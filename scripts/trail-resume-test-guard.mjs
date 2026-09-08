@@ -8,10 +8,12 @@ const localPython = process.platform === 'win32'
   : join(process.cwd(), '.venv', 'bin', 'python');
 const python = process.env.PYTHON
   || (existsSync(localPython) ? localPython : (process.platform === 'win32' ? 'python' : 'python3'));
+/** Входы обёртки для отбора мутантов (#492 §6.1): запускаемые pytest-модули. */
+export const GUARD_INPUTS = ['tests_backend/test_trails.py', 'tests_backend/test_trail_recorder.py'];
+
 const result = spawnSync(python, [
   '-m', 'pytest',
-  'tests_backend/test_trails.py',
-  'tests_backend/test_trail_recorder.py',
+  ...GUARD_INPUTS,
   '-q', '-k', 'resume or short_available',
 ], { stdio: 'inherit' });
 

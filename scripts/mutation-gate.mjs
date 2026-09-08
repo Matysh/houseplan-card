@@ -35,10 +35,11 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { withoutProductVersion } from './source-fingerprint.mjs';
+import { closure, trackedFiles } from './check-inputs.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -3560,6 +3561,61 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'manifest-drops-workflow-input',
+    guard: 'node --test --test-name-pattern="toolchain input of every job" test/gate-reuse.test.mjs',
+    because: 'validate.yml decides what a job checks; a job whose key ignores its own workflow is '
+      + 'reused after a step is added and the new step never runs (#492 §5.4, the #430 class)',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: "const WORKFLOW = ['.github/workflows/validate.yml'];",
+      replace: 'const WORKFLOW = [];  // mutant: the workflow is nobody\'s input',
+    }],
+  },
+  {
+    id: 'classify-unknown-input-is-unaffected',
+    guard: 'node --test --test-name-pattern="неизвестный исполняемый вход расширяет" test/classify-changes.test.mjs',
+    because: 'a changed executable file no check claims must widen the run to the full set; treating '
+      + '"unknown" as "unaffected" is exactly how relay tests stayed unrun (#492 §5.2)',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: '  if (unknown.length) for (const name of CHECK_NAMES) affected.add(name);',
+      replace: '  // mutant: unknown inputs widen nothing',
+    }],
+  },
+  {
+    id: 'reuse-backend-hashes-ui',
+    guard: 'node --test --test-name-pattern="a version bump changes all of them" test/gate-reuse.test.mjs',
+    because: 'backend does not execute the UI; hashing src/** into its key reverts the AC6 closure '
+      + 'and rebuilds the "every frontend edit reruns pytest" skew (#492 AC6)',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: "    roots: ['custom_components/**/*.py', 'custom_components/houseplan/manifest.json', 'scripts/support-relay/**/*.py',",
+      replace: "    roots: ['src/**', 'custom_components/**/*.py', 'custom_components/houseplan/manifest.json', 'scripts/support-relay/**/*.py',",
+    }],
+  },
+  {
+    id: 'guard-inputs-ignore-wrapper-defaults',
+    guard: 'node --test --test-name-pattern="#492 §8.2" test/mutation-gate.test.mjs',
+    because: 'ten backend wrappers run tests_backend/test_ha_import_export.py by default without naming '
+      + 'it; dropping the declared default hides that test from selection and fingerprints again (#492 §6.1)',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: '  const declared = explicit ? [] : wrappers' + '.flatMap((file) => wrapperInputs(file, read));',
+      replace: '  const declared = [];  // mutant: wrapper defaults are invisible',
+    }],
+  },
+  {
+    id: 'registry-diff-not-selected',
+    guard: 'node --test --test-name-pattern="#492 §6.4: дифф только по реестру" test/mutation-gate.test.mjs',
+    because: 'a new or changed mutant definition must run on the push that adds it; selecting only by '
+      + 'patch and guard files leaves a registry-only diff green without running the witness (#492 §6.4)',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: '    byRegistry = mutants' + '.filter((m) => delta.changed.includes(m.id));',
+      replace: '    byRegistry = [];  // mutant: definitions never select',
+    }],
+  },
+  {
     id: 'changed-selection-ignores-guard-files',
     guard: 'node --test --test-name-pattern="#475 AC2" test/mutation-gate.test.mjs',
     because: 'a witness also rots when its guard changes and stops reaching the mutated branch; '
@@ -3568,7 +3624,7 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/mutation-gate.mjs',
       // Реестр живёт в том же файле, что и код: якорь собирается из двух
       // частей, иначе --check найдёт его дважды — в коде и здесь.
-      find: '    || guardFiles(m.guard, exists)' + '.some((file) => changed.has(file)));',
+      find: '    || inputsOf(m.guard)' + '.some((file) => changed.has(file)));',
       replace: '    || false);',
     }],
   },
@@ -7860,6 +7916,55 @@ export function guardFiles(guard, exists = (file) => existsSync(join(repoRoot, f
 }
 
 /**
+ * Обёртки гардов объявляют, что запускают (#492 §6.1): `export const
+ * GUARD_INPUTS = [...]` читается статически, без исполнения — обёртка при
+ * импорте сразу бежит и падает на usage. Файл гарда без объявления не
+ * считается обёрткой: его входы — только импорты и пути (§6.2).
+ */
+const GUARD_INPUTS_RE = /export const GUARD_INPUTS = \[([^\]]*)\]/;
+export function wrapperInputs(file, read = (f) => (existsSync(join(repoRoot, f)) ? readFileSync(join(repoRoot, f), 'utf8') : '')) {
+  if (!/^scripts\/[\w-]+-guard\.mjs$/.test(file)) return [];
+  const m = GUARD_INPUTS_RE.exec(String(read(file)));
+  if (!m) return [];
+  return [...m[1].matchAll(/['"]([^'"]+)['"]/g)].map((x) => x[1]);
+}
+
+/** Сторона патча остаётся точечной (#492 §6.4): замыкание в `src/**` не идёт. */
+const GUARD_CLOSURE_STOP = (file) => file.startsWith('src/') || file.startsWith('custom_components/houseplan/frontend/');
+
+let trackedCache = null;
+const tracked = () => (trackedCache ??= trackedFiles(repoRoot));
+
+/**
+ * Все входы гарда (#492 §6): файлы из строки команды ∪ объявленные входы
+ * обёрток ∪ транзитивное замыкание по импортам и путям — смок тянет
+ * `serve.mjs` и фикстуры, pytest-модуль — `conftest.py`, обёртка — свои
+ * тесты. `src/**` исключён: это сторона патча, не гарда.
+ */
+export function guardInputs(guard, {
+  exists = (file) => existsSync(join(repoRoot, file)),
+  read,
+  files = tracked(),
+} = {}) {
+  const named = guardFiles(guard, exists);
+  // Объявленное умолчание обёртки действует, когда гард не назвал файл сам:
+  // третий аргумент backend-test-guard уже стоит в строке и отбирается оттуда.
+  const isWrapper = (file) => /^scripts\/[\w-]+-guard\.mjs$/.test(file);
+  const wrappers = named.filter(isWrapper);
+  const explicit = named.some((file) => !isWrapper(file));
+  const declared = explicit ? [] : wrappers.flatMap((file) => wrapperInputs(file, read));
+  // Сама обёртка — вход (её текст в отпечатке), но её ссылки не читаются:
+  // умолчание уже учтено выше, а перечитывать его из текста значило бы
+  // отменять явный аргумент.
+  const entries = [...new Set([...named, ...declared])].filter(exists);
+  const reached = closure(repoRoot, entries.filter((file) => !wrappers.includes(file)),
+    { tracked: files, read, stopAt: GUARD_CLOSURE_STOP });
+  return [...new Set([...entries, ...reached])]
+    .filter((file) => !GUARD_CLOSURE_STOP(file))
+    .sort();
+}
+
+/**
  * Отпечаток свидетеля (#481): содержимое файлов патча и гарда плюс само
  * объявление мутанта. Строка версии продукта нормализуется, как в
  * `visualFingerprint` (#245): релизный бамп трогает `houseplan-card.ts` и
@@ -7879,7 +7984,7 @@ export function witnessFingerprint(mutant, {
   hash.update('\0');
   const files = new Set([
     ...mutant.patches.map((patch) => patch.file),
-    ...guardFiles(mutant.guard, exists),
+    ...guardInputs(mutant.guard, { exists, read }),
   ]);
   for (const file of [...files].sort()) {
     hash.update(file);
@@ -7944,10 +8049,57 @@ export function splitByLedger(mutants, ledger, fingerprintOf = (m) => witnessFin
  * четыре мутанта пережили свои гарды и обнаружились лишь полным прогоном
  * перед v1.72.0 (#466, #467).
  */
-export function selectChangedMutants(mutants, changedFiles, exists) {
+export function selectChangedMutants(mutants, changedFiles, exists, options = {}) {
   const changed = new Set(changedFiles);
+  const inputsOf = options.guardInputs || ((guard) => guardInputs(guard, { exists, ...options }));
   return mutants.filter((m) => m.patches.some((patch) => changed.has(patch.file))
-    || guardFiles(m.guard, exists).some((file) => changed.has(file)));
+    || inputsOf(m.guard).some((file) => changed.has(file)));
+}
+
+/**
+ * Определения реестра, добавленные или изменённые относительно базы (#492
+ * §6.4): реестр базы читается через `git show` во временный модуль рядом с
+ * этим файлом (относительные импорты обязаны разрешаться) и импортируется —
+ * реестр данные, побочных эффектов при импорте нет (закреплено тестом).
+ * Удалённые id возвращаются отдельно: гонять их нечем, но сказать стоит.
+ */
+export function registryDelta(current, base) {
+  const shape = (m) => JSON.stringify({ guard: m.guard, patches: m.patches, because: m.because });
+  const before = new Map(base.map((m) => [m.id, shape(m)]));
+  const changed = current.filter((m) => before.get(m.id) !== shape(m)).map((m) => m.id);
+  const removed = base.filter((m) => !current.some((c) => c.id === m.id)).map((m) => m.id);
+  return { changed, removed };
+}
+
+/**
+ * Отбор для диффа (#332, #475, #492): по файлам патчей и входам гардов плюс —
+ * когда дифф трогает сам реестр — по добавленным/изменённым определениям
+ * относительно реестра базы (`base`, null — база не прочитана).
+ */
+export function selectForDiff(mutants, files, base, options = {}) {
+  const byFiles = selectChangedMutants(mutants, files, options.exists, options);
+  let byRegistry = [];
+  let removed = [];
+  if (files.includes('scripts/mutation-gate.mjs') && base) {
+    const delta = registryDelta(mutants, base);
+    byRegistry = mutants.filter((m) => delta.changed.includes(m.id));
+    removed = delta.removed;
+  }
+  const ids = new Set([...byFiles, ...byRegistry].map((m) => m.id));
+  return { selected: mutants.filter((m) => ids.has(m.id)), byFiles, byRegistry, removed };
+}
+
+export async function baseRegistry(baseRef) {
+  const shown = spawnSync('git', ['-C', repoRoot, 'show', `${baseRef}:scripts/mutation-gate.mjs`], { encoding: 'utf8' });
+  if (shown.status !== 0) return null;
+  const temp = join(repoRoot, 'scripts', `.mutation-gate.base-${process.pid}.mjs`);
+  writeFileSync(temp, shown.stdout);
+  try {
+    const mod = await import(`${pathToFileURL(temp).href}?t=${Date.now()}`);
+    return mod.MUTANTS;
+  } finally {
+    rmSync(temp, { force: true });
+  }
 }
 
 /**
@@ -7961,7 +8113,7 @@ export function shardMutants(mutants, index, total) {
   return ordered.filter((_, position) => position % total === index - 1);
 }
 
-function main(argv) {
+async function main(argv) {
   const idArg = argv.find((a) => a.startsWith('--id='))?.slice(5);
   let selected = idArg ? MUTANTS.filter((m) => m.id === idArg) : MUTANTS;
   if (idArg && !selected.length) {
@@ -7987,9 +8139,19 @@ function main(argv) {
     }
     const files = diff.stdout.split('\n').filter(Boolean);
     const before = selected.length;
-    selected = selectChangedMutants(selected, files);
+    // #492 §6.4: правка реестра отбирает добавленные и изменённые определения
+    // явно — новый свидетель не обязан трогать чужие patch/guard-файлы.
+    let base = null;
+    if (files.includes('scripts/mutation-gate.mjs')) {
+      const baseRef = range.includes('..') ? range.split('..')[0] : range;
+      base = await baseRegistry(baseRef);
+      if (!base) console.log(`реестр базы ${baseRef} не прочитан — отбор по определениям пропущен`);
+    }
+    const picked = selectForDiff(selected, files, base);
+    if (picked.removed.length) console.log(`удалены из реестра: ${picked.removed.join(', ')}`);
+    selected = picked.selected;
     console.log(`дифф-режим ${range}: файлов в диффе ${files.length}, `
-      + `мутантов затронуто ${selected.length} из ${before}`);
+      + `мутантов затронуто ${selected.length} из ${before} (по файлам ${picked.byFiles.length}, по определениям ${picked.byRegistry.length})`);
     if (!selected.length) {
       console.log('дифф не задевает ни одного patch.file — гонять нечего; '
         + 'полный реестр остаётся предрелизным контрактом');
@@ -8084,5 +8246,8 @@ function main(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  process.exit(main(process.argv.slice(2)));
+  main(process.argv.slice(2)).then((code) => process.exit(code), (err) => {
+    console.error(err);
+    process.exit(2);
+  });
 }
