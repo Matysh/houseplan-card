@@ -29,6 +29,16 @@
 export const SMOKE_LINKS = [
   {
     symbols: [
+      'confirmedSummaryPanelWriteRecovery', 'summaryPanelEntityIds',
+      '_adoptStructuralResponses', 'LoadedSummaryPanelRuntime',
+    ],
+    smokes: ['smoke_summary_panel.mjs'],
+    because: 'the #490 production-bundle sequence proves that a lost config/set ACK adopts the '
+      + 'whole authoritative document and revision before a second write, and that a summary-only '
+      + 'HA state row drives the real panel without rendering unrelated ticks or rebuilding geometry',
+  },
+  {
+    symbols: [
       'roomTempRangeOf', 'roomTempRangeFromDraft', 'roomTempThresholdDraft',
       'applyRoomTempThresholdDraft', 'roomTemperatureControls',
     ],

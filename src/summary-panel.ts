@@ -123,6 +123,24 @@ export function visibleSummaryBlocks(
       || block.scope.type === 'space' && block.scope.space_id === spaceId));
 }
 
+/**
+ * Complete bounded HA dependency projection for the supported shared panel.
+ * Visibility and space scope are intentionally irrelevant: local show/floor
+ * changes must never leave the next frame subscribed to an older subset.
+ */
+export function summaryPanelEntityIds(
+  config: SummaryPanelConfig | null | undefined,
+): readonly string[] {
+  if (!config || !runnableSummaryPanel(config)) return [];
+  const ids = new Set<string>();
+  for (const block of config.blocks) for (const value of block.values) {
+    if (value.source.type !== 'entity') continue;
+    const id = cleanText(value.source.entity_id);
+    if (id) ids.add(id);
+  }
+  return [...ids];
+}
+
 function oldReferenceMaps(base: SummaryPanelConfig | null): {
   scopes: Map<string, string>; sources: Map<string, string>;
 } {
@@ -289,6 +307,30 @@ export function parseSummaryLocal(
 
 export function sameSummaryPanel(a: SummaryPanelConfig, b: SummaryPanelConfig): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+export interface ConfirmedSummaryPanelWriteRecovery {
+  readonly config: ServerConfig;
+  readonly rev: number;
+}
+
+/**
+ * A transport failure is a lost ACK only when one authoritative read returns
+ * the exact saved panel together with a complete config and its revision.
+ */
+export function confirmedSummaryPanelWriteRecovery(
+  response: unknown,
+  draft: SummaryPanelConfig,
+): ConfirmedSummaryPanelWriteRecovery | null {
+  if (!record(response)) return null;
+  const config = response.config;
+  const rev = response.rev;
+  if (!record(config) || !Array.isArray(config.spaces)
+      || typeof rev !== 'number' || !Number.isSafeInteger(rev) || rev < 0) return null;
+  const settings = record(config.settings) ? config.settings : null;
+  const saved = settings?.summary_panel;
+  if (!runnableSummaryPanel(saved) || !sameSummaryPanel(saved, draft)) return null;
+  return { config: config as unknown as ServerConfig, rev };
 }
 
 export function moveSummaryItem<T>(items: readonly T[], from: number, to: number): T[] {

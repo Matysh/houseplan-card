@@ -119,6 +119,11 @@ test('the card gates snapshot positions on the render model', () => {
     /positions:\s*new Map\(this\._devices\.map\(/,
     'the previous unconditional position path must not return',
   );
+  assert.match(
+    capture,
+    /this\._summary\?\.entityIds\(\)/,
+    '#490 summary-only HA sources join the one render dependency projection',
+  );
 });
 
 test('opening references use their own availability policy without weakening plan tombstones', () => {

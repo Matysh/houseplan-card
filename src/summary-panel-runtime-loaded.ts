@@ -7,10 +7,10 @@ import type {
 import {
   SUMMARY_PANEL_LEGACY_SCALE_KEY,
   type SummaryDraftProblem, type SummaryPanelLocalPreferences,
-  cloneSummaryPanel, defaultSummaryPanel, effectiveSummaryVisible,
+  cloneSummaryPanel, confirmedSummaryPanelWriteRecovery, defaultSummaryPanel, effectiveSummaryVisible,
   moveSummaryItem, normalizeSummaryDraft, parseSummaryLocal,
   normalizeSummaryScale, resolveSummaryLayout, sameSummaryPanel,
-  summaryLocalKey, summaryPanelOf, validateSummaryDraft, visibleSummaryBlocks,
+  summaryLocalKey, summaryPanelEntityIds, summaryPanelOf, validateSummaryDraft, visibleSummaryBlocks,
 } from './summary-panel';
 import { SUMMARY_PANEL_API_VERSION } from './summary-panel-api';
 import { contentFingerprint } from './visual-continuity';
@@ -83,6 +83,9 @@ export class LoadedSummaryPanelRuntime {
   public constructor(host: unknown) { this.host = host as SummaryPanelHost; }
 
   public get dialogOpen(): boolean { return !!this.dialog; }
+
+  /** Entity rows that can affect any supported saved summary-panel frame. */
+  public entityIds(): readonly string[] { return summaryPanelEntityIds(this.config().config); }
 
   public connect(): void { this.ensureStyle(); this.loadLocal(); }
 
@@ -429,19 +432,30 @@ export class LoadedSummaryPanelRuntime {
             ...this.host._serverCfg,
             settings: { ...(this.host._serverCfg.settings || {}), summary_panel: draft },
           }) as ServerConfig;
+          let recovered = false;
           try {
             await this.host._sendConfigCandidate(candidate);
           } catch (writeError) {
             try {
               const authoritative = await this.host._getAuthoritativeConfig();
-              const saved = authoritative.config?.settings?.summary_panel;
-              if (!saved || !sameSummaryPanel(saved, draft)) throw writeError;
-              this.host._cfgRev = authoritative.rev ?? this.host._cfgRev;
+              const confirmed = confirmedSummaryPanelWriteRecovery(authoritative, draft);
+              if (!confirmed) throw writeError;
+              const visibleSpace = this.host._space;
+              this.host._adoptStructuralResponses(authoritative);
+              void this.host._syncDecorAssets(confirmed.config).catch(() => undefined);
+              this.host._adoptInitialSpace(this.host._model, true);
+              this.host._cacheSnapshot();
+              if (this.host._space !== visibleSpace) this.host._restoreZoom();
+              this.host._regSignature = '';
+              this.host._maybeRebuildDevices();
+              recovered = true;
             } catch { throw writeError; }
           }
-          this.host._serverCfg = candidate;
-          this.host._cfgContentFingerprint = contentFingerprint(candidate);
-          this.host._cacheSnapshot();
+          if (!recovered) {
+            this.host._serverCfg = candidate;
+            this.host._cfgContentFingerprint = contentFingerprint(candidate);
+            this.host._cacheSnapshot();
+          }
         });
         this.host._writeChain = write;
         await write.finally(() => { this.host._writesPending--; });

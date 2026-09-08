@@ -1,6 +1,7 @@
 import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { I18nKey } from './i18n';
 import type { CardConfig, Marker, ServerConfig, SpaceModel } from './types';
+import type { AuthoritativeConfigResponse } from './version-recovery-card';
 
 export interface SummaryHassState {
   state?: string;
@@ -47,6 +48,7 @@ export interface SummaryPanelHost extends Node {
   _cfgEpoch: number;
   _layoutRev: number;
   _cfgContentFingerprint: string;
+  _regSignature: string;
   _writesPending: number;
   _writeChain: Promise<void>;
   _kiosk: boolean;
@@ -70,7 +72,12 @@ export interface SummaryPanelHost extends Node {
     cancelLabel: string;
   }): Promise<boolean>;
   _sendConfigCandidate(candidate: ServerConfig): Promise<void>;
-  _getAuthoritativeConfig(): Promise<{ config?: ServerConfig | null; rev?: number }>;
+  _getAuthoritativeConfig(): Promise<AuthoritativeConfigResponse>;
+  _adoptStructuralResponses(response: AuthoritativeConfigResponse): { configChanged: boolean };
+  _syncDecorAssets(config: ServerConfig | null): Promise<void>;
+  _adoptInitialSpace(models: SpaceModel[], authoritative?: boolean): unknown;
+  _maybeRebuildDevices(): void;
+  _restoreZoom(): void;
   _reloadConfigOnly(force?: boolean): Promise<void>;
   _cacheSnapshot(): void;
 }

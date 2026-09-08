@@ -2610,7 +2610,7 @@ export class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.locale_load_failed'));
     }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed')))); // #474
     super.connectedCallback();
-    if (this._summary) this._summary.connect(); else void import('./summary-panel-runtime-loaded').then(({ LoadedSummaryPanelRuntime }) => { this._summary ||= new LoadedSummaryPanelRuntime(this); if (this.isConnected) this._summary.connect(); this.requestUpdate(); }).catch(() => undefined);
+    if (this._summary) this._summary.connect(); else void import('./summary-panel-runtime-loaded').then(({ LoadedSummaryPanelRuntime }) => { this._summary ||= new LoadedSummaryPanelRuntime(this); this._capturedSnapshotSequence = -1; if (this.isConnected) this._summary.connect(); this.requestUpdate(); }).catch(() => undefined);
     void this._ensureLiveRuntime().catch(() => this.requestUpdate());
     this._pointerModality.connect(this.ownerDocument.defaultView);
     const PointerHoverObserver = this.ownerDocument.defaultView?.MutationObserver;
@@ -4620,7 +4620,7 @@ export class HouseplanCard extends LitElement {
     const planHass = this._planHass;
     const presentations = new Map<string, ResolvedDevicePresentation>();
     const facts = new Map<string, unknown>();
-    const entityIds = new Set<string>(['sun.sun']);
+    const entityIds = new Set<string>(['sun.sun']); for (const id of this._summary?.entityIds() || []) entityIds.add(id);
     if (this._vacFit?.source) entityIds.add(this._vacFit.source);
     const deviceIds = new Set<string>();
     const areaIds = new Set<string>();

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Summary-panel entity values now update immediately even when the entity is
+  not represented anywhere else on the plan. A recovered save whose response
+  was lost also keeps unrelated changes made concurrently in another House
+  Plan client instead of overwriting them on the next write
+  ([#490](https://github.com/Matysh/houseplan-card/issues/490)).
 - House Plan now publishes a documented, machine-readable set of stable UI
   hooks for external end-to-end tests and advanced card-mod rules. Tests can
   detect card readiness and editor mode, address header actions, toolbars,

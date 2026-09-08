@@ -126,10 +126,198 @@ const settings = await page.evaluate(() => {
   return result;
 });
 
+const liveSetup = await page.evaluate(async () => {
+  const card = window.__card;
+  const panel = {
+    version: 1, title: 'Live summary', show_on_mobile: true,
+    blocks: [{ id: 'live', title: 'Sensors', visible: true, scope: { type: 'all' }, values: [
+      { id: 'summary-only', label: 'Summary only',
+        source: { type: 'entity', entity_id: 'sensor.summary_only' } },
+    ] }],
+  };
+  card._serverCfg = {
+    ...card._serverCfg,
+    settings: { ...(card._serverCfg.settings || {}), summary_panel: panel },
+  };
+  card.hass = {
+    ...card.hass,
+    states: {
+      ...card.hass.states,
+      'sensor.summary_only': {
+        entity_id: 'sensor.summary_only', state: '111', attributes: { unit_of_measurement: 'ppm' },
+      },
+    },
+  };
+  card.requestUpdate();
+  await card.updateComplete;
+  return card._renderDeviceSnapshot?.entityIds.includes('sensor.summary_only') === true;
+});
+await page.waitForFunction(() => {
+  const card = window.__card;
+  const root = card.shadowRoot || card.renderRoot;
+  return [...root.querySelectorAll('.summary-value strong')]
+    .some((node) => node.textContent.trim() === '111 ppm');
+});
+
+const liveState = await page.evaluate(async () => {
+  const card = window.__card;
+  const root = () => card.shadowRoot || card.renderRoot;
+  const value = () => root().querySelector('.summary-overlay .summary-value strong')
+    ?.textContent.trim() || '';
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  await card.updateComplete;
+  const originalUpdated = card.updated.bind(card);
+  let updateCount = 0;
+  card.updated = (changed) => { updateCount++; return originalUpdated(changed); };
+  const modelBefore = card._model;
+  const epochBefore = card._cfgEpoch;
+  const layoutBefore = card._layoutRev;
+  const beforeUnrelated = updateCount;
+
+  card.hass = {
+    ...card.hass,
+    states: {
+      ...card.hass.states,
+      'sensor.unrelated_490': { entity_id: 'sensor.unrelated_490', state: 'changed', attributes: {} },
+    },
+  };
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  const unrelatedRenders = updateCount - beforeUnrelated;
+  const beforeRelevant = updateCount;
+
+  card.hass = {
+    ...card.hass,
+    states: {
+      ...card.hass.states,
+      'sensor.summary_only': {
+        ...card.hass.states['sensor.summary_only'], state: '222',
+      },
+    },
+  };
+  await card.updateComplete;
+  const changed = value();
+  const relevantRenders = updateCount - beforeRelevant;
+
+  card.hass = {
+    ...card.hass,
+    states: {
+      ...card.hass.states,
+      'sensor.summary_only': {
+        ...card.hass.states['sensor.summary_only'], state: 'unavailable', attributes: {},
+      },
+    },
+  };
+  await card.updateComplete;
+  const unavailable = value();
+
+  const missingStates = { ...card.hass.states };
+  delete missingStates['sensor.summary_only'];
+  card.hass = { ...card.hass, states: missingStates };
+  await card.updateComplete;
+  const missing = value();
+
+  card.hass = {
+    ...card.hass,
+    states: {
+      ...card.hass.states,
+      'sensor.summary_only': {
+        entity_id: 'sensor.summary_only', state: '333', attributes: { unit_of_measurement: 'ppm' },
+      },
+    },
+  };
+  await card.updateComplete;
+  const recovered = value();
+  card.updated = originalUpdated;
+  return {
+    unrelatedTickSkipped: unrelatedRenders === 0,
+    relevantTickRenderedOnce: relevantRenders === 1,
+    valueUpdated: changed === '222 ppm',
+    unavailableUpdated: unavailable === 'unavailable',
+    missingUpdated: missing === card._summary.t('summary.unavailable'),
+    recoveredUpdated: recovered === '333 ppm',
+    stateTicksKeepGeometry: card._model === modelBefore && card._cfgEpoch === epochBefore
+      && card._layoutRev === layoutBefore,
+  };
+});
+
+const recovery = await page.evaluate(async () => {
+  const card = window.__card;
+  const runtime = card._summary;
+  const originalHass = card.hass;
+  const originalCallWS = originalHass.callWS;
+  const writes = [];
+  let serverConfig = structuredClone(card._serverCfg);
+  let serverRev = card._cfgRev;
+  let firstWrite = true;
+  let rejectConflict = false;
+  card.hass = {
+    ...originalHass,
+    callWS: async (message) => {
+      if (message.type === 'houseplan/config/set') {
+        writes.push(structuredClone(message));
+        if (rejectConflict) throw Object.assign(new Error('synthetic conflict'), { code: 'conflict' });
+        if (firstWrite) {
+          firstWrite = false;
+          serverConfig = structuredClone(message.config);
+          serverConfig.spaces[0] = { ...serverConfig.spaces[0], title: 'Concurrent title kept' };
+          serverConfig.settings = { ...serverConfig.settings, concurrent_guard_490: 'kept' };
+          serverRev = message.expected_rev + 2;
+          throw new Error('synthetic lost ACK');
+        }
+        serverConfig = structuredClone(message.config);
+        serverRev++;
+        return { rev: serverRev };
+      }
+      if (message.type === 'houseplan/config/get') return {
+        config: structuredClone(serverConfig), rev: serverRev,
+        can_write: true, summary_panel_api: 1,
+      };
+      return originalCallWS(message);
+    },
+  };
+  await card.updateComplete;
+
+  await runtime.openDialog();
+  runtime.dialog.draft.title = 'Saved despite lost ACK';
+  await runtime.saveDialog();
+  const recoveredConfig = card._serverCfg;
+  const recoveredRev = card._cfgRev;
+  const firstClosed = runtime.dialog === null;
+
+  await runtime.openDialog();
+  runtime.dialog.draft.title = 'Second summary write';
+  await runtime.saveDialog();
+  const secondWrite = writes[1];
+
+  rejectConflict = true;
+  await runtime.openDialog();
+  runtime.dialog.draft.title = 'Must remain a conflict';
+  await runtime.saveDialog();
+  const trueConflictStaysOpen = runtime.dialog?.conflict === true
+    && !!runtime.dialog.error
+    && card._serverCfg.settings.summary_panel.title === 'Second summary write';
+  runtime.dialog = null;
+  card.hass = { ...card.hass, callWS: originalCallWS };
+  await card.updateComplete;
+  return {
+    lostAckClosesAsSuccess: firstClosed,
+    recoveryAdoptsWholeConfig: recoveredConfig.spaces[0].title === 'Concurrent title kept'
+      && recoveredConfig.settings.concurrent_guard_490 === 'kept',
+    recoveryAdoptsRevision: recoveredRev === writes[0].expected_rev + 2,
+    nextWriteUsesRecoveredRevision: secondWrite?.expected_rev === recoveredRev,
+    nextWritePreservesConcurrentChange: secondWrite?.config?.spaces?.[0]?.title === 'Concurrent title kept'
+      && secondWrite?.config?.settings?.concurrent_guard_490 === 'kept',
+    trueConflictStaysOpen,
+  };
+});
+
 checkAll({
   ...initial,
   bottomOnTallStage,
   smallCardKeepsLocalIntent,
   ...settings,
+  summaryDependencyCaptured: liveSetup,
+  ...liveState,
+  ...recovery,
 });
 await finish(browser);

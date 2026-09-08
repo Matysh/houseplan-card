@@ -3,12 +3,14 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 
 import {
+  confirmedSummaryPanelWriteRecovery,
   defaultSummaryPanel,
   effectiveSummaryVisible,
   normalizeSummaryDraft,
   normalizeSummaryScale,
   parseSummaryLocal,
   resolveSummaryLayout,
+  summaryPanelEntityIds,
   summaryLocalKey,
   summaryPanelOf,
   validateSummaryDraft,
@@ -125,6 +127,47 @@ test('#437 scope filters blocks without changing their order', () => {
   ] };
   assert.deepEqual(visibleSummaryBlocks(config, 'f2').map((b) => b.id), ['a', 'b']);
   assert.deepEqual(visibleSummaryBlocks(config, 'f1').map((b) => b.id), ['a']);
+});
+
+test('#490 summary entity dependencies are complete, bounded and schema-aware', () => {
+  const config = { version: 1, title: 'S', show_on_mobile: true, blocks: [
+    { id: 'visible', title: 'Visible', visible: true, scope: { type: 'all' }, values: [
+      { id: 'a', label: 'A', source: { type: 'entity', entity_id: 'sensor.a' } },
+      { id: 'system', label: 'Time', source: { type: 'system', key: 'datetime' } },
+    ] },
+    { id: 'hidden', title: 'Hidden', visible: false,
+      scope: { type: 'space', space_id: 'another-floor' }, values: [
+        { id: 'a-again', label: 'A again', source: { type: 'entity', entity_id: 'sensor.a' } },
+        { id: 'b', label: 'B', source: { type: 'entity', entity_id: '  sensor.b  ' } },
+      ] },
+  ] };
+  assert.deepEqual(summaryPanelEntityIds(config), ['sensor.a', 'sensor.b']);
+  assert.deepEqual(summaryPanelEntityIds(null), []);
+  assert.deepEqual(summaryPanelEntityIds({ ...config, version: 2 }), []);
+});
+
+test('#490 lost-ACK proof requires the exact panel, full config and revision', () => {
+  const draft = defaultSummaryPanel(tr);
+  draft.title = 'Saved summary';
+  const authoritative = {
+    spaces: [{ id: 'f1', title: 'Concurrent title' }], markers: [],
+    settings: { summary_panel: structuredClone(draft), concurrent: true },
+  };
+  assert.deepEqual(confirmedSummaryPanelWriteRecovery({ config: authoritative, rev: 42 }, draft), {
+    config: authoritative, rev: 42,
+  });
+
+  const different = structuredClone(authoritative);
+  different.settings.summary_panel.title = 'Another summary';
+  for (const response of [
+    null,
+    { config: authoritative },
+    { config: authoritative, rev: 1.5 },
+    { config: authoritative, rev: -1 },
+    { config: null, rev: 42 },
+    { config: { settings: authoritative.settings }, rev: 42 },
+    { config: different, rev: 43 },
+  ]) assert.equal(confirmedSummaryPanelWriteRecovery(response, draft), null);
 });
 
 test('#437 local preferences use legacy sizes once but never legacy show', () => {
