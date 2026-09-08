@@ -42,9 +42,9 @@ from .const import (
     PLAN_MODEL_VERSION,
     PLANS_DIR,
     PLANS_URL,
+    SUMMARY_PANEL_API_VERSION,
     SUPPORT_API_VERSION,
     SUPPORT_PREVIEW_TTL_S,
-    SUMMARY_PANEL_API_VERSION,
     VERSION,
 )
 from .coordinate_canonicalization import (
