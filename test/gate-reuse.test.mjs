@@ -7,13 +7,14 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  HARNESS, JOBS, harnessFiles, inheritedFailureNote, parseFailureMarker, reuseKey,
+  JOBS, harnessFiles, inheritedFailureNote, parseFailureMarker, reuseKey,
 } from '../scripts/gate-reuse.mjs';
 
 /**
- * Дерево, минимально достаточное для sourceFingerprint плюс оснастка каждой
- * тяжёлой job. Реальные каталоги, а не подмены: ключ обязан отражать файловую
- * систему так же, как в CI.
+ * Дерево, минимально достаточное для manifest каждой тяжёлой job (#492):
+ * корни проверок, точки входа и то, что они импортируют. Реальные каталоги,
+ * а не подмены: ключ обязан отражать файловую систему так же, как в CI.
+ * Без `.git` manifest обходит дерево сам.
  */
 const makeTree = () => {
   const dir = mkdtempSync(join(tmpdir(), 'hp-reuse-'));
@@ -26,48 +27,63 @@ const makeTree = () => {
   put('package-lock.json', '{"lockfileVersion":3}\n');
   put('rollup.config.mjs', 'export default {};\n');
   put('tsconfig.json', '{}\n');
+  put('.github/workflows/validate.yml', 'name: Validate\n');
   put('scripts/source-fingerprint.mjs', '// pinned by the real repo copy\n');
+  put('scripts/gate-reuse.mjs', '// reuse protocol\n');
+  put('scripts/check-inputs.mjs', '// manifest\n');
   put('src/card.ts', "export const CARD_VERSION = '1.0.0';\n");
+  put('demo/serve.mjs', "import './bundle-freshness.mjs';\n");
+  put('demo/bundle-freshness.mjs', 'export const fresh = 1;\n');
+  put('demo/srv/demo.html', '<div id="host"></div>\n');
   put('demo/fixtures/one.mjs', 'export const fixture = 1;\n');
-  put('demo/smoke_alpha.mjs', 'console.log(1);\n');
-  put('demo/smoke_beta.mjs', 'console.log(2);\n');
-  put('demo/benchmark_glow.mjs', 'export const glow = 1;\n');
-  put('demo/golden/run.mjs', 'export const run = 1;\n');
+  put('demo/smoke_alpha.mjs', "import { launch } from './serve.mjs';\nimport '../scripts/model-invariants.mjs';\nconsole.log(1);\n");
+  put('demo/smoke_beta.mjs', "import { launch } from './serve.mjs';\nconsole.log(2);\n");
+  put('scripts/model-invariants.mjs', 'export const invariants = 1;\n');
+  put('demo/guard/verify-guard.mjs', '// probes\n');
+  put('demo/benchmark_glow.mjs', "import './serve.mjs';\nexport const glow = 1;\n");
+  put('demo/benchmark_large_house.mjs', "import './serve.mjs';\nimport './fixtures/one.mjs';\n");
+  put('demo/golden/run.mjs', "import '../serve.mjs';\nexport const run = 1;\n");
   put('demo/golden/baselines/one.png', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x01]));
   put('demo/performance/compare.mjs', 'export const cmp = 1;\n');
-  put('tests_backend/test_pure.py', 'def test_x():\n    assert True\n');
+  put('demo/performance/budgets-glow-smoke.json', '{"hardMaxMs":1}\n');
+  put('tests_backend/test_pure.py', 'from custom_components.houseplan.store import VERSION\n\ndef test_x():\n    assert True\n');
+  put('tests_backend/requirements.txt', 'pytest\n');
   put('custom_components/houseplan/store.py', 'VERSION = 1\n');
+  put('custom_components/houseplan/manifest.json', '{"domain":"houseplan","version":"1.0.0"}\n');
   put('custom_components/houseplan/frontend/houseplan-card.js', 'built bundle\n');
+  put('scripts/support-relay/relay.py', 'from hp_relay.app import main\n');
+  put('scripts/support-relay/hp_relay/app.py', 'def main():\n    pass\n');
+  put('scripts/support-relay/tests/test_relay.py', 'from hp_relay.app import main\n');
+  put('scripts/config-schema.json', '{}\n');
   put('pytest.ini', '[pytest]\n');
+  put('pyproject.toml', '[tool.ruff]\n');
+  put('scripts/backend-coverage-baseline.txt', '80.0\n');
   put('docs/STATUS.md', 'status\n');
   return { dir, put };
 };
 
 const keys = (dir) => Object.fromEntries(JOBS.map((job) => [job, reuseKey(dir, job)]));
 
-test('every heavy job has a non-empty harness and its own key', () => {
+test('every heavy job has non-empty inputs and its own key', () => {
   const { dir } = makeTree();
   try {
     assert.deepEqual(JOBS, ['smoke', 'golden', 'performance_smoke', 'backend']);
+    const k = keys(dir);
     for (const job of JOBS) assert.ok(harnessFiles(dir, job).length > 0, job);
-    // Ключи различаются между job: иначе правка чужой оснастки гасила бы чужой
-    // прогон, а совпадение ключей маскировало бы это как «то же самое».
-    const set = new Set(Object.values(keys(dir)));
-    assert.equal(set.size, JOBS.length);
+    assert.equal(new Set(Object.values(k)).size, JOBS.length, 'ключи job обязаны различаться');
     assert.throws(() => reuseKey(dir, 'frontend'), /неизвестная job/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
-test('documentation, workflows and unit tests leave every key untouched (#208)', () => {
+test('documentation, the process canon and tooling nobody executes leave every key untouched (#208)', () => {
   // Именно этот случай и оплачивал полный прогон: коммит, не меняющий ни одного
-  // входа поведения и ни одной оснастки.
+  // входа ни одной тяжёлой job.
   const { dir, put } = makeTree();
   try {
     const before = keys(dir);
     put('docs/STATUS.md', 'status changed\n');
-    put('.github/workflows/validate.yml', 'name: Validate\n');
     put('test/some.test.mjs', 'import test from "node:test";\n');
     put('scripts/process-gate.mjs', '// unrelated tooling\n');
     put('PROCESS.md', 'canon\n');
@@ -77,19 +93,35 @@ test('documentation, workflows and unit tests leave every key untouched (#208)',
   }
 });
 
-test('a behaviour input changes every key, including a version bump (#208)', () => {
+test('the workflow itself is a toolchain input of every job (#492 §5.4)', () => {
+  // Правка шага job меняет, ЧТО проверяется; пропустить такую job как
+  // переиспользованную — тот же дефект, что #430, этажом выше.
+  const { dir, put } = makeTree();
+  try {
+    const before = keys(dir);
+    put('.github/workflows/validate.yml', 'name: Validate\n# step added\n');
+    for (const job of JOBS) assert.notEqual(reuseKey(dir, job), before[job], job);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a behaviour input changes every browser key and a version bump changes all of them (#208, #492 AC6)', () => {
   const { dir, put } = makeTree();
   try {
     const before = keys(dir);
     put('src/card.ts', "export const CARD_VERSION = '1.0.0';\n// behaviour\n");
-    for (const job of JOBS) assert.notEqual(reuseKey(dir, job), before[job], job);
+    for (const job of ['smoke', 'golden', 'performance_smoke']) assert.notEqual(reuseKey(dir, job), before[job], job);
+    // Обратная проба AC6: бэкенд UI не исполняет — его ключ на месте.
+    assert.equal(reuseKey(dir, 'backend'), before.backend, 'backend не зависит от src/**');
 
-    // Релизный кандидат бампает версию, поэтому его ключи заведомо новые и
-    // полный набор гейтов прогоняется всегда — переиспользование не может
-    // ослабить релизный гейт.
+    // Релизный кандидат бампает версию в package.json (браузерные job) и в
+    // manifest.json интеграции (backend): ключи кандидата заведомо новые, и
+    // полный набор гейтов прогоняется всегда.
     const bumped = keys(dir);
     put('src/card.ts', "export const CARD_VERSION = '1.1.0';\n// behaviour\n");
     put('package.json', '{"name":"x","version":"1.1.0"}\n');
+    put('custom_components/houseplan/manifest.json', '{"domain":"houseplan","version":"1.1.0"}\n');
     for (const job of JOBS) assert.notEqual(reuseKey(dir, job), bumped[job], job);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -104,19 +136,41 @@ test('harness edits are isolated to their own job (#208)', () => {
       apply();
       const after = keys(dir);
       for (const job of JOBS) {
-        if (job === changed) assert.notEqual(after[job], before[job], `${job} должен меняться`);
+        if (changed.includes(job)) assert.notEqual(after[job], before[job], `${job} должен меняться`);
         else assert.equal(after[job], before[job], `${job} меняться не должен`);
       }
     };
   };
 
   try {
-    only('smoke')(() => put('demo/smoke_alpha.mjs', 'console.log(3);\n'));
+    only(['smoke'])(() => put('demo/smoke_alpha.mjs', "import { launch } from './serve.mjs';\nconsole.log(3);\n"));
     // Эталон — вход сравнения, его подмена обязана менять ключ golden.
-    only('golden')(() => put('demo/golden/baselines/one.png',
+    only(['golden'])(() => put('demo/golden/baselines/one.png',
       Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x02])));
-    only('performance_smoke')(() => put('demo/performance/compare.mjs', 'export const cmp = 2;\n'));
-    only('backend')(() => put('custom_components/houseplan/store.py', 'VERSION = 2\n'));
+    only(['performance_smoke'])(() => put('demo/performance/compare.mjs', 'export const cmp = 2;\n'));
+    only(['backend'])(() => put('custom_components/houseplan/store.py', 'VERSION = 2\n'));
+    // Протокол браузерного харнеса общий для трёх job (#492 §5.1 protocol).
+    only(['smoke', 'golden', 'performance_smoke'])(() => put('demo/serve.mjs', "import './bundle-freshness.mjs';\n// harness\n"));
+    only(['smoke', 'golden', 'performance_smoke'])(() => put('demo/srv/demo.html', '<div id="host"></div>\n<!-- page -->\n'));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('#492 backend inputs the old HARNESS did not know: relay, schema, converter, pyproject', () => {
+  const { dir, put } = makeTree();
+  const bumps = (rel, text) => {
+    const before = reuseKey(dir, 'backend');
+    put(rel, text);
+    assert.notEqual(reuseKey(dir, 'backend'), before, `${rel}: правка не меняет ключ backend`);
+  };
+  try {
+    bumps('scripts/support-relay/relay.py', 'from hp_relay.app import main\n# changed\n');
+    bumps('scripts/support-relay/hp_relay/app.py', 'def main():\n    return 1\n');
+    bumps('scripts/config-schema.json', '{"v":2}\n');
+    bumps('pyproject.toml', '[tool.ruff]\nline-length = 100\n');
+    bumps('scripts/backend-coverage-baseline.txt', '81.0\n');
+    bumps('tests_backend/requirements.txt', 'pytest==9\n');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -139,7 +193,7 @@ test('the key is canonical across line endings', () => {
   const { dir, put } = makeTree();
   try {
     const before = keys(dir);
-    put('demo/smoke_alpha.mjs', 'console.log(1);\r\n');
+    put('demo/smoke_alpha.mjs', "import { launch } from './serve.mjs';\r\nimport '../scripts/model-invariants.mjs';\r\nconsole.log(1);\r\n");
     assert.deepEqual(keys(dir), before, 'CRLF не должен рождать другой ключ');
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -183,24 +237,26 @@ test('#430 ключ смоков покрывает всё, что эта job и
   // разу. Здесь закреплено, что так больше не выйдет.
   const { dir, put } = makeTree();
   try {
-    put('demo/serve.mjs', '// harness\n');
-    put('demo/guard/verify-guard.mjs', '// probes\n');
     put('demo/guard/guard_tail_exception.mjs', '// probe\n');
     put('demo/benchmark_backdrop_decode.mjs', '// benchmark\n');
     const files = harnessFiles(dir, 'smoke');
     for (const rel of [
       'demo/serve.mjs',
+      'demo/bundle-freshness.mjs',
+      'demo/srv/demo.html',
       'demo/guard/verify-guard.mjs',
       'demo/guard/guard_tail_exception.mjs',
       'demo/benchmark_backdrop_decode.mjs',
+      'scripts/model-invariants.mjs',
     ]) {
       assert.ok(files.includes(rel), `${rel} вне ключа смоков — его правка будет реюзнута`);
     }
     // И ключ обязан меняться от правки каждого из них: список файлов сам по
     // себе ничего не гарантирует, если хэш их не читает.
     for (const rel of files) {
+      if (rel === 'demo/golden/baselines/one.png') continue;
       const before = reuseKey(dir, 'smoke');
-      put(rel, '// changed\n');
+      put(rel, readFileSync(join(dir, rel), 'utf8') + '// changed\n');
       assert.notEqual(reuseKey(dir, 'smoke'), before, `${rel}: правка не меняет ключ`);
     }
   } finally {
@@ -208,20 +264,18 @@ test('#430 ключ смоков покрывает всё, что эта job и
   }
 });
 
-test('HARNESS keeps scripts/** out of the keys on purpose', () => {
-  // Инфраструктурная работа правит scripts/** постоянно. Если бы каталог
-  // целиком попал в ключ, переиспользование не срабатывало бы никогда — ровно
-  // тот случай, ради которого #208 и заводился.
+test('scripts/** enter a key only when the job actually reaches them (#208, #492)', () => {
+  // Инфраструктурная работа правит scripts/** постоянно. В ключ попадает не
+  // каталог, а то, что job импортирует или запускает: process-gate.mjs — нет,
+  // model-invariants.mjs (импорт смока) — да.
   const { dir, put } = makeTree();
   try {
     put('scripts/process-gate.mjs', '// tooling\n');
-    for (const [job, spec] of Object.entries(HARNESS)) {
-      assert.ok(!spec.roots.includes('scripts'), `${job}: scripts в корнях обхода`);
-      assert.ok(
-        !harnessFiles(dir, job).some((rel) => rel.startsWith('scripts/')),
-        `${job}: scripts попал в оснастку`,
-      );
+    for (const job of JOBS) {
+      assert.ok(!harnessFiles(dir, job).includes('scripts/process-gate.mjs'), `${job}: process-gate в оснастке`);
     }
+    assert.ok(harnessFiles(dir, 'smoke').includes('scripts/model-invariants.mjs'));
+    assert.ok(!harnessFiles(dir, 'backend').includes('scripts/model-invariants.mjs'));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

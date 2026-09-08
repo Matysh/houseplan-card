@@ -5,10 +5,11 @@
 // скрипты, где бандл и оснастка побайтово те же. Ключ здесь отвечает на один
 // вопрос: «менялось ли хоть что-то, от чего результат этой job зависит».
 //
-// Ключ = sourceFingerprint (входы поведения: src/**, demo/fixtures,
-// demo/golden/*.mjs, package.json, lock, rollup, tsconfig) ПЛЮС хеш собственной
-// оснастки job. Совпал ключ с прогоном, который завершился успешно, — повторять
-// нечего; не совпал — гоняем.
+// Ключ = хеш содержимого ВСЕХ входов job по единому manifest (#492,
+// scripts/check-inputs.mjs): исходники, которые job собирает, тесты и их
+// обёртки, фикстуры, конфиги инструментов, toolchain и протокол харнеса.
+// Совпал ключ с прогоном, который завершился успешно, — повторять нечего;
+// не совпал — гоняем.
 //
 // Почему это не фильтры путей из job `changes` (на dev они намеренно
 // отключены): там объём прогона угадывается по путям, и «зелёный» начинает
@@ -16,111 +17,50 @@
 // пишет только успешный прогон с тем же ключом.
 //
 // Свойство, которое стоит знать: релизный кандидат (бета или стабильный релиз)
-// бампает версию, а `CARD_VERSION` и `package.json` входят в sourceFingerprint.
+// бампает версию — `package.json`/`CARD_VERSION` у браузерных job и
+// `custom_components/houseplan/manifest.json` у backend входят в manifest.
 // Значит ключ кандидата заведомо новый и полный набор гейтов прогоняется всегда.
 // Переиспользование физически не может ослабить релизный гейт.
 
 import { createHash } from 'node:crypto';
-import { appendFileSync, existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-import { sourceFingerprint } from './source-fingerprint.mjs';
+import { REUSE_JOBS, inputsOf } from './check-inputs.mjs';
 
 /**
- * Оснастка каждой job: файлы, от которых её результат зависит помимо входов
- * поведения. `scripts/**` целиком сюда не берётся намеренно — он меняется
- * часто и почти всегда не в той части, которую job исполняет; берутся только
- * фактически исполняемые файлы (см. package.json).
+ * Входы каждой job — из единого manifest (#492 §5.3). Прежний `HARNESS`
+ * перечислял оснастку руками и молчал о том, чего не знал: relay, converter,
+ * schema у backend; `serve.mjs`, `demo.html`, compat-хелперы у golden/perf.
+ * Теперь список ВЫЧИСЛЯЕТСЯ: корни проверки плюс замыкание её точек входа по
+ * импортам и путям (см. check-inputs.mjs). `src/**` входит только туда, где
+ * бандл собирается и исполняется, — backend от UI больше не зависит.
  */
-export const HARNESS = {
-  smoke: {
-    // Всё, что job «Смоки в браузере» ИСПОЛНЯЕТ, а не только сами смоки (#430).
-    //
-    // До этой задачи ключ держал ровно `demo/smoke_*.mjs`. Из него выпадали:
-    // `demo/serve.mjs` — сама оснастка, включая гард исключений; `demo/guard/**`
-    // — отрицательные пробы этого гарда и запускающий их `verify-guard.mjs`;
-    // benchmark, который одна из проб запускает с `--guard-probe`.
-    //
-    // Стоило это ровно того, чего и должно было. Прогон #2371 (ee678352)
-    // добавлял в `verify-guard.mjs` пробу гарда benchmark — и job со смоками
-    // была ПРОПУЩЕНА как переиспользованная: правка файла, который исполняется
-    // только в ней, её ключ не меняла. Проба уехала в `dev`, ни разу не
-    // запустившись. Пропущенная проверка выглядит точно как пройденная — и это
-    // тот же дефект, против которого заведён весь #430.
-    //
-    // Benchmark'и берутся все, а не по имени: любой из них может быть подключён
-    // к пробам позже, а платить за лишний прогон дешевле, чем за молчание.
-    // `demo/fixtures/**` в ключ не входит — он в корпусе `sourceFingerprint`,
-    // который уже подмешан в ключ строкой выше.
-    roots: ['demo'],
-    keep: (rel) => /^demo\/smoke_[^/]+\.mjs$/.test(rel)
-      || rel === 'demo/serve.mjs'
-      || /^demo\/guard\//.test(rel)
-      || /^demo\/benchmark_[^/]+\.mjs$/.test(rel),
-  },
-  golden: {
-    // demo/golden/** целиком: и сценарии, и эталоны — эталон тоже вход
-    // сравнения, его подмена обязана менять ключ.
-    roots: ['demo/golden'],
-    keep: () => true,
-  },
-  performance_smoke: {
-    roots: ['demo'],
-    keep: (rel) => /^demo\/performance\//.test(rel)
-      || /^demo\/benchmark_(glow|large_house)\.mjs$/.test(rel),
-  },
-  backend: {
-    // #42: порог покрытия и конфиг линтеров — прямые входы job
-    // (`head -1 baseline` в шаге сравнения; ruff/mypy читают pyproject): их
-    // изменение без правок тестов обязано сбрасывать реюз, иначе baseline-bump
-    // молча пройдёт по старому зелёному маркеру. Пины зависимостей
-    // (tests_backend/requirements.txt, #392) покрыты корнем tests_backend.
-    roots: ['tests_backend', 'custom_components', 'pytest.ini',
-      'scripts/backend-coverage-baseline.txt', 'pyproject.toml'],
-    // Внутри custom_components/** значим только Python: собранный фронтенд
-    // лежит там же и меняется от любой сборки, а backend его не исполняет.
-    keep: (rel) => !rel.startsWith('custom_components/') || rel.endsWith('.py'),
-  },
-};
+export const JOBS = REUSE_JOBS;
 
-export const JOBS = Object.keys(HARNESS);
-
-/** Все файлы под путём (файл — сам путь), относительными путями через «/». */
-const walk = (root, entry) => {
-  const abs = resolve(root, entry);
-  if (!existsSync(abs)) return [];
-  if (!statSync(abs).isDirectory()) return [relative(root, abs).replaceAll('\\', '/')];
-  return readdirSync(abs).sort().flatMap((name) =>
-    walk(root, relative(root, resolve(abs, name)).replaceAll('\\', '/')));
-};
-
-/** Файлы оснастки job в порядке, не зависящем от файловой системы. */
+/** Файлы, от которых зависит результат job, в порядке, не зависящем от ФС. */
 export function harnessFiles(root, job) {
-  const spec = HARNESS[job];
-  if (!spec) throw new Error(`неизвестная job: ${job}. Известны: ${JOBS.join(', ')}`);
-  const seen = new Set();
-  for (const entry of spec.roots) {
-    for (const rel of walk(root, entry)) if (spec.keep(rel)) seen.add(rel);
-  }
-  return [...seen].sort((a, b) => a.localeCompare(b));
+  if (!JOBS.includes(job)) throw new Error(`неизвестная job: ${job}. Известны: ${JOBS.join(', ')}`);
+  return inputsOf(job, root);
 }
 
 /**
- * Ключ переиспользования. Пустая оснастка не молчит: она означала бы, что job
- * зависит только от входов поведения, и такую подмену лучше заметить.
+ * Ключ переиспользования: имя job + содержимое всех её входов. Пустой список
+ * не молчит: он означал бы job без входов, и такую подмену лучше заметить.
  */
 export function reuseKey(root, job) {
   const files = harnessFiles(root, job);
-  if (!files.length) throw new Error(`оснастка job ${job} пуста — проверьте HARNESS`);
+  if (!files.length) throw new Error(`входы job ${job} пусты — проверьте CHECKS в check-inputs.mjs`);
   const hash = createHash('sha256');
   hash.update(`job:${job}\0`);
-  hash.update(`source:${sourceFingerprint(root)}\0`);
   for (const rel of files) {
+    const abs = resolve(root, rel);
+    if (!existsSync(abs)) continue;
     hash.update(rel);
     hash.update('\0');
     // Текст канонизируется по переводам строк, бинарное берётся как есть:
     // иначе Windows и Linux дали бы разные ключи на одном дереве.
-    const raw = readFileSync(resolve(root, rel));
+    const raw = readFileSync(abs);
     const text = raw.includes(0) ? raw : Buffer.from(raw.toString('utf8').replace(/\r\n?/g, '\n'));
     hash.update(text);
     hash.update('\0');

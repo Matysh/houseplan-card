@@ -179,8 +179,13 @@ test('перф-смок добавляет профиль ровно при св
   const changes = workflow.slice(workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'));
   assert.match(changes, /perf_iso: \$\{\{ steps\.classify\.outputs\.perf_iso \}\}/);
   assert.match(changes, /perf_interaction: \$\{\{ steps\.classify\.outputs\.perf_interaction \}\}/);
-  // Выходы пишет скрипт, а не inline-shell: шаблоны проверяются unit-тестом (AC8).
-  assert.match(changes, /printf '%s\\n' "\$files" \| node scripts\/classify-changes\.mjs \| tee -a "\$GITHUB_OUTPUT"/);
+  // Выходы пишет скрипт, а не inline-shell: решение проверяется unit-тестом
+  // (AC8); #492 §5.2 — тот же вывод читается и для summary неизвестных входов.
+  assert.match(changes, /printf '%s\\n' "\$files" \| node scripts\/classify-changes\.mjs > \/tmp\/classify\.out/);
+  assert.match(changes, /tee -a "\$GITHUB_OUTPUT" < \/tmp\/classify\.out/);
+  assert.match(changes, /unknown_inputs: \$\{\{ steps\.classify\.outputs\.unknown_inputs \}\}/);
+  assert.match(changes, /sed -n 's\/\^unknown_inputs=\/\/p' \/tmp\/classify\.out/);
+  assert.match(changes, /Неизвестные входы \(#492\)/);
   // Все три fallback-а «без классификации» идут через тот же скрипт с --all:
   // новый выход не может выпасть из fallback-а.
   const fallbacks = changes.split('node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"').length - 1;
