@@ -534,6 +534,29 @@ jobs:
         # внятной ошибкой — тогда флаг вернуть.
         run: npx playwright install chromium
 
+      # Action ревью ставит Claude Code через `claude install`, и с его
+      # v1.0.218 (Claude Code 2.1.265) лаунчер ~/.local/bin/claude на
+      # ubuntu-latest иногда не появляется, хотя установщик рапортует об успехе;
+      # action верит рапорту и падает на ENOENT (anthropics, issue 1817).
+      # Кладём бинарник сами: версию берём ту, что пинит сам action (он уже
+      # скачан в _actions к началу job), контрольную сумму — из манифеста релиза.
+      - name: Установить Claude Code детерминированно
+        id: claude_bin
+        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
+        run: |
+          src=$(ls "$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-*/v1/src/entrypoints/run.ts 2>/dev/null | head -1)
+          ver=$(grep -oE 'claudeCodeVersion = "[0-9]+\.[0-9]+\.[0-9]+"' "$src" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
+          ver="${ver:-2.1.265}"
+          base=https://downloads.claude.ai/claude-code-releases
+          bin="$HOME/.local/bin/claude"
+          mkdir -p "$(dirname "$bin")"
+          curl -fsSL --retry 3 "$base/$ver/linux-x64/claude" -o "$bin"
+          sum=$(curl -fsSL --retry 3 "$base/$ver/manifest.json" | jq -r '.platforms["linux-x64"].checksum')
+          echo "$sum  $bin" | sha256sum -c -
+          chmod +x "$bin"
+          "$bin" --version
+          echo "path=$bin" >> "$GITHUB_OUTPUT"
+
       - name: Review
         id: review
         if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
@@ -546,6 +569,7 @@ jobs:
           # Подписка, а не отдельный счёт API: токен выпускается через
           # `claude setup-token` (Pro/Max). Действуют лимиты подписки.
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
           prompt: |
             Ты ревьюер проекта House Plan. Язык ответа — русский.
 
