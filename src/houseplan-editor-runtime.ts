@@ -829,7 +829,6 @@ interface DeviceInboxDialogState {
 
 type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
 
-
 export interface HouseplanEditorHostPort {
   _ackNewDevice: (id: string) => void;
   _activeWallChainId: string | null;

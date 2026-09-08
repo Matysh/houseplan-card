@@ -7637,7 +7637,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._limitReached(kind);
   }
 
-
   private _svgPoint(ev: MouseEvent): number[] {
     return this._editorRuntimeOrThrow()._svgPoint(ev);
   }
