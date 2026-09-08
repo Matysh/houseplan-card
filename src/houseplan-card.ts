@@ -894,7 +894,7 @@ export class HouseplanCard extends LitElement {
     this._setMode(mode, animate);
   }
   public hass?: any;
-  public panelHost = false;
+  public panelHost = false; public narrow: boolean | null = null;
   private _config?: CardConfig;
 
   private _space = 'f1';
@@ -2139,7 +2139,7 @@ export class HouseplanCard extends LitElement {
   /** #423: support protocol capability from config/get; never persisted. */
   private _haSupportApi: number | null = null;
   /** #51: custom-image protocol capability from config/get; fail closed. */
-  private _haDecorAssetsApi: number | null = null;
+  private _haDecorAssetsApi: number | null = null; private _haSummaryPanelApi: number | null = null;
   private _decorAssetSyncToken = 0;
   private _alignDialog: {
     report: OptimizeReport; config: any; layout: Record<string, any>;
@@ -2289,8 +2289,8 @@ export class HouseplanCard extends LitElement {
   private _viewPreference: Record<string, 'flat' | 'iso'> = {};
   private _renderProjection: 'flat' | 'iso' = 'flat';
   // ---- kiosk (wall device) mode ----
-  private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 };
-  private _kioskDialog = false;
+  private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 }; private _kioskDialog = false;
+  private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime;
   /**
    * Previous entity states + the short event/terminal-transition window for
    * every marker. The map lives outside Lit state: hass ticks update it, one
@@ -2344,7 +2344,7 @@ export class HouseplanCard extends LitElement {
 
   private _pageVisibility = (signal: PageVisibilitySignal): void => {
     this._continuity.visibility(signal);
-    this._dayCycleVisibility(signal);
+    this._dayCycleVisibility(signal); this._summary?.visibility(signal.kind);
     if (signal.kind === 'hidden') {
       this._clearRoomFocus(true);
       this._clearTransientHover(true);
@@ -2517,6 +2517,7 @@ export class HouseplanCard extends LitElement {
     _dangerConfirm: { state: true },
     hass: { attribute: false },
     panelHost: { type: Boolean, attribute: 'panel-host', reflect: true },
+    narrow: { attribute: false },
     _config: { state: true },
     _space: { state: true },
     _layout: { state: true },
@@ -2617,6 +2618,7 @@ export class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.locale_load_failed'));
     }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed')))); // #474
     super.connectedCallback();
+    if (this._summary) this._summary.connect(); else void import('./summary-panel-runtime-loaded').then(({ LoadedSummaryPanelRuntime }) => { this._summary ||= new LoadedSummaryPanelRuntime(this); if (this.isConnected) this._summary.connect(); this.requestUpdate(); }).catch(() => undefined);
     void this._ensureLiveRuntime().catch(() => this.requestUpdate());
     this._pointerModality.connect(this.ownerDocument.defaultView);
     const PointerHoverObserver = this.ownerDocument.defaultView?.MutationObserver;
@@ -2709,7 +2711,7 @@ export class HouseplanCard extends LitElement {
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
     this._warmModeRequest = 0;
-    if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
+    if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._summary?.disconnect();
     this._dayCycleClockKey = '';
     if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
     this._bootSettling = false;
@@ -2857,6 +2859,7 @@ export class HouseplanCard extends LitElement {
       if (this._pdfDialog) { this._pdfDialog = false; return; }
       if (this._supportDialog) { void this._editorRuntime?._closeSupportDialog(); return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
+      if (this._summary?.closeDialogIfIdle()) return;
       if (this._markerDialog) { this._closeMarkerDialog(); return; }
       if (this._deviceInbox) { this._deviceInbox = null; return; }
       if (this._openingDialog) { this._openingDialog = null; return; }
@@ -4111,7 +4114,7 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(): void {
-    this._liveRt?.commit();
+    this._summary?.updated(); this._liveRt?.commit();
     this._editorRuntime?._commitLiveEditor();
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
@@ -4120,7 +4123,7 @@ export class HouseplanCard extends LitElement {
     if (this._editorRuntime) this._dtMeasure();
     const stage = this._stageEl;
     if (stage && !this._roViewport) {
-      this._roViewport = new ResizeObserver(() => this._refitView());
+      this._roViewport = new ResizeObserver(() => { this._refitView(); requestAnimationFrame(() => this._summary?.resized()); });
       this._roViewport.observe(stage);
     }
     if (stage && this._booting && !this._bootTimer) this._bootWatch();
@@ -6203,8 +6206,8 @@ export class HouseplanCard extends LitElement {
       wallSilhouettes: structural.wallSilhouettes,
       resolveCollisions,
       iconPct, deviceBasePct, showLqi, cellCm: this._cellCm,
-      kioskIconScale: this._kiosk ? this._kioskScale.icon : 1,
-      kioskFontScale: this._kiosk ? this._kioskScale.font : 1,
+      kioskIconScale: this._mode === 'view' ? this._kioskScale.icon : 1,
+      kioskFontScale: this._mode === 'view' ? this._kioskScale.font : 1,
       stageSize: this._stageEl?.getBoundingClientRect?.(),
       selectedDeviceId: this._selId,
       focusedRoomId: this._roomFocus?.roomId,
@@ -9029,7 +9032,7 @@ export class HouseplanCard extends LitElement {
       || this._decorTextDialog || this._decorShapeDialog || this._backdropDialog
       || this._decorEraseConfirm || this._spaceDialog || this._markerDialog || this._deviceInbox
       || this._infoCard || this._rulesDialog || this._settingsDialog || this._supportDialog
-      || this._alignDialog || this._importDialog || this._kioskDialog
+      || this._alignDialog || this._importDialog || this._kioskDialog || this._summary?.blocksOtherDialogs()
       || this._backupExportDialog || this._backupImportDialog
       || this._wallDialog);
   }
@@ -11157,15 +11160,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._renderRulesDialog();
   }
 
-  private _saveKioskScale(patch: Partial<{ icon: number; font: number }>): void {
-    this._kioskScale = { ...this._kioskScale, ...patch };
-    try {
-      localStorage.setItem(LS_KIOSK, JSON.stringify(this._kioskScale));
-    } catch {
-      /* ignore */
-    }
-    this.requestUpdate();
-  }
+  private _saveKioskScale(patch: Partial<{ icon: number; font: number }>): void { this._summary?.saveScale(patch); }
 
   /** Per-SCREEN size settings (wall tablets differ) — stored locally. */
   private _renderKioskDialog(): TemplateResult {
@@ -11480,6 +11475,7 @@ export class HouseplanCard extends LitElement {
                 <ha-icon icon=${iso ? 'mdi:view-grid-outline' : 'mdi:cube-outline'}></ha-icon>
               </button>`
             : nothing}
+          ${!this._kiosk ? this._summary?.renderControls(false) : nothing}
           <div class="zoomctl">
             <button class="btn zb" @click=${() => this._stepZoom(-1)} title=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
             ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
@@ -11809,7 +11805,7 @@ export class HouseplanCard extends LitElement {
                  space-card, so the two renderers agree. The compatibility
                  base is resolved before `iconCqw`; only the per-device and
                  kiosk multipliers still feed --dev-size. */}
-          <div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
+          <div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._kioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._mode === 'view' ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(
               d, view, showLqi, isoOverlays?.devices.get(d.id),
             ))}
@@ -11834,6 +11830,9 @@ export class HouseplanCard extends LitElement {
           ${this._renderHomeArrow(this._baseVb(projection, isoScene))}
           ${this._renderEditorRuntimeLoading()}
           ${this._renderRecoveryOverlay()}
+          ${this._summary?.renderMeasure()}
+          ${this._kiosk ? this._summary?.renderControls(true) : nothing}
+          ${this._summary?.renderPanel()}
           ${this._booting || this._bootFading
             ? html`<div class="bootveil ${this._booting ? '' : 'off'}" aria-hidden="true">
                 <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
@@ -11897,6 +11896,7 @@ export class HouseplanCard extends LitElement {
             </div>`
           : nothing}
         ${this._kioskDialog ? this._renderKioskDialog() : nothing}
+        ${this._summary?.dialogOpen ? this._summary.renderDialog() : nothing}
         ${this._vacFit ? html`<div class="vaccalbar" aria-busy=${String(!!this._vacFit.busy)}>
           <span>${this._t('vac.fit_hint')}</span>
           <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- A configurable read-only summary panel can now show Home Assistant entity
+  states, the number of represented devices, total clean room area, and the
+  current date and time over the plan. Administrators define shared blocks and
+  scopes; each user can show or hide the panel and adjust View icon/text sizes
+  independently on each card. The panel moves between the right and bottom
+  edges, respects Home Assistant mobile mode, and hides when the card is too
+  small ([#437](https://github.com/Matysh/houseplan-card/issues/437)).
+
 ## v1.73.0-beta.6 — 2026-09-08
 
 - The House Plan sidebar page now shows the plan on the first open in a real

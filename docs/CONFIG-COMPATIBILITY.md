@@ -77,6 +77,24 @@ new frontend restores the disabled behavior after upgrade. Full backup/import
 preserves the setting and the privacy-safe support projection includes only a
 validated boolean.
 
+## Summary panel namespace (#437)
+
+`settings.summary_panel` is an optional shared versioned object. Absence means
+that the frontend derives one localized default block without writing the
+server; an explicit `blocks: []` remains intentionally empty. Version 1 bounds
+the panel to 10 blocks and 20 values per block, uses stable block/value ids,
+and accepts only entity state sources or the three built-in read-only values.
+New entity and space references are checked at `config/set`; an unchanged old
+broken reference remains editable and is shown as a warning.
+
+An old ordinary client that omits an existing namespace cannot erase it. A
+bounded future version is preserved losslessly but stays inert in an older
+frontend. Full backup/restore remains authoritative. Per-user/per-card show and
+View scale preferences, HA states, registry snapshots, computed totals and
+clock values are browser runtime data and never enter server config, exports or
+support packages. `config/get.summary_panel_api === 1` is a runtime capability,
+not persisted user configuration and not a store/model version bump.
+
 ## Contextual Zigbee topology (#54)
 
 `settings.zigbee_topology` is an optional global object. Only exact

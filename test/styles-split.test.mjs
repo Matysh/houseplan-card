@@ -66,10 +66,10 @@ test('issue 266 the media wrappers survived the move', () => {
   const all = FILES.map((name) => sourceOf(name)).join('\n');
   assert.equal((all.match(/@media \(forced-colors: active\)/g) || []).length, 2,
     'both forced-colors blocks must survive — golden never emulates them');
-  // 10 source wrappers; two of them were MIXED-zone and are split into
-  // per-zone copies by the generator (cascade fix), hence 12 wrappers over
-  // the same 10 wrappers' worth of rules — the scope-keyed refactor diff
-  // proves no rule lost its wrapper.
+  // 10 historical source wrappers; two were MIXED-zone and split into
+  // per-zone copies by the generator. #437's overlay stylesheet is loaded
+  // with its lazy runtime and has its own source contract, so the five eager
+  // surface owners remain at the historical 12 wrappers.
   assert.equal((all.match(/@media \(prefers-reduced-motion: reduce\)/g) || []).length, 12,
     'reduced-motion wrappers must survive — golden always shoots reduced');
 });

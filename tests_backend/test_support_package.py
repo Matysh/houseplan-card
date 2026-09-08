@@ -33,7 +33,8 @@ def _source() -> tuple[dict, dict, list[str]]:
         "area.private", "device-secret", "sensor.secret_temperature",
         "https://private.example/plan.png", "C:\\Users\\Private\\floor.png",
         "person@example.test", "<b>private note</b>", "unknown-private-value",
-        "value-badge-private-sentinel",
+        "value-badge-private-sentinel", "Private summary title",
+        "Private summary block", "Private summary row", "sensor.private_summary",
     ]
     config = {
         "model_version": 9,
@@ -42,6 +43,19 @@ def _source() -> tuple[dict, dict, list[str]]:
             "bg_mode": "daynight",
             "known_devices": ["device-secret"],
             "unknown_nested": "unknown-private-value",
+            "summary_panel": {
+                "version": 1,
+                "title": "Private summary title",
+                "show_on_mobile": True,
+                "blocks": [{
+                    "id": "summary-private", "title": "Private summary block",
+                    "visible": True, "scope": {"type": "all"},
+                    "values": [{
+                        "id": "summary-value-private", "label": "Private summary row",
+                        "source": {"type": "entity", "entity_id": "sensor.private_summary"},
+                    }],
+                }],
+            },
         },
         "spaces": [{
             "id": "sentinel-space-id",
@@ -158,6 +172,7 @@ def test_geometry_and_references_survive_with_package_local_pseudonyms():
         "lifecycle": {"active": 1},
         "binding": {"device": 1},
     }
+    assert "summary_panel" not in package["plan_backup"]["config"]["settings"]
 
 
 def test_each_preview_uses_a_new_namespace_and_cannot_be_correlated():

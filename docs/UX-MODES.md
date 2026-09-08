@@ -91,6 +91,17 @@ The global `settings.show_room_tooltip` preference controls only the floating
 room information window. Missing or invalid values mean enabled; exact `false`
 hides the window while room highlight and every device tooltip remain active.
 
+The #437 summary is a screen-space View overlay, not another mode and not part
+of the plan camera. Its header control separates settings from the local
+show/hide choice. Shared block contents are available only to an authorised
+non-kiosk editor; read-only and kiosk users see the same dialog shell with
+local show and View-size controls only. In a landscape/square House Plan stage
+the panel is on the right; in a portrait stage it is centred at the bottom.
+Native HA `narrow` controls the independent mobile permission. Insufficient
+measured stage space temporarily hides the overlay without changing the saved
+local choice. All summary surfaces disappear in Plan, Devices and Background;
+`houseplan-space-card` never renders them.
+
 The admin-only **General settings → Show Zigbee links on device hover** option
 is off by default. Once an admin explicitly reads cached ZHA data or updates a
 configured Zigbee2MQTT map, mouse hover temporarily draws only the observed
@@ -109,7 +120,7 @@ Removed from this mode (they move, not die):
 - every edit button in the header (+device, 👁 show-all, ↺ reset, ⬡ rules, ⚙ general,
   per-space gear, markup toggle).
 
-Header in View: space tabs, device count, zoom cluster. Nothing else.
+Header in View: space tabs, device count, summary control and zoom cluster.
 
 ## Plan — geometry and appearance of the space
 

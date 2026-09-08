@@ -23,6 +23,7 @@ export interface HpConfigSnapshot {
   rev: number;
   /** Runtime-only: absent until a fresh config/get advertises exact v1. */
   decorAssetsApi: number | null;
+  summaryPanelApi: number | null;
   configFingerprint: string;
   layout: Record<string, any>;
   layoutRev: number;
@@ -53,6 +54,7 @@ export function cachedSnapshot(): HpConfigSnapshot | null {
         config: c.config,
         rev: c.rev || 0,
         decorAssetsApi: null,
+        summaryPanelApi: null,
         configFingerprint: c.config_fingerprint || contentFingerprint(c.config),
         layout,
         layoutRev: c.layout_rev || 0,
@@ -84,6 +86,7 @@ async function fetchFresh(hass: any, generation: number): Promise<HpConfigSnapsh
     config: cfgResp?.config ?? null,
     rev: configRev,
     decorAssetsApi: cfgResp?.decor_assets_api === 1 ? 1 : null,
+    summaryPanelApi: cfgResp?.summary_panel_api === 1 ? 1 : null,
     configFingerprint: contentFingerprint(cfgResp?.config ?? null),
     layout: layResp?.layout ?? {},
     layoutRev: layResp?.rev ?? 0,

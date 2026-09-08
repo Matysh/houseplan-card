@@ -1883,6 +1883,35 @@ not the feeling that "editor text should be lazy".
   the frontend renders unknown codes localized (code-first, raw messages go
   to the console).
 
+## Summary panel boundary (#437)
+
+`settings.summary_panel` is the only shared persistence for the read-only
+summary overlay. The backend validates its bounded version-1 shape, preserves
+omission from older ordinary writers, and performs change-aware checks for new
+space/entity references under the calling user's read permissions. The
+`summary_panel_api` value returned by `config/get` gates shared editing; cached
+configuration cannot manufacture that capability. Unknown future versions are
+stored but never executed or rendered by an older frontend.
+
+`summary-panel.ts` owns deterministic defaults, stable-id validation, native
+narrow/fit predicates, local-key encoding and the two cached aggregate
+resolvers. `summary-panel-runtime.ts` is the small eager View controller: it
+measures the actual `.stage`, renders a screen-space sibling of the camera
+layer, owns at most one boundary-aligned minute timer, and keeps browser-local
+show/icon/text preferences separate by HA user, route, host and logical card
+slot. `summary-panel-editor.ts` is dynamically imported only after the settings
+button is pressed. It edits one draft; a successful revision-checked shared
+write precedes application of the draft local show choice.
+
+The overlay is not SVG, does not enter camera/content bounds, and performs no
+HA actions. Device totals require an authoritative per-connection registry
+snapshot and deduplicate real parent device ids before visual filters. Clean
+area unions canonical room floors (including holes) per space and converts
+each space with its own `cell_cm`; its cache is independent from the registry
+cache. Entity values remain in the current user's `hass.states` and use the
+existing HA formatting boundary. Editors and `houseplan-space-card` never load
+or render the panel.
+
 ## Private support boundary (#43)
 
 The Help & feedback surface is rendered by the lazy editor runtime even when

@@ -256,7 +256,39 @@ export interface ServerConfig {
     show_room_tooltip?: boolean;
     /** Opt-in, admin-only contextual Zigbee diagnostics (#54). */
     zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] };
+    /** Read-only grouped values shown over the plan (#437). */
+    summary_panel?: SummaryPanelConfig;
   };
+}
+
+export type SummaryPanelSystemKey = 'device_count' | 'total_area' | 'datetime';
+export type SummaryPanelSource =
+  | ({ type: 'entity'; entity_id: string } & Record<string, unknown>)
+  | ({ type: 'system'; key: SummaryPanelSystemKey } & Record<string, unknown>);
+
+export type SummaryPanelScope =
+  | ({ type: 'all' } & Record<string, unknown>)
+  | ({ type: 'space'; space_id: string } & Record<string, unknown>);
+
+export interface SummaryPanelValue extends Record<string, unknown> {
+  id: string;
+  label: string;
+  source: SummaryPanelSource;
+}
+
+export interface SummaryPanelBlock extends Record<string, unknown> {
+  id: string;
+  title: string;
+  visible: boolean;
+  scope: SummaryPanelScope;
+  values: SummaryPanelValue[];
+}
+
+export interface SummaryPanelConfig extends Record<string, unknown> {
+  version: 1;
+  title: string;
+  show_on_mobile: boolean;
+  blocks: SummaryPanelBlock[];
 }
 
 export type MarkerAreaBinding = `device:${string}` | `entity:${string}`;

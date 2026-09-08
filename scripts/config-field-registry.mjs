@@ -8,6 +8,21 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'settings.summary_panel',
+    enforcedBy: 'summary-panel.ts + validation.py change-aware reference validation; #437',
+    selector: { path: ['settings', 'summary_panel'] },
+    storage: 'House Plan server config',
+    type: '{ version: 1, title, show_on_mobile, blocks[] } | bounded future object',
+    default: 'unset (= localized read-only defaults; no server write)',
+    level: 'global shared presentation',
+    ui: 'View → Summary panel settings',
+    runtime: 'read-only screen-space overlay; HA entity values remain runtime-only',
+    introduced: '#437 / v1.73.0',
+    status: 'current',
+    migration: 'none — omission derives defaults; explicit empty blocks remain empty',
+    compatibility: 'older ordinary config/set preserves the namespace; future versions stay opaque and inert',
+  },
+  {
     id: 'card.tap_action',
     schema: 'lovelace-card', // #33: Lovelace card option — not in the backend manifest by design
     selector: { path: ['tap_action'] },

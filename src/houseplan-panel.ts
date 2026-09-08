@@ -3,6 +3,7 @@ import './houseplan-card';
 interface HouseplanCardElement extends HTMLElement {
   hass?: unknown;
   panelHost: boolean;
+  narrow: boolean | null;
   setConfig(config: { type: 'custom:houseplan-card' }): void;
 }
 
@@ -60,6 +61,7 @@ export class HouseplanPanel extends HTMLElement {
   public set narrow(value: boolean) {
     this._narrow = Boolean(value);
     this.toggleAttribute('narrow', this._narrow);
+    if (this._card) this._card.narrow = this._narrow;
   }
 
   public get route(): unknown { return this._route; }
@@ -200,6 +202,7 @@ export class HouseplanPanel extends HTMLElement {
     content.className = 'content';
     const card = document.createElement('houseplan-card') as HouseplanCardElement;
     card.panelHost = true;
+    card.narrow = this._narrow;
     card.setConfig({ type: 'custom:houseplan-card' });
     if (this._hass !== undefined) card.hass = this._hass;
     content.append(card);

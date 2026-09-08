@@ -244,6 +244,33 @@ View is the state with no editor open. Close the active editor to return to it.
 | Kiosk | Actionable as in View | Read-only | Read-only; no editors |
 | Static card | Not live or interactive | Render only | Render only |
 
+### Summary panel
+
+The two-part control in View opens **Summary panel settings** with its gear and
+shows or hides the panel with its second button. The panel is off on a new
+screen until you explicitly show it. Its contents are shared for the whole
+House Plan installation; the show/hide choice and the two View size sliders
+belong only to your Home Assistant user and this particular card or sidebar
+panel. A read-only user and kiosk can change those local choices without being
+allowed to edit the shared contents.
+
+An administrator can name the panel, add up to ten ordered blocks, show a block
+on every space or one selected space, and add up to twenty values to a block.
+A value can be the state of any entity available to that user, the number of
+real HA devices represented on valid plans, the total clean room area across
+all spaces, or the current date and time. Entity values use Home Assistant's
+own formatting and units. Rows are informational only: pressing them never
+opens more-info or calls a service.
+
+The panel floats over the plan without resizing it. It appears on the right
+when the House Plan working area is at least as wide as it is tall and at the
+bottom otherwise. It temporarily hides when the card cannot fit a readable
+panel, and restores itself after the card grows. Turning off **Display on
+mobile devices** also hides it whenever Home Assistant reports a narrow view;
+the show/hide button remains pressed because the local choice was not erased.
+The panel and its controls are absent from all three editors and from the
+static space card.
+
 The room highlight remains available in View and kiosk. To keep that highlight
 but hide the floating room summary, turn off **General settings → Show the room
 information window on hover**. The option is on by default and does not affect

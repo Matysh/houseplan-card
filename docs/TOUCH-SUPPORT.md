@@ -45,6 +45,13 @@ On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
   remount;
 - preserve kiosk gestures and prevent accidental editor interactions.
 
+The summary panel and both halves of its control are supported View surfaces:
+each control has a 44 × 44 px or larger target, panel scrolling owns its touch
+gesture instead of zooming the plan, and the settings dialog retains reachable
+content and actions on a narrow viewport. The panel may hide because its
+measured House Plan stage is too small; this is responsive safety, not loss of
+the user's per-card show preference.
+
 A touch-only failure in View is a product defect, not an accepted limitation of
 the editor policy.
 

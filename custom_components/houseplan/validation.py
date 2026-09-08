@@ -1992,6 +1992,141 @@ def _config_wall_segment_invariants(value: dict) -> dict:
     return value
 
 
+# #437: the summary is shared configuration, so its wire shape is validated by
+# the integration rather than trusted to whichever browser happened to save it.
+def _summary_text(max_length: int):
+    """Trim user text and reject whitespace-only/raw oversized WS values."""
+    def validate(value: object) -> str:
+        if not isinstance(value, str):
+            raise vol.Invalid("summary text must be a string")
+        text = value.strip()
+        if not text or len(text) > max_length:
+            raise vol.Invalid("summary text length is invalid")
+        return text
+    return validate
+
+
+_SUMMARY_ID = _summary_text(64)
+_SUMMARY_TITLE = _summary_text(48)
+_SUMMARY_LABEL = _summary_text(64)
+_SUMMARY_SCOPE = vol.Any(
+    vol.Schema({vol.Required("type"): vol.Equal("all")}, extra=vol.ALLOW_EXTRA),
+    vol.Schema({
+        vol.Required("type"): vol.Equal("space"),
+        vol.Required("space_id"): _SUMMARY_ID,
+    }, extra=vol.ALLOW_EXTRA),
+)
+_SUMMARY_SOURCE = vol.Any(
+    vol.Schema({
+        vol.Required("type"): vol.Equal("system"),
+        vol.Required("key"): vol.In(["device_count", "total_area", "datetime"]),
+    }, extra=vol.ALLOW_EXTRA),
+    vol.Schema({
+        vol.Required("type"): vol.Equal("entity"),
+        vol.Required("entity_id"): _summary_text(500),
+    }, extra=vol.ALLOW_EXTRA),
+)
+_SUMMARY_VALUE_SCHEMA = vol.Schema({
+    vol.Required("id"): _SUMMARY_ID,
+    vol.Required("label"): _SUMMARY_LABEL,
+    vol.Required("source"): _SUMMARY_SOURCE,
+}, extra=vol.ALLOW_EXTRA)
+_SUMMARY_BLOCK_SCHEMA = vol.Schema({
+    vol.Required("id"): _SUMMARY_ID,
+    vol.Required("title"): _SUMMARY_TITLE,
+    vol.Required("visible"): bool,
+    vol.Required("scope"): _SUMMARY_SCOPE,
+    vol.Required("values"): vol.All([_SUMMARY_VALUE_SCHEMA], vol.Length(max=20)),
+}, extra=vol.ALLOW_EXTRA)
+
+
+def _summary_panel_invariants(value: dict) -> dict:
+    """Stable block/value ids are the reference identity used by the editor."""
+    block_ids: set[str] = set()
+    value_ids: set[str] = set()
+    for block in value.get("blocks", []):
+        block_id = block["id"]
+        if block_id in block_ids:
+            raise vol.Invalid("summary block ids must be unique")
+        block_ids.add(block_id)
+        for item in block.get("values", []):
+            value_id = item["id"]
+            if value_id in value_ids:
+                raise vol.Invalid("summary value ids must be unique")
+            value_ids.add(value_id)
+    return value
+
+
+SUMMARY_PANEL_SCHEMA = vol.All(vol.Schema({
+    vol.Required("version"): vol.Equal(1),
+    vol.Required("title"): _SUMMARY_TITLE,
+    vol.Required("show_on_mobile"): bool,
+    vol.Required("blocks"): vol.All([_SUMMARY_BLOCK_SCHEMA], vol.Length(max=10)),
+}, extra=vol.ALLOW_EXTRA), _summary_panel_invariants)
+
+
+def _future_summary_panel(value: object) -> dict:
+    """Keep a newer opaque namespace losslessly, with a bounded data envelope."""
+    if not isinstance(value, dict):
+        raise vol.Invalid("summary panel must be an object")
+    version = value.get("version")
+    if not isinstance(version, int) or isinstance(version, bool) or version <= 1:
+        raise vol.Invalid("unsupported summary panel version")
+    if len(json.dumps(value, separators=(",", ":"), ensure_ascii=False)) > 128 * 1024:
+        raise vol.Invalid("summary panel is too large")
+    return value
+
+
+SUMMARY_PANEL_WIRE_SCHEMA = vol.Any(SUMMARY_PANEL_SCHEMA, _future_summary_panel)
+
+
+def preserve_summary_panel_namespace(config: dict, previous: dict | None) -> None:
+    """A stale client that does not know #437 cannot erase the shared panel."""
+    old_settings = (previous or {}).get("settings")
+    new_settings = config.get("settings")
+    if not isinstance(old_settings, dict) or "summary_panel" not in old_settings:
+        return
+    if not isinstance(new_settings, dict):
+        new_settings = {}
+        config["settings"] = new_settings
+    if "summary_panel" not in new_settings:
+        new_settings["summary_panel"] = copy.deepcopy(old_settings["summary_panel"])
+
+
+def validate_summary_panel_references(
+    config: dict, previous: dict | None, readable_entity_ids: set[str]
+) -> None:
+    """Only newly introduced broken refs fail; stable-id legacy refs warn in UI."""
+    panel = (config.get("settings") or {}).get("summary_panel")
+    if not isinstance(panel, dict) or panel.get("version") != 1:
+        return
+    old_panel = ((previous or {}).get("settings") or {}).get("summary_panel")
+    old_blocks = {
+        block.get("id"): block for block in (old_panel or {}).get("blocks", [])
+        if isinstance(block, dict) and block.get("id")
+    } if isinstance(old_panel, dict) and old_panel.get("version") == 1 else {}
+    old_values = {
+        item.get("id"): item
+        for block in old_blocks.values()
+        for item in block.get("values", [])
+        if isinstance(item, dict) and item.get("id")
+    }
+    spaces = {space.get("id") for space in config.get("spaces", []) if isinstance(space, dict)}
+    for block in panel.get("blocks", []):
+        scope = block.get("scope") or {}
+        if scope.get("type") == "space" and scope.get("space_id") not in spaces:
+            old_scope = (old_blocks.get(block.get("id"), {}).get("scope") or {})
+            if old_scope.get("type") != "space" or old_scope.get("space_id") != scope.get("space_id"):
+                raise vol.Invalid("new summary space reference must exist")
+        for item in block.get("values", []):
+            source = item.get("source") or {}
+            entity_id = source.get("entity_id") if source.get("type") == "entity" else None
+            if entity_id and entity_id not in readable_entity_ids:
+                old_source = (old_values.get(item.get("id"), {}).get("source") or {})
+                if old_source.get("type") != "entity" or old_source.get("entity_id") != entity_id:
+                    raise vol.Invalid("new summary entity reference must be readable")
+
+
 CONFIG_SCHEMA = vol.All(
     vol.Schema(
         {
@@ -2022,6 +2157,7 @@ CONFIG_SCHEMA = vol.All(
                     vol.Optional("bg_mode"): _BG_MODE,
                     vol.Optional("sun_rays"): bool,
                     vol.Optional("show_room_tooltip"): bool,
+                    vol.Optional("summary_panel"): SUMMARY_PANEL_WIRE_SCHEMA,
                     # Removed from the UI/runtime in 2026-08-08. Keep accepting the
                     # legacy field so an existing stored config can still load; the
                     # frontend ignores it and removes it on the next settings save.

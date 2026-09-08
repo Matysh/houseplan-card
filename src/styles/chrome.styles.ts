@@ -1,7 +1,7 @@
 /** Editor chrome: toolbars, tabs, menus and hints (#266, split from styles.ts). */
-import { css } from 'lit';
+import { css, type CSSResultGroup } from 'lit';
 
-export const chromeStyles = css`
+const chromeCoreStyles = css`
     .hdr {
       position: sticky;
       top: var(--header-height, 56px);
@@ -389,3 +389,6 @@ export const chromeStyles = css`
       display: block;
     }
 `;
+
+/** #437 summary CSS lives with its lazy runtime in summary-panel-style.ts. */
+export const chromeStyles: CSSResultGroup = chromeCoreStyles;

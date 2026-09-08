@@ -44,6 +44,7 @@ from .const import (
     PLANS_URL,
     SUPPORT_API_VERSION,
     SUPPORT_PREVIEW_TTL_S,
+    SUMMARY_PANEL_API_VERSION,
     VERSION,
 )
 from .coordinate_canonicalization import (
@@ -109,6 +110,7 @@ from .validation import (
     PartitionOpeningHostError,
     PartitionOpeningJambMarginError,
     WallModelClientOutdatedError,
+    preserve_summary_panel_namespace,
     sanitize_filename,
     valid_space_id,
     validate_marker_controls,
@@ -117,6 +119,7 @@ from .validation import (
     validate_marker_value_badges,
     validate_opening_passages,
     validate_partition_opening_hosts,
+    validate_summary_panel_references,
     validate_wall_model_transition,
 )
 from .virtual_lights import (
@@ -1394,6 +1397,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             # #423: protocol capability is independent from release skew.
             "support_api": SUPPORT_API_VERSION,
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
+            "summary_panel_api": SUMMARY_PANEL_API_VERSION,
         },
     )
 
@@ -1570,12 +1574,25 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # cached by rev, so a repeated write does not re-judge `previous`.
         baseline = rt.junction_baseline
         baseline_counts = baseline[1] if baseline and baseline[0] == current_rev else None
+        user = getattr(connection, "user", None)
+        readable_entity_ids: set[str] = set()
+        for state in hass.states.async_all():
+            try:
+                if user and (getattr(user, "is_admin", False)
+                             or user.permissions.check_entity(state.entity_id, "read")):
+                    readable_entity_ids.add(state.entity_id)
+            except Exception:  # noqa: BLE001 - a denied/unknown permission is unreadable
+                continue
 
         def _validate_config_cpu():
+            preserve_summary_panel_namespace(msg["config"], data.get("config"))
             validate_wall_model_transition(msg["config"], data.get("config"))
             checked = CONFIG_SCHEMA(msg["config"])
             msg["config"].clear()
             msg["config"].update(checked)
+            validate_summary_panel_references(
+                msg["config"], data.get("config"), readable_entity_ids
+            )
             validate_marker_controls(msg["config"], data.get("config"))
             validate_marker_light_entities(msg["config"], data.get("config"))
             validate_marker_value_badges(msg["config"], data.get("config"))

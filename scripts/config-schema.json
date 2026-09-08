@@ -420,6 +420,19 @@
       "required": false,
       "type": "bool"
     },
+    "config.settings.summary_panel": {
+      "required": false,
+      "variants": [
+        {
+          "allowExtra": true,
+          "object": true,
+          "opaque": "<function _summary_panel_invariants>"
+        },
+        {
+          "opaque": "<function _future_summary_panel>"
+        }
+      ]
+    },
     "config.settings.sun_rays": {
       "required": false,
       "type": "bool"
