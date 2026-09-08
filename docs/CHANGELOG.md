@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.73.0-beta.5 — 2026-09-08
+
 - House Plan now opens directly from its own Home Assistant sidebar page, with
   the same spaces, live controls and editors as the full dashboard card. The
   optional dashboard card remains available and now defaults to full width in
