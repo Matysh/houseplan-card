@@ -1,11 +1,11 @@
 // Классификация изменённых файлов для job `changes` в validate.yml (#473 AC8).
 //
-// Шаблоны жили inline в shell-шаге `classify` как `has('regex')`. Пока выходов
-// было три, это терпимо; с диффозависимыми профилями перф-смока (#473) их
-// пять, и вопрос «запустит ли правка src/iso-x.ts изометрический профиль»
-// стал вопросом к workflow, на который нельзя ответить тестом — shell в YAML
-// не исполняется локально. Теперь ответ даёт функция, а shell только
-// переписывает её вывод в `$GITHUB_OUTPUT`.
+// Шаблоны жили inline в shell-шаге `classify` как `has('regex')`, потом —
+// регэкспами здесь (#473). С #492 выбор job идёт из единого manifest входов
+// (scripts/check-inputs.mjs): того же, из которого считается ключ реюза.
+// Регэкспы остались только у профилей перф-смока — это выбор набора внутри
+// job, не самой job. Shell по-прежнему только переписывает вывод функции в
+// `$GITHUB_OUTPUT`.
 //
 // Контракт неизменен: каждый выход — строка 'true'/'false', как её и читают
 // условия `if: needs.changes.outputs.X == 'true'`. Fallback «полный прогон
@@ -16,36 +16,63 @@
 
 import { readFileSync } from 'node:fs';
 
-export const CLASSIFIERS = {
-  frontend: /^(src\/|demo\/|test\/|dist\/|custom_components\/houseplan\/frontend\/|package(-lock)?\.json$|rollup\.config\.mjs$|tsconfig)/,
-  backend: /^(custom_components\/.*\.py$|tests_backend\/|scripts\/support-relay\/|pytest\.ini$)/,
-  integration: /^(custom_components\/houseplan\/manifest\.json$|hacs\.json$|custom_components\/.*\.py$|custom_components\/.*\/translations\/)/,
-  // Перф-смок (#473 §5): изометрический профиль — при правке изометрии,
-  // профиль взаимодействия — при правке живого пути и оркестраторов кадра.
-  // Только `src/**`: тесты и демо кадр не замедляют.
-  perf_iso: /^src\/iso-[^/]+\.ts$/,
-  perf_interaction: /^src\/(live-[^/]+|render-[^/]+|houseplan-render-lifecycle|houseplan-card)\.ts$/,
-  // Реестр мутантов сам по себе — вход гейта по диффу (#475 ревью r1): новый
-  // свидетель без правки в src/test иначе не проверялся бы до понедельника.
-  mutants: /^scripts\/mutation-gate\.mjs$/,
+import { checksAffectedBy } from './check-inputs.mjs';
+
+/**
+ * Выходы job `changes` → проверка manifest (#492 §5.2). Job запускается, если
+ * дифф задел хотя бы один её вход по `scripts/check-inputs.mjs`; прежние
+ * регэкспы по путям заменены тем же источником, из которого считается ключ
+ * реюза, — два места больше не расходятся.
+ */
+export const CHECK_OF_OUTPUT = {
+  frontend: 'frontend',
+  backend: 'backend',
+  integration: 'integration',
+  mutants: 'changed_mutants',
 };
 
-export const OUTPUTS = Object.keys(CLASSIFIERS);
+/**
+ * Профили перф-смока (#473 §5): изометрический — при правке изометрии,
+ * профиль взаимодействия — при правке живого пути и оркестраторов кадра.
+ * Только `src/**`: тесты и демо кадр не замедляют. Это НЕ выбор job, а выбор
+ * набора внутри неё, поэтому остаётся фильтром по путям.
+ */
+export const PERF_PROFILES = {
+  perf_iso: /^src\/iso-[^/]+\.ts$/,
+  perf_interaction: /^src\/(live-[^/]+|render-[^/]+|houseplan-render-lifecycle|houseplan-card)\.ts$/,
+};
 
-/** Список файлов → выходы job `changes` ('true'/'false' по каждому ключу). */
-export function classifyChanges(files) {
+/** Совместимость с прежним экспортом: имя выхода → предикат по файлу. */
+export const CLASSIFIERS = {
+  ...Object.fromEntries(Object.keys(CHECK_OF_OUTPUT).map((name) => [name, null])),
+  ...PERF_PROFILES,
+};
+
+export const OUTPUTS = [...Object.keys(CHECK_OF_OUTPUT), ...Object.keys(PERF_PROFILES)];
+
+/**
+ * Список файлов → выходы job `changes` ('true'/'false' по каждому ключу) плюс
+ * `unknown` — неизвестные исполняемые входы, из-за которых прогон расширен
+ * до полного набора (§5.2).
+ */
+export function classifyChanges(files, { root = process.cwd(), manifest } = {}) {
   const list = (Array.isArray(files) ? files : String(files).split('\n'))
     .map((file) => file.trim()).filter(Boolean);
+  const { affected, unknown } = checksAffectedBy(list, root, manifest ? { manifest } : {});
   const result = {};
-  for (const [name, pattern] of Object.entries(CLASSIFIERS)) {
-    result[name] = list.some((file) => pattern.test(file)) ? 'true' : 'false';
+  for (const [name, check] of Object.entries(CHECK_OF_OUTPUT)) {
+    result[name] = affected.has(check) ? 'true' : 'false';
   }
+  for (const [name, pattern] of Object.entries(PERF_PROFILES)) {
+    result[name] = unknown.length || list.some((file) => pattern.test(file)) ? 'true' : 'false';
+  }
+  result.unknown = unknown;
   return result;
 }
 
 /** Fallback без классификации: всё прогоняется. */
 export function classifyAll() {
-  return Object.fromEntries(OUTPUTS.map((name) => [name, 'true']));
+  return { ...Object.fromEntries(OUTPUTS.map((name) => [name, 'true'])), unknown: [] };
 }
 
 /**
@@ -71,9 +98,11 @@ export function hasReleaseTrailer(message) {
   return /^Release:\s*v?\d+\.\d+\.\d+\S*\s*$/m.test(String(message || ''));
 }
 
-/** Формат `$GITHUB_OUTPUT`. */
+/** Формат `$GITHUB_OUTPUT`; неизвестные входы — отдельной строкой через пробел. */
 export function formatOutputs(outputs) {
-  return OUTPUTS.map((name) => `${name}=${outputs[name]}`).join('\n') + '\n';
+  const lines = OUTPUTS.map((name) => `${name}=${outputs[name]}`);
+  lines.push(`unknown_inputs=${(outputs.unknown || []).join(' ')}`);
+  return lines.join('\n') + '\n';
 }
 
 const invokedDirectly = process.argv[1]

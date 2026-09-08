@@ -215,13 +215,13 @@ jobs:
       perf_iso: ${{ steps.classify.outputs.perf_iso }} # #473 §5
       perf_interaction: ${{ steps.classify.outputs.perf_interaction }}
       mutants: ${{ steps.classify.outputs.mutants }}
+      unknown_inputs: ${{ steps.classify.outputs.unknown_inputs }}
       # Тяжёлые job только на кандидате/по кнопке/на PR (#479), см. шаг heavy.
       heavy: ${{ steps.heavy.outputs.heavy }}
       base: ${{ steps.base.outputs.base }}
       # Разные вещи под разными именами намеренно: `base` — до какого коммита
-      # классифицировать файлы ветки (#387), `range_base` — от какого коммита
-      # судить сам диапазон на dev (#388). Общее имя означало бы, что
-      # потребитель однажды молча возьмёт чужую базу.
+      # классифицировать файлы ветки (#387), `range_base` — от какого судить
+      # диапазон на dev (#388): общее имя — чужая база у потребителя.
       range_base: ${{ steps.base.outputs.range_base }}
     steps:
       # `git diff --name-only` содержимого файлов не читает вовсе, поэтому
@@ -320,13 +320,28 @@ jobs:
           fi
           files=$(git diff --name-only "$base" "$HEAD_SHA")
           printf '%s\n' "$files" | head -50
-          # Шаблоны — в scripts/classify-changes.mjs: там они проверяемы
-          # unit-тестом, здесь — только переписываются в выходы (#473 AC8).
-          printf '%s\n' "$files" | node scripts/classify-changes.mjs | tee -a "$GITHUB_OUTPUT"
+          # Решение — в scripts/classify-changes.mjs по единому manifest входов
+          # (#492 §5.2): там оно проверяемо unit-тестом, здесь — только
+          # переписывается в выходы (#473 AC8).
+          printf '%s\n' "$files" | node scripts/classify-changes.mjs > /tmp/classify.out
+          tee -a "$GITHUB_OUTPUT" < /tmp/classify.out
+          # Файл, которого нет в manifest ни одной проверки, — не «не влияет»,
+          # а «неизвестно»: прогон расширен до полного набора, и это видно в
+          # summary, а не только в логе.
+          unknown=$(sed -n 's/^unknown_inputs=//p' /tmp/classify.out)
+          if [ -n "$unknown" ]; then
+            {
+              echo "### Неизвестные входы (#492)"
+              echo "Файлы, которых нет в manifest ни одной проверки — прогон расширен до полного набора:"
+              for f in $unknown; do echo "- \`$f\`"; done
+              echo "Впишите файл в \`CHECKS\` или \`NOT_AN_INPUT\` (scripts/check-inputs.mjs) с причиной."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-  # Переиспользование результата тяжёлой job (#208). Ключ = входы поведения
-  # (sourceFingerprint: src/**, demo/fixtures, demo/golden/*.mjs, манифесты
-  # сборки) ПЛЮС оснастка именно этой job. Маркер в кэше пишет только успешный
+  # Переиспользование результата тяжёлой job (#208). Ключ = хеш содержимого
+  # всех входов job по единому manifest (#492, scripts/check-inputs.mjs):
+  # что собирает, что исполняет, что читает, чем запускается — включая
+  # `validate.yml`. Маркер в кэше пишет только успешный
   # прогон с тем же ключом, поэтому попадание доказывает: job с побайтово теми
   # же входами уже завершилась успешно.
   #
