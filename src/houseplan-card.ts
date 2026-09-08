@@ -321,7 +321,7 @@ import {
 import {
   CameraTransitionController, cameraTargetAtAnchor, sameCameraState,
   type CameraState, type CameraTransitionReason, type CameraTransitionState,
-} from './viewport-transition';
+} from './viewport-transition'; import { measuredCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
 import {
   acceptedRoomFitGesture, DoubleFitGestureRecognizer, roomFitCameraTarget,
   roomFitClampFrame,
@@ -1219,7 +1219,7 @@ export class HouseplanCard extends LitElement {
    *  short structural transition first so two controllers never write `_view`
    *  in the same frame. */
   private _prepareCameraCommand(): void {
-    if (this._modeTransitionBusy) this._cancelModeTransition(true);
+    this._bootSoftCancel(); if (this._modeTransitionBusy) this._cancelModeTransition(true);
     if (this._tool === 'opening') {
       this._cursorPt = null;
       this._clearOpeningPlacement(false);
@@ -4139,12 +4139,7 @@ export class HouseplanCard extends LitElement {
     const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
     if (hdr && stage && !this._roHdr) {
       const measure = () => {
-        const card = this.renderRoot.querySelector('ha-card');
-        if (!card) return;
-        const own = stage.getBoundingClientRect().top - card.getBoundingClientRect().top;
-        const above = this.panelHost ? 0
-          : Math.min(Math.max(card.getBoundingClientRect().top, 0), 120);
-        const t = Math.round(own + above);
+        const t = measuredCardHeaderHeight(this.renderRoot, stage, this.panelHost); if (t === null) return;
         // `t` is already an integer. Ignoring a one-pixel delta left the View
         // stage one pixel shorter after an editor collapse and made the fitted
         // viewport drift; changing stage height cannot feed back into its top.
@@ -6558,13 +6553,18 @@ export class HouseplanCard extends LitElement {
     this._bootSoftTimer = window.setTimeout(() => { this._bootSoft = false; }, BOOT_SOFT_MS);
   }
 
-  /** The soft grace only covers PASSIVE late chrome. A user action that
-   *  changes the stage height (entering/leaving an editor) must apply
-   *  instantly — the plan may not drift under the pointer mid-drag. */
+  /** The soft grace only covers PASSIVE late chrome. A user action must
+   *  consume the final layout instantly — the plan may neither drift under
+   *  the pointer nor derive a camera target from an intermediate height. */
   private _bootSoftCancel(): void {
     if (!this._bootSoft) return;
     clearTimeout(this._bootSoftTimer);
     this._bootSoft = false;
+    const settled = settleSoftStageLayout(this.renderRoot, this._stageEl, this.panelHost, this._kiosk);
+    if (!settled) return; if (settled.headerHeight !== null) this._hdrH = settled.headerHeight;
+    if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
+    this._pendingRefitSize = null; this._lastValidStageSize = settled.size; const current = this._view;
+    if (current) this._applyView(this._zoom, current.x + current.w / 2, current.y + current.h / 2);
   }
 
   /** Hold the last complete frame after a long sleep; never hide the scene. */
@@ -6585,14 +6585,12 @@ export class HouseplanCard extends LitElement {
   /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
     if (this._modeTransitionBusy || this._warmModeRequest) return;
-    // Resize is structural: keep the currently painted camera, cancel its old
-    // target, then let the existing refit path own the new stage geometry.
-    this._cancelCameraTransition(false);
     const stage = this._stageEl;
     // ResizeObserver may deliver a zero/transitional box while a browser tab
     // is frozen or while Lovelace replaces the card. Mutating `_view` from
     // that box is the scale jump observed on return.
     if (!stage || document.visibilityState !== 'visible' || stage.clientWidth <= 0 || stage.clientHeight <= 0) {
+      this._cancelCameraTransition(false);
       if (!this._viewportInvalidAt) this._viewportInvalidAt = Date.now();
       return;
     }
@@ -6603,16 +6601,18 @@ export class HouseplanCard extends LitElement {
       && Math.abs(previous[1] - size[1]) <= 0.5;
     const invalidFor = this._viewportInvalidAt ? Date.now() - this._viewportInvalidAt : 0;
     this._viewportInvalidAt = 0;
+    // A no-op delivery must not cancel a camera command just started by input.
+    if (sameSize) {
+      this._pendingRefitSize = null;
+      return;
+    }
+    // A real resize is structural and owns the new stage geometry.
+    this._cancelCameraTransition(false);
     if (!previous) {
       this._lastValidStageSize = size;
       if (this._roomFocus?.spaceId === this._space) {
         this._fitRoom(this._roomFocus.roomId, false);
       } else if (!this._view) this._applyView(this._zoom);
-      return;
-    }
-    // 0x0 -> the same positive size is explicitly a no-op.
-    if (sameSize) {
-      this._pendingRefitSize = null;
       return;
     }
     this._pendingRefitSize = size;
@@ -6788,7 +6788,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
-    const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view' ? roomFitOwnerFromPath(ev.composedPath()) : null;
+    this._bootSoftCancel(); const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view' ? roomFitOwnerFromPath(ev.composedPath()) : null;
     this._roomPointer = roomId
       ? { pointerId: ev.pointerId, spaceId: this._space, roomId }
       : null;

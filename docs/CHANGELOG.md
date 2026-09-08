@@ -9,7 +9,9 @@
   independently on each card. The panel moves between the right and bottom
   edges, respects Home Assistant mobile mode, and hides when the card is too
   small. Its settings are touch-friendly and stay attached to the same card
-  when a dashboard reflows ([#437](https://github.com/Matysh/houseplan-card/issues/437)).
+  when a dashboard reflows. A first camera action also waits for the final
+  header geometry instead of drifting while the new control settles
+  ([#437](https://github.com/Matysh/houseplan-card/issues/437)).
 
 ## v1.73.0-beta.6 — 2026-09-08
 
