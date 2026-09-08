@@ -113,7 +113,13 @@ the file — and if a future version wants to reclaim that space, it asks.
   the already maintained House Plan geometry to an installer, insurer or
   renovation contractor.
 - A general dashboard framework (menus, popups, theming engine) → Bubble Card,
-  Dwains and friends.
+  Dwains and friends. A narrow exception approved on 2026-09-03 for
+  [#437](https://github.com/Matysh/houseplan-card/issues/437) is a configurable
+  read-only summary overlay accompanying the spatial plan: named groups of
+  current HA states and three built-in values (represented device count,
+  clean room-floor area, date/time). It adds no arbitrary cards, formulas,
+  history, device actions or HA administration; shared GUI configuration and
+  per-screen visibility do not turn it into a general dashboard builder.
 
 ## Excess-functionality audit (2026-07-22)
 
