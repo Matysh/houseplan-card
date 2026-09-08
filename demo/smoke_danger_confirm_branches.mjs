@@ -299,7 +299,11 @@ const out = await page.evaluate(async () => {
   card.requestUpdate();
   await settle();
   const spaceLossDecision = await boundedDangerDecision(pendingAtSpaceLoss);
-  result.lostSpaceBranchIsActuallyEntered = root().childElementCount === 0;
+  // The summary runtime may keep its inert lazy stylesheet in the shadow root
+  // after render() returns `nothing`; it is not a decision or content surface.
+  const lostSpaceContent = [...root().children]
+    .filter((element) => !element.matches('style[data-hp-summary]'));
+  result.lostSpaceBranchIsActuallyEntered = lostSpaceContent.length === 0;
   result.openConfirmCancelsWhenSpaceIsLost = spaceLossDecision.settled
     && spaceLossDecision.value === false
     && card._dangerConfirm === null && card._dangerConfirmController.state === null;
