@@ -30,6 +30,7 @@ from .plans import collect_attachments, collect_plans, sweep_upload_temps
 from .repairs import async_check_plan_files
 from .store import (
     HouseplanConfigEntry,
+    async_resolve_pending_pair,
     async_save_config_state,
     async_save_layout_state,
     create_data,
@@ -111,6 +112,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     # repairs or housekeeping below.
     await async_setup_frontend_registration(hass, entry, card_path)
 
+    # Resolve an interrupted whole-plan pair before any other setup-time
+    # writer reads or mutates either store. This is the same fence used by
+    # runtime writers, so startup migration cannot build on a half-commit.
+    optimize_revs: tuple[int, int] | None = None
+    recovered_import = False
+    async with data.write_lock:
+        resolved = await async_resolve_pending_pair(data)
+        if resolved.recovered_kind is not None:
+            optimize_revs = (
+                int(resolved.config_data.get("rev", 0)),
+                int(resolved.layout_data.get("rev", 0)),
+            )
+            recovered_import = resolved.recovered_kind.startswith("import")
+            _LOGGER.warning(
+                "House Plan: completed an interrupted %s",
+                resolved.recovered_kind.replace("_", " "),
+            )
+
     # One-time move to the square canvas (v1.48.0). Coordinates used to be
     # normalised against a per-space aspect ratio; the canvas is now always
     # square and a plan is centred inside it. Nothing about the drawing changes
@@ -154,66 +173,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
             # event must never see one migrated half and one old one
             hass.bus.async_fire("houseplan_config_updated", {"rev": rev})
 
-    # Finish an explicit whole-plan optimization/undo interrupted between the
-    # config and layout store writes. The target was persisted before either
-    # visible half changed, so setup can always converge on the requested pair.
-    optimize_revs: tuple[int, int] | None = None
-    recovered_import = False
-    async with data.write_lock:
-        stored = await data.config_store.async_load() or {}
-        lay_stored = await data.store.async_load() or {}
-        pending = lay_stored.get("optimize_pending")
-        if isinstance(pending, dict) and isinstance(pending.get("config"), dict) \
-                and isinstance(pending.get("layout"), dict):
-            target_config = pending["config"]
-            target_layout = pending["layout"]
-            config_rev = int(stored.get("rev", 0))
-            layout_rev = int(lay_stored.get("rev", 0))
-            target_config_rev = int(pending.get(
-                "config_rev", config_rev + (stored.get("config") != target_config)
-            ))
-            target_layout_rev = int(pending.get(
-                "layout_rev", layout_rev + (lay_stored.get("layout", {}) != target_layout)
-            ))
-            if stored.get("config") != target_config or config_rev < target_config_rev:
-                previous_config_rev = config_rev
-                config_rev = max(config_rev, target_config_rev)
-                await async_save_config_state(
-                    data,
-                    target_config,
-                    config_rev,
-                    previous_rev=previous_config_rev,
-                )
-            if lay_stored.get("layout", {}) != target_layout or layout_rev < target_layout_rev:
-                layout_rev = max(layout_rev, target_layout_rev)
-            exact_metadata = pending.get("final_metadata")
-            replace_metadata = isinstance(exact_metadata, dict)
-            metadata = dict(exact_metadata) if replace_metadata else None
-            if not replace_metadata and not pending.get("clear_backup") \
-                    and "optimize_backup" in lay_stored:
-                metadata = {"optimize_backup": lay_stored["optimize_backup"]}
-            remove_metadata = ["optimize_pending", "optimize_backup"]
-            if pending.get("clear_backup"):
-                # A recovered whole-plan undo replaces the complete layout;
-                # a point-wise repair snapshot from the replaced layout must
-                # not survive and later restore coordinates into the new pair.
-                remove_metadata.append("repair_backup")
-            await async_save_layout_state(
-                data,
-                lay_stored,
-                target_layout,
-                layout_rev,
-                metadata=metadata,
-                remove=tuple(remove_metadata),
-                replace_metadata=replace_metadata,
-            )
-            optimize_revs = (config_rev, layout_rev)
-            recovered_import = str(pending.get("kind") or "").startswith("import")
-            _LOGGER.warning(
-                "House Plan: completed an interrupted %s",
-                str(pending.get("kind") or "plan optimization").replace("_", " "),
-            )
     if optimize_revs is not None:
+        # Setup-time geometry migration may have advanced either revision
+        # after pair recovery. Events always describe the final durable stores.
+        recovered_config = await data.config_store.async_load() or {}
+        recovered_layout = await data.store.async_load() or {}
+        optimize_revs = (
+            int(recovered_config.get("rev", 0)),
+            int(recovered_layout.get("rev", 0)),
+        )
         hass.bus.async_fire("houseplan_config_updated", {"rev": optimize_revs[0]})
         hass.bus.async_fire("houseplan_layout_updated", {"rev": optimize_revs[1]})
         if recovered_import:

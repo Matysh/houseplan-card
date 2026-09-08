@@ -85,6 +85,9 @@ from .registry_snapshot import import_registry_snapshot
 from .store import (
     LAYOUT_STORE_CORE_KEYS,
     HouseplanData,
+    ResolvedStorePair,
+    async_converge_store_pair,
+    async_resolve_pending_pair,
     async_save_config_state,
     async_save_layout_state,
     get_data,
@@ -189,6 +192,46 @@ async def _discard_optimizer_snapshot(rt: HouseplanData) -> None:
         int(data.get("rev", 0)),
         remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
     )
+
+
+class PairCommitFailure(Exception):
+    """A paired write failed after restoring, or while recovery stayed durable."""
+
+    def __init__(self, *, recovery_pending: bool) -> None:
+        super().__init__("paired store commit failed")
+        self.recovery_pending = recovery_pending
+
+
+async def _resolved_write_pair(
+    hass: HomeAssistant,
+    connection,
+    msg_id: int,
+    rt: HouseplanData,
+) -> ResolvedStorePair | None:
+    """Resolve an older pair before a writer reads revisions or state."""
+    try:
+        resolved = await async_resolve_pending_pair(rt)
+    except Exception:  # noqa: BLE001 - the pending intent must remain authoritative
+        _LOGGER.exception("House Plan: an interrupted paired write is still pending recovery")
+        connection.send_error(
+            msg_id,
+            "commit_failed",
+            "A previous House Plan save is pending recovery; retry or restart Home Assistant",
+        )
+        return None
+    if resolved.recovered_kind is not None:
+        # Both durable halves are complete before either event is observable.
+        hass.bus.async_fire(
+            "houseplan_config_updated", {"rev": int(resolved.config_data.get("rev", 0))}
+        )
+        hass.bus.async_fire(
+            "houseplan_layout_updated", {"rev": int(resolved.layout_data.get("rev", 0))}
+        )
+        _LOGGER.warning(
+            "House Plan: completed an interrupted %s before the next write",
+            resolved.recovered_kind.replace("_", " "),
+        )
+    return resolved
 
 
 @callback
@@ -328,23 +371,10 @@ async def _persist_pair_intent(
 
 async def _converge_pair(rt: HouseplanData, pending: dict[str, Any]) -> None:
     """Write both target halves and remove the durable intent last."""
-    await async_save_config_state(
-        rt,
-        pending["config"],
-        int(pending["config_rev"]),
-    )
-    stored = await rt.store.async_load() or {}
-    await async_save_layout_state(
-        rt,
-        stored,
-        pending["layout"],
-        int(pending["layout_rev"]),
-        metadata=dict(pending.get("final_metadata") or {}),
-        replace_metadata=True,
-    )
+    await async_converge_store_pair(rt, pending)
 
 
-async def _commit_import_pair(
+async def _commit_pair(
     rt: HouseplanData,
     pending: dict[str, Any],
     rollback: dict[str, Any],
@@ -362,24 +392,22 @@ async def _commit_import_pair(
         await _converge_pair(rt, pending)
         return
     except Exception:  # noqa: BLE001 - one retry handles fail-after-write too
-        _LOGGER.warning("House Plan import pair write failed; retrying target", exc_info=True)
+        _LOGGER.warning("House Plan pair write failed; retrying target", exc_info=True)
     try:
         await _persist_pair_intent(rt, pending)
         await _converge_pair(rt, pending)
         return
     except Exception:  # noqa: BLE001 - target is no longer the recovery policy
-        _LOGGER.exception("House Plan import target retry failed; restoring previous pair")
+        _LOGGER.exception("House Plan target retry failed; restoring previous pair")
     try:
         await _persist_pair_intent(rt, rollback)
         await _converge_pair(rt, rollback)
     except Exception as rollback_error:  # noqa: BLE001 - a failed rollback must not mask the original commit error
         _LOGGER.exception(
-            "House Plan import rollback could not finish; rollback intent remains for setup"
+            "House Plan rollback could not finish; rollback intent remains for recovery"
         )
-        raise ImportFailure(
-            "commit_failed", "Import failed; the previous plan is pending recovery"
-        ) from rollback_error
-    raise ImportFailure("commit_failed", "Import failed and the previous plan was restored")
+        raise PairCommitFailure(recovery_pending=True) from rollback_error
+    raise PairCommitFailure(recovery_pending=False)
 
 
 # ---------------- portable backup / transfer ----------------
@@ -501,8 +529,11 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
     try:
         async with rt.write_lock:
             candidate = get_candidate(rt, msg["token"], _connection_user_id(connection))
-            config_data = await rt.config_store.async_load() or {}
-            layout_data = await rt.store.async_load() or {}
+            resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+            if resolved is None:
+                return
+            config_data = resolved.config_data
+            layout_data = resolved.layout_data
             config_rev = int(config_data.get("rev", 0))
             layout_rev = int(layout_data.get("rev", 0))
             if (
@@ -591,11 +622,19 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                 "layout_rev": layout_rev,
                 "final_metadata": original_metadata,
             }
-            await _commit_import_pair(rt, pending, rollback)
+            await _commit_pair(rt, pending, rollback)
             # A token becomes single-use only after both durable halves land.
             get_candidate(rt, msg["token"], _connection_user_id(connection), consume=True)
     except ImportFailure as err:
         _send_import_error(connection, msg["id"], err)
+        return
+    except PairCommitFailure as err:
+        message = (
+            "Import failed; the previous plan is pending recovery"
+            if err.recovery_pending
+            else "Import failed and the previous plan was restored"
+        )
+        connection.send_error(msg["id"], "commit_failed", message)
         return
     except Exception:  # noqa: BLE001 - defensive: a listener must never break the write path
         _LOGGER.exception("House Plan import commit failed")
@@ -690,8 +729,11 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     if rt is None:
         return
     async with rt.write_lock:
-        config_data = await rt.config_store.async_load() or {}
-        data = await rt.store.async_load() or {}
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        config_data = resolved.config_data
+        data = resolved.layout_data
         current_rev = int(data.get("rev", 0))
         if "expected_rev" not in msg and current_rev:
             # #356: without the revision the client read, a wholesale write is
@@ -749,7 +791,10 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
         # the marker. Its tombstone is the server-side authority: acknowledge
         # but ignore the late point so re-adding starts without a zombie
         # position.
-        config_data = await rt.config_store.async_load() or {}
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        config_data = resolved.config_data
         config = config_data.get("config") or {}
         markers = config.get("markers") or []
         deleted = any(
@@ -771,14 +816,14 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
             and not live_explicit
         )
         if deleted or orphan_virtual:
-            data = await rt.store.async_load() or {}
+            data = resolved.layout_data
             connection.send_result(msg["id"], {
                 "ok": True,
                 "ignored": "removed" if deleted else "missing_virtual",
                 "rev": int(data.get("rev", 0)),
             })
             return
-        data = await rt.store.async_load() or {}
+        data = resolved.layout_data
         layout = data.get("layout", {})
         if layout.get(msg["device_id"]) == msg["pos"]:
             connection.send_result(msg["id"], {"ok": True, "rev": int(data.get("rev", 0))})
@@ -833,7 +878,10 @@ async def ws_geometry_repair(hass: HomeAssistant, connection, msg: dict[str, Any
         connection.send_error(msg["id"], "invalid_space_id", "space_id: only [a-z0-9_-], up to 64 characters")
         return
     async with rt.write_lock:
-        data = await rt.store.async_load() or {}
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        data = resolved.layout_data
         layout = data.get("layout") or {}
         current_rev = int(data.get("rev", 0))
         if "expected_rev" in msg and msg["expected_rev"] != current_rev:
@@ -1314,7 +1362,10 @@ async def ws_layout_delete(hass: HomeAssistant, connection, msg: dict[str, Any])
         return
     new_rev: int | None = None
     async with rt.write_lock:
-        data = await rt.store.async_load() or {}
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        data = resolved.layout_data
         layout = data.get("layout", {})
         if msg["device_id"] in layout:
             del layout[msg["device_id"]]
@@ -1537,7 +1588,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         )
         return
     async with rt.write_lock:
-        data = await rt.config_store.async_load() or {}
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        data = resolved.config_data
         current_rev = data.get("rev", 0)
         if "expected_rev" not in msg and current_rev:
             # #340: a request without the revision it read is indistinguishable
@@ -1801,8 +1855,11 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
 
     try:
         async with rt.write_lock:
-            config_data = await rt.config_store.async_load() or {}
-            layout_data = await rt.store.async_load() or {}
+            resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+            if resolved is None:
+                return
+            config_data = resolved.config_data
+            layout_data = resolved.layout_data
             config_rev = int(config_data.get("rev", 0))
             layout_rev = int(layout_data.get("rev", 0))
             if (msg["expected_config_rev"] != config_rev
@@ -1854,7 +1911,15 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                 "layout_rev": layout_rev,
                 "final_metadata": original_metadata,
             }
-            await _commit_import_pair(rt, pending, rollback)
+            await _commit_pair(rt, pending, rollback)
+    except PairCommitFailure as err:
+        message = (
+            "Space delete failed; the previous plan is pending recovery"
+            if err.recovery_pending
+            else "Space delete failed and the previous plan was restored"
+        )
+        connection.send_error(msg["id"], "commit_failed", message)
+        return
     except ImportFailure as err:
         _send_import_error(connection, msg["id"], err)
         return
@@ -1910,8 +1975,11 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         return
 
     async with rt.write_lock:
-        config_data = await rt.config_store.async_load() or {}
-        layout_data = await rt.store.async_load() or {}
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        config_data = resolved.config_data
+        layout_data = resolved.layout_data
         config_rev = int(config_data.get("rev", 0))
         layout_rev = int(layout_data.get("rev", 0))
         if msg["expected_config_rev"] != config_rev or msg["expected_layout_rev"] != layout_rev:
@@ -2021,36 +2089,50 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             "after_config_rev": new_config_rev,
             "after_layout_rev": new_layout_rev,
         }
+        original_metadata = _layout_metadata(layout_data)
+        final_metadata = {
+            key: value for key, value in original_metadata.items()
+            if key not in {
+                _OPTIMIZE_BACKUP, _OPTIMIZE_PENDING,
+                "repair_backup", "geom_pending",
+            }
+        }
+        final_metadata[_OPTIMIZE_BACKUP] = backup
         pending = {
+            "kind": "optimize",
             "config": canonicalize_config_geometry(msg["config"]),
             "layout": canonicalize_layout_geometry(msg["layout"]),
             "config_rev": new_config_rev,
             "layout_rev": new_layout_rev,
-            "clear_backup": False,
+            "final_metadata": final_metadata,
         }
-        # Intent first. A setup-time finisher completes whichever half a crash
-        # interrupted; until then the visible layout/revision remain unchanged.
-        await async_save_layout_state(
-            rt, layout_data, layout_data.get("layout", {}), layout_rev,
-            metadata={_OPTIMIZE_BACKUP: backup, _OPTIMIZE_PENDING: pending},
-            remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
-        )
-        await async_save_config_state(
-            rt,
-            msg["config"],
-            new_config_rev,
-            previous_rev=config_rev,
-        )
+        rollback = {
+            "kind": "optimize_rollback",
+            "config": canonicalize_config_geometry(
+                config_data.get("config") or DEFAULT_CONFIG
+            ),
+            "layout": canonicalize_layout_geometry(
+                layout_data.get("layout") or {}
+            ),
+            "config_rev": config_rev,
+            "layout_rev": layout_rev,
+            "final_metadata": original_metadata,
+        }
+        try:
+            await _commit_pair(rt, pending, rollback)
+        except PairCommitFailure as err:
+            message = (
+                "Plan optimization failed; the previous plan is pending recovery"
+                if err.recovery_pending
+                else "Plan optimization failed and the previous plan was restored"
+            )
+            connection.send_error(msg["id"], "commit_failed", message)
+            return
         # The optimized candidate is now the stored document: its junction
         # counts are the next write's baseline (#333 AC3, symmetric with
         # config/set — otherwise the next save re-judges `previous` for
         # nothing and the #330 cache loses its point).
         rt.junction_baseline = (int(new_config_rev), optimize_counts or {})
-        await async_save_layout_state(
-            rt, layout_data, msg["layout"], new_layout_rev,
-            metadata={_OPTIMIZE_BACKUP: backup},
-            remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup", "geom_pending"),
-        )
 
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})
@@ -2082,8 +2164,11 @@ async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, 
 
     restored_kind = "optimize"
     async with rt.write_lock:
-        config_data = await rt.config_store.async_load() or {}
-        layout_data = await rt.store.async_load() or {}
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        config_data = resolved.config_data
+        layout_data = resolved.layout_data
         config_rev = int(config_data.get("rev", 0))
         layout_rev = int(layout_data.get("rev", 0))
         if msg["expected_config_rev"] != config_rev or msg["expected_layout_rev"] != layout_rev:
@@ -2106,29 +2191,45 @@ async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, 
         )
         new_config_rev = config_rev + 1
         new_layout_rev = layout_rev + 1
+        original_metadata = _layout_metadata(layout_data)
+        final_metadata = {
+            key: value for key, value in original_metadata.items()
+            if key not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup"}
+        }
         pending = {
             "kind": "import_undo" if restored_kind == "import" else "optimize_undo",
             "config": restored_config,
             "layout": restored_layout,
             "config_rev": new_config_rev,
             "layout_rev": new_layout_rev,
-            "clear_backup": True,
+            "final_metadata": final_metadata,
         }
-        await async_save_layout_state(
-            rt, layout_data, layout_data.get("layout", {}), layout_rev,
-            metadata={_OPTIMIZE_BACKUP: backup, _OPTIMIZE_PENDING: pending},
-            remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
-        )
-        await async_save_config_state(
-            rt,
-            restored_config,
-            new_config_rev,
-            previous_rev=config_rev,
-        )
-        await async_save_layout_state(
-            rt, layout_data, restored_layout, new_layout_rev,
-            remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup"),
-        )
+        rollback = {
+            "kind": (
+                "import_undo_rollback"
+                if restored_kind == "import"
+                else "optimize_undo_rollback"
+            ),
+            "config": canonicalize_config_geometry(
+                config_data.get("config") or DEFAULT_CONFIG
+            ),
+            "layout": canonicalize_layout_geometry(
+                layout_data.get("layout") or {}
+            ),
+            "config_rev": config_rev,
+            "layout_rev": layout_rev,
+            "final_metadata": original_metadata,
+        }
+        try:
+            await _commit_pair(rt, pending, rollback)
+        except PairCommitFailure as err:
+            message = (
+                "Plan undo failed; the previous plan is pending recovery"
+                if err.recovery_pending
+                else "Plan undo failed and the previous plan was restored"
+            )
+            connection.send_error(msg["id"], "commit_failed", message)
+            return
 
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})

@@ -1118,6 +1118,13 @@ and explicitly removed positions with the rest of the previous layout. Any
 later edit makes that undo stale, so create a Home Assistant backup before a
 large maintenance operation.
 
+If a temporary storage error interrupts Optimize or its server-side Undo,
+House Plan does not let the next edit overwrite the unfinished half. The next
+save first completes the recorded operation (or its safe rollback) and then
+checks the edit against the fresh revisions. A stale browser may therefore ask
+you to reload and retry. If storage is still unavailable, the save fails and
+the recovery record remains for another attempt or a Home Assistant restart.
+
 <!-- docs-section: multiple-cards -->
 
 ## 20. Storage, multiple cards and backups

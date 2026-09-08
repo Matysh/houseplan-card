@@ -63,6 +63,26 @@ writer produce the same request; accepting either would reopen last-writer-wins
 data loss. This changes only the WebSocket write contract. Stored config,
 model/store versions, exports and read compatibility are unchanged.
 
+## Crash-resumable config/layout pairs (#491)
+
+`optimize_pending` is the durable authority for every paired config/layout
+write: Optimize, Optimize Undo, full import and space deletion. Current intents
+carry canonical target documents, their exact target revisions and exact final
+layout-store metadata. The intent is written before either visible half and is
+removed only by the final layout write after config and layout both match it.
+On a persistent target failure, an explicit rollback intent restores the exact
+before-pair, including its revisions and unknown metadata.
+
+Before every runtime config/layout writer reads revisions or validates its own
+candidate, the common write fence resolves a valid pending intent and reloads
+both stores. Old CAS revisions conflict normally; point layout writes then
+change only their named entry on the recovered layout. If recovery cannot yet
+finish, the new write is rejected without deleting the intent or backup.
+Startup invokes the same resolver before storage migrations. Legacy valid
+intents without `final_metadata` retain their previous compatibility fallback;
+there are no new persisted fields, store/model version bumps, export fields or
+read-side repair semantics.
+
 ## Room hover information preference (#426)
 
 `settings.show_room_tooltip` is an optional global boolean. Absence and any

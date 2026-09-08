@@ -7749,6 +7749,93 @@ const MUTANT_DEFINITIONS = [
       replace: '      partitionIds: [], // mutant: finish skips coincident seed scope',
     }],
   },
+  {
+    id: 'pair-recovery-config-writer-skips-fence',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_491_config_writer_resolves_pending_pair_before_cas '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'a config save after a half-finished Optimize must resolve the durable pair before '
+      + 'CAS, or it can consume the recovery intent and commit over mixed state (#491 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '    async with rt.write_lock:\n'
+        + '        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)\n'
+        + '        if resolved is None:\n'
+        + '            return\n'
+        + '        data = resolved.config_data\n'
+        + '        current_rev = data.get("rev", 0)\n',
+      replace: '    async with rt.write_lock:\n'
+        + '        data = await rt.config_store.async_load() or {}\n'
+        + '        current_rev = data.get("rev", 0)\n',
+    }],
+  },
+  {
+    id: 'pair-recovery-point-writer-skips-fence',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_491_point_layout_writer_applies_delta_to_recovered_pair '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'a point drag must apply its one-device delta to the recovered target layout, not '
+      + 'the stale visible half that existed when the drag started (#491 AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)\n'
+        + '        if resolved is None:\n'
+        + '            return\n'
+        + '        config_data = resolved.config_data\n'
+        + '        config = config_data.get("config") or {}\n'
+        + '        markers = config.get("markers") or []\n',
+      replace: '        config_data = await rt.config_store.async_load() or {}\n'
+        + '        resolved = ResolvedStorePair(\n'
+        + '            config_data=config_data, layout_data=await rt.store.async_load() or {},\n'
+        + '        )\n'
+        + '        config = config_data.get("config") or {}\n'
+        + '        markers = config.get("markers") or []\n',
+    }],
+  },
+  {
+    id: 'optimize-skips-pair-retry-rollback',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_491_optimize_failure_restores_before_pair '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'Optimize must report a failed target only after the common retry/rollback protocol '
+      + 'has restored the exact before-pair and metadata (#491 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '        try:\n'
+        + '            await _commit_pair(rt, pending, rollback)\n'
+        + '        except PairCommitFailure as err:\n'
+        + '            message = (\n'
+        + '                "Plan optimization failed; the previous plan is pending recovery"\n',
+      replace: '        try:\n'
+        + '            await _persist_pair_intent(rt, pending)\n'
+        + '            await _converge_pair(rt, pending)\n'
+        + '        except PairCommitFailure as err:\n'
+        + '            message = (\n'
+        + '                "Plan optimization failed; the previous plan is pending recovery"\n',
+    }],
+  },
+  {
+    id: 'optimize-undo-skips-pair-retry-rollback',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_491_optimize_undo_failure_restores_pre_undo_pair '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'Optimize Undo needs the same retry/rollback primitive; otherwise a failed restore '
+      + 'can leave a target intent over the still-live optimized pair (#491 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '        try:\n'
+        + '            await _commit_pair(rt, pending, rollback)\n'
+        + '        except PairCommitFailure as err:\n'
+        + '            message = (\n'
+        + '                "Plan undo failed; the previous plan is pending recovery"\n',
+      replace: '        try:\n'
+        + '            await _persist_pair_intent(rt, pending)\n'
+        + '            await _converge_pair(rt, pending)\n'
+        + '        except PairCommitFailure as err:\n'
+        + '            message = (\n'
+        + '                "Plan undo failed; the previous plan is pending recovery"\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

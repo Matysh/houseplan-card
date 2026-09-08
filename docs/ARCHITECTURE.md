@@ -1201,13 +1201,25 @@ geometry/presentation allowlists. The parser recomputes that projection and
 its placement manifest before showing a plan-only preview, so manually adding
 a private field while keeping `transfer.plan_only: true` is rejected.
 
-The browser never parses imported configuration. Full import and maintenance
-share the `optimize_pending` crash-recovery intent and the one-deep backup slot;
-the backup carries `kind: optimize|import`, while every layout-store writer
-goes through `async_save_layout_state` so unrelated store metadata survives.
-Apply rechecks local plan files under the write lock. A failed pair is retried
-toward the target once, then gets an explicit rollback intent so a later
-restart never finishes an import already reported as failed.
+The browser never parses imported configuration. Optimize, Optimize Undo, full
+import, space deletion and maintenance share the `optimize_pending`
+crash-recovery intent and the one-deep backup slot; the backup carries
+`kind: optimize|import`, while every layout-store writer goes through
+`async_save_layout_state` so unrelated store metadata survives. Each paired
+writer persists an exact target intent before either half, retries convergence
+once, then durably replaces it with an exact before-pair rollback intent before
+reporting failure. HA Store exceptions are resolved by reloading and comparing
+the exact payload because an exception may follow a durable atomic replace.
+
+Every runtime config/layout writer holds the common `write_lock` and calls the
+same pending-pair resolver before reading revisions, validating or checking for
+a no-op. A stale CAS writer therefore sees the recovered revisions and gets a
+normal conflict; point layout writers apply only their delta to the recovered
+layout. If convergence still fails, the new writer performs no own write and
+leaves the intent available for retry or restart. Setup runs this resolver
+before any setup-time storage migration. Config/layout update events are fired
+only after both halves and final metadata are durable. Apply still rechecks
+local plan files under the write lock.
 
 **If the v1.48 migration crashed halfway** (HP-1500-01): the config write
 landed, the layout write did not, and both triggers are gone — markers of that

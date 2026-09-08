@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Optimize, its server-side Undo, imports and space deletion now use one
+  crash-resumable config/layout commit protocol. If a temporary storage error
+  leaves such a save unfinished, the next edit completes recovery before it
+  checks revisions or writes anything, so it cannot silently replace half of
+  the plan or lose device positions ([#491](https://github.com/Matysh/houseplan-card/issues/491)).
 - Summary-panel entity values now update immediately even when the entity is
   not represented anywhere else on the plan. A recovered save whose response
   was lost also keeps unrelated changes made concurrently in another House

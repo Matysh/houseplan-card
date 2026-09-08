@@ -1161,6 +1161,363 @@ async def test_plan_optimize_pair_and_one_deep_undo_survives_geometry_repair(
     )
 
 
+async def test_issue_491_config_writer_resolves_pending_pair_before_cas(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """A stale config edit cannot consume a half-finished Optimize intent."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    before = {"spaces": [], "markers": [], "settings": {}}
+    target = {
+        "spaces": [],
+        "markers": [{"id": "target", "binding": "virtual"}],
+        "settings": {},
+    }
+    target_layout = {
+        "dev": {"s": "f1", "x": 0.4, "y": 0.5},
+        "other": {"s": "f1", "x": 0.7, "y": 0.8},
+    }
+    backup = {
+        "kind": "optimize", "config": before, "layout": {},
+        "after_config_rev": 2, "after_layout_rev": 2,
+    }
+    await runtime.config_store.async_save({"config": before, "rev": 1})
+    await runtime.store.async_save({
+        "layout": {}, "rev": 1,
+        "optimize_pending": {
+            "kind": "optimize", "config": target, "layout": target_layout,
+            "config_rev": 2, "layout_rev": 2,
+            "final_metadata": {"optimize_backup": backup, "future": {"kept": True}},
+        },
+    })
+
+    candidate = {
+        **target,
+        "markers": [
+            *target["markers"],
+            {"id": "next", "binding": "virtual"},
+        ],
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": candidate, "expected_rev": 1,
+    })
+    stale = await client.receive_json()
+    assert not stale["success"] and stale["error"]["code"] == "conflict"
+    assert await runtime.config_store.async_load() == {"config": target, "rev": 2}
+    resolved_layout = await runtime.store.async_load()
+    assert resolved_layout["layout"] == target_layout
+    assert resolved_layout["rev"] == 2
+    assert resolved_layout["future"] == {"kept": True}
+    assert "optimize_pending" not in resolved_layout
+
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": candidate, "expected_rev": 2,
+    })
+    saved = await client.receive_json()
+    assert saved["success"] and saved["result"]["rev"] == 3
+    assert (await runtime.store.async_load())["layout"] == target_layout
+
+
+async def test_issue_491_point_layout_writer_applies_delta_to_recovered_pair(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """A drag after a half-commit preserves every recovered foreign point."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    config = {"spaces": [], "markers": [], "settings": {}}
+    old_layout = {"dev": {"s": "f1", "x": 0.1, "y": 0.2}}
+    target_layout = {
+        "dev": {"s": "f1", "x": 0.4, "y": 0.5},
+        "other": {"s": "f1", "x": 0.7, "y": 0.8},
+    }
+    await runtime.config_store.async_save({"config": config, "rev": 2})
+    await runtime.store.async_save({
+        "layout": old_layout, "rev": 1,
+        "optimize_pending": {
+            "kind": "optimize", "config": config, "layout": target_layout,
+            "config_rev": 2, "layout_rev": 2,
+            "final_metadata": {"optimize_backup": {"after_config_rev": 2,
+                                                     "after_layout_rev": 2}},
+        },
+    })
+
+    moved = {"s": "f1", "x": 0.9, "y": 0.6}
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/update", "device_id": "dev", "pos": moved,
+    })
+    response = await client.receive_json()
+    assert response["success"] and response["result"]["rev"] == 3
+    stored = await runtime.store.async_load()
+    assert stored["layout"] == {"dev": moved, "other": target_layout["other"]}
+    assert "optimize_pending" not in stored
+    assert "optimize_backup" not in stored
+
+
+@pytest.mark.parametrize("writer", ["set", "delete", "repair"])
+async def test_issue_491_every_layout_writer_fences_a_pending_pair(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, writer: str,
+) -> None:
+    """CAS, point-delete and maintenance all start from the recovered layout."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    config = {"spaces": [], "markers": [], "settings": {}}
+    target_layout = {
+        "dev": {"s": "f1", "x": 0.2, "y": 0.25},
+        "other": {"s": "f2", "x": 0.7, "y": 0.8},
+    }
+    backup = {"after_config_rev": 2, "after_layout_rev": 2}
+    await runtime.config_store.async_save({"config": config, "rev": 1})
+    await runtime.store.async_save({
+        "layout": {"dev": {"s": "f1", "x": 0.1, "y": 0.1}}, "rev": 1,
+        "optimize_pending": {
+            "kind": "optimize", "config": config, "layout": target_layout,
+            "config_rev": 2, "layout_rev": 2,
+            "final_metadata": {"optimize_backup": backup},
+        },
+    })
+
+    if writer == "set":
+        await client.send_json_auto_id({
+            "type": "houseplan/layout/set",
+            "layout": {"replacement": {"s": "f3", "x": 0.5, "y": 0.5}},
+            "expected_rev": 1,
+        })
+    elif writer == "delete":
+        await client.send_json_auto_id({
+            "type": "houseplan/layout/delete", "device_id": "dev",
+        })
+    else:
+        await client.send_json_auto_id({
+            "type": "houseplan/geometry/repair", "space_id": "f1", "aspect": 2.0,
+        })
+    response = await client.receive_json()
+    stored = await runtime.store.async_load()
+    assert "optimize_pending" not in stored
+
+    if writer == "set":
+        assert not response["success"] and response["error"]["code"] == "conflict"
+        assert stored["layout"] == target_layout and stored["rev"] == 2
+        assert stored["optimize_backup"] == backup
+    elif writer == "delete":
+        assert response["success"] and response["result"]["rev"] == 3
+        assert stored["layout"] == {"other": target_layout["other"]}
+        assert "optimize_backup" not in stored
+    else:
+        assert response["success"] and response["result"]["rev"] == 3
+        assert stored["layout"]["other"] == target_layout["other"]
+        assert stored["layout"]["dev"] != target_layout["dev"]
+        assert stored["optimize_backup"]["after_layout_rev"] == 3
+
+
+async def test_issue_491_space_delete_fences_before_pair_revisions(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """A paired writer cannot replace an older unresolved paired operation."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    before = {
+        "spaces": [_space("f1", "r1")], "markers": [], "settings": {},
+    }
+    target = copy.deepcopy(before)
+    target["spaces"][0]["title"] = "Recovered"
+    target_layout = {"dev": {"s": "f1", "x": 0.4, "y": 0.5}}
+    await runtime.config_store.async_save({"config": before, "rev": 1})
+    await runtime.store.async_save({
+        "layout": {}, "rev": 1,
+        "optimize_pending": {
+            "kind": "optimize", "config": target, "layout": target_layout,
+            "config_rev": 2, "layout_rev": 2, "final_metadata": {},
+        },
+    })
+
+    await client.send_json_auto_id({
+        "type": "houseplan/space/delete", "space_id": "f1",
+        "expected_config_rev": 1, "expected_layout_rev": 1,
+    })
+    response = await client.receive_json()
+    assert not response["success"] and response["error"]["code"] == "conflict"
+    assert await runtime.config_store.async_load() == {"config": target, "rev": 2}
+    assert await runtime.store.async_load() == {"layout": target_layout, "rev": 2}
+
+
+async def test_issue_491_failed_fence_blocks_point_write_and_keeps_intent(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch,
+) -> None:
+    """A continuing Store failure cannot turn recovery into an ordinary edit."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    before = {"spaces": [], "markers": [], "settings": {}}
+    target = {
+        "spaces": [], "markers": [{"id": "target", "binding": "virtual"}],
+        "settings": {},
+    }
+    old_layout = {"dev": {"s": "f1", "x": 0.1, "y": 0.2}}
+    pending = {
+        "kind": "optimize", "config": target,
+        "layout": {"dev": {"s": "f1", "x": 0.4, "y": 0.5}},
+        "config_rev": 2, "layout_rev": 2,
+        "final_metadata": {"optimize_backup": {"sentinel": True}},
+    }
+    await runtime.config_store.async_save({"config": before, "rev": 1})
+    await runtime.store.async_save({
+        "layout": old_layout, "rev": 1, "optimize_pending": pending,
+    })
+
+    real_config_save = runtime.config_store.async_save
+
+    async def refuse_recovery(value: dict) -> None:
+        if value.get("rev") == 2:
+            raise OSError("target config remains unavailable")
+        await real_config_save(value)
+
+    monkeypatch.setattr(runtime.config_store, "async_save", refuse_recovery)
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/update", "device_id": "dev",
+        "pos": {"s": "f1", "x": 0.9, "y": 0.9},
+    })
+    response = await client.receive_json()
+    assert not response["success"] and response["error"]["code"] == "commit_failed"
+    assert await runtime.config_store.async_load() == {"config": before, "rev": 1}
+    stored = await runtime.store.async_load()
+    assert stored["layout"] == old_layout
+    assert stored["optimize_pending"] == pending
+
+
+async def test_issue_491_optimize_fail_after_final_write_is_success(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch,
+) -> None:
+    """A post-durable Store exception is decided by exact reload, not guessed."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    before = {"spaces": [], "markers": [], "settings": {}}
+    target = {**before, "model_version": 1}
+    await runtime.config_store.async_save({"config": before, "rev": 1})
+    await runtime.store.async_save({"layout": {}, "rev": 1, "future": "kept"})
+    real_layout_save = runtime.store.async_save
+    failed = False
+
+    async def fail_after_final(value: dict) -> None:
+        nonlocal failed
+        await real_layout_save(value)
+        if value.get("rev") == 2 and "optimize_pending" not in value and not failed:
+            failed = True
+            raise OSError("reported failure after durable final layout")
+
+    monkeypatch.setattr(runtime.store, "async_save", fail_after_final)
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize", "config": target, "layout": {},
+        "expected_config_rev": 1, "expected_layout_rev": 1,
+    })
+    response = await client.receive_json()
+    assert response["success"] and response["result"]["can_undo"] is True
+    assert failed
+    assert (await runtime.config_store.async_load())["rev"] == 2
+    stored = await runtime.store.async_load()
+    assert stored["rev"] == 2 and "optimize_pending" not in stored
+    assert stored["future"] == "kept"
+
+
+async def test_issue_491_optimize_failure_restores_before_pair(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch,
+) -> None:
+    """Persistent target failure reports an error only after exact rollback."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    before = {"spaces": [], "markers": [], "settings": {}}
+    target = {**before, "model_version": 1}
+    before_layout = {"dev": {"s": "f1", "x": 0.1, "y": 0.2}}
+    before_store = {
+        "layout": before_layout, "rev": 1,
+        "future": {"must": "survive"},
+    }
+    await runtime.config_store.async_save({"config": before, "rev": 1})
+    await runtime.store.async_save(before_store)
+    real_config_save = runtime.config_store.async_save
+
+    async def refuse_target(value: dict) -> None:
+        if value.get("rev") == 2:
+            raise OSError("optimize target unavailable")
+        await real_config_save(value)
+
+    monkeypatch.setattr(runtime.config_store, "async_save", refuse_target)
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize", "config": target,
+        "layout": {"dev": {"s": "f1", "x": 0.8, "y": 0.9}},
+        "expected_config_rev": 1, "expected_layout_rev": 1,
+    })
+    response = await client.receive_json()
+    assert not response["success"] and response["error"]["code"] == "commit_failed"
+    assert await runtime.config_store.async_load() == {"config": before, "rev": 1}
+    assert await runtime.store.async_load() == before_store
+
+
+async def test_issue_491_optimize_undo_failure_restores_pre_undo_pair(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch,
+) -> None:
+    """Undo uses the same retry/rollback protocol and keeps its live backup."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    before = {"spaces": [], "markers": [], "settings": {}}
+    optimized = {**before, "model_version": 1}
+    await runtime.config_store.async_save({"config": before, "rev": 1})
+    await runtime.store.async_save({"layout": {}, "rev": 1})
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize", "config": optimized, "layout": {},
+        "expected_config_rev": 1, "expected_layout_rev": 1,
+    })
+    assert (await client.receive_json())["success"]
+    exact_config = await runtime.config_store.async_load()
+    exact_layout = await runtime.store.async_load()
+    real_config_save = runtime.config_store.async_save
+
+    async def refuse_undo_target(value: dict) -> None:
+        if value.get("rev") == 3:
+            raise OSError("undo target unavailable")
+        await real_config_save(value)
+
+    monkeypatch.setattr(runtime.config_store, "async_save", refuse_undo_target)
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize_undo",
+        "expected_config_rev": 2, "expected_layout_rev": 2,
+    })
+    response = await client.receive_json()
+    assert not response["success"] and response["error"]["code"] == "commit_failed"
+    assert await runtime.config_store.async_load() == exact_config
+    assert await runtime.store.async_load() == exact_layout
+
+
 async def test_not_ready_without_entry(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
     """WS commands answer not_ready when the integration has no loaded entry."""
     # register only the WS commands, without an entry

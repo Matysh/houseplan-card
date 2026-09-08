@@ -236,3 +236,154 @@ async def async_save_config_state(
     except Exception:  # noqa: BLE001 - config commit already stands
         _LOGGER.exception("House Plan: virtual-light state reconciliation failed")
     return payload
+
+
+@dataclass(frozen=True)
+class ResolvedStorePair:
+    """One coherent config/layout read, optionally after pending recovery."""
+
+    config_data: dict[str, Any]
+    layout_data: dict[str, Any]
+    recovered_kind: str | None = None
+
+
+def _pending_target(
+    layout_data: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Return a structurally usable paired-write intent, if one is present."""
+    pending = layout_data.get(OPTIMIZE_PENDING)
+    if not isinstance(pending, dict):
+        return None
+    if not isinstance(pending.get("config"), dict):
+        return None
+    if not isinstance(pending.get("layout"), dict):
+        return None
+    return pending
+
+
+async def async_converge_store_pair(
+    runtime: HouseplanData,
+    pending: dict[str, Any],
+    *,
+    config_data: dict[str, Any] | None = None,
+    layout_data: dict[str, Any] | None = None,
+) -> ResolvedStorePair:
+    """Converge both stores on one durable paired-write intent.
+
+    Callers hold ``runtime.write_lock``.  Store may raise after bytes reached
+    disk, so each failed half is reloaded and compared with the exact payload
+    before the exception is allowed to escape.
+    """
+    if config_data is None:
+        config_data = await runtime.config_store.async_load() or {}
+    if layout_data is None:
+        layout_data = await runtime.store.async_load() or {}
+
+    target_config = canonicalize_config_geometry(pending["config"])
+    target_layout = canonicalize_layout_geometry(pending["layout"])
+    config_rev = int(config_data.get("rev", 0))
+    layout_rev = int(layout_data.get("rev", 0))
+    target_config_rev = int(pending.get(
+        "config_rev", config_rev + (config_data.get("config") != target_config)
+    ))
+    target_layout_rev = int(pending.get(
+        "layout_rev", layout_rev + (layout_data.get("layout", {}) != target_layout)
+    ))
+
+    exact_metadata = pending.get("final_metadata")
+    replace_metadata = isinstance(exact_metadata, dict)
+    config_needs_write = (
+        config_data.get("config") != target_config
+        or (
+            config_rev != target_config_rev
+            if replace_metadata
+            else config_rev < target_config_rev
+        )
+    )
+    if config_needs_write:
+        previous_config_rev = config_rev
+        config_rev = (
+            target_config_rev
+            if replace_metadata
+            else max(config_rev, target_config_rev)
+        )
+        expected_config = {"config": target_config, "rev": config_rev}
+        try:
+            config_data = await async_save_config_state(
+                runtime,
+                target_config,
+                config_rev,
+                previous_rev=previous_config_rev,
+            )
+        except Exception:
+            # A Store write is allowed to fail after its atomic replacement.
+            # Exact reload distinguishes that case from a half that never
+            # reached disk; no inference is made from the exception itself.
+            config_data = await runtime.config_store.async_load() or {}
+            if config_data != expected_config:
+                raise
+
+    layout_rev = (
+        target_layout_rev
+        if replace_metadata
+        else max(layout_rev, target_layout_rev)
+    )
+    metadata = dict(exact_metadata) if replace_metadata else None
+    if (
+        not replace_metadata
+        and not pending.get("clear_backup")
+        and OPTIMIZE_BACKUP in layout_data
+    ):
+        metadata = {OPTIMIZE_BACKUP: layout_data[OPTIMIZE_BACKUP]}
+    remove_metadata = [OPTIMIZE_PENDING, OPTIMIZE_BACKUP]
+    if pending.get("clear_backup"):
+        # A recovered whole-plan undo replaces the complete layout; a nested
+        # repair snapshot from that replaced layout must not survive it.
+        remove_metadata.append("repair_backup")
+    expected_layout = layout_store_payload(
+        layout_data,
+        target_layout,
+        layout_rev,
+        metadata=metadata,
+        remove=tuple(remove_metadata),
+        replace_metadata=replace_metadata,
+    )
+    try:
+        layout_data = await async_save_layout_state(
+            runtime,
+            layout_data,
+            target_layout,
+            layout_rev,
+            metadata=metadata,
+            remove=tuple(remove_metadata),
+            replace_metadata=replace_metadata,
+        )
+    except Exception:
+        layout_data = await runtime.store.async_load() or {}
+        if layout_data != expected_layout:
+            raise
+
+    # Return fresh durable documents.  A following writer must never continue
+    # with pre-recovery revisions or a pre-recovery layout snapshot.
+    config_data = await runtime.config_store.async_load() or {}
+    layout_data = await runtime.store.async_load() or {}
+    return ResolvedStorePair(
+        config_data=config_data,
+        layout_data=layout_data,
+        recovered_kind=str(pending.get("kind") or "plan optimization"),
+    )
+
+
+async def async_resolve_pending_pair(runtime: HouseplanData) -> ResolvedStorePair:
+    """Load a coherent pair, finishing a valid durable intent first."""
+    config_data = await runtime.config_store.async_load() or {}
+    layout_data = await runtime.store.async_load() or {}
+    pending = _pending_target(layout_data)
+    if pending is None:
+        return ResolvedStorePair(config_data=config_data, layout_data=layout_data)
+    return await async_converge_store_pair(
+        runtime,
+        pending,
+        config_data=config_data,
+        layout_data=layout_data,
+    )

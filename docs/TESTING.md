@@ -3052,6 +3052,21 @@ require hands on real hardware — they remain for the human pass.
       test_ha_import_export; auto: smoke_optimize_coordinate_canonicalization;
       mutations: `optimize-storage-boundary-removed`,
       `optimize-config-storage-half-raw`, `optimize-layout-storage-half-raw`].
+- [ ] **An unfinished config/layout pair survives the next writer (#491)**:
+      Optimize and Optimize Undo use the same intent → exact reload/retry →
+      rollback protocol as import and space deletion. A runtime config writer
+      resolves pending before CAS; a point layout writer applies only its
+      delta to the recovered target; a continuing Store failure rejects that
+      writer without changing either half or deleting intent/backup. A Store
+      exception after the final durable layout is recognized as success, while
+      persistent Optimize/Undo target failures restore the exact before-pair
+      including unknown metadata and revisions. Setup shares the resolver and
+      legacy pending remains compatible [backend/HA harness:
+      `test_issue_491_*`, existing `test_setup_recovers_*` and import pair
+      fault tests; mutations: `pair-recovery-config-writer-skips-fence`,
+      `pair-recovery-point-writer-skips-fence`,
+      `optimize-skips-pair-retry-rollback`,
+      `optimize-undo-skips-pair-retry-rollback`].
 - [ ] Optimizer migration safety: legacy decor width/text size is clamped to
       the backend schema, `fill: true` receives explicit fill style, invalid
       legacy `plan_scale` is preserved for repair, an already canonical plan is

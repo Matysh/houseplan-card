@@ -2402,6 +2402,37 @@ async def test_pair_retries_a_fail_after_layout_write_before_success(
     assert "optimize_pending" not in layout_data
 
 
+async def test_issue_491_import_apply_fences_an_older_pending_pair(
+    hass: HomeAssistant, tmp_path: Path,
+) -> None:
+    """A preview made before recovery conflicts after the exact pair is resolved."""
+    await _setup(hass)
+    rt, response, _ = await _candidate(hass, tmp_path)
+    recovered_config = _config()
+    recovered_config["spaces"][0]["title"] = "Recovered before import"
+    recovered_layout = {"lamp": {"x": 0.4, "y": 0.5, "s": "ground"}}
+    current_layout = await rt.store.async_load()
+    await rt.store.async_save({
+        **current_layout,
+        "optimize_pending": {
+            "kind": "optimize", "config": recovered_config,
+            "layout": recovered_layout, "config_rev": 2, "layout_rev": 2,
+            "final_metadata": {"future": {"kept": True}},
+        },
+    })
+
+    connection = await _apply(hass, response)
+    assert connection.result is None
+    assert connection.error and connection.error[0] == "conflict"
+    assert await rt.config_store.async_load() == {
+        "config": recovered_config, "rev": 2,
+    }
+    stored = await rt.store.async_load()
+    assert stored == {
+        "future": {"kept": True}, "layout": recovered_layout, "rev": 2,
+    }
+
+
 async def test_success_events_are_emitted_only_after_both_target_writes(
     hass: HomeAssistant, tmp_path: Path, monkeypatch,
 ) -> None:
