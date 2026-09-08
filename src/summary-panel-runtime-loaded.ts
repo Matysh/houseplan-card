@@ -440,10 +440,24 @@ export class LoadedSummaryPanelRuntime {
               const authoritative = await this.host._getAuthoritativeConfig();
               const confirmed = confirmedSummaryPanelWriteRecovery(authoritative, draft);
               if (!confirmed) throw writeError;
+              const configChanged = contentFingerprint(confirmed.config)
+                !== (this.host._cfgContentFingerprint || contentFingerprint(this.host._serverCfg));
+              if (configChanged && !await this.host._signer.prepareImage(
+                this.host.hass, this.host._candidateBackdrop(confirmed.config),
+              )) {
+                this.host._continuity.note('asset-failed');
+                this.host._scheduleLoadRetry(true);
+                throw writeError;
+              }
+              if (configChanged && this.host._continuity.hasCompleteFrame
+                  && this.host._continuity.state === 'steady') {
+                this.host._beginContinuityCandidate('summary-recovery', true);
+              }
               const visibleSpace = this.host._space;
               this.host._adoptStructuralResponses(authoritative);
               void this.host._syncDecorAssets(confirmed.config).catch(() => undefined);
               this.host._adoptInitialSpace(this.host._model, true);
+              this.host._resumePendingNavMode();
               this.host._cacheSnapshot();
               if (this.host._space !== visibleSpace) this.host._restoreZoom();
               this.host._regSignature = '';

@@ -49,6 +49,14 @@ export interface SummaryPanelHost extends Node {
   _layoutRev: number;
   _cfgContentFingerprint: string;
   _regSignature: string;
+  _signer: {
+    prepareImage(hass: SummaryHass | undefined, href: string): Promise<boolean>;
+  };
+  _continuity: {
+    readonly hasCompleteFrame: boolean;
+    readonly state: string;
+    note(event: string): void;
+  };
   _writesPending: number;
   _writeChain: Promise<void>;
   _kiosk: boolean;
@@ -73,10 +81,14 @@ export interface SummaryPanelHost extends Node {
   }): Promise<boolean>;
   _sendConfigCandidate(candidate: ServerConfig): Promise<void>;
   _getAuthoritativeConfig(): Promise<AuthoritativeConfigResponse>;
+  _candidateBackdrop(config: ServerConfig | null): string;
+  _scheduleLoadRetry(force?: boolean): void;
+  _beginContinuityCandidate(reason: string, dataReady: boolean): number;
   _adoptStructuralResponses(response: AuthoritativeConfigResponse): { configChanged: boolean };
   _syncDecorAssets(config: ServerConfig | null): Promise<void>;
   _adoptInitialSpace(models: SpaceModel[], authoritative?: boolean): unknown;
   _maybeRebuildDevices(): void;
+  _resumePendingNavMode(): boolean;
   _restoreZoom(): void;
   _reloadConfigOnly(force?: boolean): Promise<void>;
   _cacheSnapshot(): void;

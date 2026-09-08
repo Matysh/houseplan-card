@@ -245,6 +245,18 @@ const recovery = await page.evaluate(async () => {
   const runtime = card._summary;
   const originalHass = card.hass;
   const originalCallWS = originalHass.callWS;
+  const originalPrepareImage = card._signer.prepareImage.bind(card._signer);
+  const originalAdoptStructuralResponses = card._adoptStructuralResponses.bind(card);
+  const recoveryOrder = [];
+  const concurrentBackdrop = 'media-source://image/summary-recovery-490';
+  card._signer.prepareImage = async (_hass, href) => {
+    recoveryOrder.push(`prepare:${href}`);
+    return true;
+  };
+  card._adoptStructuralResponses = (...args) => {
+    recoveryOrder.push('adopt');
+    return originalAdoptStructuralResponses(...args);
+  };
   const writes = [];
   let serverConfig = structuredClone(card._serverCfg);
   let serverRev = card._cfgRev;
@@ -259,7 +271,11 @@ const recovery = await page.evaluate(async () => {
         if (firstWrite) {
           firstWrite = false;
           serverConfig = structuredClone(message.config);
-          serverConfig.spaces[0] = { ...serverConfig.spaces[0], title: 'Concurrent title kept' };
+          serverConfig.spaces[0] = {
+            ...serverConfig.spaces[0],
+            title: 'Concurrent title kept',
+            plan_url: concurrentBackdrop,
+          };
           serverConfig.settings = { ...serverConfig.settings, concurrent_guard_490: 'kept' };
           serverRev = message.expected_rev + 2;
           throw new Error('synthetic lost ACK');
@@ -298,14 +314,21 @@ const recovery = await page.evaluate(async () => {
     && card._serverCfg.settings.summary_panel.title === 'Second summary write';
   runtime.dialog = null;
   card.hass = { ...card.hass, callWS: originalCallWS };
+  card._signer.prepareImage = originalPrepareImage;
+  card._adoptStructuralResponses = originalAdoptStructuralResponses;
   await card.updateComplete;
   return {
     lostAckClosesAsSuccess: firstClosed,
     recoveryAdoptsWholeConfig: recoveredConfig.spaces[0].title === 'Concurrent title kept'
+      && recoveredConfig.spaces[0].plan_url === concurrentBackdrop
       && recoveredConfig.settings.concurrent_guard_490 === 'kept',
+    recoveryPreparesBackdropBeforeAdoption:
+      recoveryOrder.indexOf(`prepare:${concurrentBackdrop}`) >= 0
+      && recoveryOrder.indexOf('adopt') > recoveryOrder.indexOf(`prepare:${concurrentBackdrop}`),
     recoveryAdoptsRevision: recoveredRev === writes[0].expected_rev + 2,
     nextWriteUsesRecoveredRevision: secondWrite?.expected_rev === recoveredRev,
     nextWritePreservesConcurrentChange: secondWrite?.config?.spaces?.[0]?.title === 'Concurrent title kept'
+      && secondWrite?.config?.spaces?.[0]?.plan_url === concurrentBackdrop
       && secondWrite?.config?.settings?.concurrent_guard_490 === 'kept',
     trueConflictStaysOpen,
   };
