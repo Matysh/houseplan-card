@@ -52,6 +52,28 @@ export interface RadarRecognition {
   reason: 'saved' | 'saved_unsupported' | 'ld2450' | 'radar_metadata' | 'none';
 }
 
+const LD2450_MODELS = new Set(['ld2450', 'hlkld2450', 'hilinkld2450']);
+
+const canonicalModel = (value: unknown): string => String(value || '')
+  .toLowerCase().replace(/[^a-z0-9]/g, '');
+
+export const freshRadarInstallationId = (): string => (
+  globalThis.crypto?.randomUUID?.()
+  || `radar_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+);
+
+export const radarAfterBindingChange = (
+  radar: RadarEditorDraft | null, touched: boolean, remove: boolean,
+) => {
+  const saved = !!radar?.original;
+  return {
+    radar: saved ? radar : null,
+    radarEligible: saved,
+    radarTouched: saved ? touched : touched || !!radar,
+    radarRemove: saved ? remove : remove || !!radar,
+  };
+};
+
 interface RadarRegistryEntity { device_id?: string }
 interface RadarRegistryDevice {
   model?: string;
@@ -95,17 +117,11 @@ export function recognizeRadar(
   const deviceId = device.bindingKind === 'device'
     ? device.bindingRef : registryEntity?.device_id;
   const registryDevice = deviceId ? registryHass?.devices?.[deviceId] : null;
-  const haystack = [
-    device.model, registryDevice?.model, registryDevice?.manufacturer,
-  ].filter(Boolean).join(' ').toLowerCase();
   const entities = deviceEntityIds(device);
-  if (/\bld[-_ ]?2450\b/.test(haystack)
+  if (LD2450_MODELS.has(canonicalModel(registryDevice?.model || device.model))
       && entities.some((entityId) => suffixScore(entityId, 'x', 1))
       && entities.some((entityId) => suffixScore(entityId, 'y', 1))) {
     return { eligible: true, profile: 'esphome_ld2450_v1', reason: 'ld2450' };
-  }
-  if (/\b(?:mmwave|mm-wave|radar|presence radar|fp2|fp1e|ld24(?:10|12|50))\b/.test(haystack)) {
-    return { eligible: true, profile: 'presence_v1', reason: 'radar_metadata' };
   }
   return { eligible: false, profile: 'presence_v1', reason: 'none' };
 }
@@ -174,9 +190,7 @@ export function radarDraft(
     showLive: original?.show_live !== false,
     profile,
     roomId,
-    installationId: original?.mount?.installation_id
-      || globalThis.crypto?.randomUUID?.()
-      || `radar_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    installationId: original?.mount?.installation_id || freshRadarInstallationId(),
     // The editor canvas is 0..1000; persisted plan coordinates remain the
     // canonical 0..1 space used by rooms and wall geometry.
     mountX: finiteText(original?.mount?.x == null ? undefined : original.mount.x * 1000,

@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  radarConfigFromDraft, radarDraft, radarSourceCandidates, recognizeRadar,
+  freshRadarInstallationId, radarAfterBindingChange, radarConfigFromDraft, radarDraft,
+  radarSourceCandidates, recognizeRadar,
 } from '../test-build/radar-editor.js';
 
 const space = { id: 'floor', title: 'Floor', cellCm: 5, rooms: [
@@ -50,6 +51,22 @@ test('coordinate-looking entity names alone do not claim an LD2450 adapter', () 
     'sensor.machine_target_1_x', 'sensor.machine_target_1_y',
   ] });
   assert.equal(recognizeRadar(ordinary, {}).eligible, false);
+  const fuzzy = device({ model: 'Presence Radar FP2', allEntities: [
+    'sensor.machine_target_1_x', 'sensor.machine_target_1_y',
+  ] });
+  assert.equal(recognizeRadar(fuzzy, {}).eligible, false);
+});
+
+test('rebinding preserves only an already-saved radar and a new installation gets a new id', () => {
+  const pending = radarDraft(device(), space, [50, 60], {}, true);
+  assert.deepEqual(radarAfterBindingChange(pending, true, false), {
+    radar: null, radarEligible: false, radarTouched: true, radarRemove: true,
+  });
+  const saved = { ...pending, original: { version: 1 } };
+  assert.deepEqual(radarAfterBindingChange(saved, false, false), {
+    radar: saved, radarEligible: true, radarTouched: false, radarRemove: false,
+  });
+  assert.notEqual(freshRadarInstallationId(), freshRadarInstallationId());
 });
 
 test('manual exact sources may come from separate HA devices', () => {

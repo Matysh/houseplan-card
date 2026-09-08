@@ -3,7 +3,8 @@ import { html, nothing, type TemplateResult } from 'lit';
 
 import type { I18nKey } from '../i18n';
 import {
-  radarConfigFromDraft, radarDraft, radarSourceCandidates, recognizeRadar,
+  freshRadarInstallationId, radarConfigFromDraft, radarDraft, radarSourceCandidates,
+  recognizeRadar,
   type RadarEditorDraft, type RadarHassLike,
 } from '../radar-editor';
 import type { RadarSetupController } from '../radar-setup';
@@ -50,7 +51,10 @@ export interface RadarSectionOptions {
 }
 
 /** Rendered from the lazy editor chunk; ordinary View never loads this file. */
-export function renderRadarSection(options: RadarSectionOptions): TemplateResult {
+export function renderRadarSection(
+  options: RadarSectionOptions,
+  placement: 'main' | 'additional' = 'main',
+): TemplateResult {
   const { dialog: d, device } = options;
   if (!device) return html``;
   options.setup.syncMarker(device.marker?.id || device.id);
@@ -59,6 +63,27 @@ export function renderRadarSection(options: RadarSectionOptions): TemplateResult
   const remove = () => options.updateDialog({
     radar: null, radarTouched: true, radarRemove: true,
   });
+  const begin = () => {
+    const space = options.spaceModelById(device.space) || options.currentSpace();
+    if (!space) return;
+    const point = options.position(device);
+    const radar = radarDraft(device, space, [point.x, point.y], options.registryHass, true);
+    if (!radar) return;
+    options.updateDialog({
+      radar, radarEligible: true, radarTouched: true, radarRemove: false,
+    });
+  };
+  const manualEntry = !savedUnsupported && d.bindingMode !== 'virtual'
+    && (!d.radar || d.radarRemove) && !recognition.eligible;
+  if (placement === 'additional') {
+    if (!manualEntry) return html``;
+    return html`<details class="markerlightgroup radaradditional">
+      <summary>${options.t('radar.additional_actions')}</summary>
+      <button class="btn ghost" type="button" @click=${begin}>
+        <ha-icon icon="mdi:radar"></ha-icon>${options.t('radar.declare')}
+      </button>
+    </details>`;
+  }
   if ((!d.radar || d.radarRemove) && options.setup.isActive()) options.setup.reset();
   if (savedUnsupported || d.bindingMode === 'virtual' && !!device.marker?.radar) {
     return html`<fieldset class="markerlightgroup radargroup">
@@ -72,16 +97,6 @@ export function renderRadarSection(options: RadarSectionOptions): TemplateResult
     </fieldset>`;
   }
   if (d.bindingMode === 'virtual') return html``;
-  const begin = () => {
-    const space = options.spaceModelById(device.space) || options.currentSpace();
-    if (!space) return;
-    const point = options.position(device);
-    const radar = radarDraft(device, space, [point.x, point.y], options.registryHass, true);
-    if (!radar) return;
-    options.updateDialog({
-      radar, radarEligible: true, radarTouched: true, radarRemove: false,
-    });
-  };
   if (!d.radar || d.radarRemove) {
     if (recognition.eligible) {
       return html`<fieldset class="markerlightgroup radargroup">
@@ -93,12 +108,7 @@ export function renderRadarSection(options: RadarSectionOptions): TemplateResult
         </button>
       </fieldset>`;
     }
-    return html`<details class="markerlightgroup radaradditional">
-      <summary>${options.t('radar.additional_actions')}</summary>
-      <button class="btn ghost" type="button" @click=${begin}>
-        <ha-icon icon="mdi:radar"></ha-icon>${options.t('radar.declare')}
-      </button>
-    </details>`;
+    return html``;
   }
 
   const radar = d.radar;
@@ -172,17 +182,26 @@ export function renderRadarSection(options: RadarSectionOptions): TemplateResult
       });
     }
   };
-  const configureOnPlan = () => {
-    const room = roomOptions.find((candidate) => candidate.id === radar.roomId);
-    if (!space || !room || !Array.isArray(room.poly) || room.poly.length < 3
-        || !radarConfigFromDraft(radar, space.cellCm || 5)) {
+  const configureOnPlan = (draft = radar) => {
+    const room = roomOptions.find((candidate) => candidate.id === draft.roomId);
+    if (!space || !room || !radarConfigFromDraft(draft, space.cellCm || 5)) {
       options.toast(options.t('radar.invalid'));
       return;
     }
+    if (!Array.isArray(room.poly) || room.poly.length < 3) {
+      options.toast(options.t('radar.no_contour'));
+    }
     if (!options.setup.begin(
-      device.marker?.id || device.id, radar, room, space.cellCm || 5, options.configRev,
+      device.marker?.id || device.id, draft, room, space.cellCm || 5, options.configRev,
     )) options.toast(options.t('radar.invalid'));
   };
+  const changeInstallation = () => configureOnPlan({
+    ...radar,
+    installationId: freshRadarInstallationId(),
+    calibrationOverride: undefined,
+    inspection: undefined,
+    inspectError: undefined,
+  });
   const setAxis = (axis: 'xEntities' | 'yEntities', index: number, value: string) => {
     const next = [...radar[axis]];
     next[index] = value;
@@ -419,9 +438,12 @@ export function renderRadarSection(options: RadarSectionOptions): TemplateResult
       <span>${options.t('radar.mirror')}</span>
     </label>
     <div class="row">
-      <button class="btn" type="button" @click=${configureOnPlan}>
+      <button class="btn" type="button" @click=${() => configureOnPlan()}>
         <ha-icon icon="mdi:map-marker-radius"></ha-icon>${options.t('radar.configure_on_plan')}
       </button>
+      ${radar.original ? html`<button class="btn ghost" type="button" @click=${changeInstallation}>
+        <ha-icon icon="mdi:restart"></ha-icon>${options.t('radar.change_installation')}
+      </button>` : nothing}
       <button class="btn" type="button" ?disabled=${radar.inspectBusy} @click=${inspect}>
         <ha-icon icon="mdi:radar"></ha-icon>
         ${radar.inspectBusy ? options.t('radar.checking') : options.t('radar.check_sources')}
@@ -435,9 +457,12 @@ export function renderRadarSection(options: RadarSectionOptions): TemplateResult
         targets: radar.inspection.frame.targets?.length || 0,
         ranges: radar.inspection.frame.ranges?.length || 0,
       })}</span>
-      ${(radar.inspection.sources || []).map((source) => html`<code>
-        ${source.entity_id}: ${source.state ?? '—'}
-      </code>`)}
+      ${(radar.inspection.sources || []).map((source) => {
+        const age = typeof source.reported_at === 'number' && Number.isFinite(source.reported_at)
+          ? Math.max(0, Math.round(Date.now() / 1000 - source.reported_at)) : null;
+        return html`<code>${source.entity_id}: ${source.state ?? '—'}${age == null ? ''
+          : ` · ${options.t('radar.report_age', { seconds: age })}`}</code>`;
+      })}
     </div>` : nothing}
     ${options.setup.render()}
     <div class="row">

@@ -15,6 +15,8 @@ export function radarMarkerLiveInSpace(marker: Marker, space: string): boolean {
 
 const RADAR_HEALTH_KEYS: Partial<Record<string, I18nKey>> = {
   ok: 'radar.health_ok', off: 'radar.health_off', stale: 'radar.health_stale',
+  partial: 'radar.health_partial', restricted: 'radar.health_restricted',
+  incomplete: 'radar.health_incomplete',
   position_unavailable: 'radar.health_position_unavailable',
   unavailable: 'radar.health_unavailable', needs_setup: 'radar.health_needs_setup',
   inconsistent: 'radar.health_inconsistent', unknown: 'radar.health_unknown',
@@ -44,7 +46,12 @@ export interface RadarLiveRange {
   segments?: readonly (readonly (readonly [number, number])[])[];
 }
 
-export interface RadarLiveZone { id: string; state: boolean | number | null }
+export interface RadarLiveZone {
+  id: string;
+  state: boolean | number | null;
+  /** Server-owned geometry for a verified adapter; the client never invents it. */
+  polygon?: readonly (readonly [number, number])[];
+}
 
 export interface RadarLiveFrame {
   server_session_id: string;
@@ -98,8 +105,12 @@ export function normalizeRadarFrame(value: unknown): RadarLiveFrame | null {
     const item = entry as Record<string, unknown>;
     if (typeof item.id !== 'string') return [];
     const state = item.state;
-    return state === null || typeof state === 'boolean' || finite(state)
-      ? [{ id: item.id, state } as RadarLiveZone] : [];
+    if (!(state === null || typeof state === 'boolean' || finite(state))) return [];
+    const polygon = Array.isArray(item.polygon) ? item.polygon.slice(0, 64).flatMap((point) => {
+      if (!Array.isArray(point) || point.length !== 2 || !finite(point[0]) || !finite(point[1])) return [];
+      return [[point[0], point[1]] as const];
+    }) : [];
+    return [{ id: item.id, state, ...(polygon.length >= 3 ? { polygon } : {}) } as RadarLiveZone];
   }) : [];
   return {
     server_session_id: raw.server_session_id,

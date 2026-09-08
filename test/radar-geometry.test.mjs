@@ -37,6 +37,27 @@ test('two reference solve keeps physical scale rigid', () => {
   ], 5), /invalid_selection/);
 });
 
+test('two-point calibration keeps every distance and fit guard distinct', () => {
+  const mount = [.5, .5];
+  const plan = (x, y) => [.5 + x / 1200, .5 - y / 1200];
+  assert.throws(() => solveRadarTwoPoint(mount, [[49, 0], [0, 100]], [
+    plan(49, 0), plan(0, 100),
+  ], 5), /invalid_selection/, 'references under 50 cm are rejected');
+  assert.throws(() => solveRadarTwoPoint(mount, [[100, 0], [0, 100]], [
+    plan(100, 0), plan(-50, 86.603),
+  ], 5), /invalid_selection/, 'RMS over 20 cm is rejected');
+  assert.throws(() => solveRadarTwoPoint(mount, [[100, 0], [0, 100]], [
+    plan(100, 0), plan(-64.279, 76.604),
+  ], 5), /invalid_selection/, 'an individual error over 30 cm is rejected');
+});
+
+test('two-point calibration exposes an ambiguous mirror instead of choosing silently', () => {
+  const plan = (x, y) => [.5 + x / 1200, .5 - y / 1200];
+  assert.throws(() => solveRadarTwoPoint([.5, .5], [[-20, 80], [20, 80]], [
+    plan(0, 80), plan(0, 80),
+  ], 5), /ambiguous_sources/);
+});
+
 test('capture median rejects one sample more than 15cm away', () => {
   assert.deepEqual(radarMedianSample([[100, 200], [102, 198], [101, 201]]), [101, 200]);
   assert.throws(() => radarMedianSample([[100, 200], [101, 199], [140, 240]]), /bad_fit/);

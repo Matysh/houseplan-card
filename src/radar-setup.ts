@@ -7,6 +7,14 @@ import {
   projectRadarLocal, radarMedianSample, solveRadarTwoPoint,
 } from './radar-geometry';
 import type { RadarEditorDraft } from './radar-editor';
+
+type RadarDiscardKey = 'radar.discard_setup_title' | 'radar.discard_setup' | 'btn.close' | 'btn.cancel';
+
+export const radarDiscardRequest = (t: (key: RadarDiscardKey) => string) => ({
+  key: 'discard-radar-setup', kind: 'warning' as const,
+  title: t('radar.discard_setup_title'), message: t('radar.discard_setup'),
+  confirmLabel: t('btn.close'), cancelLabel: t('btn.cancel'),
+});
 import type { MarkerRadar, RoomCfg } from './types';
 
 const COUNTDOWN_MS = 10_000;
@@ -63,6 +71,7 @@ export interface RadarSetupHost {
   t(key: I18nKey, vars?: Record<string, string | number>): string;
   configFromDraft(draft: RadarEditorDraft, cellCm: number): MarkerRadar | null;
   apply(draft: RadarEditorDraft): void;
+  confirmDiscard(): Promise<boolean>;
 }
 
 function pointFromEvent(event: PointerEvent): Point | null {
@@ -118,12 +127,16 @@ export class RadarSetupController {
     this.active = null;
   }
 
-  public cancel(): boolean {
-    if (!this.active) return false;
+  public async discardIfAllowed(): Promise<boolean> {
+    if (!this.active) return true;
+    const dirty = this.active.mount !== null || this.active.phase !== 'mount';
+    if (dirty && !await this.host.confirmDiscard()) return false;
     this.reset();
     this.host.requestUpdate();
     return true;
   }
+
+  public cancel(): Promise<boolean> { return this.discardIfAllowed(); }
 
   public isActive(): boolean { return this.active !== null; }
 
@@ -313,7 +326,7 @@ export class RadarSetupController {
       state.error = undefined;
     } catch (error: unknown) {
       const message = String((error as Error)?.message);
-      state.error = message === 'ambiguous_sources' ? 'radar.bad_references' : 'radar.bad_fit';
+      state.error = message === 'ambiguous_sources' ? 'radar.ambiguous_sources' : 'radar.bad_fit';
       state.refs = [];
       state.phase = 'reference_1';
     }
@@ -386,7 +399,7 @@ export class RadarSetupController {
       <div class="radarsetup-head">
         <strong>${this.instruction(state)}</strong>
         <button class="iconbtn" type="button" title=${this.host.t('btn.cancel')}
-          @click=${() => this.cancel()}><ha-icon icon="mdi:close"></ha-icon></button>
+          @click=${() => { void this.cancel(); }}><ha-icon icon="mdi:close"></ha-icon></button>
       </div>
       <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"
         @pointerdown=${(event: PointerEvent) => this.choosePoint(event)}

@@ -2,13 +2,18 @@
 from __future__ import annotations
 
 import copy
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.houseplan.radar import RadarCoordinator
+from custom_components.houseplan.radar_validation import radar_source_entity_ids
 
 
 def _stored(profile: str = "esphome_ld2450_v1") -> dict:
@@ -35,6 +40,28 @@ def _stored(profile: str = "esphome_ld2450_v1") -> dict:
 
 
 async def _coordinator(hass: HomeAssistant, document: dict) -> RadarCoordinator:
+    radar = document["config"]["markers"][0]["radar"]
+    if radar.get("profile") == "esphome_ld2450_v1":
+        MockConfigEntry(
+            domain="esphome", title="Radar", entry_id="radar-test",
+        ).add_to_hass(hass)
+        device = dr.async_get(hass).async_get_or_create(
+            config_entry_id="radar-test", identifiers={("esphome", "radar-test")},
+            name="Radar", model="HLK-LD2450",
+        )
+        document["config"]["markers"][0]["binding"] = f"device:{device.id}"
+        registry = er.async_get(hass)
+        for entity_id in radar_source_entity_ids(radar):
+            domain, object_id = entity_id.split(".", 1)
+            state = hass.states.get(entity_id)
+            if state is not None:
+                hass.states.async_remove(entity_id)
+            registry.async_get_or_create(
+                domain, "esphome", object_id, device_id=device.id,
+                suggested_object_id=object_id,
+            )
+            if state is not None:
+                hass.states.async_set(entity_id, state.state, state.attributes)
     runtime = SimpleNamespace(config_store=AsyncMock())
     runtime.config_store.async_load.return_value = document
     coordinator = RadarCoordinator(hass, runtime)
@@ -75,6 +102,30 @@ async def test_generic_cartesian_origin_is_not_treated_as_absence(
     coordinator = await _coordinator(hass, document)
     frame = coordinator.frames_for_space("floor")[0]
     assert [(item["x"], item["y"]) for item in frame["targets"]] == [(.5, .5)]
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_mixed_current_and_stale_coordinate_slots_report_partial(
+    hass: HomeAssistant,
+) -> None:
+    document = _stored("cartesian_v1")
+    sources = document["config"]["markers"][0]["radar"]["sources"]
+    sources["slots"].append({
+        "id": "target_2", "x_entity": "sensor.radar_target_2_x",
+        "y_entity": "sensor.radar_target_2_y", "unit": "mm",
+    })
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_target_1_x", "0")
+    hass.states.async_set("sensor.radar_target_1_y", "1000")
+    hass.states.async_set("sensor.radar_target_2_x", "unknown")
+    hass.states.async_set("sensor.radar_target_2_y", "1000")
+
+    coordinator = await _coordinator(hass, document)
+    frame = coordinator.frames_for_space("floor")[0]
+    assert len(frame["targets"]) == 1
+    assert frame["complete"] is False
+    assert frame["health"] == "partial"
     coordinator.teardown()
 
 
@@ -250,6 +301,26 @@ async def test_teardown_releases_frames_and_subscriptions(
 
     assert coordinator.closed is True
     assert coordinator.frames_for_space("floor") == []
+    assert coordinator._unsub_sources == []
+
+
+@pytest.mark.asyncio
+async def test_teardown_during_config_load_cannot_resurrect_subscriptions(
+    hass: HomeAssistant,
+) -> None:
+    pending = hass.loop.create_future()
+    runtime = SimpleNamespace(config_store=SimpleNamespace(async_load=lambda: pending))
+    coordinator = RadarCoordinator(hass, runtime)
+    setup = hass.async_create_task(coordinator.async_setup())
+    await asyncio.sleep(0)
+
+    coordinator.teardown()
+    pending.set_result(_stored())
+    await setup
+
+    assert coordinator.closed is True
+    assert coordinator.radars == {}
+    assert coordinator._unsub_config is None
     assert coordinator._unsub_sources == []
 
 

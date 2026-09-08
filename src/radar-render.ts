@@ -13,7 +13,15 @@ export function renderRadarLive(
   if (!items.length) return nothing;
   const dots: TemplateResult[] = [];
   const arcs: TemplateResult[] = [];
+  const zones: TemplateResult[] = [];
   for (const frame of items) {
+    for (const zone of frame.zones) {
+      const occupied = zone.state === true || typeof zone.state === 'number' && zone.state > 0;
+      if (!occupied || !zone.polygon) continue;
+      const projected = zone.polygon.map((point) => project([point[0] * 1000, point[1] * 1000]));
+      zones.push(svg`<polygon class="radar-zone" data-radar-zone=${zone.id}
+        points=${projected.map((point) => `${point[0]},${point[1]}`).join(' ')}></polygon>`);
+    }
     for (const range of frame.ranges) {
       // An empty authoritative segment list means clipping removed the whole
       // arc. Never resurrect it with an unclipped client-side fallback.
@@ -34,7 +42,8 @@ export function renderRadarLive(
         aria-hidden="true"></span>`);
     }
   }
-  return html`${arcs.length ? svg`<svg class="radar-ranges" data-hp-live-viewbox="camera"
+  if (!arcs.length && !zones.length && !dots.length) return nothing;
+  return html`${arcs.length || zones.length ? svg`<svg class="radar-ranges" data-hp-live-viewbox="camera"
       viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none"
-      aria-hidden="true">${arcs}</svg>` : nothing}${dots}`;
+      aria-hidden="true">${zones}${arcs}</svg>` : nothing}${dots}`;
 }

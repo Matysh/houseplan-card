@@ -45,7 +45,10 @@
   House Plan recognizes ESPHome LD2450 coordinate sets, also supports explicit
   Cartesian, polar, range, zone-state and presence-only mappings, and provides
   an on-plan installation/calibration flow with source-health diagnostics. Raw
-  observations and the short diagnostic trail remain session-only
+  observations and the short diagnostic trail remain session-only. LD2450
+  auto-detection now requires an exact ESPHome, same-device registry match;
+  changing a saved binding keeps its radar setup available for repair, while
+  setup cancellation and source-health states are reported consistently
   ([#485](https://github.com/Matysh/houseplan-card/issues/485)).
 
 ## v1.73.0-beta.6 — 2026-09-08

@@ -38,6 +38,9 @@ class _Connection:
 
 class _Coordinator:
     def __init__(self) -> None:
+        self.hass = SimpleNamespace(states={
+            "sensor.x": SimpleNamespace(state="1"),
+        })
         self.closed = False
         self.server_session_id = "session-1"
         self.config_rev = 7
@@ -91,7 +94,8 @@ class _Coordinator:
 
 
 @pytest.fixture(autouse=True)
-def _clear_radar_ws_state():
+def _clear_radar_ws_state(monkeypatch):
+    monkeypatch.setattr(radar_ws, "radar_registry_evidence", lambda _hass: {})
     radar_ws._INSPECT_CALLS.clear()
     radar_ws._ACTIVE_SUBSCRIPTIONS.clear()
     radar_ws._ACTIVE_SETUP.clear()
@@ -119,13 +123,17 @@ def test_coordinator_lookup_and_read_permissions(monkeypatch, hass) -> None:
     assert radar_ws._coordinator(hass, connection, 1) is None
     assert connection.errors[-1][1] == "not_ready"
 
+    monkeypatch.setattr(radar_ws, "get_data", lambda _hass: SimpleNamespace())
+    assert radar_ws._coordinator(hass, connection, 2) is None
+    assert connection.errors[-1][1] == "unsupported_capability"
+
     coordinator = RadarCoordinator(hass, SimpleNamespace())
     monkeypatch.setattr(
         radar_ws, "get_data", lambda _hass: SimpleNamespace(radar_coordinator=coordinator),
     )
-    assert radar_ws._coordinator(hass, connection, 2) is coordinator
+    assert radar_ws._coordinator(hass, connection, 3) is coordinator
     coordinator.closed = True
-    assert radar_ws._coordinator(hass, connection, 3) is None
+    assert radar_ws._coordinator(hass, connection, 4) is None
     assert radar_ws._can_read(connection, {"sensor.x"}) is True
     connection.user.permissions.allowed = False
     assert radar_ws._can_read(connection, {"sensor.x"}) is False
@@ -192,6 +200,24 @@ def test_draft_validation_size_permission_and_success(monkeypatch) -> None:
     huge = {"id": 2, "marker_id": "radar", "draft_sources": {"x": "x" * 66000}}
     assert radar_ws._validated_draft(coordinator, huge, connection) is None
     assert connection.errors[-1][1] == "invalid_selection"
+
+
+def test_draft_validation_reports_unavailable_sources(monkeypatch) -> None:
+    coordinator = _Coordinator()
+    coordinator.hass.states = {}
+    connection = _Connection()
+    marker = {"id": "radar"}
+    radar = {"profile": "cartesian_v1"}
+    monkeypatch.setattr(
+        radar_ws, "validate_radar_draft", lambda *_args: (marker, {"sensor.x"}),
+    )
+
+    assert radar_ws._validated_draft(
+        coordinator,
+        {"id": 1, "marker_id": "radar", "draft_sources": {"radar": radar}},
+        connection,
+    ) is None
+    assert connection.errors[-1][1] == "source_unavailable"
 
 
 def test_draft_validation_reports_stable_radar_error(monkeypatch) -> None:

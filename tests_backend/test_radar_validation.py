@@ -32,6 +32,20 @@ def _config():
     }
 
 
+def _ld2450_registry(*, y_device: str = "abc", model: str = "HLK-LD2450"):
+    return {
+        "entities": {
+            "sensor.x": {"device_id": "abc", "platform": "esphome"},
+            "sensor.y": {"device_id": y_device, "platform": "esphome"},
+            "binary_sensor.presence": {"device_id": "abc", "platform": "esphome"},
+        },
+        "devices": {
+            "abc": {"model": model},
+            "other": {"model": model},
+        },
+    }
+
+
 def test_valid_stage1_radar_and_absent_namespace():
     validate_marker_radars(_config(), validate_all=True)
     validate_marker_radars({"spaces": [], "markers": [], "settings": {}}, validate_all=True)
@@ -50,6 +64,28 @@ def test_ld2450_requires_mm_and_distinct_axis_entities():
     radar["sources"]["slots"][0]["unit"] = "cm"
     with pytest.raises(vol.Invalid, match="must be mm"):
         validate_marker_radars(config, validate_all=True)
+
+
+def test_ld2450_verified_adapter_requires_same_esphome_marker_device():
+    config = _config()
+    radar = config["markers"][0]["radar"]
+    radar["profile"] = "esphome_ld2450_v1"
+    validate_marker_radars(
+        config, validate_all=True, registry=_ld2450_registry(),
+    )
+    with pytest.raises(vol.Invalid, match="same ESPHome device"):
+        validate_marker_radars(
+            config, validate_all=True, registry=_ld2450_registry(y_device="other"),
+        )
+    with pytest.raises(vol.Invalid, match="metadata"):
+        validate_marker_radars(
+            config, validate_all=True, registry=_ld2450_registry(model="Not a radar"),
+        )
+    config["markers"][0]["binding"] = "device:other"
+    with pytest.raises(vol.Invalid, match="marker device"):
+        validate_marker_radars(
+            config, validate_all=True, registry=_ld2450_registry(),
+        )
 
 
 def test_two_point_fit_and_owner_scale_are_revalidated_on_write():
@@ -101,14 +137,15 @@ def test_untouched_future_radar_round_trips_but_changed_one_fails():
         validate_marker_radars(changed, previous)
 
 
-def test_stage2_zone_polygon_and_stage3_cross_space_group_fail_closed():
+def test_future_stage_extensions_are_preserved_but_inert_in_stage1():
     config = _config()
     config["markers"][0]["radar"]["zones"] = {"local": [{
         "id": "sofa", "name": "Sofa", "poly": [{"x": 0, "y": 0},
         {"x": 1, "y": 0}, {"x": 2, "y": 0}], "state": {"kind": "targets"},
     }]}
-    with pytest.raises(vol.Invalid, match="zero area"):
-        validate_marker_radars(config, validate_all=True)
+    config["settings"]["radar"]["fusion_groups"] = [{"future": True}]
+    validate_marker_radars(config, validate_all=True)
+    assert config["markers"][0]["radar"]["zones"]["local"][0]["id"] == "sofa"
 
 
 @pytest.mark.parametrize("profile", [
@@ -143,7 +180,7 @@ def test_all_stage1_profiles_have_a_valid_explicit_source_contract(profile):
     validate_marker_radars(config, validate_all=True)
 
 
-def test_stage2_metadata_and_source_inventory_are_validated_together():
+def test_stage1_source_inventory_ignores_future_stage_extensions():
     config = _config()
     radar = config["markers"][0]["radar"]
     radar["sources"].update({
@@ -179,13 +216,15 @@ def test_stage2_metadata_and_source_inventory_are_validated_together():
     radar["allowed_room_ids"] = ["living"]
     validate_marker_radars(config, validate_all=True)
     ids = radar_source_entity_ids(radar)
-    assert {"sensor.x", "sensor.y", "binary_sensor.desk", "select.zone_mode",
-            "number.zone_3_y2"} <= ids
+    assert ids == {
+        "sensor.x", "sensor.y", "binary_sensor.presence", "sensor.count",
+        "binary_sensor.available", "binary_sensor.slot",
+    }
     assert radar_source_entity_ids(None) == set()
     assert radar_source_entity_ids({"sources": []}) == set()
 
 
-def test_valid_fusion_and_room_output_settings():
+def test_future_fusion_and_output_settings_round_trip_without_stage1_validation():
     config = _config()
     second = copy.deepcopy(config["markers"][0])
     second["id"] = "radar-two"

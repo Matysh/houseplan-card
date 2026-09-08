@@ -26,10 +26,14 @@ test('radar frames reject malformed geometry and cap nested payloads', () => {
     ],
     ranges: [{ id: 'r', x: 10, y: 20, radius: 3, reported_at: 100, expires_at: 103,
       segments: [[[1, 2], [3, 4]], [[Number.NaN, 2], [3, 4]]] }],
+    zones: [{ id: 'desk', state: true, polygon: [[.1, .1], [.3, .1], [.3, .3]] },
+      { id: 'broken', state: true, polygon: [[.1, Number.NaN], [.2, .2], [.3, .3]] }],
   }));
   assert.ok(normalized);
   assert.equal(normalized.targets.length, 1);
   assert.deepEqual(normalized.ranges[0].segments, [[[1, 2], [3, 4]]]);
+  assert.deepEqual(normalized.zones[0].polygon, [[.1, .1], [.3, .1], [.3, .3]]);
+  assert.equal(normalized.zones[1].polygon, undefined);
   assert.equal(normalizeRadarFrame({ marker_id: 'x' }), null);
 });
 
@@ -84,6 +88,9 @@ test('radar health respects disabled config before runtime state', () => {
   const radar = { version: 1, enabled: false, show_live: true };
   assert.equal(radarHealthI18nKey(radar, 'ok'), 'radar.health_disabled');
   assert.equal(radarHealthI18nKey({ ...radar, enabled: true }, 'ok'), 'radar.health_ok');
+  assert.equal(radarHealthI18nKey({ ...radar, enabled: true }, 'partial'), 'radar.health_partial');
+  assert.equal(radarHealthI18nKey({ ...radar, enabled: true }, 'restricted'), 'radar.health_restricted');
+  assert.equal(radarHealthI18nKey({ ...radar, enabled: true }, 'incomplete'), 'radar.health_incomplete');
   assert.equal(radarHealthI18nKey({ ...radar, enabled: true }, 'future_status'),
     'radar.health_unknown');
 });

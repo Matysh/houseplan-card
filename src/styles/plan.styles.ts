@@ -1445,6 +1445,13 @@ export const planStyles = css`
       vector-effect: non-scaling-stroke;
       opacity: 0.72;
     }
+    .radar-ranges .radar-zone {
+      fill: color-mix(in srgb, var(--success-color, #43a047) 8%, transparent);
+      stroke: var(--success-color, #43a047);
+      stroke-width: 2px;
+      vector-effect: non-scaling-stroke;
+      opacity: 0.8;
+    }
     .stage.mode-devices .dev { cursor: grab; }
     .stage.mode-devices .dev:active { cursor: grabbing; }
     .physical-hit {

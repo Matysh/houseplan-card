@@ -26,6 +26,7 @@ ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 ENTITY_RE = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 MAX_RADARS = 32
 CANVAS_LIMIT = 5000.0
+LD2450_MODELS = frozenset({"ld2450", "hlkld2450", "hilinkld2450"})
 
 
 class RadarValidationError(vol.Invalid):
@@ -111,22 +112,72 @@ def radar_source_entity_ids(radar: Any) -> set[str]:
         return set()
     sources = radar.get("sources")
     out = _source_ids(sources) if isinstance(sources, dict) else set()
-    zones = radar.get("zones")
-    if isinstance(zones, dict):
-        for item in zones.get("local") or []:
-            state = item.get("state") if isinstance(item, dict) else None
-            if isinstance(state, dict) and isinstance(state.get("entity_id"), str):
-                out.add(state["entity_id"])
-        hardware = zones.get("hardware")
-        if isinstance(hardware, dict):
-            for value in hardware.values():
-                if isinstance(value, str) and "." in value:
-                    out.add(value)
-            for slot in hardware.get("slots") or []:
-                if isinstance(slot, dict):
-                    out.update(value for key, value in slot.items()
-                               if key.endswith("_entity") and isinstance(value, str))
     return out
+
+
+def radar_registry_evidence(hass: Any) -> dict[str, dict[str, dict[str, Any]]]:
+    """Capture the small registry subset needed by verified adapters.
+
+    The returned plain mapping is safe to pass into executor-side validation.
+    Generic/manual profiles deliberately do not depend on registry evidence.
+    """
+    from homeassistant.helpers import device_registry as dr
+    from homeassistant.helpers import entity_registry as er
+
+    entities = {
+        str(entry.entity_id): {
+            "device_id": str(entry.device_id) if entry.device_id else None,
+            "platform": str(getattr(entry, "platform", "") or ""),
+        }
+        for entry in er.async_get(hass).entities.values()
+    }
+    devices = {
+        str(entry.id): {
+            "model": str(getattr(entry, "model", "") or ""),
+        }
+        for entry in dr.async_get(hass).devices.values()
+    }
+    return {"entities": entities, "devices": devices}
+
+
+def _canonical_model(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(value or "").lower())
+
+
+def _validate_verified_adapter(
+    profile: str,
+    sources: dict[str, Any],
+    marker: dict[str, Any],
+    registry: dict[str, dict[str, dict[str, Any]]] | None,
+) -> None:
+    """Require structural same-device evidence for the LD2450 adapter."""
+    if profile != "esphome_ld2450_v1" or registry is None:
+        return
+    entities = registry.get("entities") or {}
+    source_ids = _source_ids(sources)
+    rows = [entities.get(entity_id) for entity_id in source_ids]
+    device_ids = {
+        str(row.get("device_id"))
+        for row in rows
+        if isinstance(row, dict) and row.get("device_id")
+    }
+    if len(rows) != len(source_ids) or any(not isinstance(row, dict) for row in rows) \
+            or len(device_ids) != 1 \
+            or any(str(row.get("platform") or "") != "esphome" for row in rows if row):
+        _invalid("LD2450 sources must belong to the same ESPHome device")
+    device_id = next(iter(device_ids))
+    model = (registry.get("devices") or {}).get(device_id, {}).get("model")
+    if _canonical_model(model) not in LD2450_MODELS:
+        _invalid("LD2450 adapter requires verified LD2450 device metadata")
+    binding = str(marker.get("binding") or "")
+    owner_device: str | None = None
+    if binding.startswith("device:"):
+        owner_device = binding.removeprefix("device:")
+    elif binding.startswith("entity:"):
+        owner = entities.get(binding.removeprefix("entity:"))
+        owner_device = str(owner.get("device_id")) if isinstance(owner, dict) and owner.get("device_id") else None
+    if owner_device != device_id:
+        _invalid("LD2450 sources must belong to the marker device")
 
 
 def _validate_sources(profile: str, sources: Any) -> None:
@@ -215,81 +266,12 @@ def _validate_sources(profile: str, sources: Any) -> None:
         _entity(obj["availability_entity"], "radar.sources.availability_entity", {"binary_sensor"})
 
 
-def _polygon(points: Any, name: str) -> None:
-    items = _array(points, name, 64)
-    if len(items) < 3:
-        _invalid(f"{name} requires at least three points")
-    parsed = [_point(point, name) for point in items]
-    if any(parsed[index] == parsed[(index + 1) % len(parsed)] for index in range(len(parsed))):
-        _invalid(f"{name} contains duplicate adjacent points")
-    area = sum(parsed[i][0] * parsed[(i + 1) % len(parsed)][1]
-               - parsed[(i + 1) % len(parsed)][0] * parsed[i][1]
-               for i in range(len(parsed))) / 2
-    if abs(area) <= 1e-9:
-        _invalid(f"{name} has zero area")
-
-
-def _validate_stage2(radar: dict[str, Any]) -> None:
-    zones = radar.get("zones")
-    if zones is not None:
-        obj = _mapping(zones, "radar.zones")
-        local = _array(obj.get("local", []), "radar.zones.local", 32)
-        seen: set[str] = set()
-        for index, zone in enumerate(local):
-            item = _mapping(zone, f"radar.zones.local[{index}]")
-            ident = _identifier(item.get("id"), "radar zone id")
-            if ident in seen:
-                _invalid("radar zone ids must be unique")
-            seen.add(ident)
-            if not isinstance(item.get("name"), str) or not 1 <= len(item["name"].strip()) <= 80:
-                _invalid("radar zone name is invalid")
-            _polygon(item.get("poly"), "radar zone polygon")
-            state = _mapping(item.get("state"), "radar zone state")
-            kind = state.get("kind")
-            if kind not in {"targets", "occupancy", "count"}:
-                _invalid("radar zone state kind is invalid")
-            if kind != "targets":
-                _entity(state.get("entity_id"), "radar zone state entity",
-                        {"binary_sensor"} if kind == "occupancy" else {"sensor"})
-        hardware = obj.get("hardware")
-        if hardware is not None:
-            item = _mapping(hardware, "radar.zones.hardware")
-            if item.get("adapter") != "esphome_ld2450_numbers_v1":
-                _invalid("unsupported radar hardware adapter")
-            _entity(item.get("mode_entity"), "radar hardware mode", {"select"})
-            slots = _array(item.get("slots"), "radar hardware slots", 3)
-            if len(slots) != 3:
-                _invalid("radar hardware requires three slots")
-            entity_ids: set[str] = {item["mode_entity"]}
-            for expected, slot in enumerate(slots, 1):
-                entry = _mapping(slot, "radar hardware slot")
-                if entry.get("slot") != expected:
-                    _invalid("radar hardware slots must be ordered 1..3")
-                for key in ("x1_entity", "y1_entity", "x2_entity", "y2_entity"):
-                    entity_id = _entity(entry.get(key), f"radar hardware {key}", {"number"})
-                    if entity_id in entity_ids:
-                        _invalid("radar hardware entities must be distinct")
-                    entity_ids.add(entity_id)
-
-    reflectors = _array(radar.get("reflectors", []), "radar.reflectors", 8)
-    seen_reflectors: set[str] = set()
-    for item in reflectors:
-        line = _mapping(item, "radar reflector")
-        ident = _identifier(line.get("id"), "radar reflector id")
-        if ident in seen_reflectors:
-            _invalid("radar reflector ids must be unique")
-        seen_reflectors.add(ident)
-        if not isinstance(line.get("name"), str) or not 1 <= len(line["name"].strip()) <= 80:
-            _invalid("radar reflector name is invalid")
-        if not isinstance(line.get("enabled"), bool):
-            _invalid("radar reflector enabled must be boolean")
-        a = _point(line.get("a"), "radar reflector a")
-        b = _point(line.get("b"), "radar reflector b")
-        if a == b:
-            _invalid("radar reflector has zero length")
-
-
-def _validate_radar(radar: Any, spaces: dict[str, dict[str, Any]], marker: dict[str, Any]) -> None:
+def _validate_radar(
+    radar: Any,
+    spaces: dict[str, dict[str, Any]],
+    marker: dict[str, Any],
+    registry: dict[str, dict[str, dict[str, Any]]] | None = None,
+) -> None:
     obj = _mapping(radar, "marker.radar")
     if obj.get("version") != 1:
         _invalid("unsupported radar version")
@@ -301,6 +283,7 @@ def _validate_radar(radar: Any, spaces: dict[str, dict[str, Any]], marker: dict[
     if profile not in RADAR_PROFILES:
         _invalid("unsupported radar profile")
     _validate_sources(profile, obj.get("sources"))
+    _validate_verified_adapter(profile, obj["sources"], marker, registry)
     room_id = obj.get("room_id")
     if not isinstance(room_id, str) or not room_id:
         _invalid("radar.room_id is required")
@@ -364,7 +347,6 @@ def _validate_radar(radar: Any, spaces: dict[str, dict[str, Any]], marker: dict[
         _invalid("manual calibration cannot contain captured references")
     if calibration.get("rms_cm") is not None:
         _finite(calibration["rms_cm"], "radar calibration rms_cm", 0, 30)
-    _validate_stage2(obj)
     allowed = obj.get("allowed_room_ids")
     if allowed is not None:
         room_ids = _array(allowed, "radar.allowed_room_ids", 32)
@@ -373,54 +355,17 @@ def _validate_radar(radar: Any, spaces: dict[str, dict[str, Any]], marker: dict[
             _invalid("radar allowed rooms must be unique rooms in the marker space")
 
 
-def _validate_settings(settings: Any, spaces: dict[str, dict[str, Any]],
-                       markers: dict[str, dict[str, Any]]) -> None:
+def _validate_settings(settings: Any) -> None:
     obj = _mapping(settings, "settings.radar")
     if obj.get("version") not in (None, 1):
         _invalid("unsupported radar settings version")
     if obj.get("show_live") is not None and not isinstance(obj.get("show_live"), bool):
         _invalid("settings.radar.show_live must be boolean")
-    groups = _array(obj.get("fusion_groups", []), "settings.radar.fusion_groups", 32)
-    group_ids: set[str] = set()
-    used_markers: set[str] = set()
-    for group in groups:
-        item = _mapping(group, "radar fusion group")
-        ident = _identifier(item.get("id"), "radar fusion group id")
-        if ident in group_ids:
-            _invalid("radar fusion group ids must be unique")
-        group_ids.add(ident)
-        if not isinstance(item.get("enabled"), bool):
-            _invalid("radar fusion group enabled must be boolean")
-        space_id = item.get("space_id")
-        if space_id not in spaces:
-            _invalid("radar fusion group space is invalid")
-        marker_ids = _array(item.get("marker_ids"), "radar fusion marker_ids", 8)
-        if len(marker_ids) < 2 or len(set(marker_ids)) != len(marker_ids):
-            _invalid("radar fusion group requires 2..8 unique markers")
-        for marker_id in marker_ids:
-            marker = markers.get(str(marker_id))
-            if marker is None or marker.get("space") != space_id or marker_id in used_markers:
-                _invalid("radar fusion marker ownership is invalid")
-            used_markers.add(str(marker_id))
-    outputs = _array(obj.get("room_outputs", []), "settings.radar.room_outputs", 64)
-    output_ids: set[str] = set()
-    for output in outputs:
-        item = _mapping(output, "radar room output")
-        ident = _identifier(item.get("id"), "radar room output id")
-        if ident in output_ids:
-            _invalid("radar room output ids must be unique")
-        output_ids.add(ident)
-        space = spaces.get(str(item.get("space_id")))
-        if space is None or str(item.get("room_id")) not in {
-            str(room.get("id")) for room in space.get("rooms") or []
-        }:
-            _invalid("radar room output owner is invalid")
-        if item.get("presence") not in (None, True, False) or item.get("estimated_count") not in (None, True, False):
-            _invalid("radar room output flags must be boolean")
 
 
 def validate_marker_radars(config: dict[str, Any], previous: dict[str, Any] | None = None,
-                           *, validate_all: bool = False) -> None:
+                           *, validate_all: bool = False,
+                           registry: dict[str, dict[str, dict[str, Any]]] | None = None) -> None:
     """Validate only newly created/changed known radar namespaces.
 
     This mirrors the project's lossless compatibility doctrine: untouched
@@ -442,7 +387,7 @@ def validate_marker_radars(config: dict[str, Any], previous: dict[str, Any] | No
         configured += 1
         old = previous_markers.get(marker_id, {}).get("radar", object())
         if validate_all or radar != old:
-            _validate_radar(radar, spaces, marker)
+            _validate_radar(radar, spaces, marker, registry)
     if configured > MAX_RADARS:
         _invalid("at most 32 radars may be configured")
 
@@ -450,11 +395,12 @@ def validate_marker_radars(config: dict[str, Any], previous: dict[str, Any] | No
     settings = (config.get("settings") or {}).get("radar", missing)
     previous_settings = ((previous or {}).get("settings") or {}).get("radar", missing)
     if settings is not missing and (validate_all or settings != previous_settings):
-        _validate_settings(settings, spaces, markers)
+        _validate_settings(settings)
 
 
 def validate_radar_draft(
     config: dict[str, Any], marker_id: str, radar: Any,
+    registry: dict[str, dict[str, dict[str, Any]]] | None = None,
 ) -> tuple[dict[str, Any], set[str]]:
     """Validate an unsaved setup block against its exact stored marker owner."""
     marker = next(
@@ -467,5 +413,5 @@ def validate_radar_draft(
     candidate = copy.deepcopy(marker)
     candidate["radar"] = copy.deepcopy(radar)
     spaces = {str(space.get("id")): space for space in config.get("spaces") or []}
-    _validate_radar(candidate["radar"], spaces, candidate)
+    _validate_radar(candidate["radar"], spaces, candidate, registry)
     return candidate, radar_source_entity_ids(candidate["radar"])

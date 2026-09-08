@@ -187,11 +187,11 @@ import type {
   MarkerValueBadge, ValueBadgePosition, ValueBadgeSource, ZeroWallStyle,
 } from './types';
 import {
-  radarConfigFromDraft, radarDraft, recognizeRadar,
+  radarAfterBindingChange, radarConfigFromDraft, radarDraft, recognizeRadar,
   type RadarEditorDraft,
 } from './radar-editor';
 import { renderRadarSection } from './editors/radar-section';
-import { RadarSetupController } from './radar-setup';
+import { radarDiscardRequest, RadarSetupController } from './radar-setup';
 import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
   directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
@@ -1231,6 +1231,7 @@ export class HouseplanEditorRuntime {
           ...host._markerDialog, radar, radarEligible: true, radarTouched: true, radarRemove: false,
         };
       },
+      confirmDiscard: () => host._confirmDanger(radarDiscardRequest((key) => host._t(key))),
     });
     host._editorSecondary = new EditorSecondaryController({
       root: () => host.renderRoot as ShadowRoot,
@@ -7327,8 +7328,13 @@ public _openDeviceInbox(): void {
     };
   }
 
-public _closeMarkerDialog(): void {
-    this._radarSetup.reset();
+public _closeMarkerDialog(): void { void this._closeMarkerDialogGuarded(); }
+private async _closeMarkerDialogGuarded(): Promise<void> {
+  if (!await this._radarSetup.discardIfAllowed()) {
+      await this.host.updateComplete; this.host.renderRoot
+        .querySelector<HpDialog>('#marker-dialog')?.rejectClose();
+      return;
+    }
     this.host._markerDialog = null;
     if (this.host._deviceInboxReturn) {
       const restored = { ...this.host._deviceInboxReturn };
@@ -12856,10 +12862,7 @@ public _setMarkerGlowMode(mode: 'auto' | 'color' | 'fixed'): void {
     };
   }
 
-public _renderRadarSection(
-  d: NonNullable<HouseplanEditorHostPort['_markerDialog']>,
-  device: DevItem | null,
-): TemplateResult {
+public _renderRadarSection(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>, device: DevItem | null, placement: 'main' | 'additional' = 'main'): TemplateResult {
     return renderRadarSection({
       dialog: d,
       device,
@@ -12879,7 +12882,7 @@ public _renderRadarSection(
       toast: (message) => this.host._showToast(message),
       setup: this._radarSetup,
       configRev: this.host._cfgRev,
-    });
+    }, placement);
   }
 
 public _renderMarkerDialog(): TemplateResult {
@@ -12978,7 +12981,7 @@ public _renderMarkerDialog(): TemplateResult {
       if (k === 'device') return this.host._fullRegistryHass.devices[ref]?.name_by_user || this.host._fullRegistryHass.devices[ref]?.name || ref;
       return this.host._fullRegistryHass.entities[ref]?.name || this.host.hass.states[ref]?.attributes?.friendly_name || ref;
     })();
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="marker"
+    return html`<hp-dialog id="marker-dialog" .hass=${this.host.hass} data-kind="marker"
       .title=${d.devId ? this.host._t('info.device_header') : this.host._t('marker.new_device')}
       icon="mdi:shape-plus" wide @hp-close=${() => this._closeMarkerDialog()}>
         <div class="body">
@@ -13016,9 +13019,7 @@ public _renderMarkerDialog(): TemplateResult {
                     ...d, bindingMode: 'virtual' as const, binding: 'virtual', bindingOpen: false,
                     controls: persistedExternalControls('virtual', d.controls),
                     autoIcon: this.host._autoIconForBinding('virtual'),
-                    radar: null, radarEligible: false,
-                    radarTouched: d.radarTouched || !!d.radar,
-                    radarRemove: d.radarRemove || !!d.radar,
+                    ...radarAfterBindingChange(d.radar, d.radarTouched, d.radarRemove),
                   };
                   this.host._markerDialog = this._announceToggleDraft({
                     ...next, ...this._valueBadgeForBinding(next, 'virtual'),
@@ -13074,9 +13075,7 @@ public _renderMarkerDialog(): TemplateResult {
                                     c.value, d.controls, this.host._bindingEntities(c.value),
                                   ),
                                   autoIcon: this.host._autoIconForBinding(c.value),
-                                  radar: null, radarEligible: false,
-                                  radarTouched: d.radarTouched || !!d.radar,
-                                  radarRemove: d.radarRemove || !!d.radar,
+                                  ...radarAfterBindingChange(d.radar, d.radarTouched, d.radarRemove),
                                 };
                                 this.host._markerDialog = this._announceToggleDraft({
                                   ...next, ...this._valueBadgeForBinding(next, c.value),
@@ -13578,6 +13577,7 @@ public _renderMarkerDialog(): TemplateResult {
                 @change=${(e: Event) => this._pickMarkerFiles(e)} />
             </span>
           </div>
+          ${this._renderRadarSection(d, previewDevice, 'additional')}
         </div>
         <div class="row markerfooter" slot="footer">
           <div class="markeractions">

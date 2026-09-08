@@ -18,7 +18,11 @@ from homeassistant.helpers.event import (
 
 from .auth import may_write
 from .radar import MAX_FRAME_HZ, RadarCoordinator
-from .radar_validation import RadarValidationError, validate_radar_draft
+from .radar_validation import (
+    RadarValidationError,
+    radar_registry_evidence,
+    validate_radar_draft,
+)
 from .store import get_data
 
 _INSPECT_CALLS: dict[str, deque[float]] = defaultdict(deque)
@@ -41,6 +45,7 @@ def _validated_draft(
             raise vol.Invalid("radar draft is too large")
         marker, source_ids = validate_radar_draft(
             coordinator.config, message["marker_id"], radar,
+            radar_registry_evidence(coordinator.hass),
         )
     except RadarValidationError:
         connection.send_error(message["id"], "invalid_radar", "invalid_radar")
@@ -51,12 +56,22 @@ def _validated_draft(
     if not _can_read(connection, source_ids):
         connection.send_error(message["id"], "source_restricted", "source_restricted")
         return None
+    if any(
+        coordinator.hass.states.get(entity_id) is None
+        or str(coordinator.hass.states.get(entity_id).state) in {"unknown", "unavailable"}
+        for entity_id in source_ids
+    ):
+        connection.send_error(message["id"], "source_unavailable", "source_unavailable")
+        return None
     return marker, radar, source_ids
 
 
 def _coordinator(hass: HomeAssistant, connection, msg_id: int) -> RadarCoordinator | None:
     runtime = get_data(hass)
     coordinator = getattr(runtime, "radar_coordinator", None) if runtime else None
+    if runtime is not None and coordinator is None:
+        connection.send_error(msg_id, "unsupported_capability", "unsupported_capability")
+        return None
     if not isinstance(coordinator, RadarCoordinator) or coordinator.closed:
         connection.send_error(msg_id, "not_ready", "not_ready")
         return None

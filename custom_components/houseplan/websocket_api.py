@@ -81,7 +81,11 @@ from .plans import (
     reserve_filename,
 )
 from .projection import project_config, project_layout
-from .radar_validation import RadarValidationError, validate_marker_radars
+from .radar_validation import (
+    RadarValidationError,
+    radar_registry_evidence,
+    validate_marker_radars,
+)
 from .registry_snapshot import import_registry_snapshot
 from .store import (
     LAYOUT_STORE_CORE_KEYS,
@@ -1650,6 +1654,8 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         baseline_counts = baseline[1] if baseline and baseline[0] == current_rev else None
         readable_entity_ids = _readable_entity_ids(hass, connection)
 
+        radar_registry = radar_registry_evidence(hass)
+
         def _validate_config_cpu():
             def _normalize(candidate):
                 validate_wall_model_transition(candidate, data.get("config"))
@@ -1662,7 +1668,9 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             msg["config"].update(checked)
             validate_marker_controls(msg["config"], data.get("config"))
             validate_marker_light_entities(msg["config"], data.get("config"))
-            validate_marker_radars(msg["config"], data.get("config"))
+            validate_marker_radars(
+                msg["config"], data.get("config"), registry=radar_registry,
+            )
             validate_marker_value_badges(msg["config"], data.get("config"))
             validate_marker_vacuum_routes(msg["config"], data.get("config"))
             validate_opening_passages(msg["config"], data.get("config"))
@@ -2014,6 +2022,8 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         # #330 §4.1: the same executor treatment as config/set — Optimize
         # carries schema + a possible full migration, the costliest CPU path
         # of all writers, and it used to run on the event loop.
+        optimize_radar_registry = radar_registry_evidence(hass)
+
         def _validate_optimize_cpu():
             def _normalize(candidate):
                 validate_wall_model_transition(candidate, config_data.get("config"))
@@ -2046,7 +2056,10 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             msg["config"].update(checked)
             validate_marker_controls(msg["config"], config_data.get("config"))
             validate_marker_light_entities(msg["config"], config_data.get("config"))
-            validate_marker_radars(msg["config"], config_data.get("config"))
+            validate_marker_radars(
+                msg["config"], config_data.get("config"),
+                registry=optimize_radar_registry,
+            )
             validate_marker_value_badges(msg["config"], config_data.get("config"))
             validate_marker_vacuum_routes(msg["config"], config_data.get("config"))
             validate_opening_passages(msg["config"], config_data.get("config"))

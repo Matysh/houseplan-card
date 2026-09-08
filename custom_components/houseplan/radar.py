@@ -31,7 +31,11 @@ from .radar_geometry import (
     polygon_is_convex,
     project_local,
 )
-from .radar_validation import radar_source_entity_ids, validate_radar_draft
+from .radar_validation import (
+    radar_registry_evidence,
+    radar_source_entity_ids,
+    validate_radar_draft,
+)
 from .store import HouseplanData
 
 MAX_FRAME_HZ = 4
@@ -103,6 +107,8 @@ class RadarCoordinator:
 
     async def async_setup(self) -> None:
         await self.async_refresh()
+        if self.closed:
+            return
 
         @callback
         def config_updated(_event: Event) -> None:
@@ -117,7 +123,10 @@ class RadarCoordinator:
             if self.closed:
                 return
             stored = await self.runtime.config_store.async_load() or {}
+            if self.closed:
+                return
             config = stored.get("config") or {}
+            registry = radar_registry_evidence(self.hass)
             self.config = config
             self.config_rev = int(stored.get("rev", 0))
             self.radars = {}
@@ -129,7 +138,7 @@ class RadarCoordinator:
                     continue
                 marker_id = str(marker.get("id"))
                 try:
-                    validate_radar_draft(config, marker_id, marker["radar"])
+                    validate_radar_draft(config, marker_id, marker["radar"], registry)
                 except vol.Invalid:
                     # Change-aware config compatibility may retain an old or
                     # future-invalid block. It stays lossless but never runs.
@@ -540,7 +549,9 @@ class RadarCoordinator:
         if occupancy is True and not frame["targets"] and not frame["ranges"]:
             frame["health"] = "position_unavailable"
         elif any_stale:
-            frame["health"] = "stale"
+            has_current_evidence = bool(frame["ranges"]) if profile == "range_v1" \
+                else explicit_slots > 0
+            frame["health"] = "partial" if has_current_evidence else "stale"
         expires = [item["expires_at"] for item in [*frame["targets"], *frame["ranges"]]]
         frame["expires_at"] = min(expires) if expires else now
         count = _numeric_state(self.hass.states.get(sources.get("count_entity"))) \

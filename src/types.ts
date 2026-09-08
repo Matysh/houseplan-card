@@ -124,10 +124,6 @@ export interface RadarRangeSource {
 export interface RadarZoneSource {
   id: string; kind: 'occupancy' | 'count'; entity_id: string;
 }
-export interface RadarLocalZone {
-  id: string; name: string; poly: RadarPoint[];
-  state: { kind: 'targets' } | { kind: 'occupancy' | 'count'; entity_id: string };
-}
 export interface MarkerRadar {
   version: 1;
   enabled: boolean;
@@ -150,8 +146,6 @@ export interface MarkerRadar {
     method: 'manual' | 'two_point' | 'not_required'; mirror: boolean; cell_cm: number;
     refs?: { plan: RadarPoint; local_cm: RadarPoint }[]; rms_cm?: number;
   };
-  zones?: { local?: RadarLocalZone[]; hardware?: Record<string, unknown> };
-  reflectors?: { id: string; name: string; a: RadarPoint; b: RadarPoint; enabled: boolean }[];
   allowed_room_ids?: string[];
   [key: string]: unknown;
 }
@@ -314,8 +308,6 @@ export interface ServerConfig {
     radar?: {
       version?: 1;
       show_live?: boolean;
-      fusion_groups?: unknown[];
-      room_outputs?: unknown[];
       [key: string]: unknown;
     };
   };

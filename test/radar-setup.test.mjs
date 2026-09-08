@@ -23,6 +23,7 @@ test('on-plan installation changes only the editor draft until ordinary Save', (
   const controller = new RadarSetupController({
     hass: () => ({}), requestUpdate() {}, t: (key) => key,
     configFromDraft: radarConfigFromDraft, apply: (next) => { applied = next; },
+    confirmDiscard: async () => true,
   });
   assert.equal(controller.begin('radar', draft(), {
     id: 'living', name: 'Living', poly: [[0, 0], [1, 0], [1, 1], [0, 1]],
@@ -40,17 +41,37 @@ test('on-plan installation changes only the editor draft until ordinary Save', (
   assert.equal(radarConfigFromDraft(applied, 5).mount.x, .25);
 });
 
-test('cancelling calibration releases its draft subscription exactly once', () => {
+test('cancelling calibration releases its draft subscription exactly once', async () => {
   const controller = new RadarSetupController({
     hass: () => ({}), requestUpdate() {}, t: (key) => key,
-    configFromDraft: radarConfigFromDraft, apply() {},
+    configFromDraft: radarConfigFromDraft, apply() {}, confirmDiscard: async () => true,
   });
   assert.equal(controller.begin('radar', draft(), {
     id: 'living', name: 'Living', poly: [[0, 0], [1, 0], [1, 1]],
   }, 5, 7), true);
   let calls = 0;
   controller.unsubscribe = () => { calls += 1; };
-  assert.equal(controller.cancel(), true);
-  assert.equal(controller.cancel(), false);
+  assert.equal(await controller.cancel(), true);
+  assert.equal(await controller.cancel(), true);
   assert.equal(calls, 1);
+});
+
+test('dirty calibration stays open when discard confirmation is rejected', async () => {
+  let confirmations = 0;
+  const controller = new RadarSetupController({
+    hass: () => ({}), requestUpdate() {}, t: (key) => key,
+    configFromDraft: radarConfigFromDraft, apply() {},
+    confirmDiscard: async () => { confirmations += 1; return false; },
+  });
+  assert.equal(controller.begin('radar', draft(), {
+    id: 'living', name: 'Living', poly: [[0, 0], [1, 0], [1, 1]],
+  }, 5, 7), true);
+  controller.choosePoint(pointer(250, 400));
+  let cleanups = 0;
+  controller.unsubscribe = () => { cleanups += 1; };
+
+  assert.equal(await controller.cancel(), false);
+  assert.equal(confirmations, 1);
+  assert.equal(cleanups, 0);
+  assert.ok(controller.active);
 });

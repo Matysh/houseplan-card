@@ -750,7 +750,7 @@ unavailable sources and presence without a usable position.
 Live dots and range arcs do not intercept clicks and are clipped to the selected
 room. Their short trail and smoothing exist only in the open browser session;
 House Plan does not save raw radar samples or target history. Disable either
-the radar itself or **General settings → Show presence on the plan** to hide the
+the radar itself or **General settings → Show live presence on the plan** to hide the
 layer. See [Presence radars](RADAR.md) for supported profiles, setup and privacy.
 
 ## 11. Tap actions
