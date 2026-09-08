@@ -45,9 +45,11 @@ mutable state. Names may change in review without changing the contracts.
 
 Device editor → select an eligible device or placed-entity marker → **Presence
 on plan**. Owner clarification of 2026-09-08: show this section **only for
-suitable devices**, not every device in the editor. Ineligible devices have
-no section header, placeholder, disabled switch, unsupported teaser or radar
-setup button. The global display preference below remains unchanged.
+suitable devices**, not every device in the editor. Without eligibility there
+is no main section header, placeholder, disabled switch, unsupported teaser or
+primary radar setup button. Q5's accepted secondary manual-entry action below
+is the deliberate route for unknown/custom hardware, not an automatic section.
+The global display preference below remains unchanged.
 
 Section eligibility is distinct from live availability and from successful
 automatic source assignment:
@@ -66,22 +68,50 @@ automatic source assignment:
   the saved version is unsupported. Unsupported/malformed saved content remains
   inert and preserved under the existing compatibility rules; showing repair
   grants no runtime or device-write capability.
+- The user's explicit **This is a presence radar** action admits an otherwise
+  unrecognized real device or placed-entity marker to manual setup for the
+  current draft session. No positive manufacturer/profile descriptor or owning
+  HA `device_id` is required for this route. It neither preselects numeric
+  sources nor grants live, calibration or hardware-write capabilities.
 - A normal light, switch, temperature/humidity sensor, ordinary PIR, virtual
   marker, or a device with merely arbitrary numeric/binary entities is not a
-  radar candidate. Two numeric values or a generic occupancy/motion class alone
-  do not prove a radar profile. A virtual marker with inherited invalid radar
+  radar candidate automatically. Two numeric values or a generic occupancy/motion
+  class alone do not prove a radar profile. A virtual marker with inherited invalid radar
   content may show cleanup-only repair, never enable live setup.
 - Unresolved metadata with no saved radar configuration is not positive evidence:
-  do not flash a generic section while loading or offer setup on every unknown
-  device. Reevaluate the same exact device when registry data becomes available;
+  do not flash a generic section while loading. The secondary manual-entry
+  action remains available without that metadata. Reevaluate the same exact
+  device when registry data becomes available;
   never retarget to another device in order to make the section appear.
 
-Use one derived eligibility result for the section entry and its child tools;
-do not persist a new display flag or run source subscriptions merely to decide
-whether a header is visible. Manual mapping remains available for an eligible
-radar whose firmware/source roles need manual assignment; it is not an entry
-point on unrelated devices. The resolver's concrete metadata signatures are
-engineering choices with positive and negative fixtures, not a new UI taxonomy.
+Use one derived eligibility result for the section entry and its child tools:
+positive recognition, existing saved repair, or explicit session-local manual
+entry. Do not persist a new display flag or run source subscriptions merely to
+decide whether a header is visible. The resolver's concrete metadata signatures
+are engineering choices with positive and negative fixtures, not a UI taxonomy.
+
+**Manual entry (Q5).** In the marker editor's collapsed **Additional actions**
+group at the end of its body, offer **This is a presence radar** for a real
+device/placed-entity binding that has neither positive recognition nor a saved
+radar block. The group/action is secondary, keyboard/touch operable and governed
+by normal editor write access; virtual markers never get it. This explicit
+escape hatch is available even if registry identity is unresolved, including
+a standalone `sensor` with no `device_id`. Ordinary devices still have no main
+radar section unless the administrator deliberately takes this action.
+
+The action opens the same setup wizard at manual profile/source selection,
+with no auto-picked profile/entities and no extra confirmation dialog. The
+user chooses one of the generic profiles in §3 and exact sources, then follows
+the existing setup/Save flow. Persist only the complete normal `marker.radar`
+block on successful atomic Save, not an `is_radar` flag or a provisional block.
+Cancel/Esc, leaving setup, closing the editor or page hide discards this
+session-local declaration with the draft and releases any setup listeners. If
+there was no eligibility beforehand, the main section stays hidden on return
+or reopening. Saving makes subsequent access use the saved-configuration path,
+including while disabled/offline. Removing that saved configuration restores
+automatic-only eligibility and the secondary entry if still unrecognized.
+Changing the marker binding clears an unsaved manual declaration; it must not
+silently transfer consent or draft sources to another device/virtual marker.
 
 Resolve an `entity:` marker's owning device through the existing registry
 snapshot's entity `device_id` and `src/ha-binding-status.ts` authority. Inspect
@@ -89,10 +119,12 @@ full available registry metadata, not only the enabled-state `dev.entities`
 projection: filtering out disabled diagnostic entities must not hide a known
 radar. Proposed `radar-model.ts` owns the pure section predicate; the existing
 conditional vacuum section in `houseplan-editor-runtime.ts` is a UI integration
-precedent, not radar detection logic. Completely unidentifiable hardware with
-no saved radar block cannot be automatically distinguished from an ordinary
-PIR; it stays unqualified rather than making the section universal again.
-This does not remove manual role assignment from an identified radar.
+precedent, not radar detection logic. Completely unidentifiable hardware cannot
+be automatically distinguished from an ordinary PIR; Q5's explicit manual
+entry resolves this without making the section universal. An entity without an
+owning device cannot auto-discover sibling sources but remains eligible for
+explicit generic mapping. This does not remove manual role assignment from an
+identified radar.
 
 For eligible, not-yet-configured radars the section is collapsed/off. No automatic
 enabling on upgrade, placement or source discovery. A virtual marker cannot own
@@ -130,8 +162,21 @@ Do not infer axes/units from translated friendly names, or select an unrelated
 global entity with a similar name. A placed entity resolves its current registry
 device for discovery; on an eligible radar or existing saved repair path,
 missing/limited role metadata offers manual selection without claiming deleted
-or disabled. With no positive radar evidence and no saved configuration, §2
-hides the section instead. Existing binding-status authority remains in use.
+or disabled. With neither positive radar evidence nor saved configuration, §2
+keeps the main section hidden until explicit manual entry. Existing binding-status
+authority remains in use.
+
+Manual generic mapping does not require an owning HA device, known firmware or
+radar-specific `device_class`. It accepts exact, explicitly selected `sensor.*`
+and `binary_sensor.*` roles required by the chosen profile, even when their
+`device_id` is absent or differs. List only sources readable by the current
+user; present their exact ids and device attribution (when known), with no
+cross-device auto-binding or fuzzy-name fallback. Numeric profiles still require
+their complete unit/axis/range conventions and finite values per this section.
+For example, a custom numeric distance sensor may use `range_v1` without an
+occupancy source or manufacturer signature; it yields an arc, not an invented
+target point. Marker/space ownership and per-source read ACL remain mandatory.
+Manual declaration never supplies a verified hardware adapter signature.
 
 For LD2450 automatic role mapping, require the same ESPHome device, recognized
 LD2450 descriptor and a complete unique role set exposed by registry metadata.
@@ -446,7 +491,13 @@ Use exact space/marker ids, not arbitrary source arrays in ordinary subscribe.
 | `houseplan/radar/setup/inspect` | `{marker_id,draft_sources?}` | `may_write` + source read permission; bounded capability/source-value snapshot; no persistence/services |
 | `houseplan/radar/setup/subscribe` | `{marker_id,draft_sources?,expected_config_rev}` | Same guards; ephemeral setup values, <=1 draft subscription/user/marker, <=8 globally |
 
-Draft sources use the same strict schema/size caps and owner checks. Setup
+Draft sources use the same strict schema/size caps and owner checks: the
+existing marker belongs to the requested space/configuration and is writable
+under `may_write`; every explicitly selected source is independently readable.
+Generic profiles do not require shared/non-null HA `device_id`. Same-device
+checks remain mandatory for verified hardware adapter roles, not generic input.
+Neither manual-entry consent nor frontend eligibility is authorization; the
+server validates the draft profile/source graph itself. Setup
 does not gain permission to query arbitrary HA state using an unvalidated
 attribute path. Server rejects disabled/removed markers, stale revisions or
 invalid source graph before allocating listeners. Subscription ids use HA's
@@ -470,6 +521,8 @@ handle values; every new dynamic error is mapped to a translated key.
 | Key | English | Русский |
 |---|---|---|
 | `title` | Presence on plan | Присутствие на плане |
+| `additional_actions` | Additional actions | Дополнительные действия |
+| `declare_radar` | This is a presence radar | Это радар присутствия |
 | `show_global` | Show presence on the plan | Показывать присутствие на плане |
 | `enable` | Configure presence on plan | Настроить присутствие на плане |
 | `show_live` | Show live presence | Показывать текущее присутствие |
@@ -555,7 +608,8 @@ Every `S1-*` is required. Proposed test names are not claims of completed tests.
 | S1-16 | New/old frontend/backend safe; unsupported commands absent; original vacuum/Glow unaffected | rolling-matrix smoke, existing vacuum/light unit/golden; API capability bypass => unsupported-call assertion fails |
 | S1-17 | Editor lazy, active load bounded and no idle animation/subscriptions when disabled | bundle graph + baseline/candidate perf + backend timer count; eager editor or runaway listener => budget fails |
 | S1-18 | Text, status announcements and safe desktop/touch exit meet §2/5/8 | i18n parity, keyboard/touch smoke, reviewed screenshots; ordinary expected-vs-actual witnesses |
-| S1-19 | Section appears only for eligible radars or an existing saved repair path; unavailable/no-target/manual-binding cases retain access, ordinary devices have no teaser; global preference remains visible without radars | unit eligibility matrix + device-editor smoke/golden for coordinate/range/zone/presence radars, light/switch/temperature/PIR/virtual/unknown devices and saved broken/future config; remove eligibility guard => ordinary-device header assertion fails; gate by on/valid coordinates => offline/range/manual repair assertion fails; hide global switch until first radar => empty-installation settings assertion fails |
+| S1-19 | Main section appears only for recognized radars, an existing saved repair path or explicit session-local manual entry; unavailable/no-target/manual-binding cases retain access, ordinary devices have no automatic section/teaser; global preference remains visible without radars | unit eligibility matrix + device-editor smoke/golden for coordinate/range/zone/presence radars, light/switch/temperature/PIR/virtual/unknown devices and saved broken/future config; remove eligibility guard => ordinary-device header assertion fails; gate by on/valid coordinates => offline/range/manual repair assertion fails; hide global switch until first radar => empty-installation settings assertion fails |
+| S1-20 | Secondary manual entry supports unknown/custom radars and standalone sources without device_id; only validated atomic Save persists eligibility, Cancel/exit/binding change does not; declaration grants no source or hardware privileges | device-editor smoke for unrecognized custom range sensor (no device_id or occupancy), explicit multi-device Cartesian bindings, save/reopen/disable/repair/remove and Cancel/reload; unit/backend ACL, invalid-unit and hardware-adapter negative fixtures. Require auto identity => generic-setup witness fails; persist declaration early => cancel-config comparison fails; bypass ACL or adapter proof => restricted-source/service canary fails |
 
 Implementation artifacts: `test/radar-geometry.test.mjs`, `test/radar-model.test.mjs`,
 `tests_backend/test_ha_radar.py`, shared JSON coordinate/source fixtures,
@@ -613,3 +667,8 @@ owner questions. Atomic frames are not assumed for separate HA sensors. A
 backend reporting API is deliberately required for uniform normalization and
 future browser-independent recording. Exact shared coordinate fixtures, not
 historical ARCHITECTURE pixel dimensions, are the mathematical acceptance truth.
+For Q5, session-local declaration state and the collapsed additional-actions
+group are implementation choices for the accepted secondary-entry behaviour;
+no extra persisted classification flag is necessary. Generic source ownership
+means marker/space ownership plus per-entity authorization, not device-registry
+membership. Hardware adapter identity is a separate verified capability.

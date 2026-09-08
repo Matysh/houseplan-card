@@ -25,7 +25,8 @@ closing this issue before all its AC are met requires an owner decision.
 Authority: `docs/SCOPE.md`, repository process, the issue's owner request,
 [UX proposal](https://github.com/Matysh/houseplan-card/issues/485#issuecomment-5583682816),
 [analysis](https://github.com/Matysh/houseplan-card/issues/485#issuecomment-5583878376),
-and [accepted defaults](https://github.com/Matysh/houseplan-card/issues/485#issuecomment-5583909140).
+and [accepted defaults](https://github.com/Matysh/houseplan-card/issues/485#issuecomment-5583909140),
+including the [Q5 manual-entry decision](https://github.com/Matysh/houseplan-card/issues/485#issuecomment-5585013213).
 The numbered specs turn those requirements into testable contracts. Old open
 questions in the original issue are superseded by these explicit decisions;
 the external field report is evidence, not an instruction to copy a firmware.
@@ -50,6 +51,7 @@ Original HA entities, automations and existing light Glow/spill remain untouched
 | Q2 default | Stages 1–2 use one selected room if its polygon exists. Stage 3 permits multiple allowed rooms. No invented room rectangle. |
 | Q3 default | Stage-2 raw recording starts manually, defaults to 1 h, each run <=24 h, each point expires after 24 h, works without a browser, editor-only access. |
 | Q4 default | Cross-radar consolidation is Stage 3; earlier stages make no global people count or identity claim. |
+| Q5 default | Hide the device section until positive radar recognition, an existing saved configuration, or the user's explicit secondary action **This is a presence radar**. The action opens manual setup; Cancel saves nothing. Keep the global preference unchanged. |
 
 The requested weekly heat map has its own explicit, default-off collection
 action; it is not enabled by raw recording or live display. Each collection
@@ -65,8 +67,12 @@ There is no new editor mode or separate fleet of person/device markers. Add
 configuration under the existing device/placed-entity marker in Device editor:
 **Presence on plan**, shown only for an eligible presence-radar device as
 defined by Stage 1 §2. Unsupported ordinary devices get no empty/disabled
-section. An existing saved radar configuration retains its repair path even
-when its sources become unavailable. This owner clarification of 2026-09-08
+section. Unknown/custom devices and standalone entities retain an explicit
+secondary **This is a presence radar** action under additional device-editor
+actions; this opens the same manual source wizard without automatic recognition.
+Until that choice the main section stays hidden; cancelling unsaved setup leaves
+it hidden and persists nothing. An existing saved radar configuration retains
+its repair path even when its sources become unavailable. This owner clarification of 2026-09-08
 does **not** condition the global Show presence on the plan preference on
 device discovery or first setup: that preference stays unchanged.
 Reuse the primary House Plan panel and full dashboard
@@ -90,8 +96,11 @@ Named products in the initial issue are examples, not a claim that every
 firmware is automatically supported. Positively identified radars with unknown
 connection roles use manual bindings or an unsupported explanation, never
 guessed axes/units/writable capabilities. Hardware with neither positive radar
-metadata nor a saved radar configuration does not get a generic setup section;
-an arbitrary pair of numbers or occupancy class is not enough to qualify it.
+metadata nor a saved radar configuration gets no automatic setup section, but
+Q5's explicit manual entry preserves generic numeric/range/occupancy support.
+An arbitrary pair of numbers or occupancy class is not automatic radar evidence;
+user declaration is entry consent, not proof of source validity or device-write
+capability. Exact manually selected sources still pass Stage 1 profile/ACL checks.
 
 ## 4. Shared architecture and authoritative state
 
