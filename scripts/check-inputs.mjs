@@ -100,6 +100,7 @@ export function trackedFiles(root) {
 
 const TOP = '(?:scripts|demo|docs|src|custom_components|tests_backend|test|\\.github)';
 const PATH_LITERAL = new RegExp(`['"\`](${TOP}/[\\w./@-]+)['"\`]`, 'g');
+const TOP_RE = new RegExp(`^${TOP}/`);
 const ROOT_FILE_LITERAL = /['"`](package\.json|package-lock\.json|hacs\.json|PROCESS\.md|README\.md|README\.ru\.md|pyproject\.toml|pytest\.ini|rollup\.config\.mjs|tsconfig[\w.]*\.json)['"`]/g;
 const JS_IMPORT = /(?:^|[^\w$])(?:import|export)\s*(?:[^'"`;]*?\s+from\s*)?['"](\.\.?\/[^'"]+)['"]/g;
 const JS_DYNAMIC = /import\(\s*['"](\.\.?\/[^'"]+)['"]\s*\)/g;
@@ -107,6 +108,7 @@ const JS_REQUIRE = /require\(\s*['"](\.\.?\/[^'"]+)['"]\s*\)/g;
 const PY_FROM = /^\s*from\s+([\w.]+)\s+import/gm;
 const PY_IMPORT = /^\s*import\s+([\w.]+)/gm;
 const PY_PATH_JOIN = /((?:"[\w.-]+"\s*\/\s*)+"[\w.-]+")/g;
+const REL_EXEC_LITERAL = /['"]((?:\.\.?\/)*[\w.-]+(?:\/[\w.-]+)*\.(?:mjs|py))['"]/g;
 
 const toPosix = (p) => p.replaceAll('\\', '/');
 const BINARY = /\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf|pdf|zip)$/i;
@@ -166,6 +168,8 @@ export function referencesOf(file, rawText) {
     }
   }
   if (file.endsWith('.py')) {
+    // pytest подхватывает conftest.py каталога без импорта — это код теста
+    if (/^tests_backend\/test_[\w-]+\.py$/.test(file)) code.add('tests_backend/conftest.py');
     for (const m of text.matchAll(PY_FROM)) pyModuleCandidates(file, m[1]).forEach((p) => code.add(norm(p)));
     for (const m of text.matchAll(PY_IMPORT)) pyModuleCandidates(file, m[1]).forEach((p) => code.add(norm(p)));
     for (const m of text.matchAll(PY_PATH_JOIN)) {
@@ -181,6 +185,15 @@ export function referencesOf(file, rawText) {
   }
   for (const m of text.matchAll(PATH_LITERAL)) data.add(norm(m[1].replace(/[.:,;]+$/, '')));
   for (const m of text.matchAll(ROOT_FILE_LITERAL)) data.add(m[1]);
+  // Относительный путь к исполняемому файлу рядом (`'guard_x.mjs'`,
+  // `'../benchmark_x.mjs'` у verify-guard) — код, если такой файл есть в дереве.
+  if (/\.(mjs|cjs|js|ts)$/.test(file)) {
+    for (const m of text.matchAll(REL_EXEC_LITERAL)) {
+      if (TOP_RE.test(m[1])) continue; // путь от корня уже разобран выше
+      const rel = norm(posix.join(posix.dirname(file), m[1]));
+      if (!rel.startsWith('..')) code.add(rel);
+    }
+  }
   for (const c of code) data.delete(c);
   return { code: [...code], data: [...data] };
 }
@@ -196,6 +209,13 @@ export function referencesOf(file, rawText) {
  * данные. `parents` хранит, откуда файл пришёл, — для объяснения «почему это
  * вход» (`--why`).
  */
+/**
+ * Файлы, чьи ссылки не читаются: реестр мутантов называет в гардах и патчах
+ * сотни путей, но для того, кто его импортирует (тесты реестра), это данные,
+ * а не зависимости — иначе одна правка любого теста отбирала бы весь реестр.
+ */
+export const LEAF_FILES = new Set(['scripts/mutation-gate.mjs']);
+
 export function closure(root, entries, { tracked = trackedFiles(root), stopAt = () => false, read, parents } = {}) {
   const trackedSet = new Set(tracked);
   const readText = read || ((rel) => {
@@ -212,7 +232,7 @@ export function closure(root, entries, { tracked = trackedFiles(root), stopAt = 
     const file = queue.shift();
     if (seen.has(file)) continue;
     seen.add(file);
-    if (stopAt(file)) continue;
+    if (stopAt(file) || LEAF_FILES.has(file)) continue;
     if (!/\.(mjs|cjs|js|ts|py)$/.test(file)) continue;
     let text;
     try { text = readText(file); } catch { continue; }

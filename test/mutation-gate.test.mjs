@@ -464,3 +464,90 @@ test('#499: ни один гвард реестра не собирает бан
   const source = readFileSync(new URL('../scripts/mutation-gate.mjs', import.meta.url), 'utf8');
   assert.match(source, /гвард сам собирает бандл — сборку делает раннер \(#499\)/);
 });
+
+// --- #492 §6: замыкание входов гарда, обёртки, определения реестра -----------
+
+import {
+  baseRegistry, guardInputs, registryDelta, selectForDiff, wrapperInputs,
+} from '../scripts/mutation-gate.mjs';
+
+test('#492 §6.1: обёртки объявляют GUARD_INPUTS, и объявление читается статически', () => {
+  assert.deepEqual(wrapperInputs('scripts/backend-test-guard.mjs'), ['tests_backend/test_ha_import_export.py']);
+  assert.deepEqual(wrapperInputs('scripts/trail-resume-test-guard.mjs'),
+    ['tests_backend/test_trails.py', 'tests_backend/test_trail_recorder.py']);
+  assert.deepEqual(wrapperInputs('test/x.test.mjs'), [], 'не обёртка — нет объявления');
+  // умолчание в коде обёртки совпадает с объявлением
+  const wrapper = readFileSync(join(repoRoot, 'scripts/backend-test-guard.mjs'), 'utf8');
+  assert.match(wrapper, /process\.argv\[3\] \|\| GUARD_INPUTS\[0\]/);
+  // каждая обёртка, которую использует реестр, объявляет входы
+  const wrappers = new Set(MUTANTS.flatMap((m) => guardFiles(m.guard)).filter((f) => /^scripts\/[\w-]+-guard\.mjs$/.test(f)));
+  for (const file of wrappers) assert.ok(wrapperInputs(file).length > 0, `${file}: нет GUARD_INPUTS`);
+});
+
+test('#492 §6.1: умолчание обёртки действует без третьего аргумента и уступает явному файлу', () => {
+  const byDefault = guardInputs('node scripts/backend-test-guard.mjs some_pattern');
+  assert.ok(byDefault.includes('tests_backend/test_ha_import_export.py'));
+  assert.ok(byDefault.includes('tests_backend/conftest.py'), 'pytest подхватывает conftest');
+  assert.ok(byDefault.includes('scripts/backend-test-guard.mjs'), 'текст обёртки — в отпечатке');
+  const explicit = guardInputs('node scripts/backend-test-guard.mjs some_pattern tests_backend/test_ha_websocket.py');
+  assert.ok(explicit.includes('tests_backend/test_ha_websocket.py'));
+  assert.ok(!explicit.includes('tests_backend/test_ha_import_export.py'), 'явный файл отменяет умолчание');
+  const trail = guardInputs('node scripts/trail-resume-test-guard.mjs');
+  assert.ok(trail.includes('tests_backend/test_trails.py') && trail.includes('tests_backend/test_trail_recorder.py'));
+});
+
+test('#492 §6.2: смок-гард тянет serve.mjs, compat-хелперы и фикстуры; src/** остаётся стороной патча', () => {
+  const inputs = guardInputs('node demo/smoke_zigbee_topology_hover.mjs');
+  for (const file of ['demo/serve.mjs', 'demo/editor-runtime-compat.mjs', 'demo/bundle-freshness.mjs']) {
+    assert.ok(inputs.includes(file), `${file} вне входов смок-гарда`);
+  }
+  assert.ok(!inputs.some((f) => f.startsWith('src/')), 'src/** — не вход гарда (§6.4)');
+  assert.ok(!inputs.some((f) => f.includes('/frontend/')), 'копия бандла — не вход');
+});
+
+test('#492 §8.2: правка запускаемого теста отбирает свидетелей обёрток и меняет их отпечаток', () => {
+  const defaults = MUTANTS.filter((m) => /^node scripts\/backend-test-guard\.mjs \S+$/.test(m.guard));
+  assert.ok(defaults.length >= 10, `обёрток без третьего аргумента: ${defaults.length}`);
+  const selected = new Set(selectChangedMutants(MUTANTS, ['tests_backend/test_ha_import_export.py']).map((m) => m.id));
+  for (const m of defaults) assert.ok(selected.has(m.id), `${m.id} не отобран правкой import-export теста`);
+  const explicitOther = MUTANTS.find((m) => m.guard.includes('tests_backend/test_ha_websocket.py'));
+  assert.ok(!selected.has(explicitOther.id), 'явный websocket-гард не отбирается правкой import-export');
+
+  const trail = MUTANTS.find((m) => m.id === 'vacuum-trail-resume-disabled');
+  assert.ok(selectChangedMutants(MUTANTS, ['tests_backend/test_trails.py']).some((m) => m.id === trail.id));
+  const before = witnessFingerprint(trail);
+  const after = witnessFingerprint(trail, {
+    read: (file) => (file === 'tests_backend/test_trails.py' ? '# changed\n' : (existsSync(join(repoRoot, file)) ? readFileSync(join(repoRoot, file), 'utf8') : '')),
+  });
+  assert.notEqual(after, before, 'правка test_trails.py обязана менять отпечаток trail-свидетеля');
+
+  const smokes = MUTANTS.filter((m) => /^node demo\/smoke_/.test(m.guard));
+  const byServe = new Set(selectChangedMutants(MUTANTS, ['demo/serve.mjs']).map((m) => m.id));
+  for (const m of smokes) assert.ok(byServe.has(m.id), `${m.id}: смок-свидетель не отобран правкой serve.mjs`);
+});
+
+test('#492 §6.4: дифф только по реестру отбирает добавленные и изменённые определения', () => {
+  const a = { id: 'a', guard: 'node --test test/a.test.mjs', patches: [{ file: 'src/a.ts', find: '1', replace: '2' }], because: 'a' };
+  const b = { id: 'b', guard: 'node --test test/b.test.mjs', patches: [{ file: 'src/b.ts', find: '1', replace: '2' }], because: 'b' };
+  const bChanged = { ...b, patches: [{ file: 'src/b.ts', find: '1', replace: '3' }] };
+  const c = { id: 'c', guard: 'node --test test/c.test.mjs', patches: [{ file: 'src/c.ts', find: '1', replace: '2' }], because: 'c' };
+  assert.deepEqual(registryDelta([a, bChanged, c], [a, b, { ...c, id: 'gone' }]), { changed: ['b', 'c'], removed: ['gone'] });
+  const picked = selectForDiff([a, bChanged, c], ['scripts/mutation-gate.mjs'], [a, b], { guardInputs: () => [] });
+  assert.deepEqual(picked.selected.map((m) => m.id), ['b', 'c']);
+  assert.deepEqual(picked.byFiles, []);
+  // без реестра базы отбор по определениям невозможен — и это не «ничего не изменилось»
+  const blind = selectForDiff([a, bChanged, c], ['scripts/mutation-gate.mjs'], null, { guardInputs: () => [] });
+  assert.deepEqual(blind.selected, []);
+  // дифф без реестра — определения не смотрятся
+  const plain = selectForDiff([a, bChanged, c], ['src/a.ts'], [a, b], { guardInputs: () => [] });
+  assert.deepEqual(plain.selected.map((m) => m.id), ['a']);
+});
+
+test('#492 §6.4: реестр базы читается из git без побочных эффектов', async () => {
+  const base = await baseRegistry('HEAD');
+  assert.ok(Array.isArray(base) && base.length > 500, 'реестр HEAD прочитан');
+  assert.ok(!existsSync(join(repoRoot, 'scripts')) || !readFileSync(join(repoRoot, 'scripts/mutation-gate.mjs'), 'utf8').includes('\0'));
+  assert.equal(await baseRegistry('0000000000000000000000000000000000000000'), null, 'нет такой базы — null, не бросок');
+  const leftovers = (await import('node:fs')).readdirSync(join(repoRoot, 'scripts')).filter((f) => f.startsWith('.mutation-gate.base-'));
+  assert.deepEqual(leftovers, [], 'временный модуль удалён');
+});
