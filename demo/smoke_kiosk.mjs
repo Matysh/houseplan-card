@@ -3,6 +3,13 @@ const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
   const c0 = window.__card;
+  const legacyScaleKey = 'houseplan_card_kiosk_v1';
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (key?.startsWith('houseplan.summary-panel.v1:')) localStorage.removeItem(key);
+  }
+  localStorage.setItem(legacyScaleKey, JSON.stringify({ icon: 1.25, font: 0.95 }));
+  const legacyScaleBefore = localStorage.getItem(legacyScaleKey);
   // создать киоск-экземпляр
   const c = document.createElement('houseplan-card');
   c.setConfig({ type: 'custom:houseplan-card', kiosk: true, cycle: 0 });
@@ -54,7 +61,12 @@ const res = await page.evaluate(async () => {
   const v1 = parseFloat(size1.match(/--icon-size:([\d.]+)/)[1]);
   const v2 = parseFloat(size2.match(/--icon-size:([\d.]+)/)[1]);
   out.iconScaleWorks = Math.abs(v1 / v2 - 2) < 0.01;
-  out.persisted = JSON.parse(localStorage.getItem('houseplan_card_kiosk_v1')).icon === 1;
+  const summaryKeys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index))
+    .filter((key) => key?.startsWith('houseplan.summary-panel.v1:'));
+  const savedScale = summaryKeys.map((key) => JSON.parse(localStorage.getItem(key)))
+    .find((value) => value?.icon_scale === 1);
+  out.persisted = savedScale?.icon_scale === 1;
+  out.legacyScaleUntouched = localStorage.getItem(legacyScaleKey) === legacyScaleBefore;
   // 7) попап настроек экрана открывается (прямой вызов; долгое нажатие проверено таймером)
   c._kioskDialog = true; await c.updateComplete;
   out.dialogRenders = !!sr().querySelector('hp-dialog input[type="range"]');

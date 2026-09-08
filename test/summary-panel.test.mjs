@@ -21,6 +21,7 @@ import {
   totalCleanFloorAreaM2,
 } from '../test-build/summary-panel-metrics.js';
 import { summaryPanelDictionaries, summaryPanelText } from '../test-build/summary-panel-i18n.js';
+import { stableSummaryPlacementSlot } from '../test-build/summary-panel-identity.js';
 
 const tr = (key) => key;
 
@@ -39,6 +40,7 @@ test('#437 keeps the settings form lazy and every summary surface action-free', 
   assert.doesNotMatch(`${loaded}\n${editor}`, /callService\s*\(/);
   assert.match(editor, /\?selected=/, 'native selects must project their saved selection');
   assert.doesNotMatch(editor, /maxlength=/i, 'limits count Unicode code points, not UTF-16 units');
+  assert.match(style, /\.summary-editor-row button\s*\{[^}]*min-width:\s*44px;[^}]*height:\s*44px;/s);
 });
 
 test('#437 lazy summary dictionaries have exact parity and locale fallback', () => {
@@ -140,6 +142,30 @@ test('#437 local preferences use legacy sizes once but never legacy show', () =>
   assert.equal(normalizeSummaryScale(1.234), 1.25);
 });
 
+test('#437 placement identity survives Masonry reflow and inner-card remount', () => {
+  const page = { localName: 'hui-view', parentNode: null, children: [] };
+  const masonry = { localName: 'hui-masonry-view', parentNode: page, children: [] };
+  const firstWrapper = { localName: 'hui-card', parentNode: masonry, children: [] };
+  const secondWrapper = { localName: 'hui-card', parentNode: masonry, children: [] };
+  const firstCard = { localName: 'houseplan-card', parentNode: firstWrapper, children: [] };
+  const secondCard = { localName: 'houseplan-card', parentNode: secondWrapper, children: [] };
+  page.children = [masonry];
+  masonry.children = [firstWrapper, secondWrapper];
+  firstWrapper.children = [firstCard];
+  secondWrapper.children = [secondCard];
+
+  const firstSlot = stableSummaryPlacementSlot(firstCard);
+  const secondSlot = stableSummaryPlacementSlot(secondCard);
+  assert.notEqual(firstSlot, secondSlot, 'two logical cards need distinct preference keys');
+
+  masonry.children = [secondWrapper, firstWrapper];
+  assert.equal(stableSummaryPlacementSlot(firstCard), firstSlot, 'visual column reflow must not change the key');
+
+  const remountedCard = { localName: 'houseplan-card', parentNode: firstWrapper, children: [] };
+  firstWrapper.children = [remountedCard];
+  assert.equal(stableSummaryPlacementSlot(remountedCard), firstSlot, 'native wrapper owns the key across remount');
+});
+
 test('#437 device total counts unique represented real HA device ids before visual filters', () => {
   const registry = {
     authoritative: true,
@@ -147,10 +173,13 @@ test('#437 device total counts unique represented real HA device ids before visu
       d1: { id: 'd1', area_id: 'kitchen' },
       d2: { id: 'd2', area_id: null },
       d3: { id: 'd3', area_id: 'missing' },
+      d4: { id: 'd4', area_id: 'kitchen' },
+      d5: { id: 'd5', area_id: 'kitchen' },
     },
     entities: {
       'sensor.two': { entity_id: 'sensor.two', device_id: 'd2' },
       'sensor.standalone': { entity_id: 'sensor.standalone', device_id: null },
+      'sensor.restored': { entity_id: 'sensor.restored', device_id: 'd5' },
     },
   };
   const result = representedHaDeviceIds({
@@ -161,9 +190,12 @@ test('#437 device total counts unique represented real HA device ids before visu
       { id: 'standalone', binding: 'entity:sensor.standalone', space: 'f1' },
       { id: 'orphan', binding: 'device:d3', space: 'gone' },
       { id: 'virtual', binding: 'virtual', space: 'f1' },
+      { id: 'removed-area-device', binding: 'device:d4', removed: true, hidden: true },
+      { id: 'removed-parent', binding: 'device:d5', removed: true, hidden: true },
+      { id: 'restored-child', binding: 'entity:sensor.restored', space: 'f1' },
     ],
   });
-  assert.deepEqual([...result].sort(), ['d1', 'd2']);
+  assert.deepEqual([...result].sort(), ['d1', 'd2', 'd5']);
   assert.equal(representedHaDeviceIds({
     ...{ registry: { ...registry, authoritative: false } }, areaToSpace: {},
     spaceIds: new Set(), firstSpaceId: '', markers: [],

@@ -20,6 +20,7 @@ import type { SummaryPanelEditorRenderer } from './summary-panel-editor';
 import { summaryPanelCss } from './summary-panel-style';
 import { summaryPanelText } from './summary-panel-i18n';
 import type { SummaryPanelHost } from './summary-panel-host';
+import { stableSummaryPlacementSlot } from './summary-panel-identity';
 
 const isSummarySystemKey = (value: string): value is SummaryPanelSystemKey =>
   value === 'device_count' || value === 'total_area' || value === 'datetime';
@@ -234,19 +235,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private placementSlot(): string {
-    const parts: string[] = [];
-    let node: Node | null = this.host;
-    for (let depth = 0; node && depth < 10; depth++) {
-      const root = node.getRootNode() as Document | ShadowRoot;
-      const parent = node.parentNode;
-      if (parent && 'children' in parent) {
-        const children = Array.from((parent as Element).children || []);
-        parts.unshift(`${(node as Element).localName || 'node'}:${Math.max(0, children.indexOf(node as Element))}`);
-        node = parent;
-      } else if (root instanceof ShadowRoot && root.host) node = root.host;
-      else break;
-    }
-    return `${contentFingerprint(this.host._config || {})}:${parts.join('/') || 'root'}`;
+    return stableSummaryPlacementSlot(this.host);
   }
 
   private preferenceKey(): string | null {

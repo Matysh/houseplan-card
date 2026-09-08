@@ -8,7 +8,8 @@
   scopes; each user can show or hide the panel and adjust View icon/text sizes
   independently on each card. The panel moves between the right and bottom
   edges, respects Home Assistant mobile mode, and hides when the card is too
-  small ([#437](https://github.com/Matysh/houseplan-card/issues/437)).
+  small. Its settings are touch-friendly and stay attached to the same card
+  when a dashboard reflows ([#437](https://github.com/Matysh/houseplan-card/issues/437)).
 
 ## v1.73.0-beta.6 — 2026-09-08
 

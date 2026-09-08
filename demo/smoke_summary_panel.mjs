@@ -104,6 +104,10 @@ const settings = await page.evaluate(() => {
   const card = window.__card;
   const root = card.shadowRoot || card.renderRoot;
   const editor = root.querySelector('hp-dialog .summary-editor');
+  const actionTargets = [...editor.querySelectorAll(
+    "button, input:not([type='checkbox']), select, .summary-drag",
+  )];
+  const switchTargets = [...editor.querySelectorAll('.summary-switch')];
   const cancel = [...root.querySelectorAll('hp-dialog [slot="footer"] button')]
     .find((button) => button.textContent.trim() === card._t('btn.cancel'));
   const result = {
@@ -113,6 +117,10 @@ const settings = await page.evaluate(() => {
       && !!editor.querySelector('input[type="checkbox"]'),
     entityPickerSeesHass: (editor?.querySelector('.summary-source')?.options.length || 0)
       > 3,
+    editorTouchTargets: [...actionTargets, ...switchTargets].every((target) => {
+      const box = target.getBoundingClientRect();
+      return box.width >= 44 && box.height >= 44;
+    }),
   };
   cancel?.click();
   return result;

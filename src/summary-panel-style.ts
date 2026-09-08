@@ -164,7 +164,7 @@ export const summaryPanelCss = String.raw`
   .summary-editor select {
     box-sizing: border-box;
     min-width: 0;
-    min-height: 38px;
+    min-height: 44px;
     padding: 7px 9px;
     color: var(--primary-text-color);
     background: var(--card-background-color, #fff);
@@ -174,8 +174,17 @@ export const summaryPanelCss = String.raw`
   .summary-editor input[type='text'],
   .summary-editor input[type='search'] { width: 100%; }
   .summary-editor [aria-invalid='true'] { border-color: var(--error-color, #db4437); }
-  .summary-switch { display: inline-flex; align-items: center; gap: 8px; margin: 8px 0; }
+  .summary-switch {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    gap: 8px;
+    margin: 8px 0;
+  }
   .summary-switch input { width: 18px; height: 18px; }
+  .summary-editor input[type='range'] { min-height: 44px; }
+  .summary-editor button,
+  hp-dialog > .row[slot='footer'] button { min-height: 44px; }
   .summary-local-sizes {
     display: grid;
     grid-template-columns: max-content minmax(140px, 1fr) 48px;
@@ -195,8 +204,8 @@ export const summaryPanelCss = String.raw`
   .summary-block-head { flex-wrap: nowrap; }
   .summary-block-head input { flex: 1 1 180px; }
   .summary-editor-row button {
-    min-width: 34px;
-    height: 34px;
+    min-width: 44px;
+    height: 44px;
     padding: 0 7px;
     border: 0;
     border-radius: 7px;
@@ -205,7 +214,16 @@ export const summaryPanelCss = String.raw`
     cursor: pointer;
   }
   .summary-editor-row button:disabled { opacity: .4; cursor: default; }
-  .summary-drag { color: var(--secondary-text-color); cursor: grab; letter-spacing: -4px; }
+  .summary-drag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+    color: var(--secondary-text-color);
+    cursor: grab;
+    letter-spacing: -4px;
+  }
   .summary-editor-values { display: grid; gap: 8px; margin-top: 10px; }
   .summary-editor-value { padding-top: 8px; border-top: 1px solid var(--divider-color); }
   .summary-editor-value input { flex: 1 1 180px; }
