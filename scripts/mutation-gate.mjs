@@ -8093,6 +8093,28 @@ export function selectChangedMutants(mutants, changedFiles, exists, options = {}
 }
 
 /**
+ * Задевает ли правка package.json хоть один гвард (#496, run 2795).
+ *
+ * package.json — вход почти каждого гварда (`npm run …`, `npx …`), поэтому любое
+ * его касание отбирало ~195 мутантов из 590 и шард упирался в 30-минутный
+ * лимит job. Но гвард зависит только от того, что он вызывает: изменённый или
+ * удалённый существующий script, зависимости, engines/overrides. ДОБАВЛЕННЫЙ
+ * script никакой прежний гвард не вызывает — он не вход. Любое другое поле или
+ * непрочитанная база — считается задевающим: сторона ошибки — лишний прогон.
+ */
+export function packageJsonRelevance(baseText, headText) {
+  let base; let head;
+  try { base = JSON.parse(baseText); head = JSON.parse(headText); } catch { return { relevant: true, reason: 'package.json не разобран' }; }
+  const baseScripts = base.scripts || {}; const headScripts = head.scripts || {};
+  const changedScripts = Object.keys(baseScripts).filter((k) => headScripts[k] !== baseScripts[k]);
+  if (changedScripts.length) return { relevant: true, reason: `изменены/удалены scripts: ${changedScripts.join(', ')}` };
+  const rest = (pkg) => JSON.stringify({ ...pkg, scripts: undefined, description: undefined });
+  if (rest(base) !== rest(head)) return { relevant: true, reason: 'изменены поля вне scripts (зависимости, engines, …)' };
+  const added = Object.keys(headScripts).filter((k) => !(k in baseScripts));
+  return { relevant: false, reason: `только добавлены scripts: ${added.join(', ') || '—'}` };
+}
+
+/**
  * Определения реестра, добавленные или изменённые относительно базы (#492
  * §6.4): реестр базы читается через `git show` во временный модуль рядом с
  * этим файлом (относительные импорты обязаны разрешаться) и импортируется —
@@ -8173,8 +8195,19 @@ async function main(argv) {
       console.error(`git diff ${range} не удался:\n${diff.stderr}`);
       return 2;
     }
-    const files = diff.stdout.split('\n').filter(Boolean);
+    let files = diff.stdout.split('\n').filter(Boolean);
     const before = selected.length;
+    // #496: package.json отбирает ~все гварды; добавленный script — не вход.
+    if (files.includes('package.json') && range.includes('..')) {
+      const [baseRef, headRef] = range.split('..');
+      const show = (ref) => spawnSync('git', ['-C', repoRoot, 'show', `${ref}:package.json`], { encoding: 'utf8' });
+      const baseShown = show(baseRef); const headShown = show(headRef || 'HEAD');
+      const relevance = (baseShown.status === 0 && headShown.status === 0)
+        ? packageJsonRelevance(baseShown.stdout, headShown.stdout)
+        : { relevant: true, reason: 'package.json базы или головы не прочитан' };
+      console.log(`package.json в диффе: ${relevance.relevant ? 'задевает гварды' : 'гварды не задевает'} — ${relevance.reason}`);
+      if (!relevance.relevant) files = files.filter((f) => f !== 'package.json');
+    }
     // #492 §6.4: правка реестра отбирает добавленные и изменённые определения
     // явно — новый свидетель не обязан трогать чужие patch/guard-файлы.
     let base = null;

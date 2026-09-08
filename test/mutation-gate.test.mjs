@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  MUTANTS, applyPatches, guardNeedsBundle, guardNeedsTestBuild, selectChangedMutants, shardMutants, guardFiles,
+  MUTANTS, applyPatches, guardNeedsBundle, guardNeedsTestBuild, selectChangedMutants, shardMutants, guardFiles, packageJsonRelevance,
   witnessFingerprint, readLedger, recordCaught, splitByLedger, LEDGER_SCHEMA,
 } from '../scripts/mutation-gate.mjs';
 
@@ -559,4 +559,20 @@ test('#496: гварды check-docs не требуют свежих скрин�
   const strict = MUTANTS.filter((m) => /check-docs\.mjs/.test(m.guard) && !/--screenshots=warn/.test(m.guard));
   assert.deepEqual(strict.map((m) => m.id), []);
   assert.ok(MUTANTS.some((m) => /check-docs\.mjs --screenshots=warn/.test(m.guard)), 'хотя бы один гвард check-docs есть');
+});
+
+// #496 (run 2795): package.json — вход почти каждого гварда, и добавленный
+// npm-script отбирал 195 мутантов из 590 — шард упирался в 30-минутный лимит.
+test('#496: добавленный script в package.json гварды не задевает, изменённый или зависимости — задевают', () => {
+  const base = JSON.stringify({ name: 'x', scripts: { test: 'node --test', build: 'rollup -c' }, devDependencies: { playwright: '^1.62.0' } });
+  const added = JSON.stringify({ name: 'x', scripts: { test: 'node --test', build: 'rollup -c', 'toolchain:check': 'node scripts/toolchain-pins.mjs --check' }, devDependencies: { playwright: '^1.62.0' } });
+  assert.deepEqual(packageJsonRelevance(base, added), { relevant: false, reason: 'только добавлены scripts: toolchain:check' });
+  const changed = JSON.stringify({ name: 'x', scripts: { test: 'echo skip', build: 'rollup -c' }, devDependencies: { playwright: '^1.62.0' } });
+  assert.equal(packageJsonRelevance(base, changed).relevant, true);
+  assert.match(packageJsonRelevance(base, changed).reason, /test/);
+  const removed = JSON.stringify({ name: 'x', scripts: { build: 'rollup -c' }, devDependencies: { playwright: '^1.62.0' } });
+  assert.equal(packageJsonRelevance(base, removed).relevant, true);
+  const deps = JSON.stringify({ name: 'x', scripts: { test: 'node --test', build: 'rollup -c' }, devDependencies: { playwright: '^1.63.0' } });
+  assert.equal(packageJsonRelevance(base, deps).relevant, true);
+  assert.equal(packageJsonRelevance('{not json', added).relevant, true, 'неразобранное — задевает: сторона ошибки — лишний прогон');
 });
