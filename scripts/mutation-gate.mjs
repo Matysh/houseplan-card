@@ -7793,6 +7793,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'pair-recovery-fence-ignores-resolution-failure',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_491_failed_fence_blocks_point_write_and_keeps_intent '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'an unresolved durable pair must block every following writer; continuing with the '
+      + 'raw halves would let an ordinary point update overwrite recovery state (#491 AC6)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '    except Exception:  # noqa: BLE001 - the pending intent must remain authoritative\n'
+        + '        _LOGGER.exception("House Plan: an interrupted paired write is still pending recovery")\n'
+        + '        connection.send_error(\n'
+        + '            msg_id,\n'
+        + '            "commit_failed",\n'
+        + '            "A previous House Plan save is pending recovery; retry or restart Home Assistant",\n'
+        + '        )\n'
+        + '        return None\n',
+      replace: '    except Exception:  # mutant: ignore failed recovery and expose mixed halves\n'
+        + '        resolved = ResolvedStorePair(\n'
+        + '            config_data=await rt.config_store.async_load() or {},\n'
+        + '            layout_data=await rt.store.async_load() or {},\n'
+        + '        )\n',
+    }],
+  },
+  {
     id: 'optimize-skips-pair-retry-rollback',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'issue_491_optimize_failure_restores_before_pair '
