@@ -78,6 +78,7 @@ export class LoadedSummaryPanelRuntime {
   private editorLoad: Promise<SummaryPanelEditorRenderer> | null = null;
   private metricsModule: typeof import('./summary-panel-metrics') | null = null;
   private metricsLoad: Promise<typeof import('./summary-panel-metrics')> | null = null;
+  private styleSheet: CSSStyleSheet | null = null;
 
   public constructor(host: unknown) { this.host = host as SummaryPanelHost; }
 
@@ -227,10 +228,17 @@ export class LoadedSummaryPanelRuntime {
 
   private ensureStyle(): void {
     const root = this.host.renderRoot as ShadowRoot;
+    if (this.styleSheet && root.adoptedStyleSheets.includes(this.styleSheet)) return;
+    const Sheet = this.host.ownerDocument.defaultView?.CSSStyleSheet;
+    if (Sheet && 'adoptedStyleSheets' in root) {
+      const sheet = new Sheet(); sheet.replaceSync(summaryPanelCss);
+      this.styleSheet = sheet;
+      root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+      return;
+    }
     if (root.querySelector('style[data-hp-summary]')) return;
     const style = this.host.ownerDocument.createElement('style');
-    style.dataset.hpSummary = 'true';
-    style.textContent = summaryPanelCss;
+    style.dataset.hpSummary = 'true'; style.textContent = summaryPanelCss;
     root.insertBefore(style, root.firstChild);
   }
 

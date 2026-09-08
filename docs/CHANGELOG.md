@@ -10,7 +10,9 @@
   edges, respects Home Assistant mobile mode, and hides when the card is too
   small. Its settings are touch-friendly and stay attached to the same card
   when a dashboard reflows. A first camera action also waits for the final
-  header geometry instead of drifting while the new control settles
+  header geometry instead of drifting while the new control settles; loading
+  another language stays visually neutral, and room labels keep their size
+  when the View-only controls disappear on entering an editor
   ([#437](https://github.com/Matysh/houseplan-card/issues/437)).
 
 ## v1.73.0-beta.6 — 2026-09-08

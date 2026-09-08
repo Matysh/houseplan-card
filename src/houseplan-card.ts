@@ -1296,7 +1296,7 @@ export class HouseplanCard extends LitElement {
     stageWidth: number, stageHeight: number,
   ): ModeViewBox {
     const vb = this._baseVb();
-    const fit = fitView(vb, stageWidth / Math.max(1, stageHeight));
+    const fit = fitView(vb, stageWidth / stageHeight);
     const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, zoom));
     const w = fit.w / z, h = fit.h / z;
     const cx = centerX ?? fit.x + fit.w / 2;
@@ -1442,19 +1442,11 @@ export class HouseplanCard extends LitElement {
         }
         return;
       }
-      const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
-      const inner = chrome?.querySelector('.editorchrome-inner') as HTMLElement | null;
-      const targetChromeHeight = targetMode === 'view' ? 0 : inner?.scrollHeight || inner?.getBoundingClientRect().height || 0;
-      const totalHeight = Math.max(1, from.stageHeight + from.editorChromeHeight);
-      const targetStageHeight = Math.max(1, totalHeight - targetChromeHeight);
+      const inner = this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null;
+      const targetChromeHeight = targetMode === 'view' ? 0 : inner?.scrollHeight || 0;
+      // updateComplete guarantees that this stage already belongs to the rendered ha-card.
+      const targetStageHeight = Math.max(1, (this.panelHost ? this.clientHeight : innerHeight) - measuredCardHeaderHeight(this.renderRoot, this._stageEl!, this.panelHost)!);
       const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
-      if (targetStageWidth <= 0 || targetStageHeight <= 0) {
-        this._modeTransitionPreparing = false;
-        this._modeTransitionVisual = null;
-        this._applyView(targetZoom, targetCenterX, targetCenterY);
-        this.requestUpdate();
-        return;
-      }
       const targetView = this._viewForModeTarget(
         targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,
       );
@@ -2006,7 +1998,7 @@ export class HouseplanCard extends LitElement {
    * working tool (zoom in to grab a vertex), not the user's intention for
    * viewing — leaving any editor brings the view-mode viewport back.
    */
-  private _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number } | null = null;
+  private _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; w?: number } | null = null;
   /** Session-only View intent. It is deliberately absent from warm/LS/config state. */
   private _roomFocus: { spaceId: string; roomId: string } | null = null;
   /** Pointer owner captured from the actually painted event path. */
@@ -6418,11 +6410,11 @@ export class HouseplanCard extends LitElement {
    */
   private _roomLabelReferenceViewWidth(view: { w: number }): number {
     if (!this._markup) return view.w;
+    const snap = this._viewModeSnap; if (snap?.space === this._space && snap.w) return snap.w * snap.zoom / this._zoom;
     const stage = this._stageEl;
     const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
-    if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return view.w;
-    const totalHeight = stage.clientHeight + (chrome?.getBoundingClientRect().height || 0);
-    if (totalHeight <= 0) return view.w;
+    if (!stage?.clientWidth || !stage.clientHeight) return view.w;
+    const totalHeight = stage.clientHeight + (chrome?.offsetHeight || 0);
     return this._viewForModeTarget(
       this._zoom, undefined, undefined, stage.clientWidth, totalHeight,
     ).w;

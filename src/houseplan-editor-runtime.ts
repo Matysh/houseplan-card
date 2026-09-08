@@ -1151,7 +1151,7 @@ export interface HouseplanEditorHostPort {
   _vacSrvTrails: Record<string, any>;
   _view: { x: number; y: number; w: number; h: number; } | null;
   _viewportGestureDirty: boolean;
-  _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; } | null;
+  _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; w?: number; } | null;
   _viewOr: (vb: number[]) => { x: number; y: number; w: number; h: number; };
   _viewPreference: Record<string, "flat" | "iso">;
   _virtualLights: VirtualLightSnapshot;
@@ -1328,7 +1328,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
         space: this.host._space,
         zoom: this.host._zoom,
         cx: v ? this.host._logicalViewCenter(previousProjection)?.x : undefined,
-        cy: v ? this.host._logicalViewCenter(previousProjection)?.y : undefined,
+        cy: v ? this.host._logicalViewCenter(previousProjection)?.y : undefined, w: previousProjection === 'flat' ? v?.w : undefined,
       };
       if (previousProjection === 'iso') {
         const logical = this.host._logicalViewCenter('iso');
