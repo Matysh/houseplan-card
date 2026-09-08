@@ -471,6 +471,100 @@ export const dialogsStyles = css`
     }
     .markerlightgroup legend > span { min-width: 0; overflow-wrap: anywhere; }
     .markerlightgroup[disabled] > :not(legend) { opacity: .62; }
+    .radargroup {
+      display: grid;
+      gap: var(--sp-2);
+    }
+    .radargroup > p { margin: 0; }
+    .radargroup > label:not(.srcrow) {
+      margin-top: var(--sp-2);
+    }
+    .radarcoordinates {
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .radarcoordinates > label {
+      display: grid;
+      flex: 1 1 92px;
+      gap: var(--sp-1);
+      min-width: 0;
+      margin: 0;
+    }
+    hp-dialog .body .radarcoordinates .tempin {
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .radaradditional {
+      margin-top: var(--sp-5);
+    }
+    .radaradditional summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .radaradditional .btn { margin-top: var(--sp-3); }
+    .radarinspection {
+      display: grid;
+      gap: 6px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--primary-color) 7%, transparent);
+    }
+    .radarinspection code { overflow-wrap: anywhere; font-size: 12px; }
+    .radarsetup {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid var(--hp-accent);
+      border-radius: var(--rad-m);
+      background: color-mix(in srgb, var(--secondary-background-color) 88%, transparent);
+    }
+    .radarsetup-head { display: flex; align-items: center; gap: 8px; }
+    .radarsetup-head strong { flex: 1; }
+    .radarsetup > svg {
+      width: min(100%, 460px);
+      aspect-ratio: 1;
+      justify-self: center;
+      border-radius: var(--rad-m);
+      background: var(--primary-background-color);
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .radarsetup .room {
+      fill: color-mix(in srgb, var(--hp-accent) 8%, transparent);
+      stroke: var(--divider-color);
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+    .radarsetup .heading {
+      stroke: var(--hp-accent);
+      stroke-width: 4;
+      vector-effect: non-scaling-stroke;
+    }
+    .radarsetup .trail {
+      fill: none;
+      stroke: var(--success-color, #43a047);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+      opacity: .55;
+    }
+    .radarsetup g circle {
+      fill: var(--hp-bg);
+      stroke: var(--hp-accent);
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+    .radarsetup g.pending circle { stroke-dasharray: 5 4; }
+    .radarsetup g text {
+      fill: var(--hp-txt);
+      font-size: 22px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
     .markerhelpfield { margin-top: var(--sp-4); }
     .markerhelplabel {
       display: flex;

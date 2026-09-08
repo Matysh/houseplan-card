@@ -52,6 +52,7 @@ from .validation import (
     sanitize_marker_id,
     validate_marker_controls,
     validate_marker_light_entities,
+    validate_marker_radars,
     validate_marker_vacuum_routes,
     validate_marker_value_badges,
     validate_opening_passages,
@@ -1223,6 +1224,31 @@ def _repair_target_space_refs(
                 preserve_related(
                     marker_id, "marker.value_source", old_target, resolve_marker,
                 )
+        radar = marker.get("radar")
+        if isinstance(radar, dict):
+            if may_rebind_room:
+                mapped = replace(
+                    marker_id, "marker.radar.room_id", radar.get("room_id"), resolve_room,
+                )
+                if mapped is not None:
+                    radar["room_id"] = mapped
+                allowed = radar.get("allowed_room_ids")
+                if isinstance(allowed, list):
+                    remapped_allowed: list[Any] = []
+                    for room_id in allowed:
+                        mapped = replace(
+                            marker_id, "marker.radar.allowed_room_ids", room_id, resolve_room,
+                        )
+                        remapped_allowed.append(mapped if mapped is not None else room_id)
+                    radar["allowed_room_ids"] = remapped_allowed
+            else:
+                preserve_related(
+                    marker_id, "marker.radar.room_id", radar.get("room_id"), resolve_room,
+                )
+                for room_id in radar.get("allowed_room_ids") or []:
+                    preserve_related(
+                        marker_id, "marker.radar.allowed_room_ids", room_id, resolve_room,
+                    )
 
     # Destination wins collisions. Rekey only proven dead plan-owned keys;
     # opaque HA owners remain literal.
@@ -1410,6 +1436,22 @@ def build_space_merge(
                 _report_remap(
                     reference_report, "incoming", "marker.room_id", new_id, old_room_id,
                 )
+        radar = marker.get("radar")
+        if isinstance(radar, dict):
+            radar_room = radar.get("room_id")
+            if radar_room is not None:
+                old_radar_room = str(radar_room)
+                radar["room_id"] = old_room_ids.get(old_radar_room, radar_room)
+                if radar["room_id"] != old_radar_room:
+                    _report_remap(
+                        reference_report, "incoming", "marker.radar.room_id",
+                        new_id, old_radar_room,
+                    )
+            allowed_rooms = radar.get("allowed_room_ids")
+            if isinstance(allowed_rooms, list):
+                radar["allowed_room_ids"] = [
+                    old_room_ids.get(str(room_id), room_id) for room_id in allowed_rooms
+                ]
         vacuum = marker.get("vacuum")
         if isinstance(vacuum, dict) and isinstance(vacuum.get("segment_map"), dict):
             remapped_segments = {}
@@ -1437,6 +1479,11 @@ def build_space_merge(
             if isinstance(value_source, dict) \
                     and value_source.get("kind") == "derived_marker_state":
                 dropped_marker_links += 1
+            if isinstance(marker.get("radar"), dict):
+                _report_reference(
+                    reference_report, "droppedIncomingLinks", "marker.radar",
+                    new_id, old_id,
+                )
             marker["binding"] = "virtual"
             marker["display"] = "static_icon"
             for field in (
@@ -1444,6 +1491,7 @@ def build_space_merge(
                 "vacuum", "is_light", "use_climate_temp", "glow_color",
                 "glow_radius_cm", "light_entity", "toggle_entity", "hidden", "removed",
                 "value_badge", "value_source",
+                "radar",
             ):
                 marker.pop(field, None)
         output_markers.append(marker)
@@ -1574,6 +1622,7 @@ def build_space_merge(
     try:
         validate_marker_controls(merged_config, current_config)
         validate_marker_light_entities(merged_config, current_config)
+        validate_marker_radars(merged_config, current_config)
         validate_marker_value_badges(merged_config, current_config)
         validate_marker_vacuum_routes(merged_config, current_config)
         validate_opening_passages(merged_config, current_config)
@@ -1583,6 +1632,8 @@ def build_space_merge(
         PartitionOpeningJambMarginError,
     ) as err:
         raise ImportFailure(err.code, str(err)) from err
+    except vol.Invalid as err:
+        raise ImportFailure("invalid_config", str(err)) from err
     try:
         merged_layout = LAYOUT_SCHEMA(merged_layout)
     except vol.Invalid as err:
@@ -1868,10 +1919,13 @@ def create_preview(
         try:
             validate_marker_controls(incoming_config, validate_all=True)
             validate_marker_light_entities(incoming_config, validate_all=True)
+            validate_marker_radars(incoming_config, validate_all=True)
             validate_marker_value_badges(incoming_config, validate_all=True)
             validate_marker_vacuum_routes(incoming_config, validate_all=True)
         except MarkerControlError as err:
             raise ImportFailure(err.code, str(err)) from err
+        except vol.Invalid as err:
+            raise ImportFailure("invalid_config", str(err)) from err
     content, confirmation = _content_state(document, same_source, config_root)
     target_config, target_layout, details = _materialize_import_candidate(
         document, current_config, current_layout,

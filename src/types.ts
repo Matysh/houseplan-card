@@ -105,6 +105,57 @@ export interface MarkerValueBadge {
   position: ValueBadgePosition;
 }
 
+export type RadarProfile = 'esphome_ld2450_v1' | 'cartesian_v1' | 'polar_v1'
+  | 'range_v1' | 'zones_v1' | 'presence_v1';
+export type RadarLengthUnit = 'mm' | 'cm' | 'm' | 'in' | 'ft';
+export interface RadarPoint { x: number; y: number }
+export interface RadarCartesianSlot {
+  id: string; x_entity: string; y_entity: string; unit: RadarLengthUnit;
+  swap_xy?: boolean; x_sign?: 1 | -1; y_sign?: 1 | -1; presence_entity?: string;
+}
+export interface RadarPolarSlot {
+  id: string; distance_entity: string; angle_entity: string; unit: RadarLengthUnit;
+  angle_unit: 'degrees' | 'radians'; angle_zero: 'forward' | 'right';
+  angle_clockwise: boolean; presence_entity?: string;
+}
+export interface RadarRangeSource {
+  id: string; entity_id: string; unit: RadarLengthUnit; presence_entity?: string;
+}
+export interface RadarZoneSource {
+  id: string; kind: 'occupancy' | 'count'; entity_id: string;
+}
+export interface RadarLocalZone {
+  id: string; name: string; poly: RadarPoint[];
+  state: { kind: 'targets' } | { kind: 'occupancy' | 'count'; entity_id: string };
+}
+export interface MarkerRadar {
+  version: 1;
+  enabled: boolean;
+  show_live?: boolean;
+  profile: RadarProfile;
+  sources: {
+    slots?: (RadarCartesianSlot | RadarPolarSlot)[];
+    ranges?: RadarRangeSource[];
+    zones?: RadarZoneSource[];
+    occupancy_entity?: string;
+    count_entity?: string;
+    availability_entity?: string;
+  };
+  mount: {
+    installation_id: string; x: number; y: number; heading_deg: number;
+    range_cm?: number; fov_deg?: number;
+  };
+  room_id: string;
+  calibration: {
+    method: 'manual' | 'two_point' | 'not_required'; mirror: boolean; cell_cm: number;
+    refs?: { plan: RadarPoint; local_cm: RadarPoint }[]; rms_cm?: number;
+  };
+  zones?: { local?: RadarLocalZone[]; hardware?: Record<string, unknown> };
+  reflectors?: { id: string; name: string; a: RadarPoint; b: RadarPoint; enabled: boolean }[];
+  allowed_room_ids?: string[];
+  [key: string]: unknown;
+}
+
 /** Config marker: edits/augments an auto-discovered device OR describes a manual/virtual icon. */
 export const VACUUM_TRAIL_MODES = ['never', 'cleaning', 'always'] as const; // #33 parity
 export type VacuumTrailMode = (typeof VACUUM_TRAIL_MODES)[number];
@@ -144,6 +195,8 @@ export interface Marker {
     /** Canonical map->space routing (#162, docs/VACUUM.md). */
     map_routes?: VacuumMapRoute[] | null;
   } | null;
+  /** Optional #485 presence-radar setup. Unknown future versions remain inert. */
+  radar?: MarkerRadar | Record<string, unknown> | null;
   /** Manual placement into a House Plan room without an HA Area. Room-aware
    * consumers resolve it together with `space`; visual placement is not its
    * only use. */
@@ -258,6 +311,13 @@ export interface ServerConfig {
     zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] };
     /** Read-only grouped values shown over the plan (#437). */
     summary_panel?: SummaryPanelConfig;
+    radar?: {
+      version?: 1;
+      show_live?: boolean;
+      fusion_groups?: unknown[];
+      room_outputs?: unknown[];
+      [key: string]: unknown;
+    };
   };
 }
 

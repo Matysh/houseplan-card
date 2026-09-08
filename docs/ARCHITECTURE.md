@@ -328,6 +328,51 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
   source-glow fill mode: a light pool is spatial information, not a replacement
   for the universal working-state plate.
 
+### Presence-radar runtime (#485 Stage 1)
+
+`marker.radar` is an optional, versioned source/installation namespace. The
+ordinary config transaction remains its only persistence boundary and
+`radar_validation.py` validates only a changed known version: untouched future
+versions are preserved inertly. Import virtualization removes hardware entity
+bindings. `settings.radar.show_live` is only a display preference and never
+authorizes source discovery, recording or hardware writes.
+
+`RadarCoordinator` owns exact HA source listeners, report-time freshness,
+independent-pair skew, source/calibration epochs, projection, real-room clipping
+and bounded public frames. It reconciles on config revision, has one runtime
+instance per integration entry and closes all listeners/timers on unload.
+Only the backend interprets raw HA states; the eager View graph receives
+normalized `targets/ranges/zones/health` snapshots from
+`houseplan/radar/subscribe`. Per-user entity-read ACLs are checked for initial
+and subsequent delivery. The two setup commands additionally require the
+existing `may_write` policy, validate bounded drafts and enforce subscription,
+payload and inspect-rate limits.
+
+The eager client split is `radar-model.ts` (frame validation/ordering/leasing),
+`radar-live.ts` (one active-space subscription and lifecycle) and
+`radar-render.ts` (pointer-transparent SVG only). Dots live below ordinary
+device markers. The server supplies already-clipped range segments; an empty
+segment list is authoritative and must not fall back to an unclipped arc.
+Transition eligibility is also a server fact: only a current same-slot step of
+at most 100 cm in a convex room may receive the CSS movement transition.
+Reduced motion disables it. The client diagnostic trail is per slot, limited
+to 8 seconds/32 points, resets on gaps or large jumps and never enters storage.
+
+The lazy editor split is `radar-editor.ts` (recognition/draft round-trip),
+`editors/radar-section.ts` (marker-dialog composition) and `radar-setup.ts`
+(session-only on-plan wizard). The physical mount/calibration is independent
+of marker layout. A two-reference result changes only the open editor draft;
+the third reference is a check and the ordinary revisioned marker Save is the
+only write. Source/profile/geometry changes invalidate calibration, while
+display-only switches do not. Page hide, Cancel, Escape, binding change and
+disposal release draft subscriptions and samples.
+
+Raw observations, calibration captures, live frames and trails are never put
+in config/layout, uploads, support reports or browser storage. See
+[`RADAR.md`](RADAR.md) for the user contract and
+[`specs/485-radar-presence-stage1.md`](specs/485-radar-presence-stage1.md) for
+the normative limits and acceptance matrix.
+
 ### Vacuum map-to-space routing authority
 
 `src/vacuum-routes.ts` owns the answer to "which map is on which floor" and is

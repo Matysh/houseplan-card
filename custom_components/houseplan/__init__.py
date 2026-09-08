@@ -84,6 +84,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         _LOGGER.exception("House Plan: virtual-light storage is not readable; using default on")
     entry.runtime_data = data
 
+    from .radar import RadarCoordinator
+    data.radar_coordinator = RadarCoordinator(hass, data)
+    await data.radar_coordinator.async_setup()
+
     # server-side vacuum trails: the integration records the path itself
     from .trails import TrailRecorder
     recorder = TrailRecorder(hass, data)
@@ -260,6 +264,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) -
     rec = hass.data.get(DOMAIN, {}).pop("trail_recorder", None)
     if rec:
         rec.teardown()
+    if entry.runtime_data.radar_coordinator:
+        entry.runtime_data.radar_coordinator.teardown()
+        entry.runtime_data.radar_coordinator = None
     return True
 
 

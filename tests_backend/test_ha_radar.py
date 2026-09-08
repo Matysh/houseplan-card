@@ -1,0 +1,125 @@
+"""HA-state witnesses for the Stage-1 radar coordinator (#485)."""
+from __future__ import annotations
+
+import copy
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
+from homeassistant.core import HomeAssistant
+
+from custom_components.houseplan.radar import RadarCoordinator
+
+
+def _stored(profile: str = "esphome_ld2450_v1") -> dict:
+    slot = {
+        "id": "target_1", "x_entity": "sensor.radar_target_1_x",
+        "y_entity": "sensor.radar_target_1_y", "unit": "mm",
+    }
+    return {"rev": 7, "config": {
+        "spaces": [{"id": "floor", "cell_cm": 5, "rooms": [{
+            "id": "living", "poly": [[.1, .1], [.9, .1], [.9, .9], [.1, .9]],
+        }]}],
+        "markers": [{
+            "id": "radar", "binding": "device:radar", "space": "floor",
+            "radar": {
+                "version": 1, "enabled": True, "profile": profile,
+                "sources": {"slots": [slot], "occupancy_entity": "binary_sensor.radar_presence"},
+                "mount": {"installation_id": "installation-1", "x": .5, "y": .5,
+                          "heading_deg": 0, "range_cm": 600, "fov_deg": 120},
+                "room_id": "living",
+                "calibration": {"method": "manual", "mirror": False, "cell_cm": 5},
+            },
+        }], "settings": {},
+    }}
+
+
+async def _coordinator(hass: HomeAssistant, document: dict) -> RadarCoordinator:
+    runtime = SimpleNamespace(config_store=AsyncMock())
+    runtime.config_store.async_load.return_value = document
+    coordinator = RadarCoordinator(hass, runtime)
+    await coordinator.async_setup()
+    return coordinator
+
+
+@pytest.mark.asyncio
+async def test_ld2450_pair_zero_is_absent_but_single_zero_axis_is_valid(
+    hass: HomeAssistant,
+) -> None:
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_target_1_x", "0")
+    hass.states.async_set("sensor.radar_target_1_y", "1000")
+    coordinator = await _coordinator(hass, _stored())
+    frame = coordinator.frames_for_space("floor")[0]
+    assert frame["health"] == "ok"
+    assert frame["targets"][0]["x"] == pytest.approx(.5)
+    assert frame["targets"][0]["y"] == pytest.approx(.5 - 100 / 1200)
+
+    hass.states.async_set("sensor.radar_target_1_y", "0")
+    coordinator._publish_all(force=True)
+    frame = coordinator.frames_for_space("floor")[0]
+    assert frame["targets"] == []
+    assert frame["complete"] is True
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_generic_cartesian_origin_is_not_treated_as_absence(
+    hass: HomeAssistant,
+) -> None:
+    document = _stored("cartesian_v1")
+    document["config"]["markers"][0]["radar"]["sources"]["slots"][0]["unit"] = "mm"
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_target_1_x", "0")
+    hass.states.async_set("sensor.radar_target_1_y", "0")
+    coordinator = await _coordinator(hass, document)
+    frame = coordinator.frames_for_space("floor")[0]
+    assert [(item["x"], item["y"]) for item in frame["targets"]] == [(.5, .5)]
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_room_removal_and_scale_change_suspend_projection(
+    hass: HomeAssistant,
+) -> None:
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_target_1_x", "100")
+    hass.states.async_set("sensor.radar_target_1_y", "1000")
+    document = _stored()
+    coordinator = await _coordinator(hass, document)
+    marker = coordinator.radars["radar"]
+    marker["radar"]["room_id"] = "removed"
+    assert coordinator._build_frame("radar", marker, frame_now := coordinator._frames["radar"]["reported_at"])["health"] == "needs_setup"
+    marker["radar"]["room_id"] = "living"
+    coordinator.config["spaces"][0]["cell_cm"] = 10
+    assert coordinator._build_frame("radar", marker, frame_now)["health"] == "needs_setup"
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_smoothing_is_bounded_and_does_not_bridge_a_gap(
+    hass: HomeAssistant,
+) -> None:
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_target_1_x", "0")
+    hass.states.async_set("sensor.radar_target_1_y", "1000")
+    coordinator = await _coordinator(hass, _stored())
+    previous = coordinator._frames["radar"]
+
+    nearby = copy.deepcopy(previous)
+    nearby["targets"][0]["x"] += 50 / (240 * 5)
+    nearby["targets"][0]["reported_at"] += .5
+    coordinator._annotate_smoothing("radar", coordinator.radars["radar"], nearby)
+    assert nearby["targets"][0]["smooth"] is True
+
+    jump = copy.deepcopy(previous)
+    jump["targets"][0]["x"] += 101 / (240 * 5)
+    jump["targets"][0]["reported_at"] += .5
+    coordinator._annotate_smoothing("radar", coordinator.radars["radar"], jump)
+    assert "smooth" not in jump["targets"][0]
+
+    after_gap = copy.deepcopy(previous)
+    after_gap["targets"][0]["reported_at"] = previous["targets"][0]["expires_at"] + .1
+    coordinator._annotate_smoothing("radar", coordinator.radars["radar"], after_gap)
+    assert "smooth" not in after_gap["targets"][0]
+    coordinator.teardown()

@@ -18,6 +18,7 @@ from custom_components.houseplan.coordinate_canonicalization import (
     canonicalize_position,
 )
 from custom_components.houseplan.vacuum_routes import validate_marker_routes
+from custom_components.houseplan.radar_validation import validate_marker_radars
 
 # ---------- limits and extension sets ----------
 PLAN_EXTENSIONS = {"svg": "image/svg+xml", "png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}
@@ -1814,6 +1815,10 @@ MARKER_SCHEMA = vol.Schema(
                 ),
             }),
         ),
+        # #485: kept structurally open here so untouched future versions and
+        # unknown siblings survive. validate_marker_radars performs the strict,
+        # change-aware semantic validation at every write/import seam.
+        vol.Optional("radar"): vol.Any(None, vol.Schema({}, extra=vol.ALLOW_EXTRA)),
         vol.Optional("controls"): vol.Any(None, vol.All([_TEXT], vol.Length(max=MAX_CONTROLS))),
         vol.Optional("glow_radius_cm"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)), None),
         vol.Optional("glow_color"): vol.Any(
@@ -2176,6 +2181,7 @@ CONFIG_SCHEMA = vol.All(
                     vol.Optional("sun_rays"): bool,
                     vol.Optional("show_room_tooltip"): bool,
                     vol.Optional("summary_panel"): SUMMARY_PANEL_WIRE_SCHEMA,
+                    vol.Optional("radar"): vol.Schema({}, extra=vol.ALLOW_EXTRA),
                     # Removed from the UI/runtime in 2026-08-08. Keep accepting the
                     # legacy field so an existing stored config can still load; the
                     # frontend ignores it and removes it on the next settings save.

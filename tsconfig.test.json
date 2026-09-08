@@ -14,6 +14,7 @@
     "src/device-face.ts", "src/device-toggle.ts", "src/marker-toggle-entity.ts", "src/activity-runtime.ts", "src/device-area-relocation.ts",
     "src/ha-binding-status.ts",
     "src/zigbee-topology-settings.ts", "src/zigbee-topology.ts", "src/zigbee-topology-geometry.ts", "src/zigbee-topology-runtime.ts",
+    "src/radar-model.ts", "src/radar-editor.ts", "src/radar-geometry.ts", "src/radar-setup.ts",
     "src/integration-provider.ts", "src/vacuum.ts", "src/vacuum-routes.ts", "src/vacuum-route-edit.ts",
     "src/sun.ts",
     "src/light-visibility.ts", "src/glow-scene.ts", "src/space-render.ts",

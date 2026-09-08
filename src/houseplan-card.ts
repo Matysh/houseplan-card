@@ -167,6 +167,7 @@ import type {
   SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
   MarkerValueBadge, ValueBadgePosition, ValueBadgeSource, ZeroWallStyle,
 } from './types';
+import type { RadarEditorDraft } from './radar-editor';
 import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
   directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
@@ -311,6 +312,9 @@ import {
   type RenderDeviceSnapshot,
 } from './render-device-snapshot';
 import { RenderLifecycle, intakeHass } from './houseplan-render-lifecycle';
+import { RadarLiveController } from './radar-live';
+import { renderRadarLive } from './radar-render';
+import { isMarkerRadarV1, radarHealthI18nKey, radarMarkerLiveInSpace } from './radar-model';
 import type { HassRenderSnapshot } from './render-invalidation';
 import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
@@ -2131,7 +2135,10 @@ export class HouseplanCard extends LitElement {
   /** #423: support protocol capability from config/get; never persisted. */
   private _haSupportApi: number | null = null;
   /** #51: custom-image protocol capability from config/get; fail closed. */
-  private _haDecorAssetsApi: number | null = null; private _haSummaryPanelApi: number | null = null;
+  private _haDecorAssetsApi: number | null = null;
+  private _haSummaryPanelApi: number | null = null;
+  private _haRadarStage1Api: number | null = null;
+  private readonly _radarLive = new RadarLiveController(this);
   private _decorAssetSyncToken = 0;
   private _alignDialog: {
     report: OptimizeReport; config: any; layout: Record<string, any>;
@@ -2151,6 +2158,7 @@ export class HouseplanCard extends LitElement {
     /** sun on the plan (docs/SUN.md) */
     northDeg: number | null; bgMode: 'static' | 'daynight'; sunRays: boolean;
     showRoomTooltip: boolean; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings;
+    radarShowLive: boolean;
     busy: boolean;
   } | null = null;
   private _pdfDialog = false;
@@ -2256,6 +2264,10 @@ export class HouseplanCard extends LitElement {
     pdfs: PdfRef[];
     room: string;
     roomTouched: boolean;
+    radar: RadarEditorDraft | null;
+    radarEligible: boolean;
+    radarTouched: boolean;
+    radarRemove: boolean;
     hideFromPlan: boolean;        // 'space#area' for a virtual one
     busy: boolean;
   } | null = null;
@@ -2338,6 +2350,8 @@ export class HouseplanCard extends LitElement {
     this._continuity.visibility(signal);
     this._dayCycleVisibility(signal); this._summary?.visibility(signal.kind);
     if (signal.kind === 'hidden') {
+      this._radarLive.stop();
+      this._editorRuntime?._cancelRadarSetup();
       this._clearRoomFocus(true);
       this._clearTransientHover(true);
       this._cancelDevicePressFeedback();
@@ -2353,6 +2367,7 @@ export class HouseplanCard extends LitElement {
       return;
     }
     this._vacJumpOnce = true;
+    this._syncRadarLive();
     if (!signal.long) {
       const now = Date.now();
       let expired = false;
@@ -2683,6 +2698,7 @@ export class HouseplanCard extends LitElement {
     // config/layout state or this detached instance can reload the document.
     this._versionRecovery.disconnect();
     this._liveRt?.dispose();
+    this._radarLive.stop();
     this._editorRuntime?._disposeLiveEditor();
     this._clearRoomFocus(true);
     this._cancelDangerConfirm();
@@ -4110,6 +4126,7 @@ export class HouseplanCard extends LitElement {
     this._editorRuntime?._commitLiveEditor();
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
+    this._syncRadarLive();
     this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
     // Decor selection cannot exist before the lazy editor runtime is ready.
     if (this._editorRuntime) this._dtMeasure();
@@ -4184,6 +4201,16 @@ export class HouseplanCard extends LitElement {
    */
   private _adoptConfigCapabilities(response: unknown): void {
     adoptCardConfigCapabilities(this as unknown as ConfigCapabilitiesCardPort, response);
+  }
+  /** Live presence exists only in ordinary View and only when both display
+   * switches and the freshly advertised backend protocol allow it. */
+  private _syncRadarLive(): void {
+    const settings = this._serverCfg?.settings?.radar;
+    const configured = (this._serverCfg?.markers || [])
+      .some((marker) => radarMarkerLiveInSpace(marker, this._space));
+    this._radarLive.sync(this._space, this._haRadarStage1Api === 1
+      && this._mode === 'view' && settings?.show_live !== false && configured
+      && this.ownerDocument.visibilityState !== 'hidden');
   }
 
   private async _syncDecorAssets(cfg: ServerConfig | null): Promise<void> {
@@ -11803,6 +11830,14 @@ export class HouseplanCard extends LitElement {
                  base is resolved before `iconCqw`; only the per-device and
                  kiosk multipliers still feed --dev-size. */}
           <div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._kioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._mode === 'view' ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._kioskScale.font : 1}">
+            ${renderRadarLive(
+              [...this._radarLive.frames.values()].filter((frame) => {
+                const marker = this._serverCfg?.markers.find((item) => item.id === frame.marker_id);
+                return !!marker && radarMarkerLiveInSpace(marker, this._space);
+              }),
+              view,
+              (point) => this._scenePoint(point),
+            )}
             ${devs.map((d) => this._renderDevice(
               d, view, showLqi, isoOverlays?.devices.get(d.id),
             ))}
@@ -13348,6 +13383,9 @@ export class HouseplanCard extends LitElement {
     const d = this._infoCard!;
     const st = d.primary ? this.hass.states[d.primary] : undefined;
     const stateTxt = st ? hassValue(this.hass, d.primary)?.text ?? st.state : null;
+    const radar = isMarkerRadarV1(d.marker?.radar) ? d.marker.radar : null;
+    const radarFrame = radar ? this._radarLive.frames.get(d.marker?.id || d.id) : null;
+    const radarHealthKey = radar ? radarHealthI18nKey(radar, radarFrame?.health) : null;
     const controls = (d.controls ?? d.marker?.controls ?? [])
       .filter(isControllable).filter((eid) => this._planEntityAvailable(eid));
     return html`<hp-dialog .hass=${this.hass} data-kind="info"
@@ -13386,6 +13424,10 @@ export class HouseplanCard extends LitElement {
           ${d.model ? html`<div class="inforow"><span class="k">${this._t('info.model')}</span><span>${d.model}</span></div>` : nothing}
           ${stateTxt && !this._cardEntities(d).length
             ? html`<div class="inforow"><span class="k">${this._t('info.state')}</span><span>${stateTxt}</span></div>` : nothing}
+          ${radarHealthKey
+            ? html`<div class="inforow"><span class="k">${this._t('radar.health')}</span>
+                <span>${this._t(radarHealthKey)}</span></div>`
+            : nothing}
           ${safeUrl(d.link)
             ? html`<div class="inforow"><span class="k">${this._t('info.link')}</span>
                 <a href="${safeUrl(d.link)}" target="_blank" rel="noreferrer noopener">${d.link}</a></div>`
@@ -13410,7 +13452,7 @@ export class HouseplanCard extends LitElement {
                   })}
                 </span></div>`
             : nothing}
-          ${!d.model && !stateTxt && !d.link && !d.description && !(d.pdfs && d.pdfs.length) && !controls.length
+          ${!d.model && !stateTxt && !radarHealthKey && !d.link && !d.description && !(d.pdfs && d.pdfs.length) && !controls.length
             ? html`<div class="infodesc muted">${this._t('info.none')}</div>`
             : nothing}
         </div>

@@ -187,6 +187,12 @@ import type {
   MarkerValueBadge, ValueBadgePosition, ValueBadgeSource, ZeroWallStyle,
 } from './types';
 import {
+  radarConfigFromDraft, radarDraft, recognizeRadar,
+  type RadarEditorDraft,
+} from './radar-editor';
+import { renderRadarSection } from './editors/radar-section';
+import { RadarSetupController } from './radar-setup';
+import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
   directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
   geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
@@ -991,7 +997,7 @@ export interface HouseplanEditorHostPort {
   _layout: DeviceLayout;
   _layoutRev: number;
   _logicalViewCenter: (projection: "flat" | "iso") => { x: number; y: number; } | null;
-  _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; hideFromPlan: boolean; busy: boolean; } | null;
+  _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
   _markers: Marker[];
@@ -1104,9 +1110,9 @@ export interface HouseplanEditorHostPort {
   _sentPos: Map<string, DeviceLayout[string] | null>;
   _serverCfg: ServerConfig | null;
   _serverStorage: boolean;
-  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; };
+  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
   _terminalFrame: 0 | 1 | 2;
-  _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; busy: boolean; } | null;
+  _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
@@ -1200,7 +1206,7 @@ export class HouseplanEditorRuntime {
   private _supportPreviewGeneration = 0;
   private _decorAssetGuardReplace: boolean | null = null;
   private readonly _decorImages: DecorImageEditor<SpaceGeometryState | null>;
-
+  private readonly _radarSetup: RadarSetupController;
   public constructor(public readonly host: HouseplanEditorHostPort) {
     this._decorImages = new DecorImageEditor(host, {
       decorSnap: (raw, pointerType) => this._decorSnap(raw, pointerType),
@@ -1214,6 +1220,17 @@ export class HouseplanEditorRuntime {
       furnPick: (symbol) => this._furnPick(symbol),
       furnFieldValue: (cm) => this._furnFieldValue(cm),
       furnFieldToCm: (value) => this._furnFieldToCm(value),
+    });
+    this._radarSetup = new RadarSetupController({
+      hass: () => host.hass,
+      requestUpdate: () => host.requestUpdate(),
+      t: (key, vars) => host._t(key, vars),
+      configFromDraft: radarConfigFromDraft,
+      apply: (radar) => {
+        if (host._markerDialog) host._markerDialog = {
+          ...host._markerDialog, radar, radarEligible: true, radarTouched: true, radarRemove: false,
+        };
+      },
     });
     host._editorSecondary = new EditorSecondaryController({
       root: () => host.renderRoot as ShadowRoot,
@@ -1231,7 +1248,8 @@ public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
     return live;
   }
 public _commitLiveEditor(): void { commitHouseplanEditor(this.host); }
-public _disposeLiveEditor(): void { disposeHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { this._radarSetup.reset(); disposeHouseplanEditor(this.host); }
+public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
   // An already queued pointer calculation runs before this continuation.
   // A complete Lit render may also supersede the lightweight frame, and its
@@ -7310,6 +7328,7 @@ public _openDeviceInbox(): void {
   }
 
 public _closeMarkerDialog(): void {
+    this._radarSetup.reset();
     this.host._markerDialog = null;
     if (this.host._deviceInboxReturn) {
       const restored = { ...this.host._deviceInboxReturn };
@@ -7564,6 +7583,12 @@ public _openMarkerDialog(d?: DevItem): void {
       const currentBadge = this.host._devicePresentation(d, true).valueBadge;
       const badgeCandidates = valueBadgeCandidates(this.host._planHass, d, this.host._devices);
       const recommendedBadge = recommendedValueBadgeSource(this.host._planHass, d, badgeCandidates);
+      const radarRecognition = recognizeRadar(d, this.host._fullRegistryHass);
+      const radarSpace = this.host._spaceModelById(d.space) || this.host._spaceModel();
+      const markerPoint = this.host._pos(d);
+      const radar = radarSpace
+        ? radarDraft(d, radarSpace, [markerPoint.x, markerPoint.y], this.host._fullRegistryHass)
+        : null;
       this.host._markerDialog = {
         devId: d.id,
         name: d.name,
@@ -7637,6 +7662,10 @@ public _openMarkerDialog(d?: DevItem): void {
           ? d.space + '#@' + d.marker.room_id
           : d.space && d.area ? d.space + '#' + d.area : '',
         roomTouched: false,
+        radar,
+        radarEligible: radarRecognition.eligible,
+        radarTouched: false,
+        radarRemove: false,
         hideFromPlan: d.marker?.hidden === true,
         busy: false,
       };
@@ -7664,6 +7693,7 @@ public _openMarkerDialog(d?: DevItem): void {
         originalHasValueSource: false, originalValueSource: undefined,
         useClimateTemp: false, glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', roomTouched: false,
+        radar: null, radarEligible: false, radarTouched: false, radarRemove: false,
         hideFromPlan: false, busy: false,
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       };
@@ -7906,6 +7936,21 @@ public async _saveMarker(): Promise<void> {
     if (!targetSpaceModel) return;
     const targetSpaceId = targetSpaceModel.id;
     if (dlg.binding === 'virtual' && !space) space = targetSpaceId;
+    let radarField: Pick<Marker, 'radar'> | Record<string, never> = {};
+    if (dlg.radarTouched) {
+      if (dlg.radarRemove) {
+        radarField = { radar: null };
+      } else if (dlg.radar) {
+        const radar = radarConfigFromDraft(dlg.radar, targetSpaceModel.cellCm || 5);
+        if (!radar) {
+          this.host._showToast(this.host._t('radar.invalid'));
+          return;
+        }
+        radarField = { radar };
+      }
+    } else if (previousMarker && Object.prototype.hasOwnProperty.call(previousMarker, 'radar')) {
+      radarField = { radar: previousMarker.radar };
+    }
     this.host._markerDialog = { ...dlg, busy: true };
     let attempt: OptimisticAttempt<ServerConfig> | null = null;
     let configAccepted = false;
@@ -7925,6 +7970,7 @@ public async _saveMarker(): Promise<void> {
       const marker: Marker = {
         id,
         vacuum: prevVac,
+        ...radarField,
         binding: dlg.binding,
         name: dlg.name.trim() || null,
         icon: dlg.icon || null,
@@ -8791,6 +8837,7 @@ public _openSettingsDialog = (): void => {
       northDeg: northDegOf(this.host._settings, {}),
       bgMode: bgModeOf(this.host._settings, {}),
       sunRays: sunRaysOn(this.host._settings, {}),
+      radarShowLive: this.host._settings.radar?.show_live !== false,
       showRoomTooltip: showRoomTooltipOf(this.host._settings), zigbeeTopology: zigbeeTopologySettingsOf(this.host._settings), busy: false,
     };
   };
@@ -9984,7 +10031,14 @@ public _updateDecorStyle(next: DecorStyle): void {
       if (d.sunRays) settings.sun_rays = true;
       else delete settings.sun_rays;
       if (d.showRoomTooltip) delete settings.show_room_tooltip;
-      else settings.show_room_tooltip = false; settings = writeZigbeeTopologySettings(settings, d.zigbeeTopology);
+      else settings.show_room_tooltip = false;
+      const radarSettings = settings.radar;
+      if (!radarSettings || radarSettings.version == null || radarSettings.version === 1) {
+        settings.radar = { ...(radarSettings || {}), version: 1 };
+        if (d.radarShowLive) delete settings.radar.show_live;
+        else settings.radar.show_live = false;
+      }
+      settings = writeZigbeeTopologySettings(settings, d.zigbeeTopology);
       // Old configs may still contain this accepted field, but weather no
       // longer affects sunlight; saving general settings cleans it up.
       delete settings.weather_entity;
@@ -10292,7 +10346,14 @@ public _renderSettingsDialog(): TemplateResult {
             <span>${supportT(
               langOf(this.host.hass, this.host._config?.language), 'gs.show_room_tooltip',
             )}</span>
-          </label><hp-zigbee-topology-settings .hass=${this.host.hass} .value=${this.host._settingsDialog!.zigbeeTopology} .savedEnabled=${zigbeeTopologySettingsOf(this.host._settings).enabled} .devices=${this.host._devices} .registry=${this.host._haRegistry} @hp-topology-settings-change=${(event: CustomEvent<ZigbeeTopologySettings>) => (this.host._settingsDialog = { ...this.host._settingsDialog!, zigbeeTopology: event.detail })}></hp-zigbee-topology-settings>
+          </label>
+          <label class="srcrow">
+            ${this._boolInput(this.host._settingsDialog!.radarShowLive, (v) =>
+              (this.host._settingsDialog = { ...this.host._settingsDialog!, radarShowLive: v }))}
+            <span>${this.host._t('gs.radar_show_live')}</span>
+          </label>
+          <div class="rhint">${this.host._t('gs.radar_show_live_hint')}</div>
+          <hp-zigbee-topology-settings .hass=${this.host.hass} .value=${this.host._settingsDialog!.zigbeeTopology} .savedEnabled=${zigbeeTopologySettingsOf(this.host._settings).enabled} .devices=${this.host._devices} .registry=${this.host._haRegistry} @hp-topology-settings-change=${(event: CustomEvent<ZigbeeTopologySettings>) => (this.host._settingsDialog = { ...this.host._settingsDialog!, zigbeeTopology: event.detail })}></hp-zigbee-topology-settings>
           <label class="dispsection">${this.host._t('gs.light_group')}</label>
           ${this._renderColorRow('light_on', 'gs.light_on')}
           ${this._renderColorRow('light_off', 'gs.light_off')}
@@ -10418,7 +10479,7 @@ public _renderSettingsDialog(): TemplateResult {
         </div>
         <div class="row" slot="footer">
           <button class="btn ghost" @click=${() =>
-            (this.host._settingsDialog = { ...this.host._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this.host._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false, showRoomTooltip: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] } })}>
+            (this.host._settingsDialog = { ...this.host._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this.host._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false, showRoomTooltip: true, radarShowLive: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] } })}>
             ${this.host._t('gs.reset')}
           </button>
           <span class="spacer"></span>
@@ -12795,6 +12856,32 @@ public _setMarkerGlowMode(mode: 'auto' | 'color' | 'fixed'): void {
     };
   }
 
+public _renderRadarSection(
+  d: NonNullable<HouseplanEditorHostPort['_markerDialog']>,
+  device: DevItem | null,
+): TemplateResult {
+    return renderRadarSection({
+      dialog: d,
+      device,
+      registryHass: this.host._fullRegistryHass,
+      planHass: this.host._planHass,
+      hass: this.host.hass,
+      spaceModelById: (id) => this.host._spaceModelById(id),
+      currentSpace: () => this.host._spaceModel(),
+      position: (item) => this.host._pos(item),
+      updateDialog: (patch) => {
+        if (this.host._markerDialog) this.host._markerDialog = { ...this.host._markerDialog, ...patch };
+      },
+      dialogDeviceId: () => this.host._markerDialog?.devId,
+      t: (key, vars) => this.host._t(key, vars),
+      help: (key) => this._help(key),
+      boolInput: (value, change) => this._boolInput(value, change),
+      toast: (message) => this.host._showToast(message),
+      setup: this._radarSetup,
+      configRev: this.host._cfgRev,
+    });
+  }
+
 public _renderMarkerDialog(): TemplateResult {
     const d = this.host._markerDialog!;
     const isVirtual = d.bindingMode === 'virtual';
@@ -12929,6 +13016,9 @@ public _renderMarkerDialog(): TemplateResult {
                     ...d, bindingMode: 'virtual' as const, binding: 'virtual', bindingOpen: false,
                     controls: persistedExternalControls('virtual', d.controls),
                     autoIcon: this.host._autoIconForBinding('virtual'),
+                    radar: null, radarEligible: false,
+                    radarTouched: d.radarTouched || !!d.radar,
+                    radarRemove: d.radarRemove || !!d.radar,
                   };
                   this.host._markerDialog = this._announceToggleDraft({
                     ...next, ...this._valueBadgeForBinding(next, 'virtual'),
@@ -12984,6 +13074,9 @@ public _renderMarkerDialog(): TemplateResult {
                                     c.value, d.controls, this.host._bindingEntities(c.value),
                                   ),
                                   autoIcon: this.host._autoIconForBinding(c.value),
+                                  radar: null, radarEligible: false,
+                                  radarTouched: d.radarTouched || !!d.radar,
+                                  radarRemove: d.radarRemove || !!d.radar,
                                 };
                                 this.host._markerDialog = this._announceToggleDraft({
                                   ...next, ...this._valueBadgeForBinding(next, c.value),
@@ -13002,9 +13095,16 @@ public _renderMarkerDialog(): TemplateResult {
 
           <label for="marker-room">${this.host._t('marker.room_label')}${isVirtual ? '' : this.host._t('marker.room_override')}</label>
           <select id="marker-room" class="areasel"
-            @change=${(e: Event) => (this.host._markerDialog = {
-              ...d, room: (e.target as HTMLSelectElement).value, roomTouched: true,
-            })}>
+            @change=${(e: Event) => {
+              const room = (e.target as HTMLSelectElement).value;
+              const ref = parseRoomRef(room);
+              this.host._markerDialog = {
+                ...d, room, roomTouched: true,
+                radar: d.radar && ref?.space === (previewDevice?.space || '') && ref.roomId
+                  ? { ...d.radar, roomId: ref.roomId } : d.radar,
+                radarTouched: d.radar && ref?.roomId ? true : d.radarTouched,
+              };
+            }}>
             <option value="" ?selected=${!d.room}>
               ${isVirtual ? this.host._t('marker.room_choose') : this.host._t('marker.room_auto')}
             </option>
@@ -13013,6 +13113,7 @@ public _renderMarkerDialog(): TemplateResult {
             )}
           </select>
 
+          ${this._renderRadarSection(d, previewDevice)}
           ${this._renderVacSection(d)}
 
           <label>${this.host._t('marker.tap_label')}</label>
@@ -13482,7 +13583,7 @@ public _renderMarkerDialog(): TemplateResult {
           <div class="markeractions">
             ${d.devId
               ? html`<button class="btn" type="button"
-                  ?disabled=${d.busy}
+                  ?disabled=${d.busy || this._radarSetup.isActive()}
                   aria-pressed=${d.hideFromPlan || bindingStatus?.kind === 'ha_disabled' ? 'true' : 'false'}
                   title=${this.host._t(d.hideFromPlan || bindingStatus?.kind === 'ha_disabled' ? 'marker.show_tip' : 'marker.hide_tip')}
                   @click=${this.host._toggleMarkerDialogVisibility}>
@@ -13491,7 +13592,7 @@ public _renderMarkerDialog(): TemplateResult {
                 </button>`
               : nothing}
             ${d.devId
-              ? html`<button class="btn danger" type="button" ?disabled=${d.busy}
+              ? html`<button class="btn danger" type="button" ?disabled=${d.busy || this._radarSetup.isActive()}
                   title=${this.host._t('marker.delete_tip')} @click=${() => this._deleteMarker()}>
                   <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
                 </button>`
@@ -13501,7 +13602,7 @@ public _renderMarkerDialog(): TemplateResult {
             <button class="btn ghost" data-hp="dialog-cancel" ?disabled=${d.busy}
               @click=${() => this._closeMarkerDialog()}>${this.host._t('btn.cancel')}</button>
             <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveMarker()}
-              ?disabled=${d.busy || (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual'
+              ?disabled=${d.busy || this._radarSetup.isActive() || (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual'
                 || (!d.devId && bindingStatus?.kind !== 'active')))}
               title=${d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual') ? this.host._t('marker.pick_ph') : ''}>
               <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this.host._t('btn.save')}

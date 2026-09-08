@@ -41,6 +41,12 @@
   another language stays visually neutral, and room labels keep their size
   when the View-only controls disappear on entering an editor
   ([#437](https://github.com/Matysh/houseplan-card/issues/437)).
+- Presence radars can now show live, room-clipped observations on the plan.
+  House Plan recognizes ESPHome LD2450 coordinate sets, also supports explicit
+  Cartesian, polar, range, zone-state and presence-only mappings, and provides
+  an on-plan installation/calibration flow with source-health diagnostics. Raw
+  observations and the short diagnostic trail remain session-only
+  ([#485](https://github.com/Matysh/houseplan-card/issues/485)).
 
 ## v1.73.0-beta.6 — 2026-09-08
 

@@ -1,9 +1,10 @@
 # #485 — Stage 1: sources, calibration and live presence
 
 Issue: [#485](https://github.com/Matysh/houseplan-card/issues/485).
-Read the [common contract](485-radar-presence.md) first. This is a planned
-implementation, not code already shipped. The owner requested stopping at S5
-after independent review; this document does not authorize starting S6 now.
+Read the [common contract](485-radar-presence.md) first. The contract completed
+independent review at `spec-r4`; the owner authorized S6 on 2026-09-08 and this
+document is the implementation authority for Stage 1. Stages 2 and 3 remain
+separate, unimplemented scopes.
 
 ## 1. Before / after, scope and integration seams
 
@@ -204,6 +205,15 @@ or zero-right and clockwise/counterclockwise; distance is nonnegative. Source
 strings `unknown`, `unavailable`, empty, NaN/Infinity are not numeric zero.
 Cartesian x=0, negative x and valid origin observations remain legal.
 
+The reference ESPHome LD2450 source was clarified with a real 68k-row capture
+in the issue on 2026-09-08: signed X is left/right, positive Y is forward, and
+that adapter uses the simultaneously reported pair X=0,Y=0 for an unused
+target slot. Treat only that complete fresh **verified-adapter pair** as explicit
+absence. One zero axis remains a valid position, and generic Cartesian sources
+continue to allow a real origin unless their own verified profile defines an
+absence signal. The contributed capture informs synthetic boundary fixtures;
+it is not copied into the repository without an explicit data licence.
+
 Global occupancy `off` suppresses all targets immediately; `unknown/unavailable`
 gate suppresses gated geometry without becoming `off`. Per-slot gates affect
 their own slots. `on` allows coordinates but never manufactures them. Optional
@@ -259,8 +269,9 @@ require a complete eligible pair before showing a dot again. Invalid slot
 coordinates clear that slot immediately, even during a presence hold timeout.
 No guessed zero-target frame from an empty list of expired slots.
 
-For LD2450, `unknown` X/Y by itself is not explicit absence: the driver also
-uses missing values when a slot is unused. Global occupancy `off` is explicit
+For LD2450, `unknown` X/Y by itself is not explicit absence. A complete fresh
+X=0,Y=0 pair is explicit absence under the verified ESPHome adapter contract
+documented above; a lone zero or stale/partial pair is not. Global occupancy `off` is explicit
 negative evidence under that source's current HA state semantics; an eligible
 fresh global target count of zero with no conflicting valid target is also
 explicit negative. Otherwise an unknown slot keeps coordinate completeness

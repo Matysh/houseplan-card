@@ -19,9 +19,13 @@ const SLACK = 250;
 // Потолки. Меняются только вручную и только вместе с объяснением в ревью:
 // потолок, который вычисляется от текущего размера, потолком не является.
 const CAPS = {
-  'src/houseplan-card.ts': 13659,
+  // #485 adds the View-side subscription/render integration seams; the live
+  // model and rendering themselves remain in dedicated modules.
+  'src/houseplan-card.ts': 13700,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
-  'src/houseplan-editor-runtime.ts': 14000,
+  // #485 keeps its large setup surface in editors/radar-section.ts; these are
+  // only the dialog state/save seam and the thin lazy-render adapter.
+  'src/houseplan-editor-runtime.ts': 14100,
 };
 
 /**

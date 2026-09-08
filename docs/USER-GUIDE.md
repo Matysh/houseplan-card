@@ -731,6 +731,28 @@ Hidden markers keep configuration and may still contribute to area aggregates.
 An HA-disabled binding is excluded from rendering, state, actions, light and
 aggregates until the same ID becomes active again.
 
+### Presence radars
+
+For a recognized presence radar, marker settings contain **Presence on the
+plan**. Enable it, verify the exact Home Assistant sources and select the room
+whose contour must contain the observations. Unknown/custom real devices can
+use **Additional actions → This is a presence radar** and an explicit data
+profile. The editor never guesses coordinate units, axis directions or a
+bearing from entity names.
+
+**Configure on plan** records the physical sensor position and direction,
+independently of the decorative marker. Coordinate profiles can then use two
+measured reference positions; an optional third point checks the result without
+changing it. Use a desktop browser and stand alone/still at each reference.
+**Check live data** distinguishes no target, stale or partial coordinates,
+unavailable sources and presence without a usable position.
+
+Live dots and range arcs do not intercept clicks and are clipped to the selected
+room. Their short trail and smoothing exist only in the open browser session;
+House Plan does not save raw radar samples or target history. Disable either
+the radar itself or **General settings → Show presence on the plan** to hide the
+layer. See [Presence radars](RADAR.md) for supported profiles, setup and privacy.
+
 ## 11. Tap actions
 
 | Gesture | View | Device editor |

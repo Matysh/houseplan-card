@@ -118,12 +118,14 @@ from .validation import (
     valid_space_id,
     validate_marker_controls,
     validate_marker_light_entities,
+    validate_marker_radars,
     validate_marker_vacuum_routes,
     validate_marker_value_badges,
     validate_opening_passages,
     validate_partition_opening_hosts,
     validate_wall_model_transition,
 )
+from .radar_validation import RadarValidationError
 from .virtual_lights import (
     EVENT_VIRTUAL_LIGHT_UPDATED,
     async_toggle_virtual_light,
@@ -236,6 +238,8 @@ async def _resolved_write_pair(
 @callback
 def async_register(hass: HomeAssistant) -> None:
     """Register the WS commands."""
+    from .radar_websocket import async_register as async_register_radar
+
     websocket_api.async_register_command(hass, ws_layout_get)
     websocket_api.async_register_command(hass, ws_trail_get)
     websocket_api.async_register_command(hass, ws_trail_delete)
@@ -264,6 +268,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_support_preview)
     websocket_api.async_register_command(hass, ws_support_preview_discard)
     websocket_api.async_register_command(hass, ws_support_submit)
+    async_register_radar(hass)
 
 
 def _runtime(hass: HomeAssistant, connection, msg_id: int) -> HouseplanData | None:
@@ -1448,6 +1453,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "support_api": SUPPORT_API_VERSION,
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
+            "radar_stage1_api": 1,
         },
     )
 
@@ -1657,6 +1663,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             msg["config"].update(checked)
             validate_marker_controls(msg["config"], data.get("config"))
             validate_marker_light_entities(msg["config"], data.get("config"))
+            validate_marker_radars(msg["config"], data.get("config"))
             validate_marker_value_badges(msg["config"], data.get("config"))
             validate_marker_vacuum_routes(msg["config"], data.get("config"))
             validate_opening_passages(msg["config"], data.get("config"))
@@ -1672,6 +1679,9 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             PartitionOpeningHostError, PartitionOpeningJambMarginError,
             WallModelClientOutdatedError,
         ) as err:
+            connection.send_error(msg["id"], err.code, str(err))
+            return
+        except RadarValidationError as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
         except vol.Invalid as err:
@@ -2037,6 +2047,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             msg["config"].update(checked)
             validate_marker_controls(msg["config"], config_data.get("config"))
             validate_marker_light_entities(msg["config"], config_data.get("config"))
+            validate_marker_radars(msg["config"], config_data.get("config"))
             validate_marker_value_badges(msg["config"], config_data.get("config"))
             validate_marker_vacuum_routes(msg["config"], config_data.get("config"))
             validate_opening_passages(msg["config"], config_data.get("config"))
@@ -2071,6 +2082,9 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             WallModelClientOutdatedError,
             WallSegmentMigrationError,
         ) as err:
+            connection.send_error(msg["id"], err.code, str(err))
+            return
+        except RadarValidationError as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
         except vol.Invalid as err:

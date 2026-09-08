@@ -94,7 +94,7 @@ test('every i18n key has a literal, dynamic-family or derived help consumer', ()
 });
 
 test('help accessibility copy is derived from every literal help consumer', () => {
-  assert.equal(derivedHelpAria.size, 20, 'the current settings surface has 20 help descriptions');
+  assert.equal(derivedHelpAria.size, 20, 'the current settings surface has 20 statically derived help descriptions');
   for (const key of derivedHelpAria) {
     assert.equal(typeof dictionary[key], 'string', `${key} must accompany its .help consumer`);
   }

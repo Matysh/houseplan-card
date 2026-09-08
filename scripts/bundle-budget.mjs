@@ -191,8 +191,14 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * остаются вне runtime. Измеренный initial-факт 291 681 Б оставляет 819 Б
  * сверху и 1 181 Б до нижней границы полосы — обе стороны дальше
  * наблюдаемого gzip-шума; общий бюджет и долг #367 не меняются.
+ *
+ * 2026-09-08, #485: the authenticated live-presence controller, normalized
+ * frame model and pointer-transparent renderer join the initial View graph;
+ * the large setup UI remains lazy. The 298 kB ceiling retains the existing
+ * 2 kB ratchet band while #437 and #485 coexist; the overall 301 066 B budget
+ * is unchanged.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 292_500;
+export const INITIAL_VIEW_GZIP_CEILING = 298_000;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**

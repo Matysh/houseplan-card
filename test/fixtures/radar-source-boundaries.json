@@ -1,0 +1,35 @@
+{
+  "provenance": "Synthetic boundary cases derived from the public LD2450 coordinate contract in issue #485; no contributed observations are copied.",
+  "projection": [
+    {
+      "name": "LD2450 centre line keeps a zero X axis",
+      "mount": [0.5, 0.5],
+      "heading_deg": 0,
+      "mirror": false,
+      "cell_cm": 5,
+      "local": [0, 1000],
+      "unit": "mm",
+      "expected": [0.5, 0.4166666666666667]
+    },
+    {
+      "name": "LD2450 signed left coordinate keeps a zero Y axis",
+      "mount": [0.5, 0.5],
+      "heading_deg": 0,
+      "mirror": false,
+      "cell_cm": 5,
+      "local": [-1200, 0],
+      "unit": "mm",
+      "expected": [0.4, 0.5]
+    },
+    {
+      "name": "Imperial generic source uses the exact factor",
+      "mount": [0.25, 0.75],
+      "heading_deg": 90,
+      "mirror": true,
+      "cell_cm": 1,
+      "local": [10, 0],
+      "unit": "in",
+      "expected": [0.25, 0.6441666666666667]
+    }
+  ]
+}

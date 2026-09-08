@@ -472,6 +472,7 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
     'vac.diag_status',
     'vac.diag_position',
     'version_mismatch.backend',
+    'radar.source_optional',
   ]);
   const equalKeys = Object.keys(en).filter((key) => en[key] === de[key]);
   assert.deepEqual(new Set(equalKeys), allowed);
@@ -518,6 +519,8 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
     'vac.diag_source',
     'vac.documentation',
     'wallthick.unit_cm',
+    'radar.heading',
+    'radar.radians',
   ]);
   const equalKeys = Object.keys(en).filter((key) => en[key] === fr[key]);
   assert.deepEqual(new Set(equalKeys), allowed);

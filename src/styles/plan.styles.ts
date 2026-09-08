@@ -12,6 +12,7 @@ export const planStyles = css`
     }
     @media (prefers-reduced-motion: reduce) {
       .fixedfloor-loading { animation: none; }
+      .radar-target { transition: none; }
     }
     .stage.noplan {
       background: #ffffff;
@@ -1411,6 +1412,38 @@ export const planStyles = css`
       inset: 0;
       pointer-events: none;
       z-index: 6;
+    }
+    .radar-target {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      box-sizing: border-box;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: var(--success-color, #43a047);
+      border: 2px solid var(--primary-text-color, #1f1f1f);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-background-color, #fff) 80%, transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .radar-target.smooth { transition: left 200ms linear, top 200ms linear; }
+    .radar-ranges {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .radar-ranges path,
+    .radar-ranges polyline {
+      fill: none;
+      stroke: var(--success-color, #43a047);
+      stroke-width: 2px;
+      stroke-dasharray: 5 4;
+      vector-effect: non-scaling-stroke;
+      opacity: 0.72;
     }
     .stage.mode-devices .dev { cursor: grab; }
     .stage.mode-devices .dev:active { cursor: grabbing; }

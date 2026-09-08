@@ -109,6 +109,8 @@ class HouseplanData:
     # memory-only, invalidated by a rev mismatch; the previous document is
     # not re-judged on every write. Counts only — documents are never held.
     junction_baseline: tuple[int, dict[str, dict[str, int]]] | None = None
+    # Runtime-only #485 authority; never serialized by HouseplanStore.
+    radar_coordinator: Any | None = None
 
 
 HouseplanConfigEntry = ConfigEntry[HouseplanData]
