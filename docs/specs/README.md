@@ -100,6 +100,7 @@
 
 | Issue | ТЗ |
 |---|---|
+| [#493](https://github.com/Matysh/houseplan-card/issues/493) Ограниченный picker и надёжный lifecycle сводной панели | [493-summary-panel-hardening.md](493-summary-panel-hardening.md) |
 | [#437](https://github.com/Matysh/houseplan-card/issues/437) Конфигурируемая сводная панель поверх плана | [437-summary-panel.md](437-summary-panel.md) |
 | [#487](https://github.com/Matysh/houseplan-card/issues/487) Пороги комфортной температуры для комнаты | [487-room-temperature-thresholds.md](487-room-temperature-thresholds.md) |
 | [#478](https://github.com/Matysh/houseplan-card/issues/478) Отказ от persisted-сущности `room_drafts` | [478-remove-room-drafts.md](478-remove-room-drafts.md) |
