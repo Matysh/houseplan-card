@@ -106,7 +106,7 @@ card, отдельная sidebar panel #486, три редактора и общ
 | Атрибут | Значения | Правило |
 |---|---|---|
 | `data-hp-state` | `booting`, `ready` | `booting`, пока действует существующий `_booting`; после его завершения — `ready` |
-| `data-hp-mode` | `view`, `plan`, `device`, `decor` | Публичное имя текущего режима; внутреннее `devices` отображается как `device` |
+| `data-hp-mode` | `view`, `plan`, `devices`, `decor` | Публичное имя текущего режима; словарь совпадает с уже опубликованным `mode-devices` и существующим `data-editor-navigation="devices"` |
 
 Empty card после завершённой загрузки является `ready`, даже если в ней нет ни
 одного пространства. Ошибка fixed-floor не возвращает карточку в `booting`.
@@ -118,9 +118,9 @@ Empty card после завершённой загрузки является `
 | `settings` | кнопка общих настроек | как сейчас: writable normal mode |
 | `pdf` | кнопка PDF | как сейчас |
 | `support` | кнопка помощи/обратной связи | как сейчас |
-| `zoom-in` | кнопка `+` zoom | когда отображается header |
-| `zoom-out` | кнопка `−` zoom | когда отображается header |
-| `zoom-fit` | кнопка «вписать всё» | когда отображается header |
+| `zoom-in` | кнопка `+` zoom | как сейчас: в ordinary plan render; в kiosk остаётся в DOM внутри скрытого CSS header |
+| `zoom-out` | кнопка `−` zoom | как сейчас: в ordinary plan render; в kiosk остаётся в DOM внутри скрытого CSS header |
+| `zoom-fit` | кнопка «вписать всё» | как сейчас: в ordinary plan render; в kiosk остаётся в DOM внутри скрытого CSS header |
 | `space-add` | кнопка `+` рядом со вкладками | по существующим permission/fixed-floor/kiosk правилам |
 | `space-settings` | шестерёнка внутри вкладки | `data-id` равен id пространства |
 | `empty` | существующий контейнер пустого состояния | нет пространств либо отображается fixed-floor pending/error |
@@ -309,14 +309,18 @@ Menu и title существующей #486 panel находятся как `pan
 на #489. Пользовательская config и видимый DOM/layout не меняются кроме новых
 атрибутов.
 
-**Доказательство:** review diff + `npm run check:docs` (если такой script
-доступен в текущем package) и обычный build.
+**Доказательство:** review diff + обязательный
+`node scripts/check-docs.mjs` после принятия канонического screenshot-артефакта
+и обычный build.
 
 ### AC8 — обязательные гейты
 
 Проходят `npm run typecheck`, `npm test`, `npm run build`,
 `npm run bundle:sync`, `npm run bundle:budget` и локальный
-`node demo/smoke_styling_hooks.mjs`.
+`node demo/smoke_styling_hooks.mjs`. Поскольку меняется `src/**`, дополнительно
+обязателен `node scripts/check-docs.mjs`: до пересъёмки он должен честно
+сообщить об устаревшем source fingerprint, после принятия нового комплекта —
+пройти зелёным.
 
 **Доказательство:** точные команды и результаты в комментарии #489 перед
 `S7-code-review`.
@@ -372,6 +376,10 @@ Menu и title существующей #486 panel находятся как `pan
 - запись `docs/specs/README.md` и двусторонняя ссылка issue ↔ ТЗ;
 - `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` в том же user-visible commit;
 - синхронные bundle trees после `npm run bundle:sync`;
+- канонический комплект docs screenshots из workflow **Docs screenshots** на
+  точном implementation SHA, принятый командой
+  `npm run docs:accept -- --reviewed --from=<распакованный-артефакт>`; локальная
+  самостоятельная пересъёмка PNG не принимается;
 - без golden baseline, если visual diff действительно нулевой.
 
 ## 15. Принятые предположения
@@ -387,7 +395,9 @@ Menu и title существующей #486 panel находятся как `pan
   достоверно восстановить из переведённого текста и она не нужна заявленному
   E2E-сценарию;
 - dialog kinds намеренно broad и не кодируют каждый внутренний подшаг;
-- `device` — публичное имя режима при внутреннем `_mode === "devices"`;
+- `devices` сохраняет уже опубликованное имя `.stage.mode-devices` и значение
+  `data-editor-navigation="devices"`; отдельное третье имя `device` для того же
+  режима не вводится;
 - следующая запись `since` предварительно равна `1.73.0-beta.7` и уточняется
   release commit, если версия линии изменится;
 - внутренние исключения могут быть exact values сверх перечисленных в issue,
