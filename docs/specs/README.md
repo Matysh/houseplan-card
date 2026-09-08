@@ -96,6 +96,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 
 | Issue | ТЗ |
 |---|---|
+| [#487](https://github.com/Matysh/houseplan-card/issues/487) Пороги комфортной температуры для комнаты | [487-room-temperature-thresholds.md](487-room-temperature-thresholds.md) |
 | [#478](https://github.com/Matysh/houseplan-card/issues/478) Отказ от persisted-сущности `room_drafts` | [478-remove-room-drafts.md](478-remove-room-drafts.md) |
 | [#477](https://github.com/Matysh/houseplan-card/issues/477) Fixed point оптимизатора после штатного редактирования | [477-editor-writer-fixed-point.md](477-editor-writer-fixed-point.md) |
 | [#10](https://github.com/Matysh/houseplan-card/issues/10) Roomba live position | [010-vacuum-roomba-live-position.md](010-vacuum-roomba-live-position.md) |
