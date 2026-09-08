@@ -63,7 +63,13 @@ not an assertion that Q3 authorized permanent collection.
 
 There is no new editor mode or separate fleet of person/device markers. Add
 configuration under the existing device/placed-entity marker in Device editor:
-**Presence on plan**. Reuse the primary House Plan panel and full dashboard
+**Presence on plan**, shown only for an eligible presence-radar device as
+defined by Stage 1 §2. Unsupported ordinary devices get no empty/disabled
+section. An existing saved radar configuration retains its repair path even
+when its sources become unavailable. This owner clarification of 2026-09-08
+does **not** condition the global Show presence on the plan preference on
+device discovery or first setup: that preference stays unchanged.
+Reuse the primary House Plan panel and full dashboard
 card's shared editor. The compact Room View card is not a second radar editor;
 this issue neither replaces its current renderer nor adds historical tools to it.
 
@@ -81,8 +87,11 @@ Reference adapters: ESPHome LD2450 (coordinate slots and separately verified
 zone-number bindings), generic explicit Cartesian/polar/range/occupancy inputs,
 and exact zone occupancy/count mappings (including FP2-style connections).
 Named products in the initial issue are examples, not a claim that every
-firmware is automatically supported. Unknown connections use manual bindings
-or an unsupported explanation, never guessed axes/units/writable capabilities.
+firmware is automatically supported. Positively identified radars with unknown
+connection roles use manual bindings or an unsupported explanation, never
+guessed axes/units/writable capabilities. Hardware with neither positive radar
+metadata nor a saved radar configuration does not get a generic setup section;
+an arbitrary pair of numbers or occupancy class is not enough to qualify it.
 
 ## 4. Shared architecture and authoritative state
 
