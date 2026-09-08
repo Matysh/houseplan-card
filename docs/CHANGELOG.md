@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.73.0-beta.6 — 2026-09-08
+
 - The House Plan sidebar page now shows the plan on the first open in a real
   Home Assistant install: the panel adopts the properties Home Assistant assigns
   before the element is defined and sizes itself from the viewport instead of
