@@ -251,3 +251,127 @@ async def test_teardown_releases_frames_and_subscriptions(
     assert coordinator.closed is True
     assert coordinator.frames_for_space("floor") == []
     assert coordinator._unsub_sources == []
+
+
+@pytest.mark.asyncio
+async def test_presence_only_profile_reports_without_geometry(
+    hass: HomeAssistant,
+) -> None:
+    document = _stored("presence_v1")
+    radar = document["config"]["markers"][0]["radar"]
+    radar["sources"] = {"occupancy_entity": "binary_sensor.radar_presence"}
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+
+    coordinator = await _coordinator(hass, document)
+    frame = coordinator.frame("radar")
+    assert frame is not None
+    assert frame["health"] == "ok"
+    assert frame["reported_presence"] is True
+    assert frame["complete"] is True
+    assert frame["expires_at"] is None
+    assert coordinator.inspect("radar")["capabilities"] == ["reported_presence"]
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_zone_profile_normalizes_occupancy_and_count(
+    hass: HomeAssistant,
+) -> None:
+    document = _stored("zones_v1")
+    radar = document["config"]["markers"][0]["radar"]
+    radar["sources"] = {"zones": [
+        {"id": "desk", "entity_id": "binary_sensor.desk", "kind": "occupancy"},
+        {"id": "people", "entity_id": "sensor.people", "kind": "count"},
+    ]}
+    hass.states.async_set("binary_sensor.desk", "on")
+    hass.states.async_set("sensor.people", "2")
+
+    coordinator = await _coordinator(hass, document)
+    frame = coordinator.frame("radar")
+    assert frame is not None
+    assert frame["health"] == "ok"
+    assert frame["complete"] is True
+    assert frame["zones"] == [
+        {"id": "desk", "state": True}, {"id": "people", "state": 2.0},
+    ]
+    assert coordinator.inspect("radar")["capabilities"] == ["zone_state"]
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_range_profile_clips_arc_to_owner_room(
+    hass: HomeAssistant,
+) -> None:
+    document = _stored("range_v1")
+    radar = document["config"]["markers"][0]["radar"]
+    radar["sources"] = {"ranges": [{
+        "id": "distance", "entity_id": "sensor.radar_distance", "unit": "m",
+        "presence_entity": "binary_sensor.radar_presence",
+    }]}
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_distance", "2")
+
+    coordinator = await _coordinator(hass, document)
+    frame = coordinator.frame("radar")
+    assert frame is not None
+    assert frame["health"] == "ok"
+    assert frame["complete"] is True
+    assert frame["ranges"][0]["radius"] == pytest.approx(200 / 1200)
+    assert frame["ranges"][0]["segments"]
+    assert coordinator.inspect("radar")["capabilities"] == ["range"]
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_polar_profile_projects_explicit_bearing(
+    hass: HomeAssistant,
+) -> None:
+    document = _stored("polar_v1")
+    radar = document["config"]["markers"][0]["radar"]
+    radar["sources"] = {"slots": [{
+        "id": "target_1", "distance_entity": "sensor.radar_distance",
+        "angle_entity": "sensor.radar_angle", "unit": "cm",
+        "angle_unit": "degrees", "angle_zero": "forward",
+        "angle_clockwise": True,
+    }]}
+    hass.states.async_set("sensor.radar_distance", "100")
+    hass.states.async_set("sensor.radar_angle", "90")
+
+    coordinator = await _coordinator(hass, document)
+    frame = coordinator.frame("radar")
+    assert frame is not None
+    assert frame["health"] == "ok"
+    assert frame["targets"][0]["x"] == pytest.approx(.5 + 100 / 1200)
+    assert frame["targets"][0]["y"] == pytest.approx(.5)
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_coordinator_query_and_listener_lifecycle(
+    hass: HomeAssistant,
+) -> None:
+    hass.states.async_set("binary_sensor.radar_presence", "off")
+    coordinator = await _coordinator(hass, _stored())
+    public_events = []
+    internal_events = []
+    remove_public = coordinator.add_listener(
+        lambda marker_id, frame: public_events.append((marker_id, frame)),
+    )
+    remove_internal = coordinator.add_internal_listener(
+        lambda marker_id, frame: internal_events.append((marker_id, frame)),
+    )
+    assert public_events[0][0] == "radar"
+    assert coordinator.has_space("floor") is True
+    assert coordinator.has_space("missing") is False
+    assert coordinator.space_for_marker("missing") is None
+    assert coordinator.marker_config("radar")["id"] == "radar"
+    assert coordinator.marker_config("missing") is None
+    assert coordinator.source_ids("missing") == set()
+    assert coordinator.inspect("missing")["health"] == "not_configured"
+
+    coordinator._publish_all(force=True)
+    assert internal_events[-1][0] == "radar"
+    remove_public()
+    remove_internal()
+    assert coordinator._unsub_tick is None
+    coordinator.teardown()
