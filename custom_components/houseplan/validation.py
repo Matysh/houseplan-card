@@ -18,7 +18,6 @@ from custom_components.houseplan.coordinate_canonicalization import (
     canonicalize_position,
 )
 from custom_components.houseplan.vacuum_routes import validate_marker_routes
-from custom_components.houseplan.radar_validation import validate_marker_radars
 
 # ---------- limits and extension sets ----------
 PLAN_EXTENSIONS = {"svg": "image/svg+xml", "png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}

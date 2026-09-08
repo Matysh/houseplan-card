@@ -27,8 +27,8 @@ from .radar_geometry import (
     clipped_arc_segments,
     length_cm,
     point_in_polygon,
-    polygon_is_convex,
     polar_to_cartesian,
+    polygon_is_convex,
     project_local,
 )
 from .radar_validation import radar_source_entity_ids, validate_radar_draft

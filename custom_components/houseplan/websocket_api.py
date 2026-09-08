@@ -81,6 +81,7 @@ from .plans import (
     reserve_filename,
 )
 from .projection import project_config, project_layout
+from .radar_validation import RadarValidationError
 from .registry_snapshot import import_registry_snapshot
 from .store import (
     LAYOUT_STORE_CORE_KEYS,
@@ -125,7 +126,6 @@ from .validation import (
     validate_partition_opening_hosts,
     validate_wall_model_transition,
 )
-from .radar_validation import RadarValidationError
 from .virtual_lights import (
     EVENT_VIRTUAL_LIGHT_UPDATED,
     async_toggle_virtual_light,
