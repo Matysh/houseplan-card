@@ -855,6 +855,7 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
         "area": "living-area",
         "settings": {
             "fill_mode": "custom", "custom_fill": {"c": "#123456", "a": 0.4},
+            "temp_min": 18.5, "temp_max": 24,
             "temp_source": "sensor.room_temp", "hum_source": "sensor.room_humidity",
             "future_room_binding": "sensor.secret",
         },
@@ -907,6 +908,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert "area" not in room and "future_room" not in room
     assert room["settings"] == {
         "fill_mode": "custom", "custom_fill": {"c": "#123456", "a": 0.4},
+        "temp_min": 18.5, "temp_max": 24,
     }
     opening = exported["openings"][0]
     assert opening["flip_h"] is True
@@ -973,6 +975,10 @@ def test_ordinary_space_export_is_unchanged_when_plan_only_is_false(tmp_path: Pa
     assert implicit == explicit
     assert "plan_only" not in implicit["transfer"]
     assert implicit["payload"]["config"]["markers"]
+    settings = implicit["payload"]["config"]["spaces"][0]["rooms"][0]["settings"]
+    assert settings["temp_min"] == 18.5
+    assert settings["temp_max"] == 24
+    assert settings["future_room_binding"] == "sensor.secret"
     assert set(implicit["payload"]["layout"]) == {
         key for key, pos in layout.items() if pos.get("s") == "ground"
     }

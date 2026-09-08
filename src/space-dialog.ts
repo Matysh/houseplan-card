@@ -1,4 +1,4 @@
-import type { FillColorEntry } from './logic';
+import { roomTempRangeOf, type FillColorEntry, type RoomTempRange } from './logic';
 import type { ZeroWallStyle } from './types';
 
 export type SpacePlanSource = 'file' | 'draw';
@@ -118,4 +118,70 @@ export function strictNumber(value: string): number | null {
   if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) return null;
   const parsed = Number(text);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+export interface RoomTempThresholdDraft {
+  valid: boolean;
+  min: number | null;
+  max: number | null;
+}
+
+/** Parse room threshold inputs without conflating an empty field with zero. */
+export function roomTempThresholdDraft(
+  rawMin: string,
+  rawMax: string,
+): RoomTempThresholdDraft {
+  const parse = (raw: string): { valid: boolean; value: number | null } => {
+    if (String(raw ?? '').trim() === '') return { valid: true, value: null };
+    const value = strictNumber(raw);
+    return { valid: value !== null, value };
+  };
+  const lower = parse(rawMin);
+  const upper = parse(rawMax);
+  if (!lower.valid || !upper.valid) {
+    return { valid: false, min: lower.value, max: upper.value };
+  }
+  if (lower.value !== null && upper.value !== null && lower.value > upper.value) {
+    return { valid: true, min: upper.value, max: lower.value };
+  }
+  return { valid: true, min: lower.value, max: upper.value };
+}
+
+/** Resolve saved or pending room bounds through the same production inheritance rule. */
+export function roomTempRangeFromDraft(
+  spaceMin: number,
+  spaceMax: number,
+  room: { settings?: { temp_min?: unknown; temp_max?: unknown } | null },
+  rawMin: string,
+  rawMax: string,
+  useDraft: boolean,
+): RoomTempRange {
+  const draft = roomTempThresholdDraft(rawMin, rawMax);
+  const source = useDraft && draft.valid
+    ? { settings: { ...(room.settings || {}), temp_min: draft.min, temp_max: draft.max } }
+    : room;
+  return roomTempRangeOf(spaceMin, spaceMax, source);
+}
+
+export function roomTempThresholdInputValues(
+  settings: { temp_min?: unknown; temp_max?: unknown } | null | undefined,
+): [string, string] {
+  const value = (value: unknown): string =>
+    typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+  return [value(settings?.temp_min), value(settings?.temp_max)];
+}
+
+/** Mutate a dialog-owned settings draft; false means the inputs must not be saved. */
+export function applyRoomTempThresholdDraft(
+  settings: Record<string, unknown>,
+  rawMin: string,
+  rawMax: string,
+): boolean {
+  const draft = roomTempThresholdDraft(rawMin, rawMax);
+  if (!draft.valid) return false;
+  if (draft.min === null) delete settings.temp_min;
+  else settings.temp_min = draft.min;
+  if (draft.max === null) delete settings.temp_max;
+  else settings.temp_max = draft.max;
+  return true;
 }

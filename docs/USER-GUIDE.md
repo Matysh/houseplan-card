@@ -819,6 +819,12 @@ Plan, Background, preview and the read-only static card add no tab stop.
 Space fill modes include user colour, temperature comfort range and LQI. Room
 settings may override the space. Glow is independent from the base fill.
 
+When a room effectively uses the temperature fill, its settings show optional
+lower and upper comfort bounds. Each blank field independently inherits the
+matching space bound, and **As the space** clears both overrides. The range
+changes only the room floor and opening-tunnel fill; room-card and tooltip
+temperature values are unchanged.
+
 A light source may come from automatic classification, an explicit Always
 role, or a controlled source group. Walls, partitions and columns occlude Glow;
 open passages transmit it. When a configured light source disappears or loses

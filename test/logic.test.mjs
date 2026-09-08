@@ -12,7 +12,7 @@ import {
   alignGuides, segmentAngle, is45,
   swipeTarget, clampScale,
   migratePdfUrls,
-  roomFillModeOf, roomGlowOf, customFillOf, roomCustomFillOf,
+  roomFillModeOf, roomGlowOf, customFillOf, roomCustomFillOf, roomTempRangeOf,
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
@@ -625,6 +625,23 @@ test('custom fill projection is safe and follows room -> space -> default inheri
     { c: '#112233', a: 0.7 });
   assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: { c: '#445566', a: 0.7 } } }),
     { c: '#445566', a: 0.7 });
+});
+
+test('room temperature range inherits per side and normalises the effective pair (#487)', () => {
+  assert.deepEqual(roomTempRangeOf(20, 25, null), { min: 20, max: 25 });
+  assert.deepEqual(roomTempRangeOf(20, 25, { settings: { temp_min: 19, temp_max: 24 } }),
+    { min: 19, max: 24 });
+  assert.deepEqual(roomTempRangeOf(20, 25, { settings: { temp_min: 21 } }),
+    { min: 21, max: 25 });
+  assert.deepEqual(roomTempRangeOf(20, 25, { settings: { temp_max: 19 } }),
+    { min: 19, max: 20 });
+  assert.deepEqual(roomTempRangeOf(20, 25, { settings: { temp_min: 0, temp_max: null } }),
+    { min: 0, max: 25 });
+  assert.deepEqual(roomTempRangeOf(20, 25, { settings: { temp_min: 28, temp_max: 18 } }),
+    { min: 18, max: 28 });
+  assert.deepEqual(roomTempRangeOf(20, 25, { settings: { temp_min: '18', temp_max: Infinity } }),
+    { min: 20, max: 25 });
+  assert.deepEqual(roomTempRangeOf(Number.NaN, Infinity, {}), { min: 20, max: 25 });
 });
 
 test('spaceDisplayOf: show_lqi tri-state (null = follow the card option)', () => {

@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 60;
+export const GOLDEN_MATRIX_VERSION = 61;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -990,6 +990,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,
     deviceName: 'Wohnzimmer-Lichtsteuerung mit absichtlich sehr langem Namen',
     language: 'de', theme: 'light', viewport: { width: 1180, height: 1200 }, ...page },
+  { id: 'room-temperature-dialog-desktop-en', fixture: 'visual', space: 'golden-lighting',
+    dialog: 'room-temperature', roomTemperature: { min: 18, max: 22 },
+    language: 'en', theme: 'light', viewport: { width: 900, height: 900 }, ...page },
+  { id: 'room-temperature-dialog-mobile-ru', fixture: 'visual', space: 'golden-lighting',
+    dialog: 'room-temperature', roomTemperature: { min: 18, max: null },
+    language: 'ru', theme: 'dark', viewport: { width: 390, height: 820 }, ...page },
   { id: 'german-view-mobile-light', fixture: 'visual', space: 'golden-geometry',
     mode: 'view', language: 'de', theme: 'light',
     viewport: { width: 390, height: 900 }, ...page },

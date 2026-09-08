@@ -17,6 +17,9 @@ export interface RoomCfg {
     /** 'device:<id>' or 'entity:<eid>'; unset = average over the room sensors. */
     temp_source?: string | null;
     hum_source?: string | null;
+    /** Room comfort bounds; each absent/null side inherits from the space. */
+    temp_min?: number | null;
+    temp_max?: number | null;
     /** Font multipliers for THIS room's card (0.5-3, unset = 1). */
     name_scale?: number | null;
     label_scale?: number | null;

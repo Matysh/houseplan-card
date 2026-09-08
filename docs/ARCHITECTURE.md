@@ -1421,6 +1421,12 @@ Full View and hosted Static use the same resolver and bounded active render
 snapshot, so a state tick cannot update a temperature fill through a different
 membership rule.
 
+Per-room comfort bounds are resolved by `roomTempRangeOf()`: each absent or
+invalid room side independently inherits the space side, then the effective
+pair is normalised. Both full and static renderers pass that one result into
+`resolveEffectiveRoomFill()`, keeping room polygons and thick-opening tunnels
+in the same temperature band without another climate aggregation pass.
+
 **File uploads go over HTTP** (not WS, which has a message-size limit): `POST /api/houseplan/upload`
 (multipart: marker_id + file), HomeAssistantView, requires_auth. Served from `/houseplan_files/files/`.
 

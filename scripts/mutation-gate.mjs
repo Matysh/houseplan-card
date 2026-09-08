@@ -109,6 +109,28 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'room-temperature-blank-becomes-zero',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="room temperature draft" test/space-dialog.test.mjs',
+    because: 'a blank per-room bound means inheritance and must never become the explicit numeric value zero',
+    patches: [{
+      file: 'src/space-dialog.ts',
+      find: "    if (String(raw ?? '').trim() === '') return { valid: true, value: null };",
+      replace: "    if (String(raw ?? '').trim() === '') return { valid: true, value: 0 };",
+    }],
+  },
+  {
+    id: 'room-temperature-min-inherits-wrong-side',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="room temperature range" test/logic.test.mjs',
+    because: 'each absent room threshold must inherit the matching space side before the effective pair is normalized',
+    patches: [{
+      file: 'src/logic.ts',
+      find: '  const rawMin = finiteOr(room?.settings?.temp_min, inheritedMin);',
+      replace: '  const rawMin = finiteOr(room?.settings?.temp_min, inheritedMax);',
+    }],
+  },
+  {
     id: 'pdf-shared-wall-twice',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="shared wall architecture" test/pdf-scene.test.mjs',
@@ -2521,13 +2543,13 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'schema-manifest-enum-drift',
     guard: 'node --test test/config-schema-parity.test.mjs',
-    because: 'a backend enum value the frontend does not know (and the allow-list does not '
-      + 'bless) is exactly the schema drift #33 exists to catch — the manifest mutation '
-      + 'simulates the backend change without the frontend pair',
+    because: 'a backend schema path the frontend does not know (and the allow-list does not '
+      + 'bless) is exactly the schema drift #33 exists to catch; a single-line path mutation '
+      + 'also stays deterministic across LF and CRLF schema dumps',
     patches: [{
       file: 'scripts/config-schema.json',
-      find: "    \"config.spaces[].settings.fill_mode\": {\n      \"enum\": [\n        \"custom\",",
-      replace: "    \"config.spaces[].settings.fill_mode\": {\n      \"enum\": [\n        \"phantom-33\",\n        \"custom\",",
+      find: '    "config.spaces[].settings.fill_mode": {',
+      replace: '    "config.spaces[].settings.fill_mode_phantom": {',
     }],
   },
   {

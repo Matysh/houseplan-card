@@ -13,7 +13,7 @@ import {
 } from './devices';
 import {
   spaceDisplayOf, fillColorsOf, roomFillModeOf, roomGlowOf,
-  roomCustomFillOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
+  roomCustomFillOf, roomTempRangeOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
   openingAmount, roomPoly, outlineWithout, islandsOf,
   type ResolvedRoomFill,
 } from './logic';
@@ -494,6 +494,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // and therefore receives the same base darkness as explicit `none`.
   const resolvedRoomFills = new Map(space.rooms.map((room) => {
     const fill = roomFillModeOf(disp.fill, room);
+    const tempRange = roomTempRangeOf(disp.tempMin, disp.tempMax, room);
     return [room, resolveEffectiveRoomFill(
       fill,
       fill === 'lqi' && room.area ? areaLqi(planHass, spaceDevs, room.area) : null,
@@ -501,8 +502,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         ? resolvedLightState(resolvedLightSources(planHass, spaceDevs, room, o.virtualLights))
         : 'none',
       fill === 'temp' ? roomTemperature(room) : null,
-      disp.tempMin,
-      disp.tempMax,
+      tempRange.min,
+      tempRange.max,
       colors,
       roomCustomFillOf(disp.customFill, room),
     )] as const;

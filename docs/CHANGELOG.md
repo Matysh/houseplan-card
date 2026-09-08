@@ -7,6 +7,10 @@
   before the element is defined and sizes itself from the viewport instead of
   its height-less container, so the page is no longer blank with a 0 px stage
   ([#488](https://github.com/Matysh/houseplan-card/issues/488)).
+- Each room can now override the lower and upper comfort-temperature bounds.
+  Either blank field independently inherits its space value; the setting only
+  affects the room and opening-tunnel temperature fill
+  ([#487](https://github.com/Matysh/houseplan-card/issues/487)).
 
 ## v1.73.0-beta.5 — 2026-09-08
 

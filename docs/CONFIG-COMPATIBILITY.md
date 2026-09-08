@@ -525,6 +525,15 @@ the Glow base. `none` remains accepted by the model and exposed at room level,
 where it is still required to suppress an inherited
 LQI/light/temperature/custom fill for one room.
 
+Rooms may also store optional `settings.temp_min` and `settings.temp_max`
+finite numbers. Each absent or explicit `null` side independently inherits
+`space.settings.temp_min` / `temp_max` (and then the product default). The
+effective pair is sorted only at the read boundary, so a partial override is
+not materialised merely because its inherited counterpart crosses it. Current
+writers sort two explicitly entered values and omit cleared keys. The fields
+affect only temperature room/tunnel fills. Older cards ignore them and may
+erase them if they rebuild that room's settings after a downgrade.
+
 ## Per-marker light role and Glow appearance
 
 `marker.is_light` is tri-state. Missing/null means automatic device-role

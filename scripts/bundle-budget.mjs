@@ -170,8 +170,14 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * 289 556 Б; writer, шрифт, печатная сцена и общий дизайнерский арт мебели
  * остались в `lazyPdfFiles` (114 486 Б gzip). Новый центр даёт 944 Б сверху и 1 056 Б
  * снизу; PDF-граф не пересекается с initial View.
+ *
+ * 2026-09-07, #487: потолок поднят 290 500 → 291 500 без изменения общего
+ * бюджета. Pure-resolver диапазона комнаты и его вызовы нужны обоим View-
+ * renderer'ам до загрузки редактора: именно они меняют температурную заливку
+ * обычного и статичного плана. Измеренный факт 290 937 Б оставляет 563 Б
+ * сверху и 1 437 Б до нижней границы полосы; UI и writer остались в lazy editor.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 290_500;
+export const INITIAL_VIEW_GZIP_CEILING = 291_500;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**

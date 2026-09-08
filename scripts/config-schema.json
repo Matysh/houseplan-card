@@ -1186,6 +1186,14 @@
       "required": false,
       "type": "float"
     },
+    "config.spaces[].rooms[].settings.temp_max": {
+      "opaque": "<function _finite_number_or_none>",
+      "required": false
+    },
+    "config.spaces[].rooms[].settings.temp_min": {
+      "opaque": "<function _finite_number_or_none>",
+      "required": false
+    },
     "config.spaces[].rooms[].settings.temp_source": {
       "nullable": true,
       "required": false,

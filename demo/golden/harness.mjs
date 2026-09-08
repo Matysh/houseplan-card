@@ -1718,6 +1718,34 @@ export async function prepareGoldenScenario(page, scenario) {
       if (body && body.scrollWidth > body.clientWidth + 1) {
         throw new Error(`golden device lifecycle catalog overflows horizontally: ${scenario.id}`);
       }
+    } else if (scenario.dialog === 'room-temperature') {
+      const space = card._curSpaceCfg;
+      const room = space?.rooms?.[0];
+      const thresholds = scenario.roomTemperature;
+      if (!room || !thresholds || !Number.isFinite(thresholds.min)
+          || !(thresholds.max === null || Number.isFinite(thresholds.max))) {
+        throw new Error(`invalid golden room-temperature dialog: ${scenario.id}`);
+      }
+      space.settings = { ...(space.settings || {}), fill_mode: 'temp', temp_min: 20, temp_max: 25 };
+      room.settings = {
+        ...(room.settings || {}), temp_min: thresholds.min,
+        ...(thresholds.max === null ? {} : { temp_max: thresholds.max }),
+      };
+      card._setMode('plan');
+      await card.updateComplete;
+      await settleMode(card);
+      card._openRoomEdit(room);
+      await card.updateComplete;
+      await frame();
+      const dialog = card.renderRoot.querySelector('hp-dialog.roomdialog');
+      const inputs = dialog?.querySelectorAll('.roomtemprange-fields input');
+      const reset = dialog?.querySelector('.roomtemprange-fields .btn');
+      if (!dialog || inputs?.length !== 2 || inputs[0].placeholder !== '20'
+          || inputs[1].placeholder !== '25' || inputs[0].value !== String(thresholds.min)
+          || inputs[1].value !== (thresholds.max === null ? '' : String(thresholds.max))
+          || !reset || dialog.scrollWidth > dialog.clientWidth + 1) {
+        throw new Error(`golden room-temperature controls are incomplete or clipped: ${scenario.id}`);
+      }
     } else if (scenario.dialog === 'device') {
       card._setMode('devices');
       await card.updateComplete;

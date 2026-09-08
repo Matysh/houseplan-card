@@ -107,7 +107,7 @@ import {
 } from './initial-load';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import {
-  createEmptySpaceConfig, initialSpaceDisplayDraft, switchSpacePlanSource, touchSpaceDisplay,
+  createEmptySpaceConfig, initialSpaceDisplayDraft, roomTempRangeFromDraft, switchSpacePlanSource, touchSpaceDisplay,
   type SpaceDialogState,
 } from './space-dialog';
 import { mdiHomeCityOutline } from '@mdi/js';
@@ -1991,7 +1991,7 @@ export class HouseplanCard extends LitElement {
   private _roomFill: '' | 'none' | 'lqi' | 'light' | 'temp' | 'custom' = ''; // '' = inherit
   /** null = inherit the space custom color; value = explicit room override. */
   private _roomCustomFill: FillColorEntry | null = null;
-  private _roomTempSrc = ''; // '' = average
+  private _roomTempMin = ''; private _roomTempMax = ''; private _roomTempSrc = ''; // blank inherits; zero is explicit
   private _roomHumSrc = '';
   private _roomSrcOpen: 'temp' | 'hum' | null = null;
   private _roomSrcFilter = '';
@@ -2573,6 +2573,7 @@ export class HouseplanCard extends LitElement {
     _roomEditId: { state: true },
     _roomFill: { state: true },
     _roomCustomFill: { state: true },
+    _roomTempMin: { state: true }, _roomTempMax: { state: true },
     _roomTempSrc: { state: true },
     _roomHumSrc: { state: true },
     _roomSrcOpen: { state: true },
@@ -3499,7 +3500,7 @@ export class HouseplanCard extends LitElement {
     if (this._roomDialog) {
       return at('room', {
         editId: this._roomEditId, fill: this._roomFill, customFill: this._roomCustomFill,
-        tempSrc: this._roomTempSrc,
+        tempMin: this._roomTempMin, tempMax: this._roomTempMax, tempSrc: this._roomTempSrc,
         humSrc: this._roomHumSrc, srcOpen: this._roomSrcOpen, srcFilter: this._roomSrcFilter,
         nameScale: this._roomNameScale, labelScale: this._roomLabelScale,
         areaSel: this._areaSel, nameSel: this._nameSel,
@@ -3584,7 +3585,8 @@ export class HouseplanCard extends LitElement {
       case 'room': {
         const r = d.data;
         this._roomEditId = r.editId; this._roomFill = r.fill;
-        this._roomCustomFill = r.customFill || null; this._roomTempSrc = r.tempSrc;
+        this._roomCustomFill = r.customFill || null; this._roomTempMin = r.tempMin || '';
+        this._roomTempMax = r.tempMax || ''; this._roomTempSrc = r.tempSrc;
         this._roomHumSrc = r.humSrc; this._roomSrcOpen = r.srcOpen; this._roomSrcFilter = r.srcFilter;
         this._roomNameScale = r.nameScale; this._roomLabelScale = r.labelScale;
         this._areaSel = r.areaSel; this._nameSel = r.nameSel;
@@ -9285,6 +9287,8 @@ export class HouseplanCard extends LitElement {
       const customFill = this._roomDialog && room.id === this._roomEditId
         ? (this._roomCustomFill || disp.customFill)
         : roomCustomFillOf(disp.customFill, room);
+      const tempRange = roomTempRangeFromDraft(disp.tempMin, disp.tempMax, room,
+        this._roomTempMin, this._roomTempMax, this._roomDialog && room.id === this._roomEditId);
       const resolved = resolveEffectiveRoomFill(
         mode,
         mode === 'lqi' && room.area ? this._roomLqi(room.area) : null,
@@ -9294,8 +9298,8 @@ export class HouseplanCard extends LitElement {
           ))
           : 'none',
         mode === 'temp' ? this._roomTemp(room) : null,
-        disp.tempMin,
-        disp.tempMax,
+        tempRange.min,
+        tempRange.max,
         this._fillColors,
         customFill,
       );
@@ -12555,20 +12559,16 @@ export class HouseplanCard extends LitElement {
     );
   }
 
-  /** Room temperature honouring the tier-3 source override. */
+  /** Room climate value honouring the tier-3 source override. */
   private _roomTemp(r: RoomCfg): number | null {
-    const src = r.settings?.temp_source;
-    if (src) return sourceValue(this._renderPlanHass, src, 'temp', this._markers);
-    const key = roomClimateKey(this._spaceModel()?.id, r);
-    return key ? this._climate().get(key)?.temp ?? null : null;
+    const src = r.settings?.temp_source, key = roomClimateKey(this._spaceModel()?.id, r);
+    return src ? sourceValue(this._renderPlanHass, src, 'temp', this._markers)
+      : key ? this._climate().get(key)?.temp ?? null : null;
   }
-
-  /** Room humidity honouring the tier-3 source override. */
   private _roomHum(r: RoomCfg): number | null {
-    const src = r.settings?.hum_source;
-    if (src) return sourceValue(this._renderPlanHass, src, 'hum', this._markers);
-    const key = roomClimateKey(this._spaceModel()?.id, r);
-    return key ? this._climate().get(key)?.hum ?? null : null;
+    const src = r.settings?.hum_source, key = roomClimateKey(this._spaceModel()?.id, r);
+    return src ? sourceValue(this._renderPlanHass, src, 'hum', this._markers)
+      : key ? this._climate().get(key)?.hum ?? null : null;
   }
 
   // Ключи сравниваются только по ссылке (`===`), значение не читается ни разу.

@@ -398,11 +398,36 @@ export const dialogsStyles = css`
       font-weight: 600;
       color: var(--hp-txt) !important;
     }
-    .colorrow {
+  .colorrow {
       display: flex;
       align-items: center;
       gap: var(--sp-4);
-    }
+  }
+  .roomtemprange {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+  .roomtemprange-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+  .roomtemprange-fields {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .roomtemprange-fields input {
+    flex: 0 1 104px;
+    min-width: 72px;
+  }
+  .roomtemprange-fields input[aria-invalid='true'] {
+    border-color: var(--error-color, #db4437);
+  }
     .gsrow > hp-color-opacity {
       min-width: min(100%, 210px);
       justify-content: space-between;

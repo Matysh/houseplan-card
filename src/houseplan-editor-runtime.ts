@@ -126,10 +126,12 @@ import {
 } from './initial-load';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import {
-  createEmptySpaceConfig, initialSpaceDisplayDraft, strictNumber, switchSpacePlanSource,
+  applyRoomTempThresholdDraft, createEmptySpaceConfig, initialSpaceDisplayDraft,
+  roomTempThresholdDraft, roomTempThresholdInputValues, strictNumber, switchSpacePlanSource,
   touchSpaceDisplay, type SpaceDialogState,
 } from './space-dialog';
 import { commitPlanOptimization } from './plan-optimize-write';
+import { roomTemperatureControls } from './room-temperature-controls';
 import { openSpaceCopyDialog, renderSpaceCopyDialog, saveSpaceCopy } from './space-copy-runtime';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
@@ -1087,9 +1089,9 @@ export interface HouseplanEditorHostPort {
   _roomHumSrc: string;
   _roomLabelScale: number;
   _roomNameScale: number;
+  _roomTempMin: string; _roomTempMax: string; _roomTempSrc: string;
   _roomSrcFilter: string;
   _roomSrcOpen: "temp" | "hum" | null;
-  _roomTempSrc: string;
   _roomWallOpeningInputs: (openings?: readonly RenderOpening[], space?: SpaceModel | undefined) => Array<{ x: number; y: number; angle: number; length: number; }>;
   _rszLimitViolation: JunctionLimitViolation | null;
   _rulesDialog: { rules: IconRule[]; test: string; busy: boolean; } | null;
@@ -6687,6 +6689,7 @@ public _markupMove(ev: MouseEvent): void {
 
 public _saveRoom(): void {
     if (!this.host._areaSel && !this.host._nameSel.trim()) return;
+    if (!roomTempThresholdDraft(this.host._roomTempMin, this.host._roomTempMax).valid) return;
     if (this.host._wallFaceBatch) {
       this._decideWallFace(true);
       return;
@@ -10916,6 +10919,7 @@ public _resetRoomDialogFields(): void {
     this.host._roomEditId = null;
     this.host._roomFill = '';
     this.host._roomCustomFill = null;
+    this.host._roomTempMin = ''; this.host._roomTempMax = '';
     this.host._roomTempSrc = '';
     this.host._roomHumSrc = '';
     this.host._roomSrcOpen = null;
@@ -10936,6 +10940,7 @@ public _openRoomEdit(r: RoomCfg): void {
     this.host._roomCustomFill = rawCustom && typeof rawCustom === 'object'
       ? customFillOf(rawCustom, spaceDisplayOf(this.host._curSpaceCfg).customFill)
       : null;
+    [this.host._roomTempMin, this.host._roomTempMax] = roomTempThresholdInputValues(r.settings);
     this.host._roomTempSrc = r.settings?.temp_source || '';
     this.host._roomHumSrc = r.settings?.hum_source || '';
     this.host._roomNameScale = clampScale(r.settings?.name_scale);
@@ -10951,6 +10956,7 @@ public _roomSettingsFromDialog(): RoomCfg['settings'] {
     if (this.host._roomCustomFill) st.custom_fill = this.host._roomCustomFill;
     if (this.host._roomTempSrc) st.temp_source = this.host._roomTempSrc;
     if (this.host._roomHumSrc) st.hum_source = this.host._roomHumSrc;
+    applyRoomTempThresholdDraft(st, this.host._roomTempMin, this.host._roomTempMax);
     if (this.host._roomNameScale !== 1) st.name_scale = this.host._roomNameScale;
     if (this.host._roomLabelScale !== 1) st.label_scale = this.host._roomLabelScale;
     return Object.keys(st).length ? st : null;
@@ -10971,6 +10977,7 @@ public _saveRoomEdit(): void {
     // seemingly unrelated room edit cannot switch the light overlay off.
     const previous = room.settings || {};
     const next: any = { ...previous };
+    if (!applyRoomTempThresholdDraft(next, this.host._roomTempMin, this.host._roomTempMax)) return;
     if (this.host._roomFill) next.fill_mode = this.host._roomFill;
     else delete next.fill_mode;
     if (this.host._roomCustomFill) next.custom_fill = this.host._roomCustomFill;
@@ -13885,10 +13892,11 @@ public _renderRoomDialog(): TemplateResult {
           current: faceBatch.index + 1, total: faceBatch.candidates.length,
         })
       : '';
-    const canSaveNew = !!this.host._areaSel || !!this.host._nameSel.trim();
     const spaceDisplay = spaceDisplayOf(this.host._curSpaceCfg);
     const effectiveFill = this.host._roomFill || spaceDisplay.fill;
     const customFill = this.host._roomCustomFill || spaceDisplay.customFill;
+    const tempValid = roomTempThresholdDraft(this.host._roomTempMin, this.host._roomTempMax).valid;
+    const canSaveNew = (!!this.host._areaSel || !!this.host._nameSel.trim()) && tempValid;
     // the free-areas list must include the edited room's CURRENT area
     const areas = [...this.host._freeAreas];
     if (edit && this.host._areaSel && !areas.some((a) => a.area_id === this.host._areaSel)) {
@@ -13951,9 +13959,9 @@ public _renderRoomDialog(): TemplateResult {
                   : nothing}
               </div>`
             : nothing}
+          <div class="roomtemprange-host">${roomTemperatureControls(this.host, effectiveFill, spaceDisplay.tempMin, spaceDisplay.tempMax, this._help('room.temp_range.help')).template}</div>
           ${this._renderRoomSource('temp')}
           ${this._renderRoomSource('hum')}
-
           <label class="dispsection">${this.host._t('room.sizes_section')}</label>
           <label>${this.host._t('room.name_scale')}</label>
           <div class="colorrow gsrow">
@@ -13975,7 +13983,7 @@ public _renderRoomDialog(): TemplateResult {
           <button class="btn ghost" @click=${() => this._roomDialogCancel()}>${this.host._t('btn.cancel')}</button>
           <span class="spacer"></span>
           ${edit
-            ? html`<button class="btn on" @click=${() => this._saveRoomEdit()} ?disabled=${!this.host._nameSel.trim()}>
+            ? html`<button class="btn on" @click=${() => this._saveRoomEdit()} ?disabled=${!this.host._nameSel.trim() || !tempValid}>
                 <ha-icon icon="mdi:check"></ha-icon>${this.host._t('btn.save')}
               </button>`
             : html`${!this.host._pendingSplit ? html`<button class="btn ghost" @click=${() => this._keepClosedAsPartitions()}>

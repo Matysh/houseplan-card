@@ -1309,6 +1309,32 @@ export function roomCustomFillOf(
   return own && typeof own === 'object' ? customFillOf(own, spaceFill) : spaceFill;
 }
 
+export interface RoomTempRange {
+  min: number;
+  max: number;
+}
+
+/**
+ * Effective comfort range for one room. Each side inherits independently,
+ * then the complete pair is normalised. Invalid legacy/future values behave
+ * like an absent override and are never written back by this read boundary.
+ */
+export function roomTempRangeOf(
+  spaceMin: number,
+  spaceMax: number,
+  room: {
+    settings?: { temp_min?: unknown; temp_max?: unknown } | null;
+  } | null | undefined,
+): RoomTempRange {
+  const finiteOr = (value: unknown, fallback: number): number =>
+    typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  const inheritedMin = finiteOr(spaceMin, DEFAULT_TEMP_MIN);
+  const inheritedMax = finiteOr(spaceMax, DEFAULT_TEMP_MAX);
+  const rawMin = finiteOr(room?.settings?.temp_min, inheritedMin);
+  const rawMax = finiteOr(room?.settings?.temp_max, inheritedMax);
+  return { min: Math.min(rawMin, rawMax), max: Math.max(rawMin, rawMax) };
+}
+
 /** Resolve a space's display settings; spaces without a plan default to visible markup. */
 export function spaceDisplayOf(spaceCfg: any): SpaceDisplay {
   const s = spaceCfg?.settings || {};

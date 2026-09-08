@@ -1101,6 +1101,15 @@ def _finite(value):
     return f
 
 
+def _finite_number_or_none(value):
+    """A persisted optional number: do not coerce strings or booleans."""
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise vol.Invalid("temperature threshold must be a finite number or null")
+    return _finite(value)
+
+
 # Persisted colours deliberately use one small, browser-independent format.
 # Keep this exact contract in sync with src/color.ts.
 # `^...$` accepts a trailing newline in Python. Persisted CSS tokens must
@@ -1280,6 +1289,8 @@ ROOM_SCHEMA = vol.All(
                         vol.Optional("glow"): vol.Any(bool, None),
                         vol.Optional("temp_source"): vol.Any(str, None),
                         vol.Optional("hum_source"): vol.Any(str, None),
+                        vol.Optional("temp_min"): _finite_number_or_none,
+                        vol.Optional("temp_max"): _finite_number_or_none,
                         vol.Optional("name_scale"): vol.Any(None, vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3))),
                         vol.Optional("label_scale"): vol.Any(None, vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3))),
                     },
