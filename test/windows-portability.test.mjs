@@ -51,3 +51,12 @@ test('тесты с временным git-репозиторием изолир
   const text = readFileSync(new URL('./rebase-on-dev.test.mjs', import.meta.url), 'utf8');
   assert.match(text, /GIT_CONFIG_KEY_0: 'core\.autocrlf', GIT_CONFIG_VALUE_0: 'false'/);
 });
+
+test('тесты не запускают скрипты по URL.pathname — на Windows это /C:/… → C:\\C:\\… (#496)', () => {
+  const TESTS = fileURLToPath(new URL('./', import.meta.url));
+  const offenders = readdirSync(TESTS)
+    .filter((name) => name.endsWith('.test.mjs'))
+    .filter((name) => /import\.meta\.url\)\.pathname/.test(readFileSync(new URL(name, `file://${TESTS}`), 'utf8')))
+    .filter((name) => name !== 'windows-portability.test.mjs');
+  assert.deepEqual(offenders, [], 'путь для execSync/spawn — только через fileURLToPath');
+});

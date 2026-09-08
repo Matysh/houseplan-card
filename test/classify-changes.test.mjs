@@ -5,6 +5,7 @@ import {
   CHECK_OF_OUTPUT, CLASSIFIERS, OUTPUTS, PERF_PROFILES, classifyAll, classifyChanges, formatOutputs,
 } from '../scripts/classify-changes.mjs';
 import { manifest } from '../scripts/check-inputs.mjs';
+import { fileURLToPath } from 'node:url';
 
 // Классификация идёт из единого manifest входов (#492 §5.2) на РЕАЛЬНОМ
 // дереве репозитория: тест доказывает решения job `changes` для настоящих
@@ -106,7 +107,8 @@ test('fallback --all выставляет каждый известный вых
 });
 
 test('CLI пишет формат $GITHUB_OUTPUT: stdin — список файлов, --all — всё true', () => {
-  const script = new URL('../scripts/classify-changes.mjs', import.meta.url).pathname;
+  // fileURLToPath, не URL.pathname (#496): на Windows pathname даёт «/C:/…», Node ищет C:\C:\… .
+  const script = fileURLToPath(new URL('../scripts/classify-changes.mjs', import.meta.url));
   const doc = p('docs', 'SUN.md');
   const fromStdin = execFileSync('node', [script], { input: `src/iso-overlays.ts\n${doc}\n`, encoding: 'utf8' });
   assert.equal(fromStdin, formatOutputs(classify(['src/iso-overlays.ts', doc])));

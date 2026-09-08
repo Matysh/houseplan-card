@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 
+import { fileURLToPath } from 'node:url';
 import {
   CHECKS, CHECK_NAMES, NOT_AN_INPUT, REUSE_JOBS, checksAffectedBy, closure, coverage, globToRegExp,
   inputsOf, isDeclaredNotAnInput, isExecutableInput, manifest, referencesOf, stripComments,
@@ -214,7 +215,8 @@ test('неизвестный вход расширяет до всех пров�
 });
 
 test('CLI: --check печатает входы, --why объясняет цепочку, --coverage зелёный на текущем дереве', () => {
-  const script = new URL('../scripts/check-inputs.mjs', import.meta.url).pathname;
+  // fileURLToPath, не URL.pathname (#496): на Windows pathname даёт «/C:/…», Node ищет C:\C:\… .
+  const script = fileURLToPath(new URL('../scripts/check-inputs.mjs', import.meta.url));
   const backend = execFileSync('node', [script, '--check=backend'], { encoding: 'utf8' }).trim().split('\n');
   assert.ok(backend.includes('scripts/support-relay/relay.py'));
   const why = execFileSync('node', [script, '--check=backend', '--why=scripts/sh3d-convert/convert.mjs'], { encoding: 'utf8' });
