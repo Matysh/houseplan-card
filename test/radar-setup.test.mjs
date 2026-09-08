@@ -26,9 +26,11 @@ test('on-plan installation changes only the editor draft until ordinary Save', (
     confirmDiscard: async () => true,
   });
   assert.equal(controller.begin('radar', draft(), {
-    id: 'living', name: 'Living', poly: [[0, 0], [1, 0], [1, 1], [0, 1]],
+        id: 'living', name: 'Living', poly: [[0, 0], [1, 0], [1, 1], [0, 1]],
   }, 5, 7), true);
+  assert.equal(controller.isDirty(), false, 'an untouched setup may close synchronously');
   controller.choosePoint(pointer(250, 400));
+  assert.equal(controller.isDirty(), true, 'placing the mount makes the setup discard-sensitive');
   controller.choosePoint(pointer(250, 100));
   assert.equal(applied, null, 'the setup surface must not persist or apply before confirmation');
   controller.apply();
@@ -54,6 +56,7 @@ test('cancelling calibration releases its draft subscription exactly once', asyn
   assert.equal(await controller.cancel(), true);
   assert.equal(await controller.cancel(), true);
   assert.equal(calls, 1);
+  assert.equal(controller.isDirty(), false);
 });
 
 test('dirty calibration stays open when discard confirmation is rejected', async () => {

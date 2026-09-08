@@ -140,6 +140,10 @@ export class RadarSetupController {
 
   public isActive(): boolean { return this.active !== null; }
 
+  public isDirty(): boolean {
+    return !!this.active && (this.active.mount !== null || this.active.phase !== 'mount');
+  }
+
   public syncMarker(markerId: string): void {
     if (this.active && this.active.markerId !== markerId) this.reset();
   }

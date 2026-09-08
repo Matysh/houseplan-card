@@ -190,6 +190,7 @@ import {
   radarAfterBindingChange, radarConfigFromDraft, radarDraft, recognizeRadar,
   type RadarEditorDraft,
 } from './radar-editor';
+import { finishMarkerDialogClose } from './marker-dialog-close';
 import { renderRadarSection } from './editors/radar-section';
 import { radarDiscardRequest, RadarSetupController } from './radar-setup';
 import {
@@ -7327,25 +7328,18 @@ public _openDeviceInbox(): void {
     };
   }
 
-public _closeMarkerDialog(): void { void this._closeMarkerDialogGuarded(); }
+public _closeMarkerDialog(): void {
+    if (this._radarSetup.isDirty()) { void this._closeMarkerDialogGuarded(); return; }
+    this._radarSetup.reset();
+    finishMarkerDialogClose(this.host);
+  }
 private async _closeMarkerDialogGuarded(): Promise<void> {
-  if (!await this._radarSetup.discardIfAllowed()) {
+    if (!await this._radarSetup.discardIfAllowed()) {
       await this.host.updateComplete; this.host.renderRoot
         .querySelector<HpDialog>('#marker-dialog')?.rejectClose();
       return;
     }
-    this.host._markerDialog = null;
-    if (this.host._deviceInboxReturn) {
-      const restored = { ...this.host._deviceInboxReturn };
-      this.host._deviceInbox = restored;
-      this.host._deviceInboxReturn = null;
-      if (restored.anchor) {
-        void this.host.updateComplete.then(() => requestAnimationFrame(() => {
-          const selector = `.device-inbox-row[data-binding="${CSS.escape(restored.anchor!)}"]`;
-          this.host.renderRoot.querySelector<HTMLElement>(selector)?.scrollIntoView({ block: 'nearest' });
-        }));
-      }
-    }
+    this._closeMarkerDialog();
   }
 
 public _deviceInboxCandidates(showEntities: boolean) {
