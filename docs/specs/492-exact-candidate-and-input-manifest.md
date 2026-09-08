@@ -167,6 +167,18 @@
 
 `scripts/check-inputs.mjs` (новый), `scripts/classify-changes.mjs`, `scripts/gate-reuse.mjs`, `scripts/mutation-gate.mjs` (guardInputs, замыкание, registry diff, шесть мутантов), `scripts/backend-test-guard.mjs`, `scripts/trail-resume-test-guard.mjs` (+ остальные обёртки — `GUARD_INPUTS`), `scripts/merge-candidate.mjs` (новый), `.github/workflows/process.yml`, `.github/workflows/nightly.yml`, `.github/workflows/validate.yml` (summary неизвестных входов), `test/check-inputs.test.mjs` (новый), `test/merge-candidate.test.mjs` (новый), `test/nightly-workflow.test.mjs` (новый), `test/gate-reuse.test.mjs`, `test/classify-changes.test.mjs`, `test/mutation-gate.test.mjs`, `docs/TESTING.md`, `PROCESS.md`.
 
+## 12.1. Уточнение по реализации (S6)
+
+Категории §5.1 в коде не перечисляются руками: `CHECKS` объявляет у проверки
+корни (`roots`, что читается не из кода: `src/**` у сборки, `tests_backend/**` у
+pytest, `demo/golden/**` у эталонов, `validate.yml` у всех) и точки входа
+(`entries`), а source/tests/fixtures/config/protocol выводятся замыканием точек
+входа по импортам (транзитивно) и строковым путям (как листья). Это даёт те же
+представители §8.1, но без ручного списка, который отстаёт от кода. Реестр
+мутантов — лист замыкания (его гарды называют сотни путей как данные, не как
+зависимости); обёртки гардов объявляют `GUARD_INPUTS`, их собственные ссылки не
+читаются, чтобы явный аргумент отменял умолчание.
+
 ## 13. Принятые предположения
 
 - Validate на ветке (лёгкий набор + диффозависимые гейты) — достаточная «проверка нового дерева и затронутых взаимодействий» для слияния; тяжёлые гейты — за кандидатом релиза (#479).
