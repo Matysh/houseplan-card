@@ -1010,8 +1010,8 @@ const MUTANT_DEFINITIONS = [
       + 'a full Lit render; the production smoke owns this card/runtime wiring (#451)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      if (!render) return;',
-      replace: '      if (false && !render) return;',
+      find: '      if (!render && !this._summary?.observeHassComposition()) return;',
+      replace: '      if (false && !render && !this._summary?.observeHassComposition()) return;',
     }],
   },
   {
@@ -7858,6 +7858,95 @@ const MUTANT_DEFINITIONS = [
         + '        except PairCommitFailure as err:\n'
         + '            message = (\n'
         + '                "Plan undo failed; the previous plan is pending recovery"\n',
+    }],
+  },
+  {
+    id: 'summary-picker-renders-unbounded-results',
+    guard: 'node demo/smoke_summary_panel.mjs',
+    because: 'the one active picker may search all HA entities but must never project all 10,000 '
+      + 'matches into the modal DOM (#493 AC1/AC9)',
+    patches: [{
+      file: 'src/summary-panel-picker.ts',
+      find: '  limit = SUMMARY_ENTITY_RESULT_LIMIT,',
+      replace: '  limit = 10_000, // mutant: return the complete index to the DOM',
+    }],
+  },
+  {
+    id: 'summary-index-rebuilds-on-state-value',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#493 entity index" test/summary-panel.test.mjs',
+    because: 'ordinary HA state values must reuse the entity-id/friendly-name index instead of '
+      + 'sorting 10,000 entries on every update (#493 AC3)',
+    patches: [{
+      file: 'src/summary-panel-picker.ts',
+      find: '    if (unchanged) return previous;',
+      replace: '    if (false && unchanged) return previous; // mutant: rebuild every update',
+    }],
+  },
+  {
+    id: 'summary-picker-hot-add-stays-filtered',
+    guard: 'node demo/smoke_summary_panel.mjs',
+    because: 'an open picker must wake the otherwise dependency-filtered card when an unplaced '
+      + 'HA entity is added, removed or renamed (#493 AC3)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      if (!render && !this._summary?.observeHassComposition()) return;',
+      replace: '      if (!render) return; // mutant: the open picker never sees unplaced hot-adds',
+    }],
+  },
+  {
+    id: 'summary-local-scale-authority-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#493 same-key scale" test/summary-panel-runtime.test.mjs',
+    because: 'a resolved summary-local key must shield its 200%/150% scales from the legacy '
+      + 'kiosk seed during repeated setConfig (#493 AC4)',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: '    this.host._kioskScale = { icon: this.local.icon_scale, font: this.local.font_scale };\n'
+        + '    return true;\n',
+      replace: '    this.host._kioskScale = { icon: this.local.icon_scale, font: this.local.font_scale };\n'
+        + '    return false; // mutant: allow setConfig to overwrite the resolved local scale\n',
+    }],
+  },
+  {
+    id: 'summary-picker-uses-row-index-owner',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#493 active picker" test/summary-panel-runtime.test.mjs',
+    because: 'reordering an open summary row must not redirect the next selection to its old '
+      + 'array index (#493 AC2)',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: '      const value = draft.blocks.find((block) => block.id === blockId)\n'
+        + '        ?.values.find((candidate) => candidate.id === valueId);',
+      replace: '      const value = draft.blocks[0]?.values[0]; // mutant: stale row-index ownership',
+    }],
+  },
+  {
+    id: 'summary-lifecycle-generation-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#493 a late save" test/summary-panel-runtime.test.mjs',
+    because: 'an in-flight save from the previous HA user may finish server-side but must never '
+      + 'adopt its config or local choice into the new lifecycle (#493 AC5)',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: '    return this.connected && generation === this.lifecycleGeneration\n'
+        + '      && this.lifecycleIdentity === this.identity();',
+      replace: '    return this.connected; // mutant: every async completion belongs to the current user',
+    }],
+  },
+  {
+    id: 'summary-optimize-skips-ordinary-writer-guard',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'test_493_ordinary_writers_share_summary_panel_contract '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'Optimize must preserve an omitted summary namespace and enforce the same readable '
+      + 'reference policy as config/set (#493 AC7)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            checked = prepare_ordinary_summary_candidate(\n'
+        + '                msg["config"], config_data.get("config"), readable_entity_ids, _normalize,\n'
+        + '            )',
+      replace: '            checked = _normalize(msg["config"])  # mutant: Optimize bypasses summary guard',
     }],
   },
 ];

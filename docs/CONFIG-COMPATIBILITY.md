@@ -104,8 +104,9 @@ that the frontend derives one localized default block without writing the
 server; an explicit `blocks: []` remains intentionally empty. Version 1 bounds
 the panel to 10 blocks and 20 values per block, uses stable block/value ids,
 and accepts only entity state sources or the three built-in read-only values.
-New entity and space references are checked at `config/set`; an unchanged old
-broken reference remains editable and is shown as a warning.
+New entity and space references are checked identically at `config/set` and
+`plan/optimize`; an unchanged old broken reference remains editable and is
+shown as a warning.
 
 An old ordinary client that omits an existing namespace cannot erase it. A
 bounded future version is preserved losslessly but stays inert in an older
@@ -114,6 +115,21 @@ View scale preferences, HA states, registry snapshots, computed totals and
 clock values are browser runtime data and never enter server config, exports or
 support packages. `config/get.summary_panel_api === 1` is a runtime capability,
 not persisted user configuration and not a store/model version bump.
+
+The writer authority is explicit:
+
+| Writer | Summary-panel authority |
+|---|---|
+| `config/set`, Optimize | Candidate; omission preserves the exact stored namespace, while explicit `blocks: []` remains empty |
+| Full import | Archive is authoritative, including an absent namespace |
+| Space/plan-only import | Exact global settings of the target installation |
+| Optimize/Import Undo | Exact configuration from the corresponding backup |
+| Create/copy/delete space | Ordinary candidate built over current global settings; no scope is silently remapped or removed |
+
+Every row also preserves unrelated known and future settings namespaces. Only
+the two ordinary WebSocket writers apply the caller's current entity-read
+permissions to newly selected version-1 references; an authoritative restore
+may legitimately carry a broken transfer reference for later replacement.
 
 ## Contextual Zigbee topology (#54)
 

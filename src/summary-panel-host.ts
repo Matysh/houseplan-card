@@ -14,7 +14,7 @@ export interface SummaryHassState {
 
 export interface SummaryHass {
   states?: Record<string, SummaryHassState>;
-  user?: { id?: string; name?: string };
+  user?: { id?: string; name?: string; is_admin?: boolean };
   config?: {
     time_zone?: string;
     unit_system?: { length?: string };

@@ -86,6 +86,77 @@ await page.waitForFunction(() => {
   return root?.querySelector('.summary-overlay.right');
 });
 
+const pickerWitnessSetup = await page.evaluate(async () => {
+  const card = window.__card;
+  const states = {};
+  for (let index = 0; index < 10_000; index++) {
+    const id = `sensor.summary_${String(index).padStart(5, '0')}`;
+    states[id] = {
+      entity_id: id, state: String(index),
+      attributes: { friendly_name: `Summary reading ${index}` },
+    };
+  }
+  const blocks = Array.from({ length: 10 }, (_, blockIndex) => ({
+    id: `block-${blockIndex}`, title: `Block ${blockIndex}`, visible: true,
+    scope: { type: 'all' },
+    values: Array.from({ length: 20 }, (_, valueIndex) => {
+      const index = blockIndex * 20 + valueIndex;
+      return {
+        id: `value-${index}`, label: `Value ${index}`,
+        source: { type: 'entity', entity_id: `sensor.summary_${String(index).padStart(5, '0')}` },
+      };
+    }),
+  }));
+  card._serverCfg = {
+    ...card._serverCfg,
+    settings: { ...(card._serverCfg.settings || {}), summary_panel: {
+      version: 1, title: 'Picker witness', show_on_mobile: true, blocks,
+    } },
+  };
+  card._settings = card._serverCfg.settings;
+  card.hass = { ...card.hass, states };
+  card.requestUpdate();
+  await card.updateComplete;
+  card._haSummaryPanelApi = 1;
+  await card._summary.openDialog();
+  await card.updateComplete;
+  card._summary.dialog = null;
+  card.requestUpdate();
+  await card.updateComplete;
+  const extras = [];
+  for (let index = 0; index < 2; index++) {
+    const extra = document.createElement('houseplan-card');
+    extra.style.display = 'none';
+    extra.hass = card.hass;
+    extra.setConfig({ ...(card._config || {}), type: 'custom:houseplan-card' });
+    document.body.append(extra);
+    for (let attempt = 0; attempt < 100 && !extra._summary; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    extra._serverCfg = structuredClone(card._serverCfg);
+    extra._settings = extra._serverCfg.settings;
+    extra._haSummaryPanelApi = 1;
+    extra._serverCanWrite = true;
+    await extra._summary.openDialog();
+    extra._summary.openSource('block-0', 'value-0');
+    await extra.updateComplete;
+    extras.push(extra);
+  }
+  window.__summaryWitnessExtras = extras;
+  const cards = [card, ...extras];
+  return {
+    cards: cards.length,
+    rows: blocks.reduce((sum, block) => sum + block.values.length, 0),
+    states: Object.keys(states).length,
+    everyCardHasFullIndex: cards.every((entry) => entry._summary.entityIndex?.entries.length === 10_000),
+    extraCardsBoundOnePicker: extras.every((entry) => {
+      const root = entry.shadowRoot || entry.renderRoot;
+      return root.querySelectorAll('.summary-source-picker').length === 1
+        && root.querySelectorAll('.summary-source-results button').length <= 104;
+    }),
+  };
+});
+
 await page.evaluate(() => {
   const card = window.__card;
   const root = card.shadowRoot || card.renderRoot;
@@ -100,23 +171,65 @@ await page.waitForFunction(() => {
   const root = card?.shadowRoot || card?.renderRoot;
   return !!root?.querySelector('hp-dialog .summary-editor');
 });
-const settings = await page.evaluate(() => {
+const settings = await page.evaluate(async () => {
   const card = window.__card;
-  const root = card.shadowRoot || card.renderRoot;
-  const editor = root.querySelector('hp-dialog .summary-editor');
+  const root = () => card.shadowRoot || card.renderRoot;
+  const editor = root().querySelector('hp-dialog .summary-editor');
   const actionTargets = [...editor.querySelectorAll(
     "button, input:not([type='checkbox']), select, .summary-drag",
   )];
   const switchTargets = [...editor.querySelectorAll('.summary-switch')];
-  const cancel = [...root.querySelectorAll('hp-dialog [slot="footer"] button')]
+  const source = editor.querySelector('.summary-source');
+  const closedHasNoEntityOptions = editor.querySelectorAll('option[value^="entity:"]').length === 0;
+  source.click();
+  await card.updateComplete;
+  const picker = root().querySelector('.summary-source-picker');
+  const search = picker.querySelector('[data-summary-picker-search]');
+  const inputSamples = [];
+  for (let index = 0; index < 23; index++) {
+    const started = performance.now();
+    search.value = `Summary reading ${index % 10}`;
+    search.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    await card.updateComplete;
+    if (index >= 3) inputSamples.push(performance.now() - started);
+  }
+  inputSamples.sort((a, b) => a - b);
+  const inputP95 = inputSamples[Math.ceil(inputSamples.length * .95) - 1];
+  search.value = 'sensor.summary_09999';
+  search.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  await card.updateComplete;
+  const refreshedPicker = root().querySelector('.summary-source-picker');
+  const oneActivePicker = root().querySelectorAll('.summary-source-picker').length === 1;
+  const exact = [...refreshedPicker.querySelectorAll('.summary-source-results button')]
+    .find((button) => button.textContent.includes('sensor.summary_09999'));
+  const boundedPicker = refreshedPicker.querySelectorAll('.summary-source-results button').length <= 104;
+  exact?.click();
+  await card.updateComplete;
+  const cancel = [...root().querySelectorAll('hp-dialog [slot="footer"] button')]
     .find((button) => button.textContent.trim() === card._t('btn.cancel'));
+  const samples = [];
+  for (let index = 0; index < 23; index++) {
+    card._summary.dialog = null;
+    const started = performance.now();
+    await card._summary.openDialog();
+    await card.updateComplete;
+    if (index >= 3) samples.push(performance.now() - started);
+  }
+  samples.sort((a, b) => a - b);
+  const openP95 = samples[Math.ceil(samples.length * .95) - 1];
   const result = {
     editorLoadedOnDemand: !!editor,
     sharedAndLocalControls: !!editor?.querySelector('input[type="text"]')
       && editor.querySelectorAll('input[type="range"]').length === 2
       && !!editor.querySelector('input[type="checkbox"]'),
-    entityPickerSeesHass: (editor?.querySelector('.summary-source')?.options.length || 0)
-      > 3,
+    closedRowsHaveNoEntityOptions: closedHasNoEntityOptions,
+    oneActivePicker,
+    pickerClosesAfterSelection: root().querySelectorAll('.summary-source-picker').length === 0,
+    boundedPicker,
+    fullIndexReachableByExactSearch: !!exact,
+    loadedFormOpenP95Under250ms: openP95 <= 250,
+    pickerInputP95Under50ms: inputP95 <= 50,
+    metrics: { openP95Ms: openP95, inputP95Ms: inputP95, samples: inputSamples.length },
     editorTouchTargets: [...actionTargets, ...switchTargets].every((target) => {
       const box = target.getBoundingClientRect();
       return box.width >= 44 && box.height >= 44;
@@ -124,6 +237,106 @@ const settings = await page.evaluate(() => {
   };
   cancel?.click();
   return result;
+});
+
+await page.evaluate(() => {
+  for (const extra of window.__summaryWitnessExtras || []) extra.remove();
+  window.__summaryWitnessExtras = [];
+});
+
+const indexInvalidation = await page.evaluate(async () => {
+  const card = window.__card;
+  const runtime = card._summary;
+  await runtime.openDialog();
+  await card.updateComplete;
+  const initial = runtime.entityIndex.rebuilds;
+  card.hass = { ...card.hass, states: {
+    ...card.hass.states,
+    'sensor.summary_00000': { ...card.hass.states['sensor.summary_00000'], state: 'changed' },
+  } };
+  await card.updateComplete;
+  const afterValue = runtime.entityIndex.rebuilds;
+  card.hass = { ...card.hass, states: {
+    ...card.hass.states,
+    'sensor.summary_added': {
+      entity_id: 'sensor.summary_added', state: '1', attributes: { friendly_name: 'Added' },
+    },
+  } };
+  await card.updateComplete;
+  const afterAdd = runtime.entityIndex.rebuilds;
+  card.hass = { ...card.hass, states: {
+    ...card.hass.states,
+    'sensor.summary_00001': {
+      ...card.hass.states['sensor.summary_00001'], attributes: { friendly_name: 'Renamed' },
+    },
+  } };
+  await card.updateComplete;
+  const afterRename = runtime.entityIndex.rebuilds;
+  runtime.dialog = null;
+  card.requestUpdate();
+  return {
+    stateValueDoesNotRebuildIndex: afterValue === initial,
+    addRebuildsIndexOnce: afterAdd === initial + 1,
+    renameRebuildsIndexOnce: afterRename === afterAdd + 1,
+    counts: { initial, afterValue, afterAdd, afterRename },
+  };
+});
+
+const responsiveForm = async ({ width, language, dark, canWrite, kiosk }) => {
+  await page.setViewportSize({ width, height: 760 });
+  return page.evaluate(async ({ language, dark, canWrite, kiosk }) => {
+    const card = window.__card;
+    document.documentElement.style.fontSize = '200%';
+    document.documentElement.toggleAttribute('dark', dark);
+    card._config = { ...card._config, language, kiosk };
+    card._serverCanWrite = canWrite;
+    card._summary.updated();
+    await card._summary.openDialog();
+    await card.updateComplete;
+    const root = card.shadowRoot || card.renderRoot;
+    const editor = root.querySelector('hp-dialog .summary-editor');
+    const footer = root.querySelector('hp-dialog [slot="footer"]');
+    const editorBox = editor.getBoundingClientRect();
+    const controls = [...root.querySelectorAll(
+      'hp-dialog .summary-local-sizes input, hp-dialog .summary-local-sizes button, hp-dialog [slot="footer"] button',
+    )];
+    const result = {
+      noHorizontalOverflow: editor.scrollWidth <= editor.clientWidth + 1,
+      controlsInsideViewport: controls.every((control) => {
+        const box = control.getBoundingClientRect();
+        return box.left >= -1 && box.right <= innerWidth + 1 && box.width >= 44 && box.height >= 44;
+      }),
+      footerReachable: !!footer && footer.getBoundingClientRect().left >= -1
+        && footer.getBoundingClientRect().right <= innerWidth + 1,
+      editorInsideViewport: editorBox.left >= -1 && editorBox.right <= innerWidth + 1,
+      localOnlyMatchesRole: canWrite && !kiosk
+        ? !editor.querySelector('.rhint') : !!editor.querySelector('.rhint'),
+      bounds: { left: editorBox.left, right: editorBox.right, viewport: innerWidth },
+    };
+    card._summary.dialog = null;
+    card.requestUpdate();
+    return result;
+  }, { language, dark, canWrite, kiosk });
+};
+
+const responsiveAdmin = await responsiveForm({
+  width: 320, language: 'ru', dark: true, canWrite: true, kiosk: false,
+});
+const responsiveHousehold = await responsiveForm({
+  width: 390, language: 'en', dark: false, canWrite: false, kiosk: false,
+});
+const responsiveKiosk = await responsiveForm({
+  width: 320, language: 'ru', dark: true, canWrite: true, kiosk: true,
+});
+await page.setViewportSize({ width: 960, height: 640 });
+await page.evaluate(async () => {
+  const card = window.__card;
+  document.documentElement.style.fontSize = '';
+  document.documentElement.removeAttribute('dark');
+  card._config = { ...card._config, language: 'en', kiosk: false };
+  card._serverCanWrite = true;
+  card._summary.updated();
+  await card.updateComplete;
 });
 
 const liveSetup = await page.evaluate(async () => {
@@ -334,13 +547,31 @@ const recovery = await page.evaluate(async () => {
   };
 });
 
-checkAll({
+const { metrics: pickerMetrics, ...settingsChecks } = settings;
+const witness = {
   ...initial,
   bottomOnTallStage,
   smallCardKeepsLocalIntent,
-  ...settings,
+  ...settingsChecks,
+  pickerWitnessHas200RowsAnd10000States:
+    pickerWitnessSetup.cards === 3 && pickerWitnessSetup.rows === 200
+      && pickerWitnessSetup.states === 10_000 && pickerWitnessSetup.everyCardHasFullIndex
+      && pickerWitnessSetup.extraCardsBoundOnePicker,
+  stateValueDoesNotRebuildIndex: indexInvalidation.stateValueDoesNotRebuildIndex,
+  addRebuildsIndexOnce: indexInvalidation.addRebuildsIndexOnce,
+  renameRebuildsIndexOnce: indexInvalidation.renameRebuildsIndexOnce,
+  responsiveAdmin: Object.entries(responsiveAdmin).filter(([key]) => key !== 'bounds').every(([, value]) => value),
+  responsiveHousehold: Object.entries(responsiveHousehold).filter(([key]) => key !== 'bounds').every(([, value]) => value),
+  responsiveKiosk: Object.entries(responsiveKiosk).filter(([key]) => key !== 'bounds').every(([, value]) => value),
   summaryDependencyCaptured: liveSetup,
   ...liveState,
   ...recovery,
+};
+checkAll(witness);
+await finish(browser, {
+  ...witness,
+  pickerTimings: pickerMetrics,
+  pickerFixture: pickerWitnessSetup,
+  indexRebuilds: indexInvalidation,
+  responsive: { admin: responsiveAdmin, household: responsiveHousehold, kiosk: responsiveKiosk },
 });
-await finish(browser);

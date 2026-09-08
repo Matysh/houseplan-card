@@ -673,7 +673,7 @@ export class HouseplanCard extends LitElement {
         snapshot ? { entityIds: snapshot.entityIds } : null,
         () => intakeHass(this),
       );
-      if (!render) return;
+      if (!render && !this._summary?.observeHassComposition()) return;
     }
     if (name !== undefined) this._terminalFrame = 0;
     if (this._editorRuntime?._routeLiveEditorUpdate(name, oldValue)) return;
@@ -3178,7 +3178,7 @@ export class HouseplanCard extends LitElement {
     }
     this._labs = currentLabs();
     if (this.isConnected && this._labsIso) void this._ensureIsoSceneRuntime();
-    try {
+    if (!this._summary?.applyLocalScaleForCurrentIdentity()) try {
       const ks = JSON.parse(localStorage.getItem(LS_KIOSK) || 'null');
       this._kioskScale = { icon: clampScale(ks?.icon), font: clampScale(ks?.font) };
     } catch { /* defaults */ }
@@ -4075,7 +4075,7 @@ export class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    this._isoProjectionSnapshot = null;
+    this._isoProjectionSnapshot = null; this._summary?.willUpdate();
     // `_serverCfg` is the root of every geometry cache. Keep the epoch
     // invariant local to that reactive assignment so imports, reconnects and
     // demo harnesses cannot accidentally reuse an older config object's data.
@@ -7471,7 +7471,7 @@ export class HouseplanCard extends LitElement {
    */
   private _leaveCardRoute(): void {
     if (this._routeDepartureHandled) return;
-    this._routeDepartureHandled = true;
+    this._routeDepartureHandled = true; this._summary?.leaveRoute();
     this._clearRoomFocus(true); this._cancelDangerConfirm();
     // The destination page cannot display this decorative transition and may
     // disconnect us before its first measured frame. Commit View atomically so

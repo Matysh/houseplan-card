@@ -21,6 +21,9 @@ import { summaryPanelCss } from './summary-panel-style';
 import { summaryPanelText } from './summary-panel-i18n';
 import type { SummaryPanelHost } from './summary-panel-host';
 import { stableSummaryPlacementSlot } from './summary-panel-identity';
+import {
+  refreshSummaryEntityIndex, type SummaryEntityIndex,
+} from './summary-panel-picker';
 
 const isSummarySystemKey = (value: string): value is SummaryPanelSystemKey =>
   value === 'device_count' || value === 'total_area' || value === 'datetime';
@@ -36,6 +39,7 @@ export type SummaryPanelDialogState = {
   busy: boolean;
   attempted: boolean;
   entityFilter: string;
+  activeSource: { blockId: string; valueId: string } | null;
   error: string;
   conflict: boolean;
 };
@@ -79,6 +83,10 @@ export class LoadedSummaryPanelRuntime {
   private metricsModule: typeof import('./summary-panel-metrics') | null = null;
   private metricsLoad: Promise<typeof import('./summary-panel-metrics')> | null = null;
   private styleSheet: CSSStyleSheet | null = null;
+  private entityIndex: SummaryEntityIndex | null = null;
+  private lifecycleGeneration = 0;
+  private lifecycleIdentity = '';
+  private connected = false;
 
   public constructor(host: unknown) { this.host = host as SummaryPanelHost; }
 
@@ -87,11 +95,29 @@ export class LoadedSummaryPanelRuntime {
   /** Entity rows that can affect any supported saved summary-panel frame. */
   public entityIds(): readonly string[] { return summaryPanelEntityIds(this.config().config); }
 
-  public connect(): void { this.ensureStyle(); this.loadLocal(); }
+  public connect(): void {
+    this.ensureStyle();
+    this.connected = true;
+    this.syncLifecycle();
+    this.loadLocal();
+  }
 
   public disconnect(): void {
-    if (this.clockTimer) clearTimeout(this.clockTimer);
-    this.clockTimer = 0;
+    this.connected = false;
+    this.resetLifecycle();
+  }
+
+  /** A real HA route departure is stronger than a responsive remount. */
+  public leaveRoute(): void { this.resetLifecycle(); }
+
+  /** Re-apply the per-card authority instead of the legacy kiosk seed. */
+  public applyLocalScaleForCurrentIdentity(): boolean {
+    const key = this.preferenceKey();
+    if (!key) return false;
+    if (key !== this.storageKey) this.loadLocal();
+    if (key !== this.storageKey) return false;
+    this.host._kioskScale = { icon: this.local.icon_scale, font: this.local.font_scale };
+    return true;
   }
 
   public visibility(kind: 'hidden' | 'visible' | 'pageshow'): void {
@@ -106,10 +132,23 @@ export class LoadedSummaryPanelRuntime {
   }
 
   public updated(): void {
+    this.syncLifecycle();
     this.syncNativeNarrow();
     this.loadLocal();
     this.measureLayout();
     this.syncClock();
+  }
+
+  /** Reset an identity-changing draft before the host renders the new context. */
+  public willUpdate(): void { this.syncLifecycle(); }
+
+  /** Wake a filtered HA render only when an open picker composition changed. */
+  public observeHassComposition(): boolean {
+    this.syncLifecycle();
+    if (!this.dialog || this.dialog.localOnly) return false;
+    const previous = this.entityIndex;
+    this.refreshEntityIndex();
+    return this.entityIndex !== previous;
   }
 
   public resized(): void { this.measureLayout(); }
@@ -201,12 +240,14 @@ export class LoadedSummaryPanelRuntime {
 
   public renderDialog(): TemplateResult | typeof nothing {
     if (!this.dialog || !this.editorRenderer) return nothing;
+    if (!this.dialog.localOnly) this.refreshEntityIndex();
     return this.editorRenderer({
       host: this.host,
       dialog: this.dialog,
       local: this.local,
       storageUnavailable: this.storageUnavailable,
       problems: this.problems(this.dialog),
+      entityIndex: this.entityIndex || refreshSummaryEntityIndex({}, null),
       setDialog: (dialog) => { this.dialog = dialog; this.host.requestUpdate(); },
       saveLocal: (patch) => this.saveLocal(patch),
       mutate: (mutate) => this.mutate(mutate),
@@ -214,7 +255,9 @@ export class LoadedSummaryPanelRuntime {
       dragStart: (event, token) => this.dragStart(event, token),
       drop: (event, target) => this.drop(event, target),
       sourceToken: (source) => this.sourceToken(source),
-      setSource: (blockIndex, valueIndex, token) => this.setSource(blockIndex, valueIndex, token),
+      openSource: (blockId, valueId) => this.openSource(blockId, valueId),
+      closeSource: (returnFocus) => this.closeSource(returnFocus),
+      setSource: (blockId, valueId, token) => this.setSource(blockId, valueId, token),
       save: () => void this.saveDialog(),
       reload: () => void this.reloadDialog(),
       close: () => this.closeDialogIfIdle(),
@@ -256,6 +299,49 @@ export class LoadedSummaryPanelRuntime {
       host: this.host.panelHost ? 'panel' : 'lovelace',
       slot: this.placementSlot(),
     });
+  }
+
+  private identity(): string {
+    return JSON.stringify({
+      key: this.preferenceKey(),
+      user: this.host.hass?.user?.id || this.host.hass?.user?.name || '',
+      route: location.pathname,
+      host: this.host.panelHost ? 'panel' : 'lovelace',
+      slot: this.placementSlot(),
+      kiosk: this.host._kiosk,
+      canManage: this.host._canManageConfiguration,
+    });
+  }
+
+  private syncLifecycle(): void {
+    const next = this.identity();
+    if (this.lifecycleIdentity && next !== this.lifecycleIdentity) this.resetLifecycle();
+    this.lifecycleIdentity = next;
+  }
+
+  private resetLifecycle(): void {
+    this.lifecycleGeneration++;
+    this.dialog = null;
+    this.entityIndex = null;
+    this.deviceMemo = null;
+    this.areaMemo = null;
+    this.clockContext = '';
+    this.storageKey = null;
+    this.storageUnavailable = false;
+    this.local = { version: 1, show: false, icon_scale: 1, font_scale: 1 };
+    if (this.clockTimer) clearTimeout(this.clockTimer);
+    this.clockTimer = 0;
+    this.lifecycleIdentity = this.connected ? this.identity() : '';
+    this.host.requestUpdate();
+  }
+
+  private current(generation: number): boolean {
+    return this.connected && generation === this.lifecycleGeneration
+      && this.lifecycleIdentity === this.identity();
+  }
+
+  private refreshEntityIndex(): void {
+    this.entityIndex = refreshSummaryEntityIndex(this.host.hass?.states, this.entityIndex);
   }
 
   private syncNativeNarrow(): void {
@@ -312,15 +398,18 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private async openDialog(): Promise<void> {
+    const generation = this.lifecycleGeneration;
     this.loadLocal();
     try {
       this.editorLoad ||= import('./summary-panel-editor').then((module) => module.renderSummaryPanelEditor);
       this.editorRenderer = await this.editorLoad;
     } catch (error) {
       this.editorLoad = null;
+      if (!this.current(generation)) return;
       this.host._showToast?.(`${this.t('summary.load_failed')} ${this.host._errText(error)}`);
       return;
     }
+    if (!this.current(generation)) return;
     const resolved = this.config();
     const base = resolved.config || defaultSummaryPanel(this.translate);
     const backendUnsupported = this.host._haSummaryPanelApi !== SUMMARY_PANEL_API_VERSION;
@@ -334,8 +423,10 @@ export class LoadedSummaryPanelRuntime {
       localOnly: this.host._kiosk || !this.host._canManageConfiguration
         || backendUnsupported || resolved.unsupported,
       localOnlyHint,
-      busy: false, attempted: false, entityFilter: '', error: '', conflict: false,
+      busy: false, attempted: false, entityFilter: '', activeSource: null,
+      error: '', conflict: false,
     };
+    if (!this.dialog.localOnly) this.refreshEntityIndex();
     this.host.requestUpdate();
   }
 
@@ -352,37 +443,80 @@ export class LoadedSummaryPanelRuntime {
     if (!this.dialog || this.dialog.busy || this.dialog.localOnly) return;
     const draft = cloneSummaryPanel(this.dialog.draft);
     mutate(draft);
-    this.dialog = { ...this.dialog, draft, error: '', conflict: false };
+    const owner = this.dialog.activeSource;
+    const ownerExists = !owner || draft.blocks.some((block) => block.id === owner.blockId
+      && block.values.some((value) => value.id === owner.valueId));
+    this.dialog = {
+      ...this.dialog, draft, error: '', conflict: false,
+      activeSource: ownerExists ? owner : null,
+      entityFilter: ownerExists ? this.dialog.entityFilter : '',
+    };
     this.host.requestUpdate();
   }
 
   private async deleteBlock(index: number): Promise<void> {
     const block = this.dialog?.draft.blocks[index];
     if (!block) return;
+    const generation = this.lifecycleGeneration;
     if (block.values.length) {
       const accepted = await this.host._confirmDanger({
         key: 'summary-block', kind: 'warning',
         title: this.t('summary.delete_block_title'), message: this.t('summary.delete_block_body'),
         objectName: block.title, confirmLabel: this.t('btn.delete'), cancelLabel: this.t('btn.cancel'),
       });
-      if (!accepted) return;
+      if (!accepted || !this.current(generation)) return;
     }
-    this.mutate((draft) => { draft.blocks.splice(index, 1); });
+    this.mutate((draft) => {
+      const current = draft.blocks.findIndex((candidate) => candidate.id === block.id);
+      if (current >= 0) draft.blocks.splice(current, 1);
+    });
   }
 
   private sourceToken(source: SummaryPanelSource): string {
     return source.type === 'system' ? `system:${source.key}` : `entity:${source.entity_id}`;
   }
 
-  private setSource(blockIndex: number, valueIndex: number, token: string): void {
+  private openSource(blockId: string, valueId: string): void {
+    if (!this.dialog || this.dialog.busy || this.dialog.localOnly) return;
+    this.refreshEntityIndex();
+    this.dialog = { ...this.dialog, activeSource: { blockId, valueId }, entityFilter: '' };
+    this.host.requestUpdate();
+    void this.host.updateComplete.then(() => {
+      if (this.dialog?.activeSource?.blockId === blockId
+          && this.dialog.activeSource.valueId === valueId) {
+        (this.host.renderRoot.querySelector('[data-summary-picker-search]') as HTMLElement | null)?.focus();
+      }
+    });
+  }
+
+  private closeSource(returnFocus = false): void {
+    const owner = this.dialog?.activeSource;
+    if (!this.dialog || !owner) return;
+    this.dialog = { ...this.dialog, activeSource: null, entityFilter: '' };
+    this.host.requestUpdate();
+    if (returnFocus) void this.focusSource(owner.blockId, owner.valueId);
+  }
+
+  private async focusSource(blockId: string, valueId: string): Promise<void> {
+    await this.host.updateComplete;
+    const token = `${blockId}\n${valueId}`;
+    const buttons = this.host.renderRoot.querySelectorAll<HTMLElement>('[data-summary-source-owner]');
+    [...buttons].find((button) => button.dataset.summarySourceOwner === token)?.focus();
+  }
+
+  private setSource(blockId: string, valueId: string, token: string): void {
     this.mutate((draft) => {
-      const value = draft.blocks[blockIndex]?.values[valueIndex];
+      const value = draft.blocks.find((block) => block.id === blockId)
+        ?.values.find((candidate) => candidate.id === valueId);
       if (!value) return;
       if (token.startsWith('system:')) {
         const key = token.slice(7);
         if (isSummarySystemKey(key)) value.source = { type: 'system', key };
       } else value.source = { type: 'entity', entity_id: token.startsWith('entity:') ? token.slice(7) : token };
     });
+    if (this.dialog) this.dialog = { ...this.dialog, activeSource: null, entityFilter: '' };
+    this.host.requestUpdate();
+    void this.focusSource(blockId, valueId);
   }
 
   private dragStart(event: DragEvent, token: string): void {
@@ -408,6 +542,7 @@ export class LoadedSummaryPanelRuntime {
   private async saveDialog(): Promise<void> {
     const dialog = this.dialog;
     if (!dialog || dialog.busy) return;
+    const generation = this.lifecycleGeneration;
     const draft = normalizeSummaryDraft(dialog.draft);
     const problems = dialog.localOnly ? [] : validateSummaryDraft(
       draft, dialog.base, new Set(this.host._model.map((space) => space.id)),
@@ -426,6 +561,7 @@ export class LoadedSummaryPanelRuntime {
       if (!dialog.localOnly && !sameSummaryPanel(draft, dialog.base)) {
         this.host._writesPending++;
         const write = enqueueSerializedWrite(this.host._writeChain, async () => {
+          if (!this.current(generation)) return;
           if (!this.host._serverCfg) throw new Error(this.t('summary.save_failed'));
           if (this.host._cfgRev !== dialog.baseRevision) throw new Error(this.t('summary.conflict'));
           const candidate = canonicalizeConfigGeometry({
@@ -435,9 +571,12 @@ export class LoadedSummaryPanelRuntime {
           let recovered = false;
           try {
             await this.host._sendConfigCandidate(candidate);
+            if (!this.current(generation)) return;
           } catch (writeError) {
+            if (!this.current(generation)) throw writeError;
             try {
               const authoritative = await this.host._getAuthoritativeConfig();
+              if (!this.current(generation)) throw writeError;
               const confirmed = confirmedSummaryPanelWriteRecovery(authoritative, draft);
               if (!confirmed) throw writeError;
               const configChanged = contentFingerprint(confirmed.config)
@@ -466,6 +605,7 @@ export class LoadedSummaryPanelRuntime {
             } catch { throw writeError; }
           }
           if (!recovered) {
+            if (!this.current(generation)) return;
             this.host._serverCfg = candidate;
             this.host._cfgContentFingerprint = contentFingerprint(candidate);
             this.host._cacheSnapshot();
@@ -474,9 +614,11 @@ export class LoadedSummaryPanelRuntime {
         this.host._writeChain = write;
         await write.finally(() => { this.host._writesPending--; });
       }
+      if (!this.current(generation)) return;
       this.saveLocal({ show: dialog.localShow });
       this.dialog = null;
     } catch (error) {
+      if (!this.current(generation)) return;
       const conflict = (error as { code?: unknown } | null)?.code === 'conflict'
         || this.host._cfgRev !== dialog.baseRevision;
       this.dialog = {
@@ -484,16 +626,18 @@ export class LoadedSummaryPanelRuntime {
         error: conflict ? this.t('summary.conflict') : this.host._errText(error),
       };
     }
-    this.host.requestUpdate();
+    if (this.current(generation)) this.host.requestUpdate();
   }
 
   private async reloadDialog(): Promise<void> {
     const dialog = this.dialog;
     if (!dialog || dialog.busy) return;
+    const generation = this.lifecycleGeneration;
     this.dialog = { ...dialog, busy: true, error: '', conflict: false };
     this.host.requestUpdate();
     try {
       await this.host._reloadConfigOnly(true);
+      if (!this.current(generation)) return;
       if (dialog.conflict && this.host._cfgRev === dialog.baseRevision) {
         throw new Error(this.t('summary.load_failed'));
       }
@@ -505,9 +649,10 @@ export class LoadedSummaryPanelRuntime {
         error: '', conflict: false,
       };
     } catch (error) {
+      if (!this.current(generation)) return;
       this.dialog = { ...dialog, busy: false, error: this.host._errText(error), conflict: true };
     }
-    this.host.requestUpdate();
+    if (this.current(generation)) this.host.requestUpdate();
   }
 
   private metrics(): { deviceCount: number | null; areaM2: number | null; now: Date } {
@@ -551,10 +696,11 @@ export class LoadedSummaryPanelRuntime {
 
   private ensureMetrics(): void {
     if (this.metricsModule || this.metricsLoad) return;
+    const generation = this.lifecycleGeneration;
     this.metricsLoad = import('./summary-panel-metrics');
     void this.metricsLoad.then((module) => {
       this.metricsModule = module;
-      this.host.requestUpdate();
+      if (this.current(generation)) this.host.requestUpdate();
     }).catch(() => undefined).finally(() => { this.metricsLoad = null; });
   }
 

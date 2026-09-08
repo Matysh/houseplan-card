@@ -1905,15 +1905,21 @@ space/entity references under the calling user's read permissions. The
 configuration cannot manufacture that capability. Unknown future versions are
 stored but never executed or rendered by an older frontend.
 
-`summary-panel.ts` owns deterministic defaults, stable-id validation, native
-narrow/fit predicates, local-key encoding and the two cached aggregate
-resolvers. `summary-panel-runtime.ts` is the small eager View controller: it
-measures the actual `.stage`, renders a screen-space sibling of the camera
-layer, owns at most one boundary-aligned minute timer, and keeps browser-local
-show/icon/text preferences separate by HA user, route, host and logical card
-slot. `summary-panel-editor.ts` is dynamically imported only after the settings
-button is pressed. It edits one draft; a successful revision-checked shared
-write precedes application of the draft local show choice.
+`summary-panel.ts` owns deterministic defaults, stable-id validation,
+native-narrow/fit predicates and local-key encoding. `summary-panel-picker.ts`
+owns a non-DOM index of the current `entity_id + friendly_name` composition.
+It reuses that index for state-value changes and exposes only 100 search
+results to the one active picker. `summary-panel-runtime-loaded.ts` is the lazy
+View controller: it measures the actual `.stage`, renders a screen-space
+sibling of the camera layer, owns at most one boundary-aligned minute timer,
+and keeps browser-local show/icon/text preferences separate by HA user, route,
+host and logical card slot. The resolved summary-local key is the scale
+authority; the legacy kiosk key is only a first-load seed. A lifecycle
+generation binds dialog, draft, picker, index and async continuations to one
+route/user/permission/kiosk identity. `summary-panel-editor.ts` is dynamically
+imported only after the settings button is pressed. It edits one draft; a
+successful revision-checked shared write precedes application of the draft
+local show choice.
 
 The overlay is not SVG, does not enter camera/content bounds, and performs no
 HA actions. Device totals require an authoritative per-connection registry
@@ -1923,6 +1929,13 @@ each space with its own `cell_cm`; its cache is independent from the registry
 cache. Entity values remain in the current user's `hass.states` and use the
 existing HA formatting boundary. Editors and `houseplan-space-card` never load
 or render the panel.
+
+`prepare_ordinary_summary_candidate()` is the common backend boundary for
+`config/set` and `plan/optimize`: it preserves an omitted stored namespace
+before the endpoint-specific schema/migration sequence, then applies the same
+change-aware reference validation against the caller's readable-entity
+snapshot. Full import/restore deliberately bypasses this ordinary-writer
+helper because the archive is authoritative.
 
 ## Private support boundary (#43)
 

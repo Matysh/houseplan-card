@@ -588,6 +588,53 @@ def test_background_mode_is_materialized_across_export_and_legacy_import(tmp_pat
     assert merged["spaces"][-1]["settings"]["bg_mode"] == "static"
 
 
+@pytest.mark.parametrize(
+    ("kind", "plan_only"),
+    [("full", False), ("space", False), ("space", True)],
+    ids=["full", "space", "plan-only"],
+)
+def test_493_import_authority_preserves_or_replaces_global_namespaces(
+    tmp_path: Path, kind: str, plan_only: bool,
+) -> None:
+    source = _config()
+    source["settings"].update({
+        "source_known": True,
+        "source_future": {"sentinel": "source"},
+    })
+    source["settings"].pop("summary_panel", None)
+    document, _ = create_export(
+        SimpleNamespace(instance_id="source-instance"),
+        {"config": source, "rev": 2}, {"layout": {}, "rev": 3},
+        kind=kind, space_id="ground" if kind == "space" else None,
+        plan_only=plan_only, card_version="review", config_root=tmp_path,
+    )
+    current = _config()
+    current["settings"].update({
+        "summary_panel": {
+            "version": 1, "title": "Target", "show_on_mobile": True, "blocks": [],
+        },
+        "target_known": False,
+        "target_future": {"sentinel": "target"},
+    })
+    runtime = SimpleNamespace(instance_id="target-instance", import_previews={})
+    preview = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice",
+        duplicate_policy="skip", current_config_data={"config": current, "rev": 7},
+        current_layout_data={"layout": {}, "rev": 8}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, preview["token"], "alice")
+    imported, _layout, _details = prepare_apply(
+        candidate, current, {}, confirm_missing_content=True,
+    )
+    if kind == "full":
+        assert "summary_panel" not in imported["settings"]
+        assert imported["settings"]["source_known"] is True
+        assert imported["settings"]["source_future"] == {"sentinel": "source"}
+        assert "target_future" not in imported["settings"]
+    else:
+        assert imported["settings"] == current["settings"]
+
+
 def test_strict_parser_rejects_duplicate_proto_and_future_model(tmp_path: Path) -> None:
     with pytest.raises(ImportFailure, match="Duplicate") as duplicate:
         parse_document(b'{"format":"houseplan-export","format":"houseplan-export"}')

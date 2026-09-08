@@ -3984,3 +3984,30 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Мутанты слоя/endpoints/cleanup/double projection/casing обязаны краснеть;
       `npm run benchmark:zigbee-topology`, `bundle:budget`, selected smokes и
       `golden:verify` сохраняют действующие ceilings.
+
+## Надёжность сводной панели (#493)
+
+- [ ] `test/summary-panel.test.mjs` строит индекс по 10 000 HA entities,
+      находит exact `entity_id` через полный индекс, ограничивает выдачу 100
+      строками и доказывает 0 rebuild при смене state value и ровно один при
+      add/remove/friendly-name change.
+- [ ] `test/summary-panel-runtime.test.mjs` доказывает authority локальных
+      200%/150% при repeated same-key `setConfig`, stable-id ownership после
+      reorder/delete и lifecycle generation при route/user/permission/kiosk,
+      disconnect/reconnect и поздних async completion.
+- [ ] `tests_backend/test_summary_panel.py`, `test_ha_websocket.py` и
+      `test_ha_import_export.py` проверяют одну writer matrix: omission/explicit
+      empty, readable и старую broken reference, Optimize, full/space/plan-only
+      import, Optimize/Import Undo, copy и delete вместе с independent-setting
+      sentinels.
+- [ ] Перед `S7-code-review`: `node demo/smoke_summary_panel.mjs`. Fixture
+      содержит 200 rows и 10 000 states; закрытые строки не содержат entity
+      options, открыт ровно один picker (до 100 entity + 3 system + current
+      broken), а после трёх warmups и 20 samples действуют бюджеты open p95
+      ≤250 ms и input p95 ≤50 ms. Тот же smoke проверяет 320/390 CSS px,
+      RU/EN, light/dark, admin/household/kiosk и 200% text без горизонтального
+      overflow и с targets не меньше 44 px.
+- [ ] `node scripts/mutation-gate.mjs --changed origin/dev..HEAD` обязан поймать
+      снятие DOM bound, state-value rebuild, local-scale authority, lifecycle
+      generation и Optimize writer guard. Полные golden/smoke/performance и
+      Linux CI HA harness остаются обязательным гейтом точного SHA беты.

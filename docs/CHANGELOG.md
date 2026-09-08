@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Summary-panel settings stay responsive with large Home Assistant installs:
+  each value now opens one searchable source picker capped at 100 visible
+  entity results instead of embedding every entity in every row. Per-card icon
+  and text sizes no longer jump back after configuration refreshes, narrow and
+  enlarged-text forms reflow without horizontal clipping, and leaving the
+  page or changing user/permissions discards the old draft safely. Optimize
+  now preserves and validates the panel by the same rules as an ordinary save
+  ([#493](https://github.com/Matysh/houseplan-card/issues/493)).
 - Optimize, its server-side Undo, imports and space deletion now use one
   crash-resumable config/layout commit protocol. If a temporary storage error
   leaves such a save unfinished, the next edit completes recovery before it

@@ -7,6 +7,9 @@ import {
 } from './summary-panel';
 import type { SummaryPanelDialogState } from './summary-panel-runtime-loaded';
 import type { SummaryPanelHost } from './summary-panel-host';
+import {
+  searchSummaryEntityIndex, type SummaryEntityIndex,
+} from './summary-panel-picker';
 
 export type SummaryPanelEditorContext = {
   host: SummaryPanelHost;
@@ -14,6 +17,7 @@ export type SummaryPanelEditorContext = {
   local: SummaryPanelLocalPreferences;
   storageUnavailable: boolean;
   problems: SummaryDraftProblem[];
+  entityIndex: SummaryEntityIndex;
   setDialog(dialog: SummaryPanelDialogState | null): void;
   saveLocal(patch: Partial<SummaryPanelLocalPreferences>): void;
   mutate(mutate: (draft: SummaryPanelConfig) => void): void;
@@ -21,7 +25,9 @@ export type SummaryPanelEditorContext = {
   dragStart(event: DragEvent, token: string): void;
   drop(event: DragEvent, target: string): void;
   sourceToken(source: SummaryPanelSource): string;
-  setSource(blockIndex: number, valueIndex: number, token: string): void;
+  openSource(blockId: string, valueId: string): void;
+  closeSource(returnFocus?: boolean): void;
+  setSource(blockId: string, valueId: string, token: string): void;
   save(): void;
   reload(): void;
   close(): void;
@@ -42,14 +48,6 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
   const fieldProblem = (path: string) => problems.find((problem) => problem.path === path);
   const problemText = (problem: SummaryDraftProblem | undefined) => problem
     ? t(`summary.problem.${problem.code}`) : '';
-  const allEntities = Object.entries(host.hass?.states || {}).sort((a, b) => {
-    const an = String(a[1]?.attributes?.friendly_name || a[0]);
-    const bn = String(b[1]?.attributes?.friendly_name || b[0]);
-    return an.localeCompare(bn);
-  });
-  const query = dialog.entityFilter.trim().toLocaleLowerCase();
-  const entities = query ? allEntities.filter(([id, state]) => `${id} ${
-    state.attributes?.friendly_name || ''}`.toLocaleLowerCase().includes(query)) : allEntities;
   const close = () => context.close();
   const showRow = html`<label class="summary-switch"><input type="checkbox"
       .checked=${dialog.localShow}
@@ -59,20 +57,24 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
     <span>${t('summary.show_local')}</span></label>`;
   const sizeRows = html`<h3 class="summary-sizes-title">${t('summary.sizes_title')}</h3>
     <div class="summary-local-sizes">
-      <label>${t('kiosk.icon_scale')}</label>
-      <input type="range" min="50" max="300" step="5"
-        .value=${String(Math.round(local.icon_scale * 100))}
-        @input=${(event: Event) => context.saveLocal({
-          icon_scale: Number((event.target as HTMLInputElement).value) / 100,
-        })} />
-      <span>${Math.round(local.icon_scale * 100)}%</span>
-      <label>${t('kiosk.font_scale')}</label>
-      <input type="range" min="50" max="300" step="5"
-        .value=${String(Math.round(local.font_scale * 100))}
-        @input=${(event: Event) => context.saveLocal({
-          font_scale: Number((event.target as HTMLInputElement).value) / 100,
-        })} />
-      <span>${Math.round(local.font_scale * 100)}%</span>
+      <div class="summary-size-field">
+        <div><label for="summary-icon-scale">${t('kiosk.icon_scale')}</label>
+          <output for="summary-icon-scale">${Math.round(local.icon_scale * 100)}%</output></div>
+        <input id="summary-icon-scale" type="range" min="50" max="300" step="5"
+          .value=${String(Math.round(local.icon_scale * 100))}
+          @input=${(event: Event) => context.saveLocal({
+            icon_scale: Number((event.target as HTMLInputElement).value) / 100,
+          })} />
+      </div>
+      <div class="summary-size-field">
+        <div><label for="summary-font-scale">${t('kiosk.font_scale')}</label>
+          <output for="summary-font-scale">${Math.round(local.font_scale * 100)}%</output></div>
+        <input id="summary-font-scale" type="range" min="50" max="300" step="5"
+          .value=${String(Math.round(local.font_scale * 100))}
+          @input=${(event: Event) => context.saveLocal({
+            font_scale: Number((event.target as HTMLInputElement).value) / 100,
+          })} />
+      </div>
       <button class="btn ghost summary-size-reset" type="button"
         @click=${() => context.saveLocal({ icon_scale: 1, font_scale: 1 })}>${t('gs.reset')}</button>
     </div>
@@ -82,7 +84,7 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
       .title=${t('summary.settings')}
       icon="mdi:view-dashboard-outline" dismiss-on-scrim aria-busy=${String(dialog.busy)}
       @hp-close=${close}>
-    <div class="body summary-editor">
+    <div class="body summary-editor" @click=${() => context.closeSource()}>
       ${dialog.localOnly ? html`<p class="rhint">${t(
         dialog.localOnlyHint,
       )}</p>` : nothing}
@@ -103,12 +105,6 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
           })} />
           <span>${t('summary.show_mobile')}</span></label>
         ${sizeRows}
-        <label>${t('summary.search_entities')}</label>
-        <input type="search" .value=${dialog.entityFilter}
-          @input=${(event: Event) => context.setDialog({
-            ...dialog, entityFilter: (event.target as HTMLInputElement).value,
-          })} />
-        ${entities.length ? nothing : html`<div class="summary-empty">${t('summary.no_search_results')}</div>`}
         <div class="summary-editor-blocks">
           ${dialog.draft.blocks.map((block, bi) => {
             const bp = `blocks.${bi}`;
@@ -172,6 +168,19 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                   const vp = `${bp}.values.${vi}`;
                   const sourceProblem = fieldProblem(`${vp}.source`);
                   const sourceToken = context.sourceToken(value.source);
+                  const active = dialog.activeSource?.blockId === block.id
+                    && dialog.activeSource.valueId === value.id;
+                  const sourceLabel = value.source.type === 'system'
+                    ? t(`summary.system.${value.source.key}`)
+                    : value.source.entity_id
+                      ? `${context.entityIndex.labels.get(value.source.entity_id)
+                        || value.source.entity_id} — ${value.source.entity_id}`
+                      : t('summary.select_source');
+                  const search = active
+                    ? searchSummaryEntityIndex(context.entityIndex, dialog.entityFilter) : null;
+                  const broken = value.source.type === 'entity' && !!value.source.entity_id
+                    && !context.entityIndex.labels.has(value.source.entity_id);
+                  const owner = `${block.id}\n${value.id}`;
                   return html`<div class="summary-editor-value"
                       @dragover=${(event: DragEvent) => { event.preventDefault(); event.stopPropagation(); }}
                       @drop=${(event: DragEvent) => context.drop(event, `value:${bi}:${vi}`)}>
@@ -199,29 +208,52 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                     </div>
                     ${fieldProblem(`${vp}.label`)
                       ? html`<div class="summary-problem error">${problemText(fieldProblem(`${vp}.label`))}</div>` : nothing}
-                    <select class="summary-source" .value=${sourceToken}
+                    <button class="summary-source" type="button"
+                      data-summary-source-owner=${owner}
                       data-summary-error=${String(dialog.attempted && firstError?.path === `${vp}.source`)}
-                      @change=${(event: Event) => context.setSource(
-                        bi, vi, (event.target as HTMLSelectElement).value,
-                      )}>
-                      <optgroup label=${t('summary.system_group')}>
-                        <option value="system:device_count" ?selected=${sourceToken === 'system:device_count'}>${t('summary.system.device_count')}</option>
-                        <option value="system:total_area" ?selected=${sourceToken === 'system:total_area'}>${t('summary.system.total_area')}</option>
-                        <option value="system:datetime" ?selected=${sourceToken === 'system:datetime'}>${t('summary.system.datetime')}</option>
-                      </optgroup>
-                      <optgroup label=${t('summary.entities_group')}>
-                        ${value.source.type === 'entity' && !value.source.entity_id
-                          ? html`<option value="entity:" selected>${t('summary.select_source')}</option>` : nothing}
-                        ${value.source.type === 'entity' && !entities.some(([id]) => id === value.source.entity_id)
-                          ? html`<option value=${`entity:${value.source.entity_id}`} selected>${
-                            host.hass?.states?.[value.source.entity_id]?.attributes?.friendly_name || value.source.entity_id
-                          } — ${value.source.entity_id}</option>` : nothing}
-                        ${entities.map(([id, state]) => html`<option value=${`entity:${id}`}
-                          ?selected=${sourceToken === `entity:${id}`}>
-                          ${state.attributes?.friendly_name || id} — ${id}
-                        </option>`)}
-                      </optgroup>
-                    </select>
+                      aria-haspopup="listbox" aria-expanded=${active ? 'true' : 'false'}
+                      @click=${(event: Event) => {
+                        event.stopPropagation();
+                        if (active) context.closeSource(); else context.openSource(block.id, value.id);
+                      }}>
+                      <span>${sourceLabel}</span><ha-icon icon="mdi:chevron-down"></ha-icon>
+                    </button>
+                    ${active && search ? html`<div class="summary-source-picker"
+                        @click=${(event: Event) => event.stopPropagation()}
+                        @keydown=${(event: KeyboardEvent) => {
+                          if (event.key !== 'Escape') return;
+                          event.preventDefault(); event.stopPropagation(); context.closeSource(true);
+                        }}>
+                      <label>${t('summary.search_entities')}</label>
+                      <input type="search" data-summary-picker-search
+                        aria-label=${t('summary.search_entities')} .value=${dialog.entityFilter}
+                        @input=${(event: Event) => context.setDialog({
+                          ...dialog, entityFilter: (event.target as HTMLInputElement).value,
+                        })} />
+                      <div class="summary-source-results" role="listbox"
+                          aria-label=${t('summary.select_source')}>
+                        <div class="summary-source-group">${t('summary.system_group')}</div>
+                        ${(['device_count', 'total_area', 'datetime'] as const).map((key) => html`
+                          <button type="button" role="option"
+                            aria-selected=${sourceToken === `system:${key}` ? 'true' : 'false'}
+                            @click=${() => context.setSource(block.id, value.id, `system:${key}`)}>
+                            ${t(`summary.system.${key}`)}
+                          </button>`)}
+                        ${broken ? html`<div class="summary-source-group">${t('summary.current_source')}</div>
+                          <button type="button" role="option" class="broken" aria-selected="true"
+                            @click=${() => context.setSource(block.id, value.id, sourceToken)}>
+                            ${sourceLabel}
+                          </button>` : nothing}
+                        <div class="summary-source-group">${t('summary.entities_group')}</div>
+                        ${search.entries.map((entry) => html`<button type="button" role="option"
+                            aria-selected=${sourceToken === `entity:${entry.id}` ? 'true' : 'false'}
+                            @click=${() => context.setSource(block.id, value.id, `entity:${entry.id}`)}>
+                          <span>${entry.label}</span><small>${entry.id}</small>
+                        </button>`)}
+                        ${!search.total ? html`<div class="summary-empty">${t('summary.no_search_results')}</div>` : nothing}
+                        ${search.truncated ? html`<div class="summary-refine">${t('summary.refine_search')}</div>` : nothing}
+                      </div>
+                    </div>` : nothing}
                     ${sourceProblem
                       ? html`<div class="summary-problem ${sourceProblem.kind}">${problemText(sourceProblem)}</div>` : nothing}
                   </div>`;

@@ -59,7 +59,14 @@ def test_issue_244_space_delete_dependency_and_tombstone_candidate() -> None:
                 "space": "f1", "room_id": "r1", "name": "Kept",
             },
         ],
-        "settings": {},
+        "settings": {
+            "summary_panel": {
+                "version": 1, "title": "Summary", "show_on_mobile": True,
+                "blocks": [],
+            },
+            "show_room_tooltip": False,
+            "future_namespace": {"sentinel": "kept"},
+        },
     }
     layout = {"all": {"s": "f1"}, "position": {"s": "f1"}, "removed": {"s": "f1"}}
     assert _space_marker_dependencies(config, layout, "f1") == ["all", "position"]
@@ -75,6 +82,7 @@ def test_issue_244_space_delete_dependency_and_tombstone_candidate() -> None:
     }
     assert candidate_layout == {}
     assert removed_layout == 3
+    assert candidate["settings"] == config["settings"]
     assert config["markers"][0]["space"] == "f1"
 
 
@@ -974,6 +982,101 @@ async def test_plan_optimize_rejects_new_marker_light_cycle(
     assert stored["rev"] == 1 and stored["config"] == base
 
 
+@pytest.mark.parametrize("endpoint", [
+    "houseplan/config/set",
+    "houseplan/plan/optimize",
+])
+async def test_493_ordinary_writers_share_summary_panel_contract(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, endpoint: str,
+) -> None:
+    """Omission, explicit empty and new broken refs mean the same on both paths."""
+    await _setup(hass)
+    hass.states.async_set("sensor.live", "1", {"friendly_name": "Live"})
+    client = await hass_ws_client(hass)
+    summary = {
+        "version": 1, "title": "Summary", "show_on_mobile": True,
+        "blocks": [{
+            "id": "b1", "title": "General", "visible": True,
+            "scope": {"type": "all"},
+            "values": [{
+                "id": "v1", "label": "Live",
+                "source": {"type": "entity", "entity_id": "sensor.live"},
+            }],
+        }],
+    }
+    base = {
+        "spaces": [], "markers": [],
+        "settings": {
+            "summary_panel": summary,
+            "show_room_tooltip": False,
+            "future_namespace": {"sentinel": "kept"},
+        },
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": base, "expected_rev": 0,
+    })
+    seeded = await client.receive_json()
+    assert seeded["success"], seeded
+    hass.states.async_remove("sensor.live")  # the stored source is now an allowed old broken ref
+
+    def message(candidate: dict, config_rev: int, layout_rev: int = 0) -> dict:
+        result = {"type": endpoint, "config": candidate}
+        if endpoint == "houseplan/config/set":
+            result["expected_rev"] = config_rev
+        else:
+            result.update({
+                "layout": {}, "expected_config_rev": config_rev,
+                "expected_layout_rev": layout_rev,
+            })
+        return result
+
+    omitted = copy.deepcopy(base)
+    omitted["settings"].pop("summary_panel")
+    omitted["settings"]["bg_color"] = "#112233"
+    await client.send_json_auto_id(message(omitted, 1))
+    preserved = await client.receive_json()
+    assert preserved["success"], preserved
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]["config"]
+    assert stored["settings"]["summary_panel"] == summary
+    assert stored["settings"]["show_room_tooltip"] is False
+    assert stored["settings"]["future_namespace"] == {"sentinel": "kept"}
+
+    broken = copy.deepcopy(stored)
+    broken["settings"]["summary_panel"]["blocks"][0]["values"][0]["source"] = {
+        "type": "entity", "entity_id": "sensor.not_readable",
+    }
+    await client.send_json_auto_id(message(
+        broken, 2, 1 if endpoint == "houseplan/plan/optimize" else 0,
+    ))
+    refused = await client.receive_json()
+    assert not refused["success"] and refused["error"]["code"] == "invalid_format"
+
+    hass.states.async_set("sensor.allowed", "2", {"friendly_name": "Allowed"})
+    allowed = copy.deepcopy(stored)
+    allowed["settings"]["summary_panel"]["blocks"][0]["values"][0]["source"] = {
+        "type": "entity", "entity_id": "sensor.allowed",
+    }
+    await client.send_json_auto_id(message(
+        allowed, 2, 1 if endpoint == "houseplan/plan/optimize" else 0,
+    ))
+    accepted_ref = await client.receive_json()
+    assert accepted_ref["success"], accepted_ref
+
+    empty = copy.deepcopy(allowed)
+    empty["settings"]["summary_panel"] = {
+        "version": 1, "title": "Empty", "show_on_mobile": True, "blocks": [],
+    }
+    await client.send_json_auto_id(message(
+        empty, 3, 2 if endpoint == "houseplan/plan/optimize" else 0,
+    ))
+    accepted = await client.receive_json()
+    assert accepted["success"], accepted
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    final = (await client.receive_json())["result"]["config"]
+    assert final["settings"]["summary_panel"]["blocks"] == []
+
+
 @pytest.mark.parametrize("endpoint,field,value", [
     ("houseplan/config/set", "lock", "lock.private"),
     ("houseplan/plan/optimize", "flip_h", False),
@@ -1077,7 +1180,17 @@ async def test_plan_optimize_pair_and_one_deep_undo_survives_geometry_repair(
     """Maintenance preserves the one-deep snapshot and its revision guard."""
     await _setup(hass)
     client = await hass_ws_client(hass)
-    original = {"spaces": [], "markers": [], "settings": {}}
+    original = {
+        "spaces": [], "markers": [],
+        "settings": {
+            "summary_panel": {
+                "version": 1, "title": "Summary", "show_on_mobile": True,
+                "blocks": [],
+            },
+            "show_room_tooltip": False,
+            "future_namespace": {"sentinel": "undo-kept"},
+        },
+    }
     original_layout = {"dev": {"s": "f1", "x": 0.1, "y": 0.2}}
 
     await client.send_json_auto_id({

@@ -91,3 +91,42 @@ def test_reference_validation_allows_old_broken_ids_but_rejects_new_ones():
     new_scope = config(panel("sensor.live", "other"))
     with pytest.raises(vol.Invalid, match="space reference"):
         v.validate_summary_panel_references(new_scope, previous, {"sensor.live"})
+
+
+def test_ordinary_summary_contract_preserves_omission_but_not_explicit_empty():
+    previous = config(panel())
+    previous["settings"].update(known=True, future={"sentinel": 1})
+    omitted = {"spaces": [], "markers": [], "settings": {"known": True, "future": {"sentinel": 1}}}
+    checked = v.prepare_ordinary_summary_candidate(
+        omitted, previous, {"sensor.live"}, v.CONFIG_SCHEMA,
+    )
+    assert checked["settings"]["summary_panel"] == previous["settings"]["summary_panel"]
+    assert checked["settings"]["known"] is True
+    assert checked["settings"]["future"] == {"sentinel": 1}
+
+    empty = config({
+        "version": 1, "title": "Empty", "show_on_mobile": True, "blocks": [],
+    })
+    checked_empty = v.prepare_ordinary_summary_candidate(
+        empty, previous, set(), v.CONFIG_SCHEMA,
+    )
+    assert checked_empty["settings"]["summary_panel"]["blocks"] == []
+
+
+def test_ordinary_summary_contract_validates_after_writer_normalization():
+    calls = []
+    previous = config(panel("sensor.old"))
+    candidate = config()
+
+    def normalize(value):
+        calls.append(value["settings"]["summary_panel"]["title"])
+        value["settings"]["summary_panel"]["title"] = "Normalized"
+        return v.CONFIG_SCHEMA(value)
+
+    checked = v.prepare_ordinary_summary_candidate(candidate, previous, set(), normalize)
+    assert calls == ["Summary"]
+    assert checked["settings"]["summary_panel"]["title"] == "Normalized"
+
+    replacement = config(panel("sensor.denied"))
+    with pytest.raises(vol.Invalid, match="entity reference"):
+        v.prepare_ordinary_summary_candidate(replacement, previous, set(), v.CONFIG_SCHEMA)

@@ -2127,6 +2127,24 @@ def validate_summary_panel_references(
                     raise vol.Invalid("new summary entity reference must be readable")
 
 
+def prepare_ordinary_summary_candidate(
+    candidate: dict,
+    previous: dict | None,
+    readable_entity_ids: set[str],
+    normalize,
+) -> dict:
+    """Apply the one summary-panel contract shared by ordinary config writers.
+
+    `normalize` owns the writer-specific schema/migration sequence. Preservation
+    must happen before it; change-aware reference validation must happen after
+    it. Authoritative full import/restore intentionally does not use this helper.
+    """
+    preserve_summary_panel_namespace(candidate, previous)
+    checked = normalize(candidate)
+    validate_summary_panel_references(checked, previous, readable_entity_ids)
+    return checked
+
+
 CONFIG_SCHEMA = vol.All(
     vol.Schema(
         {

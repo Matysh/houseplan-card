@@ -24,6 +24,11 @@ import {
 } from '../test-build/summary-panel-metrics.js';
 import { summaryPanelDictionaries, summaryPanelText } from '../test-build/summary-panel-i18n.js';
 import { stableSummaryPlacementSlot } from '../test-build/summary-panel-identity.js';
+import {
+  SUMMARY_ENTITY_RESULT_LIMIT,
+  refreshSummaryEntityIndex,
+  searchSummaryEntityIndex,
+} from '../test-build/summary-panel-picker.js';
 
 const tr = (key) => key;
 
@@ -40,9 +45,62 @@ test('#437 keeps the settings form lazy and every summary surface action-free', 
   assert.ok(manifest.initialViewFiles.every((path) => !path.includes('summary-panel')));
   assert.doesNotMatch(card, /from ['"]\.\/summary-panel-editor/);
   assert.doesNotMatch(`${loaded}\n${editor}`, /callService\s*\(/);
-  assert.match(editor, /\?selected=/, 'native selects must project their saved selection');
+  assert.doesNotMatch(editor, /Object\.entries\(host\.hass\?\.states/);
+  assert.doesNotMatch(editor, /entities\.map\([^)]*<option/s,
+    'closed value rows must not contain a full entity option list');
+  assert.match(editor, /data-summary-source-owner/);
   assert.doesNotMatch(editor, /maxlength=/i, 'limits count Unicode code points, not UTF-16 units');
   assert.match(style, /\.summary-editor-row button\s*\{[^}]*min-width:\s*44px;[^}]*height:\s*44px;/s);
+});
+
+test('#493 entity picker searches the full index while bounding rendered rows', () => {
+  const states = Object.fromEntries(Array.from({ length: 10_000 }, (_, index) => {
+    const id = `sensor.item_${String(index).padStart(5, '0')}`;
+    return [id, { state: String(index), attributes: { friendly_name: `Reading ${index}` } }];
+  }));
+  const index = refreshSummaryEntityIndex(states, null);
+  assert.equal(index.entries.length, 10_000);
+  assert.equal(index.rebuilds, 1);
+  const broad = searchSummaryEntityIndex(index, 'Reading');
+  assert.equal(broad.entries.length, SUMMARY_ENTITY_RESULT_LIMIT);
+  assert.equal(broad.total, 10_000);
+  assert.equal(broad.truncated, true);
+  const exact = searchSummaryEntityIndex(index, 'sensor.item_09999');
+  assert.deepEqual(exact.entries.map((entry) => entry.id), ['sensor.item_09999']);
+});
+
+test('#493 entity index ignores state values and rebuilds once for composition or name', () => {
+  const firstStates = {
+    'sensor.a': { state: '1', attributes: { friendly_name: 'Alpha' } },
+    'sensor.b': { state: '2', attributes: { friendly_name: 'Beta' } },
+  };
+  const first = refreshSummaryEntityIndex(firstStates, null);
+  const stateOnly = refreshSummaryEntityIndex({
+    ...firstStates, 'sensor.a': { ...firstStates['sensor.a'], state: '3' },
+  }, first);
+  assert.equal(stateOnly, first);
+  assert.equal(stateOnly.rebuilds, 1);
+  const renamed = refreshSummaryEntityIndex({
+    ...firstStates,
+    'sensor.a': { state: '3', attributes: { friendly_name: 'Aleph' } },
+  }, stateOnly);
+  assert.notEqual(renamed, stateOnly);
+  assert.equal(renamed.rebuilds, 2);
+  const added = refreshSummaryEntityIndex({ ...firstStates, 'sensor.c': { state: '4', attributes: {} } }, renamed);
+  assert.equal(added.rebuilds, 3);
+  const { 'sensor.b': _removed, ...withoutB } = firstStates;
+  const removed = refreshSummaryEntityIndex({ ...withoutB, 'sensor.c': { state: '4', attributes: {} } }, added);
+  assert.equal(removed.rebuilds, 4);
+});
+
+test('#493 runtime owns same-key scales and binds async UI to lifecycle generation', () => {
+  const runtime = readFileSync(new URL('../src/summary-panel-runtime-loaded.ts', import.meta.url), 'utf8');
+  const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  assert.match(card, /!this\._summary\?\.applyLocalScaleForCurrentIdentity\(\)/);
+  assert.match(card, /this\._summary\?\.leaveRoute\(\)/);
+  assert.match(runtime, /lifecycleGeneration/);
+  assert.match(runtime, /if \(!this\.current\(generation\)\) return;/);
+  assert.match(runtime, /activeSource: \{ blockId: string; valueId: string \}/);
 });
 
 test('#437 lazy summary dictionaries have exact parity and locale fallback', () => {

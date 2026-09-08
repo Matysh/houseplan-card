@@ -45,7 +45,11 @@ const fixture = () => ({
     { id: 'after', title: 'After', rooms: [], wall_segments: [], view_box: [0, 0, 1, 1] },
   ],
   markers: [{ id: 'device', space: 'source', room_id: 'room', vacuum: { map_routes: [{ space: 'source' }] } }],
-  settings: { global: true },
+  settings: {
+    global: true,
+    summary_panel: { version: 1, title: 'Summary', show_on_mobile: true, blocks: [] },
+    future_namespace: { sentinel: 'kept' },
+  },
 });
 
 test('#456 chooses the first free numbered copy title', () => {

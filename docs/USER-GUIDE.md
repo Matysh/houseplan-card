@@ -262,6 +262,20 @@ all spaces, or the current date and time. Entity values use Home Assistant's
 own formatting and units. Rows are informational only: pressing them never
 opens more-info or calls a service.
 
+Press a value's source field to open its picker. Only that row's picker is
+shown: search by friendly name or exact entity ID, then choose one of the
+matching entities or a built-in value. A broad search shows the first 100
+matches and asks you to refine it; the search still covers every entity. Escape
+or a press outside closes the picker without changing the draft. A missing old
+source remains visible until you explicitly replace it.
+
+The two size sliders are saved for the current user and card. Configuration
+refreshes do not reset them. On a narrow screen—or with enlarged system
+text—the label and percentage move above a full-width slider, so Save, Cancel
+and Reset remain reachable without horizontal scrolling. Leaving the House
+Plan page, reconnecting under another user, or changing edit permission closes
+an open summary draft rather than carrying it into the new context.
+
 The panel floats over the plan without resizing it. It appears on the right
 when the House Plan working area is at least as wide as it is tall and at the
 bottom otherwise. It temporarily hides when the card cannot fit a readable
