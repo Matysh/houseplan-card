@@ -21,10 +21,12 @@ on:
   issues:
     types: [labeled]
 
-concurrency:
-  # Два события по одному issue не должны запускать два прогона.
-  group: process-issue-${{ github.event.issue.number }}
-  cancel-in-progress: false
+# Concurrency стоит на job, а не на workflow (#499). На уровне workflow в
+# группу issue попадал КАЖДЫЙ прогон — и от `polish`, и от `P2`, и от метки,
+# которую переставил сам конвейер. GitHub держит в группе один идущий и один
+# ожидающий прогон, и новый ожидающий вытесняет старого: ожидавший S7-code-review
+# отменялся первой же посторонней меткой. Теперь посторонняя метка не запускает
+# ни одной job (`if` на guard) и в группу не входит.
 
 permissions:
   contents: read
@@ -36,7 +38,13 @@ permissions:
 jobs:
   guard:
     name: "Страж: ребейз на dev и предпосылки ревью"
+    # Только статусные метки этапов ревью запускают конвейер (#499). Остальные
+    # события помечаются skipped и не занимают место в группе concurrency.
+    if: github.event.label.name == 'S4-spec-review' || github.event.label.name == 'S7-code-review'
     runs-on: ubuntu-latest
+    concurrency:
+      group: process-issue-${{ github.event.issue.number }}
+      cancel-in-progress: false
     outputs:
       stage: ${{ steps.decide.outputs.stage }}
       cycle: ${{ steps.decide.outputs.cycle }}
@@ -57,12 +65,20 @@ jobs:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           REPO: ${{ github.repository }}
           LABEL: ${{ github.event.label.name }}
-          BLOCKED: ${{ contains(github.event.issue.labels.*.name, 'blocked') }}
-          EXHAUSTED: ${{ contains(github.event.issue.labels.*.name, 'review-4') }}
-          SMALL: ${{ contains(github.event.issue.labels.*.name, 'small') }}
-          TRIVIAL: ${{ contains(github.event.issue.labels.*.name, 'trivial') }}
           NUM: ${{ github.event.issue.number }}
         run: |
+          # Контроллер идемпотентен (#499): событие только будит его, а состояние
+          # читается ТЕКУЩЕЕ, не из снимка события. Прогон мог простоять в
+          # очереди concurrency, пока владелец снял метку или поставил blocked —
+          # снимок события об этом не знает, а исполнять отозванный запрос нельзя.
+          current=$(gh issue view "$NUM" --repo "$REPO" --json labels --jq '.labels[].name')
+          has() { printf '%s\n' "$current" | grep -qx -- "$1"; }
+          BLOCKED=false; EXHAUSTED=false; SMALL=false; TRIVIAL=false
+          has blocked && BLOCKED=true
+          has review-4 && EXHAUSTED=true
+          has small && SMALL=true
+          has trivial && TRIVIAL=true
+
           # Этап определяется первым: от него зависит, какие вердикты считать.
           stage=""; marker=""
           case "$LABEL" in
@@ -70,6 +86,13 @@ jobs:
             S7-code-review) stage="code"; marker="CODE-REVIEW" ;;
             *) echo "метка $LABEL конвейер не запускает" ;;
           esac
+          # Метка, породившая событие, уже снята — запрос отозван. Это не отказ
+          # и не повод для комментария: владелец передумал сам, шум ему не нужен.
+          if [ -n "$stage" ] && ! has "$LABEL"; then
+            echo "метка $LABEL уже снята с issue — запрос отозван, конвейер не запускается (#499)"
+            echo "запрос отозван: \`$LABEL\` снята до старта" >> "$GITHUB_STEP_SUMMARY"
+            stage=""
+          fi
 
           # Лимит циклов: 4 обычный, 2 на лёгком и коротком треке (PROCESS.md §4).
           limit=4
@@ -236,6 +259,9 @@ jobs:
     needs: guard
     if: needs.guard.outputs.stage != ''
     runs-on: ubuntu-latest
+    concurrency:
+      group: process-issue-${{ github.event.issue.number }}
+      cancel-in-progress: false
     # Время — единственный настоящий ограничитель зациклившегося прогона.
     timeout-minutes: 45
     steps:
@@ -391,6 +417,28 @@ jobs:
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "материал ревью: $(git rev-parse --short HEAD)"
 
+      # Повторное применение зелёного вердикта без вызова модели (#499). Сценарий
+      # #437 r4: зелёный r3 не слился (страж #312), задача вернулась в S6 и тут же
+      # в S7, и ревьюер двенадцать минут заново разбирал дерево, в котором с r3
+      # изменился ровно один файл — его собственный документ r3. Правило узкое:
+      # последний документ этапа несёт записанный конвейером вердикт `green`
+      # с High 0, и `git diff` между его якорем-деревом и HEAD пуст вне
+      # docs/reviews/**. Любое иное отличие — ребейз, тест, фикстура, скрипт,
+      # ТЗ — даёт полный разбор. Только этап code: материал spec может жить в
+      # теле issue, которого в дереве нет.
+      - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"
+        id: reuse
+        if: steps.rebase.outputs.conflict != 'true' && needs.guard.outputs.stage == 'code'
+        env:
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          out=$(node scripts/review-doc-guard.mjs --reuse --marker=CODE-REVIEW --num="$NUM" --head=HEAD)
+          printf '%s\n' "$out"
+          printf '%s\n' "$out" >> "$GITHUB_OUTPUT"
+          if printf '%s\n' "$out" | grep -qx 'reuse=true'; then
+            echo "вердикт прошлого захода применяется повторно: модель не вызывается" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       # Конфликт возвращает задачу автору ДО ревью. Инвариант «после прогона
       # метка меняется всегда» при этом держится: возврат в S6-in-progress —
       # тоже смена метки, и автор не ждёт впустую.
@@ -464,21 +512,21 @@ jobs:
       # Зависимости ставятся ПОСЛЕ переключения на ветку задачи: lockfile мог
       # измениться именно в ней, и установка по копии из dev дала бы не то дерево.
       - name: Установить зависимости
-        if: steps.rebase.outputs.conflict != 'true'
+        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
         run: npm ci
 
       # Браузер нужен не всякому ревью (см. правило выбора гейтов в промпте),
       # но когда нужен — качать его заново дороже, чем держать в кэше.
       - name: Кэш браузеров Playwright
         id: pw
-        if: steps.rebase.outputs.conflict != 'true'
+        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Установить Chromium
-        if: steps.rebase.outputs.conflict != 'true' && steps.pw.outputs.cache-hit != 'true'
+        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true' && steps.pw.outputs.cache-hit != 'true'
         # Без --with-deps: системные библиотеки Chromium предустановлены в
         # образе ubuntu-latest, а apt при промахе кэша съедал минуты из бюджета
         # ревью и подолгу перебирал недоступное azure-зеркало (#175). Если
@@ -488,7 +536,7 @@ jobs:
 
       - name: Review
         id: review
-        if: steps.rebase.outputs.conflict != 'true'
+        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
         uses: anthropics/claude-code-action@v1
         env:
           # Вне рабочей копии: восстановление дерева ревьюером не должно
@@ -573,7 +621,14 @@ jobs:
             решаешь по существу в своём вердикте.
 
             Для этапа code: материал — диапазон `git log --oneline origin/dev..HEAD`
-            и `git diff origin/dev...HEAD`. Ручного тестирования в цикле нет,
+            и `git diff origin/dev...HEAD`. **Материал ревью — ровно
+            `${{ steps.material.outputs.sha }}`, рабочая копия уже на нём.** Не
+            делай `git fetch`, `git pull` и `git checkout` на другой коммит: вердикт
+            привязан к этому SHA (#312), и страж слияния сверяет вершину ветки с
+            ним. Если автор в issue называет более новый коммит, которого в
+            материале нет, — это находка «материал не был запушен до метки», а не
+            повод подтянуть его самому (#437 r3→r4 стоил лишнего раунда именно так,
+            #499). Ручного тестирования в цикле нет,
             поэтому именно ты отвечаешь на вопрос «оно вообще работает».
             По каждому AC: либо он доказан автотестом и ты убедился, что тест
             умеет падать, либо разобран по коду с явной записью «проверено
@@ -704,7 +759,7 @@ jobs:
       # Ревьюер пишет только в docs/reviews/. Что именно попадёт в коммит,
       # решает этот шаг, а не модель: всё остальное откатывается.
       - name: Опубликовать документ ревью
-        if: steps.rebase.outputs.conflict != 'true'
+        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
         env:
           TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ steps.branch.outputs.name }}
@@ -715,7 +770,12 @@ jobs:
           MATERIAL_SHA: ${{ steps.branch.outputs.sha }}
           MATERIAL_TREE: ${{ steps.branch.outputs.tree }}
           MATERIAL_SPECS: ${{ steps.branch.outputs.specs }}
+          # Вердикт из structured_output попадает в блок якорей (#499): по нему
+          # следующий заход решает, можно ли применить зелёный вердикт повторно.
+          OUT: ${{ steps.review.outputs.structured_output }}
         run: |
+          verdict=$(printf '%s' "$OUT" | jq -r '.verdict // empty' 2>/dev/null || true)
+          high=$(printf '%s' "$OUT" | jq -r '.high // empty' 2>/dev/null || true)
           # Ветки задачи может не быть: у задач, размеченных до появления
           # конвейера, ТЗ лежит прямо в dev. Раньше шаг в этом случае молча
           # выходил с нулём, и разбор ревью терялся — оставался только вердикт
@@ -770,7 +830,8 @@ jobs:
             # может; блок помечен как машинный, чтобы никто не правил его руками.
             node scripts/review-doc-guard.mjs --anchor="$doc" \
               --sha="$MATERIAL_SHA" --tree="$MATERIAL_TREE" \
-              --branch="${BRANCH:-dev}" --specs="$MATERIAL_SPECS"
+              --branch="${BRANCH:-dev}" --specs="$MATERIAL_SPECS" \
+              --verdict="$verdict" --high="$high"
           else
             echo "::warning::$SOURCE не найден — документа для публикации нет"
           fi
@@ -860,7 +921,7 @@ jobs:
       # достижим там из необновлённой локальной ветки. Читателю отчёта от этого
       # пользы нет — он достанет только то, что есть на origin.
       - name: "Материал раунда воспроизводим (#413)"
-        if: steps.rebase.outputs.conflict != 'true'
+        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
         env:
           NUM: ${{ github.event.issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
@@ -881,9 +942,26 @@ jobs:
         env:
           OUT: ${{ steps.review.outputs.structured_output }}
           STAGE: ${{ needs.guard.outputs.stage }}
+          REUSE: ${{ steps.reuse.outputs.reuse }}
+          REUSE_DOC: ${{ steps.reuse.outputs.doc }}
+          REUSE_ROUND: ${{ steps.reuse.outputs.round }}
+          REUSE_TREE: ${{ steps.reuse.outputs.tree }}
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
         run: |
-          verdict=$(echo "$OUT" | jq -r '.verdict')
-          high=$(echo "$OUT" | jq -r '.high')
+          if [ "$REUSE" = "true" ]; then
+            # Модель не вызывалась: вердикт — записанный конвейером зелёный
+            # прошлого захода, дерево вне docs/reviews с тех пор не менялось (#499).
+            verdict=green; high=0
+            short_tree=$(printf '%s' "$REUSE_TREE" | cut -c1-12)
+            gh issue comment "$NUM" --repo "${{ github.repository }}" --body \
+              "Вердикт: зелёный · заход r${{ needs.guard.outputs.cycle }} · применён повторно из r${REUSE_ROUND} без вызова модели (#499) · High: 0 · Medium: 0 · Документ: docs/reviews/${REUSE_DOC}
+
+          Дерево материала \`${short_tree}\` с захода r${REUSE_ROUND} не изменилось ни в одном файле вне \`docs/reviews/\` (проверено \`git diff\` по содержимому). Новый документ не публикуется: разбирать нечего. Любое отличие дерева — ребейз, тест, фикстура, ТЗ — запустило бы полный разбор."
+          else
+            verdict=$(echo "$OUT" | jq -r '.verdict')
+            high=$(echo "$OUT" | jq -r '.high')
+          fi
           echo "вердикт: $verdict, High: $high"
 
           # Вперёд двигает ТОЛЬКО зелёный. Жёлтый и красный возвращают
@@ -975,9 +1053,9 @@ jobs:
             cat > /tmp/stale-verdict.md <<EOF
           **Слияние отменено: ветка изменилась после проверенного материала (#312).**
 
-          Ревью выполнялось на \\`$(git rev-parse --short "$reviewed")\\`, а вершина ветки сейчас \\`$(git rev-parse --short "$actual")\\` — в ней есть коммиты, которых вердикт не покрывает. Зелёный вердикт остаётся в силе только для проверенного SHA.
+          Ревью выполнялось на \`$(git rev-parse --short "$reviewed")\`, а вершина ветки сейчас \`$(git rev-parse --short "$actual")\` — в ней есть коммиты, которых вердикт не покрывает. Зелёный вердикт остаётся в силе только для проверенного SHA.
 
-          Задача переведена в \\`S6-in-progress\\`. Дальше: убедиться, что вершина ветки — именно то, что должно ехать в dev, и вернуть метку \\`S7-code-review\\` — новый заход ревью проверит актуальный код.
+          Задача переведена в \`S6-in-progress\`. Дальше: убедиться, что вершина ветки — именно то, что должно ехать в dev, и вернуть метку \`S7-code-review\`. Если вершина отличается от проверенного материала только коммитами публикации документов ревью, новый заход применит зелёный вердикт повторно без вызова модели (#499).
           EOF
             gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/stale-verdict.md
             exit 0
