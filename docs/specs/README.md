@@ -28,6 +28,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 
 | Issue | ТЗ |
 |---|---|
+| [#490](https://github.com/Matysh/houseplan-card/issues/490) Атомарный recovery и live-состояние сводной панели | [490-summary-recovery-live-state.md](490-summary-recovery-live-state.md) |
 | [#486](https://github.com/Matysh/houseplan-card/issues/486) Панель House Plan в боковом меню HA | [486-house-plan-panel.md](486-house-plan-panel.md) |
 | [#489](https://github.com/Matysh/houseplan-card/issues/489) Объявленный `data-hp`-контракт для UI и E2E | [489-data-hp-contract.md](489-data-hp-contract.md) |
 | [#484](https://github.com/Matysh/houseplan-card/issues/484) Внешняя размерная цепь ступенчатого фасада в PDF | [484-pdf-exterior-dimension-chain.md](484-pdf-exterior-dimension-chain.md) |
