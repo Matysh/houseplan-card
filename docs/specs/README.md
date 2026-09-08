@@ -102,6 +102,7 @@
 |---|---|
 | [#493](https://github.com/Matysh/houseplan-card/issues/493) Ограниченный picker и надёжный lifecycle сводной панели | [493-summary-panel-hardening.md](493-summary-panel-hardening.md) |
 | [#437](https://github.com/Matysh/houseplan-card/issues/437) Конфигурируемая сводная панель поверх плана | [437-summary-panel.md](437-summary-panel.md) |
+| [#485](https://github.com/Matysh/houseplan-card/issues/485) Радары присутствия: общий контракт и три этапа | [Общий контракт](485-radar-presence.md) · [Этап 1](485-radar-presence-stage1.md) · [Этап 2](485-radar-presence-stage2.md) · [Этап 3](485-radar-presence-stage3.md) |
 | [#487](https://github.com/Matysh/houseplan-card/issues/487) Пороги комфортной температуры для комнаты | [487-room-temperature-thresholds.md](487-room-temperature-thresholds.md) |
 | [#478](https://github.com/Matysh/houseplan-card/issues/478) Отказ от persisted-сущности `room_drafts` | [478-remove-room-drafts.md](478-remove-room-drafts.md) |
 | [#477](https://github.com/Matysh/houseplan-card/issues/477) Fixed point оптимизатора после штатного редактирования | [477-editor-writer-fixed-point.md](477-editor-writer-fixed-point.md) |
