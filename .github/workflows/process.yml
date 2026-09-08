@@ -1012,16 +1012,19 @@ jobs:
       # S8-merged утверждает, что код в dev. Значит слияние обязано произойти
       # ДО метки, иначе она врёт в промежутке.
       #
-      # При конфликте шаг НЕ падает и метку не оставляет на месте. Первая
-      # редакция делала именно так, и это оказалось тупиком: автор ждёт смену
-      # метки, метка не менялась, и он тридцать раз опрашивал впустую, чтобы
-      # затем отчитаться «лимит исчерпан» — при зелёном вердикте. Инвариант
-      # теперь жёстче: ПОСЛЕ ПРОГОНА РЕВЬЮ МЕТКА МЕНЯЕТСЯ ВСЕГДА.
+      # Слияние — точный кандидат (#492 §4, scripts/merge-candidate.mjs):
+      # ветка сверяется с материалом (#312); если dev не двигался — push с
+      # lease на текущую вершину; если двигался — ребейз, сравнение patch-id
+      # с проверенным диффом, публикация кандидата в ветку, ожидание
+      # Validate на этом SHA и только потом push в dev с lease. Повторное
+      # движение dev — новая попытка, не более трёх. Каждый исход, кроме
+      # успеха, ведёт в S6-in-progress/S7-code-review с комментарием, ПОСЛЕ
+      # ПРОГОНА МЕТКА МЕНЯЕТСЯ ВСЕГДА — инвариант тот же, что и раньше.
       - name: Слить ветку в dev
         id: merge
         if: needs.guard.outputs.stage == 'code' && steps.decide.outputs.green == 'true'
         env:
-          TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          HP_PROCESS_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ steps.branch.outputs.name }}
           NUM: ${{ github.event.issue.number }}
@@ -1032,58 +1035,8 @@ jobs:
             echo "merged=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git fetch -q origin dev "$BRANCH"
-          # #312: сливается только проверенный код. Допустимые вершины ветки:
-          # сам SHA материала либо он же плюс ровно один коммит публикации
-          # документа ревью (дифф только docs/reviews/). Любой другой коммит —
-          # ветка уехала после ревью, вердикт к ней не применим: возврат в
-          # S6-in-progress через merged=false, как при конфликте.
-          actual=$(git rev-parse "origin/$BRANCH")
-          reviewed="$MATERIAL_SHA"
-          fresh=false
-          if [ "$actual" = "$reviewed" ]; then
-            fresh=true
-          elif [ "$(git rev-parse "$actual^" 2>/dev/null)" = "$reviewed" ] \
-            && [ -z "$(git diff --name-only "$reviewed" "$actual" -- . ':!docs/reviews')" ]; then
-            fresh=true
-          fi
-          if [ "$fresh" != true ]; then
-            echo "merged=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::ветка $BRANCH уехала после проверенного SHA $reviewed (сейчас $actual) — слияние отменено (#312)"
-            cat > /tmp/stale-verdict.md <<EOF
-          **Слияние отменено: ветка изменилась после проверенного материала (#312).**
-
-          Ревью выполнялось на \`$(git rev-parse --short "$reviewed")\`, а вершина ветки сейчас \`$(git rev-parse --short "$actual")\` — в ней есть коммиты, которых вердикт не покрывает. Зелёный вердикт остаётся в силе только для проверенного SHA.
-
-          Задача переведена в \`S6-in-progress\`. Дальше: убедиться, что вершина ветки — именно то, что должно ехать в dev, и вернуть метку \`S7-code-review\`. Если вершина отличается от проверенного материала только коммитами публикации документов ревью, новый заход применит зелёный вердикт повторно без вызова модели (#499).
-          EOF
-            gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/stale-verdict.md
-            exit 0
-          fi
-          git checkout -q -B merge-into-dev "$actual"
-          if ! git -c user.name="claude[bot]" \
-                   -c user.email="209825114+claude[bot]@users.noreply.github.com" \
-                   rebase origin/dev; then
-            git rebase --abort || true
-            echo "merged=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::ветка $BRANCH не сливается в dev без конфликта"
-            cat > /tmp/conflict.md <<EOF
-          **Код-ревью зелёное — вердикт выше в силе, переделывать работу не нужно.** Не удалось только слияние: ветка \`$BRANCH\` конфликтует с \`dev\`.
-
-          Задача переведена в \`S6-in-progress\`, потому что работа вернулась к автору. Осталась не правка кода, а ребейз:
-
-          1. \`git fetch origin\`, затем \`git rebase origin/dev\` в ветке задачи, разрешить конфликт;
-          2. запушить ветку;
-          3. вернуть метку \`S7-code-review\`.
-
-          Повторный прогон ревью — не формальность: после ребейза на новый \`dev\` это другой код, и принимать его без проверки нельзя. Цикл считается по этапу, лимит на код-ревью тратится отдельно от ревью ТЗ.
-          EOF
-            gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/conflict.md
-            exit 0
-          fi
-          git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev
-          echo "merged=true" >> "$GITHUB_OUTPUT"
-          echo "слито в dev: $(git rev-parse --short HEAD)"
+          node scripts/merge-candidate.mjs --branch="$BRANCH" --material="$MATERIAL_SHA" \
+            --issue="$NUM" --repo="${{ github.repository }}"
 
       - name: Переставить метку
         if: steps.rebase.outputs.conflict != 'true'
@@ -1094,7 +1047,10 @@ jobs:
           FROM: ${{ steps.decide.outputs.from }}
           # Зелёное код-ревью без слияния ведёт не в S8-merged, а обратно к
           # автору: метка утверждала бы, что код в dev, а его там нет.
-          TO: ${{ (needs.guard.outputs.stage == 'code' && steps.decide.outputs.green == 'true' && steps.merge.outputs.merged != 'true') && 'S6-in-progress' || steps.decide.outputs.to }}
+          # Точный кандидат (#492) сам называет исход: S8 после push, S6/S7 —
+          # когда кандидат не слит (конфликт, красный Validate, изменившийся
+          # patch-id, ушедший dev). Без исхода от скрипта — как раньше: S6.
+          TO: ${{ (needs.guard.outputs.stage == 'code' && steps.decide.outputs.green == 'true' && steps.merge.outputs.to != '') && steps.merge.outputs.to || ((needs.guard.outputs.stage == 'code' && steps.decide.outputs.green == 'true' && steps.merge.outputs.merged != 'true') && 'S6-in-progress' || steps.decide.outputs.to) }}
         run: |
           gh issue edit "$NUM" --repo "${{ github.repository }}" \
             --add-label "$TO" --remove-label "$FROM"
