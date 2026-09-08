@@ -1,12 +1,12 @@
 {
   "schema": 1,
-  "matrixVersion": 60,
-  "acceptedAt": "2026-09-07T22:36:44.292Z",
-  "sourceFingerprint": "8e7650990368dac8b2651e684ac8ae9c578ba2a166396aa678bc3bf1ad9519ea",
+  "matrixVersion": 61,
+  "acceptedAt": "2026-09-08T07:21:40.179Z",
+  "sourceFingerprint": "890c1fb3c26652d17297e069612868f7bdad06b80839ef1dfda080e53d2b19c1",
   "chromium": "151.0.7922.34",
-  "platform": "linux",
+  "platform": "win32",
   "witnesses": {
-    "count": 139,
+    "count": 138,
     "floor": 10
   },
   "scenarios": {
@@ -151,6 +151,8 @@
     "device-dialog-desktop-en": "f3a3a45dad2cc22e692366114a4f87272b39ba261c1509e8a501dbfb82b6584e",
     "device-dialog-mobile-ru": "7ac796286ab4e65275838b4095ea3f16491311f99fd98cad3bbb475c6061e31c",
     "device-dialog-desktop-de": "9d39d3e73a3f36171e8cc7c930bcb43bfbfd788e31db0f584962300a2b00ca93",
+    "room-temperature-dialog-desktop-en": "b496e84e960f7b42eb38094ebaadeff8da146ce43c2f21405ddebf59b8561465",
+    "room-temperature-dialog-mobile-ru": "2c3bd451394e00c539aca68a1a27979d3c3fb6f5cc0e6fb189545b884458c59e",
     "german-view-mobile-light": "dc252c1a0ced7c636dfbd5cc3113abe546d568b9c62e4812326ab604dfd4e5cd",
     "toggle-entity-dialog-desktop-en": "3ea2bb828b554b6fb544b77fdef2af947e45af632769f4deab03c6adf195fa68",
     "toggle-entity-dialog-mobile-ru": "2d433f3f1fab9e9d4c3d413c302ac0d3b44a2d46ec9ecbf098c3063da6f1df04",
