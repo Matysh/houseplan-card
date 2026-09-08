@@ -125,7 +125,7 @@
 
 ## 8. Отрицательные тесты протокола
 
-8.1. **Manifest**: для каждой проверки и каждой непустой категории — представительный реальный файл; тест подменяет его содержимое (через инъекцию `read` в функцию ключа) и утверждает: ключ реюза меняется, `checksAffectedBy` содержит проверку. Список представителей: `scripts/support-relay/relay.py`, `scripts/sh3d-convert/golden/*.json`, `scripts/config-schema.json`, `pyproject.toml`, `demo/serve.mjs`, `demo/srv/demo.html`, `demo/editor-runtime-compat.mjs`, `demo/golden/baselines/*.png`, `demo/performance/budgets-*.json`, `tests_backend/requirements.txt`, `.github/workflows/validate.yml`.
+8.1. **Manifest**: для каждой проверки и каждой непустой категории — представительный реальный файл; тест подменяет его содержимое (через инъекцию `read` в функцию ключа) и утверждает: ключ реюза меняется, `checksAffectedBy` содержит проверку. Список представителей: `scripts/support-relay/relay.py`, `scripts/sh3d-convert/golden/*.json`, `scripts/config-schema.json`, `pyproject.toml`, `demo/serve.mjs`, `demo/srv/demo.html`, `demo/editor-runtime-compat.mjs`, `demo/golden/baselines/*.png`, `demo/performance/budgets-*.json`, `tests_backend/requirements.txt`, `.github/workflows/validate.yml`. **Обратная проба (AC6):** представитель `src/houseplan-card.ts` — ключ `backend` **не** меняется и `checksAffectedBy` **не** содержит `backend`; тест в `test/gate-reuse.test.mjs` и `test/classify-changes.test.mjs`, чтобы случайный возврат `sourceFingerprint` в ключ бэкенда был пойман, а не молча удлинял прогоны.
 8.2. **Мутанты**: правка `tests_backend/test_ha_import_export.py` отбирает все 10 обёрток без третьего аргумента; правка `tests_backend/test_trails.py` отбирает `vacuum-trail-*` и меняет их отпечаток; правка `demo/serve.mjs` отбирает все смок-свидетели; дифф только по реестру с новым мутантом отбирает ровно его.
 8.3. **Полнота**: лист покрытия §5.5 зелёный на текущем `git ls-files`.
 8.4. **Слияние**: `decideMerge` — таблица случаев: `dev` не двигался → push; двигался, patch-id равен, Validate зелёный → push с lease; lease отклонён дважды → повтор, трижды → `S6`; patch-id отличается → `S7`; Validate красный → `S6`; прогон не найден → ошибка, не push. Плюс git-эксперимент аудита в temp-репозитории (`20 → 40`): скрипт требует Validate, не пушит.
@@ -142,7 +142,7 @@
 - AC3. Дифф с изменившимся patch-id после ребейза не сливается — задача в `S7-code-review`.
 - AC4. Ключ реюза каждой job вычисляется из manifest; для каждого представителя §8.1 доказано изменение ключа и классификации.
 - AC5. Неизвестный исполняемый вход расширяет прогон до полного набора и виден в summary; лист покрытия §5.5 зелёный.
-- AC6. `backend` не зависит от `src/**` — включено последним коммитом после AC4–AC5.
+- AC6. `backend` не зависит от `src/**` — включено последним коммитом после AC4–AC5; доказано обратной пробой §8.1 (правка `src/houseplan-card.ts` не меняет ключ `backend` и не классифицируется как `backend`).
 - AC7. Обёртки гардов объявляют `GUARD_INPUTS`; отбор и отпечаток видят обёртки, импорты и фикстуры (§8.2).
 - AC8. Новый/изменённый мутант при диффе только по реестру отбирается и бежит.
 - AC9. `nightly.yml` красный при красном дочернем Validate.
