@@ -449,3 +449,18 @@ test('#481 AC6 (реестр): бамп версии продукта не ме�
     assert.equal(after, before, `${m.id}: релизный бамп изменил отпечаток`);
   }
 });
+
+// #499: девять браузерных гвардов начинались с `npm run bundle:sync` — раннер
+// уже собрал бандл мутанта, гвард собирал его второй раз, а `tsc --noEmit`
+// внутри `bundle:sync` красил гвард на нестрогом мутанте ещё до смока.
+test('#499: ни один гвард реестра не собирает бандл сам — сборка одна, у раннера', () => {
+  const selfBuilding = MUTANTS.filter((m) => /bundle:sync|bundle-sync\.mjs|rollup -c/.test(m.guard));
+  assert.deepEqual(selfBuilding.map((m) => m.id), []);
+  // Отрицательный свидетель: --check отвергает такой гвард. Проверяется на самой
+  // регулярке из реестра, чтобы правило и тест не расходились.
+  const guard = 'npm run bundle:sync && node demo/smoke_furniture.mjs';
+  assert.ok(/bundle:sync|bundle-sync\.mjs|rollup -c/.test(guard));
+  assert.equal(guardNeedsBundle('node demo/smoke_furniture.mjs'), true, 'без префикса гвард остаётся браузерным');
+  const source = readFileSync(new URL('../scripts/mutation-gate.mjs', import.meta.url), 'utf8');
+  assert.match(source, /гвард сам собирает бандл — сборку делает раннер \(#499\)/);
+});

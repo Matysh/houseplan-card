@@ -252,7 +252,7 @@ export function anchorLiveness(object, run) {
   return false;
 }
 
-export function materialAnchorBlock({ sha, tree, branch, specs = [] } = {}) {
+export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, high } = {}) {
   const short = (value) => (typeof value === 'string' ? value.slice(0, 12) : '');
   const lines = [
     ANCHOR_MARKER,
@@ -276,6 +276,13 @@ export function materialAnchorBlock({ sha, tree, branch, specs = [] } = {}) {
   }
   if (!tree && !specs.length) {
     lines.push('- Якоря снять не удалось: ветки задачи нет, материал читался по `dev`.');
+  }
+  // Вердикт из structured_output модели, записанный конвейером (#499): по нему
+  // следующий заход решает, можно ли применить зелёный вердикт повторно без
+  // вызова модели. Прозу документа для этого читать нельзя — она цитирует
+  // прошлые раунды и пишется в свободной форме.
+  if (verdict) {
+    lines.push(`- Вердикт конвейера: \`${verdict}\` · High ${Number.isFinite(Number(high)) ? Number(high) : '?'}`);
   }
   return `${lines.join('\n')}\n`;
 }
@@ -428,6 +435,63 @@ export function verdictDeclaration(text) {
 /** Цикл израсходован, если вердикт вернул работу автору (#227). */
 export function isBlockingVerdict(line) {
   return Boolean(line) && BLOCKING_COLOUR.test(line);
+}
+
+/** Дерево материала из блока якорей документа (#414), либо `null`. */
+export function anchorTreeFrom(text) {
+  const body = String(text ?? '');
+  const at = body.indexOf(ANCHOR_MARKER);
+  if (at < 0) return null;
+  const match = body.slice(at).match(/Дерево материала: `([0-9a-f]{40})`/);
+  return match ? match[1] : null;
+}
+
+/** Вердикт конвейера из блока якорей (#499): `{ verdict, high }` либо `null`. */
+export function anchorVerdictFrom(text) {
+  const body = String(text ?? '');
+  const at = body.indexOf(ANCHOR_MARKER);
+  if (at < 0) return null;
+  const match = body.slice(at).match(/Вердикт конвейера: `(green|yellow|red)` · High (\d+)/);
+  return match ? { verdict: match[1], high: Number(match[2]) } : null;
+}
+
+/**
+ * Повторное применение зелёного вердикта без вызова модели (#499).
+ *
+ * Сценарий #437 r4: зелёный r3 не слился (страж #312 не признал вершину), задача
+ * вернулась в S6 и тут же в S7 — и ревьюер двенадцать минут заново разбирал
+ * дерево, в котором с r3 изменился ровно один файл: собственный документ r3.
+ *
+ * Правило узкое и одностороннее: вердикт переиспользуется ТОЛЬКО если
+ *  - последний опубликованный документ этапа несёт записанный КОНВЕЙЕРОМ
+ *    вердикт `green` с High 0 (из structured_output модели, не из прозы);
+ *  - его якорь «дерево материала» снят конвейером (#414), а не написан рукой;
+ *  - текущее дерево отличается от якоря НИЧЕМ, кроме docs/reviews/** —
+ *    сравнение делает git по содержимому, так что ребейз на ушедший dev,
+ *    правка теста, фикстуры, скрипта или ТЗ в docs/specs дают отличие и
+ *    полный разбор (§7.2). Смена базы без изменения дерева невозможна:
+ *    дерево ветки после ребейза включает содержимое dev.
+ * Любое сомнение — `null`, и ревью идёт как обычно.
+ *
+ * @param docs [{ name, text }] опубликованные документы этапа этой задачи
+ * @param differs (tree) => boolean — есть ли отличие дерева от HEAD вне docs/reviews
+ */
+export function reusableGreenVerdict(docs, differs) {
+  const numbered = (docs || [])
+    .map((doc) => ({ ...doc, round: Number((String(doc?.name || '').match(/-r(\d+)\.md$/) || [])[1]) }))
+    .filter((doc) => Number.isFinite(doc.round))
+    .sort((a, b) => b.round - a.round);
+  const latest = numbered[0];
+  if (!latest) return null;
+  // Судится запись конвейера, не проза: документ r4 по #437 держит вердикт
+  // словом «Зелёный.» под заголовком раздела и цитирует r3 строкой «Вердикт
+  // r3: зелёный» — ни то, ни другое не годится как машинный источник.
+  const recorded = anchorVerdictFrom(latest.text);
+  if (!recorded || recorded.verdict !== 'green' || recorded.high !== 0) return null;
+  const tree = anchorTreeFrom(latest.text);
+  if (!tree) return null;
+  if (differs(tree)) return null;
+  return { doc: latest.name, round: latest.round, tree, verdict: 'green' };
 }
 
 /**
@@ -607,6 +671,36 @@ if (invokedDirectly) {
     process.exit(0);
   }
 
+  // Режим повторного применения зелёного вердикта (#499): документы этапа
+  // читаются из рабочей копии (они в дереве ветки), отличие дерева судит git.
+  //   --reuse --marker=CODE-REVIEW --num=437 [--head=HEAD]
+  // Печатает `reuse=true|false` и, при true, `doc=`, `round=`, `tree=`, `verdict=`.
+  if (argv.includes('--reuse')) {
+    const value = (name) => {
+      const found = argv.find((item) => item.startsWith(`--${name}=`));
+      return found ? found.slice(name.length + 3) : '';
+    };
+    const marker = value('marker'); const num = value('num'); const head = value('head') || 'HEAD';
+    const listed = spawnSync('git', ['ls-tree', '--name-only', `${head}:docs/reviews`], { encoding: 'utf8' });
+    const names = (listed.stdout || '').split('\n')
+      .filter((name) => new RegExp(`^${marker}-${num}-r\\d+\\.md$`).test(name));
+    const docs = names.map((name) => {
+      const shown = spawnSync('git', ['show', `${head}:docs/reviews/${name}`], { encoding: 'utf8' });
+      return { name, text: shown.status === 0 ? shown.stdout : '' };
+    });
+    const differs = (tree) => {
+      // Сначала дерево обязано существовать: неизвестный объект — не «совпало».
+      const exists = spawnSync('git', ['cat-file', '-e', `${tree}^{tree}`], { encoding: 'utf8' });
+      if (exists.status !== 0) return true;
+      const diff = spawnSync('git', ['diff', '--quiet', tree, head, '--', '.', ':!docs/reviews'], { encoding: 'utf8' });
+      return diff.status !== 0;
+    };
+    const found = reusableGreenVerdict(docs, differs);
+    if (!found) { process.stdout.write('reuse=false\n'); process.exit(0); }
+    process.stdout.write(`reuse=true\ndoc=${found.doc}\nround=${found.round}\ntree=${found.tree}\n`);
+    process.exit(0);
+  }
+
   // Режим дописывания якорей (#414): конвейер снял их при чтении материала.
   const anchorArg = argv.find((item) => item.startsWith('--anchor='));
   if (anchorArg) {
@@ -620,6 +714,8 @@ if (invokedDirectly) {
       tree: value('tree'),
       branch: value('branch'),
       specs: parseSpecList(value('specs')),
+      verdict: ['green', 'yellow', 'red'].includes(value('verdict')) ? value('verdict') : '',
+      high: value('high'),
     };
     const text = readFileSync(path, 'utf8');
     writeFileSync(path, withMaterialAnchors(text, anchors), 'utf8');

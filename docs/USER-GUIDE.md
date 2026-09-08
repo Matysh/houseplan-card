@@ -242,7 +242,7 @@ View is the state with no editor open. Close the active editor to return to it.
 | Device | Draggable; click opens settings | Read-only background | Read-only background |
 | Background | Dimmed and inert | Dimmed | Background objects editable |
 | Kiosk | Actionable as in View | Read-only | Read-only; no editors |
-| Static card | Not live or interactive | Render only | Render only |
+| Static card | Live states, values and alarms as in View (`live_states`), no tooltips or more-info | Render only | Render only; not interactive |
 
 ### Summary panel
 
@@ -964,7 +964,7 @@ contract.
 ## 17. Kiosk
 
 Set `kiosk: true` on a card in a Panel view. Editors and the ordinary header are
-removed. Pinch/drag navigate, double-tap resets, and a 1:1 horizontal swipe
+removed. Pinch/drag navigate, double-tap on free background fits the whole plan, and a 1:1 horizontal swipe
 changes space. Holding empty space for three seconds opens per-display icon and
 text sizing. `cycle` enables automatic space changes; interaction pauses it for
 60 seconds.

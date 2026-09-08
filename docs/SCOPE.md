@@ -4,8 +4,8 @@
 built, improved and accepted **only** if they serve a job listed here. When a new
 idea appears, first find its row in this file; if there is none — it belongs to
 HA core, to another card, or nowhere. The current order of work lives only in
-[GitHub Issues](https://github.com/Matysh/houseplan-card/issues) and the linked
-[Project v2](https://github.com/users/Matysh/projects/1). Companion
+[GitHub Issues](https://github.com/Matysh/houseplan-card/issues) and their
+status labels (Project v2 was dropped on 2026-08-14, #139). Companion
 documents: ROADMAP.md (historical engineering direction), UX-MODES.md
 (interaction model).
 TOUCH-SUPPORT.md fixes the input-support contract: touch is a guaranteed View
@@ -25,7 +25,7 @@ obvious" is somebody else's job.
 
 | Persona | Role | Surface |
 |---|---|---|
-| **Home admin** (primary) | HA enthusiast, house/large flat, 20–200 devices, several floors; sets up and maintains the plan | Desktop browser (both editors live here) |
+| **Home admin** (primary) | HA enthusiast, house/large flat, 20–200 devices, several floors; sets up and maintains the plan | Desktop browser (all editors live here) |
 | **Household members** | Non-technical; consume the plan daily, never edit | Wall tablet (kiosk), phone (companion app) |
 | **Guests / kiosk** | View-only glance at the home | Wall tablet |
 

@@ -6,6 +6,7 @@ import {
   ANCHOR_MARKER, REVIEW_DOC_ALLOWLIST, anchorLiveness, REVIEW_HEADER_LINES, citedMaterialShas, danglingMaterialRefusal, materialAnchorBlock, materialAnchorsFrom, parseSpecList, pathsOutsideAllowlist, reviewDocPushRefusal, withMaterialAnchors,
   attemptFromRounds, blockingFromDocs, isBlockingVerdict, reviewCounters, reviewRoundsFromFiles, verdictDeclaration,
   commentCounters, stageVerdictComments,
+  anchorTreeFrom, anchorVerdictFrom, reusableGreenVerdict,
 } from '../scripts/review-doc-guard.mjs';
 
 // #365. 28.08 шаг публикации ревью-дока запушил в dev коммит bb2919f с тридцатью
@@ -525,4 +526,78 @@ test('мусор в комментариях не роняет счёт (#454 AC
   assert.equal(commentCounters([{}, { body: null }, 'строка'], 'CODE-REVIEW', '454').attempt, 1);
   assert.equal(commentCounters([C('Вердикт: жёлтый CODE-REVIEW-454-r1.md')], '', '454').attempt, 1);
   assert.deepEqual(stageVerdictComments([C('Вердикт: жёлтый CODE-REVIEW-454-r1.md')], 'CODE-REVIEW', 'x'), []);
+});
+
+// #499: повторное применение зелёного вердикта без вызова модели — только по
+// записи конвейера и только при неизменённом дереве вне docs/reviews.
+
+const TREE_A = 'a'.repeat(40);
+const TREE_B = 'b'.repeat(40);
+const docWith = (name, anchors) => ({ name, text: withMaterialAnchors(`# ${name}\n\nВердикт: зелёный · заход r9\n`, anchors) });
+
+test('блок якорей несёт вердикт конвейера, и он читается обратно (#499)', () => {
+  const block = materialAnchorBlock({ sha: 'c'.repeat(40), tree: TREE_A, branch: 'issue/1-x', verdict: 'green', high: 0 });
+  assert.match(block, /Вердикт конвейера: `green` · High 0/);
+  assert.deepEqual(anchorVerdictFrom(block), { verdict: 'green', high: 0 });
+  assert.equal(anchorTreeFrom(block), TREE_A);
+  // Без вердикта строки нет — старые документы остаются старыми.
+  assert.doesNotMatch(materialAnchorBlock({ tree: TREE_A }), /Вердикт конвейера/);
+  assert.equal(anchorVerdictFrom(materialAnchorBlock({ tree: TREE_A })), null);
+  // Проза вне блока якорей не читается как запись конвейера.
+  assert.equal(anchorVerdictFrom('Вердикт конвейера: `green` · High 0\nбез маркера'), null);
+});
+
+test('зелёный r3 с неизменённым деревом применяется повторно (#499)', () => {
+  const docs = [
+    docWith('CODE-REVIEW-437-r1.md', { tree: TREE_B, verdict: 'yellow', high: 0 }),
+    docWith('CODE-REVIEW-437-r3.md', { tree: TREE_A, verdict: 'green', high: 0 }),
+    docWith('CODE-REVIEW-437-r2.md', { tree: TREE_B, verdict: 'yellow', high: 0 }),
+  ];
+  const asked = [];
+  const found = reusableGreenVerdict(docs, (tree) => { asked.push(tree); return false; });
+  assert.deepEqual(found, { doc: 'CODE-REVIEW-437-r3.md', round: 3, tree: TREE_A, verdict: 'green' });
+  assert.deepEqual(asked, [TREE_A], 'судится только последний раунд');
+});
+
+test('изменённое дерево, жёлтый вердикт, High>0 или проза без записи — полный разбор (#499)', () => {
+  const green = docWith('CODE-REVIEW-1-r2.md', { tree: TREE_A, verdict: 'green', high: 0 });
+  assert.equal(reusableGreenVerdict([green], () => true), null, 'дерево отличается');
+  assert.equal(reusableGreenVerdict([docWith('CODE-REVIEW-1-r2.md', { tree: TREE_A, verdict: 'yellow', high: 0 })], () => false), null);
+  assert.equal(reusableGreenVerdict([docWith('CODE-REVIEW-1-r2.md', { tree: TREE_A, verdict: 'green', high: 1 })], () => false), null);
+  // Зелёный r2, но поверх него жёлтый r3 — последний решает.
+  assert.equal(reusableGreenVerdict([green, docWith('CODE-REVIEW-1-r3.md', { tree: TREE_A, verdict: 'red', high: 2 })], () => false), null);
+  // Документ без записи конвейера (до #499) — только проза «Вердикт: зелёный».
+  assert.equal(reusableGreenVerdict([docWith('CODE-REVIEW-1-r1.md', { tree: TREE_A })], () => false), null);
+  // Якорь дерева отсутствует — сравнивать нечего.
+  assert.equal(reusableGreenVerdict([docWith('CODE-REVIEW-1-r1.md', { verdict: 'green', high: 0 })], () => false), null);
+  assert.equal(reusableGreenVerdict([], () => false), null);
+});
+
+test('конвейер: посторонняя метка не входит в concurrency, guard читает текущие метки (#499)', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  // Concurrency — на job, не на workflow: иначе любой `labeled` вытеснял ожидающий S7.
+  const head = workflow.slice(0, workflow.indexOf('\njobs:'));
+  assert.doesNotMatch(head, /^concurrency:/m, 'concurrency на уровне workflow снова пустит в группу все метки');
+  const guard = workflow.slice(workflow.indexOf('\n  guard:'), workflow.indexOf('\n  review:'));
+  assert.match(guard, /if: github\.event\.label\.name == 'S4-spec-review' \|\| github\.event\.label\.name == 'S7-code-review'/);
+  assert.match(guard, /concurrency:\n\s+group: process-issue-\$\{\{ github\.event\.issue\.number \}\}/);
+  const review = workflow.slice(workflow.indexOf('\n  review:'));
+  assert.match(review, /concurrency:\n\s+group: process-issue-\$\{\{ github\.event\.issue\.number \}\}/);
+  // Состояние читается текущее, не из снимка события.
+  assert.match(guard, /gh issue view "\$NUM" --repo "\$REPO" --json labels/);
+  assert.doesNotMatch(guard, /contains\(github\.event\.issue\.labels/, 'снимок события больше не источник меток');
+  assert.match(guard, /запрос отозван/);
+});
+
+test('конвейер: зелёный вердикт применяется повторно без модели, вердикт пишется в якоря (#499)', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /review-doc-guard\.mjs --reuse --marker=CODE-REVIEW --num="\$NUM" --head=HEAD/);
+  const reviewStep = workflow.slice(workflow.indexOf('      - name: Review\n'), workflow.indexOf('anthropics/claude-code-action'));
+  assert.match(reviewStep, /steps\.reuse\.outputs\.reuse != 'true'/, 'модель не вызывается при повторном применении');
+  const publish = workflow.slice(workflow.indexOf('- name: Опубликовать документ ревью'), workflow.indexOf('- name: Решение по вердикту'));
+  assert.match(publish, /--verdict="\$verdict" --high="\$high"/);
+  const decide = workflow.slice(workflow.indexOf('- name: Решение по вердикту'), workflow.indexOf('- name: dev ушёл вперёд'));
+  assert.match(decide, /if \[ "\$REUSE" = "true" \]; then\n\s+(#[^\n]*\n\s+)*verdict=green; high=0/);
+  // Ревьюер привязан к SHA материала — сам подтягивать новее не должен.
+  assert.match(workflow, /Материал ревью — ровно\s+`\$\{\{ steps\.material\.outputs\.sha \}\}`/);
 });

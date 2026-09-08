@@ -158,7 +158,16 @@ remaining work is the rebase. When the conflict is only in the committed bundle
 tasks built it in parallel), run `node scripts/rebase-on-dev.mjs` (#479): it takes
 `dev`'s copy through the rebase, rebuilds with `npm run bundle:sync` and amends
 the result into your last commit; a conflict anywhere else aborts and leaves the
-tree as it was. Then push the branch and re-apply `S7-code-review`. The second review run is not a formality — after a rebase onto a
+tree as it was. Then push the branch and re-apply `S7-code-review`. When the
+only difference from the reviewed material is the pipeline's own review-document
+commit, the next run re-applies the green verdict without calling the model
+(#499); any other change to the tree — a rebase included — gets a full review.
+
+The pipeline is an idempotent controller (#499): only `S4-spec-review` and
+`S7-code-review` start it, it reads the issue's *current* labels rather than the
+event snapshot, and a label removed before the run starts is treated as a
+withdrawn request. Push the material **before** applying the label — the reviewer
+is pinned to the SHA the pipeline captured and must not fetch newer commits. The second review run is not a formality — after a rebase onto a
 moved `dev` this is different code, and accepting it unchecked is how regressions
 arrive. Cycles are counted per stage, so a code review spends its own budget.
 

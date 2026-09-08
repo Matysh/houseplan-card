@@ -259,7 +259,7 @@ export function initialViewCeilingViolation(bytes, {
       over: bytes - ceiling,
       text: `initial View graph ${bytes} B gzip выше потолка ${ceiling} B на ${bytes - ceiling} B.`
         + ' Поднимите потолок в этом же коммите, объяснив рост, либо вынесите код в ленивый'
-        + ' граф (#367). Молча расти этому графу больше нечем.',
+        + ' граф (история: #367 → #474). Молча расти этому графу больше нечем.',
     };
   }
   if (bytes < ceiling - band) {
@@ -268,7 +268,7 @@ export function initialViewCeilingViolation(bytes, {
       under: ceiling - bytes,
       text: `initial View graph ${bytes} B gzip ниже потолка ${ceiling} B на ${ceiling - bytes} B`
         + ` — больше полосы ${band} B. Опустите потолок: незафиксированный выигрыш граф`
-        + ' отыграет обратно, и это уже происходило (#367).',
+        + ' отыграет обратно, и это уже происходило (#367, закрыт).',
     };
   }
   return null;
@@ -290,10 +290,11 @@ export function lowHeadroomWarning(headroom, {
     ? ` Признание долга покрывает потолок до ${acknowledgedCeiling} Б, а он уже ${ceiling} Б —`
       + ' граф вырос с тех пор, вопрос вернулся.'
     : ' Погасить можно решением владельца: LOW_HEADROOM_ACKNOWLEDGED_CEILING в'
-      + ' scripts/bundle-budget.mjs. Пока не погашено — это долг (#367).';
+      + ' scripts/bundle-budget.mjs. Живого issue у долга нет: #367 закрыт рекалибровкой,'
+      + ' его рычаг сделан в #474 (#499) — следующий рост заводит новый.';
   return `запас бюджета ${headroom} Б, меньше порога ${threshold} Б:`
     + ' следующая средняя фича упрётся в стену. Рекалибровка это не лечит —'
-    + ' смотрите ленивые графы (#367).' + stale;
+    + ' смотрите ленивые графы (история: #367 → #474).' + stale;
 }
 
 export function assertBundleBudget(

@@ -1359,7 +1359,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'vacuum-overlay-back-to-the-dock-space-filter',
-    guard: 'npm run bundle:sync && node demo/smoke_vacuum_multifloor.mjs',
+    guard: 'node demo/smoke_vacuum_multifloor.mjs',
     because: 'the overlay layer must see every robot of the plan, not only those whose DOCK '
       + 'is in the space on screen: the old filter is exactly why a multi-floor robot could '
       + 'never appear on its second floor (#162, AC2)',
@@ -1383,7 +1383,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'vacuum-manual-fit-after-proposal-uses-the-dock',
-    guard: 'npm run bundle:sync && node demo/smoke_vacuum_multifloor.mjs',
+    guard: 'node demo/smoke_vacuum_multifloor.mjs',
     because: 'the high-residual proposal is refined against the geometry the matrix was solved '
       + 'against — opening it on the dock floor fits the robot to the wrong plan (#162, AC8, '
       + 'the stateful half the pure calibrationTarget mutant cannot reach)',
@@ -4297,7 +4297,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'near-axis-authoring-snap-bypassed',
-    guard: 'npm run bundle:sync && node demo/smoke_plan_drawing_repairs.mjs',
+    guard: 'node demo/smoke_plan_drawing_repairs.mjs',
     because: 'the production Walls hover and click must persist the exact same straight endpoint '
       + 'instead of merely repairing old data through Optimize (#290)',
     patches: [{
@@ -4331,7 +4331,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'near-axis-optimize-confirmation-bypassed',
-    guard: 'npm run bundle:sync && node demo/smoke_near_axis_optimize.mjs',
+    guard: 'node demo/smoke_near_axis_optimize.mjs',
     because: 'opening the Optimize preview or cancelling it must never persist a lossy repair (#290)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
@@ -6242,7 +6242,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'current-rejected-physical-write-keeps-optimistic-wall',
-    guard: 'npm run bundle:sync && node demo/smoke_v8_draft_write.mjs',
+    guard: 'node demo/smoke_v8_draft_write.mjs',
     because: 'a rejected config/set must synchronously discard its whole pending physical batch '
       + 'before an optimistic active-chain partition survives as a ghost wall (#314/#478)',
     patches: [{
@@ -6253,7 +6253,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'area-relocation-loses-position-on-refusal',
-    guard: 'npm run bundle:sync && node demo/smoke_area_relocation_safety.mjs',
+    guard: 'node demo/smoke_area_relocation_safety.mjs',
     because: 'a rejected provenance write must restore every manual layout point deleted '
       + 'before config/set, or leave explicit attention when restoration also fails (#403)',
     patches: [{
@@ -6264,7 +6264,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'area-relocation-clears-whole-history',
-    guard: 'npm run bundle:sync && node demo/smoke_area_relocation_safety.mjs',
+    guard: 'node demo/smoke_area_relocation_safety.mjs',
     because: 'moving one marker to a new HA Area must invalidate only that marker\'s commands '
       + 'instead of silently erasing Undo and Redo for every other marker (#403)',
     patches: [{
@@ -7305,7 +7305,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'furniture-art-editor-adopt-skipped',
-    guard: 'npm run bundle:sync && node demo/smoke_furniture.mjs',
+    guard: 'node demo/smoke_furniture.mjs',
     because: 'the editor imports the artwork statically and must hand it over synchronously; without '
       + 'adopt the palette previews and the placement ghost render empty on a plan without furniture (#474 r1)',
     patches: [{
@@ -7567,7 +7567,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'writer-history-skips-finished-chain-normalization',
-    guard: 'npm run bundle:sync && node demo/smoke_writer_fixed_point.mjs',
+    guard: 'node demo/smoke_writer_fixed_point.mjs',
     because: 'Undo/Redo after a chain has finished must restore canonical snapshots rather than '
       + 'bringing the hidden collinear seams back into durable config (#477)',
     patches: [{
@@ -7737,6 +7737,9 @@ export function guardNeedsTestBuild(guard) {
  * выполняется только там, где её результат кто-то откроет.
  */
 export function guardNeedsBundle(guard) {
+  // `bundle:sync` в гварде реестр больше не допускает (--check, #499), но
+  // распознавание остаётся: чужой или старый гвард со сборкой всё равно
+  // браузерный, и бандл ему нужен.
   return guard.includes('demo/') || guard.includes('bundle:sync');
 }
 
@@ -8015,6 +8018,13 @@ function main(argv) {
     let stale = 0;
     for (const m of selected) {
       try {
+        // #499: бандл мутанта собирает раннер (`buildBundle`, только rollup +
+        // sync). Гвард с собственным `npm run bundle:sync` собирал бы его второй
+        // раз — плюс `tsc --noEmit`, который на нестрогом мутанте падает сам и
+        // красит гвард ещё до теста: «мутант пойман» без единого запуска смока.
+        if (/bundle:sync|bundle-sync\.mjs|rollup -c/.test(m.guard)) {
+          throw new Error('гвард сам собирает бандл — сборку делает раннер (#499)');
+        }
         for (const patch of m.patches) {
           const source = readFileSync(join(repoRoot, patch.file), 'utf8');
           const hits = source.split(patch.find).length - 1;
