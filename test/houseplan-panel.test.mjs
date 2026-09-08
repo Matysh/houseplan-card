@@ -27,8 +27,20 @@ test('#486 menu and container-owned panel layout have explicit accessibility and
     'the toolbar may not replace the app bar header landmark');
   assert.match(panel, /grid-template-rows: auto minmax\(0, 1fr\)/);
   assert.match(panel, /\.content \{[\s\S]*min-width: 0;[\s\S]*min-height: 0;[\s\S]*overflow: hidden;/);
-  assert.doesNotMatch(panel, /100dvh|100vh|safe-area-inset/,
-    'the shell must use the HA-owned content slot rather than viewport or duplicated safe-area math');
+});
+
+test('#488 the shell sizes itself from the viewport and adopts pre-upgrade HA properties', () => {
+  const panel = source('src/houseplan-panel.ts');
+  // <ha-panel-custom> is a height-less block with safe-area padding: a percentage
+  // host height resolves to auto and the stage collapses to 0 px. The fallback
+  // 100vh must come first so the dvh/inset line wins wherever it is supported.
+  assert.match(panel, /:host \{[\s\S]*?height: 100vh;\s+height: calc\(100dvh - var\(--safe-area-inset-top, 0px\) - var\(--safe-area-inset-bottom, 0px\)\);/);
+  assert.doesNotMatch(panel, /:host \{[^}]*height: 100%;/,
+    'the host must not take its height from the height-less ha-panel-custom container');
+  // HA assigns these before the top-level-await entry defines the element.
+  assert.match(panel, /const PRE_UPGRADE_PROPERTIES = \['panel', 'hass', 'narrow', 'route'\] as const;/);
+  assert.match(panel, /public constructor\(\) \{[\s\S]*?this\._adoptPreUpgradeProperties\(\);[\s\S]*?public connectedCallback\(\): void \{\s+this\._adoptPreUpgradeProperties\(\);/);
+  assert.match(panel, /if \(!Object\.prototype\.hasOwnProperty\.call\(this, key\)\) continue;[\s\S]*?delete \(this as unknown as Record<string, unknown>\)\[key\];/);
 });
 
 test('#486 only the full card advertises a full-width Sections default', () => {
