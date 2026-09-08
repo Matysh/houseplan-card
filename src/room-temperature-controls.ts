@@ -1,10 +1,11 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import type { I18nKey } from './i18n';
 import { roomTempThresholdDraft, strictNumber } from './space-dialog';
 
 interface RoomTemperatureControlsHost {
   _roomTempMin: string;
   _roomTempMax: string;
-  _t: (key: any) => string;
+  _t: (key: I18nKey) => string;
   requestUpdate: () => unknown;
 }
 
