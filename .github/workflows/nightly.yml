@@ -13,6 +13,11 @@
 # Красный ночной прогон — сигнал автору последних коммитов на dev, не гейт:
 # гейт беты по-прежнему требует зелёный Validate на точном SHA кандидата, и
 # там полный набор идёт заново.
+#
+# Сигнал обязан быть настоящим (#492 §7): до этой задачи job завершалась
+# успехом в момент постановки Validate в очередь, и красный полный прогон не
+# делал ночной workflow красным. Теперь job находит запущенный прогон и ждёт
+# его: успешный dispatch — не успешная проверка.
 name: Ночной полный прогон dev
 
 on:
@@ -26,13 +31,34 @@ permissions:
 
 jobs:
   dispatch:
-    name: "Запустить Validate на dev с полным набором"
+    name: "Запустить Validate на dev с полным набором и дождаться результата"
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+          since=$(date -u +%FT%TZ)
           gh workflow run validate.yml --repo "$REPO" --ref dev -f full=true
-          echo "Validate(dev, full=true) поставлен в очередь: $(date -u +%FT%TZ)"
+          echo "Validate(dev, full=true) поставлен в очередь: $since"
+          # Найти именно этот прогон: workflow_dispatch на dev, созданный не
+          # раньше момента запуска. До трёх минут на появление в списке.
+          run_id=""
+          for _ in $(seq 1 18); do
+            sleep 10
+            run_id=$(gh run list --repo "$REPO" --workflow validate.yml --branch dev \
+              --event workflow_dispatch --json databaseId,createdAt --limit 5 \
+              --jq "[.[] | select(.createdAt >= \"$since\")] | sort_by(.createdAt) | last | .databaseId // empty")
+            [ -n "$run_id" ] && break
+          done
+          if [ -z "$run_id" ]; then
+            echo "::error::прогон Validate не появился за 3 минуты — dispatch не равен проверке"
+            exit 1
+          fi
+          url="${{ github.server_url }}/$REPO/actions/runs/$run_id"
+          echo "дочерний прогон: $url"
+          echo "- Validate(dev, full=true): $url" >> "$GITHUB_STEP_SUMMARY"
+          # Ждём завершения; красный дочерний прогон — красный ночной.
+          gh run watch "$run_id" --repo "$REPO" --exit-status --interval 30

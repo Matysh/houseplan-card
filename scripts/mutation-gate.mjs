@@ -3616,6 +3616,39 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'merge-pushes-unvalidated-candidate',
+    guard: 'node --test --test-name-pattern="эксперимент аудита" test/merge-candidate.test.mjs',
+    because: 'after a clean rebase onto a moved dev the candidate is a tree nobody checked; pushing '
+      + 'it without a green Validate on that SHA is the false-green the audit reproduced (#492 §4)',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: '    const { result, url } = await ops.waitValidate(candidate);',
+      replace: "    const { result, url } = { result: 'green', url: 'skipped' };  // mutant: no validation",
+    }],
+  },
+  {
+    id: 'merge-ignores-lease-rejection',
+    guard: 'node --test --test-name-pattern="lease отклонён" test/merge-candidate.test.mjs',
+    because: 'dev moving again between Validate and push must restart the candidate, not be '
+      + 'reported as merged: a rejected lease treated as success leaves S8-merged on code not in dev (#492 AC2)',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: "    const pushed = ops.pushWithLease(candidate, 'dev', devNow);\n    decision = decideMerge(",
+      replace: "    const pushed = ops.pushWithLease(candidate, 'dev', devNow) || true;  // mutant: lease never rejected\n    decision = decideMerge(",
+    }],
+  },
+  {
+    id: 'nightly-does-not-wait',
+    guard: 'node --test --test-name-pattern="nightly ждёт запущенный Validate" test/nightly-workflow.test.mjs',
+    because: 'a nightly that returns green at dispatch time hides a red full run; the job must wait '
+      + 'for the child and inherit its conclusion (#492 §7)',
+    patches: [{
+      file: '.github/workflows/nightly.yml',
+      find: '          gh run watch "$run_id" --repo "$REPO" --exit-status --interval 30',
+      replace: '          echo "watching skipped"  # mutant: dispatch counted as success',
+    }],
+  },
+  {
     id: 'changed-selection-ignores-guard-files',
     guard: 'node --test --test-name-pattern="#475 AC2" test/mutation-gate.test.mjs',
     because: 'a witness also rots when its guard changes and stops reaching the mutated branch; '
