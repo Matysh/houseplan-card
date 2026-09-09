@@ -2,6 +2,52 @@
 
 ## Unreleased
 
+## v1.73.0 — 2026-09-09
+
+- House Plan opens from its own page in the Home Assistant sidebar, without
+  requiring a separate dashboard. The regular dashboard card remains available
+  ([#486](https://github.com/Matysh/houseplan-card/issues/486)).
+- A configurable summary panel shows current HA values, device count, room
+  area, date and time. An administrator defines shared groups, while each user
+  controls visibility independently on each card. The panel, header controls
+  and wide settings dialog follow the designer's layout, with smooth opening
+  and closing
+  ([#437](https://github.com/Matysh/houseplan-card/issues/437),
+  [#505](https://github.com/Matysh/houseplan-card/issues/505)).
+- Export the current space as a single-page A4 PDF with architecture, room
+  names and floor areas, dimensions, hatched walls and a compass. Background,
+  furniture and decor are optional; devices and live states are excluded
+  ([#53](https://github.com/Matysh/houseplan-card/issues/53)).
+- The first presence-radar stage displays current observations on the plan
+  and supports source mapping, placement and calibration. ESPHome LD2450 and
+  explicit mapping of other observation formats are supported; diagnostic
+  trails remain session-local, without long-term history
+  ([#485](https://github.com/Matysh/houseplan-card/issues/485)).
+- Rooms can override the lower and upper comfortable-temperature limits;
+  each unset limit independently inherits from the space
+  ([#487](https://github.com/Matysh/houseplan-card/issues/487)).
+- Each accepted wall-chain segment is saved immediately as an ordinary wall;
+  unfinished chains no longer need a separate recovery mode. Finishing,
+  deleting and merging rooms consistently updates geometry, device bindings
+  and vacuum maps through Undo/Redo
+  ([#478](https://github.com/Matysh/houseplan-card/issues/478),
+  [#477](https://github.com/Matysh/houseplan-card/issues/477)).
+- Zigbee topology lines and labels stay above room names and unrelated
+  markers, while connected devices remain above the lines. Grey dashes have a
+  contrast outline, and colour pickers now have an explicit OK button
+  ([#464](https://github.com/Matysh/houseplan-card/issues/464),
+  [#476](https://github.com/Matysh/houseplan-card/issues/476)).
+- Recovery from storage errors during import, optimisation and space removal
+  is more reliable, and deleted robot routes no longer return after restart.
+  Attachment quota accounting is corrected, with stronger SVG validation and
+  support-package privacy checks
+  ([#491](https://github.com/Matysh/houseplan-card/issues/491),
+  [#495](https://github.com/Matysh/houseplan-card/issues/495),
+  [#498](https://github.com/Matysh/houseplan-card/issues/498)).
+- A stable set of UI hooks is documented for external end-to-end tests and
+  card-mod rules, without depending on private CSS classes
+  ([#489](https://github.com/Matysh/houseplan-card/issues/489)).
+
 ## v1.73.0-beta.8 — 2026-09-09
 
 - Attachment uploads no longer count their own in-flight file twice against
