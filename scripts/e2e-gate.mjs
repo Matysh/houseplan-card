@@ -25,7 +25,7 @@ export const E2E_REPO = 'Matysh/houseplan-e2e';
 export const E2E_WORKFLOW = 'e2e.yml';
 /** Допуск на расхождение часов раннера и GitHub при отборе «свежих» прогонов. */
 export const CLOCK_SKEW_MS = 60_000;
-export const TOKEN_HINT = 'нужен секрет E2E_DISPATCH_TOKEN с правом Actions: write на houseplan-e2e';
+export const TOKEN_HINT = 'нужен секрет E2E_DISPATCH_TOKEN: Actions: write на houseplan-e2e И чтение релизов houseplan-card (fine-grained PAT — оба репозитория в списке)';
 export const CARD_REPO = 'Matysh/houseplan-card';
 
 /**
@@ -74,6 +74,9 @@ export function classifyRun(jobs, tag) {
 export async function e2eGate({ tag, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS }) {
   const started = ops.now();
   try {
+    // Список релизов читается ДО dispatch и обязан падать громко (ревью r3 M1):
+    // fine-grained токен «только houseplan-e2e» не видит houseplan-card, и
+    // тихий пустой список дал бы upgrade_from=stable — тег сам на себя.
     await ops.dispatch(tag, previousStable(await ops.releases(), tag));
   } catch (error) {
     const message = String(error?.message || error);
@@ -116,7 +119,11 @@ export function realOps({ repo = E2E_REPO, workflow = E2E_WORKFLOW, cardRepo = C
   const fields = 'databaseId,status,conclusion,url,createdAt';
   const parse = (r) => (r.status === 0 && r.stdout ? JSON.parse(r.stdout) : []);
   return {
-    releases: async () => parse(exec('gh', ['release', 'list', '--repo', cardRepo, '--json', 'tagName,isDraft,isPrerelease', '--limit', '30'])),
+    releases: async () => {
+      const r = exec('gh', ['release', 'list', '--repo', cardRepo, '--json', 'tagName,isDraft,isPrerelease', '--limit', '30']);
+      if (r.status !== 0) throw new Error(`gh release list ${cardRepo}: ${(r.stderr || r.stdout || '').trim()}`);
+      return r.stdout ? JSON.parse(r.stdout) : [];
+    },
     dispatch: async (tag, upgradeFrom = 'stable') => {
       const r = exec('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', 'main',
         '-f', `houseplan_ref=${tag}`, '-f', `upgrade_from=${upgradeFrom}`, '-f', 'ha_version=stable']);

@@ -114,6 +114,18 @@ test('#514 AC1: a dispatch refused by the token is an error that names the missi
   assert.equal(fake.calls(), 0, 'no polling after a failed dispatch');
 });
 
+test('#514 r3 M1: a token that cannot read houseplan-card releases fails loudly with the token hint, never dispatches with upgrade_from=stable', async () => {
+  const fake = fakeOps({ snapshots: [[]] });
+  fake.ops.releases = async () => { throw new Error('gh release list Matysh/houseplan-card: HTTP 404: Not Found'); };
+  const outcome = await e2eGate({ tag: TAG, ops: fake.ops, pollMs: 1000 });
+  assert.equal(outcome.result, 'error');
+  assert.deepEqual(fake.dispatched, [], 'no dispatch on a broken release list');
+  assert.ok(outcome.note.includes('gh release list'), outcome.note);
+  // realOps: a failing gh is an exception, not an empty list
+  const exec = () => ({ status: 1, stdout: '', stderr: 'HTTP 403: Resource not accessible by personal access token' });
+  await assert.rejects(() => realOps({ exec }).releases(), /403/);
+});
+
 test('#514: the upgrade suite starts from the previous stable, never from the tag under test', () => {
   const releases = [
     { tagName: 'v1.74.0', isDraft: false, isPrerelease: false },
