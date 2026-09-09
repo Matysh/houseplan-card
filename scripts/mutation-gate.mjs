@@ -8110,6 +8110,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'version-seam-ignores-override',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/card-version.test.mjs',
+    because: 'the harness pins the displayed version through the seam; a seam that always returns '
+      + 'the literal puts every beta bump back into the golden frames (#512 AC1)',
+    patches: [{
+      file: 'src/card-version.ts',
+      find: "  return typeof override === 'string' && override.length > 0 ? override : fallback;",
+      replace: '  return fallback; // mutant: seam ignored',
+    }],
+  },
+  {
+    id: 'docs-identical-accepts-any-frame',
+    guard: 'node --test test/png-identical.test.mjs',
+    because: 'the identical-pixels acceptance must count every differing pixel, alpha included; a '
+      + 'comparator that reports zero would accept a changed frame without review (#512 AC3)',
+    patches: [{
+      file: 'scripts/png-identical.mjs',
+      find: "        || a.data[at + 2] !== b.data[at + 2] || a.data[at + 3] !== b.data[at + 3]) differing += 1;",
+      replace: "        || a.data[at + 2] !== b.data[at + 2]) differing += 0; // mutant: nothing differs",
+    }],
+  },
+  {
     id: 'summary-runtime-attaches-after-first-render',
     guard: 'node demo/smoke_summary_warm_attach.mjs',
     because: 'a warm summary chunk must hand the new instance its runtime synchronously in '

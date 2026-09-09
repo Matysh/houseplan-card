@@ -166,7 +166,17 @@ npm run benchmark:isometric-stage3-dense -- --samples=7 --warmups=1 --output=art
 npm run golden:capture
 npm run golden:verify
 npm run golden:accept -- --reviewed
+
+# Docs screenshots whose pixels did not change (a version bump, a refactor):
+# re-capture locally, compare decoded RGBA against the committed frames and,
+# if every frame is identical, refresh only the manifest fingerprints (#512).
+npm run docs:accept -- --identical
 ```
+
+Golden frames never show the real card version: the harness sets the test-only
+seam `window.__HP_VERSION_OVERRIDE__ = '0.0.0-golden'` before the card is
+created, so a version bump alone changes no baseline (#512, see
+`demo/golden/README.md`).
 
 The config audit performs no network requests and does not rewrite the input.
 Its registry and lifecycle rules are documented in `CONFIG-COMPATIBILITY.md`.

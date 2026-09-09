@@ -409,6 +409,7 @@ import {
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 import { SummaryRuntimeSlot, summaryRuntimeLoader } from './summary-runtime-loader';
+import { displayVersion } from './card-version';
 
 const CARD_VERSION = '1.73.0';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
@@ -2127,7 +2128,7 @@ export class HouseplanCard extends LitElement {
   private readonly _versionRecovery = createCardVersionRecovery(this as unknown as VersionRecoveryCardPort);
   private _syncVersionRecovery(): void {
     this._versionRecovery.update({
-      frontendVersion: CARD_VERSION,
+      frontendVersion: displayVersion(CARD_VERSION),
       backendVersion: this._haIntegrationVersion,
       kiosk: this._config?.kiosk === true,
       reducedMotion: this._reducedMotion,
@@ -8123,7 +8124,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._physicalRotateUp(ev);
   }
 
-
   // ================= room resize tool (docs/RESIZE.md) =================
 
   /** Rooms of the current space as render-unit polygons (legacy rects converted). */
@@ -10729,7 +10729,7 @@ export class HouseplanCard extends LitElement {
       layout: this._layout,
       imperial: this._imperial,
       cardTitle: this._config?.title || this._t('card.title'),
-      version: CARD_VERSION,
+      version: displayVersion(CARD_VERSION),
       hass: this.hass,
       backdropUrl: space.bg ? this._display(space.bg.href) : '',
       decorAssets,

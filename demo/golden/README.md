@@ -43,6 +43,17 @@ radial spokes visible instead of hiding them under a translucent room fill.
   CI turns green"; the second stops an empty or clipped frame from becoming the
   contract unseen (#350).
 
+## Displayed version (#512)
+
+Frames never show the real `CARD_VERSION`. The harness sets the test seam
+`window.__HP_VERSION_OVERRIDE__ = '0.0.0-golden'` before any card is created and
+feeds the same constant wherever it plays the backend (`integration_version`,
+support facts), so the about dialog, the version-recovery banner and the support
+and backup previews print `0.0.0-golden` in every baseline. A beta bump therefore
+changes no golden frame; the version-mismatch scenarios keep their own
+`0.0.0-golden-backend` and still exercise the frontend≠backend relation. The
+product never sets the seam (`src/card-version.ts`).
+
 ## Workflow
 
 Build and copy the exact current source first:

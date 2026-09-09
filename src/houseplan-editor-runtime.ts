@@ -7,6 +7,7 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
+import { displayVersion } from './card-version';
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
 import { calibrationTarget, planVacuumFit } from './vacuum-route-edit';
@@ -8976,7 +8977,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
     try {
       const response: unknown = await this.host.hass.callWS({
         type: 'houseplan/support/preview',
-        card_version: CARD_VERSION,
+        card_version: displayVersion(CARD_VERSION),
         ...this._supportFacts(),
         draft_id: draftId,
       });
@@ -9194,7 +9195,7 @@ public _renderSupportDialog(): TemplateResult {
         <div class="body supportbody">
           <section class="supportsection" aria-labelledby="support-about-heading">
             <h3 id="support-about-heading">${st('support.about_group')}</h3>
-            <div class="aboutver">${this.host._t('gs.about_version', { v: CARD_VERSION })}</div>
+            <div class="aboutver">${this.host._t('gs.about_version', { v: displayVersion(CARD_VERSION) })}</div>
             <div class="supportlinks">
               <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener noreferrer">
                 <ha-icon icon="mdi:github"></ha-icon>${this.host._t('gs.about_github')}</a>
@@ -9339,7 +9340,7 @@ public _preflightDiagnostics(
     return {
       kind: 'houseplan-optimize-preflight',
       origin: 'runtime',
-      cardVersion: CARD_VERSION,
+      cardVersion: displayVersion(CARD_VERSION),
       checkedAt: new Date().toISOString(),
       preflightFingerprint: preflight.fingerprint,
       failures: preflight.failures.map((failure) => ({
@@ -9367,7 +9368,7 @@ public _reportPreflightFailure(
 public _preflightVersionsDiffer(): boolean {
     const integration = this.host._haIntegrationVersion;
     return typeof integration === 'string' && integration.length > 0
-      && integration !== CARD_VERSION;
+      && integration !== displayVersion(CARD_VERSION);
   }
 
 public async _copyPreflightDiagnostics(): Promise<void> {
@@ -9612,7 +9613,7 @@ public async _runBackupExport(): Promise<void> {
         kind: d.kind,
         space_id: d.kind === 'space' ? this.host._space : undefined,
         ...(d.kind === 'space' && d.planOnly ? { plan_only: true } : {}),
-        card_version: CARD_VERSION,
+        card_version: displayVersion(CARD_VERSION),
       });
       const blob = new Blob([JSON.stringify(response.document, null, 2) + '\n'], {
         type: 'application/json;charset=utf-8',

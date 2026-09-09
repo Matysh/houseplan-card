@@ -4,6 +4,7 @@
  *
  *   npm run docs:accept -- --reviewed --from=artifacts/docs
  *   npm run docs:accept -- --reviewed --from=… --expect-change=device-editor
+ *   npm run docs:accept -- --identical        # #512: кадры те же попиксельно → только отпечаток
  *
  * Съёмка в другом окружении даёт байтово разный PNG при том же содержимом
  * кадра: сглаживание и хинтинг зависят от шрифтового стека, а не только от
@@ -24,7 +25,11 @@
  * приёмка не должна быть способом протащить картинки мимо чужих глаз.
  */
 import { createHash } from 'node:crypto';
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
+import { compareFramePairs, compareInPage } from './png-identical.mjs';
+import { portableCommand } from './spawn-portable.mjs';
 import { assertCaptureEnvironment, captureEnvironment } from './capture-environment.mjs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -118,7 +123,125 @@ const list = (argv, name) => argv
   .map((arg) => arg.slice(name.length + 3))
   .filter(Boolean);
 
-function main(argv) {
+/**
+ * Манифест после приёмки «кадры те же попиксельно» (#512): от кандидата —
+ * только отпечаток исходников (и его копии в сценариях), всё остальное — от
+ * закоммиченного: байты кадров, их sha, браузер и упаковщик съёмки, след
+ * приёмки. Это тот же fingerprint-only путь, что у `--reviewed` с
+ * совпавшими байтами, только доказательство — декодированные пиксели.
+ */
+export function identicalDocsManifest({ committed, candidate }) {
+  const scenarios = Object.fromEntries(Object.entries(committed.scenarios).map(([id, entry]) => [
+    id, { ...entry, sourceSha256: candidate.sourceFingerprint },
+  ]));
+  return {
+    ...committed,
+    sourceFingerprint: candidate.sourceFingerprint,
+    // Сторож capture.mjs (check-docs) тоже берётся из кандидата: правка
+    // съёмочного скрипта без визуальных изменений принимается здесь же, а не
+    // красит docs до пересъёмки через артефакт (ревью ТЗ r1, H1).
+    captureScriptSha256: candidate.captureScriptSha256,
+    scenarios,
+    acceptance: { ...(committed.acceptance || {}), lastWriteWasFingerprintOnly: true, identicalPixels: true },
+  };
+}
+
+/**
+ * Решение по режиму `--identical`: все кадры попиксельно равны → принять
+ * только отпечаток; иначе — отказ с перечнем.
+ * @param {Array<{id:string, identical:boolean, differing:number, sizeMismatch:boolean}>} results
+ */
+export function identicalDecision(results) {
+  const differing = results.filter((result) => !result.identical);
+  if (!differing.length) return { accept: true, refusal: '' };
+  const lines = differing.map((result) => `${result.id}: ${result.sizeMismatch ? 'другой размер' : `${result.differing} px`}`);
+  return { accept: false, refusal: `кадры отличаются — приёмка только через CI-артефакт и --reviewed:\n${lines.join('\n')}` };
+}
+
+/**
+ * `--identical`: снять кадры локально во временный каталог (сама съёмка пишет
+ * в docs/images — закоммиченные кадры сохраняются заранее и возвращаются на
+ * место в любом исходе), декодировать оба набора в Chromium и сравнить
+ * пиксели. Съёмка и браузер инъектируются ради тестов.
+ */
+export async function acceptIdentical({
+  root = ROOT,
+  capture = () => {
+    const npm = portableCommand('npm');
+    const build = spawnSync(npm.cmd, ['run', '-s', 'build'], { cwd: root, encoding: 'utf8', stdio: 'inherit', shell: npm.shell });
+    if (build.status !== 0) throw new Error('сборка бандла перед съёмкой не удалась');
+    const shot = spawnSync(process.execPath, ['demo/docs/capture.mjs'], { cwd: root, encoding: 'utf8', stdio: 'inherit' });
+    if (shot.status !== 0) throw new Error('локальная съёмка не удалась');
+  },
+  compare = async (pairs) => {
+    const { chromium } = await import('playwright');
+    const browser = await chromium.launch({ args: ['--no-sandbox'] });
+    try {
+      const page = await browser.newPage();
+      return await compareFramePairs(pairs, (committed, candidate) => compareInPage(page, committed, candidate));
+    } finally {
+      await browser.close();
+    }
+  },
+  log = (line) => console.log(line),
+} = {}) {
+  const images = resolve(root, 'docs/images');
+  const manifestPath = resolve(images, 'screenshots.json');
+  const committedManifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  const backup = mkdtempSync(resolve(tmpdir(), 'hp-docs-identical-'));
+  const committedBytes = new Map();
+  for (const scenario of DOC_SCREENSHOTS) {
+    const file = committedManifest.scenarios[scenario.id]?.file;
+    if (!file) throw new Error(`${scenario.id}: в закоммиченном манифесте нет файла`);
+    committedBytes.set(scenario.id, readFileSync(resolve(images, file)));
+    copyFileSync(resolve(images, file), resolve(backup, file));
+  }
+  copyFileSync(manifestPath, resolve(backup, 'screenshots.json'));
+  const restoreFrames = () => {
+    for (const scenario of DOC_SCREENSHOTS) {
+      const file = committedManifest.scenarios[scenario.id].file;
+      copyFileSync(resolve(backup, file), resolve(images, file));
+    }
+  };
+  try {
+    capture();
+    const candidateManifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    const pairs = DOC_SCREENSHOTS.map((scenario) => ({
+      id: scenario.id,
+      committed: committedBytes.get(scenario.id),
+      candidate: readFileSync(resolve(images, candidateManifest.scenarios[scenario.id].file)),
+    }));
+    const results = await compare(pairs);
+    const decision = identicalDecision(results);
+    // Кадры на диске — всегда закоммиченные: приёмка касается только манифеста.
+    restoreFrames();
+    if (!decision.accept) {
+      copyFileSync(resolve(backup, 'screenshots.json'), manifestPath);
+      log(`отказ: ${decision.refusal}`);
+      return 1;
+    }
+    const accepted = identicalDocsManifest({ committed: committedManifest, candidate: candidateManifest });
+    writeFileSync(manifestPath, `${JSON.stringify(accepted, null, 2)}\n`, 'utf8');
+    log(`Все ${results.length} кадров попиксельно совпали с закоммиченными: принят только отпечаток исходников`
+      + ` (${candidateManifest.sourceFingerprint.slice(0, 8)}). Коммит — за вами.`);
+    return 0;
+  } catch (error) {
+    restoreFrames();
+    copyFileSync(resolve(backup, 'screenshots.json'), manifestPath);
+    throw error;
+  } finally {
+    rmSync(backup, { recursive: true, force: true });
+  }
+}
+
+async function main(argv) {
+  if (argv.includes('--identical')) {
+    if (argv.some((arg) => arg.startsWith('--from=') || arg === '--reviewed')) {
+      console.error('отказ: --identical не сочетается с --from/--reviewed — это локальная проверка, а не приёмка артефакта');
+      return 2;
+    }
+    return acceptIdentical();
+  }
   // Среда приёмки (#455). Платформу съёмки манифест не несёт и не может:
   // добавить поле — значит править `demo/docs/capture.mjs`, чей sha записан в
   // индексе скриншотов, то есть платить пересъёмкой десяти картинок за
@@ -205,10 +328,8 @@ function main(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  try {
-    process.exit(main(process.argv.slice(2)));
-  } catch (error) {
+  main(process.argv.slice(2)).then((code) => process.exit(code), (error) => {
     console.error(`отказ: ${error.message}`);
     process.exit(1);
-  }
+  });
 }

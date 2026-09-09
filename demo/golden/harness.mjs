@@ -32,9 +32,13 @@ const spanOverDoorFixture = JSON.parse(readFileSync(
 const wallUnionIsolationFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/278-wall-union-isolation.json', import.meta.url), 'utf8',
 ));
-const cardVersion = JSON.parse(readFileSync(
-  new URL('../../package.json', import.meta.url), 'utf8',
-)).version;
+// The version the frames show (#512). The card's own CARD_VERSION changes with
+// every beta and used to invalidate every frame that prints it (about, the
+// version-recovery banner, support and backup previews) although nothing but
+// the digits changed. The harness pins the displayed version through the
+// `__HP_VERSION_OVERRIDE__` seam and feeds the same constant wherever it plays
+// the backend, so a version bump is invisible to golden by construction.
+const cardVersion = '0.0.0-golden';
 const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
 const fixtureFor = (scenario) => scenario.fixture === 'large'
@@ -857,6 +861,8 @@ export async function prepareGoldenScenario(page, scenario) {
   const fixture = prepareGoldenFixture(scenario);
 
   const result = await page.evaluate(async ({ fixture, scenario, cardVersion, attemptKey }) => {
+    // #512: the displayed version is pinned before any card is created.
+    window.__HP_VERSION_OVERRIDE__ = cardVersion;
     const wait = (ms) => new Promise((done) => setTimeout(done, ms));
     const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
     const until = async (predicate, timeout = 10000) => {

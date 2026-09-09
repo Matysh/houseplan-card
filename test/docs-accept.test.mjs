@@ -3,7 +3,10 @@ import test from 'node:test';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import { acceptedDocsManifest, verifyDocsCandidate } from '../scripts/docs-accept.mjs';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { acceptIdentical, acceptedDocsManifest, identicalDecision, identicalDocsManifest, verifyDocsCandidate } from '../scripts/docs-accept.mjs';
 import { DOC_SCREENSHOT_VERSION, DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
 
 // Приёмка — единственное место, где картинки попадают в репозиторий, поэтому
@@ -206,4 +209,73 @@ test('#455 принятый манифест несёт среду приёмк�
   assert.equal(accepted.acceptedOn, 'linux');
   const withoutPlatform = acceptedDocsManifest({ manifest: candidate(), decision });
   assert.ok(!('acceptedOn' in withoutPlatform), 'без платформы поля быть не должно');
+});
+
+// ---------- #512: --identical ----------
+
+const identicalRoot = (frames) => {
+  const root = mkdtempSync(join(tmpdir(), 'hp-identical-'));
+  mkdirSync(join(root, 'docs', 'images'), { recursive: true });
+  const scenarios = {};
+  for (const scenario of DOC_SCREENSHOTS) {
+    const file = `${scenario.id}.png`;
+    writeFileSync(join(root, 'docs', 'images', file), Buffer.from(`committed:${scenario.id}`));
+    scenarios[scenario.id] = { file, sourceSha256: 'old-fp', imageSha256: `sha-${scenario.id}` };
+  }
+  const manifest = {
+    version: DOC_SCREENSHOT_VERSION, fixture: 'synthetic-only', chromium: '151', oxipng: 'oxipng 10',
+    sourceFingerprint: 'old-fp', captureScriptSha256: 'cap', scenarios,
+    acceptance: { declared: ['view-desktop'], witnesses: 10, floor: 5 },
+  };
+  writeFileSync(join(root, 'docs', 'images', 'screenshots.json'), JSON.stringify(manifest));
+  // «съёмка»: переписывает кадры и манифест с новым отпечатком
+  const capture = () => {
+    for (const scenario of DOC_SCREENSHOTS) {
+      writeFileSync(join(root, 'docs', 'images', `${scenario.id}.png`), Buffer.from(`candidate:${scenario.id}`));
+    }
+    const next = { ...manifest, sourceFingerprint: 'new-fp', chromium: '152', captureScriptSha256: 'cap-next',
+      scenarios: Object.fromEntries(Object.entries(scenarios).map(([id, e]) => [id, { ...e, sourceSha256: 'new-fp', imageSha256: 'other' }])) };
+    writeFileSync(join(root, 'docs', 'images', 'screenshots.json'), JSON.stringify(next));
+  };
+  const compare = async (pairs) => pairs.map((pair) => ({ id: pair.id, ...(frames[pair.id] || { identical: true, differing: 0, sizeMismatch: false }) }));
+  return { root, manifest, capture, compare };
+};
+
+test('#512 AC3: identical frames accept only the source fingerprint; bytes and provenance stay committed', async () => {
+  const { root, manifest, capture, compare } = identicalRoot({});
+  const log = [];
+  const code = await acceptIdentical({ root, capture, compare, log: (line) => log.push(line) });
+  assert.equal(code, 0);
+  const written = JSON.parse(readFileSync(join(root, 'docs', 'images', 'screenshots.json'), 'utf8'));
+  assert.equal(written.sourceFingerprint, 'new-fp');
+  assert.equal(written.chromium, '151', 'the browser of the committed frames stays');
+  assert.equal(written.captureScriptSha256, 'cap-next', 'the capture-script guard follows the candidate (r1 H1)');
+  for (const scenario of DOC_SCREENSHOTS) {
+    assert.equal(written.scenarios[scenario.id].sourceSha256, 'new-fp');
+    assert.equal(written.scenarios[scenario.id].imageSha256, `sha-${scenario.id}`, 'frame sha untouched');
+    assert.equal(readFileSync(join(root, 'docs', 'images', `${scenario.id}.png`), 'utf8'), `committed:${scenario.id}`, 'frame bytes restored');
+  }
+  assert.deepEqual(written.acceptance, { ...manifest.acceptance, lastWriteWasFingerprintOnly: true, identicalPixels: true });
+  assert.match(log[0], /попиксельно совпали/);
+});
+
+test('#512 AC3: one differing pixel refuses, names the frame and leaves everything committed as it was', async () => {
+  const { root, manifest, capture, compare } = identicalRoot({ 'view-desktop': { identical: false, differing: 3, sizeMismatch: false } });
+  const log = [];
+  const code = await acceptIdentical({ root, capture, compare, log: (line) => log.push(line) });
+  assert.equal(code, 1);
+  assert.match(log[0], /view-desktop: 3 px/);
+  assert.deepEqual(JSON.parse(readFileSync(join(root, 'docs', 'images', 'screenshots.json'), 'utf8')), manifest);
+  assert.equal(readFileSync(join(root, 'docs', 'images', 'view-desktop.png'), 'utf8'), 'committed:view-desktop');
+});
+
+test('#512: identicalDecision and identicalDocsManifest are pure', () => {
+  assert.deepEqual(identicalDecision([{ id: 'a', identical: true, differing: 0, sizeMismatch: false }]), { accept: true, refusal: '' });
+  assert.match(identicalDecision([{ id: 'a', identical: false, differing: 0, sizeMismatch: true }]).refusal, /a: другой размер/);
+  const out = identicalDocsManifest({ committed: { sourceFingerprint: 'o', scenarios: { x: { file: 'x.png', sourceSha256: 'o', imageSha256: 'i' } } }, candidate: { sourceFingerprint: 'n', captureScriptSha256: 'c', chromium: 'other' } });
+  assert.equal(out.sourceFingerprint, 'n');
+  assert.equal(out.captureScriptSha256, 'c');
+  assert.equal(out.scenarios.x.sourceSha256, 'n');
+  assert.equal(out.scenarios.x.imageSha256, 'i');
+  assert.equal(out.chromium, undefined);
 });

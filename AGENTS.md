@@ -421,7 +421,14 @@ simply the only one we have). The deliberate override is
 `HP_ALLOW_FOREIGN_CAPTURE="reason"`; the reason travels into the output and the
 manifest. Baselines are still accepted only via
 `npm run golden:accept -- --reviewed` on a complete artefact, and the accepted
-index records the platform next to the Chromium build.
+index records the platform next to the Chromium build. The one local
+shortcut is `npm run docs:accept -- --identical` (#512): it re-captures on this
+machine, compares decoded pixels with the committed frames and, only when every
+frame is identical, refreshes the manifest fingerprints — frames that differ go
+through the artefact as before. The displayed card version reaches the DOM
+through `displayVersion()` (`src/card-version.ts`); the global
+`__HP_VERSION_OVERRIDE__` behind it is for harnesses only and the product never
+sets it.
 
 **Backend.** A full Home Assistant harness cannot run on native Windows at all:
 Home Assistant imports the Unix-only `fcntl` module. Its canon is Linux CI or WSL.
