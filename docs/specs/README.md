@@ -28,6 +28,7 @@
 
 | Issue | ТЗ |
 |---|---|
+| [#498](https://github.com/Matysh/houseplan-card/issues/498) Backend hardening: точная квота upload, ключи палитры в support-пакете, предел цепочки ссылок SVG | [498-backend-hardening-quota-palette-svg-refs.md](498-backend-hardening-quota-palette-svg-refs.md) |
 | [#495](https://github.com/Matysh/houseplan-card/issues/495) Результат Import согласован с commit; удаление маршрутов робота доходит до Store | [495-import-commit-and-route-runs-durability.md](495-import-commit-and-route-runs-durability.md) |
 | [#492](https://github.com/Matysh/houseplan-card/issues/492) Точный кандидат интеграции и полный manifest входов selection/reuse | [492-exact-candidate-and-input-manifest.md](492-exact-candidate-and-input-manifest.md) |
 | [#491](https://github.com/Matysh/houseplan-card/issues/491) Незавершённая пара Optimize/Undo переживает следующую запись | [491-optimize-undo-pair-recovery.md](491-optimize-undo-pair-recovery.md) |
