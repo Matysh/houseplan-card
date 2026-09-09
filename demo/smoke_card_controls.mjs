@@ -19,6 +19,10 @@ const res = await page.evaluate(async () => {
   const footer = sr().querySelector('.infofooter');
   const footerBox = footer?.getBoundingClientRect();
   const footerButtons = [...(footer?.querySelectorAll('button') || [])];
+  // #505 release gate: this minimum must not depend on loading summary-panel CSS.
+  // Its design rewrite once shrank unrelated dialog actions from 44px to 30px.
+  out.footerActionTapTargets = footerButtons.length >= 2
+    && footerButtons.every((button) => button.getBoundingClientRect().height >= 44);
   out.footerActionsContained = !!footerBox && footerButtons.length >= 2 && footerButtons.every((button) => {
     const rect = button.getBoundingClientRect();
     return rect.left >= footerBox.left - 1 && rect.right <= footerBox.right + 1;

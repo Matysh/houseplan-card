@@ -1514,6 +1514,10 @@ export const dialogsStyles = css`
       padding: var(--sp-5) var(--sp-6);
       border-top: 1px solid var(--hp-line);
     }
+    /* Shared footer target size, independent of lazy summary-panel styles (#505). */
+    hp-dialog > .row[slot='footer'] button {
+      min-height: 44px;
+    }
     /* Stable destructive/commit footer contract.  A flex spacer cannot react
        when translated labels no longer fit: justify-content then overflows
        the destructive button through the left inset.  Two real groups wrap

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.73.0-beta.8 — 2026-09-09
+
 - Attachment uploads no longer count their own in-flight file twice against
   the storage quota, so the last file that still fits is accepted instead of
   being refused at the boundary. A decor SVG whose local references chain
@@ -20,7 +22,8 @@
 - The summary panel, its header icons and wide settings dialog now follow the
   designer's layout. Hiding the panel is animated too; unnecessary size controls
   are removed from its settings, and the mobile switch is disabled when the panel
-  is hidden on the card ([#505](https://github.com/Matysh/houseplan-card/issues/505)).
+  is hidden on the card. Other dialogs retain their full-size action buttons
+  independently of the panel ([#505](https://github.com/Matysh/houseplan-card/issues/505)).
 
 ## v1.73.0-beta.7 — 2026-09-09
 
