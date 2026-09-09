@@ -8087,6 +8087,104 @@ const MUTANT_DEFINITIONS = [
         + '                    # The store is the durable authority (#335): a drop that\n',
     }],
   },
+  {
+    id: 'quota-counts-the-staged-upload-twice',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_498_upload_accepts_the_last_bytes '
+      + 'tests_backend/test_ha_upload.py',
+    because: 'the staged .upload-* already lives under files_root; charging it as stored usage '
+      + 'and as incoming refuses the last file that still fits (#498 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/http_api.py',
+      find: '                        MAX_FILES_BYTES, MAX_FILES_COUNT, exclude=tmp_path,\n',
+      replace: '                        MAX_FILES_BYTES, MAX_FILES_COUNT,\n',
+    }],
+  },
+  {
+    id: 'quota-ignores-foreign-staged-uploads',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_498_concurrent_uploads_still_count_each_other '
+      + 'tests_backend/test_ha_upload.py',
+    because: 'only the caller\'s own staged file is exempt: skipping every .upload-* would let two '
+      + 'concurrent uploads pass a quota neither of them fits alone (#498 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/plans.py',
+      find: '        if exclude is not None and item == exclude:\n',
+      replace: '        if item.name.startswith(TMP_PREFIX):  # mutant: every staged file is invisible\n',
+    }],
+  },
+  {
+    id: 'support-palette-copies-any-key',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'rich_plan_projection_preserves_safe_structure '
+      + 'tests_backend/test_support_package.py',
+    because: 'the package must carry the fill palette only under the slot names the card defines; '
+      + 'a private string used as a key must not leave the installation (#498 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/support_package.py',
+      find: '            for key in SUPPORT_FILL_COLOR_KEYS\n',
+      replace: '            for key in fill_colors\n',
+    }],
+  },
+  {
+    id: 'svg-reference-chain-unbounded',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_498_flat_reference_chain_is_bounded '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'a reference chain must stop at MAX_SVG_REF_DEPTH with too_large; an unbounded walk '
+      + 'accepts what rendering will choke on (#498 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '                if chain > MAX_SVG_REF_DEPTH:\n',
+      replace: '                if False:  # mutant: no chain limit\n',
+    }, {
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '            if len(stack) > MAX_SVG_REF_DEPTH:\n',
+      replace: '            if False:  # mutant: no stack limit\n',
+    }],
+  },
+  {
+    id: 'svg-reference-depth-per-start-not-per-chain',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_498_flat_reference_chain_is_bounded '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'the limit is the longest chain through a node; measuring only the stack of the '
+      + 'traversal that reached it first lets a hostile id order cut a long chain into short '
+      + 'segments (#498 spec review r1)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '                stack[-1] = (node_id, children, max(chain, longest[ref] + 1))\n',
+      replace: '                stack[-1] = (node_id, children, chain)  # mutant: forget the memoised chain\n',
+    }],
+  },
+  {
+    id: 'svg-reference-walk-recursive-again',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_498_flat_reference_chain_is_bounded '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'the walk must be iterative: a recursive DFS over a flat 2500-link chain dies with '
+      + 'RecursionError, which is not a DecorAssetError and reaches the client as a 500 (#498 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '    _walk_reference_graph(ids, ref_graph)\n',
+      replace: '    visiting: set[str] = set()\n'
+        + '    visited: set[str] = set()\n'
+        + '\n'
+        + '    def _visit(node_id: str) -> None:  # mutant: the old recursive walk\n'
+        + '        if node_id in visiting:\n'
+        + '            raise DecorAssetError("invalid_image", "The SVG contains a cyclic local reference")\n'
+        + '        if node_id in visited:\n'
+        + '            return\n'
+        + '        visiting.add(node_id)\n'
+        + '        for ref in ref_graph.get(node_id, ()):\n'
+        + '            _visit(ref)\n'
+        + '        visiting.remove(node_id)\n'
+        + '        visited.add(node_id)\n'
+        + '\n'
+        + '    for node_id in ids:\n'
+        + '        _visit(node_id)\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

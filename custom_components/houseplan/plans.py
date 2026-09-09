@@ -198,12 +198,20 @@ class QuotaError(Exception):
         self.detail = detail
 
 
-def dir_usage(path: Path) -> tuple[int, int]:
-    """(bytes, files) below `path`, ignoring what we cannot read."""
+def dir_usage(path: Path, *, exclude: Path | None = None) -> tuple[int, int]:
+    """(bytes, files) below `path`, ignoring what we cannot read.
+
+    `exclude` is the caller's own staged upload: it already lives under `path`
+    and its size arrives separately as `incoming`, so counting it here would
+    charge the same bytes and the same file twice (#498). Any *other* staged
+    file stays in the count — it is about to become an attachment.
+    """
     total = count = 0
     if not path.is_dir():
         return 0, 0
     for item in path.rglob("*"):
+        if exclude is not None and item == exclude:
+            continue
         try:
             if item.is_file():
                 total += item.stat().st_size
@@ -213,8 +221,10 @@ def dir_usage(path: Path) -> tuple[int, int]:
     return total, count
 
 
-def check_quota(path: Path, incoming: int, max_bytes: int, max_files: int) -> None:
-    """Raise QuotaError unless `incoming` more bytes fit.
+def check_quota(
+    path: Path, incoming: int, max_bytes: int, max_files: int, *, exclude: Path | None = None,
+) -> None:
+    """Raise QuotaError unless `incoming` more bytes fit (`exclude`: see dir_usage).
 
     Deliberately not an age rule. Files are never removed for getting old — that
     cost real plans twice — so the limit sits where a decision is being made
@@ -222,7 +232,7 @@ def check_quota(path: Path, incoming: int, max_bytes: int, max_files: int) -> No
     """
     import shutil
 
-    used, count = dir_usage(path)
+    used, count = dir_usage(path, exclude=exclude)
     if count + 1 > max_files:
         raise QuotaError("too_many_files", f"{count} files already stored, the limit is {max_files}")
     if used + incoming > max_bytes:

@@ -445,9 +445,13 @@ class HouseplanUploadView(HomeAssistantView):
 
             tmp_path = temps[0]
             try:
+                # The staged file already sits under files_root: hand it to
+                # the quota as `incoming` only, not as stored usage too (#498).
                 await hass.async_add_executor_job(
-                    check_quota, files_root, tmp_path.stat().st_size,
-                    MAX_FILES_BYTES, MAX_FILES_COUNT,
+                    partial(
+                        check_quota, files_root, tmp_path.stat().st_size,
+                        MAX_FILES_BYTES, MAX_FILES_COUNT, exclude=tmp_path,
+                    ),
                 )
             except QuotaError as err:
                 _LOGGER.warning("House Plan upload refused: %s", err.detail)

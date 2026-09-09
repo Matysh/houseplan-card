@@ -15,8 +15,9 @@ off by default. If selected, the integration sends the exact canonical bytes
 shown in the preview together with their size and SHA-256.
 
 The package is constructed field by field. It contains plan geometry and
-dimensions, safe display settings, structural counts, validation/repair
-families and bounded browser/registry capability enums. Space, room, wall,
+dimensions, safe display settings (the fill palette only by the eleven slot
+names the card defines; any other key is dropped), structural counts,
+validation/repair families and bounded browser/registry capability enums. Space, room, wall,
 opening, marker and binding references receive random package-local names.
 
 It excludes original names and text, Home Assistant installation/location,

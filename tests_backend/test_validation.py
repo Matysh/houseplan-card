@@ -1522,6 +1522,36 @@ def test_check_quota_counts_the_whole_store_not_one_request(tmp_path):
     assert e.value.reason == "too_many_files"
 
 
+def test_issue_498_check_quota_excludes_the_staged_upload_itself(tmp_path):
+    """The staged `.upload-*` already sits under the root; its size arrives as `incoming`."""
+    d = tmp_path / "files"
+    (d / "m1").mkdir(parents=True)
+    (d / "m1" / "a.pdf").write_bytes(b"x" * 600)
+    staged = d / (plans.TMP_PREFIX + "own")
+    staged.write_bytes(b"y" * 300)
+
+    # Without the exclusion the same 300 bytes are charged twice: 600 + 300 + 300 > 1000.
+    with pytest.raises(plans.QuotaError) as doubled:
+        plans.check_quota(d, staged.stat().st_size, max_bytes=1000, max_files=10)
+    assert doubled.value.reason == "quota_exceeded"
+
+    plans.check_quota(d, staged.stat().st_size, max_bytes=1000, max_files=10, exclude=staged)   # 900 fits
+    plans.check_quota(d, staged.stat().st_size, max_bytes=900, max_files=2, exclude=staged)     # exact bytes and count
+    with pytest.raises(plans.QuotaError) as bytes_over:
+        plans.check_quota(d, staged.stat().st_size, max_bytes=899, max_files=2, exclude=staged)
+    assert bytes_over.value.reason == "quota_exceeded"
+    with pytest.raises(plans.QuotaError) as files_over:
+        plans.check_quota(d, staged.stat().st_size, max_bytes=1000, max_files=1, exclude=staged)
+    assert files_over.value.reason == "too_many_files"
+
+    # Somebody else's staged upload is about to become an attachment: it counts.
+    (d / (plans.TMP_PREFIX + "other")).write_bytes(b"z" * 200)
+    with pytest.raises(plans.QuotaError) as shared:
+        plans.check_quota(d, staged.stat().st_size, max_bytes=1000, max_files=10, exclude=staged)
+    assert shared.value.reason == "quota_exceeded"
+    assert plans.dir_usage(d, exclude=staged) == (800, 2)
+
+
 def test_dir_usage_walks_subfolders_and_ignores_the_unreadable(tmp_path):
     d = tmp_path / "files"
     (d / "m1").mkdir(parents=True)

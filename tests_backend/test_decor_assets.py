@@ -182,6 +182,50 @@ def test_svg_resource_limits_fail_closed() -> None:
             validate_asset(payload, "bounded.svg")
 
 
+def _reference_chain(length: int) -> bytes:
+    defs = "".join(
+        f'<linearGradient id="g{index}" href="#g{index + 1}"/>' for index in range(length - 1)
+    ) + f'<linearGradient id="g{length - 1}"/>'
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1">'
+        f"<defs>{defs}</defs>" '<rect width="1" height="1" fill="url(#g0)"/></svg>'
+    ).encode()
+
+
+def test_issue_498_flat_reference_chain_is_bounded_not_recursive() -> None:
+    """A chain within every #436 bound used to end in RecursionError; now it is a refusal."""
+    from custom_components.houseplan.decor_assets import MAX_SVG_REF_DEPTH
+
+    with pytest.raises(DecorAssetError, match="reference chain") as deep:
+        validate_asset(_reference_chain(2500), "chain.svg")
+    assert deep.value.code == "too_large"
+    with pytest.raises(DecorAssetError, match="reference chain"):
+        validate_asset(_reference_chain(MAX_SVG_REF_DEPTH + 1), "chain.svg")
+    assert validate_asset(_reference_chain(MAX_SVG_REF_DEPTH), "chain.svg").mime == "image/svg+xml"
+
+    # Hostile id order (spec review r1): sorted() starts at the tail of the chain,
+    # so a walk that measures stack height per start would see segments of one.
+    hostile = "".join(
+        f'<linearGradient id="n{index:04d}" href="#n{index - 1:04d}"/>'
+        for index in range(MAX_SVG_REF_DEPTH + 1, 1, -1)
+    ) + '<linearGradient id="n0001"/>'
+    reversed_chain = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1">'
+        f"<defs>{hostile}</defs>" f'<rect width="1" height="1" fill="url(#n{MAX_SVG_REF_DEPTH + 1:04d})"/></svg>'
+    ).encode()
+    with pytest.raises(DecorAssetError, match="reference chain"):
+        validate_asset(reversed_chain, "hostile.svg")
+
+    cycle = (
+        b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><defs>'
+        b'<linearGradient id="a" href="#b"/><linearGradient id="b" href="#a"/>'
+        b'</defs><rect width="1" height="1" fill="url(#a)"/></svg>'
+    )
+    with pytest.raises(DecorAssetError, match="cyclic") as looped:
+        validate_asset(cycle, "cycle.svg")
+    assert looped.value.code == "invalid_image"
+
+
 @pytest.mark.parametrize("attribute", [
     'opacity="NaN"', 'opacity="1.1"', 'stop-opacity="101%"', 'offset="-0.1"',
 ])

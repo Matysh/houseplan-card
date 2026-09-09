@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Attachment uploads no longer count their own in-flight file twice against
+  the storage quota, so the last file that still fits is accepted instead of
+  being refused at the boundary. A decor SVG whose local references chain
+  deeper than 64 hops is refused with a clear "too large" error instead of a
+  server error. Support packages carry the fill palette only under the eleven
+  slot names the card defines; any other key in `fill_colors` stays private
+  ([#498](https://github.com/Matysh/houseplan-card/issues/498)).
+
 - Applying a backup import no longer reports "preview expired" after the plan
   was already replaced: once both halves of the import are written, the result
   and the update events follow the commit even if the preview timed out or was

@@ -13,6 +13,7 @@ import re
 import stat
 import struct
 import xml.etree.ElementTree as ET
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,8 @@ MAX_RASTER_DIMENSION = 16_384
 MAX_RASTER_PIXELS = (128 * 1024 * 1024) // 4
 MAX_SVG_ELEMENTS = 5_000
 MAX_SVG_DEPTH = 64
+# Rendering follows href/url() chains; a chain this long is not art (#498).
+MAX_SVG_REF_DEPTH = 64
 MAX_SVG_ATTR_CHARS = 512_000
 MAX_SVG_ATTR_VALUE_CHARS = 65_536
 _SVG_TAGS = frozenset({
@@ -269,22 +272,7 @@ def _validate_svg(data: bytes) -> ValidatedAsset:
     if any(ref not in ids for ref in refs):
         raise DecorAssetError("invalid_image", "The SVG contains an unresolved local reference")
 
-    visiting: set[str] = set()
-    visited: set[str] = set()
-
-    def _visit(node_id: str) -> None:
-        if node_id in visiting:
-            raise DecorAssetError("invalid_image", "The SVG contains a cyclic local reference")
-        if node_id in visited:
-            return
-        visiting.add(node_id)
-        for ref in ref_graph.get(node_id, ()):
-            _visit(ref)
-        visiting.remove(node_id)
-        visited.add(node_id)
-
-    for node_id in ids:
-        _visit(node_id)
+    _walk_reference_graph(ids, ref_graph)
     view_box = root.attrib.get("viewBox")
     width = _svg_number(root.attrib.get("width"))
     height = _svg_number(root.attrib.get("height"))
@@ -307,6 +295,52 @@ def _validate_svg(data: bytes) -> ValidatedAsset:
     except ET.ParseError as err:  # pragma: no cover - serializer invariant
         raise DecorAssetError("invalid_image", "Canonical SVG could not be reparsed") from err
     return ValidatedAsset(canonical, "image/svg+xml", ".svg", w, h)
+
+
+def _walk_reference_graph(ids: set[str], ref_graph: dict[str, set[str]]) -> None:
+    """Reject cycles and chains of local references longer than MAX_SVG_REF_DEPTH.
+
+    Iterative on purpose: a flat chain of a few thousand `href`s passes every
+    element/depth/attribute bound yet used to blow the interpreter's recursion
+    limit inside a recursive DFS, which the upload view answered with a 500
+    instead of a refusal (#498).
+
+    The limit is the longest chain *through* a node, memoised per node, not the
+    stack height of whichever traversal happened to reach it first: a chain
+    cut into short segments by a hostile `id` order must still be measured
+    end to end (spec review #498 r1).
+    """
+    longest: dict[str, int] = {}
+    visiting: set[str] = set()
+    for start in sorted(ids):
+        if start in longest:
+            continue
+        stack: list[tuple[str, Iterator[str], int]] = [
+            (start, iter(sorted(ref_graph.get(start, ()))), 1),
+        ]
+        visiting.add(start)
+        while stack:
+            node_id, children, chain = stack[-1]
+            ref = next(children, None)
+            if ref is None:
+                stack.pop()
+                visiting.discard(node_id)
+                longest[node_id] = chain
+                if chain > MAX_SVG_REF_DEPTH:
+                    raise DecorAssetError("too_large", "The SVG reference chain exceeds the safety limit")
+                if stack:
+                    parent, parent_children, parent_chain = stack[-1]
+                    stack[-1] = (parent, parent_children, max(parent_chain, chain + 1))
+                continue
+            if ref in visiting:
+                raise DecorAssetError("invalid_image", "The SVG contains a cyclic local reference")
+            if ref in longest:
+                stack[-1] = (node_id, children, max(chain, longest[ref] + 1))
+                continue
+            if len(stack) > MAX_SVG_REF_DEPTH:
+                raise DecorAssetError("too_large", "The SVG reference chain exceeds the safety limit")
+            visiting.add(ref)
+            stack.append((ref, iter(sorted(ref_graph.get(ref, ()))), 1))
 
 
 def validate_asset(

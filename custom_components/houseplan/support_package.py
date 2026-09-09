@@ -136,6 +136,15 @@ def _custom_fill(value: object) -> dict[str, Any] | None:
     return _copy_keys(value, ("c", "a"))
 
 
+# The eleven palette slots the card reads (src/logic.ts DEFAULT_FILL_COLORS).
+# The config schema stays open on purpose so older or extended configs keep
+# loading; a package must not carry a key the product never defined (#498).
+SUPPORT_FILL_COLOR_KEYS = (
+    "light_on", "light_off", "light_none", "temp_cold", "temp_ok", "temp_hot",
+    "lqi_low", "lqi_high", "glow_base", "glow_light", "wall_fill",
+)
+
+
 def _global_settings(value: object) -> dict[str, Any]:
     out = _copy_keys(value, ("glow_radius_cm", "bg_color", "north_deg", "bg_mode", "sun_rays"))
     if not isinstance(value, dict):
@@ -145,11 +154,13 @@ def _global_settings(value: object) -> dict[str, Any]:
         out["show_room_tooltip"] = show_room_tooltip
     fill_colors = value.get("fill_colors")
     if isinstance(fill_colors, dict):
-        out["fill_colors"] = {
-            str(key): _copy_keys(item, ("c", "a"))
-            for key, item in fill_colors.items()
-            if isinstance(key, str) and isinstance(item, dict)
+        palette = {
+            key: _copy_keys(fill_colors[key], ("c", "a"))
+            for key in SUPPORT_FILL_COLOR_KEYS
+            if isinstance(fill_colors.get(key), dict)
         }
+        if palette:
+            out["fill_colors"] = palette
     style = value.get("decor_default_style")
     if isinstance(style, dict):
         out["decor_default_style"] = _copy_keys(

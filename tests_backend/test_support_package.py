@@ -220,7 +220,10 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
                 "enabled": True,
                 "z2m_base_topics": ["private/site/zigbee2mqtt"],
             },
-            "fill_colors": {"warm": {"c": "#ffaa00", "a": 0.5, "secret": "drop"}},
+            "fill_colors": {
+                "temp_hot": {"c": "#ffaa00", "a": 0.5, "secret": "drop"},
+                "private-owner@example.test": {"c": "#010101", "a": 0.1},
+            },
             "decor_default_style": {
                 "color": "#123456", "width_cm": 2, "secret": "drop",
             },
@@ -309,7 +312,8 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
     space = plan["spaces"][0]
 
     assert package["versions"]["card"] == "unknown"
-    assert plan["settings"]["fill_colors"] == {"warm": {"a": 0.5, "c": "#ffaa00"}}
+    assert plan["settings"]["fill_colors"] == {"temp_hot": {"a": 0.5, "c": "#ffaa00"}}
+    assert b"private-owner" not in raw and b"example.test" not in raw
     assert plan["settings"]["show_room_tooltip"] is False
     assert "zigbee_topology" not in plan["settings"]
     assert b"private/site/zigbee2mqtt" not in raw
@@ -407,3 +411,26 @@ def test_package_size_limit_is_enforced_after_projection(monkeypatch):
     monkeypatch.setattr(support_package, "MAX_SUPPORT_ATTACHMENT_BYTES", 1)
     with pytest.raises(SupportPackageError, match="support_package_too_large"):
         _build()
+
+
+def test_issue_498_palette_allowlist_matches_the_card_defaults():
+    """The package keeps exactly the palette slots the card reads (src/logic.ts)."""
+    import os
+    import re
+
+    src = os.path.join(os.path.dirname(os.path.dirname(__file__)), "src", "logic.ts")
+    with open(src, encoding="utf-8") as fh:
+        text = fh.read()
+    block = re.search(r"export const DEFAULT_FILL_COLORS: FillColors = \{(.*?)\};", text, re.S)
+    assert block, "DEFAULT_FILL_COLORS not found in src/logic.ts"
+    card_keys = re.findall(r"^\s*([a-z_]+):\s*\{", block.group(1), re.M)
+    assert set(card_keys) == set(support_package.SUPPORT_FILL_COLOR_KEYS)
+    assert len(card_keys) == len(support_package.SUPPORT_FILL_COLOR_KEYS) == 11
+
+
+def test_issue_498_projection_omits_an_empty_palette():
+    assert "fill_colors" not in support_package._global_settings({"fill_colors": {}})
+    assert "fill_colors" not in support_package._global_settings({"fill_colors": {"warm": {"c": "#fff", "a": 1}}})
+    assert support_package._global_settings({"fill_colors": {"wall_fill": {"c": "#fff", "a": 1, "x": 1}}}) == {
+        "fill_colors": {"wall_fill": {"c": "#fff", "a": 1}},
+    }
