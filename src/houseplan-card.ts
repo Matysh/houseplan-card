@@ -408,6 +408,7 @@ import {
 } from './space-order';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
+import { SummaryRuntimeSlot, summaryRuntimeLoader } from './summary-runtime-loader';
 
 const CARD_VERSION = '1.73.0';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
@@ -2294,7 +2295,7 @@ export class HouseplanCard extends LitElement {
   private _renderProjection: 'flat' | 'iso' = 'flat';
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 }; private _kioskDialog = false;
-  private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime;
+  private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime; private readonly _summarySlot = new SummaryRuntimeSlot(summaryRuntimeLoader, this, (runtime) => { this._summary = runtime; this._capturedSnapshotSequence = -1; /* summary entities (re)join the live subscription */ if (this.isConnected) { runtime.connect(); if (this.hasUpdated) this.requestUpdate(); } }); // #506: warm code attaches before the first render
   /**
    * Previous entity states + the short event/terminal-transition window for
    * every marker. The map lives outside Lit state: hass ticks update it, one
@@ -2625,7 +2626,7 @@ export class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.locale_load_failed'));
     }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed')))); // #474
     super.connectedCallback();
-    if (this._summary) this._summary.connect(); else void import('./summary-panel-runtime-loaded').then(({ LoadedSummaryPanelRuntime }) => { this._summary ||= new LoadedSummaryPanelRuntime(this); this._capturedSnapshotSequence = -1; if (this.isConnected) this._summary.connect(); this.requestUpdate(); }).catch(() => undefined);
+    this._summarySlot.connect();
     void this._ensureLiveRuntime().catch(() => this.requestUpdate());
     this._pointerModality.connect(this.ownerDocument.defaultView);
     const PointerHoverObserver = this.ownerDocument.defaultView?.MutationObserver;
@@ -2719,7 +2720,7 @@ export class HouseplanCard extends LitElement {
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
     this._warmModeRequest = 0;
-    if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._summary?.disconnect();
+    if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._summarySlot.disconnect();
     this._dayCycleClockKey = '';
     if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
     this._bootSettling = false;
@@ -12203,7 +12204,6 @@ export class HouseplanCard extends LitElement {
       }
     }
   }
-
 
 
   /**

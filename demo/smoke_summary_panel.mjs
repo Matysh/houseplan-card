@@ -137,7 +137,9 @@ const pickerWitnessSetup = await page.evaluate(async () => {
     extra.hass = card.hass;
     extra.setConfig({ ...(card._config || {}), type: 'custom:houseplan-card' });
     document.body.append(extra);
-    for (let attempt = 0; attempt < 100 && !extra._summary; attempt++) {
+    // #506: the warm summary runtime now exists synchronously; the readiness
+    // this witness needs is the server config load, which stays asynchronous.
+    for (let attempt = 0; attempt < 400 && !(extra._summary && extra._loadOk); attempt++) {
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
     extra._serverCfg = structuredClone(card._serverCfg);

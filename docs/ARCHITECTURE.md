@@ -1966,6 +1966,20 @@ imported only after the settings button is pressed. It edits one draft; a
 successful revision-checked shared write precedes application of the draft
 local show choice.
 
+`summary-runtime-loader.ts` (#506) separates the summary *code* from its
+*state*. The loaded factory is remembered per page; every host builds its own
+runtime from it — preferences, drafts, subscriptions, timers and DOM are never
+shared between card instances. Once the factory is warm, a new instance
+(a warm remount or a cold card on a warm page) receives its runtime
+synchronously in `connectedCallback`, before the first Lit render, so the
+first header measurement already includes the summary controls and no late
+summary-driven refit or `stage-resize` continuity candidate follows. The chunk
+itself stays lazy: the first cold mount pays one dynamic import, concurrent
+cold mounts share that pending import, a failed import is forgotten so the next
+connection may retry, and a disconnect cancels the pending attachment of that
+connection so a late resolution cannot connect a runtime to a host that has
+left the tree. A same-node reconnect keeps its instance.
+
 The #505 designer-aligned surface stays in the lazy summary graph. Its sheet
 includes the settings-only composition from `summary-panel-editor-style.ts`.
 The runtime installs `summary-panel-dialog-style.ts` in each summary dialog's

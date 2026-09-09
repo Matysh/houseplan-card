@@ -200,8 +200,14 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * that ceiling. A 299.1 kB ceiling restores the required >500 B noise margin
  * on both sides of the existing 2 kB ratchet band. The overall 301 066 B
  * budget is unchanged.
+ *
+ * 2026-09-09, #506: потолок перецентрирован 299 100 → 299 600. В initial View
+ * вошёл `summary-runtime-loader.ts` — кеш фабрики кода сводной панели и слот
+ * подключения на экземпляр (+299 Б gzip); сам runtime панели остаётся
+ * ленивым чанком. Измеренный факт 298 891 Б оставляет 709 Б сверху и 1 291 Б
+ * до нижней границы полосы; общий бюджет 301 066 Б и долг #367 не меняются.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 299_100;
+export const INITIAL_VIEW_GZIP_CEILING = 299_600;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**
