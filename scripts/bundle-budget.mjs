@@ -195,11 +195,13 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * 2026-09-08, #485: the authenticated live-presence controller, normalized
  * frame model and pointer-transparent renderer join the initial View graph;
  * the large setup UI remains lazy. After rebasing over the public data-hp
- * hooks from #489 the measured graph is 298 474 B; the 299 kB ceiling keeps
- * that fact inside the existing 2 kB ratchet band. The overall 301 066 B
+ * hooks from #489 the measured graph is 298 474 B. After rebasing over #493,
+ * harmless gzip movement put the same graph at 298 527 B, just 473 B below
+ * that ceiling. A 299.1 kB ceiling restores the required >500 B noise margin
+ * on both sides of the existing 2 kB ratchet band. The overall 301 066 B
  * budget is unchanged.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 299_000;
+export const INITIAL_VIEW_GZIP_CEILING = 299_100;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**
