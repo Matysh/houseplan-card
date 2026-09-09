@@ -8215,6 +8215,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'release-ships-on-red-e2e',
+    guard: 'node --test test/e2e-gate.test.mjs',
+    because: 'a stable release must wait for a green E2E on a real Home Assistant; a gate that reads '
+      + 'a failed run as green ships the assets the run just rejected (#514 AC1)',
+    patches: [{
+      file: 'scripts/e2e-gate.mjs',
+      find: "        if (run.conclusion === 'success') return { result: 'green', url: run.url, note: `E2E на ${tag} зелёный` };",
+      replace: "        return { result: 'green', url: run.url, note: `E2E на ${tag} зелёный` }; // mutant: completed means green",
+    }],
+  },
+  {
+    id: 'release-trusts-foreign-e2e-run',
+    guard: 'node --test test/e2e-gate.test.mjs',
+    because: 'the gate must follow the dispatch it made for this tag; accepting any dispatch run lets '
+      + 'a green run on another tag vouch for this release (#514 AC2)',
+    patches: [{
+      file: 'scripts/e2e-gate.mjs',
+      find: "  return (Array.isArray(jobs) ? jobs : []).some((job) => String(job?.name || '').includes(needle));",
+      replace: "  return true; // mutant: every dispatch is ours",
+    }],
+  },
+  {
     id: 'review-trusts-push-run-without-mutants',
     guard: 'node --test test/validate-gate.test.mjs',
     because: 'a green push run on the same SHA holds no mutants and is not proof; the gate must '

@@ -370,7 +370,11 @@ SHA to complete successfully (#511: a cancelled run is not a verdict, a later
 re-run or another-baseline comparison refreshes an older result), then builds
 and attaches `houseplan-card.js`. A missing, failed or one-hour-timed-out latest
 Validate withholds the asset; stable releases additionally need the same for
-Full Performance. Bump the version
+Full Performance and a green E2E run on a real Home Assistant: `release.yml`
+dispatches `e2e.yml` in `Matysh/houseplan-e2e` with the tag (the suite installs
+the release's `houseplan.zip` into HA in docker) and waits for it (#514). A red
+E2E withholds the assets — open the linked run, the Playwright traces and
+screenshots are in its artifacts; fix, then cut a new tag. Bump the version
 everywhere in sync: `src/houseplan-card.ts` (CARD_VERSION), `package.json`,
 `custom_components/houseplan/manifest.json`, `custom_components/houseplan/const.py`.
 

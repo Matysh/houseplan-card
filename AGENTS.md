@@ -464,7 +464,10 @@ an unfinished Validate for the same branch. Gate jobs, matching the actual
 `frontend`, `smoke`, `golden`, `performance_smoke`, `backend`. The `changes` job
 is a service path-filter, not a gate. `docs` is a real blocker: it checks the
 screenshots `sourceFingerprint` against current `src/**`, which is exactly what
-went red after the #113 merge.
+went red after the #113 merge. A stable release additionally waits for Full
+Performance and for a green E2E run on a real Home Assistant (`houseplan-e2e`,
+dispatched on the tag by `release.yml`, #514); betas and the development cycle
+never run E2E.
 
 **"Verified" without a named command and its result is not evidence.**
 
