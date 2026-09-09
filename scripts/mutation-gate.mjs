@@ -8226,6 +8226,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'release-upgrades-stable-onto-itself',
+    guard: 'node --test test/e2e-gate.test.mjs',
+    because: 'at release time the tag under test is already the newest stable, so upgrade_from=stable '
+      + 'makes the upgrade suite update a version onto itself and go red (#514, live run 09.09)',
+    patches: [{
+      file: 'scripts/e2e-gate.mjs',
+      find: "  return prior[0]?.tagName || 'stable';",
+      replace: "  return 'stable'; // mutant: always the newest stable, i.e. the tag itself",
+    }],
+  },
+  {
     id: 'release-trusts-foreign-e2e-run',
     guard: 'node --test test/e2e-gate.test.mjs',
     because: 'the gate must follow the dispatch it made for this tag; accepting any dispatch run lets '

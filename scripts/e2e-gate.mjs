@@ -26,6 +26,20 @@ export const E2E_WORKFLOW = 'e2e.yml';
 /** Допуск на расхождение часов раннера и GitHub при отборе «свежих» прогонов. */
 export const CLOCK_SKEW_MS = 60_000;
 export const TOKEN_HINT = 'нужен секрет E2E_DISPATCH_TOKEN с правом Actions: write на houseplan-e2e';
+export const CARD_REPO = 'Matysh/houseplan-card';
+
+/**
+ * Откуда обновляться в сьюте `upgrade`: предыдущий stable, не `stable`.
+ * К моменту события `release: published` новый тег — уже самый свежий
+ * не-пре-релиз, и `upgrade_from=stable` означало бы «обновиться с v1.74.0 на
+ * v1.74.0» — сьют честно краснеет (`Expected: not "1.73.0"`, живой прогон
+ * 09.09). Первый stable в истории обновляться неоткуда — тогда `stable`.
+ */
+export function previousStable(releases, tag) {
+  const prior = (Array.isArray(releases) ? releases : [])
+    .filter((r) => r && !r.isDraft && !r.isPrerelease && r.tagName && r.tagName !== tag);
+  return prior[0]?.tagName || 'stable';
+}
 
 /**
  * Прогон — наш, если хотя бы одна job названа по нашему тегу: имя job в
@@ -41,13 +55,13 @@ export function isOurRun(jobs, tag) {
 /**
  * @param {object} p
  * @param {string} p.tag  тег релиза (houseplan_ref для e2e.yml)
- * @param {object} p.ops  { dispatch(tag), listRuns() → [{databaseId,status,conclusion,url,createdAt}], jobs(runId) → [{name,conclusion}], sleep(ms), now() }
+ * @param {object} p.ops  { releases() → [{tagName,isDraft,isPrerelease}] новые первыми, dispatch(tag, upgradeFrom), listRuns() → [{databaseId,status,conclusion,url,createdAt}], jobs(runId) → [{name,conclusion}], sleep(ms), now() }
  * @returns {Promise<{result:'green'|'red'|'missing'|'error', url:string|null, note:string}>}
  */
 export async function e2eGate({ tag, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS }) {
   const started = ops.now();
   try {
-    await ops.dispatch(tag);
+    await ops.dispatch(tag, previousStable(await ops.releases(), tag));
   } catch (error) {
     const message = String(error?.message || error);
     const forbidden = /403|Resource not accessible|not accessible by/i.test(message);
@@ -84,13 +98,14 @@ export async function e2eGate({ tag, ops, appearMs = VALIDATE_APPEAR_MS, totalMs
 
 const sh = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8' });
 
-export function realOps({ repo = E2E_REPO, workflow = E2E_WORKFLOW, exec = sh } = {}) {
+export function realOps({ repo = E2E_REPO, workflow = E2E_WORKFLOW, cardRepo = CARD_REPO, exec = sh } = {}) {
   const fields = 'databaseId,status,conclusion,url,createdAt';
   const parse = (r) => (r.status === 0 && r.stdout ? JSON.parse(r.stdout) : []);
   return {
-    dispatch: async (tag) => {
+    releases: async () => parse(exec('gh', ['release', 'list', '--repo', cardRepo, '--json', 'tagName,isDraft,isPrerelease', '--limit', '30'])),
+    dispatch: async (tag, upgradeFrom = 'stable') => {
       const r = exec('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', 'main',
-        '-f', `houseplan_ref=${tag}`, '-f', 'upgrade_from=stable', '-f', 'ha_version=stable']);
+        '-f', `houseplan_ref=${tag}`, '-f', `upgrade_from=${upgradeFrom}`, '-f', 'ha_version=stable']);
       if (r.status !== 0) throw new Error(`gh workflow run: ${(r.stderr || r.stdout || '').trim()}`);
     },
     listRuns: async () => parse(exec('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--event', 'workflow_dispatch', '--json', fields, '--limit', '10'])),
@@ -108,10 +123,10 @@ if (invokedDirectly) {
   const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
   const tag = arg('tag');
   if (!tag) {
-    console.error('usage: e2e-gate.mjs --tag=<vX.Y.Z> [--repo=Matysh/houseplan-e2e] [--workflow=e2e.yml]');
+    console.error('usage: e2e-gate.mjs --tag=<vX.Y.Z> [--repo=Matysh/houseplan-e2e] [--workflow=e2e.yml] [--card-repo=Matysh/houseplan-card]');
     process.exit(2);
   }
-  const outcome = await e2eGate({ tag, ops: realOps({ repo: arg('repo') || E2E_REPO, workflow: arg('workflow') || E2E_WORKFLOW }) });
+  const outcome = await e2eGate({ tag, ops: realOps({ repo: arg('repo') || E2E_REPO, workflow: arg('workflow') || E2E_WORKFLOW, cardRepo: arg('card-repo') || CARD_REPO }) });
   const lines = [`result=${outcome.result}`, `url=${outcome.url || ''}`, `note=${outcome.note}`];
   for (const line of lines) console.log(line);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`);

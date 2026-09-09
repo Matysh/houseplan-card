@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { e2eGate, isOurRun, realOps, TOKEN_HINT } from '../scripts/e2e-gate.mjs';
+import { e2eGate, isOurRun, previousStable, realOps, TOKEN_HINT } from '../scripts/e2e-gate.mjs';
 
 const TAG = 'v1.74.0';
 const ours = (suffix = '') => [{ name: `journeys · HP ${TAG} · HA stable${suffix}`, conclusion: 'success' }, { name: 'upgrade · HP stable · HA stable', conclusion: 'success' }];
@@ -15,7 +15,8 @@ function fakeOps({ snapshots, jobsById = {}, dispatchError = null, startedAt = 1
   const dispatched = [];
   return {
     ops: {
-      dispatch: async (tag) => { if (dispatchError) throw new Error(dispatchError); dispatched.push(tag); },
+      releases: async () => [{ tagName: TAG, isDraft: false, isPrerelease: false }, { tagName: 'v1.74.0-beta.2', isPrerelease: true }, { tagName: 'v1.73.0', isDraft: false, isPrerelease: false }],
+      dispatch: async (tag, upgradeFrom) => { if (dispatchError) throw new Error(dispatchError); dispatched.push([tag, upgradeFrom]); },
       listRuns: async () => { const s = snapshots[Math.min(calls, snapshots.length - 1)]; calls += 1; return s; },
       jobs: async (id) => jobsById[id] ?? [],
       sleep: async (ms) => { clock += ms; },
@@ -40,7 +41,7 @@ test('#514 AC1: dispatch, then the green run on the tag is accepted', async () =
   const outcome = await e2eGate({ tag: TAG, ops: fake.ops, pollMs: 1000 });
   assert.equal(outcome.result, 'green');
   assert.equal(outcome.url, 'https://e2e/run/1');
-  assert.deepEqual(fake.dispatched, [TAG], 'exactly one dispatch with the release tag');
+  assert.deepEqual(fake.dispatched, [[TAG, 'v1.73.0']], 'exactly one dispatch with the release tag, upgrading from the previous stable');
 });
 
 test('#514 AC1: a red run withholds the assets and names the run', async () => {
@@ -96,13 +97,28 @@ test('#514 AC1: a dispatch refused by the token is an error that names the missi
   assert.equal(fake.calls(), 0, 'no polling after a failed dispatch');
 });
 
-test('#514: realOps dispatches e2e.yml on main with the tag and the stable baseline', async () => {
+test('#514: the upgrade suite starts from the previous stable, never from the tag under test', () => {
+  const releases = [
+    { tagName: 'v1.74.0', isDraft: false, isPrerelease: false },
+    { tagName: 'v1.74.0-beta.3', isDraft: false, isPrerelease: true },
+    { tagName: 'v1.73.0', isDraft: false, isPrerelease: false },
+    { tagName: 'v1.72.0', isDraft: false, isPrerelease: false },
+  ];
+  assert.equal(previousStable(releases, 'v1.74.0'), 'v1.73.0', 'the tag itself is already the newest stable at release time');
+  assert.equal(previousStable(releases, 'v1.73.0'), 'v1.74.0', 'a re-gated older tag still upgrades from another stable');
+  assert.equal(previousStable([{ tagName: 'v1.0.0', isPrerelease: false }], 'v1.0.0'), 'stable', 'the first stable ever falls back to stable');
+  assert.equal(previousStable([{ tagName: 'v1.74.0', isDraft: true, isPrerelease: false }, { tagName: 'v1.73.0', isPrerelease: false }], 'v1.75.0'), 'v1.73.0', 'drafts are not releases');
+});
+
+test('#514: realOps dispatches e2e.yml on main with the tag and the previous stable', async () => {
   const calls = [];
   const exec = (cmd, args) => { calls.push([cmd, ...args]); return { status: 0, stdout: '[]', stderr: '' }; };
   const ops = realOps({ exec });
-  await ops.dispatch(TAG);
+  await ops.dispatch(TAG, 'v1.73.0');
   assert.deepEqual(calls[0], ['gh', 'workflow', 'run', 'e2e.yml', '--repo', 'Matysh/houseplan-e2e', '--ref', 'main',
-    '-f', `houseplan_ref=${TAG}`, '-f', 'upgrade_from=stable', '-f', 'ha_version=stable']);
+    '-f', `houseplan_ref=${TAG}`, '-f', 'upgrade_from=v1.73.0', '-f', 'ha_version=stable']);
   await ops.listRuns();
   assert.ok(calls[1].includes('--event') && calls[1].includes('workflow_dispatch'));
+  await ops.releases();
+  assert.deepEqual(calls[2].slice(0, 5), ['gh', 'release', 'list', '--repo', 'Matysh/houseplan-card']);
 });

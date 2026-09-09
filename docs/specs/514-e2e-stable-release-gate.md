@@ -35,7 +35,7 @@
 
 Чистая функция `e2eGate({ tag, ops, appearMs, totalMs, pollMs })` поверх инъектируемых `ops` (образец — `validate-gate.mjs` #510) и `realOps({ repo: 'Matysh/houseplan-e2e', workflow: 'e2e.yml', token })` на `gh`.
 
-1. `ops.dispatch(tag)` → `gh workflow run e2e.yml --repo Matysh/houseplan-e2e --ref main -f houseplan_ref=<tag> -f upgrade_from=stable -f ha_version=stable`. Ошибка запуска (403 — токен без `actions: write` на `houseplan-e2e`) → `result=error` с текстом «нужен секрет `E2E_DISPATCH_TOKEN` с правом Actions: write на houseplan-e2e»; ассет не публикуется.
+1. `ops.dispatch(tag, upgradeFrom)` → `gh workflow run e2e.yml --repo Matysh/houseplan-e2e --ref main -f houseplan_ref=<tag> -f upgrade_from=<предыдущий stable> -f ha_version=stable`. `upgradeFrom` — новейший не-пре-релиз, не черновик, с тегом ≠ `<tag>` (`gh release list --repo Matysh/houseplan-card`); нет такого — `stable`. Уточнение после живого прогона в S6 (09.09): к моменту `release: published` сам тег — уже «stable», и `upgrade_from=stable` заставлял сьют `upgrade` обновлять v1.73.0 на v1.73.0 (`Expected: not "1.73.0"`). Ошибка запуска (403 — токен без `actions: write` на `houseplan-e2e`) → `result=error` с текстом «нужен секрет `E2E_DISPATCH_TOKEN` с правом Actions: write на houseplan-e2e»; ассет не публикуется.
 2. Опознание своего прогона: `ops.listRuns()` (`gh run list --workflow e2e.yml --event workflow_dispatch --json databaseId,status,conclusion,url,createdAt --limit 10`) → кандидаты с `createdAt ≥ t0 − 60 с`; для каждого `ops.jobs(id)` — прогон **наш**, если хотя бы одна job называется `… · HP <tag> · …` (имя job в `e2e.yml` несёт `matrix.ref`). Первый подошедший — `tracked`; чужие dispatch (владелец запустил руками другой тег) игнорируются. Не появился за `appearMs` (3 мин) → `missing`.
 3. Ожидание завершения `tracked` до `totalMs` (45 мин), опрос каждые 20 с. `success` → `green`; `failure`/`timed_out` → `red`; `cancelled` → `red` с пометкой «отменён вручную» (concurrency-группа dispatch в `e2e.yml` не отменяет — `cancel-in-progress: false`, значит отмена рукотворная); таймаут → `red`.
 4. CLI: `node scripts/e2e-gate.mjs --tag=<tag> [--repo=Matysh/houseplan-e2e]`, печатает `result=`, `url=`, `note=` (и в `$GITHUB_OUTPUT`), код выхода 0 только на `green`. Константы 3/45 мин — из `merge-candidate.mjs` (`VALIDATE_APPEAR_MS`, `VALIDATE_TOTAL_MS`).
@@ -59,13 +59,13 @@ Job `gate`, после «Require full performance for a stable release», с т�
 
 ## 6. `houseplan-e2e/e2e.yml`
 
-Сьют `journeys-dev` (снимок `dev`) не относится к тегу и может краснеть по причинам, не связанным со stable: job получает `if: matrix.suite != 'journeys-dev' || github.event_name == 'schedule'`. Остальные три сьюта на dispatch с `houseplan_ref=<tag>`: `journeys` и `first-run` — тег, `upgrade` — со stable (предыдущий) на тег. Отдельный коммит в `houseplan-e2e` (там процесс не ведётся; ссылка на коммит — в хендоффе).
+Сьют `journeys-dev` (снимок `dev`) не относится к тегу и может краснеть по причинам, не связанным со stable: job получает `if: matrix.suite != 'journeys-dev' || github.event_name == 'schedule'`. Остальные три сьюта на dispatch с `houseplan_ref=<tag>`: `journeys` и `first-run` — тег, `upgrade` — с предыдущего stable (`upgrade_from` вычисляет гейт, §4 п.1) на тег. Условие «только по расписанию» для `journeys-dev` реализуется job `plan`, собирающей матрицу: job-level `if` не читает `matrix.*` (первая правка упала на парсинге workflow). Отдельный коммит в `houseplan-e2e` (там процесс не ведётся; ссылка на коммит — в хендоффе).
 
 ## 7. Тесты и мутанты
 
 - `test/e2e-gate.test.mjs` (новый, fake ops с снимками и `jobsById`): dispatch и ожидание; чужой dispatch без `HP <tag>` в именах job игнорируется, свой отслеживается; red на failure; missing по `appearMs`; red по `totalMs`; `cancelled` → red с пометкой; ошибка dispatch → `error` с текстом про секрет.
 - `test/release-workflow.test.mjs` (новый): шаг есть, стоит после Full Performance, условие `!prerelease`, токен с фолбэком, вызывает `scripts/e2e-gate.mjs --tag`.
-- Мутанты (`scripts/mutation-gate.mjs`, гард `node --test test/e2e-gate.test.mjs`): `release-ships-on-red-e2e` (failure читается как green), `release-trusts-foreign-e2e-run` (опознание по имени job снято — любой dispatch считается своим). Каждый — отрицательным прогоном штатным раннером.
+- Мутанты (`scripts/mutation-gate.mjs`, гард `node --test test/e2e-gate.test.mjs`): `release-ships-on-red-e2e` (failure читается как green), `release-trusts-foreign-e2e-run` (опознание по имени job снято — любой dispatch считается своим), `release-upgrades-stable-onto-itself` (`upgrade_from` всегда `stable`). Каждый — отрицательным прогоном штатным раннером.
 
 ## 8. Документация
 
@@ -81,7 +81,7 @@ Job `gate`, после «Require full performance for a stable release», с т�
 - AC2. Гейт опознаёт **свой** прогон по `HP <tag>` в именах job и не принимает чужой dispatch (тест + мутант `release-trusts-foreign-e2e-run`).
 - AC3. Пре-релизы (`prerelease: true`) шаг не выполняют (условие в yml, тест).
 - AC4. `journeys-dev` не бежит на dispatch (коммит в houseplan-e2e, ссылка в хендоффе; проверка — dispatch e2e.yml на `v1.73.0` показывает 3 job).
-- AC5. Оба мутанта §7 пойманы штатным раннером.
+- AC5. Все три мутанта §7 пойманы штатным раннером.
 - AC6. Документы §8 обновлены; `User-Visible: no`; UX/i18n/модель данных/перф не затронуты.
 
 ## 10.0. UX, модель данных, i18n
