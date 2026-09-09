@@ -107,6 +107,22 @@ each clean guard passed, each mutated guard failed, and the runner reported
 | AC10 | Four locales, narrow geometry, actual targets, keyboard, camera identity; theme/large-text frames | Actual bounds/focus/value comparisons and frame inspection. |
 | AC11 | Gates/docs above; code scope inspection | No new eager implementation except header call order; stored schema and backend untouched. |
 
+## Code-review r1 follow-up
+
+The independent review accepted the implementation and recorded one Low L1:
+`summary.block_visible` had no remaining consumers. The follow-up removes only
+that unused key from all four dictionaries and rebuilds the bundle. No render,
+style, event, model or visible string is changed. The paired visual evidence
+above still describes the accepted implementation; it is not claimed as a new
+capture of the cleanup commit.
+
+- `rg -n 'summary\.block_visible' src demo test scripts` — no matches.
+- `npm run gate:small` after rebuilding, synchronizing and staging the complete
+  generated trees — PASS. The preliminary attempts caught unsynchronized bundle
+  manifests and untracked generated assets; both were corrected without changing
+  any test or gate.
+- `node demo/smoke_summary_panel_polish.mjs` on the fresh cleanup bundle — PASS.
+
 Rollback is a revert and normal bundle rebuild. Nothing needs data migration.
 Independent review and pipeline merge remain required before S8; publication
 and issue closure belong to a later release request.
