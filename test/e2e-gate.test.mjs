@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { e2eGate, isOurRun, previousStable, realOps, TOKEN_HINT } from '../scripts/e2e-gate.mjs';
+import { classifyRun, e2eGate, isOurRun, previousStable, realOps, TOKEN_HINT } from '../scripts/e2e-gate.mjs';
 
 const TAG = 'v1.74.0';
 const ours = (suffix = '') => [{ name: `journeys · HP ${TAG} · HA stable${suffix}`, conclusion: 'success' }, { name: 'upgrade · HP stable · HA stable', conclusion: 'success' }];
@@ -34,6 +34,23 @@ test('#514 AC2: a run is ours only when a job carries our tag', () => {
   assert.equal(isOurRun(theirs(), TAG), false);
   assert.equal(isOurRun([{ name: `journeys · HP ${TAG}-beta.1 · HA stable` }], TAG), false, 'a prerelease of the same version is not the tag');
   assert.equal(isOurRun([], TAG), false);
+  // live 09.09: the upgrade job carries the PREVIOUS stable's tag — a gate for v1.72.0 must not adopt the v1.73.0 run
+  assert.equal(isOurRun([{ name: 'journeys · HP v1.73.0 · HA stable' }, { name: 'upgrade · HP v1.72.0 · HA stable' }], 'v1.72.0'), false);
+  assert.equal(isOurRun([{ name: 'first-run · HP v1.73.0 · HA stable' }], 'v1.73.0'), true);
+});
+
+test('#514 AC2: a run that has only planned its matrix is undecided, not foreign', async () => {
+  assert.equal(classifyRun([{ name: 'Матрица прогона', conclusion: 'success' }], TAG), 'unknown');
+  assert.equal(classifyRun([{ name: 'Матрица прогона' }, ...ours()], TAG), 'ours');
+  assert.equal(classifyRun(theirs(), TAG), 'foreign');
+  // live 09.09: the first poll saw only the plan job — the run must still be recognised on the next poll
+  const planning = run({ databaseId: 5, status: 'in_progress', conclusion: null, url: 'https://e2e/run/5' });
+  let polls = 0;
+  const fake = fakeOps({ snapshots: [[planning], [planning], [run({ databaseId: 5, url: 'https://e2e/run/5' })]] });
+  fake.ops.jobs = async () => (polls++ === 0 ? [{ name: 'Матрица прогона', conclusion: 'success' }] : [{ name: 'Матрица прогона' }, ...ours()]);
+  const outcome = await e2eGate({ tag: TAG, ops: fake.ops, pollMs: 1000 });
+  assert.equal(outcome.result, 'green');
+  assert.equal(outcome.url, 'https://e2e/run/5');
 });
 
 test('#514 AC1: dispatch, then the green run on the tag is accepted', async () => {

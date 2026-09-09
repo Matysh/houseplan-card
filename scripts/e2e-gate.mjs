@@ -42,14 +42,27 @@ export function previousStable(releases, tag) {
 }
 
 /**
- * Прогон — наш, если хотя бы одна job названа по нашему тегу: имя job в
- * e2e.yml — `"${suite} · HP ${ref} · HA ${ha}"`. Сьют `upgrade` носит
- * `upgrade_from` (stable), но `journeys`/`first-run` несут тег — этого
- * достаточно, чтобы не принять чужой dispatch (владелец запустил другой тег).
+ * Прогон — наш, если сьют, ставящий сам тег, назван по нему: имя job в
+ * e2e.yml — `"${suite} · HP ${ref} · HA ${ha}"`, и у `journeys`/`first-run`
+ * `ref` — это `houseplan_ref`. Сьют `upgrade` носит `upgrade_from` — тег
+ * ПРЕДЫДУЩЕГО stable, поэтому «любая job с HP <tag>» приняла бы прогон нового
+ * релиза за прогон старого (живой прогон 09.09: v1.72.0 ← run для v1.73.0).
  */
+export const TAG_SUITES = ['journeys', 'first-run'];
 export function isOurRun(jobs, tag) {
-  const needle = ` · HP ${tag} · `;
-  return (Array.isArray(jobs) ? jobs : []).some((job) => String(job?.name || '').includes(needle));
+  const needles = TAG_SUITES.map((suite) => `${suite} · HP ${tag} · `);
+  return (Array.isArray(jobs) ? jobs : []).some((job) => needles.some((needle) => String(job?.name || '').startsWith(needle)));
+}
+
+/**
+ * Прогон, у которого ещё нет ни одной job `· HP … ·`, решать рано: e2e.yml
+ * сначала планирует матрицу отдельной job, и первые секунды виден только
+ * «Матрица прогона». Живой прогон 09.09 записал такой run в чужие навсегда.
+ */
+export function classifyRun(jobs, tag) {
+  const named = (Array.isArray(jobs) ? jobs : []).filter((job) => / · HP .+ · /.test(String(job?.name || '')));
+  if (!named.length) return 'unknown';
+  return isOurRun(named, tag) ? 'ours' : 'foreign';
 }
 
 /**
@@ -77,8 +90,9 @@ export async function e2eGate({ tag, ops, appearMs = VALIDATE_APPEAR_MS, totalMs
       for (const candidate of runs) {
         const createdAt = Date.parse(candidate.createdAt || '') || 0;
         if (createdAt < started - CLOCK_SKEW_MS) continue;
-        if (isOurRun(await ops.jobs(candidate.databaseId), tag)) { run = candidate; break; }
-        foreign.add(candidate.databaseId);
+        const kind = classifyRun(await ops.jobs(candidate.databaseId), tag);
+        if (kind === 'ours') { run = candidate; break; }
+        if (kind === 'foreign' || candidate.status === 'completed') foreign.add(candidate.databaseId);
       }
     }
     if (run) {

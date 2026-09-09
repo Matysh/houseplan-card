@@ -8243,7 +8243,7 @@ const MUTANT_DEFINITIONS = [
       + 'a green run on another tag vouch for this release (#514 AC2)',
     patches: [{
       file: 'scripts/e2e-gate.mjs',
-      find: "  return (Array.isArray(jobs) ? jobs : []).some((job) => String(job?.name || '').includes(needle));",
+      find: "  return (Array.isArray(jobs) ? jobs : []).some((job) => needles.some((needle) => String(job?.name || '').startsWith(needle)));",
       replace: "  return true; // mutant: every dispatch is ours",
     }],
   },
