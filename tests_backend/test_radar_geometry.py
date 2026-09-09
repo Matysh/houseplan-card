@@ -105,6 +105,19 @@ def test_two_point_fit_rejects_ambiguous_mirror_candidates():
                         [plan(0, 80), plan(0, 80)], 5)
 
 
+def test_two_point_fit_rejects_hidden_radial_mismatch():
+    mount = (.5, .5)
+
+    def plan(x, y):
+        return .5 + x / 1200, .5 - y / 1200
+
+    # The 25 cm error passes RMS (17.68 cm) and per-reference (30 cm)
+    # thresholds. The independent radial-consistency guard must reject it.
+    with pytest.raises(ValueError, match="invalid_selection"):
+        solve_two_point(mount, [(100, 0), (0, 100)],
+                        [plan(125, 0), plan(0, 100)], 5)
+
+
 def test_projection_rejects_nonfinite_and_over_100m():
     mount = {"x": .5, "y": .5, "heading_deg": 0}
     calibration = {"cell_cm": 5, "mirror": False}

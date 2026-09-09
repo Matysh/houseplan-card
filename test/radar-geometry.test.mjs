@@ -58,6 +58,15 @@ test('two-point calibration exposes an ambiguous mirror instead of choosing sile
   ], 5), /ambiguous_sources/);
 });
 
+test('two-point calibration rejects a reference with a hidden radial mismatch', () => {
+  const mount = [.5, .5];
+  const plan = (x, y) => [.5 + x / 1200, .5 - y / 1200];
+  assert.throws(() => solveRadarTwoPoint(mount, [[100, 0], [0, 100]], [
+    plan(125, 0), plan(0, 100),
+  ], 5), /invalid_selection/,
+  'a 25 cm radial mismatch must fail even though RMS and per-reference error limits pass');
+});
+
 test('capture median rejects one sample more than 15cm away', () => {
   assert.deepEqual(radarMedianSample([[100, 200], [102, 198], [101, 201]]), [101, 200]);
   assert.throws(() => radarMedianSample([[100, 200], [101, 199], [140, 240]]), /bad_fit/);
