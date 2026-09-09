@@ -8,12 +8,13 @@
   ([#437](https://github.com/Matysh/houseplan-card/issues/437),
   [#490](https://github.com/Matysh/houseplan-card/issues/490),
   [#493](https://github.com/Matysh/houseplan-card/issues/493)).
+- Радары присутствия теперь можно привязать, откалибровать прямо на плане и
+  использовать для показа актуальных целей внутри выбранной комнаты; доступны
+  ESPHome LD2450 и явные схемы сопоставления для других mmWave-датчиков
+  ([#485](https://github.com/Matysh/houseplan-card/issues/485)).
 - Оптимизация, отмена, импорт и удаление пространства теперь восстанавливаются
   после прерванной записи без потери частей плана и позиций устройств
   ([#491](https://github.com/Matysh/houseplan-card/issues/491)).
-- Добавлен документированный набор стабильных UI-хуков для внешних end-to-end
-  тестов и расширенных правил card-mod
-  ([#489](https://github.com/Matysh/houseplan-card/issues/489)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
@@ -24,12 +25,13 @@
   ([#437](https://github.com/Matysh/houseplan-card/issues/437),
   [#490](https://github.com/Matysh/houseplan-card/issues/490),
   [#493](https://github.com/Matysh/houseplan-card/issues/493)).
+- Presence radars can now be bound and calibrated directly on the plan to show
+  current targets inside the selected room, with ESPHome LD2450 discovery and
+  explicit mappings for other mmWave sensors
+  ([#485](https://github.com/Matysh/houseplan-card/issues/485)).
 - Optimize, Undo, import and space deletion now recover interrupted writes
   without losing parts of the plan or device positions
   ([#491](https://github.com/Matysh/houseplan-card/issues/491)).
-- Added a documented set of stable UI hooks for external end-to-end tests and
-  advanced card-mod rules
-  ([#489](https://github.com/Matysh/houseplan-card/issues/489)).
 - Small fixes and improvements.
 
 [Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.73.0-beta.7/docs/CHANGELOG.ru.md)
