@@ -28,6 +28,7 @@
 
 | Issue | ТЗ |
 |---|---|
+| [#495](https://github.com/Matysh/houseplan-card/issues/495) Результат Import согласован с commit; удаление маршрутов робота доходит до Store | [495-import-commit-and-route-runs-durability.md](495-import-commit-and-route-runs-durability.md) |
 | [#492](https://github.com/Matysh/houseplan-card/issues/492) Точный кандидат интеграции и полный manifest входов selection/reuse | [492-exact-candidate-and-input-manifest.md](492-exact-candidate-and-input-manifest.md) |
 | [#491](https://github.com/Matysh/houseplan-card/issues/491) Незавершённая пара Optimize/Undo переживает следующую запись | [491-optimize-undo-pair-recovery.md](491-optimize-undo-pair-recovery.md) |
 | [#490](https://github.com/Matysh/houseplan-card/issues/490) Атомарный recovery и live-состояние сводной панели | [490-summary-recovery-live-state.md](490-summary-recovery-live-state.md) |
