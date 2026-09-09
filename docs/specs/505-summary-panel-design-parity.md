@@ -6,6 +6,21 @@ Baseline: `dev@abbca50ce732a87b59c8675d394f691738ea0961` (1.73.0-beta.7).
 Status: specification; implementation requires independent S4 green verdict.
 Owner decision: 2026-09-09, resume after scope extension with designer archive.
 
+## Сценарий
+
+Администратор дома на desktop открывает сводную панель рядом с планом,
+настраивает её название, блоки и показатели; домочадец смотрит те же текущие
+значения на телефоне, а гость — на настенном экране в киоске. Каждый включает
+или скрывает панель для своей карточки, не сдвигая план. При изменении состава
+администратор должен узнавать согласованный дизайнером интерфейс, видеть все
+поля и действия и не искать их за горизонтальной прокруткой.
+
+## Что человек увидит до и после
+
+Вместо отличающейся от макета панели с резко исчезающим содержимым и тесными
+настройками человек увидит знакомые по макету кнопки, аккуратную плавно
+появляющуюся и скрывающуюся панель и просторные настройки с понятными блоками.
+
 ## 1. Problem, value and scope
 
 The working #437 panel differs materially from the supplied Dashboard 5 design.
@@ -215,11 +230,16 @@ Full release/golden/performance capture is not required for this scoped task.
 | AC10 | Themes/locales/44px targets/long content/keyboard and camera independence | smoke RU/EN/DE/FR + light/dark + 320/390/desktop, review |
 | AC11 | Docs/changelogs current, scoped CSS/lazy budgets/build parity preserved | docs gate, code review, gate:small |
 
-Visual evidence is mandatory: matched 1600x1000 reference and product captures of
-control+open right panel and settings, dark desktop, bottom portrait, kiosk; plus
-narrow native/real HA settings screenshots. Use equivalent default three values
-and one custom-source row. Inspect geometry, hierarchy, glyphs, columns and
-allowed adaptations separately from irrelevant background-plan pixels.
+Visual evidence is mandatory: paired reference/product captures explicitly cover
+all five contexts: (1) desktop light at 1600x1000, (2) desktop dark at 1600x1000,
+(3) bottom portrait at 800x1100, (4) kiosk at 1600x1000, (5) mobile View panel at
+390x844, including its control. Also capture the settings dialog in light/dark
+desktop and narrow native/real HA at 320/390px. Where the demo's surrounding HA
+chrome overflows at mobile width, compare its panel region/structure with the
+bounded product panel; do not reproduce unrelated demo chrome defects. Use
+equivalent default three values and one custom-source row. Inspect geometry,
+hierarchy, glyphs, columns and allowed adaptations separately from irrelevant
+background-plan pixels.
 Record dimensions and accepted differences; no claim of pixel-identical UI.
 
 These are task diagnostic images, not updates of accepted golden/docs baselines.
@@ -248,3 +268,24 @@ section update control placement, layout, mobile dependency, removed size contro
 spec index and visual acceptance report. No release/tag/public announcement in
 this task; stop at pipeline S8 (merged, waiting for next beta).
 
+## Принятые технические предположения
+
+Принято предположительно, поменять свободно при сохранении продуктового
+контракта и AC; технические решения могут быть оспорены ревьюером:
+
+- Разбиение на файлы в §7 и конкретные имена ключей §6 — план реализации,
+  а не публичный API. Допустимы небольшие summary-only helper-модули.
+- Ширина задаётся через существующий wide и CSS-переменные оболочек.
+  Для реального pinned HA предполагается наследование
+  `--ha-dialog-width-md`; это проверяется на настоящем компоненте. Если для
+  нейтральной границы, шапки и 44px close необходима правка `hp-dialog.ts`,
+  она строго ограничена `:host([data-kind="summary"])`, без изменения других
+  диалогов и их defaults.
+- Lifecycle анимации хранится только в памяти runtime; CSS transitions либо
+  Web Animations API с собственным completion и ограниченным cleanup допустимы
+  одинаково, если соблюдены длительность, reversals, inert и generation guards.
+- Снимки visual acceptance — диагностические артефакты задачи, не новые
+  canonical golden/docs baselines. Воспроизводимый capture и текстовый отчёт
+  служат ревьюеру; ветка продукта не зависит от локальных путей автора.
+- Форматы shared config/local preferences, capability version, вычисление
+  данных и resolver стороны сохраняются; миграция не предполагается.
