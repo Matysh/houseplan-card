@@ -264,6 +264,7 @@ test('isometric long-task count allowance covers the lazy iso-chunk split, nothi
   assert.equal(isometric.longTasks.maxCountP95, 30);
   assert.equal(isometric.longTasks.maxTotalRegressionRatio, 0.2, 'total work is still gated as before');
   assert.equal(isometric.longTasks.maxSingleRegressionRatio, 0.2);
+  assert.equal(readBudget('budgets-isometric-stage3-dense.json').longTasks.countNoiseAllowance, 5, 'the dense twin shares the lazy iso chunk and the #160 common-ceiling contract');
   for (const file of ['budgets.json', 'budgets-large-house-plan-snap.json', 'budgets-large-house-interaction.json']) {
     assert.equal(readBudget(file).longTasks.countNoiseAllowance, 3, `${file} keeps the ordinary allowance`);
   }

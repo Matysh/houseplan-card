@@ -218,8 +218,8 @@ rationale in the change. Do not loosen a threshold merely to make a single red
 run pass. A new fixture profile gets a new profile id instead of silently
 changing the meaning of `large-house-v1`.
 
-`large-house-isometric-v1` carries `countNoiseAllowance: 5` (the other
-profiles keep 3). Owner decision 2026-09-09, #507: since v1.73.0-beta.1 the
+`large-house-isometric-v1` and its Stage 3 dense twin carry
+`countNoiseAllowance: 5` (the other profiles keep 3). Owner decision 2026-09-09, #507: since v1.73.0-beta.1 the
 isometric renderer lives in the lazy `iso-scene-render` chunk (#160 Stage 3),
 so the single v1.72.0 boot task is split into two around that import. The
 load-phase work is unchanged — timings, `longTask.totalP95Ms` and
