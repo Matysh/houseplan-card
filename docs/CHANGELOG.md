@@ -2,12 +2,6 @@
 
 ## Unreleased
 
-- Reopening the plan on a page that has already loaded the summary panel no
-  longer triggers a late header re-measurement and an extra round of heavy
-  redraws right after the first frame: the panel's controls are part of the
-  first frame, so the first device/glow update lands on a stable stage
-  ([#506](https://github.com/Matysh/houseplan-card/issues/506)).
-
 ## v1.73.0 — 2026-09-09
 
 - House Plan opens from its own page in the Home Assistant sidebar, without
@@ -53,6 +47,14 @@
 - A stable set of UI hooks is documented for external end-to-end tests and
   card-mod rules, without depending on private CSS classes
   ([#489](https://github.com/Matysh/houseplan-card/issues/489)).
+
+## v1.73.0-beta.9 — 2026-09-09
+
+- Reopening the plan on a page that has already loaded the summary panel no
+  longer triggers a late header re-measurement and an extra round of heavy
+  redraws right after the first frame: the panel's controls are part of the
+  first frame, so the first device/glow update lands on a stable stage
+  ([#506](https://github.com/Matysh/houseplan-card/issues/506)).
 
 ## v1.73.0-beta.8 — 2026-09-09
 
