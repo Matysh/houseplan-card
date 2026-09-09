@@ -8143,8 +8143,8 @@ const MUTANT_DEFINITIONS = [
       + 'any completed run as green spends the review cycle on code CI already rejected (#510 AC2)',
     patches: [{
       file: 'scripts/validate-gate.mjs',
-      find: "    result: run.conclusion === 'success' ? 'green' : 'red',",
-      replace: "    result: 'green', // mutant: completed means green",
+      find: "        if (run.conclusion !== 'success') return { result: 'red', url: run.url, note: `dispatch-прогон завершился: ${run.conclusion}` };",
+      replace: "        // mutant: completed means green — a red dispatch falls through to the job check",
     }],
   },
   {
