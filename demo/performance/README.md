@@ -218,6 +218,17 @@ rationale in the change. Do not loosen a threshold merely to make a single red
 run pass. A new fixture profile gets a new profile id instead of silently
 changing the meaning of `large-house-v1`.
 
+`large-house-isometric-v1` carries `countNoiseAllowance: 5` (the other
+profiles keep 3). Owner decision 2026-09-09, #507: since v1.73.0-beta.1 the
+isometric renderer lives in the lazy `iso-scene-render` chunk (#160 Stage 3),
+so the single v1.72.0 boot task is split into two around that import. The
+load-phase work is unchanged — timings, `longTask.totalP95Ms` and
+`longTask.maxSingleMs` keep their unchanged ratios and still catch real
+growth — but `longTask.countP95` counts the split as +2 tasks and, with
+runner jitter, sat at 16 → 20 against a 19.2 limit on the v1.73.0 stable
+comparison. The allowance widens the count check alone to 16 → 21 for that
+baseline; it is not a licence for more work per task.
+
 The `cleanFloor` entry ceiling is 100: the reviewed fixture warms exactly 100
 deterministic room/physical-body entries. An extra 20 means that one complete
 floor was invalidated and rebuilt, so fixture extensions must recalibrate this

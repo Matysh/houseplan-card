@@ -256,3 +256,18 @@ test('interaction aggregate keeps hosted-runner headroom without weakening compo
   assert.equal(smoke.timings.cameraSeriesMs.hardMaxMs, 500);
   assert.equal(smoke.timings.editorSeriesMs.hardMaxMs, 750);
 });
+
+test('isometric long-task count allowance covers the lazy iso-chunk split, nothing else (#507)', () => {
+  const isometric = readBudget('budgets-large-house-isometric.json');
+  assert.equal(isometric.longTasks.countNoiseAllowance, 5, 'owner-accepted +2 tasks of the lazy iso-scene-render split plus jitter');
+  assert.equal(isometric.longTasks.maxCountRegressionRatio, 0.2, 'the ratio is not the lever');
+  assert.equal(isometric.longTasks.maxCountP95, 30);
+  assert.equal(isometric.longTasks.maxTotalRegressionRatio, 0.2, 'total work is still gated as before');
+  assert.equal(isometric.longTasks.maxSingleRegressionRatio, 0.2);
+  for (const file of ['budgets.json', 'budgets-large-house-plan-snap.json', 'budgets-large-house-interaction.json']) {
+    assert.equal(readBudget(file).longTasks.countNoiseAllowance, 3, `${file} keeps the ordinary allowance`);
+  }
+  // The v1.73.0 stable comparison against v1.72.0: 16 → 20 passes, 22 does not.
+  const limit = Math.max(16 * (1 + isometric.longTasks.maxCountRegressionRatio), 16 + isometric.longTasks.countNoiseAllowance);
+  assert.equal(limit, 21);
+});
