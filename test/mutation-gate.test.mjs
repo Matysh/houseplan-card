@@ -260,6 +260,12 @@ const validateWorkflowText = readWorkflowFile(
   new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8',
 );
 
+test('#513 AC1: полный мутационный прогон идёт каждую ночь, не раз в неделю и не перед релизом', () => {
+  assert.match(mutationWorkflow, /- cron: '0 1 \* \* \*'/, 'ежедневно 01:00 UTC');
+  assert.ok(!/cron: '[^']*\* [0-6]'/.test(mutationWorkflow), 'недельного расписания (день недели) быть не должно');
+  assert.ok(!mutationWorkflow.includes('перед стабильным релизом'), 'полный прогон — не шаг релиза');
+});
+
 test('#472 AC1: у расписания и ручного запуска разные concurrency-группы', () => {
   assert.match(mutationWorkflow, /group: mutation-gate-\$\{\{ github\.event_name \}\}/);
 });
