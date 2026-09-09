@@ -3536,7 +3536,7 @@ export class HouseplanCard extends LitElement {
     const patch: Partial<WarmEntry> = {
       vp: this._warmViewportState(),
       frameFingerprint: this._continuity.frameFingerprint,
-      devices: this._devices,
+      devices: this._devices, hdrH: this._hdrH,
     };
     // do not overwrite the snapshot we are about to revive FROM
     if (!this._warmRevivePending) patch.dlg = this._warmDialogState();
@@ -6613,7 +6613,7 @@ export class HouseplanCard extends LitElement {
       if (!this._viewportInvalidAt) this._viewportInvalidAt = Date.now();
       return;
     }
-    const size: [number, number] = [stage.clientWidth, stage.clientHeight];
+    const size: [number, number] = [stage.clientWidth, stage.clientHeight]; if (this._bootSoft && this._warmVp) { this._lastValidStageSize = size; this._pendingRefitSize = null; return; }
     const previous = this._lastValidStageSize;
     const sameSize = !!previous
       && Math.abs(previous[0] - size[0]) <= 0.5

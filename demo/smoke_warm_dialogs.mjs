@@ -42,6 +42,29 @@ const res = await page.evaluate(async () => {
   };
   const rect = (c) => (c._view ? [c._view.x, c._view.y, c._view.w, c._view.h] : null);
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  /** The source instance must contribute its final painted viewport to the
+   * memo. Lazy editor chrome can deliver ResizeObserver after updateComplete;
+   * a fixed sleep occasionally captured that intermediate box and then asked
+   * the successor to preserve something the source itself would not keep. */
+  const waitForStableView = async (c, quietMs = 250, timeout = 2500) => {
+    const started = performance.now();
+    let stableAt = started;
+    let previous = '';
+    while (performance.now() - started < timeout) {
+      await new Promise((done) => requestAnimationFrame(done));
+      const stage = (c.shadowRoot || c.renderRoot).querySelector('.stage');
+      const current = JSON.stringify({
+        mode: c._mode,
+        busy: c._modeTransitionBusy,
+        stage: stage ? [stage.clientWidth, stage.clientHeight] : null,
+        zoom: c._zoom,
+        view: rect(c),
+      });
+      if (current !== previous) { previous = current; stableAt = performance.now(); }
+      if (performance.now() - stableAt >= quietMs) return true;
+    }
+    return false;
+  };
   /** покадрово: ни один кадр после пересоздания не отличается от эталона */
   const watchView = async (c, zoom0, v0, ms = 700) => {
     const bad = [];
@@ -49,13 +72,22 @@ const res = await page.evaluate(async () => {
     await new Promise((done) => {
       const s = () => {
         if (Math.abs(c._zoom - zoom0) > 1e-6 || !same(rect(c), v0)) {
-          bad.push({ t: Math.round(performance.now() - t1), zoom: c._zoom, v: rect(c) });
+          const stage = (c.shadowRoot || c.renderRoot).querySelector('.stage');
+          const chrome = (c.shadowRoot || c.renderRoot).querySelector('.editorchrome');
+          bad.push({
+            t: Math.round(performance.now() - t1), zoom: c._zoom, v: rect(c),
+            stage: stage ? [stage.clientWidth, stage.clientHeight] : null,
+            chrome: chrome ? [chrome.clientWidth, chrome.clientHeight, chrome.scrollHeight] : null,
+            hdrH: c._hdrH,
+            transition: [c._modeTransitionPreparing, c._modeTransitionBusy],
+            memo: c._warmSlot ? [c._warmSlot.hdrH, c._warmSlot.stageH] : null,
+          });
         }
         if (performance.now() - t1 < ms) requestAnimationFrame(s); else done();
       };
       requestAnimationFrame(s);
     });
-    return bad.length === 0 ? true : `кадр ${bad[0].t}мс: zoom=${bad[0].zoom} view=${JSON.stringify(bad[0].v)} (ждали ${zoom0} / ${JSON.stringify(v0)})`;
+    return bad.length === 0 ? true : `кадр ${bad[0].t}мс: ${JSON.stringify(bad[0])} (ждали zoom=${zoom0} view=${JSON.stringify(v0)})`;
   };
 
   // ================= A. просмотр: пан+зум и настройки пространства ==========
@@ -63,7 +95,8 @@ const res = await page.evaluate(async () => {
   await settle(c);
   c._applyView(2.4, 260, 720);            // зум в угол — вид точно не по центру
   c._saveZoom();
-  c.requestUpdate(); await c.updateComplete; await sleep(100);
+  c.requestUpdate(); await c.updateComplete;
+  out.aSourceSettled = await waitForStableView(c);
   const zoomA = c._zoom, viewA = rect(c);
   out.aPanned = viewA[0] > 1 || viewA[1] > 1;      // sanity: вид действительно смещён
   await c._ensureEditorRuntime();
@@ -88,7 +121,8 @@ const res = await page.evaluate(async () => {
   // ================= B. редактор устройств: зум редактора + карточка =======
   await c._requestMode('devices'); await c.updateComplete;
   await waitFor(() => !c._modeTransitionBusy);
-  c._applyView(3.4, 430, 380); c.requestUpdate(); await c.updateComplete; await sleep(100);
+  c._applyView(3.4, 430, 380); c.requestUpdate(); await c.updateComplete;
+  out.bSourceSettled = await waitForStableView(c);
   const zoomB = c._zoom, viewB = rect(c);
   const dev = c._devices.find((d) => d.space === c._space);
   c._openMarkerDialog(dev); await c.updateComplete;
