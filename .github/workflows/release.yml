@@ -50,6 +50,20 @@ jobs:
           set -euo pipefail
           SHA=$(git rev-parse HEAD)
           node scripts/release-gate.mjs "$SHA" --workflow=performance.yml --label="Полные бенчмарки производительности"
+      # #514: the only check on a real Home Assistant. houseplan-e2e installs
+      # the release's houseplan.zip — the bytes HACS ships — into HA in docker
+      # and walks the sidebar page, dashboards, roles, PDF, restart and the
+      # stable→tag upgrade. A red, missing or cancelled run withholds the
+      # assets exactly like Full Performance. Cross-repository dispatch needs a
+      # token with Actions: write on houseplan-e2e; HP_PROCESS_TOKEN (classic,
+      # repo scope) has it, E2E_DISPATCH_TOKEN is the fallback for a
+      # fine-grained token.
+      - name: Require green E2E on a real Home Assistant for a stable release
+        if: ${{ !github.event.release.prerelease }}
+        env:
+          GH_TOKEN: ${{ secrets.E2E_DISPATCH_TOKEN || secrets.HP_PROCESS_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: node scripts/e2e-gate.mjs --tag="$TAG"
   build:
     name: Сборка бандла и загрузка ассетов
     needs: gate
