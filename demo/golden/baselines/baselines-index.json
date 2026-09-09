@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "matrixVersion": 61,
-  "acceptedAt": "2026-09-09T00:33:46.600Z",
-  "sourceFingerprint": "a86b32ad6c4f7aa87dadebefc141b996b78fdeefe318dbe4eaaf0e100db9c6a8",
+  "acceptedAt": "2026-09-09T01:28:14.867Z",
+  "sourceFingerprint": "a4eb6988aaa19c2c59f66beb5ac3db29d11d0730cda50fc9d5041f54bf7334c1",
   "chromium": "151.0.7922.34",
   "platform": "linux",
   "witnesses": {
-    "count": 11,
+    "count": 127,
     "floor": 10
   },
   "scenarios": {
@@ -159,7 +159,7 @@
     "device-help-popover-light-ru": "dac475aa03f90a084ff558c8a187e2bd8c7ca01743bc401a511efb665ad8e815",
     "decor-color-popover-mobile-ru": "de167d5a363758b26108f08f7e3f0ba7a44c8daf7461d1e54d719698d20ab208",
     "decor-color-popover-desktop-en": "ce6e85df6417dc8912ff7119c9851a7e15c4f28ed4097aa21e973e9da8d1ca0e",
-    "general-color-popover-desktop-en": "ce4cf29e6aaa401822f0394d10310d18a8baa1130df138394398b50387edbd77",
+    "general-color-popover-desktop-en": "fdcae0d7e72c5882253b99456727d48e16bf552abe5ac2cc90329f61af0d1af2",
     "settings-help-zoom-200-en-light": "d4c0ca1d0a6807707bc5f3366f4da8d8bba13297d09339d36917fd77f9fbe923",
     "settings-help-zoom-200-ru-dark": "5128090ce7ed3196b3cf81e95634c11c9a42160959cac682792920353f8405c7",
     "support-desktop-empty-light-en": "0f9016c9a6809806f3281c8e6e6f3aea6950b6bba27f20482ba1d3ae03e574e9",
