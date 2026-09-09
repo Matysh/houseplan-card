@@ -226,3 +226,42 @@ test('на настоящем git: чистый ребейз с равным pat
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ---------- #510 code review r2 M1: the real waitValidate, not a fake ----------
+
+/** gh scripted by call: each `gh run list` answer is the next snapshot. */
+function scriptedExec(snapshots) {
+  let calls = 0;
+  return {
+    exec: (cmd, args) => {
+      if (cmd === 'gh' && args[0] === 'run' && args[1] === 'list') {
+        const s = snapshots[Math.min(calls, snapshots.length - 1)];
+        calls += 1;
+        return { status: 0, stdout: JSON.stringify(s), stderr: '' };
+      }
+      throw new Error(`unexpected ${cmd} ${args.join(' ')}`);
+    },
+    calls: () => calls,
+  };
+}
+
+test('#510 r2 M1: realOps.waitValidate ignores a cancelled dispatch and follows its replacement', async () => {
+  const cancelled = { databaseId: 1, status: 'completed', conclusion: 'cancelled', url: 'https://run/1', event: 'workflow_dispatch' };
+  const push = { databaseId: 2, status: 'completed', conclusion: 'success', url: 'https://run/2', event: 'push' };
+  const replacement = { databaseId: 3, status: 'completed', conclusion: 'success', url: 'https://run/3', event: 'workflow_dispatch' };
+  const gh = scriptedExec([[cancelled, push], [cancelled, push], [replacement, cancelled, push]]);
+  let clock = 0;
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, sleep: async (ms) => { clock += ms; }, now: () => clock });
+  const r = await ops.waitValidate('c'.repeat(40), { event: 'workflow_dispatch' });
+  assert.deepEqual(r, { result: 'green', url: 'https://run/3' });
+  assert.equal(gh.calls(), 3, 'kept polling past the cancelled run instead of returning red on the first answer');
+});
+
+test('#510 r2 M1: realOps.waitValidate with only a cancelled dispatch reports missing after the appear window, never red', async () => {
+  const cancelled = { databaseId: 1, status: 'completed', conclusion: 'cancelled', url: 'https://run/1', event: 'workflow_dispatch' };
+  const gh = scriptedExec([[cancelled]]);
+  let clock = 0;
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, sleep: async (ms) => { clock += ms; }, now: () => clock });
+  const r = await ops.waitValidate('c'.repeat(40), { event: 'workflow_dispatch' });
+  assert.equal(r.result, 'missing');
+});

@@ -101,9 +101,9 @@ const sh = (cmd, args, opts = {}) => {
   return { status: r.status ?? 1, stdout: (r.stdout || '').trim(), stderr: (r.stderr || '').trim() };
 };
 
-export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now }) {
+export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now, exec = sh }) {
   const pushUrl = `https://x-access-token:${token}@github.com/${repo}`;
-  const git = (...args) => sh('git', args);
+  const git = (...args) => exec('git', args);
   const must = (r, what) => { if (r.status !== 0) throw new Error(`${what}: ${r.stderr || r.stdout}`); return r.stdout; };
   return {
     fetch: (...refs) => must(git('fetch', '-q', 'origin', ...refs), 'git fetch'),
@@ -131,14 +131,14 @@ export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) =
     // новое дерево, поэтому слияние запускает Validate с мутантами само и ждёт
     // именно этот dispatch-прогон; push-прогон на том же SHA их не содержит.
     dispatchValidate: (ref) => {
-      const r = sh('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', 'mutants=true']);
+      const r = exec('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', 'mutants=true']);
       if (r.status !== 0) throw new Error(`gh workflow run ${workflow}: ${r.stderr || r.stdout}`);
     },
     waitValidate: async (sha, { event = 'workflow_dispatch' } = {}) => {
       const started = now();
       let runId = null;
       while (now() - started < VALIDATE_TOTAL_MS) {
-        const r = sh('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', 'databaseId,status,conclusion,url,event', '--limit', '10']);
+        const r = exec('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', 'databaseId,status,conclusion,url,event', '--limit', '10']);
         const all = r.status === 0 && r.stdout ? JSON.parse(r.stdout) : [];
         // Отменённый прогон ничего не доказывает (#511): его заменил следующий
         // dispatch на той же ветке — ждём его, а не красим кандидата.

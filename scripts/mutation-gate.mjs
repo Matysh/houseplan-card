@@ -8159,6 +8159,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'merge-trusts-cancelled-dispatch',
+    guard: 'node --test test/merge-candidate.test.mjs',
+    because: 'the real waitValidate must skip a dispatch cancelled by its replacement; reading it as red '
+      + 'fails the merge candidate for nothing (#510 review r2 M1, #511)',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: "        const runs = all.filter((x) => (!event || x.event === event) && x.conclusion !== 'cancelled');",
+      replace: "        const runs = all.filter((x) => (!event || x.event === event)); // mutant: cancelled is red",
+    }],
+  },
+  {
     id: 'review-trusts-push-run-without-mutants',
     guard: 'node --test test/validate-gate.test.mjs',
     because: 'a green push run on the same SHA holds no mutants and is not proof; the gate must '
