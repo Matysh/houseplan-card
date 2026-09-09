@@ -56,9 +56,9 @@ export function displayVersion(fallback: string): string {
 
 `scripts/docs-accept.mjs`, новый режим (взаимоисключающий с `--from`): 
 
-1. `assertCaptureEnvironment` не требуется: кадры не заменяются. Съёмка — `node demo/docs/capture.mjs --out=<tmp>` (новый флаг `--out`, по умолчанию `docs/images`, чтобы не трогать закоммиченное); сборка бандла — как в `docs:capture`.
-2. Сравнение: каждый кадр кандидата и закоммиченный декодируются в Chromium (Playwright, `page.evaluate` с `createImageBitmap` + `OffscreenCanvas.getImageData`), сравниваются размер и все байты RGBA; результат — число отличающихся пикселей на кадр. Реализация в `scripts/png-identical.mjs` (`compareDecodedPixels`, `decodeViaChromium`), чтобы unit-тест с синтетическими PNG не поднимал браузер для компаратора.
-3. Все кадры идентичны → манифест: `sourceFingerprint` и `scenarios[*].sourceSha256` берутся из кандидата, остальное (`imageSha256`, `chromium`, `oxipng`, `acceptance`) — из закоммиченного, `acceptance.lastWriteWasFingerprintOnly: true` (как у существующего fingerprint-only пути); байты PNG не трогаются; `check-docs --screenshots=strict` зелёный.
+1. `assertCaptureEnvironment` не требуется: кадры не заменяются. `demo/docs/capture.mjs` **не меняется** (ревью ТЗ r1, H1: этот файл — сторож `captureScriptSha256` в `docs/images/screenshots.json`, и его правка сама по себе красит `check-docs`): инструмент копирует закоммиченные кадры и манифест во временную папку, запускает штатные `npm run -s build` и `node demo/docs/capture.mjs` (те пишут в `docs/images`, как всегда), сравнивает кандидата с копией и в любом исходе возвращает байты кадров на место; манифест переписывается только при успехе (п. 3), при отказе или ошибке восстанавливается из копии.
+2. Сравнение: каждый кадр кандидата и закоммиченный декодируются в Chromium (Playwright, `page.evaluate` с `createImageBitmap` + `OffscreenCanvas.getImageData`), сравниваются размер и все байты RGBA; результат — число отличающихся пикселей на кадр. Реализация в `scripts/png-identical.mjs` (`compareDecodedPixels` — чистая функция над RGBA; `compareInPage` — декодирование и сравнение одной пары внутри страницы Playwright, чтобы не сериализовать мегабайтные RGBA-массивы через evaluate; `compareFramePairs`), чтобы unit-тест с синтетическими буферами не поднимал браузер для компаратора.
+3. Все кадры идентичны → манифест: `sourceFingerprint`, `scenarios[*].sourceSha256` **и `captureScriptSha256`** берутся из кандидата (ревью ТЗ r1, H1: правка `capture.mjs` без визуальных изменений принимается этим же локальным прогоном, а не ждёт артефакта), остальное (`imageSha256`, `chromium`, `oxipng`, `acceptance`) — из закоммиченного, `acceptance.lastWriteWasFingerprintOnly: true` и `acceptance.identicalPixels: true`; байты PNG не трогаются; `check-docs --screenshots=strict` зелёный. Переприёмка docs-скриншотов в этом issue: первый локальный `--identical`-прогон в этой же ветке (11 кадров, seam не меняет docs-сцены) — его результат коммитится вместе с кодом.
 4. Хотя бы одно отличие → код 1 и перечень «кадр: N пикселей» — дальше штатный путь через CI-артефакт и `--reviewed`.
 
 ## 7. Переприёмка golden
@@ -70,7 +70,7 @@ export function displayVersion(fallback: string): string {
 - `test/card-version.test.mjs`: override не задан → fallback; задан строкой → override; пустая строка/не строка → fallback.
 - `test/houseplan-card-version-seam.test.mjs` (source-text): в обоих файлах нет прямых `CARD_VERSION` в перечисленных местах рендера/запросов, кроме объявления, `hp_retry` и `console.info`.
 - `test/png-identical.test.mjs`: два одинаковых буфера → 0; одно отличие → 1; разный размер → отказ.
-- `test/docs-accept.test.mjs`: `--identical` с идентичными кадрами обновляет только fingerprint; с отличием — код 1, манифест нетронут (через инъекцию компаратора).
+- `test/docs-accept.test.mjs`: `--identical` с идентичными кадрами обновляет только fingerprint и `captureScriptSha256` (байты, `imageSha256`, `chromium` — прежние); с отличием — код 1, манифест и кадры нетронуты (через инъекцию съёмки и компаратора).
 - Мутанты: `version-seam-ignores-override` (гард — `card-version.test`), `docs-identical-accepts-any-frame` (компаратор возвращает 0 всегда — гард `png-identical.test`).
 
 ## 9. Совместимость и откат
@@ -81,7 +81,7 @@ export function displayVersion(fallback: string): string {
 
 - AC1. При заданном override golden-кадры с версией не зависят от `CARD_VERSION`: после bump версии в следующем кандидате golden даёт 0 отличий (доказательство — первый релиз-кандидат после слияния; до него — тест seam + переприёмка §7).
 - AC2. Без override `displayVersion(CARD_VERSION) === CARD_VERSION` во всех точках (тест seam); `release-contract` читает константы обоих файлов без изменений.
-- AC3. `docs:accept --identical`: идентичные кадры → только fingerprint в манифесте, `check-docs --screenshots=strict` зелёный; ≥1 отличающийся пиксель → код 1, манифест нетронут (unit + прогон на реальных кадрах текущего дерева).
+- AC3. `docs:accept --identical`: идентичные кадры → только fingerprint и `captureScriptSha256` в манифесте, `check-docs --screenshots=strict` зелёный; ≥1 отличающийся пиксель → код 1, манифест нетронут (unit + прогон на реальных кадрах текущего дерева).
 - AC4. Golden-эталоны с версией переприняты один раз с `Baseline-Reviewed:`; `docs/TESTING.md`, `demo/golden/README.md`, `docs/DEVELOPMENT.md` описывают seam и `--identical`.
 - AC5. Оба мутанта §8 пойманы штатным раннером.
 - AC6. UX/i18n/модель данных/перф не затронуты (`User-Visible: no`); i18n-ключ `gs.about_version` и его текст не меняются.
@@ -94,7 +94,7 @@ export function displayVersion(fallback: string): string {
 
 ## 11. Затронутые файлы
 
-`src/card-version.ts` (новый), `src/houseplan-card.ts`, `src/houseplan-editor-runtime.ts`, `demo/golden/harness.mjs`, `demo/docs/capture.mjs` (`--out`), `scripts/docs-accept.mjs`, `scripts/png-identical.mjs` (новый), тесты, `demo/golden/baselines/**` (переприёмка), `docs/TESTING.md`, `docs/DEVELOPMENT.md`, `demo/golden/README.md`, `docs/specs/README.md`.
+`src/card-version.ts` (новый), `src/houseplan-card.ts`, `src/houseplan-editor-runtime.ts`, `demo/golden/harness.mjs`, `scripts/docs-accept.mjs`, `docs/images/screenshots.json` (fingerprint-only, через `--identical`), `scripts/png-identical.mjs` (новый), тесты, `demo/golden/baselines/**` (переприёмка), `docs/TESTING.md`, `docs/DEVELOPMENT.md`, `demo/golden/README.md`, `docs/specs/README.md`.
 
 ## 12. Принятые предположения
 
