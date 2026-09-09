@@ -474,6 +474,64 @@ jobs:
             --add-label S6-in-progress --remove-label S7-code-review
           echo "S7-code-review -> S6-in-progress (ревью не запускалось)"
 
+      # Мутанты по диффу бегут только по запросу (#510): до ревью конвейер
+      # запускает Validate с мутантами на материале и ждёт его. Красный или
+      # пропавший прогон возвращает задачу автору без ревью — цикл не
+      # тратится на код, который CI уже отверг (08.09: #437 дважды ушёл в S6
+      # после запущенного 15-минутного ревью). Этап spec кода не несёт и
+      # гейт не проходит; повторное применение вердикта (#499) — тоже: там
+      # слияние само дожидается Validate на кандидате.
+      - name: Validate с мутантами на материале
+        id: gate
+        if: steps.rebase.outputs.conflict != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          REUSE: ${{ steps.reuse.outputs.reuse }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          SHA: ${{ steps.material.outputs.sha }}
+        run: |
+          if [ "$STAGE" != "code" ] || [ "$REUSE" = "true" ] || [ -z "$BRANCH" ]; then
+            echo "гейт не применяется: этап $STAGE, reuse=${REUSE:-false}, ветка ${BRANCH:-dev}"
+            { echo 'proceed=true'; echo 'result=skipped'; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if node scripts/validate-gate.mjs --repo="${{ github.repository }}" --ref="$BRANCH" --sha="$SHA"; then
+            echo 'proceed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'proceed=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate красный — вернуть автору без ревью
+        if: steps.rebase.outputs.conflict != 'true' && steps.gate.outputs.proceed != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          SHA: ${{ steps.material.outputs.sha }}
+          RESULT: ${{ steps.gate.outputs.result }}
+          NOTE: ${{ steps.gate.outputs.note }}
+          URL: ${{ steps.gate.outputs.url }}
+        run: |
+          short=$(git rev-parse --short "$SHA")
+          cat > /tmp/gate.md <<EOF
+          **Ревью не запускалось:** Validate с мутантами на материале \`$short\` (ветка \`$BRANCH\`) — **$RESULT**: $NOTE.${URL:+ [Прогон]($URL).} Код никто не читал, вердикта нет, цикл ревью не израсходован.
+
+          Гейт стоит до ревью намеренно (#510): красный CI всё равно вернул бы задачу, но уже после потраченного ревью.
+
+          Задача переведена в \`S6-in-progress\`. Осталось:
+
+          1. починить то, что назвал прогон, и запушить ветку **одним** коммитом-заходом;
+          2. дождаться зелёного дешёвого Validate на пуше;
+          3. вернуть метку \`S7-code-review\` — конвейер сам запустит Validate с мутантами и ревью.
+
+          [Прогон конвейера](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+          EOF
+          gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/gate.md
+          gh issue edit "$NUM" --repo "${{ github.repository }}" \
+            --add-label S6-in-progress --remove-label S7-code-review
+          echo "S7-code-review -> S6-in-progress (Validate с мутантами: $RESULT)"
+
       # Ревьюер перегонял tsc, юниты и сборку заново в каждом раунде, хотя
       # Validate на том же SHA уже зелёный (#343). Это не тщательность: бюджет
       # ревью тратится на повторение CI вместо чтения кода.
@@ -483,7 +541,7 @@ jobs:
       # ребейза SHA другой, прогона для него нет — и ревьюер честно гоняет сам.
       - name: Зелёные гейты на этом SHA
         id: validated
-        if: steps.rebase.outputs.conflict != 'true'
+        if: steps.gate.outputs.proceed == 'true'
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
         run: |
@@ -512,21 +570,21 @@ jobs:
       # Зависимости ставятся ПОСЛЕ переключения на ветку задачи: lockfile мог
       # измениться именно в ней, и установка по копии из dev дала бы не то дерево.
       - name: Установить зависимости
-        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
         run: npm ci
 
       # Браузер нужен не всякому ревью (см. правило выбора гейтов в промпте),
       # но когда нужен — качать его заново дороже, чем держать в кэше.
       - name: Кэш браузеров Playwright
         id: pw
-        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Установить Chromium
-        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true' && steps.pw.outputs.cache-hit != 'true'
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true' && steps.pw.outputs.cache-hit != 'true'
         # Без --with-deps: системные библиотеки Chromium предустановлены в
         # образе ubuntu-latest, а apt при промахе кэша съедал минуты из бюджета
         # ревью и подолгу перебирал недоступное azure-зеркало (#175). Если
@@ -542,7 +600,7 @@ jobs:
       # скачан в _actions к началу job), контрольную сумму — из манифеста релиза.
       - name: Установить Claude Code детерминированно
         id: claude_bin
-        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
         run: |
           src=$(ls "$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-*/v1/src/entrypoints/run.ts 2>/dev/null | head -1)
           ver=$(grep -oE 'claudeCodeVersion = "[0-9]+\.[0-9]+\.[0-9]+"' "$src" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
@@ -559,7 +617,7 @@ jobs:
 
       - name: Review
         id: review
-        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
         uses: anthropics/claude-code-action@v1
         env:
           # Вне рабочей копии: восстановление дерева ревьюером не должно
@@ -783,7 +841,7 @@ jobs:
       # Ревьюер пишет только в docs/reviews/. Что именно попадёт в коммит,
       # решает этот шаг, а не модель: всё остальное откатывается.
       - name: Опубликовать документ ревью
-        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
         env:
           TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ steps.branch.outputs.name }}
@@ -945,7 +1003,7 @@ jobs:
       # достижим там из необновлённой локальной ветки. Читателю отчёта от этого
       # пользы нет — он достанет только то, что есть на origin.
       - name: "Материал раунда воспроизводим (#413)"
-        if: steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
         env:
           NUM: ${{ github.event.issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
@@ -962,7 +1020,7 @@ jobs:
           git show "origin/$target:$doc" | node scripts/review-doc-guard.mjs --doc=-
       - name: Решение по вердикту
         id: decide
-        if: steps.rebase.outputs.conflict != 'true'
+        if: steps.gate.outputs.proceed == 'true'
         env:
           OUT: ${{ steps.review.outputs.structured_output }}
           STAGE: ${{ needs.guard.outputs.stage }}
@@ -1017,7 +1075,7 @@ jobs:
       # dev действительно ушёл и вердикт зелёный, то есть слияние вот-вот
       # случится (#364).
       - name: dev ушёл вперёд, пока шло ревью
-        if: steps.rebase.outputs.conflict != 'true' && needs.guard.outputs.stage == 'code'
+        if: steps.gate.outputs.proceed == 'true' && needs.guard.outputs.stage == 'code'
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           NUM: ${{ github.event.issue.number }}
@@ -1063,7 +1121,7 @@ jobs:
             --issue="$NUM" --repo="${{ github.repository }}"
 
       - name: Переставить метку
-        if: steps.rebase.outputs.conflict != 'true'
+        if: steps.gate.outputs.proceed == 'true'
         env:
           # Именно PAT: с GITHUB_TOKEN следующий шаг конвейера не запустится.
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}

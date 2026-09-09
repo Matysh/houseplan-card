@@ -79,8 +79,9 @@ function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseReject
       if (ref === 'dev' && rejects > 0) { rejects -= 1; devIndex += 1; return false; }
       return true;
     },
-    waitValidate: async (sha) => {
-      calls.push(['validate', sha]);
+    dispatchValidate: (ref) => { calls.push(['dispatch', ref]); },
+    waitValidate: async (sha, options) => {
+      calls.push(['validate', sha, options?.event]);
       const result = validate[Math.min(validateIndex, validate.length - 1)] || 'green';
       validateIndex += 1;
       return { result, url: `https://run/${sha}` };
@@ -108,8 +109,12 @@ test('эксперимент аудита: dev двигался, ребейз ч
   const validateAt = order.indexOf('validate');
   const devPushAt = ops.calls.findIndex((c) => c[0] === 'push' && c[2] === 'dev');
   assert.ok(validateAt >= 0 && validateAt < devPushAt, `Validate (${validateAt}) раньше push в dev (${devPushAt})`);
-  // кандидат сначала опубликован в ветку (от этого push стартует Validate)
+  // кандидат сначала опубликован в ветку, затем на ней запрошен Validate с мутантами (#510)
   assert.deepEqual(ops.calls.find((c) => c[0] === 'push'), ['push', 'cand-mat-on-dev1', 'issue/1-x', 'mat']);
+  const dispatchAt = order.indexOf('dispatch');
+  assert.ok(dispatchAt > order.indexOf('push') && dispatchAt < validateAt, 'dispatch после пуша кандидата и до ожидания');
+  assert.deepEqual(ops.calls[dispatchAt], ['dispatch', 'issue/1-x']);
+  assert.deepEqual(ops.calls[validateAt], ['validate', 'cand-mat-on-dev1', 'workflow_dispatch'], 'ждём именно dispatch-прогон, не push');
   assert.deepEqual(ops.calls.find((c) => c[0] === 'push' && c[2] === 'dev'), ['push', 'cand-mat-on-dev1', 'dev', 'dev1']);
 });
 
@@ -198,6 +203,7 @@ test('на настоящем git: чистый ребейз с равным pat
       const r = spawnSync('git', ['-C', work, 'push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, 'origin', `${sha}:refs/heads/${ref}`], { encoding: 'utf8' });
       return r.status === 0;
     };
+    ops.dispatchValidate = (ref) => { calls.push(['dispatch', ref]); };
     ops.waitValidate = async (sha) => { calls.push(['validate', sha]); return { result: 'green', url: 'https://run/1' }; };
     ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 40)]); };
     ops.log = () => {};

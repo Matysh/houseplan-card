@@ -3694,7 +3694,7 @@ const MUTANT_DEFINITIONS = [
       + 'it without a green Validate on that SHA is the false-green the audit reproduced (#492 §4)',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: '    const { result, url } = await ops.waitValidate(candidate);',
+      find: "    const { result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' });",
       replace: "    const { result, url } = { result: 'green', url: 'skipped' };  // mutant: no validation",
     }],
   },
@@ -8123,6 +8123,50 @@ const MUTANT_DEFINITIONS = [
         + '      return attachment;\n'
         + '    }\n',
       replace: '    // mutant: the warm factory is deferred like a cold import\n',
+    }],
+  },
+  {
+    id: 'mutants-run-on-every-push',
+    guard: 'node --test --test-name-pattern="#510" test/classify-changes.test.mjs',
+    because: 'mutants by diff belong to the review candidate, the PR, the nightly run and the beta '
+      + 'candidate — an ordinary push must not spend 3×8 runner minutes on them (#510 AC1)',
+    patches: [{
+      file: 'scripts/classify-changes.mjs',
+      find: "  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true' || String(mutantsInput) === 'true';\n  return hasReleaseTrailer(headMessage);\n}",
+      replace: "  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true' || String(mutantsInput) === 'true';\n  return true; // mutant: every push\n}",
+    }],
+  },
+  {
+    id: 'review-starts-on-red-validate',
+    guard: 'node --test test/validate-gate.test.mjs',
+    because: 'a red dispatch run on the material must return the task without a review; treating '
+      + 'any completed run as green spends the review cycle on code CI already rejected (#510 AC2)',
+    patches: [{
+      file: 'scripts/validate-gate.mjs',
+      find: "    result: run.conclusion === 'success' ? 'green' : 'red',",
+      replace: "    result: 'green', // mutant: completed means green",
+    }],
+  },
+  {
+    id: 'review-trusts-push-run-without-mutants',
+    guard: 'node --test test/validate-gate.test.mjs',
+    because: 'a green push run on the same SHA holds no mutants and is not proof; the gate must '
+      + 'dispatch the mutant run instead of accepting it (#510 AC2)',
+    patches: [{
+      file: 'scripts/validate-gate.mjs',
+      find: "  return run?.event === 'workflow_dispatch';",
+      replace: "  return !!run; // mutant: any run counts",
+    }],
+  },
+  {
+    id: 'merge-waits-push-run-without-mutants',
+    guard: 'node --test test/merge-candidate.test.mjs',
+    because: 'the merged candidate is a new tree; the merge must dispatch the mutant run on it and '
+      + 'wait for that run, not for the push run that carries no mutants (#510 AC3)',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: "    ops.dispatchValidate(branch);\n    ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n    const { result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' });",
+      replace: "    ops.log(`Validate на кандидате ${candidate.slice(0, 8)} — ждём`);\n    const { result, url } = await ops.waitValidate(candidate); // mutant: push run, no dispatch",
     }],
   },
   {

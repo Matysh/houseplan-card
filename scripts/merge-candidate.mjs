@@ -127,12 +127,20 @@ export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) =
       if (/stale info|rejected|fetch first|lease/i.test(r.stderr)) return false;
       throw new Error(`git push ${ref}: ${r.stderr}`);
     },
-    waitValidate: async (sha) => {
+    // Мутанты по диффу бегут только по запросу (#510): кандидат после ребейза —
+    // новое дерево, поэтому слияние запускает Validate с мутантами само и ждёт
+    // именно этот dispatch-прогон; push-прогон на том же SHA их не содержит.
+    dispatchValidate: (ref) => {
+      const r = sh('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', 'mutants=true']);
+      if (r.status !== 0) throw new Error(`gh workflow run ${workflow}: ${r.stderr || r.stdout}`);
+    },
+    waitValidate: async (sha, { event = 'workflow_dispatch' } = {}) => {
       const started = now();
       let runId = null;
       while (now() - started < VALIDATE_TOTAL_MS) {
-        const r = sh('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', 'databaseId,status,conclusion,url', '--limit', '5']);
-        const runs = r.status === 0 && r.stdout ? JSON.parse(r.stdout) : [];
+        const r = sh('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', 'databaseId,status,conclusion,url,event', '--limit', '10']);
+        const all = r.status === 0 && r.stdout ? JSON.parse(r.stdout) : [];
+        const runs = all.filter((x) => !event || x.event === event);
         const run = runs.find((x) => x.databaseId === runId) || runs[0];
         if (run) {
           runId = run.databaseId;
@@ -200,8 +208,10 @@ export async function mergeCandidate({ branch, material, issue, ops, maxAttempts
     tip = candidate;
     if (!patchIdEqual) return finish(decideMerge({ fresh: true, devMoved: true, patchIdEqual: false }), { candidate, devNow });
 
-    ops.log(`Validate на кандидате ${candidate.slice(0, 8)} — ждём`);
-    const { result, url } = await ops.waitValidate(candidate);
+    // мутанты по диффу — по запросу (#510): dispatch на ветке, где теперь стоит кандидат
+    ops.dispatchValidate(branch);
+    ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);
+    const { result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' });
     let decision = decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: result, attempt, maxAttempts });
     if (decision.action !== 'push') return finish(decision, { candidate, devNow, runUrl: url });
 

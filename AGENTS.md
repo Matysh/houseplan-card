@@ -387,6 +387,18 @@ demo/smoke_<name>.mjs`. A red smoke that reaches the review costs a cycle; run
 locally it costs a minute. Precedent: on #89 a fixture error lived through a
 whole review round that a local run would have caught immediately.
 
+**One handoff, one push (#510).** Run `node scripts/process-gate.mjs --issues`
+locally with `gh` available before pushing (without `gh` the hook cannot check the
+issue status and stays silent). After `S7-code-review` do not push to the branch
+until the verdict or the return arrives: a push on top of a running review cancels
+it (10–20 runner minutes) and, after the material is fixed, also the merge (#312).
+Set `S7` once per round, not after every CI fix: the pipeline now runs Validate
+with the diff mutants on the material itself and returns a red one to `S6` without
+spending a review cycle. Mutants by diff no longer run on ordinary pushes — only
+on the review candidate, the merge candidate, the beta candidate, PRs and the
+nightly run — so a routine push costs ~3 minutes; 08–09.09 they cost 48 of 56
+Validate job-hours and were mostly cancelled by the next push.
+
 The full smoke set, `golden` and `performance_smoke` still belong to the
 pre-beta run — which is then mandatory and complete. WSL runs of the full HA
 harness (`~/houseplan-card`, venv) are advisory; **the canon does not move**:

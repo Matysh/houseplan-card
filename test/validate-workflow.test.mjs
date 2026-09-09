@@ -366,14 +366,21 @@ test('релизные гейты требуют трейлер Release: и св
   assert.match(read('publish-prerelease.yml'), /check-docs\.mjs --screenshots=strict/);
 });
 
-test('мутанты по диффу гоняются на каждом пуше с базы диапазона (#475 AC4)', () => {
+test('мутанты по диффу гоняются по запросу с базы диапазона (#475 AC4, #510 AC1)', () => {
   const workflow = read('validate.yml');
   const start = workflow.indexOf('\n  changed_mutants:\n');
   assert.ok(start > 0, 'нет job changed_mutants');
   const job = workflow.slice(start, workflow.indexOf('\n  frontend:\n', start));
   // Триггер — и фронтенд, и бэкенд: бэкенд-мутанты патчат .py и охраняются
   // pytest, а дифф только по ним даёт backend=true без frontend=true (ревью r1).
-  assert.match(job, /if: needs\.changes\.outputs\.frontend == 'true' \|\| needs\.changes\.outputs\.backend == 'true' \|\| needs\.changes\.outputs\.mutants == 'true'/);
+  // #510: job идёт ровно тогда, когда мутанты запрошены — dispatch mutants/full,
+  // PR, ночь, кандидат беты; обычный push обходится дешёвыми гейтами. Отбор по
+  // файлам живёт внутри job (`--changed`): при запросе она обязана исполниться,
+  // иначе гейт ревью не отличит «нечего гонять» от «не запрашивали» (ревью ТЗ r1).
+  assert.match(job, /\n    if: needs\.changes\.outputs\.mutants_requested == 'true'\n/);
+  assert.match(workflow, /mutants_requested: \$\{\{ steps\.heavy\.outputs\.mutants_requested \}\}/);
+  assert.match(workflow, /MUTANTS_INPUT: \$\{\{ inputs\.mutants \}\}/);
+  assert.match(workflow, /\n      mutants:\n        description: [^\n]*\n        type: boolean\n        default: false\n/, 'вход workflow_dispatch mutants, по умолчанию выключен');
   // Третий дизъюнкт (ТЗ §2, ревью r1): правка одного реестра мутантов — тоже
   // вход гейта, классификатор обязан выдавать `mutants` по этому файлу.
   assert.match(workflow, /mutants: \$\{\{ steps\.classify\.outputs\.mutants \}\}/);

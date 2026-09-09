@@ -601,3 +601,35 @@ test('конвейер: зелёный вердикт применяется п�
   // Ревьюер привязан к SHA материала — сам подтягивать новее не должен.
   assert.match(workflow, /Материал ревью — ровно\s+`\$\{\{ steps\.material\.outputs\.sha \}\}`/);
 });
+
+test('#510 AC2: конвейер запускает Validate с мутантами на материале и не ревьюит красный', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const at = (marker) => { const i = workflow.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
+  const material = at('      - name: Зафиксировать SHA материала ревью\n');
+  const reuse = at('      - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"\n');
+  const gate = at('      - name: Validate с мутантами на материале\n');
+  assert.ok(material < reuse && reuse < gate, 'gate читает steps.reuse.outputs — стоит после шага reuse (ревью ТЗ r1)');
+  const back = at('      - name: Validate красный — вернуть автору без ревью\n');
+  const deps = at('      - name: Установить зависимости\n');
+  const review = at('      - name: Review\n');
+  assert.ok(material < gate && gate < back && back < deps && deps < review, 'гейт стоит после фиксации материала и до установки зависимостей/ревью');
+  const gateStep = workflow.slice(gate, back);
+  assert.match(gateStep, /node scripts\/validate-gate\.mjs --repo="\$\{\{ github\.repository \}\}" --ref="\$BRANCH" --sha="\$SHA"/);
+  assert.match(gateStep, /if \[ "\$STAGE" != "code" \] \|\| \[ "\$REUSE" = "true" \]/, 'этап spec и reuse гейт не проходят');
+  assert.match(gateStep, /SHA: \$\{\{ steps\.material\.outputs\.sha \}\}/, 'проверяется именно материал');
+  // skip-ветка (spec/reuse) даёт proceed=true: ревью идёт, возврата S7→S6 нет (ревью ТЗ r2)
+  assert.match(gateStep, /\{ echo 'proceed=true'; echo 'result=skipped'; \}/, 'skipped = proceed');
+  assert.doesNotMatch(workflow.slice(back), /if:[^\n]*steps\.gate\.outputs\.result/, 'условия шагов — только по proceed, result идёт в текст комментария');
+  const backStep = workflow.slice(back, deps);
+  assert.match(backStep, /if: steps\.rebase\.outputs\.conflict != 'true' && steps\.gate\.outputs\.proceed != 'true'/);
+  assert.match(backStep, /--add-label S6-in-progress --remove-label S7-code-review/);
+  assert.match(backStep, /цикл ревью не израсходован/);
+  // всё, что после гейта, условно по proceed — включая перестановку метки и слияние
+  const after = workflow.slice(deps);
+  assert.doesNotMatch(after, /if: steps\.rebase\.outputs\.conflict != 'true'/, 'после гейта нет шагов, условных только по конфликту');
+  for (const name of ['Установить зависимости', 'Review', 'Решение по вердикту', 'Слить ветку в dev', 'Переставить метку']) {
+    const i = at(`      - name: ${name}\n`);
+    const chunk = workflow.slice(i, i + 400);
+    assert.match(chunk, /if: (needs\.guard\.outputs\.stage == 'code' && )?steps\.(gate\.outputs\.proceed == 'true'|decide\.outputs\.green == 'true')/, `${name}: условие по proceed/зелёному`);
+  }
+});

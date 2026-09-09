@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import {
-  CHECK_OF_OUTPUT, CLASSIFIERS, OUTPUTS, PERF_PROFILES, classifyAll, classifyChanges, formatOutputs,
+  CHECK_OF_OUTPUT, CLASSIFIERS, OUTPUTS, PERF_PROFILES, classifyAll, classifyChanges, formatOutputs, mutantsRequested,
 } from '../scripts/classify-changes.mjs';
 import { manifest } from '../scripts/check-inputs.mjs';
 import { fileURLToPath } from 'node:url';
@@ -160,7 +160,20 @@ test('CLI --heavy читает событие и сообщение из окр�
   const run = (env) => execFileSync(process.execPath, ['scripts/classify-changes.mjs', '--heavy'], {
     encoding: 'utf8', env: { ...process.env, ...env },
   }).trim();
-  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'fix: x\n\nIssue: #1\nUser-Visible: no' }), 'heavy=false');
-  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'x\n\nRelease: v1.2.3' }), 'heavy=true');
-  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true');
+  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'fix: x\n\nIssue: #1\nUser-Visible: no' }), 'heavy=false\nmutants_requested=false');
+  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'x\n\nRelease: v1.2.3' }), 'heavy=true\nmutants_requested=true');
+  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true\nmutants_requested=true');
+  // #510: мутанты по кнопке без полного набора — вызов конвейера ревью и слияния
+  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'false', MUTANTS_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=false\nmutants_requested=true');
+});
+
+test('#510 AC1: мутанты по диффу запрашиваются кандидатом, PR, ночью и по кнопке — не обычным пушем', () => {
+  const t = (env) => mutantsRequested(env);
+  assert.equal(t({ eventName: 'push', headMessage: 'fix: x\n\nIssue: #1\nUser-Visible: no' }), false, 'обычный push');
+  assert.equal(t({ eventName: 'push', headMessage: 'x\n\nRelease: v1.2.3' }), true, 'кандидат беты');
+  assert.equal(t({ eventName: 'pull_request' }), true);
+  assert.equal(t({ eventName: 'schedule' }), true);
+  assert.equal(t({ eventName: 'workflow_dispatch', fullInput: 'true' }), true);
+  assert.equal(t({ eventName: 'workflow_dispatch', fullInput: 'false', mutantsInput: 'true' }), true);
+  assert.equal(t({ eventName: 'workflow_dispatch', fullInput: 'false', mutantsInput: 'false' }), false, 'кнопка без запроса');
 });
