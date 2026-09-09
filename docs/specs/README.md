@@ -30,6 +30,7 @@
 |---|---|
 | [#506](https://github.com/Matysh/houseplan-card/issues/506) Запуск карточки без повторного layout из-за lazy summary runtime | [506-startup-performance.md](506-startup-performance.md) |
 | [#510](https://github.com/Matysh/houseplan-card/issues/510) Мутанты по диффу только на кандидате ревью; ревью ждёт зелёный Validate; правила хендоффа | [510-mutants-on-candidate-and-review-waits-validate.md](510-mutants-on-candidate-and-review-waits-validate.md) |
+| [#514](https://github.com/Matysh/houseplan-card/issues/514) E2E на реальном HA как гейт стабильного релиза | [514-e2e-stable-release-gate.md](514-e2e-stable-release-gate.md) |
 | [#512](https://github.com/Matysh/houseplan-card/issues/512) Текст версии через seam вне golden-кадров; `docs:accept --identical` | [512-golden-version-seam-and-docs-identical-accept.md](512-golden-version-seam-and-docs-identical-accept.md) |
 | [#498](https://github.com/Matysh/houseplan-card/issues/498) Backend hardening: точная квота upload, ключи палитры в support-пакете, предел цепочки ссылок SVG | [498-backend-hardening-quota-palette-svg-refs.md](498-backend-hardening-quota-palette-svg-refs.md) |
 | [#495](https://github.com/Matysh/houseplan-card/issues/495) Результат Import согласован с commit; удаление маршрутов робота доходит до Store | [495-import-commit-and-route-runs-durability.md](495-import-commit-and-route-runs-durability.md) |
