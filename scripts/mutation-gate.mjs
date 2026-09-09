@@ -8111,6 +8111,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'summary-dialog-drops-flex-content',
+    guard: 'node demo/smoke_summary_dialog_scroll.mjs',
+    because: 'in Home Assistant the settings dialog scrolls only because ha-dialog lays its body out as a '
+      + 'flex column; without flex-content the editor is unbounded and wheel/touch die at it (#508 AC1)',
+    patches: [{
+      file: 'src/summary-panel-editor.ts',
+      find: "      .title=${t('summary.settings')} wide flex-content",
+      replace: "      .title=${t('summary.settings')} wide",
+    }],
+  },
+  {
+    id: 'hp-dialog-ignores-flex-content',
+    guard: 'node demo/smoke_summary_dialog_scroll.mjs',
+    because: 'the attribute is only a promise until hp-dialog forwards it to ha-dialog; a shell that '
+      + 'swallows flex-content leaves the HA branch exactly as broken as before (#508 AC1)',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: "        ?flexcontent=${this.flexContent}\n        .preventScrimClose=${!this.dismissOnScrim}\n        .ariaLabelledBy=${this._titleId}\n        @opened=${this._focusInitial}",
+      replace: "        .preventScrimClose=${!this.dismissOnScrim}\n        .ariaLabelledBy=${this._titleId}\n        @opened=${this._focusInitial}",
+    }],
+  },
+  {
     id: 'version-seam-ignores-override',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/card-version.test.mjs',
     because: 'the harness pins the displayed version through the seam; a seam that always returns '

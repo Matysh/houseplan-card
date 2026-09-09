@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The summary panel settings dialog scrolls again in Home Assistant — with the
+  mouse wheel on desktop and with a swipe on phones; the header and the action
+  buttons stay in place
+  ([#508](https://github.com/Matysh/houseplan-card/issues/508)).
+
 ## v1.73.0 — 2026-09-09
 
 - House Plan opens from its own page in the Home Assistant sidebar, without

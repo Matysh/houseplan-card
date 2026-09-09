@@ -188,6 +188,12 @@ the same profiler available between stable promotions.
    initial focus, Escape close event and restore-focus session. Focus sessions
    are scoped to a card shadow root so nested dialogs return to their parent
    trigger and dialog replacement still returns to the original outside opener.
+   `flex-content` forwards ha-dialog's `flexcontent`, making HA's `.body` a
+   flex column so a consumer that is itself a scroll container (`min-height: 0`,
+   `overflow: auto`, `overscroll-behavior: contain`) is height-bound and scrolls
+   by itself; without it Chromium stops wheel and touch scroll chaining at the
+   never-scrolling child (#508). The summary-panel settings dialog uses it; the
+   native branch already bounds the surface with its own flex column.
    Its footer wrapper is a full-width slot item: HA lays the footer slot out as
    flex, so flattening that wrapper would shrink action rows to their content.
    The wrapper opts HA's title-height custom property into content sizing so

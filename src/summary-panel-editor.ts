@@ -61,7 +61,7 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
         ...dialog, localShow: (event.target as HTMLInputElement).checked,
       })} /></label>`;
   return html`<hp-dialog .hass=${host.hass} data-kind="summary"
-      .title=${t('summary.settings')} wide
+      .title=${t('summary.settings')} wide flex-content
       dismiss-on-scrim aria-busy=${String(dialog.busy)}
       @hp-close=${close}>
     <div class="body summary-editor" @click=${() => context.closeSource()}>

@@ -38,6 +38,12 @@ export class HpDialog extends LitElement {
     alert: { type: Boolean, reflect: true },
     describedBy: { type: String, attribute: 'described-by' },
     dismissOnScrim: { type: Boolean, attribute: 'dismiss-on-scrim' },
+    // #508: ha-dialog scrolls its own `.body`; a consumer whose content is
+    // itself a scroll container (overflow:auto + overscroll-behavior:contain)
+    // must be height-bound by a flex column, or Chromium stops scroll chaining
+    // at the never-scrolling child and neither wheel nor touch reaches HA's
+    // scroller. `flex-content` forwards ha-dialog's public `flexcontent`.
+    flexContent: { type: Boolean, reflect: true, attribute: 'flex-content' },
     hass: { attribute: false },
   };
 
@@ -226,6 +232,7 @@ export class HpDialog extends LitElement {
   alert = false;
   describedBy = '';
   dismissOnScrim = false;
+  flexContent = false;
   hass: any = null;
 
   private _opener: HTMLElement | null = null;
@@ -505,6 +512,7 @@ export class HpDialog extends LitElement {
           .hass=${this.hass}
           .open=${true}
           width=${this.wide ? 'medium' : 'small'}
+          ?flexcontent=${this.flexContent}
           .preventScrimClose=${!this.dismissOnScrim}
           .ariaLabelledBy=${this._titleId}
           .ariaDescribedBy=${this.describedBy}
@@ -520,6 +528,7 @@ export class HpDialog extends LitElement {
         .hass=${this.hass}
         .open=${true}
         width=${this.wide ? 'medium' : 'small'}
+        ?flexcontent=${this.flexContent}
         .preventScrimClose=${!this.dismissOnScrim}
         .ariaLabelledBy=${this._titleId}
         @opened=${this._focusInitial}
