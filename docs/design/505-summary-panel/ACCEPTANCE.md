@@ -19,8 +19,12 @@ optional offline wheel. No production HA instance is accessed. The genuine
 `hp-dialog → ha-dialog → wa-dialog → dialog` chain is exercised; only the HA
 app's private loader is exposed, not a replacement dialog implementation.
 
-Author run on Windows/Chromium, product commit `a038149c`:
+Author run on Windows/Chromium, product commit `05778a47` (pre-rebase
+`a038149c`, recorded in the original capture):
 source fingerprint `23ed457d01a2622aae7bb6937116f20f0044b8216b723388ed3dcf85dacd4a1e`.
+Rebase onto dev `2e387ac1` preserved identical frontend source and bundle bytes;
+both unrelated #495 and #505 changelog entries were retained. `gate:small` was
+rerun successfully after the rebase.
 The full capture completed all five paired panel contexts and native/real-HA
 settings in desktop, 320/390px, light/dark and enlarged-text cases. Every settings
 surface/editor/footer had no horizontal overflow and a visible footer; no page
