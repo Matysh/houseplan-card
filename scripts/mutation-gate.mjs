@@ -110,6 +110,75 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'summary-hide-unmounts-before-animation',
+    guard: 'node demo/smoke_summary_panel_polish.mjs',
+    because: '#505 AC3: the outgoing panel must stay mounted and inert until its measured exit animation finishes',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: '    if (!this.presentation.mounted) return nothing;',
+      replace: '    if (!this.presentation.mounted || !this.local.show) return nothing;',
+    }],
+  },
+  {
+    id: 'summary-dialog-loses-wide-shell',
+    guard: 'node demo/smoke_summary_panel_polish.mjs',
+    because: '#505 AC5: widening only inner fields must not pass while the native/HA dialog shell stays narrow',
+    patches: [{
+      file: 'src/summary-panel-editor.ts',
+      find: "      .title=${t('summary.settings')} wide",
+      replace: "      .title=${t('summary.settings')}",
+    }],
+  },
+  {
+    id: 'summary-mobile-ignores-local-off',
+    guard: 'node demo/smoke_summary_panel_polish.mjs',
+    because: '#505 AC8: the real mobile checkbox must be disabled under local off without losing its saved value',
+    patches: [{
+      file: 'src/summary-panel-editor.ts',
+      find: '          .checked=${dialog.draft.show_on_mobile} ?disabled=${!dialog.localShow || dialog.busy}',
+      replace: '          .checked=${dialog.draft.show_on_mobile} ?disabled=${dialog.busy}',
+    }],
+  },
+  {
+    id: 'summary-animation-stale-completion-unguarded',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="reversal snapshots current progress" '
+      + 'test/summary-panel-presentation.test.mjs',
+    because: '#505 AC3/AC4: a cancelled animation promise or timeout must not settle or remove '
+      + 'the newer run after an in-place reversal; both completion ownership checks are removed',
+    patches: [{
+      file: 'src/summary-panel-presentation.ts',
+      find: '      if (token !== this.generation || animation !== this.animation) return;',
+      replace: '      void token; // mutant: stale completion can settle the current run',
+    }],
+  },
+  {
+    id: 'summary-animation-reset-keeps-presentation',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="reset releases resources and stale callbacks" '
+      + 'test/summary-panel-presentation.test.mjs',
+    because: '#505 AC4: an identity/route/disconnect reset must hide the old presentation, '
+      + 'release its animation/timer/listener and prevent a late repaint into the new context',
+    patches: [{
+      file: 'src/summary-panel-presentation.ts',
+      find: '  public reset(): void {\n    this.settle(false);\n    this.side = null;',
+      replace: '  public reset(): void {\n    this.side = null; // mutant: old presentation survives reset',
+    }],
+  },
+  {
+    id: 'summary-animation-ignores-reduced-motion',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="reduced motion settles both directions" '
+      + 'test/summary-panel-presentation.test.mjs',
+    because: '#505 AC4: an already enabled reduced-motion preference must settle entering '
+      + 'and exiting immediately without starting a WAAPI animation or delayed removal timer',
+    patches: [{
+      file: 'src/summary-panel-presentation.ts',
+      find: "    if (!view || media?.matches || typeof element.animate !== 'function') {",
+      replace: "    if (!view || typeof element.animate !== 'function') {",
+    }],
+  },
+  {
     id: 'room-temperature-blank-becomes-zero',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="room temperature draft" test/space-dialog.test.mjs',

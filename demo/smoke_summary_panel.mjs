@@ -15,7 +15,9 @@ const initial = await page.evaluate(async () => {
   const buttons = root().querySelectorAll('.summary-control button');
   buttons[1].click();
   await card.updateComplete;
-  await new Promise((resolve) => requestAnimationFrame(resolve));
+  // Static containment is measured after entry. The focused #505 smoke
+  // separately samples opacity/translation and retained DOM during motion.
+  await new Promise((resolve) => setTimeout(resolve, 320));
   const overlay = root().querySelector('.summary-overlay');
   const stageAfter = root().querySelector('.stage').getBoundingClientRect();
   const box = overlay?.getBoundingClientRect();
@@ -32,6 +34,10 @@ const initial = await page.evaluate(async () => {
   };
 });
 
+// The stage respects the viewport's available height; an inline 900px height
+// cannot force it beyond the viewport. Keep the viewport landscape while
+// giving the deliberately narrower stage enough real height to be portrait.
+await page.setViewportSize({ width: 1200, height: 1000 });
 await page.evaluate(() => {
   const card = window.__card;
   const root = card.shadowRoot || card.renderRoot;
@@ -73,6 +79,7 @@ const smallCardKeepsLocalIntent = await page.evaluate(() => {
     || /space|мест|Platz|espace/i.test(toggle?.title || '');
 });
 
+await page.setViewportSize({ width: 960, height: 640 });
 await page.evaluate(() => {
   const card = window.__card;
   const root = card.shadowRoot || card.renderRoot;
@@ -219,9 +226,12 @@ const settings = await page.evaluate(async () => {
   const openP95 = samples[Math.ceil(samples.length * .95) - 1];
   const result = {
     editorLoadedOnDemand: !!editor,
-    sharedAndLocalControls: !!editor?.querySelector('input[type="text"]')
-      && editor.querySelectorAll('input[type="range"]').length === 2
-      && !!editor.querySelector('input[type="checkbox"]'),
+    sharedAndLocalControls: !!editor?.querySelector('#summary-panel-title')
+      && !!editor.querySelector('input[data-summary-local-show]')
+      && !!editor.querySelector('input[data-summary-mobile-show]'),
+    obsoleteSizeControlsAbsent: editor.querySelectorAll(
+      'input[type="range"], .summary-local-sizes, .summary-sizes-title, .summary-size-reset',
+    ).length === 0,
     closedRowsHaveNoEntityOptions: closedHasNoEntityOptions,
     oneActivePicker,
     pickerClosesAfterSelection: root().querySelectorAll('.summary-source-picker').length === 0,
@@ -297,12 +307,12 @@ const responsiveForm = async ({ width, language, dark, canWrite, kiosk }) => {
     const editor = root.querySelector('hp-dialog .summary-editor');
     const footer = root.querySelector('hp-dialog [slot="footer"]');
     const editorBox = editor.getBoundingClientRect();
-    const controls = [...root.querySelectorAll(
-      'hp-dialog .summary-local-sizes input, hp-dialog .summary-local-sizes button, hp-dialog [slot="footer"] button',
-    )];
+    const controls = [...editor.querySelectorAll(
+      'button, input:not([type="checkbox"]), select, .summary-switch, .summary-drag',
+    ), ...root.querySelectorAll('hp-dialog [slot="footer"] button')];
     const result = {
       noHorizontalOverflow: editor.scrollWidth <= editor.clientWidth + 1,
-      controlsInsideViewport: controls.every((control) => {
+      controlsInsideViewport: controls.length >= 3 && controls.every((control) => {
         const box = control.getBoundingClientRect();
         return box.left >= -1 && box.right <= innerWidth + 1 && box.width >= 44 && box.height >= 44;
       }),
@@ -310,7 +320,7 @@ const responsiveForm = async ({ width, language, dark, canWrite, kiosk }) => {
         && footer.getBoundingClientRect().right <= innerWidth + 1,
       editorInsideViewport: editorBox.left >= -1 && editorBox.right <= innerWidth + 1,
       localOnlyMatchesRole: canWrite && !kiosk
-        ? !editor.querySelector('.rhint') : !!editor.querySelector('.rhint'),
+        ? !editor.querySelector('.summary-local-hint') : !!editor.querySelector('.summary-local-hint'),
       bounds: { left: editorBox.left, right: editorBox.right, viewport: innerWidth },
     };
     card._summary.dialog = null;

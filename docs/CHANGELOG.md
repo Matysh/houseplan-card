@@ -9,6 +9,10 @@
   re-targeting a robot map route now removes its recorded runs from disk as
   well as from memory, so a Home Assistant restart cannot bring them back
   ([#495](https://github.com/Matysh/houseplan-card/issues/495)).
+- The summary panel, its header icons and wide settings dialog now follow the
+  designer's layout. Hiding the panel is animated too; unnecessary size controls
+  are removed from its settings, and the mobile switch is disabled when the panel
+  is hidden on the card ([#505](https://github.com/Matysh/houseplan-card/issues/505)).
 
 ## v1.73.0-beta.7 — 2026-09-09
 

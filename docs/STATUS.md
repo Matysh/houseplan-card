@@ -48,6 +48,12 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
   or bottom, respects native HA mobile mode, and temporarily hides in a small
   card. Shared saves remain revision-checked; read-only and kiosk users receive
   only the local controls.
+  #505 aligns its split control, compact overlay and wide settings dialog with
+  the designer reference. Both entry and exit animate; size controls are absent
+  from this form without changing saved scales, and mobile visibility is
+  disabled under draft local-off. The GitHub issue is the source of workflow
+  status; `docs/design/505-summary-panel/` holds the reference and visual evidence
+  instructions, not a separate backlog.
 - **Presence radars (#485 Stage 1, merged into `dev`):** an optional marker-owned,
   change-aware v1 configuration binds exact HA sources for recognized ESPHome
   LD2450 or explicit Cartesian, polar, range, zone-state and presence-only

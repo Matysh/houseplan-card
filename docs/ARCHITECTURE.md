@@ -1966,6 +1966,21 @@ imported only after the settings button is pressed. It edits one draft; a
 successful revision-checked shared write precedes application of the draft
 local show choice.
 
+The #505 designer-aligned surface stays in the lazy summary graph. Its sheet
+includes the settings-only composition from `summary-panel-editor-style.ts`.
+The runtime installs `summary-panel-dialog-style.ts` in each summary dialog's
+shadow root, scoped to `data-kind="summary"`, without growing the eager shared
+`hp-dialog` graph or styling other dialogs.
+`summary-panel-presentation.ts` owns transient hidden/entering/visible/exiting
+phases, never persistence. One 190 ms opacity/translate animation and bounded
+cleanup timer retain an inert outgoing node, snapshot interrupted motion, and
+discard stale completions. Reduced motion, lifecycle invalidation, backgrounding
+and an ineligible layout settle immediately. The stage camera is not animated
+or remeasured as a consequence of toggling panel visibility. Size preferences
+remain owned by the existing local key; their controls are no longer in the
+summary form. Its mobile checkbox is disabled under draft local-off without
+clearing the stored shared value.
+
 The overlay is not SVG, does not enter camera/content bounds, and performs no
 HA actions. Device totals require an authoritative per-connection registry
 snapshot and deduplicate real parent device ids before visual filters. Clean

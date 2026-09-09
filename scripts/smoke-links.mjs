@@ -28,6 +28,14 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['LoadedSummaryPanelRuntime', 'SummaryPanelPresentation', 'renderSummaryPanelEditor',
+      'summaryPanelCss', 'summaryPanelEditorCss', 'summaryPanelDialogCss', 'summaryIcon'],
+    smokes: ['smoke_summary_panel_polish.mjs'],
+    because: 'the #505 browser witness samples retained exit DOM and actual opacity/translation, '
+      + 'reversal and lifecycle boundaries, then measures the native modal shell and drives '
+      + 'dependent draft toggles without rewriting unrelated per-card scale preferences',
+  },
+  {
     symbols: [
       'confirmedSummaryPanelWriteRecovery', 'summaryPanelEntityIds',
       '_adoptStructuralResponses', 'LoadedSummaryPanelRuntime',

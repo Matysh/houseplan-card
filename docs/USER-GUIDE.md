@@ -246,13 +246,14 @@ View is the state with no editor open. Close the active editor to return to it.
 
 ### Summary panel
 
-The two-part control in View opens **Summary panel settings** with its gear and
-shows or hides the panel with its second button. The panel is off on a new
-screen until you explicitly show it. Its contents are shared for the whole
-House Plan installation; the show/hide choice and the two View size sliders
-belong only to your Home Assistant user and this particular card or sidebar
-panel. A read-only user and kiosk can change those local choices without being
-allowed to edit the shared contents.
+The two-part control at the end of the View header opens **Summary panel
+settings** with its left gear and shows or hides the panel with its right
+sidebar icon. Only the right half is highlighted when the panel is on. In kiosk
+the control floats above the plan. The panel is off on a new screen until you
+explicitly show it. Its contents are shared for the whole House Plan
+installation; the show/hide choice belongs only to your Home Assistant user
+and this particular card or sidebar panel. A read-only user and kiosk can
+change that local choice without being allowed to edit the shared contents.
 
 An administrator can name the panel, add up to ten ordered blocks, show a block
 on every space or one selected space, and add up to twenty values to a block.
@@ -269,14 +270,23 @@ matches and asks you to refine it; the search still covers every entity. Escape
 or a press outside closes the picker without changing the draft. A missing old
 source remains visible until you explicitly replace it.
 
-The two size sliders are saved for the current user and card. Configuration
-refreshes do not reset them. On a narrow screen—or with enlarged system
-text—the label and percentage move above a full-width slider, so Save, Cancel
-and Reset remain reachable without horizontal scrolling. Leaving the House
-Plan page, reconnecting under another user, or changing edit permission closes
-an open summary draft rather than carrying it into the new context.
+The wide settings dialog separates general settings from the block cards.
+Use a block's eye button to show or hide it, its grip or arrow buttons to
+reorder it, and the dashed add buttons to add values or blocks. A source field
+shows its friendly name above the entity ID. On a narrow screen or with
+enlarged text the fields stack; Save and Cancel remain in the footer. There
+are no icon/text size controls in this dialog; previously saved per-card
+sizes are preserved.
 
-The panel floats over the plan without resizing it. It appears on the right
+**Display on mobile devices** is disabled while **Show panel on this card**
+is off. Its previous value is kept, not reset. Both switches are drafts until
+Save; Cancel, Escape or closing the dialog discards their changes. Leaving the
+House Plan page, reconnecting under another user, or changing edit permission
+closes an open summary draft rather than carrying it into the new context.
+
+The compact panel floats over the plan without resizing it, with a separate
+header and scrollable block cards. Showing and hiding it both use a brief
+slide and fade; reduced-motion preferences are respected. It appears on the right
 when the House Plan working area is at least as wide as it is tall and at the
 bottom otherwise. It temporarily hides when the card cannot fit a readable
 panel, and restores itself after the card grows. Turning off **Display on

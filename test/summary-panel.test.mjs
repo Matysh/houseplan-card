@@ -35,12 +35,10 @@ const tr = (key) => key;
 test('#437 keeps the settings form lazy and every summary surface action-free', () => {
   const loaded = readFileSync(new URL('../src/summary-panel-runtime-loaded.ts', import.meta.url), 'utf8');
   const editor = readFileSync(new URL('../src/summary-panel-editor.ts', import.meta.url), 'utf8');
-  const style = readFileSync(new URL('../src/summary-panel-style.ts', import.meta.url), 'utf8');
   const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
   const manifest = JSON.parse(readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'));
   assert.match(card, /import\('\.\/summary-panel-runtime-loaded'\)/);
   assert.match(loaded, /import\('\.\/summary-panel-editor'\)/);
-  assert.match(style, /@media \(prefers-reduced-motion: reduce\)/);
   assert.ok(manifest.lazyFiles.some((path) => path.includes('summary-panel-runtime-loaded-')));
   assert.ok(manifest.initialViewFiles.every((path) => !path.includes('summary-panel')));
   assert.doesNotMatch(card, /from ['"]\.\/summary-panel-editor/);
@@ -50,7 +48,9 @@ test('#437 keeps the settings form lazy and every summary surface action-free', 
     'closed value rows must not contain a full entity option list');
   assert.match(editor, /data-summary-source-owner/);
   assert.doesNotMatch(editor, /maxlength=/i, 'limits count Unicode code points, not UTF-16 units');
-  assert.match(style, /\.summary-editor-row button\s*\{[^}]*min-width:\s*44px;[^}]*height:\s*44px;/s);
+  // #505 measures reduced-motion behaviour and actual editor, switch and
+  // footer hit areas in the summary browser smokes. Neither a media-query
+  // spelling nor a CSS selector proves a Web Animations/DOM contract.
 });
 
 test('#493 entity picker searches the full index while bounding rendered rows', () => {

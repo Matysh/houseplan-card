@@ -11498,7 +11498,6 @@ export class HouseplanCard extends LitElement {
                 <ha-icon icon=${iso ? 'mdi:view-grid-outline' : 'mdi:cube-outline'}></ha-icon>
               </button>`
             : nothing}
-          ${!this._kiosk ? this._summary?.renderControls(false) : nothing}
           <div class="zoomctl">
             <button class="btn zb" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} title=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
             ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
@@ -11521,6 +11520,7 @@ export class HouseplanCard extends LitElement {
                 <ha-icon icon="mdi:help-circle-outline"></ha-icon>
               </button>`
             : nothing}
+          ${!this._kiosk ? this._summary?.renderControls(false) : nothing}
         </div>
         ${this._canEdit && !this._kiosk
           ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"

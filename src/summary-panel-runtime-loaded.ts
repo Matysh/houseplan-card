@@ -18,6 +18,9 @@ import { enqueueSerializedWrite } from './serialized-write-queue';
 import { canonicalizeConfigGeometry } from './coordinate-canonicalization';
 import type { SummaryPanelEditorRenderer } from './summary-panel-editor';
 import { summaryPanelCss } from './summary-panel-style';
+import { summaryPanelDialogCss } from './summary-panel-dialog-style';
+import { summaryIcon } from './summary-panel-icons';
+import { SummaryPanelPresentation } from './summary-panel-presentation';
 import { summaryPanelText } from './summary-panel-i18n';
 import type { SummaryPanelHost } from './summary-panel-host';
 import { stableSummaryPlacementSlot } from './summary-panel-identity';
@@ -87,6 +90,9 @@ export class LoadedSummaryPanelRuntime {
   private lifecycleGeneration = 0;
   private lifecycleIdentity = '';
   private connected = false;
+  private readonly presentation = new SummaryPanelPresentation(() => this.host.requestUpdate());
+  private dialogStyleSheet: CSSStyleSheet | null = null;
+  private readonly styledDialogRoots = new WeakSet<ShadowRoot>();
 
   public constructor(host: unknown) { this.host = host as SummaryPanelHost; }
 
@@ -124,6 +130,8 @@ export class LoadedSummaryPanelRuntime {
     if (kind === 'hidden') {
       if (this.clockTimer) clearTimeout(this.clockTimer);
       this.clockTimer = 0;
+      this.syncPresentation(true);
+      this.host.requestUpdate();
       return;
     }
     this.clock = new Date();
@@ -137,6 +145,8 @@ export class LoadedSummaryPanelRuntime {
     this.loadLocal();
     this.measureLayout();
     this.syncClock();
+    this.ensureDialogStyle();
+    this.presentation.updated(this.host.renderRoot.querySelector<HTMLElement>('.summary-overlay'));
   }
 
   /** Reset an identity-changing draft before the host renders the new context. */
@@ -173,26 +183,25 @@ export class LoadedSummaryPanelRuntime {
     const title = this.config().config?.title;
     if (!title || this.host._mode !== 'view') return nothing;
     return html`<div class="summary-measure" aria-hidden="true" inert>
-      <h2>${title}</h2><section><h3>${this.t('summary.measure_block')}</h3>
+      <h2>${title}</h2><div class="summary-scroll"><section class="summary-block"><h3>${this.t('summary.measure_block')}</h3>
       <div class="summary-value"><span>${this.t('summary.measure_label')}</span>
-        <strong>${this.t('summary.unavailable')}</strong></div></section>
+        <strong>${this.t('summary.unavailable')}</strong></div></section></div>
     </div><div class="summary-safe-probe" aria-hidden="true" inert></div>`;
   }
 
   public renderPanel(): TemplateResult | typeof nothing {
     const resolved = this.config();
     const config = resolved.config;
+    this.syncPresentation();
     if (!config) return nothing;
     const layout = this.layout();
-    const visible = effectiveSummaryVisible({
-      view: this.host._mode === 'view', localShow: this.local.show,
-      showOnMobile: config.show_on_mobile, narrow: this.host.narrow, fits: layout.fits,
-    });
-    if (!visible) return nothing;
+    if (!this.presentation.mounted) return nothing;
     this.ensureMetrics();
     const blocks = visibleSummaryBlocks(config, this.host._space);
     const stop = (event: Event) => event.stopPropagation();
     return html`<aside class="summary-overlay ${layout.side}" aria-label=${config.title}
+        data-phase=${this.presentation.phase} ?inert=${!this.presentation.interactive}
+        aria-hidden=${this.presentation.interactive ? 'false' : 'true'}
         style="--summary-height-cap:${Math.floor(layout.heightCap)}px;--summary-width-cap:${Math.floor(layout.availableWidth)}px;--summary-top:${layout.top}px;--summary-bottom:${layout.bottom}px"
         @click=${stop} @dblclick=${stop} @pointerdown=${stop} @pointerup=${stop}
         @pointermove=${stop} @wheel=${stop}>
@@ -227,13 +236,13 @@ export class LoadedSummaryPanelRuntime {
         @pointerdown=${stop} @pointerup=${stop} @pointermove=${stop} @wheel=${stop}>
       <button type="button" @click=${() => void this.openDialog()}
         title=${this.t('summary.settings')} aria-label=${this.t('summary.settings')}>
-        <ha-icon icon="mdi:cog-outline"></ha-icon>
+        ${summaryIcon('settings')}
       </button>
       <button type="button" class=${this.local.show ? 'on' : ''}
         aria-pressed=${this.local.show ? 'true' : 'false'}
         title=${toggleTitle} aria-label=${toggleTitle}
         @click=${() => this.saveLocal({ show: !this.local.show })}>
-        <ha-icon icon="mdi:view-dashboard-outline"></ha-icon>
+        ${summaryIcon('sidebar')}
       </button>
     </div>`;
   }
@@ -288,6 +297,25 @@ export class LoadedSummaryPanelRuntime {
     root.insertBefore(style, root.firstChild);
   }
 
+  private ensureDialogStyle(): void {
+    const root = this.host.renderRoot.querySelector('hp-dialog[data-kind="summary"]')?.shadowRoot;
+    if (!root || this.styledDialogRoots.has(root)) return;
+    const Sheet = this.host.ownerDocument.defaultView?.CSSStyleSheet;
+    if (Sheet && 'adoptedStyleSheets' in root) {
+      if (!this.dialogStyleSheet) {
+        this.dialogStyleSheet = new Sheet();
+        this.dialogStyleSheet.replaceSync(summaryPanelDialogCss);
+      }
+      root.adoptedStyleSheets = [...root.adoptedStyleSheets, this.dialogStyleSheet];
+    } else {
+      const style = this.host.ownerDocument.createElement('style');
+      style.dataset.hpSummaryShell = 'true';
+      style.textContent = summaryPanelDialogCss;
+      root.appendChild(style);
+    }
+    this.styledDialogRoots.add(root);
+  }
+
   private placementSlot(): string {
     return stableSummaryPlacementSlot(this.host);
   }
@@ -320,6 +348,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private resetLifecycle(): void {
+    this.presentation.reset();
     this.lifecycleGeneration++;
     this.dialog = null;
     this.entityIndex = null;
@@ -711,6 +740,18 @@ export class LoadedSummaryPanelRuntime {
       controlTop: this.host._kiosk ? this.stage.controlTop : 0,
       minimumHeight: this.stage.minimumHeight,
     });
+  }
+
+  private syncPresentation(immediate = false): void {
+    const config = this.config().config;
+    const layout = this.layout();
+    const eligible = !!config && this.host._mode === 'view' && layout.fits
+      && effectiveSummaryVisible({
+        view: true, localShow: true, showOnMobile: config.show_on_mobile,
+        narrow: this.host.narrow, fits: true,
+      });
+    this.presentation.sync(eligible && this.local.show, layout.side,
+      immediate || !eligible || this.host.ownerDocument.visibilityState === 'hidden');
   }
 
   private measureLayout(): void {
