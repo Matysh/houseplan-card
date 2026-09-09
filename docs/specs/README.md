@@ -101,6 +101,7 @@
 
 | Issue | ТЗ |
 |---|---|
+| [#505](https://github.com/Matysh/houseplan-card/issues/505) Сводная панель: дизайнерский прототип и UX-исправления | [505-summary-panel-design-parity.md](505-summary-panel-design-parity.md) |
 | [#493](https://github.com/Matysh/houseplan-card/issues/493) Ограниченный picker и надёжный lifecycle сводной панели | [493-summary-panel-hardening.md](493-summary-panel-hardening.md) |
 | [#437](https://github.com/Matysh/houseplan-card/issues/437) Конфигурируемая сводная панель поверх плана | [437-summary-panel.md](437-summary-panel.md) |
 | [#485](https://github.com/Matysh/houseplan-card/issues/485) Радары присутствия: общий контракт и три этапа | [Общий контракт](485-radar-presence.md) · [Этап 1](485-radar-presence-stage1.md) · [Этап 2](485-radar-presence-stage2.md) · [Этап 3](485-radar-presence-stage3.md) |

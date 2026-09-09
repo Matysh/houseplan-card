@@ -1,0 +1,373 @@
+:root {
+  --sidebar-width: 190px;
+  --global-bar-height: 41px;
+  --toolbar-height: 42px;
+  --blue: #00a5cf;
+  --ink: #303437;
+  --muted: #767b7e;
+  --line: #e7e7e7;
+  --room-fill: #8f979e;
+  --wall-dark: #53585b;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  background: #fff;
+}
+
+body { min-width: 1160px; min-height: 680px; }
+.components-page { min-height: 100vh; overflow: auto; }
+
+.app-shell { display: flex; width: 100vw; height: 100vh; }
+
+.sidebar {
+  position: relative;
+  z-index: 10;
+  flex: 0 0 var(--sidebar-width);
+  height: 100%;
+  border-right: 1px solid var(--line);
+  background: #fff;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  height: var(--global-bar-height);
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  gap: 12px;
+}
+
+.brand-name { font-size: 16px; font-weight: 500; color: #242424; }
+.nav-icon { width: 19px; text-align: center; color: #7b7f80; font-size: 17px; font-weight: 700; }
+.hamburger { font-size: 15px; transform: scaleX(1.1); }
+.plan-glyph, .active .nav-icon { color: var(--blue); }
+.lightning { font-size: 23px; }
+
+.side-nav { padding-top: 7px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 12px;
+  gap: 11px;
+  color: #2e3032;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+.nav-item.active {
+  margin: 0 3px;
+  padding-left: 9px;
+  border-radius: 3px;
+  color: var(--blue);
+  background: #d9f1f7;
+}
+.sidebar-footer { position: absolute; left: 0; right: 0; bottom: 8px; }
+.sidebar-footer .nav-item { position: relative; }
+.badge {
+  position: absolute;
+  right: 11px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  color: #fff;
+  background: #ff9900;
+  font-size: 10px;
+}
+.profile { height: 38px; }
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  margin-left: -5px;
+  border-radius: 50%;
+  color: #328496;
+  background: #d1f2fb;
+  font-weight: 400;
+}
+
+.workspace { position: relative; display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; height: 100%; }
+.global-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--global-bar-height);
+  padding: 0 14px 0 10px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  flex: 0 0 var(--global-bar-height);
+}
+.view-switcher { display: flex; align-self: stretch; gap: 14px; }
+.view-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  color: #555;
+  font-size: 16px;
+}
+.view-icon.selected::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  content: "";
+  background: #2d2d2d;
+}
+.global-actions { display: flex; align-items: center; gap: 24px; font-size: 20px; color: #222; }
+
+.ha-view-tabs--compact {
+  align-items: stretch;
+  align-self: stretch;
+  height: var(--global-bar-height);
+  padding-left: 0;
+  gap: 14px;
+  border-bottom: 0;
+}
+.ha-view-tabs--compact .ha-view-tab { width: 28px; height: var(--global-bar-height); font-size: 16px; }
+.ha-view-tabs--compact .ha-view-tab.active::after { height: 2px; }
+
+.ha-context-row--compact {
+  flex: 0 0 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  gap: 8px;
+  overflow: hidden;
+  font-size: 11px;
+}
+.ha-context-row--compact .ha-plan-label { gap: 5px; font-size: 12px; }
+.ha-context-row--compact .ha-home-icon { font-size: 17px; }
+.ha-context-row--compact .ha-segmented { height: 31px; padding: 3px; border-radius: 10px; }
+.ha-context-row--compact .ha-segment { height: 25px; padding: 0 11px; gap: 5px; border-radius: 7px; font-size: 11px; }
+.ha-context-row--compact .ha-segment small { font-size: 10px; }
+.ha-context-row--compact .ha-segment b { margin-left: 4px; font-size: 15px; }
+.ha-context-row--compact .ha-add { padding: 0 7px; font-size: 16px; }
+.ha-context-row--compact .ha-device-count { font-size: 11px; }
+
+.ha-tools-row--compact {
+  flex: 0 0 50px;
+  min-height: 50px;
+  height: 50px;
+  padding: 7px 10px;
+  gap: 7px;
+  overflow: hidden;
+}
+.ha-tools-row--compact .ha-tool-mode { font-size: 24px; }
+.ha-tools-row--compact .ha-tool { height: 34px; padding: 0 10px; gap: 6px; border-radius: 9px; font-size: 12px; }
+.ha-tools-row--compact .ha-tool-icon { font-size: 15px; }
+.ha-tools-row--compact .ha-history-actions { gap: 8px; }
+.ha-tools-row--compact .ha-history-actions button { font-size: 18px; }
+
+.dashboard-body { display: flex; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+
+.plan-toolbar {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  height: var(--toolbar-height);
+  padding: 0 10px;
+  gap: 8px;
+  border-bottom: 1px solid #ededed;
+  background: #fff;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.plan-title { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+.home-mark { color: var(--blue); font-size: 17px; }
+.floor-tabs, .editor-tabs, .zoom-tools {
+  display: flex;
+  align-items: center;
+  height: 29px;
+  border-radius: 10px;
+  background: #f1f1f1;
+}
+.floor-tab { height: 29px; padding: 8px 12px; color: #606164; font-weight: 600; }
+.floor-tab small { color: #999; }
+.floor-tab.active { margin: 2px; height: 25px; padding-top: 6px; border-radius: 6px; color: #fff; background: var(--blue); }
+.add-floor { padding: 0 9px; color: #777; font-size: 16px; }
+.editor-tabs { gap: 18px; padding: 0 13px; color: #616164; font-weight: 600; }
+.device-count { color: #777; }
+.zoom-tools { margin-left: auto; border-radius: 8px; }
+.zoom-tools span { display: grid; place-items: center; width: 29px; height: 29px; font-size: 16px; }
+.settings-button { display: grid; place-items: center; width: 30px; height: 29px; border-radius: 8px; background: #f5f5f5; font-size: 15px; }
+
+.canvas {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: auto;
+  overflow: hidden;
+  background: #d9ebf1;
+}
+.canvas::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255,255,255,.34), transparent 37%),
+    linear-gradient(90deg, rgba(255,255,255,.08), transparent 12%, transparent 88%, rgba(255,255,255,.08));
+}
+.ambient-light { position: absolute; border-radius: 50%; filter: blur(20px); opacity: .6; }
+.light-one { right: 5%; top: 53%; width: 155px; height: 155px; background: rgba(255, 245, 145, .42); }
+.light-two { left: 39%; top: 5%; width: 70px; height: 70px; background: rgba(255, 236, 166, .22); }
+
+.floor-plan {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 700px;
+  height: 850px;
+  transform: translate(-46%, -49%) scale(var(--plan-scale, .94));
+  transform-origin: center;
+  color: #3d4143;
+}
+
+.room {
+  position: absolute;
+  border: 10px solid transparent;
+  background:
+    linear-gradient(var(--room-fill), var(--room-fill)) padding-box,
+    repeating-linear-gradient(135deg, #4f5355 0 2px, #9da2a4 2px 7px) border-box;
+}
+.room-name { position: absolute; font-size: 12px; font-weight: 700; color: #414548; white-space: nowrap; }
+.room-name sup { color: #666; font-size: 9px; }
+.room-name small { display: block; margin-top: 8px; font-size: 9px; color: #555; }
+
+.terrace {
+  left: 185px; top: 9px; width: 420px; height: 190px;
+  border: 10px solid #5d7c8a;
+  border-top-style: dashed;
+  background: rgba(175, 195, 204, .55);
+}
+.terrace h1 { margin: 42px 0 0; text-align: center; font-size: 44px; line-height: 1; }
+.kitchen { left: 12px; top: 170px; width: 590px; height: 285px; }
+.kitchen-name { right: 76px; top: 46px; font-size: 15px; text-align: left; }
+.kitchen-name small { margin-top: 8px; font-size: 11px; }
+.sauna { left: 12px; top: 445px; width: 122px; height: 150px; }
+.sauna .room-name { left: 7px; bottom: 17px; }
+.guest-wc { left: 123px; top: 445px; width: 145px; height: 150px; }
+.guest-wc .room-name { right: 9px; bottom: 17px; }
+.storage { left: 12px; top: 585px; width: 112px; height: 165px; }
+.storage-name { top: 7px; left: 6px; font-size: 9px; }
+.washroom { left: 113px; top: 585px; width: 155px; height: 165px; }
+.water-value { position: absolute; top: 57px; left: -17px; color: #4f879c; font-size: 12px; font-weight: 700; }
+.boiler { left: 155px; top: 668px; width: 113px; height: 82px; }
+.boiler .room-name { right: 4px; bottom: 17px; }
+.hallway { left: 258px; top: 445px; width: 193px; height: 305px; }
+.hallway-name { left: 0; top: 163px; }
+.stairs-closet { left: 440px; top: 365px; width: 250px; height: 165px; }
+.closet-name { right: 10px; bottom: 14px; font-size: 11px; }
+.guest-bedroom { left: 440px; top: 520px; width: 160px; height: 230px; }
+.bedroom-name { right: 7px; bottom: 17px; font-size: 11px; }
+.porch {
+  left: 12px; top: 740px; width: 440px; height: 102px;
+  border-color: #5d7c8a;
+  background: #b8aa9a;
+}
+.porch h2 { margin: 24px 0 0; text-align: center; color: #595d5f; font-size: 26px; }
+
+.door { position: absolute; width: 56px; height: 56px; border: 2px solid #555; border-left: 0; border-bottom: 0; border-radius: 0 56px 0 0; }
+.terrace-door { left: 41px; bottom: -11px; transform: rotate(-90deg); transform-origin: bottom left; }
+.kitchen-door { left: 235px; bottom: -11px; transform: rotate(90deg); transform-origin: bottom left; }
+.wc-door { right: -10px; top: 48px; transform: rotate(-90deg); }
+.wash-door { right: -10px; top: 68px; transform: rotate(-90deg); }
+.hall-door-left { left: -10px; top: 23px; transform: rotate(-90deg); }
+.hall-door-right { right: -10px; top: 58px; transform: rotate(-90deg); }
+.closet-door { left: 70px; bottom: -10px; transform: rotate(180deg); }
+.porch-door-one { left: 8px; top: -10px; transform: rotate(90deg); }
+.porch-door-two { right: 74px; top: -10px; transform: rotate(90deg); }
+.dashed-zone { position: absolute; left: 273px; top: 450px; width: 223px; height: 84px; border: 2px dashed #555; border-bottom: 0; }
+
+.device {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #9da3a7;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,.22);
+  color: #111;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+.bulb { font-size: 10px; }
+.camera { font-size: 13px; }
+.sensor { width: 29px; font-size: 10px; }
+.thermometer { font-size: 13px; }
+.small-indicator { width: 14px; height: 14px; border: 0; color: #fff; background: #36c86c; font-size: 7px; box-shadow: 0 0 5px rgba(55,202,108,.6); }
+.device-row { position: absolute; display: flex; gap: 4px; }
+.device-column { position: absolute; display: flex; flex-direction: column; gap: 4px; }
+.top-left { left: 24px; top: 182px; }
+.d1 { left: 188px; top: 182px; }
+.d2 { left: 305px; top: 182px; }
+.d3 { left: 298px; top: 204px; }
+.d4 { left: 421px; top: 182px; }
+.d5 { left: 540px; top: 182px; }
+.online-1 { left: 271px; top: 184px; }
+.left-devices { left: 23px; top: 340px; }
+.right-devices { left: 565px; top: 202px; }
+.fan-row { position: absolute; left: 536px; top: 302px; display: flex; gap: 7px; }
+.temp-main { left: 138px; top: 411px; }
+.temp-icon { left: 183px; top: 411px; }
+.center-bulb-1 { left: 219px; top: 337px; }
+.center-bulb-2 { left: 324px; top: 446px; }
+.center-bulb-3 { left: 324px; top: 497px; }
+.center-bulb-4 { left: 324px; top: 548px; }
+.center-bulb-5 { left: 324px; top: 607px; }
+.center-bulb-6 { left: 324px; top: 660px; }
+.utility-devices { left: 23px; top: 611px; }
+.wash-devices { left: 128px; top: 622px; }
+.wash-camera { left: 158px; top: 592px; }
+.wash-percent { left: 151px; top: 633px; }
+.wash-warning { left: 187px; top: 634px; color: #fff; background: #ffae00; }
+.status-pill { position: absolute; padding: 5px 7px; border: 2px solid #fff; border-radius: 11px; color: #fff; background: #ffad00; font-size: 9px; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.rinsing { left: 191px; top: 672px; }
+.boiler-warning { left: 123px; top: 711px; color: #fff; background: #ffae00; }
+.boiler-bulb { left: 143px; top: 692px; }
+.online-2 { left: 53px; top: 718px; }
+.online-3 { left: 325px; top: 718px; }
+.closet-camera { left: 622px; top: 386px; }
+.guest-temp { left: 514px; top: 525px; }
+.guest-thermo { left: 550px; top: 525px; }
+.guest-devices { left: 442px; top: 603px; }
+
+@media (max-height: 820px) {
+  .floor-plan { --plan-scale: .76; }
+}
+
+@media (min-height: 821px) and (max-height: 940px) {
+  .floor-plan { --plan-scale: .88; }
+}
+
+@media (min-height: 941px) {
+  .floor-plan { --plan-scale: 1; }
+}
+
+@media (max-width: 1450px) {
+  :root { --sidebar-width: 178px; }
+  .ha-context-row--compact .ha-segment { padding-inline: 7px; font-size: 10px; }
+  .ha-tools-row--compact .ha-tool { padding-inline: 7px; font-size: 11px; }
+  .floor-plan { transform: translate(-44%, -49%) scale(var(--plan-scale, .85)); }
+}
+
+@media (max-width: 1220px) {
+  .ha-context-row--compact .ha-editor-switcher .ha-segment { padding-inline: 5px; font-size: 9px; }
+  .ha-tools-row--compact .ha-tool { padding-inline: 5px; gap: 3px; font-size: 10px; }
+}
+

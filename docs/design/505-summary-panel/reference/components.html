@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Assistant — Компоненты панели</title>
+  <link rel="stylesheet" href="components.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="components-page">
+  <header class="ha-component-header" aria-label="Панели редактора плана">
+    <div class="ha-view-tabs ha-view-tabs--compact" aria-label="Представление">
+      <span class="ha-view-tab active" aria-label="План">⌗</span>
+      <span class="ha-view-tab" aria-label="Панель">▣</span>
+      <span class="ha-view-tab" aria-label="Изображение">▧</span>
+    </div>
+
+    <div class="ha-context-row ha-context-row--compact">
+      <div class="ha-plan-label"><span class="ha-home-icon">▥</span><strong>План дома</strong></div>
+
+      <div class="ha-segmented ha-floor-switcher">
+        <span class="ha-segment active">Ground Floor <small>⚙</small></span>
+        <span class="ha-segment">First Floor <small>⚙</small></span>
+        <span class="ha-segment">Yard <small>⚙</small></span>
+        <span class="ha-segment ha-add">＋</span>
+      </div>
+
+      <div class="ha-segmented ha-editor-switcher">
+        <span class="ha-segment active"><span>⌗</span> Редактор плана <b>×</b></span>
+        <span class="ha-segment"><span>⌘</span> Редактор устройств</span>
+        <span class="ha-segment"><span>⌁</span> Редактор подложки</span>
+      </div>
+
+      <span class="ha-device-count">50 устр.</span>
+    </div>
+
+    <div class="ha-tools-row ha-tools-row--compact" aria-label="Инструменты редактирования">
+      <span class="ha-tool-mode" aria-hidden="true">⌗</span>
+      <button class="ha-tool"><span class="ha-tool-icon">➤</span>Выбрать</button>
+      <button class="ha-tool active"><span class="ha-tool-icon">⌁</span>Стены</button>
+      <button class="ha-tool"><span class="ha-tool-icon">⌗</span>Колонна</button>
+      <button class="ha-tool"><span class="ha-tool-icon">▱</span>Объединить</button>
+      <button class="ha-tool"><span class="ha-tool-icon">⌁</span>Разделить</button>
+      <button class="ha-tool"><span class="ha-tool-icon">⛶</span>Размер</button>
+      <button class="ha-tool"><span class="ha-tool-icon">▯</span>Проём <span class="ha-chevron">⌄</span></button>
+      <button class="ha-tool"><span class="ha-tool-icon">◲</span>Граница</button>
+      <button class="ha-tool"><span class="ha-tool-icon">▦</span>Толщина</button>
+      <button class="ha-tool"><span class="ha-tool-icon">▱</span>Удалить комнату</button>
+      <span class="ha-history-actions"><button aria-label="Отменить">↶</button><button aria-label="Повторить">↷</button></span>
+    </div>
+  </header>
+
+  <main class="ha-component-stage">
+    <div class="ha-stage-grid" aria-hidden="true"></div>
+    <div class="ha-plan-fragment" aria-hidden="true">
+      <div class="ha-plan-room room-a">Kitchen &amp; Living</div>
+      <div class="ha-plan-room room-b">Hallway</div>
+      <div class="ha-plan-room room-c">Guest Bedroom</div>
+    </div>
+    <div class="ha-modal-backdrop"></div>
+
+    <section class="ha-device-modal" role="dialog" aria-modal="true" aria-labelledby="device-modal-title">
+      <header class="ha-modal-header">
+        <span class="ha-modal-close" aria-hidden="true">×</span>
+        <span class="ha-device-shapes" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <h1 id="device-modal-title">Устройство на плане</h1>
+      </header>
+
+      <div class="ha-modal-body">
+        <div class="ha-field">
+          <label for="device-name">Имя (отображается на плане)</label>
+          <input id="device-name" type="text" value="Wall Lamp 3" readonly>
+        </div>
+
+        <section class="ha-field">
+          <div class="ha-field-label">Привязка к устройству HA</div>
+          <div class="ha-binding-card">
+            <label class="ha-choice"><input type="radio" name="binding"><span>Виртуальное устройство (без привязки)</span></label>
+            <div class="ha-choice-row">
+              <label class="ha-choice"><input type="radio" name="binding" checked><span>Выбрать из списка HA</span></label>
+              <label class="ha-switch-label"><span class="ha-switch"><i></i></span><span>Отображать сущности</span></label>
+            </div>
+            <div class="ha-select-box strong-select">
+              <strong>Wall Lamp 3</strong>
+              <span class="ha-entity">entity:light.wall_lamp_3</span>
+              <span class="ha-select-arrow">⌄</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="ha-field">
+          <label for="room-select">Комната (переопределить размещение)</label>
+          <div class="ha-select-box" id="room-select"><span>Ground Floor · Kitchen &amp; Living</span><span class="ha-select-arrow">⌄</span></div>
+        </div>
+
+        <div class="ha-field action-field">
+          <label for="action-select">Действие по нажатию для этого устройства</label>
+          <div class="ha-select-box" id="action-select"><span>Переключить состояние</span><span class="ha-select-arrow">⌄</span></div>
+          <p>Цель: Wall Lamp 3 (light.wall_lamp_3).</p>
+          <p>Сейчас: выключено → включится.</p>
+        </div>
+
+        <label class="ha-switch-label confirmation"><span class="ha-switch"><i></i></span><span>Спрашивать подтверждение</span></label>
+
+        <section class="ha-light-sources">
+          <h2>Управляет другими источниками света</h2>
+          <p>При действии «Переключить» клик разом переключает все добавленные здесь источники.</p>
+          <p>Собственная сущность маркера управляется напрямую и сюда не добавляется; чтобы считать её светом, включите флаг ниже.</p>
+          <input type="text" placeholder="Поиск ламп и выключателей..." readonly>
+        </section>
+
+        <fieldset class="ha-source-type">
+          <legend>Является источником света <span class="ha-help">?</span></legend>
+          <label class="ha-choice"><input type="radio" name="source" checked><span>Автоматически (источник света)</span></label>
+          <label class="ha-choice"><input type="radio" name="source"><span>Всегда источник света</span></label>
+        </fieldset>
+
+        <div class="ha-modal-spacer" aria-hidden="true"></div>
+      </div>
+
+      <footer class="ha-modal-footer">
+        <div class="ha-footer-left">
+          <button class="ha-action-button"><span>◉̸</span>Скрыть</button>
+          <button class="ha-action-button danger"><span>▱</span>Удалить</button>
+        </div>
+        <div class="ha-footer-right">
+          <button class="ha-text-button">Отмена</button>
+          <button class="ha-save-button"><span>✓</span>Сохранить</button>
+        </div>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>
+

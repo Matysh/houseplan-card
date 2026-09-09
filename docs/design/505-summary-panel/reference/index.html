@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Assistant — Dashboard 5</title>
+  <link rel="stylesheet" href="components.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="dashboard-5.css?v=5.4">
+  <script src="dashboard-5.js?v=5.1" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Основная навигация">
+      <div class="brand-row">
+        <span class="nav-icon hamburger" aria-hidden="true">☰</span>
+        <span class="brand-name">Home Assistant</span>
+      </div>
+
+      <nav class="side-nav">
+        <a class="nav-item" href="#"><span class="nav-icon">⌂</span><span>Обзор</span></a>
+        <a class="nav-item active" href="#"><span class="nav-icon plan-glyph">⌗</span><span>House plan</span></a>
+        <a class="nav-item" href="#"><span class="nav-icon">◆</span><span>Map</span></a>
+        <a class="nav-item" href="#"><span class="nav-icon lightning">ϟ</span><span>Энергия</span></a>
+        <a class="nav-item" href="#"><span class="nav-icon">☷</span><span>Активность</span></a>
+        <a class="nav-item" href="#"><span class="nav-icon">▥</span><span>История</span></a>
+        <a class="nav-item" href="#"><span class="nav-icon">▣</span><span>Календарь</span></a>
+        <a class="nav-item" href="#"><span class="nav-icon">▶</span><span>Мультимедиа</span></a>
+        <a class="nav-item" href="#"><span class="nav-icon">☷</span><span>Списки дел</span></a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a class="nav-item" href="#"><span class="nav-icon">⚙</span><span>Настройки</span><span class="badge">4</span></a>
+        <a class="nav-item" href="#"><span class="nav-icon">♟</span><span>Уведомления</span><span class="badge">1</span></a>
+        <a class="nav-item profile" href="#"><span class="avatar">D</span><span>Demo</span></a>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <header class="global-bar dashboard3-app-header">
+        <div class="dashboard3-view-tabs" aria-label="Варианты представления">
+          <button class="dashboard3-header-icon dashboard3-view-tab active" type="button" aria-label="План дома" aria-current="page">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h7v7H4zM13 3h7v4h-7zM13 9h7v12h-7zM4 12h7v9H4z"/><path d="M7 3v3M17 3v2M4 16h3M17 14h3M13 17h3"/></svg>
+          </button>
+          <button class="dashboard3-header-icon dashboard3-view-tab" type="button" aria-label="Карточки">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M7 8h5v4H7zM14 8h3M14 11h3M7 15h10"/></svg>
+          </button>
+          <button class="dashboard3-header-icon dashboard3-view-tab" type="button" aria-label="Изображение">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><circle cx="9" cy="9" r="1.4"/><path d="m6.5 17 4-4 2.7 2.5 2.1-2.1 2.2 3.6"/></svg>
+          </button>
+        </div>
+        <div class="dashboard3-header-actions" aria-label="Глобальные действия">
+          <button class="dashboard3-header-icon" type="button" aria-label="Добавить"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button class="dashboard3-header-icon" type="button" aria-label="Поиск"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4.5 4.5"/></svg></button>
+          <button class="dashboard3-header-icon" type="button" aria-label="Сообщения"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H9l-4 3v-3H4z"/><path d="M8 10h1M12 10h1M16 10h1"/></svg></button>
+          <button class="dashboard3-header-icon" type="button" aria-label="Редактировать"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 17-.7 3 3-.7L18.5 8.1l-2.3-2.3zM14.8 7.2l2.3 2.3"/></svg></button>
+        </div>
+      </header>
+
+      <div class="ha-context-row ha-context-row--compact dashboard3-context-bar">
+        <div class="ha-plan-label">
+          <svg class="ha-plan-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-7v-6h-4v6H3z"/><path d="M4 7V4h4v1.6M16 4h5v5"/></svg>
+          <strong>План дома</strong>
+        </div>
+        <div class="ha-segmented ha-floor-switcher">
+          <button class="ha-segment dashboard3-space-tab active" type="button" data-space-id="ground-floor">Ground Floor <small>⚙</small></button>
+          <button class="ha-segment dashboard3-space-tab" type="button" data-space-id="first-floor">First Floor <small>⚙</small></button>
+          <button class="ha-segment dashboard3-space-tab" type="button" data-space-id="yard">Yard <small>⚙</small></button>
+          <span class="ha-segment ha-add">＋</span>
+        </div>
+        <div class="ha-segmented ha-editor-switcher">
+          <span class="ha-segment"><span>⌗</span> Редактор плана</span>
+          <span class="ha-segment"><span>⌘</span> Редактор устройств</span>
+          <span class="ha-segment"><span>⌁</span> Редактор подложки</span>
+        </div>
+        <span class="ha-device-count">50 устр.</span>
+        <div class="dashboard3-context-actions" aria-label="Действия с планом">
+          <div class="dashboard3-zoom-group" aria-label="Масштаб">
+            <button type="button" aria-label="Уменьшить">−</button>
+            <button type="button" aria-label="Вместить план"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><path d="m9 9 6 6M15 9l-6 6"/></svg></button>
+            <button type="button" aria-label="Увеличить">＋</button>
+          </div>
+          <button class="dashboard3-context-icon dashboard4-size-toggle" type="button" aria-label="Размеры на этом экране" title="Размеры на этом экране"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M7 14v6"/></svg></button>
+          <button class="dashboard3-context-icon" type="button" aria-label="Печать"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7zM17 12h1"/></svg></button>
+          <button class="dashboard3-context-icon dashboard3-help-icon" type="button" aria-label="Помощь">?</button>
+          <button class="dashboard3-context-icon dashboard4-theme-toggle" type="button" aria-label="Включить тёмную тему" title="Тема">◐</button>
+          <button class="dashboard4-kiosk-toggle" type="button" aria-pressed="false">Киоск</button>
+          <div class="dashboard5-summary-control" role="group" aria-label="Управление информационной панелью">
+            <button class="dashboard3-settings-toggle" type="button" aria-controls="dashboard3-settings-dialog" aria-haspopup="dialog" aria-label="Настроить информационную панель" title="Настроить информационную панель">
+              <img src="./svg/settings.svg" alt="" aria-hidden="true">
+            </button>
+            <button class="dashboard3-global-toggle" type="button" aria-controls="dashboard3-panel" aria-pressed="false" aria-label="Показать информационную панель" title="Показать информационную панель">
+              <img src="./svg/layout-sidebar-right.svg" alt="" aria-hidden="true">
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-body">
+      <main class="canvas" aria-label="План дома">
+        <div class="ambient-light light-one"></div>
+        <div class="ambient-light light-two"></div>
+        <div class="floor-plan">
+          <section class="room terrace">
+            <h1>Terrace</h1>
+            <span class="door terrace-door"></span>
+          </section>
+
+          <section class="room kitchen">
+            <div class="room-name kitchen-name">
+              <strong>Kitchen &amp; Living <sup>↗</sup></strong>
+              <small>♟ 20.6° &nbsp; ● 42% &nbsp; ◒ Выкл</small>
+            </div>
+            <span class="door kitchen-door"></span>
+          </section>
+
+          <section class="room sauna"><span class="room-name">Sauna <sup>↗</sup></span></section>
+          <section class="room guest-wc"><span class="room-name">Guest WC <sup>↗</sup></span><span class="door wc-door"></span></section>
+          <section class="room storage">
+            <span class="room-name storage-name">Outdoor Storage <sup>↗</sup><small>◉ Выкл</small></span>
+          </section>
+          <section class="room washroom">
+            <span class="water-value">Water · 66%</span>
+            <span class="door wash-door"></span>
+          </section>
+          <section class="room boiler"><span class="room-name">Boiler Room <sup>↗</sup></span></section>
+          <section class="room hallway">
+            <span class="room-name hallway-name">Hallway <sup>↗</sup><small>◉ Выкл</small></span>
+            <span class="door hall-door-left"></span>
+            <span class="door hall-door-right"></span>
+          </section>
+          <section class="room stairs-closet">
+            <span class="room-name closet-name">Under-Stairs Closet <sup>↗</sup></span>
+            <span class="door closet-door"></span>
+          </section>
+          <section class="room guest-bedroom"><span class="room-name bedroom-name">Guest Bedroom <sup>↗</sup></span></section>
+          <section class="room porch">
+            <h2>Porch</h2>
+            <span class="door porch-door-one"></span>
+            <span class="door porch-door-two"></span>
+          </section>
+
+          <div class="dashed-zone" aria-hidden="true"></div>
+
+          <div class="device-row top-left">
+            <span class="device">▣</span><span class="device bulb">●</span>
+          </div>
+          <span class="device bulb d1">●</span>
+          <span class="device bulb d2">●</span>
+          <span class="device camera d3">◉</span>
+          <span class="device bulb d4">●</span>
+          <span class="device bulb d5">●</span>
+          <span class="device small-indicator online-1">●</span>
+
+          <div class="device-column left-devices">
+            <span class="device">▬</span><span class="device">▣</span><span class="device">⌂</span>
+          </div>
+          <div class="device-column right-devices">
+            <span class="device">▣</span><span class="device">▦</span><span class="device">▦</span><span class="device">▣</span>
+          </div>
+          <div class="fan-row"><span class="device">✣</span><span class="device">✣</span></div>
+
+          <span class="device sensor temp-main">42%</span>
+          <span class="device thermometer temp-icon">♟</span>
+          <span class="device bulb center-bulb-1">●</span>
+          <span class="device bulb center-bulb-2">●</span>
+          <span class="device bulb center-bulb-3">●</span>
+          <span class="device bulb center-bulb-4">●</span>
+          <span class="device bulb center-bulb-5">●</span>
+          <span class="device bulb center-bulb-6">●</span>
+
+          <div class="device-column utility-devices">
+            <span class="device">↔</span><span class="device">☷</span><span class="device">↔</span>
+          </div>
+          <div class="device-column wash-devices">
+            <span class="device">♜</span><span class="device">▦</span>
+          </div>
+          <span class="device camera wash-camera">◉</span>
+          <span class="device sensor wash-percent">66%</span>
+          <span class="device warning wash-warning">⌁</span>
+          <span class="status-pill rinsing">Rinsing</span>
+          <span class="device warning boiler-warning">⌁</span>
+          <span class="device bulb boiler-bulb">●</span>
+          <span class="device small-indicator online-2">●</span>
+          <span class="device small-indicator online-3">●</span>
+
+          <span class="device camera closet-camera">◉</span>
+          <span class="device sensor guest-temp">43%</span>
+          <span class="device thermometer guest-thermo">♟</span>
+          <div class="device-column guest-devices"><span class="device">▣</span><span class="device">▬</span></div>
+        </div>
+      </main>
+
+      <aside class="ha-home-panel" id="legacy-home-panel" aria-label="Старая панель дома" hidden>
+        <header class="ha-home-panel__header">
+          <button class="ha-icon-button ha-home-panel__size-toggle" type="button" aria-controls="home-panel-content" aria-expanded="true" title="Свернуть панель вправо">
+            <span class="when-expanded">›</span>
+            <span class="when-collapsed">‹</span>
+          </button>
+          <div class="ha-home-panel__title-wrap">
+            <span class="ha-home-panel__mark">▥</span>
+            <div>
+              <h2>Панель дома</h2>
+              <small>Ground Floor</small>
+            </div>
+          </div>
+          <button class="ha-icon-button ha-panel-settings-toggle" type="button" aria-controls="panel-manager" aria-expanded="false" title="Настроить блоки">⚙</button>
+          <span class="ha-home-panel__rail-title">Панель дома</span>
+        </header>
+
+        <section class="ha-device-editor" id="device-editor" aria-labelledby="device-editor-title" hidden>
+          <header class="ha-device-editor__header">
+            <button class="ha-icon-button ha-device-editor__back" type="button" aria-label="Вернуться к панели">←</button>
+            <div><span class="ha-eyebrow">Настройка устройства</span><h3 id="device-editor-title">Устройство</h3></div>
+          </header>
+          <div class="ha-device-editor__body">
+            <div class="ha-field">
+              <label for="editor-device-name">Имя</label>
+              <input id="editor-device-name" type="text">
+            </div>
+            <div class="ha-field">
+              <label for="editor-device-entity">Сущность Home Assistant</label>
+              <input id="editor-device-entity" type="text" readonly>
+            </div>
+            <div class="ha-field">
+              <label for="editor-device-room">Комната</label>
+              <select id="editor-device-room">
+                <option>Kitchen &amp; Living</option><option>Hallway</option><option>Guest Bedroom</option><option>Boiler Room</option><option>Sauna</option><option>Outdoor Storage</option><option>Terrace</option><option>Porch</option>
+              </select>
+            </div>
+            <div class="ha-field">
+              <label for="editor-device-action">Действие по нажатию</label>
+              <select id="editor-device-action">
+                <option>Переключить состояние</option><option>Открыть подробнее</option><option>Включить</option><option>Выключить</option><option>Нет действия</option>
+              </select>
+            </div>
+            <label class="ha-device-enabled"><input type="checkbox" id="editor-device-enabled" checked><span>Показывать устройство на панели</span></label>
+          </div>
+          <footer class="ha-device-editor__footer">
+            <button class="ha-device-editor__cancel" type="button">Отмена</button>
+            <button class="ha-device-editor__save" type="button">✓&nbsp; Сохранить</button>
+          </footer>
+        </section>
+
+        <section class="ha-block-editor" id="block-editor" aria-labelledby="block-editor-title" hidden>
+          <header class="ha-block-editor__header">
+            <button class="ha-icon-button ha-block-editor__back" type="button" aria-label="Вернуться к настройке панели">←</button>
+            <div><span class="ha-eyebrow">Настройка блока</span><h3 id="block-editor-title">Блок</h3></div>
+          </header>
+          <div class="ha-block-editor__body">
+            <p>Отключайте данные без удаления или удаляйте типы информации из блока.</p>
+            <div class="ha-block-editor__title-field">
+              <label for="block-title-input">Заголовок блока</label>
+              <input id="block-title-input" type="text" maxlength="48">
+            </div>
+            <div class="ha-block-editor__list" aria-label="Типы информации блока"></div>
+            <div class="ha-block-editor__add">
+              <label for="block-info-add-select">Добавить тип информации</label>
+              <div><select id="block-info-add-select"></select><button type="button" class="ha-block-editor__add-button">＋ Добавить</button></div>
+            </div>
+          </div>
+          <footer class="ha-block-editor__footer">
+            <button class="ha-block-editor__reset" type="button">Сбросить блок</button>
+            <button class="ha-block-editor__done" type="button">Готово</button>
+          </footer>
+        </section>
+
+        <div class="ha-home-panel__content" id="home-panel-content">
+          <section class="ha-summary-card" id="summary-card" data-panel-id="summary" data-panel-title="Общая сводка" aria-labelledby="summary-title">
+            <div class="ha-summary-card__heading">
+              <div>
+                <span class="ha-eyebrow">Общая сводка</span>
+                <h3 id="summary-title">Состояние дома</h3>
+              </div>
+              <div class="ha-summary-actions"><span class="ha-status-badge good">Всё в порядке</span><button class="ha-block-settings-button" type="button" aria-label="Настроить общую сводку">⚙</button></div>
+            </div>
+            <div class="ha-temperature-grid">
+              <div class="ha-temperature-metric home" data-info-key="home-temperature" data-info-label="Средняя температура дома"><span class="metric-icon">⌂</span><span><small>Средняя дома</small><strong>20,5 °C</strong></span></div>
+              <div class="ha-temperature-metric outside" data-info-key="outside-temperature" data-info-label="Температура снаружи"><span class="metric-icon">☀</span><span><small>Снаружи</small><strong>18,3 °C</strong></span></div>
+            </div>
+            <div class="ha-summary-grid ha-summary-grid--secondary">
+              <div class="ha-summary-metric" data-info-key="humidity" data-info-label="Средняя влажность"><span class="metric-icon">◉</span><strong>41%</strong><small>Влажность</small></div>
+              <div class="ha-summary-metric" data-info-key="lighting" data-info-label="Сводка освещения"><span class="metric-icon">◉</span><strong>0 / 9</strong><small>Свет включён</small></div>
+              <div class="ha-summary-metric" data-info-key="entries" data-info-label="Состояние входов"><span class="metric-icon">⌂</span><strong>3</strong><small>Входа закрыто</small></div>
+            </div>
+            <div class="ha-summary-note" data-info-key="warnings" data-info-label="Предупреждения"><span class="ha-warning-dot"></span><span>2 инженерных устройства требуют внимания</span></div>
+          </section>
+
+          <section class="ha-panel-manager" id="panel-manager" aria-labelledby="panel-manager-title" hidden>
+            <div class="ha-panel-manager__heading">
+              <div><span class="ha-eyebrow">Режим редактирования</span><h3 id="panel-manager-title">Блоки панели</h3></div>
+              <button class="ha-icon-button ha-panel-settings-close" type="button" aria-label="Закрыть настройки">×</button>
+            </div>
+            <p>Перетаскивайте блоки или используйте стрелки. Переключатель управляет отображением.</p>
+            <div class="ha-panel-manager__list" aria-label="Порядок и видимость блоков"></div>
+            <button class="ha-reset-layout" type="button">Сбросить настройки</button>
+          </section>
+
+          <div class="ha-panel-blocks" id="panel-blocks">
+            <section class="ha-info-block" data-panel-id="rooms" data-panel-title="Комнаты" draggable="false">
+              <header class="ha-info-block__header">
+                <span class="ha-drag-handle" title="Перетащить">⠿</span><span class="ha-block-icon">⌂</span>
+                <button class="ha-info-block__toggle" type="button" aria-expanded="true"><span>Комнаты</span><small>10 зон</small><b>⌃</b></button>
+              </header>
+              <div class="ha-info-block__body">
+                <ul class="ha-status-list room-list" data-info-key="room-statuses" data-info-label="Состояния комнат">
+                  <li><span><strong>Kitchen &amp; Living</strong><small>20,5° · 41% · свет выключен</small></span><span class="room-state">4 света</span></li>
+                  <li><span><strong>Hallway</strong><small>Освещение выключено</small></span><span class="room-state">5 светов</span></li>
+                  <li><span><strong>Guest Bedroom</strong><small>Влажность 44%</small></span><span class="room-state">2 устройства</span></li>
+                  <li><span><strong>Boiler Room</strong><small>Бойлер 54,0° · вода 65%</small></span><span class="room-state warning">Внимание</span></li>
+                </ul>
+                <button class="ha-block-link" type="button" data-info-key="all-rooms-link" data-info-label="Переход ко всем зонам">Показать все 10 зон <span>→</span></button>
+              </div>
+            </section>
+
+            <section class="ha-info-block" data-panel-id="lighting" data-panel-title="Освещение" draggable="false">
+              <header class="ha-info-block__header">
+                <span class="ha-drag-handle" title="Перетащить">⠿</span><span class="ha-block-icon">●</span>
+                <button class="ha-info-block__toggle" type="button" aria-expanded="true"><span>Освещение</span><small>9 источников</small><b>⌃</b></button>
+              </header>
+              <div class="ha-info-block__body">
+                <div class="ha-inline-stats" data-info-key="lighting-summary" data-info-label="Общие показатели"><span><strong>0</strong><small>включено</small></span><span><strong>9</strong><small>выключено</small></span><span><strong>2</strong><small>группы</small></span></div>
+                <ul class="ha-compact-list" data-info-key="lighting-groups" data-info-label="Группы освещения"><li>Kitchen &amp; Living <span>4 · Выкл</span></li><li>Hallway <span>5 · Выкл</span></li></ul>
+              </div>
+            </section>
+
+            <section class="ha-info-block" data-panel-id="climate" data-panel-title="Климат" draggable="false">
+              <header class="ha-info-block__header">
+                <span class="ha-drag-handle" title="Перетащить">⠿</span><span class="ha-block-icon">♨</span>
+                <button class="ha-info-block__toggle" type="button" aria-expanded="true"><span>Климат</span><small>4 датчика</small><b>⌃</b></button>
+              </header>
+              <div class="ha-info-block__body">
+                <div class="ha-inline-stats" data-info-key="climate-summary" data-info-label="Средние показатели"><span><strong>20,5°</strong><small>в доме</small></span><span><strong>18,3°</strong><small>снаружи</small></span><span><strong>41%</strong><small>влажность</small></span></div>
+                <ul class="ha-compact-list" data-info-key="climate-sensors" data-info-label="Датчики климата"><li>Kitchen &amp; Living <span>20,5° · 41%</span></li><li>Guest Bedroom <span>44%</span></li><li>Boiler Room <span>54,0°</span></li><li>Sauna <span>Нагреватель</span></li></ul>
+              </div>
+            </section>
+
+            <section class="ha-info-block" data-panel-id="water" data-panel-title="Вода" draggable="false">
+              <header class="ha-info-block__header">
+                <span class="ha-drag-handle" title="Перетащить">⠿</span><span class="ha-block-icon">◒</span>
+                <button class="ha-info-block__toggle" type="button" aria-expanded="true"><span>Вода</span><small>4 устройства</small><b>⌃</b></button>
+              </header>
+              <div class="ha-info-block__body">
+                <div class="ha-inline-stats" data-info-key="water-summary" data-info-label="Сводка воды"><span><strong>65%</strong><small>датчик</small></span><span><strong>54,0°</strong><small>бойлер</small></span><span><strong>2</strong><small>клапана</small></span></div>
+                <ul class="ha-status-list" data-info-key="water-devices" data-info-label="Водяные устройства"><li><span><strong>Water Leak</strong><small>Boiler Room</small></span><span class="room-state warning">65%</span></li><li><span><strong>Бойлер</strong><small>Температура воды</small></span><span class="room-state">54,0°</span></li><li><span><strong>Клапаны</strong><small>2 устройства</small></span><span class="room-state good">Закрыты</span></li></ul>
+              </div>
+            </section>
+
+            <section class="ha-info-block" data-panel-id="security" data-panel-title="Безопасность" draggable="false">
+              <header class="ha-info-block__header">
+                <span class="ha-drag-handle" title="Перетащить">⠿</span><span class="ha-block-icon">▣</span>
+                <button class="ha-info-block__toggle" type="button" aria-expanded="true"><span>Безопасность</span><small>5 устройств</small><b>⌃</b></button>
+              </header>
+              <div class="ha-info-block__body">
+                <div class="ha-inline-stats" data-info-key="security-summary" data-info-label="Сводка безопасности"><span><strong>3</strong><small>закрыто</small></span><span><strong>2</strong><small>камеры</small></span><span><strong>0</strong><small>тревоги</small></span></div>
+                <ul class="ha-compact-list" data-info-key="security-devices" data-info-label="Двери и камеры"><li>Terrace <span class="good-text">Закрыто</span></li><li>Porch · 2 двери <span class="good-text">Закрыто</span></li><li>Камеры <span>2 доступны</span></li></ul>
+              </div>
+            </section>
+
+            <section class="ha-info-block" data-panel-id="devices" data-panel-title="Устройства" draggable="false">
+              <header class="ha-info-block__header">
+                <span class="ha-drag-handle" title="Перетащить">⠿</span><span class="ha-block-icon">▦</span>
+                <button class="ha-info-block__toggle" type="button" aria-expanded="true"><span>Устройства</span><small>14 устройств</small><b>⌃</b></button>
+              </header>
+              <div class="ha-info-block__body">
+                <div class="ha-inline-stats" data-info-key="device-summary" data-info-label="Сводка устройств"><span><strong>12</strong><small>доступно</small></span><span><strong>2</strong><small>внимание</small></span><span><strong>0</strong><small>офлайн</small></span></div>
+                <div class="ha-device-categories" data-info-key="device-categories" data-info-label="Категории устройств">
+                  <section class="ha-device-category" data-device-category="appliances">
+                    <button class="ha-device-category__toggle" type="button" aria-expanded="false"><span>Бытовая техника</span><small>7 устройств</small><b>⌄</b></button>
+                    <ul class="ha-device-category__list" hidden>
+                      <li><span><strong>Dishwasher</strong><small>Kitchen &amp; Living · Доступно</small></span><button class="ha-device-settings-button" type="button" data-device-name="Dishwasher" data-device-entity="switch.dishwasher" data-device-room="Kitchen & Living">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Oven</strong><small>Kitchen &amp; Living · Выключено</small></span><button class="ha-device-settings-button" type="button" data-device-name="Oven" data-device-entity="switch.oven" data-device-room="Kitchen & Living">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Fridge</strong><small>Kitchen &amp; Living · Работает</small></span><button class="ha-device-settings-button" type="button" data-device-name="Fridge" data-device-entity="sensor.fridge" data-device-room="Kitchen & Living">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Washer</strong><small>Boiler Room · Done</small></span><button class="ha-device-settings-button" type="button" data-device-name="Washer" data-device-entity="sensor.washer" data-device-room="Boiler Room">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Dryer</strong><small>Boiler Room · Доступно</small></span><button class="ha-device-settings-button" type="button" data-device-name="Dryer" data-device-entity="switch.dryer" data-device-room="Boiler Room">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Sauna Heater</strong><small>Sauna · Выключено</small></span><button class="ha-device-settings-button" type="button" data-device-name="Sauna Heater" data-device-entity="climate.sauna_heater" data-device-room="Sauna">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Boiler</strong><small>Boiler Room · 54,0 °C</small></span><button class="ha-device-settings-button" type="button" data-device-name="Boiler" data-device-entity="water_heater.boiler" data-device-room="Boiler Room">⚙ <span>Настроить</span></button></li>
+                    </ul>
+                  </section>
+
+                  <section class="ha-device-category" data-device-category="media">
+                    <button class="ha-device-category__toggle" type="button" aria-expanded="false"><span>Мультимедиа</span><small>3 устройства</small><b>⌄</b></button>
+                    <ul class="ha-device-category__list" hidden>
+                      <li><span><strong>Living Room TV</strong><small>Kitchen &amp; Living · Выключено</small></span><button class="ha-device-settings-button" type="button" data-device-name="Living Room TV" data-device-entity="media_player.living_room_tv" data-device-room="Kitchen & Living">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Media Player</strong><small>Kitchen &amp; Living · Доступно</small></span><button class="ha-device-settings-button" type="button" data-device-name="Media Player" data-device-entity="media_player.main" data-device-room="Kitchen & Living">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Bedroom Display</strong><small>Guest Bedroom · Доступно</small></span><button class="ha-device-settings-button" type="button" data-device-name="Bedroom Display" data-device-entity="media_player.bedroom_display" data-device-room="Guest Bedroom">⚙ <span>Настроить</span></button></li>
+                    </ul>
+                  </section>
+
+                  <section class="ha-device-category" data-device-category="sensors">
+                    <button class="ha-device-category__toggle" type="button" aria-expanded="false"><span>Контроллеры и датчики</span><small>4 устройства</small><b>⌄</b></button>
+                    <ul class="ha-device-category__list" hidden>
+                      <li><span><strong>Kitchen Temperature</strong><small>Kitchen &amp; Living · 20,5 °C</small></span><button class="ha-device-settings-button" type="button" data-device-name="Kitchen Temperature" data-device-entity="sensor.kitchen_temperature" data-device-room="Kitchen & Living">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Kitchen Humidity</strong><small>Kitchen &amp; Living · 41%</small></span><button class="ha-device-settings-button" type="button" data-device-name="Kitchen Humidity" data-device-entity="sensor.kitchen_humidity" data-device-room="Kitchen & Living">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Water Leak</strong><small>Boiler Room · 65%</small></span><button class="ha-device-settings-button" type="button" data-device-name="Water Leak" data-device-entity="binary_sensor.water_leak" data-device-room="Boiler Room">⚙ <span>Настроить</span></button></li>
+                      <li><span><strong>Terrace Camera</strong><small>Terrace · Доступно</small></span><button class="ha-device-settings-button" type="button" data-device-name="Terrace Camera" data-device-entity="camera.terrace" data-device-room="Terrace">⚙ <span>Настроить</span></button></li>
+                    </ul>
+                  </section>
+                </div>
+              </div>
+            </section>
+
+            <section class="ha-info-block" data-panel-id="events" data-panel-title="События" draggable="false">
+              <header class="ha-info-block__header">
+                <span class="ha-drag-handle" title="Перетащить">⠿</span><span class="ha-block-icon">!</span>
+                <button class="ha-info-block__toggle" type="button" aria-expanded="true"><span>События</span><small>2 записи</small><b>⌃</b></button>
+              </header>
+              <div class="ha-info-block__body">
+                <div class="ha-inline-stats" data-info-key="event-summary" data-info-label="Сводка событий"><span><strong>1</strong><small>внимание</small></span><span><strong>1</strong><small>завершено</small></span><span><strong>0</strong><small>критично</small></span></div>
+                <ul class="ha-timeline" data-info-key="event-history" data-info-label="История событий"><li><span class="event-dot warning"></span><div><strong>Boiler Room</strong><small>Проверьте показатель Water Leak · 65%</small></div></li><li><span class="event-dot good"></span><div><strong>Процесс завершён</strong><small>Статус инженерного устройства: Done</small></div></li></ul>
+              </div>
+            </section>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="ha-home-panel dashboard3-panel" id="dashboard3-panel" aria-label="Сводная информация" hidden>
+        <div class="dashboard3-panel__content" id="dashboard3-panel-content">
+          <header class="dashboard5-panel-header">
+            <h2 id="dashboard5-panel-title">Сводная информация</h2>
+          </header>
+          <div class="dashboard3-blocks" id="dashboard3-blocks" aria-live="polite"></div>
+        </div>
+      </aside>
+
+      <div class="dashboard3-settings-dialog" id="dashboard3-settings-dialog" role="dialog" aria-modal="true" aria-labelledby="dashboard3-settings-title" hidden>
+        <form class="dashboard3-settings-dialog__window" novalidate>
+          <header class="dashboard3-settings-dialog__header">
+            <h2 id="dashboard3-settings-title">Настройка панели</h2>
+            <button class="ha-icon-button dashboard3-settings-dialog__close" type="button" aria-label="Закрыть настройки">×</button>
+          </header>
+
+          <div class="dashboard3-settings-dialog__body">
+            <section class="dashboard3-general-settings" aria-labelledby="dashboard3-general-title">
+              <header><h3 id="dashboard3-general-title">Основные настройки</h3></header>
+              <div class="dashboard3-general-settings__grid">
+                <label class="dashboard3-field">
+                  <span>Название панели</span>
+                  <input id="dashboard3-panel-title" type="text" value="Сводная информация" maxlength="48" required>
+                  <small class="dashboard3-field__error" aria-live="polite"></small>
+                </label>
+                <label class="dashboard3-switch-field">
+                  <span><strong>Показывать информационную панель</strong><small>То же состояние, что у кнопки показа в шапке House Plan.</small></span>
+                  <input id="dashboard5-show-panel" type="checkbox">
+                  <span class="dashboard3-switch" aria-hidden="true"></span>
+                </label>
+                <label class="dashboard3-switch-field">
+                  <span><strong>Отображать на мобильных устройствах</strong><small>Ограничивает показ в нативном узком режиме Home Assistant.</small></span>
+                  <input id="dashboard3-show-mobile" type="checkbox" checked>
+                  <span class="dashboard3-switch" aria-hidden="true"></span>
+                </label>
+              </div>
+            </section>
+
+            <section class="dashboard3-block-editor" aria-labelledby="dashboard3-block-editor-title">
+              <header class="dashboard3-block-editor__heading">
+                <div><h3 id="dashboard3-block-editor-title">Блоки</h3><p>Настройте порядок, область отображения и значения.</p></div>
+                <span class="dashboard3-block-count" id="dashboard3-block-count">1 из 10</span>
+              </header>
+              <div class="dashboard3-block-editor__list" id="dashboard3-block-editor-list"></div>
+              <button class="dashboard3-add-block" type="button"><img src="./svg/plus.svg" alt="" aria-hidden="true">Добавить блок</button>
+            </section>
+          </div>
+
+          <footer class="dashboard3-settings-dialog__footer">
+            <span class="dashboard3-settings-status" id="dashboard3-settings-status" aria-live="polite"></span>
+            <button class="dashboard3-button dashboard3-button--secondary dashboard3-settings-cancel" type="button">Отмена</button>
+            <button class="dashboard3-button dashboard3-button--primary dashboard3-settings-save" type="submit" hidden>Сохранить</button>
+          </footer>
+        </form>
+      </div>
+
+      <div class="dashboard3-entity-picker" id="dashboard3-entity-picker" role="dialog" aria-label="Выбор сущности Home Assistant" hidden>
+        <label class="dashboard3-entity-picker__search">
+          <span aria-hidden="true">⌕</span>
+          <input id="dashboard3-entity-search" type="search" placeholder="Поиск сущности..." autocomplete="off">
+        </label>
+        <div class="dashboard3-entity-picker__list" id="dashboard3-entity-list" role="listbox"></div>
+        <p class="dashboard3-entity-picker__hint">Нужно своё вычисление? Создайте Template-сущность в Home Assistant — она появится в этом списке.</p>
+      </div>
+
+      <div class="dashboard4-size-dialog" id="dashboard4-size-dialog" role="dialog" aria-modal="true" aria-labelledby="dashboard4-size-title" hidden>
+        <form class="dashboard4-size-dialog__window">
+          <header><h2 id="dashboard4-size-title">Размеры на этом экране</h2><button class="dashboard4-size-close" type="button" aria-label="Закрыть">×</button></header>
+          <label><span>Размер значков устройств</span><output id="dashboard4-icon-size-output">100%</output><input id="dashboard4-icon-size" type="range" min="80" max="160" step="10" value="100"></label>
+          <label><span>Размер текста карточек комнат</span><output id="dashboard4-text-size-output">100%</output><input id="dashboard4-text-size" type="range" min="80" max="160" step="10" value="100"></label>
+          <footer><button class="dashboard4-size-reset" type="button">Сбросить</button><button class="dashboard3-button dashboard3-button--primary" type="submit">Готово</button></footer>
+        </form>
+      </div>
+
+      </div>
+    </section>
+  </div>
+</body>
+</html>
+
