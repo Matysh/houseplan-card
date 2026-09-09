@@ -22,7 +22,7 @@
 
 ## 1.2. Что человек увидит до и после
 
-До: см. §1.1. После: файл, который влезает в квоту, принимается; отказ у границы — только когда действительно не влезает. Support-пакет содержит палитру только по 11 ключам продукта, значения `c`/`a` без изменений. SVG с цепочкой ссылок глубже 64 отклоняется кодом `too_large` (413) с сообщением про предел ссылок; цепочка до 64 включительно принимается; цикл — `invalid_image` (400), как раньше.
+До: см. §1.1. После: вложение, которое влезает в квоту, принимается; отказ у границы — только когда места действительно нет. Пакет поддержки содержит палитру заливок только по одиннадцати слотам карточки, значения без изменений. SVG-декор со слишком длинной цепочкой ссылок отклоняется понятным сообщением «слишком большой», как и прочие превышения лимитов; цепочка в пределах лимита принимается; зацикленная — отклоняется как некорректная, как и раньше.
 
 ## 2. Скоуп
 
@@ -54,7 +54,7 @@
 - ровно `max_bytes` суммарно после promote (used + incoming == max_bytes) — принимается;
 - ровно `max_files` файлов после promote (count + 1 == max_files) — принимается;
 - на один байт / один файл больше — отклоняется;
-- чужой `.upload-*` в `files_root` (параллельная загрузка) — учитывается: два параллельных файла, каждый из которых влезает по отдельности, а вместе нет, — второй по порядку проверки отклоняется.
+- чужой `.upload-*` в `files_root` (параллельная загрузка) — учитывается: два параллельных файла, каждый из которых влезает по отдельности, а вместе нет, никогда не сохраняются оба. Если проверки идут последовательно (первый уже продвинут), отклоняется второй; если обе проверки идут, пока оба файла staged, каждая видит чужой staged-файл и отклоняются оба — консервативно, повтор любого из них проходит. Обход лимита исключён в обоих порядках.
 
 ## 5. Проекция палитры по allowlist
 
@@ -75,13 +75,22 @@ SUPPORT_FILL_COLOR_KEYS = (
 
 ## 6. Итеративный обход графа ссылок
 
-В `_validate_svg` после сборки `ref_graph`:
+В `_validate_svg` после сборки `ref_graph` — вызов `_walk_reference_graph(ids, ref_graph)`:
 
 ```python
 MAX_SVG_REF_DEPTH = 64  # rendering follows href/url() chains; a chain this long is not art
 ```
 
-Обход: для каждого `node_id in sorted(ids)` (детерминированный порядок) — явный стек `[(node_id, iter(children))]`, множества `visiting`/`visited`. Встреча узла из `visiting` → `invalid_image` «cyclic local reference» (как сейчас). Глубина стека > `MAX_SVG_REF_DEPTH` → `too_large` «The SVG reference chain exceeds the safety limit». Узел из `visited` пропускается. Ни одной рекурсивной функции; `RecursionError` невозможен по построению.
+Инвариант: **предел — длина самой длинной цепочки, проходящей через узел**, а не высота стека того обхода, который первым до узла добрался (ревью ТЗ r1, Medium 2: цепь любой длины можно нарезать сегментами ≤64 и подобрать `id` так, чтобы `sorted()` стартовал с хвоста).
+
+Алгоритм: явный стек `[(node, iter(children), chain)]`, где `chain` — длина самой длинной цепочки от `node` вниз, известная на данный момент (сам узел = 1); `visiting` — узлы на текущем пути; `longest[node]` — мемоизированная длина после полного обхода узла. Для каждого `start in sorted(ids)` без `longest`:
+
+- потомок в `visiting` → `invalid_image` «cyclic local reference» (как сейчас);
+- потомок в `longest` → `chain = max(chain, longest[ref] + 1)`, без спуска;
+- иначе — спуск; если высота стека уже превышает `MAX_SVG_REF_DEPTH` → `too_large` (ограничение работы, не только результата);
+- узел исчерпан → `longest[node] = chain`; `chain > MAX_SVG_REF_DEPTH` → `too_large` «The SVG reference chain exceeds the safety limit»; родитель получает `max(parent_chain, chain + 1)`.
+
+Ни одной рекурсивной функции — `RecursionError` невозможен по построению. Сложность O(узлы + рёбра): каждый узел обходится один раз. Цепочка из 64 узлов принимается, из 65 — нет, при любом порядке `id`.
 
 Семантика цикла и «висячей» ссылки не меняется; существующие тесты `test_svg_rejects_the_whole_unsafe_document` (цикл) и `test_svg_preserves_safe_local_gradient_clip_mask_and_transparency` зелёные без правок.
 
@@ -91,7 +100,7 @@ MAX_SVG_REF_DEPTH = 64  # rendering follows href/url() chains; a chain this long
 
 - `test_validation.py::test_issue_498_check_quota_excludes_the_staged_upload_itself`: `d/m1/a.pdf` 600 Б, `d/.upload-x` 300 Б, лимит 1000/10 → без `exclude` — `quota_exceeded` (фиксирует старое поведение как ошибку), с `exclude=d/.upload-x` — проходит; `max_files=2` с одним сохранённым — проходит; `max_files=1` — `too_many_files`; чужой `d/.upload-y` 200 Б при лимите 1000 → `quota_exceeded` (600+200+300 > 1000).
 - `test_ha_upload.py::test_issue_498_upload_accepts_the_last_bytes_and_the_last_file_of_the_quota`: monkeypatch `http_api.MAX_FILES_BYTES`/`MAX_FILES_COUNT`; первый файл ровно до границы по байтам — 200; ещё один байт — 507 `quota_exceeded`; по числу файлов: `MAX_FILES_COUNT=2`, два файла — 200/200, третий — 507 `too_many_files`.
-- `test_ha_upload.py::test_issue_498_concurrent_uploads_still_count_each_other`: два `client.post` через `asyncio.gather` с файлами, каждый из которых влезает, а сумма нет → ровно один 200 и один 507 (порядок не фиксируется); на диске один файл и ни одного `.upload-*`.
+- `test_ha_upload.py::test_issue_498_concurrent_uploads_still_count_each_other`: два `client.post` через `asyncio.gather`, `check_quota` обёрнут барьером на два вызова (обе проверки идут, пока оба файла staged); каждый влезает по отдельности, сумма — нет → не `[200, 200]`, суммарно сохранено ≤ квоты, ни одного `.upload-*` на диске.
 
 ### 7.2. Проекция
 
@@ -101,20 +110,32 @@ MAX_SVG_REF_DEPTH = 64  # rendering follows href/url() chains; a chain this long
 
 ### 7.3. SVG
 
-- `test_decor_assets.py::test_issue_498_flat_reference_chain_is_bounded_not_recursive`: цепь длиной 2500 → `DecorAssetError("too_large")` (не `RecursionError`); цепь длиной 64 — принимается; 65 — `too_large`; цикл `a→b→a` — `invalid_image` (регрессия).
-- `test_ha_websocket.py` / `test_ha_upload.py` (endpoint декора): цепь 2500 через `/api/houseplan/decor/assets` → 413 `too_large` (в HA; доказывает отсутствие 500).
+- `test_decor_assets.py::test_issue_498_flat_reference_chain_is_bounded_not_recursive`: цепь длиной 2500 → `DecorAssetError("too_large")` (не `RecursionError`); цепь длиной 64 — принимается; 65 — `too_large`; **недоброжелательный порядок id** — цепь 65 с именами `n0065→n0064→…→n0001` (sorted стартует с хвоста) → `too_large`; цикл `a→b→a` — `invalid_image` (регрессия).
+- `test_ha_upload.py::test_issue_498_decor_upload_refuses_a_deep_reference_chain_with_a_code_not_a_500`: цепь 2500 через `/api/houseplan/assets/upload` → 413 `too_large`, цепь 64 → 200 (в HA; доказывает отсутствие 500).
 
 ### 7.4. Мутанты (`scripts/mutation-gate.mjs`, гард `backend-test-guard.mjs`)
 
 - `quota-counts-the-staged-upload-twice`: в `HouseplanUploadView.post` убрать `exclude=tmp_path`; свидетель — 7.1 endpoint-тест границ.
 - `quota-ignores-foreign-staged-uploads`: `dir_usage` пропускает все файлы с префиксом `TMP_PREFIX`; свидетель — 7.1 параллельный тест.
 - `support-palette-copies-any-key`: allowlist → `fill_colors.keys()`; свидетель — 7.2 первый тест.
-- `svg-reference-chain-unbounded`: предел → `sys.maxsize`; свидетель — 7.3 (цепь 65).
+- `svg-reference-chain-unbounded`: обе проверки предела отключены; свидетель — 7.3 (цепь 65).
+- `svg-reference-depth-per-start-not-per-chain`: мемоизированная длина потомка не учитывается (`chain` вместо `max(chain, longest[ref] + 1)`); свидетель — 7.3 (недоброжелательный порядок id).
 - `svg-reference-walk-recursive-again`: итеративный обход заменён на прежнюю рекурсивную `_visit`; свидетель — 7.3 (цепь 2500: `RecursionError` ≠ `DecorAssetError`).
 
-Каждый мутант — отрицательным прогоном штатным раннером до S7.
+Каждый из шести мутантов — отрицательным прогоном штатным раннером до S7.
 
-## 8. Совместимость и откат
+## 8. Критерии приёмки
+
+- AC1. Вложение, после которого суммарный объём равен `MAX_FILES_BYTES` или число файлов равно `MAX_FILES_COUNT`, принимается; на один байт или один файл больше — отклоняется `507` с прежними кодами `quota_exceeded`/`too_many_files`. Доказательство: `test_issue_498_check_quota_excludes_the_staged_upload_itself` (валидатор) и `test_issue_498_upload_accepts_the_last_bytes_and_the_last_file_of_the_quota` (endpoint в HA).
+- AC2. Две параллельные загрузки, каждая из которых влезает, а сумма — нет, никогда не сохраняются обе; после запросов в `files_root` нет `.upload-*`. Доказательство: `test_issue_498_concurrent_uploads_still_count_each_other`.
+- AC3. Support-пакет содержит `fill_colors` только по ключам `SUPPORT_FILL_COLOR_KEYS`, значения только `c`/`a`; ключ, отсутствующий в списке, не встречается в байтах пакета; пустая палитра опускается. Схема `fill_colors` не изменена. Доказательство: `test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values`, `test_issue_498_projection_omits_an_empty_palette`, отсутствие диффа в `validation.py`.
+- AC4. `SUPPORT_FILL_COLOR_KEYS` равен множеству ключей `DEFAULT_FILL_COLORS` из `src/logic.ts` (11 штук). Доказательство: `test_issue_498_palette_allowlist_matches_the_card_defaults`.
+- AC5. SVG с цепочкой локальных ссылок длиннее `MAX_SVG_REF_DEPTH` отклоняется `DecorAssetError("too_large")` при любом порядке `id`; цепочка ровно `MAX_SVG_REF_DEPTH` принимается; цикл — `invalid_image`; цепь из 2500 звеньев не поднимает `RecursionError`. Доказательство: `test_issue_498_flat_reference_chain_is_bounded_not_recursive`.
+- AC6. Endpoint `/api/houseplan/assets/upload` отвечает на цепь 2500 кодом `413 too_large`, на цепь 64 — `200`. Доказательство: `test_issue_498_decor_upload_refuses_a_deep_reference_chain_with_a_code_not_a_500` (HA).
+- AC7. Шесть мутантов §7.4 пойманы штатным раннером; полный `tests_backend/` зелёный; `ruff`, `mypy` (allowlist) зелёные.
+- AC8. Производительность и touch не затронуты: правки только в серверных валидаторах и проекции; `src/**` без изменений (доказательство — дифф).
+
+## 8.0. Совместимость и откат
 
 Форматы Store, конфига и support-пакета не меняются (пакет становится строго подмножеством прежнего). Лимиты не меняются. Откат — revert одного коммита.
 
