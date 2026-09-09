@@ -38,8 +38,9 @@
   small. Its settings are touch-friendly and stay attached to the same card
   when a dashboard reflows. A first camera action also waits for the final
   header geometry instead of drifting while the new control settles, and a
-  warm card remount preserves the stage height that was actually painted
-  instead of briefly shifting it by a few pixels. Loading another language
+  warm card remount pins the exact stage height that was actually painted
+  until its replacement chrome has settled, instead of briefly shifting it
+  by a few pixels. Loading another language
   stays visually neutral, and room labels keep their size when the View-only
   controls disappear on entering an editor
   ([#437](https://github.com/Matysh/houseplan-card/issues/437)).

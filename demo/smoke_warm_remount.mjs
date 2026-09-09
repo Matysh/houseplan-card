@@ -43,6 +43,8 @@ const res = await page.evaluate(async () => {
   const stage1 = (c1.shadowRoot || c1.renderRoot).querySelector('.stage');
   const hFinal = stage1.clientHeight;
   const zoomSaved = c1._zoom;
+  const sourceLayout = { stageH: hFinal, hdrH: c1._hdrH,
+    memo: c1._warmSlot ? [c1._warmSlot.hdrH, c1._warmSlot.stageH] : null };
   out.zoomArmed = Math.abs(zoomSaved - 1.8) < 0.01;
   c1.remove(); // Lovelace throws the old element away…
   await sleep(30);
@@ -64,6 +66,8 @@ const res = await page.evaluate(async () => {
           planVisible: !!zw && getComputedStyle(zw).visibility === 'visible',
           rooms: stage.querySelectorAll('.room').length,
           stageH: stage.clientHeight,
+          hdrH: c2._hdrH,
+          memo: c2._warmSlot ? [c2._warmSlot.hdrH, c2._warmSlot.stageH] : null,
           zoom: c2._zoom,
         });
       }
@@ -78,7 +82,7 @@ const res = await page.evaluate(async () => {
     ? true : 'a frame hid the plan';
   const badH = frames.filter((f) => Math.abs(f.stageH - hFinal) > 2);
   out.warmNoStaleHeightFrame = badH.length === 0
-    ? true : `stage h=${badH[0].stageH} vs final ${hFinal} at t=${badH[0].t}ms`;
+    ? true : `source=${JSON.stringify(sourceLayout)}; frame=${JSON.stringify(badH[0])}; final=${JSON.stringify(frames.at(-1))}`;
   out.warmZoomEveryFrame = frames.every((f) => Math.abs(f.zoom - zoomSaved) < 0.01)
     ? true : 'a frame at a non-saved zoom';
   // the server config reload on a warm mount must not blank the plan

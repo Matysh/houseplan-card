@@ -50,10 +50,9 @@ const settle = () => page.evaluate(() => new Promise((resolve) =>
 const screenPt = (x, y) => page.evaluate(([px, py]) => {
   const card = window.__card;
   const stage = card.renderRoot.querySelector('.stage');
-  const rect = stage.getBoundingClientRect();
   const svg = stage.querySelector('svg');
-  const [vx, vy, vw, vh] = svg.getAttribute('viewBox').split(' ').map(Number);
-  return [rect.left + ((px - vx) / vw) * rect.width, rect.top + ((py - vy) / vh) * rect.height];
+  const point = new DOMPoint(px, py).matrixTransform(svg.getScreenCTM());
+  return [point.x, point.y];
 }, [x, y]);
 
 const pointer = (type, clientX, clientY, { cx, cy, pointerId = 77 } = {}) => page.evaluate((args) => {
