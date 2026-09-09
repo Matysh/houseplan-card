@@ -1,4 +1,6 @@
-/** Dialogs, forms, buttons and pickers (#266, split from styles.ts). */
+/** Dialogs, forms, buttons and pickers (#266, split from styles.ts).
+ * Footer hit targets belong here, not in lazy summary-panel styles (#505).
+ */
 import { css } from 'lit';
 
 export const dialogsStyles = css`
@@ -1514,7 +1516,6 @@ export const dialogsStyles = css`
       padding: var(--sp-5) var(--sp-6);
       border-top: 1px solid var(--hp-line);
     }
-    /* Shared footer target size, independent of lazy summary-panel styles (#505). */
     hp-dialog > .row[slot='footer'] button {
       min-height: 44px;
     }
