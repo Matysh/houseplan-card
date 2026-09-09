@@ -118,35 +118,31 @@ check('kioskNoVeil', kiosk.kioskNoVeil);
 check('kioskPlanNeverHidden', kiosk.kioskPlanNeverHidden);
 
 // ---------- phase 3: prefers-reduced-motion → the house does not pulse ----------
+// The wait lives on the Playwright side: an in-page promise that only a
+// requestAnimationFrame chain keeps alive was reported as "garbage collected"
+// on a CI runner (#506 beta.9 candidate) while the same phase passed locally.
+// Polling from outside cannot be collected, and a destroyed context or a
+// navigation surfaces as its own error instead of a vanished promise.
+page.on('framenavigated', (frame) => console.log('diagnostic navigation:', frame.url()));
+page.on('crash', () => console.log('diagnostic page crash'));
 await page.emulateMedia({ reducedMotion: 'reduce' });
-const reduced = await page.evaluate(async () => {
+await page.evaluate(() => {
   customElements.get('houseplan-card')?._warmBootReset?.(); // DEV-B703: this scenario simulates a COLD first open — forget the page's warm re-mount memo
   const c = document.createElement('houseplan-card');
   c.setConfig({ type: 'custom:houseplan-card' });
   c.hass = window.__card.hass;
   c.style.cssText = 'position:fixed;left:0;top:0;width:800px;z-index:99';
   document.body.appendChild(c);
-  const sr = () => c.shadowRoot || c.renderRoot;
-  const t0 = performance.now();
-  let anim = 'missed';
-  await new Promise((done) => {
-    // A timer keeps this promise reachable even if the renderer withholds
-    // animation frames for a while (a CI runner under load once let the
-    // rAF-only chain be garbage-collected mid-wait); the verdict stays the
-    // same: the house is found, or `anim` remains 'missed'.
-    const settle = () => { clearTimeout(guard); done(); };
-    const guard = setTimeout(settle, 700);
-    const tick = () => {
-      const house = sr().querySelector('.bootveil .boothouse');
-      if (house) { anim = getComputedStyle(house).animationName; settle(); return; }
-      if (performance.now() - t0 < 500) requestAnimationFrame(tick);
-      else settle();
-    };
-    requestAnimationFrame(tick);
-  });
-  c.remove();
-  return { anim };
+  window.__preloaderReduced = { card: c, started: performance.now() };
 });
+const reduced = await page.waitForFunction(() => {
+  const probe = window.__preloaderReduced;
+  const root = probe.card.shadowRoot || probe.card.renderRoot;
+  const house = root?.querySelector('.bootveil .boothouse');
+  if (house) return { anim: getComputedStyle(house).animationName };
+  return performance.now() - probe.started > 500 ? { anim: 'missed' } : null;
+}, null, { polling: 'raf', timeout: 5000 }).then((handle) => handle.jsonValue());
+await page.evaluate(() => { window.__preloaderReduced.card.remove(); delete window.__preloaderReduced; });
 check('reducedMotionStaticHouse', reduced.anim, 'none');
 
 await finish(browser, { ...res, ...kiosk, ...reduced });
