@@ -110,8 +110,11 @@ export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) =
     revParse: (ref) => must(git('rev-parse', ref), `rev-parse ${ref}`),
     mergeBase: (a, b) => must(git('merge-base', a, b), 'merge-base'),
     diffNames: (from, to, pathspec = []) => must(git('diff', '--name-only', from, to, '--', ...pathspec), 'diff').split('\n').filter(Boolean),
+    // Документы ревью — не часть патча (#516): кандидат несёт свой
+    // CODE-REVIEW-N-rK.md, материал — нет, и без pathspec их patch-id
+    // расходились на каждом сдвиге dev; `reviewedFresh` судит так же.
     patchId: (from, to) => {
-      const diff = must(git('diff', '--full-index', from, to), 'diff');
+      const diff = must(git('diff', '--full-index', from, to, '--', '.', ':!docs/reviews'), 'diff');
       const r = spawnSync('git', ['patch-id', '--stable'], { input: diff, encoding: 'utf8' });
       return (r.stdout || '').trim().split(' ')[0] || 'empty';
     },

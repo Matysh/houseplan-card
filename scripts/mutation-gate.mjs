@@ -8204,6 +8204,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'merge-rereviews-own-review-doc',
+    guard: 'node --test test/merge-candidate.test.mjs',
+    because: 'the candidate carries its own review document and the material does not; a patch-id '
+      + 'that counts docs/reviews sends every green candidate back to review whenever dev moved (#516)',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: "      const diff = must(git('diff', '--full-index', from, to, '--', '.', ':!docs/reviews'), 'diff');",
+      replace: "      const diff = must(git('diff', '--full-index', from, to), 'diff'); // mutant: review docs count",
+    }],
+  },
+  {
     id: 'merge-trusts-cancelled-dispatch',
     guard: 'node --test test/merge-candidate.test.mjs',
     because: 'the real waitValidate must skip a dispatch cancelled by its replacement; reading it as red '
