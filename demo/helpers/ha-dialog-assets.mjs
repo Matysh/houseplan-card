@@ -11,6 +11,9 @@ import { parseAst } from 'rollup/parseAst';
 export const HA_DIALOG_PIN = Object.freeze({
   version: '20260729.7', bytes: 124294469,
   sha256: 'ba01782297e9506d3185f99a74d829f3811df322623848af21bcc0b8ea834c12',
+  // Deterministic manifest generated from that authenticated wheel, including
+  // extracted-file hashes and the module index. Cache metadata is not trusted.
+  cacheManifestSha256: '6fd75eb27f8a660c57d173d7b9b496d17f96e404c48adba7faeef1a3d391d831',
   url: 'https://files.pythonhosted.org/packages/22/84/f117626ac7db42d34341aa2795cd2bd2f84e7cc89ecdf0117bf4cfa2f1e6/home_assistant_frontend-20260729.7-py3-none-any.whl',
   app: 'app.d53ce8172fc8c85d.js', module: '25395', entry: 'o(91535);',
 });
@@ -67,7 +70,9 @@ export async function prepareHaDialogAssets({
   mkdirSync(cache, { recursive: true });
   const manifestPath = join(cache, 'manifest.json');
   if (existsSync(manifestPath)) {
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    const manifestBytes = readFileSync(manifestPath);
+    if (digest(manifestBytes) !== HA_DIALOG_PIN.cacheManifestSha256) throw new Error('HA fixture cache manifest hash mismatch');
+    const manifest = JSON.parse(manifestBytes);
     if (manifest.version !== pin || manifest.sha256 !== HA_DIALOG_PIN.sha256
         || !manifest.files?.length || !manifest.modules?.[HA_DIALOG_PIN.module]) throw new Error('Invalid HA fixture cache manifest');
     for (const file of manifest.files) {
@@ -123,6 +128,7 @@ export async function prepareHaDialogAssets({
   const root = join(cache, 'hass_frontend');
   const manifest = { version: pin, sha256: HA_DIALOG_PIN.sha256, url: HA_DIALOG_PIN.url,
     files, modules: moduleIndex(join(root, 'frontend_latest')) };
+  if (digest(JSON.stringify(manifest)) !== HA_DIALOG_PIN.cacheManifestSha256) throw new Error('Rebuilt HA manifest differs from verified pin; refusing this cache');
   writeFileSync(manifestPath, JSON.stringify(manifest));
   return { root, manifest };
 }

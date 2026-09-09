@@ -99,7 +99,7 @@ export async function launchHaDialogFixture({
             .replace(/<script type="module">\r?\nconst CFG/, '<script type="module">\nawait import("/ha505-bootstrap.mjs");\nconst CFG');
         }
       }
-      response.writeHead(200, { 'content-type': type, 'cache-control': 'no-store',
+      response.writeHead(200, { 'content-type': type.startsWith('text/') ? `${type}; charset=utf-8` : type, 'cache-control': 'no-store',
         'content-security-policy': "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self' data:; img-src 'self' data: blob:; worker-src 'none'" }).end(body);
     } catch (error) { errors.push(String(error)); response.writeHead(500).end('Diagnostic fixture error'); }
   });

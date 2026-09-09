@@ -13,3 +13,5 @@ instructions. No backend dependencies are needed. Demo dates may vary.
 Do not bundle these files into the product. The numbered spec documents the
 allowed adaptation for HA themes, accessibility and production data ownership.
 
+[Author comparison and executable evidence](ACCEPTANCE.md) documents the
+prototype/product pairs and accepted adaptations; it does not replace S7 review.

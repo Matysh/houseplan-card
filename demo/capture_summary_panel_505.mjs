@@ -14,10 +14,11 @@ const options = { output: join(repo, 'artifacts/summary-panel-505') };
 for (let index = 2; index < process.argv.length; index++) {
   const arg = process.argv[index];
   if (arg === '--probe-only') options.probeOnly = true;
-  else if (['--output', '--ha-cache', '--ha-wheel'].includes(arg)) {
+  else if (['--output', '--ha-cache', '--ha-wheel', '--only'].includes(arg)) {
     const value = process.argv[++index];
     if (!value || value.startsWith('--')) throw new Error(`Missing value for ${arg}`);
-    options[{ '--output': 'output', '--ha-cache': 'cacheDir', '--ha-wheel': 'wheelPath' }[arg]] = resolve(value);
+    if (arg === '--only') options.only = value.split(',');
+    else options[{ '--output': 'output', '--ha-cache': 'cacheDir', '--ha-wheel': 'wheelPath' }[arg]] = resolve(value);
   } else throw new Error(`Unknown option ${arg}`);
 }
 // Fail before the optional 124 MB download. Captures never bypass freshness.
@@ -31,6 +32,7 @@ const report = {
   issue: 505, diagnosticOnly: true, platform: process.platform,
   sourceSha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim(),
   sourceFingerprint: fingerprint, probeOnly: Boolean(options.probeOnly),
+  selectedCases: options.only || 'full matrix',
   haFrontend: HA_DIALOG_PIN.version, wheelSha256: HA_DIALOG_PIN.sha256,
   boundaries: 'Loopback synthetic demo only. No core/auth/HA server. Official app loader exposed at runtime; component factories/CSS unmodified.',
   comparison: 'Equivalent one block, three default system rows and one entity row. Reference row text is normalized to observed product values; reference CSS/files are unchanged. Floor-plan/fake HA chrome pixels are not parity targets.',
@@ -234,8 +236,37 @@ async function capture(scenario) {
       await shot('product', 'control', page.locator('.summary-control'));
     }
     if (scenario.language === 'de') {
-      await page.locator('.summary-editor').evaluate((node) => { node.scrollTop = node.scrollHeight; });
+      // The genuine HA owns scrolling in its shadow .body; the native wrapper
+      // owns it in the editor. Follow the composed tree instead of assuming.
+      const measureSource = async (align) => page.locator('.summary-source').last().evaluate((source, align) => {
+        const label = source.querySelector('strong');
+        (align === 'start' ? label : source).scrollIntoView({ block: align, inline: 'nearest', behavior: 'instant' });
+        const hp = source.closest('hp-dialog');
+        const ha = hp.shadowRoot.querySelector('ha-dialog');
+        const header = ha?.shadowRoot.querySelector('ha-dialog-header') || hp.shadowRoot.querySelector('.header');
+        const footer = hp.querySelector('[slot="footer"]');
+        let bandTop = Math.max(0, header?.getBoundingClientRect().bottom || 0);
+        let bandBottom = Math.min(innerHeight, footer.getBoundingClientRect().top);
+        const visible = (node) => { const box = node.getBoundingClientRect().toJSON();
+          const visibleHeight = Math.max(0, Math.min(box.bottom, bandBottom) - Math.max(box.top, bandTop));
+          return { box, visibleHeight, visibleFraction: visibleHeight / box.height }; };
+        const scrollOwners = [];
+        for (let node = source; node; node = node.assignedSlot || node.parentElement || node.getRootNode()?.host) {
+          if (node.scrollHeight > node.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(node).overflowY)) {
+            const clip = node.getBoundingClientRect();
+            bandTop = Math.max(bandTop, clip.top); bandBottom = Math.min(bandBottom, clip.bottom);
+            scrollOwners.push({ tag: node.localName, class: node.className, scrollTop: node.scrollTop,
+              scrollHeight: node.scrollHeight, clientHeight: node.clientHeight });
+          }
+        }
+        return { align, bandTop, bandBottom, label: visible(label), source: visible(source), scrollOwners };
+      }, align);
+      record.product.longSourceStart = await measureSource('start');
+      assert.ok(record.product.longSourceStart.label.visibleHeight > 0, 'Long source label must actually appear between header and footer');
       await shot('product', 'long-source-scrolled');
+      record.product.longSourceEnd = await measureSource('end');
+      assert.ok(record.product.longSourceEnd.source.visibleHeight > 0, 'Long source end must actually be visible');
+      await shot('product', 'long-source-end');
     }
     await fixture.assertClean();
     await page.addInitScript(({ config, theme, kiosk, textSize }) => {
@@ -276,7 +307,9 @@ async function capture(scenario) {
 
 try {
   await probe();
-  if (!options.probeOnly) for (const scenario of [...panelCases, ...settingCases, ...edgeCases]) await capture(scenario);
+  const cases = [...panelCases, ...settingCases, ...edgeCases];
+  if (options.only) for (const name of options.only) assert.ok(cases.some((scenario) => scenario.name === name), `Unknown case ${name}`);
+  if (!options.probeOnly) for (const scenario of cases.filter((scenario) => !options.only || options.only.includes(scenario.name))) await capture(scenario);
   report.status = 'complete'; saveReport();
   console.log(`Diagnostic evidence: ${join(options.output, 'report.json')}`);
 } catch (error) {

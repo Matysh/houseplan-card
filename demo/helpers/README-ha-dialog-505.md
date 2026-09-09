@@ -16,14 +16,17 @@ The second command requires an already fresh `npm run bundle:sync` result.
 It never builds or changes product/reference files, and refuses stale source
 fingerprints even when `HP_ALLOW_STALE_BUNDLE` is set. For reviewer work, use
 `--output "$RUNNER_TEMP/summary-panel-505"` to keep all evidence outside the checkout.
+Use `--only edge-real-ha-text-200-long-de-390` for a named focused recapture;
+comma-separated names are accepted and recorded as a partial selection.
 
 The first explicit run downloads the official 124,294,469-byte
 `home-assistant-frontend==20260729.7` wheel from the exact allowlisted PyPI file
 URL; version, size and SHA-256 are pinned in `ha-dialog-assets.mjs`, checked
 before extraction, and checked against `tests_backend/requirements.txt`.
 The wheel is **not installed**. Only allowlisted modern JS/static assets are
-extracted to the OS temporary cache. Existing extracted bytes are hash-checked
-against the generated local cache manifest each run. Use a new cache directory
+extracted to the OS temporary cache. The deterministic cache manifest has its
+own pinned hash; existing extracted bytes are then checked against its per-file
+hashes each run, so edited cache metadata is not trusted. Use a new cache directory
 after corruption; the tool does not delete existing data.
 
 To reuse an already downloaded official wheel or select a disposable cache:
@@ -70,6 +73,9 @@ on both sides. Reference displayed values are normalized to measured product
 values **only as fixture text**, not CSS; original reference files stay intact.
 The archived prototype UI is Russian; German stress changes fixture data and
 product locale, not the archived prototype UI translation.
+Long-source start/end images use `scrollIntoView` and record the actual composed
+scroll owner plus source/label visibility between header and footer. This matters
+because genuine HA scrolls its shadow body, not necessarily `.summary-editor`.
 
 The 800×500 case is explicitly an effective-viewport proxy for a 1600×1000
 display at 200%, **not actual browser zoom**. Separate 32px root-font cases
