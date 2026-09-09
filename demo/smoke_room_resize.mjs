@@ -108,22 +108,33 @@ check('safe_resize.shared_enabled_handles', await page.evaluate(() =>
       && handle.getAttribute('aria-disabled') === 'false').length), 2);
 const [sx, sy] = await screenPt(400, 250);
 const [tx] = await screenPt(450, 250);
+const safeResizeScreen = await page.evaluate(() => {
+  const stage = window.__card.renderRoot.querySelector('.stage');
+  const svg = stage.querySelector('svg');
+  const matrix = svg.getScreenCTM();
+  return { stage: [stage.clientWidth, stage.clientHeight], viewBox: svg.getAttribute('viewBox'),
+    matrix: matrix ? [matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f] : null };
+});
 await pointer('pointerdown', sx, sy, { cx: 400, cy: 250 });
 check('safe_resize.drag_started', await page.evaluate(() => window.__card._resize.dragging), true);
 await pointer('pointermove', tx, sy);
 await settle();
-check('safe_resize.preview_moved', Math.abs((await edgeX('left', 1, true)) - 450) < 6, true);
+const safeResizePreviewLeft = await edgeX('left', 1, true);
+check('safe_resize.preview_moved', Math.abs(safeResizePreviewLeft - 450) < 6, true);
 check('safe_resize.preview_not_persisted', Math.abs((await edgeX('left', 1, false)) - 400) < 1e-6, true);
 await pointer('pointerup', tx, sy);
 await settle();
-check('safe_resize.commit_left', Math.abs((await edgeX('left', 1, false)) - 450) < 6, true);
-check('safe_resize.commit_right', Math.abs((await edgeX('right', 3, false)) - 450) < 6, true);
+const safeResizeCommitLeft = await edgeX('left', 1, false);
+const safeResizeCommitRight = await edgeX('right', 3, false);
+check('safe_resize.commit_left', Math.abs(safeResizeCommitLeft - 450) < 6, true);
+check('safe_resize.commit_right', Math.abs(safeResizeCommitRight - 450) < 6, true);
 check('safe_resize.third_static', Math.abs((await edgeX('third', 1, false)) - 950) < 1e-6, true);
-check('safe_resize.opening_once', await page.evaluate(() => {
+const safeResizeOpeningX = await page.evaluate(() => {
   const card = window.__card;
   const space = card._serverCfg.spaces.find((candidate) => candidate.id === card._space);
-  return Math.abs(space.openings.find((opening) => opening.id === 'moving-door').x - 0.45) < 0.006;
-}), true);
+  return space.openings.find((opening) => opening.id === 'moving-door').x;
+});
+check('safe_resize.opening_once', Math.abs(safeResizeOpeningX - 0.45) < 0.006, true);
 check('safe_resize.one_undo', await page.evaluate(() => window.__card._geometryHistory.size), 1);
 await page.keyboard.press('Control+z');
 await settle();
@@ -356,4 +367,5 @@ await settle();
 check('safe_resize.cancel_geometry', JSON.stringify(await roomPoly('solo')), cancelBefore);
 check('safe_resize.cancel_zero_write', await page.evaluate(() => window.__card._geometryHistory.size), 0);
 
-await finish(browser, { done: true });
+await finish(browser, { done: true, safeResizeScreen, safeResizePoints: [sx, sy, tx],
+  safeResizeResult: [safeResizePreviewLeft, safeResizeCommitLeft, safeResizeCommitRight, safeResizeOpeningX] });
