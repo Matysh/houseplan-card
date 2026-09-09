@@ -48,7 +48,7 @@ export function provesMutants(jobs) {
  */
 export async function validateGate({ ref, sha, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS }) {
   const started = ops.now();
-  const ignored = new Set(); // завершённые зелёные dispatch без исполненных мутантов
+  const ignored = new Set(); // завершённые dispatch, которые ничего не доказывают: отменённые и зелёные без мутантов
   let tracked = null;
   let dispatchedAt = null;
   while (ops.now() - started < totalMs) {
@@ -57,6 +57,14 @@ export async function validateGate({ ref, sha, ops, appearMs = VALIDATE_APPEAR_M
     if (run) {
       tracked = run.databaseId;
       if (run.status === 'completed') {
+        if (run.conclusion === 'cancelled') {
+          // Отменённый прогон ничего не доказывает (#511, ревью r1 M1): его
+          // заменил другой dispatch в той же concurrency-группе — ждём его,
+          // а если замены нет, запускаем свой.
+          ignored.add(run.databaseId);
+          tracked = null;
+          continue;
+        }
         if (run.conclusion !== 'success') return { result: 'red', url: run.url, note: `dispatch-прогон завершился: ${run.conclusion}` };
         if (provesMutants(await ops.jobs(run.databaseId))) return { result: 'green', url: run.url, note: 'dispatch-прогон с исполненными мутантами зелёный' };
         // зелёный, но мутанты не исполнялись (чужой dispatch без mutants=true) — не доказательство

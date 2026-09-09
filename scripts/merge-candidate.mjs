@@ -140,7 +140,9 @@ export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) =
       while (now() - started < VALIDATE_TOTAL_MS) {
         const r = sh('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', 'databaseId,status,conclusion,url,event', '--limit', '10']);
         const all = r.status === 0 && r.stdout ? JSON.parse(r.stdout) : [];
-        const runs = all.filter((x) => !event || x.event === event);
+        // Отменённый прогон ничего не доказывает (#511): его заменил следующий
+        // dispatch на той же ветке — ждём его, а не красим кандидата.
+        const runs = all.filter((x) => (!event || x.event === event) && x.conclusion !== 'cancelled');
         const run = runs.find((x) => x.databaseId === runId) || runs[0];
         if (run) {
           runId = run.databaseId;

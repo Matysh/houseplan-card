@@ -8148,6 +8148,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-returns-task-on-cancelled-dispatch',
+    guard: 'node --test test/validate-gate.test.mjs',
+    because: 'a dispatch cancelled by its replacement in the same concurrency group proves nothing; '
+      + 'reading it as red sends the task back to S6 for no reason (#510 review r1 M1, #511)',
+    patches: [{
+      file: 'scripts/validate-gate.mjs',
+      find: "        if (run.conclusion === 'cancelled') {",
+      replace: "        if (false) { // mutant: cancelled counts as red",
+    }],
+  },
+  {
     id: 'review-trusts-push-run-without-mutants',
     guard: 'node --test test/validate-gate.test.mjs',
     because: 'a green push run on the same SHA holds no mutants and is not proof; the gate must '

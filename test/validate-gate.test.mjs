@@ -105,3 +105,21 @@ test('#510: the tracked dispatch run is followed even when a newer dispatch appe
   assert.equal(outcome.result, 'green');
   assert.equal(outcome.url, 'https://run/1');
 });
+
+test('#510 r1 M1: a cancelled dispatch proves nothing — the gate waits for its replacement instead of returning the task', async () => {
+  const cancelled = run({ databaseId: 1, conclusion: 'cancelled', url: 'https://run/cancelled' });
+  const replacement = run({ databaseId: 2, url: 'https://run/2' });
+  const fake = fakeOps({ snapshots: [[cancelled], [replacement, cancelled]] });
+  const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, pollMs: 1000 });
+  assert.equal(outcome.result, 'green');
+  assert.equal(outcome.url, 'https://run/2');
+  assert.deepEqual(fake.dispatched, [], 'the replacement was already there — no extra dispatch');
+});
+
+test('#510 r1 M1: a cancelled dispatch with no replacement gets one dispatch, not a red verdict', async () => {
+  const cancelled = run({ databaseId: 1, conclusion: 'cancelled' });
+  const fake = fakeOps({ snapshots: [[cancelled], [cancelled], [run({ databaseId: 3, url: 'https://run/3' }), cancelled]] });
+  const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, pollMs: 1000 });
+  assert.equal(outcome.result, 'green');
+  assert.deepEqual(fake.dispatched, ['issue/1']);
+});
