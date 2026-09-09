@@ -633,3 +633,22 @@ test('#510 AC2: конвейер запускает Validate с мутантам
     assert.match(chunk, /if: (needs\.guard\.outputs\.stage == 'code' && )?steps\.(gate\.outputs\.proceed == 'true'|decide\.outputs\.green == 'true')/, `${name}: условие по proceed/зелёному`);
   }
 });
+
+test('#515: якоря материала снимаются ПОСЛЕ ребейза конвейером и публикуются из шага material', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const at = (marker) => { const i = workflow.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
+  const rebase = at('      - name: Привести ветку к dev\n');
+  const material = at('      - name: Зафиксировать SHA материала ревью\n');
+  const reuse = at('      - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"\n');
+  assert.ok(rebase < material && material < reuse, 'material стоит после ребейза и до reuse');
+  const materialStep = workflow.slice(material, reuse);
+  assert.match(materialStep, /echo "tree=\$\(git rev-parse 'HEAD\^\{tree\}'\)" >> "\$GITHUB_OUTPUT"/, 'дерево — из шага material');
+  assert.match(materialStep, /echo "specs=\$specs" >> "\$GITHUB_OUTPUT"/, 'ТЗ — из шага material');
+  const publish = at('      - name: Опубликовать документ ревью\n');
+  const publishStep = workflow.slice(publish, at('      - name: "Материал раунда воспроизводим (#413)"\n'));
+  for (const name of ['SHA', 'TREE', 'SPECS']) {
+    assert.match(publishStep, new RegExp(`MATERIAL_${name}: \\$\\{\\{ steps\\.material\\.outputs\\.${name.toLowerCase()} \\}\\}`), `MATERIAL_${name} из material`);
+  }
+  // до-ребейзные якоря из шага branch никем не читаются: после force-push они мертвы (#508 r1–r3)
+  assert.doesNotMatch(workflow, /steps\.branch\.outputs\.(sha|tree|specs)/, 'якоря из шага branch — осиротевшие после ребейза');
+});
