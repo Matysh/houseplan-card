@@ -130,11 +130,17 @@ const reduced = await page.evaluate(async () => {
   const t0 = performance.now();
   let anim = 'missed';
   await new Promise((done) => {
+    // A timer keeps this promise reachable even if the renderer withholds
+    // animation frames for a while (a CI runner under load once let the
+    // rAF-only chain be garbage-collected mid-wait); the verdict stays the
+    // same: the house is found, or `anim` remains 'missed'.
+    const settle = () => { clearTimeout(guard); done(); };
+    const guard = setTimeout(settle, 700);
     const tick = () => {
       const house = sr().querySelector('.bootveil .boothouse');
-      if (house) { anim = getComputedStyle(house).animationName; done(); return; }
+      if (house) { anim = getComputedStyle(house).animationName; settle(); return; }
       if (performance.now() - t0 < 500) requestAnimationFrame(tick);
-      else done();
+      else settle();
     };
     requestAnimationFrame(tick);
   });
