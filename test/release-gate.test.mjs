@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyValidateRuns, workflowRunsUrl } from '../scripts/release-gate.mjs';
+import { readFileSync } from 'node:fs';
+import { classifyValidateRuns, latestRelevantRun, workflowRunsUrl } from '../scripts/release-gate.mjs';
 
 test('release gate waits until an exact-SHA Validate exists and completes', () => {
   assert.equal(classifyValidateRuns([]), 'wait');
   assert.equal(classifyValidateRuns([{ status: 'queued', conclusion: null }]), 'wait');
   assert.equal(classifyValidateRuns([
-    { status: 'completed', conclusion: 'success' },
-    { status: 'in_progress', conclusion: null },
+    { id: 1, run_started_at: '2026-09-09T13:01:00Z', status: 'completed', conclusion: 'success' },
+    { id: 2, run_started_at: '2026-09-09T13:02:00Z', status: 'in_progress', conclusion: null },
   ]), 'wait');
 });
 
@@ -18,8 +19,8 @@ test('release gate accepts only completed success runs', () => {
   ]), 'success');
 });
 
-test('release gate fails closed for red, cancelled and skipped runs', () => {
-  for (const conclusion of ['failure', 'cancelled', 'timed_out', 'action_required', 'skipped', null]) {
+test('release gate fails closed for red, timed-out and skipped runs (cancelled ones are not verdicts, #511)', () => {
+  for (const conclusion of ['failure', 'timed_out', 'action_required', 'skipped', null]) {
     assert.equal(
       classifyValidateRuns([{ status: 'completed', conclusion }]),
       'fail',
@@ -28,11 +29,22 @@ test('release gate fails closed for red, cancelled and skipped runs', () => {
   }
 });
 
-test('one red duplicate blocks a green duplicate for the same SHA', () => {
-  assert.equal(classifyValidateRuns([
-    { status: 'completed', conclusion: 'success' },
-    { status: 'completed', conclusion: 'failure' },
-  ]), 'fail');
+test('#511: the latest non-cancelled run is the verdict; cancelled runs prove nothing', () => {
+  const at = (minute, over) => ({ id: minute, run_started_at: `2026-09-09T13:${String(minute).padStart(2, '0')}:00Z`, status: 'completed', ...over });
+  // an older green does not outrank a newer red …
+  assert.equal(classifyValidateRuns([at(1, { conclusion: 'success' }), at(2, { conclusion: 'failure' })]), 'fail');
+  // … and a newer green (re-run, dispatch with another baseline) refreshes an older red
+  assert.equal(classifyValidateRuns([at(1, { conclusion: 'failure' }), at(2, { conclusion: 'success' })]), 'success');
+  // order in the payload is irrelevant: the timestamp decides
+  assert.equal(classifyValidateRuns([at(2, { conclusion: 'success' }), at(1, { conclusion: 'failure' })]), 'success');
+  // cancelled twins are invisible
+  assert.equal(classifyValidateRuns([at(1, { conclusion: 'cancelled' })]), 'wait');
+  assert.equal(classifyValidateRuns([at(2, { conclusion: 'cancelled' }), at(1, { conclusion: 'success' })]), 'success');
+  assert.equal(classifyValidateRuns([at(2, { conclusion: 'cancelled' }), at(1, { conclusion: 'failure' })]), 'fail');
+  // a newer run still going means wait, even with an older green behind it
+  assert.equal(classifyValidateRuns([at(1, { conclusion: 'success' }), at(2, { status: 'in_progress', conclusion: null })]), 'wait');
+  assert.equal(latestRelevantRun([at(2, { conclusion: 'cancelled' }), at(1, { conclusion: 'success' })]).id, 1);
+  assert.equal(latestRelevantRun([]), null);
 });
 
 test('release gate can target the dedicated exact-SHA performance workflow', () => {
@@ -40,4 +52,12 @@ test('release gate can target the dedicated exact-SHA performance workflow', () 
     workflowRunsUrl({ repo: 'Matysh/houseplan-card', workflow: 'performance.yml', sha: 'abc/123' }),
     'https://api.github.com/repos/Matysh/houseplan-card/actions/workflows/performance.yml/runs?head_sha=abc%2F123&per_page=100',
   );
+});
+
+test('#511 AC3: the release documents describe the latest-run semantics', () => {
+  const development = readFileSync(new URL('../docs/DEVELOPMENT.md', import.meta.url), 'utf8');
+  assert.match(development, /latest non-cancelled Validate run of the\nSHA/);
+  assert.doesNotMatch(development, /A missing, failed,\ncancelled or one-hour-timed-out Validate withholds/);
+  const performance = readFileSync(new URL('../demo/performance/README.md', import.meta.url), 'utf8');
+  assert.match(performance, /latest\nnon-cancelled run on the SHA/);
 });

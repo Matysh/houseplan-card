@@ -355,9 +355,12 @@ fallback. They still gate assets on the exact tagged SHA, so adopting the new
 path does not weaken releases created through the old path.
 
 Tag `vX.Y.Z` + GitHub Release → `.github/workflows/release.yml` resolves that
-tag to its exact commit, waits for every Validate run of the SHA to complete
-successfully, then builds and attaches `houseplan-card.js`. A missing, failed,
-cancelled or one-hour-timed-out Validate withholds the asset. Bump the version
+tag to its exact commit, waits for the latest non-cancelled Validate run of the
+SHA to complete successfully (#511: a cancelled run is not a verdict, a later
+re-run or another-baseline comparison refreshes an older result), then builds
+and attaches `houseplan-card.js`. A missing, failed or one-hour-timed-out latest
+Validate withholds the asset; stable releases additionally need the same for
+Full Performance. Bump the version
 everywhere in sync: `src/houseplan-card.ts` (CARD_VERSION), `package.json`,
 `custom_components/houseplan/manifest.json`, `custom_components/houseplan/const.py`.
 

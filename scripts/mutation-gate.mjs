@@ -8088,6 +8088,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'release-gate-counts-cancelled-runs',
+    guard: 'node --test test/release-gate.test.mjs',
+    because: 'a cancelled twin on the tag SHA proves nothing and must not block the assets; the '
+      + 'verdict is the latest non-cancelled run (#511 AC1)',
+    patches: [{
+      file: 'scripts/release-gate.mjs',
+      find: "  const relevant = (Array.isArray(runs) ? runs : []).filter((run) => run && run.conclusion !== 'cancelled');",
+      replace: "  const relevant = (Array.isArray(runs) ? runs : []).filter((run) => !!run); // mutant: cancelled counts",
+    }],
+  },
+  {
+    id: 'release-gate-oldest-run-wins',
+    guard: 'node --test test/release-gate.test.mjs',
+    because: 'the latest run is the verdict: a re-run or another-baseline comparison must be able to '
+      + 'refresh an older result on the same SHA (#511 AC1)',
+    patches: [{
+      file: 'scripts/release-gate.mjs',
+      find: "  return relevant.sort((a, b) => stamp(b) - stamp(a) || Number(b.id || 0) - Number(a.id || 0))[0] || null;",
+      replace: "  return relevant.sort((a, b) => stamp(a) - stamp(b) || Number(a.id || 0) - Number(b.id || 0))[0] || null; // mutant: oldest",
+    }],
+  },
+  {
     id: 'summary-runtime-attaches-after-first-render',
     guard: 'node demo/smoke_summary_warm_attach.mjs',
     because: 'a warm summary chunk must hand the new instance its runtime synchronously in '

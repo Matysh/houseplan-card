@@ -4,11 +4,26 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/**
+ * The verdict is the LATEST run that was not cancelled (#511). A cancelled run
+ * proves nothing either way — concurrency or a hand superseded it — and the
+ * old "every run must be green" rule turned one red or cancelled duplicate on
+ * a SHA into a permanent block (v1.73.0: a cancelled dispatch twin plus a red
+ * comparison next to a green push run left the tag without assets). A later
+ * re-run or a dispatch with another baseline may therefore refresh the verdict
+ * on the same SHA; the owner accepted that trade-off deliberately.
+ */
+export function latestRelevantRun(runs) {
+  const relevant = (Array.isArray(runs) ? runs : []).filter((run) => run && run.conclusion !== 'cancelled');
+  const stamp = (run) => Date.parse(run.run_started_at || run.created_at || 0) || 0;
+  return relevant.sort((a, b) => stamp(b) - stamp(a) || Number(b.id || 0) - Number(a.id || 0))[0] || null;
+}
+
 export function classifyValidateRuns(runs) {
-  if (!Array.isArray(runs) || runs.length === 0) return 'wait';
-  if (runs.some((run) => run?.status === 'completed' && run?.conclusion !== 'success')) return 'fail';
-  if (runs.some((run) => run?.status !== 'completed')) return 'wait';
-  return 'success';
+  const latest = latestRelevantRun(runs);
+  if (!latest) return 'wait';
+  if (latest.status !== 'completed') return 'wait';
+  return latest.conclusion === 'success' ? 'success' : 'fail';
 }
 
 export const workflowRunsUrl = ({ repo, workflow, sha }) => (
@@ -37,14 +52,14 @@ export async function waitForGreenWorkflow({
     const body = await response.json();
     const runs = Array.isArray(body?.workflow_runs) ? body.workflow_runs : [];
     const state = classifyValidateRuns(runs);
+    const latest = latestRelevantRun(runs);
     if (state === 'fail') {
-      const failed = runs.filter((run) => run?.status === 'completed' && run?.conclusion !== 'success');
-      throw new Error(`${label} is not green for ${sha}: ${JSON.stringify(failed.map((run) => ({
-        conclusion: run.conclusion, url: run.html_url,
-      })))}`);
+      throw new Error(`${label} is not green for ${sha}: latest run ${JSON.stringify({
+        conclusion: latest.conclusion, url: latest.html_url,
+      })}`);
     }
     if (state === 'success') {
-      console.log(`${label} is green for ${sha} (${runs.length} run(s))`);
+      console.log(`${label} is green for ${sha}: latest run ${latest.html_url || latest.id} (${runs.length} run(s) on the SHA)`);
       return;
     }
     if (Date.now() >= deadline) throw new Error(`No completed green ${label} for ${sha} within the deadline`);
