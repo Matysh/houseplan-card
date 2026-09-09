@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.73.0-beta.7 — 2026-09-09
+
 - Summary-panel settings stay responsive with large Home Assistant installs:
   each value now opens one searchable source picker capped at 100 visible
   entity results instead of embedding every entity in every row. Per-card icon
