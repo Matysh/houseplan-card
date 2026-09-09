@@ -18,9 +18,15 @@ on:
   workflow_dispatch:
     inputs:
       full:
-        description: 'Полный набор: смоки, golden, performance_smoke'
+        description: 'Полный набор: смоки, golden, performance_smoke, мутанты по диффу'
         type: boolean
         default: true
+      # Мутанты по диффу бегут по запросу (#510): ревью-конвейер и слияние
+      # кандидата запускают `-f full=false -f mutants=true` на материале.
+      mutants:
+        description: 'Мутанты по диффу на этом SHA (кандидат ревью)'
+        type: boolean
+        default: false
 
 # A new push supersedes an unfinished validation for the same branch or PR.
 # Exact-SHA release gates never depend on an obsolete commit.
@@ -218,10 +224,10 @@ jobs:
       unknown_inputs: ${{ steps.classify.outputs.unknown_inputs }}
       # Тяжёлые job только на кандидате/по кнопке/на PR (#479), см. шаг heavy.
       heavy: ${{ steps.heavy.outputs.heavy }}
+      mutants_requested: ${{ steps.heavy.outputs.mutants_requested }} # #510
       base: ${{ steps.base.outputs.base }}
-      # Разные вещи под разными именами намеренно: `base` — до какого коммита
-      # классифицировать файлы ветки (#387), `range_base` — от какого судить
-      # диапазон на dev (#388): общее имя — чужая база у потребителя.
+      # `base` — до какого коммита классифицировать файлы ветки (#387),
+      # `range_base` — от какого судить диапазон на dev (#388).
       range_base: ${{ steps.base.outputs.range_base }}
     steps:
       # `git diff --name-only` содержимого файлов не читает вовсе, поэтому
@@ -241,6 +247,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           HEAD_MESSAGE: ${{ github.event.head_commit.message }}
           FULL_INPUT: ${{ inputs.full }}
+          MUTANTS_INPUT: ${{ inputs.mutants }}
         run: node scripts/classify-changes.mjs --heavy | tee -a "$GITHUB_OUTPUT"
       - id: base
         if: github.event_name != 'pull_request'
@@ -476,10 +483,17 @@ jobs:
   # что и остальные гейты ветки (#387/#388). Релизный диапазон всё же может
   # задеть сотню свидетелей, поэтому #480 делит тот же набор на три
   # детерминированных непересекающихся шарда вместо ослабления проверки.
+  # С #510 job бежит не на каждом пуше, а на кандидате: ревью-конвейер и
+  # слияние кандидата запускают Validate по кнопке с `mutants=true` на
+  # материале, ночной прогон/PR/кандидат беты берут её сами. За 08–09.09 на
+  # промежуточных пушах она стоила 48 из 56 часов job-минут и в основном
+  # отменялась следующим пушем. Когда мутанты запрошены, job бежит даже при
+  # диффе без входов (отбор пустой, минута на checkout): гейт ревью читает
+  # её исход по job, и skipped был бы неотличим от «не запрашивали».
   changed_mutants:
     name: "Мутанты по диффу (${{ matrix.shard }}/3): затронутые свидетели краснеют"
     needs: changes
-    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.mutants == 'true'
+    if: needs.changes.outputs.mutants_requested == 'true'
     strategy:
       fail-fast: false
       matrix:
