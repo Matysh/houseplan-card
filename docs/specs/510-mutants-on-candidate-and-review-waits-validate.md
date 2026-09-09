@@ -44,7 +44,7 @@
 
 - `workflow_dispatch.inputs.mutants` — boolean, default `false`, описание «Мутанты по диффу на этом SHA (конвейер ревью и слияние кандидата)». `full` остаётся (default `true`) и подразумевает мутанты.
 - Шаг `heavy` job `changes` печатает вторую строку `mutants_requested=true|false`; `classify-changes.mjs --heavy` читает `MUTANTS_INPUT` и экспортирует `mutantsRequested({ eventName, headMessage, fullInput, mutantsInput })`: `pull_request` → true; `schedule` → true; `workflow_dispatch` → `full === 'true' || mutants === 'true'`; `push` → `hasReleaseTrailer(headMessage)`.
-- Выход `changes.outputs.mutants_requested`; условие job `changed_mutants` дополняется `&& needs.changes.outputs.mutants_requested == 'true'` (условие по файлам сохраняется: без задетых входов job по-прежнему skipped).
+- Выход `changes.outputs.mutants_requested`; условие job `changed_mutants` становится ровно `needs.changes.outputs.mutants_requested == 'true'`. Отбор по файлам живёт внутри job (`--changed`, пустой отбор — минута на checkout): при запросе job обязана исполниться, потому что гейт ревью читает её исход по job, и `skipped` был бы неотличим от «не запрашивали» (ревью ТЗ r1, Medium 2).
 - Группа concurrency dispatch-прогонов уже отдельная (`validate-dispatch-<ref>`): dispatch не отменяет push-прогон и наоборот; два dispatch на одну ветку подряд — второй отменяет первый, что верно (материал сменился).
 
 Комментарий в yml и `docs/TESTING.md` (раздел «Мутанты по диффу»): где теперь бегут мутанты и почему.
@@ -58,7 +58,7 @@ CLI: `node scripts/validate-gate.mjs --repo=<owner/repo> --ref=<ветка> --sh
 Алгоритм (`ops` инъекция как в `merge-candidate.mjs`):
 
 1. `gh run list --workflow validate.yml --commit <sha> --json databaseId,status,conclusion,url,event,createdAt --limit 20`.
-2. Подходящий прогон — `event == 'workflow_dispatch'` (мутанты запрошены). Завершённый success → `green`; завершённый иначе → `red`; незавершённый → ждать его.
+2. Кандидат в доказательства — `event == 'workflow_dispatch'` (только там мутанты могли быть запрошены). Завершённый не-success → `red`. Завершённый success — доказательство **только если** job «Мутанты по диффу» в нём исполнены и зелёные (`gh run view --json jobs`: есть ≥1 job с таким префиксом и все `success`); зелёный dispatch со `skipped` мутантами (чужой запуск с `mutants=false`) не доказательство — он игнорируется, и гейт запускает свой (ревью ТЗ r1, Medium 2). Незавершённый → ждать его.
 3. Нет подходящего → `gh workflow run validate.yml --ref <ref> -f full=false -f mutants=true`; затем ждать появления dispatch-прогона на `<sha>` до `VALIDATE_APPEAR_MS` (3 мин; используются константы `merge-candidate.mjs`). Если голова ветки за это время сменилась (появился dispatch-прогон на другом SHA) — `missing` с пояснением «материал сменился».
 4. Ждать завершения до `VALIDATE_TOTAL_MS` (45 мин), опрос каждые 20 с; таймаут → `red` («не завершился за 45 минут»).
 
@@ -66,7 +66,7 @@ Push-прогоны на том же SHA не считаются доказат�
 
 ### 5.2. `process.yml`
 
-Новый шаг «Validate с мутантами на материале» (`id: gate`) после `material`, условие `needs.guard.outputs.stage == 'code' && steps.rebase.outputs.conflict != 'true' && steps.reuse.outputs.reuse != 'true'`, `continue-on-error: false`, но результат читается из выходов, а не из кода выхода (шаг заканчивается `exit 0`, чтобы дальнейшая логика меток отработала). Далее:
+Новый шаг «Validate с мутантами на материале» (`id: gate`) стоит **после `reuse` (#499) и шага «Конфликт с dev — вернуть автору без ревью»** и **перед** «Зелёные гейты на этом SHA» (#343): порядок в файле — `material` → `reuse` → возврат при конфликте → `gate` → возврат при красном → `validated` (ревью ТЗ r1, Medium 1: `reuse.outputs` должен быть уже вычислен). Условие шага — `steps.rebase.outputs.conflict != 'true'`; внутри: при `stage != code`, `reuse == true` или отсутствии ветки шаг пишет `proceed=true`, `result=skipped` и выходит; иначе вызывает `validate-gate.mjs` и пишет `proceed=true|false` по его коду выхода (сам шаг всегда `exit 0`, чтобы дальнейшая логика меток отработала). Далее:
 
 - новый шаг «Validate красный — вернуть автору без ревью», условие `steps.gate.outputs.result != 'green'` (и те же условия этапа): комментарий по образцу шага «Конфликт с dev» — что именно (red/missing), ссылка на прогон, что делать (починить, запушить, вернуть `S7`), «цикл ревью не израсходован»; метка `S7 → S6`; `exit 0`.
 - все последующие шаги ревью (`validated`, зависимости, Chromium, Claude, Review, публикация, решение, слияние, перестановка метки) получают дополнительное условие `steps.gate.outputs.result == 'green'` там, где сейчас стоит `steps.rebase.outputs.conflict != 'true'` (одно условие — одна переменная: ввести выход `steps.gate.outputs.proceed`).
@@ -96,7 +96,8 @@ Push-прогоны на том же SHA не считаются доказат�
 - `test/classify-changes.test.mjs`: таблица `mutantsRequested` (push без трейлера → false; push с `Release:` → true; dispatch full/mutants/ни одного; PR; schedule).
 - `test/validate-workflow.test.mjs`: вход `mutants` объявлен; `mutants_requested` выход и условие job; группа concurrency для dispatch отдельная.
 - `test/validate-gate.test.mjs` (новый, fake `gh`): найден зелёный dispatch → green без запуска; найден красный → red; идущий → ждёт; нет → запускает и ждёт появления; появился на другом SHA → missing; таймаут → red; push-прогон не считается.
-- `test/review-doc-guard.test.mjs`: шаг gate стоит после `material` и до установки зависимостей; шаги ревью условны по `proceed`; возврат в `S6` при `result != green`; этап spec не гейтится.
+- `test/review-doc-guard.test.mjs`: шаг gate стоит после `material` **и после `reuse`** и до установки зависимостей; шаги ревью условны по `proceed`; возврат в `S6` при `proceed != true`; этап spec и reuse гейт не проходят.
+- `test/validate-gate.test.mjs`: `provesMutants` — job исполнены и зелёные / нет job / skipped / одна красная; зелёный чужой dispatch со skipped-мутантами игнорируется, гейт запускает свой.
 - `test/merge-candidate.test.mjs`: dispatch после пуша кандидата, ожидание dispatch-прогона.
 - Мутанты реестра (`scripts/mutation-gate.mjs`, гарды — `node --test`): `mutants-run-on-every-push` (classify: push → true), `review-starts-on-red-validate` (gate: red → green), `merge-waits-push-run-without-mutants` (waitValidate игнорирует событие). Каждый — отрицательным прогоном штатным раннером.
 
@@ -112,6 +113,10 @@ Push-прогоны на том же SHA не считаются доказат�
 - AC4. Три мутанта §8 пойманы штатным раннером.
 - AC5. `docs/TESTING.md`, `PROCESS.md`, `AGENTS.md` обновлены; после слияния `process.yml`/`validate.yml` зеркалированы в `main`.
 - AC6. Перф/touch/UX не затронуты: `src/**` без изменений.
+
+## 10.0. UX, модель данных, i18n
+
+Не затрагиваются: пользовательского поведения нет (`User-Visible: no`), i18n, схема конфига, Store и сетевые API не меняются; release-артефактов нет.
 
 ## 10.1. Риски и меры
 
