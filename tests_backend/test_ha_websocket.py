@@ -474,6 +474,55 @@ async def test_config_set_purges_tombstoned_and_absent_trails_durably(
     assert "late_orphan" in (await recorder.store.async_load() or {})
 
 
+async def test_issue_495_config_set_dropping_a_route_purges_its_runs_durably(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """#495 AC6: a route deleted from a live marker takes its runs off the disk, not just out of memory."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    def robot(*route_ids: str) -> dict:
+        return {
+            "id": "robot", "binding": "entity:vacuum.robot", "space": "f1",
+            "vacuum": {"source": "camera.map", "map_routes": [
+                {"id": route_id, "source": "camera.map", "map_id": route_id,
+                 "space": "f1", "calibration": [1, 0, 0, 0, 1, 0]}
+                for route_id in route_ids
+            ]},
+        }
+
+    initial = {"spaces": [_space("f1", "r1")], "markers": [robot("vr_old", "vr_keep")], "settings": {}}
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": initial, "expected_rev": 0,
+    })
+    first = await client.receive_json()
+    assert first["success"], first
+    await hass.async_block_till_done()
+
+    recorder = hass.data[DOMAIN]["trail_recorder"]
+    recorder.book.data = {"robot": {
+        "current": {"route_id": "vr_old", "map_id": "vr_old", "points": [[1, 2]]},
+        "previous": {"route_id": "vr_keep", "map_id": "vr_keep", "points": [[3, 4]]},
+    }}
+    await recorder.store.async_save(copy.deepcopy(recorder.book.data))
+
+    candidate = {**copy.deepcopy(initial), "markers": [robot("vr_keep")]}
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": candidate,
+        "expected_rev": first["result"]["rev"],
+    })
+    dropped = await client.receive_json()
+    assert dropped["success"], dropped
+
+    await client.send_json_auto_id({"type": "houseplan/trail/get"})
+    trails = (await client.receive_json())["result"]["trails"]
+    assert trails["robot"].get("current") is None
+    assert trails["robot"]["previous"]["route_id"] == "vr_keep"
+    durable = await recorder.store.async_load() or {}
+    assert durable["robot"].get("current") is None, "the dropped run must not survive a restart"
+    assert durable["robot"]["previous"]["route_id"] == "vr_keep"
+
+
 async def test_config_rev_conflict(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
     await _setup(hass)
     client = await hass_ws_client(hass)

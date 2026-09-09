@@ -630,8 +630,12 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                 "final_metadata": original_metadata,
             }
             await _commit_pair(rt, pending, rollback)
-            # A token becomes single-use only after both durable halves land.
-            get_candidate(rt, msg["token"], _connection_user_id(connection), consume=True)
+            # Both halves are durable: the token is spent no matter what
+            # happened to the preview registry meanwhile. Re-validating it
+            # here (TTL lapsed during the write, eviction by a newer preview
+            # of the same user) would report a failure for a plan that is
+            # already replaced — the outcome follows the commit (#495).
+            rt.import_previews.pop(msg["token"], None)
     except ImportFailure as err:
         _send_import_error(connection, msg["id"], err)
         return

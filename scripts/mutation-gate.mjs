@@ -7949,6 +7949,75 @@ const MUTANT_DEFINITIONS = [
       replace: '            checked = _normalize(msg["config"])  # mutant: Optimize bypasses summary guard',
     }],
   },
+  {
+    id: 'import-apply-rechecks-preview-after-commit',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_495_apply_result '
+      + 'tests_backend/test_ha_import_export.py',
+    because: 'once both halves are durable, a lapsed TTL or an eviction by a newer preview must '
+      + 'not turn the accepted import into an error (#495 AC1/AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            rt.import_previews.pop(msg["token"], None)\n',
+      replace: '            get_candidate(rt, msg["token"], _connection_user_id(connection), consume=True)\n',
+    }],
+  },
+  {
+    id: 'trail-purge-drops-routes-in-memory-only',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_495_dropped_route_runs_reach_the_store '
+      + 'tests_backend/test_trail_recorder.py',
+    because: 'a route deleted from a live marker without any orphan must still write the book, or a '
+      + 'restart brings its runs back (#495 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/trails.py',
+      find: '                        removed = 0\n                        await self._save_now_locked()\n',
+      replace: '                        removed = 0  # mutant: memory only\n',
+    }],
+  },
+  {
+    id: 'trail-purge-keeps-dropped-runs-after-failed-write',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_495_dropped_route_runs_roll_back '
+      + 'tests_backend/test_trail_recorder.py',
+    because: 'when the store refuses the write the dropped runs must return to memory so the next '
+      + 'commit retries instead of diverging from the disk (#495 AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/trails.py',
+      find: '                    self._restore_dropped(dropped)\n                    raise\n',
+      replace: '                    raise  # mutant: memory keeps the drop the disk never saw\n',
+    }],
+  },
+  {
+    id: 'trail-purge-forgets-routes-when-orphans-exist',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_495_dropped_route_runs_share_the_orphan_transaction '
+      + 'tests_backend/test_trail_recorder.py',
+    because: 'orphan deletion and route drops are one transaction: the orphan path must not write a '
+      + 'book that still holds the dropped runs (#495 AC5)',
+    patches: [{
+      file: 'custom_components/houseplan/trails.py',
+      find: '                    if orphan_ids:\n                        removed = await self._delete_many_locked(orphan_ids)\n',
+      replace: '                    if orphan_ids:\n                        self._restore_dropped(dropped)  # mutant\n'
+        + '                        removed = await self._delete_many_locked(orphan_ids)\n',
+    }],
+  },
+  {
+    id: 'trail-purge-failed-orphan-write-loses-dropped-runs',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_495_failed_orphan_transaction_restores_dropped_route_runs_too '
+      + 'tests_backend/test_trail_recorder.py',
+    because: 'the #335 rollback of the orphan transaction must cover the route drops made in the same '
+      + 'pass, not only the orphan books (#495 AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/trails.py',
+      find: '                except Exception:\n'
+        + '                    # The store is the durable authority (#335): a drop that\n',
+      replace: '                except Exception:\n'
+        + '                    dropped = {}  # mutant: nothing to restore\n'
+        + '                    # The store is the durable authority (#335): a drop that\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

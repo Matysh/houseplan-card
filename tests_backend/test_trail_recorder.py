@@ -294,6 +294,118 @@ def test_failed_orphan_store_write_rolls_back_and_can_be_retried():
     assert hass.bus.fired == [("houseplan_trail_updated", {})]
 
 
+def _route_book():
+    """One live marker: a run filed under a route that is about to vanish, one to keep."""
+    return {
+        "live": {
+            "current": {"route_id": "vr_old", "map_id": "1", "points": [[1, 2]]},
+            "previous": {"route_id": "vr_keep", "map_id": "1", "points": [[3, 4]]},
+        },
+    }
+
+
+def _live_marker_without_vr_old():
+    return {
+        "id": "live", "space": "ground",
+        "vacuum": {"map_routes": [
+            {"id": "vr_keep", "source": "camera.map", "map_id": "1", "space": "ground"},
+        ]},
+    }
+
+
+class _RecordingStore:
+    def __init__(self):
+        self.saved = []
+
+    async def async_save(self, data):
+        self.saved.append(json.loads(json.dumps(data)))
+
+
+def test_issue_495_dropped_route_runs_reach_the_store_without_orphans():
+    """#495 AC3: deleting a route persists the drop even when no marker is orphaned."""
+    rec, hass, _states = _rec()
+    rec.book.data = _route_book()
+    rec.pairs = {"camera.map": [("live", "vacuum.x50")]}
+    rec.store = _RecordingStore()
+    pending_cancelled = []
+    rec._unsub_save = lambda: pending_cancelled.append(True)
+
+    removed = _run_isolated(rec.async_purge_orphans({"markers": [_live_marker_without_vr_old()]}))
+
+    assert removed == 0, "the return value still counts markers, not runs"
+    assert len(rec.store.saved) == 1
+    assert rec.store.saved[0] == {
+        "live": {"previous": {"route_id": "vr_keep", "map_id": "1", "points": [[3, 4]]}},
+    }
+    assert pending_cancelled == [True] and rec._unsub_save is None
+    assert hass.bus.fired == [("houseplan_trail_updated", {})]
+    # Restart model: a fresh book from what the store holds has no vr_old run.
+    restarted = trails.TrailBook(json.loads(json.dumps(rec.store.saved[-1])))
+    assert restarted.data["live"].get("current") is None
+    assert restarted.data["live"]["previous"]["route_id"] == "vr_keep"
+    # No change → no write, no event.
+    _run_isolated(rec.async_purge_orphans({"markers": [_live_marker_without_vr_old()]}))
+    assert len(rec.store.saved) == 1
+    assert hass.bus.fired == [("houseplan_trail_updated", {})]
+
+
+def test_issue_495_dropped_route_runs_roll_back_when_the_store_write_fails():
+    """#495 AC4: memory follows the store — a failed write keeps the run for a retry."""
+    rec, hass, _states = _rec()
+    rec.book.data = _route_book()
+    rec.pairs = {"camera.map": [("live", "vacuum.x50")]}
+
+    class FailingStore:
+        async def async_save(self, _data):
+            raise OSError("disk full")
+
+    rec.store = FailingStore()
+    assert _run_isolated(rec.async_purge_orphans({"markers": [_live_marker_without_vr_old()]})) == 0
+    assert rec.book.data == _route_book()
+    assert hass.bus.fired == []
+
+    rec.store = _RecordingStore()
+    assert _run_isolated(rec.async_purge_orphans({"markers": [_live_marker_without_vr_old()]})) == 0
+    assert rec.store.saved[-1]["live"] == {
+        "previous": {"route_id": "vr_keep", "map_id": "1", "points": [[3, 4]]},
+    }
+    assert hass.bus.fired == [("houseplan_trail_updated", {})]
+
+
+def test_issue_495_dropped_route_runs_share_the_orphan_transaction():
+    """#495 AC5: orphans and dropped routes leave in one write with one event."""
+    rec, hass, _states = _rec()
+    rec.book.data = {**_route_book(), "orphan": {"current": {"points": [[5, 6]]}}}
+    rec.pairs = {"camera.map": [("live", "vacuum.x50"), ("orphan", "vacuum.x50")]}
+    rec.store = _RecordingStore()
+
+    removed = _run_isolated(rec.async_purge_orphans({"markers": [_live_marker_without_vr_old()]}))
+
+    assert removed == 1
+    assert len(rec.store.saved) == 1
+    assert rec.store.saved[0] == {
+        "live": {"previous": {"route_id": "vr_keep", "map_id": "1", "points": [[3, 4]]}},
+    }
+    assert rec.pairs == {"camera.map": [("live", "vacuum.x50")]}
+    assert hass.bus.fired == [("houseplan_trail_updated", {})]
+
+
+def test_issue_495_failed_orphan_transaction_restores_dropped_route_runs_too():
+    """#495 AC4 in the orphan path: rollback covers both halves of the write."""
+    rec, hass, _states = _rec()
+    rec.book.data = {**_route_book(), "orphan": {"current": {"points": [[5, 6]]}}}
+    rec.pairs = {"camera.map": [("live", "vacuum.x50"), ("orphan", "vacuum.x50")]}
+
+    class FailingStore:
+        async def async_save(self, _data):
+            raise OSError("disk full")
+
+    rec.store = FailingStore()
+    assert _run_isolated(rec.async_purge_orphans({"markers": [_live_marker_without_vr_old()]})) == 0
+    assert rec.book.data == {**_route_book(), "orphan": {"current": {"points": [[5, 6]]}}}
+    assert hass.bus.fired == []
+
+
 def test_object_style_position_is_read():
     # Tasshack in-memory attributes hold a Point OBJECT, not a dict
     class Point:

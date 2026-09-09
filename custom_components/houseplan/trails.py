@@ -317,15 +317,53 @@ class TrailRecorder:
         A tombstone deliberately stays in config so discovery cannot resurrect
         a deleted device.  For live tracking and trail ownership it is absent:
         this is the same boundary used by ``async_refresh`` above.
+
+        Returns the number of erased markers. Runs dropped because their route
+        vanished (#162) are not counted, but they are just as durable (#495):
+        they leave with the orphan transaction, or with a write of their own.
         """
         live_marker_ids = {
             str(marker.get("id"))
             for marker in config.get("markers") or []
             if marker.get("id") is not None and marker.get("removed") is not True
         }
-        # #162: a route that vanished (deleted, or re-targeted to another
-        # space, which is a new identity) takes its own runs with it, while the
-        # marker and its other routes stay untouched.
+        fire = False
+        try:
+            async with self._refresh_lock:
+                # #162: a route that vanished (deleted, or re-targeted to
+                # another space, which is a new identity) takes its own runs
+                # with it, while the marker and its other routes stay untouched.
+                dropped = self._drop_unknown_routes(config)
+                orphan_ids = set(self.book.data) - live_marker_ids
+                if not orphan_ids and not dropped:
+                    return 0
+                try:
+                    if orphan_ids:
+                        removed = await self._delete_many_locked(orphan_ids)
+                    else:
+                        removed = 0
+                        await self._save_now_locked()
+                except Exception:
+                    # The store is the durable authority (#335): a drop that
+                    # never reached it must not survive only in memory, or a
+                    # restart brings the runs back while the card believed
+                    # them gone. Put them back so the next commit retries.
+                    self._restore_dropped(dropped)
+                    raise
+                fire = True
+                return removed
+        except Exception:  # noqa: BLE001 — config commit already succeeded
+            _LOGGER.exception(
+                "House Plan: reconciling vacuum trails after a config commit failed",
+            )
+            return 0
+        finally:
+            if fire:
+                self.hass.bus.async_fire("houseplan_trail_updated", {})
+
+    def _drop_unknown_routes(self, config: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        """Forget runs of routes the config no longer has; return what was dropped."""
+        dropped: dict[str, dict[str, Any]] = {}
         for marker in config.get("markers") or []:
             marker_id = str(marker.get("id"))
             if marker.get("removed") is True or marker_id not in self.book.data:
@@ -333,56 +371,75 @@ class TrailRecorder:
             vacuum = marker.get("vacuum") or {}
             routes = effective_routes(
                 marker_id, vacuum, str(marker.get("space") or ""), vacuum.get("source"))
-            self.book.drop_unknown_routes(marker_id, {str(r.get("id")) for r in routes})
-        orphan_ids = set(self.book.data) - live_marker_ids
-        if not orphan_ids:
-            return 0
+            before = {
+                slot: run for slot, run in (self.book.data.get(marker_id) or {}).items()
+                if slot in ("current", "previous")
+            }
+            if self.book.drop_unknown_routes(marker_id, {str(r.get("id")) for r in routes}):
+                after = self.book.data.get(marker_id) or {}
+                dropped[marker_id] = {
+                    slot: run for slot, run in before.items() if slot not in after
+                }
+        return dropped
+
+    def _restore_dropped(self, dropped: dict[str, dict[str, Any]]) -> None:
+        for marker_id, runs in dropped.items():
+            self.book.data.setdefault(marker_id, {}).update(runs)
+
+    async def _save_now_locked(self) -> None:
+        """Write the book immediately, superseding a pending debounced write.
+
+        A failed write puts the debounce back: the points it was going to
+        persist are still only in memory.
+        """
+        had_pending_save = self._unsub_save is not None
+        if self._unsub_save:
+            self._unsub_save()
+            self._unsub_save = None
         try:
-            return await self._async_delete_many(orphan_ids)
-        except Exception:  # noqa: BLE001 — config commit already succeeded
-            _LOGGER.exception(
-                "House Plan: removing orphan vacuum trails failed: markers=%s",
-                sorted(orphan_ids),
-            )
-            return 0
+            await self.store.async_save(self.book.data)
+        except Exception:
+            if had_pending_save:
+                self._schedule_save()
+            raise
 
     async def _async_delete_many(self, markers: set[str]) -> int:
         """Delete one or more books with one subscription/store transaction."""
         async with self._refresh_lock:
-            # The trail book owns deletion. When it has no such marker, this
-            # is a no-op and must not silently damage the live tracking graph.
-            removed = {
-                marker: self.book.data.pop(marker)
-                for marker in markers
-                if marker in self.book.data
-            }
-            if not removed:
-                return 0
-            previous_pairs = {src: list(pairs) for src, pairs in self.pairs.items()}
-            had_pending_save = self._unsub_save is not None
-            try:
-                for src in list(self.pairs):
-                    kept = [pair for pair in self.pairs[src] if pair[0] not in removed]
-                    if kept:
-                        self.pairs[src] = kept
-                    else:
-                        del self.pairs[src]
-                self._resubscribe()
-                if self._unsub_save:
-                    self._unsub_save()
-                    self._unsub_save = None
-                await self.store.async_save(self.book.data)
-            except Exception:
-                # The store is the durable authority. Restore the in-memory
-                # owner graph so the next successful config sync can retry
-                # instead of leaving an orphan on disk forever (#335).
-                self.book.data.update(removed)
-                self.pairs = previous_pairs
-                self._resubscribe()
-                if had_pending_save:
-                    self._schedule_save()
-                raise
-        self.hass.bus.async_fire("houseplan_trail_updated", {})
+            removed = await self._delete_many_locked(markers)
+        if removed:
+            self.hass.bus.async_fire("houseplan_trail_updated", {})
+        return removed
+
+    async def _delete_many_locked(self, markers: set[str]) -> int:
+        """The transaction of ``_async_delete_many``; the caller holds the lock."""
+        # The trail book owns deletion. When it has no such marker, this
+        # is a no-op and must not silently damage the live tracking graph.
+        removed = {
+            marker: self.book.data.pop(marker)
+            for marker in markers
+            if marker in self.book.data
+        }
+        if not removed:
+            return 0
+        previous_pairs = {src: list(pairs) for src, pairs in self.pairs.items()}
+        try:
+            for src in list(self.pairs):
+                kept = [pair for pair in self.pairs[src] if pair[0] not in removed]
+                if kept:
+                    self.pairs[src] = kept
+                else:
+                    del self.pairs[src]
+            self._resubscribe()
+            await self._save_now_locked()
+        except Exception:
+            # The store is the durable authority. Restore the in-memory
+            # owner graph so the next successful config sync can retry
+            # instead of leaving an orphan on disk forever (#335).
+            self.book.data.update(removed)
+            self.pairs = previous_pairs
+            self._resubscribe()
+            raise
         return len(removed)
 
     def _resubscribe(self) -> None:

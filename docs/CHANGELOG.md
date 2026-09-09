@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Applying a backup import no longer reports "preview expired" after the plan
+  was already replaced: once both halves of the import are written, the result
+  and the update events follow the commit even if the preview timed out or was
+  displaced by a newer preview while the write was in flight. Deleting or
+  re-targeting a robot map route now removes its recorded runs from disk as
+  well as from memory, so a Home Assistant restart cannot bring them back
+  ([#495](https://github.com/Matysh/houseplan-card/issues/495)).
+
 ## v1.73.0-beta.7 — 2026-09-09
 
 - Summary-panel settings stay responsive with large Home Assistant installs:

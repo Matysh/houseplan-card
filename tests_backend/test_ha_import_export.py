@@ -2522,6 +2522,76 @@ async def test_success_events_are_emitted_only_after_both_target_writes(
     assert all(config_done and layout_done for _event, config_done, layout_done in observed)
 
 
+async def _apply_with_registry_hook(
+    hass: HomeAssistant, tmp_path: Path, monkeypatch, hook,
+) -> tuple[Any, dict[str, Any], _Connection, list[str]]:
+    """Apply a full import; ``hook(rt, token)`` runs after both halves are durable."""
+    await _setup(hass)
+    rt, response, _ = await _candidate(hass, tmp_path)
+    real_commit = wsapi._commit_pair
+
+    async def commit_then_hook(runtime: Any, pending: dict[str, Any], rollback: dict[str, Any]) -> None:
+        await real_commit(runtime, pending, rollback)
+        hook(runtime, response["token"])
+
+    fired: list[str] = []
+
+    def fire(_bus: Any, event_type: str, _event_data: dict[str, Any] | None = None, **_kwargs: Any) -> None:
+        if event_type in {"houseplan_config_updated", "houseplan_layout_updated"}:
+            fired.append(event_type)
+
+    monkeypatch.setattr(wsapi, "_commit_pair", commit_then_hook)
+    monkeypatch.setattr(type(hass.bus), "async_fire", fire)
+    connection = await _apply(hass, response)
+    return rt, response, connection, fired
+
+
+async def test_issue_495_apply_result_follows_the_commit_when_the_preview_expires_meanwhile(
+    hass: HomeAssistant, tmp_path: Path, monkeypatch,
+) -> None:
+    """#495 AC1: a TTL that lapses during the write cannot turn a durable import into an error."""
+    def expire(rt: Any, token: str) -> None:
+        rt.import_previews[token]["expires"] = 0
+
+    rt, response, connection, fired = await _apply_with_registry_hook(hass, tmp_path, monkeypatch, expire)
+    assert connection.error is None, connection.error
+    assert connection.result and connection.result["ok"]
+    assert connection.result["config_rev"] == connection.result["layout_rev"] == 2
+    assert fired == ["houseplan_config_updated", "houseplan_layout_updated"]
+    assert response["token"] not in rt.import_previews
+    assert (await rt.config_store.async_load())["rev"] == 2
+    assert (await rt.config_store.async_load())["config"]["spaces"][0]["title"] == "Imported"
+
+
+async def test_issue_495_apply_result_survives_eviction_by_a_newer_preview(
+    hass: HomeAssistant, tmp_path: Path, monkeypatch,
+) -> None:
+    """#495 AC2: previews made by the same user during the write may evict the token; the import stands."""
+    monkeypatch.setattr(import_export_api, "MAX_IMPORT_PREVIEWS_PER_USER", 1)
+    newer: list[str] = []
+
+    def evict(rt: Any, token: str) -> None:
+        raw = json.dumps(create_export(
+            rt, {"config": _config(), "rev": 1}, {"layout": {}, "rev": 1},
+            kind="full", space_id=None, card_version="1.61.0",
+            config_root=Path(hass.config.path("")),
+        )[0]).encode()
+        newer.append(create_preview(
+            rt, raw, owner_id="review-owner", duplicate_policy="skip",
+            current_config_data={"config": _config(), "rev": 1},
+            current_layout_data={"layout": {}, "rev": 1}, config_root=Path(hass.config.path("")),
+        )["token"])
+        assert token not in rt.import_previews, "the hook must evict the applying token"
+
+    rt, response, connection, fired = await _apply_with_registry_hook(hass, tmp_path, monkeypatch, evict)
+    assert connection.error is None, connection.error
+    assert connection.result and connection.result["ok"]
+    assert fired == ["houseplan_config_updated", "houseplan_layout_updated"]
+    assert response["token"] not in rt.import_previews
+    assert newer and all(token in rt.import_previews for token in newer)
+    assert (await rt.store.async_load())["rev"] == 2
+
+
 async def test_pair_rolls_back_before_reporting_a_persistent_target_failure(
     hass: HomeAssistant, tmp_path: Path, monkeypatch,
 ) -> None:
