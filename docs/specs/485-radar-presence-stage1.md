@@ -631,6 +631,14 @@ HA delivery, unexpected unknown coordinates, concave room, duplicate slots,
 disconnected client, scale change and private-source canaries — not only moving
 ideal points. Consented field CSV is supplementary, not a blocking dependency.
 
+Field evidence received on 2026-09-08 was inspected locally and is not stored in
+the repository. Its 68,367 observations covered all three LD2450 target slots
+(47,350 / 18,344 / 2,673 rows). It confirms that `(x=0,y=0)` is the empty-slot
+sentinel, while a zero on only one axis is a valid target coordinate and signed
+X distinguishes the two sides of the radar. An approximately 1.4 m apparent
+zone offset is recorded as Stage-2 calibration evidence; Stage 1 must not apply
+an undocumented correction for it.
+
 ## 10. Performance, release and rollback
 
 Baseline/candidate workload: 32 configured radars, eight slots each, four output
