@@ -2,7 +2,7 @@
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/500
 - **Тип / приоритет:** tech-debt / P3
-- **Статус ТЗ:** готово к ревью
+- **Статус ТЗ:** готово к ревью (r2 — учтены High-1/High-2 ревью r1)
 - **Трек:** полный; §5 не проходит по сложности и риску (7/10), числу
   поверхностей (7 модулей) и state-контракту revision+fingerprint, который
   читают все feature-runtime и multi-client сценарии
@@ -46,25 +46,33 @@ lint-тестом. Для пользователя ничего не меняе�
 
 1. Тройка `(_serverCfg, _cfgRev, _cfgContentFingerprint)` и пара
    `(_layout, _layoutRev, _layoutContentFingerprint)` — поля хоста без
-   владельца. `_serverCfg =` — 16 присваиваний в 6 модулях (`houseplan-card.ts`
-   6, `houseplan-editor-runtime.ts` 6, `plan-optimize-write.ts`,
-   `serialized-write-queue.ts`, `space-copy-runtime.ts`,
-   `summary-panel-runtime-loaded.ts`); `_cfgRev =` — 6 в 4 модулях;
-   fingerprint пишут 12 мест, включая `_cacheSnapshot()`, который его попутно
-   пересчитывает.
-2. Seam `_adoptStructuralResponses` (`houseplan-card.ts:4231`) имеет четыре
-   вызывающих — `_loadFromServer` (4315), `_reloadConfigOnly` (4496),
-   summary recovery (`summary-panel-runtime-loaded.ts:611`), onboarding
-   `space/delete` (`houseplan-onboarding-runtime.ts:476`). Пред-условия
-   (сравнение fingerprint → `_signer.prepareImage` → `_beginContinuityCandidate`)
-   и пост-шаги (`_syncDecorAssets`, `_adoptInitialSpace`,
+   владельца. `_serverCfg =` — **18 присваиваний в 8 модулях**
+   (`houseplan-card.ts` 6, `houseplan-editor-runtime.ts` 6,
+   `plan-optimize-write.ts`, `serialized-write-queue.ts`,
+   `space-copy-runtime.ts`, `summary-panel-runtime-loaded.ts`,
+   `vacuum-calibration-write.ts:108`, `editors/vacuum-maps-section.ts:107`);
+   `_cfgRev =` — 6 в 4 модулях; `_layoutRev =` — 7 в 4; fingerprint config —
+   10 мест в 5 модулях, включая `_cacheSnapshot()`, который его попутно
+   пересчитывает; fingerprint layout — 5 мест.
+2. Seam `_adoptStructuralResponses` (`houseplan-card.ts:4231`) имеет **семь**
+   вызывающих в двух профилях. *Reload* — три: `_loadFromServer` (4315),
+   `_reloadConfigOnly` (4496), summary recovery
+   (`summary-panel-runtime-loaded.ts:611`); пред-условия (сравнение
+   fingerprint → `_signer.prepareImage` → `_beginContinuityCandidate`) и
+   пост-шаги (`_syncDecorAssets`, `_adoptInitialSpace`,
    `_resumePendingNavMode`, `_cacheSnapshot`, `_restoreZoom`,
-   `_regSignature = ''`, `_maybeRebuildDevices`) продублированы в трёх местах и
-   отсутствуют в четвёртом.
-3. `space/delete` адоптирует `config/get` без гейта фона и continuity, затем
-   перезаписывает `_cfgRev` ревизией из ответа `space/delete`
-   (`houseplan-onboarding-runtime.ts:477`) — второй писатель той же ревизии
-   после adoption. Тот же класс дефекта, что M1 r1 в #490.
+   `_regSignature = ''`, `_maybeRebuildDevices`) продублированы во всех трёх.
+   *Post-write* — четыре, каждый после собственной парной записи перечитывает
+   `config/get` + `layout/get`: `space/delete` в
+   `houseplan-onboarding-runtime.ts:476` **и его байт-в-байт дубликат** в
+   `houseplan-editor-runtime.ts:8693`, `plan/optimize_undo`
+   (`houseplan-editor-runtime.ts:9577`), `import/apply`
+   (`houseplan-editor-runtime.ts:9736`). Ни один из четырёх не проходит
+   гейт фона и continuity перед сменой структуры.
+3. Оба `space/delete` после adoption перезаписывают `_cfgRev`/`_layoutRev`
+   ревизиями из ответа `space/delete` (`houseplan-onboarding-runtime.ts:477–478`,
+   `houseplan-editor-runtime.ts:8694–8695`) — второй писатель той же ревизии
+   после adoption. Тот же класс дефекта, что M1 r1 в #490, в двух копиях.
 4. `SummaryPanelHost` экспортирует восемь внутренних шагов adoption как
    публичный контракт (`summary-panel-host.ts:84–94`): любой следующий
    feature-runtime получит тот же набор ножей и повторит #490 M1.
@@ -75,18 +83,23 @@ lint-тестом. Для пользователя ничего не меняе�
 1. Новый модуль `src/config-adoption.ts` — владелец идентичности config и
    layout и единственная точка превращения ответа сервера в локальное
    состояние (§6.1–6.2).
-2. Единая гейт-последовательность adoption для всех четырёх путей (§6.3);
-   `_adoptStructuralResponses` становится внутренней деталью модуля.
+2. Единая гейт-последовательность adoption для всех **семи** путей в двух
+   профилях (§6.3); `_adoptStructuralResponses` становится внутренней деталью
+   модуля.
 3. Хост оставляет `_serverCfg`, `_cfgRev`, `_cfgContentFingerprint`, `_layout`,
    `_layoutRev`, `_layoutContentFingerprint` как **делегаты** к модулю
    (чтение — всюду как раньше; запись — только через модуль).
 4. Сужение `SummaryPanelHost` и host-контракта onboarding-runtime до одного
    метода adoption вместо восьми шагов.
 5. Lint-тест «идентичность пишет только модуль» по образцу
-   `single-source-numbers`; allowlist локальных замен `_serverCfg` в editor
-   runtime — зафиксированный список, только вниз.
-6. Regression witness `space/delete` при параллельной смене `plan_url` — до
-   переноса; тесты модуля на синтетических ответах; мутанты на защиты.
+   `single-source-numbers`; allowlist локальных замен `_serverCfg`/`_layout`
+   — зафиксированный список, только вниз. Vacuum-писатели
+   (`vacuum-calibration-write.ts`, `editors/vacuum-maps-section.ts`) переходят
+   на `beginOptimistic`/`stageLocalConfig`/`rollbackOptimistic` модуля вместе
+   с переносом `rollbackOptimistic` и в allowlist не входят.
+6. Regression witness `space/delete` (оба входа) при параллельной смене
+   `plan_url` — до переноса; тесты модуля на синтетических ответах; мутанты
+   на защиты.
 7. `docs/ARCHITECTURE.md` — абзац о границе; `core-file-budget` — храповик
    вниз.
 
@@ -176,11 +189,14 @@ export class ConfigAdoption implements StructuralIdentity {
 ```ts
 export async function adoptAuthoritativeGated(host: AdoptionHost, input: {
   cfgResp?: AuthoritativeConfigResponse; layResp?: LayoutResponse;
-  reason: 'structural-response' | 'config-reload' | 'summary-recovery' | 'space-delete';
+  reason: 'structural-response' | 'config-reload' | 'summary-recovery'
+        | 'space-delete' | 'optimize-undo' | 'import-apply';
+  profile: 'reload' | 'post-write';
 }): Promise<'adopted' | 'asset-wait'>;
 ```
 
-Шаги, ровно как сегодня в `_reloadConfigOnly`/summary recovery:
+Шаги 1–4 общие для обоих профилей, шаг 5 — по профилю. Профиль `reload` —
+ровно как сегодня в `_reloadConfigOnly`/summary recovery:
 
 1. `compare` → если структура не изменилась, шаги 2–3 пропускаются.
 2. `await host._signer.prepareImage(hass, host._candidateBackdrop(candidate))`;
@@ -189,25 +205,41 @@ export async function adoptAuthoritativeGated(host: AdoptionHost, input: {
 3. Если `_continuity.hasCompleteFrame && state === 'steady'` —
    `_beginContinuityCandidate(reason, true)`.
 4. `adoptAuthoritative(...)`.
-5. Пост-шаги: `_syncDecorAssets(candidate)` (fire-and-forget),
-   `_adoptInitialSpace(_model, true)`, `_resumePendingNavMode()`,
-   `_cacheSnapshot()`, `_restoreZoom()` если видимое пространство сменилось,
-   `_regSignature = ''`, `_maybeRebuildDevices()`.
+5. Пост-шаги профиля `reload`: `_syncDecorAssets(candidate)`
+   (fire-and-forget), `_adoptInitialSpace(_model, true)`,
+   `_resumePendingNavMode()`, `_cacheSnapshot()`, `_restoreZoom()` если
+   видимое пространство сменилось, `_regSignature = ''`,
+   `_maybeRebuildDevices()`.
+   Пост-шаги профиля `post-write`: `_cacheSnapshot()`, `_regSignature = ''`,
+   `_maybeRebuildDevices()`, `requestUpdate()` — то общее, что сегодня делают
+   все четыре post-write пути. `_adoptInitialSpace`/`_resumePendingNavMode`/
+   `_restoreZoom` в этот профиль **не входят**: сегодня их там нет, а выбор
+   пространства после удаления делает `_commitSpace` вызывающего.
 
 Особенности вызывающих остаются снаружи и не размножаются:
 `_loadFromServer` — флаги `_connectionWasLost`, `_serverStorage`, warm-viewport
 логика `_warmVpArmed`, `_loadOk`, подписки; `_reloadConfigOnly` — continuity
 кандидат `'config-reload'` **до** запроса и ветка `_cfgWriting`; summary —
 `confirmedSummaryPanelWriteRecovery` и генерация; `space/delete` —
-`_commitSpace` при удалении текущего пространства и toast.
+`_commitSpace` при удалении текущего пространства и toast; `optimize_undo` —
+сброс `_canOptimizeUndo`/`_undoKind`, очистки историй, `_cfgEpoch++`, toast;
+`import/apply` — очистки `_dirtyPos`/`_sentPos`/`_defPos`, снапшотов
+устройств, `_signer.invalidate` + `_resign`, `_cfgEpoch++`. Две копии
+`space/delete` обязаны вызывать одну последовательность; слияние их в один
+метод хоста допустимо, но не требуется этим ТЗ.
 
-**Единственное намеренное изменение поведения:** `space/delete` получает шаги
-2–3 и перестаёт перезаписывать `_cfgRev`/`_layoutRev` ревизиями из ответа
-`space/delete` — обе ревизии берутся из адоптированных `config/get` и
-`layout/get` (I2). Backend отдаёт в `space/delete` те же значения, что затем
-вернёт `get`, поэтому в штатном случае числа совпадают; расходятся они только
-при параллельной записи между `delete` и `get` — и тогда прежний код ставил
-ревизию **старше** тела, а следующая запись получала ложный `conflict`.
+**Единственное намеренное изменение поведения — гейт на post-write путях.**
+Все четыре post-write пути получают шаги 2–3 (готовность фона и continuity
+перед сменой структуры), а оба `space/delete` перестают перезаписывать
+`_cfgRev`/`_layoutRev` ревизиями из ответа `space/delete` — обе ревизии
+берутся из адоптированных `config/get` и `layout/get` (I2). Backend отдаёт в
+`space/delete` те же значения, что затем вернёт `get`, поэтому в штатном
+случае числа совпадают; расходятся они только при параллельной записи между
+`delete` и `get` — и тогда прежний код ставил ревизию **старше** тела, а
+следующая запись получала ложный `conflict`. Для `optimize_undo` и
+`import/apply` изменение сводится к ожиданию `prepareImage` при смене
+`plan_url` (Undo/Import могут вернуть другой фон) — сегодня они адоптируют
+структуру до подписания фона, тот же переходный дефект, что M1 #490.
 
 ### 6.4 Сужение публичных контрактов
 
@@ -215,11 +247,15 @@ export async function adoptAuthoritativeGated(host: AdoptionHost, input: {
 `_syncDecorAssets`, `_adoptInitialSpace`, `_resumePendingNavMode`,
 `_restoreZoom`, `_cacheSnapshot`, `_candidateBackdrop`, `_scheduleLoadRetry`,
 `_signer`, `_continuity` и получает один `_adoptAuthoritative(cfgResp, reason)`.
-Host-интерфейс onboarding-runtime — аналогично. `plan-optimize-write.ts` и
+Host-интерфейсы onboarding-runtime и editor-runtime
+(`houseplan-editor-runtime.ts:842`) теряют `_adoptStructuralResponses` и
+получают тот же метод с профилем `post-write`. `plan-optimize-write.ts` и
 `space-copy-runtime.ts` вместо пяти полей идентичности получают
 `acceptPairWrite`. `serialized-write-queue.ts` сохраняет чистые
 `enqueueSerializedWrite`/`optimisticAttempt`; `rollbackOptimistic` переезжает
-в модуль (единственный писатель тела из отката).
+в модуль (единственный писатель тела из отката), и вместе с ним на модуль
+переходят все его вызывающие — editor runtime, `vacuum-calibration-write.ts`,
+`editors/vacuum-maps-section.ts`.
 
 ## 7. UX
 
@@ -242,10 +278,10 @@ fingerprint восстанавливается с пересчётом, как �
 
 | # | AC | Чем доказан | Чем краснеет |
 |---|---|---|---|
-| AC1 | Идентичность пишет только модуль: в `src/**` вне `config-adoption.ts` нет присваиваний `_cfgRev`, `_layoutRev`, `_cfgContentFingerprint`, `_layoutContentFingerprint` (в т.ч. через `host.`); присваивания тел `_serverCfg =`/`_layout =` вне модуля — только локальные замены до записи (staging) в allowlist `{ 'houseplan-editor-runtime.ts': N, 'houseplan-card.ts': M }` (размещение устройств), счётчики зафиксированы и могут только уменьшаться; в `plan-optimize-write.ts`, `serialized-write-queue.ts`, `space-copy-runtime.ts`, `summary-panel-runtime-loaded.ts`, `houseplan-onboarding-runtime.ts` — ноль | unit `test/config-adoption-ownership.test.mjs` (regex по `src/**`, по образцу `single-source-numbers`) | вернуть одно присваивание в `plan-optimize-write.ts` — тест красный; поднять счётчик allowlist без правки теста — красный |
-| AC2 | Все четыре пути adoption идут через `adoptAuthoritativeGated`; `_adoptStructuralResponses` не существует как метод хоста; `SummaryPanelHost` и host-интерфейс onboarding не содержат восьми шагов §6.4 | unit (grep по `src/summary-panel-host.ts`, `src/houseplan-onboarding-runtime.ts`, `src/summary-panel-runtime-loaded.ts` на отсутствие имён) + `npm run typecheck` | оставить вызов `_adoptStructuralResponses` в summary recovery — красный |
-| AC3 | Поведенческая нейтральность: таблица переходов модуля на синтетических ответах совпадает с сегодняшней — эхо (тот же fingerprint: тело и истории не тронуты, rev обновлён), смена config (истории очищены, fingerprint новый), только layout, ответ без `rev` (старый rev сохранён), `layoutOverride`, virtual lights; существующие свидетели зелёные без изменения ожиданий: `demo/smoke_summary_panel.mjs` (lost-ACK + параллельная правка + порядок `prepare → adopt`), `demo/smoke_ws_resilience.mjs`, `test/render-invalidation.test.mjs`, `test/serialized-write-queue.test.mjs`, `test/summary-panel-runtime.test.mjs`, `test/config-store.test.mjs` | unit `test/config-adoption.test.mjs` + перечисленные смоки/юниты | мутант «эхо тоже очищает историю» — unit красный; мутант «prepareImage не ждём» — `smoke_summary_panel` красный (`recoveryPreparesBackdropBeforeAdoption`, уже есть) |
-| AC4 | `space/delete`: при параллельной смене `plan_url` другим клиентом `prepareImage` вызывается **до** adoption; после удаления `configRev`/`layoutRev` равны ревизиям адоптированных `config/get`/`layout/get`, а не ответа `delete` | новый сценарий в `demo/smoke_space_delete_adoption.mjs` (или расширение существующего смока onboarding) + unit модуля «acceptPairWrite не применяется после adoptAuthoritative того же шага» | вернуть `host._cfgRev = response.config_rev` после adoption — unit красный; убрать гейт — смок красный |
+| AC1 | Идентичность пишет только модуль: в `src/**` вне `config-adoption.ts` нет присваиваний `_cfgRev`, `_layoutRev`, `_cfgContentFingerprint`, `_layoutContentFingerprint` (в т.ч. через `host.`); присваивания тел `_serverCfg =`/`_layout =` вне модуля — только локальные замены до записи (staging) в allowlist `{ 'houseplan-editor-runtime.ts': N, 'houseplan-card.ts': M }` (размещение устройств), счётчики зафиксированы и могут только уменьшаться; во **всех остальных** файлах `src/**` — ноль, в том числе `plan-optimize-write.ts`, `serialized-write-queue.ts`, `space-copy-runtime.ts`, `summary-panel-runtime-loaded.ts`, `houseplan-onboarding-runtime.ts`, `vacuum-calibration-write.ts`, `editors/vacuum-maps-section.ts` (последние два — через `stageLocalConfig`/`beginOptimistic`/`rollbackOptimistic` модуля) | unit `test/config-adoption-ownership.test.mjs` (regex по `src/**`, по образцу `single-source-numbers`) | вернуть одно присваивание в `plan-optimize-write.ts` — тест красный; поднять счётчик allowlist без правки теста — красный |
+| AC2 | Все **семь** путей adoption (§3 п.2) идут через `adoptAuthoritativeGated`; имя `_adoptStructuralResponses` не встречается в `src/**` вне `config-adoption.ts`; `SummaryPanelHost`, host-интерфейсы onboarding- и editor-runtime не содержат шагов §6.4 | unit (grep по `src/**` на отсутствие имён вне модуля) + `npm run typecheck` | оставить вызов `_adoptStructuralResponses` в любом из семи мест — красный |
+| AC3 | Поведенческая нейтральность: таблица переходов модуля на синтетических ответах совпадает с сегодняшней — эхо (тот же fingerprint: тело и истории не тронуты, rev обновлён), смена config (истории очищены, fingerprint новый), только layout, ответ без `rev` (старый rev сохранён), `layoutOverride`, virtual lights, профиль `post-write` не вызывает `_adoptInitialSpace`/`_resumePendingNavMode`/`_restoreZoom`; существующие свидетели зелёные без изменения ожиданий: `demo/smoke_summary_panel.mjs` (lost-ACK + параллельная правка + порядок `prepare → adopt`), `demo/smoke_ws_resilience.mjs`, `test/render-invalidation.test.mjs`, `test/serialized-write-queue.test.mjs`, `test/summary-panel-runtime.test.mjs`, `test/config-store.test.mjs` | unit `test/config-adoption.test.mjs` + перечисленные смоки/юниты | мутант «эхо тоже очищает историю» — unit красный; мутант «prepareImage не ждём» — `smoke_summary_panel` красный (`recoveryPreparesBackdropBeforeAdoption`, уже есть) |
+| AC4 | Post-write пути: для каждого из четырёх (`space/delete` ×2 входа, `optimize_undo`, `import/apply`) при параллельной смене `plan_url` другим клиентом `prepareImage` вызывается **до** adoption; после обоих `space/delete` `configRev`/`layoutRev` равны ревизиям адоптированных `config/get`/`layout/get`, а не ответа `delete` | `demo/smoke_post_write_adoption.mjs` на production bundle: четыре сценария с synthetic HA, моки `prepareImage` и порядок вызовов (по образцу `recoveryPreparesBackdropBeforeAdoption`), для `space/delete` — оба входа (onboarding и editor runtime) и проверка ревизий; unit модуля «ревизия не берётся из чужого ответа» (I2) | вернуть `host._cfgRev = response.config_rev` в любой копии `delete` — смок и unit красные; убрать гейт в любом из четырёх — смок красный |
 | AC5 | Тёплый старт: `snapshot()` → `restoreCached()` восстанавливает идентичность ровно (rev, оба fingerprint, layout, virtual lights); ключи `LS_CFG` неизменны; кэш без fingerprint восстанавливается с пересчётом | unit `test/config-adoption.test.mjs` (round-trip и фикстура старого кэша) | переименовать ключ или потерять `layout_rev` — красный |
 | AC6 | Optimistic rollback (#314) через модуль: откат только при совпадении rev **и** fingerprint попытки; откат не меняет rev; конфликтный reload побеждает | `test/serialized-write-queue.test.mjs` перенесён/адаптирован + мутант | мутант «откат без проверки rev» — красный |
 | AC7 | Бюджеты: `core-file-budget` для `houseplan-card.ts` опущен до нового размера (храповик вниз), `bundle:budget` не поднят; новых WS-запросов на путях adoption нет (те же `config/get`/`layout/get`, что сегодня) | `test/core-file-budget.test.mjs`, `npm run bundle:budget`; отсутствие новых `callWS` — ревью диффа | поднять потолок — красный (по правилу теста) |
@@ -256,15 +292,18 @@ fingerprint восстанавливается с пересчётом, как �
 - `test/config-adoption.test.mjs` — таблица переходов AC3, round-trip AC5,
   I2/I4 (ссылка та же; ревизия не от чужого ответа), rollback AC6.
 - `test/config-adoption-ownership.test.mjs` — lint AC1/AC2 по `src/**`.
-- `demo/smoke_space_delete_adoption.mjs` — AC4 на production bundle с
-  synthetic HA: два клиента, второй меняет `plan_url` между `delete` и `get`.
+- `demo/smoke_post_write_adoption.mjs` — AC4 на production bundle с
+  synthetic HA: второй клиент меняет `plan_url` между записью и `get`; четыре
+  сценария (`space/delete` из onboarding и из editor runtime, `optimize_undo`,
+  `import/apply`), порядок `prepare → adopt`, ревизии из `get`.
 - Существующие: `smoke_summary_panel`, `smoke_ws_resilience`,
   `render-invalidation`, `serialized-write-queue`, `summary-panel-runtime`,
   `config-store`, `core-file-budget` — без изменения ожиданий,
   кроме адаптации импорта в `serialized-write-queue.test.mjs`.
 - Мутанты в `scripts/mutation-gate.mjs` (§2.7, защиты в продуктовом коде):
   `config-adoption-echo-clears-history`, `config-adoption-rev-from-foreign-response`,
-  `config-adoption-rollback-ignores-rev`, `space-delete-skips-asset-gate`.
+  `config-adoption-rollback-ignores-rev`, `post-write-skips-asset-gate`
+  (снимает гейт в `post-write` профиле — смок AC4 красный на всех четырёх).
 - Гейт по диффу: `typecheck`, `test`, `build`, `bundle:budget`, `no-new-any`;
   смоки по `smoke-select` для `_serverCfg`/`_cfgRev`/`_adoptStructuralResponses`;
   golden/perf — предрелизный набор (диффом не задеты: рендер не меняется).
@@ -277,7 +316,8 @@ fingerprint восстанавливается с пересчётом, как �
 | Редактор сравнивает и мутирует тело по ссылке | I4 — без клонирования; unit на идентичность ссылки |
 | Скрытый порядок побочных эффектов в `_adoptStructuralResponses` | Порядок переносится один в один, тест-таблица AC3 фиксирует наблюдаемые результаты; ревьюер сверяет диффом |
 | Ребейз-конфликты в `houseplan-card.ts`/`houseplan-editor-runtime.ts` (горячие файлы) | Небольшие коммиты: (1) модуль + тесты, (2) хост-делегаты, (3) четыре пути, (4) сужение контрактов, (5) lint + бюджеты + docs; `scripts/rebase-on-dev.mjs` |
-| `space/delete` — единственное изменение поведения | Собственный AC4 и смок; зафиксировано в §6.3 как намеренное |
+| Гейт на post-write путях — единственное изменение поведения | Собственный AC4 и смок на все четыре пути; зафиксировано в §6.3 как намеренное |
+| Профиль `post-write` случайно получит шаги `reload` (`_adoptInitialSpace`, `_restoreZoom`) и сместит выбранное пространство после Import/Undo | Профиль явный в сигнатуре; таблица AC3 включает кейс «post-write не вызывает `_adoptInitialSpace`»; смок AC4 проверяет, что видимое пространство после Import не меняется |
 | Windows-гейт владельца | Никаких новых spawn/путей; тесты — чистые Node |
 
 ## 13. Откат
@@ -314,5 +354,10 @@ fingerprint восстанавливается с пересчётом, как �
 5. `_reloadLayoutOnly` (слияние `mine` поверх ответа) использует
    `acceptLayoutWrite(merged, resp)` — семантика та же: тело слитое, ревизия
    ответа; отдельного «adopt layout with override» не заводится.
-6. Lifecycle registry не начинается даже частично: `space/delete` берёт
+6. Lifecycle registry не начинается даже частично: post-write пути берут
    готовую последовательность, а не новый механизм регистрации.
+7. Два профиля вместо одного: `reload` и `post-write` различаются сегодня
+   реальным набором пост-шагов; склеивать их значило бы менять поведение
+   Import/Undo/Delete (выбор пространства, viewport). Третьего профиля не
+   заводится; появление нового вызывающего с иным набором шагов — повод
+   пересмотреть границу, а не добавить ветку.
