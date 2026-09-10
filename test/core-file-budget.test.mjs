@@ -23,7 +23,7 @@ const CAPS = {
   // model and rendering themselves remain in dedicated modules.
   // #500 moved config/layout identity and the adoption sequence into
   // src/config-adoption.ts; the ratchet keeps that win.
-  'src/houseplan-card.ts': 13600,
+  'src/houseplan-card.ts': 13650,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.

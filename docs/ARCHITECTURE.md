@@ -1365,6 +1365,26 @@ snapshot for every affected space, clears its gestures and geometry history,
 then best-effort reloads authoritative config. Thus a newer edit made while the
 rejected request was in flight cannot survive on an unaccepted base (#314).
 
+**Config/layout identity has one owner** (#500). `src/config-adoption.ts`
+holds the server config and the device layout together with their revision
+and content fingerprint; the card exposes `_serverCfg`, `_cfgRev`, `_layout`
+and `_layoutRev` only as read delegates. The identity changes in exactly
+three ways — adopting an authoritative response, accepting the reply to our
+own write (`acceptConfigWrite`, `acceptPairWrite`), restoring the warm cache —
+and a revision is never taken apart from the body it describes: after
+`space/delete`, Optimize Undo or Import the revisions come from the re-read
+`config/get`/`layout/get`, not from the write reply. Every authoritative
+adoption goes through `adoptAuthoritativeGated`: compare by fingerprint →
+backdrop readiness (`ContentSigner.prepareImage`) → continuity candidate →
+adopt → tail. The `reload` profile (initial load, `config_updated`, summary
+lost-ACK recovery) runs the shared tail (decor assets, initial space, pending
+nav mode, cache snapshot); the `post-write` profile (the four re-reads after a
+paired write) ends at adoption and leaves each caller its own tail. Bodies may
+still be staged locally before a write — that is how the editors work — but
+only in the files pinned by `test/config-adoption-ownership.test.mjs`, whose
+counts ratchet down. Feature runtimes see one host method,
+`_adoptAuthoritative`, instead of the eight steps it replaces.
+
 **Persisted coordinates have one lattice-aware write boundary** (#291).
 `canonicalizeConfigGeometry()` / `canonicalizeLayoutGeometry()` /
 `canonicalizePosition()` own the frontend candidate; mirrored Python functions

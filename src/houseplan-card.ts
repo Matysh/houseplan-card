@@ -919,6 +919,11 @@ export class HouseplanCard extends LitElement {
   public readonly _adoption: ConfigAdoption = createConfigAdoption();
   private get _layout(): DeviceLayout { return this._adoption.layout; }
   private set _layout(layout: DeviceLayout) { this._adoption.stageLocalLayout(layout); }
+  // Setters below exist for the browser harness only (smokes seed revisions).
+  private get _layoutRev(): number { return this._adoption.layoutRev; }
+  private set _layoutRev(layoutRev: number) { this._adoption.seedIdentity({ layoutRev }); }
+  private get _layoutContentFingerprint(): string { return this._adoption.layoutFingerprint; }
+  private set _layoutContentFingerprint(layoutFingerprint: string) { this._adoption.seedIdentity({ layoutFingerprint }); }
   private _serverStorage = false;
   private _loadOk = false;
   /** null until config/get answers; then mirrors auth.may_write for this user. */
@@ -928,13 +933,15 @@ export class HouseplanCard extends LitElement {
   private get _serverCfg(): ServerConfig | null { return this._adoption.config; }
   private set _serverCfg(config: ServerConfig | null) { this._adoption.stageLocalConfig(config); }
   private get _cfgRev(): number { return this._adoption.configRev; }
+  private set _cfgRev(configRev: number) { this._adoption.seedIdentity({ configRev }); }
+  private get _cfgContentFingerprint(): string { return this._adoption.configFingerprint; }
+  private set _cfgContentFingerprint(configFingerprint: string) { this._adoption.seedIdentity({ configFingerprint }); }
   private _unsubCfg: (() => void) | null = null;
   private _unsubLayout: (() => void) | null = null;
   private _unsubVirtual: (() => void) | null = null;
   private _liveSyncAttempt: Promise<void> | null = null;
   private _liveSyncGeneration = 0;
   private _liveSyncConnection: any = null;
-  private get _layoutRev(): number { return this._adoption.layoutRev; }
   private _virtualLights: VirtualLightSnapshot = virtualLightSnapshot(null);
   /** One-deep server snapshot; invalidated by the first later plan edit. */
   private _canOptimizeUndo = false;

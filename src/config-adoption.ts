@@ -182,6 +182,17 @@ export class MutableConfigAdoption {
   stageLocalLayout(layout: DeviceLayout): void { this.layout = layout; }
 
   /**
+   * Browser-harness seam: smokes and capture scripts drive revisions and
+   * fingerprints from outside the card (`card._cfgRev = rev`). Production code
+   * never calls this — `test/config-adoption-ownership.test.mjs` pins the only
+   * callers to the card's delegate setters.
+   */
+  seedIdentity(patch: Partial<Pick<MutableConfigAdoption,
+    'configRev' | 'layoutRev' | 'configFingerprint' | 'layoutFingerprint'>>): void {
+    Object.assign(this, patch);
+  }
+
+  /**
    * Re-pair fingerprints with the live bodies. Local edits mutate nested
    * config/layout before the debounced write; the cache and the rollback of a
    * rejected physical write need the identity to describe what is actually

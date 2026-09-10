@@ -196,7 +196,8 @@ const out = await page.evaluate(async () => {
   card._saveConfigDebounced.cancel();
   card._persistLayout.cancel();
   card._writeChain = Promise.resolve();
-  card._adoptStructuralResponses = () => ({ configChanged: false, layoutChanged: false });
+  // #500: the delete path re-reads and adopts through the one gated entry; keep it inert here.
+  card._adoptAuthoritative = async () => ({ status: 'adopted', spaceChanged: false });
   for (const [name, runtime] of [['editor', editor], ['onboarding', onboarding]]) {
     card._space = 'another-space';
     card._serverCfg = { spaces: [baseSpace()], markers: [], settings: {} };

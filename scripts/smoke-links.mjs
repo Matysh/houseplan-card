@@ -38,7 +38,7 @@ export const SMOKE_LINKS = [
   {
     symbols: [
       'confirmedSummaryPanelWriteRecovery', 'summaryPanelEntityIds',
-      '_adoptStructuralResponses', 'LoadedSummaryPanelRuntime',
+      'adoptAuthoritativeGated', 'LoadedSummaryPanelRuntime',
     ],
     smokes: ['smoke_summary_panel.mjs'],
     because: 'the #490 production-bundle sequence proves that a lost config/set ACK adopts the '
