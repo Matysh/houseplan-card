@@ -24,9 +24,26 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
-  const lines = () => sr().querySelectorAll('.alignline').length;
-  const dots = () => sr().querySelectorAll('.aligndot').length;
-  const groups = () => sr().querySelectorAll('.alignguides').length;
+  // Считается ВИДИМОЕ. Осевая копия слоя на время жеста гасится прозрачностью
+  // и остаётся в DOM — если считать узлы, две направляющие подряд (живая и
+  // осевая, отставшая на шаг) выглядят как одна.
+  const visible = (selector) => [...sr().querySelectorAll(selector)].filter((node) => {
+    const layer = node.closest('.hp-editor-only-layer');
+    return !layer || layer.style.opacity !== '0';
+  });
+  const lines = () => visible('.alignline').length;
+  const dots = () => visible('.aligndot').length;
+  const groups = () => visible('.alignguides').length;
+  /** Кто сейчас рисует видимую направляющую: живой художник или осевшая сцена. */
+  const guideOwner = () => {
+    const group = visible('.alignguides')[0];
+    if (!group) return 'none';
+    return group.closest('[data-hp-live-editor]') ? 'live' : 'settled';
+  };
+  const guideLineX = () => {
+    const line = visible('.alignline')[0];
+    return line ? Number(line.getAttribute('x1')) : NaN;
+  };
   const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
   /** Осевые кадры оседания редактора должны закончиться ДО жеста. */
   const quiet = async () => {
@@ -118,6 +135,7 @@ const res = await page.evaluate(async () => {
   out.devGuideIsMeasuredFromTheLivePosition = Math.abs(y2 - endFrom(atGuide)) < 0.01;
   out.alignPointIsTheLivePosition = Math.abs(c._alignPoint[0] - atGuide.x) < 1e-6
     && Math.abs(c._alignPoint[1] - atGuide.y) < 1e-6;
+  out.guideIsPaintedByTheLivePainter = guideOwner() === 'live';
   // #400: направляющая обязана идти ОТ ДРУГОГО значка. Проверяется без
   // подмены состояния жеста: перетаскиваемого маркера нет среди кандидатов.
   const candidates = c._editorRuntime._alignCandidates();
@@ -141,8 +159,61 @@ const res = await page.evaluate(async () => {
   out.candidatesAreComputedOncePerFrame = paints >= 1 && candidateCalls >= 1
     && candidateCalls <= paints;
   runtime._alignCandidates = realCandidates;
-  // Съехали с оси — направляющей нет.
-  clientX += g * 7.3 * pxPerUnit();
+
+  // Передача слоя посреди жеста. Осевой кадр приходит не от жеста — у
+  // владельца это делает наблюдатель высоты шапки (`_hdrH` сходится
+  // ступеньками при любом изменении раскладки), и он же маскировал дефект на
+  // замерах S2. Каждый осевой рендер заканчивается `_commitLiveEditor()`,
+  // который гасит живой слой и возвращает владение сцене: двух групп не
+  // бывает, но точка обязана остаться живой — иначе осевая копия нарисует
+  // направляющую там, где маркер стоял до жеста.
+  // Серия AC6 увела маркер с оси на пару шагов — возвращаем его, иначе
+  // проверять передачу слоя не на чем: без совпадения направляющей нет.
+  for (let step = 0; step < 8; step++) {
+    const at = live();
+    if (Math.abs(at.x - anchorPos.x) < g * 0.01) break;
+    clientX += (anchorPos.x - at.x) * pxPerUnit();
+    marker.dispatchEvent(pe('pointermove', 77, { clientX, clientY }));
+    await frame();
+    await frame();
+  }
+  const atHandover = live();
+  out.markerIsBackOnTheAxis = Math.abs(atHandover.x - anchorPos.x) < 1e-6 && lines() === 1;
+  const settledBeforeHandover = settled;
+  c._hdrH = (c._hdrH || 0) + 0.01;
+  await c.updateComplete;
+  await frame();
+  out.handoverHappened = settled - settledBeforeHandover >= 1;
+  out.handoverGivesTheLayerBackToTheSettledScene = guideOwner() === 'settled'
+    && sr().querySelector('[data-hp-live-editor]').childElementCount === 0;
+  out.handoverKeepsExactlyOneGuide = groups() === 1 && lines() === 1;
+  out.handoverGuideStaysOnTheLivePoint = Math.abs(guideLineX() - atHandover.x) < 1e-6;
+  // Настоящее движение — и слой снова у живого художника. Шаг вниз по той же
+  // оси: выравнивание сохраняется, а позиция меняется, иначе живой отрисовки
+  // не будет вовсе — менять нечего, и это правильно.
+  clientY += g * pxPerUnit();
+  marker.dispatchEvent(pe('pointermove', 77, { clientX, clientY }));
+  for (let i = 0; i < 10 && guideOwner() !== 'live'; i++) await frame();
+  out.nextMoveTakesTheLayerBack = guideOwner() === 'live' && groups() === 1 && lines() === 1;
+
+  // Съехали с оси — направляющей нет. Смещение выбирается так, чтобы не
+  // попасть на ось ни одного из кандидатов: их девять, и «на глаз» выбранный
+  // отступ однажды уже сел ровно на чужую ось.
+  const away = (() => {
+    const points = c._editorRuntime._alignCandidates();
+    const here = live();
+    for (let step = 3; step <= 24; step++) {
+      const x = here.x + g * step;
+      const y = here.y + g * step;
+      const clear = points.every((point) => Math.abs(point[0] - x) > g * 0.5
+        && Math.abs(point[1] - y) > g * 0.5);
+      if (clear) return step;
+    }
+    return 0;
+  })();
+  out.foundAPlaceOffEveryAxis = away > 0;
+  clientX += g * away * pxPerUnit();
+  clientY += g * away * pxPerUnit();
   marker.dispatchEvent(pe('pointermove', 77, { clientX, clientY }));
   await frame();
   await frame();

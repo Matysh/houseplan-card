@@ -291,6 +291,12 @@ const editorTemplate = (host: LiveEditorHost): TemplateResult | typeof nothing =
   // the marker element and the settled scene, which owns the guides, never ran
   // again during the drag. The guides are the only thing this mode needs from
   // a template: everything else about a dragged marker is an element style.
+  //
+  // Ownership alternates: every settled render ends in `updated()` →
+  // `_commitLiveEditor()`, which empties this root and hands the layer back to
+  // the settled scene, and the next live paint takes it again. Both sides draw
+  // the same `_alignPoint`, live since this issue; the settled copy left over
+  // from a mid-gesture render is hidden by `paintHouseplanEditor`.
   return svg`<g class="hp-live-devices" aria-hidden="true" pointer-events="none">
     ${host._renderAlignGuides()}
   </g>`;
@@ -351,10 +357,13 @@ export function paintHouseplanEditor(value: object): void {
   paintDevice(host, root);
   const target = root.querySelector<SVGElement>('[data-hp-live-editor]');
   if (!target) return;
-  // #521: one visible guides layer per gesture, in every editor mode. The
-  // settled copy of `.hp-editor-only-layer` holds `_renderAlignGuides()`
-  // everywhere; plan mode already hid it because its markup layer lives here
-  // too, and devices/decor left it on screen with a stale point on it.
+  // #521: the settled copy of the guides layer goes transparent for the whole
+  // gesture, in every editor mode — plan mode already did it for its markup
+  // layer. Ownership alternates rather than doubling *while nothing else
+  // renders*: `updated()` → `_commitLiveEditor()` empties the live root on
+  // every settled render. But a settled render that lands mid-gesture leaves
+  // its own guides behind, and the next live paint then adds a second copy —
+  // measured: two `.alignline`, the settled one a step behind the marker.
   makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');
   if (host._mode === 'plan') {
     if (host._opDrag) hide(state, root, '.wallbodies');

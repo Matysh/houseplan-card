@@ -7335,6 +7335,22 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'live-editor-keeps-the-settled-guides-visible',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'a settled render landing mid-gesture leaves its own guides behind; without '
+      + 'hiding that copy the next live paint adds a second one, and the leftover is a step '
+      + 'behind the marker — two dashed lines for one alignment (#521 AC5)',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: "  makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n"
+        + "  if (host._mode === 'plan') {\n"
+        + '    if (host._opDrag) hide(state, root, \'.wallbodies\');',
+      replace: "  if (host._mode === 'plan') {\n"
+        + "    makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n"
+        + '    if (host._opDrag) hide(state, root, \'.wallbodies\');',
+    }],
+  },
+  {
     id: 'align-point-reads-frozen-snapshot',
     guard: 'node demo/smoke_align_guides.mjs',
     because: 'during a live gesture `_pos` answers from the snapshot of the last settled '
