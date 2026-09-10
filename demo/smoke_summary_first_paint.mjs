@@ -69,6 +69,25 @@ async function openLargePlan(page, { reducedMotion = false } = {}) {
     // Долгие задачи главного потока за всё время показа: подвисание может
     // случиться и не в первом кадре, а сразу после прихода ленивого чанка,
     // и человек увидит ровно тот же фриз (#509 AC4).
+    //
+    // Считаются только задачи ПОСЛЕ того, как большой план дорисован: сама
+    // отрисовка 60 комнат — тоже длинная задача, но она не про эту задачу и
+    // на CI-раннере попадала в окно наблюдения (#509, первый прогон CI).
+    await new Promise((resolve) => {
+      let quiet = null;
+      const settleObserver = (() => {
+        try {
+          const observer = new PerformanceObserver(() => {
+            clearTimeout(quiet);
+            quiet = setTimeout(() => { observer.disconnect(); resolve(); }, 400);
+          });
+          observer.observe({ entryTypes: ['longtask'] });
+          quiet = setTimeout(() => { observer.disconnect(); resolve(); }, 400);
+          return observer;
+        } catch { resolve(); return null; }
+      })();
+      if (!settleObserver) resolve();
+    });
     window.__longTasks = [];
     try {
       window.__longTaskObserver = new PerformanceObserver((list) => {
@@ -109,6 +128,7 @@ async function openLargePlan(page, { reducedMotion = false } = {}) {
     return {
       waitedMs: performance.now() - started, pending: f.pending(), texts: f.texts(),
       longest: window.__longTasks.length ? Math.max(...window.__longTasks) : 0,
+      tasks: window.__longTasks.slice(0, 8),
       observed: !!window.__longTaskObserver,
     };
   });
@@ -117,6 +137,8 @@ async function openLargePlan(page, { reducedMotion = false } = {}) {
   check('replacedWithinBudget', settled.waitedMs < 6000);
   // AC4: ни одна порция расчёта не держит поток дольше кадра-другого. Без
   // порционного обхода здесь была бы одна задача на всю площадь (S2: ~1,5 с).
+  console.log(`  диагностика: долгих задач ${settled.tasks.length ? settled.tasks.join(', ') : 'нет'};`
+    + ` значения через ${Math.round(settled.waitedMs)} мс`);
   check('noLongTaskWhileComputing', !settled.observed || settled.longest < 250);
 
   // AC5: появление панели анимируется — кадры анимации реально существуют.
