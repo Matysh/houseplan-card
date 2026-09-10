@@ -7261,6 +7261,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'adoption-notifies-no-host-on-config-replacement',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'since #520 the bodies are no longer declared Lit properties, so this call is the '
+      + 'only thing that wakes an update when the config body is replaced: without it the '
+      + 'geometry epoch never moves and the plan keeps painting the retired body (#520 AC2)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: "    this.config = next;\n    this.onBodyReplaced?.('_serverCfg', previous);",
+      replace: '    this.config = next;',
+    }],
+  },
+  {
     id: 'live-editor-view-mode-routes-live',
     guard: 'node --test test/live-editor.test.mjs',
     because: 'View is the product for two of three personas: the live editor path must never '
