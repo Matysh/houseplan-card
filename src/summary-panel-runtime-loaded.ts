@@ -63,6 +63,9 @@ type SummaryLayoutState = {
  * this controller owns only summary-panel local/UI state and asks the host to
  * repaint after mutations.
  */
+/** Бюджет одной порции фонового расчёта агрегатов: короче кадра (#509). */
+const SUMMARY_METRICS_FRAME_BUDGET_MS = 8;
+
 export class LoadedSummaryPanelRuntime {
   private readonly host: SummaryPanelHost;
   private dialog: SummaryPanelDialogState | null = null;
@@ -89,6 +92,8 @@ export class LoadedSummaryPanelRuntime {
   // геометрии занимал сотни миллисекунд прямо в render, и первый показ панели
   // выглядел зависанием. Здесь — только флаг «пересчёт уже запланирован».
   private metricsRefresh = 0;
+  private areaSteps: Generator<void, number | null, void> | null = null;
+  private areaStepsEpoch = -1;
   private styleSheet: CSSStyleSheet | null = null;
   private entityIndex: SummaryEntityIndex | null = null;
   private lifecycleGeneration = 0;
@@ -722,8 +727,13 @@ export class LoadedSummaryPanelRuntime {
     const run = () => {
       this.metricsRefresh = 0;
       if (!this.current(generation)) return;
-      this.computeMetrics();
+      // Порциями по комнате с бюджетом на кадр: полный обход большого дома —
+      // полторы секунды непрерывной работы, и вне кадра он всё равно
+      // «подвешивал» бы интерфейс (#509). Каждая порция короче кадра, между
+      // порциями браузер обрабатывает ввод и рисует.
+      const done = this.advanceMetrics(SUMMARY_METRICS_FRAME_BUDGET_MS);
       this.host.requestUpdate();
+      if (!done) this.scheduleMetrics();
     };
     // Кадр сначала должен быть показан: rAF отдаёт нам момент ПОСЛЕ отрисовки,
     // таймер — фолбэк для окружений без rAF (тесты, скрытая вкладка).
@@ -735,7 +745,33 @@ export class LoadedSummaryPanelRuntime {
   }
 
   /** @internal — фоновый пересчёт агрегатов; тесты вызывают напрямую (#509). */
-  public computeMetrics(): void {
+  /**
+   * Один шаг фонового расчёта: работает не дольше бюджета, возвращает `true`,
+   * когда считать больше нечего (#509).
+   */
+  public advanceMetrics(budgetMs = SUMMARY_METRICS_FRAME_BUDGET_MS): boolean {
+    const module = this.metricsModule;
+    if (!module) return true;
+    this.computeDeviceCount();
+    if (!this.host._serverCfg) {
+      this.areaMemo = { cfgEpoch: this.host._cfgEpoch, value: null };
+      return true;
+    }
+    if (this.areaMemo && this.areaMemo.cfgEpoch === this.host._cfgEpoch) return true;
+    if (!this.areaSteps || this.areaStepsEpoch !== this.host._cfgEpoch) {
+      this.areaSteps = module.cleanFloorAreaSteps(this.host._serverCfg, this.host._model);
+      this.areaStepsEpoch = this.host._cfgEpoch;
+    }
+    const started = Date.now();
+    let step = this.areaSteps.next();
+    while (!step.done && Date.now() - started < budgetMs) step = this.areaSteps.next();
+    if (!step.done) return false;
+    this.areaMemo = { cfgEpoch: this.areaStepsEpoch, value: step.value ?? null };
+    this.areaSteps = null;
+    return true;
+  }
+
+  private computeDeviceCount(): void {
     const module = this.metricsModule;
     if (!module) return;
     if (!this.deviceMemo || this.deviceMemo.cfgEpoch !== this.host._cfgEpoch
@@ -754,12 +790,11 @@ export class LoadedSummaryPanelRuntime {
         registryRev: this.host._haRegistry.revision, value: represented?.size ?? null,
       };
     }
-    if (!this.areaMemo || this.areaMemo.cfgEpoch !== this.host._cfgEpoch) {
-      this.areaMemo = {
-        cfgEpoch: this.host._cfgEpoch,
-        value: this.host._serverCfg ? module.totalCleanFloorAreaM2(this.host._serverCfg, this.host._model) : null,
-      };
-    }
+  }
+
+  /** Синхронный расчёт целиком — тесты и окружения без кадров (#509). */
+  public computeMetrics(): void {
+    while (!this.advanceMetrics(Number.POSITIVE_INFINITY)) { /* до конца */ }
   }
 
   private metrics(): { deviceCount: number | null; areaM2: number | null; now: Date } {

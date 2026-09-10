@@ -244,13 +244,20 @@ test('#509 AC1/AC2/AC9: значение показывает скелет до 
         ? (values.deviceCount === null ? null : String(values.deviceCount)) : null),
       representedHaDeviceIds: () => new Set(['d1', 'd2']),
       totalCleanFloorAreaM2: () => 12.5,
+      // Порционный расчёт площади (#509): генератор, отдающий управление
+      // после каждой комнаты. Здесь — две порции, чтобы проверить и то, что
+      // незавершённый расчёт не считается готовым.
+      cleanFloorAreaSteps: function* steps() { yield; yield; return 12.5; },
     };
     assert.deepEqual(state(deviceCount), { kind: 'pending' });
     // AC2: живая сущность отвечает сразу; отсутствующая — честная ошибка.
     assert.deepEqual(state(entity), { kind: 'ready', text: 'On' });
     assert.deepEqual(state({ ...entity, source: { type: 'entity', entity_id: 'light.gone' } }), { kind: 'unavailable' });
 
-    // Расчёт после кадра: имитируем его завершение.
+    // Порция короче полного расчёта не делает значение готовым…
+    assert.equal(runtime.advanceMetrics(-1), false, 'бюджет исчерпан — расчёт продолжится');
+    assert.equal(runtime.metricsFresh(), false);
+    // …а полный проход — делает.
     runtime.computeMetrics();
     assert.deepEqual(state(deviceCount), { kind: 'ready', text: '2' });
 

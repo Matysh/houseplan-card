@@ -81,12 +81,21 @@ export function spaceWallGeometry(
   };
 }
 
-/** Canonical clean-floor union, in physical square metres, for every space. */
-export function totalCleanFloorAreaM2(
+/**
+ * Тот же расчёт, но шагами по комнате (#509).
+ *
+ * Даже с общей кладкой пространства полный обход большого дома — это ~1,5 с
+ * непрерывной работы в главном потоке. Вне кадра он не задерживает первый
+ * показ панели, но всё ещё «подвешивает» интерфейс на всё это время, а это
+ * ровно тот симптом, ради которого заведена задача. Поэтому расчёт отдаёт
+ * управление после каждой комнаты: вызывающий сам решает, сколько работы
+ * уместить в кадр.
+ */
+export function* cleanFloorAreaSteps(
   config: ServerConfig,
   models: readonly SpaceModel[],
   geometryOf: typeof spaceWallGeometry = spaceWallGeometry,
-): number | null {
+): Generator<void, number | null, void> {
   try {
     let total = 0;
     for (const space of models) {
@@ -107,6 +116,7 @@ export function totalCleanFloorAreaM2(
         ) || poly;
         const clean = floorMinusBodies(inner, prepared.physicalBodies) as Geom;
         spaceFloor = unionGeometry(spaceFloor, clean);
+        yield;
       }
       const cmPerUnit = prepared.cellCm / GRID_PITCH;
       total += geometryArea(spaceFloor) * cmPerUnit * cmPerUnit / 1e4;
@@ -115,6 +125,18 @@ export function totalCleanFloorAreaM2(
   } catch {
     return null;
   }
+}
+
+/** Canonical clean-floor union, in physical square metres, for every space. */
+export function totalCleanFloorAreaM2(
+  config: ServerConfig,
+  models: readonly SpaceModel[],
+  geometryOf: typeof spaceWallGeometry = spaceWallGeometry,
+): number | null {
+  const steps = cleanFloorAreaSteps(config, models, geometryOf);
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
 }
 
 export function summarySystemValue(

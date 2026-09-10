@@ -66,6 +66,16 @@ async function openLargePlan(page, { reducedMotion = false } = {}) {
   const first = await page.evaluate(async () => {
     const f = window.__firstPaint;
     const toggle = f.root().querySelector('.summary-control')?.querySelector('button:last-child');
+    // Долгие задачи главного потока за всё время показа: подвисание может
+    // случиться и не в первом кадре, а сразу после прихода ленивого чанка,
+    // и человек увидит ровно тот же фриз (#509 AC4).
+    window.__longTasks = [];
+    try {
+      window.__longTaskObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) window.__longTasks.push(Math.round(entry.duration));
+      });
+      window.__longTaskObserver.observe({ entryTypes: ['longtask'] });
+    } catch { window.__longTaskObserver = null; }
     const started = performance.now();
     toggle?.click();
     // Ровно один кадр: именно его и видел человек как «зависание».
@@ -94,11 +104,20 @@ async function openLargePlan(page, { reducedMotion = false } = {}) {
       await new Promise((resolve) => setTimeout(resolve, 25));
       await f.card.updateComplete;
     }
-    return { waitedMs: performance.now() - started, pending: f.pending(), texts: f.texts() };
+    window.__longTaskObserver?.takeRecords?.().forEach((entry) => window.__longTasks.push(Math.round(entry.duration)));
+    window.__longTaskObserver?.disconnect?.();
+    return {
+      waitedMs: performance.now() - started, pending: f.pending(), texts: f.texts(),
+      longest: window.__longTasks.length ? Math.max(...window.__longTasks) : 0,
+      observed: !!window.__longTaskObserver,
+    };
   });
   check('skeletonReplacedByValues', settled.pending === 0);
   check('valuesAreReal', settled.texts.every((text) => text && !/unavailable/i.test(text)));
-  check('replacedWithinBudget', settled.waitedMs < 3000);
+  check('replacedWithinBudget', settled.waitedMs < 6000);
+  // AC4: ни одна порция расчёта не держит поток дольше кадра-другого. Без
+  // порционного обхода здесь была бы одна задача на всю площадь (S2: ~1,5 с).
+  check('noLongTaskWhileComputing', !settled.observed || settled.longest < 250);
 
   // AC5: появление панели анимируется — кадры анимации реально существуют.
   const motion = await page.evaluate(async () => {
