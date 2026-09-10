@@ -123,3 +123,5 @@ test('#510 r1 M1: a cancelled dispatch with no replacement gets one dispatch, no
   assert.equal(outcome.result, 'green');
   assert.deepEqual(fake.dispatched, ['issue/1']);
 });
+
+// #518: живая проверка гейта (ветка временная).
