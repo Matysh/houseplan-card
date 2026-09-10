@@ -4,7 +4,7 @@ import test from 'node:test';
 import {
   closeSpaceCopyDialog, openSpaceCopyDialog, saveSpaceCopy,
 } from '../test-build/space-copy-runtime.js';
-import { contentFingerprint } from '../test-build/visual-continuity.js';
+import { installAdoption } from './helpers/adoption-host.mjs';
 
 const configFixture = () => ({
   model_version: 9,
@@ -24,11 +24,6 @@ function runtimeHarness(overrides = {}) {
       mode: 'edit', spaceId: 'source', title: 'unsaved settings title', busy: false,
       copy: { title: 'Floor (2)', busy: false, token: 0 },
     },
-    _serverCfg: config,
-    _layout: {},
-    _cfgRev: 5,
-    _layoutRev: 8,
-    _cfgContentFingerprint: contentFingerprint(config),
     _saveConfigDebounced: { pending: () => false, flush: () => events.push('flush-config') },
     _writeChain: Promise.resolve(),
     _geometryHistory: { clear: () => events.push('clear-geometry-history') },
@@ -72,8 +67,9 @@ function runtimeHarness(overrides = {}) {
     _activeWallChainPartitionIds: ['partition'],
     _primeDrawWallField: () => events.push('prime-draw'),
     _saveNav: () => events.push('save-nav'),
-    ...overrides,
   };
+  installAdoption(host, { config, layout: {}, configRev: 5, layoutRev: 8 });
+  Object.assign(host, overrides);
   const services = {
     clearGeometryGesture: () => {
       events.push('clear-gesture');
@@ -85,8 +81,7 @@ function runtimeHarness(overrides = {}) {
     reportPreflightFailure: () => events.push('report-preflight'),
     saveConfigNow: async () => {
       events.push('config-write');
-      host._cfgRev++;
-      host._cfgContentFingerprint = contentFingerprint(host._serverCfg);
+      host._adoption.acceptConfigWrite(host._serverCfg, { rev: host._cfgRev + 1 });
     },
     setMode: () => events.push('mode:plan'),
     showWallModelMigrationBlocked: () => events.push('migration-blocked'),
@@ -168,7 +163,8 @@ test('#456 a concurrent plan change invalidates an open Optimize confirmation', 
   });
   harness.host._confirmDanger = async () => {
     harness.events.push('confirm');
-    harness.host._cfgRev++;
+    // another client's write landed while the confirmation was open
+    harness.host._adoption.acceptConfigWrite(harness.host._serverCfg, { rev: harness.host._cfgRev + 1 });
     return true;
   };
   await saveSpaceCopy(harness.host, harness.services);
@@ -220,8 +216,7 @@ test('#456 a rejected copy rolls back only the copy and keeps accepted Optimize'
   const { host, services, events } = runtimeHarness({
     _reloadConfigOnly: async () => {
       events.push('reload-config');
-      host._serverCfg = structuredClone(optimized);
-      host._cfgContentFingerprint = contentFingerprint(host._serverCfg);
+      host._adoption.stageConfigCandidate(structuredClone(optimized));
     },
   });
   services.optimize = (_currentConfig, currentLayout) => ({

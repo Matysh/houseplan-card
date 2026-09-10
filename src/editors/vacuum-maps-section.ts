@@ -18,8 +18,8 @@ import {
   commitVacuumRouteDraft, convertLegacyRoutes, newRouteId, removeRoute,
   type VacuumRouteDraft,
 } from '../vacuum-route-edit';
-import { optimisticAttempt, rollbackOptimistic } from '../serialized-write-queue';
-import { contentFingerprint } from '../visual-continuity';
+import type { ConfigAdoption } from '../config-adoption';
+import type { OptimisticAttempt } from '../serialized-write-queue';
 
 interface SpaceRow { id?: unknown; name?: unknown }
 
@@ -27,9 +27,10 @@ interface SpaceRow { id?: unknown; name?: unknown }
 export interface VacuumMapsCardHost {
   hass?: { states?: Record<string, unknown> } | null;
   _config?: { language?: string | null } | null;
-  _serverCfg: (ServerConfig & { spaces: SpaceRow[] }) | null;
-  _cfgContentFingerprint: string;
-  _cfgRev: number;
+  readonly _serverCfg: (ServerConfig & { spaces: SpaceRow[] }) | null;
+  readonly _cfgRev: number;
+  readonly _adoption: ConfigAdoption;
+  _rollbackOptimistic: (attempt: OptimisticAttempt<ServerConfig>) => boolean;
   _saveConfigDebounced: { pending: () => boolean; cancel: () => void };
   _regSignature: string;
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
@@ -102,9 +103,8 @@ export function renderVacuumMapsSection(
     }
     marker.vacuum = { ...(marker.vacuum || {}), map_routes: nextRoutes };
     delete marker.vacuum.calibration;
-    const attempt = optimisticAttempt(previous, nextConfig, host._cfgContentFingerprint,
-      host._cfgRev, contentFingerprint);
-    host._serverCfg = nextConfig;
+    const attempt = host._adoption.beginOptimistic(previous, nextConfig);
+    host._adoption.stageLocalConfig(nextConfig);
     host._regSignature = '';
     host._maybeRebuildDevices();
     host.requestUpdate();
@@ -113,7 +113,7 @@ export function renderVacuumMapsSection(
       await runtime._saveConfigNow();
       return true;
     } catch (error) {
-      rollbackOptimistic(host, attempt, contentFingerprint);
+      host._rollbackOptimistic(attempt);
       host._regSignature = '';
       host._maybeRebuildDevices();
       host.requestUpdate();

@@ -7,8 +7,7 @@ import {
   saveManualCalibration,
   saveVacuumMatrix,
 } from '../test-build/vacuum-calibration-write.js';
-
-const fingerprint = (value) => JSON.stringify(value);
+import { installAdoption } from './helpers/adoption-host.mjs';
 
 function deferred() {
   let resolve;
@@ -34,13 +33,10 @@ function fixture({ marker = true, save } = {}) {
   const toasts = [];
   let rebuilds = 0;
   const host = {
-    _serverCfg: accepted,
     _devices: [{
       id: 'vac', bindingKind: 'entity', bindingRef: 'vacuum.demo',
       space: 'ground', area: null, hidden: false,
     }],
-    _cfgContentFingerprint: fingerprint(accepted),
-    _cfgRev: 7,
     _saveConfigDebounced: { pending: () => true, cancel: () => {} },
     _regSignature: 'accepted',
     _markerDialog: { busy: false, name: 'Vacuum draft' },
@@ -54,11 +50,12 @@ function fixture({ marker = true, save } = {}) {
     _errText: (error) => String(error?.message || error),
     requestUpdate: () => {},
   };
+  installAdoption(host, { config: accepted, configRev: 7 });
   const runtime = {
     host,
     _prepareConfigCandidate: (config) => config,
     _saveConfigNow: save || (async () => {
-      host._cfgContentFingerprint = fingerprint(host._serverCfg);
+      host._adoption.refreshConfigFingerprint();
     }),
   };
   return { accepted, host, runtime, toasts, rebuilds: () => rebuilds };
@@ -68,7 +65,7 @@ test('rejected matrix restores the accepted marker and a retry can persist (#442
   let reject = true;
   const f = fixture({ save: async () => {
     if (reject) throw new Error('semantic reject');
-    f.host._cfgContentFingerprint = fingerprint(f.host._serverCfg);
+    f.host._adoption.refreshConfigFingerprint();
   } });
 
   assert.equal(await saveVacuumMatrix(

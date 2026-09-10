@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:dist/houseplan-assets/summary-panel-editor-DoCYqzD1.js
 globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="5c1b1c61b738b69334f9555c60ee17aa874c642234b0dcca6c358552357c0daf";import{b as a,A as e}from"./houseplan-card-yh8-YihB.js";import{s,n as t,a as l,m as r,b as o,c as i,d as u}from"./summary-panel-runtime-loaded-CPSfTezy.js";const m=m=>{const{host:c,dialog:d,problems:n,t:b}=m,y=n.find(a=>"error"===a.kind),$=d.localShow!==d.baseLocalShow||!d.localOnly&&!s(t(d.draft),d.base),p=$&&!d.busy&&!y,v=a=>n.find(e=>e.path===a),h=a=>a?b(`summary.problem.${a.code}`):"",k=()=>m.close(),g=a`<label class="summary-switch" for="summary-local-show">
+========
+globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0a76a76ae3d778006d8d7f2d7296a95336a306c743d15efd5166a8249caedeee";import{b as a,A as e}from"./houseplan-card-CfF5g1xu.js";import{s,n as t,a as l,m as r,b as o,c as i,d as u}from"./summary-panel-runtime-loaded-DZOniG9e.js";const m=m=>{const{host:c,dialog:d,problems:n,t:b}=m,y=n.find(a=>"error"===a.kind),$=d.localShow!==d.baseLocalShow||!d.localOnly&&!s(t(d.draft),d.base),p=$&&!d.busy&&!y,v=a=>n.find(e=>e.path===a),h=a=>a?b(`summary.problem.${a.code}`):"",k=()=>m.close(),g=a`<label class="summary-switch" for="summary-local-show">
+>>>>>>>> 1ff91b54 (feat(adoption): one owner for config/layout identity and the adoption sequence):dist/houseplan-assets/summary-panel-editor-C77DC5Fh.js
     <span class="summary-switch-caption"><strong>${b("summary.show_local")}</strong>
       <small id="summary-local-show-hint">${b("summary.show_local_hint")}</small></span>
     <input id="summary-local-show" data-summary-local-show type="checkbox"

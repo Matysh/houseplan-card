@@ -1055,7 +1055,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a rejected second write must restore server truth without rolling back the accepted Optimize (#456 AC11)',
     patches: [{
       file: 'src/space-copy-runtime.ts',
-      find: '      if (rollbackOptimistic(host, attempt, contentFingerprint)) invalidateConfig(host);',
+      find: '      if (host._rollbackOptimistic(attempt)) invalidateConfig(host);',
       replace: '',
     }, {
       file: 'src/space-copy-runtime.ts',
@@ -6896,7 +6896,7 @@ const MUTANT_DEFINITIONS = [
       + 'leaving the independent Device editor draft available for Retry (#442 AC1)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: '        rollbackOptimistic(this.host, attempt, contentFingerprint);\n'
+      find: '        this.host._rollbackOptimistic(attempt);\n'
         + "        this.host._regSignature = '';",
       replace: "        this.host._regSignature = '';",
     }],
@@ -6920,7 +6920,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
       find: '      if (!configAccepted && attempt) {\n'
-        + '        rollbackOptimistic(this.host, attempt, contentFingerprint);',
+        + '        this.host._rollbackOptimistic(attempt);',
       replace: '      if (attempt) {\n'
         + '        this.host._serverCfg = attempt.previous;',
     }],
@@ -6932,7 +6932,7 @@ const MUTANT_DEFINITIONS = [
       + 'marker in the local accepted config (#442 AC5–AC7)',
     patches: [{
       file: 'src/vacuum-calibration-write.ts',
-      find: '    rollbackOptimistic(host, attempt, contentFingerprint);\n    rebuild(host);',
+      find: '    host._rollbackOptimistic(attempt);\n    rebuild(host);',
       replace: '    rebuild(host);',
     }],
   },
@@ -6954,16 +6954,16 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'optimistic-rollback-skips-same-root-fingerprint',
-    guard: 'node --test test/serialized-write-queue.test.mjs',
+    guard: 'node --test test/config-adoption.test.mjs',
     because: 'newer in-place content can retain the attempted object identity; rollback must still '
-      + 'compare content and must never erase that newer owner (#442 AC2)',
+      + 'compare content and must never erase that newer owner (#442 AC2; owner moved by #500)',
     patches: [{
-      file: 'src/serialized-write-queue.ts',
-      find: '  if (!current || host._cfgRev !== attempt.revision\n'
-        + '      || fingerprint(current) !== attempt.attemptedFingerprint) return false;',
-      replace: '  if (!current || host._cfgRev !== attempt.revision\n'
-        + '      || (current !== attempt.attempted\n'
-        + '        && fingerprint(current) !== attempt.attemptedFingerprint)) return false;',
+      file: 'src/config-adoption.ts',
+      find: '    if (!current || this.configRev !== attempt.revision\n'
+        + '        || contentFingerprint(current) !== attempt.attemptedFingerprint) return false;',
+      replace: '    if (!current || this.configRev !== attempt.revision\n'
+        + '        || (current !== attempt.attempted\n'
+        + '          && contentFingerprint(current) !== attempt.attemptedFingerprint)) return false;',
     }],
   },
   {
@@ -8511,6 +8511,61 @@ const MUTANT_DEFINITIONS = [
         + '\n'
         + '    for node_id in ids:\n'
         + '        _visit(node_id)\n',
+    }],
+  },
+  {
+    id: 'config-adoption-echo-clears-history',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'an authoritative echo with identical content must keep local geometry undo and the '
+      + 'reactive root; only a genuinely different baseline retires them (#500 AC3, I3)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '    const configChanged = nextFingerprint !== this.currentConfigFingerprint();\n'
+        + '    if (configChanged) {\n'
+        + '      onConfigReplace();',
+      replace: '    const configChanged = nextFingerprint !== this.currentConfigFingerprint();\n'
+        + '    onConfigReplace();\n'
+        + '    if (configChanged) {',
+    }],
+  },
+  {
+    id: 'config-adoption-rev-from-foreign-response',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'a revision is accepted only together with the body it describes; taking the reply '
+      + 'revision without its body leaves a stale candidate with a newer rev (#500 I2, #490 F1)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '    if (!assetReady) {\n'
+        + "      host._continuity.note('asset-failed');",
+      replace: '    if (!assetReady) {\n'
+        + '      adoption.acceptConfigWrite(candidateConfig ?? adoption.config!, cfgResp ?? {});\n'
+        + "      host._continuity.note('asset-failed');",
+    }],
+  },
+  {
+    id: 'config-adoption-rollback-ignores-rev',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'a rollback must yield to a newer revision adopted while the candidate was in flight; '
+      + 'comparing content alone would erase a conflict reload (#500 AC6, #439)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '    if (!current || this.configRev !== attempt.revision\n'
+        + '        || contentFingerprint(current) !== attempt.attemptedFingerprint) return false;',
+      replace: '    if (!current\n'
+        + '        || contentFingerprint(current) !== attempt.attemptedFingerprint) return false;',
+    }],
+  },
+  {
+    id: 'post-write-skips-asset-gate',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'post-write adoptions (space/delete, optimize_undo, import/apply) pass the same '
+      + 'backdrop readiness gate as reloads; skipping it re-creates the transient blank plan of #490 M1 (#500 AC4)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '  if (structuralChanged) {\n'
+        + '    const assetReady = await host._signer.prepareImage(host.hass, host._candidateBackdrop(candidateConfig));',
+      replace: "  if (structuralChanged && input.profile === 'reload') {\n"
+        + '    const assetReady = await host._signer.prepareImage(host.hass, host._candidateBackdrop(candidateConfig));',
     }],
   },
 ];

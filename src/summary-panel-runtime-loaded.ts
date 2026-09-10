@@ -13,7 +13,6 @@ import {
   summaryLocalKey, summaryPanelEntityIds, summaryPanelOf, validateSummaryDraft, visibleSummaryBlocks,
 } from './summary-panel';
 import { SUMMARY_PANEL_API_VERSION } from './summary-panel-api';
-import { contentFingerprint } from './visual-continuity';
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import { canonicalizeConfigGeometry } from './coordinate-canonicalization';
 import type { SummaryPanelEditorRenderer } from './summary-panel-editor';
@@ -625,26 +624,14 @@ export class LoadedSummaryPanelRuntime {
               if (!this.current(generation)) throw writeError;
               const confirmed = confirmedSummaryPanelWriteRecovery(authoritative, draft);
               if (!confirmed) throw writeError;
-              const configChanged = contentFingerprint(confirmed.config)
-                !== (this.host._cfgContentFingerprint || contentFingerprint(this.host._serverCfg));
-              if (configChanged && !await this.host._signer.prepareImage(
-                this.host.hass, this.host._candidateBackdrop(confirmed.config),
-              )) {
-                this.host._continuity.note('asset-failed');
-                this.host._scheduleLoadRetry(true);
-                throw writeError;
-              }
-              if (configChanged && this.host._continuity.hasCompleteFrame
-                  && this.host._continuity.state === 'steady') {
-                this.host._beginContinuityCandidate('summary-recovery', true);
-              }
-              const visibleSpace = this.host._space;
-              this.host._adoptStructuralResponses(authoritative);
-              void this.host._syncDecorAssets(confirmed.config).catch(() => undefined);
-              this.host._adoptInitialSpace(this.host._model, true);
-              this.host._resumePendingNavMode();
-              this.host._cacheSnapshot();
-              if (this.host._space !== visibleSpace) this.host._restoreZoom();
+              // #500: the same gated sequence as every other authoritative
+              // adoption — backdrop readiness, continuity candidate, adopt,
+              // reload tail. A bounded asset failure keeps the write error.
+              const adopted = await this.host._adoptAuthoritative({
+                cfgResp: authoritative, reason: 'summary-recovery', profile: 'reload',
+              });
+              if (adopted.status !== 'adopted') throw writeError;
+              if (adopted.spaceChanged) this.host._restoreZoom();
               this.host._regSignature = '';
               this.host._maybeRebuildDevices();
               recovered = true;
@@ -652,8 +639,7 @@ export class LoadedSummaryPanelRuntime {
           }
           if (!recovered) {
             if (!this.current(generation)) return;
-            this.host._serverCfg = candidate;
-            this.host._cfgContentFingerprint = contentFingerprint(candidate);
+            this.host._adoption.stageConfigCandidate(candidate);
             this.host._cacheSnapshot();
           }
         });

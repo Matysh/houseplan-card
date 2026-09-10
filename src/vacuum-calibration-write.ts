@@ -3,10 +3,8 @@ import type { I18nKey } from './i18n';
 import type { DevItem, Marker, ServerConfig } from './types';
 import { fitFromMatrix, type Affine, type FitParams } from './vacuum';
 import { writeVacuumMatrix } from './vacuum-route-edit';
-import {
-  optimisticAttempt, rollbackOptimistic, type OptimisticAttempt,
-} from './serialized-write-queue';
-import { contentFingerprint } from './visual-continuity';
+import type { OptimisticAttempt } from './serialized-write-queue';
+import type { ConfigAdoption } from './config-adoption';
 
 export type CalibrationProposal = {
   markerId: string;
@@ -38,10 +36,11 @@ export type VacuumFit = {
 };
 
 export interface VacuumCalibrationWriteHost {
-  _serverCfg: ServerConfig | null;
+  readonly _serverCfg: ServerConfig | null;
   _devices: DevItem[];
-  _cfgContentFingerprint: string;
-  _cfgRev: number;
+  readonly _cfgRev: number;
+  readonly _adoption: ConfigAdoption;
+  _rollbackOptimistic: (attempt: OptimisticAttempt<ServerConfig>) => boolean;
   _saveConfigDebounced: { pending: () => boolean; cancel: () => void };
   _regSignature: string;
   _markerDialog: { busy: boolean } | null;
@@ -102,17 +101,15 @@ export async function saveVacuumMatrix(
     source, mapId, routeId, matrix,
   });
   candidate = runtime._prepareConfigCandidate(candidate);
-  const attempt = optimisticAttempt(
-    previous, candidate, host._cfgContentFingerprint, host._cfgRev, contentFingerprint,
-  );
-  host._serverCfg = candidate;
+  const attempt = host._adoption.beginOptimistic(previous, candidate);
+  host._adoption.stageLocalConfig(candidate);
   rebuild(host);
   if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.cancel();
   try {
     await runtime._saveConfigNow(attempt);
     return true;
   } catch (error) {
-    rollbackOptimistic(host, attempt, contentFingerprint);
+    host._rollbackOptimistic(attempt);
     rebuild(host);
     host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }));
     return false;

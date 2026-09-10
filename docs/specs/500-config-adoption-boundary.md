@@ -290,7 +290,7 @@ fingerprint восстанавливается с пересчётом, как �
 | AC4 | Post-write пути: для каждого из четырёх (`space/delete` ×2 входа, `optimize_undo`, `import/apply`) при параллельной смене `plan_url` другим клиентом `prepareImage` вызывается **до** adoption; после обоих `space/delete` `configRev`/`layoutRev` равны ревизиям адоптированных `config/get`/`layout/get`, а не ответа `delete` | `demo/smoke_post_write_adoption.mjs` на production bundle: четыре сценария с synthetic HA, моки `prepareImage` и порядок вызовов (по образцу `recoveryPreparesBackdropBeforeAdoption`), для `space/delete` — оба входа (onboarding и editor runtime) и проверка ревизий; unit модуля «ревизия не берётся из чужого ответа» (I2) | вернуть `host._cfgRev = response.config_rev` в любой копии `delete` — смок и unit красные; убрать гейт в любом из четырёх — смок красный |
 | AC5 | Тёплый старт: `snapshot()` → `restoreCached()` восстанавливает идентичность ровно (rev, оба fingerprint, layout, virtual lights); ключи `LS_CFG` неизменны; кэш без fingerprint восстанавливается с пересчётом | unit `test/config-adoption.test.mjs` (round-trip и фикстура старого кэша) | переименовать ключ или потерять `layout_rev` — красный |
 | AC6 | Optimistic rollback (#314) через модуль: откат только при совпадении rev **и** fingerprint попытки; откат не меняет rev; конфликтный reload побеждает | `test/serialized-write-queue.test.mjs` перенесён/адаптирован + мутант | мутант «откат без проверки rev» — красный |
-| AC7 | Бюджеты: `core-file-budget` для `houseplan-card.ts` опущен до нового размера (храповик вниз), `bundle:budget` не поднят; новых WS-запросов на путях adoption нет (те же `config/get`/`layout/get`, что сегодня) | `test/core-file-budget.test.mjs`, `npm run bundle:budget`; отсутствие новых `callWS` — ревью диффа | поднять потолок — красный (по правилу теста) |
+| AC7 | Бюджеты: `core-file-budget` для `houseplan-card.ts` опущен до нового размера (храповик вниз); общий бюджет initial View (`INITIAL_VIEW_GZIP_BUDGET`, 301 066 Б) **не поднят**; если факт выходит за полосу потолка, потолок перецентрируется по практике #485/#506 — с датированной записью причины и измеренного факта в `scripts/bundle-budget.mjs`, а рост называется в хендоффе; новых WS-запросов на путях adoption нет (те же `config/get`/`layout/get`, что сегодня) | `test/core-file-budget.test.mjs`, `npm run bundle:budget`, `test/bundle-assets.test.mjs` (полоса ±2000, запас ≥500 Б с обеих сторон); отсутствие новых `callWS` — ревью диффа | поднять `core-file-budget` или общий бюджет — красный (по правилу тестов); перецентровка без записи — находка ревью |
 | AC8 | Документация: `docs/ARCHITECTURE.md` описывает границу (владелец, три способа смены ревизии, единая последовательность); changelog не трогается (`User-Visible: no`) | ревью кода | — |
 
 ## 11. План автотестов
@@ -338,7 +338,8 @@ fingerprint восстанавливается с пересчётом, как �
 - Пользовательская документация: нет.
 - Golden/скриншоты: нет (визуал не меняется).
 - `docs/ARCHITECTURE.md`: абзац о границе (AC8).
-- Performance: бюджеты по AC7, без новых замеров.
+- Performance: бюджеты по AC7 (`core-file-budget` вниз; потолок initial View
+  перецентрирован с записью, общий бюджет не тронут), без новых замеров.
 - Security: нет.
 
 ## 15. Принято предположительно (техническое, менять свободно)
