@@ -7,7 +7,7 @@ import { validateGate, isMutantRun, provesMutants } from '../scripts/validate-ga
 const SHA = 'a'.repeat(40);
 
 /** Fake gh: a scripted list of run snapshots per call, a virtual clock. */
-const MUTANT_JOBS = [1, 2, 3].map((n) => ({ name: `Мутанты по диффу (${n}/3): затронутые свидетели краснеют`, conclusion: 'success' }));
+const MUTANT_JOBS = [1, 2, 3, 4, 5, 6].map((n) => ({ name: `Мутанты по диффу (${n}/6): затронутые свидетели краснеют`, conclusion: 'success' }));
 const OTHER_JOBS = [{ name: 'Фронтенд: типы, юниты, мутанты, синхрон бандла', conclusion: 'success' }];
 
 function fakeOps({ snapshots, onRef = [], jobsById = {} }) {
