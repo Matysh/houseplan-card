@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { makeLargeHouseFixture } from '../demo/fixtures/large-house.mjs';
+import { spaceModels } from '../test-build/space-geometry.js';
 import { readFileSync } from 'node:fs';
 
 import {
@@ -385,4 +387,21 @@ test('#509 AC3: площадь считает геометрию стен оди
   assert.deepEqual(calls, ['f1', 'f2']);
   assert.equal(withSpy, totalCleanFloorAreaM2(config, model), 'общая геометрия не меняет результат');
   assert.equal(withSpy, 4.32);
+});
+
+test('#509 AC3: один этаж большого дома считается без пересборки кладки на каждой комнате', () => {
+  // Синтетический счётчик выше доказывает «один вызов на пространство», но не
+  // то, что результат этого вызова ДОШЁЛ до innerContourForRoom: без
+  // shared-аргументов та объединяет кладку заново для каждой комнаты, и
+  // единственный наблюдаемый признак — время (S2: 176 мс на комнату).
+  // Разрыв семикратный, поэтому порог грубый и не флейкует.
+  const fixture = makeLargeHouseFixture();
+  const config = { ...fixture.config, spaces: fixture.config.spaces.slice(0, 1) };
+  const model = spaceModels(config);
+  assert.equal(model[0].rooms.length, 20, 'фикстура даёт этаж из 20 комнат');
+  const started = Date.now();
+  const area = totalCleanFloorAreaM2(config, model);
+  const elapsed = Date.now() - started;
+  assert.ok(area > 0, String(area));
+  assert.ok(elapsed < 2500, `этаж из 20 комнат посчитан за ${elapsed} мс — кладка собирается заново на каждой комнате (#509)`);
 });
