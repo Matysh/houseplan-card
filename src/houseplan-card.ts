@@ -12891,7 +12891,9 @@ export class HouseplanCard extends LitElement {
     }
     if (this._mode === 'devices' && this._deviceDrag?.moved) {
       const d = this._devices.find((x) => x.id === this._deviceDrag!.id);
-      return d ? (() => { const p = this._pos(d); return [p.x, p.y]; })() : null;
+      // #521: live, not `_pos` — during a gesture `_pos` answers from the last
+      // settled snapshot, i.e. where the marker stood before the drag began.
+      return d ? (() => { const p = this._livePos(d); return [p.x, p.y]; })() : null;
     }
     if (this._mode === 'decor') {
       if (this._decorDraft) return this._decorDraft.b;
@@ -12912,8 +12914,10 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._alignCandidates();
   }
 
-  private _renderAlignGuides(): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderAlignGuides();
+  // #521: soft, because the live gesture painter calls this too — an exception
+  // inside a `requestAnimationFrame` paint would take the gesture with it.
+  private _renderAlignGuides(): TemplateResult | typeof nothing {
+    return this._editorRuntime?._renderAlignGuides() ?? nothing;
   }
 
   /** Perpendicular dashed tick through the wall's center while a dragged opening

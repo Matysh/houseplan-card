@@ -7298,6 +7298,55 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'live-editor-devices-drops-align-guides',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'the device editor paints nothing else from a template, so dropping the guides '
+      + 'leaves the settled scene as their only owner — and a live gesture never reaches it: '
+      + 'the regression of #521, invisible to a smoke that fabricates the drag',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: "  return svg`<g class=\"hp-live-devices\" aria-hidden=\"true\" pointer-events=\"none\">\n"
+        + '    ${host._renderAlignGuides()}\n'
+        + '  </g>`;',
+      replace: '  return nothing;',
+    }],
+  },
+  {
+    id: 'live-editor-decor-drops-align-guides',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'drawing a shape in the backdrop editor is a live gesture too: without the guides '
+      + 'in its own layer the corner snap has nothing to show (#521 AC3)',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: '      ${host._renderDecorLayer(activeId)}\n      ${host._renderAlignGuides()}',
+      replace: '      ${host._renderDecorLayer(activeId)}',
+    }],
+  },
+  {
+    id: 'live-editor-plan-drops-align-guides',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'in the plan editor the guides used to reappear only on a click; without them in '
+      + 'the live layer the contour is drawn against a guide frozen at the last click (#521 AC4)',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: '    ${host._renderAlignGuides()}\n'
+        + "    ${host._tool === 'draw' ? nothing : host._renderPlanSnapOverlay()}",
+      replace: "    ${host._tool === 'draw' ? nothing : host._renderPlanSnapOverlay()}",
+    }],
+  },
+  {
+    id: 'align-point-reads-frozen-snapshot',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'during a live gesture `_pos` answers from the snapshot of the last settled '
+      + 'render, so the guide is measured from where the marker stood before the drag — eight '
+      + 'grid steps away on a measured run (#521 AC2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      return d ? (() => { const p = this._livePos(d); return [p.x, p.y]; })() : null;',
+      replace: '      return d ? (() => { const p = this._pos(d); return [p.x, p.y]; })() : null;',
+    }],
+  },
+  {
     id: 'live-editor-view-mode-routes-live',
     guard: 'node --test test/live-editor.test.mjs',
     because: 'View is the product for two of three personas: the live editor path must never '

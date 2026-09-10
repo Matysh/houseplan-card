@@ -61,6 +61,8 @@ interface LiveEditorHost {
   _renderBackdropFrame: (view: unknown) => unknown;
   _renderTextFrame: (view: unknown) => unknown;
   _renderLiveEditorMeasurements: (view: unknown) => unknown;
+  /** #521: guides for the gesture in flight; `nothing` while the runtime loads. */
+  _renderAlignGuides: () => unknown;
   _livePos: (device: { id: string }) => { x: number; y: number };
   _scenePoint: (point: number[]) => number[];
   _renderProjection: string;
@@ -264,6 +266,9 @@ const planTemplate = (host: LiveEditorHost): TemplateResult => {
     ${measure ? host._renderOpeningDimensionGuides(measure) : nothing}
     ${measure?.guide ? host._renderOpeningCenterTick(measure.guide) : nothing}
     ${host._renderActiveChainInk()}
+    ${''/* #521: the guides belong to whoever moves the point. The settled copy
+           of this layer is made transparent below, so exactly one is visible. */}
+    ${host._renderAlignGuides()}
     ${host._tool === 'draw' ? nothing : host._renderPlanSnapOverlay()}
     ${host._renderWallThickUi()}
     ${host._opDrag ? host._renderOpenings(display) : nothing}
@@ -277,11 +282,18 @@ const editorTemplate = (host: LiveEditorHost): TemplateResult | typeof nothing =
     const activeId = host._dtDrag?.id || host._decorMove?.id || null;
     return svg`<g class="hp-live-decor" aria-hidden="true" pointer-events="none">
       ${host._renderDecorLayer(activeId)}
+      ${host._renderAlignGuides()}
       ${host._renderBackdropFrame(view)}
       ${host._renderTextFrame(view)}
     </g>`;
   }
-  return nothing;
+  // #521: the device editor used to paint nothing here — `paintDevice` moved
+  // the marker element and the settled scene, which owns the guides, never ran
+  // again during the drag. The guides are the only thing this mode needs from
+  // a template: everything else about a dragged marker is an element style.
+  return svg`<g class="hp-live-devices" aria-hidden="true" pointer-events="none">
+    ${host._renderAlignGuides()}
+  </g>`;
 };
 
 const paintDevice = (host: LiveEditorHost, root: ParentNode): void => {
@@ -339,8 +351,12 @@ export function paintHouseplanEditor(value: object): void {
   paintDevice(host, root);
   const target = root.querySelector<SVGElement>('[data-hp-live-editor]');
   if (!target) return;
+  // #521: one visible guides layer per gesture, in every editor mode. The
+  // settled copy of `.hp-editor-only-layer` holds `_renderAlignGuides()`
+  // everywhere; plan mode already hid it because its markup layer lives here
+  // too, and devices/decor left it on screen with a stale point on it.
+  makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');
   if (host._mode === 'plan') {
-    makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');
     if (host._opDrag) hide(state, root, '.wallbodies');
     if (host._resize?.dragging) {
       dim(state, root, '.wallbodies');
