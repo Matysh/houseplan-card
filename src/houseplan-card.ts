@@ -2541,18 +2541,23 @@ export class HouseplanCard extends LitElement {
    * #520: `_serverCfg` и `_layout` здесь НЕ объявляются, хотя они реактивны.
    *
    * С #500 их тела принадлежат `_adoption`, а карточка видит их через
-   * собственные аксессоры прототипа. Lit на такое объявление ставит флаг
-   * `wrapped` (`createProperty`) и на ПЕРВОМ обновлении принудительно кладёт
-   * свойство в `changedProperties` со старым значением `undefined` — даже
-   * если никто ничего не присваивал. `willUpdate` читает это как замену
-   * конфига, поднимает `_cfgEpoch`, ключ памятки модели меняется, и большой
-   * дом собирает и рисует модель второй раз: +550 мс до первого устойчивого
-   * кадра (замерено против базы `a44fbd37`, 3 эпохи против 4).
+   * собственные аксессоры прототипа. Объявление сделало бы вторым владельцем
+   * реактивности сам Lit: он ставит такому свойству флаг `wrapped`
+   * (`createProperty`) и на ПЕРВОМ обновлении принудительно кладёт его в
+   * `changedProperties` со старым значением `undefined` — даже если никто
+   * ничего не присваивал. Сегодня этот лишний вход в ветку `willUpdate`
+   * безвреден ровно по совпадению: на первом обновлении и тело, и
+   * `_cfgEpochPreservedConfig` равны `null`, поэтому `preserveGeometry`
+   * истинно и эпоха не растёт. Совпадение — не контракт: любой ранний
+   * приход конфига (тёплый кеш) превращает его в лишний бамп эпохи.
    *
    * Реактивность даёт `_adoption` через `onBodyReplaced` → `requestUpdate`:
    * `requestUpdate` не требует объявления, `getPropertyOptions` возвращает
    * умолчание, и `changed.has('_serverCfg')` работает как прежде.
    * `noAccessor: true` не помогает — `wrapped` ставится до его проверки.
+   *
+   * Регрессию первого кадра из #520 чинило не это, а атомарность усыновления
+   * (`afterAdopt` в `_loadFromServer`); см. комментарий там.
    */
   static properties = {
     _tabDrag: { state: true },
@@ -4283,6 +4288,15 @@ export class HouseplanCard extends LitElement {
     this._loadTries++;
     const visibleSpace = this._space;
     const hadViewport = !!this._view;
+    // #520: whoever rebuilds the devices for this attempt does it exactly
+    // once. On the adopted path that is `afterAdopt`, inside the adoption
+    // task; the tail below only covers the attempts that never adopted.
+    let devicesRebuilt = false;
+    const rebuildDevices = (): void => {
+      devicesRebuilt = true;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+    };
     try {
       const [cfgResp, layResp] = await Promise.all([
         this._getAuthoritativeConfig(),
@@ -4294,15 +4308,27 @@ export class HouseplanCard extends LitElement {
           this._connectionWasLost = false;
           this._serverStorage = true;
         },
+        // #520: everything that touches the viewport, the readiness flag or
+        // the devices belongs in the same task as the adoption. Seeding
+        // devices writes the config back (new devices, hidden filter), and
+        // after the `await` Lit has already painted the adopted body — the
+        // writes then cost a second config epoch, a second model build and a
+        // second paint of a 60-room house, ~550 ms of the first stable frame.
+        afterAdopt: () => {
+          // DEV-B703-03: a warm re-mount already holds the exact viewport of
+          // the instance that was thrown away; the centred restore here IS
+          // the reported jerk. Only a genuine navigation (the hash/nav landed
+          // us on another space) still needs it.
+          if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
+          else if (!hadViewport || this._space !== visibleSpace) this._restoreZoom();
+          // `_syncNewDevices` and `_syncAreaRelocations` refuse to write
+          // before the authoritative snapshot is usable, and it is usable
+          // exactly here — the bodies are adopted.
+          this._loadOk = true;
+          rebuildDevices();
+        },
       });
       if (adopted.status !== 'adopted') return;
-      // DEV-B703-03: a warm re-mount already holds the exact viewport of the
-      // instance that was thrown away; the centred restore here IS the
-      // reported jerk. Only a genuine navigation (the hash/nav landed us on
-      // another space) still needs it.
-      if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
-      else if (!hadViewport || this._space !== visibleSpace) this._restoreZoom();
-      this._loadOk = true;
       // Trails and event subscriptions enrich an already complete snapshot.
       // A read-only HA session may reject these; that must never roll the
       // accepted config back into the mandatory load catch.
@@ -4337,8 +4363,7 @@ export class HouseplanCard extends LitElement {
       // failure. Leaving it false on an early return stranded the controller
       // before its own two-second barrier could ever start.
       this._continuityDataReady = true;
-      this._regSignature = '';
-      this._maybeRebuildDevices();
+      if (!devicesRebuilt) rebuildDevices();
       this.requestUpdate();
     }
   }
@@ -4458,11 +4483,11 @@ export class HouseplanCard extends LitElement {
       const resp = await this._getAuthoritativeConfig();
       const adopted = await this._adoptAuthoritative({
         cfgResp: resp, reason: 'config-reload', profile: 'reload',
+        // #520: same task as the adoption — see `_loadFromServer`.
+        afterAdopt: () => { this._regSignature = ''; this._maybeRebuildDevices(); },
       });
       if (adopted.status !== 'adopted') return;
       if (adopted.spaceChanged) this._restoreZoom();
-      this._regSignature = '';
-      this._maybeRebuildDevices();
       this.requestUpdate();
     } catch (e: any) {
       // a failed reload leaves the card on its last known config; tell the user

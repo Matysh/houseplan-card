@@ -7251,9 +7251,10 @@ const MUTANT_DEFINITIONS = [
     id: 'adoption-bodies-declared-reactive',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#520" test/config-adoption-ownership.test.mjs',
-    because: 'declaring the adoption bodies as Lit properties marks them `wrapped`, and the '
-      + 'forced first-update change raises the config epoch: the model of a 60-room house is '
-      + 'built and painted a second time, +550 ms to the first stable frame (#520)',
+    because: 'since #500 `_adoption` owns the reactivity of these bodies; declaring them again '
+      + 'makes Lit a second owner, marks them `wrapped` and force-writes a change on the first '
+      + 'update — today harmless only because both sides are null at that moment, and a '
+      + 'spurious config epoch as soon as a warm cache arrives earlier (#520 AC1)',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: "    _devices: { state: true },",
@@ -7270,6 +7271,30 @@ const MUTANT_DEFINITIONS = [
       file: 'src/config-adoption.ts',
       find: "    this.config = next;\n    this.onBodyReplaced?.('_serverCfg', previous);",
       replace: '    this.config = next;',
+    }],
+  },
+  {
+    id: 'adoption-tail-defers-caller-hook',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'the caller hook closes the adoption task; deferring it by even one microtask lets '
+      + 'Lit paint the adopted config first, and the device seeding that follows costs a second '
+      + 'config epoch, a second model build and a second paint of a 60-room house (#520 AC6)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '  input.afterAdopt?.();',
+      replace: '  void Promise.resolve().then(() => input.afterAdopt?.());',
+    }],
+  },
+  {
+    id: 'authoritative-load-seeds-devices-after-the-await',
+    guard: 'node --test --test-name-pattern="#520" test/config-adoption-ownership.test.mjs',
+    because: 'the cold-start regression of #520 itself: seeding the devices outside the adoption '
+      + 'task writes the config back after Lit already painted it, 19 update cycles, 4 model '
+      + 'builds and 4 config epochs against 18/3/3 (#520 AC6)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '          this._loadOk = true;\n          rebuildDevices();',
+      replace: '          this._loadOk = true;',
     }],
   },
   {

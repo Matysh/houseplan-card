@@ -109,12 +109,13 @@ test('AC2: feature-runtime host contracts expose one adoption method, not its ei
 });
 
 test('#520: the adoption bodies are not declared as Lit reactive properties', () => {
-  // Lit marks a declared property whose prototype already has an accessor as
-  // `wrapped` and force-writes it into `changedProperties` on the FIRST update
-  // with an `undefined` old value — even when nobody assigned anything. The
-  // card reads that as a config replacement, raises `_cfgEpoch`, invalidates
-  // the memoized model and rebuilds a 60-room house a second time: +550 ms to
-  // the first stable frame. The bodies stay reactive through
+  // One owner of the reactivity, not two. Lit marks a declared property whose
+  // prototype already has an accessor as `wrapped` and force-writes it into
+  // `changedProperties` on the FIRST update with an `undefined` old value —
+  // even when nobody assigned anything. That is harmless only by coincidence
+  // (body and `_cfgEpochPreservedConfig` are both null at that moment); an
+  // earlier config, such as the warm cache, turns it into a spurious epoch.
+  // The bodies stay reactive through
   // `_adoption` → `onBodyReplaced` → `requestUpdate`, which needs no declaration.
   const card = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
   const block = card.slice(card.indexOf('static properties = {'));
@@ -127,4 +128,43 @@ test('#520: the adoption bodies are not declared as Lit reactive properties', ()
   assert.match(card, /private get _serverCfg\(\)/);
   assert.match(card, /private get _layout\(\)/);
   assert.match(card, /\(field, previous\) => this\.requestUpdate\(field, previous\)/);
+});
+
+test('#520: the authoritative load keeps viewport, readiness and devices inside the adoption task', () => {
+  // The cold-start regression of #520: `await this._adoptAuthoritative(...)`
+  // hands control to Lit, which paints the adopted config; the device seeding
+  // that follows writes the config back (new devices, hidden filter), so the
+  // plan gets a second config epoch, a second model build and a second paint
+  // — 18/3/3 update cycles, model builds and epochs became 19/4/4, ~550 ms of
+  // the first stable frame. Everything that touches the adopted config must
+  // therefore run in `afterAdopt`, which the sequence calls in its own task.
+  const card = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
+  const load = card.slice(card.indexOf('private async _loadFromServer('));
+  const body = load.slice(0, load.indexOf('\n  /** Best-effort live sync'));
+  const hook = body.indexOf('afterAdopt: () => {');
+  const awaited = body.indexOf('await this._adoptAuthoritative(');
+  assert.ok(awaited >= 0 && hook > awaited, '_loadFromServer adopts through the hook');
+  const inHook = body.slice(hook, body.indexOf('\n      });', hook));
+  assert.match(inHook, /this\._loadOk = true;/, 'readiness is set before the devices are seeded');
+  assert.match(inHook, /rebuildDevices\(\);/);
+  assert.match(inHook, /this\._restoreZoom\(\);/, 'the viewport is restored before the first paint');
+  // Nothing may rebuild the devices after the await: the tail only covers the
+  // attempts that never adopted.
+  const afterHook = body.slice(body.indexOf('\n      });', hook));
+  assert.doesNotMatch(afterHook, /^\s*this\._maybeRebuildDevices\(\);/m,
+    'an unguarded rebuild after the await is the regression itself');
+  assert.match(afterHook, /if \(!devicesRebuilt\) rebuildDevices\(\);/);
+  // The config reload takes the same route.
+  const reload = card.slice(card.indexOf('private async _reloadConfigOnly('));
+  const reloadCall = reload.slice(reload.indexOf('await this._adoptAuthoritative('), reload.indexOf('if (adopted.status'));
+  assert.match(reloadCall, /afterAdopt: \(\) => \{ this\._regSignature = ''; this\._maybeRebuildDevices\(\); \}/);
+});
+
+test('#520: the adoption sequence closes with the caller hook, synchronously', () => {
+  const owner = readFileSync(join(repoRoot, OWNER), 'utf8');
+  const gated = owner.slice(owner.indexOf('export async function adoptAuthoritativeGated('));
+  const hook = gated.indexOf('input.afterAdopt?.();');
+  const ret = gated.indexOf("return { status: 'adopted'");
+  assert.ok(hook > 0 && ret > hook, 'afterAdopt runs last, before the promise resolves');
+  assert.doesNotMatch(gated.slice(hook, ret), /await|then\(/, 'no await may separate the hook from the adoption');
 });

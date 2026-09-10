@@ -188,6 +188,49 @@ test('gated adoption: a changed structure prepares the candidate backdrop, start
   assert.equal(adoption.config, next);
 });
 
+test('#520: afterAdopt closes the adoption task — the tail, then the hook, before any microtask', async () => {
+  const adoption = adoptedWith(cfg('Ground floor'), 3);
+  const host = hostStub(adoption);
+  const next = cfg('New', {});
+  next.spaces[0].bg = { href: '/local/new-plan.svg' };
+  // A microtask queued the moment adoption starts is the probe: anything that
+  // runs after it has crossed an `await`, and in the card that means Lit has
+  // already painted the adopted config — an extra epoch, model build and paint
+  // of the whole plan. `afterAdopt` must land before the probe.
+  const result = await adoptAuthoritativeGated(host, {
+    cfgResp: { config: next, rev: 4 }, reason: 'structural-response', profile: 'reload',
+    beforeAdopt: () => { void Promise.resolve().then(() => host.calls.push('microtask')); },
+    afterAdopt: () => host.calls.push('afterAdopt'),
+  });
+  assert.equal(result.status, 'adopted');
+  assert.deepEqual(
+    host.calls.slice(host.calls.indexOf('adoptInitialSpace')),
+    ['adoptInitialSpace', 'resumePendingNavMode', 'cacheSnapshot', 'afterAdopt', 'microtask'],
+  );
+});
+
+test('#520: a post-write adoption keeps its own tail but still closes with afterAdopt', async () => {
+  const adoption = adoptedWith(cfg('Ground floor'), 3);
+  const host = hostStub(adoption);
+  await adoptAuthoritativeGated(host, {
+    cfgResp: { config: cfg('New'), rev: 4 }, reason: 'space-delete', profile: 'post-write',
+    beforeAdopt: () => { void Promise.resolve().then(() => host.calls.push('microtask')); },
+    afterAdopt: () => host.calls.push('afterAdopt'),
+  });
+  assert.ok(!host.calls.includes('adoptInitialSpace'), 'the reload tail stays off the post-write profile');
+  assert.ok(host.calls.indexOf('afterAdopt') < host.calls.indexOf('microtask'));
+});
+
+test('#520: a refused asset gate adopts nothing, so afterAdopt never runs', async () => {
+  const adoption = adoptedWith(cfg('Ground floor'), 3);
+  const host = hostStub(adoption, { assetReady: false });
+  const result = await adoptAuthoritativeGated(host, {
+    cfgResp: { config: cfg('New'), rev: 4 }, reason: 'structural-response', profile: 'reload',
+    afterAdopt: () => assert.fail('afterAdopt must not run when nothing was adopted'),
+  });
+  assert.deepEqual(result, { status: 'asset-wait' });
+});
+
 test('gated adoption: a bounded asset failure adopts nothing, notes the failure and schedules a retry', async () => {
   const adoption = adoptedWith(cfg('Ground floor'), 3);
   const host = hostStub(adoption, { assetReady: false });

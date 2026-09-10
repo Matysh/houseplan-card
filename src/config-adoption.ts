@@ -401,6 +401,15 @@ export interface GatedAdoptionInput {
   profile: 'reload' | 'post-write';
   /** Runs once the gate passed, before adoption (connection flags of the initial load). */
   beforeAdopt?: () => void;
+  /**
+   * Runs synchronously at the end of the sequence, in the same task as the
+   * adoption. Work that must reach the renderer together with the adopted
+   * body belongs here and nowhere else: the caller resumes only after
+   * `await`, and by then Lit has already flushed an update on the adopted
+   * config, so the same work done there costs a second config epoch, a
+   * second model build and a second paint of the whole plan (#520).
+   */
+  afterAdopt?: () => void;
 }
 
 export type GatedAdoptionResult =
@@ -409,8 +418,12 @@ export type GatedAdoptionResult =
 
 /**
  * The one adoption sequence (#500 §6.3): compare → backdrop readiness gate →
- * continuity candidate → adopt → profile tail. On `asset-wait` nothing was
- * adopted; a load retry is already scheduled.
+ * continuity candidate → adopt → profile tail → `afterAdopt`. On `asset-wait`
+ * nothing was adopted; a load retry is already scheduled.
+ *
+ * Everything from the adoption to the end of this function runs in one task,
+ * uninterrupted by a render: that atomicity is what keeps a cold start at one
+ * model build for the adopted config (#520).
  */
 export async function adoptAuthoritativeGated(
   host: ConfigAdoptionHostPort,
@@ -442,5 +455,6 @@ export async function adoptAuthoritativeGated(
     host._resumePendingNavMode();
     host._cacheSnapshot();
   }
+  input.afterAdopt?.();
   return { status: 'adopted', spaceChanged: host._space !== visibleSpace };
 }
