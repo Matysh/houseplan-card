@@ -491,13 +491,13 @@ jobs:
   # диффе без входов (отбор пустой, минута на checkout): гейт ревью читает
   # её исход по job, и skipped был бы неотличим от «не запрашивали».
   changed_mutants:
-    name: "Мутанты по диффу (${{ matrix.shard }}/3): затронутые свидетели краснеют"
+    name: "Мутанты по диффу (${{ matrix.shard }}/6): затронутые свидетели краснеют"
     needs: changes
     if: needs.changes.outputs.mutants_requested == 'true'
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4, 5, 6]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -508,26 +508,13 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.14'
-      - name: Backend test dependencies
-        run: pip install -r tests_backend/requirements.txt
-      - name: Кэш браузеров Playwright
-        id: pw
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      - name: Установить Chromium
-        if: steps.pw.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
       # Журнал пойманных свидетелей (#481). Отменённый или упавший по таймауту
       # прогон не пропадает: журнал пишется после каждого пойманного мутанта и
       # сохраняется при любом исходе шага, а следующая попытка или пуш начинает
       # с того места, где предыдущий остановился. Мутант с тем же отпечатком входов
-      # (файлы патча и гарда, без строки версии) повторно не гоняется.
+      # (область якоря и файлы гарда, без строки версии) повторно не гоняется.
+      # Восстанавливается ДО плана (#518): план обязан видеть журнал, иначе
+      # пропуск станет известен только после установки окружения.
       - name: Журнал свидетелей (последний по шарду)
         uses: actions/cache/restore@v6
         with:
@@ -538,7 +525,13 @@ jobs:
           restore-keys: |
             mutation-ledger-${{ matrix.shard }}-${{ github.run_id }}-
             mutation-ledger-${{ matrix.shard }}-
-      - name: Затронутые мутанты ловятся
+      # #518: план шарда считается до установки окружения. npm ci, Python с
+      # зависимостями бэкенда и Chromium — около трёх минут на шард, и раньше
+      # их платили даже тогда, когда гонять было нечего: правка задела чужой
+      # конец хост-файла или журнал уже держит всех отобранных. Плану хватает
+      # git и node из образа.
+      - name: План шарда
+        id: plan
         env:
           EVENT_NAME: ${{ github.event_name }}
           BEFORE_SHA: ${{ github.event.before }}
@@ -560,11 +553,45 @@ jobs:
           fi
           if [ -z "$base" ]; then
             echo "не нашёл базу диапазона — мутанты по диффу пропущены, это увидит следующий пуш"
+            echo "count=0" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           echo "диапазон: $base..$HEAD_SHA"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          count=$(node scripts/mutation-gate.mjs --changed="$base..$HEAD_SHA" --shard="$SHARD/6" \
+            --ledger="artifacts/mutation-ledger/shard-$SHARD.json" --plan-only \
+            | tee /dev/stderr | sed -n 's/^plan=//p' | tail -1)
+          echo "к прогону в этом шарде: ${count:-0}"
+          echo "count=${count:-0}" >> "$GITHUB_OUTPUT"
+      - if: steps.plan.outputs.count != '0'
+        run: npm ci
+      - if: steps.plan.outputs.count != '0'
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Backend test dependencies
+        if: steps.plan.outputs.count != '0'
+        run: pip install -r tests_backend/requirements.txt
+      - name: Кэш браузеров Playwright
+        id: pw
+        if: steps.plan.outputs.count != '0'
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Установить Chromium
+        if: steps.plan.outputs.count != '0' && steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Затронутые мутанты ловятся
+        if: steps.plan.outputs.count != '0'
+        env:
+          BASE: ${{ steps.plan.outputs.base }}
+          HEAD_SHA: ${{ github.sha }}
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
           npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs
-          node scripts/mutation-gate.mjs --changed="$base..$HEAD_SHA" --shard="$SHARD/3" \
+          node scripts/mutation-gate.mjs --changed="$BASE..$HEAD_SHA" --shard="$SHARD/6" \
             --ledger="artifacts/mutation-ledger/shard-$SHARD.json"
       # Сохраняется всегда: и после красного шага (пойманные до отказа уже
       # записаны), и при отмене прогона — post-шаг cache/save исполняется,

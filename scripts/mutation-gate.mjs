@@ -3612,14 +3612,61 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'anchor-region-narrows-ambiguous-anchor',
+    guard: 'node --test --test-name-pattern="#518 AC4" test/mutation-gate.test.mjs',
+    because: '#518: якорь, найденный не ровно один раз, значит «реестр отстал от кода» — '
+      + 'судить такого свидетеля по окрестности первого попавшегося вхождения значит '
+      + 'молча сузить проверку там, где она и так под вопросом',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      // Реестр живёт в том же файле, что и код: якорь собирается из частей,
+      // иначе --check найдёт его дважды — в коде и здесь.
+      find: '  if (!find || text.split(find)' + '.length - 1 !== 1) return null;',
+      replace: '  if (!find) return null;',
+    }],
+  },
+  {
+    id: 'anchor-radius-collapses',
+    guard: 'node --test --test-name-pattern="#518 AC2" test/mutation-gate.test.mjs',
+    because: '#518: нулевой радиус оставляет в отпечатке одни строки патча — правка соседней '
+      + 'строки перестаёт перегонять свидетеля, и «поймано» начинает значить «не проверяли»',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: 'export const ANCHOR_RADIUS' + '_LINES = 40;',
+      replace: 'export const ANCHOR_RADIUS' + '_LINES = 0;',
+    }],
+  },
+  {
+    id: 'anchor-select-drops-guard-inputs',
+    guard: 'node --test --test-name-pattern="#518 AC1/AC2 \\(отбор\\)" test/mutation-gate.test.mjs',
+    because: '#518: сужение касается ТОЛЬКО стороны патча; у гарда якоря нет, и его правка '
+      + 'обязана отбирать свидетеля при любых известных областях (#475 AC2 иначе отменяется)',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: '    || inputsOf(m.guard).some((file) =>' + ' changed.has(file)));',
+      replace: '    || (!ranges && inputsOf(m.guard).some((file) => changed.has(file))));',
+    }],
+  },
+  {
+    id: 'anchor-touched-defaults-to-skip',
+    guard: 'node --test --test-name-pattern="#518 AC1/AC2 \\(отбор\\)" test/mutation-gate.test.mjs',
+    because: '#518: файл в диффе без прочитанных ханков — незнание, а не доказательство; '
+      + 'ответ по умолчанию обязан быть «гнать», иначе непрочитанный дифф тихо пропускает свидетелей',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: '  if (!hunks || !hunks.length)' + ' return true;',
+      replace: '  if (!hunks || !hunks.length) return false;',
+    }],
+  },
+  {
     id: 'ledger-version-sensitive',
     guard: 'node --test --test-name-pattern="#481 AC1" test/mutation-gate.test.mjs',
     because: 'a release bump touches houseplan-card.ts and houseplan-editor-runtime.ts; without '
       + 'version normalisation every witness patching them re-runs on every candidate — the #480 timeout (#481)',
     patches: [{
       file: 'scripts/mutation-gate.mjs',
-      find: "    hash.update(normalize(String(read(file))" + ".replace(/\\r\\n?/g, '\\n')));",
-      replace: "    hash.update(String(read(file)).replace(/\\r\\n?/g, '\\n'));",
+      find: '    hash.update(normalize(' + 'valueOf()));',
+      replace: '    hash.update(valueOf());',
     }],
   },
   {
@@ -8718,6 +8765,81 @@ export function guardInputs(guard, {
 }
 
 /**
+ * Радиус области якоря (#518): сколько строк вокруг патча считается «его
+ * кодом». Хост-файлы карты — тринадцать тысяч строк, и правка в одном их
+ * конце перегоняла свидетелей из другого: на #500 двенадцать изменённых строк
+ * `houseplan-editor-runtime.ts` тянули 53 мутанта из 75. Сорок строк — то
+ * расстояние, на котором правка ещё почти всегда трогает тот же код; дальше
+ * начинается чужой, и его перебирает ночной полный гейт (#513).
+ */
+export const ANCHOR_RADIUS_LINES = 40;
+
+/**
+ * Строки области якоря, 1-based включительно, или `null` — когда `find`
+ * встречается в файле не ровно один раз. `null` значит «судить по файлу
+ * целиком»: реестр, отставший от кода, обязан отвечать консервативно, а не
+ * сужать проверку (эту же однократность требуют `--check` и `applyPatches`).
+ */
+export function anchorSpan(source, find, radius = ANCHOR_RADIUS_LINES) {
+  const text = String(source ?? '');
+  if (!find || text.split(find).length - 1 !== 1) return null;
+  const start = text.indexOf(find);
+  const before = text.slice(0, start).split('\n').length; // 1-based строка начала
+  const inside = String(find).split('\n').length - 1;
+  const lines = text.split('\n').length;
+  return {
+    from: Math.max(1, before - radius),
+    to: Math.min(lines, before + inside + radius),
+  };
+}
+
+/** Текст области якоря (или весь файл, если якорь не однозначен). */
+export function anchorRegion(source, find, radius = ANCHOR_RADIUS_LINES) {
+  const text = String(source ?? '');
+  const span = anchorSpan(text, find, radius);
+  if (!span) return text;
+  return text.split('\n').slice(span.from - 1, span.to).join('\n');
+}
+
+/**
+ * Изменённые области по файлам из `git diff --unified=0` — стороны ГОЛОВЫ
+ * (`+`), потому что якоря ищутся в рабочем дереве. Чистое удаление даёт
+ * нулевую длину `+c,0`: считаем задетыми строки вокруг стыка, иначе вырезанный
+ * кусок кода не задел бы никого.
+ */
+export function parseDiffRanges(diffText) {
+  const ranges = new Map();
+  let file = null;
+  for (const line of String(diffText ?? '').split('\n')) {
+    const head = /^\+\+\+ (?:b\/)?(.+)$/.exec(line);
+    if (head) { file = head[1] === '/dev/null' ? null : head[1]; continue; }
+    const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/.exec(line);
+    if (!hunk || !file) continue;
+    const from = Number(hunk[1]);
+    const count = hunk[2] === undefined ? 1 : Number(hunk[2]);
+    const list = ranges.get(file) ?? [];
+    list.push(count === 0 ? [from, from + 1] : [from, from + count - 1]);
+    ranges.set(file, list);
+  }
+  return ranges;
+}
+
+const spansOverlap = (span, [from, to]) => from <= span.to && to >= span.from;
+
+/**
+ * Задел ли дифф область якоря патча (#518). `ranges` — карта из
+ * `parseDiffRanges`; её отсутствие означает прежний ответ по файлу целиком.
+ */
+export function patchTouched(patch, ranges, read) {
+  if (!ranges) return true;
+  const hunks = ranges.get(patch.file);
+  if (!hunks || !hunks.length) return true;
+  const span = anchorSpan(read(patch.file), patch.find);
+  if (!span) return true; // якорь не однозначен — судим по файлу
+  return hunks.some((hunk) => spansOverlap(span, hunk));
+}
+
+/**
  * Отпечаток свидетеля (#481): содержимое файлов патча и гарда плюс само
  * объявление мутанта. Строка версии продукта нормализуется, как в
  * `visualFingerprint` (#245): релизный бамп трогает `houseplan-card.ts` и
@@ -8735,14 +8857,20 @@ export function witnessFingerprint(mutant, {
   const hash = createHash('sha256');
   hash.update(JSON.stringify({ id: mutant.id, guard: mutant.guard, patches: mutant.patches }));
   hash.update('\0');
-  const files = new Set([
-    ...mutant.patches.map((patch) => patch.file),
-    ...guardInputs(mutant.guard, { exists, read }),
-  ]);
-  for (const file of [...files].sort()) {
-    hash.update(file);
+  const text = (file) => String(read(file)).replace(/\r\n?/g, '\n');
+  // Сторона патча — только область якоря (#518); сторона гарда — файл целиком:
+  // у гарда якоря нет, он судит поведение и меняется весь.
+  const entries = [
+    ...mutant.patches.map((patch, index) => [
+      `${patch.file}#якорь-${index}`,
+      () => anchorRegion(text(patch.file), patch.find),
+    ]),
+    ...guardInputs(mutant.guard, { exists, read }).map((file) => [file, () => text(file)]),
+  ].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  for (const [key, valueOf] of entries) {
+    hash.update(key);
     hash.update('\0');
-    hash.update(normalize(String(read(file)).replace(/\r\n?/g, '\n')));
+    hash.update(normalize(valueOf()));
     hash.update('\0');
   }
   return hash.digest('hex');
@@ -8805,7 +8933,12 @@ export function splitByLedger(mutants, ledger, fingerprintOf = (m) => witnessFin
 export function selectChangedMutants(mutants, changedFiles, exists, options = {}) {
   const changed = new Set(changedFiles);
   const inputsOf = options.guardInputs || ((guard) => guardInputs(guard, { exists, ...options }));
-  return mutants.filter((m) => m.patches.some((patch) => changed.has(patch.file))
+  // #518: когда известны области диффа, файл патча отбирает свидетеля лишь
+  // тем, что задел его якорь. Без областей — прежний ответ по файлу.
+  const ranges = options.ranges || null;
+  const read = options.read || ((file) => (existsSync(join(repoRoot, file)) ? readFileSync(join(repoRoot, file), 'utf8') : ''));
+  return mutants.filter((m) => m.patches.some((patch) => changed.has(patch.file)
+      && patchTouched(patch, ranges, read))
     || inputsOf(m.guard).some((file) => changed.has(file)));
 }
 
@@ -8933,14 +9066,26 @@ async function main(argv) {
       base = await baseRegistry(baseRef);
       if (!base) console.log(`реестр базы ${baseRef} не прочитан — отбор по определениям пропущен`);
     }
-    const picked = selectForDiff(selected, files, base);
+    // #518: области диффа сужают сторону патча до окрестности якоря. Не
+    // прочитались — отбор остаётся файловым, то есть прежним и более широким.
+    const hunks = spawnSync('git', ['-C', repoRoot, 'diff', '--unified=0', '--no-color', range],
+      { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+    const ranges = hunks.status === 0 && !hunks.error ? parseDiffRanges(hunks.stdout) : null;
+    if (!ranges) console.log('области диффа не прочитаны — отбор по файлам целиком');
+    const wide = selectForDiff(selected, files, base);
+    const picked = selectForDiff(selected, files, base, { ranges });
     if (picked.removed.length) console.log(`удалены из реестра: ${picked.removed.join(', ')}`);
     selected = picked.selected;
     console.log(`дифф-режим ${range}: файлов в диффе ${files.length}, `
       + `мутантов затронуто ${selected.length} из ${before} (по файлам ${picked.byFiles.length}, по определениям ${picked.byRegistry.length})`);
+    if (ranges && wide.selected.length !== selected.length) {
+      console.log(`области якорей (радиус ${ANCHOR_RADIUS_LINES} строк, #518): `
+        + `${wide.selected.length} → ${selected.length}`);
+    }
     if (!selected.length) {
-      console.log('дифф не задевает ни одного patch.file — гонять нечего; '
+      console.log('дифф не задевает ни одной области якоря — гонять нечего; '
         + 'полный реестр идёт ночным расписанием (#513)');
+      if (argv.includes('--plan-only')) console.log('plan=0');
       return 0;
     }
   }
@@ -9016,10 +9161,17 @@ async function main(argv) {
     plan = split.run;
     if (!plan.length) {
       console.log('все отобранные свидетели уже пойманы на этих же входах — гонять нечего');
+      if (argv.includes('--plan-only')) console.log('plan=0');
       return 0;
     }
   }
   const toRun = plan.map((entry) => entry.mutant);
+  // #518: `--plan-only` считает план и выходит — job мутантов спрашивает его
+  // ДО установки окружения (npm ci, python, Chromium ≈ 3 минуты на шард).
+  if (argv.includes('--plan-only')) {
+    console.log(`plan=${toRun.length}`);
+    return 0;
+  }
   if (!runCleanGuards(toRun)) return 2;
   let caught = 0;
   for (const entry of plan) {

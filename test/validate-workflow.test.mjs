@@ -393,13 +393,40 @@ test('мутанты по диффу гоняются по запросу с б�
   // 30-минутный timeout. Тот же набор теперь делится существующим
   // детерминированным shardMutants без пропусков и пересечений.
   assert.match(job, /fail-fast: false/);
-  assert.match(job, /shard: \[1, 2, 3\]/);
+  // #518: шесть шардов вместо трёх — job-минуты те же, стена раунда ревью вдвое короче.
+  assert.match(job, /shard: \[1, 2, 3, 4, 5, 6\]/);
   assert.match(job, /SHARD: \$\{\{ matrix\.shard \}\}/);
-  assert.match(job, /node scripts\/mutation-gate\.mjs --changed="\$base\.\.\$HEAD_SHA" --shard="\$SHARD\/3"/);
+  assert.match(job, /node scripts\/mutation-gate\.mjs --changed="\$base\.\.\$HEAD_SHA" --shard="\$SHARD\/6"/);
+  assert.match(job, /node scripts\/mutation-gate\.mjs --changed="\$BASE\.\.\$HEAD_SHA" --shard="\$SHARD\/6"/);
   // pytest-гарды исполнимы: Python и зависимости ставятся, как в mutation-gate.yml.
   assert.match(job, /pip install -r tests_backend\/requirements\.txt/);
   // Блокирующая job: свидетель, разучившийся краснеть, — отказ, а не предупреждение.
   assert.ok(!job.includes('continue-on-error'), 'job обязана красить прогон');
+});
+
+test('#518: пустой план шарда не ставит окружение, job остаётся исполненной', () => {
+  const workflow = read('validate.yml');
+  const start = workflow.indexOf('\n  changed_mutants:\n');
+  const job = workflow.slice(start, workflow.indexOf('\n  frontend:\n', start));
+  // План считается на голом образе: git и node уже есть, npm ci/python/Chromium — нет.
+  const plan = job.slice(job.indexOf('name: План шарда'), job.indexOf("- if: steps.plan.outputs.count != '0'"));
+  assert.ok(!/npm ci|playwright install|pip install/.test(plan), 'план обязан обходиться без установки окружения');
+  assert.match(plan, /--plan-only/);
+  assert.match(plan, /count=\$\{count:-0\}/, 'непрочитанный план считается пустым, а не срывает шаг');
+  // Дорогие шаги — под условием, но сама job исполняется: доказательство
+  // гейта ревью (#510 provesMutants) требует УСПЕШНОЙ job, а не пропущенной.
+  for (const step of ['run: npm ci', 'actions/setup-python@v7', 'pip install -r tests_backend/requirements.txt',
+    'name: Затронутые мутанты ловятся']) {
+    const at = job.indexOf(step);
+    assert.ok(at > 0, `нет шага ${step}`);
+    const from = job.lastIndexOf('\n      - ', at);
+    const to = job.indexOf('\n      - ', at + step.length);
+    const block = job.slice(from, to < 0 ? job.length : to);
+    assert.match(block, /if: steps\.plan\.outputs\.count != '0'/, `шаг ${step} обязан быть под условием плана`);
+  }
+  assert.ok(!/\n    if: [^\n]*steps\.plan/.test(job), 'условие плана — на шагах, не на job');
+  const save = job.slice(job.indexOf('name: Сохранить журнал свидетелей'));
+  assert.match(save, /if: always\(\)/);
 });
 
 test('ручной/ночной полный прогон не делит concurrency с push (#479)', () => {
@@ -411,11 +438,15 @@ test('журнал свидетелей changed_mutants: rerun продолжа�
   const workflow = read('validate.yml');
   const start = workflow.indexOf('\n  changed_mutants:\n');
   const job = workflow.slice(start, workflow.indexOf('\n  frontend:\n', start));
-  const restore = job.slice(job.indexOf('actions/cache/restore@v6'), job.indexOf('name: Затронутые мутанты ловятся'));
+  const restore = job.slice(job.indexOf('actions/cache/restore@v6'), job.indexOf('name: План шарда'));
   assert.match(restore, /key: mutation-ledger-\$\{\{ matrix\.shard \}\}-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
   assert.match(restore, /mutation-ledger-\$\{\{ matrix\.shard \}\}-\$\{\{ github\.run_id \}\}-/, 'rerun обязан восстановить предыдущую попытку того же run');
   assert.match(restore, /^\s+mutation-ledger-\$\{\{ matrix\.shard \}\}-\s*$/m, 'новый run обязан найти последний журнал шарда');
-  assert.match(job, /--changed="\$base\.\.\$HEAD_SHA" --shard="\$SHARD\/3" \\\n\s+--ledger="artifacts\/mutation-ledger\/shard-\$SHARD\.json"/);
+  assert.match(job, /--changed="\$base\.\.\$HEAD_SHA" --shard="\$SHARD\/6" \\\n\s+--ledger="artifacts\/mutation-ledger\/shard-\$SHARD\.json" --plan-only/);
+  assert.match(job, /--changed="\$BASE\.\.\$HEAD_SHA" --shard="\$SHARD\/6" \\\n\s+--ledger="artifacts\/mutation-ledger\/shard-\$SHARD\.json"/);
+  // #518: журнал обязан восстанавливаться ДО плана, иначе план не увидит
+  // уже пойманных и шард заплатит за окружение впустую.
+  assert.ok(job.indexOf('actions/cache/restore@v6') < job.indexOf('name: План шарда'), 'restore журнала идёт до плана');
   const save = job.slice(job.indexOf('name: Сохранить журнал свидетелей'));
   assert.match(save, /if: always\(\)/, 'красный или отменённый шард обязан сохранить уже пойманное');
   assert.match(save, /actions\/cache\/save@v6/);
