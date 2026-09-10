@@ -16,6 +16,7 @@ import {
   checkIssueStatuses,
   checkReviewDocLimit,
   REVIEW_DOC_LIMIT,
+  checkFrozenSpecs,
   checkSpecs,
   clampIssueBranchRange,
   classify,
@@ -163,27 +164,37 @@ test('the branch name must agree with the Issue trailers', () => {
   assert.deepEqual(checkBranchRule('dev', [c]), []);
 });
 
-test('a class A commit without a spec warns offline and fails with labels', () => {
+test('#517 AC3: ТЗ класса A судится по телу issue, архивный файл тоже годится', () => {
   const c = commit('Fix', 'Issue: #104', ['src/a.ts']);
+  // Архивный файл ТЗ старой задачи — по-прежнему ТЗ.
   assert.deepEqual(checkSpecs([c], ['104-opening-ha-reference.md']), []);
 
-  // Офлайн отличить «ТЗ в теле issue» от «ТЗ нет» нельзя — только предупреждение.
-  const offline = checkSpecs([c], ['111-something-else.md']);
-  assert.equal(offline.length, 1);
-  assert.equal(offline[0].level, 'warn');
-  assert.equal(offline[0].rule, 3);
+  // Тело с разделом «## ТЗ» либо с AC1 — это ТЗ, файла не требуется.
+  assert.deepEqual(checkSpecs([c], [], () => '## ТЗ\n\nконтракт'), []);
+  assert.deepEqual(checkSpecs([c], [], () => 'Проблема\n\n- AC1. Так и так'), []);
+  assert.deepEqual(checkSpecs([c], null, () => '### ТЗ (лёгкий трек)'), []);
 
-  // С метками: small и trivial оправдывают отсутствие файла, их отсутствие — нет.
-  assert.deepEqual(checkSpecs([c], [], () => ['small', 'S5-ready']), []);
-  assert.deepEqual(checkSpecs([c], [], () => ['trivial', 'S5-ready']), []);
-  const strict = checkSpecs([c], [], () => ['S5-ready']);
-  assert.equal(strict.length, 1);
-  assert.equal(strict[0].level, 'fail');
-  assert.equal(strict[0].rule, 3);
+  // Ни того, ни другого — предупреждение: настоящий рубеж — ревью ТЗ.
+  const bare = checkSpecs([c], ['111-something-else.md'], () => 'просто описание бага');
+  assert.equal(bare.length, 1);
+  assert.equal(bare[0].level, 'warn');
+  assert.equal(bare[0].rule, 3);
+  assert.match(bare[0].msg, /в теле issue нет/);
 
-  // Метки недоступны — падать обратно на предупреждение: за недоступность
-  // отвечает проверка 8, она уже краснеет fail closed.
-  assert.equal(checkSpecs([c], [], () => null)[0].level, 'warn');
+  // Офлайн тела нет — судить нечем, молчим (метки больше ничего не решают).
+  assert.deepEqual(checkSpecs([c], [], () => null), []);
+  assert.deepEqual(checkSpecs([c], null), []);
+});
+
+test('#517: docs/specs заморожен — новый файл ТЗ даёт предупреждение, правка старого нет', () => {
+  const added = { ...commit('Spec', 'Issue: #700', ['docs/specs/700-new.md']), addedFiles: ['docs/specs/700-new.md'] };
+  const edited = { ...commit('Fix typo', 'Issue: #162', ['docs/specs/162-old.md']), addedFiles: [] };
+  const readme = { ...commit('Archive note', 'Issue: #517', ['docs/specs/README.md']), addedFiles: ['docs/specs/README.md'] };
+  const unknown = commit('Spec', 'Issue: #700', ['docs/specs/700-new.md']); // addedFiles не доказаны
+  const out = checkFrozenSpecs([added, edited, readme, unknown]);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].level, 'warn');
+  assert.match(out[0].msg, /docs\/specs\/700-new\.md/);
 });
 
 test('a rebase re-run may exceed the cycle limit in documents (#227)', () => {

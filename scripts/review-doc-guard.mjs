@@ -23,6 +23,7 @@
  * который пуш добавит в целевую ветку. Пустой список — тоже отказ: публиковать
  * нечего, значит что-то пошло не так раньше.
  */
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { isMainModule } from './spawn-portable.mjs';
@@ -253,7 +254,60 @@ export function anchorLiveness(object, run) {
   return false;
 }
 
-export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, high } = {}) {
+/**
+ * Нормализация тела issue перед хешем (#517).
+ *
+ * GitHub отдаёт тело с `\r\n`, а веб-редактор дописывает пробелы в концах
+ * строк — без нормализации хеш менялся бы от правок, которых в тексте нет.
+ * Нормализуется ровно это: перевод строки, хвостовые пробелы каждой строки и
+ * финальные пустые строки. Содержательные пробелы внутри строк не трогаются:
+ * в ТЗ есть таблицы и блоки кода, где они значимы.
+ */
+export function normalizeIssueBody(text) {
+  return String(text ?? '')
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/[ \t]+$/, ''))
+    .join('\n')
+    .replace(/\n+$/, '');
+}
+
+/** sha256 нормализованного тела issue — материал ревью ТЗ (#517). */
+export function issueBodyDigest(text) {
+  return createHash('sha256').update(normalizeIssueBody(text), 'utf8').digest('hex');
+}
+
+/** Хеш тела из машинного блока документа ревью, либо `null` (#517). */
+export function anchorIssueBodyFrom(text) {
+  const body = String(text ?? '');
+  const at = body.indexOf(ANCHOR_MARKER);
+  if (at < 0) return null;
+  const match = body.slice(at).match(/Тело issue: `([0-9a-f]{64})`/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Менялось ли ТЗ после зелёного ревью ТЗ (#517 AC2).
+ *
+ * `docs` — документы этапа spec, `digest` — хеш тела на момент этого захода.
+ * Сравнивается запись конвейера в последнем ЗЕЛЁНОМ документе: проза цитирует
+ * прошлые раунды и источником быть не может. Нет зелёного документа или в нём
+ * нет строки `Тело issue:` (задачи до перехода) — сравнивать не с чем, и это
+ * не находка: молчание здесь честнее выдуманного «менялось».
+ */
+export function issueBodyChanged(docs, digest) {
+  const numbered = (docs || [])
+    .map((doc) => ({ ...doc, round: Number((String(doc?.name || '').match(/-r(\d+)\.md$/) || [])[1]) }))
+    .filter((doc) => Number.isFinite(doc.round))
+    .sort((a, b) => b.round - a.round);
+  const green = numbered.find((doc) => anchorVerdictFrom(doc.text)?.verdict === 'green');
+  if (!green) return null;
+  const recorded = anchorIssueBodyFrom(green.text);
+  if (!recorded || !digest) return null;
+  return recorded === digest ? null : { doc: green.name, recorded, current: digest };
+}
+
+export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, high, issueBody } = {}) {
   const short = (value) => (typeof value === 'string' ? value.slice(0, 12) : '');
   const lines = [
     ANCHOR_MARKER,
@@ -269,13 +323,20 @@ export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, hi
     lines.push(`  git log --all --format='%H %T' | grep ${short(tree)}`);
     lines.push('  ```');
   }
+  // Тело issue — материал ревью ТЗ на лёгком и (с #517) на полном треке. Файл
+  // ТЗ может отсутствовать вовсе; хеш тела есть всегда, и он единственное,
+  // чем доказуемо «вердикт вынесен на этом тексте»: GitHub хранит правки тела
+  // без diff и без истории, доступной чтением.
+  if (issueBody) {
+    lines.push(`- Тело issue: \`${issueBody}\``);
+  }
   for (const spec of specs) {
     lines.push(`- ТЗ \`${spec.path}\`, блоб \`${spec.blob}\``);
     lines.push('  ```');
     lines.push(`  git log --all --find-object=${spec.blob} -- ${spec.path}`);
     lines.push('  ```');
   }
-  if (!tree && !specs.length) {
+  if (!tree && !specs.length && !issueBody) {
     lines.push('- Якоря снять не удалось: ветки задачи нет, материал читался по `dev`.');
   }
   // Вердикт из structured_output модели, записанный конвейером (#499): по нему
@@ -477,7 +538,7 @@ export function anchorVerdictFrom(text) {
  * @param docs [{ name, text }] опубликованные документы этапа этой задачи
  * @param differs (tree) => boolean — есть ли отличие дерева от HEAD вне docs/reviews
  */
-export function reusableGreenVerdict(docs, differs) {
+export function reusableGreenVerdict(docs, differs, issueBodyDigest = null) {
   const numbered = (docs || [])
     .map((doc) => ({ ...doc, round: Number((String(doc?.name || '').match(/-r(\d+)\.md$/) || [])[1]) }))
     .filter((doc) => Number.isFinite(doc.round))
@@ -492,6 +553,13 @@ export function reusableGreenVerdict(docs, differs) {
   const tree = anchorTreeFrom(latest.text);
   if (!tree) return null;
   if (differs(tree)) return null;
+  // Дерево не знает о теле issue, а с #517 ТЗ живёт именно там: без этой
+  // проверки правка ТЗ между раундами проходила бы невидимой — вызов модели
+  // пропущен, находка «ТЗ менялось» некому напечатать (ревью ТЗ #517 r1).
+  // Документ без записи (весь бэклог до перехода) судится по дереву, как
+  // раньше: иначе переход обнулил бы reuse для всех накопленных задач.
+  const recordedBody = anchorIssueBodyFrom(latest.text);
+  if (recordedBody && issueBodyDigest && recordedBody !== issueBodyDigest) return null;
   return { doc: latest.name, round: latest.round, tree, verdict: 'green' };
 }
 
@@ -697,7 +765,7 @@ if (invokedDirectly) {
       const diff = spawnSync('git', ['diff', '--quiet', tree, head, '--', '.', ':!docs/reviews'], { encoding: 'utf8' });
       return diff.status !== 0;
     };
-    const found = reusableGreenVerdict(docs, differs);
+    const found = reusableGreenVerdict(docs, differs, value('issue-body'));
     if (!found) { process.stdout.write('reuse=false\n'); process.exit(0); }
     process.stdout.write(`reuse=true\ndoc=${found.doc}\nround=${found.round}\ntree=${found.tree}\n`);
     process.exit(0);
@@ -715,6 +783,7 @@ if (invokedDirectly) {
       sha: value('sha'),
       tree: value('tree'),
       branch: value('branch'),
+      issueBody: /^[0-9a-f]{64}$/.test(value('issue-body')) ? value('issue-body') : '',
       specs: parseSpecList(value('specs')),
       verdict: ['green', 'yellow', 'red'].includes(value('verdict')) ? value('verdict') : '',
       high: value('high'),
@@ -722,7 +791,7 @@ if (invokedDirectly) {
     const text = readFileSync(path, 'utf8');
     writeFileSync(path, withMaterialAnchors(text, anchors), 'utf8');
     console.log(`якоря материала дописаны: дерево ${anchors.tree.slice(0, 12) || '—'},`
-      + ` ТЗ ${anchors.specs.length}`);
+      + ` ТЗ ${anchors.specs.length}, тело issue ${anchors.issueBody.slice(0, 12) || '—'}`);
     process.exit(0);
   }
 

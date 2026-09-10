@@ -8193,6 +8193,50 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-anchor-drops-issue-body',
+    guard: 'node --test test/review-doc-guard.test.mjs',
+    because: 'ТЗ живёт в теле issue, которое GitHub правит без diff и без истории: без хеша тела '
+      + 'в якорях доказать «вердикт вынесен на этом тексте» нечем (#517 AC1)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '    lines.push(`- Тело issue: \\`${issueBody}\\``);',
+      replace: '    // mutant: anchor without the issue body',
+    }],
+  },
+  {
+    id: 'review-ignores-changed-spec-body',
+    guard: 'node --test test/review-doc-guard.test.mjs',
+    because: 'правка ТЗ после зелёного ревью ТЗ обязана приходить ревьюеру кода находкой; '
+      + 'сравнение, которое всегда молчит, возвращает ровно ту слепоту, ради которой заведён хеш (#517 AC2)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '  return recorded === digest ? null : { doc: green.name, recorded, current: digest };',
+      replace: '  return null; // mutant: the body never changed',
+    }],
+  },
+  {
+    id: 'reuse-ignores-changed-issue-body',
+    guard: 'node --test test/review-doc-guard.test.mjs',
+    because: 'повторное применение зелёного вердикта пропускает вызов модели целиком: если оно не '
+      + 'смотрит на хеш тела, правка ТЗ между раундами проходит невидимой (#517 AC6)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '  if (recordedBody && issueBodyDigest && recordedBody !== issueBodyDigest) return null;',
+      replace: '  // mutant: reuse ignores the issue body',
+    }],
+  },
+  {
+    id: 'process-gate-requires-spec-file',
+    guard: 'node --test test/process-gate.test.mjs',
+    because: 'после #517 файла ТЗ не создаёт ни одна новая задача: гейт, требующий файл, краснеет '
+      + 'на каждом классе A и учит игнорировать себя (#517 AC3)',
+    patches: [{
+      file: 'scripts/process-gate.mjs',
+      find: '      if (hasSpecText(body)) continue;',
+      replace: '      if (body !== null) continue; // mutant: only the file counts',
+    }],
+  },
+  {
     id: 'review-returns-task-on-cancelled-dispatch',
     guard: 'node --test test/validate-gate.test.mjs',
     because: 'a dispatch cancelled by its replacement in the same concurrency group proves nothing; '

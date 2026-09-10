@@ -89,3 +89,19 @@ test('пакет собирается и рендерится: статус, м�
   // Ничего не додумывается: без ветки — прямо сказано, что материал не запушен.
   assert.match(renderPacket(buildPacket({ issue: { number: 1, title: 't', state: 'OPEN', body: '' }, labels: [] })), /материал не запушен/);
 });
+
+test('#517 AC5: AC берутся из тела issue, файл ТЗ — только когда в теле их нет', () => {
+  const base = {
+    issue: { number: 700, title: 'x', state: 'OPEN', url: 'u', body: '## ТЗ\n\n- AC1. Из тела\n' },
+    labels: ['S6-in-progress'], comments: [],
+    specs: [{ name: '700-old.md', text: '| AC1 | Из файла |\n| AC2 | Тоже из файла |' }],
+  };
+  const fromBody = buildPacket(base);
+  assert.deepEqual(fromBody.acceptance.map((a) => a.text), ['Из тела'], 'тело важнее файла');
+
+  const legacy = buildPacket({ ...base, issue: { ...base.issue, body: 'просто описание, AC нет' } });
+  assert.deepEqual(legacy.acceptance.map((a) => a.id), ['AC1', 'AC2'], 'без AC в теле — архивный файл');
+
+  const neither = buildPacket({ ...base, issue: { ...base.issue, body: 'ничего' }, specs: [] });
+  assert.deepEqual(neither.acceptance, []);
+});

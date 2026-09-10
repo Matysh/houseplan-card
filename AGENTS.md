@@ -305,10 +305,14 @@ does not meet.
 
 ## Specs
 
-`docs/specs/<NN>-<slug>.md`, linked to its issue in both directions. Required
-sections are in `PROCESS.md` §7.1, plus two product ones: which persona meets this,
-on which surface, at what moment; and what the person sees before and after, in one
-sentence without implementation terms.
+The spec lives in the **issue body**, under a `## ТЗ` heading (owner decision
+2026-09-10, #517); `docs/specs/` is an archive of specs written before that date
+and takes no new files. Required sections are in `PROCESS.md` §7.1, plus two
+product ones: which persona meets this, on which surface, at what moment; and what
+the person sees before and after, in one sentence without implementation terms.
+Proof that a verdict was passed on a given text is the pipeline's job: it writes
+the `sha256` of the normalised body into the review document's anchor block, and
+an edit made after a green spec review reaches the code reviewer as a finding.
 
 **Ambiguity is asked, not guessed — but only product ambiguity.** A guess written as
 fact is the worst kind of defect: it passes review because it looks like a decision.
