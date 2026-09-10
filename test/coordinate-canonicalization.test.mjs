@@ -199,7 +199,7 @@ test('frontend write paths adopt canonical candidates before persistence (#224)'
   assert.match(source, /this\._adoption\.stageConfigCandidate\(candidate\);\s*(?:try \{\s*)?await this\._sendConfigCandidate\(candidate\);/);
   assert.match(
     readFileSync(new URL('../src/config-adoption.ts', import.meta.url), 'utf8'),
-    /stageConfigCandidate\(candidate: ServerConfig\): void \{\s*const fingerprint = contentFingerprint\(candidate\);\s*if \(fingerprint !== contentFingerprint\(this\.config\)\) this\.config = candidate;/,
+    /stageConfigCandidate\(candidate: ServerConfig\): void \{\s*const fingerprint = contentFingerprint\(candidate\);\s*if \(fingerprint !== contentFingerprint\(this\.config\)\) this\.setConfig\(candidate\);/,
   );
   assert.match(
     source,

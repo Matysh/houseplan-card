@@ -307,6 +307,41 @@ test('layout: merged re-read keeps the reference on equal content; own replies m
   assert.equal(adoption.layoutRev, 8);
 });
 
+// --- reactive contract: a replaced body is a host event ------------------------
+
+test('a replaced body reference notifies the host with the field name and previous value; echoes and identity-only changes do not', () => {
+  const events = [];
+  const adoption = createConfigAdoption((field, previous) => events.push([field, previous]));
+  const first = cfg('First');
+  adoptStructuralResponses(hostStub(adoption), { config: first, rev: 1 }, { layout: { d: {} }, rev: 0 });
+  assert.deepEqual(events.map(([f]) => f), ['_serverCfg', '_layout'], 'first adoption replaces both bodies');
+  assert.equal(events[0][1], null);
+  events.length = 0;
+  adoptStructuralResponses(hostStub(adoption), { config: cloneOf(first), rev: 2 }, { layout: { d: {} }, rev: 3 });
+  assert.deepEqual(events, [], 'an echo moves revisions only — no reactive event, no epoch bump (#500)');
+  adoption.acceptConfigWrite(first, { rev: 3 });
+  adoption.refreshConfigFingerprint();
+  adoption.noteLayoutRevision(9);
+  assert.deepEqual(events, [], 'identity-only changes are not body events');
+  const second = cfg('Second');
+  adoption.stageLocalConfig(second);
+  assert.deepEqual(events, [['_serverCfg', first]]);
+  adoption.stageLocalConfig(second);
+  assert.equal(events.length, 1, 'same reference again is not a replacement');
+  const attempt = adoption.beginOptimistic(second, cfg('Draft'));
+  adoption.stageLocalConfig(attempt.attempted);
+  adoption.rollbackOptimistic(attempt);
+  assert.deepEqual(events.slice(1).map(([f]) => f), ['_serverCfg', '_serverCfg'], 'staging and rollback both replace the body');
+  events.length = 0;
+  adoption.acceptPairWrite(cfg('Pair'), { d: {} }, { config_rev: 5, layout_rev: 6 });
+  assert.deepEqual(events.map(([f]) => f), ['_serverCfg', '_layout']);
+  events.length = 0;
+  adoption.adoptMergedLayout(cloneOf(adoption.layout), { rev: 7 });
+  assert.deepEqual(events, [], 'equal merged layout keeps the reference');
+  adoption.adoptMergedLayout({ e: {} }, { rev: 8 });
+  assert.deepEqual(events.map(([f]) => f), ['_layout']);
+});
+
 // --- AC5: warm cache round-trip ----------------------------------------------
 
 test('AC5: snapshot → restoreCached reproduces the identity exactly with the persisted LS_CFG keys', () => {

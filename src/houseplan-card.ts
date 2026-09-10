@@ -916,7 +916,11 @@ export class HouseplanCard extends LitElement {
    * test/config-adoption-ownership.test.mjs), revisions and fingerprints
    * change only through `_adoption`.
    */
-  public readonly _adoption: ConfigAdoption = createConfigAdoption();
+  public readonly _adoption: ConfigAdoption = createConfigAdoption(
+    // A replaced body is the reactive event `willUpdate` keys the geometry
+    // epoch on (`changed.has('_serverCfg')`), exactly as the Lit accessor did.
+    (field, previous) => this.requestUpdate(field, previous),
+  );
   private get _layout(): DeviceLayout { return this._adoption.layout; }
   private set _layout(layout: DeviceLayout) { this._adoption.stageLocalLayout(layout); }
   // Setters below exist for the browser harness only (smokes seed revisions).

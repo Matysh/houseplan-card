@@ -54,11 +54,22 @@ const configOf = (cfgResp: AuthoritativeConfigResponse | undefined | null): Serv
 const finiteRevision = (value: unknown, fallback: number): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 
+/** Host field a body maps to — the name Lit sees in `changedProperties`. */
+export type BodyField = '_serverCfg' | '_layout';
+
 /**
  * Identity owner. Bodies are stored by reference: the editor mutates the config
  * in place and compares `host._serverCfg === cfg`, so cloning here would break
  * both (#500 I4). Every other module sees the `ConfigAdoption` type below, where
  * the six fields are `readonly`; only the methods of this class write them.
+ *
+ * Replacing a body reference is a reactive event for the host: before #500 it
+ * went through Lit's `_serverCfg`/`_layout` accessors and `willUpdate` keyed
+ * the geometry epoch and render-lifecycle invalidation on
+ * `changed.has('_serverCfg')`. `onBodyReplaced` keeps that contract — the card
+ * wires it to `requestUpdate(name, previous)`; identity-only changes (revision,
+ * fingerprint) and echoes do not fire it, exactly as an unchanged reference
+ * never did.
  */
 export class MutableConfigAdoption {
   config: ServerConfig | null = null;
@@ -68,6 +79,21 @@ export class MutableConfigAdoption {
   layout: DeviceLayout = {};
   layoutRev = 0;
   layoutFingerprint = '';
+
+  constructor(private readonly onBodyReplaced?: (field: BodyField, previous: unknown) => void) {}
+
+  private setConfig(next: ServerConfig | null): void {
+    const previous = this.config;
+    if (next === previous) return;
+    this.config = next;
+    this.onBodyReplaced?.('_serverCfg', previous);
+  }
+  private setLayout(next: DeviceLayout): void {
+    const previous = this.layout;
+    if (next === previous) return;
+    this.layout = next;
+    this.onBodyReplaced?.('_layout', previous);
+  }
 
   /** Accepted fingerprint, or the live body's when nothing was accepted yet. */
   currentConfigFingerprint(): string {
@@ -97,7 +123,7 @@ export class MutableConfigAdoption {
     const configChanged = nextFingerprint !== this.currentConfigFingerprint();
     if (configChanged) {
       onConfigReplace();
-      this.config = next;
+      this.setConfig(next);
       this.configFingerprint = nextFingerprint;
     }
     this.configRev = cfgResp?.rev ?? this.configRev;
@@ -108,7 +134,7 @@ export class MutableConfigAdoption {
       layoutChanged = nextLayoutFingerprint !== this.currentLayoutFingerprint();
       if (layoutChanged) {
         onLayoutReplace();
-        this.layout = nextLayout;
+        this.setLayout(nextLayout);
         this.layoutFingerprint = nextLayoutFingerprint;
       }
       this.layoutRev = layResp?.rev ?? this.layoutRev;
@@ -126,7 +152,7 @@ export class MutableConfigAdoption {
     const changed = fingerprint !== contentFingerprint(this.layout);
     if (changed) {
       onReplace?.();
-      this.layout = merged;
+      this.setLayout(merged);
     }
     this.layoutFingerprint = fingerprint;
     this.layoutRev = layResp?.rev ?? this.layoutRev;
@@ -142,7 +168,7 @@ export class MutableConfigAdoption {
    */
   stageConfigCandidate(candidate: ServerConfig): void {
     const fingerprint = contentFingerprint(candidate);
-    if (fingerprint !== contentFingerprint(this.config)) this.config = candidate;
+    if (fingerprint !== contentFingerprint(this.config)) this.setConfig(candidate);
     this.configFingerprint = fingerprint;
   }
 
@@ -162,9 +188,9 @@ export class MutableConfigAdoption {
     layout: DeviceLayout,
     response: { config_rev?: unknown; layout_rev?: unknown } | null | undefined,
   ): void {
-    this.config = config;
+    this.setConfig(config);
     this.configFingerprint = contentFingerprint(config);
-    this.layout = layout;
+    this.setLayout(layout);
     this.layoutFingerprint = contentFingerprint(layout);
     this.configRev = finiteRevision(response?.config_rev, this.configRev + 1);
     this.layoutRev = finiteRevision(response?.layout_rev, this.layoutRev + 1);
@@ -178,8 +204,8 @@ export class MutableConfigAdoption {
   // --- local staging (bodies only; identity untouched) --------------------
 
   /** Editor replaced the working config before a write; revision/fingerprint stay. */
-  stageLocalConfig(config: ServerConfig | null): void { this.config = config; }
-  stageLocalLayout(layout: DeviceLayout): void { this.layout = layout; }
+  stageLocalConfig(config: ServerConfig | null): void { this.setConfig(config); }
+  stageLocalLayout(layout: DeviceLayout): void { this.setLayout(layout); }
 
   /**
    * Browser-harness seam: smokes and capture scripts drive revisions and
@@ -219,7 +245,7 @@ export class MutableConfigAdoption {
     const current = this.config;
     if (!current || this.configRev !== attempt.revision
         || contentFingerprint(current) !== attempt.attemptedFingerprint) return false;
-    this.config = attempt.previous;
+    this.setConfig(attempt.previous);
     this.configFingerprint = attempt.previousFingerprint;
     return true;
   }
@@ -230,10 +256,10 @@ export class MutableConfigAdoption {
   restoreCached(cached: Partial<CachedStructuralSnapshot> | null | undefined): boolean {
     const config = cached?.config;
     if (!config || !Array.isArray(config.spaces)) return false;
-    this.config = config;
+    this.setConfig(config);
     this.configRev = cached?.rev || 0;
     this.configFingerprint = cached?.config_fingerprint || contentFingerprint(config);
-    this.layout = cached?.layout || {};
+    this.setLayout(cached?.layout || {});
     this.layoutRev = cached?.layout_rev || 0;
     this.layoutFingerprint = cached?.layout_fingerprint || contentFingerprint(this.layout);
     return true;
@@ -258,7 +284,9 @@ export class MutableConfigAdoption {
 
 /** What every other module holds: the owner with its identity fields read-only. */
 export type ConfigAdoption = Readonly<MutableConfigAdoption>;
-export const createConfigAdoption = (): ConfigAdoption => new MutableConfigAdoption();
+export const createConfigAdoption = (
+  onBodyReplaced?: (field: BodyField, previous: unknown) => void,
+): ConfigAdoption => new MutableConfigAdoption(onBodyReplaced);
 
 // ---------------------------------------------------------------------------
 // Host side effects and the single gated sequence.
