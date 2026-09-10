@@ -8556,6 +8556,20 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'post-write-tail-runs-on-refused-gate',
+    guard: 'node demo/smoke_post_write_adoption.mjs',
+    because: '#500 r1 M1: a post-write caller whose adoption was refused must skip its tail — '
+      + 'clearing history, bumping the geometry epoch and toasting «отменено» on a body the card '
+      + 'never adopted leaves the frontend describing state the server does not have; the scheduled '
+      + 'reload owns the tail. Guarded by the smoke, so the review gate runs it (r2 M1: the witness '
+      + 'was red for a round and nobody saw it — CI never ran this smoke)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "      if (adopted.status !== 'adopted') return; // asset wait: the scheduled reload owns the tail",
+      replace: '      void adopted; // mutant: the tail runs on a body that was never adopted',
+    }],
+  },
+  {
     id: 'post-write-skips-asset-gate',
     guard: 'node --test test/config-adoption.test.mjs',
     because: 'post-write adoptions (space/delete, optimize_undo, import/apply) pass the same '

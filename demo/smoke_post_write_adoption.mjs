@@ -80,6 +80,13 @@ const out = await page.evaluate(async () => {
   };
 
   const reset = async (scenario) => {
+    // Ревью r2 M1: отложенная запись предыдущего сценария иначе доживает до
+    // следующего и флашится безусловным `if (pending) flush()` внутри
+    // `_deleteSpace`; мок отвечает `{}` без `rev`, запасной путь «rev + 1»
+    // двигает ревизию по ЧУЖОМУ телу, и отказная ветка выглядит принявшей.
+    // Сценарии обязаны быть независимы — так же чистится smoke_danger_confirmation.
+    card._saveConfigDebounced.cancel();
+    card._persistLayout.cancel();
     server = { config: freshConfig(), layout: {}, cfgRev: 10, layRev: 20 };
     concurrentHref = `media-source://image/${scenario}-500`;
     adoption.restoreCached({ config: structuredClone(server.config), rev: 10, layout: {}, layout_rev: 20 });
