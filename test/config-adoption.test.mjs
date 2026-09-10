@@ -380,6 +380,19 @@ test('AC6: a conflict reload or a newer mutation wins over a rejected candidate 
   assert.equal(same.config.spaces[0].title, 'Newer local edit');
 });
 
+test('AC6: an attempt from an older revision cannot roll back the same content accepted at a newer one (#442 AC2)', () => {
+  const adoption = adoptedWith(cfg('Server before'), 3);
+  const attempted = cfg('Draft');
+  const attempt = adoption.beginOptimistic(adoption.config, attempted);
+  adoption.stageLocalConfig(attempted);
+  // the queued write for the very same body was accepted meanwhile
+  adoption.acceptConfigWrite(attempted, { rev: 4 });
+  assert.equal(contentFingerprint(adoption.config), attempt.attemptedFingerprint, 'content is identical — only the revision differs');
+  assert.equal(adoption.rollbackOptimistic(attempt), false, 'the revision guard alone must refuse');
+  assert.equal(adoption.config, attempted);
+  assert.equal(adoption.configRev, 4);
+});
+
 test('AC6: newer in-place content on the attempted root also wins (#442)', () => {
   const adoption = adoptedWith(cfg('Server before'), 3);
   const attempted = cfg('Draft');
