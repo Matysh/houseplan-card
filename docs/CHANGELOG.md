@@ -2,13 +2,13 @@
 
 ## Unreleased
 
+## v1.74.0-beta.1 — 2026-09-10
+
 - Alignment guides follow the object again while you drag it: the marker in the
   device editor, the shape and the cursor in the backdrop and plan editors. The
   dashed line and its anchor dot appear the moment the object lines up with
   another one, instead of after the gesture is over
   ([#521](https://github.com/Matysh/houseplan-card/issues/521)).
-
-## v1.74.0-beta.1 — 2026-09-10
 
 - The summary panel no longer freezes the first frame on a large plan, and it
   no longer says «Source unavailable» while its values are still being
