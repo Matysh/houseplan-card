@@ -2537,6 +2537,23 @@ export class HouseplanCard extends LitElement {
   private _holdTimer?: number;
   private _holdFired = false;
 
+  /**
+   * #520: `_serverCfg` и `_layout` здесь НЕ объявляются, хотя они реактивны.
+   *
+   * С #500 их тела принадлежат `_adoption`, а карточка видит их через
+   * собственные аксессоры прототипа. Lit на такое объявление ставит флаг
+   * `wrapped` (`createProperty`) и на ПЕРВОМ обновлении принудительно кладёт
+   * свойство в `changedProperties` со старым значением `undefined` — даже
+   * если никто ничего не присваивал. `willUpdate` читает это как замену
+   * конфига, поднимает `_cfgEpoch`, ключ памятки модели меняется, и большой
+   * дом собирает и рисует модель второй раз: +550 мс до первого устойчивого
+   * кадра (замерено против базы `a44fbd37`, 3 эпохи против 4).
+   *
+   * Реактивность даёт `_adoption` через `onBodyReplaced` → `requestUpdate`:
+   * `requestUpdate` не требует объявления, `getPropertyOptions` возвращает
+   * умолчание, и `changed.has('_serverCfg')` работает как прежде.
+   * `noAccessor: true` не помогает — `wrapped` ставится до его проверки.
+   */
   static properties = {
     _tabDrag: { state: true },
     _hdrH: { state: true },
@@ -2553,11 +2570,9 @@ export class HouseplanCard extends LitElement {
     narrow: { attribute: false },
     _config: { state: true },
     _space: { state: true },
-    _layout: { state: true },
     _devices: { state: true },
     _selId: { state: true },
     _toast: { state: true },
-    _serverCfg: { state: true },
     _mode: { state: true },
     _tool: { state: true },
     _wallDialog: { state: true },

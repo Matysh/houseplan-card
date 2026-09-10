@@ -7248,6 +7248,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'adoption-bodies-declared-reactive',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#520" test/config-adoption-ownership.test.mjs',
+    because: 'declaring the adoption bodies as Lit properties marks them `wrapped`, and the '
+      + 'forced first-update change raises the config epoch: the model of a 60-room house is '
+      + 'built and painted a second time, +550 ms to the first stable frame (#520)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    _devices: { state: true },",
+      replace: "    _serverCfg: { state: true },\n    _devices: { state: true },",
+    }],
+  },
+  {
     id: 'live-editor-view-mode-routes-live',
     guard: 'node --test test/live-editor.test.mjs',
     because: 'View is the product for two of three personas: the live editor path must never '

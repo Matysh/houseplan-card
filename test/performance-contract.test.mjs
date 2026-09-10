@@ -105,9 +105,11 @@ test('large-house contract accepts only an explicit current or stable resize own
     LARGE_HOUSE_CARD_CONTRACT.fields.map((name) => [name, null]),
   );
   Object.assign(fields, {
+    _adoptAuthoritative: () => undefined,
     _booting: false,
     _bootSoft: false,
     _cameraTransition: {},
+    _cfgEpoch: 0,
     _cleanFloorCache: new Map(),
     _continuity: {},
     _decorList: [],

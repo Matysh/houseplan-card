@@ -107,3 +107,24 @@ test('AC2: feature-runtime host contracts expose one adoption method, not its ei
   const rollbackCallers = sources.filter(({ text }) => /(?<![_\w])rollbackOptimistic\(/.test(text)).map(({ file }) => file).sort();
   assert.deepEqual(rollbackCallers, ['src/houseplan-card.ts'], 'only the host wrapper reaches the owner\'s rollback');
 });
+
+test('#520: the adoption bodies are not declared as Lit reactive properties', () => {
+  // Lit marks a declared property whose prototype already has an accessor as
+  // `wrapped` and force-writes it into `changedProperties` on the FIRST update
+  // with an `undefined` old value — even when nobody assigned anything. The
+  // card reads that as a config replacement, raises `_cfgEpoch`, invalidates
+  // the memoized model and rebuilds a 60-room house a second time: +550 ms to
+  // the first stable frame. The bodies stay reactive through
+  // `_adoption` → `onBodyReplaced` → `requestUpdate`, which needs no declaration.
+  const card = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
+  const block = card.slice(card.indexOf('static properties = {'));
+  const declarations = block.slice(0, block.indexOf('\n  };'));
+  for (const body of ['_serverCfg', '_layout']) {
+    assert.ok(!new RegExp(`^\\s*${body}:`, 'm').test(declarations),
+      `${body} must not be declared in static properties (#520)`);
+  }
+  // The delegates and the notification that replace the declaration are here.
+  assert.match(card, /private get _serverCfg\(\)/);
+  assert.match(card, /private get _layout\(\)/);
+  assert.match(card, /\(field, previous\) => this\.requestUpdate\(field, previous\)/);
+});

@@ -96,7 +96,7 @@
     "hardMaxGrowthBytes": 67108864
   },
   "cacheEntries": {
-    "cleanFloor": 180,
+    "cleanFloor": 100,
     "glowClip": 200,
     "wallUnion": 1,
     "openingTunnel": 1,
