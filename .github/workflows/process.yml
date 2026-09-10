@@ -405,6 +405,8 @@ jobs:
         if: steps.rebase.outputs.conflict != 'true'
         env:
           NUM: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
         run: |
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           # Якоря материала, устойчивые к ребейзу (#413, #414). SHA коммита
@@ -422,6 +424,24 @@ jobs:
           specs=$(git ls-files -s -- "docs/specs/${NUM}-*.md" \
             | awk '{print $2" "$4}' | tr '\n' ';')
           echo "specs=$specs" >> "$GITHUB_OUTPUT"
+          # Тело issue — материал ревью ТЗ (#517): с переходом на ТЗ в теле это
+          # единственный якорь, доказывающий «вердикт вынесен на этом тексте».
+          # Читается здесь, а не из github.event.issue.body: между событием
+          # метки и вызовом модели проходят минуты (ребейз, гейт #510, ожидание
+          # Validate), и снимок события описывал бы не тот текст.
+          body=$(mktemp)
+          if gh issue view "$NUM" --repo "$REPO" --json body --jq .body > "$body"; then
+            digest=$(node -e '
+              import("./scripts/review-doc-guard.mjs").then(async (m) => {
+                const { readFileSync } = await import("node:fs");
+                process.stdout.write(m.issueBodyDigest(readFileSync(process.argv[1], "utf8")));
+              });
+            ' "$body")
+            echo "issue_body=$digest" >> "$GITHUB_OUTPUT"
+            echo "тело issue: ${digest:0:12}"
+          else
+            echo "::warning::тело issue $NUM не прочитано — якорь ТЗ в документ не попадёт"
+          fi
           echo "материал ревью: $(git rev-parse --short HEAD), дерево $(git rev-parse --short 'HEAD^{tree}')"
 
       # Повторное применение зелёного вердикта без вызова модели (#499). Сценарий
@@ -438,8 +458,13 @@ jobs:
         if: steps.rebase.outputs.conflict != 'true' && needs.guard.outputs.stage == 'code'
         env:
           NUM: ${{ github.event.issue.number }}
+          # Правка ТЗ между раундами обязана отменять повторное применение
+          # зелёного вердикта: иначе вызов модели пропускается и находку
+          # «ТЗ менялось» некому напечатать (#517 AC6).
+          ISSUE_BODY: ${{ steps.material.outputs.issue_body }}
         run: |
-          out=$(node scripts/review-doc-guard.mjs --reuse --marker=CODE-REVIEW --num="$NUM" --head=HEAD)
+          out=$(node scripts/review-doc-guard.mjs --reuse --marker=CODE-REVIEW --num="$NUM" --head=HEAD \
+            --issue-body="${ISSUE_BODY}")
           printf '%s\n' "$out"
           printf '%s\n' "$out" >> "$GITHUB_OUTPUT"
           if printf '%s\n' "$out" | grep -qx 'reuse=true'; then
@@ -622,6 +647,40 @@ jobs:
           "$bin" --version
           echo "path=$bin" >> "$GITHUB_OUTPUT"
 
+      # ТЗ живёт в теле issue (#517), а GitHub хранит его правки без diff и без
+      # доступной чтением истории. Единственное, что можно доказать, — «текст
+      # изменился после того, как ревью ТЗ признало его зелёным». Это не отказ:
+      # автор вправе уточнять ТЗ. Это находка, доставляемая ревьюеру кода в
+      # промпт и владельцу в комментарий вердикта: разбор AC в таком заходе
+      # обязан быть полным, а не по дельте.
+      - name: "ТЗ менялось после зелёного ревью ТЗ (#517)"
+        id: spec_body
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true' && needs.guard.outputs.stage == 'code'
+        env:
+          NUM: ${{ github.event.issue.number }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          DIGEST: ${{ steps.material.outputs.issue_body }}
+        run: |
+          if [ -z "$DIGEST" ]; then
+            echo "хеша тела нет — сравнивать не с чем"
+            exit 0
+          fi
+          out=$(node -e '
+            import("./scripts/review-doc-guard.mjs").then(async (m) => {
+              const { execFileSync } = await import("node:child_process");
+              const [num, digest] = process.argv.slice(1);
+              const git = (args) => { try { return execFileSync("git", args, { encoding: "utf8" }); } catch { return ""; } };
+              const names = git(["ls-tree", "--name-only", "HEAD:docs/reviews"]).split("\n")
+                .filter((name) => new RegExp(`^SPEC-REVIEW-${num}-r\\d+\\.md$`).test(name));
+              const docs = names.map((name) => ({ name, text: git(["show", `HEAD:docs/reviews/${name}`]) }));
+              const changed = m.issueBodyChanged(docs, digest);
+              if (changed) process.stdout.write(`changed=true\ndoc=${changed.doc}\nrecorded=${changed.recorded}\n`);
+              else process.stdout.write("changed=false\n");
+            });
+          ' "$NUM" "$DIGEST")
+          printf '%s\n' "$out"
+          printf '%s\n' "$out" >> "$GITHUB_OUTPUT"
+
       - name: Review
         id: review
         if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
@@ -650,6 +709,8 @@ jobs:
               одинаковым номером затёрли бы друг друга.
 
             ${{ steps.rebase.outputs.note }}
+
+            ${{ steps.spec_body.outputs.changed == 'true' && format('ТЗ в теле issue менялось после зелёного ревью ТЗ ({0}, записанный хеш {1}). GitHub хранит правки тела без diff — дельту показать нельзя, поэтому AC сверяются с ТЕКУЩИМ текстом целиком, а не по дельте, и находка называется в вердикте (#517).', steps.spec_body.outputs.doc, steps.spec_body.outputs.recorded) || '' }}
 
             **Если цикл не первый — объём разбора по дельте, а не заново**
             (PROCESS.md §2.9, issue #214). Раньше промпт был одинаковым для
@@ -696,8 +757,9 @@ jobs:
                  LIGHT.md, CANVAS.md, WALL-THICKNESS.md, UX-MODES.md,
                  CONFIG-COMPATIBILITY.md, TOUCH-SUPPORT.md.
 
-            Для этапа spec: если issue помечен small, ТЗ живёт в теле issue и
-            файла в docs/specs/ быть не должно. Иначе ТЗ — docs/specs/<NN>-*.md.
+            Для этапа spec: ТЗ живёт в теле issue (#517) — читай его, а не файл.
+            Файлы docs/specs/<NN>-*.md — архив ТЗ до 2026-09-10: если такой файл
+            есть у старой задачи, он и есть материал, новые не создаются.
             Проверь обязательные разделы §7.1, однозначность каждого AC и
             указание способа доказательства. Отдельно проверь, что автор не
             выдал догадку за решение: утверждение о поведении, которого нет ни
@@ -860,6 +922,7 @@ jobs:
           MATERIAL_SHA: ${{ steps.material.outputs.sha }}
           MATERIAL_TREE: ${{ steps.material.outputs.tree }}
           MATERIAL_SPECS: ${{ steps.material.outputs.specs }}
+          MATERIAL_ISSUE_BODY: ${{ steps.material.outputs.issue_body }}
           # Вердикт из structured_output попадает в блок якорей (#499): по нему
           # следующий заход решает, можно ли применить зелёный вердикт повторно.
           OUT: ${{ steps.review.outputs.structured_output }}
@@ -921,6 +984,7 @@ jobs:
             node scripts/review-doc-guard.mjs --anchor="$doc" \
               --sha="$MATERIAL_SHA" --tree="$MATERIAL_TREE" \
               --branch="${BRANCH:-dev}" --specs="$MATERIAL_SPECS" \
+              --issue-body="$MATERIAL_ISSUE_BODY" \
               --verdict="$verdict" --high="$high"
           else
             echo "::warning::$SOURCE не найден — документа для публикации нет"
