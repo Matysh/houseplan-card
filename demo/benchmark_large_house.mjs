@@ -296,7 +296,22 @@ try {
       const card = document.createElement('houseplan-card');
       // #520 diagnostics: where the extra half second of model readiness goes.
       // Counts Lit update cycles and model builds; printed, never budgeted.
-      card.__diag = { updates: 0, updateMs: 0, models: 0, adopts: 0 };
+      card.__diag = { updates: 0, updateMs: 0, models: 0, adopts: 0, epochs: [] };
+      // Every `_cfgEpoch` bump with the frame that made it: the extra epoch is
+      // what rebuilds the model a second time (#520).
+      let diagEpoch = 0;
+      Object.defineProperty(card, '_cfgEpoch', {
+        configurable: true,
+        get: () => diagEpoch,
+        set: (next) => {
+          if (next !== diagEpoch) {
+            const frames = (new Error().stack || '').split('\n').slice(1, 4)
+              .map((line) => line.trim().replace(/^at\s+/, '').replace(/\s*\(.*$/, ''));
+            card.__diag.epochs.push(`${diagEpoch}->${next}@${frames.join('<')}`);
+          }
+          diagEpoch = next;
+        },
+      });
       const diagPerform = card.performUpdate.bind(card);
       card.performUpdate = function () {
         const started = performance.now();
@@ -389,6 +404,7 @@ try {
         models: card.__diag.models,
         adopts: card.__diag.adopts,
         cfgEpoch: card._cfgEpoch,
+        epochs: card.__diag.epochs.slice(0, 8),
       };
       const initialProjection = typeof card._effectiveProjection === 'function'
         ? card._effectiveProjection() : null;
@@ -1199,6 +1215,7 @@ try {
       console.log(`#520 diag sample ${row.sample}: updates=${bootDiag.updates}`
         + ` updateMs=${bootDiag.updateMs} models=${bootDiag.models}`
         + ` adopts=${bootDiag.adopts} cfgEpoch=${bootDiag.cfgEpoch}`
+        + ` epochs=[${(bootDiag.epochs || []).join(' ; ')}]`
         + ` modelReady=${measured.modelReadyMs} firstStable=${measured.firstStableRenderMs}`);
     }
     if (measuredSample >= 0) rows.push(measured);
