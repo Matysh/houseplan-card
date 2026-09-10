@@ -8111,6 +8111,50 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'summary-first-paint-shows-unavailable',
+    guard: 'node demo/smoke_summary_first_paint.mjs',
+    because: 'до прихода ленивого чанка метрик значения ещё НЕ известны: текст «источник недоступен» '
+      + 'здесь — ложь, которую человек видит в первый же кадр панели (#509 AC1)',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: "    if (!module) return { kind: 'pending' };",
+      replace: "    if (!module) return { kind: 'unavailable' }; // mutant: loading looks like a dead source",
+    }],
+  },
+  {
+    id: 'summary-metrics-block-first-frame',
+    guard: 'node demo/smoke_summary_first_paint.mjs',
+    because: 'агрегаты по всей геометрии и реестру, посчитанные внутри render, замораживают первый '
+      + 'показ панели на сотни миллисекунд — ровно симптом #509 (AC4)',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: "    const needsAggregate = value.source.key === 'device_count' || value.source.key === 'total_area';",
+      replace: "    this.computeMetrics(); // mutant: aggregates back inside render\n    const needsAggregate = value.source.key === 'device_count' || value.source.key === 'total_area';",
+    }],
+  },
+  {
+    id: 'summary-area-recomputes-walls-per-room',
+    guard: 'node --test test/summary-panel.test.mjs',
+    because: 'innerContourForRoom без общей геометрии объединяет кладку пространства заново для КАЖДОЙ '
+      + 'комнаты: 176 мс на комнату и 11 с на большом плане (#509 AC3)',
+    patches: [{
+      file: 'src/summary-panel-metrics.ts',
+      find: "          shared.roomGeom, shared.multiWallNodes,",
+      replace: "          // mutant: no shared masonry",
+    }],
+  },
+  {
+    id: 'summary-stale-metric-falls-back-to-skeleton',
+    guard: 'node --test test/summary-panel-runtime.test.mjs',
+    because: 'правка конфигурации не должна возвращать панель в скелет: прежнее число остаётся до '
+      + 'прихода нового, иначе мигание возвращается с другой стороны (#509 AC9)',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: "    if (needsAggregate && !known) {",
+      replace: "    if (needsAggregate && (!known || !this.metricsFresh())) {",
+    }],
+  },
+  {
     id: 'summary-dialog-drops-flex-content',
     guard: 'node demo/smoke_summary_dialog_scroll.mjs',
     because: 'in Home Assistant the settings dialog scrolls only because ha-dialog lays its body out as a '

@@ -21,6 +21,7 @@ import {
   summaryEntityValue,
   summarySystemValue,
   totalCleanFloorAreaM2,
+  spaceWallGeometry,
 } from '../test-build/summary-panel-metrics.js';
 import { summaryPanelDictionaries, summaryPanelText } from '../test-build/summary-panel-i18n.js';
 import { stableSummaryPlacementSlot } from '../test-build/summary-panel-identity.js';
@@ -355,4 +356,33 @@ test('#437 entity and system sources preserve real zero and delegate HA formatti
     { type: 'system', key: 'total_area' },
     { deviceCount: 0, areaM2: 0, now: new Date('2026-01-01T00:00:00Z') }, hass, 'en',
   ), '0.0 m²');
+});
+
+test('#509 AC3: площадь считает геометрию стен один раз на пространство, результат не меняется', () => {
+  const roomsOf = (prefix) => [
+    { id: `${prefix}1`, name: 'A', poly: [[0, 0], [100, 0], [100, 100], [0, 100]] },
+    { id: `${prefix}2`, name: 'B', poly: [[50, 0], [150, 0], [150, 100], [50, 100]] },
+  ];
+  const space = (id, prefix) => ({
+    id, title: id, cellCm: 5, vb: [0, 0, 1000, 1000], bg: null,
+    rooms: roomsOf(prefix), wall_segments: [], partitions: [], wall_columns: [],
+  });
+  const raw = (id, prefix) => ({
+    id, title: id, cell_cm: 5, view_box: [0, 0, 1, 1], rooms: roomsOf(prefix),
+    wall_segments: [], partitions: [], wall_columns: [], openings: [], walls: [],
+  });
+  const model = [space('f1', 'r'), space('f2', 'q')];
+  const config = { spaces: [raw('f1', 'r'), raw('f2', 'q')], markers: [], settings: {} };
+
+  const calls = [];
+  const spy = (spaceModel, prepared) => {
+    calls.push(spaceModel.id);
+    return spaceWallGeometry(spaceModel, prepared);
+  };
+  const withSpy = totalCleanFloorAreaM2(config, model, spy);
+  // Один вызов на ПРОСТРАНСТВО, а не на комнату: без этого innerContourForRoom
+  // объединял кладку заново для каждой комнаты (11 с на большом доме, #509).
+  assert.deepEqual(calls, ['f1', 'f2']);
+  assert.equal(withSpy, totalCleanFloorAreaM2(config, model), 'общая геометрия не меняет результат');
+  assert.equal(withSpy, 4.32);
 });

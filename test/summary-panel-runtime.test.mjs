@@ -222,3 +222,46 @@ test('#493 late reload and confirmation completions stay outside a new lifecycle
     browser.restore();
   }
 });
+
+test('#509 AC1/AC2/AC9: значение показывает скелет до готовности, ошибку — только для недоступного источника', () => {
+  const browser = installBrowserGlobals();
+  try {
+    const host = hostFixture();
+    host._cfgEpoch = 1;
+    const runtime = new LoadedSummaryPanelRuntime(host);
+    const state = (value) => runtime.valueState(value);
+    const deviceCount = { id: 'v1', label: 'Devices', source: { type: 'system', key: 'device_count' } };
+    const entity = { id: 'v2', label: 'Lamp', source: { type: 'entity', entity_id: 'light.a' } };
+
+    // AC1: ленивый чанк ещё не пришёл — скелет, а не «источник недоступен».
+    assert.deepEqual(state(deviceCount), { kind: 'pending' });
+    assert.deepEqual(state(entity), { kind: 'pending' });
+
+    // Модуль пришёл, агрегат ещё не посчитан — по-прежнему скелет.
+    runtime.metricsModule = {
+      summaryEntityValue: (hass, id) => (id === 'light.a' ? 'On' : null),
+      summarySystemValue: (source, values) => (source.key === 'device_count'
+        ? (values.deviceCount === null ? null : String(values.deviceCount)) : null),
+      representedHaDeviceIds: () => new Set(['d1', 'd2']),
+      totalCleanFloorAreaM2: () => 12.5,
+    };
+    assert.deepEqual(state(deviceCount), { kind: 'pending' });
+    // AC2: живая сущность отвечает сразу; отсутствующая — честная ошибка.
+    assert.deepEqual(state(entity), { kind: 'ready', text: 'On' });
+    assert.deepEqual(state({ ...entity, source: { type: 'entity', entity_id: 'light.gone' } }), { kind: 'unavailable' });
+
+    // Расчёт после кадра: имитируем его завершение.
+    runtime.computeMetrics();
+    assert.deepEqual(state(deviceCount), { kind: 'ready', text: '2' });
+
+    // AC9: конфигурация изменилась — мемо устарело, но на экране остаётся
+    // прежнее число, а не скелет; пересчёт запланирован.
+    host._cfgEpoch = 2;
+    assert.equal(runtime.metricsFresh(), false);
+    assert.deepEqual(state(deviceCount), { kind: 'ready', text: '2' });
+    runtime.computeMetrics();
+    assert.equal(runtime.metricsFresh(), true);
+  } finally {
+    browser.restore();
+  }
+});

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The summary panel no longer freezes the first frame on a large plan, and it
+  no longer says «Source unavailable» while its values are still being
+  computed: rows show a pulsing placeholder that is replaced by the numbers as
+  they arrive, and the panel fades in and out again
+  ([#509](https://github.com/Matysh/houseplan-card/issues/509)).
+
 - The summary panel settings dialog scrolls again in Home Assistant — with the
   mouse wheel on desktop and with a swipe on phones; the header and the action
   buttons stay in place

@@ -142,6 +142,39 @@ export const summaryPanelCss = String.raw`
   .summary-value strong { min-width: 0; overflow-wrap: anywhere; }
   .summary-value span { color: var(--secondary-text-color); }
   .summary-value strong { text-align: right; font-weight: 700; }
+  /* Значение появляется плавно, а не скачком после скелета (#509). */
+  .summary-value strong:not(.summary-value-pending) { animation: summary-value-in 140ms ease both; }
+  /* Скелет: прямоугольник в высоту строки на месте значения. Плашка, сетка и
+     высота строки те же, что с готовым значением, — панель не прыгает. */
+  .summary-value-pending {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 1.2em;
+  }
+  .summary-value-pending i {
+    display: block;
+    width: 4.5em;
+    max-width: 100%;
+    height: 1.2em;
+    border-radius: 5px;
+    background: var(--secondary-text-color, #7a7f87);
+    opacity: 0.18;
+    animation: summary-skeleton-pulse 1200ms ease-in-out infinite;
+  }
+  @keyframes summary-skeleton-pulse {
+    0%, 100% { opacity: 0.12; }
+    50% { opacity: 0.28; }
+  }
+  @keyframes summary-value-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    /* Прямоугольник остаётся — исчезает только моторика (#509). */
+    .summary-value-pending i { animation: none; opacity: 0.18; }
+    .summary-value strong:not(.summary-value-pending) { animation: none; }
+  }
   .summary-empty { margin: 0; padding: 10px 11px; color: var(--secondary-text-color); }
   .summary-measure {
     position: fixed;

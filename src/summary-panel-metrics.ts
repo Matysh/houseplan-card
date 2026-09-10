@@ -5,7 +5,7 @@ import { geometryArea, floorMinusBodies } from './physical-geometry';
 import { prepareSpacePhysicalGeometryInputs } from './plan-geometry-preflight';
 import { GRID_PITCH, GRID_STEP_N, NORM_W } from './space-geometry';
 import { hassValue, roomPoly, valueWithUnit } from './logic';
-import { innerContourForRoom } from './wall-thickness';
+import { innerContourForRoom, multiWallNodesForGeometry, wallBodiesGeometry } from './wall-thickness';
 import type { Marker, ServerConfig, SpaceModel, SummaryPanelSource } from './types';
 import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { SummaryHass } from './summary-panel-host';
@@ -55,10 +55,37 @@ function unionGeometry(current: Geom | null, next: Geom): Geom {
   return union(current, next);
 }
 
+/**
+ * Wall masonry and junction topology of one space, computed once (#509).
+ *
+ * `innerContourForRoom` accepts both as optional arguments and, without them,
+ * unions the whole space's masonry again for EVERY room: on the large-house
+ * fixture that was 176 ms per room and 11 s for the panel's first frame. The
+ * card has always passed them from its own render cache (`_innerContour`);
+ * the panel now does the same, one pass per space instead of one per room.
+ */
+export function spaceWallGeometry(
+  space: SpaceModel,
+  prepared: ReturnType<typeof prepareSpacePhysicalGeometryInputs>,
+): { roomGeom: unknown; multiWallNodes: ReturnType<typeof multiWallNodesForGeometry> } {
+  const united = wallBodiesGeometry(
+    space.rooms, prepared.walls, prepared.openCuts, [],
+    GRID_STEP_N, prepared.cellCm, GRID_PITCH, NORM_W,
+  );
+  return {
+    roomGeom: united.status === 'ok' || united.status === 'degraded-extra' ? united.roomGeom : undefined,
+    multiWallNodes: multiWallNodesForGeometry(
+      space.rooms, prepared.walls, prepared.openCuts,
+      GRID_STEP_N, prepared.cellCm, GRID_PITCH, NORM_W,
+    ),
+  };
+}
+
 /** Canonical clean-floor union, in physical square metres, for every space. */
 export function totalCleanFloorAreaM2(
   config: ServerConfig,
   models: readonly SpaceModel[],
+  geometryOf: typeof spaceWallGeometry = spaceWallGeometry,
 ): number | null {
   try {
     let total = 0;
@@ -66,6 +93,8 @@ export function totalCleanFloorAreaM2(
       const raw = config.spaces.find((item) => String(item?.id) === space.id);
       if (!raw) continue;
       const prepared = prepareSpacePhysicalGeometryInputs(raw, space);
+      // Один проход на пространство, не на комнату (#509).
+      const shared = geometryOf(space, prepared);
       let spaceFloor: Geom | null = null;
       for (const room of space.rooms) {
         if (!room.id) continue;
@@ -74,6 +103,7 @@ export function totalCleanFloorAreaM2(
         const inner = innerContourForRoom(
           space.rooms, room.id, prepared.walls, prepared.openCuts,
           GRID_STEP_N, prepared.cellCm, GRID_PITCH, NORM_W,
+          shared.roomGeom, shared.multiWallNodes,
         ) || poly;
         const clean = floorMinusBodies(inner, prepared.physicalBodies) as Geom;
         spaceFloor = unionGeometry(spaceFloor, clean);
