@@ -2,7 +2,7 @@
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/500
 - **Тип / приоритет:** tech-debt / P3
-- **Статус ТЗ:** готово к ревью (r2 — учтены High-1/High-2 ревью r1)
+- **Статус ТЗ:** готово к ревью (r3 — учтены High-1/High-2 r1 и High-3 r2)
 - **Трек:** полный; §5 не проходит по сложности и риску (7/10), числу
   поверхностей (7 модулей) и state-контракту revision+fingerprint, который
   читают все feature-runtime и multi-client сценарии
@@ -210,11 +210,15 @@ export async function adoptAuthoritativeGated(host: AdoptionHost, input: {
    `_resumePendingNavMode()`, `_cacheSnapshot()`, `_restoreZoom()` если
    видимое пространство сменилось, `_regSignature = ''`,
    `_maybeRebuildDevices()`.
-   Пост-шаги профиля `post-write`: `_cacheSnapshot()`, `_regSignature = ''`,
-   `_maybeRebuildDevices()`, `requestUpdate()` — то общее, что сегодня делают
-   все четыре post-write пути. `_adoptInitialSpace`/`_resumePendingNavMode`/
-   `_restoreZoom` в этот профиль **не входят**: сегодня их там нет, а выбор
-   пространства после удаления делает `_commitSpace` вызывающего.
+   Профиль `post-write` **пост-шагов не имеет**: последовательность
+   заканчивается шагом 4, а хвост каждого post-write вызывающего (очистки,
+   `_cfgEpoch++`, выбор пространства, `_cacheSnapshot`, toast) остаётся в
+   вызывающем **без изменений** — включая `_adoptInitialSpace(_model, true)`
+   в ветке `_hasFixedFloor` у `import/apply`
+   (`houseplan-editor-runtime.ts:9757`) и `_commitSpace(...)` у обоих
+   `space/delete` и у `import/apply` без фиксированного этажа. Общий хвост
+   у четырёх путей разный по составу и порядку; вычленять из него «общую
+   часть» значило бы менять порядок побочных эффектов, чего это ТЗ не делает.
 
 Особенности вызывающих остаются снаружи и не размножаются:
 `_loadFromServer` — флаги `_connectionWasLost`, `_serverStorage`, warm-viewport
@@ -224,7 +228,9 @@ export async function adoptAuthoritativeGated(host: AdoptionHost, input: {
 `_commitSpace` при удалении текущего пространства и toast; `optimize_undo` —
 сброс `_canOptimizeUndo`/`_undoKind`, очистки историй, `_cfgEpoch++`, toast;
 `import/apply` — очистки `_dirtyPos`/`_sentPos`/`_defPos`, снапшотов
-устройств, `_signer.invalidate` + `_resign`, `_cfgEpoch++`. Две копии
+устройств, `_signer.invalidate` + `_resign`, `_cfgEpoch++`, выбор
+пространства (`_adoptInitialSpace` при `_hasFixedFloor`, иначе
+`_commitSpace(nextSpace)`), `_cacheSnapshot`. Две копии
 `space/delete` обязаны вызывать одну последовательность; слияние их в один
 метод хоста допустимо, но не требуется этим ТЗ.
 
@@ -280,7 +286,7 @@ fingerprint восстанавливается с пересчётом, как �
 |---|---|---|---|
 | AC1 | Идентичность пишет только модуль: в `src/**` вне `config-adoption.ts` нет присваиваний `_cfgRev`, `_layoutRev`, `_cfgContentFingerprint`, `_layoutContentFingerprint` (в т.ч. через `host.`); присваивания тел `_serverCfg =`/`_layout =` вне модуля — только локальные замены до записи (staging) в allowlist `{ 'houseplan-editor-runtime.ts': N, 'houseplan-card.ts': M }` (размещение устройств), счётчики зафиксированы и могут только уменьшаться; во **всех остальных** файлах `src/**` — ноль, в том числе `plan-optimize-write.ts`, `serialized-write-queue.ts`, `space-copy-runtime.ts`, `summary-panel-runtime-loaded.ts`, `houseplan-onboarding-runtime.ts`, `vacuum-calibration-write.ts`, `editors/vacuum-maps-section.ts` (последние два — через `stageLocalConfig`/`beginOptimistic`/`rollbackOptimistic` модуля) | unit `test/config-adoption-ownership.test.mjs` (regex по `src/**`, по образцу `single-source-numbers`) | вернуть одно присваивание в `plan-optimize-write.ts` — тест красный; поднять счётчик allowlist без правки теста — красный |
 | AC2 | Все **семь** путей adoption (§3 п.2) идут через `adoptAuthoritativeGated`; имя `_adoptStructuralResponses` не встречается в `src/**` вне `config-adoption.ts`; `SummaryPanelHost`, host-интерфейсы onboarding- и editor-runtime не содержат шагов §6.4 | unit (grep по `src/**` на отсутствие имён вне модуля) + `npm run typecheck` | оставить вызов `_adoptStructuralResponses` в любом из семи мест — красный |
-| AC3 | Поведенческая нейтральность: таблица переходов модуля на синтетических ответах совпадает с сегодняшней — эхо (тот же fingerprint: тело и истории не тронуты, rev обновлён), смена config (истории очищены, fingerprint новый), только layout, ответ без `rev` (старый rev сохранён), `layoutOverride`, virtual lights, профиль `post-write` не вызывает `_adoptInitialSpace`/`_resumePendingNavMode`/`_restoreZoom`; существующие свидетели зелёные без изменения ожиданий: `demo/smoke_summary_panel.mjs` (lost-ACK + параллельная правка + порядок `prepare → adopt`), `demo/smoke_ws_resilience.mjs`, `test/render-invalidation.test.mjs`, `test/serialized-write-queue.test.mjs`, `test/summary-panel-runtime.test.mjs`, `test/config-store.test.mjs` | unit `test/config-adoption.test.mjs` + перечисленные смоки/юниты | мутант «эхо тоже очищает историю» — unit красный; мутант «prepareImage не ждём» — `smoke_summary_panel` красный (`recoveryPreparesBackdropBeforeAdoption`, уже есть) |
+| AC3 | Поведенческая нейтральность: таблица переходов модуля на синтетических ответах совпадает с сегодняшней — эхо (тот же fingerprint: тело и истории не тронуты, rev обновлён), смена config (истории очищены, fingerprint новый), только layout, ответ без `rev` (старый rev сохранён), `layoutOverride`, virtual lights, профиль `post-write` завершается шагом 4 и не выполняет пост-шагов профиля `reload` (хост-callbacks `_adoptInitialSpace`/`_resumePendingNavMode`/`_restoreZoom`/`_syncDecorAssets` не вызываются модулем); хвосты четырёх post-write вызывающих не меняются — сверка диффом на ревью; существующие свидетели зелёные без изменения ожиданий: `demo/smoke_summary_panel.mjs` (lost-ACK + параллельная правка + порядок `prepare → adopt`), `demo/smoke_ws_resilience.mjs`, `test/render-invalidation.test.mjs`, `test/serialized-write-queue.test.mjs`, `test/summary-panel-runtime.test.mjs`, `test/config-store.test.mjs` | unit `test/config-adoption.test.mjs` + перечисленные смоки/юниты | мутант «эхо тоже очищает историю» — unit красный; мутант «prepareImage не ждём» — `smoke_summary_panel` красный (`recoveryPreparesBackdropBeforeAdoption`, уже есть) |
 | AC4 | Post-write пути: для каждого из четырёх (`space/delete` ×2 входа, `optimize_undo`, `import/apply`) при параллельной смене `plan_url` другим клиентом `prepareImage` вызывается **до** adoption; после обоих `space/delete` `configRev`/`layoutRev` равны ревизиям адоптированных `config/get`/`layout/get`, а не ответа `delete` | `demo/smoke_post_write_adoption.mjs` на production bundle: четыре сценария с synthetic HA, моки `prepareImage` и порядок вызовов (по образцу `recoveryPreparesBackdropBeforeAdoption`), для `space/delete` — оба входа (onboarding и editor runtime) и проверка ревизий; unit модуля «ревизия не берётся из чужого ответа» (I2) | вернуть `host._cfgRev = response.config_rev` в любой копии `delete` — смок и unit красные; убрать гейт в любом из четырёх — смок красный |
 | AC5 | Тёплый старт: `snapshot()` → `restoreCached()` восстанавливает идентичность ровно (rev, оба fingerprint, layout, virtual lights); ключи `LS_CFG` неизменны; кэш без fingerprint восстанавливается с пересчётом | unit `test/config-adoption.test.mjs` (round-trip и фикстура старого кэша) | переименовать ключ или потерять `layout_rev` — красный |
 | AC6 | Optimistic rollback (#314) через модуль: откат только при совпадении rev **и** fingerprint попытки; откат не меняет rev; конфликтный reload побеждает | `test/serialized-write-queue.test.mjs` перенесён/адаптирован + мутант | мутант «откат без проверки rev» — красный |
@@ -317,7 +323,7 @@ fingerprint восстанавливается с пересчётом, как �
 | Скрытый порядок побочных эффектов в `_adoptStructuralResponses` | Порядок переносится один в один, тест-таблица AC3 фиксирует наблюдаемые результаты; ревьюер сверяет диффом |
 | Ребейз-конфликты в `houseplan-card.ts`/`houseplan-editor-runtime.ts` (горячие файлы) | Небольшие коммиты: (1) модуль + тесты, (2) хост-делегаты, (3) четыре пути, (4) сужение контрактов, (5) lint + бюджеты + docs; `scripts/rebase-on-dev.mjs` |
 | Гейт на post-write путях — единственное изменение поведения | Собственный AC4 и смок на все четыре пути; зафиксировано в §6.3 как намеренное |
-| Профиль `post-write` случайно получит шаги `reload` (`_adoptInitialSpace`, `_restoreZoom`) и сместит выбранное пространство после Import/Undo | Профиль явный в сигнатуре; таблица AC3 включает кейс «post-write не вызывает `_adoptInitialSpace`»; смок AC4 проверяет, что видимое пространство после Import не меняется |
+| Профиль `post-write` случайно получит пост-шаги `reload` (`_adoptInitialSpace`, `_restoreZoom`) или хвост вызывающего изменится при переносе | Профиль явный в сигнатуре и не имеет пост-шагов; таблица AC3 включает кейс «post-write завершается шагом 4»; хвосты вызывающих в диффе не меняются (ревью); смок AC4 проверяет сегодняшнее правило выбора пространства после Import: при `_hasFixedFloor` — `_adoptInitialSpace`, иначе целевое/прежнее пространство — а не его отсутствие |
 | Windows-гейт владельца | Никаких новых spawn/путей; тесты — чистые Node |
 
 ## 13. Откат
@@ -356,8 +362,10 @@ fingerprint восстанавливается с пересчётом, как �
    ответа; отдельного «adopt layout with override» не заводится.
 6. Lifecycle registry не начинается даже частично: post-write пути берут
    готовую последовательность, а не новый механизм регистрации.
-7. Два профиля вместо одного: `reload` и `post-write` различаются сегодня
-   реальным набором пост-шагов; склеивать их значило бы менять поведение
-   Import/Undo/Delete (выбор пространства, viewport). Третьего профиля не
-   заводится; появление нового вызывающего с иным набором шагов — повод
-   пересмотреть границу, а не добавить ветку.
+7. Два профиля вместо одного: у `reload` пост-шаги общие и одинаковые в трёх
+   местах, у `post-write` хвосты разные (Import выбирает пространство по
+   `_hasFixedFloor`, Delete — `_commitSpace`, Undo — сброс undo-состояния),
+   поэтому `post-write` = только гейт + adoption, хвосты остаются на месте.
+   Склеивать профили значило бы менять поведение Import/Undo/Delete (выбор
+   пространства, viewport). Третьего профиля не заводится; новый вызывающий
+   с иным набором шагов — повод пересмотреть границу, а не добавить ветку.
