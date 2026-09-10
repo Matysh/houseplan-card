@@ -383,10 +383,13 @@ try {
       if (interaction && '_bootSoft' in card) await until(() => card._bootSoft === false);
       await frame();
       const firstStableRenderMs = Number((performance.now() - loadStarted).toFixed(2));
-      console.log(`#520 diag sample ${sample}: updates=${card.__diag.updates}`
-        + ` updateMs=${card.__diag.updateMs.toFixed(1)} models=${card.__diag.models}`
-        + ` adopts=${card.__diag.adopts} cfgEpoch=${card._cfgEpoch}`
-        + ` modelReady=${modelReadyMs} firstStable=${firstStableRenderMs}`);
+      const bootDiag = {
+        updates: card.__diag.updates,
+        updateMs: Number(card.__diag.updateMs.toFixed(1)),
+        models: card.__diag.models,
+        adopts: card.__diag.adopts,
+        cfgEpoch: card._cfgEpoch,
+      };
       const initialProjection = typeof card._effectiveProjection === 'function'
         ? card._effectiveProjection() : null;
       if (requiresIsometric && initialProjection !== 'iso')
@@ -1120,6 +1123,7 @@ try {
 
       const result = {
         sample,
+        bootDiag,
         modelReadyMs,
         firstStableRenderMs,
         ...(viewToggle ? { viewToggleMs: viewToggle.ms } : {}),
@@ -1189,7 +1193,15 @@ try {
       interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, profile,
     });
-    if (measuredSample >= 0) rows.push(row);
+    // #520: диагностика печатается в лог прогона и в запись не попадает.
+    const { bootDiag, ...measured } = row;
+    if (bootDiag) {
+      console.log(`#520 diag sample ${row.sample}: updates=${bootDiag.updates}`
+        + ` updateMs=${bootDiag.updateMs} models=${bootDiag.models}`
+        + ` adopts=${bootDiag.adopts} cfgEpoch=${bootDiag.cfgEpoch}`
+        + ` modelReady=${measured.modelReadyMs} firstStable=${measured.firstStableRenderMs}`);
+    }
+    if (measuredSample >= 0) rows.push(measured);
   }
 } finally {
   await browser.close();
