@@ -477,8 +477,14 @@ export class HouseplanOnboardingRuntime {
       const adopted = await this.host._adoptAuthoritative({
         cfgResp: configResponse, layResp: layoutResponse, reason: 'space-delete', profile: 'post-write',
       });
+      // Asset wait: nothing adopted, the scheduled reload owns the tail (same as every reload path).
+      if (adopted.status !== 'adopted') {
+        this.host._spaceDialog = { ...currentDialog, busy: false };
+        this.host.requestUpdate();
+        return;
+      }
       this.host._spaceDialog = null;
-      if (adopted.status === 'adopted' && this.host._space === spaceId) {
+      if (this.host._space === spaceId) {
         this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || '');
       }
       this.host._regSignature = '';

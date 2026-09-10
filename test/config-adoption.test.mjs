@@ -228,6 +228,22 @@ test('post-write profile ends at adoption: no reload tail, the caller keeps its 
   assert.equal(adoption.layoutRev, 2);
 });
 
+test('post-write profile: a refused gate adopts nothing and reports asset-wait, so the caller can skip its tail (AC4, review r1 M1)', async () => {
+  const adoption = adoptedWith(cfg('Ground floor'), 3);
+  const host = hostStub(adoption, { assetReady: false });
+  const body = adoption.config;
+  const result = await adoptAuthoritativeGated(host, {
+    cfgResp: { config: cfg('Deleted on server'), rev: 4 }, layResp: { layout: { d: {} }, rev: 1 },
+    reason: 'space-delete', profile: 'post-write',
+  });
+  assert.deepEqual(result, { status: 'asset-wait' });
+  assert.equal(adoption.config, body);
+  assert.equal(adoption.configRev, 3);
+  assert.equal(adoption.layoutRev, 0);
+  assert.ok(host.calls.includes('note:asset-failed') && host.calls.includes('scheduleLoadRetry'));
+  assert.ok(!host.calls.includes('geometryHistory.clear'));
+});
+
 test('I2: a revision is never taken from a response other than the one carrying the adopted body', async () => {
   const adoption = adoptedWith(cfg('Ground floor'), 3);
   const host = hostStub(adoption);

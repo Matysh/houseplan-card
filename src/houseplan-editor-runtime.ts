@@ -8691,8 +8691,10 @@ public async _deleteSpace(): Promise<void> {
       ]);
       // #500: revisions come with the re-read bodies, never from the delete reply.
       const adopted = await this.host._adoptAuthoritative({ cfgResp: configResponse, layResp: layoutResponse, reason: 'space-delete', profile: 'post-write' });
+      // Asset wait: nothing adopted, the scheduled reload owns the tail (same as every reload path).
+      if (adopted.status !== 'adopted') { this.host._spaceDialog = { ...currentDialog, busy: false }; this.host.requestUpdate(); return; }
       this.host._spaceDialog = null;
-      if (adopted.status === 'adopted' && this.host._space === spaceId) this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || '');
+      if (this.host._space === spaceId) this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || '');
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
       this.host._showToast(this.host._t('toast.space_deleted'));
@@ -9572,7 +9574,8 @@ public async _undoPlanOptimization(): Promise<void> {
       // config/get is the sole authority for runtime capabilities, including
       // integration_version. Reuse the full-card adopter instead of leaving
       // this direct optimization-undo path with stale version state (#462).
-      await this.host._adoptAuthoritative({ cfgResp, layResp, reason: 'optimize-undo', profile: 'post-write' });
+      const adopted = await this.host._adoptAuthoritative({ cfgResp, layResp, reason: 'optimize-undo', profile: 'post-write' });
+      if (adopted.status !== 'adopted') return; // asset wait: the scheduled reload owns the tail
       this.host._geometryHistory.clear();
       this.host._cancelDeviceDrag();
       this.host._devicePositionHistory.clear();
@@ -9732,6 +9735,7 @@ public async _applyBackupImport(): Promise<void> {
         this.host.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
       const adopted = await this.host._adoptAuthoritative({ cfgResp: configResponse, layResp: layoutResponse, reason: 'import-apply', profile: 'post-write' });
+      if (adopted.status !== 'adopted') { this.host._backupImportDialog = { ...d, busy: false, error: '' }; this.host.requestUpdate(); return; }
       this.host._geometryHistory.clear();
       this.host._dirtyPos.clear();
       this.host._sentPos.clear();
@@ -9752,9 +9756,7 @@ public async _applyBackupImport(): Promise<void> {
         ? result.space_id
         : spaces.some((space) => space.id === previousSpace)
           ? previousSpace : spaces[0]?.id || this.host._space;
-      // Not adopted (bounded asset wait): the scheduled reload owns the space selection.
-      if (adopted.status !== 'adopted') { /* keep the current space */ }
-      else if (this.host._hasFixedFloor) this.host._adoptInitialSpace(this.host._model, true);
+      if (this.host._hasFixedFloor) this.host._adoptInitialSpace(this.host._model, true);
       else this.host._commitSpace(nextSpace);
       this.host._backupImportDialog = null;
       this.host._cacheSnapshot();

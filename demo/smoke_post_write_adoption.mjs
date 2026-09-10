@@ -26,12 +26,16 @@ const out = await page.evaluate(async () => {
   });
 
   const order = [];
+  const toasts = [];
+  let retries = 0;
+  let assetReady = true;
   const originalPrepareImage = card._signer.prepareImage.bind(card._signer);
-  card._signer.prepareImage = async (_hass, href) => { order.push(`prepare:${href}`); return true; };
+  card._signer.prepareImage = async (_hass, href) => { order.push(`prepare:${href}`); return assetReady; };
+  card._scheduleLoadRetry = () => { retries += 1; };
   const originalAdoptResponses = adoption.adoptResponses.bind(adoption);
   adoption.adoptResponses = (...args) => { order.push('adopt'); return originalAdoptResponses(...args); };
   card._confirmDanger = async () => true;
-  card._showToast = () => {};
+  card._showToast = (message) => { toasts.push(message); };
 
   // Fake server: our write bumps both revisions; a concurrent client then
   // swaps the backdrop and bumps the config revision again before the re-read.
@@ -83,7 +87,19 @@ const out = await page.evaluate(async () => {
     card._spaceDialog = null;
     card._backupImportDialog = null;
     order.length = 0;
+    toasts.length = 0;
+    retries = 0;
     await card.updateComplete;
+  };
+  // Review r1 M1: a refused backdrop gate adopts nothing and skips the caller's
+  // tail (no toast, no space switch, dialog released), exactly like every
+  // reload path; the scheduled retry owns the rest.
+  const refusedVerdict = (scenario, extra = {}) => {
+    result[`${scenario}RefusedAdoptsNothing`] = card._cfgRev === 10 && card._layoutRev === 20
+      && card._serverCfg.spaces.length === 2 && card._serverCfg.spaces.every((s) => s.plan_url !== concurrentHref);
+    result[`${scenario}RefusedSchedulesRetry`] = retries === 1 && !order.includes('adopt');
+    result[`${scenario}RefusedSkipsTail`] = toasts.length === 0 && card._space === 'beta';
+    Object.assign(result, extra);
   };
   const verdict = (scenario, extra = {}) => {
     const prepared = order.indexOf(`prepare:${concurrentHref}`);
@@ -137,8 +153,31 @@ const out = await page.evaluate(async () => {
     importApplyKeepsSpaceRule: fixedFloor ? typeof card._space === 'string' && card._space.length > 0 : card._space === 'beta',
   });
 
+  assetReady = false;
+  for (const [name, runtime] of [['onboardingDelete', onboarding], ['editorDelete', editor]]) {
+    await reset(`${name}-refused`);
+    card._spaceDialog = spaceDialog('beta');
+    await runtime._deleteSpace();
+    refusedVerdict(name, { [`${name}RefusedReleasesDialog`]: card._spaceDialog?.busy === false });
+  }
+  await reset('optimizeUndo-refused');
+  card._canOptimizeUndo = true;
+  card._undoKind = 'optimize';
+  await editor._undoPlanOptimization();
+  refusedVerdict('optimizeUndo', { optimizeUndoRefusedKeepsUndoFlag: card._canOptimizeUndo === true && card._optimizeUndoBusy === false });
+  await reset('importApply-refused');
+  card._backupImportDialog = {
+    filename: 'plan.json', size: 1, token: 'token-500', preview: { confirmation_required: false, counts: {} },
+    expectedConfigRev: card._cfgRev, expectedLayoutRev: card._layoutRev,
+    duplicatePolicy: 'skip', confirmMissing: false, busy: false, error: '',
+  };
+  await editor._applyBackupImport();
+  refusedVerdict('importApply', { importApplyRefusedReleasesDialog: card._backupImportDialog?.busy === false });
+  assetReady = true;
+
   card.hass = originalHass;
   card._signer.prepareImage = originalPrepareImage;
+  delete card._scheduleLoadRetry;
   delete adoption.adoptResponses;
   await card.updateComplete;
   return result;
