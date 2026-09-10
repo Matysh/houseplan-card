@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.74.0-beta.1 — 2026-09-10
+
 - The summary panel no longer freezes the first frame on a large plan, and it
   no longer says «Source unavailable» while its values are still being
   computed: rows show a pulsing placeholder that is replaced by the numbers as
