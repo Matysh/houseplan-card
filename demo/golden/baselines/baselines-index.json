@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "matrixVersion": 61,
-  "acceptedAt": "2026-09-09T15:06:57.368Z",
-  "sourceFingerprint": "b6d96e4120acb757fb31f8003e38b4de3eba014f652ec08da7890d611e50bacf",
+  "acceptedAt": "2026-09-11T12:27:12.847Z",
+  "sourceFingerprint": "8c2272f0c2abd6db38c759ea65f8aa1c8b93e4596d37c53cce6da796096cb411",
   "chromium": "151.0.7922.34",
   "platform": "linux",
   "witnesses": {
-    "count": 128,
+    "count": 133,
     "floor": 10
   },
   "scenarios": {
@@ -40,9 +40,9 @@
     "isometric-stage3-no-filter-dark": "b2eeda001fa1d72c74aa0a06a996df205a7398dfc9f729406939a49a4c009a21",
     "geometry-view-dark-fit": "454da1248f1fe13b8f60c589ae9ebee5e852995e9bc5175d3c5692c445f7cb94",
     "geometry-view-light-fit": "de5f6a41552447ca909d20471ed6665f558fb6e111c1f333eeba55866517d5a5",
-    "pdf-export-geometry-light": "03765f043e4dffd0c46d2a63059c580cb20bfdddd3df49ab58cac626b4d0f91a",
-    "pdf-export-polish-light": "30c2cb38ec2cec45aba5721a8d210ba982b51ea30a840fff9d76973c1e1f2724",
-    "pdf-export-stepped-dimensions-light": "5d5d16194fba0ae86b84607eabc4dbda9450162eb6441ad38520e5aaef84b86d",
+    "pdf-export-geometry-light": "c403a141cefb73e4653f2ffb9c346b4cfaa3de339b6c39c227ef1552ebde0048",
+    "pdf-export-polish-light": "ed6685900355e20a4618e931d42d2e45a39ad44e4a2ab044fa5ee64ff56f12f4",
+    "pdf-export-stepped-dimensions-light": "b9732b8b9c38153c564d0c93fbfbf44a8dd348c8667d2f8c2d14492e08e04f3e",
     "vacuum-trail-smoothing-dark": "f8eecc726a3e8bdaba414584ad6afd48908ee9d96ea969a1e37758f4e76843e2",
     "room-label-parity-view-dark": "a188d4db84533d605cb6fe822d20c34d164e3bfc8458a55beaad564854eef169",
     "room-label-parity-plan-dark": "07e896d4f6dad384bd52dc60f786f042e1cfcd26ddb1f7b12b72d40bb4824324",
