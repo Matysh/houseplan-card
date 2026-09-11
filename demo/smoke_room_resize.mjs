@@ -209,7 +209,7 @@ const disabledActivation = await page.evaluate(() => {
 check('safe_resize.disabled_click_reason', disabledActivation.click, disabledActivation.expected);
 check('safe_resize.disabled_enter_reason', disabledActivation.enter, disabledActivation.expected);
 check('safe_resize.disabled_space_reason', disabledActivation.space, disabledActivation.expected);
-sent('owner_boundary.pointerdown_sent', await pointer('pointerdown', 331, 245, { cx: 331, cy: 245, pointerId: 78 }));
+sent('disabled.pointerdown_sent', await pointer('pointerdown', 331, 245, { cx: 331, cy: 245, pointerId: 78 }));
 await settle();
 check('safe_resize.disabled_no_drag', await page.evaluate(() => window.__card._resize.dragging), false);
 check('safe_resize.disabled_zero_history', await page.evaluate(() => window.__card._geometryHistory.size), historyBefore);
@@ -260,9 +260,9 @@ await setRooms([
   { key: '0.000000,0.162500@1.5708', cm: 30, a: [0, 0.125], b: [0, 0.2] },
 ]);
 await enter();
-sent('range_role.pointerdown_sent', await pointer('pointerdown', 50, 100, { cx: 50, cy: 100, pointerId: 83 }));
-sent('range_role.pointermove_sent', await pointer('pointermove', 50, 150, { cx: 50, cy: 100, pointerId: 83 }));
-sent('range_role.pointerup_sent', await pointer('pointerup', 50, 150, { cx: 50, cy: 100, pointerId: 83 }));
+sent('owner_boundary.pointerdown_sent', await pointer('pointerdown', 50, 100, { cx: 50, cy: 100, pointerId: 83 }));
+sent('owner_boundary.pointermove_sent', await pointer('pointermove', 50, 150, { cx: 50, cy: 100, pointerId: 83 }));
+sent('owner_boundary.pointerup_sent', await pointer('pointerup', 50, 150, { cx: 50, cy: 100, pointerId: 83 }));
 await settle();
 const rangePoly = await roomPoly('range-main');
 check('safe_resize.owner_boundary_clamped', Math.abs(rangePoly[2][1] * 1000 - 125) < 1, true);
