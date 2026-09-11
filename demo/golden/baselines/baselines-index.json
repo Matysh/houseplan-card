@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "matrixVersion": 61,
-  "acceptedAt": "2026-09-11T12:27:12.847Z",
-  "sourceFingerprint": "8c2272f0c2abd6db38c759ea65f8aa1c8b93e4596d37c53cce6da796096cb411",
+  "acceptedAt": "2026-09-11T20:05:33.184Z",
+  "sourceFingerprint": "b3e08d50a47faaba7562dc080f267ca13de845113735892a9115a6cdd991392a",
   "chromium": "151.0.7922.34",
   "platform": "linux",
   "witnesses": {
-    "count": 133,
+    "count": 129,
     "floor": 10
   },
   "scenarios": {
@@ -50,10 +50,10 @@
     "room-label-parity-plan-light": "91b7aed42c3a677e387b26c405a04dcc327957f9368625c7c3ad3cca758f1fb1",
     "washer-active-cycle-dark": "0d683619c27747b3dd6a1e6c7cdc5e15dd886f4f2db4b85b7ca5a5c529e9ec52",
     "washer-idle-cycle-dark": "0138902daa8dabb0588904507ef5a44f5257f7859b4f1198191bfca3dd4130b7",
-    "day-cycle-dawn-dark": "6adecb5c2b2c14122140b87f41eb7222c9db4b185eee71a6008209fa8fc42ebc",
-    "day-cycle-day-dark": "6319379d476f56c91a28e44981fe97883dedfe9e73dd942107328855845e3009",
-    "day-cycle-dusk-dark": "7039204aa1d66fe8cc30f698e44ad8da7a8550d15aa849720c500b4d4810ac00",
-    "day-cycle-night-dark": "dc7514e39b37903c9704be833b553d713295b63fc6530fb975a86481f32be6a2",
+    "day-cycle-dawn-dark": "96bd5ef84345976bb83d35d418e7d247503629eceb732b6e926f2217f3b9faa4",
+    "day-cycle-day-dark": "605849bbada8d3c3a02a2c88c7b21c81c675a7a89b72c4c560df635d63005e67",
+    "day-cycle-dusk-dark": "d19cc97b75014d9f0661705df50d5f30a3a574661957c04c5dab96e26c5e3364",
+    "day-cycle-night-dark": "39a6a959676295eb4ead02703533641f57901ad0ce1359933e1d47f48867196a",
     "geometry-plan-editor-dark": "6fa29c51ac37449e53ff76afe17760a86325e160f53040c737619aae1095599d",
     "safe-resize-handles-clamp-light": "98db89eb1ec29aa6297ac0bc10653c8efce16175833091d0e76dd033ad9f4a8e",
     "safe-resize-handles-clamp-dark": "581f85ca93197ba796e72daa67402eebb7c64f13d4722b5d33943577837c8980",
