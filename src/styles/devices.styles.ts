@@ -210,6 +210,9 @@ export const devicesStyles = css`
       background: transparent;
       box-shadow: var(--device-shell-shadow);
       /* no box-shadow here: cqw-sized, restarts on every container resize (#524) */
+      /* these two are why the marker list keeps a per-item key under the
+         space-level one (#525, #534): ghosts and live config sync shift
+         positions inside one space — see plan.styles.ts for the full note */
       transition: border-color .15s, opacity .2s;
       pointer-events: auto;
       /* Normative production fallback: never add a per-marker backdrop blur. */

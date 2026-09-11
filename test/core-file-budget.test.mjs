@@ -23,7 +23,10 @@ const CAPS = {
   // model and rendering themselves remain in dedicated modules.
   // #500 moved config/layout identity and the adoption sequence into
   // src/config-adoption.ts; the ratchet keeps that win.
-  'src/houseplan-card.ts': 13650,
+  // 2026-09-11, #534: +1 for `import { keyed }`. The line buys back the 80 ms
+  // that #525 put on every space switch, and there is nothing to move out —
+  // the render itself did not grow by a character.
+  'src/houseplan-card.ts': 13651,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.

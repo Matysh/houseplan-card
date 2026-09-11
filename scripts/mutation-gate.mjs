@@ -7438,8 +7438,9 @@ const MUTANT_DEFINITIONS = [
       + 'animates a door that never moved (#525 AC1)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    return svg`<g class="openinglayer">${repeat(items, (o) => o.id, (o) => {',
-      replace: '    return svg`<g class="openinglayer">${items.map((o) => {',
+      find: "    return svg`<g class=\"openinglayer\">${keyed(space.id, repeat(items,"
+        + " (o) => o.id, (o) => {",
+      replace: "    return svg`<g class=\"openinglayer\">${keyed(space.id, items.map((o) => {",
     }],
   },
   {
@@ -7450,8 +7451,8 @@ const MUTANT_DEFINITIONS = [
       + 'painter, which finds the dragged marker by that attribute (#525 AC2)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '            ${repeat(devs, (d) => d.id, (d) => this._renderDevice(',
-      replace: '            ${devs.map((d) => this._renderDevice(',
+      find: '            ${keyed(space.id, repeat(devs, (d) => d.id, (d) => this._renderDevice(',
+      replace: '            ${keyed(space.id, devs.map((d) => this._renderDevice(',
     }],
   },
   {
