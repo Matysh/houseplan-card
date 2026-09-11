@@ -97,6 +97,14 @@ const res = await page.evaluate(async () => {
   await settle();
   const leafBefore = root().querySelector('.op-leaf');
   out.doorIsDrawnInTheFirstSpace = !!leafBefore;
+  // #528: маркеры судятся по идентичности узлов, а не по бегущему переходу.
+  // Прежняя проверка смотрела на переход `box-shadow` у оболочки — он исчез
+  // вместе с правкой #524, и мутант «маркеры без ключей» начал выживать:
+  // признак стал тривиально истинным. Идентичность узла не зависит ни от
+  // одного перехода и переживёт любую правку стилей.
+  const markersBefore = [...root().querySelectorAll('[data-hp="device"]')]
+    .map((node) => ({ node, id: node.dataset.id }));
+  out.markersDrawnInTheFirstSpace = markersBefore.length >= 3;
   out.quietBeforeTheSwitch = runningAnimations().filter((entry) => !EXPECTED(entry)).length === 0;
   // поворот створки живёт инлайновым стилем, не атрибутом
   const leafTransform = (leaf) => leaf?.style?.transform || leaf?.getAttribute('transform') || null;
@@ -113,6 +121,13 @@ const res = await page.evaluate(async () => {
     .filter((entry) => /op-leaf|op-arc/.test(entry.cls)).length === 0;
   out.noMarkerTransitionOnSwitch = afterSwitch
     .filter((entry) => /device-shell-frame/.test(entry.cls)).length === 0;
+  // Узел, живший до переключения, не имеет права остаться в DOM под чужим
+  // `data-id`: это и есть позиционное переиспользование, ради которого в
+  // `repeat` стоят ключи (#525 AC2, #528).
+  const reused = markersBefore.filter((entry) => entry.node.isConnected
+    && entry.node.dataset.id !== entry.id);
+  out.noMarkerNodeReusedForAnotherDevice = reused.length === 0;
+  out.reusedMarkerNodes = reused.map((entry) => `${entry.id} → ${entry.node.dataset.id}`);
   const unexpected = afterSwitch.filter((entry) => !EXPECTED(entry));
   out.onlyTheSwitchItselfAnimates = unexpected.length === 0;
   out.unexpectedAnimations = unexpected.map((entry) => `${entry.cls}:${entry.property}`);
@@ -135,5 +150,5 @@ const res = await page.evaluate(async () => {
     .filter((entry) => /op-leaf/.test(entry.cls)).length >= 1;
   return out;
 });
-checkAll(res, { unexpectedAnimations: [] });
+checkAll(res, { unexpectedAnimations: [], reusedMarkerNodes: [] });
 await finish(browser, res);
