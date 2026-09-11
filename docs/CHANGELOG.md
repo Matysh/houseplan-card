@@ -8,6 +8,13 @@
   are no longer printed
   ([#530](https://github.com/Matysh/houseplan-card/issues/530)).
 
+- Dragging the plan around is smooth again. Every frame of the gesture used to
+  redraw the entire plan from scratch instead of simply moving what was already
+  drawn, which on a high-refresh screen in Firefox turned panning into a slide
+  show. The plan now slides with the cursor and refreshes its content a few
+  times a second; the picture you end up with is exactly the same
+  ([#531](https://github.com/Matysh/houseplan-card/issues/531)).
+
 ## v1.74.0-beta.2 — 2026-09-11
 
 - A plan left over from the era of “rooms without walls” can be edited again.

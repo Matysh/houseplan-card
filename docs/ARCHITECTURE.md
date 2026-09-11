@@ -1914,6 +1914,36 @@ core; known-LQI and solid parent routes remain single strokes. Cache data, IEEE
 addresses and raw payloads are never persisted, logged, exported or admitted
 to support diagnostics.
 
+## Live viewport: a transform per frame, a `viewBox` on a budget (#531, 2026-09-11)
+
+Rewriting the `viewBox` attribute is not a move, it is a repaint: the whole SVG
+scene is re-rasterized. Doing it once per gesture frame is what made panning
+crawl on the owner's machine — the frame reached the screen in 200 ms and the
+refresh driver skipped 124–144 ticks per second marked "waiting for paint".
+
+So `paintLiveViewport` keeps an anchor: the frame whose `viewBox` is currently
+written into the DOM, and when it was written. Every gesture frame moves the
+scene nodes by the same projective transform (`liveLayerProjection`,
+`transform-origin: 0 0`) that already moved the HTML layers — a composited move,
+no repaint. The `viewBox` is rewritten only when `needsViewBoxRefresh` says so:
+`LIVE_VIEWBOX_REFRESH_MS` (100 ms) has passed, or the view shifted by
+`LIVE_VIEWBOX_REFRESH_SHIFT` (15 %) of its own size on either axis, or the scale
+changed by as much. The time budget covers ordinary dragging; the shift budget
+covers a flick, where the plan can travel half a screen before 100 ms is up and
+an empty band on the leading edge would become visible. Both are module
+constants, not settings.
+
+The two projections have different bases and must stay that way: scene nodes are
+projected from the anchor (what is drawn now), HTML layers from the last settled
+Lit frame (their content is positioned in percentages of that view). They land on
+the same current view, which is what keeps the #451 contract — a marker within
+one CSS pixel of its place in the scene — true on every frame of the gesture.
+
+Neither the attribute nor the style is written when the string is unchanged: an
+idle frame must leave the DOM byte-identical, or the settled raster shifts by a
+few colour levels and golden frames flap. `commitHouseplanViewport` still ends
+the gesture the same way — transforms removed, final `viewBox` forced in.
+
 ## The initial bundle carries English and Russian whole (#400, 2026-08-31)
 
 `en` and `ru` are synchronous dictionaries in the initial chunk; `de` and `fr`

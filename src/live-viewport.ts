@@ -15,6 +15,22 @@ interface LiveViewportState {
   painted: LiveViewportFrame | null;
   pending: LiveViewportFrame | null;
   raf: number;
+  anchor: LiveViewportAnchor | null;
+}
+
+/**
+ * Кадр, чей `viewBox` сейчас записан в сцену, и момент записи (#531).
+ *
+ * Перезапись `viewBox` — это инвалидация растеризации всего плана: слой нельзя
+ * сдвинуть, его надо нарисовать заново. Профиль владельца на панораме: краска
+ * заканчивается, и до композиции проходит 94 мс медианы при незагруженном GPU,
+ * а драйвер пропускает 124–144 тика в секунду с пометкой «ждём краску».
+ * Поэтому кадр жеста двигает сцену трансформом, а `viewBox` переписывается по
+ * бюджету — иначе на набегающем крае осталась бы пустая полоса.
+ */
+export interface LiveViewportAnchor {
+  frame: LiveViewportFrame;
+  at: number;
 }
 
 interface LiveViewportHost {
@@ -29,7 +45,7 @@ const states = new WeakMap<object, LiveViewportState>();
 const stateOf = (host: object): LiveViewportState => {
   let state = states.get(host);
   if (!state) {
-    state = { painted: null, pending: null, raf: 0 };
+    state = { painted: null, pending: null, raf: 0, anchor: null };
     states.set(host, state);
   }
   return state;
@@ -64,38 +80,106 @@ export const isIdentityLiveLayerProjection = (projection: LiveLayerProjection): 
   && projection.scaleX === 1
   && projection.scaleY === 1;
 
+/** Как часто сцена догоняет жест содержимым, а не сдвигом пикселей. */
+export const LIVE_VIEWBOX_REFRESH_MS = 100;
+/** Доля видимой области, после которой ждать бюджет времени уже поздно. */
+export const LIVE_VIEWBOX_REFRESH_SHIFT = 0.15;
+
+/**
+ * Пора ли записать новый `viewBox`. Два условия, оба нужны: по времени —
+ * обычное перетаскивание, по сдвигу — рывок, за который план уезжает на
+ * полэкрана раньше, чем истечёт бюджет времени.
+ */
+export function needsViewBoxRefresh(
+  anchor: LiveViewportAnchor, current: LiveViewportFrame, now: number,
+): boolean {
+  if (now - anchor.at >= LIVE_VIEWBOX_REFRESH_MS) return true;
+  const before = anchor.frame.view;
+  const after = current.view;
+  if (Math.abs(after.x - before.x) >= after.w * LIVE_VIEWBOX_REFRESH_SHIFT) return true;
+  if (Math.abs(after.y - before.y) >= after.h * LIVE_VIEWBOX_REFRESH_SHIFT) return true;
+  const scale = before.w / after.w;
+  return Math.abs(1 - scale) >= LIVE_VIEWBOX_REFRESH_SHIFT;
+}
+
 const finiteView = (view: LiveViewBox): boolean =>
   [view.x, view.y, view.w, view.h].every(Number.isFinite) && view.w > 0 && view.h > 0;
 
+const projectionText = (projection: LiveLayerProjection): string =>
+  `translate(${projection.translateXPercent}%,${projection.translateYPercent}%)`
+  + ` scale(${projection.scaleX},${projection.scaleY})`;
+
 const setLayerProjection = (
-  layer: HTMLElement,
+  layer: ElementCSSInlineStyle,
   projection: LiveLayerProjection | null,
 ): void => {
+  const style = layer.style;
   if (!projection) {
-    layer.style.removeProperty('transform');
-    layer.style.removeProperty('transform-origin');
-    layer.style.removeProperty('will-change');
+    // #531: снимать только то, что стоит. Лишняя запись в стиль — это
+    // инвалидация, а тихий кадр обязан оставлять DOM нетронутым.
+    if (style.transform) {
+      style.removeProperty('transform');
+      style.removeProperty('transform-origin');
+      style.removeProperty('will-change');
+    }
     return;
   }
-  layer.style.transformOrigin = '0 0';
-  layer.style.willChange = 'transform';
-  layer.style.transform = `translate(${projection.translateXPercent}%,${projection.translateYPercent}%) scale(${projection.scaleX},${projection.scaleY})`;
+  const text = projectionText(projection);
+  if (style.transform === text) return;
+  style.transformOrigin = '0 0';
+  style.willChange = 'transform';
+  style.transform = text;
 };
 
-/** One atomic DOM-only viewport paint; no Lit host update is involved. */
+/** Атрибут пишется только когда строка действительно другая (#531). */
+const setViewBox = (svg: SVGElement, text: string): void => {
+  if (svg.getAttribute('viewBox') !== text) svg.setAttribute('viewBox', text);
+};
+
+/**
+ * Один атомарный кадр живого вьюпорта (#451, #531).
+ *
+ * Каждый кадр сцена едет трансформом от своего якоря, а слои устройств и
+ * подписей — от последнего осевшего кадра Lit: базы у них разные, потому что
+ * содержимое слоёв спозиционировано в процентах осевшего вида. Новый `viewBox`
+ * пишется только когда наступил бюджет (`needsViewBoxRefresh`) либо когда
+ * вызывающий требует этого явно (терминальное примирение). Возвращается якорь,
+ * который после этого кадра действительно записан в DOM.
+ */
 export function paintLiveViewport(
   root: ParentNode,
   painted: LiveViewportFrame,
   current: LiveViewportFrame,
-): void {
-  if (!finiteView(painted.view) || !finiteView(current.view) || !finiteView(current.floor)) return;
-  const viewBox = liveViewBoxText(current.view);
-  const floorBox = liveViewBoxText(current.floor);
+  anchor?: LiveViewportAnchor | null,
+  options: { now?: number; force?: boolean } = {},
+): LiveViewportAnchor {
+  const now = options.now ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  const base: LiveViewportAnchor = anchor ?? { frame: painted, at: -Infinity };
+  if (!finiteView(painted.view) || !finiteView(current.view) || !finiteView(current.floor)) {
+    return base;
+  }
+  const refresh = options.force === true || !finiteView(base.frame.view)
+    || !finiteView(base.frame.floor) || needsViewBoxRefresh(base, current, now);
+  const next: LiveViewportAnchor = refresh ? { frame: current, at: now } : base;
+  if (refresh) {
+    const viewBox = liveViewBoxText(current.view);
+    const floorBox = liveViewBoxText(current.floor);
+    for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="camera"]')) {
+      setViewBox(svg, viewBox);
+    }
+    for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')) {
+      setViewBox(svg, floorBox);
+    }
+  }
+  // Сцена: от записанного якоря к текущему кадру. После перезаписи `viewBox`
+  // это тождество, и трансформ снимается в том же кадре.
+  const sceneCamera = liveLayerProjection(next.frame.view, current.view);
+  const sceneFloor = liveLayerProjection(next.frame.floor, current.floor);
   for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="camera"]')) {
-    svg.setAttribute('viewBox', viewBox);
+    setLayerProjection(svg, isIdentityLiveLayerProjection(sceneCamera) ? null : sceneCamera);
   }
   for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')) {
-    svg.setAttribute('viewBox', floorBox);
+    setLayerProjection(svg, isIdentityLiveLayerProjection(sceneFloor) ? null : sceneFloor);
   }
   const projection = liveLayerProjection(painted.view, current.view);
   for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
@@ -106,10 +190,13 @@ export function paintLiveViewport(
   }
   const badge = root.querySelector<HTMLElement>('[data-hp-live-zoom]');
   if (badge) {
-    badge.hidden = current.zoom <= 1;
+    const hidden = current.zoom <= 1;
+    if (badge.hidden !== hidden) badge.hidden = hidden;
     const value = badge.querySelector<HTMLElement>('[data-hp-live-zoom-value]');
-    if (value) value.textContent = `${Math.round(current.zoom * 100)}%`;
+    const text = `${Math.round(current.zoom * 100)}%`;
+    if (value && value.textContent !== text) value.textContent = text;
   }
+  return next;
 }
 
 const frameOf = (host: LiveViewportHost): LiveViewportFrame => {
@@ -126,7 +213,7 @@ export function scheduleHouseplanViewport(value: object, now = false): void {
     if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
     state.raf = 0; state.pending = null;
     if (!state.painted) state.painted = next;
-    paintLiveViewport(host.renderRoot, state.painted, next);
+    state.anchor = paintLiveViewport(host.renderRoot, state.painted, next, state.anchor);
     return;
   }
   state.pending = next;
@@ -138,7 +225,7 @@ export function scheduleHouseplanViewport(value: object, now = false): void {
     const root = host.renderRoot as ParentNode | undefined;
     if (!next || !root) return;
     if (!state.painted) state.painted = next;
-    paintLiveViewport(root, state.painted, next);
+    state.anchor = paintLiveViewport(root, state.painted, next, state.anchor);
   });
 }
 
@@ -155,7 +242,9 @@ export function commitHouseplanViewport(value: object): void {
   for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
     setLayerProjection(layer, null);
   }
-  paintLiveViewport(root, state.painted, state.painted);
+  // Осевший кадр: `viewBox` записывается принудительно, трансформы сцены
+  // снимаются вместе с ним — дальше кадр принадлежит Lit, а не живому пути.
+  state.anchor = paintLiveViewport(root, state.painted, state.painted, state.anchor, { force: true });
 }
 
 export function disposeHouseplanViewport(host: object): void {

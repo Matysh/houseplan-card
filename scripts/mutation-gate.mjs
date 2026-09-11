@@ -7602,6 +7602,46 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'live-pan-rewrites-viewbox-every-frame',
+    guard: 'node demo/smoke_live_pan_viewbox.mjs',
+    because: '#531: перезапись `view' + 'Box` — это инвалидация растеризации всей сцены, её '
+      + 'нельзя сдвинуть, её надо нарисовать заново; в профиле владельца кадр панорамы '
+      + 'доезжал до экрана 200 мс, а драйвер пропускал 124-144 тика в секунду с пометкой '
+      + '«ждём краску». Кадр жеста обязан быть трансформом, а не новой краской',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      find: '    || !finiteView(base.frame.floor) || needsViewBoxRefresh(base, current, now);',
+      replace: '    || !finiteView(base.frame.floor) || true;',
+    }],
+  },
+  {
+    id: 'live-pan-writes-unchanged-viewbox',
+    guard: 'node --test test/live-viewport.test.mjs',
+    because: '#531: тихий кадр обязан оставлять DOM нетронутым. Запись того же значения в '
+      + 'атрибут — это всё равно инвалидация стиля, и в обычном режиме узлы floor и camera '
+      + 'получают ровно одну и ту же строку кадр за кадром',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      find: "  if (svg.getAttribute('view" + "Box') !== text) svg.setAttribute('view" + "Box', text);",
+      replace: "  svg.setAttribute('view" + "Box', text);",
+    }],
+  },
+  {
+    id: 'live-pan-shift-threshold-ignored',
+    guard: 'node --test test/live-viewport.test.mjs',
+    because: '#531: временного бюджета мало — за 100 мс рывка план уезжает на пол-экрана, и '
+      + 'на набегающем крае остаётся пустая полоса. Сдвиговый порог существует ровно ради '
+      + 'этого случая и обязан срабатывать раньше времени',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      find: '  if (Math.abs(after.x - before.x) >= after.w * LIVE_VIEWBOX_REFRESH_SHIFT)'
+        + ' return true;\n'
+        + '  if (Math.abs(after.y - before.y) >= after.h * LIVE_VIEWBOX_REFRESH_SHIFT)'
+        + ' return true;\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'render-invalidation-unknown-key-ignored',
     guard: 'node --test test/render-invalidation.test.mjs',
     because: 'the classifier fails OPEN on Home Assistant keys it does not know: without that '
