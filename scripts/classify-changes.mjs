@@ -94,6 +94,20 @@ export function heavyGatesRequested({ eventName, headMessage, fullInput } = {}) 
   return hasReleaseTrailer(headMessage);
 }
 
+/**
+ * Нужны ли мутанты по диффу (#510). За 08–09.09 они съели 86 % job-минут
+ * Validate, потому что бежали на каждом промежуточном пуше и отменялись
+ * следующим. Место мутантов — кандидат: ревью-конвейер и слияние кандидата
+ * запускают Validate по кнопке с `mutants=true`, ночной прогон и PR берут
+ * полный набор, кандидат беты несёт трейлер `Release:`. Обычный push — нет.
+ */
+export function mutantsRequested({ eventName, headMessage, fullInput, mutantsInput } = {}) {
+  if (eventName === 'pull_request') return true;
+  if (eventName === 'schedule') return true;
+  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true' || String(mutantsInput) === 'true';
+  return hasReleaseTrailer(headMessage);
+}
+
 /** Трейлер `Release: vX.Y.Z` в конце сообщения коммита — признак кандидата. */
 export function hasReleaseTrailer(message) {
   return /^Release:\s*v?\d+\.\d+\.\d+\S*\s*$/m.test(String(message || ''));
@@ -119,6 +133,13 @@ if (invokedDirectly) {
       fullInput: process.env.FULL_INPUT,
     });
     process.stdout.write(`heavy=${heavy ? 'true' : 'false'}\n`);
+    const mutants = mutantsRequested({
+      eventName: process.env.EVENT_NAME,
+      headMessage: process.env.HEAD_MESSAGE,
+      fullInput: process.env.FULL_INPUT,
+      mutantsInput: process.env.MUTANTS_INPUT,
+    });
+    process.stdout.write(`mutants_requested=${mutants ? 'true' : 'false'}\n`);
   } else {
     const all = process.argv.includes('--all');
     const outputs = all ? classifyAll() : classifyChanges(readFileSync(0, 'utf8'));

@@ -180,7 +180,11 @@ def validate_wall_model_transition(config: dict, previous: dict | None) -> None:
     except (TypeError, ValueError):
         return  # CONFIG_SCHEMA owns malformed values.
     previous = previous or {}
-    if old_model >= 10 and new_model < 10 and any(
+    stored_drafts = any(
+        "room_drafts" in space for space in previous.get("spaces") or []
+        if isinstance(space, dict)
+    )
+    if old_model >= 10 and not stored_drafts and any(
         "room_drafts" in space for space in config.get("spaces") or []
         if isinstance(space, dict)
     ):
@@ -188,6 +192,15 @@ def validate_wall_model_transition(config: dict, previous: dict | None) -> None:
         # projection at all. The old catalogue guard therefore cannot see the
         # destructive downgrade, but v10 must never persist the removed
         # carrier again (#478 AC2).
+        #
+        # #529: the submitted model number is not the tell. A stale card
+        # echoes back the `model_version` it was given — the current one — so
+        # the old `new_model < 10` condition let exactly the outdated client
+        # through and the user met an unrelated "conflicting wall identifiers"
+        # instead of "update the card and reload the page". What identifies the
+        # stale writer is the carrier itself appearing over a stored plan that
+        # does not have it; legacy left in storage is not a stale writer and is
+        # healed by the migration instead (#529 K4).
         raise WallModelClientOutdatedError(
             f"stored model={old_model}; submitted legacy room_drafts model={new_model}"
         )
@@ -1903,7 +1916,11 @@ def _config_wall_segment_invariants(value: dict) -> dict:
         if model >= 9:
             if "open_spans" in space or any("open_to" in room for room in space.get("rooms", [])):
                 raise vol.Invalid("v9 config must not contain legacy open boundaries")
-        if model >= 10 and "room_drafts" in space:
+        # #529: пустой ключ данных не несёт и записи не стоит. Непустой
+        # остаётся отказом — это последняя линия против устаревшего клиента,
+        # и к ней человек приходит уже с понятным сообщением от сторожа
+        # переходов.
+        if model >= 10 and space.get("room_drafts"):
             raise vol.Invalid("v10 config must not contain room_drafts")
         segments = space.get("wall_segments")
         if segments is None:

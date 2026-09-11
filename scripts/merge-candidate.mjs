@@ -101,17 +101,20 @@ const sh = (cmd, args, opts = {}) => {
   return { status: r.status ?? 1, stdout: (r.stdout || '').trim(), stderr: (r.stderr || '').trim() };
 };
 
-export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now }) {
+export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now, exec = sh }) {
   const pushUrl = `https://x-access-token:${token}@github.com/${repo}`;
-  const git = (...args) => sh('git', args);
+  const git = (...args) => exec('git', args);
   const must = (r, what) => { if (r.status !== 0) throw new Error(`${what}: ${r.stderr || r.stdout}`); return r.stdout; };
   return {
     fetch: (...refs) => must(git('fetch', '-q', 'origin', ...refs), 'git fetch'),
     revParse: (ref) => must(git('rev-parse', ref), `rev-parse ${ref}`),
     mergeBase: (a, b) => must(git('merge-base', a, b), 'merge-base'),
     diffNames: (from, to, pathspec = []) => must(git('diff', '--name-only', from, to, '--', ...pathspec), 'diff').split('\n').filter(Boolean),
+    // Документы ревью — не часть патча (#516): кандидат несёт свой
+    // CODE-REVIEW-N-rK.md, материал — нет, и без pathspec их patch-id
+    // расходились на каждом сдвиге dev; `reviewedFresh` судит так же.
     patchId: (from, to) => {
-      const diff = must(git('diff', '--full-index', from, to), 'diff');
+      const diff = must(git('diff', '--full-index', from, to, '--', '.', ':!docs/reviews'), 'diff');
       const r = spawnSync('git', ['patch-id', '--stable'], { input: diff, encoding: 'utf8' });
       return (r.stdout || '').trim().split(' ')[0] || 'empty';
     },
@@ -127,12 +130,22 @@ export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) =
       if (/stale info|rejected|fetch first|lease/i.test(r.stderr)) return false;
       throw new Error(`git push ${ref}: ${r.stderr}`);
     },
-    waitValidate: async (sha) => {
+    // Мутанты по диффу бегут только по запросу (#510): кандидат после ребейза —
+    // новое дерево, поэтому слияние запускает Validate с мутантами само и ждёт
+    // именно этот dispatch-прогон; push-прогон на том же SHA их не содержит.
+    dispatchValidate: (ref) => {
+      const r = exec('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', 'mutants=true']);
+      if (r.status !== 0) throw new Error(`gh workflow run ${workflow}: ${r.stderr || r.stdout}`);
+    },
+    waitValidate: async (sha, { event = 'workflow_dispatch' } = {}) => {
       const started = now();
       let runId = null;
       while (now() - started < VALIDATE_TOTAL_MS) {
-        const r = sh('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', 'databaseId,status,conclusion,url', '--limit', '5']);
-        const runs = r.status === 0 && r.stdout ? JSON.parse(r.stdout) : [];
+        const r = exec('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', 'databaseId,status,conclusion,url,event', '--limit', '10']);
+        const all = r.status === 0 && r.stdout ? JSON.parse(r.stdout) : [];
+        // Отменённый прогон ничего не доказывает (#511): его заменил следующий
+        // dispatch на той же ветке — ждём его, а не красим кандидата.
+        const runs = all.filter((x) => (!event || x.event === event) && x.conclusion !== 'cancelled');
         const run = runs.find((x) => x.databaseId === runId) || runs[0];
         if (run) {
           runId = run.databaseId;
@@ -200,8 +213,10 @@ export async function mergeCandidate({ branch, material, issue, ops, maxAttempts
     tip = candidate;
     if (!patchIdEqual) return finish(decideMerge({ fresh: true, devMoved: true, patchIdEqual: false }), { candidate, devNow });
 
-    ops.log(`Validate на кандидате ${candidate.slice(0, 8)} — ждём`);
-    const { result, url } = await ops.waitValidate(candidate);
+    // мутанты по диффу — по запросу (#510): dispatch на ветке, где теперь стоит кандидат
+    ops.dispatchValidate(branch);
+    ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);
+    const { result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' });
     let decision = decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: result, attempt, maxAttempts });
     if (decision.action !== 'push') return finish(decision, { candidate, devNow, runUrl: url });
 

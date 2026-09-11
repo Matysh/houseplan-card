@@ -37,7 +37,7 @@ const res = await page.evaluate(async () => {
     if (message.type === 'houseplan/config/get') {
       // #397 AC3: the reconnect path reads BOTH answers, and a config that
       // differs clears the history for its own reason (`configChanged` in
-      // `_adoptStructuralResponses`). To isolate the layout question the
+      // `adoptStructuralResponses`, #500). To isolate the layout question the
       // fake server echoes the config the card already holds.
       return { config: structuredClone(c._serverCfg), rev: c._cfgRev };
     }
@@ -294,7 +294,7 @@ const res = await page.evaluate(async () => {
         placement: structuredClone(rawProbe) },
     });
     // #397 AC3: the reconnect path (`_loadFromServer` →
-    // `_adoptStructuralResponses`) is the OTHER reader of the same value: it
+    // `adoptAuthoritativeGated`, #500) is the OTHER reader of the same value: it
     // compares the stored `_layoutContentFingerprint` with the server answer
     // instead of recomputing it. It must be exercised right after a write,
     // before any reload has had a chance to align the two sides — otherwise

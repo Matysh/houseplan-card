@@ -122,3 +122,46 @@ test('#423 каждый page-benchmark обязан иметь вердикт и
     );
   }
 });
+
+// #521. Свидетель направляющих выравнивания был зелёным на сломанном коде,
+// потому что фабриковал состояние жеста: `c._deviceDrag = {…, moved: true}` и
+// `c._decorDraft = {…}` присваивались целиком. Присвоение с `oldValue == null`
+// живой путь не включает, поэтому проверялась осевая отрисовка — то есть путь,
+// которого при настоящем жесте не бывает. Проверка статическая и узкая: она
+// стоит на одном файле и на двух именах, зато закрывает ровно тот способ
+// обмануть её, который однажды уже сработал.
+test('свидетель направляющих ведёт жест, а не подставляет его состояние (#521)', () => {
+  const source = read('smoke_align_guides.mjs');
+  for (const state of ['_deviceDrag', '_decorDraft']) {
+    assert.doesNotMatch(source, new RegExp(`\\b${state}\\s*=[^=]`),
+      `smoke_align_guides.mjs: ${state} присваивается напрямую — жест обязан`
+      + ' создавать его сам, иначе смок снова проверит осевой путь (#521)');
+  }
+  assert.match(source, /dispatchEvent\(pe\('pointerdown'/,
+    'жест начинается настоящим pointerdown по элементу');
+  assert.match(source, /dispatchEvent\(pe\('pointermove'/,
+    'жест продолжается настоящими pointermove');
+  // Тишина перед жестом и нулевой счёт осевых кадров — часть свидетеля, а не
+  // украшение: без них сломанный код зеленеет на кадрах оседания `_hdrH`.
+  assert.match(source, /const quiet = async \(\) =>/);
+  assert.match(source, /ZeroSettledRenders/);
+});
+
+// #525. Карточка живёт в shadow root, и `document.getAnimations()` в неё не
+// заходит: на сломанном коде документный вызов возвращал пустой список, пока
+// створка двери честно доигрывала чужой переход. Свидетель обязан считать
+// поэлементно, обходя вложенные теневые деревья, — иначе он зелен всегда.
+test('свидетель переходов при переключении меряет поэлементно (#525)', () => {
+  const source = read('smoke_space_switch_transitions.mjs');
+  // Ловушка названа в шапке смока словами — упоминание в комментарии это не
+  // вызов; проверяется код, а не текст о нём.
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.doesNotMatch(code, /document\.getAnimations\(\)/,
+    'smoke_space_switch_transitions.mjs: документный getAnimations() пуст даже на'
+    + ' сломанном коде — считать надо по узлам внутри renderRoot (#525)');
+  assert.match(code, /element\.getAnimations\(\)/);
+  assert.match(code, /element\.shadowRoot\) walk\(element\.shadowRoot\)/,
+    'обход обязан заходить во вложенные shadow root');
+  assert.match(code, /_pickSpace/, 'переключение делается штатным путём');
+});
+

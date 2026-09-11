@@ -7,6 +7,7 @@ import {
   attemptFromRounds, blockingFromDocs, isBlockingVerdict, reviewCounters, reviewRoundsFromFiles, verdictDeclaration,
   commentCounters, stageVerdictComments,
   anchorTreeFrom, anchorVerdictFrom, reusableGreenVerdict,
+  anchorIssueBodyFrom, issueBodyChanged, issueBodyDigest, normalizeIssueBody,
 } from '../scripts/review-doc-guard.mjs';
 
 // #365. 28.08 шаг публикации ревью-дока запушил в dev коммит bb2919f с тридцатью
@@ -600,4 +601,145 @@ test('конвейер: зелёный вердикт применяется п�
   assert.match(decide, /if \[ "\$REUSE" = "true" \]; then\n\s+(#[^\n]*\n\s+)*verdict=green; high=0/);
   // Ревьюер привязан к SHA материала — сам подтягивать новее не должен.
   assert.match(workflow, /Материал ревью — ровно\s+`\$\{\{ steps\.material\.outputs\.sha \}\}`/);
+});
+
+test('#510 AC2: конвейер запускает Validate с мутантами на материале и не ревьюит красный', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const at = (marker) => { const i = workflow.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
+  const material = at('      - name: Зафиксировать SHA материала ревью\n');
+  const reuse = at('      - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"\n');
+  const gate = at('      - name: Validate с мутантами на материале\n');
+  assert.ok(material < reuse && reuse < gate, 'gate читает steps.reuse.outputs — стоит после шага reuse (ревью ТЗ r1)');
+  const back = at('      - name: Validate красный — вернуть автору без ревью\n');
+  const deps = at('      - name: Установить зависимости\n');
+  const review = at('      - name: Review\n');
+  assert.ok(material < gate && gate < back && back < deps && deps < review, 'гейт стоит после фиксации материала и до установки зависимостей/ревью');
+  const gateStep = workflow.slice(gate, back);
+  assert.match(gateStep, /node scripts\/validate-gate\.mjs --repo="\$\{\{ github\.repository \}\}" --ref="\$BRANCH" --sha="\$SHA"/);
+  assert.match(gateStep, /if \[ "\$STAGE" != "code" \] \|\| \[ "\$REUSE" = "true" \]/, 'этап spec и reuse гейт не проходят');
+  assert.match(gateStep, /SHA: \$\{\{ steps\.material\.outputs\.sha \}\}/, 'проверяется именно материал');
+  // skip-ветка (spec/reuse) даёт proceed=true: ревью идёт, возврата S7→S6 нет (ревью ТЗ r2)
+  assert.match(gateStep, /\{ echo 'proceed=true'; echo 'result=skipped'; \}/, 'skipped = proceed');
+  assert.doesNotMatch(workflow.slice(back), /if:[^\n]*steps\.gate\.outputs\.result/, 'условия шагов — только по proceed, result идёт в текст комментария');
+  const backStep = workflow.slice(back, deps);
+  assert.match(backStep, /if: steps\.rebase\.outputs\.conflict != 'true' && steps\.gate\.outputs\.proceed != 'true'/);
+  assert.match(backStep, /--add-label S6-in-progress --remove-label S7-code-review/);
+  assert.match(backStep, /цикл ревью не израсходован/);
+  // всё, что после гейта, условно по proceed — включая перестановку метки и слияние
+  const after = workflow.slice(deps);
+  assert.doesNotMatch(after, /if: steps\.rebase\.outputs\.conflict != 'true'/, 'после гейта нет шагов, условных только по конфликту');
+  for (const name of ['Установить зависимости', 'Review', 'Решение по вердикту', 'Слить ветку в dev', 'Переставить метку']) {
+    const i = at(`      - name: ${name}\n`);
+    const chunk = workflow.slice(i, i + 400);
+    assert.match(chunk, /if: (needs\.guard\.outputs\.stage == 'code' && )?steps\.(gate\.outputs\.proceed == 'true'|decide\.outputs\.green == 'true')/, `${name}: условие по proceed/зелёному`);
+  }
+});
+
+test('#515: якоря материала снимаются ПОСЛЕ ребейза конвейером и публикуются из шага material', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const at = (marker) => { const i = workflow.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
+  const rebase = at('      - name: Привести ветку к dev\n');
+  const material = at('      - name: Зафиксировать SHA материала ревью\n');
+  const reuse = at('      - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"\n');
+  assert.ok(rebase < material && material < reuse, 'material стоит после ребейза и до reuse');
+  const materialStep = workflow.slice(material, reuse);
+  assert.match(materialStep, /echo "tree=\$\(git rev-parse 'HEAD\^\{tree\}'\)" >> "\$GITHUB_OUTPUT"/, 'дерево — из шага material');
+  assert.match(materialStep, /echo "specs=\$specs" >> "\$GITHUB_OUTPUT"/, 'ТЗ — из шага material');
+  const publish = at('      - name: Опубликовать документ ревью\n');
+  const publishStep = workflow.slice(publish, at('      - name: "Материал раунда воспроизводим (#413)"\n'));
+  for (const name of ['SHA', 'TREE', 'SPECS']) {
+    assert.match(publishStep, new RegExp(`MATERIAL_${name}: \\$\\{\\{ steps\\.material\\.outputs\\.${name.toLowerCase()} \\}\\}`), `MATERIAL_${name} из material`);
+  }
+  // до-ребейзные якоря из шага branch никем не читаются: после force-push они мертвы (#508 r1–r3)
+  assert.doesNotMatch(workflow, /steps\.branch\.outputs\.(sha|tree|specs)/, 'якоря из шага branch — осиротевшие после ребейза');
+});
+
+// --- ТЗ живёт в теле issue: хеш тела как якорь материала (#517) --------------
+
+const BODY_A = issueBodyDigest('## ТЗ\n\n- AC1. Как было');
+const BODY_B = issueBodyDigest('## ТЗ\n\n- AC1. Как стало');
+
+test('#517 AC1: нормализация тела гасит правки, которых в тексте нет', () => {
+  const canonical = '## ТЗ\n\n- AC1. Строка\n- AC2. Вторая';
+  assert.equal(normalizeIssueBody('## ТЗ\r\n\r\n- AC1. Строка  \r\n- AC2. Вторая\n\n\n'), canonical);
+  assert.equal(issueBodyDigest('## ТЗ\r\n\r\n- AC1. Строка  \n- AC2. Вторая'), issueBodyDigest(canonical));
+  // Содержательный пробел внутри строки значим: в ТЗ есть таблицы и код.
+  assert.notEqual(issueBodyDigest('| AC1 | текст |'), issueBodyDigest('| AC1 |  текст |'));
+  assert.match(BODY_A, /^[0-9a-f]{64}$/);
+  assert.notEqual(BODY_A, BODY_B);
+});
+
+test('#517 AC1: блок якорей несёт хеш тела и читается обратно', () => {
+  const block = materialAnchorBlock({ tree: TREE_A, issueBody: BODY_A, verdict: 'green', high: 0 });
+  assert.match(block, new RegExp(`- Тело issue: \`${BODY_A}\``));
+  assert.equal(anchorIssueBodyFrom(block), BODY_A);
+  // Старые документы без строки читаются как раньше, а не как «хеш пустой».
+  assert.equal(anchorIssueBodyFrom(materialAnchorBlock({ tree: TREE_A })), null);
+  assert.doesNotMatch(materialAnchorBlock({ tree: TREE_A }), /Тело issue/);
+  // Проза вне машинного блока записью не считается.
+  assert.equal(anchorIssueBodyFrom(`Тело issue: \`${BODY_A}\`\nбез маркера`), null);
+  // Ветки задачи нет, но тело есть — материал воспроизводим, отговорки нет.
+  assert.doesNotMatch(materialAnchorBlock({ issueBody: BODY_A }), /Якоря снять не удалось/);
+  assert.match(materialAnchorBlock({}), /Якоря снять не удалось/);
+});
+
+test('#517 AC2: правка тела после зелёного ревью ТЗ — находка; неизменённое молчит', () => {
+  const green = docWith('SPEC-REVIEW-9-r2.md', { tree: TREE_A, verdict: 'green', high: 0, issueBody: BODY_A });
+  const yellow = docWith('SPEC-REVIEW-9-r1.md', { tree: TREE_B, verdict: 'yellow', high: 0, issueBody: BODY_B });
+  assert.equal(issueBodyChanged([yellow, green], BODY_A), null, 'текст тот же — молчим');
+  const changed = issueBodyChanged([yellow, green], BODY_B);
+  assert.equal(changed.doc, 'SPEC-REVIEW-9-r2.md');
+  assert.equal(changed.recorded, BODY_A);
+  assert.equal(changed.current, BODY_B);
+  // Судится последний ЗЕЛЁНЫЙ, а не последний вообще.
+  const red = docWith('SPEC-REVIEW-9-r3.md', { tree: TREE_A, verdict: 'red', high: 1, issueBody: BODY_B });
+  assert.equal(issueBodyChanged([green, red], BODY_A), null);
+  // Задачи до перехода: зелёного документа нет либо в нём нет записи — не находка.
+  assert.equal(issueBodyChanged([yellow], BODY_B), null);
+  assert.equal(issueBodyChanged([docWith('SPEC-REVIEW-9-r1.md', { tree: TREE_A, verdict: 'green', high: 0 })], BODY_A), null);
+  assert.equal(issueBodyChanged([green], ''), null, 'хеша нет — сравнивать не с чем');
+});
+
+test('#517 AC6: reuse не применяет зелёный вердикт, если тело issue изменилось', () => {
+  const green = docWith('CODE-REVIEW-9-r2.md', { tree: TREE_A, verdict: 'green', high: 0, issueBody: BODY_A });
+  assert.ok(reusableGreenVerdict([green], () => false, BODY_A), 'тело то же — вердикт применим');
+  assert.equal(reusableGreenVerdict([green], () => false, BODY_B), null, 'тело менялось — нужен разбор');
+  // Документ без записи (весь бэклог до перехода) судится по дереву, как раньше.
+  const legacy = docWith('CODE-REVIEW-9-r2.md', { tree: TREE_A, verdict: 'green', high: 0 });
+  assert.ok(reusableGreenVerdict([legacy], () => false, BODY_B));
+  assert.ok(reusableGreenVerdict([green], () => false), 'хеш не передан — прежнее поведение');
+});
+
+test('#517: конвейер снимает хеш тела на материале и передаёт его в якоря, reuse и ревьюеру', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const at = (marker) => { const i = workflow.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
+  const material = at('      - name: Зафиксировать SHA материала ревью\n');
+  const reuse = at('      - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"\n');
+  const specBody = at('      - name: "ТЗ менялось после зелёного ревью ТЗ (#517)"\n');
+  const review = at('      - name: Review\n');
+  assert.ok(material < reuse && reuse < specBody && specBody < review, 'хеш снят до reuse, находка — до модели');
+  const materialStep = workflow.slice(material, reuse);
+  assert.match(materialStep, /gh issue view "\$NUM" --repo "\$REPO" --json body/, 'тело читается в прогоне, не из события');
+  assert.match(materialStep, /echo "issue_body=\$digest" >> "\$GITHUB_OUTPUT"/);
+  assert.match(workflow.slice(reuse, specBody), /--issue-body="\$\{ISSUE_BODY\}"/, 'reuse учитывает тело (AC6)');
+  assert.match(workflow, /--issue-body="\$MATERIAL_ISSUE_BODY"/, 'якорь попадает в документ');
+  assert.match(workflow, /steps\.spec_body\.outputs\.changed == 'true' &&/, 'находка уходит в промпт ревьюера');
+});
+
+test('#517 AC4: документы процесса не требуют файла ТЗ, индекс docs/specs удалён', () => {
+  const read = (rel) => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
+  const process = read('PROCESS.md');
+  // Цепочка §7.1 называет тело issue, а не файл.
+  assert.match(process, /↔ ТЗ\s+тело issue, раздел `## ТЗ`/);
+  assert.doesNotMatch(process, /Артефакт:\*\* `docs\/specs\//, 'файл ТЗ больше не артефакт этапа S3');
+  // Гейт судит текст, а не наличие файла.
+  assert.match(process, /у класса A есть ТЗ: раздел `## ТЗ` или хотя бы один `AC1`/);
+  const agents = read('AGENTS.md');
+  assert.match(agents, /spec lives in the \*\*issue body\*\*/);
+  assert.match(agents, /`docs\/specs\/` is an archive/);
+  // README архива: ни одной строки индекса «| [#NN](…) | […](….md) |».
+  const readme = read('docs/specs/README.md');
+  assert.match(readme, /архив/i);
+  assert.equal((readme.match(/^\| \[#\d+\]/gm) || []).length, 0, 'таблица-индекс удалена');
+  assert.doesNotMatch(readme, /Статус ТЗ/);
 });

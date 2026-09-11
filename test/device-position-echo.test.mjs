@@ -29,7 +29,8 @@ test('#397 AC1: the update branch stores what it sends, before sending it', () =
   assert.ok(branch, 'the persist method must be found');
   const write = branch.indexOf('this._layout = { ...this._layout, [deviceId]: pos }');
   const send = branch.indexOf("type: 'houseplan/layout/update'");
-  const fingerprint = branch.indexOf('this._layoutContentFingerprint = contentFingerprint(this._layout)');
+  // #500: the fingerprint is re-paired by the identity owner, not assigned by hand.
+  const fingerprint = branch.indexOf('this._adoption.refreshLayoutFingerprint()');
   assert.ok(write > 0, 'the canonical position must be written back into _layout');
   assert.ok(write < send,
     'the local copy is updated BEFORE the wire, so a reload racing the answer '
@@ -41,7 +42,7 @@ test('#397 AC1: the update branch stores what it sends, before sending it', () =
 test('#397 AC5a: the delete branch removes the key before the fingerprint', () => {
   const method = CARD.slice(CARD.indexOf('private async _persistDevicePlacement'));
   const apply = method.indexOf('applyDevicePlacement(this._layout, deviceId, placement)');
-  const fingerprint = method.indexOf('this._layoutContentFingerprint = contentFingerprint(this._layout)');
+  const fingerprint = method.indexOf('this._adoption.refreshLayoutFingerprint()');
   assert.ok(apply > 0 && apply < fingerprint,
     'both branches mutate _layout through applyDevicePlacement before the '
     + 'fingerprint is recorded — deletion removes the key, not replaces a value');

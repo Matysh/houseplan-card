@@ -169,6 +169,11 @@ import type {
 } from './types';
 import type { RadarEditorDraft } from './radar-editor';
 import {
+  adoptAuthoritativeGated, createConfigAdoption,
+  type ConfigAdoption, type ConfigAdoptionHostPort, type GatedAdoptionInput, type GatedAdoptionResult,
+} from './config-adoption';
+import type { OptimisticAttempt } from './serialized-write-queue';
+import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
   directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
   geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
@@ -409,8 +414,9 @@ import {
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 import { SummaryRuntimeSlot, summaryRuntimeLoader } from './summary-runtime-loader';
+import { displayVersion } from './card-version';
 
-const CARD_VERSION = '1.73.0';
+const CARD_VERSION = '1.74.0';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
@@ -903,24 +909,43 @@ export class HouseplanCard extends LitElement {
   private _config?: CardConfig;
 
   private _space = 'f1';
-  private _layout: DeviceLayout = {};
+  /**
+   * #500: structural identity (config/layout with revision and fingerprint)
+   * has one owner. The accessors below are read delegates; bodies may be
+   * staged locally before a write (allowlisted in
+   * test/config-adoption-ownership.test.mjs), revisions and fingerprints
+   * change only through `_adoption`.
+   */
+  public readonly _adoption: ConfigAdoption = createConfigAdoption(
+    // A replaced body is the reactive event `willUpdate` keys the geometry
+    // epoch on (`changed.has('_serverCfg')`), exactly as the Lit accessor did.
+    (field, previous) => this.requestUpdate(field, previous),
+  );
+  private get _layout(): DeviceLayout { return this._adoption.layout; }
+  private set _layout(layout: DeviceLayout) { this._adoption.stageLocalLayout(layout); }
+  // Setters below exist for the browser harness only (smokes seed revisions).
+  private get _layoutRev(): number { return this._adoption.layoutRev; }
+  private set _layoutRev(layoutRev: number) { this._adoption.seedIdentity({ layoutRev }); }
+  private get _layoutContentFingerprint(): string { return this._adoption.layoutFingerprint; }
+  private set _layoutContentFingerprint(layoutFingerprint: string) { this._adoption.seedIdentity({ layoutFingerprint }); }
   private _serverStorage = false;
   private _loadOk = false;
   /** null until config/get answers; then mirrors auth.may_write for this user. */
   private _serverCanWrite: boolean | null = null;
   private _loading = false;
   private _loadTries = 0;
-  private _serverCfg: ServerConfig | null = null;
-  private _cfgRev = 0;
-  private _cfgContentFingerprint = '';
+  private get _serverCfg(): ServerConfig | null { return this._adoption.config; }
+  private set _serverCfg(config: ServerConfig | null) { this._adoption.stageLocalConfig(config); }
+  private get _cfgRev(): number { return this._adoption.configRev; }
+  private set _cfgRev(configRev: number) { this._adoption.seedIdentity({ configRev }); }
+  private get _cfgContentFingerprint(): string { return this._adoption.configFingerprint; }
+  private set _cfgContentFingerprint(configFingerprint: string) { this._adoption.seedIdentity({ configFingerprint }); }
   private _unsubCfg: (() => void) | null = null;
   private _unsubLayout: (() => void) | null = null;
   private _unsubVirtual: (() => void) | null = null;
   private _liveSyncAttempt: Promise<void> | null = null;
   private _liveSyncGeneration = 0;
   private _liveSyncConnection: any = null;
-  private _layoutRev = 0;
-  private _layoutContentFingerprint = '';
   private _virtualLights: VirtualLightSnapshot = virtualLightSnapshot(null);
   /** One-deep server snapshot; invalidated by the first later plan edit. */
   private _canOptimizeUndo = false;
@@ -2127,7 +2152,7 @@ export class HouseplanCard extends LitElement {
   private readonly _versionRecovery = createCardVersionRecovery(this as unknown as VersionRecoveryCardPort);
   private _syncVersionRecovery(): void {
     this._versionRecovery.update({
-      frontendVersion: CARD_VERSION,
+      frontendVersion: displayVersion(CARD_VERSION),
       backendVersion: this._haIntegrationVersion,
       kiosk: this._config?.kiosk === true,
       reducedMotion: this._reducedMotion,
@@ -2512,6 +2537,28 @@ export class HouseplanCard extends LitElement {
   private _holdTimer?: number;
   private _holdFired = false;
 
+  /**
+   * #520: `_serverCfg` и `_layout` здесь НЕ объявляются, хотя они реактивны.
+   *
+   * С #500 их тела принадлежат `_adoption`, а карточка видит их через
+   * собственные аксессоры прототипа. Объявление сделало бы вторым владельцем
+   * реактивности сам Lit: он ставит такому свойству флаг `wrapped`
+   * (`createProperty`) и на ПЕРВОМ обновлении принудительно кладёт его в
+   * `changedProperties` со старым значением `undefined` — даже если никто
+   * ничего не присваивал. Сегодня этот лишний вход в ветку `willUpdate`
+   * безвреден ровно по совпадению: на первом обновлении и тело, и
+   * `_cfgEpochPreservedConfig` равны `null`, поэтому `preserveGeometry`
+   * истинно и эпоха не растёт. Совпадение — не контракт: любой ранний
+   * приход конфига (тёплый кеш) превращает его в лишний бамп эпохи.
+   *
+   * Реактивность даёт `_adoption` через `onBodyReplaced` → `requestUpdate`:
+   * `requestUpdate` не требует объявления, `getPropertyOptions` возвращает
+   * умолчание, и `changed.has('_serverCfg')` работает как прежде.
+   * `noAccessor: true` не помогает — `wrapped` ставится до его проверки.
+   *
+   * Регрессию первого кадра из #520 чинило не это, а атомарность усыновления
+   * (`afterAdopt` в `_loadFromServer`); см. комментарий там.
+   */
   static properties = {
     _tabDrag: { state: true },
     _hdrH: { state: true },
@@ -2528,11 +2575,9 @@ export class HouseplanCard extends LitElement {
     narrow: { attribute: false },
     _config: { state: true },
     _space: { state: true },
-    _layout: { state: true },
     _devices: { state: true },
     _selId: { state: true },
     _toast: { state: true },
-    _serverCfg: { state: true },
     _mode: { state: true },
     _tool: { state: true },
     _wallDialog: { state: true },
@@ -3203,15 +3248,9 @@ export class HouseplanCard extends LitElement {
     // right away, without waiting for the server response — fresh data will load in the background.
     try {
       const c = JSON.parse(localStorage.getItem(LS_CFG) || 'null');
-      if (c && c.config && Array.isArray(c.config.spaces)) {
-        this._serverCfg = c.config;
+      if (this._adoption.restoreCached(c)) {
         this._seedDecorStyle(this._serverCfg);
         this._cfgEpoch++;
-        this._cfgRev = c.rev || 0;
-        this._cfgContentFingerprint = c.config_fingerprint || contentFingerprint(c.config);
-        this._layout = c.layout || {};
-        this._layoutRev = c.layout_rev || 0;
-        this._layoutContentFingerprint = c.layout_fingerprint || contentFingerprint(this._layout);
         this._virtualLights = virtualLightSnapshot(c.virtual_lights, this._cfgRev);
         this._serverStorage = true;
       }
@@ -3632,22 +3671,13 @@ export class HouseplanCard extends LitElement {
   private _cacheSnapshot(): void {
     if (!this._serverCfg) return;
     try {
-      // Local edits may mutate nested config/layout before the debounced write;
-      // keep the accepted identity paired with exactly what is cached.
-      this._cfgContentFingerprint = contentFingerprint(this._serverCfg);
-      this._layoutContentFingerprint = contentFingerprint(this._layout);
       this._virtualLights = reconcileVirtualLightSnapshot(
         this._virtualLights, this._serverCfg, this._cfgRev,
       );
-      localStorage.setItem(LS_CFG, JSON.stringify({
-        config: this._serverCfg,
-        rev: this._cfgRev,
-        config_fingerprint: this._cfgContentFingerprint,
-        layout: this._layout,
-        layout_rev: this._layoutRev,
-        layout_fingerprint: this._layoutContentFingerprint,
-        virtual_lights: virtualLightWire(this._virtualLights),
-      }));
+      // Local edits may mutate nested config/layout before the debounced write;
+      // `snapshot()` re-pairs the accepted identity with exactly what is cached.
+      const snapshot = this._adoption.snapshot(virtualLightWire(this._virtualLights));
+      if (snapshot) localStorage.setItem(LS_CFG, JSON.stringify(snapshot));
     } catch {
       /* ignore */
     }
@@ -3729,9 +3759,9 @@ export class HouseplanCard extends LitElement {
     const size = stage ? [stage.clientWidth, stage.clientHeight] : [0, 0];
     return visualFrameFingerprint([
       this._cfgRev,
-      this._cfgContentFingerprint || contentFingerprint(this._serverCfg),
+      this._adoption.currentConfigFingerprint(),
       this._layoutRev,
-      this._layoutContentFingerprint || contentFingerprint(this._layout),
+      this._adoption.currentLayoutFingerprint(),
       this._space,
       this._mode,
       this._view,
@@ -4195,11 +4225,6 @@ export class HouseplanCard extends LitElement {
 
   // ================= server: config + layout =================
 
-  /**
-   * Adopt one structural WS candidate by revision + actual content identity.
-   * Equal payloads keep their authoritative object references and geometry
-   * epoch; equal revisions never hide changed content (#73 §9.4).
-   */
   private _adoptConfigCapabilities(response: unknown): void {
     adoptCardConfigCapabilities(this as unknown as ConfigCapabilitiesCardPort, response);
   }
@@ -4227,72 +4252,19 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  private _adoptStructuralResponses(
-    cfgResp: any,
-    layResp?: any,
-    layoutOverride?: Record<string, any>,
-  ): { configChanged: boolean; layoutChanged: boolean } {
-    const rawConfig = cfgResp?.config;
-    const nextConfig = rawConfig && Array.isArray(rawConfig.spaces)
-      ? rawConfig as ServerConfig : null;
-    const nextCfgFingerprint = contentFingerprint(nextConfig);
-    const configChanged = nextCfgFingerprint !== (this._cfgContentFingerprint
-      || contentFingerprint(this._serverCfg));
-    if (configChanged) {
-      // A genuinely different baseline invalidates local geometry undo. A
-      // reconnect echo with identical content deliberately does not.
-      this._geometryHistory.clear();
-      this._devicePositionHistory.clear();
-      this._cancelDeviceDrag();
-      this._pendingPhysicalWrites.clear();
-      this._clearRoomFocus(true);
-      // #82: a new structural baseline owns the viewport. Freeze the last
-      // painted camera frame before replacing geometry so an obsolete target
-      // cannot settle against the new content frame.
-      this._cancelCameraTransition(false);
-      if (this._serverCfg) this._clearGeometryGesture();
-      this._serverCfg = nextConfig;
-      this._seedDecorStyle(this._serverCfg);
-      this._cfgContentFingerprint = nextCfgFingerprint;
-    }
-    this._cfgRev = cfgResp?.rev ?? this._cfgRev;
-    if (cfgResp && ('virtual_lights' in cfgResp || 'config' in cfgResp)) {
-      const nextVirtualLights = adoptVirtualLightServerSnapshot(
-        this._virtualLights,
-        cfgResp.virtual_lights,
-        this._cfgRev,
-        'virtual_lights' in cfgResp,
-      );
-      if (virtualLightFingerprint(nextVirtualLights)
-          !== virtualLightFingerprint(this._virtualLights)) {
-        this._virtualLights = nextVirtualLights;
-        this._capturedSnapshotVirtual = '';
-      }
-    }
+  /**
+   * #500: the one adoption entry. Compare → backdrop readiness gate →
+   * continuity candidate → adopt → profile tail; see `adoptAuthoritativeGated`.
+   */
+  public _adoptAuthoritative(input: GatedAdoptionInput): Promise<GatedAdoptionResult> {
+    return adoptAuthoritativeGated(this as unknown as ConfigAdoptionHostPort, input);
+  }
 
-    let layoutChanged = false;
-    if (layResp !== undefined || layoutOverride !== undefined) {
-      const nextLayout = layoutOverride ?? layResp?.layout ?? {};
-      const nextLayoutFingerprint = contentFingerprint(nextLayout);
-      layoutChanged = nextLayoutFingerprint !== (this._layoutContentFingerprint
-        || contentFingerprint(this._layout));
-      if (layoutChanged) {
-        this._cancelCameraTransition(false);
-        this._devicePositionHistory.clear();
-        this._cancelDeviceDrag();
-        this._layout = nextLayout;
-        this._layoutContentFingerprint = nextLayoutFingerprint;
-      }
-      this._layoutRev = layResp?.rev ?? this._layoutRev;
-    }
-
-    this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
-    this._adoptConfigCapabilities(cfgResp);
-    this._undoKind = (cfgResp?.undo_kind || layResp?.undo_kind || null) as any;
-    if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
-    if (configChanged) this._continuity.note('config-candidate', { configRev: this._cfgRev });
-    if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: this._layoutRev });
-    return { configChanged, layoutChanged };
+  /** #314 via #500: undo only the exact failed candidate, then repaint. */
+  public _rollbackOptimistic(attempt: OptimisticAttempt<ServerConfig>): boolean {
+    const rolledBack = this._adoption.rollbackOptimistic(attempt);
+    if (rolledBack) this.requestUpdate();
+    return rolledBack;
   }
 
   /** Resume only a same-route warm editor intent after permissions arrive.
@@ -4316,48 +4288,47 @@ export class HouseplanCard extends LitElement {
     this._loadTries++;
     const visibleSpace = this._space;
     const hadViewport = !!this._view;
+    // #520: whoever rebuilds the devices for this attempt does it exactly
+    // once. On the adopted path that is `afterAdopt`, inside the adoption
+    // task; the tail below only covers the attempts that never adopted.
+    let devicesRebuilt = false;
+    const rebuildDevices = (): void => {
+      devicesRebuilt = true;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
+    };
     try {
       const [cfgResp, layResp] = await Promise.all([
         this._getAuthoritativeConfig(),
         this.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
-      const candidateConfig = cfgResp?.config && Array.isArray(cfgResp.config.spaces)
-        ? cfgResp.config : null;
-      const structuralChanged = contentFingerprint(candidateConfig)
-          !== (this._cfgContentFingerprint || contentFingerprint(this._serverCfg))
-        || contentFingerprint(layResp?.layout ?? {})
-          !== (this._layoutContentFingerprint || contentFingerprint(this._layout));
-      if (structuralChanged) {
-        const assetReady = await this._signer.prepareImage(
-          this.hass, this._candidateBackdrop(candidateConfig),
-        );
-        if (!assetReady) {
-          this._continuity.note('asset-failed');
-          this._scheduleLoadRetry(true);
-          return;
-        }
-      }
-      if (structuralChanged && this._continuity.hasCompleteFrame
-          && this._continuity.state === 'steady') {
-        this._beginContinuityCandidate('structural-response', true);
-      }
-      this._connectionWasLost = false;
-      this._serverStorage = true;
-      // absent can_write = older backend / demo stub → keep null (legacy admin fallback)
-      if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
-      this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
-      this._adoptStructuralResponses(cfgResp, layResp);
-      void this._syncDecorAssets(candidateConfig).catch(() => undefined);
-      this._adoptInitialSpace(this._model, true);
-      this._resumePendingNavMode();
-      this._cacheSnapshot();
-      // DEV-B703-03: a warm re-mount already holds the exact viewport of the
-      // instance that was thrown away; the centred restore here IS the
-      // reported jerk. Only a genuine navigation (the hash/nav landed us on
-      // another space) still needs it.
-      if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
-      else if (!hadViewport || this._space !== visibleSpace) this._restoreZoom();
-      this._loadOk = true;
+      const adopted = await this._adoptAuthoritative({
+        cfgResp, layResp, reason: 'structural-response', profile: 'reload',
+        beforeAdopt: () => {
+          this._connectionWasLost = false;
+          this._serverStorage = true;
+        },
+        // #520: everything that touches the viewport, the readiness flag or
+        // the devices belongs in the same task as the adoption. Seeding
+        // devices writes the config back (new devices, hidden filter), and
+        // after the `await` Lit has already painted the adopted body — the
+        // writes then cost a second config epoch, a second model build and a
+        // second paint of a 60-room house, ~550 ms of the first stable frame.
+        afterAdopt: () => {
+          // DEV-B703-03: a warm re-mount already holds the exact viewport of
+          // the instance that was thrown away; the centred restore here IS
+          // the reported jerk. Only a genuine navigation (the hash/nav landed
+          // us on another space) still needs it.
+          if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
+          else if (!hadViewport || this._space !== visibleSpace) this._restoreZoom();
+          // `_syncNewDevices` and `_syncAreaRelocations` refuse to write
+          // before the authoritative snapshot is usable, and it is usable
+          // exactly here — the bodies are adopted.
+          this._loadOk = true;
+          rebuildDevices();
+        },
+      });
+      if (adopted.status !== 'adopted') return;
       // Trails and event subscriptions enrich an already complete snapshot.
       // A read-only HA session may reject these; that must never roll the
       // accepted config back into the mandatory load catch.
@@ -4392,8 +4363,7 @@ export class HouseplanCard extends LitElement {
       // failure. Leaving it false on an early return stranded the controller
       // before its own two-second barrier could ever start.
       this._continuityDataReady = true;
-      this._regSignature = '';
-      this._maybeRebuildDevices();
+      if (!devicesRebuilt) rebuildDevices();
       this.requestUpdate();
     }
   }
@@ -4511,26 +4481,13 @@ export class HouseplanCard extends LitElement {
     this._beginContinuityCandidate('config-reload', false);
     try {
       const resp = await this._getAuthoritativeConfig();
-      const candidateConfig = resp?.config && Array.isArray(resp.config.spaces)
-        ? resp.config as ServerConfig : null;
-      const configChanged = contentFingerprint(candidateConfig)
-        !== (this._cfgContentFingerprint || contentFingerprint(this._serverCfg));
-      if (configChanged && !await this._signer.prepareImage(
-        this.hass, this._candidateBackdrop(candidateConfig),
-      )) {
-        this._continuity.note('asset-failed');
-        this._scheduleLoadRetry(true);
-        return;
-      }
-      const visibleSpace = this._space;
-      this._adoptStructuralResponses(resp);
-      void this._syncDecorAssets(candidateConfig).catch(() => undefined);
-      this._adoptInitialSpace(this._model, true);
-      this._resumePendingNavMode();
-      this._cacheSnapshot();
-      if (this._space !== visibleSpace) this._restoreZoom();
-      this._regSignature = '';
-      this._maybeRebuildDevices();
+      const adopted = await this._adoptAuthoritative({
+        cfgResp: resp, reason: 'config-reload', profile: 'reload',
+        // #520: same task as the adoption — see `_loadFromServer`.
+        afterAdopt: () => { this._regSignature = ''; this._maybeRebuildDevices(); },
+      });
+      if (adopted.status !== 'adopted') return;
+      if (adopted.spaceChanged) this._restoreZoom();
       this.requestUpdate();
     } catch (e: any) {
       // a failed reload leaves the card on its last known config; tell the user
@@ -4950,8 +4907,7 @@ export class HouseplanCard extends LitElement {
    * re-read of what we just wrote.
    */
   private _noteLayoutRev(r: any): void {
-    const rev = r?.rev;
-    if (typeof rev === 'number' && rev > this._layoutRev) this._layoutRev = rev;
+    this._adoption.noteLayoutRevision(r?.rev);
   }
 
   /**
@@ -4985,15 +4941,10 @@ export class HouseplanCard extends LitElement {
         if (pos === null) delete merged[id];
         else merged[id] = pos;
       }
-      const fingerprint = contentFingerprint(merged);
-      const differsFromCurrent = fingerprint !== contentFingerprint(this._layout);
-      if (differsFromCurrent) {
+      this._adoption.adoptMergedLayout(merged, resp, () => {
         this._cancelDeviceDrag();
         this._devicePositionHistory.clear();
-        this._layout = merged;
-      }
-      this._layoutContentFingerprint = fingerprint;
-      this._layoutRev = resp?.rev ?? this._layoutRev;
+      });
       this._canOptimizeUndo = !!resp?.can_optimize_undo;
       this._undoKind = (resp?.undo_kind || null) as any;
       this._cacheSnapshot();
@@ -5287,7 +5238,7 @@ export class HouseplanCard extends LitElement {
             else restored.new_device_ids = previousAttention;
             const restoredConfig: ServerConfig = { ...this._serverCfg!, settings: restored };
             this._setAreaLifecycleConfig(restoredConfig);
-            this._cfgContentFingerprint = contentFingerprint(this._serverCfg);
+            this._adoption.refreshConfigFingerprint();
           }
           // Config and layout are separate stores, but this lifecycle change is
           // one user transaction. A rejected provenance write must put every
@@ -5518,7 +5469,7 @@ export class HouseplanCard extends LitElement {
           });
         }
         this._noteLayoutRev(response);
-        this._layoutContentFingerprint = contentFingerprint(this._layout);
+        this._adoption.refreshLayoutFingerprint();
         this._cacheSnapshot();
       } finally {
         if (registered && this._sentPos.get(deviceId) === pending) this._sentPos.delete(deviceId);
@@ -7788,7 +7739,7 @@ export class HouseplanCard extends LitElement {
     const response = await this.hass.callWS({
       type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: this._cfgRev,
     });
-    this._cfgRev = response?.rev ?? this._cfgRev + 1;
+    this._adoption.acceptConfigWrite(canonicalCandidate, response);
   }
 
   private _writeConfig(): Promise<void> {
@@ -7801,11 +7752,7 @@ export class HouseplanCard extends LitElement {
     this._writeChain = enqueueSerializedWrite(this._writeChain, async () => {
       if (!this._serverCfg) return;
       const candidate = canonicalizeConfigGeometry(this._serverCfg);
-      const candidateFingerprint = contentFingerprint(candidate);
-      if (candidateFingerprint !== contentFingerprint(this._serverCfg)) {
-        this._serverCfg = candidate;
-      }
-      this._cfgContentFingerprint = candidateFingerprint;
+      this._adoption.stageConfigCandidate(candidate);
       await this._sendConfigCandidate(candidate);
     });
     const mine = this._writeChain.finally(() => { this._writesPending--; });
@@ -8122,7 +8069,6 @@ export class HouseplanCard extends LitElement {
   private _physicalRotateUp(ev: PointerEvent): void {
     return this._editorRuntimeOrThrow()._physicalRotateUp(ev);
   }
-
 
   // ================= room resize tool (docs/RESIZE.md) =================
 
@@ -10729,7 +10675,7 @@ export class HouseplanCard extends LitElement {
       layout: this._layout,
       imperial: this._imperial,
       cardTitle: this._config?.title || this._t('card.title'),
-      version: CARD_VERSION,
+      version: displayVersion(CARD_VERSION),
       hass: this.hass,
       backdropUrl: space.bg ? this._display(space.bg.href) : '',
       decorAssets,
@@ -11838,7 +11784,7 @@ export class HouseplanCard extends LitElement {
               view,
               (point) => this._scenePoint(point),
             )}
-            ${devs.map((d) => this._renderDevice(
+            ${repeat(devs, (d) => d.id, (d) => this._renderDevice(
               d, view, showLqi, isoOverlays?.devices.get(d.id),
             ))}
             ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}
@@ -12945,7 +12891,9 @@ export class HouseplanCard extends LitElement {
     }
     if (this._mode === 'devices' && this._deviceDrag?.moved) {
       const d = this._devices.find((x) => x.id === this._deviceDrag!.id);
-      return d ? (() => { const p = this._pos(d); return [p.x, p.y]; })() : null;
+      // #521: live, not `_pos` — during a gesture `_pos` answers from the last
+      // settled snapshot, i.e. where the marker stood before the drag began.
+      return d ? (() => { const p = this._livePos(d); return [p.x, p.y]; })() : null;
     }
     if (this._mode === 'decor') {
       if (this._decorDraft) return this._decorDraft.b;
@@ -12966,8 +12914,10 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._alignCandidates();
   }
 
-  private _renderAlignGuides(): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderAlignGuides();
+  // #521: soft, because the live gesture painter calls this too — an exception
+  // inside a `requestAnimationFrame` paint would take the gesture with it.
+  private _renderAlignGuides(): TemplateResult | typeof nothing {
+    return this._editorRuntime?._renderAlignGuides() ?? nothing;
   }
 
   /** Perpendicular dashed tick through the wall's center while a dragged opening
@@ -13043,7 +12993,7 @@ export class HouseplanCard extends LitElement {
     const walls = this._spaceWalls;
     const openCuts = this._openCuts();
     const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
-    return svg`<g class="openinglayer">${items.map((o) => {
+    return svg`<g class="openinglayer">${repeat(items, (o) => o.id, (o) => {
       if (o.orphanReason) return svg`<g class="opening orphan" data-hp="opening-orphan"
         data-id=${o.id} role="button" tabindex="0"
         aria-label=${this._t('opening.partition_orphan')}

@@ -121,7 +121,9 @@ one runner. Its raw reports and comparison are uploaded as
 `full-performance-<profile>`, and the table is written to that GitHub job
 summary. Stable release assets require both exact-SHA
 `Validate` and exact-SHA `Full Performance`; prereleases require only
-`Validate`.
+`Validate`. The gate (`scripts/release-gate.mjs`, #511) judges by the latest
+non-cancelled run on the SHA: a re-run or a manual comparison against another
+baseline refreshes the verdict, and a cancelled twin is invisible.
 
 This base-vs-candidate design intentionally does not compare timings captured
 on different machines or different Chromium builds. A runtime/profile mismatch

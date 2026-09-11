@@ -7,6 +7,7 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
+import { displayVersion } from './card-version';
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
 import { calibrationTarget, planVacuumFit } from './vacuum-route-edit';
@@ -25,6 +26,7 @@ import './hp-color-opacity';
 import type { ColorPickerLabels } from './hp-color-opacity';
 import './hp-help';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
+import type { ConfigAdoption, GatedAdoptionInput, GatedAdoptionResult } from './config-adoption';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
 import {
   EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
@@ -273,7 +275,7 @@ import {
   canonicalizePosition,
   formatLatticeShiftCm,
 } from './coordinate-canonicalization';
-import { enqueueSerializedWrite, optimisticAttempt, rollbackOptimistic, type OptimisticAttempt } from './serialized-write-queue';
+import { enqueueSerializedWrite, type OptimisticAttempt } from './serialized-write-queue';
 import { applyCalibrationProposal, saveAutomaticCalibration, saveManualCalibration, saveVacuumMatrix,
   type CalibrationProposal, type VacuumFit } from './vacuum-calibration-write';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
@@ -386,7 +388,7 @@ import {
   rewriteMarkerRoomReferences, type MarkerRoomReferenceSnapshot,
 } from './room-reference-transaction';
 
-const CARD_VERSION = '1.73.0';
+const CARD_VERSION = '1.74.0';
 
 // #474: the editor imports the furniture artwork statically and hands it to
 // the page runtime the moment this chunk evaluates — before the loader's
@@ -838,7 +840,9 @@ export interface HouseplanEditorHostPort {
   _activePlanSnapConflicts: PlanSnapEndpoint[];
   _activityRt: Map<string, FiniteActivityRuntime>;
   _adoptInitialSpace: (models: SpaceModel[], authoritative?: boolean) => InitialSpaceSelection;
-  _adoptStructuralResponses: (cfgResp: any, layResp?: any, layoutOverride?: Record<string, any>) => { configChanged: boolean; layoutChanged: boolean; };
+  _adoptAuthoritative: (input: GatedAdoptionInput) => Promise<GatedAdoptionResult>; // #500: the one adoption entry
+  _rollbackOptimistic: (attempt: OptimisticAttempt<ServerConfig>) => boolean;
+  readonly _adoption: ConfigAdoption; // #500: identity owner; _serverCfg/_cfgRev/_layout/_layoutRev delegate to it
   _alignDialog: { report: OptimizeReport; config: any; layout: Record<string, any>; preflight: OptimizeGeometryPreflightResult | null; cm: number; where: string; changed: boolean; busy: boolean; removeLiveMissingPositions: boolean; } | null;
   _alignPoint: number[] | null;
   _allRoomsFlat: () => { value: string; label: string; }[];
@@ -876,9 +880,8 @@ export interface HouseplanEditorHostPort {
   _candidateDeviceSnapshot: RenderDeviceSnapshot | null;
   _capturedSnapshotConfigEpoch: number;
   _cellCm: number;
-  _cfgContentFingerprint: string;
   _cfgEpoch: number;
-  _cfgRev: number;
+  readonly _cfgRev: number;
   _clearTransientHover: (suspend?: boolean) => void;
   _closeInfoCard: () => void;
   _closingWallCm: number | null;
@@ -995,7 +998,7 @@ export interface HouseplanEditorHostPort {
   _labsIso: boolean;
   _lastValidStageSize: [number, number] | null;
   _layout: DeviceLayout;
-  _layoutRev: number;
+  readonly _layoutRev: number;
   _logicalViewCenter: (projection: "flat" | "iso") => { x: number; y: number; } | null;
   _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
@@ -1827,7 +1830,7 @@ public _rollbackRejectedPhysicalWrites(
     this.host._physicalBodiesCache = null;
     this.host._frame = null;
     this.host._regSignature = '';
-    this.host._cfgContentFingerprint = contentFingerprint(this.host._serverCfg);
+    this.host._adoption.refreshConfigFingerprint();
     this.host._maybeRebuildDevices();
     this.host.requestUpdate();
     return true;
@@ -1870,10 +1873,7 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
       // unrelated write-time cleanup as a visual change (#224 review H1).
       // A real coordinate change still adopts the exact object sent below;
       // willUpdate owns the corresponding geometry-epoch bump.
-      if (candidateFingerprint !== contentFingerprint(this.host._serverCfg)) {
-        this.host._serverCfg = candidate;
-      }
-      this.host._cfgContentFingerprint = candidateFingerprint;
+      this.host._adoption.stageConfigCandidate(candidate);
       try {
         await this.host._sendConfigCandidate(candidate);
       } catch (error) {
@@ -8101,7 +8101,7 @@ public async _saveMarker(): Promise<void> {
         return;
       }
       candidate = this._prepareConfigCandidate(candidate);
-      attempt = optimisticAttempt(cfg, candidate, this.host._cfgContentFingerprint, this.host._cfgRev, contentFingerprint);
+      attempt = this.host._adoption.beginOptimistic(cfg, candidate);
       this.host._serverCfg = candidate;
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
@@ -8143,7 +8143,7 @@ public async _saveMarker(): Promise<void> {
       // then crashes, blanking the whole card. The toast below is the
       // only remaining signal, so it must still fire.
       if (!configAccepted && attempt) {
-        rollbackOptimistic(this.host, attempt, contentFingerprint);
+        this.host._rollbackOptimistic(attempt);
         this.host._regSignature = '';
         this.host._maybeRebuildDevices();
         this.host.requestUpdate();
@@ -8679,7 +8679,7 @@ public async _deleteSpace(): Promise<void> {
       if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.flush();
       if (this.host._persistLayout.pending()) this.host._persistLayout.flush();
       await this.host._writeChain;
-      const response: any = await this.host.hass.callWS({
+      await this.host.hass.callWS({
         type: 'houseplan/space/delete',
         space_id: spaceId,
         expected_config_rev: this.host._cfgRev,
@@ -8689,9 +8689,10 @@ public async _deleteSpace(): Promise<void> {
         this.host._getAuthoritativeConfig(),
         this.host.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
-      this.host._adoptStructuralResponses(configResponse, layoutResponse);
-      this.host._cfgRev = response?.config_rev ?? this.host._cfgRev;
-      this.host._layoutRev = response?.layout_rev ?? this.host._layoutRev;
+      // #500: revisions come with the re-read bodies, never from the delete reply.
+      const adopted = await this.host._adoptAuthoritative({ cfgResp: configResponse, layResp: layoutResponse, reason: 'space-delete', profile: 'post-write' });
+      // Asset wait: nothing adopted, the scheduled reload owns the tail (same as every reload path).
+      if (adopted.status !== 'adopted') { this.host._spaceDialog = { ...currentDialog, busy: false }; this.host.requestUpdate(); return; }
       this.host._spaceDialog = null;
       if (this.host._space === spaceId) this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || '');
       this.host._regSignature = '';
@@ -8976,7 +8977,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
     try {
       const response: unknown = await this.host.hass.callWS({
         type: 'houseplan/support/preview',
-        card_version: CARD_VERSION,
+        card_version: displayVersion(CARD_VERSION),
         ...this._supportFacts(),
         draft_id: draftId,
       });
@@ -9194,7 +9195,7 @@ public _renderSupportDialog(): TemplateResult {
         <div class="body supportbody">
           <section class="supportsection" aria-labelledby="support-about-heading">
             <h3 id="support-about-heading">${st('support.about_group')}</h3>
-            <div class="aboutver">${this.host._t('gs.about_version', { v: CARD_VERSION })}</div>
+            <div class="aboutver">${this.host._t('gs.about_version', { v: displayVersion(CARD_VERSION) })}</div>
             <div class="supportlinks">
               <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener noreferrer">
                 <ha-icon icon="mdi:github"></ha-icon>${this.host._t('gs.about_github')}</a>
@@ -9339,7 +9340,7 @@ public _preflightDiagnostics(
     return {
       kind: 'houseplan-optimize-preflight',
       origin: 'runtime',
-      cardVersion: CARD_VERSION,
+      cardVersion: displayVersion(CARD_VERSION),
       checkedAt: new Date().toISOString(),
       preflightFingerprint: preflight.fingerprint,
       failures: preflight.failures.map((failure) => ({
@@ -9367,7 +9368,7 @@ public _reportPreflightFailure(
 public _preflightVersionsDiffer(): boolean {
     const integration = this.host._haIntegrationVersion;
     return typeof integration === 'string' && integration.length > 0
-      && integration !== CARD_VERSION;
+      && integration !== displayVersion(CARD_VERSION);
   }
 
 public async _copyPreflightDiagnostics(): Promise<void> {
@@ -9573,7 +9574,8 @@ public async _undoPlanOptimization(): Promise<void> {
       // config/get is the sole authority for runtime capabilities, including
       // integration_version. Reuse the full-card adopter instead of leaving
       // this direct optimization-undo path with stale version state (#462).
-      this.host._adoptStructuralResponses(cfgResp, layResp);
+      const adopted = await this.host._adoptAuthoritative({ cfgResp, layResp, reason: 'optimize-undo', profile: 'post-write' });
+      if (adopted.status !== 'adopted') return; // asset wait: the scheduled reload owns the tail
       this.host._geometryHistory.clear();
       this.host._cancelDeviceDrag();
       this.host._devicePositionHistory.clear();
@@ -9612,7 +9614,7 @@ public async _runBackupExport(): Promise<void> {
         kind: d.kind,
         space_id: d.kind === 'space' ? this.host._space : undefined,
         ...(d.kind === 'space' && d.planOnly ? { plan_only: true } : {}),
-        card_version: CARD_VERSION,
+        card_version: displayVersion(CARD_VERSION),
       });
       const blob = new Blob([JSON.stringify(response.document, null, 2) + '\n'], {
         type: 'application/json;charset=utf-8',
@@ -9732,7 +9734,8 @@ public async _applyBackupImport(): Promise<void> {
         this.host._getAuthoritativeConfig(),
         this.host.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
-      this.host._adoptStructuralResponses(configResponse, layoutResponse);
+      const adopted = await this.host._adoptAuthoritative({ cfgResp: configResponse, layResp: layoutResponse, reason: 'import-apply', profile: 'post-write' });
+      if (adopted.status !== 'adopted') { this.host._backupImportDialog = { ...d, busy: false, error: '' }; this.host.requestUpdate(); return; }
       this.host._geometryHistory.clear();
       this.host._dirtyPos.clear();
       this.host._sentPos.clear();
@@ -10042,8 +10045,7 @@ public _updateDecorStyle(next: DecorStyle): void {
       // longer affects sunlight; saving general settings cleans it up.
       delete settings.weather_entity;
       const nextConfig = { ...cfg, settings };
-      attempt = optimisticAttempt(cfg, nextConfig, this.host._cfgContentFingerprint,
-        this.host._cfgRev, contentFingerprint);
+      attempt = this.host._adoption.beginOptimistic(cfg, nextConfig);
       this.host._serverCfg = nextConfig;
       await this._saveConfigNow(attempt);
       if (!d.showRoomTooltip && this.host._tip?.room) this.host._tip = null;
@@ -10053,7 +10055,7 @@ public _updateDecorStyle(next: DecorStyle): void {
     } catch (e: any) {
       // Esc may close the dialog in flight; the toast must still fire (audit L3).
       // Never overwrite an authoritative conflict reload or newer edit (#439).
-      if (attempt) rollbackOptimistic(this.host, attempt, contentFingerprint);
+      if (attempt) this.host._rollbackOptimistic(attempt);
       if (this.host._settingsDialog) this.host._settingsDialog = { ...this.host._settingsDialog, busy: false };
       this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }

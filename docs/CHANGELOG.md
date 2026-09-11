@@ -2,6 +2,108 @@
 
 ## Unreleased
 
+## v1.74.0 — 2026-09-11
+
+- The plan is noticeably smoother, and in Firefox the difference is dramatic.
+  Dragging the plan used to redraw it from scratch on every frame instead of
+  moving what was already drawn, and a device marker's shadow restarted an
+  animation on every marker at once whenever the container width changed —
+  sixty-one of them dropped Firefox to nine frames per second. Both are gone;
+  the picture is exactly the same
+  ([#531](https://github.com/Matysh/houseplan-card/issues/531),
+  [#524](https://github.com/Matysh/houseplan-card/issues/524)).
+
+- The printed plan is about a third larger: in-plan labels are a quarter
+  smaller and the separate list of internal dimensions is gone — the numbers
+  now sit on the drawing itself. Short dimensions that do not fit inside a room
+  are no longer printed
+  ([#530](https://github.com/Matysh/houseplan-card/issues/530)).
+
+- A plan left over from the era of “rooms without walls” can be edited again.
+  Such a plan could refuse every change with “conflicting wall identifiers”,
+  send you to “Optimize plans”, which then reported that everything was already
+  optimal, and refuse to export as well — leaving no way out at all. The
+  leftover is now cleaned up on the first save, and a genuinely outdated card is
+  told to update and reload instead
+  ([#529](https://github.com/Matysh/houseplan-card/issues/529),
+  reported in [#527](https://github.com/Matysh/houseplan-card/issues/527)).
+
+- Alignment guides follow the object again while you drag it, and the summary
+  panel no longer freezes the first frame on a large plan or says “Source
+  unavailable” while its values are still being computed; its settings dialog
+  scrolls again in Home Assistant. Switching between spaces no longer replays a
+  neighbouring door's leaf movement, and the card downloads 12.8 KB less on a
+  cold start
+  ([#521](https://github.com/Matysh/houseplan-card/issues/521),
+  [#509](https://github.com/Matysh/houseplan-card/issues/509),
+  [#508](https://github.com/Matysh/houseplan-card/issues/508),
+  [#525](https://github.com/Matysh/houseplan-card/issues/525),
+  [#526](https://github.com/Matysh/houseplan-card/issues/526)).
+
+
+## v1.74.0-beta.3 — 2026-09-11
+
+- The printed plan is about a third larger: in-plan labels are a quarter
+  smaller and the separate list of internal dimensions is gone — the numbers
+  now sit on the drawing itself. Short dimensions that do not fit inside a room
+  are no longer printed
+  ([#530](https://github.com/Matysh/houseplan-card/issues/530)).
+
+- Dragging the plan around is smooth again. Every frame of the gesture used to
+  redraw the entire plan from scratch instead of simply moving what was already
+  drawn, which on a high-refresh screen in Firefox turned panning into a slide
+  show. The plan now slides with the cursor and refreshes its content a few
+  times a second; the picture you end up with is exactly the same
+  ([#531](https://github.com/Matysh/houseplan-card/issues/531)).
+
+## v1.74.0-beta.2 — 2026-09-11
+
+- A plan left over from the era of “rooms without walls” can be edited again.
+  Such a plan could refuse every change with “conflicting wall identifiers”,
+  send you to “Optimize plans”, which then reported that everything was already
+  optimal, and refuse to export as well — leaving no way out at all. The leftover
+  is now cleaned up on the first save, and a genuinely outdated card is told to
+  update and reload instead
+  ([#529](https://github.com/Matysh/houseplan-card/issues/529),
+  reported in [#527](https://github.com/Matysh/houseplan-card/issues/527)).
+
+- The card downloads 12.8 KB less on a cold start. The stylesheet minifier had
+  never actually run — it looked for its tag written one way and the build hands
+  it another — so every explanatory comment inside the stylesheets was shipped
+  to the browser. Nothing looks or behaves differently; the plan simply arrives
+  sooner ([#526](https://github.com/Matysh/houseplan-card/issues/526)).
+
+- The plan is smooth again in Firefox. A device marker's shadow is sized from
+  the marker, which is sized from the container, so anything that changed the
+  container width — a tooltip, a scrollbar, a rotation — restarted a shadow
+  animation on every marker at once. Sixty-one of them at a time dropped
+  Firefox to nine frames per second; the shadow now simply appears, unchanged
+  ([#524](https://github.com/Matysh/houseplan-card/issues/524)).
+
+- Switching between spaces no longer replays a neighbouring door's leaf
+  movement, in either direction. The animation now belongs to a real sensor
+  change and nothing else
+  ([#525](https://github.com/Matysh/houseplan-card/issues/525)).
+
+## v1.74.0-beta.1 — 2026-09-10
+
+- Alignment guides follow the object again while you drag it: the marker in the
+  device editor, the shape and the cursor in the backdrop and plan editors. The
+  dashed line and its anchor dot appear the moment the object lines up with
+  another one, instead of after the gesture is over
+  ([#521](https://github.com/Matysh/houseplan-card/issues/521)).
+
+- The summary panel no longer freezes the first frame on a large plan, and it
+  no longer says «Source unavailable» while its values are still being
+  computed: rows show a pulsing placeholder that is replaced by the numbers as
+  they arrive, and the panel fades in and out again
+  ([#509](https://github.com/Matysh/houseplan-card/issues/509)).
+
+- The summary panel settings dialog scrolls again in Home Assistant — with the
+  mouse wheel on desktop and with a swipe on phones; the header and the action
+  buttons stay in place
+  ([#508](https://github.com/Matysh/houseplan-card/issues/508)).
+
 ## v1.73.0 — 2026-09-09
 
 - House Plan opens from its own page in the Home Assistant sidebar, without

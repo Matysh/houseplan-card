@@ -22,8 +22,9 @@
 // worktree → патч → сборка бандла → бандл в demo/srv/assets → тест. Тест,
 // оставшийся зелёным, — это провал гейта, а не успех теста.
 //
-// Прогон дорогой (пересборка бандла на мутанта), поэтому его место — перед
-// стабильным релизом (.github/workflows/mutation-gate.yml), не на каждой бете.
+// Прогон дорогой (пересборка бандла на мутанта) и проверяет тесты, а не
+// продукт, поэтому его место — ночное расписание (.github/workflows/
+// mutation-gate.yml, #513), вне цикла разработки и релиза; отказ — issue.
 // Дешёвая часть — «патчи применимы, guard-файлы существуют» — живёт в
 // test/mutation-gate.test.mjs и идёт с обычными юнитами: реестр, отставший от
 // кода, хуже отсутствующего, потому что выглядит защитой.
@@ -233,14 +234,47 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'pdf-room-edge-dropped',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="dense non-rectangular" test/pdf-scene.test.mjs',
-    because: 'every non-short edge must retain a direct value or a numbered callout',
+      + '&& node --test --test-name-pattern="#530: a square house" test/pdf-scene.test.mjs',
+    because: 'since #530 there is no callout column to catch a dropped edge: a value that is '
+      + 'not printed beside its wall is not printed anywhere, so the dedupe must never quietly '
+      + 'lose an edge',
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: '      const edges = dedupeOppositeDimensionEdges(rawEdges,\n'
         + '        { ring: contour, epsilon, score: placementScore });',
       replace: '      const edges = dedupeOppositeDimensionEdges(rawEdges,\n'
         + '        { ring: contour, epsilon, score: placementScore }).slice(0, -1);',
+    }],
+  },
+  {
+    id: 'pdf-restores-dimension-callouts',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#530" test/pdf-scene.test.mjs',
+    because: 'the numbered column beside the plan cost a whole scale step — 124 pt of the upright '
+      + 'field — and turned the sheet sideways: a ten-metre house printed 1:100 landscape on a '
+      + 'quarter of the field instead of 1:75 upright (#530 AC1)',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '        if (!placed) continue;',
+      replace: '        if (!placed) {\n'
+        + '          for (const edge of group) commands.push({ kind: \'text\',\n'
+        + '            x: pt(edge.mid)[0] + edge.inwardNormal[0] * 4 * MM,\n'
+        + '            y: pt(edge.mid)[1] + edge.inwardNormal[1] * 4 * MM,\n'
+        + '            text: `R${occupied.length}`, size: 6, align: \'center\' });\n'
+        + '          continue;\n'
+        + '        }',
+    }],
+  },
+  {
+    id: 'pdf-keeps-large-in-plan-labels',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#530" test/pdf-scene.test.mjs',
+    because: 'in-plan labels do not scale with the drawing: at the old size they crowd the larger '
+      + 'plan instead of reading better, and they take the room the architecture needs (#530 AC2)',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: 'const DIMENSION_SIZE = 5.25;',
+      replace: 'const DIMENSION_SIZE = 7;',
     }],
   },
   {
@@ -584,21 +618,23 @@ const MUTANT_DEFINITIONS = [
     id: 'pdf-rectangle-restores-unsafe-label',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="blocked rectangular" test/pdf-scene.test.mjs',
-    because: 'a rectangular dimension with no valid lane must not be printed through the room',
+    because: 'a dimension with no valid lane must not be printed through the room: since #530 the '
+      + 'rectangular rule is the general one, so the only alternative to a clean lane is silence',
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
-      find: '          // Rectangular rooms have no unambiguous numbered callout fallback.\n'
-        + '          // If every internal lane is blocked, omit the unsafe label rather\n'
-        + '          // than knowingly printing it through a wall, room title or area.',
-      replace: "          if (!nonRect) commands.push({ kind: 'text', x: base[0], y: base[1],\n"
-        + "            text: edge.text, size: 6, angle: edge.angle, align: 'center' });",
+      find: '        // через стену, имя или площадь.',
+      replace: '        if (!placed) { for (const edge of group) commands.push({ kind: \'text\',\n'
+        + '          x: pt(edge.mid)[0], y: pt(edge.mid)[1], text: edge.text,\n'
+        + '          size: DIMENSION_SIZE, angle: edge.angle, align: \'center\' }); }',
     }],
   },
   {
     id: 'pdf-overflow-returns-clipped-page',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="unprintable fixed callouts" test/pdf-scene.test.mjs',
-    because: 'mathematically unprintable fixed annotations must fail instead of returning a clipped A4 page',
+      + '&& node --test --test-name-pattern="fails closed" test/pdf-scene.test.mjs',
+    because: 'architecture that does not fit at any representable denominator must fail instead of '
+      + 'returning a clipped A4 page; since #530 this is the only fail-closed case left, because a '
+      + 'label that has no room is dropped rather than making the whole sheet unprintable',
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: "  if (!fittingScale) throw new Error('pdf.failed');",
@@ -1054,7 +1090,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a rejected second write must restore server truth without rolling back the accepted Optimize (#456 AC11)',
     patches: [{
       file: 'src/space-copy-runtime.ts',
-      find: '      if (rollbackOptimistic(host, attempt, contentFingerprint)) invalidateConfig(host);',
+      find: '      if (host._rollbackOptimistic(attempt)) invalidateConfig(host);',
       replace: '',
     }, {
       file: 'src/space-copy-runtime.ts',
@@ -3611,14 +3647,147 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'room-drafts-refuse-instead-of-heal',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'room_drafts_on_current_model_convert_exactly_like_the_first_migration '
+      + 'tests_backend/test_wall_segment_model.py',
+    because: '#529: наследие обязано сниматься миграцией, а не запирать план — отказ здесь '
+      + 'отбивал структурную правку ещё до отправки на сервер и заодно ломал экспорт, '
+      + 'то есть единственный способ вытащить бэкап и починить конфиг руками',
+    patches: [{
+      file: 'custom_components/houseplan/wall_segment_model.py',
+      find: '    if not drafts:\n'
+        + '        space.pop("room_drafts", None)\n'
+        + '        return 0, 0',
+      replace: '    if True:\n'
+        + '        raise WallSegmentMigrationError("duplicate-id", "model v10 must not contain room_drafts")',
+    }],
+  },
+  {
+    id: 'outdated-client-detected-by-model-number',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'outdated_client_is_recognised_by_the_carrier_not_by_the_model_number '
+      + 'tests_backend/test_wall_segment_model.py',
+    because: '#529: устаревшая карточка возвращает эхом полученный номер модели, поэтому '
+      + 'признаком служит сам носитель поверх чистого сохранённого конфига; сверка по '
+      + 'номеру пропускала ровно тот случай, ради которого сторож и написан (#478 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/validation.py',
+      find: '    if old_model >= 10 and not stored_drafts and any(',
+      replace: '    if old_model >= 10 and new_model < 10 and any(',
+    }],
+  },
+  {
+    id: 'room-drafts-mirror-still-throws',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#529" test/wall-segment-model.test.mjs',
+    because: '#529: зеркало в карточке лечит хранилище — именно оно снимает ключ в кандидате, '
+      + 'который уходит в config/set; если оно снова бросает, план остаётся запертым '
+      + 'независимо от того, что умеет бэкенд',
+    patches: [{
+      file: 'src/wall-segment-model.ts',
+      find: '  if (!drafts.length) {\n'
+        + '    delete space.room_drafts;\n'
+        + '    return { drafts: 0, segments: 0 };\n'
+        + '  }',
+      replace: "  if (true) throw new WallSegmentModelError('duplicate-id', 'model v10 must not contain room_drafts');",
+    }],
+  },
+  {
+    id: 'css-minifier-skips-typescript-output',
+    guard: 'node --test --test-name-pattern="#526 AC4|#526 AC2" test/bundle-assets.test.mjs',
+    because: '#526: плагин видит вывод TypeScript, где тег отделён от шаблона пробелом; '
+      + 'строгий отсев `css` вплотную к бэктику молча выключает минификацию целиком — '
+      + 'так 23 КБ комментариев и 12,8 КБ gzip уехали пользователю и никто не заметил',
+    patches: [{
+      file: 'scripts/css-template-minifier.mjs',
+      find: "      if (!id.endsWith('.ts') || !CSS_TAG" + '.test(code)) return null;',
+      replace: "      if (!id.endsWith('.ts') || !code.includes('css" + String.fromCharCode(96) + "')) return null;",
+    }],
+  },
+  {
+    id: 'css-minifier-eats-required-space',
+    guard: 'node demo/smoke_css_minifier_semantics.mjs',
+    because: '#526: минификация 23 КБ CSS включилась впервые — свидетель обязан ловить '
+      + 'съеденный значащий пробел (потомковый комбинатор, аргумент calc), а не только '
+      + 'считать сэкономленные байты',
+    patches: [{
+      file: 'scripts/css-template-minifier.mjs',
+      find: '    if (pendingSpace && out && !TIGHT_AFTER.has(out.at(-1))'
+        + ' && !TIGHT_BEFORE.has(char)) {\n'
+        + "      out += ' ';\n"
+        + '    }',
+      replace: '    void pendingSpace; // mutant: значащий пробел больше не восстанавливается',
+    }],
+  },
+  {
+    id: 'marker-shadow-animates-again',
+    guard: 'node demo/smoke_marker_shadow_transitions.mjs',
+    because: '#524: тень маркера выражена в контейнерных единицах — с переходом любой пересчёт '
+      + 'контейнерных запросов запускает некомпозируемый переход на каждом маркере; в профиле '
+      + 'владельца 61 штука разом дала 9,4 к/с и кадры по 149 мс',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '      transition: border-color .15s, opacity' + ' .2s;',
+      replace: '      transition: border-color .15s, box-shadow .15s, opacity .2s;',
+    }],
+  },
+  {
+    id: 'anchor-region-narrows-ambiguous-anchor',
+    guard: 'node --test --test-name-pattern="#518 AC4" test/mutation-gate.test.mjs',
+    because: '#518: якорь, найденный не ровно один раз, значит «реестр отстал от кода» — '
+      + 'судить такого свидетеля по окрестности первого попавшегося вхождения значит '
+      + 'молча сузить проверку там, где она и так под вопросом',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      // Реестр живёт в том же файле, что и код: якорь собирается из частей,
+      // иначе --check найдёт его дважды — в коде и здесь.
+      find: '  if (!find || text.split(find)' + '.length - 1 !== 1) return null;',
+      replace: '  if (!find) return null;',
+    }],
+  },
+  {
+    id: 'anchor-radius-collapses',
+    guard: 'node --test --test-name-pattern="#518 AC2" test/mutation-gate.test.mjs',
+    because: '#518: нулевой радиус оставляет в отпечатке одни строки патча — правка соседней '
+      + 'строки перестаёт перегонять свидетеля, и «поймано» начинает значить «не проверяли»',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: 'export const ANCHOR_RADIUS' + '_LINES = 40;',
+      replace: 'export const ANCHOR_RADIUS' + '_LINES = 0;',
+    }],
+  },
+  {
+    id: 'anchor-select-drops-guard-inputs',
+    guard: 'node --test --test-name-pattern="#518 AC1/AC2 \\(отбор\\)" test/mutation-gate.test.mjs',
+    because: '#518: сужение касается ТОЛЬКО стороны патча; у гарда якоря нет, и его правка '
+      + 'обязана отбирать свидетеля при любых известных областях (#475 AC2 иначе отменяется)',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: '    || inputsOf(m.guard).some((file) =>' + ' changed.has(file)));',
+      replace: '    || (!ranges && inputsOf(m.guard).some((file) => changed.has(file))));',
+    }],
+  },
+  {
+    id: 'anchor-touched-defaults-to-skip',
+    guard: 'node --test --test-name-pattern="#518 AC1/AC2 \\(отбор\\)" test/mutation-gate.test.mjs',
+    because: '#518: файл в диффе без прочитанных ханков — незнание, а не доказательство; '
+      + 'ответ по умолчанию обязан быть «гнать», иначе непрочитанный дифф тихо пропускает свидетелей',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: '  if (!hunks || !hunks.length)' + ' return true;',
+      replace: '  if (!hunks || !hunks.length) return false;',
+    }],
+  },
+  {
     id: 'ledger-version-sensitive',
     guard: 'node --test --test-name-pattern="#481 AC1" test/mutation-gate.test.mjs',
     because: 'a release bump touches houseplan-card.ts and houseplan-editor-runtime.ts; without '
       + 'version normalisation every witness patching them re-runs on every candidate — the #480 timeout (#481)',
     patches: [{
       file: 'scripts/mutation-gate.mjs',
-      find: "    hash.update(normalize(String(read(file))" + ".replace(/\\r\\n?/g, '\\n')));",
-      replace: "    hash.update(String(read(file)).replace(/\\r\\n?/g, '\\n'));",
+      find: '    hash.update(normalize(' + 'valueOf()));',
+      replace: '    hash.update(valueOf());',
     }],
   },
   {
@@ -3694,7 +3863,7 @@ const MUTANT_DEFINITIONS = [
       + 'it without a green Validate on that SHA is the false-green the audit reproduced (#492 §4)',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: '    const { result, url } = await ops.waitValidate(candidate);',
+      find: "    const { result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' });",
       replace: "    const { result, url } = { result: 'green', url: 'skipped' };  // mutant: no validation",
     }],
   },
@@ -6848,7 +7017,7 @@ const MUTANT_DEFINITIONS = [
       + 'leaving the independent Device editor draft available for Retry (#442 AC1)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: '        rollbackOptimistic(this.host, attempt, contentFingerprint);\n'
+      find: '        this.host._rollbackOptimistic(attempt);\n'
         + "        this.host._regSignature = '';",
       replace: "        this.host._regSignature = '';",
     }],
@@ -6872,7 +7041,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
       find: '      if (!configAccepted && attempt) {\n'
-        + '        rollbackOptimistic(this.host, attempt, contentFingerprint);',
+        + '        this.host._rollbackOptimistic(attempt);',
       replace: '      if (attempt) {\n'
         + '        this.host._serverCfg = attempt.previous;',
     }],
@@ -6884,7 +7053,7 @@ const MUTANT_DEFINITIONS = [
       + 'marker in the local accepted config (#442 AC5–AC7)',
     patches: [{
       file: 'src/vacuum-calibration-write.ts',
-      find: '    rollbackOptimistic(host, attempt, contentFingerprint);\n    rebuild(host);',
+      find: '    host._rollbackOptimistic(attempt);\n    rebuild(host);',
       replace: '    rebuild(host);',
     }],
   },
@@ -6906,16 +7075,16 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'optimistic-rollback-skips-same-root-fingerprint',
-    guard: 'node --test test/serialized-write-queue.test.mjs',
+    guard: 'node --test test/config-adoption.test.mjs',
     because: 'newer in-place content can retain the attempted object identity; rollback must still '
-      + 'compare content and must never erase that newer owner (#442 AC2)',
+      + 'compare content and must never erase that newer owner (#442 AC2; owner moved by #500)',
     patches: [{
-      file: 'src/serialized-write-queue.ts',
-      find: '  if (!current || host._cfgRev !== attempt.revision\n'
-        + '      || fingerprint(current) !== attempt.attemptedFingerprint) return false;',
-      replace: '  if (!current || host._cfgRev !== attempt.revision\n'
-        + '      || (current !== attempt.attempted\n'
-        + '        && fingerprint(current) !== attempt.attemptedFingerprint)) return false;',
+      file: 'src/config-adoption.ts',
+      find: '    if (!current || this.configRev !== attempt.revision\n'
+        + '        || contentFingerprint(current) !== attempt.attemptedFingerprint) return false;',
+      replace: '    if (!current || this.configRev !== attempt.revision\n'
+        + '        || (current !== attempt.attempted\n'
+        + '          && contentFingerprint(current) !== attempt.attemptedFingerprint)) return false;',
     }],
   },
   {
@@ -7200,6 +7369,145 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'adoption-bodies-declared-reactive',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#520" test/config-adoption-ownership.test.mjs',
+    because: 'since #500 `_adoption` owns the reactivity of these bodies; declaring them again '
+      + 'makes Lit a second owner, marks them `wrapped` and force-writes a change on the first '
+      + 'update — today harmless only because both sides are null at that moment, and a '
+      + 'spurious config epoch as soon as a warm cache arrives earlier (#520 AC1)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    _devices: { state: true },",
+      replace: "    _serverCfg: { state: true },\n    _devices: { state: true },",
+    }],
+  },
+  {
+    id: 'adoption-notifies-no-host-on-config-replacement',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'since #520 the bodies are no longer declared Lit properties, so this call is the '
+      + 'only thing that wakes an update when the config body is replaced: without it the '
+      + 'geometry epoch never moves and the plan keeps painting the retired body (#520 AC2)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: "    this.config = next;\n    this.onBodyReplaced?.('_serverCfg', previous);",
+      replace: '    this.config = next;',
+    }],
+  },
+  {
+    id: 'adoption-tail-defers-caller-hook',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'the caller hook closes the adoption task; deferring it by even one microtask lets '
+      + 'Lit paint the adopted config first, and the device seeding that follows costs a second '
+      + 'config epoch, a second model build and a second paint of a 60-room house (#520 AC6)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '  input.afterAdopt?.();',
+      replace: '  void Promise.resolve().then(() => input.afterAdopt?.());',
+    }],
+  },
+  {
+    id: 'authoritative-load-seeds-devices-after-the-await',
+    guard: 'node --test --test-name-pattern="#520" test/config-adoption-ownership.test.mjs',
+    because: 'the cold-start regression of #520 itself: seeding the devices outside the adoption '
+      + 'task writes the config back after Lit already painted it, 19 update cycles, 4 model '
+      + 'builds and 4 config epochs against 18/3/3 (#520 AC6)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '          this._loadOk = true;\n          rebuildDevices();',
+      replace: '          this._loadOk = true;',
+    }],
+  },
+  {
+    id: 'openings-rendered-without-keys',
+    guard: 'node demo/smoke_space_switch_transitions.mjs',
+    because: 'Lit reuses list nodes by position: without a key the leaf of the next space '
+      + 'inherits the node of whatever door held that slot, and its 0.6s transform transition '
+      + 'animates a door that never moved (#525 AC1)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    return svg`<g class="openinglayer">${repeat(items, (o) => o.id, (o) => {',
+      replace: '    return svg`<g class="openinglayer">${items.map((o) => {',
+    }],
+  },
+  {
+    id: 'device-markers-rendered-without-keys',
+    guard: 'node demo/smoke_space_switch_transitions.mjs',
+    because: 'the marker shell carries a `box-shadow` transition, so a positional reuse replays '
+      + 'it on every space switch; the key also keeps `data-id` honest for the live editor '
+      + 'painter, which finds the dragged marker by that attribute (#525 AC2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '            ${repeat(devs, (d) => d.id, (d) => this._renderDevice(',
+      replace: '            ${devs.map((d) => this._renderDevice(',
+    }],
+  },
+  {
+    id: 'live-editor-devices-drops-align-guides',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'the device editor paints nothing else from a template, so dropping the guides '
+      + 'leaves the settled scene as their only owner — and a live gesture never reaches it: '
+      + 'the regression of #521, invisible to a smoke that fabricates the drag',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: "  return svg`<g class=\"hp-live-devices\" aria-hidden=\"true\" pointer-events=\"none\">\n"
+        + '    ${host._renderAlignGuides()}\n'
+        + '  </g>`;',
+      replace: '  return nothing;',
+    }],
+  },
+  {
+    id: 'live-editor-decor-drops-align-guides',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'drawing a shape in the backdrop editor is a live gesture too: without the guides '
+      + 'in its own layer the corner snap has nothing to show (#521 AC3)',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: '      ${host._renderDecorLayer(activeId)}\n      ${host._renderAlignGuides()}',
+      replace: '      ${host._renderDecorLayer(activeId)}',
+    }],
+  },
+  {
+    id: 'live-editor-plan-drops-align-guides',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'in the plan editor the guides used to reappear only on a click; without them in '
+      + 'the live layer the contour is drawn against a guide frozen at the last click (#521 AC4)',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: '    ${host._renderAlignGuides()}\n'
+        + "    ${host._tool === 'draw' ? nothing : host._renderPlanSnapOverlay()}",
+      replace: "    ${host._tool === 'draw' ? nothing : host._renderPlanSnapOverlay()}",
+    }],
+  },
+  {
+    id: 'live-editor-keeps-the-settled-guides-visible',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'a settled render landing mid-gesture leaves its own guides behind; without '
+      + 'hiding that copy the next live paint adds a second one, and the leftover is a step '
+      + 'behind the marker — two dashed lines for one alignment (#521 AC5)',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: "  makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n"
+        + "  if (host._mode === 'plan') {\n"
+        + '    if (host._opDrag) hide(state, root, \'.wallbodies\');',
+      replace: "  if (host._mode === 'plan') {\n"
+        + "    makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n"
+        + '    if (host._opDrag) hide(state, root, \'.wallbodies\');',
+    }],
+  },
+  {
+    id: 'align-point-reads-frozen-snapshot',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'during a live gesture `_pos` answers from the snapshot of the last settled '
+      + 'render, so the guide is measured from where the marker stood before the drag — eight '
+      + 'grid steps away on a measured run (#521 AC2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      return d ? (() => { const p = this._livePos(d); return [p.x, p.y]; })() : null;',
+      replace: '      return d ? (() => { const p = this._pos(d); return [p.x, p.y]; })() : null;',
+    }],
+  },
+  {
     id: 'live-editor-view-mode-routes-live',
     guard: 'node --test test/live-editor.test.mjs',
     because: 'View is the product for two of three personas: the live editor path must never '
@@ -7291,6 +7599,46 @@ const MUTANT_DEFINITIONS = [
       // identity, и мутируется именно оно.
       find: '  projection.translateXPercent === 0',
       replace: '  projection.translateXPercent === 1',
+    }],
+  },
+  {
+    id: 'live-pan-rewrites-viewbox-every-frame',
+    guard: 'node demo/smoke_live_pan_viewbox.mjs',
+    because: '#531: перезапись `view' + 'Box` — это инвалидация растеризации всей сцены, её '
+      + 'нельзя сдвинуть, её надо нарисовать заново; в профиле владельца кадр панорамы '
+      + 'доезжал до экрана 200 мс, а драйвер пропускал 124-144 тика в секунду с пометкой '
+      + '«ждём краску». Кадр жеста обязан быть трансформом, а не новой краской',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      find: '    || !finiteView(base.frame.floor) || needsViewBoxRefresh(base, current, now);',
+      replace: '    || !finiteView(base.frame.floor) || true;',
+    }],
+  },
+  {
+    id: 'live-pan-writes-unchanged-viewbox',
+    guard: 'node --test test/live-viewport.test.mjs',
+    because: '#531: тихий кадр обязан оставлять DOM нетронутым. Запись того же значения в '
+      + 'атрибут — это всё равно инвалидация стиля, и в обычном режиме узлы floor и camera '
+      + 'получают ровно одну и ту же строку кадр за кадром',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      find: "  if (svg.getAttribute('view" + "Box') !== text) svg.setAttribute('view" + "Box', text);",
+      replace: "  svg.setAttribute('view" + "Box', text);",
+    }],
+  },
+  {
+    id: 'live-pan-shift-threshold-ignored',
+    guard: 'node --test test/live-viewport.test.mjs',
+    because: '#531: временного бюджета мало — за 100 мс рывка план уезжает на пол-экрана, и '
+      + 'на набегающем крае остаётся пустая полоса. Сдвиговый порог существует ровно ради '
+      + 'этого случая и обязан срабатывать раньше времени',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      find: '  if (Math.abs(after.x - before.x) >= after.w * LIVE_VIEWBOX_REFRESH_SHIFT)'
+        + ' return true;\n'
+        + '  if (Math.abs(after.y - before.y) >= after.h * LIVE_VIEWBOX_REFRESH_SHIFT)'
+        + ' return true;\n',
+      replace: '',
     }],
   },
   {
@@ -8088,6 +8436,116 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'release-gate-counts-cancelled-runs',
+    guard: 'node --test test/release-gate.test.mjs',
+    because: 'a cancelled twin on the tag SHA proves nothing and must not block the assets; the '
+      + 'verdict is the latest non-cancelled run (#511 AC1)',
+    patches: [{
+      file: 'scripts/release-gate.mjs',
+      find: "  const relevant = (Array.isArray(runs) ? runs : []).filter((run) => run && run.conclusion !== 'cancelled');",
+      replace: "  const relevant = (Array.isArray(runs) ? runs : []).filter((run) => !!run); // mutant: cancelled counts",
+    }],
+  },
+  {
+    id: 'release-gate-oldest-run-wins',
+    guard: 'node --test test/release-gate.test.mjs',
+    because: 'the latest run is the verdict: a re-run or another-baseline comparison must be able to '
+      + 'refresh an older result on the same SHA (#511 AC1)',
+    patches: [{
+      file: 'scripts/release-gate.mjs',
+      find: "  return relevant.sort((a, b) => stamp(b) - stamp(a) || Number(b.id || 0) - Number(a.id || 0))[0] || null;",
+      replace: "  return relevant.sort((a, b) => stamp(a) - stamp(b) || Number(a.id || 0) - Number(b.id || 0))[0] || null; // mutant: oldest",
+    }],
+  },
+  {
+    id: 'summary-first-paint-shows-unavailable',
+    guard: 'node demo/smoke_summary_first_paint.mjs',
+    because: 'до прихода ленивого чанка метрик значения ещё НЕ известны: текст «источник недоступен» '
+      + 'здесь — ложь, которую человек видит в первый же кадр панели (#509 AC1)',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: "    if (!module) return { kind: 'pending' };",
+      replace: "    if (!module) return { kind: 'unavailable' }; // mutant: loading looks like a dead source",
+    }],
+  },
+  {
+    id: 'summary-metrics-block-first-frame',
+    guard: 'node demo/smoke_summary_first_paint.mjs',
+    because: 'агрегаты по всей геометрии и реестру, посчитанные внутри render, замораживают первый '
+      + 'показ панели на сотни миллисекунд — ровно симптом #509 (AC4)',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: "    const needsAggregate = value.source.key === 'device_count' || value.source.key === 'total_area';",
+      replace: "    this.computeMetrics(); // mutant: aggregates back inside render\n    const needsAggregate = value.source.key === 'device_count' || value.source.key === 'total_area';",
+    }],
+  },
+  {
+    id: 'summary-area-recomputes-walls-per-room',
+    guard: 'node --test test/summary-panel.test.mjs',
+    because: 'innerContourForRoom без общей геометрии объединяет кладку пространства заново для КАЖДОЙ '
+      + 'комнаты: 176 мс на комнату и 11 с на большом плане (#509 AC3)',
+    patches: [{
+      file: 'src/summary-panel-metrics.ts',
+      find: "          shared.roomGeom, shared.multiWallNodes,",
+      replace: "          // mutant: no shared masonry",
+    }],
+  },
+  {
+    id: 'summary-stale-metric-falls-back-to-skeleton',
+    guard: 'node --test test/summary-panel-runtime.test.mjs',
+    because: 'правка конфигурации не должна возвращать панель в скелет: прежнее число остаётся до '
+      + 'прихода нового, иначе мигание возвращается с другой стороны (#509 AC9)',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: "    if (needsAggregate && !known) {",
+      replace: "    if (needsAggregate && (!known || !this.metricsFresh())) {",
+    }],
+  },
+  {
+    id: 'summary-dialog-drops-flex-content',
+    guard: 'node demo/smoke_summary_dialog_scroll.mjs',
+    because: 'in Home Assistant the settings dialog scrolls only because ha-dialog lays its body out as a '
+      + 'flex column; without flex-content the editor is unbounded and wheel/touch die at it (#508 AC1)',
+    patches: [{
+      file: 'src/summary-panel-editor.ts',
+      find: "      .title=${t('summary.settings')} wide flex-content",
+      replace: "      .title=${t('summary.settings')} wide",
+    }],
+  },
+  {
+    id: 'hp-dialog-ignores-flex-content',
+    guard: 'node demo/smoke_summary_dialog_scroll.mjs',
+    because: 'the attribute is only a promise until hp-dialog forwards it to ha-dialog; a shell that '
+      + 'swallows flex-content leaves the HA branch exactly as broken as before (#508 AC1)',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: "        ?flexcontent=${this.flexContent}\n        .preventScrimClose=${!this.dismissOnScrim}\n        .ariaLabelledBy=${this._titleId}\n        @opened=${this._focusInitial}",
+      replace: "        .preventScrimClose=${!this.dismissOnScrim}\n        .ariaLabelledBy=${this._titleId}\n        @opened=${this._focusInitial}",
+    }],
+  },
+  {
+    id: 'version-seam-ignores-override',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/card-version.test.mjs',
+    because: 'the harness pins the displayed version through the seam; a seam that always returns '
+      + 'the literal puts every beta bump back into the golden frames (#512 AC1)',
+    patches: [{
+      file: 'src/card-version.ts',
+      find: "  return typeof override === 'string' && override.length > 0 ? override : fallback;",
+      replace: '  return fallback; // mutant: seam ignored',
+    }],
+  },
+  {
+    id: 'docs-identical-accepts-any-frame',
+    guard: 'node --test test/png-identical.test.mjs',
+    because: 'the identical-pixels acceptance must count every differing pixel, alpha included; a '
+      + 'comparator that reports zero would accept a changed frame without review (#512 AC3)',
+    patches: [{
+      file: 'scripts/png-identical.mjs',
+      find: "        || a.data[at + 2] !== b.data[at + 2] || a.data[at + 3] !== b.data[at + 3]) differing += 1;",
+      replace: "        || a.data[at + 2] !== b.data[at + 2]) differing += 0; // mutant: nothing differs",
+    }],
+  },
+  {
     id: 'summary-runtime-attaches-after-first-render',
     guard: 'node demo/smoke_summary_warm_attach.mjs',
     because: 'a warm summary chunk must hand the new instance its runtime synchronously in '
@@ -8101,6 +8559,160 @@ const MUTANT_DEFINITIONS = [
         + '      return attachment;\n'
         + '    }\n',
       replace: '    // mutant: the warm factory is deferred like a cold import\n',
+    }],
+  },
+  {
+    id: 'mutants-run-on-every-push',
+    guard: 'node --test --test-name-pattern="#510" test/classify-changes.test.mjs',
+    because: 'mutants by diff belong to the review candidate, the PR, the nightly run and the beta '
+      + 'candidate — an ordinary push must not spend 3×8 runner minutes on them (#510 AC1)',
+    patches: [{
+      file: 'scripts/classify-changes.mjs',
+      find: "  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true' || String(mutantsInput) === 'true';\n  return hasReleaseTrailer(headMessage);\n}",
+      replace: "  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true' || String(mutantsInput) === 'true';\n  return true; // mutant: every push\n}",
+    }],
+  },
+  {
+    id: 'review-starts-on-red-validate',
+    guard: 'node --test test/validate-gate.test.mjs',
+    because: 'a red dispatch run on the material must return the task without a review; treating '
+      + 'any completed run as green spends the review cycle on code CI already rejected (#510 AC2)',
+    patches: [{
+      file: 'scripts/validate-gate.mjs',
+      find: "        if (run.conclusion !== 'success') return { result: 'red', url: run.url, note: `dispatch-прогон завершился: ${run.conclusion}` };",
+      replace: "        // mutant: completed means green — a red dispatch falls through to the job check",
+    }],
+  },
+  {
+    id: 'review-anchor-drops-issue-body',
+    guard: 'node --test test/review-doc-guard.test.mjs',
+    because: 'ТЗ живёт в теле issue, которое GitHub правит без diff и без истории: без хеша тела '
+      + 'в якорях доказать «вердикт вынесен на этом тексте» нечем (#517 AC1)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '    lines.push(`- Тело issue: \\`${issueBody}\\``);',
+      replace: '    // mutant: anchor without the issue body',
+    }],
+  },
+  {
+    id: 'review-ignores-changed-spec-body',
+    guard: 'node --test test/review-doc-guard.test.mjs',
+    because: 'правка ТЗ после зелёного ревью ТЗ обязана приходить ревьюеру кода находкой; '
+      + 'сравнение, которое всегда молчит, возвращает ровно ту слепоту, ради которой заведён хеш (#517 AC2)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '  return recorded === digest ? null : { doc: green.name, recorded, current: digest };',
+      replace: '  return null; // mutant: the body never changed',
+    }],
+  },
+  {
+    id: 'reuse-ignores-changed-issue-body',
+    guard: 'node --test test/review-doc-guard.test.mjs',
+    because: 'повторное применение зелёного вердикта пропускает вызов модели целиком: если оно не '
+      + 'смотрит на хеш тела, правка ТЗ между раундами проходит невидимой (#517 AC6)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '  if (recordedBody && issueBodyDigest && recordedBody !== issueBodyDigest) return null;',
+      replace: '  // mutant: reuse ignores the issue body',
+    }],
+  },
+  {
+    id: 'process-gate-requires-spec-file',
+    guard: 'node --test test/process-gate.test.mjs',
+    because: 'после #517 файла ТЗ не создаёт ни одна новая задача: гейт, требующий файл, краснеет '
+      + 'на каждом классе A и учит игнорировать себя (#517 AC3)',
+    patches: [{
+      file: 'scripts/process-gate.mjs',
+      find: '      if (hasSpecText(body)) continue;',
+      replace: '      if (body !== null) continue; // mutant: only the file counts',
+    }],
+  },
+  {
+    id: 'review-returns-task-on-cancelled-dispatch',
+    guard: 'node --test test/validate-gate.test.mjs',
+    because: 'a dispatch cancelled by its replacement in the same concurrency group proves nothing; '
+      + 'reading it as red sends the task back to S6 for no reason (#510 review r1 M1, #511)',
+    patches: [{
+      file: 'scripts/validate-gate.mjs',
+      find: "        if (run.conclusion === 'cancelled') {",
+      replace: "        if (false) { // mutant: cancelled counts as red",
+    }],
+  },
+  {
+    id: 'merge-rereviews-own-review-doc',
+    guard: 'node --test test/merge-candidate.test.mjs',
+    because: 'the candidate carries its own review document and the material does not; a patch-id '
+      + 'that counts docs/reviews sends every green candidate back to review whenever dev moved (#516)',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: "      const diff = must(git('diff', '--full-index', from, to, '--', '.', ':!docs/reviews'), 'diff');",
+      replace: "      const diff = must(git('diff', '--full-index', from, to), 'diff'); // mutant: review docs count",
+    }],
+  },
+  {
+    id: 'merge-trusts-cancelled-dispatch',
+    guard: 'node --test test/merge-candidate.test.mjs',
+    because: 'the real waitValidate must skip a dispatch cancelled by its replacement; reading it as red '
+      + 'fails the merge candidate for nothing (#510 review r2 M1, #511)',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: "        const runs = all.filter((x) => (!event || x.event === event) && x.conclusion !== 'cancelled');",
+      replace: "        const runs = all.filter((x) => (!event || x.event === event)); // mutant: cancelled is red",
+    }],
+  },
+  {
+    id: 'release-ships-on-red-e2e',
+    guard: 'node --test test/e2e-gate.test.mjs',
+    because: 'a stable release must wait for a green E2E on a real Home Assistant; a gate that reads '
+      + 'a failed run as green ships the assets the run just rejected (#514 AC1)',
+    patches: [{
+      file: 'scripts/e2e-gate.mjs',
+      find: "        if (run.conclusion === 'success') return { result: 'green', url: run.url, note: `E2E на ${tag} зелёный` };",
+      replace: "        return { result: 'green', url: run.url, note: `E2E на ${tag} зелёный` }; // mutant: completed means green",
+    }],
+  },
+  {
+    id: 'release-upgrades-stable-onto-itself',
+    guard: 'node --test test/e2e-gate.test.mjs',
+    because: 'at release time the tag under test is already the newest stable, so upgrade_from=stable '
+      + 'makes the upgrade suite update a version onto itself and go red (#514, live run 09.09)',
+    patches: [{
+      file: 'scripts/e2e-gate.mjs',
+      find: "  return prior[0]?.tagName || 'stable';",
+      replace: "  return 'stable'; // mutant: always the newest stable, i.e. the tag itself",
+    }],
+  },
+  {
+    id: 'release-trusts-foreign-e2e-run',
+    guard: 'node --test test/e2e-gate.test.mjs',
+    because: 'the gate must follow the dispatch it made for this tag; accepting any dispatch run lets '
+      + 'a green run on another tag vouch for this release (#514 AC2)',
+    patches: [{
+      file: 'scripts/e2e-gate.mjs',
+      find: "  return (Array.isArray(jobs) ? jobs : []).some((job) => needles.some((needle) => String(job?.name || '').startsWith(needle)));",
+      replace: "  return true; // mutant: every dispatch is ours",
+    }],
+  },
+  {
+    id: 'review-trusts-push-run-without-mutants',
+    guard: 'node --test test/validate-gate.test.mjs',
+    because: 'a green push run on the same SHA holds no mutants and is not proof; the gate must '
+      + 'dispatch the mutant run instead of accepting it (#510 AC2)',
+    patches: [{
+      file: 'scripts/validate-gate.mjs',
+      find: "  return run?.event === 'workflow_dispatch';",
+      replace: "  return !!run; // mutant: any run counts",
+    }],
+  },
+  {
+    id: 'merge-waits-push-run-without-mutants',
+    guard: 'node --test test/merge-candidate.test.mjs',
+    because: 'the merged candidate is a new tree; the merge must dispatch the mutant run on it and '
+      + 'wait for that run, not for the push run that carries no mutants (#510 AC3)',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: "    ops.dispatchValidate(branch);\n    ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n    const { result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' });",
+      replace: "    ops.log(`Validate на кандидате ${candidate.slice(0, 8)} — ждём`);\n    const { result, url } = await ops.waitValidate(candidate); // mutant: push run, no dispatch",
     }],
   },
   {
@@ -8199,6 +8811,75 @@ const MUTANT_DEFINITIONS = [
         + '\n'
         + '    for node_id in ids:\n'
         + '        _visit(node_id)\n',
+    }],
+  },
+  {
+    id: 'config-adoption-echo-clears-history',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'an authoritative echo with identical content must keep local geometry undo and the '
+      + 'reactive root; only a genuinely different baseline retires them (#500 AC3, I3)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '    const configChanged = nextFingerprint !== this.currentConfigFingerprint();\n'
+        + '    if (configChanged) {\n'
+        + '      onConfigReplace();',
+      replace: '    const configChanged = nextFingerprint !== this.currentConfigFingerprint();\n'
+        + '    onConfigReplace();\n'
+        + '    if (configChanged) {',
+    }],
+  },
+  {
+    id: 'config-adoption-rev-from-foreign-response',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'a revision is accepted only together with the body it describes; taking the reply '
+      + 'revision without its body leaves a stale candidate with a newer rev (#500 I2, #490 F1)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '    if (!assetReady) {\n'
+        + "      host._continuity.note('asset-failed');",
+      replace: '    if (!assetReady) {\n'
+        + '      adoption.acceptConfigWrite(candidateConfig ?? adoption.config!, cfgResp ?? {});\n'
+        + "      host._continuity.note('asset-failed');",
+    }],
+  },
+  {
+    id: 'config-adoption-rollback-ignores-rev',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'a rollback must yield to a newer revision adopted while the candidate was in flight; '
+      + 'comparing content alone would erase a conflict reload (#500 AC6, #439)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '    if (!current || this.configRev !== attempt.revision\n'
+        + '        || contentFingerprint(current) !== attempt.attemptedFingerprint) return false;',
+      replace: '    if (!current\n'
+        + '        || contentFingerprint(current) !== attempt.attemptedFingerprint) return false;',
+    }],
+  },
+  {
+    id: 'post-write-tail-runs-on-refused-gate',
+    guard: 'node demo/smoke_post_write_adoption.mjs',
+    because: '#500 r1 M1: a post-write caller whose adoption was refused must skip its tail — '
+      + 'clearing history, bumping the geometry epoch and toasting «отменено» on a body the card '
+      + 'never adopted leaves the frontend describing state the server does not have; the scheduled '
+      + 'reload owns the tail. Guarded by the smoke, so the review gate runs it (r2 M1: the witness '
+      + 'was red for a round and nobody saw it — CI never ran this smoke)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "      if (adopted.status !== 'adopted') return; // asset wait: the scheduled reload owns the tail",
+      replace: '      void adopted; // mutant: the tail runs on a body that was never adopted',
+    }],
+  },
+  {
+    id: 'post-write-skips-asset-gate',
+    guard: 'node --test test/config-adoption.test.mjs',
+    because: 'post-write adoptions (space/delete, optimize_undo, import/apply) pass the same '
+      + 'backdrop readiness gate as reloads; skipping it re-creates the transient blank plan of #490 M1 (#500 AC4)',
+    patches: [{
+      file: 'src/config-adoption.ts',
+      find: '  if (structuralChanged) {\n'
+        + '    const assetReady = await host._signer.prepareImage(host.hass, host._candidateBackdrop(candidateConfig));',
+      replace: "  if (structuralChanged && input.profile === 'reload') {\n"
+        + '    const assetReady = await host._signer.prepareImage(host.hass, host._candidateBackdrop(candidateConfig));',
     }],
   },
 ];
@@ -8378,7 +9059,7 @@ function runCleanGuards(mutants) {
 
 /**
  * Мутанты, чьи патч-файлы задеты диффом (#332). Дифф-режим — для локальной
- * проверки и ревью-циклов; полный набор остаётся предрелизным контрактом,
+ * проверки и ревью-циклов; полный набор идёт ночным расписанием (#513),
  * поэтому пустая выборка — честный успех с явным сообщением, а не ошибка.
  */
 /**
@@ -8453,6 +9134,81 @@ export function guardInputs(guard, {
 }
 
 /**
+ * Радиус области якоря (#518): сколько строк вокруг патча считается «его
+ * кодом». Хост-файлы карты — тринадцать тысяч строк, и правка в одном их
+ * конце перегоняла свидетелей из другого: на #500 двенадцать изменённых строк
+ * `houseplan-editor-runtime.ts` тянули 53 мутанта из 75. Сорок строк — то
+ * расстояние, на котором правка ещё почти всегда трогает тот же код; дальше
+ * начинается чужой, и его перебирает ночной полный гейт (#513).
+ */
+export const ANCHOR_RADIUS_LINES = 40;
+
+/**
+ * Строки области якоря, 1-based включительно, или `null` — когда `find`
+ * встречается в файле не ровно один раз. `null` значит «судить по файлу
+ * целиком»: реестр, отставший от кода, обязан отвечать консервативно, а не
+ * сужать проверку (эту же однократность требуют `--check` и `applyPatches`).
+ */
+export function anchorSpan(source, find, radius = ANCHOR_RADIUS_LINES) {
+  const text = String(source ?? '');
+  if (!find || text.split(find).length - 1 !== 1) return null;
+  const start = text.indexOf(find);
+  const before = text.slice(0, start).split('\n').length; // 1-based строка начала
+  const inside = String(find).split('\n').length - 1;
+  const lines = text.split('\n').length;
+  return {
+    from: Math.max(1, before - radius),
+    to: Math.min(lines, before + inside + radius),
+  };
+}
+
+/** Текст области якоря (или весь файл, если якорь не однозначен). */
+export function anchorRegion(source, find, radius = ANCHOR_RADIUS_LINES) {
+  const text = String(source ?? '');
+  const span = anchorSpan(text, find, radius);
+  if (!span) return text;
+  return text.split('\n').slice(span.from - 1, span.to).join('\n');
+}
+
+/**
+ * Изменённые области по файлам из `git diff --unified=0` — стороны ГОЛОВЫ
+ * (`+`), потому что якоря ищутся в рабочем дереве. Чистое удаление даёт
+ * нулевую длину `+c,0`: считаем задетыми строки вокруг стыка, иначе вырезанный
+ * кусок кода не задел бы никого.
+ */
+export function parseDiffRanges(diffText) {
+  const ranges = new Map();
+  let file = null;
+  for (const line of String(diffText ?? '').split('\n')) {
+    const head = /^\+\+\+ (?:b\/)?(.+)$/.exec(line);
+    if (head) { file = head[1] === '/dev/null' ? null : head[1]; continue; }
+    const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/.exec(line);
+    if (!hunk || !file) continue;
+    const from = Number(hunk[1]);
+    const count = hunk[2] === undefined ? 1 : Number(hunk[2]);
+    const list = ranges.get(file) ?? [];
+    list.push(count === 0 ? [from, from + 1] : [from, from + count - 1]);
+    ranges.set(file, list);
+  }
+  return ranges;
+}
+
+const spansOverlap = (span, [from, to]) => from <= span.to && to >= span.from;
+
+/**
+ * Задел ли дифф область якоря патча (#518). `ranges` — карта из
+ * `parseDiffRanges`; её отсутствие означает прежний ответ по файлу целиком.
+ */
+export function patchTouched(patch, ranges, read) {
+  if (!ranges) return true;
+  const hunks = ranges.get(patch.file);
+  if (!hunks || !hunks.length) return true;
+  const span = anchorSpan(read(patch.file), patch.find);
+  if (!span) return true; // якорь не однозначен — судим по файлу
+  return hunks.some((hunk) => spansOverlap(span, hunk));
+}
+
+/**
  * Отпечаток свидетеля (#481): содержимое файлов патча и гарда плюс само
  * объявление мутанта. Строка версии продукта нормализуется, как в
  * `visualFingerprint` (#245): релизный бамп трогает `houseplan-card.ts` и
@@ -8470,14 +9226,20 @@ export function witnessFingerprint(mutant, {
   const hash = createHash('sha256');
   hash.update(JSON.stringify({ id: mutant.id, guard: mutant.guard, patches: mutant.patches }));
   hash.update('\0');
-  const files = new Set([
-    ...mutant.patches.map((patch) => patch.file),
-    ...guardInputs(mutant.guard, { exists, read }),
-  ]);
-  for (const file of [...files].sort()) {
-    hash.update(file);
+  const text = (file) => String(read(file)).replace(/\r\n?/g, '\n');
+  // Сторона патча — только область якоря (#518); сторона гарда — файл целиком:
+  // у гарда якоря нет, он судит поведение и меняется весь.
+  const entries = [
+    ...mutant.patches.map((patch, index) => [
+      `${patch.file}#якорь-${index}`,
+      () => anchorRegion(text(patch.file), patch.find),
+    ]),
+    ...guardInputs(mutant.guard, { exists, read }).map((file) => [file, () => text(file)]),
+  ].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  for (const [key, valueOf] of entries) {
+    hash.update(key);
     hash.update('\0');
-    hash.update(normalize(String(read(file)).replace(/\r\n?/g, '\n')));
+    hash.update(normalize(valueOf()));
     hash.update('\0');
   }
   return hash.digest('hex');
@@ -8540,7 +9302,12 @@ export function splitByLedger(mutants, ledger, fingerprintOf = (m) => witnessFin
 export function selectChangedMutants(mutants, changedFiles, exists, options = {}) {
   const changed = new Set(changedFiles);
   const inputsOf = options.guardInputs || ((guard) => guardInputs(guard, { exists, ...options }));
-  return mutants.filter((m) => m.patches.some((patch) => changed.has(patch.file))
+  // #518: когда известны области диффа, файл патча отбирает свидетеля лишь
+  // тем, что задел его якорь. Без областей — прежний ответ по файлу.
+  const ranges = options.ranges || null;
+  const read = options.read || ((file) => (existsSync(join(repoRoot, file)) ? readFileSync(join(repoRoot, file), 'utf8') : ''));
+  return mutants.filter((m) => m.patches.some((patch) => changed.has(patch.file)
+      && patchTouched(patch, ranges, read))
     || inputsOf(m.guard).some((file) => changed.has(file)));
 }
 
@@ -8668,14 +9435,26 @@ async function main(argv) {
       base = await baseRegistry(baseRef);
       if (!base) console.log(`реестр базы ${baseRef} не прочитан — отбор по определениям пропущен`);
     }
-    const picked = selectForDiff(selected, files, base);
+    // #518: области диффа сужают сторону патча до окрестности якоря. Не
+    // прочитались — отбор остаётся файловым, то есть прежним и более широким.
+    const hunks = spawnSync('git', ['-C', repoRoot, 'diff', '--unified=0', '--no-color', range],
+      { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+    const ranges = hunks.status === 0 && !hunks.error ? parseDiffRanges(hunks.stdout) : null;
+    if (!ranges) console.log('области диффа не прочитаны — отбор по файлам целиком');
+    const wide = selectForDiff(selected, files, base);
+    const picked = selectForDiff(selected, files, base, { ranges });
     if (picked.removed.length) console.log(`удалены из реестра: ${picked.removed.join(', ')}`);
     selected = picked.selected;
     console.log(`дифф-режим ${range}: файлов в диффе ${files.length}, `
       + `мутантов затронуто ${selected.length} из ${before} (по файлам ${picked.byFiles.length}, по определениям ${picked.byRegistry.length})`);
+    if (ranges && wide.selected.length !== selected.length) {
+      console.log(`области якорей (радиус ${ANCHOR_RADIUS_LINES} строк, #518): `
+        + `${wide.selected.length} → ${selected.length}`);
+    }
     if (!selected.length) {
-      console.log('дифф не задевает ни одного patch.file — гонять нечего; '
-        + 'полный реестр остаётся предрелизным контрактом');
+      console.log('дифф не задевает ни одной области якоря — гонять нечего; '
+        + 'полный реестр идёт ночным расписанием (#513)');
+      if (argv.includes('--plan-only')) console.log('plan=0');
       return 0;
     }
   }
@@ -8751,10 +9530,17 @@ async function main(argv) {
     plan = split.run;
     if (!plan.length) {
       console.log('все отобранные свидетели уже пойманы на этих же входах — гонять нечего');
+      if (argv.includes('--plan-only')) console.log('plan=0');
       return 0;
     }
   }
   const toRun = plan.map((entry) => entry.mutant);
+  // #518: `--plan-only` считает план и выходит — job мутантов спрашивает его
+  // ДО установки окружения (npm ci, python, Chromium ≈ 3 минуты на шард).
+  if (argv.includes('--plan-only')) {
+    console.log(`plan=${toRun.length}`);
+    return 0;
+  }
   if (!runCleanGuards(toRun)) return 2;
   let caught = 0;
   for (const entry of plan) {

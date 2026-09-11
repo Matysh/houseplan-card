@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -79,8 +79,9 @@ function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseReject
       if (ref === 'dev' && rejects > 0) { rejects -= 1; devIndex += 1; return false; }
       return true;
     },
-    waitValidate: async (sha) => {
-      calls.push(['validate', sha]);
+    dispatchValidate: (ref) => { calls.push(['dispatch', ref]); },
+    waitValidate: async (sha, options) => {
+      calls.push(['validate', sha, options?.event]);
       const result = validate[Math.min(validateIndex, validate.length - 1)] || 'green';
       validateIndex += 1;
       return { result, url: `https://run/${sha}` };
@@ -108,8 +109,12 @@ test('эксперимент аудита: dev двигался, ребейз ч
   const validateAt = order.indexOf('validate');
   const devPushAt = ops.calls.findIndex((c) => c[0] === 'push' && c[2] === 'dev');
   assert.ok(validateAt >= 0 && validateAt < devPushAt, `Validate (${validateAt}) раньше push в dev (${devPushAt})`);
-  // кандидат сначала опубликован в ветку (от этого push стартует Validate)
+  // кандидат сначала опубликован в ветку, затем на ней запрошен Validate с мутантами (#510)
   assert.deepEqual(ops.calls.find((c) => c[0] === 'push'), ['push', 'cand-mat-on-dev1', 'issue/1-x', 'mat']);
+  const dispatchAt = order.indexOf('dispatch');
+  assert.ok(dispatchAt > order.indexOf('push') && dispatchAt < validateAt, 'dispatch после пуша кандидата и до ожидания');
+  assert.deepEqual(ops.calls[dispatchAt], ['dispatch', 'issue/1-x']);
+  assert.deepEqual(ops.calls[validateAt], ['validate', 'cand-mat-on-dev1', 'workflow_dispatch'], 'ждём именно dispatch-прогон, не push');
   assert.deepEqual(ops.calls.find((c) => c[0] === 'push' && c[2] === 'dev'), ['push', 'cand-mat-on-dev1', 'dev', 'dev1']);
 });
 
@@ -198,6 +203,7 @@ test('на настоящем git: чистый ребейз с равным pat
       const r = spawnSync('git', ['-C', work, 'push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, 'origin', `${sha}:refs/heads/${ref}`], { encoding: 'utf8' });
       return r.status === 0;
     };
+    ops.dispatchValidate = (ref) => { calls.push(['dispatch', ref]); };
     ops.waitValidate = async (sha) => { calls.push(['validate', sha]); return { result: 'green', url: 'https://run/1' }; };
     ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 40)]); };
     ops.log = () => {};
@@ -216,6 +222,107 @@ test('на настоящем git: чистый ребейз с равным pat
     // lease: dev ждали на вершине «a is 40 now»
     const lease = calls.find((c) => c[0] === 'push' && c[1] === 'dev')[2];
     assert.equal(lease, git(work, 'rev-parse', `${devTip}^`));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ---------- #510 code review r2 M1: the real waitValidate, not a fake ----------
+
+/** gh scripted by call: each `gh run list` answer is the next snapshot. */
+function scriptedExec(snapshots) {
+  let calls = 0;
+  return {
+    exec: (cmd, args) => {
+      if (cmd === 'gh' && args[0] === 'run' && args[1] === 'list') {
+        const s = snapshots[Math.min(calls, snapshots.length - 1)];
+        calls += 1;
+        return { status: 0, stdout: JSON.stringify(s), stderr: '' };
+      }
+      throw new Error(`unexpected ${cmd} ${args.join(' ')}`);
+    },
+    calls: () => calls,
+  };
+}
+
+test('#510 r2 M1: realOps.waitValidate ignores a cancelled dispatch and follows its replacement', async () => {
+  const cancelled = { databaseId: 1, status: 'completed', conclusion: 'cancelled', url: 'https://run/1', event: 'workflow_dispatch' };
+  const push = { databaseId: 2, status: 'completed', conclusion: 'success', url: 'https://run/2', event: 'push' };
+  const replacement = { databaseId: 3, status: 'completed', conclusion: 'success', url: 'https://run/3', event: 'workflow_dispatch' };
+  const gh = scriptedExec([[cancelled, push], [cancelled, push], [replacement, cancelled, push]]);
+  let clock = 0;
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, sleep: async (ms) => { clock += ms; }, now: () => clock });
+  const r = await ops.waitValidate('c'.repeat(40), { event: 'workflow_dispatch' });
+  assert.deepEqual(r, { result: 'green', url: 'https://run/3' });
+  assert.equal(gh.calls(), 3, 'kept polling past the cancelled run instead of returning red on the first answer');
+});
+
+test('#510 r2 M1: realOps.waitValidate with only a cancelled dispatch reports missing after the appear window, never red', async () => {
+  const cancelled = { databaseId: 1, status: 'completed', conclusion: 'cancelled', url: 'https://run/1', event: 'workflow_dispatch' };
+  const gh = scriptedExec([[cancelled]]);
+  let clock = 0;
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, sleep: async (ms) => { clock += ms; }, now: () => clock });
+  const r = await ops.waitValidate('c'.repeat(40), { event: 'workflow_dispatch' });
+  assert.equal(r.result, 'missing');
+});
+
+// ---------- #516: the candidate carries its own review document; dev moves by other documents ----------
+
+test('#516 AC1: dev moved only by review documents and the branch carries its own — patch-id equal, merge goes through Validate, not re-review', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-merge-516-'));
+  try {
+    const origin = join(dir, 'origin.git');
+    const work = join(dir, 'work');
+    execFileSync('git', ['init', '-q', '--bare', origin]);
+    execFileSync('git', ['clone', '-q', origin, work]);
+    const cfg = ['-c', 'user.name=t', '-c', 'user.email=t@x'];
+    const git = (cwd, ...args) => execFileSync('git', ['-C', cwd, ...cfg, ...args], { encoding: 'utf8' }).trim();
+    const commit = (msg) => execFileSync('git', ['-C', work, ...cfg, 'commit', '-q', '-am', msg]);
+    mkdirSync(join(work, 'docs', 'reviews'), { recursive: true });
+    writeFileSync(join(work, 'a.mjs'), 'export const a = 20;\n');
+    writeFileSync(join(work, 'docs', 'reviews', '.keep'), '');
+    git(work, 'add', '.');
+    commit('base');
+    git(work, 'branch', '-M', 'dev');
+    git(work, 'push', '-q', '-u', 'origin', 'dev');
+    // ветка задачи: код + (позже) её собственный документ ревью
+    git(work, 'checkout', '-q', '-b', 'issue/9-fix');
+    writeFileSync(join(work, 'a.mjs'), 'export const a = 21;\n');
+    commit('fix');
+    const material = git(work, 'rev-parse', 'HEAD');
+    writeFileSync(join(work, 'docs', 'reviews', 'CODE-REVIEW-9-r1.md'), '# CODE-REVIEW-9-r1\nVerdict: green\n');
+    git(work, 'add', '.');
+    commit('docs: review document for #9');
+    git(work, 'push', '-q', '-u', 'origin', 'issue/9-fix');
+    // dev двинулся чужим документом ревью — ровно то, что делает каждый паблиш конвейера
+    git(work, 'checkout', '-q', 'dev');
+    writeFileSync(join(work, 'docs', 'reviews', 'CODE-REVIEW-8-r2.md'), '# CODE-REVIEW-8-r2\n');
+    git(work, 'add', '.');
+    commit('docs: review document for #8');
+    git(work, 'push', '-q', 'origin', 'dev');
+
+    const calls = [];
+    const ops = realOps({ repo: 'x/y', token: 'none' });
+    ops.pushWithLease = (sha, ref, expected) => {
+      calls.push(['push', ref, expected]);
+      const r = spawnSync('git', ['-C', work, 'push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, 'origin', `${sha}:refs/heads/${ref}`], { encoding: 'utf8' });
+      return r.status === 0;
+    };
+    ops.dispatchValidate = (ref) => { calls.push(['dispatch', ref]); };
+    ops.waitValidate = async (sha) => { calls.push(['validate', sha]); return { result: 'green', url: 'https://run/1' }; };
+    ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 60)]); };
+    ops.log = () => {};
+    const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
+    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto']) ops[name] = inWork(ops[name]);
+
+    const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });
+    assert.equal(r.action, 'push', JSON.stringify(calls));
+    assert.ok(calls.some((c) => c[0] === 'validate'), 'кандидат прошёл Validate');
+    assert.ok(!calls.some((c) => c[0] === 'comment' && /patch-id/.test(c[1])), 'нет возврата «дифф изменился»');
+    const devTip = git(work, 'rev-parse', 'origin/dev');
+    assert.match(git(work, 'show', `${devTip}:a.mjs`), /a = 21/);
+    assert.equal(git(work, 'cat-file', '-t', `${devTip}:docs/reviews/CODE-REVIEW-9-r1.md`), 'blob', 'документ раунда уехал вместе с кодом');
+    assert.equal(git(work, 'cat-file', '-t', `${devTip}:docs/reviews/CODE-REVIEW-8-r2.md`), 'blob');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

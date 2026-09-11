@@ -294,6 +294,41 @@ try {
       } else history.replaceState(null, '', location.pathname);
       const host = document.getElementById('host');
       const card = document.createElement('houseplan-card');
+      // #520 diagnostics: where the extra half second of model readiness goes.
+      // Counts Lit update cycles and model builds; printed, never budgeted.
+      card.__diag = { updates: 0, updateMs: 0, models: 0, adopts: 0, epochs: [] };
+      // Every `_cfgEpoch` bump with the frame that made it: the extra epoch is
+      // what rebuilds the model a second time (#520).
+      let diagEpoch = 0;
+      Object.defineProperty(card, '_cfgEpoch', {
+        configurable: true,
+        get: () => diagEpoch,
+        set: (next) => {
+          if (next !== diagEpoch) {
+            const frames = (new Error().stack || '').split('\n').slice(1, 4)
+              .map((line) => line.trim().replace(/^at\s+/, '').replace(/\s*\(.*$/, ''));
+            card.__diag.epochs.push(`${diagEpoch}->${next}@${frames.join('<')}`);
+          }
+          diagEpoch = next;
+        },
+      });
+      const diagPerform = card.performUpdate.bind(card);
+      card.performUpdate = function () {
+        const started = performance.now();
+        const result = diagPerform();
+        card.__diag.updates += 1;
+        card.__diag.updateMs += performance.now() - started;
+        return result;
+      };
+      const diagBuild = card._buildModel.bind(card);
+      card._buildModel = function () { card.__diag.models += 1; return diagBuild(); };
+      if (typeof card._adoptStructuralResponses === 'function') {
+        const legacy = card._adoptStructuralResponses.bind(card);
+        card._adoptStructuralResponses = function (...args) { card.__diag.adopts += 1; return legacy(...args); };
+      } else if (typeof card._adoptAuthoritative === 'function') {
+        const gated = card._adoptAuthoritative.bind(card);
+        card._adoptAuthoritative = function (...args) { card.__diag.adopts += 1; return gated(...args); };
+      }
       card.setConfig({
         type: 'custom:houseplan-card', title: `Performance baseline ${sample}`, icon_size: 3.4,
       });
@@ -363,6 +398,14 @@ try {
       if (interaction && '_bootSoft' in card) await until(() => card._bootSoft === false);
       await frame();
       const firstStableRenderMs = Number((performance.now() - loadStarted).toFixed(2));
+      const bootDiag = {
+        updates: card.__diag.updates,
+        updateMs: Number(card.__diag.updateMs.toFixed(1)),
+        models: card.__diag.models,
+        adopts: card.__diag.adopts,
+        cfgEpoch: card._cfgEpoch,
+        epochs: card.__diag.epochs.slice(0, 8),
+      };
       const initialProjection = typeof card._effectiveProjection === 'function'
         ? card._effectiveProjection() : null;
       if (requiresIsometric && initialProjection !== 'iso')
@@ -1096,6 +1139,7 @@ try {
 
       const result = {
         sample,
+        bootDiag,
         modelReadyMs,
         firstStableRenderMs,
         ...(viewToggle ? { viewToggleMs: viewToggle.ms } : {}),
@@ -1165,7 +1209,16 @@ try {
       interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, profile,
     });
-    if (measuredSample >= 0) rows.push(row);
+    // #520: диагностика печатается в лог прогона и в запись не попадает.
+    const { bootDiag, ...measured } = row;
+    if (bootDiag) {
+      console.log(`#520 diag sample ${row.sample}: updates=${bootDiag.updates}`
+        + ` updateMs=${bootDiag.updateMs} models=${bootDiag.models}`
+        + ` adopts=${bootDiag.adopts} cfgEpoch=${bootDiag.cfgEpoch}`
+        + ` epochs=[${(bootDiag.epochs || []).join(' ; ')}]`
+        + ` modelReady=${measured.modelReadyMs} firstStable=${measured.firstStableRenderMs}`);
+    }
+    if (measuredSample >= 0) rows.push(measured);
   }
 } finally {
   await browser.close();

@@ -166,7 +166,17 @@ npm run benchmark:isometric-stage3-dense -- --samples=7 --warmups=1 --output=art
 npm run golden:capture
 npm run golden:verify
 npm run golden:accept -- --reviewed
+
+# Docs screenshots whose pixels did not change (a version bump, a refactor):
+# re-capture locally, compare decoded RGBA against the committed frames and,
+# if every frame is identical, refresh only the manifest fingerprints (#512).
+npm run docs:accept -- --identical
 ```
+
+Golden frames never show the real card version: the harness sets the test-only
+seam `window.__HP_VERSION_OVERRIDE__ = '0.0.0-golden'` before the card is
+created, so a version bump alone changes no baseline (#512, see
+`demo/golden/README.md`).
 
 The config audit performs no network requests and does not rewrite the input.
 Its registry and lifecycle rules are documented in `CONFIG-COMPATIBILITY.md`.
@@ -269,6 +279,47 @@ node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
 
   The full HA pytest harness requires Linux/WSL; native Windows lacks `fcntl`.
 
+## The stylesheet minifier sees TypeScript output, not the source (#526)
+
+`scripts/css-template-minifier.mjs` runs as a Rollup transform, and by then the
+module has already been through TypeScript. The TS printer puts a space between
+a tag and its template, so the source `css`…`` arrives as `css `…``.
+
+The plugin used to look for the exact string `css` + backtick and therefore
+returned `null` for every stylesheet in the project: minification never ran
+once, and roughly 23 KB of explanatory comments were shipped to every user —
+12.8 KB gzipped in the initial chunk.
+
+Two consequences for anyone touching this area:
+
+- match the tag as a word followed by optional whitespace, never as a literal
+  two-character string;
+- the guard that keeps this honest is not inside the plugin but in
+  `test/bundle-assets.test.mjs`: it takes real comment text out of
+  `src/styles/*.ts` and asserts none of it appears in `dist/**`. A plugin that
+  silently stops working cannot pass it.
+
+## Do not animate container-relative properties on the plan (#524)
+
+A CSS property whose value is expressed in container query units — `cqw`,
+`cqh`, or any custom property derived from them, such as `--dev-size` — must
+not appear in a `transition` on elements the plan draws in quantity.
+
+Container query styles are re-evaluated whenever the container's inline size
+changes: a tooltip, a scrollbar, a rotation, a panel resize. Every such
+re-evaluation produces a new computed value and therefore **restarts the
+transition on every one of those elements at once**.
+
+That is how `box-shadow` on device markers cost a real user 9.4 frames per
+second in Firefox 155: sixty-one markers started a 150 ms non-composited
+shadow transition four times in two seconds, and the refresh driver spent the
+window waiting for paint. Chromium starts exactly the same transitions — it
+merely pays less for them, which is why the defect hid there.
+
+The witness is browser-independent and lives in
+`demo/smoke_marker_shadow_transitions.mjs`: change the stage container width by
+one pixel and assert that no `transitionrun` for `box-shadow` arrives.
+
 ## Dependency and cache gotchas
 
 - **polygon-clipping is a trap**: its `.d.ts` declares named exports but the ESM build has only
@@ -355,9 +406,16 @@ fallback. They still gate assets on the exact tagged SHA, so adopting the new
 path does not weaken releases created through the old path.
 
 Tag `vX.Y.Z` + GitHub Release → `.github/workflows/release.yml` resolves that
-tag to its exact commit, waits for every Validate run of the SHA to complete
-successfully, then builds and attaches `houseplan-card.js`. A missing, failed,
-cancelled or one-hour-timed-out Validate withholds the asset. Bump the version
+tag to its exact commit, waits for the latest non-cancelled Validate run of the
+SHA to complete successfully (#511: a cancelled run is not a verdict, a later
+re-run or another-baseline comparison refreshes an older result), then builds
+and attaches `houseplan-card.js`. A missing, failed or one-hour-timed-out latest
+Validate withholds the asset; stable releases additionally need the same for
+Full Performance and a green E2E run on a real Home Assistant: `release.yml`
+dispatches `e2e.yml` in `Matysh/houseplan-e2e` with the tag (the suite installs
+the release's `houseplan.zip` into HA in docker) and waits for it (#514). A red
+E2E withholds the assets — open the linked run, the Playwright traces and
+screenshots are in its artifacts; fix, then cut a new tag. Bump the version
 everywhere in sync: `src/houseplan-card.ts` (CARD_VERSION), `package.json`,
 `custom_components/houseplan/manifest.json`, `custom_components/houseplan/const.py`.
 

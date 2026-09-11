@@ -35,25 +35,5 @@ export function optimisticAttempt<T>(
   };
 }
 
-/**
- * Roll back only the failed candidate represented by this attempt. A conflict
- * reload or a newer edit owns a different revision/content and must win.
- */
-export function rollbackOptimistic<T>(
-  host: {
-    _serverCfg: T | null;
-    _cfgRev: number;
-    _cfgContentFingerprint: string;
-    requestUpdate: () => unknown;
-  },
-  attempt: OptimisticAttempt<T>,
-  fingerprint: (value: T) => string,
-): boolean {
-  const current = host._serverCfg;
-  if (!current || host._cfgRev !== attempt.revision
-      || fingerprint(current) !== attempt.attemptedFingerprint) return false;
-  host._serverCfg = attempt.previous;
-  host._cfgContentFingerprint = attempt.previousFingerprint;
-  host.requestUpdate();
-  return true;
-}
+// The rollback of an attempt lives with the identity owner:
+// `ConfigAdoption.rollbackOptimistic` (#500).

@@ -107,7 +107,13 @@ export function buildPacket(inputs) {
   const track = labels.includes('trivial') ? 'trivial' : labels.includes('small') ? 'small' : 'полный';
   const stage = status === 'S4-spec-review' || status === 'S3-spec' || status === 'S5-ready' ? 'spec' : 'code';
   const verdict = lastVerdict(comments, reviewDocs, stage);
-  const acSource = specs.length ? specs.map((s) => s.text).join('\n') : issue.body;
+  // ТЗ живёт в теле issue (#517); архивный файл — источник только у задач до
+  // перехода, у которых в теле AC нет. Порядок именно такой: тело правится и
+  // после создания файла, и тогда файл описывает не тот текст, что читает
+  // ревьюер.
+  const fromBody = extractAcceptanceCriteria(issue.body);
+  const acSource = fromBody.length || !specs.length
+    ? issue.body : specs.map((s) => s.text).join('\n');
   const acs = evidenceFor(extractAcceptanceCriteria(acSource), reviewDocs.length ? reviewDocs.at(-1).text : '');
   const unverified = acs.filter((a) => a.evidence.startsWith('без записи'));
   const packet = {

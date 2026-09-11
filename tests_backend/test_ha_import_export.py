@@ -824,6 +824,31 @@ def test_layout_writer_preserves_unrelated_metadata_and_removes_only_named_keys(
     assert result["rev"] == 5
 
 
+def test_export_is_not_locked_by_legacy_room_drafts(tmp_path: Path) -> None:
+    """#529: возможность забрать бэкап — последняя линия обороны.
+
+    Экспорт зовёт ту же миграцию модели стен, что и карточка, поэтому конфиг с
+    наследием `room_drafts` при текущей версии модели запирал и её: план нельзя
+    было ни отредактировать, ни выгрузить, чтобы починить руками.
+    """
+    config = _config()
+    config["model_version"] = PLAN_MODEL_VERSION
+    config["spaces"][0]["room_drafts"] = []
+    runtime = SimpleNamespace(instance_id="instance-a")
+
+    document, filename = create_export(
+        runtime,
+        {"config": config, "rev": 1},
+        {"layout": {}},
+        kind="full", space_id=None, card_version="1.74.0", config_root=tmp_path,
+    )
+
+    assert filename.endswith(".json")
+    assert all(
+        "room_drafts" not in space for space in document["payload"]["config"]["spaces"]
+    )
+
+
 def test_full_export_has_versioned_envelope_and_live_layout(tmp_path: Path) -> None:
     config = _config()
     config["markers"].append({"id": "gone", "binding": "virtual", "removed": True})

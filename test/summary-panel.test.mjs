@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { makeLargeHouseFixture } from '../demo/fixtures/large-house.mjs';
+import { spaceModels } from '../test-build/space-geometry.js';
 import { readFileSync } from 'node:fs';
 
 import {
@@ -21,6 +23,7 @@ import {
   summaryEntityValue,
   summarySystemValue,
   totalCleanFloorAreaM2,
+  spaceWallGeometry,
 } from '../test-build/summary-panel-metrics.js';
 import { summaryPanelDictionaries, summaryPanelText } from '../test-build/summary-panel-i18n.js';
 import { stableSummaryPlacementSlot } from '../test-build/summary-panel-identity.js';
@@ -355,4 +358,50 @@ test('#437 entity and system sources preserve real zero and delegate HA formatti
     { type: 'system', key: 'total_area' },
     { deviceCount: 0, areaM2: 0, now: new Date('2026-01-01T00:00:00Z') }, hass, 'en',
   ), '0.0 m²');
+});
+
+test('#509 AC3: площадь считает геометрию стен один раз на пространство, результат не меняется', () => {
+  const roomsOf = (prefix) => [
+    { id: `${prefix}1`, name: 'A', poly: [[0, 0], [100, 0], [100, 100], [0, 100]] },
+    { id: `${prefix}2`, name: 'B', poly: [[50, 0], [150, 0], [150, 100], [50, 100]] },
+  ];
+  const space = (id, prefix) => ({
+    id, title: id, cellCm: 5, vb: [0, 0, 1000, 1000], bg: null,
+    rooms: roomsOf(prefix), wall_segments: [], partitions: [], wall_columns: [],
+  });
+  const raw = (id, prefix) => ({
+    id, title: id, cell_cm: 5, view_box: [0, 0, 1, 1], rooms: roomsOf(prefix),
+    wall_segments: [], partitions: [], wall_columns: [], openings: [], walls: [],
+  });
+  const model = [space('f1', 'r'), space('f2', 'q')];
+  const config = { spaces: [raw('f1', 'r'), raw('f2', 'q')], markers: [], settings: {} };
+
+  const calls = [];
+  const spy = (spaceModel, prepared) => {
+    calls.push(spaceModel.id);
+    return spaceWallGeometry(spaceModel, prepared);
+  };
+  const withSpy = totalCleanFloorAreaM2(config, model, spy);
+  // Один вызов на ПРОСТРАНСТВО, а не на комнату: без этого innerContourForRoom
+  // объединял кладку заново для каждой комнаты (11 с на большом доме, #509).
+  assert.deepEqual(calls, ['f1', 'f2']);
+  assert.equal(withSpy, totalCleanFloorAreaM2(config, model), 'общая геометрия не меняет результат');
+  assert.equal(withSpy, 4.32);
+});
+
+test('#509 AC3: один этаж большого дома считается без пересборки кладки на каждой комнате', () => {
+  // Синтетический счётчик выше доказывает «один вызов на пространство», но не
+  // то, что результат этого вызова ДОШЁЛ до innerContourForRoom: без
+  // shared-аргументов та объединяет кладку заново для каждой комнаты, и
+  // единственный наблюдаемый признак — время (S2: 176 мс на комнату).
+  // Разрыв семикратный, поэтому порог грубый и не флейкует.
+  const fixture = makeLargeHouseFixture();
+  const config = { ...fixture.config, spaces: fixture.config.spaces.slice(0, 1) };
+  const model = spaceModels(config);
+  assert.equal(model[0].rooms.length, 20, 'фикстура даёт этаж из 20 комнат');
+  const started = Date.now();
+  const area = totalCleanFloorAreaM2(config, model);
+  const elapsed = Date.now() - started;
+  assert.ok(area > 0, String(area));
+  assert.ok(elapsed < 2500, `этаж из 20 комнат посчитан за ${elapsed} мс — кладка собирается заново на каждой комнате (#509)`);
 });

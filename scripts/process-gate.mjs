@@ -69,11 +69,6 @@ const CLASS_C = [
 
 const CHANGELOGS = ['docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'];
 
-// Метки, при которых файла ТЗ в docs/specs/ быть не должно: на лёгком треке ТЗ
-// живёт в теле issue (§5), на коротком — там же, и ревью ТЗ вообще не проводится
-// (§5.1, issue #128). Офлайн эти случаи неотличимы от «ТЗ не написано», поэтому
-// проверка 3 краснеет только когда метки прочитаны.
-export const NO_SPEC_FILE = ['small', 'trivial'];
 
 export const ALLOWED_STATUS = ['S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 export const STRICT_STATUS = ['S5-ready', 'S6-in-progress', 'S7-code-review'];
@@ -124,7 +119,7 @@ export function isReleaseCommit(subject, one) {
 
 export function makeCommit({
   sha = '', subject = '', body = '', files = [], authorDate = '',
-  releaseSourceViolations = null,
+  releaseSourceViolations = null, addedFiles = null,
 }) {
   const text = `${subject}\n${body}`;
   const all = (name) =>
@@ -136,6 +131,9 @@ export function makeCommit({
     subject,
     authorDate,
     files,
+    // Добавленные файлы (`--diff-filter=A`) нужны одной проверке — заморозке
+    // docs/specs (#517). Не доказаны вызывающим — null, и проверка молчит.
+    addedFiles,
     classes: new Set(files.map(classify)),
     issues: all('Issue'),
     userVisible: one('User-Visible'),
@@ -151,7 +149,7 @@ export function makeCommit({
 }
 
 export function parseRecords(
-  raw, filesOf = () => [], releaseSourceViolationsOf = () => null,
+  raw, filesOf = () => [], releaseSourceViolationsOf = () => null, addedFilesOf = null,
 ) {
   if (!raw.trim()) return [];
   return raw
@@ -168,6 +166,7 @@ export function parseRecords(
       const one = (name) => text.match(new RegExp(`^${name}:\\s*(.+)$`, 'mi'))?.[1].trim() ?? null;
       return makeCommit({
         sha, subject, body, files, authorDate,
+        addedFiles: addedFilesOf ? addedFilesOf(sha) : null,
         releaseSourceViolations: isReleaseCommit(subject, one)
           ? releaseSourceViolationsOf(sha, files) : null,
       });
@@ -299,36 +298,64 @@ export function checkBranchRule(branch, commits) {
   return out;
 }
 
-// 3. для класса A нужно ТЗ docs/specs/NN-*.md, либо метка small (лёгкий трек).
-// Офлайн это предупреждение: лёгкий трек держит ТЗ в теле issue, и без чтения
-// меток отличить «ТЗ в issue» от «ТЗ не написано» невозможно. С метками — отказ.
-export function checkSpecs(commits, specFiles, labelsOf = null) {
-  if (specFiles === null) {
-    return [{ level: 'warn', rule: 3, sha: '-', msg: 'нет docs/specs/ — проверка 3 пропущена' }];
-  }
+// 3. у класса A есть ТЗ — в теле issue (#517) либо в архивном файле
+// docs/specs/NN-*.md у задач до 2026-09-10.
+//
+// Что изменилось. Прежняя редакция требовала ФАЙЛА и отличала «ТЗ в теле» от
+// «ТЗ нет» только по меткам `small`/`trivial`. С переходом на ТЗ в теле issue
+// (#517) файла нет ни у одной новой задачи, и проверка по файлу требовала бы
+// того, чего процесс больше не создаёт. Судится текст: тело с заголовком
+// `## ТЗ` или хотя бы одним `AC1` — это ТЗ; тело без обоих признаков — код без
+// ТЗ. Офлайн (без `--issues`) тела нет, и проверка честно молчит: угадывать по
+// меткам больше нечего.
+//
+// Уровень — предупреждение, а не отказ: признак текстовый, и ложный красный
+// здесь дороже пропуска. Настоящий рубеж — ревью ТЗ, оно без ТЗ не бывает
+// зелёным.
+export function checkSpecs(commits, specFiles, bodyOf = null) {
   const out = [];
   const seen = new Set();
+  // `\b` в JS считает границей только латиницу с цифрами, поэтому после
+  // кириллического «ТЗ» её нет — признак ищется явным концом слова.
+  const hasSpecText = (body) => /^[ \t]*#{1,6}[ \t]*ТЗ(?![\p{L}\p{N}])/mu.test(String(body ?? ''))
+    || /(?<![\p{L}\p{N}])AC1(?![\p{L}\p{N}])/u.test(String(body ?? ''));
   for (const c of commits) {
     if (!c.classes.has('A') || c.isRelease) continue;
     for (const t of c.issues) {
       const nn = t.slice(1);
       if (seen.has(nn)) continue;
       seen.add(nn);
-      if (specFiles.some((f) => new RegExp(`^0*${nn}[-_]`).test(f))) continue;
+      // Архивный файл ТЗ у старой задачи — по-прежнему ТЗ.
+      if (specFiles && specFiles.some((f) => new RegExp(`^0*${nn}[-_]`).test(f))) continue;
 
-      const labels = labelsOf ? labelsOf(nn) : null;
-      if (labels === null) {
-        out.push({
-          level: 'warn', rule: 3, sha: c.short,
-          msg: `класс A по ${t}, но ТЗ docs/specs/${nn}-*.md не найдено — допустимо при метке small или trivial`,
-        });
-      } else if (!labels.some((l) => NO_SPEC_FILE.includes(l))) {
-        out.push({
-          level: 'fail', rule: 3, sha: c.short,
-          msg: `класс A по ${t}: ТЗ docs/specs/${nn}-*.md нет, и метки ${NO_SPEC_FILE.join(' / ')} на issue нет — код без ТЗ`,
-        });
-      }
+      const body = bodyOf ? bodyOf(nn) : null;
+      if (body === null) continue; // офлайн: тела нет, судить нечем
+      if (hasSpecText(body)) continue;
+      out.push({
+        level: 'warn', rule: 3, sha: c.short,
+        msg: `класс A по ${t}: в теле issue нет ни раздела «## ТЗ», ни AC1, архивного ТЗ docs/specs/${nn}-*.md тоже нет — код без ТЗ`,
+      });
     }
+  }
+  return out;
+}
+
+/**
+ * Новые файлы в `docs/specs/**` — предупреждение: каталог заморожен (#517).
+ *
+ * Старые ТЗ остаются и редактируются владельцем свободно; добавление нового
+ * файла означает, что кто-то пишет ТЗ по отменённой схеме.
+ */
+export function checkFrozenSpecs(commits) {
+  const out = [];
+  for (const c of commits) {
+    const added = (c.addedFiles || []).filter((f) => /^docs\/specs\/[^/]+\.md$/.test(f)
+      && !/README\.md$/.test(f));
+    if (!added.length) continue;
+    out.push({
+      level: 'warn', rule: 3, sha: c.short,
+      msg: `новый файл ТЗ ${added.join(', ')} — docs/specs/ заморожен с 2026-09-10 (#517), ТЗ живёт в теле issue`,
+    });
   }
   return out;
 }
@@ -600,7 +627,7 @@ function ghTimelineRunner(nwo, bin) {
 
 function ghRunner(nwo, bin) {
   return (nn) => {
-    const r = spawnSync(bin, ['issue', 'view', String(nn), '--repo', nwo, '--json', 'number,state,labels'],
+    const r = spawnSync(bin, ['issue', 'view', String(nn), '--repo', nwo, '--json', 'number,state,labels,body'],
       { encoding: 'utf8' });
     return r.status === 0
       ? { ok: true, json: r.stdout }
@@ -696,10 +723,14 @@ function main(argv) {
     .filter((file) => !isReleaseVersionOnlyChange(
       file, blobOf(`${sha}^`, file), blobOf(sha, file),
     ));
+  const addedFilesOf = (sha) =>
+    git(['show', '--name-only', '--diff-filter=A', '--pretty=format:', sha], repo)
+      .split('\n').map((s) => s.trim()).filter(Boolean);
   const commits = parseRecords(
     git(['log', '--reverse', `--pretty=format:${LOG_FORMAT}`, range], repo),
     filesOf,
     releaseSourceViolationsOf,
+    addedFilesOf,
   );
   const branch = git(['rev-parse', '--abbrev-ref', 'HEAD'], repo).trim();
 
@@ -747,6 +778,7 @@ function main(argv) {
   // Метки читаются один раз и используются дважды: проверкой 8 и escalation
   // проверки 3. Второй запрос по тому же issue — лишний сетевой вызов.
   let labelsOf = null;
+  let bodyOf = null;
   if (flag('issues')) {
     const prereleaseTags = isStableTarget(targetRef)
       ? git(['tag', '--list'], repo).split('\n').map((s) => s.trim()).filter((tag) =>
@@ -801,12 +833,24 @@ function main(argv) {
         return null;
       }
     };
+    // Тело issue — материал ТЗ с #517; по нему судит проверка 3.
+    bodyOf = (nn) => {
+      const r = cached(nn);
+      if (!r || r.ok !== true) return null;
+      try {
+        const issue = typeof r.json === 'string' ? JSON.parse(r.json) : r.json;
+        return typeof issue.body === 'string' ? issue.body : null;
+      } catch {
+        return null;
+      }
+    };
   }
 
   const specsDir = join(repo, 'docs', 'specs');
   findings.push(...checkSpecs(
-    checkedCommits, existsSync(specsDir) ? readdirSync(specsDir) : null, labelsOf,
+    checkedCommits, existsSync(specsDir) ? readdirSync(specsDir) : null, bodyOf,
   ));
+  findings.push(...checkFrozenSpecs(checkedCommits));
 
   const reviewDir = join(repo, 'docs', 'reviews');
   const reviewFiles = [

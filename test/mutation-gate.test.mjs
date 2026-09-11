@@ -8,13 +8,14 @@ import { fileURLToPath } from 'node:url';
 
 import {
   MUTANTS, applyPatches, guardNeedsBundle, guardNeedsTestBuild, selectChangedMutants, shardMutants, guardFiles, packageJsonRelevance,
+  anchorSpan, anchorRegion, parseDiffRanges, ANCHOR_RADIUS_LINES,
   witnessFingerprint, readLedger, recordCaught, splitByLedger, LEDGER_SCHEMA,
 } from '../scripts/mutation-gate.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
 // Дешёвая половина гейта, идёт с обычными юнитами на каждом прогоне. Полный
-// прогон с пересборкой бандла на мутанта — предрелизный, он в
+// прогон с пересборкой бандла на мутанта — ночное расписание (#513), он в
 // .github/workflows/mutation-gate.yml.
 //
 // Реестр, отставший от кода, хуже отсутствующего: он выглядит защитой. Поэтому
@@ -260,6 +261,12 @@ const validateWorkflowText = readWorkflowFile(
   new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8',
 );
 
+test('#513 AC1: полный мутационный прогон идёт каждую ночь, не раз в неделю и не перед релизом', () => {
+  assert.match(mutationWorkflow, /- cron: '0 1 \* \* \*'/, 'ежедневно 01:00 UTC');
+  assert.ok(!/cron: '[^']*\* [0-6]'/.test(mutationWorkflow), 'недельного расписания (день недели) быть не должно');
+  assert.ok(!mutationWorkflow.includes('перед стабильным релизом'), 'полный прогон — не шаг релиза');
+});
+
 test('#472 AC1: у расписания и ручного запуска разные concurrency-группы', () => {
   assert.match(mutationWorkflow, /group: mutation-gate-\$\{\{ github\.event_name \}\}/);
 });
@@ -391,6 +398,115 @@ test('#481 AC1: отпечаток свидетеля не меняется от
   assert.notEqual(witnessFingerprint(LEDGER_MUTANT, guardChanged), fp, 'правка файла гарда меняет отпечаток');
   assert.notEqual(witnessFingerprint({ ...LEDGER_MUTANT, guard: 'node --test test/y.test.mjs' }, base), fp, 'объявление гарда');
   assert.notEqual(witnessFingerprint({ ...LEDGER_MUTANT, patches: [{ file: 'src/x.ts', find: 'a', replace: 'c' }] }, base), fp, 'объявление патча');
+});
+
+// #518. Хост-файлы карты — тринадцать тысяч строк. Отпечаток и отбор по файлу
+// целиком означали, что правка в одном их конце перегоняет свидетелей из
+// другого: на #500 двенадцать изменённых строк тянули 53 мутанта из 75.
+// Сторона патча судится по области якоря; сторона гарда — по-прежнему целиком.
+
+/** Файл из `lines` строк, где на `at` (1-based) стоит якорь. */
+const withAnchor = (lines, at, anchor = 'const ЯКОРЬ = 1;') => Array.from(
+  { length: lines }, (_, i) => (i + 1 === at ? anchor : `let x${i} = ${i};`),
+).join('\n');
+
+const ANCHORED = { id: 'x', guard: 'node --test test/x.test.mjs', patches: [{ file: 'src/big.ts', find: 'const ЯКОРЬ = 1;', replace: 'const ЯКОРЬ = 2;' }] };
+const anchoredFs = (source, guard = 'assert(a)') => ({
+  root: '/repo',
+  read: (file) => (file === 'src/big.ts' ? source : guard),
+  exists: (file) => ['src/big.ts', 'test/x.test.mjs'].includes(file),
+  normalize: (text) => text,
+});
+
+test('#518 AC1: правка дальше радиуса от якоря не меняет отпечаток', () => {
+  const source = withAnchor(400, 200);
+  const fp = witnessFingerprint(ANCHORED, anchoredFs(source));
+  const far = source.split('\n');
+  far[10] = 'let x10 = 999;'; // 190 строк от якоря — чужой код
+  assert.equal(witnessFingerprint(ANCHORED, anchoredFs(far.join('\n'))), fp, 'дальняя правка — не изменение свидетеля');
+});
+
+test('#518 AC2: правка ВНУТРИ области якоря возвращает свидетеля в прогон', () => {
+  const source = withAnchor(400, 200);
+  const fp = witnessFingerprint(ANCHORED, anchoredFs(source));
+  for (const line of [200 - ANCHOR_RADIUS_LINES, 199, 201, 200 + ANCHOR_RADIUS_LINES]) {
+    const near = source.split('\n');
+    near[line - 1] = 'let touched = 1;';
+    assert.notEqual(witnessFingerprint(ANCHORED, anchoredFs(near.join('\n'))), fp,
+      `правка строки ${line} обязана перегнать свидетеля (якорь на 200, радиус ${ANCHOR_RADIUS_LINES})`);
+  }
+});
+
+test('#518 AC3: изменение входа гарда перегоняет свидетеля независимо от расстояния', () => {
+  const source = withAnchor(400, 200);
+  const fp = witnessFingerprint(ANCHORED, anchoredFs(source));
+  assert.notEqual(witnessFingerprint(ANCHORED, anchoredFs(source, 'assert(b)')), fp);
+});
+
+test('#518 AC4: якорь не однозначен — область равна файлу целиком', () => {
+  const twice = `${withAnchor(400, 200)}\nconst ЯКОРЬ = 1;`;
+  assert.equal(anchorSpan(twice, 'const ЯКОРЬ = 1;'), null, 'два вхождения — области нет');
+  assert.equal(anchorSpan('нет якоря', 'const ЯКОРЬ = 1;'), null);
+  assert.equal(anchorRegion(twice, 'const ЯКОРЬ = 1;'), twice, 'фолбэк — весь файл');
+  const fp = witnessFingerprint(ANCHORED, anchoredFs(twice));
+  const far = twice.split('\n');
+  far[10] = 'let x10 = 999;';
+  assert.notEqual(witnessFingerprint(ANCHORED, anchoredFs(far.join('\n'))), fp,
+    'при неоднозначном якоре ответ обязан остаться консервативным — как до #518');
+});
+
+test('#518 AC1/AC2 (отбор): ханк вне области якоря не отбирает, внутри — отбирает', () => {
+  const source = withAnchor(400, 200);
+  const read = () => source;
+  const pick = (ranges) => selectChangedMutants([ANCHORED], ['src/big.ts'], always, { ranges, read }).length;
+  assert.equal(pick(new Map([['src/big.ts', [[10, 12]]]])), 0, 'дальний ханк');
+  assert.equal(pick(new Map([['src/big.ts', [[199, 201]]]])), 1, 'ханк по якорю');
+  assert.equal(pick(new Map([['src/big.ts', [[200 + ANCHOR_RADIUS_LINES, 260]]]])), 1, 'ханк по краю области');
+  assert.equal(pick(new Map([['src/big.ts', [[10, 12], [199, 199]]]])), 1, 'хотя бы один ханк в области');
+  assert.equal(pick(null), 1, 'без областей — прежний ответ по файлу');
+  assert.equal(pick(new Map()), 1, 'файл в диффе, а ханков нет — консервативно');
+  // Гард судится по файлу целиком и при известных областях (AC3).
+  const guardOnly = selectChangedMutants([ANCHORED], ['test/x.test.mjs'], always,
+    { ranges: new Map([['test/x.test.mjs', [[1, 1]]]]), read });
+  assert.equal(guardOnly.length, 1);
+});
+
+test('#518: области диффа читаются из --unified=0, удаление считается задевшим стык', () => {
+  const ranges = parseDiffRanges([
+    'diff --git a/src/big.ts b/src/big.ts',
+    '--- a/src/big.ts',
+    '+++ b/src/big.ts',
+    '@@ -10,2 +10,3 @@',
+    '@@ -50 +51,0 @@',
+    '--- a/gone.ts',
+    '+++ /dev/null',
+    '@@ -1,5 +0,0 @@',
+  ].join('\n'));
+  assert.deepEqual(ranges.get('src/big.ts'), [[10, 12], [51, 52]]);
+  assert.equal(ranges.has('gone.ts'), false, 'удалённый файл ханков головы не даёт — судится по имени');
+});
+
+test('#518 AC5: у релоцированных свидетелей область ищется в файле назначения', () => {
+  const relocated = MUTANTS.filter((m) => m.patches.some((patch) => patch.file === 'src/houseplan-editor-runtime.ts'));
+  assert.ok(relocated.length > 10, 'в реестре есть свидетели, переехавшие в редакторский рантайм');
+  const source = readFileSync(join(repoRoot, 'src/houseplan-editor-runtime.ts'), 'utf8');
+  for (const mutant of relocated) {
+    for (const patch of mutant.patches.filter((x) => x.file === 'src/houseplan-editor-runtime.ts')) {
+      assert.notEqual(anchorSpan(source, patch.find), null,
+        `${mutant.id}: якорь не найден в файле назначения — область стала бы файлом целиком`);
+    }
+  }
+});
+
+test('#518: сужение реально режет отбор на реестре — правка одной функции хоста', () => {
+  const host = 'src/houseplan-editor-runtime.ts';
+  const source = readFileSync(join(repoRoot, host), 'utf8');
+  const byFile = selectChangedMutants(MUTANTS, [host], always).length;
+  assert.ok(byFile > 20, `по файлу целиком отбирается ${byFile} свидетелей`);
+  const lines = source.split('\n').length;
+  const tail = new Map([[host, [[lines, lines]]]]);
+  const byRange = selectChangedMutants(MUTANTS, [host], always, { ranges: tail, read: () => source }).length;
+  assert.ok(byRange < byFile / 2, `правка последней строки не должна отбирать ${byRange} из ${byFile}`);
 });
 
 test('#481 AC2: по журналу пропускается только совпавший отпечаток; чужой или отсутствующий — к прогону', () => {

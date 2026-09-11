@@ -9,7 +9,7 @@ import {
 } from './space-copy';
 import type { OptimizeGeometryPreflightResult } from './plan-geometry-preflight';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
-import { optimisticAttempt, rollbackOptimistic, type OptimisticAttempt } from './serialized-write-queue';
+import type { OptimisticAttempt } from './serialized-write-queue';
 import type { ServerConfig } from './types';
 import { contentFingerprint } from './visual-continuity';
 
@@ -213,15 +213,13 @@ export async function saveSpaceCopy(
     if (!safe || host._junctionLimitViolations(result.config, result.space.id).length) {
       throw new SpaceCopyError('geometry_unsafe');
     }
-    const attempt = optimisticAttempt(
-      previous, result.config, host._cfgContentFingerprint, host._cfgRev, contentFingerprint,
-    );
-    host._serverCfg = result.config;
+    const attempt = host._adoption.beginOptimistic(previous, result.config);
+    host._adoption.stageLocalConfig(result.config);
     invalidateConfig(host);
     try {
       await services.saveConfigNow(attempt);
     } catch (error) {
-      if (rollbackOptimistic(host, attempt, contentFingerprint)) invalidateConfig(host);
+      if (host._rollbackOptimistic(attempt)) invalidateConfig(host);
       if ((error as { code?: unknown } | null)?.code !== 'conflict') {
         await host._reloadConfigOnly(true);
       }

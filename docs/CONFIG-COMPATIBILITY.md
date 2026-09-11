@@ -254,9 +254,21 @@ partition. A unique existing segment id is retained; a missing, empty or
 colliding id is replaced deterministically from the space, draft and edge
 index, with a stable numeric suffix when needed. Draft order and each edge's
 `cm` are preserved, existing partitions are not merged, and the carrier record
-is removed atomically. Malformed geometry or invalid thickness fails closed. A
-current v10 document containing `room_drafts` is rejected instead of silently
-accepting a stale writer.
+is removed atomically. Malformed geometry or invalid thickness fails closed.
+
+A current v10 document that still carries `room_drafts` is **healed, not
+refused** (#529). The key is removed the same way the first migration removes
+it: an empty carrier silently, drafts converted one for one into partitions.
+Refusing it locked the plan completely — the card runs the same migration, so
+structural edits were rejected before the request left the browser, and export
+calls it too, so no backup could be taken to repair the file by hand.
+
+A stale writer is identified where it can actually be identified — in
+`validate_wall_model_transition`, which sees both the submission and the stored
+plan: drafts appearing over a stored plan that does not have them are refused
+with the outdated-client error, regardless of the `model_version` the client
+submitted (a stale card echoes back the number it was given). The schema
+invariant still refuses a non-empty carrier as the last line.
 
 Import preview, full/space backup restore and Optimize materialize this legacy
 shape before current processing, report converted draft/segment counts, and

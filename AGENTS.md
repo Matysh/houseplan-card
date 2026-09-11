@@ -305,10 +305,14 @@ does not meet.
 
 ## Specs
 
-`docs/specs/<NN>-<slug>.md`, linked to its issue in both directions. Required
-sections are in `PROCESS.md` §7.1, plus two product ones: which persona meets this,
-on which surface, at what moment; and what the person sees before and after, in one
-sentence without implementation terms.
+The spec lives in the **issue body**, under a `## ТЗ` heading (owner decision
+2026-09-10, #517); `docs/specs/` is an archive of specs written before that date
+and takes no new files. Required sections are in `PROCESS.md` §7.1, plus two
+product ones: which persona meets this, on which surface, at what moment; and what
+the person sees before and after, in one sentence without implementation terms.
+Proof that a verdict was passed on a given text is the pipeline's job: it writes
+the `sha256` of the normalised body into the review document's anchor block, and
+an edit made after a green spec review reaches the code reviewer as a finding.
 
 **Ambiguity is asked, not guessed — but only product ambiguity.** A guess written as
 fact is the worst kind of defect: it passes review because it looks like a decision.
@@ -387,6 +391,18 @@ demo/smoke_<name>.mjs`. A red smoke that reaches the review costs a cycle; run
 locally it costs a minute. Precedent: on #89 a fixture error lived through a
 whole review round that a local run would have caught immediately.
 
+**One handoff, one push (#510).** Run `node scripts/process-gate.mjs --issues`
+locally with `gh` available before pushing (without `gh` the hook cannot check the
+issue status and stays silent). After `S7-code-review` do not push to the branch
+until the verdict or the return arrives: a push on top of a running review cancels
+it (10–20 runner minutes) and, after the material is fixed, also the merge (#312).
+Set `S7` once per round, not after every CI fix: the pipeline now runs Validate
+with the diff mutants on the material itself and returns a red one to `S6` without
+spending a review cycle. Mutants by diff no longer run on ordinary pushes — only
+on the review candidate, the merge candidate, the beta candidate, PRs and the
+nightly run — so a routine push costs ~3 minutes; 08–09.09 they cost 48 of 56
+Validate job-hours and were mostly cancelled by the next push.
+
 The full smoke set, `golden` and `performance_smoke` still belong to the
 pre-beta run — which is then mandatory and complete. WSL runs of the full HA
 harness (`~/houseplan-card`, venv) are advisory; **the canon does not move**:
@@ -409,7 +425,14 @@ simply the only one we have). The deliberate override is
 `HP_ALLOW_FOREIGN_CAPTURE="reason"`; the reason travels into the output and the
 manifest. Baselines are still accepted only via
 `npm run golden:accept -- --reviewed` on a complete artefact, and the accepted
-index records the platform next to the Chromium build.
+index records the platform next to the Chromium build. The one local
+shortcut is `npm run docs:accept -- --identical` (#512): it re-captures on this
+machine, compares decoded pixels with the committed frames and, only when every
+frame is identical, refreshes the manifest fingerprints — frames that differ go
+through the artefact as before. The displayed card version reaches the DOM
+through `displayVersion()` (`src/card-version.ts`); the global
+`__HP_VERSION_OVERRIDE__` behind it is for harnesses only and the product never
+sets it.
 
 **Backend.** A full Home Assistant harness cannot run on native Windows at all:
 Home Assistant imports the Unix-only `fcntl` module. Its canon is Linux CI or WSL.
@@ -445,7 +468,10 @@ an unfinished Validate for the same branch. Gate jobs, matching the actual
 `frontend`, `smoke`, `golden`, `performance_smoke`, `backend`. The `changes` job
 is a service path-filter, not a gate. `docs` is a real blocker: it checks the
 screenshots `sourceFingerprint` against current `src/**`, which is exactly what
-went red after the #113 merge.
+went red after the #113 merge. A stable release additionally waits for Full
+Performance and for a green E2E run on a real Home Assistant (`houseplan-e2e`,
+dispatched on the tag by `release.yml`, #514); betas and the development cycle
+never run E2E.
 
 **"Verified" without a named command and its result is not evidence.**
 

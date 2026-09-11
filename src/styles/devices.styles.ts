@@ -209,7 +209,8 @@ export const devicesStyles = css`
       border-radius: 9999px;
       background: transparent;
       box-shadow: var(--device-shell-shadow);
-      transition: border-color .15s, box-shadow .15s, opacity .2s;
+      /* no box-shadow here: cqw-sized, restarts on every container resize (#524) */
+      transition: border-color .15s, opacity .2s;
       pointer-events: auto;
       /* Normative production fallback: never add a per-marker backdrop blur. */
       backdrop-filter: none;
@@ -261,7 +262,8 @@ export const devicesStyles = css`
         var(--device-core-inset-shadow),
         0 0 0 var(--device-ring-width) var(--device-ring-color);
       line-height: 0;
-      transition: background .15s, color .15s, box-shadow .15s, opacity .2s;
+      /* same rule as the shell: the ring is cqw-sized, so it applies at once (#524) */
+      transition: background .15s, color .15s, opacity .2s;
       pointer-events: none;
     }
     .device-sections {

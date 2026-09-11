@@ -188,6 +188,12 @@ the same profiler available between stable promotions.
    initial focus, Escape close event and restore-focus session. Focus sessions
    are scoped to a card shadow root so nested dialogs return to their parent
    trigger and dialog replacement still returns to the original outside opener.
+   `flex-content` forwards ha-dialog's `flexcontent`, making HA's `.body` a
+   flex column so a consumer that is itself a scroll container (`min-height: 0`,
+   `overflow: auto`, `overscroll-behavior: contain`) is height-bound and scrolls
+   by itself; without it Chromium stops wheel and touch scroll chaining at the
+   never-scrolling child (#508). The summary-panel settings dialog uses it; the
+   native branch already bounds the surface with its own flex column.
    Its footer wrapper is a full-width slot item: HA lays the footer slot out as
    flex, so flattening that wrapper would shrink action rows to their content.
    The wrapper opts HA's title-height custom property into content sizing so
@@ -1359,6 +1365,26 @@ snapshot for every affected space, clears its gestures and geometry history,
 then best-effort reloads authoritative config. Thus a newer edit made while the
 rejected request was in flight cannot survive on an unaccepted base (#314).
 
+**Config/layout identity has one owner** (#500). `src/config-adoption.ts`
+holds the server config and the device layout together with their revision
+and content fingerprint; the card exposes `_serverCfg`, `_cfgRev`, `_layout`
+and `_layoutRev` only as read delegates. The identity changes in exactly
+three ways — adopting an authoritative response, accepting the reply to our
+own write (`acceptConfigWrite`, `acceptPairWrite`), restoring the warm cache —
+and a revision is never taken apart from the body it describes: after
+`space/delete`, Optimize Undo or Import the revisions come from the re-read
+`config/get`/`layout/get`, not from the write reply. Every authoritative
+adoption goes through `adoptAuthoritativeGated`: compare by fingerprint →
+backdrop readiness (`ContentSigner.prepareImage`) → continuity candidate →
+adopt → tail. The `reload` profile (initial load, `config_updated`, summary
+lost-ACK recovery) runs the shared tail (decor assets, initial space, pending
+nav mode, cache snapshot); the `post-write` profile (the four re-reads after a
+paired write) ends at adoption and leaves each caller its own tail. Bodies may
+still be staged locally before a write — that is how the editors work — but
+only in the files pinned by `test/config-adoption-ownership.test.mjs`, whose
+counts ratchet down. Feature runtimes see one host method,
+`_adoptAuthoritative`, instead of the eight steps it replaces.
+
 **Persisted coordinates have one lattice-aware write boundary** (#291).
 `canonicalizeConfigGeometry()` / `canonicalizeLayoutGeometry()` /
 `canonicalizePosition()` own the frontend candidate; mirrored Python functions
@@ -1887,6 +1913,36 @@ non-scaling strokes: a 4 px `#2e2e2e` casing followed by the existing 2 px gray
 core; known-LQI and solid parent routes remain single strokes. Cache data, IEEE
 addresses and raw payloads are never persisted, logged, exported or admitted
 to support diagnostics.
+
+## Live viewport: a transform per frame, a `viewBox` on a budget (#531, 2026-09-11)
+
+Rewriting the `viewBox` attribute is not a move, it is a repaint: the whole SVG
+scene is re-rasterized. Doing it once per gesture frame is what made panning
+crawl on the owner's machine — the frame reached the screen in 200 ms and the
+refresh driver skipped 124–144 ticks per second marked "waiting for paint".
+
+So `paintLiveViewport` keeps an anchor: the frame whose `viewBox` is currently
+written into the DOM, and when it was written. Every gesture frame moves the
+scene nodes by the same projective transform (`liveLayerProjection`,
+`transform-origin: 0 0`) that already moved the HTML layers — a composited move,
+no repaint. The `viewBox` is rewritten only when `needsViewBoxRefresh` says so:
+`LIVE_VIEWBOX_REFRESH_MS` (100 ms) has passed, or the view shifted by
+`LIVE_VIEWBOX_REFRESH_SHIFT` (15 %) of its own size on either axis, or the scale
+changed by as much. The time budget covers ordinary dragging; the shift budget
+covers a flick, where the plan can travel half a screen before 100 ms is up and
+an empty band on the leading edge would become visible. Both are module
+constants, not settings.
+
+The two projections have different bases and must stay that way: scene nodes are
+projected from the anchor (what is drawn now), HTML layers from the last settled
+Lit frame (their content is positioned in percentages of that view). They land on
+the same current view, which is what keeps the #451 contract — a marker within
+one CSS pixel of its place in the scene — true on every frame of the gesture.
+
+Neither the attribute nor the style is written when the string is unchanged: an
+idle frame must leave the DOM byte-identical, or the settled raster shifts by a
+few colour levels and golden frames flap. `commitHouseplanViewport` still ends
+the gesture the same way — transforms removed, final `viewBox` forced in.
 
 ## The initial bundle carries English and Russian whole (#400, 2026-08-31)
 

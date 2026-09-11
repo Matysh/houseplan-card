@@ -449,7 +449,6 @@
   "pdf.failed": "Could not create the PDF.",
   "pdf.too_large": "The images exceed the 25 MB PDF limit.",
   "pdf.asset_failed": "A backdrop or decor image could not be loaded.",
-  "pdf.internal_dimensions": "Internal dimensions",
   "pdf.scale": "Scale 1:{n}",
   "pdf.north": "North",
   "gs.title": "General settings",

@@ -28,6 +28,15 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['_renderDevice', '_renderOpenings'],
+    smokes: ['smoke_space_switch_transitions.mjs'],
+    because: '#525: the smoke never names these renderers — it switches spaces the ordinary way '
+      + 'and reads running transitions off the nodes they produced. The contract it guards is '
+      + 'list identity: a keyless list reuses a node by position, and the leaf of the next space '
+      + 'then animates from the previous door\'s angle. Any edit to either renderer can drop the '
+      + 'key without a single identifier of the smoke changing',
+  },
+  {
     symbols: ['LoadedSummaryPanelRuntime', 'SummaryPanelPresentation', 'renderSummaryPanelEditor',
       'summaryPanelCss', 'summaryPanelEditorCss', 'summaryPanelDialogCss', 'summaryIcon'],
     smokes: ['smoke_summary_panel_polish.mjs'],
@@ -38,7 +47,7 @@ export const SMOKE_LINKS = [
   {
     symbols: [
       'confirmedSummaryPanelWriteRecovery', 'summaryPanelEntityIds',
-      '_adoptStructuralResponses', 'LoadedSummaryPanelRuntime',
+      'adoptAuthoritativeGated', 'LoadedSummaryPanelRuntime',
     ],
     smokes: ['smoke_summary_panel.mjs'],
     because: 'the #490 production-bundle sequence proves that a lost config/set ACK adopts the '

@@ -463,7 +463,7 @@ export class HouseplanOnboardingRuntime {
       if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.flush();
       if (this.host._persistLayout.pending()) this.host._persistLayout.flush();
       await this.host._writeChain;
-      const response: { config_rev?: number; layout_rev?: number } = await this.host.hass.callWS({
+      await this.host.hass.callWS({
         type: 'houseplan/space/delete',
         space_id: spaceId,
         expected_config_rev: this.host._cfgRev,
@@ -473,9 +473,16 @@ export class HouseplanOnboardingRuntime {
         this.host._getAuthoritativeConfig(),
         this.host.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
-      this.host._adoptStructuralResponses(configResponse, layoutResponse);
-      this.host._cfgRev = response?.config_rev ?? this.host._cfgRev;
-      this.host._layoutRev = response?.layout_rev ?? this.host._layoutRev;
+      // #500: revisions come with the re-read bodies, never from the delete reply.
+      const adopted = await this.host._adoptAuthoritative({
+        cfgResp: configResponse, layResp: layoutResponse, reason: 'space-delete', profile: 'post-write',
+      });
+      // Asset wait: nothing adopted, the scheduled reload owns the tail (same as every reload path).
+      if (adopted.status !== 'adopted') {
+        this.host._spaceDialog = { ...currentDialog, busy: false };
+        this.host.requestUpdate();
+        return;
+      }
       this.host._spaceDialog = null;
       if (this.host._space === spaceId) {
         this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || '');

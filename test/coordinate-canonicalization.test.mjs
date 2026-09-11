@@ -194,9 +194,12 @@ test('frontend write paths adopt canonical candidates before persistence (#224)'
     source,
     /const canonicalCandidate = canonicalizeConfigGeometry\(candidate\);[\s\S]*config: canonicalCandidate/,
   );
+  // #500: the reactive root is replaced only when canonicalization changed
+  // content — the rule moved into the identity owner with the writers.
+  assert.match(source, /this\._adoption\.stageConfigCandidate\(candidate\);\s*(?:try \{\s*)?await this\._sendConfigCandidate\(candidate\);/);
   assert.match(
-    source,
-    /if \(candidateFingerprint !== contentFingerprint\(this\._serverCfg\)\) \{\s*this\._serverCfg = candidate;/,
+    readFileSync(new URL('../src/config-adoption.ts', import.meta.url), 'utf8'),
+    /stageConfigCandidate\(candidate: ServerConfig\): void \{\s*const fingerprint = contentFingerprint\(candidate\);\s*if \(fingerprint !== contentFingerprint\(this\.config\)\) this\.setConfig\(candidate\);/,
   );
   assert.match(
     source,

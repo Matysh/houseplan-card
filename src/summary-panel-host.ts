@@ -2,6 +2,7 @@ import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { I18nKey } from './i18n';
 import type { CardConfig, Marker, ServerConfig, SpaceModel } from './types';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
+import type { ConfigAdoption, GatedAdoptionInput, GatedAdoptionResult } from './config-adoption';
 
 export interface SummaryHassState {
   state?: string;
@@ -43,20 +44,13 @@ export interface SummaryPanelHost extends Node {
   _config?: CardConfig;
   _model: SpaceModel[];
   _markers: Marker[];
-  _serverCfg: ServerConfig | null;
-  _cfgRev: number;
+  readonly _serverCfg: ServerConfig | null;
+  readonly _cfgRev: number;
   _cfgEpoch: number;
-  _layoutRev: number;
-  _cfgContentFingerprint: string;
+  readonly _layoutRev: number;
+  /** #500: identity owner; the fields above are its read delegates. */
+  readonly _adoption: ConfigAdoption;
   _regSignature: string;
-  _signer: {
-    prepareImage(hass: SummaryHass | undefined, href: string): Promise<boolean>;
-  };
-  _continuity: {
-    readonly hasCompleteFrame: boolean;
-    readonly state: string;
-    note(event: string): void;
-  };
   _writesPending: number;
   _writeChain: Promise<void>;
   _kiosk: boolean;
@@ -81,14 +75,9 @@ export interface SummaryPanelHost extends Node {
   }): Promise<boolean>;
   _sendConfigCandidate(candidate: ServerConfig): Promise<void>;
   _getAuthoritativeConfig(): Promise<AuthoritativeConfigResponse>;
-  _candidateBackdrop(config: ServerConfig | null): string;
-  _scheduleLoadRetry(force?: boolean): void;
-  _beginContinuityCandidate(reason: string, dataReady: boolean): number;
-  _adoptStructuralResponses(response: AuthoritativeConfigResponse): { configChanged: boolean };
-  _syncDecorAssets(config: ServerConfig | null): Promise<void>;
-  _adoptInitialSpace(models: SpaceModel[], authoritative?: boolean): unknown;
+  /** #500: the one adoption entry — gate, continuity, adopt, reload tail. */
+  _adoptAuthoritative(input: GatedAdoptionInput): Promise<GatedAdoptionResult>;
   _maybeRebuildDevices(): void;
-  _resumePendingNavMode(): boolean;
   _restoreZoom(): void;
   _reloadConfigOnly(force?: boolean): Promise<void>;
   _cacheSnapshot(): void;

@@ -13,7 +13,6 @@ import {
   summaryLocalKey, summaryPanelEntityIds, summaryPanelOf, validateSummaryDraft, visibleSummaryBlocks,
 } from './summary-panel';
 import { SUMMARY_PANEL_API_VERSION } from './summary-panel-api';
-import { contentFingerprint } from './visual-continuity';
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import { canonicalizeConfigGeometry } from './coordinate-canonicalization';
 import type { SummaryPanelEditorRenderer } from './summary-panel-editor';
@@ -63,6 +62,9 @@ type SummaryLayoutState = {
  * this controller owns only summary-panel local/UI state and asks the host to
  * repaint after mutations.
  */
+/** Бюджет одной порции фонового расчёта агрегатов: короче кадра (#509). */
+const SUMMARY_METRICS_FRAME_BUDGET_MS = 8;
+
 export class LoadedSummaryPanelRuntime {
   private readonly host: SummaryPanelHost;
   private dialog: SummaryPanelDialogState | null = null;
@@ -85,6 +87,12 @@ export class LoadedSummaryPanelRuntime {
   private editorLoad: Promise<SummaryPanelEditorRenderer> | null = null;
   private metricsModule: typeof import('./summary-panel-metrics') | null = null;
   private metricsLoad: Promise<typeof import('./summary-panel-metrics')> | null = null;
+  // Тяжёлые агрегаты считаются ПОСЛЕ кадра (#509): на большом плане обход
+  // геометрии занимал сотни миллисекунд прямо в render, и первый показ панели
+  // выглядел зависанием. Здесь — только флаг «пересчёт уже запланирован».
+  private metricsRefresh = 0;
+  private areaSteps: Generator<void, number | null, void> | null = null;
+  private areaStepsEpoch = -1;
   private styleSheet: CSSStyleSheet | null = null;
   private entityIndex: SummaryEntityIndex | null = null;
   private lifecycleGeneration = 0;
@@ -209,9 +217,17 @@ export class LoadedSummaryPanelRuntime {
       <div class="summary-scroll">
         ${blocks.length ? blocks.map((block) => html`<section class="summary-block">
           <h3>${block.title}</h3>
-          ${block.values.length ? block.values.map((value) => html`<div class="summary-value">
-            <span>${value.label}</span><strong>${this.value(value)}</strong>
-          </div>`) : html`<div class="summary-empty">${this.t('summary.empty_block')}</div>`}
+          ${block.values.length ? block.values.map((value) => {
+            const state = this.valueState(value);
+            // Скелет вместо текста ошибки, пока значения нет (#509): та же
+            // плашка и та же высота строки, пульсирующий прямоугольник на
+            // месте значения, плавная замена по готовности.
+            return html`<div class="summary-value">
+              <span>${value.label}</span>${state.kind === 'pending'
+                ? html`<strong class="summary-value-pending" aria-hidden="true"><i></i></strong>`
+                : html`<strong>${state.kind === 'ready' ? state.text : this.t('summary.unavailable')}</strong>`}
+            </div>`;
+          }) : html`<div class="summary-empty">${this.t('summary.empty_block')}</div>`}
         </section>`) : html`<div class="summary-empty">${this.t('summary.empty_space')}</div>`}
       </div>
     </aside>`;
@@ -608,26 +624,14 @@ export class LoadedSummaryPanelRuntime {
               if (!this.current(generation)) throw writeError;
               const confirmed = confirmedSummaryPanelWriteRecovery(authoritative, draft);
               if (!confirmed) throw writeError;
-              const configChanged = contentFingerprint(confirmed.config)
-                !== (this.host._cfgContentFingerprint || contentFingerprint(this.host._serverCfg));
-              if (configChanged && !await this.host._signer.prepareImage(
-                this.host.hass, this.host._candidateBackdrop(confirmed.config),
-              )) {
-                this.host._continuity.note('asset-failed');
-                this.host._scheduleLoadRetry(true);
-                throw writeError;
-              }
-              if (configChanged && this.host._continuity.hasCompleteFrame
-                  && this.host._continuity.state === 'steady') {
-                this.host._beginContinuityCandidate('summary-recovery', true);
-              }
-              const visibleSpace = this.host._space;
-              this.host._adoptStructuralResponses(authoritative);
-              void this.host._syncDecorAssets(confirmed.config).catch(() => undefined);
-              this.host._adoptInitialSpace(this.host._model, true);
-              this.host._resumePendingNavMode();
-              this.host._cacheSnapshot();
-              if (this.host._space !== visibleSpace) this.host._restoreZoom();
+              // #500: the same gated sequence as every other authoritative
+              // adoption — backdrop readiness, continuity candidate, adopt,
+              // reload tail. A bounded asset failure keeps the write error.
+              const adopted = await this.host._adoptAuthoritative({
+                cfgResp: authoritative, reason: 'summary-recovery', profile: 'reload',
+              });
+              if (adopted.status !== 'adopted') throw writeError;
+              if (adopted.spaceChanged) this.host._restoreZoom();
               this.host._regSignature = '';
               this.host._maybeRebuildDevices();
               recovered = true;
@@ -635,8 +639,7 @@ export class LoadedSummaryPanelRuntime {
           }
           if (!recovered) {
             if (!this.current(generation)) return;
-            this.host._serverCfg = candidate;
-            this.host._cfgContentFingerprint = contentFingerprint(candidate);
+            this.host._adoption.stageConfigCandidate(candidate);
             this.host._cacheSnapshot();
           }
         });
@@ -684,9 +687,79 @@ export class LoadedSummaryPanelRuntime {
     if (this.current(generation)) this.host.requestUpdate();
   }
 
-  private metrics(): { deviceCount: number | null; areaM2: number | null; now: Date } {
+  /** Свежи ли мемо-агрегаты для текущей конфигурации и реестра. */
+  /** @internal — читается рендером и тестами (#509). */
+  public metricsFresh(): boolean {
+    return !!this.deviceMemo && !!this.areaMemo
+      && this.deviceMemo.cfgEpoch === this.host._cfgEpoch
+      && this.deviceMemo.layoutRev === this.host._layoutRev
+      && this.deviceMemo.registryRev === this.host._haRegistry.revision
+      && this.areaMemo.cfgEpoch === this.host._cfgEpoch;
+  }
+
+  /**
+   * Пересчёт агрегатов ПОСЛЕ кадра (#509).
+   *
+   * Обход реестра и объединение чистого пола по всем пространствам стоят
+   * сотни миллисекунд на большом плане; в render это была заморозка первого
+   * показа. Кадр рисуется скелетами, работа идёт следом, и по её завершении
+   * панель перерисовывается уже числами. Устаревшее мемо при этом остаётся
+   * на экране до прихода нового — прыжка «значение → скелет → значение» нет.
+   */
+  private scheduleMetrics(): void {
+    if (this.metricsRefresh || !this.metricsModule || this.metricsFresh()) return;
+    const generation = this.lifecycleGeneration;
+    const view = typeof window === 'undefined' ? undefined : window;
+    const run = () => {
+      this.metricsRefresh = 0;
+      if (!this.current(generation)) return;
+      // Порциями по комнате с бюджетом на кадр: полный обход большого дома —
+      // полторы секунды непрерывной работы, и вне кадра он всё равно
+      // «подвешивал» бы интерфейс (#509). Каждая порция короче кадра, между
+      // порциями браузер обрабатывает ввод и рисует.
+      const done = this.advanceMetrics(SUMMARY_METRICS_FRAME_BUDGET_MS);
+      this.host.requestUpdate();
+      if (!done) this.scheduleMetrics();
+    };
+    // Кадр сначала должен быть показан: rAF отдаёт нам момент ПОСЛЕ отрисовки,
+    // таймер — фолбэк для окружений без rAF (тесты, скрытая вкладка).
+    this.metricsRefresh = view?.setTimeout(() => {
+      if (typeof view.requestAnimationFrame === 'function') {
+        view.requestAnimationFrame(() => view.setTimeout(run, 0));
+      } else run();
+    }, 0) as unknown as number || 0;
+  }
+
+  /** @internal — фоновый пересчёт агрегатов; тесты вызывают напрямую (#509). */
+  /**
+   * Один шаг фонового расчёта: работает не дольше бюджета, возвращает `true`,
+   * когда считать больше нечего (#509).
+   */
+  public advanceMetrics(budgetMs = SUMMARY_METRICS_FRAME_BUDGET_MS): boolean {
     const module = this.metricsModule;
-    if (!module) return { deviceCount: null, areaM2: null, now: this.clock };
+    if (!module) return true;
+    this.computeDeviceCount();
+    if (!this.host._serverCfg) {
+      this.areaMemo = { cfgEpoch: this.host._cfgEpoch, value: null };
+      return true;
+    }
+    if (this.areaMemo && this.areaMemo.cfgEpoch === this.host._cfgEpoch) return true;
+    if (!this.areaSteps || this.areaStepsEpoch !== this.host._cfgEpoch) {
+      this.areaSteps = module.cleanFloorAreaSteps(this.host._serverCfg, this.host._model);
+      this.areaStepsEpoch = this.host._cfgEpoch;
+    }
+    const started = Date.now();
+    let step = this.areaSteps.next();
+    while (!step.done && Date.now() - started < budgetMs) step = this.areaSteps.next();
+    if (!step.done) return false;
+    this.areaMemo = { cfgEpoch: this.areaStepsEpoch, value: step.value ?? null };
+    this.areaSteps = null;
+    return true;
+  }
+
+  private computeDeviceCount(): void {
+    const module = this.metricsModule;
+    if (!module) return;
     if (!this.deviceMemo || this.deviceMemo.cfgEpoch !== this.host._cfgEpoch
         || this.deviceMemo.layoutRev !== this.host._layoutRev
         || this.deviceMemo.registryRev !== this.host._haRegistry.revision) {
@@ -703,24 +776,53 @@ export class LoadedSummaryPanelRuntime {
         registryRev: this.host._haRegistry.revision, value: represented?.size ?? null,
       };
     }
-    if (!this.areaMemo || this.areaMemo.cfgEpoch !== this.host._cfgEpoch) {
-      this.areaMemo = {
-        cfgEpoch: this.host._cfgEpoch,
-        value: this.host._serverCfg ? module.totalCleanFloorAreaM2(this.host._serverCfg, this.host._model) : null,
-      };
+  }
+
+  /** Синхронный расчёт целиком — тесты и окружения без кадров (#509). */
+  public computeMetrics(): void {
+    while (!this.advanceMetrics(Number.POSITIVE_INFINITY)) { /* до конца */ }
+  }
+
+  private metrics(): { deviceCount: number | null; areaM2: number | null; now: Date } {
+    return {
+      deviceCount: this.deviceMemo ? this.deviceMemo.value : null,
+      areaM2: this.areaMemo ? this.areaMemo.value : null,
+      now: this.clock,
+    };
+  }
+
+  /**
+   * Состояние одного значения панели (#509).
+   *
+   * `pending` — значение ещё не посчитано: ленивый чанк метрик не пришёл либо
+   * агрегат считается после кадра. Это НЕ «источник недоступен»: до правки оба
+   * состояния рисовались текстом `summary.unavailable`, и первый показ панели
+   * выглядел как ошибка всех источников сразу.
+   */
+  public valueState(value: SummaryPanelValue): { kind: 'ready'; text: string } | { kind: 'pending' } | { kind: 'unavailable' } {
+    const module = this.metricsModule;
+    if (!module) return { kind: 'pending' };
+    if (value.source.type === 'entity') {
+      const resolved = module.summaryEntityValue(this.host.hass, value.source.entity_id);
+      return resolved === null ? { kind: 'unavailable' } : { kind: 'ready', text: resolved };
     }
-    return { deviceCount: this.deviceMemo.value, areaM2: this.areaMemo.value, now: this.clock };
+    const needsAggregate = value.source.key === 'device_count' || value.source.key === 'total_area';
+    const known = value.source.key === 'device_count' ? this.deviceMemo : this.areaMemo;
+    if (needsAggregate && !known) {
+      this.scheduleMetrics();
+      return { kind: 'pending' };
+    }
+    if (needsAggregate) this.scheduleMetrics();
+    const resolved = module.summarySystemValue(
+      value.source, this.metrics(), this.host.hass,
+      langOf(this.host.hass, this.host._config?.language),
+    );
+    return resolved === null ? { kind: 'unavailable' } : { kind: 'ready', text: resolved };
   }
 
   private value(value: SummaryPanelValue): string {
-    const module = this.metricsModule;
-    const resolved = !module ? null : value.source.type === 'entity'
-      ? module.summaryEntityValue(this.host.hass, value.source.entity_id)
-      : module.summarySystemValue(
-        value.source, this.metrics(), this.host.hass,
-        langOf(this.host.hass, this.host._config?.language),
-      );
-    return resolved ?? this.t('summary.unavailable');
+    const state = this.valueState(value);
+    return state.kind === 'ready' ? state.text : this.t('summary.unavailable');
   }
 
   private ensureMetrics(): void {

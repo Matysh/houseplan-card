@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildPdfPage } from '../test-build/pdf/pdf-scene.js';
-import { pdfCommandBounds } from '../test-build/pdf/pdf-layout.js';
+import { pdfCommandBounds, pdfSceneFits } from '../test-build/pdf/pdf-layout.js';
 import {
   dedupeOppositeDimensionEdges, dimensionEpsilonUnits, stableDimensionEdges,
 } from '../test-build/pdf/pdf-dimensions.js';
@@ -491,15 +491,25 @@ test('actual annotated scene bbox selects portrait/landscape, fits and centers a
   assertFitsAndIsCentered(squarePage);
 });
 
-test('unprintable fixed callouts fail closed instead of returning a clipped PDF page', () => {
+// #530 заменяет прежний «unprintable fixed callouts fail closed»: у страницы
+// больше нет фиксированного блока, который мог не поместиться. Отказ остаётся
+// только там, где не помещается сама архитектура (#53, тест ниже), а подпись,
+// которой не хватает места, просто не печатается.
+test('#530: a label that cannot fit is dropped, and the page is still produced', () => {
   const dense = polygonRaw('fixed-callout-overflow', [
     [0.1, 0.1], [0.14, 0.1], [0.14, 0.9], [0.128, 0.9],
     [0.128, 0.3], [0.112, 0.3], [0.112, 0.9], [0.1, 0.9],
   ], { wallCm: 0, name: 'X'.repeat(1000) });
-  assert.throws(() => buildRawPage(dense,
-    { dimensions: true, roomNames: true, decor: false, backdrop: false }),
-  /pdf\.failed/,
-  'a fixed-width callout that cannot fit A4 must not leak an overflowing best-effort page');
+  const built = buildRawPage(dense,
+    { dimensions: true, roomNames: true, decor: false, backdrop: false });
+  const texts = built.commands.filter((command) => command.kind === 'text')
+    .map((command) => command.text);
+  assert.ok(!texts.some((value) => value.includes('X'.repeat(50))),
+    'a name that does not fit inside the room is omitted, not printed through the walls');
+  assert.ok(!texts.some((value) => /^R\d+/.test(value)),
+    'no numbered callout survives anywhere');
+  assert.ok(pdfSceneFits(built.sceneBounds, built.planField, 0.5 * MM),
+    'the page still fits its field');
 });
 
 test('oversized architecture brackets a larger printable scale and still returns a fitted page', () => {
@@ -511,6 +521,18 @@ test('oversized architecture brackets a larger printable scale and still returns
   assert.ok(output.scale > 500, 'the unbounded-space path selects a larger denominator');
   assert.equal(output.scale % 50, 0, 'fallback denominators retain the established 50-step contract');
   assertFitsAndIsCentered(output);
+});
+
+// #530 убрал единственный блок постоянного размера, который мог не поместиться
+// на лист. Отказ при этом не исчез: архитектура сама может не влезть ни на одном
+// представимом знаменателе — это последний случай, когда листа не будет вовсе.
+test('#530: architecture too large for any denominator still fails closed', () => {
+  const impossible = polygonRaw('impossible-scale', [
+    [0, 0], [50000, 0], [50000, 1], [0, 1],
+  ], { wallCm: 0, name: '' });
+  assert.throws(() => buildRawPage(impossible,
+    { dimensions: false, roomNames: false, decor: false, backdrop: false }),
+  /pdf\.failed/, 'a plan that fits at no denominator is refused, not returned clipped');
 });
 
 test('rotated raster bounds do not reject the tighter fitting page orientation', () => {
@@ -560,7 +582,13 @@ test('PDF scene integrates the vector compass and never restores the architectur
     'removed legend translations are never requested');
 });
 
-test('dense non-rectangular rooms keep mandatory dimensions in stable callouts', () => {
+// #530. Прежняя редакция требовала обратного: каждое неукороченное ребро
+// обязано было сохранить значение — прямо на плане или строкой нумерованного
+// столбца сбоку. Столбец стоил целого шага масштаба (124 pt ширины поля) и
+// переворачивал лист, а читался отдельно от чертежа; владелец отказался от
+// него сознательно. Теперь контракт такой: печатается то, что помещается,
+// каждое значение печатается один раз, столбца и меток нет вовсе.
+test('#530: dense non-rectangular rooms print what fits, with no callout column', () => {
   const denseRaw = structuredClone(rawSpace);
   denseRaw.id = 'dense';
   denseRaw.title = 'Dense';
@@ -584,17 +612,93 @@ test('dense non-rectangular rooms keep mandatory dimensions in stable callouts',
   });
   const texts = output.commands.filter((command) => command.kind === 'text')
     .map((command) => command.text);
-  assert.ok(texts.includes('pdf.internal_dimensions'));
-  assert.ok(texts.some((value) => /^R\d+$/.test(value)));
-  assert.ok(texts.some((value) => /^R\d+ .+: .+/.test(value)));
-  const contour = denseRaw.rooms[0].poly.map(([x, y]) => [x * NORM_W, y * NORM_W]);
-  const epsilon = dimensionEpsilonUnits(5 / GRID_PITCH);
-  const expectedValues = dedupeOppositeDimensionEdges(
-    stableDimensionEdges(contour, 5 / GRID_PITCH, false, { ringIndex: 0, epsilon }),
-    { ring: contour, epsilon },
-  ).filter((edge) => !edge.short).length;
-  assert.equal(texts.filter((value) => value !== '1 m' && /(?:^|:\s)\d+(?:[.,]\d+)?\sm$/.test(value)).length,
-    expectedValues, 'every locally deduped non-short edge keeps one reconstructable value');
+  assert.ok(!texts.includes('pdf.internal_dimensions'), 'no callout section title');
+  assert.ok(!texts.some((value) => /^R\d+$/.test(value)), 'no callout marks on the plan');
+  assert.ok(!texts.some((value) => /^R\d+ .+: .+/.test(value)), 'no callout rows');
+  const printed = texts.filter((value) => value !== '1 m' && /^\d+(?:[.,]\d+)?\sm$/.test(value));
+  assert.ok(printed.length >= 1, 'the dimensions that fit are still printed');
+  assert.equal(new Set(printed).size, printed.length,
+    'a value is printed once: what used to go to the column is not duplicated on the plan');
+});
+
+// #530, свидетель случая владельца: квадратный дом ≈11 м, восемь комнат, три
+// непрямоугольные. До правки такой дом печатался 1:100 на альбомном листе с
+// десятью метками `R…` и столбцом сбоку — план занимал четверть поля. Тест
+// держит три числа разом: масштаб, ориентацию и то, что подписей на плане
+// стало БОЛЬШЕ, а не меньше, хотя столбец убрали.
+const dachaRaw = (() => {
+  const seg = (id, a, b, cm = 15) => ({ id, a, b, cm });
+  const segs = [
+    seg('n', [0.05, 0.05], [0.95, 0.05]), seg('e', [0.95, 0.05], [0.95, 0.95]),
+    seg('s', [0.95, 0.95], [0.05, 0.95]), seg('w', [0.05, 0.95], [0.05, 0.05]),
+    seg('h1', [0.05, 0.45], [0.62, 0.45]), seg('v1', [0.62, 0.30], [0.62, 0.95]),
+    seg('h2', [0.62, 0.30], [0.95, 0.30]), seg('v2', [0.20, 0.45], [0.20, 0.95]),
+    seg('v3', [0.38, 0.45], [0.38, 0.75]), seg('h3', [0.20, 0.75], [0.38, 0.75]),
+    seg('h4', [0.62, 0.62], [0.95, 0.62]), seg('v4', [0.78, 0.30], [0.78, 0.62]),
+  ];
+  return {
+    id: 'dacha', title: 'Ground floor', cell_cm: 5, view_box: [0, 0, 1, 1],
+    rooms: [
+      { id: 'r1', name: 'Kitchen-living room', area: null,
+        poly: [[0.05, 0.05], [0.95, 0.05], [0.95, 0.30], [0.62, 0.30], [0.62, 0.45], [0.05, 0.45]],
+        wall_ids: ['n', 'e', 'h2', 'v1', 'h1', 'w'] },
+      { id: 'r2', name: 'Sauna', area: null,
+        poly: [[0.05, 0.45], [0.20, 0.45], [0.20, 0.95], [0.05, 0.95]],
+        wall_ids: ['h1', 'v2', 's', 'w'] },
+      { id: 'r3', name: 'Guest bathroom', area: null,
+        poly: [[0.20, 0.45], [0.38, 0.45], [0.38, 0.75], [0.20, 0.75]],
+        wall_ids: ['h1', 'v3', 'h3', 'v2'] },
+      { id: 'r4', name: 'Boiler room', area: null,
+        poly: [[0.20, 0.75], [0.38, 0.75], [0.38, 0.95], [0.20, 0.95]],
+        wall_ids: ['h3', 'v3', 's', 'v2'] },
+      { id: 'r5', name: 'Hallway', area: null,
+        poly: [[0.38, 0.45], [0.62, 0.45], [0.62, 0.95], [0.38, 0.95]],
+        wall_ids: ['h1', 'v1', 's', 'v3'] },
+      { id: 'r6', name: 'Under-stair storage closet', area: null,
+        poly: [[0.62, 0.30], [0.78, 0.30], [0.78, 0.46], [0.70, 0.46], [0.70, 0.62], [0.62, 0.62]],
+        wall_ids: ['h2', 'v4', 'h4', 'v1'] },
+      { id: 'r7', name: 'Guest bedroom', area: null,
+        poly: [[0.62, 0.62], [0.95, 0.62], [0.95, 0.95], [0.75, 0.95], [0.75, 0.86], [0.62, 0.86]],
+        wall_ids: ['h4', 'e', 's', 'v1'] },
+      { id: 'r8', name: 'Pantry', area: null,
+        poly: [[0.78, 0.30], [0.95, 0.30], [0.95, 0.62], [0.90, 0.62], [0.90, 0.55],
+          [0.86, 0.55], [0.86, 0.48], [0.82, 0.48], [0.82, 0.40], [0.78, 0.40]],
+        wall_ids: ['h2', 'e', 'h4', 'v4'] },
+    ],
+    walls: segs.map((wall) => ({
+      key: fixtureWallKey(wall.a, wall.b), a: wall.a, b: wall.b, cm: wall.cm,
+    })),
+    wall_segments: segs, partitions: [], wall_columns: [], decor: [], settings: {},
+    openings: [
+      { id: 'd1', type: 'door', x: 0.5, y: 0.05, angle: 0, length: 0.06 },
+      { id: 'd2', type: 'door', x: 0.5, y: 0.45, angle: 0, length: 0.06 },
+      { id: 'w1', type: 'window', x: 0.95, y: 0.75, angle: 90, length: 0.08 },
+    ],
+  };
+})();
+
+test('#530: a square house fills the sheet at the next standard scale, upright', () => {
+  const dachaConfig = { model_version: 9, spaces: [dachaRaw], markers: [], settings: {} };
+  const output = buildPdfPage({
+    config: dachaConfig, rawSpace: dachaRaw, space: spaceModels(dachaConfig)[0], layout: {},
+    options: { dimensions: true, roomNames: true, decor: false, backdrop: false },
+    imperial: false, cardTitle: 'House', version: 'test',
+    now: new Date('2026-09-11T00:00:00Z'), t,
+  });
+  assert.equal(output.scale, 75, 'the plan is drawn one standard step larger than before (#530)');
+  assert.ok(output.width < output.height, 'a square plan goes on an upright sheet');
+  const texts = output.commands.filter((command) => command.kind === 'text');
+  const values = texts.map((command) => command.text)
+    .filter((value) => value !== '1 m' && /^\d+(?:[.,]\d+)?\sm$/.test(value));
+  // Замер: 37 значений после правки против 35 до неё, при том что десять из
+  // прежних уезжали в столбец. Порог держит «не меньше, чем было».
+  assert.ok(values.length >= 36,
+    `every value that fits is printed on the drawing itself: ${values.length}`);
+  assert.ok(!texts.some((command) => /^R\d+/.test(command.text)), 'no callouts survive');
+  // Кегли: внутри плана уменьшены на четверть, хром страницы не тронут.
+  const sizes = [...new Set(texts.map((command) => command.size))].sort((a, b) => a - b);
+  assert.deepEqual(sizes, [5.25, 6, 6.75, 7, 8, 10, 14],
+    'in-plan labels are 5.25/6/6.75, page chrome stays 7/8/10/14');
 });
 
 test('decor toggle uses the canonical designer furniture vector path', () => {

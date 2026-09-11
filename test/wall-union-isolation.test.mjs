@@ -131,6 +131,9 @@ test('#278 production source routes physical writers through one barrier and dec
   assert.match(source,
     /if \(physicalChanged\)[\s\S]{0,2500}_pendingPhysicalWrites\.set\((?:state|target)\.spaceId/,
     'physical Undo/Redo must retain the deferred-write barrier');
-  assert.match(source, /if \(configChanged\)[\s\S]{0,300}_pendingPhysicalWrites\.clear\(\)/,
+  // #500: the baseline replacement hook lives with the identity owner; the
+  // clear runs inside the config-replace hook passed to adoptResponses.
+  const adoption = readFileSync(new URL('../src/config-adoption.ts', import.meta.url), 'utf8');
+  assert.match(adoption, /adoptResponses\(cfgResp \?\? \{\}, layResp,\s*\(\) => \{[\s\S]{0,400}_pendingPhysicalWrites\.clear\(\)/,
     'an external baseline must invalidate pending local approvals');
 });

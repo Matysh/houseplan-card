@@ -18,6 +18,7 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
   methods: Object.freeze([
     '_baseVb',
     '_bindingStatus',
+    '_buildModel',
     '_cancelDecorGesture',
     '_checkSpacePhysicalGeometry',
     '_decorBoxOf',
@@ -40,6 +41,7 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_booting',
     '_bootSoft',
     '_cameraTransition',
+    '_cfgEpoch',
     ...CACHE_FIELDS,
     '_continuity',
     '_cursorPt',
@@ -72,13 +74,20 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
   // bundles moved it into ResizeController. A comparison target must expose
   // one of the two explicit shapes; the current member retains its object
   // type check and is also verified against current production source.
+  // #500 replaced the private structural adoption with a gated public entry
+  // point. The boot diagnostics (#520) count adoptions through whichever of
+  // the two the measured bundle owns; an undeclared rename would silently
+  // report zero adoptions instead of failing.
   fieldAlternatives: Object.freeze([
     Object.freeze({ current: '_resize', legacy: '_rszDrag' }),
+    Object.freeze({ current: '_adoptAuthoritative', legacy: '_adoptStructuralResponses' }),
   ]),
   fieldTypes: Object.freeze({
+    _adoptAuthoritative: 'function',
     _booting: 'boolean',
     _bootSoft: 'boolean',
     _cameraTransition: 'object',
+    _cfgEpoch: 'number',
     _cleanFloorCache: 'map',
     _devices: 'array',
     _continuity: 'object',

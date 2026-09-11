@@ -471,16 +471,18 @@ const recovery = await page.evaluate(async () => {
   const originalHass = card.hass;
   const originalCallWS = originalHass.callWS;
   const originalPrepareImage = card._signer.prepareImage.bind(card._signer);
-  const originalAdoptStructuralResponses = card._adoptStructuralResponses.bind(card);
+  // #500: adoption lives in the identity owner; observe it there.
+  const adoption = card._adoption;
+  const originalAdoptResponses = adoption.adoptResponses.bind(adoption);
   const recoveryOrder = [];
   const concurrentBackdrop = 'media-source://image/summary-recovery-490';
   card._signer.prepareImage = async (_hass, href) => {
     recoveryOrder.push(`prepare:${href}`);
     return true;
   };
-  card._adoptStructuralResponses = (...args) => {
+  adoption.adoptResponses = (...args) => {
     recoveryOrder.push('adopt');
-    return originalAdoptStructuralResponses(...args);
+    return originalAdoptResponses(...args);
   };
   const writes = [];
   let serverConfig = structuredClone(card._serverCfg);
@@ -540,7 +542,7 @@ const recovery = await page.evaluate(async () => {
   runtime.dialog = null;
   card.hass = { ...card.hass, callWS: originalCallWS };
   card._signer.prepareImage = originalPrepareImage;
-  card._adoptStructuralResponses = originalAdoptStructuralResponses;
+  delete adoption.adoptResponses;
   await card.updateComplete;
   return {
     lostAckClosesAsSuccess: firstClosed,
