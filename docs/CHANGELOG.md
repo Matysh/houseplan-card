@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Switching between floors on a large plan is quick again. Every switch was
+  rebuilding the device markers the slow way — comparing two hundred old
+  markers against two hundred new ones only to throw all of them away — which
+  cost about a tenth of a second of a frozen card each time. Nothing looks
+  different, and the door that never moved still does not animate
+  ([#534](https://github.com/Matysh/houseplan-card/issues/534)).
+
+- The “Follows the sun” background no longer slows the plan down. The plan's
+  outer outline is a blur over the whole sheet, and it lived in the same layer
+  as the plan: any mouse movement made the engine re-run it. The outline now
+  keeps its own layer. Measured on a demo-stand pan, rasterization fell from
+  fifteen times a static background to the same order as one. The view is the
+  same: the outline around the plan matches pixel for pixel, and the hatch
+  inside the walls is anti-aliased a shade differently — splitting the layer
+  moves it by a sub-pixel
+  ([#532](https://github.com/Matysh/houseplan-card/issues/532)).
+
 ## v1.74.0 — 2026-09-11
 
 - The plan is noticeably smoother, and in Firefox the difference is dramatic.

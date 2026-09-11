@@ -86,12 +86,21 @@ export const planStyles = css`
         opacity 1100ms cubic-bezier(.22, .61, .36, 1);
     }
     .stage.mode-transition .hp-day-cycle-env { transition: none; }
+    /* #532: the outline keeps its OWN compositing layer. The group holds paper
+       silhouettes only and does not change on hover or pan, but the filter used
+       to live in the plan's own layer — so every repaint of the plan re-ran
+       three blur passes over the whole sheet. Measured on a demo-stand pan
+       (Chromium, CDP, summed RasterTask): 852 ms without the hint against 28 ms
+       with it, where a static background costs 108 ms. The hint costs one layer
+       of memory, so it is scoped to .daycycle and a static background never
+       pays for it. */
     .stage.daycycle .hp-paperg,
     .hp-static-stage.daycycle .hp-paperg {
       filter:
         drop-shadow(0 0 1px var(--hp-day-cycle-outline-near))
         drop-shadow(0 0 5px var(--hp-day-cycle-outline-mid))
         drop-shadow(0 0 10px var(--hp-day-cycle-outline-far));
+      will-change: filter;
       transition: filter 1100ms cubic-bezier(.22, .61, .36, 1);
     }
     @media (prefers-reduced-motion: reduce) {
@@ -530,7 +539,17 @@ export const planStyles = css`
        Anything animated that is rendered from a list needs a key. The Glow
        spots learned it first (glow-scene.ts, opacity), the openings and the
        device markers (.device-shell-frame, box-shadow) with this issue.
-       Witness: demo/smoke_space_switch_transitions.mjs. */
+
+       #534: the shape is now keyed(space.id, repeat(items, (o) => o.id, ...)),
+       and BOTH halves are load-bearing. The outer key does the space switch:
+       there the key sets are disjoint, so repeat would build two key maps and
+       walk both lists only to throw everything away — 80 ms of it on a plan
+       with two hundred markers. The inner key does everything inside one
+       space, where the list composition still changes underneath: an opening
+       with an unresolved host is listed ONLY in plan mode (_openingsR), so
+       entering and leaving the editor shifts the positions of the rest.
+       Removing either half brings the phantom animation back through a
+       different door. Witnesses: demo/smoke_space_switch_transitions.mjs. */
     .op-leaf {
       transition: transform 0.6s ease;
     }

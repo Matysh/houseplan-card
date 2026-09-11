@@ -148,7 +148,62 @@ const res = await page.evaluate(async () => {
   const onRealChange = runningAnimations();
   out.aRealDoorOpeningStillAnimates = onRealChange
     .filter((entry) => /op-leaf/.test(entry.cls)).length >= 1;
+  // ---- 3) состав списка меняется ВНУТРИ пространства (#534) --------------
+  // Внешний ключ `keyed(space.id, …)` снимает дорогой диф на смене
+  // пространства, но внутри пространства состав списков всё равно ездит:
+  // у маркеров — призраки редактора и живой синк, у проёмов — запись с
+  // нерешённым хостом, которая живёт ТОЛЬКО в режиме plan. Если убрать
+  // внутренний `repeat`, позиционное переиспользование вернётся через эту
+  // дверь, и ни одна проверка выше не покраснеет.
+  await settle();
+  const byId = (nodes) => new Map(nodes.map((node) => [node.dataset.id, node]));
+  const markerNodes = () => [...root().querySelectorAll('[data-hp="device"]')];
+  const openingNodes = () => [...root().querySelectorAll('.opening')];
+
+  const markersKept = byId(markerNodes());
+  const template = c._renderDevices.find((device) => device.space === c._space);
+  out.markerTemplateFound = !!template;
+  c._devices = [{ ...template, id: 'hp-534-probe', name: 'probe' }, ...c._devices];
+  c._cfgEpoch++;
+  c.requestUpdate();
+  await c.updateComplete;
+  await frame();
+  const markersAfterInsert = byId(markerNodes());
+  const movedMarkers = [...markersKept].filter(([id, node]) =>
+    markersAfterInsert.has(id) && markersAfterInsert.get(id) !== node);
+  out.listGrewInsideTheSpace = markersAfterInsert.size > markersKept.size;
+  out.noMarkerNodeSwappedInsideTheSpace = movedMarkers.length === 0;
+  out.swappedMarkerNodes = movedMarkers.map(([id]) => id);
+  out.quietAfterTheInsert = runningAnimations().filter((entry) => !EXPECTED(entry)).length === 0;
+
+  // Проёмы: запись с нерешённым хостом отдаётся только в режиме plan, поэтому
+  // вход в редактор добавляет её в список и сдвигает позиции остальных.
+  await settle();
+  const space = c._serverCfg.spaces.find((item) => item.id === c._space);
+  const donor = space.openings[0];
+  out.openingDonorFound = !!donor;
+  space.openings = [
+    { ...donor, id: 'hp-534-orphan', host: { kind: 'partition', id: 'hp-534-missing' } },
+    ...space.openings,
+  ];
+  c._cfgEpoch++;
+  c.requestUpdate();
+  await c.updateComplete;
+  await settle();
+  const openingsKept = byId(openingNodes());
+  c._setMode('plan');
+  await c.updateComplete;
+  await frame();
+  const openingsInPlan = byId(openingNodes());
+  const movedOpenings = [...openingsKept].filter(([id, node]) =>
+    openingsInPlan.has(id) && openingsInPlan.get(id) !== node);
+  out.orphanAppearsOnlyInPlan = openingsInPlan.size > openingsKept.size;
+  out.noOpeningNodeSwappedInsideTheSpace = movedOpenings.length === 0;
+  out.swappedOpeningNodes = movedOpenings.map(([id]) => id);
+  out.quietAfterTheModeSwitch = runningAnimations()
+    .filter((entry) => /op-leaf|op-arc/.test(entry.cls)).length === 0;
   return out;
 });
-checkAll(res, { unexpectedAnimations: [], reusedMarkerNodes: [] });
+checkAll(res, { unexpectedAnimations: [], reusedMarkerNodes: [],
+  swappedMarkerNodes: [], swappedOpeningNodes: [] });
 await finish(browser, res);

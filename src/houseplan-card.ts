@@ -9,6 +9,7 @@
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { cache as litCache } from 'lit/directives/cache.js';
 import { guard } from 'lit/directives/guard.js';
+import { keyed } from 'lit/directives/keyed.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
@@ -11784,9 +11785,9 @@ export class HouseplanCard extends LitElement {
               view,
               (point) => this._scenePoint(point),
             )}
-            ${repeat(devs, (d) => d.id, (d) => this._renderDevice(
+            ${keyed(space.id, repeat(devs, (d) => d.id, (d) => this._renderDevice(
               d, view, showLqi, isoOverlays?.devices.get(d.id),
-            ))}
+            )))}
             ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}
             ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view, isoOverlays?.locks)}
@@ -12993,7 +12994,7 @@ export class HouseplanCard extends LitElement {
     const walls = this._spaceWalls;
     const openCuts = this._openCuts();
     const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
-    return svg`<g class="openinglayer">${repeat(items, (o) => o.id, (o) => {
+    return svg`<g class="openinglayer">${keyed(space.id, repeat(items, (o) => o.id, (o) => {
       if (o.orphanReason) return svg`<g class="opening orphan" data-hp="opening-orphan"
         data-id=${o.id} role="button" tabindex="0"
         aria-label=${this._t('opening.partition_orphan')}
@@ -13045,7 +13046,7 @@ export class HouseplanCard extends LitElement {
           @pointerup=${(e: PointerEvent) => this._opPointerUp(e, o)}
           @pointercancel=${(e: PointerEvent) => this._opPointerUp(e, o)}></rect>
       </g>`;
-    })}</g>`;
+    }))}</g>`;
   }
 
   /** Padlock badges for door-like openings with a lock entity. */

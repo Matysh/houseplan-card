@@ -2401,6 +2401,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'daycycle-outline-not-promoted',
+    guard: 'node demo/smoke_daycycle_raster.mjs',
+    because: 'the day-cycle outline is a triple drop-shadow over the whole sheet; without its own '
+      + 'compositing layer every repaint of the plan re-runs three blur passes, and a demo-stand '
+      + 'pan costs fifteen times the rasterization of a static background (#532 AC1/AC2)',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '      will-change: filter;\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'align-guides-exclude-dead-source',
     guard: 'node demo/smoke_align_guides.mjs',
     because: 'device dragging lives in _deviceDrag since #74; excluding by '
@@ -7426,8 +7438,9 @@ const MUTANT_DEFINITIONS = [
       + 'animates a door that never moved (#525 AC1)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    return svg`<g class="openinglayer">${repeat(items, (o) => o.id, (o) => {',
-      replace: '    return svg`<g class="openinglayer">${items.map((o) => {',
+      find: "    return svg`<g class=\"openinglayer\">${keyed(space.id, repeat(items,"
+        + " (o) => o.id, (o) => {",
+      replace: "    return svg`<g class=\"openinglayer\">${keyed(space.id, items.map((o) => {",
     }],
   },
   {
@@ -7438,8 +7451,8 @@ const MUTANT_DEFINITIONS = [
       + 'painter, which finds the dragged marker by that attribute (#525 AC2)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '            ${repeat(devs, (d) => d.id, (d) => this._renderDevice(',
-      replace: '            ${devs.map((d) => this._renderDevice(',
+      find: '            ${keyed(space.id, repeat(devs, (d) => d.id, (d) => this._renderDevice(',
+      replace: '            ${keyed(space.id, devs.map((d) => this._renderDevice(',
     }],
   },
   {

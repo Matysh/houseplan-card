@@ -75,6 +75,17 @@ The public setting remains a two-value selector. `static` uses `bg_color`.
   05:00→13:00→21:00 fallback arc. It has zero visible opacity at night.
 - Four constant environment layers cross-fade for exactly 1100 ms with
   `cubic-bezier(.22,.61,.36,1)`. Reduced motion disables the transition.
+- The zero-offset outline is a filter over the grouped paper footprint, so it
+  is kept on its own compositing layer (`will-change: filter`, scoped to the
+  day-cycle stage). The group holds paper silhouettes only and does not change
+  while the plan is hovered or panned; without the hint every repaint of the
+  plan re-ran three blur passes over the whole sheet. Measured in headless
+  Chromium (CDP tracing, summed `RasterTask`) on a demo-stand pan, that cost
+  about fifteen times the rasterization of a static background; the owner's
+  Firefox profile that opened #532 showed the same cause as 23 MB of texture
+  uploads per frame and about nine frames per second, without a comparable
+  ratio of its own. A static background carries neither the filter nor the
+  hint.
 - Only the environment and the zero-offset alpha-aware outline outside the
   grouped plan-paper footprint change. The plan, paper, floors, room fills,
   Glow/spill, devices, labels, decor/backdrop, vacuum, hover, and window rays
