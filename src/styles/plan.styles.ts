@@ -86,12 +86,21 @@ export const planStyles = css`
         opacity 1100ms cubic-bezier(.22, .61, .36, 1);
     }
     .stage.mode-transition .hp-day-cycle-env { transition: none; }
+    /* #532: the outline keeps its OWN compositing layer. The group holds paper
+       silhouettes only and does not change on hover or pan, but the filter used
+       to live in the plan's own layer — so every repaint of the plan re-ran
+       three blur passes over the whole sheet. Measured on a demo-stand pan
+       (Chromium, CDP, summed RasterTask): 852 ms without the hint against 28 ms
+       with it, where a static background costs 108 ms. The hint costs one layer
+       of memory, so it is scoped to .daycycle and a static background never
+       pays for it. */
     .stage.daycycle .hp-paperg,
     .hp-static-stage.daycycle .hp-paperg {
       filter:
         drop-shadow(0 0 1px var(--hp-day-cycle-outline-near))
         drop-shadow(0 0 5px var(--hp-day-cycle-outline-mid))
         drop-shadow(0 0 10px var(--hp-day-cycle-outline-far));
+      will-change: filter;
       transition: filter 1100ms cubic-bezier(.22, .61, .36, 1);
     }
     @media (prefers-reduced-motion: reduce) {

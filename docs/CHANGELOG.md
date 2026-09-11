@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- The “Follows the sun” background no longer slows the plan down. The plan's
+  outer outline is a blur over the whole sheet, and it lived in the same layer
+  as the plan: any mouse movement made the engine re-run it. The outline now
+  keeps its own layer. Measured on a demo-stand pan, rasterization fell from
+  fifteen times a static background to the same order as one. The picture is
+  unchanged, to the pixel
+  ([#532](https://github.com/Matysh/houseplan-card/issues/532)).
+
 ## v1.74.0 — 2026-09-11
 
 - The plan is noticeably smoother, and in Firefox the difference is dramatic.

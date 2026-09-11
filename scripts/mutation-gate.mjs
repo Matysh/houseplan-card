@@ -2401,6 +2401,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'daycycle-outline-not-promoted',
+    guard: 'node demo/smoke_daycycle_raster.mjs',
+    because: 'the day-cycle outline is a triple drop-shadow over the whole sheet; without its own '
+      + 'compositing layer every repaint of the plan re-runs three blur passes, and a demo-stand '
+      + 'pan costs fifteen times the rasterization of a static background (#532 AC1/AC2)',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '      will-change: filter;\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'align-guides-exclude-dead-source',
     guard: 'node demo/smoke_align_guides.mjs',
     because: 'device dragging lives in _deviceDrag since #74; excluding by '
