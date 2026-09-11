@@ -209,7 +209,7 @@ const disabledActivation = await page.evaluate(() => {
 check('safe_resize.disabled_click_reason', disabledActivation.click, disabledActivation.expected);
 check('safe_resize.disabled_enter_reason', disabledActivation.enter, disabledActivation.expected);
 check('safe_resize.disabled_space_reason', disabledActivation.space, disabledActivation.expected);
-await pointer('pointerdown', 331, 245, { cx: 331, cy: 245, pointerId: 78 });
+sent('owner_boundary.pointerdown_sent', await pointer('pointerdown', 331, 245, { cx: 331, cy: 245, pointerId: 78 }));
 await settle();
 check('safe_resize.disabled_no_drag', await page.evaluate(() => window.__card._resize.dragging), false);
 check('safe_resize.disabled_zero_history', await page.evaluate(() => window.__card._geometryHistory.size), historyBefore);
@@ -241,9 +241,9 @@ const mixedHandle = await page.evaluate(() => {
 });
 check('safe_resize.mixed_role_disabled', mixedHandle.disabled, 'true');
 check('safe_resize.mixed_role_reason', /only part of this wall|часть этой стены/i.test(mixedHandle.label), true);
-await pointer('pointerdown', 100, 928, { cx: 100, cy: 928, pointerId: 82 });
-await pointer('pointermove', 100, 971, { cx: 100, cy: 928, pointerId: 82 });
-await pointer('pointerup', 100, 971, { cx: 100, cy: 928, pointerId: 82 });
+sent('mixed_role.pointerdown_sent', await pointer('pointerdown', 100, 928, { cx: 100, cy: 928, pointerId: 82 }));
+sent('mixed_role.pointermove_sent', await pointer('pointermove', 100, 971, { cx: 100, cy: 928, pointerId: 82 }));
+sent('mixed_role.pointerup_sent', await pointer('pointerup', 100, 971, { cx: 100, cy: 928, pointerId: 82 }));
 await settle();
 check('safe_resize.mixed_role_no_drag', await page.evaluate(() => window.__card._resize.dragging), false);
 check('safe_resize.mixed_role_geometry_exact', JSON.stringify(await roomPoly('mixed-main')), mixedBefore);
@@ -260,9 +260,9 @@ await setRooms([
   { key: '0.000000,0.162500@1.5708', cm: 30, a: [0, 0.125], b: [0, 0.2] },
 ]);
 await enter();
-await pointer('pointerdown', 50, 100, { cx: 50, cy: 100, pointerId: 83 });
-await pointer('pointermove', 50, 150, { cx: 50, cy: 100, pointerId: 83 });
-await pointer('pointerup', 50, 150, { cx: 50, cy: 100, pointerId: 83 });
+sent('range_role.pointerdown_sent', await pointer('pointerdown', 50, 100, { cx: 50, cy: 100, pointerId: 83 }));
+sent('range_role.pointermove_sent', await pointer('pointermove', 50, 150, { cx: 50, cy: 100, pointerId: 83 }));
+sent('range_role.pointerup_sent', await pointer('pointerup', 50, 150, { cx: 50, cy: 100, pointerId: 83 }));
 await settle();
 const rangePoly = await roomPoly('range-main');
 check('safe_resize.owner_boundary_clamped', Math.abs(rangePoly[2][1] * 1000 - 125) < 1, true);
@@ -289,9 +289,9 @@ await setRooms([
   { id: 'irregular', name: 'irregular', area: null, poly: [[400, 100], [700, 100], [700, 200], [650, 200], [650, 400], [400, 400]].map(([x, y]) => [x / 1000, y / 1000]) },
 ]);
 await enter();
-await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 79 });
-await pointer('pointermove', 720, 250, { cx: 400, cy: 250, pointerId: 79 });
-await pointer('pointerup', 720, 250, { cx: 400, cy: 250, pointerId: 79 });
+sent('corner_clamped.pointerdown_sent', await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 79 }));
+sent('corner_clamped.pointermove_sent', await pointer('pointermove', 720, 250, { cx: 400, cy: 250, pointerId: 79 }));
+sent('corner_clamped.pointerup_sent', await pointer('pointerup', 720, 250, { cx: 400, cy: 250, pointerId: 79 }));
 await settle();
 const irregular = await roomPoly('irregular');
 check('safe_resize.corner_clamped', Math.abs(irregular[5][0] * 1000 - 625) < 6, true);
@@ -312,15 +312,15 @@ await page.evaluate(() => {
   };
 });
 const preflightBefore = JSON.stringify(await roomPoly('preflight'));
-await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 80 });
-await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 80 });
-await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 80, nudge: [20, 0] });
+sent('preflight.pointerdown_sent', await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 80 }));
+sent('preflight.pointermove_sent', await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 80 }));
+sent('preflight.pointermove2_sent', await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 80, nudge: [20, 0] }));
 await settle();
 check('safe_resize.preflight_visible_reason', await page.evaluate(() =>
   /last safe position|последн/i.test(window.__card._toast)), true);
 check('safe_resize.preflight_reason_once', await page.evaluate(() =>
   window.__card.__resizeRejectToasts), 1);
-await pointer('pointerup', 500, 250, { cx: 400, cy: 250, pointerId: 80 });
+sent('preflight.pointerup_sent', await pointer('pointerup', 500, 250, { cx: 400, cy: 250, pointerId: 80 }));
 await settle();
 await page.evaluate(() => {
   const card = window.__card;
@@ -339,8 +339,8 @@ check('safe_resize.preflight_zero_write', await page.evaluate(() => window.__car
 await setRooms([rect('commit-preflight', 100, 100, 400, 400)]);
 await enter();
 const commitPreflightBefore = JSON.stringify(await roomPoly('commit-preflight'));
-await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 84 });
-await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 84 });
+sent('commit_preflight.pointerdown_sent', await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 84 }));
+sent('commit_preflight.pointermove_sent', await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 84 }));
 await settle();
 check('safe_resize.commit_preflight_preview_exists',
   Math.abs((await edgeX('commit-preflight', 1, true)) - 500) < 6, true);
@@ -349,7 +349,7 @@ await page.evaluate(() => {
   card.__resizeCommitPreflight = card._checkSpacePhysicalGeometry;
   card._checkSpacePhysicalGeometry = () => ({ ok: false, status: 'failed' });
 });
-await pointer('pointerup', 500, 250, { cx: 400, cy: 250, pointerId: 84 });
+sent('commit_preflight.pointerup_sent', await pointer('pointerup', 500, 250, { cx: 400, cy: 250, pointerId: 84 }));
 await settle();
 await page.evaluate(() => {
   const card = window.__card;
@@ -365,9 +365,9 @@ check('safe_resize.commit_preflight_zero_write',
 await setRooms([rect('solo', 100, 100, 400, 400)]);
 await enter();
 const cancelBefore = JSON.stringify(await roomPoly('solo'));
-await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 81 });
-await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 81 });
-await pointer('pointercancel', 500, 250, { cx: 400, cy: 250, pointerId: 81 });
+sent('cancel.pointerdown_sent', await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 81 }));
+sent('cancel.pointermove_sent', await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 81 }));
+sent('cancel.pointercancel_sent', await pointer('pointercancel', 500, 250, { cx: 400, cy: 250, pointerId: 81 }));
 await settle();
 check('safe_resize.cancel_geometry', JSON.stringify(await roomPoly('solo')), cancelBefore);
 check('safe_resize.cancel_zero_write', await page.evaluate(() => window.__card._geometryHistory.size), 0);
