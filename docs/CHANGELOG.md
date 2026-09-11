@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- The House Plan sidebar page can no longer get stuck on a previous version of
+  the card. It used to fetch the card through the one address in the
+  distribution that carries no version, and entries are served with no caching
+  instructions — so a browser was free to hand back an old copy for hours. The
+  version-mismatch banner was telling the truth, but reloading the page could
+  not help: the address never changed. The panel now asks for the implementation
+  by its content-hashed name: either the card it was built with arrives, or the
+  panel says out loud that the page needs a reload
+  ([#535](https://github.com/Matysh/houseplan-card/issues/535)).
+
 ## v1.74.0 — 2026-09-11
 
 - Switching between floors on a large plan is quick again. Every switch was

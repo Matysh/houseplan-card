@@ -70,9 +70,9 @@ test('bundle freshness verifies every manifest-listed demo asset', async () => {
       initialViewFiles: ['houseplan-assets/editor-HASH.js', 'houseplan-card.js'],
       initialViewGzipBytes: 11,
       initialPanelFiles: [
-        'houseplan-assets/editor-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
+        'houseplan-assets/editor-HASH.js', 'houseplan-panel.js',
       ],
-      initialPanelGzipBytes: 16,
+      initialPanelGzipBytes: 10,
       initialPanelOnlyFiles: ['houseplan-panel.js'],
       initialPanelOnlyGzipBytes: 5,
       files: files.map(([path, contents], index) => ({

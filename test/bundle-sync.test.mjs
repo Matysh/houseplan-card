@@ -28,7 +28,7 @@ const writeCurrentBundle = (root) => {
     gzipBytes: path === 'houseplan-card.js' ? 5 : path === 'houseplan-panel.js' ? 3 : 7,
     isEntry: path === 'houseplan-card.js' || path === 'houseplan-panel.js',
     imports: path === 'houseplan-panel.js'
-      ? ['houseplan-card.js']
+      ? ['houseplan-assets/card-HASH.js']
       : path === 'houseplan-card.js' ? ['houseplan-assets/card-HASH.js'] : [],
     dynamicImports: [],
   }));
@@ -40,9 +40,9 @@ const writeCurrentBundle = (root) => {
     initialViewFiles: ['houseplan-assets/card-HASH.js', 'houseplan-card.js'],
     initialViewGzipBytes: 12,
     initialPanelFiles: [
-      'houseplan-assets/card-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
+      'houseplan-assets/card-HASH.js', 'houseplan-panel.js',
     ],
-    initialPanelGzipBytes: 15,
+    initialPanelGzipBytes: 10,
     initialPanelOnlyFiles: ['houseplan-panel.js'],
     initialPanelOnlyGzipBytes: 3,
     files,

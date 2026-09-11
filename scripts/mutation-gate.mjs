@@ -3100,23 +3100,44 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/bundle-manifest.mjs',
       find: '      panelEntry.code = panelEntry.code.replace(\n'
         + '        panelPattern,\n'
-        + '        `try{await import("./${CARD_ENTRY_FILE}")}`\n'
+        + '        `try{await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
-        + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card entry is unavailable\",e)}',\n"
+        + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '\n"
+        + "          + 'chunk is unavailable\",e)}',\n"
         + '      );',
       replace: '      void panelEntry; // mutant: cached panel keeps its static shared-chunk import',
+    }],
+  },
+  {
+    id: 'panel-imports-unversioned-card-entry',
+    guard: 'node --test --test-name-pattern="#486 both stable entries" '
+      + 'test/bundle-assets.test.mjs',
+    because: 'the stable card facade is the one address in the distribution without a version '
+      + 'in it, and entries are served without Cache-Control: routing the panel through it let a '
+      + 'browser keep a previous card for hours and run it against the current backend in silence '
+      + '(#535 AC1/AC2)',
+    patches: [{
+      file: 'scripts/bundle-manifest.mjs',
+      find: '        `try{await import("${cardAsset}")}`\n'
+        + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
+        + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '",
+      replace: '        `try{await import("./${CARD_ENTRY_FILE}")}`\n'
+        + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
+        + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '",
     }],
   },
   {
     id: 'panel-entry-bypasses-card-graph',
     guard: 'node --test --test-name-pattern="#486 both stable entries" '
       + 'test/bundle-assets.test.mjs',
-    because: 'routing panel startup straight to a hashed implementation bypasses the stable '
-      + 'card root and breaks the required exact card-graph subset (#486 AC5)',
+    because: 'the manifest edge must name what the panel actually imports. Since #535 that is '
+      + 'the hashed implementation, not the stable facade; an edge naming the facade would make '
+      + 'initialPanelFiles describe a graph the panel never loads, and the "panel reuses the '
+      + 'exact card graph" check would then pass on a fiction (#486 AC5, #535 AC4)',
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
-      find: '      panelEntry.imports = [CARD_ENTRY_FILE];',
-      replace: '      panelEntry.imports = [cardAsset.slice(2)]; // mutant: direct hashed edge',
+      find: "      panelEntry.imports = [cardAsset.replace(/^\\.\\//, '')];",
+      replace: '      panelEntry.imports = [CARD_ENTRY_FILE]; // mutant: edge names the facade',
     }],
   },
   {

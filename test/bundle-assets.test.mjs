@@ -29,7 +29,8 @@ import {
 const minimalTwoEntryBundle = () => ({
   'houseplan-panel.js': {
     type: 'chunk', fileName: 'houseplan-panel.js', code: 'panel', isEntry: true,
-    facadeModuleId: '/repo/src/houseplan-panel.ts', imports: ['houseplan-card.js'],
+    facadeModuleId: '/repo/src/houseplan-panel.ts',
+    imports: ['houseplan-assets/card-HASH.js'],
     dynamicImports: [], modules: { '/repo/src/houseplan-panel.ts': {} },
   },
   'houseplan-card.js': {
@@ -51,9 +52,9 @@ const minimalTwoEntryManifest = () => ({
   initialViewFiles: ['houseplan-assets/card-HASH.js', 'houseplan-card.js'],
   initialViewGzipBytes: 11,
   initialPanelFiles: [
-    'houseplan-assets/card-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
+    'houseplan-assets/card-HASH.js', 'houseplan-panel.js',
   ],
-  initialPanelGzipBytes: 14,
+  initialPanelGzipBytes: 9,
   initialPanelOnlyFiles: ['houseplan-panel.js'],
   initialPanelOnlyGzipBytes: 3,
   files: [
@@ -147,7 +148,8 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
     'houseplan-panel.js': {
       type: 'chunk', fileName: 'houseplan-panel.js', code: 'panel', isEntry: true,
       facadeModuleId: '/repo/src/houseplan-panel.ts',
-      imports: ['houseplan-card.js'], dynamicImports: [],
+      // #535: панель импортирует реализацию, а не фасад без версии.
+      imports: ['shared.js'], dynamicImports: [],
     },
     'houseplan-card.js': {
       type: 'chunk', fileName: 'houseplan-card.js', code: 'entry', isEntry: true,
@@ -200,7 +202,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
   assert.deepEqual(manifest.initialViewFiles, ['houseplan-card.js', 'shared.js']);
   assert.deepEqual(
     manifest.initialPanelFiles,
-    ['houseplan-card.js', 'houseplan-panel.js', 'shared.js'],
+    ['houseplan-panel.js', 'shared.js'],
   );
   assert.deepEqual(manifest.initialPanelOnlyFiles, ['houseplan-panel.js']);
   assert.equal(
@@ -248,8 +250,9 @@ test('#486 manifest root selection is exact and independent of entry enumeration
   assert.deepEqual(manifest.initialViewFiles, [
     'houseplan-assets/card-HASH.js', 'houseplan-card.js',
   ]);
+  // #535: панель тянет реализацию по хешированному имени, фасада в её графе нет.
   assert.deepEqual(manifest.initialPanelFiles, [
-    'houseplan-assets/card-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
+    'houseplan-assets/card-HASH.js', 'houseplan-panel.js',
   ]);
 
   const wrongFacade = minimalTwoEntryBundle();
@@ -290,9 +293,22 @@ test('#486 manifest graph validator rejects missing panel roots and duplicated c
     'houseplan-assets/card-copy-HASH.js', 'houseplan-panel.js',
   ];
   duplicateGraph.initialPanelOnlyGzipBytes = 9;
+  // #535: панель обязана переиспользовать ту же реализацию, а не свою копию.
   assert.throws(
     () => assertBundleManifest(duplicateGraph),
-    /initial panel graph must contain both stable entries|not a subset/,
+    /initial panel graph must contain its own stable entry only|not a subset/,
+  );
+
+  // Обратная сторона того же инварианта: фасад карточки в графе панели —
+  // теперь ошибка, потому что это единственный адрес без версии (#535).
+  const facadeInPanel = structuredClone(valid);
+  facadeInPanel.initialPanelFiles = [
+    'houseplan-assets/card-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
+  ];
+  facadeInPanel.initialPanelGzipBytes = 14;
+  assert.throws(
+    () => assertBundleManifest(facadeInPanel),
+    /initial panel graph must contain its own stable entry only/,
   );
 });
 
@@ -315,10 +331,15 @@ test('#486 both stable entries install a visible stale-load fallback', async () 
   assert.match(card, /try\{await import\("\.\/houseplan-assets\/card-HASH\.js"\)\}catch/);
   assert.match(card, /customElements\.define\("houseplan-card"/);
   assert.doesNotMatch(card, /export\{/);
-  assert.match(panel, /try\{await import\("\.\/houseplan-card\.js"\)\}catch/);
+  // #535 переворачивает это утверждение: панель импортирует РЕАЛИЗАЦИЮ по
+  // content-hashed адресу, а не стабильный фасад. Фасад — единственный адрес
+  // дистрибутива без версии, и на нём панель молча работала на прошлой карточке.
+  assert.match(panel, /try\{await import\("\.\/houseplan-assets\/card-HASH\.js"\)\}catch/);
+  assert.doesNotMatch(panel, /houseplan-card\.js/,
+    'у панели не остаётся ни одной ссылки на карточку по адресу без версии');
   assert.match(panel, /customElements\.define\("houseplan-panel"/);
   assert.doesNotMatch(panel, /(?:^|;)import["']/);
-  assert.deepEqual(bundle['houseplan-panel.js'].imports, ['houseplan-card.js']);
+  assert.deepEqual(bundle['houseplan-panel.js'].imports, ['houseplan-assets/card-HASH.js']);
 
   const priorCustomElements = Object.getOwnPropertyDescriptor(globalThis, 'customElements');
   const priorHTMLElement = Object.getOwnPropertyDescriptor(globalThis, 'HTMLElement');
@@ -480,9 +501,9 @@ test('bundle tree verification fails for a missing or tampered manifest asset', 
         initialViewFiles: ['houseplan-assets/editor-hash.js', 'houseplan-card.js'],
         initialViewGzipBytes: 6,
         initialPanelFiles: [
-          'houseplan-assets/editor-hash.js', 'houseplan-card.js', 'houseplan-panel.js',
+          'houseplan-assets/editor-hash.js', 'houseplan-panel.js',
         ],
-        initialPanelGzipBytes: 8,
+        initialPanelGzipBytes: 5,
         initialPanelOnlyFiles: ['houseplan-panel.js'],
         initialPanelOnlyGzipBytes: 2,
         files,
@@ -519,13 +540,17 @@ test('entry facade fails loudly when the main chunk is unavailable (#353 AC3a)',
   );
 });
 
-test('#486 panel entry routes through the card facade and fails loudly too', () => {
+test('#535 panel entry reaches the card implementation by its hashed name', () => {
   const panel = readFileSync(new URL('../dist/houseplan-panel.js', import.meta.url), 'utf8');
   assert.match(
     panel,
     /^globalThis\.__HOUSEPLAN_BUILD_FINGERPRINT__="[0-9a-f]{64}";/,
   );
-  assert.match(panel, /try\{await import\("\.\/houseplan-card\.js"\)\}catch\(/);
+  // До #535 здесь стоял фасад `./houseplan-card.js` — единственный адрес
+  // дистрибутива без версии. Входные файлы отдаются без Cache-Control, поэтому
+  // браузер вправе держать копию часами, и устаревшая панель молча работала на
+  // прошлой карточке против текущего бэкенда. Хешированное имя это исключает.
+  assert.match(panel, /try\{await import\("\.\/houseplan-assets\/houseplan-card-[^"']+\.js"\)\}catch\(/);
   assert.match(panel, /customElements\.define\("houseplan-panel",/);
   assert.match(panel, /reload the page/);
   assert.doesNotMatch(
@@ -538,11 +563,34 @@ test('#486 panel entry routes through the card facade and fails loudly too', () 
     readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
   );
   assert.ok(!manifest.initialViewFiles.includes(manifest.panelEntry));
+  // «Панель переиспользует точный граф карточки» после #535 проверяется по
+  // РЕАЛИЗАЦИИ: фасад в начальный граф панели больше не входит, всё остальное
+  // обязано совпадать файл в файл.
   assert.ok(
-    manifest.initialViewFiles.every((path) => manifest.initialPanelFiles.includes(path)),
-    'the panel must reuse the exact card graph',
+    manifest.initialViewFiles
+      .filter((path) => path !== manifest.entry)
+      .every((path) => manifest.initialPanelFiles.includes(path)),
+    'the panel must reuse the exact card implementation graph',
   );
+  assert.ok(!manifest.initialPanelFiles.includes(manifest.entry),
+    'the un-versioned card facade is no longer part of what the panel loads');
   assert.ok(manifest.initialPanelOnlyGzipBytes <= INITIAL_PANEL_ONLY_GZIP_BUDGET);
+});
+
+test('#535 no built entry reaches the card by an address without a version', () => {
+  // Инвариант на весь дистрибутив, а не на код плагина: `?v=` ставит бэкенд
+  // при регистрации, и относительный спецификатор его не наследует. Любая
+  // будущая правка, вернувшая ссылку на фасад из другого входа, красит это.
+  const dist = new URL('../dist/', import.meta.url);
+  const entries = ['houseplan-panel.js'];
+  for (const name of entries) {
+    const code = readFileSync(new URL(name, dist), 'utf8');
+    assert.doesNotMatch(code, /houseplan-card\.js/,
+      `${name}: ссылка на карточку по адресу без версии`);
+  }
+  const card = readFileSync(new URL('houseplan-card.js', dist), 'utf8');
+  assert.match(card, /try\{await import\("\.\/houseplan-assets\/houseplan-card-[^"']+\.js"\)\}catch\(/,
+    'сам фасад остаётся стабильным входом Lovelace-ресурса и тянет хешированный чанк');
 });
 
 test('bundle tree verification rejects orphan chunks (#353 AC4)', async () => {
@@ -566,9 +614,9 @@ test('bundle tree verification rejects orphan chunks (#353 AC4)', async () => {
     initialViewFiles: ['houseplan-assets/main-abc.js', 'houseplan-card.js'],
     initialViewGzipBytes: 12,
     initialPanelFiles: [
-      'houseplan-assets/main-abc.js', 'houseplan-card.js', 'houseplan-panel.js',
+      'houseplan-assets/main-abc.js', 'houseplan-panel.js',
     ],
-    initialPanelGzipBytes: 14,
+    initialPanelGzipBytes: 9,
     initialPanelOnlyFiles: ['houseplan-panel.js'],
     initialPanelOnlyGzipBytes: 2,
     files: [
@@ -786,8 +834,8 @@ const runBudgetCli = (initialViewGzipBytes) => {
       ],
       initialViewFiles: ['houseplan-card.js'],
       initialViewGzipBytes,
-      initialPanelFiles: ['houseplan-card.js', 'houseplan-panel.js'],
-      initialPanelGzipBytes: initialViewGzipBytes + 1,
+      initialPanelFiles: ['houseplan-panel.js'],
+      initialPanelGzipBytes: 1,
       initialPanelOnlyFiles: ['houseplan-panel.js'],
       initialPanelOnlyGzipBytes: 1,
       lazyEditorFiles: ['editor.js'],

@@ -63,11 +63,16 @@ export function assertBundleManifest(manifest, label = BUNDLE_MANIFEST) {
   if (!initialView.includes(CARD_ENTRY) || initialView.includes(PANEL_ENTRY)) {
     throw new Error(`${label}: initial View graph must contain only the card stable entry`);
   }
-  if (!initialPanel.includes(CARD_ENTRY) || !initialPanel.includes(PANEL_ENTRY)) {
-    throw new Error(`${label}: initial panel graph must contain both stable entries`);
+  // #535: the panel reaches the implementation by its content-hashed name, so
+  // the card's stable facade is no longer part of what the panel loads. That is
+  // the point: the facade is the one address with no version in it, and the
+  // panel must not depend on a URL a browser may keep for hours. What still has
+  // to hold is that the panel reuses the exact card IMPLEMENTATION graph.
+  if (initialPanel.includes(CARD_ENTRY) || !initialPanel.includes(PANEL_ENTRY)) {
+    throw new Error(`${label}: initial panel graph must contain its own stable entry only`);
   }
-  if (initialView.some((path) => !initialPanel.includes(path))) {
-    throw new Error(`${label}: initial View graph is not a subset of initial panel graph`);
+  if (initialView.some((path) => path !== CARD_ENTRY && !initialPanel.includes(path))) {
+    throw new Error(`${label}: initial View implementation is not a subset of initial panel graph`);
   }
   const expectedPanelOnly = initialPanel
     .filter((path) => !initialView.includes(path))

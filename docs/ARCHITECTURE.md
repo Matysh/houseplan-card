@@ -68,8 +68,15 @@ houseplan-card/
 
 Rollup emits two stable roots: `houseplan-card.js` for optional Lovelace cards
 and `houseplan-panel.js` for the primary HA sidebar page. The panel root imports
-the card graph rather than duplicating it; the card initial graph never imports
-the panel shell. Both stable roots keep the fail-loud stale-load wrapper. Rollup
+the card implementation by its content-hashed name rather than duplicating it;
+the card initial graph never imports the panel shell. The panel does not go
+through the card's stable facade: that facade is the one address with no version
+in it — a dashboard reaches the same file through the Lovelace resource's `?v=`,
+and a relative specifier cannot inherit that query — while entries are served
+without `Cache-Control`, so a browser may keep its copy for hours. Routing the
+panel through it let a stale entry pull a stale chunk and run a previous card
+against the current backend in silence (#535). Both stable roots keep the
+fail-loud stale-load wrapper. Rollup
 embeds one source fingerprint in the eager entry and every fingerprint-checked
 lazy runtime.
 `dist/houseplan-assets.json` records the import graph, sizes and SHA-256 of every

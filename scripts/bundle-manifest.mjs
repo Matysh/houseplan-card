@@ -358,10 +358,18 @@ export function entryFallbackPlugin() {
       );
 
       // Rollup folds the small panel shell into its stable entry and points its
-      // side-effect import directly at the shared card implementation. Route it
-      // through the stable card facade instead: the real startup closure then
-      // contains the exact card graph (not a second copy), and a stale card
-      // implementation renders the existing card fallback inside the panel.
+      // side-effect import directly at the shared card implementation. Keep that
+      // edge (#535). Routing it through the stable card facade instead used to
+      // look harmless — the chunk is the same URL either way, so no second copy
+      // arises — but the facade is the ONE address in the distribution with no
+      // version in it: a dashboard reaches the same file through the Lovelace
+      // resource's `?v=`, while a relative specifier cannot inherit that query.
+      // Entries are served without Cache-Control (only ETag/Last-Modified), so
+      // a browser may keep its copy for hours; a stale panel entry then pulled
+      // a stale chunk — both cached — and silently ran a previous card against
+      // the current backend, with nothing but the version banner to show for it.
+      // The hashed name changes with the content, so now either the matching
+      // implementation arrives or the panel's own fallback says so out loud.
       const panelContract = ENTRY_CONTRACTS[1];
       const panelEntry = exactEntryChunk(bundle, panelContract);
       const panelPattern = new RegExp(
@@ -376,11 +384,12 @@ export function entryFallbackPlugin() {
       }
       panelEntry.code = panelEntry.code.replace(
         panelPattern,
-        `try{await import("./${CARD_ENTRY_FILE}")}`
+        `try{await import("${cardAsset}")}`
           + `catch(e){${fallbackDefinition(panelContract)}`
-          + 'console.error("[houseplan] stale houseplan-panel.js: the card entry is unavailable",e)}',
+          + 'console.error("[houseplan] stale houseplan-panel.js: the card implementation '
+          + 'chunk is unavailable",e)}',
       );
-      panelEntry.imports = [CARD_ENTRY_FILE];
+      panelEntry.imports = [cardAsset.replace(/^\.\//, '')];
     },
   };
 }
