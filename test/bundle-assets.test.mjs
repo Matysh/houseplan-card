@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -23,7 +23,7 @@ import {
   verifyBundleTree,
 } from '../scripts/bundle-tree.mjs';
 import {
-  minifyCssText, minifyStaticCssTemplates,
+  cssTemplateMinifier, minifyCssText, minifyStaticCssTemplates,
 } from '../scripts/css-template-minifier.mjs';
 
 const minimalTwoEntryBundle = () => ({
@@ -78,6 +78,59 @@ test('CSS template minifier preserves semantic whitespace, strings and functions
     minifyStaticCssTemplates('const s = css` .a { content: "\\`"; } `;', 'fixture.ts'),
     'const s = css`.a{content:"\\`";}`;',
   );
+});
+
+// #526. Плагин видит ВЫВОД TypeScript, а не исходник, и принтер TS ставит
+// пробел между тегом и шаблоном: `css \``. Отсев по строгому `css\`` не
+// срабатывал никогда — минификация не выполнялась ни для одного файла стилей,
+// и 23 КБ пояснительных комментариев ехали в браузер каждому пользователю.
+
+test('#526 AC1: тег распознаётся с любым пробельным промежутком и только как отдельное слово', () => {
+  for (const gap of [' ', '\n', '\t', '  \n  ']) {
+    assert.equal(
+      minifyStaticCssTemplates(`const s = css${gap}\` .a { color: red; } \`;`, 'fixture.ts'),
+      'const s = css`.a{color:red;}`;',
+      `промежуток ${JSON.stringify(gap)} обязан распознаваться`,
+    );
+  }
+  // Хвост чужого идентификатора тегом не является.
+  for (const source of ['const s = mycss` .a { color: red; } `;',
+    'const s = lit.css` .a { color: red; } `;',
+    'const s = styles$css` .a { color: red; } `;']) {
+    assert.equal(minifyStaticCssTemplates(source, 'fixture.ts'), null, source);
+  }
+});
+
+test('#526 AC2: хук плагина и сканер согласованы — вывод TypeScript обрабатывается', () => {
+  const plugin = cssTemplateMinifier();
+  const compiled = 'export const devicesStyles = css `\n  /* note */\n  .dev { color: red; }\n`;';
+  const result = plugin.transform(compiled, '/repo/src/styles/devices.styles.ts');
+  assert.ok(result && typeof result.code === 'string', 'отсев не должен отбрасывать вывод TypeScript');
+  assert.ok(!result.code.includes('note'), 'комментарий обязан исчезнуть');
+  assert.equal(plugin.transform(compiled, '/repo/src/styles/devices.styles.js'), null, 'не .ts — не наше дело');
+  assert.equal(plugin.transform('const a = 1;', '/repo/src/x.ts'), null, 'без тега — нечего делать');
+});
+
+test('#526 AC4: в собранном бандле нет комментариев из таблиц стилей', () => {
+  const styleFiles = readdirSync(new URL('../src/styles/', import.meta.url))
+    .filter((name) => name.endsWith('.ts'));
+  assert.ok(styleFiles.length >= 4, 'таблицы стилей на месте');
+  const phrases = [];
+  for (const name of styleFiles) {
+    const source = readFileSync(new URL(`../src/styles/${name}`, import.meta.url), 'utf8');
+    for (const match of source.matchAll(/\/\*([\s\S]*?)\*\//g)) {
+      const words = match[1].replace(/\s+/g, ' ').trim();
+      // Достаточно длинный кусок, чтобы совпадение случайным не было.
+      if (words.length >= 40) phrases.push(words.slice(0, 40));
+    }
+  }
+  assert.ok(phrases.length >= 20, `нашлось ${phrases.length} комментариев — ожидались десятки`);
+  const bundleDir = new URL('../dist/houseplan-assets/', import.meta.url);
+  const bundles = readdirSync(bundleDir).filter((name) => name.endsWith('.js'))
+    .map((name) => readFileSync(new URL(name, bundleDir), 'utf8'));
+  bundles.push(readFileSync(new URL('../dist/houseplan-card.js', import.meta.url), 'utf8'));
+  const leaked = phrases.filter((phrase) => bundles.some((code) => code.includes(phrase)));
+  assert.deepEqual(leaked, [], 'эти комментарии уехали пользователю');
 });
 
 test('CSS template minifier fails closed on interpolation and malformed input', () => {

@@ -60,14 +60,18 @@ export function minifyCssText(source, label = '<css>') {
   return out.trim();
 }
 
+const CSS_TAG = /(^|[^\w$.])css\s*`/;
+
 export function minifyStaticCssTemplates(code, id = '<module>') {
   let cursor = 0;
   let output = '';
   let changed = false;
   while (true) {
-    const start = code.indexOf('css`', cursor);
-    if (start < 0) break;
-    let end = start + 4;
+    const match = CSS_TAG.exec(code.slice(cursor));
+    if (!match) break;
+    const start = cursor + match.index + match[1].length;
+    const tagLength = match[0].length - match[1].length;
+    let end = start + tagLength;
     let escaped = false;
     for (; end < code.length; end += 1) {
       const char = code[end];
@@ -85,7 +89,7 @@ export function minifyStaticCssTemplates(code, id = '<module>') {
       if (char === '`') break;
     }
     if (end >= code.length) throw new Error(`${id}:${start}: unclosed css template`);
-    const css = code.slice(start + 4, end);
+    const css = code.slice(start + tagLength, end);
     output += code.slice(cursor, start);
     output += `css\`${minifyCssText(css, `${id}:${start}`)}\``;
     cursor = end + 1;
@@ -99,7 +103,7 @@ export function cssTemplateMinifier() {
   return {
     name: 'houseplan-css-template-minifier',
     transform(code, id) {
-      if (!id.endsWith('.ts') || !code.includes('css`')) return null;
+      if (!id.endsWith('.ts') || !CSS_TAG.test(code)) return null;
       const transformed = minifyStaticCssTemplates(code, id);
       return transformed == null ? null : { code: transformed, map: null };
     },

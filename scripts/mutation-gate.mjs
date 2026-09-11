@@ -3612,6 +3612,32 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'css-minifier-skips-typescript-output',
+    guard: 'node --test --test-name-pattern="#526 AC4|#526 AC2" test/bundle-assets.test.mjs',
+    because: '#526: плагин видит вывод TypeScript, где тег отделён от шаблона пробелом; '
+      + 'строгий отсев `css` вплотную к бэктику молча выключает минификацию целиком — '
+      + 'так 23 КБ комментариев и 12,8 КБ gzip уехали пользователю и никто не заметил',
+    patches: [{
+      file: 'scripts/css-template-minifier.mjs',
+      find: "      if (!id.endsWith('.ts') || !CSS_TAG" + '.test(code)) return null;',
+      replace: "      if (!id.endsWith('.ts') || !code.includes('css" + String.fromCharCode(96) + "')) return null;",
+    }],
+  },
+  {
+    id: 'css-minifier-eats-required-space',
+    guard: 'node demo/smoke_css_minifier_semantics.mjs',
+    because: '#526: минификация 23 КБ CSS включилась впервые — свидетель обязан ловить '
+      + 'съеденный значащий пробел (потомковый комбинатор, аргумент calc), а не только '
+      + 'считать сэкономленные байты',
+    patches: [{
+      file: 'scripts/css-template-minifier.mjs',
+      find: '    if (pendingSpace && out && !TIGHT_AFTER.has(out.at(-1))' + ' && !TIGHT_BEFORE.has(char)) {
+      out += ' ';
+    }',
+      replace: '    void pendingSpace; // mutant: значащий пробел больше не восстанавливается',
+    }],
+  },
+  {
     id: 'marker-shadow-animates-again',
     guard: 'node demo/smoke_marker_shadow_transitions.mjs',
     because: '#524: тень маркера выражена в контейнерных единицах — с переходом любой пересчёт '

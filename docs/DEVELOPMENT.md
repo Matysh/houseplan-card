@@ -279,6 +279,26 @@ node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
 
   The full HA pytest harness requires Linux/WSL; native Windows lacks `fcntl`.
 
+## The stylesheet minifier sees TypeScript output, not the source (#526)
+
+`scripts/css-template-minifier.mjs` runs as a Rollup transform, and by then the
+module has already been through TypeScript. The TS printer puts a space between
+a tag and its template, so the source `css`…`` arrives as `css `…``.
+
+The plugin used to look for the exact string `css` + backtick and therefore
+returned `null` for every stylesheet in the project: minification never ran
+once, and roughly 23 KB of explanatory comments were shipped to every user —
+12.8 KB gzipped in the initial chunk.
+
+Two consequences for anyone touching this area:
+
+- match the tag as a word followed by optional whitespace, never as a literal
+  two-character string;
+- the guard that keeps this honest is not inside the plugin but in
+  `test/bundle-assets.test.mjs`: it takes real comment text out of
+  `src/styles/*.ts` and asserts none of it appears in `dist/**`. A plugin that
+  silently stops working cannot pass it.
+
 ## Do not animate container-relative properties on the plan (#524)
 
 A CSS property whose value is expressed in container query units — `cqw`,

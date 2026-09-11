@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The card downloads 12.8 KB less on a cold start. The stylesheet minifier had
+  never actually run — it looked for its tag written one way and the build hands
+  it another — so every explanatory comment inside the stylesheets was shipped
+  to the browser. Nothing looks or behaves differently; the plan simply arrives
+  sooner ([#526](https://github.com/Matysh/houseplan-card/issues/526)).
+
 - The plan is smooth again in Firefox. A device marker's shadow is sized from
   the marker, which is sized from the container, so anything that changed the
   container width — a tooltip, a scrollbar, a rotation — restarted a shadow
