@@ -3612,6 +3612,53 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'room-drafts-refuse-instead-of-heal',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'room_drafts_on_current_model_convert_exactly_like_the_first_migration '
+      + 'tests_backend/test_wall_segment_model.py',
+    because: '#529: наследие обязано сниматься миграцией, а не запирать план — отказ здесь '
+      + 'отбивал структурную правку ещё до отправки на сервер и заодно ломал экспорт, '
+      + 'то есть единственный способ вытащить бэкап и починить конфиг руками',
+    patches: [{
+      file: 'custom_components/houseplan/wall_segment_model.py',
+      find: '    if not drafts:\n'
+        + '        space.pop("room_drafts", None)\n'
+        + '        return 0, 0',
+      replace: '    if True:\n'
+        + '        raise WallSegmentMigrationError("duplicate-id", "model v10 must not contain room_drafts")',
+    }],
+  },
+  {
+    id: 'outdated-client-detected-by-model-number',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'outdated_client_is_recognised_by_the_carrier_not_by_the_model_number '
+      + 'tests_backend/test_wall_segment_model.py',
+    because: '#529: устаревшая карточка возвращает эхом полученный номер модели, поэтому '
+      + 'признаком служит сам носитель поверх чистого сохранённого конфига; сверка по '
+      + 'номеру пропускала ровно тот случай, ради которого сторож и написан (#478 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/validation.py',
+      find: '    if old_model >= 10 and not stored_drafts and any(',
+      replace: '    if old_model >= 10 and new_model < 10 and any(',
+    }],
+  },
+  {
+    id: 'room-drafts-mirror-still-throws',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#529" test/wall-segment-model.test.mjs',
+    because: '#529: зеркало в карточке лечит хранилище — именно оно снимает ключ в кандидате, '
+      + 'который уходит в config/set; если оно снова бросает, план остаётся запертым '
+      + 'независимо от того, что умеет бэкенд',
+    patches: [{
+      file: 'src/wall-segment-model.ts',
+      find: '  if (!drafts.length) {\n'
+        + '    delete space.room_drafts;\n'
+        + '    return { drafts: 0, segments: 0 };\n'
+        + '  }',
+      replace: "  if (true) throw new WallSegmentModelError('duplicate-id', 'model v10 must not contain room_drafts');",
+    }],
+  },
+  {
     id: 'css-minifier-skips-typescript-output',
     guard: 'node --test --test-name-pattern="#526 AC4|#526 AC2" test/bundle-assets.test.mjs',
     because: '#526: плагин видит вывод TypeScript, где тег отделён от шаблона пробелом; '

@@ -739,13 +739,17 @@ const legacyDraftPoint = (value: unknown): Point | null => {
 const legacyIdentity = (value: unknown): string => typeof value === 'string' ? value : '';
 
 const migrateRoomDraftsToPartitions = (
-  space: LegacyRoomDraftSpace, initialMigration: boolean,
+  space: LegacyRoomDraftSpace,
 ): { drafts: number; segments: number } => {
   if (!Object.prototype.hasOwnProperty.call(space, 'room_drafts')) return { drafts: 0, segments: 0 };
-  if (!initialMigration) {
-    throw new WallSegmentModelError('duplicate-id', 'model v10 must not contain room_drafts');
-  }
   const drafts = Array.isArray(space.room_drafts) ? space.room_drafts : [];
+  // #529: наследие снимается, а не запирает план — зеркало питоновской
+  // миграции. Отказ здесь отбивал структурную правку ещё до отправки на
+  // сервер, и план становился нередактируемым и невыгружаемым.
+  if (!drafts.length) {
+    delete space.room_drafts;
+    return { drafts: 0, segments: 0 };
+  }
   const used = new Set<string>();
   for (const collection of [
     space.rooms, space.openings, space.decor, space.partitions,
@@ -802,7 +806,7 @@ const migrateRoomDraftsToPartitions = (
  */
 export const migrateLegacyRoomDraftsToPartitionsInPlace = (
   space: LegacyRoomDraftSpace,
-): { drafts: number; segments: number } => migrateRoomDraftsToPartitions(space, true);
+): { drafts: number; segments: number } => migrateRoomDraftsToPartitions(space);
 
 const resolvedThicknessCm = (
   space: any, atom: Atom, previous: WallSegmentEntry | undefined,
@@ -827,7 +831,7 @@ const resolvedThicknessCm = (
 const migrateSpace = (
   space: any, initialMigration: boolean, lineageHints?: ReadonlyMap<string, string>,
 ): { wallSegments: number; drafts: number; draftSegments: number } => {
-  const draftMigration = migrateRoomDraftsToPartitions(space, initialMigration);
+  const draftMigration = migrateRoomDraftsToPartitions(space);
   const old = oldSegmentMap(space);
   const { atoms, rooms } = buildAtoms(space, old);
   assignLineage(space, atoms, old, initialMigration, lineageHints);

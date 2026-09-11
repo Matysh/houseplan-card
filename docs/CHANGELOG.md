@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- A plan left over from the era of “rooms without walls” can be edited again.
+  Such a plan could refuse every change with “conflicting wall identifiers”,
+  send you to “Optimize plans”, which then reported that everything was already
+  optimal, and refuse to export as well — leaving no way out at all. The leftover
+  is now cleaned up on the first save, and a genuinely outdated card is told to
+  update and reload instead
+  ([#529](https://github.com/Matysh/houseplan-card/issues/529),
+  reported in [#527](https://github.com/Matysh/houseplan-card/issues/527)).
+
 - The card downloads 12.8 KB less on a cold start. The stylesheet minifier had
   never actually run — it looked for its tag written one way and the build hands
   it another — so every explanatory comment inside the stylesheets was shipped

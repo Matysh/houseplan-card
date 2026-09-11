@@ -318,10 +318,92 @@ def test_current_wall_model_independent_geometry_does_not_require_contour_catalo
         validate_wall_model_transition(candidate, previous)
         assert CONFIG_SCHEMA(candidate) == candidate
 
+    # #529: пустой ключ данных не несёт и записи больше не стоит — прежде
+    # именно он запирал план целиком. Непустой остаётся отказом схемы.
+    empty = copy.deepcopy(previous)
+    empty["spaces"][0]["room_drafts"] = []
+    assert CONFIG_SCHEMA(empty) == empty
     stale = copy.deepcopy(previous)
-    stale["spaces"][0]["room_drafts"] = []
+    stale["spaces"][0]["room_drafts"] = [{
+        "id": "cached-draft", "points": [[2, 0], [3, 0]], "segments": [{"cm": 15}],
+    }]
     with pytest.raises(Exception, match="v10 config must not contain room_drafts"):
         CONFIG_SCHEMA(stale)
+
+
+# #529. Конфиг текущей модели с ключом `room_drafts` запирал план наглухо:
+# карточка считает ту же миграцию своим зеркалом, поэтому структурная правка
+# отбивалась ещё до отправки на сервер, «Optimize plans» этой ветки не касается,
+# а экспорт зовёт ту же функцию — забрать бэкап и починить файл руками тоже было
+# нельзя. Наследие снимается миграцией; защита #478 переехала на слой валидации,
+# где видно и заявку, и сохранённый конфиг.
+
+def test_empty_room_drafts_on_current_model_are_dropped_silently() -> None:
+    config, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    stuck = copy.deepcopy(config)
+    stuck["spaces"][0]["room_drafts"] = []
+
+    healed, _ = commit_wall_segment_model(stuck)
+
+    assert "room_drafts" not in healed["spaces"][0]
+    assert healed["spaces"][0].get("partitions", []) == []
+    assert healed == config
+
+
+def test_room_drafts_on_current_model_convert_exactly_like_the_first_migration() -> None:
+    draft = {
+        "id": "draft-1",
+        "points": [[0.5, 0.5], [0.7, 0.5]],
+        "segments": [{"id": "draft-seg-1", "cm": 10}],
+    }
+
+    def legacy(model: int) -> dict:
+        space = {"id": "floor", "rooms": [_room("room")],
+                 "room_drafts": [copy.deepcopy(draft)]}
+        config = _config(space)
+        config["model_version"] = model
+        return config
+
+    current, _ = commit_wall_segment_model(legacy(WALL_SEGMENT_MODEL_VERSION))
+    initial, _ = commit_wall_segment_model(legacy(WALL_SEGMENT_MODEL_VERSION - 1))
+
+    assert "room_drafts" not in current["spaces"][0]
+    assert [item["id"] for item in current["spaces"][0]["partitions"]] == ["draft-seg-1"]
+    # Лечение не выдумывает собственную семантику: результат тот же, что у
+    # первой миграции того же конфига.
+    assert current["spaces"][0]["partitions"] == initial["spaces"][0]["partitions"]
+
+
+def test_outdated_client_is_recognised_by_the_carrier_not_by_the_model_number() -> None:
+    previous, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    draft = {"id": "cached-draft", "points": [[2, 0], [3, 0]], "segments": [{"cm": 15}]}
+
+    for submitted_model in (WALL_SEGMENT_MODEL_VERSION - 1, WALL_SEGMENT_MODEL_VERSION):
+        stale = copy.deepcopy(previous)
+        stale["model_version"] = submitted_model
+        stale["spaces"][0]["room_drafts"] = [copy.deepcopy(draft)]
+        # Устаревшая карточка возвращает эхом ту версию модели, которую
+        # получила, поэтому номер версии признаком не является: признак —
+        # сам носитель поверх чистого сохранённого конфига.
+        with pytest.raises(WallModelClientOutdatedError, match="legacy room_drafts"):
+            validate_wall_model_transition(stale, previous)
+
+
+def test_legacy_left_in_storage_is_not_treated_as_a_stale_writer() -> None:
+    previous, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    previous["spaces"][0]["room_drafts"] = []
+    candidate = copy.deepcopy(previous)
+
+    validate_wall_model_transition(candidate, previous)
+
+    healed, _ = commit_wall_segment_model(candidate)
+    assert "room_drafts" not in healed["spaces"][0]
 
 
 def test_stale_v9_room_draft_write_over_v10_is_rejected_before_schema() -> None:

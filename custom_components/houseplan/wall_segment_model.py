@@ -644,14 +644,21 @@ def _host_openings(
             opening.pop("host", None)
 
 
-def _migrate_room_drafts_to_partitions(
-    space: dict[str, Any], initial_migration: bool,
-) -> tuple[int, int]:
+def _migrate_room_drafts_to_partitions(space: dict[str, Any]) -> tuple[int, int]:
     if "room_drafts" not in space:
         return 0, 0
-    if not initial_migration:
-        raise WallSegmentMigrationError("duplicate-id", "model v10 must not contain room_drafts")
     drafts = space.get("room_drafts") or []
+    # #529: наследие снимается, а не запирает план. Отказ здесь стоил
+    # пользователю всего: карточка считает ту же миграцию своим зеркалом, так
+    # что структурная правка отбивалась ещё до отправки, «Optimize plans» на
+    # эту ветку не влияет, а экспорт зовёт эту же функцию — забрать бэкап и
+    # починить файл руками тоже было нельзя. Защита от устаревшего клиента
+    # (#478) переехала на свой слой: `validate_wall_model_transition` ловит
+    # заявку с черновиками поверх чистого сохранённого конфига и отвечает
+    # человеку «обновите карточку», а не загадкой про идентификаторы.
+    if not drafts:
+        space.pop("room_drafts", None)
+        return 0, 0
     used = {
         str(item["id"])
         for name in ("rooms", "openings", "decor", "partitions",
@@ -709,9 +716,7 @@ def _migrate_room_drafts_to_partitions(
 def _migrate_space(
     space: dict[str, Any], initial_migration: bool,
 ) -> tuple[int, int, int]:
-    migrated_drafts, migrated_draft_segments = _migrate_room_drafts_to_partitions(
-        space, initial_migration,
-    )
+    migrated_drafts, migrated_draft_segments = _migrate_room_drafts_to_partitions(space)
     old: dict[str, dict[str, Any]] = {}
     for segment in space.get("wall_segments") or []:
         segment_id = str(segment.get("id", ""))

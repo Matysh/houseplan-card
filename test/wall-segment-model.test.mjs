@@ -111,13 +111,41 @@ test('#478: malformed legacy draft vectors have deterministic migration semantic
   }
 });
 
-test('#478: current model rejects reintroduced room_drafts', () => {
-  assert.throws(() => commitWallSegmentModel({
+// #529. Прежде здесь стоял отказ: конфиг текущей модели с ключом `room_drafts`
+// роняли даже когда список был пуст. Отказ стоил пользователю всего плана —
+// карточка считает эту же миграцию своим зеркалом, поэтому структурная правка
+// отбивалась ещё до отправки, а экспорт звал ту же функцию. Защита #478 от
+// устаревшего клиента переехала на слой валидации, где видно и заявку, и
+// сохранённый конфиг; здесь наследие снимается.
+test('#529: пустой room_drafts снимается молча, план не запирается', () => {
+  const { config } = commitWallSegmentModel({
     model_version: 10, markers: [], settings: {}, spaces: [{
       id: 'floor', title: 'Floor', rooms: [], wall_segments: [], room_drafts: [],
     }],
-  }), (error) => error instanceof WallSegmentModelError
-    && error.message.includes('model v10 must not contain room_drafts'));
+  });
+  assert.equal('room_drafts' in config.spaces[0], false);
+  assert.deepEqual(config.spaces[0].partitions ?? [], []);
+});
+
+test('#529: черновики в конфиге текущей модели конвертируются один к одному', () => {
+  const draft = {
+    id: 'draft-1',
+    points: [[0.5, 0.5], [0.7, 0.5]],
+    segments: [{ id: 'draft-seg-1', cm: 10 }],
+  };
+  const legacy = () => ({
+    markers: [], settings: {}, spaces: [{
+      id: 'floor', title: 'Floor', rooms: [], wall_segments: [],
+      room_drafts: [structuredClone(draft)],
+    }],
+  });
+  const current = commitWallSegmentModel({ ...legacy(), model_version: 10 }).config;
+  const initial = commitWallSegmentModel({ ...legacy(), model_version: 9 }).config;
+  assert.equal('room_drafts' in current.spaces[0], false);
+  assert.deepEqual(current.spaces[0].partitions.map((item) => item.id), ['draft-seg-1']);
+  // Тот же результат, что у первой миграции того же конфига: лечение не
+  // выдумывает собственную семантику.
+  assert.deepEqual(current.spaces[0].partitions, initial.spaces[0].partitions);
 });
 
 test('wall ids use the specified SHA-256/base32 seed and ignore endpoint order', () => {
