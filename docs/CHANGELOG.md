@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.74.0-beta.2 — 2026-09-11
+
 - A plan left over from the era of “rooms without walls” can be edited again.
   Such a plan could refuse every change with “conflicting wall identifiers”,
   send you to “Optimize plans”, which then reported that everything was already

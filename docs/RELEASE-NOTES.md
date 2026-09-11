@@ -1,20 +1,20 @@
-<!-- release: v1.74.0-beta.1 -->
+<!-- release: v1.74.0-beta.2 -->
 
 ## Основное
 
-- Сводная панель больше не подвешивает первый кадр на большом плане и не показывает «Source unavailable», пока значения ещё считаются ([#509](https://github.com/Matysh/houseplan-card/issues/509)).
-- Диалог настроек сводной панели снова прокручивается — колесом мыши на десктопе и свайпом на телефоне ([#508](https://github.com/Matysh/houseplan-card/issues/508)).
-- Направляющие выравнивания снова идут за значком, фигурой и курсором во время жеста в трёх редакторах ([#521](https://github.com/Matysh/houseplan-card/issues/521)).
+- План, доставшийся от времён «комнат без стен», снова редактируется: наследие снимается при первом сохранении, а не запирает план наглухо ([#529](https://github.com/Matysh/houseplan-card/issues/529)).
+- План снова плавный в Firefox: тень маркера больше не перезапускает анимацию у всех значков разом ([#524](https://github.com/Matysh/houseplan-card/issues/524)).
+- Карточка скачивается на 12,8 КБ меньше при холодном старте ([#526](https://github.com/Matysh/houseplan-card/issues/526)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- The summary panel no longer freezes the first frame on a large plan and no longer says "Source unavailable" while its values are still being computed ([#509](https://github.com/Matysh/houseplan-card/issues/509)).
-- The summary panel settings dialog scrolls again — with the mouse wheel on desktop and with a swipe on phones ([#508](https://github.com/Matysh/houseplan-card/issues/508)).
-- Alignment guides follow the marker, the shape and the cursor again while you drag, in all three editors ([#521](https://github.com/Matysh/houseplan-card/issues/521)).
+- A plan left over from the era of “rooms without walls” can be edited again: the leftover is cleaned up on the first save instead of locking the plan completely ([#529](https://github.com/Matysh/houseplan-card/issues/529)).
+- The plan is smooth again in Firefox: a marker's shadow no longer restarts an animation on every marker at once ([#524](https://github.com/Matysh/houseplan-card/issues/524)).
+- The card downloads 12.8 KB less on a cold start ([#526](https://github.com/Matysh/houseplan-card/issues/526)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.74.0-beta.1/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.74.0-beta.1/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.74.0-beta.2/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.74.0-beta.2/docs/CHANGELOG.md)
