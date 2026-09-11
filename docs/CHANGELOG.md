@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- The plan is smooth again in Firefox. A device marker's shadow is sized from
+  the marker, which is sized from the container, so anything that changed the
+  container width — a tooltip, a scrollbar, a rotation — restarted a shadow
+  animation on every marker at once. Sixty-one of them at a time dropped
+  Firefox to nine frames per second; the shadow now simply appears, unchanged
+  ([#524](https://github.com/Matysh/houseplan-card/issues/524)).
+
 - Switching between spaces no longer replays a neighbouring door's leaf
   movement, in either direction. The animation now belongs to a real sensor
   change and nothing else

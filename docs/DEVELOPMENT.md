@@ -279,6 +279,27 @@ node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
 
   The full HA pytest harness requires Linux/WSL; native Windows lacks `fcntl`.
 
+## Do not animate container-relative properties on the plan (#524)
+
+A CSS property whose value is expressed in container query units — `cqw`,
+`cqh`, or any custom property derived from them, such as `--dev-size` — must
+not appear in a `transition` on elements the plan draws in quantity.
+
+Container query styles are re-evaluated whenever the container's inline size
+changes: a tooltip, a scrollbar, a rotation, a panel resize. Every such
+re-evaluation produces a new computed value and therefore **restarts the
+transition on every one of those elements at once**.
+
+That is how `box-shadow` on device markers cost a real user 9.4 frames per
+second in Firefox 155: sixty-one markers started a 150 ms non-composited
+shadow transition four times in two seconds, and the refresh driver spent the
+window waiting for paint. Chromium starts exactly the same transitions — it
+merely pays less for them, which is why the defect hid there.
+
+The witness is browser-independent and lives in
+`demo/smoke_marker_shadow_transitions.mjs`: change the stage container width by
+one pixel and assert that no `transitionrun` for `box-shadow` arrives.
+
 ## Dependency and cache gotchas
 
 - **polygon-clipping is a trap**: its `.d.ts` declares named exports but the ESM build has only

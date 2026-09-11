@@ -3612,6 +3612,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'marker-shadow-animates-again',
+    guard: 'node demo/smoke_marker_shadow_transitions.mjs',
+    because: '#524: тень маркера выражена в контейнерных единицах — с переходом любой пересчёт '
+      + 'контейнерных запросов запускает некомпозируемый переход на каждом маркере; в профиле '
+      + 'владельца 61 штука разом дала 9,4 к/с и кадры по 149 мс',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '      transition: border-color .15s, opacity' + ' .2s;',
+      replace: '      transition: border-color .15s, box-shadow .15s, opacity .2s;',
+    }],
+  },
+  {
     id: 'anchor-region-narrows-ambiguous-anchor',
     guard: 'node --test --test-name-pattern="#518 AC4" test/mutation-gate.test.mjs',
     because: '#518: якорь, найденный не ровно один раз, значит «реестр отстал от кода» — '

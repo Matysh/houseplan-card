@@ -209,7 +209,12 @@ export const devicesStyles = css`
       border-radius: 9999px;
       background: transparent;
       box-shadow: var(--device-shell-shadow);
-      transition: border-color .15s, box-shadow .15s, opacity .2s;
+      /* #524: тень оболочки выражена в --dev-size, а он — в cqw. Пока
+         box-shadow стоял в переходах, любой пересчёт контейнерных запросов
+         запускал некомпозируемый переход на КАЖДОМ маркере: на плане владельца
+         61 штука разом роняли Firefox до 9,4 к/с. Сама тень не изменилась —
+         она просто применяется сразу. */
+      transition: border-color .15s, opacity .2s;
       pointer-events: auto;
       /* Normative production fallback: never add a per-marker backdrop blur. */
       backdrop-filter: none;
@@ -261,7 +266,10 @@ export const devicesStyles = css`
         var(--device-core-inset-shadow),
         0 0 0 var(--device-ring-width) var(--device-ring-color);
       line-height: 0;
-      transition: background .15s, color .15s, box-shadow .15s, opacity .2s;
+      /* #524: то же и у ядра — кольцо выделения и внутренняя тень заданы
+         через --dev-size. Кольцо появляется мгновенно; плавное стоило бы
+         перерисовки кадра на каждый маркер при каждом пересчёте контейнера. */
+      transition: background .15s, color .15s, opacity .2s;
       pointer-events: none;
     }
     .device-sections {
