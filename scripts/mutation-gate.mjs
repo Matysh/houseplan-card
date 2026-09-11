@@ -3631,9 +3631,10 @@ const MUTANT_DEFINITIONS = [
       + 'считать сэкономленные байты',
     patches: [{
       file: 'scripts/css-template-minifier.mjs',
-      find: '    if (pendingSpace && out && !TIGHT_AFTER.has(out.at(-1))' + ' && !TIGHT_BEFORE.has(char)) {
-      out += ' ';
-    }',
+      find: '    if (pendingSpace && out && !TIGHT_AFTER.has(out.at(-1))'
+        + ' && !TIGHT_BEFORE.has(char)) {\n'
+        + "      out += ' ';\n"
+        + '    }',
       replace: '    void pendingSpace; // mutant: значащий пробел больше не восстанавливается',
     }],
   },
