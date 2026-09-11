@@ -147,3 +147,21 @@ test('свидетель направляющих ведёт жест, а не �
   assert.match(source, /ZeroSettledRenders/);
 });
 
+// #525. Карточка живёт в shadow root, и `document.getAnimations()` в неё не
+// заходит: на сломанном коде документный вызов возвращал пустой список, пока
+// створка двери честно доигрывала чужой переход. Свидетель обязан считать
+// поэлементно, обходя вложенные теневые деревья, — иначе он зелен всегда.
+test('свидетель переходов при переключении меряет поэлементно (#525)', () => {
+  const source = read('smoke_space_switch_transitions.mjs');
+  // Ловушка названа в шапке смока словами — упоминание в комментарии это не
+  // вызов; проверяется код, а не текст о нём.
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.doesNotMatch(code, /document\.getAnimations\(\)/,
+    'smoke_space_switch_transitions.mjs: документный getAnimations() пуст даже на'
+    + ' сломанном коде — считать надо по узлам внутри renderRoot (#525)');
+  assert.match(code, /element\.getAnimations\(\)/);
+  assert.match(code, /element\.shadowRoot\) walk\(element\.shadowRoot\)/,
+    'обход обязан заходить во вложенные shadow root');
+  assert.match(code, /_pickSpace/, 'переключение делается штатным путём');
+});
+

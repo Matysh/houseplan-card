@@ -11784,7 +11784,7 @@ export class HouseplanCard extends LitElement {
               view,
               (point) => this._scenePoint(point),
             )}
-            ${devs.map((d) => this._renderDevice(
+            ${repeat(devs, (d) => d.id, (d) => this._renderDevice(
               d, view, showLqi, isoOverlays?.devices.get(d.id),
             ))}
             ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}
@@ -12993,7 +12993,7 @@ export class HouseplanCard extends LitElement {
     const walls = this._spaceWalls;
     const openCuts = this._openCuts();
     const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
-    return svg`<g class="openinglayer">${items.map((o) => {
+    return svg`<g class="openinglayer">${repeat(items, (o) => o.id, (o) => {
       if (o.orphanReason) return svg`<g class="opening orphan" data-hp="opening-orphan"
         data-id=${o.id} role="button" tabindex="0"
         aria-label=${this._t('opening.partition_orphan')}

@@ -519,7 +519,18 @@ export const planStyles = css`
       stroke: var(--hp-accent);
       stroke-opacity: 1;
     }
-    /* doors, windows & gates */
+    /* doors, windows & gates
+
+       #525: these two transitions are the reason the opening list is rendered
+       with repeat(items, (o) => o.id, ...) and not a bare map(). Lit reuses
+       list nodes by POSITION, so on a space switch the leaf that held a slot
+       kept its DOM node and only changed values — and the browser dutifully
+       animated a door that never moved: the new floor's leaf drove in from the
+       previous floor's opening angle, 0.6 s of an event that did not happen.
+       Anything animated that is rendered from a list needs a key. The Glow
+       spots learned it first (glow-scene.ts, opacity), the openings and the
+       device markers (.device-shell-frame, box-shadow) with this issue.
+       Witness: demo/smoke_space_switch_transitions.mjs. */
     .op-leaf {
       transition: transform 0.6s ease;
     }

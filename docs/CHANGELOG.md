@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Switching between spaces no longer replays a neighbouring door's leaf
+  movement, in either direction. The animation now belongs to a real sensor
+  change and nothing else
+  ([#525](https://github.com/Matysh/houseplan-card/issues/525)).
+
 ## v1.74.0-beta.1 — 2026-09-10
 
 - Alignment guides follow the object again while you drag it: the marker in the

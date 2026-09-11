@@ -7298,6 +7298,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'openings-rendered-without-keys',
+    guard: 'node demo/smoke_space_switch_transitions.mjs',
+    because: 'Lit reuses list nodes by position: without a key the leaf of the next space '
+      + 'inherits the node of whatever door held that slot, and its 0.6s transform transition '
+      + 'animates a door that never moved (#525 AC1)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    return svg`<g class="openinglayer">${repeat(items, (o) => o.id, (o) => {',
+      replace: '    return svg`<g class="openinglayer">${items.map((o) => {',
+    }],
+  },
+  {
+    id: 'device-markers-rendered-without-keys',
+    guard: 'node demo/smoke_space_switch_transitions.mjs',
+    because: 'the marker shell carries a `box-shadow` transition, so a positional reuse replays '
+      + 'it on every space switch; the key also keeps `data-id` honest for the live editor '
+      + 'painter, which finds the dragged marker by that attribute (#525 AC2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '            ${repeat(devs, (d) => d.id, (d) => this._renderDevice(',
+      replace: '            ${devs.map((d) => this._renderDevice(',
+    }],
+  },
+  {
     id: 'live-editor-devices-drops-align-guides',
     guard: 'node demo/smoke_align_guides.mjs',
     because: 'the device editor paints nothing else from a template, so dropping the guides '
