@@ -47,25 +47,45 @@ const setRooms = async (rooms, openings = [], walls = []) => {
 const settle = () => page.evaluate(() => new Promise((resolve) =>
   requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
-const screenPt = (x, y) => page.evaluate(([px, py]) => {
-  const card = window.__card;
-  const stage = card.renderRoot.querySelector('.stage');
-  const svg = stage.querySelector('svg');
-  const point = new DOMPoint(px, py).matrixTransform(svg.getScreenCTM());
-  return [point.x, point.y];
-}, [x, y]);
+/**
+ * #533: перевод координат живёт внутри того же кадра, что и отправка события.
+ *
+ * Прежде смок считал экранные точки заранее, одним вызовом на весь жест, а
+ * карточка переводит их обратно в момент события — от текущего размера стейджа
+ * и текущего вида. Стоило раскладке осесть между замером и жестом, и 34 экранных
+ * пикселя превращались уже не в 50 единиц плана: ресайз коммитил не ту величину,
+ * а свидетель сообщал об этом четырьмя немыми `expected true, got false`.
+ * Раннер ловил это, локальная машина — нет.
+ *
+ * Координаты сюда передаются В ЕДИНИЦАХ ПЛАНА; `nudge` — добавка в экранных
+ * пикселях для случаев, где проверяется именно подрагивание указателя.
+ */
+const pointer = (type, planX, planY, { cx, cy, pointerId = 77, nudge } = {}) =>
+  page.evaluate((args) => {
+    const card = window.__card;
+    const stage = card.renderRoot.querySelector('.stage');
+    const svg = stage.querySelector('svg');
+    const matrix = svg.getScreenCTM();
+    const point = new DOMPoint(args.planX, args.planY).matrixTransform(matrix);
+    const clientX = point.x + (args.nudge ? args.nudge[0] : 0);
+    const clientY = point.y + (args.nudge ? args.nudge[1] : 0);
+    const handles = [...card.renderRoot.querySelectorAll('.rszhandle')];
+    const target = args.cx == null ? handles.find((handle) => !handle.classList.contains('disabled'))
+      : handles.find((handle) => Math.abs(Number(handle.getAttribute('cx')) - args.cx) < 1
+        && Math.abs(Number(handle.getAttribute('cy')) - args.cy) < 1);
+    target?.dispatchEvent(new PointerEvent(args.type, {
+      bubbles: true, cancelable: true, pointerId: args.pointerId,
+      clientX, clientY, pointerType: 'mouse', buttons: args.type === 'pointerup' ? 0 : 1,
+    }));
+    return { sent: !!target, scale: matrix.a, client: [clientX, clientY],
+      stage: [stage.clientWidth, stage.clientHeight] };
+  }, { type, planX, planY, cx, cy, pointerId, nudge });
 
-const pointer = (type, clientX, clientY, { cx, cy, pointerId = 77 } = {}) => page.evaluate((args) => {
-  const handles = [...window.__card.renderRoot.querySelectorAll('.rszhandle')];
-  const target = args.cx == null ? handles.find((handle) => !handle.classList.contains('disabled'))
-    : handles.find((handle) => Math.abs(Number(handle.getAttribute('cx')) - args.cx) < 1
-      && Math.abs(Number(handle.getAttribute('cy')) - args.cy) < 1);
-  target?.dispatchEvent(new PointerEvent(args.type, {
-    bubbles: true, cancelable: true, pointerId: args.pointerId,
-    clientX: args.clientX, clientY: args.clientY, pointerType: 'mouse', buttons: args.type === 'pointerup' ? 0 : 1,
-  }));
-  return !!target;
-}, { type, clientX, clientY, cx, cy, pointerId });
+/** Жест обязан доехать: молчаливый `find` без цели — это зелёный смок ни о чём. */
+const sent = (name, result) => {
+  check(name, result.sent, true);
+  return result;
+};
 
 const roomPoly = (id, live = false) => page.evaluate(({ id, live }) => {
   const card = window.__card;
@@ -106,23 +126,21 @@ check('safe_resize.shared_enabled_handles', await page.evaluate(() =>
   [...window.__card.renderRoot.querySelectorAll('.rszhandle')]
     .filter((handle) => Math.abs(Number(handle.getAttribute('cx')) - 400) < 1
       && handle.getAttribute('aria-disabled') === 'false').length), 2);
-const [sx, sy] = await screenPt(400, 250);
-const [tx] = await screenPt(450, 250);
-const safeResizeScreen = await page.evaluate(() => {
-  const stage = window.__card.renderRoot.querySelector('.stage');
-  const svg = stage.querySelector('svg');
-  const matrix = svg.getScreenCTM();
-  return { stage: [stage.clientWidth, stage.clientHeight], viewBox: svg.getAttribute('viewBox'),
-    matrix: matrix ? [matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f] : null };
-});
-await pointer('pointerdown', sx, sy, { cx: 400, cy: 250 });
+const grab = sent('safe_resize.down_sent', await pointer('pointerdown', 400, 250, { cx: 400, cy: 250 }));
 check('safe_resize.drag_started', await page.evaluate(() => window.__card._resize.dragging), true);
-await pointer('pointermove', tx, sy);
+const moved = sent('safe_resize.move_sent', await pointer('pointermove', 450, 250, { cx: 400, cy: 250 }));
+// #533: если отображение экран↔план поехало между захватом и движением, жест
+// коммитит не ту величину. Пусть это будет одна строка с числами, а не четыре
+// немых `expected true, got false`.
+check(`safe_resize.mapping_stable ${grab.scale} vs ${moved.scale}`
+  + ` stage ${grab.stage} vs ${moved.stage}`,
+  Math.abs(grab.scale - moved.scale) < 1e-6, true);
+const safeResizeScreen = { down: grab, move: moved };
 await settle();
 const safeResizePreviewLeft = await edgeX('left', 1, true);
 check('safe_resize.preview_moved', Math.abs(safeResizePreviewLeft - 450) < 6, true);
 check('safe_resize.preview_not_persisted', Math.abs((await edgeX('left', 1, false)) - 400) < 1e-6, true);
-await pointer('pointerup', tx, sy);
+sent('safe_resize.up_sent', await pointer('pointerup', 450, 250, { cx: 400, cy: 250 }));
 await settle();
 const safeResizeCommitLeft = await edgeX('left', 1, false);
 const safeResizeCommitRight = await edgeX('right', 3, false);
@@ -191,8 +209,7 @@ const disabledActivation = await page.evaluate(() => {
 check('safe_resize.disabled_click_reason', disabledActivation.click, disabledActivation.expected);
 check('safe_resize.disabled_enter_reason', disabledActivation.enter, disabledActivation.expected);
 check('safe_resize.disabled_space_reason', disabledActivation.space, disabledActivation.expected);
-const [dx, dy] = await screenPt(331, 245);
-await pointer('pointerdown', dx, dy, { cx: 331, cy: 245, pointerId: 78 });
+await pointer('pointerdown', 331, 245, { cx: 331, cy: 245, pointerId: 78 });
 await settle();
 check('safe_resize.disabled_no_drag', await page.evaluate(() => window.__card._resize.dragging), false);
 check('safe_resize.disabled_zero_history', await page.evaluate(() => window.__card._geometryHistory.size), historyBefore);
@@ -224,11 +241,9 @@ const mixedHandle = await page.evaluate(() => {
 });
 check('safe_resize.mixed_role_disabled', mixedHandle.disabled, 'true');
 check('safe_resize.mixed_role_reason', /only part of this wall|часть этой стены/i.test(mixedHandle.label), true);
-const [mx, my] = await screenPt(100, 928);
-const [, mixed43] = await screenPt(100, 971);
-await pointer('pointerdown', mx, my, { cx: 100, cy: 928, pointerId: 82 });
-await pointer('pointermove', mx, mixed43, { pointerId: 82 });
-await pointer('pointerup', mx, mixed43, { pointerId: 82 });
+await pointer('pointerdown', 100, 928, { cx: 100, cy: 928, pointerId: 82 });
+await pointer('pointermove', 100, 971, { cx: 100, cy: 928, pointerId: 82 });
+await pointer('pointerup', 100, 971, { cx: 100, cy: 928, pointerId: 82 });
 await settle();
 check('safe_resize.mixed_role_no_drag', await page.evaluate(() => window.__card._resize.dragging), false);
 check('safe_resize.mixed_role_geometry_exact', JSON.stringify(await roomPoly('mixed-main')), mixedBefore);
@@ -245,11 +260,9 @@ await setRooms([
   { key: '0.000000,0.162500@1.5708', cm: 30, a: [0, 0.125], b: [0, 0.2] },
 ]);
 await enter();
-const [rx, ry] = await screenPt(50, 100);
-const [, rangeFar] = await screenPt(50, 150);
-await pointer('pointerdown', rx, ry, { cx: 50, cy: 100, pointerId: 83 });
-await pointer('pointermove', rx, rangeFar, { pointerId: 83 });
-await pointer('pointerup', rx, rangeFar, { pointerId: 83 });
+await pointer('pointerdown', 50, 100, { cx: 50, cy: 100, pointerId: 83 });
+await pointer('pointermove', 50, 150, { cx: 50, cy: 100, pointerId: 83 });
+await pointer('pointerup', 50, 150, { cx: 50, cy: 100, pointerId: 83 });
 await settle();
 const rangePoly = await roomPoly('range-main');
 check('safe_resize.owner_boundary_clamped', Math.abs(rangePoly[2][1] * 1000 - 125) < 1, true);
@@ -276,11 +289,9 @@ await setRooms([
   { id: 'irregular', name: 'irregular', area: null, poly: [[400, 100], [700, 100], [700, 200], [650, 200], [650, 400], [400, 400]].map(([x, y]) => [x / 1000, y / 1000]) },
 ]);
 await enter();
-const [ix, iy] = await screenPt(400, 250);
-const [farX] = await screenPt(720, 250);
-await pointer('pointerdown', ix, iy, { cx: 400, cy: 250, pointerId: 79 });
-await pointer('pointermove', farX, iy, { pointerId: 79 });
-await pointer('pointerup', farX, iy, { pointerId: 79 });
+await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 79 });
+await pointer('pointermove', 720, 250, { cx: 400, cy: 250, pointerId: 79 });
+await pointer('pointerup', 720, 250, { cx: 400, cy: 250, pointerId: 79 });
 await settle();
 const irregular = await roomPoly('irregular');
 check('safe_resize.corner_clamped', Math.abs(irregular[5][0] * 1000 - 625) < 6, true);
@@ -301,17 +312,15 @@ await page.evaluate(() => {
   };
 });
 const preflightBefore = JSON.stringify(await roomPoly('preflight'));
-const [px, py] = await screenPt(400, 250);
-const [preflightX] = await screenPt(500, 250);
-await pointer('pointerdown', px, py, { cx: 400, cy: 250, pointerId: 80 });
-await pointer('pointermove', preflightX, py, { pointerId: 80 });
-await pointer('pointermove', preflightX + 20, py, { pointerId: 80 });
+await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 80 });
+await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 80 });
+await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 80, nudge: [20, 0] });
 await settle();
 check('safe_resize.preflight_visible_reason', await page.evaluate(() =>
   /last safe position|последн/i.test(window.__card._toast)), true);
 check('safe_resize.preflight_reason_once', await page.evaluate(() =>
   window.__card.__resizeRejectToasts), 1);
-await pointer('pointerup', preflightX, py, { pointerId: 80 });
+await pointer('pointerup', 500, 250, { cx: 400, cy: 250, pointerId: 80 });
 await settle();
 await page.evaluate(() => {
   const card = window.__card;
@@ -330,10 +339,8 @@ check('safe_resize.preflight_zero_write', await page.evaluate(() => window.__car
 await setRooms([rect('commit-preflight', 100, 100, 400, 400)]);
 await enter();
 const commitPreflightBefore = JSON.stringify(await roomPoly('commit-preflight'));
-const [cpx, cpy] = await screenPt(400, 250);
-const [commitPreflightX] = await screenPt(500, 250);
-await pointer('pointerdown', cpx, cpy, { cx: 400, cy: 250, pointerId: 84 });
-await pointer('pointermove', commitPreflightX, cpy, { pointerId: 84 });
+await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 84 });
+await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 84 });
 await settle();
 check('safe_resize.commit_preflight_preview_exists',
   Math.abs((await edgeX('commit-preflight', 1, true)) - 500) < 6, true);
@@ -342,7 +349,7 @@ await page.evaluate(() => {
   card.__resizeCommitPreflight = card._checkSpacePhysicalGeometry;
   card._checkSpacePhysicalGeometry = () => ({ ok: false, status: 'failed' });
 });
-await pointer('pointerup', commitPreflightX, cpy, { pointerId: 84 });
+await pointer('pointerup', 500, 250, { cx: 400, cy: 250, pointerId: 84 });
 await settle();
 await page.evaluate(() => {
   const card = window.__card;
@@ -358,14 +365,12 @@ check('safe_resize.commit_preflight_zero_write',
 await setRooms([rect('solo', 100, 100, 400, 400)]);
 await enter();
 const cancelBefore = JSON.stringify(await roomPoly('solo'));
-const [cx, cy] = await screenPt(400, 250);
-const [moveX] = await screenPt(500, 250);
-await pointer('pointerdown', cx, cy, { cx: 400, cy: 250, pointerId: 81 });
-await pointer('pointermove', moveX, cy, { pointerId: 81 });
-await pointer('pointercancel', moveX, cy, { pointerId: 81 });
+await pointer('pointerdown', 400, 250, { cx: 400, cy: 250, pointerId: 81 });
+await pointer('pointermove', 500, 250, { cx: 400, cy: 250, pointerId: 81 });
+await pointer('pointercancel', 500, 250, { cx: 400, cy: 250, pointerId: 81 });
 await settle();
 check('safe_resize.cancel_geometry', JSON.stringify(await roomPoly('solo')), cancelBefore);
 check('safe_resize.cancel_zero_write', await page.evaluate(() => window.__card._geometryHistory.size), 0);
 
-await finish(browser, { done: true, safeResizeScreen, safeResizePoints: [sx, sy, tx],
+await finish(browser, { done: true, safeResizeScreen,
   safeResizeResult: [safeResizePreviewLeft, safeResizeCommitLeft, safeResizeCommitRight, safeResizeOpeningX] });
