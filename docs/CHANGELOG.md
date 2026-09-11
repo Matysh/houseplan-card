@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The printed plan is about a third larger: in-plan labels are a quarter
+  smaller and the separate list of internal dimensions is gone — the numbers
+  now sit on the drawing itself. Short dimensions that do not fit inside a room
+  are no longer printed
+  ([#530](https://github.com/Matysh/houseplan-card/issues/530)).
+
 ## v1.74.0-beta.2 — 2026-09-11
 
 - A plan left over from the era of “rooms without walls” can be edited again.

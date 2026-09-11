@@ -449,7 +449,6 @@
   "pdf.failed": "Die PDF-Datei konnte nicht erstellt werden.",
   "pdf.too_large": "Die Bilder überschreiten das PDF-Limit von 25 MB.",
   "pdf.asset_failed": "Ein Hintergrund- oder Dekorbild konnte nicht geladen werden.",
-  "pdf.internal_dimensions": "Innenmaße",
   "pdf.scale": "Maßstab 1:{n}",
   "pdf.north": "Nord",
   "gs.title": "Allgemeine Einstellungen",

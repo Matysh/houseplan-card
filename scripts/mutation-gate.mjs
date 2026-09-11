@@ -234,14 +234,47 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'pdf-room-edge-dropped',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="dense non-rectangular" test/pdf-scene.test.mjs',
-    because: 'every non-short edge must retain a direct value or a numbered callout',
+      + '&& node --test --test-name-pattern="#530: a square house" test/pdf-scene.test.mjs',
+    because: 'since #530 there is no callout column to catch a dropped edge: a value that is '
+      + 'not printed beside its wall is not printed anywhere, so the dedupe must never quietly '
+      + 'lose an edge',
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: '      const edges = dedupeOppositeDimensionEdges(rawEdges,\n'
         + '        { ring: contour, epsilon, score: placementScore });',
       replace: '      const edges = dedupeOppositeDimensionEdges(rawEdges,\n'
         + '        { ring: contour, epsilon, score: placementScore }).slice(0, -1);',
+    }],
+  },
+  {
+    id: 'pdf-restores-dimension-callouts',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#530" test/pdf-scene.test.mjs',
+    because: 'the numbered column beside the plan cost a whole scale step — 124 pt of the upright '
+      + 'field — and turned the sheet sideways: a ten-metre house printed 1:100 landscape on a '
+      + 'quarter of the field instead of 1:75 upright (#530 AC1)',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '        if (!placed) continue;',
+      replace: '        if (!placed) {\n'
+        + '          for (const edge of group) commands.push({ kind: \'text\',\n'
+        + '            x: pt(edge.mid)[0] + edge.inwardNormal[0] * 4 * MM,\n'
+        + '            y: pt(edge.mid)[1] + edge.inwardNormal[1] * 4 * MM,\n'
+        + '            text: `R${occupied.length}`, size: 6, align: \'center\' });\n'
+        + '          continue;\n'
+        + '        }',
+    }],
+  },
+  {
+    id: 'pdf-keeps-large-in-plan-labels',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#530" test/pdf-scene.test.mjs',
+    because: 'in-plan labels do not scale with the drawing: at the old size they crowd the larger '
+      + 'plan instead of reading better, and they take the room the architecture needs (#530 AC2)',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: 'const DIMENSION_SIZE = 5.25;',
+      replace: 'const DIMENSION_SIZE = 7;',
     }],
   },
   {
@@ -585,21 +618,23 @@ const MUTANT_DEFINITIONS = [
     id: 'pdf-rectangle-restores-unsafe-label',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="blocked rectangular" test/pdf-scene.test.mjs',
-    because: 'a rectangular dimension with no valid lane must not be printed through the room',
+    because: 'a dimension with no valid lane must not be printed through the room: since #530 the '
+      + 'rectangular rule is the general one, so the only alternative to a clean lane is silence',
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
-      find: '          // Rectangular rooms have no unambiguous numbered callout fallback.\n'
-        + '          // If every internal lane is blocked, omit the unsafe label rather\n'
-        + '          // than knowingly printing it through a wall, room title or area.',
-      replace: "          if (!nonRect) commands.push({ kind: 'text', x: base[0], y: base[1],\n"
-        + "            text: edge.text, size: 6, angle: edge.angle, align: 'center' });",
+      find: '        // через стену, имя или площадь.',
+      replace: '        if (!placed) { for (const edge of group) commands.push({ kind: \'text\',\n'
+        + '          x: pt(edge.mid)[0], y: pt(edge.mid)[1], text: edge.text,\n'
+        + '          size: DIMENSION_SIZE, angle: edge.angle, align: \'center\' }); }',
     }],
   },
   {
     id: 'pdf-overflow-returns-clipped-page',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="unprintable fixed callouts" test/pdf-scene.test.mjs',
-    because: 'mathematically unprintable fixed annotations must fail instead of returning a clipped A4 page',
+      + '&& node --test --test-name-pattern="fails closed" test/pdf-scene.test.mjs',
+    because: 'architecture that does not fit at any representable denominator must fail instead of '
+      + 'returning a clipped A4 page; since #530 this is the only fail-closed case left, because a '
+      + 'label that has no room is dropped rather than making the whole sheet unprintable',
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: "  if (!fittingScale) throw new Error('pdf.failed');",

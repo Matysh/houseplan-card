@@ -449,7 +449,6 @@
   "pdf.failed": "Impossible de créer le PDF.",
   "pdf.too_large": "Les images dépassent la limite PDF de 25 Mo.",
   "pdf.asset_failed": "Impossible de charger une image de fond ou de décoration.",
-  "pdf.internal_dimensions": "Dimensions intérieures",
   "pdf.scale": "Échelle 1:{n}",
   "pdf.north": "Nord",
   "gs.title": "Paramètres généraux",

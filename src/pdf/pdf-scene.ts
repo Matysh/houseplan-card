@@ -20,7 +20,7 @@ import {
 import { resolveZeroWalls } from '../zero-walls';
 import { northDegOf } from '../sun';
 import {
-  compactRing, dedupeOppositeDimensionEdges, dimensionEdges, dimensionEpsilonUnits,
+  dedupeOppositeDimensionEdges, dimensionEdges, dimensionEpsilonUnits,
   groupCollinearDimensionEdges, PDF_SCALE_SERIES, pointInSimpleRing,
   stableDimensionEdges, type DimensionEdge,
 } from './pdf-dimensions';
@@ -97,6 +97,16 @@ export interface BuiltPdfPage extends PdfPage {
 }
 
 const MM = 72 / 25.4;
+// #530: подписи ВНУТРИ плана — три четверти прежнего кегля. Их размер не
+// зависит от масштаба, поэтому крупный план они делали теснее, а не читаемее;
+// уменьшение освобождает место самому чертежу и вместе со снятым столбцом
+// выносов поднимает дом 10 м с 1:100 альбомной на 1:75 книжную. Хром страницы
+// (заголовок, подвал, линейка, компас) остаётся прежним: он читается с
+// расстояния и от масштаба плана не зависит.
+const DIMENSION_SIZE = 5.25;
+const AREA_SIZE = 6;
+const NAME_SIZE = 6.75;
+const NAME_SIZE_SMALL = 5.25;
 const INK: readonly [number, number, number] = [0.08, 0.08, 0.08];
 const WALL: readonly [number, number, number] = [127 / 255, 127 / 255, 127 / 255];
 const LIGHT: readonly [number, number, number] = [0.72, 0.72, 0.72];
@@ -560,14 +570,13 @@ function buildPdfCandidate(
             kind: 'line', points: [entry.middle, entry.label], stroke: INK, width: 0.15 * MM,
           });
           commands.push({ kind: 'text', x: entry.label[0], y: entry.label[1], text: entry.edge.text,
-            size: 7, angle: entry.edge.angle, align: 'center' });
+            size: DIMENSION_SIZE, angle: entry.edge.angle, align: 'center' });
           occupied.push(entry.box);
         }
       }
     }
   }
 
-  const callouts: Array<{ mark: string; room: string; value: string }> = [];
   const rooms = [...input.space.rooms].sort((a, b) => String(a.id || '').localeCompare(String(b.id || '')));
   for (const [roomIndex, room] of rooms.entries()) {
     const original = roomPoly(room);
@@ -581,8 +590,8 @@ function buildPdfCandidate(
     let printedName = false;
     if (input.options.roomNames && room.name) {
       const available = Math.max(0, contourBounds.maxX - contourBounds.minX - 4 * MM);
-      const nameSize = measurePdfText(room.name, 9) <= available ? 9
-        : measurePdfText(room.name, 7) <= available ? 7 : 0;
+      const nameSize = measurePdfText(room.name, NAME_SIZE) <= available ? NAME_SIZE
+        : measurePdfText(room.name, NAME_SIZE_SMALL) <= available ? NAME_SIZE_SMALL : 0;
       if (nameSize) {
         commands.push({ kind: 'text', x: labelX, y: labelY - 2, text: room.name,
           size: nameSize, align: 'center' });
@@ -593,7 +602,7 @@ function buildPdfCandidate(
     if (input.options.dimensions) {
       const area = formatArea(areaUnits * cmPerUnit * cmPerUnit / 1e4, input.imperial);
       const areaY = labelY + (printedName ? 8 : 0);
-      commands.push({ kind: 'text', x: labelX, y: areaY, text: area, size: 8, align: 'center' });
+      commands.push({ kind: 'text', x: labelX, y: areaY, text: area, size: AREA_SIZE, align: 'center' });
       occupied.push(textBox(labelX, areaY, area, 8, 0, 'center'));
     }
     if (input.options.dimensions) {
@@ -602,7 +611,7 @@ function buildPdfCandidate(
         { ringIndex: roomIndex, epsilon });
       const placementScore = (edge: DimensionEdge) => {
         const base = pt(edge.mid);
-        const provisional = textBox(base[0], base[1], edge.text, 7, edge.angle, 'center');
+        const provisional = textBox(base[0], base[1], edge.text, DIMENSION_SIZE, edge.angle, 'center');
         const offset = textNormalOffset(
           provisional, base[0], base[1], edge.inwardNormal, MM,
         );
@@ -620,7 +629,6 @@ function buildPdfCandidate(
       };
       const edges = dedupeOppositeDimensionEdges(rawEdges,
         { ring: contour, epsilon, score: placementScore });
-      const nonRect = compactRing(contour, epsilon).length !== 4;
       for (const edge of edges.filter((candidate) => candidate.short)) {
         const inward = edge.inwardNormal;
         const a = pt(edge.a), b = pt(edge.b);
@@ -640,13 +648,13 @@ function buildPdfCandidate(
         for (let lane = 0; lane <= 30 && !placed; lane += 3) {
           const proposed = group.map((edge) => {
             const base = pt(edge.mid);
-            const provisional = textBox(base[0], base[1], edge.text, 7, edge.angle, 'center');
+            const provisional = textBox(base[0], base[1], edge.text, DIMENSION_SIZE, edge.angle, 'center');
             const offset = textNormalOffset(
               provisional, base[0], base[1], edge.inwardNormal, (1 + lane) * MM,
             );
             const x = base[0] + edge.inwardNormal[0] * offset;
             const y = base[1] + edge.inwardNormal[1] * offset;
-            return { edge, x, y, box: textBox(x, y, edge.text, 7, edge.angle, 'center') };
+            return { edge, x, y, box: textBox(x, y, edge.text, DIMENSION_SIZE, edge.angle, 'center') };
           });
           const selfCollision = proposed.some((entry, index) =>
             proposed.slice(0, index).some((other) => intersects(entry.box, other.box)));
@@ -655,42 +663,19 @@ function buildPdfCandidate(
           const insideRoom = proposed.every((entry) => boxInsideRing(entry.box, contour));
           if (!selfCollision && !priorCollision && insideRoom) placed = proposed;
         }
-        if (placed) {
-          for (const entry of placed) {
-            commands.push({ kind: 'text', x: entry.x, y: entry.y, text: entry.edge.text,
-              size: 7, angle: entry.edge.angle, align: 'center' });
-            occupied.push(entry.box);
-          }
-          continue;
-        }
-        for (const edge of group) {
-          const base = pt(edge.mid), inward = edge.inwardNormal;
-          if (nonRect) {
-            const mark = `R${callouts.length + 1}`;
-            const markerX = base[0] + inward[0] * 4 * MM;
-            const markerY = base[1] + inward[1] * 4 * MM;
-            commands.push({ kind: 'line', points: [base, [markerX, markerY]], stroke: INK, width: 0.15 * MM },
-              { kind: 'text', x: markerX, y: markerY, text: mark, size: 6, align: 'center' });
-            callouts.push({ mark, room: room.name || room.id || '', value: edge.text });
-          }
-          // Rectangular rooms have no unambiguous numbered callout fallback.
-          // If every internal lane is blocked, omit the unsafe label rather
-          // than knowingly printing it through a wall, room title or area.
+        // #530: не нашлось места — значение не печатается вовсе. Раньше
+        // непрямоугольная комната отправляла его в нумерованный столбец сбоку;
+        // столбец стоил целого шага масштаба (124 pt ширины поля) и переворачивал
+        // лист, а читался всё равно отдельно от чертежа. Правило прямоугольных
+        // комнат стало общим: лучше не напечатать значение, чем протащить его
+        // через стену, имя или площадь.
+        if (!placed) continue;
+        for (const entry of placed) {
+          commands.push({ kind: 'text', x: entry.x, y: entry.y, text: entry.edge.text,
+            size: DIMENSION_SIZE, angle: entry.edge.angle, align: 'center' });
+          occupied.push(entry.box);
         }
       }
-    }
-  }
-
-  if (callouts.length) {
-    const content = pdfCommandBounds(commands);
-    const x = (Number.isFinite(content.maxX) ? content.maxX : drawingWidth) + 8 * MM;
-    let y = (Number.isFinite(content.minY) ? content.minY : 0) + 5 * MM;
-    commands.push({ kind: 'text', x, y, text: input.t('pdf.internal_dimensions'), size: 8 });
-    y += 5 * MM;
-    for (const callout of callouts) {
-      commands.push({ kind: 'text', x, y,
-        text: `${callout.mark} ${callout.room}: ${callout.value}`, size: 6 });
-      y += 4 * MM;
     }
   }
 
@@ -781,8 +766,8 @@ export function buildPdfPage(input: PdfSceneInput): BuiltPdfPage {
   }
 
   // Preserve the unbounded-space fallback from #53. A first real 1:500 scene
-  // supplies a useful starting estimate, but fixed-size labels/callouts do not
-  // shrink with the architecture. Bracket a fitting denominator
+  // supplies a useful starting estimate, but fixed-size labels do not shrink
+  // with the architecture. Bracket a fitting denominator
   // exponentially, then refine it to a 50-step denominator. Never return a
   // knowingly clipped page when fixed annotations cannot fit at any useful
   // scale.

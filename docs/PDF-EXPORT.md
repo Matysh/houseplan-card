@@ -29,17 +29,18 @@ vertically while retaining touch-sized controls.
 ## Sheet and measurement rules
 
 The output is a single A4 sheet. House Plan builds the complete print scene
-first — architecture, enabled dimensions and callouts, names, decor and
-backdrop — and then chooses portrait or landscape and the smallest standard
-scale that fits all of it. The complete scene is centred on the usable sheet,
+first — architecture, enabled dimensions, names, decor and backdrop — and then
+chooses portrait or landscape and the smallest standard scale that fits all of
+it. The complete scene is centred on the usable sheet,
 so optional content is not pushed into a fixed reserve or left outside the
 centred area. The footer shows the scale, a 1 m or 5 ft scale bar, a vector
 compass when north is configured, the date and the House Plan version. There
 is no architectural symbol legend.
 
 For unusually large plans, House Plan continues the scale series in steps of
-50 until the complete scene fits. If a fixed annotation itself cannot fit on
-one A4 sheet, export stops with an error instead of producing a clipped file.
+50 until the complete scene fits. If the architecture itself cannot fit on one
+A4 sheet at any scale, export stops with an error instead of producing a
+clipped file.
 
 Physical walls, partitions and columns use a `#7f7f7f` base with a consistent
 45-degree hatch. Openings remain clean cut-outs through both the base and the
@@ -55,8 +56,13 @@ opposite measurements are shown once on the side with more free space. Equal
 lengths in different rooms, disconnected rings or unrelated walls are never
 deduplicated globally. Labels are centred on their measured wall and arranged
 in consistent lanes clear of the wall body. Units follow Home Assistant. Very
-short internal edges use a tick instead of unreadable text, while required
-values that cannot fit beside an edge use numbered callouts.
+short internal edges use a tick instead of unreadable text. A value that has no
+room beside its own wall is not printed at all: it is never pushed through a
+wall, a room name or an area, and it is not moved to a separate list beside the
+plan. Until v1.74.0-beta.2 such values went into a numbered "Internal
+dimensions" column; that column cost the drawing a whole step of the scale
+series and turned the sheet sideways, so it was removed and the drawing grew by
+about a third instead.
 
 For a rectangular step in an exterior facade, the chain retains enough
 horizontal and vertical values to reconstruct the outline: both neighbouring
