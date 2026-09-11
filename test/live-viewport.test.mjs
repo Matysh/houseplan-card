@@ -144,3 +144,28 @@ test('#531 AC4: терминальное примирение пишет око�
   paintLiveViewport(root, settled, settled, anchor, { now: 21, force: true });
   assert.equal(root.camera.writes, writes, 'повторное примирение ничего не пишет');
 });
+
+// Наблюдение ревьюера r1: во всех кадрах выше `floor === view`, то есть
+// изометрия, ради которой проекции и считаются раздельно, ни одним свидетелем
+// не тронута. Здесь виды камеры и пола расходятся и по сдвигу, и по масштабу.
+const isoFrame = (x, y, floorX, floorW) => ({
+  view: { x, y, w: 1000, h: 500 },
+  floor: { x: floorX, y: y / 2, w: floorW, h: 400 },
+  zoom: 1,
+});
+
+test('#531 изометрия: камера и пол проецируются раздельно и оседают вместе', () => {
+  const root = fakeRoot();
+  const painted = isoFrame(0, 0, 0, 800);
+  let anchor = paintLiveViewport(root, painted, painted, null, { now: 0 });
+  anchor = paintLiveViewport(root, painted, isoFrame(100, 40, 60, 800), anchor, { now: 10 });
+  assert.equal(root.camera.style.transform, 'translate(-10%,-8%) scale(1,1)');
+  assert.equal(root.floor.style.transform, 'translate(-7.5%,-5%) scale(1,1)');
+  assert.notEqual(root.camera.style.transform, root.floor.style.transform,
+    'у пола свой вид, и подменять его видом камеры нельзя');
+  anchor = paintLiveViewport(root, painted, isoFrame(200, 80, 120, 800), anchor, { now: 200 });
+  assert.equal(root.camera.attrs.viewBox, '200 80 1000 500');
+  assert.equal(root.floor.attrs.viewBox, '120 40 800 400');
+  assert.equal(root.camera.style.transform, undefined);
+  assert.equal(root.floor.style.transform, undefined);
+});
