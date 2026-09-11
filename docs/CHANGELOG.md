@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.74.0 — 2026-09-11
+
 - Switching between floors on a large plan is quick again. Every switch was
   rebuilding the device markers the slow way — comparing two hundred old
   markers against two hundred new ones only to throw all of them away — which
@@ -18,9 +20,6 @@
   inside the walls is anti-aliased a shade differently — splitting the layer
   moves it by a sub-pixel
   ([#532](https://github.com/Matysh/houseplan-card/issues/532)).
-
-## v1.74.0 — 2026-09-11
-
 - The plan is noticeably smoother, and in Firefox the difference is dramatic.
   Dragging the plan used to redraw it from scratch on every frame instead of
   moving what was already drawn, and a device marker's shadow restarted an
