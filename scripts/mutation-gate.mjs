@@ -7736,6 +7736,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'announce-listens-to-the-release-event-again',
+    guard: 'node --test test/release-workflow.test.mjs',
+    because: '#538: пока анонс висел на самом событии `release: published`, он бежал '
+      + 'параллельно гейту и обгонял его — проверять ему нечего. 12.09 v1.75.0 объявили в '
+      + 'канале в ту же минуту, когда проверка отказала выкладывать ассеты, и снаружи это '
+      + 'выглядело обычным релизом',
+    patches: [{
+      file: '.github/workflows/announce.yml',
+      find: 'on:\n  workflow_dispatch: {}',
+      replace: 'on:\n  release:\n    types: [published]\n  workflow_dispatch: {}',
+    }],
+  },
+  {
+    id: 'announce-job-stops-waiting-for-the-assets',
+    guard: 'node --test test/release-workflow.test.mjs',
+    because: '#538: зависимость анонса от выкладки — это и есть правило «молчание тоже '
+      + 'ответ». Без неё анонс уходит при красном гейте, то есть ровно то, что случилось',
+    patches: [{
+      file: '.github/workflows/release.yml',
+      find: '    name: Оповещение о релизе после выкладки\n    needs: build',
+      replace: '    name: Оповещение о релизе после выкладки\n    if: always()',
+    }],
+  },
+  {
     id: 'render-invalidation-unknown-key-ignored',
     guard: 'node --test test/render-invalidation.test.mjs',
     because: 'the classifier fails OPEN on Home Assistant keys it does not know: without that '

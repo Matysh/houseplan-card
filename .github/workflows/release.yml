@@ -96,6 +96,23 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: dist/houseplan-card.js
+  announce:
+    # #538: анонс — последнее звено, а не параллельное. Пока он висел на самом
+    # событии `release: published`, он обгонял гейт: 12.09 v1.75.0 объявили в
+    # канале в ту же минуту, когда проверка отказала выкладывать ассеты.
+    # `needs: build` означает, что молчание — это тоже ответ: красный гейт или
+    # несостоявшаяся выкладка сообщения не рождают.
+    name: Оповещение о релизе после выкладки
+    needs: build
+    uses: ./.github/workflows/announce.yml
+    with:
+      reusable: true
+      tag: ${{ github.event.release.tag_name }}
+      release_name: ${{ github.event.release.name }}
+      url: ${{ github.event.release.html_url }}
+      prerelease: ${{ github.event.release.prerelease }}
+      ref: ${{ github.event.release.tag_name }}
+    secrets: inherit
   hacs-discovery:
     name: HACS-видимость пре-релиза (порядок бет)
     # HACS 2.0.x takes the first prerelease in GitHub's response instead of
