@@ -4040,3 +4040,15 @@ require hands on real hardware — they remain for the human pass.
       снятие DOM bound, state-value rebuild, local-scale authority, lifecycle
       generation и Optimize writer guard. Полные golden/smoke/performance и
       Linux CI HA harness остаются обязательным гейтом точного SHA беты.
+
+## Полнота источников радара (#545)
+
+- [ ] `tests_backend/test_radar_validation.py` проверяет точный inventory всех
+      Stage 1 profiles: известные общие и профильные роли включены, future-поля
+      остаются inert.
+- [ ] `tests_backend/test_ha_radar.py` и
+      `tests_backend/test_ha_radar_websocket.py` доказывают подписку, rebind,
+      cleanup и fail-closed read ACL именно для основных `entity_id` профилей
+      `range_v1`/`zones_v1`.
+- [ ] Мутант `radar-profile-source-entity-id-omitted` удаляет обе роли
+      `entity_id`; точный backend guard обязан покраснеть.

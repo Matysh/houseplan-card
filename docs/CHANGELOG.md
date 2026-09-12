@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Range and zone radar sources now stay live in the setup preview and use the
+  same complete source list for Home Assistant read-permission checks as for
+  frame calculation
+  ([#545](https://github.com/Matysh/houseplan-card/issues/545)).
+
 - A plan updated from another browser no longer jumps back to an older version
   when that older response's background image finishes loading late. The newest
   accepted plan, its revision and the instant-start cache now remain together

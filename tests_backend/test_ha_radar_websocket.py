@@ -8,19 +8,27 @@ import pytest
 
 from custom_components.houseplan import radar_websocket as radar_ws
 from custom_components.houseplan.radar import RadarCoordinator
+from custom_components.houseplan.radar_validation import radar_source_entity_ids
 
 
 class _Permissions:
-    def __init__(self, allowed: bool = True) -> None:
+    def __init__(self, allowed: bool = True, denied: set[str] | None = None) -> None:
         self.allowed = allowed
+        self.denied = denied or set()
+        self.checked: list[tuple[str, str]] = []
 
-    def check_entity(self, _entity_id: str, _policy: str) -> bool:
-        return self.allowed
+    def check_entity(self, entity_id: str, policy: str) -> bool:
+        self.checked.append((entity_id, policy))
+        return self.allowed and entity_id not in self.denied
 
 
 class _Connection:
-    def __init__(self, *, allowed: bool = True) -> None:
-        self.user = SimpleNamespace(id="user-1", permissions=_Permissions(allowed))
+    def __init__(
+        self, *, allowed: bool = True, denied: set[str] | None = None,
+    ) -> None:
+        self.user = SimpleNamespace(
+            id="user-1", permissions=_Permissions(allowed, denied),
+        )
         self.subscriptions: dict[int, object] = {}
         self.results: list[tuple[int, object]] = []
         self.errors: list[tuple[int, str, str]] = []
@@ -37,10 +45,11 @@ class _Connection:
 
 
 class _Coordinator:
-    def __init__(self) -> None:
+    def __init__(self, source_ids: set[str] | None = None) -> None:
         self.hass = SimpleNamespace(states={
             "sensor.x": SimpleNamespace(state="1"),
         })
+        self._source_ids = source_ids or {"sensor.x"}
         self.closed = False
         self.server_session_id = "session-1"
         self.config_rev = 7
@@ -54,7 +63,7 @@ class _Coordinator:
         return space_id == "floor"
 
     def source_ids(self, marker_id: str) -> set[str]:
-        return {"sensor.x"} if marker_id == "radar" else set()
+        return self._source_ids if marker_id == "radar" else set()
 
     def space_for_marker(self, marker_id: str) -> str | None:
         return "floor" if marker_id == "radar" else "other"
@@ -91,6 +100,34 @@ class _Coordinator:
             self.external_cleanup = None
 
         return unregister
+
+
+def _radar_config(profile: str, sources: dict) -> tuple[dict, dict, dict]:
+    radar = {
+        "version": 1, "enabled": True, "profile": profile,
+        "sources": sources,
+        "mount": {
+            "installation_id": "installation-1", "x": .5, "y": .5,
+            "heading_deg": 0, "range_cm": 600, "fov_deg": 120,
+        },
+        "room_id": "living",
+        "calibration": {"method": "manual", "mirror": False, "cell_cm": 5},
+    }
+    marker = {
+        "id": "radar", "binding": "device:radar", "space": "floor",
+        "radar": radar,
+    }
+    config = {
+        "spaces": [{
+            "id": "floor", "cell_cm": 5,
+            "rooms": [{
+                "id": "living",
+                "poly": [[.1, .1], [.9, .1], [.9, .9], [.1, .9]],
+            }],
+        }],
+        "markers": [marker], "settings": {},
+    }
+    return config, marker, radar
 
 
 @pytest.fixture(autouse=True)
@@ -325,6 +362,125 @@ async def test_setup_subscription_coalesces_restricts_and_removes(monkeypatch, h
     assert len(cleanups) == 2
     assert ("user-1", "radar") not in radar_ws._ACTIVE_SETUP
     assert coordinator.external_cleanup is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("profile", "sources", "source_id"), [
+    (
+        "range_v1",
+        {"ranges": [{"id": "range", "entity_id": "sensor.distance", "unit": "m"}]},
+        "sensor.distance",
+    ),
+    (
+        "zones_v1",
+        {"zones": [{
+            "id": "zone", "entity_id": "binary_sensor.zone", "kind": "occupancy",
+        }]},
+        "binary_sensor.zone",
+    ),
+])
+async def test_setup_subscribes_to_range_and_zone_primary_sources(
+    monkeypatch, hass, profile, sources, source_id,
+) -> None:
+    config, marker, radar = _radar_config(profile, sources)
+    coordinator = _Coordinator(radar_source_entity_ids(radar))
+    coordinator.config = config
+    coordinator.radars = {"radar": marker}
+    coordinator.hass.states = {source_id: SimpleNamespace(state="1")}
+    tracks = []
+    cleanups = []
+    monkeypatch.setattr(radar_ws, "_coordinator", lambda *_args: coordinator)
+    monkeypatch.setattr(radar_ws, "may_write", lambda *_args: True)
+
+    def track(_hass, entity_ids, callback):
+        tracks.append((tuple(entity_ids), callback))
+
+        def cleanup() -> None:
+            cleanups.append(tuple(entity_ids))
+
+        return cleanup
+
+    monkeypatch.setattr(radar_ws, "async_track_state_report_event", track)
+    monkeypatch.setattr(radar_ws, "async_track_state_change_event", track)
+
+    saved = _Connection()
+    message = {"id": 10, "marker_id": "radar", "expected_config_rev": 7}
+    radar_ws.ws_radar_setup_subscribe(hass, saved, message)
+    assert [ids for ids, _callback in tracks] == [(source_id,), (source_id,)]
+    initial_events = len(saved.events)
+    tracks[0][1](None)
+    await asyncio.sleep(1 / radar_ws.MAX_FRAME_HZ + .05)
+    assert len(saved.events) == initial_events + 1
+    saved.subscriptions[10]()
+
+    draft = _Connection()
+    radar_ws.ws_radar_setup_subscribe(
+        hass, draft, {**message, "id": 11, "draft_sources": {"radar": radar}},
+    )
+    assert [ids for ids, _callback in tracks[2:]] == [(source_id,), (source_id,)]
+    draft.subscriptions[11]()
+    assert cleanups == [(source_id,)] * 4
+
+
+@pytest.mark.parametrize(("profile", "sources", "source_id"), [
+    (
+        "range_v1",
+        {"ranges": [{"id": "range", "entity_id": "sensor.distance", "unit": "m"}]},
+        "sensor.distance",
+    ),
+    (
+        "zones_v1",
+        {"zones": [{
+            "id": "zone", "entity_id": "binary_sensor.zone", "kind": "occupancy",
+        }]},
+        "binary_sensor.zone",
+    ),
+])
+def test_range_and_zone_primary_sources_are_permission_checked_fail_closed(
+    monkeypatch, hass, profile, sources, source_id,
+) -> None:
+    config, marker, radar = _radar_config(profile, sources)
+    coordinator = _Coordinator(radar_source_entity_ids(radar))
+    coordinator.config = config
+    coordinator.radars = {"radar": marker}
+    coordinator.hass.states = {source_id: SimpleNamespace(state="1")}
+    coordinator.frames_for_space = lambda _space_id: [{
+        "marker_id": "radar", "seq": 8,
+        "targets": [{"x": .5, "y": .5}],
+        "ranges": [{"id": "secret-range", "radius": .5}],
+        "zones": [{"id": "secret-zone", "state": True}],
+    }]
+    monkeypatch.setattr(radar_ws, "_coordinator", lambda *_args: coordinator)
+    monkeypatch.setattr(radar_ws, "may_write", lambda *_args: True)
+
+    saved = _Connection(denied={source_id})
+    radar_ws.ws_radar_setup_inspect(
+        hass, saved, {"id": 20, "marker_id": "radar"},
+    )
+    assert saved.errors[-1][1] == "source_restricted"
+    assert saved.results == []
+
+    draft = _Connection(denied={source_id})
+    radar_ws.ws_radar_setup_inspect(
+        hass, draft, {
+            "id": 21, "marker_id": "radar", "draft_sources": {"radar": radar},
+        },
+    )
+    assert draft.errors[-1][1] == "source_restricted"
+    assert draft.results == []
+
+    live = _Connection(denied={source_id})
+    radar_ws.ws_radar_subscribe(hass, live, {"id": 22, "space_id": "floor"})
+    restricted = live.events[-1][1]
+    assert restricted["health"] == "restricted"
+    assert restricted["targets"] == []
+    assert restricted["ranges"] == []
+    assert restricted["zones"] == []
+    assert {
+        entity_id
+        for connection in (saved, draft, live)
+        for entity_id, _policy in connection.user.permissions.checked
+    } == {source_id}
 
 
 def test_setup_subscribe_draft_failure_and_source_restriction(monkeypatch, hass) -> None:

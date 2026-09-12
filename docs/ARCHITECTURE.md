@@ -354,6 +354,13 @@ authorizes source discovery, recording or hardware writes.
 independent-pair skew, source/calibration epochs, projection, real-room clipping
 and bounded public frames. It reconciles on config revision, has one runtime
 instance per integration entry and closes all listeners/timers on unload.
+The explicit profile/source-role inventory is the shared authority for those
+listeners, setup listeners and per-entity read ACLs. Common roles are
+`occupancy_entity`, `count_entity` and `availability_entity`; Cartesian slots
+add `x_entity`/`y_entity`, polar slots add
+`distance_entity`/`angle_entity`, range rows add `entity_id`, zone rows add
+`entity_id`, and slot/range presence gates add `presence_entity`. Unknown
+future fields remain inert instead of becoming sources by naming convention.
 Only the backend interprets raw HA states; the eager View graph receives
 normalized `targets/ranges/zones/health` snapshots from
 `houseplan/radar/subscribe`. Per-user entity-read ACLs are checked for initial

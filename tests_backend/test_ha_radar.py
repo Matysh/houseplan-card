@@ -1,8 +1,8 @@
 """HA-state witnesses for the Stage-1 radar coordinator (#485)."""
 from __future__ import annotations
 
-import copy
 import asyncio
+import copy
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -12,6 +12,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.houseplan import radar as radar_module
 from custom_components.houseplan.radar import RadarCoordinator
 from custom_components.houseplan.radar_validation import radar_source_entity_ids
 
@@ -391,6 +392,67 @@ async def test_range_profile_clips_arc_to_owner_room(
     assert frame["ranges"][0]["segments"]
     assert coordinator.inspect("radar")["capabilities"] == ["range"]
     coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_range_and_zone_primary_source_subscriptions_rebind_and_teardown(
+    monkeypatch, hass: HomeAssistant,
+) -> None:
+    tracked = []
+    cleaned = []
+
+    def track(kind):
+        def register(_hass, entity_ids, _callback):
+            ids = tuple(entity_ids)
+            tracked.append((kind, ids))
+
+            def cleanup() -> None:
+                cleaned.append((kind, ids))
+
+            return cleanup
+
+        return register
+
+    monkeypatch.setattr(radar_module, "async_track_state_report_event", track("reported"))
+    monkeypatch.setattr(radar_module, "async_track_state_change_event", track("changed"))
+
+    range_document = _stored("range_v1")
+    range_radar = range_document["config"]["markers"][0]["radar"]
+    range_radar["sources"] = {"ranges": [{
+        "id": "distance", "entity_id": "sensor.radar_distance", "unit": "m",
+    }]}
+    hass.states.async_set("sensor.radar_distance", "2")
+    coordinator = await _coordinator(hass, range_document)
+    assert coordinator.source_ids("radar") == {"sensor.radar_distance"}
+    assert tracked == [
+        ("reported", ("sensor.radar_distance",)),
+        ("changed", ("sensor.radar_distance",)),
+    ]
+
+    zone_document = _stored("zones_v1")
+    zone_radar = zone_document["config"]["markers"][0]["radar"]
+    zone_radar["sources"] = {"zones": [{
+        "id": "desk", "entity_id": "binary_sensor.desk", "kind": "occupancy",
+    }]}
+    hass.states.async_set("binary_sensor.desk", "on")
+    coordinator.runtime.config_store.async_load.return_value = zone_document
+    await coordinator.async_refresh()
+
+    assert coordinator.source_ids("radar") == {"binary_sensor.desk"}
+    assert cleaned == [
+        ("reported", ("sensor.radar_distance",)),
+        ("changed", ("sensor.radar_distance",)),
+    ]
+    assert tracked[-2:] == [
+        ("reported", ("binary_sensor.desk",)),
+        ("changed", ("binary_sensor.desk",)),
+    ]
+
+    coordinator.teardown()
+    assert cleaned[-2:] == [
+        ("reported", ("binary_sensor.desk",)),
+        ("changed", ("binary_sensor.desk",)),
+    ]
 
 
 @pytest.mark.asyncio

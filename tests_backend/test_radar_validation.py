@@ -180,6 +180,64 @@ def test_all_stage1_profiles_have_a_valid_explicit_source_contract(profile):
     validate_marker_radars(config, validate_all=True)
 
 
+@pytest.mark.parametrize(("profile", "group", "item", "expected"), [
+    (
+        "esphome_ld2450_v1", "slots",
+        {
+            "x_entity": "sensor.x", "y_entity": "sensor.y",
+            "presence_entity": "binary_sensor.slot",
+        },
+        {"sensor.x", "sensor.y", "binary_sensor.slot"},
+    ),
+    (
+        "cartesian_v1", "slots",
+        {
+            "x_entity": "sensor.x", "y_entity": "sensor.y",
+            "presence_entity": "binary_sensor.slot",
+        },
+        {"sensor.x", "sensor.y", "binary_sensor.slot"},
+    ),
+    (
+        "polar_v1", "slots",
+        {
+            "distance_entity": "sensor.distance", "angle_entity": "sensor.angle",
+            "presence_entity": "binary_sensor.slot",
+        },
+        {"sensor.distance", "sensor.angle", "binary_sensor.slot"},
+    ),
+    (
+        "range_v1", "ranges",
+        {
+            "entity_id": "sensor.distance",
+            "presence_entity": "binary_sensor.range",
+        },
+        {"sensor.distance", "binary_sensor.range"},
+    ),
+    (
+        "zones_v1", "zones",
+        {"entity_id": "binary_sensor.zone"},
+        {"binary_sensor.zone"},
+    ),
+    ("presence_v1", None, {}, set()),
+])
+def test_stage1_source_inventory_is_exact_for_each_profile(
+    profile, group, item, expected,
+):
+    common = {
+        "occupancy_entity": "binary_sensor.presence",
+        "count_entity": "sensor.count",
+        "availability_entity": "binary_sensor.available",
+        "future_entity": "sensor.future_top",
+    }
+    if group is not None:
+        common[group] = [{**item, "future_entity": "sensor.future_nested"}]
+    radar = {"profile": profile, "sources": common}
+
+    assert radar_source_entity_ids(radar) == expected | {
+        "binary_sensor.presence", "sensor.count", "binary_sensor.available",
+    }
+
+
 def test_stage1_source_inventory_ignores_future_stage_extensions():
     config = _config()
     radar = config["markers"][0]["radar"]
@@ -222,6 +280,10 @@ def test_stage1_source_inventory_ignores_future_stage_extensions():
     }
     assert radar_source_entity_ids(None) == set()
     assert radar_source_entity_ids({"sources": []}) == set()
+    assert radar_source_entity_ids({
+        "profile": "future_v2",
+        "sources": {"occupancy_entity": "binary_sensor.future"},
+    }) == set()
 
 
 def test_future_fusion_and_output_settings_round_trip_without_stage1_validation():

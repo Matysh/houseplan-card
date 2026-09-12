@@ -20,6 +20,17 @@ RADAR_PROFILES = frozenset({
     "esphome_ld2450_v1", "cartesian_v1", "polar_v1", "range_v1",
     "zones_v1", "presence_v1",
 })
+_COMMON_SOURCE_ROLES = (
+    "occupancy_entity", "count_entity", "availability_entity",
+)
+_PROFILE_SOURCE_ROLES: dict[str, tuple[str, tuple[str, ...]]] = {
+    "esphome_ld2450_v1": ("slots", ("x_entity", "y_entity", "presence_entity")),
+    "cartesian_v1": ("slots", ("x_entity", "y_entity", "presence_entity")),
+    "polar_v1": ("slots", ("distance_entity", "angle_entity", "presence_entity")),
+    "range_v1": ("ranges", ("entity_id", "presence_entity")),
+    "zones_v1": ("zones", ("entity_id",)),
+    "presence_v1": ("", ()),
+}
 LENGTH_UNITS = frozenset({"mm", "cm", "m", "in", "ft"})
 ANGLE_UNITS = frozenset({"degrees", "radians"})
 ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
@@ -90,18 +101,23 @@ def _point(value: Any, name: str) -> tuple[float, float]:
     )
 
 
-def _source_ids(sources: dict[str, Any]) -> set[str]:
+def _source_ids(profile: Any, sources: dict[str, Any]) -> set[str]:
+    profile_roles = _PROFILE_SOURCE_ROLES.get(profile)
+    if profile_roles is None:
+        return set()
     out: set[str] = set()
-    for key in ("occupancy_entity", "count_entity", "availability_entity"):
+    for key in _COMMON_SOURCE_ROLES:
         value = sources.get(key)
         if isinstance(value, str):
             out.add(value)
-    for group in ("slots", "ranges", "zones"):
+    group, roles = profile_roles
+    if group:
         for item in sources.get(group) or []:
             if not isinstance(item, dict):
                 continue
-            for key, value in item.items():
-                if key.endswith("_entity") and isinstance(value, str):
+            for key in roles:
+                value = item.get(key)
+                if isinstance(value, str):
                     out.add(value)
     return out
 
@@ -111,7 +127,8 @@ def radar_source_entity_ids(radar: Any) -> set[str]:
     if not isinstance(radar, dict):
         return set()
     sources = radar.get("sources")
-    out = _source_ids(sources) if isinstance(sources, dict) else set()
+    out = _source_ids(radar.get("profile"), sources) \
+        if isinstance(sources, dict) else set()
     return out
 
 
@@ -154,7 +171,7 @@ def _validate_verified_adapter(
     if profile != "esphome_ld2450_v1" or registry is None:
         return
     entities = registry.get("entities") or {}
-    source_ids = _source_ids(sources)
+    source_ids = _source_ids(profile, sources)
     rows = [entities.get(entity_id) for entity_id in source_ids]
     device_ids = {
         str(row.get("device_id"))

@@ -9030,6 +9030,23 @@ const MUTANT_DEFINITIONS = [
         + "      afterAdopt: () => { host._regSignature = ''; host._maybeRebuildDevices(); },",
     }],
   },
+  {
+    id: 'radar-profile-source-entity-id-omitted',
+    guard: 'python3 -m pytest tests_backend/test_radar_validation.py -q -p no:cacheprovider '
+      + '-k "stage1_source_inventory_is_exact_for_each_profile"',
+    because: 'range_v1 and zones_v1 read their primary value from entity_id; omitting that '
+      + 'profile role removes both the HA subscription and the per-source read-permission check '
+      + '(#545 AC1, AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/radar_validation.py',
+      find: '    "range_v1": ("ranges", ("entity_id", "presence_entity")),',
+      replace: '    "range_v1": ("ranges", ("presence_entity",)),',
+    }, {
+      file: 'custom_components/houseplan/radar_validation.py',
+      find: '    "zones_v1": ("zones", ("entity_id",)),',
+      replace: '    "zones_v1": ("zones", ()),',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
