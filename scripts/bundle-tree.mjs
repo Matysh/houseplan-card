@@ -35,6 +35,34 @@ const assertUniqueGraph = (manifest, field, listed, label) => {
   return graph;
 };
 
+/**
+ * Topology of the CURRENT build, checked only against our own tree (#537).
+ *
+ * `assertBundleManifest` above answers «can this manifest be loaded»: paths
+ * exist, nothing is duplicated, graphs reference listed assets, sizes add up.
+ * That question is also asked about FOREIGN trees — the performance harness
+ * runs the candidate's benchmark against a baseline checkout, so the
+ * candidate's validator reads a manifest built by an older commit.
+ *
+ * «Is the panel wired the way we decided today» is a different question, and
+ * #535 proved the cost of confusing them: the rule «the panel graph does not
+ * contain the card facade» is true of every build since #535 and false of
+ * every build before it, so putting it in the shared validator made the
+ * candidate refuse to LOAD any older baseline. All nine performance profiles
+ * went red at once, and the release gate withheld an asset from a published
+ * stable release. Topology belongs here, where only our own dist is judged.
+ */
+export function assertOwnBundleTopology(manifest, label = BUNDLE_MANIFEST) {
+  const initialPanel = manifest?.initialPanelFiles;
+  if (!Array.isArray(initialPanel)) {
+    throw new Error(`${label}: initialPanelFiles must be an array of bundle paths`);
+  }
+  if (initialPanel.includes(CARD_ENTRY)) {
+    throw new Error(`${label}: initial panel graph must not contain the card facade`);
+  }
+  return manifest;
+}
+
 /** Validate the additive two-entry manifest contract independently of disk I/O. */
 export function assertBundleManifest(manifest, label = BUNDLE_MANIFEST) {
   if (manifest?.schema !== 1 || typeof manifest.fingerprint !== 'string'
@@ -63,13 +91,8 @@ export function assertBundleManifest(manifest, label = BUNDLE_MANIFEST) {
   if (!initialView.includes(CARD_ENTRY) || initialView.includes(PANEL_ENTRY)) {
     throw new Error(`${label}: initial View graph must contain only the card stable entry`);
   }
-  // #535: the panel reaches the implementation by its content-hashed name, so
-  // the card's stable facade is no longer part of what the panel loads. That is
-  // the point: the facade is the one address with no version in it, and the
-  // panel must not depend on a URL a browser may keep for hours. What still has
-  // to hold is that the panel reuses the exact card IMPLEMENTATION graph.
-  if (initialPanel.includes(CARD_ENTRY) || !initialPanel.includes(PANEL_ENTRY)) {
-    throw new Error(`${label}: initial panel graph must contain its own stable entry only`);
+  if (!initialPanel.includes(PANEL_ENTRY)) {
+    throw new Error(`${label}: initial panel graph must contain its own stable entry`);
   }
   if (initialView.some((path) => path !== CARD_ENTRY && !initialPanel.includes(path))) {
     throw new Error(`${label}: initial View implementation is not a subset of initial panel graph`);

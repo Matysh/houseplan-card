@@ -19,8 +19,8 @@ import {
   lowHeadroomWarning,
 } from '../scripts/bundle-budget.mjs';
 import {
-  assertBundleManifest, compareBundleTrees, orderedBundlePayload, sha256Bytes,
-  verifyBundleTree,
+  assertBundleManifest, assertOwnBundleTopology, compareBundleTrees,
+  orderedBundlePayload, sha256Bytes, verifyBundleTree,
 } from '../scripts/bundle-tree.mjs';
 import {
   cssTemplateMinifier, minifyCssText, minifyStaticCssTemplates,
@@ -296,20 +296,30 @@ test('#486 manifest graph validator rejects missing panel roots and duplicated c
   // #535: панель обязана переиспользовать ту же реализацию, а не свою копию.
   assert.throws(
     () => assertBundleManifest(duplicateGraph),
-    /initial panel graph must contain its own stable entry only|not a subset/,
+    /initial panel graph must contain its own stable entry|not a subset/,
   );
+});
 
-  // Обратная сторона того же инварианта: фасад карточки в графе панели —
-  // теперь ошибка, потому что это единственный адрес без версии (#535).
-  const facadeInPanel = structuredClone(valid);
-  facadeInPanel.initialPanelFiles = [
+test('#537 loader-side validation accepts a pre-#535 manifest; topology does not', () => {
+  // Манифест той топологии, что была до #535: фасад карточки входит в граф
+  // панели. Ровно такой лежит в каждой базе сравнения старше #535, и
+  // производительный харнесс читает его валидатором КАНДИДАТА — поэтому
+  // «можно ли это загрузить» обязано отвечать «да».
+  const legacy = minimalTwoEntryManifest();
+  legacy.initialPanelFiles = [
     'houseplan-assets/card-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
   ];
-  facadeInPanel.initialPanelGzipBytes = 14;
+  legacy.initialPanelGzipBytes = 14;
+  assert.equal(assertBundleManifest(legacy), legacy,
+    'валидатор загрузки обязан принимать манифест базы прежней топологии');
+
+  // А «так ли устроена ТЕКУЩАЯ сборка» — отдельный вопрос и отдельная функция.
   assert.throws(
-    () => assertBundleManifest(facadeInPanel),
-    /initial panel graph must contain its own stable entry only/,
+    () => assertOwnBundleTopology(legacy),
+    /initial panel graph must not contain the card facade/,
   );
+  const current = minimalTwoEntryManifest();
+  assert.equal(assertOwnBundleTopology(current), current);
 });
 
 test('#486 sync payload orders dependencies before both stable entries', () => {

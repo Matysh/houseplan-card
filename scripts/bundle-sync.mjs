@@ -16,7 +16,7 @@ import {
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  assertBundleManifest, orderedBundlePayload, verifyBundleTree,
+  assertBundleManifest, assertOwnBundleTopology, orderedBundlePayload, verifyBundleTree,
 } from './bundle-tree.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -38,6 +38,9 @@ const parseManifest = (path) => {
   return parsed;
 };
 const sourceManifest = assertBundleManifest(parseManifest(manifestPath), manifestPath);
+// #537: this script materializes OUR dist, so the topology of the current
+// build is judged here and nowhere in the shared loader-side validator.
+assertOwnBundleTopology(sourceManifest, manifestPath);
 const managedFiles = [MANIFEST_NAME, ...sourceManifest.files.map((file) => file.path)];
 const sha256 = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
 const contained = (root, name) => {
