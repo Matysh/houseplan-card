@@ -44,7 +44,9 @@ test('#538 AC2: release.yml зовёт анонс после выкладки а
   const build = at('  build:\n');
   assert.ok(build < job, 'анонс описан после сборки, а не до неё');
   const block = workflow.slice(job, workflow.indexOf('\n  hacs-discovery:'));
-  assert.match(block, /needs: build/, 'анонс зависит от выкладки ассетов');
+  // Не `/needs: build/`: в том же блоке лежит комментарий, где эта строка
+  // процитирована, и проверка зеленела бы на нём. Требуется сама директива.
+  assert.match(block, /^ {4}needs: build$/m, 'анонс зависит от выкладки ассетов');
   assert.match(block, /uses: \.\/\.github\/workflows\/announce\.yml/);
   assert.match(block, /prerelease: \$\{\{ github\.event\.release\.prerelease \}\}/,
     'беты остаются тихими по тому же признаку, что и раньше');
