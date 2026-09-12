@@ -3125,6 +3125,25 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'manifest-loader-judges-current-topology',
+    guard: 'node --test --test-name-pattern="#537 loader-side validation" '
+      + 'test/bundle-assets.test.mjs',
+    because: 'the loader-side validator also reads FOREIGN manifests — the performance harness '
+      + 'runs the candidate against a baseline checkout — so a rule about how the CURRENT build '
+      + 'is wired makes the candidate refuse to load any older baseline. That is what turned all '
+      + 'nine performance profiles red at once and withheld an asset from a published stable '
+      + 'release (#537)',
+    patches: [{
+      file: 'scripts/bundle-tree.mjs',
+      find: '  if (!initialPanel.includes(PANEL_ENTRY)) {\n'
+        + '    throw new Error(`${label}: initial panel graph must contain its own stable entry`);\n'
+        + '  }',
+      replace: '  if (initialPanel.includes(CARD_ENTRY) || !initialPanel.includes(PANEL_ENTRY)) {\n'
+        + '    throw new Error(`${label}: initial panel graph must contain its own stable entry`);\n'
+        + '  }',
+    }],
+  },
+  {
     id: 'panel-imports-unversioned-card-entry',
     guard: 'node --test --test-name-pattern="#486 both stable entries" '
       + 'test/bundle-assets.test.mjs',
