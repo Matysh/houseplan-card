@@ -8874,6 +8874,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'quota-reserves-staged-bytes-twice-on-disk',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_554_upload_uses_actual_free_space_after_staging '
+      + 'tests_backend/test_ha_upload.py',
+    because: 'the attachment body already occupies disk space inside files_root; subtracting its '
+      + 'size again rejects a rename even when the real reserve is intact (#554 AC5)',
+    patches: [{
+      file: 'custom_components/houseplan/http_api.py',
+      find: '                        additional_disk_bytes=0,\n',
+      replace: '                        # mutant: staged bytes are reserved a second time\n',
+    }],
+  },
+  {
     id: 'support-palette-copies-any-key',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'rich_plan_projection_preserves_safe_structure '

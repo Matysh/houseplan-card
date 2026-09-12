@@ -222,9 +222,20 @@ def dir_usage(path: Path, *, exclude: Path | None = None) -> tuple[int, int]:
 
 
 def check_quota(
-    path: Path, incoming: int, max_bytes: int, max_files: int, *, exclude: Path | None = None,
+    path: Path,
+    incoming: int,
+    max_bytes: int,
+    max_files: int,
+    *,
+    exclude: Path | None = None,
+    additional_disk_bytes: int | None = None,
 ) -> None:
-    """Raise QuotaError unless `incoming` more bytes fit (`exclude`: see dir_usage).
+    """Raise QuotaError unless `incoming` fits the store and disk.
+
+    `exclude` is omitted from current store usage but still charged as
+    `incoming`. `additional_disk_bytes` is the part not physically written yet;
+    by default all incoming bytes still need disk space. A staged file already
+    under `path` passes zero because promotion only renames it (#554).
 
     Deliberately not an age rule. Files are never removed for getting old — that
     cost real plans twice — so the limit sits where a decision is being made
@@ -245,7 +256,8 @@ def check_quota(
         free = shutil.disk_usage(str(path if path.is_dir() else path.parent)).free
     except OSError:
         return
-    if free - incoming < MIN_FREE_BYTES:
+    disk_incoming = incoming if additional_disk_bytes is None else additional_disk_bytes
+    if free - disk_incoming < MIN_FREE_BYTES:
         raise QuotaError("low_disk_space", f"only {free // 1024 // 1024} MB free on the disk")
 
 

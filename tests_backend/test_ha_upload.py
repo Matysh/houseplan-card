@@ -150,6 +150,38 @@ async def test_issue_498_concurrent_uploads_still_count_each_other(
     assert stored <= 1000
 
 
+async def test_issue_554_upload_uses_actual_free_space_after_staging(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator, monkeypatch,
+) -> None:
+    """A completed staging file needs no second disk reserve before its rename."""
+    import shutil
+    from pathlib import Path
+
+    from custom_components.houseplan.const import FILES_DIR, MIN_FREE_BYTES
+    from custom_components.houseplan.plans import TMP_PREFIX
+
+    await _setup(hass)
+    client = await hass_client()
+    usage = type("Usage", (), {"free": MIN_FREE_BYTES})()
+    monkeypatch.setattr(shutil, "disk_usage", lambda _path: usage)
+
+    accepted = await client.post(
+        "/api/houseplan/upload", data=_pdf_form("at-reserve.pdf", 50),
+    )
+    assert accepted.status == 200, await accepted.text()
+
+    usage.free = MIN_FREE_BYTES - 1
+    refused = await client.post(
+        "/api/houseplan/upload", data=_pdf_form("below-reserve.pdf", 50),
+    )
+    assert refused.status == 507
+    assert (await refused.json())["error"] == "low_disk_space"
+
+    root = Path(hass.config.path(FILES_DIR))
+    assert not list(root.glob(TMP_PREFIX + "*"))
+    assert sorted(path.name for path in (root / "m1").iterdir()) == ["at-reserve.pdf"]
+
+
 def _svg_chain(length: int) -> bytes:
     defs = "".join(
         f'<linearGradient id="g{index}" href="#g{index + 1}"/>' for index in range(length - 1)

@@ -451,6 +451,7 @@ class HouseplanUploadView(HomeAssistantView):
                     partial(
                         check_quota, files_root, tmp_path.stat().st_size,
                         MAX_FILES_BYTES, MAX_FILES_COUNT, exclude=tmp_path,
+                        additional_disk_bytes=0,
                     ),
                 )
             except QuotaError as err:

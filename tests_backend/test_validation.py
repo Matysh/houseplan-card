@@ -1574,6 +1574,48 @@ def test_check_quota_refuses_when_the_disk_is_nearly_full(tmp_path, monkeypatch)
     assert e.value.reason == "low_disk_space"
 
 
+def test_issue_554_low_disk_reserve_distinguishes_staged_and_unwritten_bytes(
+    tmp_path, monkeypatch,
+):
+    """Already-written staging needs no second reserve; pending bytes still do."""
+    import shutil
+
+    d = tmp_path / "files"
+    d.mkdir()
+    staged = d / (plans.TMP_PREFIX + "own")
+    staged.write_bytes(b"x" * 50)
+    usage = type("Usage", (), {"free": const.MIN_FREE_BYTES})()
+    monkeypatch.setattr(shutil, "disk_usage", lambda _path: usage)
+
+    plans.check_quota(
+        d,
+        50,
+        max_bytes=1000,
+        max_files=10,
+        exclude=staged,
+        additional_disk_bytes=0,
+    )
+
+    usage.free = const.MIN_FREE_BYTES - 1
+    with pytest.raises(plans.QuotaError) as staged_low:
+        plans.check_quota(
+            d,
+            50,
+            max_bytes=1000,
+            max_files=10,
+            exclude=staged,
+            additional_disk_bytes=0,
+        )
+    assert staged_low.value.reason == "low_disk_space"
+
+    usage.free = const.MIN_FREE_BYTES + 50
+    plans.check_quota(d, 50, max_bytes=1000, max_files=10)
+    usage.free -= 1
+    with pytest.raises(plans.QuotaError) as unwritten_low:
+        plans.check_quota(d, 50, max_bytes=1000, max_files=10)
+    assert unwritten_low.value.reason == "low_disk_space"
+
+
 class TestVacuum:
     """marker.vacuum (docs/VACUUM.md): optional everywhere, matrices strict."""
 

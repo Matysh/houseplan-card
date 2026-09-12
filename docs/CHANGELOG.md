@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Uploading an attachment no longer reports low disk space merely because its
+  completed staging file was counted a second time. The 512 MiB safety reserve
+  itself is unchanged
+  ([#554](https://github.com/Matysh/houseplan-card/issues/554)).
+
 - Range and zone radar sources now stay live in the setup preview and use the
   same complete source list for Home Assistant read-permission checks as for
   frame calculation

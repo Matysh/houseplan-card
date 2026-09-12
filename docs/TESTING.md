@@ -1652,6 +1652,13 @@ separately promised workflows:
       returns the newest 60 with a total
       [auto: unit: test_check_quota_counts_the_whole_store_not_one_request,
       backend test_uploads_are_bounded_by_a_store_quota]
+- [ ] An attachment already written to staging is not reserved twice: with the
+      real 512 MiB disk reserve intact its same-filesystem promotion succeeds,
+      while one byte below the reserve still fails. Uploads checked before any
+      bytes are written continue to reserve their full incoming size
+      [auto: backend test_issue_554_low_disk_reserve_distinguishes_staged_and_unwritten_bytes
+      + test_issue_554_upload_uses_actual_free_space_after_staging; mutation:
+      quota-reserves-staged-bytes-twice-on-disk]
 - [ ] Square canvas migration (v1.48.0): after the upgrade every existing plan
       looks exactly as before, just with margins where the canvas was extended.
       Measure a wall in the plan editor — the length in cm is unchanged. Marker
