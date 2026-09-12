@@ -84,8 +84,28 @@ test('#510 AC2: the dispatch that never appears is reported as missing, naming a
   const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, appearMs: 5000, pollMs: 1000 });
   assert.equal(outcome.result, 'missing');
   assert.equal(outcome.url, 'https://run/other');
-  assert.match(outcome.note, /материал сменился: dispatch-прогон стоит на bbbbbbbb/);
-  assert.deepEqual(fake.dispatched, ['issue/1']);
+  assert.match(outcome.note, /ссылка ветки не указывает на материал/);
+  assert.match(outcome.note, /bbbbbbbb/);
+  // #539: прежде чем обвинять автора, гейт пробует ещё раз — своя гонка
+  // закрывается, чужой коммит переживает и вторую попытку.
+  assert.deepEqual(fake.dispatched, ['issue/1', 'issue/1']);
+});
+
+// #539: `workflow_dispatch` принимает только ref, а имя ветки резолвится на
+// стороне GitHub. Конвейер сам переписывает ветку ребейзом, и 12.09 на #536
+// диспатч встал на ДОпушевый SHA — задача вернулась автору, которому чинить
+// было нечего. Вторая попытка обязана попасть на материал.
+test('#539: диспатч, промахнувшийся по устаревшей ссылке, повторяется и принимается', async () => {
+  const landed = run({ databaseId: 7, url: 'https://run/7' });
+  const fake = fakeOps({
+    // пусто → пусто (промах, повтор) → прогон на материале
+    snapshots: [[], [], [landed]],
+    onRef: [run({ headSha: 'b'.repeat(40), url: 'https://run/other' })],
+  });
+  const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, appearMs: 5000, pollMs: 6000 });
+  assert.equal(outcome.result, 'green', 'повторный диспатч попал на материал');
+  assert.equal(outcome.url, 'https://run/7');
+  assert.deepEqual(fake.dispatched, ['issue/1', 'issue/1'], 'ровно две попытки, не бесконечно');
 });
 
 test('#510 AC2: a dispatch that never finishes is red after the total window', async () => {

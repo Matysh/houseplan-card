@@ -7711,6 +7711,31 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'gate-blames-the-author-for-its-own-stale-dispatch',
+    guard: 'node --test test/validate-gate.test.mjs',
+    because: '#539: `workflow_dispatch` принимает только ref, и конвейер сам переписывает '
+      + 'ветку ребейзом за секунды до запуска. Без повторной попытки собственная гонка '
+      + 'выглядит как «материал сменился», и задача уезжает автору, которому чинить нечего — '
+      + 'ровно это случилось с #536 12.09',
+    patches: [{
+      file: 'scripts/validate-gate.mjs',
+      find: '      if (elsewhere && attempts < DISPATCH_ATTEMPTS) {',
+      replace: '      if (false && elsewhere && attempts < DISPATCH_ATTEMPTS) {',
+    }],
+  },
+  {
+    id: 'rebase-dispatches-before-the-ref-settles',
+    guard: 'node --test test/review-doc-guard.test.mjs',
+    because: '#539: ссылка на стороне GitHub доезжает не мгновенно, а диспатч идёт по имени '
+      + 'ветки. Без ожидания шаг возвращается сразу после push, и запуск встаёт на вершину, '
+      + 'которой на ветке уже нет',
+    patches: [{
+      file: '.github/workflows/process.yml',
+      find: '            if [ "$seen" = "$after" ]; then settled=true; break; fi',
+      replace: '            settled=true; break',
+    }],
+  },
+  {
     id: 'render-invalidation-unknown-key-ignored',
     guard: 'node --test test/render-invalidation.test.mjs',
     because: 'the classifier fails OPEN on Home Assistant keys it does not know: without that '

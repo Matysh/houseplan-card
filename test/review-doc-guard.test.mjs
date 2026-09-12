@@ -743,3 +743,25 @@ test('#517 AC4: документы процесса не требуют файл
   assert.equal((readme.match(/^\| \[#\d+\]/gm) || []).length, 0, 'таблица-индекс удалена');
   assert.doesNotMatch(readme, /Статус ТЗ/);
 });
+
+// #539: `workflow_dispatch` принимает только ref, а не SHA. Конвейер сам
+// переписывает ветку ребейзом и тут же просит GitHub разрешить эту же ссылку:
+// 12.09 на #536 диспатч встал на ДОпушевый SHA, гейт не нашёл прогона на
+// материале и вернул задачу автору, которому чинить было нечего. Шаг ребейза
+// обязан дождаться, что ссылка доехала, и спрашивать об этом REST — через него
+// же идёт диспатч.
+test('конвейер: ребейз не заканчивается, пока ссылка не укажет на новую вершину (#539)', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const rebase = workflow.slice(
+    workflow.indexOf('      - name: Привести ветку к dev\n'),
+    workflow.indexOf('      - name: Зафиксировать SHA материала ревью\n'),
+  );
+  assert.ok(rebase.length > 0, 'шаг ребейза найден');
+  assert.match(rebase, /gh api "repos\/\$\{\{ github\.repository \}\}\/git\/ref\/heads\/\$BRANCH"/,
+    'вершина спрашивается у REST, а не у git ls-remote');
+  assert.match(rebase, /^\s+GH_TOKEN: \$\{\{ secrets\.HP_PROCESS_TOKEN \}\}$/m, 'токен для REST есть');
+  const wait = rebase.indexOf('git api') >= 0 ? -1 : rebase.indexOf('gh api');
+  const fetchLocal = rebase.indexOf('git fetch -q origin "+refs/heads/$BRANCH');
+  assert.ok(wait > 0 && wait < fetchLocal, 'ожидание стоит после push и до конца шага');
+  assert.match(rebase, /ссылка \$BRANCH за минуту не стала указывать/, 'не доехавшая ссылка — отказ, а не молчание');
+});

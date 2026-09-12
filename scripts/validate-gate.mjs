@@ -20,6 +20,17 @@ import { resolve } from 'node:path';
 import { VALIDATE_APPEAR_MS, VALIDATE_TOTAL_MS } from './merge-candidate.mjs';
 
 export const POLL_MS = 20_000;
+/**
+ * Сколько раз гейт пробует запустить свой dispatch (#539).
+ *
+ * `workflow_dispatch` в API принимает только ref, а не SHA: имя ветки
+ * резолвится на стороне GitHub в момент запуска. Конвейер перед этим сам
+ * переписывает ветку ребейзом, и 12.09 на #536 диспатч, отправленный через
+ * три секунды после force-push, встал на ДОпушевый SHA — гейт не нашёл прогона
+ * на материале и вернул задачу автору, которому чинить было нечего. Вторая
+ * попытка закрывает это окно: ссылка к тому времени доезжает гарантированно.
+ */
+export const DISPATCH_ATTEMPTS = 2;
 
 /** Кандидат в доказательства: dispatch — только там мутанты могут быть запрошены. */
 export function isMutantRun(run) {
@@ -51,6 +62,7 @@ export async function validateGate({ ref, sha, ops, appearMs = VALIDATE_APPEAR_M
   const ignored = new Set(); // завершённые dispatch, которые ничего не доказывают: отменённые и зелёные без мутантов
   let tracked = null;
   let dispatchedAt = null;
+  let attempts = 0;
   while (ops.now() - started < totalMs) {
     const runs = (await ops.listRuns(sha)).filter((x) => isMutantRun(x) && !ignored.has(x.databaseId));
     const run = runs.find((x) => tracked && x.databaseId === tracked) || runs[0];
@@ -75,13 +87,27 @@ export async function validateGate({ ref, sha, ops, appearMs = VALIDATE_APPEAR_M
     } else if (dispatchedAt === null) {
       await ops.dispatch(ref);
       dispatchedAt = ops.now();
+      attempts = 1;
     } else if (ops.now() - dispatchedAt > appearMs) {
-      // Прогон должен был появиться. Если на ветке появился dispatch на другом
-      // SHA — материал сменился под ногами; иначе запуск просто не прошёл.
+      // Прогон должен был появиться. Если на ветке стоит dispatch на другом
+      // SHA — либо ссылка ветки в момент запуска ещё отдавала прежнюю вершину
+      // (#539: конвейер сам переписал её ребейзом за секунды до этого), либо
+      // материал действительно сменился. Различать гадательно нечем, поэтому
+      // гейт сначала пробует ещё раз: собственная гонка этим закрывается, а
+      // чужой коммит переживёт и вторую попытку.
       const elsewhere = (await ops.listRunsOnRef(ref)).filter(isMutantRun).find((x) => x.headSha && x.headSha !== sha);
+      if (elsewhere && attempts < DISPATCH_ATTEMPTS) {
+        await ops.dispatch(ref);
+        dispatchedAt = ops.now();
+        attempts += 1;
+        await ops.sleep(pollMs);
+        continue;
+      }
       return {
         result: 'missing', url: elsewhere?.url || null,
-        note: elsewhere ? `материал сменился: dispatch-прогон стоит на ${String(elsewhere.headSha).slice(0, 8)}` : 'dispatch-прогон не появился за 3 минуты',
+        note: elsewhere
+          ? `ссылка ветки не указывает на материал: ${attempts} попыт(ки) диспатча встали на ${String(elsewhere.headSha).slice(0, 8)}`
+          : 'dispatch-прогон не появился за 3 минуты',
       };
     }
     await ops.sleep(pollMs);
