@@ -240,7 +240,10 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
   assert.ok(announce.includes('if: ${{ inputs.reusable == true }}'));
   assert.ok(announce.includes('CALLED: ${{ inputs.reusable }}'));
   assert.ok(announce.includes('BODY=$(cat docs/RELEASE-NOTES.md)'));
-  assert.ok(announce.includes("github.event_name == 'release' && github.event.release.prerelease == false"));
+  // #538: условия на событие релиза больше нет и быть не должно — анонс
+  // вызывается только после выкладки ассетов. Пинится обратное: ветка события
+  // не вернулась.
+  assert.ok(!announce.includes("github.event_name == 'release'"));
   assert.ok(announce.includes("github.event_name == 'workflow_call' && inputs.prerelease == false"));
   assert.ok(announce.includes('Prerelease Telegram announcement is disabled'));
 
