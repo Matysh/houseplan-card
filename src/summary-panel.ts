@@ -275,7 +275,7 @@ export function effectiveSummaryVisible(input: {
 }
 
 export function summaryLocalKey(parts: {
-  userId?: string | null; path?: string; host?: string; slot?: string;
+  userId?: string | null; path?: string; host?: string; slot?: string | null;
 }): string | null {
   const user = cleanText(parts.userId);
   const slot = cleanText(parts.slot);

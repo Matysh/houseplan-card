@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { SUMMARY_PANEL_API_VERSION } from '../test-build/summary-panel-api.js';
-import { summaryLocalKey } from '../test-build/summary-panel.js';
+import { SUMMARY_PANEL_LEGACY_SCALE_KEY, summaryLocalKey } from '../test-build/summary-panel.js';
 import { LoadedSummaryPanelRuntime } from '../test-build/summary-panel-runtime-loaded.js';
 
 const installBrowserGlobals = () => {
@@ -11,18 +11,20 @@ const installBrowserGlobals = () => {
     localStorage: Object.getOwnPropertyDescriptor(globalThis, 'localStorage'),
   };
   const values = new Map();
+  const reads = [];
+  const writes = [];
   Object.defineProperty(globalThis, 'location', {
     configurable: true, value: { pathname: '/dashboard/home' },
   });
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
     value: {
-      getItem: (key) => values.get(key) ?? null,
-      setItem: (key, value) => values.set(key, value),
+      getItem: (key) => { reads.push(key); return values.get(key) ?? null; },
+      setItem: (key, value) => { writes.push(key); values.set(key, value); },
     },
   });
   return {
-    values,
+    values, reads, writes,
     restore() {
       for (const [key, descriptor] of Object.entries(previous)) {
         if (descriptor) Object.defineProperty(globalThis, key, descriptor);
@@ -69,6 +71,107 @@ const hostFixture = () => {
     _cacheSnapshot: () => undefined,
   };
 };
+
+test('#561 unresolved Masonry stays session-only and never imports an old DOM-path preference', () => {
+  const browser = installBrowserGlobals();
+  try {
+    const host = hostFixture();
+    host.panelHost = false;
+    const masonry = { localName: 'hui-masonry-view', parentNode: null, children: [] };
+    const column = { localName: 'div', parentNode: masonry, children: [host] };
+    masonry.children = [column];
+    host.parentNode = column;
+    const oldKey = summaryLocalKey({
+      userId: 'alice', path: '/dashboard/home', host: 'lovelace',
+      slot: 'hui-view:0/hui-masonry-view:0/div:0/houseplan-card:1',
+    });
+    const canonicalKey = summaryLocalKey({
+      userId: 'alice', path: '/dashboard/home', host: 'lovelace', slot: 'masonry-v2:0',
+    });
+    browser.values.set(oldKey, JSON.stringify({
+      version: 1, show: true, icon_scale: 3, font_scale: 3,
+    }));
+    browser.values.set(SUMMARY_PANEL_LEGACY_SCALE_KEY, JSON.stringify({ icon: 1.2, font: 0.9 }));
+
+    const runtime = new LoadedSummaryPanelRuntime(host);
+    runtime.connect();
+    assert.deepEqual(browser.reads, [], 'unresolved identity must not read any persistent fallback');
+    runtime.saveLocal({ show: true, icon_scale: 1.5 });
+    assert.equal(runtime.local.show, true, 'the preference remains effective for this session');
+    assert.deepEqual(browser.writes, [], 'unresolved identity must not write any persistent fallback');
+
+    masonry.cards = [host];
+    runtime.willUpdate();
+    runtime.loadLocal();
+    assert.deepEqual(runtime.local, {
+      version: 1, show: false, icon_scale: 1.2, font_scale: 0.9,
+    }, 'a new canonical key starts from the normal defaults and legacy scale seed');
+    assert.equal(browser.reads.includes(oldKey), false, 'the ambiguous legacy DOM key is not migrated');
+    assert.equal(browser.values.has(oldKey), true, 'upgrade leaves the old key untouched');
+    assert.deepEqual(browser.reads, [canonicalKey, SUMMARY_PANEL_LEGACY_SCALE_KEY]);
+
+    runtime.saveLocal({ show: false });
+    assert.deepEqual(browser.writes, [canonicalKey]);
+    assert.equal(JSON.parse(browser.values.get(canonicalKey)).show, false);
+    runtime.disconnect();
+  } finally {
+    browser.restore();
+  }
+});
+
+test('#561 identical Masonry cards reload their own local preferences', () => {
+  const browser = installBrowserGlobals();
+  const runtimes = [];
+  const mount = (columnIndexes) => {
+    const hosts = columnIndexes.flat().map(() => {
+      const host = hostFixture();
+      host.panelHost = false;
+      return host;
+    });
+    const masonry = { localName: 'hui-masonry-view', parentNode: null, children: [], cards: hosts };
+    const columns = columnIndexes.map((indexes) => {
+      const column = { localName: 'div', parentNode: masonry, children: [] };
+      column.children = indexes.map((index) => {
+        hosts[index].parentNode = column;
+        return hosts[index];
+      });
+      return column;
+    });
+    masonry.children = columns;
+    return hosts;
+  };
+  try {
+    const values = [
+      { version: 1, show: true, icon_scale: 1.25, font_scale: 0.8 },
+      { version: 1, show: false, icon_scale: 2.4, font_scale: 1.6 },
+    ];
+    values.forEach((value, index) => browser.values.set(summaryLocalKey({
+      userId: 'alice', path: '/dashboard/home', host: 'lovelace', slot: `masonry-v2:${index}`,
+    }), JSON.stringify(value)));
+
+    const wide = mount([[0], [1]]);
+    const firstPass = wide.map((host) => {
+      const runtime = new LoadedSummaryPanelRuntime(host);
+      runtimes.push(runtime);
+      runtime.connect();
+      return runtime.local;
+    });
+    assert.deepEqual(firstPass, values);
+
+    runtimes.splice(0).forEach((runtime) => runtime.disconnect());
+    const narrow = mount([[0, 1]]);
+    const secondPass = narrow.map((host) => {
+      const runtime = new LoadedSummaryPanelRuntime(host);
+      runtimes.push(runtime);
+      runtime.connect();
+      return runtime.local;
+    });
+    assert.deepEqual(secondPass, values, 'new card objects after reload must not exchange preferences');
+  } finally {
+    runtimes.forEach((runtime) => runtime.disconnect());
+    browser.restore();
+  }
+});
 
 test('#493 same-key scale remains authoritative and identity changes discard the dialog', async () => {
   const browser = installBrowserGlobals();

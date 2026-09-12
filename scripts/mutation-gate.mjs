@@ -141,6 +141,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'summary-masonry-identity-uses-visual-dom-path',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="full Masonry reload uses canonical" '
+      + 'test/summary-panel.test.mjs',
+    because: '#561 AC1/AC7: a full Masonry reload must derive each preference slot from '
+      + 'the canonical cards array, never the responsive visual-column DOM path',
+    patches: [{
+      file: 'src/summary-panel-identity.ts',
+      find: "  const slot = `masonry-v2:${cardIndex}${suffix ? `/${suffix}` : ''}`;",
+      replace: '  const slot = structuralPath(start); // mutant: visual DOM path becomes persistent identity',
+    }],
+  },
+  {
     id: 'summary-animation-stale-completion-unguarded',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="reversal snapshots current progress" '

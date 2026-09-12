@@ -2064,6 +2064,15 @@ imported only after the settings button is pressed. It edits one draft; a
 successful revision-checked shared write precedes application of the draft
 local show choice.
 
+`summary-panel-identity.ts` resolves a native Masonry slot from the top-level
+card element's index in `hui-masonry-view.cards`, which remains in dashboard
+config order while HA moves those elements between responsive visual columns.
+A nested stack/conditional appends only its composed descendant path below
+that canonical top-level card. A new `masonry-v2` marker separates these keys
+from the old ambiguous DOM paths. If the native view exists but its canonical
+array or matching ancestor is not available yet, the runtime keeps preferences
+session-only and does not read or write a guessed persistent key.
+
 `summary-runtime-loader.ts` (#506) separates the summary *code* from its
 *state*. The loaded factory is remembered per page; every host builds its own
 runtime from it — preferences, drafts, subscriptions, timers and DOM are never

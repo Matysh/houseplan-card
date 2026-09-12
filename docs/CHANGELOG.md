@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Summary-panel visibility and size preferences no longer move between House
+  Plan cards after a full Masonry reload at another width. Masonry cards now
+  use their logical dashboard order instead of visual columns; because the old
+  per-card keys were ambiguous, existing Masonry panel choices may need to be
+  set once again
+  ([#561](https://github.com/Matysh/houseplan-card/issues/561)).
+
 - Uploading an attachment no longer reports low disk space merely because its
   completed staging file was counted a second time. The 512 MiB safety reserve
   itself is unchanged

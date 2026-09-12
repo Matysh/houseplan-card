@@ -332,7 +332,7 @@ export class LoadedSummaryPanelRuntime {
     this.styledDialogRoots.add(root);
   }
 
-  private placementSlot(): string {
+  private placementSlot(): string | null {
     return stableSummaryPlacementSlot(this.host);
   }
 

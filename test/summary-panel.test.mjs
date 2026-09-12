@@ -248,13 +248,14 @@ test('#437 local preferences use legacy sizes once but never legacy show', () =>
 
 test('#437 placement identity survives Masonry reflow and inner-card remount', () => {
   const page = { localName: 'hui-view', parentNode: null, children: [] };
-  const masonry = { localName: 'hui-masonry-view', parentNode: page, children: [] };
+  const masonry = { localName: 'hui-masonry-view', parentNode: page, children: [], cards: [] };
   const firstWrapper = { localName: 'hui-card', parentNode: masonry, children: [] };
   const secondWrapper = { localName: 'hui-card', parentNode: masonry, children: [] };
   const firstCard = { localName: 'houseplan-card', parentNode: firstWrapper, children: [] };
   const secondCard = { localName: 'houseplan-card', parentNode: secondWrapper, children: [] };
   page.children = [masonry];
   masonry.children = [firstWrapper, secondWrapper];
+  masonry.cards = [firstWrapper, secondWrapper];
   firstWrapper.children = [firstCard];
   secondWrapper.children = [secondCard];
 
@@ -268,6 +269,89 @@ test('#437 placement identity survives Masonry reflow and inner-card remount', (
   const remountedCard = { localName: 'houseplan-card', parentNode: firstWrapper, children: [] };
   firstWrapper.children = [remountedCard];
   assert.equal(stableSummaryPlacementSlot(remountedCard), firstSlot, 'native wrapper owns the key across remount');
+});
+
+function masonryReloadFixture(columnIndexes) {
+  const page = { localName: 'hui-view', parentNode: null, children: [] };
+  const masonry = { localName: 'hui-masonry-view', parentNode: page, children: [], cards: [] };
+  const root = { localName: 'div', parentNode: masonry, children: [] };
+  const cards = ['a', 'b', 'c'].map((id) => ({
+    id, localName: 'houseplan-card', parentNode: null, children: [], config: { type: 'custom:houseplan-card' },
+  }));
+  const columns = columnIndexes.map((indexes) => {
+    const column = { localName: 'div', parentNode: root, children: [] };
+    column.children = indexes.map((index) => {
+      cards[index].parentNode = column;
+      return cards[index];
+    });
+    return column;
+  });
+  page.children = [masonry];
+  masonry.children = [root];
+  masonry.cards = cards;
+  root.children = columns;
+  return { cards, masonry };
+}
+
+test('#561 full Masonry reload uses canonical cards instead of visual columns', () => {
+  const wide = masonryReloadFixture([[0, 2], [1]]);
+  const narrow = masonryReloadFixture([[0, 1, 2]]);
+  const wideSlots = wide.cards.map((card) => stableSummaryPlacementSlot(card));
+  const narrowSlots = narrow.cards.map((card) => stableSummaryPlacementSlot(card));
+
+  assert.deepEqual(wideSlots, ['masonry-v2:0', 'masonry-v2:1', 'masonry-v2:2']);
+  assert.deepEqual(narrowSlots, wideSlots, 'new DOM objects keep the logical config order after reload');
+  assert.equal(new Set(wideSlots).size, 3, 'identical configs still own separate preferences');
+  assert.notEqual(wideSlots[2], narrowSlots[1], 'old C must never become new B');
+
+  const [a, b, c] = wide.cards;
+  const [firstColumn, secondColumn] = wide.masonry.children[0].children;
+  firstColumn.children = [a];
+  secondColumn.children = [b, c];
+  c.parentNode = secondColumn;
+  assert.deepEqual(wide.cards.map((card) => stableSummaryPlacementSlot(card)), wideSlots,
+    'live responsive reflow keeps the same canonical slots');
+});
+
+test('#561 nested Masonry cards use a stable descendant suffix', () => {
+  const page = { localName: 'hui-view', parentNode: null, children: [] };
+  const masonry = { localName: 'hui-masonry-view', parentNode: page, children: [], cards: [] };
+  const column = { localName: 'div', parentNode: masonry, children: [] };
+  const stack = { localName: 'hui-vertical-stack-card', parentNode: column, children: [] };
+  const shadow = { localName: 'shadow-root', parentNode: null, host: stack, children: [] };
+  const shell = { localName: 'div', parentNode: shadow, children: [] };
+  const first = { localName: 'houseplan-card', parentNode: shell, children: [] };
+  const second = { localName: 'houseplan-card', parentNode: shell, children: [] };
+  page.children = [masonry];
+  masonry.children = [column];
+  masonry.cards = [stack];
+  column.children = [stack];
+  shadow.children = [shell];
+  shell.children = [first, second];
+
+  const firstSlot = stableSummaryPlacementSlot(first);
+  const secondSlot = stableSummaryPlacementSlot(second);
+  assert.notEqual(firstSlot, secondSlot, 'two nested House Plan instances must not share a key');
+  assert.match(firstSlot, /^masonry-v2:0\/shadow-root\/div:0\/houseplan-card:0$/);
+
+  const remounted = { localName: 'houseplan-card', parentNode: shell, children: [] };
+  shell.children = [remounted, second];
+  assert.equal(stableSummaryPlacementSlot(remounted), firstSlot,
+    'inner-card remount at the same logical slot keeps the preference');
+});
+
+test('#561 unresolved native Masonry identity never falls back to a visual DOM path', () => {
+  const masonry = { localName: 'hui-masonry-view', parentNode: null, children: [] };
+  const column = { localName: 'div', parentNode: masonry, children: [] };
+  const card = { localName: 'houseplan-card', parentNode: column, children: [] };
+  masonry.children = [column];
+  column.children = [card];
+
+  assert.equal(stableSummaryPlacementSlot(card), null, 'missing canonical cards stays session-only');
+  masonry.cards = [{ localName: 'hui-other-card' }];
+  assert.equal(stableSummaryPlacementSlot(card), null, 'an unmatched element is not guessed by position');
+  masonry.cards = [card];
+  assert.equal(stableSummaryPlacementSlot(card), 'masonry-v2:0', 'an unresolved result is never cached');
 });
 
 test('#437 device total counts unique represented real HA device ids before visual filters', () => {

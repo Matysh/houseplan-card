@@ -4048,6 +4048,24 @@ require hands on real hardware — they remain for the human pass.
       generation и Optimize writer guard. Полные golden/smoke/performance и
       Linux CI HA harness остаются обязательным гейтом точного SHA беты.
 
+## Идентичность сводной панели в Masonry (#561)
+
+- [ ] `test/summary-panel.test.mjs` пересоздаёт весь production-shaped
+      `hui-masonry-view`: canonical `cards=[A,B,C]`, wide-колонки `[A,C] [B]`
+      и новый narrow DOM `[A,B,C]`. Slots обязаны остаться
+      `masonry-v2:0/1/2`, без коллизии old C → new B.
+- [ ] Тот же unit проверяет live reflow, nested stack через ShadowRoot,
+      remount внутренней House Plan card, два nested instances и повторную
+      попытку resolution после временно отсутствующего `masonry.cards`.
+- [ ] `test/summary-panel-runtime.test.mjs` доказывает отсутствие localStorage
+      read/write при unresolved identity, отсутствие импорта/удаления старого
+      DOM-path key и независимое восстановление show/scale одинаковых карточек
+      после полного reload.
+- [ ] Мутант `summary-masonry-identity-uses-visual-dom-path` возвращает
+      структурный DOM path вместо canonical index; focused #561 unit обязан
+      покраснеть. Перед бетой selected summary-panel smoke проверяет ротацию
+      touch/kiosk viewport по общему release-процессу.
+
 ## Полнота источников радара (#545)
 
 - [ ] `tests_backend/test_radar_validation.py` проверяет точный inventory всех
