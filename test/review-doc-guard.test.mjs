@@ -763,5 +763,9 @@ test('конвейер: ребейз не заканчивается, пока �
   const wait = rebase.indexOf('git api') >= 0 ? -1 : rebase.indexOf('gh api');
   const fetchLocal = rebase.indexOf('git fetch -q origin "+refs/heads/$BRANCH');
   assert.ok(wait > 0 && wait < fetchLocal, 'ожидание стоит после push и до конца шага');
+  // Сама сверка, а не только её обвязка: без этой строки цикл выходит на первой
+  // же итерации, и ожидание становится декорацией.
+  assert.match(rebase, /if \[ "\$seen" = "\$after" \]; then settled=true; break; fi/,
+    'ответ REST сверяется с новой вершиной');
   assert.match(rebase, /ссылка \$BRANCH за минуту не стала указывать/, 'не доехавшая ссылка — отказ, а не молчание');
 });
