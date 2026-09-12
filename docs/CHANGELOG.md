@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v1.75.0 — 2026-09-12
+
+- The House Plan sidebar page no longer gets stuck on a previous version of the
+  card: it fetched the card through the one address in the distribution that
+  carries no version, and a browser was free to serve a cached copy for hours.
+  The panel now asks for the implementation by its content-hashed name — either
+  the card it was built with arrives, or the panel says out loud that the page
+  needs a reload
+  ([#535](https://github.com/Matysh/houseplan-card/issues/535)).
+
 ## v1.75.0-beta.1 — 2026-09-12
 
 - The House Plan sidebar page can no longer get stuck on a previous version of
