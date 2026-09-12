@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.75.0-beta.1 — 2026-09-12
+
 - The House Plan sidebar page can no longer get stuck on a previous version of
   the card. It used to fetch the card through the one address in the
   distribution that carries no version, and entries are served with no caching
