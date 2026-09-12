@@ -2413,6 +2413,22 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'version-banner-disconnect-silent',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#536 a notice dropped" test/version-recovery.test.mjs',
+    because: 'Lit renders neither on disconnect nor on reconnect, so a notice dropped in silence '
+      + 'stays on screen with no owner until some unrelated update happens to run — correctness '
+      + 'by coincidence, which is exactly what #536 removed',
+    patches: [{
+      file: 'src/version-recovery.ts',
+      find: '    if (this._banner) {\n'
+        + '      this._banner = null;\n'
+        + '      this.hooks.changed();\n'
+        + '    }',
+      replace: '    if (this._banner) this._banner = null;',
+    }],
+  },
+  {
     id: 'align-guides-exclude-dead-source',
     guard: 'node demo/smoke_align_guides.mjs',
     because: 'device dragging lives in _deviceDrag since #74; excluding by '

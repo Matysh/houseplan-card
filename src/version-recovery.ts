@@ -202,7 +202,18 @@ export class VersionRecoveryController {
     this._cancelTimer();
     // A detached element cannot be trusted to deliver animationend.  Reconnect
     // reconstructs the right notice from the retained semantic input.
-    if (this._banner) this._banner = null;
+    //
+    // #536: dropping the field is not enough — the host has to be told.  Lit
+    // renders neither on disconnect nor on reconnect, so markup produced before
+    // the detach survives it, and the controller would then own no notice while
+    // one is still on screen.  Until some unrelated update happened to run, the
+    // banner stayed: correctness rested on a coincidence rather than on this
+    // class.  Nothing else about the teardown changes; `changed()` is asked for
+    // only when a notice actually went away.
+    if (this._banner) {
+      this._banner = null;
+      this.hooks.changed();
+    }
   }
 
   public update(next: VersionRecoveryInput): void {

@@ -291,3 +291,42 @@ test('banner exit is token-safe and reduced motion removes it immediately', () =
   update(h.controller, { backendVersion: '1.72.0', reducedMotion: true });
   assert.equal(h.controller.banner, null);
 });
+
+// #536: снятие плашки обязано быть наблюдаемым. Lit не перерисовывает дерево ни
+// при отсоединении, ни при присоединении, поэтому разметка, отрендеренная до
+// отсоединения, переживает его: контроллер, обнуливший поле молча, оставляет на
+// экране плашку, которой он уже не владеет. До правки во всей последовательности
+// была ровно одна перерисовка — та, что плашку показала, — и снимала её только
+// посторонняя. Счётчик здесь и есть предмет проверки.
+test('#536 a notice dropped on disconnect asks the host to repaint', () => {
+  const h = harness();
+  const repaints = () => h.events.filter((event) => event.kind === 'changed').length;
+
+  update(h.controller, { reducedMotion: false });
+  h.controller.connect();
+  assert.equal(h.controller.banner?.phase, 'visible');
+  assert.equal(repaints(), 1, 'показ плашки просит перерисовку');
+
+  h.controller.disconnect();
+  assert.equal(h.controller.banner, null);
+  assert.equal(repaints(), 2, 'снятие плашки на отсоединении тоже просит перерисовку');
+
+  // Версии сходятся, пока карточка отсоединена, и она возвращается обратно.
+  update(h.controller, { backendVersion: '1.72.0', reducedMotion: false });
+  h.controller.connect();
+  assert.equal(h.controller.banner, null, 'совпавшие версии не воскрешают плашку');
+  assert.equal(repaints(), 2, 'снимать больше нечего — холостых перерисовок нет');
+});
+
+test('#536 a disconnect without a notice asks for nothing', () => {
+  const h = harness();
+  update(h.controller, { backendVersion: '1.72.0' });
+  h.controller.connect();
+  assert.equal(h.controller.banner, null);
+  const before = h.events.filter((event) => event.kind === 'changed').length;
+  h.controller.disconnect();
+  assert.equal(
+    h.events.filter((event) => event.kind === 'changed').length, before,
+    'отсоединение без плашки перерисовку не просит',
+  );
+});
