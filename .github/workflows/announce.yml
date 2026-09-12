@@ -3,9 +3,14 @@ name: Анонс релиза
 # Stable releases are announced; prereleases are deliberately silent.
 # workflow_dispatch exists purely as a connectivity test button and therefore
 # remains allowed to send a test message.
+# #538: НЕТ триггера `release: published`. Три воркфлоу висели на одном событии
+# и бежали параллельно, а анонсу нечего было проверять — он выигрывал гонку
+# всегда. 12.09 v1.75.0 объявили в канале в ту же минуту, когда гейт ассетов
+# отказал: релиз остался без `houseplan-card.js`, E2E не выполнялся вовсе, а
+# подписчики получили сообщение. Анонс вызывается только после того, как работа
+# сделана: `release.yml` зовёт его после выкладки ассетов,
+# `publish-prerelease.yml` — после публикации беты.
 on:
-  release:
-    types: [published]
   workflow_dispatch: {}
   workflow_call:
     inputs:
@@ -37,7 +42,7 @@ permissions:
 jobs:
   telegram:
     name: Оповещение в Telegram (только стабильные)
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == false) || (github.event_name == 'workflow_call' && inputs.prerelease == false) }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_call' && inputs.prerelease == false) }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out release notes for a reusable call
@@ -54,32 +59,20 @@ jobs:
           INPUT_NAME: ${{ inputs.release_name }}
           INPUT_URL: ${{ inputs.url }}
           INPUT_PRE: ${{ inputs.prerelease }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-          RELEASE_NAME: ${{ github.event.release.name }}
-          RELEASE_URL: ${{ github.event.release.html_url }}
-          RELEASE_PRE: ${{ github.event.release.prerelease }}
-          # The body goes through env, never through shell interpolation —
-          # release notes are arbitrary text.
-          RELEASE_BODY: ${{ github.event.release.body }}
           EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
           if [ "$EVENT" = "workflow_dispatch" ] && [ "$CALLED" != "true" ]; then
             TEXT="✅ Тест: оповещения о релизах houseplan-card подключены."
           else
-            if [ "$CALLED" = "true" ]; then
-              TAG=$INPUT_TAG
-              NAME=$INPUT_NAME
-              URL=$INPUT_URL
-              PRE=$INPUT_PRE
-              BODY=$(cat docs/RELEASE-NOTES.md)
-            else
-              TAG=$RELEASE_TAG
-              NAME=$RELEASE_NAME
-              URL=$RELEASE_URL
-              PRE=$RELEASE_PRE
-              BODY=$RELEASE_BODY
-            fi
+            # Единственный путь к сообщению о релизе — вызов из воркфлоу, который
+            # уже закончил работу (#538). Тело берётся из файла заметок ветки
+            # тега, а не из события: события здесь больше нет.
+            TAG=$INPUT_TAG
+            NAME=$INPUT_NAME
+            URL=$INPUT_URL
+            PRE=$INPUT_PRE
+            BODY=$(cat docs/RELEASE-NOTES.md)
             if [ "$PRE" = "true" ]; then
               echo "Prerelease Telegram announcement is disabled"
               exit 0
