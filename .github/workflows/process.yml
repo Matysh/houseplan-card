@@ -347,6 +347,8 @@ jobs:
         if: needs.guard.outputs.stage == 'code' && steps.branch.outputs.name != ''
         env:
           TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          # #539: тем же токеном спрашивается REST — через него идёт и диспатч.
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ steps.branch.outputs.name }}
           # rebase, в отличие от commit, не принимает -c user.*: он запускает
           # свои процессы и требует личность в окружении, иначе падает с
@@ -387,6 +389,25 @@ jobs:
                "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
                "HEAD:refs/heads/$BRANCH"; then
             echo "::error::ветка $BRANCH изменилась во время ребейза — прогон прерван, чтобы не потерять коммит автора"
+            exit 1
+          fi
+          # #539: ссылка на стороне GitHub доезжает не мгновенно, а гейт ниже
+          # просит `workflow_dispatch` ПО ИМЕНИ ВЕТКИ — SHA туда передать
+          # нельзя. 12.09 на #536 диспатч, отправленный через три секунды после
+          # этого push, встал на ДОпушевый SHA: гейт не нашёл прогона на
+          # материале и вернул задачу автору, которому чинить было нечего.
+          # Поэтому шаг не заканчивается, пока REST не отдаст новую вершину —
+          # именно REST, потому что через него же идёт и сам диспатч.
+          after=$(git rev-parse HEAD)
+          settled=false
+          for _ in $(seq 1 30); do
+            seen=$(gh api "repos/${{ github.repository }}/git/ref/heads/$BRANCH" \
+              --jq .object.sha 2>/dev/null || true)
+            if [ "$seen" = "$after" ]; then settled=true; break; fi
+            sleep 2
+          done
+          if [ "$settled" != "true" ]; then
+            echo "::error::ссылка $BRANCH за минуту не стала указывать на $after — диспатч встал бы на устаревший SHA"
             exit 1
           fi
           # Локальная ссылка обновляется тоже: шаг слияния берёт origin/$BRANCH,
