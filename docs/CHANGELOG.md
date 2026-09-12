@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Dragging or pinching a plan no longer reveals a blank strip along the incoming
+  edge while the plan catches up. The fast path now keeps the already drawn
+  scene covering the card between its budgeted redraws, including when a finger
+  or mouse is held still mid-gesture
+  ([#544](https://github.com/Matysh/houseplan-card/issues/544)).
+
 ## v1.75.0 — 2026-09-12
 
 - The House Plan sidebar page no longer gets stuck on a previous version of the

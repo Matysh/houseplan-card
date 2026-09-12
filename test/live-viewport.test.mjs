@@ -57,12 +57,13 @@ const fakeRoot = () => {
     return el;
   };
   const camera = node({ viewBox: '0 0 1000 500' });
+  const cameraPeer = node({ viewBox: '0 0 1000 500' });
   const floor = node({ viewBox: '0 0 1000 500' });
   const layer = node({});
   return {
-    camera, floor, layer,
+    camera, cameraPeer, floor, layer,
     querySelectorAll: (selector) => {
-      if (selector.includes('viewbox="camera"')) return [camera];
+      if (selector.includes('viewbox="camera"')) return [camera, cameraPeer];
       if (selector.includes('viewbox="floor"')) return [floor];
       if (selector.includes('live-layer')) return [layer];
       return [];
@@ -86,7 +87,11 @@ test('#531 AC1: кадр жеста двигает сцену трансформ
   assert.equal(root.camera.writes, writesAfterAnchor, 'viewBox переписывать не за что');
   assert.equal(root.camera.attrs.viewBox, '0 0 1000 500');
   assert.match(root.camera.style.transform, /^translate\(-5%,0%\) scale\(1,1\)$/);
+  assert.equal(root.camera.style.overflow, 'visible', 'scene exposes the incoming edge');
+  assert.equal(root.cameraPeer.style.overflow, 'visible', 'every camera scene exposes the edge');
+  assert.equal(root.floor.style.overflow, 'visible', 'the floor scene exposes the edge');
   assert.equal(root.layer.style.transform, root.camera.style.transform, 'слой и сцена едут одинаково');
+  assert.equal(root.layer.style.overflow, undefined, 'HTML layers do not inherit SVG overflow handling');
 });
 
 test('#531 AC2: по истечении бюджета viewBox пишется один раз, трансформ снимается', () => {
@@ -99,6 +104,9 @@ test('#531 AC2: по истечении бюджета viewBox пишется о
   assert.equal(root.camera.writes, before + 1, 'ровно одна перезапись');
   assert.equal(root.camera.attrs.viewBox, '20 0 1000 500');
   assert.equal(root.camera.style.transform, undefined, 'сцена вернулась в тождество');
+  assert.equal(root.camera.style.overflow, undefined, 'refresh removes temporary scene overflow');
+  assert.equal(root.cameraPeer.style.overflow, undefined, 'refresh cleans every camera scene');
+  assert.equal(root.floor.style.overflow, undefined, 'refresh cleans the floor scene');
   assert.ok(root.layer.style.transform, 'слой по-прежнему спроецирован от осевшего кадра');
 });
 
@@ -139,6 +147,9 @@ test('#531 AC4: терминальное примирение пишет око�
   anchor = paintLiveViewport(root, settled, settled, anchor, { now: 20, force: true });
   assert.equal(root.camera.attrs.viewBox, '60 0 1000 500');
   assert.equal(root.camera.style.transform, undefined);
+  assert.equal(root.camera.style.overflow, undefined);
+  assert.equal(root.cameraPeer.style.overflow, undefined);
+  assert.equal(root.floor.style.overflow, undefined);
   assert.equal(root.layer.style.transform, undefined);
   const writes = root.camera.writes;
   paintLiveViewport(root, settled, settled, anchor, { now: 21, force: true });

@@ -112,9 +112,16 @@ const projectionText = (projection: LiveLayerProjection): string =>
 const setLayerProjection = (
   layer: ElementCSSInlineStyle,
   projection: LiveLayerProjection | null,
+  options: { exposeSceneOverflow?: boolean } = {},
 ): void => {
   const style = layer.style;
   if (!projection) {
+    // #544: the SVG viewport may be opened only while it is being projected.
+    // `.stage` remains the outer clip, while removing this inline value keeps
+    // the settled DOM and filter/compositing path byte-equivalent to #531.
+    if (options.exposeSceneOverflow && style.overflow === 'visible') {
+      style.removeProperty('overflow');
+    }
     // #531: снимать только то, что стоит. Лишняя запись в стиль — это
     // инвалидация, а тихий кадр обязан оставлять DOM нетронутым.
     if (style.transform) {
@@ -123,6 +130,13 @@ const setLayerProjection = (
       style.removeProperty('will-change');
     }
     return;
+  }
+  // A transformed SVG keeps its old viewport box. Without exposing the scene
+  // beyond that internal box, the incoming edge shows `.stage` background
+  // until the next budgeted viewBox refresh (#544). The stage still clips the
+  // complete card, so no scene pixels escape the visible plan surface.
+  if (options.exposeSceneOverflow && style.overflow !== 'visible') {
+    style.overflow = 'visible';
   }
   const text = projectionText(projection);
   if (style.transform === text) return;
@@ -176,10 +190,18 @@ export function paintLiveViewport(
   const sceneCamera = liveLayerProjection(next.frame.view, current.view);
   const sceneFloor = liveLayerProjection(next.frame.floor, current.floor);
   for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="camera"]')) {
-    setLayerProjection(svg, isIdentityLiveLayerProjection(sceneCamera) ? null : sceneCamera);
+    setLayerProjection(
+      svg,
+      isIdentityLiveLayerProjection(sceneCamera) ? null : sceneCamera,
+      { exposeSceneOverflow: true },
+    );
   }
   for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')) {
-    setLayerProjection(svg, isIdentityLiveLayerProjection(sceneFloor) ? null : sceneFloor);
+    setLayerProjection(
+      svg,
+      isIdentityLiveLayerProjection(sceneFloor) ? null : sceneFloor,
+      { exposeSceneOverflow: true },
+    );
   }
   const projection = liveLayerProjection(painted.view, current.view);
   for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {

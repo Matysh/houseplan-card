@@ -7671,6 +7671,20 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'live-pan-incoming-edge-clipped',
+    guard: 'node demo/smoke_live_pan_coverage.mjs',
+    because: '#544: a transformed SVG keeps its old viewport. Without temporarily exposing '
+      + 'the scene inside the outer stage clip, the incoming edge becomes stage background '
+      + 'until pointerup or a budgeted viewBox refresh; terminal screenshots miss the defect',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      find: "  if (options.exposeSceneOverflow && style.overflow !== 'visible') {\n"
+        + "    style.overflow = 'visible';\n"
+        + '  }',
+      replace: '',
+    }],
+  },
+  {
     id: 'live-pan-rewrites-viewbox-every-frame',
     guard: 'node demo/smoke_live_pan_viewbox.mjs',
     because: '#531: перезапись `view' + 'Box` — это инвалидация растеризации всей сцены, её '

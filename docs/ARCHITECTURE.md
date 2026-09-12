@@ -1946,6 +1946,17 @@ Lit frame (their content is positioned in percentages of that view). They land o
 the same current view, which is what keeps the #451 contract — a marker within
 one CSS pixel of its place in the scene — true on every frame of the gesture.
 
+There are deliberately two clipping levels (#544). `.stage` remains the outer
+clip for the card, but a camera or floor scene whose anchor is being transformed
+temporarily gets inline `overflow: visible`. That lets the already rasterized SVG
+cover the incoming edge until the budgeted `viewBox` catches up; otherwise the
+root SVG clips at its stale viewport and exposes a band of stage background.
+HTML layers never receive this exception. A budget refresh or the terminal
+commit removes the inline overflow together with the transform, so a settled
+scene returns to its ordinary authored styles. The coverage contract also holds
+when a pointer is held still between frames: the fast frame must contain every
+scene pixel that a forced target `viewBox` would contain inside `.stage`.
+
 Neither the attribute nor the style is written when the string is unchanged: an
 idle frame must leave the DOM byte-identical, or the settled raster shifts by a
 few colour levels and golden frames flap. `commitHouseplanViewport` still ends
