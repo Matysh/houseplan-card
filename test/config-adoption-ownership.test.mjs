@@ -79,6 +79,7 @@ test('AC2: the former host seam is gone and every module adopts through the one 
   assert.deepEqual(seam, [], '_adoptStructuralResponses must not come back as a host method');
   const adopters = sources.filter(({ text }) => /_adoptAuthoritative\(\{/.test(text)).map(({ file }) => file).sort();
   assert.deepEqual(adopters, [
+    'src/config-reload-authority.ts',
     'src/houseplan-card.ts',
     'src/houseplan-editor-runtime.ts',
     'src/houseplan-onboarding-runtime.ts',
@@ -155,9 +156,10 @@ test('#520: the authoritative load keeps viewport, readiness and devices inside 
     'an unguarded rebuild after the await is the regression itself');
   assert.match(afterHook, /if \(!devicesRebuilt\) rebuildDevices\(\);/);
   // The config reload takes the same route.
-  const reload = card.slice(card.indexOf('private async _reloadConfigOnly('));
-  const reloadCall = reload.slice(reload.indexOf('await this._adoptAuthoritative('), reload.indexOf('if (adopted.status'));
-  assert.match(reloadCall, /afterAdopt: \(\) => \{ this\._regSignature = ''; this\._maybeRebuildDevices\(\); \}/);
+  const reloadOwner = readFileSync(join(repoRoot, 'src/config-reload-authority.ts'), 'utf8');
+  const reload = reloadOwner.slice(reloadOwner.indexOf('export async function reloadConfigOnly('));
+  const reloadCall = reload.slice(reload.indexOf('await host._adoptAuthoritative('), reload.indexOf('if (adopted.status'));
+  assert.match(reloadCall, /afterAdopt: \(\) => \{ host\._regSignature = ''; host\._maybeRebuildDevices\(\); \}/);
 });
 
 test('#520: the adoption sequence closes with the caller hook, synchronously', () => {

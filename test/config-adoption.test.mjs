@@ -42,7 +42,10 @@ function hostStub(adoption, overrides = {}) {
       note: (event, detail) => { calls.push(`note:${event}`); host.notes.push([event, detail]); },
     },
     notes: [],
-    _signer: { prepareImage: async (_hass, url) => { calls.push(`prepareImage:${url}`); return overrides.assetReady ?? true; } },
+    _signer: { prepareImage: async (_hass, url) => {
+      calls.push(`prepareImage:${url}`);
+      return overrides.prepareImage ? overrides.prepareImage(url) : (overrides.assetReady ?? true);
+    } },
     _cancelDeviceDrag: rec('cancelDeviceDrag'),
     _clearRoomFocus: rec('clearRoomFocus'),
     _cancelCameraTransition: rec('cancelCameraTransition'),
@@ -186,6 +189,48 @@ test('gated adoption: a changed structure prepares the candidate backdrop, start
   assert.ok(order.indexOf('continuity:summary-recovery') < order.indexOf('geometryHistory.clear'));
   assert.notEqual(beforeAdoptSeen, next, 'beforeAdopt runs after the gate, before adoption');
   assert.equal(adoption.config, next);
+});
+
+test('#543: a request superseded inside prepareImage adopts no body, revision or reload tail', async () => {
+  const adoption = adoptedWith(cfg('Initial'), 2);
+  let releaseOlder;
+  let olderEntered;
+  const entered = new Promise((resolve) => { olderEntered = resolve; });
+  const olderAsset = new Promise((resolve) => { releaseOlder = resolve; });
+  const host = hostStub(adoption, {
+    prepareImage: (url) => {
+      if (url === '/local/older.svg') {
+        olderEntered();
+        return olderAsset;
+      }
+      return true;
+    },
+  });
+  const older = cfg('Older');
+  older.spaces[0].bg = { href: '/local/older.svg' };
+  const newer = cfg('Newer');
+  newer.spaces[0].bg = { href: '/local/newer.svg' };
+  let olderCurrent = true;
+  const olderResult = adoptAuthoritativeGated(host, {
+    cfgResp: { config: older, rev: 3 }, reason: 'config-reload', profile: 'reload',
+    isCurrent: () => olderCurrent,
+  });
+  await entered;
+  olderCurrent = false;
+  const newerResult = await adoptAuthoritativeGated(host, {
+    cfgResp: { config: newer, rev: 4 }, reason: 'config-reload', profile: 'reload',
+    isCurrent: () => true,
+  });
+  assert.deepEqual(newerResult, { status: 'adopted', spaceChanged: false });
+  const tailsAfterNewer = host.calls.filter((call) => call === 'cacheSnapshot').length;
+  releaseOlder(false);
+  assert.deepEqual(await olderResult, { status: 'superseded' });
+  assert.equal(adoption.config, newer);
+  assert.equal(adoption.configRev, 4);
+  assert.equal(adoption.configFingerprint, contentFingerprint(newer));
+  assert.equal(host.calls.filter((call) => call === 'cacheSnapshot').length, tailsAfterNewer);
+  assert.ok(!host.calls.includes('note:asset-failed'));
+  assert.ok(!host.calls.includes('scheduleLoadRetry'));
 });
 
 test('#520: afterAdopt closes the adoption task — the tail, then the hook, before any microtask', async () => {

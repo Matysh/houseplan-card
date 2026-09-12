@@ -410,10 +410,18 @@ export interface GatedAdoptionInput {
    * second model build and a second paint of the whole plan (#520).
    */
   afterAdopt?: () => void;
+  /**
+   * Request-scoped ownership (#543). Callers that crossed an async transport
+   * boundary provide a claim captured before that boundary. The common gate
+   * checks it again around its own backdrop await so a superseded response can
+   * never reach structural adoption or the reload tail.
+   */
+  isCurrent?: () => boolean;
 }
 
 export type GatedAdoptionResult =
   | { status: 'asset-wait' }
+  | { status: 'superseded' }
   | { status: 'adopted'; spaceChanged: boolean };
 
 /**
@@ -429,6 +437,8 @@ export async function adoptAuthoritativeGated(
   host: ConfigAdoptionHostPort,
   input: GatedAdoptionInput,
 ): Promise<GatedAdoptionResult> {
+  const isCurrent = input.isCurrent ?? (() => true);
+  if (!isCurrent()) return { status: 'superseded' };
   const { cfgResp, layResp } = input;
   const adoption = host._adoption;
   const candidateConfig = configOf(cfgResp);
@@ -437,12 +447,17 @@ export async function adoptAuthoritativeGated(
     || (layResp != null && contentFingerprint(layResp.layout ?? {}) !== adoption.currentLayoutFingerprint());
   if (structuralChanged) {
     const assetReady = await host._signer.prepareImage(host.hass, host._candidateBackdrop(candidateConfig));
+    if (!isCurrent()) return { status: 'superseded' };
     if (!assetReady) {
       host._continuity.note('asset-failed');
       host._scheduleLoadRetry(true);
       return { status: 'asset-wait' };
     }
   }
+  // No await follows this check before `adoptStructuralResponses`; JavaScript's
+  // run-to-completion makes the winning response and its synchronous tail one
+  // atomic adoption task (#520, #543).
+  if (!isCurrent()) return { status: 'superseded' };
   if (structuralChanged && host._continuity.hasCompleteFrame && host._continuity.state === 'steady') {
     host._beginContinuityCandidate(input.reason, true);
   }

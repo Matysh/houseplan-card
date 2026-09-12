@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- A plan updated from another browser no longer jumps back to an older version
+  when that older response's background image finishes loading late. The newest
+  accepted plan, its revision and the instant-start cache now remain together
+  across overlapping reloads, reconnects and account changes
+  ([#543](https://github.com/Matysh/houseplan-card/issues/543)).
+
 - Dragging or pinching a plan no longer reveals a blank strip along the incoming
   edge while the plan catches up. The fast path now keeps the already drawn
   scene covering the card between its budgeted redraws, including when a finger

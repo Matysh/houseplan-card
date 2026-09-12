@@ -1392,6 +1392,23 @@ only in the files pinned by `test/config-adoption-ownership.test.mjs`, whose
 counts ratchet down. Feature runtimes see one host method,
 `_adoptAuthoritative`, instead of the eight steps it replaces.
 
+**Overlapping config reads have one live owner** (#543).
+`src/config-reload-authority.ts` gives every `_reloadConfigOnly` request a
+claim before its first network await. The claim is valid only while it is the
+latest request in the same connection/user/route/lifecycle generation and the
+accepted config revision/fingerprint has not changed under it. Ordinary config
+events additionally reserve a generation-scoped revision high-water, so a
+late lower event cannot cancel an already-running higher one; an explicit
+force/reset starts a fresh generation and may legitimately accept a lower
+revision. Route departure, disconnect/reconnect, connection replacement and
+user replacement invalidate claims monotonically, so returning to the same
+visible identity cannot revive an old promise. The claim is checked after the
+transport await and by `adoptAuthoritativeGated` on both sides of
+`ContentSigner.prepareImage`; a loser returns `superseded` without continuity,
+adoption, cache, retry, toast or render side effects. The winning synchronous
+adoption tail remains one JavaScript task and does not make a newer reload wait
+for an older image.
+
 **Persisted coordinates have one lattice-aware write boundary** (#291).
 `canonicalizeConfigGeometry()` / `canonicalizeLayoutGeometry()` /
 `canonicalizePosition()` own the frontend candidate; mirrored Python functions

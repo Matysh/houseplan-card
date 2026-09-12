@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const card = read('src/houseplan-card.ts');
+const configReload = read('src/config-reload-authority.ts');
 const adapter = read('src/version-recovery-card.ts');
 const editor = read('src/houseplan-editor-runtime.ts');
 const onboarding = read('src/houseplan-onboarding-runtime.ts');
@@ -22,7 +23,10 @@ test('one host seam owns every full-card config/get request', () => {
 
   assert.match(card,
     /private _getAuthoritativeConfig\(\): Promise<AuthoritativeConfigResponse>/);
-  assert.equal(occurrences(card, 'this._getAuthoritativeConfig()'), 2,
+  assert.equal(
+    occurrences(card, 'this._getAuthoritativeConfig()')
+      + occurrences(configReload, 'host._getAuthoritativeConfig()'),
+    2,
     'initial load and config-only reload both use the seam');
   assert.equal(occurrences(editor, 'this.host._getAuthoritativeConfig()'), 3,
     'delete, optimization undo and backup import use the seam');

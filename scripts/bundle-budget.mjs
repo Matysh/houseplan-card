@@ -242,8 +242,15 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * 12 816 Б gzip. Измеренный факт 287 284 Б оставляет 1 016 Б сверху и 984 Б до
  * нижней границы полосы; общий бюджет 301 066 Б не меняется, запас до него
  * вырос с 955 Б до 13 782 Б.
+ *
+ * 2026-09-12, #543: потолок перецентрирован 288 300 → 288 900 без изменения
+ * общего бюджета. В initial View вошёл session-scoped владелец конкурентных
+ * config reload: request claims, event high-water и lifecycle/baseline guards,
+ * без которых поздняя подложка откатывала уже показанный план. Измеренный факт
+ * 288 226 Б оставляет 674 Б сверху и 1 326 Б до нижней границы полосы; тяжёлых
+ * UI/runtime зависимостей механизм не добавляет.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 288_300;
+export const INITIAL_VIEW_GZIP_CEILING = 288_900;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**

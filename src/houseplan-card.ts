@@ -173,6 +173,12 @@ import {
   adoptAuthoritativeGated, createConfigAdoption,
   type ConfigAdoption, type ConfigAdoptionHostPort, type GatedAdoptionInput, type GatedAdoptionResult,
 } from './config-adoption';
+import {
+  configReloadContext,
+  ConfigReloadAuthority,
+  reloadConfigOnly,
+  type ConfigReloadHostPort,
+} from './config-reload-authority';
 import type { OptimisticAttempt } from './serialized-write-queue';
 import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
@@ -947,6 +953,8 @@ export class HouseplanCard extends LitElement {
   private _liveSyncAttempt: Promise<void> | null = null;
   private _liveSyncGeneration = 0;
   private _liveSyncConnection: any = null;
+  /** #543: only the newest live-context config read may cross adoption. */
+  private readonly _configReloadAuthority = new ConfigReloadAuthority();
   private _virtualLights: VirtualLightSnapshot = virtualLightSnapshot(null);
   /** One-deep server snapshot; invalidated by the first later plan edit. */
   private _canOptimizeUndo = false;
@@ -2653,6 +2661,7 @@ export class HouseplanCard extends LitElement {
   public connectedCallback(): void {
     this._connectedPath = location.pathname;
     this._routeDepartureHandled = false;
+    this._configReloadAuthority.observeContext(configReloadContext(this));
     window.addEventListener('location-changed', this._onLocationChanged);
     window.addEventListener('popstate', this._onLocationChanged);
     if (this._continuityDisposed) {
@@ -2744,6 +2753,9 @@ export class HouseplanCard extends LitElement {
     // Stop the independent kiosk timer before any teardown flush can mutate
     // config/layout state or this detached instance can reload the document.
     this._versionRecovery.disconnect();
+    // A same-element reconnect is a new lifecycle even when HA reuses the
+    // Connection object and the route/user strings happen to match (#543).
+    this._configReloadAuthority.invalidateLifecycle();
     this._liveRt?.dispose();
     this._radarLive.stop();
     this._editorRuntime?._disposeLiveEditor();
@@ -4124,6 +4136,11 @@ export class HouseplanCard extends LitElement {
 
   protected willUpdate(changed: PropertyValues): void {
     this._isoProjectionSnapshot = null; this._summary?.willUpdate();
+    if (changed.has('hass')) {
+      // Observe every user/connection transition, including A→B→A while an
+      // old promise is waiting. Equality at completion must not revive it.
+      this._configReloadAuthority.observeContext(configReloadContext(this));
+    }
     // `_serverCfg` is the root of every geometry cache. Keep the epoch
     // invariant local to that reactive assignment so imports, reconnects and
     // demo harnesses cannot accidentally reuse an older config object's data.
@@ -4464,40 +4481,7 @@ export class HouseplanCard extends LitElement {
    * `force` skips the deferral (conflict path: the local edit already lost).
    */
   private async _reloadConfigOnly(force = false, observedRev?: number): Promise<void> {
-    if (!force) {
-      // The event can arrive before the response to our own config/set. By the
-      // time a pending write settles, its returned revision is current and the
-      // queued event is merely an echo. Reloading it would erase the valid
-      // session Undo stack after every local command. Revisions are monotonic,
-      // so an equal or older observation is safe to ignore.
-      if (observedRev !== undefined && observedRev <= this._cfgRev) return;
-      if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
-      if (this._cfgWriting) {
-        // retry once the in-flight write settles
-        clearTimeout(this._reloadRetry);
-        this._reloadRetry = window.setTimeout(() => this._reloadConfigOnly(false, observedRev), 400);
-        return;
-      }
-    }
-    this._beginContinuityCandidate('config-reload', false);
-    try {
-      const resp = await this._getAuthoritativeConfig();
-      const adopted = await this._adoptAuthoritative({
-        cfgResp: resp, reason: 'config-reload', profile: 'reload',
-        // #520: same task as the adoption — see `_loadFromServer`.
-        afterAdopt: () => { this._regSignature = ''; this._maybeRebuildDevices(); },
-      });
-      if (adopted.status !== 'adopted') return;
-      if (adopted.spaceChanged) this._restoreZoom();
-      this.requestUpdate();
-    } catch (e: any) {
-      // a failed reload leaves the card on its last known config; tell the user
-      // rather than silently diverging from the server (audit L2 note)
-      this._showToast(this._t('toast.cfg_reload_failed', { err: this._errText(e) }));
-    } finally {
-      this._continuityDataReady = true;
-      this.requestUpdate();
-    }
+    return reloadConfigOnly(this as unknown as ConfigReloadHostPort, force, observedRev);
   }
 
   private _reloadRetry?: number;
@@ -7451,7 +7435,9 @@ export class HouseplanCard extends LitElement {
    */
   private _leaveCardRoute(): void {
     if (this._routeDepartureHandled) return;
-    this._routeDepartureHandled = true; this._summary?.leaveRoute();
+    this._routeDepartureHandled = true;
+    this._configReloadAuthority.invalidateLifecycle();
+    this._summary?.leaveRoute();
     this._clearRoomFocus(true); this._cancelDangerConfirm();
     // The destination page cannot display this decorative transition and may
     // disconnect us before its first measured frame. Commit View atomically so

@@ -9014,6 +9014,22 @@ const MUTANT_DEFINITIONS = [
         + '    const assetReady = await host._signer.prepareImage(host.hass, host._candidateBackdrop(candidateConfig));',
     }],
   },
+  {
+    id: 'config-reload-drops-asset-gap-ownership',
+    guard: 'node demo/smoke_config_reload_race.mjs',
+    because: 'a config response that was current before prepareImage may lose to a newer reload '
+      + 'inside that await; omitting the request claim at the common adoption boundary lets the '
+      + 'late response replace View, revision and cache again (#543 AC1, AC2, AC8)',
+    patches: [{
+      file: 'src/config-reload-authority.ts',
+      find: "      profile: 'reload',\n"
+        + '      isCurrent,\n'
+        + "      afterAdopt: () => { host._regSignature = ''; host._maybeRebuildDevices(); },",
+      replace: "      profile: 'reload',\n"
+        + '      // mutant: the common asset gate cannot see that this request lost ownership\n'
+        + "      afterAdopt: () => { host._regSignature = ''; host._maybeRebuildDevices(); },",
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
