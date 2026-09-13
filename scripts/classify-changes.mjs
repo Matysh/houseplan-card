@@ -27,6 +27,7 @@ import { checksAffectedBy } from './check-inputs.mjs';
  */
 export const CHECK_OF_OUTPUT = {
   frontend: 'frontend',
+  geometry_parity: 'geometry_parity',
   backend: 'backend',
   integration: 'integration',
   mutants: 'changed_mutants',

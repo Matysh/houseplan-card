@@ -3203,6 +3203,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'junction-limit-ts-python-parity-drift',
+    guard: 'npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs '
+      + '&& python3 tests_backend/junction_parity.py --build-dir=test-build/junction-parity',
+    because: 'the clean-runner parity job must turn red when either production mirror changes '
+      + 'one shared rule; otherwise a green run can again mean that no cross-runtime comparison '
+      + 'actually happened (#548 AC2)',
+    patches: [{
+      file: 'src/junction-limits.ts',
+      find: 'export const MIN_NODE_DISTANCE_CM = 5;',
+      replace: 'export const MIN_NODE_DISTANCE_CM = 4; // mutant: drift from Python mirror',
+    }],
+  },
+  {
     id: 'junction-limit-branch-dropped',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#331 AC3" test/junction-limits.test.mjs',

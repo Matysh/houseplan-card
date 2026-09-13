@@ -633,6 +633,9 @@ npm run golden:verify                 # если менялся визуал
 node scripts/check-docs.mjs           # если менялся src/**
 node scripts/model-invariants.mjs --config <экспорт>   # если правилась геометрия или ссылки
 python -m pytest tests_backend -q     # py3.14 как в CI (npm run toolchain:check), если менялся бэкенд
+npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs \
+  && python tests_backend/junction_parity.py --build-dir=test-build/junction-parity
+                                      # если менялось одно из зеркал junction limits
 ```
 
 **Новый код не добавляет `any`** (#342). В `src/**` уже 1034 вхождения явного

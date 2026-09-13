@@ -27,13 +27,19 @@ const makeTree = () => {
   put('package-lock.json', '{"lockfileVersion":3}\n');
   put('rollup.config.mjs', 'export default {};\n');
   put('tsconfig.json', '{}\n');
+  put('tsconfig.junction-parity.json', '{}\n');
+  put('.nvmrc', '22\n');
+  put('.python-version', '3.14\n');
   put('.github/workflows/validate.yml', 'name: Validate\n');
   put('scripts/source-fingerprint.mjs', '// pinned by the real repo copy\n');
   put('scripts/gate-reuse.mjs', '// reuse protocol\n');
   put('scripts/check-inputs.mjs', '// manifest\n');
+  put('scripts/fix-test-build.mjs', '// esm import fixer\n');
   put('src/card.ts', "export const CARD_VERSION = '1.0.0';\n");
   put('src/plan-optimizer.ts', 'export const PLAN_MODEL_VERSION = 1;\n');
   put('src/logic.ts', 'export const logic = 1;\n');
+  put('src/junction-limits.ts', "import './space-geometry';\nexport const MIN = 5;\n");
+  put('src/space-geometry.ts', 'export const GRID_STEP_N = 1 / 240;\n');
   put('demo/serve.mjs', "import './bundle-freshness.mjs';\n");
   put('demo/bundle-freshness.mjs', 'export const fresh = 1;\n');
   put('demo/srv/demo.html', '<div id="host"></div>\n');
@@ -51,7 +57,12 @@ const makeTree = () => {
   put('demo/performance/compare.mjs', 'export const cmp = 1;\n');
   put('demo/performance/budgets-glow-smoke.json', '{"hardMaxMs":1}\n');
   put('tests_backend/test_pure.py', 'from custom_components.houseplan.store import VERSION\n\ndef test_x():\n    assert True\n');
+  put('tests_backend/junction_parity.py', 'from pure_imports import load_pure\n');
+  put('tests_backend/pure_imports.py', 'def load_pure():\n    pass\n');
   put('tests_backend/requirements.txt', 'pytest\n');
+  put('test/fixtures/junction-limits-parity.json', '{"schema_version":1}\n');
+  put('custom_components/houseplan/junction_limits.py', 'from .wall_segment_model import VERSION\n');
+  put('custom_components/houseplan/wall_segment_model.py', 'VERSION = 1\n');
   put('custom_components/houseplan/store.py', 'VERSION = 1\n');
   put('custom_components/houseplan/manifest.json', '{"domain":"houseplan","version":"1.0.0"}\n');
   put('custom_components/houseplan/frontend/houseplan-card.js', 'built bundle\n');
@@ -71,7 +82,7 @@ const keys = (dir) => Object.fromEntries(JOBS.map((job) => [job, reuseKey(dir, j
 test('every heavy job has non-empty inputs and its own key', () => {
   const { dir } = makeTree();
   try {
-    assert.deepEqual(JOBS, ['smoke', 'golden', 'performance_smoke', 'backend']);
+    assert.deepEqual(JOBS, ['smoke', 'golden', 'performance_smoke', 'geometry_parity', 'backend']);
     const k = keys(dir);
     for (const job of JOBS) assert.ok(harnessFiles(dir, job).length > 0, job);
     assert.equal(new Set(Object.values(k)).size, JOBS.length, 'ключи job обязаны различаться');
@@ -152,6 +163,7 @@ test('harness edits are isolated to their own job (#208)', () => {
     only(['golden'])(() => put('demo/golden/baselines/one.png',
       Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x02])));
     only(['performance_smoke'])(() => put('demo/performance/compare.mjs', 'export const cmp = 2;\n'));
+    only(['geometry_parity'])(() => put('test/fixtures/junction-limits-parity.json', '{"schema_version":1,"changed":true}\n'));
     only(['backend'])(() => put('custom_components/houseplan/store.py', 'VERSION = 2\n'));
     // Протокол браузерного харнеса общий для трёх job (#492 §5.1 protocol).
     only(['smoke', 'golden', 'performance_smoke'])(() => put('demo/serve.mjs', "import './bundle-freshness.mjs';\n// harness\n"));

@@ -1,6 +1,7 @@
 // Ключ переиспользования результата тяжёлой job (issue #208).
 //
-// Тяжёлые job Validate — smoke, golden, performance_smoke, backend — прогонялись
+// Reusable job Validate — smoke, golden, performance_smoke, geometry_parity,
+// backend — прогонялись
 // на каждый push в dev, включая коммиты в документацию, workflows и процессные
 // скрипты, где бандл и оснастка побайтово те же. Ключ здесь отвечает на один
 // вопрос: «менялось ли хоть что-то, от чего результат этой job зависит».
@@ -17,8 +18,9 @@
 // пишет только успешный прогон с тем же ключом.
 //
 // Свойство, которое стоит знать: релизный кандидат (бета или стабильный релиз)
-// бампает версию — `package.json`/`CARD_VERSION` у браузерных job и
-// `custom_components/houseplan/manifest.json` у backend входят в manifest.
+// бампает версию — `package.json`/`CARD_VERSION` у браузерных job,
+// `package.json` у geometry_parity и `custom_components/houseplan/manifest.json`
+// у backend входят в manifest.
 // Значит ключ кандидата заведомо новый и полный набор гейтов прогоняется всегда.
 // Переиспользование физически не может ослабить релизный гейт.
 

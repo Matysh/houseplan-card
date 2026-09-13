@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "outDir": "test-build/junction-parity",
+    "noEmit": false,
+    "declaration": false,
+    "incremental": false
+  },
+  "include": [
+    "src/junction-limits.ts"
+  ]
+}

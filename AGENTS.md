@@ -390,7 +390,8 @@ push (#479).** `smoke`, `golden` and `performance_smoke` in Validate are gated
 on the `heavy` output: true for a head commit carrying a `Release:` trailer, for
 `workflow_dispatch full=true` (which `nightly.yml` issues on `dev` every night)
 and for pull requests. A plain push to `dev` runs preflight, frontend (types,
-units, build, bundle sync, no-new-any), backend, hacs and hassfest. Screenshot
+units, build, bundle sync, no-new-any), the narrow TS/Python geometry parity
+guard when its inputs changed, backend, hacs and hassfest. Screenshot
 freshness in `check-docs` is likewise a warning on a plain push and an error on
 the candidate; `publish-prerelease.yml` and `release.yml` refuse a candidate
 without the `Release:` trailer, so a green Validate without the heavy jobs can
@@ -478,7 +479,8 @@ assertions go red and part stay green, which reads as a logic defect.
 success` run for the candidate's SHA, not "the last green one"; a new push cancels
 an unfinished Validate for the same branch. Gate jobs, matching the actual
 `validate.yml` (#191): `docs`, `provenance`, `process-gate`, `hacs`, `hassfest`,
-`frontend`, `smoke`, `golden`, `performance_smoke`, `backend`. The `changes` job
+`frontend`, `smoke`, `golden`, `performance_smoke`, `geometry_parity`, `backend`.
+The `changes` job
 is a service path-filter, not a gate. `docs` is a real blocker: it checks the
 screenshots `sourceFingerprint` against current `src/**`, which is exactly what
 went red after the #113 merge. A stable release additionally waits for Full

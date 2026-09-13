@@ -20,6 +20,7 @@ const names = {
   smokeDone: 'Смоки: все шарды зелёные',
   golden: 'Golden-кадры против принятых эталонов',
   performance: 'Перф-смок: бюджет времени кадра',
+  geometryParity: 'Геометрия: TS/Python parity исполнена',
   backend: 'Бэкенд: pytest в Home Assistant',
 };
 
@@ -33,7 +34,7 @@ const smokeJobs = () => Array.from({ length: 3 }, (_, index) => (
 
 export function proofFixture({
   id = 10, attempt = 2, full = true, mutants = true,
-  frontend = true, backend = true, integration = true, conclusion = 'success',
+  frontend = true, geometryParity = true, backend = true, integration = true, conclusion = 'success',
 } = {}) {
   const needs = {
     preflight: { result: 'success' },
@@ -41,7 +42,8 @@ export function proofFixture({
       result: 'success',
       outputs: {
         heavy: String(full), mutants_requested: String(mutants),
-        frontend: String(frontend), backend: String(backend), integration: String(integration),
+        frontend: String(frontend), geometry_parity: String(geometryParity),
+        backend: String(backend), integration: String(integration),
       },
     },
     reuse: { result: 'success', outputs: {} },
@@ -53,6 +55,7 @@ export function proofFixture({
     smoke_done: { result: full ? 'success' : 'skipped' },
     golden: { result: full ? 'success' : 'skipped' },
     performance_smoke: { result: full ? 'success' : 'skipped' },
+    geometry_parity: { result: geometryParity ? 'success' : 'skipped' },
     backend: { result: backend ? 'success' : 'skipped' },
   };
   const proof = buildCiProof({
@@ -64,6 +67,7 @@ export function proofFixture({
   if (integration) jobs.push(success(names.hacs), success(names.hassfest));
   if (mutants) jobs.push(...mutantJobs());
   if (full) jobs.push(...smokeJobs(), success(names.smokeDone), success(names.golden), success(names.performance));
+  if (geometryParity) jobs.push(success(names.geometryParity));
   if (backend) jobs.push(success(names.backend));
   const run = {
     databaseId: id, attempt, status: 'completed', conclusion,
@@ -80,7 +84,7 @@ test('#541: proof records candidate identity, request and exact required check s
   });
   assert.deepEqual(fixture.proof.requiredChecks, [
     'preflight', 'changes', 'reuse', 'frontend', 'integration', 'mutants',
-    'smoke', 'golden', 'performance_smoke', 'backend',
+    'smoke', 'golden', 'performance_smoke', 'geometry_parity', 'backend',
   ]);
   assert.deepEqual(fixture.proof.requiredChecks, requiredCheckIds(fixture.proof));
 });

@@ -216,6 +216,7 @@ jobs:
       actions: read
     outputs:
       frontend: ${{ steps.classify.outputs.frontend }}
+      geometry_parity: ${{ steps.classify.outputs.geometry_parity }}
       backend: ${{ steps.classify.outputs.backend }}
       integration: ${{ steps.classify.outputs.integration }}
       perf_iso: ${{ steps.classify.outputs.perf_iso }} # #473 §5
@@ -370,11 +371,13 @@ jobs:
       smoke: ${{ steps.probe.outputs.smoke }}
       golden: ${{ steps.probe.outputs.golden }}
       performance_smoke: ${{ steps.probe.outputs.performance_smoke }}
+      geometry_parity: ${{ steps.probe.outputs.geometry_parity }}
       backend: ${{ steps.probe.outputs.backend }}
       smoke_key: ${{ steps.keys.outputs.smoke }}
       golden_key: ${{ steps.keys.outputs.golden }}
       performance_smoke_key: ${{ steps.keys.outputs.performance_smoke }}
       performance_smoke_set: ${{ steps.keys.outputs.performance_smoke_set }}
+      geometry_parity_key: ${{ steps.keys.outputs.geometry_parity }}
       backend_key: ${{ steps.keys.outputs.backend }}
       smoke_source_run: ${{ steps.p_smoke.outputs.source_run }}
       smoke_source_attempt: ${{ steps.p_smoke.outputs.source_attempt }}
@@ -385,6 +388,9 @@ jobs:
       performance_smoke_source_run: ${{ steps.p_perf.outputs.source_run }}
       performance_smoke_source_attempt: ${{ steps.p_perf.outputs.source_attempt }}
       performance_smoke_source_sha: ${{ steps.p_perf.outputs.source_sha }}
+      geometry_parity_source_run: ${{ steps.p_geometry_parity.outputs.source_run }}
+      geometry_parity_source_attempt: ${{ steps.p_geometry_parity.outputs.source_attempt }}
+      geometry_parity_source_sha: ${{ steps.p_geometry_parity.outputs.source_sha }}
       backend_source_run: ${{ steps.p_backend.outputs.source_run }}
       backend_source_attempt: ${{ steps.p_backend.outputs.source_attempt }}
       backend_source_sha: ${{ steps.p_backend.outputs.source_sha }}
@@ -398,7 +404,7 @@ jobs:
           PERF_ISO: ${{ needs.changes.outputs.perf_iso }}
           PERF_INTERACTION: ${{ needs.changes.outputs.perf_interaction }}
         run: |
-          for job in smoke golden performance_smoke backend; do
+          for job in smoke golden performance_smoke geometry_parity backend; do
             key=$(node scripts/gate-reuse.mjs --job="$job")
             echo "$job=$key" >> "$GITHUB_OUTPUT"
             echo "$job: $key"
@@ -451,6 +457,19 @@ jobs:
       - name: Очистить маркер performance_smoke перед следующим lookup
         if: always()
         run: rm -f .reuse-marker
+      - name: Маркер geometry_parity
+        id: m_geometry_parity
+        uses: actions/cache/restore@v6
+        with:
+          path: .reuse-marker
+          key: reuse-geometry_parity-${{ steps.keys.outputs.geometry_parity }}
+      - name: Доказательство источника geometry_parity
+        id: p_geometry_parity
+        if: steps.m_geometry_parity.outputs.cache-hit == 'true'
+        run: node scripts/ci-proof.mjs --marker=.reuse-marker
+      - name: Очистить маркер geometry_parity перед следующим lookup
+        if: always()
+        run: rm -f .reuse-marker
       - name: Маркер backend
         id: m_backend
         uses: actions/cache/restore@v6
@@ -470,6 +489,7 @@ jobs:
           SMOKE: ${{ steps.m_smoke.outputs.cache-hit }}
           GOLDEN: ${{ steps.m_golden.outputs.cache-hit }}
           PERF: ${{ steps.m_perf.outputs.cache-hit }}
+          GEOMETRY_PARITY: ${{ steps.m_geometry_parity.outputs.cache-hit }}
           BACKEND: ${{ steps.m_backend.outputs.cache-hit }}
         run: |
           # Пропуск обязан быть громким: молчаливый skip — тот самый тихий
@@ -488,6 +508,7 @@ jobs:
           waive smoke "$SMOKE"
           waive golden "$GOLDEN"
           waive performance_smoke "$PERF"
+          waive geometry_parity "$GEOMETRY_PARITY"
           waive backend "$BACKEND"
 
   hacs:
@@ -1048,6 +1069,40 @@ jobs:
           path: .reuse-marker
           key: reuse-performance_smoke-${{ needs.reuse.outputs.performance_smoke_key }}-${{ needs.reuse.outputs.performance_smoke_set }}
 
+  geometry_parity:
+    name: "Геометрия: TS/Python parity исполнена"
+    needs: [changes, reuse]
+    if: needs.changes.outputs.geometry_parity == 'true' && needs.reuse.outputs.geometry_parity != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: .python-version
+      - run: npm ci
+      - name: Компилировать узкое TS-зеркало П1–П4
+        run: |
+          npx --no-install tsc -p tsconfig.junction-parity.json
+          node scripts/fix-test-build.mjs
+      - name: Сравнить настоящие TS/Python validators (fail closed)
+        run: python tests_backend/junction_parity.py --build-dir=test-build/junction-parity
+      - name: Записать маркер успеха
+        run: |
+          printf '%s\n' "geometry_parity прогнана успешно" \
+            "SHA: ${{ github.sha }}" \
+            "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            "попытка: ${{ github.run_attempt }}" \
+            > .reuse-marker
+      - uses: actions/cache/save@v6
+        continue-on-error: true
+        with:
+          path: .reuse-marker
+          key: reuse-geometry_parity-${{ needs.reuse.outputs.geometry_parity_key }}
+
   backend:
     name: "Бэкенд: pytest в Home Assistant"
     needs: [changes, reuse]
@@ -1137,7 +1192,7 @@ jobs:
   proof:
     name: "Доказательство выполненных проверок"
     if: always()
-    needs: [preflight, changes, reuse, hacs, hassfest, changed_mutants, frontend, smoke, smoke_done, golden, performance_smoke, backend]
+    needs: [preflight, changes, reuse, hacs, hassfest, changed_mutants, frontend, smoke, smoke_done, golden, performance_smoke, geometry_parity, backend]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

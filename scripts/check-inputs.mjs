@@ -324,6 +324,17 @@ export const CHECKS = {
     roots: [...BUILD_INPUTS, 'demo/performance/**', ...BROWSER_PROTOCOL, ...REUSE_PROTOCOL, ...WORKFLOW],
     reuse: true,
   },
+  geometry_parity: {
+    // #548: узкий clean-runner guard реальных TS/Python зеркал П1–П4.
+    // Полный frontend artifact и HA harness ему не нужны; каждый фактический
+    // вход перечислен здесь и участвует одновременно в selection и reuse key.
+    entries: ['tests_backend/junction_parity.py', 'src/junction-limits.ts',
+      'custom_components/houseplan/junction_limits.py', 'scripts/fix-test-build.mjs'],
+    roots: ['tests_backend/pure_imports.py', 'custom_components/houseplan/wall_segment_model.py',
+      'test/fixtures/junction-limits-parity.json', 'tsconfig.junction-parity.json', 'tsconfig.json',
+      'package.json', 'package-lock.json', '.nvmrc', '.python-version', ...REUSE_PROTOCOL, ...WORKFLOW],
+    reuse: true,
+  },
   backend: {
     // pytest tests_backend, unittest scripts/support-relay/tests, ruff/mypy, порог покрытия
     entries: ['tests_backend/**/*.py', 'scripts/support-relay/tests/**/*.py', 'scripts/dump-config-schema.py'],

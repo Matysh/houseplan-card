@@ -1,18 +1,15 @@
 """Issue #329: the backend mirror of the wall-junction limits.
 
 Loaded by path, like the other pure backend tests, so Home Assistant is not
-needed. The parity test at the bottom is the important one: it feeds the same
-fixtures to the TypeScript checks and to this module and demands the same
-verdict, because two implementations of one rule are worth nothing if they can
-disagree.
+needed. Cross-runtime parity is owned by the fail-closed
+``tests_backend/junction_parity.py`` executable and its dedicated Validate job
+(#548); keeping it here as an optional pytest test was the silent-skip defect.
 """
 import json
 import os
-import subprocess
+from pathlib import Path
 
 import pytest
-
-from pathlib import Path
 
 from pure_imports import load_pure
 
@@ -201,74 +198,6 @@ def test_a_write_that_adds_a_violation_is_refused_with_a_stable_code():
         jl.validate_junction_limits(candidate, previous)
     assert excinfo.value.code == "junction_limit_angle"
     assert excinfo.value.space_id == "s"
-
-
-def test_parity_with_the_frontend_checks():
-    """The same fixtures must get the same verdict on both sides."""
-    fixtures = {
-        "angle-14": [(*ray(0), 15), (*ray(14), 15)],
-        "angle-15": [(*ray(0), 15), (*ray(15), 15)],
-        "valence-7": [(*ray(degree), 15)
-                      for degree in (0, 51, 102, 153, 204, 255, 306)],
-        "length-19": [([0.0, 0.0], [cm(19), 0.0], 15)],
-        "length-run": [([0.0, 0.0], [cm(10), 0.0], 15),
-                       ([cm(10), 0.0], [cm(20), 0.0], 15)],
-        "length-thickness": [([0.0, 0.0], [cm(25), 0.0], 30)],
-        "distance-4": [([0.0, 0.0], [cm(300), 0.0], 15),
-                       ([0.0, cm(4)], [cm(300), cm(4)], 15)],
-        "tee": [([0.0, 0.0], [cm(300), 0.0], 15),
-                ([cm(150), 0.0], [cm(150), cm(300)], 15)],
-        # #330 M2: границы из плана тестов §7 — их вердикт обязан совпадать
-        # у зеркал и не зависеть от пути §4.6 (as-is или через миграцию).
-        "angle-15-exact": [(*ray(0), 15), (*ray(15.0), 15)],
-        "length-20-exact": [([0.0, 0.0], [cm(20), 0.0], 15)],
-        "filler-run": [([0.0, 0.0], [cm(349), 0.0], 30),
-                       ([cm(349), 0.0], [cm(354), 0.0], 30),
-                       ([cm(354), 0.0], [cm(554), 0.0], 20)],
-        "distance-5-exact": [([0.0, 0.0], [cm(300), 0.0], 15),
-                             ([0.0, cm(5)], [cm(300), cm(5)], 15)],
-        # #331: пограничные классы точности — вердикт зеркал обязан совпасть.
-        "debris-node": [([-1e-8, 0.0], [cm(300), 0.0], 15),
-                        ([0.0, 0.0], [0.0, cm(300)], 15)],
-        "duplicate-wall": [([0.0, 0.0], [cm(300), 0.0], 15),
-                           ([0.0, 0.0], [cm(300), 0.0], 15)],
-        "collinear-fork": [([0.0, 0.0], [cm(100), 0.0], 15),
-                           ([cm(100), 0.0], [cm(160), 0.0], 15),
-                           ([cm(100), 0.0], [cm(220), 1e-9], 15)],
-    }
-    payload = {name: space(segments, space_id=name)
-               for name, segments in fixtures.items()}
-    mine = {name: rules(sp) for name, sp in payload.items()}
-
-    script = """
-import { checkNodes, checkSegmentLengths, checkNodeDistances } from './test-build/junction-limits.js';
-import { GRID_STEP_N } from './test-build/space-geometry.js';
-let raw = '';
-process.stdin.on('data', (chunk) => { raw += chunk; });
-process.stdin.on('end', () => {
-  const spaces = JSON.parse(raw);
-  const out = {};
-  for (const [name, space] of Object.entries(spaces)) {
-    const segments = space.wall_segments;
-    const violations = [
-      ...checkNodes(segments),
-      ...checkSegmentLengths(segments, space.cell_cm, GRID_STEP_N),
-      ...checkNodeDistances(segments, space.cell_cm, GRID_STEP_N),
-    ];
-    out[name] = [...new Set(violations.map((item) => item.rule))].sort();
-  }
-  process.stdout.write(JSON.stringify(out));
-});
-"""
-    if not os.path.isdir(os.path.join(_ROOT, "test-build")):
-        pytest.skip("test-build/ is not compiled; run npx tsc -p tsconfig.test.json")
-    result = subprocess.run(
-        ["node", "--input-type=module", "--eval", script],
-        cwd=_ROOT, input=json.dumps(payload), capture_output=True, text=True,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr
-    assert json.loads(result.stdout) == mine
 
 
 # --- #330: производительность без смены вердиктов ---

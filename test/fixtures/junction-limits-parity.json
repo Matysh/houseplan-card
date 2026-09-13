@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "cell_cm": 5,
+  "cases": [
+    {
+      "name": "angle-14",
+      "segments": [
+        { "ray_degrees": 0, "length_cm": 100, "thickness_cm": 15 },
+        { "ray_degrees": 14, "length_cm": 100, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "angle-15",
+      "segments": [
+        { "ray_degrees": 0, "length_cm": 100, "thickness_cm": 15 },
+        { "ray_degrees": 15, "length_cm": 100, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "valence-7",
+      "segments": [
+        { "ray_degrees": 0, "length_cm": 100, "thickness_cm": 15 },
+        { "ray_degrees": 51, "length_cm": 100, "thickness_cm": 15 },
+        { "ray_degrees": 102, "length_cm": 100, "thickness_cm": 15 },
+        { "ray_degrees": 153, "length_cm": 100, "thickness_cm": 15 },
+        { "ray_degrees": 204, "length_cm": 100, "thickness_cm": 15 },
+        { "ray_degrees": 255, "length_cm": 100, "thickness_cm": 15 },
+        { "ray_degrees": 306, "length_cm": 100, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "length-19",
+      "segments": [
+        { "a": { "cm": [0, 0] }, "b": { "cm": [19, 0] }, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "length-run",
+      "segments": [
+        { "a": { "cm": [0, 0] }, "b": { "cm": [10, 0] }, "thickness_cm": 15 },
+        { "a": { "cm": [10, 0] }, "b": { "cm": [20, 0] }, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "length-thickness",
+      "segments": [
+        { "a": { "cm": [0, 0] }, "b": { "cm": [25, 0] }, "thickness_cm": 30 }
+      ]
+    },
+    {
+      "name": "distance-4",
+      "segments": [
+        { "a": { "cm": [0, 0] }, "b": { "cm": [300, 0] }, "thickness_cm": 15 },
+        { "a": { "cm": [0, 4] }, "b": { "cm": [300, 4] }, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "tee",
+      "segments": [
+        { "a": { "cm": [0, 0] }, "b": { "cm": [300, 0] }, "thickness_cm": 15 },
+        { "a": { "cm": [150, 0] }, "b": { "cm": [150, 300] }, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "angle-15-exact",
+      "segments": [
+        { "ray_degrees": 0, "length_cm": 100, "thickness_cm": 15 },
+        { "ray_degrees": 15, "length_cm": 100, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "length-20-exact",
+      "segments": [
+        { "a": { "cm": [0, 0] }, "b": { "cm": [20, 0] }, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "filler-run",
+      "segments": [
+        { "a": { "cm": [0, 0] }, "b": { "cm": [349, 0] }, "thickness_cm": 30 },
+        { "a": { "cm": [349, 0] }, "b": { "cm": [354, 0] }, "thickness_cm": 30 },
+        { "a": { "cm": [354, 0] }, "b": { "cm": [554, 0] }, "thickness_cm": 20 }
+      ]
+    },
+    {
+      "name": "distance-5-exact",
+      "segments": [
+        { "a": { "cm": [0, 0] }, "b": { "cm": [300, 0] }, "thickness_cm": 15 },
+        { "a": { "cm": [0, 5] }, "b": { "cm": [300, 5] }, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "debris-node",
+      "segments": [
+        { "a": { "units": [-1e-8, 0] }, "b": { "cm": [300, 0] }, "thickness_cm": 15 },
+        { "a": { "cm": [0, 0] }, "b": { "cm": [0, 300] }, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "duplicate-wall",
+      "segments": [
+        { "a": { "cm": [0, 0] }, "b": { "cm": [300, 0] }, "thickness_cm": 15 },
+        { "a": { "cm": [0, 0] }, "b": { "cm": [300, 0] }, "thickness_cm": 15 }
+      ]
+    },
+    {
+      "name": "collinear-fork",
+      "segments": [
+        { "a": { "cm": [0, 0] }, "b": { "cm": [100, 0] }, "thickness_cm": 15 },
+        { "a": { "cm": [100, 0] }, "b": { "cm": [160, 0] }, "thickness_cm": 15 },
+        { "a": { "cm": [100, 0] }, "b": { "cm": [220, 0], "units_offset": [0, 1e-9] }, "thickness_cm": 15 }
+      ]
+    }
+  ]
+}

@@ -130,6 +130,11 @@ git config core.untrackedCache true
   `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'`.
 - Full backend (including `test_ha_*.py`): `python -m pytest tests_backend/ -q`
   in CI or WSL/Linux only.
+- Junction-limit TS/Python parity (clean, no Home Assistant):
+  `npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs &&
+  python tests_backend/junction_parity.py --build-dir=test-build/junction-parity`.
+  Its dedicated reusable Validate job owns this proof; missing compiled modules
+  fail setup instead of turning into a pytest skip.
 - IMPORTANT (audit lesson): the rollup typescript plugin reports a syntax error as a WARNING and still
   builds the bundle — a truncated file can "pass". That is why the build starts with `tsc --noEmit`,
   which fails on such errors. Always build with `npm run build`, never bare `rollup -c`.

@@ -68,6 +68,20 @@ test('#492 §1.2: relay, converter, schema и pyproject запускают backe
   }
 });
 
+test('#548: parity выбирается по обоим зеркалам, fixture и toolchain, но не по чужому UI', () => {
+  for (const file of ['src/junction-limits.ts', 'src/space-geometry.ts',
+    'custom_components/houseplan/junction_limits.py',
+    'custom_components/houseplan/wall_segment_model.py',
+    'tests_backend/junction_parity.py', 'test/fixtures/junction-limits-parity.json',
+    'tsconfig.junction-parity.json', 'package-lock.json', '.nvmrc', '.python-version']) {
+    const out = classify([file]);
+    assert.equal(out.geometry_parity, 'true', file);
+    assert.deepEqual(out.unknown, [], file);
+  }
+  assert.equal(classify(['src/houseplan-card.ts']).geometry_parity, 'false');
+  assert.equal(classify(['custom_components/houseplan/websocket_api.py']).geometry_parity, 'false');
+});
+
 test('#492 AC6: правка UI не классифицируется как backend', () => {
   const out = classify(['src/houseplan-card.ts', 'src/houseplan-editor-runtime.ts']);
   assert.equal(out.backend, 'false');

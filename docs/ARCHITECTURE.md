@@ -2034,6 +2034,13 @@ not the feeling that "editor text should be lazy".
 - The backend CI job measures branch coverage (pure + HA harness combined),
   fails below `scripts/backend-coverage-baseline.txt` and refuses to run when
   the HA harness would silently skip.
+- The junction-limit mirror has a separate clean-runner `geometry_parity` job
+  (#548). It compiles only the transitive TypeScript graph rooted at
+  `src/junction-limits.ts`, loads the production Python module without Home
+  Assistant and compares both over `test/fixtures/junction-limits-parity.json`.
+  The job fails closed on missing build/runtime prerequisites, announces the
+  number of executed scenarios, and reuses a result only when both mirrors,
+  fixture, toolchain pins and harness inputs are byte-identical.
 - `const.ERROR_CODES` / `ERROR_CODE_FAMILIES` are THE stable error contract:
   the scanner test proves every emitted code (send_error literals, exception
   class attrs, literal and variable-passed MarkerControlError codes, f-string

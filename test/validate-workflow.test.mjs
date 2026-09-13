@@ -91,7 +91,7 @@ test('джобы с полной историей качают её без бл�
     // job `changes`, поэтому имя job ищется только с начала строки.
     const start = workflow.indexOf(`\n  ${job}:\n`);
     assert.ok(start > 0, `нет job ${job}`);
-    const chunk = workflow.slice(start, start + 1400);
+    const chunk = workflow.slice(start, start + 1800);
     assert.match(chunk, /fetch-depth: 0, filter: 'blob:none'/,
       `${job} обязана качать историю без блобов`);
   }
@@ -193,7 +193,7 @@ test('перф-смок добавляет профиль ровно при св
   assert.ok(!changes.includes("printf 'frontend=true"), 'ручной список выходов в fallback-е запрещён');
 
   const start = workflow.indexOf('\n  performance_smoke:\n');
-  const job = workflow.slice(start, workflow.indexOf('\n  backend:\n', start));
+  const job = workflow.slice(start, workflow.indexOf('\n  geometry_parity:\n', start));
   assert.match(job, /needs: \[changes, frontend, reuse\]/);
   const iso = job.slice(job.indexOf('Изометрический профиль по диффу'), job.indexOf('Профиль взаимодействия по диффу'));
   assert.match(iso, /if: needs\.changes\.outputs\.perf_iso == 'true'/);
@@ -206,6 +206,34 @@ test('перф-смок добавляет профиль ровно при св
   // Glow-профили остаются безусловными.
   const glow = job.slice(job.indexOf('Capture the heaviest Glow state'), job.indexOf('Enforce absolute smoke ceilings'));
   assert.ok(!/\n\s+if:/.test(glow), 'glow-профили гоняются всегда');
+});
+
+test('#548: TS/Python parity — отдельная clean-runner job без тихого skip', () => {
+  const workflow = read('validate.yml');
+  const start = workflow.indexOf('\n  geometry_parity:\n');
+  const job = workflow.slice(start, workflow.indexOf('\n  backend:\n', start));
+  assert.ok(start > 0, 'нет job geometry_parity');
+  assert.match(job, /needs: \[changes, reuse\]/);
+  assert.match(job, /if: needs\.changes\.outputs\.geometry_parity == 'true'/);
+  assert.match(job, /node-version-file: \.nvmrc/);
+  assert.match(job, /python-version-file: \.python-version/);
+  assert.match(job, /npx --no-install tsc -p tsconfig\.junction-parity\.json/);
+  assert.match(job, /python tests_backend\/junction_parity\.py --build-dir=test-build\/junction-parity/);
+  assert.match(job, /reuse-geometry_parity-\$\{\{ needs\.reuse\.outputs\.geometry_parity_key \}\}/);
+  assert.ok(!/pytest\.skip|continue-on-error:[^\n]*\n[^]*junction_parity\.py/.test(job),
+    'паритет не может становиться зелёным через skip/continue-on-error');
+
+  const changes = workflow.slice(workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'));
+  assert.match(changes, /geometry_parity: \$\{\{ steps\.classify\.outputs\.geometry_parity \}\}/);
+  const reuse = workflow.slice(workflow.indexOf('\n  reuse:\n'), workflow.indexOf('\n  hacs:\n'));
+  assert.match(reuse, /geometry_parity_key: \$\{\{ steps\.keys\.outputs\.geometry_parity \}\}/);
+  assert.match(reuse, /waive geometry_parity "\$GEOMETRY_PARITY"/);
+
+  const oldPytestHome = readFileSync(
+    new URL('../tests_backend/test_junction_limits.py', import.meta.url), 'utf8',
+  );
+  assert.doesNotMatch(oldPytestHome, /pytest\.skip\([^\n]*test-build/,
+    'старый optional parity pytest не должен возвращаться рядом с обязательной job');
 });
 
 test('ключ reuse перф-смока различает наборы профилей (#473 AC5)', () => {
@@ -468,7 +496,7 @@ test('#541: Validate всегда публикует proof точной попы
   assert.match(proof, /if: always\(\)/, 'proof создаётся и на красном прогоне');
   for (const dependency of [
     'preflight', 'changes', 'reuse', 'hacs', 'hassfest', 'changed_mutants',
-    'frontend', 'smoke', 'smoke_done', 'golden', 'performance_smoke', 'backend',
+    'frontend', 'smoke', 'smoke_done', 'golden', 'performance_smoke', 'geometry_parity', 'backend',
   ]) assert.match(proof, new RegExp(`needs: \\[[^\\n]*\\b${dependency}\\b`), dependency);
   assert.match(proof, /CANDIDATE_SHA: \$\{\{ github\.sha \}\}/);
   assert.match(proof, /CANDIDATE_TREE: \$\{\{ steps\.candidate\.outputs\.tree \}\}/);
@@ -480,12 +508,12 @@ test('#541: Validate всегда публикует proof точной попы
   assert.match(proof, /name: ci-proof-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
 
   const reuse = workflow.slice(workflow.indexOf('\n  reuse:\n'), workflow.indexOf('\n  hacs:\n'));
-  for (const id of ['smoke', 'golden', 'performance_smoke', 'backend']) {
+  for (const id of ['smoke', 'golden', 'performance_smoke', 'geometry_parity', 'backend']) {
     assert.match(reuse, new RegExp(`${id}_source_run:`), `${id}: source run output`);
     assert.match(reuse, new RegExp(`${id}_source_attempt:`), `${id}: source attempt output`);
     assert.match(reuse, new RegExp(`${id}_source_sha:`), `${id}: source SHA output`);
   }
-  assert.equal((reuse.match(/node scripts\/ci-proof\.mjs --marker=\.reuse-marker/g) || []).length, 4);
+  assert.equal((reuse.match(/node scripts\/ci-proof\.mjs --marker=\.reuse-marker/g) || []).length, 5);
   assert.equal(reuse.includes('lookup-only: true'), false,
     'marker contents must be restored and verified, not reduced to a cache-hit bit');
 });

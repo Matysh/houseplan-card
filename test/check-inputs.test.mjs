@@ -122,7 +122,7 @@ test('замыкание останавливается на копиях бан
 });
 
 test('каждая проверка объявлена, у тяжёлых job включён реюз, у остальных нет', () => {
-  assert.deepEqual(REUSE_JOBS, ['smoke', 'golden', 'performance_smoke', 'backend']);
+  assert.deepEqual(REUSE_JOBS, ['smoke', 'golden', 'performance_smoke', 'geometry_parity', 'backend']);
   for (const name of CHECK_NAMES) {
     assert.ok(MANIFEST[name].size > 0, `${name}: пустой manifest`);
     assert.ok(Array.isArray(CHECKS[name].entries) && Array.isArray(CHECKS[name].roots), name);
@@ -132,6 +132,16 @@ test('каждая проверка объявлена, у тяжёлых job в
 
 test('§8.1 представители: каждая категория каждой тяжёлой job — её вход', () => {
   const expect = {
+    geometry_parity: {
+      source: ['src/junction-limits.ts', 'src/space-geometry.ts',
+        'custom_components/houseplan/junction_limits.py', 'custom_components/houseplan/wall_segment_model.py'],
+      tests: ['tests_backend/junction_parity.py'],
+      fixtures: ['test/fixtures/junction-limits-parity.json'],
+      config: ['tsconfig.junction-parity.json', 'tsconfig.json'],
+      toolchain: ['package.json', 'package-lock.json', '.nvmrc', '.python-version',
+        '.github/workflows/validate.yml'],
+      protocol: ['scripts/fix-test-build.mjs', 'scripts/gate-reuse.mjs', 'scripts/check-inputs.mjs'],
+    },
     backend: {
       source: ['custom_components/houseplan/websocket_api.py', 'scripts/support-relay/relay.py',
         'scripts/support-relay/hp_relay/app.py', 'scripts/sh3d-convert/convert.mjs', 'scripts/dump-config-schema.py'],
@@ -215,6 +225,10 @@ test('§8.1 обратная проба (AC6): UI — не вход backend, bac
   // честная зависимость; но tests_backend/** браузерным job не нужны
   for (const job of ['smoke', 'golden', 'performance_smoke']) {
     assert.ok(![...MANIFEST[job]].some((f) => f.startsWith('tests_backend/')), `${job} читает tests_backend`);
+  }
+  for (const file of ['src/houseplan-card.ts', 'src/houseplan-editor-runtime.ts',
+    'custom_components/houseplan/websocket_api.py']) {
+    assert.ok(!MANIFEST.geometry_parity.has(file), `geometry_parity зависит от ${file}`);
   }
 });
 

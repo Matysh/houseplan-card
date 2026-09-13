@@ -36,6 +36,7 @@ const JOB_RULES = Object.freeze({
   ],
   golden: [{ exact: 'Golden-кадры против принятых эталонов', count: 1 }],
   performance_smoke: [{ exact: 'Перф-смок: бюджет времени кадра', count: 1 }],
+  geometry_parity: [{ exact: 'Геометрия: TS/Python parity исполнена', count: 1 }],
   backend: [{ exact: 'Бэкенд: pytest в Home Assistant', count: 1 }],
 });
 
@@ -66,6 +67,7 @@ export function requiredCheckIds({ request = {}, selection = {} } = {}) {
   if (asBool(selection.integration)) ids.push('integration');
   if (asBool(request.mutants)) ids.push('mutants');
   if (asBool(request.full)) ids.push('smoke', 'golden', 'performance_smoke');
+  if (asBool(selection.geometry_parity)) ids.push('geometry_parity');
   if (asBool(selection.backend)) ids.push('backend');
   return ids;
 }
@@ -90,6 +92,7 @@ export function buildCiProof({
   };
   const selection = {
     frontend: asBool(changes.frontend),
+    geometry_parity: asBool(changes.geometry_parity),
     backend: asBool(changes.backend),
     integration: asBool(changes.integration),
   };
@@ -124,6 +127,7 @@ export function buildCiProof({
     executedOrReused('golden');
     executedOrReused('performance_smoke');
   }
+  if (selection.geometry_parity) executedOrReused('geometry_parity');
   if (selection.backend) executedOrReused('backend');
   const requiredChecks = requiredCheckIds({ request, selection });
   return {
