@@ -430,15 +430,15 @@ publisher of installable assets (#540). Run it with `workflow_dispatch` on
 `main` with the exact tag: when the tag does not exist yet it is created on the
 `main` tip; when it exists, its commit is the candidate. The workflow resolves
 the tag to its exact commit, requires the `Release: <tag>` trailer on it,
-checks the release contract (`release-contract.mjs --stable`) and requires a
-complete Validate proof for the exact candidate SHA and Git tree (#541). The
-proof is tied to the workflow run ID and attempt and lists both the requested
-checks and the jobs that actually executed. A skipped heavy job counts only
+checks the release contract (`release-contract.mjs --stable`) and
+requires a complete Validate proof for its SHA and
+Git tree (#541). The proof is tied to the workflow run ID and attempt and lists
+both the requested checks and the jobs that actually executed. A skipped heavy job counts only
 when its content-addressed reuse marker names an independently verified
-successful source job. Review, merge and release use the same `missing` /
-`pending` / `cancelled` / `stale` / `failed` state machine. A cancelled or light
-run is not a release verdict and cannot hide an older full failure; a later
-complete full proof can refresh it (#511). The release also requires Full
+successful source job. Review, merge and release use the
+same `missing` / `pending` / `cancelled` / `stale` / `failed` state machine. A
+cancelled or light run is not a release verdict and cannot hide an older full
+failure; a later complete full proof can refresh it (#511). The release also requires Full
 Performance and a green E2E run on a
 real Home Assistant — `e2e-gate.mjs --ref=<sha>` dispatches `e2e.yml` in
 `Matysh/houseplan-e2e` on the **candidate commit**, whose
