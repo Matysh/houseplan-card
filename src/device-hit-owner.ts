@@ -265,8 +265,10 @@ export class DeviceHitController {
   public click<T extends RenderedDeviceHitItem>(
     root: ParentNode, devices: readonly T[], space: string | null, ev: Event, fallback: T,
   ): T {
-    if (ev instanceof KeyboardEvent) return fallback;
-    const point = ev as PointerEvent;
+    // Keyboard/programmatic activation is already bound to an exact marker.
+    // Only a real pointer click carries coordinates that need arbitration.
+    if (!(ev instanceof PointerEvent)) return fallback;
+    const point = ev;
     const id = Number.isFinite(point.pointerId) ? this.pointers.consumeClick(point.pointerId) : null;
     return this.byId(devices, space, id)
       || this.at(root, devices, space, point.clientX, point.clientY)

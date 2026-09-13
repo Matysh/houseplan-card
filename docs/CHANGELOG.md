@@ -5,7 +5,8 @@
 - Closely placed device markers no longer steal one another's hover, click,
   long-press or drag target. The painted marker under the pointer now wins;
   overlapping invisible touch areas fall back to the nearest marker while the
-  existing 44 px minimum target remains unchanged
+  existing 44 px minimum target remains unchanged. Keyboard and programmatic
+  activation stay attached to the explicitly targeted marker
   ([#564](https://github.com/Matysh/houseplan-card/issues/564)).
 
 - Pinch-zooming the plan from a device marker no longer runs that device's

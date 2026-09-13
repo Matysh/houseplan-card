@@ -5742,7 +5742,7 @@ export class HouseplanCard extends LitElement {
     const presentation = this._devicePresentation(d, showLqi);
     const disabledReason = presentation.disabledReason;
     const ghostLabel = presentation.haDisabled
-      ? this._t((`marker.ha_disabled_${disabledReason}`) as any)
+      ? this._t((`marker.ha_disabled_${disabledReason}`) as I18nKey)
       : d.userHidden ? this._t('marker.hidden_ghost') : d.name;
     const metrics = [
       d.model,

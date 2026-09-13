@@ -13,6 +13,7 @@ test('#564 wires one semantic owner through pointer, click and hover paths', () 
   assert.match(card, /private _pointerDown[\s\S]*?_deviceHits\.begin/);
   assert.match(card, /private _pointerCancel[\s\S]*?_deviceHits\.cancel/);
   assert.match(owner, /class DeviceHitController[\s\S]*?consumeClick/);
+  assert.match(owner, /if \(!\(ev instanceof PointerEvent\)\) return fallback/);
   assert.match(owner, /hover\([\s\S]*?data-hp-device-hover/);
 });
 

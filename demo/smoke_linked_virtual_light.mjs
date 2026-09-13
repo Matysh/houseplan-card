@@ -15,10 +15,12 @@ const result = await page.evaluate(async () => {
   const frame = () => new Promise((resolve) => requestAnimationFrame(
     () => requestAnimationFrame(resolve),
   ));
-  const until = async (predicate, timeout = 6000) => {
+  const until = async (predicate, timeout = 6000, label = '') => {
     const started = performance.now();
     while (!predicate()) {
-      if (performance.now() - started > timeout) throw new Error('linked-light smoke timed out');
+      if (performance.now() - started > timeout) {
+        throw new Error(`linked-light smoke timed out${label ? `: ${label}` : ''}`);
+      }
       await wait(25);
     }
   };
@@ -162,8 +164,24 @@ const result = await page.evaluate(async () => {
       })}`, { cause: error });
     }
   };
+  let clickPointerId = 17300;
   const click = async (id) => {
-    node(id).dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+    const target = node(id);
+    const rect = target.getBoundingClientRect();
+    const clientX = rect.left + rect.width / 2;
+    const clientY = rect.top + rect.height / 2;
+    const pointerId = ++clickPointerId;
+    target.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true, composed: true, pointerId, pointerType: 'mouse',
+      clientX, clientY, button: 0, buttons: 1,
+    }));
+    target.dispatchEvent(new PointerEvent('pointerup', {
+      bubbles: true, composed: true, pointerId, pointerType: 'mouse',
+      clientX, clientY, button: 0, buttons: 0,
+    }));
+    target.dispatchEvent(new MouseEvent('click', {
+      bubbles: true, composed: true, clientX, clientY, button: 0,
+    }));
     await wait(0);
   };
   const targetsOf = (call) => {
@@ -283,11 +301,28 @@ const result = await page.evaluate(async () => {
   card._regSignature = '';
   card._maybeRebuildDevices();
   await card.updateComplete;
-  await until(() => !isOn(sourceId));
+  await until(() => !isOn(sourceId), 6000, 'unlink did not restore manual off');
   const unlinkRestoresManualOff = !isOn(sourceId) && virtual.off.includes(sourceId);
   const beforeManualService = serviceCalls.length;
   await click(sourceId);
-  await until(() => isOn(sourceId));
+  try {
+    await until(() => isOn(sourceId), 6000, 'manual virtual toggle did not turn on');
+  } catch (error) {
+    throw new Error(`manual virtual toggle did not settle: ${JSON.stringify({
+      operationalToggleCalls,
+      serviceCalls: serviceCalls.length,
+      beforeManualService,
+      off: virtual.off,
+      suppressClick: card._suppressClick,
+      holdFired: card._holdFired,
+      deviceDrag: card._deviceDrag,
+      sourceAction: item(sourceId)?.tapAction,
+      sourceBinding: item(sourceId)?.binding,
+      sourceState: card._stateClass(item(sourceId)),
+      sourceIntent: card._toggleIntent(item(sourceId)),
+      sourceConnected: node(sourceId)?.isConnected,
+    })}`, { cause: error });
+  }
   const manualToggleRestored = operationalToggleCalls === 1
     && serviceCalls.length === beforeManualService && !virtual.off.includes(sourceId);
 
