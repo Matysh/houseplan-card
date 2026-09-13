@@ -11,6 +11,7 @@ import {
   anchorSpan, anchorRegion, parseDiffRanges, ANCHOR_RADIUS_LINES,
   witnessFingerprint, readLedger, recordCaught, splitByLedger, LEDGER_SCHEMA,
 } from '../scripts/mutation-gate.mjs';
+import { guardPhases } from '../scripts/mutation-guard-outcome.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -62,6 +63,24 @@ test('every mutant explains itself', () => {
     ids.add(mutant.id);
   }
   assert.ok(MUTANTS.length >= 6, 'стартовый набор — шесть мутантов по дырам из #85');
+});
+
+test('#550: assertion witnesses have no behavioural oracle hidden in setup', () => {
+  const behavioural = /(?:node --test|(?:^|\s)node demo\/(?:smoke|benchmark)_|(?:^|\s)(?:python3? -m )?pytest\b)/;
+  for (const mutant of MUTANTS.filter(({ oracle }) => (oracle || 'assertion') === 'assertion')) {
+    const phases = guardPhases(mutant.guard, 'assertion');
+    for (const command of phases.setup) {
+      assert.doesNotMatch(command, behavioural,
+        `${mutant.id}: behavioural command is setup, not the declared oracle`);
+    }
+  }
+});
+
+test('#550: preflight saved-config mutant targets the editor host and still compiles', () => {
+  const mutant = MUTANTS.find(({ id }) => id === 'preflight-fingerprint-from-saved-config');
+  assert.ok(mutant);
+  assert.equal(mutant.patches[0].file, 'src/houseplan-editor-runtime.ts');
+  assert.match(mutant.patches[0].replace, /this\.host\._serverCfg/);
 });
 
 test('#486 panel registration, cleanup and read-only protections have mutation witnesses', () => {

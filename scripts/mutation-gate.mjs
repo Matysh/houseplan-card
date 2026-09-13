@@ -3269,12 +3269,11 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'junction-limit-baseline-cache-stale',
-    // r2-M1: the behavioural guard — the smoke counts BASELINE computations
-    // (exactly one per gesture with a working cache, one per pointermove
-    // without) — plus the source-contract unit stays as the cheap first line.
-    guard: 'node demo/smoke_junction_limits.mjs '
-      + '&& npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#330 AC4" test/junction-limits.test.mjs',
+    // r2-M1: the behavioural oracle counts BASELINE computations (exactly one
+    // per gesture with a working cache, one per pointermove without). Keep it
+    // as the sole oracle: a second behavioural command in an `&&` prefix is a
+    // setup phase under the honest #550 taxonomy and cannot prove the mutant.
+    guard: 'node demo/smoke_junction_limits.mjs',
     because: 'a baseline cache that survives a config epoch change serves verdicts of a '
       + 'plan that no longer exists — the epoch check IS the invalidation contract (#330 §4.4)',
     patches: [{
@@ -5943,9 +5942,11 @@ const MUTANT_DEFINITIONS = [
       + '&& node demo/smoke_preflight_diagnostics.mjs',
     because: 'диагностика с хэшем сохранённой геометрии не несёт ничего сверх экспорта (AC4)',
     patches: [{
-      file: 'src/houseplan-card.ts',
+      // This method lives on HouseplanEditorRuntime after the editor split;
+      // the saved config belongs to the typed host, not to the runtime itself.
+      file: 'src/houseplan-editor-runtime.ts',
       find: "    const spacesById = new Map(((candidate as any)?.spaces || [])",
-      replace: "    const spacesById = new Map(((this._serverCfg as any)?.spaces || [])",
+      replace: "    const spacesById = new Map(((this.host._serverCfg as any)?.spaces || [])",
     }],
   },
   {
@@ -5968,8 +5969,7 @@ const MUTANT_DEFINITIONS = [
     // возвращает глобальный блокер рисования beta.3.
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="migrates unhosted instead of blocking" '
-      + 'test/wall-segment-model.test.mjs '
-      + '&& node demo/smoke_zero_wall_migration_unblocked.mjs',
+      + 'test/wall-segment-model.test.mjs',
     because: 'один конфликтный проём снова заблокировал бы структурные записи во всех пространствах (#316)',
     patches: [{
       file: 'src/wall-segment-model.ts',

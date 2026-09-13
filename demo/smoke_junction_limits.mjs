@@ -279,9 +279,46 @@ if (handle) {
   }
 }
 
+// #330 AC4 / #550: the production cache is keyed by the config object because
+// physical commits intentionally update that object in place. Prove that a
+// changed geometry fingerprint invalidates an entry even when object identity
+// is unchanged; the gesture above normally receives a fresh object after the
+// write and therefore cannot distinguish this case on its own.
+resize.resizeBaselineFingerprintRejectsStaleObject = await page.evaluate(() => {
+  const card = window.__card;
+  const runtime = card._editorRuntime;
+  const previous = structuredClone(card._serverCfg);
+  const space = previous?.spaces?.find((entry) => entry.id === card._space);
+  if (!runtime || !space || !space.rooms?.length) return false;
+  const firstRoom = space.rooms[0];
+  const point = Array.isArray(firstRoom.poly) ? firstRoom.poly[0] : null;
+  if (!Array.isArray(point)) return false;
+  const original = card._junctionLimitViolations;
+  let calls = 0;
+  card._junctionLimitViolations = (...args) => {
+    if (args[0] === previous) calls += 1;
+    return original(...args);
+  };
+  try {
+    runtime._junctionLimitsIntroduced(structuredClone(previous), previous, space.id);
+    if (!runtime._junctionBaselineCache.get(previous)) return false;
+    point[0] += 0.001;
+    runtime._junctionLimitsIntroduced(structuredClone(previous), previous, space.id);
+    return calls === 2;
+  } finally {
+    card._junctionLimitViolations = original;
+  }
+});
+
 checkAll({ ...out, ...resize }, {
   resizeGapBefore: 10,
   resizeStoppedAtLastAllowed: 6,
   resizeRefusalOnce: 1,
+  resizeHandleFound: true,
+  resizeRefusalNamesRule: true,
+  resizeBaselineComputedOncePerGesture: true,
+  resizeSecondHandleFound: true,
+  resizeBaselineRecomputedAfterCommit: true,
+  resizeBaselineFingerprintRejectsStaleObject: true,
 });
 await finish(browser);
