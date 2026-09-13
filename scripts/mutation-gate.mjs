@@ -7859,6 +7859,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-model-seals-verdict-as-boolean',
+    guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
+    because: '#551: результат JSON-schema review должен дойти до интеграции объектом; '
+      + 'перенаправление stdout предиката jq записывает boolean true и роняет публикацию',
+    patches: [{
+      file: '.github/workflows/process.yml',
+      find: '          printf \'%s\' "$OUT" > "$RUNNER_TEMP/verdict.json"',
+      replace: '          printf \'%s\' "$OUT" | jq -e \'true\' > "$RUNNER_TEMP/verdict.json" # mutant: boolean payload',
+    }],
+  },
+  {
     id: 'review-integration-skips-evidence-checksum',
     guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
     because: '#551: artifact между моделью и привилегированной интеграцией — вход доверенной '

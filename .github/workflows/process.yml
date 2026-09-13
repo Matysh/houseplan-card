@@ -1082,10 +1082,11 @@ jobs:
           legacy="docs/reviews/${marker}-${NUM}-r${CYCLE}.md"
           if [ ! -f "$SOURCE" ] && [ -f "$legacy" ]; then cp "$legacy" "$SOURCE"; fi
           test -s "$SOURCE" || { echo "::error::модель не оставила документ ревью"; exit 1; }
-          printf '%s' "$OUT" | jq -e '
+          printf '%s' "$OUT" > "$RUNNER_TEMP/verdict.json"
+          jq -e '
             (.verdict == "green" or .verdict == "yellow" or .verdict == "red")
             and (.high | type == "number") and (.medium | type == "number")
-            and (.summary | type == "string")' > "$RUNNER_TEMP/verdict.json"
+            and (.summary | type == "string")' "$RUNNER_TEMP/verdict.json" >/dev/null
           dir="$RUNNER_TEMP/review-result"
           mkdir -p "$dir"
           cp "$RUNNER_TEMP/review-prepared/prepared.json" "$dir/prepared.json"

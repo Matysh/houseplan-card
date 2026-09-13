@@ -768,6 +768,17 @@ test('#551: gates, модель и интеграция имеют незави�
   assert.doesNotMatch(model, /validate-gate\.mjs/, 'ожидания Validate нет в бюджете модели');
   assert.match(model, /needs: \[guard, prepare\]/);
   assert.match(integrate, /needs: \[guard, prepare, model_review\]/);
+  const seal = model.slice(
+    model.indexOf('- name: Запечатать результат модели'),
+    model.indexOf('- name: Передать результат интеграции'),
+  );
+  assert.match(seal, /printf '%s' "\$OUT" > "\$RUNNER_TEMP\/verdict\.json"/,
+    'structured verdict сохраняется как объект до проверки');
+  assert.match(seal,
+    /and \(\.summary \| type == "string"\)' "\$RUNNER_TEMP\/verdict\.json" >\/dev\/null/,
+    'jq валидирует сохранённый объект, не записывает boolean предиката вместо него');
+  assert.doesNotMatch(seal, /jq -e '[\s\S]*> "\$RUNNER_TEMP\/verdict\.json"/,
+    'stdout предиката jq не становится payload интеграции');
   assert.match(model, /ref: \$\{\{ needs\.prepare\.outputs\.material_sha \}\}/,
     'модель получает exact material, а не подвижную ветку');
 
