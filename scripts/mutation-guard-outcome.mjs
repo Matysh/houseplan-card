@@ -90,7 +90,7 @@ const ORACLE_SETUP_FAILURE = new RegExp([
 // Test frameworks include user/fixture text in failure diagnostics. A fixture
 // may literally mention ERR_MODULE_NOT_FOUND, so a proven assertion failure
 // must win over a setup-looking substring quoted inside that assertion.
-const ASSERTION_EVIDENCE = /(?:ERR_ASSERTION|AssertionError|^FAILED\s+\S+)/im;
+const ASSERTION_EVIDENCE = /(?:ERR_ASSERTION|AssertionError|^FAILED\s+\S+|^# Subtest:|^✖\s+)/im;
 
 export function classifyCommandResult(result, { phase = 'oracle', proof = MUTATION_PROOF.ASSERTION } = {}) {
   const stopped = interruption(result);

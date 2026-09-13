@@ -61,6 +61,23 @@ test('#550 fixture: real named assertion failure is reusable proof', () => {
   });
   assert.equal(quotedFixture.kind, MUTATION_OUTCOME.ASSERTION_KILLED,
     'слово из fixture внутри AssertionError не маскирует реальное падение теста');
+  const runtimeEnoent = runGuardPhases('node --test ledger.test.mjs', {
+    execute: () => result(1, [
+      '# Subtest: ledger writes immediately',
+      'not ok 1 - ledger writes immediately',
+      "error: ENOENT: no such file or directory, open 'ledger.json'",
+    ].join('\n')),
+  });
+  assert.equal(runtimeEnoent.kind, MUTATION_OUTCOME.ASSERTION_KILLED,
+    'ошибка поведения внутри исполнившегося subtest не становится setup failure');
+  const specReporter = runGuardPhases('node --test ledger.test.mjs', {
+    execute: () => result(1, [
+      '✖ ledger writes immediately (2ms)',
+      "Error: ENOENT: no such file or directory, open 'ledger.json'",
+    ].join('\n')),
+  });
+  assert.equal(specReporter.kind, MUTATION_OUTCOME.ASSERTION_KILLED,
+    'node spec reporter также доказывает, что именованный test исполнился');
 });
 
 test('#550 fixture: green named assertion means the mutant survived', () => {
