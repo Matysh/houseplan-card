@@ -16,6 +16,7 @@
  *
  *   FAIL <mutant-id>: тест остался зелёным на сломанном коде   → escaped
  *   FAIL чистый прогон: <guard> красный без мутанта             → redGuards
+ *   FAIL <mutant-id>: ошибка подготовки до заявленного теста    → unverifiable
  *
  * Наивный парсер «id — это слово после FAIL» сделал бы из второй формы
  * мутанта по имени «чистый», которого в реестре нет, и команда `--id=чистый`
@@ -34,6 +35,8 @@ export const MUTATION_EVIDENCE_SCHEMA = 'houseplan-mutation-shard-evidence/v1';
 
 const ESCAPED_LINE = /^FAIL (\S+): тест остался зелёным на сломанном коде\s*$/;
 const RED_GUARD_LINE = /^FAIL чистый прогон: (.+?) красный без мутанта\s*$/;
+const UNVERIFIABLE_LINE = /^FAIL (\S+): (неприменимый мутант|ошибка подготовки до заявленного теста|прерывание инфраструктуры)\s*$/;
+const CLEAN_UNVERIFIABLE_LINE = /^FAIL чистая (подготовка|инфраструктура): (.+?)\s*$/;
 const ANY_FAIL_LINE = /^FAIL /;
 
 const FULL_SHA = /^[0-9a-f]{40}$/;
@@ -152,6 +155,7 @@ export function parseShardLogs(logs, knownIds) {
   const known = new Set(knownIds);
   const escaped = new Set();
   const redGuards = new Set();
+  const unverifiable = [];
   const unparsed = [];
   const shards = [];
   for (const { shard, text } of logs) {
@@ -165,6 +169,16 @@ export function parseShardLogs(logs, knownIds) {
       if (asEscaped && known.has(asEscaped[1])) { escaped.add(asEscaped[1]); continue; }
       const asRed = RED_GUARD_LINE.exec(line);
       if (asRed) { redGuards.add(asRed[1]); continue; }
+      const asUnverifiable = UNVERIFIABLE_LINE.exec(line);
+      if (asUnverifiable && known.has(asUnverifiable[1])) {
+        unverifiable.push({ shard, id: asUnverifiable[1], reason: asUnverifiable[2] });
+        continue;
+      }
+      const asCleanUnverifiable = CLEAN_UNVERIFIABLE_LINE.exec(line);
+      if (asCleanUnverifiable) {
+        unverifiable.push({ shard, id: '', reason: `чистая ${asCleanUnverifiable[1]}: ${asCleanUnverifiable[2]}` });
+        continue;
+      }
       unparsed.push({ shard, line });
     }
     shards.push({ shard, status: failed ? 'failed' : 'ok' });
@@ -172,6 +186,7 @@ export function parseShardLogs(logs, knownIds) {
   return {
     escaped: [...escaped].sort(),
     redGuards: [...redGuards].sort(),
+    unverifiable,
     unparsed,
     shards: shards.sort((a, b) => a.shard - b.shard),
   };
@@ -193,7 +208,8 @@ export function mutationGateReport(input) {
   const parsed = parseShardLogs(input.logs || [], [...guards.keys()]);
   const evidenceErrors = [...(input.evidenceErrors || [])];
   const failed = evidenceErrors.length > 0 || parsed.shards.some((s) => s.status !== 'ok')
-    || parsed.escaped.length > 0 || parsed.redGuards.length > 0 || parsed.unparsed.length > 0;
+    || parsed.escaped.length > 0 || parsed.redGuards.length > 0
+    || parsed.unverifiable.length > 0 || parsed.unparsed.length > 0;
   const lines = [];
   lines.push(`Полный мутационный прогон по расписанию не прошёл: ${input.date}, \`${input.ref}\` @ \`${String(input.sha || '').slice(0, 12)}\`.`);
   lines.push(`Прогон: ${input.runUrl}`);
@@ -231,6 +247,17 @@ export function mutationGateReport(input) {
     lines.push('Это не сбежавший мутант: тест падает и на исправном коде, доказать им ничего нельзя. Команда как есть:');
     lines.push('');
     for (const guard of parsed.redGuards) lines.push(`- \`${guard}\``);
+  }
+  if (parsed.unverifiable.length) {
+    lines.push('');
+    lines.push(`## Свидетели без доказательства (${parsed.unverifiable.length})`);
+    lines.push('');
+    lines.push('Заявленный тест не дал вердикт: такой исход не записывается в ledger и не переиспользуется.');
+    lines.push('');
+    for (const item of parsed.unverifiable) {
+      const target = item.id ? `\`${item.id}\`` : `шард ${item.shard}`;
+      lines.push(`- ${target} — ${item.reason}`);
+    }
   }
   if (parsed.unparsed.length) {
     lines.push('');

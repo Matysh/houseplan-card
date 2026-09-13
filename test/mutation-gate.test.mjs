@@ -48,10 +48,17 @@ test('every guard command points at a file that exists', () => {
 
 test('every mutant explains itself', () => {
   const ids = new Set();
+  const guardProofs = new Map();
   for (const mutant of MUTANTS) {
     assert.ok(mutant.because && mutant.because.length > 40,
       `${mutant.id}: без объяснения мутант превратится в карго-культ`);
     assert.ok(!ids.has(mutant.id), `дубль id: ${mutant.id}`);
+    assert.ok(mutant.oracle == null || ['assertion', 'compile'].includes(mutant.oracle),
+      `${mutant.id}: неизвестный oracle ${mutant.oracle}`);
+    const proof = mutant.oracle || 'assertion';
+    assert.ok(!guardProofs.has(mutant.guard) || guardProofs.get(mutant.guard) === proof,
+      `${mutant.id}: одинаковый guard объявлен с разными oracle`);
+    guardProofs.set(mutant.guard, proof);
     ids.add(mutant.id);
   }
   assert.ok(MUTANTS.length >= 6, 'стартовый набор — шесть мутантов по дырам из #85');
@@ -533,10 +540,16 @@ test('#481 AC2: по журналу пропускается только сов
   const a = { id: 'a', guard: 'g', patches: [] };
   const b = { id: 'b', guard: 'g', patches: [] };
   const c = { id: 'c', guard: 'g', patches: [] };
-  const ledger = { schema: LEDGER_SCHEMA, caught: { a: 'fp-a', b: 'fp-old' } };
-  const split = splitByLedger([a, b, c], ledger, (m) => `fp-${m.id}`);
+  const d = { id: 'd', guard: 'g', patches: [] };
+  const ledger = { schema: LEDGER_SCHEMA, caught: {
+    a: { fingerprint: 'fp-a', proof: 'assertion' },
+    b: { fingerprint: 'fp-old', proof: 'assertion' },
+    d: { fingerprint: 'fp-d', proof: 'compile' },
+  } };
+  const split = splitByLedger([a, b, c, d], ledger, (m) => `fp-${m.id}`);
   assert.deepEqual(split.skipped.map((m) => m.id), ['a']);
-  assert.deepEqual(split.run.map((entry) => `${entry.mutant.id}:${entry.fingerprint}`), ['b:fp-b', 'c:fp-c']);
+  assert.deepEqual(split.run.map((entry) => `${entry.mutant.id}:${entry.fingerprint}`),
+    ['b:fp-b', 'c:fp-c', 'd:fp-d'], 'proof другого типа не переиспользуется');
 });
 
 test('#481 AC3: журнал пишется сразу при поимке и переживает битый/чужой файл', () => {
@@ -546,14 +559,25 @@ test('#481 AC3: журнал пишется сразу при поимке и п
     assert.deepEqual(readLedger(file), { schema: LEDGER_SCHEMA, caught: {} }, 'нет файла — пустой журнал');
     const ledger = readLedger(file);
     recordCaught(file, ledger, { id: 'a' }, 'fp-a');
-    assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), { schema: LEDGER_SCHEMA, caught: { a: 'fp-a' } },
+    assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), { schema: LEDGER_SCHEMA, caught: {
+      a: { fingerprint: 'fp-a', proof: 'assertion' },
+    } },
       'запись появляется в файле немедленно, не в конце прогона');
-    recordCaught(file, ledger, { id: 'b' }, 'fp-b');
-    assert.deepEqual(readLedger(file).caught, { a: 'fp-a', b: 'fp-b' });
+    recordCaught(file, ledger, { id: 'b' }, 'fp-b', 'compile');
+    assert.deepEqual(readLedger(file).caught, {
+      a: { fingerprint: 'fp-a', proof: 'assertion' },
+      b: { fingerprint: 'fp-b', proof: 'compile' },
+    });
     writeFileSync(file, '{ not json');
     assert.deepEqual(readLedger(file).caught, {}, 'битый журнал — пустой, не отказ');
     writeFileSync(file, JSON.stringify({ schema: 99, caught: { a: 'x' } }));
     assert.deepEqual(readLedger(file).caught, {}, 'чужая схема — пустой');
+    writeFileSync(file, JSON.stringify({ schema: LEDGER_SCHEMA, caught: {
+      setup: { fingerprint: 'fp-setup', proof: 'setup' },
+      legacy: 'fp-from-schema-1',
+    } }));
+    assert.deepEqual(readLedger(file).caught, {}, 'setup и старые строки не становятся доказательством');
+    assert.throws(() => recordCaught(file, ledger, { id: 'bad' }, 'fp-bad', 'setup'), /недоказанный outcome/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -570,6 +594,8 @@ test('#481: отпечатки реестра детерминированы и 
   const first = witnessFingerprint(MUTANTS[0]);
   assert.equal(witnessFingerprint(MUTANTS[0]), first);
   assert.notEqual(witnessFingerprint(MUTANTS[1]), first);
+  assert.notEqual(witnessFingerprint({ ...MUTANTS[0], oracle: 'compile' }), first,
+    'смена типа доказательства инвалидирует ledger');
   assert.match(first, /^[0-9a-f]{64}$/);
 });
 

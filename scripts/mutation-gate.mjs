@@ -41,6 +41,9 @@ import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { withoutProductVersion } from './source-fingerprint.mjs';
 import { closure, trackedFiles } from './check-inputs.mjs';
+import {
+  MUTATION_OUTCOME, MUTATION_PROOF, isProofOutcome, runGuardPhases, runMutationLifecycle,
+} from './mutation-guard-outcome.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -3723,6 +3726,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'mutation-report-setup-as-unparsed',
+    guard: 'node --test --test-name-pattern="#550: setup/invalid/interruption" '
+      + 'test/mutation-gate-report.test.mjs',
+    because: 'setup, invalid-patch and infrastructure outcomes must be called out as missing '
+      + 'evidence; losing their parser branch buries the reason in generic text and invites a '
+      + 'false escaped/caught interpretation (#550 AC4)',
+    patches: [{
+      file: 'scripts/mutation-gate-report.mjs',
+      find: '      if (asUnverifiable && known.has(asUnverifiable[1])) {',
+      replace: '      if (false && asUnverifiable && known.has(asUnverifiable[1])) {',
+    }],
+  },
+  {
     id: 'mutation-report-accepts-foreign-material',
     guard: 'node --test --test-name-pattern="foreign SHA и отсутствующий шард" '
       + 'test/mutation-gate-report.test.mjs',
@@ -3742,14 +3758,19 @@ const MUTANT_DEFINITIONS = [
       + 'skip it on every later push and hide the exact rot the gate exists for (#481)',
     patches: [{
       file: 'scripts/mutation-gate.mjs',
-      find: '    if (!runMutant(entry.mutant)) ' + 'continue;\n    caught++;',
-      replace: '    if (!runMutant(entry.mutant)) { if (ledger) recordCaught(ledgerArg, ledger, entry.mutant, entry.fingerprint); continue; }\n    caught++;',
+      find: '    if (!isProofOutcome(outcome)) {\n'
+        + '      if (outcome.kind !== MUTATION_OUTCOME.SURVIVED) unverifiable = true;',
+      replace: '    if (!isProofOutcome(outcome)) {\n'
+        + "      if (ledger) recordCaught(ledgerArg, ledger, entry.mutant, entry.fingerprint, 'assertion');\n"
+        + '      if (outcome.kind !== MUTATION_OUTCOME.SURVIVED) unverifiable = true;',
     }, {
       // Unit-наблюдаемая половина того же контракта: пустой отпечаток в
       // записи считался бы «совпавшим» с любым — журнал перестаёт сравнивать.
       file: 'scripts/mutation-gate.mjs',
-      find: "    if (ledger.caught[mutant.id] === fingerprint) " + "skipped.push(mutant);",
-      replace: "    if (ledger.caught[mutant.id] === fingerprint || mutant.id in ledger.caught) skipped.push(mutant);",
+      find: '    if (proof?.fingerprint === fingerprint && proof.proof === expectedProof\n'
+        + '      && validProof(proof.proof)) skipped.push(mutant);',
+      replace: '    if ((proof?.fingerprint === fingerprint && proof.proof === expectedProof\n'
+        + '      && validProof(proof.proof)) || mutant.id in ledger.caught) skipped.push(mutant);',
     }],
   },
   {
@@ -3903,8 +3924,36 @@ const MUTANT_DEFINITIONS = [
       + 'or killed by the timeout must keep what it proved, or the snowball returns (#481)',
     patches: [{
       file: 'scripts/mutation-gate.mjs',
-      find: "  ledger.caught[mutant.id] = fingerprint;\n  mkdirSync(dirname(file), " + "{ recursive: true });\n  writeFileSync(file,",
-      replace: "  ledger.caught[mutant.id] = fingerprint;\n  mkdirSync(dirname(file), { recursive: true });\n  if (Object.keys(ledger.caught).length > 1) writeFileSync(file,",
+      find: '  ledger.caught[mutant.id] = { fingerprint, proof };\n'
+        + '  mkdirSync(dirname(file), { recursive: true });\n  writeFileSync(file,',
+      replace: '  ledger.caught[mutant.id] = { fingerprint, proof };\n'
+        + '  mkdirSync(dirname(file), { recursive: true });\n'
+        + '  if (Object.keys(ledger.caught).length > 1) writeFileSync(file,',
+    }],
+  },
+  {
+    id: 'mutation-outcome-setup-counts-as-assertion',
+    guard: 'node --test test/mutation-guard-outcome.test.mjs',
+    because: 'a compile or preparation failure before the declared oracle must never be reusable '
+      + 'proof that the named assertion executed and killed the mutant (#550 AC1-AC3)',
+    patches: [{
+      file: 'scripts/mutation-guard-outcome.mjs',
+      find: "  if (phase === 'setup') {",
+      replace: "  if (false && phase === 'setup') {",
+    }],
+  },
+  {
+    id: 'mutation-ledger-accepts-setup-proof',
+    guard: 'node --test --test-name-pattern="#550 fixture: clean setup|#481 AC3" '
+      + 'test/mutation-guard-outcome.test.mjs test/mutation-gate.test.mjs',
+    because: 'ledger reuse may only carry an assertion or an explicitly declared compile-time '
+      + 'witness; admitting setup failures makes a transient broken runner green forever (#550 AC4)',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: 'const validProof = (proof) => Object.values(MUTATION_PROOF)'
+        + '.includes(proof);',
+      replace: "const validProof = (proof) => proof === 'setup' || Object.values(MUTATION_PROOF)"
+        + '.includes(proof);',
     }],
   },
   {
@@ -9266,6 +9315,8 @@ export function applyPatches(root, patches) {
 function sh(cmd, cwd, extraEnv = {}) {
   return spawnSync(cmd, {
     cwd, shell: true, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
+    timeout: Number(process.env.MUTATION_COMMAND_TIMEOUT_MS) || 180_000,
+    killSignal: 'SIGTERM',
     env: { ...process.env, ...extraEnv },
   });
 }
@@ -9342,16 +9393,18 @@ function seedTestBuild(dir) {
 /**
  * Собрать `test-build/` из мутированного src в каталоге мутанта.
  *
- * Код выхода `tsc` игнорируется сознательно, по той же причине, что и в
- * `buildBundle`: мутант воспроизводит поломку, а не образцовый код, и имеет
- * право быть нестрогим по типам. Доказательством служит появление каталога —
- * если его нет, падаем громко, а не отдаём тесту пустоту.
+ * `tsc` здесь — подготовка, а не заявленный оракул. Его отказ не может
+ * считаться падением последующего теста (#550), даже если тёплый каталог от
+ * прошлого дерева всё ещё существует.
  */
 function buildTestBuild(dir) {
   seedTestBuild(dir);
-  sh('npx tsc -p tsconfig.test.json', dir);
+  const built = sh('npx tsc -p tsconfig.test.json', dir);
+  if (built.status !== 0) {
+    throw new Error(`test-build не скомпилировался в мутанте:\n${(built.stderr || built.stdout || built.error?.message || '').slice(-2000)}`);
+  }
   const fixed = sh('node scripts/fix-test-build.mjs', dir);
-  if (!existsSync(join(dir, 'test-build'))) {
+  if (fixed.status !== 0 || !existsSync(join(dir, 'test-build'))) {
     throw new Error(`test-build не собрался в мутанте:\n${(fixed.stderr || fixed.stdout).slice(-2000)}`);
   }
 }
@@ -9361,31 +9414,66 @@ function buildBundle(dir) {
   // типам — он воспроизводит поломку, а не образцовый код.
   const built = sh('npx rollup -c', dir);
   if (built.status !== 0) {
-    throw new Error(`сборка мутанта упала:\n${(built.stderr || built.stdout).slice(-2000)}`);
+    throw new Error(`сборка мутанта упала:\n${String(built.stderr || built.stdout || built.error?.message || '').slice(-2000)}`);
   }
   const synced = sh('node scripts/bundle-sync.mjs', dir);
   if (synced.status !== 0) {
-    throw new Error(`дерево бандла мутанта не синхронизировалось:\n${(synced.stderr || synced.stdout).slice(-2000)}`);
+    throw new Error(`дерево бандла мутанта не синхронизировалось:\n${String(synced.stderr || synced.stdout || synced.error?.message || '').slice(-2000)}`);
   }
 }
 
+function printMutantOutcome(mutant, outcome) {
+  if (outcome.kind === MUTATION_OUTCOME.ASSERTION_KILLED) {
+    console.log(`ok   ${mutant.id}: заявленный тест покраснел на мутанте`);
+    return;
+  }
+  if (outcome.kind === MUTATION_OUTCOME.COMPILE_KILLED) {
+    console.log(`ok   ${mutant.id}: явный compile-time свидетель поймал мутант`);
+    return;
+  }
+  if (outcome.kind === MUTATION_OUTCOME.SURVIVED) {
+    // Формат читает mutation-gate-report.mjs — менять синхронно.
+    console.log(`FAIL ${mutant.id}: тест остался зелёным на сломанном коде`);
+    console.log(`     guard: ${mutant.guard}`);
+    console.log(`     ${mutant.because}`);
+    return;
+  }
+  const labels = {
+    [MUTATION_OUTCOME.INVALID]: 'неприменимый мутант',
+    [MUTATION_OUTCOME.SETUP]: 'ошибка подготовки до заявленного теста',
+    [MUTATION_OUTCOME.INTERRUPTED]: 'прерывание инфраструктуры',
+  };
+  console.log(`FAIL ${mutant.id}: ${labels[outcome.kind] || outcome.kind}`);
+  if (outcome.command) console.log(`     command: ${outcome.command}`);
+  if (outcome.detail) console.log(`     ${outcome.detail}`);
+}
+
 function runMutant(mutant) {
-  const dir = makeWorktree();
+  let dir;
   try {
-    applyPatches(dir, mutant.patches);
-    if (guardNeedsBundle(mutant.guard)) buildBundle(dir);
-    if (guardNeedsTestBuild(mutant.guard)) buildTestBuild(dir);
-    const guard = sh(mutant.guard, dir);
-    if (guard.status === 0) {
-      console.log(`FAIL ${mutant.id}: тест остался зелёным на сломанном коде`);
-      console.log(`     guard: ${mutant.guard}`);
-      console.log(`     ${mutant.because}`);
-      return false;
-    }
-    console.log(`ok   ${mutant.id}: тест покраснел, как обязан`);
-    return true;
+    dir = makeWorktree();
+    const outcome = runMutationLifecycle({
+      apply: () => applyPatches(dir, mutant.patches),
+      prepare: () => {
+        if (guardNeedsBundle(mutant.guard)) buildBundle(dir);
+        if (guardNeedsTestBuild(mutant.guard)) buildTestBuild(dir);
+      },
+      guard: mutant.guard,
+      proof: mutant.oracle || MUTATION_PROOF.ASSERTION,
+      execute: (command) => sh(command, dir),
+    });
+    printMutantOutcome(mutant, outcome);
+    return outcome;
+  } catch (error) {
+    const outcome = {
+      kind: MUTATION_OUTCOME.INTERRUPTED,
+      detail: error.message,
+      command: '',
+    };
+    printMutantOutcome(mutant, outcome);
+    return outcome;
   } finally {
-    dropWorktree(dir);
+    if (dir) dropWorktree(dir);
   }
 }
 
@@ -9395,14 +9483,30 @@ function runCleanGuards(mutants) {
   const guards = [...new Set(mutants.map((m) => m.guard))];
   const dir = makeWorktree();
   try {
-    if (guards.some(guardNeedsBundle)) buildBundle(dir);
-    // Один worktree на все чистые гварды — значит и компиляция одна.
-    if (guards.some(guardNeedsTestBuild)) buildTestBuild(dir);
+    try {
+      if (guards.some(guardNeedsBundle)) buildBundle(dir);
+      // Один worktree на все чистые гварды — значит и компиляция одна.
+      if (guards.some(guardNeedsTestBuild)) buildTestBuild(dir);
+    } catch (error) {
+      console.log(`FAIL чистая подготовка: ${error.message}`);
+      return false;
+    }
     for (const guard of guards) {
-      const result = sh(guard, dir);
-      if (result.status !== 0) {
-        console.log(`FAIL чистый прогон: ${guard} красный без мутанта`);
-        console.log((result.stderr || result.stdout).slice(-1500));
+      const mutant = mutants.find((item) => item.guard === guard);
+      const outcome = runGuardPhases(guard, {
+        proof: mutant?.oracle || MUTATION_PROOF.ASSERTION,
+        execute: (command) => sh(command, dir),
+      });
+      if (outcome.kind !== MUTATION_OUTCOME.SURVIVED) {
+        if (outcome.kind === MUTATION_OUTCOME.SETUP) {
+          console.log(`FAIL чистая подготовка: ${outcome.command}`);
+        } else if (outcome.kind === MUTATION_OUTCOME.INTERRUPTED) {
+          console.log(`FAIL чистая инфраструктура: ${outcome.command || guard}`);
+        } else {
+          // Формат читает mutation-gate-report.mjs — менять синхронно.
+          console.log(`FAIL чистый прогон: ${guard} красный без мутанта`);
+        }
+        if (outcome.detail) console.log(outcome.detail.slice(-1500));
         return false;
       }
       console.log(`ok   чистый прогон: ${guard}`);
@@ -9580,7 +9684,12 @@ export function witnessFingerprint(mutant, {
   normalize = withoutProductVersion(root),
 } = {}) {
   const hash = createHash('sha256');
-  hash.update(JSON.stringify({ id: mutant.id, guard: mutant.guard, patches: mutant.patches }));
+  hash.update(JSON.stringify({
+    id: mutant.id,
+    guard: mutant.guard,
+    oracle: mutant.oracle || MUTATION_PROOF.ASSERTION,
+    patches: mutant.patches,
+  }));
   hash.update('\0');
   const text = (file) => String(read(file)).replace(/\r\n?/g, '\n');
   // Сторона патча — только область якоря (#518); сторона гарда — файл целиком:
@@ -9601,21 +9710,33 @@ export function witnessFingerprint(mutant, {
   return hash.digest('hex');
 }
 
-export const LEDGER_SCHEMA = 1;
+export const LEDGER_SCHEMA = 2;
 
-/** Журнал пойманных свидетелей: `{ schema, caught: { [id]: fingerprint } }`. */
+const emptyLedger = () => ({ schema: LEDGER_SCHEMA, caught: {} });
+const validProof = (proof) => Object.values(MUTATION_PROOF).includes(proof);
+
+/**
+ * Журнал доказанных свидетелей.
+ *
+ * Schema 2 намеренно не принимает старые строки fingerprint: до #550 они не
+ * доказывали, что упал именно oracle, а не tsc/setup перед ним.
+ */
 export function readLedger(file) {
-  if (!file || !existsSync(file)) return { schema: LEDGER_SCHEMA, caught: {} };
+  if (!file || !existsSync(file)) return emptyLedger();
   try {
     const parsed = JSON.parse(readFileSync(file, 'utf8'));
     if (parsed?.schema !== LEDGER_SCHEMA || typeof parsed.caught !== 'object' || !parsed.caught) {
-      return { schema: LEDGER_SCHEMA, caught: {} };
+      return emptyLedger();
     }
-    return { schema: LEDGER_SCHEMA, caught: { ...parsed.caught } };
+    const caught = {};
+    for (const [id, value] of Object.entries(parsed.caught)) {
+      if (typeof value?.fingerprint === 'string' && validProof(value.proof)) caught[id] = { ...value };
+    }
+    return { schema: LEDGER_SCHEMA, caught };
   } catch {
     // Битый журнал — не отказ гейта: он лишь сужает работу, и пустой журнал
     // означает «гонять всё отобранное», то есть прежнее поведение.
-    return { schema: LEDGER_SCHEMA, caught: {} };
+    return emptyLedger();
   }
 }
 
@@ -9624,8 +9745,9 @@ export function readLedger(file) {
  * или упавший по таймауту шард обязан сохранить уже сделанное, иначе
  * следующий пуш начинает с нуля (снежный ком #481).
  */
-export function recordCaught(file, ledger, mutant, fingerprint) {
-  ledger.caught[mutant.id] = fingerprint;
+export function recordCaught(file, ledger, mutant, fingerprint, proof = MUTATION_PROOF.ASSERTION) {
+  if (!validProof(proof)) throw new Error(`нельзя записать недоказанный outcome в ledger: ${proof}`);
+  ledger.caught[mutant.id] = { fingerprint, proof };
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify({ schema: LEDGER_SCHEMA, caught: ledger.caught }, null, 2)}\n`);
 }
@@ -9640,7 +9762,10 @@ export function splitByLedger(mutants, ledger, fingerprintOf = (m) => witnessFin
   const skipped = [];
   for (const mutant of mutants) {
     const fingerprint = fingerprintOf(mutant);
-    if (ledger.caught[mutant.id] === fingerprint) skipped.push(mutant);
+    const proof = ledger.caught[mutant.id];
+    const expectedProof = mutant.oracle || MUTATION_PROOF.ASSERTION;
+    if (proof?.fingerprint === fingerprint && proof.proof === expectedProof
+      && validProof(proof.proof)) skipped.push(mutant);
     else run.push({ mutant, fingerprint });
   }
   return { run, skipped };
@@ -9899,12 +10024,18 @@ async function main(argv) {
   }
   if (!runCleanGuards(toRun)) return 2;
   let caught = 0;
+  let unverifiable = false;
   for (const entry of plan) {
-    if (!runMutant(entry.mutant)) continue;
+    const outcome = runMutant(entry.mutant);
+    if (!isProofOutcome(outcome)) {
+      if (outcome.kind !== MUTATION_OUTCOME.SURVIVED) unverifiable = true;
+      continue;
+    }
     caught++;
-    if (ledger) recordCaught(ledgerArg, ledger, entry.mutant, entry.fingerprint);
+    if (ledger) recordCaught(ledgerArg, ledger, entry.mutant, entry.fingerprint, outcome.proof);
   }
   console.log(`\nпоймано ${caught} из ${toRun.length}`);
+  if (unverifiable) return 2;
   return caught === toRun.length ? 0 : 1;
 }
 

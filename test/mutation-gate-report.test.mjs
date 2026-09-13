@@ -89,6 +89,25 @@ test('красный гард без мутанта — не сбежавший 
   assert.equal(report.failed, true);
 });
 
+test('#550: setup/invalid/interruption reported as unverified, never escaped or caught', () => {
+  const report = mutationGateReport({ ...meta, guards, logs: [
+    { shard: 1, text: [
+      'FAIL alpha-mutant: ошибка подготовки до заявленного теста',
+      'FAIL beta-mutant: неприменимый мутант',
+      'FAIL gamma-mutant: прерывание инфраструктуры',
+      'FAIL чистая подготовка: npx tsc -p tsconfig.test.json',
+    ].join('\n') },
+  ] });
+  assert.deepEqual(report.escaped, []);
+  assert.deepEqual(report.redGuards, []);
+  assert.equal(report.unverifiable.length, 4);
+  assert.equal(report.unparsed.length, 0);
+  assert.match(report.body, /Свидетели без доказательства \(4\)/);
+  assert.match(report.body, /не записывается в ledger/);
+  assert.ok(!report.body.includes('--id=alpha-mutant'));
+  assert.equal(report.failed, true);
+});
+
 test('id вне реестра не выдумывается, строка сохраняется как есть (#472 AC3)', () => {
   const report = mutationGateReport({ ...meta, guards, logs: [
     { shard: 1, text: 'FAIL ghost-mutant: тест остался зелёным на сломанном коде\n' },
