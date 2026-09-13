@@ -245,7 +245,10 @@ the command timeout. Do the polling with `node scripts/wait-verdict.mjs --issue 
 cancelled merge, failed run) and optionally Validate on the SHA, prints only when
 the state changes and exits 0 on a new label, 3 on an event that needs a hand,
 4 on timeout — the same 90 s × 30 without a model turn per tick. It writes
-nothing. Watch the **label**, not the comment: the label is the state,
+nothing. Pipeline comments older than the latest application of `S4`/`S7` are
+the baseline, not an outcome of the new round; an outcome from the current round
+which already exists when the waiter starts is still delivered immediately (#546).
+Watch the **label**, not the comment: the label is the state,
 the comment only explains it. Do not wait at all while `blocked` is set — the task
 is waiting on the owner, not on the reviewer. On exhausting the attempts, stop and
 tell the owner: a failed run leaves the label where it was, forever.

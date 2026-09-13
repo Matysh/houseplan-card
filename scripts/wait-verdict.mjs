@@ -8,7 +8,10 @@
 // состояние не будит никого. Что доставляется: смена статусной метки (вердикт),
 // отказ конвейера (комментарий «Ревью не запускалось» / «Слияние отменено» /
 // «Автоматическое ревью не отработало»), `blocked`, `review-4`, а при `--sha` —
-// исход Validate на этом SHA.
+// исход Validate на этом SHA. Исторические комментарии до последнего запроса
+// S4/S7 образуют baseline: иначе новый раунд немедленно завершался по старому
+// failure. Событие текущего раунда, даже опубликованное до запуска waiter,
+// доставляется сразу (#546).
 //
 // Скрипт НИЧЕГО не пишет: ни меток, ни комментариев, ни запусков. Новое ревью
 // или релиз начинаются только по текущей авторизации человека.
@@ -36,13 +39,34 @@ export const PIPELINE_EVENTS = [
   { re: /^Конвейер ревью не запущен:/m, kind: 'refused', text: 'конвейер отказал (blocked/review-4) — читать комментарий' },
 ];
 
+/** Последнее применение S4/S7 — устойчивый якорь текущего раунда ревью. */
+export function reviewRequestFromEvents(events = []) {
+  const requests = events
+    .filter((event) => event?.event === 'labeled' && REVIEW_LABELS.includes(event?.label?.name))
+    .map((event) => ({
+      id: String(event.id || event.node_id || event.createdAt || event.created_at || ''),
+      at: event.createdAt || event.created_at || null,
+      label: event.label.name,
+    }))
+    .filter((request) => Number.isFinite(Date.parse(String(request.at || ''))));
+  requests.sort((a, b) => Date.parse(a.at) - Date.parse(b.at) || a.id.localeCompare(b.id));
+  return requests.at(-1) || null;
+}
+
+function eventBelongsToReview(comment, request) {
+  if (!request) return true; // Совместимость с чистыми/старыми snapshot без timeline.
+  const eventAt = Date.parse(String(comment.at || ''));
+  const requestAt = Date.parse(String(request.at || ''));
+  return Number.isFinite(eventAt) && Number.isFinite(requestAt) && eventAt >= requestAt;
+}
+
 /** Снимок → нормализованное состояние. */
 export function stateOf(snapshot) {
   const labels = snapshot.labels || [];
   const status = STATUS.find((l) => labels.includes(l)) || null;
   const events = (snapshot.comments || [])
     .map((c) => ({ id: c.id, at: c.createdAt, event: PIPELINE_EVENTS.find((e) => e.re.test(String(c.body || ''))) }))
-    .filter((c) => c.event);
+    .filter((c) => c.event && eventBelongsToReview(c, snapshot.reviewRequest));
   const last = events.at(-1) || null;
   return {
     status,
@@ -50,6 +74,7 @@ export function stateOf(snapshot) {
     exhausted: labels.includes('review-4'),
     lastEventId: last ? String(last.id) : null,
     lastEvent: last ? last.event : null,
+    reviewRequest: snapshot.reviewRequest || null,
     validate: snapshot.validate || null,
   };
 }
@@ -115,9 +140,12 @@ function gh(args) {
 export function ghSnapshotReader({ number, repo, sha }) {
   return async () => {
     const view = gh(['issue', 'view', String(number), '--repo', repo, '--json', 'labels,comments']);
+    const pages = gh(['api', '--paginate', '--slurp', `repos/${repo}/issues/${number}/events?per_page=100`]);
+    const timelineEvents = Array.isArray(pages?.[0]) ? pages.flat() : (Array.isArray(pages) ? pages : []);
     const snapshot = {
       labels: (view.labels || []).map((l) => l.name),
       comments: (view.comments || []).map((c) => ({ id: c.id || c.url || c.createdAt, createdAt: c.createdAt, body: c.body })),
+      reviewRequest: reviewRequestFromEvents(timelineEvents),
     };
     if (sha) {
       try {

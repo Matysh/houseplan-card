@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decide, stateOf, waitForVerdict } from '../scripts/wait-verdict.mjs';
+import { decide, reviewRequestFromEvents, stateOf, waitForVerdict } from '../scripts/wait-verdict.mjs';
 
 // #496: ожидание детерминировано — одинаковое состояние молчит, смена метки и
 // события конвейера доставляются один раз, ничего не пишется.
@@ -55,4 +55,72 @@ test('лимит ожидания — код 4 и одна строка (#496)',
   assert.equal(code, 4);
   assert.equal(lines.length, 2);
   assert.match(lines[1], /лимит ожидания \(3 × 0 с\)/);
+});
+
+test('старый failure до нового запроса ревью — baseline, ожидание продолжается (#546)', async () => {
+  const oldFailure = {
+    id: 'old', createdAt: '2026-09-08T10:00:00Z',
+    body: 'Автоматическое ревью не отработало: [прогон](old).',
+  };
+  const currentRequest = { id: 'request-2', at: '2026-09-12T10:00:00Z', label: 'S7-code-review' };
+  const snapshot = { ...snap(['S7-code-review'], [oldFailure]), reviewRequest: currentRequest };
+  const lines = []; let slept = 0;
+  const code = await waitForVerdict({
+    readSnapshot: async () => snapshot,
+    intervalMs: 1, maxTicks: 2, sleep: async () => { slept++; }, log: (line) => lines.push(line),
+  });
+  assert.equal(code, 4);
+  assert.equal(slept, 1);
+  assert.equal(lines.some((line) => line.includes('прогон ревью упал')), false);
+});
+
+test('failure текущего раунда, опубликованный до запуска waiter, виден на первом poll (#546)', async () => {
+  const currentFailure = {
+    id: 'current', createdAt: '2026-09-12T10:05:00Z',
+    body: 'Автоматическое ревью не отработало: [прогон](current).',
+  };
+  const snapshot = {
+    ...snap(['S7-code-review'], [currentFailure]),
+    reviewRequest: { id: 'request-2', at: '2026-09-12T10:00:00Z', label: 'S7-code-review' },
+  };
+  const lines = []; let slept = 0;
+  const code = await waitForVerdict({
+    readSnapshot: async () => snapshot,
+    intervalMs: 1, maxTicks: 2, sleep: async () => { slept++; }, log: (line) => lines.push(line),
+  });
+  assert.equal(code, 3);
+  assert.equal(slept, 0);
+  assert.ok(lines.some((line) => line.includes('прогон ревью упал')));
+});
+
+test('якорь раунда — последнее применение любой review-метки (#546)', () => {
+  const request = reviewRequestFromEvents([
+    { id: 1, event: 'labeled', created_at: '2026-09-10T09:00:00Z', label: { name: 'S4-spec-review' } },
+    { id: 2, event: 'labeled', created_at: '2026-09-10T10:00:00Z', label: { name: 'P1' } },
+    { id: 3, event: 'unlabeled', created_at: '2026-09-10T11:00:00Z', label: { name: 'S4-spec-review' } },
+    { id: 4, event: 'labeled', created_at: '2026-09-12T09:00:00Z', label: { name: 'S7-code-review' } },
+  ]);
+  assert.deepEqual(request, { id: '4', at: '2026-09-12T09:00:00Z', label: 'S7-code-review' });
+});
+
+test('новые outcome и owner blocker текущего раунда не скрываются baseline-фильтром (#546)', () => {
+  const request = { id: 'request', at: '2026-09-12T10:00:00Z', label: 'S7-code-review' };
+  const stale = {
+    id: 'stale', createdAt: '2026-09-12T10:05:00Z',
+    body: '**Слияние отменено: ветка изменилась после проверенного материала (#312).**',
+  };
+  const event = decide(null, stateOf({ ...snap(['S7-code-review'], [stale]), reviewRequest: request }));
+  assert.equal(event.code, 3);
+  assert.ok(event.lines.some((line) => line.includes('слияние отменено')));
+
+  const blocker = decide(null, stateOf({ ...snap(['S7-code-review', 'blocked']), reviewRequest: request }));
+  assert.equal(blocker.code, 3);
+  assert.ok(blocker.lines.some((line) => line.includes('blocked')));
+
+  const verdict = decide(
+    stateOf({ ...snap(['S7-code-review']), reviewRequest: request }),
+    stateOf({ ...snap(['S8-merged']), reviewRequest: request }),
+  );
+  assert.equal(verdict.code, 0);
+  assert.ok(verdict.lines.some((line) => line.includes('S7-code-review → S8-merged')));
 });

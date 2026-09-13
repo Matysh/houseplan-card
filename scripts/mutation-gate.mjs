@@ -8654,6 +8654,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'wait-verdict-reuses-historical-failure',
+    guard: 'node --test --test-name-pattern="#546" test/wait-verdict.test.mjs',
+    because: 'the first snapshot must baseline pipeline comments older than the latest S4/S7 request; '
+      + 'otherwise every restarted review immediately exits on the previous round failure (#546 AC1/AC2)',
+    patches: [{
+      file: 'scripts/wait-verdict.mjs',
+      find: '    .filter((c) => c.event && eventBelongsToReview(c, snapshot.reviewRequest));',
+      replace: '    .filter((c) => c.event); // mutant: every historical event belongs to the current round',
+    }],
+  },
+  {
     id: 'release-gate-counts-cancelled-runs',
     guard: 'node --test test/release-gate.test.mjs',
     because: 'a cancelled twin on the tag SHA proves nothing and must not block the assets; the '
