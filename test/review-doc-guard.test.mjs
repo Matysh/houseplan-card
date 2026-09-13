@@ -779,6 +779,16 @@ test('#551: gates, модель и интеграция имеют незави�
     'jq валидирует сохранённый объект, не записывает boolean предиката вместо него');
   assert.doesNotMatch(seal, /jq -e '[\s\S]*> "\$RUNNER_TEMP\/verdict\.json"/,
     'stdout предиката jq не становится payload интеграции');
+  const resultOutput = integrate.slice(
+    integrate.indexOf('- name: Проверить полноту и происхождение результата'),
+    integrate.indexOf('- name: Опубликовать документ ревью'),
+  );
+  assert.match(resultOutput,
+    /cat "\$dir\/verdict\.json" >> "\$GITHUB_OUTPUT"[\s\S]*printf '\\nEOF_RESULT\\n' >> "\$GITHUB_OUTPUT"/,
+    'закрывающий delimiter начинается с новой строки даже у JSON без финального LF');
+  assert.doesNotMatch(resultOutput,
+    /cat "\$dir\/verdict\.json"\n\s+echo 'EOF_RESULT'/,
+    'cat без гарантированного LF не приклеивает delimiter к JSON');
   assert.match(model, /ref: \$\{\{ needs\.prepare\.outputs\.material_sha \}\}/,
     'модель получает exact material, а не подвижную ветку');
 

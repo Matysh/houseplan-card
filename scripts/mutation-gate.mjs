@@ -7870,6 +7870,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-integration-delimiter-follows-json-without-newline',
+    guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
+    because: '#551: structured verdict записан через printf без финального LF; GitHub output '
+      + 'delimiter обязан начинаться с новой строки, иначе integration падает после зелёной модели',
+    patches: [{
+      file: '.github/workflows/process.yml',
+      find: '          printf \'\\nEOF_RESULT\\n\' >> "$GITHUB_OUTPUT"',
+      replace: '          printf \'EOF_RESULT\\n\' >> "$GITHUB_OUTPUT" # mutant: delimiter glued to JSON',
+    }],
+  },
+  {
     id: 'review-integration-skips-evidence-checksum',
     guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
     because: '#551: artifact между моделью и привилегированной интеграцией — вход доверенной '
