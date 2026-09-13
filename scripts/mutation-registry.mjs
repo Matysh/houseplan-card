@@ -73,6 +73,18 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'radar-sources-compared-as-text',
+    guard: 'node --test --test-name-pattern="#567" test/radar-editor.test.mjs',
+    because: '#567: порядок ключей `sources` меняет сам билдер, поэтому текстовое сравнение '
+      + 'ложно отвечает «источники изменились» и радар молча теряет refs и rms_cm '
+      + 'двухточечной калибровки при первом же обычном сохранении',
+    patches: [{
+      file: 'src/radar-editor.ts',
+      find: '    && canonicalSources(original.sources) === canonicalSources(sources)',
+      replace: '    && JSON.stringify(original.sources) === JSON.stringify(sources)',
+    }],
+  },
+  {
     id: 'household-marker-drops-keyboard-reach',
     guard: 'node demo/smoke_household_journeys.mjs',
     because: '#560 J4: маркер с действием обязан доставаться клавиатурой — без tabindex он '

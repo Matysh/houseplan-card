@@ -230,6 +230,29 @@ export function radarDraft(
   };
 }
 
+/**
+ * Источники, сравнимые по смыслу, а не по тексту (#567).
+ *
+ * Порядок ключей объекта смыслом не является, и опираться на него нельзя именно
+ * здесь: билдер ниже удаляет `slots`/`ranges`/`zones`/`occupancy_entity`/
+ * `count_entity` и дописывает их заново, а `availability_entity` остаётся на
+ * своём месте — значит конфиг, только что записанный этим же билдером,
+ * разворачивается в другом порядке. Прежнее `JSON.stringify` на этом ложно
+ * сообщало «источники изменились», и радар с `availability_entity` молча терял
+ * `refs` и `rms_cm` при первом же обычном сохранении.
+ *
+ * Порядок ЭЛЕМЕНТОВ массивов, наоборот, смысл: позиция слота — это его
+ * `target_N`, поэтому массивы не сортируются.
+ *
+ * Сравнение кодовых точек, а не `localeCompare`: порядок должен быть одинаковым
+ * в любой локали и любом движке, иначе сравнение начнёт зависеть от браузера.
+ */
+const canonicalSources = (value: unknown): string => JSON.stringify(value, (_key, item) => (
+  item && typeof item === 'object' && !Array.isArray(item)
+    ? Object.fromEntries(Object.entries(item as Record<string, unknown>)
+      .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)))
+    : item));
+
 const numeric = (value: string): number | null => {
   if (!value.trim()) return null;
   const parsed = Number(value.replace(',', '.'));
@@ -300,7 +323,7 @@ export function radarConfigFromDraft(draft: RadarEditorDraft, cellCm: number): M
   const original = draft.original;
   const keepTwoPoint = original?.calibration?.method === 'two_point'
     && original.profile === draft.profile
-    && JSON.stringify(original.sources) === JSON.stringify(sources)
+    && canonicalSources(original.sources) === canonicalSources(sources)
     && original.mount.installation_id === draft.installationId
     && Math.abs(original.mount.x - mount.x) < 1e-12
     && Math.abs(original.mount.y - mount.y) < 1e-12

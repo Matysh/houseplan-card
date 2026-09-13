@@ -116,6 +116,105 @@ test('an unrelated edit preserves accepted two-point calibration', () => {
   assert.equal(saved.show_live, undefined);
 });
 
+/**
+ * #567: гард `keepTwoPoint` сравнивал источники ТЕКСТОМ, а билдер сам меняет
+ * порядок ключей: `slots`/`occupancy_entity`/`count_entity` он удаляет и
+ * дописывает заново, а `availability_entity` остаётся на своём месте — то есть
+ * уезжает в начало. Конфиг, только что записанный этим же билдером, при
+ * следующем открытии сравнивался неравным, и радар молча терял `refs` и
+ * `rms_cm`, получая `method: manual`. Тест ведётся на радаре С
+ * `availability_entity`: без него старый код зелёный.
+ */
+const twoPointRadar = (sources) => ({
+  version: 1, enabled: true, profile: 'cartesian_v1', room_id: 'living',
+  sources,
+  mount: { installation_id: 'install', x: .5, y: .5, heading_deg: 90 },
+  calibration: {
+    method: 'two_point', mirror: true, cell_cm: 5,
+    refs: [
+      { plan: { x: .5, y: .5 - 100 / 1200 }, local_cm: { x: 100, y: 0 } },
+      { plan: { x: .5 + 100 / 1200, y: .5 }, local_cm: { x: 0, y: 100 } },
+    ],
+    rms_cm: 0,
+  },
+});
+
+const savedFrom = (radar, patch = {}) => {
+  const configured = device({ marker: { ...device().marker, radar } });
+  const draft = radarDraft(configured, space, [0, 0], {});
+  return radarConfigFromDraft({ ...draft, ...patch }, 5);
+};
+
+test('#567 AC1: availability_entity не отменяет двухточечную калибровку', () => {
+  // Порядок ключей ровно тот, который пишет сам билдер: availability последним.
+  const radar = twoPointRadar({
+    slots: [{ id: 'target_1', x_entity: 'sensor.x', y_entity: 'sensor.y', unit: 'cm' }],
+    occupancy_entity: 'binary_sensor.occupancy',
+    availability_entity: 'binary_sensor.availability',
+  });
+  const saved = savedFrom(radar);
+  assert.equal(saved.calibration.method, 'two_point');
+  assert.deepEqual(saved.calibration.refs, radar.calibration.refs);
+  assert.equal(saved.calibration.rms_cm, 0);
+  // Источники сохранились по смыслу, порядок ключей значения не имеет.
+  assert.deepEqual(
+    Object.keys(saved.sources).sort(),
+    ['availability_entity', 'occupancy_entity', 'slots'],
+  );
+  assert.equal(saved.sources.availability_entity, 'binary_sensor.availability');
+  // Проекция считается от этих трёх величин — правка их не касается.
+  assert.deepEqual(
+    [saved.mount.x, saved.mount.y, saved.mount.heading_deg, saved.calibration.cell_cm,
+      saved.calibration.mirror],
+    [.5, .5, 90, 5, true],
+  );
+});
+
+test('#567 AC2: смена сущности источника калибровку отменяет', () => {
+  const radar = twoPointRadar({
+    slots: [{ id: 'target_1', x_entity: 'sensor.x', y_entity: 'sensor.y', unit: 'cm' }],
+    availability_entity: 'binary_sensor.availability',
+  });
+  const saved = savedFrom(radar, { xEntities: ['sensor.other_x', '', ''] });
+  assert.equal(saved.calibration.method, 'manual');
+  assert.equal(saved.calibration.refs, undefined);
+  assert.equal(saved.calibration.rms_cm, undefined);
+});
+
+test('#567 AC3: порядок полей внутри слота не смысл, состав слотов — смысл', () => {
+  // Тот же слот, поля записаны в другом порядке: так выглядит запись, сделанная
+  // другой версией или пришедшая импортом.
+  const shuffled = twoPointRadar({
+    availability_entity: 'binary_sensor.availability',
+    slots: [{ unit: 'cm', y_entity: 'sensor.y', x_entity: 'sensor.x', id: 'target_1' }],
+  });
+  assert.equal(savedFrom(shuffled).calibration.method, 'two_point');
+
+  const extraSlot = twoPointRadar({
+    slots: [
+      { id: 'target_1', x_entity: 'sensor.x', y_entity: 'sensor.y', unit: 'cm' },
+      { id: 'target_2', x_entity: 'sensor.x2', y_entity: 'sensor.y2', unit: 'cm' },
+    ],
+    availability_entity: 'binary_sensor.availability',
+  });
+  // Второй слот пропадает из черновика только вместе с сущностями, поэтому
+  // отнимаем именно их — это и есть «состав слотов изменился».
+  const saved = savedFrom(extraSlot, { xEntities: ['sensor.x', '', ''], yEntities: ['sensor.y', '', ''] });
+  assert.equal(saved.sources.slots.length, 1);
+  assert.equal(saved.calibration.method, 'manual');
+
+  // Обратная сторона того же контракта: позиция слота — это его target_N,
+  // поэтому перестановка сущностей между слотами меняет смысл, и калибровка
+  // обязана уйти. Отдельного мутанта здесь нет намеренно: сортировка массивов
+  // в канонизации поведение НЕ меняет (элементы остаются под своими индексами),
+  // такой «мутант» был бы записью, которая ничего не проверяет.
+  const swapped = savedFrom(extraSlot, {
+    xEntities: ['sensor.x2', 'sensor.x', ''], yEntities: ['sensor.y2', 'sensor.y', ''],
+  });
+  assert.equal(swapped.sources.slots[0].x_entity, 'sensor.x2');
+  assert.equal(swapped.calibration.method, 'manual');
+});
+
 test('polar conventions are explicit and round-trip through the editor', () => {
   const original = {
     version: 1, enabled: true, profile: 'polar_v1', room_id: 'living',
