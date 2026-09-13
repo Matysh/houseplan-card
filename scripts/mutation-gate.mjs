@@ -7949,6 +7949,41 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'process-reconcile-relabels-before-durable-marker',
+    guard: 'node --test test/process-reconcile.test.mjs',
+    because: '#555 review r1: the dedupe/diagnostic comment must exist before a fallible label '
+      + 'mutation; otherwise a failed restore is silent and repeats on every schedule tick',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: '  await ops.comment(repo, issue, commentBody(issue, request, decision, key));\n'
+        + "  if (decision.action === 'retry') await ops.relabel(repo, issue, decision.label);",
+      replace: "  if (decision.action === 'retry') await ops.relabel(repo, issue, decision.label);\n"
+        + '  await ops.comment(repo, issue, commentBody(issue, request, decision, key));',
+    }],
+  },
+  {
+    id: 'process-reconcile-ignores-failed-label-restore',
+    guard: 'node --test test/process-reconcile.test.mjs',
+    because: '#555 review r1: the bounded second add-label attempt is authoritative; ignoring '
+      + 'its failure would claim success while leaving the issue outside S4/S7',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: '  if (restore.status !== 0) throw new Error(`could not restore ${label}: ${(restore.stderr || first.stderr || \'\').trim()}`);',
+      replace: '  if (false && restore.status !== 0) throw new Error(`mutant: restore ignored`);',
+    }],
+  },
+  {
+    id: 'process-reconcile-write-error-aborts-summary',
+    guard: 'node --test test/process-reconcile.test.mjs',
+    because: '#555 review r1: a write failure belongs in the machine summary and must not abort '
+      + 'the whole snapshot before its artifact can be published',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: '        } catch (error) {\n          record.error = error instanceof Error ? error.message : String(error);',
+      replace: '        } catch (error) {\n          throw error; // mutant: summary is lost',
+    }],
+  },
+  {
     id: 'review-integration-skips-evidence-checksum',
     guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
     because: '#551: artifact между моделью и привилегированной интеграцией — вход доверенной '

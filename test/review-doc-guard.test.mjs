@@ -786,6 +786,8 @@ test('#555: bounded reconciler wakes only lost review requests and emits one mac
   assert.match(workflow, /secrets\.HP_PROCESS_TOKEN/);
   assert.match(workflow, /node scripts\/process-reconcile\.mjs[\s\S]*--apply="\$APPLY"/);
   assert.match(workflow, /--max-actions=5/);
+  assert.match(workflow, /- name: Опубликовать компактный machine-readable итог\n\s+if: always\(\)/,
+    'summary artifact survives a failed write or reconciler exit');
   assert.match(workflow, /process-reconcile-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
   assert.match(process, /houseplan-process-reconcile\/v1/);
   assert.match(process, /второй вызов модели или S8 по догадке запрещены/);

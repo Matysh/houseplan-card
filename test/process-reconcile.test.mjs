@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  alreadyReported, decideReconciliation, latestReviewRequest, markerFor,
-  parseProcessRun, preparedEvidenceError, reconciliationKey,
+  alreadyReported, applyReconciliationDecision, decideReconciliation, latestReviewRequest, markerFor,
+  parseProcessRun, preparedEvidenceError, reconcileAll, reconciliationKey, relabel,
 } from '../scripts/process-reconcile.mjs';
 
 const NOW = Date.parse('2026-09-13T12:00:00Z');
@@ -137,13 +137,71 @@ test('#555 repeat reconciliation has a stable dedupe marker', () => {
     ...issue(),
     comments: [{
       createdAt: '2026-09-13T10:05:00Z',
-      body: `${markerFor(key)}\nАвтосверка процесса повторно разбудила \`S7-code-review\``,
+      body: `${markerFor(key)}\nАвтосверка процесса пытается повторно разбудить \`S7-code-review\``,
     }],
   };
   const retriedRequest = { ...request, id: 'event-8', at: '2026-09-13T10:04:59Z' };
   const stopped = decideReconciliation({ issue: afterRetry, request: retriedRequest, runs: [], now: NOW });
   assert.equal(stopped.action, 'escalate');
   assert.match(stopped.reason, /one automatic retry/);
+});
+
+test('#555 write path persists the marker before relabel and never mutates after comment failure', async () => {
+  const decision = decideReconciliation({ issue: issue(), request, runs: [], now: NOW });
+  const key = reconciliationKey(issue(), request, decision);
+  const calls = [];
+  await assert.rejects(applyReconciliationDecision({
+    repo: 'owner/repo', issue: issue(), request, decision, key,
+    ops: {
+      comment: async () => { calls.push('comment'); throw new Error('comment unavailable'); },
+      relabel: async () => { calls.push('relabel'); },
+    },
+  }), /comment unavailable/);
+  assert.deepEqual(calls, ['comment']);
+
+  calls.length = 0;
+  await applyReconciliationDecision({
+    repo: 'owner/repo', issue: issue(), request, decision, key,
+    ops: {
+      comment: async (_repo, _issue, body) => { calls.push('comment'); assert.match(body, new RegExp(markerFor(key))); },
+      relabel: async () => { calls.push('relabel'); },
+    },
+  });
+  assert.deepEqual(calls, ['comment', 'relabel']);
+});
+
+test('#555 relabel checks the bounded restore attempt instead of throwing the first error blindly', () => {
+  const calls = [];
+  let adds = 0;
+  const recovered = (args) => {
+    calls.push(args.at(-2));
+    if (args.includes('--remove-label')) return { status: 0, stderr: '' };
+    adds++;
+    return adds === 1 ? { status: 1, stderr: 'transient' } : { status: 0, stderr: '' };
+  };
+  assert.doesNotThrow(() => relabel('owner/repo', issue(), 'S7-code-review', recovered));
+  assert.equal(adds, 2);
+  assert.equal(calls.length, 3);
+
+  const broken = (args) => args.includes('--remove-label')
+    ? { status: 0, stderr: '' } : { status: 1, stderr: 'still broken' };
+  assert.throws(() => relabel('owner/repo', issue(), 'S7-code-review', broken), /still broken/);
+});
+
+test('#555 one write failure stays in machine summary and does not abort the snapshot', async () => {
+  const snapshot = { issue: issue(), request, runs: [] };
+  const runtime = {
+    openReviewIssues: async () => [snapshot.issue],
+    processRuns: async () => [],
+    snapshot: async () => snapshot,
+    applyDecision: async () => { throw new Error('write failed after durable diagnosis'); },
+  };
+  const summary = await reconcileAll({ repo: 'owner/repo', apply: true, now: NOW, runtime });
+  assert.equal(summary.failures, 1);
+  assert.equal(summary.mutations, 0);
+  assert.equal(summary.records.length, 1);
+  assert.equal(summary.records[0].applied, false);
+  assert.match(summary.records[0].error, /write failed/);
 });
 
 test('#555 a fresh label/run completion stays inside grace instead of duplicating work', () => {

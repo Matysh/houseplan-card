@@ -49,6 +49,7 @@ jobs:
             --max-actions=5 \
             --output=artifacts/process-reconcile/summary.json
       - name: Опубликовать компактный machine-readable итог
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: process-reconcile-${{ github.run_id }}-${{ github.run_attempt }}

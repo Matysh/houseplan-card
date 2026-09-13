@@ -23,7 +23,7 @@ export const DEFAULT_ACTIVE_LIMIT_MS = 4 * 60 * 60_000;
 const STAGE = { 'S4-spec-review': 'spec', 'S7-code-review': 'code' };
 const RUN_TITLE = /^process #(\d+) · (S4-spec-review|S7-code-review)(?: ·|$)/;
 const MARKER_PREFIX = 'houseplan-process-reconcile:v1';
-const RETRY_COMMENT = /houseplan-process-reconcile:v1:[^\s]+[\s\S]*Автосверка процесса повторно/;
+const RETRY_COMMENT = /houseplan-process-reconcile:v1:[^\s]+[\s\S]*Автосверка процесса (?:пытается )?повторно/;
 
 const at = (value) => {
   const parsed = Date.parse(String(value || ''));
@@ -281,8 +281,8 @@ function commentBody(issue, request, decision, key) {
     : '';
   const link = run?.url ? ` [Прогон](${run.url}).` : '';
   if (decision.action === 'retry') {
-    return `${markerFor(key)}\nАвтосверка процесса повторно разбудила \`${decision.label}\`: ${decision.reason}.${link}${evidence}\n\n`
-      + 'Вердикт не применялся, цикл ревью не расходуется самой сверкой; новый запуск заново проверит актуальные метки и материал.';
+    return `${markerFor(key)}\nАвтосверка процесса пытается повторно разбудить \`${decision.label}\`: ${decision.reason}.${link}${evidence}\n\n`
+      + 'Вердикт не применялся, цикл ревью не расходуется самой сверкой; после успешного восстановления новый запуск заново проверит актуальные метки и материал.';
   }
   return `${markerFor(key)}\n**Автосверка процесса не стала угадывать результат.** ${decision.reason}.${link}${evidence}\n\n`
     + `Запрос: \`${request?.id || 'не найден'}\`, текущая метка: \`${decision.label || labelsOf(issue).join(', ') || 'нет'}\`. `
@@ -293,15 +293,29 @@ function addComment(repo, issue, body) {
   gh(['issue', 'comment', String(issue.number), '--repo', repo, '--body', body]);
 }
 
-function relabel(repo, issue, label) {
-  gh(['issue', 'edit', String(issue.number), '--repo', repo, '--remove-label', label]);
-  const added = gh(['issue', 'edit', String(issue.number), '--repo', repo, '--add-label', label], { allowFailure: true });
-  if (added.status !== 0) {
-    // Best-effort rollback: leaving an issue without its review state is worse
-    // than a loud failed reconciliation.
-    gh(['issue', 'edit', String(issue.number), '--repo', repo, '--add-label', label], { allowFailure: true });
-    throw new Error(`could not restore ${label}: ${(added.stderr || '').trim()}`);
-  }
+export function relabel(repo, issue, label, execute = gh) {
+  execute(['issue', 'edit', String(issue.number), '--repo', repo, '--remove-label', label]);
+  const args = ['issue', 'edit', String(issue.number), '--repo', repo, '--add-label', label];
+  const first = execute(args, { allowFailure: true });
+  if (first.status === 0) return;
+  // One bounded restore attempt. Its result is authoritative; unlike the old
+  // best-effort call, a second failure is retained in summary.json.
+  const restore = execute(args, { allowFailure: true });
+  if (restore.status !== 0) throw new Error(`could not restore ${label}: ${(restore.stderr || first.stderr || '').trim()}`);
+}
+
+const DEFAULT_APPLY_OPS = {
+  comment: (repo, issue, body) => addComment(repo, issue, body),
+  relabel: (repo, issue, label) => relabel(repo, issue, label),
+};
+
+/** The write path is deliberately small and dependency-injected for failure fixtures. */
+export async function applyReconciliationDecision({ repo, issue, request, decision, key, ops = DEFAULT_APPLY_OPS }) {
+  // Persist the dedupe/diagnostic marker before touching the status. If comment
+  // publication fails, no relabel happens; if relabel fails, the owner still
+  // gets one durable explanation and the next schedule cannot loop silently.
+  await ops.comment(repo, issue, commentBody(issue, request, decision, key));
+  if (decision.action === 'retry') await ops.relabel(repo, issue, decision.label);
 }
 
 async function snapshot(repo, baseRuns, issue) {
@@ -316,13 +330,23 @@ async function snapshot(repo, baseRuns, issue) {
   return { issue: fresh, request, runs: hydrated };
 }
 
-export async function reconcileAll({ repo, apply = false, maxActions = 5, now = Date.now() }) {
-  const issues = openReviewIssues(repo);
-  const runs = processRuns(repo, issues);
+const DEFAULT_RUNTIME = {
+  openReviewIssues,
+  processRuns,
+  snapshot,
+  applyDecision: applyReconciliationDecision,
+};
+
+export async function reconcileAll({
+  repo, apply = false, maxActions = 5, now = Date.now(), runtime = DEFAULT_RUNTIME,
+}) {
+  const issues = await runtime.openReviewIssues(repo);
+  const runs = await runtime.processRuns(repo, issues);
   const records = [];
   let mutations = 0;
+  let failures = 0;
   for (const listed of issues) {
-    const first = await snapshot(repo, runs, listed);
+    const first = await runtime.snapshot(repo, runs, listed);
     const decision = decideReconciliation({ ...first, now });
     const key = reconciliationKey(first.issue, first.request, decision);
     const record = {
@@ -346,15 +370,19 @@ export async function reconcileAll({ repo, apply = false, maxActions = 5, now = 
       && !alreadyReported(first.issue, key)) {
       // Re-read immediately before a write. A label/body/owner decision may have
       // changed while runs and artifacts were inspected.
-      const freshRuns = processRuns(repo, [first.issue]);
-      const second = await snapshot(repo, freshRuns, first.issue);
+      const freshRuns = await runtime.processRuns(repo, [first.issue]);
+      const second = await runtime.snapshot(repo, freshRuns, first.issue);
       const confirmed = decideReconciliation({ ...second, now: Date.now() });
       const confirmedKey = reconciliationKey(second.issue, second.request, confirmed);
       if (confirmed.action === decision.action && confirmedKey === key && !alreadyReported(second.issue, key)) {
-        if (decision.action === 'retry') relabel(repo, second.issue, decision.label);
-        addComment(repo, second.issue, commentBody(second.issue, second.request, confirmed, key));
-        record.applied = true;
-        mutations++;
+        try {
+          await runtime.applyDecision({ repo, issue: second.issue, request: second.request, decision: confirmed, key });
+          record.applied = true;
+          mutations++;
+        } catch (error) {
+          record.error = error instanceof Error ? error.message : String(error);
+          failures++;
+        }
       } else {
         record.reason = `state changed before write: ${confirmed.action}/${confirmed.reason}`;
         record.action = 'noop';
@@ -369,6 +397,7 @@ export async function reconcileAll({ repo, apply = false, maxActions = 5, now = 
     apply,
     counts: records.reduce((out, row) => ({ ...out, [row.action]: (out[row.action] || 0) + 1 }), {}),
     mutations,
+    failures,
     records,
   };
 }
@@ -391,7 +420,8 @@ if (isMainModule(import.meta.url)) {
       mkdirSync(dirname(output), { recursive: true });
       writeFileSync(output, body);
     }
-    process.stdout.write(`${JSON.stringify({ schema: summary.schema, counts: summary.counts, mutations: summary.mutations })}\n`);
+    process.stdout.write(`${JSON.stringify({ schema: summary.schema, counts: summary.counts, mutations: summary.mutations, failures: summary.failures })}\n`);
+    if (summary.failures) process.exitCode = 1;
   }).catch((error) => {
     console.error(`process-reconcile: ${error instanceof Error ? error.stack || error.message : String(error)}`);
     process.exitCode = 2;
