@@ -484,10 +484,11 @@ screenshots `sourceFingerprint` against current `src/**`, which is exactly what
 went red after the #113 merge. A stable release additionally waits for Full
 Performance and for a green E2E run on a real Home Assistant (`houseplan-e2e`,
 dispatched on the candidate SHA by `release.yml`, #514/#540); betas and the
-development cycle never run E2E. Installable assets (`houseplan.zip`,
-`houseplan-card.js`, `SHA256SUMS`) reach the public release only from
-`release.yml` after those gates; a release published by hand is turned back into
-a draft first (#540).
+development cycle never run E2E. Stable installable assets (`houseplan.zip`,
+`houseplan-card.js` and their `SHA256SUMS`) reach the public stable release only
+from `release.yml` after those gates; a release published by hand is turned back
+into a draft first (#540). The prerelease publisher additionally ships a
+candidate-bound `RELEASE-MEMBERSHIP.json` covered by the same passport (#547).
 
 **"Verified" without a named command and its result is not evidence.**
 
@@ -547,4 +548,7 @@ the work itself and follows the ordinary rules, trailers included.
 
 Issues are closed in a batch when a beta ships, not when implementation ends: that
 way a bug found in the beta returns to the same task, and the beta announcement can
-list what went in. Status labels are stripped as the issues close.
+list what went in. The batch is immutable candidate membership proven by Git
+trailers, never the mutable S8 queue at close time; authorship does not change
+membership. Status labels are stripped as the issues close, and retries resume the
+same manifest without duplicating the release comment (#547).

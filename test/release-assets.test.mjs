@@ -8,15 +8,19 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import {
-  INSTALLABLE_ASSETS, SUMS_FILE, compareSums, formatSums, parseSums, sha256Hex, sumsOfDirectory,
+  INSTALLABLE_ASSETS, PASSPORTED_ASSETS, SUMS_FILE, compareSums, formatSums, parseSums,
+  sha256Hex, sumsOfDirectory,
 } from '../scripts/release-assets.mjs';
 
 const A = 'a'.repeat(64);
 const B = 'b'.repeat(64);
 const C = 'c'.repeat(64);
 
-test('#540: the passport covers exactly the two installable assets, in sha256sum format, sorted', () => {
+test('#540/#547: installables stay two while the passport also binds release membership', () => {
   assert.deepEqual(INSTALLABLE_ASSETS, ['houseplan-card.js', 'houseplan.zip']);
+  assert.deepEqual(PASSPORTED_ASSETS, [
+    'houseplan-card.js', 'houseplan.zip', 'RELEASE-MEMBERSHIP.json',
+  ]);
   assert.equal(SUMS_FILE, 'SHA256SUMS');
   const text = formatSums({ 'houseplan.zip': A, 'houseplan-card.js': B });
   assert.equal(text, `${B}  houseplan-card.js\n${A}  houseplan.zip\n`);
@@ -49,14 +53,20 @@ test('#540: the CLI writes the passport from real files and refuses an incomplet
     assert.match(r.stderr, /houseplan\.zip отсутствует/);
 
     writeFileSync(join(dir, 'houseplan.zip'), 'zip');
-    r = spawnSync(process.execPath, [script, 'sums', dir], { encoding: 'utf8' });
+    r = spawnSync(process.execPath, [script, 'sums', dir, '--include-membership'], { encoding: 'utf8' });
+    assert.equal(r.status, 1, 'candidate membership is part of a prerelease passport');
+    assert.match(r.stderr, /RELEASE-MEMBERSHIP\.json отсутствует/);
+
+    writeFileSync(join(dir, 'RELEASE-MEMBERSHIP.json'), '{"schema":1}\n');
+    r = spawnSync(process.execPath, [script, 'sums', dir, '--include-membership'], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr);
     const sums = readFileSync(join(dir, SUMS_FILE), 'utf8');
     assert.deepEqual(parseSums(sums), {
       'houseplan-card.js': sha256Hex(Buffer.from('card')),
       'houseplan.zip': sha256Hex(Buffer.from('zip')),
+      'RELEASE-MEMBERSHIP.json': sha256Hex(Buffer.from('{"schema":1}\n')),
     });
-    assert.deepEqual(sumsOfDirectory(dir), parseSums(sums));
+    assert.deepEqual(sumsOfDirectory(dir, PASSPORTED_ASSETS), parseSums(sums));
 
     r = spawnSync(process.execPath, [script, 'check', dir, join(dir, SUMS_FILE)], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr);

@@ -7860,6 +7860,29 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'prerelease-membership-keeps-unproven-s8',
+    guard: 'node --test test/release-membership.test.mjs',
+    because: '#547: the mutable S8 queue is only a hint. Keeping an issue without an '
+      + 'Issue trailer in the pinned candidate recreates the A -> B -> publish A race and '
+      + 'closes B as if it had shipped',
+    patches: [{
+      file: 'scripts/release-membership.mjs',
+      find: '      .filter((number) => evidence.get(number).length > 0)',
+      replace: '      .filter(() => true) // mutant: trust the live S8 snapshot',
+    }],
+  },
+  {
+    id: 'prerelease-bookkeeping-duplicates-release-comment',
+    guard: 'node --test test/release-bookkeeping.test.mjs',
+    because: '#547: a failure after commenting but before label removal must be retryable; '
+      + 'without the marker check every retry adds another public release comment',
+    patches: [{
+      file: 'scripts/release-bookkeeping.mjs',
+      find: '    comment: !comments.some((body) => String(body).includes(marker)),',
+      replace: '    comment: true, // mutant: retries duplicate the comment',
+    }],
+  },
+  {
     id: 'render-invalidation-unknown-key-ignored',
     guard: 'node --test test/render-invalidation.test.mjs',
     because: 'the classifier fails OPEN on Home Assistant keys it does not know: without that '

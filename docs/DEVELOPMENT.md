@@ -401,16 +401,20 @@ operation; it does not modify the developer's Git configuration.
 It creates or verifies an
 annotated exact-SHA tag, builds `houseplan.zip` directly from that committed
 tree, verifies its manifest and embedded frontend against the candidate hash,
-stages a draft prerelease and uploads both assets plus their `SHA256SUMS`
-passport. Only then does it make the release public. It verifies the downloaded
-public asset contents against the candidate and the passport, checks the
-paginated HACS prerelease order, and finally closes only the explicitly supplied
-issues and strips their status label. Nothing else re-uploads assets after
-publication (#540): the bytes it verified are the bytes that stay. Re-running the same command
-after a partial failure is safe when local/remote tags still resolve to the same
-SHA: stale public assets are replaced and verified rather than accepted or left
-for manual deletion. ZIP inspection is implemented in Node and does not depend
-on the host's `tar`/`unzip` variant. A per-tag local lock and GitHub workflow
+and creates `RELEASE-MEMBERSHIP.json`. Every explicitly supplied issue must have
+an `Issue: #NN` trailer in the candidate history since the previous release;
+issue authorship is irrelevant. The prerelease is staged as a draft and receives
+both installable assets, the membership manifest and their `SHA256SUMS` passport.
+Only then does it become public. The downloaded public bytes and membership are
+verified against the candidate, followed by the paginated HACS order and
+manifest-driven issue bookkeeping. Nothing else re-uploads assets after
+publication (#540): the bytes it verified are the bytes that stay. Re-running
+the same command after a partial failure is safe when the checkout still points
+to the tagged candidate: stale assets are repaired, while a hidden per-release
+comment marker, manifest membership and postcondition check make comment,
+status-label removal and close individually repeatable (#547). ZIP inspection
+is implemented in Node and does not depend on the host's `tar`/`unzip` variant.
+A per-tag local lock and GitHub workflow
 concurrency reject parallel runs; the local lock is removed on normal exit and
 on handled `SIGHUP`/`SIGINT`/`SIGTERM` interruption (`SIGKILL` cannot be handled
 by any process).
@@ -421,9 +425,12 @@ draft-first publication entirely on GitHub, including both assets. Prereleases
 are intentionally silent in Telegram; only stable releases are announced.
 GitHub exposes a `workflow_dispatch` button only after
 the workflow file exists on the default branch; until the next promotion to
-`main`, use the local command. The button deliberately does not close Issues:
-closing them is the release manager's call, and the `close-merged` job does it
-from the beta itself (#120).
+`main`, use the local command. The workflow snapshots the current S8 candidates
+before publication, then retains only issues proven by Git history in the pinned
+SHA. Its `close-merged` job consumes that immutable manifest after public asset
+verification, so work merged later remains open and an accepted external issue
+is treated like an owner-authored one. A retry reuses the published manifest and
+resumes bookkeeping even when the release is already public (#120, #547).
 
 **Stable releases** go through `.github/workflows/release.yml`, the only
 publisher of installable assets (#540). Run it with `workflow_dispatch` on

@@ -15,6 +15,10 @@ import { assertReleaseContract } from './release-contract.mjs';
 import { classifyValidateProofs } from './release-gate.mjs';
 import { assertBundleManifest } from './bundle-tree.mjs';
 import { SUMS_FILE, compareSums, formatSums, parseSums, sumsOfDirectory } from './release-assets.mjs';
+import {
+  MEMBERSHIP_FILE, buildReleaseMembership, readCandidateHistory,
+  verifyReleaseMembershipAgainstGit,
+} from './release-membership.mjs';
 
 const SUBPROCESS_MAX_BUFFER = 64 * 1024 * 1024;
 
@@ -80,7 +84,7 @@ export function verifyReleaseProjection(release, { tag }) {
   if (release.isDraft) throw new Error(`GitHub release ${tag} is still a draft`);
   if (!release.isPrerelease) throw new Error(`GitHub release ${tag} is not marked as a prerelease`);
   const assets = new Map((release.assets || []).map((asset) => [asset.name, asset]));
-  for (const name of ['houseplan-card.js', 'houseplan.zip', SUMS_FILE]) {
+  for (const name of ['houseplan-card.js', 'houseplan.zip', MEMBERSHIP_FILE, SUMS_FILE]) {
     const asset = assets.get(name);
     if (!asset || !(Number(asset.size) > 0)) throw new Error(`Release asset ${name} is missing or empty`);
   }
@@ -347,12 +351,13 @@ if (invokedDirectly) {
     return zipPath;
   };
 
-  const verifyRemoteAssetContents = (version, bundleSnapshot) => {
+  const verifyRemoteAssetContents = (version, bundleSnapshot, candidate) => {
     const download = mkdtempSync(resolve(tmpdir(), 'houseplan-release-check-'));
     try {
       run('gh', [
         'release', 'download', tag, '--repo', repo, '--dir', download,
-        '--pattern', 'houseplan-card.js', '--pattern', 'houseplan.zip', '--pattern', SUMS_FILE, '--clobber',
+        '--pattern', 'houseplan-card.js', '--pattern', 'houseplan.zip',
+        '--pattern', MEMBERSHIP_FILE, '--pattern', SUMS_FILE, '--clobber',
       ]);
       try {
         const cardPath = resolve(download, 'houseplan-card.js');
@@ -360,12 +365,24 @@ if (invokedDirectly) {
         if (cardHash !== bundleSnapshot.entrySha256)
           throw new Error(`Published houseplan-card.js hash ${cardHash} != candidate ${bundleSnapshot.entrySha256}`);
         verifyZipContents(resolve(download, 'houseplan.zip'), version, bundleSnapshot);
+        const membership = verifyReleaseMembershipAgainstGit(
+          JSON.parse(readFileSync(resolve(download, MEMBERSHIP_FILE), 'utf8')),
+          { tag, candidate },
+        );
+        if (issues.length) {
+          const actual = membership.issues.map((row) => row.number);
+          if (JSON.stringify(actual) !== JSON.stringify([...issues].sort((a, b) => a - b))) {
+            throw new Error(`Published membership ${actual.join(',')} != requested ${issues.join(',')}`);
+          }
+        }
         // #540: паспорт обязан быть и обязан описывать ровно эти байты.
+        const expectedSums = parseSums(readFileSync(resolve(download, SUMS_FILE), 'utf8'));
         const passport = compareSums(
-          parseSums(readFileSync(resolve(download, SUMS_FILE), 'utf8')),
-          sumsOfDirectory(download),
+          expectedSums,
+          sumsOfDirectory(download, Object.keys(expectedSums)),
         );
         if (!passport.ok) throw new Error(`Published ${SUMS_FILE} disagrees with the assets: ${JSON.stringify(passport)}`);
+        return membership;
       } catch (error) {
         throw new ReleaseAssetContentError(
           error instanceof Error ? error.message : String(error),
@@ -426,26 +443,11 @@ if (invokedDirectly) {
   // отсутствие задачи в проекте роняло публикацию. Статус живёт в метках
   // (PROCESS.md §9), и релизу нечего синхронизировать: он закрывает issue и
   // снимает статусную метку, как это делает job close-merged (#120).
-  const finishIssues = (releaseUrl) => {
-    if (!issues.length) return;
-    for (const issue of issues) {
-      const row = ghJson(['issue', 'view', String(issue), '--repo', repo, '--json', 'state,labels']);
-      if (row.state === 'OPEN') {
-        const status = (row.labels || [])
-          .map((label) => label.name)
-          .filter((name) => /^S\d-/.test(name));
-        // Метка снимается ДО закрытия: инвариант «закрытый issue не несёт
-        // статусных меток» ломался уже дважды, и оба раза из-за обратного
-        // порядка в ручном шаге.
-        for (const name of status) {
-          run('gh', ['issue', 'edit', String(issue), '--repo', repo, '--remove-label', name]);
-        }
-        run('gh', [
-          'issue', 'close', String(issue), '--repo', repo, '--reason', 'completed',
-          '--comment', `Реализовано и опубликовано в [${tag}](${releaseUrl}).`,
-        ], { inherit: true });
-      }
-    }
+  const finishIssues = (releaseUrl, sha, membershipPath) => {
+    run(process.execPath, [
+      'scripts/release-bookkeeping.mjs', `--repo=${repo}`, `--tag=${tag}`,
+      `--candidate=${sha}`, `--url=${releaseUrl}`, `--membership=${membershipPath}`,
+    ], { inherit: true });
   };
 
   const acquireReleaseLock = () => {
@@ -482,14 +484,22 @@ if (invokedDirectly) {
     run('git', ['fetch', 'origin', branch]);
     const sha = run('git', ['rev-parse', 'HEAD']).stdout;
     const remoteBranch = run('git', ['rev-parse', `origin/${branch}`]).stdout;
-    if (sha !== remoteBranch) throw new Error(`HEAD ${sha} is not synchronized with origin/${branch} ${remoteBranch}`);
+    const existingTag = remoteTag();
+    if (existingTag.exists) {
+      if (existingTag.commit !== sha) {
+        throw new Error(`Remote tag ${tag} points to ${existingTag.commit}; check out that candidate before retrying`);
+      }
+    } else if (sha !== remoteBranch) {
+      throw new Error(`HEAD ${sha} is not synchronized with origin/${branch} ${remoteBranch}`);
+    }
     const bundleSnapshot = assertBundleSnapshots(sha);
     const bundleSha256 = bundleSnapshot.entrySha256;
     const validateRuns = await assertGreenValidate(sha);
     validateIssues();
-    const existingTag = remoteTag();
-    if (existingTag.exists && existingTag.commit !== sha)
-      throw new Error(`Remote tag ${tag} points to ${existingTag.commit}, expected ${sha}`);
+    const history = readCandidateHistory(sha);
+    const generatedMembership = buildReleaseMembership({
+      tag, candidate: sha, base: history.base, commits: history.commits, issueNumbers: issues,
+    }).manifest;
     const existingRelease = releaseView();
 
     console.log(JSON.stringify({
@@ -525,6 +535,8 @@ if (invokedDirectly) {
     try {
       artifactsDir = mkdtempSync(resolve(tmpdir(), 'houseplan-release-'));
       const bundlePath = materializeCommittedBundle(sha, bundleSha256, artifactsDir);
+      const membershipPath = resolve(artifactsDir, MEMBERSHIP_FILE);
+      writeFileSync(membershipPath, `${JSON.stringify(generatedMembership, null, 2)}\n`);
       if (existingRelease && !existingRelease.isDraft) {
         let complete;
         try {
@@ -537,7 +549,8 @@ if (invokedDirectly) {
           // A matching name and non-zero size are insufficient: bind both
           // downloadable assets to this exact candidate before closing issues.
           try {
-            verifyRemoteAssetContents(contract.version, bundleSnapshot);
+            const publishedMembership = verifyRemoteAssetContents(contract.version, bundleSnapshot, sha);
+            writeFileSync(membershipPath, `${JSON.stringify(publishedMembership, null, 2)}\n`);
           } catch (error) {
             if (!(error instanceof ReleaseAssetContentError)) throw error;
             console.log(`Published release needs stale-asset recovery: ${error.message}`);
@@ -545,7 +558,7 @@ if (invokedDirectly) {
           }
           if (complete) {
             verifyHacsDiscovery();
-            finishIssues(complete.url);
+            finishIssues(complete.url, sha, membershipPath);
             console.log(`Already published and content-verified: ${complete.url}`);
             return;
           }
@@ -579,14 +592,15 @@ if (invokedDirectly) {
       writeFileSync(sumsPath, formatSums({
         'houseplan-card.js': sha256Path(bundlePath),
         'houseplan.zip': sha256Path(zipPath),
+        [MEMBERSHIP_FILE]: sha256Path(membershipPath),
       }));
       run('gh', [
-        'release', 'upload', tag, bundlePath, zipPath, sumsPath,
+        'release', 'upload', tag, bundlePath, zipPath, membershipPath, sumsPath,
         '--repo', repo, '--clobber',
       ], { inherit: true });
       const staged = releaseView();
       const stagedAssets = new Map((staged?.assets || []).map((asset) => [asset.name, asset]));
-      for (const name of ['houseplan-card.js', 'houseplan.zip', SUMS_FILE]) {
+      for (const name of ['houseplan-card.js', 'houseplan.zip', MEMBERSHIP_FILE, SUMS_FILE]) {
         if (!(Number(stagedAssets.get(name)?.size) > 0))
           throw new Error(`Draft release asset ${name} is missing or empty`);
       }
@@ -600,9 +614,9 @@ if (invokedDirectly) {
       const finalTag = remoteTag();
       if (!finalTag.exists || finalTag.commit !== sha)
         throw new Error(`Published tag ${tag} no longer resolves to exact SHA ${sha}`);
-      verifyRemoteAssetContents(contract.version, bundleSnapshot);
+      verifyRemoteAssetContents(contract.version, bundleSnapshot, sha);
       verifyHacsDiscovery();
-      finishIssues(published.url);
+      finishIssues(published.url, sha, membershipPath);
       console.log(`Published and content-verified: ${published.url}`);
     } finally {
       for (const [signal, handler] of signalHandlers) process.removeListener(signal, handler);

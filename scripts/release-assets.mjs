@@ -19,9 +19,12 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
+import { MEMBERSHIP_FILE } from './release-membership.mjs';
 
 /** Установочные ассеты — то, что скачивает HACS и человек. Ровно эти два. */
 export const INSTALLABLE_ASSETS = ['houseplan-card.js', 'houseplan.zip'];
+/** Candidate identity is not installable, but is part of the verified release. */
+export const PASSPORTED_ASSETS = [...INSTALLABLE_ASSETS, MEMBERSHIP_FILE];
 export const SUMS_FILE = 'SHA256SUMS';
 
 export const sha256Hex = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -83,8 +86,9 @@ if (isMainModule(import.meta.url)) { // #496: переносимо для Window
     const [command, dir, sumsPath] = positionals;
     if (command === 'sums') {
       if (!dir) throw new Error('usage: release-assets.mjs sums <dir> [--out=<file>]');
-      const entries = sumsOfDirectory(dir);
-      for (const name of INSTALLABLE_ASSETS) {
+      const names = flag('include-membership') ? PASSPORTED_ASSETS : INSTALLABLE_ASSETS;
+      const entries = sumsOfDirectory(dir, names);
+      for (const name of names) {
         if (!entries[name]) throw new Error(`${name} отсутствует в ${dir} — паспорт не выписывается на неполный набор`);
       }
       const out = value('out') || resolve(dir, SUMS_FILE);

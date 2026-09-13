@@ -12,6 +12,7 @@ on:
 permissions:
   contents: write
   actions: read
+  issues: read
 
 concurrency:
   group: publish-prerelease-${{ inputs.tag }}
@@ -31,7 +32,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v7
         with: { node-version: 22 }
-      - name: Pin the current dev candidate
+      - name: Pin the dev candidate or the existing annotated tag
         id: candidate
         env:
           TAG: ${{ inputs.tag }}
@@ -42,12 +43,23 @@ jobs:
             echo "::error::Prereleases must be dispatched from the dev branch, got $REF_NAME"
             exit 1
           }
-          SHA=$(git rev-parse HEAD)
-          git fetch origin dev
-          test "$(git rev-parse origin/dev)" = "$SHA" || {
-            echo "::error::The dispatched SHA is no longer the origin/dev tip"
-            exit 1
-          }
+          DISPATCHED_SHA=$(git rev-parse HEAD)
+          git fetch --force origin dev --tags
+          REMOTE=$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}")
+          if [ -n "$REMOTE" ]; then
+            SHA=$(printf '%s\n' "$REMOTE" | awk -v ref="refs/tags/$TAG^{}" '$2 == ref {print $1}')
+            test -n "$SHA" || {
+              echo "::error::Existing remote tag $TAG is not annotated"
+              exit 1
+            }
+          else
+            SHA=$DISPATCHED_SHA
+            test "$(git rev-parse origin/dev)" = "$SHA" || {
+              echo "::error::The dispatched SHA is no longer the origin/dev tip"
+              exit 1
+            }
+          fi
+          git checkout --detach "$SHA"
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
       - name: Verify version, changelogs and bilingual release notes
@@ -77,6 +89,35 @@ jobs:
           REPO: ${{ github.repository }}
           SHA: ${{ steps.candidate.outputs.sha }}
         run: node scripts/release-gate.mjs "$SHA"
+      - name: Bind issue membership to the exact candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.candidate.outputs.tag }}
+          SHA: ${{ steps.candidate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p release-membership
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --dir release-membership --pattern RELEASE-MEMBERSHIP.json --clobber || true
+          fi
+          if [ -s release-membership/RELEASE-MEMBERSHIP.json ]; then
+            node scripts/release-membership.mjs verify --tag="$TAG" --candidate="$SHA" \
+              --input=release-membership/RELEASE-MEMBERSHIP.json
+          else
+            ISSUES=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+              --label S8-merged --limit 1000 --json number --jq 'map(.number)|join(",")')
+            node scripts/release-membership.mjs create --tag="$TAG" --candidate="$SHA" \
+              --issues="$ISSUES" --allow-unmatched \
+              --output=release-membership/RELEASE-MEMBERSHIP.json
+          fi
+      - name: Preserve candidate membership for publication
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-membership
+          path: release-membership/RELEASE-MEMBERSHIP.json
+          if-no-files-found: error
+          retention-days: 7
 
   publish:
     name: Публикация тега и релиза
@@ -92,6 +133,10 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v7
         with: { node-version: 22 }
+      - uses: actions/download-artifact@v7
+        with:
+          name: release-membership
+          path: release-assets
       - name: Build and verify both release assets before publication
         env:
           TAG: ${{ needs.gate.outputs.tag }}
@@ -115,7 +160,9 @@ jobs:
           test -s houseplan.zip
           mkdir -p release-assets
           cp dist/houseplan-card.js houseplan.zip release-assets/
-          node scripts/release-assets.mjs sums release-assets
+          node scripts/release-membership.mjs verify --tag="$TAG" --candidate="$SHA" \
+            --input=release-assets/RELEASE-MEMBERSHIP.json
+          node scripts/release-assets.mjs sums release-assets --include-membership
       - name: Create or verify the annotated tag
         env:
           TAG: ${{ needs.gate.outputs.tag }}
@@ -154,8 +201,23 @@ jobs:
           fi
           WAS_DRAFT=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
           echo "newly_published=$WAS_DRAFT" >> "$GITHUB_OUTPUT"
+          if [ "$WAS_DRAFT" = "false" ]; then
+            mkdir -p existing-public
+            if gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir existing-public \
+                --pattern houseplan-card.js --pattern houseplan.zip \
+                --pattern RELEASE-MEMBERSHIP.json --pattern SHA256SUMS --clobber \
+              && diff -u release-assets/SHA256SUMS existing-public/SHA256SUMS \
+              && node scripts/release-assets.mjs check existing-public release-assets/SHA256SUMS \
+              && node scripts/release-membership.mjs verify --tag="$TAG" --candidate="${{ needs.gate.outputs.sha }}" \
+                --input=existing-public/RELEASE-MEMBERSHIP.json; then
+              echo "release is already public and byte-identical; publication skipped"
+              exit 0
+            fi
+            echo "existing public assets need recovery; verified files will be uploaded again"
+          fi
           gh release upload "$TAG" release-assets/houseplan-card.js release-assets/houseplan.zip \
-            release-assets/SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber
+            release-assets/RELEASE-MEMBERSHIP.json release-assets/SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" --clobber
           RELEASE_JSON=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
             --json tagName,isDraft,isPrerelease,assets,url)
           export RELEASE_JSON TAG
@@ -163,7 +225,7 @@ jobs:
           const release = JSON.parse(process.env.RELEASE_JSON);
           if (release.tagName !== process.env.TAG) throw new Error('release tag mismatch');
           const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
-          for (const name of ['houseplan-card.js', 'houseplan.zip', 'SHA256SUMS']) {
+          for (const name of ['houseplan-card.js', 'houseplan.zip', 'RELEASE-MEMBERSHIP.json', 'SHA256SUMS']) {
             if (!(Number(assets.get(name)?.size) > 0)) throw new Error(`${name} is missing or empty`);
           }
           NODE
@@ -185,16 +247,19 @@ jobs:
           if (release.tagName !== process.env.TAG || release.isDraft || !release.isPrerelease)
             throw new Error('release is not a public prerelease for the requested tag');
           const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
-          for (const name of ['houseplan-card.js', 'houseplan.zip', 'SHA256SUMS']) {
+          for (const name of ['houseplan-card.js', 'houseplan.zip', 'RELEASE-MEMBERSHIP.json', 'SHA256SUMS']) {
             if (!(Number(assets.get(name)?.size) > 0)) throw new Error(`${name} is missing or empty`);
           }
           NODE
           # #540: публичные байты — ровно те, что собраны и проверены выше.
           mkdir -p public
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir public \
-            --pattern houseplan-card.js --pattern houseplan.zip --pattern SHA256SUMS --clobber
+            --pattern houseplan-card.js --pattern houseplan.zip \
+            --pattern RELEASE-MEMBERSHIP.json --pattern SHA256SUMS --clobber
           diff -u release-assets/SHA256SUMS public/SHA256SUMS
           node scripts/release-assets.mjs check public release-assets/SHA256SUMS
+          node scripts/release-membership.mjs verify --tag="$TAG" --candidate="$SHA" \
+            --input=public/RELEASE-MEMBERSHIP.json
           test "$(git rev-list -n 1 "$TAG")" = "$SHA"
           URL=$(node -p "JSON.parse(process.env.RELEASE_JSON).url")
           echo "url=$URL" >> "$GITHUB_OUTPUT"
@@ -219,26 +284,31 @@ jobs:
               );
             }
 
-  # PROCESS.md 10.2 item 10: closing issues and stripping status labels happens
-  # because a beta was published, not because someone remembered to do it. The
-  # manual step was skipped twice, and both times it broke the invariant that a
-  # closed issue carries no status label — the one thing `verify` relies on.
-  #
-  # A manual step after a successful release is the worst kind: by the time it is
-  # due, the work already looks finished, which is exactly why it gets forgotten.
+  # #547: bookkeeping is driven by the immutable candidate manifest, not by the
+  # mutable S8 queue. It also runs on a verified retry of an already-public beta.
   close-merged:
     name: Закрытие вошедших issue
     needs: [gate, publish]
-    if: ${{ needs.publish.outputs.newly_published == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read
       # Deliberately the stock token, not a PAT: events caused by GITHUB_TOKEN do
       # not start workflows, so removing the label cannot wake the review
       # pipeline. A PAT here would build a cascade out of a bookkeeping step.
       issues: write
     steps:
-      - name: Close the S8-merged queue and strip status labels
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.gate.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v7
+        with:
+          name: release-membership
+          path: release-membership
+      - name: Finish only the issues proven in the candidate manifest
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -246,33 +316,9 @@ jobs:
           URL: ${{ needs.publish.outputs.url }}
         run: |
           set -euo pipefail
-          # Only the owner's issues take part in the process; issues filed by
-          # anyone else never carry status labels and are not ours to close.
-          numbers=$(gh issue list --repo "$REPO" --state open --label S8-merged \
-            --author Matysh --limit 100 --json number --jq '.[].number')
-          if [ -z "$numbers" ]; then
-            echo "the S8-merged queue is empty, nothing to close"
-          else
-            for n in $numbers; do
-              gh issue comment "$n" --repo "$REPO" \
-                --body "Выпущено в \`$TAG\` · [релиз]($URL)"
-              # Label first, then close. If the run dies between the two steps an
-              # open issue without a status is visible and fixable in the flow;
-              # the reverse order would recreate the exact breakage this job is
-              # here to prevent.
-              gh issue edit "$n" --repo "$REPO" --remove-label S8-merged
-              gh issue close "$n" --repo "$REPO" --reason completed
-              echo "closed #$n"
-            done
-          fi
-          # Targeted at the defect that actually recurs, not at the invariant in
-          # general: no closed issue may still carry S8-merged.
-          leftover=$(gh issue list --repo "$REPO" --state closed --label S8-merged \
-            --limit 100 --json number --jq 'length')
-          test "$leftover" = "0" || {
-            echo "::error::$leftover closed issues still carry S8-merged"
-            exit 1
-          }
+          node scripts/release-bookkeeping.mjs --repo="$REPO" --tag="$TAG" \
+            --candidate="${{ needs.gate.outputs.sha }}" --url="$URL" \
+            --membership=release-membership/RELEASE-MEMBERSHIP.json
 
   announce:
     name: Комментарий о публикации

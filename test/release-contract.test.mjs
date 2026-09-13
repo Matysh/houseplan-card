@@ -138,7 +138,12 @@ test('local orchestrator validates issue lists and public release assets', () =>
   assert.throws(() => parsePrereleaseArgs([tag, 'extra']), /Exactly one/);
   const release = {
     tagName: tag, isDraft: false, isPrerelease: true,
-    assets: [{ name: 'houseplan-card.js', size: 10 }, { name: 'houseplan.zip', size: 20 }, { name: 'SHA256SUMS', size: 5 }],
+    assets: [
+      { name: 'houseplan-card.js', size: 10 },
+      { name: 'houseplan.zip', size: 20 },
+      { name: 'RELEASE-MEMBERSHIP.json', size: 30 },
+      { name: 'SHA256SUMS', size: 5 },
+    ],
   };
   assert.equal(verifyReleaseProjection(release, { tag }), release);
   assert.throws(
@@ -151,7 +156,9 @@ test('local orchestrator validates issue lists and public release assets', () =>
   );
   // #540: паспорт — часть единого вида релиза; бета без него неполна.
   assert.throws(
-    () => verifyReleaseProjection({ ...release, assets: release.assets.slice(0, 2) }, { tag }),
+    () => verifyReleaseProjection({
+      ...release, assets: release.assets.filter((asset) => asset.name !== 'SHA256SUMS'),
+    }, { tag }),
     /SHA256SUMS/,
   );
   const orchestrator = readFileSync(
@@ -160,9 +167,9 @@ test('local orchestrator validates issue lists and public release assets', () =>
   // #540: после публикации никто не ждёт независимых републикаторов — их нет.
   assert.ok(!/waitForReleaseWorkflows|release-zip\.yml|prereleaseWorkflowSucceeded/.test(orchestrator),
     'the local publisher no longer waits for release.yml/release-zip.yml to re-upload what it already verified');
-  assert.match(orchestrator, /formatSums\(\{\n\s+'houseplan-card\.js': sha256Path\(bundlePath\),\n\s+'houseplan\.zip': sha256Path\(zipPath\),/,
+  assert.match(orchestrator, /formatSums\(\{\n\s+'houseplan-card\.js': sha256Path\(bundlePath\),\n\s+'houseplan\.zip': sha256Path\(zipPath\),\n\s+\[MEMBERSHIP_FILE\]: sha256Path\(membershipPath\),/,
     'the passport is computed from the very files that are uploaded');
-  assert.match(orchestrator, /'release', 'upload', tag, bundlePath, zipPath, sumsPath,/);
+  assert.match(orchestrator, /'release', 'upload', tag, bundlePath, zipPath, membershipPath, sumsPath,/);
 });
 
 test('release ZIP inspection is portable and does not depend on tar', () => {
@@ -227,9 +234,9 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
     'node scripts/release-contract.mjs',
     'node scripts/release-gate.mjs',
     '--draft --prerelease',
-    "'houseplan-card.js', 'houseplan.zip', 'SHA256SUMS'",
+    "'houseplan-card.js', 'houseplan.zip', 'RELEASE-MEMBERSHIP.json', 'SHA256SUMS'",
     'test -s dist/houseplan-panel.js',
-    'node scripts/release-assets.mjs sums release-assets',
+    'node scripts/release-assets.mjs sums release-assets --include-membership',
     'node scripts/release-assets.mjs check public release-assets/SHA256SUMS',
     'git -c core.autocrlf=false archive --format=zip --output=houseplan.zip',
     '--draft=false --prerelease',
@@ -238,6 +245,13 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
     "if: ${{ needs.publish.outputs.newly_published == 'true' }}",
     'uses: ./.github/workflows/announce.yml',
   ]) assert.ok(workflow.includes(required), `missing workflow contract: ${required}`);
+  assert.ok(workflow.includes('node scripts/release-membership.mjs create'));
+  assert.ok(workflow.includes('node scripts/release-bookkeeping.mjs'));
+  assert.ok(workflow.includes('release is already public and byte-identical; publication skipped'));
+  assert.ok(!workflow.includes('--author Matysh'));
+  const closeJob = workflow.slice(workflow.indexOf('  close-merged:'), workflow.indexOf('  announce:'));
+  assert.ok(!closeJob.includes('newly_published'), 'verified retries must resume bookkeeping');
+  assert.ok(!closeJob.includes('gh issue list'), 'closing is manifest-driven, never a fresh S8 snapshot');
   assert.ok(workflow.indexOf('gh release upload') < workflow.indexOf('--draft=false --prerelease'));
 
   const announce = readFileSync(new URL('../.github/workflows/announce.yml', import.meta.url), 'utf8');

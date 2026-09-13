@@ -124,7 +124,11 @@ version authorities, both changelogs need a dated section, and the canonical
 bilingual `docs/RELEASE-NOTES.md` must link to immutable tagged changelogs. A
 public release is assembled as a draft, receives and verifies
 `houseplan-card.js` plus `houseplan.zip`, and becomes visible only after the
-exact candidate SHA has a green Validate. Existing release-event workflows are
+exact candidate SHA has a green Validate. `RELEASE-MEMBERSHIP.json` binds the
+issue batch to that SHA through commit trailers and is itself covered by
+`SHA256SUMS`; the post-publication bookkeeping never selects the live S8 queue.
+The same manifest consumer makes local and workflow retries idempotent across
+comment, label-removal and close failures. Existing release-event workflows are
 kept as an independent recovery path; they enforce the same exact-SHA gate.
 `Validate` contains only the candidate performance smoke so ordinary betas do
 not wait for a full comparison. Every `main` promotion starts the dedicated
