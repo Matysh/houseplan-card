@@ -250,7 +250,10 @@ const CORPUS = [
     // хранит их намеренно, а инварианты сообщают о них НАБЛЮДЕНИЕМ. Нарушением
     // была бы только запись, чей владелец отсутствует по самой конфигурации.
     expectedViolations: [],
-    expectedNotes: ['references/stale_layout_space', 'references/stale_layout_space'],
+    // Владельцев этих двух ключей по конфигурации не видно, поэтому наблюдение
+    // именно `unknown_owner`: «владелец жив» здесь было бы заявлением о
+    // доказанности, которой нет (r1 Medium).
+    expectedNotes: ['references/unknown_owner', 'references/unknown_owner'],
     condition(space, layout) {
       const known = new Set([space.id]);
       const orphans = Object.values(layout).filter((entry) => !known.has(entry.s));

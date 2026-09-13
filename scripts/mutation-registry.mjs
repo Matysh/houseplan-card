@@ -80,8 +80,20 @@ const MUTANT_DEFINITIONS = [
       + 'после Optimize — и следующий разбор начнётся с ложного сигнала',
     patches: [{
       file: 'scripts/model-invariants.mjs',
-      find: '      const ownerGone = roomOwner ? !allRoomIds.has(roomOwner)',
-      replace: '      const ownerGone = true || roomOwner ? !allRoomIds.has(roomOwner)',
+      find: "      if (owner === 'absent') {",
+      replace: "      if (owner === 'absent' || true) {",
+    }],
+  },
+  {
+    id: 'invariants-claim-proof-for-an-unknown-owner',
+    guard: 'node --test --test-name-pattern="#566" test/model-invariants.test.mjs',
+    because: '#566 r1: ключ, который ни во что не резолвится, и живой маркер — разные '
+      + 'состояния; общая формулировка «владелец жив» заявляет доказанность там, где её нет, '
+      + 'и следующий разбор поверит записи вместо проверки',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: "        : activeMarkerIds.has(key) ? 'live'\n        : 'unverified';",
+      replace: "        : 'live';",
     }],
   },
   {
@@ -92,8 +104,10 @@ const MUTANT_DEFINITIONS = [
       + 'отключение проверки',
     patches: [{
       file: 'scripts/model-invariants.mjs',
-      find: '        : removedMarkerIds.has(key);',
-      replace: '        : false;',
+      // Файл на JS, поэтому литеральная ложь здесь безопасна: сужения типов,
+      // которые ломает статически мёртвая ветка в .ts (#568), тут нет.
+      find: "        : removedMarkerIds.has(key) ? 'absent'",
+      replace: "        : false ? 'absent'",
     }],
   },
   {

@@ -212,21 +212,35 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
       // пользователя. Значит конфиг, только что прошедший Optimize, законно
       // содержит такие записи, и объявлять их нарушением — врать про модель.
       //
-      // Судим тем же правилом: нарушение только там, где владелец ОТСУТСТВУЕТ
-      // по самой конфигурации. Остальное — наблюдение, как и у ветки
-      // `unknown_owner` ниже: проверка с ложными срабатываниями умирает первой.
+      // Судим тем же правилом и ТЕМИ ЖЕ ТРЕМЯ состояниями, что продукт: `absent`
+      // (нарушение), `live` и `unverified` (наблюдения). Разница между двумя
+      // последними — не педантизм: сказать «владелец жив» про ключ, который ни
+      // во что не резолвится, значит заявить доказанность там, где её нет, и
+      // следующий разбор поверит записи вместо проверки (r1 Medium).
       const roomOwner = key.startsWith('rl_') ? key.slice(3) : '';
       const areaOwner = key.startsWith('grp_') ? key.slice(4) : '';
-      const ownerGone = roomOwner ? !allRoomIds.has(roomOwner)
-        : areaOwner ? !allAreas.has(areaOwner)
-        : removedMarkerIds.has(key);
-      if (ownerGone) {
+      const owner = roomOwner
+        ? (allRoomIds.has(roomOwner) ? 'live' : 'absent')
+        : areaOwner
+        ? (allAreas.has(areaOwner) ? 'live' : 'absent')
+        : removedMarkerIds.has(key) ? 'absent'
+        : activeMarkerIds.has(key) ? 'live'
+        : 'unverified';
+      if (owner === 'absent') {
         add('layout_space', key, space,
           'пространства не существует, и владельца позиции тоже нет');
-      } else {
+      } else if (owner === 'live') {
         notes.push({ invariant: 'references', kind: 'stale_layout_space', owner: key,
           reference: space,
           detail: 'пространства не существует, владелец жив — Optimize хранит позицию намеренно' });
+      } else {
+        // Тот же факт, что у ветки `unknown_owner` ниже, и та же формулировка:
+        // владельца в конфигурации не видно, отличить устройство HA от мусора
+        // по одному конфигу нельзя. Продукт в этом состоянии тоже ничего не
+        // удаляет — но не потому, что владелец жив, а потому, что не знает.
+        notes.push({ invariant: 'references', kind: 'unknown_owner', owner: key,
+          reference: key,
+          detail: 'владелец не найден в конфигурации (возможно устройство HA); пространства тоже нет' });
       }
       continue;
     }

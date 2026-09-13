@@ -150,14 +150,22 @@ test('#566: на удалённом пространстве нарушение 
     'layout_space:m_gone',
     'layout_space:rl_room_never_existed',
   ]);
+  // Три состояния, а не два: продукт различает `live` и `unverified`, и
+  // проверка обязана различать их тоже. Сказать «владелец жив» про ключ,
+  // который ни во что не резолвится, — заявить доказанность там, где её нет
+  // (находка r1). Поэтому сверяется и вид наблюдения, и ТЕКСТ причины: вид без
+  // текста эту асимметрию пропускает — именно так она и проехала.
   assert.deepEqual(notes.filter((n) => n.kind === 'stale_layout_space')
-    .map((n) => n.owner).sort(), [
-    '980f1446c4ec1a3a9fa9ff5f6d93caed', 'grp_kitchen', 'm1', 'rl_r1',
-  ]);
-  // Наблюдение обязано называть причину, иначе читатель решит, что проверка
-  // просто ослабла.
-  assert.match(notes.find((n) => n.kind === 'stale_layout_space').detail,
-    /Optimize хранит позицию намеренно/);
+    .map((n) => n.owner).sort(), ['grp_kitchen', 'm1', 'rl_r1']);
+  assert.deepEqual(notes.filter((n) => n.kind === 'unknown_owner')
+    .map((n) => n.owner), ['980f1446c4ec1a3a9fa9ff5f6d93caed']);
+  for (const note of notes.filter((n) => n.kind === 'stale_layout_space')) {
+    assert.match(note.detail, /владелец жив — Optimize хранит позицию намеренно/);
+  }
+  for (const note of notes.filter((n) => n.kind === 'unknown_owner')) {
+    assert.match(note.detail, /владелец не найден в конфигурации/);
+    assert.doesNotMatch(note.detail, /владелец жив/);
+  }
 });
 
 test('позиция устройства без записи маркера — наблюдение, а не нарушение (#254)', () => {
