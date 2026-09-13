@@ -32,10 +32,14 @@ const makeTree = () => {
   put('scripts/gate-reuse.mjs', '// reuse protocol\n');
   put('scripts/check-inputs.mjs', '// manifest\n');
   put('src/card.ts', "export const CARD_VERSION = '1.0.0';\n");
+  put('src/plan-optimizer.ts', 'export const PLAN_MODEL_VERSION = 1;\n');
+  put('src/logic.ts', 'export const logic = 1;\n');
   put('demo/serve.mjs', "import './bundle-freshness.mjs';\n");
   put('demo/bundle-freshness.mjs', 'export const fresh = 1;\n');
   put('demo/srv/demo.html', '<div id="host"></div>\n');
   put('demo/fixtures/one.mjs', 'export const fixture = 1;\n');
+  put('demo/fixtures/large-house.mjs', 'export const makeLargeHouseFixture = () => ({});\n');
+  put('demo/fixtures/visual-matrix.mjs', 'export const makeVisualMatrixFixture = () => ({});\n');
   put('demo/smoke_alpha.mjs', "import { launch } from './serve.mjs';\nimport '../scripts/model-invariants.mjs';\nconsole.log(1);\n");
   put('demo/smoke_beta.mjs', "import { launch } from './serve.mjs';\nconsole.log(2);\n");
   put('scripts/model-invariants.mjs', 'export const invariants = 1;\n');
@@ -171,6 +175,28 @@ test('#492 backend inputs the old HARNESS did not know: relay, schema, converter
     bumps('pyproject.toml', '[tool.ruff]\nline-length = 100\n');
     bumps('scripts/backend-coverage-baseline.txt', '81.0\n');
     bumps('tests_backend/requirements.txt', 'pytest==9\n');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('#542 dynamic backend inputs invalidate its reuse key and unrelated fixtures do not', () => {
+  const { dir, put } = makeTree();
+  const bumpsBackend = (rel, text) => {
+    const before = reuseKey(dir, 'backend');
+    put(rel, text);
+    assert.notEqual(reuseKey(dir, 'backend'), before, `${rel}: backend reuse key не изменился`);
+  };
+  try {
+    bumpsBackend('src/plan-optimizer.ts', 'export const PLAN_MODEL_VERSION = 2;\n');
+    bumpsBackend('src/logic.ts', 'export const logic = 2;\n');
+    bumpsBackend('demo/fixtures/large-house.mjs', 'export const makeLargeHouseFixture = () => ({ changed: true });\n');
+    bumpsBackend('demo/fixtures/visual-matrix.mjs', 'export const makeVisualMatrixFixture = () => ({ changed: true });\n');
+
+    const before = reuseKey(dir, 'backend');
+    put('demo/fixtures/one.mjs', 'export const fixture = 2;\n');
+    assert.equal(reuseKey(dir, 'backend'), before,
+      'нерелевантная fixture не должна превращать backend в широкий UI-гейт');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -3916,6 +3916,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'backend-dynamic-inputs-dropped',
+    guard: 'node --test --test-name-pattern="#542" test/check-inputs.test.mjs test/gate-reuse.test.mjs',
+    because: 'backend pytest reads selected TS sources and browser fixtures through os.path.join and a '
+      + 'Python f-string dynamic import; without exact roots selection and reuse silently miss them (#542)',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: '      ...BACKEND_DYNAMIC_INPUTS,',
+      replace: '      // mutant: dynamic cross-runtime inputs are absent',
+    }],
+  },
+  {
     id: 'guard-inputs-ignore-wrapper-defaults',
     guard: 'node --test --test-name-pattern="#492 §8.2" test/mutation-gate.test.mjs',
     because: 'ten backend wrappers run tests_backend/test_ha_import_export.py by default without naming '

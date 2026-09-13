@@ -102,7 +102,13 @@ manifest читают и `classify-changes.mjs` (job `changes`: job запуск
 Правила, которые стоит знать:
 
 - `validate.yml` — вход toolchain каждой job: правка workflow гоняет всё;
-- `src/**` — вход только браузерных job; backend от UI не зависит, а
+- `src/**` — вход только браузерных job, кроме точных cross-runtime входов
+  `src/plan-optimizer.ts` и `src/logic.ts`, которые backend pytest читает для
+  parity-контрактов; `demo/fixtures/large-house.mjs` и
+  `demo/fixtures/visual-matrix.mjs` так же явно входят в backend, потому что
+  pytest запускает их через Node dynamic import. Точные исключения не делают
+  весь UI или каталог fixtures входом backend (#542); backend от остального UI
+  не зависит, а
   `custom_components/houseplan/manifest.json` (версия) держит правило «кандидат
   релиза прогоняет всё» и для него;
 - **неизвестный исполняемый вход** — файл под `scripts/`, `demo/`, `test/`,
@@ -119,6 +125,7 @@ manifest читают и `classify-changes.mjs` (job `changes`: job запуск
 `test/check-inputs.test.mjs`) держат представителей каждой категории входов и
 обратную пробу для UI ↔ backend; мутанты `manifest-drops-workflow-input`,
 `classify-unknown-input-is-unaffected`, `reuse-backend-hashes-ui`,
+`backend-dynamic-inputs-dropped`,
 `guard-inputs-ignore-wrapper-defaults`, `registry-diff-not-selected`,
 `merge-pushes-unvalidated-candidate`, `merge-ignores-lease-rejection`,
 `nightly-does-not-wait` держат сам протокол.

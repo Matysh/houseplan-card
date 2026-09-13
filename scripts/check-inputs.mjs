@@ -271,6 +271,21 @@ const BROWSER_PROTOCOL = ['demo/serve.mjs', 'demo/srv/demo.html', 'demo/bundle-f
 const WORKFLOW = ['.github/workflows/validate.yml'];
 /** Протокол реюза: кто считает ключ, тот и вход (§5.1 protocol). */
 const REUSE_PROTOCOL = ['scripts/gate-reuse.mjs', 'scripts/check-inputs.mjs'];
+/**
+ * Cross-runtime inputs, которые pytest читает динамически и которые поэтому
+ * нельзя вывести из статических import/string ссылок (#542).
+ *
+ * test_validation.py собирает путь к TS-константе через os.path.join и имя
+ * fixture через Python f-string -> Node dynamic import; test_support_package.py
+ * тем же способом читает logic.ts. Держим точные файлы, не src/** или
+ * demo/fixtures/**: остальные UI-входы не должны без причины запускать backend.
+ */
+const BACKEND_DYNAMIC_INPUTS = [
+  'src/plan-optimizer.ts',
+  'src/logic.ts',
+  'demo/fixtures/large-house.mjs',
+  'demo/fixtures/visual-matrix.mjs',
+];
 
 export const CHECKS = {
   preflight: {
@@ -315,6 +330,7 @@ export const CHECKS = {
     entries: ['tests_backend/**/*.py', 'scripts/support-relay/tests/**/*.py', 'scripts/dump-config-schema.py'],
     // manifest.json несёт версию: кандидат релиза обязан прогнать backend заново
     roots: ['custom_components/**/*.py', 'custom_components/houseplan/manifest.json', 'scripts/support-relay/**/*.py',
+      ...BACKEND_DYNAMIC_INPUTS,
       'tests_backend/**', 'pyproject.toml', 'pytest.ini', 'scripts/backend-coverage-baseline.txt',
       'scripts/config-schema.json', ...REUSE_PROTOCOL, ...WORKFLOW],
     reuse: true,

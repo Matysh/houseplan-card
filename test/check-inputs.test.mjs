@@ -182,6 +182,27 @@ test('§8.1 представители: каждая категория кажд
   }
 });
 
+test('#542: каждый динамический cross-runtime input выбирает backend без глобального fallback', () => {
+  const cases = [
+    [p('src', 'plan-optimizer.ts'), p('tests_backend', 'test_validation.py')],
+    [p('src', 'logic.ts'), p('tests_backend', 'test_support_package.py')],
+    [p('demo', 'fixtures', 'large-house.mjs'), p('tests_backend', 'test_validation.py')],
+    [p('demo', 'fixtures', 'visual-matrix.mjs'), p('tests_backend', 'test_validation.py')],
+  ];
+  for (const [input, consumer] of cases) {
+    assert.ok(MANIFEST.backend.has(consumer), `${consumer}: consumer не входит в backend`);
+    assert.ok(MANIFEST.backend.has(input), `${consumer} читает ${input}, но manifest его потерял`);
+    const { affected, unknown } = checksAffectedBy([input], ROOT, { manifest: MANIFEST });
+    assert.ok(affected.has('backend'), `${input}: backend не выбран`);
+    assert.ok(affected.size < CHECK_NAMES.length, `${input}: сработал глобальный fallback вместо точного owner`);
+    assert.deepEqual(unknown, [], input);
+  }
+
+  const unrelated = p('demo', 'fixtures', 'wall-draw-click.mjs');
+  assert.ok(!MANIFEST.backend.has(unrelated), `${unrelated}: точные roots нельзя расширять до всего каталога`);
+  assert.ok(!checksAffectedBy([unrelated], ROOT, { manifest: MANIFEST }).affected.has('backend'));
+});
+
 test('§8.1 обратная проба (AC6): UI — не вход backend, backend — не вход браузерных job без причины', () => {
   for (const file of ['src/houseplan-card.ts', 'src/houseplan-editor-runtime.ts', 'src/iso-overlays.ts', 'package.json']) {
     assert.ok(!MANIFEST.backend.has(file), `backend зависит от ${file}`);
