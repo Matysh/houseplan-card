@@ -24,7 +24,7 @@ const mergeProofContext = (row, sha, tree) => {
   });
   const success = (name) => ({ name, conclusion: 'success' });
   return { proof, reuseRuns: new Map(), jobs: [
-    success('Предполётные проверки: документация, провенанс, процесс'),
+    success('Предполёт: документация, провенанс, процесс'),
     success('Классификация изменённых файлов'),
     success('Переиспользование: это дерево уже проверено'),
     success('Фронтенд: типы, юниты, мутанты, синхрон бандла'),

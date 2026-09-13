@@ -23,7 +23,7 @@ const proofContext = ({ id, full = true, conclusion = 'success' }) => {
   };
   const proof = buildCiProof({ candidateSha: SHA, candidateTree: TREE, runId: id, attempt: 1, event: 'workflow_dispatch', needs });
   const jobs = [
-    greenJob('Предполётные проверки: документация, провенанс, процесс'),
+    greenJob('Предполёт: документация, провенанс, процесс'),
     greenJob('Классификация изменённых файлов'), greenJob('Переиспользование: это дерево уже проверено'),
     greenJob('Фронтенд: типы, юниты, мутанты, синхрон бандла'),
     ...Array.from({ length: 6 }, (_, i) => greenJob(`Мутанты по диффу (${i + 1}/6): затронутые свидетели краснеют`)),

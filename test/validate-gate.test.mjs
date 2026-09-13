@@ -12,7 +12,7 @@ const TREE = 'b'.repeat(40);
 const MUTANT_JOBS = [1, 2, 3, 4, 5, 6].map((n) => ({ name: `Мутанты по диффу (${n}/6): затронутые свидетели краснеют`, conclusion: 'success' }));
 const OTHER_JOBS = [{ name: 'Фронтенд: типы, юниты, мутанты, синхрон бандла', conclusion: 'success' }];
 const BASE_JOBS = [
-  { name: 'Предполётные проверки: документация, провенанс, процесс', conclusion: 'success' },
+  { name: 'Предполёт: документация, провенанс, процесс', conclusion: 'success' },
   { name: 'Классификация изменённых файлов', conclusion: 'success' },
   { name: 'Переиспользование: это дерево уже проверено', conclusion: 'success' },
 ];

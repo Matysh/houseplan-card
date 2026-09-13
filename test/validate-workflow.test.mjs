@@ -456,6 +456,10 @@ test('журнал свидетелей changed_mutants: rerun продолжа�
 
 test('#541: Validate всегда публикует proof точной попытки, а reuse раскрывает источник', () => {
   const workflow = read('validate.yml');
+  const preflightName = workflow.match(/\n  preflight:\n    name: "([^"]+)"/)?.[1];
+  assert.equal(preflightName, 'Предполёт: документация, провенанс, процесс');
+  assert.ok(Buffer.byteLength(preflightName, 'utf8') <= 100,
+    'GitHub Jobs API truncates job names longer than 100 UTF-8 bytes');
   assert.doesNotMatch(workflow, /with:\s*\{[^\n]*\$\{\{/,
     'GitHub does not parse an unquoted expression inside a YAML flow mapping');
   const proofAt = workflow.indexOf('\n  proof:\n');

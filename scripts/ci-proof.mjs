@@ -21,7 +21,7 @@ export const CI_PROOF_POLICIES = Object.freeze({
 });
 
 const JOB_RULES = Object.freeze({
-  preflight: [{ exact: 'Предполётные проверки: документация, провенанс, процесс', count: 1 }],
+  preflight: [{ exact: 'Предполёт: документация, провенанс, процесс', count: 1 }],
   changes: [{ exact: 'Классификация изменённых файлов', count: 1 }],
   reuse: [{ exact: 'Переиспользование: это дерево уже проверено', count: 1 }],
   frontend: [{ exact: 'Фронтенд: типы, юниты, мутанты, синхрон бандла', count: 1 }],
