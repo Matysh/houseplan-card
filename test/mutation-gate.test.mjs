@@ -271,16 +271,17 @@ test('#472 AC1: у расписания и ручного запуска раз�
   assert.match(mutationWorkflow, /group: mutation-gate-\$\{\{ github\.event_name \}\}/);
 });
 
-test('#472 AC2: каждый шард сохраняет свой лог артефактом при любом исходе', () => {
+test('#472 AC2 / #549: каждый шард сохраняет лог и identity при любом исходе', () => {
   assert.match(mutationWorkflow, /set -o pipefail\n\s+node scripts\/mutation-gate\.mjs --shard=[^\n]*\| tee artifacts\/mutation-shard-/);
-  const upload = mutationWorkflow.slice(mutationWorkflow.indexOf('- name: Сохранить лог шарда'));
+  const upload = mutationWorkflow.slice(mutationWorkflow.indexOf('- name: Сохранить лог и identity шарда'));
   assert.match(upload.slice(0, 400), /if: always\(\)/);
-  assert.match(upload.slice(0, 400), /name: mutation-shard-\$\{\{ matrix\.shard \}\}/);
+  assert.match(upload.slice(0, 500), /name: mutation-shard-\$\{\{ matrix\.shard \}\}-attempt-\$\{\{ github\.run_attempt \}\}/);
+  assert.match(mutationWorkflow, /--write-evidence=.*evidence\.json/);
 });
 
 test('#472 AC5: job report — только по расписанию, только при не-успехе, с полными правами', () => {
   const report = mutationWorkflow.slice(mutationWorkflow.indexOf('  report:'));
-  assert.match(report, /if: always\(\) && github\.event_name == 'schedule' && needs\.mutants\.result != 'success'/);
+  assert.match(report, /if: always\(\) && github\.event_name == 'schedule' && \(needs\.mutants\.result != 'success' \|\| needs\.evidence\.result != 'success'\)/);
   const permissions = report.slice(report.indexOf('permissions:'), report.indexOf('steps:'));
   for (const grant of ['contents: read', 'actions: read', 'issues: write']) {
     assert.ok(permissions.includes(grant), `нет права ${grant} у job report`);
@@ -288,12 +289,27 @@ test('#472 AC5: job report — только по расписанию, толь�
   assert.match(report, /node scripts\/mutation-gate-report\.mjs/);
 });
 
-test('#472 r1: SHA отчёта — от чекаута dev, а не github.sha (вершина main у расписания)', () => {
+test('#549: moving ref фиксируется один раз, а каждый шард checkout делает по material SHA', () => {
+  const material = mutationWorkflow.slice(mutationWorkflow.indexOf('  material:'), mutationWorkflow.indexOf('  mutants:'));
+  const mutants = mutationWorkflow.slice(mutationWorkflow.indexOf('  mutants:'), mutationWorkflow.indexOf('  evidence:'));
+  assert.match(material, /sha: \$\{\{ steps\.identity\.outputs\.sha \}\}/);
+  assert.match(material, /tree: \$\{\{ steps\.identity\.outputs\.tree \}\}/);
+  assert.match(mutants, /needs: material/);
+  assert.match(mutants, /ref: \$\{\{ needs\.material\.outputs\.sha \}\}/);
+  assert.ok(!mutants.includes("inputs.ref || 'dev'"), 'шарды не должны независимо читать moving ref');
+});
+
+test('#549: агрегатор требует четыре evidence одного material и report не перечитывает dev', () => {
+  const evidence = mutationWorkflow.slice(mutationWorkflow.indexOf('  evidence:'), mutationWorkflow.indexOf('  report:'));
   const report = mutationWorkflow.slice(mutationWorkflow.indexOf('\n  report:\n'));
-  assert.match(report, /ref: dev/);
-  assert.match(report, /SHA=\$\(git rev-parse HEAD\)/);
-  assert.ok(!report.includes('${{ github.sha }}'), 'github.sha у schedule указывает на main, не на проверенный dev');
-  assert.match(report, /--ref=dev --sha="\$SHA"/);
+  assert.match(evidence, /--verify-only/);
+  assert.match(evidence, /--sha=\$\{\{ needs\.material\.outputs\.sha \}\}/);
+  assert.match(evidence, /--tree=\$\{\{ needs\.material\.outputs\.tree \}\}/);
+  assert.match(evidence, /--run-id=\$\{\{ github\.run_id \}\} --run-attempt=\$\{\{ github\.run_attempt \}\}/);
+  assert.match(report, /--require-evidence/);
+  assert.match(report, /ref: \$\{\{ github\.sha \}\}/);
+  assert.ok(!report.includes('git rev-parse HEAD'));
+  assert.ok(!report.includes('ref: dev'));
 });
 
 test('#472 AC6: повторный отказ дописывает открытое issue, а не создаёт второе', () => {

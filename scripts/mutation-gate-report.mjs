@@ -23,14 +23,122 @@
  * остальное уходит в `unparsed` с текстом как есть — потерять строку нельзя,
  * но и выдумывать из неё сущность тоже.
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import {
+  existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync,
+} from 'node:fs';
+import { dirname, join } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
 
 export const REPORT_TITLE_MARKER = '[mutation-gate] отказ прогона по расписанию';
+export const MUTATION_EVIDENCE_SCHEMA = 'houseplan-mutation-shard-evidence/v1';
 
 const ESCAPED_LINE = /^FAIL (\S+): тест остался зелёным на сломанном коде\s*$/;
 const RED_GUARD_LINE = /^FAIL чистый прогон: (.+?) красный без мутанта\s*$/;
 const ANY_FAIL_LINE = /^FAIL /;
+
+const FULL_SHA = /^[0-9a-f]{40}$/;
+const positiveInteger = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
+
+/** Machine-readable identity written beside every nightly shard log (#549). */
+export function mutationShardEvidence(input) {
+  const evidence = {
+    schema: MUTATION_EVIDENCE_SCHEMA,
+    materialSha: String(input.materialSha || ''),
+    materialTree: String(input.materialTree || ''),
+    workflowSha: String(input.workflowSha || ''),
+    runId: Number(input.runId),
+    runAttempt: Number(input.runAttempt),
+    shard: Number(input.shard),
+    shardCount: Number(input.shardCount),
+  };
+  if (!FULL_SHA.test(evidence.materialSha) || !FULL_SHA.test(evidence.materialTree)
+    || !FULL_SHA.test(evidence.workflowSha) || !positiveInteger(evidence.runId)
+    || !positiveInteger(evidence.runAttempt) || !positiveInteger(evidence.shard)
+    || !positiveInteger(evidence.shardCount) || evidence.shard > evidence.shardCount) {
+    throw new Error('invalid mutation shard evidence identity');
+  }
+  return evidence;
+}
+
+/**
+ * Select the newest artifact attempt for each shard, then prove that the whole
+ * set belongs to one immutable material and workflow run. Older artifacts are
+ * deliberately ignored so a full rerun may pin a fresh material, while a
+ * partial rerun can reuse successful shards from its earlier attempt.
+ */
+export function validateMutationShardEvidence(rows, expected) {
+  const errors = [];
+  const byShard = new Map();
+  for (const row of rows || []) {
+    if (row?.error) { errors.push(`${row.file || 'evidence'}: ${row.error}`); continue; }
+    const evidence = row?.evidence;
+    try {
+      mutationShardEvidence(evidence || {});
+    } catch {
+      errors.push(`${row?.file || 'evidence'}: invalid evidence identity`);
+      continue;
+    }
+    const shard = Number(evidence.shard);
+    const current = byShard.get(shard);
+    if (!current || Number(evidence.runAttempt) > Number(current.evidence.runAttempt)) {
+      byShard.set(shard, row);
+    } else if (Number(evidence.runAttempt) === Number(current.evidence.runAttempt)) {
+      errors.push(`shard ${shard}: duplicate evidence for attempt ${evidence.runAttempt}`);
+    }
+  }
+
+  const selected = [];
+  const shardCount = Number(expected.shardCount);
+  for (let shard = 1; shard <= shardCount; shard++) {
+    const row = byShard.get(shard);
+    if (!row) { errors.push(`shard ${shard}: evidence is missing`); continue; }
+    const evidence = row.evidence;
+    selected.push(row);
+    if (evidence.schema !== MUTATION_EVIDENCE_SCHEMA) errors.push(`shard ${shard}: wrong schema`);
+    if (Number(evidence.shardCount) !== shardCount) errors.push(`shard ${shard}: wrong shard count`);
+    if (evidence.materialSha !== expected.materialSha) errors.push(`shard ${shard}: foreign material SHA`);
+    if (evidence.materialTree !== expected.materialTree) errors.push(`shard ${shard}: foreign material tree`);
+    if (evidence.workflowSha !== expected.workflowSha) errors.push(`shard ${shard}: foreign workflow SHA`);
+    if (Number(evidence.runId) !== Number(expected.runId)) errors.push(`shard ${shard}: foreign run id`);
+    if (!positiveInteger(evidence.runAttempt)
+      || Number(evidence.runAttempt) > Number(expected.runAttempt)) {
+      errors.push(`shard ${shard}: impossible run attempt`);
+    }
+  }
+  return { ok: errors.length === 0, errors, selected };
+}
+
+function evidenceFiles(root) {
+  if (!existsSync(root)) return [];
+  const out = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else if (entry.name === 'evidence.json') out.push(path);
+    }
+  };
+  walk(root);
+  return out.sort();
+}
+
+export function loadMutationShardArtifacts(root, expected) {
+  const rows = evidenceFiles(root).map((file) => {
+    try { return { file, evidence: JSON.parse(readFileSync(file, 'utf8')) }; }
+    catch (error) { return { file, error: `invalid JSON: ${error.message}` }; }
+  });
+  const validation = validateMutationShardEvidence(rows, expected);
+  const selectedByShard = new Map(validation.selected.map((row) => [Number(row.evidence.shard), row]));
+  const logs = [];
+  for (let shard = 1; shard <= Number(expected.shardCount); shard++) {
+    const row = selectedByShard.get(shard);
+    const path = row ? join(dirname(row.file), `mutation-shard-${shard}.log`) : '';
+    logs.push({ shard, text: path && existsSync(path) ? readFileSync(path, 'utf8') : null });
+    if (row && (!path || !existsSync(path))) validation.errors.push(`shard ${shard}: log is missing`);
+  }
+  validation.ok = validation.errors.length === 0;
+  return { ...validation, logs };
+}
 
 /**
  * Разобрать логи шардов.
@@ -83,7 +191,8 @@ export function parseShardLogs(logs, knownIds) {
 export function mutationGateReport(input) {
   const guards = input.guards instanceof Map ? input.guards : new Map(Object.entries(input.guards || {}));
   const parsed = parseShardLogs(input.logs || [], [...guards.keys()]);
-  const failed = parsed.shards.some((s) => s.status !== 'ok')
+  const evidenceErrors = [...(input.evidenceErrors || [])];
+  const failed = evidenceErrors.length > 0 || parsed.shards.some((s) => s.status !== 'ok')
     || parsed.escaped.length > 0 || parsed.redGuards.length > 0 || parsed.unparsed.length > 0;
   const lines = [];
   lines.push(`Полный мутационный прогон по расписанию не прошёл: ${input.date}, \`${input.ref}\` @ \`${String(input.sha || '').slice(0, 12)}\`.`);
@@ -94,6 +203,14 @@ export function mutationGateReport(input) {
   for (const s of parsed.shards) {
     const label = s.status === 'ok' ? 'ok' : s.status === 'failed' ? '**красный**' : '**артефакт не пришёл**';
     lines.push(`| ${s.shard} | ${label} |`);
+  }
+  if (evidenceErrors.length) {
+    lines.push('');
+    lines.push('## Материал шардов не доказан');
+    lines.push('');
+    lines.push('Агрегатор отверг смешанные или неполные evidence; общий результат этому SHA не приписывается.');
+    lines.push('');
+    for (const error of evidenceErrors) lines.push(`- ${error}`);
   }
   if (parsed.escaped.length) {
     lines.push('');
@@ -153,27 +270,60 @@ if (invokedDirectly) {
     const found = argv.find((item) => item.startsWith(`--${name}=`));
     return found ? found.slice(name.length + 3) : fallback;
   };
+  const writeEvidence = value('write-evidence');
   const shardCount = Number(value('shards', '4'));
-  const dir = value('logs', 'artifacts/mutation-logs');
-  const logs = [];
-  for (let shard = 1; shard <= shardCount; shard++) {
-    const path = `${dir}/mutation-shard-${shard}/mutation-shard-${shard}.log`;
-    logs.push({ shard, text: existsSync(path) ? readFileSync(path, 'utf8') : null });
+  if (writeEvidence) {
+    const evidence = mutationShardEvidence({
+      materialSha: value('sha'), materialTree: value('tree'), workflowSha: value('workflow-sha'),
+      runId: value('run-id'), runAttempt: value('run-attempt'),
+      shard: value('shard'), shardCount,
+    });
+    mkdirSync(dirname(writeEvidence), { recursive: true });
+    writeFileSync(writeEvidence, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
+    console.log(`evidence=${writeEvidence}`);
+  } else {
+    const dir = value('logs', 'artifacts/mutation-logs');
+    const expected = {
+      materialSha: value('sha'), materialTree: value('tree'), workflowSha: value('workflow-sha'),
+      runId: Number(value('run-id')), runAttempt: Number(value('run-attempt')), shardCount,
+    };
+    const requireEvidence = argv.includes('--require-evidence') || argv.includes('--verify-only');
+    let logs = [];
+    let evidenceErrors = [];
+    if (requireEvidence) {
+      const loaded = loadMutationShardArtifacts(dir, expected);
+      logs = loaded.logs;
+      evidenceErrors = loaded.errors;
+      for (const error of evidenceErrors) console.error(`evidence: ${error}`);
+      if (argv.includes('--verify-only')) {
+        console.log(`verified=${loaded.ok}`);
+        if (!loaded.ok) process.exitCode = 1;
+      }
+    } else {
+      for (let shard = 1; shard <= shardCount; shard++) {
+        const path = `${dir}/mutation-shard-${shard}/mutation-shard-${shard}.log`;
+        logs.push({ shard, text: existsSync(path) ? readFileSync(path, 'utf8') : null });
+      }
+    }
+    if (!argv.includes('--verify-only')) {
+      const { MUTANTS } = await import('./mutation-gate.mjs');
+      const guards = new Map(MUTANTS.map((m) => [m.id, m.guard]));
+      const report = mutationGateReport({
+        logs, guards, evidenceErrors,
+        runUrl: value('run-url'), ref: value('ref', 'dev'), sha: value('sha'),
+        date: value('date', new Date().toISOString().slice(0, 10)),
+      });
+      const bodyPath = value('body-out', 'artifacts/mutation-report.md');
+      mkdirSync(dirname(bodyPath), { recursive: true });
+      writeFileSync(bodyPath, report.body, 'utf8');
+      const summaryPath = value('telegram-out', 'artifacts/mutation-telegram.txt');
+      mkdirSync(dirname(summaryPath), { recursive: true });
+      writeFileSync(summaryPath, telegramSummary(report, value('issue-url', '(issue)')), 'utf8');
+      console.log(`title=${report.title}`);
+      console.log(`marker=${REPORT_TITLE_MARKER}`);
+      console.log(`body=${bodyPath}`);
+      console.log(`escaped=${report.escaped.join(',')}`);
+      console.log(`failed=${report.failed}`);
+    }
   }
-  const { MUTANTS } = await import('./mutation-gate.mjs');
-  const guards = new Map(MUTANTS.map((m) => [m.id, m.guard]));
-  const report = mutationGateReport({
-    logs, guards,
-    runUrl: value('run-url'), ref: value('ref', 'dev'), sha: value('sha'),
-    date: value('date', new Date().toISOString().slice(0, 10)),
-  });
-  const bodyPath = value('body-out', 'artifacts/mutation-report.md');
-  writeFileSync(bodyPath, report.body, 'utf8');
-  const summaryPath = value('telegram-out', 'artifacts/mutation-telegram.txt');
-  writeFileSync(summaryPath, telegramSummary(report, value('issue-url', '(issue)')), 'utf8');
-  console.log(`title=${report.title}`);
-  console.log(`marker=${REPORT_TITLE_MARKER}`);
-  console.log(`body=${bodyPath}`);
-  console.log(`escaped=${report.escaped.join(',')}`);
-  console.log(`failed=${report.failed}`);
 }

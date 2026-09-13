@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  REPORT_TITLE_MARKER, mutationGateReport, parseShardLogs, telegramSummary,
+  REPORT_TITLE_MARKER, mutationGateReport, mutationShardEvidence, parseShardLogs,
+  telegramSummary, validateMutationShardEvidence,
 } from '../scripts/mutation-gate-report.mjs';
 
 // #472. Еженедельный полный прогон падал дважды подряд, и никто не смотрел:
@@ -16,6 +17,52 @@ const guards = new Map([
   ['gamma-mutant', 'node --test test/g.test.mjs'],
 ]);
 const meta = { runUrl: 'https://x/runs/1', ref: 'dev', sha: 'abcdef1234567890', date: '2026-09-08' };
+const A = 'a'.repeat(40);
+const B = 'b'.repeat(40);
+const C = 'c'.repeat(40);
+const expectedEvidence = {
+  materialSha: A, materialTree: B, workflowSha: C,
+  runId: 549, runAttempt: 2, shardCount: 4,
+};
+const evidenceRow = (shard, overrides = {}) => ({
+  file: `attempt-${overrides.runAttempt || 1}/shard-${shard}/evidence.json`,
+  evidence: mutationShardEvidence({
+    ...expectedEvidence, shard, runAttempt: 1, ...overrides,
+  }),
+});
+
+test('#549: четыре шарда одного material образуют доказанный результат', () => {
+  const result = validateMutationShardEvidence(
+    [1, 2, 3, 4].map((shard) => evidenceRow(shard)), expectedEvidence,
+  );
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.selected.map((row) => row.evidence.shard), [1, 2, 3, 4]);
+});
+
+test('#549: foreign SHA и отсутствующий шард отвергаются fail-closed', () => {
+  const rows = [evidenceRow(1), evidenceRow(2, { materialSha: 'd'.repeat(40) }), evidenceRow(4)];
+  const result = validateMutationShardEvidence(rows, expectedEvidence);
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((error) => error.includes('foreign material SHA')));
+  assert.ok(result.errors.some((error) => error.includes('shard 3: evidence is missing')));
+});
+
+test('#549: partial retry выбирает новый attempt, но сохраняет единый material', () => {
+  const rows = [1, 2, 3, 4].map((shard) => evidenceRow(shard));
+  rows.push(evidenceRow(2, { runAttempt: 2 }));
+  const result = validateMutationShardEvidence(rows, expectedEvidence);
+  assert.equal(result.ok, true);
+  assert.equal(result.selected.find((row) => row.evidence.shard === 2).evidence.runAttempt, 2);
+  assert.equal(result.selected.find((row) => row.evidence.shard === 1).evidence.runAttempt, 1);
+});
+
+test('#549: partial retry с другим material не склеивается со старыми шардами', () => {
+  const rows = [1, 2, 3, 4].map((shard) => evidenceRow(shard));
+  rows.push(evidenceRow(2, { runAttempt: 2, materialSha: 'd'.repeat(40) }));
+  const result = validateMutationShardEvidence(rows, expectedEvidence);
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((error) => error.includes('foreign material SHA')));
+});
 
 test('сбежавшие собираются из нескольких шардов без дублей и по порядку (#472 AC3)', () => {
   const report = mutationGateReport({ ...meta, guards, logs: [

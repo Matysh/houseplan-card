@@ -3722,6 +3722,18 @@ const MUTANT_DEFINITIONS = [
       replace: "      if (asEscaped) { escaped.add(asEscaped[1]); continue; }\n      if (/^FAIL (\\S+)/.test(line)) { escaped.add(line.split(' ')[1].replace(/:$/, '')); continue; }",
     }],
   },
+  {
+    id: 'mutation-report-accepts-foreign-material',
+    guard: 'node --test --test-name-pattern="foreign SHA и отсутствующий шард" '
+      + 'test/mutation-gate-report.test.mjs',
+    because: 'without the material-SHA check, a partial retry can combine a fresh shard with '
+      + 'three logs from an older dev tree and publish a green result that no commit earned (#549)',
+    patches: [{
+      file: 'scripts/mutation-gate-report.mjs',
+      find: '    if (evidence.materialSha !== expected.materialSha) errors.push(`shard ${shard}: foreign material SHA`);',
+      replace: '    if (false && evidence.materialSha !== expected.materialSha) errors.push(`shard ${shard}: foreign material SHA`);',
+    }],
+  },
   // #481: журнал пойманных свидетелей — каждый защитный контракт под свидетелем.
   {
     id: 'ledger-records-escaped',
