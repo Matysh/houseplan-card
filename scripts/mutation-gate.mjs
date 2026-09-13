@@ -8047,6 +8047,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-model-gets-repository-write',
+    guard: 'node --test --test-name-pattern="по job" test/review-doc-guard.test.mjs',
+    because: '#556: недоверенная стадия с правом записи в репозиторий может положить коммит в '
+      + 'ветку задачи в обход ревью и слияния — потолок прав этой job проверяется дословно',
+    patches: [{
+      file: '.github/workflows/process.yml',
+      find: '    permissions:\n      contents: read\n      issues: write\n    needs: [guard, prepare]\n',
+      replace: '    permissions:\n      contents: write\n      issues: write\n    needs: [guard, prepare]\n',
+    }],
+  },
+  {
     id: 'review-job-trusts-the-app-token',
     guard: 'node --test --test-name-pattern="job-scoped" test/review-doc-guard.test.mjs',
     because: '#556 r1 H1: без переданного ambient-токена claude-code-action меняет OIDC на '
