@@ -56,7 +56,8 @@ where a criterion is broken plainly and saying which one is easy.
 `S5-ready`, with the AC written into the issue body first. `trivial` requires a bug confined to one surface with no new UX
 contract, no migration, no i18n, no perf or touch impact, at most three checkable
 AC, **and expected behaviour already on record** — nothing left to decide. Code
-review is never skipped on either track; it is what stands in for testing.
+review is never skipped on either track: it checks scope, risks and the evidence
+from executed tests, but does not stand in for executing them.
 `PROCESS.md` §5 and §5.1 hold the criteria.
 
 An issue filed by an outsider is worked exactly like one of the owner's own, once
@@ -497,9 +498,10 @@ candidate-bound `RELEASE-MEMBERSHIP.json` covered by the same passport (#547).
 
 ## Environments
 
-**Local Windows checkout** is the day-to-day environment: Node 22 and Python 3.14
-as in CI (`npm run toolchain:check` compares the machine with the pins CI actually
-uses — `.nvmrc` and `.python-version` are derived from the same sources, #496),
+**Local Windows checkout** is the day-to-day environment: repository-pinned Node
+and Python as in CI (`npm run toolchain:check` compares the machine with the pins
+CI actually uses — `.nvmrc` and `.python-version` are derived from the same
+sources, #496),
 `gh` authenticated. On the owner's machine do not trust the ambient PATH:
 `.\scripts\windows-toolchain.ps1 setup|check` owns a verified portable Node and
 dedicated `.venv-ci`, and its `npm`/`node`/`python`/`playwright` actions are the

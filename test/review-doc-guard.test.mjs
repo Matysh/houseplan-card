@@ -748,6 +748,28 @@ test('#517 AC4: документы процесса не требуют файл
   assert.doesNotMatch(readme, /Статус ТЗ/);
 });
 
+test('#553: канон разделяет review и исполнение тестов и не возвращает новые ТЗ в архив', () => {
+  const read = (rel) => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
+  const process = read('PROCESS.md');
+  const agents = read('AGENTS.md');
+  const status = read('docs/STATUS.md');
+
+  assert.doesNotMatch(process, /ревью[^\n]{0,80}заменяет тестирование/i);
+  assert.doesNotMatch(agents, /review[^\n]{0,80}stands in for testing/i);
+  assert.doesNotMatch(process, /получает\s+нормальный файл ТЗ/i);
+  assert.match(process, /полное ТЗ в теле issue по §7\.1/);
+  assert.match(process, /Приёмка проверяет результат для человека/);
+  assert.match(process, /async \(порядок, отмена/);
+  assert.match(process, /zoom\/DPR/);
+  assert.match(process, /host\/input/);
+  assert.match(process, /Ревьюер отвечает за полноту доказательств AC/);
+  assert.match(process, /проверено чтением, не\s+исполнением/);
+  assert.doesNotMatch(status, /py3\.13|Python 3\.13/i);
+  assert.match(status, /uses repository-pinned Python/);
+  assert.doesNotMatch(agents, /Node 22|Python 3\.14/,
+    'точные runtime pins читаются из исполняемых источников, не из памятки');
+});
+
 test('#551: gates, модель и интеграция имеют независимые jobs, contracts и бюджеты', () => {
   const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
   const job = (name, next) => {
