@@ -73,6 +73,30 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'invariants-blame-every-stale-position',
+    guard: 'node --test --test-name-pattern="#566" test/model-invariants.test.mjs',
+    because: '#566: продукт СОЗНАТЕЛЬНО хранит позицию, чей владелец жив, а пространство '
+      + 'удалено; объявляя это нарушением, инварианты краснеют на законном конфиге сразу '
+      + 'после Optimize — и следующий разбор начнётся с ложного сигнала',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '      const ownerGone = roomOwner ? !allRoomIds.has(roomOwner)',
+      replace: '      const ownerGone = true || roomOwner ? !allRoomIds.has(roomOwner)',
+    }],
+  },
+  {
+    id: 'invariants-forgive-a-vanished-position-owner',
+    guard: 'node --test --test-name-pattern="#566" test/model-invariants.test.mjs',
+    because: '#566: обратная сторона того же правила — запись, чей владелец отсутствует по '
+      + 'самой конфигурации, обязана остаться нарушением, иначе сужение превращается в '
+      + 'отключение проверки',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '        : removedMarkerIds.has(key);',
+      replace: '        : false;',
+    }],
+  },
+  {
     id: 'radar-sources-compared-as-text',
     guard: 'node --test --test-name-pattern="#567" test/radar-editor.test.mjs',
     because: '#567: порядок ключей `sources` меняет сам билдер, поэтому текстовое сравнение '

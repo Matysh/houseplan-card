@@ -191,10 +191,43 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
     }
   }
 
+  // Владельцы позиций, разрешимые по одной конфигурации: комнаты и области
+  // любого пространства. Нужны, чтобы судить запись на удалённом пространстве
+  // тем же правилом, которым её судит сам продукт (#566).
+  const allRoomIds = new Set(spaces.flatMap((space) => (space?.rooms || [])
+    .map((room) => String(room?.id ?? '')).filter(Boolean)));
+  const allAreas = new Set(spaces.flatMap((space) => (space?.rooms || [])
+    .map((room) => String(room?.area ?? '')).filter(Boolean)));
+  const removedMarkerIds = new Set((config?.markers || [])
+    .filter((marker) => marker?.removed === true)
+    .map((marker) => String(marker?.id ?? '')).filter(Boolean));
+
   for (const [key, position] of Object.entries(layout || {})) {
     const space = position?.s == null ? '' : String(position.s);
     if (space && !spaceIds.has(space)) {
-      add('layout_space', key, space, 'пространства не существует');
+      // Пространства нет — но это ещё не нарушение (#566). `Optimize`
+      // (`space-reference-repair.ts`) удаляет такую запись только когда МОЖЕТ
+      // ДОКАЗАТЬ, что владелец тоже исчез, и сознательно сохраняет её, когда
+      // владелец жив или доказательств нет: иначе удаление уносит расстановку
+      // пользователя. Значит конфиг, только что прошедший Optimize, законно
+      // содержит такие записи, и объявлять их нарушением — врать про модель.
+      //
+      // Судим тем же правилом: нарушение только там, где владелец ОТСУТСТВУЕТ
+      // по самой конфигурации. Остальное — наблюдение, как и у ветки
+      // `unknown_owner` ниже: проверка с ложными срабатываниями умирает первой.
+      const roomOwner = key.startsWith('rl_') ? key.slice(3) : '';
+      const areaOwner = key.startsWith('grp_') ? key.slice(4) : '';
+      const ownerGone = roomOwner ? !allRoomIds.has(roomOwner)
+        : areaOwner ? !allAreas.has(areaOwner)
+        : removedMarkerIds.has(key);
+      if (ownerGone) {
+        add('layout_space', key, space,
+          'пространства не существует, и владельца позиции тоже нет');
+      } else {
+        notes.push({ invariant: 'references', kind: 'stale_layout_space', owner: key,
+          reference: space,
+          detail: 'пространства не существует, владелец жив — Optimize хранит позицию намеренно' });
+      }
       continue;
     }
     // Владелец позиции: подпись комнаты, групповая метка области либо маркер.
@@ -746,6 +779,7 @@ function noteSummary(notes) {
   for (const note of notes) counts.set(note.kind, (counts.get(note.kind) || 0) + 1);
   const titles = {
     unknown_owner: 'позиции без записи маркера',
+    stale_layout_space: 'позиции живых владельцев на удалённых пространствах',
     stale_wall_key: 'записей толщины используют exact endpoints вместо своего ключа',
   };
   return [...counts].map(([kind, n]) => `${n} — ${titles[kind] || kind}`).join('; ') + '.';
@@ -802,7 +836,7 @@ function report(violations, notes = []) {
     room_open_to: 'Связи комнат ссылаются на несуществующие комнаты',
     opening_host: 'Проёмы ссылаются на несуществующие стены',
     room_wall_ids: 'Комнаты ссылаются на несуществующие сегменты стен',
-    layout_space: 'Позиции ссылаются на несуществующие пространства',
+    layout_space: 'Позиции на несуществующих пространствах, владельцев тоже нет',
     layout_owner: 'Позиции без владельца',
     wall_carrier: 'Записи толщины вне рёбер и перегородок',
     open_span_carrier: 'Виртуальные проёмы вне границ комнат',

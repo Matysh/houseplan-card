@@ -48,10 +48,14 @@ const load = (name) => {
   return { config: raw.config ?? raw, layout: raw.layout ?? {} };
 };
 
-/** Все нарушения инвариантов одним списком — тот же набор, что у CLI (#254). */
-const violations = (config, layout = {}) => [
-  ...checkReferences({ config, layout }),
-  ...checkWallKeys(config),
+/**
+ * Все нарушения инвариантов одним списком — тот же набор, что у CLI (#254).
+ * Наблюдения складываются в переданный массив: #566 перевёл часть случаев из
+ * нарушений в наблюдения, и корпус обязан отличать одно от другого.
+ */
+const violations = (config, layout = {}, notes = []) => [
+  ...checkReferences({ config, layout }, { notes }),
+  ...checkWallKeys(config, { notes }),
   ...checkMixedRoleRecords(config),
   ...checkHiddenObstacles(config),
   ...checkPhysicalGeometry(config),
@@ -242,7 +246,11 @@ const CORPUS = [
     what: 'записи layout на пространство, которого в конфиге больше нет',
     field: 'в поле четыре такие записи на два удалённых пространства',
     fixedPointOnImport: false,
-    expectedViolations: ['references/layout_space', 'references/layout_space'],
+    // #566: владельца этих записей по конфигурации не видно, поэтому продукт
+    // хранит их намеренно, а инварианты сообщают о них НАБЛЮДЕНИЕМ. Нарушением
+    // была бы только запись, чей владелец отсутствует по самой конфигурации.
+    expectedViolations: [],
+    expectedNotes: ['references/stale_layout_space', 'references/stale_layout_space'],
     condition(space, layout) {
       const known = new Set([space.id]);
       const orphans = Object.values(layout).filter((entry) => !known.has(entry.s));
@@ -263,8 +271,11 @@ for (const item of CORPUS) {
   test(`корпус #560 ${label}: импорт → Optimize → Optimize`, () => {
     const { config, layout } = load(item.file);
     const expected = item.expectedViolations ?? [];
-    assert.deepEqual(kinds(violations(config, layout)), expected.slice().sort(),
+    const notes = [];
+    assert.deepEqual(kinds(violations(config, layout, notes)), expected.slice().sort(),
       'импорт: инварианты');
+    assert.deepEqual(kinds(notes), (item.expectedNotes ?? []).slice().sort(),
+      'импорт: наблюдения названы ровно те, что заявлены');
 
     const guard = clone(config);
     const first = optimizePlans(config, layout);

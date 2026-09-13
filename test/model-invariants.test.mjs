@@ -98,18 +98,66 @@ test('#265: marker-ссылки принимают только активную
   ]);
 });
 
-test('#252: позиция на удалённое пространство и позиция без владельца', () => {
+test('#252/#566: позиция на удалённое пространство судится по владельцу', () => {
+  // #566 сузил правило. Прежде ЛЮБАЯ позиция на удалённом пространстве была
+  // нарушением, и это расходилось с самим продуктом: `space-reference-repair`
+  // удаляет такую запись только когда может ДОКАЗАТЬ, что владелец тоже
+  // исчез, а иначе хранит её намеренно — удаление уносит расстановку
+  // пользователя. Конфиг сразу после Optimize законно содержит такие записи.
   const m = model({ layout: {
     m1: { s: 'sp1', x: 0.2, y: 0.2 },
-    ghost: { s: 'space_f1_4c7c573f', x: 0.3, y: 0.3 },
     rl_room_gone: { s: 'sp1', x: 0.3, y: 0.3 },
     'grp_no_such_area': { s: 'sp1', x: 0.3, y: 0.3 },
   } });
   const kinds = checkReferences(m).map((v) => `${v.kind}:${v.owner}`);
-  assert.ok(kinds.includes('layout_space:ghost'));
   assert.ok(kinds.includes('layout_owner:rl_room_gone'));
   assert.ok(kinds.includes('layout_owner:grp_no_such_area'));
-  assert.equal(kinds.length, 3, 'живая позиция m1 нарушением быть не должна');
+  assert.equal(kinds.length, 2, 'живая позиция m1 нарушением быть не должна');
+});
+
+test('#566: на удалённом пространстве нарушение — только исчезнувший владелец', () => {
+  const m = model({
+    config: {
+      spaces: [{
+        id: 'sp1', cell_cm: 5,
+        rooms: [{ id: 'r1', name: 'R', area: 'kitchen', poly: rect(0.1, 0.1, 0.4, 0.4) }],
+        walls: [{ key: 'k1', cm: 30, a: [0.1, 0.1], b: [0.4, 0.1] }],
+        partitions: [], open_spans: [],
+      }],
+      markers: [
+        { id: 'm1', binding: 'virtual', space: 'sp1' },
+        { id: 'm_gone', binding: 'virtual', space: 'sp1', removed: true },
+      ],
+    },
+    layout: {
+      // Владелец жив, исчезло только пространство: продукт хранит намеренно.
+      rl_r1: { s: 'dead_space', x: 0.3, y: 0.3 },
+      grp_kitchen: { s: 'dead_space', x: 0.3, y: 0.3 },
+      m1: { s: 'dead_space', x: 0.3, y: 0.3 },
+      // Владельца по конфигурации не видно: это устройство HA либо мусор,
+      // отличить нельзя — наблюдение, как и внутри живого пространства.
+      '980f1446c4ec1a3a9fa9ff5f6d93caed': { s: 'dead_space', x: 0.3, y: 0.3 },
+      // Владелец ОТСУТСТВУЕТ по самой конфигурации — это нарушение.
+      rl_room_never_existed: { s: 'dead_space', x: 0.3, y: 0.3 },
+      grp_area_never_existed: { s: 'dead_space', x: 0.3, y: 0.3 },
+      m_gone: { s: 'dead_space', x: 0.3, y: 0.3 },
+    },
+  });
+  const notes = [];
+  const found = checkReferences(m, { notes });
+  assert.deepEqual(found.map((v) => `${v.kind}:${v.owner}`).sort(), [
+    'layout_space:grp_area_never_existed',
+    'layout_space:m_gone',
+    'layout_space:rl_room_never_existed',
+  ]);
+  assert.deepEqual(notes.filter((n) => n.kind === 'stale_layout_space')
+    .map((n) => n.owner).sort(), [
+    '980f1446c4ec1a3a9fa9ff5f6d93caed', 'grp_kitchen', 'm1', 'rl_r1',
+  ]);
+  // Наблюдение обязано называть причину, иначе читатель решит, что проверка
+  // просто ослабла.
+  assert.match(notes.find((n) => n.kind === 'stale_layout_space').detail,
+    /Optimize хранит позицию намеренно/);
 });
 
 test('позиция устройства без записи маркера — наблюдение, а не нарушение (#254)', () => {
