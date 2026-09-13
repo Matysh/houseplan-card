@@ -1082,10 +1082,11 @@ jobs:
           legacy="docs/reviews/${marker}-${NUM}-r${CYCLE}.md"
           if [ ! -f "$SOURCE" ] && [ -f "$legacy" ]; then cp "$legacy" "$SOURCE"; fi
           test -s "$SOURCE" || { echo "::error::модель не оставила документ ревью"; exit 1; }
-          printf '%s' "$OUT" | jq -e '
+          printf '%s' "$OUT" > "$RUNNER_TEMP/verdict.json"
+          jq -e '
             (.verdict == "green" or .verdict == "yellow" or .verdict == "red")
             and (.high | type == "number") and (.medium | type == "number")
-            and (.summary | type == "string")' > "$RUNNER_TEMP/verdict.json"
+            and (.summary | type == "string")' "$RUNNER_TEMP/verdict.json" >/dev/null
           dir="$RUNNER_TEMP/review-result"
           mkdir -p "$dir"
           cp "$RUNNER_TEMP/review-prepared/prepared.json" "$dir/prepared.json"
@@ -1211,11 +1212,11 @@ jobs:
             (.verdict == "green" or .verdict == "yellow" or .verdict == "red")
             and (.high | type == "number") and (.medium | type == "number")
             and (.summary | type == "string")' "$dir/verdict.json" >/dev/null
-          {
-            echo 'structured_output<<EOF_RESULT'
-            cat "$dir/verdict.json"
-            echo 'EOF_RESULT'
-          } >> "$GITHUB_OUTPUT"
+          printf 'structured_output<<EOF_RESULT\n' >> "$GITHUB_OUTPUT"
+          cat "$dir/verdict.json" >> "$GITHUB_OUTPUT"
+          # structured_output не обязан оканчиваться LF: delimiter команды
+          # GitHub должен начинаться с отдельной строки.
+          printf '\nEOF_RESULT\n' >> "$GITHUB_OUTPUT"
 
       # Ревьюер пишет только в docs/reviews/. Что именно попадёт в коммит,
       # решает этот шаг, а не модель: всё остальное откатывается.
