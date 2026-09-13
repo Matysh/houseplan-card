@@ -4,8 +4,8 @@ import { TouchGestureClickGuard } from '../test-build/touch-gesture-click-guard.
 
 test('#563 multi-touch keeps every unowned click blocked after both releases', () => {
   const guard = new TouchGestureClickGuard();
-  assert.equal(guard.pointerDown(1, 'touch'), false);
-  assert.equal(guard.pointerDown(2, 'touch'), true);
+  guard.pointerDown(1, 'touch');
+  guard.pointerDown(2, 'touch');
   assert.equal(guard.sequenceMultitouch, true);
   assert.equal(guard.clickBlocked, true);
 
@@ -25,7 +25,7 @@ test('#563 a new single-pointer sequence re-arms its click immediately', () => {
   guard.pointerTerminal(1, 'touch');
   assert.equal(guard.clickBlocked, true);
 
-  assert.equal(guard.pointerDown(3, 'touch'), false);
+  guard.pointerDown(3, 'touch');
   assert.equal(guard.clickBlocked, false);
   assert.equal(guard.pointerTerminal(3, 'touch'), false);
   assert.equal(guard.clickBlocked, false);

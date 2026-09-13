@@ -19,21 +19,18 @@ export class TouchGestureClickGuard {
     return this._sequenceMultitouch || this._postGestureClickBlocked;
   }
 
-  /** Returns true only when this pointer makes the sequence multi-touch. */
-  pointerDown(pointerId: number, pointerType: string): boolean {
+  pointerDown(pointerId: number, pointerType: string): void {
     // No touch contact from the previous sequence remains: this pointerdown is
     // positive evidence of a new deliberate input sequence. It may therefore
     // re-arm touch, mouse and hybrid-device clicks immediately.
     if (this._activeTouchPointers.size === 0) this._postGestureClickBlocked = false;
-    if (pointerType !== 'touch') return false;
+    if (pointerType !== 'touch') return;
 
-    const wasMultitouch = this._sequenceMultitouch;
     this._activeTouchPointers.add(pointerId);
     if (this._activeTouchPointers.size >= 2) {
       this._sequenceMultitouch = true;
       this._postGestureClickBlocked = true;
     }
-    return !wasMultitouch && this._sequenceMultitouch;
   }
 
   /** Returns whether the pointer belonged to an already multi-touch sequence. */
