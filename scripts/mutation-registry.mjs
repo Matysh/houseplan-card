@@ -1993,8 +1993,11 @@ const MUTANT_DEFINITIONS = [
       + 'one unambiguous whole changed edge (#298)',
     patches: [{
       file: 'src/wall-thickness.ts',
+      // `false &&` делало ветку статически мёртвой, и TypeScript терял сужение
+      // `direct` внутри неё: мутант падал на компиляции вместо проверки (#568).
+      // Сравнение со строкой вне союза даёт ту же ложь без потери сужения.
       find: "    if (mode === 'fixed-topology') {\n      const direct = wholeEdgeMoves.get(w.key);",
-      replace: "    if (false && mode === 'fixed-topology') {\n      const direct = wholeEdgeMoves.get(w.key);",
+      replace: "    if (String(mode) === 'mutant-never-fixed-topology') {\n      const direct = wholeEdgeMoves.get(w.key);",
     }],
   },
   {
@@ -4411,8 +4414,11 @@ const MUTANT_DEFINITIONS = [
       + 'edges (#233, spec review r1/H2)',
     patches: [{
       file: 'src/wall-thickness.ts',
+      // Условие ложно в рантайме, но не статически: с литеральным `false`
+      // TypeScript признаёт блок мёртвым и ТЕРЯЕТ сужение `profile` выше, из-за
+      // чего мутант падал на компиляции и не проверял ничего (#568).
       find: '      if (distToSeg(mid[0], mid[1], p0[0], p0[1], p1[0], p1[1]) <= eps) {',
-      replace: '      if (false) {',
+      replace: '      if (eps < 0) {',
     }],
   },
   {
