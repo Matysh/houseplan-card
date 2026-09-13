@@ -26,11 +26,16 @@ export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-revie
 export function rightsFor(status, labels = []) {
   const blocked = labels.includes('blocked');
   const exhausted = labels.includes('review-4');
-  const code = ['S5-ready', 'S6-in-progress', 'S7-code-review'].includes(status);
+  const infrastructure = labels.includes('infra');
+  const code = !infrastructure && ['S5-ready', 'S6-in-progress', 'S7-code-review'].includes(status);
   const lines = [];
   if (exhausted) lines.push('review-4: лимит циклов исчерпан — решение владельца (разделить, отклонить, арбитраж); дальше не двигать');
   if (blocked) lines.push('blocked: работа стоит, ждём внешнего решения — коммиты по задаче гейт не пропустит');
-  lines.push(code ? 'продуктовый код трогать МОЖНО (правило №1)' : 'продуктовый код трогать НЕЛЬЗЯ: статус не S5/S6/S7 (правило №1)');
+  lines.push(code
+    ? 'продуктовый код трогать МОЖНО (правило №1)'
+    : infrastructure
+      ? 'файлы класса A трогать НЕЛЬЗЯ; инфраструктурную реализацию МОЖНО вести сразу по issue (#562)'
+      : 'продуктовый код трогать НЕЛЬЗЯ: статус не S5/S6/S7 (правило №1)');
   switch (status) {
     case 'S1-new': lines.push('следующий шаг: аналитика (S2) — оценки метками, критерий лёгкого трека, затем ТЗ'); break;
     case 'S2-analysis': lines.push('следующий шаг: ТЗ (S3); трек по умолчанию small — отказ от него обосновать названным критерием §5'); break;
@@ -40,7 +45,10 @@ export function rightsFor(status, labels = []) {
     case 'S6-in-progress': lines.push('следующий шаг: gate:small + смоки по AC → push ветки → метка S7-code-review (метку после push)'); break;
     case 'S7-code-review': lines.push('идёт код-ревью: ждать вердикт, ничего не пушить в ветку — вердикт привязан к SHA (#312)'); break;
     case 'S8-merged': lines.push('код в dev, ждёт беты; ничего не делать; issue закроет владелец при выпуске'); break;
-    default: lines.push('статусной метки нет — задача вне процесса; вход в процесс — присвоение первой S*-метки владельцем');
+    default:
+      lines.push(infrastructure
+        ? 'инфраструктурный вход: реализовать и проверить → push ветки → S7-code-review; ТЗ и S1–S6 не нужны (#562)'
+        : 'статусной метки нет — продуктовая задача вне процесса; вход — первая S*-метка владельца');
   }
   return lines;
 }
@@ -104,7 +112,9 @@ export function buildPacket(inputs) {
     issue, labels = [], comments = [], owner = 'Matysh', branch = null, specs = [], reviewDocs = [], validate = null,
   } = inputs;
   const status = STATUS_LABELS.find((l) => labels.includes(l)) || null;
-  const track = labels.includes('trivial') ? 'trivial' : labels.includes('small') ? 'small' : 'полный';
+  const track = labels.includes('infra')
+    ? 'инфраструктурный'
+    : labels.includes('trivial') ? 'trivial' : labels.includes('small') ? 'small' : 'полный';
   const stage = status === 'S4-spec-review' || status === 'S3-spec' || status === 'S5-ready' ? 'spec' : 'code';
   const verdict = lastVerdict(comments, reviewDocs, stage);
   // ТЗ живёт в теле issue (#517); архивный файл — источник только у задач до

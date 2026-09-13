@@ -701,7 +701,7 @@ test('the CLI falls back to origin/dev when BEFORE_SHA is orphaned by a force-pu
   }
 });
 
-test('an infrastructure range is recognised by the absence of class A files (#207)', () => {
+test('an infrastructure range is recognised by the absence of class A files (#562)', () => {
   const infra = makeCommit({
     sha: 'a'.repeat(40), subject: 'Tune CI', body: 'Issue: #206\nUser-Visible: no',
     files: ['.github/workflows/validate.yml'],
@@ -734,8 +734,8 @@ test('a support-relay-only change stays on the reviewed class-B track (#43)', ()
   assert.equal(isInfrastructureRange([relay]), true);
 });
 
-test('statusOptional waives the status label but keeps every other rule-8 refusal (#207)', () => {
-  // Метки инфраструктурного issue по #118: тип, приоритет, тема — без S*.
+test('statusOptional permits the pre-S7 infra push but keeps every other rule-8 refusal (#562)', () => {
+  // Первый push инфраструктурного issue по #562: тип, приоритет, тема — без S*.
   const infraIssue = () => ({
     ok: true, json: JSON.stringify({ state: 'OPEN', labels: [
       { name: 'bug' }, { name: 'P2' }, { name: 'infra' },
@@ -764,10 +764,10 @@ test('statusOptional waives the status label but keeps every other rule-8 refusa
   assert.deepEqual(rules(checkIssueStatuses(['206'], garbage, { statusOptional: true })), [8]);
 });
 
-// AC #207: сквозной прогон CLI по настоящему репозиторию с подставным gh.
+// AC #562: сквозной прогон CLI по настоящему репозиторию с подставным gh.
 // Диапазон без класса A и с issue без статусной метки обязан быть зелёным;
 // тот же диапазон плюс один файл `src/**` — красным по проверке 8.
-test('the CLI waives the issue status for a class-B-only range but not with class A (#207)', (t) => {
+test('the CLI permits a pre-S7 class-B-only range but not one with class A (#562)', (t) => {
   if (process.platform === 'win32') {
     t.skip('нужен исполняемый stub gh — прогон в Linux CI');
     return;
@@ -794,7 +794,7 @@ test('the CLI waives the issue status for a class-B-only range but not with clas
     git('-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'core.hooksPath=/dev/null',
       'commit', '-q', '-m', message);
   };
-  // Подставной gh: инфраструктурный issue по #118 — тип, приоритет, тема, без S*.
+  // Подставной gh: первый push инфраструктурного issue по #562 — без S*.
   const ghStub = join(dir, 'gh-stub.mjs');
   writeFileSync(ghStub, '#!/usr/bin/env node\n'
     + 'process.stdout.write(JSON.stringify({ number: 206, state: "OPEN", labels: '

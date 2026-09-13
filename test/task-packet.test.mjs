@@ -16,7 +16,11 @@ test('права выводятся из статусной метки по пр
   assert.ok(rightsFor('S7-code-review').some((l) => l.includes('#312')));
   assert.ok(rightsFor('S6-in-progress', ['blocked'])[0].startsWith('blocked'));
   assert.ok(rightsFor('S7-code-review', ['review-4'])[0].startsWith('review-4'));
-  assert.ok(rightsFor(null).some((l) => l.includes('вне процесса')));
+  assert.ok(rightsFor(null).some((l) => l.includes('продуктовая задача вне процесса')));
+  const infrastructure = rightsFor(null, ['infra']);
+  assert.ok(infrastructure.some((l) => l.includes('инфраструктурную реализацию МОЖНО')));
+  assert.ok(infrastructure.some((l) => l.includes('S7-code-review')));
+  assert.ok(infrastructure.every((l) => !l.includes('продуктовый код трогать МОЖНО')));
 });
 
 test('AC распознаются из таблицы ТЗ и из строк тела issue (#496)', () => {
@@ -88,6 +92,18 @@ test('пакет собирается и рендерится: статус, м�
   assert.match(md, /Validate на вершине: зелёный/);
   // Ничего не додумывается: без ветки — прямо сказано, что материал не запушен.
   assert.match(renderPacket(buildPacket({ issue: { number: 1, title: 't', state: 'OPEN', body: '' }, labels: [] })), /материал не запушен/);
+});
+
+test('#562: statusless infra issue is the accelerated track ending at S7 review', () => {
+  const packet = buildPacket({
+    issue: { number: 562, title: 'process', state: 'OPEN', url: 'u', body: '' },
+    labels: ['P1', 'infra', 'process', 'tech-debt'],
+  });
+  assert.equal(packet.status, null);
+  assert.equal(packet.track, 'инфраструктурный');
+  const md = renderPacket(packet);
+  assert.match(md, /инфраструктурный вход/);
+  assert.match(md, /S7-code-review/);
 });
 
 test('#517 AC5: AC берутся из тела issue, файл ТЗ — только когда в теле их нет', () => {

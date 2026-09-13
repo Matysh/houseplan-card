@@ -38,8 +38,11 @@ task records: problem, scope, acceptance criteria and discussion.
 
 **Status lives in labels:** `S1-new`, `S2-analysis`, `S3-spec`, `S4-spec-review`,
 `S5-ready`, `S6-in-progress`, `S7-code-review`, `S8-merged`, plus `blocked` on top
-of a status and `rejected` on a closed issue. Exactly one `S*` label per open
-issue. Labels are the whole of it: GitHub Projects is no longer used.
+of a status and `rejected` on a closed issue. A product issue in flight carries
+exactly one `S*` label. An infrastructure-only issue is the deliberate exception:
+it may carry no `S*` label while being implemented, enters the common flow at
+`S7-code-review`, and from then on carries exactly one. Labels are the whole of
+it: GitHub Projects is no longer used.
 
 **The light track is the default, not a shortcut** (owner's decision 2026-08-27,
 issue #338). `small` — the spec lives in the issue body and its review is a
@@ -57,10 +60,11 @@ review is never skipped on either track; it is what stands in for testing.
 `PROCESS.md` §5 and §5.1 hold the criteria.
 
 An issue filed by an outsider is worked exactly like one of the owner's own, once
-the owner has decided to take it. The check sits **at the entrance**, not on every
-step: while an issue carries no status label it is outside the process and the
-invariants do not apply to it; once a label is on, the task is in flight and **who
-filed it stops mattering**.
+the owner has decided to take it. For product work the check sits **at the
+entrance**, not on every step: the first status label admits it to the flow. For
+infrastructure work an explicit assignment by the owner is the entrance, and the
+issue may remain without an `S*` label until its first `S7-code-review`. In either
+case, **who filed it stops mattering** once the owner has admitted it.
 
 Applying that first label *is* the owner's explicit decision, and the platform
 already guarantees it — only someone with write access can label. The earlier rule
@@ -185,32 +189,36 @@ way. The layout is therefore fixed:
   or the owner — never reset or clean them away.
 - **`houseplan-card-src/hp-dev`** — the owner's worktree, permanently on `dev`. For owner-side operations that must not disturb the
   author's tree: pushing `dev`, restoring a hook's executable bit, emergencies.
-- **The reviewer and the infrastructure agent own no local tree.** The reviewer
-  runs in CI on a fresh checkout. The infrastructure agent reads via `git show`
-  and publishes through the GitHub API; it makes no local commits at all, so it
-  needs no `HEAD` of its own. Its scratch worktrees live outside the repo and are
-  pruned after use.
+- **The reviewer owns no author tree.** It runs in CI on a fresh checkout. The
+  agent implementing an infrastructure task is an ordinary task author and uses
+  the same author-tree rules as product work; task branches must not share a
+  mutable checkout concurrently.
 
 A worktree is only usable on the machine that created it: the `.git` file records
 an absolute path in that machine's format. One created from a Linux sandbox is
 dead on Windows and vice versa — create worktrees on the machine that will use
 them, which for `hp-dev` means the owner's.
 
-## Two-agent workflow
+## Agent-neutral workflow
 
-**Codex** writes analysis, specs and all product code. **Claude** reviews specs and
-code and owns infrastructure and distribution. The owner rules on disputes, closes
-issues and commands releases.
+No task type is reserved for Codex, Claude or any other named model. **Any agent
+may take any task**: analysis, spec, product implementation, infrastructure or a
+release explicitly commanded by the owner. Roles describe the current artifact,
+not the agent brand. The owner rules on product disputes, closes issues and
+commands releases.
 
-Author and reviewer are different models, which is what "a fresh session without
-implementation context" means in practice. The reviewer never edits product code;
-the author never grades their own work.
+Author and reviewer are independent agents/sessions. They need not use different
+model families, but the reviewer must start without implementation context and
+must not be the author grading their own work. The reviewer does not edit the
+material under review.
 
-**Infrastructure-only work runs outside this flow.** CI, scripts, labels, demo
-stands, the landing page and distribution are Claude's alone, and running them
-through spec-writing and review buys nothing: the spec would restate what is
-already unambiguous, and author and reviewer would be the same role. So no spec
-file, no spec review, no code review, no walk through `S1`…`S8`.
+**Infrastructure-only work uses an accelerated entry into the common flow.** It
+is implemented immediately by any agent, without analysis, spec, spec review or
+the statuses `S1`…`S6`. Once the branch is ready and pushed, apply
+`S7-code-review`. From there the ordinary controller applies: green review rebases
+and merges the checked material into `dev` and then sets `S8-merged`; findings or
+a failed merge return the issue to `S6-in-progress`, and after correction it is
+submitted to `S7-code-review` again.
 
 The test for "infrastructure only" is mechanical: **not a single class A file** —
 nothing under `src/**`, no `custom_components/**/*.py`, no manifests, no i18n. A
@@ -220,8 +228,10 @@ a loose reading would turn this into the route by which product changes skip
 review.
 
 What stays mandatory either way: an issue exists, both trailers are on every
-commit, `typecheck`, `test` and `build` are green, and any non-obvious decision is
-written down in the code or the issue rather than kept in someone's head.
+commit, proportionate local gates are green (normally `typecheck`, `test` and
+`build`), and any non-obvious decision is written down in the code or the issue
+rather than kept in someone's head. Infrastructure work skips specification, not
+code review.
 
 **Review starts by itself.** Applying `S4-spec-review` or `S7-code-review` fires the
 pipeline, which reviews without anyone asking and takes ten to forty-five minutes.
