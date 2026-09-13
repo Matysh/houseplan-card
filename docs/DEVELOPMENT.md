@@ -348,6 +348,28 @@ The witness is browser-independent and lives in
 `demo/smoke_marker_shadow_transitions.mjs`: change the stage container width by
 one pixel and assert that no `transitionrun` for `box-shadow` arrives.
 
+## Updating a pinned Action (#556)
+
+Every `uses:` in `.github/workflows/**` is a full commit SHA with the human
+version in a trailing comment; `node scripts/action-pins.mjs` enforces it and the
+Validate preflight runs it. The comment is not decoration — it is the only thing
+that tells a reader which release they audited.
+
+To move a pin: read what the tag points at today,
+
+```bash
+gh api repos/<owner>/<repo>/commits/<tag> -q .sha
+```
+
+read the delta from the currently pinned SHA, then change **both** the SHA and
+the comment in one commit. `node scripts/action-pins.mjs --list` prints every
+third-party action with its pin, which is the fastest way to see what is behind.
+
+Two of these are branches upstream, not releases — `home-assistant/actions`
+(`master`) and `hacs/action` (`main`) — so their comment carries the date the
+branch head was read. They have no tags to follow; the only honest record is
+"this commit, read on this day".
+
 ## Dependency and cache gotchas
 
 - **polygon-clipping is a trap**: its `.d.ts` declares named exports but the ESM build has only
