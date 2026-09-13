@@ -73,6 +73,50 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'household-marker-drops-keyboard-reach',
+    guard: 'node demo/smoke_household_journeys.mjs',
+    because: '#560 J4: маркер с действием обязан доставаться клавиатурой — без tabindex он '
+      + 'остаётся нажимаемым мышью, и обычный прогон этого не замечает',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "      tabindex=${interactive ? '0' : nothing}\n      aria-label=${deviceAriaLabel}",
+      replace: '      aria-label=${deviceAriaLabel}',
+    }],
+  },
+  {
+    id: 'household-enter-stops-acting',
+    guard: 'node demo/smoke_household_journeys.mjs',
+    because: '#560 J4: Enter и Space на маркере обязаны вызывать действие; фокус и роль при '
+      + 'этом остаются на месте, поэтому дефект виден только вызовом сервиса',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (ev.key !== 'Enter' && ev.key !== ' ') return;",
+      replace: '    return;',
+    }],
+  },
+  {
+    id: 'corpus-loses-its-short-edge',
+    guard: 'node --test --test-name-pattern="c1-short-edges" test/geometry-corpus.test.mjs',
+    because: '#560: фикстура, потерявшая своё условие, — это зелёный прогон, который ничего '
+      + 'не проверяет; корпус обязан замечать такую потерю, а не считать дальше',
+    patches: [{
+      file: 'test/fixtures/560-corpus/c1-short-edges.json',
+      find: '              0.24166666666666667,\n              0.15833333333333333\n            ],\n            [\n              0.24166666666666667,',
+      replace: '              0.2,\n              0.15833333333333333\n            ],\n            [\n              0.2,',
+    }],
+  },
+  {
+    id: 'optimize-reports-work-it-did-not-do',
+    guard: 'node --test --test-name-pattern="импорт" test/geometry-corpus.test.mjs',
+    because: '#477/#560: приведённый план Optimize трогать не должен; вечное changed=true '
+      + 'заново пишет конфиг, бьёт rev и множит записи истории на каждом нажатии',
+    patches: [{
+      file: 'src/plan-optimizer.ts',
+      find: '  const changed = JSON.stringify(persistedConfig) !== original\n    || JSON.stringify(persistedLayout) !== originalLayout;',
+      replace: '  const changed = true;',
+    }],
+  },
+  {
     id: 'summary-hide-unmounts-before-animation',
     guard: 'node demo/smoke_summary_panel_polish.mjs',
     because: '#505 AC3: the outgoing panel must stay mounted and inert until its measured exit animation finishes',
