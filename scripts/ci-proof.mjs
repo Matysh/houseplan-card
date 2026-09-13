@@ -199,7 +199,8 @@ export function evaluateCiProof({ run, proof, jobs = [], reuseRuns = new Map(), 
       if (!executedCheckIsGreen(id, jobs)) return result('failed', `${id}: claimed execution is absent, incomplete or not green`);
       continue;
     }
-    if (claim.mode !== 'reused' || !['smoke', 'golden', 'performance_smoke', 'backend'].includes(id))
+    if (claim.mode !== 'reused'
+      || !['smoke', 'golden', 'performance_smoke', 'geometry_parity', 'backend'].includes(id))
       return result('failed', `${id}: unsupported proof mode ${claim.mode || 'missing'}`);
     const reuse = claim.reuse || {};
     if (!/^[0-9a-f]{64}$/.test(reuse.key || '') || !/^[0-9a-f]{40}$/.test(reuse.sourceSha || '')

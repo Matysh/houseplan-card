@@ -154,6 +154,24 @@ test('#541 AC: reuse needs a content key, marker source SHA/run and the successf
   assert.equal(evaluateCiProof({ ...fixture, proof: badKey, policy: CI_PROOF_POLICIES.release }).status, 'failed');
 });
 
+test('#548: geometry parity reuse is accepted only with a verified source job', () => {
+  const fixture = proofFixture();
+  fixture.proof.checks.geometry_parity = {
+    mode: 'reused', result: 'success',
+    reuse: { key: 'e'.repeat(64), sourceRun: 78, sourceAttempt: 2, sourceSha: 'f'.repeat(40) },
+  };
+  fixture.proof.executedChecks = fixture.proof.executedChecks.filter((id) => id !== 'geometry_parity');
+  fixture.proof.reusedChecks = ['geometry_parity'];
+  fixture.jobs = fixture.jobs.filter((job) => job.name !== names.geometryParity);
+  fixture.reuseRuns.set('78:2', {
+    run: { id: 78, run_attempt: 2, status: 'completed', conclusion: 'success', head_sha: 'f'.repeat(40) },
+    jobs: [success(names.geometryParity)],
+  });
+
+  assert.equal(evaluateCiProof({ ...fixture, policy: CI_PROOF_POLICIES.release }).status, 'green');
+  assert.equal(evaluateCiProof({ ...fixture, reuseRuns: new Map(), policy: CI_PROOF_POLICIES.release }).status, 'failed');
+});
+
 test('#541: reuse marker parser fails closed', () => {
   assert.deepEqual(parseReuseMarker(
     `golden прогнана успешно\nSHA: ${SHA}\nпрогон: https://github.com/x/y/actions/runs/123\nпопытка: 4\n`,
