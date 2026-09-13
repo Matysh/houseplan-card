@@ -370,6 +370,29 @@ Two of these are branches upstream, not releases — `home-assistant/actions`
 branch head was read. They have no tags to follow; the only honest record is
 "this commit, read on this day".
 
+## What the review model is allowed to do (#556)
+
+The `model_review` job is the only untrusted stage of the review pipeline: it
+runs a model with `Read/Write/Bash` over the material. Its `permissions:` block
+is the real ceiling **only because** the `Review` step is handed
+`github_token: ${{ secrets.GITHUB_TOKEN }}`.
+
+Without that input `claude-code-action` exchanges the job's OIDC token for its
+own GitHub App installation token (`src/github/token.ts`), and that exchange
+defaults to `contents: write`, `pull_requests: write`, `issues: write` no matter
+what the calling job declared — the `ghs_…` token then sits in the environment of
+the model's own Bash tool. Removing the one line therefore widens the model's
+rights silently, with every test still green, which is why there is a witness
+(`test/review-doc-guard.test.mjs`) and a mutant
+(`review-job-trusts-the-app-token`) standing on it.
+
+`issues: write` is the single write scope the model keeps, because the process
+asks the reviewer for the verdict comment (§7.2) and a separate issue for
+out-of-scope Medium findings (§12). It buys comments, labels and issue-body
+edits — not a commit, not a merge (that is decided in `integrate` from the sealed
+`verdict.json`), not a release. Dropping it means moving both duties into
+`integrate`, which is a pipeline change and not part of this one.
+
 ## Dependency and cache gotchas
 
 - **polygon-clipping is a trap**: its `.d.ts` declares named exports but the ESM build has only

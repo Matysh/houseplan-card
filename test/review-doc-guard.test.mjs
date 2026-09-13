@@ -898,10 +898,10 @@ test('конвейер: права выдаются по job, модель не 
 
   const jobBlock = (name, next) => workflow.slice(workflow.indexOf(`\n  ${name}:\n`), workflow.indexOf(`\n  ${next}:\n`));
   const model = jobBlock('model_review', 'integrate');
-  assert.match(model, /^\s+permissions:\n\s+contents: read\n\s+id-token: write$/m,
-    'модели — только чтение и OIDC для claude-code-action');
-  assert.doesNotMatch(model.slice(0, model.indexOf('steps:')), /issues: write/,
-    'модель не получает права записи в issue');
+  assert.match(model, /^\s+permissions:\n\s+contents: read\n\s+issues: write$/m,
+    'модели — чтение репозитория и ровно одно право записи: комментарий в issue');
+  assert.doesNotMatch(model.slice(0, model.indexOf('steps:')), /contents: write/,
+    'модель не получает права записи в репозиторий');
 
   for (const [name, next] of [['guard', 'prepare'], ['prepare', 'model_review']]) {
     assert.match(jobBlock(name, next), /^\s+permissions:\n\s+contents: read\n\s+issues: write$/m,
@@ -909,4 +909,25 @@ test('конвейер: права выдаются по job, модель не 
   }
   const integrate = workflow.slice(workflow.indexOf('\n  integrate:\n'));
   assert.match(integrate, /^\s+permissions:\n\s+contents: read\n\s+issues: write$/m);
+});
+
+// #556 r1 H1: объявленные `permissions:` у model_review ничего не ограничивали,
+// пока claude-code-action меняла OIDC на собственный App-токен: его дефолт —
+// `contents/issues/pull_requests: write`, и `ghs_…` от claude[bot] лежал прямо в
+// окружении Bash-инструмента модели. Потолком права становятся только при
+// переданном ambient-токене: `OVERRIDE_GITHUB_TOKEN` замыкает обмен в
+// `setupGitHubToken`. Свидетель стоит на проводке, потому что снятие одной
+// строки возвращает модели запись в репозиторий молча — прогон остаётся зелёным.
+test('ревью: модель работает job-scoped токеном, а не App-обменом (#556)', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const model = workflow.slice(workflow.indexOf('\n  model_review:\n'), workflow.indexOf('\n  integrate:\n'));
+  const review = model.slice(model.indexOf('      - name: Review\n'));
+  const withBlock = review.slice(review.indexOf('        with:'), review.indexOf('          prompt: |'));
+  assert.match(withBlock, /^\s+github_token: \$\{\{ secrets\.GITHUB_TOKEN \}\}$/m,
+    'шагу Review передан ambient job-scoped токен');
+  assert.doesNotMatch(withBlock, /additional_permissions/,
+    'права не расширяются через additional_permissions');
+  // Без обмена OIDC не нужен, и заявка на него — признак вернувшегося App-токена.
+  assert.doesNotMatch(model.slice(0, model.indexOf('steps:')), /id-token: write/,
+    'OIDC этой стадии больше не выдаётся');
 });

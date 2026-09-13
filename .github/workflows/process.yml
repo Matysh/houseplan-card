@@ -742,11 +742,26 @@ jobs:
     name: "Ревью: работа модели"
     # Единственная недоверенная стадия: модель читает материал и кладёт
     # запечатанный artifact. Писать в issue и в репозиторий ей незачем — это
-    # делает `integrate`, проверив происхождение. `id-token` нужен самой
-    # claude-code-action для авторизации GitHub App.
+    # делает `integrate`, проверив происхождение: в репозиторий модель не пишет
+    # вообще, а в issue — только своим комментарием и отдельным issue по §12.
+    #
+    # Права здесь реальны только вместе с `github_token` у шага Review. Без него
+    # claude-code-action меняет OIDC на собственный App-токен с дефолтом
+    # `contents/issues/pull_requests: write` (`src/github/token.ts`), и блок ниже
+    # не ограничивает ничего: токен `ghs_…` от claude[bot] лежит прямо в
+    # окружении Bash-инструмента модели — это поймало ревью r1 по #556 в
+    # собственной же сессии. С переданным `secrets.GITHUB_TOKEN` обмена не
+    # происходит, `id-token` больше не нужен, и этот список становится потолком.
+    #
+    # `issues: write` остаётся: процесс требует от ревьюера комментарий с
+    # вердиктом (§7.2) и отдельный issue на Medium вне скоупа (§12). Снять его
+    # можно только перенеся и то и другое в `integrate` — это отдельная правка
+    # конвейера, не эта задача. Что остаётся модели этим правом: комментарий,
+    # метки, правка тела issue. Чего не остаётся: запись в репозиторий, слияние
+    # (его решает запечатанный verdict.json в `integrate`), релиз.
     permissions:
       contents: read
-      id-token: write
+      issues: write
     needs: [guard, prepare]
     if: needs.prepare.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
     runs-on: ubuntu-latest
@@ -870,6 +885,11 @@ jobs:
           # Подписка, а не отдельный счёт API: токен выпускается через
           # `claude setup-token` (Pro/Max). Действуют лимиты подписки.
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Ambient job-scoped токен вместо App-обмена (#556). Со ним
+          # `permissions:` этой job — настоящий потолок прав модели: ни записи в
+          # репозиторий, ни постановки метки, ни комментария. Строку нельзя
+          # снять, не вернув модели право двигать процесс.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
           prompt: |
             Ты ревьюер проекта House Plan. Язык ответа — русский.

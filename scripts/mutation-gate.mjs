@@ -8047,6 +8047,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-job-trusts-the-app-token',
+    guard: 'node --test --test-name-pattern="job-scoped" test/review-doc-guard.test.mjs',
+    because: '#556 r1 H1: без переданного ambient-токена claude-code-action меняет OIDC на '
+      + 'собственный App-токен с дефолтом contents/issues/pull_requests: write, и объявленные '
+      + '`permissions:` недоверенной стадии перестают быть потолком — молча, зелёным прогоном',
+    patches: [{
+      file: '.github/workflows/process.yml',
+      find: '          github_token: ${{ secrets.GITHUB_TOKEN }}\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'review-integration-trusts-failed-model',
     guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
     because: '#551: timeout/cancel/failure модели не является вердиктом; интеграция обязана '
