@@ -173,13 +173,21 @@ const result = await page.evaluate(async () => {
   const devlayer = root().querySelector('.devlayer');
   const endpoints = [...devlayer.querySelectorAll('[data-hp-zigbee-topology-endpoint]')]
     .map((marker) => marker.dataset.id).sort();
+  const overlayLayer = Number.parseInt(getComputedStyle(overlay).zIndex, 10);
+  const unrelatedFloorLayer = Number.parseInt(getComputedStyle(unrelated, '::before').zIndex, 10);
+  const unrelatedShellLayer = Number.parseInt(
+    getComputedStyle(unrelated.querySelector('.device-shell')).zIndex, 10,
+  );
+  const sourceLayer = Number.parseInt(getComputedStyle(source).zIndex, 10);
   out.incidentOnly = overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-line"]').length === 2
     && overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-neighbor"]').length === 2;
   out.layerContract = overlay.parentElement === devlayer
     && !overlay.hasAttribute('data-hp-live-layer')
-    && Number.parseInt(getComputedStyle(overlay).zIndex, 10) > Number.parseInt(getComputedStyle(unrelated).zIndex, 10)
-    && Number.parseInt(getComputedStyle(source).zIndex, 10) > Number.parseInt(getComputedStyle(overlay).zIndex, 10)
-    && (!roomLabel || Number.parseInt(getComputedStyle(overlay).zIndex, 10)
+    && getComputedStyle(unrelated).zIndex === 'auto'
+    && overlayLayer > unrelatedFloorLayer
+    && overlayLayer > unrelatedShellLayer
+    && sourceLayer > overlayLayer
+    && (!roomLabel || overlayLayer
       > Number.parseInt(getComputedStyle(roomLabel).zIndex, 10));
   out.exactEndpoints = endpoints.join(',') === 'd_lamp,d_light1,d_tv'
     && !unrelated.hasAttribute('data-hp-zigbee-topology-endpoint');
