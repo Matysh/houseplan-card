@@ -6,6 +6,31 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { MAX_ATTEMPTS, commentFor, decideMerge, mergeCandidate, realOps } from '../scripts/merge-candidate.mjs';
+import { buildCiProof } from '../scripts/ci-proof.mjs';
+
+const mergeProofContext = (row, sha, tree) => {
+  const proof = buildCiProof({
+    candidateSha: sha, candidateTree: tree, runId: row.databaseId,
+    attempt: row.attempt ?? 1, event: row.event,
+    needs: {
+      preflight: { result: 'success' },
+      changes: { result: 'success', outputs: {
+        heavy: 'false', mutants_requested: 'true', frontend: 'true',
+        backend: 'false', integration: 'false',
+      } },
+      reuse: { result: 'success', outputs: {} }, frontend: { result: 'success' },
+      changed_mutants: { result: 'success' },
+    },
+  });
+  const success = (name) => ({ name, conclusion: 'success' });
+  return { proof, reuseRuns: new Map(), jobs: [
+    success('Предполётные проверки: документация, провенанс, процесс'),
+    success('Классификация изменённых файлов'),
+    success('Переиспользование: это дерево уже проверено'),
+    success('Фронтенд: типы, юниты, мутанты, синхрон бандла'),
+    ...Array.from({ length: 6 }, (_, i) => success(`Мутанты по диффу (${i + 1}/6): затронутые свидетели краснеют`)),
+  ] };
+};
 
 // #492 §4 / §8.4: слияние точного кандидата. Таблица решений — на чистой
 // функции; последовательность операций — на фальшивых git/gh; эксперимент
@@ -21,13 +46,13 @@ test('§8.4 таблица решений decideMerge', () => {
   assert.deepEqual(decideMerge({ fresh: true, devMoved: true, patchIdEqual: false }), { action: 'rereview', to: 'S7-code-review' });
   assert.deepEqual(decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: null }), { action: 'validate' });
   assert.deepEqual(decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: 'missing' }), { action: 'validation-missing', to: 'S6-in-progress' });
-  assert.deepEqual(decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: 'red' }), { action: 'validation-red', to: 'S6-in-progress' });
+  assert.deepEqual(decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: 'failed' }), { action: 'validation-red', to: 'S6-in-progress' });
   assert.deepEqual(decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: 'green' }), { action: 'push', to: 'S8-merged' });
   assert.deepEqual(decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: 'green', leaseRejected: true, attempt: 1 }), { action: 'retry' });
   assert.deepEqual(decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: 'green', leaseRejected: true, attempt: 2 }), { action: 'retry' });
   assert.deepEqual(decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: 'green', leaseRejected: true, attempt: MAX_ATTEMPTS }), { action: 'give-up', to: 'S6-in-progress' });
   // ни один исход не ведёт в S8 без зелёного Validate при движении dev
-  for (const validate of [null, 'missing', 'red']) {
+  for (const validate of [null, 'missing', 'failed', 'pending', 'cancelled', 'stale']) {
     assert.notEqual(decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate }).to, 'S8-merged', String(validate));
   }
   assert.equal(MAX_ATTEMPTS, 3);
@@ -119,7 +144,7 @@ test('эксперимент аудита: dev двигался, ребейз ч
 });
 
 test('красный Validate на кандидате — S6, без push в dev', async () => {
-  const ops = fakeOps({ devTips: ['dev1'], branchTip: 'mat', material: 'mat', validate: ['red'] });
+  const ops = fakeOps({ devTips: ['dev1'], branchTip: 'mat', material: 'mat', validate: ['failed'] });
   const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
   assert.equal(r.action, 'validation-red');
   assert.equal(r.to, 'S6-in-progress');
@@ -246,24 +271,59 @@ function scriptedExec(snapshots) {
 }
 
 test('#510 r2 M1: realOps.waitValidate ignores a cancelled dispatch and follows its replacement', async () => {
-  const cancelled = { databaseId: 1, status: 'completed', conclusion: 'cancelled', url: 'https://run/1', event: 'workflow_dispatch' };
-  const push = { databaseId: 2, status: 'completed', conclusion: 'success', url: 'https://run/2', event: 'push' };
-  const replacement = { databaseId: 3, status: 'completed', conclusion: 'success', url: 'https://run/3', event: 'workflow_dispatch' };
+  const sha = 'c'.repeat(40);
+  const tree = 'd'.repeat(40);
+  const cancelled = { databaseId: 1, attempt: 1, status: 'completed', conclusion: 'cancelled', url: 'https://run/1', event: 'workflow_dispatch', headSha: sha };
+  const push = { databaseId: 2, attempt: 1, status: 'completed', conclusion: 'success', url: 'https://run/2', event: 'push', headSha: sha };
+  const replacement = { databaseId: 3, attempt: 1, status: 'completed', conclusion: 'success', url: 'https://run/3', event: 'workflow_dispatch', headSha: sha };
   const gh = scriptedExec([[cancelled, push], [cancelled, push], [replacement, cancelled, push]]);
   let clock = 0;
-  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, sleep: async (ms) => { clock += ms; }, now: () => clock });
-  const r = await ops.waitValidate('c'.repeat(40), { event: 'workflow_dispatch' });
-  assert.deepEqual(r, { result: 'green', url: 'https://run/3' });
+  const ops = realOps({
+    repo: 'x/y', token: 'none', exec: gh.exec,
+    sleep: async (ms) => { clock += ms; }, now: () => clock,
+    candidateTree: async () => tree,
+    proofContext: async (row) => row.databaseId === 3
+      ? mergeProofContext(row, sha, tree) : { proof: null, jobs: [], reuseRuns: new Map() },
+  });
+  const r = await ops.waitValidate(sha, { event: 'workflow_dispatch' });
+  assert.equal(r.result, 'green');
+  assert.equal(r.url, 'https://run/3');
   assert.equal(gh.calls(), 3, 'kept polling past the cancelled run instead of returning red on the first answer');
 });
 
 test('#510 r2 M1: realOps.waitValidate with only a cancelled dispatch reports missing after the appear window, never red', async () => {
-  const cancelled = { databaseId: 1, status: 'completed', conclusion: 'cancelled', url: 'https://run/1', event: 'workflow_dispatch' };
+  const sha = 'c'.repeat(40);
+  const tree = 'd'.repeat(40);
+  const cancelled = { databaseId: 1, attempt: 1, status: 'completed', conclusion: 'cancelled', url: 'https://run/1', event: 'workflow_dispatch', headSha: sha };
   const gh = scriptedExec([[cancelled]]);
   let clock = 0;
-  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, sleep: async (ms) => { clock += ms; }, now: () => clock });
-  const r = await ops.waitValidate('c'.repeat(40), { event: 'workflow_dispatch' });
+  const ops = realOps({
+    repo: 'x/y', token: 'none', exec: gh.exec,
+    sleep: async (ms) => { clock += ms; }, now: () => clock,
+    candidateTree: async () => tree,
+    proofContext: async () => ({ proof: null, jobs: [], reuseRuns: new Map() }),
+  });
+  const r = await ops.waitValidate(sha, { event: 'workflow_dispatch' });
   assert.equal(r.result, 'missing');
+});
+
+test('#541: real merge waiter never accepts a successful dispatch without its proof artifact', async () => {
+  const sha = 'c'.repeat(40);
+  const tree = 'd'.repeat(40);
+  const unproved = {
+    databaseId: 4, attempt: 1, status: 'completed', conclusion: 'success',
+    url: 'https://run/4', event: 'workflow_dispatch', headSha: sha,
+  };
+  const gh = scriptedExec([[unproved]]);
+  let clock = 0;
+  const ops = realOps({
+    repo: 'x/y', token: 'none', exec: gh.exec,
+    sleep: async (ms) => { clock += ms; }, now: () => clock,
+    candidateTree: async () => tree,
+    proofContext: async () => ({ proof: null, jobs: [], reuseRuns: new Map() }),
+  });
+  const result = await ops.waitValidate(sha, { event: 'workflow_dispatch' });
+  assert.equal(result.result, 'missing');
 });
 
 // ---------- #516: the candidate carries its own review document; dev moves by other documents ----------

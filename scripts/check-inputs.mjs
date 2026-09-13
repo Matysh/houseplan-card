@@ -270,7 +270,7 @@ const BROWSER_PROTOCOL = ['demo/serve.mjs', 'demo/srv/demo.html', 'demo/bundle-f
   'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'demo/guard/**'];
 const WORKFLOW = ['.github/workflows/validate.yml'];
 /** Протокол реюза: кто считает ключ, тот и вход (§5.1 protocol). */
-const REUSE_PROTOCOL = ['scripts/gate-reuse.mjs', 'scripts/check-inputs.mjs'];
+const REUSE_PROTOCOL = ['scripts/gate-reuse.mjs', 'scripts/check-inputs.mjs', 'scripts/ci-proof.mjs'];
 /**
  * Cross-runtime inputs, которые pytest читает динамически и которые поэтому
  * нельзя вывести из статических import/string ссылок (#542).
@@ -286,7 +286,6 @@ const BACKEND_DYNAMIC_INPUTS = [
   'demo/fixtures/large-house.mjs',
   'demo/fixtures/visual-matrix.mjs',
 ];
-
 export const CHECKS = {
   preflight: {
     // документация, провенанс, процесс — всегда запускается; реюза нет

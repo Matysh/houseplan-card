@@ -12,7 +12,7 @@ import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { assertReleaseContract } from './release-contract.mjs';
-import { classifyValidateRuns } from './release-gate.mjs';
+import { classifyValidateProofs } from './release-gate.mjs';
 import { assertBundleManifest } from './bundle-tree.mjs';
 import { SUMS_FILE, compareSums, formatSums, parseSums, sumsOfDirectory } from './release-assets.mjs';
 
@@ -392,18 +392,16 @@ if (invokedDirectly) {
     }
   };
 
-  const assertGreenValidate = (sha) => {
+  const assertGreenValidate = async (sha) => {
     const runs = ghJson([
       'run', 'list', '--repo', repo, '--workflow', 'validate.yml', '--commit', sha,
-      '--limit', '100', '--json', 'databaseId,status,conclusion,url,headSha',
+      '--limit', '100', '--json', 'databaseId,status,conclusion,url,headSha,event,attempt,startedAt,createdAt',
     ]);
-    const state = classifyValidateRuns(runs);
-    if (state !== 'success') {
-      throw new Error(
-        state === 'wait'
-          ? `Exact-SHA Validate has not completed successfully for ${sha}`
-          : `Exact-SHA Validate contains a failed/cancelled run for ${sha}`,
-      );
+    const tree = run('git', ['rev-parse', `${sha}^{tree}`]).stdout;
+    const token = run('gh', ['auth', 'token']).stdout;
+    const verdict = await classifyValidateProofs({ runs, repo, sha, tree, token });
+    if (verdict.status !== 'green') {
+      throw new Error(`Exact-SHA Validate proof is ${verdict.status} for ${sha}: ${verdict.note}`);
     }
     return runs;
   };
@@ -487,7 +485,7 @@ if (invokedDirectly) {
     if (sha !== remoteBranch) throw new Error(`HEAD ${sha} is not synchronized with origin/${branch} ${remoteBranch}`);
     const bundleSnapshot = assertBundleSnapshots(sha);
     const bundleSha256 = bundleSnapshot.entrySha256;
-    const validateRuns = assertGreenValidate(sha);
+    const validateRuns = await assertGreenValidate(sha);
     validateIssues();
     const existingTag = remoteTag();
     if (existingTag.exists && existingTag.commit !== sha)

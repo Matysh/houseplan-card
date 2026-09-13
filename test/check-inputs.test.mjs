@@ -140,7 +140,7 @@ test('§8.1 представители: каждая категория кажд
         'test/fixtures/real-plan-first-floor.json'],
       config: ['pyproject.toml', 'pytest.ini', 'scripts/backend-coverage-baseline.txt'],
       toolchain: ['tests_backend/requirements.txt', 'custom_components/houseplan/manifest.json', '.github/workflows/validate.yml'],
-      protocol: ['scripts/gate-reuse.mjs', 'scripts/check-inputs.mjs'],
+      protocol: ['scripts/gate-reuse.mjs', 'scripts/check-inputs.mjs', 'scripts/ci-proof.mjs'],
     },
     smoke: {
       source: ['src/houseplan-card.ts', 'src/logic.ts'],
@@ -149,7 +149,8 @@ test('§8.1 представители: каждая категория кажд
       config: ['rollup.config.mjs', 'tsconfig.json'],
       toolchain: ['package.json', 'package-lock.json', '.github/workflows/validate.yml'],
       protocol: ['demo/serve.mjs', 'demo/srv/demo.html', 'demo/bundle-freshness.mjs',
-        'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'scripts/smoke-select.mjs'],
+        'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'scripts/smoke-select.mjs',
+        'scripts/ci-proof.mjs'],
     },
     golden: {
       source: ['src/houseplan-card.ts'],
@@ -158,7 +159,8 @@ test('§8.1 представители: каждая категория кажд
         'demo/fixtures/visual-matrix.mjs'],
       config: ['rollup.config.mjs', 'tsconfig.json'],
       toolchain: ['package.json', '.github/workflows/validate.yml'],
-      protocol: ['demo/serve.mjs', 'demo/srv/demo.html', 'demo/bundle-freshness.mjs', 'demo/editor-runtime-compat.mjs'],
+      protocol: ['demo/serve.mjs', 'demo/srv/demo.html', 'demo/bundle-freshness.mjs',
+        'demo/editor-runtime-compat.mjs', 'scripts/ci-proof.mjs'],
     },
     performance_smoke: {
       source: ['src/houseplan-card.ts'],
@@ -167,7 +169,8 @@ test('§8.1 представители: каждая категория кажд
         'demo/performance/budgets-isometric-smoke.json', 'demo/performance/budgets-interaction-smoke.json'],
       config: ['rollup.config.mjs'],
       toolchain: ['package.json', '.github/workflows/validate.yml'],
-      protocol: ['demo/serve.mjs', 'demo/srv/demo.html', 'demo/editor-runtime-compat.mjs', 'demo/performance/evaluate.mjs'],
+      protocol: ['demo/serve.mjs', 'demo/srv/demo.html', 'demo/editor-runtime-compat.mjs',
+        'demo/performance/evaluate.mjs', 'scripts/ci-proof.mjs'],
     },
   };
   for (const [job, categories] of Object.entries(expect)) {

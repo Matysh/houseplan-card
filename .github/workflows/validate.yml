@@ -376,6 +376,18 @@ jobs:
       performance_smoke_key: ${{ steps.keys.outputs.performance_smoke }}
       performance_smoke_set: ${{ steps.keys.outputs.performance_smoke_set }}
       backend_key: ${{ steps.keys.outputs.backend }}
+      smoke_source_run: ${{ steps.p_smoke.outputs.source_run }}
+      smoke_source_attempt: ${{ steps.p_smoke.outputs.source_attempt }}
+      smoke_source_sha: ${{ steps.p_smoke.outputs.source_sha }}
+      golden_source_run: ${{ steps.p_golden.outputs.source_run }}
+      golden_source_attempt: ${{ steps.p_golden.outputs.source_attempt }}
+      golden_source_sha: ${{ steps.p_golden.outputs.source_sha }}
+      performance_smoke_source_run: ${{ steps.p_perf.outputs.source_run }}
+      performance_smoke_source_attempt: ${{ steps.p_perf.outputs.source_attempt }}
+      performance_smoke_source_sha: ${{ steps.p_perf.outputs.source_sha }}
+      backend_source_run: ${{ steps.p_backend.outputs.source_run }}
+      backend_source_attempt: ${{ steps.p_backend.outputs.source_attempt }}
+      backend_source_sha: ${{ steps.p_backend.outputs.source_sha }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -397,36 +409,61 @@ jobs:
           [ "$PERF_INTERACTION" = "true" ] && set="$set-interaction"
           echo "performance_smoke_set=$set" >> "$GITHUB_OUTPUT"
           echo "performance_smoke set: $set"
-      # lookup-only: маркер только проверяется, но не восстанавливается —
-      # сохранять его в этой job нечего, она ничего не прогоняла.
+      # Маркер восстанавливается во временный файл: #541 требует не только
+      # cache-hit, но и SHA/run исходного успешного job. Между lookup файл
+      # удаляется, чтобы один маркер не был принят за другой.
       - name: Маркер smoke
         id: m_smoke
         uses: actions/cache/restore@v6
         with:
           path: .reuse-marker
           key: reuse-smoke-${{ steps.keys.outputs.smoke }}
-          lookup-only: true
+      - name: Доказательство источника smoke
+        id: p_smoke
+        if: steps.m_smoke.outputs.cache-hit == 'true'
+        run: node scripts/ci-proof.mjs --marker=.reuse-marker
+      - name: Очистить маркер smoke перед следующим lookup
+        if: always()
+        run: rm -f .reuse-marker
       - name: Маркер golden
         id: m_golden
         uses: actions/cache/restore@v6
         with:
           path: .reuse-marker
           key: reuse-golden-${{ steps.keys.outputs.golden }}
-          lookup-only: true
+      - name: Доказательство источника golden
+        id: p_golden
+        if: steps.m_golden.outputs.cache-hit == 'true'
+        run: node scripts/ci-proof.mjs --marker=.reuse-marker
+      - name: Очистить маркер golden перед следующим lookup
+        if: always()
+        run: rm -f .reuse-marker
       - name: Маркер performance_smoke
         id: m_perf
         uses: actions/cache/restore@v6
         with:
           path: .reuse-marker
           key: reuse-performance_smoke-${{ steps.keys.outputs.performance_smoke }}-${{ steps.keys.outputs.performance_smoke_set }}
-          lookup-only: true
+      - name: Доказательство источника performance_smoke
+        id: p_perf
+        if: steps.m_perf.outputs.cache-hit == 'true'
+        run: node scripts/ci-proof.mjs --marker=.reuse-marker
+      - name: Очистить маркер performance_smoke перед следующим lookup
+        if: always()
+        run: rm -f .reuse-marker
       - name: Маркер backend
         id: m_backend
         uses: actions/cache/restore@v6
         with:
           path: .reuse-marker
           key: reuse-backend-${{ steps.keys.outputs.backend }}
-          lookup-only: true
+      - name: Доказательство источника backend
+        id: p_backend
+        if: steps.m_backend.outputs.cache-hit == 'true'
+        run: node scripts/ci-proof.mjs --marker=.reuse-marker
+      - name: Очистить маркер backend
+        if: always()
+        run: rm -f .reuse-marker
       - name: Что переиспользуем
         id: probe
         env:
@@ -806,6 +843,7 @@ jobs:
           printf '%s\n' "smoke прогнана успешно (3 шарда)" \
             "SHA: ${{ github.sha }}" \
             "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            "попытка: ${{ github.run_attempt }}" \
             > .reuse-marker
       - uses: actions/cache/save@v6
         # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
@@ -904,6 +942,7 @@ jobs:
           printf '%s\n' "golden прогнана успешно" \
             "SHA: ${{ github.sha }}" \
             "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            "попытка: ${{ github.run_attempt }}" \
             > .reuse-marker
       - uses: actions/cache/save@v6
         # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
@@ -998,6 +1037,7 @@ jobs:
           printf '%s\n' "performance_smoke прогнана успешно" \
             "SHA: ${{ github.sha }}" \
             "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            "попытка: ${{ github.run_attempt }}" \
             > .reuse-marker
       - uses: actions/cache/save@v6
         # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
@@ -1078,6 +1118,7 @@ jobs:
           printf '%s\n' "backend прогнана успешно" \
             "SHA: ${{ github.sha }}" \
             "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            "попытка: ${{ github.run_attempt }}" \
             > .reuse-marker
       - uses: actions/cache/save@v6
         # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
@@ -1087,3 +1128,40 @@ jobs:
         with:
           path: .reuse-marker
           key: reuse-backend-${{ needs.reuse.outputs.backend_key }}
+
+  # #541: общий conclusion workflow не говорит, какие условные job реально
+  # исполнились, а какие были законно переиспользованы. Этот всегда исполняемый
+  # финальный job публикует неизменяемый proof, привязанный к SHA/tree,
+  # run_id/run_attempt и фактическим outputs всех prerequisite job. Consumers
+  # review/merge/release принимают Validate только через scripts/ci-proof.mjs.
+  proof:
+    name: "Доказательство выполненных проверок"
+    if: always()
+    needs: [preflight, changes, reuse, hacs, hassfest, changed_mutants, frontend, smoke, smoke_done, golden, performance_smoke, backend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with: { ref: ${{ github.sha }} }
+      - uses: actions/setup-node@v7
+        with: { node-version: 22 }
+      - name: Зафиксировать tree кандидата
+        id: candidate
+        run: echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+      - name: Собрать единый CI proof
+        env:
+          CANDIDATE_SHA: ${{ github.sha }}
+          CANDIDATE_TREE: ${{ steps.candidate.outputs.tree }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_EVENT: ${{ github.event_name }}
+          REQUEST_FULL: ${{ inputs.full }}
+          REQUEST_MUTANTS: ${{ inputs.mutants }}
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: node scripts/ci-proof.mjs --emit=artifacts/ci-proof/proof.json
+      - name: Опубликовать proof точной попытки
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/ci-proof/proof.json
+          retention-days: 30
+          if-no-files-found: error

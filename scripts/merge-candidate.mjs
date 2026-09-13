@@ -22,6 +22,9 @@
 import { spawnSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { isMainModule } from './spawn-portable.mjs';
+import {
+  CI_PROOF_POLICIES, evaluateCiProof, githubCandidateTree, loadGithubProofContext,
+} from './ci-proof.mjs';
 
 export const MAX_ATTEMPTS = 3;
 export const VALIDATE_APPEAR_MS = 3 * 60 * 1000;
@@ -36,7 +39,7 @@ export const VALIDATE_TOTAL_MS = 45 * 60 * 1000;
  * @param {boolean} s.devMoved       dev не равен базе материала
  * @param {boolean} s.conflict       ребейз на dev упал
  * @param {boolean} s.patchIdEqual   дифф после ребейза совпадает с проверенным
- * @param {'green'|'red'|'missing'|null} s.validate  результат Validate на кандидате
+ * @param {'green'|'failed'|'missing'|'pending'|'cancelled'|'stale'|null} s.validate результат общего CI proof
  * @param {boolean} s.leaseRejected  push в dev отклонён: dev двинулся снова
  * @param {number}  s.attempt        номер попытки, с 1
  */
@@ -49,8 +52,8 @@ export function decideMerge(s) {
   }
   if (!s.patchIdEqual) return { action: 'rereview', to: 'S7-code-review' };
   if (s.validate === null || s.validate === undefined) return { action: 'validate' };
-  if (s.validate === 'missing') return { action: 'validation-missing', to: 'S6-in-progress' };
-  if (s.validate === 'red') return { action: 'validation-red', to: 'S6-in-progress' };
+  if (['missing', 'pending', 'cancelled', 'stale'].includes(s.validate)) return { action: 'validation-missing', to: 'S6-in-progress' };
+  if (s.validate === 'failed') return { action: 'validation-red', to: 'S6-in-progress' };
   if (s.leaseRejected) {
     if ((s.attempt ?? 1) >= (s.maxAttempts ?? MAX_ATTEMPTS)) return { action: 'give-up', to: 'S6-in-progress' };
     return { action: 'retry' };
@@ -101,7 +104,12 @@ const sh = (cmd, args, opts = {}) => {
   return { status: r.status ?? 1, stdout: (r.stdout || '').trim(), stderr: (r.stderr || '').trim() };
 };
 
-export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = Date.now, exec = sh }) {
+export function realOps({
+  repo, token, workflow = 'validate.yml', sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+  now = Date.now, exec = sh,
+  candidateTree = (sha) => githubCandidateTree({ repo, sha, token }),
+  proofContext = (run) => loadGithubProofContext({ repo, run, token }),
+}) {
   const pushUrl = `https://x-access-token:${token}@github.com/${repo}`;
   const git = (...args) => exec('git', args);
   const must = (r, what) => { if (r.status !== 0) throw new Error(`${what}: ${r.stderr || r.stdout}`); return r.stdout; };
@@ -140,22 +148,34 @@ export function realOps({ repo, token, workflow = 'validate.yml', sleep = (ms) =
     waitValidate: async (sha, { event = 'workflow_dispatch' } = {}) => {
       const started = now();
       let runId = null;
+      const ignored = new Set();
+      const tree = await candidateTree(sha);
       while (now() - started < VALIDATE_TOTAL_MS) {
-        const r = exec('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', 'databaseId,status,conclusion,url,event', '--limit', '10']);
+        const r = exec('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', 'databaseId,status,conclusion,url,event,headSha,attempt,startedAt,createdAt', '--limit', '10']);
         const all = r.status === 0 && r.stdout ? JSON.parse(r.stdout) : [];
-        // Отменённый прогон ничего не доказывает (#511): его заменил следующий
-        // dispatch на той же ветке — ждём его, а не красим кандидата.
-        const runs = all.filter((x) => (!event || x.event === event) && x.conclusion !== 'cancelled');
+        const runs = all.filter((x) => (!event || x.event === event) && !ignored.has(x.databaseId));
         const run = runs.find((x) => x.databaseId === runId) || runs[0];
         if (run) {
           runId = run.databaseId;
-          if (run.status === 'completed') return { result: run.conclusion === 'success' ? 'green' : 'red', url: run.url };
+          if (run.status === 'completed') {
+            let context;
+            try { context = await proofContext(run); }
+            catch { context = { proof: null, jobs: [], reuseRuns: new Map() }; }
+            const verdict = evaluateCiProof({
+              run, ...context, candidate: { sha, tree }, policy: CI_PROOF_POLICIES.merge,
+            });
+            if (verdict.status === 'green' || verdict.status === 'failed')
+              return { result: verdict.status, url: verdict.url, note: verdict.note };
+            ignored.add(run.databaseId);
+            runId = null;
+            continue;
+          }
         } else if (now() - started > VALIDATE_APPEAR_MS) {
           return { result: 'missing', url: null };
         }
         await sleep(20_000);
       }
-      return { result: 'red', url: runId ? `run ${runId} (timeout)` : null };
+      return { result: 'failed', url: runId ? `run ${runId} (timeout)` : null };
     },
     comment: (issue, body) => {
       const r = spawnSync('gh', ['issue', 'comment', String(issue), '--repo', repo, '--body-file', '-'], { input: body, encoding: 'utf8' });

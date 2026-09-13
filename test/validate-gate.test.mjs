@@ -3,12 +3,19 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { validateGate, isMutantRun, provesMutants } from '../scripts/validate-gate.mjs';
+import { buildCiProof } from '../scripts/ci-proof.mjs';
 
 const SHA = 'a'.repeat(40);
+const TREE = 'b'.repeat(40);
 
 /** Fake gh: a scripted list of run snapshots per call, a virtual clock. */
 const MUTANT_JOBS = [1, 2, 3, 4, 5, 6].map((n) => ({ name: `Мутанты по диффу (${n}/6): затронутые свидетели краснеют`, conclusion: 'success' }));
 const OTHER_JOBS = [{ name: 'Фронтенд: типы, юниты, мутанты, синхрон бандла', conclusion: 'success' }];
+const BASE_JOBS = [
+  { name: 'Предполётные проверки: документация, провенанс, процесс', conclusion: 'success' },
+  { name: 'Классификация изменённых файлов', conclusion: 'success' },
+  { name: 'Переиспользование: это дерево уже проверено', conclusion: 'success' },
+];
 
 function fakeOps({ snapshots, onRef = [], jobsById = {} }) {
   let clock = 0;
@@ -19,6 +26,26 @@ function fakeOps({ snapshots, onRef = [], jobsById = {} }) {
       listRuns: async () => { const s = snapshots[Math.min(calls, snapshots.length - 1)]; calls += 1; return s; },
       listRunsOnRef: async () => onRef,
       jobs: async (id) => jobsById[id] ?? [...OTHER_JOBS, ...MUTANT_JOBS],
+      candidateTree: async () => TREE,
+      proof: async (row) => {
+        const selected = jobsById[row.databaseId] ?? [...OTHER_JOBS, ...MUTANT_JOBS];
+        const mutants = provesMutants(selected);
+        const proof = buildCiProof({
+          candidateSha: SHA, candidateTree: TREE, runId: row.databaseId,
+          attempt: row.attempt ?? 1, event: row.event,
+          needs: {
+            preflight: { result: 'success' },
+            changes: { result: 'success', outputs: {
+              heavy: 'false', mutants_requested: String(mutants),
+              frontend: 'true', backend: 'false', integration: 'false',
+            } },
+            reuse: { result: 'success', outputs: {} },
+            frontend: { result: 'success' },
+            changed_mutants: { result: mutants ? 'success' : 'skipped' },
+          },
+        });
+        return { proof, jobs: [...BASE_JOBS, ...selected], reuseRuns: new Map() };
+      },
       dispatch: async (ref) => { dispatched.push(ref); },
       sleep: async (ms) => { clock += ms; },
       now: () => clock,
@@ -67,7 +94,7 @@ test('#510 AC2: a completed green dispatch run on the material is accepted witho
 test('#510 AC2: a completed red dispatch run returns the task without review', async () => {
   const fake = fakeOps({ snapshots: [[run({ conclusion: 'failure', url: 'https://run/red' })]] });
   const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops });
-  assert.equal(outcome.result, 'red');
+  assert.equal(outcome.result, 'failed');
   assert.equal(outcome.url, 'https://run/red');
 });
 
@@ -112,7 +139,7 @@ test('#510 AC2: a dispatch that never finishes is red after the total window', a
   const running = [run({ status: 'in_progress', conclusion: null })];
   const fake = fakeOps({ snapshots: [running] });
   const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, totalMs: 10_000, pollMs: 4000 });
-  assert.equal(outcome.result, 'red');
+  assert.equal(outcome.result, 'failed');
   assert.match(outcome.note, /не завершился/);
   assert.deepEqual(fake.dispatched, []);
 });

@@ -9,7 +9,7 @@
  *
  *   node scripts/validate-gate.mjs --repo=<owner/repo> --ref=<ветка> --sha=<sha> [--workflow=validate.yml]
  *
- * Печатает `result=green|red|missing` и `url=…` (и в $GITHUB_OUTPUT, если он
+ * Печатает `result=green|failed|missing` и `url=…` (и в $GITHUB_OUTPUT, если он
  * задан); код выхода 0 только при green. Логика — чистая функция `validateGate`
  * поверх инъектируемых `ops`, чтобы тесты и мутанты гоняли её без gh.
  */
@@ -18,6 +18,9 @@ import { appendFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { VALIDATE_APPEAR_MS, VALIDATE_TOTAL_MS } from './merge-candidate.mjs';
+import {
+  CI_PROOF_POLICIES, evaluateCiProof, githubCandidateTree, loadGithubProofContext,
+} from './ci-proof.mjs';
 
 export const POLL_MS = 20_000;
 /**
@@ -54,12 +57,13 @@ export function provesMutants(jobs) {
  * @param {object} p
  * @param {string} p.ref     ветка, на которой запускать
  * @param {string} p.sha     SHA материала
- * @param {object} p.ops     { listRuns(sha) → [{databaseId,status,conclusion,url,event,headSha}], listRunsOnRef(ref) → те же, jobs(runId) → [{name,conclusion}], dispatch(ref), sleep(ms), now() }
- * @returns {Promise<{result:'green'|'red'|'missing', url:string|null, note:string}>}
+ * @param {object} p.ops     GitHub run/proof operations plus dispatch, sleep and clock.
+ * @returns {Promise<{result:'green'|'failed'|'missing', url:string|null, note:string}>}
  */
 export async function validateGate({ ref, sha, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS }) {
   const started = ops.now();
-  const ignored = new Set(); // завершённые dispatch, которые ничего не доказывают: отменённые и зелёные без мутантов
+  const candidateTree = await ops.candidateTree(sha);
+  const ignored = new Set(); // завершённые dispatch без применимого proof
   let tracked = null;
   let dispatchedAt = null;
   let attempts = 0;
@@ -69,17 +73,13 @@ export async function validateGate({ ref, sha, ops, appearMs = VALIDATE_APPEAR_M
     if (run) {
       tracked = run.databaseId;
       if (run.status === 'completed') {
-        if (run.conclusion === 'cancelled') {
-          // Отменённый прогон ничего не доказывает (#511, ревью r1 M1): его
-          // заменил другой dispatch в той же concurrency-группе — ждём его,
-          // а если замены нет, запускаем свой.
-          ignored.add(run.databaseId);
-          tracked = null;
-          continue;
-        }
-        if (run.conclusion !== 'success') return { result: 'red', url: run.url, note: `dispatch-прогон завершился: ${run.conclusion}` };
-        if (provesMutants(await ops.jobs(run.databaseId))) return { result: 'green', url: run.url, note: 'dispatch-прогон с исполненными мутантами зелёный' };
-        // зелёный, но мутанты не исполнялись (чужой dispatch без mutants=true) — не доказательство
+        const context = await ops.proof(run);
+        const verdict = evaluateCiProof({
+          run, ...context, candidate: { sha, tree: candidateTree }, policy: CI_PROOF_POLICIES.review,
+        });
+        if (verdict.status === 'green') return { result: 'green', url: verdict.url, note: verdict.note };
+        if (verdict.status === 'failed') return { result: 'failed', url: verdict.url, note: verdict.note };
+        // cancelled, light, stale или legacy run без proof — не доказательство.
         ignored.add(run.databaseId);
         tracked = null;
         continue;
@@ -112,19 +112,24 @@ export async function validateGate({ ref, sha, ops, appearMs = VALIDATE_APPEAR_M
     }
     await ops.sleep(pollMs);
   }
-  return { result: 'red', url: null, note: 'Validate с мутантами не завершился за 45 минут' };
+  return { result: 'failed', url: null, note: 'Validate с мутантами не завершился за 45 минут' };
 }
 
 const sh = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8' });
 
-export function realOps({ repo, workflow = 'validate.yml' }) {
-  const fields = 'databaseId,status,conclusion,url,event,headSha';
+export function realOps({ repo, workflow = 'validate.yml', token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN }) {
+  const fields = 'databaseId,status,conclusion,url,event,headSha,attempt,startedAt,createdAt';
   const parse = (r) => (r.status === 0 && r.stdout ? JSON.parse(r.stdout) : []);
   return {
     listRuns: async (sha) => parse(sh('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--commit', sha, '--json', fields, '--limit', '20'])),
     jobs: async (runId) => {
       const r = sh('gh', ['run', 'view', String(runId), '--repo', repo, '--json', 'jobs']);
       return r.status === 0 && r.stdout ? (JSON.parse(r.stdout).jobs || []).map((job) => ({ name: job.name, conclusion: job.conclusion })) : [];
+    },
+    candidateTree: (sha) => githubCandidateTree({ repo, sha, token }),
+    proof: async (run) => {
+      try { return await loadGithubProofContext({ repo, run, token }); }
+      catch { return { proof: null, jobs: [], reuseRuns: new Map() }; }
     },
     listRunsOnRef: async (ref) => parse(sh('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--branch', ref, '--event', 'workflow_dispatch', '--json', fields, '--limit', '5'])),
     dispatch: async (ref) => {

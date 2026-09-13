@@ -8676,6 +8676,39 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'release-proof-accepts-light-run',
+    guard: 'node --test test/ci-proof.test.mjs test/release-gate.test.mjs',
+    because: 'a later light workflow_dispatch must not hide an older full failure and release assets; '
+      + 'release accepts only a proof that requested the heavy matrix (#541)',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: "  if (policy?.full && !asBool(proof.request?.full)) return result('stale', 'proof is light; full gates were not requested');",
+      replace: "  if (false && policy?.full && !asBool(proof.request?.full)) return result('stale', 'mutant');",
+    }],
+  },
+  {
+    id: 'ci-proof-ignores-run-attempt',
+    guard: 'node --test test/ci-proof.test.mjs',
+    because: 'rerunning the same Actions run changes its attempt and jobs; an artifact from another '
+      + 'attempt cannot vouch for the current result (#541)',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: '  if (proof.run?.id !== expected.runId || proof.run?.attempt !== expected.attempt\n',
+      replace: '  if (proof.run?.id !== expected.runId || false && proof.run?.attempt !== expected.attempt\n',
+    }],
+  },
+  {
+    id: 'ci-proof-trusts-reuse-without-source-job',
+    guard: 'node --test test/ci-proof.test.mjs',
+    because: 'a cache-hit bit and key are not proof; lawful reuse also needs the source SHA/run and '
+      + 'the independently fetched successful source job (#541)',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: "    if (!source || runIdOf(source.run) !== reuse.sourceRun || runAttemptOf(source.run) !== reuse.sourceAttempt\n      || runShaOf(source.run) !== reuse.sourceSha\n      || !executedCheckIsGreen(id, source.jobs)) {",
+      replace: "    if (false && (!source || runIdOf(source.run) !== reuse.sourceRun || runAttemptOf(source.run) !== reuse.sourceAttempt\n      || runShaOf(source.run) !== reuse.sourceSha\n      || !executedCheckIsGreen(id, source.jobs))) {",
+    }],
+  },
+  {
     id: 'summary-first-paint-shows-unavailable',
     guard: 'node demo/smoke_summary_first_paint.mjs',
     because: 'до прихода ленивого чанка метрик значения ещё НЕ известны: текст «источник недоступен» '
@@ -8792,13 +8825,13 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'review-starts-on-red-validate',
-    guard: 'node --test test/validate-gate.test.mjs',
+    guard: 'node --test test/ci-proof.test.mjs test/validate-gate.test.mjs',
     because: 'a red dispatch run on the material must return the task without a review; treating '
       + 'any completed run as green spends the review cycle on code CI already rejected (#510 AC2)',
     patches: [{
-      file: 'scripts/validate-gate.mjs',
-      find: "        if (run.conclusion !== 'success') return { result: 'red', url: run.url, note: `dispatch-прогон завершился: ${run.conclusion}` };",
-      replace: "        // mutant: completed means green — a red dispatch falls through to the job check",
+      file: 'scripts/ci-proof.mjs',
+      find: "  if (run.conclusion !== 'success')\n    return result('failed', `Validate run ${runIdOf(run)} concluded ${run.conclusion || 'without success'}`);",
+      replace: "  if (false && run.conclusion !== 'success')\n    return result('failed', 'mutant'); // mutant: completed means green",
     }],
   },
   {
@@ -8847,13 +8880,13 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'review-returns-task-on-cancelled-dispatch',
-    guard: 'node --test test/validate-gate.test.mjs',
+    guard: 'node --test test/ci-proof.test.mjs test/validate-gate.test.mjs',
     because: 'a dispatch cancelled by its replacement in the same concurrency group proves nothing; '
       + 'reading it as red sends the task back to S6 for no reason (#510 review r1 M1, #511)',
     patches: [{
-      file: 'scripts/validate-gate.mjs',
-      find: "        if (run.conclusion === 'cancelled') {",
-      replace: "        if (false) { // mutant: cancelled counts as red",
+      file: 'scripts/ci-proof.mjs',
+      find: "  if (run.conclusion === 'cancelled') return result('cancelled', `Validate run ${runIdOf(run)} was cancelled`);",
+      replace: "  if (false && run.conclusion === 'cancelled') return result('cancelled', 'mutant');",
     }],
   },
   {
@@ -8868,14 +8901,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'merge-trusts-cancelled-dispatch',
+    id: 'merge-trusts-success-without-proof',
     guard: 'node --test test/merge-candidate.test.mjs',
-    because: 'the real waitValidate must skip a dispatch cancelled by its replacement; reading it as red '
-      + 'fails the merge candidate for nothing (#510 review r2 M1, #511)',
+    because: 'a workflow conclusion does not prove that mutant jobs ran; merge must require the shared '
+      + 'artifact instead of accepting a successful dispatch on the candidate SHA (#541)',
     patches: [{
-      file: 'scripts/merge-candidate.mjs',
-      find: "        const runs = all.filter((x) => (!event || x.event === event) && x.conclusion !== 'cancelled');",
-      replace: "        const runs = all.filter((x) => (!event || x.event === event)); // mutant: cancelled is red",
+      file: 'scripts/ci-proof.mjs',
+      find: "  if (!proof) return result('missing', `Validate run ${runIdOf(run)} has no proof artifact`);",
+      replace: "  if (!proof) return result('green', 'mutant: conclusion alone');",
     }],
   },
   {

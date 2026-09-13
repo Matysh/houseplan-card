@@ -2466,9 +2466,9 @@ The dedicated `Full Performance` workflow builds the candidate and base SHA,
 then captures seven measured samples for each sequentially on the same Node 22,
 Playwright Chromium and hosted runner. It runs on `main`, weekly and by manual
 dispatch. `demo/performance/compare.mjs` applies the tighter of the approved
-absolute ceiling and baseline-relative allowance. Stable release assets need
-an exact-SHA green full run; prereleases need the fast exact-SHA `Validate`
-only. Raw reports and comparisons are uploaded as CI artifacts, and the check
+absolute ceiling and baseline-relative allowance. Stable release assets additionally need
+an exact-SHA green Full Performance run; every release, including a prerelease,
+needs the full exact-SHA `Validate` proof. Raw reports and comparisons are uploaded as CI artifacts, and the check
 tables are written to the job summary. Local measurements remain diagnostic.
 See `demo/performance/README.md` for commands and the budget-review contract.
 

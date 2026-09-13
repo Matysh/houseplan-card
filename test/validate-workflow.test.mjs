@@ -453,3 +453,33 @@ test('журнал свидетелей changed_mutants: rerun продолжа�
   assert.match(save, /key: mutation-ledger-\$\{\{ matrix\.shard \}\}-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
   assert.ok(job.indexOf('name: Сохранить журнал свидетелей') > job.indexOf('--ledger='), 'save идёт после шага прогона');
 });
+
+test('#541: Validate всегда публикует proof точной попытки, а reuse раскрывает источник', () => {
+  const workflow = read('validate.yml');
+  const proofAt = workflow.indexOf('\n  proof:\n');
+  assert.ok(proofAt > 0, 'финальная proof job существует');
+  const proof = workflow.slice(proofAt);
+  assert.match(proof, /if: always\(\)/, 'proof создаётся и на красном прогоне');
+  for (const dependency of [
+    'preflight', 'changes', 'reuse', 'hacs', 'hassfest', 'changed_mutants',
+    'frontend', 'smoke', 'smoke_done', 'golden', 'performance_smoke', 'backend',
+  ]) assert.match(proof, new RegExp(`needs: \\[[^\\n]*\\b${dependency}\\b`), dependency);
+  assert.match(proof, /CANDIDATE_SHA: \$\{\{ github\.sha \}\}/);
+  assert.match(proof, /CANDIDATE_TREE: \$\{\{ steps\.candidate\.outputs\.tree \}\}/);
+  assert.match(proof, /CI_RUN_ID: \$\{\{ github\.run_id \}\}/);
+  assert.match(proof, /CI_RUN_ATTEMPT: \$\{\{ github\.run_attempt \}\}/);
+  assert.match(proof, /REQUEST_FULL: \$\{\{ inputs\.full \}\}/);
+  assert.match(proof, /REQUEST_MUTANTS: \$\{\{ inputs\.mutants \}\}/);
+  assert.match(proof, /NEEDS_JSON: \$\{\{ toJSON\(needs\) \}\}/);
+  assert.match(proof, /name: ci-proof-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
+
+  const reuse = workflow.slice(workflow.indexOf('\n  reuse:\n'), workflow.indexOf('\n  hacs:\n'));
+  for (const id of ['smoke', 'golden', 'performance_smoke', 'backend']) {
+    assert.match(reuse, new RegExp(`${id}_source_run:`), `${id}: source run output`);
+    assert.match(reuse, new RegExp(`${id}_source_attempt:`), `${id}: source attempt output`);
+    assert.match(reuse, new RegExp(`${id}_source_sha:`), `${id}: source SHA output`);
+  }
+  assert.equal((reuse.match(/node scripts\/ci-proof\.mjs --marker=\.reuse-marker/g) || []).length, 4);
+  assert.equal(reuse.includes('lookup-only: true'), false,
+    'marker contents must be restored and verified, not reduced to a cache-hit bit');
+});
