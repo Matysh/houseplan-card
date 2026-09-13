@@ -23,6 +23,9 @@ test('права выводятся из статусной метки по пр
   assert.ok(infrastructure.every((l) => !l.includes('продуктовый код трогать МОЖНО')));
   assert.ok(rightsFor('S6-in-progress', ['infra']).some((l) => l.includes('продуктовый код трогать МОЖНО')),
     'the thematic infra label alone must not override an S6 product status');
+  const hint = rightsFor(null, ['infra'], { infrastructureHint: true });
+  assert.ok(hint.some((l) => l.includes('только подсказка, не доказательство и не право')));
+  assert.ok(hint.some((l) => l.includes('предварительный инфраструктурный вход')));
 });
 
 test('AC распознаются из таблицы ТЗ и из строк тела issue (#496)', () => {
@@ -117,6 +120,19 @@ test('#562: the infra label alone never grants the accelerated track', () => {
   });
   assert.equal(packet.track, 'полный');
   assert.ok(packet.rights.some((l) => l.includes('продуктовый код трогать МОЖНО')));
+});
+
+test('#562: before a branch exists the infra label prompts classification but grants no rights', () => {
+  const packet = buildPacket({
+    issue: { number: 1000, title: 'unpublished infra candidate', state: 'OPEN', url: 'u', body: '' },
+    labels: ['infra'],
+    branch: null,
+  });
+  assert.equal(packet.status, null);
+  assert.match(packet.track, /предварительно/);
+  assert.ok(packet.rights.some((l) => l.includes('без class A начинай сразу')));
+  assert.ok(packet.rights.some((l) => l.includes('не доказательство и не право')));
+  assert.ok(packet.rights.every((l) => !l.includes('продуктовый код трогать МОЖНО')));
 });
 
 test('#517 AC5: AC берутся из тела issue, файл ТЗ — только когда в теле их нет', () => {

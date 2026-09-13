@@ -24,7 +24,7 @@ import { classify } from './process-gate.mjs';
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
 /** Что разрешено в статусе — по PROCESS.md, без домыслов. */
-export function rightsFor(status, labels = [], { infrastructure = false } = {}) {
+export function rightsFor(status, labels = [], { infrastructure = false, infrastructureHint = false } = {}) {
   const blocked = labels.includes('blocked');
   const exhausted = labels.includes('review-4');
   const code = !infrastructure && ['S5-ready', 'S6-in-progress', 'S7-code-review'].includes(status);
@@ -36,6 +36,9 @@ export function rightsFor(status, labels = [], { infrastructure = false } = {}) 
     : infrastructure
       ? 'файлы класса A трогать НЕЛЬЗЯ; инфраструктурную реализацию МОЖНО вести сразу по issue (#562)'
       : 'продуктовый код трогать НЕЛЬЗЯ: статус не S5/S6/S7 (правило №1)');
+  if (infrastructureHint) {
+    lines.push('метка infra — только подсказка, не доказательство и не право: до ветки проверь предполагаемые пути; без class A начинай сразу, при любом class A нужен продуктовый S-flow (#562)');
+  }
   switch (status) {
     case 'S1-new': lines.push('следующий шаг: аналитика (S2) — оценки метками, критерий лёгкого трека, затем ТЗ'); break;
     case 'S2-analysis': lines.push('следующий шаг: ТЗ (S3); трек по умолчанию small — отказ от него обосновать названным критерием §5'); break;
@@ -48,7 +51,9 @@ export function rightsFor(status, labels = [], { infrastructure = false } = {}) 
     default:
       lines.push(infrastructure
         ? 'инфраструктурный вход: реализовать и проверить → push ветки → S7-code-review; ТЗ и S1–S6 не нужны (#562)'
-        : 'статусной метки нет — продуктовая задача вне процесса; вход — первая S*-метка владельца');
+        : infrastructureHint
+          ? 'предварительный инфраструктурный вход: после проверки отсутствия class A реализовать → push ветки → S7-code-review; diff станет окончательным доказательством'
+          : 'статусной метки нет — продуктовая задача вне процесса; вход — первая S*-метка владельца');
   }
   return lines;
 }
@@ -116,8 +121,10 @@ export function buildPacket(inputs) {
   // доказывается тем же механическим признаком, что process-gate: в реальном
   // diff опубликованной ветки нет ни одного файла класса A.
   const infrastructure = branch?.infrastructure === true;
+  const infrastructureHint = branch == null && status == null && labels.includes('infra');
   const track = infrastructure
     ? 'инфраструктурный'
+    : infrastructureHint ? 'инфраструктурный (предварительно; подтвердить путями/diff)'
     : labels.includes('trivial') ? 'trivial' : labels.includes('small') ? 'small' : 'полный';
   const stage = status === 'S4-spec-review' || status === 'S3-spec' || status === 'S5-ready' ? 'spec' : 'code';
   const verdict = lastVerdict(comments, reviewDocs, stage);
@@ -132,7 +139,7 @@ export function buildPacket(inputs) {
   const unverified = acs.filter((a) => a.evidence.startsWith('без записи'));
   const packet = {
     issue: { number: issue.number, title: issue.title, state: issue.state, url: issue.url },
-    status, track, labels, rights: rightsFor(status, labels, { infrastructure }),
+    status, track, labels, rights: rightsFor(status, labels, { infrastructure, infrastructureHint }),
     decisions: ownerDecisions(comments, owner),
     material: branch ? {
       branch: branch.name, tip: branch.tip, base: branch.base, ahead: branch.ahead, behind: branch.behind,
