@@ -86,7 +86,7 @@ test('#540 AC3: one build, deterministic ZIP from the tree E2E installed, passpo
   assert.match(publish, /diff -u passport\/SHA256SUMS public\/SHA256SUMS/);
   assert.match(publish, /node scripts\/release-assets\.mjs check public passport\/SHA256SUMS\n/);
   assert.match(publish, /test "\$\(git rev-list -n 1 "refs\/tags\/\$TAG"\)" = "\$SHA"/);
-  assert.match(publish, /download-artifact@v7/, 'the passport travels from stage as an artifact, not via the release');
+  assert.match(publish, /download-artifact@/, 'the passport travels from stage as an artifact, not via the release');
 });
 
 // #538: анонс — последнее звено выпуска, а не параллельное ему. Пока он висел

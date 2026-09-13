@@ -8000,13 +8000,50 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'review-integration-skips-evidence-checksum',
-    guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
-    because: '#551: artifact между моделью и привилегированной интеграцией — вход доверенной '
-      + 'стадии; без checksum неполный или подменённый документ можно опубликовать и слить',
+    guard: 'node --test test/review-result-gate.test.mjs',
+    because: '#551/#556: artifact между моделью и привилегированной интеграцией — вход '
+      + 'доверенной стадии; без сверки контрольных сумм подменённый документ или вердикт '
+      + 'публикуется и сливается. Проверка живёт в `review-result-gate.mjs` с тех пор, как '
+      + 'её стало можно прогнать враждебными фикстурами',
     patches: [{
-      file: '.github/workflows/process.yml',
-      find: '          (cd "$dir" && sha256sum -c manifest.sha256)\n          test -s "$dir/review-document.md"',
-      replace: '          # mutant: result contents are trusted\n          test -s "$dir/review-document.md"',
+      file: 'scripts/review-result-gate.mjs',
+      find: '    if (digest !== row.hash) problems.push(`контрольная сумма не сходится: ${row.name}`);',
+      replace: '    void digest; // mutant: содержимое artifact принимается на веру',
+    }],
+  },
+  {
+    id: 'review-gate-accepts-a-foreign-passport',
+    guard: 'node --test test/review-result-gate.test.mjs',
+    because: '#556: паспорт — единственное, чем привилегированная стадия отличает свой '
+      + 'результат от чужого. Без посполевой сверки чужой run, устаревший material_sha или '
+      + 'другой этап проходят как свои',
+    patches: [{
+      file: 'scripts/review-result-gate.mjs',
+      find: "    if (String(got) !== String(want)) {",
+      replace: "    if (false && String(got) !== String(want)) {",
+    }],
+  },
+  {
+    id: 'review-gate-tolerates-an-extra-file',
+    guard: 'node --test test/review-result-gate.test.mjs',
+    because: '#556: набор файлов задан точно, а не «не меньше»: лишний файл в artifact — это '
+      + 'уже не тот artifact, который запечатала модель',
+    patches: [{
+      file: 'scripts/review-result-gate.mjs',
+      find: "  if (actual.join(',') !== wanted.join(',')) {",
+      replace: "  if (wanted.some((name) => !actual.includes(name))) {",
+    }],
+  },
+  {
+    id: 'action-pins-accept-a-moving-ref',
+    guard: 'node --test test/action-pins.test.mjs',
+    because: '#556: перемещаемая ссылка в `uses:` — доверие чужому владельцу тега здесь и '
+      + 'сейчас, а не коду, который читали; `@master` и `@main` у hassfest и hacs означали '
+      + 'произвольный будущий коммит чужой ветки',
+    patches: [{
+      file: 'scripts/action-pins.mjs',
+      find: "export const isPinned = (spec) => /^[\\w.-]+\\/[\\w./-]+@[0-9a-f]{40}$/.test(spec);",
+      replace: "export const isPinned = (spec) => /^[\\w.-]+\\/[\\w./-]+@\\S+$/.test(spec);",
     }],
   },
   {

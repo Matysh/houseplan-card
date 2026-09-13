@@ -56,7 +56,7 @@ jobs:
       prerelease: ${{ steps.resolve.outputs.prerelease }}
       mode: ${{ steps.release.outputs.mode }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
       - name: Resolve the tag to its exact commit
@@ -136,11 +136,11 @@ jobs:
     needs: candidate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.candidate.outputs.sha }}
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
       # #479: тяжёлые job Validate идут только на коммите с трейлером `Release:`;
       # без него зелёный Validate — прогон без смоков и golden. Трейлер обязан
@@ -206,11 +206,11 @@ jobs:
     needs: [candidate, gate]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.candidate.outputs.sha }}
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
       - name: Build once and verify both installable assets
         id: build
@@ -248,12 +248,12 @@ jobs:
           npm run continuity:screencast
       - name: Upload failed continuity frames
         if: ${{ failure() && needs.candidate.outputs.prerelease != 'true' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: continuity-screencast
           path: artifacts/continuity-screencast
       - name: Keep the passport for the publication step
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-assets-${{ needs.candidate.outputs.tag }}
           path: release-assets/SHA256SUMS
@@ -350,13 +350,13 @@ jobs:
       name: ${{ steps.verify.outputs.name }}
       newly_published: ${{ steps.flip.outputs.newly_published }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.candidate.outputs.sha }}
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: release-assets-${{ needs.candidate.outputs.tag }}
           path: passport
@@ -447,7 +447,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Verify the published tag is the prerelease HACS will discover
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           EXPECTED_TAG: ${{ needs.candidate.outputs.tag }}
         with:

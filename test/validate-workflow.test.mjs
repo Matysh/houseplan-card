@@ -71,13 +71,17 @@ test('предполётные проверки не прячут друг др�
   const preflight = workflow.slice(
     workflow.indexOf('\n  preflight:\n'), workflow.indexOf('\n  changes:\n'),
   );
-  for (const id of ['docs', 'workflow_sync', 'provenance', 'process_gate']) {
+  // #556 добавил пятый сигнал — пины сторонних Actions. Число берётся из
+  // списка, а не из магической константы: иначе каждая новая проверка красит
+  // тест, который про другое.
+  const checks = ['docs', 'workflow_sync', 'provenance', 'process_gate', 'action_pins'];
+  for (const id of checks) {
     assert.ok(preflight.includes(`id: ${id}`), `нет шага ${id}`);
     assert.ok(preflight.includes(`steps.${id}.outcome`), `вердикт не читает ${id}`);
   }
-  // Слияние джоб не имеет права превратить четыре независимых сигнала в один
+  // Слияние джоб не имеет права превратить независимые сигналы в один
   // «первый упавший»: иначе автор узнаёт о втором нарушении следующим кругом.
-  assert.equal(preflight.match(/continue-on-error: true/g)?.length, 4);
+  assert.equal(preflight.match(/continue-on-error: true/g)?.length, checks.length);
   assert.ok(preflight.includes('exit $fail'), 'вердикт обязан падать сам');
 });
 
@@ -128,7 +132,7 @@ test('упавшая golden называет первопричину, а не �
 
   // Восстановление обязано стоять ДО прогона: после падения различить виновника
   // и свидетеля уже нечем.
-  const restore = golden.indexOf('cache/restore@v6');
+  const restore = golden.indexOf('cache/restore@');
   const verify = golden.indexOf('npm run golden:verify');
   assert.ok(restore > 0 && verify > restore, 'маркер падения восстанавливается до прогона');
 
@@ -443,7 +447,7 @@ test('#518: пустой план шарда не ставит окружени�
   assert.match(plan, /count=\$\{count:-0\}/, 'непрочитанный план считается пустым, а не срывает шаг');
   // Дорогие шаги — под условием, но сама job исполняется: доказательство
   // гейта ревью (#510 provesMutants) требует УСПЕШНОЙ job, а не пропущенной.
-  for (const step of ['run: npm ci', 'actions/setup-python@v7', 'pip install -r tests_backend/requirements.txt',
+  for (const step of ['run: npm ci', 'actions/setup-python@', 'pip install -r tests_backend/requirements.txt',
     'name: Затронутые мутанты ловятся']) {
     const at = job.indexOf(step);
     assert.ok(at > 0, `нет шага ${step}`);
@@ -466,7 +470,7 @@ test('журнал свидетелей changed_mutants: rerun продолжа�
   const workflow = read('validate.yml');
   const start = workflow.indexOf('\n  changed_mutants:\n');
   const job = workflow.slice(start, workflow.indexOf('\n  frontend:\n', start));
-  const restore = job.slice(job.indexOf('actions/cache/restore@v6'), job.indexOf('name: План шарда'));
+  const restore = job.slice(job.indexOf('actions/cache/restore@'), job.indexOf('name: План шарда'));
   assert.match(restore, /key: mutation-ledger-\$\{\{ matrix\.shard \}\}-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
   assert.match(restore, /mutation-ledger-\$\{\{ matrix\.shard \}\}-\$\{\{ github\.run_id \}\}-/, 'rerun обязан восстановить предыдущую попытку того же run');
   assert.match(restore, /^\s+mutation-ledger-\$\{\{ matrix\.shard \}\}-\s*$/m, 'новый run обязан найти последний журнал шарда');
@@ -474,10 +478,10 @@ test('журнал свидетелей changed_mutants: rerun продолжа�
   assert.match(job, /--changed="\$BASE\.\.\$HEAD_SHA" --shard="\$SHARD\/6" \\\n\s+--ledger="artifacts\/mutation-ledger\/shard-\$SHARD\.json"/);
   // #518: журнал обязан восстанавливаться ДО плана, иначе план не увидит
   // уже пойманных и шард заплатит за окружение впустую.
-  assert.ok(job.indexOf('actions/cache/restore@v6') < job.indexOf('name: План шарда'), 'restore журнала идёт до плана');
+  assert.ok(job.indexOf('actions/cache/restore@') < job.indexOf('name: План шарда'), 'restore журнала идёт до плана');
   const save = job.slice(job.indexOf('name: Сохранить журнал свидетелей'));
   assert.match(save, /if: always\(\)/, 'красный или отменённый шард обязан сохранить уже пойманное');
-  assert.match(save, /actions\/cache\/save@v6/);
+  assert.match(save, /actions\/cache\/save@/);
   assert.match(save, /key: mutation-ledger-\$\{\{ matrix\.shard \}\}-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
   assert.ok(job.indexOf('name: Сохранить журнал свидетелей') > job.indexOf('--ledger='), 'save идёт после шага прогона');
 });

@@ -26,11 +26,11 @@ jobs:
       sha: ${{ steps.candidate.outputs.sha }}
       tag: ${{ steps.candidate.outputs.tag }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
       - name: Pin the dev candidate or the existing annotated tag
         id: candidate
@@ -112,7 +112,7 @@ jobs:
               --output=release-membership/RELEASE-MEMBERSHIP.json
           fi
       - name: Preserve candidate membership for publication
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-membership
           path: release-membership/RELEASE-MEMBERSHIP.json
@@ -127,13 +127,13 @@ jobs:
       url: ${{ steps.verify.outputs.url }}
       newly_published: ${{ steps.release.outputs.newly_published }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.gate.outputs.sha }}
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: release-membership
           path: release-assets
@@ -266,7 +266,7 @@ jobs:
           printf '### Published %s\n\n- exact SHA: `%s`\n- [GitHub prerelease](%s)\n\n```\n%s```\n' \
             "$TAG" "$SHA" "$URL" "$(cat public/SHA256SUMS)" >> "$GITHUB_STEP_SUMMARY"
       - name: Verify HACS prerelease discovery order
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           EXPECTED_TAG: ${{ needs.gate.outputs.tag }}
         with:
@@ -298,13 +298,13 @@ jobs:
       # pipeline. A PAT here would build a cascade out of a bookkeeping step.
       issues: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.gate.outputs.sha }}
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: release-membership
           path: release-membership

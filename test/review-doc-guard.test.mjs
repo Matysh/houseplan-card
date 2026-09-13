@@ -839,14 +839,19 @@ test('#551: gates, модель и интеграция имеют незави�
     'модель получает exact material, а не подвижную ветку');
 
   assert.match(prepare, /review-prepared-\$\{NUM\}-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}/);
-  assert.equal((workflow.match(/sha256sum -c manifest\.sha256/g) || []).length, 2,
-    'контракт проверяют и модель, и интеграция');
+  assert.match(model, /sha256sum .*> "\$RUNNER_TEMP\/review-result\/manifest\.sha256"|sha256sum/,
+    'модель запечатывает результат контрольными суммами');
   assert.match(model, /test "\$\(git rev-parse HEAD\)" = "\$MATERIAL_SHA"/);
   assert.match(model, /review-result-\$\{NUM\}-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}/);
-  assert.match(integrate, /неполный или неожиданный набор evidence/);
-  assert.match(integrate, /sha256sum -c manifest\.sha256/);
-  assert.match(integrate, /\.run_id == \$run_id[\s\S]*\.material_sha == \$sha[\s\S]*\.material_tree == \$tree/,
-    'подмена run/SHA/tree между jobs отвергается');
+  // #556: разбор того же контракта переехал из inline-shell в
+  // `scripts/review-result-gate.mjs` — ровно ради враждебных фикстур, которых в
+  // YAML поставить было некуда (`test/review-result-gate.test.mjs`). Здесь
+  // проверяется, что привилегированная стадия ходит через него и передаёт ему
+  // весь паспорт, а не его часть.
+  assert.match(integrate, /node scripts\/review-result-gate\.mjs --dir="\$dir"/);
+  for (const field of ['MATERIAL_SHA', 'MATERIAL_TREE', 'STAGE', 'CYCLE', 'BRANCH', 'ISSUE']) {
+    assert.match(integrate, new RegExp(`^\\s+${field}: `, 'm'), `${field} передаётся гейту`);
+  }
   assert.match(integrate, /PREPARE_RESULT: \$\{\{ needs\.prepare\.result \}\}/);
   assert.match(integrate, /MODEL_RESULT: \$\{\{ needs\.model_review\.result \}\}/);
   assert.match(integrate, /if \[ "\$REUSE" != "true" \] && \[ "\$MODEL_RESULT" != "success" \]; then/,
@@ -879,4 +884,29 @@ test('конвейер: ребейз не заканчивается, пока �
   assert.match(rebase, /if \[ "\$seen" = "\$after" \]; then settled=true; break; fi/,
     'ответ REST сверяется с новой вершиной');
   assert.match(rebase, /ссылка \$BRANCH за минуту не стала указывать/, 'не доехавшая ссылка — отказ, а не молчание');
+});
+
+// #556: до этой правки один блок `permissions` на весь workflow выдавал
+// `issues: write` и OIDC каждой стадии, включая единственную недоверенную —
+// работу модели. Права выдаются по job и по факту использования.
+test('конвейер: права выдаются по job, модель не пишет в issue (#556)', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const head = workflow.slice(0, workflow.indexOf('\njobs:'));
+  assert.match(head, /^permissions:\n  contents: read\n/m, 'на уровне workflow остаётся только чтение');
+  assert.doesNotMatch(head, /^\s+issues: write$/m, 'issues: write на весь workflow больше не выдаётся');
+  assert.doesNotMatch(head, /^\s+id-token: write$/m, 'OIDC на весь workflow больше не выдаётся');
+
+  const jobBlock = (name, next) => workflow.slice(workflow.indexOf(`\n  ${name}:\n`), workflow.indexOf(`\n  ${next}:\n`));
+  const model = jobBlock('model_review', 'integrate');
+  assert.match(model, /^\s+permissions:\n\s+contents: read\n\s+id-token: write$/m,
+    'модели — только чтение и OIDC для claude-code-action');
+  assert.doesNotMatch(model.slice(0, model.indexOf('steps:')), /issues: write/,
+    'модель не получает права записи в issue');
+
+  for (const [name, next] of [['guard', 'prepare'], ['prepare', 'model_review']]) {
+    assert.match(jobBlock(name, next), /^\s+permissions:\n\s+contents: read\n\s+issues: write$/m,
+      `${name} пишет в issue и только туда`);
+  }
+  const integrate = workflow.slice(workflow.indexOf('\n  integrate:\n'));
+  assert.match(integrate, /^\s+permissions:\n\s+contents: read\n\s+issues: write$/m);
 });

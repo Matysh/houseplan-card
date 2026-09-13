@@ -65,9 +65,9 @@ jobs:
       # Коммиты и деревья скачиваются целиком, поэтому диапазоны и `merge-base`
       # работают как раньше. Единственная догрузка по требованию здесь —
       # `git show origin/main:.github/workflows/process.yml`: один блоб.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: { fetch-depth: 0, filter: 'blob:none' }
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
 
       # Свежесть скриншотов на обычном пуше — предупреждение, на кандидате беты
@@ -175,12 +175,22 @@ jobs:
       # Вердикт обязан быть громким и перечислять всё упавшее сразу: иначе
       # слияние job стоило бы автору лишнего круга «починил одно — узнал о
       # втором».
+      # #556: перемещаемая ссылка в `uses:` — доверие чужому владельцу тега
+      # здесь и сейчас, а не коду, который читали. Проверка стоит в preflight:
+      # она стоит миллисекунды и ловит правку, которая иначе доехала бы до
+      # привилегированной стадии.
+      - name: "Сторонние Actions закреплены полным SHA"
+        id: action_pins
+        continue-on-error: true
+        run: node scripts/action-pins.mjs
+
       - name: Вердикт предполётных проверок
         env:
           DOCS: ${{ steps.docs.outcome }}
           WORKFLOW_SYNC: ${{ steps.workflow_sync.outcome }}
           PROVENANCE: ${{ steps.provenance.outcome }}
           PROCESS_GATE: ${{ steps.process_gate.outcome }}
+          ACTION_PINS: ${{ steps.action_pins.outcome }}
         run: |
           fail=0
           check() {
@@ -197,6 +207,7 @@ jobs:
           check "process.yml и mutation-gate.yml в main и dev" "$WORKFLOW_SYNC"
           check "провенанс коммитов" "$PROVENANCE"
           check "процессный гейт" "$PROCESS_GATE"
+          check "пины сторонних Actions" "$ACTION_PINS"
           exit $fail
 
   # Классификация изменённых путей: тяжёлые job идут только там, где менялось
@@ -233,7 +244,7 @@ jobs:
     steps:
       # `git diff --name-only` содержимого файлов не читает вовсе, поэтому
       # блобы истории этой job не нужны ни на одном шаге (#345).
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: { fetch-depth: 0, filter: 'blob:none' }
       # База диапазона — самый новый предок с УСПЕШНО завершённым Validate
       # (#387). Прежде бралась голова предыдущего пуша (`github.event.before`),
@@ -395,8 +406,8 @@ jobs:
       backend_source_attempt: ${{ steps.p_backend.outputs.source_attempt }}
       backend_source_sha: ${{ steps.p_backend.outputs.source_sha }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
       - name: Ключи переиспользования
         id: keys
@@ -420,7 +431,7 @@ jobs:
       # удаляется, чтобы один маркер не был принят за другой.
       - name: Маркер smoke
         id: m_smoke
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .reuse-marker
           key: reuse-smoke-${{ steps.keys.outputs.smoke }}
@@ -433,7 +444,7 @@ jobs:
         run: rm -f .reuse-marker
       - name: Маркер golden
         id: m_golden
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .reuse-marker
           key: reuse-golden-${{ steps.keys.outputs.golden }}
@@ -446,7 +457,7 @@ jobs:
         run: rm -f .reuse-marker
       - name: Маркер performance_smoke
         id: m_perf
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .reuse-marker
           key: reuse-performance_smoke-${{ steps.keys.outputs.performance_smoke }}-${{ steps.keys.outputs.performance_smoke_set }}
@@ -459,7 +470,7 @@ jobs:
         run: rm -f .reuse-marker
       - name: Маркер geometry_parity
         id: m_geometry_parity
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .reuse-marker
           key: reuse-geometry_parity-${{ steps.keys.outputs.geometry_parity }}
@@ -472,7 +483,7 @@ jobs:
         run: rm -f .reuse-marker
       - name: Маркер backend
         id: m_backend
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .reuse-marker
           key: reuse-backend-${{ steps.keys.outputs.backend }}
@@ -517,9 +528,9 @@ jobs:
     if: needs.changes.outputs.integration == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: HACS validation
-        uses: hacs/action@main
+        uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main@2026-09-13
         with:
           category: integration
 
@@ -529,9 +540,9 @@ jobs:
     if: needs.changes.outputs.integration == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Hassfest validation
-        uses: home-assistant/actions/hassfest@master
+        uses: home-assistant/actions/hassfest@58bff37c8947f690ace498be413a9b78d6f30f93 # master@2026-09-13
 
   # Мутанты по диффу (#475). Свидетель гниёт двумя способами: изменился
   # файл, который он патчит, либо изменился его гард. `--check` этого не
@@ -559,10 +570,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
@@ -574,7 +585,7 @@ jobs:
       # Восстанавливается ДО плана (#518): план обязан видеть журнал, иначе
       # пропуск станет известен только после установки окружения.
       - name: Журнал свидетелей (последний по шарду)
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: artifacts/mutation-ledger
           # Cache immutable: rerun с тем же run_id обязан получить новый key,
@@ -624,7 +635,7 @@ jobs:
       - if: steps.plan.outputs.count != '0'
         run: npm ci
       - if: steps.plan.outputs.count != '0'
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.14'
       - name: Backend test dependencies
@@ -633,7 +644,7 @@ jobs:
       - name: Кэш браузеров Playwright
         id: pw
         if: steps.plan.outputs.count != '0'
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
@@ -658,7 +669,7 @@ jobs:
       # попытку этого run либо самый новый журнал шарда.
       - name: Сохранить журнал свидетелей
         if: always()
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: artifacts/mutation-ledger
           key: mutation-ledger-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -671,9 +682,9 @@ jobs:
     steps:
       # Полная история без блобов (#342): гейт «новый код не добавляет any»
       # diff-aware, ему нужен диапазон, а содержимое старых ревизий — нет.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: { fetch-depth: 0, filter: 'blob:none' }
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
@@ -731,7 +742,7 @@ jobs:
       # сверяет вшитый в бандл отпечаток с `sourceFingerprint` выкачанного
       # дерева, и каждая браузерная job делает это перед первым кадром.
       - name: Выложить бандл для браузерных job
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: card-bundle
           path: dist/
@@ -741,7 +752,7 @@ jobs:
       # скомпилированного тестового дерева. Оно создаётся `npm test`, но не
       # входит в production-бандл и потому едет отдельным артефактом (#336).
       - name: Выложить тестовые модули для смоков
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: card-test-build
           path: test-build/
@@ -763,8 +774,8 @@ jobs:
       matrix:
         shard: [1, 2, 3]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
@@ -776,7 +787,7 @@ jobs:
       # внятной ошибкой — тогда флаг вернуть.
       - name: Кэш браузеров Playwright
         id: pw
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
@@ -787,12 +798,12 @@ jobs:
       # один раз на прогон. Свежесть проверяет сам продукт — `assertFreshDemoBundle`
       # сверяет вшитый отпечаток с исходниками этого дерева.
       - name: Забрать собранный бандл
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: card-bundle
           path: dist
       - name: Забрать тестовые модули
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: card-test-build
           path: test-build
@@ -846,7 +857,7 @@ jobs:
           exit $fail
       - name: Upload smoke logs
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: smoke-logs-${{ matrix.shard }}
           path: /tmp/smoke-logs
@@ -866,7 +877,7 @@ jobs:
             "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             "попытка: ${{ github.run_attempt }}" \
             > .reuse-marker
-      - uses: actions/cache/save@v6
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
         # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
         # краснеть из-за этого не должна.
@@ -883,8 +894,8 @@ jobs:
     if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.golden != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
@@ -896,7 +907,7 @@ jobs:
       # внятной ошибкой — тогда флаг вернуть.
       - name: Кэш браузеров Playwright
         id: pw
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
@@ -907,7 +918,7 @@ jobs:
       # один раз на прогон. Свежесть проверяет сам продукт — `assertFreshDemoBundle`
       # сверяет вшитый отпечаток с исходниками этого дерева.
       - name: Забрать собранный бандл
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: card-bundle
           path: dist
@@ -917,7 +928,7 @@ jobs:
       # прогона, потому что после падения шаги кэша уже не помогут отличить
       # виновника от свидетеля.
       - name: Прежнее падение на тех же входах
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .fail-marker
           key: fail-golden-${{ needs.reuse.outputs.golden_key }}
@@ -933,7 +944,7 @@ jobs:
           fi
       - name: Upload golden candidates/diffs
         if: failure() || steps.golden.outputs.has_baselines == 'false'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: golden-images
           path: artifacts/golden
@@ -952,7 +963,7 @@ jobs:
         # Гонка двух прогонов даёт «Cache already exists»; для маркера падения
         # это тем более не отказ гейта — job и так красная по существу.
         continue-on-error: true
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .fail-marker
           key: fail-golden-${{ needs.reuse.outputs.golden_key }}
@@ -965,7 +976,7 @@ jobs:
             "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             "попытка: ${{ github.run_attempt }}" \
             > .reuse-marker
-      - uses: actions/cache/save@v6
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
         # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
         # краснеть из-за этого не должна.
@@ -987,8 +998,8 @@ jobs:
     # (#473) добавляют до двух замеров по 3 образца — окно расширено под них.
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
@@ -1000,7 +1011,7 @@ jobs:
       # внятной ошибкой — тогда флаг вернуть.
       - name: Кэш браузеров Playwright
         id: pw
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
@@ -1011,7 +1022,7 @@ jobs:
       # один раз на прогон. Свежесть проверяет сам продукт — `assertFreshDemoBundle`
       # сверяет вшитый отпечаток с исходниками этого дерева.
       - name: Забрать собранный бандл
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: card-bundle
           path: dist
@@ -1047,7 +1058,7 @@ jobs:
         run: npm run benchmark:wall-draw-click -- --output=artifacts/performance-smoke/wall-draw-click.json
       - name: Upload performance smoke report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: performance-smoke
           path: artifacts/performance-smoke
@@ -1060,7 +1071,7 @@ jobs:
             "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             "попытка: ${{ github.run_attempt }}" \
             > .reuse-marker
-      - uses: actions/cache/save@v6
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
         # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
         # краснеть из-за этого не должна.
@@ -1075,12 +1086,12 @@ jobs:
     if: needs.changes.outputs.geometry_parity == 'true' && needs.reuse.outputs.geometry_parity != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .nvmrc
           cache: npm
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version-file: .python-version
       - run: npm ci
@@ -1097,7 +1108,7 @@ jobs:
             "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             "попытка: ${{ github.run_attempt }}" \
             > .reuse-marker
-      - uses: actions/cache/save@v6
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         continue-on-error: true
         with:
           path: .reuse-marker
@@ -1109,12 +1120,12 @@ jobs:
     if: needs.changes.outputs.backend == 'true' && needs.reuse.outputs.backend != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # Browser fixtures are generated by their real ESM factories and then
       # validated through the Python CONFIG_SCHEMA/LAYOUT_SCHEMA in the same test.
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with: { python-version: "3.14" }
       - run: |
           # Точные версии — в tests_backend/requirements.txt (#392): без них
@@ -1162,7 +1173,7 @@ jobs:
           echo "coverage: $actual% (baseline $baseline%)"
           python -c "import sys; sys.exit(0 if float('$actual') >= float('$baseline') - 0.1 else 1)"
       - name: Артефакт coverage.xml
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: backend-coverage
           path: coverage.xml
@@ -1175,7 +1186,7 @@ jobs:
             "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             "попытка: ${{ github.run_attempt }}" \
             > .reuse-marker
-      - uses: actions/cache/save@v6
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         # Гонка двух прогонов с одинаковым ключом даёт «Cache already exists».
         # Это не отказ гейта: работа выполнена, маркер уже записал сосед — job
         # краснеть из-за этого не должна.
@@ -1195,10 +1206,10 @@ jobs:
     needs: [preflight, changes, reuse, hacs, hassfest, changed_mutants, frontend, smoke, smoke_done, golden, performance_smoke, geometry_parity, backend]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
       - name: Зафиксировать tree кандидата
         id: candidate
@@ -1215,7 +1226,7 @@ jobs:
           NEEDS_JSON: ${{ toJSON(needs) }}
         run: node scripts/ci-proof.mjs --emit=artifacts/ci-proof/proof.json
       - name: Опубликовать proof точной попытки
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/ci-proof/proof.json

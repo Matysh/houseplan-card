@@ -29,16 +29,20 @@ on:
 # отменялся первой же посторонней меткой. Теперь посторонняя метка не запускает
 # ни одной job (`if` на guard) и в группу не входит.
 
+# #556: права выдаются по job, а не одной строкой на весь workflow. Общий блок
+# давал `issues: write` и OIDC даже той стадии, которая ничего не пишет, —
+# модели. Ниже минимум на каждую: писать в issue умеют только детерминированные
+# стадии, OIDC нужен исключительно `claude-code-action`.
 permissions:
   contents: read
-  issues: write
-  # Обязательно: claude-code-action получает OIDC-токен для авторизации
-  # GitHub App. Без этого прогон падает с «Could not fetch an OIDC token».
-  id-token: write
 
 jobs:
   guard:
     name: "Страж: ребейз на dev и предпосылки ревью"
+    # Читает и переставляет метки, комментирует отказ.
+    permissions:
+      contents: read
+      issues: write
     # Только статусные метки этапов ревью запускают конвейер (#499). Остальные
     # события помечаются skipped и не занимают место в группе concurrency.
     if: github.event.label.name == 'S4-spec-review' || github.event.label.name == 'S7-code-review'
@@ -56,7 +60,7 @@ jobs:
       # scripts/review-doc-guard.mjs — счёт раундов вынесен туда, потому что
       # inline-shell не покрывается тестами (#454). Node на раннере
       # предустановлен, setup-node не нужен.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           ref: dev
@@ -257,6 +261,10 @@ jobs:
 
   prepare:
     name: "Ревью: материал и deterministic gates"
+    # Ребейзит ветку задачи и комментирует возврат автору.
+    permissions:
+      contents: read
+      issues: write
     needs: guard
     if: needs.guard.outputs.stage != ''
     runs-on: ubuntu-latest
@@ -290,7 +298,7 @@ jobs:
         id: clock
         run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           ref: dev
@@ -320,7 +328,7 @@ jobs:
       # кэша, платились из бюджета 45 минут и из лимитов подписки, а ходы модели
       # тратились на работу инфраструктуры. В validate.yml кэш стоит на всех
       # тяжёлых job, здесь его не было.
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
@@ -713,7 +721,7 @@ jobs:
 
       - name: Передать подтверждённый материал модели
         if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ steps.prepared.outputs.artifact }}
           path: ${{ runner.temp }}/review-prepared
@@ -732,6 +740,13 @@ jobs:
 
   model_review:
     name: "Ревью: работа модели"
+    # Единственная недоверенная стадия: модель читает материал и кладёт
+    # запечатанный artifact. Писать в issue и в репозиторий ей незачем — это
+    # делает `integrate`, проверив происхождение. `id-token` нужен самой
+    # claude-code-action для авторизации GitHub App.
+    permissions:
+      contents: read
+      id-token: write
     needs: [guard, prepare]
     if: needs.prepare.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
     runs-on: ubuntu-latest
@@ -748,19 +763,19 @@ jobs:
         id: clock
         run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           ref: ${{ needs.prepare.outputs.material_sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
 
       - name: Получить контракт подготовленного материала
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: review-prepared-${{ github.event.issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/review-prepared
@@ -808,7 +823,7 @@ jobs:
       # но когда нужен — качать его заново дороже, чем держать в кэше.
       - name: Кэш браузеров Playwright
         id: pw
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
@@ -846,7 +861,7 @@ jobs:
 
       - name: Review
         id: review
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520 # v1
         env:
           # Вне рабочей копии: восстановление дерева ревьюером не должно
           # уничтожать его собственный артефакт (#220).
@@ -1097,7 +1112,7 @@ jobs:
           echo "artifact=review-result-${NUM}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
 
       - name: Передать результат интеграции
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ steps.result.outputs.artifact }}
           path: ${{ runner.temp }}/review-result
@@ -1116,6 +1131,10 @@ jobs:
 
   integrate:
     name: "Ревью: публикация и интеграция"
+    # Публикует разбор, переставляет метку, сливает проверенный материал.
+    permissions:
+      contents: read
+      issues: write
     needs: [guard, prepare, model_review]
     if: always() && needs.guard.outputs.stage != ''
     runs-on: ubuntu-latest
@@ -1153,21 +1172,21 @@ jobs:
           fi
           echo "proceed=true" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: steps.ready.outputs.proceed == 'true'
         with:
           fetch-depth: 0
           ref: dev
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         if: steps.ready.outputs.proceed == 'true'
         with:
           node-version: 22
 
       - name: Получить результат модели
         if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: review-result-${{ github.event.issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/review-result
@@ -1175,8 +1194,14 @@ jobs:
       - name: Проверить полноту и происхождение результата
         id: result
         if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
+        # #556: единственное, что недоверенная стадия модели может передать
+        # дальше, — этот artifact, и принимается он как ввод противника: полный
+        # набор файлов, сходящиеся суммы, совпадение КАЖДОГО поля паспорта с
+        # тем, что посчитала детерминированная `prepare`. Проверка вынесена из
+        # inline-shell в `scripts/review-result-gate.mjs` ради враждебных
+        # фикстур — в YAML её нельзя прогнать ни одним отрицательным случаем.
         env:
-          NUM: ${{ github.event.issue.number }}
+          ISSUE: ${{ github.event.issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           BRANCH: ${{ needs.prepare.outputs.branch }}
@@ -1192,27 +1217,9 @@ jobs:
           SPEC_BODY_DOC: ${{ needs.prepare.outputs.spec_body_doc }}
           SPEC_BODY_RECORDED: ${{ needs.prepare.outputs.spec_body_recorded }}
         run: |
+          set -euo pipefail
           dir="$RUNNER_TEMP/review-result"
-          expected=$(printf '%s\n' manifest.sha256 prepared.json review-document.md verdict.json | sort)
-          actual=$(find "$dir" -maxdepth 1 -type f -printf '%f\n' | sort)
-          test "$actual" = "$expected" || { echo "::error::неполный или неожиданный набор evidence"; printf 'ожидалось:\n%s\nполучено:\n%s\n' "$expected" "$actual"; exit 1; }
-          (cd "$dir" && sha256sum -c manifest.sha256)
-          test -s "$dir/review-document.md"
-          jq -e \
-            --arg run_id "$GITHUB_RUN_ID" --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
-            --arg issue "$NUM" --arg stage "$STAGE" --arg cycle "$CYCLE" \
-            --arg branch "$BRANCH" --arg sha "$MATERIAL_SHA" --arg tree "$MATERIAL_TREE" \
-            --arg specs "$MATERIAL_SPECS" --arg body "$MATERIAL_ISSUE_BODY" \
-            --arg validate "$VALIDATE_RESULT" --arg validate_url "$VALIDATE_URL" \
-            --arg rebase_note "$REBASE_NOTE" --arg validated_note "$VALIDATED_NOTE" \
-            --arg spec_changed "$SPEC_BODY_CHANGED" --arg spec_doc "$SPEC_BODY_DOC" \
-            --arg spec_recorded "$SPEC_BODY_RECORDED" \
-            '.schema == 1 and .run_id == $run_id and .run_attempt == $run_attempt and .issue == $issue and .stage == $stage and .cycle == $cycle and .branch == $branch and .material_sha == $sha and .material_tree == $tree and .material_specs == $specs and .material_issue_body == $body and .validate_result == $validate and .validate_url == $validate_url and .rebase_note == $rebase_note and .validated_note == $validated_note and .spec_body_changed == $spec_changed and .spec_body_doc == $spec_doc and .spec_body_recorded == $spec_recorded' \
-            "$dir/prepared.json"
-          jq -e '
-            (.verdict == "green" or .verdict == "yellow" or .verdict == "red")
-            and (.high | type == "number") and (.medium | type == "number")
-            and (.summary | type == "string")' "$dir/verdict.json" >/dev/null
+          node scripts/review-result-gate.mjs --dir="$dir"
           printf 'structured_output<<EOF_RESULT\n' >> "$GITHUB_OUTPUT"
           cat "$dir/verdict.json" >> "$GITHUB_OUTPUT"
           # structured_output не обязан оканчиваться LF: delimiter команды
