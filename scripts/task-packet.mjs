@@ -19,14 +19,14 @@
 import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
 import { anchorTreeFrom, anchorVerdictFrom, verdictDeclaration } from './review-doc-guard.mjs';
+import { classify } from './process-gate.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
 /** Что разрешено в статусе — по PROCESS.md, без домыслов. */
-export function rightsFor(status, labels = []) {
+export function rightsFor(status, labels = [], { infrastructure = false } = {}) {
   const blocked = labels.includes('blocked');
   const exhausted = labels.includes('review-4');
-  const infrastructure = labels.includes('infra');
   const code = !infrastructure && ['S5-ready', 'S6-in-progress', 'S7-code-review'].includes(status);
   const lines = [];
   if (exhausted) lines.push('review-4: лимит циклов исчерпан — решение владельца (разделить, отклонить, арбитраж); дальше не двигать');
@@ -112,7 +112,11 @@ export function buildPacket(inputs) {
     issue, labels = [], comments = [], owner = 'Matysh', branch = null, specs = [], reviewDocs = [], validate = null,
   } = inputs;
   const status = STATUS_LABELS.find((l) => labels.includes(l)) || null;
-  const track = labels.includes('infra')
+  // `infra` — тематическая метка и не даёт процессных прав. Ускоренный трек
+  // доказывается тем же механическим признаком, что process-gate: в реальном
+  // diff опубликованной ветки нет ни одного файла класса A.
+  const infrastructure = branch?.infrastructure === true;
+  const track = infrastructure
     ? 'инфраструктурный'
     : labels.includes('trivial') ? 'trivial' : labels.includes('small') ? 'small' : 'полный';
   const stage = status === 'S4-spec-review' || status === 'S3-spec' || status === 'S5-ready' ? 'spec' : 'code';
@@ -128,7 +132,7 @@ export function buildPacket(inputs) {
   const unverified = acs.filter((a) => a.evidence.startsWith('без записи'));
   const packet = {
     issue: { number: issue.number, title: issue.title, state: issue.state, url: issue.url },
-    status, track, labels, rights: rightsFor(status, labels),
+    status, track, labels, rights: rightsFor(status, labels, { infrastructure }),
     decisions: ownerDecisions(comments, owner),
     material: branch ? {
       branch: branch.name, tip: branch.tip, base: branch.base, ahead: branch.ahead, behind: branch.behind,
@@ -202,6 +206,8 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
     const base = sh('git', ['merge-base', 'origin/dev', ref], { cwd });
     const ahead = Number(sh('git', ['rev-list', '--count', `origin/dev..${ref}`], { cwd }));
     const behind = Number(sh('git', ['rev-list', '--count', `${ref}..origin/dev`], { cwd }));
+    const changedFiles = sh('git', ['diff', '--name-only', `${base}..${ref}`], { cwd }).split('\n').filter(Boolean);
+    const infrastructure = changedFiles.length > 0 && !changedFiles.some((name) => classify(name) === 'A');
     // Дерево без docs/reviews — для сравнения с якорем вердикта: git сам его не даёт,
     // поэтому сравнение делается diff'ом при известном якоре (см. ниже).
     const names = sh('git', ['ls-tree', '--name-only', `${ref}:docs/reviews`], { cwd }).split('\n').filter((n) => new RegExp(`-${number}-r\\d+\\.md$`).test(n));
@@ -214,7 +220,7 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
       const same = spawnSync('git', ['diff', '--quiet', anchorTree, tip, '--', '.', ':!docs/reviews'], { cwd });
       treeWithoutReviews = same.status === 0 ? anchorTree : `differs-from-${anchorTree}`;
     }
-    branch = { name, tip, base, ahead, behind, treeWithoutReviews };
+    branch = { name, tip, base, ahead, behind, treeWithoutReviews, infrastructure };
   }
   let validate = null;
   if (branch) {

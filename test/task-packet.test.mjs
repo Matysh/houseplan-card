@@ -17,10 +17,12 @@ test('права выводятся из статусной метки по пр
   assert.ok(rightsFor('S6-in-progress', ['blocked'])[0].startsWith('blocked'));
   assert.ok(rightsFor('S7-code-review', ['review-4'])[0].startsWith('review-4'));
   assert.ok(rightsFor(null).some((l) => l.includes('продуктовая задача вне процесса')));
-  const infrastructure = rightsFor(null, ['infra']);
+  const infrastructure = rightsFor(null, ['infra'], { infrastructure: true });
   assert.ok(infrastructure.some((l) => l.includes('инфраструктурную реализацию МОЖНО')));
   assert.ok(infrastructure.some((l) => l.includes('S7-code-review')));
   assert.ok(infrastructure.every((l) => !l.includes('продуктовый код трогать МОЖНО')));
+  assert.ok(rightsFor('S6-in-progress', ['infra']).some((l) => l.includes('продуктовый код трогать МОЖНО')),
+    'the thematic infra label alone must not override an S6 product status');
 });
 
 test('AC распознаются из таблицы ТЗ и из строк тела issue (#496)', () => {
@@ -77,7 +79,7 @@ test('пакет собирается и рендерится: статус, м�
     labels: ['P2', 'feature', 'S6-in-progress', 'small'],
     comments: [{ author: 'Matysh', body: '## Решения владельца\n…', createdAt: '2026-09-08T13:35:00Z' },
       { author: 'claude[bot]', body: 'Вердикт: зелёный · заход r3 · High: 0 · Medium: 0', createdAt: '2026-09-08T17:37:00Z' }],
-    branch: { name: 'issue/437-summary-panel', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 3, behind: 0, treeWithoutReviews: TREE },
+    branch: { name: 'issue/437-summary-panel', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 3, behind: 0, treeWithoutReviews: TREE, infrastructure: false },
     reviewDocs: [{ name: 'CODE-REVIEW-437-r3.md', text: doc }],
     validate: { status: 'зелёный', url: 'https://run' },
   });
@@ -98,12 +100,23 @@ test('#562: statusless infra issue is the accelerated track ending at S7 review'
   const packet = buildPacket({
     issue: { number: 562, title: 'process', state: 'OPEN', url: 'u', body: '' },
     labels: ['P1', 'infra', 'process', 'tech-debt'],
+    branch: { name: 'issue/562-process', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: true },
   });
   assert.equal(packet.status, null);
   assert.equal(packet.track, 'инфраструктурный');
   const md = renderPacket(packet);
   assert.match(md, /инфраструктурный вход/);
   assert.match(md, /S7-code-review/);
+});
+
+test('#562: the infra label alone never grants the accelerated track', () => {
+  const packet = buildPacket({
+    issue: { number: 999, title: 'mislabeled product', state: 'OPEN', url: 'u', body: '' },
+    labels: ['infra', 'S6-in-progress'],
+    branch: { name: 'issue/999-product', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: false },
+  });
+  assert.equal(packet.track, 'полный');
+  assert.ok(packet.rights.some((l) => l.includes('продуктовый код трогать МОЖНО')));
 });
 
 test('#517 AC5: AC берутся из тела issue, файл ТЗ — только когда в теле их нет', () => {
