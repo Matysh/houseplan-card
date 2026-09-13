@@ -50,10 +50,14 @@ test('тесты и демо перф-профили не включают: ка
 });
 
 test('правка реестра мутантов даёт mutants=true; юниты реестра — тоже вход frontend (#475 r1, #492)', () => {
-  const out = classify(['scripts/mutation-gate.mjs']);
-  assert.equal(out.mutants, 'true');
-  assert.equal(out.frontend, 'true', 'test/mutation-gate.test.mjs читает реестр');
-  assert.equal(out.backend, 'false');
+  for (const file of ['scripts/mutation-gate.mjs', 'scripts/mutation-registry.mjs',
+    'scripts/mutation-selection.mjs', 'scripts/mutation-evidence.mjs',
+    'scripts/mutation-execution.mjs']) {
+    const out = classify([file]);
+    assert.equal(out.mutants, 'true', file);
+    assert.equal(out.frontend, 'true', `${file}: test/mutation-gate.test.mjs читает tooling`);
+    assert.equal(out.backend, 'false', file);
+  }
   assert.equal(classify(['src/color.ts']).mutants, 'true', 'патчи мутантов лежат в src/**');
 });
 

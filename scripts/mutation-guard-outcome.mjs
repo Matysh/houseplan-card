@@ -6,8 +6,8 @@
  * command can prove the behavioural assertion.  Treating every non-zero exit
  * as "caught" turns a missing dependency or a mutant that no longer compiles
  * into false test evidence.  This module keeps that distinction pure and
- * fixture-testable; the worktree/build orchestration remains in
- * mutation-gate.mjs.
+ * fixture-testable; the worktree/build orchestration lives in
+ * mutation-execution.mjs.
  */
 
 export const MUTATION_OUTCOME = Object.freeze({

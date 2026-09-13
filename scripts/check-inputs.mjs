@@ -221,7 +221,10 @@ export function referencesOf(file, rawText) {
  * сотни путей, но для того, кто его импортирует (тесты реестра), это данные,
  * а не зависимости — иначе одна правка любого теста отбирала бы весь реестр.
  */
-export const LEAF_FILES = new Set(['scripts/mutation-gate.mjs']);
+// The mutation registry contains patch snippets that look like imports and
+// file paths but are data, not executable dependencies. Runner modules are
+// ordinary source and must participate in closure discovery.
+export const LEAF_FILES = new Set(['scripts/mutation-registry.mjs']);
 
 export function closure(root, entries, { tracked = trackedFiles(root), stopAt = () => false, read, parents } = {}) {
   const trackedSet = new Set(tracked);
@@ -299,7 +302,7 @@ export const CHECKS = {
     roots: [...BUILD_INPUTS, 'test/**', 'tsconfig*.json', ...WORKFLOW],
   },
   changed_mutants: {
-    entries: ['scripts/mutation-gate.mjs', 'scripts/*-guard.mjs', 'test/*.test.mjs', 'demo/smoke_*.mjs', 'tests_backend/**/*.py'],
+    entries: ['scripts/mutation-*.mjs', 'scripts/*-guard.mjs', 'test/*.test.mjs', 'demo/smoke_*.mjs', 'tests_backend/**/*.py'],
     roots: [...BUILD_INPUTS, 'custom_components/**/*.py', ...BROWSER_PROTOCOL, ...WORKFLOW],
   },
   integration: {

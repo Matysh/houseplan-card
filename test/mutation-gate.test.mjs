@@ -609,11 +609,20 @@ test('#481 AC4: --ledger без --changed — отказ с кодом 2', () =>
   assert.match(run.stderr, /--ledger работает только вместе с --changed/);
 });
 
+test('#558: CLI reports planning time and guard-input cache counters', () => {
+  const script = join(repoRoot, 'scripts/mutation-gate.mjs');
+  const run = spawnSync(process.execPath, [script, '--changed=HEAD..HEAD', '--plan-only'], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  assert.match(run.stdout, /plan=0/);
+  assert.match(run.stdout, /plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=\d+(?:\.\d+)?/);
+});
+
 test('#481: отпечатки реестра детерминированы и различают мутантов', () => {
-  const first = witnessFingerprint(MUTANTS[0]);
-  assert.equal(witnessFingerprint(MUTANTS[0]), first);
-  assert.notEqual(witnessFingerprint(MUTANTS[1]), first);
-  assert.notEqual(witnessFingerprint({ ...MUTANTS[0], oracle: 'compile' }), first,
+  const inputsOf = createGuardInputResolver();
+  const first = witnessFingerprint(MUTANTS[0], { inputsOf });
+  assert.equal(witnessFingerprint(MUTANTS[0], { inputsOf }), first);
+  assert.notEqual(witnessFingerprint(MUTANTS[1], { inputsOf }), first);
+  assert.notEqual(witnessFingerprint({ ...MUTANTS[0], oracle: 'compile' }, { inputsOf }), first,
     'смена типа доказательства инвалидирует ledger');
   assert.match(first, /^[0-9a-f]{64}$/);
 });
@@ -624,9 +633,14 @@ test('#481 AC6 (реестр): бамп версии продукта не ме�
   assert.ok(core.length > 50, `ожидались десятки мутантов на ядра, найдено ${core.length}`);
   const bumped = (file) => readFileSync(join(repoRoot, file), 'utf8').split(version).join('9.9.9-bumped');
   const normalize = (text) => text.split('9.9.9-bumped').join('0.0.0-product-version').split(version).join('0.0.0-product-version');
+  const files = trackedFiles(repoRoot);
+  const beforeInputs = createGuardInputResolver({ files });
+  const afterInputs = createGuardInputResolver({ files, read: bumped });
   for (const m of core) {
-    const before = witnessFingerprint(m, { root: repoRoot, normalize });
-    const after = witnessFingerprint(m, { root: repoRoot, read: bumped, normalize });
+    const before = witnessFingerprint(m, { root: repoRoot, normalize, inputsOf: beforeInputs });
+    const after = witnessFingerprint(m, {
+      root: repoRoot, read: bumped, normalize, inputsOf: afterInputs,
+    });
     assert.equal(after, before, `${m.id}: релизный бамп изменил отпечаток`);
   }
 });
@@ -650,7 +664,9 @@ test('#499: ни один гвард реестра не собирает бан
 
 import {
   baseRegistry, guardInputs, registryDelta, selectForDiff, wrapperInputs,
+  createGuardInputResolver, MUTATION_REGISTRY_FILES,
 } from '../scripts/mutation-gate.mjs';
+import { trackedFiles } from '../scripts/check-inputs.mjs';
 
 test('#492 §6.1: обёртки объявляют GUARD_INPUTS, и объявление читается статически', () => {
   assert.deepEqual(wrapperInputs('scripts/backend-test-guard.mjs'), ['tests_backend/test_ha_import_export.py']);
@@ -713,15 +729,103 @@ test('#492 §6.4: дифф только по реестру отбирает д�
   const bChanged = { ...b, patches: [{ file: 'src/b.ts', find: '1', replace: '3' }] };
   const c = { id: 'c', guard: 'node --test test/c.test.mjs', patches: [{ file: 'src/c.ts', find: '1', replace: '2' }], because: 'c' };
   assert.deepEqual(registryDelta([a, bChanged, c], [a, b, { ...c, id: 'gone' }]), { changed: ['b', 'c'], removed: ['gone'] });
-  const picked = selectForDiff([a, bChanged, c], ['scripts/mutation-gate.mjs'], [a, b], { guardInputs: () => [] });
+  const picked = selectForDiff([a, bChanged, c], MUTATION_REGISTRY_FILES, [a, b], { guardInputs: () => [] });
   assert.deepEqual(picked.selected.map((m) => m.id), ['b', 'c']);
   assert.deepEqual(picked.byFiles, []);
   // без реестра базы отбор по определениям невозможен — и это не «ничего не изменилось»
-  const blind = selectForDiff([a, bChanged, c], ['scripts/mutation-gate.mjs'], null, { guardInputs: () => [] });
+  const blind = selectForDiff([a, bChanged, c], MUTATION_REGISTRY_FILES, null, { guardInputs: () => [] });
   assert.deepEqual(blind.selected, []);
   // дифф без реестра — определения не смотрятся
   const plain = selectForDiff([a, bChanged, c], ['src/a.ts'], [a, b], { guardInputs: () => [] });
   assert.deepEqual(plain.selected.map((m) => m.id), ['a']);
+});
+
+test('#558: invocation-scoped resolver computes each unique guard once and cannot leak across trees', () => {
+  const guard = 'node scripts/example-guard.mjs';
+  const resolverFor = (testFile) => {
+    const files = ['scripts/example-guard.mjs', testFile];
+    return createGuardInputResolver({
+      files,
+      exists: (file) => files.includes(file),
+      read: (file) => (file === 'scripts/example-guard.mjs'
+        ? `export const GUARD_INPUTS = ['${testFile}'];`
+        : ''),
+    });
+  };
+
+  const firstTree = resolverFor('test/a.test.mjs');
+  assert.deepEqual(firstTree(guard), ['scripts/example-guard.mjs', 'test/a.test.mjs']);
+  assert.deepEqual(firstTree(guard), ['scripts/example-guard.mjs', 'test/a.test.mjs']);
+  assert.deepEqual(firstTree(guard), ['scripts/example-guard.mjs', 'test/a.test.mjs']);
+  assert.deepEqual(firstTree.stats(), {
+    requests: 3, computations: 1, hits: 2, uniqueGuards: 1,
+  });
+
+  const secondTree = resolverFor('test/b.test.mjs');
+  assert.deepEqual(secondTree(guard), ['scripts/example-guard.mjs', 'test/b.test.mjs'],
+    'новый resolver читает новый материал, а не результат прошлого дерева');
+  assert.deepEqual(secondTree.stats(), {
+    requests: 1, computations: 1, hits: 0, uniqueGuards: 1,
+  });
+});
+
+test('#558: cached and uncached representative plans and fingerprints are equivalent', () => {
+  const files = trackedFiles(repoRoot);
+  const sample = MUTANTS.filter((mutant, index, all) =>
+    all.findIndex((candidate) => candidate.guard === mutant.guard) === index).slice(0, 80);
+  assert.ok(sample.length >= 50, `ожидалась представительная матрица guard-типов, найдено ${sample.length}`);
+  const changed = [
+    'demo/serve.mjs', 'tests_backend/conftest.py', 'test/mutation-gate.test.mjs',
+    ...sample.slice(0, 10).flatMap((mutant) => mutant.patches.map((patch) => patch.file)),
+  ];
+  const uncached = (guard) => guardInputs(guard, { files });
+  const cached = createGuardInputResolver({ files });
+  const expected = selectChangedMutants(sample, changed, undefined, { guardInputs: uncached });
+  const actual = selectChangedMutants(sample, changed, undefined, { guardInputs: cached });
+  assert.deepEqual(actual.map((mutant) => mutant.id), expected.map((mutant) => mutant.id));
+
+  for (const mutant of actual.slice(0, 20)) {
+    assert.equal(witnessFingerprint(mutant, { inputsOf: cached }),
+      witnessFingerprint(mutant, { inputsOf: uncached }), mutant.id);
+  }
+  const ledgerSample = actual.slice(0, 12);
+  const caught = Object.fromEntries(ledgerSample.slice(0, 5).map((mutant) => [mutant.id, {
+    fingerprint: witnessFingerprint(mutant, { inputsOf: uncached }),
+    proof: mutant.oracle || 'assertion',
+  }]));
+  const ledger = { schema: LEDGER_SCHEMA, caught };
+  const uncachedSplit = splitByLedger(ledgerSample, ledger,
+    (mutant) => witnessFingerprint(mutant, { inputsOf: uncached }));
+  const cachedSplit = splitByLedger(ledgerSample, ledger,
+    (mutant) => witnessFingerprint(mutant, { inputsOf: cached }));
+  assert.deepEqual(cachedSplit.skipped.map((mutant) => mutant.id),
+    uncachedSplit.skipped.map((mutant) => mutant.id));
+  assert.deepEqual(cachedSplit.run.map((entry) => entry.mutant.id),
+    uncachedSplit.run.map((entry) => entry.mutant.id));
+  for (const mutant of sample) cached(mutant.guard);
+  const stats = cached.stats();
+  assert.equal(stats.computations, new Set(sample.map((mutant) => mutant.guard)).size);
+  assert.ok(stats.hits > 0, `ожидались повторные обращения selection/fingerprint: ${JSON.stringify(stats)}`);
+});
+
+test('#558: registry, selection, evidence and execution stay behind bounded module boundaries', () => {
+  const read = (file) => readFileSync(join(repoRoot, file), 'utf8');
+  const gate = read('scripts/mutation-gate.mjs');
+  const registry = read('scripts/mutation-registry.mjs');
+  const selection = read('scripts/mutation-selection.mjs');
+  const evidence = read('scripts/mutation-evidence.mjs');
+  const execution = read('scripts/mutation-execution.mjs');
+  assert.ok(gate.split('\n').length < 300, 'CLI снова поглотил механику или реестр');
+  assert.ok(selection.split('\n').length < 350, 'selection-модуль потерял ограниченную границу');
+  assert.ok(evidence.split('\n').length < 150, 'evidence-модуль потерял ограниченную границу');
+  assert.ok(execution.split('\n').length < 250, 'execution-модуль потерял ограниченную границу');
+  assert.doesNotMatch(registry, /from ['"]\.\/mutation-(selection|evidence|execution)\.mjs['"]/,
+    'декларации не зависят от механики');
+  assert.doesNotMatch(selection, /from ['"]\.\/mutation-(registry|evidence|execution)\.mjs['"]/,
+    'отбор не зависит от реестра, ledger или запуска');
+  assert.doesNotMatch(execution, /from ['"]\.\/mutation-(registry|selection|evidence)\.mjs['"]/,
+    'запуск не зависит от реестра, отбора или ledger');
+  assert.match(evidence, /from ['"]\.\/mutation-selection\.mjs['"]/, 'fingerprint переиспользует входы/якоря');
 });
 
 test('#492 §6.4: реестр базы читается из git без побочных эффектов', async () => {

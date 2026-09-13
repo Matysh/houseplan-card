@@ -2165,3 +2165,19 @@ The three WebSocket commands are:
 | `houseplan/support/preview` | `may_write`, strict facts + draft id | opaque token, TTL, byte count, SHA-256 and exact JSON text |
 | `houseplan/support/preview/discard` | `may_write`, token owner | idempotent cleanup |
 | `houseplan/support/submit` | `may_write`, text + optional owned token | bounded private report id |
+
+## Mutation tooling boundaries (#558)
+
+The stable CLI remains `scripts/mutation-gate.mjs`, but it is only an
+orchestrator and compatibility export surface. Mutation declarations live in
+`scripts/mutation-registry.mjs`; diff/guard-input selection in
+`scripts/mutation-selection.mjs`; witness fingerprints and the caught ledger
+in `scripts/mutation-evidence.mjs`; worktree mutation execution in
+`scripts/mutation-execution.mjs`. Dependencies point from the CLI toward these
+boundaries, never from the registry or executor back to orchestration.
+
+Guard-input caching is invocation-scoped. One resolver owns one tracked-file
+snapshot and one result per exact guard string; creating a resolver is the
+cache boundary for another source tree/material. Selection and ledger
+fingerprinting share that resolver during one plan, while persisted success
+continues to exist only in the explicit caught-witness ledger.
