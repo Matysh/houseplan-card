@@ -48,38 +48,62 @@ them from `validate.yml`, `tests_backend/requirements.txt` and the lockfile, and
 `npm run toolchain:check` compares the machine with them (#496). `.nvmrc` and
 `.python-version` carry the same values for nvm/uv/pyenv; a test keeps them equal.
 
-Minimal native setup (PowerShell):
+The supported native setup is repository-scoped and does not change the
+machine's default Node, Python or persistent `PATH` (#557):
 
 ```powershell
-winget install --id OpenJS.NodeJS.22 --source winget
-winget install --id GitHub.cli --source winget
-gh auth login
-Set-Location 'C:\Users\Sergey\Downloads\dev\houseplan-dev\houseplan-card-src'
-uv python install 3.14
-uv venv --python 3.14 .venv
-uv pip install --python '.venv\Scripts\python.exe' pytest voluptuous pytest-asyncio
-npm ci
-npx playwright install chromium
+# One-time/idempotent setup. Requires uv; installs a verified portable Node 22
+# under %LOCALAPPDATA% and Python 3.14 in the dedicated .venv-ci.
+.\scripts\windows-toolchain.ps1 setup
+
+# Read-only proof: actual versions and executable/package/browser paths.
+.\scripts\windows-toolchain.ps1 check
+
+# Explicit pinned entrypoints for ordinary commands; no accidental PATH tools.
+.\scripts\windows-toolchain.ps1 npm run gate:small
+.\scripts\windows-toolchain.ps1 python -Arguments @(
+  '-m', 'pytest', '-p', 'pytest_asyncio.plugin',
+  'tests_backend/test_validation.py', 'tests_backend/test_trails.py',
+  'tests_backend/test_trail_recorder.py', '-q'
+)
+.\scripts\windows-toolchain.ps1 playwright install chromium
 ```
 
-Open a new Windows Terminal after installing Node/GitHub CLI so their PATH
-changes are visible. Keep the Playwright browser in its normal shared Windows
-cache; downloading it inside every repository wastes time and disk space.
+The Node archive is selected from the official release index for the major in
+`.nvmrc` and checked against Node's `SHASUMS256.txt`. The script prepends that
+directory to `PATH` only for its child process. It never removes an existing
+venv: if the requested `-VenvPath` contains another Python minor, setup stops
+and asks for another path. Playwright remains in its normal shared Windows
+cache. Install `uv` once with `winget install --id astral-sh.uv --source winget`
+if it is absent; GitHub access still uses the separately installed `gh`.
 
-WSL2 is optional for the ordinary frontend and pure-backend loop. `bash
-scripts/wsl-setup.sh` provisions it with the CI pins (nvm → Node, uv → Python and
-the HA test stack from `tests_backend/requirements.txt`, Playwright Chromium from
-the lockfile) and ends with the same `toolchain:check`; it is idempotent. The
-canonical proof still lives in Linux CI at the exact SHA — WSL is early feedback.
-It is required only when running the full HA harness locally: current Home Assistant imports
-the Unix-only `fcntl` module and cannot start its pytest plugin on native
-Windows. Keep a WSL clone inside the Linux ext4 filesystem rather than under
-`/mnt/c`, otherwise dependency installs become slower. The release CI always
-runs this harness on Ubuntu and gates the exact tagged commit. Docker Desktop is
-not currently required. Do not install the full Home Assistant pytest stack
-natively just for this repository: its pinned `lru-dict==1.3.0` first requires
-Visual Studio Build Tools to compile, but the resulting plugin still cannot run
-without `fcntl`.
+WSL2 is optional for the ordinary frontend and pure-backend loop. Keep its clone
+inside Linux ext4, not under `/mnt/c`; on a fresh checkout run:
+
+```bash
+cd ~/houseplan-card
+bash scripts/wsl-setup.sh           # idempotent setup in dedicated .venv-ci
+bash scripts/wsl-setup.sh --check   # no installation; paths + versions only
+bash scripts/wsl-setup.sh --verify  # setup, real HA subset and one golden capture
+```
+
+The script provisions the CI pins (nvm → Node, uv → Python and the HA test stack
+from `tests_backend/requirements.txt`, Playwright Chromium from the lockfile).
+`--verify` imports Unix-only `fcntl` and the pinned Home Assistant, runs
+`tests_backend/test_ha_setup.py`, builds the card and captures
+`panel-wide-view-light-en` under `artifacts/golden/`; it records elapsed time and
+the resulting PNG path. `HOUSEPLAN_VENV` selects another dedicated venv without
+deleting or rewriting an existing one. The canonical proof still lives in Linux
+CI at the exact SHA — WSL is early feedback.
+It is required only when running the full HA harness locally: current Home
+Assistant imports the Unix-only `fcntl` module and cannot start its pytest plugin
+on native Windows. Keep a WSL clone inside the Linux ext4 filesystem rather than
+under `/mnt/c`, otherwise dependency installs become slower. The release CI
+always runs this harness on Ubuntu and gates the exact tagged commit. Docker
+Desktop is not currently required. Do not install the full Home Assistant pytest
+stack natively just for this repository: its pinned `lru-dict==1.3.0` first
+requires Visual Studio Build Tools to compile, but the resulting plugin still
+cannot run without `fcntl`.
 
 Useful repo-local Git settings on NTFS (optional for this small repository):
 
@@ -101,10 +125,9 @@ git config core.untrackedCache true
 
 - Frontend: `npm test` — compiles src/logic.ts+rules.ts (tsconfig.test.json) and runs node:test
   (test/*.test.mjs). Strict typing: `npm run typecheck` (tsc --noEmit, part of `npm run build`).
-- Pure backend on native Windows (with no HA plugin autoload):
-  `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest
-  -p pytest_asyncio.plugin tests_backend/test_validation.py
-  tests_backend/test_trails.py tests_backend/test_trail_recorder.py -q`.
+- Pure backend on native Windows (with no HA plugin autoload): use the explicit
+  `python -Arguments @(...)` invocation above after setting
+  `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'`.
 - Full backend (including `test_ha_*.py`): `python -m pytest tests_backend/ -q`
   in CI or WSL/Linux only.
 - IMPORTANT (audit lesson): the rollup typescript plugin reports a syntax error as a WARNING and still

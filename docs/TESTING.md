@@ -4069,6 +4069,24 @@ require hands on real hardware — they remain for the human pass.
       покраснеть. Перед бетой selected summary-panel smoke проверяет ротацию
       touch/kiosk viewport по общему release-процессу.
 
+## Локальный CI-совместимый toolchain (#557)
+
+- [ ] `test/toolchain-pins.test.mjs` проверяет, что явно выбранный Python
+      используется и для version probe, и для `pip show`, без fallback к
+      `python`/`python3`/`py` из PATH; строки результата содержат пути Node,
+      Python, Playwright package и Chromium executable.
+- [ ] Тот же unit запрещает Windows setup менять persistent PATH или удалять
+      существующий venv, требует SHA-256 проверки portable Node и подтверждает,
+      что WSL verify запускает настоящий HA subset и одну Linux golden-съёмку.
+- [ ] На Windows два последовательных
+      `pwsh -File scripts/windows-toolchain.ps1 setup` проходят: первый ставит
+      изолированные runtimes, второй переиспользует их; `check` после каждого
+      зелёный и печатает фактические версии/пути.
+- [ ] Из свежего ext4 checkout WSL команда
+      `bash scripts/wsl-setup.sh --verify` проходит `test_ha_setup.py` без skip,
+      создаёт непустой `panel-wide-view-light-en.png` и печатает длительность.
+      Это ранняя обратная связь; независимый exact-SHA Validate остаётся каноном.
+
 ## Полнота источников радара (#545)
 
 - [ ] `tests_backend/test_radar_validation.py` проверяет точный inventory всех

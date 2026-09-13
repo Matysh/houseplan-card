@@ -60,6 +60,7 @@ export const NOT_AN_INPUT = [
   ['scripts/sh3d-convert/make-fixtures.mjs', 'генератор фикстур конвертера, ручной'],
   ['scripts/support-relay/deploy/**', 'деплой relay на стенд'],
   ['scripts/wsl-setup.sh', 'установка локального Linux/WSL-контура с пинами CI (#496), ручной запуск'],
+  ['scripts/windows-toolchain.ps1', 'изолированная установка и запуск Windows toolchain с пинами CI (#557), ручной запуск'],
   ['.github/workflows/*.yml', 'другие workflow: у каждого свой запуск; validate.yml — вход toolchain всех проверок, объявлен явно'],
   ['.github/ISSUE_TEMPLATE/**', 'шаблоны issue GitHub, не исполняются'],
   ['.githooks/**', 'локальные хуки'],

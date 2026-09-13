@@ -52,27 +52,52 @@ export function pinsFromSources({
 }
 
 function run(cmd, args) {
-  const r = spawnSync(cmd, args, { encoding: 'utf8' });
+  const r = spawnSync(cmd, args, { cwd: ROOT, encoding: 'utf8' });
   if (r.error || r.status !== 0) return null;
   return `${r.stdout || ''}${r.stderr || ''}`.trim();
 }
 
+function pythonProbe(exec, explicitCommand = null) {
+  const candidates = explicitCommand
+    ? [[explicitCommand, []]]
+    : [['python', []], ['python3', []], ['py', ['-3']]];
+  for (const [command, prefix] of candidates) {
+    const out = exec(command, [...prefix, '-c',
+      'import sys; print(sys.version.split()[0]); print(sys.executable)']);
+    if (!out) continue;
+    const [version, executable] = out.split(/\r?\n/).map((line) => line.trim());
+    if (/^\d+\.\d+(?:\.\d+)?$/.test(version) && executable) {
+      return { command, prefix, version, executable };
+    }
+  }
+  return null;
+}
+
 /** Что установлено локально; `null` — не найдено. */
-export function localToolchain({ exec = run } = {}) {
+export function localToolchain({ exec = run, pythonCommand = null } = {}) {
   const node = process.versions.node;
-  const pyOut = exec('python', ['--version']) || exec('python3', ['--version']) || exec('py', ['-3', '--version']);
-  const python = pyOut ? (pyOut.match(/(\d+\.\d+(?:\.\d+)?)/) || [])[1] || null : null;
+  const pythonRuntime = pythonProbe(exec, pythonCommand);
   const pipShow = (name) => {
-    const out = exec('python', ['-m', 'pip', 'show', name]) || exec('python3', ['-m', 'pip', 'show', name]);
+    if (!pythonRuntime) return null;
+    const out = exec(pythonRuntime.command, [...pythonRuntime.prefix, '-m', 'pip', 'show', name]);
     return out ? (out.match(/^Version:\s*(\S+)/m) || [])[1] || null : null;
   };
   let playwright = null;
-  try { playwright = JSON.parse(read('node_modules/playwright/package.json')).version; } catch { /* нет */ }
+  const playwrightPath = resolve(ROOT, 'node_modules/playwright/package.json');
+  try { playwright = JSON.parse(readFileSync(playwrightPath, 'utf8')).version; } catch { /* нет */ }
+  const chromiumPath = exec(process.execPath, ['-e',
+    'const { chromium } = require("playwright"); process.stdout.write(chromium.executablePath())']);
   return {
-    node, python,
+    node,
+    nodePath: process.execPath,
+    python: pythonRuntime?.version || null,
+    pythonPath: pythonRuntime?.executable || null,
     homeassistant: pipShow('homeassistant'),
     pytestHomeAssistant: pipShow('pytest-homeassistant-custom-component'),
     playwright,
+    playwrightPath: existsSync(playwrightPath) ? playwrightPath : null,
+    chromiumPath,
+    chromiumExists: !!chromiumPath && existsSync(chromiumPath),
   };
 }
 
@@ -88,28 +113,43 @@ export function compareToolchain(pins, local) {
     if (!ok) failures.push(name);
   };
   row('node', pins.node, local.node, String(local.node).split('.')[0] === String(pins.node),
-    ' (сравнение по мажору; .nvmrc)');
+    ` (major; ${local.nodePath || 'path unknown'})`);
   const pyMinor = (v) => (v ? v.split('.').slice(0, 2).join('.') : null);
   row('python', pins.python, local.python, pyMinor(local.python) === pyMinor(pins.python),
-    ' (сравнение по minor; .python-version)');
+    ` (minor; ${local.pythonPath || 'path unknown'})`);
   for (const [key, name] of [['homeassistant', 'homeassistant'], ['pytestHomeAssistant', 'pytest-ha-plugin']]) {
     if (local[key] == null) {
-      lines.push(`warn  ${name.padEnd(14)} пин ${String(pins[key]).padEnd(12)} локально —            (не установлен: полный HA-харнесс — Linux/WSL)`);
+      lines.push(`warn  ${name.padEnd(14)} пин ${String(pins[key]).padEnd(12)} локально —            `
+        + `(не установлен в ${local.pythonPath || 'selected Python'}: полный HA-харнесс — Linux/WSL)`);
       continue;
     }
     row(name, pins[key], local[key], local[key] === pins[key]);
   }
-  row('playwright', pins.playwright, local.playwright, local.playwright === pins.playwright, ' (npm ci ставит из lockfile)');
+  row('playwright', pins.playwright, local.playwright, local.playwright === pins.playwright,
+    ` (${local.playwrightPath || 'package path unknown'})`);
+  if (local.chromiumExists !== undefined || local.chromiumPath !== undefined) {
+    const chromiumPin = `${pins.chromium?.version || '?'} rev ${pins.chromium?.revision || '?'}`;
+    row('chromium', chromiumPin, local.chromiumExists ? 'installed' : 'missing',
+      local.chromiumExists === true, ` (${local.chromiumPath || 'executable path unavailable'})`);
+  }
   return { ok: failures.length === 0, lines, failures };
 }
 
 if (isMainModule(import.meta.url)) {
   const argv = process.argv.slice(2);
   const pins = pinsFromSources();
+  const pythonEquals = argv.find((arg) => arg.startsWith('--python='));
+  const pythonIndex = argv.indexOf('--python');
+  const pythonCommand = pythonEquals?.slice('--python='.length)
+    || (pythonIndex >= 0 ? argv[pythonIndex + 1] : null);
+  if ((pythonEquals && !pythonEquals.slice('--python='.length))
+    || (pythonIndex >= 0 && (!pythonCommand || pythonCommand.startsWith('--')))) {
+    throw new Error('--python requires an executable path');
+  }
   if (argv.includes('--json')) {
     process.stdout.write(`${JSON.stringify(pins, null, 2)}\n`);
   } else if (argv.includes('--check')) {
-    const result = compareToolchain(pins, localToolchain());
+    const result = compareToolchain(pins, localToolchain({ pythonCommand }));
     for (const line of result.lines) console.log(line);
     console.log(result.ok
       ? 'toolchain совпадает с CI'

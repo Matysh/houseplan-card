@@ -483,9 +483,15 @@ a draft first (#540).
 **Local Windows checkout** is the day-to-day environment: Node 22 and Python 3.14
 as in CI (`npm run toolchain:check` compares the machine with the pins CI actually
 uses — `.nvmrc` and `.python-version` are derived from the same sources, #496),
-`gh` authenticated. `.venv-backend` does **not** exist there — it is
-provisioned only by cloud agent startup scripts, which also run `npm ci` and install
-Playwright Chromium.
+`gh` authenticated. On the owner's machine do not trust the ambient PATH:
+`.\scripts\windows-toolchain.ps1 setup|check` owns a verified portable Node and
+dedicated `.venv-ci`, and its `npm`/`node`/`python`/`playwright` actions are the
+explicit pinned entrypoints (#557). It changes no persistent PATH and never
+deletes a mismatched venv. In WSL, work from an ext4 clone and use
+`bash scripts/wsl-setup.sh --verify` for the real HA subset plus one Linux visual
+capture; exact-SHA Linux CI remains authoritative. `.venv-backend` does **not**
+exist there — it is provisioned only by cloud agent startup scripts, which also
+run `npm ci` and install Playwright Chromium.
 
 Known environment-sensitive smoke: `demo/smoke_opening_measure.mjs` fails two
 sub-checks (`place_dialog_x_magnetised`, `place_committed_x_center`) under the pinned
