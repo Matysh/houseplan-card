@@ -133,7 +133,7 @@ jobs:
             --write-evidence=artifacts/mutation-shard-${{ matrix.shard }}/evidence.json \
             --sha=${{ needs.material.outputs.sha }} \
             --tree=${{ needs.material.outputs.tree }} \
-            --workflow-sha=${{ github.sha }} \
+            --workflow-sha=${{ github.workflow_sha }} \
             --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }} \
             --shard=${{ matrix.shard }} --shards=4
       - name: Сохранить лог и identity шарда
@@ -155,7 +155,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.sha }}
+          # CLI отчётчика принадлежит зафиксированному material. В main лежит
+          # только workflow и может не быть dev-версии scripts/**.
+          ref: ${{ needs.material.outputs.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -170,7 +172,7 @@ jobs:
             --logs=artifacts/mutation-logs --shards=4 \
             --sha=${{ needs.material.outputs.sha }} \
             --tree=${{ needs.material.outputs.tree }} \
-            --workflow-sha=${{ github.sha }} \
+            --workflow-sha=${{ github.workflow_sha }} \
             --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }}
 
   # Адресат у отказа (#472). Только по расписанию: ручной dispatch остаётся
@@ -191,9 +193,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # Код отчётчика берётся из того же workflow revision, а не из
-          # успевшего сдвинуться dev. Проверяемый material передаётся отдельно.
-          ref: ${{ github.sha }}
+          # Не перечитываем moving dev: код отчётчика берётся из уже
+          # зафиксированного material. В стабильном main dev-скриптов нет.
+          ref: ${{ needs.material.outputs.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -213,7 +215,7 @@ jobs:
             --require-evidence --logs=artifacts/mutation-logs --shards=4 \
             --sha=${{ needs.material.outputs.sha }} \
             --tree=${{ needs.material.outputs.tree }} \
-            --workflow-sha=${{ github.sha }} \
+            --workflow-sha=${{ github.workflow_sha }} \
             --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }} \
             --run-url="$RUN_URL" --ref=${{ needs.material.outputs.ref }} \
             --body-out=artifacts/mutation-report.md \
