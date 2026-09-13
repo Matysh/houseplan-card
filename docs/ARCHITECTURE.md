@@ -475,7 +475,14 @@ core. The 101.5/80 shell/core ratio, shared shell/core centre, Light/Dark
 context, full-text fitting and 44×44 core-centred interaction floor are
 renderer facts rather than surface-specific DOM. A positioned shell frame owns
 the complete visible capsule hit area; its event bubbles to the marker's one
-action path.
+action path. Overlapping marker targets do not inherit DOM order. All painted
+shells share a layer above all invisible 44 px floors; `device-hit-owner.ts`
+then resolves the semantic owner in screen coordinates, preferring a painted
+capsule and otherwise the nearest core with a stable id tie-break. The card
+measures the current faces into a small spatial index only after render/resize
+invalidation, never by scanning layout on every pointer move. One owner is
+latched from pointerdown through hover/action/long-press/context-menu and a
+Devices-editor drag, so a terminal event cannot jump to a neighbouring marker.
 `badge` shows the icon/morph and semantic core; `icon_ripple` additionally shows three finite
 event waves or one continuous wave for presence, mechanical transition and actual work;
 `value` replaces the icon

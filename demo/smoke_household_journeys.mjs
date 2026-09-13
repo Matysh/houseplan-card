@@ -209,7 +209,7 @@ const dense = await page.evaluate(async () => {
   const room = space.rooms.find((candidate) => candidate.id && candidate.area) || space.rooms[0];
   const ids = ['dense1', 'dense2', 'dense3', 'dense4', 'dense5'];
   card._serverCfg.markers = [...(card._serverCfg.markers || []), ...ids.map((id, index) => ({
-    id, name: `Dense ${index + 1}`, binding: 'virtual', is_light: true, tap_action: 'toggle',
+    id, name: `Dense ${index + 1}`, binding: 'virtual', is_light: true, tap_action: 'info',
     space: space.id, area: room.area, room_id: room.id,
   }))];
   const layout = { ...card._layout };
@@ -220,11 +220,6 @@ const dense = await page.evaluate(async () => {
   card._maybeRebuildDevices();
   card.requestUpdate();
   await card.updateComplete;
-  window.__journeyHits = [];
-  const original = card._clickDevice?.bind(card);
-  if (original) {
-    card._clickDevice = (event, device) => { window.__journeyHits.push(device?.id || null); return original(event, device); };
-  }
   return { ids };
 });
 
@@ -242,31 +237,87 @@ const ownerOfCentre = async (id) => {
   }, [centre[0], centre[1]]);
 };
 
-const tablet = { size: (await settledBox('dense1'))?.[2] ?? null, owners: [] };
-for (const id of dense.ids) tablet.owners.push(await ownerOfCentre(id));
+const semanticOwnerOfCentre = async (id) => {
+  const centre = await settledBox(id);
+  if (!centre) return null;
+  return page.evaluate(([cx, cy]) => window.__card._deviceHitOwnerAt(cx, cy)?.id || null,
+    [centre[0], centre[1]]);
+};
+
+const clickAndReadInfoOwner = async (centre) => {
+  await page.mouse.click(centre[0], centre[1]);
+  await page.waitForTimeout(100);
+  return page.evaluate(async () => {
+    const card = window.__card;
+    const id = card._infoCard?.id || null;
+    card._infoCard = null;
+    card.requestUpdate();
+    await card.updateComplete;
+    return id;
+  });
+};
+
+const tablet = {
+  size: (await settledBox('dense1'))?.[2] ?? null, owners: [], semanticOwners: [],
+};
+for (const id of dense.ids) {
+  tablet.owners.push(await ownerOfCentre(id));
+  tablet.semanticOwners.push(await semanticOwnerOfCentre(id));
+}
 const tabletCentre = await settledBox('dense1');
-await page.mouse.click(tabletCentre[0], tabletCentre[1]);
-await page.waitForTimeout(200);
-tablet.clickWentTo = await page.evaluate(() => window.__journeyHits.at(-1) || null);
+tablet.clickWentTo = await clickAndReadInfoOwner(tabletCentre);
 out.j7_tablet = tablet;
 // Настенный планшет: центр видимого маркера принадлежит ему. Это то свойство,
 // которое правка плотных целей обязана сохранить.
 check('j7.tablet_centre_belongs_to_its_marker',
   tablet.owners.every((owner, index) => owner === dense.ids[index]), true);
+check('j7.tablet_semantic_owner_is_its_marker',
+  tablet.semanticOwners.every((owner, index) => owner === dense.ids[index]), true);
 check('j7.tablet_click_reaches_its_marker', tablet.clickWentTo, 'dense1');
 
-// Узкая колонка телефона: тот же замер печатается в отчёт БЕЗ проверки —
-// расхождение здесь заведено отдельным issue, и свидетель приедет с правкой.
-// Вписывать текущее поведение проверкой значило бы узаконить дефект.
+// Узкая колонка телефона — исходная регрессия #564. И native hit owner, и
+// семантический владелец действия обязаны совпасть с видимым маркером.
 await setWidth(390);
-const phone = { size: (await settledBox('dense1'))?.[2] ?? null, owners: [] };
-for (const id of dense.ids) phone.owners.push(await ownerOfCentre(id));
+const phone = {
+  size: (await settledBox('dense1'))?.[2] ?? null, owners: [], semanticOwners: [],
+};
+for (const id of dense.ids) {
+  phone.owners.push(await ownerOfCentre(id));
+  phone.semanticOwners.push(await semanticOwnerOfCentre(id));
+}
 const phoneCentre = await settledBox('dense1');
-const before = await page.evaluate(() => window.__journeyHits.length);
-await page.mouse.click(phoneCentre[0], phoneCentre[1]);
-await page.waitForTimeout(200);
-phone.clickWentTo = await page.evaluate((from) => window.__journeyHits.slice(from).at(-1) || null, before);
+phone.clickWentTo = await clickAndReadInfoOwner(phoneCentre);
+phone.latchedOwner = await page.evaluate(async () => {
+  const card = window.__card;
+  const first = card.renderRoot.querySelector('[data-hp="device"][data-id="dense1"]');
+  const second = card.renderRoot.querySelector('[data-hp="device"][data-id="dense2"]');
+  const a = first.getBoundingClientRect();
+  const b = second.getBoundingClientRect();
+  const pointerId = 564;
+  const event = (type, rect, buttons) => new PointerEvent(type, {
+    pointerId, pointerType: 'touch', buttons, bubbles: true, cancelable: true,
+    clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
+  });
+  const d1 = card._devices.find((device) => device.id === 'dense1');
+  const d2 = card._devices.find((device) => device.id === 'dense2');
+  card._pointerDown(event('pointerdown', a, 1), d1);
+  const moved = card._pointerMove(event('pointermove', b, 1), d2)?.id || null;
+  card._pointerUp(event('pointerup', b, 0), d2);
+  card._clickDevice(event('click', b, 0), d2);
+  await card.updateComplete;
+  const clicked = card._infoCard?.id || null;
+  card._infoCard = null;
+  card.requestUpdate();
+  await card.updateComplete;
+  return { moved, clicked };
+});
 out.j7_phone = phone;
-console.log('j7.phone (без проверки, см. docs/QUALITY-560.md):', JSON.stringify(phone));
+check('j7.phone_centre_belongs_to_its_marker',
+  phone.owners.every((owner, index) => owner === dense.ids[index]), true);
+check('j7.phone_semantic_owner_is_its_marker',
+  phone.semanticOwners.every((owner, index) => owner === dense.ids[index]), true);
+check('j7.phone_click_reaches_its_marker', phone.clickWentTo, 'dense1');
+check('j7.pointer_owner_is_latched_through_terminal_click',
+  phone.latchedOwner, { moved: 'dense1', clicked: 'dense1' });
 
 await finish(browser, out);

@@ -26,7 +26,10 @@ const CAPS = {
   // 2026-09-11, #534: +1 for `import { keyed }`. The line buys back the 80 ms
   // that #525 put on every space switch, and there is nothing to move out —
   // the render itself did not grow by a character.
-  'src/houseplan-card.ts': 13651,
+  // 2026-09-14, #564: the geometry/index/latch/DOM ownership implementation is
+  // isolated in device-hit-owner.ts. These 81 lines are the remaining card
+  // lifecycle invalidations and the presentation/action integration seams.
+  'src/houseplan-card.ts': 13732,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.

@@ -141,11 +141,14 @@ export const devicesStyles = css`
       display: block;
       color: var(--device-core-fg);
       cursor: pointer;
-      pointer-events: auto;
+      /* The visible shell and the 44px floor opt in separately. Keeping the
+         transparent root inert lets painted faces from every marker stack
+         above every invisible floor instead of inheriting DOM order (#564). */
+      pointer-events: none;
       transition: opacity 0.2s;
       box-shadow: none;
       outline: none;
-      z-index: 2;
+      z-index: auto;
     }
     .dev.theme-light {
       --device-core-bg: #fff;
@@ -180,7 +183,7 @@ export const devicesStyles = css`
       transform: translate(-50%, -50%);
       border-radius: 50%;
       pointer-events: auto;
-      z-index: 3;
+      z-index: 1;
     }
     .device-shell {
       position: absolute;
@@ -196,6 +199,8 @@ export const devicesStyles = css`
       box-shadow: none;
       transition: opacity .2s;
       pointer-events: none;
+      /* All painted faces share one layer above all core-centred floors. */
+      z-index: 2;
     }
     .device-shell-frame {
       position: absolute;
@@ -331,14 +336,14 @@ export const devicesStyles = css`
     }
     /* Interaction wins ordinary state colours. Alarm keeps priority through
        the more-specific rule below. Unavailable has no visual hover. */
-    :host([data-pointer-hover]) .dev:not(.unavail):hover {
+    :host([data-pointer-hover]) .dev:not(.unavail)[data-hp-device-hover] {
       --device-face-bg: #0C82F0;
       --device-face-fg: light-dark(#fff, #252525);
       --device-shell-stroke: var(--device-shell-base-stroke);
     }
-    :host([data-pointer-hover]) .dev.theme-light:not(.unavail):hover { --device-face-fg: #fff; }
-    :host([data-pointer-hover]) .dev.theme-dark:not(.unavail):hover { --device-face-fg: #252525; }
-    :host([data-pointer-hover]) .dev:hover,
+    :host([data-pointer-hover]) .dev.theme-light:not(.unavail)[data-hp-device-hover] { --device-face-fg: #fff; }
+    :host([data-pointer-hover]) .dev.theme-dark:not(.unavail)[data-hp-device-hover] { --device-face-fg: #252525; }
+    :host([data-pointer-hover]) .dev[data-hp-device-hover],
     .dev:focus-visible { z-index: 5; }
     /* #464: only markers that terminate a currently rendered local Zigbee
        link rise above the topology overlay. The namespaced attribute is
@@ -347,7 +352,7 @@ export const devicesStyles = css`
     /* A real CSS hover is more specific than the base endpoint selector.
        Repeat the endpoint contract at a still-higher specificity so the
        hovered source cannot fall back below the topology overlay. */
-    :host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint]:hover { z-index: 8; }
+    :host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint][data-hp-device-hover] { z-index: 8; }
     .dev.unavail {
       opacity: 0.35;
       --device-face-bg: #B5BAC1;
@@ -417,7 +422,7 @@ export const devicesStyles = css`
     }
     /* Alert stays above focus, selection, hover and ordinary semantic paint. */
     .dev.alarm,
-    :host([data-pointer-hover]) .dev.alarm:hover,
+    :host([data-pointer-hover]) .dev.alarm[data-hp-device-hover],
     .dev.alarm:focus-visible {
       --device-face-bg: #F0410C;
       --device-face-fg: light-dark(#fff, #252525);

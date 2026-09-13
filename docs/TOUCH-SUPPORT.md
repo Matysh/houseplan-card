@@ -73,6 +73,14 @@ desktop hover without a reload. Space/mode changes, page hiding and remounts
 also discard transient hover. Keyboard focus and explicit click/tap surfaces
 remain independent of this visual hover gate.
 
+When device markers are packed more tightly than their 44 × 44 px minimum
+targets, the marker visibly painted under the pointer owns that point. Only an
+otherwise empty overlap of invisible target floors is resolved by the nearest
+marker core. This same screen-space owner is held for the complete pointer
+sequence, so hover, tap, long press, context menu and Devices-editor drag cannot
+switch to a neighbour between press and release. Saved marker coordinates and
+the visible layout are not moved to manufacture separation.
+
 The default-on **Show the room information window on hover** preference applies
 only after this pointer-modality gate has enabled real mouse hover. Turning it
 off leaves the room highlight and device tooltips unchanged; it does not add a

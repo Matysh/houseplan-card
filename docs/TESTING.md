@@ -536,6 +536,23 @@ manifest читают и `classify-changes.mjs` (job `changes`: job запуск
       sizes 32/56/96 and colored backgrounds. Full smoke/golden/performance
       remains a Linux release gate.
 
+## Dense device-marker hit ownership (#564)
+
+- [ ] Pure geometry covers visible capsule priority, invisible 44 px-floor
+      overlap, nearest-core selection, stable exact ties, stadium corners and
+      spatial-index locality [unit: `device-hit-owner.test.mjs`].
+- [ ] Source contracts keep painted shells globally above transparent floors,
+      route hover/click/pointer lifecycle through one semantic owner and forbid
+      layout reads from the pointer-move path
+      [unit: `device-hit-owner-contract.test.mjs`].
+- [ ] Household J7 checks the five-marker dense column at tablet and phone
+      widths: every visible centre has the same native and semantic owner, its
+      click opens that marker, and a pointer sequence remains latched through
+      its terminal click [auto: `smoke_household_journeys.mjs`].
+- [ ] Replacing nearest-screen-core selection with first-input/DOM order makes
+      the focused guard red
+      [mutation: `dense-device-hit-falls-back-to-input-order`].
+
 ## Device marker polish and pointer modality (#212)
 
 - [ ] Shared icon geometry applies one 0.9 visual factor after card/per-marker

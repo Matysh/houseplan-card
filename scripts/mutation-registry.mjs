@@ -111,6 +111,20 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'dense-device-hit-falls-back-to-input-order',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/device-hit-owner.test.mjs',
+    because: '#564: при перекрытии целей владелец выбирается по экранной геометрии, а не '
+      + 'по порядку DOM/массива; иначе сосед снова крадёт hover, click и drag',
+    patches: [{
+      file: 'src/device-hit-owner.ts',
+      find: '    if (distance < bestDistance - EPSILON\n'
+        + '        || (Math.abs(distance - bestDistance) <= EPSILON\n'
+        + '          && (best === null || candidate.id < best.id))) {',
+      replace: '    if (best === null) {',
+    }],
+  },
+  {
     id: 'radar-sources-compared-as-text',
     guard: 'node --test --test-name-pattern="#567" test/radar-editor.test.mjs',
     because: '#567: порядок ключей `sources` меняет сам билдер, поэтому текстовое сравнение '
@@ -5555,8 +5569,8 @@ const MUTANT_DEFINITIONS = [
       + 'which makes an offline device look live',
     patches: [{
       file: 'src/styles/devices.styles.ts',
-      find: '.dev:not(.unavail):hover {',
-      replace: '.dev.unavail:hover {',
+      find: '.dev:not(.unavail)[data-hp-device-hover] {',
+      replace: '.dev.unavail[data-hp-device-hover] {',
     }],
   },
   {
@@ -5937,8 +5951,8 @@ const MUTANT_DEFINITIONS = [
       + 'has already been cleared',
     patches: [{
       file: 'src/styles/devices.styles.ts',
-      find: '    :host([data-pointer-hover]) .dev:not(.unavail):hover {',
-      replace: '    .dev:not(.unavail):hover {',
+      find: '    :host([data-pointer-hover]) .dev:not(.unavail)[data-hp-device-hover] {',
+      replace: '    .dev:not(.unavail)[data-hp-device-hover] {',
     }],
   },
   {
@@ -7336,12 +7350,12 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'zigbee-topology-hovered-endpoint-elevation-removed',
     guard: 'node demo/smoke_zigbee_topology_hover.mjs',
-    because: 'a real CSS :hover has higher specificity than the base endpoint rule; the source '
+    because: 'semantic device hover has higher specificity than the base endpoint rule; the source '
       + 'must still remain above its active topology line (#464 AC1, code-review r1)',
     patches: [{
       file: 'src/styles/devices.styles.ts',
-      find: ':host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint]:hover { z-index: 8; }',
-      replace: ':host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint]:hover { z-index: 1; }',
+      find: ':host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint][data-hp-device-hover] { z-index: 8; }',
+      replace: ':host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint][data-hp-device-hover] { z-index: 1; }',
     }],
   },
   {

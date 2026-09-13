@@ -107,6 +107,7 @@ import {
   type FixedFloorSelection, type InitialSpaceSelection,
 } from './initial-load';
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
+import { DeviceHitController } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import {
   createEmptySpaceConfig, initialSpaceDisplayDraft, roomTempRangeFromDraft, switchSpacePlanSource, touchSpaceDisplay,
@@ -1426,7 +1427,10 @@ export class HouseplanCard extends LitElement {
   /** Adopt a mode from configuration/recovery without leaving a measured
    * transition alive. User navigation continues to go through `_setMode()`. */
   private _adoptMode(mode: HouseplanMode): void {
-    if (mode !== this._mode) this._clearRoomFocus(true);
+    if (mode !== this._mode) {
+      this._clearRoomFocus(true);
+      this._resetDeviceHitState();
+    }
     this._cancelModeTransition(false);
     this._mode = mode; this._isoProjectionSnapshot = null;
     if (mode !== 'view') this._editorChromeMode = mode;
@@ -1554,6 +1558,7 @@ export class HouseplanCard extends LitElement {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
       this._clearRoomFocus(true);
+      this._resetDeviceHitState();
       this._cancelDangerConfirm();
       this._cancelCameraTransition(false);
       this._clearTransientHover(true);
@@ -2043,6 +2048,7 @@ export class HouseplanCard extends LitElement {
   private _roomFocus: { spaceId: string; roomId: string } | null = null;
   /** Pointer owner captured from the actually painted event path. */
   private _roomPointer: RoomFitGestureCandidate | null = null; private readonly _doubleFit = new DoubleFitGestureRecognizer();
+  private readonly _deviceHits = new DeviceHitController();
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
   /**
@@ -2690,11 +2696,28 @@ export class HouseplanCard extends LitElement {
     const PointerHoverObserver = this.ownerDocument.defaultView?.MutationObserver;
     if (PointerHoverObserver) {
       this._pointerHoverObserver = new PointerHoverObserver((records) => {
+        let deviceGeometryChanged = false;
         for (const record of records) {
           for (const node of record.addedNodes) this._syncPointerHoverSubtree(node);
+          const inDeviceLayer = (node: Node): boolean => {
+            if (node.nodeType !== Node.ELEMENT_NODE) return false;
+            const element = node as Element;
+            return element.matches('.devlayer, .devlayer *')
+              || !!element.querySelector?.('.devlayer');
+          };
+          if (inDeviceLayer(record.target)
+              || [...record.addedNodes, ...record.removedNodes].some(inDeviceLayer)) {
+            deviceGeometryChanged = true;
+          }
         }
+        if (deviceGeometryChanged) this._invalidateDeviceHitGeometry();
       });
-      this._pointerHoverObserver.observe(this.renderRoot, { childList: true, subtree: true });
+      this._pointerHoverObserver.observe(this.renderRoot, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-id'],
+      });
     }
     this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     this._reducedMotion = !!this._motionMedia?.matches;
@@ -2887,6 +2910,7 @@ export class HouseplanCard extends LitElement {
     this._editorRuntime?._furnShiftDetach();
     this._touchContacts.clear();
     this._touchClickGuard.reset();
+    this._resetDeviceHitState();
     this._clearTransientHover(true);
     this._cancelDevicePressFeedback();
     this._pointerHoverObserver?.disconnect();
@@ -4013,6 +4037,7 @@ export class HouseplanCard extends LitElement {
     this._swipeStart = null;
     this._drag = null;
     this._deviceDrag = null;
+    this._resetDeviceHitState();
     this._rlResize = null;
     this._vacFit = null;
     this._compassDrag = false;
@@ -4183,7 +4208,11 @@ export class HouseplanCard extends LitElement {
     if (this._editorRuntime) this._dtMeasure();
     const stage = this._stageEl;
     if (stage && !this._roViewport) {
-      this._roViewport = new ResizeObserver(() => { this._refitView(); requestAnimationFrame(() => this._summary?.resized()); });
+      this._roViewport = new ResizeObserver(() => {
+        this._invalidateDeviceHitGeometry();
+        this._refitView();
+        requestAnimationFrame(() => this._summary?.resized());
+      });
       this._roViewport.observe(stage);
     }
     if (stage && this._booting && !this._bootTimer) this._bootWatch();
@@ -5412,6 +5441,7 @@ export class HouseplanCard extends LitElement {
     if (!drag) return false;
     this._editorRuntime?._cancelPointerMove('device');
     this._deviceDrag = null;
+    this._deviceHits.cancel(drag.pointerId);
     try {
       if (drag.source?.hasPointerCapture?.(drag.pointerId)) {
         drag.source.releasePointerCapture(drag.pointerId);
@@ -5664,6 +5694,7 @@ export class HouseplanCard extends LitElement {
     this._swipeStart = null;
     this._roomPointer = null;
     this._doubleFit.clear();
+    this._deviceHits.clearPointers();
   }
 
   /** Close the device card and make stale long-press state non-observable. */
@@ -5673,9 +5704,59 @@ export class HouseplanCard extends LitElement {
     this._infoCard = null;
   }
 
+  private _invalidateDeviceHitGeometry(): void {
+    this._deviceHits.invalidate();
+  }
+
+  private _resetDeviceHitState(): void {
+    this._deviceHits.reset(this.renderRoot);
+  }
+
+  /** Exposed only as a runtime diagnostic for the real-browser #564 witness. */
+  private _deviceHitOwnerAt(clientX: number, clientY: number): DevItem | null {
+    if (this._mode !== 'view' && this._mode !== 'devices') return null;
+    return this._deviceHits.at(
+      this.renderRoot, this._renderDevices, this._space, clientX, clientY,
+    );
+  }
+
+  private _deviceForPointerEvent(ev: PointerEvent, fallback: DevItem): DevItem {
+    return this._deviceHits.pointer(
+      this.renderRoot, this._renderDevices, this._space, ev, fallback,
+    );
+  }
+
+  private _deviceForClickEvent(ev: Event, fallback: DevItem): DevItem {
+    return this._deviceHits.click(
+      this.renderRoot, this._renderDevices, this._space, ev, fallback,
+    );
+  }
+
+  private _showDeviceTip(ev: PointerEvent, d: DevItem): void {
+    this._notePointer(ev);
+    if (!this._pointerModality.hoverEnabled || this._drag || this._deviceDrag) {
+      this._deviceHits.hover(this.renderRoot, null);
+      return;
+    }
+    const showLqi = this._spaceDisplayForRender().showLqi ?? this._config?.show_signal ?? true;
+    const presentation = this._devicePresentation(d, showLqi);
+    const disabledReason = presentation.disabledReason;
+    const ghostLabel = presentation.haDisabled
+      ? this._t((`marker.ha_disabled_${disabledReason}`) as any)
+      : d.userHidden ? this._t('marker.hidden_ghost') : d.name;
+    const metrics = [
+      d.model,
+      presentation.valueBadge?.fullText || '',
+      presentation.lqiText != null ? 'LQI ' + presentation.lqiText : '',
+    ].filter(Boolean).join(' · ');
+    this._deviceHits.hover(this.renderRoot, d.id);
+    this._showTip(ev, d.name, presentation.haDisabled ? ghostLabel : metrics);
+  }
+
   /** Right click in VIEW mode always opens HA's more-info (owner's decision). */
   private _ctxDevice(ev: MouseEvent, d: DevItem): void {
     if (this._mode !== 'view') return; // editors keep the native context menu
+    d = this._deviceForPointerEvent(ev as PointerEvent, d);
     ev.preventDefault();
     ev.stopPropagation();
     if (!this._deviceBindingActive(d)) return;
@@ -5689,6 +5770,7 @@ export class HouseplanCard extends LitElement {
     // if a future CSS change accidentally makes a marker a hit target again.
     if (this._mode !== 'view' && this._mode !== 'devices') return;
     ev.stopPropagation();
+    d = this._deviceForClickEvent(ev, d);
     if (this._deviceDrag?.moved || this._suppressClick || this._holdFired) return;
     if (this._mode === 'devices') {
       this._openMarkerDialog(d);
@@ -6952,6 +7034,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerUp(ev: PointerEvent): void {
+    this._deviceHits.release(ev.pointerId);
     this._flushHa();
     this._editorRuntime?._cancelPointerMove('markup-hover');
     const acceptedRoom = acceptedRoomFitGesture(
@@ -7054,6 +7137,9 @@ export class HouseplanCard extends LitElement {
     // event must keep bubbling to the active decor tool; do not prevent it,
     // capture it or create a layout drag.
     if (this._mode !== 'view' && this._mode !== 'devices') return;
+    d = this._deviceHits.begin(
+      this.renderRoot, this._renderDevices, this._space, ev, d,
+    );
     if (this._mode === 'view') {
       // view: no drag, no capture — panning may start on an icon; only the
       // long-press timer runs (cancelled by stage movement)
@@ -7096,11 +7182,14 @@ export class HouseplanCard extends LitElement {
     this._syncLiveHover();
   }
 
-  private _pointerMove(ev: PointerEvent, d: DevItem): void {
-    if (this._mode !== 'devices') return;
+  private _pointerMove(ev: PointerEvent, d: DevItem): DevItem | null {
+    if (this._mode !== 'view' && this._mode !== 'devices') return null;
+    d = this._deviceForPointerEvent(ev, d);
+    if (this._mode !== 'devices') return d;
     const drag = this._deviceDrag;
-    if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
+    if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return d;
     this._editorRuntimeOrThrow()._queuePointerMove('device', () => this._pointerMoveNow(ev, d));
+    return d;
   }
 
   private _pointerMoveNow(ev: PointerEvent, d: DevItem): void {
@@ -7130,6 +7219,8 @@ export class HouseplanCard extends LitElement {
     this._previewDevicePlacement(d.id, this._devicePlacementForCanvas(d, nx, ny));
   }
   private _pointerUp(ev: PointerEvent, d: DevItem): void {
+    d = this._deviceForPointerEvent(ev, d);
+    this._deviceHits.release(ev.pointerId);
     clearTimeout(this._holdTimer);
     if (this._mode !== 'devices') return;
     const drag = this._deviceDrag;
@@ -7170,6 +7261,8 @@ export class HouseplanCard extends LitElement {
       });
   }
   private _pointerCancel(ev: PointerEvent, d: DevItem): void {
+    d = this._deviceForPointerEvent(ev, d);
+    this._deviceHits.cancel(ev.pointerId);
     if (this._deviceDrag?.id !== d.id || this._deviceDrag.pointerId !== ev.pointerId) return;
     this._cancelDeviceDrag();
   }
@@ -7214,6 +7307,7 @@ export class HouseplanCard extends LitElement {
   /** Remove visual state that can only be owned by a live mouse hover. */
   private _clearTransientHover(suspend = false): void {
     if (suspend) this._pointerModality.suspend();
+    this._deviceHits.hover(this.renderRoot, null);
     if (this._tip) this._tip = null;
     if (this._hoverRoom) this._hoverRoom = null;
     this._syncLiveHover();
@@ -7261,6 +7355,7 @@ export class HouseplanCard extends LitElement {
         inStage: !!(pointer.target as Element | null)?.closest?.('.stage'),
       });
       if (this._touchContacts.size >= 2) {
+        this._deviceHits.clearPointers();
         this._clearRoomFocus(true);
         this._clearTransientHover();
         clearTimeout(this._holdTimer);
@@ -7506,6 +7601,7 @@ export class HouseplanCard extends LitElement {
     if (mode !== this._mode) {
       this._clearRoomFocus(true);
       this._cancelDangerConfirm();
+      this._resetDeviceHitState();
     }
     this._warmModeRequest = 0;
     if (!this._editorRuntime) {
@@ -7876,6 +7972,7 @@ export class HouseplanCard extends LitElement {
 
   /** Browser/OS cancellation is an aborted transaction, never a commit. */
   private _stagePointerCancel(ev: PointerEvent): void {
+    this._deviceHits.cancel(ev.pointerId);
     this._flushHa();
     this._editorRuntime?._cancelPointerMove('markup-hover');
     if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null; this._doubleFit.clear();
@@ -12434,12 +12531,6 @@ export class HouseplanCard extends LitElement {
             value: presentation.lqiText,
           }) : '',
     ].filter(Boolean).join(', ');
-    const metrics = [
-      d.model,
-      presentation.valueBadge?.fullText || '',
-      presentation.lqiText != null ? 'LQI ' + presentation.lqiText : '',
-    ].filter(Boolean).join(' · ');
-
     return html`<div
       ${''/* docs/STYLING-HOOKS.md §3: the styling contract. `nothing` on an
              attribute binding REMOVES the attribute, so a virtual marker has
@@ -12467,14 +12558,14 @@ export class HouseplanCard extends LitElement {
       @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
       @pointerover=${(e: PointerEvent) => {
         if (this._mode !== 'view' && this._mode !== 'devices') return;
-        this._showTip(e, d.name, presentation.haDisabled ? ghostLabel : metrics);
+        this._showDeviceTip(e, this._deviceForPointerEvent(e, d));
       }}
       @pointerleave=${() => this._clearTransientHover()}
       @pointerdown=${(e: PointerEvent) => this._pointerDown(e, d)}
       @pointermove=${(e: PointerEvent) => {
         if (this._mode !== 'view' && this._mode !== 'devices') return;
-        this._pointerMove(e, d);
-        this._showTip(e, d.name, presentation.haDisabled ? ghostLabel : metrics);
+        const owner = this._pointerMove(e, d);
+        if (owner) this._showDeviceTip(e, owner);
       }}
       @pointerup=${(e: PointerEvent) => this._pointerUp(e, d)}
       @pointercancel=${(e: PointerEvent) => this._pointerCancel(e, d)}
