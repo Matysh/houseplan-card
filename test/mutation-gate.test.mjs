@@ -303,13 +303,17 @@ test('#549: агрегатор требует четыре evidence одного
   const evidence = mutationWorkflow.slice(mutationWorkflow.indexOf('  evidence:'), mutationWorkflow.indexOf('  report:'));
   const report = mutationWorkflow.slice(mutationWorkflow.indexOf('\n  report:\n'));
   assert.match(evidence, /--verify-only/);
+  assert.match(evidence, /ref: \$\{\{ needs\.material\.outputs\.sha \}\}/);
   assert.match(evidence, /--sha=\$\{\{ needs\.material\.outputs\.sha \}\}/);
   assert.match(evidence, /--tree=\$\{\{ needs\.material\.outputs\.tree \}\}/);
+  assert.match(evidence, /--workflow-sha=\$\{\{ github\.workflow_sha \}\}/);
   assert.match(evidence, /--run-id=\$\{\{ github\.run_id \}\} --run-attempt=\$\{\{ github\.run_attempt \}\}/);
   assert.match(report, /--require-evidence/);
-  assert.match(report, /ref: \$\{\{ github\.sha \}\}/);
+  assert.match(report, /ref: \$\{\{ needs\.material\.outputs\.sha \}\}/);
+  assert.match(report, /--workflow-sha=\$\{\{ github\.workflow_sha \}\}/);
   assert.ok(!report.includes('git rev-parse HEAD'));
   assert.ok(!report.includes('ref: dev'));
+  assert.ok(!report.includes('ref: ${{ github.sha }}'), 'main может не содержать dev-CLI отчётчика');
 });
 
 test('#472 AC6: повторный отказ дописывает открытое issue, а не создаёт второе', () => {
