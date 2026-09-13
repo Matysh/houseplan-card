@@ -754,7 +754,7 @@ test('#553: канон разделяет review и исполнение тес�
   const agents = read('AGENTS.md');
   const status = read('docs/STATUS.md');
 
-  assert.doesNotMatch(process, /ревью[^\n]{0,80}заменяет тестирование/i);
+  assert.doesNotMatch(process, /ревью[\s\S]{0,120}заменяет тестирование/i);
   assert.doesNotMatch(agents, /review[^\n]{0,80}stands in for testing/i);
   assert.doesNotMatch(process, /получает\s+нормальный файл ТЗ/i);
   assert.match(process, /полное ТЗ в теле issue по §7\.1/);

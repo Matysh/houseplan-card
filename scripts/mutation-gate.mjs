@@ -7881,6 +7881,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'process-canon-says-review-replaces-testing-across-line-break',
+    guard: 'node --test --test-name-pattern="#553" test/review-doc-guard.test.mjs',
+    because: '#553: запрет старой формулировки обязан переживать перенос строки; '
+      + 'дословный откат прежнего абзаца не должен проходить regression-тест',
+    patches: [{
+      file: 'PROCESS.md',
+      find: '- **Ревьюер отвечает за полноту доказательств AC, а не заменяет их исполнение.**',
+      replace: '- **Ревьюер отвечает за полноту доказательств AC, а не заменяет их исполнение.**\n'
+        + '  Код-ревью не пропускается\n'
+        + '  никогда — именно оно в этом процессе заменяет тестирование.',
+    }],
+  },
+  {
     id: 'review-integration-skips-evidence-checksum',
     guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
     because: '#551: artifact между моделью и привилегированной интеграцией — вход доверенной '
