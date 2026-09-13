@@ -770,6 +770,28 @@ test('#553: канон разделяет review и исполнение тес�
     'точные runtime pins читаются из исполняемых источников, не из памятки');
 });
 
+test('#555: bounded reconciler wakes only lost review requests and emits one machine summary', () => {
+  const read = (rel) => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
+  const workflow = read('.github/workflows/process-reconcile.yml');
+  const processWorkflow = read('.github/workflows/process.yml');
+  const process = read('PROCESS.md');
+  const agents = read('AGENTS.md');
+
+  assert.match(processWorkflow,
+    /run-name: "process #\$\{\{ github\.event\.issue\.number \}\} · \$\{\{ github\.event\.label\.name \}\}/,
+    'run identity includes issue and requested stage');
+  assert.match(workflow, /cron: '7,37 \* \* \* \*'/);
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /ref: dev/);
+  assert.match(workflow, /secrets\.HP_PROCESS_TOKEN/);
+  assert.match(workflow, /node scripts\/process-reconcile\.mjs[\s\S]*--apply="\$APPLY"/);
+  assert.match(workflow, /--max-actions=5/);
+  assert.match(workflow, /process-reconcile-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
+  assert.match(process, /houseplan-process-reconcile\/v1/);
+  assert.match(process, /второй вызов модели или S8 по догадке запрещены/);
+  assert.match(agents, /bounded queue reconciler \(#555\)/);
+});
+
 test('#551: gates, модель и интеграция имеют независимые jobs, contracts и бюджеты', () => {
   const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
   const job = (name, next) => {

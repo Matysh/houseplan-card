@@ -7894,6 +7894,61 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'process-reconcile-restarts-healthy-run',
+    guard: 'node --test test/process-reconcile.test.mjs',
+    because: '#555: bounded reconciliation must not duplicate a healthy queued/running review '
+      + 'or turn metadata polling into another model invocation',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: "    if (age <= activeLimitMs) return result('wait', 'matching process run is healthy and active', { label, stage, run });",
+      replace: "    if (age <= activeLimitMs) return result('retry', 'mutant: restart healthy run', { label, stage, run });",
+    }],
+  },
+  {
+    id: 'process-reconcile-ignores-owner-stop',
+    guard: 'node --test test/process-reconcile.test.mjs',
+    because: '#555: blocked/review-4 is a current owner decision and always wins over an old '
+      + 'lost-event or cancelled-run observation',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: "  if (labels.includes('blocked') || labels.includes('review-4')) {",
+      replace: "  if (false && (labels.includes('blocked') || labels.includes('review-4'))) {",
+    }],
+  },
+  {
+    id: 'process-reconcile-accepts-foreign-prepared-evidence',
+    guard: 'node --test test/process-reconcile.test.mjs',
+    because: '#555: an artifact from another issue, stage, run or attempt is diagnosis only and '
+      + 'must never authorize recovery or verdict application',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: '  if (badIdentity) return \'prepared artifact belongs to another issue/stage/run attempt\';',
+      replace: '  if (false && badIdentity) return \'mutant: foreign identity accepted\';',
+    }],
+  },
+  {
+    id: 'process-reconcile-reruns-sealed-model-result',
+    guard: 'node --test test/process-reconcile.test.mjs',
+    because: '#555: a sealed model artifact must be escalated for deterministic integration, not '
+      + 'paid for a second time by an automatic relabel',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: '  if (run.resultArtifact) {',
+      replace: '  if (false && run.resultArtifact) {',
+    }],
+  },
+  {
+    id: 'process-reconcile-retries-lost-event-forever',
+    guard: 'node --test test/process-reconcile.test.mjs',
+    because: '#555: one lost wake-up gets one automatic relabel; if that event is lost too, '
+      + 'reconciliation escalates instead of generating a run/comment every schedule tick',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: '    if (retryAlreadyIssued) {',
+      replace: '    if (false && retryAlreadyIssued) {',
+    }],
+  },
+  {
     id: 'review-integration-skips-evidence-checksum',
     guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
     because: '#551: artifact между моделью и привилегированной интеграцией — вход доверенной '

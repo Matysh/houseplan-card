@@ -268,6 +268,15 @@ What the new label means:
 **After a review run the label always changes.** If it did not, the run itself
 failed rather than the work — say so to the owner instead of polling on.
 
+The repository also has a bounded queue reconciler (#555). It takes one S4/S7
+snapshot every thirty minutes and exits. It may re-apply the same review label
+only when the matching event was lost or its run ended with a transient
+cancellation/timeout before a sealed result existed. It never applies verdicts or
+merges. Running work, `blocked`, `review-4`, a foreign material/stage/attempt, a
+guard failure, or an unintegrated sealed model result is left untouched and gets
+at most one machine-keyed diagnostic. This is a safety net, not permission for an
+agent to stop waiting for the result of the review it started.
+
 **A failed pre-release gate does not send the issue back to review.** The
 implementation loop runs only typecheck, unit and build; golden, browser smokes,
 performance and the full HA harness run before a beta, which is after the code

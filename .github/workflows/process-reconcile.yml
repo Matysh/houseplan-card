@@ -1,0 +1,57 @@
+name: Сверка очереди ревью
+run-name: "reconcile process queue · ${{ github.event_name }}"
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Повторно будить потерянные запросы и публиковать диагностику"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  actions: read
+  contents: read
+  issues: read
+
+jobs:
+  reconcile:
+    name: "Один снимок S4/S7 без polling модели"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: process-reconcile
+      cancel-in-progress: false
+    steps:
+      # Расписание читается из main, а исполняемый reconciler — из dev: так
+      # после штатного merge действует та же версия кода, которую проверил CI.
+      - uses: actions/checkout@v7
+        with:
+          ref: dev
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Сопоставить labels, requests, runs и sealed evidence
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+          APPLY: ${{ github.event_name == 'schedule' || inputs.apply == true }}
+        run: |
+          mkdir -p artifacts/process-reconcile
+          node scripts/process-reconcile.mjs \
+            --repo "$REPO" \
+            --apply="$APPLY" \
+            --max-actions=5 \
+            --output=artifacts/process-reconcile/summary.json
+      - name: Опубликовать компактный machine-readable итог
+        uses: actions/upload-artifact@v4
+        with:
+          name: process-reconcile-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/process-reconcile/summary.json
+          if-no-files-found: error
+          retention-days: 14
