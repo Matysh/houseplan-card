@@ -456,6 +456,8 @@ test('журнал свидетелей changed_mutants: rerun продолжа�
 
 test('#541: Validate всегда публикует proof точной попытки, а reuse раскрывает источник', () => {
   const workflow = read('validate.yml');
+  assert.doesNotMatch(workflow, /with:\s*\{[^\n]*\$\{\{/,
+    'GitHub does not parse an unquoted expression inside a YAML flow mapping');
   const proofAt = workflow.indexOf('\n  proof:\n');
   assert.ok(proofAt > 0, 'финальная proof job существует');
   const proof = workflow.slice(proofAt);
