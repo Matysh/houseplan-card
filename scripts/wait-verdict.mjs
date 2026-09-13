@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Детерминированное ожидание вердикта / CI (#496).
 //
-// Runbook велит автору ждать вердикт опросом: раз в 90 секунд, не более 30 раз,
+// Runbook велит автору ждать вердикт опросом: раз в 90 секунд, не более 110 раз,
 // смотреть на метку. В исполнении LLM каждый тик — это ход модели с чтением JSON
 // и рассуждением «ничего не изменилось» — десятки пустых ходов на одно ревью.
 // Этот скрипт делает опрос сам и ГОВОРИТ только при смене состояния: одинаковое
@@ -16,7 +16,7 @@
 // Скрипт НИЧЕГО не пишет: ни меток, ни комментариев, ни запусков. Новое ревью
 // или релиз начинаются только по текущей авторизации человека.
 //
-//   node scripts/wait-verdict.mjs --issue 437 [--sha <tip>] [--interval 90] [--max 30]
+//   node scripts/wait-verdict.mjs --issue 437 [--sha <tip>] [--interval 90] [--max 110]
 //
 // Коды выхода: 0 — статус сменился (вердикт есть, читать метку и комментарий);
 // 3 — доставлено событие, требующее действия (отказ конвейера, конфликт,
@@ -171,7 +171,7 @@ if (isMainModule(import.meta.url)) {
   const repo = value('repo', 'Matysh/houseplan-card');
   const sha = value('sha') || null;
   const intervalMs = Number(value('interval', '90')) * 1000;
-  const maxTicks = Number(value('max', '30'));
+  const maxTicks = Number(value('max', '110'));
   waitForVerdict({ readSnapshot: ghSnapshotReader({ number, repo, sha }), intervalMs, maxTicks })
     .then((code) => { process.exitCode = code; })
     .catch((error) => { console.error(`wait-verdict: ${error.message}`); process.exitCode = 2; });

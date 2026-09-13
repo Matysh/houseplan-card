@@ -254,17 +254,41 @@ jobs:
           echo "spent=$spent" >> "$GITHUB_OUTPUT"
           echo "limit=$limit" >> "$GITHUB_OUTPUT"
 
-  review:
-    name: "Ревью (Claude): вердикт в issue"
+  prepare:
+    name: "Ревью: материал и deterministic gates"
     needs: guard
     if: needs.guard.outputs.stage != ''
     runs-on: ubuntu-latest
     concurrency:
       group: process-issue-${{ github.event.issue.number }}
       cancel-in-progress: false
-    # Время — единственный настоящий ограничитель зациклившегося прогона.
-    timeout-minutes: 45
+    # Ожидание Validate не отнимает бюджет у модели (#551). Сам gate может
+    # ждать 45 минут; подготовке оставлен отдельный запас на checkout/rebase.
+    timeout-minutes: 55
+    outputs:
+      proceed: ${{ steps.gate.outputs.proceed }}
+      branch: ${{ steps.branch.outputs.name }}
+      rebase_note: ${{ steps.rebase.outputs.note }}
+      material_sha: ${{ steps.material.outputs.sha }}
+      material_tree: ${{ steps.material.outputs.tree }}
+      material_specs: ${{ steps.material.outputs.specs }}
+      material_issue_body: ${{ steps.material.outputs.issue_body }}
+      reuse: ${{ steps.reuse.outputs.reuse }}
+      reuse_doc: ${{ steps.reuse.outputs.doc }}
+      reuse_round: ${{ steps.reuse.outputs.round }}
+      reuse_tree: ${{ steps.reuse.outputs.tree }}
+      validate_result: ${{ steps.gate.outputs.result }}
+      validate_url: ${{ steps.gate.outputs.url }}
+      validated_note: ${{ steps.validated.outputs.note }}
+      spec_body_changed: ${{ steps.spec_body.outputs.changed }}
+      spec_body_doc: ${{ steps.spec_body.outputs.doc }}
+      spec_body_recorded: ${{ steps.spec_body.outputs.recorded }}
+      duration_seconds: ${{ steps.duration.outputs.seconds }}
     steps:
+      - name: Начать измерение стадии
+        id: clock
+        run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -620,66 +644,13 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           if [ -n "$row" ]; then echo "Validate на $short: зелёный"; else echo "Validate на $short: зелёного нет"; fi
 
-      # Зависимости ставятся ПОСЛЕ переключения на ветку задачи: lockfile мог
-      # измениться именно в ней, и установка по копии из dev дала бы не то дерево.
-      - name: Установить зависимости
-        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
-        run: npm ci
-
-      # Браузер нужен не всякому ревью (см. правило выбора гейтов в промпте),
-      # но когда нужен — качать его заново дороже, чем держать в кэше.
-      - name: Кэш браузеров Playwright
-        id: pw
-        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Установить Chromium
-        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true' && steps.pw.outputs.cache-hit != 'true'
-        # Без --with-deps: системные библиотеки Chromium предустановлены в
-        # образе ubuntu-latest, а apt при промахе кэша съедал минуты из бюджета
-        # ревью и подолгу перебирал недоступное azure-зеркало (#175). Если
-        # библиотека когда-нибудь пропадёт из образа, Chromium не запустится с
-        # внятной ошибкой — тогда флаг вернуть.
-        run: npx playwright install chromium
-
-      # Action ревью ставит Claude Code через `claude install`, и с его
-      # v1.0.218 (Claude Code 2.1.265) лаунчер ~/.local/bin/claude на
-      # ubuntu-latest иногда не появляется, хотя установщик рапортует об успехе;
-      # action верит рапорту и падает на ENOENT (anthropics, issue 1817).
-      # Кладём бинарник сами: версию берём ту, что пинит сам action (он уже
-      # скачан в _actions к началу job), контрольную сумму — из манифеста релиза.
-      - name: Установить Claude Code детерминированно
-        id: claude_bin
-        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
-        run: |
-          src=$(ls "$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-*/v1/src/entrypoints/run.ts 2>/dev/null | head -1)
-          ver=$(grep -oE 'claudeCodeVersion = "[0-9]+\.[0-9]+\.[0-9]+"' "$src" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
-          ver="${ver:-2.1.265}"
-          base=https://downloads.claude.ai/claude-code-releases
-          bin="$HOME/.local/bin/claude"
-          mkdir -p "$(dirname "$bin")"
-          curl -fsSL --retry 3 "$base/$ver/linux-x64/claude" -o "$bin"
-          sum=$(curl -fsSL --retry 3 "$base/$ver/manifest.json" | jq -r '.platforms["linux-x64"].checksum')
-          echo "$sum  $bin" | sha256sum -c -
-          chmod +x "$bin"
-          "$bin" --version
-          echo "path=$bin" >> "$GITHUB_OUTPUT"
-
-      # ТЗ живёт в теле issue (#517), а GitHub хранит его правки без diff и без
-      # доступной чтением истории. Единственное, что можно доказать, — «текст
-      # изменился после того, как ревью ТЗ признало его зелёным». Это не отказ:
-      # автор вправе уточнять ТЗ. Это находка, доставляемая ревьюеру кода в
-      # промпт и владельцу в комментарий вердикта: разбор AC в таком заходе
-      # обязан быть полным, а не по дельте.
+      # Это deterministic evidence для промпта, поэтому вычисляется до запуска
+      # модели и передаётся вместе с неизменяемым контрактом материала (#551).
       - name: "ТЗ менялось после зелёного ревью ТЗ (#517)"
         id: spec_body
         if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true' && needs.guard.outputs.stage == 'code'
         env:
           NUM: ${{ github.event.issue.number }}
-          BRANCH: ${{ steps.branch.outputs.name }}
           DIGEST: ${{ steps.material.outputs.issue_body }}
         run: |
           if [ -z "$DIGEST" ]; then
@@ -702,9 +673,178 @@ jobs:
           printf '%s\n' "$out"
           printf '%s\n' "$out" >> "$GITHUB_OUTPUT"
 
+      - name: Собрать контракт материала между стадиями
+        id: prepared
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
+        env:
+          NUM: ${{ github.event.issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          CYCLE: ${{ needs.guard.outputs.cycle }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          MATERIAL_SHA: ${{ steps.material.outputs.sha }}
+          MATERIAL_TREE: ${{ steps.material.outputs.tree }}
+          MATERIAL_SPECS: ${{ steps.material.outputs.specs }}
+          MATERIAL_ISSUE_BODY: ${{ steps.material.outputs.issue_body }}
+          VALIDATE_RESULT: ${{ steps.gate.outputs.result }}
+          VALIDATE_URL: ${{ steps.gate.outputs.url }}
+          REBASE_NOTE: ${{ steps.rebase.outputs.note }}
+          VALIDATED_NOTE: ${{ steps.validated.outputs.note }}
+          SPEC_BODY_CHANGED: ${{ steps.spec_body.outputs.changed }}
+          SPEC_BODY_DOC: ${{ steps.spec_body.outputs.doc }}
+          SPEC_BODY_RECORDED: ${{ steps.spec_body.outputs.recorded }}
+        run: |
+          dir="$RUNNER_TEMP/review-prepared"
+          mkdir -p "$dir"
+          jq -n -S \
+            --arg run_id "$GITHUB_RUN_ID" --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg issue "$NUM" --arg stage "$STAGE" --arg cycle "$CYCLE" \
+            --arg branch "$BRANCH" --arg material_sha "$MATERIAL_SHA" \
+            --arg material_tree "$MATERIAL_TREE" --arg material_specs "$MATERIAL_SPECS" \
+            --arg material_issue_body "$MATERIAL_ISSUE_BODY" \
+            --arg validate_result "$VALIDATE_RESULT" --arg validate_url "$VALIDATE_URL" \
+            --arg rebase_note "$REBASE_NOTE" --arg validated_note "$VALIDATED_NOTE" \
+            --arg spec_body_changed "$SPEC_BODY_CHANGED" --arg spec_body_doc "$SPEC_BODY_DOC" \
+            --arg spec_body_recorded "$SPEC_BODY_RECORDED" \
+            '{schema:1,run_id:$run_id,run_attempt:$run_attempt,issue:$issue,stage:$stage,cycle:$cycle,branch:$branch,material_sha:$material_sha,material_tree:$material_tree,material_specs:$material_specs,material_issue_body:$material_issue_body,validate_result:$validate_result,validate_url:$validate_url,rebase_note:$rebase_note,validated_note:$validated_note,spec_body_changed:$spec_body_changed,spec_body_doc:$spec_body_doc,spec_body_recorded:$spec_body_recorded}' \
+            > "$dir/prepared.json"
+          (cd "$dir" && sha256sum prepared.json > manifest.sha256)
+          echo "artifact=review-prepared-${NUM}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+
+      - name: Передать подтверждённый материал модели
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepared.outputs.artifact }}
+          path: ${{ runner.temp }}/review-prepared
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Зафиксировать длительность подготовки
+        id: duration
+        if: always()
+        env:
+          STARTED: ${{ steps.clock.outputs.started }}
+        run: |
+          seconds=$(( $(date +%s) - STARTED ))
+          echo "seconds=$seconds" >> "$GITHUB_OUTPUT"
+          echo "- deterministic prerequisites: **${seconds}s**" >> "$GITHUB_STEP_SUMMARY"
+
+  model_review:
+    name: "Ревью: работа модели"
+    needs: [guard, prepare]
+    if: needs.prepare.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: process-issue-${{ github.event.issue.number }}
+      cancel-in-progress: false
+    # Весь бюджет принадлежит модели и её локальным проверкам; ожидания Validate
+    # в этом job больше нет (#551).
+    timeout-minutes: 45
+    outputs:
+      duration_seconds: ${{ steps.duration.outputs.seconds }}
+    steps:
+      - name: Начать измерение стадии
+        id: clock
+        run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.prepare.outputs.material_sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Получить контракт подготовленного материала
+        uses: actions/download-artifact@v4
+        with:
+          name: review-prepared-${{ github.event.issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/review-prepared
+
+      - name: Проверить контракт и exact material
+        env:
+          NUM: ${{ github.event.issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          CYCLE: ${{ needs.guard.outputs.cycle }}
+          BRANCH: ${{ needs.prepare.outputs.branch }}
+          MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
+          MATERIAL_TREE: ${{ needs.prepare.outputs.material_tree }}
+          MATERIAL_SPECS: ${{ needs.prepare.outputs.material_specs }}
+          MATERIAL_ISSUE_BODY: ${{ needs.prepare.outputs.material_issue_body }}
+          VALIDATE_RESULT: ${{ needs.prepare.outputs.validate_result }}
+          VALIDATE_URL: ${{ needs.prepare.outputs.validate_url }}
+          REBASE_NOTE: ${{ needs.prepare.outputs.rebase_note }}
+          VALIDATED_NOTE: ${{ needs.prepare.outputs.validated_note }}
+          SPEC_BODY_CHANGED: ${{ needs.prepare.outputs.spec_body_changed }}
+          SPEC_BODY_DOC: ${{ needs.prepare.outputs.spec_body_doc }}
+          SPEC_BODY_RECORDED: ${{ needs.prepare.outputs.spec_body_recorded }}
+        run: |
+          dir="$RUNNER_TEMP/review-prepared"
+          (cd "$dir" && sha256sum -c manifest.sha256)
+          jq -e \
+            --arg run_id "$GITHUB_RUN_ID" --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg issue "$NUM" --arg stage "$STAGE" --arg cycle "$CYCLE" \
+            --arg branch "$BRANCH" --arg sha "$MATERIAL_SHA" --arg tree "$MATERIAL_TREE" \
+            --arg specs "$MATERIAL_SPECS" --arg body "$MATERIAL_ISSUE_BODY" \
+            --arg validate "$VALIDATE_RESULT" --arg validate_url "$VALIDATE_URL" \
+            --arg rebase_note "$REBASE_NOTE" --arg validated_note "$VALIDATED_NOTE" \
+            --arg spec_changed "$SPEC_BODY_CHANGED" --arg spec_doc "$SPEC_BODY_DOC" \
+            --arg spec_recorded "$SPEC_BODY_RECORDED" \
+            '.schema == 1 and .run_id == $run_id and .run_attempt == $run_attempt and .issue == $issue and .stage == $stage and .cycle == $cycle and .branch == $branch and .material_sha == $sha and .material_tree == $tree and .material_specs == $specs and .material_issue_body == $body and .validate_result == $validate and .validate_url == $validate_url and .rebase_note == $rebase_note and .validated_note == $validated_note and .spec_body_changed == $spec_changed and .spec_body_doc == $spec_doc and .spec_body_recorded == $spec_recorded' \
+            "$dir/prepared.json"
+          test "$(git rev-parse HEAD)" = "$MATERIAL_SHA"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$MATERIAL_TREE"
+
+      # Зависимости ставятся ПОСЛЕ переключения на ветку задачи: lockfile мог
+      # измениться именно в ней, и установка по копии из dev дала бы не то дерево.
+      - name: Установить зависимости
+        run: npm ci
+
+      # Браузер нужен не всякому ревью (см. правило выбора гейтов в промпте),
+      # но когда нужен — качать его заново дороже, чем держать в кэше.
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Установить Chromium
+        if: steps.pw.outputs.cache-hit != 'true'
+        # Без --with-deps: системные библиотеки Chromium предустановлены в
+        # образе ubuntu-latest, а apt при промахе кэша съедал минуты из бюджета
+        # ревью и подолгу перебирал недоступное azure-зеркало (#175). Если
+        # библиотека когда-нибудь пропадёт из образа, Chromium не запустится с
+        # внятной ошибкой — тогда флаг вернуть.
+        run: npx playwright install chromium
+
+      # Action ревью ставит Claude Code через `claude install`, и с его
+      # v1.0.218 (Claude Code 2.1.265) лаунчер ~/.local/bin/claude на
+      # ubuntu-latest иногда не появляется, хотя установщик рапортует об успехе;
+      # action верит рапорту и падает на ENOENT (anthropics, issue 1817).
+      # Кладём бинарник сами: версию берём ту, что пинит сам action (он уже
+      # скачан в _actions к началу job), контрольную сумму — из манифеста релиза.
+      - name: Установить Claude Code детерминированно
+        id: claude_bin
+        run: |
+          src=$(ls "$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-*/v1/src/entrypoints/run.ts 2>/dev/null | head -1)
+          ver=$(grep -oE 'claudeCodeVersion = "[0-9]+\.[0-9]+\.[0-9]+"' "$src" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
+          ver="${ver:-2.1.265}"
+          base=https://downloads.claude.ai/claude-code-releases
+          bin="$HOME/.local/bin/claude"
+          mkdir -p "$(dirname "$bin")"
+          curl -fsSL --retry 3 "$base/$ver/linux-x64/claude" -o "$bin"
+          sum=$(curl -fsSL --retry 3 "$base/$ver/manifest.json" | jq -r '.platforms["linux-x64"].checksum')
+          echo "$sum  $bin" | sha256sum -c -
+          chmod +x "$bin"
+          "$bin" --version
+          echo "path=$bin" >> "$GITHUB_OUTPUT"
+
       - name: Review
         id: review
-        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
         uses: anthropics/claude-code-action@v1
         env:
           # Вне рабочей копии: восстановление дерева ревьюером не должно
@@ -729,9 +869,9 @@ jobs:
               Номер захода нужен для имени документа — два документа с
               одинаковым номером затёрли бы друг друга.
 
-            ${{ steps.rebase.outputs.note }}
+            ${{ needs.prepare.outputs.rebase_note }}
 
-            ${{ steps.spec_body.outputs.changed == 'true' && format('ТЗ в теле issue менялось после зелёного ревью ТЗ ({0}, записанный хеш {1}). GitHub хранит правки тела без diff — дельту показать нельзя, поэтому AC сверяются с ТЕКУЩИМ текстом целиком, а не по дельте, и находка называется в вердикте (#517).', steps.spec_body.outputs.doc, steps.spec_body.outputs.recorded) || '' }}
+            ${{ needs.prepare.outputs.spec_body_changed == 'true' && format('ТЗ в теле issue менялось после зелёного ревью ТЗ ({0}, записанный хеш {1}). GitHub хранит правки тела без diff — дельту показать нельзя, поэтому AC сверяются с ТЕКУЩИМ текстом целиком, а не по дельте, и находка называется в вердикте (#517).', needs.prepare.outputs.spec_body_doc, needs.prepare.outputs.spec_body_recorded) || '' }}
 
             **Если цикл не первый — объём разбора по дельте, а не заново**
             (PROCESS.md §2.9, issue #214). Раньше промпт был одинаковым для
@@ -794,7 +934,7 @@ jobs:
 
             Для этапа code: материал — диапазон `git log --oneline origin/dev..HEAD`
             и `git diff origin/dev...HEAD`. **Материал ревью — ровно
-            `${{ steps.material.outputs.sha }}`, рабочая копия уже на нём.** Не
+            `${{ needs.prepare.outputs.material_sha }}`, рабочая копия уже на нём.** Не
             делай `git fetch`, `git pull` и `git checkout` на другой коммит: вердикт
             привязан к этому SHA (#312), и страж слияния сверяет вершину ветки с
             ним. Если автор в issue называет более новый коммит, которого в
@@ -814,7 +954,7 @@ jobs:
             правке — не тщательность, а потеря времени: полные наборы это
             предрелизный гейт (PROCESS.md §8), а не гейт ревью.
 
-            ${{ steps.validated.outputs.note }}
+            ${{ needs.prepare.outputs.validated_note }}
 
             Если зелёного прогона на этом SHA нет — прогоняешь сам, они дешёвые,
             и в повторном раунде тоже: код изменился, а стоят они минуты:
@@ -928,25 +1068,174 @@ jobs:
             --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment,mcp__github__issue_write,mcp__github__issue_read
             --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"}},"required":["verdict","high","medium","summary"]}'
 
-      # Ревьюер пишет только в docs/reviews/. Что именно попадёт в коммит,
-      # решает этот шаг, а не модель: всё остальное откатывается.
-      - name: Опубликовать документ ревью
-        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
+      - name: Запечатать результат модели
+        id: result
         env:
-          TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          BRANCH: ${{ steps.branch.outputs.name }}
+          SOURCE: ${{ runner.temp }}/review-document.md
+          OUT: ${{ steps.review.outputs.structured_output }}
           NUM: ${{ github.event.issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
-          SOURCE: ${{ runner.temp }}/review-document.md
+        run: |
+          marker=CODE-REVIEW
+          if [ "$STAGE" = "spec" ]; then marker=SPEC-REVIEW; fi
+          legacy="docs/reviews/${marker}-${NUM}-r${CYCLE}.md"
+          if [ ! -f "$SOURCE" ] && [ -f "$legacy" ]; then cp "$legacy" "$SOURCE"; fi
+          test -s "$SOURCE" || { echo "::error::модель не оставила документ ревью"; exit 1; }
+          printf '%s' "$OUT" | jq -e '
+            (.verdict == "green" or .verdict == "yellow" or .verdict == "red")
+            and (.high | type == "number") and (.medium | type == "number")
+            and (.summary | type == "string")' > "$RUNNER_TEMP/verdict.json"
+          dir="$RUNNER_TEMP/review-result"
+          mkdir -p "$dir"
+          cp "$RUNNER_TEMP/review-prepared/prepared.json" "$dir/prepared.json"
+          cp "$SOURCE" "$dir/review-document.md"
+          cp "$RUNNER_TEMP/verdict.json" "$dir/verdict.json"
+          (cd "$dir" && sha256sum prepared.json review-document.md verdict.json > manifest.sha256)
+          echo "artifact=review-result-${NUM}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+
+      - name: Передать результат интеграции
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.result.outputs.artifact }}
+          path: ${{ runner.temp }}/review-result
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Зафиксировать длительность модели
+        id: duration
+        if: always()
+        env:
+          STARTED: ${{ steps.clock.outputs.started }}
+        run: |
+          seconds=$(( $(date +%s) - STARTED ))
+          echo "seconds=$seconds" >> "$GITHUB_OUTPUT"
+          echo "- model review: **${seconds}s**" >> "$GITHUB_STEP_SUMMARY"
+
+  integrate:
+    name: "Ревью: публикация и интеграция"
+    needs: [guard, prepare, model_review]
+    if: always() && needs.guard.outputs.stage != ''
+    runs-on: ubuntu-latest
+    concurrency:
+      group: process-issue-${{ github.event.issue.number }}
+      cancel-in-progress: false
+    # Слияние кандидата при ушедшем dev может само ждать Validate до 45 минут;
+    # оно не должно обрывать уже оплаченный model review (#551).
+    timeout-minutes: 55
+    steps:
+      - name: Начать измерение стадии
+        id: clock
+        run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Проверить исходы предыдущих стадий
+        id: ready
+        env:
+          PREPARE_RESULT: ${{ needs.prepare.result }}
+          MODEL_RESULT: ${{ needs.model_review.result }}
+          PROCEED: ${{ needs.prepare.outputs.proceed }}
+          REUSE: ${{ needs.prepare.outputs.reuse }}
+        run: |
+          if [ "$PREPARE_RESULT" != "success" ]; then
+            echo "::error::стадия deterministic prerequisites завершилась: $PREPARE_RESULT"
+            exit 1
+          fi
+          if [ "$PROCEED" != "true" ]; then
+            echo "подготовка уже вернула задачу автору; интегрировать нечего"
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$REUSE" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then
+            echo "::error::стадия model review завершилась: $MODEL_RESULT"
+            exit 1
+          fi
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        if: steps.ready.outputs.proceed == 'true'
+        with:
+          fetch-depth: 0
+          ref: dev
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        if: steps.ready.outputs.proceed == 'true'
+        with:
+          node-version: 22
+
+      - name: Получить результат модели
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: review-result-${{ github.event.issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/review-result
+
+      - name: Проверить полноту и происхождение результата
+        id: result
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
+        env:
+          NUM: ${{ github.event.issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          CYCLE: ${{ needs.guard.outputs.cycle }}
+          BRANCH: ${{ needs.prepare.outputs.branch }}
+          MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
+          MATERIAL_TREE: ${{ needs.prepare.outputs.material_tree }}
+          MATERIAL_SPECS: ${{ needs.prepare.outputs.material_specs }}
+          MATERIAL_ISSUE_BODY: ${{ needs.prepare.outputs.material_issue_body }}
+          VALIDATE_RESULT: ${{ needs.prepare.outputs.validate_result }}
+          VALIDATE_URL: ${{ needs.prepare.outputs.validate_url }}
+          REBASE_NOTE: ${{ needs.prepare.outputs.rebase_note }}
+          VALIDATED_NOTE: ${{ needs.prepare.outputs.validated_note }}
+          SPEC_BODY_CHANGED: ${{ needs.prepare.outputs.spec_body_changed }}
+          SPEC_BODY_DOC: ${{ needs.prepare.outputs.spec_body_doc }}
+          SPEC_BODY_RECORDED: ${{ needs.prepare.outputs.spec_body_recorded }}
+        run: |
+          dir="$RUNNER_TEMP/review-result"
+          expected=$(printf '%s\n' manifest.sha256 prepared.json review-document.md verdict.json | sort)
+          actual=$(find "$dir" -maxdepth 1 -type f -printf '%f\n' | sort)
+          test "$actual" = "$expected" || { echo "::error::неполный или неожиданный набор evidence"; printf 'ожидалось:\n%s\nполучено:\n%s\n' "$expected" "$actual"; exit 1; }
+          (cd "$dir" && sha256sum -c manifest.sha256)
+          test -s "$dir/review-document.md"
+          jq -e \
+            --arg run_id "$GITHUB_RUN_ID" --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg issue "$NUM" --arg stage "$STAGE" --arg cycle "$CYCLE" \
+            --arg branch "$BRANCH" --arg sha "$MATERIAL_SHA" --arg tree "$MATERIAL_TREE" \
+            --arg specs "$MATERIAL_SPECS" --arg body "$MATERIAL_ISSUE_BODY" \
+            --arg validate "$VALIDATE_RESULT" --arg validate_url "$VALIDATE_URL" \
+            --arg rebase_note "$REBASE_NOTE" --arg validated_note "$VALIDATED_NOTE" \
+            --arg spec_changed "$SPEC_BODY_CHANGED" --arg spec_doc "$SPEC_BODY_DOC" \
+            --arg spec_recorded "$SPEC_BODY_RECORDED" \
+            '.schema == 1 and .run_id == $run_id and .run_attempt == $run_attempt and .issue == $issue and .stage == $stage and .cycle == $cycle and .branch == $branch and .material_sha == $sha and .material_tree == $tree and .material_specs == $specs and .material_issue_body == $body and .validate_result == $validate and .validate_url == $validate_url and .rebase_note == $rebase_note and .validated_note == $validated_note and .spec_body_changed == $spec_changed and .spec_body_doc == $spec_doc and .spec_body_recorded == $spec_recorded' \
+            "$dir/prepared.json"
+          jq -e '
+            (.verdict == "green" or .verdict == "yellow" or .verdict == "red")
+            and (.high | type == "number") and (.medium | type == "number")
+            and (.summary | type == "string")' "$dir/verdict.json" >/dev/null
+          {
+            echo 'structured_output<<EOF_RESULT'
+            cat "$dir/verdict.json"
+            echo 'EOF_RESULT'
+          } >> "$GITHUB_OUTPUT"
+
+      # Ревьюер пишет только в docs/reviews/. Что именно попадёт в коммит,
+      # решает этот шаг, а не модель: всё остальное откатывается.
+      - name: Опубликовать документ ревью
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
+        env:
+          TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          BRANCH: ${{ needs.prepare.outputs.branch }}
+          NUM: ${{ github.event.issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          CYCLE: ${{ needs.guard.outputs.cycle }}
+          SOURCE: ${{ runner.temp }}/review-result/review-document.md
           # После ребейза конвейером — якоря приведённого материала (#515).
-          MATERIAL_SHA: ${{ steps.material.outputs.sha }}
-          MATERIAL_TREE: ${{ steps.material.outputs.tree }}
-          MATERIAL_SPECS: ${{ steps.material.outputs.specs }}
-          MATERIAL_ISSUE_BODY: ${{ steps.material.outputs.issue_body }}
+          MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
+          MATERIAL_TREE: ${{ needs.prepare.outputs.material_tree }}
+          MATERIAL_SPECS: ${{ needs.prepare.outputs.material_specs }}
+          MATERIAL_ISSUE_BODY: ${{ needs.prepare.outputs.material_issue_body }}
           # Вердикт из structured_output попадает в блок якорей (#499): по нему
           # следующий заход решает, можно ли применить зелёный вердикт повторно.
-          OUT: ${{ steps.review.outputs.structured_output }}
+          OUT: ${{ steps.result.outputs.structured_output }}
         run: |
           verdict=$(printf '%s' "$OUT" | jq -r '.verdict // empty' 2>/dev/null || true)
           high=$(printf '%s' "$OUT" | jq -r '.high // empty' 2>/dev/null || true)
@@ -1096,12 +1385,12 @@ jobs:
       # достижим там из необновлённой локальной ветки. Читателю отчёта от этого
       # пользы нет — он достанет только то, что есть на origin.
       - name: "Материал раунда воспроизводим (#413)"
-        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
         env:
           NUM: ${{ github.event.issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
-          BRANCH: ${{ steps.branch.outputs.name }}
+          BRANCH: ${{ needs.prepare.outputs.branch }}
         run: |
           marker=CODE-REVIEW
           if [ "$STAGE" = "spec" ]; then marker=SPEC-REVIEW; fi
@@ -1113,14 +1402,14 @@ jobs:
           git show "origin/$target:$doc" | node scripts/review-doc-guard.mjs --doc=-
       - name: Решение по вердикту
         id: decide
-        if: steps.gate.outputs.proceed == 'true'
+        if: steps.ready.outputs.proceed == 'true'
         env:
-          OUT: ${{ steps.review.outputs.structured_output }}
+          OUT: ${{ steps.result.outputs.structured_output }}
           STAGE: ${{ needs.guard.outputs.stage }}
-          REUSE: ${{ steps.reuse.outputs.reuse }}
-          REUSE_DOC: ${{ steps.reuse.outputs.doc }}
-          REUSE_ROUND: ${{ steps.reuse.outputs.round }}
-          REUSE_TREE: ${{ steps.reuse.outputs.tree }}
+          REUSE: ${{ needs.prepare.outputs.reuse }}
+          REUSE_DOC: ${{ needs.prepare.outputs.reuse_doc }}
+          REUSE_ROUND: ${{ needs.prepare.outputs.reuse_round }}
+          REUSE_TREE: ${{ needs.prepare.outputs.reuse_tree }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           NUM: ${{ github.event.issue.number }}
         run: |
@@ -1168,11 +1457,11 @@ jobs:
       # dev действительно ушёл и вердикт зелёный, то есть слияние вот-вот
       # случится (#364).
       - name: dev ушёл вперёд, пока шло ревью
-        if: steps.gate.outputs.proceed == 'true' && needs.guard.outputs.stage == 'code'
+        if: steps.ready.outputs.proceed == 'true' && needs.guard.outputs.stage == 'code'
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           NUM: ${{ github.event.issue.number }}
-          MATERIAL: ${{ steps.material.outputs.sha }}
+          MATERIAL: ${{ needs.prepare.outputs.material_sha }}
           GREEN: ${{ steps.decide.outputs.green }}
         run: |
           git fetch -q origin dev
@@ -1201,9 +1490,9 @@ jobs:
         env:
           HP_PROCESS_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          BRANCH: ${{ steps.branch.outputs.name }}
+          BRANCH: ${{ needs.prepare.outputs.branch }}
           NUM: ${{ github.event.issue.number }}
-          MATERIAL_SHA: ${{ steps.material.outputs.sha }}
+          MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
         run: |
           if [ -z "$BRANCH" ]; then
             echo "::error::ветки задачи нет — сливать нечего"
@@ -1214,7 +1503,7 @@ jobs:
             --issue="$NUM" --repo="${{ github.repository }}"
 
       - name: Переставить метку
-        if: steps.gate.outputs.proceed == 'true'
+        if: steps.ready.outputs.proceed == 'true'
         env:
           # Именно PAT: с GITHUB_TOKEN следующий шаг конвейера не запустится.
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
@@ -1231,18 +1520,51 @@ jobs:
             --add-label "$TO" --remove-label "$FROM"
           echo "$FROM -> $TO"
 
-      - name: Позвать владельца, если ревью упало
+      - name: Сводка длительности стадий
+        if: always()
+        env:
+          STARTED: ${{ steps.clock.outputs.started }}
+          PREPARE_SECONDS: ${{ needs.prepare.outputs.duration_seconds }}
+          MODEL_SECONDS: ${{ needs.model_review.outputs.duration_seconds }}
+        run: |
+          integration=$(( $(date +%s) - STARTED ))
+          {
+            echo "## Бюджеты стадий (#551)"
+            echo ""
+            echo "| Стадия | Длительность | Лимит |"
+            echo "|---|---:|---:|"
+            echo "| deterministic prerequisites | ${PREPARE_SECONDS:-нет полного измерения}s | 55 min |"
+            echo "| model review | ${MODEL_SECONDS:-не запускалась}s | 45 min |"
+            echo "| publication/integration | ${integration}s | 55 min |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Позвать владельца, если стадия упала
         if: failure()
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PREPARE_RESULT: ${{ needs.prepare.result }}
+          MODEL_RESULT: ${{ needs.model_review.result }}
+          PROCEED: ${{ needs.prepare.outputs.proceed }}
+          REUSE: ${{ needs.prepare.outputs.reuse }}
         run: |
+          stage="публикация/интеграция"
+          detail="Модель уже завершила работу; её запечатанный результат сохранён artifact-ом этого run, но не был применён."
+          if [ "$PREPARE_RESULT" != "success" ]; then
+            stage="deterministic prerequisites"
+            detail="Модель не запускалась, цикл ревью не израсходован."
+          elif [ "$PROCEED" = "true" ] && [ "$REUSE" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then
+            stage="model review"
+            detail="Полного валидного результата модели нет; метка не менялась."
+          fi
           # Тело через heredoc, а не многострочный --body: строка с нулевым
           # отступом обрывает блок YAML и оставляет незакрытую кавычку.
           cat > /tmp/failure.md <<EOF
-          Автоматическое ревью не отработало: [прогон]($RUN_URL). Статусная метка не менялась, задача осталась на месте.
+          Автоматическое ревью не отработало: стадия **$stage** остановилась. [Прогон]($RUN_URL). Статусная метка не менялась, задача осталась на месте.
 
-          Если вердикт выше всё же опубликован — сбой произошёл после него. Перестановку метки в этом случае выполняет чат обслуживания или владелец, но не автор задачи: автор не толкует вердикт о своей же работе.
+          $detail
+
+          Если вердикт выше всё же опубликован — перестановку метки выполняет чат обслуживания или владелец, но не автор задачи: автор не толкует вердикт о своей же работе.
           EOF
           gh issue comment "${{ github.event.issue.number }}" \
             --repo "${{ github.repository }}" --body-file /tmp/failure.md

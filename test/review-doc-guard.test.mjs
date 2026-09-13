@@ -579,11 +579,14 @@ test('конвейер: посторонняя метка не входит в c
   // Concurrency — на job, не на workflow: иначе любой `labeled` вытеснял ожидающий S7.
   const head = workflow.slice(0, workflow.indexOf('\njobs:'));
   assert.doesNotMatch(head, /^concurrency:/m, 'concurrency на уровне workflow снова пустит в группу все метки');
-  const guard = workflow.slice(workflow.indexOf('\n  guard:'), workflow.indexOf('\n  review:'));
+  const guard = workflow.slice(workflow.indexOf('\n  guard:'), workflow.indexOf('\n  prepare:'));
   assert.match(guard, /if: github\.event\.label\.name == 'S4-spec-review' \|\| github\.event\.label\.name == 'S7-code-review'/);
   assert.match(guard, /concurrency:\n\s+group: process-issue-\$\{\{ github\.event\.issue\.number \}\}/);
-  const review = workflow.slice(workflow.indexOf('\n  review:'));
-  assert.match(review, /concurrency:\n\s+group: process-issue-\$\{\{ github\.event\.issue\.number \}\}/);
+  for (const [job, next] of [['prepare', 'model_review'], ['model_review', 'integrate'], ['integrate', null]]) {
+    const start = workflow.indexOf(`\n  ${job}:`);
+    const end = next ? workflow.indexOf(`\n  ${next}:`) : workflow.length;
+    assert.match(workflow.slice(start, end), /concurrency:\n\s+group: process-issue-\$\{\{ github\.event\.issue\.number \}\}/, `${job} сериализован по issue`);
+  }
   // Состояние читается текущее, не из снимка события.
   assert.match(guard, /gh issue view "\$NUM" --repo "\$REPO" --json labels/);
   assert.doesNotMatch(guard, /contains\(github\.event\.issue\.labels/, 'снимок события больше не источник меток');
@@ -593,14 +596,15 @@ test('конвейер: посторонняя метка не входит в c
 test('конвейер: зелёный вердикт применяется повторно без модели, вердикт пишется в якоря (#499)', () => {
   const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
   assert.match(workflow, /review-doc-guard\.mjs --reuse --marker=CODE-REVIEW --num="\$NUM" --head=HEAD/);
-  const reviewStep = workflow.slice(workflow.indexOf('      - name: Review\n'), workflow.indexOf('anthropics/claude-code-action'));
-  assert.match(reviewStep, /steps\.reuse\.outputs\.reuse != 'true'/, 'модель не вызывается при повторном применении');
+  const modelJob = workflow.slice(workflow.indexOf('\n  model_review:'), workflow.indexOf('\n  integrate:'));
+  assert.match(modelJob, /if: needs\.prepare\.outputs\.proceed == 'true' && needs\.prepare\.outputs\.reuse != 'true'/,
+    'при повторном применении вся стадия модели пропускается');
   const publish = workflow.slice(workflow.indexOf('- name: Опубликовать документ ревью'), workflow.indexOf('- name: Решение по вердикту'));
   assert.match(publish, /--verdict="\$verdict" --high="\$high"/);
   const decide = workflow.slice(workflow.indexOf('- name: Решение по вердикту'), workflow.indexOf('- name: dev ушёл вперёд'));
   assert.match(decide, /if \[ "\$REUSE" = "true" \]; then\n\s+(#[^\n]*\n\s+)*verdict=green; high=0/);
   // Ревьюер привязан к SHA материала — сам подтягивать новее не должен.
-  assert.match(workflow, /Материал ревью — ровно\s+`\$\{\{ steps\.material\.outputs\.sha \}\}`/);
+  assert.match(workflow, /Материал ревью — ровно\s+`\$\{\{ needs\.prepare\.outputs\.material_sha \}\}`/);
 });
 
 test('#510 AC2: конвейер запускает Validate с мутантами на материале и не ревьюит красный', () => {
@@ -611,28 +615,28 @@ test('#510 AC2: конвейер запускает Validate с мутантам
   const gate = at('      - name: Validate с мутантами на материале\n');
   assert.ok(material < reuse && reuse < gate, 'gate читает steps.reuse.outputs — стоит после шага reuse (ревью ТЗ r1)');
   const back = at('      - name: Validate красный — вернуть автору без ревью\n');
+  const modelJob = at('\n  model_review:\n');
   const deps = at('      - name: Установить зависимости\n');
   const review = at('      - name: Review\n');
-  assert.ok(material < gate && gate < back && back < deps && deps < review, 'гейт стоит после фиксации материала и до установки зависимостей/ревью');
+  assert.ok(material < gate && gate < back && back < modelJob && modelJob < deps && deps < review,
+    'гейт закончен в отдельной стадии до установки зависимостей/ревью');
   const gateStep = workflow.slice(gate, back);
   assert.match(gateStep, /node scripts\/validate-gate\.mjs --repo="\$\{\{ github\.repository \}\}" --ref="\$BRANCH" --sha="\$SHA"/);
   assert.match(gateStep, /if \[ "\$STAGE" != "code" \] \|\| \[ "\$REUSE" = "true" \]/, 'этап spec и reuse гейт не проходят');
   assert.match(gateStep, /SHA: \$\{\{ steps\.material\.outputs\.sha \}\}/, 'проверяется именно материал');
   // skip-ветка (spec/reuse) даёт proceed=true: ревью идёт, возврата S7→S6 нет (ревью ТЗ r2)
   assert.match(gateStep, /\{ echo 'proceed=true'; echo 'result=skipped'; \}/, 'skipped = proceed');
-  assert.doesNotMatch(workflow.slice(back), /if:[^\n]*steps\.gate\.outputs\.result/, 'условия шагов — только по proceed, result идёт в текст комментария');
+  assert.doesNotMatch(workflow.slice(modelJob), /steps\.gate\.outputs/, 'следующие jobs не читают локальные outputs prepare');
   const backStep = workflow.slice(back, deps);
   assert.match(backStep, /if: steps\.rebase\.outputs\.conflict != 'true' && steps\.gate\.outputs\.proceed != 'true'/);
   assert.match(backStep, /--add-label S6-in-progress --remove-label S7-code-review/);
   assert.match(backStep, /цикл ревью не израсходован/);
-  // всё, что после гейта, условно по proceed — включая перестановку метки и слияние
-  const after = workflow.slice(deps);
-  assert.doesNotMatch(after, /if: steps\.rebase\.outputs\.conflict != 'true'/, 'после гейта нет шагов, условных только по конфликту');
-  for (const name of ['Установить зависимости', 'Review', 'Решение по вердикту', 'Слить ветку в dev', 'Переставить метку']) {
-    const i = at(`      - name: ${name}\n`);
-    const chunk = workflow.slice(i, i + 400);
-    assert.match(chunk, /if: (needs\.guard\.outputs\.stage == 'code' && )?steps\.(gate\.outputs\.proceed == 'true'|decide\.outputs\.green == 'true')/, `${name}: условие по proceed/зелёному`);
-  }
+  assert.match(workflow.slice(modelJob, deps), /if: needs\.prepare\.outputs\.proceed == 'true'/,
+    'красный prepare вообще не запускает модель');
+  const integrate = workflow.slice(at('\n  integrate:\n'));
+  assert.match(integrate, /PROCEED: \$\{\{ needs\.prepare\.outputs\.proceed \}\}/);
+  assert.match(integrate, /if \[ "\$PROCEED" != "true" \]; then[\s\S]*echo "proceed=false"/,
+    'интеграция не применяется после красного gate');
 });
 
 test('#515: якоря материала снимаются ПОСЛЕ ребейза конвейером и публикуются из шага material', () => {
@@ -648,7 +652,7 @@ test('#515: якоря материала снимаются ПОСЛЕ ребе
   const publish = at('      - name: Опубликовать документ ревью\n');
   const publishStep = workflow.slice(publish, at('      - name: "Материал раунда воспроизводим (#413)"\n'));
   for (const name of ['SHA', 'TREE', 'SPECS']) {
-    assert.match(publishStep, new RegExp(`MATERIAL_${name}: \\$\\{\\{ steps\\.material\\.outputs\\.${name.toLowerCase()} \\}\\}`), `MATERIAL_${name} из material`);
+    assert.match(publishStep, new RegExp(`MATERIAL_${name}: \\$\\{\\{ needs\\.prepare\\.outputs\\.material_${name.toLowerCase()} \\}\\}`), `MATERIAL_${name} из prepare`);
   }
   // до-ребейзные якоря из шага branch никем не читаются: после force-push они мертвы (#508 r1–r3)
   assert.doesNotMatch(workflow, /steps\.branch\.outputs\.(sha|tree|specs)/, 'якоря из шага branch — осиротевшие после ребейза');
@@ -723,7 +727,7 @@ test('#517: конвейер снимает хеш тела на материа�
   assert.match(materialStep, /echo "issue_body=\$digest" >> "\$GITHUB_OUTPUT"/);
   assert.match(workflow.slice(reuse, specBody), /--issue-body="\$\{ISSUE_BODY\}"/, 'reuse учитывает тело (AC6)');
   assert.match(workflow, /--issue-body="\$MATERIAL_ISSUE_BODY"/, 'якорь попадает в документ');
-  assert.match(workflow, /steps\.spec_body\.outputs\.changed == 'true' &&/, 'находка уходит в промпт ревьюера');
+  assert.match(workflow, /needs\.prepare\.outputs\.spec_body_changed == 'true' &&/, 'находка уходит в промпт ревьюера');
 });
 
 test('#517 AC4: документы процесса не требуют файла ТЗ, индекс docs/specs удалён', () => {
@@ -742,6 +746,46 @@ test('#517 AC4: документы процесса не требуют файл
   assert.match(readme, /архив/i);
   assert.equal((readme.match(/^\| \[#\d+\]/gm) || []).length, 0, 'таблица-индекс удалена');
   assert.doesNotMatch(readme, /Статус ТЗ/);
+});
+
+test('#551: gates, модель и интеграция имеют независимые jobs, contracts и бюджеты', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const job = (name, next) => {
+    const start = workflow.indexOf(`\n  ${name}:`);
+    assert.ok(start > 0, `job ${name} найден`);
+    const end = next ? workflow.indexOf(`\n  ${next}:`, start + 1) : workflow.length;
+    assert.ok(end > start, `граница job ${name} найдена`);
+    return workflow.slice(start, end);
+  };
+  const prepare = job('prepare', 'model_review');
+  const model = job('model_review', 'integrate');
+  const integrate = job('integrate');
+
+  assert.match(prepare, /timeout-minutes: 55/);
+  assert.match(model, /timeout-minutes: 45/);
+  assert.match(integrate, /timeout-minutes: 55/);
+  assert.match(prepare, /node scripts\/validate-gate\.mjs/);
+  assert.doesNotMatch(model, /validate-gate\.mjs/, 'ожидания Validate нет в бюджете модели');
+  assert.match(model, /needs: \[guard, prepare\]/);
+  assert.match(integrate, /needs: \[guard, prepare, model_review\]/);
+  assert.match(model, /ref: \$\{\{ needs\.prepare\.outputs\.material_sha \}\}/,
+    'модель получает exact material, а не подвижную ветку');
+
+  assert.match(prepare, /review-prepared-\$\{NUM\}-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}/);
+  assert.equal((workflow.match(/sha256sum -c manifest\.sha256/g) || []).length, 2,
+    'контракт проверяют и модель, и интеграция');
+  assert.match(model, /test "\$\(git rev-parse HEAD\)" = "\$MATERIAL_SHA"/);
+  assert.match(model, /review-result-\$\{NUM\}-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}/);
+  assert.match(integrate, /неполный или неожиданный набор evidence/);
+  assert.match(integrate, /sha256sum -c manifest\.sha256/);
+  assert.match(integrate, /\.run_id == \$run_id[\s\S]*\.material_sha == \$sha[\s\S]*\.material_tree == \$tree/,
+    'подмена run/SHA/tree между jobs отвергается');
+  assert.match(integrate, /PREPARE_RESULT: \$\{\{ needs\.prepare\.result \}\}/);
+  assert.match(integrate, /MODEL_RESULT: \$\{\{ needs\.model_review\.result \}\}/);
+  assert.match(integrate, /if \[ "\$REUSE" != "true" \] && \[ "\$MODEL_RESULT" != "success" \]; then/,
+    'интеграция не доверяет failed/cancelled/skipped модели');
+  assert.match(integrate, /цикл ревью не израсходован/);
+  assert.match(integrate, /Бюджеты стадий \(#551\)/, 'длительности публикуются раздельно');
 });
 
 // #539: `workflow_dispatch` принимает только ref, а не SHA. Конвейер сам

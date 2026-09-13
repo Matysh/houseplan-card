@@ -7848,6 +7848,39 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-model-checks-out-moving-dev',
+    guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
+    because: '#551: модель должна читать exact material, подготовленный до её запуска; checkout '
+      + 'подвижного dev разрывает контракт между зелёным gate и вердиктом',
+    patches: [{
+      file: '.github/workflows/process.yml',
+      find: '          ref: ${{ needs.prepare.outputs.material_sha }}',
+      replace: '          ref: dev # mutant: moving material',
+    }],
+  },
+  {
+    id: 'review-integration-skips-evidence-checksum',
+    guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
+    because: '#551: artifact между моделью и привилегированной интеграцией — вход доверенной '
+      + 'стадии; без checksum неполный или подменённый документ можно опубликовать и слить',
+    patches: [{
+      file: '.github/workflows/process.yml',
+      find: '          (cd "$dir" && sha256sum -c manifest.sha256)\n          test -s "$dir/review-document.md"',
+      replace: '          # mutant: result contents are trusted\n          test -s "$dir/review-document.md"',
+    }],
+  },
+  {
+    id: 'review-integration-trusts-failed-model',
+    guard: 'node --test --test-name-pattern="#551" test/review-doc-guard.test.mjs',
+    because: '#551: timeout/cancel/failure модели не является вердиктом; интеграция обязана '
+      + 'остановиться, сохранить метку и назвать упавшую стадию',
+    patches: [{
+      file: '.github/workflows/process.yml',
+      find: '          if [ "$REUSE" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then',
+      replace: '          if false; then # mutant: every model result is accepted',
+    }],
+  },
+  {
     id: 'announce-listens-to-the-release-event-again',
     guard: 'node --test test/release-workflow.test.mjs',
     because: '#538: пока анонс висел на самом событии `release: published`, он бежал '

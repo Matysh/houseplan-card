@@ -234,17 +234,18 @@ rather than kept in someone's head. Infrastructure work skips specification, not
 code review.
 
 **Review starts by itself.** Applying `S4-spec-review` or `S7-code-review` fires the
-pipeline, which reviews without anyone asking and takes ten to forty-five minutes.
+pipeline. Deterministic gates, model review and integration have independent
+55/45/55-minute budgets (#551); typical runs finish well before those ceilings.
 
 **Having applied one of those labels, wait for the result instead of ending the
 session.** Reporting "handed over for review" stops a conveyor that could have kept
 moving on its own. An agent has no clock — it exists only during its own turn — so
-waiting means polling: every 90 seconds, at most 30 times. A single long sleep hits
+waiting means polling: every 90 seconds, at most 110 times. A single long sleep hits
 the command timeout. Do the polling with `node scripts/wait-verdict.mjs --issue NN
 [--sha <tip>]` (#496): it watches the label, the pipeline's own comments (conflict,
 cancelled merge, failed run) and optionally Validate on the SHA, prints only when
 the state changes and exits 0 on a new label, 3 on an event that needs a hand,
-4 on timeout — the same 90 s × 30 without a model turn per tick. It writes
+4 on timeout — the same 90 s × 110 without a model turn per tick. It writes
 nothing. Pipeline comments older than the latest application of `S4`/`S7` are
 the baseline, not an outcome of the new round; an outcome from the current round
 which already exists when the waiter starts is still delivered immediately (#546).
