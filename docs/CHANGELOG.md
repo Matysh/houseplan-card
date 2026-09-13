@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.76.0-beta.1 — 2026-09-13
+
 - Summary-panel visibility and size preferences no longer move between House
   Plan cards after a full Masonry reload at another width. Masonry cards now
   use their logical dashboard order instead of visual columns; because the old
