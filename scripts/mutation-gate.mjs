@@ -7782,8 +7782,70 @@ const MUTANT_DEFINITIONS = [
       + 'ответ». Без неё анонс уходит при красном гейте, то есть ровно то, что случилось',
     patches: [{
       file: '.github/workflows/release.yml',
-      find: '    name: Оповещение о релизе после выкладки\n    needs: build',
-      replace: '    name: Оповещение о релизе после выкладки\n    if: always()',
+      find: '    name: Оповещение о релизе после выкладки\n    needs: [candidate, publish]\n'
+        + "    if: ${{ needs.publish.outputs.newly_published == 'true' }}",
+      replace: '    name: Оповещение о релизе после выкладки\n    needs: [candidate]\n    if: always()',
+    }],
+  },
+  {
+    id: 'asset-upload-stops-needing-the-gate',
+    guard: 'node --test test/release-workflow.test.mjs',
+    because: '#540: единственный публикатор ассетов ценен ровно тем, что стоит ЗА гейтом. '
+      + 'Снятая зависимость — это `release-zip.yml` под другим именем: ассеты уходят в '
+      + 'ту же минуту, когда Validate, Full Performance и E2E ещё идут или уже красные',
+    patches: [{
+      file: '.github/workflows/release.yml',
+      find: '  stage:\n    name: "Сборка: ассеты, SHA256SUMS и загрузка в черновик"\n    needs: [candidate, gate]',
+      replace: '  stage:\n    name: "Сборка: ассеты, SHA256SUMS и загрузка в черновик"\n    needs: [candidate]',
+    }],
+  },
+  {
+    id: 'hand-published-release-stays-public-during-the-gates',
+    guard: 'node --test test/release-workflow.test.mjs',
+    because: '#540: fail-closed держится на одном шаге — релиз, опубликованный руками, '
+      + 'немедленно возвращается в черновик. Без него всё время гейтов (час и больше) '
+      + 'снаружи висит публичный релиз с непроверенными или отсутствующими ассетами — '
+      + 'состояние v1.75.0 12.09',
+    patches: [{
+      file: '.github/workflows/release.yml',
+      find: '            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft\n',
+      replace: '            true\n',
+    }],
+  },
+  {
+    id: 'repair-clobbers-the-public-asset',
+    guard: 'node --test test/release-workflow.test.mjs',
+    because: '#540: ремонт догружает только недостающее. `--clobber` на публичном релизе '
+      + 'подменяет байты, которые кто-то уже скачал и установил, — молча и без следа; '
+      + 'расхождение хеша обязано быть отказом, а не перезаписью',
+    patches: [{
+      file: '.github/workflows/release.yml',
+      find: '              gh release upload "$TAG" $missing --repo "$GITHUB_REPOSITORY"\n',
+      replace: '              gh release upload "$TAG" $missing --repo "$GITHUB_REPOSITORY" --clobber\n',
+    }],
+  },
+  {
+    id: 'e2e-gate-tests-the-tag-instead-of-the-candidate',
+    guard: 'node --test test/e2e-gate.test.mjs',
+    because: '#540: E2E на теге качает `houseplan.zip` из публичного релиза — то есть '
+      + 'требует публикации ДО проверки, и цикл «релиз должен быть публичным, чтобы его '
+      + 'проверить» возвращается. Под тестом обязан быть SHA кандидата',
+    patches: [{
+      file: 'scripts/e2e-gate.mjs',
+      find: '    await ops.dispatch(ref, previousStable(await ops.releases(), tag));',
+      replace: '    await ops.dispatch(tag, previousStable(await ops.releases(), tag));',
+    }],
+  },
+  {
+    id: 'passport-accepts-a-different-hash',
+    guard: 'node --test test/release-assets.test.mjs',
+    because: '#540: паспорт ассетов существует ради одного сравнения — публичные байты '
+      + 'равны проверенным. Ослеплённое сравнение делает SHA256SUMS украшением: релиз с '
+      + 'подменённым ZIP проходит сверку зелёным',
+    patches: [{
+      file: 'scripts/release-assets.mjs',
+      find: '    else if (actual[name] !== expected[name]) mismatched.push(name);',
+      replace: '    else if (false) mismatched.push(name);',
     }],
   },
   {
@@ -8812,8 +8874,8 @@ const MUTANT_DEFINITIONS = [
       + 'a failed run as green ships the assets the run just rejected (#514 AC1)',
     patches: [{
       file: 'scripts/e2e-gate.mjs',
-      find: "        if (run.conclusion === 'success') return { result: 'green', url: run.url, note: `E2E на ${tag} зелёный` };",
-      replace: "        return { result: 'green', url: run.url, note: `E2E на ${tag} зелёный` }; // mutant: completed means green",
+      find: "        if (run.conclusion === 'success') return { result: 'green', url: run.url, note: `E2E на ${ref} зелёный` };",
+      replace: "        return { result: 'green', url: run.url, note: `E2E на ${ref} зелёный` }; // mutant: completed means green",
     }],
   },
   {

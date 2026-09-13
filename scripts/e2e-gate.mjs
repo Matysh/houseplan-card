@@ -4,11 +4,17 @@
  *
  * Стабильный релиз проходил Validate и Full Performance на точном SHA, но ни
  * разу не запускался в настоящем HA. Репозиторий houseplan-e2e ставит House
- * Plan из `houseplan.zip` релиза — те же байты, что скачивает HACS, — и гоняет
- * 13 сценариев Playwright. Этот скрипт запускает его workflow на теге и ждёт
- * зелёного; `release.yml` вызывает его для `!prerelease` после Full Performance.
+ * Plan и гоняет 13 сценариев Playwright. Этот скрипт запускает его workflow и
+ * ждёт зелёного; `release.yml` вызывает его для стабильных после Full Performance.
  *
- *   node scripts/e2e-gate.mjs --tag=<vX.Y.Z> [--repo=Matysh/houseplan-e2e] [--workflow=e2e.yml]
+ * #540: под тестом — коммит-кандидат (`--ref=<sha>`), а не публичный релиз.
+ * install-houseplan.mjs для ветки/коммита ставит `custom_components/houseplan`
+ * из tarball codeload — то же дерево, из которого `git archive` строит
+ * `houseplan.zip`. Так релиз проверяется ДО того, как станет публичным; раньше
+ * гейт качал ZIP из релиза, то есть требовал публикации до проверки. `--tag`
+ * при этом остаётся: он исключает выпускаемый тег из выбора `upgrade_from`.
+ *
+ *   node scripts/e2e-gate.mjs --tag=<vX.Y.Z> [--ref=<sha>] [--repo=Matysh/houseplan-e2e] [--workflow=e2e.yml]
  *
  * Печатает `result=green|red|missing|error`, `url=…`, `note=…` (и в
  * $GITHUB_OUTPUT), код выхода 0 только при green. Логика — чистая функция
@@ -16,9 +22,8 @@
  */
 import { spawnSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { resolve } from 'node:path';
 import { VALIDATE_APPEAR_MS, VALIDATE_TOTAL_MS } from './merge-candidate.mjs';
+import { isMainModule } from './spawn-portable.mjs';
 
 export const POLL_MS = 20_000;
 export const E2E_REPO = 'Matysh/houseplan-e2e';
@@ -42,15 +47,16 @@ export function previousStable(releases, tag) {
 }
 
 /**
- * Прогон — наш, если сьют, ставящий сам тег, назван по нему: имя job в
+ * Прогон — наш, если сьют, ставящий сам кандидат, назван по нему: имя job в
  * e2e.yml — `"${suite} · HP ${ref} · HA ${ha}"`, и у `journeys`/`first-run`
- * `ref` — это `houseplan_ref`. Сьют `upgrade` носит `upgrade_from` — тег
- * ПРЕДЫДУЩЕГО stable, поэтому «любая job с HP <tag>» приняла бы прогон нового
- * релиза за прогон старого (живой прогон 09.09: v1.72.0 ← run для v1.73.0).
+ * `ref` — это `houseplan_ref` (тег или SHA, #540). Сьют `upgrade` носит
+ * `upgrade_from` — тег ПРЕДЫДУЩЕГО stable, поэтому «любая job с HP <ref>»
+ * приняла бы прогон нового релиза за прогон старого (живой прогон 09.09:
+ * v1.72.0 ← run для v1.73.0).
  */
 export const TAG_SUITES = ['journeys', 'first-run'];
-export function isOurRun(jobs, tag) {
-  const needles = TAG_SUITES.map((suite) => `${suite} · HP ${tag} · `);
+export function isOurRun(jobs, ref) {
+  const needles = TAG_SUITES.map((suite) => `${suite} · HP ${ref} · `);
   return (Array.isArray(jobs) ? jobs : []).some((job) => needles.some((needle) => String(job?.name || '').startsWith(needle)));
 }
 
@@ -59,25 +65,26 @@ export function isOurRun(jobs, tag) {
  * сначала планирует матрицу отдельной job, и первые секунды виден только
  * «Матрица прогона». Живой прогон 09.09 записал такой run в чужие навсегда.
  */
-export function classifyRun(jobs, tag) {
+export function classifyRun(jobs, ref) {
   const named = (Array.isArray(jobs) ? jobs : []).filter((job) => / · HP .+ · /.test(String(job?.name || '')));
   if (!named.length) return 'unknown';
-  return isOurRun(named, tag) ? 'ours' : 'foreign';
+  return isOurRun(named, ref) ? 'ours' : 'foreign';
 }
 
 /**
  * @param {object} p
- * @param {string} p.tag  тег релиза (houseplan_ref для e2e.yml)
- * @param {object} p.ops  { releases() → [{tagName,isDraft,isPrerelease}] новые первыми, dispatch(tag, upgradeFrom), listRuns() → [{databaseId,status,conclusion,url,createdAt}], jobs(runId) → [{name,conclusion}], sleep(ms), now() }
+ * @param {string} p.tag  выпускаемый тег — исключается из выбора `upgrade_from`
+ * @param {string} [p.ref] что ставить под тест (`houseplan_ref` для e2e.yml): SHA кандидата (#540); по умолчанию сам тег
+ * @param {object} p.ops  { releases() → [{tagName,isDraft,isPrerelease}] новые первыми, dispatch(ref, upgradeFrom), listRuns() → [{databaseId,status,conclusion,url,createdAt}], jobs(runId) → [{name,conclusion}], sleep(ms), now() }
  * @returns {Promise<{result:'green'|'red'|'missing'|'error', url:string|null, note:string}>}
  */
-export async function e2eGate({ tag, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS }) {
+export async function e2eGate({ tag, ref = tag, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS }) {
   const started = ops.now();
   try {
     // Список релизов читается ДО dispatch и обязан падать громко (ревью r3 M1):
     // fine-grained токен «только houseplan-e2e» не видит houseplan-card, и
     // тихий пустой список дал бы upgrade_from=stable — тег сам на себя.
-    await ops.dispatch(tag, previousStable(await ops.releases(), tag));
+    await ops.dispatch(ref, previousStable(await ops.releases(), tag));
   } catch (error) {
     const message = String(error?.message || error);
     const forbidden = /403|Resource not accessible|not accessible by/i.test(message);
@@ -93,7 +100,7 @@ export async function e2eGate({ tag, ops, appearMs = VALIDATE_APPEAR_MS, totalMs
       for (const candidate of runs) {
         const createdAt = Date.parse(candidate.createdAt || '') || 0;
         if (createdAt < started - CLOCK_SKEW_MS) continue;
-        const kind = classifyRun(await ops.jobs(candidate.databaseId), tag);
+        const kind = classifyRun(await ops.jobs(candidate.databaseId), ref);
         if (kind === 'ours') { run = candidate; break; }
         if (kind === 'foreign' || candidate.status === 'completed') foreign.add(candidate.databaseId);
       }
@@ -101,16 +108,16 @@ export async function e2eGate({ tag, ops, appearMs = VALIDATE_APPEAR_MS, totalMs
     if (run) {
       tracked = run.databaseId;
       if (run.status === 'completed') {
-        if (run.conclusion === 'success') return { result: 'green', url: run.url, note: `E2E на ${tag} зелёный` };
-        if (run.conclusion === 'cancelled') return { result: 'red', url: run.url, note: `E2E на ${tag} отменён вручную — перезапустите гейт` };
-        return { result: 'red', url: run.url, note: `E2E на ${tag} завершился: ${run.conclusion}` };
+        if (run.conclusion === 'success') return { result: 'green', url: run.url, note: `E2E на ${ref} зелёный` };
+        if (run.conclusion === 'cancelled') return { result: 'red', url: run.url, note: `E2E на ${ref} отменён вручную — перезапустите гейт` };
+        return { result: 'red', url: run.url, note: `E2E на ${ref} завершился: ${run.conclusion}` };
       }
     } else if (ops.now() - started > appearMs) {
-      return { result: 'missing', url: null, note: `dispatch e2e.yml на ${tag} не появился за ${Math.round(appearMs / 60000)} мин` };
+      return { result: 'missing', url: null, note: `dispatch e2e.yml на ${ref} не появился за ${Math.round(appearMs / 60000)} мин` };
     }
     await ops.sleep(pollMs);
   }
-  return { result: 'red', url: tracked ? `run ${tracked}` : null, note: `E2E на ${tag} не завершился за ${Math.round(totalMs / 60000)} мин` };
+  return { result: 'red', url: tracked ? `run ${tracked}` : null, note: `E2E на ${ref} не завершился за ${Math.round(totalMs / 60000)} мин` };
 }
 
 const sh = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8' });
@@ -124,9 +131,9 @@ export function realOps({ repo = E2E_REPO, workflow = E2E_WORKFLOW, cardRepo = C
       if (r.status !== 0) throw new Error(`gh release list ${cardRepo}: ${(r.stderr || r.stdout || '').trim()}`);
       return r.stdout ? JSON.parse(r.stdout) : [];
     },
-    dispatch: async (tag, upgradeFrom = 'stable') => {
+    dispatch: async (ref, upgradeFrom = 'stable') => {
       const r = exec('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', 'main',
-        '-f', `houseplan_ref=${tag}`, '-f', `upgrade_from=${upgradeFrom}`, '-f', 'ha_version=stable']);
+        '-f', `houseplan_ref=${ref}`, '-f', `upgrade_from=${upgradeFrom}`, '-f', 'ha_version=stable']);
       if (r.status !== 0) throw new Error(`gh workflow run: ${(r.stderr || r.stdout || '').trim()}`);
     },
     listRuns: async () => parse(exec('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--event', 'workflow_dispatch', '--json', fields, '--limit', '10'])),
@@ -139,15 +146,15 @@ export function realOps({ repo = E2E_REPO, workflow = E2E_WORKFLOW, cardRepo = C
   };
 }
 
-const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
-if (invokedDirectly) {
+if (isMainModule(import.meta.url)) { // #496: переносимо для Windows
   const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
   const tag = arg('tag');
   if (!tag) {
-    console.error('usage: e2e-gate.mjs --tag=<vX.Y.Z> [--repo=Matysh/houseplan-e2e] [--workflow=e2e.yml] [--card-repo=Matysh/houseplan-card]');
+    console.error('usage: e2e-gate.mjs --tag=<vX.Y.Z> [--ref=<sha>] [--repo=Matysh/houseplan-e2e] [--workflow=e2e.yml] [--card-repo=Matysh/houseplan-card]');
     process.exit(2);
   }
-  const outcome = await e2eGate({ tag, ops: realOps({ repo: arg('repo') || E2E_REPO, workflow: arg('workflow') || E2E_WORKFLOW, cardRepo: arg('card-repo') || CARD_REPO }) });
+  const ref = arg('ref') || tag;
+  const outcome = await e2eGate({ tag, ref, ops: realOps({ repo: arg('repo') || E2E_REPO, workflow: arg('workflow') || E2E_WORKFLOW, cardRepo: arg('card-repo') || CARD_REPO }) });
   const lines = [`result=${outcome.result}`, `url=${outcome.url || ''}`, `note=${outcome.note}`];
   for (const line of lines) console.log(line);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`);

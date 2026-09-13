@@ -378,11 +378,12 @@ operation; it does not modify the developer's Git configuration.
 It creates or verifies an
 annotated exact-SHA tag, builds `houseplan.zip` directly from that committed
 tree, verifies its manifest and embedded frontend against the candidate hash,
-stages a draft prerelease and uploads both assets. Only then does it make the
-release public. It locates the Release, HACS-zip and Telegram runs by workflow
-file plus exact tag/SHA, verifies the downloaded public asset contents and
+stages a draft prerelease and uploads both assets plus their `SHA256SUMS`
+passport. Only then does it make the release public. It verifies the downloaded
+public asset contents against the candidate and the passport, checks the
 paginated HACS prerelease order, and finally closes only the explicitly supplied
-issues and strips their status label. Re-running the same command
+issues and strips their status label. Nothing else re-uploads assets after
+publication (#540): the bytes it verified are the bytes that stay. Re-running the same command
 after a partial failure is safe when local/remote tags still resolve to the same
 SHA: stale public assets are replaced and verified rather than accepted or left
 for manual deletion. ZIP inspection is implemented in Node and does not depend
@@ -401,21 +402,36 @@ the workflow file exists on the default branch; until the next promotion to
 closing them is the release manager's call, and the `close-merged` job does it
 from the beta itself (#120).
 
-The older release-event workflows remain supported as a recovery/manual
-fallback. They still gate assets on the exact tagged SHA, so adopting the new
-path does not weaken releases created through the old path.
-
-Tag `vX.Y.Z` + GitHub Release → `.github/workflows/release.yml` resolves that
-tag to its exact commit, waits for the latest non-cancelled Validate run of the
+**Stable releases** go through `.github/workflows/release.yml`, the only
+publisher of installable assets (#540). Run it with `workflow_dispatch` on
+`main` with the exact tag: when the tag does not exist yet it is created on the
+`main` tip; when it exists, its commit is the candidate. The workflow resolves
+the tag to its exact commit, requires the `Release: <tag>` trailer on it,
+checks the release contract (`release-contract.mjs --stable`), waits for the
+latest non-cancelled Validate run of the
 SHA to complete successfully (#511: a cancelled run is not a verdict, a later
-re-run or another-baseline comparison refreshes an older result), then builds
-and attaches `houseplan-card.js`. A missing, failed or one-hour-timed-out latest
-Validate withholds the asset; stable releases additionally need the same for
-Full Performance and a green E2E run on a real Home Assistant: `release.yml`
-dispatches `e2e.yml` in `Matysh/houseplan-e2e` with the tag (the suite installs
-the release's `houseplan.zip` into HA in docker) and waits for it (#514). A red
-E2E withholds the assets — open the linked run, the Playwright traces and
-screenshots are in its artifacts; fix, then cut a new tag. Bump the version
+re-run or another-baseline comparison refreshes an older result), requires Full
+Performance and a green E2E run on a
+real Home Assistant — `e2e-gate.mjs --ref=<sha>` dispatches `e2e.yml` in
+`Matysh/houseplan-e2e` on the **candidate commit**, whose
+`custom_components/houseplan` tree the suite installs from the codeload tarball
+(#514, #540) — then builds once, archives `houseplan.zip` from that same tree
+(`git archive <sha>:custom_components/houseplan`, deterministic), writes
+`SHA256SUMS`, uploads everything into a draft, publishes, downloads the public
+assets back and checks them against the passport, and only then announces. The
+tree hash printed in the run summary is the identity between what E2E installed
+and what HACS downloads.
+
+Publishing a stable release by hand in the GitHub form still works, but
+fail-closed: `release: published` starts the same workflow, which immediately
+turns the release back into a draft and walks the same path; nothing installable
+is public while the gates run. A red gate leaves the draft in place — open the
+linked run, the Playwright traces and screenshots are in its artifacts; fix,
+then cut a new tag. Re-dispatching the workflow on an already public tag is a
+**repair**: the gates run again on the SHA, missing assets are added, and an
+existing asset whose hash differs from the rebuilt one fails the run instead of
+being replaced. Hand-published betas are ignored by this workflow — prereleases
+have their own staged path above. Bump the version
 everywhere in sync: `src/houseplan-card.ts` (CARD_VERSION), `package.json`,
 `custom_components/houseplan/manifest.json`, `custom_components/houseplan/const.py`.
 

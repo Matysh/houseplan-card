@@ -470,8 +470,11 @@ is a service path-filter, not a gate. `docs` is a real blocker: it checks the
 screenshots `sourceFingerprint` against current `src/**`, which is exactly what
 went red after the #113 merge. A stable release additionally waits for Full
 Performance and for a green E2E run on a real Home Assistant (`houseplan-e2e`,
-dispatched on the tag by `release.yml`, #514); betas and the development cycle
-never run E2E.
+dispatched on the candidate SHA by `release.yml`, #514/#540); betas and the
+development cycle never run E2E. Installable assets (`houseplan.zip`,
+`houseplan-card.js`, `SHA256SUMS`) reach the public release only from
+`release.yml` after those gates; a release published by hand is turned back into
+a draft first (#540).
 
 **"Verified" without a named command and its result is not evidence.**
 

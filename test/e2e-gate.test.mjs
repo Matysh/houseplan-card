@@ -151,3 +151,34 @@ test('#514: realOps dispatches e2e.yml on main with the tag and the previous sta
   await ops.releases();
   assert.deepEqual(calls[2].slice(0, 5), ['gh', 'release', 'list', '--repo', 'Matysh/houseplan-card']);
 });
+
+// #540: под тестом — коммит-кандидат, не публичный релиз. Гейт диспатчит e2e.yml
+// на SHA (install-houseplan.mjs ставит дерево из tarball codeload), опознаёт
+// прогон по этому SHA в именах job, а `upgrade_from` по-прежнему выбирает по
+// тегу — выпускаемый тег из кандидатов исключается.
+const SHA = 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678';
+
+test('#540 AC1: with --ref the dispatch and the recognition use the candidate SHA, upgrade_from still excludes the tag', async () => {
+  const oursBySha = [{ name: `journeys · HP ${SHA} · HA stable`, conclusion: 'success' }, { name: 'upgrade · HP v1.73.0 · HA stable', conclusion: 'success' }];
+  const fake = fakeOps({ snapshots: [[run({ status: 'in_progress', conclusion: null })], [run()]], jobsById: { 1: oursBySha } });
+  const outcome = await e2eGate({ tag: TAG, ref: SHA, ops: fake.ops, pollMs: 1000 });
+  assert.equal(outcome.result, 'green');
+  assert.match(outcome.note, new RegExp(SHA));
+  assert.deepEqual(fake.dispatched, [[SHA, 'v1.73.0']], 'houseplan_ref is the SHA; upgrade_from is the previous stable, not the tag under release');
+});
+
+test('#540 AC1: a run whose jobs carry the tag, not the SHA, is foreign to a SHA-dispatched gate', async () => {
+  const byTag = run({ databaseId: 3, url: 'https://e2e/run/3' });
+  const fake = fakeOps({ snapshots: [[byTag], [byTag], [byTag]], jobsById: { 3: ours() }, startedAt: 100_000 });
+  const outcome = await e2eGate({ tag: TAG, ref: SHA, ops: fake.ops, pollMs: 1000, appearMs: 2500 });
+  assert.equal(outcome.result, 'missing', 'a tag-named run is not the SHA run — the old ZIP-from-release path is gone');
+  assert.equal(isOurRun(ours(), SHA), false);
+  assert.equal(classifyRun([{ name: `first-run · HP ${SHA} · HA stable` }], SHA), 'ours');
+});
+
+test('#540: without --ref the gate behaves exactly as before — the tag is the ref', async () => {
+  const fake = fakeOps({ snapshots: [[run()]], jobsById: { 1: ours() } });
+  const outcome = await e2eGate({ tag: TAG, ops: fake.ops, pollMs: 1000 });
+  assert.equal(outcome.result, 'green');
+  assert.deepEqual(fake.dispatched, [[TAG, 'v1.73.0']]);
+});

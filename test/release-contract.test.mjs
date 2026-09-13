@@ -15,7 +15,7 @@ import {
   versionFromTag,
 } from '../scripts/release-contract.mjs';
 import {
-  assertHacsDiscoverableTag, parseIssueList, parsePrereleaseArgs, prereleaseWorkflowSucceeded,
+  assertHacsDiscoverableTag, parseIssueList, parsePrereleaseArgs,
   readZipEntries, verifyReleaseProjection,
 } from '../scripts/release-prerelease.mjs';
 
@@ -138,7 +138,7 @@ test('local orchestrator validates issue lists and public release assets', () =>
   assert.throws(() => parsePrereleaseArgs([tag, 'extra']), /Exactly one/);
   const release = {
     tagName: tag, isDraft: false, isPrerelease: true,
-    assets: [{ name: 'houseplan-card.js', size: 10 }, { name: 'houseplan.zip', size: 20 }],
+    assets: [{ name: 'houseplan-card.js', size: 10 }, { name: 'houseplan.zip', size: 20 }, { name: 'SHA256SUMS', size: 5 }],
   };
   assert.equal(verifyReleaseProjection(release, { tag }), release);
   assert.throws(
@@ -146,21 +146,23 @@ test('local orchestrator validates issue lists and public release assets', () =>
     /still a draft/,
   );
   assert.throws(
-    () => verifyReleaseProjection({ ...release, assets: release.assets.slice(0, 1) }, { tag }),
+    () => verifyReleaseProjection({ ...release, assets: release.assets.filter((a) => a.name !== 'houseplan.zip') }, { tag }),
     /houseplan\.zip/,
   );
-  assert.equal(prereleaseWorkflowSucceeded('Release', 'success'), true);
-  assert.equal(prereleaseWorkflowSucceeded('Announce release', 'skipped'), true);
-  assert.equal(prereleaseWorkflowSucceeded('Release', 'skipped'), false);
-  assert.equal(prereleaseWorkflowSucceeded('Announce release', 'failure'), false);
+  // #540: паспорт — часть единого вида релиза; бета без него неполна.
+  assert.throws(
+    () => verifyReleaseProjection({ ...release, assets: release.assets.slice(0, 2) }, { tag }),
+    /SHA256SUMS/,
+  );
   const orchestrator = readFileSync(
     new URL('../scripts/release-prerelease.mjs', import.meta.url), 'utf8',
   );
-  assert.match(
-    orchestrator,
-    /if \(!prereleaseWorkflowSucceeded\(label, row\.conclusion\)\)/,
-    'the workflow waiter must use the prerelease-aware conclusion policy',
-  );
+  // #540: после публикации никто не ждёт независимых републикаторов — их нет.
+  assert.ok(!/waitForReleaseWorkflows|release-zip\.yml|prereleaseWorkflowSucceeded/.test(orchestrator),
+    'the local publisher no longer waits for release.yml/release-zip.yml to re-upload what it already verified');
+  assert.match(orchestrator, /formatSums\(\{\n\s+'houseplan-card\.js': sha256Path\(bundlePath\),\n\s+'houseplan\.zip': sha256Path\(zipPath\),/,
+    'the passport is computed from the very files that are uploaded');
+  assert.match(orchestrator, /'release', 'upload', tag, bundlePath, zipPath, sumsPath,/);
 });
 
 test('release ZIP inspection is portable and does not depend on tar', () => {
@@ -225,8 +227,11 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
     'node scripts/release-contract.mjs',
     'node scripts/release-gate.mjs',
     '--draft --prerelease',
-    "'houseplan-card.js', 'houseplan.zip'",
+    "'houseplan-card.js', 'houseplan.zip', 'SHA256SUMS'",
     'test -s dist/houseplan-panel.js',
+    'node scripts/release-assets.mjs sums release-assets',
+    'node scripts/release-assets.mjs check public release-assets/SHA256SUMS',
+    'git -c core.autocrlf=false archive --format=zip --output=houseplan.zip',
     '--draft=false --prerelease',
     'Verify HACS prerelease discovery order',
     'group: publish-prerelease-${{ inputs.tag }}',
@@ -250,7 +255,7 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
   const local = readFileSync(new URL('../scripts/release-prerelease.mjs', import.meta.url), 'utf8');
   assert.ok(local.includes("'core.autocrlf=false', 'archive', '--format=zip'"));
   assert.ok(local.includes("'release', 'download'"));
-  assert.ok(local.includes("'release-zip.yml'"));
+  assert.ok(!local.includes("'release-zip.yml'"), '#540: no republisher to wait for');
   assert.ok(local.includes('Published release needs stale-asset recovery'));
   assert.ok(local.includes("['SIGINT'"));
   assert.ok(!local.includes("run('tar'"));

@@ -41,10 +41,15 @@ export function parseVersionSources({
   };
 }
 
-export function validateVersionSources(tag, sources, { requirePrerelease = true } = {}) {
+export function validateVersionSources(tag, sources, { requirePrerelease = true, requireStable = false } = {}) {
   const parsed = versionFromTag(tag);
   if (requirePrerelease && !parsed.prerelease)
     throw new Error(`Prerelease publication requires a prerelease SemVer tag: ${tag}`);
+  // #540: стабильный путь (release.yml) — зеркальное требование: тег без
+  // пре-релизного суффикса. Режима «любой тег» нет: публикатор всегда знает,
+  // что выпускает.
+  if (requireStable && parsed.prerelease)
+    throw new Error(`Stable publication requires a stable SemVer tag, got prerelease ${tag}`);
   const mismatches = Object.entries(sources)
     .filter(([, value]) => value !== parsed.version)
     .map(([name, value]) => `${name}=${JSON.stringify(value)}`);
@@ -133,10 +138,10 @@ export function readReleaseContract(root = process.cwd()) {
 }
 
 export function assertReleaseContract({
-  root = process.cwd(), tag, repo = 'Matysh/houseplan-card', requirePrerelease = true,
+  root = process.cwd(), tag, repo = 'Matysh/houseplan-card', requirePrerelease = true, requireStable = false,
 } = {}) {
   const contract = readReleaseContract(root);
-  const parsed = validateVersionSources(tag, contract.sources, { requirePrerelease });
+  const parsed = validateVersionSources(tag, contract.sources, { requirePrerelease, requireStable });
   if (!changelogContainsVersion(contract.changelogRu, tag))
     throw new Error(`docs/CHANGELOG.ru.md has no dated ${tag} section`);
   if (!changelogContainsVersion(contract.changelogEn, tag))
@@ -152,14 +157,18 @@ if (invokedDirectly) {
     const args = process.argv.slice(2);
     const positionals = args.filter((arg) => !arg.startsWith('--'));
     const repoArgs = args.filter((arg) => arg.startsWith('--repo='));
-    const unknown = args.filter((arg) => arg.startsWith('--') && !arg.startsWith('--repo='));
+    // #540: `--stable` — контракт стабильного релиза (release.yml). Тот же
+    // набор проверок; отличие одно — тег обязан быть БЕЗ пре-релизного суффикса,
+    // как без флага он обязан быть с ним. Третьего режима «любой тег» нет.
+    const stable = args.includes('--stable');
+    const unknown = args.filter((arg) => arg.startsWith('--') && !arg.startsWith('--repo=') && arg !== '--stable');
     if (positionals.length !== 1) throw new Error('Exactly one release tag is required');
     if (repoArgs.length > 1 || unknown.length)
       throw new Error(`Unknown or duplicate release-contract arguments: ${[...repoArgs.slice(1), ...unknown].join(', ')}`);
     const tag = positionals[0];
     const repo = repoArgs[0]?.slice('--repo='.length)
       || process.env.GITHUB_REPOSITORY || 'Matysh/houseplan-card';
-    const result = assertReleaseContract({ tag, repo, requirePrerelease: true });
+    const result = assertReleaseContract({ tag, repo, requirePrerelease: !stable, requireStable: stable });
     console.log(JSON.stringify({
       ok: true, tag: result.tag, version: result.version,
       prerelease: result.prerelease, sources: result.sources,

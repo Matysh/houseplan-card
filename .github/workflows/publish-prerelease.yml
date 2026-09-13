@@ -95,6 +95,7 @@ jobs:
       - name: Build and verify both release assets before publication
         env:
           TAG: ${{ needs.gate.outputs.tag }}
+          SHA: ${{ needs.gate.outputs.sha }}
         run: |
           set -euo pipefail
           npm ci
@@ -103,12 +104,18 @@ jobs:
           npm run bundle:budget
           VERSION=${TAG#v}
           grep -RFq "$VERSION" dist
-          (cd custom_components/houseplan && zip -qr ../../houseplan.zip .)
+          # #540: тот же способ, что у release.yml и release-prerelease.mjs —
+          # архив закоммиченного дерева точного коммита, детерминированный.
+          git -c core.autocrlf=false archive --format=zip --output=houseplan.zip \
+            "$SHA:custom_components/houseplan"
           node scripts/verify-houseplan-zip.mjs houseplan.zip \
             custom_components/houseplan/frontend "$VERSION"
           test -s dist/houseplan-card.js
           test -s dist/houseplan-panel.js
           test -s houseplan.zip
+          mkdir -p release-assets
+          cp dist/houseplan-card.js houseplan.zip release-assets/
+          node scripts/release-assets.mjs sums release-assets
       - name: Create or verify the annotated tag
         env:
           TAG: ${{ needs.gate.outputs.tag }}
@@ -147,8 +154,8 @@ jobs:
           fi
           WAS_DRAFT=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
           echo "newly_published=$WAS_DRAFT" >> "$GITHUB_OUTPUT"
-          gh release upload "$TAG" dist/houseplan-card.js houseplan.zip \
-            --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$TAG" release-assets/houseplan-card.js release-assets/houseplan.zip \
+            release-assets/SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber
           RELEASE_JSON=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
             --json tagName,isDraft,isPrerelease,assets,url)
           export RELEASE_JSON TAG
@@ -156,7 +163,7 @@ jobs:
           const release = JSON.parse(process.env.RELEASE_JSON);
           if (release.tagName !== process.env.TAG) throw new Error('release tag mismatch');
           const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
-          for (const name of ['houseplan-card.js', 'houseplan.zip']) {
+          for (const name of ['houseplan-card.js', 'houseplan.zip', 'SHA256SUMS']) {
             if (!(Number(assets.get(name)?.size) > 0)) throw new Error(`${name} is missing or empty`);
           }
           NODE
@@ -178,15 +185,21 @@ jobs:
           if (release.tagName !== process.env.TAG || release.isDraft || !release.isPrerelease)
             throw new Error('release is not a public prerelease for the requested tag');
           const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
-          for (const name of ['houseplan-card.js', 'houseplan.zip']) {
+          for (const name of ['houseplan-card.js', 'houseplan.zip', 'SHA256SUMS']) {
             if (!(Number(assets.get(name)?.size) > 0)) throw new Error(`${name} is missing or empty`);
           }
           NODE
+          # #540: публичные байты — ровно те, что собраны и проверены выше.
+          mkdir -p public
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir public \
+            --pattern houseplan-card.js --pattern houseplan.zip --pattern SHA256SUMS --clobber
+          diff -u release-assets/SHA256SUMS public/SHA256SUMS
+          node scripts/release-assets.mjs check public release-assets/SHA256SUMS
           test "$(git rev-list -n 1 "$TAG")" = "$SHA"
           URL=$(node -p "JSON.parse(process.env.RELEASE_JSON).url")
           echo "url=$URL" >> "$GITHUB_OUTPUT"
-          printf '### Published %s\n\n- exact SHA: `%s`\n- [GitHub prerelease](%s)\n- assets: `houseplan-card.js`, `houseplan.zip`\n' \
-            "$TAG" "$SHA" "$URL" >> "$GITHUB_STEP_SUMMARY"
+          printf '### Published %s\n\n- exact SHA: `%s`\n- [GitHub prerelease](%s)\n\n```\n%s```\n' \
+            "$TAG" "$SHA" "$URL" "$(cat public/SHA256SUMS)" >> "$GITHUB_STEP_SUMMARY"
       - name: Verify HACS prerelease discovery order
         uses: actions/github-script@v9
         env:

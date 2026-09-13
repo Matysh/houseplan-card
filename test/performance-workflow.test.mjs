@@ -59,11 +59,14 @@ test('full performance is isolated to stable, scheduled and manual entry points'
   assert.equal((workflow.match(/--candidate-sha=/g) || []).length, 2);
 
   const release = readWorkflow('release.yml');
-  assert.ok(release.includes('if: ${{ !github.event.release.prerelease }}'));
+  // #540: признак стабильного — тег кандидата, не поле события: тот же гейт
+  // работает и по `workflow_dispatch`, где события нет.
+  assert.ok(release.includes("if: ${{ needs.candidate.outputs.prerelease != 'true' }}"));
   assert.ok(release.includes('--workflow=performance.yml --label="Полные бенчмарки производительности"'));
   assert.ok(release.includes('test -s dist/houseplan-panel.js'));
-  assert.ok(release.includes('files: dist/houseplan-card.js'),
+  assert.ok(release.includes('cp dist/houseplan-card.js houseplan.zip release-assets/'),
     'the standalone release asset remains card-only; the panel ships through HACS zip');
+  assert.ok(!release.includes('softprops/action-gh-release'), 'one upload path (gh release upload into the draft), not two');
 });
 
 test('#160 Stage 3 dense fixture extends rather than mutates the historical witness', () => {

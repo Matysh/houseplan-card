@@ -14,8 +14,8 @@ import { stdin, stdout } from 'node:process';
 import { assertReleaseContract } from './release-contract.mjs';
 import { classifyValidateRuns } from './release-gate.mjs';
 import { assertBundleManifest } from './bundle-tree.mjs';
+import { SUMS_FILE, compareSums, formatSums, parseSums, sumsOfDirectory } from './release-assets.mjs';
 
-const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 const SUBPROCESS_MAX_BUFFER = 64 * 1024 * 1024;
 
 class ReleaseAssetContentError extends Error {}
@@ -80,17 +80,11 @@ export function verifyReleaseProjection(release, { tag }) {
   if (release.isDraft) throw new Error(`GitHub release ${tag} is still a draft`);
   if (!release.isPrerelease) throw new Error(`GitHub release ${tag} is not marked as a prerelease`);
   const assets = new Map((release.assets || []).map((asset) => [asset.name, asset]));
-  for (const name of ['houseplan-card.js', 'houseplan.zip']) {
+  for (const name of ['houseplan-card.js', 'houseplan.zip', SUMS_FILE]) {
     const asset = assets.get(name);
     if (!asset || !(Number(asset.size) > 0)) throw new Error(`Release asset ${name} is missing or empty`);
   }
   return release;
-}
-
-/** Telegram announcements are deliberately skipped for prereleases. */
-export function prereleaseWorkflowSucceeded(label, conclusion) {
-  return conclusion === 'success'
-    || (label === 'Announce release' && conclusion === 'skipped');
 }
 
 /**
@@ -358,7 +352,7 @@ if (invokedDirectly) {
     try {
       run('gh', [
         'release', 'download', tag, '--repo', repo, '--dir', download,
-        '--pattern', 'houseplan-card.js', '--pattern', 'houseplan.zip', '--clobber',
+        '--pattern', 'houseplan-card.js', '--pattern', 'houseplan.zip', '--pattern', SUMS_FILE, '--clobber',
       ]);
       try {
         const cardPath = resolve(download, 'houseplan-card.js');
@@ -366,6 +360,12 @@ if (invokedDirectly) {
         if (cardHash !== bundleSnapshot.entrySha256)
           throw new Error(`Published houseplan-card.js hash ${cardHash} != candidate ${bundleSnapshot.entrySha256}`);
         verifyZipContents(resolve(download, 'houseplan.zip'), version, bundleSnapshot);
+        // #540: паспорт обязан быть и обязан описывать ровно эти байты.
+        const passport = compareSums(
+          parseSums(readFileSync(resolve(download, SUMS_FILE), 'utf8')),
+          sumsOfDirectory(download),
+        );
+        if (!passport.ok) throw new Error(`Published ${SUMS_FILE} disagrees with the assets: ${JSON.stringify(passport)}`);
       } catch (error) {
         throw new ReleaseAssetContentError(
           error instanceof Error ? error.message : String(error),
@@ -408,45 +408,9 @@ if (invokedDirectly) {
     return runs;
   };
 
-  const waitForRun = async (runId, label) => {
-    let last = '';
-    for (let attempt = 0; attempt < 360; attempt++) {
-      const row = ghJson([
-        'run', 'view', String(runId), '--repo', repo, '--json', 'status,conclusion,url',
-      ]);
-      const state = `${row.status}/${row.conclusion || '-'}`;
-      if (state !== last) console.log(`${label}: ${state} ${row.url}`);
-      last = state;
-      if (row.status === 'completed') {
-        if (!prereleaseWorkflowSucceeded(label, row.conclusion))
-          throw new Error(`${label} concluded ${row.conclusion}: ${row.url}`);
-        return row;
-      }
-      await sleep(10_000);
-    }
-    throw new Error(`${label} did not complete within one hour`);
-  };
-
-  const waitForReleaseWorkflows = async (sha) => {
-    const expected = [
-      ['release.yml', 'Release'],
-      ['release-zip.yml', 'Attach HACS zip'],
-      ['announce.yml', 'Announce release'],
-    ];
-    for (const [workflow, label] of expected) {
-      let match = null;
-      for (let attempt = 0; attempt < 300 && !match; attempt++) {
-        const runs = ghJson([
-          'run', 'list', '--repo', repo, '--workflow', workflow, '--event', 'release',
-          '--limit', '30', '--json', 'databaseId,headBranch,headSha,status,conclusion,url',
-        ]);
-        match = runs.find((row) => row.headBranch === tag && row.headSha === sha) || null;
-        if (!match) await sleep(2_000);
-      }
-      if (!match) throw new Error(`${label} workflow did not start for ${tag} at ${sha}`);
-      await waitForRun(match.databaseId, label);
-    }
-  };
+  // #540: после публикации никто больше не ждёт релизные workflow на событии:
+  // независимых републикаторов нет, ассеты беты выкладывает только этот путь,
+  // и сверка выложенного с кандидатом (sha256) делается здесь же ниже.
 
   const verifyHacsDiscovery = () => {
     const pages = ghJson(['api', '--paginate', '--slurp', `repos/${repo}/releases?per_page=100`]);
@@ -611,23 +575,28 @@ if (invokedDirectly) {
         release = releaseView();
       }
 
+      // #540: паспорт ассетов — единый вид релиза с release.yml. Считается с
+      // тех самых файлов, что уходят наверх, и сверяется после публикации.
+      const sumsPath = resolve(artifactsDir, SUMS_FILE);
+      writeFileSync(sumsPath, formatSums({
+        'houseplan-card.js': sha256Path(bundlePath),
+        'houseplan.zip': sha256Path(zipPath),
+      }));
       run('gh', [
-        'release', 'upload', tag, bundlePath, zipPath,
+        'release', 'upload', tag, bundlePath, zipPath, sumsPath,
         '--repo', repo, '--clobber',
       ], { inherit: true });
       const staged = releaseView();
       const stagedAssets = new Map((staged?.assets || []).map((asset) => [asset.name, asset]));
-      for (const name of ['houseplan-card.js', 'houseplan.zip']) {
+      for (const name of ['houseplan-card.js', 'houseplan.zip', SUMS_FILE]) {
         if (!(Number(stagedAssets.get(name)?.size) > 0))
           throw new Error(`Draft release asset ${name} is missing or empty`);
       }
 
-      const wasDraft = staged.isDraft;
       run('gh', [
         'release', 'edit', tag, '--repo', repo, '--draft=false', '--prerelease',
         '--title', tag, '--notes-file', 'docs/RELEASE-NOTES.md',
       ], { inherit: true });
-      if (wasDraft) await waitForReleaseWorkflows(sha);
 
       const published = verifyReleaseProjection(releaseView(), { tag });
       const finalTag = remoteTag();

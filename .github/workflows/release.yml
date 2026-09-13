@@ -1,130 +1,455 @@
-name: "Релиз: ассеты после зелёной проверки"
+name: "Релиз: проверка, сборка и публикация ассетов"
+run-name: "Release ${{ inputs.tag || github.event.release.tag_name }}"
+
+# #540: единственный путь, по которому установочные ассеты стабильного релиза
+# (`houseplan.zip` для HACS и `houseplan-card.js` для ручной установки) попадают
+# наружу. До этого публикаторов было четыре, и `release-zip.yml` выкладывал ZIP
+# в ту же секунду, когда релиз становился публичным, — до Validate, Full
+# Performance и E2E. Порядок теперь один: закрепить SHA → релиз в черновике →
+# гейты на этом SHA → одна сборка и `SHA256SUMS` → загрузка в черновик →
+# публикация → сверка публичных байтов с паспортом → анонс.
+#
+# Два входа, один порядок:
+#   • `workflow_dispatch(tag)` — штатный выпуск и ремонт. Тега ещё нет — он
+#     ставится на вершину ветки, с которой запущен workflow (main для
+#     стабильного, dev для беты). Тег есть — берётся его коммит.
+#   • `release: published` — человек опубликовал стабильный релиз руками.
+#     Fail-closed: релиз немедленно возвращается в черновик и проходит тот же
+#     путь; снаружи ничего установочного не остаётся, пока идут проверки.
+#     Беты это событие пропускают — у них свой staged-путь
+#     (`publish-prerelease.yml`, `release-prerelease.mjs`).
+#
+# Ремонт публичного релиза (dispatch на существующий тег): недостающие ассеты
+# догружаются только при зелёных гейтах; присутствующий ассет с другим хешем —
+# отказ без правок, публичные байты не подменяются молча.
+#
+# Событие `release` исполняет workflow с коммита тега: новая редакция файла
+# действует для стабильных тегов только после того, как она есть на main.
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Exact release tag, for example v1.75.1; created on the dispatched branch tip when missing"
+        required: true
+        type: string
+
 permissions:
   contents: write
   actions: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.event.release.tag_name }}
+  cancel-in-progress: false
+
 jobs:
-  # AUD-159B7-02: publishing a GitHub Release used to BE the gate — this
-  # workflow only built and uploaded, so an asset shipped while both Validate
-  # runs for the very same commit were red. The asset now waits for a green
-  # Validate of the EXACT commit the tag points at, and is withheld otherwise.
-  #
-  # Needs a push with a token that has the `workflow` scope (the ordinary
-  # Personal Access Token used for `git push` refuses workflow file updates).
+  candidate:
+    name: "Кандидат: точный SHA, режим и черновик"
+    # Публикация беты руками — не наш случай: у бет свой staged-путь.
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+      prerelease: ${{ steps.resolve.outputs.prerelease }}
+      mode: ${{ steps.release.outputs.mode }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Resolve the tag to its exact commit
+        id: resolve
+        env:
+          EVENT: ${{ github.event_name }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || {
+            echo "::error::$TAG is not a release tag (vX.Y.Z or vX.Y.Z-pre)"
+            exit 1
+          }
+          VERSION=${TAG#v}
+          case "$TAG" in *-*) PRERELEASE=true ;; *) PRERELEASE=false ;; esac
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
+            # Peeled commit both for annotated and lightweight tags (a release
+            # form makes lightweight ones). Neither target_commitish nor the
+            # event SHA is trusted: the former may be a branch name.
+            SHA=$(git rev-list -n 1 "refs/tags/$TAG")
+            echo "tag $TAG exists → $SHA"
+          else
+            test "$EVENT" = "workflow_dispatch" || {
+              echo "::error::release event for a tag that does not exist: $TAG"
+              exit 1
+            }
+            SHA=$(git rev-parse HEAD)
+            echo "tag $TAG is new → dispatched branch tip $SHA"
+          fi
+          if [ "$PRERELEASE" = "false" ]; then
+            git fetch origin main
+            git merge-base --is-ancestor "$SHA" origin/main || {
+              echo "::error::stable candidate $SHA is not on main"
+              exit 1
+            }
+          else
+            git fetch origin dev
+            git merge-base --is-ancestor "$SHA" origin/dev || {
+              echo "::error::prerelease candidate $SHA is not on dev"
+              exit 1
+            }
+          fi
+          {
+            echo "sha=$SHA"
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+            echo "prerelease=$PRERELEASE"
+          } >> "$GITHUB_OUTPUT"
+      - name: Take the release off the public surface until it is verified
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          TAG: ${{ steps.resolve.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft > /tmp/is-draft 2>/dev/null; then
+            echo "mode=fresh" >> "$GITHUB_OUTPUT"
+            echo "no release for $TAG yet: it will be created as a draft after the gates"
+          elif [ "$(cat /tmp/is-draft)" = "true" ]; then
+            echo "mode=staged" >> "$GITHUB_OUTPUT"
+            echo "release $TAG is a draft: staging into it"
+          elif [ "$EVENT" = "release" ]; then
+            # Published by hand: nothing here has been verified. Back to draft
+            # first, gates second — the order is the whole point (#540).
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft
+            echo "mode=event" >> "$GITHUB_OUTPUT"
+            echo "::notice::$TAG was published by hand and is a draft again until the gates pass"
+          else
+            echo "mode=repair" >> "$GITHUB_OUTPUT"
+            echo "release $TAG is public: repair mode — only missing assets may be added"
+          fi
+
   gate:
-    name: "Гейт: зелёная Проверка точного SHA тега"
+    name: "Гейт: контракт, Validate, Full Performance и E2E на точном SHA"
+    needs: candidate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ needs.candidate.outputs.sha }}
           fetch-depth: 0
       - uses: actions/setup-node@v7
         with: { node-version: 22 }
+      # #479: тяжёлые job Validate идут только на коммите с трейлером `Release:`;
+      # без него зелёный Validate — прогон без смоков и golden. Трейлер обязан
+      # называть ровно этот тег: кандидат сам объявляет, чем он выпускается.
+      - name: Require the Release trailer naming this exact tag
+        env:
+          SHA: ${{ needs.candidate.outputs.sha }}
+          TAG: ${{ needs.candidate.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git log -1 --format=%B "$SHA" > /tmp/head-message.txt
+          if ! grep -Eq '^Release:[[:space:]]*v?[0-9]+\.[0-9]+\.[0-9]+' /tmp/head-message.txt; then
+            echo "::error::$SHA has no Release: trailer — Validate ran without the heavy gates (#479)"
+            exit 1
+          fi
+          if ! grep -Fxq "Release: $TAG" /tmp/head-message.txt; then
+            echo "::error::$SHA declares $(grep -E '^Release:' /tmp/head-message.txt | head -1), not $TAG"
+            exit 1
+          fi
+      - name: Verify version, changelogs and bilingual release notes
+        env:
+          TAG: ${{ needs.candidate.outputs.tag }}
+          PRERELEASE: ${{ needs.candidate.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          if [ "$PRERELEASE" = "true" ]; then
+            node scripts/release-contract.mjs "$TAG" --repo="$GITHUB_REPOSITORY"
+          else
+            node scripts/release-contract.mjs "$TAG" --repo="$GITHUB_REPOSITORY" --stable
+          fi
       - name: Require a green Validate for this exact commit
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          TAG: ${{ github.event.release.tag_name }}
-        run: |
-          set -euo pipefail
-          # HEAD is the peeled commit even when TAG is annotated. Do not trust
-          # target_commitish (it may be a branch name) or an event-context SHA.
-          SHA=$(git rev-parse HEAD)
-          echo "release tag: $TAG; exact commit: $SHA"
-          # #479: тяжёлые job Validate идут только на коммите с трейлером
-          # `Release:`; без него зелёный Validate прогона без смоков не доказывает.
-          if ! git log -1 --format=%B "$SHA" | grep -Eq '^Release:[[:space:]]*v?[0-9]+\.[0-9]+\.[0-9]+'; then
-            echo "::error::$SHA has no Release: trailer — Validate ran without the heavy gates (#479)"
-            exit 1
-          fi
-          node scripts/release-gate.mjs "$SHA"
+          SHA: ${{ needs.candidate.outputs.sha }}
+        run: node scripts/release-gate.mjs "$SHA"
       - name: Require full performance for a stable release
-        if: ${{ !github.event.release.prerelease }}
+        if: ${{ needs.candidate.outputs.prerelease != 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          SHA=$(git rev-parse HEAD)
-          node scripts/release-gate.mjs "$SHA" --workflow=performance.yml --label="Полные бенчмарки производительности"
-      # #514: the only check on a real Home Assistant. houseplan-e2e installs
-      # the release's houseplan.zip — the bytes HACS ships — into HA in docker
-      # and walks the sidebar page, dashboards, roles, PDF, restart and the
-      # stable→tag upgrade. A red, missing or cancelled run withholds the
-      # assets exactly like Full Performance. Cross-repository dispatch needs a
-      # token with Actions: write on houseplan-e2e; HP_PROCESS_TOKEN (classic,
-      # repo scope) has it, E2E_DISPATCH_TOKEN is the fallback for a
-      # fine-grained token.
+          SHA: ${{ needs.candidate.outputs.sha }}
+        run: node scripts/release-gate.mjs "$SHA" --workflow=performance.yml --label="Полные бенчмарки производительности"
+      # #514/#540: единственная проверка на настоящем Home Assistant. Раньше
+      # houseplan-e2e ставил `houseplan.zip` из публичного релиза — то есть
+      # релиз должен был быть публичным ДО проверки. Теперь он ставит дерево
+      # `custom_components/houseplan` коммита-кандидата (tarball codeload),
+      # а ZIP строится `git archive` из того же дерева: тождество «что
+      # тестировали = что публикуем» — хеш дерева, он печатается на сборке.
+      # Cross-repository dispatch needs a token with Actions: write on
+      # houseplan-e2e; HP_PROCESS_TOKEN (classic, repo scope) has it,
+      # E2E_DISPATCH_TOKEN is the fallback for a fine-grained token.
       - name: Require green E2E on a real Home Assistant for a stable release
-        if: ${{ !github.event.release.prerelease }}
+        if: ${{ needs.candidate.outputs.prerelease != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.E2E_DISPATCH_TOKEN || secrets.HP_PROCESS_TOKEN }}
-          TAG: ${{ github.event.release.tag_name }}
-        run: node scripts/e2e-gate.mjs --tag="$TAG"
-  build:
-    name: Сборка бандла и загрузка ассетов
-    needs: gate
+          SHA: ${{ needs.candidate.outputs.sha }}
+          TAG: ${{ needs.candidate.outputs.tag }}
+        run: node scripts/e2e-gate.mjs --ref="$SHA" --tag="$TAG"
+
+  stage:
+    name: "Сборка: ассеты, SHA256SUMS и загрузка в черновик"
+    needs: [candidate, gate]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ needs.candidate.outputs.sha }}
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with: { node-version: 22 }
-      - run: npm ci && npm run build
+      - name: Build once and verify both installable assets
+        id: build
+        env:
+          SHA: ${{ needs.candidate.outputs.sha }}
+          VERSION: ${{ needs.candidate.outputs.version }}
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
+          npm run bundle:budget
+          grep -RFq "$VERSION" dist
+          test -s dist/houseplan-card.js
+          test -s dist/houseplan-panel.js
+          # The ZIP is the committed integration tree of the exact commit —
+          # the same tree E2E installed from the codeload tarball. `git archive`
+          # is deterministic for a commit, so a repair rebuilds identical bytes.
+          git -c core.autocrlf=false archive --format=zip --output=houseplan.zip \
+            "$SHA:custom_components/houseplan"
+          node scripts/verify-houseplan-zip.mjs houseplan.zip \
+            custom_components/houseplan/frontend "$VERSION"
+          mkdir -p release-assets
+          cp dist/houseplan-card.js houseplan.zip release-assets/
+          node scripts/release-assets.mjs sums release-assets
+          TREE=$(git rev-parse "$SHA:custom_components/houseplan")
+          echo "tree=$TREE" >> "$GITHUB_OUTPUT"
+          printf '### Staged assets for %s\n\n- exact commit: `%s`\n- `custom_components/houseplan` tree (what E2E installed): `%s`\n\n```\n%s```\n' \
+            "$VERSION" "$SHA" "$TREE" "$(cat release-assets/SHA256SUMS)" >> "$GITHUB_STEP_SUMMARY"
       - name: Verify compositor frame continuity for a stable release
-        if: ${{ !github.event.release.prerelease }}
+        if: ${{ needs.candidate.outputs.prerelease != 'true' }}
         run: |
           npx playwright install --with-deps chromium
           node scripts/bundle-sync.mjs
           npm run continuity:screencast
       - name: Upload failed continuity frames
-        if: ${{ failure() && !github.event.release.prerelease }}
+        if: ${{ failure() && needs.candidate.outputs.prerelease != 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: continuity-screencast
           path: artifacts/continuity-screencast
-      - name: Verify the complete committed frontend tree
-        run: |
-          node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
-          test -s dist/houseplan-card.js
-          test -s dist/houseplan-panel.js
-      - name: Attach card to release
-        uses: softprops/action-gh-release@v3
+      - name: Keep the passport for the publication step
+        uses: actions/upload-artifact@v7
         with:
-          files: dist/houseplan-card.js
+          name: release-assets-${{ needs.candidate.outputs.tag }}
+          path: release-assets/SHA256SUMS
+          if-no-files-found: error
+      # Also for a draft made in the release form: its tag may not exist yet,
+      # and publishing such a draft would let GitHub tag target_commitish —
+      # not necessarily the verified commit. The tag is pinned here, first.
+      - name: Create or verify the tag at the exact commit
+        env:
+          TAG: ${{ needs.candidate.outputs.tag }}
+          SHA: ${{ needs.candidate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          REMOTE=$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}")
+          if [ -n "$REMOTE" ]; then
+            PEELED=$(printf '%s\n' "$REMOTE" | awk -v ref="refs/tags/$TAG^{}" '$2 == ref {print $1}')
+            test -n "$PEELED" || PEELED=$(printf '%s\n' "$REMOTE" | awk -v ref="refs/tags/$TAG" '$2 == ref {print $1}')
+            test "$PEELED" = "$SHA" || {
+              echo "::error::Existing tag $TAG points to $PEELED, expected $SHA"
+              exit 1
+            }
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" "$SHA" -m "$TAG"
+            git push origin "$TAG"
+          fi
+      - name: Stage the verified assets into the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.candidate.outputs.tag }}
+          MODE: ${{ needs.candidate.outputs.mode }}
+          PRERELEASE: ${{ needs.candidate.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          if [ "$MODE" = "fresh" ]; then
+            FLAG="--prerelease=false"
+            if [ "$PRERELEASE" = "true" ]; then FLAG="--prerelease"; fi
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft "$FLAG" \
+              --title "$TAG" --notes-file docs/RELEASE-NOTES.md
+          fi
+          if [ "$MODE" = "repair" ]; then
+            # Public release: what is already outside must be the bytes we just
+            # rebuilt; anything else is a finding, not a --clobber. Only missing
+            # assets are added, and only now — after the gates.
+            mkdir -p public
+            for name in $(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name'); do
+              case "$name" in
+                houseplan-card.js|houseplan.zip|SHA256SUMS)
+                  gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir public --pattern "$name" --clobber ;;
+              esac
+            done
+            if [ -f public/SHA256SUMS ]; then
+              diff -u public/SHA256SUMS release-assets/SHA256SUMS || {
+                echo "::error::public SHA256SUMS of $TAG differ from the rebuilt assets"
+                exit 1
+              }
+            fi
+            node scripts/release-assets.mjs check public release-assets/SHA256SUMS --allow-missing
+            missing=""
+            for name in houseplan-card.js houseplan.zip SHA256SUMS; do
+              [ -f "public/$name" ] || missing="$missing release-assets/$name"
+            done
+            if [ -z "$missing" ]; then
+              echo "nothing to repair: every asset of $TAG is present and matches"
+            else
+              echo "adding missing assets:$missing"
+              # shellcheck disable=SC2086
+              gh release upload "$TAG" $missing --repo "$GITHUB_REPOSITORY"
+            fi
+          else
+            # Draft: whatever a hand-made publication put here was never
+            # verified, so the verified bytes replace it.
+            gh release upload "$TAG" release-assets/houseplan-card.js release-assets/houseplan.zip \
+              release-assets/SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber
+          fi
+          RELEASE_JSON=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,assets)
+          export RELEASE_JSON TAG
+          node <<'NODE'
+          const release = JSON.parse(process.env.RELEASE_JSON);
+          if (release.tagName !== process.env.TAG) throw new Error('release tag mismatch');
+          const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
+          for (const name of ['houseplan-card.js', 'houseplan.zip', 'SHA256SUMS']) {
+            if (!(Number(assets.get(name)?.size) > 0)) throw new Error(`${name} is missing or empty`);
+          }
+          NODE
+
+  publish:
+    name: "Публикация и сверка публичных байтов"
+    needs: [candidate, gate, stage]
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.verify.outputs.url }}
+      name: ${{ steps.verify.outputs.name }}
+      newly_published: ${{ steps.flip.outputs.newly_published }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.candidate.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v7
+        with:
+          name: release-assets-${{ needs.candidate.outputs.tag }}
+          path: passport
+      - name: Publish the verified draft
+        id: flip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.candidate.outputs.tag }}
+          MODE: ${{ needs.candidate.outputs.mode }}
+          PRERELEASE: ${{ needs.candidate.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          if [ "$MODE" = "repair" ]; then
+            echo "newly_published=false" >> "$GITHUB_OUTPUT"
+            echo "repair of a public release: nothing to publish"
+            exit 0
+          fi
+          FLAG="--prerelease=false"
+          if [ "$PRERELEASE" = "true" ]; then FLAG="--prerelease"; fi
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false "$FLAG" \
+            --title "$TAG" --notes-file docs/RELEASE-NOTES.md
+          echo "newly_published=true" >> "$GITHUB_OUTPUT"
+      - name: Verify the public release against the passport
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.candidate.outputs.tag }}
+          SHA: ${{ needs.candidate.outputs.sha }}
+          PRERELEASE: ${{ needs.candidate.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          RELEASE_JSON=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,name,isDraft,isPrerelease,assets,url)
+          export RELEASE_JSON TAG PRERELEASE
+          node <<'NODE'
+          const release = JSON.parse(process.env.RELEASE_JSON);
+          if (release.tagName !== process.env.TAG || release.isDraft) throw new Error('release is not public for the requested tag');
+          if (String(release.isPrerelease) !== process.env.PRERELEASE) throw new Error('release prerelease flag does not match the tag');
+          const assets = new Map(release.assets.map((asset) => [asset.name, asset]));
+          for (const name of ['houseplan-card.js', 'houseplan.zip', 'SHA256SUMS']) {
+            if (!(Number(assets.get(name)?.size) > 0)) throw new Error(`${name} is missing or empty`);
+          }
+          NODE
+          # The bytes anyone downloads now are the bytes the gates saw.
+          mkdir -p public
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir public \
+            --pattern houseplan-card.js --pattern houseplan.zip --pattern SHA256SUMS --clobber
+          diff -u passport/SHA256SUMS public/SHA256SUMS
+          node scripts/release-assets.mjs check public passport/SHA256SUMS
+          git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
+          test "$(git rev-list -n 1 "refs/tags/$TAG")" = "$SHA"
+          URL=$(node -p "JSON.parse(process.env.RELEASE_JSON).url")
+          NAME=$(node -p "JSON.parse(process.env.RELEASE_JSON).name || process.env.TAG")
+          {
+            echo "url=$URL"
+            echo "name=$NAME"
+          } >> "$GITHUB_OUTPUT"
+          printf '### Published %s\n\n- exact SHA: `%s`\n- [GitHub release](%s)\n\n```\n%s```\n' \
+            "$TAG" "$SHA" "$URL" "$(cat public/SHA256SUMS)" >> "$GITHUB_STEP_SUMMARY"
+
   announce:
     # #538: анонс — последнее звено, а не параллельное. Пока он висел на самом
     # событии `release: published`, он обгонял гейт: 12.09 v1.75.0 объявили в
     # канале в ту же минуту, когда проверка отказала выкладывать ассеты.
-    # `needs: build` означает, что молчание — это тоже ответ: красный гейт или
-    # несостоявшаяся выкладка сообщения не рождают.
+    # `needs: publish` означает, что молчание — это тоже ответ: красный гейт или
+    # несостоявшаяся выкладка сообщения не рождают. Ремонт не анонсируется.
     name: Оповещение о релизе после выкладки
-    needs: build
+    needs: [candidate, publish]
+    if: ${{ needs.publish.outputs.newly_published == 'true' }}
     uses: ./.github/workflows/announce.yml
     with:
       reusable: true
-      tag: ${{ github.event.release.tag_name }}
-      release_name: ${{ github.event.release.name }}
-      url: ${{ github.event.release.html_url }}
-      prerelease: ${{ github.event.release.prerelease }}
-      ref: ${{ github.event.release.tag_name }}
+      tag: ${{ needs.candidate.outputs.tag }}
+      release_name: ${{ needs.publish.outputs.name }}
+      url: ${{ needs.publish.outputs.url }}
+      prerelease: ${{ needs.candidate.outputs.prerelease == 'true' }}
+      ref: ${{ needs.candidate.outputs.tag }}
     secrets: inherit
+
   hacs-discovery:
     name: HACS-видимость пре-релиза (порядок бет)
     # HACS 2.0.x takes the first prerelease in GitHub's response instead of
     # sorting SemVer. A valid asset can therefore be invisible to beta users
     # (beta.10 appeared after beta.9). Keep the release asset, but
     # make that distribution failure impossible to miss in the release run.
-    if: ${{ github.event.release.prerelease }}
-    needs: build
+    if: ${{ needs.candidate.outputs.prerelease == 'true' }}
+    needs: [candidate, publish]
     runs-on: ubuntu-latest
     steps:
       - name: Verify the published tag is the prerelease HACS will discover
         uses: actions/github-script@v9
+        env:
+          EXPECTED_TAG: ${{ needs.candidate.outputs.tag }}
         with:
           script: |
             const releases = await github.paginate(github.rest.repos.listReleases, {
@@ -133,7 +458,7 @@ jobs:
               per_page: 100,
             });
             const first = releases.find((r) => r.prerelease && !r.draft);
-            const expected = context.payload.release.tag_name;
+            const expected = process.env.EXPECTED_TAG;
             if (first?.tag_name !== expected) {
               core.setFailed(
                 `HACS prerelease discovery is stale: GitHub returns ${first?.tag_name ?? 'none'} before ${expected}. ` +
