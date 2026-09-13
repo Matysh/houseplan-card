@@ -4889,7 +4889,10 @@ const MUTANT_DEFINITIONS = [
       file: 'src/plan-optimizer.ts',
       find: '  if (!walls?.length) return [];\n  const scale = coordScale > 0 ? coordScale : 1;\n'
         + '  const eps = Math.max(pitch * scale * 0.02, 1e-9);',
-      replace: '  if (!walls?.length) return [];\n  return walls.slice();\n'
+      // Возврат под рантайм-условием, а не безусловный: после безусловного
+      // `return` остаток функции становится недостижимым, а в недостижимом коде
+      // TypeScript теряет сужение `profile` и мутант падает на компиляции (#568).
+      replace: '  if (!walls?.length) return [];\n  if (walls.length >= 0) return walls.slice();\n'
         + '  const scale = coordScale > 0 ? coordScale : 1;\n'
         + '  const eps = Math.max(pitch * scale * 0.02, 1e-9);',
     }],
