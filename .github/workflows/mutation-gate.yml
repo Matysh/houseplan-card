@@ -53,7 +53,7 @@ jobs:
       tree: ${{ steps.identity.outputs.tree }}
       ref: ${{ steps.identity.outputs.ref }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'dev' }}
           fetch-depth: 0
@@ -76,19 +76,19 @@ jobs:
     # Час — потолок против зависшего Chromium.
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.material.outputs.sha }}
           fetch-depth: 0
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
 
       - run: npm ci
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.14'
 
@@ -102,7 +102,7 @@ jobs:
 
       - name: Кэш браузеров Playwright
         id: pw
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
@@ -138,7 +138,7 @@ jobs:
             --shard=${{ matrix.shard }} --shards=4
       - name: Сохранить лог и identity шарда
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: mutation-shard-${{ matrix.shard }}-attempt-${{ github.run_attempt }}
           path: artifacts/mutation-shard-${{ matrix.shard }}
@@ -153,16 +153,16 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # CLI отчётчика принадлежит зафиксированному material. В main лежит
           # только workflow и может не быть dev-версии scripts/**.
           ref: ${{ needs.material.outputs.sha }}
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
       - name: Забрать evidence всех попыток
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           pattern: mutation-shard-*
           path: artifacts/mutation-logs
@@ -191,17 +191,17 @@ jobs:
       actions: read
       issues: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Не перечитываем moving dev: код отчётчика берётся из уже
           # зафиксированного material. В стабильном main dev-скриптов нет.
           ref: ${{ needs.material.outputs.sha }}
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
       - name: Забрать логи шардов
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           pattern: mutation-shard-*
           path: artifacts/mutation-logs
