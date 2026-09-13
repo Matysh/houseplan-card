@@ -26,44 +26,81 @@ out.pinchZoomsInPlanEditor = await page.evaluate(() => {
   return zoomed && c._path.length === 0;
 });
 
-// A child control may stop pointer events before the stage sees the first
-// finger. The card-level capture guard must still classify the sequence as a
-// pinch and swallow WebKit's synthetic click before it reaches that control.
-out.pinchCannotMisclickInteractiveChild = await page.evaluate(async () => {
+// A real device is the safety boundary: a delayed compatibility click from a
+// completed pinch must not reach its action, while the next deliberate
+// pointerdown/up/click sequence must work immediately. Exercise every terminal
+// path because touch browsers disagree about pointerup/cancel/capture ordering.
+Object.assign(out, await page.evaluate(async () => {
   const c = window.__card;
   c._setMode('view');
   await c.updateComplete;
   const stage = c._stageEl;
-  const probe = document.createElement('button');
-  let clicks = 0;
-  probe.addEventListener('pointerdown', (ev) => ev.stopPropagation());
-  probe.addEventListener('pointermove', (ev) => ev.stopPropagation());
-  probe.addEventListener('pointerup', (ev) => ev.stopPropagation());
-  probe.addEventListener('click', () => clicks++);
-  stage.appendChild(probe);
-  const pointer = (type, id, target, x = id === 51 ? 300 : 400) => target.dispatchEvent(new PointerEvent(type, {
+  const marker = c.renderRoot.querySelector('.dev');
+  if (!marker) return {
+    pinchZoomsFromDevice: false,
+    pinchIntermediateClickBlocked: false,
+    pinchDelayedClickBlocked: false,
+    pinchTerminalVariantsBlocked: false,
+    pinchCancelsDeviceLongPress: false,
+    nextDeliberateDeviceTapWorks: false,
+  };
+  let actionCalls = 0;
+  const originalClickDevice = c._clickDevice;
+  c._clickDevice = () => { actionCalls += 1; };
+  c._infoCard = null;
+  c._tapConfirm = null;
+  const pointer = (type, id, target, x) => target.dispatchEvent(new PointerEvent(type, {
     bubbles: true, composed: true, pointerId: id, pointerType: 'touch',
     clientX: x, clientY: 300,
   }));
+  const compatibilityClick = () => marker.dispatchEvent(new MouseEvent('click', {
+    bubbles: true, composed: true, cancelable: true,
+  }));
   c._resetZoom();
   const zoom0 = c._zoom;
-  pointer('pointerdown', 51, probe);
-  pointer('pointerdown', 52, stage);
-  pointer('pointermove', 51, probe, 250);
+  pointer('pointerdown', 51, marker, 300);
+  pointer('pointerdown', 52, stage, 400);
+  pointer('pointermove', 51, marker, 250);
   pointer('pointermove', 52, stage, 450);
-  const pinchZoomed = c._zoom > zoom0 * 1.5;
-  pointer('pointerup', 51, probe);
-  pointer('pointerup', 52, stage);
-  probe.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true }));
-  const gestureClickBlocked = clicks === 0;
-  await new Promise((resolve) => setTimeout(resolve, 520));
-  probe.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true }));
-  probe.remove();
-  const ordinaryTapStillWorks = clicks === 1;
+  const pinchZoomsFromDevice = c._zoom > zoom0 * 1.5;
+  pointer('pointerup', 51, marker, 250);
+  compatibilityClick(); // between the two releases
+  const pinchIntermediateClickBlocked = actionCalls === 0;
+  pointer('pointerup', 52, stage, 450);
+  await new Promise((resolve) => setTimeout(resolve, 620));
+  compatibilityClick(); // deliberately later than the old 500 ms window
+  const pinchDelayedClickBlocked = actionCalls === 0;
+  const pinchCancelsDeviceLongPress = c._infoCard === null && c._tapConfirm === null;
+
+  const terminalGesture = (firstTerminal, secondTerminal, base) => {
+    pointer('pointerdown', base, marker, 300);
+    pointer('pointerdown', base + 1, stage, 400);
+    pointer(firstTerminal, base + 1, stage, 400); // reverse the first gesture's order
+    compatibilityClick();
+    pointer(secondTerminal, base, marker, 300);
+    compatibilityClick();
+  };
+  terminalGesture('pointerup', 'pointercancel', 61);
+  terminalGesture('lostpointercapture', 'pointerup', 71);
+  const pinchTerminalVariantsBlocked = actionCalls === 0;
+
+  // No timeout: the pointerdown itself, not elapsed time, proves a new intent.
+  pointer('pointerdown', 81, marker, 300);
+  pointer('pointerup', 81, marker, 300);
+  compatibilityClick();
+  const nextDeliberateDeviceTapWorks = actionCalls === 1;
+  c._clickDevice = originalClickDevice;
   c._setMode('plan');
   await c.updateComplete;
-  return pinchZoomed && gestureClickBlocked && ordinaryTapStillWorks;
-});
+  return {
+    pinchZoomsFromDevice,
+    pinchIntermediateClickBlocked,
+    pinchDelayedClickBlocked,
+    pinchTerminalVariantsBlocked,
+    pinchCancelsDeviceLongPress,
+    nextDeliberateDeviceTapWorks,
+  };
+}));
 
 // Robot-map calibration owns the gesture surface. The card-level capture
 // guard must still suppress a two-finger misclick, but must not seed or apply

@@ -106,6 +106,7 @@ import {
   resolveFixedFloor, resolveInitialSpace, settleBestEffort,
   type FixedFloorSelection, type InitialSpaceSelection,
 } from './initial-load';
+import { TouchGestureClickGuard } from './touch-gesture-click-guard';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import {
   createEmptySpaceConfig, initialSpaceDisplayDraft, roomTempRangeFromDraft, switchSpacePlanSource, touchSpaceDisplay,
@@ -2061,8 +2062,10 @@ export class HouseplanCard extends LitElement {
    * a synthetic tap on a device, room link, opening badge or editor control.
    */
   private _touchContacts = new Map<number, { x: number; y: number; inStage: boolean }>();
-  private _touchSequenceMultitouch = false;
-  private _touchClickBlockUntil = 0;
+  private readonly _touchClickGuard = new TouchGestureClickGuard();
+  private get _touchSequenceMultitouch(): boolean {
+    return this._touchClickGuard.sequenceMultitouch;
+  }
   /** Route occupied by this live card. Persistent navigation remembers only
    *  the space; leaving this HA route ends the transient editor session. */
   private _connectedPath = '';
@@ -2883,8 +2886,7 @@ export class HouseplanCard extends LitElement {
     // their closure — a disconnected card must not stay pinned to window.
     this._editorRuntime?._furnShiftDetach();
     this._touchContacts.clear();
-    this._touchSequenceMultitouch = false;
-    this._touchClickBlockUntil = 0;
+    this._touchClickGuard.reset();
     this._clearTransientHover(true);
     this._cancelDevicePressFeedback();
     this._pointerHoverObserver?.disconnect();
@@ -7233,14 +7235,14 @@ export class HouseplanCard extends LitElement {
    * `_suppressClick` covers a pan/pinch that the stage itself observed. The
    * contact set closes the other path: an interactive child is allowed to stop
    * pointer propagation, but it is not allowed to hide/navigate/toggle from one
-   * finger of a two-finger gesture. The short tail also covers WebKit emitting
-   * `click` after the final pointerup rather than in the same task.
+   * finger of a two-finger gesture. The event-owned post-gesture barrier also
+   * covers WebKit emitting `click` long after the final pointerup; only a new
+   * pointerdown proves a new deliberate input sequence.
    */
   private _guardTouchGesture(ev: Event): void {
     if (this._editorSecondary?.handleOutsideDismiss(ev)) return;
     if (ev.type === 'click') {
-      if (!this._suppressClick && !this._touchSequenceMultitouch
-          && Date.now() > this._touchClickBlockUntil) return;
+      if (!this._suppressClick && !this._touchClickGuard.clickBlocked) return;
       ev.preventDefault();
       ev.stopImmediatePropagation();
       return;
@@ -7248,6 +7250,9 @@ export class HouseplanCard extends LitElement {
     const pointer = ev as PointerEvent;
     this._notePointer(pointer);
     if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') this._doubleFit.clear(); else if (ev.type === 'pointerdown') this._doubleFit.clearOutside(pointer);
+    if (ev.type === 'pointerdown') this._touchClickGuard.pointerDown(
+      pointer.pointerId, pointer.pointerType,
+    );
     if (pointer.pointerType !== 'touch') return;
     if (ev.type === 'pointerdown') {
       this._touchContacts.set(pointer.pointerId, {
@@ -7258,8 +7263,6 @@ export class HouseplanCard extends LitElement {
       if (this._touchContacts.size >= 2) {
         this._clearRoomFocus(true);
         this._clearTransientHover();
-        this._touchSequenceMultitouch = true;
-        this._touchClickBlockUntil = Number.POSITIVE_INFINITY;
         clearTimeout(this._holdTimer);
         clearTimeout(this._kioskHoldTimer);
         this._swipeStart = null;
@@ -7306,10 +7309,12 @@ export class HouseplanCard extends LitElement {
     }
     if (ev.type !== 'pointerup' && ev.type !== 'pointercancel'
         && ev.type !== 'lostpointercapture') return;
+    const wasMultitouch = this._touchClickGuard.pointerTerminal(
+      pointer.pointerId, pointer.pointerType,
+    );
     this._clearTransientHover();
     this._touchContacts.delete(pointer.pointerId);
-    if (this._touchSequenceMultitouch) {
-      this._touchClickBlockUntil = Date.now() + 500;
+    if (wasMultitouch) {
       this._pointers.delete(pointer.pointerId);
       if (!this._vacFit && this._pointers.size >= 2) {
         const [a, b] = [...this._pointers.values()];
@@ -7322,7 +7327,6 @@ export class HouseplanCard extends LitElement {
         this._panLock = null;
       }
     }
-    if (this._touchContacts.size === 0) this._touchSequenceMultitouch = false;
   }
 
   private _showTip(

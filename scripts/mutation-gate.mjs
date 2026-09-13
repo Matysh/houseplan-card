@@ -7491,6 +7491,21 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'touch-pinch-click-block-cleared-on-terminal',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#563" test/touch-gesture-click-guard.test.mjs',
+    because: 'a completed pinch still owns every delayed compatibility click until a new '
+      + 'pointerdown proves deliberate input; clearing on pointerup can toggle a real device (#563 AC7)',
+    patches: [{
+      file: 'src/touch-gesture-click-guard.ts',
+      find: '    if (this._activeTouchPointers.size === 0) this._sequenceMultitouch = false;',
+      replace: '    if (this._activeTouchPointers.size === 0) {\n'
+        + '      this._sequenceMultitouch = false;\n'
+        + '      this._postGestureClickBlocked = false; // mutant: delayed click is re-armed\n'
+        + '    }',
+    }],
+  },
+  {
     id: 'double-fit-free-background-owner-removed',
     guard: 'node --test --test-name-pattern="#449 only" test/room-fit.test.mjs',
     because: 'room, device and opening owners must never become a half of the free-background '

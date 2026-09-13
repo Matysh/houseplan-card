@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Pinch-zooming the plan from a device marker no longer runs that device's
+  action through a delayed browser compatibility click. The next deliberate
+  single tap works immediately, without an artificial pause
+  ([#563](https://github.com/Matysh/houseplan-card/issues/563)).
+
 ## v1.76.0-beta.1 — 2026-09-13
 
 - Summary-panel visibility and size preferences no longer move between House

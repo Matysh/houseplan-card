@@ -1613,9 +1613,15 @@ separately promised workflows:
       the current snapshot immediately, so the very first later motion/event
       transition is detected. Rebinding a marker's effective source clears the
       old source's finite flash in the same update [auto: smoke_motion_sense]
-- [ ] Editor gestures on touch (dev): in the plan editor on a phone, pinch
-      zooms and a moving finger pans; releasing after a gesture does not draw
-      a point, a clean tap still does [auto: smoke_editor_gestures]
+- [ ] Touch gesture ownership (dev): in the plan editor on a phone, pinch zooms
+      and a moving finger pans; releasing after a gesture does not draw a point
+      and a clean tap still does. In View, a pinch started on a real device
+      marker changes zoom but neither an intermediate nor a delayed (>500 ms)
+      compatibility click runs its action; reverse release, pointer cancel and
+      lost capture stay blocked, while the next deliberate single-touch
+      pointerdown/up/click works once without waiting
+      [unit: touch-gesture-click-guard; auto: smoke_editor_gestures; mutation:
+      touch-pinch-click-block-cleared-on-terminal]
 - [ ] Legacy geometry parity (v1.50.4, HP-1503-01): a store with a zero
       viewport and a negative rect renders identically sane in BOTH cards —
       full canvas fallback, normalised rectangle [auto: smoke_legacy_geometry]

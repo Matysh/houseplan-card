@@ -45,6 +45,13 @@ On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
   remount;
 - preserve kiosk gestures and prevent accidental editor interactions.
 
+Once a second touch joins an input sequence, that whole sequence is navigation
+only: device and other click actions stay blocked through every release,
+cancellation or lost capture and through any delayed browser compatibility
+clicks. A new pointer down after the old contacts have ended starts a deliberate
+input sequence immediately; users never have to wait before the next single
+tap.
+
 The summary panel, both halves of its control, and its simple settings form are
 supported View surfaces: each control has a 44 × 44 px or larger target, panel
 scrolling owns its touch gesture instead of zooming the plan, and the settings
