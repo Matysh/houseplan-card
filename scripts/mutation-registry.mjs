@@ -5417,8 +5417,16 @@ const MUTANT_DEFINITIONS = [
       + 'структурный тест обязан требовать ненулевой север и асимметричный азимут',
     patches: [{
       file: 'demo/golden/matrix.mjs',
-      find: '    glowEnabled: false, allLightsOff: true, northDeg: 90,',
-      replace: '    glowEnabled: false, allLightsOff: true, northDeg: 0,',
+      find: "  { id: 'lighting-sun-window-state-only-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',\n"
+        + '    // The golden screenshot is backed by a second, sun-layer-hidden capture.\n'
+        + '    // A real painted ray must account for enough changed pixels; DOM-only\n'
+        + '    // presence or an accidentally accepted empty baseline is not sufficient.\n'
+        + '    glowEnabled: false, allLightsOff: true, northDeg: 90,',
+      replace: "  { id: 'lighting-sun-window-state-only-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',\n"
+        + '    // The golden screenshot is backed by a second, sun-layer-hidden capture.\n'
+        + '    // A real painted ray must account for enough changed pixels; DOM-only\n'
+        + '    // presence or an accidentally accepted empty baseline is not sufficient.\n'
+        + '    glowEnabled: false, allLightsOff: true, northDeg: 0,',
     }],
   },
   {
