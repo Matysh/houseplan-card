@@ -55,8 +55,8 @@ const res = await page.evaluate(async () => {
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
-  "rows": 15, // 11 цветов (включая wall_fill) + радиус свечения + фон
-               // + «Оптимизировать планы» (docs/CANVAS.md §9)
+  "rows": 16, // 11 цветов (включая wall_fill) + радиус свечения + фон
+               // + грань окна #577 + «Оптимизировать планы» (docs/CANVAS.md §9)
   "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Light-source glow", "Walls", "Stage background", "Sun", "Backup and transfer", "Plan maintenance"],
   "aboutMovedOut": true,
   "saved": {"c": "#ff00ff", "a": 0.5},
