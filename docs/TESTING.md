@@ -4180,10 +4180,15 @@ require hands on real hardware — they remain for the human pass.
 - [ ] `demo/smoke_household_journeys.mjs` проверяет именованную навигацию и
       единственный `aria-current="page"`, реальный Tab-focus tooltip, переход к
       следующему устройству, blur-cleanup и попадание подсказки в viewport.
+      Комбинированный mouse+keyboard сценарий доказывает, что комната не
+      заменяет focus-tooltip, другое устройство сохраняет обычный hover, а
+      pointerleave восстанавливает подсказку всё ещё сфокусированного устройства.
 - [ ] `demo/smoke_space_card.mjs` считает сегменты тревоги в доступном имени
       статической карточки и не добавляет ей интерактивность.
 - [ ] Мутанты `view-current-space-aria-removed`,
       `device-accessible-label-dedup-removed`,
       `device-focus-tooltip-handler-removed` и
-      `device-focus-tooltip-blur-cleanup-removed` обязаны покраснеть на своих
+      `device-focus-tooltip-blur-cleanup-removed`, а также мутанты раунда r2
+      `device-focus-tooltip-room-hover-overwrites` и
+      `device-pointer-leave-clears-focus-fallback` обязаны покраснеть на своих
       заявленных гардах.

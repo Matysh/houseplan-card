@@ -5744,10 +5744,8 @@ export class HouseplanCard extends LitElement {
     if (this._liveRt) this._liveRt.deviceFocusTip(target, d);
     else void this._ensureLiveRuntime().then(() => this._liveRt?.deviceFocusTip(target, d));
   }
-
   private _hideDeviceFocusTip(deviceId: string): void { this._liveRt?.deviceBlur(deviceId); }
-
-  private _clearPointerHover(): void { this._liveRt?.pointerLeave() ?? this._clearTransientHover(); }
+  private _clearPointerHover(): void { this._liveRt ? this._liveRt.pointerLeave() : this._clearTransientHover(); }
 
   /** Right click in VIEW mode always opens HA's more-info (owner's decision). */
   private _ctxDevice(ev: MouseEvent, d: DevItem): void {
@@ -7303,6 +7301,7 @@ export class HouseplanCard extends LitElement {
   /** Remove visual state that can only be owned by a live mouse hover. */
   private _clearTransientHover(suspend = false): void {
     if (suspend) this._pointerModality.suspend();
+    this._liveRt?.clearDeviceFocus();
     this._deviceHits.hover(this.renderRoot, null);
     if (this._tip) this._tip = null;
     if (this._hoverRoom) this._hoverRoom = null;
@@ -7432,6 +7431,7 @@ export class HouseplanCard extends LitElement {
     this._notePointer(ev);
     if (!this._pointerModality.hoverEnabled) return;
     if (this._drag || this._deviceDrag) return;
+    if (room && this._liveRt?.deviceFocusActive()) return;
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum, room, source: 'pointer' };
     this._syncLiveHover();
   }

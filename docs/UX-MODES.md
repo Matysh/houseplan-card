@@ -85,8 +85,10 @@ clears it on touch/pen and on mode, space or lifecycle boundaries, and restores
 it when a real mouse is used again. Keyboard focus, selection and semantic
 device state do not depend on that gate. Visible keyboard focus on a View device
 opens the same marker-anchored tooltip as mouse hover; it moves with Tab focus
-and closes at the usual focus, mode, space and lifecycle boundaries. Touch and
-pen do not open it. A device action that actually dispatches
+and closes at the usual focus, mode, space and lifecycle boundaries. Room hover
+does not replace it; ordinary mouse hover on another device may show that
+device temporarily, then pointerleave restores the still-focused device.
+Touch and pen do not open it. A device action that actually dispatches
 briefly scales its painted shell to 95% and back over 200 ms; informational,
 editor and no-op paths do not imitate a successful action.
 

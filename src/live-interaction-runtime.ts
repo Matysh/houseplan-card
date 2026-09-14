@@ -2,8 +2,9 @@ import {
   commitHouseplanViewport, disposeHouseplanViewport, scheduleHouseplanViewport,
 } from './live-viewport';
 import {
-  clearPointerHover, hideDeviceFocusTip, reconcileDeviceFocusTip, resetHouseplanHover,
-  showDeviceFocusTip, showDevicePointerTip, syncHouseplanHover,
+  clearDeviceFocusTip, clearPointerHover, deviceFocusTipActive, hideDeviceFocusTip,
+  reconcileDeviceFocusTip, resetHouseplanHover, showDeviceFocusTip, showDevicePointerTip,
+  syncHouseplanHover,
 } from './live-hover';
 import {
   classifyHassRenderChange, type HassRenderDependencies, type HassRenderSnapshot,
@@ -65,6 +66,8 @@ export class LiveRuntime {
   }
   public deviceBlur(deviceId: string): void { hideDeviceFocusTip(this.host, deviceId); }
   public pointerLeave(): void { clearPointerHover(this.host); }
+  public deviceFocusActive(): boolean { return deviceFocusTipActive(this.host); }
+  public clearDeviceFocus(): void { clearDeviceFocusTip(this.host); }
   public active(): boolean {
     const host = this.host as LiveRuntimeHost;
     return host._pointers.size > 0 || host._cameraTransition.active || !!host._deviceDrag
@@ -80,6 +83,7 @@ export class LiveRuntime {
   }
   public dispose(): void {
     disposeHouseplanViewport(this.host);
+    clearDeviceFocusTip(this.host);
     resetHouseplanHover(this.host);
   }
 }

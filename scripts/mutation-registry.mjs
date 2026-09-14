@@ -151,6 +151,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-focus-tooltip-room-hover-overwrites',
+    guard: 'node demo/smoke_household_journeys.mjs',
+    because: '#565 AC6/r1 M1: moving a mouse over the room must not erase a keyboard-owned '
+      + 'device tooltip while focus remains on that device',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (room && this._liveRt?.deviceFocusActive()) return;",
+      replace: '    void this._liveRt; // mutant: room hover overwrites the focus tooltip',
+    }],
+  },
+  {
+    id: 'device-pointer-leave-clears-focus-fallback',
+    guard: 'node demo/smoke_household_journeys.mjs',
+    because: '#565 AC6/r1 M1: pointerleave after a temporary device hover must restore the '
+      + 'still-focused keyboard tooltip instead of falling through to the destructive fallback',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '  private _clearPointerHover(): void { this._liveRt ? this._liveRt.pointerLeave() : this._clearTransientHover(); }',
+      replace: '  private _clearPointerHover(): void { this._liveRt?.pointerLeave() ?? this._clearTransientHover(); }',
+    }],
+  },
+  {
     id: 'invariants-blame-every-stale-position',
     guard: 'node --test --test-name-pattern="#566" test/model-invariants.test.mjs',
     because: '#566: продукт СОЗНАТЕЛЬНО хранит позицию, чей владелец жив, а пространство '

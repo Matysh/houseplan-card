@@ -172,6 +172,56 @@ check('j4.focus_tooltip_is_anchored_in_viewport',
   j4.focusTooltip.source === 'focus' && j4.focusTooltip.inViewport, true);
 check('j4.enter_calls_service', j4.calls.length > 0, true);
 
+const j4DualInput = await page.evaluate((focusId) => {
+  const card = window.__card;
+  const root = card.renderRoot;
+  const tip = root.querySelector('[data-hp-live-tip]');
+  const focusText = tip?.textContent?.trim() || '';
+  const room = root.querySelector('[data-hp="room"]');
+  const roomBox = room?.getBoundingClientRect();
+  room?.dispatchEvent(new PointerEvent('pointermove', {
+    bubbles: true, composed: true, pointerType: 'mouse',
+    clientX: roomBox?.left || 0, clientY: roomBox?.top || 0,
+  }));
+  const afterRoom = {
+    source: card._tip?.source || null,
+    deviceId: card._tip?.deviceId || null,
+    text: tip?.textContent?.trim() || '',
+  };
+  const other = [...root.querySelectorAll('[data-hp="device"]')]
+    .find((marker) => marker.dataset.id !== focusId);
+  const otherBox = other?.getBoundingClientRect();
+  const otherName = card._devices.find((device) => device.id === other?.dataset.id)?.name || '';
+  other?.dispatchEvent(new PointerEvent('pointerover', {
+    bubbles: true, composed: true, pointerType: 'mouse',
+    clientX: (otherBox?.left || 0) + (otherBox?.width || 0) / 2,
+    clientY: (otherBox?.top || 0) + (otherBox?.height || 0) / 2,
+  }));
+  const afterDevice = {
+    source: card._tip?.source || null,
+    title: tip?.querySelector('b')?.textContent?.trim() || '',
+    expectedTitle: otherName,
+  };
+  other?.dispatchEvent(new PointerEvent('pointerleave', {
+    bubbles: false, composed: true, pointerType: 'mouse',
+    clientX: otherBox?.right || 0, clientY: otherBox?.bottom || 0,
+  }));
+  const restored = {
+    source: card._tip?.source || null,
+    deviceId: card._tip?.deviceId || null,
+    text: tip?.textContent?.trim() || '',
+  };
+  return { focusText, afterRoom, afterDevice, restored };
+}, tabStops.id);
+out.j4_dual_input = j4DualInput;
+check('j4.room_hover_does_not_replace_keyboard_tooltip', j4DualInput.afterRoom,
+  { source: 'focus', deviceId: tabStops.id, text: j4DualInput.focusText });
+check('j4.other_device_keeps_ordinary_pointer_hover',
+  j4DualInput.afterDevice.source === 'pointer'
+    && j4DualInput.afterDevice.title === j4DualInput.afterDevice.expectedTitle, true);
+check('j4.pointer_leave_restores_keyboard_tooltip', j4DualInput.restored,
+  { source: 'focus', deviceId: tabStops.id, text: j4DualInput.focusText });
+
 await page.keyboard.press('Tab');
 const j4Next = await page.evaluate(() => {
   const card = window.__card;

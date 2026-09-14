@@ -45,6 +45,7 @@ interface DeviceTipHost extends LiveHoverHost {
 }
 
 const states = new WeakMap<object, HoverState>();
+const focusTips = new WeakMap<object, LiveTip>();
 
 const deviceTipContent = (host: DeviceTipHost, device: DevItem): { title: string; meta: string } => {
   const showLqi = host._spaceDisplayForRender().showLqi ?? host._config?.show_signal ?? true;
@@ -67,7 +68,6 @@ export function showDevicePointerTip(value: object, event: PointerEvent, device:
     host._deviceHits.hover(host.renderRoot, null);
     return;
   }
-  if (host._tip?.source === 'focus') return;
   const tip = deviceTipContent(host, device);
   host._deviceHits.hover(host.renderRoot, device.id);
   host._showTip(event, tip.title, tip.meta);
@@ -78,36 +78,44 @@ export function showDeviceFocusTip(value: object, target: HTMLElement | null, de
   if (host._mode !== 'view' || host._drag || host._deviceDrag
       || !target?.matches(':focus-visible')) return;
   const rect = target.getBoundingClientRect();
-  host._tip = {
+  const tip: LiveTip = {
     x: rect.right, y: rect.top, ...deviceTipContent(host, device),
     source: 'focus', deviceId: device.id,
   };
+  focusTips.set(value, tip);
+  host._tip = tip;
   syncHouseplanHover(host);
 }
 
 export function hideDeviceFocusTip(value: object, deviceId: string): void {
   const host = value as DeviceTipHost;
-  if (host._tip?.source !== 'focus' || host._tip.deviceId !== deviceId) return;
-  host._tip = null;
+  if (focusTips.get(value)?.deviceId !== deviceId) return;
+  focusTips.delete(value);
+  if (host._tip?.source === 'focus') host._tip = null;
   syncHouseplanHover(host);
 }
 
 export function clearPointerHover(value: object): void {
   const host = value as DeviceTipHost;
   host._deviceHits.hover(host.renderRoot, null);
-  if (host._tip?.source !== 'focus') host._tip = null;
+  host._tip = focusTips.get(value) || null;
   host._hoverRoom = null;
   syncHouseplanHover(host);
 }
 
 export function reconcileDeviceFocusTip(value: object): void {
   const host = value as DeviceTipHost;
-  if (host._tip?.source !== 'focus') return;
+  const tip = focusTips.get(value);
+  if (!tip) return;
   const marker = [...host.renderRoot.querySelectorAll<HTMLElement>('[data-hp="device"]')]
-    .find((node) => node.dataset.id === host._tip?.deviceId);
+    .find((node) => node.dataset.id === tip.deviceId);
   if (marker?.matches(':focus-visible')) return;
-  host._tip = null;
+  focusTips.delete(value);
+  if (host._tip?.source === 'focus') host._tip = null;
 }
+
+export const deviceFocusTipActive = (value: object): boolean => focusTips.has(value);
+export const clearDeviceFocusTip = (value: object): void => { focusTips.delete(value); };
 
 const appendMeta = (tip: HTMLElement, label: string, value?: string, color?: string): void => {
   if (!value) return;
