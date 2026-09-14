@@ -465,7 +465,9 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   const outerSpace = outerFixture.config.spaces.find((item) => item.id === outer.space);
   const hostWall = outerSpace.walls.find((wall) =>
     Math.abs(wall.a[1] - 0.10) < 1e-9 && Math.abs(wall.b[1] - 0.10) < 1e-9);
-  assert.equal(outerSpace.settings.sun_ray_origin, 'outer');
+  assert.equal(outerFixture.config.settings.sun_ray_origin, 'outer');
+  assert.equal(outerSpace.settings.sun_ray_origin, undefined,
+    'the selector is global-only and must not be hidden in a space override');
   assert.equal(hostWall?.cm, 15, 'outer golden must retain a physical wall tunnel');
   assert.equal(outer.capture, 'sun-window');
   assert.equal(outer.sunRayPixels.minPixels >= 500, true);
