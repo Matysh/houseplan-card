@@ -162,6 +162,7 @@ test('issue 212 feedback is owned by actual dispatch and lasts 200 ms', () => {
 
 test('issue 212 removes the global touch latch and gates every shared hover selector', () => {
   const card = source('houseplan-card.ts');
+  const styles = source('styles.ts');
   assert.doesNotMatch(card, /private static _touchSeen/);
   assert.match(card, /PointerModalityController/);
   assert.match(card, /_clearTransientHover/);
@@ -169,6 +170,11 @@ test('issue 212 removes the global touch latch and gates every shared hover sele
     card,
     /POINTER_HOVER_TARGET_SELECTOR\s*=\s*'[^']*hp-device-preview[^']*'/,
     'device preview must receive the card-owned pointer hover gate',
+  );
+  assert.match(
+    styles,
+    /:host\(\[data-pointer-hover\]\)\s+\.dev:not\(\.unavail\)\[data-hp-device-hover\]\s*\{/,
+    'semantic device hover paint must remain gated by the current pointer modality',
   );
 
   for (const name of [
