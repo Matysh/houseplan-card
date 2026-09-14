@@ -7128,6 +7128,7 @@ export class HouseplanCard extends LitElement {
     // event must keep bubbling to the active decor tool; do not prevent it,
     // capture it or create a layout drag.
     if (this._mode !== 'view' && this._mode !== 'devices') return;
+    if (this._mode === 'view' && ev.pointerType === 'touch' && this._touchSequenceMultitouch) return;
     d = this._deviceHits.begin(
       this.renderRoot, this._renderDevices, this._space, ev, d,
     );
@@ -7316,23 +7317,18 @@ export class HouseplanCard extends LitElement {
   }
 
   /**
-   * Capture-phase guard for browser clicks synthesized after touch gestures.
+   * Capture-phase guard for browser activations synthesized after touch gestures.
    *
    * `_suppressClick` covers a pan/pinch that the stage itself observed. The
    * contact set closes the other path: an interactive child is allowed to stop
    * pointer propagation, but it is not allowed to hide/navigate/toggle from one
    * finger of a two-finger gesture. The event-owned post-gesture barrier also
-   * covers WebKit emitting `click` long after the final pointerup; only a new
-   * pointerdown proves a new deliberate input sequence.
+   * covers a delayed `click` or touch `contextmenu` after the final pointerup;
+   * only a new pointerdown/keyboard event proves a new deliberate sequence.
    */
   private _guardTouchGesture(ev: Event): void {
     if (this._editorSecondary?.handleOutsideDismiss(ev)) return;
-    if (ev.type === 'click') {
-      if (!this._suppressClick && !this._touchClickGuard.clickBlocked) return;
-      ev.preventDefault();
-      ev.stopImmediatePropagation();
-      return;
-    }
+    if (this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
     const pointer = ev as PointerEvent;
     this._notePointer(pointer);
     if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') this._doubleFit.clear(); else if (ev.type === 'pointerdown') this._doubleFit.clearOutside(pointer);
@@ -11453,6 +11449,8 @@ export class HouseplanCard extends LitElement {
         @pointerup=${this._touchGestureGuard}
         @pointercancel=${this._touchGestureGuard}
         @lostpointercapture=${this._touchGestureGuard}
+        @keydown=${this._touchGestureGuard}
+        @contextmenu=${this._touchGestureGuard}
         @click=${this._touchGestureGuard}>
         <div class="hdr ${this._kiosk ? 'kioskhide' : ''}">
         <div class="head">

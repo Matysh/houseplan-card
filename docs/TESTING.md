@@ -1658,13 +1658,17 @@ separately promised workflows:
       old source's finite flash in the same update [auto: smoke_motion_sense]
 - [ ] Touch gesture ownership (dev): in the plan editor on a phone, pinch zooms
       and a moving finger pans; releasing after a gesture does not draw a point
-      and a clean tap still does. In View, a pinch started on a real device
-      marker changes zoom but neither an intermediate nor a delayed (>500 ms)
-      compatibility click runs its action; reverse release, pointer cancel and
-      lost capture stay blocked, while the next deliberate single-touch
-      pointerdown/up/click works once without waiting
-      [unit: touch-gesture-click-guard; auto: smoke_editor_gestures; mutation:
-      touch-pinch-click-block-cleared-on-terminal]
+      and a clean tap still does. In View, both marker-first and stage-first
+      pinches change zoom; the latter holds its second contact on the marker for
+      more than 600 ms. Neither order opens the local card, HA more-info,
+      confirmation/service or a compatibility click/contextmenu action. Reverse
+      release, a third contact, pointer cancel and lost capture stay blocked,
+      while the next deliberate single-touch tap and long press work once
+      without waiting; real mouse and keyboard context menus remain available
+      [unit: touch-gesture-click-guard; auto: smoke_editor_gestures; mutations:
+      touch-pinch-click-block-cleared-on-terminal,
+      touch-pinch-marker-hold-rearmed,
+      touch-pinch-contextmenu-guard-removed]
 - [ ] Legacy geometry parity (v1.50.4, HP-1503-01): a store with a zero
       viewport and a negative rect renders identically sane in BOTH cards —
       full canvas fallback, normalised rectangle [auto: smoke_legacy_geometry]

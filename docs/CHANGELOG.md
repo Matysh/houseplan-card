@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Pinch-zooming with the second finger on a device marker no longer re-arms the
+  marker's long-press timer or opens both the House Plan device card and Home
+  Assistant more-info. Delayed touch context-menu events are now kept inside
+  the navigation gesture, while the next deliberate tap, long press, mouse
+  right-click and keyboard action still work immediately
+  ([#578](https://github.com/Matysh/houseplan-card/issues/578)).
+
 ## v1.76.0-beta.3 — 2026-09-14
 
 - Internal maintenance only; the default House Plan experience is unchanged.

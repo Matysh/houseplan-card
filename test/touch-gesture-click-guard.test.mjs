@@ -61,3 +61,48 @@ test('#563 a new mouse sequence on a hybrid device is not held by an old pinch',
   assert.equal(guard.sequenceMultitouch, false);
   assert.equal(guard.clickBlocked, false);
 });
+
+test('#578 active and completed pinch own click and context-menu activation', () => {
+  const guard = new TouchGestureClickGuard();
+  guard.pointerDown(1, 'touch');
+  guard.pointerDown(2, 'touch');
+  assert.equal(guard.clickBlocked, true, 'activation is blocked while both contacts are active');
+
+  guard.pointerTerminal(1, 'touch');
+  assert.equal(guard.clickBlocked, true, 'the remaining old contact cannot become a new gesture');
+  guard.pointerTerminal(2, 'touch');
+  assert.equal(guard.clickBlocked, true, 'compatibility activation stays owned after release');
+});
+
+test('#578 keyboard intent re-arms context menu only after every old touch ended', () => {
+  const guard = new TouchGestureClickGuard();
+  const activation = (type, init = {}) => {
+    const event = {
+      type, defaultPrevented: false, immediateStopped: false, ...init,
+      preventDefault() { this.defaultPrevented = true; },
+      stopImmediatePropagation() { this.immediateStopped = true; },
+    };
+    assert.equal(guard.handleActivation(event, false), true);
+    return event;
+  };
+  guard.pointerDown(1, 'touch');
+  guard.pointerDown(2, 'touch');
+
+  activation('keydown', { key: 'F10', shiftKey: true });
+  assert.equal(guard.clickBlocked, true, 'a key cannot re-arm actions during an active pinch');
+  guard.pointerTerminal(1, 'touch');
+  activation('keydown', { key: 'ContextMenu', shiftKey: false });
+  assert.equal(guard.clickBlocked, true, 'the last old touch still owns the sequence');
+  guard.pointerTerminal(2, 'touch');
+
+  activation('keydown', { key: 'Tab', shiftKey: false });
+  assert.equal(guard.clickBlocked, true, 'an unrelated key is not new pointer intent');
+  const staleContextMenu = activation('contextmenu');
+  assert.equal(staleContextMenu.defaultPrevented, true);
+  assert.equal(staleContextMenu.immediateStopped, true);
+
+  activation('keydown', { key: 'F10', shiftKey: true });
+  assert.equal(guard.clickBlocked, false, 'Shift+F10 is fresh intent after all contacts ended');
+  const freshContextMenu = activation('contextmenu');
+  assert.equal(freshContextMenu.defaultPrevented, false);
+});

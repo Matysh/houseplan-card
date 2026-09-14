@@ -7710,6 +7710,29 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'touch-pinch-marker-hold-rearmed',
+    guard: 'node demo/smoke_editor_gestures.mjs',
+    because: 'when the stage owns the first touch and a marker receives the second, capture has '
+      + 'already cancelled holds; the marker must not arm a new 600 ms timer inside the same pinch '
+      + '(#578 AC1/AC8)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (this._mode === 'view' && ev.pointerType === 'touch' && this._touchSequenceMultitouch) return;",
+      replace: "    if (this._mode === 'view' && ev.pointerType === 'touch' && false) return; // mutant: re-arm hold",
+    }],
+  },
+  {
+    id: 'touch-pinch-contextmenu-guard-removed',
+    guard: 'node demo/smoke_editor_gestures.mjs',
+    because: 'touch-generated contextmenu belongs to the active/completed pinch and must not '
+      + 'reach the device handler or open HA more-info (#578 AC4/AC8)',
+    patches: [{
+      file: 'src/touch-gesture-click-guard.ts',
+      find: "    if (event.type !== 'click' && event.type !== 'contextmenu') return false;",
+      replace: "    if (event.type !== 'click') return false; // mutant: contextmenu bypasses the guard",
+    }],
+  },
+  {
     id: 'double-fit-free-background-owner-removed',
     guard: 'node --test --test-name-pattern="#449 only" test/room-fit.test.mjs',
     because: 'room, device and opening owners must never become a half of the free-background '

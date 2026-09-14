@@ -1,10 +1,11 @@
 /**
  * Event-owned click suppression for touch gestures.
  *
- * Browsers may emit a compatibility `click` an arbitrary time after the final
- * touch pointerup. A timeout cannot tell that stale click from a deliberate
- * tap; a new pointerdown can. Keep the completed multi-touch sequence blocked
- * until a genuinely new pointer sequence starts.
+ * Browsers may emit compatibility activations (`click` or `contextmenu`) an
+ * arbitrary time after the final touch pointerup. A timeout cannot tell that
+ * stale activation from deliberate input; a new pointerdown or keyboard event
+ * can. Keep the completed multi-touch sequence blocked until such positive
+ * evidence starts a new sequence.
  */
 export class TouchGestureClickGuard {
   private readonly _activeTouchPointers = new Set<number>();
@@ -17,6 +18,27 @@ export class TouchGestureClickGuard {
 
   get clickBlocked(): boolean {
     return this._sequenceMultitouch || this._postGestureClickBlocked;
+  }
+
+  /**
+   * Handles only activation/keyboard events; pointer lifecycle stays with the
+   * card because it also owns coordinates and pinch navigation.
+   */
+  handleActivation(event: Event, suppressClick: boolean): boolean {
+    if (event.type === 'keydown') {
+      const keyboard = event as KeyboardEvent;
+      if (this._activeTouchPointers.size === 0
+          && (keyboard.key === 'ContextMenu' || keyboard.key === 'F10' && keyboard.shiftKey)) {
+        this._postGestureClickBlocked = false;
+      }
+      return true;
+    }
+    if (event.type !== 'click' && event.type !== 'contextmenu') return false;
+    if (this.clickBlocked || event.type === 'click' && suppressClick) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    return true;
   }
 
   pointerDown(pointerId: number, pointerType: string): void {
