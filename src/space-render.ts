@@ -37,7 +37,7 @@ import {
 } from './render/opening-symbol';
 import { activeRegistryHass, fullRegistryHass, type HaRegistrySnapshot } from './ha-binding-status';
 import {
-  deviceA11yState, resolveDevicePresentation,
+  deviceAccessibleLabel, deviceA11yState, resolveDevicePresentation,
   type PresentationActivityRuntime, type ResolvedDevicePresentation,
 } from './device-presentation';
 import { presentationSnapshotKey } from './render-device-snapshot';
@@ -591,7 +591,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     });
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
     const a11yState = deviceA11yState(presentation);
-    const deviceAriaLabel = [
+    const deviceAriaLabel = deviceAccessibleLabel([
       d.name,
       t(o.lang, (`marker.state_a11y_${a11yState}`) as any),
       presentation.pulse.kind !== 'none'
@@ -602,7 +602,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         ? t(o.lang, (`marker.lqi_a11y_${presentation.lqiBand}`) as any, {
             value: presentation.lqiText,
           }) : '',
-    ].filter(Boolean).join(', ');
+    ]);
     return html`<div class="dev ${deviceThemeClass(planHass)} ${presentation.classes.join(' ')} ${d.virtual ? 'virtual' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
       data-hp="device" data-id="${d.id}" data-entity=${d.primary || nothing} data-area=${d.area || nothing}
       role="img" aria-label=${deviceAriaLabel}

@@ -4171,3 +4171,19 @@ require hands on real hardware — they remain for the human pass.
       `range_v1`/`zones_v1`.
 - [ ] Мутант `radar-profile-source-entity-id-omitted` удаляет обе роли
       `entity_id`; точный backend guard обязан покраснеть.
+
+## Доступность основного View (#565)
+
+- [ ] `test/device-presentation.test.mjs` доказывает whole-segment
+      дедупликацию доступного имени во всех четырёх локалях, сохранение порядка
+      и отсутствие ложного удаления при частичном совпадении.
+- [ ] `demo/smoke_household_journeys.mjs` проверяет именованную навигацию и
+      единственный `aria-current="page"`, реальный Tab-focus tooltip, переход к
+      следующему устройству, blur-cleanup и попадание подсказки в viewport.
+- [ ] `demo/smoke_space_card.mjs` считает сегменты тревоги в доступном имени
+      статической карточки и не добавляет ей интерактивность.
+- [ ] Мутанты `view-current-space-aria-removed`,
+      `device-accessible-label-dedup-removed`,
+      `device-focus-tooltip-handler-removed` и
+      `device-focus-tooltip-blur-cleanup-removed` обязаны покраснеть на своих
+      заявленных гардах.

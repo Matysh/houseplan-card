@@ -107,6 +107,50 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'view-current-space-aria-removed',
+    guard: 'node demo/smoke_household_journeys.mjs',
+    because: '#565 AC1: the active class is visual only; removing aria-current makes the '
+      + 'open space unknowable to assistive technology even though the tab still looks selected',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "                aria-current=${this._space === s.id ? 'page' : nothing}",
+      replace: '                aria-current=${nothing}',
+    }],
+  },
+  {
+    id: 'device-accessible-label-dedup-removed',
+    guard: 'node --test --test-name-pattern="#565 accessible" test/device-presentation.test.mjs',
+    because: '#565 AC3/AC4: state and pulse may localise to the same word; without whole-segment '
+      + 'deduplication a screen reader announces Alarm twice in both plan cards',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: '    if (seen.has(key)) continue;',
+      replace: '    void seen; // mutant: repeated accessible facts are retained',
+    }],
+  },
+  {
+    id: 'device-focus-tooltip-handler-removed',
+    guard: 'node demo/smoke_household_journeys.mjs',
+    because: '#565 AC5: the visible focus ring alone does not give a sighted keyboard user the '
+      + 'device name and metrics shown to a mouse user',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      @focus=${(e: FocusEvent) => this._showDeviceFocusTip(e, d)}',
+      replace: '      @focus=${nothing}',
+    }],
+  },
+  {
+    id: 'device-focus-tooltip-blur-cleanup-removed',
+    guard: 'node demo/smoke_household_journeys.mjs',
+    because: '#565 AC6: a focus-owned tooltip must not remain after keyboard focus leaves the '
+      + 'marker; stale content can otherwise describe the wrong device',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '  private _hideDeviceFocusTip(deviceId: string): void { this._liveRt?.deviceBlur(deviceId); }',
+      replace: '  private _hideDeviceFocusTip(deviceId: string): void { void deviceId; }',
+    }],
+  },
+  {
     id: 'invariants-blame-every-stale-position',
     guard: 'node --test --test-name-pattern="#566" test/model-invariants.test.mjs',
     because: '#566: продукт СОЗНАТЕЛЬНО хранит позицию, чей владелец жив, а пространство '

@@ -4,6 +4,13 @@ const { page, browser } = await launch({ width: 900, height: 900 }, 1);
 const res = await page.evaluate(async () => {
   await customElements.whenDefined('houseplan-space-card');
   const hass = window.__card.hass;
+  const alarmDevice = window.__card._devices.find((device) => device.id === 'd_leak');
+  if (alarmDevice?.primary && hass.states[alarmDevice.primary]) {
+    hass.states = {
+      ...hass.states,
+      [alarmDevice.primary]: { ...hass.states[alarmDevice.primary], state: 'on' },
+    };
+  }
   const spaceId = window.__card._model[0].id;
   // Give the real static renderer structural voters that room-only fixtures
   // cannot prove: an independent wall, saved draft, column and hosted door.
@@ -124,6 +131,11 @@ const res = await page.evaluate(async () => {
   const pe = stage ? getComputedStyle(stage).pointerEvents : null;
   const markers = card.renderRoot.querySelectorAll('.hp-static-stage .devlayer .dev').length;
   const litMarker = card.renderRoot.querySelector('.hp-static-stage .dev[data-id="d_light1"]');
+  const alarmMarker = alarmDevice
+    ? card.renderRoot.querySelector(`.hp-static-stage .dev[data-id="${alarmDevice.id}"]`)
+    : null;
+  const alarmSegments = (alarmMarker?.getAttribute('aria-label') || '').split(', ')
+    .map((value) => value.trim().toLowerCase()).filter(Boolean);
   const btn = card.renderRoot.querySelector('.hp-static-btn');
 
   // deep-link: clicking the button pushes #space=<id>
@@ -143,6 +155,9 @@ const res = await page.evaluate(async () => {
     markers,
     litMarkerOn: !!litMarker?.classList.contains('on'),
     sharedFacePresent: !!litMarker?.querySelector('ha-icon'),
+    alarmLabelHasNoRepeats: alarmSegments.length >= 2
+      && new Set(alarmSegments).size === alarmSegments.length
+      && alarmSegments.filter((part) => part === 'alarm').length === 1,
     omittedTitle: card.renderRoot.querySelector('.hp-static-title')?.textContent?.trim() || null,
     namedTitle: named.renderRoot.querySelector('.hp-static-title')?.textContent?.trim() || null,
     compactHasTitle: !!compact.renderRoot.querySelector('.hp-static-title'),
@@ -209,6 +224,7 @@ const ok =
   res.markers > 0 &&
   res.litMarkerOn &&
   res.sharedFacePresent &&
+  res.alarmLabelHasNoRepeats &&
   !!res.omittedTitle &&
   res.namedTitle === 'Named floor' &&
   !res.compactHasTitle &&

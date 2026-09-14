@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   activitySourceSignature,
+  deviceAccessibleLabel,
   deviceA11yState,
   markerLqiBand,
   markerLqiColor,
@@ -54,6 +55,29 @@ const options = {
   showTemperature: true,
   showSignal: true,
 };
+
+test('#565 accessible device label removes only whole repeated segments', () => {
+  assert.equal(deviceAccessibleLabel([
+    'Sink leak sensor', ' Alarm ', 'alarm', '', null, false,
+    'LQI 117', 'medium signal',
+  ]), 'Sink leak sensor, Alarm, LQI 117, medium signal');
+  assert.equal(deviceAccessibleLabel([
+    'Alarm sensor', 'Alarm', 'Alarm active', 'LQI 117', 'LQI 117, medium signal',
+  ]), 'Alarm sensor, Alarm, Alarm active, LQI 117, LQI 117, medium signal');
+  assert.equal(deviceAccessibleLabel([
+    '  Door   sensor  ', 'Open', 'Recent opening', 'OPEN',
+  ]), 'Door sensor, Open, Recent opening');
+
+  for (const language of ['en', 'ru', 'de', 'fr']) {
+    const dictionary = JSON.parse(readFileSync(
+      new URL(`../src/i18n/${language}.json`, import.meta.url), 'utf8',
+    ));
+    const alarm = dictionary['marker.state_a11y_alarm'];
+    assert.equal(alarm, dictionary['marker.pulse_a11y_alarm']);
+    assert.equal(deviceAccessibleLabel(['Leak sensor', alarm, alarm]).split(', ').length, 2,
+      `${language}: alarm is spoken once`);
+  }
+});
 
 test('marker LQI keeps semantic bands while its colour uses the continuous gradient', () => {
   assert.deepEqual([0, 40, 41, 179, 180].map(markerLqiBand), [

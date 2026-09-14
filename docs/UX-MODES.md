@@ -83,7 +83,10 @@ Room, device, opening and shared-control hover is a mouse-only transient layer:
 the card enables it per instance after real mouse input on fine/hover hardware,
 clears it on touch/pen and on mode, space or lifecycle boundaries, and restores
 it when a real mouse is used again. Keyboard focus, selection and semantic
-device state do not depend on that gate. A device action that actually dispatches
+device state do not depend on that gate. Visible keyboard focus on a View device
+opens the same marker-anchored tooltip as mouse hover; it moves with Tab focus
+and closes at the usual focus, mode, space and lifecycle boundaries. Touch and
+pen do not open it. A device action that actually dispatches
 briefly scales its painted shell to 95% and back over 200 ms; informational,
 editor and no-op paths do not imitate a successful action.
 

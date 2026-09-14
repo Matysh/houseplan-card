@@ -88,11 +88,15 @@ const j2 = await page.evaluate(async () => {
     state: node?.dataset.state || null,
     alarmClass: node?.classList.contains('alarm') || false,
     role: node?.getAttribute('role') || null,
+    segments: (node?.getAttribute('aria-label') || '').split(', ')
+      .map((value) => value.trim().toLowerCase()).filter(Boolean),
   };
 });
 out.j2 = j2;
 check('j2.alarm_has_accessible_state', /\S/.test(j2.label) && j2.state !== null, true);
 check('j2.alarm_not_colour_only', j2.label.split(',').length >= 2, true);
+check('j2.alarm_fact_is_not_repeated', new Set(j2.segments).size, j2.segments.length);
+check('j2.alarm_is_spoken_once', j2.segments.filter((part) => part === 'alarm').length, 1);
 
 // --- J3. «Сколько в спальне» -------------------------------------------------
 // Оракул: числовое значение попадает в ДОСТУПНОЕ ИМЯ, а не только в рисунок.
@@ -143,14 +147,88 @@ const j4 = await page.evaluate(async () => {
   const ring = leaf ? getComputedStyle(leaf).getPropertyValue('--device-ring-color').trim() : null;
   const idle = card.renderRoot.querySelector('[data-hp="device"]:not(:focus-visible)');
   const idleRing = idle ? getComputedStyle(idle).getPropertyValue('--device-ring-color').trim() : null;
+  const tip = card.renderRoot.querySelector('[data-hp-live-tip]');
+  const tipBox = tip?.getBoundingClientRect();
+  const focusedDevice = card._devices.find((device) => device.id === leaf?.dataset?.id);
+  const focusTooltip = {
+    visible: !!tip && !tip.hidden,
+    title: tip?.querySelector('b')?.textContent?.trim() || '',
+    text: tip?.textContent?.trim() || '',
+    expectedTitle: focusedDevice?.name || '',
+    inViewport: !!tipBox && tipBox.left >= 0 && tipBox.top >= 0
+      && tipBox.right <= innerWidth && tipBox.bottom <= innerHeight,
+    source: card._tip?.source || null,
+  };
   leaf?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
   await new Promise((resolve) => setTimeout(resolve, 150));
-  return { calls, focusVisible, ring, idleRing };
+  return { calls, focusVisible, ring, idleRing, focusTooltip };
 });
 out.j4 = { ...j4, ...tabStops };
 check('j4.marker_reachable_by_tab', tabStops.id !== null, true);
 check('j4.focus_is_visible', j4.focusVisible && j4.ring !== j4.idleRing, true);
+check('j4.focus_shows_same_device_tooltip',
+  j4.focusTooltip.visible && j4.focusTooltip.title === j4.focusTooltip.expectedTitle, true);
+check('j4.focus_tooltip_is_anchored_in_viewport',
+  j4.focusTooltip.source === 'focus' && j4.focusTooltip.inViewport, true);
 check('j4.enter_calls_service', j4.calls.length > 0, true);
+
+await page.keyboard.press('Tab');
+const j4Next = await page.evaluate(() => {
+  const card = window.__card;
+  const tip = card.renderRoot.querySelector('[data-hp-live-tip]');
+  const leaf = (() => {
+    let node = document.activeElement;
+    while (node?.shadowRoot?.activeElement) node = node.shadowRoot.activeElement;
+    return node;
+  })();
+  return {
+    visible: !!tip && !tip.hidden,
+    activeTag: leaf?.tagName || null,
+    activeHp: leaf?.dataset?.hp || null,
+    activeId: leaf?.dataset?.id || null,
+    tipSource: card._tip?.source || null,
+    tipDevice: card._tip?.deviceId || null,
+  };
+});
+out.j4_next = j4Next;
+check('j4.tab_moves_focus_tooltip_to_next_device',
+  j4Next.visible && j4Next.activeHp === 'device' && j4Next.activeId === j4Next.tipDevice
+    && j4Next.tipSource === 'focus', true);
+
+const j4Blur = await page.evaluate(() => {
+  const card = window.__card;
+  let leaf = document.activeElement;
+  while (leaf?.shadowRoot?.activeElement) leaf = leaf.shadowRoot.activeElement;
+  leaf?.blur?.();
+  const tip = card.renderRoot.querySelector('[data-hp-live-tip]');
+  return { hidden: !tip || tip.hidden, stateCleared: card._tip === null };
+});
+out.j4_blur = j4Blur;
+check('j4.blur_hides_focus_tooltip', j4Blur.hidden && j4Blur.stateCleared, true);
+
+const j4HoverParity = await page.evaluate((deviceId) => {
+  const card = window.__card;
+  const marker = card.renderRoot.querySelector(`[data-hp="device"][data-id="${deviceId}"]`);
+  const rect = marker?.getBoundingClientRect();
+  marker?.dispatchEvent(new PointerEvent('pointerover', {
+    bubbles: true, composed: true, pointerType: 'mouse',
+    clientX: rect?.left || 0, clientY: rect?.top || 0,
+  }));
+  const tip = card.renderRoot.querySelector('[data-hp-live-tip]');
+  const hoverText = tip?.textContent?.trim() || '';
+  card._showTip(new PointerEvent('pointermove', {
+    pointerType: 'mouse', clientX: innerWidth, clientY: innerHeight,
+  }), 'Viewport edge', 'clamp probe');
+  const edgeBox = tip?.getBoundingClientRect();
+  const edgeInViewport = !!edgeBox && edgeBox.left >= 0 && edgeBox.top >= 0
+    && edgeBox.right <= innerWidth && edgeBox.bottom <= innerHeight;
+  card._clearTransientHover();
+  return { hoverText, edgeInViewport };
+}, tabStops.id);
+out.j4_hover_parity = j4HoverParity;
+check('j4.focus_and_mouse_tooltip_content_match',
+  j4HoverParity.hoverText, j4.focusTooltip.text);
+check('j4.tooltip_clamps_at_viewport_edge', j4HoverParity.edgeInViewport, true);
 
 // --- J5. «Переключить этаж» --------------------------------------------------
 const j5 = await page.evaluate(async () => {
@@ -165,6 +243,9 @@ const j5 = await page.evaluate(async () => {
   await new Promise((resolve) => setTimeout(resolve, 250));
   const afterRooms = [...root.querySelectorAll('[data-hp="room"]')].map((node) => node.dataset.id).join(',');
   const activeTab = root.querySelector('[data-hp="space-tab"].active');
+  const navigation = root.querySelector('nav.tabs');
+  const currentTabs = [...root.querySelectorAll('[data-hp="space-tab"][aria-current]')];
+  const add = root.querySelector('[data-hp="space-add"]');
   return {
     tabs: tabs.length, before, after: card._space,
     roomsChanged: beforeRooms !== afterRooms,
@@ -173,12 +254,38 @@ const j5 = await page.evaluate(async () => {
     ariaCurrent: activeTab?.getAttribute('aria-current'),
     ariaPressed: activeTab?.getAttribute('aria-pressed'),
     ariaSelected: activeTab?.getAttribute('aria-selected'),
+    navigationName: navigation?.getAttribute('aria-label') || '',
+    currentCount: currentTabs.length,
+    inactiveHaveNoCurrent: [...root.querySelectorAll('[data-hp="space-tab"]')]
+      .filter((tab) => tab !== activeTab).every((tab) => !tab.hasAttribute('aria-current')),
+    addHasNoCurrent: !add?.hasAttribute('aria-current'),
+    hasTablistRoles: !!root.querySelector('[role="tablist"], [role="tab"]'),
   };
 });
 out.j5 = j5;
 check('j5.floor_switched', j5.after !== j5.before, true);
 check('j5.plan_rerendered', j5.roomsChanged, true);
 check('j5.active_tab_matches_space', j5.activeTabIsCurrent, true);
+check('j5.spaces_are_named_navigation', /\S/.test(j5.navigationName), true);
+check('j5.only_current_space_is_programmatic',
+  j5.ariaCurrent === 'page' && j5.currentCount === 1 && j5.inactiveHaveNoCurrent
+    && j5.addHasNoCurrent, true);
+check('j5.native_button_navigation_is_kept', j5.hasTablistRoles, false);
+
+const j5Keyboard = {};
+for (const [key, expected] of [['Enter', j5.before], [' ', j5.after]]) {
+  const before = await page.evaluate(() => window.__card._space);
+  await page.evaluate((id) => {
+    window.__card.renderRoot.querySelector(`[data-hp="space-tab"][data-id="${id}"]`)?.focus();
+  }, expected);
+  await page.keyboard.press(key === ' ' ? 'Space' : key);
+  await settle();
+  const after = await page.evaluate(() => window.__card._space);
+  j5Keyboard[key === ' ' ? 'space' : 'enter'] = { before, after, expected };
+}
+out.j5_keyboard = j5Keyboard;
+check('j5.enter_switches_space', j5Keyboard.enter.after, j5Keyboard.enter.expected);
+check('j5.space_switches_space', j5Keyboard.space.after, j5Keyboard.space.expected);
 
 // --- J6. «Вернулся после обновления» ----------------------------------------
 const j6 = await page.evaluate(async () => {

@@ -1,11 +1,15 @@
 import {
   commitHouseplanViewport, disposeHouseplanViewport, scheduleHouseplanViewport,
 } from './live-viewport';
-import { resetHouseplanHover, syncHouseplanHover } from './live-hover';
+import {
+  clearPointerHover, hideDeviceFocusTip, reconcileDeviceFocusTip, resetHouseplanHover,
+  showDeviceFocusTip, showDevicePointerTip, syncHouseplanHover,
+} from './live-hover';
 import {
   classifyHassRenderChange, type HassRenderDependencies, type HassRenderSnapshot,
 } from './render-invalidation';
 import type { RenderLifecycle } from './houseplan-render-lifecycle';
+import type { DevItem } from './types';
 
 interface LiveRuntimeHost {
   _renderLife: RenderLifecycle;
@@ -53,6 +57,14 @@ export class LiveRuntime {
   }
   public viewport(now = false): void { scheduleHouseplanViewport(this.host, now); }
   public hover(): void { syncHouseplanHover(this.host); }
+  public devicePointerTip(event: PointerEvent, device: DevItem): void {
+    showDevicePointerTip(this.host, event, device);
+  }
+  public deviceFocusTip(target: HTMLElement | null, device: DevItem): void {
+    showDeviceFocusTip(this.host, target, device);
+  }
+  public deviceBlur(deviceId: string): void { hideDeviceFocusTip(this.host, deviceId); }
+  public pointerLeave(): void { clearPointerHover(this.host); }
   public active(): boolean {
     const host = this.host as LiveRuntimeHost;
     return host._pointers.size > 0 || host._cameraTransition.active || !!host._deviceDrag
@@ -62,6 +74,7 @@ export class LiveRuntime {
   }
   public commit(): void {
     commitHouseplanViewport(this.host);
+    reconcileDeviceFocusTip(this.host);
     resetHouseplanHover(this.host);
     syncHouseplanHover(this.host);
   }

@@ -310,7 +310,8 @@ import {
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
-  activitySourceSignature, deviceA11yState, presentationClasses, resolveDevicePresentation,
+  activitySourceSignature, deviceAccessibleLabel, deviceA11yState, presentationClasses,
+  resolveDevicePresentation,
   resolvePresentationSources, type ResolvedDevicePresentation,
 } from './device-presentation';
 import {
@@ -980,6 +981,7 @@ export class HouseplanCard extends LitElement {
     temp?: number | null;
     hum?: number | null;
     room?: boolean;
+    source?: 'pointer' | 'focus'; deviceId?: string;
   } | null = null;
   /** Room whose physical perimeter is highlighted in View. The explicit
    *  overlay is needed because thick wall bodies paint above room shapes. */
@@ -5733,25 +5735,19 @@ export class HouseplanCard extends LitElement {
   }
 
   private _showDeviceTip(ev: PointerEvent, d: DevItem): void {
-    this._notePointer(ev);
-    if (!this._pointerModality.hoverEnabled || this._drag || this._deviceDrag) {
-      this._deviceHits.hover(this.renderRoot, null);
-      return;
-    }
-    const showLqi = this._spaceDisplayForRender().showLqi ?? this._config?.show_signal ?? true;
-    const presentation = this._devicePresentation(d, showLqi);
-    const disabledReason = presentation.disabledReason;
-    const ghostLabel = presentation.haDisabled
-      ? this._t((`marker.ha_disabled_${disabledReason}`) as I18nKey)
-      : d.userHidden ? this._t('marker.hidden_ghost') : d.name;
-    const metrics = [
-      d.model,
-      presentation.valueBadge?.fullText || '',
-      presentation.lqiText != null ? 'LQI ' + presentation.lqiText : '',
-    ].filter(Boolean).join(' · ');
-    this._deviceHits.hover(this.renderRoot, d.id);
-    this._showTip(ev, d.name, presentation.haDisabled ? ghostLabel : metrics);
+    if (this._liveRt) this._liveRt.devicePointerTip(ev, d);
+    else void this._ensureLiveRuntime().then(() => this._liveRt?.devicePointerTip(ev, d));
   }
+
+  private _showDeviceFocusTip(ev: FocusEvent, d: DevItem): void {
+    const target = ev.currentTarget as HTMLElement | null;
+    if (this._liveRt) this._liveRt.deviceFocusTip(target, d);
+    else void this._ensureLiveRuntime().then(() => this._liveRt?.deviceFocusTip(target, d));
+  }
+
+  private _hideDeviceFocusTip(deviceId: string): void { this._liveRt?.deviceBlur(deviceId); }
+
+  private _clearPointerHover(): void { this._liveRt?.pointerLeave() ?? this._clearTransientHover(); }
 
   /** Right click in VIEW mode always opens HA's more-info (owner's decision). */
   private _ctxDevice(ev: MouseEvent, d: DevItem): void {
@@ -7436,7 +7432,7 @@ export class HouseplanCard extends LitElement {
     this._notePointer(ev);
     if (!this._pointerModality.hoverEnabled) return;
     if (this._drag || this._deviceDrag) return;
-    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum, room };
+    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum, room, source: 'pointer' };
     this._syncLiveHover();
   }
 
@@ -7602,6 +7598,7 @@ export class HouseplanCard extends LitElement {
       this._clearRoomFocus(true);
       this._cancelDangerConfirm();
       this._resetDeviceHitState();
+      this._clearTransientHover(true);
     }
     this._warmModeRequest = 0;
     if (!this._editorRuntime) {
@@ -11466,7 +11463,7 @@ export class HouseplanCard extends LitElement {
             <ha-icon icon="mdi:home-city"></ha-icon>
             ${this._config.title || this._t('card.title')}
           </div>`}
-          <div class="tabs" @pointermove=${(e: PointerEvent) => this._tabPointerMove(e)}>
+          <nav class="tabs" aria-label=${this._t('nav.spaces')} @pointermove=${(e: PointerEvent) => this._tabPointerMove(e)}>
             ${navigationSpaces.map(
               (s) => html`<button
                 data-hp="space-tab" data-id="${s.id}"
@@ -11475,6 +11472,7 @@ export class HouseplanCard extends LitElement {
                   this._tabDrag?.moved && this._tabDrag.targetId === s.id
                     ? ` drop-${this._tabDrag.placement}` : ''}"
                 ?data-reorderable=${this._canReorderTabs}
+                aria-current=${this._space === s.id ? 'page' : nothing}
                 @pointerdown=${(e: PointerEvent) => this._tabPointerDown(e, s.id)}
                 @pointerup=${(e: PointerEvent) => this._tabPointerUp(e)}
                 @pointercancel=${() => this._endTabDrag()}
@@ -11503,7 +11501,7 @@ export class HouseplanCard extends LitElement {
                   <ha-icon icon="mdi:plus"></ha-icon>
                 </button>`
               : nothing}
-          </div>
+          </nav>
           ${this._canEdit
             ? html`<div class="modes">
                 ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant'], ['decor', 'mdi:draw']] as const).map(
@@ -11734,32 +11732,32 @@ export class HouseplanCard extends LitElement {
                     d="${[obstaclePath, ...holes.map(pathD)].join(' ')}"
                     @pointerenter=${enterRoom}
                     @pointermove=${tip}
-                    @pointerleave=${() => this._clearTransientHover()}></path>`
+                    @pointerleave=${() => this._clearPointerHover()}></path>`
                 : holes.length && fillPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp="room" data-id=${hpId} data-area=${hpArea}
                     d="${[fillPoly, ...holes].map(pathD).join(' ')}"
                     @pointerenter=${enterRoom}
                     @pointermove=${tip}
-                    @pointerleave=${() => this._clearTransientHover()}></path>`
+                    @pointerleave=${() => this._clearPointerHover()}></path>`
                  : fillPoly && fillPoly !== myPoly
                  ? svg`<polygon class="${cls}" style="${style}" points="${fillPoly.map((p) => p.join(',')).join(' ')}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
                     @pointerenter=${enterRoom}
                     @pointermove=${tip}
-                    @pointerleave=${() => this._clearTransientHover()}></polygon>`
+                    @pointerleave=${() => this._clearPointerHover()}></polygon>`
                  : r.poly
                  ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
                     @pointerenter=${enterRoom}
                     @pointermove=${tip}
-                    @pointerleave=${() => this._clearTransientHover()}></polygon>`
+                    @pointerleave=${() => this._clearPointerHover()}></polygon>`
                  : svg`<rect class="${cls}" style="${style}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
                      x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
                     @pointerenter=${enterRoom}
                     @pointermove=${tip}
-                    @pointerleave=${() => this._clearTransientHover()}></rect>`;
+                    @pointerleave=${() => this._clearPointerHover()}></rect>`;
               const trimmed = edgeCuts.length && myPoly
                 ? outlineWithout(myPoly, edgeCuts, this._gridPitch * 0.02)
                 : null;
@@ -12518,7 +12516,7 @@ export class HouseplanCard extends LitElement {
       : d.userHidden ? this._t('marker.hidden_ghost') : d.name;
     const a11yState = deviceA11yState(presentation);
     const interactive = this._mode === 'view' || this._mode === 'devices';
-    const deviceAriaLabel = [
+    const deviceAriaLabel = deviceAccessibleLabel([
       ghostLabel,
       !presentation.haDisabled
         ? this._t((`marker.state_a11y_${a11yState}`) as I18nKey) : '',
@@ -12530,7 +12528,7 @@ export class HouseplanCard extends LitElement {
         ? this._t((`marker.lqi_a11y_${presentation.lqiBand}`) as I18nKey, {
             value: presentation.lqiText,
           }) : '',
-    ].filter(Boolean).join(', ');
+    ]);
     return html`<div
       ${''/* docs/STYLING-HOOKS.md §3: the styling contract. `nothing` on an
              attribute binding REMOVES the attribute, so a virtual marker has
@@ -12555,12 +12553,14 @@ export class HouseplanCard extends LitElement {
       style="${st.join(';')}"
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @keydown=${(e: KeyboardEvent) => this._keyDevice(e, d)}
+      @focus=${(e: FocusEvent) => this._showDeviceFocusTip(e, d)}
+      @focusout=${() => this._hideDeviceFocusTip(d.id)}
       @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
       @pointerover=${(e: PointerEvent) => {
         if (this._mode !== 'view' && this._mode !== 'devices') return;
         this._showDeviceTip(e, this._deviceForPointerEvent(e, d));
       }}
-      @pointerleave=${() => this._clearTransientHover()}
+      @pointerleave=${() => this._clearPointerHover()}
       @pointerdown=${(e: PointerEvent) => this._pointerDown(e, d)}
       @pointermove=${(e: PointerEvent) => {
         if (this._mode !== 'view' && this._mode !== 'devices') return;

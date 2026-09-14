@@ -60,6 +60,29 @@ export function markerLqiColor(lqi: number): string {
   return lqiColor(lqi);
 }
 
+/**
+ * Join short, already-localised accessible-name segments without making a
+ * screen reader repeat the same fact.  Only whole segments are deduplicated:
+ * state, value and signal details remain independent even when they share a
+ * word.
+ */
+export function deviceAccessibleLabel(
+  segments: readonly (string | null | undefined | false)[],
+): string {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const segment of segments) {
+    if (typeof segment !== 'string') continue;
+    const value = segment.trim().replace(/\s+/g, ' ');
+    if (!value) continue;
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(value);
+  }
+  return unique.join(', ');
+}
+
 export function deviceA11yState(presentation: Pick<
   ResolvedDevicePresentation, 'visual' | 'lockState' | 'display'
 >): DeviceA11yState {

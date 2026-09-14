@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Space navigation now exposes the current space to assistive technology, an
+  alarm is no longer repeated in a device's accessible name, and keyboard
+  focus opens the same device tooltip as mouse hover. Room-label colours and
+  the touch/pen behaviour are unchanged
+  ([#565](https://github.com/Matysh/houseplan-card/issues/565)).
+
 - Closely placed device markers no longer steal one another's hover, click,
   long-press or drag target. The painted marker under the pointer now wins;
   overlapping invisible touch areas fall back to the nearest marker while the

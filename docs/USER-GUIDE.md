@@ -886,6 +886,10 @@ room fill gradient and the displayed number are unchanged.
 Interactive View/kiosk and Device-editor markers have at least a 44×44 CSS px
 target. Enter and Space reuse the exact current click and confirmation path;
 Plan, Background, preview and the read-only static card add no tab stop.
+In the full View, Tab focus also opens the same device tooltip as mouse hover;
+moving to the next control closes or moves it. The active space is exposed as
+the current item of the named space navigation. The static card remains
+non-interactive.
 
 ## 13. Room fills and light
 

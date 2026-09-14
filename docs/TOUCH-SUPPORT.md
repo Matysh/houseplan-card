@@ -73,6 +73,11 @@ desktop hover without a reload. Space/mode changes, page hiding and remounts
 also discard transient hover. Keyboard focus and explicit click/tap surfaces
 remain independent of this visual hover gate.
 
+In View, a device reached with visible keyboard focus opens the same anchored
+device tooltip as mouse hover. It follows focus from marker to marker and closes
+on blur, space/mode changes, page hiding or remount. Touch and pen still never
+open it and immediately clear it on hybrid hardware.
+
 When device markers are packed more tightly than their 44 × 44 px minimum
 targets, the marker visibly painted under the pointer owns that point. Only an
 otherwise empty overlap of invisible target floors is resolved by the nearest
