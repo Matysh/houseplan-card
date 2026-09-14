@@ -1047,7 +1047,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/version-recovery.ts',
       find: '    if (!this._input.kiosk) {',
-      replace: '    if (false && !this._input.kiosk) {',
+      // Условие ложно в рантайме и не статически: иначе внутри мёртвой ветки
+      // теряется сужение `_relation` до варианта `mismatch` (#569).
+      replace: "    if (!this._input.kiosk && String(this._relation.kind) === 'mutant-never') {",
     }],
   },
   {
@@ -1169,7 +1171,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/space-copy.ts',
       find: '  const sourcePartitions = geometryList(source.partitions);',
-      replace: '  const sourcePartitions = [];',
+      // Пустой литерал выводится как `never[]`, и дальше падают `.id`/`.a`.
+      // Тип сохраняется, содержимое теряется — именно это мутант и заявляет (#569).
+      replace: '  const sourcePartitions = geometryList(source.partitions).slice(0, 0);',
     }],
   },
   {
@@ -1527,7 +1531,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/vacuum-routes.ts',
       find: "    case 'unmapped': case 'needs_calibration': case 'ambiguous': case 'missing_space':\n      return resolution.kind;",
-      replace: "    case 'нет такого':\n      return resolution.kind as any;",
+      // Метки остаются валидными, молчит сам ответ: бракованная метка ломала
+      // `switch` по union и сужение `resolution` (#569).
+      replace: "    case 'unmapped': case 'needs_calibration': case 'ambiguous': case 'missing_space':\n      return null;",
     }],
   },
   {
@@ -2172,7 +2178,13 @@ const MUTANT_DEFINITIONS = [
       find: '      const resolution = resolveSafeResize(\n'
         + '        rooms, openings, room.id, edge, optionsFor(room.id, edge, a, b),\n'
         + '      );',
-      replace: '      const resolution: SafeResizeResolution = { enabled: true, plan: {} as SafeResizePlan };',
+      // Тот же вызов резолвера, но его вердикт игнорируется: подмена литералом
+      // сужала union, и ветка `resolution.reason` ниже становилась `never` —
+      // мутант падал на компиляции вместо теста (#569).
+      replace: '      const resolution = {\n'
+        + '        ...resolveSafeResize(rooms, openings, room.id, edge, optionsFor(room.id, edge, a, b)),\n'
+        + '        enabled: true,\n'
+        + '      } as SafeResizeResolution;',
     }],
   },
   {
@@ -3484,7 +3496,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/draft-live-preflight.ts',
       find: '    return id && near ? [id] : [];',
-      replace: '    return [];',
+      // Пустой литерал выводится как `never[]`, и вызывающие падают на строках;
+      // тип сохраняется, сосед теряется — это мутант и заявляет (#569).
+      replace: '    return [] as string[];',
     }],
   },
   {
@@ -3932,7 +3946,9 @@ const MUTANT_DEFINITIONS = [
         + '    delete space.room_drafts;\n'
         + '    return { drafts: 0, segments: 0 };\n'
         + '  }',
-      replace: "  if (true) throw new WallSegmentModelError('duplicate-id', 'model v10 must not contain room_drafts');",
+      // Условие истинно в рантайме, но не статически: с литеральным `true`
+      // остаток функции недостижим, и TypeScript теряет сужения ниже (#569).
+      replace: "  if (drafts.length >= 0) throw new WallSegmentModelError('duplicate-id', 'model v10 must not contain room_drafts');",
     }],
   },
   {
@@ -4708,7 +4724,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/coordinate-canonicalization.ts',
       find: '  }\n  return value;\n}\n\n/** Existing scalar contract',
-      replace: '  }\n  return canonicalizeNumber(value);\n}\n\n/** Existing scalar contract',
+      // `canonicalizeNumber` объявлен как `unknown`, а функция возвращает `T`:
+      // без приведения мутант падал на компиляции, а не на тесте (#569).
+      replace: '  }\n  return canonicalizeNumber(value) as T;\n}\n\n/** Existing scalar contract',
     }],
   },
   {
@@ -4756,7 +4774,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/plan-geometry-preflight.ts',
       find: "      if (united.status === 'degraded-extra') {",
-      replace: "      if (false && united.status === 'degraded-extra') {",
+      // Ложь в рантайме, но не статическая: в мёртвой ветке TypeScript теряет
+      // сужение `united` из `if (united == null) continue;` выше (#569).
+      replace: "      if (String(united.status) === 'mutant-never-degraded-extra') {",
     }],
   },
   {
@@ -8963,7 +8983,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/summary-panel-picker.ts',
       find: '    if (unchanged) return previous;',
-      replace: '    if (false && unchanged) return previous; // mutant: rebuild every update',
+      // `previous` сужен до непустого условием выше; в статически мёртвой ветке
+      // сужение теряется, и мутант падал на компиляции (#569).
+      replace: "    if (unchanged && String(ids.length) === 'mutant-never') return previous;",
     }],
   },
   {
