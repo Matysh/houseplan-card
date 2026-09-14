@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.76.0-beta.2 — 2026-09-14
+
 - Space navigation now exposes the current space to assistive technology, an
   alarm is no longer repeated in a device's accessible name, and keyboard
   focus opens the same device tooltip as mouse hover. Room-label colours and
