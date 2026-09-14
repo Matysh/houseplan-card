@@ -22,6 +22,7 @@ import {
 import {
   LEDGER_SCHEMA, readLedger, recordCaught, splitByLedger, witnessFingerprint,
 } from './mutation-evidence.mjs';
+import { attributeSetupFailure } from './mutation-attribution.mjs';
 import { MUTATION_OUTCOME, isProofOutcome } from './mutation-guard-outcome.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -64,6 +65,7 @@ export async function main(argv) {
   }
 
   const changedArg = argv.find((a) => a === '--changed' || a.startsWith('--changed='));
+  let rangeBase = null;
   const ledgerArg = argv.find((a) => a.startsWith('--ledger='))?.slice(9);
   if (ledgerArg && !changedArg) {
     // Полный прогон журнал не читает — он его пишет по расписанию целиком;
@@ -92,6 +94,9 @@ export async function main(argv) {
       console.log(`package.json в диффе: ${relevance.relevant ? 'задевает гварды' : 'гварды не задевает'} — ${relevance.reason}`);
       if (!relevance.relevant) files = files.filter((f) => f !== 'package.json');
     }
+    // База диапазона нужна не только отбору: по ней атрибутируется отказ
+    // подготовки (#568).
+    rangeBase = range.includes('..') ? range.split('..')[0] : range;
     // #492 §6.4: правка реестра отбирает добавленные и изменённые определения
     // явно — новый свидетель не обязан трогать чужие patch/guard-файлы.
     let base = null;
@@ -217,18 +222,47 @@ export async function main(argv) {
   if (!runCleanGuards(toRun)) return 2;
   let caught = 0;
   let unverifiable = false;
+  // #568: свидетель, который не готовится к прогону, ломает гейт той задачи,
+  // чей дифф его выбрал, — а причина может лежать в чужом коммите. Тогда автор
+  // либо чинит чужое, либо стоит; я сам потерял на этом два круга. Поэтому
+  // отказ подготовки атрибутируется: тот же мутант прогоняется на дереве базы
+  // диапазона. Ложных срабатываний тут быть не может — сравниваются два
+  // прогона одного и того же мутанта, а не код с ожиданием.
+  const preExisting = [];
   for (const entry of plan) {
     const outcome = runMutant(entry.mutant);
     if (!isProofOutcome(outcome)) {
+      if (outcome.kind === MUTATION_OUTCOME.SETUP) {
+        const verdict = await attributeSetupFailure(entry.mutant, outcome, rangeBase);
+        if (verdict === 'pre-existing') {
+          // Не красим гейт этой задачи (решение владельца 14.09): поломка не из
+          // этого диффа. Но и не теряем её — она названа здесь и обязана
+          // покраснеть в ночном полном прогоне, у которого есть адресат (#472).
+          console.log(`     ПРЕДСУЩЕСТВУЮЩИЙ: не готовится и на базе — отказ не из этого диффа`);
+          preExisting.push(entry.mutant.id);
+          continue;
+        }
+        if (verdict === 'introduced') {
+          console.log('     отказ внесён этим диффом: на базе тот же мутант готовится');
+        }
+      }
       if (outcome.kind !== MUTATION_OUTCOME.SURVIVED) unverifiable = true;
       continue;
     }
     caught++;
     if (ledger) recordCaught(ledgerArg, ledger, entry.mutant, entry.fingerprint, outcome.proof);
   }
-  console.log(`\nпоймано ${caught} из ${toRun.length}`);
+  console.log(`\nпоймано ${caught} из ${toRun.length - preExisting.length}`);
+  if (preExisting.length) {
+    // Строку читает человек и (при желании) CI. Формат менять синхронно с теми,
+    // кто её разбирает.
+    console.log(`предсуществующих отказов подготовки: ${preExisting.length}`);
+    console.log(`pre-existing-setup-failures=${preExisting.join(',')}`);
+    console.log('Эти свидетели мертвы до текущего диффа: гейт задачи они не красят, '
+      + 'а ночной полный прогон обязан их назвать (#472, #568).');
+  }
   if (unverifiable) return 2;
-  return caught === toRun.length ? 0 : 1;
+  return caught === toRun.length - preExisting.length ? 0 : 1;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

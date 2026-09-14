@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 import {
-  MUTATION_OUTCOME, MUTATION_PROOF, runGuardPhases, runMutationLifecycle,
+  MUTATION_OUTCOME, MUTATION_PROOF, runGuardPhases, runMutationLifecycle, setupFailureOwner,
 } from './mutation-guard-outcome.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -36,11 +36,16 @@ function sh(cmd, cwd, extraEnv = {}) {
   });
 }
 
-export function makeWorktree() {
+/**
+ * Рабочее дерево для одного мутанта. `ref` нужен атрибуции отказа подготовки
+ * (#568): тот же мутант прогоняется на дереве базы диапазона, и по исходу
+ * видно, чей это отказ — диффа или предсуществующий.
+ */
+export function makeWorktree(ref = 'HEAD') {
   const dir = mkdtempSync(join(tmpdir(), 'hp-mutant-'));
-  const added = spawnSync('git', ['-C', repoRoot, 'worktree', 'add', '--detach', dir, 'HEAD'],
+  const added = spawnSync('git', ['-C', repoRoot, 'worktree', 'add', '--detach', dir, ref],
     { encoding: 'utf8' });
-  if (added.status !== 0) throw new Error(`git worktree add: ${added.stderr}`);
+  if (added.status !== 0) throw new Error(`git worktree add ${ref}: ${added.stderr}`);
   // node_modules не копируется — символическая ссылка на настоящий. Установка
   // зависимостей на каждого мутанта превратила бы вечерний гейт в суточный.
   symlinkSync(join(repoRoot, 'node_modules'), join(dir, 'node_modules'), 'junction');
@@ -163,10 +168,10 @@ function printMutantOutcome(mutant, outcome) {
   if (outcome.detail) console.log(`     ${outcome.detail}`);
 }
 
-export function runMutant(mutant) {
+export function runMutant(mutant, { ref = 'HEAD' } = {}) {
   let dir;
   try {
-    dir = makeWorktree();
+    dir = makeWorktree(ref);
     const outcome = runMutationLifecycle({
       apply: () => applyPatches(dir, mutant.patches),
       prepare: () => {

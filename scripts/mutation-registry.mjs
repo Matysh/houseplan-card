@@ -73,6 +73,40 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'attribution-judges-the-head-definition-on-the-base',
+    guard: 'node --test --test-name-pattern="#568" test/mutation-guard-outcome.test.mjs',
+    because: '#568: атрибуция обязана сравнивать подобное с подобным — определение БАЗЫ на '
+      + 'дереве базы; с определением из головы сломанная своей же правкой запись реестра '
+      + 'выглядит предсуществующей, и гейт оправдывает автора вместо того, чтобы назвать его',
+    patches: [{
+      file: 'scripts/mutation-attribution.mjs',
+      find: '    return setupFailureOwner(outcome, run(baseDefinition, { ref: rangeBase }));',
+      replace: '    return setupFailureOwner(outcome, run(mutant, { ref: rangeBase }));',
+    }],
+  },
+  {
+    id: 'attribution-lets-a-new-witness-off',
+    guard: 'node --test --test-name-pattern="#568" test/mutation-guard-outcome.test.mjs',
+    because: '#568: свидетеля, которого в базе нет, оправдывать нечем — иначе новый мутант, '
+      + 'не готовящийся к прогону с рождения, проезжает гейт молча',
+    patches: [{
+      file: 'scripts/mutation-attribution.mjs',
+      find: "    return 'introduced';\n  }\n  log(`     атрибуция: определение базы",
+      replace: "    return 'pre-existing';\n  }\n  log(`     атрибуция: определение базы",
+    }],
+  },
+  {
+    id: 'attribution-still-reddens-a-foreign-failure',
+    guard: 'node --test --test-name-pattern="#568" test/mutation-guard-outcome.test.mjs',
+    because: '#568: решение владельца — предсуществующий отказ гейт задачи не красит; если '
+      + 'итог считать по полному списку, «не красим» остаётся словами',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: '  return caught === toRun.length - preExisting.length ? 0 : 1;',
+      replace: '  return caught === toRun.length ? 0 : 1;',
+    }],
+  },
+  {
     id: 'invariants-blame-every-stale-position',
     guard: 'node --test --test-name-pattern="#566" test/model-invariants.test.mjs',
     because: '#566: продукт СОЗНАТЕЛЬНО хранит позицию, чей владелец жив, а пространство '
@@ -3839,10 +3873,10 @@ const MUTANT_DEFINITIONS = [
       + 'skip it on every later push and hide the exact rot the gate exists for (#481)',
     patches: [{
       file: 'scripts/mutation-gate.mjs',
-      find: '    if (!isProofOutcome(outcome)) {\n'
-        + '      if (outcome.kind !== MUTATION_OUTCOME.SURVIVED) unverifiable = true;',
-      replace: '    if (!isProofOutcome(outcome)) {\n'
-        + "      if (ledger) recordCaught(ledgerArg, ledger, entry.mutant, entry.fingerprint, 'assertion');\n"
+      // Якорь переехал: между `isProofOutcome` и этой строкой встала атрибуция
+      // отказа подготовки (#568), поэтому патч цепляется за сам сторож.
+      find: '      if (outcome.kind !== MUTATION_OUTCOME.SURVIVED) unverifiable = true;',
+      replace: "      if (ledger) recordCaught(ledgerArg, ledger, entry.mutant, entry.fingerprint, 'assertion');\n"
         + '      if (outcome.kind !== MUTATION_OUTCOME.SURVIVED) unverifiable = true;',
     }, {
       // Unit-наблюдаемая половина того же контракта: пустой отпечаток в

@@ -24,6 +24,27 @@ export const MUTATION_PROOF = Object.freeze({
   COMPILE: 'compile',
 });
 
+/**
+ * Кому принадлежит отказ подготовки (#568).
+ *
+ * Свидетель, который не готовится к прогону, краснит гейт той задачи, чей дифф
+ * его выбрал, — но причина может лежать в чужом коммите. Единственное честное
+ * доказательство здесь — прогон ТОГО ЖЕ мутанта на дереве базы диапазона:
+ * ложных срабатываний быть не может, потому что сравниваются два прогона одного
+ * мутанта, а не код с ожиданием.
+ *
+ * `null` означает «сказать нечего»: базы нет либо прогон на ней сорвался. Тогда
+ * поведение остаётся прежним — отказ считается отказом этой задачи, потому что
+ * недоказанная невиновность не оправдание.
+ */
+export function setupFailureOwner(headOutcome, baseOutcome) {
+  if (headOutcome?.kind !== MUTATION_OUTCOME.SETUP) return null;
+  if (!baseOutcome) return null;
+  if (baseOutcome.kind === MUTATION_OUTCOME.SETUP) return 'pre-existing';
+  if (baseOutcome.kind === MUTATION_OUTCOME.INTERRUPTED) return null;
+  return 'introduced';
+}
+
 const outputOf = (result = {}) => `${result.stdout || ''}\n${result.stderr || ''}`.trim();
 
 /** Split `&&` only when it is a shell operator, not text inside quotes. */

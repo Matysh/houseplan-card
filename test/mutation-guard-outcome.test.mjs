@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 
 import {
-  MUTATION_OUTCOME, guardPhases, isProofOutcome, runGuardPhases,
+  MUTATION_OUTCOME, guardPhases, isProofOutcome, runGuardPhases, setupFailureOwner,
   runMutationLifecycle, splitAndChain,
 } from '../scripts/mutation-guard-outcome.mjs';
+import { attributeSetupFailure } from '../scripts/mutation-attribution.mjs';
 
 const result = (status, output = '') => ({ status, stdout: output, stderr: '' });
 
@@ -139,4 +141,84 @@ test('#550: compile-time proof is explicit and cannot hide in an assertion chain
   });
   assert.equal(isProofOutcome(compile), true);
   assert.throws(() => guardPhases('prepare && tsc', 'compile'), /one command/);
+});
+
+// #568: отказ подготовки краснил гейт той задачи, чей дифф выбрал свидетеля,
+// даже когда причина лежала в чужом коммите — на этом я потерял два круга по
+// #566. Атрибуция доказывает принадлежность прогоном ТОГО ЖЕ мутанта на базе.
+const setup = { kind: MUTATION_OUTCOME.SETUP, command: 'tsc', detail: 'TS18047' };
+
+test('#568: не готовится и на базе — отказ предсуществующий', () => {
+  assert.equal(setupFailureOwner(setup, { kind: MUTATION_OUTCOME.SETUP }), 'pre-existing');
+});
+
+test('#568: на базе тот же мутант готовится — отказ внесён диффом', () => {
+  for (const kind of [MUTATION_OUTCOME.ASSERTION_KILLED, MUTATION_OUTCOME.COMPILE_KILLED,
+    MUTATION_OUTCOME.SURVIVED, MUTATION_OUTCOME.INVALID]) {
+    assert.equal(setupFailureOwner(setup, { kind }), 'introduced', kind);
+  }
+});
+
+test('#568: недоказанная невиновность оправданием не считается', () => {
+  // Базы нет, прогон на ней сорвался или голова упала не на подготовке —
+  // молчим, и отказ остаётся отказом этой задачи. Иначе прерывание
+  // инфраструктуры превращалось бы в индульгенцию.
+  assert.equal(setupFailureOwner(setup, null), null);
+  assert.equal(setupFailureOwner(setup, { kind: MUTATION_OUTCOME.INTERRUPTED }), null);
+  assert.equal(setupFailureOwner({ kind: MUTATION_OUTCOME.SURVIVED }, { kind: MUTATION_OUTCOME.SETUP }), null);
+});
+
+test('#568: атрибуция судит определение базы, а не головы', async () => {
+  // Проверка исполнением, а не regexp по исходнику: подменяются реестр базы и
+  // запуск, и видно, ЧЬЁ определение пошло на прогон. Первая версия брала
+  // определение из головы — и своя же сломанная правка реестра выглядела
+  // предсуществующей; поймал это демонстрацией на себе.
+  const head = { id: 'w', guard: 'g', patches: [{ file: 'f', find: 'a', replace: 'HEAD' }] };
+  const base = { id: 'w', guard: 'g', patches: [{ file: 'f', find: 'a', replace: 'BASE' }] };
+  const ran = [];
+  const verdict = await attributeSetupFailure(head, setup, 'base-sha', {
+    registryOf: async () => [base],
+    run: (mutant) => { ran.push(mutant.patches[0].replace); return { kind: MUTATION_OUTCOME.ASSERTION_KILLED }; },
+    log: () => {},
+  });
+  assert.deepEqual(ran, ['BASE'], 'на базе прогоняется определение базы');
+  assert.equal(verdict, 'introduced');
+});
+
+test('#568: не готовится и на базе — предсуществующий; нового свидетеля оправдывать нечем', async () => {
+  const mutant = { id: 'w', guard: 'g', patches: [] };
+  assert.equal(await attributeSetupFailure(mutant, setup, 'base-sha', {
+    registryOf: async () => [mutant],
+    run: () => ({ kind: MUTATION_OUTCOME.SETUP }),
+    log: () => {},
+  }), 'pre-existing');
+  // Мутанта, которого в базе нет, оправдывать нечем по построению.
+  assert.equal(await attributeSetupFailure(mutant, setup, 'base-sha', {
+    registryOf: async () => [],
+    run: () => { throw new Error('прогон не должен случиться'); },
+    log: () => {},
+  }), 'introduced');
+});
+
+test('#568: сказать нечего — отказ остаётся отказом этой задачи', async () => {
+  const mutant = { id: 'w', guard: 'g', patches: [] };
+  const quiet = { log: () => {}, run: () => ({ kind: MUTATION_OUTCOME.SETUP }) };
+  assert.equal(await attributeSetupFailure(mutant, setup, '', { ...quiet, registryOf: async () => [mutant] }), null,
+    'базы нет');
+  assert.equal(await attributeSetupFailure(mutant, setup, 'base-sha', { ...quiet, registryOf: async () => null }), null,
+    'реестр базы не прочитан');
+  assert.equal(await attributeSetupFailure(mutant, setup, 'base-sha', {
+    ...quiet, registryOf: async () => { throw new Error('git сломался'); },
+  }), null, 'чтение реестра бросило');
+});
+
+test('#568: раннер не красит гейт предсуществующим отказом', () => {
+  const source = readFileSync(new URL('../scripts/mutation-gate.mjs', import.meta.url), 'utf8');
+  assert.match(source, /await attributeSetupFailure\(entry\.mutant, outcome, rangeBase\)/,
+    'раннер зовёт атрибуцию на исходе подготовки');
+  assert.match(source, /preExisting\.push\(entry\.mutant\.id\);/);
+  // Итог считается без предсуществующих, иначе «не красим» осталось бы словами.
+  assert.match(source, /return caught === toRun\.length - preExisting\.length \? 0 : 1;/);
+  assert.match(source, /pre-existing-setup-failures=/,
+    'список назван машиночитаемой строкой: его читает человек и CI');
 });
