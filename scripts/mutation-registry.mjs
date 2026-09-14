@@ -125,6 +125,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'dense-device-hit-browser-skips-painted-priority',
+    guard: 'node demo/smoke_device_hit_capsules.mjs',
+    because: '#564 r1 M1: real Icon/Text/Double/legacy DOM geometry in every cardinal '
+      + 'direction must beat an earlier neighbour whose invisible 44 px floor overlaps '
+      + 'the painted point; a synthetic rectangle-only proof is insufficient',
+    patches: [{
+      file: 'src/device-hit-owner.ts',
+      find: '  if (painted.length) return nearest(painted, point);',
+      replace: '  if (false && painted.length) return nearest(painted, point);',
+    }],
+  },
+  {
     id: 'radar-sources-compared-as-text',
     guard: 'node --test --test-name-pattern="#567" test/radar-editor.test.mjs',
     because: '#567: порядок ключей `sources` меняет сам билдер, поэтому текстовое сравнение '

@@ -549,9 +549,15 @@ manifest читают и `classify-changes.mjs` (job `changes`: job запуск
       widths: every visible centre has the same native and semantic owner, its
       click opens that marker, and a pointer sequence remains latched through
       its terminal click [auto: `smoke_household_journeys.mjs`].
+- [ ] Real browser geometry covers Icon, Text, Double and untouched legacy
+      faces at all four cardinal sides/directions. In every case a painted
+      point overlaps only the neighbour's invisible 44 px floor and still owns
+      the native hit, semantic owner and click
+      [auto: `smoke_device_hit_capsules.mjs`].
 - [ ] Replacing nearest-screen-core selection with first-input/DOM order makes
-      the focused guard red
-      [mutation: `dense-device-hit-falls-back-to-input-order`].
+      both the pure geometry guard and the real rendered-face browser guard red
+      [mutations: `dense-device-hit-falls-back-to-input-order`,
+      `dense-device-hit-browser-skips-painted-priority`].
 
 ## Device marker polish and pointer modality (#212)
 
