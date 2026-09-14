@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v1.76.0-beta.3 — 2026-09-14
+
+- Internal maintenance only; the default House Plan experience is unchanged.
+
 ## v1.76.0-beta.2 — 2026-09-14
 
 - Space navigation now exposes the current space to assistive technology, an
