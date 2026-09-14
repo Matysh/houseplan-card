@@ -47,6 +47,7 @@ const liveState = () => page.evaluate(() => {
     const rect = node?.getBoundingClientRect();
     return rect ? [rect.left + rect.width / 2, rect.top + rect.height / 2] : null;
   };
+  const stage = root.querySelector('.stage');
   return {
     view: structuredClone(card._view),
     transformed: scenes.filter((node) => node.style.transform).length,
@@ -60,6 +61,14 @@ const liveState = () => page.evaluate(() => {
       && !node.style.transform && !node.style.transformOrigin && !node.style.willChange),
     marker: centre(root.querySelector('[data-hp="device"]')),
     room: centre(root.querySelector('[data-hp="room"]')),
+    effects: {
+      dayCycle: !!root.querySelector('.hp-day-cycle-env .hp-day-cycle-bg.active'),
+      glowBases: root.querySelectorAll('.glow-base-layer .glow-base').length,
+      glowPools: root.querySelectorAll('.glowlayer circle, .glow-pool').length,
+      roomFills: root.querySelectorAll('.room.filled').length,
+      hatchedWalls: root.querySelectorAll('.wallbody:not(.solid)[fill^="url("]').length,
+      customBackground: (stage?.getAttribute('style') || '').includes('#123456'),
+    },
   };
 });
 
@@ -149,7 +158,32 @@ const dispatchTouch = (type, id, x, y, buttons = type === 'pointerup' ? 0 : 1) =
   { type, id, x, y, buttons },
 );
 
-const runPan = async ({ name, kind, dx, dy, edge, parity = false }) => {
+const configureEffectMatrix = ({ dayCycle, glow }) => page.evaluate(async (variant) => {
+  const card = document.querySelector('houseplan-card');
+  const config = structuredClone(card._serverCfg);
+  const space = config.spaces.find((item) => item.id === card._space) || config.spaces[0];
+  config.settings = {
+    ...(config.settings || {}),
+    bg_color: '#123456',
+    bg_mode: variant.dayCycle ? 'daynight' : 'static',
+  };
+  space.settings = {
+    ...(space.settings || {}),
+    bg_color: '#123456',
+    bg_mode: variant.dayCycle ? 'daynight' : 'static',
+    fill_mode: 'custom',
+    custom_fill: { c: '#d02020', a: 1 },
+    glow_enabled: variant.glow,
+    show_borders: true,
+  };
+  card._serverCfg = config;
+  card._cfgEpoch++;
+  card.requestUpdate();
+  await card.updateComplete;
+  await new Promise((done) => setTimeout(done, 250));
+}, { dayCycle, glow });
+
+const runPan = async ({ name, kind, dx, dy, edge, parity = false, effects = null }) => {
   await resetCamera();
   await preparePointerCapture();
   const origin = await pointerCentre();
@@ -201,6 +235,8 @@ const runPan = async ({ name, kind, dx, dy, edge, parity = false }) => {
     promotedHeld: heldState.allScenePromoted,
     targetStableWhileHeld: JSON.stringify(immediateState.view) === JSON.stringify(heldState.view),
     temporaryStylesCleared: settledState.allTemporaryStylesCleared,
+    effectsImmediate: immediateState.effects,
+    effectsHeld: heldState.effects,
     parityPx,
   };
   checks[`${name}ImmediateCoverage`] = immediateCoverage.sameSize
@@ -211,6 +247,16 @@ const runPan = async ({ name, kind, dx, dy, edge, parity = false }) => {
     && heldState.allScenePromoted
     && settledState.allTemporaryStylesCleared;
   checks[`${name}TargetStableWhileHeld`] = diagnostics[name].targetStableWhileHeld;
+  if (effects) {
+    const expected = (sample) => sample.roomFills > 0 && sample.hatchedWalls > 0
+      && sample.customBackground
+      && sample.dayCycle === effects.dayCycle
+      && (effects.glow
+        ? sample.glowPools > 0
+        : sample.glowPools === 0);
+    checks[`${name}EffectsVisible`] = expected(immediateState.effects)
+      && expected(heldState.effects);
+  }
   if (parity) checks[`${name}MarkerParity`] = parityPx !== null && parityPx <= 1;
 };
 
@@ -348,15 +394,33 @@ await page.evaluate(async () => {
   const card = window.__card;
   const config = structuredClone(card._serverCfg);
   const space = config.spaces.find((item) => item.id === card._space) || config.spaces[0];
+  const poly = [[0, 0], [1, 0], [1, 1], [0, 1]];
   space.rooms = [{
     id: 'coverage-room',
     name: 'Coverage room',
-    poly: [[0, 0], [1, 0], [1, 1], [0, 1]],
+    poly,
     fill_mode: 'custom',
     fill_color: '#d02020',
     fill_opacity: 1,
   }];
-  space.settings = { ...(space.settings || {}), show_borders: true };
+  space.walls = poly.map((a, index) => ({
+    key: `coverage-wall-${index}`,
+    a,
+    b: poly[(index + 1) % poly.length],
+    cm: 15,
+  }));
+  config.settings = {
+    ...(config.settings || {}), bg_color: '#123456', bg_mode: 'static',
+  };
+  space.settings = {
+    ...(space.settings || {}),
+    bg_color: '#123456',
+    bg_mode: 'static',
+    fill_mode: 'custom',
+    custom_fill: { c: '#d02020', a: 1 },
+    glow_enabled: false,
+    show_borders: true,
+  };
   card._serverCfg = config;
   card._space = space.id;
   card.requestUpdate();
@@ -371,6 +435,19 @@ await runPan({ name: 'flatMouseTopEdge', kind: 'mouse', dx: 0, dy: 48, edge: 'to
 await runPan({ name: 'flatTouchRightEdge', kind: 'touch', dx: -65, dy: 0, edge: 'right' });
 await runTouchZoomOut({ name: 'flatTouchZoomOut' });
 await runStablePromotion();
+
+// #579 AC4: every combination keeps the same expensive scene effects alive
+// in both the immediate and held compositor frames. The custom fill, wall
+// hatch and user background stay on in all four rows of the matrix.
+for (const dayCycle of [false, true]) {
+  for (const glow of [false, true]) {
+    await configureEffectMatrix({ dayCycle, glow });
+    await runPan({
+      name: `effectsDay${Number(dayCycle)}Glow${Number(glow)}`,
+      kind: 'touch', dx: -65, dy: 0, edge: 'right', effects: { dayCycle, glow },
+    });
+  }
+}
 
 await page.evaluate(async () => {
   history.replaceState(null, '', '?hp_alpha=1#space=f1');
