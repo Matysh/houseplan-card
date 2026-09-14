@@ -1339,6 +1339,7 @@ def _north_deg(value):
 
 
 _BG_MODE = vol.In(["static", "daynight"])
+_SUN_RAY_ORIGIN = vol.In(["inner", "outer"])
 
 SPACE_DISPLAY_SCHEMA = vol.Schema(
     {
@@ -2195,6 +2196,7 @@ CONFIG_SCHEMA = vol.All(
                     vol.Optional("north_deg"): _north_deg,
                     vol.Optional("bg_mode"): _BG_MODE,
                     vol.Optional("sun_rays"): bool,
+                    vol.Optional("sun_ray_origin"): _SUN_RAY_ORIGIN,
                     vol.Optional("show_room_tooltip"): bool,
                     vol.Optional("summary_panel"): SUMMARY_PANEL_WIRE_SCHEMA,
                     vol.Optional("radar"): vol.Schema({}, extra=vol.ALLOW_EXTRA),

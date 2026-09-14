@@ -65,10 +65,10 @@ import {
   type ResizeAreaPlacement,
 } from './resize-labels';
 import {
-  computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn,
+  computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf,
   sunStateOf, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
   rayStops, resolveDayCycle, dayCycleFingerprint, type DayCycleState,
-  rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR,
+  rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
 } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import {
@@ -2202,7 +2202,7 @@ export class HouseplanCard extends LitElement {
   private _settingsDialog: {
     colors: FillColors; glowRadius: number; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
-    northDeg: number | null; bgMode: 'static' | 'daynight'; sunRays: boolean;
+    northDeg: number | null; bgMode: 'static' | 'daynight'; sunRays: boolean; sunRayOrigin: SunRayOrigin;
     showRoomTooltip: boolean; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings;
     radarShowLive: boolean;
     busy: boolean;
@@ -10372,6 +10372,7 @@ export class HouseplanCard extends LitElement {
       north_deg: gd.northDeg ?? undefined,
       bg_mode: gd.bgMode,
       sun_rays: gd.sunRays,
+      sun_ray_origin: gd.sunRayOrigin,
     };
   }
 
@@ -10445,6 +10446,8 @@ export class HouseplanCard extends LitElement {
     return sunRaysOn(this._sunGlobal(), this._sunSpace());
   }
 
+  private _effSunRayOrigin(): SunRayOrigin { return sunRayOriginOf(this._sunGlobal()); }
+
   /** sun.sun, but only when the feature is armed (north_deg set somewhere). */
   private _sunNow(): { azimuth: number; elevation: number } | null {
     return this._effNorth() !== null ? sunStateOf(this._renderPlanHass) : null;
@@ -10498,7 +10501,8 @@ export class HouseplanCard extends LitElement {
     // during the whole write window (and forever if the write failed).
     const zeroWalls = this._zeroWalls();
     const zeroKey = zeroWalls.barriers.map((line) => line.join(',')).join(';');
-    const key = `${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${this._cfgEpoch}`
+    const origin = this._effSunRayOrigin();
+    const key = `${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${origin}|${this._cfgEpoch}`
       + `|${zeroWalls.style}|${zeroKey}`;
     if (!this._sunRaysCache || this._sunRaysCache.key !== key) {
       const rooms = space.rooms
@@ -10534,6 +10538,7 @@ export class HouseplanCard extends LitElement {
         rooms, windows, sun.azimuth, sun.elevation, north!,
         walls.length ? innerByRoom : undefined,
         walls.length ? wallDepthByOpening : undefined,
+        origin,
       );
       const physical = this._physicalBodiesR(space);
       // A two-point body has zero area at rest, but its extrusion along the
@@ -10576,11 +10581,11 @@ export class HouseplanCard extends LitElement {
     // side of a wall.
     //
     // DEV-EB173-01: the axis runs along the wall's INWARD NORMAL, from the
-    // room-side opening face inward, and is `r.depth` = `len·cos` long — NOT
+    // selected opening face inward, and is `r.depth` = `len·cos` long — NOT
     // along the ray. For parallel rays, distance from the source span is an
     // affine function of the point, so its iso-alpha lines are parallel to the
     // wall; with this axis every point `source + dir·u` lands at offset
-    // `u/len`. Whole inner opening at peak alpha, identical fade distance along every
+    // `u/len`. Whole selected opening at peak alpha, identical fade distance along every
     // ray, and the parallelogram's far edge exactly on the gradient's end.
     //
     // THE RIM (owner 2026-08-04, docs/SUN.md «The rim»): a 1 px black hairline

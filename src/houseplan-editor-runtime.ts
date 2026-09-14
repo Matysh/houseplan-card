@@ -74,12 +74,13 @@ import {
   type ResizeAreaPlacement,
 } from './resize-labels';
 import {
-  computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn,
+  computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf,
   sunStateOf, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
   rayStops, resolveDayCycle, dayCycleFingerprint, type DayCycleState,
-  rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR,
+  rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
 } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
+import { renderSunRayOriginSelect } from './sun-settings-view';
 import {
   furnitureDefaultCm,
   furnitureGraphic, furnitureCorners,
@@ -1113,9 +1114,9 @@ export interface HouseplanEditorHostPort {
   _sentPos: Map<string, DeviceLayout[string] | null>;
   _serverCfg: ServerConfig | null;
   _serverStorage: boolean;
-  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
+  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
   _terminalFrame: 0 | 1 | 2;
-  _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; busy: boolean; } | null;
+  _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
@@ -8837,6 +8838,7 @@ public _openSettingsDialog = (): void => {
       northDeg: northDegOf(this.host._settings, {}),
       bgMode: bgModeOf(this.host._settings, {}),
       sunRays: sunRaysOn(this.host._settings, {}),
+      sunRayOrigin: sunRayOriginOf(this.host._settings),
       radarShowLive: this.host._settings.radar?.show_live !== false,
       showRoomTooltip: showRoomTooltipOf(this.host._settings), zigbeeTopology: zigbeeTopologySettingsOf(this.host._settings), busy: false,
     };
@@ -10032,6 +10034,7 @@ public _updateDecorStyle(next: DecorStyle): void {
       settings.bg_mode = d.bgMode;
       if (d.sunRays) settings.sun_rays = true;
       else delete settings.sun_rays;
+      settings.sun_ray_origin = d.sunRayOrigin;
       if (d.showRoomTooltip) delete settings.show_room_tooltip;
       else settings.show_room_tooltip = false;
       const radarSettings = settings.radar;
@@ -10444,6 +10447,7 @@ public _renderSettingsDialog(): TemplateResult {
               (this.host._settingsDialog = { ...this.host._settingsDialog!, sunRays: v }))}
             <span>${this.host._t('gs.sun_rays')}</span>
           </label>
+          ${renderSunRayOriginSelect(this.host._settingsDialog!.sunRayOrigin, (key) => this.host._t(key), (sunRayOrigin) => (this.host._settingsDialog = { ...this.host._settingsDialog!, sunRayOrigin }))}
           ${this.host._canEdit ? html`
             <label class="dispsection">${this.host._t('gs.backup_group')}</label>
             <div class="rhint">${this.host._t('gs.backup_hint')}</div>
@@ -10480,7 +10484,7 @@ public _renderSettingsDialog(): TemplateResult {
         </div>
         <div class="row" slot="footer">
           <button class="btn ghost" @click=${() =>
-            (this.host._settingsDialog = { ...this.host._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this.host._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false, showRoomTooltip: true, radarShowLive: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] } })}>
+            (this.host._settingsDialog = { ...this.host._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this.host._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner', showRoomTooltip: true, radarShowLive: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] } })}>
             ${this.host._t('gs.reset')}
           </button>
           <span class="spacer"></span>

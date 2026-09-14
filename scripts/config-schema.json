@@ -442,6 +442,13 @@
         }
       ]
     },
+    "config.settings.sun_ray_origin": {
+      "enum": [
+        "inner",
+        "outer"
+      ],
+      "required": false
+    },
     "config.settings.sun_rays": {
       "required": false,
       "type": "bool"

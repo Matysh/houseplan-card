@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- General settings now let window sunlight start at either the inner window
+  corners (the existing default) or the outer window corners. The outer mode
+  carries the visible shaft only through the physical window tunnel before it
+  reaches the room; sun direction, reach, colour and shadows are unchanged
+  ([#577](https://github.com/Matysh/houseplan-card/issues/577)).
+
 - Pinch-zooming in the Home Assistant Companion app no longer repeatedly moves
   the plan between compositor paths while the fingers are still down. Walls,
   floors, fills, hatching and lighting now remain continuously painted across

@@ -8,6 +8,21 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'settings.sun_ray_origin',
+    enforcedBy: 'sun.ts + validation.py + config-schema parity; #577',
+    selector: { path: ['settings', 'sun_ray_origin'] },
+    storage: 'House Plan server config',
+    type: "'inner' | 'outer'",
+    default: "unset (= 'inner', the pre-#577 geometry)",
+    level: 'global',
+    ui: 'General settings → Sun → Sun rays',
+    runtime: 'selects the physical window face used as the source span',
+    introduced: '#577',
+    status: 'current',
+    migration: "none — old configs stay on 'inner'; new settings saves materialise the enum",
+    compatibility: "unknown values fail backend writes and fall back to 'inner' in the frontend",
+  },
+  {
     id: 'settings.summary_panel',
     enforcedBy: 'summary-panel.ts + validation.py change-aware reference validation; #437',
     selector: { path: ['settings', 'summary_panel'] },

@@ -9,7 +9,7 @@ import {
   RAY_LENGTH_K, RAY_FADE_END, rayStops, RAY_MIN_COS,
   rimStops, rimPeakAlpha, rayRimEdges, RIM_MAX_ALPHA, RIM_COLOR,
   SKY_SNAP_DEG, skyNeedsSnap, skyElevation,
-  northDegOf, bgModeOf, sunRaysOn, sunStateOf,
+  northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf, SUN_RAY_ORIGINS, sunStateOf,
   DAY_CYCLE_PALETTES, dayCycleSunOf, dayCyclePhaseFromSun,
   dayCyclePhaseFromMinutes, dayCyclePositionFromSun,
   dayCyclePositionFromMinutes, resolveDayCycle, dayCycleFingerprint,
@@ -463,6 +463,47 @@ test('computeSunRays: a thick-wall ray starts at both room-side opening corners'
     assert.ok(x >= 110 - 1e-6 && x <= 490 + 1e-6, 'clipped to the clean-floor contour');
     assert.ok(y >= 110 - 1e-6 && y <= 490 + 1e-6, 'clipped to the clean-floor contour');
   }
+});
+
+test('#577: outer rays start at the exterior corners and cross only the window tunnel', () => {
+  const win = { id: 'wW', x: 100, y: 300, angle: 90, length: 80 };
+  const inner = { r1: [[110, 110], [490, 110], [490, 490], [110, 490]] };
+  const [inside] = computeSunRays(ROOMS, [win], 270, 60, 0, inner, { wW: 20 }, 'inner');
+  const [outside] = computeSunRays(ROOMS, [win], 270, 60, 0, inner, { wW: 20 }, 'outer');
+
+  assert.ok(inside && outside, 'the west window is lit in both modes');
+  assert.deepEqual(outside.a, [90, 260]);
+  assert.deepEqual(outside.b, [90, 340]);
+  assert.deepEqual(inside.a, [110, 260]);
+  assert.deepEqual(inside.b, [110, 340]);
+  assert.equal(outside.len, inside.len, 'origin selection does not change nominal reach');
+  assert.deepEqual(outside.dir, inside.dir, 'origin selection does not change direction');
+  assert.deepEqual(outside.normal, inside.normal, 'origin selection does not change fade axis');
+  assert.equal(outside.depth, inside.depth, 'origin selection does not change fade depth');
+
+  const points = outside.polys.flat();
+  assert.ok(points.some(([x]) => near(x, 90, 1e-6)), 'the visible shaft reaches the outer face');
+  assert.ok(points.some(([x]) => x > 110 + 1e-6), 'the shaft continues from the tunnel into the room');
+  for (const [x, y] of points) {
+    if (x < 110 - 1e-6) {
+      assert.ok(y >= 260 - 1e-6 && y <= 340 + 1e-6,
+        'outside the clean floor, light exists only inside the physical opening tunnel');
+    }
+  }
+});
+
+test('#577: zero-depth walls are identical and invalid values preserve the legacy inner default', () => {
+  assert.deepEqual(SUN_RAY_ORIGINS, ['inner', 'outer']);
+  assert.equal(sunRayOriginOf({}), 'inner');
+  assert.equal(sunRayOriginOf({ sun_ray_origin: 'inner' }), 'inner');
+  assert.equal(sunRayOriginOf({ sun_ray_origin: 'outer' }), 'outer');
+  for (const invalid of [null, '', 'outside', 1, true, {}]) {
+    assert.equal(sunRayOriginOf({ sun_ray_origin: invalid }), 'inner');
+  }
+
+  const inner = computeSunRays(ROOMS, [WIN.west], 270, 60, 0, undefined, undefined, 'inner');
+  const outer = computeSunRays(ROOMS, [WIN.west], 270, 60, 0, undefined, undefined, 'outer');
+  assert.deepEqual(outer, inner, 'without wall depth the two source faces coincide exactly');
 });
 
 test('grazing sun: the auditor\'s repro, fixed by a normal-axis fade (DEV-EB173-01)', () => {

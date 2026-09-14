@@ -527,6 +527,7 @@ def test_issue_225_backup_with_an_attachment_survives_a_full_round_trip(
 
 def test_background_defaults_and_store_migration_preserve_legacy_view() -> None:
     assert DEFAULT_CONFIG["settings"]["bg_mode"] == "daynight"
+    assert DEFAULT_CONFIG["settings"]["sun_ray_origin"] == "inner"
 
     legacy = {
         "config": {
@@ -586,6 +587,19 @@ def test_background_mode_is_materialized_across_export_and_legacy_import(tmp_pat
     target["settings"]["bg_mode"] = "daynight"
     merged, _layout, _details = build_space_merge(parsed_space, target, {}, "skip")
     assert merged["spaces"][-1]["settings"]["bg_mode"] == "static"
+
+
+def test_issue_577_full_export_preserves_sun_ray_origin(tmp_path: Path) -> None:
+    runtime = SimpleNamespace(instance_id="instance-a")
+    config = _config()
+    config["settings"]["sun_ray_origin"] = "outer"
+    document, _ = create_export(
+        runtime, {"config": config}, {"layout": {}},
+        kind="full", space_id=None, card_version="1.76.0", config_root=tmp_path,
+    )
+    assert document["payload"]["config"]["settings"]["sun_ray_origin"] == "outer"
+    parsed = parse_document(json.dumps(document).encode())
+    assert parsed["payload"]["config"]["settings"]["sun_ray_origin"] == "outer"
 
 
 @pytest.mark.parametrize(

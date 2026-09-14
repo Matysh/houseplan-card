@@ -185,17 +185,48 @@ await page.mouse.move(box.cx + 45, box.cy); // on the ring, due right = 90°
 await page.mouse.down();
 await page.mouse.move(box.cx, box.cy + 45); // drag on to due down = 180°
 await page.mouse.up();
-const dlg = await page.evaluate(() => {
+const dlg = await page.evaluate(async () => {
   const c = window.__card;
   const sr = c.shadowRoot;
+  const originSelect = sr.querySelector('#gs-sun-ray-origin');
   const out = {
     compassDragSets180: c._settingsDialog?.northDeg === 180,
     dialogHasModeSelect: !!sr.querySelector('hp-dialog select.areasel'),
     dialogHasRaysToggle: [...sr.querySelectorAll('hp-dialog .srcrow input[type=checkbox]')].length > 0,
+    dialogHasOriginSelect: !!originSelect,
+    originDefaultsInner: originSelect?.value === 'inner' && c._settingsDialog?.sunRayOrigin === 'inner',
+    originAvailableWhenRaysOff: false,
     dialogHasNoWeatherList: sr.querySelectorAll('#hp-weather-list option').length === 0,
     dialogNumberMatches: sr.querySelector('.suncol input[type=number]')?.value === '180',
   };
-  c._settingsDialog = null;
+  c._settingsDialog = { ...c._settingsDialog, northDeg: 0, sunRays: false };
+  await c.updateComplete;
+  out.originAvailableWhenRaysOff = !sr.querySelector('#gs-sun-ray-origin')?.disabled;
+  c._settingsDialog = { ...c._settingsDialog, sunRays: true };
+  await c.updateComplete;
+  const cacheBefore = c._sunRaysCache;
+  const changedOrigin = sr.querySelector('#gs-sun-ray-origin');
+  changedOrigin.value = 'outer';
+  changedOrigin.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+  await c.updateComplete;
+  out.originPendingRekeysGeometry = c._settingsDialog?.sunRayOrigin === 'outer'
+    && c._sunRaysCache !== cacheBefore;
+  await c._saveSettingsDialog();
+  await c.updateComplete;
+  out.originSavedOuter = c._serverCfg.settings.sun_ray_origin === 'outer';
+
+  c._openSettingsDialog();
+  c.requestUpdate();
+  await c.updateComplete;
+  const restored = sr.querySelector('#gs-sun-ray-origin');
+  out.originRoundTripsToDialog = restored?.value === 'outer'
+    && c._settingsDialog?.sunRayOrigin === 'outer';
+  restored.value = 'inner';
+  restored.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+  await c.updateComplete;
+  await c._saveSettingsDialog();
+  await c.updateComplete;
+  out.originSavedInner = c._serverCfg.settings.sun_ray_origin === 'inner';
   return out;
 });
 Object.assign(res, dlg);

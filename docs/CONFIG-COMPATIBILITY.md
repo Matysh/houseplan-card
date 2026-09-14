@@ -97,6 +97,20 @@ new frontend restores the disabled behavior after upgrade. Full backup/import
 preserves the setting and the privacy-safe support projection includes only a
 validated boolean.
 
+## Sun-ray window face (#577)
+
+`settings.sun_ray_origin` is an optional global enum: `inner` or `outer`.
+Absence and an unknown read-side value resolve to `inner`, preserving the exact
+pre-#577 source geometry without rewriting an existing configuration. Saving
+General settings materialises a valid value; new installations start with
+`inner`. Backend writes reject every other value. There is deliberately no
+per-space override and no model/store version bump.
+
+Full backup/import preserves the enum. The privacy-safe support projection
+includes only a validated `inner`/`outer` scalar. Older frontends ignore a
+preserved value and temporarily render the historical inner mode; a current
+frontend restores the selected mode after upgrade.
+
 ## Summary panel namespace (#437)
 
 `settings.summary_panel` is an optional shared versioned object. Absence means

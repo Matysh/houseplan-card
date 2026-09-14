@@ -7,7 +7,7 @@ Status: **implemented / evolving** (post beta.4 redesign). Visual reference:
 Owner intent: thick walls form one continuous hatched body (seamless L and T),
 grow both ways from the room centreline, fills/light stay inside the inner
 contour, displayed area is the clean floor, and sun wedges start at the two
-room-side corners of an opening.
+corners of the globally selected inner or outer opening face.
 
 Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 `src/space-render.ts`. Sun: `src/sun.ts`. Tests: `test/wall-thickness.test.mjs`,
@@ -369,11 +369,14 @@ invoke it.
 
 ## 5. Sun
 
-Wedges do not draw through wall bodies. Their full source span is translated
-from the centreline by half the wall depth along the receiving room's inward
-normal, so both side rays begin at the two room-side corners of the window
-opening. Clip to the receiving room's inner contour. `d = 0` keeps the previous
-centreline/full-span wedge. `hide_openings` hides the symbol only.
+Wedges do not draw through wall bodies. The global `settings.sun_ray_origin`
+selects their source face. `inner` (default and legacy fallback) translates the
+full span from the centreline by `+d/2` along the receiving room's inward
+normal, so both sides begin at the room-side corners. `outer` translates it by
+`-d/2` and includes only the rectangular physical window tunnel before the
+receiving room's inner contour; adjacent wall and exterior space stay clipped.
+The nominal length and gradient begin at the selected span. `d = 0` makes both
+modes identical. `hide_openings` hides the symbol only.
 
 ## 6. Tool / hooks / i18n
 
@@ -446,8 +449,8 @@ handle and cannot split or re-key their atomic records
 `demo/smoke_resize_wall_thickness.mjs`); an eligible uniformly thick exact
 wall moves through the fixed-topology safe pipeline and Undo restores its
 source (`demo/smoke_room_resize.mjs`);
-the zero-wall preview paints above the real body; sun starts at the room-side
-opening corners; nav mode restores after `can_write`; a 1 cm body uses
+the zero-wall preview paints above the real body; sun starts at the selected
+inner/outer opening corners; nav mode restores after `can_write`; a 1 cm body uses
 solid-only in both full and static cards while a 20 cm body keeps its hatch;
 door/window/gate tunnels repeat outer/shared room fills without an axis seam
 (`demo/smoke_opening_tunnel_fill.mjs`); corner Split keeps the same facade in

@@ -2848,6 +2848,21 @@ require hands on real hardware — they remain for the human pass.
       corners of the window opening (the full span translated inward by half
       the wall depth), including at an oblique sun angle; no edge starts on the
       wall centreline [auto: unit `sun.test.mjs` + `smoke_wall_thickness`]
+- [ ] **Window face (#577):** General settings always shows the global
+      `inner`/`outer` selector, even when rays are off; save/reopen preserves it.
+      Missing/invalid read-side values resolve to `inner`, backend writes reject
+      invalid values, full export/import and support projection preserve only a
+      valid enum [auto: `smoke_sun`, `sun.test.mjs`,
+      `config-schema-parity.test.mjs`, `test_validation.py`,
+      `test_ha_import_export.py`, `test_support_package.py`]
+- [ ] In `outer`, a thick-wall ray starts at both exterior window corners and
+      reaches the clean floor only through the physical opening tunnel; wall
+      body and exterior space never light up. Direction, nominal reach, fade,
+      colour, thresholds and shadows are identical to `inner`; at `d = 0` the
+      two results are byte-identical. Switching the pending dialog value
+      invalidates the geometry memo without waiting for a server revision
+      [auto: `sun.test.mjs`, `smoke_sun`; golden regression: existing inner
+      sun scenarios]
 - [ ] Brightness + the 3° threshold (2026-08-03): wedges are visibly brighter
       (peak alpha 0.30, was 0.18) yet still readable over white paper AND the
       dark glow canvas; there is NO gradual ramp near the horizon — below 3°

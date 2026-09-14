@@ -497,9 +497,12 @@ def test_all_persisted_color_fields_share_the_strict_hex_contract():
 def test_sun_settings_global():
     """Active sun settings plus the accepted-but-ignored legacy weather field."""
     v.CONFIG_SCHEMA({"spaces": [], "settings": {
-        "north_deg": 0, "bg_mode": "daynight", "sun_rays": True, "weather_entity": "weather.home",
+        "north_deg": 0, "bg_mode": "daynight", "sun_rays": True,
+        "sun_ray_origin": "outer", "weather_entity": "weather.home",
     }})
-    v.CONFIG_SCHEMA({"spaces": [], "settings": {"north_deg": 359, "bg_mode": "static"}})
+    v.CONFIG_SCHEMA({"spaces": [], "settings": {
+        "north_deg": 359, "bg_mode": "static", "sun_ray_origin": "inner",
+    }})
     v.CONFIG_SCHEMA({"spaces": [], "settings": {"weather_entity": None}})
     for bad in (360, -1, 1.5, "90", True, None):
         with pytest.raises(vol.Invalid):
@@ -508,6 +511,9 @@ def test_sun_settings_global():
         v.CONFIG_SCHEMA({"spaces": [], "settings": {"bg_mode": "disco"}})
     with pytest.raises(vol.Invalid):
         v.CONFIG_SCHEMA({"spaces": [], "settings": {"sun_rays": "yes"}})
+    for bad in (None, "inside", "", 0, True, [], {}):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [], "settings": {"sun_ray_origin": bad}})
     with pytest.raises(vol.Invalid):
         v.CONFIG_SCHEMA({"spaces": [], "settings": {"weather_entity": {"e": 1}}})
 

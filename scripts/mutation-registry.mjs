@@ -5330,6 +5330,63 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'sun-ray-origin-outer-ignored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#577: outer rays" test/sun.test.mjs',
+    because: 'если внешний режим снова использует внутреннюю грань, геометрия остаётся '
+      + 'визуально прежней; unit-защита #577 обязана увидеть обе фасадные точки и тоннель',
+    patches: [{
+      file: 'src/sun.ts',
+      find: "    const side = origin === 'outer' ? -1 : 1;",
+      replace: '    const side = 1; // mutant: ignore outer source face',
+    }],
+  },
+  {
+    id: 'sun-ray-origin-cache-ignored',
+    guard: 'node demo/smoke_sun.mjs',
+    because: 'переключение в открытом диалоге не меняет config epoch; без origin в ключе '
+      + 'пользователь до следующей записи видит закэшированную старую геометрию (#577)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '`${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${origin}|${this._cfgEpoch}`',
+      replace: '`${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${this._cfgEpoch}`',
+    }],
+  },
+  {
+    id: 'sun-ray-origin-save-forced-inner',
+    guard: 'node demo/smoke_sun.mjs',
+    because: 'селектор без сохранения — ложная функция; браузерный round-trip обязан '
+      + 'увидеть outer после Save и при повторном открытии общих настроек (#577)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      settings.sun_ray_origin = d.sunRayOrigin;',
+      replace: "      settings.sun_ray_origin = 'inner'; // mutant: discard the selected face",
+    }],
+  },
+  {
+    id: 'sun-ray-origin-backend-allows-any-string',
+    guard: 'node scripts/backend-test-guard.mjs test_sun_settings_global tests_backend/test_validation.py',
+    because: 'backend обязан отвергать неизвестный enum, иначе сохранённая опечатка расходится '
+      + 'с UI и молча читается как inner; строгий validation-тест #577 должен покраснеть',
+    patches: [{
+      file: 'custom_components/houseplan/validation.py',
+      find: '_SUN_RAY_ORIGIN = vol.In(["inner", "outer"])',
+      replace: '_SUN_RAY_ORIGIN = str  # mutant: accept any string',
+    }],
+  },
+  {
+    id: 'sun-ray-origin-support-leaks-invalid',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'test_projection_helpers_fail_closed_on_malformed_shapes tests_backend/test_support_package.py',
+    because: 'support package переносит только безопасный известный enum; неизвестная строка '
+      + 'не должна попадать в диагностический архив (#577)',
+    patches: [{
+      file: 'custom_components/houseplan/support_package.py',
+      find: '    if sun_ray_origin in ("inner", "outer"):',
+      replace: '    if isinstance(sun_ray_origin, str):  # mutant: leak unknown strings',
+    }],
+  },
+  {
     id: 'sun-north-subtraction-restored',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="planSunAngle" test/sun.test.mjs',

@@ -91,7 +91,7 @@ MAX_IMPORT_PREVIEWS_TOTAL = 3
 DEFAULT_CONFIG: dict[str, object] = {
     "spaces": [],
     "markers": [],
-    "settings": {"bg_mode": "daynight"},
+    "settings": {"bg_mode": "daynight", "sun_ray_origin": "inner"},
 }
 
 # #42: THE stable public error-code contract. Every code a user-facing

@@ -9,7 +9,7 @@ import {
 import {
   OPENING_TYPES, VACUUM_TRAIL_MODES, ZERO_WALL_STYLES,
 } from '../test-build/types.js';
-import { BG_MODES } from '../test-build/sun.js';
+import { BG_MODES, SUN_RAY_ORIGINS } from '../test-build/sun.js';
 
 const manifest = JSON.parse(readFileSync(
   new URL('../scripts/config-schema.json', import.meta.url), 'utf8')).fields;
@@ -38,6 +38,7 @@ const PAIRS = [
   { pair: 'vacuum.trail_mode', path: 'config.markers[].vacuum.trail_mode', front: VACUUM_TRAIL_MODES },
   { pair: 'space.zero_wall_style', path: 'config.spaces[].zero_wall_style', front: ZERO_WALL_STYLES },
   { pair: 'settings.bg_mode', path: 'config.settings.bg_mode', front: BG_MODES },
+  { pair: 'settings.sun_ray_origin', path: 'config.settings.sun_ray_origin', front: SUN_RAY_ORIGINS },
 ];
 
 test('#33 AC2: backend and frontend enums agree, divergences only via the allow-list', () => {

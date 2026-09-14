@@ -366,7 +366,7 @@ export interface SunRay {
   polys: number[][][];
   /** Optional even-odd polygons after physical-obstacle subtraction. */
   paths?: string[];
-  /** Room-side opening corners (the bright end of the gradient). */
+  /** Selected opening corners (inner or outer; the bright end of the gradient). */
   a: number[];
   b: number[];
   /** Direction the light travels (AWAY from the sun), unit vector. */
@@ -396,8 +396,8 @@ export interface SunRay {
  *
  * `innerByRoom` (optional): when wall thickness is set, clip wedges to each
  * room's inner contour. `wallDepthByOpening` moves the full window span from
- * the wall centreline to its room-side face, so the two side rays start at the
- * opening's two inner corners (docs/WALL-THICKNESS.md §5).
+ * the wall centreline to the selected inner or outer face, so the two side
+ * rays start at that face's corners (docs/WALL-THICKNESS.md §5).
  */
 export function computeSunRays(
   rooms: SunRoom[],
@@ -407,6 +407,7 @@ export function computeSunRays(
   northDeg: number,
   innerByRoom?: Record<string, number[][]>,
   wallDepthByOpening?: Record<string, number>,
+  origin: SunRayOrigin = 'inner',
 ): SunRay[] {
   if (!(elevation > 0)) return [];
   const toSun = sunDirOnPlan(azimuth, northDeg);
@@ -424,17 +425,29 @@ export function computeSunRays(
     const half = w.length / 2;
     const normal: [number, number] = [-info.normal[0], -info.normal[1]];
     const d = Math.max(0, wallDepthByOpening?.[w.id] || 0);
-    // A wall grows ±½ from its centreline. Start the whole light span on the
-    // room-side face: its endpoints are the two inner corners of the opening,
-    // independent of the sun's incidence angle.
-    const sourceX = w.x + normal[0] * d / 2;
-    const sourceY = w.y + normal[1] * d / 2;
     const hx = Math.cos(rad) * half;
     const hy = Math.sin(rad) * half;
+    // A wall grows ±½ from its centreline. The compatibility default starts
+    // at the room-side face. `outer` starts at the exterior face and admits
+    // only the physical window tunnel before joining the clean room floor.
+    const side = origin === 'outer' ? -1 : 1;
+    const sourceX = w.x + normal[0] * d * side / 2;
+    const sourceY = w.y + normal[1] * d * side / 2;
     const a = [sourceX - hx, sourceY - hy];
     const b = [sourceX + hx, sourceY + hy];
     const len = k * w.length;
-    const polys = clipToRoom(rayQuad(a, b, away, len), clipPoly);
+    const quad = rayQuad(a, b, away, len);
+    const polys = clipToRoom(quad, clipPoly);
+    if (origin === 'outer' && d > 0) {
+      const innerX = w.x + normal[0] * d / 2;
+      const innerY = w.y + normal[1] * d / 2;
+      polys.push(...clipToRoom(quad, [
+        [sourceX - hx, sourceY - hy],
+        [sourceX + hx, sourceY + hy],
+        [innerX + hx, innerY + hy],
+        [innerX - hx, innerY - hy],
+      ]));
+    }
     if (!polys.length) continue;
     // inward normal + how deep the ray gets: cos of the incidence angle,
     // which windowLit() has already found to be above RAY_MIN_COS
@@ -498,13 +511,13 @@ export const RAY_FADE_END = 0.85;
 
 /**
  * Gradient stops along the shaft: `[offset 0..1, share of the peak alpha]`.
- * Convex ease-out — bright at the inner opening, half gone by a third of the way,
+ * Convex ease-out — bright at the selected opening face, half gone by a third of the way,
  * a whisper at two thirds, nothing from RAY_FADE_END on. Consumed by the card
  * as SVG <stop>s over the FULL wedge length, so the geometry and the gradient
  * always describe the same shaft (docs/SUN.md).
  *
  * This gradient is the ONLY thing that dissolves a wedge: the falloff runs
- * along the ray, from the inner opening inward, and the sides of the shaft keep the
+ * along the ray, from the selected opening face inward, and the sides of the shaft keep the
  * hard edge light actually has (owner 2026-08-04: «не надо размывать их
  * боковые грани»). No blur is involved anywhere.
  */
@@ -536,7 +549,7 @@ export function rayStops(): [number, number][] {
  *
  * Contract (docs/SUN.md, «The rim»):
  *
- * - only the two SIDE edges — the ones running from the inner opening corners
+ * - only the two SIDE edges — the ones running from the selected opening corners
  *   along `dir`. Never the source edge (a-b) and never the far edge: those are
  *   not boundaries of the beam, they are its source and its end;
  * - one screen pixel at any zoom (`vector-effect: non-scaling-stroke`);
@@ -549,7 +562,7 @@ export function rayStops(): [number, number][] {
  */
 
 /**
- * Peak rim opacity at the inner opening. Visually tuned on the
+ * Peak rim opacity at the selected opening face. Visually tuned on the
  * demo rig at both extremes: it has to make the shaft legible on white paper
  * (the whole point) yet not read as an ink outline over the dark glow canvas.
  * Below ~0.3 the line disappears on paper at kiosk scale; above ~0.5 it turns
@@ -672,6 +685,14 @@ export function northDegOf(settings: any, spaceSettings: any): number | null {
 
 export const BG_MODES = ['static', 'daynight'] as const; // #33 parity
 export type BgMode = (typeof BG_MODES)[number];
+
+export const SUN_RAY_ORIGINS = ['inner', 'outer'] as const; // #577 parity
+export type SunRayOrigin = (typeof SUN_RAY_ORIGINS)[number];
+
+/** Global window-light source; unknown/legacy values preserve the old geometry. */
+export function sunRayOriginOf(settings: any): SunRayOrigin {
+  return settings?.sun_ray_origin === 'outer' ? 'outer' : 'inner';
+}
 
 /** Effective background mode; anything unknown falls back to 'static'. */
 export function bgModeOf(settings: any, spaceSettings: any): BgMode {

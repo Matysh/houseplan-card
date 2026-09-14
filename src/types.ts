@@ -301,6 +301,11 @@ export interface ServerConfig {
     icon_rules?: { pattern: string; icon: string }[];
     /** Only an explicit false hides the room hover information window. */
     show_room_tooltip?: boolean;
+    north_deg?: number;
+    bg_mode?: 'static' | 'daynight';
+    sun_rays?: boolean;
+    /** Global source face for window sunlight; absent keeps the legacy inner face. */
+    sun_ray_origin?: 'inner' | 'outer';
     /** Opt-in, admin-only contextual Zigbee diagnostics (#54). */
     zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] };
     /** Read-only grouped values shown over the plan (#437). */
