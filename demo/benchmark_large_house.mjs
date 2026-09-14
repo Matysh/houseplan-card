@@ -142,7 +142,7 @@ try {
           longTasks: await longTasks.stop(),
         };
       };
-      // Current candidates split Stage 3 out of the initial graph. Comparison
+      // Current candidates split the experimental Iso runtime out of the initial graph. Comparison
       // bundles remain valid: their older monolithic renderer has no preload
       // hook and is already available synchronously.
       const ensureIsoRuntime = async (card) => {
@@ -249,11 +249,11 @@ try {
         const missingKinds = expectedKinds.filter((kind) => !snapshot.overlayKinds.includes(kind));
         const failures = [];
         if (snapshot.effectiveProjection !== 'iso') failures.push('effective projection is not iso');
-        if (snapshot.isoStageRevision !== '3') failures.push('Stage 3 revision marker is absent');
+        if (snapshot.isoStageRevision !== '4') failures.push('Stage 4 revision marker is absent');
         if (snapshot.structuralBuilds == null) failures.push('structural build counter is absent');
         if (snapshot.renderedOverlayCount < 1) failures.push('no raised overlay roots rendered');
         if (snapshot.raisedOverlayCount !== snapshot.renderedOverlayCount)
-          failures.push('one or more Stage 3 overlay roots remained on the floor plane');
+          failures.push('one or more Stage 4 overlay roots remained outside the low visual plane');
         if (snapshot.nudgedOverlayCount < 1) failures.push('dense fixture produced no bounded nudge');
         if (snapshot.raisedVacuumCount !== 0) failures.push('floor-bound vacuum was marked as raised');
         if (missingKinds.length) failures.push(`missing overlay kinds: ${missingKinds.join(', ')}`);
@@ -262,11 +262,11 @@ try {
           const stage3 = snapshot.stage3RootsByKind[kind];
           if (total < 1) failures.push(`no rendered ${kind} roots`);
           else if (stage3 !== total)
-            failures.push(`${kind} Stage 3 roots ${stage3}/${total}`);
+            failures.push(`${kind} Stage 4 roots ${stage3}/${total}`);
         }
         for (const kind of fixture.stage3Dense.expectedOpeningKinds) {
           if (!(snapshot.openingSurfaceCounts[kind] > 0))
-            failures.push(`no Stage 3 ${kind} opening surfaces`);
+            failures.push(`no Stage 4 ${kind} opening surfaces`);
         }
         for (const [facet, count] of Object.entries(snapshot.facetCounts)) {
           if (!(count > 0)) failures.push(`no observable ${facet} facet${facet === 'pulse'
@@ -280,7 +280,7 @@ try {
         if (!(snapshot.definitionCounts.patterns > 0)) failures.push('no shared texture pattern');
         if (!(snapshot.definitionCounts.filters > 0)) failures.push('no shared shadow filter');
         if (failures.length)
-          throw new Error(`Stage 3 ${label} contract failed: ${failures.join('; ')}`);
+          throw new Error(`Stage 4 ${label} contract failed: ${failures.join('; ')}`);
       };
 
       window.__card?.remove?.();
@@ -494,7 +494,7 @@ try {
         throw new Error(`${profile} performed a structural rebuild for an HA-only state update`);
       }
       if (requireStage3 && afterStateStage3.structuralBuilds !== steadyStage3.structuralBuilds)
-        throw new Error(`${profile} rebuilt Stage 3 structure for an HA-only state update`);
+        throw new Error(`${profile} rebuilt Stage 4 structure for an HA-only state update`);
 
       let stage3States = nextStates;
       const openingUpdate = stage3Dense ? await duration(async () => {
@@ -512,7 +512,7 @@ try {
       if (stage3Dense && requiresIsometric && afterOpeningStage3?.effectiveProjection !== 'iso')
         throw new Error(`${profile} entered Flat fallback during an opening update`);
       if (requireStage3 && afterOpeningStage3.structuralBuilds !== steadyStage3.structuralBuilds)
-        throw new Error(`${profile} rebuilt Stage 3 structure for an opening update`);
+        throw new Error(`${profile} rebuilt Stage 4 structure for an opening update`);
 
       const overlayInteraction = stage3Dense ? await duration(async () => {
         const overlay = card.renderRoot.querySelector(requireStage3
@@ -538,7 +538,7 @@ try {
         throw new Error(`${profile} entered Flat fallback during a hover/focus update`);
       if (requireStage3
           && afterInteractionStage3.structuralBuilds !== steadyStage3.structuralBuilds) {
-        throw new Error(`${profile} rebuilt Stage 3 structure for a hover/focus update`);
+        throw new Error(`${profile} rebuilt Stage 4 structure for a hover/focus update`);
       }
 
       let interactionDiagnostics = null;

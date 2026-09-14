@@ -8432,15 +8432,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'iso-placement-cache-ignores-selected',
+    id: 'iso-window-occlusion-ignores-height',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#473 W1" test/iso-scene-render.test.mjs',
-    because: 'a selected plate must resolve its own placement; a signature without `selected` '
-      + 'hands back the unselected cached one — a stale picture with no failure (#473, perf delta of #160)',
+      + '&& node --test --test-name-pattern="shared painter queue puts elevated window glass" '
+      + 'test/iso-scene-render.test.mjs',
+    because: 'Stage 4 must sort one windows existing shared-queue slots by physical camera depth; '
+      + 'falling back to floor/screen depth paints the rear sill over elevated glass without any '
+      + 'runtime failure (#570)',
     patches: [{
       file: 'src/iso-scene-render.ts',
-      find: "      input.layers.shadows ? 1 : 0, selected ? 1 : 0].join('|');",
-      replace: "      input.layers.shadows ? 1 : 0].join('|');",
+      find: '    return (surfaceA?.cameraDepth ?? surfaceA?.depth ?? 0)\n'
+        + '      - (surfaceB?.cameraDepth ?? surfaceB?.depth ?? 0)',
+      replace: '    return (surfaceA?.depth ?? 0) - (surfaceB?.depth ?? 0)',
     }],
   },
   {
@@ -8590,19 +8593,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'stage3-w1-camera-rotation-reset',
+    id: 'stage4-w1-camera-rotation-regresses',
     guard: 'node --test --test-name-pattern="exact fixed" test/iso-projection.test.mjs',
-    because: 'W1: the reviewed Stage 3 camera is exactly +4 degrees; a front-on camera must '
-      + 'fail the exact projection contract (#160)',
+    because: 'W1: the reviewed Stage 4 camera is exactly 0 degrees; restoring the old +4 degree '
+      + 'yaw must fail the exact designer-handoff projection contract (#570)',
     patches: [{
       file: 'src/iso-projection.ts',
-      find: '  rotDeg: 4,\n',
-      replace: '  rotDeg: 0,\n',
+      find: '  rotDeg: 0,\n',
+      replace: '  rotDeg: 4,\n',
     }],
   },
   {
     id: 'stage3-w2-room-label-left-on-floor',
-    guard: 'node --test --test-name-pattern="exact D2 overlay matrix" test/iso-overlays.test.mjs',
+    guard: 'node --test --test-name-pattern="exact Stage 4 overlay matrix" test/iso-overlays.test.mjs',
     because: 'W2: room labels/cards and value-bearing device roots belong to the raised plane; '
       + 'the D2 matrix must reject a floor-plane room label (#160)',
     patches: [{
@@ -8615,7 +8618,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stage3-w3-vacuum-raised-with-devices',
-    guard: 'node --test --test-name-pattern="raises only device" test/isometric-contract.test.mjs',
+    guard: 'node --test --test-name-pattern="Stage 4 keeps device" test/isometric-contract.test.mjs',
     because: 'W3: the live vacuum puck/trail stays on the floor even while device, room and lock '
       + 'roots are raised (#160)',
     patches: [{
@@ -8677,8 +8680,8 @@ const MUTANT_DEFINITIONS = [
       replace: '  onBuild(): void;\n  liveFingerprint?: string;\n}',
     }, {
       file: 'src/iso-scene-render.ts',
-      find: '    algorithm: 4,\n  })}`;',
-      replace: '    algorithm: 4,\n  })}|${input.liveFingerprint ?? \'\'}`;',
+      find: '    algorithm: 5,\n  })}`;',
+      replace: '    algorithm: 5,\n  })}|${input.liveFingerprint ?? \'\'}`;',
     }, {
       file: 'src/houseplan-card.ts',
       find: '      onBuild: () => { this._isoStructuralBuildCount += 1; },',
@@ -8689,8 +8692,8 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'stage3-w8-material-defs-created-per-face',
     guard: 'node demo/smoke_isometric_contract.mjs',
-    because: 'W8: Stage 3 material patterns and filters are shared O(1) definitions, never '
-      + 'replicated for every face or marker (#160)',
+    because: 'W8: Stage 4 material patterns and filters are shared O(1) definitions, never '
+      + 'replicated for every face or marker (#570)',
     patches: [{
       file: 'src/iso-scene-render.ts',
       find: '          return svg`<path class="iso-wall-top" d=${face.d} data-component=${face.component}\n'
@@ -8723,24 +8726,22 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'stage3-w11-nudged-overlay-loses-tether',
+    id: 'stage4-w11-nudged-overlay-restores-tether',
     guard: 'node --test --test-name-pattern="wall-aware nudge" test/iso-overlays.test.mjs',
-    because: 'W11: every non-zero nudge keeps a tether back to its immutable floor owner '
-      + 'anchor (#160)',
+    because: 'W11: Stage 4 keeps collision nudge internal but removes the debug tether; restoring '
+      + 'it would recreate the tall visual clutter rejected by the designer handoff (#570)',
     patches: [{
       file: 'src/iso-overlays.ts',
-      find: '  const tetherVisible = nudged || nearWallBefore || nearWallAfter\n'
-        + '    || !!input.hovered || !!input.focused || !!input.selected;',
-      replace: '  const tetherVisible = !nudged && (nearWallBefore || nearWallAfter\n'
-        + '    || !!input.hovered || !!input.focused || !!input.selected);',
+      find: '  const tetherVisible = false;',
+      replace: '  const tetherVisible = nudged;',
     }],
   },
   {
     id: 'stage3-w12-separate-alpha-url-key-restored',
     guard: 'node --test --test-name-pattern="Labs iso is presentation-only" '
       + 'test/isometric-contract.test.mjs',
-    because: 'W12: Stage 3 shares the one permanent hp_alpha switch; a feature-specific URL '
-      + 'key or expiry must not return (#160)',
+    because: 'W12: Stage 4 shares the one permanent hp_alpha switch; a feature-specific URL '
+      + 'key or expiry must not return (#570)',
     patches: [{
       file: 'src/labs.ts',
       find: "params.getAll('hp_alpha')",

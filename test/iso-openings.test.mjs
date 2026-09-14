@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ISO_OPENING_FRAME_THICKNESS_RATIO, ISO_OPENING_LEAF_THICKNESS_RATIO,
+  ISO_OPENING_FRAME_THICKNESS_RATIO, ISO_OPENING_GEOMETRY_POLICY,
+  ISO_OPENING_LEAF_THICKNESS_RATIO,
   buildIsoOpeningBasis, isoOpeningBounds, projectIsoOpening,
   projectIsoOpeningStructure, resolveIsoDecoration,
 } from '../test-build/iso-openings.js';
 import { openingAmount } from '../test-build/logic.js';
-import { projectPlanPoint } from '../test-build/iso-projection.js';
+import { ISO_WALL_HEIGHT, projectPlanPoint } from '../test-build/iso-projection.js';
 
 const opening = (patch = {}) => ({
   id: 'op-1', sourceIndex: 0, type: 'door', x: 100, y: 80,
@@ -24,10 +25,11 @@ test('door basis is immutable and live amount preserves the exact jamb anchor', 
   assert.match(closed.d, new RegExp(`^M ${hinge.replace('.', '\\.')}`));
   assert.match(open.d, new RegExp(`^M ${hinge.replace('.', '\\.')}`));
   assert.notEqual(open.d, closed.d);
-  assert.equal(basis.leaves[0].top, 64 * 0.92);
+  assert.equal(basis.leaves[0].top, ISO_WALL_HEIGHT * 0.92);
+  assert.equal(basis.leaves[0].turnDeg, -50);
 });
 
-test('Stage 3 basis freezes the real axis, physical face depth and jamb endpoints', () => {
+test('Stage 4 basis freezes the real axis, physical face depth and jamb endpoints', () => {
   const basis = buildIsoOpeningBasis(opening());
   assert.equal(Object.isFrozen(basis), true);
   assert.equal(Object.isFrozen(basis.axis), true);
@@ -55,8 +57,8 @@ test('Stage 3 basis freezes the real axis, physical face depth and jamb endpoint
     { jamb: 0, center: [70, 80], selected: [70, 85], opposite: [70, 75] },
     { jamb: 1, center: [130, 80], selected: [130, 85], opposite: [130, 75] },
   ]);
-  assert.equal(basis.leafThickness, 64 * ISO_OPENING_LEAF_THICKNESS_RATIO);
-  assert.equal(basis.frameThickness, 64 * ISO_OPENING_FRAME_THICKNESS_RATIO);
+  assert.equal(basis.leafThickness, ISO_WALL_HEIGHT * ISO_OPENING_LEAF_THICKNESS_RATIO);
+  assert.equal(basis.frameThickness, ISO_WALL_HEIGHT * ISO_OPENING_FRAME_THICKNESS_RATIO);
 
   const rotated = buildIsoOpeningBasis(opening({
     angle: 90,
@@ -102,14 +104,22 @@ test('door and gate expose matte fixed-thickness leaf prisms plus real jamb reve
   }
 });
 
-test('window has only light inserts, frame and sill surfaces and no dark glass material', () => {
+test('window separates neutral fixed/sash frames from blue glass above the sill', () => {
   const basis = buildIsoOpeningBasis(opening({ type: 'window' }));
+  assert.deepEqual(basis.windowProfile, {
+    frameBottom: ISO_WALL_HEIGHT * 0.38,
+    frameTop: ISO_WALL_HEIGHT,
+    sashBottom: ISO_WALL_HEIGHT * 0.40,
+    sashTop: ISO_WALL_HEIGHT * 0.98,
+    glassBottom: ISO_WALL_HEIGHT * 0.45,
+    glassTop: ISO_WALL_HEIGHT * 0.93,
+    member: ISO_WALL_HEIGHT * 0.05,
+  });
   const structure = projectIsoOpeningStructure(basis);
   assert.equal(structure.filter((surface) => surface.kind === 'jamb-reveal').length, 2);
   assert.equal(structure.filter((surface) => surface.kind === 'window-frame-side').length, 4);
   assert.equal(structure.filter((surface) => surface.kind === 'window-frame-top').length, 2);
   assert.equal(structure.filter((surface) => surface.kind === 'window-sill').length, 1);
-  assert.equal(structure.some((surface) => /glass|dark/i.test(surface.material)), false);
   assert.equal(structure.filter((surface) => surface.kind.startsWith('window-'))
     .every((surface) => ['light-frame', 'light-sill'].includes(surface.material)), true);
 
@@ -117,12 +127,16 @@ test('window has only light inserts, frame and sill surfaces and no dark glass m
   assert.equal(panels.length, 2);
   assert.equal(panels.every((panel) => panel.material === 'light-window'
     && panel.thickness === 0
-    && panel.surfaces.length === 1
-    && panel.surfaces[0].kind === 'window-insert'
-    && panel.surfaces[0].material === 'light-window'), true);
+    && panel.surfaces.length === 7
+    && panel.surfaces.filter((surface) => surface.material === 'light-frame').length === 4
+    && panel.surfaces.filter((surface) => surface.material === 'glass-side').length === 2
+    && panel.surfaces.filter((surface) => surface.material === 'glass-top').length === 1), true);
+  assert.equal(panels.flatMap((panel) => panel.surfaces)
+    .filter((surface) => surface.material.startsWith('glass'))
+    .every((surface) => ['window-glass', 'window-glass-top'].includes(surface.kind)), true);
 });
 
-test('live projection is O(leaves)-only and cannot mutate the structural Stage 3 basis', () => {
+test('live projection is O(leaves)-only and cannot mutate the structural Stage 4 basis', () => {
   const basis = buildIsoOpeningBasis(opening({ type: 'gate', flipV: true }));
   const snapshot = structuredClone(basis);
   const structure = projectIsoOpeningStructure(basis);
@@ -133,15 +147,37 @@ test('live projection is O(leaves)-only and cannot mutate the structural Stage 3
   assert.deepEqual(basis, snapshot);
 });
 
-test('window and gate retain two leaves, fixed height bounds and gate 10 degree turn', () => {
+test('window and gate retain two leaves with reviewed height and turn policies', () => {
   const windowBasis = buildIsoOpeningBasis(opening({ type: 'window' }));
   const gateBasis = buildIsoOpeningBasis(opening({ type: 'gate', flipV: true }));
   assert.equal(windowBasis.leaves.length, 2);
-  assert.equal(windowBasis.leaves.every((leaf) => leaf.bottom === 64 * 0.27
-    && leaf.top === 64 * 0.78), true);
+  assert.equal(ISO_OPENING_GEOMETRY_POLICY.revision, 2);
+  assert.equal(windowBasis.leaves.every((leaf) => leaf.bottom === ISO_WALL_HEIGHT * 0.40
+    && leaf.top === ISO_WALL_HEIGHT * 0.98 && Math.abs(leaf.turnDeg) === 65), true);
   assert.deepEqual(gateBasis.leaves.map((leaf) => Math.abs(leaf.turnDeg)), [10, 10]);
-  assert.equal(gateBasis.leaves.every((leaf) => leaf.top === 64 * 0.88), true);
+  assert.equal(gateBasis.leaves.every((leaf) => leaf.top === ISO_WALL_HEIGHT * 0.88), true);
   assert.equal(projectIsoOpening(gateBasis, 1).length, 2);
+});
+
+test('paired window leaves open toward their resolved exterior face in every orientation', () => {
+  for (const angle of [0, 90, 180, 270, 37]) {
+    const radians = angle * Math.PI / 180;
+    const normal = [-Math.sin(radians), Math.cos(radians)];
+    for (const flipV of [false, true]) for (const flipH of [false, true]) {
+      const side = flipV ? 1 : -1;
+      const basis = buildIsoOpeningBasis(opening({
+        type: 'window', angle, flipV, flipH,
+        face: { ox: normal[0] * side * 5, oy: normal[1] * side * 5, cm: 20, side },
+      }));
+      for (const leaf of basis.leaves) {
+        const turn = leaf.turnDeg * Math.PI / 180;
+        const swingNormal = (leaf.quarterVector[0] * Math.sin(turn)) * normal[0]
+          + (leaf.quarterVector[1] * Math.sin(turn)) * normal[1];
+        assert.ok(swingNormal * side > 0,
+          `angle=${angle} flipH=${flipH} flipV=${flipV} leaf=${leaf.leaf}`);
+      }
+    }
+  }
 });
 
 test('isometric symbols keep one centre while flips change only direction', () => {

@@ -1,4 +1,4 @@
-// #122/#160 Stage 3: live-floor preservation, raised overlays, openings and touch paths.
+// #122/#160/#570 Stage 4: live-floor preservation, low overlays, openings and touch paths.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch(
@@ -56,7 +56,7 @@ const out = await page.evaluate(async () => {
     },
   });
   // Put one real interactive device almost on the shared wall so this smoke
-  // always owns a deterministic non-zero nudge/tether witness.
+  // always owns a deterministic non-zero nudge witness.
   original._layout.d_light1 = { ...original._layout.d_light1, s: 'f1', x: 0.548, y: 0.22 };
   original._layout['iso-vacuum'] = { s: 'f1', x: 0.18, y: 0.78 };
   original._hoverRoom = { space: 'f1', room: original._spaceModel('f1').rooms[0] };
@@ -188,12 +188,10 @@ const out = await page.evaluate(async () => {
   ];
   const overlaySvg = root(original).querySelector('.iso-overlays-svg');
   const wallSvg = root(original).querySelector('.iso-walls-svg');
-  const overlayGround = root(original).querySelector('[data-hp="iso-overlay-grounds"]');
-  const overlayGroundFilter = root(original).querySelector('#hp-iso-overlay-ground');
   const doorResolved = original._openingsR.find((opening) => opening.id === 'iso-door');
   const isoFloorMatrix = (root(original).querySelector('.iso-floor-scene')
     ?.getAttribute('transform')?.match(/-?[\d.e+]+/gi) || []).map(Number);
-  const wallHeight = 64 * (5 / original._cellCm);
+  const wallHeight = 84 * (5 / original._cellCm);
   const openingTopPoint = doorResolved && isoFloorMatrix.length === 6
     ? new DOMPoint(
       isoFloorMatrix[0] * doorResolved.rx + isoFloorMatrix[2] * doorResolved.ry + isoFloorMatrix[4],
@@ -206,7 +204,7 @@ const out = await page.evaluate(async () => {
     && ![...root(original).querySelectorAll('.iso-wall-top')]
       .some((path) => path.isPointInFill(openingTopPoint));
   const result = {
-    isoOnTouch: root(original).querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '3'
+    isoOnTouch: root(original).querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '4'
       && !!root(original).querySelector('[data-hp="iso-walls"]'),
     flatIsoLayerParity: JSON.stringify({ ...flat, openings: 0, verticalOpenings: before.verticalOpenings })
         === JSON.stringify(before)
@@ -225,10 +223,11 @@ const out = await page.evaluate(async () => {
       && ordered.slice(1).every((node, index) => Boolean(
         ordered[index].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING
       )),
-    overlayGroundLivesAboveWallsWithDefs: overlayGround?.closest('svg') === overlaySvg
-      && overlayGroundFilter?.closest('svg') === overlaySvg
-      && root(original).querySelectorAll('#hp-iso-overlay-ground').length === 1
-      && Boolean(wallSvg?.compareDocumentPosition(overlayGround) & Node.DOCUMENT_POSITION_FOLLOWING),
+    overlaysStayAboveWallsWithoutDebugGrounds: !!overlaySvg && !!wallSvg
+      && Boolean(wallSvg.compareDocumentPosition(overlaySvg) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && !root(original).querySelector(
+        '.iso-overlay-ground, .iso-overlay-tether, #hp-iso-overlay-ground',
+      ),
     haColorUpdatePainted: [...root(original).querySelectorAll('radialGradient stop')]
       .some((stop) => stop.getAttribute('stop-color') === '#ff4020'),
     sameWallFingerprint: root(original).querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint === wallFingerprint,
@@ -295,10 +294,12 @@ const out = await page.evaluate(async () => {
   const noBordersRoom = root(original).querySelector('[data-hp="room-label"]');
   const noBordersLock = root(original).querySelector('.oplock');
   result.noBordersUsesTrueAffineFloor = original._effectiveProjection() === 'iso'
-    && root(original).querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '3'
+    && root(original).querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '4'
     && root(original).querySelector('.plan-svg')?.getAttribute('data-hp-live-viewbox') === 'camera'
     && floorMatrix.length === 6 && floorMatrix.every(Number.isFinite)
-    && (Math.abs(floorMatrix[1]) > 1e-6 || Math.abs(floorMatrix[2]) > 1e-6)
+    && Math.abs(floorMatrix[0] - 1) < 1e-6
+    && Math.abs(floorMatrix[1]) < 1e-6 && Math.abs(floorMatrix[2]) < 1e-6
+    && Math.abs(floorMatrix[3] - Math.cos(20 * Math.PI / 180)) < 1e-6
     && root(original).querySelectorAll('[data-hp="opening"]').length === 3
     && [noBordersDevice, noBordersRoom, noBordersLock].every((node) => node
       && !node.hasAttribute('data-hp-iso-raised'));
@@ -329,9 +330,9 @@ const out = await page.evaluate(async () => {
   original._cfgEpoch++;
   original.requestUpdate();
   await original.updateComplete;
-  result.visibleBordersRestoreStage3 = !!root(original).querySelector('[data-hp="iso-openings"]')
-    && !!root(original).querySelector('[data-hp="iso-raised-overlays"]')
-    && root(original).querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '3'
+  result.visibleBordersRestoreStage4 = !!root(original).querySelector('[data-hp="iso-openings"]')
+    && !!root(original).querySelector('[data-hp-iso-raised="true"]')
+    && root(original).querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '4'
     && original._isoGeometryCache.size === 1;
 
   original._hoverRoom = null;
@@ -350,7 +351,7 @@ const out = await page.evaluate(async () => {
   result.runtimeNudgeNeverPersists = JSON.stringify(original._layout) === floorLayoutBeforeLive
     && forbiddenWrites.length === 0 && storageWrites.length === 0
     && !!root(original).querySelector('[data-hp-iso-nudged="true"]')
-    && !!root(original).querySelector('.iso-overlay-tether');
+    && !root(original).querySelector('.iso-overlay-tether, .iso-overlay-ground');
   Storage.prototype.setItem = nativeStorageSet;
 
   const fallbackCalls = [];
@@ -365,9 +366,6 @@ const out = await page.evaluate(async () => {
   await original.updateComplete;
   const fallbackNudged = root(original).querySelector('[data-hp-iso-nudged="true"][data-id]');
   const fallbackId = fallbackNudged?.getAttribute('data-id');
-  const fallbackTether = fallbackId && root(original).querySelector(
-    `.iso-overlay-tether[data-id="${CSS.escape(fallbackId)}"]`,
-  );
   root(original).querySelector('[data-entity="light.ceiling"]')?.click();
   await frame();
   result.unsupportedDecorationKeepsIsoStructure = !!root(original).querySelector('[data-hp="iso-walls"]')
@@ -377,7 +375,8 @@ const out = await page.evaluate(async () => {
   result.unsupportedDecorationKeepsFootprintInvisible = !root(original).querySelector(
     '.iso-overlay-plate, .iso-overlay-plate-texture, #hp-iso-overlay-texture',
   );
-  result.unsupportedDecorationKeepsTether = !!fallbackTether;
+  result.unsupportedDecorationAddsNoDebugCue = !!fallbackId
+    && !root(original).querySelector('.iso-overlay-tether, .iso-overlay-ground');
   result.unsupportedDecorationKeepsActions = fallbackCalls.length === 1;
   CSS.supports = supports;
   original.requestUpdate();

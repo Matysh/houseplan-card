@@ -66,7 +66,7 @@ export interface IsoOpeningRevealBasis {
 }
 
 /**
- * Versioned authority for every fixed Stage 3 opening dimension. It is part of
+ * Versioned authority for every fixed Stage 4 opening dimension. It is part of
  * the structural fingerprint, so a policy change cannot reuse stale cached
  * opening volumes from an older algorithm.
  */
@@ -74,21 +74,33 @@ export interface IsoOpeningGeometryPolicy {
   revision: number;
   leafThicknessRatio: number;
   frameThicknessRatio: number;
+  doorTurnDeg: number;
+  windowTurnDeg: number;
   gateTurnDeg: number;
   gateTopRatio: number;
-  windowBottomRatio: number;
-  windowTopRatio: number;
+  windowFrameBottomRatio: number;
+  windowFrameTopRatio: number;
+  windowSashBottomRatio: number;
+  windowSashTopRatio: number;
+  windowGlassBottomRatio: number;
+  windowGlassTopRatio: number;
   doorTopRatio: number;
 }
 
 export const ISO_OPENING_GEOMETRY_POLICY: Readonly<IsoOpeningGeometryPolicy> = Object.freeze({
-  revision: 1,
+  revision: 2,
   leafThicknessRatio: 0.04,
-  frameThicknessRatio: 0.055,
+  frameThicknessRatio: 0.05,
+  doorTurnDeg: 50,
+  windowTurnDeg: 65,
   gateTurnDeg: 10,
   gateTopRatio: 0.88,
-  windowBottomRatio: 0.27,
-  windowTopRatio: 0.78,
+  windowFrameBottomRatio: 0.38,
+  windowFrameTopRatio: 1,
+  windowSashBottomRatio: 0.40,
+  windowSashTopRatio: 0.98,
+  windowGlassBottomRatio: 0.45,
+  windowGlassTopRatio: 0.93,
   doorTopRatio: 0.92,
 });
 
@@ -96,6 +108,16 @@ export const ISO_OPENING_LEAF_THICKNESS_RATIO =
   ISO_OPENING_GEOMETRY_POLICY.leafThicknessRatio;
 export const ISO_OPENING_FRAME_THICKNESS_RATIO =
   ISO_OPENING_GEOMETRY_POLICY.frameThicknessRatio;
+
+export interface IsoWindowProfile {
+  frameBottom: number;
+  frameTop: number;
+  sashBottom: number;
+  sashTop: number;
+  glassBottom: number;
+  glassTop: number;
+  member: number;
+}
 
 /** Immutable jamb/axis topology stored in the structural Iso LRU. */
 export interface IsoOpeningBasis {
@@ -105,6 +127,7 @@ export interface IsoOpeningBasis {
   wallHeight: number;
   leafThickness: number;
   frameThickness: number;
+  windowProfile: IsoWindowProfile | null;
   axis: IsoOpeningAxisBasis;
   face: IsoOpeningFaceBasis;
   reveals: readonly IsoOpeningRevealBasis[];
@@ -118,6 +141,11 @@ export type IsoOpeningSurfaceKind =
   | 'leaf-edge'
   | 'leaf-top'
   | 'window-insert'
+  | 'window-sash-side'
+  | 'window-sash-bottom'
+  | 'window-sash-top'
+  | 'window-glass'
+  | 'window-glass-top'
   | 'window-frame-side'
   | 'window-frame-top'
   | 'window-sill';
@@ -126,6 +154,8 @@ export type IsoOpeningMaterial =
   | 'reveal'
   | 'matte-leaf'
   | 'light-window'
+  | 'glass-side'
+  | 'glass-top'
   | 'light-frame'
   | 'light-sill';
 
@@ -133,6 +163,8 @@ export interface IsoOpeningSurface {
   kind: IsoOpeningSurfaceKind;
   material: IsoOpeningMaterial;
   d: string;
+  /** Orthographic camera depth of the face centre, used for local occlusion. */
+  cameraDepth: number;
   depth: number;
   jamb?: 0 | 1;
   edge?: 'hinge' | 'tip';
@@ -148,7 +180,7 @@ export interface IsoOpeningPanel {
   depth: number;
   material: 'matte-leaf' | 'light-window';
   thickness: number;
-  /** Stage 3 prism/frame faces. The legacy d remains the centre face for compatibility. */
+  /** Stage 4 prism/frame faces. The legacy d remains the centre face for compatibility. */
   surfaces: readonly IsoOpeningSurface[];
 }
 
@@ -276,15 +308,26 @@ export function buildIsoOpeningBasis(
     ];
   } else if (input.type === 'window') {
     leaves = [
-      leafBasis(input, 0, [-half, 0], [half, 0], -90,
-        wallHeight * policy.windowBottomRatio, wallHeight * policy.windowTopRatio),
-      leafBasis(input, 1, [half, 0], [-half, 0], 90,
-        wallHeight * policy.windowBottomRatio, wallHeight * policy.windowTopRatio),
+      leafBasis(input, 0, [-half, 0], [half, 0], -policy.windowTurnDeg,
+        wallHeight * policy.windowSashBottomRatio,
+        wallHeight * policy.windowSashTopRatio),
+      leafBasis(input, 1, [half, 0], [-half, 0], policy.windowTurnDeg,
+        wallHeight * policy.windowSashBottomRatio,
+        wallHeight * policy.windowSashTopRatio),
     ];
   } else {
-    leaves = [leafBasis(input, 0, [-half, 0], [input.length, 0], -90, 0,
+    leaves = [leafBasis(input, 0, [-half, 0], [input.length, 0], -policy.doorTurnDeg, 0,
       wallHeight * policy.doorTopRatio)];
   }
+  const windowProfile = input.type === 'window' ? Object.freeze({
+    frameBottom: wallHeight * policy.windowFrameBottomRatio,
+    frameTop: wallHeight * policy.windowFrameTopRatio,
+    sashBottom: wallHeight * policy.windowSashBottomRatio,
+    sashTop: wallHeight * policy.windowSashTopRatio,
+    glassBottom: wallHeight * policy.windowGlassBottomRatio,
+    glassTop: wallHeight * policy.windowGlassTopRatio,
+    member: wallHeight * policy.frameThicknessRatio,
+  }) : null;
   return Object.freeze({
     id: input.id,
     sourceIndex: input.sourceIndex,
@@ -292,6 +335,7 @@ export function buildIsoOpeningBasis(
     wallHeight,
     leafThickness: wallHeight * policy.leafThicknessRatio,
     frameThickness: wallHeight * policy.frameThicknessRatio,
+    windowProfile,
     axis,
     face,
     reveals: Object.freeze(reveals),
@@ -320,10 +364,17 @@ function projectedSurface(
   metadata: Pick<IsoOpeningSurface, 'jamb' | 'edge'> = {},
 ): IsoOpeningSurface {
   const projected = points.map((value) => projectPlanPoint(value.point, value.z, camera));
+  const rotation = camera.rotDeg * Math.PI / 180;
+  const tilt = camera.tiltDeg * Math.PI / 180;
+  const cameraDepth = points.reduce((sum, value) => sum
+    + (value.point[0] * Math.sin(rotation) + value.point[1] * Math.cos(rotation))
+      * Math.sin(tilt)
+    + value.z * Math.cos(tilt), 0) / points.length;
   return Object.freeze({
     kind,
     material,
     d: `M ${projected.map(pointText).join(' L ')} Z`,
+    cameraDepth,
     depth: Math.max(...projected.map((point) => point[1])),
     ...metadata,
   });
@@ -403,7 +454,7 @@ function leafPrismSurfaces(
 }
 
 /**
- * Project state-independent Stage 3 jamb/reveal and window frame/sill surfaces.
+ * Project state-independent Stage 4 jamb/reveal and window frame/sill surfaces.
  * Passage deliberately has no decorative volume. This function consumes only
  * the immutable structural basis and is safe to cache with that basis.
  */
@@ -426,8 +477,10 @@ export function projectIsoOpeningStructure(
       || a.kind.localeCompare(b.kind) || (a.jamb ?? 0) - (b.jamb ?? 0)));
   }
 
-  const bottom = Math.min(...basis.leaves.map((leaf) => leaf.bottom));
-  const top = Math.max(...basis.leaves.map((leaf) => leaf.top));
+  const profile = basis.windowProfile;
+  if (!profile) throw new Error('missing isometric window profile');
+  const bottom = profile.frameBottom;
+  const top = profile.frameTop;
   const member = Math.min(basis.frameThickness, Math.hypot(
     basis.axis.end[0] - basis.axis.start[0],
     basis.axis.end[1] - basis.axis.start[1],
@@ -469,6 +522,56 @@ export function projectIsoOpeningStructure(
     || a.kind.localeCompare(b.kind) || (a.jamb ?? 0) - (b.jamb ?? 0)));
 }
 
+/** Live sash frame and glass, all derived from the same immutable window basis. */
+function windowSashSurfaces(
+  basis: IsoOpeningBasis,
+  leaf: IsoOpeningLeafBasis,
+  tip: PlanPoint,
+  camera: IsoCamera,
+): readonly IsoOpeningSurface[] {
+  const profile = basis.windowProfile;
+  if (!profile) throw new Error('missing isometric window profile');
+  const vector = subtract(tip, leaf.hinge);
+  const length = Math.hypot(vector[0], vector[1]);
+  if (!(length > 1e-9)) return Object.freeze([]);
+  const unit = frozenPoint(vector[0] / length, vector[1] / length);
+  const member = Math.min(profile.member, length / 4,
+    (profile.sashTop - profile.sashBottom) / 4);
+  const innerHinge = add(leaf.hinge, scaled(unit, member));
+  const innerTip = subtract(tip, scaled(unit, member));
+  const paneThickness = Math.min(basis.frameThickness * 0.35, length * 0.02);
+  const paneHalfNormal = frozenPoint(
+    -unit[1] * paneThickness / 2,
+    unit[0] * paneThickness / 2,
+  );
+  const glassFrontHinge = add(innerHinge, paneHalfNormal);
+  const glassFrontTip = add(innerTip, paneHalfNormal);
+  const glassBackHinge = subtract(innerHinge, paneHalfNormal);
+  const glassBackTip = subtract(innerTip, paneHalfNormal);
+  const surfaces: IsoOpeningSurface[] = [
+    verticalSurface('window-sash-side', 'light-frame', leaf.hinge, innerHinge,
+      profile.sashBottom, profile.sashTop, camera, { edge: 'hinge' }),
+    verticalSurface('window-sash-side', 'light-frame', innerTip, tip,
+      profile.sashBottom, profile.sashTop, camera, { edge: 'tip' }),
+    verticalSurface('window-sash-bottom', 'light-frame', leaf.hinge, tip,
+      profile.sashBottom, profile.sashBottom + member, camera),
+    verticalSurface('window-sash-top', 'light-frame', leaf.hinge, tip,
+      profile.sashTop - member, profile.sashTop, camera),
+    verticalSurface('window-glass', 'glass-side', glassFrontHinge, glassFrontTip,
+      profile.glassBottom, profile.glassTop, camera),
+    verticalSurface('window-glass', 'glass-side', glassBackTip, glassBackHinge,
+      profile.glassBottom, profile.glassTop, camera),
+    projectedSurface('window-glass-top', 'glass-top', [
+      { point: glassFrontHinge, z: profile.glassTop },
+      { point: glassFrontTip, z: profile.glassTop },
+      { point: glassBackTip, z: profile.glassTop },
+      { point: glassBackHinge, z: profile.glassTop },
+    ], camera),
+  ];
+  return Object.freeze(surfaces.sort((a, b) => a.depth - b.depth
+    || a.kind.localeCompare(b.kind) || String(a.edge || '').localeCompare(String(b.edge || ''))));
+}
+
 /** Apply live state after the structural cache: O(leaves), no topology work. */
 export function projectIsoOpening(
   basis: IsoOpeningBasis,
@@ -484,10 +587,7 @@ export function projectIsoOpening(
     const topHinge = projectPlanPoint(leaf.hinge, leaf.top, camera);
     const material = basis.type === 'window' ? 'light-window' : 'matte-leaf';
     const surfaces = basis.type === 'window'
-      ? Object.freeze([verticalSurface(
-          'window-insert', 'light-window', leaf.hinge, tip,
-          leaf.bottom, leaf.top, camera,
-        )])
+      ? windowSashSurfaces(basis, leaf, tip, camera)
       : leafPrismSurfaces(leaf, tip, basis.leafThickness, camera);
     return Object.freeze({
       id: basis.id,

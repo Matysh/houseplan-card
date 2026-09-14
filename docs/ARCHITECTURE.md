@@ -28,7 +28,7 @@ houseplan-card/
 │  ├─ houseplan-editor-runtime.ts # Plan/Devices/Background composition root
 │  ├─ decor-image-editor.ts      # lazy Background/Furniture image palette, upload and properties controller
 │  ├─ houseplan-onboarding-runtime.ts # first-space/import dialogs, independent of editor
-│  ├─ iso-scene-render.ts        # hidden alpha-only Stage 3 scene/runtime boundary
+│  ├─ iso-scene-render.ts        # hidden alpha-only Stage 4 scene/runtime boundary
 │  ├─ furniture-art-runtime.ts   # page-scoped lazy designer furniture artwork (ready/pending/fallback)
 │  ├─ pdf/                       # lazy read-only A4 scene, writer, dialog and embedded font
 │  ├─ iso-overlays.ts            # pure raised-overlay ownership, collision and nudge
@@ -845,20 +845,21 @@ remove nuance/shadows without changing projection; only structural failure
 uses the Stage 1 latched Flat fallback. Details and fixed ratios are recorded in
 `docs/adr/122-isometric-stage2-composition.md`.
 
-### Hidden Isometric Stage 3 spatial overlays (#160)
+### Hidden Isometric Stage 4 visual handoff (#570)
 
-Stage 3 keeps the Stage 2 structural scene and moves the fixed camera authority
-to `rotDeg=4`, `tiltDeg=20`. `isoPlaneMatrix()` is shared by floor content,
-invisible raised-footprint corners, point projection and inverse floor hit mapping. The
-projected frame includes the floor edge, wall/opening tops and the raised
-height; blur/shadow extents never enter camera fit.
+Stage 4 keeps the Stage 2/3 structural scene and fixes the camera authority at
+`rotDeg=0`, `tiltDeg=20`, with scale-aware wall height 84. `isoPlaneMatrix()` is
+shared by floor content, invisible footprint corners, point projection and
+inverse floor hit mapping. The projected frame includes the floor edge,
+wall/opening tops and low overlay plane; blur/shadow extents never enter fit.
 
-`src/iso-overlays.ts` is the pure boundary between floor-bound and raised
+`src/iso-overlays.ts` is the pure boundary between floor-bound and low-plane
 presentation. Device roots, room-label/card roots and opening-lock roots keep
-an immutable floor anchor and receive one computed raised visual anchor. Their
-conservative floor-parallel footprint stays calculation-only for collision and
-fit; only the grounding cue and tether are inert SVG. The existing screen-facing
-HTML root remains the sole hit, focus, tooltip and action target.
+an immutable floor anchor and receive one computed visual anchor four
+scale-aware units above the floor. Their conservative floor-parallel footprint
+stays calculation-only for collision and fit; Stage 4 paints no ground dot,
+tether, plate or per-marker shadow. The existing screen-facing HTML root remains
+the sole hit, focus, tooltip and action target.
 Vacuum, lighting, fills, backdrop and decor continue to consume `z=0`.
 
 Wall collision consumes projected top and visible-side silhouettes produced
@@ -867,28 +868,34 @@ LRU. The pure resolver uses a four CSS-pixel safety gap and a bounded 48
 CSS-pixel inward search toward a proven owning-room point. Every candidate path
 must remain strictly inside that room and outside its island holes. It changes
 only the visual anchor. Ownership failure, invalid wall geometry, an owner
-boundary or an exhausted cap yields a deterministic tethered placement and no
+boundary or an exhausted cap yields a deterministic unchanged placement and no
 write. Room labels use their room, device markers prefer a valid explicit room
 and otherwise the smallest strictly containing room, and lock badges inherit
 the physical room side selected by opening-host geometry rather than
 re-inferring ownership from their offset point.
 
-Stage 3 opening bases add state-independent full-depth reveals, matte door/gate
-leaf thickness and light window frame/sill surfaces. Live
+Stage 4 opening bases retain state-independent full-depth reveals and matte
+door/gate leaf thickness. Windows use a 0.38H..1.00H fixed frame, a
+0.40H..0.98H sash and 0.45H..0.93H glass with neutral rails and separate blue
+side/top glass materials. Live
 `openingAmount()` still projects leaves after the LRU hit. Passage has no
-decorative volume. A bounded set of shared material definitions textures only
-generated 2.5D surfaces and uses one fixed visual-light vector; theme, HA Sun,
-hover/focus and filter capability remain presentation-only inputs.
+decorative volume. The shared wall/opening painter queue retains its global
+screen-depth slots and reorders only one window's existing slots by physical
+camera depth, preventing a rear sill from covering elevated glass. A bounded
+set of shared material definitions textures only generated 2.5D surfaces and
+uses one fixed visual-light vector; theme, HA Sun, hover/focus and filter
+capability remain presentation-only inputs.
 
 The DOM exposes fail-closed evidence without becoming public API:
-`.stage[data-hp-iso-stage="3"]` carries the structural build counter, raised
+`.stage[data-hp-iso-stage="4"]` carries the structural build counter, low-plane
 interactive roots identify their overlay kind/raised/nudged state, and shared
 material definitions carry `data-hp-iso-material-def`. With borders disabled,
-raised roots and Stage 2/3 volume are absent while the true rotated floor
+raised roots and Stage 2/3/4 volume are absent while the true affine floor
 matrix remains active. Forced colours or missing filters strip texture and
 soft shadows only; topology/projection exceptions alone enter the established
-Flat fallback latch. Fixed values and the complete decision are recorded in
-`docs/adr/160-isometric-stage3-overlays.md`.
+Flat fallback latch. Historical Stage 3 decisions remain in
+`docs/adr/160-isometric-stage3-overlays.md`; the current reviewed contract and
+designer handoff are attached to issue #570.
 
 ## Markup editor (v1.4.0+)
 

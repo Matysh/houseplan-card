@@ -810,7 +810,7 @@ test('opening symbol goldens lock room, diagonal, flip-pair and hidden Iso contr
   }
 });
 
-test('issue 160 Stage 3 goldens cover raised ownership, openings and solid fallbacks', () => {
+test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff coverage', () => {
   const scenarios = GOLDEN_SCENARIOS.filter((item) => item.id.startsWith('isometric-stage3-'));
   assert.deepEqual(scenarios.map((item) => item.id), [
     'isometric-stage3-overlays-light',
@@ -825,8 +825,8 @@ test('issue 160 Stage 3 goldens cover raised ownership, openings and solid fallb
   assert.deepEqual(new Set(overlays.map((item) => item.theme)), new Set(['light', 'dark']));
   assert.equal(overlays.every((item) => item.stage3Golden.requireNudged
     && item.stage3Golden.requireDenseFacets
-    && item.stage3Golden.requireTetherCues
-    && item.stage3Golden.requireGrounding
+    && item.stage3Golden.requireNoTetherCues
+    && item.stage3Golden.requireNoGrounding
     && item.stage3Golden.requiredKinds.includes('device')
     && item.stage3Golden.requiredKinds.includes('room-label')
     && item.stage3Golden.requiredKinds.includes('opening-lock')), true);
@@ -866,8 +866,10 @@ test('issue 160 Stage 3 goldens cover raised ownership, openings and solid fallb
   const noFilter = scenarios.find((item) => item.disableIsoFilters);
   assert.equal(forced.stage3Golden.requireNoMaterialDefs, true);
   assert.equal(noFilter.stage3Golden.requireNoMaterialDefs, true);
-  assert.equal(forced.stage3Golden.requireTetherCues, true);
-  assert.equal(noFilter.stage3Golden.requireTetherCues, true);
+  assert.equal(forced.stage3Golden.requireNoTetherCues, true);
+  assert.equal(noFilter.stage3Golden.requireNoTetherCues, true);
+  assert.equal(forced.stage3Golden.requireNoGrounding, true);
+  assert.equal(noFilter.stage3Golden.requireNoGrounding, true);
   const noBorders = GOLDEN_SCENARIOS.find((item) => item.id === 'isometric-no-borders-dark');
   assert.equal(noBorders.stage3Golden.noBorders, true);
 
@@ -875,20 +877,20 @@ test('issue 160 Stage 3 goldens cover raised ownership, openings and solid fallb
   assert.match(harness,
     /\[data-hp-iso-overlay-kind\]\[data-hp-iso-floor\]\[data-hp-iso-visual\]/);
   assert.match(harness, /forcedColors: scenario\.forcedColors \? 'active' : 'none'/);
-  assert.match(harness, /Stage 3 golden raised a floor-bound vacuum/);
-  assert.match(harness, /Stage 3 no-borders golden retained raised overlays/);
+  assert.match(harness, /Stage 4 golden raised a floor-bound vacuum/);
+  assert.match(harness, /Stage 4 no-borders golden retained low overlays/);
   assert.match(harness, /!scenario\.stage3Golden\?\.noBorders[\s\S]*?data-hp-iso-stage/,
     'no-borders remains true Iso without requiring the intentionally absent volume stage');
   assert.match(harness,
     /\.\.\.\(scenario\.stage3Golden[\s\S]*?\? \{ themes: \{ darkMode: scenario\.theme === 'dark' \} \}[\s\S]*?: \{\}\)/,
-    'explicit HA darkMode must be scoped to Stage 3 golden scenarios');
+    'explicit HA darkMode must be scoped to isometric golden scenarios');
   assert.doesNotMatch(harness,
     /locale: \{ language: scenario\.language \|\| 'en' \},\s*themes:/,
     'legacy Flat and Iso golden inputs must not gain an unconditional HA themes field');
-  assert.match(harness, /Stage 3 golden did not use HA darkMode/);
-  assert.match(harness, /Stage 3 dense golden lacks/);
-  assert.match(harness, /Stage 3 combined golden lacks/);
-  assert.ok(harness.lastIndexOf('Stage 3 combined golden lacks')
+  assert.match(harness, /Stage 4 golden did not use HA darkMode/);
+  assert.match(harness, /Stage 4 dense golden lacks/);
+  assert.match(harness, /Stage 4 combined golden lacks/);
+  assert.ok(harness.lastIndexOf('Stage 4 combined golden lacks')
     > harness.lastIndexOf("await until(() => !!card.renderRoot.querySelector('.vactrail > path.case'))"),
   'combined live-layer preflight must run after the async vacuum fixture settles');
 });

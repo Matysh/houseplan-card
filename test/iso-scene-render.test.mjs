@@ -19,7 +19,12 @@ import {
   resolveIsoOverlayFitEnvelope,
   resolveIsoScene,
 } from '../test-build/iso-scene-render.js';
-import { ISO_OPENING_GEOMETRY_POLICY } from '../test-build/iso-openings.js';
+import {
+  ISO_OPENING_GEOMETRY_POLICY,
+  buildIsoOpeningBasis,
+  projectIsoOpening,
+  projectIsoOpeningStructure,
+} from '../test-build/iso-openings.js';
 import { buildIsoWallGeometry } from '../test-build/iso-walls.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 import {
@@ -40,7 +45,7 @@ const room = (id, x0, y0, x1, y1) => ({
   poly: [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
 });
 
-test('every Stage 3 shadow plane uses the same scale-aware fixed-light vector', () => {
+test('every Stage 4 shadow plane uses the same scale-aware fixed-light vector', () => {
   assert.equal(isoFixedLightTransform(5), 'translate(4 8)');
   assert.equal(isoFixedLightTransform(1), 'translate(20 40)');
 });
@@ -188,7 +193,7 @@ test('one painter queue paints a nearer wall after an unrelated rear opening', (
   const rearOpening = {
     id: 'rear-door', sourceIndex: 4, type: 'door', leaf: 0,
     kind: 'leaf-front', material: 'matte-leaf', d: 'M 0 0 L 1 0 L 1 1 Z',
-    depth: nearWall.depth - 10,
+    depth: nearWall.depth - 10, cameraDepth: nearWall.depth - 10,
   };
   const queue = buildIsoWallDepthQueue(geometry, [rearOpening]);
   const rearIndex = queue.findIndex((entry) => entry.layer === 'opening');
@@ -198,6 +203,40 @@ test('one painter queue paints a nearer wall after an unrelated rear opening', (
     'later SVG paint order must let the near wall occlude the rear opening');
   assert.deepEqual(buildIsoWallDepthQueue(geometry, [rearOpening]), queue,
     'the combined wall/opening order is deterministic');
+});
+
+test('shared painter queue puts elevated window glass over its rear sill only in window slots', () => {
+  const geometry = buildIsoWallGeometry([[[
+    [0, 100], [100, 100], [100, 200], [0, 200], [0, 100],
+  ]]]);
+  const basis = buildIsoOpeningBasis({
+    id: 'window-overlap', sourceIndex: 2, type: 'window', x: 50, y: 100,
+    angle: 0, length: 60, flipH: false, flipV: false,
+    face: { ox: 0, oy: -5, cm: 20, side: -1 },
+  });
+  const surfaces = [
+    ...projectIsoOpeningStructure(basis),
+    ...projectIsoOpening(basis, 0).flatMap((panel) => panel.surfaces),
+  ].map((surface, index) => ({
+    ...surface, id: basis.id, sourceIndex: basis.sourceIndex,
+    type: 'window', leaf: index,
+  }));
+  const queue = buildIsoWallDepthQueue(geometry, surfaces);
+  const windowEntries = queue.filter((entry) => entry.layer === 'opening');
+  assert.deepEqual(windowEntries.map((entry) => entry.surface.cameraDepth),
+    windowEntries.map((entry) => entry.surface.cameraDepth).toSorted((a, b) => a - b),
+    'one window reuses its shared queue slots in physical camera-depth order');
+  const sillIndex = queue.findIndex((entry) => entry.layer === 'opening'
+    && entry.surface.kind === 'window-sill');
+  const glassIndices = queue.flatMap((entry, index) => entry.layer === 'opening'
+    && entry.surface.material.startsWith('glass') ? [index] : []);
+  assert.ok(sillIndex >= 0 && glassIndices.length === 6
+    && glassIndices.some((index) => index > sillIndex),
+  'elevated glass must paint after the rear sill projection');
+  const wallSlots = queue.flatMap((entry, index) => entry.layer === 'opening' ? [] : [index]);
+  const reversed = buildIsoWallDepthQueue(geometry, [...surfaces].reverse());
+  assert.deepEqual(reversed.flatMap((entry, index) => entry.layer === 'opening' ? [] : [index]),
+    wallSlots, 'window-local occlusion cannot move unrelated wall slots');
 });
 
 test('production overlay rooms preserve direct island holes and cache safe points', () => {
@@ -335,10 +374,10 @@ test('opening lock without a canonical host owner never guesses from point conta
   assert.equal(placement?.owner, null);
   assert.equal(placement?.nudged, false);
   assert.equal(placement?.reason, 'missing-owner');
-  assert.equal(placement?.tether.visible, true);
+  assert.equal(placement?.tether.visible, false);
 });
 
-test('Stage 3 reuses pure overlay placements and fit probes skip collision search', () => {
+test('Stage 4 reuses pure overlay placements and fit probes skip collision search', () => {
   const owner = room('owner', 0, 0, 100, 100);
   const space = {
     id: 'floor', title: 'Floor', cellCm: 5, vb: [0, 0, 100, 100], bg: null,
@@ -458,7 +497,7 @@ test('visible wall side quads participate in overlay collision', () => {
     'the same raised footprint intersects a rendered vertical side');
 });
 
-test('orphan hosted openings never become phantom Stage 3 volumes', () => {
+test('orphan hosted openings never become phantom Stage 4 volumes', () => {
   const base = {
     type: 'door', rx: 20, ry: 30, rlen: 40, angle: 0,
     flip_h: false, flip_v: false,
@@ -746,19 +785,16 @@ const perfFixture = () => {
   return { input, wallSilhouettes };
 };
 
-test('#473 W1: выделение входит в подпись кэша размещений', () => {
+test('#570 supersedes #473 W1: selection reuses the cue-free low placement', () => {
   const { input } = perfFixture();
   const plain = buildIsoOverlayRenderScene(input).devices.get('device');
   const selected = buildIsoOverlayRenderScene({ ...input, selectedDeviceId: 'device' })
     .devices.get('device');
-  // Подпись без `selected` вернула бы тот же кэшированный объект — плита
-  // выделенного устройства осталась бы без своего размещения.
-  assert.notStrictEqual(selected, plain, 'выделение обязано дать своё размещение, а не кэш');
-  // Кэш держит одну запись на (режим, вид, id): снятие выделения пересчитывает
-  // заново, и это правильно — подпись изменилась. Тождества с `plain` здесь
-  // быть не должно, проверяется только отсутствие подмены.
+  // Stage 4 removed the selected/hover tether and ground cue. Selection no
+  // longer changes collision geometry and therefore must not churn the cache.
+  assert.strictEqual(selected, plain, 'selection is presentation-only after cue removal');
   const again = buildIsoOverlayRenderScene(input).devices.get('device');
-  assert.notStrictEqual(again, selected, 'снятие выделения не отдаёт выделенное размещение');
+  assert.strictEqual(again, selected, 'clearing selection keeps the same immutable placement');
 });
 
 test('#473 W2: кэш размещений привязан к идентичности массива силуэтов', () => {
@@ -808,7 +844,7 @@ test('#473 W4: AABB-отсечение учитывает зазор безоп�
   // до точного теста, и плита легла бы вплотную к стене.
   // Стена — компактный силуэт: у длинной стены AABB в изометрии накрывает плиту
   // при любом сдвиге вдоль оси, и отсечение не участвует в решении.
-  const wall = { outer: buildIsoFootprintPolygon([0, 50], [2, 2], ISO_WALL_HEIGHT) };
+  const wall = { outer: buildIsoFootprintPolygon([0, 50], [2, 2], 0) };
   const owner = { id: 'owner', outer: [[0, 0], [100, 0], [100, 100], [0, 100]], holes: [], safePoint: [50, 50] };
   const placeAt = (x, safetyGapCssPx) => resolveIsoOverlayPlacement({
     kind: 'device', floorAnchor: [x, 50], footprintHalfSize: [2, 2],

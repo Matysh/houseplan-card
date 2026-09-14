@@ -98,17 +98,17 @@ test('performance budget refuses incomparable runtime profiles', () => {
   );
 });
 
-test('isometric reports fail closed on exact SHA, effective projection and Stage 3 metadata', () => {
+test('isometric reports fail closed on exact SHA, effective projection and current Stage 4 metadata', () => {
   const isoBudgets = { ...budgets, profile: 'isometric-stage3-dense-v1' };
   const valid = report();
   Object.assign(valid, {
     profile: isoBudgets.profile,
     effectiveProjection: ['iso'],
-    isoStageRevision: ['3'],
+    isoStageRevision: ['4'],
     stage3Required: true,
   });
   valid.rows.forEach((row) => Object.assign(row, {
-    effectiveProjection: 'iso', isoStageRevision: '3',
+    effectiveProjection: 'iso', isoStageRevision: '4',
     isoStructuralBuilds: {
       supported: true, initial: 1, beforeHaUpdate: 2, afterHaUpdate: 2, haUpdateDelta: 0,
     },
@@ -135,7 +135,7 @@ test('isometric reports fail closed on exact SHA, effective projection and Stage
     mutate(candidate);
     assert.throws(() => evaluatePerformanceBudget({
       baseline, candidate, budgets: isoBudgets,
-    }), /sourceSha|effectiveProjection|Stage 3|structural build count/);
+    }), /sourceSha|effectiveProjection|Stage 4|structural build count/);
   }
   assert.throws(() => evaluatePerformanceBudget({
     baseline, candidate: valid, budgets: isoBudgets, candidateSha: 'f'.repeat(40),

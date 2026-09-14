@@ -775,7 +775,7 @@ export class HouseplanCard extends LitElement {
   });
 
   /**
-   * Stage 3 is an opt-in alpha surface. Keep its renderer and geometry outside
+   * Stage 4 is an opt-in alpha surface. Keep its renderer and geometry outside
    * the ordinary View graph, but use the same exact-build, atomic installation
    * contract as the editor runtimes so a stale chunk can never half-install.
    */
@@ -1898,7 +1898,7 @@ export class HouseplanCard extends LitElement {
   private _isoGeometryCache = new Map<string, IsoSceneCacheEntry>();
   private _renderIsoScene: IsoRenderScene | null = null;
   private _isoProjectionSnapshot: 'flat' | 'iso' | null = null;
-  /** Observable Stage 3 performance seam: increments only for a real
+  /** Observable Stage 4 performance seam: increments only for a real
    * structural LRU miss, never for HA/theme/hover/opening-state paint. */
   private _isoStructuralBuildCount = 0;
   private _isoFallback = new Set<string>();
@@ -6214,7 +6214,7 @@ export class HouseplanCard extends LitElement {
     const start = unprojectFloorPoint([view.x, view.y]), end = unprojectFloorPoint([view.x + view.w, view.y + view.h]);
     return { x: start[0], y: start[1], w: end[0] - start[0], h: end[1] - start[1] };
   }
-  /** Stage 3 keeps one immutable floor point and one runtime visual point per
+  /** Stage 4 keeps one immutable floor point and one runtime visual point per
    * raised item. This snapshot is presentation-only and never enters config. */
   private _isoOverlayScene(
     space: SpaceModel,
@@ -6231,16 +6231,13 @@ export class HouseplanCard extends LitElement {
     const runtime = this._isoSceneRuntime;
     if (!runtime || !layers?.structural || !structural) return null;
     return runtime.buildIsoOverlayRenderScene({
-      space, devices: devs, openings: this._openingsR, view, display: disp, layers,
+      space, devices: devs, openings: this._openingsR, view, display: disp,
       wallSilhouettes: structural.wallSilhouettes,
       resolveCollisions,
       iconPct, deviceBasePct, showLqi, cellCm: this._cellCm,
       kioskIconScale: this._mode === 'view' ? this._kioskScale.icon : 1,
       kioskFontScale: this._mode === 'view' ? this._kioskScale.font : 1,
       stageSize: this._stageEl?.getBoundingClientRect?.(),
-      selectedDeviceId: this._selId,
-      focusedRoomId: this._roomFocus?.roomId,
-      selectedOpeningId: this._openingInfo?.id,
       positionOf: (device) => this._pos(device),
       presentationOf: (device, withLqi) => this._devicePresentation(device, withLqi),
       labelPositionOf: (room, spaceId) => this._labelPos(room, spaceId),
@@ -6255,7 +6252,7 @@ export class HouseplanCard extends LitElement {
     scene: IsoRenderScene | null = this._renderIsoScene,
   ): number[] {
     if (projection === 'iso') {
-      // No-borders is the accepted no-volume scene. Stage 2/3 structure and
+      // No-borders is the accepted no-volume scene. Stage 2/3/4 structure and
       // raised overlays are absent there, so invisible wall/opening/overlay
       // height must not reframe the affine-projected floor.
       if (!this._spaceDisplayForRender().showBorders) {
@@ -8318,7 +8315,7 @@ export class HouseplanCard extends LitElement {
         ...o, rx: o.x * NORM_W, ry: o.y * H, rlen: o.length * NORM_W,
       };
       // Contour-wall hosts are identity metadata; their materialised x/y/angle
-      // stay the legacy render input until the Stage 3 graph renderer.
+      // stay the legacy render input until the Stage 4 graph renderer.
       if (!o.host || o.host.kind === 'wall') return [fallback];
       const resolution = resolvePartitionOpeningCompat(
         o, space.partitions, NORM_W, this._cellCm, this._gridPitch,
@@ -11575,7 +11572,7 @@ export class HouseplanCard extends LitElement {
         </div>
 
         <div class="stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
-          data-hp-iso-stage=${iso ? '3' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
+          data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           ?inert=${this._modeTransitionBusy}
           style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this.panelHost ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}

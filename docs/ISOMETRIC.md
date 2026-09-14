@@ -36,11 +36,11 @@ network requests.
 - `clientToScenePoint()` maps a client point to the current scene; floor hit
   testing then uses `unprojectFloorPoint()`.
 
-Stage 1 uses a fixed orthographic affine camera:
+The current Stage 4 presentation uses a fixed orthographic affine camera:
 
 ```text
 rotDeg=0, tiltDeg=20, xyScale=1, zScale=1, origin=[500,500]
-wallHeight=64 plan units
+wallHeight=84 scale-aware visual units
 ```
 
 There is no perspective, free rotation or user tilt. Switching projections
@@ -188,76 +188,62 @@ still use the Stage 1 latched Flat fallback. The known independent exact-SHA
 view-toggle performance debt remains tracked in #124; #122 neither weakens its
 budget nor treats fallback as benchmark success.
 
-## Stage 3 spatial overlays and materials (#160)
+## Stage 4 visual handoff (#570)
 
-Stage 3 evolves the same hidden `iso` presentation behind `hp_alpha`; it adds
-no public switch, configuration field or separate experiment id. The normative
-contract is `docs/specs/160-isometric-stage3.md` and the fixed implementation
-decisions are in `docs/adr/160-isometric-stage3-overlays.md`.
+Stage 4 refines the same hidden `iso` presentation behind `hp_alpha`; it adds no
+public switch, configuration field or experiment id. Stage 3 history remains in
+`docs/specs/160-isometric-stage3.md` and
+`docs/adr/160-isometric-stage3-overlays.md`; the current acceptance contract is
+the reviewed specification in issue #570 plus its revision-3 designer handoff.
 
-### Camera, floor plane and raised plane
+### Camera and low screen-facing overlays
 
-The current fixed camera is orthographic `rotDeg=4`, `tiltDeg=20`, with the
-same `[500,500]` pivot, scale and scale-aware 64-unit wall height. The four
-degree turn is part of `ISO_CAMERA`; floor SVG, point projection, inverse hit
-mapping, invisible raised footprints and fit bounds therefore use one affine
-authority.
+The camera is orthographic `rotDeg=0`, `tiltDeg=20`, with the same `[500,500]`
+pivot and scale-aware 84-unit wall height. Floor SVG, wall/opening projection,
+inverse hit mapping, invisible collision footprints and fit bounds share that
+one affine authority.
 
-Device markers (including their badges), room labels/cards and opening lock
-badges use a raised plane at the scale-aware wall height plus a nominal four
-visual units. Vacuum puck/trail, Glow/spill, sunlight, room fills/hover,
-decor/furniture/backdrop and every persisted coordinate stay on the floor
-plane. A conservative floor-parallel footprint remains internal calculation
-geometry for collision, nudge and fit, but is never painted. Glyphs, values and
-text remain screen-facing on the existing HTML roots and retain their actions
-and minimum touch targets.
+Device markers, room labels/cards and opening-lock badges keep their canonical
+floor anchors but render on a low plane four visual units above the floor. Their
+conservative footprints still participate in deterministic, bounded in-room
+collision correction and fit. There is no painted plate, long tether, ground
+dot or per-marker shadow. The original screen-facing HTML root remains the only
+hit, focus, tooltip and action target, and selection/hover cannot invalidate the
+placement cache. Vacuum, Glow/spill, SUN, room fills/hover, arbitrary decor,
+furniture/backdrop and every persisted coordinate remain on `z=0`.
 
-Each raised item keeps separate immutable floor and visual anchors. A grounding
-cue stays at the floor anchor. Collision is tested against cached projected wall
-tops and visible sides, expanded by a four CSS-pixel gap. A deterministic inward
-nudge may move only the visual anchor by at most 48 CSS pixels; its straight path
-must stay inside the owning room and outside island holes, and it never writes
-layout/config/storage. The owning-room resolver prefers an explicit valid owner,
-otherwise the smallest strictly containing room with a stable id tie-break;
-opening locks instead inherit the physical host side. Missing or ambiguous
-ownership degrades to a tethered placement rather than guessing or mutating
-data. A tether is always retained after nudge or near a wall and while the item
-is hovered, focused or selected; an idle item in free space may omit it.
+Room names remain screen-facing and lose stroke, text shadow, drop shadow and
+halo. Iso uses `#303936` on a light presentation and `#f2f0e8` on a dark one;
+contrast comes from colour and the bounded position correction, never an
+outline.
 
-### Openings, materials and degradation
+### Openings, occlusion and materials
 
-The structural cache now also carries jamb/reveal surfaces and deterministic
-window frame/sill geometry. Door and gate leaves are matte finite-thickness
-prisms; windows are light inserts without dark glass; passages remain an empty
-full-depth cut. `openingAmount()` is still applied after a structural-cache hit,
-so contact changes do not rebuild wall/floor booleans. `hide_openings` removes
-panels, reveal decoration and their shadows but preserves the cut and lock
-semantics.
+Door leaves turn by `50° × openingAmount`, paired window leaves by `65° ×
+openingAmount`, and gates retain their established 0–10° behaviour. The same
+canonical flips/host face that drive the floor symbol determine hinges and
+direction; missing, unknown or unavailable state keeps the existing static-plan
+fallback. Opening geometry stays inert and lock actions stay on the existing
+guarded lock badge/card.
 
-One bounded set of shared gradients, patterns and filters provides low-amplitude
-theme-aware texture and a fixed visual-light direction. Generated walls,
-floor-edge surfaces and opening volume may use it. The invisible raised
-footprint and user floor content, room fills, Glow, sunlight, decor, glyph/text
-and vacuum never do.
-Neither theme nor HA Sun state enters the structural fingerprint.
+For wall height `H`, the fixed window frame spans `0.38H..1.00H`, its sash
+`0.40H..0.98H`, and clear glass `0.45H..0.93H`; frame/sash rails are `0.05H`.
+Frames and sill are neutral, glass side is `#c9e4f3` and its top face is
+`#e3f2fa`. Fixed and live faces remain in `buildIsoWallDepthQueue()`. Only the
+slots belonging to one window are resolved by physical camera depth, so raised
+glass covers the rear sill without reordering unrelated walls or openings.
 
-Forced colours and missing filter support remove texture/soft shadow nuance,
-not geometry, raised ownership, tethers or actions. `show_borders: false` is
-the exact no-volume branch: Stage 2/3 structural and raised roots are absent,
-all overlays return to their floor anchors, and the floor still uses the real
-4° affine camera. Only topology/projection failure enters the established
-fingerprint-latched Flat fallback.
+The constant material/filter set remains theme-aware and bounded. Forced
+colours or missing filter support remove texture and soft shadows, not geometry,
+ownership or actions. `show_borders:false` is the exact no-volume branch: the
+floor keeps the real 0°/20° affine matrix and interactive overlays return to
+their floor anchors. `hide_openings` removes vertical decoration but preserves
+cuts, Glow/SUN and lock semantics.
 
-The structural LRU remains capped at eight. Its key includes geometry, opening
-flips and fixed ratios, scale, camera, raised/opening heights and the Stage 3
-algorithm revision; it excludes HA state, opening amount, theme, Sun,
-interaction and capability state. Golden references and both exact-SHA
-performance profiles remain Linux-CI evidence and may not accept a Flat
-fallback as a successful Iso sample.
-
-The Stage 3 renderer, opening volumes and overlay resolver form an independent
-`iso-scene-render` lazy graph. With `hp_alpha` off an ordinary View does not
-request that graph. Enabling the alpha loads it atomically through the same
-source-fingerprint handshake and one cache-busted retry used by other lazy
-runtimes; until a matching runtime is installed, the requested view remains
-Flat rather than mixing builds or rendering a partial Iso scene.
+The eight-entry structural LRU fingerprints the 0°/20°/84 profile, opening
+policy revision 2 and structural algorithm 5. It excludes HA state, live
+opening amount, hover/selection, theme, SUN and filter capability. The lazy
+`iso-scene-render` graph is still not requested with alpha off; topology,
+projection or module mismatch still enters the established fingerprint-latched
+Flat fallback. Linux exact-SHA goldens and performance profiles remain the
+canonical release evidence.

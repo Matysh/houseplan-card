@@ -62,10 +62,12 @@ const requireReport = (report, budgets, label, expectedSha = null) => {
     throw new Error(`${label}: Iso structural build count is missing or changed on HA-only update`);
   }
   if (label === 'candidate' && report.profile === 'isometric-stage3-dense-v1') {
-    if (report.stage3Required !== true) throw new Error(`${label}: Stage 3 was not required`);
-    if (!sameJson(report.isoStageRevision, ['3'])
-        || report.rows.some((row) => row.isoStageRevision !== '3')) {
-      throw new Error(`${label}: Stage 3 revision metadata is incomplete`);
+    // The profile/schema name is intentionally stable for baseline continuity;
+    // the candidate DOM revision tracks the current experimental Stage 4.
+    if (report.stage3Required !== true) throw new Error(`${label}: Stage 4 was not required`);
+    if (!sameJson(report.isoStageRevision, ['4'])
+        || report.rows.some((row) => row.isoStageRevision !== '4')) {
+      throw new Error(`${label}: Stage 4 revision metadata is incomplete`);
     }
   }
 };

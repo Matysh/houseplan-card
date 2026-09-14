@@ -3,24 +3,25 @@ import assert from 'node:assert/strict';
 import {
   ISO_CAMERA, ISO_OVERLAY_VISUAL_OFFSET, ISO_RAISED_OVERLAY_HEIGHT,
   ISO_WALL_HEIGHT, applyIsoMatrix, clientToScenePoint, isoFloorMatrix,
-  isoPlaneMatrix, isoPlaneMatrixCss, isoRaisedOverlayHeight, projectPlanPoint,
+  isoOverlayVisualHeight, isoPlaneMatrix, isoPlaneMatrixCss, projectPlanPoint,
   projectedFrame, unprojectFloorPoint,
 } from '../test-build/iso-projection.js';
 
 const close = (actual, expected, epsilon = 1e-9) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
 
-test('Stage 3 camera is the exact fixed +4°/20° orthographic camera', () => {
-  assert.equal(ISO_CAMERA.rotDeg, 4);
+test('Stage 4 camera is the exact fixed 0°/20° orthographic camera', () => {
+  assert.equal(ISO_CAMERA.rotDeg, 0);
   assert.equal(ISO_CAMERA.tiltDeg, 20);
   const origin = projectPlanPoint([500, 500], 0);
   assert.deepEqual(origin, [500, 500]);
   const x = projectPlanPoint([600, 500], 0);
   const y = projectPlanPoint([500, 600], 0);
-  assert.ok(x[0] > 500 && x[1] > 500, 'positive plan X follows the +4° yaw');
-  assert.ok(y[0] < 500 && y[1] > 500, 'positive plan Y follows the +4° yaw');
+  assert.ok(x[0] > 500 && x[1] === 500, 'positive plan X stays horizontal at zero yaw');
+  assert.ok(y[0] === 500 && y[1] > 500, 'positive plan Y follows the tilted vertical axis');
+  assert.equal(ISO_WALL_HEIGHT, 84);
   assert.equal(ISO_OVERLAY_VISUAL_OFFSET, 4);
-  assert.equal(ISO_RAISED_OVERLAY_HEIGHT, 68);
+  assert.equal(ISO_RAISED_OVERLAY_HEIGHT, 4);
 });
 
 test('floor projection round-trips across the infinite canvas contract', () => {
@@ -52,7 +53,7 @@ test('one canonical affine helper projects floor and raised planes', () => {
     assert.match(isoPlaneMatrixCss(z), /^matrix\([-0-9.e ]+\)$/);
   }
   assert.deepEqual(isoPlaneMatrix(0), isoFloorMatrix());
-  assert.equal(isoRaisedOverlayHeight(64, 4), 68);
+  assert.equal(isoOverlayVisualHeight(4), 4);
 });
 
 test('projected frame includes raised wall tops and is view-state independent', () => {
@@ -75,7 +76,7 @@ test('Stage 2 frame includes opening tops and the structural floor edge, not blu
   assert.deepEqual(Object.keys(stage2).sort(), ['h', 'w', 'x', 'y']);
 });
 
-test('Stage 3 frame includes the final raised plane and diagonal camera corners', () => {
+test('Stage 4 frame already contains the low overlay plane at zero yaw', () => {
   const rect = { x: 100, y: 200, w: 400, h: 300 };
   const wallFrame = projectedFrame({ rect, wallHeight: ISO_WALL_HEIGHT });
   const raisedFrame = projectedFrame({
@@ -83,15 +84,14 @@ test('Stage 3 frame includes the final raised plane and diagonal camera corners'
     wallHeight: ISO_WALL_HEIGHT,
     raisedHeight: ISO_RAISED_OVERLAY_HEIGHT,
   });
-  assert.ok(raisedFrame.y < wallFrame.y, 'raised overlay top is not clipped');
-  assert.ok(raisedFrame.h > wallFrame.h, 'raised overlay height participates in fit bounds');
+  assert.deepEqual(raisedFrame, wallFrame, 'the wall top encloses the low overlay plane');
   const projectedFloor = [
     [rect.x, rect.y], [rect.x + rect.w, rect.y],
     [rect.x + rect.w, rect.y + rect.h], [rect.x, rect.y + rect.h],
   ].map((point) => projectPlanPoint(point, 0));
   const projectedWidth = Math.max(...projectedFloor.map((point) => point[0]))
     - Math.min(...projectedFloor.map((point) => point[0]));
-  assert.ok(projectedWidth > rect.w, 'the +4° camera expands the frame diagonally');
+  close(projectedWidth, rect.w);
 });
 
 test('client coordinates map through the current scene view', () => {
@@ -105,7 +105,7 @@ test('degenerate cameras and frames throw instead of mixing projections', () => 
   assert.throws(() => unprojectFloorPoint([0, 0], { ...ISO_CAMERA, tiltDeg: 90 }));
   assert.throws(() => clientToScenePoint([0, 0], { left: 0, top: 0, width: 0, height: 1 },
     { x: 0, y: 0, w: 1, h: 1 }));
-  assert.throws(() => isoRaisedOverlayHeight(64, -1));
+  assert.throws(() => isoOverlayVisualHeight(-1));
   assert.throws(() => projectedFrame({
     rect: { x: 0, y: 0, w: 1, h: 1 }, wallHeight: 64, raisedHeight: -1,
   }));

@@ -1,4 +1,4 @@
-// #122/#160 Stage 3: alpha lifecycle, structural composition and flat editor boundary.
+// #122/#160/#570 Stage 4: alpha lifecycle, visual handoff and flat editor boundary.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
@@ -125,7 +125,7 @@ const out = await page.evaluate(async () => {
   result.isoRendered = isoToggle?.getAttribute('aria-pressed') === 'true'
     && !!root().querySelector('[data-hp="iso-underlay"] .iso-floor-side')
     && !!root().querySelector('[data-hp="iso-walls"] .iso-wall-top');
-  result.stage3RevisionAdvertised = stage?.getAttribute('data-hp-iso-stage') === '3';
+  result.stage4RevisionAdvertised = stage?.getAttribute('data-hp-iso-stage') === '4';
   result.sharedProjectionSnapshot = [
     '.iso-underlay-svg', '.plan-svg', '.iso-shadows-svg', '.iso-walls-svg', '.iso-overlays-svg',
   ]
@@ -135,52 +135,49 @@ const out = await page.evaluate(async () => {
   const requiredDefs = [
     'hp-iso-wall-side', 'hp-iso-wall-top', 'hp-iso-wall-texture',
     'hp-iso-floor-texture', 'hp-iso-ambient-shadow', 'hp-iso-contact-shadow',
-    'hp-iso-leaf-shadow', 'hp-iso-overlay-ground',
+    'hp-iso-leaf-shadow',
   ];
-  result.stage3DefinitionsBounded = materialDefs.length >= requiredDefs.length
+  result.stage4DefinitionsBounded = materialDefs.length >= requiredDefs.length
     && materialDefs.length <= 16
     && new Set(materialDefs.map((node) => node.id)).size === materialDefs.length
     && requiredDefs.every((id) => materialDefs.some((node) => node.id === id));
   const shadowNodes = [...root().querySelectorAll(
-    '.iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow, .iso-overlay-ground',
+    '.iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow',
   )];
   const fixedLightTransform = card._isoSceneRuntime.isoFixedLightTransform(card._cellCm);
-  result.fixedLightVectorShared = shadowNodes.some((node) => node.matches('.iso-overlay-ground'))
-    && ['iso-ambient-shadow', 'iso-contact-shadow', 'iso-leaf-shadow', 'iso-overlay-ground']
+  result.fixedLightVectorShared = ['iso-ambient-shadow', 'iso-contact-shadow', 'iso-leaf-shadow']
       .every((name) => shadowNodes.some((node) => node.classList.contains(name)))
     && shadowNodes.every((node) => node.getAttribute('transform') === fixedLightTransform);
   const hasOpeningSurface = (id, surface, material) => !!root().querySelector(
     `[data-hp="iso-openings"] [data-id="${id}"][data-surface="${surface}"].iso-material-${material}`,
   );
-  result.stage3OpeningMaterials = [
+  result.stage4OpeningMaterials = [
     ['iso-centred-door', 'jamb-reveal', 'reveal'],
     ['iso-centred-door', 'leaf-front', 'matte-leaf'],
     ['iso-centred-door', 'leaf-back', 'matte-leaf'],
     ['iso-centred-door', 'leaf-edge', 'matte-leaf'],
     ['iso-centred-door', 'leaf-top', 'matte-leaf'],
-    ['iso-flipped-window', 'window-insert', 'light-window'],
     ['iso-flipped-window', 'window-frame-side', 'light-frame'],
     ['iso-flipped-window', 'window-frame-top', 'light-frame'],
     ['iso-flipped-window', 'window-sill', 'light-sill'],
+    ['iso-flipped-window', 'window-sash-side', 'light-frame'],
+    ['iso-flipped-window', 'window-sash-bottom', 'light-frame'],
+    ['iso-flipped-window', 'window-sash-top', 'light-frame'],
+    ['iso-flipped-window', 'window-glass', 'glass-side'],
+    ['iso-flipped-window', 'window-glass-top', 'glass-top'],
     ['iso-centred-gate', 'jamb-reveal', 'reveal'],
     ['iso-centred-gate', 'leaf-front', 'matte-leaf'],
   ].every(([id, surface, material]) => hasOpeningSurface(id, surface, material))
-    && !root().querySelector(
-      '[data-hp="iso-openings"] [data-surface*="glass"],'
-      + '[data-hp="iso-openings"] .iso-material-dark-glass',
-    );
+    && !root().querySelector('[data-hp="iso-openings"] .iso-material-dark-glass');
   const raisedRoot = (node, kind) => node?.getAttribute('data-hp-iso-overlay-kind') === kind
     && node.getAttribute('data-hp-iso-raised') === 'true'
     && node.getAttribute('data-hp-iso-floor')
     && node.getAttribute('data-hp-iso-visual')
     && node.getAttribute('data-hp-iso-floor') !== node.getAttribute('data-hp-iso-visual');
-  result.stage3RaisesExactInteractiveRoots = raisedRoot(device, 'device')
+  result.stage4UsesExactLowInteractiveRoots = raisedRoot(device, 'device')
     && raisedRoot(roomLabel, 'room-label')
     && raisedRoot(openingLock, 'opening-lock')
-    && ['device', 'room-label', 'opening-lock'].every((kind) => root().querySelector(
-      `[data-hp="iso-raised-overlays"] .iso-overlay-tether`
-      + `[data-hp-iso-overlay-kind="${kind}"]`,
-    ));
+    && !root().querySelector('.iso-overlay-tether, .iso-overlay-ground, #hp-iso-overlay-ground');
   result.raisedFootprintsStayInvisible = !root().querySelector(
     '.iso-overlay-plate, .iso-overlay-plate-texture, #hp-iso-overlay-texture',
   );
@@ -192,31 +189,12 @@ const out = await page.evaluate(async () => {
   const raisedNodes = [...root().querySelectorAll('[data-hp-iso-raised="true"]')]
     .filter((node) => node.closest('.devlayer'));
   const raisedGeometryMatches = (node) => {
-    const kind = node.getAttribute('data-hp-iso-overlay-kind');
-    const id = node.getAttribute('data-id');
-    const suffix = id ? `[data-id="${CSS.escape(id)}"]` : '';
     const visual = (node.getAttribute('data-hp-iso-visual') || '').split(',').map(Number);
     const floorPoint = (node.getAttribute('data-hp-iso-floor') || '').split(',').map(Number);
     if (visual.length !== 2 || floorPoint.length !== 2) return false;
     const expected = sceneToClient(visual), actual = center(node);
-    const ground = root().querySelector(
-      `[data-hp="iso-overlay-grounds"] [data-hp-iso-overlay-kind="${kind}"]${suffix}`,
-    ) || root().querySelector(
-      `[data-hp="iso-overlay-grounds"] [data-hp-iso-overlay-kind="${kind}"]`,
-    );
-    const tether = root().querySelector(
-      `[data-hp="iso-raised-overlays"] .iso-overlay-tether[data-hp-iso-overlay-kind="${kind}"]${suffix}`,
-    ) || root().querySelector(
-      `[data-hp="iso-raised-overlays"] .iso-overlay-tether[data-hp-iso-overlay-kind="${kind}"]`,
-    );
     return Math.hypot(actual[0] - expected[0], actual[1] - expected[1]) <= 1
-      && !!ground && Math.hypot(Number(ground.getAttribute('cx')) - floorPoint[0],
-        Number(ground.getAttribute('cy')) - floorPoint[1]) <= 1e-6
-      && !!tether
-      && Math.hypot(Number(tether.getAttribute('x1')) - floorPoint[0],
-        Number(tether.getAttribute('y1')) - floorPoint[1]) <= 1e-6
-      && Math.hypot(Number(tether.getAttribute('x2')) - visual[0],
-        Number(tether.getAttribute('y2')) - visual[1]) <= 1e-6;
+      && Math.hypot(floorPoint[0] - visual[0], floorPoint[1] - visual[1]) > 0;
   };
   result.globalFitContainsRaisedFootprints = raisedNodes.length >= 3
     && raisedNodes.every((node) => inside(root().querySelector('.stage'), node));
@@ -384,10 +362,10 @@ const out = await page.evaluate(async () => {
     && !!root().querySelector('[data-hp="iso-walls"] .iso-wall-top')
     && !!root().querySelector('[data-hp="iso-openings"] .iso-opening-panel')
     && !root().querySelector('.iso-overlay-plate, .iso-overlay-plate-texture')
-    && !!root().querySelector('[data-hp="iso-raised-overlays"] .iso-overlay-tether')
+    && !root().querySelector('.iso-overlay-tether, .iso-overlay-ground, #hp-iso-overlay-ground')
     && !root().querySelector('[data-hp-iso-material-def]')
     && !root().querySelector('.iso-ambient-shadow, .iso-contact-shadow,'
-      + ' .iso-leaf-shadow, .iso-overlay-ground');
+      + ' .iso-leaf-shadow');
   CSS.supports = nativeCssSupports;
   card.requestUpdate();
   await card.updateComplete;

@@ -11,7 +11,6 @@ import {
 } from '../test-build/iso-overlays.js';
 import {
   ISO_RAISED_OVERLAY_HEIGHT,
-  ISO_WALL_HEIGHT,
   projectPlanPoint,
 } from '../test-build/iso-projection.js';
 
@@ -43,7 +42,7 @@ const placement = (overrides = {}) => resolveIsoOverlayPlacement({
   ...overrides,
 });
 
-test('the exact D2 overlay matrix keeps only the three accepted roots raised', () => {
+test('the exact Stage 4 overlay matrix keeps only the three interactive roots on the low plane', () => {
   for (const kind of ['device', 'room-label', 'opening-lock'])
     assert.equal(isoOverlayPlane(kind, true), 'raised', kind);
   for (const kind of [
@@ -124,7 +123,7 @@ test('a degenerate room has no safe point and placement degrades without throwin
   const result = placement({
     rooms: [degenerate],
     preferredRoomId: degenerate.id,
-    wallSilhouettes: [{ outer: buildIsoFootprintPolygon([50, 50], [10, 10], ISO_WALL_HEIGHT) }],
+    wallSilhouettes: [{ outer: buildIsoFootprintPolygon([50, 50], [10, 10], ISO_RAISED_OVERLAY_HEIGHT) }],
   });
   assert.equal(result.owner, null);
   assert.equal(result.status, 'degraded');
@@ -140,11 +139,12 @@ test('footprint corners use the same affine camera on the raised plane', () => {
     close(footprint[index][0], projected[0]);
     close(footprint[index][1], projected[1]);
   });
-  assert.notEqual(footprint[0][1], footprint[1][1],
-    'the +4° footprint is a projected parallelogram');
+  close(footprint[0][1], footprint[1][1]);
+  assert.ok(footprint[2][1] > footprint[1][1],
+    'zero yaw keeps the screen-facing footprint aligned with the plan axes');
 });
 
-test('free raised overlay separates floor, raised, footprint and optional tether geometry', () => {
+test('free low overlay separates the immutable floor anchor from invisible collision geometry', () => {
   const normal = placement();
   assert.equal(normal.plane, 'raised');
   assert.deepEqual(normal.floorAnchor, [50, 50]);
@@ -152,19 +152,19 @@ test('free raised overlay separates floor, raised, footprint and optional tether
   assert.deepEqual(normal.raisedScene, projectPlanPoint([50, 50], ISO_RAISED_OVERLAY_HEIGHT));
   assert.deepEqual(normal.visualScene, normal.raisedScene);
   assert.equal(normal.footprint.length, 4);
-  assert.equal(normal.grounding.visible, true);
+  assert.equal(normal.grounding.visible, false);
   assert.equal(normal.tether.visible, false);
   assert.equal(normal.status, 'ok');
 
   for (const state of ['hovered', 'focused', 'selected'])
-    assert.equal(placement({ [state]: true }).tether.visible, true, state);
+    assert.equal(placement({ [state]: true }).tether.visible, false, state);
   assert.equal(placement({ filtersSupported: false }).grounding.visible, false,
     'unsupported filters remove the soft grounding shadow only');
 });
 
 test('wall-aware nudge is deterministic, minimal, inward and never changes the floor anchor', () => {
   const wall = {
-    outer: buildIsoFootprintPolygon([0, 50], [4, 60], ISO_WALL_HEIGHT),
+    outer: buildIsoFootprintPolygon([0, 50], [4, 60], ISO_RAISED_OVERLAY_HEIGHT),
   };
   const input = {
     floorAnchor: [5, 50],
@@ -188,12 +188,12 @@ test('wall-aware nudge is deterministic, minimal, inward and never changes the f
   const towardSafe = projectPlanPoint([50, 50], ISO_RAISED_OVERLAY_HEIGHT);
   const safeVector = [towardSafe[0] - first.raisedScene[0], towardSafe[1] - first.raisedScene[1]];
   assert.ok(first.nudgeScene[0] * safeVector[0] + first.nudgeScene[1] * safeVector[1] > 0);
-  assert.equal(first.tether.visible, true);
+  assert.equal(first.tether.visible, false);
 });
 
 test('shared-wall and corner fixtures nudge only toward the selected room', () => {
   const verticalWall = {
-    outer: buildIsoFootprintPolygon([50, 50], [3, 60], ISO_WALL_HEIGHT),
+    outer: buildIsoFootprintPolygon([50, 50], [3, 60], ISO_RAISED_OVERLAY_HEIGHT),
   };
   const shared = placement({
     floorAnchor: [49, 50],
@@ -212,14 +212,14 @@ test('shared-wall and corner fixtures nudge only toward the selected room', () =
     rooms: [square('corner', 0, 0, 100, 100, [50, 50])],
     preferredRoomId: 'corner',
     wallSilhouettes: [
-      { outer: buildIsoFootprintPolygon([0, 50], [4, 60], ISO_WALL_HEIGHT) },
-      { outer: buildIsoFootprintPolygon([50, 0], [60, 4], ISO_WALL_HEIGHT) },
+      { outer: buildIsoFootprintPolygon([0, 50], [4, 60], ISO_RAISED_OVERLAY_HEIGHT) },
+      { outer: buildIsoFootprintPolygon([50, 0], [60, 4], ISO_RAISED_OVERLAY_HEIGHT) },
     ],
   });
   assert.equal(corner.nearWallBefore, true);
   assert.ok(corner.nudgeScene[0] > 0 && corner.nudgeScene[1] > 0,
     'corner marker follows the projected inward diagonal');
-  assert.equal(corner.tether.visible, true);
+  assert.equal(corner.tether.visible, false);
 });
 
 test('nudge never crosses an island hole or a concave-room boundary', () => {
@@ -275,9 +275,9 @@ test('nudge never crosses an island hole or a concave-room boundary', () => {
   }
 });
 
-test('cap and ambiguous ownership fail safe with a visible tether', () => {
+test('cap and ambiguous ownership fail safe without bringing back debug cues', () => {
   const largeWall = {
-    outer: buildIsoFootprintPolygon([25, 50], [30, 30], ISO_WALL_HEIGHT),
+    outer: buildIsoFootprintPolygon([25, 50], [30, 30], ISO_RAISED_OVERLAY_HEIGHT),
   };
   const capped = placement({
     floorAnchor: [25, 50], wallSilhouettes: [largeWall], maxNudgeCssPx: 2,
@@ -287,19 +287,19 @@ test('cap and ambiguous ownership fail safe with a visible tether', () => {
   assert.equal(capped.cleared, false);
   assert.equal(capped.status, 'degraded');
   assert.equal(capped.reason, 'nudge-cap');
-  assert.equal(capped.tether.visible, true);
+  assert.equal(capped.tether.visible, false);
 
   const ownerless = placement({
     floorAnchor: [150, 50], rooms: [], preferredRoomId: null,
     wallSilhouettes: [{
-      outer: buildIsoFootprintPolygon([150, 50], [10, 10], ISO_WALL_HEIGHT),
+      outer: buildIsoFootprintPolygon([150, 50], [10, 10], ISO_RAISED_OVERLAY_HEIGHT),
     }],
   });
   assert.equal(ownerless.owner, null);
   assert.equal(ownerless.nudged, false);
   assert.equal(ownerless.status, 'degraded');
   assert.equal(ownerless.reason, 'missing-owner');
-  assert.equal(ownerless.tether.visible, true);
+  assert.equal(ownerless.tether.visible, false);
 });
 
 test('malformed collision input degrades without a guessed move', () => {
@@ -309,7 +309,7 @@ test('malformed collision input degrades without a guessed move', () => {
   assert.equal(result.status, 'degraded');
   assert.equal(result.reason, 'invalid-wall-geometry');
   assert.equal(result.nudged, false);
-  assert.equal(result.tether.visible, true);
+  assert.equal(result.tether.visible, false);
 });
 
 test('show_borders:false is exact no-volume: floor anchor, no footprint/nudge/cues', () => {

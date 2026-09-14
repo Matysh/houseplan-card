@@ -21,18 +21,18 @@ export interface IsoFrameInput {
 }
 
 export const ISO_CAMERA: Readonly<IsoCamera> = Object.freeze({
-  rotDeg: 4,
+  rotDeg: 0,
   tiltDeg: 20,
   xyScale: 1,
   zScale: 1,
   origin: Object.freeze([500, 500]) as PlanPoint,
 });
 
-export const ISO_WALL_HEIGHT = 64;
+export const ISO_WALL_HEIGHT = 84;
 export const ISO_FLOOR_EDGE_HEIGHT = 10;
-/** Nominal Stage 3 offset; callers scale it with the same wall-height policy. */
+/** Low visual lift above the floor; callers scale it with the same grid policy. */
 export const ISO_OVERLAY_VISUAL_OFFSET = 4;
-export const ISO_RAISED_OVERLAY_HEIGHT = ISO_WALL_HEIGHT + ISO_OVERLAY_VISUAL_OFFSET;
+export const ISO_RAISED_OVERLAY_HEIGHT = ISO_OVERLAY_VISUAL_OFFSET;
 
 function finiteCamera(camera: IsoCamera): boolean {
   return [camera.rotDeg, camera.tiltDeg, camera.xyScale, camera.zScale,
@@ -104,13 +104,10 @@ export function isoFloorMatrixCss(camera: IsoCamera = ISO_CAMERA): string {
   return isoPlaneMatrixCss(0, camera);
 }
 
-export function isoRaisedOverlayHeight(
-  wallHeight: number, visualOffset: number,
-): number {
-  if (!Number.isFinite(wallHeight) || !Number.isFinite(visualOffset)
-      || wallHeight < 0 || visualOffset < 0)
-    throw new Error('invalid raised overlay height');
-  return wallHeight + visualOffset;
+export function isoOverlayVisualHeight(visualOffset: number): number {
+  if (!Number.isFinite(visualOffset) || visualOffset < 0)
+    throw new Error('invalid isometric overlay height');
+  return visualOffset;
 }
 
 export function clientToScenePoint(

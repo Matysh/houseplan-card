@@ -5,7 +5,7 @@ import {
 
 export interface IsoWallFace {
   d: string;
-  /** Exact visible quad, reused by Stage 3 overlay collision geometry. */
+  /** Exact visible quad, reused by Stage 4 overlay collision geometry. */
   points: readonly ScenePoint[];
   depth: number;
   polygon: number;
@@ -23,7 +23,7 @@ export interface IsoWallTopFace {
 export interface IsoWallGeometry {
   /** Compatibility aggregate used by collision/debug consumers. */
   topPath: string;
-  /** Independently paintable top components for the shared Stage 3 depth queue. */
+  /** Independently paintable top components for the shared Stage 4 depth queue. */
   topFaces: readonly IsoWallTopFace[];
   sides: readonly IsoWallFace[];
   contactPath: string;

@@ -42,7 +42,7 @@ test('Labs iso is presentation-only and absent from the secondary space card', (
   assert.doesNotMatch(labs, /CARD_VERSION|houseplan_card_labs_v1|params\.getAll\('hp-labs'\)/);
 });
 
-test('Stage 3 code is loaded only through the hidden alpha runtime boundary', () => {
+test('Stage 4 code is loaded only through the hidden alpha runtime boundary', () => {
   assert.equal([...card.matchAll(/await import\('\.\/iso-scene-render'\)/g)].length, 1);
   for (const module of ['iso-scene-render', 'iso-walls', 'iso-openings', 'iso-overlays']) {
     const valueImport = new RegExp(`import\\s+(?!type\\b)[^;]+from './${module}';`, 's');
@@ -56,14 +56,14 @@ test('Stage 3 code is loaded only through the hidden alpha runtime boundary', ()
   assert.match(card, /if \(this\._labsIso\) void this\._ensureIsoSceneRuntime\(\)/);
 });
 
-test('Stage 3 browser harnesses await the lazy runtime and cold alpha-off skips its chunk', () => {
+test('Stage 4 browser harnesses await the lazy runtime and cold alpha-off skips its chunk', () => {
   for (const [label, source] of [
     ['contract smoke', contractSmoke],
     ['touch smoke', touchSmoke],
     ['golden harness', goldenHarness],
   ]) {
     assert.match(source, /await card\._ensureIsoSceneRuntime\(\)/,
-      `${label} does not await the Stage 3 runtime`);
+      `${label} does not await the Stage 4 runtime`);
   }
   assert.match(contractSmoke,
     /cleanAlphaOffSkipsIsoRuntimeRequest = isoRuntimeRequests\(\) === 0/);
@@ -93,7 +93,7 @@ test('every browser smoke that explicitly selects Iso waits for its lazy runtime
     'the shared helper must await load and a painted settled frame');
 });
 
-test('Stage 3 composes ordered inert SVG surfaces below screen-facing HTML', () => {
+test('Stage 4 composes ordered inert SVG surfaces below screen-facing HTML', () => {
   assert.match(card, /<svg class="iso-underlay-svg"/);
   assert.match(card, /<svg class="iso-shadows-svg"/);
   assert.match(card, /<svg class="iso-walls-svg"/);
@@ -103,8 +103,8 @@ test('Stage 3 composes ordered inert SVG surfaces below screen-facing HTML', () 
   assert.match(sceneRender, /class="iso-opening-panel iso-\$\{surface\.type\} iso-opening-\$\{surface\.kind\} iso-material-\$\{surface\.material\}"/);
   assert.doesNotMatch(sceneRender, /iso-overlay-plate|hp-iso-overlay-texture/,
     'the invisible safety footprint must never become painted SVG geometry');
-  assert.match(sceneRender, /class="iso-overlay-tether"/);
-  assert.match(sceneRender, /class="iso-overlay-ground"/);
+  assert.doesNotMatch(sceneRender, /class="iso-overlay-tether"|class="iso-overlay-ground"/,
+    'the reviewed near-floor treatment has no debug tethers or ground dots');
   assert.match(sceneRender, /const depthQueue = buildIsoWallDepthQueue\(scene\.geometry, openingSurfaces\)/);
   assert.match(sceneRender, /depthQueue\.map\(\(entry\) =>/);
   assert.match(sceneRender, /entry\.layer === 'wall-top'[\s\S]*?fill-rule="evenodd"/,
@@ -125,13 +125,12 @@ test('Stage 3 composes ordered inert SVG surfaces below screen-facing HTML', () 
     < frameResolver.indexOf('raised: renderIsoRaisedOverlays'));
   const grounds = section(sceneRender, 'export function renderIsoOverlayGrounds',
     'export function renderIsoRaisedOverlays');
-  assert.match(grounds, /renderIsoDefs\(layers, 'overlays', cellCm\)/);
-  assert.match(grounds, /class="iso-overlay-ground"[\s\S]*?transform=\$\{isoFixedLightTransform\(cellCm\)\}/);
+  assert.match(grounds, /return emptySvg\(\)/);
   assert.doesNotMatch(styles, /perspective\s*:|preserve-3d|rotateX\(|rotateZ\(/);
   assert.doesNotMatch(sceneRender, /window-light|iso-window-light|iso-glow|iso-sun/);
 });
 
-test('Stage 3 raises only device, room and lock roots while floor/live layers stay floor-bound', () => {
+test('Stage 4 keeps device, room and lock roots on one corrected low visual plane', () => {
   for (const renderer of [
     '_renderDecorLayer(undefined, view)', '_renderRoomHoverFill(roomHover)', '_renderGlowLayer(space, disp, view)',
     '_renderSunRays(space)', '_renderOpenings(disp)',
@@ -147,12 +146,12 @@ test('Stage 3 raises only device, room and lock roots while floor/live layers st
     assert.match(card, new RegExp(`data-hp-iso-overlay-kind=\\$\\{isoPlacement\\?\\.plane === 'raised' \\? '${kind}'`));
 });
 
-test('Stage 3 structural cache fingerprints geometry/camera/heights and excludes live paint', () => {
+test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes live paint', () => {
   assert.match(sceneRender, /flipH: !!opening\.flip_h/);
   assert.match(sceneRender, /flipV: !!opening\.flip_v/);
   assert.match(sceneRender, /const floorEdgeHeight = gridVisualUnits\(ISO_FLOOR_EDGE_HEIGHT, input\.cellCm\)/);
   assert.match(sceneRender, /const raisedHeight = gridVisualUnits\(ISO_RAISED_OVERLAY_HEIGHT, input\.cellCm\)/);
-  assert.match(sceneRender, /camera: ISO_CAMERA,[\s\S]*?wallHeight,[\s\S]*?raisedHeight,[\s\S]*?floorEdgeHeight,[\s\S]*?algorithm: 4/);
+  assert.match(sceneRender, /camera: ISO_CAMERA,[\s\S]*?wallHeight,[\s\S]*?raisedHeight,[\s\S]*?floorEdgeHeight,[\s\S]*?algorithm: 5/);
   const source = section(sceneRender, 'export function createIsoStructuralSource', 'const unknownArray');
   const roomProjection = section(sceneRender,
     'export function isoStructuralRoomGeometry', 'export type IsoStructuralOpeningHost');
@@ -167,11 +166,14 @@ test('Stage 3 structural cache fingerprints geometry/camera/heights and excludes
     'export function isoStructuralOpeningHost', 'export interface IsoStructuralSourceInput');
   for (const field of ['hostId: resolved.host.id', 't: resolved.t', 'depth: resolved.depth',
     'face: partitionOpeningFace']) assert.ok(hostProjection.includes(field), `missing ${field}`);
-  assert.match(openings, /ISO_OPENING_GEOMETRY_POLICY[\s\S]*?revision: 1/);
+  assert.match(openings, /ISO_OPENING_GEOMETRY_POLICY[\s\S]*?revision: 2/);
   assert.match(source,
     /buildIsoOpeningBasis\(\{ \.\.\.opening, face \}, wallHeight, openingGeometryPolicy\)/);
   assert.match(openings, /policy\.gateTurnDeg[\s\S]*?policy\.gateTopRatio/);
-  assert.match(openings, /policy\.windowBottomRatio[\s\S]*?policy\.windowTopRatio/);
+  assert.match(openings, /policy\.windowSashBottomRatio[\s\S]*?policy\.windowSashTopRatio/);
+  assert.match(openings, /policy\.windowGlassBottomRatio[\s\S]*?policy\.windowGlassTopRatio/);
+  assert.match(openings, /policy\.doorTurnDeg/);
+  assert.match(openings, /policy\.windowTurnDeg/);
   assert.match(openings, /policy\.doorTopRatio/);
   assert.match(openings, /policy\.leafThicknessRatio[\s\S]*?policy\.frameThicknessRatio/);
   assert.match(contractSmoke,
@@ -188,7 +190,7 @@ test('Stage 3 structural cache fingerprints geometry/camera/heights and excludes
   assert.match(sceneRender, /wallSilhouettes:\s*Object\.freeze\(\[[\s\S]*?\.\.\.wallTops,[\s\S]*?\.\.\.geometry\.sides\.map\(\(face\) => \(\{ outer: face\.points \}\)\),[\s\S]*?\]\)/);
 });
 
-test('show_borders:false keeps the exact +4° floor matrix and removes every volume cue', () => {
+test('show_borders:false keeps the exact zero-yaw floor matrix and removes every volume cue', () => {
   assert.match(card, /isoLayers && !isoLayers\.floorSymbols/);
   assert.match(card, /<svg class=\$\{iso \? 'plan-svg' : nothing\}[\s\S]*?data-hp-live-viewbox=\$\{iso \? 'camera' : 'floor'\}/);
   assert.match(card, /transform=\$\{iso \? isoFloorMatrixCss\(\) : nothing\}/);
@@ -235,7 +237,7 @@ test('one frame resolves one structural source and latches late topology/project
   const resolver = section(sceneRender, 'export function resolveIsoFramePresentation', 'const emptySvg');
   for (const step of ['resolveIsoDecorationLayers', 'resolveIsoOpeningPanels', 'renderIsoUnderlay',
     'renderIsoShadows', 'renderIsoWalls', 'renderIsoOverlayGrounds', 'renderIsoRaisedOverlays'])
-    assert.ok(resolver.includes(step), `late Stage 3 step escaped the frame boundary: ${step}`);
+    assert.ok(resolver.includes(step), `late Stage 4 step escaped the frame boundary: ${step}`);
 });
 
 test('raised footprints participate in global and room fit without entering the structural LRU', () => {
@@ -257,8 +259,8 @@ test('raised footprints participate in global and room fit without entering the 
   assert.doesNotMatch(structural, /overlayFitEntries|resolveIsoOverlayFitEnvelope|buildIsoOverlayRenderScene/);
 });
 
-test('raised DOM roots expose one floor/visual identity and preserve existing actions', () => {
-  assert.match(card, /data-hp-iso-stage=\$\{iso \? '3' : nothing\}/);
+test('low-plane DOM roots expose one floor/visual identity and preserve existing actions', () => {
+  assert.match(card, /data-hp-iso-stage=\$\{iso \? '4' : nothing\}/);
   for (const token of [
     'data-hp-iso-overlay-kind', 'data-hp-iso-raised', 'data-hp-iso-nudged',
     'data-hp-iso-floor', 'data-hp-iso-visual',
@@ -277,7 +279,7 @@ test('raised DOM roots expose one floor/visual identity and preserve existing ac
   assert.match(styles, /\.iso-overlays-svg,[\s\S]*?pointer-events:\s*none/);
 });
 
-test('Stage 3 materials and shadows are bounded, theme-aware and capability-safe', () => {
+test('Stage 4 materials and shadows are bounded, theme-aware and capability-safe', () => {
   const materialIds = [...sceneRender.matchAll(/id="(hp-iso-[^"]+)" data-hp-iso-material-def/g)]
     .map((match) => match[1]);
   assert.ok(materialIds.length >= 5 && materialIds.length <= 12,
@@ -287,15 +289,29 @@ test('Stage 3 materials and shadows are bounded, theme-aware and capability-safe
   assert.match(styles, /\.stage:not\(\.theme-light\) \.iso-wall-side/);
   assert.doesNotMatch(styles, /iso-overlay-plate|hp-iso-overlay-texture/,
     'themes and forced colors must not recreate a painted footprint');
-  assert.match(styles, /@supports not \(filter: blur\(1px\)\)[\s\S]*?\.iso-overlay-ground[\s\S]*?display:\s*none/);
+  assert.doesNotMatch(styles, /iso-overlay-ground|iso-overlay-tether/,
+    'themes and capability fallbacks must not recreate removed debug cues');
+  assert.match(styles, /iso-material-glass-side[\s\S]*?fill:\s*#c9e4f3/);
+  assert.match(styles, /iso-material-glass-top[\s\S]*?fill:\s*#e3f2fa/);
   const rendering = section(sceneRender, 'function renderIsoDefs(', 'export function resolveIsoDecorationLayers');
   assert.match(sceneRender, /return `translate\(\$\{gridVisualUnits\(4, cellCm\)\} \$\{gridVisualUnits\(8, cellCm\)\}\)`/);
-  assert.equal([...sceneRender.matchAll(/transform=\$\{isoFixedLightTransform\(cellCm\)\}/g)].length, 4,
-    'ambient, contact, opening and overlay grounding shadows share one fixed-light vector');
+  assert.equal([...sceneRender.matchAll(/transform=\$\{isoFixedLightTransform\(cellCm\)\}/g)].length, 3,
+    'ambient, contact and opening shadows share one fixed-light vector');
   assert.doesNotMatch(rendering, /sunState|_renderSun|Date\.now|Math\.random/);
 });
 
-test('Stage 3 adds no schema, dependency, storage, network or HA action surface', () => {
+test('Stage 4 room labels override Flat inline colors with the approved clean palette', () => {
+  const lightLabel = styleBodiesFor('projection-iso', 'mode-view', '.roomlabel');
+  const darkLabel = styleBodiesFor('projection-iso', 'theme-dark', 'mode-view', '.roomlabel');
+  assert.match(lightLabel, /text-shadow:\s*none/);
+  assert.match(lightLabel, /filter:\s*none/);
+  assert.match(lightLabel, /-webkit-text-stroke:\s*0 transparent/);
+  assert.match(lightLabel, /color:\s*#303936\s*!important/,
+    'Iso palette must win over the room color written inline for Flat');
+  assert.match(darkLabel, /color:\s*#f2f0e8\s*!important/);
+});
+
+test('Stage 4 adds no schema, dependency, storage, network or HA action surface', () => {
   for (const source of [openings, overlays, projection, sceneRender]) {
     assert.doesNotMatch(source, /localStorage\s*\.|fetch\(|XMLHttpRequest|WebSocket|callService\(|Math\.random/);
   }

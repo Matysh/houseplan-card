@@ -439,7 +439,11 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
     };
   }
 
-  const raisedHeight = wallHeight + visualOffset;
+  // Stage 4 keeps the canonical floor anchor and collision footprint, but the
+  // screen-facing content sits just above the floor instead of on a tall
+  // wall-height mast. The wall height is still validated because the same
+  // placement consumes wall silhouettes built from that physical height.
+  const raisedHeight = visualOffset;
   const raisedScene = projectPlanPoint(floorAnchor, raisedHeight, camera);
   const owner = input.ownerAlreadyResolved
     ? input.resolvedOwner ?? null
@@ -582,8 +586,10 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
     raisedHeight, camera, nudgeScene);
   const nearWallAfter = geometryValid ? knownNearWallAfter ?? isNear(footprint) : true;
   const nudged = distanceCss > EPS;
-  const tetherVisible = nudged || nearWallBefore || nearWallAfter
-    || !!input.hovered || !!input.focused || !!input.selected;
+  // Ownership remains encoded by the immutable anchor and invisible bounded
+  // footprint. Stage 4 deliberately removes the visible ground dot and long
+  // tether which made the architectural view look like a debug overlay.
+  const tetherVisible = false;
   return {
     plane, owner, floorAnchor, floorScene, raisedScene, visualScene, footprint,
     nudgeScene,
@@ -591,7 +597,7 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
     nudgeDistanceCss: distanceCss,
     nudged, nearWallBefore, nearWallAfter,
     cleared: !nearWallAfter, capped,
-    grounding: { center: floorScene, visible: input.filtersSupported !== false },
+    grounding: { center: floorScene, visible: false },
     tether: tetherGeometry(floorScene, visualScene, tetherVisible),
     status, reason,
   };

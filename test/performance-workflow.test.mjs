@@ -126,7 +126,7 @@ test('#160 Stage 3 budget preserves every historical common ceiling', () => {
   }
 });
 
-test('#160 Stage 3 runner fails closed on the agreed observable DOM contract', () => {
+test('#570 current Stage 4 runner fails closed on the agreed observable DOM contract', () => {
   const runner = readFileSync(new URL('../demo/benchmark_large_house.mjs', import.meta.url), 'utf8');
   for (const contract of [
     'data-hp-iso-stage',
@@ -143,7 +143,7 @@ test('#160 Stage 3 runner fails closed on the agreed observable DOM contract', (
     'no shared texture pattern',
     'no shared shadow filter',
     'no observable',
-    'Stage 3 roots',
+    'Stage 4 roots',
     'opening surfaces',
     'entered Flat fallback',
     'structural build counter is absent',
@@ -151,21 +151,21 @@ test('#160 Stage 3 runner fails closed on the agreed observable DOM contract', (
     'haUpdateDelta',
     'performed a structural rebuild for an HA-only state update',
     'requires an exact git source SHA',
-  ]) assert.ok(runner.includes(contract), `missing Stage 3 runner contract: ${contract}`);
+  ]) assert.ok(runner.includes(contract), `missing Stage 4 runner contract: ${contract}`);
   assert.match(runner,
     /\[data-hp-iso-overlay-kind\]\[data-hp-iso-floor\]\[data-hp-iso-visual\]/,
-    'Stage 3 counts must use interactive roots, not duplicated inert SVG diagnostics');
+    'Stage 4 counts must use interactive roots, not duplicated inert SVG diagnostics');
   assert.match(runner, /raisedVacuumCount/,
     'floor-bound vacuum must have an independent negative raised-state check');
   assert.match(runner, /stage3 !== total/,
-    'every rendered device, room label and lock root must participate in Stage 3');
+    'every rendered device, room label and lock root must participate in Stage 4');
   assert.match(runner, /expectedOpeningKinds\.map/,
-    'door, window and gate surfaces must contribute to the measured Stage 3 scene');
+    'door, window and gate surfaces must contribute to the measured Stage 4 scene');
   assert.match(runner, /pulseDeviceIdsBySpace\?\.\[card\._space\]/,
     'every switched floor must retain its own observable pulse witness');
   assert.match(runner,
     /if \(snapshot\.effectiveProjection !== 'iso'\) failures\.push\('effective projection is not iso'\);/,
-    'a dense Stage 3 report must reject Flat fallback instead of timing it as success');
+    'a dense Stage 4 report must reject Flat fallback instead of timing it as success');
   assert.match(runner,
     /requiresIsoStructuralBuildCounter[\s\S]*?afterStateIsoStructuralBuilds !== steadyIsoStructuralBuilds/,
     'both isometric profiles must reject a structural rebuild on the HA-only window');

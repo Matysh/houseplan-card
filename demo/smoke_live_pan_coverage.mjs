@@ -300,7 +300,7 @@ await page.evaluate(async () => {
 checks.alphaIsoEnabled = await page.evaluate(() => {
   const card = document.querySelector('houseplan-card');
   return card._effectiveProjection() === 'iso'
-    && card.renderRoot.querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '3';
+    && card.renderRoot.querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '4';
 });
 await runPan({ name: 'isoMouseRightEdge', kind: 'mouse', dx: -65, dy: 0, edge: 'right', parity: true });
 await runTouchZoomOut({ name: 'isoTouchZoomOut' });
