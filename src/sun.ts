@@ -690,7 +690,9 @@ export const SUN_RAY_ORIGINS = ['inner', 'outer'] as const; // #577 parity
 export type SunRayOrigin = (typeof SUN_RAY_ORIGINS)[number];
 
 /** Global window-light source; unknown/legacy values preserve the old geometry. */
-export function sunRayOriginOf(settings: any): SunRayOrigin {
+export function sunRayOriginOf(
+  settings: { sun_ray_origin?: unknown } | null | undefined,
+): SunRayOrigin {
   return settings?.sun_ray_origin === 'outer' ? 'outer' : 'inner';
 }
 
