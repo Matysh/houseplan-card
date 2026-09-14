@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.76.0-beta.4 — 2026-09-15
+
 - General settings now let window sunlight start at either the inner window
   corners (the existing default) or the outer window corners. The outer mode
   carries the visible shaft only through the physical window tunnel before it
