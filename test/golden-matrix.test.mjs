@@ -441,7 +441,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 61);
+  assert.equal(GOLDEN_MATRIX_VERSION, 62);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -457,6 +457,18 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.equal(scenario.allLightsOff, true);
   assert.equal(scenario.sunRayPixels.minPixels >= 500, true);
   assert.equal(scenario.sunRayPixels.minChannelDelta >= 4, true);
+
+  const outer = GOLDEN_SCENARIOS.find((item) =>
+    item.id === 'lighting-sun-window-outer-thick-dark');
+  assert.ok(outer);
+  const outerFixture = prepareGoldenFixture(outer);
+  const outerSpace = outerFixture.config.spaces.find((item) => item.id === outer.space);
+  const hostWall = outerSpace.walls.find((wall) =>
+    Math.abs(wall.a[1] - 0.10) < 1e-9 && Math.abs(wall.b[1] - 0.10) < 1e-9);
+  assert.equal(outerSpace.settings.sun_ray_origin, 'outer');
+  assert.equal(hostWall?.cm, 15, 'outer golden must retain a physical wall tunnel');
+  assert.equal(outer.capture, 'sun-window');
+  assert.equal(outer.sunRayPixels.minPixels >= 500, true);
 });
 
 test('vacuum smoothing golden covers current gaps and the previous run', () => {

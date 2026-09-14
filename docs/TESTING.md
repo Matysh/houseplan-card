@@ -2861,8 +2861,9 @@ require hands on real hardware — they remain for the human pass.
       colour, thresholds and shadows are identical to `inner`; at `d = 0` the
       two results are byte-identical. Switching the pending dialog value
       invalidates the geometry memo without waiting for a server revision
-      [auto: `sun.test.mjs`, `smoke_sun`; golden regression: existing inner
-      sun scenarios]
+      [auto: `sun.test.mjs`, `smoke_sun`; golden:
+      `lighting-sun-window-state-only-dark` (inner) and
+      `lighting-sun-window-outer-thick-dark` (outer tunnel + room seam)]
 - [ ] Brightness + the 3° threshold (2026-08-03): wedges are visibly brighter
       (peak alpha 0.30, was 0.18) yet still readable over white paper AND the
       dark glow canvas; there is NO gradual ramp near the horizon — below 3°

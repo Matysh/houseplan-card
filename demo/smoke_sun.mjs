@@ -255,6 +255,14 @@ const rayInfo = () => page.evaluate(() => {
     ids: rays.map((q) => q.openingId).sort(),
     midY: r ? (r.a[1] + r.b[1]) / 2 : NaN,
     minX: r ? Math.min(...r.polys.flat().map((p) => p[0])) : NaN,
+    sourceX: r?.a?.[0] ?? NaN,
+    polyCount: r?.polys?.length ?? 0,
+    hasExteriorTunnel: !!r?.polys?.some((poly) => poly.some(([x]) => x > 960 + 0.5)),
+    hasRoomLight: !!r?.polys?.some((poly) => poly.some(([x]) => x < 960 - 0.5)),
+    domPolyCount: [...(c.renderRoot || c.shadowRoot).querySelectorAll('.sunlayer polygon')].length,
+    domPointsFinite: [...(c.renderRoot || c.shadowRoot).querySelectorAll('.sunlayer polygon')]
+      .every((polygon) => polygon.getAttribute('points')?.split(/[ ,]+/)
+        .filter(Boolean).every((value) => Number.isFinite(Number(value)))),
     rev: c._cfgRev,
     wEy: opening.y,
   };
@@ -298,6 +306,31 @@ await page.evaluate(async () => {
 const base = await rayInfo();
 check('b701_baseline_east_only', base.ids, ['wE']);
 check('b701_baseline_mid_600', Math.abs(base.midY - 600) < 1, true);
+
+// #577 review regression: exercise the complete browser render path on a real
+// physical 15 cm exterior wall. Outer starts beyond the wall centreline and
+// paints both the opening tunnel and the clean-floor part of the ray. The
+// golden scene pins their shared raster boundary so a one-pixel seam cannot
+// hide behind these geometry assertions.
+await page.evaluate(async () => {
+  const c = window.__card;
+  c._serverCfg.settings.sun_ray_origin = 'outer';
+  c._cfgEpoch++;
+  c.requestUpdate(); await c.updateComplete;
+});
+const outer = await rayInfo();
+check('outer_real_wall_source_is_exterior', outer.sourceX > 960, true);
+check('outer_real_wall_has_tunnel_and_room_polys', outer.polyCount >= 2, true);
+check('outer_real_wall_tunnel_is_painted', outer.hasExteriorTunnel, true);
+check('outer_real_wall_room_is_painted', outer.hasRoomLight, true);
+check('outer_real_wall_dom_polys_are_complete', outer.domPolyCount >= 2, true);
+check('outer_real_wall_dom_points_are_finite', outer.domPointsFinite, true);
+await page.evaluate(async () => {
+  const c = window.__card;
+  c._serverCfg.settings.sun_ray_origin = 'inner';
+  c._cfgEpoch++;
+  c.requestUpdate(); await c.updateComplete;
+});
 
 // the real drag: enter the opening editor and pull wE down the east wall
 await page.evaluate(async () => {

@@ -670,7 +670,8 @@ export function prepareGoldenFixture(scenario) {
   if (scenario.fillMode || scenario.bgMode || typeof scenario.glowEnabled === 'boolean'
       || typeof scenario.sunRays === 'boolean' || typeof scenario.showBorders === 'boolean'
       || typeof scenario.showNames === 'boolean'
-      || typeof scenario.northDeg === 'number') {
+      || typeof scenario.northDeg === 'number'
+      || scenario.sunRayOrigin === 'inner' || scenario.sunRayOrigin === 'outer') {
     const space = requireSpace();
     space.settings = {
       ...(space.settings || {}),
@@ -678,6 +679,8 @@ export function prepareGoldenFixture(scenario) {
       ...(scenario.bgMode ? { bg_mode: scenario.bgMode } : {}),
       ...(typeof scenario.glowEnabled === 'boolean' ? { glow_enabled: scenario.glowEnabled } : {}),
       ...(typeof scenario.sunRays === 'boolean' ? { sun_rays: scenario.sunRays } : {}),
+      ...(scenario.sunRayOrigin === 'inner' || scenario.sunRayOrigin === 'outer'
+        ? { sun_ray_origin: scenario.sunRayOrigin } : {}),
       ...(typeof scenario.showBorders === 'boolean' ? { show_borders: scenario.showBorders } : {}),
       ...(typeof scenario.showNames === 'boolean' ? { show_names: scenario.showNames } : {}),
       ...(typeof scenario.northDeg === 'number' ? { north_deg: scenario.northDeg } : {}),
