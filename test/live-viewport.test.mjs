@@ -42,12 +42,17 @@ test('a settled live viewport removes its compositor transform', () => {
 const fakeRoot = () => {
   const node = (attrs) => {
     const el = {
-      attrs: { ...attrs }, writes: 0, styleWrites: 0,
+      attrs: { ...attrs }, writes: 0, styleWrites: 0, styleRemovals: [],
       getAttribute: (name) => (name in el.attrs ? el.attrs[name] : null),
       setAttribute: (name, value) => { el.attrs[name] = value; el.writes += 1; },
       style: new Proxy({ _v: {} }, {
         get: (target, key) => {
-          if (key === 'removeProperty') return (name) => { delete target._v[name]; el.styleWrites += 1; };
+          if (key === 'removeProperty') return (name) => {
+            const camel = name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+            delete target._v[camel];
+            el.styleRemovals.push(name);
+            el.styleWrites += 1;
+          };
           if (key === '_v') return target._v;
           return target._v[key];
         },
@@ -108,6 +113,55 @@ test('#531 AC2: по истечении бюджета viewBox пишется о
   assert.equal(root.cameraPeer.style.overflow, undefined, 'refresh cleans every camera scene');
   assert.equal(root.floor.style.overflow, undefined, 'refresh cleans the floor scene');
   assert.ok(root.layer.style.transform, 'слой по-прежнему спроецирован от осевшего кадра');
+});
+
+test('#579 a live session keeps one promoted scene layer across budget refreshes', () => {
+  const root = fakeRoot();
+  const painted = frame(0, 0);
+  let anchor = paintLiveViewport(root, painted, painted, null, {
+    now: 0, keepSceneLayer: true,
+  });
+  const scenes = [root.camera, root.cameraPeer, root.floor];
+  for (const scene of scenes) {
+    assert.equal(scene.style.transform, 'translate(0%,0%) scale(1,1)');
+    assert.equal(scene.style.transformOrigin, '0 0');
+    assert.equal(scene.style.willChange, 'transform');
+    assert.equal(scene.style.overflow, 'visible');
+  }
+
+  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor, {
+    now: 50, keepSceneLayer: true,
+  });
+  const removalsBeforeRefresh = scenes.map((scene) => scene.styleRemovals.length);
+  const viewBoxWritesBeforeRefresh = root.camera.writes;
+  anchor = paintLiveViewport(root, painted, frame(20, 0), anchor, {
+    now: 100, keepSceneLayer: true,
+  });
+  assert.equal(root.camera.writes, viewBoxWritesBeforeRefresh + 1, 'budget refresh still lands');
+  for (const [index, scene] of scenes.entries()) {
+    assert.equal(scene.style.transform, 'translate(0%,0%) scale(1,1)');
+    assert.equal(scene.style.transformOrigin, '0 0');
+    assert.equal(scene.style.willChange, 'transform');
+    assert.equal(scene.style.overflow, 'visible');
+    assert.equal(scene.styleRemovals.length, removalsBeforeRefresh[index],
+      'refresh may not demote and re-promote the SVG');
+  }
+
+  const styleWrites = scenes.reduce((sum, scene) => sum + scene.styleWrites, 0);
+  anchor = paintLiveViewport(root, painted, frame(20, 0), anchor, {
+    now: 101, keepSceneLayer: true,
+  });
+  assert.equal(scenes.reduce((sum, scene) => sum + scene.styleWrites, 0), styleWrites,
+    'an unchanged promoted frame writes no style');
+
+  const settled = frame(20, 0);
+  paintLiveViewport(root, settled, settled, anchor, { now: 110, force: true });
+  for (const scene of scenes) {
+    assert.equal(scene.style.transform, undefined);
+    assert.equal(scene.style.transformOrigin, undefined);
+    assert.equal(scene.style.willChange, undefined);
+    assert.equal(scene.style.overflow, undefined);
+  }
 });
 
 test('#531 AC2а: рывок переписывает viewBox сразу, не дожидаясь бюджета времени', () => {

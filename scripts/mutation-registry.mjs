@@ -8025,6 +8025,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'live-pinch-compositor-demoted-on-budget-refresh',
+    guard: 'node --test --test-name-pattern="#579" test/live-viewport.test.mjs',
+    because: '#579: a budgeted viewBox refresh must re-anchor the picture without removing '
+      + 'the scene transform, will-change or overflow. Demoting and promoting the SVG during '
+      + 'an active pinch produces white or transparent frames in HA Companion WebView',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      find: '  const keepSceneLayer = options.keepSceneLayer === true;',
+      replace: '  const keepSceneLayer = false; // mutant: demote at every identity refresh',
+    }],
+  },
+  {
+    id: 'live-pinch-compositor-demoted-on-active-lit-commit',
+    guard: 'node demo/smoke_live_pan_coverage.mjs',
+    because: '#579: a full Lit update can land before the fingers are released. It may '
+      + 're-anchor viewBox, but it must preserve the same promoted scene lifecycle until the '
+      + 'terminal commit or the WebView flashes between compositor ownership paths',
+    patches: [{
+      file: 'src/live-interaction-runtime.ts',
+      find: '    commitHouseplanViewport(this.host, this.active());',
+      replace: '    commitHouseplanViewport(this.host);',
+    }],
+  },
+  {
     id: 'live-pan-rewrites-viewbox-every-frame',
     guard: 'node demo/smoke_live_pan_viewbox.mjs',
     because: '#531: перезапись `view' + 'Box` — это инвалидация растеризации всей сцены, её '

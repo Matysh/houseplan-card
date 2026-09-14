@@ -1963,7 +1963,7 @@ core; known-LQI and solid parent routes remain single strokes. Cache data, IEEE
 addresses and raw payloads are never persisted, logged, exported or admitted
 to support diagnostics.
 
-## Live viewport: a transform per frame, a `viewBox` on a budget (#531, 2026-09-11)
+## Live viewport: a transform per frame, a `viewBox` on a budget (#531, #579, 2026-09-14)
 
 Rewriting the `viewBox` attribute is not a move, it is a repaint: the whole SVG
 scene is re-rasterized. Doing it once per gesture frame is what made panning
@@ -1993,16 +1993,23 @@ clip for the card, but a camera or floor scene whose anchor is being transformed
 temporarily gets inline `overflow: visible`. That lets the already rasterized SVG
 cover the incoming edge until the budgeted `viewBox` catches up; otherwise the
 root SVG clips at its stale viewport and exposes a band of stage background.
-HTML layers never receive this exception. A budget refresh or the terminal
-commit removes the inline overflow together with the transform, so a settled
-scene returns to its ordinary authored styles. The coverage contract also holds
-when a pointer is held still between frames: the fast frame must contain every
-scene pixel that a forced target `viewBox` would contain inside `.stage`.
+HTML layers never receive this exception. From the first live paint through the
+terminal commit, every scene SVG stays in one compositor lifecycle: even an
+identity projection remains explicit and retains `transform-origin`,
+`will-change: transform` and `overflow: visible`. A budget refresh or a full Lit
+frame during an active gesture may replace the anchor `viewBox`, but may not
+demote and re-promote the scene; HA Companion WebView can present a white or
+transparent frame at that ownership boundary (#579). Only the terminal commit
+removes the inline styles, so a settled scene returns to its ordinary authored
+state. The coverage contract also holds when a pointer is held still between
+frames: the fast frame must contain every scene pixel that a forced target
+`viewBox` would contain inside `.stage`.
 
-Neither the attribute nor the style is written when the string is unchanged: an
-idle frame must leave the DOM byte-identical, or the settled raster shifts by a
-few colour levels and golden frames flap. `commitHouseplanViewport` still ends
-the gesture the same way — transforms removed, final `viewBox` forced in.
+Neither the attribute nor an equal style property is written when its value is
+unchanged: an idle frame must leave the DOM byte-identical, or the settled raster
+shifts by a few colour levels and golden frames flap. `commitHouseplanViewport`
+still ends the gesture the same way — transforms removed, final `viewBox`
+forced in.
 
 ## The initial bundle carries English and Russian whole (#400, 2026-08-31)
 

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Pinch-zooming in the Home Assistant Companion app no longer repeatedly moves
+  the plan between compositor paths while the fingers are still down. Walls,
+  floors, fills, hatching and lighting now remain continuously painted across
+  budgeted redraws and Home Assistant updates; ordinary browser, isometric and
+  kiosk behaviour is unchanged
+  ([#579](https://github.com/Matysh/houseplan-card/issues/579)).
+
 - Pinch-zooming with the second finger on a device marker no longer re-arms the
   marker's long-press timer or opens both the House Plan device card and Home
   Assistant more-info. Delayed touch context-menu events are now kept inside

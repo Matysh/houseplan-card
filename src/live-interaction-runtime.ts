@@ -76,7 +76,7 @@ export class LiveRuntime {
       || !!host._resize?.dragging;
   }
   public commit(): void {
-    commitHouseplanViewport(this.host);
+    commitHouseplanViewport(this.host, this.active());
     reconcileDeviceFocusTip(this.host);
     resetHouseplanHover(this.host);
     syncHouseplanHover(this.host);

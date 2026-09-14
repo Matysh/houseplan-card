@@ -45,6 +45,13 @@ On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
   remount;
 - preserve kiosk gestures and prevent accidental editor interactions.
 
+During every intermediate pan or pinch frame, walls, floors, room fills,
+hatching, lighting and markers must remain continuously painted. The scene SVGs
+stay on one promoted compositor path from the first movement until the terminal
+frame; a budgeted redraw or an unrelated Home Assistant state update must never
+flash white, become transparent or momentarily expose the stage background.
+This contract applies equally to browsers and HA Companion WebViews.
+
 Once a second touch joins an input sequence, that whole sequence is navigation
 only, whichever contact began on a device marker. Marker tap, long press,
 confirmation, service calls and touch-generated context menu stay blocked

@@ -28,6 +28,15 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: [
+      'commitHouseplanViewport', 'isIdentityLiveLayerProjection', 'paintLiveViewport',
+    ],
+    smokes: ['smoke_live_pan_coverage.mjs'],
+    because: '#579: the production-bundle witness observes promotion through budgeted viewBox '
+      + 'refreshes and active Lit commits via scene style attributes; it intentionally does not '
+      + 'call the viewport helpers whose compositor lifecycle it guards',
+  },
+  {
     symbols: ['_renderDevice', '_renderOpenings'],
     smokes: ['smoke_space_switch_transitions.mjs'],
     because: '#525: the smoke never names these renderers — it switches spaces the ordinary way '

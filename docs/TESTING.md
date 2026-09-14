@@ -2511,11 +2511,22 @@ websocket-resilience and golden verification.
 
 `npm run continuity:screencast` is the separate compositor-level gate required
 before a stable release. It captures acknowledged PNG frames through CDP
-`Page.startScreencast`, crops the real plan stage, rejects uniform/black frame
-regressions and writes the exact frames plus metrics to
+`Page.startScreencast`, drives an oscillating multi-frame touch pinch, crops the
+real plan stage, requires multiple compositor-presented pinch frames and rejects
+uniform, black, white or transparent-looking frame regressions. It writes the
+exact frames plus metrics to
 `artifacts/continuity-screencast`. Prereleases keep the faster mandatory rAF
 smoke; the stable release workflow installs Chromium and runs the screencast
 before attaching the public card asset.
+
+The #579 live-viewport witness is split deliberately. `test/live-viewport.test.mjs`
+proves that a budget refresh keeps the identity transform, transform origin,
+`will-change` and overflow without a demotion; `demo/smoke_live_pan_coverage.mjs`
+also holds the pointer through a full Lit commit in flat, isometric and kiosk
+modes, then proves terminal cleanup. Before a beta, repeat a physical pinch in
+HA Companion on the reported Android WebView: Chromium CDP proves the contract
+and records presented frames, but cannot claim that a vendor WebView compositor
+has no separate defect.
 
 ## Large-house performance gate
 

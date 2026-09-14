@@ -53,7 +53,11 @@ const liveState = () => page.evaluate(() => {
     sceneCount: scenes.length,
     allSceneOverflowOpen: scenes.length > 0
       && scenes.every((node) => node.style.overflow === 'visible'),
-    allTemporaryStylesCleared: scenes.every((node) => !node.style.overflow && !node.style.transform),
+    allScenePromoted: scenes.length > 0 && scenes.every((node) => node.style.transform
+      && node.style.transformOrigin && node.style.willChange === 'transform'
+      && node.style.overflow === 'visible'),
+    allTemporaryStylesCleared: scenes.every((node) => !node.style.overflow
+      && !node.style.transform && !node.style.transformOrigin && !node.style.willChange),
     marker: centre(root.querySelector('[data-hp="device"]')),
     room: centre(root.querySelector('[data-hp="room"]')),
   };
@@ -193,6 +197,8 @@ const runPan = async ({ name, kind, dx, dy, edge, parity = false }) => {
     sceneCount: immediateState.sceneCount,
     overflowImmediate: immediateState.allSceneOverflowOpen,
     overflowHeld: heldState.allSceneOverflowOpen,
+    promotedImmediate: immediateState.allScenePromoted,
+    promotedHeld: heldState.allScenePromoted,
     targetStableWhileHeld: JSON.stringify(immediateState.view) === JSON.stringify(heldState.view),
     temporaryStylesCleared: settledState.allTemporaryStylesCleared,
     parityPx,
@@ -201,9 +207,8 @@ const runPan = async ({ name, kind, dx, dy, edge, parity = false }) => {
     && immediateCoverage.referenceScenePixels > 500 && immediateCoverage.missing === 0;
   checks[`${name}HeldCoverage`] = heldCoverage.sameSize
     && heldCoverage.referenceScenePixels > 500 && heldCoverage.missing === 0;
-  checks[`${name}UsesTemporaryOverflow`] = (immediateState.transformed === 0
-      || immediateState.allSceneOverflowOpen)
-    && (heldState.transformed === 0 || heldState.allSceneOverflowOpen)
+  checks[`${name}UsesTemporaryOverflow`] = immediateState.allScenePromoted
+    && heldState.allScenePromoted
     && settledState.allTemporaryStylesCleared;
   checks[`${name}TargetStableWhileHeld`] = diagnostics[name].targetStableWhileHeld;
   if (parity) checks[`${name}MarkerParity`] = parityPx !== null && parityPx <= 1;
@@ -245,6 +250,8 @@ const runTouchZoomOut = async ({ name }) => {
     heldTransformed: heldState.transformed,
     overflowImmediate: immediateState.allSceneOverflowOpen,
     overflowHeld: heldState.allSceneOverflowOpen,
+    promotedImmediate: immediateState.allScenePromoted,
+    promotedHeld: heldState.allScenePromoted,
     targetStableWhileHeld: JSON.stringify(immediateState.view) === JSON.stringify(heldState.view),
     temporaryStylesCleared: settledState.allTemporaryStylesCleared,
   };
@@ -253,11 +260,88 @@ const runTouchZoomOut = async ({ name }) => {
     && immediateCoverage.referenceScenePixels > 5000 && immediateCoverage.missing === 0;
   checks[`${name}HeldCoverage`] = heldCoverage.sameSize
     && heldCoverage.referenceScenePixels > 5000 && heldCoverage.missing === 0;
-  checks[`${name}UsesTemporaryOverflow`] = (immediateState.transformed === 0
-      || immediateState.allSceneOverflowOpen)
-    && (heldState.transformed === 0 || heldState.allSceneOverflowOpen)
+  checks[`${name}UsesTemporaryOverflow`] = immediateState.allScenePromoted
+    && heldState.allScenePromoted
     && settledState.allTemporaryStylesCleared;
   checks[`${name}TargetStableWhileHeld`] = diagnostics[name].targetStableWhileHeld;
+};
+
+// #579: observe the actual style attribute through several budget refreshes.
+// Starting the observer after the first promoted frame excludes the legitimate
+// initial style construction; from that point until pointerup every oldValue
+// must already describe the same promoted compositor lifecycle.
+const runStablePromotion = async () => {
+  await resetCamera();
+  await preparePointerCapture();
+  const origin = await pointerCentre();
+  await dispatchTouch('pointerdown', 721, origin.x - 80, origin.y);
+  await dispatchTouch('pointerdown', 722, origin.x + 80, origin.y);
+  await dispatchTouch('pointermove', 721, origin.x - 90, origin.y);
+  await dispatchTouch('pointermove', 722, origin.x + 90, origin.y);
+  await frame();
+  const initial = await liveState();
+  await page.evaluate(() => {
+    const card = document.querySelector('houseplan-card');
+    const scenes = [...card.renderRoot.querySelectorAll('[data-hp-live-viewbox]')];
+    const records = [];
+    const observer = new MutationObserver((batch) => records.push(...batch));
+    for (const scene of scenes) observer.observe(scene, {
+      attributes: true, attributeFilter: ['style', 'viewBox'], attributeOldValue: true,
+    });
+    window.__hp579Promotion = { observer, records };
+  });
+
+  // Force the exact second ownership boundary from the bug: Home Assistant or
+  // another reactive input may deliver a complete Lit frame while both touch
+  // contacts are still held. Waiting for incidental fixture activity made the
+  // mutation witness timing-dependent on slower Linux runners.
+  await page.evaluate(async () => {
+    const card = document.querySelector('houseplan-card');
+    card.requestUpdate();
+    await card.updateComplete;
+  });
+  await frame();
+
+  for (const distance of [112, 72, 118]) {
+    await page.waitForTimeout(110);
+    await dispatchTouch('pointermove', 721, origin.x - distance, origin.y);
+    await dispatchTouch('pointermove', 722, origin.x + distance, origin.y);
+    await frame();
+  }
+  const active = await page.evaluate(async () => {
+    await Promise.resolve();
+    const card = document.querySelector('houseplan-card');
+    const scenes = [...card.renderRoot.querySelectorAll('[data-hp-live-viewbox]')];
+    const state = window.__hp579Promotion;
+    const records = [...state.records, ...state.observer.takeRecords()];
+    state.observer.disconnect();
+    delete window.__hp579Promotion;
+    const styleRecords = records.filter((record) => record.attributeName === 'style');
+    const promoted = (text) => typeof text === 'string'
+      && text.includes('overflow: visible') && text.includes('transform-origin:')
+      && text.includes('will-change: transform') && text.includes('transform:');
+    return {
+      sceneCount: scenes.length,
+      styleMutations: styleRecords.length,
+      viewBoxMutations: records.filter((record) => record.attributeName === 'viewBox').length,
+      demotedOldValues: styleRecords.filter((record) => !promoted(record.oldValue)).length,
+      allPromoted: scenes.every((scene) => promoted(scene.getAttribute('style'))),
+    };
+  });
+  await dispatchTouch('pointerup', 721, origin.x - 118, origin.y, 0);
+  await dispatchTouch('pointerup', 722, origin.x + 118, origin.y, 0);
+  await settle();
+  const terminal = await liveState();
+  diagnostics.stablePromotion = { initial, active, terminal };
+  checks.stablePromotionStartsOnce = initial.allScenePromoted;
+  checks.stablePromotionSurvivesRefresh = active.sceneCount > 0 && active.allPromoted
+    && active.demotedOldValues === 0;
+  // The forced Lit commit contributes one deliberate anchor write per scene;
+  // subtract it before judging the ordinary 100 ms / 15% refresh budget.
+  const budgetedViewBoxMutations = active.viewBoxMutations - active.sceneCount;
+  checks.stablePromotionKeepsViewBoxBudget = budgetedViewBoxMutations >= active.sceneCount * 3
+    && budgetedViewBoxMutations <= active.sceneCount * 5;
+  checks.stablePromotionCleansAtTerminal = terminal.allTemporaryStylesCleared;
 };
 
 await page.evaluate(async () => {
@@ -286,6 +370,7 @@ await runPan({ name: 'flatMouseBottomEdge', kind: 'mouse', dx: 0, dy: -48, edge:
 await runPan({ name: 'flatMouseTopEdge', kind: 'mouse', dx: 0, dy: 48, edge: 'top' });
 await runPan({ name: 'flatTouchRightEdge', kind: 'touch', dx: -65, dy: 0, edge: 'right' });
 await runTouchZoomOut({ name: 'flatTouchZoomOut' });
+await runStablePromotion();
 
 await page.evaluate(async () => {
   history.replaceState(null, '', '?hp_alpha=1#space=f1');

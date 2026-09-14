@@ -139,10 +139,14 @@ const setLayerProjection = (
     style.overflow = 'visible';
   }
   const text = projectionText(projection);
-  if (style.transform === text) return;
-  style.transformOrigin = '0 0';
-  style.willChange = 'transform';
-  style.transform = text;
+  // Promotion is gesture-scoped, not a per-frame hint (#579). Avoid even
+  // equal writes while the projection changes: WebViews may treat them as
+  // compositor lifecycle changes rather than harmless string assignments.
+  if (style.transformOrigin !== '0 0' && style.transformOrigin !== '0px 0px') {
+    style.transformOrigin = '0 0';
+  }
+  if (style.willChange !== 'transform') style.willChange = 'transform';
+  if (style.transform !== text) style.transform = text;
 };
 
 /** Атрибут пишется только когда строка действительно другая (#531). */
@@ -165,7 +169,7 @@ export function paintLiveViewport(
   painted: LiveViewportFrame,
   current: LiveViewportFrame,
   anchor?: LiveViewportAnchor | null,
-  options: { now?: number; force?: boolean } = {},
+  options: { now?: number; force?: boolean; keepSceneLayer?: boolean } = {},
 ): LiveViewportAnchor {
   const now = options.now ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
   const base: LiveViewportAnchor = anchor ?? { frame: painted, at: -Infinity };
@@ -185,21 +189,23 @@ export function paintLiveViewport(
       setViewBox(svg, floorBox);
     }
   }
-  // Сцена: от записанного якоря к текущему кадру. После перезаписи `viewBox`
-  // это тождество, и трансформ снимается в том же кадре.
+  // Сцена: от записанного якоря к текущему кадру. Budget refresh делает
+  // проекцию тождественной, но активная live-сессия сохраняет compositor layer
+  // до terminal commit (#579), не демотирует и не промотирует SVG каждые 100 мс.
   const sceneCamera = liveLayerProjection(next.frame.view, current.view);
   const sceneFloor = liveLayerProjection(next.frame.floor, current.floor);
+  const keepSceneLayer = options.keepSceneLayer === true;
   for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="camera"]')) {
     setLayerProjection(
       svg,
-      isIdentityLiveLayerProjection(sceneCamera) ? null : sceneCamera,
+      isIdentityLiveLayerProjection(sceneCamera) && !keepSceneLayer ? null : sceneCamera,
       { exposeSceneOverflow: true },
     );
   }
   for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')) {
     setLayerProjection(
       svg,
-      isIdentityLiveLayerProjection(sceneFloor) ? null : sceneFloor,
+      isIdentityLiveLayerProjection(sceneFloor) && !keepSceneLayer ? null : sceneFloor,
       { exposeSceneOverflow: true },
     );
   }
@@ -235,7 +241,9 @@ export function scheduleHouseplanViewport(value: object, now = false): void {
     if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
     state.raf = 0; state.pending = null;
     if (!state.painted) state.painted = next;
-    state.anchor = paintLiveViewport(host.renderRoot, state.painted, next, state.anchor);
+    state.anchor = paintLiveViewport(
+      host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true },
+    );
     return;
   }
   state.pending = next;
@@ -247,12 +255,14 @@ export function scheduleHouseplanViewport(value: object, now = false): void {
     const root = host.renderRoot as ParentNode | undefined;
     if (!next || !root) return;
     if (!state.painted) state.painted = next;
-    state.anchor = paintLiveViewport(root, state.painted, next, state.anchor);
+    state.anchor = paintLiveViewport(
+      root, state.painted, next, state.anchor, { keepSceneLayer: true },
+    );
   });
 }
 
-/** Record a complete Lit frame and remove any temporary HTML projection. */
-export function commitHouseplanViewport(value: object): void {
+/** Record a complete Lit frame and reconcile gesture-scoped projections. */
+export function commitHouseplanViewport(value: object, keepSceneLayer = false): void {
   const host = value as LiveViewportHost;
   const state = stateOf(value);
   if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
@@ -264,9 +274,13 @@ export function commitHouseplanViewport(value: object): void {
   for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
     setLayerProjection(layer, null);
   }
-  // Осевший кадр: `viewBox` записывается принудительно, трансформы сцены
-  // снимаются вместе с ним — дальше кадр принадлежит Lit, а не живому пути.
-  state.anchor = paintLiveViewport(root, state.painted, state.painted, state.anchor, { force: true });
+  // A full Lit frame may arrive while a pointer or programmatic camera is still
+  // active. It becomes the new exact anchor, but must not demote the scene in
+  // the middle of that session (#579). The terminal Lit frame passes false and
+  // restores the authored, transform-free idle DOM.
+  state.anchor = paintLiveViewport(root, state.painted, state.painted, state.anchor, {
+    force: true, keepSceneLayer,
+  });
 }
 
 export function disposeHouseplanViewport(host: object): void {

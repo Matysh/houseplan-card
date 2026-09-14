@@ -4,13 +4,15 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launch, check, finish } from './serve.mjs';
 
-const { page, browser } = await launch({ width: 820, height: 760 });
+const { page, browser } = await launch(
+  { width: 820, height: 760 }, 1, [], { hasTouch: true },
+);
 const session = await page.context().newCDPSession(page);
 const frames = [];
 let stopped = false;
 
 session.on('Page.screencastFrame', (event) => {
-  if (frames.length < 120) frames.push(event.data);
+  if (frames.length < 180) frames.push(event.data);
   void session.send('Page.screencastFrameAck', { sessionId: event.sessionId });
 });
 
@@ -36,6 +38,46 @@ try {
     format: 'png', everyNthFrame: 1, maxWidth: 820, maxHeight: 760,
   });
   await wait(120);
+
+  // #579: exercise a real multi-frame pinch while CDP records compositor-
+  // presented frames. DOM screenshots cannot witness the transient white or
+  // transparent WebView frame reported by users.
+  const pinchFrameStart = frames.length;
+  await page.evaluate(async () => {
+    const card = window.__card;
+    const stage = (card.shadowRoot || card.renderRoot).querySelector('.stage');
+    const rect = stage.getBoundingClientRect();
+    const centerX = rect.x + rect.width / 2;
+    const centerY = rect.y + rect.height / 2;
+    stage.setPointerCapture = () => {};
+    stage.releasePointerCapture = () => {};
+    const send = (type, pointerId, x, buttons = 1) => stage.dispatchEvent(new PointerEvent(type, {
+      bubbles: true,
+      composed: true,
+      pointerId,
+      pointerType: 'touch',
+      isPrimary: pointerId === 731,
+      button: type === 'pointerdown' ? 0 : -1,
+      buttons,
+      clientX: x,
+      clientY: centerY,
+    }));
+    send('pointerdown', 731, centerX - 72);
+    send('pointerdown', 732, centerX + 72);
+    const distances = [80, 91, 70, 98, 66, 104, 73, 96, 68, 101, 75, 94];
+    for (const distance of distances) {
+      send('pointermove', 731, centerX - distance);
+      send('pointermove', 732, centerX + distance);
+      await new Promise(requestAnimationFrame);
+    }
+    send('pointerup', 731, centerX - distances.at(-1), 0);
+    send('pointerup', 732, centerX + distances.at(-1), 0);
+    await card.updateComplete;
+    await new Promise(requestAnimationFrame);
+  });
+  await wait(180);
+  const pinchPresentedFrames = frames.length - pinchFrameStart;
+
   await page.evaluate(() => window.__card._pageVisibility({
     kind: 'visible', token: 73, at: Date.now(), hiddenFor: 20_000, long: true,
   }));
@@ -110,11 +152,12 @@ try {
     Buffer.from(data, 'base64'),
   ));
   writeFileSync('artifacts/continuity-screencast/metrics.json', JSON.stringify({
-    stage, frames: metrics, forbidden: forbidden.length,
+    stage, frames: metrics, forbidden: forbidden.length, pinchPresentedFrames,
   }, null, 2));
 
   const result = {
     capturedPresentedFrames: frames.length >= 2,
+    capturedPinchPresentedFrames: pinchPresentedFrames >= 4,
     baselineContainsPlanDetail: baseline.variance >= 12 && baseline.mean >= 4,
     noEmptyOrBlackPresentedFrame: forbidden.length === 0,
   };
