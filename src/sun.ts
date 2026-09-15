@@ -7,7 +7,7 @@
  * y grows DOWNWARD), same as the card's space model. Nothing here
  * touches Lit, the DOM or `hass` beyond a plain state object.
  */
-import { intersection } from 'polyclip-ts';
+import { intersection, type Geom } from 'polyclip-ts';
 import { pointInPolygon, lerpColor } from './logic';
 
 // ---------------- angles ----------------
@@ -349,12 +349,14 @@ export function clipToRoom(quad: number[][], room: number[][]): number[][][] {
 function intersectRings(...rings: number[][][]): number[][][] {
   try {
     if (!rings.length || rings.some((ring) => ring.length < 3)) return [];
-    const closed = rings.map((ring) =>
-      [[...ring.map((p) => [p[0], p[1]]), [ring[0][0], ring[0][1]]]] as any);
+    const closed: Geom[] = rings.map((ring) => [[
+      ...ring.map((p): [number, number] => [p[0], p[1]]),
+      [ring[0][0], ring[0][1]],
+    ]]);
     const res = intersection(closed[0], ...closed.slice(1));
     const out: number[][][] = [];
-    for (const poly of res as any) {
-      const ring = poly?.[0];
+    for (const poly of res) {
+      const ring = poly[0];
       if (!Array.isArray(ring) || ring.length < 4) continue;
       out.push(ring.slice(0, ring.length - 1).map((p: number[]) => [p[0], p[1]]));
     }
