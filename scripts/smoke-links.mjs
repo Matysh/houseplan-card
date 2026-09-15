@@ -35,6 +35,16 @@ export const SMOKE_LINKS = [
       + 'draft; neither smoke calls the pure function by name',
   },
   {
+    symbols: ['renderPaperShapes'],
+    smokes: [
+      'smoke_daycycle_layer_budget.mjs', 'smoke_daycycle_raster.mjs',
+      'smoke_live_pan_coverage.mjs', 'smoke_bg_color.mjs',
+    ],
+    because: '#582: production-bundle witnesses prove that the separate day-cycle paper '
+      + 'silhouette remains stage-bounded at 1 cm/point, keeps the #532 raster budget and follows '
+      + 'the same #579 live viewport as the visible plan; source imports cannot expose CDP layers',
+  },
+  {
     symbols: [
       'commitHouseplanViewport', 'isIdentityLiveLayerProjection', 'paintLiveViewport',
     ],

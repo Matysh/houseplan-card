@@ -86,16 +86,12 @@ export const planStyles = css`
         opacity 1100ms cubic-bezier(.22, .61, .36, 1);
     }
     .stage.mode-transition .hp-day-cycle-env { transition: none; }
-    /* #532: the outline keeps its OWN compositing layer. The group holds paper
-       silhouettes only and does not change on hover or pan, but the filter used
-       to live in the plan's own layer — so every repaint of the plan re-ran
-       three blur passes over the whole sheet. Measured on a demo-stand pan
-       (Chromium, CDP, summed RasterTask): 852 ms without the hint against 28 ms
-       with it, where a static background costs 108 ms. The hint costs one layer
-       of memory, so it is scoped to .daycycle and a static background never
-       pays for it. */
-    .stage.daycycle .hp-paperg,
-    .hp-static-stage.daycycle .hp-paperg {
+    /* #532 + #582: the outline keeps its OWN compositing layer, but the
+       promoted element must be the stage-sized root SVG. Promoting the inner
+       paper group allocated in local plan coordinates (4700×4200 at
+       1 cm/point) and overflowed HA Companion's WebView texture budget. */
+    .stage.daycycle .hp-paper-outline-svg,
+    .hp-static-stage.daycycle .hp-paper-outline-svg {
       filter:
         drop-shadow(0 0 1px var(--hp-day-cycle-outline-near))
         drop-shadow(0 0 5px var(--hp-day-cycle-outline-mid))
@@ -106,8 +102,8 @@ export const planStyles = css`
     @media (prefers-reduced-motion: reduce) {
       .hp-day-cycle-bg,
       .hp-day-cycle-sun,
-      .stage.daycycle .hp-paperg,
-      .hp-static-stage.daycycle .hp-paperg {
+      .stage.daycycle .hp-paper-outline-svg,
+      .hp-static-stage.daycycle .hp-paper-outline-svg {
         transition: none;
       }
     }
@@ -252,6 +248,11 @@ export const planStyles = css`
       display: block;
     }
     .plan-svg { z-index: 1; }
+    .hp-paper-outline-svg {
+      z-index: 0;
+      overflow: visible;
+      pointer-events: none;
+    }
     .iso-underlay-svg { z-index: 0; overflow: visible; }
     .iso-shadows-svg { z-index: 3; overflow: visible; }
     .iso-walls-svg {

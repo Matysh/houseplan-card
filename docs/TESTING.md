@@ -2830,6 +2830,13 @@ require hands on real hardware — they remain for the human pass.
       dawn/day/dusk/night environment tokens. Only environment and outer
       plan-paper outline cross-fade for 1100 ms; reduced motion is instant
       [auto: `smoke_sun_live_bg`, golden `day-cycle-*`]
+- [ ] A physically ordinary day-cycle plan stored at 1 cm/grid-point keeps the
+      outline compositor surface bounded by the visible stage during pinch;
+      the inner paper group is unfiltered, no content layer exceeds 4096 in
+      either dimension, and sampled presented frames contain no white tile.
+      The same isolated outline still satisfies the #532 relative raster
+      budget [auto: `smoke_daycycle_layer_budget`, `smoke_daycycle_raster`,
+      `smoke_live_pan_coverage`]
 - [ ] Opaque plan paper (2026-08-03, owner): the scene background —
       `bg_color` or the daynight sky — is visible ONLY around the plan and
       NEVER bleeds through it, in view/kiosk/editors and on the static

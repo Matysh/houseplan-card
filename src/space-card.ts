@@ -957,6 +957,11 @@ class HouseplanSpaceCard extends LitElement {
         display: block;
         z-index: 1;
       }
+      .hp-static-stage .hp-paper-outline-svg {
+        z-index: 0;
+        overflow: visible;
+        pointer-events: none;
+      }
       /* Opaque plan paper — the scene bg_color/day-cycle environment shows only AROUND
          the plan (owner 2026-08-03). The static card keeps its historical
          canvas colour: the theme card background. Drawn plans paper the room

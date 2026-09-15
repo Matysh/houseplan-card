@@ -192,7 +192,7 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
 
 test('show_borders:false keeps the exact zero-yaw floor matrix and removes every volume cue', () => {
   assert.match(card, /isoLayers && !isoLayers\.floorSymbols/);
-  assert.match(card, /<svg class=\$\{iso \? 'plan-svg' : nothing\}[\s\S]*?data-hp-live-viewbox=\$\{iso \? 'camera' : 'floor'\}/);
+  assert.match(card, /<svg class="plan-svg"[\s\S]*?data-hp-live-viewbox=\$\{iso \? 'camera' : 'floor'\}/);
   assert.match(card, /transform=\$\{iso \? isoFloorMatrixCss\(\) : nothing\}/);
   assert.match(card,
     /\$\{litCache\(iso && isoLayers\?\.structural \? svg`<svg class="iso-shadows-svg"/);

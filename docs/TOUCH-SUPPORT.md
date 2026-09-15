@@ -51,6 +51,10 @@ stay on one promoted compositor path from the first movement until the terminal
 frame; a budgeted redraw or an unrelated Home Assistant state update must never
 flash white, become transparent or momentarily expose the stage background.
 This contract applies equally to browsers and HA Companion WebViews.
+`smoke_daycycle_layer_budget` additionally proves that a 1 cm/grid-point
+day-cycle plan keeps compositor surfaces in screen-space bounds and samples
+the compositor-presented pinch frames; the real-device beta pass remains the
+field acceptance for WebView-specific tile loss (#582).
 
 Once a second touch joins an input sequence, that whole sequence is navigation
 only, whichever contact began on a device marker. Marker tap, long press,

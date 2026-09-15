@@ -259,9 +259,12 @@ the same profiler available between stable promotions.
    owns the constant four-layer DOM and exact palette used by full View, kiosk,
    and `houseplan-space-card`; no surface copies thresholds or formulas. The
    environment is a pointer-inert sibling behind the plan. The only
-   phase-dependent effect touching the SVG is a zero-offset filter on the one
-   grouped `.hp-paperg` footprint; the content tree has no brightness, tint,
-   opacity, or blend changes. Full and static card lifecycles arm a 30-second
+   phase-dependent SVG effect is a zero-offset filter on a stage-sized sibling
+   SVG containing an exact copy of the grouped paper footprint. The visible
+   `.hp-paperg` is not filtered: keeping `will-change: filter` on that inner
+   coordinate-space group made 1 cm/point plans exceed WebView texture budgets
+   (#582). The content tree has no brightness, tint, opacity, or blend changes.
+   Full and static card lifecycles arm a 30-second
    timer only during clock fallback while visible, catch up on visibility return,
    and dispose it on disconnect. Window-ray geometry remains a separate
    north-gated consumer of `sun.sun`.
@@ -2010,6 +2013,14 @@ removes the inline styles, so a settled scene returns to its ordinary authored
 state. The coverage contract also holds when a pointer is held still between
 frames: the fast frame must contain every scene pixel that a forced target
 `viewBox` would contain inside `.stage`.
+
+The day-cycle paper outline is one of those scene SVGs (#582). Its root CSS box
+is stage-sized and owns the triple drop-shadow and idle `will-change: filter`;
+its child is only an exact paper alpha silhouette. During a gesture the same
+floor/camera projection and budgeted `viewBox` updates are applied to both the
+outline root and the visible plan root. This keeps #532's isolated raster path
+without promoting the inner 4700×4200-style local-coordinate footprint or the
+large overlap graph that HA Companion could not tile continuously.
 
 Neither the attribute nor an equal style property is written when its value is
 unchanged: an idle frame must leave the DOM byte-identical, or the settled raster

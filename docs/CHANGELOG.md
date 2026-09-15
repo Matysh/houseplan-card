@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Large plans using the “Follows the Sun” background no longer allocate their
+  soft outline in the plan's full internal coordinate size. Pinch-zoom in Home
+  Assistant Companion now keeps those compositor surfaces screen-sized, so
+  walls and floors no longer develop fixed white gaps on 1 cm/grid-point
+  spaces; the outline appearance and static backgrounds are unchanged
+  ([#582](https://github.com/Matysh/houseplan-card/issues/582)).
+
 - Sun rays from the outer window corners now respect occlusion by thick-wall
   jambs: at oblique angles only the part with a clear path through the complete
   opening reaches the room, instead of shining through solid wall

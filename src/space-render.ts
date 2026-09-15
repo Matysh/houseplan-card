@@ -47,6 +47,7 @@ import { valueBadgeTitle } from './device-value-badge';
 import { contentFingerprint } from './visual-continuity';
 import type { VirtualLightSnapshot } from './virtual-light-state';
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
+import { renderPaperShapes, type PaperShape } from './render/paper-scene';
 import { gridVisualScale, gridVisualUnits } from './grid-scale';
 import {
   spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
@@ -692,7 +693,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       dataLayer: 'glow-base',
     })
     : nothing;
-  const paperShapes = walls.length && canonicalWallGeometry?.paperD
+  const paperShapes: PaperShape[] = walls.length && canonicalWallGeometry?.paperD
     ? [{ path: canonicalWallGeometry.paperD }]
     : paperRoomShapes(space.rooms);
   const wallUnion = disp.showBorders ? canonicalWallGeometry : null;
@@ -898,7 +899,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       ?inert=${!!o.inert}
       style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--hp-cell-visual-scale:${gridVisualScale(cellCm)};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}">
       ${renderDayCycleEnvironment(dayCycle)}
-      <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
+      ${dayCycle && paperShapes.length ? svg`<svg class="hp-paper-outline-svg"
+          viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}"
+          preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
+          ${renderPaperShapes(paperShapes, 'hp-paper-outline-shapes')}
+        </svg>` : nothing}
+      <svg class="hp-static-plan-svg" viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
         ${wallUnion ? svg`<defs>
           <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
             width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)">
@@ -906,13 +912,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
               stroke-width="${2 * (hatchStep / HATCH_BASE_STEP_UNITS)}"></path>
           </pattern>
         </defs>` : nothing}
-        <g class="hp-paperg">${paperShapes.map((sh) =>
-          'path' in sh
-            ? svg`<path class="hp-paper" d="${sh.path}" fill-rule="evenodd"></path>`
-          : 'poly' in sh
-            ? svg`<polygon class="hp-paper" points="${sh.poly}"></polygon>`
-            : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}"></rect>`,
-        )}</g>
+        ${renderPaperShapes(paperShapes)}
         ${bgHref
           ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}"
               @load=${() => o.assetLoaded?.(space.bg!.href, bgHref)}

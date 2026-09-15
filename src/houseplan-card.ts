@@ -71,6 +71,7 @@ import {
   rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
 } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
+import { renderPaperShapes, type PaperShape } from './render/paper-scene';
 import {
   furnitureGraphic, furnitureArtIsLazy,
   furniturePlanScreenScale, furnitureStrokePx,
@@ -9181,11 +9182,7 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Paper under rooms, grown by shared-wall half-thickness when set. */
-  private _paperShapes(rooms: any[]): Array<
-    | { path: string }
-    | { poly: string }
-    | { rect: { x: number; y: number; w: number; h: number; rx: number } }
-  > {
+  private _paperShapes(rooms: RoomCfg[]): PaperShape[] {
     const walls = this._spaceWalls;
     if (!walls.length) return paperRoomShapes(rooms);
     const united = this._wallUnionGeometry();
@@ -11430,6 +11427,7 @@ export class HouseplanCard extends LitElement {
     const modeVisual = this._modeTransitionVisual;
     const dayCycle = this._dayCycleState();
     const dayCycleWeight = modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
+    const paperShapes = this._paperShapes(space.rooms);
     const transitionFromMode = this._modeTransition.state?.from.presentedMode;
     const glowLayerVisible = !this._markup || !!modeVisual && (
       modeVisual.presentedMode === 'view' || modeVisual.presentedMode === 'devices'
@@ -11595,7 +11593,15 @@ export class HouseplanCard extends LitElement {
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${isoFrame?.underlay ?? nothing}
             </svg>` : nothing}
-          <svg class=${iso ? 'plan-svg' : nothing}
+          ${dayCycle && paperShapes.length ? svg`<svg class="hp-paper-outline-svg"
+              data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
+              viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+              preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
+              <g transform=${iso ? isoFloorMatrixCss() : nothing}>
+                ${renderPaperShapes(paperShapes, 'hp-paper-outline-shapes')}
+              </g>
+            </svg>` : nothing}
+          <svg class="plan-svg"
             data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
             viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
             preserveAspectRatio="xMidYMid meet">
@@ -11617,13 +11623,7 @@ export class HouseplanCard extends LitElement {
                    One <g> around ALL paper shapes: the external day-cycle outline
                    (styles.ts) is composited once for the whole sheet, so
                    adjacent rooms never cast seams onto each other's paper. */}
-            ${this._wallHatchDefs(disp.color)}${svg`<g class="hp-paperg">${this._paperShapes(space.rooms).map((sh) =>
-              'path' in sh
-                ? svg`<path class="hp-paper" d="${sh.path}" fill-rule="evenodd" pointer-events="none"></path>`
-              : 'poly' in sh
-                ? svg`<polygon class="hp-paper" points="${sh.poly}" pointer-events="none"></polygon>`
-                : svg`<rect class="hp-paper" x="${sh.rect.x}" y="${sh.rect.y}" width="${sh.rect.w}" height="${sh.rect.h}" rx="${sh.rect.rx}" pointer-events="none"></rect>`,
-              )}</g>`}
+            ${this._wallHatchDefs(disp.color)}${renderPaperShapes(paperShapes)}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
             ${''/* the grid is a property of the plane, not of a box: it follows
                    the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}

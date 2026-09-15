@@ -3,11 +3,9 @@
 // Владелец: «в Firefox план тормозит; со статичным цветом фона тормоза
 // пропадают». Профиль подтвердил: наш JS спал 89 % времени, а в GPU-процессе
 // на кадр уезжало 23 МБ текстур. Виновником оказалась не сцена плана, а
-// тройной drop-shadow внешнего контура: группа .hp-paperg несёт одни бумажные
-// силуэты и при ховере и панораме не меняется, но фильтр жил в общем слое
-// плана — и каждая перерисовка плана заново прогоняла три прохода размытия по
-// габариту всего листа. Лечится одной подсказкой will-change: filter, которая
-// уводит отфильтрованную бумагу в свой композиционный слой.
+// тройной drop-shadow внешнего контура. После #582 alpha-силуэт живёт в
+// отдельном stage-sized SVG: это по-прежнему собственный промотированный слой,
+// но уже не координатно огромная внутренняя .hp-paperg.
 //
 // Смок проверяет две вещи, и вторая — не время, а ОТНОШЕНИЕ: абсолютные
 // миллисекунды зависят от машины и раннера, отношение «дневной цикл к
@@ -54,13 +52,17 @@ const setBackground = async (mode) => {
 const outlineStyle = () => page.evaluate(() => {
   const root = window.__card.shadowRoot || window.__card.renderRoot;
   const stage = root.querySelector('.stage');
-  const group = root.querySelector('.hp-paperg');
-  if (!group) return null;
-  const style = getComputedStyle(group);
+  const outline = root.querySelector('.hp-paper-outline-svg');
+  const paper = root.querySelector('.plan-svg .hp-paperg');
+  if (!paper) return null;
+  const style = outline ? getComputedStyle(outline) : null;
   return {
     daycycle: stage.classList.contains('daycycle'),
-    filter: style.filter,
-    willChange: style.willChange,
+    outlinePresent: !!outline,
+    filter: style?.filter || 'none',
+    willChange: style?.willChange || 'auto',
+    paperFilter: getComputedStyle(paper).filter,
+    paperWillChange: getComputedStyle(paper).willChange,
   };
 });
 
@@ -112,12 +114,16 @@ const out = {};
 await setBackground('daynight');
 const dayStyle = await outlineStyle();
 out.dayCycleClassOn = dayStyle?.daycycle === true;
+out.dayCycleOutlinePresent = dayStyle?.outlinePresent === true;
 out.dayCycleOutlineFiltered = /drop-shadow/.test(dayStyle?.filter || '');
 out.dayCycleOutlinePromoted = /filter/.test(dayStyle?.willChange || '');
+out.dayCyclePaperStaysUnfiltered = (dayStyle?.paperFilter || 'none') === 'none'
+  && !/filter/.test(dayStyle?.paperWillChange || '');
 
 await setBackground('static');
 const staticStyle = await outlineStyle();
 out.staticClassOff = staticStyle?.daycycle === false;
+out.staticOutlineAbsent = staticStyle?.outlinePresent === false;
 out.staticOutlineUnfiltered = (staticStyle?.filter || 'none') === 'none';
 // Статичный фон не платит за чужую подсказку ни слоем, ни памятью.
 out.staticOutlineNotPromoted = !/filter/.test(staticStyle?.willChange || '');
