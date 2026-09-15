@@ -342,11 +342,16 @@ export function rayQuad(a: number[], b: number[], dir: number[], len: number): n
 
 /** Clip a wedge by the room outline. Returns outer rings (may be several). */
 export function clipToRoom(quad: number[][], room: number[][]): number[][][] {
+  return intersectRings(quad, room);
+}
+
+/** Intersect simple outer rings and return the resulting outer rings. */
+function intersectRings(...rings: number[][][]): number[][][] {
   try {
-    const res = intersection(
-      [[...quad.map((p) => [p[0], p[1]]), [quad[0][0], quad[0][1]]]] as any,
-      [[...room.map((p) => [p[0], p[1]]), [room[0][0], room[0][1]]]] as any,
-    );
+    if (!rings.length || rings.some((ring) => ring.length < 3)) return [];
+    const closed = rings.map((ring) =>
+      [[...ring.map((p) => [p[0], p[1]]), [ring[0][0], ring[0][1]]]] as any);
+    const res = intersection(closed[0], ...closed.slice(1));
     const out: number[][][] = [];
     for (const poly of res as any) {
       const ring = poly?.[0];
@@ -369,6 +374,8 @@ export interface SunRay {
   /** Selected opening corners (inner or outer; the bright end of the gradient). */
   a: number[];
   b: number[];
+  /** Lines that can bound the visible shaft after aperture occlusion. */
+  rimSources?: number[][];
   /** Direction the light travels (AWAY from the sun), unit vector. */
   dir: [number, number];
   /** Wedge reach in render units: how far along `dir` every ray travels. */
@@ -437,22 +444,37 @@ export function computeSunRays(
     const b = [sourceX + hx, sourceY + hy];
     const len = k * w.length;
     const quad = rayQuad(a, b, away, len);
-    const polys = clipToRoom(quad, clipPoly);
+    let polys = clipToRoom(quad, clipPoly);
+    let rimSources: number[][] | undefined;
     if (origin === 'outer' && d > 0) {
       const innerX = w.x + normal[0] * d / 2;
       const innerY = w.y + normal[1] * d / 2;
-      polys.push(...clipToRoom(quad, [
+      const innerA = [innerX - hx, innerY - hy];
+      const innerB = [innerX + hx, innerY + hy];
+      const tunnel = [
         [sourceX - hx, sourceY - hy],
         [sourceX + hx, sourceY + hy],
         [innerX + hx, innerY + hy],
         [innerX - hx, innerY - hy],
-      ]));
+      ];
+      // The exterior span is fully bright at the facade, but only parallel
+      // trajectories which also pass through the inner span may continue on
+      // the room floor. Intersecting both ray strips models the jamb shadow at
+      // every window orientation without a direction-specific correction.
+      polys = [
+        ...intersectRings(quad, rayQuad(innerA, innerB, away, len), clipPoly),
+        ...intersectRings(quad, tunnel),
+      ];
+      // A clipped side can start at an inner jamb rather than either exterior
+      // corner. Let the rim extractor see all four possible ray-parallel
+      // boundary lines; it still emits only segments present in `polys`.
+      rimSources = [a, b, innerA, innerB];
     }
     if (!polys.length) continue;
     // inward normal + how deep the ray gets: cos of the incidence angle,
     // which windowLit() has already found to be above RAY_MIN_COS
     const cos = away[0] * normal[0] + away[1] * normal[1];
-    out.push({ openingId: w.id, roomId: info.roomId, polys, a, b, dir: away, len,
+    out.push({ openingId: w.id, roomId: info.roomId, polys, a, b, rimSources, dir: away, len,
       normal, depth: len * cos });
   }
   return out;
@@ -605,7 +627,13 @@ export function rayRimEdges(ray: SunRay, eps = 1e-4): number[][][] {
   const nx = -dy;
   const ny = dx;
   const out: number[][][] = [];
-  for (const src of [ray.a, ray.b]) {
+  const sources = ray.rimSources || [ray.a, ray.b];
+  const uniqueSources = sources.filter((src, index) => {
+    const offset = src[0] * nx + src[1] * ny;
+    return sources.findIndex((candidate) =>
+      Math.abs(candidate[0] * nx + candidate[1] * ny - offset) <= eps) === index;
+  });
+  for (const src of uniqueSources) {
     const spans: [number, number][] = [];
     for (const poly of ray.polys) {
       for (let i = 0; i < poly.length; i++) {

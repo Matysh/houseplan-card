@@ -441,7 +441,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 62);
+  assert.equal(GOLDEN_MATRIX_VERSION, 63);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -471,6 +471,18 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.equal(hostWall?.cm, 15, 'outer golden must retain a physical wall tunnel');
   assert.equal(outer.capture, 'sun-window');
   assert.equal(outer.sunRayPixels.minPixels >= 500, true);
+
+  const occlusion = GOLDEN_SCENARIOS.filter((item) =>
+    item.id.startsWith('lighting-sun-window-outer-occluded-dpr'));
+  assert.deepEqual(occlusion.map((item) => item.deviceScaleFactor), [1, 2]);
+  for (const item of occlusion) {
+    const prepared = prepareGoldenFixture(item);
+    assert.equal(prepared.config.settings.sun_ray_origin, 'outer');
+    assert.equal(prepared.states['sun.sun']?.attributes?.azimuth, 240,
+      'north=90 plus azimuth=240 keeps the top window lit at an oblique angle');
+    assert.equal(item.capture, 'sun-window');
+    assert.equal(item.sunRayPixels.minPixels >= 400, true);
+  }
 });
 
 test('vacuum smoothing golden covers current gaps and the previous run', () => {

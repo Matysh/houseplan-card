@@ -215,12 +215,16 @@ its far edge is parallel to the wall, clipped by the receiving room's
 half the wall thickness — see `docs/WALL-THICKNESS.md`); otherwise by
 the room polygon (`polyclip` intersection). In `outer`, the clip also includes
 only the physical rectangular window tunnel between the exterior span and the
-clean-floor contour; the surrounding wall body and outside facade remain
-occluders. With wall depth `d`, `inner` translates the source from the
-centreline by `+d/2` along the inward normal and `outer` by `-d/2`. Thus both
-crisp side edges begin exactly at the selected two corners at every incidence
-angle (`d = 0` makes both modes identical). The nominal length and gradient
-start at that selected span rather than adding the wall depth to the old reach.
+clean-floor contour. At oblique incidence, only parallel trajectories which
+cross both the exterior and interior spans continue onto the room floor, so
+the jamb cuts the visible width instead of letting light pass through the wall
+body. The surrounding wall body and outside facade remain occluders. With wall
+depth `d`, `inner` translates the source from the
+centreline by `+d/2` along the inward normal and `outer` by `-d/2`. Thus the
+full source span begins exactly at the selected two corners (`d = 0` makes both
+modes identical); in `outer`, a jamb can replace one or both continuing room
+edges with a new crisp boundary at the inner face. The nominal length and
+gradient start at the selected span rather than adding the wall depth to the old reach.
 Its length
 is `k(elevation)` in window lengths: ~1.75 at sunrise/sunset tapering to ~0.56 at the zenith
 (`0.56 + 1.19·(1 − elevation/90)^1.6` — the v1.56 curve

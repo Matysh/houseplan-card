@@ -5330,6 +5330,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'sun-ray-outer-jamb-occlusion-ignored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#580:" test/sun.test.mjs',
+    because: 'если комнатную часть снова клиповать только полом, косой внешний луч '
+      + 'проходит через сплошной откос; unit-защита #580 обязана увидеть лишний интервал',
+    patches: [{
+      file: 'src/sun.ts',
+      find: '        ...intersectRings(quad, rayQuad(innerA, innerB, away, len), clipPoly),',
+      replace: '        ...clipToRoom(quad, clipPoly), // mutant: skip the inner aperture',
+    }],
+  },
+  {
+    id: 'sun-ray-outer-occluded-rim-source-ignored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#580: an oblique" test/sun.test.mjs',
+    because: 'после затенения новая боковая граница начинается на внутреннем откосе; '
+      + 'unit-защита #580 обязана поймать пропавшую чёткую обводку',
+    patches: [{
+      file: 'src/sun.ts',
+      find: '      rimSources = [a, b, innerA, innerB];',
+      replace: '      rimSources = [a, b]; // mutant: ignore the occluded beam sides',
+    }],
+  },
+  {
     id: 'sun-ray-origin-outer-ignored',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#577: outer rays" test/sun.test.mjs',

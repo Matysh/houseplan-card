@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Sun rays from the outer window corners now respect occlusion by thick-wall
+  jambs: at oblique angles only the part with a clear path through the complete
+  opening reaches the room, instead of shining through solid wall
+  ([#580](https://github.com/Matysh/houseplan-card/issues/580)).
+
 ## v1.76.0-beta.4 — 2026-09-15
 
 - General settings now let window sunlight start at either the inner window

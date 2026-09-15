@@ -251,6 +251,20 @@ const rayInfo = () => page.evaluate(() => {
   const r = rays.find((q) => q.openingId === 'wE');
   const space = c._serverCfg.spaces.find((s) => s.id === 'f1');
   const opening = space.openings.find((o) => o.id === 'wE');
+  const pointInRing = ([x, y], ring) => {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i];
+      const [xj, yj] = ring[j];
+      if (((yi > y) !== (yj > y))
+          && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  };
+  const wallCenterX = opening.x * 1000;
+  const innerFaceX = r ? wallCenterX * 2 - r.a[0] : NaN;
+  const innerSeamYs = r?.polys?.flat()
+    .filter(([x]) => Math.abs(x - innerFaceX) < 1e-4).map(([, y]) => y) || [];
   return {
     ids: rays.map((q) => q.openingId).sort(),
     midY: r ? (r.a[1] + r.b[1]) / 2 : NaN,
@@ -259,6 +273,10 @@ const rayInfo = () => page.evaluate(() => {
     polyCount: r?.polys?.length ?? 0,
     hasExteriorTunnel: !!r?.polys?.some((poly) => poly.some(([x]) => x > 960 + 0.5)),
     hasRoomLight: !!r?.polys?.some((poly) => poly.some(([x]) => x < 960 - 0.5)),
+    innerSeamMinY: innerSeamYs.length ? Math.min(...innerSeamYs) : NaN,
+    innerSeamMaxY: innerSeamYs.length ? Math.max(...innerSeamYs) : NaN,
+    openPointLit: !!r?.polys?.some((poly) => pointInRing([950, 620], poly)),
+    blockedPointLit: !!r?.polys?.some((poly) => pointInRing([950, 646], poly)),
     domPolyCount: [...(c.renderRoot || c.shadowRoot).querySelectorAll('.sunlayer polygon')].length,
     domPointsFinite: [...(c.renderRoot || c.shadowRoot).querySelectorAll('.sunlayer polygon')]
       .every((polygon) => polygon.getAttribute('points')?.split(/[ ,]+/)
@@ -315,6 +333,9 @@ check('b701_baseline_mid_600', Math.abs(base.midY - 600) < 1, true);
 await page.evaluate(async () => {
   const c = window.__card;
   c._serverCfg.settings.sun_ray_origin = 'outer';
+  c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
+    entity_id: 'sun.sun', state: 'above_horizon', attributes: { azimuth: 60, elevation: 5 },
+  } } };
   c._cfgEpoch++;
   c.requestUpdate(); await c.updateComplete;
 });
@@ -323,11 +344,20 @@ check('outer_real_wall_source_is_exterior', outer.sourceX > 960, true);
 check('outer_real_wall_has_tunnel_and_room_polys', outer.polyCount >= 2, true);
 check('outer_real_wall_tunnel_is_painted', outer.hasExteriorTunnel, true);
 check('outer_real_wall_room_is_painted', outer.hasRoomLight, true);
+check('outer_oblique_inner_seam_starts_after_jamb_shadow',
+  outer.innerSeamMinY > 560 && outer.innerSeamMinY < 580, true);
+check('outer_oblique_inner_seam_stops_at_aperture',
+  Math.abs(outer.innerSeamMaxY - 640) < 0.01, true);
+check('outer_oblique_open_path_is_painted', outer.openPointLit, true);
+check('outer_oblique_wall_shadow_is_not_painted', outer.blockedPointLit, false);
 check('outer_real_wall_dom_polys_are_complete', outer.domPolyCount >= 2, true);
 check('outer_real_wall_dom_points_are_finite', outer.domPointsFinite, true);
 await page.evaluate(async () => {
   const c = window.__card;
   c._serverCfg.settings.sun_ray_origin = 'inner';
+  c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
+    entity_id: 'sun.sun', state: 'above_horizon', attributes: { azimuth: 90, elevation: 5 },
+  } } };
   c._cfgEpoch++;
   c.requestUpdate(); await c.updateComplete;
 });

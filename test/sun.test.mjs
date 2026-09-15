@@ -492,6 +492,43 @@ test('#577: outer rays start at the exterior corners and cross only the window t
   }
 });
 
+test('#580: an oblique outer ray reaches the room only through both aperture faces', () => {
+  const win = { id: 'wW', x: 100, y: 300, angle: 90, length: 80 };
+  const inner = { r1: [[110, 110], [490, 110], [490, 490], [110, 490]] };
+  const [ray] = computeSunRays(ROOMS, [win], 240, 60, 0, inner, { wW: 20 }, 'outer');
+  assert.ok(ray, 'the oblique west-window ray is present');
+
+  const seam = ray.polys.flat().filter(([x]) => near(x, 110, 1e-6)).map(([, y]) => y);
+  assert.ok(seam.length >= 2, 'the tunnel and room meet at the inner face');
+  assert.ok(near(Math.min(...seam), 260, 1e-6), 'the lower jamb blocks the shifted outer ray');
+  assert.ok(near(Math.max(...seam), 328.4529946162075, 1e-6),
+    'only the overlap with the outer ray strip reaches the room');
+  assert.ok(!seam.some((y) => y < 260 - 1e-6), 'no light enters through solid wall');
+
+  const rims = rayRimEdges(ray);
+  assert.ok(rims.some(([p, q]) =>
+    (near(p[0], 110, 1e-6) && near(p[1], 260, 1e-6) && q[0] > 110)
+    || (near(q[0], 110, 1e-6) && near(q[1], 260, 1e-6) && p[0] > 110)),
+  'the new room-side boundary keeps a crisp rim from the blocking jamb');
+});
+
+test('#580: normal incidence stays full-width and a fully blocked angle has no room light', () => {
+  const win = { id: 'wW', x: 100, y: 300, angle: 90, length: 80 };
+  const inner = { r1: [[110, 110], [490, 110], [490, 490], [110, 490]] };
+  const [normal] = computeSunRays(ROOMS, [win], 270, 60, 0, inner, { wW: 20 }, 'outer');
+  const normalSeam = normal.polys.flat()
+    .filter(([x]) => near(x, 110, 1e-6)).map(([, y]) => y);
+  assert.ok(near(Math.min(...normalSeam), 260, 1e-6));
+  assert.ok(near(Math.max(...normalSeam), 340, 1e-6));
+
+  const [grazing] = computeSunRays(ROOMS, [win], 190, 5, 0, inner, { wW: 20 }, 'outer');
+  assert.ok(grazing, 'the exterior face still admits a visible tunnel fragment');
+  assert.ok(grazing.polys.flat().some(([x]) => x > 90 + 1e-6 && x < 110 - 1e-6),
+    'light enters the physical tunnel before the jamb blocks it');
+  assert.ok(!grazing.polys.flat().some(([x]) => x > 110 + 1e-6),
+    'no fully blocked trajectory reaches the room');
+});
+
 test('#577: zero-depth walls are identical and invalid values preserve the legacy inner default', () => {
   assert.deepEqual(SUN_RAY_ORIGINS, ['inner', 'outer']);
   assert.equal(sunRayOriginOf({}), 'inner');

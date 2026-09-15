@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 62;
+export const GOLDEN_MATRIX_VERSION = 63;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -861,6 +861,17 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     stateOverrides: { 'sun.sun': { attributes: { azimuth: 270, elevation: 24 } } },
     sunRayPixels: { minPixels: 500, minChannelDelta: 4 },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...sunWindow },
+  ...[1, 2].map((deviceScaleFactor) => ({
+    id: `lighting-sun-window-outer-occluded-dpr${deviceScaleFactor}-dark`,
+    fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    // #580: diagonal light through the real 15 cm tunnel must narrow at the
+    // inner jamb instead of continuing through solid wall. Pin both raster
+    // scales because the tunnel/room seam is exactly where subpixels differ.
+    glowEnabled: false, allLightsOff: true, northDeg: 90, sunRayOrigin: 'outer',
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 240, elevation: 24 } } },
+    sunRayPixels: { minPixels: 400, minChannelDelta: 4 }, deviceScaleFactor,
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...sunWindow,
+  })),
   { id: 'lighting-fill-light-axis-split-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'light', glowEnabled: false, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-fill-temp-axis-split-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
