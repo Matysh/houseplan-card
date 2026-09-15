@@ -134,20 +134,18 @@ const out = await page.evaluate(async () => {
   const materialDefs = [...root().querySelectorAll('[data-hp-iso-material-def]')];
   const requiredDefs = [
     'hp-iso-wall-side', 'hp-iso-wall-top', 'hp-iso-wall-texture',
-    'hp-iso-floor-texture', 'hp-iso-ambient-shadow', 'hp-iso-contact-shadow',
-    'hp-iso-leaf-shadow',
+    'hp-iso-floor-texture', 'hp-iso-ambient-shadow',
   ];
   result.stage4DefinitionsBounded = materialDefs.length >= requiredDefs.length
     && materialDefs.length <= 16
     && new Set(materialDefs.map((node) => node.id)).size === materialDefs.length
     && requiredDefs.every((id) => materialDefs.some((node) => node.id === id));
-  const shadowNodes = [...root().querySelectorAll(
-    '.iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow',
-  )];
+  const shadowNodes = [...root().querySelectorAll('.iso-ambient-shadow')];
   const fixedLightTransform = card._isoSceneRuntime.isoFixedLightTransform(card._cellCm);
-  result.fixedLightVectorShared = ['iso-ambient-shadow', 'iso-contact-shadow', 'iso-leaf-shadow']
-      .every((name) => shadowNodes.some((node) => node.classList.contains(name)))
-    && shadowNodes.every((node) => node.getAttribute('transform') === fixedLightTransform);
+  result.fixedLightVectorShared = shadowNodes.length === 1
+    && shadowNodes[0].getAttribute('transform') === fixedLightTransform
+    && !root().querySelector('.iso-contact-shadow, .iso-leaf-shadow,'
+      + ' #hp-iso-contact-shadow, #hp-iso-leaf-shadow');
   const hasOpeningSurface = (id, surface, material) => !!root().querySelector(
     `[data-hp="iso-openings"] [data-id="${id}"][data-surface="${surface}"].iso-material-${material}`,
   );
@@ -364,8 +362,7 @@ const out = await page.evaluate(async () => {
     && !root().querySelector('.iso-overlay-plate, .iso-overlay-plate-texture')
     && !root().querySelector('.iso-overlay-tether, .iso-overlay-ground, #hp-iso-overlay-ground')
     && !root().querySelector('[data-hp-iso-material-def]')
-    && !root().querySelector('.iso-ambient-shadow, .iso-contact-shadow,'
-      + ' .iso-leaf-shadow');
+    && !root().querySelector('.iso-ambient-shadow');
   CSS.supports = nativeCssSupports;
   card.requestUpdate();
   await card.updateComplete;

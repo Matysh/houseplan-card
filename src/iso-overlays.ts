@@ -3,6 +3,7 @@ import {
   ISO_OVERLAY_VISUAL_OFFSET,
   ISO_WALL_HEIGHT,
   projectPlanPoint,
+  unprojectFloorPoint,
   type IsoCamera,
   type PlanPoint,
   type ScenePoint,
@@ -105,10 +106,41 @@ export interface IsoOverlayPlacement {
   tether: IsoOverlayTetherGeometry;
   status: 'ok' | 'degraded';
   reason: 'invalid-wall-geometry' | 'missing-owner' | 'invalid-safe-point'
-    | 'owner-boundary' | 'nudge-cap' | null;
+    | 'owner-boundary' | 'nudge-cap' | 'overlay-collision' | null;
+}
+
+export type IsoOverlayCollisionKind = Exclude<IsoRaisedOverlayKind, 'room-label'>;
+
+export interface IsoOverlayCollisionItem {
+  id: string;
+  kind: IsoOverlayCollisionKind;
+  placement: IsoOverlayPlacement;
+  /** Axis-aligned screen-facing half-size in scene units. */
+  screenHalfSize: PlanPoint;
+}
+
+export interface IsoOverlayCollisionInput {
+  items: readonly IsoOverlayCollisionItem[];
+  rooms: readonly IsoOverlayRoom[];
+  wallSilhouettes: readonly IsoWallSilhouette[];
+  sceneUnitsPerCssPixel: number;
+  visualOffset?: number;
+  safetyGapCssPx?: number;
+  maxNudgeCssPx?: number;
+  camera?: IsoCamera;
+}
+
+export interface IsoOverlayCollisionResult {
+  placements: ReadonlyMap<string, IsoOverlayPlacement>;
+  residualPairs: readonly (readonly [string, string])[];
 }
 
 const EPS = 1e-9;
+
+/** Stable identity shared by the pure resolver and the render-scene maps. */
+export const isoOverlayCollisionKey = (
+  kind: IsoOverlayCollisionKind, id: string,
+): string => `${kind}\u0000${id}`;
 
 const finitePoint = (point: readonly number[]): boolean =>
   point.length >= 2 && Number.isFinite(point[0]) && Number.isFinite(point[1]);
@@ -600,5 +632,264 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
     grounding: { center: floorScene, visible: false },
     tether: tetherGeometry(floorScene, visualScene, tetherVisible),
     status, reason,
+  };
+}
+
+const ISO_OVERLAY_GROUP_SEARCH_STEP_CSS_PX = 1;
+const ISO_OVERLAY_GROUP_CELL_CSS_PX = 64;
+
+/**
+ * One bounded, order-independent candidate lattice. It is allocated once and
+ * reused by every card. The radius is the public absolute displacement cap,
+ * not a per-collision allowance.
+ */
+const ISO_OVERLAY_GROUP_OFFSETS_CSS: readonly ScenePoint[] = Object.freeze((() => {
+  const offsets: ScenePoint[] = [];
+  const limit = Math.floor(ISO_OVERLAY_MAX_NUDGE_CSS_PX / ISO_OVERLAY_GROUP_SEARCH_STEP_CSS_PX);
+  for (let y = -limit; y <= limit; y++) {
+    for (let x = -limit; x <= limit; x++) {
+      if (x * x + y * y > limit * limit) continue;
+      offsets.push(Object.freeze([
+        x * ISO_OVERLAY_GROUP_SEARCH_STEP_CSS_PX,
+        y * ISO_OVERLAY_GROUP_SEARCH_STEP_CSS_PX,
+      ]) as ScenePoint);
+    }
+  }
+  offsets.sort((a, b) => a[0] * a[0] + a[1] * a[1]
+    - (b[0] * b[0] + b[1] * b[1])
+    || a[1] - b[1] || a[0] - b[0]);
+  return offsets;
+})());
+
+function overlayRootBounds(
+  item: IsoOverlayCollisionItem, center: ScenePoint,
+): Bounds {
+  return [
+    center[0] - item.screenHalfSize[0],
+    center[1] - item.screenHalfSize[1],
+    center[0] + item.screenHalfSize[0],
+    center[1] + item.screenHalfSize[1],
+  ];
+}
+
+function expandedBounds(bounds: Bounds, gap: number): Bounds {
+  return [bounds[0] - gap, bounds[1] - gap, bounds[2] + gap, bounds[3] + gap];
+}
+
+function overlapPenalty(a: Bounds, b: Bounds, gap: number): number {
+  const x = Math.min(a[2], b[2]) - Math.max(a[0], b[0]) + gap;
+  const y = Math.min(a[3], b[3]) - Math.max(a[1], b[1]) + gap;
+  return x > EPS && y > EPS ? x * y : 0;
+}
+
+function raisedSceneToPlan(
+  point: ScenePoint, visualOffset: number, camera: IsoCamera,
+): PlanPoint {
+  const tilt = camera.tiltDeg * Math.PI / 180;
+  return unprojectFloorPoint([
+    point[0],
+    point[1] + visualOffset * camera.zScale * Math.sin(tilt),
+  ], camera);
+}
+
+function placementAtGroupOffset(
+  base: IsoOverlayPlacement,
+  offsetCss: ScenePoint,
+  unitsPerPixel: number,
+  residual: boolean,
+): IsoOverlayPlacement {
+  const nudgeScene: ScenePoint = [
+    offsetCss[0] * unitsPerPixel,
+    offsetCss[1] * unitsPerPixel,
+  ];
+  if (!residual
+      && Math.abs(nudgeScene[0] - base.nudgeScene[0]) <= EPS
+      && Math.abs(nudgeScene[1] - base.nudgeScene[1]) <= EPS) return base;
+  const delta: ScenePoint = [
+    nudgeScene[0] - base.nudgeScene[0],
+    nudgeScene[1] - base.nudgeScene[1],
+  ];
+  const visualScene: ScenePoint = [
+    base.raisedScene[0] + nudgeScene[0],
+    base.raisedScene[1] + nudgeScene[1],
+  ];
+  const nudgeDistanceCss = Math.hypot(offsetCss[0], offsetCss[1]);
+  return {
+    ...base,
+    visualScene,
+    footprint: base.footprint.map((point) => [
+      point[0] + delta[0], point[1] + delta[1],
+    ] as ScenePoint),
+    nudgeScene,
+    nudgeCss: offsetCss,
+    nudgeDistanceCss,
+    nudged: nudgeDistanceCss > EPS,
+    capped: base.capped || residual,
+    status: residual ? 'degraded' : base.status,
+    reason: residual ? 'overlay-collision' : base.reason,
+    tether: tetherGeometry(base.floorScene, visualScene, false),
+  };
+}
+
+type AcceptedOverlay = {
+  key: string;
+  bounds: Bounds;
+};
+
+/**
+ * Resolve device/lock collisions after each item has independently cleared
+ * wall geometry. Room labels deliberately do not enter this pass. Earlier
+ * items are the ones with the smaller already-required wall displacement;
+ * ties use kind/id, never HA registry or render order.
+ */
+export function resolveIsoOverlayCollisions(
+  input: IsoOverlayCollisionInput,
+): IsoOverlayCollisionResult {
+  const unitsPerPixel = input.sceneUnitsPerCssPixel;
+  const maxNudge = input.maxNudgeCssPx ?? ISO_OVERLAY_MAX_NUDGE_CSS_PX;
+  const safetyGap = input.safetyGapCssPx ?? ISO_OVERLAY_SAFETY_GAP_CSS_PX;
+  const visualOffset = input.visualOffset ?? ISO_OVERLAY_VISUAL_OFFSET;
+  const camera = input.camera || ISO_CAMERA;
+  if (!(unitsPerPixel > 0) || !Number.isFinite(unitsPerPixel)
+      || !(maxNudge >= 0) || !Number.isFinite(maxNudge)
+      || !(safetyGap >= 0) || !Number.isFinite(safetyGap)) {
+    throw new Error('invalid isometric overlay collision input');
+  }
+  const gapUnits = safetyGap * unitsPerPixel;
+  const cellUnits = ISO_OVERLAY_GROUP_CELL_CSS_PX * unitsPerPixel;
+  const rooms = new Map(input.rooms.filter(validRoom).map((room) => [room.id, room]));
+  const wallsValid = input.wallSilhouettes.every(validSilhouette);
+  const accepted: AcceptedOverlay[] = [];
+  const cells = new Map<string, number[]>();
+  const placements = new Map<string, IsoOverlayPlacement>();
+  const residualPairs: Array<readonly [string, string]> = [];
+  const stableItems = [...input.items].sort((a, b) =>
+    a.placement.nudgeDistanceCss - b.placement.nudgeDistanceCss
+    || isoOverlayCollisionKey(a.kind, a.id).localeCompare(isoOverlayCollisionKey(b.kind, b.id)));
+
+  const cellRange = (bounds: Bounds): readonly [number, number, number, number] => [
+    Math.floor(bounds[0] / cellUnits), Math.floor(bounds[1] / cellUnits),
+    Math.floor(bounds[2] / cellUnits), Math.floor(bounds[3] / cellUnits),
+  ];
+  const nearby = (bounds: Bounds): number[] => {
+    const [minX, minY, maxX, maxY] = cellRange(expandedBounds(bounds, gapUnits));
+    const result = new Set<number>();
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        for (const index of cells.get(`${x}:${y}`) || []) result.add(index);
+      }
+    }
+    return [...result].sort((a, b) => a - b);
+  };
+  const addAccepted = (value: AcceptedOverlay): void => {
+    const index = accepted.push(value) - 1;
+    const [minX, minY, maxX, maxY] = cellRange(value.bounds);
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const key = `${x}:${y}`;
+        const list = cells.get(key) || [];
+        list.push(index);
+        cells.set(key, list);
+      }
+    }
+  };
+
+  for (const item of stableItems) {
+    const key = isoOverlayCollisionKey(item.kind, item.id);
+    const base = item.placement;
+    const baseOffsetCss: ScenePoint = [
+      base.nudgeScene[0] / unitsPerPixel,
+      base.nudgeScene[1] / unitsPerPixel,
+    ];
+    const baseFootprint = base.footprint.map((point) => [
+      point[0] - base.nudgeScene[0], point[1] - base.nudgeScene[1],
+    ] as ScenePoint);
+    const ownerRoom = base.owner ? rooms.get(base.owner.id) || null : null;
+    const currentPlan = raisedSceneToPlan(base.visualScene, visualOffset, camera);
+    const wallCandidates = wallsValid && baseFootprint.length
+      ? input.wallSilhouettes.filter((wall) => {
+        const wallBounds = silhouetteBounds(wall, true);
+        if (!wallBounds) return false;
+        const radius = maxNudge * unitsPerPixel;
+        const footprintBounds = ringBounds(baseFootprint);
+        return !!footprintBounds && boundsNear(expandedBounds(footprintBounds, radius),
+          wallBounds, gapUnits);
+      })
+      : input.wallSilhouettes;
+
+    const candidate = (offsetCss: ScenePoint): {
+      placement: IsoOverlayPlacement;
+      bounds: Bounds;
+      conflicts: readonly number[];
+      penalty: number;
+    } | null => {
+      const distance = Math.hypot(offsetCss[0], offsetCss[1]);
+      if (distance > maxNudge + EPS) return null;
+      const offsetScene: ScenePoint = [
+        offsetCss[0] * unitsPerPixel, offsetCss[1] * unitsPerPixel,
+      ];
+      const sameAsBase = Math.abs(offsetScene[0] - base.nudgeScene[0]) <= EPS
+        && Math.abs(offsetScene[1] - base.nudgeScene[1]) <= EPS;
+      const visualScene: ScenePoint = [
+        base.raisedScene[0] + offsetScene[0],
+        base.raisedScene[1] + offsetScene[1],
+      ];
+      if (!sameAsBase) {
+        if (!wallsValid || !ownerRoom) return null;
+        const plan = raisedSceneToPlan(visualScene, visualOffset, camera);
+        if (!pointStrictlyInRoom(plan, ownerRoom)) return null;
+        if (pointStrictlyInRoom(currentPlan, ownerRoom)
+            && !segmentStrictlyInRoom(currentPlan, plan, ownerRoom)) return null;
+        const footprint = baseFootprint.map((point) => [
+          point[0] + offsetScene[0], point[1] + offsetScene[1],
+        ] as ScenePoint);
+        const footprintBounds = ringBounds(footprint);
+        if (!footprintBounds || wallCandidates.some((wall) =>
+          footprintNearSilhouette(footprint, footprintBounds, wall, gapUnits, true))) return null;
+      }
+      const bounds = overlayRootBounds(item, visualScene);
+      const conflicts = nearby(bounds).filter((index) =>
+        overlapPenalty(bounds, accepted[index].bounds, gapUnits) > EPS);
+      const penalty = conflicts.reduce((sum, index) =>
+        sum + overlapPenalty(bounds, accepted[index].bounds, gapUnits), 0);
+      return {
+        placement: placementAtGroupOffset(base, offsetCss, unitsPerPixel, false),
+        bounds, conflicts, penalty,
+      };
+    };
+
+    let best = candidate(baseOffsetCss);
+    if (!best || best.conflicts.length) {
+      for (const offset of ISO_OVERLAY_GROUP_OFFSETS_CSS) {
+        if (Math.hypot(offset[0], offset[1]) > maxNudge + EPS) break;
+        if (Math.abs(offset[0] - baseOffsetCss[0]) <= EPS
+            && Math.abs(offset[1] - baseOffsetCss[1]) <= EPS) continue;
+        const next = candidate(offset);
+        if (!next) continue;
+        if (!next.conflicts.length) { best = next; break; }
+        if (!best || next.penalty < best.penalty - EPS
+            || Math.abs(next.penalty - best.penalty) <= EPS
+              && next.placement.nudgeDistanceCss < best.placement.nudgeDistanceCss - EPS) best = next;
+      }
+    }
+    if (!best) {
+      const placement = placementAtGroupOffset(base, baseOffsetCss, unitsPerPixel, true);
+      const bounds = overlayRootBounds(item, placement.visualScene);
+      best = { placement, bounds, conflicts: nearby(bounds), penalty: Infinity };
+    } else if (best.conflicts.length) {
+      best = { ...best, placement: placementAtGroupOffset(
+        base, best.placement.nudgeCss, unitsPerPixel, true,
+      ) };
+    }
+    for (const index of best.conflicts) {
+      if (overlapPenalty(best.bounds, accepted[index].bounds, gapUnits) > EPS)
+        residualPairs.push(Object.freeze([accepted[index].key, key]));
+    }
+    placements.set(key, best.placement);
+    addAccepted({ key, bounds: best.bounds });
+  }
+  return {
+    placements,
+    residualPairs: Object.freeze(residualPairs),
   };
 }

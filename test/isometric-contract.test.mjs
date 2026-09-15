@@ -166,7 +166,10 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
     'export function isoStructuralOpeningHost', 'export interface IsoStructuralSourceInput');
   for (const field of ['hostId: resolved.host.id', 't: resolved.t', 'depth: resolved.depth',
     'face: partitionOpeningFace']) assert.ok(hostProjection.includes(field), `missing ${field}`);
-  assert.match(openings, /ISO_OPENING_GEOMETRY_POLICY[\s\S]*?revision: 2/);
+  assert.match(openings, /ISO_OPENING_GEOMETRY_POLICY[\s\S]*?revision: 3/);
+  assert.match(openings,
+    /input\.type === 'door' \|\| input\.type === 'gate'[\s\S]*?\? input\.face[\s\S]*?: openingSymbolOffset/,
+  'door/gate volume uses the selected physical face while Flat/window geometry stays canonical');
   assert.match(source,
     /buildIsoOpeningBasis\(\{ \.\.\.opening, face \}, wallHeight, openingGeometryPolicy\)/);
   assert.match(openings, /policy\.gateTurnDeg[\s\S]*?policy\.gateTopRatio/);
@@ -279,7 +282,7 @@ test('low-plane DOM roots expose one floor/visual identity and preserve existing
   assert.match(styles, /\.iso-overlays-svg,[\s\S]*?pointer-events:\s*none/);
 });
 
-test('Stage 4 materials and shadows are bounded, theme-aware and capability-safe', () => {
+test('Stage 4 materials and ambient shadow are bounded, theme-aware and capability-safe', () => {
   const materialIds = [...sceneRender.matchAll(/id="(hp-iso-[^"]+)" data-hp-iso-material-def/g)]
     .map((match) => match[1]);
   assert.ok(materialIds.length >= 5 && materialIds.length <= 12,
@@ -295,8 +298,18 @@ test('Stage 4 materials and shadows are bounded, theme-aware and capability-safe
   assert.match(styles, /iso-material-glass-top[\s\S]*?fill:\s*#e3f2fa/);
   const rendering = section(sceneRender, 'function renderIsoDefs(', 'export function resolveIsoDecorationLayers');
   assert.match(sceneRender, /return `translate\(\$\{gridVisualUnits\(4, cellCm\)\} \$\{gridVisualUnits\(8, cellCm\)\}\)`/);
-  assert.equal([...sceneRender.matchAll(/transform=\$\{isoFixedLightTransform\(cellCm\)\}/g)].length, 3,
-    'ambient, contact and opening shadows share one fixed-light vector');
+  assert.equal([...sceneRender.matchAll(/transform=\$\{isoFixedLightTransform\(cellCm\)\}/g)].length, 1,
+    'only the approved building ambient shadow uses the fixed-light vector');
+  assert.doesNotMatch(sceneRender, /hp-iso-contact-shadow|hp-iso-leaf-shadow|iso-contact-shadow|iso-leaf-shadow/);
+  assert.doesNotMatch(styles, /\.iso-contact-shadow|\.iso-leaf-shadow/);
+  assert.match(styles, /\.iso-opening-panel\.iso-material-matte-leaf\s*\{[\s\S]*?stroke:\s*none/);
+  assert.match(styles, /\.stage\.theme-dark \.iso-opening-panel\.iso-material-matte-leaf\s*\{[^}]*stroke:\s*none/);
+  assert.match(styles, /\.stage:not\(\.theme-light\) \.iso-opening-panel\.iso-material-matte-leaf\s*\{[^}]*stroke:\s*none/);
+  assert.match(styles, /iso-material-glass-side[\s\S]*?stroke:\s*#8fb4c7/,
+    'window glass keeps its thin border');
+  assert.match(styles,
+    /\.stage\.projection-iso\.mode-view \.dev,[\s\S]*?\.stage\.projection-iso\.mode-view \.oplock\s*\{\s*z-index:\s*2/,
+  'interactive overlays remain above room labels');
   assert.doesNotMatch(rendering, /sunState|_renderSun|Date\.now|Math\.random/);
 });
 

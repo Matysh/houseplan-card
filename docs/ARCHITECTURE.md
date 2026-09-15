@@ -843,10 +843,11 @@ applies `openingAmount()` only during live projection, keeping contact updates
 out of the boolean geometry path.
 
 Composition is shared-viewBox SVG: ambient shadow/floor edge → the existing
-affine-projected floor/live scene → contact/leaf shadows → wall material and
-vertical panels → existing screen-facing HTML overlays. A constant set of
-gradients/filters serves every face. Unsupported decoration or forced colours
-remove nuance/shadows without changing projection; only structural failure
+affine-projected floor/live scene → wall material and vertical panels →
+existing screen-facing HTML overlays. Internal wall-contact and opening-leaf
+shadows are deliberately absent. A constant set of gradients and one ambient
+filter serves every face. Unsupported decoration or forced colours remove
+nuance/ambient shadow without changing projection; only structural failure
 uses the Stage 1 latched Flat fallback. Details and fixed ratios are recorded in
 `docs/adr/122-isometric-stage2-composition.md`.
 
@@ -879,17 +880,30 @@ and otherwise the smallest strictly containing room, and lock badges inherit
 the physical room side selected by opening-host geometry rather than
 re-inferring ownership from their offset point.
 
+After individual wall correction, one deterministic group pass separates the
+full screen-space roots of devices and lock badges within the same absolute 48
+CSS-pixel cap. A bounded spatial grid avoids all-pairs scans; stable required
+displacement plus kind/id controls priority independently of HA registry order.
+Room labels are excluded and remain below interactive roots. An impossible
+layout keeps every root and reports stable residual pairs rather than hiding,
+shrinking or moving an item across its owning-room boundary. Live placement is
+memoized by immutable geometry/footprint signatures; fit probes reserve the
+maximum envelope and skip this pass.
+
 Stage 4 opening bases retain state-independent full-depth reveals and matte
 door/gate leaf thickness. Windows use a 0.38H..1.00H fixed frame, a
 0.40H..0.98H sash and 0.45H..0.93H glass with neutral rails and separate blue
 side/top glass materials. Live
 `openingAmount()` still projects leaves after the LRU hit. Passage has no
-decorative volume. The shared wall/opening painter queue retains its global
-screen-depth slots and reorders only one window's existing slots by physical
-camera depth, preventing a rear sill from covering elevated glass. A bounded
-set of shared material definitions textures only generated 2.5D surfaces and
-uses one fixed visual-light vector; theme, HA Sun, hover/focus and filter
-capability remain presentation-only inputs.
+decorative volume. Derived door/gate leaves pivot on the selected physical host
+face while the saved/Flat axis remains unchanged. The shared wall/opening
+painter queue retains its global screen-depth slots and reorders only one
+opening's existing slots by physical camera depth, preventing a rear sill from
+covering elevated glass or a rotating prism from inverting its faces. Door and
+gate faces have no stroke; window frame/glass borders remain. A bounded set of
+shared material definitions textures only generated 2.5D surfaces and uses one
+fixed visual-light vector for the single building ambient shadow; theme, HA
+Sun, hover/focus and filter capability remain presentation-only inputs.
 
 The DOM exposes fail-closed evidence without becoming public API:
 `.stage[data-hp-iso-stage="4"]` carries the structural build counter, low-plane
@@ -1133,10 +1147,13 @@ authoritative, while `x/y/angle` are an atomically refreshed compatibility
 projection. No explicit host ever falls back to a nearest wall.
 
 Rendering (after easy-floorplan, MIT): SVG symbol at the origin (jambs + hinged leaf + a
-quarter-circle arc revealed via `stroke-dashoffset`), translated/rotated onto the wall. The
-visible group is always centred across wall depth on Flat, preview, Static and Iso; the shared
-pure placement helper returns an exact zero translation for every type and `flip_v` value.
-`flip_v` changes only door/window direction or the gate turn. Windows are two casement leaves.
+quarter-circle arc revealed via `stroke-dashoffset`), translated/rotated onto the wall. Flat,
+preview and Static keep the visible group centred across wall depth; their shared pure placement
+helper returns an exact zero translation for every type and `flip_v` value. The derived 2.5D
+door/gate volume instead pivots on the selected physical host face so its prism does not begin
+inside masonry; this never changes saved coordinates or the Flat symbol. Windows remain centred
+through the reveal. `flip_v` changes door/window direction or the gate turn and selects the
+corresponding 2.5D host face. Windows are two casement leaves.
 A gate has the same data/light/contact/lock semantics as a door, but
 uses two centred half-width leaves opening only 10° toward the selected face and no large swing arc.
 Its default width in the editor is 300 cm. `openingAmount` (pure) maps the contact state to

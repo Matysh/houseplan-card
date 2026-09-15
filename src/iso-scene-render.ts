@@ -24,8 +24,8 @@ import {
   type IsoOpeningGeometryPolicy, type IsoOpeningSurface,
 } from './iso-openings';
 import {
-  ISO_OVERLAY_MAX_NUDGE_CSS_PX, isoRoomSafePoint,
-  resolveIsoOverlayOwner, resolveIsoOverlayPlacement,
+  ISO_OVERLAY_MAX_NUDGE_CSS_PX, isoOverlayCollisionKey, isoRoomSafePoint,
+  resolveIsoOverlayCollisions, resolveIsoOverlayOwner, resolveIsoOverlayPlacement,
   type IsoOverlayPlacement, type IsoOverlayRoom, type IsoRaisedOverlayKind,
   type IsoWallSilhouette,
 } from './iso-overlays';
@@ -78,10 +78,11 @@ const isoDepthStableKey = (entry: IsoWallDepthQueueEntry): string => {
  * Far-to-near painter queue shared by every opaque Stage 4 structural surface.
  *
  * The established screen-depth order remains authoritative between unrelated
- * walls/openings. Inside one window, however, height is physical camera depth:
- * the glass above a sill must paint over the sill's rear projection. Reorder
- * only that window's already allocated queue slots, so the fix cannot move an
- * unrelated wall or opening into a different layer.
+ * walls/openings. Inside one opening, however, physical camera depth is the
+ * authoritative face order: elevated window glass must paint over its rear
+ * sill, and a door/gate prism must not invert its front/back faces while it
+ * rotates. Reorder only that opening's already allocated queue slots, so the
+ * fix cannot move an unrelated wall or opening into a different layer.
  */
 export function buildIsoWallDepthQueue(
   geometry: IsoWallGeometry,
@@ -101,27 +102,28 @@ export function buildIsoWallDepthQueue(
   entries.sort((a, b) => a.depth - b.depth
     || isoDepthLayerRank(a) - isoDepthLayerRank(b)
     || isoDepthStableKey(a).localeCompare(isoDepthStableKey(b)));
-  const windowSlots = new Map<string, IsoWallDepthQueueEntry[]>();
+  const openingSlots = new Map<string, IsoWallDepthQueueEntry[]>();
   for (const entry of entries) {
-    if (entry.layer !== 'opening' || entry.surface.type !== 'window') continue;
-    const slots = windowSlots.get(entry.surface.id) || [];
+    if (entry.layer !== 'opening') continue;
+    const key = `${entry.surface.type}\u0000${entry.surface.id}`;
+    const slots = openingSlots.get(key) || [];
     slots.push(entry);
-    windowSlots.set(entry.surface.id, slots);
+    openingSlots.set(key, slots);
   }
-  for (const slots of windowSlots.values()) slots.sort((a, b) => {
+  for (const slots of openingSlots.values()) slots.sort((a, b) => {
     const surfaceA = a.layer === 'opening' ? a.surface : null;
     const surfaceB = b.layer === 'opening' ? b.surface : null;
     return (surfaceA?.cameraDepth ?? surfaceA?.depth ?? 0)
       - (surfaceB?.cameraDepth ?? surfaceB?.depth ?? 0)
       || isoDepthStableKey(a).localeCompare(isoDepthStableKey(b));
   });
-  const nextWindowSlot = new Map<string, number>();
+  const nextOpeningSlot = new Map<string, number>();
   return Object.freeze(entries.map((entry) => {
-    if (entry.layer !== 'opening' || entry.surface.type !== 'window') return entry;
-    const id = entry.surface.id;
-    const index = nextWindowSlot.get(id) || 0;
-    nextWindowSlot.set(id, index + 1);
-    return windowSlots.get(id)?.[index] || entry;
+    if (entry.layer !== 'opening') return entry;
+    const key = `${entry.surface.type}\u0000${entry.surface.id}`;
+    const index = nextOpeningSlot.get(key) || 0;
+    nextOpeningSlot.set(key, index + 1);
+    return openingSlots.get(key)?.[index] || entry;
   }));
 }
 
@@ -139,6 +141,10 @@ export type IsoOverlayRenderScene = {
   rooms: ReadonlyMap<RoomCfg, IsoOverlayPlacement>;
   locks: ReadonlyMap<string, IsoOverlayPlacement>;
   entries: readonly IsoOverlayRenderEntry[];
+  /** Internal memo key for the complete raised-overlay group placement. */
+  collisionSignature: string;
+  /** Stable keys of pairs that could not be fully separated inside the cap. */
+  residualPairs: readonly (readonly [string, string])[];
 };
 
 /**
@@ -951,9 +957,6 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       });
     }
   }
-  const scene: IsoOverlayRenderScene = {
-    devices, rooms: roomPlacements, locks, entries: Object.freeze(entries),
-  };
   const mode = input.resolveCollisions === false ? 'fit' : 'live';
   let renderScenes = isoOverlayRenderSceneCache.get(input.wallSilhouettes);
   if (!renderScenes) {
@@ -961,6 +964,48 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     isoOverlayRenderSceneCache.set(input.wallSilhouettes, renderScenes);
   }
   const previous = renderScenes.get(mode);
+  const collisionSignature = entries.map((entry) => {
+    const placement = entry.placement;
+    return [entry.kind, entry.id, placement.floorAnchor[0], placement.floorAnchor[1],
+      placement.raisedScene[0], placement.raisedScene[1], placement.nudgeScene[0],
+      placement.nudgeScene[1], placement.owner?.id || '', placement.status, placement.reason || '',
+      entry.screenHalfSize[0], entry.screenHalfSize[1], unitsPerPixel].join('|');
+  }).sort().join('\u0001');
+  if (previous?.collisionSignature === collisionSignature
+      && samePlacementMap(previous.rooms, roomPlacements)) return previous;
+
+  const collision = mode === 'live' ? resolveIsoOverlayCollisions({
+    items: entries.flatMap((entry) => entry.kind === 'room-label' ? [] : [{
+      id: entry.id,
+      kind: entry.kind,
+      placement: entry.placement,
+      screenHalfSize: entry.screenHalfSize,
+    }]),
+    rooms,
+    wallSilhouettes: input.wallSilhouettes,
+    sceneUnitsPerCssPixel: unitsPerPixel,
+    visualOffset,
+  }) : { placements: new Map<string, IsoOverlayPlacement>(), residualPairs: [] };
+  const resolvedEntries = Object.freeze(entries.map((entry) => {
+    if (entry.kind === 'room-label') return entry;
+    const placement = collision.placements.get(isoOverlayCollisionKey(entry.kind, entry.id))
+      || entry.placement;
+    return placement === entry.placement ? entry : { ...entry, placement };
+  }));
+  const resolvedDevices = new Map<string, IsoOverlayPlacement>();
+  const resolvedLocks = new Map<string, IsoOverlayPlacement>();
+  for (const entry of resolvedEntries) {
+    if (entry.kind === 'device') resolvedDevices.set(entry.id, entry.placement);
+    else if (entry.kind === 'opening-lock') resolvedLocks.set(entry.id, entry.placement);
+  }
+  const scene: IsoOverlayRenderScene = {
+    devices: resolvedDevices,
+    rooms: roomPlacements,
+    locks: resolvedLocks,
+    entries: resolvedEntries,
+    collisionSignature,
+    residualPairs: Object.freeze([...collision.residualPairs]),
+  };
   if (previous && sameOverlayEntries(previous.entries, scene.entries)
       && samePlacementMap(previous.devices, scene.devices)
       && samePlacementMap(previous.rooms, scene.rooms)
@@ -1095,14 +1140,14 @@ export function resolveIsoFramePresentation(input: {
 
 const emptySvg = (): TemplateResult => svg`` as unknown as TemplateResult;
 
-/** One scale-aware visual light vector shared by every Stage 4 shadow plane. */
+/** Scale-aware visual light vector for the one remaining building ambient shadow. */
 export function isoFixedLightTransform(cellCm: number): string {
   return `translate(${gridVisualUnits(4, cellCm)} ${gridVisualUnits(8, cellCm)})`;
 }
 
 function renderIsoDefs(
   layers: IsoDecorationLayers,
-  root: 'underlay' | 'shadows' | 'walls',
+  root: 'underlay' | 'walls',
   cellCm: number,
 ): TemplateResult {
   const visualScale = gridVisualScale(cellCm);
@@ -1130,13 +1175,6 @@ function renderIsoDefs(
     ${root === 'underlay' && layers.shadows ? svg`
       <filter id="hp-iso-ambient-shadow" data-hp-iso-material-def x="-12%" y="-12%" width="124%" height="130%">
         <feGaussianBlur stdDeviation="${7 * visualScale}"></feGaussianBlur>
-      </filter>` : nothing}
-    ${root === 'shadows' && layers.shadows ? svg`
-      <filter id="hp-iso-contact-shadow" data-hp-iso-material-def x="-8%" y="-20%" width="116%" height="140%">
-        <feGaussianBlur stdDeviation="${2.5 * visualScale}"></feGaussianBlur>
-      </filter>
-      <filter id="hp-iso-leaf-shadow" data-hp-iso-material-def x="-12%" y="-30%" width="124%" height="160%">
-        <feGaussianBlur stdDeviation="${2 * visualScale}"></feGaussianBlur>
       </filter>` : nothing}
   </defs>` as unknown as TemplateResult;
 }
@@ -1176,21 +1214,12 @@ export function renderIsoUnderlay(
 }
 
 export function renderIsoShadows(
-  layers: IsoDecorationLayers,
-  panels: readonly IsoOpeningPanel[],
-  geometry: IsoWallGeometry | undefined,
-  cellCm: number,
+  _layers: IsoDecorationLayers,
+  _panels: readonly IsoOpeningPanel[],
+  _geometry: IsoWallGeometry | undefined,
+  _cellCm: number,
 ): TemplateResult {
-  if (!layers.shadows || !geometry) return emptySvg();
-  return svg`<g class="iso-shadows" data-hp="iso-shadows" aria-hidden="true" pointer-events="none">
-    ${renderIsoDefs(layers, 'shadows', cellCm)}
-    <path class="iso-contact-shadow" d=${geometry.contactPath}
-      transform=${isoFixedLightTransform(cellCm)}></path>
-    <g class="iso-leaf-shadows">${panels.map((panel) =>
-      svg`<path class="iso-leaf-shadow" d=${panel.shadowD}
-        data-id=${panel.id} data-leaf=${panel.leaf}
-        transform=${isoFixedLightTransform(cellCm)}></path>`)}</g>
-  </g>` as unknown as TemplateResult;
+  return emptySvg();
 }
 
 export function renderIsoWalls(

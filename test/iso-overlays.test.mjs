@@ -4,8 +4,10 @@ import {
   ISO_OVERLAY_MAX_NUDGE_CSS_PX,
   ISO_OVERLAY_SAFETY_GAP_CSS_PX,
   buildIsoFootprintPolygon,
+  isoOverlayCollisionKey,
   isoOverlayPlane,
   isoRoomSafePoint,
+  resolveIsoOverlayCollisions,
   resolveIsoOverlayOwner,
   resolveIsoOverlayPlacement,
 } from '../test-build/iso-overlays.js';
@@ -51,6 +53,72 @@ test('the exact Stage 4 overlay matrix keeps only the three interactive roots on
   ]) assert.equal(isoOverlayPlane(kind, true), 'floor', kind);
   for (const kind of ['device', 'room-label', 'opening-lock'])
     assert.equal(isoOverlayPlane(kind, false), 'floor', `${kind} without borders`);
+});
+
+test('group collision separates a solvable dense set independently of input order', () => {
+  const make = (id) => ({
+    id,
+    kind: id === 'lock' ? 'opening-lock' : 'device',
+    placement: placement({
+      floorAnchor: [100, 100],
+      rooms: [square('room', 0, 0, 200, 200, [100, 100])],
+      visualOffset: 0,
+      camera: identityCamera,
+    }),
+    screenHalfSize: [8, 8],
+  });
+  const solve = (items) => resolveIsoOverlayCollisions({
+    items,
+    rooms: [square('room', 0, 0, 200, 200, [100, 100])],
+    wallSilhouettes: [],
+    sceneUnitsPerCssPixel: 1,
+    visualOffset: 0,
+    camera: identityCamera,
+  });
+  const normal = solve([make('a'), make('b'), make('lock')]);
+  const reversed = solve([make('lock'), make('b'), make('a')]);
+  assert.deepEqual(normal.residualPairs, []);
+  assert.deepEqual(reversed.residualPairs, []);
+  const keys = [
+    isoOverlayCollisionKey('device', 'a'),
+    isoOverlayCollisionKey('device', 'b'),
+    isoOverlayCollisionKey('opening-lock', 'lock'),
+  ];
+  const centers = keys.map((key) => normal.placements.get(key).visualScene);
+  for (let index = 0; index < centers.length; index++) {
+    assert.deepEqual(reversed.placements.get(keys[index]).visualScene, centers[index]);
+    assert.ok(normal.placements.get(keys[index]).nudgeDistanceCss <= 48);
+    for (let other = 0; other < index; other++) {
+      assert.ok(Math.abs(centers[index][0] - centers[other][0]) >= 20
+        || Math.abs(centers[index][1] - centers[other][1]) >= 20,
+      `pair ${index}/${other} must clear its complete roots plus the 4px gap`);
+    }
+  }
+  assert.deepEqual(normal.placements.get(keys[0]).visualScene, [100, 100],
+    'the stable first item stays at its zero-deviation anchor');
+});
+
+test('group collision reports a deterministic residual without exceeding the absolute cap', () => {
+  const room = square('tight', 0, 0, 1, 1, [0.5, 0.5]);
+  const make = (id) => ({
+    id,
+    kind: 'device',
+    placement: placement({
+      floorAnchor: [0.5, 0.5], rooms: [room], preferredRoomId: 'tight',
+      visualOffset: 0, camera: identityCamera,
+    }),
+    screenHalfSize: [30, 30],
+  });
+  const result = resolveIsoOverlayCollisions({
+    items: [make('a'), make('b')], rooms: [room], wallSilhouettes: [],
+    sceneUnitsPerCssPixel: 1, visualOffset: 0, camera: identityCamera,
+  });
+  const second = result.placements.get(isoOverlayCollisionKey('device', 'b'));
+  assert.equal(result.residualPairs.length, 1);
+  assert.equal(second.status, 'degraded');
+  assert.equal(second.reason, 'overlay-collision');
+  assert.ok(second.nudgeDistanceCss <= 48,
+    'the search radius is total displacement, not a budget added per collision');
 });
 
 test('owner resolution honours bindings, then canonical minimum area and stable id', () => {

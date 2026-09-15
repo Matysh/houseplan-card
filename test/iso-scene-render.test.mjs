@@ -239,6 +239,33 @@ test('shared painter queue puts elevated window glass over its rear sill only in
     wallSlots, 'window-local occlusion cannot move unrelated wall slots');
 });
 
+test('shared painter queue keeps rotating door prism faces in physical camera order', () => {
+  const geometry = buildIsoWallGeometry([[[
+    [0, 100], [100, 100], [100, 200], [0, 200], [0, 100],
+  ]]]);
+  const basis = buildIsoOpeningBasis({
+    id: 'door-depth', sourceIndex: 3, type: 'door', x: 50, y: 100,
+    angle: 0, length: 45, flipH: false, flipV: false,
+    face: { ox: 0, oy: -5, cm: 20, side: -1 },
+  });
+  const surfaces = [
+    ...projectIsoOpeningStructure(basis),
+    ...projectIsoOpening(basis, 0.5).flatMap((panel) => panel.surfaces),
+  ].map((surface, index) => ({
+    ...surface, id: basis.id, sourceIndex: basis.sourceIndex,
+    type: 'door', leaf: index,
+  }));
+  const queue = buildIsoWallDepthQueue(geometry, [...surfaces].reverse());
+  const doorEntries = queue.filter((entry) => entry.layer === 'opening');
+  assert.deepEqual(doorEntries.map((entry) => entry.surface.cameraDepth),
+    doorEntries.map((entry) => entry.surface.cameraDepth).toSorted((a, b) => a - b),
+    'all faces of one live door reuse its queue slots in physical camera-depth order');
+  const wallSlots = queue.flatMap((entry, index) => entry.layer === 'opening' ? [] : [index]);
+  const natural = buildIsoWallDepthQueue(geometry, surfaces);
+  assert.deepEqual(natural.flatMap((entry, index) => entry.layer === 'opening' ? [] : [index]),
+    wallSlots, 'door-local ordering cannot move unrelated wall slots');
+});
+
 test('production overlay rooms preserve direct island holes and cache safe points', () => {
   const outer = room('outer', 0, 0, 100, 100);
   const island = room('island', 40, 40, 60, 60);
@@ -439,6 +466,66 @@ test('Stage 4 reuses pure overlay placements and fit probes skip collision searc
     'view scale invalidates the placement signature');
 });
 
+test('render scene separates device roots without moving labels and caches permutations', () => {
+  const owner = {
+    ...room('owner', 0, 0, 400, 400),
+    name: 'Owner label', area: 'living', settings: {},
+  };
+  const space = {
+    id: 'floor', title: 'Floor', cellCm: 5, vb: [0, 0, 400, 400], bg: null,
+    rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
+  };
+  const walls = [];
+  const devices = ['b', 'a', 'c'].map((id) => ({
+    id, space: 'floor', marker: { room_id: 'owner', x: 200, y: 200 },
+  }));
+  const input = {
+    space, devices, openings: [],
+    view: { x: 0, y: 0, w: 400, h: 400 },
+    display: { showNames: true, cardFontScale: 1 },
+    layers: { structural: true, shadows: true },
+    wallSilhouettes: walls,
+    iconPct: 3.4, deviceBasePct: 3.4, showLqi: false, cellCm: 5,
+    kioskIconScale: 1, kioskFontScale: 1,
+    stageSize: { width: 200, height: 200 },
+    positionOf: (device) => ({ x: device.marker.x, y: device.marker.y }),
+    presentationOf: () => ({
+      scale: 1, valueText: null, valueFullText: '', valueBadge: null,
+      tempText: null, humText: null, lqiText: null,
+      pulse: { animated: false, diameterScale: 1 },
+    }),
+    labelPositionOf: () => ({ x: 200, y: 200 }),
+    labelScaleOf: () => 1,
+    openingEntityAvailable: () => false,
+    openingWallIndex: () => ({ adjacencyEps: 0.1, edges: [] }),
+  };
+  const scene = buildIsoOverlayRenderScene(input);
+  assert.deepEqual(scene.residualPairs, [], 'the roomy fixture must fully separate all roots');
+  const deviceEntries = scene.entries.filter((entry) => entry.kind === 'device');
+  for (let index = 0; index < deviceEntries.length; index++) {
+    assert.ok(deviceEntries[index].placement.nudgeDistanceCss <= 48);
+    for (let other = 0; other < index; other++) {
+      const a = deviceEntries[index], b = deviceEntries[other];
+      const dx = Math.abs(a.placement.visualScene[0] - b.placement.visualScene[0]);
+      const dy = Math.abs(a.placement.visualScene[1] - b.placement.visualScene[1]);
+      assert.ok(dx >= a.screenHalfSize[0] + b.screenHalfSize[0] + 8 - 1e-7
+        || dy >= a.screenHalfSize[1] + b.screenHalfSize[1] + 8 - 1e-7,
+      `device roots ${a.id}/${b.id} must not overlap after the 4 CSS px gap`);
+    }
+  }
+  const label = scene.entries.find((entry) => entry.kind === 'room-label');
+  assert.ok(label, 'fixture includes a room label at the same projected anchor');
+  assert.equal(label.placement.nudgeDistanceCss, 0,
+    'device collisions do not push the room label');
+
+  const permuted = buildIsoOverlayRenderScene({ ...input, devices: [...devices].reverse() });
+  assert.strictEqual(permuted, scene,
+    'HA registry permutations reuse the same immutable group layout snapshot');
+  const fit = buildIsoOverlayRenderScene({ ...input, resolveCollisions: false });
+  assert.deepEqual(fit.devices.get('a').visualScene, fit.devices.get('b').visualScene,
+    'fit probing deliberately skips live group displacement');
+});
+
 test('visible wall side quads participate in overlay collision', () => {
   const walls = [[[[45, 20], [55, 20], [55, 80], [45, 80]]]];
   const scene = resolveIsoScene({
@@ -615,7 +702,7 @@ test('throwing decoration capability probes keep Iso structural geometry on the 
   }
 });
 
-test('shadow presentation failure retries the same Iso frame as solid geometry', () => {
+test('removed contact shadows are never read while ambient shadow capability remains enabled', () => {
   const previousCss = globalThis.CSS;
   const previousMatchMedia = globalThis.matchMedia;
   try {
@@ -639,11 +726,13 @@ test('shadow presentation failure retries the same Iso frame as solid geometry',
       },
       openings: [], amountOf: () => 0, overlays: () => null, cellCm: 5,
     });
-    assert.equal(contactReads, 1);
+    assert.equal(contactReads, 0,
+      'the deprecated contact path must not be touched by presentation rendering');
     assert.equal(frame.layers.structural, true);
     assert.equal(frame.layers.panels, true);
-    assert.equal(frame.layers.shadows, false);
-    assert.equal(frame.layers.materialNuance, false);
+    assert.equal(frame.layers.shadows, true,
+      'the remaining building ambient shadow still follows filter capability');
+    assert.equal(frame.layers.materialNuance, true);
     assert.equal(frame.overlays, null);
   } finally {
     if (previousCss === undefined) delete globalThis.CSS;

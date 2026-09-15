@@ -147,35 +147,37 @@ grouped under the Stage 1 affine matrix; HTML anchors still use
 stage background
 → shared ambient shadow + low exterior floor edge
 → existing floor SVG (paper/image, room fills/hover, decor, Glow, sun)
-→ shared contact and live leaf shadows
 → canonical wall sides/top + inert vertical opening panels
 → existing HTML devices, labels/cards, locks and vacuum overlays
 ```
 
-Wall top and side use two shared matte gradients. Ambient, contact and leaf
-shadows use three shared filters; definition count is constant per card, never
-per face or opening. Forced colours use solid `Canvas`/`CanvasText` faces and
-omit decoration. A runtime without the required filter paint keeps solid
-structure, floor edge and vertical panels but emits no Stage 2 shadows; this
-does not enter the structural fallback latch.
+Wall top and side use two shared matte gradients. One shared filter supplies
+only the soft exterior ambient shadow of the complete building footprint;
+internal wall-contact and opening-leaf shadows are deliberately absent.
+Definition count is constant per card, never per face or opening. Forced
+colours use solid `Canvas`/`CanvasText` faces and omit decoration. A runtime
+without the required filter paint keeps solid structure, floor edge and
+vertical panels but emits no ambient shadow; this does not enter the structural
+fallback latch.
 
 ### Vertical openings and display settings
 
 `src/iso-openings.ts` mirrors the existing opening-symbol transform algebra:
 door has one jamb-hinged leaf, gate has two leaves with the established
 0–10° exterior-face turn, and window has two light neutral casements. A saved
-`passage` keeps the same full-height masonry cut but has zero leaves/panels and
-therefore no panel or leaf shadow. Heights are fixed presentation ratios of
+`passage` keeps the same full-height masonry cut but has zero leaves/panels.
+Heights are fixed presentation ratios of
 `ISO_WALL_HEIGHT`; there is no schema field.
-The panel basis consumes the same pure visible-offset contract as Flat: default
-door/window/gate panels are always centred across wall depth. `flip_v` changes
-only door/window direction or the gate turn and never translates the structural
-origin. Jamb/cut depth remains physical and independent of symbol placement.
-Panels/shadows are pointer- and ARIA-inert. Existing lock badges/cards and HA
-actions remain the only interactive opening surface.
+The saved opening axis and Flat symbol remain on their canonical centreline.
+Derived 2.5D door/gate leaves pivot on the selected physical host face so their
+prisms do not start inside masonry; windows remain centred across the reveal.
+`flip_v` selects/determines the physical face and opening direction without
+changing saved coordinates. Jamb/cut depth remains physical and independent of
+the Flat symbol. Panels are pointer- and ARIA-inert. Existing lock badges/cards
+and HA actions remain the only interactive opening surface.
 
 - borders visible: vertical panels replace the floor-plane symbols;
-- `hide_openings: true`: panels and leaf shadows disappear, while masonry
+- `hide_openings: true`: panels disappear, while masonry
   cuts, Glow/sun and contact/lock meaning remain;
 - `show_borders: false`: Stage 2 roots are absent and the established floor
   symbols and Stage 1 projected frame return (subject to `hide_openings`),
@@ -204,12 +206,19 @@ inverse hit mapping, invisible collision footprints and fit bounds share that
 one affine authority.
 
 Device markers, room labels/cards and opening-lock badges keep their canonical
-floor anchors but render on a low plane four visual units above the floor. Their
-conservative footprints still participate in deterministic, bounded in-room
-collision correction and fit. There is no painted plate, long tether, ground
-dot or per-marker shadow. The original screen-facing HTML root remains the only
-hit, focus, tooltip and action target, and selection/hover cannot invalidate the
-placement cache. Vacuum, Glow/spill, SUN, room fills/hover, arbitrary decor,
+floor anchors but render on a low plane four visual units above the floor. Each
+first clears wall silhouettes. A second deterministic group pass separates the
+complete screen-space footprints of devices and lock badges from one another
+within one absolute 48 CSS-pixel budget, using a bounded spatial index and
+stable kind/id tie-break; it never writes the correction back to configuration.
+Room labels do not enter that mutual pass and stay below interactive roots. If
+the owning room truly has no legal placement, the least-overlapping result is
+kept as an explicit degraded diagnostic without hiding or shrinking an item.
+Fit probes reserve the maximum correction but do not execute live collision
+search. There is no painted plate, long tether, ground dot or per-marker
+shadow. The original screen-facing HTML root remains the only hit, focus,
+tooltip and action target, and selection/hover cannot invalidate the placement
+cache. Vacuum, Glow/spill, SUN, room fills/hover, arbitrary decor,
 furniture/backdrop and every persisted coordinate remain on `z=0`.
 
 Room names remain screen-facing and lose stroke, text shadow, drop shadow and
@@ -229,19 +238,22 @@ guarded lock badge/card.
 For wall height `H`, the fixed window frame spans `0.38H..1.00H`, its sash
 `0.40H..0.98H`, and clear glass `0.45H..0.93H`; frame/sash rails are `0.05H`.
 Frames and sill are neutral, glass side is `#c9e4f3` and its top face is
-`#e3f2fa`. Fixed and live faces remain in `buildIsoWallDepthQueue()`. Only the
-slots belonging to one window are resolved by physical camera depth, so raised
-glass covers the rear sill without reordering unrelated walls or openings.
+`#e3f2fa`. Fixed and live faces remain in `buildIsoWallDepthQueue()`. The slots
+belonging to one opening are resolved by physical camera depth, so raised glass
+covers the rear sill and rotating door/gate prism faces retain their physical
+order without reordering unrelated walls or openings. Door/gate faces use
+fill differences instead of strokes; window frame/glass borders remain.
 
-The constant material/filter set remains theme-aware and bounded. Forced
-colours or missing filter support remove texture and soft shadows, not geometry,
+The constant material/filter set remains theme-aware and bounded. Only the
+building ambient shadow remains; wall-contact and leaf shadows are omitted.
+Forced colours or missing filter support remove texture and the ambient shadow, not geometry,
 ownership or actions. `show_borders:false` is the exact no-volume branch: the
 floor keeps the real 0°/20° affine matrix and interactive overlays return to
 their floor anchors. `hide_openings` removes vertical decoration but preserves
 cuts, Glow/SUN and lock semantics.
 
 The eight-entry structural LRU fingerprints the 0°/20°/84 profile, opening
-policy revision 2 and structural algorithm 5. It excludes HA state, live
+policy revision 3 and structural algorithm 5. It excludes HA state, live
 opening amount, hover/selection, theme, SUN and filter capability. The lazy
 `iso-scene-render` graph is still not requested with alpha off; topology,
 projection or module mismatch still enters the established fingerprint-latched

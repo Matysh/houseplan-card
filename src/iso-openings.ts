@@ -88,7 +88,7 @@ export interface IsoOpeningGeometryPolicy {
 }
 
 export const ISO_OPENING_GEOMETRY_POLICY: Readonly<IsoOpeningGeometryPolicy> = Object.freeze({
-  revision: 2,
+  revision: 3,
   leafThicknessRatio: 0.04,
   frameThicknessRatio: 0.05,
   doorTurnDeg: 50,
@@ -230,7 +230,14 @@ function leafBasis(
   // the structural basis as well would cancel that direction on shared and
   // partition hosts, just like a nested scaleY in the flat renderer.
   const sy = input.type === 'gate' ? 1 : input.flipV ? -1 : 1;
-  const offset = openingSymbolOffset(input.type, input.flipV, input.angle, input.face);
+  // Flat symbols stay on the saved centreline (#250). A volumetric door/gate
+  // has a physical host face, however: centring its prism inside the masonry
+  // makes half of the leaf look embedded in the wall. Only the derived Iso
+  // leaf moves to that selected face; saved coordinates and the Flat symbol do
+  // not change. Windows keep their frame/sash centred across the reveal.
+  const offset = input.type === 'door' || input.type === 'gate'
+    ? input.face
+    : openingSymbolOffset(input.type, input.flipV, input.angle, input.face);
   const origin: PlanPoint = [input.x + offset.ox, input.y + offset.oy];
   const hinge = add(origin, transformVector(localHinge, input.angle, sx, sy));
   const closedVector = transformVector(localVector, input.angle, sx, sy);

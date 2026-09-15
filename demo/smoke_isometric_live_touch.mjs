@@ -255,7 +255,7 @@ const out = await page.evaluate(async () => {
   result.hideOpeningsKeepsStructure = !!root(original).querySelector('[data-hp="iso-walls"]')
     && !root(original).querySelector('[data-hp="iso-openings"]')
     && !root(original).querySelector('[data-hp="opening"]')
-    && !root(original).querySelector('.iso-leaf-shadow')
+    && !root(original).querySelector('.iso-contact-shadow, .iso-leaf-shadow')
     && !!root(original).querySelector('.oplock[data-hp-iso-raised="true"]')
     && root(original).querySelectorAll('.glowlayer [data-glow-source]').length >= 2
     && JSON.stringify([...root(original).querySelectorAll('.iso-wall-top')]

@@ -25,6 +25,8 @@ test('door basis is immutable and live amount preserves the exact jamb anchor', 
   assert.match(closed.d, new RegExp(`^M ${hinge.replace('.', '\\.')}`));
   assert.match(open.d, new RegExp(`^M ${hinge.replace('.', '\\.')}`));
   assert.notEqual(open.d, closed.d);
+  assert.deepEqual(basis.leaves[0].hinge, basis.face.selectedStart,
+    'the derived volume pivots on the selected physical wall face, not inside masonry');
   assert.equal(basis.leaves[0].top, ISO_WALL_HEIGHT * 0.92);
   assert.equal(basis.leaves[0].turnDeg, -50);
 });
@@ -151,7 +153,7 @@ test('window and gate retain two leaves with reviewed height and turn policies',
   const windowBasis = buildIsoOpeningBasis(opening({ type: 'window' }));
   const gateBasis = buildIsoOpeningBasis(opening({ type: 'gate', flipV: true }));
   assert.equal(windowBasis.leaves.length, 2);
-  assert.equal(ISO_OPENING_GEOMETRY_POLICY.revision, 2);
+  assert.equal(ISO_OPENING_GEOMETRY_POLICY.revision, 3);
   assert.equal(windowBasis.leaves.every((leaf) => leaf.bottom === ISO_WALL_HEIGHT * 0.40
     && leaf.top === ISO_WALL_HEIGHT * 0.98 && Math.abs(leaf.turnDeg) === 65), true);
   assert.deepEqual(gateBasis.leaves.map((leaf) => Math.abs(leaf.turnDeg)), [10, 10]);
@@ -180,26 +182,29 @@ test('paired window leaves open toward their resolved exterior face in every ori
   }
 });
 
-test('isometric symbols keep one centre while flips change only direction', () => {
-  const centred = buildIsoOpeningBasis(opening());
+test('isometric door and gate volumes follow the selected host face without changing saved axes', () => {
+  const selected = buildIsoOpeningBasis(opening());
   const oppositeResolvedFace = buildIsoOpeningBasis(opening({
     face: { ox: 0, oy: -5, side: -1 },
   }));
-  assert.deepEqual(oppositeResolvedFace.leaves, centred.leaves,
-    'default door ignores which physical room face was resolved');
+  assert.deepEqual(selected.axis, oppositeResolvedFace.axis,
+    'the saved centreline axis remains canonical');
+  assert.deepEqual(selected.leaves[0].hinge, selected.face.selectedStart);
+  assert.deepEqual(oppositeResolvedFace.leaves[0].hinge,
+    oppositeResolvedFace.face.selectedStart);
+  assert.notDeepEqual(oppositeResolvedFace.leaves, selected.leaves,
+    'the derived volume moves to the resolved physical face');
 
   const flippedPositive = buildIsoOpeningBasis(opening({ flipV: true }));
   const flippedNegative = buildIsoOpeningBasis(opening({
     flipV: true, face: { ox: 0, oy: -5, side: -1 },
   }));
-  assert.deepEqual(flippedNegative.leaves, flippedPositive.leaves,
-    'resolved room face cannot translate or redirect the saved flip');
-  assert.deepEqual(flippedPositive.leaves[0].hinge, centred.leaves[0].hinge,
-    'flip keeps the exact centreline hinge');
-  assert.deepEqual(flippedPositive.leaves[0].closedVector, centred.leaves[0].closedVector);
+  assert.deepEqual(flippedPositive.leaves[0].hinge, flippedPositive.face.selectedStart);
+  assert.deepEqual(flippedNegative.leaves[0].hinge, flippedNegative.face.selectedStart);
+  assert.deepEqual(flippedPositive.leaves[0].closedVector, selected.leaves[0].closedVector);
   assert.equal(
     flippedPositive.leaves[0].quarterVector[1],
-    -centred.leaves[0].quarterVector[1],
+    -selected.leaves[0].quarterVector[1],
     'flip mirrors the opening direction without moving its origin',
   );
 
@@ -207,15 +212,48 @@ test('isometric symbols keep one centre while flips change only direction', () =
   const gateFlipped = buildIsoOpeningBasis(opening({
     type: 'gate', flipV: true, face: { ox: 0, oy: -5, side: -1 },
   }));
-  assert.equal(gate.leaves[0].hinge[1], 80);
-  assert.equal(gateFlipped.leaves[0].hinge[1], 80);
+  assert.equal(gate.leaves[0].hinge[1], 85);
+  assert.equal(gateFlipped.leaves[0].hinge[1], 75);
   assert.deepEqual(gate.leaves.map((leaf) => leaf.turnDeg), [10, -10]);
   assert.deepEqual(gateFlipped.leaves.map((leaf) => leaf.turnDeg), [-10, 10]);
   assert.notDeepEqual(
     projectIsoOpening(gate, 1).map((panel) => panel.d),
     projectIsoOpening(gateFlipped, 1).map((panel) => panel.d),
-    'flip changes the gate turn without translating its centred origin',
+    'flip changes both the selected face and outward turn',
   );
+});
+
+test('door and gate face matrix keeps every live state on the selected physical hinge', () => {
+  for (const type of ['door', 'gate']) {
+    for (const angle of [0, 90, 37]) {
+      const radians = angle * Math.PI / 180;
+      const normal = [-Math.sin(radians), Math.cos(radians)];
+      for (const side of [-1, 1]) {
+        for (const flipH of [false, true]) {
+          const basis = buildIsoOpeningBasis(opening({
+            type, angle, flipH,
+            face: { ox: normal[0] * 5 * side, oy: normal[1] * 5 * side, side },
+          }));
+          for (const leaf of basis.leaves) {
+            const expected = flipH
+              ? leaf.leaf === 0 ? basis.face.selectedEnd : basis.face.selectedStart
+              : leaf.leaf === 0 ? basis.face.selectedStart : basis.face.selectedEnd;
+            assert.deepEqual(leaf.hinge, expected,
+              `${type} angle=${angle} side=${side} flipH=${flipH} leaf=${leaf.leaf}`);
+          }
+          for (const amount of [0, 0.5, 1]) {
+            const panels = projectIsoOpening(basis, amount);
+            assert.equal(panels.length, basis.leaves.length);
+            assert.ok(panels.every((panel) => panel.surfaces.length === 5
+              && panel.surfaces.every((surface) => Number.isFinite(surface.depth)
+                && Number.isFinite(surface.cameraDepth)
+                && !/NaN|Infinity/.test(surface.d))),
+            `${type} angle=${angle} side=${side} flipH=${flipH} amount=${amount}`);
+          }
+        }
+      }
+    }
+  }
 });
 
 test('passage keeps the wall cut but never creates an isometric panel', () => {
@@ -257,16 +295,16 @@ test('flipH and flipV independently mirror their exact structural axes', () => {
     };
   };
   assert.deepEqual(signature(normal), {
-    hinge: [70, 80], closedVector: [60, 0], quarterVector: [0, 60],
+    hinge: [70, 85], closedVector: [60, 0], quarterVector: [0, 60],
   });
   assert.deepEqual(signature(horizontal), {
-    hinge: [130, 80], closedVector: [-60, 0], quarterVector: [0, 60],
+    hinge: [130, 85], closedVector: [-60, 0], quarterVector: [0, 60],
   });
   assert.deepEqual(signature(vertical), {
-    hinge: [70, 80], closedVector: [60, 0], quarterVector: [0, -60],
+    hinge: [70, 85], closedVector: [60, 0], quarterVector: [0, -60],
   });
   assert.deepEqual(signature(both), {
-    hinge: [130, 80], closedVector: [-60, 0], quarterVector: [0, -60],
+    hinge: [130, 85], closedVector: [-60, 0], quarterVector: [0, -60],
   });
 });
 

@@ -21,7 +21,7 @@ assign('plan', `.stage .plan-svg .hp-paper .hp-static-stage .hp-day-cycle-bg .hp
   .rlhandle .rlgear .rlgearbtn .rlname .rlgo
   .measurelabel .measurelayer .compass .homearrow .zoomwrap .zoomctl .zoombadge
   .decorlayer .glow-spot .glow-pools .glow-pools-frame .glow-base-layer .glow-base-tunnels .sunlayer
-  .iso-opening-panel .iso-ambient-shadow .iso-contact-shadow .iso-leaf-shadow .iso-wall-side .iso-wall-top
+  .iso-opening-panel .iso-ambient-shadow .iso-wall-side .iso-wall-top
   .iso-floor-side .iso-side-hi .iso-side-lo .iso-top-hi .iso-top-lo .iso-shadows-svg .iso-underlay-svg
   .iso-walls-svg .iso-underlay .iso-shadows .iso-walls .iso-openings
   .opening-preview .opening-preview-dot .opening-dimension .opening-dimensions .opening-dimension-line

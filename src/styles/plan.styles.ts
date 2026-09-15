@@ -344,7 +344,7 @@ export const planStyles = css`
     }
     .iso-opening-panel.iso-material-matte-leaf {
       fill: #a6abad;
-      stroke: #737b7f;
+      stroke: none;
     }
     .iso-opening-panel.iso-opening-leaf-edge,
     .iso-opening-panel.iso-opening-leaf-top { fill: #8d9497; }
@@ -369,20 +369,6 @@ export const planStyles = css`
       fill: rgba(15, 21, 25, 0.22);
       filter: url(#hp-iso-ambient-shadow);
     }
-    .iso-contact-shadow {
-      fill: none;
-      stroke: rgba(22, 28, 31, 0.25);
-      stroke-width: 3;
-      filter: url(#hp-iso-contact-shadow);
-      vector-effect: non-scaling-stroke;
-    }
-    .iso-leaf-shadow {
-      fill: none;
-      stroke: rgba(18, 23, 27, 0.24);
-      stroke-width: 4;
-      filter: url(#hp-iso-leaf-shadow);
-      vector-effect: non-scaling-stroke;
-    }
     .stage.theme-dark .iso-side-hi { stop-color: #4c555a; }
     .stage.theme-dark .iso-side-lo { stop-color: #343c40; }
     .stage.theme-dark .iso-top-hi { stop-color: #687176; }
@@ -393,7 +379,7 @@ export const planStyles = css`
     .stage.theme-dark .iso-opening-panel { fill: #626b70; stroke: #899399; }
     .stage.theme-dark .iso-opening-panel.iso-window { fill: #75919b; stroke: #abc6ce; }
     .stage.theme-dark .iso-opening-panel.iso-material-reveal { fill: #454e52; stroke: #727d82; }
-    .stage.theme-dark .iso-opening-panel.iso-material-matte-leaf { fill: #626a6e; stroke: #899398; }
+    .stage.theme-dark .iso-opening-panel.iso-material-matte-leaf { fill: #626a6e; stroke: none; }
     .stage.theme-dark .iso-opening-panel.iso-opening-leaf-edge,
     .stage.theme-dark .iso-opening-panel.iso-opening-leaf-top { fill: #4b5458; }
     .stage.theme-dark .iso-opening-panel.iso-material-light-frame,
@@ -411,8 +397,6 @@ export const planStyles = css`
       stroke: #d9eef6;
     }
     .stage.theme-dark .iso-ambient-shadow { fill: rgba(0, 0, 0, 0.34); }
-    .stage.theme-dark .iso-contact-shadow,
-    .stage.theme-dark .iso-leaf-shadow { stroke: rgba(0, 0, 0, 0.38); }
     .stage.theme-dark .iso-texture-mark { fill: rgba(255, 255, 255, 0.24); }
     .stage.theme-dark .iso-texture-line { stroke: rgba(255, 255, 255, 0.18); }
     @media (prefers-color-scheme: dark) {
@@ -427,7 +411,7 @@ export const planStyles = css`
       .stage:not(.theme-light) .iso-opening-panel { fill: #626b70; stroke: #899399; }
       .stage:not(.theme-light) .iso-opening-panel.iso-window { fill: #75919b; stroke: #abc6ce; }
       .stage:not(.theme-light) .iso-opening-panel.iso-material-reveal { fill: #454e52; stroke: #727d82; }
-      .stage:not(.theme-light) .iso-opening-panel.iso-material-matte-leaf { fill: #626a6e; stroke: #899398; }
+      .stage:not(.theme-light) .iso-opening-panel.iso-material-matte-leaf { fill: #626a6e; stroke: none; }
       .stage:not(.theme-light) .iso-opening-panel.iso-opening-leaf-edge,
       .stage:not(.theme-light) .iso-opening-panel.iso-opening-leaf-top { fill: #4b5458; }
       .stage:not(.theme-light) .iso-opening-panel.iso-material-light-frame,
@@ -436,8 +420,6 @@ export const planStyles = css`
       .stage:not(.theme-light) .iso-opening-panel.iso-material-glass-side { fill: #8fbfd5; stroke: #bad9e6; }
       .stage:not(.theme-light) .iso-opening-panel.iso-material-glass-top { fill: #c9e6f2; stroke: #d9eef6; }
       .stage:not(.theme-light) .iso-ambient-shadow { fill: rgba(0, 0, 0, 0.34); }
-      .stage:not(.theme-light) .iso-contact-shadow,
-      .stage:not(.theme-light) .iso-leaf-shadow { stroke: rgba(0, 0, 0, 0.38); }
       .stage:not(.theme-light) .iso-texture-mark { fill: rgba(255, 255, 255, 0.24); }
       .stage:not(.theme-light) .iso-texture-line { stroke: rgba(255, 255, 255, 0.18); }
     }
@@ -447,11 +429,11 @@ export const planStyles = css`
         stroke: CanvasText;
         forced-color-adjust: auto;
       }
-      .iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow,
+      .iso-ambient-shadow,
       .iso-material-texture { display: none; }
     }
     @supports not (filter: blur(1px)) {
-      .iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow,
+      .iso-ambient-shadow,
       .iso-material-texture { display: none; }
     }
     /* Opaque plan paper (owner 2026-08-03): the scene bg_color / daynight sky
@@ -794,6 +776,10 @@ export const planStyles = css`
          presentation-only inline value. */
       color: #303936 !important;
     }
+    /* Interactive raised overlays stay above passive room names. Collision
+       placement never needs to move or promote a label to make a device usable. */
+    .stage.projection-iso.mode-view .dev,
+    .stage.projection-iso.mode-view .oplock { z-index: 2; }
     .stage.projection-iso.theme-dark.mode-view .roomlabel { color: #f2f0e8 !important; }
     @media (prefers-color-scheme: dark) {
       .stage.projection-iso:not(.theme-light).mode-view .roomlabel { color: #f2f0e8 !important; }
