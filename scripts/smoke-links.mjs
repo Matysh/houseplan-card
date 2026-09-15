@@ -38,10 +38,11 @@ export const SMOKE_LINKS = [
     symbols: ['renderPaperShapes'],
     smokes: [
       'smoke_daycycle_layer_budget.mjs', 'smoke_daycycle_raster.mjs',
-      'smoke_live_pan_coverage.mjs', 'smoke_bg_color.mjs',
+      'smoke_live_pan_coverage.mjs', 'smoke_bg_color.mjs', 'smoke_smooth_zoom.mjs',
     ],
     because: '#582: production-bundle witnesses prove that camera movement activates the '
-      + 'stage-bounded day-cycle silhouette at 1 cm/point, keeps the #532 raster budget and '
+      + 'stage-bounded day-cycle silhouette for direct and animated camera paths at 1 cm/point, '
+      + 'keeps the #532 raster budget and '
       + 'follows the same #579 live viewport as the visible plan; source imports cannot expose '
       + 'CDP layers',
   },

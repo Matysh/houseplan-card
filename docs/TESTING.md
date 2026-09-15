@@ -2832,15 +2832,17 @@ require hands on real hardware — they remain for the human pass.
       [auto: `smoke_sun_live_bg`, golden `day-cycle-*`]
 - [ ] A physically ordinary day-cycle plan stored at 1 cm/grid-point keeps the
       outline compositor surface bounded by the visible stage during pinch.
-      Camera movement activates the fallback, the inner paper group becomes
-      unfiltered, the plan layer is explicit rather than overlap-promoted, no
+      Direct gestures and animated camera commands activate the fallback, the
+      inner paper group becomes unfiltered, the plan layer is explicit rather
+      than overlap-promoted, no
       content layer exceeds 4096 in either dimension, and sampled presented
       frames contain no white tile. Before input the historical inner outline
       remains byte-identical to the accepted `day-cycle-*` goldens.
       The same isolated outline still satisfies the #532 relative raster
       budget; its smoke compares the median of three paired, closed-path
       static/day-cycle pans so one shared-runner spike cannot replace the A/B
-      signal
+      signal. The static space card uses one filtered stage-sized outline from
+      its first frame and leaves its inner paper group unfiltered
       [auto: `smoke_daycycle_layer_budget`, `smoke_daycycle_raster`,
       `smoke_live_pan_coverage`]
 - [ ] Opaque plan paper (2026-08-03, owner): the scene background —

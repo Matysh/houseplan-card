@@ -1283,12 +1283,12 @@ export class HouseplanCard extends LitElement {
       this._cancelCameraTransition(false);
       return false;
     }
+    this._activateSafeDayCycleOutline();
     this._cameraTransitionFit = { ...fit };
     this._cameraTransition.start(current, target, reason,
       this._reducedMotion ? 0 : duration);
     return true;
   }
-
   private _cssColor(value: string | null | undefined, fallback: string): string {
     const text = String(value || '').trim();
     if (!text) return fallback;

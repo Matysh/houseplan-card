@@ -2625,6 +2625,33 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'daycycle-static-outline-promoted-on-inner-paper',
+    guard: 'node demo/smoke_daycycle_layer_budget.mjs',
+    because: '#582 contract item 6: the static card has no gesture that could later demote '
+      + 'a coordinate-sized filtered paper group, so it must start with the bounded sibling',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '    .hp-static-stage.daycycle .hp-paperg {\n'
+        + '      filter: none;\n'
+        + '      will-change: auto;\n'
+        + '      transition: none;\n',
+      replace: '    .hp-static-stage.daycycle .hp-paperg {\n'
+        + '      will-change: filter;\n',
+    }],
+  },
+  {
+    id: 'daycycle-programmatic-camera-skips-safe-outline',
+    guard: 'node demo/smoke_smooth_zoom.mjs',
+    because: '#582: double-tap, fit, room focus, wheel and button zoom animate the same '
+      + 'camera as pinch and must enter the bounded compositor topology before movement',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    this._activateSafeDayCycleOutline();\n'
+        + '    this._cameraTransitionFit = { ...fit };\n',
+      replace: '    this._cameraTransitionFit = { ...fit };\n',
+    }],
+  },
+  {
     id: 'daycycle-outline-not-promoted',
     guard: 'node demo/smoke_daycycle_raster.mjs',
     because: 'the day-cycle outline is a triple drop-shadow over the whole sheet; without its own '

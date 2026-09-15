@@ -175,11 +175,16 @@ const res = await page.evaluate(async () => {
     && st.querySelector('.hp-day-cycle-env')?.dataset.dayCycleSource === 'sun'
     && st.querySelector('.hp-day-cycle-bg.active')?.dataset.dayCycleLayer === 'dawn';
   const staticPlan = st.querySelector(':scope > .hp-static-plan-svg');
+  const staticOutline = st.querySelector(':scope > .hp-paper-outline-svg');
   const staticPaper = staticPlan?.querySelector('.hp-paperg');
   out.staticCardLayersStayOrdered = !!staticPlan
+    && !!staticOutline
     && !!staticPaper
-    && !st.querySelector('.hp-paper-outline-svg')
-    && /drop-shadow/.test(getComputedStyle(staticPaper).filter)
+    && /drop-shadow/.test(getComputedStyle(staticOutline).filter)
+    && getComputedStyle(staticOutline).willChange.includes('filter')
+    && getComputedStyle(staticOutline).zIndex === '0'
+    && getComputedStyle(staticPaper).filter === 'none'
+    && !getComputedStyle(staticPaper).willChange.includes('filter')
     && getComputedStyle(staticPlan).zIndex === '1'
     && getComputedStyle(st.querySelector('.devlayer')).zIndex === '2';
   // ...and the space override beats the global there too

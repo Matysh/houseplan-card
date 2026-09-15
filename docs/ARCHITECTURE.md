@@ -2016,16 +2016,18 @@ state. The coverage contract also holds when a pointer is held still between
 frames: the fast frame must contain every scene pixel that a forced target
 `viewBox` would contain inside `.stage`.
 
-After the first camera movement, the day-cycle paper outline is one of those
-scene SVGs (#582). Its root CSS box is stage-sized and owns the triple
+Before the first direct or animated camera movement, the full card activates
+the safe day-cycle paper outline as one of those scene SVGs (#582). Its root
+CSS box is stage-sized and owns the triple
 drop-shadow and `will-change: filter`; its child is only an exact paper alpha
 silhouette. The visible paper loses its filter and the plan root receives an
 explicit stage-sized transform layer, so Chromium never rediscovers it as an
 implicit overlap layer. During a gesture the same floor/camera projection and
-budgeted `viewBox` updates are applied to both roots. A fresh idle card keeps
-the historical inner outline for exact reviewed pixels; the static space card,
-which has no camera gesture, never enters the fallback. This keeps #532's
-isolated raster path without moving a 4700×4200-style filtered footprint.
+budgeted `viewBox` updates are applied to both roots. A fresh idle full card
+keeps the historical inner outline for exact reviewed pixels. The static space
+card has no camera lifecycle, so it uses the stage-sized sibling from its first
+frame and never creates a coordinate-sized filtered paper group. This keeps
+#532's isolated raster path without moving a 4700×4200-style footprint.
 
 Neither the attribute nor an equal style property is written when its value is
 unchanged: an idle frame must leave the DOM byte-identical, or the settled raster

@@ -90,8 +90,9 @@ The public setting remains a two-value selector. `static` uses `bg_color`.
   Firefox profile that opened #532 showed the same cause as 23 MB of texture
   uploads per frame and about nine frames per second, without a comparable
   ratio of its own. A static background creates no outline sibling and carries
-  neither the filter nor the hint; the non-interactive static space card keeps
-  its historical inner outline because it has no camera gesture (#582).
+  neither the filter nor the hint. The non-interactive static space card uses
+  the same stage-sized day-cycle outline from its first frame because it has no
+  camera gesture that could activate a fallback later (#582).
 - Only the environment and the zero-offset alpha-aware outline outside the
   grouped plan-paper footprint change. The plan, paper, floors, room fills,
   Glow/spill, devices, labels, decor/backdrop, vacuum, hover, and window rays

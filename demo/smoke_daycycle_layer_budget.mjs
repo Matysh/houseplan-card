@@ -60,6 +60,33 @@ await cdp.send('Page.startScreencast', {
 });
 await page.waitForTimeout(80);
 
+const describeContentLayers = async () => {
+  const content = latestLayers.filter((layer) => layer.drawsContent);
+  const described = [];
+  for (const layer of content) {
+    let className = '';
+    if (layer.backendNodeId) {
+      try {
+        const { node } = await cdp.send('DOM.describeNode', { backendNodeId: layer.backendNodeId });
+        const attrs = node.attributes || [];
+        const classIndex = attrs.indexOf('class');
+        className = classIndex >= 0 ? attrs[classIndex + 1] : '';
+      } catch { /* detached between LayerTree event and inspection */ }
+    }
+    let reasons = [];
+    try {
+      ({ compositingReasons: reasons } = await cdp.send('LayerTree.compositingReasons', {
+        layerId: layer.layerId,
+      }));
+    } catch { /* root/retired layers may have no reason record */ }
+    described.push({
+      className, width: layer.width, height: layer.height,
+      pixels: layer.width * layer.height, reasons,
+    });
+  }
+  return described;
+};
+
 const layerSnapshot = async () => {
   await page.waitForTimeout(80);
   const stage = await page.evaluate(() => {
@@ -85,30 +112,7 @@ const layerSnapshot = async () => {
       } : null,
     };
   });
-  const content = latestLayers.filter((layer) => layer.drawsContent);
-  const described = [];
-  for (const layer of content) {
-    let className = '';
-    if (layer.backendNodeId) {
-      try {
-        const { node } = await cdp.send('DOM.describeNode', { backendNodeId: layer.backendNodeId });
-        const attrs = node.attributes || [];
-        const classIndex = attrs.indexOf('class');
-        className = classIndex >= 0 ? attrs[classIndex + 1] : '';
-      } catch { /* detached between LayerTree event and inspection */ }
-    }
-    let reasons = [];
-    try {
-      ({ compositingReasons: reasons } = await cdp.send('LayerTree.compositingReasons', {
-        layerId: layer.layerId,
-      }));
-    } catch { /* root/retired layers may have no reason record */ }
-    described.push({
-      className, width: layer.width, height: layer.height,
-      pixels: layer.width * layer.height, reasons,
-    });
-  }
-  return { stage, layers: described };
+  return { stage, layers: await describeContentLayers() };
 };
 
 await page.evaluate(() => {
@@ -195,6 +199,58 @@ const frameMetrics = await page.evaluate(async ({ encoded, stage }) => {
   }),
 });
 
+// Contract item 6: the non-interactive houseplan-space-card never needs a
+// gesture to become safe. Its day-cycle silhouette is stage-bounded from its
+// first frame, while the visible paper group owns no filter layer.
+const staticStage = await page.evaluate(async () => {
+  await customElements.whenDefined('houseplan-space-card');
+  const full = window.__card;
+  const fallbackCallWS = full.hass.callWS?.bind(full.hass);
+  const hass = { ...full.hass, callWS: async (message) => {
+    if (message.type === 'houseplan/config/get') {
+      return { config: full._serverCfg, rev: full._cfgRev || 1 };
+    }
+    if (message.type === 'houseplan/layout/get') return { layout: {} };
+    return fallbackCallWS ? fallbackCallWS(message) : {};
+  } };
+  const host = document.createElement('div');
+  host.style.cssText = 'width:820px';
+  document.body.appendChild(host);
+  const card = document.createElement('houseplan-space-card');
+  card.setConfig({
+    type: 'custom:houseplan-space-card', space: 'hp582-large-daycycle',
+    title: '', show_button: false,
+  });
+  card.hass = hass;
+  host.appendChild(card);
+  const deadline = Date.now() + 6000;
+  while (!card.renderRoot?.querySelector('.hp-static-stage') && Date.now() < deadline) {
+    await new Promise((done) => setTimeout(done, 60));
+  }
+  await card.updateComplete;
+  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+  full.style.display = 'none';
+  const stage = card.renderRoot?.querySelector('.hp-static-stage');
+  const outline = stage?.querySelector(':scope > .hp-paper-outline-svg');
+  const plan = stage?.querySelector(':scope > .hp-static-plan-svg');
+  const paper = plan?.querySelector('.hp-paperg');
+  const rect = stage?.getBoundingClientRect();
+  return {
+    width: rect?.width || 0,
+    height: rect?.height || 0,
+    outlinePresent: !!outline,
+    outlineFilter: outline ? getComputedStyle(outline).filter : 'none',
+    outlineWillChange: outline ? getComputedStyle(outline).willChange : 'auto',
+    outlineVisibility: outline ? getComputedStyle(outline).visibility : 'hidden',
+    outlineZ: outline ? getComputedStyle(outline).zIndex : 'auto',
+    planZ: plan ? getComputedStyle(plan).zIndex : 'auto',
+    paperFilter: paper ? getComputedStyle(paper).filter : 'missing',
+    paperWillChange: paper ? getComputedStyle(paper).willChange : 'missing',
+  };
+});
+await page.waitForTimeout(180);
+const staticLayers = await describeContentLayers();
+
 const checks = {};
 const outlineLayers = active.layers.filter((layer) => layer.className.includes('hp-paper-outline-svg'));
 const outlineLayer = outlineLayers[0];
@@ -202,6 +258,13 @@ const settledPlanLayer = settled.layers.find((layer) => layer.className.includes
 const oversized = active.layers.filter((layer) => layer.width > 4096 || layer.height > 4096);
 const activePixels = active.layers.reduce((sum, layer) => sum + layer.pixels, 0);
 const screenPixels = active.stage.width * active.stage.height;
+const staticOutlineLayers = staticLayers.filter(
+  (layer) => layer.className.includes('hp-paper-outline-svg'),
+);
+const staticOutlineLayer = staticOutlineLayers[0];
+const staticOversized = staticLayers.filter(
+  (layer) => layer.width > 4096 || layer.height > 4096,
+);
 
 checks.largeCoordinateFixture = active.stage.paper?.bbox?.[0] > 4096
   && active.stage.paper?.bbox?.[1] > 4000;
@@ -232,6 +295,19 @@ checks.capturedPresentedPinchFrames = frameMetrics.length >= 3;
 checks.presentedFramesHaveNoWhiteTile = frameMetrics.every(
   (frame) => frame.nearWhiteRatio < 0.01,
 );
+checks.staticCardUsesSeparateFilteredOutline = staticStage.outlinePresent
+  && staticStage.outlineVisibility === 'visible'
+  && /drop-shadow/.test(staticStage.outlineFilter)
+  && /filter/.test(staticStage.outlineWillChange)
+  && staticStage.outlineZ === '0'
+  && staticStage.planZ === '1';
+checks.staticCardPaperStaysUnfiltered = staticStage.paperFilter === 'none'
+  && !/filter/.test(staticStage.paperWillChange);
+checks.staticCardHasOneOutlineLayer = staticOutlineLayers.length === 1;
+checks.staticCardOutlineLayerIsStageBounded = !!staticOutlineLayer
+  && staticOutlineLayer.width <= staticStage.width * 1.5 + 64
+  && staticOutlineLayer.height <= staticStage.height * 1.5 + 64;
+checks.staticCardHasNo4096ContentLayer = staticOversized.length === 0;
 
 console.log(JSON.stringify({
   stage: active.stage,
@@ -242,6 +318,9 @@ console.log(JSON.stringify({
   activeLayers: active.layers,
   settledLayers: settled.layers,
   presentedFrameMetrics: frameMetrics,
+  staticStage,
+  staticLayers,
+  staticOversized,
 }, null, 2));
 checkAll(checks);
 await cdp.send('LayerTree.disable');

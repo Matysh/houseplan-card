@@ -42,6 +42,9 @@ const out = await page.evaluate(async () => {
     stage().clientWidth / 2, stage().clientHeight / 2, 1.4,
   ).target;
   card._stepZoom(1);
+  const buttonActivatesSafeDayCycleOutline = stage().classList.contains(
+    'hp-safe-daycycle-outline',
+  );
   const buttonSamples = await settle();
   const buttonFinal = camera();
   const buttonSaves = saveCount;
@@ -277,6 +280,7 @@ const out = await page.evaluate(async () => {
   await settle();
 
   return {
+    programmaticCameraActivatesSafeDayCycleOutline: buttonActivatesSafeDayCycleOutline,
     buttonHasIntermediateFrame: buttonSamples.some((sample) =>
       sample.zoom > 1.001 && sample.zoom < buttonExpected.zoom - 0.001),
     buttonSettlesAtExactTarget: close(buttonFinal.zoom, buttonExpected.zoom)
