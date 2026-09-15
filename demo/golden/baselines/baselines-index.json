@@ -1,12 +1,12 @@
 {
   "schema": 1,
-  "matrixVersion": 62,
-  "acceptedAt": "2026-09-14T22:07:09.772Z",
-  "sourceFingerprint": "09bdfa98edfc8feaa5f2e57eaf3915f817afefdf95ba0c1b2fe1f9ebbea93e52",
+  "matrixVersion": 63,
+  "acceptedAt": "2026-09-15T05:30:10.575Z",
+  "sourceFingerprint": "ab886881caa24d91f2954677ab9477c66a5158d85e9808105269a78eb868c621",
   "chromium": "151.0.7922.34",
   "platform": "linux",
   "witnesses": {
-    "count": 109,
+    "count": 114,
     "floor": 10
   },
   "scenarios": {
@@ -113,6 +113,8 @@
     "device-text-shell-long-dark": "0a8ed12b7167744eebb59adbd0a4c81efb9259c64305e9977b059c05db497cf5",
     "lighting-sun-window-state-only-dark": "1ed25dcc1b2efa7c2622b16c16ec8b551cf67c5c12202fd483b2377dcc47ab50",
     "lighting-sun-window-outer-thick-dark": "36935acc7bd501611a24cc57f87ce77f4a4f46efcea00c1bf7f9bf387cd695de",
+    "lighting-sun-window-outer-occluded-dpr1-dark": "2ca0d84a288a8210c51987cedc768ff346fb940d89ec5bd150d98132c42aa6f7",
+    "lighting-sun-window-outer-occluded-dpr2-dark": "2ca0d84a288a8210c51987cedc768ff346fb940d89ec5bd150d98132c42aa6f7",
     "lighting-fill-light-axis-split-dark": "9061d4cb28884190cb116f9fdec6028af7f2a3758a171fcd3404fbc65aee3a34",
     "lighting-fill-temp-axis-split-dark": "4338d916728ab8ea44e7c7686378034cfb04d96f8bb05acfdcb452dd176edb7a",
     "lighting-fill-lqi-axis-split-dark": "8486a5b02a74ef820c70651bb4bce2ab2f00277f7c6d01dc7689fd561d111727",
