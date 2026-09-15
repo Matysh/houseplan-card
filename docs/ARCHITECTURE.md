@@ -1654,10 +1654,16 @@ its configured space.
   stay independent and continue to render. The static room card uses the same
   data/base projection, omits empty base groups, and renders the same live pools
   only when its default-off `light_pools` option is enabled.
-- **Custom room fill** (#56): `space.settings.custom_fill` is the space color
-  and `room.settings.custom_fill` is an optional explicit override. The pure
-  projection is room → space → `{c:'#607d8b',a:.18}` and every read crosses
-  `safeStoredColor` plus finite alpha clamping. `resolveEffectiveRoomFill`
+- **Custom room fill** (#56, #581): `space.settings.custom_fill` is the space
+  color and `room.settings.custom_fill` is an optional explicit override that
+  counts **only together with the room's own `fill_mode: 'custom'`**. The pure
+  projection is room (own mode) → space → `{c:'#607d8b',a:.18}` and every read
+  crosses `safeStoredColor` plus finite alpha clamping. A room colour stored
+  without the own mode — the state "as the space" used to leave behind — is an
+  orphan: `roomCustomFillOf` paints the space colour, never rewrites the config,
+  and the next save of that room drops the field. The room dialog keeps the
+  colour draft only under its own "custom" radio and clears it when the radio
+  leaves that mode, so the dialog can no longer create the orphan. `resolveEffectiveRoomFill`
   remains the single source for room floor, clean-floor holes and thick-wall
   tunnel colors; stored `room_color` continues to control borders/names only.
 - **Glow pools and additive composition** (#19, #71): every source retains its

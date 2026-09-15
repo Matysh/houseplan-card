@@ -1299,13 +1299,23 @@ export function customFillOf(value: unknown, fallback: FillColorEntry = DEFAULT_
   };
 }
 
-/** Effective custom fill: explicit room value -> space value -> product default. */
+/**
+ * Effective custom fill: the room's own colour -> space colour -> product default.
+ *
+ * The room colour counts only together with the room's OWN `fill_mode: 'custom'`
+ * (#581). A colour stored without that mode — a room switched back to "as the
+ * space" by an older editor, or a legacy `glow` token — is an orphan: the
+ * dialog never named that state, so the plan must not paint it. Reading the
+ * orphan does not rewrite the config; the next save of that room drops it.
+ */
 export function roomCustomFillOf(
   spaceCustom: unknown,
-  room: { settings?: { custom_fill?: unknown } | null } | null | undefined,
+  room: { settings?: { fill_mode?: string | null; custom_fill?: unknown } | null } | null | undefined,
 ): FillColorEntry {
   const spaceFill = customFillOf(spaceCustom);
-  const own = room?.settings?.custom_fill;
+  const settings = room?.settings;
+  if (settings?.fill_mode !== 'custom') return spaceFill;
+  const own = settings?.custom_fill;
   return own && typeof own === 'object' ? customFillOf(own, spaceFill) : spaceFill;
 }
 

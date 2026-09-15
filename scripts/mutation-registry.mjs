@@ -9863,6 +9863,19 @@ const MUTANT_DEFINITIONS = [
       replace: '    "zones_v1": ("zones", ()),',
     }],
   },
+  {
+    id: 'room-orphan-colour-wins-again',
+    guard: 'node --test test/logic.test.mjs',
+    because: '#581: a room colour stored without the room\'s own `custom` mode is an orphan — the '
+      + 'state "as the space" used to leave behind (Cabinet on the dacha). Without the mode gate the '
+      + 'orphan paints again on every surface, and the radio "as the space" lies once more',
+    patches: [{
+      file: 'src/logic.ts',
+      find: "  if (settings?.fill_mode !== 'custom') return spaceFill;",
+      // runtime-false, not statically dead (#568): tsc must still compile the mutant
+      replace: "  if (settings?.fill_mode === 'never-a-fill-mode') return spaceFill;",
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

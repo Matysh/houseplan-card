@@ -7,6 +7,13 @@
   opening reaches the room, instead of shining through solid wall
   ([#580](https://github.com/Matysh/houseplan-card/issues/580)).
 
+- A room switched back to “As the space” no longer keeps its own colour: that
+  choice now forgets the room colour, and the colour row in room settings is
+  shown only under “Custom color”. Rooms already stuck with a foreign colour
+  (a room colour stored without the room's own mode) are painted in the space
+  colour after the update, with nothing to do
+  ([#581](https://github.com/Matysh/houseplan-card/issues/581)).
+
 ## v1.76.0-beta.4 — 2026-09-15
 
 - General settings now let window sunlight start at either the inner window

@@ -617,14 +617,34 @@ test('custom fill projection is safe and follows room -> space -> default inheri
   }
   assert.deepEqual(customFillOf({ c: '#abcdef', a: -2 }), { c: '#abcdef', a: 0 });
   const space = { c: '#112233', a: 0.25 };
+  const own = (custom_fill) => ({ settings: { fill_mode: 'custom', custom_fill } });
   assert.deepEqual(roomCustomFillOf(space, {}), space);
-  assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: null } }), space);
-  assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: { c: '#445566' } } }),
-    { c: '#445566', a: 0.25 });
-  assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: { a: 0.7 } } }),
+  assert.deepEqual(roomCustomFillOf(space, own(null)), space, 'own mode without a colour paints the space colour');
+  assert.deepEqual(roomCustomFillOf(space, own({ c: '#445566' })),
+    { c: '#445566', a: 0.25 }, 'per-field fallback keeps working under the own mode');
+  assert.deepEqual(roomCustomFillOf(space, own({ a: 0.7 })),
     { c: '#112233', a: 0.7 });
-  assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: { c: '#445566', a: 0.7 } } }),
+  assert.deepEqual(roomCustomFillOf(space, own({ c: '#445566', a: 0.7 })),
     { c: '#445566', a: 0.7 });
+});
+
+// #581 AC1: the room colour counts only with the room's OWN `custom` mode. A
+// colour stored without it — the state "as the space" used to leave behind —
+// is an orphan and paints the space colour; reading it changes nothing.
+test('#581 AC1: an orphan room colour (no own custom mode) yields the space colour', () => {
+  const space = { c: '#112233', a: 0.25 };
+  const orphan = { c: '#445566', a: 0.7 };
+  assert.deepEqual(roomCustomFillOf(space, { settings: { custom_fill: orphan } }), space,
+    'Cabinet on the dacha: colour without fill_mode');
+  for (const mode of ['lqi', 'light', 'temp', 'none', 'glow', '', null, undefined]) {
+    assert.deepEqual(roomCustomFillOf(space, { settings: { fill_mode: mode, custom_fill: orphan } }), space,
+      `mode ${String(mode)} does not carry the room colour`);
+  }
+  assert.deepEqual(roomCustomFillOf(space, { settings: { fill_mode: 'custom', custom_fill: orphan } }), orphan,
+    'the own custom mode is the only carrier');
+  const stored = { settings: { custom_fill: orphan, name_scale: 1.35 } };
+  roomCustomFillOf(space, stored);
+  assert.deepEqual(stored, { settings: { custom_fill: orphan, name_scale: 1.35 } }, 'reading never rewrites');
 });
 
 test('room temperature range inherits per side and normalises the effective pair (#487)', () => {

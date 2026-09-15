@@ -9330,9 +9330,9 @@ export class HouseplanCard extends LitElement {
       const mode = this._roomDialog && room.id === this._roomEditId
         ? (this._roomFill || disp.fill)
         : roomFillModeOf(disp.fill, room);
-      const customFill = this._roomDialog && room.id === this._roomEditId
-        ? (this._roomCustomFill || disp.customFill)
-        : roomCustomFillOf(disp.customFill, room);
+      // #581: the draft obeys the stored-settings rule — only the room's own `custom` mode carries its colour
+      const customFill = roomCustomFillOf(disp.customFill, this._roomDialog && room.id === this._roomEditId
+        ? { settings: { fill_mode: this._roomFill, custom_fill: this._roomCustomFill } } : room);
       const tempRange = roomTempRangeFromDraft(disp.tempMin, disp.tempMax, room,
         this._roomTempMin, this._roomTempMax, this._roomDialog && room.id === this._roomEditId);
       const resolved = resolveEffectiveRoomFill(

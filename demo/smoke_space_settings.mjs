@@ -32,18 +32,27 @@ const res = await page.evaluate(async () => {
   })};
   c.requestUpdate(); await c.updateComplete;
   out.lqiFills = [...sr().querySelectorAll('.room.styled')].filter((r) => (r.getAttribute('style') || '').includes('hsl(')).length;
-  // 4) custom fill is static, room-overridable, and Glow pools do not tint it
+  // 4) custom fill is static, room-overridable, and Glow pools do not tint it.
+  //    #581: the room colour counts only with the room's OWN `custom` mode; a
+  //    colour stored without it (an orphan) paints the space colour.
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({
     ...s,
     settings: { ...s.settings, fill_mode: 'custom', glow_enabled: true,
       custom_fill: { c: '#123456', a: 0.37 } },
-    rooms: s.rooms.map((room, index) => index ? room : ({ ...room,
-      settings: { ...(room.settings || {}), custom_fill: { c: '#abcdef', a: 0.61 } } })),
+    rooms: s.rooms.map((room, index) => index === 0
+      ? ({ ...room, settings: { ...(room.settings || {}), fill_mode: 'custom', custom_fill: { c: '#abcdef', a: 0.61 } } })
+      : index === 1
+        ? ({ ...room, settings: { ...(room.settings || {}), custom_fill: { c: '#ff0000', a: 0.9 } } })
+        : room),
   })) };
   c.requestUpdate(); await c.updateComplete;
   const customStyles = [...sr().querySelectorAll('.room.styled')].map((r) => r.getAttribute('style') || '');
   out.customSpaceFill = customStyles.some((s) => s.includes('--room-fill:#123456') && s.includes('--room-fill-op:0.37'));
   out.customRoomOverride = customStyles.some((s) => s.includes('--room-fill:#abcdef') && s.includes('--room-fill-op:0.61'));
+  const orphanRoomId = c._serverCfg.spaces.find((s) => s.id === 'f1').rooms[1].id;
+  const orphanStyle = sr().querySelector(`.room[data-id="${orphanRoomId}"]`)?.getAttribute('style') || '';
+  out.customRoomOrphanInheritsSpace = orphanStyle.includes('--room-fill:#123456') && orphanStyle.includes('--room-fill-op:0.37')
+    && !customStyles.some((s) => s.includes('#ff0000'));
   out.customNotTintedByBase = !sr().querySelector('.glow-base-layer, .glow-base-tunnels')
     && sr().querySelectorAll('.glow-pool').length > 0;
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({

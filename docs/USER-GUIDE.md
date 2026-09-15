@@ -894,7 +894,10 @@ non-interactive.
 ## 13. Room fills and light
 
 Space fill modes include user colour, temperature comfort range and LQI. Room
-settings may override the space. Glow is independent from the base fill.
+settings may override the space. A room has its own colour only while its fill
+is set to its own **Custom color**; choosing **As the space** forgets that
+colour and the room is painted like the rest of the space. Glow is independent
+from the base fill.
 
 When a room effectively uses the temperature fill, its settings show optional
 lower and upper comfort bounds. Each blank field independently inherits the

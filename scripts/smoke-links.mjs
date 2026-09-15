@@ -28,6 +28,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['roomCustomFillOf'],
+    smokes: ['smoke_space_settings.mjs', 'smoke_room_settings.mjs'],
+    because: '#581: the room-colour projection (own custom mode carries the colour, an orphan paints '
+      + 'the space) is observed through `.room` style variables in View and through the room-dialog '
+      + 'draft; neither smoke calls the pure function by name',
+  },
+  {
     symbols: [
       'commitHouseplanViewport', 'isIdentityLiveLayerProjection', 'paintLiveViewport',
     ],

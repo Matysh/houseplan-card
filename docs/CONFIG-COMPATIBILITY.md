@@ -590,7 +590,17 @@ Current `fill_mode` additionally accepts `custom`. Its optional color is stored
 as `{c:'#RRGGBB',a:0..1}` in `space.settings.custom_fill` and, for an explicit
 room override, `room.settings.custom_fill`. Missing or invalid historical data
 is projected at render time through room → space → `#607d8b`/`0.18`; merely
-reading it never rewrites the config. Backend writes keep the strict shared
+reading it never rewrites the config.
+
+Since #581 the room override is read only together with the room's **own**
+`fill_mode: 'custom'`. A `room.settings.custom_fill` stored without that mode —
+older editors wrote it when a room was switched back to "as the space" — is
+projected as the space colour on every surface (card, space-card, PDF) without
+being rewritten; the next save of that room through its dialog removes the
+field. New saves never write `custom_fill` without `fill_mode: 'custom'`. The
+field shapes and the backend schema are unchanged, so older clients read
+configs saved by newer ones as "a room without its own colour" — the same
+picture the newer client shows. Backend writes keep the strict shared
 hex/finite-alpha contract. An explicit `null` is accepted at either level and
 has the same projection semantics as a missing override.
 

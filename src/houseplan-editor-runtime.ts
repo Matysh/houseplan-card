@@ -11001,10 +11001,10 @@ public _openRoomEdit(r: RoomCfg): void {
     this.host._roomFill = r.settings?.fill_mode === 'glow'
       ? ''
       : ((r.settings?.fill_mode as any) || '');
-    const rawCustom = r.settings?.custom_fill;
+    // #581: a colour stored without the room's own custom mode is an orphan and stays out of the draft
+    const rawCustom = this.host._roomFill === 'custom' ? r.settings?.custom_fill : null;
     this.host._roomCustomFill = rawCustom && typeof rawCustom === 'object'
-      ? customFillOf(rawCustom, spaceDisplayOf(this.host._curSpaceCfg).customFill)
-      : null;
+      ? customFillOf(rawCustom, spaceDisplayOf(this.host._curSpaceCfg).customFill) : null;
     [this.host._roomTempMin, this.host._roomTempMax] = roomTempThresholdInputValues(r.settings);
     this.host._roomTempSrc = r.settings?.temp_source || '';
     this.host._roomHumSrc = r.settings?.hum_source || '';
@@ -11018,7 +11018,7 @@ public _openRoomEdit(r: RoomCfg): void {
 public _roomSettingsFromDialog(): RoomCfg['settings'] {
     const st: any = {};
     if (this.host._roomFill) st.fill_mode = this.host._roomFill;
-    if (this.host._roomCustomFill) st.custom_fill = this.host._roomCustomFill;
+    if (this.host._roomFill === 'custom' && this.host._roomCustomFill) st.custom_fill = this.host._roomCustomFill; // #581
     if (this.host._roomTempSrc) st.temp_source = this.host._roomTempSrc;
     if (this.host._roomHumSrc) st.hum_source = this.host._roomHumSrc;
     applyRoomTempThresholdDraft(st, this.host._roomTempMin, this.host._roomTempMax);
@@ -11037,15 +11037,15 @@ public _saveRoomEdit(): void {
     }
     room.name = this.host._nameSel.trim() || room.name;
     room.area = this.host._areaSel || null;
-    // Preserve unknown/future room settings. If this dialog replaces a legacy
-    // fill_mode:'glow', materialize its effective Glow in the same write so a
-    // seemingly unrelated room edit cannot switch the light overlay off.
+    // Preserve unknown/future room settings. A legacy fill_mode:'glow' materializes its effective
+    // Glow in the same write (an unrelated room edit must not switch the overlay off). #581: the room
+    // colour is kept only with the room's own custom mode — "as the space" forgets it, orphans included.
     const previous = room.settings || {};
     const next: any = { ...previous };
     if (!applyRoomTempThresholdDraft(next, this.host._roomTempMin, this.host._roomTempMax)) return;
     if (this.host._roomFill) next.fill_mode = this.host._roomFill;
     else delete next.fill_mode;
-    if (this.host._roomCustomFill) next.custom_fill = this.host._roomCustomFill;
+    if (this.host._roomFill === 'custom' && this.host._roomCustomFill) next.custom_fill = this.host._roomCustomFill;
     else delete next.custom_fill;
     if (previous.fill_mode === 'glow' && typeof previous.glow !== 'boolean') next.glow = true;
     if (this.host._roomTempSrc) next.temp_source = this.host._roomTempSrc;
@@ -14034,11 +14034,11 @@ public _renderRoomDialog(): TemplateResult {
           ${([['', 'fill.inherit'], ...ROOM_FILL_MODES.map((v) => [v, 'fill.' + v])] as const).map(
             ([v, k]) => html`<label class="srcrow inline">
               <input type="radio" name="rfill" .checked=${this.host._roomFill === v}
-                @change=${() => { this.host._roomFill = v as any; this.host.requestUpdate(); }} />
+                @change=${() => { this.host._roomFill = v as typeof this.host._roomFill; if (v !== 'custom') this.host._roomCustomFill = null; this.host.requestUpdate(); }} />
               <span>${this.host._t(k as any)}</span>
             </label>`,
           )}
-          ${effectiveFill === 'custom'
+          ${this.host._roomFill === 'custom'
             ? html`<div class="colorrow gsrow">
                 <span class="gsl">${this.host._roomCustomFill
                   ? this.host._t('room.custom_fill_own') : this.host._t('room.custom_fill_space')}</span>

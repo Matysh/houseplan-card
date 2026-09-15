@@ -1388,6 +1388,15 @@ separately promised workflows:
       temp cold/comfy/hot, LQI weak/strong), each with its own opacity slider [manual];
       Reset restores defaults; saving defaults stores nothing [manual]
 - [ ] Custom fill colors apply to the full card AND the static space-card
+- [ ] **Room colour follows the room's own mode (#581):** a room colour counts
+      only with the room's own «Свой цвет»; «Как у пространства» clears the
+      colour draft at once, the saved room keeps neither `fill_mode` nor
+      `custom_fill`, and the plan paints the space colour. A colour stored
+      without the mode (an orphan from an older editor) paints the space colour,
+      opens as «Как у пространства» without a colour row and is dropped by a
+      plain save; `name_scale`/`label_scale` survive [unit: `logic.test.mjs`
+      `#581 AC1`; auto: `smoke_room_settings` step 7, `smoke_space_settings`
+      `customRoomOrphanInheritsSpace`; mutation: `room-orphan-colour-wins-again`]
 - [ ] LQI gradient interpolates between the configured weak/strong colors [manual]
 - [ ] Per-space "Show zigbee signal (LQI)" toggle hides/shows the badges next to
       devices and the signal line in room tooltips for that space only [manual]

@@ -79,6 +79,65 @@ const res = await page.evaluate(async () => {
   await new Promise((r) => setTimeout(r, 250));
   out.fillDoesNotOptOutGlow = !sr().querySelector('clipPath#hp-glow-enabled')
     && sr().querySelectorAll('.glow-base-layer .glow-base').length === c._spaceModel().rooms.length;
+  // 7) #581: «Как у пространства» забывает свой цвет комнаты; сироты лечатся при чтении.
+  //    Пространство — «Свой цвет» A; комната получает свой цвет B, потом возвращается
+  //    к пространству: в конфиге не остаётся ни режима, ни цвета, план красит A.
+  //    Диалог живёт в редакторе плана, где комнаты рисуются синей размывкой без заливок,
+  //    поэтому цвет проверяется во View, а черновик — через кадровый резолвер заливок,
+  //    единый для всех поверхностей (`_resolvedRoomFills`).
+  const A = { c: '#123456', a: 0.37 };
+  const B = { c: '#abcdef', a: 0.61 };
+  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
+    ...s, settings: { ...(s.settings || {}), fill_mode: 'custom', custom_fill: A, glow_enabled: false } })) };
+  c._setMode('plan'); c.requestUpdate(); await c.updateComplete;
+  const frameFill = (id) => c._resolvedRoomFills(c._spaceModel(), c._spaceDisplayForRender()).byId.get(id);
+  const resolves = (id, fill) => { const f = frameFill(id); return !!f && f.mode === 'custom' && f.color === fill.c && f.opacity === fill.a; };
+  const paintsInView = async (id, fill) => {
+    c._setMode('view'); c.requestUpdate(); await c.updateComplete;
+    const style = sr().querySelector(`.room[data-id="${id}"]`)?.getAttribute('style') || '';
+    c._setMode('plan'); c.requestUpdate(); await c.updateComplete;
+    return style.includes(`--room-fill:${fill.c}`) && style.includes(`--room-fill-op:${fill.a}`);
+  };
+  const colorRow = () => !!sr().querySelector('hp-dialog hp-color-opacity');
+  const cfgRoom = () => c._curSpaceCfg.rooms.find((r) => r.id === editedId);
+  // own colour: mode + colour stored, plan paints B
+  c._openRoomEdit(cfgRoom()); await c.updateComplete;
+  out.ownColourRowHiddenWhileInheriting = !colorRow();
+  c._roomFill = 'custom'; c._roomCustomFill = { ...B }; c.requestUpdate(); await c.updateComplete;
+  out.ownColourRowShownForCustom = colorRow();
+  out.ownColourDraftResolves = resolves(editedId, B);
+  c._saveRoomEdit(); await c.updateComplete;
+  out.ownColourStored = cfgRoom().settings?.fill_mode === 'custom' && cfgRoom().settings?.custom_fill?.c === B.c;
+  out.ownColourPaintsInView = await paintsInView(editedId, B);
+  // AC5: back to "as the space" in the open dialog — the frame resolver answers A at once
+  c._openRoomEdit(cfgRoom()); await c.updateComplete;
+  out.reopenedWithOwnColour = c._roomFill === 'custom' && c._roomCustomFill?.c === B.c && colorRow();
+  const inheritRadio = [...sr().querySelectorAll('hp-dialog .srcrow')]
+    .find((l) => l.textContent.trim() === c._t('fill.inherit'))?.querySelector('input[type="radio"]');
+  inheritRadio.checked = true; inheritRadio.dispatchEvent(new Event('change', { bubbles: true }));
+  await c.updateComplete;
+  out.inheritClearsDraft = c._roomFill === '' && c._roomCustomFill === null && !colorRow();
+  out.inheritDraftResolvesSpace = resolves(editedId, A);
+  // AC3: saved — neither the mode nor the colour survives, the plan paints A
+  c._saveRoomEdit(); await c.updateComplete;
+  out.inheritForgetsColour = !('fill_mode' in (cfgRoom().settings || {})) && !('custom_fill' in (cfgRoom().settings || {}));
+  out.inheritPaintsSpaceInView = await paintsInView(editedId, A);
+  c._openRoomEdit(cfgRoom()); await c.updateComplete;
+  out.inheritReopensWithoutColourRow = c._roomFill === '' && c._roomCustomFill === null && !colorRow();
+  c._roomDialogCancel(); await c.updateComplete;
+  // AC4: an orphan saved by an older editor (Cabinet on the dacha) — paints A,
+  //      opens as "as the space" without a colour row, and a plain save drops it
+  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
+    ...s, rooms: s.rooms.map((r) => r.id !== editedId ? r : ({ ...r,
+      settings: { ...(r.settings || {}), custom_fill: { c: '#182a32', a: 0.59 }, name_scale: 1.35, label_scale: 1.2 } })) })) };
+  c.requestUpdate(); await c.updateComplete;
+  out.orphanPaintsSpaceInView = await paintsInView(editedId, A) && !(await paintsInView(editedId, { c: '#182a32', a: 0.59 }));
+  c._openRoomEdit(cfgRoom()); await c.updateComplete;
+  out.orphanOpensAsInherit = c._roomFill === '' && c._roomCustomFill === null && !colorRow();
+  c._saveRoomEdit(); await c.updateComplete;
+  out.orphanDroppedOnSave = !('custom_fill' in (cfgRoom().settings || {}))
+    && cfgRoom().settings?.name_scale === 1.35 && cfgRoom().settings?.label_scale === 1.2;
+  out.orphanStillPaintsSpaceAfterSave = await paintsInView(editedId, A);
   return out;
 });
 checkAll(res);

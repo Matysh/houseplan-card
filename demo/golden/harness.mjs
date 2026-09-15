@@ -768,7 +768,8 @@ export function prepareGoldenFixture(scenario) {
     for (const room of space.rooms) {
       if (!(room.id in scenario.roomCustomFill)) continue;
       unknown.delete(room.id);
-      room.settings = { ...(room.settings || {}), custom_fill: scenario.roomCustomFill[room.id] };
+      // #581: a room colour is carried only by the room's own `custom` mode
+      room.settings = { ...(room.settings || {}), fill_mode: 'custom', custom_fill: scenario.roomCustomFill[room.id] };
     }
     if (unknown.size)
       throw new Error(`golden roomCustomFill references missing room(s): ${[...unknown].join(', ')}`);
