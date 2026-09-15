@@ -2838,7 +2838,10 @@ require hands on real hardware — they remain for the human pass.
       frames contain no white tile. Before input the historical inner outline
       remains byte-identical to the accepted `day-cycle-*` goldens.
       The same isolated outline still satisfies the #532 relative raster
-      budget [auto: `smoke_daycycle_layer_budget`, `smoke_daycycle_raster`,
+      budget; its smoke compares the median of three paired, closed-path
+      static/day-cycle pans so one shared-runner spike cannot replace the A/B
+      signal
+      [auto: `smoke_daycycle_layer_budget`, `smoke_daycycle_raster`,
       `smoke_live_pan_coverage`]
 - [ ] Opaque plan paper (2026-08-03, owner): the scene background —
       `bg_color` or the daynight sky — is visible ONLY around the plan and

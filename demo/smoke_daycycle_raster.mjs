@@ -8,9 +8,10 @@
 // но уже не координатно огромная внутренняя .hp-paperg.
 //
 // Смок проверяет две вещи, и вторая — не время, а ОТНОШЕНИЕ: абсолютные
-// миллисекунды зависят от машины и раннера, отношение «дневной цикл к
-// статичному фону» — нет. Оба замера идут в одном процессе, на одной странице,
-// подряд, поэтому делят между собой и прогрев, и загрузку машины.
+// миллисекунды зависят от машины и раннера. Три пары замеров идут в одном
+// процессе, на одной странице и чередуют static/daynight; медиана парных
+// отношений отбрасывает единичный шум соседних mutation-шардов, не ослабляя
+// бюджет.
 //
 // Замер аналитики на панораме демо-стенда: 7.9 без подсказки, 0.26 с ней.
 // Порог 2.0 стоит примерно посередине по логарифму и даёт запас в обе стороны.
@@ -22,6 +23,7 @@
 import { launch, check, finish } from './serve.mjs';
 
 const PAN_STEPS = 60;
+const SAMPLE_ROUNDS = 3;
 const RATIO_CEILING = 2.0;
 
 const { page, browser } = await launch({ width: 1400, height: 900 }, 1);
@@ -89,8 +91,15 @@ const measurePan = async () => {
   const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
   await page.mouse.move(cx, cy);
   await page.mouse.down();
-  for (let step = 0; step < PAN_STEPS; step += 1) {
-    await page.mouse.move(cx + Math.sin(step / 6) * 140, cy + Math.cos(step / 9) * 90);
+  // Замкнутая восьмёрка возвращает камеру туда, где начала: static и daynight
+  // всегда растеризуют один и тот же участок плана, а не постепенно уезжают
+  // к краю синтетической сцены.
+  for (let step = 1; step <= PAN_STEPS; step += 1) {
+    const progress = step / PAN_STEPS;
+    await page.mouse.move(
+      cx + Math.sin(progress * Math.PI * 2) * 140,
+      cy + Math.sin(progress * Math.PI * 4) * 90,
+    );
     // Два кадра на шаг: первый ставит кадр в очередь, второй ждёт, пока он
     // действительно отрисуется. Иначе замер считает не работу, а очередь.
     await page.evaluate(() => new Promise((resolve) => {
@@ -110,6 +119,11 @@ const measurePan = async () => {
     tasks += 1;
   }
   return { ms: micros / 1000, tasks };
+};
+
+const median = (values) => {
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)];
 };
 
 const out = {};
@@ -132,10 +146,20 @@ out.staticOutlineUnfiltered = (staticStyle?.filter || 'none') === 'none';
 // Статичный фон не платит за чужую подсказку ни слоем, ни памятью.
 out.staticOutlineNotPromoted = !/filter/.test(staticStyle?.willChange || '');
 
-// 2. Отношение растеризации на настоящей панораме.
-const staticPan = await measurePan();
-await setBackground('daynight');
-const safeDayStyle = await outlineStyle();
+// 2. Отношение растеризации на настоящей панораме. Один CDP trace на общем
+// GitHub runner иногда ловит короткий всплеск соседнего shard-а. Берём три
+// чередующиеся пары и берём медиану их отношений: систематическая регрессия #532
+// остаётся во всех трёх daynight-замерах, одиночный выброс — нет.
+const staticSamples = [];
+const dayCycleSamples = [];
+let safeDayStyle = null;
+for (let round = 0; round < SAMPLE_ROUNDS; round += 1) {
+  staticSamples.push(await measurePan());
+  await setBackground('daynight');
+  safeDayStyle = await outlineStyle();
+  dayCycleSamples.push(await measurePan());
+  if (round < SAMPLE_ROUNDS - 1) await setBackground('static');
+}
 out.cameraUsesSafeOutline = safeDayStyle?.safe === true
   && safeDayStyle?.outlineVisibility === 'visible';
 out.dayCycleOutlineFiltered = /drop-shadow/.test(safeDayStyle?.filter || '');
@@ -143,15 +167,26 @@ out.dayCycleOutlinePromoted = /filter/.test(safeDayStyle?.willChange || '');
 out.dayCyclePaperStaysUnfiltered = (safeDayStyle?.paperFilter || 'none') === 'none'
   && !/filter/.test(safeDayStyle?.paperWillChange || '');
 out.safePlanLayerIsExplicit = /transform/.test(safeDayStyle?.planWillChange || '');
-const dayPan = await measurePan();
 
-out.rasterTasksObserved = staticPan.tasks > 0 && dayPan.tasks > 0;
-const ratio = staticPan.ms > 0 ? dayPan.ms / staticPan.ms : Infinity;
+out.rasterTasksObserved = [...staticSamples, ...dayCycleSamples].every((sample) => sample.tasks > 0);
+const staticMedianMs = median(staticSamples.map((sample) => sample.ms));
+const dayCycleMedianMs = median(dayCycleSamples.map((sample) => sample.ms));
+const pairedRatios = dayCycleSamples.map((sample, index) => (
+  staticSamples[index].ms > 0 ? sample.ms / staticSamples[index].ms : Infinity
+));
+const ratio = median(pairedRatios);
 out.rasterRatioWithinBudget = ratio <= RATIO_CEILING;
 
 console.log(JSON.stringify({
-  staticPanMs: Number(staticPan.ms.toFixed(1)), staticPanTasks: staticPan.tasks,
-  dayCyclePanMs: Number(dayPan.ms.toFixed(1)), dayCyclePanTasks: dayPan.tasks,
+  staticSamples: staticSamples.map((sample) => ({
+    ms: Number(sample.ms.toFixed(1)), tasks: sample.tasks,
+  })),
+  dayCycleSamples: dayCycleSamples.map((sample) => ({
+    ms: Number(sample.ms.toFixed(1)), tasks: sample.tasks,
+  })),
+  staticMedianMs: Number(staticMedianMs.toFixed(1)),
+  dayCycleMedianMs: Number(dayCycleMedianMs.toFixed(1)),
+  pairedRatios: pairedRatios.map((value) => Number(value.toFixed(2))),
   ratio: Number(ratio.toFixed(2)), ceiling: RATIO_CEILING,
 }, null, 1));
 
