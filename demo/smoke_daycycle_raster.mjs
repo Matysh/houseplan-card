@@ -53,16 +53,20 @@ const outlineStyle = () => page.evaluate(() => {
   const root = window.__card.shadowRoot || window.__card.renderRoot;
   const stage = root.querySelector('.stage');
   const outline = root.querySelector('.hp-paper-outline-svg');
-  const paper = root.querySelector('.plan-svg .hp-paperg');
+  const paper = root.querySelector('.hp-paperg');
+  const plan = root.querySelector('.plan-svg');
   if (!paper) return null;
   const style = outline ? getComputedStyle(outline) : null;
   return {
     daycycle: stage.classList.contains('daycycle'),
+    safe: stage.classList.contains('hp-safe-daycycle-outline'),
     outlinePresent: !!outline,
+    outlineVisibility: style?.visibility || 'hidden',
     filter: style?.filter || 'none',
     willChange: style?.willChange || 'auto',
     paperFilter: getComputedStyle(paper).filter,
     paperWillChange: getComputedStyle(paper).willChange,
+    planWillChange: plan ? getComputedStyle(plan).willChange : 'auto',
   };
 });
 
@@ -115,10 +119,10 @@ await setBackground('daynight');
 const dayStyle = await outlineStyle();
 out.dayCycleClassOn = dayStyle?.daycycle === true;
 out.dayCycleOutlinePresent = dayStyle?.outlinePresent === true;
-out.dayCycleOutlineFiltered = /drop-shadow/.test(dayStyle?.filter || '');
-out.dayCycleOutlinePromoted = /filter/.test(dayStyle?.willChange || '');
-out.dayCyclePaperStaysUnfiltered = (dayStyle?.paperFilter || 'none') === 'none'
-  && !/filter/.test(dayStyle?.paperWillChange || '');
+out.idleUsesHistoricalPaperFilter = dayStyle?.safe === false
+  && dayStyle?.outlineVisibility === 'hidden'
+  && /drop-shadow/.test(dayStyle?.paperFilter || '')
+  && /filter/.test(dayStyle?.paperWillChange || '');
 
 await setBackground('static');
 const staticStyle = await outlineStyle();
@@ -131,6 +135,14 @@ out.staticOutlineNotPromoted = !/filter/.test(staticStyle?.willChange || '');
 // 2. Отношение растеризации на настоящей панораме.
 const staticPan = await measurePan();
 await setBackground('daynight');
+const safeDayStyle = await outlineStyle();
+out.cameraUsesSafeOutline = safeDayStyle?.safe === true
+  && safeDayStyle?.outlineVisibility === 'visible';
+out.dayCycleOutlineFiltered = /drop-shadow/.test(safeDayStyle?.filter || '');
+out.dayCycleOutlinePromoted = /filter/.test(safeDayStyle?.willChange || '');
+out.dayCyclePaperStaysUnfiltered = (safeDayStyle?.paperFilter || 'none') === 'none'
+  && !/filter/.test(safeDayStyle?.paperWillChange || '');
+out.safePlanLayerIsExplicit = /transform/.test(safeDayStyle?.planWillChange || '');
 const dayPan = await measurePan();
 
 out.rasterTasksObserved = staticPan.tasks > 0 && dayPan.tasks > 0;

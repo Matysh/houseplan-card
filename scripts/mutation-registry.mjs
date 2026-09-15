@@ -2613,15 +2613,15 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'daycycle-outline-promoted-on-inner-paper',
     guard: 'node demo/smoke_daycycle_layer_budget.mjs',
-    because: '#582: promoting the inner paper group allocates in local plan coordinates; a '
-      + '4700x4200 floor then creates texture-sized overlap layers and HA Companion loses tiles',
+    because: '#582: if camera movement fails to demote the inner paper group, a 4700x4200 '
+      + 'floor keeps texture-sized overlap layers and HA Companion loses tiles',
     patches: [{
       file: 'src/styles/plan.styles.ts',
-      find: '    @media (prefers-reduced-motion: reduce) {\n'
-        + '      .hp-day-cycle-bg,\n',
-      replace: '    .stage.daycycle .hp-paperg { will-change: filter; }\n'
-        + '    @media (prefers-reduced-motion: reduce) {\n'
-        + '      .hp-day-cycle-bg,\n',
+      find: '    .stage.daycycle.hp-safe-daycycle-outline .hp-paperg {\n'
+        + '      filter: none;\n'
+        + '      will-change: auto;\n',
+      replace: '    .stage.daycycle.hp-safe-daycycle-outline .hp-paperg {\n'
+        + '      will-change: filter;\n',
     }],
   },
   {

@@ -2062,8 +2062,10 @@ export class HouseplanCard extends LitElement {
    */
   private _panLock: 'pan' | 'swipe' | null = null;
   private _pinchStart: { dist: number; zoom: number } | null = null;
+  private _safeDayCycleOutline = false;
   private _suppressClick = false;
   private _viewportGestureDirty = false;
+  private _activateSafeDayCycleOutline(): void { this._safeDayCycleOutline = true; this._stageEl?.classList.add('hp-safe-daycycle-outline'); }
   /**
    * Pointer events from an interactive child may stop before the stage sees
    * them. Track touch contacts on the card in capture phase, so the second
@@ -6950,7 +6952,7 @@ export class HouseplanCard extends LitElement {
     // the tool preview (snap dot, measure label) keeps following the finger
     if (this._markup && this._pointers.size === 1) this._markupMove(ev);
     if (this._pinchStart && this._pointers.size >= 2) {
-      this._clearRoomFocus(true);
+      this._activateSafeDayCycleOutline(); this._clearRoomFocus(true);
       if (this._tool === 'opening') {
         this._cursorPt = null;
         this._clearOpeningPlacement(false);
@@ -6991,7 +6993,7 @@ export class HouseplanCard extends LitElement {
       // walk, at 400% and at 33% alike.
       if (this._panLock === null && Math.abs(ddx) + Math.abs(ddy) > STAGE_TAP_DISTANCE_PX) {
         this._panLock = this._swipeZone && Math.abs(ddx) > Math.abs(ddy) * 1.5 ? 'swipe' : 'pan';
-        if (this._panLock === 'pan') this._clearRoomFocus();
+        if (this._panLock === 'pan') { this._activateSafeDayCycleOutline(); this._clearRoomFocus(); }
       }
       const stage = this._stageEl;
       if (this._panLock === 'pan' && stage) {
@@ -7378,7 +7380,7 @@ export class HouseplanCard extends LitElement {
       this._touchContacts.set(pointer.pointerId, next);
       if (this._touchSequenceMultitouch && this._mode === 'view' && !this._vacFit && this._pinchStart
           && [...this._touchContacts.values()].every((item) => item.inStage)) {
-        this._pointers.set(pointer.pointerId, { x: pointer.clientX, y: pointer.clientY });
+        this._activateSafeDayCycleOutline(); this._pointers.set(pointer.pointerId, { x: pointer.clientX, y: pointer.clientY });
         const contacts = [...this._touchContacts.values()];
         if (contacts.length >= 2 && this._stageEl) {
           const [a, b] = contacts;
@@ -11572,7 +11574,7 @@ export class HouseplanCard extends LitElement {
           : nothing}
         </div>
 
-        <div class="stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
+        <div class="stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           ?inert=${this._modeTransitionBusy}
           style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this.panelHost ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}"
@@ -11601,7 +11603,7 @@ export class HouseplanCard extends LitElement {
                 ${renderPaperShapes(paperShapes, 'hp-paper-outline-shapes')}
               </g>
             </svg>` : nothing}
-          <svg class="plan-svg"
+          <svg class="plan-svg" data-hp-layer="plan"
             data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
             viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
             preserveAspectRatio="xMidYMid meet">
@@ -11620,9 +11622,7 @@ export class HouseplanCard extends LitElement {
                    scene through, which is the deliberate consequence.
                    `space` comes from _renderCfg, so a live resize preview
                    controller preview moves the paper together with the rooms.
-                   One <g> around ALL paper shapes: the external day-cycle outline
-                   (styles.ts) is composited once for the whole sheet, so
-                   adjacent rooms never cast seams onto each other's paper. */}
+                   One <g> keeps the visible sheet and filtered silhouette free of room seams. */}
             ${this._wallHatchDefs(disp.color)}${renderPaperShapes(paperShapes)}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
             ${''/* the grid is a property of the plane, not of a box: it follows

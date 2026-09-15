@@ -899,11 +899,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       ?inert=${!!o.inert}
       style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--hp-cell-visual-scale:${gridVisualScale(cellCm)};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}">
       ${renderDayCycleEnvironment(dayCycle)}
-      ${dayCycle && paperShapes.length ? svg`<svg class="hp-paper-outline-svg"
-          viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}"
-          preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
-          ${renderPaperShapes(paperShapes, 'hp-paper-outline-shapes')}
-        </svg>` : nothing}
       <svg class="hp-static-plan-svg" viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
         ${wallUnion ? svg`<defs>
           <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"

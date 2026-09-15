@@ -2831,9 +2831,12 @@ require hands on real hardware — they remain for the human pass.
       plan-paper outline cross-fade for 1100 ms; reduced motion is instant
       [auto: `smoke_sun_live_bg`, golden `day-cycle-*`]
 - [ ] A physically ordinary day-cycle plan stored at 1 cm/grid-point keeps the
-      outline compositor surface bounded by the visible stage during pinch;
-      the inner paper group is unfiltered, no content layer exceeds 4096 in
-      either dimension, and sampled presented frames contain no white tile.
+      outline compositor surface bounded by the visible stage during pinch.
+      Camera movement activates the fallback, the inner paper group becomes
+      unfiltered, the plan layer is explicit rather than overlap-promoted, no
+      content layer exceeds 4096 in either dimension, and sampled presented
+      frames contain no white tile. Before input the historical inner outline
+      remains byte-identical to the accepted `day-cycle-*` goldens.
       The same isolated outline still satisfies the #532 relative raster
       budget [auto: `smoke_daycycle_layer_budget`, `smoke_daycycle_raster`,
       `smoke_live_pan_coverage`]

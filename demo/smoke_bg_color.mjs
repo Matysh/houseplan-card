@@ -174,8 +174,13 @@ const res = await page.evaluate(async () => {
   out.staticCardSharesDawn = st?.classList.contains('phase-dawn')
     && st.querySelector('.hp-day-cycle-env')?.dataset.dayCycleSource === 'sun'
     && st.querySelector('.hp-day-cycle-bg.active')?.dataset.dayCycleLayer === 'dawn';
-  out.staticCardLayersStayOrdered = getComputedStyle(st.querySelector('.hp-paper-outline-svg')).zIndex === '0'
-    && getComputedStyle(st.querySelector('.hp-static-plan-svg')).zIndex === '1'
+  const staticPlan = st.querySelector(':scope > .hp-static-plan-svg');
+  const staticPaper = staticPlan?.querySelector('.hp-paperg');
+  out.staticCardLayersStayOrdered = !!staticPlan
+    && !!staticPaper
+    && !st.querySelector('.hp-paper-outline-svg')
+    && /drop-shadow/.test(getComputedStyle(staticPaper).filter)
+    && getComputedStyle(staticPlan).zIndex === '1'
     && getComputedStyle(st.querySelector('.devlayer')).zIndex === '2';
   // ...and the space override beats the global there too
   cfg.spaces.find((s) => s.id === c._space).settings = { bg_color: '#654321' };

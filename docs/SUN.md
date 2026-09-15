@@ -75,20 +75,23 @@ The public setting remains a two-value selector. `static` uses `bg_color`.
   05:00→13:00→21:00 fallback arc. It has zero visible opacity at night.
 - Four constant environment layers cross-fade for exactly 1100 ms with
   `cubic-bezier(.22,.61,.36,1)`. Reduced motion disables the transition.
-- The zero-offset outline uses an exact copy of the grouped paper footprint in
-  a pointer-inert sibling SVG behind the visible plan. The filter and
-  `will-change: filter` belong to that root SVG, whose CSS box is the stage,
-  not to the inner `.hp-paperg`: a 1 cm/grid-point plan may span more than
-  4096 local SVG units without allocating a coordinate-sized filter layer.
-  The sibling follows the same live viewport as the visible plan throughout a
-  gesture. Without its own promoted layer every repaint of the plan re-ran
+- The zero-offset outline starts on the grouped paper footprint, preserving the
+  historical single-SVG alpha composition exactly. On the first pan or pinch,
+  the card instance switches to an exact pointer-inert copy in a sibling SVG
+  behind the visible plan. The filter and `will-change: filter` then belong to
+  that stage-sized root, while the inner `.hp-paperg` becomes unfiltered: a
+  1 cm/grid-point plan may span more than 4096 local SVG units without moving a
+  coordinate-sized filter layer. The sibling follows the same live viewport as
+  the visible plan for that and every later gesture. Without its own promoted
+  layer every repaint of the plan re-ran
   three blur passes over the whole sheet. Measured in headless
   Chromium (CDP tracing, summed `RasterTask`) on a demo-stand pan, that cost
   about fifteen times the rasterization of a static background; the owner's
   Firefox profile that opened #532 showed the same cause as 23 MB of texture
   uploads per frame and about nine frames per second, without a comparable
   ratio of its own. A static background creates no outline sibling and carries
-  neither the filter nor the hint (#582).
+  neither the filter nor the hint; the non-interactive static space card keeps
+  its historical inner outline because it has no camera gesture (#582).
 - Only the environment and the zero-offset alpha-aware outline outside the
   grouped plan-paper footprint change. The plan, paper, floors, room fills,
   Glow/spill, devices, labels, decor/backdrop, vacuum, hover, and window rays

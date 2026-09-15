@@ -86,12 +86,13 @@ export const planStyles = css`
         opacity 1100ms cubic-bezier(.22, .61, .36, 1);
     }
     .stage.mode-transition .hp-day-cycle-env { transition: none; }
-    /* #532 + #582: the outline keeps its OWN compositing layer, but the
-       promoted element must be the stage-sized root SVG. Promoting the inner
-       paper group allocated in local plan coordinates (4700×4200 at
-       1 cm/point) and overflowed HA Companion's WebView texture budget. */
-    .stage.daycycle .hp-paper-outline-svg,
-    .hp-static-stage.daycycle .hp-paper-outline-svg {
+    /* #532 + #582: an untouched card preserves the historical single-SVG
+       composition. On the first camera movement the card switches for its
+       remaining lifetime to the stage-sized sibling: the inner 4700×4200
+       group is demoted before HA Companion can lose compositor tiles. */
+    .stage.daycycle .hp-paperg,
+    .hp-static-stage.daycycle .hp-paperg,
+    .stage.daycycle.hp-safe-daycycle-outline .hp-paper-outline-svg {
       filter:
         drop-shadow(0 0 1px var(--hp-day-cycle-outline-near))
         drop-shadow(0 0 5px var(--hp-day-cycle-outline-mid))
@@ -99,11 +100,23 @@ export const planStyles = css`
       will-change: filter;
       transition: filter 1100ms cubic-bezier(.22, .61, .36, 1);
     }
+    .stage.daycycle.hp-safe-daycycle-outline .hp-paperg {
+      filter: none;
+      will-change: auto;
+      transition: none;
+    }
+    .stage.daycycle.hp-safe-daycycle-outline .hp-paper-outline-svg {
+      transition: none;
+    }
+    .stage.daycycle.hp-safe-daycycle-outline .plan-svg {
+      will-change: transform;
+    }
     @media (prefers-reduced-motion: reduce) {
       .hp-day-cycle-bg,
       .hp-day-cycle-sun,
-      .stage.daycycle .hp-paper-outline-svg,
-      .hp-static-stage.daycycle .hp-paper-outline-svg {
+      .stage.daycycle .hp-paperg,
+      .hp-static-stage.daycycle .hp-paperg,
+      .stage.daycycle.hp-safe-daycycle-outline .hp-paper-outline-svg {
         transition: none;
       }
     }
@@ -252,7 +265,9 @@ export const planStyles = css`
       z-index: 0;
       overflow: visible;
       pointer-events: none;
+      visibility: hidden;
     }
+    .stage.hp-safe-daycycle-outline .hp-paper-outline-svg { visibility: visible; }
     .iso-underlay-svg { z-index: 0; overflow: visible; }
     .iso-shadows-svg { z-index: 3; overflow: visible; }
     .iso-walls-svg {

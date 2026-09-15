@@ -66,15 +66,17 @@ const layerSnapshot = async () => {
     const root = window.__card.renderRoot;
     const rect = root.querySelector('.stage').getBoundingClientRect();
     const outline = root.querySelector('.hp-paper-outline-svg');
-    const paper = root.querySelector('.plan-svg .hp-paperg');
+    const paper = root.querySelector('.hp-paperg');
     return {
       width: rect.width,
       height: rect.height,
+      safe: root.querySelector('.stage').classList.contains('hp-safe-daycycle-outline'),
       outline: outline ? {
         viewBox: outline.getAttribute('viewBox'),
         filter: getComputedStyle(outline).filter,
         willChange: getComputedStyle(outline).willChange,
         pointerEvents: getComputedStyle(outline).pointerEvents,
+        visibility: getComputedStyle(outline).visibility,
       } : null,
       paper: paper ? {
         bbox: (() => { const box = paper.getBBox(); return [box.width, box.height]; })(),
@@ -194,7 +196,9 @@ const frameMetrics = await page.evaluate(async ({ encoded, stage }) => {
 });
 
 const checks = {};
-const outlineLayer = active.layers.find((layer) => layer.className.includes('hp-paper-outline-svg'));
+const outlineLayers = active.layers.filter((layer) => layer.className.includes('hp-paper-outline-svg'));
+const outlineLayer = outlineLayers[0];
+const settledPlanLayer = settled.layers.find((layer) => layer.className.includes('plan-svg'));
 const oversized = active.layers.filter((layer) => layer.width > 4096 || layer.height > 4096);
 const activePixels = active.layers.reduce((sum, layer) => sum + layer.pixels, 0);
 const screenPixels = active.stage.width * active.stage.height;
@@ -203,7 +207,10 @@ checks.largeCoordinateFixture = active.stage.paper?.bbox?.[0] > 4096
   && active.stage.paper?.bbox?.[1] > 4000;
 checks.separateFilteredOutline = !!active.stage.outline
   && /drop-shadow/.test(active.stage.outline.filter)
-  && active.stage.outline.pointerEvents === 'none';
+  && active.stage.outline.pointerEvents === 'none'
+  && active.stage.outline.visibility === 'visible';
+checks.cameraActivatesSafeFallback = active.stage.safe === true;
+checks.oneOutlineLayerOnly = outlineLayers.length === 1;
 checks.visiblePaperUnfiltered = active.stage.paper?.filter === 'none'
   && !/filter/.test(active.stage.paper?.willChange || '');
 checks.outlineLayerIsStageBounded = !!outlineLayer
@@ -216,6 +223,11 @@ checks.totalContentLayerAreaIsScreenOrder = activePixels <= screenPixels * 16;
 checks.terminalFrameKeepsBudget = settled.layers.every(
   (layer) => layer.width <= 4096 && layer.height <= 4096,
 );
+checks.settledPlanLayerIsExplicitAndBounded = !!settledPlanLayer
+  && settledPlanLayer.width <= active.stage.width * 1.5 + 64
+  && settledPlanLayer.height <= active.stage.height * 1.5 + 64
+  && settledPlanLayer.reasons.some((reason) => reason.includes('will-change: transform'))
+  && settledPlanLayer.reasons.every((reason) => !reason.includes('Overlaps other composited content'));
 checks.capturedPresentedPinchFrames = frameMetrics.length >= 3;
 checks.presentedFramesHaveNoWhiteTile = frameMetrics.every(
   (frame) => frame.nearWhiteRatio < 0.01,

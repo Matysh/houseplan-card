@@ -258,11 +258,13 @@ the same profiler available between stable promotions.
    fallback and returns only phase/source/light tokens. `src/day-cycle-render.ts`
    owns the constant four-layer DOM and exact palette used by full View, kiosk,
    and `houseplan-space-card`; no surface copies thresholds or formulas. The
-   environment is a pointer-inert sibling behind the plan. The only
-   phase-dependent SVG effect is a zero-offset filter on a stage-sized sibling
-   SVG containing an exact copy of the grouped paper footprint. The visible
-   `.hp-paperg` is not filtered: keeping `will-change: filter` on that inner
-   coordinate-space group made 1 cm/point plans exceed WebView texture budgets
+   environment is a pointer-inert sibling behind the plan. Before camera input,
+   the zero-offset outline remains on the grouped paper footprint, preserving
+   the reviewed single-SVG composition byte-for-byte. The first pan or pinch
+   switches the card instance to an exact paper copy in a stage-sized sibling
+   SVG, removes the filter hint from the visible `.hp-paperg`, and explicitly
+   caches the stage-sized plan. Keeping the filter on the inner coordinate-space
+   group while moving made 1 cm/point plans exceed WebView texture budgets
    (#582). The content tree has no brightness, tint, opacity, or blend changes.
    Full and static card lifecycles arm a 30-second
    timer only during clock fallback while visible, catch up on visibility return,
@@ -2014,13 +2016,16 @@ state. The coverage contract also holds when a pointer is held still between
 frames: the fast frame must contain every scene pixel that a forced target
 `viewBox` would contain inside `.stage`.
 
-The day-cycle paper outline is one of those scene SVGs (#582). Its root CSS box
-is stage-sized and owns the triple drop-shadow and idle `will-change: filter`;
-its child is only an exact paper alpha silhouette. During a gesture the same
-floor/camera projection and budgeted `viewBox` updates are applied to both the
-outline root and the visible plan root. This keeps #532's isolated raster path
-without promoting the inner 4700×4200-style local-coordinate footprint or the
-large overlap graph that HA Companion could not tile continuously.
+After the first camera movement, the day-cycle paper outline is one of those
+scene SVGs (#582). Its root CSS box is stage-sized and owns the triple
+drop-shadow and `will-change: filter`; its child is only an exact paper alpha
+silhouette. The visible paper loses its filter and the plan root receives an
+explicit stage-sized transform layer, so Chromium never rediscovers it as an
+implicit overlap layer. During a gesture the same floor/camera projection and
+budgeted `viewBox` updates are applied to both roots. A fresh idle card keeps
+the historical inner outline for exact reviewed pixels; the static space card,
+which has no camera gesture, never enters the fallback. This keeps #532's
+isolated raster path without moving a 4700×4200-style filtered footprint.
 
 Neither the attribute nor an equal style property is written when its value is
 unchanged: an idle frame must leave the DOM byte-identical, or the settled raster
