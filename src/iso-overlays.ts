@@ -643,6 +643,9 @@ const ISO_OVERLAY_GROUP_CELL_CSS_PX = 64;
  * reused by every card. The radius is the public absolute displacement cap,
  * not a per-collision allowance.
  */
+/** Смещение вместе с его расстоянием: hypot на 7238 кандидатов считался заново. */
+interface GroupOffset { readonly offset: ScenePoint; readonly distance: number }
+
 const ISO_OVERLAY_GROUP_OFFSETS_CSS: readonly ScenePoint[] = Object.freeze((() => {
   const offsets: ScenePoint[] = [];
   const limit = Math.floor(ISO_OVERLAY_MAX_NUDGE_CSS_PX / ISO_OVERLAY_GROUP_SEARCH_STEP_CSS_PX);
@@ -660,6 +663,42 @@ const ISO_OVERLAY_GROUP_OFFSETS_CSS: readonly ScenePoint[] = Object.freeze((() =
     || a[1] - b[1] || a[0] - b[0]);
   return offsets;
 })());
+
+const ISO_OVERLAY_GROUP_OFFSET_TABLE: readonly GroupOffset[] = Object.freeze(
+  ISO_OVERLAY_GROUP_OFFSETS_CSS.map((offset) => Object.freeze({
+    offset, distance: Math.hypot(offset[0], offset[1]),
+  })) as GroupOffset[],
+);
+
+/**
+ * Шаг грубого прохода (#583 перед бетой .5).
+ *
+ * Поиск был ограничен радиусом, но не работой: диск в 48 px с шагом 1 px — это
+ * 7238 кандидатов, и у каждого проверяется попадание в комнату и близость к
+ * кладке. Замер на `large-house-isometric-v1`: 2 523 652 просмотренных смещения,
+ * 1 742 740 проверок footprint против силуэтов, из них 98 % отвергнуты стеной, —
+ * 9.6 с на групповой проход и профиль, пробитый в 2–33 раза.
+ *
+ * Сначала идёт решётка с шагом 4 px (около 450 кандидатов), затем — уточнение
+ * 1 px в окрестности найденного места. Тесная сцена, где законного места нет
+ * вовсе, стоит 450 проверок вместо 7238; §6.4 ТЗ и требовал ограниченного
+ * детерминированного поиска, а не полного перебора.
+ */
+const ISO_OVERLAY_GROUP_COARSE_STEP_CSS_PX = 4;
+
+const ISO_OVERLAY_GROUP_COARSE_TABLE: readonly GroupOffset[] = Object.freeze(
+  ISO_OVERLAY_GROUP_OFFSET_TABLE.filter((entry) =>
+    entry.offset[0] % ISO_OVERLAY_GROUP_COARSE_STEP_CSS_PX === 0
+    && entry.offset[1] % ISO_OVERLAY_GROUP_COARSE_STEP_CSS_PX === 0) as GroupOffset[],
+);
+
+/** Уточнение вокруг грубого попадания: те же смещения, но только рядом с ним. */
+function refinementOffsets(around: ScenePoint): readonly GroupOffset[] {
+  const reach = ISO_OVERLAY_GROUP_COARSE_STEP_CSS_PX;
+  return ISO_OVERLAY_GROUP_OFFSET_TABLE.filter((entry) =>
+    Math.abs(entry.offset[0] - around[0]) <= reach
+    && Math.abs(entry.offset[1] - around[1]) <= reach);
+}
 
 function overlayRootBounds(
   item: IsoOverlayCollisionItem, center: ScenePoint,
@@ -817,8 +856,42 @@ export function resolveIsoOverlayCollisions(
       })
       : input.wallSilhouettes;
 
-    const candidate = (offsetCss: ScenePoint): {
-      placement: IsoOverlayPlacement;
+    /**
+     * Дешёвая половина кандидата: где он окажется и с кем столкнётся.
+     *
+     * Порядок половин — не стиль, а цена (#583 перед бетой .5). Проверка
+     * комнаты и силуэтов стен строит трансформированный footprint и гоняет
+     * полигон против каждой стены-кандидата; на плотной группе полный обход
+     * диска в 7238 смещений делал это тысячи раз за один проход, и групповой
+     * резолвер стоил ~755 мс на вызов. Сначала считается то, что стоит
+     * обращения к сетке ячеек, и только у смещения, способного УЛУЧШИТЬ
+     * результат, проверяется допустимость.
+     */
+    /**
+     * Соседи, до которых вообще можно дотянуться в пределах 48 px.
+     *
+     * Прежде каждое смещение спрашивало сетку ячеек заново: Set, разбор ключей
+     * и сортировка массива на каждого из 7238 кандидатов. Диапазон досягаемости
+     * известен заранее — он не зависит от смещения, — поэтому список строится
+     * один раз на элемент, и внутренний цикл остаётся арифметикой.
+     */
+    const reachIndices = nearby(expandedBounds(
+      overlayRootBounds(item, base.raisedScene), maxNudge * unitsPerPixel,
+    ));
+    const conflictsAt = (bounds: Bounds): { conflicts: number[]; penalty: number } => {
+      const conflicts: number[] = [];
+      let penalty = 0;
+      for (const index of reachIndices) {
+        const value = overlapPenalty(bounds, accepted[index].bounds, gapUnits);
+        if (value > EPS) { conflicts.push(index); penalty += value; }
+      }
+      return { conflicts, penalty };
+    };
+
+    const candidateShape = (offsetCss: ScenePoint): {
+      offsetScene: ScenePoint;
+      sameAsBase: boolean;
+      visualScene: ScenePoint;
       bounds: Bounds;
       conflicts: readonly number[];
       penalty: number;
@@ -834,43 +907,148 @@ export function resolveIsoOverlayCollisions(
         base.raisedScene[0] + offsetScene[0],
         base.raisedScene[1] + offsetScene[1],
       ];
-      if (!sameAsBase) {
-        if (!wallsValid || !ownerRoom) return null;
-        const plan = raisedSceneToPlan(visualScene, visualOffset, camera);
-        if (!pointStrictlyInRoom(plan, ownerRoom)) return null;
-        if (pointStrictlyInRoom(currentPlan, ownerRoom)
-            && !segmentStrictlyInRoom(currentPlan, plan, ownerRoom)) return null;
-        const footprint = baseFootprint.map((point) => [
-          point[0] + offsetScene[0], point[1] + offsetScene[1],
-        ] as ScenePoint);
-        const footprintBounds = ringBounds(footprint);
-        if (!footprintBounds || wallCandidates.some((wall) =>
-          footprintNearSilhouette(footprint, footprintBounds, wall, gapUnits, true))) return null;
-      }
       const bounds = overlayRootBounds(item, visualScene);
-      const conflicts = nearby(bounds).filter((index) =>
-        overlapPenalty(bounds, accepted[index].bounds, gapUnits) > EPS);
-      const penalty = conflicts.reduce((sum, index) =>
-        sum + overlapPenalty(bounds, accepted[index].bounds, gapUnits), 0);
+      const { conflicts, penalty } = conflictsAt(bounds);
+      return { offsetScene, sameAsBase, visualScene, bounds, conflicts, penalty };
+    };
+
+    /** Дорогая половина: комната владельца, кладка и непрерывность пути. */
+    /**
+     * Прямоугольник комнаты владельца — дешёвый отказ до полигонов (#583 перед
+     * бетой .5). Замер на `large-house-isometric-v1`: из 2 523 652 просмотренных
+     * смещений 1 911 721 доходило до проверки комнаты и кладки, и именно она
+     * съедала 8.5 из 9.6 секунд группового прохода. Подавляющее большинство
+     * этих точек лежит ВНЕ комнаты — узнать это можно сравнением четырёх чисел,
+     * а не обходом колец полигона и силуэтов стен.
+     */
+    const ownerBox = ownerRoom ? ringBounds(ownerRoom.outer as readonly ScenePoint[]) : null;
+
+    /**
+     * Широкая фаза по стенам — то, чего требовал §6.4 ТЗ и чего не было.
+     *
+     * Замер на `large-house-isometric-v1`: 1 742 740 проверок footprint против
+     * 41 841 466 пар «кандидат × стена», 6.4 с из 8.9 с прохода. Стен в радиусе
+     * 48 px около двух десятков, но для КОНКРЕТНОГО смещения близка одна-две.
+     * Стены раскладываются по тем же ячейкам, что и принятые оверлеи, и каждый
+     * кандидат смотрит только свои ячейки.
+     */
+    const wallCells = new Map<string, number[]>();
+    for (let index = 0; index < wallCandidates.length; index++) {
+      const wallBounds = silhouetteBounds(wallCandidates[index], true);
+      if (!wallBounds) continue;
+      const [minX, minY, maxX, maxY] = cellRange(expandedBounds(wallBounds, gapUnits));
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          const key = `${x}:${y}`;
+          const list = wallCells.get(key) || [];
+          list.push(index);
+          wallCells.set(key, list);
+        }
+      }
+    }
+    // Пометки поколения вместо Set на каждого кандидата: аллокация в этом цикле
+    // стоит дороже самой проверки.
+    const wallSeen = new Int32Array(wallCandidates.length);
+    let wallSeenGeneration = 0;
+    const wallsNear = (bounds: Bounds): IsoWallSilhouette[] => {
+      const [minX, minY, maxX, maxY] = cellRange(expandedBounds(bounds, gapUnits));
+      const result: IsoWallSilhouette[] = [];
+      wallSeenGeneration += 1;
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          for (const index of wallCells.get(`${x}:${y}`) || []) {
+            if (wallSeen[index] === wallSeenGeneration) continue;
+            wallSeen[index] = wallSeenGeneration;
+            result.push(wallCandidates[index]);
+          }
+        }
+      }
+      return result;
+    };
+
+    const candidateAllowed = (shape: {
+      offsetScene: ScenePoint; sameAsBase: boolean; visualScene: ScenePoint;
+    }): boolean => {
+      if (shape.sameAsBase) return true;
+      if (!wallsValid || !ownerRoom) return false;
+      const plan = raisedSceneToPlan(shape.visualScene, visualOffset, camera);
+      if (ownerBox && (plan[0] < ownerBox[0] || plan[0] > ownerBox[2]
+        || plan[1] < ownerBox[1] || plan[1] > ownerBox[3])) return false;
+      if (!pointStrictlyInRoom(plan, ownerRoom)) return false;
+      if (pointStrictlyInRoom(currentPlan, ownerRoom)
+          && !segmentStrictlyInRoom(currentPlan, plan, ownerRoom)) return false;
+      const footprint = baseFootprint.map((point) => [
+        point[0] + shape.offsetScene[0], point[1] + shape.offsetScene[1],
+      ] as ScenePoint);
+      const footprintBounds = ringBounds(footprint);
+      if (!footprintBounds) return false;
+      return !wallsNear(footprintBounds).some((wall) =>
+        footprintNearSilhouette(footprint, footprintBounds, wall, gapUnits, true));
+    };
+
+    const candidate = (offsetCss: ScenePoint): {
+      placement: IsoOverlayPlacement;
+      bounds: Bounds;
+      conflicts: readonly number[];
+      penalty: number;
+    } | null => {
+      const shape = candidateShape(offsetCss);
+      if (!shape || !candidateAllowed(shape)) return null;
       return {
         placement: placementAtGroupOffset(base, offsetCss, unitsPerPixel, false),
-        bounds, conflicts, penalty,
+        bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
       };
     };
 
     let best = candidate(baseOffsetCss);
+    /**
+     * Грубый проход даёт место, уточнение возвращает минимальность: без него
+     * значок остановился бы на узле решётки 4 px, хотя ближе есть законная
+     * точка. Уточняется только окрестность найденного, а не весь диск.
+     */
+    const refine = (coarse: {
+      placement: IsoOverlayPlacement; bounds: Bounds;
+      conflicts: readonly number[]; penalty: number;
+    }): typeof coarse => {
+      let refined = coarse;
+      for (const entry of refinementOffsets(coarse.placement.nudgeCss)) {
+        if (entry.distance >= refined.placement.nudgeDistanceCss - EPS) continue;
+        const shape = candidateShape(entry.offset);
+        if (!shape || shape.conflicts.length || !candidateAllowed(shape)) continue;
+        refined = {
+          placement: placementAtGroupOffset(base, entry.offset, unitsPerPixel, false),
+          bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
+        };
+      }
+      return refined;
+    };
     if (!best || best.conflicts.length) {
-      for (const offset of ISO_OVERLAY_GROUP_OFFSETS_CSS) {
-        if (Math.hypot(offset[0], offset[1]) > maxNudge + EPS) break;
+      for (const entry of ISO_OVERLAY_GROUP_COARSE_TABLE) {
+        if (entry.distance > maxNudge + EPS) break;
+        const offset = entry.offset;
         if (Math.abs(offset[0] - baseOffsetCss[0]) <= EPS
             && Math.abs(offset[1] - baseOffsetCss[1]) <= EPS) continue;
-        const next = candidate(offset);
-        if (!next) continue;
-        if (!next.conflicts.length) { best = next; break; }
-        if (!best || next.penalty < best.penalty - EPS
-            || Math.abs(next.penalty - best.penalty) <= EPS
-              && next.placement.nudgeDistanceCss < best.placement.nudgeDistanceCss - EPS) best = next;
+        const shape = candidateShape(offset);
+        if (!shape) continue;
+        // Смещения отсортированы по возрастанию расстояния, поэтому кандидат с
+        // тем же штрафом уже никогда не окажется ближе принятого: его отбор
+        // невозможен, и платить за проверку кладки незачем. Результат тот же,
+        // что у прежнего порядка, — меняется только цена.
+        const canWin = !best || !shape.conflicts.length || shape.penalty < best.penalty - EPS;
+        if (!canWin || !candidateAllowed(shape)) continue;
+        const next = {
+          placement: placementAtGroupOffset(base, offset, unitsPerPixel, false),
+          bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
+        };
+        if (!next.conflicts.length) { best = refine(next); break; }
+        best = next;
       }
+      // Грубая решётка могла пройти мимо законного места, которое лежит между
+      // её узлами: тогда лучший кандидат остаётся с пересечением. Уточнение
+      // вокруг него ищет ту самую точку с шагом 1 px — ограниченно и только
+      // один раз, а не по всему диску (АС4 ТЗ: разрешимое пересечение обязано
+      // быть устранено).
+      if (best && best.conflicts.length) best = refine(best);
     }
     if (!best) {
       const placement = placementAtGroupOffset(base, baseOffsetCss, unitsPerPixel, true);
