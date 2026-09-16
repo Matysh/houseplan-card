@@ -89,16 +89,24 @@ const out = await page.evaluate(async () => {
   const centredGate = basis('iso-centred-gate');
   const flippedGate = basis('iso-flipped-gate');
   const wallAxisY = 0.12 * 1000;
-  result.isoOpeningDefaultCentred = centredDoor?.leaves.length === 1
-    && centredDoor.leaves.every((leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6);
+  const samePoint = (a, b) => !!a && !!b
+    && Math.abs(a[0] - b[0]) < 1e-6 && Math.abs(a[1] - b[1]) < 1e-6;
+  const leavesUseSelectedFace = (opening) => !!opening
+    && opening.leaves.every((leaf) => samePoint(
+      leaf.hinge,
+      leaf.leaf === 0 ? opening.face.selectedStart : opening.face.selectedEnd,
+    ));
+  result.isoDoorUsesSelectedHostFace = centredDoor?.leaves.length === 1
+    && leavesUseSelectedFace(centredDoor)
+    && Math.abs(centredDoor.leaves[0].hinge[1] - wallAxisY) > 1e-6;
   result.isoWindowFlipStaysCentred = flippedWindow?.leaves.length === 2
     && flippedWindow.leaves.every(
       (leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6,
     );
-  result.isoGateFlipKeepsCentredOrigin = centredGate?.leaves.length === 2
-    && centredGate.leaves.every((leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6)
-    && flippedGate?.leaves.length === 2
-    && flippedGate.leaves.every((leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6)
+  result.isoGateFlipUsesSelectedHostFace = centredGate?.leaves.length === 2
+    && leavesUseSelectedFace(centredGate)
+    && flippedGate?.leaves.length === 2 && leavesUseSelectedFace(flippedGate)
+    && Math.sign(centredGate.face.offset[1]) === -Math.sign(flippedGate.face.offset[1])
     && centredGate.leaves.every((leaf) => Math.abs(leaf.turnDeg) === 10)
     && flippedGate.leaves.every((leaf) => Math.abs(leaf.turnDeg) === 10);
   result.isoGateFlipReversesTurn = centredGate?.leaves[0]?.turnDeg
