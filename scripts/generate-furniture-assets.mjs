@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { joinFurniturePaths } from './furniture-path-join.mjs';
+import { boxFillDeviation } from './svg-path-bounds.mjs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
@@ -14,6 +16,13 @@ const CATALOG_OUT = path.join(ROOT, 'src', 'furniture-plan-catalog.generated.ts'
 const PLAN_OUT = path.join(ROOT, 'src', 'furniture-plan-art.generated.ts');
 const MENU_OUT = path.join(ROOT, 'src', 'furniture-menu-art.generated.ts');
 const CHECK = process.argv.includes('--check');
+
+/**
+ * Допуск контракта #584: видимые границы планового символа обязаны заполнять
+ * `viewBox` с точностью 0,1 единицы (в сантиметрах предмета). Число пришло из
+ * ТЗ дизайнеру; присланный пак укладывается в 0,000001.
+ */
+export const PLAN_BOUNDS_TOLERANCE = 0.1;
 
 const fail = (message) => { throw new Error(`Furniture pack: ${message}`); };
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -94,7 +103,24 @@ function svgArt(file, expectedViewBox) {
     paths.push(d);
   }
   if (!paths.length) fail(`${label} has no paths`);
-  return { d: paths.join(' '), viewW: view[2], viewH: view[3] };
+  // #584: у каждого исходного пути своя текущая точка. Простая конкатенация
+  // `d` продолжала координаты предыдущего пути — рисунок уезжал.
+  const d = joinFurniturePaths(paths);
+  if (expectedViewBox) {
+    // Плановый символ описывает физический предмет: один путь, подконтуры с
+    // абсолютной `M`, и рисунок заполняет `viewBox` целиком. Пока последнего
+    // не требовали, два предмета 60 × 60 выглядели разными (#584).
+    if (paths.length !== 1) fail(`${label} plan symbol must be a single path`);
+    if (!d.startsWith('M') || /(?<![0-9eE.,\-])m/.test(d)) {
+      fail(`${label} plan subpaths must start with an absolute M`);
+    }
+    const deviation = boxFillDeviation(d, view[2], view[3]);
+    if (deviation > PLAN_BOUNDS_TOLERANCE) {
+      fail(`${label} drawable bounds miss the viewBox by ${deviation.toFixed(4)} `
+        + `(tolerance ${PLAN_BOUNDS_TOLERANCE})`);
+    }
+  }
+  return { d, viewW: view[2], viewH: view[3] };
 }
 
 function loadPack() {

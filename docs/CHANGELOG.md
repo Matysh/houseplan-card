@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Furniture items with the same dimensions now look the same: the width and
+  depth you enter match the visible size on the plan. The artwork used to fill
+  only about 88 % of its own box, so a 60 × 60 cm “Kitchen base unit” looked
+  about 14 % narrower — and 30 % smaller in area — than a 60 × 60 cm dishwasher.
+  Furniture already placed keeps its coordinates, sizes, rotation and mirroring;
+  some pieces become visually larger, which is the fix
+  ([#584](https://github.com/Matysh/houseplan-card/issues/584)).
+- The “Stairs” and “TV” icons in the furniture menu no longer spill outside their
+  own bounds: parts of the drawing were displaced when contours were joined
+  ([#584](https://github.com/Matysh/houseplan-card/issues/584)).
+
 ## v1.76.0 — 2026-09-16
 
 - Pinch-zoom in the Home Assistant app no longer tears the picture apart: large

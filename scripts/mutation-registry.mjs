@@ -9918,6 +9918,33 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'furniture-symbol-may-keep-inner-padding',
+    guard: 'node --test --test-name-pattern="AC1" test/furniture-visual-bounds.test.mjs',
+    because: '#584: «ширина × глубина» обязаны совпадать с видимым габаритом. Пока гейт '
+      + 'проверял только viewBox, все 44 дизайнерских символа занимали около 88 % стороны, и '
+      + 'предмет 60 × 60 выглядел меньше соседа 60 × 60 — цифры совпадали, картинка врала',
+    patches: [{
+      file: 'scripts/svg-path-bounds.mjs',
+      // рантайм-ложь, а не мёртвая ветка (#568): модуль обязан импортироваться
+      find: 'export function boxFillDeviation(d, width, height) {\n  const bounds = svgPathBounds(d);',
+      replace: 'export function boxFillDeviation(d, width, height) {\n'
+        + '  if (String(width) !== \'mutant-never-a-width\') return 0;\n'
+        + '  const bounds = svgPathBounds(d);',
+    }],
+  },
+  {
+    id: 'furniture-paths-joined-without-reset',
+    guard: 'node --test --test-name-pattern="AC4" test/furniture-path-join.test.mjs',
+    because: '#584: у каждого исходного path своя текущая точка. Простая конкатенация `d` '
+      + 'продолжала координаты предыдущего пути — детали уезжали за viewBox (stairs, tv, '
+      + 'coffee_table_round, table_round), причём молча: метаданные и viewBox сходились',
+    patches: [{
+      file: 'scripts/furniture-path-join.mjs',
+      find: "    if (d.startsWith('M')) return d;",
+      replace: "    if (d.startsWith('M') || d.length >= 0) return d;",
+    }],
+  },
+  {
     id: 'screenshot-freshness-never-strict',
     guard: 'node --test --test-name-pattern="#586" test/classify-changes.test.mjs',
     because: '#586: preflight сравнивал со строкой `heavy=true` ВЕСЬ двухстрочный вывод CLI, '
