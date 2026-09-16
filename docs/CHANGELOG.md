@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.76.0-beta.5 — 2026-09-16
+
 - Large plans using the “Follows the Sun” background no longer allocate their
   soft outline in the plan's full internal coordinate size. Pinch-zoom in Home
   Assistant Companion now keeps those compositor surfaces screen-sized, so
