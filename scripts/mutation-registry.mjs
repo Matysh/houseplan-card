@@ -9918,6 +9918,21 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'screenshot-freshness-never-strict',
+    guard: 'node --test --test-name-pattern="#586" test/classify-changes.test.mjs',
+    because: '#586: preflight сравнивал со строкой `heavy=true` ВЕСЬ двухстрочный вывод CLI, '
+      + 'поэтому строгий режим свежести скриншотов не включился ни на одном кандидате, и обе '
+      + 'беты после 699ab471 уехали с устаревшим индексом кадров. Проверка, которая умеет '
+      + 'только предупреждать, не гейт',
+    patches: [{
+      file: 'scripts/classify-changes.mjs',
+      // рантайм-ложь, а не мёртвая ветка (#568): модуль обязан импортироваться
+      find: '  return heavyGatesRequested(inputs) ? \'strict\' : \'warn\';',
+      replace: '  return heavyGatesRequested(inputs) && String(inputs?.eventName) === \'mutant-never-an-event\'\n'
+        + '    ? \'strict\' : \'warn\';',
+    }],
+  },
+  {
     id: 'stable-candidate-compares-against-itself',
     guard: 'node --test --test-name-pattern="AC2" test/performance-baseline.test.mjs',
     because: '#587: кандидат стабильного релиза обязан сравниваться с предыдущим стабильным '

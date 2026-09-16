@@ -109,6 +109,25 @@ export function mutantsRequested({ eventName, headMessage, fullInput, mutantsInp
   return hasReleaseTrailer(headMessage);
 }
 
+/**
+ * Режим гейта свежести скриншотов документации (#479, починен в #586).
+ *
+ * Значение одно, и считается оно здесь, а не в shell. Прежде preflight сравнивал
+ * со строкой `heavy=true` ВЕСЬ вывод `--heavy`, а вывод из двух строк
+ * (`heavy=…` и `mutants_requested=…`) в `$(…)` схлопывается в одну через
+ * пробел. Сравнение не совпадало никогда: строгий режим не включился ни на
+ * одном кандидате, проверка деградировала в предупреждение, а предупреждения
+ * в сводке не видно. Так обе беты после `699ab471` уехали с устаревшим
+ * индексом кадров.
+ *
+ * Правило разбора, которое из этого следует: формат `$GITHUB_OUTPUT` —
+ * построчный `ключ=значение`, и читать его надо по ключу либо не читать вовсе.
+ * Где нужен один ответ — CLI отдаёт один ответ.
+ */
+export function screenshotsGateMode(inputs) {
+  return heavyGatesRequested(inputs) ? 'strict' : 'warn';
+}
+
 /** Трейлер `Release: vX.Y.Z` в конце сообщения коммита — признак кандидата. */
 export function hasReleaseTrailer(message) {
   return /^Release:\s*v?\d+\.\d+\.\d+\S*\s*$/m.test(String(message || ''));
@@ -125,7 +144,15 @@ export function formatOutputs(outputs) {
 // `file:///C:/C:/...`, CLI считал себя импортированным и молчал.
 const invokedDirectly = isMainModule(import.meta.url);
 if (invokedDirectly) {
-  if (process.argv.includes('--heavy')) {
+  if (process.argv.includes('--screenshots-mode')) {
+    // #586: один вопрос — один ответ. Разбирать многострочный вывод в shell
+    // больше негде и нечем.
+    process.stdout.write(`${screenshotsGateMode({
+      eventName: process.env.EVENT_NAME,
+      headMessage: process.env.HEAD_MESSAGE,
+      fullInput: process.env.FULL_INPUT,
+    })}\n`);
+  } else if (process.argv.includes('--heavy')) {
     // Отдельный вызов: у `heavy` другие входы (событие, сообщение head-коммита),
     // и на dev он нужен даже там, где классификация путей выключена.
     const heavy = heavyGatesRequested({

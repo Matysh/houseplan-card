@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import {
   CHECK_OF_OUTPUT, CLASSIFIERS, OUTPUTS, PERF_PROFILES, classifyAll, classifyChanges, formatOutputs, mutantsRequested,
+  screenshotsGateMode,
 } from '../scripts/classify-changes.mjs';
 import { manifest } from '../scripts/check-inputs.mjs';
 import { fileURLToPath } from 'node:url';
@@ -183,6 +185,34 @@ test('CLI --heavy читает событие и сообщение из окр�
   assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true\nmutants_requested=true');
   // #510: мутанты по кнопке без полного набора — вызов конвейера ревью и слияния
   assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'false', MUTANTS_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=false\nmutants_requested=true');
+});
+
+test('#586: режим гейта скриншотов приходит одним значением и на кандидате строгий', () => {
+  assert.equal(screenshotsGateMode({ eventName: 'push', headMessage: 'fix: x\n\nIssue: #1\nUser-Visible: no' }), 'warn');
+  assert.equal(screenshotsGateMode({ eventName: 'push', headMessage: 'x\n\nRelease: v1.2.3' }), 'strict', 'кандидат беты');
+  assert.equal(screenshotsGateMode({ eventName: 'push', headMessage: 'x\n\nRelease: v1.76.0' }), 'strict', 'кандидат стабильного');
+  assert.equal(screenshotsGateMode({ eventName: 'workflow_dispatch', fullInput: 'true' }), 'strict');
+  assert.equal(screenshotsGateMode({ eventName: 'workflow_dispatch', fullInput: 'false' }), 'warn');
+  assert.equal(screenshotsGateMode({ eventName: 'pull_request' }), 'strict');
+  assert.equal(screenshotsGateMode({ eventName: 'schedule' }), 'strict');
+
+  // Регрессия, ради которой заведён #586: у `--heavy` вывод ДВУХСТРОЧНЫЙ, и
+  // сравнение всего вывода со строкой `heavy=true` не совпадает никогда.
+  const run = (args, env) => execFileSync(process.execPath, ['scripts/classify-changes.mjs', ...args], {
+    encoding: 'utf8', env: { ...process.env, ...env },
+  }).trim();
+  const candidate = { EVENT_NAME: 'push', HEAD_MESSAGE: 'x\n\nRelease: v1.2.3' };
+  assert.notEqual(run(['--heavy'], candidate), 'heavy=true', 'вывод --heavy многострочный — сравнивать его целиком нельзя');
+  assert.equal(run(['--screenshots-mode'], candidate), 'strict');
+  assert.equal(run(['--screenshots-mode'], { EVENT_NAME: 'push', HEAD_MESSAGE: 'fix: x' }), 'warn');
+});
+
+test('#586: preflight спрашивает режим одним значением, а не разбирает вывод --heavy', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /classify-changes\.mjs --screenshots-mode/);
+  assert.ok(!/=\s*"heavy=true"/.test(workflow),
+    'сравнение со строкой «heavy=true» вернулось — строгий режим снова не включится');
+  assert.match(workflow, /check-docs\.mjs --external --screenshots=\$mode/);
 });
 
 test('#510 AC1: мутанты по диффу запрашиваются кандидатом, PR, ночью и по кнопке — не обычным пушем', () => {

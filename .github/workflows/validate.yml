@@ -82,10 +82,12 @@ jobs:
           HEAD_MESSAGE: ${{ github.event.head_commit.message }}
           FULL_INPUT: ${{ inputs.full }}
         run: |
-          heavy=$(node scripts/classify-changes.mjs --heavy)
-          mode=warn
-          [ "$heavy" = "heavy=true" ] && mode=strict
-          echo "скриншоты документации: режим $mode ($heavy)"
+          # #586: CLI отдаёт ОДИН ответ. Прежде здесь сравнивался со строкой
+          # `heavy=true` весь вывод `--heavy`, а он двухстрочный: в `$(…)`
+          # строки схлопываются через пробел, сравнение не совпадало никогда,
+          # и строгий режим не включился ни на одном кандидате.
+          mode=$(node scripts/classify-changes.mjs --screenshots-mode)
+          echo "скриншоты документации: режим $mode"
           node scripts/check-docs.mjs --external --screenshots=$mode
 
       # Конвейер читает `process.yml` из ветки по умолчанию, поэтому файл обязан
