@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## v1.76.0 — 2026-09-16
+
+- Pinch-zoom in the Home Assistant app no longer tears the picture apart: large
+  plans with the “Follows the Sun” background lost their fixed white gaps in
+  walls and floors, the plan no longer moves between compositor paths mid
+  gesture, and a pinch that starts on a device marker no longer runs that
+  device's action or opens the House Plan card together with Home Assistant
+  more-info ([#582](https://github.com/Matysh/houseplan-card/issues/582),
+  [#579](https://github.com/Matysh/houseplan-card/issues/579),
+  [#578](https://github.com/Matysh/houseplan-card/issues/578),
+  [#563](https://github.com/Matysh/houseplan-card/issues/563)).
+- General settings now choose where window sunlight starts: at the inner window
+  corners (the existing behaviour) or at the outer ones
+  ([#577](https://github.com/Matysh/houseplan-card/issues/577)).
+- “As the space” in room settings gives the room the space colour back again,
+  and rooms stuck with a foreign colour are painted in the space colour on their
+  own ([#581](https://github.com/Matysh/houseplan-card/issues/581)).
+- Closely placed device markers no longer steal one another's hover and tap,
+  keyboard focus opens the same tooltip as the mouse, and switching spaces is
+  exposed to assistive technology
+  ([#564](https://github.com/Matysh/houseplan-card/issues/564),
+  [#565](https://github.com/Matysh/houseplan-card/issues/565)).
+- A plan edited in another browser no longer rolls back to an older version, and
+  dragging no longer leaves an empty strip at the incoming edge
+  ([#543](https://github.com/Matysh/houseplan-card/issues/543),
+  [#544](https://github.com/Matysh/houseplan-card/issues/544)).
+- Small fixes and improvements: summary-panel preferences stop moving between
+  Masonry cards, an upload no longer reports low disk space because of a double
+  count, radar sources refresh in the settings preview, and outer-corner sun rays
+  no longer shine through a thick wall
+  ([#561](https://github.com/Matysh/houseplan-card/issues/561),
+  [#554](https://github.com/Matysh/houseplan-card/issues/554),
+  [#545](https://github.com/Matysh/houseplan-card/issues/545),
+  [#580](https://github.com/Matysh/houseplan-card/issues/580)).
+
 ## v1.76.0-beta.5 — 2026-09-16
 
 - Large plans using the “Follows the Sun” background no longer allocate their
