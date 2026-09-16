@@ -7,9 +7,9 @@
     "firstStableRenderMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 250, "hardMaxMs": 3500 },
     "viewToggleMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 1500 },
     "spaceSwitchMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 1800 },
-    "stateUpdateMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 75, "hardMaxMs": 1000 },
-    "resizePreviewMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 150, "hardMaxMs": 2200 },
-    "panZoomMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 60, "hardMaxMs": 600 },
+    "stateUpdateMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 120, "hardMaxMs": 1000 },
+    "resizePreviewMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 450, "hardMaxMs": 2200 },
+    "panZoomMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 150, "hardMaxMs": 600 },
     "settingsDialogMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 1200 },
     "switchCycleMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 250, "hardMaxMs": 8000 }
   },

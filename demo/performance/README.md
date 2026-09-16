@@ -231,6 +231,21 @@ runner jitter, sat at 16 → 20 against a 19.2 limit on the v1.73.0 stable
 comparison. The allowance widens the count check alone to 16 → 21 for that
 baseline; it is not a licence for more work per task.
 
+The same two isometric profiles carry a widened **gesture** allowance:
+`resizePreviewMs` 450 ms, `panZoomMs` 150 ms and `stateUpdateMs` 120 ms, held
+identical on both profiles because the #160 contract requires the Stage 3 dense
+twin to share every common ceiling with `large-house-isometric-v1`. Owner decision 2026-09-16, #585: the Full Performance run
+of the v1.76.0 stable candidate against v1.75.0 (run 35097102695) measured
+resizePreview 603 → 981 ms and panZoom 91 → 205 ms in the hidden 2.5D view.
+The step is real and understood — #583 gives that view more geometry, and the
+overlay-collision search still costs about twice what it did before #583, even
+after the coarse-lattice speed-up. Absolute ceilings did not move (panZoom 205
+against 600, resize 981 against 2200) and every user-visible profile stayed
+green. The lever is milliseconds, not the ratio: it absorbs one level shift and
+still gates growth from the new level. #585 rewrites the search to enumerate
+obstacle boundaries instead of scanning the 48 px disc; when it lands, these
+allowances go back to 150/60/75.
+
 The `cleanFloor` entry ceiling is 100: the reviewed fixture warms exactly 100
 deterministic room/physical-body entries. An extra 20 means that one complete
 floor was invalidated and rebuilt, so fixture extensions must recalibrate this

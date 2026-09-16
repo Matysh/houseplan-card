@@ -257,6 +257,51 @@ test('interaction aggregate keeps hosted-runner headroom without weakening compo
   assert.equal(smoke.timings.editorSeriesMs.hardMaxMs, 750);
 });
 
+test('изометрический допуск жеста покрывает ровно принятый шаг #583, не больше (#585)', () => {
+  const isometric = readBudget('budgets-large-house-isometric.json');
+  const dense = readBudget('budgets-isometric-stage3-dense.json');
+  // Полные бенчмарки кандидата v1.76.0 (прогон 35097102695) против v1.75.0:
+  // скрытый 2.5D стал дороже на жесте — #583 добавил виду геометрии, а поиск
+  // свободного места для подписей всё ещё вдвое дороже, чем до него. Решение
+  // владельца 2026-09-16: принять шаг по трём метрикам двух изометрических
+  // профилей. Рычаг — допуск в миллисекундах, а НЕ коэффициент: он покрывает
+  // разовый сдвиг уровня и продолжает ловить рост от нового уровня. Чинит шаг
+  // #585 (перебор границ препятствий вместо скана диска), после него допуски
+  // возвращаются к 150/60/75.
+  assert.equal(isometric.timings.resizePreviewMs.noiseAllowanceMs, 450);
+  assert.equal(isometric.timings.panZoomMs.noiseAllowanceMs, 150);
+  assert.equal(isometric.timings.stateUpdateMs.noiseAllowanceMs, 120, 'профили-близнецы обязаны совпадать по общим метрикам (#160)');
+  assert.equal(dense.timings.stateUpdateMs.noiseAllowanceMs, 120);
+  assert.equal(dense.timings.resizePreviewMs.noiseAllowanceMs, 450);
+  assert.equal(dense.timings.panZoomMs.noiseAllowanceMs, 150);
+  for (const budget of [isometric, dense]) {
+    for (const metric of ['resizePreviewMs', 'panZoomMs', 'stateUpdateMs']) {
+      assert.equal(budget.timings[metric].maxRegressionRatio, 0.2, 'коэффициент не рычаг');
+    }
+    assert.equal(budget.timings.resizePreviewMs.hardMaxMs, 2200, 'абсолютный потолок не двигался');
+    assert.equal(budget.timings.panZoomMs.hardMaxMs, 600);
+    assert.equal(budget.timings.modelReadyMs.noiseAllowanceMs, 200, 'загрузка допуска не получала');
+    assert.equal(budget.timings.spaceSwitchMs.noiseAllowanceMs, 100);
+  }
+  for (const file of ['budgets.json', 'budgets-large-house-plan-snap.json', 'budgets-large-house-interaction.json']) {
+    const other = readBudget(file);
+    assert.equal(other.timings.panZoomMs.noiseAllowanceMs, 60, `${file} допуска жеста не получал`);
+    assert.equal(other.timings.resizePreviewMs.noiseAllowanceMs, 150, `${file} допуска ресайза не получал`);
+  }
+  // Наблюдённые числа прогона проходят, следующий такой же шаг — нет.
+  const limit = (budget, metric, baseline) => Math.max(
+    baseline * (1 + budget.timings[metric].maxRegressionRatio),
+    baseline + budget.timings[metric].noiseAllowanceMs,
+  );
+  assert.ok(limit(isometric, 'resizePreviewMs', 603) >= 981.4, 'принятый шаг проходит');
+  assert.ok(limit(isometric, 'resizePreviewMs', 603) < 1100, 'следующий шаг того же размера — нет');
+  assert.ok(limit(isometric, 'panZoomMs', 90.8) >= 205.2);
+  assert.ok(limit(isometric, 'panZoomMs', 90.8) < 260);
+  assert.ok(limit(dense, 'stateUpdateMs', 77.5) >= 169.1);
+  assert.ok(limit(dense, 'resizePreviewMs', 582.5) >= 765.6);
+  assert.ok(limit(dense, 'panZoomMs', 90.6) >= 171.7);
+});
+
 test('isometric long-task count allowance covers the lazy iso-chunk split, nothing else (#507)', () => {
   const isometric = readBudget('budgets-large-house-isometric.json');
   assert.equal(isometric.longTasks.countNoiseAllowance, 5, 'owner-accepted +2 tasks of the lazy iso-scene-render split plus jitter');
