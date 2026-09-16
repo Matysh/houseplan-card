@@ -109,6 +109,21 @@ applies two limits:
 1. a relative regression allowance against the base-SHA report;
 2. an absolute safety ceiling from `budgets.json`.
 
+Which base SHA the relative half compares against is decided by
+`scripts/performance-baseline.mjs`, not by the workflow's shell (#587). A
+**stable** release candidate — its head commit carries a `Release:` trailer
+without a prerelease suffix — is compared against the **previous stable tag**;
+everything else keeps the old base (`push before`, the candidate parent, or the
+`comparison_ref` a manual dispatch names). The reason is the order the stable
+gate imposes: the candidate must be on `main` before this workflow can run on
+its exact SHA, so the *next* commit of the same line would otherwise take the
+first one as its base and compare the line with itself — a red gate would be
+cleared by any follow-up commit. The negative cases of that decision (no tag,
+a tag sitting on HEAD, a base that is no longer an ancestor) cannot be exercised
+from YAML, so they live in `test/performance-baseline.test.mjs` with an injected
+git; the mutant `stable-candidate-compares-against-itself` puts the old
+behaviour back and must be caught.
+
 The tighter limit wins. The absolute values are catastrophic safety ceilings,
 not normal-performance targets; the base-relative comparison catches smaller
 regressions. Small fast operations receive an absolute noise

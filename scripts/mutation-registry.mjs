@@ -9917,6 +9917,19 @@ const MUTANT_DEFINITIONS = [
       replace: "  if (settings?.fill_mode === 'never-a-fill-mode') return spaceFill;",
     }],
   },
+  {
+    id: 'stable-candidate-compares-against-itself',
+    guard: 'node --test --test-name-pattern="AC2" test/performance-baseline.test.mjs',
+    because: '#587: кандидат стабильного релиза обязан сравниваться с предыдущим стабильным '
+      + 'тегом. Если база снова берётся с прошлой вершины main, второй коммит линейки судится '
+      + 'о первый — и красный перф-гейт снимается любым следующим коммитом, молча и зелёным',
+    patches: [{
+      file: 'scripts/performance-baseline.mjs',
+      // рантайм-ложь, а не мёртвая ветка (#568): модуль обязан импортироваться
+      find: '  if (candidateTag && isStableTag(candidateTag)) {',
+      replace: "  if (candidateTag && isStableTag(candidateTag) && candidateTag === 'v0.0.0-mutant') {",
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
