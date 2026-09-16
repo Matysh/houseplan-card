@@ -53,13 +53,13 @@ const openingIsoContract = {
   kind: 'room', wallCm: 30, surface: 'iso',
   openings: [
     { id: 'golden-iso-door', type: 'door', at: 0.20, length: 0.09,
-      flipV: false, offset: 'center' },
+      flipV: false, offset: 'selected-face' },
     { id: 'golden-iso-window', type: 'window', at: 0.40, length: 0.09,
       flipV: false, offset: 'center' },
     { id: 'golden-iso-gate-default', type: 'gate', at: 0.62, length: 0.09,
-      flipV: false, offset: 'center', turnPair: 'golden-iso-gate-turn' },
+      flipV: false, offset: 'selected-face', turnPair: 'golden-iso-gate-turn' },
     { id: 'golden-iso-gate-flipped', type: 'gate', at: 0.82, length: 0.09,
-      flipV: true, offset: 'center', turnPair: 'golden-iso-gate-turn' },
+      flipV: true, offset: 'selected-face', turnPair: 'golden-iso-gate-turn' },
   ],
 };
 

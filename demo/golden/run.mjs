@@ -848,6 +848,7 @@ async function assertOpeningSymbolContract(page, contract) {
       }
     } else {
       const bases = card._isoSource?.()?.build?.().openings || [];
+      const pointDistance = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
       for (const item of expected.openings) {
         const cfg = openingCfg.get(item.id);
         const basis = bases.find((opening) => opening.id === item.id);
@@ -865,13 +866,24 @@ async function assertOpeningSymbolContract(page, contract) {
               basis.leaves.reduce((sum, leaf) => sum + leaf.hinge[1], 0) / basis.leaves.length,
             ];
         const offset = Math.hypot(centre[0] - cfg.x * 1000, centre[1] - cfg.y * 1000);
-        if (item.offset !== 'center' || offset > epsilon)
-          throw new Error(`semantic golden Iso centre failed for ${item.id}: ${offset}`);
+        const faceOffset = Math.max(...basis.leaves.map((leaf) => pointDistance(
+          leaf.hinge,
+          leaf.leaf === 0 ? basis.face.selectedStart : basis.face.selectedEnd,
+        )));
+        if (item.offset === 'center') {
+          if (item.type !== 'window' || offset > epsilon)
+            throw new Error(`semantic golden Iso centre failed for ${item.id}: ${offset}`);
+        } else if (item.offset === 'selected-face') {
+          if (item.type === 'window' || faceOffset > epsilon)
+            throw new Error(`semantic golden Iso selected face failed for ${item.id}: ${faceOffset}`);
+        } else {
+          throw new Error(`semantic golden Iso offset contract is unknown: ${item.id}`);
+        }
         const turn = item.type === 'gate' ? basis.leaves[0].turnDeg : null;
         if (turn != null && Math.abs(Math.abs(turn) - 10) > epsilon)
           throw new Error(`semantic golden Iso gate turn failed: ${item.id}`);
         if (item.turnPair) turns.set(item.id, { pair: item.turnPair, flipV: item.flipV, turn });
-        rows.push({ id: item.id, offset, turn });
+        rows.push({ id: item.id, offset, faceOffset, turn });
       }
       if (root.querySelectorAll('.iso-opening-panel').length < expected.openings.length)
         throw new Error('semantic golden Iso opening panels are missing');

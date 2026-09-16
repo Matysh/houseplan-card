@@ -70,10 +70,12 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       for (const opening of contract.openings) {
         assert.match(opening.id, /^[a-z0-9-]+$/, scenario.id);
         assert.equal(['door', 'window', 'gate'].includes(opening.type), true, scenario.id);
-        assert.equal(['center', 'edge'].includes(opening.offset), true, scenario.id);
+        const expectedOffset = contract.surface === 'iso' && opening.type !== 'window'
+          ? 'selected-face'
+          : 'center';
+        assert.equal(opening.offset, expectedOffset, scenario.id);
         assert.equal(typeof opening.flipV, 'boolean', scenario.id);
         assert.equal(Number.isFinite(opening.at) && opening.length > 0, true, scenario.id);
-        if (opening.type === 'gate') assert.equal(opening.offset, 'center', scenario.id);
       }
       assert.equal(contract.surface === 'iso', scenario.projection === 'iso', scenario.id);
     }

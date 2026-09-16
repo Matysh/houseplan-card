@@ -534,10 +534,13 @@ export function prepareGoldenFixture(scenario) {
     }
     const seen = new Set();
     for (const opening of contract.openings) {
+      const expectedOffset = contract.surface === 'iso' && opening?.type !== 'window'
+        ? 'selected-face'
+        : 'center';
       if (!opening?.id || seen.has(opening.id)
           || !['door', 'window', 'gate'].includes(opening.type)
           || !Number.isFinite(opening.at) || !Number.isFinite(opening.length)
-          || !(opening.length > 0) || opening.offset !== 'center'
+          || !(opening.length > 0) || opening.offset !== expectedOffset
           || typeof opening.flipV !== 'boolean') {
         throw new Error(`invalid golden opening symbol entry: ${opening?.id || '<empty>'}`);
       }
