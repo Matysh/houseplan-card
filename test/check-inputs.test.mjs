@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-
 import { fileURLToPath } from 'node:url';
 import {
-  CHECKS, CHECK_NAMES, NOT_AN_INPUT, REUSE_JOBS, checksAffectedBy, closure, coverage, globToRegExp,
-  inputsOf, isDeclaredNotAnInput, isExecutableInput, manifest, referencesOf, stripComments,
+  BASELINE_OVERLAY, CHECKS, CHECK_NAMES, NOT_AN_INPUT, REUSE_JOBS, checksAffectedBy, closure, coverage,
+  globToRegExp, inputsOf, isBaselineOverlay, isDeclaredNotAnInput, isExecutableInput, manifest, referencesOf,
+  stripComments,
 } from '../scripts/check-inputs.mjs';
 
 // Единый manifest входов (#492 §5). Две группы доказательств: чистая механика
@@ -101,6 +101,48 @@ test('замыкание: код транзитивно, данные — лис
   assert.ok(!reached.includes('demo/fixtures/pic.png'));
   assert.ok(!reached.includes('scripts/never.mjs'));
   assert.equal(parents.get('scripts/helper.mjs'), 'demo/compat.mjs');
+});
+
+// #573: overlay принятых эталонов принадлежит только golden. Строка-каталог
+// `demo/golden` в корпусе отпечатка раскрывалась во ВСЕ текстовые файлы под
+// ним, и индекс эталонов становился входом smoke, perf и каждого гарда через
+// serve.mjs — приёмка 13 кадров на beta.3 перегнала 22 минуты чужой работы.
+test('#573: раскрытие каталога не выдаёт overlay эталонов; явный корень и явная ссылка — выдают', () => {
+  const files = {
+    'demo/smoke_a.mjs': "import './serve.mjs';\n",
+    'demo/serve.mjs': "import '../scripts/source-fingerprint.mjs';\n",
+    'scripts/source-fingerprint.mjs': "const corpus = ['demo/fixtures', 'demo/golden'];\n",
+    'demo/golden/run.mjs': "const baselineRoot = 'demo/golden/baselines';\n",
+    'demo/golden/matrix.mjs': 'export const GOLDEN_SCENARIOS = [];\n',
+    'demo/golden/baselines/baselines-index.json': '{"scenarios":{}}',
+    'demo/golden/baselines/scene.png': 'binary',
+    'demo/golden/baselines/.gitkeep': '',
+    'test/golden-index.test.mjs': "const index = 'demo/golden/baselines/baselines-index.json';\n",
+  };
+  const tracked = Object.keys(files).sort();
+  const viaSmoke = closure('/virtual', ['demo/smoke_a.mjs'], { tracked, read: (f) => files[f] });
+  assert.ok(viaSmoke.includes('demo/golden/matrix.mjs'), 'код под demo/golden — по-прежнему вход');
+  assert.ok(!viaSmoke.some(isBaselineOverlay), `overlay не течёт через каталог: ${viaSmoke.join(', ')}`);
+  // golden сама называет каталог эталонов строкой — и всё равно получает их не
+  // раскрытием, а явным корнем manifest (CHECKS.golden.roots)
+  const viaGolden = closure('/virtual', ['demo/golden/run.mjs'], { tracked, read: (f) => files[f] });
+  assert.ok(!viaGolden.some(isBaselineOverlay), 'каталог overlay по строке — тоже не раскрывается');
+  assert.ok(CHECKS.golden.roots.includes('demo/golden/**'), 'эталоны входят в golden корнем');
+  // явная ссылка на файл overlay — честная зависимость, она остаётся
+  const viaTest = closure('/virtual', ['test/golden-index.test.mjs'], { tracked, read: (f) => files[f] });
+  assert.ok(viaTest.includes('demo/golden/baselines/baselines-index.json'));
+  assert.deepEqual(BASELINE_OVERLAY, ['demo/golden/baselines/**']);
+  assert.equal(isBaselineOverlay('demo/golden/baselines/baselines-index.json'), true);
+  assert.equal(isBaselineOverlay('demo/golden/matrix.mjs'), false);
+});
+
+test('#573: на живом дереве индекс эталонов — вход golden и ничьей другой реюзной job', () => {
+  // путь собран из кусков: литерал сделал бы индекс входом frontend через этот тест
+  const index = p('demo', 'golden', 'baselines', 'baselines-index.json');
+  for (const check of ['smoke', 'performance_smoke', 'geometry_parity', 'backend']) {
+    assert.ok(!MANIFEST[check].has(index), `${check} не читает эталоны`);
+  }
+  assert.ok(MANIFEST.golden.has(index));
 });
 
 test('замыкание останавливается на копиях бандла (класс D)', () => {

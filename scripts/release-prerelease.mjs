@@ -12,7 +12,7 @@ import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { assertReleaseContract } from './release-contract.mjs';
-import { classifyValidateProofs } from './release-gate.mjs';
+import { candidateExpectations, classifyValidateProofs } from './release-gate.mjs';
 import { assertBundleManifest } from './bundle-tree.mjs';
 import { SUMS_FILE, compareSums, formatSums, parseSums, sumsOfDirectory } from './release-assets.mjs';
 import {
@@ -416,7 +416,9 @@ if (invokedDirectly) {
     ]);
     const tree = run('git', ['rev-parse', `${sha}^{tree}`]).stdout;
     const token = run('gh', ['auth', 'token']).stdout;
-    const verdict = await classifyValidateProofs({ runs, repo, sha, tree, token });
+    // #573: локальный публикатор стоит на checkout кандидата — сверяет evidence.
+    const expected = candidateExpectations({ sha, root });
+    const verdict = await classifyValidateProofs({ runs, repo, sha, tree, token, expected });
     if (verdict.status !== 'green') {
       throw new Error(`Exact-SHA Validate proof is ${verdict.status} for ${sha}: ${verdict.note}`);
     }

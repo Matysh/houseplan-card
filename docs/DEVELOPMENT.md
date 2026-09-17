@@ -492,7 +492,20 @@ requires a complete Validate proof for its SHA and
 Git tree (#541). The proof is tied to the workflow run ID and attempt and lists
 both the requested checks and the jobs that actually executed. A skipped heavy job counts only
 when its content-addressed reuse marker names an independently verified
-successful source job. Review, merge and release use the
+successful source job. Since #573 the proof also carries composite evidence:
+the identity of the product tree (every tracked path except the accepted
+golden overlay `demo/golden/baselines/**`), the overlay itself (its Git tree,
+the SHA-256 of `baselines-index.json` and the run named by the commit's
+`Baseline-Reviewed:` trailer) and the content key of every reusable job,
+executed or reused. Release consumers standing on the candidate checkout
+(`release-gate.mjs`, `release-prerelease.mjs`) recompute all of it locally and
+fail closed on any mismatch, on a reused marker whose key is not the
+candidate's, and on a declared review run that does not exist, was cancelled
+or is not a Validate run; a proof without the block is stale for them. The
+practical consequence is the beta.3 path: a candidate red only in golden,
+then a baseline-only commit that reuses smoke, performance smoke, parity and
+backend from the candidate's green jobs, skips every caught witness in the
+mutation ledger and re-runs golden, preflight and frontend only. Review, merge and release use the
 same `missing` / `pending` / `cancelled` / `stale` / `failed` state machine. A
 cancelled or light run is not a release verdict and cannot hide an older full
 failure; a later complete full proof can refresh it (#511). The release also requires Full

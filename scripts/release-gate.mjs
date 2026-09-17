@@ -1,12 +1,29 @@
 // Exact-SHA GitHub Actions gate used by release workflows. Prereleases require
 // Validate; stable releases additionally require the dedicated full
 // performance workflow.
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  CI_PROOF_POLICIES, evaluateCiProof, githubCandidateTree,
+  CI_PROOF_POLICIES, evaluateCiProof, githubCandidateTree, localEvidence,
   loadGithubProofContext, selectCiProofVerdict,
 } from './ci-proof.mjs';
+
+/**
+ * #573: ожидания потребителя. Гейты релиза стоят на checkout кандидата, и
+ * тогда evidence proof (product tree, overlay эталонов, content-ключи,
+ * reviewed run) не принимается на веру, а сверяется с тем, что посчитано
+ * здесь. Checkout не на кандидате — считать нечего, и об этом говорится вслух.
+ */
+export function candidateExpectations({ sha, root = process.cwd(), log = console.log } = {}) {
+  let head = null;
+  try { head = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(); } catch { head = null; }
+  if (!sha || head !== sha) {
+    log(`::notice::checkout ${head ? head.slice(0, 8) : 'absent'} is not the candidate ${String(sha).slice(0, 8)} — proof evidence is verified against GitHub only (#573)`);
+    return null;
+  }
+  return localEvidence(root);
+}
 
 /**
  * The verdict is the LATEST run that was not cancelled (#511). A cancelled run
@@ -37,7 +54,7 @@ const newestFirst = (runs) => [...(Array.isArray(runs) ? runs : [])].sort((a, b)
 
 /** #541: proof-aware verdict shared with review and merge. */
 export async function classifyValidateProofs({
-  runs, repo, sha, tree, token, fetchImpl = fetch,
+  runs, repo, sha, tree, token, fetchImpl = fetch, expected = null,
   loadContext = (run) => loadGithubProofContext({ repo, run, token, fetchImpl }),
 }) {
   const evaluations = [];
@@ -48,7 +65,7 @@ export async function classifyValidateProofs({
       try {
         const context = await loadContext(run);
         evaluations.push(evaluateCiProof({
-          run, ...context, candidate: { sha, tree }, policy: CI_PROOF_POLICIES.release,
+          run, ...context, candidate: { sha, tree }, policy: CI_PROOF_POLICIES.release, expected,
         }));
       } catch (error) {
         evaluations.push({
@@ -72,12 +89,18 @@ const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
 export async function waitForGreenWorkflow({
   repo, sha, token, workflow = 'validate.yml', label = 'Validate', timeoutMs = 60 * 60 * 1000,
+  root = process.cwd(),
 }) {
   if (!repo || !sha || !token || !workflow) throw new Error('repo, sha, token and workflow are required');
   const deadline = Date.now() + timeoutMs;
   const url = workflowRunsUrl({ repo, workflow, sha });
   const proofRequired = workflow === 'validate.yml';
   const tree = proofRequired ? await githubCandidateTree({ repo, sha, token }) : null;
+  const expected = proofRequired ? candidateExpectations({ sha, root }) : null;
+  if (expected) {
+    console.log(`candidate evidence: product tree ${expected.product.tree.slice(0, 12)}, baselines `
+      + `${expected.baselines.tree?.slice(0, 12) || 'none'}, reviewed run ${expected.baselines.reviewedRun || 'none'} (#573)`);
+  }
   while (true) {
     const response = await fetch(url, {
       headers: {
@@ -92,7 +115,7 @@ export async function waitForGreenWorkflow({
     const runs = Array.isArray(body?.workflow_runs) ? body.workflow_runs : [];
     const latest = latestRelevantRun(runs);
     const verdict = proofRequired
-      ? await classifyValidateProofs({ runs, repo, sha, tree, token })
+      ? await classifyValidateProofs({ runs, repo, sha, tree, token, expected })
       : { status: classifyValidateRuns(runs) === 'success' ? 'green'
         : classifyValidateRuns(runs) === 'fail' ? 'failed' : 'pending', url: latest?.html_url, note: '' };
     if (verdict.status === 'failed') {

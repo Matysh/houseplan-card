@@ -155,6 +155,15 @@ manifest читают и `classify-changes.mjs` (job `changes`: job запуск
   `test/check-inputs.test.mjs`) требует, чтобы каждый такой файл был чьим-то
   входом либо стоял в `NOT_AN_INPUT` с причиной: новый скрипт без записи —
   красный юнит, не вечное расширение прогонов;
+- **overlay принятых эталонов** (`demo/golden/baselines/**`, #573) — вход
+  только `golden`, у которой он стоит явным корнем. Раскрытие каталога по
+  строке его не выдаёт: корпус отпечатка называет `demo/golden` каталогом,
+  но берёт из него только `*.mjs`, а до #573 индекс эталонов через это
+  раскрытие становился входом smoke, perf и 181 из 183 браузерных
+  свидетелей — приёмка 13 кадров на beta.3 (`ad4000f9`) сменила их ключи и
+  отпечатки, и второй полный Validate повторил 22 минуты уже сделанной
+  работы. Явная ссылка на файл индекса (как в `test/check-inputs.test.mjs`)
+  входом остаётся;
 - `--check=<job>` печатает входы, `--why=<файл>` — цепочку, по которой файл
   стал входом.
 
@@ -162,7 +171,7 @@ manifest читают и `classify-changes.mjs` (job `changes`: job запуск
 `test/check-inputs.test.mjs`) держат представителей каждой категории входов и
 обратную пробу для UI ↔ backend; мутанты `manifest-drops-workflow-input`,
 `classify-unknown-input-is-unaffected`, `reuse-backend-hashes-ui`,
-`backend-dynamic-inputs-dropped`,
+`backend-dynamic-inputs-dropped`, `baseline-overlay-leaks-into-every-key`,
 `guard-inputs-ignore-wrapper-defaults`, `registry-diff-not-selected`,
 `merge-pushes-unvalidated-candidate`, `merge-ignores-lease-rejection`,
 `nightly-does-not-wait` держат сам протокол.

@@ -36,6 +36,22 @@ export const BUILD_OUTPUT = [
 ];
 
 /**
+ * Принятые эталоны и их индекс — overlay поверх продуктового дерева (#573).
+ *
+ * С ними сравнивает ровно одна проверка — `golden`, и у неё они стоят явным
+ * корнем. Никакая другая job их не читает: смок и перф-смок сверяют бандл с
+ * отпечатком исходников, а отпечаток (`source-fingerprint.mjs`) берёт из
+ * `demo/golden` только `*.mjs`. Но корпус там назван строкой-каталогом, и
+ * раскрытие каталога отдавало всем этим проверкам ещё и
+ * `baselines-index.json` — так приёмка 13 кадров на `v1.76.0-beta.3`
+ * (`ad4000f9`) сменила ключи smoke и performance_smoke и отпечатки 181 из 183
+ * свидетелей с браузерным гардом, и второй полный Validate повторил 22 минуты
+ * работы, которую первый уже сделал. Раскрытие каталога overlay не выдаёт;
+ * явный корень и явная ссылка на файл — как были.
+ */
+export const BASELINE_OVERLAY = ['demo/golden/baselines/**'];
+
+/**
  * Не входы Validate — с причиной. Каждая запись отвечает на вопрос «кто это
  * исполняет и почему не Validate».
  */
@@ -83,6 +99,7 @@ export const globToRegExp = (glob) => {
   return new RegExp(`^${re}$`);
 };
 const matchesAny = (file, globs) => globs.some((glob) => globToRegExp(glob).test(file));
+export const isBaselineOverlay = (file) => matchesAny(file, BASELINE_OVERLAY);
 
 /** Отслеживаемые файлы (git), либо обход дерева там, где git недоступен. */
 export function trackedFiles(root) {
@@ -253,8 +270,13 @@ export function closure(root, entries, { tracked = trackedFiles(root), stopAt = 
     for (const ref of data) {
       if (trackedSet.has(ref)) { note(ref, file); seen.add(ref); continue; }
       // каталог по строке — данные; бинарные файлы под ним код по строке не
-      // читает (эталоны golden входят в свою проверку явным корнем)
-      if (isDir(ref)) for (const f of tracked) if (f.startsWith(`${ref}/`) && !BINARY.test(f)) { note(f, file); seen.add(f); }
+      // читает, а overlay эталонов принадлежит только своей проверке (#573):
+      // и то и другое входит в golden явным корнем
+      if (isDir(ref)) {
+        for (const f of tracked) {
+          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }
+        }
+      }
     }
   }
   return [...seen].sort();

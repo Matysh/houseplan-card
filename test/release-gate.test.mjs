@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import {
-  classifyValidateProofs, classifyValidateRuns, latestRelevantRun, workflowRunsUrl,
+  candidateExpectations, classifyValidateProofs, classifyValidateRuns, latestRelevantRun, workflowRunsUrl,
 } from '../scripts/release-gate.mjs';
-import { buildCiProof } from '../scripts/ci-proof.mjs';
+import { buildCiProof, localEvidence } from '../scripts/ci-proof.mjs';
 
 const SHA = 'a'.repeat(40);
 const TREE = 'b'.repeat(40);
@@ -123,4 +125,41 @@ test('#541: the release documents describe proof semantics', () => {
   assert.match(development, /Review, merge and release use the\nsame `missing` \/ `pending` \/ `cancelled` \/ `stale` \/ `failed` state machine/);
   const performance = readFileSync(new URL('../demo/performance/README.md', import.meta.url), 'utf8');
   assert.match(performance, /latest\nnon-cancelled run on the SHA/);
+});
+
+// #573: гейт релиза стоит на checkout кандидата и сверяет составное evidence
+// proof с тем, что считает сам; чужой checkout — честное «проверяю только по
+// GitHub», а не молчаливый пропуск.
+test('#573: ожидания считаются только на checkout кандидата и уходят в classifyValidateProofs', async () => {
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  const head = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const notes = [];
+  const foreign = candidateExpectations({ sha: 'f'.repeat(40), root, log: (line) => notes.push(line) });
+  assert.equal(foreign, null);
+  assert.match(notes[0], /is not the candidate ffffffff — proof evidence is verified against GitHub only/);
+  const own = candidateExpectations({ sha: head, root, log: (line) => notes.push(line) });
+  assert.deepEqual(own, localEvidence(root));
+
+  // proof без evidence при наличии ожиданий — stale, а старее его нет → missing; с evidence и совпадением — green
+  const legacy = proofContext({ id: 40 });
+  const verdict = await classifyValidateProofs({
+    runs: [legacy.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected: own,
+    loadContext: async () => legacy.context,
+  });
+  assert.equal(verdict.status, 'missing', verdict.note);
+  const modern = proofContext({ id: 41 });
+  modern.context.proof.evidence = structuredClone(own);
+  const green = await classifyValidateProofs({
+    runs: [modern.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected: own,
+    loadContext: async () => modern.context,
+  });
+  assert.equal(green.status, 'green', green.note);
+  const substituted = structuredClone(own);
+  substituted.keys.golden = '0'.repeat(64);
+  const red = await classifyValidateProofs({
+    runs: [modern.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected: substituted,
+    loadContext: async () => modern.context,
+  });
+  assert.equal(red.status, 'failed');
+  assert.match(red.note, /keys\.golden/);
 });

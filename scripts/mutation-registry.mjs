@@ -9418,8 +9418,8 @@ const MUTANT_DEFINITIONS = [
       + 'attempt cannot vouch for the current result (#541)',
     patches: [{
       file: 'scripts/ci-proof.mjs',
-      find: '  if (proof.run?.id !== expected.runId || proof.run?.attempt !== expected.attempt\n',
-      replace: '  if (proof.run?.id !== expected.runId || false && proof.run?.attempt !== expected.attempt\n',
+      find: '  if (proof.run?.id !== identity.runId || proof.run?.attempt !== identity.attempt\n',
+      replace: '  if (proof.run?.id !== identity.runId || false && proof.run?.attempt !== identity.attempt\n',
     }],
   },
   {
@@ -9902,6 +9902,54 @@ const MUTANT_DEFINITIONS = [
       file: 'custom_components/houseplan/radar_validation.py',
       find: '    "zones_v1": ("zones", ("entity_id",)),',
       replace: '    "zones_v1": ("zones", ()),',
+    }],
+  },
+  {
+    id: 'baseline-overlay-leaks-into-every-key',
+    guard: 'node --test --test-name-pattern="#573" test/check-inputs.test.mjs test/gate-reuse.test.mjs test/mutation-gate.test.mjs',
+    because: '#573: строка-каталог `demo/golden` в корпусе отпечатка раскрывалась во все текстовые '
+      + 'файлы под ним, и индекс эталонов становился входом smoke, perf и 181 из 183 браузерных '
+      + 'свидетелей. Без фильтра overlay приёмка кадров снова перегоняет 22 минуты чужой работы, '
+      + 'а ключи, которые proof предъявляет как «те же входы», меняются от PNG',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: "          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }",
+      replace: "          if (f.startsWith(`${ref}/`) && !BINARY.test(f)) { note(f, file); seen.add(f); }",
+    }],
+  },
+  {
+    id: 'proof-trusts-evidence-it-could-verify',
+    guard: 'node --test --test-name-pattern="#573" test/ci-proof.test.mjs test/release-gate.test.mjs',
+    because: '#573: потребитель с checkout кандидата обязан СВЕРЯТЬ evidence, а не верить. Без '
+      + 'сравнения подменённый content-ключ, product tree или индекс эталонов проходят как свои — '
+      + 'и proof снова говорит только «вот SHA»',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: '    const mismatch = evidenceMismatch(proof.evidence, expected);',
+      replace: '    const mismatch = evidenceMismatch(proof.evidence, proof.evidence);',
+    }],
+  },
+  {
+    id: 'reused-marker-key-unchecked-against-candidate',
+    guard: 'node --test --test-name-pattern="#573" test/ci-proof.test.mjs',
+    because: '#573: маркер реюза несёт ключ источника; если он не сверяется с ключом кандидата, '
+      + 'зелёная job с ДРУГИМИ входами засчитывается этому дереву',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: "      if (claim?.mode === 'reused' && claim.reuse?.key !== proof.evidence.keys?.[id])",
+      replace: "      if (claim?.mode === 'reused' && claim.reuse?.key !== (proof.evidence.keys?.[id] ?? claim.reuse?.key) && false)",
+    }],
+  },
+  {
+    id: 'product-tree-identity-counts-baselines',
+    guard: 'node --test --test-name-pattern="#573" test/ci-proof.test.mjs',
+    because: '#573: identity продуктового дерева существует ради одного сравнения — «C и B '
+      + 'отличаются только принятыми кадрами». Считая overlay, оно совпадает с `tree` кандидата и '
+      + 'перестаёт отличать приёмку эталонов от правки продукта',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: "    .filter((line) => !isBaselineOverlayPath(line.split('\\t').slice(1).join('\\t')))",
+      replace: "    .filter((line) => typeof line === 'string')",
     }],
   },
   {

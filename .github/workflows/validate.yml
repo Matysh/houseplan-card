@@ -1216,6 +1216,10 @@ jobs:
       - name: Зафиксировать tree кандидата
         id: candidate
         run: echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+      # #573: proof несёт составное evidence — product tree без overlay эталонов,
+      # сам overlay (tree, sha256 индекса, run из `Baseline-Reviewed`) и
+      # content-ключи реюзных job; ключи сверяются с outputs job `reuse`, а
+      # потребитель на checkout кандидата пересчитывает всё заново.
       - name: Собрать единый CI proof
         env:
           CANDIDATE_SHA: ${{ github.sha }}

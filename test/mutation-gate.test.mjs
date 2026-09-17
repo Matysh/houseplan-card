@@ -446,6 +446,35 @@ test('#481 AC1: отпечаток свидетеля не меняется от
   assert.notEqual(witnessFingerprint({ ...LEDGER_MUTANT, patches: [{ file: 'src/x.ts', find: 'a', replace: 'c' }] }, base), fp, 'объявление патча');
 });
 
+// #573. Гард-смок доходит до `source-fingerprint.mjs`, а тот называет корпус
+// строкой-каталогом `demo/golden`. До #573 раскрытие каталога делало индекс
+// эталонов входом каждого такого гарда: приёмка кадров на beta.3 сменила
+// отпечатки 181 из 183 браузерных свидетелей, и журнал их не пропустил.
+test('#573: приёмка эталонов не меняет отпечаток свидетеля со смок-гардом', () => {
+  const tree = (index) => ({
+    'src/x.ts': 'let a = 1;',
+    'demo/smoke_x.mjs': "import './serve.mjs';\n",
+    'demo/serve.mjs': "import '../scripts/source-fingerprint.mjs';\n",
+    'scripts/source-fingerprint.mjs': "const corpus = ['demo/fixtures', 'demo/golden'];\n",
+    'demo/golden/matrix.mjs': 'export const GOLDEN_SCENARIOS = [];\n',
+    'demo/golden/baselines/baselines-index.json': index,
+  });
+  const fsOf = (files) => ({
+    root: '/repo',
+    read: (file) => files[file] ?? '',
+    exists: (file) => file in files,
+    normalize: (text) => text,
+    inputsOf: (guard) => guardInputs(guard, { exists: (f) => f in files, read: (f) => files[f] ?? '', files: Object.keys(files).sort() }),
+  });
+  const mutant = { id: 'x', guard: 'node demo/smoke_x.mjs', patches: [{ file: 'src/x.ts', find: 'a', replace: 'b' }] };
+  const candidate = witnessFingerprint(mutant, fsOf(tree('{"scenarios":{"one":"a"}}')));
+  const accepted = witnessFingerprint(mutant, fsOf(tree('{"scenarios":{"one":"b"},"acceptedAt":"later"}')));
+  assert.equal(accepted, candidate, 'overlay эталонов — не вход смок-гарда');
+  const harness = tree('{"scenarios":{"one":"a"}}');
+  harness['demo/golden/matrix.mjs'] = 'export const GOLDEN_SCENARIOS = [1];\n';
+  assert.notEqual(witnessFingerprint(mutant, fsOf(harness)), candidate, 'код под demo/golden — по-прежнему вход');
+});
+
 // #518. Хост-файлы карты — тринадцать тысяч строк. Отпечаток и отбор по файлу
 // целиком означали, что правка в одном их конце перегоняет свидетелей из
 // другого: на #500 двенадцать изменённых строк тянули 53 мутанта из 75.

@@ -2,10 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { deflateRawSync } from 'node:zlib';
 
+import { fileURLToPath } from 'node:url';
+
 import {
-  CI_PROOF_POLICIES, buildCiProof, evaluateCiProof, parseReuseMarker, readCiProofArtifact,
-  requiredCheckIds, selectCiProofVerdict,
+  CI_PROOF_POLICIES, baselineReviewedRun, buildCiProof, evaluateCiProof, localEvidence, parseReuseMarker,
+  productTreeId, readCiProofArtifact, requiredCheckIds, selectCiProofVerdict,
 } from '../scripts/ci-proof.mjs';
+import { REUSE_JOBS } from '../scripts/check-inputs.mjs';
+import { reuseKey } from '../scripts/gate-reuse.mjs';
 
 export const SHA = 'a'.repeat(40);
 export const TREE = 'b'.repeat(40);
@@ -209,4 +213,144 @@ test('#541: uploaded deflated artifact is read without an external ZIP dependenc
   eocd.writeUInt32LE(directoryAt, 16);
   const zip = Buffer.concat([local, name, compressed, central, name, eocd]);
   assert.deepEqual(readCiProofArtifact(zip), { schema: 'test', ok: true });
+});
+
+// #573 — составное evidence. Proof называет отдельно продуктовое дерево,
+// overlay принятых эталонов и content-ключи реюзных job; потребитель с
+// checkout кандидата сверяет их, а не верит. Сценарий beta.3: кандидат C
+// красный только по golden, baseline-only коммит B переиспользует зелёные
+// job C и перегоняет golden.
+const KEYS = Object.fromEntries(REUSE_JOBS.map((job, index) => [job, String(index + 1).repeat(64)]));
+const evidenceOf = (over = {}) => ({
+  product: { tree: 'p'.repeat(64) },
+  baselines: { tree: 'c'.repeat(40), manifestSha256: 'd'.repeat(64), reviewedRun: 34853080375 },
+  keys: { ...KEYS },
+  ...over,
+});
+
+/** B: smoke и performance_smoke reused из красного-по-golden C, golden исполнена. */
+function baselineOnlyFixture() {
+  const fixture = proofFixture({ id: 20, attempt: 1 });
+  const evidence = evidenceOf();
+  const reuseFrom = (id) => ({
+    mode: 'reused', result: 'success',
+    reuse: { key: evidence.keys[id], sourceRun: 10, sourceAttempt: 1, sourceSha: 'e'.repeat(40) },
+  });
+  fixture.proof.checks.smoke = reuseFrom('smoke');
+  fixture.proof.checks.performance_smoke = reuseFrom('performance_smoke');
+  fixture.proof.checks.golden.key = evidence.keys.golden;
+  fixture.proof.checks.geometry_parity.key = evidence.keys.geometry_parity;
+  fixture.proof.checks.backend.key = evidence.keys.backend;
+  fixture.proof.executedChecks = fixture.proof.executedChecks.filter((id) => !['smoke', 'performance_smoke'].includes(id));
+  fixture.proof.reusedChecks = ['performance_smoke', 'smoke'];
+  fixture.proof.evidence = evidence;
+  fixture.jobs = fixture.jobs.filter((job) => !/Смоки|Перф-смок/.test(job.name));
+  // C: run красный (golden different), но smoke и perf — зелёные job
+  fixture.reuseRuns.set('10:1', {
+    run: { id: 10, run_attempt: 1, status: 'completed', conclusion: 'failure', head_sha: 'e'.repeat(40) },
+    jobs: [...smokeJobs(), success(names.smokeDone), success(names.performance),
+      { name: names.golden, conclusion: 'failure' }, ...mutantJobs()],
+  });
+  fixture.reviewedRun = { run: { id: 34853080375, path: '.github/workflows/validate.yml', status: 'completed', conclusion: 'failure' } };
+  fixture.expected = evidenceOf();
+  return fixture;
+}
+
+test('#573 AC1: baseline-only коммит — reused smoke/perf из красного-по-golden кандидата, golden исполнена, proof green', () => {
+  const fixture = baselineOnlyFixture();
+  const verdict = evaluateCiProof({ ...fixture, policy: CI_PROOF_POLICIES.release });
+  assert.equal(verdict.status, 'green', verdict.note);
+  assert.deepEqual(fixture.proof.reusedChecks, ['performance_smoke', 'smoke']);
+  assert.ok(fixture.proof.executedChecks.includes('golden'), 'golden сравнивает с новыми эталонами и перегоняется всегда');
+  // те же семантики без ожиданий — review/merge потребители не ломаются
+  assert.equal(evaluateCiProof({ ...fixture, expected: null, reviewedRun: undefined, policy: CI_PROOF_POLICIES.merge }).status, 'green');
+});
+
+test('#573 AC3: красный smoke кандидата не прячется за зелёной golden — источник reuse обязан быть зелёной job', () => {
+  const fixture = baselineOnlyFixture();
+  fixture.reuseRuns.get('10:1').jobs = fixture.reuseRuns.get('10:1').jobs
+    .map((job) => (job.name.startsWith('Смоки в браузере (шард 2') ? { ...job, conclusion: 'failure' } : job));
+  const verdict = evaluateCiProof({ ...fixture, policy: CI_PROOF_POLICIES.release });
+  assert.equal(verdict.status, 'failed');
+  assert.match(verdict.note, /smoke: source run does not verify/);
+});
+
+test('#573 AC4: подмена content-ключа, product tree, overlay, индекса или reviewed run — fail-closed', () => {
+  const fixture = baselineOnlyFixture();
+  const withExpected = (over) => evaluateCiProof({
+    ...fixture, expected: evidenceOf(over), policy: CI_PROOF_POLICIES.release,
+  });
+  assert.equal(withExpected({}).status, 'green');
+  assert.match(withExpected({ keys: { ...KEYS, smoke: 'f'.repeat(64) } }).note, /keys\.smoke/);
+  assert.equal(withExpected({ keys: { ...KEYS, smoke: 'f'.repeat(64) } }).status, 'failed');
+  assert.match(withExpected({ product: { tree: 'q'.repeat(64) } }).note, /product\.tree/);
+  assert.match(withExpected({ baselines: { tree: 'x'.repeat(40), manifestSha256: 'd'.repeat(64), reviewedRun: 34853080375 } }).note, /baselines\.tree/);
+  assert.match(withExpected({ baselines: { tree: 'c'.repeat(40), manifestSha256: 'y'.repeat(64), reviewedRun: 34853080375 } }).note, /manifestSha256/);
+  assert.match(withExpected({ baselines: { tree: 'c'.repeat(40), manifestSha256: 'd'.repeat(64), reviewedRun: 1 } }).note, /reviewedRun/);
+  // маркер реюза ссылается на ключ, отличный от ключа кандидата — внутренняя несогласованность
+  const tampered = structuredClone(fixture.proof);
+  tampered.checks.smoke.reuse.key = 'a'.repeat(64);
+  assert.match(evaluateCiProof({ ...fixture, proof: tampered, policy: CI_PROOF_POLICIES.release }).note, /smoke: reused marker key differs/);
+  // объявленный run просмотра кадров не существует / отменён / не Validate
+  assert.match(evaluateCiProof({ ...fixture, reviewedRun: null, policy: CI_PROOF_POLICIES.release }).note, /Baseline-Reviewed run 34853080375 is missing/);
+  assert.equal(evaluateCiProof({
+    ...fixture, reviewedRun: { run: { id: 34853080375, path: '.github/workflows/validate.yml', status: 'completed', conclusion: 'cancelled' } },
+    policy: CI_PROOF_POLICIES.release,
+  }).status, 'failed');
+  assert.equal(evaluateCiProof({
+    ...fixture, reviewedRun: { run: { id: 34853080375, path: '.github/workflows/nightly.yml', status: 'completed', conclusion: 'success' } },
+    policy: CI_PROOF_POLICIES.release,
+  }).status, 'failed');
+  // proof без evidence при наличии ожиданий — устарел, а не «сойдёт»
+  const legacy = structuredClone(fixture.proof);
+  delete legacy.evidence;
+  assert.equal(evaluateCiProof({ ...fixture, proof: legacy, policy: CI_PROOF_POLICIES.release }).status, 'stale');
+});
+
+test('#573: identity продуктового дерева не видит overlay эталонов, но видит всё остальное', () => {
+  const lines = [
+    '100644 blob 1111\tsrc/logic.ts',
+    '100644 blob 2222\tdemo/golden/matrix.mjs',
+    '100644 blob 3333\tdemo/golden/baselines/scene.png',
+    '100644 blob 4444\tdemo/golden/baselines/baselines-index.json',
+  ];
+  const before = productTreeId(lines.join('\n'));
+  const accepted = productTreeId(lines.map((line) => line.replace('3333', '5555').replace('4444', '6666')).join('\n'));
+  assert.equal(accepted, before, 'приёмка эталонов — то же продуктовое дерево');
+  assert.notEqual(productTreeId(lines.map((line) => line.replace('1111', '9999')).join('\n')), before);
+  assert.notEqual(productTreeId(lines.map((line) => line.replace('2222', '9999')).join('\n')), before, 'сцены — продукт');
+  assert.throws(() => productTreeId(''), /empty/);
+  assert.equal(baselineReviewedRun('Accept frames\n\nBaseline-Reviewed: https://github.com/x/y/actions/runs/777\n'), 777);
+  assert.equal(baselineReviewedRun('no trailer'), null);
+  assert.throws(() => baselineReviewedRun('Baseline-Reviewed: somewhere-else\n'), /does not name an actions run/);
+});
+
+test('#573: buildCiProof пишет ключ исполненной реюзной job и отвергает маркер с чужим ключом', () => {
+  const evidence = evidenceOf();
+  const { proof } = proofFixture({ id: 30 });
+  const needs = { preflight: { result: 'success' }, changes: { result: 'success', outputs: { heavy: 'true', mutants_requested: 'true', frontend: 'true', backend: 'true', geometry_parity: 'true', integration: 'true' } },
+    reuse: { result: 'success', outputs: { smoke: 'true', smoke_key: evidence.keys.smoke, smoke_source_run: '10', smoke_source_attempt: '1', smoke_source_sha: 'e'.repeat(40) } },
+    frontend: { result: 'success' }, hacs: { result: 'success' }, hassfest: { result: 'success' }, changed_mutants: { result: 'success' },
+    smoke: { result: 'skipped' }, smoke_done: { result: 'skipped' }, golden: { result: 'success' }, performance_smoke: { result: 'success' },
+    geometry_parity: { result: 'success' }, backend: { result: 'success' } };
+  const built = buildCiProof({ candidateSha: SHA, candidateTree: TREE, runId: 30, attempt: 1, event: 'push', needs, evidence });
+  assert.equal(built.checks.golden.key, evidence.keys.golden, 'исполненная job несёт свой content-ключ');
+  assert.equal(built.checks.smoke.mode, 'reused');
+  assert.deepEqual(built.evidence, evidence);
+  assert.ok(!proof.evidence, 'без evidence блока нет — обратная совместимость записи');
+  const foreign = { ...needs, reuse: { ...needs.reuse, outputs: { ...needs.reuse.outputs, smoke_key: 'f'.repeat(64) } } };
+  assert.throws(() => buildCiProof({ candidateSha: SHA, candidateTree: TREE, runId: 30, attempt: 1, event: 'push', needs: foreign, evidence }),
+    /smoke: reuse marker key .* differs from the candidate key/);
+});
+
+test('#573: evidence живого дерева считается детерминированно и совпадает с ключами gate-reuse', () => {
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  const first = localEvidence(root);
+  const second = localEvidence(root, { keys: first.keys });
+  assert.deepEqual(second, first);
+  assert.match(first.product.tree, /^[0-9a-f]{64}$/);
+  assert.match(first.baselines.tree, /^[0-9a-f]{40}$/);
+  assert.match(first.baselines.manifestSha256, /^[0-9a-f]{64}$/);
+  for (const job of REUSE_JOBS) assert.equal(first.keys[job], reuseKey(root, job));
+  assert.throws(() => localEvidence(root, { keys: { ...first.keys, smoke: 'f'.repeat(64) } }), /smoke: reuse job key/);
 });

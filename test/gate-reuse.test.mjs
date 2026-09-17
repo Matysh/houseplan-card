@@ -143,6 +143,34 @@ test('a behaviour input changes every browser key and a version bump changes all
   }
 });
 
+// #573 — воспроизведение beta.3 на синтетическом дереве: кандидат C и
+// baseline-only коммит B отличаются только overlay эталонов (PNG + индекс).
+// Корпус отпечатка называет `demo/golden` каталогом ровно как настоящий
+// source-fingerprint.mjs; до #573 это делало индекс входом smoke и perf.
+test('#573: приёмка эталонов меняет только ключ golden — smoke, perf, parity и backend переиспользуются', () => {
+  const { dir, put } = makeTree();
+  try {
+    put('scripts/source-fingerprint.mjs', "const corpus = ['demo/fixtures', 'demo/golden'];\nexport const fp = 1;\n");
+    put('demo/bundle-freshness.mjs', "import '../scripts/source-fingerprint.mjs';\nexport const fresh = 1;\n");
+    put('demo/golden/baselines/baselines-index.json', '{"scenarios":{"one":"a"}}\n');
+    const candidate = keys(dir);
+    // B: 13 кадров и индекс переписаны, продукт не тронут
+    put('demo/golden/baselines/one.png', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x02]));
+    put('demo/golden/baselines/baselines-index.json', '{"scenarios":{"one":"b"},"acceptedAt":"later"}\n');
+    const accepted = keys(dir);
+    for (const job of JOBS) {
+      if (job === 'golden') assert.notEqual(accepted[job], candidate[job], 'golden сравнивает с эталонами и обязана перегоняться');
+      else assert.equal(accepted[job], candidate[job], `${job}: входы побайтово те же, что у кандидата`);
+    }
+    // но правка продукта вместе с эталонами перегоняет всё, что собирает бандл
+    put('src/card.ts', "export const CARD_VERSION = '1.0.0'; export const changed = true;\n");
+    const both = keys(dir);
+    for (const job of ['smoke', 'golden', 'performance_smoke']) assert.notEqual(both[job], accepted[job], `${job} видит правку исходника`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('harness edits are isolated to their own job (#208)', () => {
   const { dir, put } = makeTree();
   const only = (changed) => {
