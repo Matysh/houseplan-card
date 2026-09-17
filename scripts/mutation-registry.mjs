@@ -9966,6 +9966,29 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'golden-index-invents-capture-platform',
+    guard: 'node --test --test-name-pattern="#571" test/golden-capture-provenance.test.mjs',
+    because: '#571: платформу кадров знает только тот, кто их снял. Пока приёмщик писал в индекс '
+      + 'свою, артефакт Linux-прогона 34853080375, принятый на Windows, оставил в `ad4000f9` '
+      + 'запись «сняты на win32» — индекс утверждал неправду, и заметить это было нечем',
+    patches: [{
+      file: 'demo/golden/accept.mjs',
+      find: '  capturedOn: capturedOn,',
+      replace: '  capturedOn: acceptance.platform, // mutant: снова платформа приёмщика',
+    }],
+  },
+  {
+    id: 'golden-report-provenance-optional',
+    guard: 'node --test --test-name-pattern="#571 схема 2" test/golden-capture-provenance.test.mjs',
+    because: '#571: схема 2 обещает провенанс съёмки. Если его отсутствие перестаёт быть отказом, '
+      + 'сломанный инструмент съёмки тихо вернёт индекс к догадкам вместо факта',
+    patches: [{
+      file: 'scripts/capture-environment.mjs',
+      find: "      throw new Error(`отчёт схемы ${schema} обязан нести раздел capture с провенансом съёмки (#571)`);",
+      replace: "      return { provenance: null, legacy: true }; // mutant: молча считаем отчёт старым",
+    }],
+  },
+  {
     id: 'furniture-symbol-may-keep-inner-padding',
     guard: 'node --test --test-name-pattern="AC1" test/furniture-visual-bounds.test.mjs',
     because: '#584: «ширина × глубина» обязаны совпадать с видимым габаритом. Пока гейт '

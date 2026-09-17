@@ -48,6 +48,71 @@ export const captureEnvironment = (source = process) => ({
   arch: String(source.arch || ''),
 });
 
+/** Версия схемы отчёта съёмки, в которой провенанс обязателен (#571). */
+export const CAPTURE_PROVENANCE_SCHEMA = 2;
+
+/**
+ * Провенанс СЪЁМКИ для отчёта (#571).
+ *
+ * До этой задачи отчёт платформу не нёс вовсе, и приёмщик записывал в индекс
+ * эталонов СВОЮ платформу как платформу кадров. На `ad4000f9` это дало
+ * `"platform": "win32"` у кадров, снятых Linux-прогоном 34853080375: индекс
+ * утверждал неправду, а причина осознанного обхода осталась только в stdout.
+ *
+ * Поэтому провенанс собирается там, где кадры снимаются, и уезжает в отчёт:
+ * платформа, архитектура, сборка Chromium, отпечаток материала и — если съёмка
+ * шла в CI — прогон с попыткой. Последнее не косметика: артефакт можно скачать
+ * и принять спустя сутки, и ссылка на прогон единственная, что связывает
+ * картинки с их происхождением.
+ */
+export const captureProvenance = ({
+  chromium = null, buildFingerprint = null, source = process, env = process.env,
+} = {}) => {
+  const { platform, arch } = captureEnvironment(source);
+  const run = String(env?.GITHUB_RUN_ID ?? '').trim();
+  const attempt = String(env?.GITHUB_RUN_ATTEMPT ?? '').trim();
+  const repository = String(env?.GITHUB_REPOSITORY ?? '').trim();
+  const sha = String(env?.GITHUB_SHA ?? '').trim();
+  return {
+    platform,
+    arch,
+    chromium: chromium || null,
+    buildFingerprint: buildFingerprint || null,
+    // Пустой объект вместо `null` был бы ложью «CI известен, полей нет».
+    ci: run ? {
+      repository: repository || null,
+      run: Number(run) || null,
+      attempt: Number(attempt) || 1,
+      sha: sha || null,
+    } : null,
+  };
+};
+
+/**
+ * Провенанс отчёта в пригодном для решения виде: `{ provenance, legacy }`.
+ *
+ * `legacy: true` — отчёт старой схемы, платформы съёмки в нём нет физически.
+ * Такой отчёт не отвергается (артефакты живут дольше схемы), но и не выдаёт
+ * себя за проверенный: платформа съёмки остаётся `null`, и вызывающий обязан
+ * решить это явной веткой, а не молча подставить свою.
+ */
+export const reportCaptureProvenance = (report = {}) => {
+  const schema = Number(report?.schema) || 1;
+  const provenance = report?.capture;
+  if (schema >= CAPTURE_PROVENANCE_SCHEMA) {
+    // Fail-closed: схема обещает провенанс, значит его отсутствие — поломка
+    // инструмента съёмки, а не повод угадывать.
+    if (!provenance || typeof provenance !== 'object') {
+      throw new Error(`отчёт схемы ${schema} обязан нести раздел capture с провенансом съёмки (#571)`);
+    }
+    if (!provenance.platform) {
+      throw new Error(`отчёт схемы ${schema} не называет платформу съёмки (#571)`);
+    }
+    return { provenance, legacy: false };
+  }
+  return { provenance: null, legacy: true };
+};
+
 /**
  * Разрешён ли осознанный обход. Возвращает причину или `null`.
  * Пустая строка — не причина: обход без записанной причины неотличим от

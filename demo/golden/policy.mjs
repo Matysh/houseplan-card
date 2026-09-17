@@ -8,6 +8,21 @@ import {
 export const GOLDEN_BASELINE_MANIFEST = 'baselines-index.json';
 
 /**
+ * Версия индекса эталонов (#571).
+ *
+ * Схема 1 хранила одно поле `platform`, и заполнял его приёмщик своей
+ * платформой. Схема 2 различает `capturedOn` и `acceptedOn`, несёт раздел
+ * `capture` из отчёта съёмки и причину осознанного обхода. Читатели обязаны
+ * понимать обе: артефакты и индексы живут дольше схем.
+ */
+export const GOLDEN_INDEX_SCHEMA = 2;
+
+/** Платформа кадров по индексу любой схемы: 2 — `capturedOn`, 1 — `platform`. */
+export const indexCapturedOn = (index) => (index && typeof index === 'object'
+  ? (index.capturedOn ?? (Number(index.schema) >= GOLDEN_INDEX_SCHEMA ? null : index.platform ?? null))
+  : null);
+
+/**
  * Проверка вызова — и заодно проверка среды съёмки (#455).
  *
  * Почему здесь, а не в `run.mjs`: `run.mjs` входит в корпус

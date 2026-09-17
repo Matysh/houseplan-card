@@ -7,6 +7,7 @@ import { launch } from '../serve.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 import { goldenClip, prepareGoldenScenario } from './harness.mjs';
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from './matrix.mjs';
+import { CAPTURE_PROVENANCE_SCHEMA, captureProvenance } from '../../scripts/capture-environment.mjs';
 import {
   assertGoldenInvocation,
   GOLDEN_BASELINE_MANIFEST,
@@ -1203,8 +1204,12 @@ const manifestValid = !!baselineManifest
   && expectedScenarioIds.every((id) => typeof baselineManifest.scenarios?.[id] === 'string')
   && goldenScenarioSetsMatch(expectedScenarioIds, indexedScenarioIds, baselineScenarioIds);
 const report = {
-  schema: 1,
+  // #571: схема 2 обязана нести провенанс съёмки. До неё отчёт платформу не
+  // нёс, и приёмщик записывал в индекс эталонов свою — на `ad4000f9` кадры
+  // Linux-прогона 34853080375 уехали в индекс как `win32`.
+  schema: CAPTURE_PROVENANCE_SCHEMA,
   mode,
+  capture: captureProvenance({ chromium, buildFingerprint }),
   generatedAt: new Date().toISOString(),
   matrixVersion: GOLDEN_MATRIX_VERSION,
   buildFingerprint,

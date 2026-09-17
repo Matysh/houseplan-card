@@ -89,9 +89,14 @@ test('#455 гейт стоит во всех точках, где кадры п�
   // построению, поэтому «понизить отказ до печати» без правки этой строки
   // нельзя. Первая редакция проверки смотрела лишь на импорт модуля — и
   // молча проходила, когда отказ заменили на `void foreign`.
+  // #571 заменил бросающую обёртку на явную пару проверок: судить надо ДВЕ
+  // среды — съёмки (из отчёта) и приёмки (своя), а обёртка знала только свою.
+  // Форма остановки прежняя: `throw`, а не печать.
   assert.match(source('demo/golden/accept.mjs'),
-    /assertCaptureEnvironment\(\{ kind: 'golden', stage: 'accept' \}\)/,
-    'приёмка golden обязана проверять среду бросающей обёрткой');
+    /for \(const \[platform, stageNote\] of \[[\s\S]*?\]\) \{[\s\S]*?if \(refusal\) throw new Error\(/,
+    'приёмка golden обязана отказывать по обеим средам, а не печатать');
+  assert.match(source('demo/golden/accept.mjs'), /reportCaptureProvenance\(report\)/,
+    'среда съёмки обязана читаться из отчёта, а не из process.platform приёмщика');
   assert.match(source('scripts/docs-accept.mjs'),
     /assertCaptureEnvironment\(\{ kind: 'docs', stage: 'accept' \}\)/,
     'приёмка документации обязана проверять среду');
@@ -105,10 +110,15 @@ test('#455 гейт стоит во всех точках, где кадры п�
   assert.match(packageJson.scripts['docs:capture'] || '',
     /assert-capture-env\.mjs docs/,
     'у съёмки документации обязан быть npm-скрипт с проверкой среды');
-  // `run.mjs` трогать нельзя: он в корпусе sourceFingerprint, и его правка
-  // объявила бы устаревшими бандл, скриншоты документации и индекс эталонов.
-  assert.doesNotMatch(source('demo/golden/run.mjs'), /capture-environment\.mjs/,
-    'гейт обязан стоять в policy.mjs, а не в фингерпринтуемом run.mjs');
+  // До #571 `run.mjs` не трогали принципиально: он в корпусе sourceFingerprint,
+  // и правка объявляет устаревшими бандл и индекс скриншотов. Ради ГЕЙТА эта
+  // цена не окупалась — он прекрасно живёт в policy.mjs. Ради ПРОВЕНАНСА
+  // окупилась: платформу кадров знает только тот, кто их снял, и записать её
+  // больше негде. Цена заплачена один раз, осознанно (#571).
+  assert.doesNotMatch(source('demo/golden/run.mjs'), /assertGoldenInvocation\([^)]*platform/,
+    'гейт среды остаётся в policy.mjs: в run.mjs только сбор провенанса');
+  assert.match(source('demo/golden/run.mjs'), /capture: captureProvenance\(\{ chromium, buildFingerprint \}\)/,
+    'отчёт съёмки обязан нести провенанс среды (#571)');
 });
 
 test('#455 бросающая обёртка бросает и возвращает разрешённую причину', () => {
