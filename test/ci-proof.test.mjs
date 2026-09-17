@@ -5,14 +5,33 @@ import { deflateRawSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 import {
-  CI_PROOF_POLICIES, baselineReviewedRun, buildCiProof, evaluateCiProof, localEvidence, parseReuseMarker,
-  productTreeId, readCiProofArtifact, requiredCheckIds, selectCiProofVerdict,
+  CI_PROOF_POLICIES, baselineReviewedRun, buildCiProof, evaluateCiProof, loadGithubProofContext, localEvidence,
+  parseReuseMarker, productTreeId, readCiProofArtifact, requiredCheckIds, selectCiProofVerdict,
 } from '../scripts/ci-proof.mjs';
 import { REUSE_JOBS } from '../scripts/check-inputs.mjs';
 import { reuseKey } from '../scripts/gate-reuse.mjs';
 
 export const SHA = 'a'.repeat(40);
 export const TREE = 'b'.repeat(40);
+
+/** Минимальный ZIP с одним `proof.json` (stored), как читает readCiProofArtifact. */
+function zipWith(proof) {
+  const body = Buffer.from(JSON.stringify(proof));
+  const name = Buffer.from('proof.json');
+  const local = Buffer.alloc(30);
+  local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(20, 4); local.writeUInt16LE(0, 8);
+  local.writeUInt32LE(body.length, 18); local.writeUInt32LE(body.length, 22); local.writeUInt16LE(name.length, 26);
+  const central = Buffer.alloc(46);
+  central.writeUInt32LE(0x02014b50, 0); central.writeUInt16LE(20, 4); central.writeUInt16LE(20, 6); central.writeUInt16LE(0, 10);
+  central.writeUInt32LE(body.length, 20); central.writeUInt32LE(body.length, 24); central.writeUInt16LE(name.length, 28);
+  central.writeUInt32LE(0, 42);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0); eocd.writeUInt16LE(1, 8); eocd.writeUInt16LE(1, 10);
+  eocd.writeUInt32LE(central.length + name.length, 12);
+  eocd.writeUInt32LE(local.length + name.length + body.length, 16);
+  const bytes = Buffer.concat([local, name, body, central, name, eocd]);
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+}
 
 const names = {
   preflight: 'Предполёт: документация, провенанс, процесс',
@@ -262,8 +281,13 @@ test('#573 AC1: baseline-only коммит — reused smoke/perf из красн
   assert.equal(verdict.status, 'green', verdict.note);
   assert.deepEqual(fixture.proof.reusedChecks, ['performance_smoke', 'smoke']);
   assert.ok(fixture.proof.executedChecks.includes('golden'), 'golden сравнивает с новыми эталонами и перегоняется всегда');
-  // те же семантики без ожиданий — review/merge потребители не ломаются
-  assert.equal(evaluateCiProof({ ...fixture, expected: null, reviewedRun: undefined, policy: CI_PROOF_POLICIES.merge }).status, 'green');
+  // review/merge без ожиданий: reviewed run не спрашивается и не судится (ревью r1, M1) —
+  // недоступный или пропавший старый run не закрывает merge по чужой причине
+  for (const reviewedRun of [undefined, null, { run: null }]) {
+    assert.equal(evaluateCiProof({ ...fixture, expected: null, reviewedRun, policy: CI_PROOF_POLICIES.merge }).status, 'green',
+      `merge без ожиданий при reviewedRun=${JSON.stringify(reviewedRun)}`);
+    assert.equal(evaluateCiProof({ ...fixture, expected: null, reviewedRun, policy: CI_PROOF_POLICIES.review }).status, 'green');
+  }
 });
 
 test('#573 AC3: красный smoke кандидата не прячется за зелёной golden — источник reuse обязан быть зелёной job', () => {
@@ -305,6 +329,40 @@ test('#573 AC4: подмена content-ключа, product tree, overlay, инд
   const legacy = structuredClone(fixture.proof);
   delete legacy.evidence;
   assert.equal(evaluateCiProof({ ...fixture, proof: legacy, policy: CI_PROOF_POLICIES.release }).status, 'stale');
+});
+
+test('#573 r1 M1: reviewed run спрашивается у GitHub только для release-потребителя с ожиданиями', async () => {
+  const proof = { ...baselineOnlyFixture().proof };
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(String(url));
+    if (/\/artifacts\?name=/.test(url)) return { ok: true, json: async () => ({ artifacts: [] }) };
+    if (/\/jobs\?/.test(url)) return { ok: true, json: async () => ({ jobs: [] }) };
+    return { ok: true, json: async () => ({ id: 34853080375, path: '.github/workflows/validate.yml', status: 'completed', conclusion: 'failure' }) };
+  };
+  const run = { id: 20, run_attempt: 1 };
+  // артефакта нет → proof null → reviewed run неизвестен и не спрашивается ни в одном режиме
+  const bare = await loadGithubProofContext({ repo: 'x/y', run, token: 't', fetchImpl });
+  assert.ok(!('reviewedRun' in bare));
+  assert.ok(!urls.some((url) => url.endsWith('/actions/runs/34853080375')), 'без proof спрашивать нечего');
+  // с proof: merge/review (withReviewedRun по умолчанию false) — запроса нет
+  const withProof = (withReviewedRun) => loadGithubProofContext({
+    repo: 'x/y', run, token: 't', withReviewedRun,
+    fetchImpl: async (url) => (/\/artifacts\?name=/.test(url)
+      ? { ok: true, json: async () => ({ artifacts: [{ name: 'ci-proof-20-1', expired: false, archive_download_url: 'zip://proof' }] }) }
+      : url === 'zip://proof'
+        ? { ok: true, arrayBuffer: async () => zipWith(proof) }
+        : fetchImpl(url)),
+  });
+  urls.length = 0;
+  const merge = await withProof(false);
+  assert.deepEqual(merge.proof.evidence.baselines.reviewedRun, 34853080375);
+  assert.ok(!('reviewedRun' in merge), 'merge/review не судят reviewed run');
+  assert.ok(!urls.some((url) => url.endsWith('/actions/runs/34853080375')));
+  urls.length = 0;
+  const release = await withProof(true);
+  assert.equal(release.reviewedRun.run.id, 34853080375);
+  assert.ok(urls.some((url) => url.endsWith('/actions/runs/34853080375')), 'release спрашивает объявленный run');
 });
 
 test('#573: identity продуктового дерева не видит overlay эталонов, но видит всё остальное', () => {

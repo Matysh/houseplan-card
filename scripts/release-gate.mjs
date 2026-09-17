@@ -55,7 +55,8 @@ const newestFirst = (runs) => [...(Array.isArray(runs) ? runs : [])].sort((a, b)
 /** #541: proof-aware verdict shared with review and merge. */
 export async function classifyValidateProofs({
   runs, repo, sha, tree, token, fetchImpl = fetch, expected = null,
-  loadContext = (run) => loadGithubProofContext({ repo, run, token, fetchImpl }),
+  // #573: reviewed run спрашивается у GitHub только вместе с ожиданиями (release)
+  loadContext = (run) => loadGithubProofContext({ repo, run, token, fetchImpl, withReviewedRun: Boolean(expected) }),
 }) {
   const evaluations = [];
   for (const run of newestFirst(runs)) {

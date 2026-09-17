@@ -287,26 +287,29 @@ export function evaluateCiProof({
     return result('stale', 'run event differs from proof event');
   if (policy?.full && !asBool(proof.request?.full)) return result('stale', 'proof is light; full gates were not requested');
   if (policy?.mutants && !asBool(proof.request?.mutants)) return result('stale', 'proof has no requested mutant jobs');
-  // #573: потребитель, у которого есть checkout кандидата, сверяет составное
-  // evidence, а не верит ему. Proof без блока при наличии ожиданий устарел.
+  // #573: потребитель, у которого есть checkout кандидата (release), сверяет
+  // составное evidence, а не верит ему. Proof без блока при наличии ожиданий
+  // устарел. Объявленный run просмотра кадров проверяется ТОЛЬКО здесь же:
+  // review и merge ожиданий не передают и лишнего запроса к API не делают
+  // (ревью r1, M1) — их семантика #541 не меняется.
   if (expected) {
     if (!proof.evidence) return result('stale', 'proof predates composite evidence (#573)');
     const mismatch = evidenceMismatch(proof.evidence, expected);
     if (mismatch) return result('failed', `evidence does not match the candidate checkout — ${mismatch}`);
+    const declared = proof.evidence.baselines?.reviewedRun ?? null;
+    if (declared) {
+      const source = reviewedRun?.run;
+      if (!source || runIdOf(source) !== declared || !/validate\.yml$/.test(String(source.path || source.workflow || 'validate.yml'))
+        || source.status !== 'completed' || source.conclusion === 'cancelled') {
+        return result('failed', `Baseline-Reviewed run ${declared} is missing, cancelled or not a Validate run`);
+      }
+    }
   }
   if (proof.evidence) {
     for (const id of REUSE_JOBS) {
       const claim = proof.checks?.[id];
       if (claim?.mode === 'reused' && claim.reuse?.key !== proof.evidence.keys?.[id])
         return result('failed', `${id}: reused marker key differs from the candidate content key`);
-    }
-    const declared = proof.evidence.baselines?.reviewedRun ?? null;
-    if (declared && reviewedRun !== undefined) {
-      const source = reviewedRun?.run;
-      if (!source || runIdOf(source) !== declared || !/validate\.yml$/.test(String(source.path || source.workflow || 'validate.yml'))
-        || source.status !== 'completed' || source.conclusion === 'cancelled') {
-        return result('failed', `Baseline-Reviewed run ${declared} is missing, cancelled or not a Validate run`);
-      }
     }
   }
   const derived = requiredCheckIds(proof);
@@ -404,7 +407,7 @@ export async function githubCandidateTree({ repo, sha, token, fetchImpl = fetch 
   return row?.tree?.sha || null;
 }
 
-export async function loadGithubProofContext({ repo, run, token, fetchImpl = fetch }) {
+export async function loadGithubProofContext({ repo, run, token, fetchImpl = fetch, withReviewedRun = false }) {
   const runId = runIdOf(run);
   const attempt = runAttemptOf(run);
   const name = ciProofArtifactName(runId, attempt);
@@ -438,17 +441,19 @@ export async function loadGithubProofContext({ repo, run, token, fetchImpl = fet
     );
     reuseRuns.set(sourceKey, { run: sourceRun, jobs: sourceJobs?.jobs || [] });
   }
-  // #573: объявленный человеком run просмотра кадров обязан существовать.
+  // #573: объявленный человеком run просмотра кадров обязан существовать —
+  // спрашивает только release-потребитель (`withReviewedRun`); review и merge
+  // этот запрос не делают и от доступности старого run не зависят.
   let reviewedRun;
   const declared = proof?.evidence?.baselines?.reviewedRun;
-  if (declared) {
+  if (withReviewedRun && declared) {
     try {
       reviewedRun = { run: await githubJson(`https://api.github.com/repos/${repo}/actions/runs/${declared}`, token, fetchImpl) };
     } catch {
       reviewedRun = null;
     }
   }
-  return { proof, jobs, reuseRuns, reviewedRun };
+  return { proof, jobs, reuseRuns, ...(reviewedRun !== undefined ? { reviewedRun } : {}) };
 }
 
 if (isMainModule(import.meta.url)) {
