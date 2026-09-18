@@ -173,7 +173,7 @@ independent target resolver. Presentation source precedence is:
 below. The resolver still retains source metadata for preview diagnostics, but
 the rendered marker always uses its base icon on a neutral dark plate: no state
 morph, work/open/alarm/unavailable paint, activity, RGB, value or satellite
-temperature/humidity/LQI badge. Live vacuum puck/trail/room-highlight overlays
+temperature/humidity/LQI badge. The live vacuum puck, trail and route warning
 are also suppressed. This changes presentation only: hover/focus, service-call
 feedback, controls, Glow and room light aggregation keep using the real device.
 Hidden, removed or HA-disabled lifecycle rules still outrank display mode.

@@ -66,9 +66,8 @@ hint; arbitrary unselected cameras do not.
 ## Maps and floors (#162)
 
 One robot can hold several maps, and each map belongs to one space. The dock
-marker never moves: it stays in `marker.space`, while the live puck, the
-current trail and the room highlight belong to the space of the map that is
-active right now.
+marker never moves: it stays in `marker.space`, while the live puck and the
+current trail belong to the space of the map that is active right now.
 
 A **route** is one saved answer to "this exact map of this exact source lives
 here": `{ id, source, map_id, space, calibration }`. The exact source is part
@@ -196,9 +195,14 @@ marker.vacuum = {
   live?, trail?, trail_mode?, source?,
   calibration?: { [map_id]: [a,b,c,d,e,f] },   // legacy-read after #162
   map_routes?: [{ id, source, map_id, space, calibration? }],
-  room_highlight?, segment_map?
+  room_highlight?, segment_map?    // schema only: no runtime consumer (#12)
 }
 ```
+
+`room_highlight` and `segment_map` are accepted and round-tripped so that plans
+written by any version stay readable, but nothing draws them: the room-cleaning
+highlight (#12) was rejected, not shipped. A live vacuum draws its puck, its
+trail and — on an unmapped map — the route warning; that is the whole overlay.
 
 All fields are optional and old plans remain readable. When `map_routes` is
 absent or `null`, every valid `calibration[map_id]` is read as an effective
