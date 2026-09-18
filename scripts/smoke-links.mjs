@@ -28,6 +28,14 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['displayIsNeutral', 'displayWantsValue'],
+    smokes: ['smoke_static_icon.mjs', 'smoke_device_preview_parity.mjs'],
+    because: '#588: два предиката режима наблюдаются как следствия — текст значения внутри '
+      + 'маркера, отсутствие классов состояния и пульсации, подавленный живой слой пылесоса, '
+      + 'поля и предупреждения диалога устройства. Ни один смок не называет предикаты: они '
+      + 'живут внутри бандла, а смок работает через DOM',
+  },
+  {
     symbols: ['roomCustomFillOf'],
     smokes: ['smoke_space_settings.mjs', 'smoke_room_settings.mjs'],
     because: '#581: the room-colour projection (own custom mode carries the colour, an orphan paints '
