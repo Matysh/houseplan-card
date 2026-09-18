@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.77.0-beta.1 — 2026-09-18
+
 - Furniture items with the same dimensions now look the same: the width and
   depth you enter match the visible size on the plan. The artwork used to fill
   only about 88 % of its own box, so a 60 × 60 cm “Kitchen base unit” looked
