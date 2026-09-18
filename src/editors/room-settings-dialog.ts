@@ -8,11 +8,26 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
+import type { I18nKey } from '../i18n';
 import { ROOM_FILL_MODES, spaceDisplayOf } from '../logic';
 import { roomTemperatureControls } from '../room-temperature-controls';
 import { roomTempThresholdDraft } from '../space-dialog';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import { colorRow, ensureFormKitStyles, formCard, formRow, segmented } from './form-kit';
+
+/**
+ * Варианты заливки комнаты: «как у пространства» плюс режимы пространства.
+ *
+ * #594: раньше пара «значение, ключ» собиралась кортежами, и ключ приходилось
+ * приводить к `any` — ключ получался из конкатенации и терял литеральный тип.
+ * Явная форма сохраняет и то и другое: режим остаётся значением `_roomFill`, а
+ * ключ — настоящим `I18nKey`, который проверяет компилятор.
+ */
+type RoomFillChoice = { value: '' | typeof ROOM_FILL_MODES[number]; key: I18nKey };
+const FILL_CHOICES: readonly RoomFillChoice[] = [
+  { value: '', key: 'fill.inherit' },
+  ...ROOM_FILL_MODES.map((value) => ({ value, key: `fill.${value}` as const })),
+];
 
 /**
  * Источник измерения: среднее по комнате или выбранный датчик.
@@ -129,11 +144,11 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
           help: this._help('room.group_fill.help'),
           body: html`
             <label>${this.host._t('room.fill_label')}</label>
-            ${([['', 'fill.inherit'], ...ROOM_FILL_MODES.map((v) => [v, 'fill.' + v])] as const).map(
-              ([v, k]) => html`<label class="srcrow inline">
-                <input type="radio" name="rfill" .checked=${this.host._roomFill === v}
-                  @change=${() => { this.host._roomFill = v as typeof this.host._roomFill; if (v !== 'custom') this.host._roomCustomFill = null; this.host.requestUpdate(); }} />
-                <span>${this.host._t(k as any)}</span>
+            ${FILL_CHOICES.map(
+              ({ value, key }) => html`<label class="srcrow inline">
+                <input type="radio" name="rfill" .checked=${this.host._roomFill === value}
+                  @change=${() => { this.host._roomFill = value; if (value !== 'custom') this.host._roomCustomFill = null; this.host.requestUpdate(); }} />
+                <span>${this.host._t(key)}</span>
               </label>`,
             )}
             ${this.host._roomFill === 'custom'
