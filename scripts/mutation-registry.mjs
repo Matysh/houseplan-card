@@ -10136,15 +10136,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'no-new-any-counts-every-added-line-as-moved',
+    id: 'no-new-any-forgives-a-single-matching-line',
     guard: 'node --test test/no-new-any.test.mjs',
-    because: '#592: послабление для переноса держится на точном совпадении текста и бюджете '
-      + 'удалений. Если признать перенесённой любую добавленную строку, гейт #342 перестанет '
-      + 'ловить новый any вовсе — и сделает это молча, оставшись зелёным',
+    because: '#592 (ревью r1, M1): послабление для переноса держится на длине куска. Стоит '
+      + 'признать переносом одиночное совпадение — и гейт #342 обходится тривиально: '
+      + 'несвязанная уборка удаляет типовую строку с any, новый код добавляет такую же. '
+      + 'В базе 887 явных any, однострочники повторяются буквально',
     patches: [{
       file: 'scripts/no-new-any.mjs',
-      find: '    const budget = removed.get(item.text) || 0;\n    if (!budget) continue;',
-      replace: '    const budget = removed.get(item.text) || Number(item.line >= 0);\n    if (!budget) continue;',
+      find: 'export const MOVED_BLOCK_MIN = 5;',
+      replace: 'export const MOVED_BLOCK_MIN = 1;',
     }],
   },
 ];

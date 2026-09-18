@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  MOVED_BLOCK_MIN,
   addedLinesByFile, anyKeywordLines, blameLine, findNewAnyViolations, formatViolation,
   movedLinesByFile, parseAnyOk,
 } from '../scripts/no-new-any.mjs';
@@ -137,61 +138,106 @@ test('недоступный blame не выдумывает источник и
 // выглядит для диффа как тысяча добавленных строк. Судить по ним «новый код»
 // значит требовать типизации ровно там, где ничего не изменилось, и заодно
 // ломать доказательство переноса: тело обязано совпадать побайтово.
-test('#592 строка, перенесённая дословно, новым кодом не считается', () => {
+//
+// Послабление даётся блоку, а не строке (ревью кода #592, M1): одиночное
+// совпадение текста подделывается слишком легко.
+
+const block = (n, prefix = 'line') => Array.from({ length: n }, (_, i) => `  const ${prefix}${i} = ${i};`);
+
+test('#592 непрерывный перенесённый кусок новым кодом не считается', () => {
+  const body = [...block(3), '  const handler = (e: any) => e;', ...block(3, 'tail')];
   const diff = [
     'diff --git a/src/big.ts b/src/big.ts',
     '--- a/src/big.ts',
     '+++ b/src/big.ts',
-    '@@ -10,1 +10,0 @@',
-    '-  const handler = (e: any) => e;',
+    `@@ -10,${body.length} +10,0 @@`,
+    ...body.map((line) => `-${line}`),
     'diff --git a/src/editors/part.ts b/src/editors/part.ts',
     '--- /dev/null',
     '+++ b/src/editors/part.ts',
-    '@@ -0,0 +1,2 @@',
-    '+  const handler = (e: any) => e;',
-    '+  const fresh = (e: any) => e;',
+    `@@ -0,0 +1,${body.length} @@`,
+    ...body.map((line) => `+${line}`),
   ].join('\n');
-  const moved = movedLinesByFile(diff);
-  assert.deepEqual([...(moved.get('src/editors/part.ts') || [])], [1],
-    'перенесена первая строка; вторая такого удаления не имеет');
+  const moved = movedLinesByFile(diff).get('src/editors/part.ts');
+  assert.equal(moved?.size, body.length, 'перенесён весь кусок целиком');
 
-  const text = '  const handler = (e: any) => e;\n  const fresh = (e: any) => e;\n';
   const violations = findNewAnyViolations({ files: [{
-    path: 'src/editors/part.ts', text,
-    addedLines: new Set([1, 2]),
-    movedLines: moved.get('src/editors/part.ts'),
+    path: 'src/editors/part.ts', text: `${body.join('\n')}\n`,
+    addedLines: new Set(body.map((_, i) => i + 1)),
+    movedLines: moved,
   }] });
-  assert.equal(violations.length, 1, 'новый any по-прежнему находка');
-  assert.equal(violations[0].line, 2);
+  assert.deepEqual(violations, [], 'внутри перенесённого куска новых any нет');
 });
 
-test('#592 бюджет переноса ведётся мультимножеством, а не признаком', () => {
+test('#592 одиночное совпадение переносом не считается (M1)', () => {
+  // Обход первой редакции: несвязанная уборка удаляет типовую строку с any,
+  // а новый файл добавляет свою — текстуально такую же. Это не перенос.
+  const line = '  <span>${this.host._t(k as any)}</span>';
+  const diff = [
+    'diff --git a/src/unrelated.ts b/src/unrelated.ts',
+    '--- a/src/unrelated.ts',
+    '+++ b/src/unrelated.ts',
+    '@@ -40,1 +40,0 @@',
+    `-${line}`,
+    'diff --git a/src/fresh.ts b/src/fresh.ts',
+    '--- /dev/null',
+    '+++ b/src/fresh.ts',
+    '@@ -0,0 +1,1 @@',
+    `+${line}`,
+  ].join('\n');
+  assert.equal(movedLinesByFile(diff).size, 0, 'одна строка переносом не признаётся');
+
+  const violations = findNewAnyViolations({ files: [{
+    path: 'src/fresh.ts', text: `${line}\n`,
+    addedLines: new Set([1]),
+    movedLines: movedLinesByFile(diff).get('src/fresh.ts'),
+  }] });
+  assert.equal(violations.length, 1, 'новый any остаётся находкой');
+});
+
+test('#592 кусок короче порога переносом не считается', () => {
+  const body = block(MOVED_BLOCK_MIN - 1);
   const diff = [
     '--- a/src/big.ts',
     '+++ b/src/big.ts',
-    '@@ -10,1 +10,0 @@',
-    '-  const cast = v as any;',
+    `@@ -10,${body.length} +10,0 @@`,
+    ...body.map((line) => `-${line}`),
     '--- /dev/null',
     '+++ b/src/editors/part.ts',
-    '@@ -0,0 +1,2 @@',
-    '+  const cast = v as any;',
-    '+  const cast = v as any;',
+    `@@ -0,0 +1,${body.length} @@`,
+    ...body.map((line) => `+${line}`),
   ].join('\n');
-  const moved = movedLinesByFile(diff);
-  assert.deepEqual([...(moved.get('src/editors/part.ts') || [])], [1],
-    'одно удаление покрывает одно добавление, второе остаётся новым');
+  assert.equal(movedLinesByFile(diff).size, 0);
+});
+
+test('#592 один удалённый кусок оплачивает ровно одну вставку', () => {
+  const body = block(MOVED_BLOCK_MIN);
+  const diff = [
+    '--- a/src/big.ts',
+    '+++ b/src/big.ts',
+    `@@ -10,${body.length} +10,0 @@`,
+    ...body.map((line) => `-${line}`),
+    '--- /dev/null',
+    '+++ b/src/editors/part.ts',
+    `@@ -0,0 +1,${body.length * 2} @@`,
+    ...body.map((line) => `+${line}`),
+    ...body.map((line) => `+${line}`),
+  ].join('\n');
+  const moved = [...(movedLinesByFile(diff).get('src/editors/part.ts') || [])].sort((a, b) => a - b);
+  assert.deepEqual(moved, body.map((_, i) => i + 1), 'вторая копия остаётся новым кодом');
 });
 
 test('#592 перенос с изменённым отступом переносом не считается', () => {
+  const body = block(MOVED_BLOCK_MIN + 2);
   const diff = [
     '--- a/src/big.ts',
     '+++ b/src/big.ts',
-    '@@ -10,1 +10,0 @@',
-    '-      const cast = v as any;',
+    `@@ -10,${body.length} +10,0 @@`,
+    ...body.map((line) => `-      ${line.trim()}`),
     '--- /dev/null',
     '+++ b/src/editors/part.ts',
-    '@@ -0,0 +1,1 @@',
-    '+  const cast = v as any;',
+    `@@ -0,0 +1,${body.length} @@`,
+    ...body.map((line) => `+  ${line.trim()}`),
   ].join('\n');
   assert.equal(movedLinesByFile(diff).size, 0);
 });

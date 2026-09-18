@@ -28,13 +28,27 @@
  * «надо») гейт не проходят. Формулировка вида «внешний контракт HA не
  * типизирован» проходит.
  *
- * Второе исключение — перенос (#592). Строка, которая в этом же диапазоне
- * удалена из одного файла и добавлена в другой дословно, новым кодом не
- * является: ответственность за её тип не менялась, и долг в `src/**` не вырос.
- * Гейт считает такие строки перенесёнными и не судит их, но бюджет ведёт
- * мультимножеством: два добавления при одном удалении дают одну находку.
- * Без этого любое извлечение подсистемы — то самое, чем долг и снимается по
- * замыслу #342, — краснит гейт ровно за то, что ничего не изменило.
+ * Второе исключение — перенос (#592). Код, который в этом же диапазоне удалён
+ * из одного файла и дословно добавлен в другой, новым не является:
+ * ответственность за его типы не менялась, и долг в `src/**` не вырос. Без
+ * этого послабления любое извлечение подсистемы — то самое, чем долг и
+ * снимается по замыслу #342, — краснит гейт ровно за то, что ничего не
+ * изменило.
+ *
+ * Послабление даётся БЛОКУ, а не строке (ревью кода #592, M1). Первая редакция
+ * сопоставляла одиночные строки по всему диффу, и этого хватало для обхода:
+ * несвязанная уборка удаляет где-то строку с `any`, а новый код добавляет свою,
+ * текстуально совпадающую, — и гейт молчит. Совпадение тут не экзотика: в этой
+ * базе 887 явных `any`, и типовые однострочники вроде
+ * `<span>${...(k as any)}</span>` повторяются буквально (две таких строки
+ * встретились в самом коммите переноса).
+ *
+ * Поэтому перенесённым признаётся только непрерывный кусок длиной не меньше
+ * MOVED_BLOCK_MIN строк, встречающийся подряд и целиком среди удалённых строк
+ * ОДНОГО файла. Случайно совпасть пятью строками подряд в двух местах одного
+ * диффа практически невозможно, а настоящее извлечение подсистемы состоит из
+ * таких кусков по определению. Каждый удалённый кусок оплачивает ровно одно
+ * добавление: повторная вставка того же блока остаётся новым кодом.
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -135,22 +149,30 @@ export function addedLinesByFile(diff) {
   return files;
 }
 
+/** Минимальная длина непрерывного куска, который считается переносом. */
+export const MOVED_BLOCK_MIN = 5;
+
 /**
- * Строки, добавленные одним файлом и дословно удалённые другим (#592).
+ * Строки, которые приехали в файл переносом непрерывного куска (#592).
  *
  * Возвращает по файлу номера таких строк. Сравнение точное, без обрезки
- * пробелов: перенос с изменением отступа — уже правка, и судить её гейт обязан.
- * Бюджет ведётся мультимножеством: одно удаление покрывает одно добавление.
+ * пробелов: перенос с изменённым отступом — уже правка, и судить её гейт обязан.
  */
-export function movedLinesByFile(diff) {
-  const removed = new Map();
-  const added = [];
-  let current = null;
+export function movedLinesByFile(diff, { minBlock = MOVED_BLOCK_MIN } = {}) {
+  const removedByFile = new Map();
+  const addedByFile = new Map();
+  let target = null;
+  let sourcePath = null;
   let next = 0;
   for (const raw of String(diff).split('\n')) {
+    if (raw.startsWith('--- ')) {
+      const path = raw.slice(4).replace(/^a\//, '');
+      sourcePath = path === '/dev/null' ? null : path;
+      continue;
+    }
     if (raw.startsWith('+++ ')) {
       const path = raw.slice(4).replace(/^b\//, '');
-      current = path === '/dev/null' ? null : path;
+      target = path === '/dev/null' ? null : path;
       continue;
     }
     if (raw.startsWith('@@')) {
@@ -158,24 +180,71 @@ export function movedLinesByFile(diff) {
       next = match ? Number(match[1]) : 0;
       continue;
     }
-    if (raw.startsWith('---') || raw.startsWith('diff --git')) continue;
+    if (raw.startsWith('diff --git')) continue;
     if (raw.startsWith('-')) {
-      const text = raw.slice(1);
-      removed.set(text, (removed.get(text) || 0) + 1);
+      const key = sourcePath || target || '';
+      if (!removedByFile.has(key)) removedByFile.set(key, []);
+      removedByFile.get(key).push(raw.slice(1));
       continue;
     }
-    if (!current || !next) continue;
-    if (raw.startsWith('+')) { added.push({ path: current, line: next, text: raw.slice(1) }); next += 1; continue; }
+    if (!target || !next) continue;
+    if (raw.startsWith('+')) {
+      if (!addedByFile.has(target)) addedByFile.set(target, []);
+      addedByFile.get(target).push({ line: next, text: raw.slice(1) });
+      next += 1;
+      continue;
+    }
     if (raw.startsWith('\\')) continue;
     next += 1;
   }
+
+  // Позиции удалённых строк по тексту — чтобы искать начало куска за один шаг.
+  const index = new Map();
+  for (const [path, lines] of removedByFile) {
+    lines.forEach((text, at) => {
+      if (!index.has(text)) index.set(text, []);
+      index.get(text).push({ path, at });
+    });
+  }
+  const spent = new Map();
+  const isSpent = (path, at) => spent.get(path)?.has(at) === true;
+  const spend = (path, from, length) => {
+    if (!spent.has(path)) spent.set(path, new Set());
+    for (let step = 0; step < length; step += 1) spent.get(path).add(from + step);
+  };
+
   const moved = new Map();
-  for (const item of added) {
-    const budget = removed.get(item.text) || 0;
-    if (!budget) continue;
-    removed.set(item.text, budget - 1);
-    if (!moved.has(item.path)) moved.set(item.path, new Set());
-    moved.get(item.path).add(item.line);
+  for (const [path, added] of addedByFile) {
+    // Куски считаются по непрерывным номерам строк: разрыв — конец куска.
+    const runs = [];
+    for (const item of added) {
+      const last = runs[runs.length - 1];
+      if (last && last[last.length - 1].line + 1 === item.line) last.push(item);
+      else runs.push([item]);
+    }
+    for (const run of runs) {
+      let at = 0;
+      while (at < run.length) {
+        let best = null;
+        for (const start of index.get(run[at].text) || []) {
+          if (isSpent(start.path, start.at)) continue;
+          const source = removedByFile.get(start.path) || [];
+          let length = 0;
+          while (at + length < run.length
+            && start.at + length < source.length
+            && !isSpent(start.path, start.at + length)
+            && source[start.at + length] === run[at + length].text) length += 1;
+          if (length >= minBlock && (!best || length > best.length)) {
+            best = { path: start.path, at: start.at, length };
+          }
+        }
+        if (!best) { at += 1; continue; }
+        spend(best.path, best.at, best.length);
+        if (!moved.has(path)) moved.set(path, new Set());
+        for (let step = 0; step < best.length; step += 1) moved.get(path).add(run[at + step].line);
+        at += best.length;
+      }
+    }
   }
   return moved;
 }
