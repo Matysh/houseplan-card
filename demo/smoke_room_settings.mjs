@@ -198,6 +198,31 @@ const res = await page.evaluate(async () => {
   range.dispatchEvent(new Event('input', { bubbles: true }));
   await c.updateComplete;
   out.scaleWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['nameScale']);
+  // Область: меняется только область (и имя, если оно было пустым, — это
+  // давнее поведение селектора, а не набора).
+  before = draft();
+  const areaSelect = sr().querySelector('hp-dialog .areasel');
+  // Свободных зон в фикстуре может не остаться — комната держит единственную.
+  // «Без зоны» доступна всегда, и для проверки соседа этого достаточно: имя уже
+  // заполнено, поэтому автоподстановка имени по зоне в игру не вступает.
+  const values = [...areaSelect.options].map((o) => o.value);
+  const otherArea = c._areaSel ? '' : values.find((v) => v);
+  out.areaOptionAvailable = otherArea !== undefined;
+  areaSelect.value = otherArea;
+  areaSelect.dispatchEvent(new Event('change', { bubbles: true }));
+  await c.updateComplete;
+  out.areaWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['area']);
+  // Режим заливки: перетипизированный FILL_CHOICES пишет в _roomFill и, уходя
+  // с «Свой цвет», обнуляет цвет — это его давний контракт (#581), а не сосед.
+  before = draft();
+  const tempRadio = [...sr().querySelectorAll('hp-dialog .srcrow')]
+    .find((l) => l.textContent.trim() === c._t('fill.temp'))?.querySelector('input[type="radio"]');
+  out.fillOptionAvailable = !!tempRadio;
+  tempRadio.checked = true;
+  tempRadio.dispatchEvent(new Event('change', { bubbles: true }));
+  await c.updateComplete;
+  out.fillWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['fill'])
+    && c._roomFill === 'temp';
   // Источник влажности: сегмент открывает список и не трогает температуру.
   before = draft();
   const humSeg = segmentOf('hum');
