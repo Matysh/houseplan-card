@@ -2,7 +2,7 @@ import {
   climateTempFor, humFor, isHumEntity, isTempEntity, lqiFor, resolvedLightSources, tempFor,
 } from './devices';
 import { isRegistryEntryEnabled } from './ha-binding-status';
-import { hassValue, valueWithUnit } from './logic';
+import { displayIsNeutral, displayWantsValue, hassValue, valueWithUnit, type DeviceDisplayMode } from './logic';
 import type {
   DevItem, MarkerValueBadge, ValueBadgePosition, ValueBadgeSource,
 } from './types';
@@ -47,7 +47,7 @@ export interface ValueBadgeCandidate {
 export interface ResolveValueBadgeOptions {
   showTemperature: boolean;
   showSignal: boolean;
-  display: string;
+  display: DeviceDisplayMode;
   effectiveHidden: boolean;
   /** Canonical marker:* states already projected by presentation/light graph. */
   markerStates?: readonly { ref: string; on: boolean; name: string }[];
@@ -276,7 +276,7 @@ export function resolveDeviceValueBadge(
   hass: any, d: DevItem, options: ResolveValueBadgeOptions,
 ): ResolvedValueBadge | null {
   const configured = d.marker?.value_badge != null;
-  if (options.effectiveHidden || options.display === 'static_icon') return null;
+  if (options.effectiveHidden || displayIsNeutral(options.display)) return null;
   const stored = d.marker?.value_badge;
   if (configured) {
     if (!stored?.enabled) return null;
@@ -302,7 +302,7 @@ export function resolveDeviceValueBadge(
       ...resolveValueSource(hass, d, stored.source, options.markerStates),
     };
   }
-  if (!options.showTemperature || options.display === 'value') return null;
+  if (!options.showTemperature || displayWantsValue(options.display)) return null;
   const source = legacySource(hass, d);
   if (!source) return null;
   let legacyText: string | null = null;

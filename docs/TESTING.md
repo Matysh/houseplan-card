@@ -2652,6 +2652,12 @@ require hands on real hardware — they remain for the human pass.
       cards; preview still names the real HA state/source and explains the static result
 - [ ] Switching a static vacuum back to a dynamic display restores applicable
       live/server trails; choosing static never deletes stored trail history
+- [ ] `value_static_icon` (#588) shows the same value as `value` — including on
+      the plan itself, the space card and PDF, where sources are resolved
+      lazily — while state, alarm, unavailability, RGB and activity never paint
+      it; no pulse, no °/%/LQI, value badge suppressed with its setting kept,
+      and the live vacuum puck, trail and route warning stay hidden
+      [auto: `smoke_static_icon.mjs`, golden `device-icon-state-table-*`]
 - [ ] Activity colour and size (×2..×8) apply per device; alarm ignores them
 - [ ] Icon size ×0.5..×3 and rotation 0..355° apply per device; the
       temp/humidity badges scale with the icon

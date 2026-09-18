@@ -66,6 +66,9 @@
           "const": "static_icon"
         },
         {
+          "const": "value_static_icon"
+        },
+        {
           "type": "null"
         }
       ]

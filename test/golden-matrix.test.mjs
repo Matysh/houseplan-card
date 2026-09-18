@@ -732,6 +732,17 @@ test('device icon state-table goldens cover both themes and design facets', () =
       fixture.config.markers.find((marker) => marker.id === 'golden-right-temperature').display,
       'static_icon',
     );
+    // #588. Пятый режим стоит на включённой RGB-лампе, и это существенно:
+    // «Значение + состояние» красит её маркер, новый режим обязан оставить его
+    // нейтральным. На нейтральном источнике (сенсор, крышка) обе стороны дали
+    // бы один и тот же кадр, и пересъёмка доказывала бы только сама себя.
+    assert.equal(
+      fixture.config.markers.find((marker) => marker.id === 'golden-light-one').display,
+      'value_static_icon',
+    );
+    assert.equal(fixture.states['light.golden_light_one'].state, 'on');
+    assert.deepEqual(fixture.states['light.golden_light_one'].attributes.rgb_color,
+      [255, 196, 112]);
   }
 });
 

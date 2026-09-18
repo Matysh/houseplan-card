@@ -172,6 +172,150 @@ const out = await page.evaluate(async () => {
   }
   await staticCard.updateComplete;
   const staticCardFace = domFace(staticCard.renderRoot?.querySelector(`.dev[data-id="${markerId}"]`));
+  // ------------------ #588: значение при неизменном цвете ------------------
+  // AC6 (К2а). Три ветки живого пылесоса сравнивают режим строкой и общей
+  // политики не читают, поэтому зелёная политика их не гарантирует. Тот же
+  // маркер, который выше доказал подавление для «Всегда статичный значок»,
+  // проходит их и для нового режима — и каждый раз возвращается в `badge`,
+  // иначе отсутствие puck доказывало бы лишь сломанную фикстуру.
+  const vacPuck = () => root().querySelector(`.vacpuck[data-mid="${markerId}"]`);
+  const vacTrail = () => root().querySelector('.vactrail');
+  const vacWarn = () => root().querySelector('.vacwarn');
+  const setVacDisplay = async (mode) => {
+    savedMarker.display = mode;
+    card._cfgEpoch++;
+    card.hass = { ...card.hass };
+    await update();
+  };
+  const setMapName = async (name) => {
+    const camera = card.hass.states['camera.static_robot_map'];
+    card.hass = {
+      ...card.hass,
+      states: {
+        ...card.hass.states,
+        'camera.static_robot_map': {
+          ...camera, attributes: { ...camera.attributes, map_name: name },
+        },
+      },
+    };
+    await update();
+  };
+  // Сопоставленная карта (калибровка знает `m1`): puck и след существуют.
+  await setVacDisplay('badge');
+  const mappedBadgeShowsLive = !!vacPuck() && !!vacTrail();
+  await setVacDisplay('value_static_icon');
+  const valueStaticHidesLive = !vacPuck() && !vacTrail();
+  const valueStaticKeepsBufferEmpty = !card._vacRt.get(markerId);
+  // Несопоставленная карта (`m9` нет в калибровке): только здесь появляется
+  // бейдж маршрута. При совпадающей калибровке маршрут `ready`, предупреждения
+  // нет ни в одном режиме — и третий факт был бы тавтологией.
+  await setVacDisplay('badge');
+  await setMapName('m9');
+  const unmappedBadgeWarns = !!vacWarn();
+  // Режим меняется БЕЗ нового снимка hass: `_vacTick` живёт на приёме hass,
+  // поэтому буфер позиций остаётся наполненным, а `moving` — истинным. Это
+  // важно: иначе исчезнувший бейдж объяснялся бы пустым буфером (его чистит
+  // первая ветка), и дефектная третья ветка прошла бы свидетеля зелёной.
+  savedMarker.display = 'value_static_icon';
+  card._cfgEpoch++;
+  card._regSignature = '';
+  card._maybeRebuildDevices();
+  await update();
+  const valueStaticHidesRouteWarn = !vacWarn();
+  const routeBufferStillMoving = card._vacRt.get(markerId)?.moving === true;
+  await setMapName('m1');
+  await setVacDisplay('static_icon');
+
+  // AC5/AC7. Маркер со значением: число видно на плане, а цвет не отзывается
+  // ни на включённую лампу, ни на недоступность источника. Источник — лампа, а
+  // не дверь: у крышки состояние живёт в значке, подложка нейтральна в обоих
+  // режимах, и контраст ниже ничего бы не доказал.
+  const valueId = 'value-static-light';
+  card._serverCfg.markers.push({
+    id: valueId, binding: 'device:d_light1', space: 'f1', area: 'living_room',
+    display: 'value_static_icon', icon: 'mdi:ceiling-light', size: 1.4,
+    value_source: {
+      kind: 'entity_attribute', entity_id: 'light.ceiling', attribute: 'brightness',
+    },
+  });
+  card._layout[valueId] = { s: 'f1', x: 0.62, y: 0.3 };
+  const alarmId = 'value-static-leak';
+  card._serverCfg.markers.push({
+    id: alarmId, binding: 'device:d_leak', space: 'f1', area: 'living_room',
+    display: 'value_static_icon', icon: 'mdi:water',
+  });
+  card._layout[alarmId] = { s: 'f1', x: 0.72, y: 0.5 };
+  const setLight = async (state, attributes) => {
+    card.hass = {
+      ...card.hass,
+      states: {
+        ...card.hass.states,
+        'light.ceiling': {
+          entity_id: 'light.ceiling', state,
+          attributes: { friendly_name: 'Ceiling light', ...attributes },
+        },
+      },
+    };
+    await update();
+  };
+  const setValueDisplay = async (mode) => {
+    card._serverCfg.markers.find((marker) => marker.id === valueId).display = mode;
+    card._cfgEpoch++;
+    card.hass = { ...card.hass };
+    await update();
+  };
+  const valueNode = () => root().querySelector(`.dev[data-id="${valueId}"]`);
+  const valueText = () => valueNode()?.querySelector('.valtext')?.textContent?.trim() || '';
+  // Собственные классы режима не считаются состоянием: `static-icon` —
+  // стилевой хук нейтральной подложки, `valonly` — форма лица значения.
+  const stateClasses = (node) => [...(node?.classList || [])].filter((name) => [
+    'on', 'open', 'alarm', 'unavail',
+    'activity-running', 'activity-event', 'activity-presence', 'activity-transition',
+  ].includes(name));
+  card._regSignature = '';
+  card._cfgEpoch++;
+  await setLight('on', { brightness: 128, rgb_color: [255, 196, 112] });
+  const valueOnText = valueText();
+  const valueOnClasses = stateClasses(valueNode());
+  const valueOnNoPulse = !valueNode()?.querySelector('.pulse,.ripple')
+    && !valueNode()?.querySelector('.lqi');
+  await setLight('off', { brightness: 0 });
+  const valueOffText = valueText();
+  const valueOffClasses = stateClasses(valueNode());
+  await setLight('unavailable', {});
+  const valueUnavailableClasses = stateClasses(valueNode());
+  // Контраст: тот же маркер и тот же источник в «Значение + состояние» красится
+  // включённой лампой — нейтральность выше принадлежит режиму, а не фикстуре.
+  await setLight('on', { brightness: 128, rgb_color: [255, 196, 112] });
+  await setValueDisplay('value');
+  const dynamicText = valueText();
+  const dynamicClasses = stateClasses(valueNode());
+  await setValueDisplay('value_static_icon');
+
+  // AC7. Редактор: новая опция последняя, поле источника значения показано,
+  // предупреждение о тревоге показано, секция внешнего бейджа выключена.
+  card._setMode('devices');
+  const valueDevice = card._devices.find((item) => item.id === valueId);
+  card._openMarkerDialog(valueDevice);
+  await update();
+  const displayOptions = [...root().querySelectorAll('#marker-display option')]
+    .map((option) => option.value);
+  const editorShowsValueSource = !!root().querySelector('#marker-value-source');
+  const badgeToggle = root().querySelector('.markerbadgegroup input[type="checkbox"]');
+  const editorDisablesBadge = !!badgeToggle?.disabled
+    && !!root().querySelector('.markerbadgegroup .markerlightdisabled');
+  card._markerDialog = null;
+  await update();
+  const alarmDevice = card._devices.find((item) => item.id === alarmId);
+  card._openMarkerDialog(alarmDevice);
+  await update();
+  const editorWarnsAboutAlarm = !!root().querySelector('.habindingbanner');
+  card._markerDialog = { ...card._markerDialog, display: 'badge' };
+  await update();
+  const badgeHidesAlarmWarning = !root().querySelector('.habindingbanner');
+  card._markerDialog = null;
+  await update();
+
   return {
     staticAlarmNeutral: smokeOn.status === 'neutral'
       && smokeOn.activity === 'none'
@@ -193,6 +337,27 @@ const out = await page.evaluate(async () => {
     dynamicVacuumOverlayRestored,
     returnCreatesNoActivity,
     returnHidesVacuumOverlay,
+    // #588 AC6
+    mappedBadgeShowsLive,
+    valueStaticHidesLive,
+    valueStaticKeepsBufferEmpty,
+    valueStaticHidesRouteWarn,
+    routeBufferStillMoving,
+    unmappedBadgeWarns,
+    // #588 AC5
+    valueStaticShowsValue: valueOnText === '50 %',
+    valueStaticNeverColoured: valueOnClasses.length === 0
+      && valueOffClasses.length === 0 && valueUnavailableClasses.length === 0,
+    valueStaticFollowsSource: valueOffText === '0 %',
+    valueStaticHasNoPulseOrLqi: valueOnNoPulse,
+    dynamicValueColoured: dynamicText === '50 %' && dynamicClasses.includes('on'),
+    // #588 AC7
+    editorListsNewModeLast: displayOptions.join(',')
+      === 'badge,icon_ripple,value,static_icon,value_static_icon',
+    editorShowsValueSource,
+    editorDisablesBadge,
+    editorWarnsAboutAlarm,
+    badgeHidesAlarmWarning,
   };
 });
 

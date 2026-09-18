@@ -15,6 +15,12 @@ const resolve = (overrides = {}) => resolveDevicePulse({
 test('pulse priority is hidden/static, alarm, finite event, continuous state', () => {
   assert.equal(resolve({ effectiveHidden: true, visual: visual('alarm') }).kind, 'none');
   assert.equal(resolve({ display: 'static_icon', visual: visual('alarm') }).kind, 'none');
+  // #588 AC4: значение внутри маркера не возвращает ему ни тревожную пульсацию,
+  // ни обычную — нейтральность принадлежит цвету, а не лицу.
+  assert.equal(resolve({ display: 'value_static_icon', visual: visual('alarm') }).kind, 'none');
+  assert.equal(resolve({
+    display: 'value_static_icon', semanticActivity: 'presence',
+  }).kind, 'none');
   assert.equal(resolve({ display: 'badge', visual: visual('alarm') }).kind, 'alarm');
   assert.equal(resolve({
     shortReason: 'event', shortExpiresAt: 2_000, semanticActivity: 'running',

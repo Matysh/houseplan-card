@@ -860,9 +860,19 @@ authoritative; the package size default is 1.5 diameters. `prefers-reduced-motio
 replaces ordinary motion with a compact colored indicator while the static red
 alarm remains clear.
 
-The four display choices are icon + state; icon + state + activity; value +
-state; and always-static icon. A separate value badge can show an entity state,
+The five display choices are icon + state; icon + state + activity; value +
+state; always-static icon; and value + static icon. A separate value badge can
+show an entity state,
 useful attribute, average LQI or linked light state on any side of the marker.
+**Value + static icon** combines the two: the marker content follows the same
+rules as **value + state** — the same Value source, the same numbers and
+localized states, the same icon fallback with its reason — while the colour
+behaves like **always-static icon**. State, alarm, unavailability, live RGB
+colour and activity never change the marker; there is no pulse at all, the
+compact °/% and LQI readings stay hidden, and the separate value badge is
+suppressed the same way (the setting is kept), because the value is already
+inside the marker. A vacuum in this mode draws no live puck, trail or route
+warning, and its saved history is not deleted.
 For **value + state**, the Device editor also offers **Value source**. Keep
 **Automatic (as before)** for the legacy choice, or select one of those same
 readings—for example, cover position—to replace the icon with `42 %` rather

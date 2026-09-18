@@ -1883,7 +1883,7 @@ MARKER_SCHEMA = vol.Schema(
         vol.Optional("room_id"): vol.Any(str, None),
         # Keep in sync with DISPLAY_MODES in src/logic.ts. `ripple` is no longer
         # offered, but remains accepted while old stores migrate to icon_ripple.
-        vol.Optional("display"): vol.Any("badge", "ripple", "icon_ripple", "value", "static_icon", None),
+        vol.Optional("display"): vol.Any("badge", "ripple", "icon_ripple", "value", "static_icon", "value_static_icon", None),
         vol.Optional("ripple_color"): vol.Any(None, _COLOR),
         vol.Optional("ripple_size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=1, max=20)), None),
         vol.Optional("size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=0.2, max=6)), None),

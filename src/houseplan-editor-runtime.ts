@@ -49,7 +49,7 @@ import {
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_UI_MODES, ROOM_FILL_MODES,
-  normalizeDeviceDisplay, isAlarmCapable, type DeviceDisplayMode,
+  normalizeDeviceDisplay, isAlarmCapable, displayIsNeutral, displayWantsValue, type DeviceDisplayMode,
   liveText, liveTextReference, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
   DECOR_TEXT_BASE,
 } from './logic';
@@ -414,16 +414,13 @@ type ResizePreview = { space: string; sp: any };
 type ResizeWallUnion = ReturnType<typeof wallBodiesUnionPath>;
 type ResizeWallArtifact = ReturnType<typeof wallBodiesGeometry>;
 const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
-  badge: 'display.badge',
-  icon_ripple: 'display.icon_ripple',
-  value: 'display.value',
-  static_icon: 'display.static_icon',
+  badge: 'display.badge', icon_ripple: 'display.icon_ripple', value: 'display.value',
+  static_icon: 'display.static_icon', value_static_icon: 'display.value_static_icon',
 };
 const DISPLAY_HINT_KEYS: Record<DeviceDisplayMode, I18nKey> = {
-  badge: 'marker.display_hint_badge',
-  icon_ripple: 'marker.display_hint_icon_ripple',
-  value: 'marker.display_hint_value',
-  static_icon: 'marker.display_hint_static_icon',
+  badge: 'marker.display_hint_badge', icon_ripple: 'marker.display_hint_icon_ripple',
+  value: 'marker.display_hint_value', static_icon: 'marker.display_hint_static_icon',
+  value_static_icon: 'marker.display_hint_value_static_icon',
 };
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
@@ -13394,7 +13391,7 @@ public _renderMarkerDialog(): TemplateResult {
             </option>`)}
           </select>
           <p class="muted">${this.host._t(DISPLAY_HINT_KEYS[d.display])}</p>
-          ${d.display === 'value' ? html`<div class="markerhelpfield markervaluesource">
+          ${displayWantsValue(d.display) ? html`<div class="markerhelpfield markervaluesource">
             <div class="markerhelplabel">
               <label for="marker-value-source">${this.host._t('marker.value_source')}</label>
               ${this._help('marker.value_source.help')}
@@ -13427,7 +13424,7 @@ public _renderMarkerDialog(): TemplateResult {
               <ha-icon icon="mdi:alert-outline"></ha-icon>${this.host._t('marker.value_source_missing_hint')}
             </p>` : nothing}
           </div>` : nothing}
-          ${d.display === 'static_icon' && this.host._bindingHasAlarm(d.binding)
+          ${displayIsNeutral(d.display) && this.host._bindingHasAlarm(d.binding)
             ? html`<div class="habindingbanner" role="note">
                 <ha-icon icon="mdi:alert-outline"></ha-icon>
                 <span>${this.host._t('marker.static_alarm_warning')}</span>
@@ -13444,10 +13441,10 @@ public _renderMarkerDialog(): TemplateResult {
                   valueBadgeSource: source,
                   valueBadgeTouched: true,
                 };
-              }, d.display === 'static_icon' || (!badgeCandidates.length && !d.valueBadgeSource))}
+              }, displayIsNeutral(d.display) || (!badgeCandidates.length && !d.valueBadgeSource))}
               <span>${this.host._t('marker.value_badge_enabled')}</span>
             </label>
-            ${d.display === 'static_icon'
+            ${displayIsNeutral(d.display)
               ? html`<p class="muted markerlightdisabled" role="note">
                   <ha-icon icon="mdi:information-outline"></ha-icon>${this.host._t('marker.value_badge_static')}
                 </p>`
@@ -13483,7 +13480,7 @@ public _renderMarkerDialog(): TemplateResult {
               ${badgeSourceMissing ? html`<p class="muted markerlightwarning" role="status">
                 <ha-icon icon="mdi:alert-outline"></ha-icon>${this.host._t('marker.value_badge_missing_hint')}
               </p>` : nothing}
-              ${d.display === 'value' && badgeSourceKey === innerValueSourceKey
+              ${displayWantsValue(d.display) && badgeSourceKey === innerValueSourceKey
                 ? html`<p class="muted markerlightwarning" role="note">
                     <ha-icon icon="mdi:information-outline"></ha-icon>${this.host._t('marker.value_badge_duplicate')}
                   </p>` : nothing}

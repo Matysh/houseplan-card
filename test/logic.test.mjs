@@ -21,7 +21,8 @@ import {
   openingShoulders, openingEntityReferences, fillColorsOf, lerpColor, roomFillStyle,
   resolveEffectiveRoomFill, stateIcon, lightColorOf, isAlarmState, parseRoomRef,
   diffNewDevices, poleOfInaccessibility, runServiceFor, coverMoving,
-  normalizeDeviceDisplay, isAlarmCapable, TAP_ACTIONS,
+  normalizeDeviceDisplay, isAlarmCapable, TAP_ACTIONS, DISPLAY_MODES,
+  displayWantsValue, displayIsNeutral,
   liveText, liveTextValue, liveTextReference, liveTextToken,
   hassValue, valueWithUnit, decorTextScale, decorTextLines,
   LIVE_TEXT_DASH, LIVE_TEXT_VALUE_MAX, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX,
@@ -51,7 +52,14 @@ test('display normalization and alarm-capable metadata share one contract', () =
   assert.equal(normalizeDeviceDisplay(undefined), 'badge');
   assert.equal(normalizeDeviceDisplay('ripple'), 'icon_ripple');
   assert.equal(normalizeDeviceDisplay('static_icon'), 'static_icon');
+  assert.equal(normalizeDeviceDisplay('value_static_icon'), 'value_static_icon');
   assert.equal(normalizeDeviceDisplay('not-a-mode'), 'badge');
+  // #588: порядок списка виден пользователю — он задаёт порядок опций в
+  // селекторе «Отображение», поэтому новый режим добавлен последним.
+  assert.deepEqual([...DISPLAY_MODES],
+    ['badge', 'icon_ripple', 'value', 'static_icon', 'value_static_icon']);
+  assert.deepEqual(DISPLAY_MODES.filter(displayWantsValue), ['value', 'value_static_icon']);
+  assert.deepEqual(DISPLAY_MODES.filter(displayIsNeutral), ['static_icon', 'value_static_icon']);
   assert.equal(isAlarmCapable('alarm_control_panel', ''), true);
   assert.equal(isAlarmCapable('siren', ''), true);
   assert.equal(isAlarmCapable('binary_sensor', 'smoke'), true);

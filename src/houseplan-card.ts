@@ -45,7 +45,7 @@ import {
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_UI_MODES, ROOM_FILL_MODES,
-  normalizeDeviceDisplay, isAlarmCapable, type DeviceDisplayMode,
+  normalizeDeviceDisplay, isAlarmCapable, displayIsNeutral, type DeviceDisplayMode,
   liveText, liveTextReference, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
   DECOR_TEXT_BASE,
 } from './logic';
@@ -450,16 +450,13 @@ type ResizePreview = { space: string; sp: any };
 type ResizeWallUnion = ReturnType<typeof wallBodiesUnionPath>;
 type ResizeWallArtifact = ReturnType<typeof wallBodiesGeometry>;
 const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
-  badge: 'display.badge',
-  icon_ripple: 'display.icon_ripple',
-  value: 'display.value',
-  static_icon: 'display.static_icon',
+  badge: 'display.badge', icon_ripple: 'display.icon_ripple', value: 'display.value',
+  static_icon: 'display.static_icon', value_static_icon: 'display.value_static_icon',
 };
 const DISPLAY_HINT_KEYS: Record<DeviceDisplayMode, I18nKey> = {
-  badge: 'marker.display_hint_badge',
-  icon_ripple: 'marker.display_hint_icon_ripple',
-  value: 'marker.display_hint_value',
-  static_icon: 'marker.display_hint_static_icon',
+  badge: 'marker.display_hint_badge', icon_ripple: 'marker.display_hint_icon_ripple',
+  value: 'marker.display_hint_value', static_icon: 'marker.display_hint_static_icon',
+  value_static_icon: 'marker.display_hint_value_static_icon',
 };
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
@@ -12195,7 +12192,7 @@ export class HouseplanCard extends LitElement {
     if (!this.hass) return;
     for (const d of this._devices) {
       if (d.hidden || !this._isVacDev(d)) continue;
-      if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') {
+      if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) {
         this._vacRt.delete(d.id);
         continue;
       }
@@ -12411,7 +12408,7 @@ export class HouseplanCard extends LitElement {
     const trails: TemplateResult[] = [];
     for (const d of devs) {
       if (d.hidden || !this._isVacDev(d)) continue;
-      if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') continue;
+      if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) continue;
       const fact = this._renderDeviceSnapshot?.facts.get(`vacuum:${d.id}`) as any;
       const src = fact?.source ?? this._vacSource(d, this._renderPlanHass);
       if (!src) continue;
@@ -12590,7 +12587,7 @@ export class HouseplanCard extends LitElement {
    */
   private _vacRouteBadge(d: DevItem): TemplateResult | typeof nothing {
     if (!this._isVacDev(d) || d.hidden) return nothing;
-    if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') return nothing;
+    if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) return nothing;
     const fact = this._renderDeviceSnapshot?.facts.get(`vacuum:${d.id}`) as
       { resolution?: VacuumRouteResolution } | undefined;
     const reason = routeWarningKey(fact?.resolution, this._vacRt.get(d.id)?.moving ?? false);

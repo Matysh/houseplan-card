@@ -396,6 +396,21 @@ def test_value_badge_projection_drops_malformed_scalar_fields(
     assert "sentinel" not in json.dumps(projected)
 
 
+def test_issue_588_display_mode_survives_the_projection() -> None:
+    """The support package carries the display mode verbatim.
+
+    #588 adds a fifth mode. The projection copies the field without looking at
+    its value, so nothing had to change here — but a diagnostic package that
+    silently dropped the mode would describe a plan the user does not see, and
+    that is exactly the class of report that costs a day of guessing.
+    """
+    projected = support_package._project_marker(
+        support_package._Pseudonyms("display"),
+        {"id": "marker", "binding": "virtual", "display": "value_static_icon"},
+    )
+    assert projected["display"] == "value_static_icon"
+
+
 def test_value_badge_projection_omits_empty_result():
     projected = support_package._project_marker(
         support_package._Pseudonyms("badge"),

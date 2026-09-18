@@ -754,7 +754,11 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     id: `device-icon-state-table-${theme}`, fixture: 'visual', space: 'golden-lighting', mode: 'view',
     glowEnabled: false, sunRays: false,
     markerOverrides: [
-      { id: 'golden-light-one', binding: 'device:golden-light-one' },
+      // #588: пятый режим показан там же, где живут остальные четыре. Источник
+      // выбран цветной (включённая RGB-лампа) намеренно: на нейтральном кадр
+      // совпал бы с прежним, и эталон не доказывал бы ничего.
+      { id: 'golden-light-one', binding: 'device:golden-light-one',
+        display: 'value_static_icon' },
       { id: 'golden-light-two', binding: 'device:golden-light-two' },
       { id: 'golden-light-three', binding: 'device:golden-light-three' },
       { id: 'golden-presence', binding: 'device:golden-presence' },

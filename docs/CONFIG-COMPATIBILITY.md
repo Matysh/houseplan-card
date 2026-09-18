@@ -685,8 +685,18 @@ space transfer remaps an internal target and disables/counts a link whose
 target is outside the transfer. Older clients ignore the field and may erase
 it if they reconstruct the same marker after a downgrade.
 
+`marker.display` gained a fifth accepted token, `value_static_icon` (#588),
+beside `badge`, `icon_ripple`, `value` and `static_icon` (plus the read-only
+legacy `ripple`). The shape of the field does not change and there is no
+migration. A client older than the mode meets an unknown token at its existing
+read boundary (`normalizeDeviceDisplay`) and projects it to `badge`: the marker
+appears as an ordinary coloured icon. The degradation is visible but safe — the
+stored value is not rewritten, and only an explicit re-save of that marker by
+the user would replace it. The backend accepts the new token on write and keeps
+accepting every previous one.
+
 `marker.value_source` is an optional explicit source for the inner face of a
-`display: value` marker. Absence or `null` preserves the historical automatic
+`display: value` or `display: value_static_icon` marker. Absence or `null` preserves the historical automatic
 entity-state choice; an object uses exactly the same discriminated source
 contract and formatter as `marker.value_badge.source`. A missing explicit
 source stays selected and renders `—` rather than silently falling back. The

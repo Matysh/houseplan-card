@@ -16,6 +16,7 @@ import {
   type DeviceActivity, type DeviceAvailability, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
+  displayIsNeutral, displayWantsValue,
   hassValue, lightColorOf, lqiColor, normalizeDeviceDisplay, stateIcon, valueWithUnit,
   type DeviceDisplayMode,
 } from './logic';
@@ -86,7 +87,7 @@ export function deviceAccessibleLabel(
 export function deviceA11yState(presentation: Pick<
   ResolvedDevicePresentation, 'visual' | 'lockState' | 'display'
 >): DeviceA11yState {
-  if (presentation.display === 'static_icon') return 'neutral';
+  if (displayIsNeutral(presentation.display)) return 'neutral';
   if (presentation.visual.status === 'alarm') return 'alarm';
   if (presentation.visual.availability === 'unavailable') return 'unavailable';
   if (presentation.lockState) return presentation.lockState;
@@ -645,7 +646,7 @@ export function presentationClasses(presentation: Pick<
   'visual' | 'lockState' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration' | 'pulse'
 >): string[] {
   if (presentation.effectiveHidden) return [];
-  if (presentation.display === 'static_icon') return ['static-icon'];
+  if (displayIsNeutral(presentation.display)) return ['static-icon'];
   const classes: string[] = [];
   const { visual } = presentation;
   if (presentation.pulse.kind === 'alarm') classes.push('alarm');
@@ -672,8 +673,16 @@ export function resolveDevicePresentation(
   options: ResolvePresentationOptions,
 ): ResolvedDevicePresentation {
   const display = normalizeDeviceDisplay(d.marker?.display);
-  const staticIcon = display === 'static_icon';
-  const sources = staticIcon && options.sourceDetails === false
+  // Two independent questions, and conflating them is the trap this mode was
+  // built to avoid (#588). `neutralFace` answers "does anything colour the
+  // marker"; `sourceless` answers "can we skip resolving sources at all", and
+  // only the value-free static mode can. `sourceDetails: false` is the main
+  // plan render path, so answering the second question with the first would
+  // drop the value exactly where the user looks and keep it in the editor
+  // preview, where sources are always resolved.
+  const neutralFace = displayIsNeutral(display);
+  const sourceless = display === 'static_icon';
+  const sources = sourceless && options.sourceDetails === false
     ? EMPTY_SOURCES : resolvePresentationSources(
         hass, d, options.lightDevices || [d], options.lightSources,
         options.registryHass || hass,
@@ -712,7 +721,7 @@ export function resolveDevicePresentation(
     ).length > 0;
   const controllerFace = sources.sourceKind === 'controls'
     || (configuredController && sources.sourceKind !== 'light' && sources.sourceKind !== 'cover');
-  const value = staticIcon && options.sourceDetails === false
+  const value = sourceless && options.sourceDetails === false
     ? { source: null, text: null, fullText: null, fallback: null, explicit: false }
     : resolveValue(hass, d, sources, options.showTemperature, markerStates);
   const sourceSignature = signatureOf(d, sources, value.source);
@@ -780,7 +789,7 @@ export function resolveDevicePresentation(
   const rippleScale = Number(d.marker?.ripple_size) > 0
     ? Number(d.marker!.ripple_size) : DEVICE_PULSE_DEFAULT_SCALE;
   const configuredRippleColor = safeStoredColor(d.marker?.ripple_color, null);
-  const rippleColor = staticIcon ? null : configuredRippleColor || lightColor || null;
+  const rippleColor = neutralFace ? null : configuredRippleColor || lightColor || null;
   const pulse = resolveDevicePulse({
     display,
     visual,
@@ -809,7 +818,7 @@ export function resolveDevicePresentation(
   });
   const notices: PresentationReason[] = [];
   if (options.designPreview && userHidden) notices.push('hidden_design_preview');
-  if (!staticIcon && d.marker?.vacuum?.live === true) notices.push('vacuum_live_plan_only');
+  if (!neutralFace && d.marker?.vacuum?.live === true) notices.push('vacuum_live_plan_only');
   const powerSource = sources.visualSources.some((source) =>
     source.role === 'power_gate' || isDevicePowerSwitch(hass, source.eid),
   );
@@ -817,7 +826,7 @@ export function resolveDevicePresentation(
     eid.startsWith('switch.') && !hass?.entities?.[eid]?.entity_category,
   ).length;
   if (powerSource && uncategorisedSwitches > 1) notices.push('composite_power_source');
-  if (display !== 'icon_ripple' && display !== 'static_icon'
+  if (display !== 'icon_ripple' && !neutralFace
       && combined.status !== 'alarm' && combined.activity !== 'none') {
     notices.push('activity_display_disabled');
   }
@@ -843,7 +852,7 @@ export function resolveDevicePresentation(
     icon,
     valueText,
     valueFullText: policy.face === 'value' ? value.fullText : null,
-    fallbackReason: display === 'value' ? value.fallback : null,
+    fallbackReason: displayWantsValue(display) ? value.fallback : null,
     activity,
     activityGeneration: rt?.gen || 1,
     pulse,

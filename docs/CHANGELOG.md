@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- The Device editor offers a fifth **Display** option — **Value + static icon**.
+  The marker shows the same number or state as **Value + state** while staying
+  one colour forever: state, alarm, unavailability, live RGB colour and activity
+  never paint it, and there is no pulse. The compact °/% and LQI readings and the
+  separate value badge are hidden exactly as in **Always static icon** (the badge
+  setting is preserved); a vacuum draws no live puck, trail or route warning, and
+  its stored history is kept. An older card meeting the new mode shows the marker
+  as an ordinary coloured icon — the configuration is not damaged
+  ([#588](https://github.com/Matysh/houseplan-card/issues/588)).
+
 ## v1.77.0-beta.1 — 2026-09-18
 
 - Furniture items with the same dimensions now look the same: the width and

@@ -895,8 +895,21 @@ export function safeUrl(url: string | null | undefined): string | null {
  */
 /** UI presentations. `ripple` remains a backend/read compatibility value only
  * and is normalised to `icon_ripple` by the shared normalizer. */
-export const DISPLAY_MODES = ['badge', 'icon_ripple', 'value', 'static_icon'] as const;
+export const DISPLAY_MODES = ['badge', 'icon_ripple', 'value', 'static_icon', 'value_static_icon'] as const;
 export type DeviceDisplayMode = typeof DISPLAY_MODES[number];
+
+/* The four original modes tied two independent things together: what is drawn
+ * inside the marker (icon or value) and whether the marker takes colour from
+ * state. `value_static_icon` (#588) is the missing fourth combination, so the
+ * two questions are asked separately from here on. Every renderer, the pulse
+ * layer, the badge layer and the live vacuum branches ask these two predicates
+ * instead of comparing the token, which is what kept the modes consistent. */
+/** The marker draws the resolved value instead of its icon when one exists. */
+export const displayWantsValue = (display: DeviceDisplayMode): boolean =>
+  display === 'value' || display === 'value_static_icon';
+/** State, alarm, availability, live colour and activity never touch the face. */
+export const displayIsNeutral = (display: DeviceDisplayMode): boolean =>
+  display === 'static_icon' || display === 'value_static_icon';
 
 /** One read boundary for persisted/legacy display values. Unknown manual data
  * safely falls back to the default dynamic badge; the backend still rejects it

@@ -1,5 +1,5 @@
 import type { DeviceAvailability, DeviceVisualState } from './device-visual';
-import type { DeviceDisplayMode } from './logic';
+import { displayIsNeutral, displayWantsValue, type DeviceDisplayMode } from './logic';
 
 export type PresentationReason =
   | 'neutral'
@@ -23,6 +23,7 @@ export type PresentationReason =
   | 'composite_power_source'
   | 'activity_display_disabled'
   | 'static_icon'
+  | 'value_static_icon'
   | 'ha_disabled'
   | 'orphaned';
 
@@ -94,7 +95,8 @@ export function resolveDevicePresentationPolicy(
     decisions.push('lifecycle.active');
   }
 
-  const staticIcon = input.display === 'static_icon';
+  const neutralFace = displayIsNeutral(input.display);
+  const wantsValue = displayWantsValue(input.display);
   let visual = input.controllerFace
     ? { ...input.sourceVisual, availability: input.controllerAvailability }
     : input.sourceVisual;
@@ -107,7 +109,7 @@ export function resolveDevicePresentationPolicy(
   if (effectiveHidden) {
     visual = NEUTRAL_VISUAL;
     decisions.push('face.hidden');
-  } else if (staticIcon) {
+  } else if (neutralFace) {
     visual = NEUTRAL_VISUAL;
     decisions.push('face.static');
   } else if (input.sourceVisual.status !== 'alarm' && !input.liveStates) {
@@ -117,7 +119,7 @@ export function resolveDevicePresentationPolicy(
     decisions.push('face.dynamic');
   }
 
-  if (!staticIcon && !effectiveHidden && input.liveStates
+  if (!neutralFace && !effectiveHidden && input.liveStates
       && input.sourceVisual.status !== 'alarm' && input.shortActivity) {
     visual = { ...visual, activity: input.shortActivity };
     decisions.push(`activity.short_${input.shortActivity}`);
@@ -129,17 +131,17 @@ export function resolveDevicePresentationPolicy(
   else if (visual.status === 'open') decisions.push('status.open');
   else decisions.push('status.neutral');
 
-  const face: PresentationFace = input.display === 'value'
+  const face: PresentationFace = wantsValue
     && !effectiveHidden && input.valueAvailable ? 'value' : 'icon';
-  decisions.push(face === 'value' ? 'content.value' : input.display === 'value'
+  decisions.push(face === 'value' ? 'content.value' : wantsValue
     ? 'content.value_fallback_icon' : 'content.icon');
-  if (input.display === 'value' && !input.valueAvailable && input.valueFallback) {
+  if (wantsValue && !input.valueAvailable && input.valueFallback) {
     decisions.push(`content.${input.valueFallback}`);
   }
 
-  const dynamicIcon = input.liveStates && !staticIcon && !effectiveHidden;
-  const metrics = !staticIcon && !effectiveHidden;
-  const pulseEligible = !effectiveHidden && !bindingUnavailable && !staticIcon
+  const dynamicIcon = input.liveStates && !neutralFace && !effectiveHidden;
+  const metrics = !neutralFace && !effectiveHidden;
+  const pulseEligible = !effectiveHidden && !bindingUnavailable && !neutralFace
     && visual.availability === 'available'
     && (visual.status === 'alarm' || (input.liveStates && input.display === 'icon_ripple'));
   const vacuumLive = metrics && input.vacuumLiveRequested;
@@ -177,6 +179,7 @@ export function resolvePresentationReason(input: PresentationReasonInput): Prese
   if (input.lifecycle === 'ha_disabled') return 'ha_disabled';
   if (input.lifecycle === 'orphaned') return 'orphaned';
   if (input.display === 'static_icon') return 'static_icon';
+  if (input.display === 'value_static_icon') return 'value_static_icon';
   if (input.visual.status === 'alarm') return 'alarm';
   if (!input.liveStates) return 'live_states_disabled';
   if (input.visual.availability === 'unavailable') return 'unavailable';

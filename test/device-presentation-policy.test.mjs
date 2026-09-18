@@ -643,3 +643,65 @@ test('renderer-ready decision trace covers value, metrics, LQI, vacuum and pulse
   assert.match(sourceFiles[1], /resolveDevicePresentation\(/);
   assert.match(sourceFiles[2], /renderDeviceFace\(shown/);
 });
+
+// #588. Два родителя нового режима задавали лицо и цвет одним выбором, поэтому
+// таблица ниже проверяет их порознь: лицо остаётся «значением» при любом
+// входном статусе, а цвет не отзывается ни на один из них.
+test('#588 AC1: value_static_icon рисует значение и не берёт цвет ни от одного статуса', () => {
+  const inputs = [
+    { availability: 'available', status: 'neutral', activity: 'none' },
+    { availability: 'available', status: 'working', activity: 'running' },
+    { availability: 'available', status: 'open', activity: 'none' },
+    { availability: 'available', status: 'alarm', activity: 'running' },
+    { availability: 'unavailable', status: 'neutral', activity: 'none' },
+  ];
+  for (const sourceVisual of inputs) {
+    const r = resolveDevicePresentationPolicy(basePolicy({
+      display: 'value_static_icon', valueAvailable: true, liveStates: true,
+      shortActivity: 'event', vacuumLiveRequested: true, sourceVisual,
+    }));
+    const where = `${sourceVisual.availability}/${sourceVisual.status}`;
+    assert.equal(r.face, 'value', where);
+    assert.deepEqual(r.visual, neutral, where);
+    assert.deepEqual(
+      [r.dynamicIcon, r.metrics, r.liveColor, r.pulseEligible, r.vacuumLive],
+      [false, false, false, false, false], where,
+    );
+    assertDecision(r, 'face.static');
+    assertDecision(r, 'content.value');
+  }
+  // Контраст: тот же вход в «Значение + состояние» красится и пульсирует —
+  // иначе нейтральность выше доказывала бы только сломанную фикстуру.
+  const dynamic = resolveDevicePresentationPolicy(basePolicy({
+    display: 'value', valueAvailable: true, liveStates: true,
+    sourceVisual: { availability: 'available', status: 'alarm', activity: 'none' },
+  }));
+  assert.equal(dynamic.face, 'value');
+  assert.equal(dynamic.visual.status, 'alarm');
+  assert.equal(dynamic.pulseEligible, true);
+});
+
+// #588 AC2. Откат лица общий с `value`: нейтральный цвет не должен отменять
+// объяснение, почему вместо числа нарисован значок.
+test('#588 AC2: value_static_icon откатывается к значку и называет ту же причину, что value', () => {
+  const reasons = ['value_no_state', 'value_ambiguous_sources', 'value_non_scalar', 'value_virtual'];
+  for (const valueFallback of reasons) {
+    for (const display of ['value', 'value_static_icon']) {
+      const r = resolveDevicePresentationPolicy(basePolicy({
+        display, valueAvailable: false, valueFallback,
+      }));
+      assert.equal(r.face, 'icon', `${display}/${valueFallback}`);
+      assertDecision(r, 'content.value_fallback_icon');
+      assertDecision(r, `content.${valueFallback}`);
+    }
+  }
+  // «Всегда статичный значок» значения не просит вовсе — и потому причины не
+  // объявляет: откат принадлежит лицу значения, а не нейтральному цвету.
+  const staticOnly = resolveDevicePresentationPolicy(basePolicy({
+    display: 'static_icon', valueAvailable: false, valueFallback: 'value_no_state',
+  }));
+  assert.equal(staticOnly.face, 'icon');
+  assertDecision(staticOnly, 'content.icon');
+  assert.ok(!staticOnly.decisionIds.includes('content.value_no_state'),
+    staticOnly.decisionIds.join(', '));
+});

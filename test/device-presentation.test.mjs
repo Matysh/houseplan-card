@@ -1391,3 +1391,97 @@ test('issue 369г: устройство с полностью отключённ
   assert.equal(disabledResult.effectiveHidden, true);
   assert.equal(disabledResult.visual.status, 'neutral');
 });
+
+// #588 AC3. `sourceDetails: false` — основной путь рендера плана, карточки
+// пространства и PDF. Быстрый путь «статичному маркеру источники не нужны»
+// принадлежит только режиму без значения; распространить его на новый режим
+// значит потерять число ровно там, где на него смотрят, и сохранить его в
+// предпросмотре редактора, где источники резолвятся всегда.
+test('#588 AC3: value_static_icon резолвит значение и на быстром пути плана', () => {
+  const h = hass({
+    'cover.door': state('cover.door', 'open', { device_class: 'door', current_position: 42 }),
+  }, { 'cover.door': { entity_id: 'cover.door', device_id: 'd1', platform: 'demo' } });
+  const base = device({
+    icon: 'mdi:door', entities: ['cover.door'], primary: 'cover.door',
+    marker: {
+      id: 'd1', binding: 'device:d1',
+      value_source: { kind: 'entity_attribute', entity_id: 'cover.door', attribute: 'current_position' },
+    },
+  });
+  const planOptions = { ...options, sourceDetails: false };
+  const valueStatic = resolveDevicePresentation(h, {
+    ...base, marker: { ...base.marker, display: 'value_static_icon' },
+  }, planOptions);
+  assert.equal(valueStatic.valueText, '42 %');
+  assert.equal(valueStatic.valueSource?.eid, 'cover.door');
+  assert.ok(valueStatic.visualSources.length > 0);
+  // Тот же маркер в «Всегда статичный значок» остаётся без источников —
+  // экономия быстрого пути не потеряна.
+  const staticIcon = resolveDevicePresentation(h, {
+    ...base, marker: { ...base.marker, display: 'static_icon' },
+  }, planOptions);
+  assert.equal(staticIcon.valueText, null);
+  assert.equal(staticIcon.valueSource, null);
+  assert.deepEqual(staticIcon.visualSources, []);
+
+  // AC2 на том же пути: в автоматическом режиме недоступное значение откатывает
+  // лицо к значку и называет причину. Без причины человек видит пустой значок и
+  // не узнаёт, почему числа нет, — а режим выглядит исправным. Явно выбранный
+  // источник ведёт себя иначе (`—`), и это проверено выше по контракту К1.
+  const offline = hass({
+    'cover.door': state('cover.door', 'unavailable', { device_class: 'door' }),
+  }, { 'cover.door': { entity_id: 'cover.door', device_id: 'd1', platform: 'demo' } });
+  const fallback = resolveDevicePresentation(offline, {
+    ...base,
+    marker: { id: 'd1', binding: 'device:d1', display: 'value_static_icon' },
+  }, planOptions);
+  assert.equal(fallback.valueText, null);
+  assert.equal(fallback.fallbackReason, 'value_no_state');
+});
+
+// #588 AC2/AC4. Тревога — самый дорогой случай: она пробивает и выключенные
+// живые состояния, и отсутствие активности. «Никогда не меняет цвет» читается
+// буквально, поэтому её здесь нет ни в подложке, ни в пульсации, ни в бейдже.
+test('#588 AC2/AC4: тревожный источник не красит и не пульсирует value_static_icon', () => {
+  const h = hass({
+    'binary_sensor.smoke': state('binary_sensor.smoke', 'on', { device_class: 'smoke' }),
+    'sensor.device_linkquality': state('sensor.device_linkquality', '40'),
+  }, {
+    'binary_sensor.smoke': { entity_id: 'binary_sensor.smoke', device_id: 'd1', platform: 'demo' },
+    'sensor.device_linkquality': {
+      entity_id: 'sensor.device_linkquality', device_id: 'd1', platform: 'demo',
+    },
+  });
+  const base = device({
+    icon: 'mdi:smoke-detector',
+    entities: ['binary_sensor.smoke', 'sensor.device_linkquality'],
+    primary: 'binary_sensor.smoke',
+    bindingStatus: {
+      kind: 'active',
+      enabledEntityIds: ['binary_sensor.smoke', 'sensor.device_linkquality'],
+      allEntityIds: ['binary_sensor.smoke', 'sensor.device_linkquality'],
+    },
+    marker: {
+      id: 'd1', binding: 'device:d1', display: 'value_static_icon',
+      value_badge: { enabled: true, source: { kind: 'derived_lqi' }, position: 'right' },
+    },
+  });
+  const result = resolveDevicePresentation(h, base, options);
+  assert.equal(result.visual.status, 'neutral');
+  assert.equal(result.pulse.kind, 'none');
+  assert.deepEqual(result.classes, ['static-icon']);
+  assert.equal(result.lqiText, null);
+  assert.equal(result.valueBadge, null);
+  assert.equal(result.rippleColor, null);
+  assert.equal(deviceA11yState(result), 'neutral');
+  assert.equal(result.explanation.reason, 'value_static_icon');
+  assert.ok(result.valueText, 'значение остаётся видимым');
+  // Тот же прибор в обычном режиме тревожится — иначе фикстура доказывала бы
+  // только то, что тревоги в ней нет.
+  const alarmed = resolveDevicePresentation(h, {
+    ...base, marker: { ...base.marker, display: 'badge' },
+  }, options);
+  assert.equal(alarmed.visual.status, 'alarm');
+  assert.equal(alarmed.pulse.kind, 'alarm');
+  assert.ok(alarmed.valueBadge);
+});

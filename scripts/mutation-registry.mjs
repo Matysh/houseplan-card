@@ -6035,8 +6035,10 @@ const MUTANT_DEFINITIONS = [
       + 'metrics, pulse and vacuum live together rather than relying on renderer-specific checks',
     patches: [{
       file: 'src/device-presentation-policy.ts',
-      find: '  } else if (staticIcon) {\n    visual = NEUTRAL_VISUAL;',
-      replace: '  } else if (false && staticIcon) {\n    visual = NEUTRAL_VISUAL;',
+      // #588 переименовал переменную: она отвечает уже не за один токен, а за
+      // «нейтральное лицо» обоих статичных режимов. Якорь переехал, смысл нет.
+      find: '  } else if (neutralFace) {\n    visual = NEUTRAL_VISUAL;',
+      replace: '  } else if (false && neutralFace) {\n    visual = NEUTRAL_VISUAL;',
     }],
   },
   {
@@ -6100,7 +6102,9 @@ const MUTANT_DEFINITIONS = [
       + 'single gate either hides valid values or revives ambiguous arbitrary registry rows',
     patches: [{
       file: 'src/device-presentation-policy.ts',
-      find: "  const face: PresentationFace = input.display === 'value'\n"
+      // #588: лицо значения теперь спрашивают предикатом, а не сравнением с
+      // одним токеном — режимов со значением стало два. Якорь переехал.
+      find: '  const face: PresentationFace = wantsValue\n'
         + "    && !effectiveHidden && input.valueAvailable ? 'value' : 'icon';",
       replace: "  const face: PresentationFace = false\n"
         + "    && !effectiveHidden && input.valueAvailable ? 'value' : 'icon';",
@@ -6115,7 +6119,9 @@ const MUTANT_DEFINITIONS = [
       + 'satellites escape a static face even though the core itself remains neutral',
     patches: [{
       file: 'src/device-presentation-policy.ts',
-      find: '  const metrics = !staticIcon && !effectiveHidden;',
+      // #588: переменная переименована в `neutralFace` — режимов с нейтральным
+      // лицом стало два. Якорь переехал, смысл прежний.
+      find: '  const metrics = !neutralFace && !effectiveHidden;',
       replace: '  const metrics = true;',
     }],
   },
@@ -10041,6 +10047,90 @@ const MUTANT_DEFINITIONS = [
       // рантайм-ложь, а не мёртвая ветка (#568): модуль обязан импортироваться
       find: '  if (candidateTag && isStableTag(candidateTag)) {',
       replace: "  if (candidateTag && isStableTag(candidateTag) && candidateTag === 'v0.0.0-mutant') {",
+    }],
+  },
+  {
+    id: 'value-static-icon-keeps-live-colour',
+    guard: 'node --test test/device-presentation-policy.test.mjs',
+    because: '#588 AC1: «никогда не меняет цвет» — весь смысл режима. Стоит нейтральности '
+      + 'снова стать свойством одного токена, и маркер начнёт краснеть тревогой, гаснуть '
+      + 'недоступностью и брать цвет RGB-лампы — молча, потому что значение при этом видно',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: '  const neutralFace = displayIsNeutral(input.display);',
+      replace: "  const neutralFace = input.display === 'static_icon';",
+    }],
+  },
+  {
+    id: 'value-static-icon-loses-value-fallback',
+    guard: 'node --test test/device-presentation.test.mjs',
+    because: '#588 AC2: когда значение получить нельзя, лицо откатывается к значку, и '
+      + 'причина отката — единственное, что объясняет человеку, почему числа нет. Потеря '
+      + 'причины оставляет пустой значок без объяснения ровно в новом режиме',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: '    fallbackReason: displayWantsValue(display) ? value.fallback : null,',
+      replace: "    fallbackReason: display === 'value' ? value.fallback : null,",
+    }],
+  },
+  {
+    id: 'value-static-icon-takes-the-sourceless-fast-path',
+    guard: 'node --test test/device-presentation.test.mjs',
+    because: '#588 AC3: быстрый путь «статичному маркеру источники не нужны» действует на '
+      + 'основном пути рендера плана. Распространить его на режим со значением — значит '
+      + 'потерять число именно на плане и сохранить его в предпросмотре редактора',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: "  const sourceless = display === 'static_icon';",
+      replace: '  const sourceless = neutralFace;',
+    }],
+  },
+  {
+    id: 'value-static-icon-pulses-on-alarm',
+    guard: 'node --test test/device-pulse.test.mjs',
+    because: '#588 AC4: тревога пробивает и выключенные живые состояния, и отсутствие '
+      + 'активности. Если пульсация снова принадлежит одному токену, «маркер не меняет цвет» '
+      + 'перестаёт быть правдой в самый заметный момент',
+    patches: [{
+      file: 'src/device-pulse.ts',
+      find: '      || displayIsNeutral(display)) {',
+      replace: "      || display === 'static_icon') {",
+    }],
+  },
+  {
+    id: 'value-static-icon-keeps-live-vacuum',
+    guard: 'node demo/smoke_static_icon.mjs',
+    because: '#588 AC6 (К2а): три ветки живого слоя пылесоса сравнивают режим строкой и не '
+      + 'читают политику, поэтому зелёный AC1 их не гарантирует. Возвращённые к одному токену, '
+      + 'они оставляют над «неизменным» маркером едущий puck, след и бейдж маршрута',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "      if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) {\n        this._vacRt.delete(d.id);",
+      replace: "      if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') {\n        this._vacRt.delete(d.id);",
+    }],
+  },
+  {
+    id: 'value-static-icon-keeps-vacuum-overlay',
+    guard: 'node demo/smoke_static_icon.mjs',
+    because: '#588 AC6 (К2а): вторая из трёх веток — рендер puck и следа. Она не зависит от '
+      + '`vacuumLive` политики, и её одной достаточно, чтобы над нейтральным маркером ездил '
+      + 'робот',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) continue;',
+      replace: "      if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') continue;",
+    }],
+  },
+  {
+    id: 'value-static-icon-keeps-route-warning',
+    guard: 'node demo/smoke_static_icon.mjs',
+    because: '#588 AC6 (К2а): третья ветка — бейдж предупреждения о маршруте. Он появляется '
+      + 'только на несопоставленной карте, поэтому свидетель держит две конфигурации: при '
+      + 'совпадающей калибровке маршрут `ready` и бейджа нет ни в одном режиме',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (displayIsNeutral(normalizeDeviceDisplay(d.marker?.display))) return nothing;',
+      replace: "    if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') return nothing;",
     }],
   },
 ];

@@ -1,5 +1,5 @@
 import type { DeviceActivity, DeviceVisualState } from './device-visual';
-import type { DeviceDisplayMode } from './logic';
+import { displayIsNeutral, type DeviceDisplayMode } from './logic';
 
 export type DevicePulseKind = 'none' | 'alarm' | 'short' | 'continuous';
 export type DevicePulseReason = 'none' | 'alarm' | 'event' | 'presence' | 'transition' | 'running';
@@ -79,7 +79,7 @@ export function resolveDevicePulse(options: ResolveDevicePulseOptions): Resolved
     ? Math.max(1, Number(options.diameterScale)) : DEVICE_PULSE_DEFAULT_SCALE;
   const color = options.color || semanticPulseColor(visual, semanticActivity);
   if (effectiveHidden || bindingUnavailable || visual.availability === 'unavailable'
-      || display === 'static_icon') {
+      || displayIsNeutral(display)) {
     return noPulse(generation, color, diameterScale);
   }
 

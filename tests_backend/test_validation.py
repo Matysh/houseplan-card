@@ -942,6 +942,9 @@ def test_every_display_mode_the_editor_offers_is_accepted():
     """
     modes = _ts_list("DISPLAY_MODES")
     assert "value" in modes, "the regression this test exists for"
+    # #588: the fifth mode is named here as well, so deleting it from the TS
+    # list cannot make this test vacuously green on an empty enumeration.
+    assert "value_static_icon" in modes, "#588 combines a value face with a neutral shell"
     for mode in modes:
         v.MARKER_SCHEMA(_marker(display=mode))
     # Read/write compatibility for stores created before the unified activity UI.
