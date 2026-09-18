@@ -33,7 +33,12 @@ const CAPS = {
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.
-  'src/houseplan-editor-runtime.ts': 14100,
+  // 2026-09-18, #592: разметка четырёх диалогов настроек уехала в
+  // src/editors/{marker,space-settings,general-settings,room-settings}-dialog.ts
+  // — 1290 строк. Потолок опущен ровно на эту величину (14100 → 12810), запас
+  // над фактом остался прежним, три строки: выигрыш зафиксирован, иначе ядро
+  // отыграет его обратно первой же правкой диалога.
+  'src/houseplan-editor-runtime.ts': 12810,
 };
 
 /**

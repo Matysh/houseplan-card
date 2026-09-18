@@ -2957,7 +2957,9 @@ const MUTANT_DEFINITIONS = [
     because: 'a same-binding click silently wiping the configured value source is exactly '
       + 'the #385(a) bug — only the dialog smoke drives the real handler',
     patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
+      // #592: диалог устройства переехал в свой модуль целиком и побайтово —
+      // изменился только путь, текст якоря прежний.
+      file: 'src/editors/marker-dialog.ts',
       find: "                                if (c.value === d.binding) {\n                                  this.host._markerDialog = { ...d, bindingOpen: false };\n                                  return;\n                                }",
       replace: "                                if (false) { return; }",
     }],

@@ -105,10 +105,16 @@ test('source and display transitions are immutable and preserve unrelated fields
 });
 
 test('#456 Copy is an edit-settings action and is absent from onboarding', () => {
-  const runtime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
+  // #592: разметка диалога пространства уехала в свой модуль целиком и
+  // побайтово. Утверждения прежние — сменился только файл, в котором они
+  // ищутся; регулярки намеренно оставлены дословными, чтобы перенос не смог
+  // проскочить под видом «поправили тест».
+  const dialog = readFileSync(
+    new URL('../src/editors/space-settings-dialog.ts', import.meta.url), 'utf8',
+  );
   const onboarding = readFileSync(new URL('../src/houseplan-onboarding-runtime.ts', import.meta.url), 'utf8');
-  assert.match(runtime, /d\.mode === 'edit'[\s\S]*openSpaceCopyDialog\(this\.host\)/);
-  assert.match(runtime, /<div class="dialog-action-group">[\s\S]*btn\.copy/);
-  assert.doesNotMatch(runtime, /dialog-action-danger[\s\S]{0,300}btn\.copy/);
+  assert.match(dialog, /d\.mode === 'edit'[\s\S]*openSpaceCopyDialog\(this\.host\)/);
+  assert.match(dialog, /<div class="dialog-action-group">[\s\S]*btn\.copy/);
+  assert.doesNotMatch(dialog, /dialog-action-danger[\s\S]{0,300}btn\.copy/);
   assert.doesNotMatch(onboarding, /btn\.copy|openSpaceCopyDialog|space\.copy_/);
 });
