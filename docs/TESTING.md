@@ -2653,8 +2653,8 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Switching a static vacuum back to a dynamic display restores applicable
       live/server trails; choosing static never deletes stored trail history
 - [ ] `value_static_icon` (#588) shows the same value as `value` — including on
-      the plan itself, the space card and PDF, where sources are resolved
-      lazily — while state, alarm, unavailability, RGB and activity never paint
+      the plan itself and the space card, where sources are resolved lazily
+      — while state, alarm, unavailability, RGB and activity never paint
       it; no pulse, no °/%/LQI, value badge suppressed with its setting kept,
       and the live vacuum puck, trail and route warning stay hidden
       [auto: `smoke_static_icon.mjs`, golden `device-icon-state-table-*`]
