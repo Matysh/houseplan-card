@@ -69,8 +69,28 @@ const res = await page.evaluate(async () => {
   // 5) создание новой комнаты: в диалоге есть секция настроек
   c._setMode('plan'); c._tool = 'draw'; await c.updateComplete;
   c._resetRoomDialogFields(); c._roomDialog = true; c.requestUpdate(); await c.updateComplete;
-  out.createHasSection = [...sr().querySelectorAll('hp-dialog label')].some((l) => l.textContent === c._t('room.settings_section'));
+  // #594: одна секция «Настройки комнаты» заменена четырьмя карточками-группами.
+  const groupTitles = () => [...sr().querySelectorAll('hp-dialog .hpf-card .hpf-head h3')]
+    .map((h) => h.textContent.trim());
+  out.createHasGroups = JSON.stringify(groupTitles()) === JSON.stringify([
+    c._t('room.group_basics'), c._t('room.group_fill'),
+    c._t('room.group_sources'), c._t('room.sizes_section'),
+  ]);
   out.createHasInherit = [...sr().querySelectorAll('hp-dialog .srcrow')].some((l) => l.textContent.trim() === c._t('fill.inherit'));
+  // AC6: у каждой группы есть «?» с доступным именем — пояснения не исчезли, а уехали.
+  const helps = [...sr().querySelectorAll('hp-dialog .hpf-card .hpf-head hp-help')];
+  out.everyGroupHasHelp = helps.length === 4
+    && helps.every((h) => !!h.text && !!h.ariaLabel);
+  // AC5: сегмент источника — настоящая радиогруппа с целью нажатия не меньше 44 px.
+  const segLabels = [...sr().querySelectorAll('hp-dialog .hpf-seg label')];
+  out.sourceSegmentIsRadioGroup = segLabels.length >= 2
+    && segLabels.every((l) => l.querySelector('input[type="radio"]'))
+    && !!sr().querySelector('hp-dialog .hpf-seg[role="radiogroup"][aria-label]');
+  out.sourceSegmentHitTarget = segLabels.every((l) => l.getBoundingClientRect().height >= 44);
+  const firstSeg = segLabels[0]?.querySelector('input[type="radio"]');
+  firstSeg?.focus();
+  out.sourceSegmentTakesFocus = !!firstSeg
+    && (sr().activeElement === firstSeg || document.activeElement !== document.body);
   c._roomDialogCancel(); await c.updateComplete;
   // 6) room fill:none не выключает независимый Glow пространства
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
@@ -138,6 +158,59 @@ const res = await page.evaluate(async () => {
   out.orphanDroppedOnSave = !('custom_fill' in (cfgRoom().settings || {}))
     && cfgRoom().settings?.name_scale === 1.35 && cfgRoom().settings?.label_scale === 1.2;
   out.orphanStillPaintsSpaceAfterSave = await paintsInView(editedId, A);
+
+  // #594 AC1/AC2: каждый контрол набора пишет в СВОЁ поле черновика.
+  // Соседа ловит не взгляд, а снимок: меняем один контрол и сравниваем все
+  // остальные поля с тем, что было. Раньше два источника были двумя одинаковыми
+  // радиосписками — перепутать их местами в одной строке ничего не стоит.
+  c._openRoomEdit(cfgRoom()); await c.updateComplete;
+  const draft = () => JSON.stringify({
+    name: c._nameSel, area: c._areaSel, fill: c._roomFill, custom: c._roomCustomFill,
+    tempMin: c._roomTempMin, tempMax: c._roomTempMax,
+    tempSrc: c._roomTempSrc, humSrc: c._roomHumSrc,
+    nameScale: c._roomNameScale, labelScale: c._roomLabelScale,
+  });
+  const changedFields = (before, after) => {
+    const a = JSON.parse(before); const b = JSON.parse(after);
+    return Object.keys(a).filter((k) => JSON.stringify(a[k]) !== JSON.stringify(b[k]));
+  };
+  const segmentOf = (kind) => {
+    const groups = [...sr().querySelectorAll('hp-dialog .hpf-seg')];
+    return groups.find((g) => (g.getAttribute('aria-label') || '')
+      === c._t(kind === 'temp' ? 'room.temp_src_label' : 'room.hum_src_label'));
+  };
+  const pickSecond = (group) => {
+    const input = [...group.querySelectorAll('input[type="radio"]')][1];
+    input.checked = true;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+  // Имя: меняется только имя.
+  let before = draft();
+  const nameInput = sr().querySelector('hp-dialog .namein');
+  nameInput.value = 'Кабинет-594';
+  nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+  await c.updateComplete;
+  out.nameWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['name']);
+  // Масштаб названия: меняется только он.
+  before = draft();
+  const range = sr().querySelector('hp-dialog .hpf-card input[type="range"]');
+  range.value = String(Number(range.value) + 10);
+  range.dispatchEvent(new Event('input', { bubbles: true }));
+  await c.updateComplete;
+  out.scaleWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['nameScale']);
+  // Источник влажности: сегмент открывает список и не трогает температуру.
+  before = draft();
+  const humSeg = segmentOf('hum');
+  out.humiditySegmentFound = !!humSeg;
+  pickSecond(humSeg);
+  await c.updateComplete;
+  const humCand = [...sr().querySelectorAll('hp-dialog .droppanel .cand')][0];
+  out.humidityCandidateOffered = !!humCand;
+  humCand?.click();
+  await c.updateComplete;
+  const humChanged = changedFields(before, draft());
+  out.humiditySourceWritesOnlyItsOwnKey = JSON.stringify(humChanged) === JSON.stringify(['humSrc']);
+  c._roomDialogCancel(); await c.updateComplete;
   return out;
 });
 checkAll(res);

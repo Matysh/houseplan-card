@@ -487,6 +487,14 @@ smallest to largest. Save creates that room and consumes exactly coincident
 chain walls, Keep as walls rejects only that candidate, and Cancel leaves all
 accepted walls in place with no partial rooms.
 
+The room dialog is grouped into four cards: **Basics** (name and area), **Fill**
+(this room's fill mode, custom colour and temperature thresholds), **Sensor
+sources** (temperature and humidity) and **Font sizes** (name and label scales
+with a preview). Each group explains itself behind the `?` next to its heading.
+The measurement source is chosen with a room average / selected sensor switch;
+underneath it is still an ordinary radio group, so arrow keys and screen readers
+behave exactly as before.
+
 While drawing an open chain, `Esc` finishes all accepted segments as ordinary
 independent walls and keeps **Walls** selected; the next click starts a new
 chain. `Ctrl/Cmd+Z` instead removes the last accepted point and segment. Pan,

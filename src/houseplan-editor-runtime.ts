@@ -12756,51 +12756,5 @@ public _renderMergeDialog(): TemplateResult {
     </hp-dialog>`;
   }
 
-public _renderRoomSource(kind: 'temp' | 'hum'): TemplateResult {
-    const val = kind === 'temp' ? this.host._roomTempSrc : this.host._roomHumSrc;
-    const setVal = (v: string) => {
-      if (kind === 'temp') this.host._roomTempSrc = v;
-      else this.host._roomHumSrc = v;
-      this.host.requestUpdate();
-    };
-    const open = this.host._roomSrcOpen === kind;
-    return html`
-      <label>${this.host._t(kind === 'temp' ? 'room.temp_src_label' : 'room.hum_src_label')}</label>
-      <label class="srcrow">
-        <input type="radio" name="rsrc-${kind}" .checked=${!val}
-          @change=${() => { setVal(''); this.host._roomSrcOpen = null; }} />
-        <span>${this.host._t('room.src_average')}</span>
-      </label>
-      <label class="srcrow">
-        <input type="radio" name="rsrc-${kind}" .checked=${!!val}
-          @change=${() => { this.host._roomSrcOpen = kind; this.host._roomSrcFilter = ''; this.host.requestUpdate(); }} />
-        <span>${this.host._t('room.src_pick')}</span>
-      </label>
-      ${val || open
-        ? html`<button class="dropbtn ${open ? 'open' : ''}"
-              @click=${() => { this.host._roomSrcOpen = open ? null : kind; this.host._roomSrcFilter = ''; }}>
-              ${val
-                ? html`<b>${this._roomSrcLabel(val)}</b><span class="ref">${val}</span>`
-                : html`<span class="muted">${this.host._t('room.src_ph')}</span>`}
-              <ha-icon icon=${open ? 'mdi:chevron-up' : 'mdi:chevron-down'}></ha-icon>
-            </button>
-            ${open
-              ? html`<div class="droppanel">
-                  <input class="namein" type="text" placeholder=${this.host._t('marker.search_ph')}
-                    .value=${this.host._roomSrcFilter}
-                    @input=${(e: Event) => { this.host._roomSrcFilter = (e.target as HTMLInputElement).value; this.host.requestUpdate(); }} />
-                  <div class="candlist">
-                    ${this._roomSrcCandidates().map(
-                      (c) => html`<div class="cand ${c.value === val ? 'sel' : ''}"
-                        @click=${() => { setVal(c.value); this.host._roomSrcOpen = null; }}>
-                        <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
-                      </div>`,
-                    )}
-                  </div>
-                </div>`
-              : nothing}`
-        : nothing}`;
-  }
-
 public _renderRoomDialog(): TemplateResult { return renderRoomSettingsDialog.call(this); }
 }

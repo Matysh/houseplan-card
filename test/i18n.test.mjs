@@ -413,12 +413,25 @@ test('help hosts do not duplicate their explanation in a title attribute', () =>
   assert.ok(calls.length > 0, 'the help affordance pilot disappeared');
   for (const call of calls) {
     const prefix = helpSource.slice(Math.max(0, call.index - 700), call.index);
+    // #594: у подсказки, переданной в карточку набора (`help:`), хозяин не на
+    // месте вызова, а один на всех — в form-kit.ts. Такие вызовы проверяются
+    // ниже одним утверждением: хозяина нельзя испортить по одному месту, его
+    // можно испортить только целиком.
+    if (/\bhelp:\s*$/.test(prefix)) continue;
     const hosts = [...prefix.matchAll(/<(legend|label|div)\b([^>]*)>/g)];
     const host = hosts.at(-1);
     assert.ok(host, `no host element found for ${call[1]}`);
     assert.doesNotMatch(host[2], /\btitle\s*=/i, `${call[1]} duplicates help in title=`);
   }
   assert.ok(!cardSource.includes('markerlighttip'), 'legacy help copy is still rendered');
+});
+
+test('#594 the shared form kit hosts its help without a duplicating title', () => {
+  const kit = readFileSync(new URL('../src/editors/form-kit.ts', import.meta.url), 'utf8');
+  const head = /<div class="hpf-head"([^>]*)>/.exec(kit);
+  assert.ok(head, 'the form kit no longer renders a heading host for help');
+  assert.doesNotMatch(head[1], /\btitle\s*=/i, 'the kit heading duplicates help in title=');
+  assert.match(kit, /\$\{help \?\? nothing\}/, 'the kit heading no longer renders the help slot');
 });
 
 test('vac toasts never mention the removed point calibration (HP-1540-06)', () => {

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cardStyles, baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles }
   from '../test-build/styles.js';
+import { CARD_DIALOG_FORM_KIT, formKitCss } from '../test-build/styles/form-kit.styles.js';
 
 const FILES = ['base', 'plan', 'devices', 'chrome', 'dialogs'];
 const sourceOf = (name) =>
@@ -42,8 +43,25 @@ const selectorsOf = (tsSource) => {
 };
 
 test('issue 266 the aggregator is exactly the five surface files in the cascade order', () => {
+  // 2026-09-18, #594: набор контролов формы в этот массив НЕ входит — он живёт
+  // в ленивом редакторском графе и вносится в теневой корень при открытии
+  // диалога. Пятёрка и её порядок неприкосновенны.
   assert.deepEqual(cardStyles, [baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles],
     'the cascade order is a contract — the golden set was accepted against it');
+});
+
+test('#594 the form kit adds selectors instead of overriding existing ones', () => {
+  // Набор вносится последним листом в тот же теневой корень, поэтому его правила
+  // обязаны только добавлять: совпавший селектор молча переопределил бы принятый
+  // кадр и не покраснел бы нигде, кроме глаз.
+  const existing = new Set();
+  for (const name of FILES) for (const sel of selectorsOf(sourceOf(name))) existing.add(sel);
+  const kit = selectorsOf(`css\`${formKitCss(CARD_DIALOG_FORM_KIT)}\``);
+  assert.ok(kit.size > 0, 'the form kit emits no selectors at all');
+  const clashes = [...kit].filter((sel) => existing.has(sel));
+  assert.deepEqual(clashes, [],
+    'a kit rule lands on a selector that already exists: the last position in the cascade '
+    + 'would then silently change accepted frames');
 });
 
 test('issue 266 surface files do not share a single selector', () => {

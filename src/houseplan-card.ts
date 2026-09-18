@@ -13699,11 +13699,6 @@ export class HouseplanCard extends LitElement {
     </div>`;
   }
 
-  /** One measurement-source control (average vs an explicit device/entity). */
-  private _renderRoomSource(kind: 'temp' | 'hum'): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderRoomSource(kind);
-  }
-
   private _renderRoomDialog(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderRoomDialog();
   }

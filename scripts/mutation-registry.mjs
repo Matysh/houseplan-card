@@ -10172,6 +10172,30 @@ const MUTANT_DEFINITIONS = [
       replace: 'export const MOVED_BLOCK_MIN = 1;',
     }],
   },
+  {
+    id: 'form-kit-writes-to-a-neighbour-key',
+    guard: 'node demo/smoke_room_settings.mjs',
+    because: '#594: два источника комнаты — две одинаковые строки, отличающиеся одним словом. '
+      + 'Перепутать их местами ничего не стоит, а на глаз форма выглядит исправной: значение '
+      + 'просто уезжает в соседнее поле черновика и сохраняется туда же',
+    patches: [{
+      file: 'src/editors/room-settings-dialog.ts',
+      find: "    if (kind === 'temp') host._roomTempSrc = v;\n    else host._roomHumSrc = v;",
+      replace: '    host._roomTempSrc = v;',
+    }],
+  },
+  {
+    id: 'form-kit-segment-drops-radio-semantics',
+    guard: 'node --test test/form-kit.test.mjs',
+    because: '#594 К7: сегментированный переключатель заменил радиосписок, и вся его '
+      + 'доступность держится на том, что под капотом осталась радиогруппа. Подмена на '
+      + 'чекбоксы выглядит идентично и молча ломает стрелки и объявление скринридером',
+    patches: [{
+      file: 'src/editors/form-kit.ts',
+      find: '      <input type="radio" name=${name} .checked=${option.value === value}',
+      replace: '      <input type="checkbox" name=${name} .checked=${option.value === value}',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

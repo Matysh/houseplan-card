@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- The room settings dialog is grouped into four cards — Basics, Fill, Sensor
+  sources and Font sizes — and each group now explains itself behind a `?` next
+  to its heading instead of a paragraph inside the form. The temperature and
+  humidity source is chosen with a room average / selected sensor switch. Values,
+  units, field order and the save conditions are unchanged: the form was
+  rearranged, not the settings
+  ([#594](https://github.com/Matysh/houseplan-card/issues/594)).
+
 - The Device editor offers a fifth **Display** option — **Value + static icon**.
   The marker shows the same number or state as **Value + state** while staying
   one colour forever: state, alarm, unavailability, live RGB colour and activity

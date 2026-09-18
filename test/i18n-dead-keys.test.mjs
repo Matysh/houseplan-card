@@ -60,7 +60,10 @@ test('every declared dynamic key family covers a dictionary key and names its re
 });
 
 test('help accessibility copy is derived from every literal help consumer', () => {
-  assert.equal(consumers.derivedHelpAria.size, 20, 'the current settings surface has 20 statically derived help descriptions');
+  // 2026-09-18, #594: четыре группы диалога комнаты добавили четыре подсказки —
+  // 20 → 24. Число тут не украшение: оно ловит подсказку, у которой забыли
+  // `.aria`, и обязано расти вместе с формами, а не «примерно совпадать».
+  assert.equal(consumers.derivedHelpAria.size, 24, 'the current settings surface has 24 statically derived help descriptions');
   for (const key of consumers.derivedHelpAria) {
     assert.equal(typeof dictionary[key], 'string', `${key} must accompany its .help consumer`);
   }
