@@ -10135,6 +10135,18 @@ const MUTANT_DEFINITIONS = [
       replace: "    if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') return nothing;",
     }],
   },
+  {
+    id: 'no-new-any-counts-every-added-line-as-moved',
+    guard: 'node --test test/no-new-any.test.mjs',
+    because: '#592: послабление для переноса держится на точном совпадении текста и бюджете '
+      + 'удалений. Если признать перенесённой любую добавленную строку, гейт #342 перестанет '
+      + 'ловить новый any вовсе — и сделает это молча, оставшись зелёным',
+    patches: [{
+      file: 'scripts/no-new-any.mjs',
+      find: '    const budget = removed.get(item.text) || 0;\n    if (!budget) continue;',
+      replace: '    const budget = removed.get(item.text) || Number(item.line >= 0);\n    if (!budget) continue;',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

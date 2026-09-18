@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  addedLinesByFile, anyKeywordLines, blameLine, findNewAnyViolations, formatViolation, parseAnyOk,
+  addedLinesByFile, anyKeywordLines, blameLine, findNewAnyViolations, formatViolation,
+  movedLinesByFile, parseAnyOk,
 } from '../scripts/no-new-any.mjs';
 
 // #342. Цель гейта — не перетипизировать монолит, а не давать долгу расти. В
@@ -130,4 +131,67 @@ test('недоступный blame не выдумывает источник и
     formatViolation({ path: 'src/a.ts', line: 1, reason: 'нет обоснования' }, ''),
     '  src/a.ts:1 — нет обоснования',
   );
+});
+
+// #592. Извлечение подсистемы — то, чем по замыслу #342 и снимается долг, —
+// выглядит для диффа как тысяча добавленных строк. Судить по ним «новый код»
+// значит требовать типизации ровно там, где ничего не изменилось, и заодно
+// ломать доказательство переноса: тело обязано совпадать побайтово.
+test('#592 строка, перенесённая дословно, новым кодом не считается', () => {
+  const diff = [
+    'diff --git a/src/big.ts b/src/big.ts',
+    '--- a/src/big.ts',
+    '+++ b/src/big.ts',
+    '@@ -10,1 +10,0 @@',
+    '-  const handler = (e: any) => e;',
+    'diff --git a/src/editors/part.ts b/src/editors/part.ts',
+    '--- /dev/null',
+    '+++ b/src/editors/part.ts',
+    '@@ -0,0 +1,2 @@',
+    '+  const handler = (e: any) => e;',
+    '+  const fresh = (e: any) => e;',
+  ].join('\n');
+  const moved = movedLinesByFile(diff);
+  assert.deepEqual([...(moved.get('src/editors/part.ts') || [])], [1],
+    'перенесена первая строка; вторая такого удаления не имеет');
+
+  const text = '  const handler = (e: any) => e;\n  const fresh = (e: any) => e;\n';
+  const violations = findNewAnyViolations({ files: [{
+    path: 'src/editors/part.ts', text,
+    addedLines: new Set([1, 2]),
+    movedLines: moved.get('src/editors/part.ts'),
+  }] });
+  assert.equal(violations.length, 1, 'новый any по-прежнему находка');
+  assert.equal(violations[0].line, 2);
+});
+
+test('#592 бюджет переноса ведётся мультимножеством, а не признаком', () => {
+  const diff = [
+    '--- a/src/big.ts',
+    '+++ b/src/big.ts',
+    '@@ -10,1 +10,0 @@',
+    '-  const cast = v as any;',
+    '--- /dev/null',
+    '+++ b/src/editors/part.ts',
+    '@@ -0,0 +1,2 @@',
+    '+  const cast = v as any;',
+    '+  const cast = v as any;',
+  ].join('\n');
+  const moved = movedLinesByFile(diff);
+  assert.deepEqual([...(moved.get('src/editors/part.ts') || [])], [1],
+    'одно удаление покрывает одно добавление, второе остаётся новым');
+});
+
+test('#592 перенос с изменённым отступом переносом не считается', () => {
+  const diff = [
+    '--- a/src/big.ts',
+    '+++ b/src/big.ts',
+    '@@ -10,1 +10,0 @@',
+    '-      const cast = v as any;',
+    '--- /dev/null',
+    '+++ b/src/editors/part.ts',
+    '@@ -0,0 +1,1 @@',
+    '+  const cast = v as any;',
+  ].join('\n');
+  assert.equal(movedLinesByFile(diff).size, 0);
 });

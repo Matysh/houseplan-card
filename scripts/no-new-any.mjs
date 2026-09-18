@@ -27,6 +27,14 @@
  * конкретной: голый маркер, пустая или шаблонная причина («todo», «потом»,
  * «надо») гейт не проходят. Формулировка вида «внешний контракт HA не
  * типизирован» проходит.
+ *
+ * Второе исключение — перенос (#592). Строка, которая в этом же диапазоне
+ * удалена из одного файла и добавлена в другой дословно, новым кодом не
+ * является: ответственность за её тип не менялась, и долг в `src/**` не вырос.
+ * Гейт считает такие строки перенесёнными и не судит их, но бюджет ведёт
+ * мультимножеством: два добавления при одном удалении дают одну находку.
+ * Без этого любое извлечение подсистемы — то самое, чем долг и снимается по
+ * замыслу #342, — краснит гейт ровно за то, что ничего не изменило.
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -84,6 +92,7 @@ export function findNewAnyViolations({ files }) {
     const textLines = String(file.text).split('\n');
     for (const [line, count] of anyKeywordLines(file.path, file.text)) {
       if (!file.addedLines.has(line)) continue;
+      if (file.movedLines?.has(line)) continue;
       const lineText = textLines[line - 1] ?? '';
       const exemption = parseAnyOk(lineText);
       if (exemption?.ok) continue;
@@ -124,6 +133,51 @@ export function addedLinesByFile(diff) {
     next += 1;
   }
   return files;
+}
+
+/**
+ * Строки, добавленные одним файлом и дословно удалённые другим (#592).
+ *
+ * Возвращает по файлу номера таких строк. Сравнение точное, без обрезки
+ * пробелов: перенос с изменением отступа — уже правка, и судить её гейт обязан.
+ * Бюджет ведётся мультимножеством: одно удаление покрывает одно добавление.
+ */
+export function movedLinesByFile(diff) {
+  const removed = new Map();
+  const added = [];
+  let current = null;
+  let next = 0;
+  for (const raw of String(diff).split('\n')) {
+    if (raw.startsWith('+++ ')) {
+      const path = raw.slice(4).replace(/^b\//, '');
+      current = path === '/dev/null' ? null : path;
+      continue;
+    }
+    if (raw.startsWith('@@')) {
+      const match = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(raw);
+      next = match ? Number(match[1]) : 0;
+      continue;
+    }
+    if (raw.startsWith('---') || raw.startsWith('diff --git')) continue;
+    if (raw.startsWith('-')) {
+      const text = raw.slice(1);
+      removed.set(text, (removed.get(text) || 0) + 1);
+      continue;
+    }
+    if (!current || !next) continue;
+    if (raw.startsWith('+')) { added.push({ path: current, line: next, text: raw.slice(1) }); next += 1; continue; }
+    if (raw.startsWith('\\')) continue;
+    next += 1;
+  }
+  const moved = new Map();
+  for (const item of added) {
+    const budget = removed.get(item.text) || 0;
+    if (!budget) continue;
+    removed.set(item.text, budget - 1);
+    if (!moved.has(item.path)) moved.set(item.path, new Set());
+    moved.get(item.path).add(item.line);
+  }
+  return moved;
 }
 
 const isProductTypeScript = (path) => /^src\/.*\.ts$/.test(path);
@@ -182,19 +236,25 @@ function main(argv) {
   }
 
   const added = addedLinesByFile(diff);
+  const movedByFile = movedLinesByFile(diff);
   const files = [];
   for (const [path, addedLines] of added) {
     if (!isProductTypeScript(path) || !addedLines.size) continue;
     const full = resolve(ROOT, path);
     // Файл мог быть удалён в этом же диапазоне — судить нечего.
     if (!existsSync(full)) continue;
-    files.push({ path, text: readFileSync(full, 'utf8'), addedLines });
+    files.push({
+      path, text: readFileSync(full, 'utf8'), addedLines,
+      movedLines: movedByFile.get(path) || new Set(),
+    });
   }
 
   const violations = findNewAnyViolations({ files });
   const scanned = files.reduce((sum, file) => sum + file.addedLines.size, 0);
+  const moved = files.reduce((sum, file) => sum + file.movedLines.size, 0);
   console.log(`Проверено добавленных строк в src/**/*.ts: ${scanned}`
-    + ` в ${files.length} файл(ах).`);
+    + ` в ${files.length} файл(ах).`
+    + (moved ? ` Из них перенесены дословно из других файлов диапазона: ${moved}.` : ''));
   if (!violations.length) {
     console.log('Новых any нет.');
     return 0;
