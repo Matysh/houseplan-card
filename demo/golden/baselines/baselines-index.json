@@ -1,8 +1,8 @@
 {
   "schema": 2,
   "matrixVersion": 64,
-  "acceptedAt": "2026-09-19T17:58:36.248Z",
-  "sourceFingerprint": "d31b0b1e184ab2863684b758f839bdb6809a33cc742c6e9bb36c5ea034e3d309",
+  "acceptedAt": "2026-09-19T21:37:56.064Z",
+  "sourceFingerprint": "6b996db3eba9c0f079e9f9d7c965fc006234992d481b2dc000f3e5ddc14dcaca",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "win32",
@@ -10,19 +10,19 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "d31b0b1e184ab2863684b758f839bdb6809a33cc742c6e9bb36c5ea034e3d309",
+    "buildFingerprint": "6b996db3eba9c0f079e9f9d7c965fc006234992d481b2dc000f3e5ddc14dcaca",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 35454723038,
+      "run": 35470468142,
       "attempt": 1,
-      "sha": "acf179e448490ede3b45b61f9a4ea55e85f857db"
+      "sha": "1385a5f2e8c486005fda2dddc0886d080926dd7a"
     }
   },
   "foreignCapture": {
-    "reason": "приёмка линуксового артефакта Validate 35454723038 на Windows владельца (#455)"
+    "reason": "приёмка Linux-артефакта Validate 35470468142 на Windows владельца (#585)"
   },
   "witnesses": {
-    "count": 106,
+    "count": 116,
     "floor": 10
   },
   "scenarios": {
@@ -48,7 +48,7 @@
     "isometric-live-layers-dark": "17f41e1d18f7b16d824c437ec85c31e85300a97fc01a8a4200052f394e013d89",
     "isometric-no-borders-dark": "ec8952f4bbd4011aed80cf66c9fa8345fe4f91fecfe0c4d9f33c5ae3e210805d",
     "isometric-touch-kiosk-dark": "f478ac634e2367e2753fe2d44b516113425812e5724fd37c2b2ecb89b47c384b",
-    "isometric-large-warm-remount-dark": "4dc769b4d9ead8ecc1fd00c61eb78f073b8e31a937f5edf19541f937fd33434b",
+    "isometric-large-warm-remount-dark": "354fc12ca28a58866d7ee58794485a87dcdc5887a6c0faa6afe36aaf4a4dd824",
     "isometric-stage3-overlays-light": "a119a02a7e8755cb398f367a6fefeb6b4dceadd42d60453d11c5d3e83acae829",
     "isometric-stage3-overlays-dark": "40355196c8578159e13aaa6b0086f6175a473f8f24ceefbde3e67791ffd26135",
     "isometric-stage3-openings-dark": "702d1c159333a13483405f19bea5b0c580c717ac1c04428fdbaef6d97929c96c",
