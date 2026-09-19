@@ -9938,6 +9938,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'declared-baseline-review-run-never-checked',
+    guard: 'node --test --test-name-pattern="#595" test/release-gate.test.mjs',
+    because: '#573/#595: коммит приёмки эталонов объявляет прогон, на кадры которого смотрели. '
+      + 'Если объявление не резолвится, трейлер Baseline-Reviewed становится честным словом: '
+      + 'сослаться можно на что угодно, включая отменённый или несуществующий прогон',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: '    const declared = proof.evidence.baselines?.reviewedRun ?? null;',
+      replace: '    const declared = null;',
+    }],
+  },
+  {
     id: 'reused-marker-key-unchecked-against-candidate',
     guard: 'node --test --test-name-pattern="#573" test/ci-proof.test.mjs',
     because: '#573: маркер реюза несёт ключ источника; если он не сверяется с ключом кандидата, '

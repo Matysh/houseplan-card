@@ -140,21 +140,33 @@ test('#573: ожидания считаются только на checkout ка�
   const own = candidateExpectations({ sha: head, root, log: (line) => notes.push(line) });
   assert.deepEqual(own, localEvidence(root));
 
+  // #595: дальше ожидания строятся из `own`, но с ЯВНЫМ `baselines.reviewedRun`.
+  // Читать это поле из живого HEAD нельзя: `localEvidence` берёт его из сообщения
+  // последнего коммита, и на вершине-приёмке эталонов оно непустое. Тогда
+  // `evaluateCiProof` законно требует объявленный прогон, которого заглушка не
+  // отдавала, — и тест краснел на всей ветке, ради которой #573 и писалась.
+  const withoutReviewed = (evidence) => {
+    const copy = structuredClone(evidence);
+    copy.baselines.reviewedRun = null;
+    return copy;
+  };
+  const expected = withoutReviewed(own);
+
   // proof без evidence при наличии ожиданий — stale, а старее его нет → missing; с evidence и совпадением — green
   const legacy = proofContext({ id: 40 });
   const verdict = await classifyValidateProofs({
-    runs: [legacy.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected: own,
+    runs: [legacy.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected,
     loadContext: async () => legacy.context,
   });
   assert.equal(verdict.status, 'missing', verdict.note);
   const modern = proofContext({ id: 41 });
-  modern.context.proof.evidence = structuredClone(own);
+  modern.context.proof.evidence = structuredClone(expected);
   const green = await classifyValidateProofs({
-    runs: [modern.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected: own,
+    runs: [modern.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected,
     loadContext: async () => modern.context,
   });
   assert.equal(green.status, 'green', green.note);
-  const substituted = structuredClone(own);
+  const substituted = structuredClone(expected);
   substituted.keys.golden = '0'.repeat(64);
   const red = await classifyValidateProofs({
     runs: [modern.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected: substituted,
@@ -162,4 +174,56 @@ test('#573: ожидания считаются только на checkout ка�
   });
   assert.equal(red.status, 'failed');
   assert.match(red.note, /keys\.golden/);
+});
+
+// #595: объявленный `Baseline-Reviewed` прогон — отдельный контракт, и он обязан
+// проверяться обеими сторонами, а не случайно попадать в проверку вместе с тем,
+// каким коммитом оказалась вершина ветки.
+test('#595: объявленный Baseline-Reviewed прогон обязан существовать, но не обязан быть зелёным', async () => {
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  const head = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const base = candidateExpectations({ sha: head, root });
+  const expected = structuredClone(base);
+  expected.baselines.reviewedRun = 35407468491;
+
+  // Приёмка эталонов ПО ОПРЕДЕЛЕНИЮ ссылается на прогон, где golden покраснел:
+  // именно этот прогон и снял кадры-кандидаты. Поэтому `conclusion: 'failure'`
+  // здесь не поблажка, а рабочий случай — требуется лишь завершённость,
+  // неотменённость и то, что это Validate.
+  const accepted = proofContext({ id: 51 });
+  accepted.context.proof.evidence = structuredClone(expected);
+  accepted.context.reviewedRun = { run: {
+    databaseId: 35407468491, status: 'completed', conclusion: 'failure',
+    path: '.github/workflows/validate.yml',
+  } };
+  const green = await classifyValidateProofs({
+    runs: [accepted.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected,
+    loadContext: async () => accepted.context,
+  });
+  assert.equal(green.status, 'green', green.note);
+
+  // А вот прогона нет вовсе — объявление не подтверждается ничем.
+  const orphan = proofContext({ id: 52 });
+  orphan.context.proof.evidence = structuredClone(expected);
+  orphan.context.reviewedRun = null;
+  const missing = await classifyValidateProofs({
+    runs: [orphan.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected,
+    loadContext: async () => orphan.context,
+  });
+  assert.equal(missing.status, 'failed');
+  assert.match(missing.note, /Baseline-Reviewed run 35407468491/);
+
+  // И отменённый прогон объявлением тоже не считается.
+  const cancelled = proofContext({ id: 53 });
+  cancelled.context.proof.evidence = structuredClone(expected);
+  cancelled.context.reviewedRun = { run: {
+    databaseId: 35407468491, status: 'completed', conclusion: 'cancelled',
+    path: '.github/workflows/validate.yml',
+  } };
+  const dropped = await classifyValidateProofs({
+    runs: [cancelled.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x', expected,
+    loadContext: async () => cancelled.context,
+  });
+  assert.equal(dropped.status, 'failed');
+  assert.match(dropped.note, /Baseline-Reviewed run 35407468491/);
 });
