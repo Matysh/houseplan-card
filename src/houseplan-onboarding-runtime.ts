@@ -745,14 +745,14 @@ export class HouseplanOnboardingRuntime {
             })}
             <span>${this.host._t('space.hide_decor')}</span>
           </label>
-          <div class="rhint">${this.host._t('space.hide_decor_tip')}</div>
+          <div class="rhint">${this.host._t('space.hide_decor.help')}</div>
           <label class="srcrow">
             ${this._boolInput(dialog.hideOpenings, (value) => {
               this.host._spaceDialog = { ...dialog, hideOpenings: value };
             })}
             <span>${this.host._t('space.hide_openings')}</span>
           </label>
-          <div class="rhint">${this.host._t('space.hide_openings_tip')}</div>
+          <div class="rhint">${this.host._t('space.hide_openings.help')}</div>
           <label class="dispsection">${this.host._t('space.roomcard_section')}</label>
           ${([
             ['labelTemp', 'space.label_temp'], ['labelHum', 'space.label_hum'],

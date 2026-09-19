@@ -7,6 +7,8 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
+import { formCard } from './form-kit';
+
 import { resolveDevicePresentation } from '../device-presentation';
 import { toggleEntityCandidates } from '../device-toggle';
 import { recommendedValueBadgeSource, valueBadgeCandidates, valueBadgeSourceFromKey, valueBadgeSourceKey } from '../device-value-badge';
@@ -131,7 +133,10 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     return html`<hp-dialog id="marker-dialog" .hass=${this.host.hass} data-kind="marker"
       .title=${d.devId ? this.host._t('info.device_header') : this.host._t('marker.new_device')}
       icon="mdi:shape-plus" wide @hp-close=${() => this._closeMarkerDialog()}>
-        <div class="body">
+        <div class="body hpf-form">
+          ${formCard({
+            title: this.host._t('marker.card_basics'),
+            body: html`
           ${bindingStatus?.kind === 'ha_disabled'
             ? html`<div class="habindingbanner" role="status">
                 <ha-icon icon="mdi:power-plug-off-outline"></ha-icon>
@@ -260,7 +265,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           </select>
 
           ${this._renderRadarSection(d, previewDevice)}
-          ${this._renderVacSection(d)}
+          ${this._renderVacSection(d)}`,
+          })}
+          ${formCard({
+            title: this.host._t('marker.card_tap'),
+            body: html`
 
           <label>${this.host._t('marker.tap_label')}</label>
           <select id="marker-tap-action" class="areasel"
@@ -388,7 +397,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                   </button>`)}
               </div>`
             : nothing}
-
+`,
+          })}
+          ${formCard({
+            title: this.host._t('marker.card_light'),
+            body: html`
           ${this.host._bindingHasClimate(d.binding)
             ? html`<label class="srcrow climrow" title=${this.host._t('marker.use_climate_temp_tip')}>
                 ${this._boolInput(d.useClimateTemp, (v) => (this.host._markerDialog = { ...d, useClimateTemp: v }))}
@@ -502,7 +515,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 <ha-icon icon="mdi:information-outline"></ha-icon>${glowDisabledHint}
               </p>`
             : nothing}
-
+`,
+          })}
+          ${formCard({
+            title: this.host._t('marker.card_appearance'),
+            body: html`
           <label>${this.host._t('marker.icon_label')}</label>
           ${customElements.get('ha-icon-picker')
             // Feed the effective icon to HA's picker so its field renders both
@@ -691,7 +708,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                    line up with a wall that is not on a 10-degree grid. */}
             ${this._rangeInput(0, 355, 5, d.angle, (n) => (this.host._markerDialog = { ...d, angle: n }))}
             <span class="opv">${d.angle}°</span>
-          </div>
+          </div>`,
+          })}
+          ${formCard({
+            title: this.host._t('marker.card_details'),
+            body: html`
 
           <label>${this.host._t('marker.model_label')}</label>
           <input class="namein" type="text" placeholder=${this.host._t('marker.model_ph')}
@@ -724,7 +745,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 @change=${(e: Event) => this._pickMarkerFiles(e)} />
             </span>
           </div>
-          ${this._renderRadarSection(d, previewDevice, 'additional')}
+          ${this._renderRadarSection(d, previewDevice, 'additional')}`,
+          })}
         </div>
         <div class="row markerfooter" slot="footer">
           <div class="markeractions">

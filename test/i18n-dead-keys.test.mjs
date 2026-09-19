@@ -61,9 +61,11 @@ test('every declared dynamic key family covers a dictionary key and names its re
 
 test('help accessibility copy is derived from every literal help consumer', () => {
   // 2026-09-18, #594: четыре группы диалога комнаты добавили четыре подсказки —
-  // 20 → 24. Число тут не украшение: оно ловит подсказку, у которой забыли
-  // `.aria`, и обязано расти вместе с формами, а не «примерно совпадать».
-  assert.equal(consumers.derivedHelpAria.size, 24, 'the current settings surface has 24 statically derived help descriptions');
+  // 20 → 24. 2026-09-19, #598: «Общие настройки» и «Пространство» собраны в
+  // карточки, и шесть абзацев-пояснений переехали под «?» — 24 → 30. Число тут
+  // не украшение: оно ловит подсказку, у которой забыли `.aria`, и обязано
+  // расти вместе с формами, а не «примерно совпадать».
+  assert.equal(consumers.derivedHelpAria.size, 30, 'the current settings surface has 30 statically derived help descriptions');
   for (const key of consumers.derivedHelpAria) {
     assert.equal(typeof dictionary[key], 'string', `${key} must accompany its .help consumer`);
   }

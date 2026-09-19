@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Three settings dialogs — General settings, Space and Device on the plan — are
+  now grouped into titled cards. They used to be flat columns: nine captions
+  mixed with rows and paragraphs in General, and no grouping at all across the
+  760-line Device form. Explanations that sat as paragraphs between fields now
+  open from a «?» next to their own heading or row. The plan background choice
+  became a segmented control instead of a dropdown. Values, units, field order
+  and every action are unchanged; warnings about broken settings — a missing
+  `sun.sun` entity, or a tap target that disappeared — stay visible instead of
+  hiding under «?»
+  ([#598](https://github.com/Matysh/houseplan-card/issues/598)).
+
 - The room settings dialog is grouped into four cards — Basics, Fill, Sensor
   sources and Font sizes — and each group now explains itself behind a `?` next
   to its heading instead of a paragraph inside the form. The temperature and

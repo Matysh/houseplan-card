@@ -7,6 +7,8 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
+import { formCard, segmented } from './form-kit';
+
 import { gridCellFieldToCm, gridCellFieldValue } from '../grid-scale';
 import { DEFAULT_CUSTOM_FILL, SPACE_FILL_UI_MODES, stageBgOf } from '../logic';
 import { openSpaceCopyDialog, renderSpaceCopyDialog } from '../space-copy-runtime';
@@ -37,7 +39,10 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
     return html`<hp-dialog .hass=${this.host.hass} data-kind="space"
       .title=${`${d.mode === 'create' ? this.host._t('space.new') : this.host._t('space.header')}${progress ? ` · ${progress}` : ''}`}
       icon="mdi:floor-plan" wide @hp-close=${close}>
-        <div class="body">
+        <div class="body hpf-form">
+          ${formCard({
+            title: this.host._t('space.card_basics'),
+            body: html`
           <label>${this.host._t('space.title_label')}</label>
           <input class="namein" type="text" placeholder=${this.host._t('space.title_ph')}
             .value=${d.title}
@@ -100,9 +105,11 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
             <span class="opl">${this.host._t(
               this.host._imperial ? 'space.scale_unit_imperial' : 'space.scale_unit',
             )}</span>
-          </div>
-
-          <label class="dispsection">${this.host._t('space.display_section')}</label>
+          </div>`,
+          })}
+          ${formCard({
+            title: this.host._t('space.display_section'),
+            body: html`
           <label class="srcrow">
             ${this._boolInput(d.showBorders, (v) => (this.host._spaceDialog = touchSpaceDisplay(d, 'showBorders', v)))}
             <span>${this.host._t('space.show_borders')}</span>
@@ -140,14 +147,76 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
           <label class="srcrow">
             ${this._boolInput(d.hideDecor, (v) => (this.host._spaceDialog = { ...d, hideDecor: v }))}
             <span>${this.host._t('space.hide_decor')}</span>
+            ${this._help('space.hide_decor.help')}
           </label>
-          <div class="rhint">${this.host._t('space.hide_decor_tip')}</div>
+
           <label class="srcrow">
             ${this._boolInput(d.hideOpenings, (v) => (this.host._spaceDialog = { ...d, hideOpenings: v }))}
             <span>${this.host._t('space.hide_openings')}</span>
+            ${this._help('space.hide_openings.help')}
           </label>
-          <div class="rhint">${this.host._t('space.hide_openings_tip')}</div>
-          <label class="dispsection">${this.host._t('space.roomcard_section')}</label>
+
+          <div class="colorrow">
+            <hp-color-opacity .label=${this.host._t('space.room_color')}
+              .opacityLabel=${this.host._t('space.opacity')}
+              .pickerLabels=${this.host._colorPickerLabels}
+              .color=${d.roomColor} .opacity=${d.roomOpacity} .showOpacity=${true}
+              @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
+                this.host._spaceDialog = {
+                  ...d, roomColor: e.detail.color, roomOpacity: e.detail.opacity,
+                };
+              }}></hp-color-opacity>
+          </div>
+          <div class="helpfieldlabel">
+            <span>${this.host._t('space.fill_label')}</span>
+            ${this._help('space.fill_mode.help')}
+          </div>
+          ${SPACE_FILL_UI_MODES.map((v) => [v, 'fill.' + v] as const).map(
+            ([v, k]) => html`<label class="srcrow">
+              <input type="radio" name="fillmode" .checked=${d.fillMode === v}
+                @change=${() => (this.host._spaceDialog = { ...d, fillMode: v as any })} />
+              <span>${this.host._t(k as any)}</span>
+              ${v === 'temp' && d.fillMode === 'temp'
+                ? html`<span class="temprange">
+                    <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMin)}
+                      @input=${(e: Event) => {
+                        const n = strictNumber((e.target as HTMLInputElement).value);
+                        if (n != null) this.host._spaceDialog = { ...d, tempMin: n };
+                      }} />
+                    –
+                    <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMax)}
+                      @input=${(e: Event) => {
+                        const n = strictNumber((e.target as HTMLInputElement).value);
+                        if (n != null) this.host._spaceDialog = { ...d, tempMax: n };
+                      }} />
+                    °C
+                  </span>`
+                : nothing}
+            </label>
+              ${v === 'custom' && d.fillMode === 'custom'
+                ? html`<div class="colorrow gsrow">
+                    <span class="gsl">${this.host._t('space.custom_fill')}</span>
+                    <hp-color-opacity
+                      .label=${this.host._t('space.custom_fill')}
+                      .opacityLabel=${this.host._t('space.opacity')}
+                      .pickerLabels=${this.host._colorPickerLabels}
+                      .color=${(d.customFill || DEFAULT_CUSTOM_FILL).c}
+                      .opacity=${(d.customFill || DEFAULT_CUSTOM_FILL).a}
+                      @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
+                        this.host._spaceDialog = { ...d, customFill: { c: e.detail.color, a: e.detail.opacity } };
+                      }}></hp-color-opacity>
+                    ${d.customFill
+                      ? html`<button class="btn ghost" type="button"
+                          @click=${() => (this.host._spaceDialog = { ...d, customFill: null })}>
+                          ${this.host._t('btn.reset')}</button>`
+                      : nothing}
+                  </div>`
+                : nothing}`,
+          )}`,
+          })}
+          ${formCard({
+            title: this.host._t('space.roomcard_section'),
+            body: html`
           ${([['labelTemp', 'space.label_temp'], ['labelHum', 'space.label_hum'],
               ['labelLqi', 'space.label_lqi'], ['labelLight', 'space.label_light']] as const).map(
             ([f, k]) => html`<label class="srcrow">
@@ -160,18 +229,11 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
             ${this._rangeInput(50, 300, 5, Math.round(d.cardFontScale * 100), (n) => (this.host._spaceDialog = { ...d, cardFontScale: n / 100 }))}
             <span class="opv">${Math.round(d.cardFontScale * 100)}%</span>
           </div>
-          ${this.host._renderCardPreview(d.cardFontScale, 1, 1)}
-          <div class="colorrow">
-            <hp-color-opacity .label=${this.host._t('space.room_color')}
-              .opacityLabel=${this.host._t('space.opacity')}
-              .pickerLabels=${this.host._colorPickerLabels}
-              .color=${d.roomColor} .opacity=${d.roomOpacity} .showOpacity=${true}
-              @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
-                this.host._spaceDialog = {
-                  ...d, roomColor: e.detail.color, roomOpacity: e.detail.opacity,
-                };
-              }}></hp-color-opacity>
-          </div>
+          ${this.host._renderCardPreview(d.cardFontScale, 1, 1)}`,
+          })}
+          ${formCard({
+            title: this.host._t('space.card_sun'),
+            body: html`
           <div class="helpfieldlabel">
             <label for="space-bg-mode">${this.host._t('space.bg_mode')}</label>
             ${this._help('space.bg_mode.help')}
@@ -229,58 +291,13 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
             <option value="1" ?selected=${d.sunRays === true}>${this.host._t('space.sun_on')}</option>
             <option value="0" ?selected=${d.sunRays === false}>${this.host._t('space.sun_off')}</option>
           </select>
-          <div class="helpfieldlabel">
-            <span>${this.host._t('space.fill_label')}</span>
-            ${this._help('space.fill_mode.help')}
-          </div>
-          ${SPACE_FILL_UI_MODES.map((v) => [v, 'fill.' + v] as const).map(
-            ([v, k]) => html`<label class="srcrow">
-              <input type="radio" name="fillmode" .checked=${d.fillMode === v}
-                @change=${() => (this.host._spaceDialog = { ...d, fillMode: v as any })} />
-              <span>${this.host._t(k as any)}</span>
-              ${v === 'temp' && d.fillMode === 'temp'
-                ? html`<span class="temprange">
-                    <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMin)}
-                      @input=${(e: Event) => {
-                        const n = strictNumber((e.target as HTMLInputElement).value);
-                        if (n != null) this.host._spaceDialog = { ...d, tempMin: n };
-                      }} />
-                    –
-                    <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMax)}
-                      @input=${(e: Event) => {
-                        const n = strictNumber((e.target as HTMLInputElement).value);
-                        if (n != null) this.host._spaceDialog = { ...d, tempMax: n };
-                      }} />
-                    °C
-                  </span>`
-                : nothing}
-            </label>
-              ${v === 'custom' && d.fillMode === 'custom'
-                ? html`<div class="colorrow gsrow">
-                    <span class="gsl">${this.host._t('space.custom_fill')}</span>
-                    <hp-color-opacity
-                      .label=${this.host._t('space.custom_fill')}
-                      .opacityLabel=${this.host._t('space.opacity')}
-                      .pickerLabels=${this.host._colorPickerLabels}
-                      .color=${(d.customFill || DEFAULT_CUSTOM_FILL).c}
-                      .opacity=${(d.customFill || DEFAULT_CUSTOM_FILL).a}
-                      @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
-                        this.host._spaceDialog = { ...d, customFill: { c: e.detail.color, a: e.detail.opacity } };
-                      }}></hp-color-opacity>
-                    ${d.customFill
-                      ? html`<button class="btn ghost" type="button"
-                          @click=${() => (this.host._spaceDialog = { ...d, customFill: null })}>
-                          ${this.host._t('btn.reset')}</button>`
-                      : nothing}
-                  </div>`
-                : nothing}`,
-          )}
           <label class="srcrow">
             ${this._boolInput(d.glowEnabled, (checked) => {
               this.host._spaceDialog = { ...d, glowEnabled: checked };
             })}
             <span>${this.host._t('space.glow_enabled')}</span>
-          </label>
+          </label>`,
+          })}
           ${d.deleteBlockers
             ? html`<div class="backuperror" role="alert">${this.host._t('space.delete_blocked', {
                 n: String(d.deleteBlockers),

@@ -130,7 +130,10 @@ test('i18n: lazy editor dictionaries carry matching keys and placeholders', () =
   const supportEn = supportDictionaries.get('en');
   const keys = Object.keys(supportEn).sort();
   const placeholders = (value) => (String(value).match(/\{\w+\}/gu) || []).sort();
-  assert.equal(keys.length, 78);
+  // #598: `gs.hint` переехал из support в основной каталог как
+  // `gs.card_fills.help` — «?» карточки читает его через `_t`, а не `supportT`.
+  // 78 → 77.
+  assert.equal(keys.length, 77);
   assert.equal(Object.keys(en).filter((key) => key.startsWith('support.')).join(','), 'support.title');
   for (const { code } of LANGUAGE_REGISTRY) {
     const dictionary = supportDictionaries.get(code);
@@ -479,6 +482,9 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
     'gs.optimize_live_names',
     'gs.optimize_details',
     'furn.symbol',
+    // #598: 'Plan' и 'Details' — одни и те же слова в EN и DE
+    'gs.card_plan',
+    'marker.card_details',
     // #593: 'Computer' одинаков в EN и DE — это немецкое слово, не пропуск перевода
     'furn.cat_computer',
     'furn.sym_computer',
@@ -514,6 +520,8 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
     'color_picker.confirm',
     'color_picker.saturation',
     'confirm.delete_partition_openings_item',
+    // #598: 'Plan' — одно и то же слово в EN, DE и FR
+    'gs.card_plan',
     // #593: 'Cactus' пишется одинаково по-английски и по-французски
     'furn.sym_cactus',
     'decor.rect',

@@ -10256,6 +10256,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'state-callout-hidden-under-help',
+    guard: 'node demo/smoke_tap_run.mjs',
+    because: '#598 К5: «Цель {id} не найдена» — сообщение о СОСТОЯНИИ, а не пояснение. '
+      + 'Спрятать его под «?» заодно с шестью настоящими подсказками легко, и тогда человек '
+      + 'узнает о сломанном действии, только если сам откроет подсказку — а подставить туда '
+      + 'идентификатор пропавшей цели вообще нечем',
+    patches: [{
+      file: 'src/editors/marker-dialog.ts',
+      find: "                    ? html`<div class=\"rhint\">${this.host._t('marker.run_target_gone', { id: d.tapTarget })}</div>`",
+      replace: "                    ? html`<span title=${this.host._t('marker.run_target_gone', { id: d.tapTarget })}></span>`",
+    }],
+  },
+  {
+    id: 'dialog-card-loses-its-heading',
+    guard: 'node demo/smoke_general_settings.mjs',
+    because: '#598: карточка без заголовка — это снова плоский список, только с рамкой. '
+      + 'Заголовок и есть то, ради чего задача делалась, и его потеря обязана краснеть',
+    patches: [{
+      file: 'src/editors/general-settings-dialog.ts',
+      find: "            title: this.host._t('gs.card_fills'),",
+      replace: "            title: '',",
+    }],
+  },
+  {
     id: 'form-kit-writes-to-a-neighbour-key',
     guard: 'node demo/smoke_room_settings.mjs',
     because: '#594: два источника комнаты — две одинаковые строки, отличающиеся одним словом. '
