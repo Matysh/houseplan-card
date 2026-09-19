@@ -654,10 +654,13 @@ function boundaryCandidateKey(x: number, y: number): string {
 function addBoundaryCandidate(
   candidates: BoundaryCandidateMap, point: ScenePoint, maxNudge: number,
 ): void {
-  const x = Math.round(point[0]), y = Math.round(point[1]);
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      const candidateX = x + dx, candidateY = y + dy;
+  const axisNeighbours = (value: number): readonly number[] => {
+    const floor = Math.floor(value), ceil = Math.ceil(value);
+    return floor === ceil ? [floor - 1, floor, floor + 1] : [floor, ceil];
+  };
+  const xs = axisNeighbours(point[0]), ys = axisNeighbours(point[1]);
+  for (const candidateY of ys) {
+    for (const candidateX of xs) {
       if (candidateX * candidateX + candidateY * candidateY > maxNudge * maxNudge + EPS)
         continue;
       const key = boundaryCandidateKey(candidateX, candidateY);
@@ -692,13 +695,10 @@ function clipBoundarySegment(
   ];
 }
 
-function addBoundaryRectangleGrid(
+function addBoundaryRectangleEvents(
   candidates: BoundaryCandidateMap, rectangles: readonly Bounds[], maxNudge: number,
 ): void {
-  const xs = new Set<number>([0]), ys = new Set<number>([0]);
   for (const bounds of rectangles) {
-    xs.add(bounds[0]); xs.add(bounds[2]);
-    ys.add(bounds[1]); ys.add(bounds[3]);
     addBoundaryCandidate(candidates,
       [bounds[0], Math.max(bounds[1], Math.min(0, bounds[3]))], maxNudge);
     addBoundaryCandidate(candidates,
@@ -707,11 +707,29 @@ function addBoundaryRectangleGrid(
       [Math.max(bounds[0], Math.min(0, bounds[2])), bounds[1]], maxNudge);
     addBoundaryCandidate(candidates,
       [Math.max(bounds[0], Math.min(0, bounds[2])), bounds[3]], maxNudge);
+    addBoundaryCandidate(candidates, [bounds[0], bounds[1]], maxNudge);
+    addBoundaryCandidate(candidates, [bounds[2], bounds[1]], maxNudge);
+    addBoundaryCandidate(candidates, [bounds[2], bounds[3]], maxNudge);
+    addBoundaryCandidate(candidates, [bounds[0], bounds[3]], maxNudge);
   }
-  // A nearest point of a union of axis-aligned forbidden roots is either the
-  // projection of the origin to one edge or an intersection of two edges.
-  for (const x of xs) {
-    for (const y of ys) addBoundaryCandidate(candidates, [x, y], maxNudge);
+  // Only intersections of FINITE rectangle edges are critical. Combining
+  // every X with every unrelated Y forms an artificial O(n²) interior grid;
+  // on the 200-device benchmark it produced almost five thousand candidates
+  // for one overlay although the corresponding edge segments never met.
+  const addIntersections = (vertical: Bounds, horizontal: Bounds): void => {
+    for (const x of [vertical[0], vertical[2]]) {
+      if (x < horizontal[0] - EPS || x > horizontal[2] + EPS) continue;
+      for (const y of [horizontal[1], horizontal[3]]) {
+        if (y >= vertical[1] - EPS && y <= vertical[3] + EPS)
+          addBoundaryCandidate(candidates, [x, y], maxNudge);
+      }
+    }
+  };
+  for (let left = 0; left < rectangles.length; left++) {
+    for (let right = left + 1; right < rectangles.length; right++) {
+      addIntersections(rectangles[left], rectangles[right]);
+      addIntersections(rectangles[right], rectangles[left]);
+    }
   }
 }
 
@@ -726,7 +744,7 @@ export function buildIsoOverlayBoundaryCandidates(
   if (!(maxNudge >= 0) || !Number.isFinite(maxNudge))
     throw new Error('invalid isometric overlay boundary input');
   const candidates: BoundaryCandidateMap = new Map();
-  addBoundaryRectangleGrid(candidates, rectangles, maxNudge);
+  addBoundaryRectangleEvents(candidates, rectangles, maxNudge);
   return Object.freeze(sortedBoundaryCandidates(candidates).map(({ offset }) =>
     Object.freeze(offset) as ScenePoint));
 }
@@ -803,14 +821,11 @@ function addBoundaryLineIntersections(
       if (Math.abs(denominator) <= EPS) continue;
       const ac: ScenePoint = [c[0] - a[0], c[1] - a[1]];
       const ratio = (ac[0] * cd[1] - ac[1] * cd[0]) / denominator;
+      const otherRatio = (ac[0] * ab[1] - ac[1] * ab[0]) / denominator;
+      if (ratio < -EPS || ratio > 1 + EPS
+          || otherRatio < -EPS || otherRatio > 1 + EPS) continue;
       const point: ScenePoint = [a[0] + ab[0] * ratio, a[1] + ab[1] * ratio];
-      // Infinite support lines from unrelated distant edges create an interior
-      // grid approaching the very area scan this helper replaces. A critical
-      // junction must lie on, or in the immediate integer neighbourhood of,
-      // both finite support segments.
-      if (Math.hypot(point[0], point[1]) <= maxNudge + 2
-          && pointSegmentDistance(point, a, b) <= 3
-          && pointSegmentDistance(point, c, d) <= 3)
+      if (Math.hypot(point[0], point[1]) <= maxNudge + 2)
         addBoundaryCandidate(candidates, point, maxNudge);
     }
   }
@@ -1234,13 +1249,15 @@ export function resolveIsoOverlayCollisions(
        */
       const boundaryCandidates: BoundaryCandidateMap = new Map();
       const overlayBoundaryRectangles: Bounds[] = [];
+      const boundaryRectangles: Bounds[] = [];
+      const boundarySegments: BoundarySegment[] = [];
       const expandedOverlayBoundaries = new Set<number>();
       const encounteredOverlayBoundaries = new Set<number>(best?.conflicts || []);
       const addOverlayBoundary = (index: number): void => {
         if (expandedOverlayBoundaries.has(index)) return;
         expandedOverlayBoundaries.add(index);
         const obstacle = accepted[index].bounds;
-        overlayBoundaryRectangles.push([
+        const rectangle: Bounds = [
           (obstacle[0] - item.screenHalfSize[0] - gapUnits - base.raisedScene[0])
             / unitsPerPixel,
           (obstacle[1] - item.screenHalfSize[1] - gapUnits - base.raisedScene[1])
@@ -1249,13 +1266,12 @@ export function resolveIsoOverlayCollisions(
             / unitsPerPixel,
           (obstacle[3] + item.screenHalfSize[1] + gapUnits - base.raisedScene[1])
             / unitsPerPixel,
-        ]);
+        ];
+        overlayBoundaryRectangles.push(rectangle);
+        boundaryRectangles.push(rectangle);
       };
 
-      const roomBoundarySegments: BoundarySegment[] = [];
       const footprintBounds = ringBounds(baseFootprint);
-      const structuralBoundaryRectangles: Bounds[] = [];
-      const structuralBoundarySegments: BoundarySegment[] = [];
       const expandedWalls = new Set<number>();
       const pendingWalls = new Set<number>();
       const evaluated = new Set<string>();
@@ -1271,12 +1287,12 @@ export function resolveIsoOverlayCollisions(
             (wallBounds[2] + gapUnits - footprintBounds[0]) / unitsPerPixel,
             (wallBounds[3] + gapUnits - footprintBounds[1]) / unitsPerPixel,
           ];
-          structuralBoundaryRectangles.push(expandedWallBounds);
+          boundaryRectangles.push(expandedWallBounds);
           addCriticalBoundaryRectangle(boundaryCandidates, expandedWallBounds, maxNudge);
         }
         addExpandedWallBoundarySegments(
           boundaryCandidates, wall, baseFootprint, gapUnits, unitsPerPixel,
-          maxNudge, overlayBoundaryRectangles, structuralBoundarySegments,
+          maxNudge, overlayBoundaryRectangles, boundarySegments,
         );
       };
 
@@ -1303,25 +1319,48 @@ export function resolveIsoOverlayCollisions(
             const clipped = clipBoundarySegment(
               boundary[0], boundary[1], maxNudge + 2,
             );
-            if (clipped) roomBoundarySegments.push(clipped);
+            if (clipped) boundarySegments.push(clipped);
           }
         }
       };
 
+      let processedRectangles = 0;
+      let processedOverlayRectangles = 0;
+      let processedSegments = 0;
       const refreshBoundaryEvents = (): void => {
-        addBoundaryRectangleGrid(boundaryCandidates, [
-          ...overlayBoundaryRectangles, ...structuralBoundaryRectangles,
-        ], maxNudge);
-        // Concave silhouettes and the safety-gap rounding meet where support
-        // lines of neighbouring edge families cross. Exact polygons reject
-        // false combinations introduced by extending those lines.
-        addBoundaryLineIntersections(boundaryCandidates, [
-          ...structuralBoundarySegments, ...roomBoundarySegments,
-        ], maxNudge);
-        for (const segment of [...structuralBoundarySegments, ...roomBoundarySegments])
-          addBoundarySegmentRectangleIntersections(
-            boundaryCandidates, segment, overlayBoundaryRectangles, maxNudge,
+        for (let index = processedRectangles; index < boundaryRectangles.length; index++) {
+          addBoundaryRectangleEvents(
+            boundaryCandidates, [boundaryRectangles[index]], maxNudge,
           );
+          for (let previous = 0; previous < index; previous++)
+            addBoundaryRectangleEvents(boundaryCandidates, [
+              boundaryRectangles[previous], boundaryRectangles[index],
+            ], maxNudge);
+        }
+        // Concave silhouettes and the safety-gap rounding meet where finite
+        // boundary segments cross. Exact polygons still make the final call.
+        for (let index = processedSegments; index < boundarySegments.length; index++) {
+          for (let previous = 0; previous < index; previous++)
+            addBoundaryLineIntersections(boundaryCandidates, [
+              boundarySegments[previous], boundarySegments[index],
+            ], maxNudge);
+        }
+        for (let index = processedOverlayRectangles;
+          index < overlayBoundaryRectangles.length; index++) {
+          for (let segment = 0; segment < processedSegments; segment++)
+            addBoundarySegmentRectangleIntersections(
+              boundaryCandidates, boundarySegments[segment],
+              [overlayBoundaryRectangles[index]], maxNudge,
+            );
+        }
+        for (let index = processedSegments; index < boundarySegments.length; index++)
+          addBoundarySegmentRectangleIntersections(
+            boundaryCandidates, boundarySegments[index],
+            overlayBoundaryRectangles, maxNudge,
+          );
+        processedRectangles = boundaryRectangles.length;
+        processedOverlayRectangles = overlayBoundaryRectangles.length;
+        processedSegments = boundarySegments.length;
       };
 
       const evaluateNewCandidates = (): void => {

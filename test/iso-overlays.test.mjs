@@ -173,6 +173,17 @@ test('group collision boundary events stay sparse while covering sub-grid positi
   'every event stays on the integer CSS lattice and inside the absolute cap');
 });
 
+test('boundary events do not cross unrelated rectangle axes into an interior grid', () => {
+  const candidates = buildIsoOverlayBoundaryCandidates([
+    [10, -2, 12, 2],
+    [-2, 10, 2, 12],
+  ], ISO_OVERLAY_MAX_NUDGE_CSS_PX);
+  assert.ok(!candidates.some(([x, y]) => x === 10 && y === 10),
+    'finite edges that never meet must not invent their Cartesian intersection');
+  assert.ok(candidates.some(([x, y]) => x === 10 && y === 0));
+  assert.ok(candidates.some(([x, y]) => x === 0 && y === 10));
+});
+
 test('group collision reports a deterministic residual without exceeding the absolute cap', () => {
   const room = square('tight', 0, 0, 1, 1, [0.5, 0.5]);
   const make = (id) => ({
