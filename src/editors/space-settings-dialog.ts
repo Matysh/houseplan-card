@@ -7,7 +7,7 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { formCard, segmented } from './form-kit';
+import { ensureFormKitStyles, formCard, segmented } from './form-kit';
 
 import { gridCellFieldToCm, gridCellFieldValue } from '../grid-scale';
 import { DEFAULT_CUSTOM_FILL, SPACE_FILL_UI_MODES, stageBgOf } from '../logic';
@@ -23,6 +23,7 @@ export const CELL_CM_MAX = 1000;
 
 
 export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): TemplateResult {
+  ensureFormKitStyles(this.host);
     const d = this.host._spaceDialog!;
     if (d.copy) return renderSpaceCopyDialog(this.host, () => { void this._saveSpaceCopy(); });
     const progress = this.host._importTotal > 0 && d.mode === 'create'
@@ -118,20 +119,20 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
             <label for="space-zero-wall-style">${this.host._t('space.zero_wall_style')}</label>
             ${this._help('space.zero_wall_style.help')}
           </div>
-          <select id="space-zero-wall-style" class="areasel"
-            @change=${(e: Event) => {
-              const value = (e.target as HTMLSelectElement).value;
+          ${segmented({
+            name: 'space-zero-wall-style',
+            value: d.zeroWallStyle === 'solid' ? 'solid' : 'dashed',
+            ariaLabel: this.host._t('space.zero_wall_style'),
+            options: [
+              { value: 'dashed', label: this.host._t('space.zero_wall_dashed') },
+              { value: 'solid', label: this.host._t('space.zero_wall_solid') },
+            ],
+            onChange: (value) => {
               this.host._spaceDialog = {
                 ...d, zeroWallStyle: value === 'solid' ? 'solid' : 'dashed',
               };
-            }}>
-            <option value="dashed" ?selected=${d.zeroWallStyle === 'dashed'}>
-              ${this.host._t('space.zero_wall_dashed')}
-            </option>
-            <option value="solid" ?selected=${d.zeroWallStyle === 'solid'}>
-              ${this.host._t('space.zero_wall_solid')}
-            </option>
-          </select>
+            },
+          })}
           <label class="srcrow">
             ${this._boolInput(d.showNames, (v) => (this.host._spaceDialog = touchSpaceDisplay(d, 'showNames', v)))}
             <span>${this.host._t('space.show_names')}</span>
@@ -238,15 +239,19 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
             <label for="space-bg-mode">${this.host._t('space.bg_mode')}</label>
             ${this._help('space.bg_mode.help')}
           </div>
-          <select id="space-bg-mode" class="areasel"
-            @change=${(e: Event) => {
-              const v = (e.target as HTMLSelectElement).value;
+          ${segmented({
+            name: 'space-bg-mode',
+            value: d.bgMode ?? '',
+            ariaLabel: this.host._t('space.bg_mode'),
+            options: [
+              { value: '', label: this.host._t('space.sun_inherit') },
+              { value: 'static', label: this.host._t('gs.bg_static') },
+              { value: 'daynight', label: this.host._t('gs.bg_daynight') },
+            ],
+            onChange: (v) => {
               this.host._spaceDialog = { ...d, bgMode: v === 'static' || v === 'daynight' ? (v as any) : null };
-            }}>
-            <option value="" ?selected=${d.bgMode === null}>${this.host._t('space.sun_inherit')}</option>
-            <option value="static" ?selected=${d.bgMode === 'static'}>${this.host._t('gs.bg_static')}</option>
-            <option value="daynight" ?selected=${d.bgMode === 'daynight'}>${this.host._t('gs.bg_daynight')}</option>
-          </select>
+            },
+          })}
           ${(d.bgMode ?? bgModeOf(this.host._settings, {})) === 'static'
             ? html`<div class="colorrow">
                 <hp-color-opacity .label=${this.host._t('space.bg_color')}

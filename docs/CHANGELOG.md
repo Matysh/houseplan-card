@@ -7,7 +7,10 @@
   mixed with rows and paragraphs in General, and no grouping at all across the
   760-line Device form. Explanations that sat as paragraphs between fields now
   open from a «?» next to their own heading or row. The plan background choice
-  became a segmented control instead of a dropdown. Values, units, field order
+  became a segmented control, and so did the background and zero-wall style in
+  Space: three short lists whose options are now visible at once instead of
+  hiding behind a dropdown. The remaining dropdowns in these dialogs are long
+  or list entities and stay dropdowns. Values, units, field order
   and every action are unchanged; warnings about broken settings — a missing
   `sun.sun` entity, or a tap target that disappeared — stay visible instead of
   hiding under «?»

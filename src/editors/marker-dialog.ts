@@ -7,7 +7,7 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { formCard } from './form-kit';
+import { ensureFormKitStyles, formCard } from './form-kit';
 
 import { resolveDevicePresentation } from '../device-presentation';
 import { toggleEntityCandidates } from '../device-toggle';
@@ -35,6 +35,7 @@ const DISPLAY_HINT_KEYS: Record<DeviceDisplayMode, I18nKey> = {
 
 
 export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult {
+  ensureFormKitStyles(this.host);
     const d = this.host._markerDialog!;
     const isVirtual = d.bindingMode === 'virtual';
     const cands = this._bindingCandidates();

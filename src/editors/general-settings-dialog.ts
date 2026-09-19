@@ -11,7 +11,7 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { formCard, segmented } from './form-kit';
+import { ensureFormKitStyles, formCard, segmented } from './form-kit';
 import { langOf } from '../i18n';
 import { supportT } from '../i18n/support';
 import { DEFAULT_FILL_COLORS } from '../logic';
@@ -23,6 +23,7 @@ import type { ZigbeeTopologySettings } from '../zigbee-topology-settings';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 
 export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): TemplateResult {
+  ensureFormKitStyles(this.host);
     return html`<hp-dialog .hass=${this.host.hass} data-kind="settings" .title=${this.host._t('gs.title')} icon="mdi:cog-outline" wide
       @hp-close=${() => (this.host._settingsDialog = null)}>
         <div class="body hpf-form">

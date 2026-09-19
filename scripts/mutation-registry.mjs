@@ -10257,7 +10257,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'state-callout-hidden-under-help',
-    guard: 'node demo/smoke_tap_run.mjs',
+    guard: 'node demo/smoke_settings_dialog_cards.mjs',
     because: '#598 К5: «Цель {id} не найдена» — сообщение о СОСТОЯНИИ, а не пояснение. '
       + 'Спрятать его под «?» заодно с шестью настоящими подсказками легко, и тогда человек '
       + 'узнает о сломанном действии, только если сам откроет подсказку — а подставить туда '
@@ -10266,6 +10266,12 @@ const MUTANT_DEFINITIONS = [
       file: 'src/editors/marker-dialog.ts',
       find: "                    ? html`<div class=\"rhint\">${this.host._t('marker.run_target_gone', { id: d.tapTarget })}</div>`",
       replace: "                    ? html`<span title=${this.host._t('marker.run_target_gone', { id: d.tapTarget })}></span>`",
+    }, {
+      // Оба сообщения о состоянии — один контракт (К5), поэтому и мутант один:
+      // спрятать под «?» можно каждое, и «поймано» обязано означать оба.
+      file: 'src/editors/general-settings-dialog.ts',
+      find: "                ? html`<div class=\"rhint\">${this.host._t('gs.sun_missing')}</div>`",
+      replace: "                ? html`<span title=${this.host._t('gs.sun_missing')}></span>`",
     }],
   },
   {

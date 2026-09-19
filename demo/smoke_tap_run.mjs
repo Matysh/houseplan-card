@@ -38,27 +38,6 @@ const out = await page.evaluate(async () => {
   // сохранение без цели блокируется
   await c._saveMarker(); await c.updateComplete;
   o.saveBlockedWithoutTarget = !!c._markerDialog;
-  // #598 К5: пропавшая цель — сообщение о СОСТОЯНИИ, а не пояснение. Оно
-  // остаётся абзацем на виду и называет идентификатор; под «?» такой текст
-  // уехать не может — подставить туда `{id}` нечем, и человек не узнает, что
-  // действие сломано, пока сам не откроет подсказку.
-  c._markerDialog = { ...c._markerDialog, tapTarget: 'script.no_such_target_598' };
-  await c.updateComplete;
-  const goneNote = [...sr().querySelectorAll('hp-dialog .rhint')]
-    .find((node) => node.textContent.includes('script.no_such_target_598'));
-  o.missingRunTargetStaysVisible = !!goneNote
-    && goneNote.getBoundingClientRect().height > 0
-    && !sr().querySelector('hp-dialog hp-help[data-help-key="marker.run_target_gone.help"]');
-  // карточки диалога: пять групп в заданном порядке, каждая непустая
-  const markerCards = [...sr().querySelectorAll('hp-dialog .hpf-card > .hpf-head h3')]
-    .map((h) => h.textContent.trim());
-  o.markerCardsInOrder = JSON.stringify(markerCards) === JSON.stringify([
-    c._t('marker.card_basics'), c._t('marker.card_tap'), c._t('marker.card_light'),
-    c._t('marker.card_appearance'), c._t('marker.card_details'),
-  ]);
-  o.everyMarkerCardHasContent = [...sr().querySelectorAll('hp-dialog .hpf-card')]
-    .every((card) => card.querySelector('.hpf-head + *'));
-
   // выбираем цель + подтверждение, сохраняем
   c._markerDialog = { ...c._markerDialog, tapTarget: 'script.curtains', tapConfirm: true };
   await c.updateComplete;
@@ -100,7 +79,6 @@ const out = await page.evaluate(async () => {
   calls.length = 0;
   c._clickDevice({ stopPropagation() {} }, dev2); await c.updateComplete;
   o.missingTargetSafe = calls.length === 0 && !!c._toast;
-
 
   // очистка
   c._serverCfg.markers = c._serverCfg.markers.filter((m) => m.id !== (saved?.id ?? d.id));
