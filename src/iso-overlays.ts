@@ -995,6 +995,25 @@ function sortedBoundaryCandidates(candidates: BoundaryCandidateMap): GroupOffset
     || a.offset[1] - b.offset[1] || a.offset[0] - b.offset[0]);
 }
 
+/**
+ * Snap a continuous boundary event back to the exact integer-pixel result.
+ * The bounded 9x9 neighbourhood replaces the old complete 7,238-point disk.
+ */
+function localRefinementOffsets(
+  around: ScenePoint, maxNudge: number, reach = 4,
+): readonly GroupOffset[] {
+  const offsets: GroupOffset[] = [];
+  for (let y = Math.floor(around[1] - reach); y <= Math.ceil(around[1] + reach); y++) {
+    for (let x = Math.floor(around[0] - reach); x <= Math.ceil(around[0] + reach); x++) {
+      const distance = Math.hypot(x, y);
+      if (distance <= maxNudge + EPS) offsets.push({ offset: [x, y], distance });
+    }
+  }
+  offsets.sort((a, b) => a.distance - b.distance
+    || a.offset[1] - b.offset[1] || a.offset[0] - b.offset[0]);
+  return offsets;
+}
+
 function overlayRootBounds(
   item: IsoOverlayCollisionItem, center: ScenePoint,
 ): Bounds {
@@ -1579,6 +1598,18 @@ export function resolveIsoOverlayCollisions(
         if (!changed) break;
         refreshBoundaryEvents();
         evaluateNewCandidates();
+      }
+      if (best && !best.conflicts.length) {
+        const around = best.placement.nudgeCss;
+        for (const entry of localRefinementOffsets(around, maxNudge)) {
+          if (entry.distance >= best.placement.nudgeDistanceCss - EPS) break;
+          const shape = candidateShape(entry.offset);
+          if (!shape || shape.conflicts.length || !candidateAllowed(shape)) continue;
+          best = {
+            placement: placementAtGroupOffset(base, entry.offset, unitsPerPixel, false),
+            bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
+          };
+        }
       }
     }
     if (!best) {
