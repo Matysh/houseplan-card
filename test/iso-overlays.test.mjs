@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ISO_OVERLAY_MAX_NUDGE_CSS_PX,
   ISO_OVERLAY_SAFETY_GAP_CSS_PX,
+  buildIsoOverlayBoundaryCandidates,
   buildIsoFootprintPolygon,
   isoOverlayCollisionKey,
   isoOverlayPlane,
@@ -96,6 +97,49 @@ test('group collision separates a solvable dense set independently of input orde
   }
   assert.deepEqual(normal.placements.get(keys[0]).visualScene, [100, 100],
     'the stable first item stays at its zero-deviation anchor');
+});
+
+test('group collision finds a legal one-pixel slit between the coarse nodes', () => {
+  // The roots need 41 px of separation. Offset 40 still overlaps; offset 44
+  // reaches masonry; and the room rejects the next coarse node at 48. The old
+  // 4 px pass therefore degraded at 40 even though the exact offset 41 is free.
+  const room = square('slit', 99, 99, 147.5, 101, [100, 100]);
+  const wall = { outer: [[147.8, 99], [148.2, 99], [148.2, 101], [147.8, 101]] };
+  const make = (id) => ({
+    id,
+    kind: 'device',
+    placement: placement({
+      floorAnchor: [100, 100], rooms: [room], preferredRoomId: 'slit',
+      wallSilhouettes: [wall], footprintHalfSize: [0.1, 0.1],
+      wallHeight: 0, visualOffset: 0, sceneUnitsPerCssPixel: 1,
+      camera: identityCamera,
+    }),
+    screenHalfSize: [18.5, 18.5],
+  });
+  const result = resolveIsoOverlayCollisions({
+    items: [make('a'), make('b')], rooms: [room], wallSilhouettes: [wall],
+    sceneUnitsPerCssPixel: 1, visualOffset: 0, camera: identityCamera,
+  });
+  const second = result.placements.get(isoOverlayCollisionKey('device', 'b'));
+  assert.deepEqual(result.residualPairs, []);
+  assert.deepEqual(second.nudgeCss, [41, 0]);
+  assert.equal(second.status, 'ok');
+  assert.ok(second.nudgeDistanceCss <= ISO_OVERLAY_MAX_NUDGE_CSS_PX);
+});
+
+test('group collision boundary events stay sparse while covering sub-grid positions', () => {
+  const candidates = buildIsoOverlayBoundaryCandidates([
+    [-41, -41, 41, 41],
+    [-13.25, -8.75, 17.25, 22.75],
+  ], ISO_OVERLAY_MAX_NUDGE_CSS_PX);
+  const fullDiskLatticeSize = 7238;
+  assert.ok(candidates.length < fullDiskLatticeSize / 10,
+    `${candidates.length} boundary events must stay far below a full disk scan`);
+  assert.ok(candidates.some(([x, y]) => x === 41 && y === 0),
+    'the one-pixel position between the former 4 px nodes is present');
+  assert.ok(candidates.every(([x, y]) => Number.isInteger(x) && Number.isInteger(y)
+    && Math.hypot(x, y) <= ISO_OVERLAY_MAX_NUDGE_CSS_PX),
+  'every event stays on the integer CSS lattice and inside the absolute cap');
 });
 
 test('group collision reports a deterministic residual without exceeding the absolute cap', () => {

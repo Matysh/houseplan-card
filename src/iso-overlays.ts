@@ -635,69 +635,154 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
   };
 }
 
-const ISO_OVERLAY_GROUP_SEARCH_STEP_CSS_PX = 1;
 const ISO_OVERLAY_GROUP_CELL_CSS_PX = 64;
 
-/**
- * One bounded, order-independent candidate lattice. It is allocated once and
- * reused by every card. The radius is the public absolute displacement cap,
- * not a per-collision allowance.
- */
-/** Смещение вместе с его расстоянием: hypot на 7238 кандидатов считался заново. */
+/** Candidate displacement together with its stable distance ordering. */
 interface GroupOffset { readonly offset: ScenePoint; readonly distance: number }
 
-const ISO_OVERLAY_GROUP_OFFSETS_CSS: readonly ScenePoint[] = Object.freeze((() => {
-  const offsets: ScenePoint[] = [];
-  const limit = Math.floor(ISO_OVERLAY_MAX_NUDGE_CSS_PX / ISO_OVERLAY_GROUP_SEARCH_STEP_CSS_PX);
-  for (let y = -limit; y <= limit; y++) {
-    for (let x = -limit; x <= limit; x++) {
-      if (x * x + y * y > limit * limit) continue;
-      offsets.push(Object.freeze([
-        x * ISO_OVERLAY_GROUP_SEARCH_STEP_CSS_PX,
-        y * ISO_OVERLAY_GROUP_SEARCH_STEP_CSS_PX,
-      ]) as ScenePoint);
-    }
-  }
-  offsets.sort((a, b) => a[0] * a[0] + a[1] * a[1]
-    - (b[0] * b[0] + b[1] * b[1])
-    || a[1] - b[1] || a[0] - b[0]);
-  return offsets;
-})());
+type BoundaryCandidateMap = Map<string, ScenePoint>;
 
-const ISO_OVERLAY_GROUP_OFFSET_TABLE: readonly GroupOffset[] = Object.freeze(
-  ISO_OVERLAY_GROUP_OFFSETS_CSS.map((offset) => Object.freeze({
-    offset, distance: Math.hypot(offset[0], offset[1]),
-  })) as GroupOffset[],
-);
+function boundaryCandidateKey(x: number, y: number): string {
+  return `${x}:${y}`;
+}
 
 /**
- * Шаг грубого прохода (#583 перед бетой .5).
- *
- * Поиск был ограничен радиусом, но не работой: диск в 48 px с шагом 1 px — это
- * 7238 кандидатов, и у каждого проверяется попадание в комнату и близость к
- * кладке. Замер на `large-house-isometric-v1`: 2 523 652 просмотренных смещения,
- * 1 742 740 проверок footprint против силуэтов, из них 98 % отвергнуты стеной, —
- * 9.6 с на групповой проход и профиль, пробитый в 2–33 раза.
- *
- * Сначала идёт решётка с шагом 4 px (около 450 кандидатов), затем — уточнение
- * 1 px в окрестности найденного места. Тесная сцена, где законного места нет
- * вовсе, стоит 450 проверок вместо 7238; §6.4 ТЗ и требовал ограниченного
- * детерминированного поиска, а не полного перебора.
+ * Add both sides of a continuous boundary to the integer CSS-pixel lattice.
+ * The exact geometry still decides whether a point is legal; these neighbours
+ * merely make a sub-4 px slit observable without scanning the whole disk.
  */
-const ISO_OVERLAY_GROUP_COARSE_STEP_CSS_PX = 4;
+function addBoundaryCandidate(
+  candidates: BoundaryCandidateMap, point: ScenePoint, maxNudge: number,
+): void {
+  const x = Math.round(point[0]), y = Math.round(point[1]);
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const candidateX = x + dx, candidateY = y + dy;
+      if (candidateX * candidateX + candidateY * candidateY > maxNudge * maxNudge + EPS)
+        continue;
+      const key = boundaryCandidateKey(candidateX, candidateY);
+      if (!candidates.has(key)) candidates.set(key, [candidateX, candidateY]);
+    }
+  }
+}
 
-const ISO_OVERLAY_GROUP_COARSE_TABLE: readonly GroupOffset[] = Object.freeze(
-  ISO_OVERLAY_GROUP_OFFSET_TABLE.filter((entry) =>
-    entry.offset[0] % ISO_OVERLAY_GROUP_COARSE_STEP_CSS_PX === 0
-    && entry.offset[1] % ISO_OVERLAY_GROUP_COARSE_STEP_CSS_PX === 0) as GroupOffset[],
-);
+/** Liang-Barsky clipping keeps work proportional to the visible boundary. */
+function clipBoundarySegment(
+  start: ScenePoint, end: ScenePoint, limit: number,
+): readonly [ScenePoint, ScenePoint] | null {
+  const dx = end[0] - start[0], dy = end[1] - start[1];
+  let from = 0, to = 1;
+  const clip = (p: number, q: number): boolean => {
+    if (Math.abs(p) <= EPS) return q >= 0;
+    const ratio = q / p;
+    if (p < 0) {
+      if (ratio > to) return false;
+      if (ratio > from) from = ratio;
+    } else {
+      if (ratio < from) return false;
+      if (ratio < to) to = ratio;
+    }
+    return true;
+  };
+  if (!clip(-dx, start[0] + limit) || !clip(dx, limit - start[0])
+      || !clip(-dy, start[1] + limit) || !clip(dy, limit - start[1])) return null;
+  return [
+    [start[0] + dx * from, start[1] + dy * from],
+    [start[0] + dx * to, start[1] + dy * to],
+  ];
+}
 
-/** Уточнение вокруг грубого попадания: те же смещения, но только рядом с ним. */
-function refinementOffsets(around: ScenePoint): readonly GroupOffset[] {
-  const reach = ISO_OVERLAY_GROUP_COARSE_STEP_CSS_PX;
-  return ISO_OVERLAY_GROUP_OFFSET_TABLE.filter((entry) =>
-    Math.abs(entry.offset[0] - around[0]) <= reach
-    && Math.abs(entry.offset[1] - around[1]) <= reach);
+function addBoundaryRectangleGrid(
+  candidates: BoundaryCandidateMap, rectangles: readonly Bounds[], maxNudge: number,
+): void {
+  const xs = new Set<number>([0]), ys = new Set<number>([0]);
+  for (const bounds of rectangles) {
+    xs.add(bounds[0]); xs.add(bounds[2]);
+    ys.add(bounds[1]); ys.add(bounds[3]);
+    addBoundaryCandidate(candidates,
+      [bounds[0], Math.max(bounds[1], Math.min(0, bounds[3]))], maxNudge);
+    addBoundaryCandidate(candidates,
+      [bounds[2], Math.max(bounds[1], Math.min(0, bounds[3]))], maxNudge);
+    addBoundaryCandidate(candidates,
+      [Math.max(bounds[0], Math.min(0, bounds[2])), bounds[1]], maxNudge);
+    addBoundaryCandidate(candidates,
+      [Math.max(bounds[0], Math.min(0, bounds[2])), bounds[3]], maxNudge);
+  }
+  // A nearest point of a union of axis-aligned forbidden roots is either the
+  // projection of the origin to one edge or an intersection of two edges.
+  for (const x of xs) {
+    for (const y of ys) addBoundaryCandidate(candidates, [x, y], maxNudge);
+  }
+}
+
+/**
+ * Pure boundary-event generator kept public for the bounded-search contract.
+ * Production and unit tests share this implementation; legality is still
+ * decided later by the exact room, wall, footprint and overlap predicates.
+ */
+export function buildIsoOverlayBoundaryCandidates(
+  rectangles: readonly Bounds[], maxNudge: number,
+): readonly ScenePoint[] {
+  if (!(maxNudge >= 0) || !Number.isFinite(maxNudge))
+    throw new Error('invalid isometric overlay boundary input');
+  const candidates: BoundaryCandidateMap = new Map();
+  addBoundaryRectangleGrid(candidates, rectangles, maxNudge);
+  return Object.freeze(sortedBoundaryCandidates(candidates).map(({ offset }) =>
+    Object.freeze(offset) as ScenePoint));
+}
+
+function addCriticalBoundarySegment(
+  candidates: BoundaryCandidateMap, start: ScenePoint, end: ScenePoint, maxNudge: number,
+): void {
+  const clipped = clipBoundarySegment(start, end, maxNudge + 2);
+  if (!clipped) return;
+  const dx = clipped[1][0] - clipped[0][0], dy = clipped[1][1] - clipped[0][1];
+  const lengthSquared = dx * dx + dy * dy;
+  const ratio = lengthSquared > EPS
+    ? Math.max(0, Math.min(1, -(clipped[0][0] * dx + clipped[0][1] * dy) / lengthSquared))
+    : 0;
+  addBoundaryCandidate(candidates, clipped[0], maxNudge);
+  addBoundaryCandidate(candidates, clipped[1], maxNudge);
+  addBoundaryCandidate(candidates, [
+    clipped[0][0] + dx * ratio, clipped[0][1] + dy * ratio,
+  ], maxNudge);
+}
+
+function addCriticalBoundaryRectangle(
+  candidates: BoundaryCandidateMap, bounds: Bounds, maxNudge: number,
+): void {
+  const corners: readonly ScenePoint[] = [
+    [bounds[0], bounds[1]], [bounds[2], bounds[1]],
+    [bounds[2], bounds[3]], [bounds[0], bounds[3]],
+  ];
+  for (let index = 0; index < corners.length; index++)
+    addCriticalBoundarySegment(candidates,
+      corners[index], corners[(index + 1) % corners.length], maxNudge);
+}
+
+function addBoundaryCircle(
+  candidates: BoundaryCandidateMap, radius: number,
+): void {
+  if (radius <= EPS) {
+    addBoundaryCandidate(candidates, [0, 0], radius);
+    return;
+  }
+  // The rim is a degraded fallback, not the ordinary collision path. Fixed
+  // angular events plus their 1 px neighbours cover its extrema without
+  // rebuilding the complete integer disk.
+  const samples = 32;
+  for (let sample = 0; sample < samples; sample++) {
+    const angle = 2 * Math.PI * sample / samples;
+    addBoundaryCandidate(candidates,
+      [Math.cos(angle) * radius, Math.sin(angle) * radius], radius);
+  }
+}
+
+function sortedBoundaryCandidates(candidates: BoundaryCandidateMap): GroupOffset[] {
+  return [...candidates.values()].map((offset) => ({
+    offset, distance: Math.hypot(offset[0], offset[1]),
+  })).sort((a, b) => a.distance - b.distance
+    || a.offset[1] - b.offset[1] || a.offset[0] - b.offset[0]);
 }
 
 function overlayRootBounds(
@@ -1001,54 +1086,115 @@ export function resolveIsoOverlayCollisions(
     };
 
     let best = candidate(baseOffsetCss);
-    /**
-     * Грубый проход даёт место, уточнение возвращает минимальность: без него
-     * значок остановился бы на узле решётки 4 px, хотя ближе есть законная
-     * точка. Уточняется только окрестность найденного, а не весь диск.
-     */
-    const refine = (coarse: {
-      placement: IsoOverlayPlacement; bounds: Bounds;
-      conflicts: readonly number[]; penalty: number;
-    }): typeof coarse => {
-      let refined = coarse;
-      for (const entry of refinementOffsets(coarse.placement.nudgeCss)) {
-        if (entry.distance >= refined.placement.nudgeDistanceCss - EPS) continue;
-        const shape = candidateShape(entry.offset);
-        if (!shape || shape.conflicts.length || !candidateAllowed(shape)) continue;
-        refined = {
-          placement: placementAtGroupOffset(base, entry.offset, unitsPerPixel, false),
-          bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
-        };
-      }
-      return refined;
-    };
     if (!best || best.conflicts.length) {
-      for (const entry of ISO_OVERLAY_GROUP_COARSE_TABLE) {
-        if (entry.distance > maxNudge + EPS) break;
-        const offset = entry.offset;
-        if (Math.abs(offset[0] - baseOffsetCss[0]) <= EPS
-            && Math.abs(offset[1] - baseOffsetCss[1]) <= EPS) continue;
-        const shape = candidateShape(offset);
-        if (!shape) continue;
-        // Смещения отсортированы по возрастанию расстояния, поэтому кандидат с
-        // тем же штрафом уже никогда не окажется ближе принятого: его отбор
-        // невозможен, и платить за проверку кладки незачем. Результат тот же,
-        // что у прежнего порядка, — меняется только цена.
-        const canWin = !best || !shape.conflicts.length || shape.penalty < best.penalty - EPS;
-        if (!canWin || !candidateAllowed(shape)) continue;
-        const next = {
-          placement: placementAtGroupOffset(base, offset, unitsPerPixel, false),
-          bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
-        };
-        if (!next.conflicts.length) { best = refine(next); break; }
-        best = next;
+      /**
+       * A nearest free point must touch the boundary of the forbidden union.
+       * Enumerate those one-dimensional boundaries instead of the 7238 points
+       * in the complete 48 px disk. The 1 px neighbours added by the helper
+       * preserve the old integer result even when a legal slit is narrower
+       * than the former 4 px coarse grid.
+       */
+      const boundaryCandidates: BoundaryCandidateMap = new Map();
+      const overlayBoundaryRectangles: Bounds[] = [];
+      const expandedOverlayBoundaries = new Set<number>();
+      const addOverlayBoundary = (index: number): void => {
+        if (expandedOverlayBoundaries.has(index)) return;
+        expandedOverlayBoundaries.add(index);
+        const obstacle = accepted[index].bounds;
+        overlayBoundaryRectangles.push([
+          (obstacle[0] - item.screenHalfSize[0] - gapUnits - base.raisedScene[0])
+            / unitsPerPixel,
+          (obstacle[1] - item.screenHalfSize[1] - gapUnits - base.raisedScene[1])
+            / unitsPerPixel,
+          (obstacle[2] + item.screenHalfSize[0] + gapUnits - base.raisedScene[0])
+            / unitsPerPixel,
+          (obstacle[3] + item.screenHalfSize[1] + gapUnits - base.raisedScene[1])
+            / unitsPerPixel,
+        ]);
+      };
+
+      const evaluated = new Set<string>();
+      const encountered = new Set<number>();
+      const consider = (entries: readonly GroupOffset[]): boolean => {
+        for (const entry of entries) {
+          if (entry.distance > maxNudge + EPS) break;
+          const offset = entry.offset;
+          const offsetKey = boundaryCandidateKey(offset[0], offset[1]);
+          if (evaluated.has(offsetKey)) continue;
+          evaluated.add(offsetKey);
+          if (Math.abs(offset[0] - baseOffsetCss[0]) <= EPS
+              && Math.abs(offset[1] - baseOffsetCss[1]) <= EPS) continue;
+          const shape = candidateShape(offset);
+          if (!shape) continue;
+          for (const index of shape.conflicts) {
+            if (!expandedOverlayBoundaries.has(index)) encountered.add(index);
+          }
+          // Do not pay for room/wall polygons when this point cannot improve
+          // either the residual penalty or the first free candidate.
+          const canWin = !best || !shape.conflicts.length || shape.penalty < best.penalty - EPS;
+          if (!canWin || !candidateAllowed(shape)) continue;
+          best = {
+            placement: placementAtGroupOffset(base, offset, unitsPerPixel, false),
+            bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
+          };
+          if (!shape.conflicts.length) return true;
+        }
+        return false;
+      };
+
+      for (const index of best?.conflicts || []) encountered.add(index);
+      let resolved = false;
+      while (!resolved && encountered.size) {
+        const nextBoundaries = [...encountered].sort((a, b) => a - b);
+        encountered.clear();
+        for (const index of nextBoundaries) addOverlayBoundary(index);
+        for (const offset of buildIsoOverlayBoundaryCandidates(
+          overlayBoundaryRectangles, maxNudge,
+        )) boundaryCandidates.set(boundaryCandidateKey(offset[0], offset[1]), offset);
+        resolved = consider(sortedBoundaryCandidates(boundaryCandidates));
+        for (const index of best?.conflicts || []) {
+          if (!expandedOverlayBoundaries.has(index)) encountered.add(index);
+        }
       }
-      // Грубая решётка могла пройти мимо законного места, которое лежит между
-      // её узлами: тогда лучший кандидат остаётся с пересечением. Уточнение
-      // вокруг него ищет ту самую точку с шагом 1 px — ограниченно и только
-      // один раз, а не по всему диску (АС4 ТЗ: разрешимое пересечение обязано
-      // быть устранено).
-      if (best && best.conflicts.length) best = refine(best);
+      if (!resolved) {
+        /**
+         * If overlay borders are entirely covered by masonry/room limits, the
+         * nearest edge of the union can belong to that structural obstacle.
+         * Add only its critical extrema and projections (plus the displacement
+         * rim), never the interior of the search disk. Exact polygon checks
+         * remain authoritative.
+         */
+        addBoundaryCircle(boundaryCandidates, maxNudge);
+        const footprintBounds = ringBounds(baseFootprint);
+        if (footprintBounds) {
+          for (const wall of wallCandidates) {
+            const wallBounds = silhouetteBounds(wall, true);
+            if (!wallBounds) continue;
+            addCriticalBoundaryRectangle(boundaryCandidates, [
+              (wallBounds[0] - gapUnits - footprintBounds[2]) / unitsPerPixel,
+              (wallBounds[1] - gapUnits - footprintBounds[3]) / unitsPerPixel,
+              (wallBounds[2] + gapUnits - footprintBounds[0]) / unitsPerPixel,
+              (wallBounds[3] + gapUnits - footprintBounds[1]) / unitsPerPixel,
+            ], maxNudge);
+          }
+        }
+        if (ownerRoom) {
+          for (const ring of [ownerRoom.outer, ...(ownerRoom.holes || [])]) {
+            for (let index = 0; index < ring.length; index++) {
+              const startScene = projectPlanPoint(ring[index], visualOffset, camera);
+              const endScene = projectPlanPoint(ring[(index + 1) % ring.length], visualOffset, camera);
+              addCriticalBoundarySegment(boundaryCandidates, [
+                (startScene[0] - base.raisedScene[0]) / unitsPerPixel,
+                (startScene[1] - base.raisedScene[1]) / unitsPerPixel,
+              ], [
+                (endScene[0] - base.raisedScene[0]) / unitsPerPixel,
+                (endScene[1] - base.raisedScene[1]) / unitsPerPixel,
+              ], maxNudge);
+            }
+          }
+        }
+        consider(sortedBoundaryCandidates(boundaryCandidates));
+      }
     }
     if (!best) {
       const placement = placementAtGroupOffset(base, baseOffsetCss, unitsPerPixel, true);

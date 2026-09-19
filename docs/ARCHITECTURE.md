@@ -887,6 +887,13 @@ After individual wall correction, one deterministic group pass separates the
 full screen-space roots of devices and lock badges within the same absolute 48
 CSS-pixel cap. A bounded spatial grid avoids all-pairs scans; stable required
 displacement plus kind/id controls priority independently of HA registry order.
+Candidate generation is boundary-driven (#585): it starts with only the roots
+that actually overlap, adds newly encountered roots iteratively, and evaluates
+the origin projections and intersections of their expanded one-dimensional
+boundaries on the integer CSS-pixel lattice. Structural bounds and the 48 px rim
+are bounded fallback events, while the existing exact room-path, wall-silhouette
+and footprint predicates remain authoritative. This finds sub-4 px legal slits
+without either the lossy 4 px lattice or the former 7238-point disk scan.
 Room labels are excluded and remain below interactive roots. An impossible
 layout keeps every root and reports stable residual pairs rather than hiding,
 shrinking or moving an item across its owning-room boundary. Live placement is

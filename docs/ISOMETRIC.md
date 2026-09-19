@@ -211,6 +211,13 @@ first clears wall silhouettes. A second deterministic group pass separates the
 complete screen-space footprints of devices and lock badges from one another
 within one absolute 48 CSS-pixel budget, using a bounded spatial index and
 stable kind/id tie-break; it never writes the correction back to configuration.
+The live pass enumerates one-pixel lattice candidates only at critical edges
+and intersections of the forbidden screen-space roots it actually encounters;
+it does not scan the area of the displacement disk or depend on a coarse grid.
+Room, wall-silhouette and radius checks remain exact final filters, so a legal
+slit narrower than four CSS pixels is still found without weakening masonry or
+ownership safety. The two full isometric profiles therefore use the ordinary
+150/60/75 ms resize/pan/state noise allowances again (#585).
 Room labels do not enter that mutual pass and stay below interactive roots. If
 the owning room truly has no legal placement, the least-overlapping result is
 kept as an explicit degraded diagnostic without hiding or shrinking an item.
