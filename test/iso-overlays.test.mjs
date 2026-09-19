@@ -127,6 +127,37 @@ test('group collision finds a legal one-pixel slit between the coarse nodes', ()
   assert.ok(second.nudgeDistanceCss <= ISO_OVERLAY_MAX_NUDGE_CSS_PX);
 });
 
+test('group collision follows a real concave wall edge instead of its bounding box', () => {
+  const room = square('notch', 99, 99, 140, 112, [100, 100]);
+  // The wall bounding box covers the whole right-hand strip. Its actual ring
+  // has a 10 px notch; the nearest legal root is found only where that real
+  // inner edge meets the already accepted overlay boundary.
+  const wall = { outer: [
+    [120, 90], [130, 90], [130, 130], [120, 130],
+    [120, 115], [125, 115], [125, 105], [120, 105],
+  ] };
+  const make = (id) => ({
+    id,
+    kind: 'device',
+    placement: placement({
+      floorAnchor: [100, 100], rooms: [room], preferredRoomId: 'notch',
+      wallSilhouettes: [wall], footprintHalfSize: [1, 1],
+      wallHeight: 0, visualOffset: 0, sceneUnitsPerCssPixel: 1,
+      safetyGapCssPx: 0, camera: identityCamera,
+    }),
+    screenHalfSize: [10, 10],
+  });
+  const result = resolveIsoOverlayCollisions({
+    items: [make('a'), make('b')], rooms: [room], wallSilhouettes: [wall],
+    sceneUnitsPerCssPixel: 1, visualOffset: 0, safetyGapCssPx: 0,
+    camera: identityCamera,
+  });
+  const second = result.placements.get(isoOverlayCollisionKey('device', 'b'));
+  assert.deepEqual(result.residualPairs, []);
+  assert.deepEqual(second.nudgeCss, [20, 7]);
+  assert.equal(second.status, 'ok');
+});
+
 test('group collision boundary events stay sparse while covering sub-grid positions', () => {
   const candidates = buildIsoOverlayBoundaryCandidates([
     [-41, -41, 41, 41],

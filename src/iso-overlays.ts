@@ -760,6 +760,115 @@ function addCriticalBoundaryRectangle(
       corners[index], corners[(index + 1) % corners.length], maxNudge);
 }
 
+type BoundarySegment = readonly [start: ScenePoint, end: ScenePoint];
+
+function addBoundarySegmentRectangleIntersections(
+  candidates: BoundaryCandidateMap, segment: BoundarySegment,
+  rectangles: readonly Bounds[], maxNudge: number,
+): void {
+  const [start, end] = segment;
+  const dx = end[0] - start[0], dy = end[1] - start[1];
+  for (const bounds of rectangles) {
+    if (Math.abs(dx) > EPS) {
+      for (const x of [bounds[0], bounds[2]]) {
+        const ratio = (x - start[0]) / dx;
+        if (ratio < -EPS || ratio > 1 + EPS) continue;
+        const y = start[1] + dy * ratio;
+        if (y >= bounds[1] - EPS && y <= bounds[3] + EPS)
+          addBoundaryCandidate(candidates, [x, y], maxNudge);
+      }
+    }
+    if (Math.abs(dy) > EPS) {
+      for (const y of [bounds[1], bounds[3]]) {
+        const ratio = (y - start[1]) / dy;
+        if (ratio < -EPS || ratio > 1 + EPS) continue;
+        const x = start[0] + dx * ratio;
+        if (x >= bounds[0] - EPS && x <= bounds[2] + EPS)
+          addBoundaryCandidate(candidates, [x, y], maxNudge);
+      }
+    }
+  }
+}
+
+function addBoundaryLineIntersections(
+  candidates: BoundaryCandidateMap, segments: readonly BoundarySegment[], maxNudge: number,
+): void {
+  for (let left = 0; left < segments.length; left++) {
+    const [a, b] = segments[left];
+    const ab: ScenePoint = [b[0] - a[0], b[1] - a[1]];
+    for (let right = left + 1; right < segments.length; right++) {
+      const [c, d] = segments[right];
+      const cd: ScenePoint = [d[0] - c[0], d[1] - c[1]];
+      const denominator = ab[0] * cd[1] - ab[1] * cd[0];
+      if (Math.abs(denominator) <= EPS) continue;
+      const ac: ScenePoint = [c[0] - a[0], c[1] - a[1]];
+      const ratio = (ac[0] * cd[1] - ac[1] * cd[0]) / denominator;
+      const point: ScenePoint = [a[0] + ab[0] * ratio, a[1] + ab[1] * ratio];
+      // Infinite support lines from unrelated distant edges create an interior
+      // grid approaching the very area scan this helper replaces. A critical
+      // junction must lie on, or in the immediate integer neighbourhood of,
+      // both finite support segments.
+      if (Math.hypot(point[0], point[1]) <= maxNudge + 2
+          && pointSegmentDistance(point, a, b) <= 3
+          && pointSegmentDistance(point, c, d) <= 3)
+        addBoundaryCandidate(candidates, point, maxNudge);
+    }
+  }
+}
+
+/**
+ * Boundary of one wall edge dilated by the complete overlay footprint and the
+ * safety gap. The two parallel support segments are exact critical events for
+ * the straight part of the Minkowski boundary; the final polygon predicate
+ * still decides legality around vertices and concavities.
+ */
+function addExpandedWallBoundarySegments(
+  candidates: BoundaryCandidateMap, wall: IsoWallSilhouette,
+  footprint: readonly ScenePoint[], gapUnits: number, unitsPerPixel: number,
+  maxNudge: number, rectangles: readonly Bounds[], segments?: BoundarySegment[],
+): void {
+  for (const ring of [wall.outer, ...(wall.holes || [])]) {
+    for (let index = 0; index < ring.length; index++) {
+      const wallStart = ring[index], wallEnd = ring[(index + 1) % ring.length];
+      const edgeX = wallEnd[0] - wallStart[0], edgeY = wallEnd[1] - wallStart[1];
+      const edgeLength = Math.hypot(edgeX, edgeY);
+      if (edgeLength <= EPS) continue;
+      const tangent: ScenePoint = [edgeX / edgeLength, edgeY / edgeLength];
+      const normal: ScenePoint = [-tangent[1], tangent[0]];
+      const dot = (point: readonly number[], axis: ScenePoint): number =>
+        point[0] * axis[0] + point[1] * axis[1];
+      const wallTangentStart = dot(wallStart, tangent);
+      const wallTangentEnd = dot(wallEnd, tangent);
+      const wallTangentMin = Math.min(wallTangentStart, wallTangentEnd);
+      const wallTangentMax = Math.max(wallTangentStart, wallTangentEnd);
+      const wallNormal = dot(wallStart, normal);
+      const footprintTangents = footprint.map((point) => dot(point, tangent));
+      const footprintNormals = footprint.map((point) => dot(point, normal));
+      const tangentMin = wallTangentMin - Math.max(...footprintTangents) - gapUnits;
+      const tangentMax = wallTangentMax - Math.min(...footprintTangents) + gapUnits;
+      const normalOffsets = [
+        wallNormal - gapUnits - Math.max(...footprintNormals),
+        wallNormal + gapUnits - Math.min(...footprintNormals),
+      ];
+      for (const normalOffset of normalOffsets) {
+        const toPoint = (tangentOffset: number): ScenePoint => [
+          (tangent[0] * tangentOffset + normal[0] * normalOffset) / unitsPerPixel,
+          (tangent[1] * tangentOffset + normal[1] * normalOffset) / unitsPerPixel,
+        ];
+        const clipped = clipBoundarySegment(
+          toPoint(tangentMin), toPoint(tangentMax), maxNudge + 2,
+        );
+        if (!clipped) continue;
+        segments?.push(clipped);
+        addCriticalBoundarySegment(candidates, clipped[0], clipped[1], maxNudge);
+        addBoundarySegmentRectangleIntersections(
+          candidates, clipped, rectangles, maxNudge,
+        );
+      }
+    }
+  }
+}
+
 function addBoundaryCircle(
   candidates: BoundaryCandidateMap, radius: number,
 ): void {
@@ -767,14 +876,13 @@ function addBoundaryCircle(
     addBoundaryCandidate(candidates, [0, 0], radius);
     return;
   }
-  // The rim is a degraded fallback, not the ordinary collision path. Fixed
-  // angular events plus their 1 px neighbours cover its extrema without
-  // rebuilding the complete integer disk.
-  const samples = 32;
-  for (let sample = 0; sample < samples; sample++) {
-    const angle = 2 * Math.PI * sample / samples;
-    addBoundaryCandidate(candidates,
-      [Math.cos(angle) * radius, Math.sin(angle) * radius], radius);
+  // Enumerate the one-dimensional integer neighbourhood of the rim. This is
+  // O(radius), unlike the forbidden O(radius²) disk scan, and preserves exact
+  // nearest lattice points such as (29, -38) near a 48 px cap.
+  for (let x = Math.ceil(-radius); x <= Math.floor(radius); x++) {
+    const y = Math.sqrt(Math.max(0, radius * radius - x * x));
+    addBoundaryCandidate(candidates, [x, y], radius);
+    addBoundaryCandidate(candidates, [x, -y], radius);
   }
 }
 
@@ -783,6 +891,25 @@ function sortedBoundaryCandidates(candidates: BoundaryCandidateMap): GroupOffset
     offset, distance: Math.hypot(offset[0], offset[1]),
   })).sort((a, b) => a.distance - b.distance
     || a.offset[1] - b.offset[1] || a.offset[0] - b.offset[0]);
+}
+
+/**
+ * Snap a continuous boundary event back to the exact integer-pixel result.
+ * The bounded 9x9 neighbourhood replaces the old complete 7,238-point disk.
+ */
+function localRefinementOffsets(
+  around: ScenePoint, maxNudge: number, reach = 4,
+): readonly GroupOffset[] {
+  const offsets: GroupOffset[] = [];
+  for (let y = Math.floor(around[1] - reach); y <= Math.ceil(around[1] + reach); y++) {
+    for (let x = Math.floor(around[0] - reach); x <= Math.ceil(around[0] + reach); x++) {
+      const distance = Math.hypot(x, y);
+      if (distance <= maxNudge + EPS) offsets.push({ offset: [x, y], distance });
+    }
+  }
+  offsets.sort((a, b) => a.distance - b.distance
+    || a.offset[1] - b.offset[1] || a.offset[0] - b.offset[0]);
+  return offsets;
 }
 
 function overlayRootBounds(
@@ -1035,41 +1162,52 @@ export function resolveIsoOverlayCollisions(
     // стоит дороже самой проверки.
     const wallSeen = new Int32Array(wallCandidates.length);
     let wallSeenGeneration = 0;
-    const wallsNear = (bounds: Bounds): IsoWallSilhouette[] => {
+    const wallsNear = (bounds: Bounds): number[] => {
       const [minX, minY, maxX, maxY] = cellRange(expandedBounds(bounds, gapUnits));
-      const result: IsoWallSilhouette[] = [];
+      const result: number[] = [];
       wallSeenGeneration += 1;
       for (let y = minY; y <= maxY; y++) {
         for (let x = minX; x <= maxX; x++) {
           for (const index of wallCells.get(`${x}:${y}`) || []) {
             if (wallSeen[index] === wallSeenGeneration) continue;
             wallSeen[index] = wallSeenGeneration;
-            result.push(wallCandidates[index]);
+            result.push(index);
           }
         }
       }
       return result;
     };
 
-    const candidateAllowed = (shape: {
+    const inspectCandidate = (shape: {
       offsetScene: ScenePoint; sameAsBase: boolean; visualScene: ScenePoint;
-    }): boolean => {
-      if (shape.sameAsBase) return true;
-      if (!wallsValid || !ownerRoom) return false;
+    }): { allowed: boolean; walls: readonly number[]; room: boolean } => {
+      if (shape.sameAsBase) return { allowed: true, walls: [], room: false };
+      if (!wallsValid || !ownerRoom) return { allowed: false, walls: [], room: true };
       const plan = raisedSceneToPlan(shape.visualScene, visualOffset, camera);
       if (ownerBox && (plan[0] < ownerBox[0] || plan[0] > ownerBox[2]
-        || plan[1] < ownerBox[1] || plan[1] > ownerBox[3])) return false;
-      if (!pointStrictlyInRoom(plan, ownerRoom)) return false;
+        || plan[1] < ownerBox[1] || plan[1] > ownerBox[3]))
+        return { allowed: false, walls: [], room: true };
+      if (!pointStrictlyInRoom(plan, ownerRoom))
+        return { allowed: false, walls: [], room: true };
       if (pointStrictlyInRoom(currentPlan, ownerRoom)
-          && !segmentStrictlyInRoom(currentPlan, plan, ownerRoom)) return false;
+          && !segmentStrictlyInRoom(currentPlan, plan, ownerRoom))
+        return { allowed: false, walls: [], room: true };
       const footprint = baseFootprint.map((point) => [
         point[0] + shape.offsetScene[0], point[1] + shape.offsetScene[1],
       ] as ScenePoint);
       const footprintBounds = ringBounds(footprint);
-      if (!footprintBounds) return false;
-      return !wallsNear(footprintBounds).some((wall) =>
-        footprintNearSilhouette(footprint, footprintBounds, wall, gapUnits, true));
+      if (!footprintBounds) return { allowed: false, walls: [], room: true };
+      const wall = wallsNear(footprintBounds).find((index) =>
+        footprintNearSilhouette(
+          footprint, footprintBounds, wallCandidates[index], gapUnits, true,
+        ));
+      return wall === undefined
+        ? { allowed: true, walls: [], room: false }
+        : { allowed: false, walls: [wall], room: false };
     };
+    const candidateAllowed = (shape: {
+      offsetScene: ScenePoint; sameAsBase: boolean; visualScene: ScenePoint;
+    }): boolean => inspectCandidate(shape).allowed;
 
     const candidate = (offsetCss: ScenePoint): {
       placement: IsoOverlayPlacement;
@@ -1097,6 +1235,7 @@ export function resolveIsoOverlayCollisions(
       const boundaryCandidates: BoundaryCandidateMap = new Map();
       const overlayBoundaryRectangles: Bounds[] = [];
       const expandedOverlayBoundaries = new Set<number>();
+      const encounteredOverlayBoundaries = new Set<number>(best?.conflicts || []);
       const addOverlayBoundary = (index: number): void => {
         if (expandedOverlayBoundaries.has(index)) return;
         expandedOverlayBoundaries.add(index);
@@ -1113,87 +1252,187 @@ export function resolveIsoOverlayCollisions(
         ]);
       };
 
+      const roomBoundarySegments: BoundarySegment[] = [];
+      const footprintBounds = ringBounds(baseFootprint);
+      const structuralBoundaryRectangles: Bounds[] = [];
+      const structuralBoundarySegments: BoundarySegment[] = [];
+      const expandedWalls = new Set<number>();
+      const pendingWalls = new Set<number>();
       const evaluated = new Set<string>();
-      const encountered = new Set<number>();
-      const consider = (entries: readonly GroupOffset[]): boolean => {
+      const addWallBoundary = (index: number): void => {
+        if (expandedWalls.has(index) || !footprintBounds) return;
+        expandedWalls.add(index);
+        const wall = wallCandidates[index];
+        const wallBounds = silhouetteBounds(wall, true);
+        if (wallBounds) {
+          const expandedWallBounds: Bounds = [
+            (wallBounds[0] - gapUnits - footprintBounds[2]) / unitsPerPixel,
+            (wallBounds[1] - gapUnits - footprintBounds[3]) / unitsPerPixel,
+            (wallBounds[2] + gapUnits - footprintBounds[0]) / unitsPerPixel,
+            (wallBounds[3] + gapUnits - footprintBounds[1]) / unitsPerPixel,
+          ];
+          structuralBoundaryRectangles.push(expandedWallBounds);
+          addCriticalBoundaryRectangle(boundaryCandidates, expandedWallBounds, maxNudge);
+        }
+        addExpandedWallBoundarySegments(
+          boundaryCandidates, wall, baseFootprint, gapUnits, unitsPerPixel,
+          maxNudge, overlayBoundaryRectangles, structuralBoundarySegments,
+        );
+      };
+
+      let fallbackAdded = false;
+      const addFallbackBoundaries = (): void => {
+        if (fallbackAdded) return;
+        fallbackAdded = true;
+        addBoundaryCircle(boundaryCandidates, maxNudge);
+        if (!ownerRoom) return;
+        for (const ring of [ownerRoom.outer, ...(ownerRoom.holes || [])]) {
+          for (let index = 0; index < ring.length; index++) {
+            const startScene = projectPlanPoint(ring[index], visualOffset, camera);
+            const endScene = projectPlanPoint(ring[(index + 1) % ring.length], visualOffset, camera);
+            const boundary: BoundarySegment = [[
+              (startScene[0] - base.raisedScene[0]) / unitsPerPixel,
+              (startScene[1] - base.raisedScene[1]) / unitsPerPixel,
+            ], [
+              (endScene[0] - base.raisedScene[0]) / unitsPerPixel,
+              (endScene[1] - base.raisedScene[1]) / unitsPerPixel,
+            ]];
+            addCriticalBoundarySegment(
+              boundaryCandidates, boundary[0], boundary[1], maxNudge,
+            );
+            const clipped = clipBoundarySegment(
+              boundary[0], boundary[1], maxNudge + 2,
+            );
+            if (clipped) roomBoundarySegments.push(clipped);
+          }
+        }
+      };
+
+      const refreshBoundaryEvents = (): void => {
+        addBoundaryRectangleGrid(boundaryCandidates, [
+          ...overlayBoundaryRectangles, ...structuralBoundaryRectangles,
+        ], maxNudge);
+        // Concave silhouettes and the safety-gap rounding meet where support
+        // lines of neighbouring edge families cross. Exact polygons reject
+        // false combinations introduced by extending those lines.
+        addBoundaryLineIntersections(boundaryCandidates, [
+          ...structuralBoundarySegments, ...roomBoundarySegments,
+        ], maxNudge);
+        for (const segment of [...structuralBoundarySegments, ...roomBoundarySegments])
+          addBoundarySegmentRectangleIntersections(
+            boundaryCandidates, segment, overlayBoundaryRectangles, maxNudge,
+          );
+      };
+
+      const evaluateNewCandidates = (): void => {
+        const entries = [...boundaryCandidates.entries()]
+          .filter(([key]) => !evaluated.has(key))
+          .map(([, offset]) => ({
+            offset, distance: Math.hypot(offset[0], offset[1]),
+          }))
+          .sort((a, b) => a.distance - b.distance
+            || a.offset[1] - b.offset[1] || a.offset[0] - b.offset[0]);
+        let wallWitness: {
+          index: number; freePriority: number; score: number; distance: number;
+        } | null = null;
         for (const entry of entries) {
-          if (entry.distance > maxNudge + EPS) break;
+          const bestFreeDistance = best && !best.conflicts.length
+            ? best.placement.nudgeDistanceCss : Infinity;
+          if (entry.distance > maxNudge + EPS || entry.distance > bestFreeDistance + EPS) break;
           const offset = entry.offset;
-          const offsetKey = boundaryCandidateKey(offset[0], offset[1]);
-          if (evaluated.has(offsetKey)) continue;
-          evaluated.add(offsetKey);
+          const key = boundaryCandidateKey(offset[0], offset[1]);
+          if (evaluated.has(key)) continue;
+          evaluated.add(key);
           if (Math.abs(offset[0] - baseOffsetCss[0]) <= EPS
               && Math.abs(offset[1] - baseOffsetCss[1]) <= EPS) continue;
           const shape = candidateShape(offset);
           if (!shape) continue;
-          for (const index of shape.conflicts) {
-            if (!expandedOverlayBoundaries.has(index)) encountered.add(index);
+          for (const conflictIndex of shape.conflicts) {
+            if (!expandedOverlayBoundaries.has(conflictIndex))
+              encounteredOverlayBoundaries.add(conflictIndex);
           }
-          // Do not pay for room/wall polygons when this point cannot improve
-          // either the residual penalty or the first free candidate.
-          const canWin = !best || !shape.conflicts.length || shape.penalty < best.penalty - EPS;
-          if (!canWin || !candidateAllowed(shape)) continue;
-          best = {
+          const canWin = !best || !shape.conflicts.length
+            || best.conflicts.length && shape.penalty < best.penalty - EPS;
+          if (!canWin) continue;
+          const inspection = inspectCandidate(shape);
+          if (!inspection.allowed) {
+            for (const wallIndex of inspection.walls) {
+              if (expandedWalls.has(wallIndex)) continue;
+              const witness = {
+                index: wallIndex,
+                freePriority: shape.conflicts.length ? 1 : 0,
+                score: shape.conflicts.length ? shape.penalty : entry.distance,
+                distance: entry.distance,
+              };
+              if (!wallWitness
+                  || witness.freePriority < wallWitness.freePriority
+                  || witness.freePriority === wallWitness.freePriority
+                    && (witness.score < wallWitness.score - EPS
+                      || Math.abs(witness.score - wallWitness.score) <= EPS
+                        && (witness.distance < wallWitness.distance - EPS
+                          || Math.abs(witness.distance - wallWitness.distance) <= EPS
+                            && witness.index < wallWitness.index))) wallWitness = witness;
+            }
+            continue;
+          }
+          if (shape.conflicts.length) {
+            if (!best || best.conflicts.length && shape.penalty < best.penalty - EPS) {
+              best = {
+                placement: placementAtGroupOffset(base, offset, unitsPerPixel, false),
+                bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
+              };
+            }
+            continue;
+          }
+          const bestOffset = best?.placement.nudgeCss;
+          const wins = !best || best.conflicts.length
+            || entry.distance < best.placement.nudgeDistanceCss - EPS
+            || Math.abs(entry.distance - best.placement.nudgeDistanceCss) <= EPS
+              && !!bestOffset && (offset[1] < bestOffset[1] - EPS
+                || Math.abs(offset[1] - bestOffset[1]) <= EPS
+                  && offset[0] < bestOffset[0] - EPS);
+          if (wins) best = {
             placement: placementAtGroupOffset(base, offset, unitsPerPixel, false),
             bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
           };
-          if (!shape.conflicts.length) return true;
         }
-        return false;
+        if (wallWitness) pendingWalls.add(wallWitness.index);
       };
 
-      for (const index of best?.conflicts || []) encountered.add(index);
-      let resolved = false;
-      while (!resolved && encountered.size) {
-        const nextBoundaries = [...encountered].sort((a, b) => a - b);
-        encountered.clear();
-        for (const index of nextBoundaries) addOverlayBoundary(index);
-        for (const offset of buildIsoOverlayBoundaryCandidates(
-          overlayBoundaryRectangles, maxNudge,
-        )) boundaryCandidates.set(boundaryCandidateKey(offset[0], offset[1]), offset);
-        resolved = consider(sortedBoundaryCandidates(boundaryCandidates));
-        for (const index of best?.conflicts || []) {
-          if (!expandedOverlayBoundaries.has(index)) encountered.add(index);
+      while (true) {
+        let changed = false;
+        if (encounteredOverlayBoundaries.size) {
+          const next = [...encounteredOverlayBoundaries].sort((a, b) => a - b);
+          encounteredOverlayBoundaries.clear();
+          next.forEach(addOverlayBoundary);
+          changed = true;
         }
+        if (pendingWalls.size) {
+          const next = [...pendingWalls].sort((a, b) => a - b);
+          pendingWalls.clear();
+          next.forEach(addWallBoundary);
+          changed = true;
+        }
+        if (!changed && best && !best.conflicts.length) break;
+        if (!changed && !fallbackAdded) {
+          addFallbackBoundaries();
+          changed = true;
+        }
+        if (!changed) break;
+        refreshBoundaryEvents();
+        evaluateNewCandidates();
       }
-      if (!resolved) {
-        /**
-         * If overlay borders are entirely covered by masonry/room limits, the
-         * nearest edge of the union can belong to that structural obstacle.
-         * Add only its critical extrema and projections (plus the displacement
-         * rim), never the interior of the search disk. Exact polygon checks
-         * remain authoritative.
-         */
-        addBoundaryCircle(boundaryCandidates, maxNudge);
-        const footprintBounds = ringBounds(baseFootprint);
-        if (footprintBounds) {
-          for (const wall of wallCandidates) {
-            const wallBounds = silhouetteBounds(wall, true);
-            if (!wallBounds) continue;
-            addCriticalBoundaryRectangle(boundaryCandidates, [
-              (wallBounds[0] - gapUnits - footprintBounds[2]) / unitsPerPixel,
-              (wallBounds[1] - gapUnits - footprintBounds[3]) / unitsPerPixel,
-              (wallBounds[2] + gapUnits - footprintBounds[0]) / unitsPerPixel,
-              (wallBounds[3] + gapUnits - footprintBounds[1]) / unitsPerPixel,
-            ], maxNudge);
-          }
+      if (best && !best.conflicts.length) {
+        const around = best.placement.nudgeCss;
+        for (const entry of localRefinementOffsets(around, maxNudge)) {
+          if (entry.distance >= best.placement.nudgeDistanceCss - EPS) break;
+          const shape = candidateShape(entry.offset);
+          if (!shape || shape.conflicts.length || !candidateAllowed(shape)) continue;
+          best = {
+            placement: placementAtGroupOffset(base, entry.offset, unitsPerPixel, false),
+            bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
+          };
         }
-        if (ownerRoom) {
-          for (const ring of [ownerRoom.outer, ...(ownerRoom.holes || [])]) {
-            for (let index = 0; index < ring.length; index++) {
-              const startScene = projectPlanPoint(ring[index], visualOffset, camera);
-              const endScene = projectPlanPoint(ring[(index + 1) % ring.length], visualOffset, camera);
-              addCriticalBoundarySegment(boundaryCandidates, [
-                (startScene[0] - base.raisedScene[0]) / unitsPerPixel,
-                (startScene[1] - base.raisedScene[1]) / unitsPerPixel,
-              ], [
-                (endScene[0] - base.raisedScene[0]) / unitsPerPixel,
-                (endScene[1] - base.raisedScene[1]) / unitsPerPixel,
-              ], maxNudge);
-            }
-          }
-        }
-        consider(sortedBoundaryCandidates(boundaryCandidates));
       }
     }
     if (!best) {
