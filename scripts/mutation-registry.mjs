@@ -10243,6 +10243,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'form-kit-fragment-drifts-from-panel',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#597" test/form-kit.test.mjs',
+    because: '#597: панель подставляет фрагменты набора, и у её настроек нет ни одного '
+      + 'golden-кадра — расхождение показать пикселями нечем. Если правка фрагмента не '
+      + 'краснит побайтовое сравнение, набор может молча увести вид панели',
+    patches: [{
+      file: 'src/styles/form-kit.styles.ts',
+      find: '  return `  ${cards.join(\',\\n  \')} {\n    min-width: 0;\n    padding: 14px;',
+      replace: '  return `  ${cards.join(\',\\n  \')} {\n    min-width: 0;\n    padding: 13px;',
+    }],
+  },
+  {
     id: 'form-kit-writes-to-a-neighbour-key',
     guard: 'node demo/smoke_room_settings.mjs',
     because: '#594: два источника комнаты — две одинаковые строки, отличающиеся одним словом. '

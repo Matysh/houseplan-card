@@ -1,0 +1,67 @@
+  .hpf-card {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--hpf-line);
+    border-radius: 11px;
+    background: var(--hpf-surface);
+  }
+  .hpf-form input:focus-visible,
+  .hpf-form select:focus-visible,
+  .hpf-form button:focus-visible,
+  .hpf-footer button:focus-visible {
+    outline: 2px solid var(--hpf-accent);
+    outline-offset: 2px;
+  }
+  .hpf-form button:disabled,
+  .hpf-form input:disabled,
+  .hpf-form select:disabled { opacity: .4; cursor: default; }
+  .hpf-form { display: grid; gap: 12px; }
+  .hpf-head {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 0 10px;
+  }
+  .hpf-head h3 { margin: 0; font-size: 1rem; line-height: 1.3; font-weight: 600; }
+  .hpf-row {
+    display: flex;
+    min-width: 0;
+    min-height: 44px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .hpf-row > .hpf-label { min-width: 0; overflow-wrap: anywhere; }
+  .hpf-seg {
+    display: flex;
+    min-width: 0;
+    border: 1px solid var(--hpf-line);
+    border-radius: 9px;
+    overflow: hidden;
+  }
+  .hpf-seg label {
+    display: flex;
+    min-width: 0;
+    min-height: 44px;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 12px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .hpf-seg label + label { border-left: 1px solid var(--hpf-line); }
+  .hpf-seg input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  .hpf-seg label:has(input:checked) {
+    background: var(--hpf-accent);
+    color: var(--text-primary-color, #fff);
+  }
+  .hpf-seg label:has(input:focus-visible) {
+    outline: 2px solid var(--hpf-accent);
+    outline-offset: -2px;
+  }
+  .hpf-color { display: flex; min-width: 0; align-items: center; gap: 12px; }
+  .hpf-color hp-color-opacity { flex: 0 0 auto; }

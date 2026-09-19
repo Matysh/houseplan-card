@@ -52,11 +52,47 @@ export const CARD_DIALOG_FORM_KIT: FormKitCssOptions = {
   },
 };
 
-/** Правила, общие с панелью. Текст обязан совпадать с её листом дословно. */
-function sharedCss(options: FormKitCssOptions, withSwitch: boolean): string {
-  const { form, prefix, cards, footer, tokens } = options;
-  const switchRules = !withSwitch ? '' : `
-  ${form} .${prefix}-switch {
+/**
+ * Правила, общие с панелью, — по одному фрагменту на правило (#597).
+ *
+ * Разрезано не ради красоты: в листе панели эти правила НЕ идут подряд, между
+ * ними стоят её собственные (`button { font: inherit }`, `svg { … }`). Пока
+ * генератор отдавал их одним куском, переезд панели на общий источник требовал
+ * бы переставить её объявления — то есть переписать каскад под инструмент.
+ * Отдельные фрагменты позволяют подставить каждый ровно туда, где он стоит
+ * сейчас, и собранный лист совпадает с прежним побайтово.
+ */
+export function formKitCardsCss({ cards, tokens }: FormKitCssOptions): string {
+  return `  ${cards.join(',\n  ')} {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(${tokens.line});
+    border-radius: 11px;
+    background: var(${tokens.surface});
+  }`;
+}
+
+/** Обводка фокуса формы и её футера. */
+export function formKitFocusCss({ form, footer, tokens }: FormKitCssOptions): string {
+  return `  ${form} input:focus-visible,
+  ${form} select:focus-visible,
+  ${form} button:focus-visible,
+  ${footer} button:focus-visible {
+    outline: 2px solid var(${tokens.accent});
+    outline-offset: 2px;
+  }`;
+}
+
+/** Выключенные контролы. */
+export function formKitDisabledCss({ form }: FormKitCssOptions): string {
+  return `  ${form} button:disabled,
+  ${form} input:disabled,
+  ${form} select:disabled { opacity: .4; cursor: default; }`;
+}
+
+/** Ряд-переключатель: подпись слева, переключатель справа. */
+export function formKitSwitchRowCss({ form, prefix }: FormKitCssOptions): string {
+  return `  ${form} .${prefix}-switch {
     display: flex;
     min-width: 0;
     min-height: 54px;
@@ -66,27 +102,20 @@ function sharedCss(options: FormKitCssOptions, withSwitch: boolean): string {
     margin: 0;
     color: var(--primary-text-color);
     cursor: pointer;
-  }
-  .${prefix}-switch-caption { display: grid; min-width: 0; gap: 3px; }
+  }`;
+}
+
+/** Подпись ряда-переключателя: заголовок и пояснение мелким шрифтом. */
+export function formKitSwitchCaptionCss({ prefix }: FormKitCssOptions): string {
+  return `  .${prefix}-switch-caption { display: grid; min-width: 0; gap: 3px; }
   .${prefix}-switch-caption strong { font-size: .875rem; font-weight: 600; overflow-wrap: anywhere; }
   .${prefix}-switch-caption small { font-size: .8125rem; color: var(--secondary-text-color); overflow-wrap: anywhere; }`;
-  return `  ${cards.join(',\n  ')} {
-    min-width: 0;
-    padding: 14px;
-    border: 1px solid var(${tokens.line});
-    border-radius: 11px;
-    background: var(${tokens.surface});
-  }
-  ${form} input:focus-visible,
-  ${form} select:focus-visible,
-  ${form} button:focus-visible,
-  ${footer} button:focus-visible {
-    outline: 2px solid var(${tokens.accent});
-    outline-offset: 2px;
-  }
-  ${form} button:disabled,
-  ${form} input:disabled,
-  ${form} select:disabled { opacity: .4; cursor: default; }${switchRules}`;
+}
+
+/** Все общие правила подряд — так их берут диалоги карточки. */
+function sharedCss(options: FormKitCssOptions, withSwitch: boolean): string {
+  const switchRules = !withSwitch ? '' : `\n${formKitSwitchRowCss(options)}\n${formKitSwitchCaptionCss(options)}`;
+  return `${formKitCardsCss(options)}\n${formKitFocusCss(options)}\n${formKitDisabledCss(options)}${switchRules}`;
 }
 
 /**

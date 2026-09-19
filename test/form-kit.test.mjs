@@ -5,21 +5,33 @@ import { readFileSync } from 'node:fs';
 import {
   CARD_DIALOG_FORM_KIT, SUMMARY_PANEL_FORM_KIT, formKitCss,
 } from '../test-build/styles/form-kit.styles.js';
+import { summaryPanelEditorCss } from '../test-build/summary-panel-editor-style.js';
 
 /**
  * #594. Набор контролов поднят из редактора боковой панели, и главный вопрос к
  * нему один: общий ли он на самом деле. Ответ обязан быть машинным — с
  * параметрами панели генератор должен выдавать её нынешние правила ДОСЛОВНО.
- * Тогда переезд панели на общий источник (следующий шаг эпика #591) окажется
- * подстановкой, а не редизайном, и её пиксели не дрогнут.
  *
- * Фрагменты ниже скопированы из `src/summary-panel-editor-style.ts` как есть.
- * Тест читает тот же файл и проверяет, что фрагмент всё ещё в нём: иначе
- * «замороженная» фикстура тихо разошлась бы с панелью и сравнивала генератор
- * сама с собой.
+ * #597 довёл это до конца: панель больше не описывает эти правила у себя, она
+ * подставляет фрагменты набора. Поэтому доказательство переехало с «фрагмент
+ * есть в исходнике панели» на «СОБРАННЫЙ лист панели совпадает с замороженным
+ * побайтово» — оно сильнее и ловит в том числе перестановку правил.
  */
-const PANEL_STYLE = readFileSync(
-  new URL('../src/summary-panel-editor-style.ts', import.meta.url), 'utf8',
+const FROZEN_PANEL_CSS = readFileSync(
+  new URL('./fixtures/summary-panel-editor.css', import.meta.url), 'utf8',
+);
+/**
+ * #597 M2 ревью ТЗ. К3 обещает, что разрез генератора на фрагменты не меняет
+ * ни байта в листе диалогов, а сослаться было не на что: существующие тесты
+ * набора проверяют подстроки и счётчики, но не полный текст. Лишний пробел на
+ * стыке фрагментов прошёл бы незамеченным — в CSS он безвреден, но обещание
+ * «байт в байт» без свидетеля остаётся обещанием.
+ */
+const FROZEN_CARD_KIT_CSS = readFileSync(
+  new URL('./fixtures/form-kit-card-dialog.css', import.meta.url), 'utf8',
+);
+const FROZEN_CARD_KIT_WITH_SWITCH_CSS = readFileSync(
+  new URL('./fixtures/form-kit-card-dialog-with-switch.css', import.meta.url), 'utf8',
 );
 
 const PANEL_FRAGMENTS = {
@@ -60,11 +72,56 @@ const PANEL_FRAGMENTS = {
 test('#594 AC11 генератор воспроизводит правила панели дословно', () => {
   const generated = formKitCss(SUMMARY_PANEL_FORM_KIT);
   for (const [name, fragment] of Object.entries(PANEL_FRAGMENTS)) {
-    assert.ok(PANEL_STYLE.includes(fragment),
-      `${name}: фикстура разошлась с листом панели — сверьте src/summary-panel-editor-style.ts`);
+    assert.ok(FROZEN_PANEL_CSS.includes(fragment),
+      `${name}: фикстура разошлась с замороженным листом панели`);
     assert.ok(generated.includes(fragment),
       `${name}: генератор с параметрами панели больше не выдаёт её правило дословно`);
   }
+});
+
+/**
+ * #597. Главное доказательство шага и единственное, которое ловит перестановку
+ * правил: у настроек панели нет ни одного golden-кадра (в матрице нет сцены
+ * `dialog: 'summary'`), поэтому «панель не изменилась» нельзя показать
+ * пикселями. Сравнение собранного листа с замороженным — замена эталону.
+ *
+ * Фикстура `test/fixtures/summary-panel-editor.css` снята с `origin/dev` до
+ * правки. Она живёт ровно до того шага эпика #591, который законно меняет вид
+ * панели: там её обновляют вместе с кадрами и объясняют расхождение.
+ */
+test('#597 собранный лист панели совпадает с замороженным побайтово', () => {
+  assert.equal(summaryPanelEditorCss.length, FROZEN_PANEL_CSS.length,
+    'длина листа панели изменилась — значит изменился и он сам');
+  assert.equal(summaryPanelEditorCss, FROZEN_PANEL_CSS);
+  // И фрагменты действительно пришли из набора, а не остались литералами:
+  // иначе тест выше сравнивал бы панель сама с собой.
+  const source = readFileSync(
+    new URL('../src/summary-panel-editor-style.ts', import.meta.url), 'utf8',
+  );
+  for (const fn of ['formKitCardsCss', 'formKitFocusCss', 'formKitDisabledCss',
+    'formKitSwitchRowCss', 'formKitSwitchCaptionCss']) {
+    assert.ok(source.includes(`\${${fn}(SUMMARY_PANEL_FORM_KIT)}`),
+      `${fn}: панель не подставляет фрагмент набора`);
+  }
+  // #597 M1 ревью ТЗ: проверять надо отсутствие ВСЕХ пяти фрагментов, а не одной
+  // характерной подстроки. `min-height: 54px` встречается только в ряду-
+  // переключателе, поэтому литерал, оставленный «на всякий случай» для любого из
+  // четырёх остальных, прошёл бы и это правило, и побайтовое сравнение выше:
+  // на собранный вывод лишний литерал не влияет, он просто вторая копия.
+  for (const [name, fragment] of Object.entries(PANEL_FRAGMENTS)) {
+    assert.ok(!source.includes(fragment),
+      `${name}: правило осталось литералом в листе панели — копия не устранена`);
+  }
+});
+
+/**
+ * #597 M2. Разрез `sharedCss` на пять функций обязан быть механическим: лист
+ * диалогов карточки собирается из тех же фрагментов и не имеет права измениться
+ * ни на байт. Фикстуры сняты с `origin/dev` до правки.
+ */
+test('#597 лист диалогов карточки не изменился ни на байт', () => {
+  assert.equal(formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }), FROZEN_CARD_KIT_CSS);
+  assert.equal(formKitCss(CARD_DIALOG_FORM_KIT), FROZEN_CARD_KIT_WITH_SWITCH_CSS);
 });
 
 test('#594 имена параметризованы, а не зашиты', () => {

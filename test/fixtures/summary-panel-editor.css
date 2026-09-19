@@ -1,17 +1,4 @@
-import {
-  SUMMARY_PANEL_FORM_KIT, formKitCardsCss, formKitDisabledCss, formKitFocusCss,
-  formKitSwitchCaptionCss, formKitSwitchRowCss,
-} from './styles/form-kit.styles';
 
-/**
- * The #505 settings composition; included only in the lazy summary sheet.
- *
- * #597: карточка-группа, обводка фокуса, выключенное состояние и ряд-переключатель
- * больше не описаны здесь — они приходят из общего набора (`form-kit.styles.ts`),
- * который был поднят из ЭТОГО файла в #594. Подстановка, а не редизайн: собранный
- * лист обязан совпасть с прежним побайтово (`test/form-kit.test.mjs`).
- */
-export const summaryPanelEditorCss = `
   hp-dialog[data-kind='summary'] {
     --hp-dialog-wide-width: 920px;
     --ha-dialog-width-md: 920px;
@@ -43,7 +30,14 @@ export const summaryPanelEditorCss = `
   .summary-editor-footer * { box-sizing: border-box; }
   .summary-editor h3 { margin: 0; font-size: 1rem; line-height: 1.3; }
   .summary-editor p { margin: 0; overflow-wrap: anywhere; }
-${formKitCardsCss(SUMMARY_PANEL_FORM_KIT)}
+  .summary-general,
+  .summary-blocks-card {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--summary-editor-line);
+    border-radius: 11px;
+    background: var(--summary-editor-surface);
+  }
   .summary-general-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -81,12 +75,32 @@ ${formKitCardsCss(SUMMARY_PANEL_FORM_KIT)}
   .summary-editor [aria-invalid='true'] {
     border-color: var(--error-color, #db4437);
   }
-${formKitFocusCss(SUMMARY_PANEL_FORM_KIT)}
+  .summary-editor input:focus-visible,
+  .summary-editor select:focus-visible,
+  .summary-editor button:focus-visible,
+  .summary-editor-footer button:focus-visible {
+    outline: 2px solid var(--summary-editor-accent);
+    outline-offset: 2px;
+  }
   .summary-editor button { font: inherit; }
-${formKitDisabledCss(SUMMARY_PANEL_FORM_KIT)}
+  .summary-editor button:disabled,
+  .summary-editor input:disabled,
+  .summary-editor select:disabled { opacity: .4; cursor: default; }
   .summary-editor svg { display: block; flex: 0 0 auto; width: 20px; height: 20px; }
-${formKitSwitchRowCss(SUMMARY_PANEL_FORM_KIT)}
-${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
+  .summary-editor .summary-switch {
+    display: flex;
+    min-width: 0;
+    min-height: 54px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0;
+    color: var(--primary-text-color);
+    cursor: pointer;
+  }
+  .summary-switch-caption { display: grid; min-width: 0; gap: 3px; }
+  .summary-switch-caption strong { font-size: .875rem; font-weight: 600; overflow-wrap: anywhere; }
+  .summary-switch-caption small { font-size: .8125rem; color: var(--secondary-text-color); overflow-wrap: anywhere; }
   /* The native checkbox itself is the visible 44px hit target. No hidden
      duplicate control or optimistic storage write is needed for the switch. */
   .summary-editor .summary-switch input {
@@ -392,4 +406,3 @@ ${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
     .summary-source-field { grid-column: 1 / -1; grid-row: 3; }
     .summary-value-remove { grid-column: 3; grid-row: 1; }
   }
-`;
