@@ -974,13 +974,31 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
   if (previous?.collisionSignature === collisionSignature
       && samePlacementMap(previous.rooms, roomPlacements)) return previous;
 
+  const previousEntries = new Map(previous?.entries.map((entry) => [
+    `${entry.kind}\u0000${entry.id}`, entry,
+  ]) || []);
+
   const collision = mode === 'live' ? resolveIsoOverlayCollisions({
-    items: entries.flatMap((entry) => entry.kind === 'room-label' ? [] : [{
-      id: entry.id,
-      kind: entry.kind,
-      placement: entry.placement,
-      screenHalfSize: entry.screenHalfSize,
-    }]),
+    items: entries.flatMap((entry) => {
+      if (entry.kind === 'room-label') return [];
+      const before = previousEntries.get(`${entry.kind}\u0000${entry.id}`);
+      const sameShape = !!before
+        && before.screenHalfSize[0] === entry.screenHalfSize[0]
+        && before.screenHalfSize[1] === entry.screenHalfSize[1]
+        && before.placement.floorAnchor[0] === entry.placement.floorAnchor[0]
+        && before.placement.floorAnchor[1] === entry.placement.floorAnchor[1]
+        && (before.placement.owner?.id || '') === (entry.placement.owner?.id || '');
+      return [{
+        id: entry.id,
+        kind: entry.kind,
+        placement: entry.placement,
+        screenHalfSize: entry.screenHalfSize,
+        ...(sameShape ? { nudgeHintCss: [
+          before!.placement.nudgeScene[0] / unitsPerPixel,
+          before!.placement.nudgeScene[1] / unitsPerPixel,
+        ] as ScenePoint } : {}),
+      }];
+    }),
     rooms,
     wallSilhouettes: input.wallSilhouettes,
     sceneUnitsPerCssPixel: unitsPerPixel,

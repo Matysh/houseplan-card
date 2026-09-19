@@ -97,6 +97,14 @@ test('group collision separates a solvable dense set independently of input orde
   }
   assert.deepEqual(normal.placements.get(keys[0]).visualScene, [100, 100],
     'the stable first item stays at its zero-deviation anchor');
+
+  const hintedItems = [make('a'), make('b'), make('lock')].map((item) => ({
+    ...item,
+    nudgeHintCss: normal.placements.get(isoOverlayCollisionKey(item.kind, item.id)).nudgeCss,
+  }));
+  const hinted = solve(hintedItems);
+  for (const key of keys) assert.deepEqual(hinted.placements.get(key), normal.placements.get(key),
+    'a previous exact placement is only an upper bound and cannot change the nearest result');
 });
 
 test('group collision finds a legal one-pixel slit between the coarse nodes', () => {

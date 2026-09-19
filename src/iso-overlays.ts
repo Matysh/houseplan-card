@@ -117,6 +117,8 @@ export interface IsoOverlayCollisionItem {
   placement: IsoOverlayPlacement;
   /** Axis-aligned screen-facing half-size in scene units. */
   screenHalfSize: PlanPoint;
+  /** Previous exact result as an upper bound; every nearer event is still checked. */
+  nudgeHintCss?: ScenePoint;
 }
 
 export interface IsoOverlayCollisionInput {
@@ -201,13 +203,16 @@ function validRoom(room: IsoOverlayRoom): boolean {
     && roomArea(room) > EPS;
 }
 
-function pointStrictlyInRoom(point: PlanPoint, room: IsoOverlayRoom): boolean {
-  if (!validRoom(room) || pointOnRing(point, room.outer) || !pointInRing(point, room.outer))
-    return false;
+function pointStrictlyInValidatedRoom(point: PlanPoint, room: IsoOverlayRoom): boolean {
+  if (pointOnRing(point, room.outer) || !pointInRing(point, room.outer)) return false;
   for (const hole of room.holes || []) {
     if (pointOnRing(point, hole) || pointInRing(point, hole)) return false;
   }
   return true;
+}
+
+function pointStrictlyInRoom(point: PlanPoint, room: IsoOverlayRoom): boolean {
+  return validRoom(room) && pointStrictlyInValidatedRoom(point, room);
 }
 
 function roomBoundaryDistance(point: PlanPoint, room: IsoOverlayRoom): number {
@@ -364,6 +369,20 @@ function ringBounds(ring: readonly (readonly number[])[]): Bounds | null {
   return [minX, minY, maxX, maxY];
 }
 
+function axisAlignedRoomBox(room: IsoOverlayRoom): Bounds | null {
+  if (room.outer.length !== 4 || (room.holes?.length || 0) !== 0) return null;
+  const bounds = ringBounds(room.outer);
+  if (!bounds) return null;
+  const corners = new Set(room.outer.map((point) => {
+    const x = Math.abs(point[0] - bounds[0]) <= EPS ? 0
+      : Math.abs(point[0] - bounds[2]) <= EPS ? 1 : -1;
+    const y = Math.abs(point[1] - bounds[1]) <= EPS ? 0
+      : Math.abs(point[1] - bounds[3]) <= EPS ? 1 : -1;
+    return x < 0 || y < 0 ? '' : `${x}:${y}`;
+  }));
+  return corners.size === 4 && !corners.has('') ? bounds : null;
+}
+
 function silhouetteBounds(silhouette: IsoWallSilhouette, cache: boolean): Bounds | null {
   if (!cache) return ringBounds(silhouette.outer);
   if (silhouetteBoundsCache.has(silhouette)) return silhouetteBoundsCache.get(silhouette) ?? null;
@@ -419,6 +438,12 @@ function validSilhouette(silhouette: IsoWallSilhouette): boolean {
 /** A straight nudge must never cut through a concavity or an island hole. */
 function segmentStrictlyInRoom(start: PlanPoint, end: PlanPoint, room: IsoOverlayRoom): boolean {
   if (!pointStrictlyInRoom(start, room) || !pointStrictlyInRoom(end, room)) return false;
+  return segmentBetweenStrictRoomPoints(start, end, room);
+}
+
+function segmentBetweenStrictRoomPoints(
+  start: PlanPoint, end: PlanPoint, room: IsoOverlayRoom,
+): boolean {
   for (const ring of [room.outer, ...(room.holes || [])]) {
     for (let index = 0; index < ring.length; index++) {
       if (segmentsIntersect(start, end, ring[index], ring[(index + 1) % ring.length]))
@@ -640,9 +665,22 @@ const ISO_OVERLAY_GROUP_CELL_CSS_PX = 64;
 /** Candidate displacement together with its stable distance ordering. */
 interface GroupOffset { readonly offset: ScenePoint; readonly distance: number }
 
-type BoundaryCandidateMap = Map<string, ScenePoint>;
+type BoundaryCandidateMap = {
+  readonly points: Map<number | string, ScenePoint>;
+  readonly pending: ScenePoint[];
+};
 
-function boundaryCandidateKey(x: number, y: number): string {
+function createBoundaryCandidates(): BoundaryCandidateMap {
+  return { points: new Map(), pending: [] };
+}
+
+function boundaryCandidateKey(x: number, y: number): number | string {
+  // Production is bounded by 48 CSS px. Keep that hot path on V8's numeric
+  // Map representation; the string fallback preserves the helper's general
+  // finite-input contract without admitting packed-key collisions.
+  if (Number.isInteger(x) && Number.isInteger(y)
+      && x >= -32768 && x <= 32767 && y >= -32768 && y <= 32767)
+    return (x + 32768) * 65536 + y + 32768;
   return `${x}:${y}`;
 }
 
@@ -664,7 +702,11 @@ function addBoundaryCandidate(
       if (candidateX * candidateX + candidateY * candidateY > maxNudge * maxNudge + EPS)
         continue;
       const key = boundaryCandidateKey(candidateX, candidateY);
-      if (!candidates.has(key)) candidates.set(key, [candidateX, candidateY]);
+      if (!candidates.points.has(key)) {
+        const point: ScenePoint = [candidateX, candidateY];
+        candidates.points.set(key, point);
+        candidates.pending.push(point);
+      }
     }
   }
 }
@@ -695,23 +737,26 @@ function clipBoundarySegment(
   ];
 }
 
-function addBoundaryRectangleEvents(
-  candidates: BoundaryCandidateMap, rectangles: readonly Bounds[], maxNudge: number,
+function addBoundaryRectangle(
+  candidates: BoundaryCandidateMap, bounds: Bounds, maxNudge: number,
 ): void {
-  for (const bounds of rectangles) {
-    addBoundaryCandidate(candidates,
-      [bounds[0], Math.max(bounds[1], Math.min(0, bounds[3]))], maxNudge);
-    addBoundaryCandidate(candidates,
-      [bounds[2], Math.max(bounds[1], Math.min(0, bounds[3]))], maxNudge);
-    addBoundaryCandidate(candidates,
-      [Math.max(bounds[0], Math.min(0, bounds[2])), bounds[1]], maxNudge);
-    addBoundaryCandidate(candidates,
-      [Math.max(bounds[0], Math.min(0, bounds[2])), bounds[3]], maxNudge);
-    addBoundaryCandidate(candidates, [bounds[0], bounds[1]], maxNudge);
-    addBoundaryCandidate(candidates, [bounds[2], bounds[1]], maxNudge);
-    addBoundaryCandidate(candidates, [bounds[2], bounds[3]], maxNudge);
-    addBoundaryCandidate(candidates, [bounds[0], bounds[3]], maxNudge);
-  }
+  addBoundaryCandidate(candidates,
+    [bounds[0], Math.max(bounds[1], Math.min(0, bounds[3]))], maxNudge);
+  addBoundaryCandidate(candidates,
+    [bounds[2], Math.max(bounds[1], Math.min(0, bounds[3]))], maxNudge);
+  addBoundaryCandidate(candidates,
+    [Math.max(bounds[0], Math.min(0, bounds[2])), bounds[1]], maxNudge);
+  addBoundaryCandidate(candidates,
+    [Math.max(bounds[0], Math.min(0, bounds[2])), bounds[3]], maxNudge);
+  addBoundaryCandidate(candidates, [bounds[0], bounds[1]], maxNudge);
+  addBoundaryCandidate(candidates, [bounds[2], bounds[1]], maxNudge);
+  addBoundaryCandidate(candidates, [bounds[2], bounds[3]], maxNudge);
+  addBoundaryCandidate(candidates, [bounds[0], bounds[3]], maxNudge);
+}
+
+function addBoundaryRectangleIntersections(
+  candidates: BoundaryCandidateMap, left: Bounds, right: Bounds, maxNudge: number,
+): void {
   // Only intersections of FINITE rectangle edges are critical. Combining
   // every X with every unrelated Y forms an artificial O(n²) interior grid;
   // on the 200-device benchmark it produced almost five thousand candidates
@@ -725,10 +770,19 @@ function addBoundaryRectangleEvents(
       }
     }
   };
+  addIntersections(left, right);
+  addIntersections(right, left);
+}
+
+function addBoundaryRectangleEvents(
+  candidates: BoundaryCandidateMap, rectangles: readonly Bounds[], maxNudge: number,
+): void {
+  for (const bounds of rectangles) addBoundaryRectangle(candidates, bounds, maxNudge);
   for (let left = 0; left < rectangles.length; left++) {
     for (let right = left + 1; right < rectangles.length; right++) {
-      addIntersections(rectangles[left], rectangles[right]);
-      addIntersections(rectangles[right], rectangles[left]);
+      addBoundaryRectangleIntersections(
+        candidates, rectangles[left], rectangles[right], maxNudge,
+      );
     }
   }
 }
@@ -743,7 +797,7 @@ export function buildIsoOverlayBoundaryCandidates(
 ): readonly ScenePoint[] {
   if (!(maxNudge >= 0) || !Number.isFinite(maxNudge))
     throw new Error('invalid isometric overlay boundary input');
-  const candidates: BoundaryCandidateMap = new Map();
+  const candidates = createBoundaryCandidates();
   addBoundaryRectangleEvents(candidates, rectangles, maxNudge);
   return Object.freeze(sortedBoundaryCandidates(candidates).map(({ offset }) =>
     Object.freeze(offset) as ScenePoint));
@@ -780,55 +834,57 @@ function addCriticalBoundaryRectangle(
 
 type BoundarySegment = readonly [start: ScenePoint, end: ScenePoint];
 
-function addBoundarySegmentRectangleIntersections(
+function addBoundarySegmentRectangleIntersection(
   candidates: BoundaryCandidateMap, segment: BoundarySegment,
-  rectangles: readonly Bounds[], maxNudge: number,
+  bounds: Bounds, maxNudge: number,
 ): void {
   const [start, end] = segment;
   const dx = end[0] - start[0], dy = end[1] - start[1];
-  for (const bounds of rectangles) {
-    if (Math.abs(dx) > EPS) {
-      for (const x of [bounds[0], bounds[2]]) {
-        const ratio = (x - start[0]) / dx;
-        if (ratio < -EPS || ratio > 1 + EPS) continue;
-        const y = start[1] + dy * ratio;
-        if (y >= bounds[1] - EPS && y <= bounds[3] + EPS)
-          addBoundaryCandidate(candidates, [x, y], maxNudge);
-      }
+  if (Math.abs(dx) > EPS) {
+    for (const x of [bounds[0], bounds[2]]) {
+      const ratio = (x - start[0]) / dx;
+      if (ratio < -EPS || ratio > 1 + EPS) continue;
+      const y = start[1] + dy * ratio;
+      if (y >= bounds[1] - EPS && y <= bounds[3] + EPS)
+        addBoundaryCandidate(candidates, [x, y], maxNudge);
     }
-    if (Math.abs(dy) > EPS) {
-      for (const y of [bounds[1], bounds[3]]) {
-        const ratio = (y - start[1]) / dy;
-        if (ratio < -EPS || ratio > 1 + EPS) continue;
-        const x = start[0] + dx * ratio;
-        if (x >= bounds[0] - EPS && x <= bounds[2] + EPS)
-          addBoundaryCandidate(candidates, [x, y], maxNudge);
-      }
+  }
+  if (Math.abs(dy) > EPS) {
+    for (const y of [bounds[1], bounds[3]]) {
+      const ratio = (y - start[1]) / dy;
+      if (ratio < -EPS || ratio > 1 + EPS) continue;
+      const x = start[0] + dx * ratio;
+      if (x >= bounds[0] - EPS && x <= bounds[2] + EPS)
+        addBoundaryCandidate(candidates, [x, y], maxNudge);
     }
   }
 }
 
-function addBoundaryLineIntersections(
-  candidates: BoundaryCandidateMap, segments: readonly BoundarySegment[], maxNudge: number,
+function addBoundarySegmentRectangleIntersections(
+  candidates: BoundaryCandidateMap, segment: BoundarySegment,
+  rectangles: readonly Bounds[], maxNudge: number,
 ): void {
-  for (let left = 0; left < segments.length; left++) {
-    const [a, b] = segments[left];
-    const ab: ScenePoint = [b[0] - a[0], b[1] - a[1]];
-    for (let right = left + 1; right < segments.length; right++) {
-      const [c, d] = segments[right];
-      const cd: ScenePoint = [d[0] - c[0], d[1] - c[1]];
-      const denominator = ab[0] * cd[1] - ab[1] * cd[0];
-      if (Math.abs(denominator) <= EPS) continue;
-      const ac: ScenePoint = [c[0] - a[0], c[1] - a[1]];
-      const ratio = (ac[0] * cd[1] - ac[1] * cd[0]) / denominator;
-      const otherRatio = (ac[0] * ab[1] - ac[1] * ab[0]) / denominator;
-      if (ratio < -EPS || ratio > 1 + EPS
-          || otherRatio < -EPS || otherRatio > 1 + EPS) continue;
-      const point: ScenePoint = [a[0] + ab[0] * ratio, a[1] + ab[1] * ratio];
-      if (Math.hypot(point[0], point[1]) <= maxNudge + 2)
-        addBoundaryCandidate(candidates, point, maxNudge);
-    }
-  }
+  for (const bounds of rectangles)
+    addBoundarySegmentRectangleIntersection(candidates, segment, bounds, maxNudge);
+}
+
+function addBoundaryLineIntersection(
+  candidates: BoundaryCandidateMap, left: BoundarySegment,
+  right: BoundarySegment, maxNudge: number,
+): void {
+  const [a, b] = left, [c, d] = right;
+  const ab: ScenePoint = [b[0] - a[0], b[1] - a[1]];
+  const cd: ScenePoint = [d[0] - c[0], d[1] - c[1]];
+  const denominator = ab[0] * cd[1] - ab[1] * cd[0];
+  if (Math.abs(denominator) <= EPS) return;
+  const ac: ScenePoint = [c[0] - a[0], c[1] - a[1]];
+  const ratio = (ac[0] * cd[1] - ac[1] * cd[0]) / denominator;
+  const otherRatio = (ac[0] * ab[1] - ac[1] * ab[0]) / denominator;
+  if (ratio < -EPS || ratio > 1 + EPS
+      || otherRatio < -EPS || otherRatio > 1 + EPS) return;
+  const point: ScenePoint = [a[0] + ab[0] * ratio, a[1] + ab[1] * ratio];
+  if (Math.hypot(point[0], point[1]) <= maxNudge + 2)
+    addBoundaryCandidate(candidates, point, maxNudge);
 }
 
 /**
@@ -837,11 +893,20 @@ function addBoundaryLineIntersections(
  * the straight part of the Minkowski boundary; the final polygon predicate
  * still decides legality around vertices and concavities.
  */
-function addExpandedWallBoundarySegments(
-  candidates: BoundaryCandidateMap, wall: IsoWallSilhouette,
-  footprint: readonly ScenePoint[], gapUnits: number, unitsPerPixel: number,
-  maxNudge: number, rectangles: readonly Bounds[], segments?: BoundarySegment[],
-): void {
+type WallBoundaryEdge = {
+  readonly tangent: ScenePoint;
+  readonly normal: ScenePoint;
+  readonly tangentMin: number;
+  readonly tangentMax: number;
+  readonly normalOffset: number;
+};
+
+const wallBoundaryEdgeCache = new WeakMap<IsoWallSilhouette, readonly WallBoundaryEdge[]>();
+
+function wallBoundaryEdges(wall: IsoWallSilhouette): readonly WallBoundaryEdge[] {
+  const cached = wallBoundaryEdgeCache.get(wall);
+  if (cached) return cached;
+  const result: WallBoundaryEdge[] = [];
   for (const ring of [wall.outer, ...(wall.holes || [])]) {
     for (let index = 0; index < ring.length; index++) {
       const wallStart = ring[index], wallEnd = ring[(index + 1) % ring.length];
@@ -850,20 +915,43 @@ function addExpandedWallBoundarySegments(
       if (edgeLength <= EPS) continue;
       const tangent: ScenePoint = [edgeX / edgeLength, edgeY / edgeLength];
       const normal: ScenePoint = [-tangent[1], tangent[0]];
+      const tangentStart = wallStart[0] * tangent[0] + wallStart[1] * tangent[1];
+      const tangentEnd = wallEnd[0] * tangent[0] + wallEnd[1] * tangent[1];
+      result.push({
+        tangent, normal,
+        tangentMin: Math.min(tangentStart, tangentEnd),
+        tangentMax: Math.max(tangentStart, tangentEnd),
+        normalOffset: wallStart[0] * normal[0] + wallStart[1] * normal[1],
+      });
+    }
+  }
+  wallBoundaryEdgeCache.set(wall, result);
+  return result;
+}
+
+function addExpandedWallBoundarySegments(
+  candidates: BoundaryCandidateMap, wall: IsoWallSilhouette,
+  footprint: readonly ScenePoint[], gapUnits: number, unitsPerPixel: number,
+  maxNudge: number, rectangles: readonly Bounds[], segments?: BoundarySegment[],
+): void {
+  for (const edge of wallBoundaryEdges(wall)) {
+      const { tangent, normal } = edge;
       const dot = (point: readonly number[], axis: ScenePoint): number =>
         point[0] * axis[0] + point[1] * axis[1];
-      const wallTangentStart = dot(wallStart, tangent);
-      const wallTangentEnd = dot(wallEnd, tangent);
-      const wallTangentMin = Math.min(wallTangentStart, wallTangentEnd);
-      const wallTangentMax = Math.max(wallTangentStart, wallTangentEnd);
-      const wallNormal = dot(wallStart, normal);
-      const footprintTangents = footprint.map((point) => dot(point, tangent));
-      const footprintNormals = footprint.map((point) => dot(point, normal));
-      const tangentMin = wallTangentMin - Math.max(...footprintTangents) - gapUnits;
-      const tangentMax = wallTangentMax - Math.min(...footprintTangents) + gapUnits;
+      let footprintTangentMin = Infinity, footprintTangentMax = -Infinity;
+      let footprintNormalMin = Infinity, footprintNormalMax = -Infinity;
+      for (const point of footprint) {
+        const tangentOffset = dot(point, tangent), normalOffset = dot(point, normal);
+        footprintTangentMin = Math.min(footprintTangentMin, tangentOffset);
+        footprintTangentMax = Math.max(footprintTangentMax, tangentOffset);
+        footprintNormalMin = Math.min(footprintNormalMin, normalOffset);
+        footprintNormalMax = Math.max(footprintNormalMax, normalOffset);
+      }
+      const tangentMin = edge.tangentMin - footprintTangentMax - gapUnits;
+      const tangentMax = edge.tangentMax - footprintTangentMin + gapUnits;
       const normalOffsets = [
-        wallNormal - gapUnits - Math.max(...footprintNormals),
-        wallNormal + gapUnits - Math.min(...footprintNormals),
+        edge.normalOffset - gapUnits - footprintNormalMax,
+        edge.normalOffset + gapUnits - footprintNormalMin,
       ];
       for (const normalOffset of normalOffsets) {
         const toPoint = (tangentOffset: number): ScenePoint => [
@@ -880,7 +968,6 @@ function addExpandedWallBoundarySegments(
           candidates, clipped, rectangles, maxNudge,
         );
       }
-    }
   }
 }
 
@@ -902,29 +989,10 @@ function addBoundaryCircle(
 }
 
 function sortedBoundaryCandidates(candidates: BoundaryCandidateMap): GroupOffset[] {
-  return [...candidates.values()].map((offset) => ({
+  return [...candidates.points.values()].map((offset) => ({
     offset, distance: Math.hypot(offset[0], offset[1]),
   })).sort((a, b) => a.distance - b.distance
     || a.offset[1] - b.offset[1] || a.offset[0] - b.offset[0]);
-}
-
-/**
- * Snap a continuous boundary event back to the exact integer-pixel result.
- * The bounded 9x9 neighbourhood replaces the old complete 7,238-point disk.
- */
-function localRefinementOffsets(
-  around: ScenePoint, maxNudge: number, reach = 4,
-): readonly GroupOffset[] {
-  const offsets: GroupOffset[] = [];
-  for (let y = Math.floor(around[1] - reach); y <= Math.ceil(around[1] + reach); y++) {
-    for (let x = Math.floor(around[0] - reach); x <= Math.ceil(around[0] + reach); x++) {
-      const distance = Math.hypot(x, y);
-      if (distance <= maxNudge + EPS) offsets.push({ offset: [x, y], distance });
-    }
-  }
-  offsets.sort((a, b) => a.distance - b.distance
-    || a.offset[1] - b.offset[1] || a.offset[0] - b.offset[0]);
-  return offsets;
 }
 
 function overlayRootBounds(
@@ -1024,14 +1092,29 @@ export function resolveIsoOverlayCollisions(
   const gapUnits = safetyGap * unitsPerPixel;
   const cellUnits = ISO_OVERLAY_GROUP_CELL_CSS_PX * unitsPerPixel;
   const rooms = new Map(input.rooms.filter(validRoom).map((room) => [room.id, room]));
+  const roomBounds = new Map([...rooms].map(([id, room]) => [
+    id, ringBounds(room.outer as readonly ScenePoint[]),
+  ]));
+  const axisAlignedRoomBoxes = new Map([...rooms].flatMap(([id, room]) => {
+    const bounds = axisAlignedRoomBox(room);
+    return bounds ? [[id, bounds] as const] : [];
+  }));
   const wallsValid = input.wallSilhouettes.every(validSilhouette);
+  const wallRows = input.wallSilhouettes.map((wall) => ({
+    wall, bounds: silhouetteBounds(wall, true),
+  }));
   const accepted: AcceptedOverlay[] = [];
-  const cells = new Map<string, number[]>();
+  const cells = new Map<number | string, number[]>();
   const placements = new Map<string, IsoOverlayPlacement>();
   const residualPairs: Array<readonly [string, string]> = [];
   const stableItems = [...input.items].sort((a, b) =>
     a.placement.nudgeDistanceCss - b.placement.nudgeDistanceCss
     || isoOverlayCollisionKey(a.kind, a.id).localeCompare(isoOverlayCollisionKey(b.kind, b.id)));
+  const rot = camera.rotDeg * Math.PI / 180;
+  const tilt = camera.tiltDeg * Math.PI / 180;
+  const inverseX = 1 / camera.xyScale;
+  const inverseY = 1 / (camera.xyScale * Math.cos(tilt));
+  const cosRot = Math.cos(rot), sinRot = Math.sin(rot);
 
   const cellRange = (bounds: Bounds): readonly [number, number, number, number] => [
     Math.floor(bounds[0] / cellUnits), Math.floor(bounds[1] / cellUnits),
@@ -1042,7 +1125,7 @@ export function resolveIsoOverlayCollisions(
     const result = new Set<number>();
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
-        for (const index of cells.get(`${x}:${y}`) || []) result.add(index);
+        for (const index of cells.get(boundaryCandidateKey(x, y)) || []) result.add(index);
       }
     }
     return [...result].sort((a, b) => a - b);
@@ -1052,7 +1135,7 @@ export function resolveIsoOverlayCollisions(
     const [minX, minY, maxX, maxY] = cellRange(value.bounds);
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
-        const key = `${x}:${y}`;
+        const key = boundaryCandidateKey(x, y);
         const list = cells.get(key) || [];
         list.push(index);
         cells.set(key, list);
@@ -1072,16 +1155,15 @@ export function resolveIsoOverlayCollisions(
     ] as ScenePoint);
     const ownerRoom = base.owner ? rooms.get(base.owner.id) || null : null;
     const currentPlan = raisedSceneToPlan(base.visualScene, visualOffset, camera);
+    const baseFootprintBounds = ringBounds(baseFootprint);
     const wallCandidates = wallsValid && baseFootprint.length
-      ? input.wallSilhouettes.filter((wall) => {
-        const wallBounds = silhouetteBounds(wall, true);
+      ? wallRows.filter(({ bounds: wallBounds }) => {
         if (!wallBounds) return false;
         const radius = maxNudge * unitsPerPixel;
-        const footprintBounds = ringBounds(baseFootprint);
-        return !!footprintBounds && boundsNear(expandedBounds(footprintBounds, radius),
+        return !!baseFootprintBounds && boundsNear(expandedBounds(baseFootprintBounds, radius),
           wallBounds, gapUnits);
       })
-      : input.wallSilhouettes;
+      : wallRows;
 
     /**
      * Дешёвая половина кандидата: где он окажется и с кем столкнётся.
@@ -1147,8 +1229,16 @@ export function resolveIsoOverlayCollisions(
      * съедала 8.5 из 9.6 секунд группового прохода. Подавляющее большинство
      * этих точек лежит ВНЕ комнаты — узнать это можно сравнением четырёх чисел,
      * а не обходом колец полигона и силуэтов стен.
-     */
-    const ownerBox = ownerRoom ? ringBounds(ownerRoom.outer as readonly ScenePoint[]) : null;
+    */
+    const ownerBox = ownerRoom ? roomBounds.get(ownerRoom.id) || null : null;
+    const ownerAxisBox = ownerRoom ? axisAlignedRoomBoxes.get(ownerRoom.id) || null : null;
+    const currentStrictlyInOwner = !!ownerRoom
+      && (ownerAxisBox
+        ? currentPlan[0] > ownerAxisBox[0] + EPS
+          && currentPlan[0] < ownerAxisBox[2] - EPS
+          && currentPlan[1] > ownerAxisBox[1] + EPS
+          && currentPlan[1] < ownerAxisBox[3] - EPS
+        : pointStrictlyInValidatedRoom(currentPlan, ownerRoom));
 
     /**
      * Широкая фаза по стенам — то, чего требовал §6.4 ТЗ и чего не было.
@@ -1159,14 +1249,14 @@ export function resolveIsoOverlayCollisions(
      * Стены раскладываются по тем же ячейкам, что и принятые оверлеи, и каждый
      * кандидат смотрит только свои ячейки.
      */
-    const wallCells = new Map<string, number[]>();
+    const wallCells = new Map<number | string, number[]>();
     for (let index = 0; index < wallCandidates.length; index++) {
-      const wallBounds = silhouetteBounds(wallCandidates[index], true);
+      const wallBounds = wallCandidates[index].bounds;
       if (!wallBounds) continue;
       const [minX, minY, maxX, maxY] = cellRange(expandedBounds(wallBounds, gapUnits));
       for (let y = minY; y <= maxY; y++) {
         for (let x = minX; x <= maxX; x++) {
-          const key = `${x}:${y}`;
+          const key = boundaryCandidateKey(x, y);
           const list = wallCells.get(key) || [];
           list.push(index);
           wallCells.set(key, list);
@@ -1177,52 +1267,79 @@ export function resolveIsoOverlayCollisions(
     // стоит дороже самой проверки.
     const wallSeen = new Int32Array(wallCandidates.length);
     let wallSeenGeneration = 0;
-    const wallsNear = (bounds: Bounds): number[] => {
-      const [minX, minY, maxX, maxY] = cellRange(expandedBounds(bounds, gapUnits));
-      const result: number[] = [];
+    const translatedFootprint = baseFootprint.map(() => [0, 0] as [number, number]);
+    const footprintAt = (offset: ScenePoint): readonly ScenePoint[] => {
+      for (let index = 0; index < baseFootprint.length; index++) {
+        translatedFootprint[index][0] = baseFootprint[index][0] + offset[0];
+        translatedFootprint[index][1] = baseFootprint[index][1] + offset[1];
+      }
+      return translatedFootprint;
+    };
+    const firstWallNear = (
+      bounds: Bounds, footprint: () => readonly ScenePoint[],
+    ): number | undefined => {
+      const minX = Math.floor((bounds[0] - gapUnits) / cellUnits);
+      const minY = Math.floor((bounds[1] - gapUnits) / cellUnits);
+      const maxX = Math.floor((bounds[2] + gapUnits) / cellUnits);
+      const maxY = Math.floor((bounds[3] + gapUnits) / cellUnits);
       wallSeenGeneration += 1;
       for (let y = minY; y <= maxY; y++) {
         for (let x = minX; x <= maxX; x++) {
-          for (const index of wallCells.get(`${x}:${y}`) || []) {
+          for (const index of wallCells.get(boundaryCandidateKey(x, y)) || []) {
             if (wallSeen[index] === wallSeenGeneration) continue;
             wallSeen[index] = wallSeenGeneration;
-            result.push(index);
+            if (footprintNearSilhouette(
+              footprint(), bounds, wallCandidates[index].wall, gapUnits, true,
+            )) return index;
           }
         }
       }
-      return result;
+      return undefined;
     };
 
+    const INSPECTION_ALLOWED = -2;
+    const INSPECTION_ROOM = -1;
     const inspectCandidate = (shape: {
       offsetScene: ScenePoint; sameAsBase: boolean; visualScene: ScenePoint;
-    }): { allowed: boolean; walls: readonly number[]; room: boolean } => {
-      if (shape.sameAsBase) return { allowed: true, walls: [], room: false };
-      if (!wallsValid || !ownerRoom) return { allowed: false, walls: [], room: true };
-      const plan = raisedSceneToPlan(shape.visualScene, visualOffset, camera);
-      if (ownerBox && (plan[0] < ownerBox[0] || plan[0] > ownerBox[2]
-        || plan[1] < ownerBox[1] || plan[1] > ownerBox[3]))
-        return { allowed: false, walls: [], room: true };
-      if (!pointStrictlyInRoom(plan, ownerRoom))
-        return { allowed: false, walls: [], room: true };
-      if (pointStrictlyInRoom(currentPlan, ownerRoom)
-          && !segmentStrictlyInRoom(currentPlan, plan, ownerRoom))
-        return { allowed: false, walls: [], room: true };
-      const footprint = baseFootprint.map((point) => [
-        point[0] + shape.offsetScene[0], point[1] + shape.offsetScene[1],
-      ] as ScenePoint);
-      const footprintBounds = ringBounds(footprint);
-      if (!footprintBounds) return { allowed: false, walls: [], room: true };
-      const wall = wallsNear(footprintBounds).find((index) =>
-        footprintNearSilhouette(
-          footprint, footprintBounds, wallCandidates[index], gapUnits, true,
-        ));
-      return wall === undefined
-        ? { allowed: true, walls: [], room: false }
-        : { allowed: false, walls: [wall], room: false };
+    }): number => {
+      if (shape.sameAsBase) return INSPECTION_ALLOWED;
+      if (!wallsValid || !ownerRoom) return INSPECTION_ROOM;
+      const sceneDx = shape.visualScene[0] - base.visualScene[0];
+      const sceneDy = shape.visualScene[1] - base.visualScene[1];
+      const rx = sceneDx * inverseX, ry = sceneDy * inverseY;
+      const planX = currentPlan[0] + rx * cosRot + ry * sinRot;
+      const planY = currentPlan[1] - rx * sinRot + ry * cosRot;
+      if (ownerBox && (planX < ownerBox[0] || planX > ownerBox[2]
+        || planY < ownerBox[1] || planY > ownerBox[3]))
+        return INSPECTION_ROOM;
+      if (ownerAxisBox) {
+        if (!(planX > ownerAxisBox[0] + EPS && planX < ownerAxisBox[2] - EPS
+            && planY > ownerAxisBox[1] + EPS && planY < ownerAxisBox[3] - EPS))
+          return INSPECTION_ROOM;
+      } else {
+        const plan: PlanPoint = [planX, planY];
+        if (!pointStrictlyInValidatedRoom(plan, ownerRoom))
+          return INSPECTION_ROOM;
+        if (currentStrictlyInOwner
+            && !segmentBetweenStrictRoomPoints(currentPlan, plan, ownerRoom))
+          return INSPECTION_ROOM;
+      }
+      if (!baseFootprintBounds) return INSPECTION_ROOM;
+      const footprintBounds: Bounds = [
+        baseFootprintBounds[0] + shape.offsetScene[0],
+        baseFootprintBounds[1] + shape.offsetScene[1],
+        baseFootprintBounds[2] + shape.offsetScene[0],
+        baseFootprintBounds[3] + shape.offsetScene[1],
+      ];
+      let footprint: readonly ScenePoint[] | null = null;
+      const wall = firstWallNear(
+        footprintBounds, () => footprint ||= footprintAt(shape.offsetScene),
+      );
+      return wall === undefined ? INSPECTION_ALLOWED : wall;
     };
     const candidateAllowed = (shape: {
       offsetScene: ScenePoint; sameAsBase: boolean; visualScene: ScenePoint;
-    }): boolean => inspectCandidate(shape).allowed;
+    }): boolean => inspectCandidate(shape) === INSPECTION_ALLOWED;
 
     const candidate = (offsetCss: ScenePoint): {
       placement: IsoOverlayPlacement;
@@ -1238,8 +1355,13 @@ export function resolveIsoOverlayCollisions(
       };
     };
 
-    let best = candidate(baseOffsetCss);
+    const baseCandidate = candidate(baseOffsetCss);
+    let best = baseCandidate;
     if (!best || best.conflicts.length) {
+      const hinted = item.nudgeHintCss ? candidate(item.nudgeHintCss) : null;
+      if (hinted && !hinted.conflicts.length) best = hinted;
+    }
+    if (!baseCandidate || baseCandidate.conflicts.length) {
       /**
        * A nearest free point must touch the boundary of the forbidden union.
        * Enumerate those one-dimensional boundaries instead of the 7238 points
@@ -1247,12 +1369,12 @@ export function resolveIsoOverlayCollisions(
        * preserve the old integer result even when a legal slit is narrower
        * than the former 4 px coarse grid.
        */
-      const boundaryCandidates: BoundaryCandidateMap = new Map();
+      const boundaryCandidates = createBoundaryCandidates();
       const overlayBoundaryRectangles: Bounds[] = [];
       const boundaryRectangles: Bounds[] = [];
       const boundarySegments: BoundarySegment[] = [];
       const expandedOverlayBoundaries = new Set<number>();
-      const encounteredOverlayBoundaries = new Set<number>(best?.conflicts || []);
+      const encounteredOverlayBoundaries = new Set<number>(baseCandidate?.conflicts || []);
       const addOverlayBoundary = (index: number): void => {
         if (expandedOverlayBoundaries.has(index)) return;
         expandedOverlayBoundaries.add(index);
@@ -1271,15 +1393,13 @@ export function resolveIsoOverlayCollisions(
         boundaryRectangles.push(rectangle);
       };
 
-      const footprintBounds = ringBounds(baseFootprint);
+      const footprintBounds = baseFootprintBounds;
       const expandedWalls = new Set<number>();
       const pendingWalls = new Set<number>();
-      const evaluated = new Set<string>();
       const addWallBoundary = (index: number): void => {
         if (expandedWalls.has(index) || !footprintBounds) return;
         expandedWalls.add(index);
-        const wall = wallCandidates[index];
-        const wallBounds = silhouetteBounds(wall, true);
+        const { wall, bounds: wallBounds } = wallCandidates[index];
         if (wallBounds) {
           const expandedWallBounds: Bounds = [
             (wallBounds[0] - gapUnits - footprintBounds[2]) / unitsPerPixel,
@@ -1333,24 +1453,26 @@ export function resolveIsoOverlayCollisions(
             boundaryCandidates, [boundaryRectangles[index]], maxNudge,
           );
           for (let previous = 0; previous < index; previous++)
-            addBoundaryRectangleEvents(boundaryCandidates, [
-              boundaryRectangles[previous], boundaryRectangles[index],
-            ], maxNudge);
+            addBoundaryRectangleIntersections(
+              boundaryCandidates, boundaryRectangles[previous],
+              boundaryRectangles[index], maxNudge,
+            );
         }
         // Concave silhouettes and the safety-gap rounding meet where finite
         // boundary segments cross. Exact polygons still make the final call.
         for (let index = processedSegments; index < boundarySegments.length; index++) {
           for (let previous = 0; previous < index; previous++)
-            addBoundaryLineIntersections(boundaryCandidates, [
-              boundarySegments[previous], boundarySegments[index],
-            ], maxNudge);
+            addBoundaryLineIntersection(
+              boundaryCandidates, boundarySegments[previous],
+              boundarySegments[index], maxNudge,
+            );
         }
         for (let index = processedOverlayRectangles;
           index < overlayBoundaryRectangles.length; index++) {
           for (let segment = 0; segment < processedSegments; segment++)
-            addBoundarySegmentRectangleIntersections(
+            addBoundarySegmentRectangleIntersection(
               boundaryCandidates, boundarySegments[segment],
-              [overlayBoundaryRectangles[index]], maxNudge,
+              overlayBoundaryRectangles[index], maxNudge,
             );
         }
         for (let index = processedSegments; index < boundarySegments.length; index++)
@@ -1364,9 +1486,8 @@ export function resolveIsoOverlayCollisions(
       };
 
       const evaluateNewCandidates = (): void => {
-        const entries = [...boundaryCandidates.entries()]
-          .filter(([key]) => !evaluated.has(key))
-          .map(([, offset]) => ({
+        const entries = boundaryCandidates.pending.splice(0)
+          .map((offset) => ({
             offset, distance: Math.hypot(offset[0], offset[1]),
           }))
           .sort((a, b) => a.distance - b.distance
@@ -1379,9 +1500,6 @@ export function resolveIsoOverlayCollisions(
             ? best.placement.nudgeDistanceCss : Infinity;
           if (entry.distance > maxNudge + EPS || entry.distance > bestFreeDistance + EPS) break;
           const offset = entry.offset;
-          const key = boundaryCandidateKey(offset[0], offset[1]);
-          if (evaluated.has(key)) continue;
-          evaluated.add(key);
           if (Math.abs(offset[0] - baseOffsetCss[0]) <= EPS
               && Math.abs(offset[1] - baseOffsetCss[1]) <= EPS) continue;
           const shape = candidateShape(offset);
@@ -1394,8 +1512,9 @@ export function resolveIsoOverlayCollisions(
             || best.conflicts.length && shape.penalty < best.penalty - EPS;
           if (!canWin) continue;
           const inspection = inspectCandidate(shape);
-          if (!inspection.allowed) {
-            for (const wallIndex of inspection.walls) {
+          if (inspection !== INSPECTION_ALLOWED) {
+            if (inspection >= 0) {
+              const wallIndex = inspection;
               if (expandedWalls.has(wallIndex)) continue;
               const witness = {
                 index: wallIndex,
@@ -1460,18 +1579,6 @@ export function resolveIsoOverlayCollisions(
         if (!changed) break;
         refreshBoundaryEvents();
         evaluateNewCandidates();
-      }
-      if (best && !best.conflicts.length) {
-        const around = best.placement.nudgeCss;
-        for (const entry of localRefinementOffsets(around, maxNudge)) {
-          if (entry.distance >= best.placement.nudgeDistanceCss - EPS) break;
-          const shape = candidateShape(entry.offset);
-          if (!shape || shape.conflicts.length || !candidateAllowed(shape)) continue;
-          best = {
-            placement: placementAtGroupOffset(base, entry.offset, unitsPerPixel, false),
-            bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
-          };
-        }
       }
     }
     if (!best) {
