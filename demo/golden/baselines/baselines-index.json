@@ -1,28 +1,26 @@
 {
   "schema": 2,
-  "matrixVersion": 63,
-  "acceptedAt": "2026-09-19T05:39:06.893Z",
-  "sourceFingerprint": "271e0747b4ddef1af0d15d8bf63a832d72b0f7211550c349a59b3baa3864a84e",
+  "matrixVersion": 64,
+  "acceptedAt": "2026-09-19T11:57:24.172Z",
+  "sourceFingerprint": "1df504b858e727b2236bea77572f108e52c22f7a94f487ea2a609d97bc42b573",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
-  "acceptedOn": "win32",
+  "acceptedOn": "linux",
   "capture": {
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "271e0747b4ddef1af0d15d8bf63a832d72b0f7211550c349a59b3baa3864a84e",
+    "buildFingerprint": "1df504b858e727b2236bea77572f108e52c22f7a94f487ea2a609d97bc42b573",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 35407468491,
+      "run": 35441152733,
       "attempt": 1,
-      "sha": "ec23a35169b23ce9e2335b7f5f0070fa2a08346a"
+      "sha": "0565c7ad3e0eaafa728fe6a410e5e1727597470b"
     }
   },
-  "foreignCapture": {
-    "reason": "приёмка линуксового артефакта Validate 35407468491 с машины владельца"
-  },
+  "foreignCapture": null,
   "witnesses": {
-    "count": 117,
+    "count": 106,
     "floor": 10
   },
   "scenarios": {
@@ -105,12 +103,13 @@
     "tray-wide-tool-ru": "99abefe9c5b0f21356e87b46fc6d6d615cf9b799614c14bf8fffa0261fd9059a",
     "tray-medium-group-en": "afdb651c687cabda48e62d426b9ef4926a23caa86904fe6fa2c163930070b2bd",
     "tray-medium-selection-ru": "5d78f5d818514ab80a4fb2949274edffd372e0d2e41bc3ccf39a22fd7c993f6b",
-    "tray-narrow-palette-en": "ae23f1b1384bec23ec272156cb2b7d3fe4088addaefa2f575bc1daa0480569a1",
-    "furniture-categories-light": "1aae9b6166146b06c6571730761daed5690ea50769e6dc618a66c19339f5d834",
+    "tray-narrow-palette-en": "100d7a87eebf6665bf67cdd53b7f23ade885827af8dc6cc7ae27cebc971b8fb9",
+    "furniture-categories-light": "decddc60822ed0d6a04fe5695f3a79bb57ed98aa2103f02e89c68bced313feef",
     "furniture-variants-dark": "7988bb13215657886a1e08ada67317f030c7f99d6d1f483b5d61cebc492cb46b",
     "furniture-variants-light": "d025401492c808b11fc84e862d3154cd7ccd57095436488575d4b23f7b2debff",
-    "furniture-placement-preview-light": "e725e280f22359dd5b8df2e2c26caa8f16f35048af7be594a367c40a357e079f",
+    "furniture-placement-preview-light": "eeaea99b86807fcf61960ce7c688d929721a3a3ee47867d564079d86d089f7e5",
     "furniture-plan-art-dark": "e8d3ab381dd33e28c3c05271afeb66b110483e7fcf6e9c660d578c9ae3b4072f",
+    "furniture-new-symbols-light": "51535124c8a68cae621c4fbfc4398edd5bf820caaf6be9a5d2b5fdf962e0b628",
     "furniture-transform-light": "ca1db454c8ffe5eb9558bb08f29615b804a4f7b002d90bf51f010b2189d450af",
     "furniture-transform-dark": "04ccddce94dbd35bd3da7e5a40dc5f80adb189e3b5ed6e5e99142258558c207f",
     "tray-narrow-tool-ru": "fa8f7125ea9f5c43f47ad090cf78ab970950a03dc5a9fa1c348c880ced7c0c4c",
