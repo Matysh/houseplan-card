@@ -246,8 +246,11 @@ the same profiler available between stable promotions.
    leaving an inert surface. The bundle manifest classifies this graph as
    `lazyLocaleFiles`, separate from editor and onboarding graphs.
    Designer furniture artwork follows the same shape (#474): the catalogue
-   (ids, groups, default sizes) stays eager, the 44 SVG drawings live in
-   `lazyFurnitureArtFiles` behind `FURNITURE_ART_RUNTIME`. Plan intake starts
+   (ids, groups, default sizes) stays eager, the 60 SVG drawings live in
+   `lazyFurnitureArtFiles` behind `FURNITURE_ART_RUNTIME`. Since #593 the
+   library is designer artwork only — the twelve primitive symbols drawn from
+   code are gone, so every piece waits for the chunk instead of twelve of them
+   rendering regardless. Plan intake starts
    the load only when the plan draws a designer piece, the boot veil holds
    until the runtime settles (within the veil's hard cap), the editor imports
    the drawings statically and hands them over synchronously (`adopt`), and
