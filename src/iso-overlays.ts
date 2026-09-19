@@ -1440,6 +1440,7 @@ export function resolveIsoOverlayCollisions(
       };
 
       let fallbackAdded = false;
+      let roomBoundaryWitness = false;
       const addFallbackBoundaries = (): void => {
         if (fallbackAdded) return;
         fallbackAdded = true;
@@ -1553,7 +1554,7 @@ export function resolveIsoOverlayCollisions(
                         && (witness.distance < wallWitness.distance - EPS
                           || Math.abs(witness.distance - wallWitness.distance) <= EPS
                             && witness.index < wallWitness.index))) wallWitness = witness;
-            }
+            } else if (inspection === INSPECTION_ROOM) roomBoundaryWitness = true;
             continue;
           }
           if (shape.conflicts.length) {
@@ -1598,11 +1599,11 @@ export function resolveIsoOverlayCollisions(
           next.forEach(addWallBoundary);
           changed = true;
         }
-        // A verified hint is an upper bound, not proof of minimality. If none
-        // of the overlay events improves it, room/wall boundary intersections
-        // must still get one exact pass before the search may stop.
+        // A verified hint is an upper bound, not proof of minimality. Room
+        // boundaries only need expanding when a nearer overlay event actually
+        // reached one; otherwise they cannot bound a better feasible point.
         if (!changed && best && !best.conflicts.length
-            && (!bestFromHint || fallbackAdded)) break;
+            && (!bestFromHint || fallbackAdded || !roomBoundaryWitness)) break;
         if (!changed && !fallbackAdded) {
           addFallbackBoundaries();
           changed = true;
