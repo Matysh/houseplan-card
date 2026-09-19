@@ -1,12 +1,28 @@
 {
-  "schema": 1,
+  "schema": 2,
   "matrixVersion": 63,
-  "acceptedAt": "2026-09-16T20:10:26.546Z",
-  "sourceFingerprint": "ead0f4146471ab778119d7575ca6c0fae2c76260315828e505380a3e32910549",
+  "acceptedAt": "2026-09-19T05:39:06.893Z",
+  "sourceFingerprint": "271e0747b4ddef1af0d15d8bf63a832d72b0f7211550c349a59b3baa3864a84e",
   "chromium": "151.0.7922.34",
-  "platform": "linux",
+  "capturedOn": "linux",
+  "acceptedOn": "win32",
+  "capture": {
+    "platform": "linux",
+    "arch": "x64",
+    "chromium": "151.0.7922.34",
+    "buildFingerprint": "271e0747b4ddef1af0d15d8bf63a832d72b0f7211550c349a59b3baa3864a84e",
+    "ci": {
+      "repository": "Matysh/houseplan-card",
+      "run": 35407468491,
+      "attempt": 1,
+      "sha": "ec23a35169b23ce9e2335b7f5f0070fa2a08346a"
+    }
+  },
+  "foreignCapture": {
+    "reason": "приёмка линуксового артефакта Validate 35407468491 с машины владельца"
+  },
   "witnesses": {
-    "count": 107,
+    "count": 117,
     "floor": 10
   },
   "scenarios": {
@@ -107,8 +123,8 @@
     "lighting-glow-sun-dark": "9021fa10f6606d2307f75f8024473be3e2d6e94d1c48ab149551c2bbdf129578",
     "device-value-badge-positions-dark": "f4ae3548d65e8fd0377b7c2b446065d922473c40f85537a8ce99d3219978223c",
     "device-value-face-cover-source-dark": "18aa90881fe7794c98c52142b73fb1db33bf57d390c24b6286b7b7db6312bcfa",
-    "device-icon-state-table-light": "7967b87a5179837988708884418d914b446c6ebf5c61d5834f299c0662ce1eb5",
-    "device-icon-state-table-dark": "4f42ac7b3e7ea5a5ee17bdf9ceebfd2520603e30662d6f9ac4d4d116951dff32",
+    "device-icon-state-table-light": "0e426d536bd89354d51bd90ef62c08bdf8d36f27132d5f1f22b64c79850266df",
+    "device-icon-state-table-dark": "c993ee850b38af1325f1290d45e516a19c4bc6c3e4db864cdc1cc61276ce6d18",
     "device-text-shell-long-light": "ceca1de08ae34f610bc532ab7851855582bfd00b987922941a3253ea61aac44c",
     "device-text-shell-long-dark": "0a8ed12b7167744eebb59adbd0a4c81efb9259c64305e9977b059c05db497cf5",
     "lighting-sun-window-state-only-dark": "1ed25dcc1b2efa7c2622b16c16ec8b551cf67c5c12202fd483b2377dcc47ab50",
@@ -154,8 +170,8 @@
     "device-dialog-desktop-en": "b748923af66c4bc69785189f3f394961e4b7afb6528a538f0be845bb1261a3fd",
     "device-dialog-mobile-ru": "3a27e161cd2a2b791c38e74c24606d2a8deb47c45d8dd64aa14a0311b05b1dd3",
     "device-dialog-desktop-de": "385f8f36de1112862c8b9b10a627155a2c6c9b24f76aea45eb2a79e00397a07c",
-    "room-temperature-dialog-desktop-en": "f047924f25f7b05edf76e3acdd8e76af5b14928fd9273fa0643cda815af9fe7b",
-    "room-temperature-dialog-mobile-ru": "722ad71b8ebc482a3c11a088baa54aefdfa36f5d61aaf7e8c2551cdb7bddb3b9",
+    "room-temperature-dialog-desktop-en": "2ca0f4dab1e0c5be5d83fb38375a9e8e46e0a52908ef2506217ff96bef0e665f",
+    "room-temperature-dialog-mobile-ru": "dade0676b3158bcc701dc166278832d60d4e95ade7f33a2cdd236284050bdfd6",
     "german-view-mobile-light": "8c079d1574a6fbec478eacc872a46800f4348a9ce6d4dc1b1a11f88df8688e19",
     "toggle-entity-dialog-desktop-en": "799c95295a5f321fb512f30f6787c3057c059cd790337f46985736a16f4f0943",
     "toggle-entity-dialog-mobile-ru": "d293db2db8773d72c78936c0c82a57791811d8c2bfc9cb3859743d5e20d5ab35",
