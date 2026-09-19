@@ -3,8 +3,10 @@
 //
 // PROCESS §8 перечисляет автору шесть команд, и в #476 они гонялись
 // последовательно, вперемешку с гейтами, к задаче не относящимися. Здесь
-// обязательная часть §8 идёт параллельно — юниты, сборка с typecheck, «новый
-// код не добавляет any», выбор смоков по диффу — а затем сверяется бандл. Что
+// обязательная часть §8 начинается параллельно — сборка с typecheck, «новый
+// код не добавляет any», выбор смоков по диффу. Юниты читают свежий `dist`,
+// поэтому идут после сборки, а не одновременно с очисткой/записью её каталога;
+// затем сверяется бандл. Что
 // НЕ входит и остаётся по диффу и AC: сами смоки (их список печатается),
 // golden, pytest, инварианты модели, check-docs в строгом режиме.
 //
@@ -56,19 +58,19 @@ export async function runLimited(items, limit, worker) {
   return results;
 }
 
-/** Шаги параллельной фазы: имя → команда. `base` — начало диапазона диффа. */
+/** Шаги параллельной read-only/producer-фазы. `base` — начало диапазона диффа. */
 export function parallelSteps(base) {
   return [
-    { name: 'юниты (npm test)', cmd: npm, args: ['test'] },
     { name: 'сборка + typecheck (npm run build)', cmd: npm, args: ['run', 'build'] },
     { name: 'новый код не добавляет any', cmd: process.execPath, args: ['scripts/no-new-any.mjs', '--base', base, '--head', 'HEAD'] },
     { name: 'смоки по диффу (smoke-select)', cmd: process.execPath, args: ['scripts/smoke-select.mjs', '--base', base, '--head', 'HEAD', '--json'], informational: true },
   ];
 }
 
-/** Фаза после сборки: три копии бандла совпадают, бюджет не превышен. */
-export function serialSteps() {
+/** Фаза после сборки: consumers свежего dist и проверки готового артефакта. */
+export function postBuildSteps() {
   return [
+    { name: 'юниты (npm test)', cmd: npm, args: ['test'] },
     { name: 'копии бандла совпадают (bundle-tree)', cmd: process.execPath, args: ['scripts/bundle-tree.mjs', 'dist', 'custom_components/houseplan/frontend'], hint: 'npm run bundle:sync' },
     { name: 'бюджет бандла', cmd: npm, args: ['run', 'bundle:budget'] },
   ];
@@ -101,11 +103,11 @@ export function summarize(results) {
 
 export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = false, jobs = 2, log = console.log } = {}) {
   const started = Date.now();
-  log(`gate:small — база диапазона ${base}; параллельно: юниты, сборка, no-new-any, smoke-select${smokes ? `; затем bundle-sync и смоки по диффу (×${jobs})` : ''}`);
+  log(`gate:small — база диапазона ${base}; параллельно: сборка, no-new-any, smoke-select; после сборки: юниты и проверки артефакта${smokes ? `; затем bundle-sync и смоки по диффу (×${jobs})` : ''}`);
   const parallel = await Promise.all(parallelSteps(base).map((step) => runStep(step, cwd)));
   const buildOk = parallel.find((r) => r.args.includes('build'))?.code === 0;
   const serial = [];
-  if (buildOk) for (const step of serialSteps()) serial.push(await runStep(step, cwd));
+  if (buildOk) for (const step of postBuildSteps()) serial.push(await runStep(step, cwd));
   // Browser-consumers — после подготовки артефактов (#496): bundle-sync раскладывает
   // собранное дерево в demo/srv/assets, смоки читают его и отказываются на несвежем.
   let selected = [];

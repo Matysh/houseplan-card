@@ -380,9 +380,11 @@ npm run bundle:sync   # dist → custom_components + demo/srv/assets (#255)
 npm run bundle:budget # initial View graph <= 256000 B gzip (#337)
 ```
 
-`npm run gate:small` runs the mandatory part of PROCESS §8 in one go (#479):
-unit tests, build with typecheck, `no-new-any` and `smoke-select` in parallel,
-then the bundle-tree comparison and the bundle budget. It prints the smokes the
+`npm run gate:small` runs the mandatory part of PROCESS §8 in one go (#479,
+#576): build with typecheck, `no-new-any` and `smoke-select` start in parallel;
+unit tests follow the completed build because their bundle-contract witnesses
+read the freshly produced `dist`, then the bundle-tree comparison and the
+bundle budget run. It prints the smokes the
 diff selects but does not run them by default — `npm run gate:small -- --smokes`
 (#496) adds the browser phase after the artefact preparation: `bundle-sync`, then
 the directly matched and registered smokes two at a time; "broad" matches stay

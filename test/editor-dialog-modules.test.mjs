@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /**
@@ -26,7 +27,7 @@ const MODULES = [
 ];
 const DRAFTS = ['_markerDialog', '_spaceDialog', '_settingsDialog', '_roomDialog'];
 
-const source = (file) => readFileSync(new URL(file, new URL(ROOT, 'file:')), 'utf8');
+const source = (file) => readFileSync(resolve(ROOT, file), 'utf8');
 
 test('#592 вынесенные диалоги не заводят собственного состояния', () => {
   for (const file of MODULES) {

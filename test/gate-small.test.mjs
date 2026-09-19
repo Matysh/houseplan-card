@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { parseArgs, parallelSteps, serialSteps, summarize } from '../scripts/gate-small.mjs';
+import { parseArgs, parallelSteps, postBuildSteps, summarize } from '../scripts/gate-small.mjs';
 
 // #479 AC6: одна команда вместо списка §8 — состав обязательной части закреплён,
 // информационный шаг (smoke-select) не считается падением, сверка бандла идёт
@@ -9,11 +9,13 @@ import { parseArgs, parallelSteps, serialSteps, summarize } from '../scripts/gat
 
 test('gate:small гоняет обязательную часть PROCESS §8 и сверяет бандл (#479)', () => {
   const names = parallelSteps('origin/dev').map((s) => `${s.cmd} ${s.args.join(' ')}`);
-  assert.ok(names.some((n) => n.endsWith('npm test') || n.endsWith('npm.cmd test')));
+  assert.ok(!names.some((n) => n.endsWith('npm test') || n.endsWith('npm.cmd test')),
+    'юниты не должны гоняться одновременно со сборкой, которая пересоздаёт dist');
   assert.ok(names.some((n) => n.includes('run build')));
   assert.ok(names.some((n) => n.includes('scripts/no-new-any.mjs --base origin/dev --head HEAD')));
   assert.ok(names.some((n) => n.includes('scripts/smoke-select.mjs --base origin/dev --head HEAD')));
-  const serial = serialSteps().map((s) => s.args.join(' '));
+  const serial = postBuildSteps().map((s) => s.args.join(' '));
+  assert.equal(serial[0], 'test', 'юниты первыми читают уже готовый свежий dist');
   assert.ok(serial.some((s) => s.includes('bundle-tree.mjs dist custom_components/houseplan/frontend')));
   assert.ok(serial.some((s) => s.includes('bundle:budget')));
   assert.equal(parseArgs(['--base=abc']).base, 'abc');

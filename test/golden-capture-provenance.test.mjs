@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
+import { cpSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -73,9 +73,13 @@ function fixture({ platform = 'linux', schema = CAPTURE_PROVENANCE_SCHEMA, captu
 }
 
 /** Приёмка в изолированный каталог эталонов: рабочий репозиторий не трогаем. */
-function accept(from, { reason = '', expectFailure = false } = {}) {
+const HOST_TEST_ALLOWANCE = process.platform === 'linux'
+  ? ''
+  : '#576: unit-тест приёмки из закреплённого Windows toolchain';
+
+function accept(from, { reason = HOST_TEST_ALLOWANCE, expectFailure = false } = {}) {
   const sandbox = mkdtempSync(resolve(tmpdir(), 'hp-golden-571-baselines-'));
-  execFileSync('cp', ['-r', BASELINES + '/.', sandbox]);
+  cpSync(BASELINES, sandbox, { recursive: true });
   const env = { ...process.env };
   if (reason) env.HP_ALLOW_FOREIGN_CAPTURE = reason; else delete env.HP_ALLOW_FOREIGN_CAPTURE;
   try {
@@ -108,14 +112,15 @@ test('#571 AC1: артефакт Linux принимается, обе сторо
   assert.equal(index.acceptedOn, process.platform, 'платформа приёмки — своя');
   assert.equal(indexCapturedOn(index), 'linux');
   assert.equal(index.capture.chromium, index.chromium);
-  assert.equal(index.foreignCapture, null, 'канон обхода не требует');
+  assert.deepEqual(index.foreignCapture, HOST_TEST_ALLOWANCE ? { reason: HOST_TEST_ALLOWANCE } : null,
+    'не-Linux хост теста оставляет явный след осознанного обхода');
   rmSync(from, { recursive: true, force: true });
 });
 
 test('#571 AC2: чужая среда съёмки без причины — отказ до записи', () => {
   const from = fixture({ platform: 'win32' });
   const before = readFileSync(resolve(BASELINES, 'baselines-index.json'), 'utf8');
-  const { error, index } = accept(from, { expectFailure: true });
+  const { error, index } = accept(from, { reason: '', expectFailure: true });
   assert.match(error, /приёмка отказана/);
   assert.match(error, /win32/);
   assert.equal(index.capturedOn ?? null, JSON.parse(before).capturedOn ?? null,
