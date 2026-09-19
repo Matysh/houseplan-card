@@ -1376,9 +1376,13 @@ export function resolveIsoOverlayCollisions(
 
     const baseCandidate = candidate(baseOffsetCss);
     let best = baseCandidate;
+    let bestFromHint = false;
     if (!best || best.conflicts.length) {
       const hinted = item.nudgeHintCss ? candidate(item.nudgeHintCss) : null;
-      if (hinted && !hinted.conflicts.length) best = hinted;
+      if (hinted && !hinted.conflicts.length) {
+        best = hinted;
+        bestFromHint = true;
+      }
     }
     if (!baseCandidate || baseCandidate.conflicts.length) {
       /**
@@ -1558,6 +1562,7 @@ export function resolveIsoOverlayCollisions(
                 placement: placementAtGroupOffset(base, offset, unitsPerPixel, false),
                 bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
               };
+              bestFromHint = false;
             }
             continue;
           }
@@ -1568,10 +1573,13 @@ export function resolveIsoOverlayCollisions(
               && !!bestOffset && (offset[1] < bestOffset[1] - EPS
                 || Math.abs(offset[1] - bestOffset[1]) <= EPS
                   && offset[0] < bestOffset[0] - EPS);
-          if (wins) best = {
-            placement: placementAtGroupOffset(base, offset, unitsPerPixel, false),
-            bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
-          };
+          if (wins) {
+            best = {
+              placement: placementAtGroupOffset(base, offset, unitsPerPixel, false),
+              bounds: shape.bounds, conflicts: shape.conflicts, penalty: shape.penalty,
+            };
+            bestFromHint = false;
+          }
         }
         if (wallWitness) pendingWalls.add(wallWitness.index);
       };
@@ -1590,7 +1598,11 @@ export function resolveIsoOverlayCollisions(
           next.forEach(addWallBoundary);
           changed = true;
         }
-        if (!changed && best && !best.conflicts.length) break;
+        // A verified hint is an upper bound, not proof of minimality. If none
+        // of the overlay events improves it, room/wall boundary intersections
+        // must still get one exact pass before the search may stop.
+        if (!changed && best && !best.conflicts.length
+            && (!bestFromHint || fallbackAdded)) break;
         if (!changed && !fallbackAdded) {
           addFallbackBoundaries();
           changed = true;

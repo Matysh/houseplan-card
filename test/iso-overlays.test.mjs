@@ -107,6 +107,35 @@ test('group collision separates a solvable dense set independently of input orde
     'a previous exact placement is only an upper bound and cannot change the nearest result');
 });
 
+test('group collision checks room-edge events before accepting a legal farther hint', () => {
+  const room = {
+    id: 'diagonal-strip',
+    outer: [[-5, -5], [55, 15], [55, 25], [-5, 5]],
+    safePoint: [30, 12],
+  };
+  const make = (id) => ({
+    id,
+    kind: 'device',
+    placement: placement({
+      floorAnchor: [0, 0], rooms: [room], preferredRoomId: room.id,
+      wallSilhouettes: [], footprintHalfSize: [1, 1], wallHeight: 0,
+      visualOffset: 0, sceneUnitsPerCssPixel: 1, camera: identityCamera,
+    }),
+    screenHalfSize: [8, 8],
+  });
+  const solve = (hint) => resolveIsoOverlayCollisions({
+    items: [make('a'), { ...make('b'), ...(hint ? { nudgeHintCss: hint } : {}) }],
+    rooms: [room], wallSilhouettes: [], sceneUnitsPerCssPixel: 1,
+    visualOffset: 0, safetyGapCssPx: 4, camera: identityCamera,
+  }).placements.get(isoOverlayCollisionKey('device', 'b'));
+
+  const exact = solve();
+  const hinted = solve([25, 6]);
+  assert.deepEqual(exact.nudgeCss, [20, 4]);
+  assert.deepEqual(hinted, exact,
+    'a legal cached hint cannot skip the nearer overlay/room boundary intersection');
+});
+
 test('group collision finds a legal one-pixel slit between the coarse nodes', () => {
   // The roots need 41 px of separation. Offset 40 still overlaps; offset 44
   // reaches masonry; and the room rejects the next coarse node at 48. The old
