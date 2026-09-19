@@ -1,10 +1,16 @@
 /**
  * Lazy designer artwork for furniture (#474).
  *
- * The 44 designer symbols carry ~10 KB gzip of SVG paths that every plan used
+ * The 60 designer symbols carry ~17 KB gzip of SVG paths that every plan used
  * to pay for, including plans without a single piece of furniture. The
  * catalogue (ids, groups, default sizes) stays in the initial View graph;
  * the artwork lives in its own chunk behind this page-scoped runtime.
+ *
+ * Since #593 the library is designer artwork only: the twelve symbols that
+ * used to be drawn from unit-box primitives in the eager graph are gone, so
+ * every piece now waits for this chunk instead of twelve of them rendering
+ * regardless. The `fallback` paragraph below is therefore the behaviour of
+ * the whole library, not of 48 pieces out of 60.
  *
  * Contract mirrors `LanguageRuntime` and `EditorRuntimeLoader`:
  *
