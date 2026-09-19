@@ -10,17 +10,17 @@
  * to SCALE: a sofa is a 2.2 x 0.9 m rectangle with a back along one long
  * side. Putting a 24x24 pictogram into that rectangle stretches a drawing
  * that was never meant to be stretched, and the result reads as an icon lying
- * on the floor, not as a piece of furniture. The primary library is therefore
- * generated from House Plan's own top-view SVG pack. A small compatibility
- * set that is absent from the pack stays expressed as unit-box primitives.
- * Both forms resolve to one path plus its native coordinate box; the renderer
- * scales that box to the stored real-world size. The renderer keeps the
- * configured decor stroke stable through that local non-uniform transform,
- * while `furniturePlanScreenScale` restores the outer physical plan zoom.
+ * on the floor, not as a piece of furniture. The library is therefore
+ * generated from House Plan's own top-view SVG pack — all of it, since #593:
+ * the 12 compatibility symbols that used to be drawn from unit-box primitives
+ * got designer artwork under their existing ids. Every symbol resolves to one
+ * path plus its native coordinate box; the renderer scales that box to the
+ * stored real-world size. The renderer keeps the configured decor stroke
+ * stable through that local non-uniform transform, while
+ * `furniturePlanScreenScale` restores the outer physical plan zoom.
  *
  * THE CONVENTION EVERY SYMBOL OBEYS:
- *   - x points right and y points DOWN (SVG); generated art keeps its native
- *     viewBox while legacy primitives use `0..1 x 0..1`;
+ *   - x points right and y points DOWN (SVG); art keeps its native viewBox;
  *   - `y = 0` is the BACK of the object — the side that goes against a wall.
  *     That is what makes the wall magnet meaningful: a sofa's back, a bed's
  *     headboard, a wardrobe's rear panel and a worktop's edge all mean the
@@ -37,23 +37,6 @@ import { FURNITURE_ART_RUNTIME, type FurnitureArtHost } from './furniture-art-ru
 export const FURNITURE_GROUPS = ['furniture', 'appliance', 'sanitary', 'other'] as const;
 export type FurnitureGroup = (typeof FURNITURE_GROUPS)[number];
 
-/**
- * A drawing primitive in the unit box. Deliberately tiny — four shapes are
- * enough for a plan symbol, and each one maps to a couple of path commands,
- * so a symbol costs a few dozen bytes in the bundle instead of a kilobyte of
- * Inkscape output.
- *
- *   ['r', x, y, w, h]                 rectangle
- *   ['l', x1, y1, x2, y2]             line
- *   ['e', cx, cy, rx, ry]             ellipse
- *   ['p', x1, y1, x2, y2, ...]        open polyline (2 points or more)
- */
-export type Prim =
-  | ['r', number, number, number, number]
-  | ['l', number, number, number, number]
-  | ['e', number, number, number, number]
-  | ['p', ...number[]];
-
 export interface FurnitureSymbol {
   /** Stable id — it is what the config stores and what `data-symbol` carries. */
   id: string;
@@ -63,10 +46,6 @@ export interface FurnitureSymbol {
   /** Default REAL size in centimetres: width ALONG the back edge x depth. */
   w: number;
   h: number;
-  /** Legacy drawing retained for symbols absent from the designer pack. */
-  g?: Prim[];
-  /** Designer symbol: its drawing lives in the lazy artwork chunk (#474). */
-  designer?: true;
 }
 
 export interface FurnitureGraphic {
@@ -75,190 +54,27 @@ export interface FurnitureGraphic {
   viewH: number;
 }
 
-// The outline every boxy symbol starts from, named once so the table reads.
-const box = (): Prim => ['r', 0, 0, 1, 1];
-
 /**
- * The library. Sizes are the ones a European flat actually has; they are
- * DEFAULTS, not limits — the palette lets the user type over both numbers
- * before placing, and the corner handles change them afterwards.
+ * The public library: every symbol of the designer pack, nothing else.
+ *
+ * Until #593 this was a union of the generated catalogue and 12 symbols drawn
+ * from unit-box primitives, kept because the pack had no top view for them.
+ * Pack 0.4.0 draws all 60, so the union is gone — and with it the trap it
+ * carried: both halves used the SAME public ids, and `BY_ID` below keeps the
+ * LAST entry, so a primitive silently won over the designer drawing it was
+ * supposed to be replaced by.
+ *
+ * Sizes are the ones a European flat actually has; they are DEFAULTS, not
+ * limits — the palette lets the user type over both numbers before placing,
+ * and the corner handles change them afterwards.
  */
-const LEGACY_FURNITURE: FurnitureSymbol[] = [
-  // ------------------------------- мебель --------------------------------
-  { id: 'sofa', group: 'furniture', category: 'sofa', w: 220, h: 90, g: [
-    box(),
-    ['l', 0.09, 0.26, 0.91, 0.26],   // the back cushion
-    ['l', 0.09, 0.26, 0.09, 1],      // armrests
-    ['l', 0.91, 0.26, 0.91, 1],
-    ['l', 0.5, 0.26, 0.5, 1],        // two seats
-  ] },
-  { id: 'armchair', group: 'furniture', category: 'armchair', w: 90, h: 85, g: [
-    box(),
-    ['l', 0.14, 0.28, 0.86, 0.28],
-    ['l', 0.14, 0.28, 0.14, 1],
-    ['l', 0.86, 0.28, 0.86, 1],
-  ] },
-  { id: 'coffee_table', group: 'furniture', category: 'coffee_table', w: 110, h: 60, g: [
-    box(), ['r', 0.08, 0.14, 0.84, 0.72],
-  ] },
-  { id: 'table_dining', group: 'furniture', category: 'dining_table', w: 140, h: 80, g: [
-    box(), ['r', 0.06, 0.11, 0.88, 0.78],
-  ] },
-  { id: 'table_round', group: 'furniture', category: 'dining_table', w: 120, h: 120, g: [
-    ['e', 0.5, 0.5, 0.5, 0.5], ['e', 0.5, 0.5, 0.41, 0.41],
-  ] },
-  { id: 'chair', group: 'furniture', category: 'chair', w: 45, h: 45, g: [
-    ['r', 0, 0, 1, 0.18],            // the back
-    ['r', 0.06, 0.18, 0.88, 0.8],    // the seat
-  ] },
-  { id: 'desk', group: 'furniture', category: 'work_table', w: 120, h: 60, g: [
-    box(),
-    ['r', 0.63, 0.07, 0.31, 0.86],   // the drawer pedestal
-    ['l', 0.63, 0.5, 0.94, 0.5],
-  ] },
-  { id: 'bed_double', group: 'furniture', category: 'bed', w: 160, h: 200, g: [
-    box(),
-    ['r', 0, 0, 1, 0.07],            // the headboard, i.e. the back
-    ['r', 0.06, 0.1, 0.4, 0.15],     // two pillows
-    ['r', 0.54, 0.1, 0.4, 0.15],
-    ['l', 0, 0.33, 1, 0.33],         // the turned-down blanket
-  ] },
-  { id: 'bed_single', group: 'furniture', category: 'bed', w: 90, h: 200, g: [
-    box(),
-    ['r', 0, 0, 1, 0.07],
-    ['r', 0.15, 0.1, 0.7, 0.15],
-    ['l', 0, 0.33, 1, 0.33],
-  ] },
-  { id: 'nightstand', group: 'furniture', category: 'nightstand', w: 45, h: 40, g: [
-    box(), ['r', 0.12, 0.14, 0.76, 0.33], ['r', 0.12, 0.53, 0.76, 0.33],
-  ] },
-  { id: 'wardrobe', group: 'furniture', category: 'wardrobe', w: 100, h: 60, g: [
-    box(),
-    ['l', 0, 0.72, 1, 0.72],         // the hanging rail
-    ['l', 0.5, 0.72, 0.5, 1],        // the doors meet here
-  ] },
-  { id: 'bookshelf', group: 'furniture', category: 'wardrobe', w: 80, h: 30, g: [
-    box(), ['l', 0.34, 0, 0.34, 1], ['l', 0.67, 0, 0.67, 1],
-  ] },
-
-  // ------------------------------- техника -------------------------------
-  { id: 'fridge', group: 'appliance', category: 'fridge', w: 60, h: 65, g: [
-    box(),
-    ['l', 0, 0.36, 1, 0.36],         // freezer / fridge
-    ['l', 0.83, 0.44, 0.83, 0.64],   // the handle
-  ] },
-  { id: 'stove', group: 'appliance', category: 'cooktop', w: 60, h: 60, g: [
-    box(),
-    ['e', 0.29, 0.31, 0.15, 0.15], ['e', 0.71, 0.31, 0.15, 0.15],
-    ['e', 0.29, 0.71, 0.15, 0.15], ['e', 0.71, 0.71, 0.15, 0.15],
-  ] },
-  { id: 'dishwasher', group: 'appliance', category: 'dishwasher', w: 60, h: 60, g: [
-    box(),
-    ['r', 0.1, 0.12, 0.8, 0.76],
-    ['e', 0.5, 0.5, 0.27, 0.27], ['e', 0.5, 0.5, 0.13, 0.13],  // plates
-  ] },
-  { id: 'washer', group: 'appliance', category: 'washer', w: 60, h: 60, g: [
-    box(),
-    ['l', 0.08, 0.17, 0.92, 0.17],   // the control panel
-    ['e', 0.5, 0.57, 0.3, 0.3], ['e', 0.5, 0.57, 0.14, 0.14],  // the drum
-  ] },
-  { id: 'dryer', group: 'appliance', category: 'dryer', w: 60, h: 60, g: [
-    box(),
-    ['l', 0.08, 0.17, 0.92, 0.17],
-    ['e', 0.5, 0.57, 0.3, 0.3],
-    ['p', 0.36, 0.5, 0.5, 0.64, 0.64, 0.5],  // the chevron that is not a drum
-  ] },
-  { id: 'tv', group: 'appliance', category: 'tv', w: 120, h: 30, g: [
-    ['r', 0, 0, 1, 0.42],            // the screen, seen edge-on
-    ['l', 0.5, 0.42, 0.5, 0.72],
-    ['l', 0.3, 0.72, 0.7, 0.72],     // the stand
-  ] },
-  { id: 'ac', group: 'appliance', category: 'air_conditioner', w: 90, h: 25, g: [
-    box(), ['l', 0.05, 0.55, 0.95, 0.55], ['l', 0.05, 0.79, 0.95, 0.79],
-  ] },
-  { id: 'water_heater', group: 'appliance', category: 'boiler', w: 45, h: 45, g: [
-    ['e', 0.5, 0.5, 0.5, 0.5], ['e', 0.5, 0.5, 0.31, 0.31],
-  ] },
-
-  // ----------------------------- сантехника ------------------------------
-  { id: 'toilet', group: 'sanitary', category: 'toilet', w: 40, h: 70, g: [
-    ['r', 0.06, 0, 0.88, 0.2],       // the cistern, against the wall
-    ['e', 0.5, 0.58, 0.37, 0.35],    // the bowl
-    ['e', 0.5, 0.58, 0.22, 0.2],
-  ] },
-  { id: 'bathtub', group: 'sanitary', category: 'bathtub', w: 170, h: 75, g: [
-    box(),
-    ['r', 0.05, 0.11, 0.77, 0.78],
-    ['e', 0.89, 0.5, 0.045, 0.1],    // the drain end
-  ] },
-  { id: 'shower', group: 'sanitary', category: 'shower', w: 90, h: 90, g: [
-    box(),
-    ['l', 0, 0, 1, 1], ['l', 1, 0, 0, 1],   // the tray, as every plan draws it
-    ['e', 0.5, 0.5, 0.08, 0.08],
-  ] },
-  { id: 'sink', group: 'sanitary', category: 'sink', w: 60, h: 45, g: [
-    box(),
-    ['e', 0.5, 0.6, 0.34, 0.3],
-    ['e', 0.5, 0.15, 0.07, 0.07],    // the tap
-  ] },
-  { id: 'kitchen_sink', group: 'sanitary', category: 'kitchen_sink', w: 80, h: 60, g: [
-    box(),
-    ['r', 0.06, 0.24, 0.44, 0.64],
-    ['r', 0.54, 0.24, 0.4, 0.64],
-    ['e', 0.5, 0.12, 0.06, 0.06],
-  ] },
-  { id: 'bidet', group: 'sanitary', category: 'bidet', w: 40, h: 55, g: [
-    ['e', 0.5, 0.5, 0.44, 0.5], ['e', 0.5, 0.5, 0.26, 0.3],
-  ] },
-
-  // ------------------------------- прочее --------------------------------
-  { id: 'stairs', group: 'other', category: 'stairs', w: 100, h: 280, g: [
-    box(),
-    ['l', 0, 0.111, 1, 0.111], ['l', 0, 0.222, 1, 0.222], ['l', 0, 0.333, 1, 0.333],
-    ['l', 0, 0.444, 1, 0.444], ['l', 0, 0.556, 1, 0.556], ['l', 0, 0.667, 1, 0.667],
-    ['l', 0, 0.778, 1, 0.778], ['l', 0, 0.889, 1, 0.889],
-    ['l', 0.5, 0.93, 0.5, 0.06],               // the "up" arrow
-    ['p', 0.38, 0.16, 0.5, 0.06, 0.62, 0.16],
-  ] },
-  { id: 'fireplace', group: 'other', category: 'fireplace', w: 120, h: 40, g: [
-    box(), ['p', 0.22, 1, 0.22, 0.42, 0.78, 0.42, 0.78, 1],
-  ] },
-  // #584: единственный legacy-примитив с полями — рисунок занимал 0.02…0.98
-  // unit box, то есть 40-сантиметровое растение выглядело на 4 % меньше
-  // соседей того же размера. Растянуто от центра в 1/0.96: форма прежняя,
-  // габарит стал заявленным.
-  { id: 'plant', group: 'other', category: 'plant', w: 40, h: 40, g: [
-    ['e', 0.5, 0.5, 0.22916667, 0.22916667],
-    ['l', 0.5, 0.27083333, 0.5, 0], ['l', 0.5, 0.72916667, 0.5, 1],
-    ['l', 0.27083333, 0.5, 0, 0.5], ['l', 0.72916667, 0.5, 1, 0.5],
-    ['l', 0.33333333, 0.33333333, 0.11458333, 0.11458333],
-    ['l', 0.66666667, 0.66666667, 0.88541667, 0.88541667],
-    ['l', 0.66666667, 0.33333333, 0.88541667, 0.11458333],
-    ['l', 0.33333333, 0.66666667, 0.11458333, 0.88541667],
-  ] },
-  { id: 'rug', group: 'other', category: 'rug', w: 200, h: 140, g: [
-    box(), ['r', 0.06, 0.09, 0.88, 0.82],
-  ] },
-];
-
-const RETAINED_IDS = new Set([
-  'fridge', 'dishwasher', 'washer', 'dryer', 'ac', 'water_heater',
-  'shower', 'sink', 'stairs', 'fireplace', 'plant', 'rug',
-]);
-
-/** Complete public library: 44 designer symbols plus the 12 useful existing
- * symbols for which the pack intentionally has no top-view replacement. */
-export const FURNITURE: FurnitureSymbol[] = [
-  ...GENERATED_FURNITURE_CATALOG.map((symbol) => ({
-    id: symbol.id,
-    group: symbol.group as FurnitureGroup,
-    category: symbol.category,
-    w: symbol.w,
-    h: symbol.h,
-    designer: true as const,
-  })),
-  ...LEGACY_FURNITURE.filter((symbol) => RETAINED_IDS.has(symbol.id)),
-];
+export const FURNITURE: FurnitureSymbol[] = GENERATED_FURNITURE_CATALOG.map((symbol) => ({
+  id: symbol.id,
+  group: symbol.group as FurnitureGroup,
+  category: symbol.category,
+  w: symbol.w,
+  h: symbol.h,
+}));
 
 const BY_ID = new Map(FURNITURE.map((s) => [s.id, s]));
 
@@ -269,9 +85,11 @@ export function furnitureSymbol(id: string | null | undefined): FurnitureSymbol 
   return (id && BY_ID.get(id)) || null;
 }
 
-/** Designer symbol whose drawing is lazy (#474); legacy symbols draw eagerly. */
+/** Is this a known symbol, and therefore one whose drawing arrives with the
+ *  lazy artwork chunk (#474)? Since #593 the two questions have one answer:
+ *  every symbol is designer artwork, and an unknown id has no drawing at all. */
 export function furnitureArtIsLazy(id: string): boolean {
-  return BY_ID.get(id)?.designer === true;
+  return BY_ID.has(id);
 }
 
 /** The symbols of one group, in table order. */
@@ -328,68 +146,23 @@ export function clampFurnCm(cm: number): number {
 
 // ------------------------------ the drawing --------------------------------
 
-const num = (v: number): string => {
-  const r = Math.round(v * 1000) / 1000;
-  return Object.is(r, -0) ? '0' : String(r);
-};
-
-/**
- * The symbol as ONE `d` string, in a box `w x h` whose top-left is `(0,0)`.
- *
- * One path per piece, not one element per primitive: the whole symbol then
- * takes a single stroke, a single pointer target and a single `data-symbol`,
- * and the decor layer's DOM does not grow by ten nodes per sofa.
- */
-function primitivePathD(s: FurnitureSymbol, w: number, h: number): string {
-  if (!s.g || !(w > 0) || !(h > 0)) return '';
-  const X = (v: number) => num(v * w);
-  const Y = (v: number) => num(v * h);
-  const out: string[] = [];
-  for (const p of s.g) {
-    if (p[0] === 'r') {
-      const [, x, y, pw, ph] = p;
-      out.push(`M${X(x)} ${Y(y)}H${X(x + pw)}V${Y(y + ph)}H${X(x)}Z`);
-    } else if (p[0] === 'l') {
-      const [, x1, y1, x2, y2] = p;
-      out.push(`M${X(x1)} ${Y(y1)}L${X(x2)} ${Y(y2)}`);
-    } else if (p[0] === 'e') {
-      const [, cx, cy, rx, ry] = p;
-      // two half-arcs: a full ellipse cannot be one A command
-      out.push(`M${X(cx - rx)} ${Y(cy)}`
-        + `A${num(rx * w)} ${num(ry * h)} 0 0 1 ${X(cx + rx)} ${Y(cy)}`
-        + `A${num(rx * w)} ${num(ry * h)} 0 0 1 ${X(cx - rx)} ${Y(cy)}Z`);
-    } else {
-      const pts = p.slice(1) as number[];
-      if (pts.length < 4) continue;
-      let d = `M${X(pts[0])} ${Y(pts[1])}`;
-      for (let i = 2; i + 1 < pts.length; i += 2) d += `L${X(pts[i])} ${Y(pts[i + 1])}`;
-      out.push(d);
-    }
-  }
-  return out.join('');
-}
-
 /** Native one-path artwork and its coordinate box. The renderer scales this
  * box non-uniformly to the user's stored dimensions; the furniture stroke
  * helpers below separate that local scale from the outer plan camera. */
 export function furnitureGraphic(id: string, host?: FurnitureArtHost): FurnitureGraphic | null {
-  const symbol = furnitureSymbol(id);
-  if (!symbol) return null;
-  // Designer artwork is lazy (#474): `undefined` while the chunk is pending or
-  // settled into fallback renders the piece as an unknown symbol — nothing —
-  // and a host passed here is re-rendered once the runtime settles.
-  if (symbol.designer) return FURNITURE_ART_RUNTIME.art(id, host) ?? null;
-  const d = primitivePathD(symbol, 1, 1);
-  return d ? { d, viewW: 1, viewH: 1 } : null;
+  if (!furnitureSymbol(id)) return null;
+  // Artwork is lazy (#474): `undefined` while the chunk is pending or settled
+  // into fallback renders the piece as an unknown symbol — nothing — and a
+  // host passed here is re-rendered once the runtime settles. Since #593 that
+  // is true for all 60 symbols, including the 12 that used to draw eagerly.
+  return FURNITURE_ART_RUNTIME.art(id, host) ?? null;
 }
 
 /** Compatibility helper for callers that only need a path string. Designer
  * artwork remains in its native viewBox; use `furnitureGraphic` when sizing it. */
 export function furniturePathD(id: string, w: number, h: number): string {
-  const symbol = furnitureSymbol(id);
-  if (!symbol || !(w > 0) || !(h > 0)) return '';
-  if (symbol.designer) return FURNITURE_ART_RUNTIME.art(id)?.d || '';
-  return primitivePathD(symbol, w, h);
+  if (!furnitureSymbol(id) || !(w > 0) || !(h > 0)) return '';
+  return FURNITURE_ART_RUNTIME.art(id)?.d || '';
 }
 
 /**

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -31,9 +31,25 @@ function fixture({ platform = 'linux', schema = CAPTURE_PROVENANCE_SCHEMA, captu
   const dir = mkdtempSync(resolve(tmpdir(), 'hp-golden-571-'));
   mkdirSync(resolve(dir, 'actual'), { recursive: true });
   const index = JSON.parse(readFileSync(resolve(BASELINES, 'baselines-index.json'), 'utf8'));
+  // #350/#593: сцена, добавленная в матрицу, живёт без эталона до первой
+  // приёмки. Настоящий прогон отчитывается по ней `missing-baseline`, и
+  // фикстура обязана моделировать это же, иначе `accept.mjs` справедливо
+  // ругается на неполный отчёт.
   const results = GOLDEN_SCENARIOS.map((scenario) => {
     const source = resolve(BASELINES, `${scenario.id}.png`);
     const actual = resolve(dir, 'actual', `${scenario.id}.png`);
+    if (!existsSync(source)) {
+      // Кадр у новой сцены есть (его и смотрит ревьюер), эталона ещё нет.
+      // Байты берём у любой принятой сцены: провенанс не о содержимом кадра.
+      copyFileSync(resolve(BASELINES, `${GOLDEN_SCENARIOS[0].id}.png`), actual);
+      return {
+        id: scenario.id,
+        status: 'missing-baseline',
+        actualSha256: createHash('sha256').update(readFileSync(actual)).digest('hex'),
+        baselineSha256: null,
+        diffRatio: null,
+      };
+    }
     copyFileSync(source, actual);
     const sha = createHash('sha256').update(readFileSync(actual)).digest('hex');
     return { id: scenario.id, status: 'passed', actualSha256: sha, baselineSha256: sha, diffRatio: 0 };
@@ -63,8 +79,14 @@ function accept(from, { reason = '', expectFailure = false } = {}) {
   const env = { ...process.env };
   if (reason) env.HP_ALLOW_FOREIGN_CAPTURE = reason; else delete env.HP_ALLOW_FOREIGN_CAPTURE;
   try {
+    // Сцены без эталона объявляются явно: `--expect-new` — это утверждение
+    // «я посмотрел на новый кадр», и обойти его фикстура не должна.
+    const fresh = GOLDEN_SCENARIOS
+      .filter((scenario) => !existsSync(resolve(BASELINES, `${scenario.id}.png`)))
+      .map((scenario) => scenario.id);
     const stdout = execFileSync(process.execPath,
-      [resolve(ROOT, 'demo/golden/accept.mjs'), '--reviewed', `--from=${from}`, `--baselines=${sandbox}`],
+      [resolve(ROOT, 'demo/golden/accept.mjs'), '--reviewed', `--from=${from}`, `--baselines=${sandbox}`,
+        ...(fresh.length ? [`--expect-new=${fresh.join(',')}`] : [])],
       { cwd: ROOT, env, encoding: 'utf8' });
     if (expectFailure) throw new Error('приёмка обязана была отказать, а прошла');
     return { stdout, index: JSON.parse(readFileSync(resolve(sandbox, 'baselines-index.json'), 'utf8')), sandbox };

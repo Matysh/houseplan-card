@@ -198,8 +198,12 @@ test('the wall magnet places a designer piece while its artwork is still pending
   }), null, 'an unknown symbol is still refused');
 });
 
-test('furnitureGraphic: legacy art is eager, designer art is undefined until the page runtime settles', () => {
-  assert.ok(furnitureGraphic('fridge')?.d, 'legacy primitive art needs no chunk');
-  assert.equal(furnitureArtIsLazy('fridge'), false);
+// #593: примитивов, рисовавшихся без чанка, больше нет — все 60 символов
+// приходят из ленивого арта. Это ОСОЗНАННАЯ потеря: `docs/FURNITURE.md` обещал,
+// что 12 retained-символов рисуются всегда, и обещание снято решением владельца.
+test('furnitureGraphic: every symbol waits for the lazy chunk, including the former primitives', () => {
+  assert.equal(furnitureArtIsLazy('fridge'), true, 'бывший примитив тоже ленив');
+  assert.equal(furnitureArtIsLazy('sofa'), true);
+  assert.equal(furnitureArtIsLazy('no_such_symbol'), false, 'неизвестный ID — не символ');
   assert.equal(furnitureGraphic('no_such_symbol'), null, 'unknown id is data, not a crash');
 });

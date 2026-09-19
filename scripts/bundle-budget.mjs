@@ -291,7 +291,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * оставлял под прежним центром 354 Б сверху — внутри шумовой полосы метрики.
  * Новый центр даёт 1 054 Б сверху и 946 Б до нижней границы полосы.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 292_400;
+export const INITIAL_VIEW_GZIP_CEILING = 291_400;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**
@@ -373,6 +373,53 @@ export function initialViewCeilingViolation(bytes, {
   return null;
 }
 
+/**
+ * #593: потолки ленивых графов. До этой задачи их размеры только печатались в
+ * отчёт, и заявление «бюджет ленивого графа защищён» было неправдой: сравнения
+ * не существовало ни одного. Задача, которая перерисовывает всю библиотеку
+ * мебели, живёт ровно в этих двух графах — значит она их и закрывает.
+ *
+ * Значения сняты с собранного бандла и поставлены с тем же запасом, что у
+ * стартового графа: полоса 2000 Б и обязательный зазор больше 500 Б с обеих
+ * сторон, чтобы ни семибайтный шум не красил гейт, ни молчаливый выигрыш не
+ * оставался незафиксированным.
+ */
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 17_900;
+export const LAZY_EDITOR_GZIP_CEILING = 222_900;
+export const LAZY_GRAPH_CEILING_BAND = 2_000;
+
+/**
+ * Потолок ленивого графа: `null`, пока значение внутри полосы.
+ *
+ * Отдельная функция, а не параметр `initialViewCeilingViolation`: текст отказа
+ * обязан называть граф, иначе «graph 17 000 B выше потолка» не говорит, какой
+ * именно граф вырос и куда смотреть.
+ */
+export function lazyGraphCeilingViolation(bytes, { ceiling, label, band = LAZY_GRAPH_CEILING_BAND } = {}) {
+  if (!Number.isFinite(bytes)) {
+    return { kind: 'missing', text: `${label} не измерен — потолок проверить нечем` };
+  }
+  if (bytes > ceiling) {
+    return {
+      kind: 'grew',
+      over: bytes - ceiling,
+      text: `${label} ${bytes} B gzip выше потолка ${ceiling} B на ${bytes - ceiling} B.`
+        + ' Ленивый граф грузится не в первом кадре, но он всё равно чей-то трафик:'
+        + ' поднимите потолок в этом же коммите, объяснив рост, либо уменьшите содержимое.',
+    };
+  }
+  if (bytes < ceiling - band) {
+    return {
+      kind: 'shrank',
+      under: ceiling - bytes,
+      text: `${label} ${bytes} B gzip ниже потолка ${ceiling} B на ${ceiling - bytes} B`
+        + ` — больше полосы ${band} B. Опустите потолок: незафиксированный выигрыш`
+        + ' граф отыграет обратно.',
+    };
+  }
+  return null;
+}
+
 /** Тревога о запасе: `null`, пока его хватает или пока долг признан. */
 export function lowHeadroomWarning(headroom, {
   threshold = LOW_HEADROOM_WARNING_BYTES,
@@ -400,6 +447,8 @@ export function assertBundleBudget(
   manifest,
   budget = INITIAL_VIEW_GZIP_BUDGET,
   panelOnlyBudget = INITIAL_PANEL_ONLY_GZIP_BUDGET,
+  lazyFurnitureArtCeiling = LAZY_FURNITURE_ART_GZIP_CEILING,
+  lazyEditorCeiling = LAZY_EDITOR_GZIP_CEILING,
 ) {
   assertBundleManifest(manifest);
   if (!manifest.lazyEditorFiles?.length) {
@@ -449,6 +498,14 @@ export function assertBundleBudget(
         + ` ${panelOnlyBudget} B budget`,
     );
   }
+  // #593: два ленивых графа впервые становятся гейтом, а не строкой в отчёте.
+  for (const [bytes, ceiling, label] of [
+    [manifest.lazyFurnitureArtGzipBytes, lazyFurnitureArtCeiling, 'lazy furniture art graph'],
+    [manifest.lazyEditorGzipBytes, lazyEditorCeiling, 'lazy editor graph'],
+  ]) {
+    const violation = lazyGraphCeilingViolation(bytes, { ceiling, label });
+    if (violation) throw new Error(violation.text);
+  }
   return {
     initialViewGzipBytes: manifest.initialViewGzipBytes,
     initialPanelGzipBytes: manifest.initialPanelGzipBytes,
@@ -477,7 +534,9 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
       `initial panel-only: ${result.initialPanelOnlyGzipBytes} B gzip`
         + ` (budget ${INITIAL_PANEL_ONLY_GZIP_BUDGET} B,`
         + ` headroom ${INITIAL_PANEL_ONLY_GZIP_BUDGET - result.initialPanelOnlyGzipBytes} B)`,
-      `lazy editor: ${result.lazyEditorGzipBytes} B gzip`,
+      `lazy editor: ${result.lazyEditorGzipBytes} B gzip (потолок ${LAZY_EDITOR_GZIP_CEILING} B ±${LAZY_GRAPH_CEILING_BAND})`,
+      `lazy furniture art: ${result.lazyFurnitureArtGzipBytes} B gzip`
+        + ` (потолок ${LAZY_FURNITURE_ART_GZIP_CEILING} B ±${LAZY_GRAPH_CEILING_BAND})`,
       `lazy locale: ${result.lazyLocaleGzipBytes} B gzip`,
       `lazy isometric: ${result.lazyIsometricGzipBytes} B gzip`,
       `lazy PDF: ${result.lazyPdfGzipBytes} B gzip`,

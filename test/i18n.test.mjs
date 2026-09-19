@@ -479,6 +479,9 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
     'gs.optimize_live_names',
     'gs.optimize_details',
     'furn.symbol',
+    // #593: 'Computer' одинаков в EN и DE — это немецкое слово, не пропуск перевода
+    'furn.cat_computer',
+    'furn.sym_computer',
     'furn.cat_sofa',
     'furn.cat_bidet',
     'vac.diag_platform',
@@ -511,6 +514,8 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
     'color_picker.confirm',
     'color_picker.saturation',
     'confirm.delete_partition_openings_item',
+    // #593: 'Cactus' пишется одинаково по-английски и по-французски
+    'furn.sym_cactus',
     'decor.rect',
     'decor.image',
     'err.code',

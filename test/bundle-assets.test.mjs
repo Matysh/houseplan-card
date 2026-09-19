@@ -13,6 +13,8 @@ import {
 import {
   INITIAL_PANEL_ONLY_GZIP_BUDGET, INITIAL_VIEW_CEILING_BAND,
   INITIAL_VIEW_GZIP_BUDGET, INITIAL_VIEW_GZIP_CEILING,
+  LAZY_EDITOR_GZIP_CEILING, LAZY_FURNITURE_ART_GZIP_CEILING, LAZY_GRAPH_CEILING_BAND,
+  lazyGraphCeilingViolation,
   LOW_HEADROOM_ACKNOWLEDGED_CEILING, LOW_HEADROOM_WARNING_BYTES,
   SUPPORT_LAZY_MARKERS,
   assertBundleBudget, assertSupportBundleOwnership, initialViewCeilingViolation,
@@ -224,10 +226,13 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
     'houseplan-assets/iso-scene-render-HASH.js',
     'houseplan-assets/pdf-export-HASH.js',
   ]);
-  assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000));
-  assert.throws(() => assertBundleBudget(manifest, 1), /exceeds/);
+  // Этот тест про РАЗДЕЛЕНИЕ графов, а не про их размеры: потолки ленивых
+  // графов (#593) задаются по самой фикстуре, чтобы она не проверяла лишнего.
+  const lazyCeilings = [manifest.lazyFurnitureArtGzipBytes, manifest.lazyEditorGzipBytes];
+  assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000, undefined, ...lazyCeilings));
+  assert.throws(() => assertBundleBudget(manifest, 1, undefined, ...lazyCeilings), /exceeds/);
   assert.throws(
-    () => assertBundleBudget(manifest, 1_000_000, manifest.initialPanelOnlyGzipBytes - 1),
+    () => assertBundleBudget(manifest, 1_000_000, manifest.initialPanelOnlyGzipBytes - 1, ...lazyCeilings),
     /panel-only graph.*exceeds/,
   );
 });
@@ -849,13 +854,15 @@ const runBudgetCli = (initialViewGzipBytes) => {
       initialPanelOnlyFiles: ['houseplan-panel.js'],
       initialPanelOnlyGzipBytes: 1,
       lazyEditorFiles: ['editor.js'],
-      lazyEditorGzipBytes: 1000,
+      // #593: у ленивых графов теперь свои потолки, и фикстура обязана лежать
+      // внутри полосы — иначе CLI краснеет не на том, что проверяет тест.
+      lazyEditorGzipBytes: LAZY_EDITOR_GZIP_CEILING - 1_000,
       lazyLocaleFiles: ['locale.js'],
       lazyLocaleGzipBytes: 100,
       lazyIsometricFiles: ['isometric.js'],
       lazyIsometricGzipBytes: 100,
       lazyFurnitureArtFiles: ['furniture-art.js'],
-      lazyFurnitureArtGzipBytes: 100,
+      lazyFurnitureArtGzipBytes: LAZY_FURNITURE_ART_GZIP_CEILING - 1_000,
       lazyPdfFiles: ['pdf.js'],
       lazyPdfGzipBytes: 100,
       lazyOnboardingFiles: [],
@@ -886,4 +893,39 @@ test('#438 CLI действительно применяет потолок, а 
   assert.equal(overBudget.status, 1, overBudget.output);
   assert.match(overBudget.output,
     new RegExp(`exceeds ${INITIAL_VIEW_GZIP_BUDGET} B budget`));
+});
+
+// #593: до этой задачи размеры ленивых графов только печатались в отчёт. Тогда
+// «бюджет ленивого графа защищён» было заявлением без гейта — сравнения не
+// существовало ни одного, и рост уезжал молча.
+test('#593 потолки ленивых графов — гейт, а не строка отчёта', () => {
+  const manifest = JSON.parse(
+    readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
+  );
+  for (const [bytes, ceiling, label] of [
+    [manifest.lazyFurnitureArtGzipBytes, LAZY_FURNITURE_ART_GZIP_CEILING, 'lazy furniture art graph'],
+    [manifest.lazyEditorGzipBytes, LAZY_EDITOR_GZIP_CEILING, 'lazy editor graph'],
+  ]) {
+    const violation = lazyGraphCeilingViolation(bytes, { ceiling, label });
+    assert.equal(violation, null, violation?.text);
+    // Факт лежит не у края полосы — с тем же запасом, что у стартового графа.
+    assert.ok(ceiling - bytes > 500, `${label}: сверху меньше 500 Б — это шум`);
+    assert.ok(bytes - (ceiling - LAZY_GRAPH_CEILING_BAND) > 500,
+      `${label}: снизу меньше 500 Б — гейт потребует опустить потолок из-за шума`);
+  }
+  // Гейт обязан быть исполняемым и на синтетике, обе стороны.
+  const grew = lazyGraphCeilingViolation(20_000, { ceiling: 17_900, label: 'lazy furniture art graph' });
+  assert.equal(grew.kind, 'grew');
+  assert.equal(grew.over, 2_100);
+  assert.match(grew.text, /lazy furniture art graph 20000 B gzip выше потолка 17900 B на 2100 B/);
+  const shrank = lazyGraphCeilingViolation(15_000, { ceiling: 17_900, label: 'lazy furniture art graph' });
+  assert.equal(shrank.kind, 'shrank');
+  assert.match(shrank.text, /Опустите потолок/);
+  // Границы полосы включительные — иначе гейт краснеет на равенстве.
+  assert.equal(lazyGraphCeilingViolation(17_900, { ceiling: 17_900, label: 'x' }), null);
+  assert.equal(lazyGraphCeilingViolation(15_900, { ceiling: 17_900, label: 'x' }), null);
+  assert.equal(lazyGraphCeilingViolation(NaN, { ceiling: 17_900, label: 'x' }).kind, 'missing');
+  // Текст обязан называть граф: «graph выше потолка» не говорит, куда смотреть.
+  assert.match(lazyGraphCeilingViolation(NaN, { ceiling: 1, label: 'lazy editor graph' }).text,
+    /lazy editor graph/);
 });

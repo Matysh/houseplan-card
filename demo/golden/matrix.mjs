@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 63;
+export const GOLDEN_MATRIX_VERSION = 64;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -639,6 +639,22 @@ export const GOLDEN_SCENARIOS = Object.freeze([
         w: 0.26, h: 0.17, color: '#141832', opacity: 1, width_cm: 1.2 },
     ],
     language: 'en', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  // #593 AC7: четыре ID, которых до пакета 0.4.0 не существовало. Кадр — их
+  // единственное доказательство «видно на плане»: остальные мебельные сцены
+  // сняты на символах, которые были и раньше.
+  { id: 'furniture-new-symbols-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    decorOverride: [
+      ...decorLayerFixture.filter((shape) => shape.kind !== 'furniture'),
+      { id: 'furn-computer', kind: 'furniture', symbol: 'computer', x: 0.14, y: 0.18,
+        w: 0.12, h: 0.06, color: '#141832', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-hood', kind: 'furniture', symbol: 'hood', x: 0.32, y: 0.18,
+        w: 0.06, h: 0.05, color: '#141832', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-oven', kind: 'furniture', symbol: 'oven', x: 0.44, y: 0.18,
+        w: 0.06, h: 0.06, color: '#141832', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-cactus', kind: 'furniture', symbol: 'cactus', x: 0.58, y: 0.18,
+        w: 0.07, h: 0.12, color: '#141832', opacity: 1, width_cm: 1.2 },
+    ],
+    language: 'ru', theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'furniture-transform-light', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     decorOverride: [
       ...decorLayerFixture.filter((shape) => shape.kind !== 'furniture'),

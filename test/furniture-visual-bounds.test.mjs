@@ -14,27 +14,25 @@ import { PLAN_BOUNDS_TOLERANCE } from '../scripts/generate-furniture-assets.mjs'
 // Тесты на `viewBox` были зелёными, и предмет 60 × 60 всё равно выглядел
 // меньше соседа 60 × 60.
 
-/** Путь символа в его собственном боксе: дизайнерский art либо legacy-примитив. */
-const artOf = (symbol) => (symbol.designer
-  ? {
-    d: GENERATED_FURNITURE_ART[symbol.id].d,
-    w: GENERATED_FURNITURE_ART[symbol.id].viewW,
-    h: GENERATED_FURNITURE_ART[symbol.id].viewH,
-  }
-  // Legacy-символы рисуются в unit box и приходят тем же публичным путём, что
-  // и в продакшене.
-  : { d: furnitureGraphic(symbol.id).d, w: 1, h: 1 });
+// #593: развилки «дизайнерский символ или legacy-примитив» больше нет — пакет
+// 0.4.0 рисует все 60, и unit box исчез вместе с примитивами.
+/** Путь символа в его собственном боксе. */
+const artOf = (symbol) => ({
+  d: GENERATED_FURNITURE_ART[symbol.id].d,
+  w: GENERATED_FURNITURE_ART[symbol.id].viewW,
+  h: GENERATED_FURNITURE_ART[symbol.id].viewH,
+});
 
 test('AC1: рисунок каждого символа заполняет свой физический бокс', () => {
   const misses = [];
   for (const symbol of FURNITURE) {
     const art = artOf(symbol);
-    const tolerance = symbol.designer ? PLAN_BOUNDS_TOLERANCE : PLAN_BOUNDS_TOLERANCE / Math.max(symbol.w, symbol.h);
+    const tolerance = PLAN_BOUNDS_TOLERANCE;
     const deviation = boxFillDeviation(art.d, art.w, art.h);
     if (deviation > tolerance) misses.push(`${symbol.id}: ${deviation.toFixed(4)} > ${tolerance.toFixed(4)}`);
   }
   assert.deepEqual(misses, [], 'символы с полями внутри своего бокса');
-  assert.equal(FURNITURE.length, 56, 'библиотека: 44 дизайнерских + 12 legacy');
+  assert.equal(FURNITURE.length, 60, 'библиотека: все 60 символов дизайнерские (#593)');
 
   // Положительный контроль. Утверждение «полей нет» стоит ровно столько,
   // сколько стоит измерение: та же функция на той же геометрии обязана поля

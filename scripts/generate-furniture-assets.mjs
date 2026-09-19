@@ -6,7 +6,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PACK = path.join(ROOT, 'assets', 'furniture', 'houseplan-0.3.0');
+const PACK = path.join(ROOT, 'assets', 'furniture', 'houseplan-0.4.0');
 // Deliberately not named *manifest.json: HACS rejects a repository that
 // contains any second file matching that suffix outside the integration.
 const MANIFEST = path.join(PACK, 'pack.json');
@@ -128,11 +128,11 @@ function loadPack() {
   exactKeys(manifest,
     ['schema_version', 'view_schema', 'pack_id', 'pack_version', 'title_ru', 'title_en', 'author', 'license', 'source_url', 'menu_icons', 'symbols'],
     [], 'manifest');
-  if (manifest.schema_version !== 1 || manifest.view_schema !== 2 || manifest.pack_id !== 'houseplan' || manifest.pack_version !== '0.3.0') fail('unsupported manifest identity');
+  if (manifest.schema_version !== 1 || manifest.view_schema !== 2 || manifest.pack_id !== 'houseplan' || manifest.pack_version !== '0.4.0') fail('unsupported manifest identity');
   if (manifest.author !== 'Sergey Matyunin (Matysh)' || manifest.license !== 'MIT') fail('release provenance is incomplete');
   text(manifest.title_ru, 'manifest.title_ru'); text(manifest.title_en, 'manifest.title_en'); text(manifest.source_url, 'manifest.source_url');
   if (!Array.isArray(manifest.menu_icons) || manifest.menu_icons.length !== 33) fail('exactly 33 menu icons are required');
-  if (!Array.isArray(manifest.symbols) || manifest.symbols.length !== 44) fail('exactly 44 plan symbols are required');
+  if (!Array.isArray(manifest.symbols) || manifest.symbols.length !== 60) fail('exactly 60 plan symbols are required');
 
   const menuIds = new Set();
   const menu = manifest.menu_icons.map((entry, index) => {

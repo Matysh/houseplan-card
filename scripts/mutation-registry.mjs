@@ -8667,6 +8667,73 @@ const MUTANT_DEFINITIONS = [
   // #474: designer furniture artwork is a lazy chunk. Each protective contract
   // of the runtime and its integration gets one witness.
   {
+    id: 'furniture-legacy-shadows-designer-art',
+    guard: 'node --test test/furniture-assets.test.mjs test/furniture.test.mjs',
+    because: '#593: до пакета 0.4.0 библиотека была объединением каталога и 12 примитивов, '
+      + 'и обе половины несли ОДНИ И ТЕ ЖЕ публичные ID. `BY_ID` оставляет последнюю запись, '
+      + 'поэтому примитив молча побеждал дизайнерский рисунок, который его заменял: задача '
+      + 'выглядит выполненной, а 12 предметов не обновились',
+    patches: [{
+      file: 'src/furniture.ts',
+      find: '}));\n\nconst BY_ID = new Map(FURNITURE.map((s) => [s.id, s]));',
+      replace: '})).concat(GENERATED_FURNITURE_CATALOG.slice(0, 12).map((symbol) => ({\n'
+        + '  id: symbol.id,\n'
+        + '  group: symbol.group as FurnitureGroup,\n'
+        + '  category: symbol.category,\n'
+        + '  w: symbol.w,\n'
+        + '  h: symbol.h,\n'
+        + '})));\n\nconst BY_ID = new Map(FURNITURE.map((s) => [s.id, s]));',
+    }],
+  },
+  {
+    id: 'furniture-pack-accepts-foreign-symbol-count',
+    guard: 'node --test test/furniture-assets.test.mjs',
+    because: '#593: «ровно 60 плановых символов» — единственное, что отличает проверенную '
+      + 'поставку от произвольной папки с SVG. Без жёсткого числа в пакет можно дослать файл, '
+      + 'и он приедет в бандл, не показавшись ни на одном ревью',
+    patches: [{
+      file: 'scripts/generate-furniture-assets.mjs',
+      find: "if (!Array.isArray(manifest.symbols) || manifest.symbols.length !== 60) fail('exactly 60 plan symbols are required');",
+      replace: "if (!Array.isArray(manifest.symbols) || manifest.symbols.length < 1) fail('exactly 60 plan symbols are required');",
+    }],
+  },
+  {
+    id: 'furniture-cactus-lands-in-exercise',
+    guard: 'node --test test/furniture-assets.test.mjs',
+    because: '#593: плитка категории «Тренажёр» рисует тренажёр. Открывать её на кактус — '
+      + 'врать о содержимом палитры; решение владельца — кактус в «Растении»',
+    patches: [{
+      file: 'assets/furniture/houseplan-0.4.0/pack.json',
+      find: '      "file": "svg/plan/cactus.svg",\n      "menu_icon": "plant",',
+      replace: '      "file": "svg/plan/cactus.svg",\n      "menu_icon": "exercise",',
+    }],
+  },
+  {
+    id: 'furniture-provenance-doc-loses-its-hash',
+    guard: 'node --test test/furniture-assets.test.mjs',
+    because: '#593/#159: SHA-256 проверенного архива и ссылка на грант — единственная '
+      + 'исполнимая защита от повторения истории #159. Если тест их не сверяет, документ '
+      + 'провенанса можно переписать под любую поставку, и никто не заметит',
+    patches: [{
+      file: 'assets/furniture/houseplan-0.4.0/README.md',
+      find: '`69BA5E0C398542D59F24269F637F57B8EBF31C2836C9D493F084AD29AB299FDE`',
+      replace: '`0000000000000000000000000000000000000000000000000000000000000000`',
+    }],
+  },
+  {
+    id: 'bundle-budget-lazy-ceiling-never-fires',
+    guard: 'node --test test/bundle-assets.test.mjs',
+    because: '#593: два ленивых графа впервые получили потолки. Функция, всегда возвращающая '
+      + 'null, возвращает прежнее положение дел — размер печатается в отчёт и не сравнивается '
+      + 'ни с чем, а «бюджет защищён» остаётся заявлением без гейта',
+    patches: [{
+      file: 'scripts/bundle-budget.mjs',
+      find: 'export function lazyGraphCeilingViolation(bytes, { ceiling, label, band = LAZY_GRAPH_CEILING_BAND } = {}) {',
+      replace: 'export function lazyGraphCeilingViolation(bytes, { ceiling, label, band = LAZY_GRAPH_CEILING_BAND } = {}) {\n'
+        + '  if (Number.isFinite(bytes)) return null;  // mutant',
+    }],
+  },
+  {
     id: 'furniture-art-eager-import',
     guard: 'npm run build && node scripts/bundle-budget.mjs',
     because: 'a static import of the artwork anywhere in the View graph silently pulls ~10 KB gzip '
@@ -8680,8 +8747,8 @@ const MUTANT_DEFINITIONS = [
       // A well-meaning "fall back to the bundled artwork" is exactly how the
       // chunk would creep back into the initial graph.
       file: 'src/furniture.ts',
-      find: '  if (symbol.designer) return FURNITURE_ART_RUNTIME.art(id, host) ?? null;',
-      replace: '  if (symbol.designer) return FURNITURE_ART_RUNTIME.art(id, host) ?? EAGER_ART[id] ?? null;',
+      find: '  return FURNITURE_ART_RUNTIME.art(id, host) ?? null;',
+      replace: '  return FURNITURE_ART_RUNTIME.art(id, host) ?? EAGER_ART[id] ?? null;',
     }],
   },
   {
@@ -8729,7 +8796,10 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/furniture-placement.ts',
       find: '  if (!furnitureSymbol(symbol) || !(canvasW > 0) || !(canvasH > 0)',
-      replace: "  if (!(furnitureSymbol(symbol) && (furnitureSymbol(symbol)?.g || FURNITURE_ART_RUNTIME.art(symbol))) || !(canvasW > 0) || !(canvasH > 0)",
+      // #593: поля `g` у символа больше нет — примитивов не осталось, и мутант,
+      // ссылавшийся на него, переставал компилироваться (setup-failure вместо
+      // проверки). Ложь та же по смыслу: магнит начинает требовать арт.
+      replace: "  if (!(furnitureSymbol(symbol) && FURNITURE_ART_RUNTIME.art(symbol)) || !(canvasW > 0) || !(canvasH > 0)",
     }, {
       file: 'src/furniture-placement.ts',
       find: "import { clampFurnSize, cmToNorm, furnitureSymbol } from './furniture';",

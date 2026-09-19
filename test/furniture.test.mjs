@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   FURNITURE, FURNITURE_GROUPS, furnitureSymbol, furnitureOfGroup,
-  furnitureDefaultCm, furniturePathD, furnitureGraphic, furnitureCorners, furnitureResize,
+  furnitureDefaultCm, furniturePathD, furnitureGraphic, furnitureArtIsLazy, furnitureCorners, furnitureResize,
   furniturePlanScreenScale, furnitureStrokePx,
   resizeFurnitureTransform, furnitureRotationAngle, furnitureRenderTransform,
   furnitureSignedFieldCm, furnitureSignedFieldValue,
@@ -42,21 +42,51 @@ test('every symbol is well formed: unique id, a known group, positive default si
     assert.ok(s.w > 0 && s.h > 0, `${s.id}: default size must be positive`);
     assert.match(s.category, /^[a-z0-9_]+$/, `${s.id}: invalid category`);
     assert.ok(furnitureGraphic(s.id)?.d, `${s.id}: nothing to draw`);
-    if (s.g) {
-      // Retained primitive art stays in the legacy unit box.
-      for (const p of s.g) {
-        const nums = p.slice(1);
-        for (const v of nums) assert.ok(v >= -0.001 && v <= 1.001, `${s.id}: ${v} outside the unit box`);
-      }
-    } else {
-      const art = furnitureGraphic(s.id);
-      assert.equal(s.designer, true, `${s.id}: designer symbol without the lazy flag`);
-      assert.deepEqual([art.viewW, art.viewH], [s.w, s.h], `${s.id}: manifest and SVG viewBox differ`);
-    }
+    // #593: примитивов в unit box больше нет — у каждого символа свой
+    // физический viewBox, и он обязан совпадать с манифестом.
+    const art = furnitureGraphic(s.id);
+    assert.deepEqual([art.viewW, art.viewH], [s.w, s.h], `${s.id}: manifest and SVG viewBox differ`);
+    assert.equal(furnitureArtIsLazy(s.id), true, `${s.id}: artwork must come from the lazy chunk`);
   }
-  assert.equal(FURNITURE.length, 56);
-  assert.equal(FURNITURE.filter((s) => s.designer).length, 44);
-  assert.equal(FURNITURE.filter((s) => s.g).length, 12);
+  assert.equal(FURNITURE.length, 60);
+  assert.equal(furnitureArtIsLazy('houseplan-no-such-symbol'), false);
+});
+
+// #593 AC4: пакет 0.4.0 перерисовывает 56 существующих ID, НЕ трогая их
+// default-размеры. Таблица зашита в тест: сдвиг любого числа переписал бы
+// габарит нового размещения у людей, которые ничего не меняли.
+test('#593: default sizes of the 56 pre-existing ids are byte-for-byte the pack 0.3.0 values', () => {
+  const BEFORE = {
+    ac: [90, 25], armchair: [90, 90], armchair_office: [65, 65],
+    bathtub: [170, 75], bathtub_corner: [140, 140], bed_double: [160, 200],
+    bed_single: [90, 200], bidet: [40, 60], bidet_built_in: [40, 50],
+    bookshelf: [100, 35], cabinet_shoe: [80, 35], cabinet_sink: [80, 50],
+    cabinet_tv: [140, 45], chair: [50, 50], chair_bar: [45, 48],
+    coffee_table: [120, 60], coffee_table_oval: [120, 60], coffee_table_round: [80, 80],
+    coffee_table_rounded: [120, 60], cooktop_two: [30, 50], desk: [140, 70],
+    desk_corner: [160, 160], dishwasher: [60, 60], dryer: [60, 60],
+    fireplace: [120, 40], fridge: [60, 65], kitchen_floor: [60, 60],
+    kitchen_floor_corner: [90, 90], kitchen_sink: [60, 50], kitchen_sink_double: [90, 50],
+    kitchen_wall: [60, 35], kitchen_wall_corner: [60, 60], nightstand: [50, 40],
+    plant: [40, 40], rug: [200, 140], shelf_floor: [100, 35],
+    shelf_wall: [100, 25], shower: [90, 90], sink: [60, 45],
+    sofa: [180, 90], sofa_corner_right: [260, 170], sofa_three_seat: [240, 90],
+    stairs: [100, 280], stove: [60, 60], table_dining: [160, 90],
+    table_dining_oval: [180, 100], table_dining_rounded: [160, 90], table_round: [110, 110],
+    toilet: [40, 70], toilet_built_in: [40, 55], tv: [120, 28],
+    tv_wall: [120, 15], wall_unit: [240, 45], wardrobe: [180, 60],
+    washer: [60, 60], water_heater: [45, 45],
+  };
+  assert.equal(Object.keys(BEFORE).length, 56);
+  const drift = [];
+  for (const [id, [w, h]] of Object.entries(BEFORE)) {
+    const got = furnitureDefaultCm(id);
+    if (got.w !== w || got.h !== h) drift.push(`${id}: ${got.w}x${got.h} вместо ${w}x${h}`);
+  }
+  assert.deepEqual(drift, []);
+  // Новые ID — единственные, которых в таблице нет.
+  const added = FURNITURE.map((s) => s.id).filter((id) => !(id in BEFORE)).sort();
+  assert.deepEqual(added, ['cactus', 'computer', 'hood', 'oven']);
 });
 
 test('the three groups the owner named are all populated, and every symbol is in exactly one', () => {
@@ -125,12 +155,16 @@ test('sizes are clamped, not trusted', () => {
 
 // ------------------------------- the drawing --------------------------------
 
-test('designer paths keep their native viewBox; retained paths still scale from the unit box', () => {
+test('every path keeps its native viewBox, including the twelve former primitives', () => {
   const sofa = furnitureGraphic('sofa');
   assert.deepEqual([sofa.viewW, sofa.viewH], [180, 90]);
   assert.ok(sofa.d.length > 10);
-  const fridge = furniturePathD('fridge', 60, 65);
-  assert.ok(fridge.startsWith('M0 0H60V65H0Z'), fridge.slice(0, 40));
+  // #593: `fridge` раньше рисовался примитивом из unit box и начинался с
+  // `M0 0H60V65H0Z`. Теперь это дизайнерский рисунок в своём viewBox.
+  const fridge = furnitureGraphic('fridge');
+  assert.deepEqual([fridge.viewW, fridge.viewH], [60, 65]);
+  assert.ok(fridge.d.startsWith('M'), fridge.d.slice(0, 40));
+  assert.ok(!fridge.d.startsWith('M0 0H60V65H0Z'), 'примитив не должен пережить пакет 0.4.0');
   // a degenerate box draws nothing rather than NaNs
   assert.equal(furniturePathD('sofa', 0, 10), '');
   assert.ok(!/NaN/.test(furniturePathD('toilet', 40, 70)));

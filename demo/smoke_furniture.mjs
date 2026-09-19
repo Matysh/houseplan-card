@@ -101,8 +101,13 @@ const res = await page.evaluate(async () => {
   out.firstLevelHasNoPlanVariants = !pal()?.querySelector('.furnitem[data-symbol]');
   out.requiredCategoriesArePresent = ['sofa', 'toilet', 'washer']
     .every((id) => !!category(id));
-  out.menuOnlyCategoriesStayHidden = ['computer', 'oven', 'hood', 'exercise']
-    .every((id) => !category(id));
+  // #593: пакет 0.4.0 дал вид сверху `computer`, `hood` и `oven` — три плитки
+  // перестали быть пустыми и появились в палитре. Пустой осталась одна
+  // `exercise`: кактус живёт в «Растении», а тренажёра в поставке нет.
+  out.menuOnlyCategoriesStayHidden = !category('exercise');
+  out.newCategoriesAreVisible = ['computer', 'hood', 'oven'].every((id) => !!category(id));
+  out.paletteShowsThirtyTwoCategories = pal()
+    ? pal().querySelectorAll('.furnitem[data-category]').length === 32 : false;
   const categoryD = category('sofa')?.querySelector('svg.furncatprev path')?.getAttribute('d') || '';
   out.categoryUsesFrontArtwork = categoryD.length > 10;
   category('sofa')?.click(); await c.updateComplete;
@@ -659,9 +664,12 @@ const renderStrokeFixture = async (zoom, angle = 0, viewport = null) => {
       { id: 'stroke-designer', kind: 'furniture', symbol: 'coffee_table',
         x: 0.18, y: 0.30, w: 0.38, h: 0.09, angle,
         color: '#ff00ff', opacity: 1, width_cm: 8 },
-      // Compatibility artwork: unit-box primitive, exercising the other path
-      // source retained by the furniture catalogue.
-      { id: 'stroke-primitive', kind: 'furniture', symbol: 'fridge',
+      // #593: `fridge` до этой задачи рисовался примитивом из unit box, и
+      // фикстура доказывала, что ВТОРОЙ источник пути ведёт себя как обычный
+      // декор. Источник теперь один, но предмет оставлен в фикстуре намеренно:
+      // именно эти 12 ID сменили рисунок, и именно у них регрессия была бы
+      // незаметна — их пропорции и координаты изменились полностью.
+      { id: 'stroke-converted', kind: 'furniture', symbol: 'fridge',
         x: 0.62, y: 0.27, w: 0.11, h: 0.20, angle,
         color: '#ff00ff', opacity: 1, width_cm: 8 },
     ];
@@ -694,11 +702,12 @@ const renderStrokeFixture = async (zoom, angle = 0, viewport = null) => {
     const y = Number(line?.getAttribute('y1'));
     return {
       control: sample('stroke-control', [x1 + (x2 - x1) * 0.35, y], [x1 + (x2 - x1) * 0.65, y]),
-      // coffee_table generated art: long top and right-side straight runs.
-      designerH: sample('stroke-designer', [30, 3.692], [90, 3.692]),
-      designerV: sample('stroke-designer', [116.16, 18], [116.16, 45]),
-      // fridge compatibility art is the canonical unit rectangle.
-      primitive: sample('stroke-primitive', [0.2, 0], [0.8, 0]),
+      // coffee_table 0.4.0: прямые участки контура — верхняя грань y = 0
+      // (x от 2.5 до 117.5) и правая x = 120 (y от 2.5 до 57.5).
+      designerH: sample('stroke-designer', [30, 0], [90, 0]),
+      designerV: sample('stroke-designer', [120, 18], [120, 45]),
+      // fridge 0.4.0: верхняя грань y = 0, x от 2.143 до 57.857.
+      converted: sample('stroke-converted', [15, 0], [45, 0]),
     };
   });
   const png = (await page.screenshot({ type: 'png' })).toString('base64');
@@ -753,22 +762,22 @@ const finite = (...values) => values.every((value) => Number.isFinite(value) && 
 const closePx = (a, b, tolerance = 2) => finite(a, b) && Math.abs(a - b) <= tolerance;
 const doubles = (a, b) => finite(a, b) && b / a >= 1.6 && b / a <= 2.4;
 res.rasterFixturePainted = finite(
-  z1.control, z1.designerH, z1.designerV, z1.primitive,
-  z2.control, z2.designerH, z2.primitive, rotated.designerH,
-  rotatedZ2.designerH, compact.control, compact.designerH, compact.primitive,
+  z1.control, z1.designerH, z1.designerV, z1.converted,
+  z2.control, z2.designerH, z2.converted, rotated.designerH,
+  rotatedZ2.designerH, compact.control, compact.designerH, compact.converted,
 );
 res.furnitureFollowsPhysicalCameraZoom = doubles(z1.control, z2.control)
   && doubles(z1.designerH, z2.designerH)
-  && doubles(z1.primitive, z2.primitive)
+  && doubles(z1.converted, z2.converted)
   && doubles(rotated.designerH, rotatedZ2.designerH);
-res.designerAndPrimitiveMatchOrdinaryDecor = closePx(z1.designerH, z1.control)
-  && closePx(z1.primitive, z1.control)
+res.everyFurniturePathMatchesOrdinaryDecor = closePx(z1.designerH, z1.control)
+  && closePx(z1.converted, z1.control)
   && closePx(z2.designerH, z2.control)
-  && closePx(z2.primitive, z2.control);
+  && closePx(z2.converted, z2.control);
 res.anisotropicResizeKeepsBothAxesEqual = closePx(z1.designerH, z1.designerV);
 res.rotatedArtworkKeepsTheSameThickness = closePx(rotated.designerH, z1.designerH);
 res.viewportResizeRecalculatesTheSharedPhysicalStroke = closePx(compact.designerH, compact.control)
-  && closePx(compact.primitive, compact.control)
+  && closePx(compact.converted, compact.control)
   && Math.abs(compact.control - z1.control) >= 1;
 checkAll(res);
 await finish(browser, res);

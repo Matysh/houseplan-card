@@ -135,8 +135,12 @@ const broken = await run({ furniture: true, chunk: 'abort' });
 out.failedChunkLiftsTheVeil = broken.after.booting === false;
 out.failedChunkKeepsPlanAndDevicesAlive = broken.after.devices > 0;
 out.failedChunkRetriedExactlyOnce = broken.artRequests === 2;
-// Designer pieces (sofa, bed) render as nothing; the legacy fridge still draws.
-out.failedChunkDrawsOnlyLegacyPieces = broken.after.furniture === 1;
+// #593: до этой задачи 12 retained-примитивов рисовались и без чанка, и
+// `docs/FURNITURE.md` это обещал. Пакет 0.4.0 перевёл их на дизайнерский арт,
+// обещание снято решением владельца, и теперь при отказе чанка не рисуется
+// НИЧЕГО — одинаково для всех 60 предметов. Это единственное место, где задача
+// ухудшает наблюдаемое поведение, и оно проверяется исполнением, а не словом.
+out.failedChunkDrawsNothingAtAll = broken.after.furniture === 0;
 out.failedChunkShowsOneToast = broken.after.toasts === 1
   && /furniture|мебел/i.test(broken.after.toastText);
 
@@ -144,7 +148,7 @@ out.failedChunkShowsOneToast = broken.after.toasts === 1
 const foreign = await run({ furniture: true, chunk: 'foreign' });
 out.foreignBuildIsTerminalWithoutRetry = foreign.artRequests === 1;
 out.foreignBuildFallsBackLikeNetworkFailure = foreign.after.booting === false
-  && foreign.after.furniture === 1 && foreign.after.toasts === 1;
+  && foreign.after.furniture === 0 && foreign.after.toasts === 1;
 
 // AC11 — two cards, one request.
 const pair = await run({ furniture: true, twoCards: true });

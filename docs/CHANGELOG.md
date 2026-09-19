@@ -10,6 +10,19 @@
   rearranged, not the settings
   ([#594](https://github.com/Matysh/houseplan-card/issues/594)).
 
+- Every built-in furniture symbol was redrawn in one style, and the library grew
+  to 60 top views. Twelve pieces — refrigerator, dishwasher, washing machine,
+  dryer, air conditioner, water heater, shower, sink, stairs, fireplace, plant
+  and rug — used to be drawn in code and looked foreign next to the rest; they
+  now carry designer artwork. Four new pieces arrived — **computer**, **cooker
+  hood**, **oven** and **cactus** — and with the first three, three previously
+  empty categories opened in the palette, bringing it to 32. The cactus lives
+  under Plant. Furniture already placed on a plan stays exactly where it is:
+  position, size, rotation, mirroring, colour, opacity and line width are
+  unchanged, and so are the default dimensions of every pre-existing id — only
+  the drawing inside the box changes. One behaviour got deliberately worse: if
+  the artwork fails to load, nothing is drawn now instead of 48 pieces out of 60
+  ([#593](https://github.com/Matysh/houseplan-card/issues/593)).
 - The Device editor offers a fifth **Display** option — **Value + static icon**.
   The marker shows the same number or state as **Value + state** while staying
   one colour forever: state, alarm, unavailability, live RGB colour and activity
