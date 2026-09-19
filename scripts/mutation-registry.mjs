@@ -9938,6 +9938,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'merge-candidate-truncates-the-candidate-diff',
+    guard: 'node --test --test-name-pattern="#596" test/merge-candidate.test.mjs',
+    because: '#596: дифф кандидата с тремя копиями бандла — семь мегабайт. Без явного maxBuffer '
+      + 'spawnSync убивает git по ENOBUFS, patch-id считается по огрызку, и слияние падает '
+      + 'с усечённым диффом вместо причины',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: "  const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: MAX_COMMAND_OUTPUT_BYTES, ...opts });",
+      replace: "  const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 1024 * 1024, ...opts });",
+    }],
+  },
+  {
     id: 'declared-baseline-review-run-never-checked',
     guard: 'node --test --test-name-pattern="#595" test/release-gate.test.mjs',
     because: '#573/#595: коммит приёмки эталонов объявляет прогон, на кадры которого смотрели. '

@@ -5,7 +5,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { MAX_ATTEMPTS, commentFor, decideMerge, mergeCandidate, realOps } from '../scripts/merge-candidate.mjs';
+import {
+  MAX_ATTEMPTS, MAX_COMMAND_OUTPUT_BYTES, commentFor, decideMerge, mergeCandidate, realOps, sh,
+} from '../scripts/merge-candidate.mjs';
 import { buildCiProof } from '../scripts/ci-proof.mjs';
 
 const mergeProofContext = (row, sha, tree) => {
@@ -386,4 +388,25 @@ test('#516 AC1: dev moved only by review documents and the branch carries its ow
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// #596: шаг слияния считает patch-id через `git diff` кандидата, а тот несёт три
+// копии бандла — семь мегабайт у #594. С умолчанием spawnSync в 1 МиБ процесс
+// убивался по ENOBUFS, `status` приходил `null`, и вывод обрезался посередине.
+test('#596: вывод больше мегабайта доезжает целиком, а не обрывается по буферу', () => {
+  const bytes = 3 * 1024 * 1024;
+  const r = sh(process.execPath, ['-e', `process.stdout.write('x'.repeat(${bytes}))`]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.length, bytes);
+  assert.ok(MAX_COMMAND_OUTPUT_BYTES > bytes, 'предел выбран с запасом над проверяемым объёмом');
+});
+
+// #596: вторая половина дефекта — сбой ЗАПУСКА выдавался за ненулевой код
+// возврата, и в сообщение уезжал усечённый stdout. Огрызок диффа выглядит
+// осмысленным и уводит разбор в сторону; причина обязана быть названа.
+test('#596: сбой запуска называет причину, а не притворяется кодом возврата', () => {
+  const r = sh('houseplan-no-such-command-596', []);
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /houseplan-no-such-command-596 не выполнился: ENOENT/);
+  assert.equal(r.stdout, '');
 });

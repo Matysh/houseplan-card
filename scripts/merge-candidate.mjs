@@ -99,9 +99,25 @@ export function commentFor(action, ctx) {
 // ---------------------------------------------------------------------------
 // Исполнение: git + gh через `ops`, чтобы тест подменял их целиком.
 
-const sh = (cmd, args, opts = {}) => {
-  const r = spawnSync(cmd, args, { encoding: 'utf8', ...opts });
-  return { status: r.status ?? 1, stdout: (r.stdout || '').trim(), stderr: (r.stderr || '').trim() };
+/**
+ * #596: сколько вывода готов принять один вызов. Умолчание `spawnSync` — 1 МиБ,
+ * а `git diff` кандидата несёт три копии бандла: у #594 это 7,1 МБ. Процесс
+ * убивался по ENOBUFS, `status` становился `null`, и `status ?? 1` выдавало это
+ * за «git вернул 1» — с УСЕЧЁННЫМ stdout в сообщении об ошибке. Разбор уходил
+ * в сторону: огрызок диффа выглядит осмысленным.
+ */
+export const MAX_COMMAND_OUTPUT_BYTES = 256 * 1024 * 1024;
+
+/**
+ * Запуск с двумя гарантиями: вывод не обрезается молча, а сбой самого запуска
+ * не выдаёт себя за ненулевой код возврата. `r.error` (ENOBUFS, ENOENT, таймаут)
+ * уезжает в `stderr` результата, откуда его печатает `must()`.
+ */
+export const sh = (cmd, args, opts = {}) => {
+  const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: MAX_COMMAND_OUTPUT_BYTES, ...opts });
+  const failure = r.error ? `${cmd} не выполнился: ${r.error.code || r.error.message}` : '';
+  const stderr = [failure, (r.stderr || '').trim()].filter(Boolean).join('\n');
+  return { status: failure ? 1 : (r.status ?? 1), stdout: (r.stdout || '').trim(), stderr };
 };
 
 export function realOps({
