@@ -139,6 +139,7 @@ import {
   roomTempThresholdDraft, roomTempThresholdInputValues, strictNumber, switchSpacePlanSource,
   touchSpaceDisplay, type SpaceDialogState,
 } from './space-dialog';
+import { rememberSpaceDialogBaseline } from './editors/space-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
 import { roomTemperatureControls } from './room-temperature-controls';
 import { openSpaceCopyDialog, renderSpaceCopyDialog, saveSpaceCopy } from './space-copy-runtime';
@@ -8310,6 +8311,8 @@ public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
         busy: false,
       };
     }
+    // #600 К10: снимок на момент открытия — от него считается «есть изменения».
+    if (this.host._spaceDialog) rememberSpaceDialogBaseline(this.host, this.host._spaceDialog);
   }
 
 public async _pickPlanFile(ev: Event): Promise<void> {

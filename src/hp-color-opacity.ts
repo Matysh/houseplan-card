@@ -39,6 +39,7 @@ export class HpColorOpacity extends LitElement {
   public opacity = 1;
   public disabled = false;
   public showOpacity = true;
+  public hideLabel = false;
   public pickerLabels: ColorPickerLabels = DEFAULT_LABELS;
 
   private _open = false;
@@ -65,6 +66,9 @@ export class HpColorOpacity extends LitElement {
     opacity: { type: Number },
     disabled: { type: Boolean, reflect: true },
     showOpacity: { type: Boolean, attribute: 'show-opacity' },
+    // #600 Q5: компактная плашка набора рисует подпись сама; `label` при этом
+    // остаётся источником title/aria триггера и заголовка панели.
+    hideLabel: { type: Boolean, attribute: 'hide-label' },
     pickerLabels: { attribute: false },
     _open: { state: true },
     _hue: { state: true },
@@ -828,7 +832,7 @@ export class HpColorOpacity extends LitElement {
       ? `${this.label || 'Color'}: ${color}, ${pct}%`
       : `${this.label || 'Color'}: ${color}`;
     return html`
-      ${this.label ? html`<span class="label">${this.label}</span>` : nothing}
+      ${this.label && !this.hideLabel ? html`<span class="label">${this.label}</span>` : nothing}
       <button class="trigger" type="button" .disabled=${this.disabled}
         aria-label=${title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
         title=${title} @click=${this._toggle}>

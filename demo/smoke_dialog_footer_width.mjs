@@ -198,8 +198,10 @@ for (const metric of desktop.metrics) {
   checks[`${key}_positive_localization_headroom`] = metric.spareWidth > 0;
   checks[`${key}_no_horizontal_overflow`] = metric.noHorizontalOverflow;
 }
-checks.space_dialog_still_uses_medium_shell = desktop.space.widePreset
-  && desktop.space.surfaceWidth >= 499 && desktop.space.surfaceWidth <= 501;
+// #600 Q7: диалоги настроек (`form-shell`) — 560 px по референсу; остальные
+// wide-диалоги остаются на 500 и проверяются циклом выше.
+checks.space_dialog_uses_reference_width = desktop.space.widePreset
+  && desktop.space.surfaceWidth >= 559 && desktop.space.surfaceWidth <= 561;
 checks.space_dialog_footer_not_regressed = desktop.space.buttons === 4
   && desktop.space.oneRow && desktop.space.noHorizontalOverflow;
 

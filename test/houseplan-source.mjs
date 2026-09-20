@@ -20,6 +20,15 @@ const DIALOG_MODULES = [
   ['../src/editors/room-settings-dialog.ts', 'renderRoomSettingsDialog', '_renderRoomDialog'],
 ];
 
+/**
+ * #600: форма пространства общая для редактора и онбординга и живёт отдельным
+ * модулем; точка входа `renderSpaceSettingsDialog` — тонкая обёртка. Чтобы
+ * контрактные тесты продолжали видеть разметку (счётчики пикеров, kind
+ * диалога, футер), текст общих модулей дописывается к логическому исходнику.
+ * Обращения `port.host.` и `host.` приводятся к `this.`, как и `this.host.`.
+ */
+const SHARED_DIALOG_MODULES = ['../src/editors/space-form.ts'];
+
 export function readHouseplanProductionSource() {
   const runtime = readFileSync(
     new URL('../src/houseplan-editor-runtime.ts', import.meta.url),
@@ -78,6 +87,13 @@ export function readHouseplanProductionSource() {
     reconstructed = reconstructed.slice(0, replacement.from)
       + replacement.text
       + reconstructed.slice(replacement.to);
+  }
+  for (const path of SHARED_DIALOG_MODULES) {
+    const shared = readFileSync(new URL(path, import.meta.url), 'utf8')
+      .replaceAll('port.host.', 'this.')
+      .replaceAll('port.help(', 'this._help(')
+      .replaceAll(/\bhost\./g, 'this.');
+    reconstructed += `\n// --- shared dialog module ${path} ---\n${shared}`;
   }
   return reconstructed;
 }

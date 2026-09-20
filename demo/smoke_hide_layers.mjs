@@ -107,10 +107,22 @@ const res = await page.evaluate(async () => {
   // ---- 5) the dialog carries both switches round trip --------------------
   c._openSpaceDialog('edit', c._space);
   await upd();
-  const rows = [...sr().querySelectorAll('hp-dialog .srcrow')].map((r) => r.textContent.trim());
-  out.dialogOffersHideDecor = rows.some((t) => /декорат|decorative/i.test(t));
-  out.dialogOffersHideOpenings = rows.some((t) => /проём|проем|openings|doors and windows/i.test(t));
+  // #600 §4.2: два тумблера «скрыть» стали компактными строками «Видимые слои»
+  // с логикой «включено = видно» (К2). В UI инверсия, в состоянии — нет:
+  // проверяем и подпись строки, и что при hideX=false тумблер стоит во «вкл».
+  const layerRows = [...sr().querySelectorAll('hp-dialog .hpf-compact-list .hpf-toggle')];
+  const rowText = (r) => r.querySelector('.hpf-toggle-title')?.textContent.trim() || '';
+  const decorRow = layerRows.find((r) => /декорат|decorative|dekorativ|décoratif/i.test(rowText(r)));
+  const openingsRow = layerRows.find((r) => /двери|doors|türen|portes/i.test(rowText(r)));
+  out.dialogOffersHideDecor = !!decorRow && decorRow.querySelector('input[type="checkbox"]').checked === true;
+  out.dialogOffersHideOpenings = !!openingsRow && openingsRow.querySelector('input[type="checkbox"]').checked === true;
   out.dialogReadsOff = c._spaceDialog.hideDecor === false && c._spaceDialog.hideOpenings === false;
+  // Клик по «видимому» слою пишет hideDecor=true — то же значение в тот же ключ (К1).
+  decorRow.querySelector('input[type="checkbox"]').click();
+  await upd();
+  out.layerToggleWritesInvertedKey = c._spaceDialog.hideDecor === true && c._spaceDialog.hideOpenings === false;
+  c._spaceDialog = { ...c._spaceDialog, hideDecor: false };
+  await upd();
   c._spaceDialog = { ...c._spaceDialog, hideDecor: true, hideOpenings: true };
   await c._saveSpaceDialog();
   await upd();

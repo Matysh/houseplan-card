@@ -109,12 +109,16 @@ test('#456 Copy is an edit-settings action and is absent from onboarding', () =>
   // побайтово. Утверждения прежние — сменился только файл, в котором они
   // ищутся; регулярки намеренно оставлены дословными, чтобы перенос не смог
   // проскочить под видом «поправили тест».
-  const dialog = readFileSync(
+  // #600: форма общая (`space-form.ts`), Copy рисуется только если порт подал
+  // `copySpace`, а подаёт его один редакторский вход. Онбординг, как и прежде,
+  // о копировании не знает ни словом.
+  const entry = readFileSync(
     new URL('../src/editors/space-settings-dialog.ts', import.meta.url), 'utf8',
   );
+  const form = readFileSync(new URL('../src/editors/space-form.ts', import.meta.url), 'utf8');
   const onboarding = readFileSync(new URL('../src/houseplan-onboarding-runtime.ts', import.meta.url), 'utf8');
-  assert.match(dialog, /d\.mode === 'edit'[\s\S]*openSpaceCopyDialog\(this\.host\)/);
-  assert.match(dialog, /<div class="dialog-action-group">[\s\S]*btn\.copy/);
-  assert.doesNotMatch(dialog, /dialog-action-danger[\s\S]{0,300}btn\.copy/);
-  assert.doesNotMatch(onboarding, /btn\.copy|openSpaceCopyDialog|space\.copy_/);
+  assert.match(entry, /copySpace: \(\) => openSpaceCopyDialog\(this\.host\)/);
+  assert.match(form, /d\.mode === 'edit' && port\.copySpace[\s\S]*?<div class="dialog-action-group">[\s\S]*?btn\.copy/);
+  assert.doesNotMatch(form, /dialog-action-danger[\s\S]{0,300}btn\.copy/);
+  assert.doesNotMatch(onboarding, /btn\.copy|openSpaceCopyDialog|space\.copy_|copySpace/);
 });

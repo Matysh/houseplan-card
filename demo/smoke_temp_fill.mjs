@@ -20,9 +20,12 @@ const res = await page.evaluate(async () => {
   out.swapped = await setFill({ show_borders: true, fill_mode: 'temp', temp_min: 25, temp_max: 20 });
   // диалог: поля границ видны только в режиме temp
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
-  out.dialogTempFields = sr().querySelectorAll('.tempin').length;
+  // #600 §4.2: границы диапазона — два поля с единицей (`#space-temp-min/max`)
+  // под сегментом заливки; масштаб и север больше не делят с ними класс.
+  const tempFields = () => sr().querySelectorAll('#space-temp-min, #space-temp-max').length;
+  out.dialogTempFields = tempFields();
   c._spaceDialog = { ...c._spaceDialog, fillMode: 'custom' }; await c.updateComplete;
-  out.dialogHiddenWhenCustom = sr().querySelectorAll('.tempin').length;
+  out.dialogHiddenWhenCustom = tempFields();
   c._spaceDialog = null;
   return out;
 });
@@ -32,7 +35,7 @@ checkAll(res, {
   "cold": ["#4fc3f7", "transparent", "transparent", "transparent"],
   "hot": ["#ffd45c", "transparent", "transparent", "transparent"],
   "swapped": ["#66d17a", "transparent", "transparent", "transparent"],
-  "dialogTempFields": 4, // масштаб + мин/макс + компас пространства (docs/SUN.md)
-  "dialogHiddenWhenCustom": 2, // мин/макс скрыты; масштаб и компас остаются
+  "dialogTempFields": 2, // мин/макс видны в режиме temp (#600: считаем только их)
+  "dialogHiddenWhenCustom": 0, // мин/макс скрыты в режиме custom
 });
 await finish(browser, res);

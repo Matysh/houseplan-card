@@ -118,7 +118,9 @@ export const collectConsumers = (sources) => {
           ? node.expression.name.text
           : ts.isIdentifier(node.expression) ? node.expression.text : '';
         const key = node.arguments[0];
-        if (callee === '_help' && ts.isStringLiteralLike(key) && key.text.endsWith('.help')) {
+        // #600: у общих форм справка приходит портом (`port.help`) или из
+        // ленивого словаря (`shelp`) — те же «?», тот же производный `.aria`.
+        if (['_help', 'help', 'shelp'].includes(callee) && ts.isStringLiteralLike(key) && key.text.endsWith('.help')) {
           derivedHelpAria.add(`${key.text}.aria`);
         }
       }

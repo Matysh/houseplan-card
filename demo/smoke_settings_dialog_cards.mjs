@@ -58,18 +58,19 @@ const out = await page.evaluate(async () => {
     && !sr().querySelector('hp-dialog hp-help[data-help-key="gs.sun_missing.help"]');
   c._settingsDialog = null; await c.updateComplete;
 
-  // --- «Пространство»: карточки и два сегмента вместо селектов -------------
+  // --- «Пространство»: карточки и три сегмента (стены, заливка, фон) -------
   c._openSpaceDialog('edit', c._space); await c.updateComplete;
   o.spaceCardsInOrder = JSON.stringify(headings()) === JSON.stringify([
     c._t('space.card_basics'), c._t('space.display_section'),
     c._t('space.roomcard_section'), c._t('space.card_sun'),
   ]);
   const spaceSegs = [...sr().querySelectorAll('hp-dialog .hpf-seg[role="radiogroup"]')];
-  o.spaceHasTwoSegments = spaceSegs.length === 2
+  // #600 §4.2: стиль нулевых стен, режим заливки и фон плана — три сегмента.
+  o.spaceHasThreeSegments = spaceSegs.length === 3
     && spaceSegs.every((seg) => !!seg.getAttribute('aria-label'));
   const zeroBefore = c._spaceDialog.zeroWallStyle;
   const titleBefore = c._spaceDialog.title;
-  const zeroOther = [...spaceSegs[0]?.querySelectorAll('input[type="radio"]') ?? []]
+  const zeroOther = [...sr().querySelectorAll('hp-dialog input[name="space-zero-wall-style"]')]
     .find((radio) => !radio.checked);
   zeroOther?.click(); await c.updateComplete;
   o.zeroWallSegmentWritesItsOwnKey = c._spaceDialog.zeroWallStyle !== zeroBefore

@@ -1018,13 +1018,18 @@ test('a light source paints exactly one region: the floor it can see', () => {
 
 test('all destructive editor dialogs use the medium shell and shared responsive footer groups', () => {
   const source = readHouseplanProductionSource();
+  // #600: тело формы пространства живёт в общем модуле `space-form.ts`, а метод
+  // — тонкая обёртка с оболочкой. Футер ищем в обоих текстах.
+  const sharedSpaceForm = readFileSync(new URL('../src/editors/space-form.ts', import.meta.url), 'utf8');
   for (const method of ['_renderOpeningDialog', '_renderPhysicalDialog', '_renderSpaceDialog']) {
     const start = source.indexOf(`private ${method}`);
     assert.notEqual(start, -1, method);
     const end = source.indexOf('\n  private ', start + 10);
-    const body = source.slice(start, end < 0 ? undefined : end);
+    const body = source.slice(start, end < 0 ? undefined : end)
+      + (method === '_renderSpaceDialog' ? sharedSpaceForm : '');
     const openTag = body.match(/<hp-dialog[\s\S]*?>/)?.[0] || '';
-    assert.match(openTag, /\bwide\b/, `${method} must reserve the existing 500 px desktop shell`);
+    assert.match(openTag, /\bwide\b/,
+      `${method} must reserve the wide desktop shell (500 px; 560 px with form-shell, #600 Q7)`);
     assert.match(body, /dialog-action-footer/, method);
     assert.match(body, /dialog-action-danger/, method);
     assert.match(body, /dialog-action-commit/, method);

@@ -10298,6 +10298,54 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'space-fill-segment-writes-a-neighbour-key',
+    guard: 'node demo/smoke_space_settings_form.mjs',
+    because: '#600 К1/AC3: сегмент заливки заменил радиосписок, и его обработчик обязан '
+      + 'писать только fillMode. Утечка в соседний ключ на глаз незаметна — форма выглядит '
+      + 'исправной, а стиль нулевых стен уезжает в конфиг при сохранении',
+    patches: [{
+      file: 'src/editors/space-form.ts',
+      find: "        onChange: (v) => set(port, { ...d, fillMode: v }),",
+      replace: "        onChange: (v) => set(port, { ...d, fillMode: v, zeroWallStyle: d.zeroWallStyle === 'solid' ? 'dashed' : 'solid' }),",
+    }],
+  },
+  {
+    id: 'space-save-enabled-without-changes',
+    guard: 'node demo/smoke_space_settings_form.mjs',
+    because: '#600 К10/AC6 (решение владельца Q1): «Сохранить» активен только при '
+      + 'изменениях. Убрать dirty из условия — вернуть прежнее поведение, и футер '
+      + 'перестанет говорить правду о том, есть ли что сохранять',
+    patches: [{
+      file: 'src/editors/space-form.ts',
+      find: '  const canSave = dirty && problems.length === 0 && !d.busy;',
+      replace: '  const canSave = problems.length === 0 && !d.busy;',
+    }],
+  },
+  {
+    id: 'space-discard-without-asking',
+    guard: 'node demo/smoke_space_settings_form.mjs',
+    because: '#600 К10/AC6: закрытие с несохранёнными изменениями спрашивает. Свернуть '
+      + 'проверку до «не занят» — и «✕», Cancel и Escape снова молча теряют правки в '
+      + 'диалоге на четыре карточки',
+    patches: [{
+      file: 'src/editors/space-form.ts',
+      find: '    if (!dirty || d.busy) { close(); return; }',
+      replace: '    if (!d.busy) { close(); return; }',
+    }],
+  },
+  {
+    id: 'space-layer-toggle-loses-inversion',
+    guard: 'node demo/smoke_hide_layers.mjs',
+    because: '#600 К2 (решение Q6): «включено = видно» только в UI, ключ hideDecor в '
+      + 'состоянии и конфиге прежний. Потерять инверсию в обработчике — и тумблер '
+      + 'начинает писать противоположное тому, что показывает',
+    patches: [{
+      file: 'src/editors/space-form.ts',
+      find: "          checked: !d.hideDecor, onChange: (v) => set(port, { ...d, hideDecor: !v }),",
+      replace: "          checked: !d.hideDecor, onChange: (v) => set(port, { ...d, hideDecor: v }),",
+    }],
+  },
+  {
     id: 'form-kit-segment-drops-radio-semantics',
     guard: 'node --test test/form-kit.test.mjs',
     because: '#594 К7: сегментированный переключатель заменил радиосписок, и вся его '

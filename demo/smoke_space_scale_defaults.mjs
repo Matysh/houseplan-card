@@ -24,8 +24,9 @@ const out = await page.evaluate(async () => {
     await update();
   };
   const fieldState = () => {
-    const input = root().querySelector('hp-dialog .colorrow input.namein.tempin');
-    const unit = input?.parentElement?.querySelector('.opl');
+    // #600 §4.2: масштаб — поле с единицей внутри рамки (`hpf-unit`).
+    const input = root().querySelector('hp-dialog #space-cell-cm, hp-dialog #onboarding-space-cell-cm');
+    const unit = input?.parentElement?.querySelector('span');
     return {
       value: input?.value,
       min: input?.getAttribute('min'),
@@ -81,7 +82,7 @@ const out = await page.evaluate(async () => {
   await setLocale('mi', 'en');
   await openCreate();
   const imperialEn = fieldState();
-  const input = root().querySelector('hp-dialog .colorrow input.namein.tempin');
+  const input = root().querySelector('hp-dialog #space-cell-cm, hp-dialog #onboarding-space-cell-cm');
   input.value = '2';
   input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
   await update();

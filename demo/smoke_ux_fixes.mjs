@@ -96,18 +96,18 @@ const res = await page.evaluate(async () => {
   }));
   // диалог: радио заливки, компактные поля, ширина
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
-  out.fillRadios = sr().querySelectorAll('input[name="fillmode"]').length;
-  out.fillLabels = [...sr().querySelectorAll('input[name="fillmode"]')]
-    // Read the radio's own label only. The selected temperature mode also
-    // renders two nested range controls inside this label.
-    .map((input) => input.nextElementSibling?.textContent?.trim());
+  // #600 §4.2: заливка — сегмент (радиогруппа `space-fill-mode`), свечение —
+  // полная строка-тумблер, границы температуры — поля с единицей внутри рамки.
+  out.fillRadios = sr().querySelectorAll('input[name="space-fill-mode"]').length;
+  out.fillLabels = [...sr().querySelectorAll('input[name="space-fill-mode"]')]
+    .map((input) => input.closest('label')?.querySelector('span:last-of-type')?.textContent?.trim());
   out.fillHasNone = out.fillLabels.includes(c._t('fill.none'));
-  out.glowToggle = [...sr().querySelectorAll('hp-dialog label.srcrow')].some((label) =>
-    label.textContent.trim() === c._t('space.glow_enabled')
-      && !!label.querySelector('ha-switch,input[type="checkbox"]'));
-  out.tempInputs = sr().querySelectorAll('.temprange .tempin').length;
+  out.glowToggle = [...sr().querySelectorAll('hp-dialog .hpf-toggle')].some((label) =>
+    label.querySelector('.hpf-toggle-title')?.textContent.trim() === c._t('space.glow_enabled')
+      && !!label.querySelector('input[type="checkbox"]'));
+  out.tempInputs = sr().querySelectorAll('#space-temp-min, #space-temp-max').length;
   const hpDialog = sr().querySelector('hp-dialog');
-  out.dialogWide = !!hpDialog?.hasAttribute('wide') && !!hpDialog.querySelector('.srcrow');
+  out.dialogWide = !!hpDialog?.hasAttribute('wide') && !!hpDialog.querySelector('.hpf-toggle');
   out.dialogWidth = Math.round(hpDialog.shadowRoot.querySelector('.surface').getBoundingClientRect().width);
   // NaN-защита: пустой ввод не ломает границы
   const before = c._spaceDialog.tempMax;
@@ -133,7 +133,8 @@ const res = await page.evaluate(async () => {
 // ассертов (портируемость, ревью 2026-07-27)
 await page.screenshot({ path: join(tmpdir(), 'houseplan_ux_dialog.png') }).catch(() => {});
 // Geometry values were re-baselined for the shared border-box hp-dialog in
-// v1.59.2; the usable wide-dialog width remains 500 px.
+// v1.59.2; the usable wide-dialog width remained 500 px until #600 (Q7):
+// the settings dialogs carry `form-shell` and the reference width of 560.
 checkAll(res, {
   "filledClass": 1,
   "unfilled": 3,
@@ -146,6 +147,6 @@ checkAll(res, {
   "legacyNoneAlpha": 0,
   "legacyNoneGlowBases": 4,
   "tempInputs": 2,
-  "dialogWidth": 500,
+  "dialogWidth": 560,
 });
 await finish(browser, res);

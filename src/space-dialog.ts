@@ -185,3 +185,4 @@ export function applyRoomTempThresholdDraft(
   else settings.temp_max = draft.max;
   return true;
 }
+

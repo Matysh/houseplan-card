@@ -17,6 +17,8 @@ const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const dictionary = {
   ...JSON.parse(readFileSync(join(repoRoot, 'src/i18n/en.json'), 'utf8')),
   ...JSON.parse(readFileSync(join(repoRoot, 'src/i18n/support/en.json'), 'utf8')),
+  // #600: ленивый словарь диалогов настроек — тот же контракт «ни одного мёртвого ключа».
+  ...JSON.parse(readFileSync(join(repoRoot, 'src/i18n/settings/en.json'), 'utf8')),
 };
 const dictionaryKeys = Object.keys(dictionary);
 
@@ -64,8 +66,13 @@ test('help accessibility copy is derived from every literal help consumer', () =
   // 20 → 24. 2026-09-19, #598: «Общие настройки» и «Пространство» собраны в
   // карточки, и шесть абзацев-пояснений переехали под «?» — 24 → 30. Число тут
   // не украшение: оно ловит подсказку, у которой забыли `.aria`, и обязано
-  // расти вместе с формами, а не «примерно совпадать».
-  assert.equal(consumers.derivedHelpAria.size, 30, 'the current settings surface has 30 statically derived help descriptions');
+  // расти вместе с формами, а не «примерно совпадать». 2026-09-20, #600 серия 1:
+  // «Пространство» по референсу — минус две подсказки слоёв (одна групповая
+  // `space.layers.help` вместо них), плюс шесть новых из ленивого словаря
+  // (подложка, границы, слои, названия, размер шрифта, свечение); коллектор
+  // научился видеть `help(...)` порта — и `radar.help` из секции радара, который
+  // раньше проходил мимо счётчика, встал на учёт — 30 → 35.
+  assert.equal(consumers.derivedHelpAria.size, 35, 'the current settings surface has 35 statically derived help descriptions');
   for (const key of consumers.derivedHelpAria) {
     assert.equal(typeof dictionary[key], 'string', `${key} must accompany its .help consumer`);
   }

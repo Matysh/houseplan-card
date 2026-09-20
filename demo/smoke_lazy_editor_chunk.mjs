@@ -71,12 +71,14 @@ out.onboardingDoesNotLoadEditor = onboardingRequests
 await onboarding.page.evaluate(async () => {
   const card = window.__card;
   const root = card.renderRoot;
-  const title = root.querySelector('hp-dialog input.namein');
+  // #600: онбординг рисует ту же форму, что редактор; поле имени — по id,
+  // карточка «Нарисовать» — по смыслу (порядок §4.2: draw → file).
+  const title = root.querySelector('hp-dialog #onboarding-space-title');
   title.value = 'Cold onboarding';
   title.dispatchEvent(new InputEvent('input', { bubbles: true }));
   await card.updateComplete;
-  const sources = root.querySelectorAll('hp-dialog input[name="plansrc"]');
-  sources[1].click();
+  [...root.querySelectorAll('hp-dialog input[name="plansrc"]')]
+    .find((radio) => radio.closest('label')?.textContent.includes(card._t('space.source_draw')))?.click();
   await card.updateComplete;
   const buttons = [...root.querySelectorAll('hp-dialog button')];
   buttons.find((button) => button.textContent.includes(card._t('btn.save')))?.click();

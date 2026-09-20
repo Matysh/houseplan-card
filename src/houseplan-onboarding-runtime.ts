@@ -9,36 +9,27 @@ import {
   DEFAULT_ROOM_OPACITY,
   DEFAULT_TEMP_MAX,
   DEFAULT_TEMP_MIN,
-  SPACE_FILL_UI_MODES,
   customFillOf,
   spaceDisplayOf,
-  stageBgOf,
 } from './logic';
-import { bgModeOf, northDegOf } from './sun';
+import { northDegOf } from './sun';
 import {
   createEmptySpaceConfig,
   initialSpaceDisplayDraft,
-  switchSpacePlanSource,
-  touchSpaceDisplay,
 } from './space-dialog';
+import { rememberSpaceDialogBaseline } from './editors/space-form-state';
 import { collectSpaceMarkerDependencies } from './space-deletion';
 import {
-  gridCellFieldToCm,
   gridCellFieldValue,
   newSpaceCellCm,
 } from './grid-scale';
 import { zeroWallStyleOf } from './zero-walls';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
+// #600: форма и границы шага сетки — из одного модуля с редактором; прежняя
+// локальная копия констант и `strictNumber` нарушала «одно число — один источник».
+import { CELL_CM_MAX, CELL_CM_MIN, renderSpaceForm } from './editors/space-form';
 
 const BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
-const CELL_CM_MIN = 0.1;
-const CELL_CM_MAX = 1000;
-
-const strictNumber = (value: string): number | null => {
-  if (!value.trim()) return null;
-  const parsed = Number(value.replace(',', '.'));
-  return Number.isFinite(parsed) ? parsed : null;
-};
 
 /**
  * Space creation/import is part of empty-install onboarding, not an editor.
@@ -122,6 +113,8 @@ export class HouseplanOnboardingRuntime {
       cellCmTouched: false,
       busy: false,
     };
+    // #600 К10: снимок на момент открытия — от него считается «есть изменения».
+    rememberSpaceDialogBaseline(this.host, this.host._spaceDialog);
   }
 
   public async _pickPlanFile(ev: Event): Promise<void> {
@@ -552,6 +545,8 @@ export class HouseplanOnboardingRuntime {
       cellCmTouched: false,
       busy: false,
     };
+    // #600 К10: снимок на момент открытия — от него считается «есть изменения».
+    rememberSpaceDialogBaseline(this.host, this.host._spaceDialog);
   }
 
   public _skipImport(): void {
@@ -601,324 +596,37 @@ export class HouseplanOnboardingRuntime {
     </hp-dialog>`;
   }
 
-  private _boolInput(value: boolean, change: (checked: boolean) => void): TemplateResult {
-    return html`<input type="checkbox" .checked=${value}
-      @change=${(event: Event) => change((event.target as HTMLInputElement).checked)} />`;
-  }
-
   private _rangeInput(
     min: number, max: number, step: number, value: number, change: (next: number) => void,
+    disabled = false, ariaLabel?: string,
   ): TemplateResult {
     return html`<input type="range" min=${min} max=${max} step=${step} .value=${String(value)}
+      ?disabled=${disabled} aria-label=${ariaLabel ?? nothing}
       @input=${(event: Event) => change(Number((event.target as HTMLInputElement).value))} />`;
   }
 
+  /**
+   * #600: форма пространства — общая с редакторским рантаймом
+   * (`renderSpaceForm`), у онбординга здесь только порт: свои пикер файлов,
+   * сохранение и пропуск импорта; Copy и Delete не подаются — онбординг создаёт.
+   * До #600 здесь лежала собственная копия разметки на 300 строк.
+   */
   public _renderSpaceDialog(): TemplateResult {
-    return this._renderSpaceDialogBody(this.host._spaceDialog!);
-  }
-
-  private _renderSpaceDialogBody(
-    dialog: NonNullable<HouseplanEditorHostPort['_spaceDialog']>,
-  ): TemplateResult {
-    const progress = this.host._importTotal > 0 && dialog.mode === 'create'
-      ? this.host._t('import.progress', {
-        i: this.host._importTotal - this.host._importQueue.length,
-        n: this.host._importTotal,
-      }) : '';
-    const close = () => {
-      this.host._spaceDialog = null;
-      this.host._importQueue = [];
-      this.host._importTotal = 0;
-    };
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="onboarding"
-      .title=${`${dialog.mode === 'create'
-        ? this.host._t('space.new') : this.host._t('space.header')}${progress ? ` · ${progress}` : ''}`}
-      icon="mdi:floor-plan" wide @hp-close=${close}>
-        <div class="body">
-          <label>${this.host._t('space.title_label')}</label>
-          <input class="namein" type="text" placeholder=${this.host._t('space.title_ph')}
-            .value=${dialog.title}
-            @input=${(event: Event) => (this.host._spaceDialog = {
-              ...dialog, title: (event.target as HTMLInputElement).value,
-            })} />
-          <label>${this.host._t('space.plan_label')}</label>
-          <label class="srcrow">
-            <input type="radio" name="plansrc" .checked=${dialog.source === 'file'}
-              @change=${() => (this.host._spaceDialog = switchSpacePlanSource(dialog, 'file'))} />
-            <span>${this.host._t('space.source_file')}</span>
-          </label>
-          ${dialog.source === 'file' ? html`<div class="planrow">
-              ${dialog.planFile
-                ? html`<span class="planname">${dialog.planFile.name}</span>`
-                : dialog.planUrl
-                  ? html`<img class="planprev" src=${this.host._display(dialog.planUrl)}
-                      alt=${this.host._t('space.plan_alt')} />`
-                  : html`<span class="planname muted">${this.host._t('space.no_plan')}</span>`}
-              <span class="fileupload">
-                <button class="btn filebtn" type="button" @click=${(event: Event) =>
-                  ((event.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
-                  <ha-icon icon="mdi:upload"></ha-icon>${dialog.planUrl || dialog.planFile
-                    ? this.host._t('btn.replace') : this.host._t('btn.upload')}
-                </button>
-                <input type="file" hidden
-                  accept=".svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp"
-                  @change=${(event: Event) => this._pickPlanFile(event)} />
-              </span>
-              <button class="btn ghost" @click=${this._toggleServerPlans}
-                title=${this.host._t('space.pick_saved_hint')}>
-                <ha-icon icon="mdi:folder-image"></ha-icon>${this.host._t('space.pick_saved')}
-              </button>
-            </div>
-            ${dialog.pickSaved ? this._renderServerPlans(dialog) : nothing}` : nothing}
-          <label class="srcrow">
-            <input type="radio" name="plansrc" .checked=${dialog.source === 'draw'}
-              @change=${() => (this.host._spaceDialog = switchSpacePlanSource(dialog, 'draw'))} />
-            <span>${this.host._t('space.source_draw')}</span>
-          </label>
-
-          <div class="helpfieldlabel">
-            <label for="onboarding-space-cell-cm">${this.host._t('space.scale_label')}</label>
-            ${this._help('space.cell_cm.help')}
-          </div>
-          <div class="colorrow">
-            <input id="onboarding-space-cell-cm" class="namein tempin" type="number"
-              min=${gridCellFieldValue(CELL_CM_MIN, this.host._imperial)}
-              max=${gridCellFieldValue(CELL_CM_MAX, this.host._imperial)}
-              step="0.1"
-              .value=${dialog.cellCmInput ?? gridCellFieldValue(dialog.cellCm, this.host._imperial)}
-              @input=${(event: Event) => {
-                const raw = (event.target as HTMLInputElement).value;
-                const parsed = strictNumber(raw);
-                const canonical = parsed == null ? null
-                  : gridCellFieldToCm(parsed, this.host._imperial);
-                this.host._spaceDialog = {
-                  ...dialog,
-                  cellCmInput: raw,
-                  cellCmTouched: true,
-                  cellCm: canonical != null && canonical > 0
-                    ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, canonical)) : dialog.cellCm,
-                };
-              }} />
-            <span class="opl">${this.host._t(this.host._imperial
-              ? 'space.scale_unit_imperial' : 'space.scale_unit')}</span>
-          </div>
-
-          <label class="dispsection">${this.host._t('space.display_section')}</label>
-          <label class="srcrow">
-            ${this._boolInput(dialog.showBorders, (value) => {
-              this.host._spaceDialog = touchSpaceDisplay(dialog, 'showBorders', value);
-            })}
-            <span>${this.host._t('space.show_borders')}</span>
-          </label>
-          <div class="helpfieldlabel">
-            <label for="onboarding-space-zero-wall-style">${this.host._t('space.zero_wall_style')}</label>
-            ${this._help('space.zero_wall_style.help')}
-          </div>
-          <select id="onboarding-space-zero-wall-style" class="areasel" @change=${(event: Event) => {
-            const value = (event.target as HTMLSelectElement).value;
-            this.host._spaceDialog = {
-              ...dialog, zeroWallStyle: value === 'solid' ? 'solid' : 'dashed',
-            };
-          }}>
-            <option value="dashed" ?selected=${dialog.zeroWallStyle === 'dashed'}>
-              ${this.host._t('space.zero_wall_dashed')}
-            </option>
-            <option value="solid" ?selected=${dialog.zeroWallStyle === 'solid'}>
-              ${this.host._t('space.zero_wall_solid')}
-            </option>
-          </select>
-          <label class="srcrow">
-            ${this._boolInput(dialog.showNames, (value) => {
-              this.host._spaceDialog = touchSpaceDisplay(dialog, 'showNames', value);
-            })}
-            <span>${this.host._t('space.show_names')}</span>
-          </label>
-          <label class="srcrow">
-            ${this._boolInput(dialog.showLqi, (value) => {
-              this.host._spaceDialog = { ...dialog, showLqi: value };
-            })}
-            <span>${this.host._t('space.show_lqi')}</span>
-          </label>
-          <label class="srcrow">
-            ${this._boolInput(dialog.hideDecor, (value) => {
-              this.host._spaceDialog = { ...dialog, hideDecor: value };
-            })}
-            <span>${this.host._t('space.hide_decor')}</span>
-          </label>
-          <div class="rhint">${this.host._t('space.hide_decor.help')}</div>
-          <label class="srcrow">
-            ${this._boolInput(dialog.hideOpenings, (value) => {
-              this.host._spaceDialog = { ...dialog, hideOpenings: value };
-            })}
-            <span>${this.host._t('space.hide_openings')}</span>
-          </label>
-          <div class="rhint">${this.host._t('space.hide_openings.help')}</div>
-          <label class="dispsection">${this.host._t('space.roomcard_section')}</label>
-          ${([
-            ['labelTemp', 'space.label_temp'], ['labelHum', 'space.label_hum'],
-            ['labelLqi', 'space.label_lqi'], ['labelLight', 'space.label_light'],
-          ] as const).map(([field, key]) => html`<label class="srcrow">
-            ${this._boolInput(dialog[field], (value) => {
-              this.host._spaceDialog = { ...dialog, [field]: value };
-            })}
-            <span>${this.host._t(key)}</span>
-          </label>`)}
-          <label>${this.host._t('space.card_font')}</label>
-          <div class="colorrow gsrow">
-            ${this._rangeInput(50, 300, 5, Math.round(dialog.cardFontScale * 100), (value) => {
-              this.host._spaceDialog = { ...dialog, cardFontScale: value / 100 };
-            })}
-            <span class="opv">${Math.round(dialog.cardFontScale * 100)}%</span>
-          </div>
-          ${this.host._renderCardPreview(dialog.cardFontScale, 1, 1)}
-          <div class="colorrow">
-            <hp-color-opacity .label=${this.host._t('space.room_color')}
-              .opacityLabel=${this.host._t('space.opacity')}
-              .pickerLabels=${this.host._colorPickerLabels}
-              .color=${dialog.roomColor} .opacity=${dialog.roomOpacity} .showOpacity=${true}
-              @hp-color-opacity-change=${(event: CustomEvent<{ color: string; opacity: number }>) => {
-                this.host._spaceDialog = {
-                  ...dialog, roomColor: event.detail.color, roomOpacity: event.detail.opacity,
-                };
-              }}></hp-color-opacity>
-          </div>
-          <div class="helpfieldlabel">
-            <label for="onboarding-space-bg-mode">${this.host._t('space.bg_mode')}</label>
-            ${this._help('space.bg_mode.help')}
-          </div>
-          <select id="onboarding-space-bg-mode" class="areasel" @change=${(event: Event) => {
-            const value = (event.target as HTMLSelectElement).value;
-            this.host._spaceDialog = {
-              ...dialog,
-              bgMode: value === 'static' || value === 'daynight' ? value : null,
-            };
-          }}>
-            <option value="" ?selected=${dialog.bgMode === null}>${this.host._t('space.sun_inherit')}</option>
-            <option value="static" ?selected=${dialog.bgMode === 'static'}>${this.host._t('gs.bg_static')}</option>
-            <option value="daynight" ?selected=${dialog.bgMode === 'daynight'}>${this.host._t('gs.bg_daynight')}</option>
-          </select>
-          ${(dialog.bgMode ?? bgModeOf(this.host._settings, {})) === 'static' ? html`
-            <div class="colorrow">
-              <hp-color-opacity .label=${this.host._t('space.bg_color')}
-                .pickerLabels=${this.host._colorPickerLabels}
-                .color=${dialog.bgColor || stageBgOf(this.host._settings, { bgColor: null })
-                  || this.host._stageBgHex()}
-                .opacity=${1} .showOpacity=${false}
-                @hp-color-opacity-change=${(event: CustomEvent<{ color: string }>) => {
-                  this.host._spaceDialog = { ...dialog, bgColor: event.detail.color };
-                }}></hp-color-opacity>
-              ${dialog.bgColor ? html`<button class="btn ghost" @click=${() => {
-                this.host._spaceDialog = { ...dialog, bgColor: null };
-              }}>${this.host._t('space.bg_inherit')}</button>`
-                : html`<span class="opl">${this.host._t('space.bg_inherited')}</span>`}
-            </div>` : nothing}
-          <div class="helpfieldlabel">
-            <label for="onboarding-space-north">${this.host._t('space.north')}</label>
-            ${this._help('space.north.help')}
-          </div>
-          <div class="colorrow">
-            <input id="onboarding-space-north" class="namein tempin" type="number" min="0" max="359" step="1"
-              placeholder=${this.host._t('space.sun_inherit')}
-              .value=${dialog.northDeg === null ? '' : String(dialog.northDeg)}
-              @input=${(event: Event) => {
-                const raw = (event.target as HTMLInputElement).value.trim();
-                const value = raw === '' ? null : Math.round(Number(raw));
-                this.host._spaceDialog = {
-                  ...dialog,
-                  northDeg: value !== null && Number.isFinite(value)
-                    ? Math.min(359, Math.max(0, value)) : null,
-                };
-              }} />
-            <span class="opl">${dialog.northDeg === null
-              ? this.host._t('space.north_inherited', {
-                v: northDegOf(this.host._settings, {}) === null
-                  ? '—' : `${northDegOf(this.host._settings, {})}°`,
-              }) : '°'}</span>
-          </div>
-          <label>${this.host._t('space.sun_rays')}</label>
-          <select class="areasel" @change=${(event: Event) => {
-            const value = (event.target as HTMLSelectElement).value;
-            this.host._spaceDialog = {
-              ...dialog, sunRays: value === '' ? null : value === '1',
-            };
-          }}>
-            <option value="" ?selected=${dialog.sunRays === null}>${this.host._t('space.sun_inherit')}</option>
-            <option value="1" ?selected=${dialog.sunRays === true}>${this.host._t('space.sun_on')}</option>
-            <option value="0" ?selected=${dialog.sunRays === false}>${this.host._t('space.sun_off')}</option>
-          </select>
-          <div class="helpfieldlabel">
-            <span>${this.host._t('space.fill_label')}</span>
-            ${this._help('space.fill_mode.help')}
-          </div>
-          ${SPACE_FILL_UI_MODES.map((value) => [value, `fill.${value}`] as const).map(
-            ([value, key]) => html`<label class="srcrow">
-              <input type="radio" name="fillmode" .checked=${dialog.fillMode === value}
-                @change=${() => (this.host._spaceDialog = { ...dialog, fillMode: value })} />
-              <span>${this.host._t(key)}</span>
-              ${value === 'temp' && dialog.fillMode === 'temp' ? html`<span class="temprange">
-                <input class="namein tempin" type="number" step="0.5" .value=${String(dialog.tempMin)}
-                  @input=${(event: Event) => {
-                    const parsed = strictNumber((event.target as HTMLInputElement).value);
-                    if (parsed != null) this.host._spaceDialog = { ...dialog, tempMin: parsed };
-                  }} />
-                –
-                <input class="namein tempin" type="number" step="0.5" .value=${String(dialog.tempMax)}
-                  @input=${(event: Event) => {
-                    const parsed = strictNumber((event.target as HTMLInputElement).value);
-                    if (parsed != null) this.host._spaceDialog = { ...dialog, tempMax: parsed };
-                  }} /> °C
-              </span>` : nothing}
-            </label>
-            ${value === 'custom' && dialog.fillMode === 'custom' ? html`
-              <div class="colorrow gsrow">
-                <span class="gsl">${this.host._t('space.custom_fill')}</span>
-                <hp-color-opacity .label=${this.host._t('space.custom_fill')}
-                  .opacityLabel=${this.host._t('space.opacity')}
-                  .pickerLabels=${this.host._colorPickerLabels}
-                  .color=${(dialog.customFill || DEFAULT_CUSTOM_FILL).c}
-                  .opacity=${(dialog.customFill || DEFAULT_CUSTOM_FILL).a}
-                  @hp-color-opacity-change=${(event: CustomEvent<{ color: string; opacity: number }>) => {
-                    this.host._spaceDialog = {
-                      ...dialog, customFill: { c: event.detail.color, a: event.detail.opacity },
-                    };
-                  }}></hp-color-opacity>
-                ${dialog.customFill ? html`<button class="btn ghost" type="button"
-                  @click=${() => (this.host._spaceDialog = { ...dialog, customFill: null })}>
-                  ${this.host._t('btn.reset')}</button>` : nothing}
-              </div>` : nothing}`,
-          )}
-          <label class="srcrow">
-            ${this._boolInput(dialog.glowEnabled, (checked) => {
-              this.host._spaceDialog = { ...dialog, glowEnabled: checked };
-            })}
-            <span>${this.host._t('space.glow_enabled')}</span>
-          </label>
-          ${dialog.deleteBlockers ? html`<div class="backuperror" role="alert">
-            ${this.host._t('space.delete_blocked', { n: String(dialog.deleteBlockers) })}
-          </div>` : nothing}
-        </div>
-        <div class="row dialog-action-footer" slot="footer">
-          ${dialog.mode === 'edit' ? html`<div class="dialog-action-group dialog-action-danger">
-            <button class="btn danger" @click=${() => this._deleteSpace()} ?disabled=${dialog.busy}>
-              <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
-            </button>
-          </div>` : nothing}
-          <div class="dialog-action-group dialog-action-commit">
-            ${this.host._importTotal > 0 && dialog.mode === 'create'
-              ? html`<button class="btn ghost" @click=${() => this._skipImport()}>
-                  ${this.host._t('btn.skip')}</button>` : nothing}
-            <button class="btn ghost" data-hp="dialog-cancel"
-              @click=${close}>${this.host._t('btn.cancel')}</button>
-            <button class="btn on" data-hp="dialog-confirm"
-              @click=${() => this._saveSpaceDialog()}
-              ?disabled=${!dialog.title.trim()
-                || (dialog.source === 'file' && !(dialog.planFile || dialog.planUrl)) || dialog.busy}
-              title=${dialog.source === 'file' && !(dialog.planFile || dialog.planUrl)
-                ? this.host._t('title.need_plan') : ''}>
-              <ha-icon icon="mdi:check"></ha-icon>${dialog.busy ? '…' : this.host._t('btn.save')}
-            </button>
-          </div>
-        </div>
+    const form = renderSpaceForm({
+      host: this.host,
+      idPrefix: 'onboarding-space',
+      help: this._help.bind(this),
+      rangeInput: (min, max, step, value, onInput, disabled, ariaLabel) =>
+        this._rangeInput(min, max, step, value, onInput, disabled, ariaLabel),
+      pickPlanFile: (event) => this._pickPlanFile(event),
+      toggleServerPlans: () => this._toggleServerPlans(),
+      renderServerPlans: (dialog) => this._renderServerPlans(dialog),
+      save: () => this._saveSpaceDialog(),
+      skipImport: () => this._skipImport(),
+    });
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="onboarding" form-shell wide
+        .title=${form.title} .badge=${form.badge} icon="mdi:floor-plan" @hp-close=${form.requestClose}>
+      ${form.body}${form.footer}
     </hp-dialog>`;
   }
 }

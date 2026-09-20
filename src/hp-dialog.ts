@@ -136,25 +136,6 @@ export class HpDialog extends LitElement {
       text-overflow: ellipsis;
     }
 
-    /* #600: диалоги настроек (атрибут form-shell) — оболочка референса. Ширина 560
-       через переменную, которую уже читает :host([wide]); высота min(940,
-       окно − 48); единственный скроллер — .content, тело формы высотой не
-       владеет (К6). Generic wide и остальные диалоги не трогаются (Q7). */
-    :host([form-shell]) { --hp-dialog-wide-width: 560px; }
-    :host([form-shell]) .surface { max-height: min(940px, calc(100vh - 48px)); }
-    :host([form-shell]) .content {
-      flex: 1 1 auto;
-      overflow-y: auto;
-      overflow-x: hidden;
-      overscroll-behavior: contain;
-      background: var(--secondary-background-color, color-mix(in srgb, var(--card-background-color, var(--hp-bg, #202126)) 90%, var(--primary-text-color, #000)));
-    }
-    :host([form-shell]) .close { width: 44px; height: 44px; }
-    :host([form-shell]) .header { min-height: 70px; }
-    @media (max-width: 480px) {
-      :host([form-shell]) .surface { width: 100vw; max-height: 100vh; border: 0; border-radius: 0; }
-      :host([form-shell]) .badge { max-width: 105px; }
-    }
 
     .footer {
       /* ha-dialog lays out its footer slot as a flex row. display: contents
@@ -207,6 +188,26 @@ export class HpDialog extends LitElement {
 
     :host([wide]) .surface {
       width: min(var(--hp-dialog-wide-width, 500px), 94vw);
+    }
+
+    /* #600: диалоги настроек (атрибут form-shell) — оболочка референса. Ширина 560
+       через переменную, которую уже читает :host([wide]); высота min(940,
+       окно − 48); единственный скроллер — .content, тело формы высотой не
+       владеет (К6). Generic wide и остальные диалоги не трогаются (Q7). */
+    :host([form-shell]) { --hp-dialog-wide-width: 560px; }
+    :host([form-shell]) .surface { max-height: min(940px, calc(100vh - 48px)); }
+    :host([form-shell]) .content {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      background: var(--secondary-background-color, color-mix(in srgb, var(--card-background-color, var(--hp-bg, #202126)) 90%, var(--primary-text-color, #000)));
+    }
+    :host([form-shell]) .close { width: 44px; height: 44px; }
+    :host([form-shell]) .header { min-height: 70px; }
+    @media (max-width: 480px) {
+      :host([form-shell]) .surface { width: 100vw; max-height: 100vh; border: 0; border-radius: 0; }
+      :host([form-shell]) .badge { max-width: 105px; }
     }
 
     .header {
