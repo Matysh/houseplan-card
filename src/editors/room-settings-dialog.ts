@@ -194,11 +194,9 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                     name: 'rfill',
                     value: host._roomFill as RoomFillMode,
                     ariaLabel: t('room.fill_label'),
-                    // Короткие подписи там, где полные не помещаются в пять сегментов (§6.1: None | Zigbee | Lights | Temperature | Custom)
-                    options: ROOM_FILL_MODES.map((value) => ({
-                      value,
-                      label: value === 'lqi' ? st('room.fill_seg_lqi') : value === 'custom' ? st('room.fill_seg_custom') : t(`fill.${value}` as I18nKey),
-                    })),
+                    // Короткие подписи сегмента по референсу (§6.1: None | Zigbee | Lights | Temperature | Custom),
+                    // общие с сегментом пространства (§4.2)
+                    options: ROOM_FILL_MODES.map((value) => ({ value, label: st(`fill.seg_${value}`) })),
                     onChange: (value) => setFill(value),
                   }),
                 })}

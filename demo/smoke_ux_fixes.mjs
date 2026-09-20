@@ -141,7 +141,7 @@ checkAll(res, {
   "tipTemp": 22.4,
   "tipHum": 48,
   "fillRadios": 4,
-  "fillLabels": ["Свой цвет", "По силе зигби-сигнала", "По освещению", "По температуре"],
+  "fillLabels": ["Свой цвет", "Zigbee", "Свет", "Температура"],
   "fillHasNone": false,
   "legacyNoneProjection": "custom",
   "legacyNoneAlpha": 0,

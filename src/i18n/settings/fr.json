@@ -85,6 +85,9 @@
   "marker.size.help.aria": "Aide : taille et rotation de l’icône",
   "marker.size_short": "Taille",
   "marker.error_binding": "Choisissez un appareil ou une entité à lier.",
-  "room.fill_seg_lqi": "Zigbee",
-  "room.fill_seg_custom": "Perso"
+  "fill.seg_none": "Aucun",
+  "fill.seg_lqi": "Zigbee",
+  "fill.seg_light": "Lumières",
+  "fill.seg_temp": "Température",
+  "fill.seg_custom": "Perso"
 }

@@ -85,6 +85,9 @@
   "marker.size.help.aria": "Help: icon size and rotation",
   "marker.size_short": "Size",
   "marker.error_binding": "Choose a device or entity to bind.",
-  "room.fill_seg_lqi": "Zigbee",
-  "room.fill_seg_custom": "Custom"
+  "fill.seg_none": "None",
+  "fill.seg_lqi": "Zigbee",
+  "fill.seg_light": "Lights",
+  "fill.seg_temp": "Temperature",
+  "fill.seg_custom": "Custom"
 }

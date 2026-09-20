@@ -471,7 +471,7 @@ and the **Review N fields** link in the footer jumps to the first one.
 A space's **Appearance** card has switch rows for room borders and the two
 visible layers (**Decorative layer**, **Doors, windows and gates** — on means
 visible), a segment for zero-thickness walls, a colour plate for rooms and the
-fill segment (custom colour / Zigbee signal / lights / temperature, with two
+fill segment (Custom / Zigbee / Lights / Temperature, with two
 °C bound fields for temperature). **Room cards** holds the names switch, four
 metric tiles, the card font slider and a sample card; **Sun and light** holds
 the background segment, north (as general or a custom direction with a compass),

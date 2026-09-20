@@ -85,6 +85,9 @@
   "marker.size.help.aria": "Hilfe: Symbolgröße und Drehung",
   "marker.size_short": "Größe",
   "marker.error_binding": "Wählen Sie ein Gerät oder eine Entität zum Verknüpfen.",
-  "room.fill_seg_lqi": "Zigbee",
-  "room.fill_seg_custom": "Eigene"
+  "fill.seg_none": "Keine",
+  "fill.seg_lqi": "Zigbee",
+  "fill.seg_light": "Licht",
+  "fill.seg_temp": "Temperatur",
+  "fill.seg_custom": "Eigene"
 }

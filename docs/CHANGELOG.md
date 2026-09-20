@@ -9,8 +9,9 @@
   heading and a `?`. Inside them: full-width rows with an icon, a caption and a
   switch on the right (borders, layers, names, glow, tooltips, confirmation,
   device temperature); segmented choices where a short list used to be radios
-  or a dropdown (room fill, zero-wall style, background, sun rays, ray origin,
-  device binding, light-source role, glow mode, badge side); colour plates —
+  or a dropdown (room fill with short option names — Custom · Zigbee · Lights ·
+  Temperature — zero-wall style, background, sun rays, ray origin, device
+  binding, light-source role, glow mode, badge side); colour plates —
   swatch, hex code, opacity number and Reset — around the existing colour
   picker; number fields with the unit inside the frame (cm, °C, m, %, °);
   sliders paired with an editable number and Reset to 100%; chips for linked

@@ -357,7 +357,8 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
         name: `${port.idPrefix}-fill-mode`,
         value: d.fillMode === 'none' ? 'custom' : d.fillMode,
         ariaLabel: t('space.fill_label'),
-        options: SPACE_FILL_UI_MODES.map((v) => ({ value: v, label: t(`fill.${v}` as I18nKey) })),
+        // §4.2 референса: Custom | Zigbee | Lights | Temperature — короткие подписи сегмента (общие с комнатой)
+        options: SPACE_FILL_UI_MODES.map((v) => ({ value: v, label: st(`fill.seg_${v}`) })),
         onChange: (v) => set(port, { ...d, fillMode: v }),
       })}
       ${fillDetail}
