@@ -704,6 +704,19 @@ export const dialogsStyles = css`
       max-height: 66vh;
       overflow-y: auto;
     }
+    /* #600 К6: у диалогов настроек (атрибут form-shell) скроллит оболочка (.content в
+       hp-dialog), тело формы высотой не владеет — иначе на классических полосах
+       Windows видны две. Канва — --secondary-background-color, карточки на ней
+       белые (§3.1 «Тело»). */
+    hp-dialog[form-shell] .body {
+      max-height: none;
+      overflow: visible;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    @media (max-width: 480px) {
+      hp-dialog[form-shell] .body { padding: 12px; }
+    }
     hp-confirm {
       display: contents;
     }

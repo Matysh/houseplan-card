@@ -5,7 +5,7 @@
   "editor.open_group": "Groupe d’outils : {group}",
   "editor.group_active": "{group} — actif : {item}",
   "editor.disabled_action": "{action} est indisponible : {reason}",
-  "editor.loading": "Chargement de l'éditeur…",
+  "editor.loading": "Chargement…",
   "editor.loading_aria": "L'éditeur de plan est en cours de chargement",
   "editor.load_failed": "Impossible de charger l'éditeur.",
   "editor.refresh_advice": "Actualisez la page et réessayez.",

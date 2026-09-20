@@ -37,7 +37,7 @@ export function renderSpaceSettingsDialog(this: HouseplanEditorRuntime): Templat
       this.host._importQueue = [];
       this.host._importTotal = 0;
     };
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="space"
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="space" form-shell
       .title=${`${d.mode === 'create' ? this.host._t('space.new') : this.host._t('space.header')}${progress ? ` · ${progress}` : ''}`}
       icon="mdi:floor-plan" wide @hp-close=${close}>
         <div class="body hpf-form">

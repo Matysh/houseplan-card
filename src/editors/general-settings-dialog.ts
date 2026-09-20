@@ -24,7 +24,7 @@ import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 
 export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): TemplateResult {
   ensureFormKitStyles(this.host);
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="settings" .title=${this.host._t('gs.title')} icon="mdi:cog-outline" wide
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="settings" form-shell .title=${this.host._t('gs.title')} icon="mdi:cog-outline" wide
       @hp-close=${() => (this.host._settingsDialog = null)}>
         <div class="body hpf-form">
           ${formCard({

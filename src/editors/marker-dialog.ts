@@ -131,7 +131,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       if (k === 'device') return this.host._fullRegistryHass.devices[ref]?.name_by_user || this.host._fullRegistryHass.devices[ref]?.name || ref;
       return this.host._fullRegistryHass.entities[ref]?.name || this.host.hass.states[ref]?.attributes?.friendly_name || ref;
     })();
-    return html`<hp-dialog id="marker-dialog" .hass=${this.host.hass} data-kind="marker"
+    return html`<hp-dialog id="marker-dialog" .hass=${this.host.hass} data-kind="marker" form-shell
       .title=${d.devId ? this.host._t('info.device_header') : this.host._t('marker.new_device')}
       icon="mdi:shape-plus" wide @hp-close=${() => this._closeMarkerDialog()}>
         <div class="body hpf-form">

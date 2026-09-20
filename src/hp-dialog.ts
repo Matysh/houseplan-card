@@ -44,6 +44,10 @@ export class HpDialog extends LitElement {
     // at the never-scrolling child and neither wheel nor touch reaches HA's
     // scroller. `flex-content` forwards ha-dialog's public `flexcontent`.
     flexContent: { type: Boolean, reflect: true, attribute: 'flex-content' },
+    // #600 §3.1 «Шапка»: бейдж с именем пространства справа от заголовка и
+    // признак «диалог настроек» — оболочка референса (560, один скроллер).
+    badge: { type: String },
+    formShell: { type: Boolean, reflect: true, attribute: 'form-shell' },
     hass: { attribute: false },
   };
 
@@ -114,6 +118,42 @@ export class HpDialog extends LitElement {
       white-space: normal;
       overflow-wrap: anywhere;
       word-break: normal;
+    }
+
+    /* #600 §3.1: бейдж имени пространства — 14 px, радиус 7, обрезка 180 px. */
+    .badge {
+      flex: none;
+      max-width: 180px;
+      padding: 5px 8px;
+      border-radius: 7px;
+      background: rgb(127 127 127 / 0.16);
+      color: var(--secondary-text-color, inherit);
+      font-size: .875rem;
+      font-weight: 400;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* #600: диалоги настроек (атрибут form-shell) — оболочка референса. Ширина 560
+       через переменную, которую уже читает :host([wide]); высота min(940,
+       окно − 48); единственный скроллер — .content, тело формы высотой не
+       владеет (К6). Generic wide и остальные диалоги не трогаются (Q7). */
+    :host([form-shell]) { --hp-dialog-wide-width: 560px; }
+    :host([form-shell]) .surface { max-height: min(940px, calc(100vh - 48px)); }
+    :host([form-shell]) .content {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      background: var(--secondary-background-color, color-mix(in srgb, var(--card-background-color, var(--hp-bg, #202126)) 90%, var(--primary-text-color, #000)));
+    }
+    :host([form-shell]) .close { width: 44px; height: 44px; }
+    :host([form-shell]) .header { min-height: 70px; }
+    @media (max-width: 480px) {
+      :host([form-shell]) .surface { width: 100vw; max-height: 100vh; border: 0; border-radius: 0; }
+      :host([form-shell]) .badge { max-width: 105px; }
     }
 
     .footer {
@@ -228,6 +268,8 @@ export class HpDialog extends LitElement {
 
   title = '';
   icon = '';
+  badge = '';
+  formShell = false;
   wide = false;
   alert = false;
   describedBy = '';
@@ -504,6 +546,7 @@ export class HpDialog extends LitElement {
     const title = html`<span class="title" id=${this._titleId}>
       ${this.icon ? html`<ha-icon icon=${this.icon}></ha-icon>` : nothing}
       <span class="title-text">${this.title}</span>
+      ${this.badge ? html`<span class="badge" title=${this.badge}>${this.badge}</span>` : nothing}
     </span>`;
 
     if (this._usesHaDialog()) {

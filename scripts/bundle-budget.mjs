@@ -390,7 +390,15 @@ export function initialViewCeilingViolation(bytes, {
  * оставался незафиксированным.
  */
 export const LAZY_FURNITURE_ART_GZIP_CEILING = 17_900;
-export const LAZY_EDITOR_GZIP_CEILING = 222_900;
+/**
+ * #600, серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
+ * референса (`docs/design/600-settings-dialogs/reference/styles.css`): ряд с
+ * тумблером, компактная строка, плитки, плашка цвета, компас, футер со статусом.
+ * Рост — CSS-строки листа набора, не код. Значение промежуточное: серии 1–4
+ * выкидывают старую разметку и правила четырёх диалогов, и потолок ставится
+ * заново по итоговому замеру — вниз, если граф похудеет.
+ */
+export const LAZY_EDITOR_GZIP_CEILING = 225_900;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

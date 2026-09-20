@@ -109,7 +109,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
     const cur = this.host.hass.areas[this.host._areaSel];
     if (cur) areas.unshift(cur);
   }
-  return html`<hp-dialog class="roomdialog" .hass=${this.host.hass} data-kind="room" wide
+  return html`<hp-dialog class="roomdialog" .hass=${this.host.hass} data-kind="room" form-shell wide
     .title=${edit ? this.host._t('room.settings_title')
       : batchProgress || this.host._t('room.new')}
     icon=${edit ? 'mdi:cog-outline' : 'mdi:floor-plan'} @hp-close=${() => this._roomDialogCancel()}>

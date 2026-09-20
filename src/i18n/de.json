@@ -5,7 +5,7 @@
   "editor.open_group": "Werkzeuggruppe: {group}",
   "editor.group_active": "{group} — aktiv: {item}",
   "editor.disabled_action": "{action} ist nicht verfügbar: {reason}",
-  "editor.loading": "Editor wird geladen…",
+  "editor.loading": "Wird geladen…",
   "editor.loading_aria": "Der Plan-Editor wird geladen",
   "editor.load_failed": "Der Editor konnte nicht geladen werden.",
   "editor.refresh_advice": "Seite aktualisieren und erneut versuchen.",
