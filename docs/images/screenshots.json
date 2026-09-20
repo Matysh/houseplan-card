@@ -138,6 +138,7 @@
     ],
     "witnesses": 8,
     "floor": 2,
-    "lastWriteWasFingerprintOnly": true
+    "lastWriteWasFingerprintOnly": true,
+    "identicalPixels": true
   }
 }

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.77.0-beta.2 — 2026-09-20
+
 - Three settings dialogs — General settings, Space and Device on the plan — are
   now grouped into titled cards. They used to be flat columns: nine captions
   mixed with rows and paragraphs in General, and no grouping at all across the
