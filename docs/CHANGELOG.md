@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.77.0-beta.3 — 2026-09-20
+
 - The four settings dialogs — Space, General settings, Room settings and Device
   on the plan — now follow the designer's reference layout
   (`docs/design/600-settings-dialogs/`). Each dialog is one 560 px form with a
