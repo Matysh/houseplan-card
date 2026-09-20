@@ -10392,6 +10392,53 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'room-save-enabled-without-changes',
+    guard: 'node demo/smoke_room_settings_form.mjs',
+    because: '#600 К10/AC6 (Q1) для «Настроек комнаты»: в edit Save активен только при '
+      + 'изменениях; без dirty футер снова врёт о том, есть ли что сохранять',
+    patches: [{
+      file: 'src/editors/room-settings-dialog.ts',
+      find: '  const canSave = problems.length === 0 && tempValid && (edit ? dirty : true);',
+      replace: '  const canSave = problems.length === 0 && tempValid;',
+    }],
+  },
+  {
+    id: 'room-discard-without-asking',
+    guard: 'node demo/smoke_room_settings_form.mjs',
+    because: '#600 К10 (Q1): закрытие диалога комнаты с изменениями обязано спросить. '
+      + 'Перевёрнутое условие закрывает «грязный» диалог молча и спрашивает у чистого',
+    patches: [{
+      file: 'src/editors/room-settings-dialog.ts',
+      find: "    if (!edit || !dirty) { close(); return; }",
+      replace: "    if (!edit || dirty) { close(); return; }",
+    }],
+  },
+  {
+    id: 'room-fill-segment-starts-at-none',
+    guard: 'node demo/smoke_room_settings_form.mjs',
+    because: '#600 Q4 (решение владельца): при выключении «Как у пространства» сегмент '
+      + 'стартует с действующего режима пространства, а не с «None» — человек видит то, '
+      + 'что уже действует, и меняет дальше. Старт с None выключил бы заливку комнаты '
+      + 'одним щелчком тумблера',
+    patches: [{
+      file: 'src/editors/room-settings-dialog.ts',
+      find: "              onChange: (v) => setFill(v ? '' : startMode()),",
+      replace: "              onChange: (v) => setFill(v ? '' : 'none'),",
+    }],
+  },
+  {
+    id: 'room-temp-min-writes-max',
+    guard: 'node demo/smoke_room_settings_form.mjs',
+    because: '#600 К1/AC3: два одинаковых поля с единицей °C рядом — нижняя граница обязана '
+      + 'писать в _roomTempMin. Утечка в соседний ключ на глаз незаметна: диапазон всё '
+      + 'равно нормализуется при чтении, и в конфиг уедет не та пара',
+    patches: [{
+      file: 'src/editors/room-settings-dialog.ts',
+      find: "                        onInput: (raw) => { host._roomTempMin = raw; host.requestUpdate(); },",
+      replace: "                        onInput: (raw) => { host._roomTempMax = raw; host.requestUpdate(); },",
+    }],
+  },
+  {
     id: 'form-kit-segment-drops-radio-semantics',
     guard: 'node --test test/form-kit.test.mjs',
     because: '#594 К7: сегментированный переключатель заменил радиосписок, и вся его '

@@ -57,5 +57,13 @@
   "gs.sun_rays_hint": "Sonnenstrahlen durch Fensteröffnungen zeichnen.",
   "gs.error_glow_radius": "Geben Sie einen Radius größer als null ein.",
   "gs.error_north": "Geben Sie eine ganze Zahl zwischen 0° und 359° ein.",
-  "gs.opacity_of": "Deckkraft: {name}"
+  "gs.opacity_of": "Deckkraft: {name}",
+  "room.fill_inherit_hint": "Den Füllmodus des gesamten Bereichs verwenden.",
+  "room.fill_following": "Wie der Bereich: {mode}.",
+  "room.fill_mode_label": "Füllmodus",
+  "room.temp_min_label": "Minimum",
+  "room.temp_max_label": "Maximum",
+  "room.sizes_hint": "Zusätzlich zur bereichsweiten Kartengröße ({v} %).",
+  "room.error_temp_range": "Geben Sie Zahlen für die Komfortgrenzen ein.",
+  "room.error_name": "Geben Sie einen Namen ein oder wählen Sie einen Bereich."
 }

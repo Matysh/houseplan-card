@@ -76,7 +76,9 @@ const res = await page.evaluate(async () => {
     c._t('room.group_basics'), c._t('room.group_fill'),
     c._t('room.group_sources'), c._t('room.sizes_section'),
   ]);
-  out.createHasInherit = [...sr().querySelectorAll('hp-dialog .srcrow')].some((l) => l.textContent.trim() === c._t('fill.inherit'));
+  // #600 (Q4): «Как у пространства» — строка-тумблер, а не радио в списке.
+  out.createHasInherit = sr().querySelector('hp-dialog #room-fill-inherit')?.checked === true
+    && !sr().querySelector('hp-dialog input[name="rfill"]');
   // AC6: у каждой группы есть «?» с доступным именем — пояснения не исчезли, а уехали.
   const helps = [...sr().querySelectorAll('hp-dialog .hpf-card .hpf-head hp-help')];
   out.everyGroupHasHelp = helps.length === 4
@@ -119,6 +121,8 @@ const res = await page.evaluate(async () => {
     return style.includes(`--room-fill:${fill.c}`) && style.includes(`--room-fill-op:${fill.a}`);
   };
   const colorRow = () => !!sr().querySelector('hp-dialog hp-color-opacity');
+  // #600 (Q4): возврат к пространству — выключить тумблер, а не выбрать радио.
+  const inheritToggle = () => sr().querySelector('hp-dialog #room-fill-inherit');
   const cfgRoom = () => c._curSpaceCfg.rooms.find((r) => r.id === editedId);
   // own colour: mode + colour stored, plan paints B
   c._openRoomEdit(cfgRoom()); await c.updateComplete;
@@ -132,9 +136,7 @@ const res = await page.evaluate(async () => {
   // AC5: back to "as the space" in the open dialog — the frame resolver answers A at once
   c._openRoomEdit(cfgRoom()); await c.updateComplete;
   out.reopenedWithOwnColour = c._roomFill === 'custom' && c._roomCustomFill?.c === B.c && colorRow();
-  const inheritRadio = [...sr().querySelectorAll('hp-dialog .srcrow')]
-    .find((l) => l.textContent.trim() === c._t('fill.inherit'))?.querySelector('input[type="radio"]');
-  inheritRadio.checked = true; inheritRadio.dispatchEvent(new Event('change', { bubbles: true }));
+  inheritToggle().checked = true; inheritToggle().dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
   out.inheritClearsDraft = c._roomFill === '' && c._roomCustomFill === null && !colorRow();
   out.inheritDraftResolvesSpace = resolves(editedId, A);
@@ -186,7 +188,7 @@ const res = await page.evaluate(async () => {
   };
   // Имя: меняется только имя.
   let before = draft();
-  const nameInput = sr().querySelector('hp-dialog .namein');
+  const nameInput = sr().querySelector('hp-dialog #room-name');
   nameInput.value = 'Кабинет-594';
   nameInput.dispatchEvent(new Event('input', { bubbles: true }));
   await c.updateComplete;
@@ -201,7 +203,7 @@ const res = await page.evaluate(async () => {
   // Область: меняется только область (и имя, если оно было пустым, — это
   // давнее поведение селектора, а не набора).
   before = draft();
-  const areaSelect = sr().querySelector('hp-dialog .areasel');
+  const areaSelect = sr().querySelector('hp-dialog #room-area');
   // Свободных зон в фикстуре может не остаться — комната держит единственную.
   // «Без зоны» доступна всегда, и для проверки соседа этого достаточно: имя уже
   // заполнено, поэтому автоподстановка имени по зоне в игру не вступает.
@@ -212,11 +214,17 @@ const res = await page.evaluate(async () => {
   areaSelect.dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
   out.areaWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['area']);
-  // Режим заливки: перетипизированный FILL_CHOICES пишет в _roomFill и, уходя
+  // Режим заливки (#600 Q4): тумблер выключается — сегмент стартует с режима
+  // пространства; выбор «Температура» в сегменте пишет в _roomFill и, уходя
   // с «Свой цвет», обнуляет цвет — это его давний контракт (#581), а не сосед.
   before = draft();
-  const tempRadio = [...sr().querySelectorAll('hp-dialog .srcrow')]
-    .find((l) => l.textContent.trim() === c._t('fill.temp'))?.querySelector('input[type="radio"]');
+  inheritToggle().checked = false; inheritToggle().dispatchEvent(new Event('change', { bubbles: true }));
+  await c.updateComplete;
+  // пространство выше переведено в «Свой цвет» (A) — сегмент стартует с него
+  out.fillSegmentStartsAtSpaceMode = c._roomFill === 'custom'
+    && !!sr().querySelector('hp-dialog input[name="rfill"]:checked');
+  const tempRadio = [...sr().querySelectorAll('hp-dialog input[name="rfill"]')]
+    .find((r) => r.closest('label').textContent.trim() === c._t('fill.temp'));
   out.fillOptionAvailable = !!tempRadio;
   tempRadio.checked = true;
   tempRadio.dispatchEvent(new Event('change', { bubbles: true }));
@@ -229,7 +237,7 @@ const res = await page.evaluate(async () => {
   out.humiditySegmentFound = !!humSeg;
   pickSecond(humSeg);
   await c.updateComplete;
-  const humCand = [...sr().querySelectorAll('hp-dialog .droppanel .cand')][0];
+  const humCand = [...sr().querySelectorAll('hp-dialog .hpf-panel .hpf-cand')][0];
   out.humidityCandidateOffered = !!humCand;
   humCand?.click();
   await c.updateComplete;

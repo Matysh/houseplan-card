@@ -296,7 +296,7 @@
   "room.new": "New room",
   "room.name_label": "Display name",
   "room.name_ph": "e.g. Terrace",
-  "room.area_label": "Home Assistant area (unassigned)",
+  "room.area_label": "Home Assistant area",
   "room.no_area_option": "— no area —",
   "room.default_name": "Room",
   "device.unnamed": "unnamed",

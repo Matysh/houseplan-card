@@ -57,5 +57,13 @@
   "gs.sun_rays_hint": "Draw sun rays through window openings.",
   "gs.error_glow_radius": "Enter a radius greater than zero.",
   "gs.error_north": "Enter a whole number between 0° and 359°.",
-  "gs.opacity_of": "{name} opacity"
+  "gs.opacity_of": "{name} opacity",
+  "room.fill_inherit_hint": "Use the fill mode set for the whole space.",
+  "room.fill_following": "Following the space: {mode}.",
+  "room.fill_mode_label": "Fill mode",
+  "room.temp_min_label": "Minimum",
+  "room.temp_max_label": "Maximum",
+  "room.sizes_hint": "On top of the space-wide card size ({v}%).",
+  "room.error_temp_range": "Enter numbers for the comfort bounds.",
+  "room.error_name": "Enter a name or choose an area."
 }

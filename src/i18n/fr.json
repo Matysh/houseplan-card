@@ -296,7 +296,7 @@
   "room.new": "Nouvelle pièce",
   "room.name_label": "Nom affiché",
   "room.name_ph": "ex. Terrasse",
-  "room.area_label": "Zone Home Assistant (non attribuée)",
+  "room.area_label": "Zone Home Assistant",
   "room.no_area_option": "— aucune zone —",
   "room.default_name": "Pièce",
   "device.unnamed": "sans nom",

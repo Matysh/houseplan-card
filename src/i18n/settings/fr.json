@@ -57,5 +57,13 @@
   "gs.sun_rays_hint": "Tracer les rayons du soleil à travers les ouvertures des fenêtres.",
   "gs.error_glow_radius": "Saisissez un rayon supérieur à zéro.",
   "gs.error_north": "Saisissez un nombre entier entre 0° et 359°.",
-  "gs.opacity_of": "Opacité : {name}"
+  "gs.opacity_of": "Opacité : {name}",
+  "room.fill_inherit_hint": "Utiliser le mode de remplissage de tout l’espace.",
+  "room.fill_following": "Comme l’espace : {mode}.",
+  "room.fill_mode_label": "Mode de remplissage",
+  "room.temp_min_label": "Minimum",
+  "room.temp_max_label": "Maximum",
+  "room.sizes_hint": "En plus de la taille des cartes de l’espace ({v} %).",
+  "room.error_temp_range": "Saisissez des nombres pour les bornes de confort.",
+  "room.error_name": "Saisissez un nom ou choisissez une zone."
 }

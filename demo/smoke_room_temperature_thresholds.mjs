@@ -23,7 +23,9 @@ const result = await page.evaluate(async () => {
   await card.updateComplete;
 
   const dialog = root().querySelector('hp-dialog.roomdialog');
-  let fields = [...dialog.querySelectorAll('.roomtemprange-fields input')];
+  // #600: границы — два поля с единицей в карточке Fill, сброс — текстовая ссылка.
+  const tempFields = () => [...root().querySelectorAll('.hpf-temprange input[type="number"]')];
+  let fields = tempFields();
   const out = {
     visibleForInheritedTemp: fields.length === 2,
     partialDraftRestored: fields[0]?.value === '18' && fields[1]?.value === '',
@@ -39,15 +41,15 @@ const result = await page.evaluate(async () => {
 
   card._roomTempMin = '19'; card._roomTempMax = '23'; card._roomFill = 'none';
   card.requestUpdate(); await card.updateComplete;
-  out.hiddenOutsideTemp = !root().querySelector('.roomtemprange');
+  out.hiddenOutsideTemp = !root().querySelector('.hpf-temprange');
   out.hiddenDraftRetained = card._roomTempMin === '19' && card._roomTempMax === '23'
     && card._roomSettingsFromDialog().temp_min === 19
     && card._roomSettingsFromDialog().temp_max === 23;
 
   card._roomFill = 'temp'; card.requestUpdate(); await card.updateComplete;
-  root().querySelector('.roomtemprange-fields .btn')?.click();
+  root().querySelector('.hpf-temprange .hpf-link')?.click();
   await card.updateComplete;
-  fields = [...root().querySelectorAll('.roomtemprange-fields input')];
+  fields = tempFields();
   out.resetRestoresInheritance = card._roomTempMin === '' && card._roomTempMax === ''
     && fields.every((input) => input.value === '');
   return out;

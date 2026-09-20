@@ -93,9 +93,9 @@ export const SMOKE_LINKS = [
   {
     symbols: [
       'roomTempRangeOf', 'roomTempRangeFromDraft', 'roomTempThresholdDraft',
-      'applyRoomTempThresholdDraft', 'roomTemperatureControls',
+      'applyRoomTempThresholdDraft', 'renderRoomSettingsDialog',
     ],
-    smokes: ['smoke_room_temperature_thresholds.mjs'],
+    smokes: ['smoke_room_temperature_thresholds.mjs', 'smoke_room_settings_form.mjs'],
     because: 'the #487 production-bundle scenario proves partial inheritance, zero/invalid input, '
       + 'hidden draft retention, reset and narrow-dialog overflow through the real room editor',
   },

@@ -1757,8 +1757,9 @@ export async function prepareGoldenScenario(page, scenario) {
       await card.updateComplete;
       await frame();
       const dialog = card.renderRoot.querySelector('hp-dialog.roomdialog');
-      const inputs = dialog?.querySelectorAll('.roomtemprange-fields input');
-      const reset = dialog?.querySelector('.roomtemprange-fields .btn');
+      // #600: поля границ — `.hpf-temprange input[type=number]`, сброс — текстовая ссылка
+      const inputs = dialog?.querySelectorAll('.hpf-temprange input[type="number"]');
+      const reset = dialog?.querySelector('.hpf-temprange .hpf-link');
       if (!dialog || inputs?.length !== 2 || inputs[0].placeholder !== '20'
           || inputs[1].placeholder !== '25' || inputs[0].value !== String(thresholds.min)
           || inputs[1].value !== (thresholds.max === null ? '' : String(thresholds.max))

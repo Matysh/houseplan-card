@@ -302,7 +302,13 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * eager-листа `plan.styles.ts`, а мёртвые ключи основного каталога удалены.
  * Потолок опущен, чтобы выигрыш не потерялся.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 292_200;
+/**
+ * #600, серия 3: 292 200 → 291 600 (замер 290 575). Из eager-листа
+ * `dialogs.styles.ts` ушли правила диалога комнаты (`.roomtemprange*`,
+ * `.roomdialog .srcrow/.dropbtn`), модуль `room-temperature-controls.ts`
+ * удалён — его заменили поля набора в ленивом графе. Потолок опущен следом.
+ */
+export const INITIAL_VIEW_GZIP_CEILING = 291_600;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**
@@ -411,8 +417,13 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 17_900;
  *   плитки цвета, встроенный режим блока Zigbee, dirty/валидация; девять новых
  *   строк словаря на четыре локали. Старые `_renderColorRow`, `.sunrow/.suncol`
  *   и 120-px компас удалены.
+ * - серия 3: 238 600 → 240 100 (замер 239 391). «Настройки комнаты» по §6:
+ *   кнопка выбора источника с панелью в потоке (`sourcePicker` набора, общая с
+ *   диалогом устройства в серии 4), поля границ комфорта с легендой, dirty и
+ *   валидация комнаты, девять строк словаря на четыре локали.
+ *   `room-temperature-controls.ts` удалён.
  */
-export const LAZY_EDITOR_GZIP_CEILING = 238_600;
+export const LAZY_EDITOR_GZIP_CEILING = 240_100;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

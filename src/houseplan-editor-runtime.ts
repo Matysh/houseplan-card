@@ -140,8 +140,8 @@ import {
 } from './space-dialog';
 import { rememberSpaceDialogBaseline } from './editors/space-form-state';
 import { rememberGeneralBaseline } from './editors/general-form-state';
+import { rememberRoomBaseline } from './editors/room-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
-import { roomTemperatureControls } from './room-temperature-controls';
 import { openSpaceCopyDialog, renderSpaceCopyDialog, saveSpaceCopy } from './space-copy-runtime';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
@@ -10842,6 +10842,7 @@ public _openRoomEdit(r: RoomCfg): void {
     this.host._roomSrcOpen = null;
     this.host._roomSrcFilter = '';
     this.host._roomDialog = true;
+    rememberRoomBaseline(this.host); // #600 К10: Save только при изменениях
   }
 
 public _roomSettingsFromDialog(): RoomCfg['settings'] {

@@ -57,5 +57,13 @@
   "gs.sun_rays_hint": "Рисовать солнечные лучи через оконные проёмы.",
   "gs.error_glow_radius": "Введите радиус больше нуля.",
   "gs.error_north": "Введите целое число от 0° до 359°.",
-  "gs.opacity_of": "Прозрачность: {name}"
+  "gs.opacity_of": "Прозрачность: {name}",
+  "room.fill_inherit_hint": "Использовать режим заливки всего пространства.",
+  "room.fill_following": "Как у пространства: {mode}.",
+  "room.fill_mode_label": "Режим заливки",
+  "room.temp_min_label": "Минимум",
+  "room.temp_max_label": "Максимум",
+  "room.sizes_hint": "Поверх размера карточек всего пространства ({v}%).",
+  "room.error_temp_range": "Введите числа для границ комфорта.",
+  "room.error_name": "Введите название или выберите зону."
 }

@@ -296,7 +296,7 @@
   "room.new": "Новая комната",
   "room.name_label": "Отображаемое имя",
   "room.name_ph": "Например: Терраса",
-  "room.area_label": "Зона Home Assistant (свободные)",
+  "room.area_label": "Зона Home Assistant",
   "room.no_area_option": "— без зоны —",
   "room.default_name": "Комната",
   "device.unnamed": "без имени",

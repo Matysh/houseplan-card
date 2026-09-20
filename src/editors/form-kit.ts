@@ -426,14 +426,16 @@ export interface RangeLineOptions {
   /** Слайдер от вызывающего (`_rangeInput`: ha-slider или range) — компонент не подменяется. */
   slider: TemplateResult;
   onInput: (value: number) => void;
+  /** `id` числового поля — цель `<label for>` строки. */
+  id?: string;
 }
 
 /** Слайдер + числовое поле с единицей в одну строку (§3.1 «range-line»). */
-export function rangeLine({ min, max, value, unit, ariaLabel, disabled, slider, onInput }: RangeLineOptions): TemplateResult {
+export function rangeLine({ min, max, value, unit, ariaLabel, disabled, slider, onInput, id }: RangeLineOptions): TemplateResult {
   return html`<div class="hpf-range">
     ${slider}
     ${unitInput({
-      value: String(value), unit, min, max, step: 1, ariaLabel, disabled,
+      id, value: String(value), unit, min, max, step: 1, ariaLabel, disabled,
       onInput: (raw) => {
         const n = Number(raw);
         if (Number.isFinite(n)) onInput(Math.min(max, Math.max(min, n)));
@@ -521,3 +523,63 @@ export function tintBlock({ title, tag, body }: { title: string; tag?: string; b
 
 /** Единственный разрешённый разделитель внутри карточки (§3.2). */
 export const divider = (): TemplateResult => html`<hr class="hpf-divider" />`;
+
+export interface SourceCandidate {
+  value: string;
+  label: string;
+  sub: string;
+}
+
+export interface SourcePickerOptions {
+  /** Панель раскрыта. */
+  open: boolean;
+  /** Выбранный кандидат (подпись + идентификатор) или `null` — плейсхолдер. */
+  current: { label: string; sub: string } | null;
+  placeholder: string;
+  ariaLabel: string;
+  filter: string;
+  filterPlaceholder: string;
+  candidates: readonly SourceCandidate[];
+  /** Значение, отмеченное в списке. */
+  selected: string;
+  emptyText: string;
+  onToggle: () => void;
+  onFilter: (value: string) => void;
+  onPick: (value: string) => void;
+  /** `id` кнопки — для `<label for>` и смоков. */
+  id?: string;
+}
+
+/**
+ * Кнопка выбора источника с панелью в потоке (§3.1 «Кнопка выбора источника»):
+ * кнопка в стиле селекта, под ней поиск и список кандидатов. Панель не
+ * всплывает поверх — раздвигает карточку, скроллер диалога один (К3).
+ */
+export function sourcePicker({
+  open, current, placeholder, ariaLabel, filter, filterPlaceholder, candidates, selected, emptyText,
+  onToggle, onFilter, onPick, id,
+}: SourcePickerOptions): TemplateResult {
+  return html`<div class="hpf-picker ${open ? 'open' : ''}">
+    <button id=${id ?? nothing} type="button" class="hpf-select hpf-pick" aria-haspopup="listbox"
+      aria-expanded=${open ? 'true' : 'false'} aria-label=${ariaLabel} @click=${onToggle}>
+      ${current
+        ? html`<b>${current.label}</b><span class="hpf-pick-ref">${current.sub}</span>`
+        : html`<span class="hpf-pick-ph">${placeholder}</span>`}
+    </button>
+    ${open
+      ? html`<div class="hpf-panel">
+          <input class="hpf-input" type="text" autocomplete="off" placeholder=${filterPlaceholder}
+            aria-label=${filterPlaceholder} .value=${filter}
+            @input=${(e: Event) => onFilter((e.target as HTMLInputElement).value)} />
+          <div class="hpf-list" role="listbox" aria-label=${ariaLabel}>
+            ${candidates.length
+              ? candidates.map((c) => html`<button type="button" role="option" class="hpf-cand ${c.value === selected ? 'sel' : ''}"
+                  aria-selected=${c.value === selected ? 'true' : 'false'} @click=${() => onPick(c.value)}>
+                  <span>${c.label}</span><small>${c.sub}</small>
+                </button>`)
+              : html`<p class="hpf-hint">${emptyText}</p>`}
+          </div>
+        </div>`
+      : nothing}
+  </div>`;
+}

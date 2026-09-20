@@ -391,31 +391,6 @@ export const dialogsStyles = css`
       align-items: center;
       gap: var(--sp-4);
   }
-  .roomtemprange {
-    display: grid;
-    gap: 8px;
-    min-width: 0;
-  }
-  .roomtemprange-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-  }
-  .roomtemprange-fields {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-  }
-  .roomtemprange-fields input {
-    flex: 0 1 104px;
-    min-width: 72px;
-  }
-  .roomtemprange-fields input[aria-invalid='true'] {
-    border-color: var(--error-color, #db4437);
-  }
     .gsrow > hp-color-opacity {
       min-width: min(100%, 210px);
       justify-content: space-between;
@@ -1473,37 +1448,6 @@ export const dialogsStyles = css`
     hp-dialog .body .areasel {
       width: 100%;
       box-sizing: border-box;
-    }
-    /* Room settings contains long radio labels, two source pickers and live
-       previews, so it deliberately uses hp-dialog's medium width. Keep its
-       content shrinkable as well: the generic srcrow rule is nowrap because
-       compact switch rows need it, but here that created a horizontal scroll
-       box even on a wide desktop viewport. */
-    hp-dialog.roomdialog .body {
-      min-width: 0;
-      overflow-x: hidden;
-    }
-    hp-dialog.roomdialog .body > * {
-      min-width: 0;
-      max-width: 100%;
-      box-sizing: border-box;
-    }
-    hp-dialog.roomdialog .srcrow {
-      min-width: 0;
-      align-items: flex-start;
-    }
-    hp-dialog.roomdialog .srcrow > span:first-of-type {
-      min-width: 0;
-      white-space: normal;
-      overflow-wrap: anywhere;
-      line-height: 1.35;
-    }
-    hp-dialog.roomdialog .dropbtn > b,
-    hp-dialog.roomdialog .dropbtn > .ref {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
     hp-dialog .row {
       display: flex;
