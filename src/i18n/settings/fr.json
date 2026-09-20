@@ -81,10 +81,11 @@
   "marker.icon_custom_hint": "Icône personnalisée pour ce marqueur.",
   "marker.display.help": "Comment la face du marqueur réagit à l’état et à l’activité. Les modes valeur remplacent l’icône par une valeur Home Assistant.",
   "marker.display.help.aria": "Aide : mode d’affichage",
-  "marker.preview_now": "Maintenant",
   "marker.size.help": "Redimensionne et fait pivoter uniquement ce marqueur sur le plan. La zone de toucher grandit avec l’icône.",
   "marker.size.help.aria": "Aide : taille et rotation de l’icône",
   "marker.size_short": "Taille",
   "marker.error_binding": "Choisissez un appareil ou une entité à lier.",
-  "marker.error_glow_radius": "Saisissez un rayon supérieur à 0 ou laissez le champ vide."
+  "marker.error_glow_radius": "Saisissez un rayon supérieur à 0 ou laissez le champ vide.",
+  "room.fill_seg_lqi": "Zigbee",
+  "room.fill_seg_custom": "Perso"
 }

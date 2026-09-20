@@ -684,7 +684,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 : valueSourceMissing
                   ? note(t('marker.value_source_missing_hint'), 'warning')
                   : selectedValueSourceCandidate
-                    ? html`<code class="hpf-mono markerbadgetechnical">${selectedValueSourceCandidate.technical}</code>`
+                    ? html`<code class="hpf-mono">${selectedValueSourceCandidate.technical}</code>`
                     : undefined,
             })}</div>`
           : nothing}
@@ -736,7 +736,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 : displayWantsValue(d.display) && badgeSourceKey === innerValueSourceKey
                   ? note(t('marker.value_badge_duplicate'), 'info')
                   : selectedBadgeCandidate
-                    ? html`<code class="hpf-mono markerbadgetechnical">${selectedBadgeCandidate.technical}</code>`
+                    ? html`<code class="hpf-mono">${selectedBadgeCandidate.technical}</code>`
                     : undefined,
             })}
             ${field({
@@ -757,20 +757,22 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             })}
           ` : nothing}
         </div>
-        ${tintBlock({
-          title: t('marker.preview.title'), tag: st('marker.preview_now'),
-          body: previewPresentation
-            ? html`<hp-device-preview
-                .hass=${this.host.hass}
-                .presentation=${previewPresentation}
-                .registry=${this.host._haRegistry}
-                .deviceName=${d.name.trim() || previewDevice?.name || curLabel || ''}>
-              </hp-device-preview>`
-            : html`<div class="devicepreview-empty">
+        ${previewPresentation
+          // Q3 (решение владельца): hp-device-preview целиком — у него свой
+          // заголовок «Display preview · Now» и свой блок на тинте, обёртка не нужна.
+          ? html`<hp-device-preview
+              .hass=${this.host.hass}
+              .presentation=${previewPresentation}
+              .registry=${this.host._haRegistry}
+              .deviceName=${d.name.trim() || previewDevice?.name || curLabel || ''}>
+            </hp-device-preview>`
+          : tintBlock({
+              title: t('marker.preview.title'),
+              body: html`<div class="devicepreview-empty">
                 <ha-icon icon="mdi:eye-outline"></ha-icon>
                 <span>${t('marker.preview.select_source')}</span>
               </div>`,
-        })}
+            })}
         ${subsection({ title: t('marker.size_label'), help: shelp('marker.size.help') })}
         ${fieldGrid([
           html`<div class="hpf-field markersize">
@@ -825,8 +827,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           label: t('marker.manuals_label'),
           control: html`
             ${d.pdfs.length
-              ? html`<div class="hpf-chips pdfedit">
-                  ${d.pdfs.map((p) => html`<span class="hpf-chip pdftag"><ha-icon icon="mdi:file-pdf-box" aria-hidden="true"></ha-icon>
+              ? html`<div class="hpf-chips">
+                  ${d.pdfs.map((p) => html`<span class="hpf-chip"><ha-icon icon="mdi:file-pdf-box" aria-hidden="true"></ha-icon>
                     <a href="${safeUrl(this.host._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
                     <button type="button" aria-label=${`${t('btn.delete')}: ${p.name}`} title=${t('btn.delete')}
                       @click=${() => this._removeMarkerPdf(p.url)}><ha-icon icon="mdi:close"></ha-icon></button></span>`)}
@@ -852,7 +854,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         <div class="body hpf-form">
           ${basics}${tap}${light}${appearance}${details}
         </div>
-        <div class="row dialog-action-footer hpf-footer markerfooter" slot="footer">
+        <div class="row dialog-action-footer hpf-footer" slot="footer">
           <div class="dialog-action-group markeractions">
             ${d.devId
               ? html`<button class="btn ghost" type="button"
@@ -874,7 +876,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           ${footerStatus(problems.length
             ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
             : { text: edit && dirty ? st('dialog.unsaved') : '' })}
-          <div class="dialog-action-group dialog-action-commit markersaveactions">
+          <div class="dialog-action-group dialog-action-commit">
             <button class="btn ghost" data-hp="dialog-cancel" ?disabled=${d.busy} @click=${requestClose}>${t('btn.cancel')}</button>
             <button class="btn on" data-hp="dialog-confirm" @click=${() => { forgetMarkerBaseline(this.host); void this._saveMarker(); }}
               ?disabled=${!canSave} title=${saveTitle}>

@@ -166,7 +166,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-sub h4 { margin: 0; font-size: 1rem; line-height: 1.4; font-weight: 600; }
   .${p}-field { display: grid; gap: 7px; min-width: 0; }
   .${p}-field > .${p}-label,
-  .${p}-labelrow { display: flex; align-items: center; gap: 4px; min-height: 28px; font-size: .875rem; font-weight: 600; color: var(${tokens.muted}); }
+  .${p}-labelrow { display: flex; align-items: center; gap: 4px; min-height: 32px; font-size: .875rem; font-weight: 600; color: var(${tokens.muted}); }
   .${p}-labelrow > label { cursor: pointer; }
   .${p}-hint { margin: 0; font-size: .875rem; line-height: 1.5; color: var(${tokens.muted}); }
   .${p}-error { margin: 0; font-size: .875rem; line-height: 1.5; color: var(${tokens.danger}); }
@@ -413,7 +413,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-range-ends { display: flex; justify-content: space-between; padding-right: 122px; margin-top: -8px; font-size: .875rem; color: var(${tokens.muted}); }
   .${p}-headline { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .${p}-north { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 7px 16px; align-items: center; }
-  .${p}-north > .${p}-labelrow { grid-area: 1 / 1; min-height: 28px; }
+  .${p}-north > .${p}-labelrow { grid-area: 1 / 1; min-height: 32px; }
   .${p}-north > .${p}-select, .${p}-north > .${p}-unit, .${p}-north > .${p}-input { grid-area: 2 / 1; }
   .${p}-north > .${p}-north-n { grid-area: 1 / 2; text-align: center; font-size: .875rem; line-height: 28px; color: var(${tokens.muted}); }
   .${p}-compass { grid-area: 2 / 2; box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 50%; background: var(${tokens.canvas}); color: var(${tokens.accent}); }
@@ -462,6 +462,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-iconpreview { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.canvas}); color: var(${tokens.muted}); }
   .${p}-mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8125rem; }
   .${p}-hint > .${p}-link { padding: 0; }
+  .${p}-hint ha-icon { --mdc-icon-size: 16px; display: inline-flex; vertical-align: -3px; }
   .${p}-actionrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .${p}-note { display: flex; align-items: flex-start; gap: 6px; }
   .${p}-note > ha-icon { --mdc-icon-size: 16px; flex: 0 0 auto; margin-top: 2px; }

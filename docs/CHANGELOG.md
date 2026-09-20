@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+- The four settings dialogs — Space, General settings, Room settings and Device
+  on the plan — now follow the designer's reference layout
+  (`docs/design/600-settings-dialogs/`). Each dialog is one 560 px form with a
+  single scrollbar and the space name in the title; cards are flat, with a
+  heading and a `?`. Inside them: full-width rows with an icon, a caption and a
+  switch on the right (borders, layers, names, glow, tooltips, confirmation,
+  device temperature); segmented choices where a short list used to be radios
+  or a dropdown (room fill, zero-wall style, background, sun rays, ray origin,
+  device binding, light-source role, glow mode, badge side); colour plates —
+  swatch, hex code, opacity number and Reset — around the existing colour
+  picker; number fields with the unit inside the frame (cm, °C, m, %, °);
+  sliders paired with an editable number and Reset to 100%; chips for linked
+  lights and manuals; the entity picker opens as a panel inside the card with
+  its search and the "Show entities" checkbox. Room fill gets an "As the space"
+  switch — turning it off opens a five-mode segment that starts at the space's
+  current mode; comfort bounds are two °C fields with a Cold / Comfort / Hot
+  legend. **Save** is enabled only when something changed, and closing a
+  dialog with unsaved changes asks first; broken values (an inverted or empty
+  bound, a north outside 0–359°, a missing binding, a non-positive glow radius)
+  are named under the field and a "Review N fields" link in the footer jumps
+  to the first one. The "Ask for confirmation" row is shown only for actions
+  that do something; the Zigbee links card no longer repeats its heading; the
+  lazy editor loads with a plain "Loading…". Every setting, key and saved value
+  is the same — the forms were rebuilt, not the configuration
+  ([#600](https://github.com/Matysh/houseplan-card/issues/600), closes
+  [#591](https://github.com/Matysh/houseplan-card/issues/591) and
+  [#599](https://github.com/Matysh/houseplan-card/issues/599)).
+
 ## v1.77.0-beta.2 — 2026-09-20
 
 - Three settings dialogs — General settings, Space and Device on the plan — are

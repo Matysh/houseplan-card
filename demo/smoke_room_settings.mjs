@@ -80,7 +80,9 @@ const res = await page.evaluate(async () => {
   out.createHasInherit = sr().querySelector('hp-dialog #room-fill-inherit')?.checked === true
     && !sr().querySelector('hp-dialog input[name="rfill"]');
   // AC6: у каждой группы есть «?» с доступным именем — пояснения не исчезли, а уехали.
-  const helps = [...sr().querySelectorAll('hp-dialog .hpf-card .hpf-head hp-help')];
+  // #600 §6.1: у Basics «?» стоит у поля зоны, а не у заголовка карточки.
+  const helps = [...sr().querySelectorAll('hp-dialog .hpf-card .hpf-head hp-help'),
+    sr().querySelector('hp-dialog #room-area')?.closest('.hpf-field')?.querySelector('hp-help')].filter(Boolean);
   out.everyGroupHasHelp = helps.length === 4
     && helps.every((h) => !!h.text && !!h.ariaLabel);
   // AC5: сегмент источника — настоящая радиогруппа с целью нажатия не меньше 44 px.
@@ -223,8 +225,7 @@ const res = await page.evaluate(async () => {
   // пространство выше переведено в «Свой цвет» (A) — сегмент стартует с него
   out.fillSegmentStartsAtSpaceMode = c._roomFill === 'custom'
     && !!sr().querySelector('hp-dialog input[name="rfill"]:checked');
-  const tempRadio = [...sr().querySelectorAll('hp-dialog input[name="rfill"]')]
-    .find((r) => r.closest('label').textContent.trim() === c._t('fill.temp'));
+  const tempRadio = [...sr().querySelectorAll('hp-dialog input[name="rfill"]')].find((r) => r.value === 'temp');
   out.fillOptionAvailable = !!tempRadio;
   tempRadio.checked = true;
   tempRadio.dispatchEvent(new Event('change', { bubbles: true }));

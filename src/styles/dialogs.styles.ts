@@ -249,31 +249,6 @@ export const dialogsStyles = css`
     .oprow b { margin-left: auto; }
     .oprow.ok b { color: #66d17a; }
     .oprow.warn b { color: var(--hp-open); }
-    .bindharow {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-5);
-      flex-wrap: wrap;
-    }
-    .bindharow .entcheck { opacity: 0.9; }
-    .ctrlchips { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin: var(--sp-2) 0; }
-    .ctrlchip {
-      display: inline-flex; align-items: center; gap: var(--sp-2);
-      background: var(--hp-accent); color: var(--text-primary-color, #fff);
-      border-radius: var(--rad-l); padding: var(--sp-2) var(--sp-4); font-size: var(--fs-s);
-    }
-    .ctrlchip ha-icon { --mdc-icon-size: 14px; cursor: pointer; }
-    .ctrllist { display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-2); }
-    .ctrlopt {
-      display: flex; align-items: center; gap: var(--sp-4); text-align: left;
-      border: 0; background: transparent; color: var(--hp-txt);
-      padding: var(--sp-3) var(--sp-4); border-radius: var(--rad-s); cursor: pointer; font-family: inherit; font-size: var(--fs-m);
-    }
-    :host([data-pointer-hover]) .ctrlopt:hover {
-      background: var(--secondary-background-color, rgba(128,128,128,0.15));
-    }
-    .ctrlopt .sub { color: var(--hp-muted); font-size: var(--fs-s); margin-left: auto; }
-    .ctrlopt ha-icon { --mdc-icon-size: 16px; }
     .ctrlstates { display: flex; flex-direction: column; gap: var(--sp-2); }
     .ctrlstate { display: inline-flex; align-items: center; gap: var(--sp-3); color: var(--hp-muted); }
     .ctrlstate.on { color: var(--hp-txt); }
@@ -297,16 +272,6 @@ export const dialogsStyles = css`
       opacity: 0.85;
     }
     .cardpreview .cpmeta ha-icon { --mdc-icon-size: 1.05em; }
-    .iconauto {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-      font-size: var(--fs-s);
-      margin: var(--sp-2) 0 0;
-    }
-    .iconauto ha-icon { --mdc-icon-size: 18px; }
-    .iconauto span { flex: 1; }
-    .iconauto .btn { min-height: 32px; padding: 0 var(--sp-3); }
     hp-dialog .dfill {
       display: inline-flex;
       align-items: center;
@@ -391,17 +356,6 @@ export const dialogsStyles = css`
       align-items: center;
       gap: var(--sp-4);
   }
-    .gsrow > hp-color-opacity {
-      min-width: min(100%, 210px);
-      justify-content: space-between;
-    }
-    .ripple-colorrow > hp-color-opacity {
-      width: 100%;
-      justify-content: space-between;
-    }
-    .ripple-sizerow > .opl {
-      min-width: 0;
-    }
     .colorrow input[type='range'] { flex: 1; }
     .colorrow .tempin { width: 70px; flex: none; }
     /* beat the generic hp-dialog .body .namein { width:100% } rule */
@@ -457,14 +411,6 @@ export const dialogsStyles = css`
       box-sizing: border-box;
       width: 100%;
     }
-    .radaradditional {
-      margin-top: var(--sp-5);
-    }
-    .radaradditional summary {
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .radaradditional .btn { margin-top: var(--sp-3); }
     .radarinspection {
       display: grid;
       gap: 6px;
@@ -528,31 +474,6 @@ export const dialogsStyles = css`
       dominant-baseline: middle;
       pointer-events: none;
     }
-    .markerhelpfield { margin-top: var(--sp-4); }
-    .markerhelplabel {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: var(--sp-1);
-      margin-bottom: var(--sp-1);
-    }
-    .markerhelplabel > label { min-width: 0; overflow-wrap: anywhere; }
-    .helpfieldlabel {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: var(--sp-1);
-      min-width: 0;
-      margin-top: var(--sp-3);
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
-    }
-    .helpfieldlabel.compact { margin-top: 0; }
-    hp-dialog .body .helpfieldlabel > label {
-      min-width: 0;
-      margin-top: 0;
-      overflow-wrap: anywhere;
-    }
     .help-inline-label {
       display: inline-flex;
       align-items: center;
@@ -564,27 +485,11 @@ export const dialogsStyles = css`
       margin-top: 0;
       overflow-wrap: anywhere;
     }
-    .markerradios { display: grid; gap: var(--sp-1); min-width: 0; }
     .markerlightgroup .srcrow > span:first-of-type {
       min-width: 0;
       white-space: normal;
       overflow-wrap: anywhere;
     }
-    .markerglowvalue { margin: var(--sp-3) 0; flex-wrap: wrap; }
-    .markerglowvalue hp-color-opacity { flex: none; }
-    .markerlightdisabled {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      margin-top: var(--sp-2) !important;
-    }
-    .markerlightdisabled ha-icon { --mdc-icon-size: 18px; flex: none; }
-    .markerbadgetechnical {
-      min-width: 0;
-      margin: var(--sp-1) 0 var(--sp-2) !important;
-      overflow-wrap: anywhere;
-    }
-    .markerbadgetechnical code { white-space: normal; }
     .planrow {
       display: flex;
       align-items: center;
@@ -652,8 +557,6 @@ export const dialogsStyles = css`
     .filebtn {
       cursor: pointer;
     }
-    .fileupload { display: inline-flex; min-width: 0; }
-    .fileupload > input { display: none; }
     .btn.danger {
       border-color: #b3402a;
       color: #ff7a5c;
@@ -694,48 +597,6 @@ export const dialogsStyles = css`
       overflow-wrap: anywhere;
       font-size: var(--fs-l);
       line-height: 1.3;
-    }
-    .descin {
-      width: 100%;
-      box-sizing: border-box;
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-line);
-      color: var(--hp-txt);
-      border-radius: var(--rad-s);
-      padding: var(--sp-3) var(--sp-4);
-      font-size: var(--fs-m);
-      font-family: inherit;
-      resize: vertical;
-      /* flex column of the dialog body squeezes textareas — keep a usable height */
-      min-height: 92px;
-      flex-shrink: 0;
-      line-height: 1.35;
-    }
-    .bindsel {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-3);
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-m);
-      padding: var(--sp-4);
-    }
-    .bindsel .opt {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-      border: 1px solid var(--hp-line);
-      background: transparent;
-      color: var(--hp-txt);
-      border-radius: var(--rad-s);
-      padding: var(--sp-3) var(--sp-4);
-      cursor: pointer;
-      font-size: var(--fs-m);
-      font-family: inherit;
-    }
-    .bindsel .opt.on {
-      background: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-      border-color: var(--hp-accent);
     }
     .curbind {
       display: flex;
@@ -1036,37 +897,6 @@ export const dialogsStyles = css`
       color: var(--hp-muted);
       cursor: default;
     }
-    .pdfedit {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--sp-3);
-      align-items: center;
-    }
-    .pdftag {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-2);
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-s);
-      padding: var(--sp-2) var(--sp-3);
-      font-size: var(--fs-s);
-    }
-    .pdftag a {
-      color: var(--hp-txt);
-      text-decoration: none;
-      max-width: 150px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .pdftag .x {
-      --mdc-icon-size: 15px;
-      cursor: pointer;
-      color: var(--hp-muted);
-    }
-    :host([data-pointer-hover]) .pdftag .x:hover {
-      color: #ff7a5c;
-    }
     .entlist {
       display: flex;
       flex-direction: column;
@@ -1181,11 +1011,6 @@ export const dialogsStyles = css`
     }
     :host([data-pointer-hover]) .rrow .ract:hover { color: var(--hp-txt); }
     :host([data-pointer-hover]) .rrow .ract.del:hover { color: #ff7a5c; }
-    .gsrow .gsl {
-      min-width: 150px;
-      font-size: var(--fs-m);
-      color: var(--hp-muted);
-    }
     .optimize-live {
       display: grid;
       justify-items: start;
@@ -1493,15 +1318,6 @@ export const dialogsStyles = css`
       margin-left: auto;
       justify-content: flex-end;
     }
-    hp-dialog .row.markerfooter {
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    hp-dialog .row.roomfooter {
-      align-items: center;
-      flex-wrap: wrap;
-    }
     /* Device info can have Edit + Open in HA + Close. It uses a wide dialog;
        wrapping remains as a phone fallback, but without a flex spacer (which
        used to strand Edit alone on the first line). */
@@ -1522,14 +1338,6 @@ export const dialogsStyles = css`
         padding: var(--sp-4) var(--sp-5);
       }
     }
-    .markeractions,
-    .markersaveactions {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-4);
-    }
-    .markeractions:empty { display: none; }
-    .markersaveactions { margin-left: auto; }
     .device-inbox {
       display: flex;
       flex-direction: column;

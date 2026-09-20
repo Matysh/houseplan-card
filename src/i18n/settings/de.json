@@ -81,10 +81,11 @@
   "marker.icon_custom_hint": "Eigenes Symbol für diesen Marker.",
   "marker.display.help": "Wie das Marker-Gesicht auf Zustand und Aktivität reagiert. Die Wert-Modi ersetzen das Symbol durch einen Home-Assistant-Wert.",
   "marker.display.help.aria": "Hilfe: Anzeigemodus",
-  "marker.preview_now": "Jetzt",
   "marker.size.help": "Skaliert und dreht nur diesen Marker auf dem Plan. Die Tippfläche wächst mit dem Symbol.",
   "marker.size.help.aria": "Hilfe: Symbolgröße und Drehung",
   "marker.size_short": "Größe",
   "marker.error_binding": "Wählen Sie ein Gerät oder eine Entität zum Verknüpfen.",
-  "marker.error_glow_radius": "Geben Sie einen Radius größer als 0 ein oder lassen Sie das Feld leer."
+  "marker.error_glow_radius": "Geben Sie einen Radius größer als 0 ein oder lassen Sie das Feld leer.",
+  "room.fill_seg_lqi": "Zigbee",
+  "room.fill_seg_custom": "Eigene"
 }

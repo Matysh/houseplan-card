@@ -440,11 +440,43 @@ number means a position: after a reorder such a card shows a different floor.
 The card warns about this once. Pin the floor by space id instead of a number to
 avoid it entirely.
 
+### How the settings dialogs work
+
+The four settings dialogs — **Space**, **General settings**, **Room settings**
+and **Device on the plan** — share one layout: a 560 px form with a single
+scrollbar and the space name in the title, with settings grouped into flat
+cards that carry a heading and a `?`. Inside the cards you meet the same
+elements:
+
+| Element | Looks like | Does |
+|---|---|---|
+| Switch row | Icon, title, caption and a switch on the right | Turns one setting on or off; the whole row is the tap target |
+| Segment | A few options in one frame, the chosen one highlighted | Picks from a short list instead of a dropdown; arrow keys and screen readers work as with radio buttons |
+| Colour plate | Swatch, `#rrggbb` code, opacity number and Reset | The swatch opens the palette; the number edits opacity directly |
+| Field with a unit | A number with `cm`, `°C`, `m`, `%` or `°` inside the frame | An empty field means "as in General settings" or "as the space" when the hint says so |
+| Slider with a number | Slider, editable number and "Reset to 100%" | Drag, or type the exact value |
+| Picker button | A dropdown-styled button | Opens a panel with search and a list below it; the panel expands the card instead of floating over it |
+| Chips | Selected items with a remove button | Linked lights, manuals |
+| State message | A tinted note with an icon among the settings | Says that something is broken right now or will change on save — a missing `sun.sun` entity, a tap target that disappeared. These never hide behind `?` |
+
+**Save** is enabled only when something changed; the footer says "Unsaved
+changes". Closing a dialog with unsaved changes — by the close button,
+**Cancel** or a click outside — asks first whether to discard them. An invalid
+value — an empty or non-numeric temperature bound, a north outside 0–359°, a
+missing binding, a non-positive glow radius — is named in red under the field,
+and the **Review N fields** link in the footer jumps to the first one.
+
 ### Display settings
 
-A space can show/hide room borders, names, LQI, Background and openings. It can
-override fill mode, Glow, day-cycle background, north, sun rays, room-card font
-scale and which room metrics are visible.
+A space's **Appearance** card has switch rows for room borders and the two
+visible layers (**Decorative layer**, **Doors, windows and gates** — on means
+visible), a segment for zero-thickness walls, a colour plate for rooms and the
+fill segment (custom colour / Zigbee signal / lights / temperature, with two
+°C bound fields for temperature). **Room cards** holds the names switch, four
+metric tiles, the card font slider and a sample card; **Sun and light** holds
+the background segment, north (as general or a custom direction with a compass),
+sun rays and the glow switch. All of it overrides the general settings for this
+space only.
 
 Room cards are positioned and scaled on the plan. View renders only the metrics
 enabled for that space.
@@ -487,13 +519,27 @@ smallest to largest. Save creates that room and consumes exactly coincident
 chain walls, Keep as walls rejects only that candidate, and Cancel leaves all
 accepted walls in place with no partial rooms.
 
-The room dialog is grouped into four cards: **Basics** (name and area), **Fill**
-(this room's fill mode, custom colour and temperature thresholds), **Sensor
-sources** (temperature and humidity) and **Font sizes** (name and label scales
-with a preview). Each group explains itself behind the `?` next to its heading.
-The measurement source is chosen with a room average / selected sensor switch;
+The room dialog is grouped into four cards: **Basics** (display name and Home
+Assistant area side by side), **Fill**, **Sensor sources** (temperature and
+humidity) and **Font sizes**. Each card explains itself behind the `?` next to
+its heading.
+
+**Fill** starts with an **As the space** switch row: while it is on, the room
+follows the space's fill mode and the caption says which one. Turn it off and a
+five-mode segment appears (None / Zigbee signal / Lights / Temperature / Custom
+color), starting at the mode the space already uses rather than at None.
+**Custom color** reveals a colour plate — the space colour until you change it,
+then the room's own with a Reset link. When the temperature fill is in effect
+(own or inherited), two °C comfort-bound fields appear with a Cold / Comfort /
+Hot legend and an **As the space** link.
+
+The measurement source is chosen with a room average / specific sensor segment;
 underneath it is still an ordinary radio group, so arrow keys and screen readers
-behave exactly as before.
+behave exactly as before. For a specific sensor a picker button appears below,
+and its search-and-list panel opens inside the card. Name and label sizes are two
+sliders with an editable number, "Reset to 100%" and a sample card underneath.
+**Save** is enabled only when something changed; closing with unsaved changes
+asks first.
 
 While drawing an open chain, `Esc` finishes all accepted segments as ordinary
 independent walls and keeps **Walls** selected; the next click starts a new
@@ -737,9 +783,21 @@ binding to **Available again**. A disabled or missing binding keeps its saved
 category and receives a separate Home Assistant status instead of silently
 moving to another tab.
 
-The dialog shows binding provenance, exact next tap result, skipped targets and
-a live presentation preview. A saved missing source is shown as missing rather
-than silently replaced.
+The dialog is five cards: **Basics**, **Tap action**, **Light and glow**,
+**Appearance** and **Details**. **Hide** and **Delete** sit on the left of the
+footer, **Cancel** and **Save** on the right; Save is enabled only when
+something changed. Binding is a **Virtual device / Pick from the HA list**
+segment; in the second case a picker button opens a panel inside the card with
+search, the **Show entities** checkbox and the device list — until a binding is
+chosen, Save stays disabled and the reason is written under the field.
+**Ask for confirmation** is shown only for actions that do something (toggle or
+run). The light-source role and the glow mode are segments; with **Never** the
+whole glow block is dimmed and explains why. The glow radius is a field with a
+unit — empty means the general radius, and the hint names it. The dialog shows
+binding provenance, exact next tap result, skipped targets and a live
+presentation preview in a tinted **Display preview** block. Icon size and
+rotation are two sliders with numbers. A saved missing source is shown as
+missing rather than silently replaced.
 
 ![Device editor with binding provenance and the exact action result](images/06-device-editor.png)
 
@@ -919,7 +977,8 @@ from the base fill.
 
 When a room effectively uses the temperature fill, its settings show optional
 lower and upper comfort bounds. Each blank field independently inherits the
-matching space bound, and **As the space** clears both overrides. The range
+matching space bound, and the **As the space** link under the fields clears
+both overrides. The range
 changes only the room floor and opening-tunnel fill; room-card and tooltip
 temperature values are unchanged.
 

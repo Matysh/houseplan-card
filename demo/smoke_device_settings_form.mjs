@@ -120,7 +120,9 @@ const out = await page.evaluate(async () => {
   o.badgePositionIsASegment = qa('input[name="marker-value-badge-position"]').length === 4;
   await pickSeg('marker-value-badge-position', 'top');
   o.badgePositionWrites = c._markerDialog.valueBadgePosition === 'top' && c._markerDialog.valueBadgeTouched === true;
-  o.previewInsideTintBlock = !!q('.hpf-card[data-card="appearance"] .hpf-tint hp-device-preview') && !!q('.hpf-tint .hpf-tint-head h4');
+  // Q3: hp-device-preview целиком, без второго заголовка над ним (у компонента свой)
+  o.previewIsTheComponentItself = !!q('.hpf-card[data-card="appearance"] hp-device-preview')
+    && !q('.hpf-card[data-card="appearance"] .hpf-tint hp-device-preview');
   o.sizeRowsInAGrid = !!q('.hpf-card[data-card="appearance"] .hpf-grid #marker-size') && !!q('.hpf-card[data-card="appearance"] .hpf-grid #marker-angle');
   input(q('#marker-size'), '2'); await upd();
   input(q('#marker-angle'), '35'); await upd();

@@ -81,10 +81,11 @@
   "marker.icon_custom_hint": "Своя иконка для этого маркера.",
   "marker.display.help": "Как лицо маркера реагирует на состояние и активность. Режимы значения заменяют иконку значением из Home Assistant.",
   "marker.display.help.aria": "Справка: режим отображения",
-  "marker.preview_now": "Сейчас",
   "marker.size.help": "Масштабирует и поворачивает только этот маркер на плане. Область нажатия растёт вместе с иконкой.",
   "marker.size.help.aria": "Справка: размер и поворот иконки",
   "marker.size_short": "Размер",
   "marker.error_binding": "Выберите устройство или сущность для привязки.",
-  "marker.error_glow_radius": "Введите радиус больше 0 или оставьте поле пустым."
+  "marker.error_glow_radius": "Введите радиус больше 0 или оставьте поле пустым.",
+  "room.fill_seg_lqi": "Zigbee",
+  "room.fill_seg_custom": "Свой цвет"
 }

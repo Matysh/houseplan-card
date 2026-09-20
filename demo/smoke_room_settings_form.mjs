@@ -40,7 +40,7 @@ const out = await page.evaluate(async () => {
   const nameBox = q('#room-name').getBoundingClientRect();
   const areaBox = q('#room-area').getBoundingClientRect();
   o.basicsInOneRow = Math.abs(nameBox.top - areaBox.top) < 2 && areaBox.left > nameBox.right;
-  o.everyCardHasHelp = qa('.hpf-card .hpf-head hp-help').length === 4;
+  o.everyCardHasHelp = qa('.hpf-card .hpf-head hp-help').length === 3 && !!q('#room-area')?.closest('.hpf-field')?.querySelector('hp-help'); // §6.1: у Basics «?» — у зоны
 
   // --- AC2: оболочка — 560, один скроллер -----------------------------------
   const shell = dlg().shadowRoot;
@@ -56,10 +56,11 @@ const out = await page.evaluate(async () => {
   inherit().checked = false; change(inherit()); await upd();
   o.segmentStartsAtSpaceMode = c._roomFill === 'light'
     && qa('input[name="rfill"]').length === 5
-    && qa('input[name="rfill"]').find((r) => r.checked)?.closest('label').textContent.trim() === c._t('fill.light')
+    && qa('input[name="rfill"]').find((r) => r.checked)?.value === 'light'
     && q('.hpf-seg[role="radiogroup"]') !== null;
+  // Сегмент — радио с value режима (короткие подписи у lqi/custom из ленивого словаря)
   const pickMode = async (mode) => {
-    const r = qa('input[name="rfill"]').find((x) => x.closest('label').textContent.trim() === c._t(`fill.${mode}`));
+    const r = qa('input[name="rfill"]').find((x) => x.value === mode);
     r.checked = true; change(r); await upd();
   };
   // --- Q5: свой цвет — плашка вокруг прежнего hp-color-opacity ---------------

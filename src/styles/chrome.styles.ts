@@ -236,12 +236,6 @@ const chromeCoreStyles = css`
       color: var(--hp-muted);
       margin-bottom: var(--sp-3);
     }
-    .togglehint {
-      overflow-wrap: anywhere;
-    }
-    .togglehint > div + div {
-      margin-top: var(--sp-1);
-    }
     /* Keep the last editor bar mounted while the row collapses. This makes
        both entering and leaving an editor change the card geometry gradually;
        the header ResizeObserver keeps the stage fitted throughout. */

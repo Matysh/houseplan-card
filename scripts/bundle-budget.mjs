@@ -308,7 +308,14 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * `.roomdialog .srcrow/.dropbtn`), модуль `room-temperature-controls.ts`
  * удалён — его заменили поля набора в ленивом графе. Потолок опущен следом.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 291_600;
+/**
+ * #600, финал: 291 600 → 290 900 (замер 289 878). Из eager-листа
+ * `dialogs.styles.ts` и `chrome.styles.ts` сняты стили прежней разметки диалога
+ * устройства (`.bindsel/.bindharow`, `.ctrlchip*`, `.markerhelp*`,
+ * `.markerradios`, `.markerlightdisabled`, `.pdftag`, `.descin`, `.togglehint`
+ * и др.) — их заменил лист набора в ленивом графе.
+ */
+export const INITIAL_VIEW_GZIP_CEILING = 290_900;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**
@@ -429,6 +436,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 17_900;
  *   (четыре «?» с aria); в листе набора — блок с отключением, панель, поле
  *   иконки, заметки. Старые стили диалога (`.markerlightgroup`, `.srcrow`,
  *   `.colorrow`, `.ctrlchip*`) пока в eager-листе — снимаются в финале серии.
+ * - финал: потолок 243 900 остаётся (замер 243 127 после снятия мёртвых
+ *   классов из разметки): итог #600 — 222 900 → 243 900 (+21 000, из них
+ *   ≈ 12 000 — четыре словаря `i18n/settings`, остальное — лист набора и
+ *   разметка четырёх форм с валидацией и dirty).
  */
 export const LAZY_EDITOR_GZIP_CEILING = 243_900;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;

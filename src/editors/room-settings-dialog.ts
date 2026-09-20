@@ -152,7 +152,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
         ${formCard({
           id: 'basics',
           title: t('room.group_basics'),
-          help: this._help('room.group_basics.help'),
+          // §6.1: «?» стоит у зоны — пояснение про свободные зоны относится к ней, а не к карточке
           body: fieldGrid([
             field({
               label: t('room.name_label'), htmlFor: 'room-name',
@@ -162,7 +162,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                 @input=${(e: Event) => { host._nameSel = (e.target as HTMLInputElement).value; host.requestUpdate(); }} />`,
             }),
             field({
-              label: t('room.area_label'), htmlFor: 'room-area',
+              label: t('room.area_label'), htmlFor: 'room-area', help: this._help('room.group_basics.help'),
               control: html`<select id="room-area" class="hpf-select"
                 @change=${(e: Event) => {
                   host._areaSel = (e.target as HTMLSelectElement).value;
@@ -194,7 +194,11 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                     name: 'rfill',
                     value: host._roomFill as RoomFillMode,
                     ariaLabel: t('room.fill_label'),
-                    options: ROOM_FILL_MODES.map((value) => ({ value, label: t(`fill.${value}` as I18nKey) })),
+                    // Короткие подписи там, где полные не помещаются в пять сегментов (§6.1: None | Zigbee | Lights | Temperature | Custom)
+                    options: ROOM_FILL_MODES.map((value) => ({
+                      value,
+                      label: value === 'lqi' ? st('room.fill_seg_lqi') : value === 'custom' ? st('room.fill_seg_custom') : t(`fill.${value}` as I18nKey),
+                    })),
                     onChange: (value) => setFill(value),
                   }),
                 })}
@@ -277,7 +281,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
             <div class="hpf-tint hpf-preview">${host._renderCardPreview(spaceDisplay.cardFontScale, host._roomNameScale, host._roomLabelScale)}</div>`,
         })}
       </div>
-      <div class="row dialog-action-footer hpf-footer roomfooter" slot="footer">
+      <div class="row dialog-action-footer hpf-footer" slot="footer">
         ${!edit && !host._pendingSplit
           ? html`<div class="dialog-action-group">
               <button class="btn ghost" data-hp="dialog-confirm" @click=${() => this._keepClosedAsPartitions()}>
