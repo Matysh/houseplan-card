@@ -401,11 +401,9 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               };
               this.host._markerDialog = this._announceToggleDraft(next);
             }}>
-            ${TAP_ACTIONS.map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
-              ([v, k]) => html`<option value=${v} ?selected=${v === effectiveTapAction}>
-                ${t(k as any)}
-              </option>`,
-            )}
+            ${TAP_ACTIONS.map((v) => html`<option value=${v} ?selected=${v === effectiveTapAction}>
+                ${t(`tap.${v.replace('-', '_')}` as I18nKey)}
+              </option>`)}
           </select>`,
           hint: effectiveTapAction === 'toggle'
             ? html`<span id="marker-toggle-hint">${toggleHintLines.map((line) => html`<span class="hpf-hint-line">${line}</span>`)}</span>
@@ -591,7 +589,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       ? html`<ha-icon-picker id="marker-icon" .hass=${this.host.hass} .value=${d.icon || d.autoIcon}
           .placeholder=${d.autoIcon || undefined}
           .fallbackPath=${undefined}
-          @value-changed=${(e: any) => {
+          @value-changed=${(e: CustomEvent<{ value?: string }>) => {
             const icon = e.detail.value || '';
             // Some picker versions announce an assigned value. Do not
             // let that turn the display-only auto icon into an override.
