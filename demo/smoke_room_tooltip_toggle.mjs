@@ -13,9 +13,11 @@ const result = await page.evaluate(async () => {
 
   card._openSettingsDialog();
   await card.updateComplete;
-  const settingRow = [...root().querySelectorAll('hp-dialog label.srcrow')]
-    .find((label) => label.textContent.trim() === 'Show the room information window on hover');
-  out.localizedControl = !!settingRow?.querySelector('ha-switch,input[type="checkbox"]');
+  // #600: настройка — строка-тумблер набора (#gs-room-tooltip): название в
+  // .hpf-toggle-title, подпись отдельно, переключатель — нативный чекбокс.
+  const settingRow = root().querySelector('hp-dialog #gs-room-tooltip')?.closest('.hpf-toggle');
+  out.localizedControl = settingRow?.querySelector('.hpf-toggle-title')?.textContent.trim() === 'Show the room information window on hover'
+    && !!settingRow?.querySelector('input[type="checkbox"]');
   out.defaultOn = card._settingsDialog?.showRoomTooltip === true;
 
   card._settingsDialog = { ...card._settingsDialog, showRoomTooltip: false };
