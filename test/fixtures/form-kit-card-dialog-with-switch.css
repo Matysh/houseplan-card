@@ -166,6 +166,7 @@
   .hpf-toggle > input:disabled::before { opacity: .4; }
   .hpf-seg {
     display: flex;
+    flex-wrap: wrap;
     min-width: 0;
     gap: 3px;
     padding: 3px;
@@ -177,6 +178,7 @@
     position: relative;
     display: flex;
     min-width: 0;
+    min-width: fit-content;
     min-height: 38px;
     flex: 1 1 0;
     align-items: center;
@@ -190,7 +192,7 @@
     font-weight: 500;
     cursor: pointer;
     text-align: center;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
   }
   .hpf-seg input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
   .hpf-seg label:has(input:checked) {

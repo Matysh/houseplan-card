@@ -98,13 +98,17 @@ const out = await page.evaluate(async () => {
   input(q('#marker-glow-brightness'), '42'); await upd();
   o.brightnessNumberWrites = c._markerDialog.glowBrightness === 42 && c._markerDialog.glowTouched === true;
   o.radiusHintWhenEmpty = c._markerDialog.glowRadius === '' && !!q('#marker-glow-radius')?.closest('.hpf-field')?.querySelector('.hpf-hint');
+  // Ревью r1 M2: радиус — не условие Save. Нечисло или ноль, как на dev, при
+  // сохранении молча становится общим радиусом; поле не помечается ошибкой.
   c._markerDialog = { ...c._markerDialog, glowRadius: 'x' }; await upd();
-  o.badRadiusBlocksSave = saveBtn().disabled === true && !!q('#marker-glow-radius[aria-invalid="true"]')
-    && !!q('.hpf-card[data-card="light"] .hpf-error') && !!q('.hpf-status .hpf-link');
-  q('.hpf-status .hpf-link').click(); await upd();
-  o.reviewLinkFocusesRadius = (sr().activeElement ?? document.activeElement)?.id === 'marker-glow-radius';
+  o.badRadiusDoesNotBlockSave = saveBtn().disabled === false && !q('#marker-glow-radius[aria-invalid="true"]')
+    && !q('.hpf-card[data-card="light"] .hpf-error') && !q('.hpf-status .hpf-link');
   input(q('#marker-glow-radius'), '2.5'); await upd();
   o.radiusWrites = c._markerDialog.glowRadius === '2.5' && saveBtn().disabled === false;
+  // «Review N fields» ведёт к первому ошибочному полю — здесь к привязке (create-режим ниже проверяет ссылку).
+  input(q('#marker-glow-radius'), '0'); await upd();
+  o.zeroRadiusKeepsSaveEnabled = saveBtn().disabled === false;
+  input(q('#marker-glow-radius'), ''); await upd();
 
   // --- Appearance: иконка, display, бейдж, превью (Q3), размеры ----------------
   o.iconFieldHasPreview = !!q('#marker-icon') && !!q('.hpf-iconfield .hpf-iconpreview ha-icon');
@@ -172,6 +176,8 @@ const out = await page.evaluate(async () => {
   await pickSeg('bmode', 'ha');
   o.createHaWithoutBindingIsAProblem = saveBtn().disabled === true && !!q('.hpf-status .hpf-link')
     && !!q('.hpf-card[data-card="basics"] .hpf-error') && q('#marker-binding').getAttribute('aria-expanded') === 'true';
+  q('.hpf-status .hpf-link').click(); await upd();
+  o.reviewLinkFocusesBinding = (sr().activeElement ?? document.activeElement)?.id === 'marker-binding';
   await pickSeg('bmode', 'virtual');
   o.createVirtualHasHint = c._markerDialog.binding === 'virtual' && saveBtn().disabled === false
     && !!q('input[name="bmode"]')?.closest('.hpf-field')?.querySelector('.hpf-hint');

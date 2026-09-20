@@ -85,7 +85,6 @@
   "marker.size.help.aria": "Help: icon size and rotation",
   "marker.size_short": "Size",
   "marker.error_binding": "Choose a device or entity to bind.",
-  "marker.error_glow_radius": "Enter a radius greater than 0, or leave it empty.",
   "room.fill_seg_lqi": "Zigbee",
   "room.fill_seg_custom": "Custom"
 }

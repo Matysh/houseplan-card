@@ -10497,6 +10497,23 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'form-kit-segment-breaks-words',
+    guard: 'node demo/smoke_dialog_segments_i18n.mjs',
+    because: '#600 ревью r1 M1: пять равных колонок сегмента с overflow-wrap: anywhere рвали '
+      + '«Temperature» посреди слова, и ни один смок этого не видел — scrollWidth контейнера не '
+      + 'рос. Колонка не сжимается ниже самого длинного слова, слова переносятся только по '
+      + 'пробелам; вернуть прежние две строки — вернуть дефект в четырёх локалях',
+    patches: [{
+      file: 'src/styles/form-kit.styles.ts',
+      find: '    min-width: fit-content;\n    min-height: 38px;\n    flex: 1 1 0;',
+      replace: '    min-height: 38px;\n    flex: 1 1 0;',
+    }, {
+      file: 'src/styles/form-kit.styles.ts',
+      find: '    text-align: center;\n    overflow-wrap: normal;\n  }',
+      replace: '    text-align: center;\n    overflow-wrap: anywhere;\n  }',
+    }],
+  },
+  {
     id: 'form-kit-segment-drops-radio-semantics',
     guard: 'node --test test/form-kit.test.mjs',
     because: '#594 К7: сегментированный переключатель заменил радиосписок, и вся его '

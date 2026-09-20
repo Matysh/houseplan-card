@@ -85,7 +85,6 @@
   "marker.size.help.aria": "Справка: размер и поворот иконки",
   "marker.size_short": "Размер",
   "marker.error_binding": "Выберите устройство или сущность для привязки.",
-  "marker.error_glow_radius": "Введите радиус больше 0 или оставьте поле пустым.",
   "room.fill_seg_lqi": "Zigbee",
   "room.fill_seg_custom": "Свой цвет"
 }

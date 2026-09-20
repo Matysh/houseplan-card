@@ -463,7 +463,7 @@ elements:
 changes". Closing a dialog with unsaved changes — by the close button,
 **Cancel** or a click outside — asks first whether to discard them. An invalid
 value — an empty or non-numeric temperature bound, a north outside 0–359°, a
-missing binding, a non-positive glow radius — is named in red under the field,
+missing binding — is named in red under the field,
 and the **Review N fields** link in the footer jumps to the first one.
 
 ### Display settings
@@ -793,7 +793,8 @@ chosen, Save stays disabled and the reason is written under the field.
 **Ask for confirmation** is shown only for actions that do something (toggle or
 run). The light-source role and the glow mode are segments; with **Never** the
 whole glow block is dimmed and explains why. The glow radius is a field with a
-unit — empty means the general radius, and the hint names it. The dialog shows
+unit — empty means the general radius, and the hint names it; a value that is
+not a positive number is saved as the general radius too, as before. The dialog shows
 binding provenance, exact next tap result, skipped targets and a live
 presentation preview in a tinted **Display preview** block. Icon size and
 rotation are two sliders with numbers. A saved missing source is shown as

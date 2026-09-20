@@ -85,7 +85,6 @@
   "marker.size.help.aria": "Hilfe: Symbolgröße und Drehung",
   "marker.size_short": "Größe",
   "marker.error_binding": "Wählen Sie ein Gerät oder eine Entität zum Verknüpfen.",
-  "marker.error_glow_radius": "Geben Sie einen Radius größer als 0 ein oder lassen Sie das Feld leer.",
   "room.fill_seg_lqi": "Zigbee",
   "room.fill_seg_custom": "Eigene"
 }

@@ -25,8 +25,11 @@ Always и фиксированным свечением), раскрывает �
 из архива дизайнера (светлая тема, 1120 px при devicePixelRatio 2).
 
 Это **диагностические** кадры, а не golden-базы: они не принимаются
-`golden:accept` и не участвуют в `golden:verify`. Эталоны одиннадцати сцен живут
-отдельно и закрываются AC10. PNG пережаты в палитру 256 цветов — для сравнения
+`golden:accept` и не участвуют в `golden:verify`. Эталоны живут отдельно и
+закрываются AC10: принято **13 сцен** (`ed2af1b1`) — одиннадцать из ТЗ (список
+AC10 унаследован от #598, где диалог комнаты не менялся) плюс две
+`room-temperature-dialog-{desktop-en,mobile-ru}`, потому что диалог комнаты в
+скоупе #600. PNG пережаты в палитру 256 цветов — для сравнения
 раскладки этого достаточно, а вес папки остаётся в полумегабайте.
 
 ## Статус по диалогам
@@ -66,7 +69,7 @@ Always и фиксированным свечением), раскрывает �
 |---|---|---|---|
 | Образец карточки | убран (§6.1 «Font sizes») | под подсказкой размеров, на тинте | решение владельца Q2 |
 | «?» у Basics | у поля Home Assistant area | у поля Home Assistant area (перенесён с заголовка карточки) | §6.1 |
-| Подписи сегмента заливки | None · Zigbee · Lights · Temperature · Custom | None · Zigbee · Lights · Temperature · Custom (короткие ключи `room.fill_seg_*` для двух длинных) | §6.1 |
+| Подписи сегмента заливки | None · Zigbee · Lights · Temperature · Custom, по одной строке на пункт | те же (короткие ключи `room.fill_seg_*` для двух длинных). Ревью r1 M1: «Temperature» рвалось посреди слова в пяти равных колонках — колонка сегмента больше не сжимается ниже самого длинного слова, слова переносятся только по пробелам, не поместившийся сегмент переносится на вторую строку целыми кнопками; свидетель — `smoke_dialog_segments_i18n` (четыре диалога × en/ru/de/fr) | §6.1, §3.1 «Сегмент» |
 | Подписи источников | Temperature / Humidity | Temperature source / Humidity source (прежние ключи) | текст, не раскладка |
 | Поле цвета «Свой цвет» | `input[type=color]` | плашка вокруг `hp-color-opacity` | Q5 |
 | Кнопка выбора датчика | в потоке, панель с поиском | то же (`sourcePicker` набора) | §3.1 «Кнопка выбора источника» |
@@ -82,6 +85,20 @@ Always и фиксированным свечением), раскрывает �
 | Additional actions | строка-тумблер «This is a presence radar» | подзаголовок и кнопка «Объявить радаром» — прежнее действие радара; секции радара и пылесоса внутри диалога рисуются своими модулями без изменений | §7.2: ветки вне прототипа теми же примитивами; внутренняя разметка радара — вне скоупа #600 |
 | Иконка | поле с превью, Clear, Pin в подсказке | то же; в HA — `ha-icon-picker` вместо текстового поля | §7.1 |
 | Value badge | тумблер, Value, Position сегментом | то же; предупреждения бейджа — заметки и callout'ы | §7.1 |
+
+## AC8: девять прямых дефектов выпущенного — свидетель на каждый
+
+| № | Дефект (тело issue) | Чем закрыт | Свидетель |
+|---|---|---|---|
+| 1 | дублированный заголовок Zigbee links | карточка рисует заголовок и «?», `hp-zigbee-topology-settings` в режиме `embedded` своего не рисует | `smoke_general_settings_form` → `zigbeeHeadingOnce`; мутант `topology-embedded-draws-its-own-heading` |
+| 2 | «Fill color» дважды в строке заливки пространства | плашка цвета с одной подписью поля (`colorRow` + `colorField`, у пикера `hide-label`) | `smoke_space_settings_form` → `hexIsPrinted`, `noNativeColorInputs`; `noLegacyMarkup` |
+| 3 | семь `rhint`-абзацев в четырёх диалогах | пояснения — под «?» (`_help`/`shelp`), сообщения о состоянии — callout'ы (К5) | `noLegacyMarkup` в четырёх фокусных смоках (класс `.rhint` отсутствует); `test/i18n-dead-keys`; мутант `state-callout-hidden-under-help` |
+| 4 | карточка внутри карточки (`fieldset` в Light and glow, Value badge) | плоские блоки `.hpf-block` с подзаголовком | `smoke_device_settings_form` → `noLegacyMarkup` (`fieldset`, `.markerlightgroup`), `badgeBlock`, `neverDisablesGlowBlock` |
+| 5 | поповер «?» обрезается границей диалога комнаты | подсказка живёт в top layer (Popover API) либо в портале `.overlay-portal` **вне** поверхности диалога; тело формы без своего скроллера — резать нечем | **`smoke_dialog_help_clipping`**: короткое окно, «?» нижней карточки комнаты, подсказка выходит за край скроллера и остаётся hit-test'ируемой во всех точках; четыре ветки — нативный `<dialog>` и `ha-dialog` × Popover и fallback. Ветка `ha-dialog` — заглушка с ловушками настоящей mwc-поверхности (`transform` + `overflow: hidden` + свой скроллер); настоящий `ha-dialog` (#505, загрузка колеса HA-frontend) — отдельная диагностическая приёмка владельца, `demo/capture_summary_panel_505.mjs` как образец |
+| 6 | белый инпут на тёмной теме у Glow radius | поле набора `.hpf-unit` на токенах темы | `pairs/device-dark.png`; `smoke_device_settings_form` |
+| 7 | два скролла (тело формы и оболочка) | скроллер один — `.content` в `hp-dialog`; `.body` без `max-height`/`overflow` | фокусные смоки → `singleScroller` / `bodyHasNoOwnScroller` |
+| 8 | пустое пространство внизу | `.body` без `max-height` и лишнего `padding-bottom` | те же; кадры `pairs/` |
+| 9 | «Загружаем редактор…» | `editor.loading` → «Загрузка…» / «Loading…» | `src/i18n/*.json` |
 
 ## Принятые адаптации
 

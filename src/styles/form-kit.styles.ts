@@ -144,6 +144,13 @@ function sharedCss(options: FormKitCssOptions, withSwitch: boolean): string {
  * Числа — из §3.1 `SPEC.md` референса; цвета — через переменные темы HA, а не
  * hex прототипа: тёмная тема обязательна. Всё здесь видит только ленивый
  * редакторский граф — панель эти правила не получает (#597 К9).
+ *
+ * Сегмент (`-seg`): подпись варианта не рвётся посреди слова (ревью #600 r1,
+ * M1 — «Temperatur/e» в пяти колонках). Колонка не сжимается ниже самого
+ * длинного слова (`min-width: fit-content`; браузер без него берёт `0`
+ * строкой выше), слова переносятся только по пробелам (`overflow-wrap:
+ * normal`), а если варианты не помещаются в ряд — сегмент переносится на
+ * вторую строку целыми кнопками (`flex-wrap`), а не ломает текст.
  */
 function extrasCss(options: FormKitCssOptions): string {
   const { form, prefix, tokens } = options;
@@ -285,6 +292,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-toggle > input:disabled::before { opacity: .4; }
   .${p}-seg {
     display: flex;
+    flex-wrap: wrap;
     min-width: 0;
     gap: 3px;
     padding: 3px;
@@ -296,6 +304,7 @@ function extrasCss(options: FormKitCssOptions): string {
     position: relative;
     display: flex;
     min-width: 0;
+    min-width: fit-content;
     min-height: 38px;
     flex: 1 1 0;
     align-items: center;
@@ -309,7 +318,7 @@ function extrasCss(options: FormKitCssOptions): string {
     font-weight: 500;
     cursor: pointer;
     text-align: center;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
   }
   .${p}-seg input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
   .${p}-seg label:has(input:checked) {

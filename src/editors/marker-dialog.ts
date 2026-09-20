@@ -187,7 +187,6 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       node?.focus();
     };
     const bindingProblem = problemFor('marker-binding');
-    const radiusProblem = problemFor('marker-glow-radius');
 
     // ------------------------------------------------------------ Basics
     const bindingBanner = bindingStatus?.kind === 'ha_disabled'
@@ -565,12 +564,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           ${glowValue}
           ${field({
             label: t('marker.glow_radius_label'), htmlFor: 'marker-glow-radius', help: this._help('marker.glow_radius.help'),
-            error: radiusProblem ? st(radiusProblem.message) : undefined,
             hint: d.glowRadius.trim() ? undefined : st('marker.glow_radius_empty_hint', { v: `${this.host._glowRadiusPlaceholder} ${unit}` }),
             control: unitInput({
               id: 'marker-glow-radius', unit, min: 0.5, step: 0.5, value: d.glowRadius,
               placeholder: this.host._glowRadiusPlaceholder, ariaLabel: t('marker.glow_radius_label'),
-              disabled: glowSourceDisabled, invalid: !!radiusProblem,
+              disabled: glowSourceDisabled,
               describedBy: glowSourceDisabled || passiveSource ? 'marker-glow-disabled-hint' : undefined,
               onInput: (raw) => (this.host._markerDialog = { ...d, glowRadius: raw }),
             }),

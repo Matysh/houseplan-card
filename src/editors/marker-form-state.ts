@@ -6,7 +6,6 @@
  * в отпечаток не входят. Флаги `*Touched` и `original*` входят: они меняются
  * только действием человека, и это тоже изменение.
  */
-import { strictNumber } from '../space-dialog';
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
 import { dialogDirty, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
 
@@ -34,28 +33,20 @@ export function markerDirty(host: object, d: MarkerDialogDraft): boolean {
 
 export interface MarkerProblem {
   field: string;
-  message: 'marker.error_binding' | 'marker.error_glow_radius';
-}
-
-/** Радиус: пусто (общий радиус) либо положительное число — тем же парсером, что и запись. */
-export function glowRadiusValid(raw: string): boolean {
-  if (!raw.trim()) return true;
-  const n = strictNumber(raw);
-  return n !== null && n > 0;
+  message: 'marker.error_binding';
 }
 
 /**
- * Ошибки черновика (§7 референса): привязка обязательна в режиме HA (прежнее
- * условие Save, теперь названное словами), радиус свечения — положительное число
- * либо пусто (общий радиус).
+ * Ошибки черновика: привязка обязательна в режиме HA — прежнее условие Save,
+ * теперь названное словами под полем. Радиус свечения ошибкой **не является**
+ * (ревью #600 r1, M2): как и на `dev`, непустое нечисло или неположительное
+ * значение при сохранении молча становится «общим радиусом» (`null`), и К10
+ * закрытым списком других условий не называет.
  */
 export function markerProblems(d: MarkerDialogDraft): MarkerProblem[] {
   const problems: MarkerProblem[] = [];
   if (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual')) {
     problems.push({ field: 'marker-binding', message: 'marker.error_binding' });
-  }
-  if (!glowRadiusValid(d.glowRadius)) {
-    problems.push({ field: 'marker-glow-radius', message: 'marker.error_glow_radius' });
   }
   return problems;
 }

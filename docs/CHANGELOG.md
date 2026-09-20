@@ -19,8 +19,8 @@
   switch — turning it off opens a five-mode segment that starts at the space's
   current mode; comfort bounds are two °C fields with a Cold / Comfort / Hot
   legend. **Save** is enabled only when something changed, and closing a
-  dialog with unsaved changes asks first; broken values (an inverted or empty
-  bound, a north outside 0–359°, a missing binding, a non-positive glow radius)
+  dialog with unsaved changes asks first; broken values (an empty or
+  non-numeric bound, a north outside 0–359°, a missing binding)
   are named under the field and a "Review N fields" link in the footer jumps
   to the first one. The "Ask for confirmation" row is shown only for actions
   that do something; the Zigbee links card no longer repeats its heading; the
