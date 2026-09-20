@@ -141,7 +141,13 @@ test('#594 имена параметризованы, а не зашиты', () 
 
 test('#594 сегментированный переключатель остаётся радиогруппой', () => {
   const kit = readFileSync(new URL('../src/editors/form-kit.ts', import.meta.url), 'utf8');
-  const segment = kit.slice(kit.indexOf('export function segmented'));
+  // Только тело `segmented`: дальше в файле есть другие радиогруппы (radioRow,
+  // choiceCards), и срез «до конца файла» находил бы `type="radio"` у них,
+  // пропуская подмену внутри самого сегмента (мутант
+  // form-kit-segment-drops-radio-semantics выживал именно так).
+  const from = kit.indexOf('export function segmented');
+  const to = kit.indexOf('\nexport ', from + 1);
+  const segment = kit.slice(from, to > from ? to : undefined);
   // Доступность здесь не украшение: сегмент заменил радиосписок, и стрелки со
   // скринридером обязаны работать как раньше. Радиокнопка под капотом — это и
   // есть механизм, а не пожелание.
