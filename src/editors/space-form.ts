@@ -423,7 +423,7 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n: strin
           ${textLink(st('btn.reset_100'), () => set(port, { ...d, cardFontScale: 1 }), { disabled: pct === 100 })}
         </div>
         ${rangeLine({
-          min: 50, max: 300, step: 5, value: pct, unit: '%', ariaLabel: t('space.card_font'),
+          id: id('card-font'), min: 50, max: 300, step: 5, value: pct, unit: '%', ariaLabel: t('space.card_font'),
           slider: port.rangeInput(50, 300, 5, pct, (n) => set(port, { ...d, cardFontScale: n / 100 }), false, t('space.card_font')),
           onInput: (n) => set(port, { ...d, cardFontScale: n / 100 }),
         })}
