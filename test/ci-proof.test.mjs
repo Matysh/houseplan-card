@@ -135,6 +135,27 @@ test('#541 AC: full red followed by light green still blocks release; a later fu
   assert.equal(selectCiProofVerdict([newerFull, light, red]).status, 'green');
 });
 
+test('#601 AC3: release policy accepts a full proof without requested mutants; light stays stale; review/merge still demand them', () => {
+  // Кандидат беты (`Release:` на dev, event=push) с #601 несёт тяжёлые гейты без
+  // мутантов — proof без запрошенных mutant-jobs для релиза зелёный.
+  const beta = proofFixture({ id: 30, mutants: false });
+  beta.run.event = 'push';
+  beta.proof.run.event = 'push';
+  assert.equal(CI_PROOF_POLICIES.release.mutants, false);
+  assert.equal(evaluateCiProof({ ...beta, policy: CI_PROOF_POLICIES.release }).status, 'green');
+  assert.ok(!beta.proof.requiredChecks.includes('mutants'), 'мутанты не в списке обязательных — их никто не запрашивал');
+  // Лёгкий proof релиз по-прежнему не принимает — тяжёлые гейты обязаны быть запрошены.
+  const light = proofFixture({ id: 31, full: false, mutants: false, backend: false, integration: false });
+  assert.equal(evaluateCiProof({ ...light, policy: CI_PROOF_POLICIES.release }).status, 'stale');
+  // Ревью и слияние без запрошенных мутантов — stale (#541 не ослаблен).
+  for (const policy of [CI_PROOF_POLICIES.review, CI_PROOF_POLICIES.merge]) {
+    assert.equal(policy.mutants, true, policy.name);
+    const verdict = evaluateCiProof({ ...proofFixture({ id: 32, full: false, mutants: false, backend: false, integration: false }), policy });
+    assert.equal(verdict.status, 'stale', policy.name);
+    assert.match(verdict.note, /no requested mutant jobs/);
+  }
+});
+
 test('#541 AC: green dispatch without six executed mutant jobs proves neither review nor merge', () => {
   const fixture = proofFixture({ full: false, backend: false, integration: false });
   fixture.jobs = fixture.jobs.filter((job) => !job.name.startsWith('Мутанты по диффу'));

@@ -18,10 +18,15 @@ export const CI_PROOF_STATES = Object.freeze([
   'green', 'missing', 'pending', 'cancelled', 'stale', 'failed',
 ]);
 
+// Мутанты по диффу — доказательство для ревью и слияния (#510): без шести
+// исполненных mutant-jobs ни то ни другое не разрешается. Релиз их не
+// требует (#601): к кандидату беты каждая задача прогнана ими на ревью и на
+// слитом кандидате, а `Release:` мутантов больше не запрашивает — политика
+// с `mutants: true` объявляла бы каждый кандидат беты `stale`.
 export const CI_PROOF_POLICIES = Object.freeze({
   review: Object.freeze({ name: 'review', full: false, mutants: true }),
   merge: Object.freeze({ name: 'merge', full: false, mutants: true }),
-  release: Object.freeze({ name: 'release', full: true, mutants: true }),
+  release: Object.freeze({ name: 'release', full: true, mutants: false }),
 });
 
 const JOB_RULES = Object.freeze({

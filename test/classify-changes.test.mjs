@@ -181,10 +181,13 @@ test('CLI --heavy читает событие и сообщение из окр�
     encoding: 'utf8', env: { ...process.env, ...env },
   }).trim();
   assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'fix: x\n\nIssue: #1\nUser-Visible: no' }), 'heavy=false\nmutants_requested=false');
-  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'x\n\nRelease: v1.2.3' }), 'heavy=true\nmutants_requested=true');
-  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true\nmutants_requested=true');
+  // #601: кандидат беты и полный набор берут тяжёлые job, но не мутантов
+  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'x\n\nRelease: v1.2.3' }), 'heavy=true\nmutants_requested=false');
+  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true\nmutants_requested=false');
   // #510: мутанты по кнопке без полного набора — вызов конвейера ревью и слияния
   assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'false', MUTANTS_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=false\nmutants_requested=true');
+  // обе кнопки разом — полный набор И мутанты; так делает только человек, конвейер шлёт full=false
+  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', MUTANTS_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true\nmutants_requested=true');
 });
 
 test('#586: режим гейта скриншотов приходит одним значением и на кандидате строгий', () => {
@@ -215,13 +218,21 @@ test('#586: preflight спрашивает режим одним значени�
   assert.match(workflow, /check-docs\.mjs --external --screenshots=\$mode/);
 });
 
-test('#510 AC1: мутанты по диффу запрашиваются кандидатом, PR, ночью и по кнопке — не обычным пушем', () => {
+test('#510 AC1 / #601 AC1: мутанты по диффу запрашиваются только кнопкой mutants=true и PR — не пушем, не кандидатом беты, не full', () => {
   const t = (env) => mutantsRequested(env);
   assert.equal(t({ eventName: 'push', headMessage: 'fix: x\n\nIssue: #1\nUser-Visible: no' }), false, 'обычный push');
-  assert.equal(t({ eventName: 'push', headMessage: 'x\n\nRelease: v1.2.3' }), true, 'кандидат беты');
-  assert.equal(t({ eventName: 'pull_request' }), true);
-  assert.equal(t({ eventName: 'schedule' }), true);
-  assert.equal(t({ eventName: 'workflow_dispatch', fullInput: 'true' }), true);
-  assert.equal(t({ eventName: 'workflow_dispatch', fullInput: 'false', mutantsInput: 'true' }), true);
+  assert.equal(t({ eventName: 'pull_request' }), true, 'на PR Validate — единственный сигнал');
+  assert.equal(t({ eventName: 'workflow_dispatch', fullInput: 'false', mutantsInput: 'true' }), true, 'конвейер ревью и слияния');
   assert.equal(t({ eventName: 'workflow_dispatch', fullInput: 'false', mutantsInput: 'false' }), false, 'кнопка без запроса');
+  // #601: мутанты проверяют тесты, а не продукт (#513); к бете задача прогнана
+  // ими дважды, а ночь покрыта полным реестром — эти входы их не включают.
+  assert.equal(t({ eventName: 'push', headMessage: 'x\n\nRelease: v1.2.3' }), false, 'кандидат беты — тяжёлые гейты без мутантов');
+  assert.equal(t({ eventName: 'push', headMessage: 'x\n\nRelease: v1.76.0' }), false, 'кандидат стабильного — тоже');
+  assert.equal(t({ eventName: 'workflow_dispatch', fullInput: 'true' }), false, 'полный набор по кнопке — без мутантов');
+  assert.equal(t({ eventName: 'workflow_dispatch', fullInput: 'true', mutantsInput: 'false' }), false);
+  assert.equal(t({ eventName: 'schedule' }), false, 'расписание Validate — не место мутантов, реестр идёт в mutation-gate.yml');
+  assert.equal(t({ eventName: 'workflow_dispatch', fullInput: 'true', mutantsInput: 'true' }), true, 'явный запрос действует и рядом с full');
+  // #601 AC2: тяжёлые гейты на тех же входах не изменились
+  assert.equal(heavyGatesRequested({ eventName: 'push', headMessage: 'x\n\nRelease: v1.2.3' }), true);
+  assert.equal(heavyGatesRequested({ eventName: 'workflow_dispatch', fullInput: 'true' }), true);
 });

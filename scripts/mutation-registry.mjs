@@ -9618,12 +9618,37 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'mutants-run-on-every-push',
     guard: 'node --test --test-name-pattern="#510" test/classify-changes.test.mjs',
-    because: 'mutants by diff belong to the review candidate, the PR, the nightly run and the beta '
-      + 'candidate — an ordinary push must not spend 3×8 runner minutes on them (#510 AC1)',
+    because: 'mutants by diff belong to the review candidate, the merge candidate and the PR — an '
+      + 'ordinary push must not spend 3×8 runner minutes on them (#510 AC1, narrowed in #601)',
     patches: [{
       file: 'scripts/classify-changes.mjs',
-      find: "  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true' || String(mutantsInput) === 'true';\n  return hasReleaseTrailer(headMessage);\n}",
-      replace: "  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true' || String(mutantsInput) === 'true';\n  return true; // mutant: every push\n}",
+      find: "  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';\n  return false;\n}",
+      replace: "  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';\n  return true; // mutant: every push\n}",
+    }],
+  },
+  {
+    id: 'mutants-run-on-beta-candidate',
+    guard: 'node --test --test-name-pattern="#601" test/classify-changes.test.mjs',
+    because: 'the `Release:` trailer requests the heavy gates, not the diff mutants (#601 AC1): by the '
+      + 'beta candidate every issue has already been mutated on its review and merge candidates, and '
+      + 'the trailer also lands on class-D baseline commits inside task branches (f342ccce) — six '
+      + 'mutant jobs there prove nothing about tests that did not change',
+    patches: [{
+      file: 'scripts/classify-changes.mjs',
+      find: "export function mutantsRequested({ eventName, mutantsInput } = {}) {\n  if (eventName === 'pull_request') return true;\n  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';\n  return false;\n}",
+      replace: "export function mutantsRequested({ eventName, headMessage, mutantsInput } = {}) {\n  if (eventName === 'pull_request') return true;\n  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';\n  return hasReleaseTrailer(headMessage); // mutant: beta candidate\n}",
+    }],
+  },
+  {
+    id: 'mutants-run-on-full-dispatch',
+    guard: 'node --test --test-name-pattern="#601" test/classify-changes.test.mjs',
+    because: '`full=true` is the heavy set — smokes, golden, performance — and the nightly dispatch '
+      + '(#601 AC1). Tying the diff mutants to it made a manual full run for a golden artifact pay six '
+      + 'jobs the review conveyor then cancelled by concurrency, and duplicated the nightly registry',
+    patches: [{
+      file: 'scripts/classify-changes.mjs',
+      find: "export function mutantsRequested({ eventName, mutantsInput } = {}) {\n  if (eventName === 'pull_request') return true;\n  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';",
+      replace: "export function mutantsRequested({ eventName, fullInput, mutantsInput } = {}) {\n  if (eventName === 'pull_request') return true;\n  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true' || String(mutantsInput) === 'true'; // mutant: full requests",
     }],
   },
   {
@@ -9635,6 +9660,18 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/ci-proof.mjs',
       find: "  if (run.conclusion !== 'success')\n    return result('failed', `Validate run ${runIdOf(run)} concluded ${run.conclusion || 'without success'}`);",
       replace: "  if (false && run.conclusion !== 'success')\n    return result('failed', 'mutant'); // mutant: completed means green",
+    }],
+  },
+  {
+    id: 'release-proof-demands-mutant-jobs',
+    guard: 'node --test --test-name-pattern="#601" test/ci-proof.test.mjs',
+    because: 'with #601 the beta candidate no longer requests diff mutants, so a release policy that '
+      + 'still demands them marks every candidate proof stale and blocks publish-prerelease on a green '
+      + 'full Validate (#601 AC3); review and merge keep demanding them (#541)',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: "  release: Object.freeze({ name: 'release', full: true, mutants: false }),",
+      replace: "  release: Object.freeze({ name: 'release', full: true, mutants: true }), // mutant: release demands mutants",
     }],
   },
   {

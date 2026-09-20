@@ -425,10 +425,14 @@ until the verdict or the return arrives: a push on top of a running review cance
 it (10–20 runner minutes) and, after the material is fixed, also the merge (#312).
 Set `S7` once per round, not after every CI fix: the pipeline now runs Validate
 with the diff mutants on the material itself and returns a red one to `S6` without
-spending a review cycle. Mutants by diff no longer run on ordinary pushes — only
-on the review candidate, the merge candidate, the beta candidate, PRs and the
-nightly run — so a routine push costs ~3 minutes; 08–09.09 they cost 48 of 56
-Validate job-hours and were mostly cancelled by the next push.
+spending a review cycle. Mutants by diff run only where they are explicitly
+requested — the review candidate, the merge candidate (both dispatch Validate
+with `mutants=true`) and PRs (#510, #601). Ordinary pushes, the beta candidate
+(`Release:` trailer) and `full=true` do not request them: a routine push costs
+~3 minutes (08–09.09 mutants cost 48 of 56 Validate job-hours and were mostly
+cancelled by the next push), and by the beta every issue has already been
+mutated twice — on review and on the rebased merge candidate; the night runs
+the full registry (`mutation-gate.yml`), not a diff subset.
 
 The full smoke set, `golden` and `performance_smoke` still belong to the
 pre-beta run — which is then mandatory and complete. WSL runs of the full HA

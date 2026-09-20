@@ -96,17 +96,25 @@ export function heavyGatesRequested({ eventName, headMessage, fullInput } = {}) 
 }
 
 /**
- * Нужны ли мутанты по диффу (#510). За 08–09.09 они съели 86 % job-минут
- * Validate, потому что бежали на каждом промежуточном пуше и отменялись
- * следующим. Место мутантов — кандидат: ревью-конвейер и слияние кандидата
- * запускают Validate по кнопке с `mutants=true`, ночной прогон и PR берут
- * полный набор, кандидат беты несёт трейлер `Release:`. Обычный push — нет.
+ * Нужны ли мутанты по диффу (#510, сужено в #601). За 08–09.09 они съели 86 %
+ * job-минут Validate, потому что бежали на каждом промежуточном пуше и
+ * отменялись следующим. Место мутантов — кандидат ревью и кандидат слияния:
+ * оба запускают Validate по кнопке с `mutants=true`; на PR Validate —
+ * единственный сигнал, поэтому там тоже. Больше нигде: мутанты проверяют
+ * тесты, а не продукт (#513), и к моменту беты каждая задача прогнана ими
+ * дважды — на ревью и на слитом после ребейза кандидате. Трейлер `Release:`
+ * и `full=true` включают тяжёлые гейты, но не мутантов — иначе ручной полный
+ * прогон ради артефакта эталонов и приёмка эталонов с трейлером на ветке
+ * задачи платили шестью job впустую (#601). Ночь — полный реестр
+ * (mutation-gate.yml), не диффовое подмножество; `schedule` здесь тоже
+ * не запрашивает, чтобы будущее расписание Validate не вернуло их молча.
+ * CLI по-прежнему передаёт headMessage и fullInput вместе с остальным —
+ * функция их не читает, и тест закрепляет, что они НЕ влияют на ответ.
  */
-export function mutantsRequested({ eventName, headMessage, fullInput, mutantsInput } = {}) {
+export function mutantsRequested({ eventName, mutantsInput } = {}) {
   if (eventName === 'pull_request') return true;
-  if (eventName === 'schedule') return true;
-  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true' || String(mutantsInput) === 'true';
-  return hasReleaseTrailer(headMessage);
+  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';
+  return false;
 }
 
 /**
