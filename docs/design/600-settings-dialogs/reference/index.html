@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f6f7f8">
+  <title>Form previews · House Plan</title>
+  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="demo-toolbar" aria-label="Demo navigation">
+    <div class="demo-toolbar-inner">
+      <div class="demo-brand"><strong>House Plan</strong><span>Form previews</span></div>
+      <label class="demo-form-switch"><span>Form</span><select id="demo-form-select" class="select-input" aria-label="Preview form"><option value="">All forms</option></select></label>
+    </div>
+  </header>
+  <main id="demo-stage">
+  <section id="launch-screen" aria-labelledby="gallery-title">
+    <div class="demo-gallery-heading"><h1 id="gallery-title">Form previews</h1><p>Choose a form to explore.</p></div>
+    <div id="demo-form-list" class="demo-form-list"></div>
+    <div id="space-examples" class="demo-examples" hidden><span class="field-label">Sample space</span><div id="space-picker" class="space-picker"></div></div>
+  </section>
+  <dialog id="settings" class="settings-dialog" aria-labelledby="dialog-title">
+    <header class="dialog-header">
+      <button type="button" id="close-settings" class="icon-button" aria-label="Close space settings" title="Close" data-icon="close"></button>
+      <h1 id="dialog-title" tabindex="-1">Space settings</h1>
+      <span id="space-crumb" class="space-badge">Ground Floor</span>
+    </header>
+    <div class="dialog-scroll" id="dialog-scroll">
+    <div class="dialog-body">
+      <div id="settings-content" class="settings-content"></div>
+
+    </div>
+    </div>
+    <footer class="dialog-footer">
+      <div class="footer-tools">
+        <button class="button" id="copy-space"><span data-icon="copy"></span>Copy</button>
+        <button class="button danger-outline" id="delete-space"><span data-icon="trash"></span>Delete</button>
+      </div>
+      <div class="save-status" id="save-status" role="status" hidden></div>
+      <div class="footer-commit"><button class="button" id="cancel-settings">Cancel</button><button class="button primary" id="save-settings" disabled>Save</button></div>
+    </footer>
+  </dialog>
+  </main>
+  <dialog id="sub-dialog" class="sub-dialog" aria-labelledby="sub-title"></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="app.js" type="module"></script>
+  <script src="general-settings.js" type="module"></script>
+  <script src="room-settings.js" type="module"></script>
+  <script src="device-settings.js" type="module"></script>
+</body>
+</html>
