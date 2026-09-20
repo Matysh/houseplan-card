@@ -51,7 +51,7 @@ const out = await page.evaluate(async () => {
   o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
   q('#gs-room-tooltip').click(); await upd();
   o.toggleWritesShowRoomTooltip = c._settingsDialog.showRoomTooltip === !d0.showRoomTooltip && c._settingsDialog.radarShowLive === d0.radarShowLive;
-  o.saveEnabledWhenDirty = saveBtn().disabled === false && statusText().length > 0;
+  o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText() === '';
   q('#gs-room-tooltip').click(); await upd();
   o.cleanAgainWhenReverted = saveBtn().disabled === true;
 

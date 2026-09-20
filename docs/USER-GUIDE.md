@@ -459,9 +459,10 @@ elements:
 | Chips | Selected items with a remove button | Linked lights, manuals |
 | State message | A tinted note with an icon among the settings | Says that something is broken right now or will change on save — a missing `sun.sun` entity, a tap target that disappeared. These never hide behind `?` |
 
-**Save** is enabled only when something changed; the footer says "Unsaved
-changes". Closing a dialog with unsaved changes — by the close button,
-**Cancel** or a click outside — asks first whether to discard them. An invalid
+**Save** is enabled only when something changed; the dialog does not repeat
+that state as a separate footer message. Closing a dialog with unsaved changes
+— by the close button, **Cancel** or a click outside — asks first whether to
+discard them. An invalid
 value — an empty or non-numeric temperature bound, a north outside 0–359°, a
 missing binding — is named in red under the field,
 and the **Review N fields** link in the footer jumps to the first one.
@@ -783,8 +784,9 @@ binding to **Available again**. A disabled or missing binding keeps its saved
 category and receives a separate Home Assistant status instead of silently
 moving to another tab.
 
-The dialog is five cards: **Basics**, **Tap action**, **Light and glow**,
-**Appearance** and **Details**. **Hide** and **Delete** sit on the left of the
+The dialog has five cards: **Basics**, a compact tap-action card without a
+repeated heading, **Light and glow**, **Appearance** and **Details**. **Hide**
+and **Delete** sit on the left of the
 footer, **Cancel** and **Save** on the right; Save is enabled only when
 something changed. Binding is a **Virtual device / Pick from the HA list**
 segment; in the second case a picker button opens a panel inside the card with
@@ -797,8 +799,9 @@ unit — empty means the general radius, and the hint names it; a value that is
 not a positive number is saved as the general radius too, as before. The dialog shows
 binding provenance, exact next tap result, skipped targets and a live
 presentation preview in a tinted **Display preview** block. Icon size and
-rotation are two sliders with numbers. A saved missing source is shown as
-missing rather than silently replaced.
+rotation are two sliders with compact numbers. **Additional actions** are near
+the end of **Details**; the device-temperature switch follows them. A saved
+missing source is shown as missing rather than silently replaced.
 
 ![Device editor with binding provenance and the exact action result](images/06-device-editor.png)
 
@@ -810,12 +813,13 @@ aggregates until the same ID becomes active again.
 
 ### Presence radars
 
-For a recognized presence radar, marker settings contain **Presence on the
-plan**. Enable it, verify the exact Home Assistant sources and select the room
-whose contour must contain the observations. Unknown/custom real devices can
-use **Additional actions → This is a presence radar** and an explicit data
-profile. The editor never guesses coordinate units, axis directions or a
-bearing from entity names.
+For a recognized presence radar, **Additional actions** contains the enabled
+**This is a presence radar** switch and its settings directly below it. Verify
+the exact Home Assistant sources and select the room whose contour must contain
+the observations. Unknown/custom real devices can enable the same switch and
+choose an explicit data profile. Turning the switch off removes the radar setup
+on Save; turning it back on before Save restores the current draft. The editor
+never guesses coordinate units, axis directions or a bearing from entity names.
 
 **Configure on plan** records the physical sensor position and direction,
 independently of the decorative marker. Coordinate profiles can then use two

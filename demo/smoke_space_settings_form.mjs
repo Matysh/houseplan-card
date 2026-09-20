@@ -35,6 +35,8 @@ const out = await page.evaluate(async () => {
   o.badgeShowsSpaceTitle = dlg().badge === d0.title.trim() && !!dlg().shadowRoot.querySelector('.badge');
   o.previewKeptInsideCard = !!q('.hpf-card[data-card="room-cards"] .hpf-preview');
   o.subsectionsPresent = qa('.hpf-sub h4').length === 3; // Floor plan · Room fill · Visible layers
+  o.redundantBasicsHintsRemoved = !q('#space-title')?.closest('.hpf-field')?.querySelector('.hpf-hint')
+    && !q('#space-cell-cm')?.closest('.hpf-field')?.querySelector('.hpf-hint');
 
   // --- AC2: оболочка — 560, один скроллер --------------------------------
   const shell = dlg().shadowRoot;
@@ -51,6 +53,18 @@ const out = await page.evaluate(async () => {
   const toggles = qa('.hpf-toggle > input[type="checkbox"]');
   o.togglesArePresent = toggles.length >= 6; // borders, 3 layers, names, glow
   o.toggleTargetsAre44 = toggles.every((i) => { const b = i.getBoundingClientRect(); return b.width >= 44 && b.height >= 44; });
+  o.switchPartsAreGeometricallyCentered = toggles.every((input) => {
+    const track = getComputedStyle(input, '::before');
+    const knob = getComputedStyle(input, '::after');
+    const center = input.getBoundingClientRect().height / 2;
+    return Math.abs(parseFloat(track.top) + parseFloat(track.height) / 2 - center) < 0.6
+      && Math.abs(parseFloat(knob.top) - center) < 0.6;
+  });
+  o.compactLayerSwitchesAlignWithTheirRows = qa('.hpf-compact-list .hpf-toggle').every((row) => {
+    const inputBox = row.querySelector('input').getBoundingClientRect();
+    const titleBox = row.querySelector('.hpf-toggle-title').getBoundingClientRect();
+    return Math.abs((inputBox.top + inputBox.bottom - titleBox.top - titleBox.bottom) / 2) <= 1;
+  });
   o.segmentsAreRadiogroups = qa('.hpf-seg').length === 3 && qa('.hpf-seg').every((s) => s.getAttribute('role') === 'radiogroup' && s.getAttribute('aria-label'));
   o.tilesAreAGroupOfCheckboxes = q('.hpf-tiles')?.getAttribute('role') === 'group' && qa('.hpf-tiles input[type="checkbox"]').length === 4;
   o.segmentLabelsAre38 = qa('.hpf-seg label').every((l) => l.getBoundingClientRect().height >= 38);
@@ -59,9 +73,8 @@ const out = await page.evaluate(async () => {
   o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
   q('#space-show-borders').click(); await upd();
   o.toggleWritesShowBorders = c._spaceDialog.showBorders === !d0.showBorders && c._spaceDialog.showNames === d0.showNames;
-  // Тексты футера живут в ленивом словаре `i18n/settings`, не в `_t`: сверяем
-  // наличие статуса, а не его перевод.
-  o.saveEnabledWhenDirty = saveBtn().disabled === false && statusText().length > 0;
+  // #602: доступная Save уже выражает dirty-state; дублирующей строки нет.
+  o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText() === '';
   q('#space-show-borders').click(); await upd();
   o.saveDisabledAgainWhenReverted = saveBtn().disabled === true && statusText() === '';
 
@@ -95,6 +108,8 @@ const out = await page.evaluate(async () => {
   void tile;
 
   const opacityInput = q('.hpf-card[data-card="appearance"] .hpf-colorrow .hpf-opacity input');
+  opacityInput.value = '100'; opacityInput.dispatchEvent(new Event('input', { bubbles: true })); await upd();
+  o.opacity100FitsTheNumberField = opacityInput.value === '100' && opacityInput.clientWidth >= 60;
   opacityInput.value = '25'; opacityInput.dispatchEvent(new Event('input', { bubbles: true })); await upd();
   o.opacityNumberWritesRoomOpacity = Math.abs(c._spaceDialog.roomOpacity - 0.25) < 1e-9 && c._spaceDialog.roomColor === d0.roomColor;
   o.hexIsPrinted = q('.hpf-card[data-card="appearance"] .hpf-colorrow .hpf-hex')?.textContent === d0.roomColor;
@@ -114,6 +129,12 @@ const out = await page.evaluate(async () => {
 
   // Reset to 100% disabled at 100, enabled after change, restores 1
   const resetLink = [...qa('.hpf-headline .hpf-link')][0];
+  const cardFontRange = q('#space-card-font').closest('.hpf-range');
+  const sliderBox = cardFontRange.querySelector('ha-slider, input[type="range"]').getBoundingClientRect();
+  const endsBox = cardFontRange.nextElementSibling.querySelector('.hpf-range-ends-track').getBoundingClientRect();
+  o.fontScaleEndsMatchTheSlider = Math.abs(sliderBox.left - endsBox.left) <= 1
+    && Math.abs(sliderBox.right - endsBox.right) <= 1
+    && endsBox.bottom <= cardFontRange.nextElementSibling.getBoundingClientRect().bottom + 1;
   o.resetDisabledAt100 = resetLink.disabled === true;
   c._spaceDialog = { ...c._spaceDialog, cardFontScale: 1.5 }; await upd();
   [...qa('.hpf-headline .hpf-link')][0].click(); await upd();
@@ -125,6 +146,11 @@ const out = await page.evaluate(async () => {
   await upd(); await new Promise((r) => setTimeout(r, 60));
   const confirm = () => sr().querySelector('hp-confirm hp-dialog');
   o.discardAsksFirst = !!confirm() && !!dlg();
+  const confirmFooter = confirm()?.querySelector('.danger-confirm-footer');
+  const confirmButtons = [...(confirmFooter?.querySelectorAll('button') || [])].map((button) => button.getBoundingClientRect());
+  o.discardActionsShareOneRow = confirmButtons.length === 2
+    && Math.abs(confirmButtons[0].top - confirmButtons[1].top) <= 1
+    && confirmFooter.scrollWidth <= confirmFooter.clientWidth + 1;
   confirm()?.querySelector('[data-hp="dialog-cancel"]')?.click(); await upd(); await new Promise((r) => setTimeout(r, 60));
   o.keepEditingKeepsDialog = !!dlg() && !confirm() && c._spaceDialog !== null;
   dlg().dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));

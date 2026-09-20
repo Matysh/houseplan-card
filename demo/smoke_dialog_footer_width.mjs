@@ -171,6 +171,10 @@ const narrow = await page.evaluate(async () => {
           && rect.top >= footerRect.top - 1 && rect.bottom <= footerRect.bottom + 1;
       }),
       wrapped: !!dangerRect && !!commitRect && commitRect.top >= dangerRect.bottom - 1,
+      oneRow: buttons.length > 0 && buttons.every((button) =>
+        Math.abs(button.getBoundingClientRect().top - buttons[0].getBoundingClientRect().top) <= 1),
+      iconOnlyDestructive: kind !== 'space' || [...footer.querySelectorAll('.hpf-mobile-icon')].every((button) =>
+        button.getAttribute('aria-label') && getComputedStyle(button.querySelector('.hpf-action-label')).display === 'none'),
       buttons: buttons.length,
     };
     card._openingDialog = null;
@@ -213,10 +217,10 @@ for (const kind of ['opening', 'physical', 'opening_de', 'physical_de']) {
 }
 checks.space_narrow_not_regressed = narrow.space.buttons === 4
   && narrow.space.insideViewport && narrow.space.noHorizontalOverflow
-  && narrow.space.buttonsContained;
+  && narrow.space.buttonsContained && narrow.space.oneRow && narrow.space.iconOnlyDestructive;
 checks.space_de_narrow_not_regressed = narrow.space_de.buttons === 4
   && narrow.space_de.insideViewport && narrow.space_de.noHorizontalOverflow
-  && narrow.space_de.buttonsContained;
+  && narrow.space_de.buttonsContained && narrow.space_de.oneRow && narrow.space_de.iconOnlyDestructive;
 
 checkAll(checks);
 await finish(browser, {

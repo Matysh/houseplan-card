@@ -1,6 +1,4 @@
 {
-  "space.title_hint": "Affiché dans les onglets des espaces.",
-  "space.scale_hint": "Échelle du plan.",
   "space.scale_changed": "Changer l’échelle recalcule les dimensions de tout l’espace à l’enregistrement. Les points du plan restent en place.",
   "space.plan.help": "Une image en arrière-plan sur laquelle dessiner. Les pièces et les appareils restent modifiables par-dessus. Passer au dessin à la main conserve l’image téléversée pour la réutiliser.",
   "space.plan.help.aria": "Aide : fond de plan",
@@ -44,7 +42,6 @@
   "space.error_temp_range": "Le maximum doit être supérieur au minimum.",
   "space.error_north": "Saisissez un nombre entier entre 0° et 359°.",
   "btn.reset_100": "Réinitialiser à 100 %",
-  "dialog.unsaved": "Modifications non enregistrées",
   "dialog.review_fields": "Vérifiez {n} champ(s)",
   "dialog.discard_title": "Abandonner vos modifications ?",
   "dialog.discard_message": "Vos modifications n’ont pas été enregistrées.",
@@ -66,7 +63,6 @@
   "room.sizes_hint": "En plus de la taille des cartes de l’espace ({v} %).",
   "room.error_temp_range": "Saisissez des nombres pour les bornes de confort.",
   "room.error_name": "Saisissez un nom ou choisissez une zone.",
-  "marker.name_hint": "Affiché sur le plan.",
   "marker.binding.help": "Un marqueur lié affiche l’état en direct d’un appareil ou d’une entité Home Assistant et peut agir dessus. Un appareil virtuel est un simple marqueur sans liaison.",
   "marker.binding.help.aria": "Aide : liaison à un appareil Home Assistant",
   "marker.binding_virtual_hint": "Un appareil virtuel est un simple marqueur sans liaison.",

@@ -9,6 +9,7 @@ import {
 } from '../radar-editor';
 import type { RadarSetupController } from '../radar-setup';
 import type { DevItem, SpaceModel } from '../types';
+import { toggleRow } from './form-kit';
 
 interface RadarDialogSlice {
   devId?: string;
@@ -61,7 +62,9 @@ export function renderRadarSection(
   const recognition = recognizeRadar(device, options.registryHass);
   const savedUnsupported = recognition.reason === 'saved_unsupported';
   const remove = () => options.updateDialog({
-    radar: null, radarTouched: true, radarRemove: true,
+    // Keep the draft in memory until Save/close.  Turning the switch back on
+    // in the same session must restore every entered source/calibration value.
+    radar: d.radar, radarTouched: true, radarRemove: true,
   });
   const begin = () => {
     const space = options.spaceModelById(device.space) || options.currentSpace();
@@ -73,49 +76,46 @@ export function renderRadarSection(
       radar, radarEligible: true, radarTouched: true, radarRemove: false,
     });
   };
-  const manualEntry = !savedUnsupported && d.bindingMode !== 'virtual'
-    && (!d.radar || d.radarRemove) && !recognition.eligible;
-  if (placement === 'additional') {
-    if (!manualEntry) return html``;
-    // #600 §7: подраздел «Additional actions» карточки Details — заголовок
-    // набора и строка действий, без раскрывашки.
+  const restoreOrBegin = () => {
+    if (d.radar) {
+      options.updateDialog({
+        radar: d.radar, radarEligible: true, radarTouched: true, radarRemove: false,
+      });
+      return;
+    }
+    begin();
+  };
+  const active = !!d.radar && !d.radarRemove;
+  if (!active && options.setup.isActive()) options.setup.reset();
+  const radarToggle = toggleRow({
+    id: 'marker-radar-presence',
+    icon: 'mdi:radar',
+    title: options.t('radar.declare'),
+    caption: recognition.reason === 'ld2450' ? options.t('radar.detected_ld2450')
+      : recognition.reason === 'radar_metadata' ? options.t('radar.detected') : undefined,
+    checked: active || savedUnsupported,
+    disabled: savedUnsupported || d.bindingMode === 'virtual',
+    onChange: (checked) => { if (checked) restoreOrBegin(); else remove(); },
+  });
+  void placement; // Kept in the adapter signature for compatibility with the lazy runtime.
+  if (savedUnsupported || d.bindingMode === 'virtual' && !!device.marker?.radar) {
     return html`<div class="radaradditional">
-      <div class="hpf-sub"><h4>${options.t('radar.additional_actions')}</h4></div>
-      <div class="hpf-actions">
-        <button class="btn ghost" type="button" @click=${begin}>
-          <ha-icon icon="mdi:radar"></ha-icon>${options.t('radar.declare')}
-        </button>
-      </div>
+      ${radarToggle}
+      <fieldset class="markerlightgroup radargroup">
+        <legend>${options.t('radar.title')}</legend>
+        <p class="muted">${options.t('radar.saved_unsupported')}</p>
+        <div class="row">
+          <button class="btn danger" type="button" @click=${remove}>
+            <ha-icon icon="mdi:radar-off"></ha-icon>${options.t('radar.remove')}
+          </button>
+        </div>
+      </fieldset>
     </div>`;
   }
-  if ((!d.radar || d.radarRemove) && options.setup.isActive()) options.setup.reset();
-  if (savedUnsupported || d.bindingMode === 'virtual' && !!device.marker?.radar) {
-    return html`<fieldset class="markerlightgroup radargroup">
-      <legend>${options.t('radar.title')}</legend>
-      <p class="muted">${options.t('radar.saved_unsupported')}</p>
-      <div class="row">
-        <button class="btn danger" type="button" @click=${remove}>
-          <ha-icon icon="mdi:radar-off"></ha-icon>${options.t('radar.remove')}
-        </button>
-      </div>
-    </fieldset>`;
-  }
   if (d.bindingMode === 'virtual') return html``;
-  if (!d.radar || d.radarRemove) {
-    if (recognition.eligible) {
-      return html`<fieldset class="markerlightgroup radargroup">
-        <legend>${options.t('radar.title')}</legend>
-        <p class="muted">${options.t(recognition.reason === 'ld2450'
-          ? 'radar.detected_ld2450' : 'radar.detected')}</p>
-        <button class="btn" type="button" @click=${begin}>
-          <ha-icon icon="mdi:radar"></ha-icon>${options.t('radar.configure')}
-        </button>
-      </fieldset>`;
-    }
-    return html``;
-  }
+  if (!active) return html`<div class="radaradditional">${radarToggle}</div>`;
 
-  const radar = d.radar;
+  const radar = d.radar!;
   const candidates = radarSourceCandidates(device, options.planHass);
   const entitySelect = (
     value: string,
@@ -263,7 +263,9 @@ export function renderRadarSection(
       .filter((_value, candidate) => candidate !== index),
   });
 
-  return html`<fieldset class="markerlightgroup radargroup">
+  return html`<div class="radaradditional">
+    ${radarToggle}
+    <fieldset class="markerlightgroup radargroup">
     <legend><span>${options.t('radar.title')}</span>${options.help('radar.help')}</legend>
     <label class="srcrow">
       ${options.boolInput(radar.enabled, (enabled) => change({ enabled }, false))}
@@ -474,5 +476,6 @@ export function renderRadarSection(
         <ha-icon icon="mdi:radar-off"></ha-icon>${options.t('radar.remove')}
       </button>
     </div>
-  </fieldset>`;
+    </fieldset>
+  </div>`;
 }

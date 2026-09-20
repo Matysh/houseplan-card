@@ -118,7 +118,7 @@ test('#456 Copy is an edit-settings action and is absent from onboarding', () =>
   const form = readFileSync(new URL('../src/editors/space-form.ts', import.meta.url), 'utf8');
   const onboarding = readFileSync(new URL('../src/houseplan-onboarding-runtime.ts', import.meta.url), 'utf8');
   assert.match(entry, /copySpace: \(\) => openSpaceCopyDialog\(this\.host\)/);
-  assert.match(form, /d\.mode === 'edit' && port\.copySpace[\s\S]*?<div class="dialog-action-group">[\s\S]*?btn\.copy/);
+  assert.match(form, /d\.mode === 'edit' && port\.copySpace[\s\S]*?<div class="dialog-action-group dialog-action-copy">[\s\S]*?btn\.copy/);
   assert.doesNotMatch(form, /dialog-action-danger[\s\S]{0,300}btn\.copy/);
   assert.doesNotMatch(onboarding, /btn\.copy|openSpaceCopyDialog|space\.copy_|copySpace/);
 });

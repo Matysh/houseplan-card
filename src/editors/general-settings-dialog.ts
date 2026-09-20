@@ -257,7 +257,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
       </div>
       ${footerStatus(problems.length
         ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
-        : { text: dirty ? st('dialog.unsaved') : '' })}
+        : {})}
       <div class="dialog-action-group dialog-action-commit">
         <button class="btn ghost" data-hp="dialog-cancel" @click=${requestClose}>${t('btn.cancel')}</button>
         <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveSettingsDialog()} ?disabled=${!canSave}

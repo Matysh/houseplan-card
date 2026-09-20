@@ -44,7 +44,8 @@ const out = await page.evaluate(async () => {
   o.footerGroups = !!q('.markeractions .btn.danger') && q('.markeractions').getBoundingClientRect().left < saveBtn().getBoundingClientRect().left;
 
   // --- Basics: имя с подсказкой, сегмент привязки, кнопка выбора, «Show entities» в панели (Q8)
-  o.nameFieldWithHint = !!q('#marker-name.hpf-input') && !!q('#marker-name')?.closest('.hpf-field')?.querySelector('.hpf-hint');
+  o.nameFieldWithoutRedundantHint = !!q('#marker-name.hpf-input')
+    && !q('#marker-name')?.closest('.hpf-field')?.querySelector('.hpf-hint');
   o.bindingIsASegment = qa('input[name="bmode"]').length === 2 && q('input[name="bmode"]:checked')?.value === 'ha'
     && !!q('input[name="bmode"]')?.closest('.hpf-seg[role="radiogroup"]');
   o.bindingButtonShowsCurrent = !!q('#marker-binding.hpf-pick b') && q('#marker-binding').getAttribute('aria-expanded') === 'false'
@@ -61,6 +62,7 @@ const out = await page.evaluate(async () => {
   o.roomIsASelectWithHint = !!q('#marker-room.hpf-select') && !!q('#marker-room')?.closest('.hpf-field')?.querySelector('.hpf-hint');
 
   // --- Tap action: подтверждение только у действий (Q8), чипы источников -----
+  o.tapActionCardHasNoLargeHeading = !q('.hpf-card[data-card="tap"] > .hpf-head');
   await select(q('#marker-tap-action'), 'none');
   o.noConfirmForDoNothing = !q('#marker-tap-confirm') && !q('#marker-toggle-hint');
   await select(q('#marker-tap-action'), 'toggle');
@@ -128,6 +130,15 @@ const out = await page.evaluate(async () => {
   o.previewIsTheComponentItself = !!q('.hpf-card[data-card="appearance"] hp-device-preview')
     && !q('.hpf-card[data-card="appearance"] .hpf-tint hp-device-preview');
   o.sizeRowsInAGrid = !!q('.hpf-card[data-card="appearance"] .hpf-grid #marker-size') && !!q('.hpf-card[data-card="appearance"] .hpf-grid #marker-angle');
+  o.sizeAndAngleFieldsDoNotCoverSliders = ['#marker-size', '#marker-angle'].every((selector) => {
+    const number = q(selector);
+    const range = number.closest('.hpf-range');
+    const slider = range.querySelector('ha-slider, input[type="range"]');
+    const sliderBox = slider.getBoundingClientRect();
+    const unitBox = number.closest('.hpf-unit').getBoundingClientRect();
+    return sliderBox.right < unitBox.left && number.scrollWidth <= number.clientWidth
+      && unitBox.right <= range.getBoundingClientRect().right + 3;
+  });
   input(q('#marker-size'), '2'); await upd();
   input(q('#marker-angle'), '35'); await upd();
   o.sizeAndAngleNumbersWrite = c._markerDialog.size === 2 && c._markerDialog.angle === 35;
@@ -138,6 +149,23 @@ const out = await page.evaluate(async () => {
   o.modelAndLinkInOneRow = Math.abs(modelBox.top - linkBox.top) < 2 && linkBox.left > modelBox.right;
   o.descriptionIsAKitTextarea = q('#marker-description')?.tagName === 'TEXTAREA' && q('#marker-description').classList.contains('hpf-input');
   o.attachInActions = !!q('.hpf-card[data-card="details"] .hpf-actions .filebtn');
+  const radarToggle = q('#marker-radar-presence');
+  o.radarEntryIsAToggleInAdditionalActions = !!radarToggle
+    && !!radarToggle.closest('.hpf-card[data-card="details"] .radaradditional')
+    && !q('.hpf-card[data-card="basics"] .radargroup');
+  if (radarToggle && !radarToggle.checked) { radarToggle.click(); await upd(); }
+  const firstRadarDraft = c._markerDialog.radar;
+  const firstInstallation = firstRadarDraft?.installationId;
+  o.radarExpandsImmediatelyBelowToggle = !!firstRadarDraft && !c._markerDialog.radarRemove
+    && !!q('#marker-radar-presence')?.closest('.radaradditional')?.querySelector(':scope > .radargroup')
+    && !q('.hpf-card[data-card="basics"] .radargroup');
+  q('#marker-radar-presence')?.click(); await upd();
+  o.radarOffKeepsSessionDraft = c._markerDialog.radar === firstRadarDraft
+    && c._markerDialog.radarRemove === true && !q('.radaradditional > .radargroup');
+  q('#marker-radar-presence')?.click(); await upd();
+  o.radarOnRestoresSessionDraft = c._markerDialog.radar === firstRadarDraft
+    && c._markerDialog.radar?.installationId === firstInstallation
+    && c._markerDialog.radarRemove === false && !!q('.radaradditional > .radargroup');
   input(q('#marker-model'), 'Model 600'); await upd();
   o.modelWritesOwnKey = c._markerDialog.model === 'Model 600' && c._markerDialog.link === d0.link;
 
@@ -150,7 +178,7 @@ const out = await page.evaluate(async () => {
   c._openMarkerDialog(lamp); await upd();
   o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
   input(q('#marker-name'), `${c._markerDialog.name} x`); await upd();
-  o.saveEnabledWhenDirty = saveBtn().disabled === false && statusText().length > 0;
+  o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText() === '';
   input(q('#marker-name'), c._markerDialog.name.slice(0, -2)); await upd();
   o.cleanAgainWhenReverted = saveBtn().disabled === true && statusText() === '';
   q('.markeractions .btn:not(.danger)').click(); await upd();

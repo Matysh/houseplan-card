@@ -123,5 +123,5 @@ test('activity color and ripple size keep independent readable rows', () => {
   assert.ok(ripple.indexOf('marker.activity_color') < ripple.indexOf('ripple-sizerow'));
   assert.ok(ripple.indexOf('ripple-sizerow') < ripple.indexOf('marker.ripple_size'));
   assert.match(kit, /-colorfield \{[^}]*display:\s*flex/);
-  assert.match(kit, /-range \{[^}]*display:\s*flex/);
+  assert.match(kit, /-range \{[^}]*display:\s*grid/);
 });

@@ -392,6 +392,8 @@ export const dialogsStyles = css`
       display: grid;
       gap: var(--sp-2);
     }
+    .radaradditional { display: grid; gap: var(--sp-3); }
+    .radaradditional > .markerlightgroup { margin-top: 0; }
     .radargroup > p { margin: 0; }
     .radargroup > label:not(.srcrow) {
       margin-top: var(--sp-2);
@@ -1318,6 +1320,22 @@ export const dialogsStyles = css`
       margin-left: auto;
       justify-content: flex-end;
     }
+    /* #602: all four Space actions are one visual row.  Validation occupies a
+       separate row without changing the order of the actions themselves. */
+    hp-dialog .hpf-footer-space {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: var(--sp-3);
+      row-gap: var(--sp-2);
+    }
+    hp-dialog .hpf-footer-space .dialog-action-copy { grid-column: 1; grid-row: 2; }
+    hp-dialog .hpf-footer-space .dialog-action-danger { grid-column: 2; grid-row: 2; margin-right: 0; }
+    hp-dialog .hpf-footer-space .hpf-status { grid-column: 1 / -1; grid-row: 1; margin-left: 0; }
+    hp-dialog .hpf-footer-space .hpf-status:empty { display: none; }
+    hp-dialog .hpf-footer-space .dialog-action-commit { grid-column: 4; grid-row: 2; margin-left: 0; flex-wrap: nowrap; }
+    hp-dialog .danger-confirm-footer .dialog-action-commit { flex-wrap: nowrap; }
+    hp-dialog .danger-confirm-footer .btn { min-width: 0; white-space: normal; }
     /* Device info can have Edit + Open in HA + Close. It uses a wide dialog;
        wrapping remains as a phone fallback, but without a flex spacer (which
        used to strand Edit alone on the first line). */
@@ -1334,6 +1352,36 @@ export const dialogsStyles = css`
       margin-left: auto;
     }
     @media (max-width: 480px) {
+      hp-dialog .hpf-footer-space {
+        grid-template-columns: 44px 44px minmax(0, 1fr) auto;
+        column-gap: 6px;
+        padding: var(--sp-4);
+      }
+      hp-dialog .hpf-footer-space .dialog-action-group { flex-wrap: nowrap; gap: 6px; }
+      hp-dialog .hpf-footer-space .hpf-mobile-icon {
+        box-sizing: border-box;
+        width: 44px;
+        min-width: 44px;
+        padding-inline: 0;
+        justify-content: center;
+      }
+      hp-dialog .hpf-footer-space .hpf-mobile-icon .hpf-action-label { display: none; }
+      hp-dialog .hpf-footer-space .dialog-action-commit .btn {
+        min-width: 0;
+        padding-inline: 8px;
+        white-space: normal;
+      }
+      hp-dialog .danger-confirm-footer .dialog-action-commit {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        margin-left: 0;
+      }
+      hp-dialog .danger-confirm-footer .dialog-action-commit .btn {
+        width: 100%;
+        padding-inline: 8px;
+        line-height: 1.25;
+      }
       hp-dialog .row.infofooter {
         padding: var(--sp-4) var(--sp-5);
       }

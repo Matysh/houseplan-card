@@ -1,6 +1,4 @@
 {
-  "space.title_hint": "Wird in den Bereichs-Tabs angezeigt.",
-  "space.scale_hint": "Maßstab des Plans.",
   "space.scale_changed": "Eine Änderung des Maßstabs berechnet beim Speichern die Maße des gesamten Bereichs neu. Punkte auf dem Plan bleiben, wo sie sind.",
   "space.plan.help": "Ein Bild als Hintergrund, über das gezeichnet wird. Räume und Geräte bleiben darüber bearbeitbar. Beim Wechsel zum Zeichnen von Hand bleibt das hochgeladene Bild erhalten.",
   "space.plan.help.aria": "Hilfe: Grundriss",
@@ -44,7 +42,6 @@
   "space.error_temp_range": "Das Maximum muss über dem Minimum liegen.",
   "space.error_north": "Geben Sie eine ganze Zahl zwischen 0° und 359° ein.",
   "btn.reset_100": "Auf 100 % zurücksetzen",
-  "dialog.unsaved": "Ungespeicherte Änderungen",
   "dialog.review_fields": "{n} Feld(er) prüfen",
   "dialog.discard_title": "Änderungen verwerfen?",
   "dialog.discard_message": "Ihre Änderungen wurden nicht gespeichert.",
@@ -66,7 +63,6 @@
   "room.sizes_hint": "Zusätzlich zur bereichsweiten Kartengröße ({v} %).",
   "room.error_temp_range": "Geben Sie Zahlen für die Komfortgrenzen ein.",
   "room.error_name": "Geben Sie einen Namen ein oder wählen Sie einen Bereich.",
-  "marker.name_hint": "Wird auf dem Plan angezeigt.",
   "marker.binding.help": "Ein verknüpfter Marker zeigt den Live-Zustand eines Home-Assistant-Geräts oder einer Entität und kann darauf wirken. Ein virtuelles Gerät ist ein einfacher Marker ohne Verknüpfung.",
   "marker.binding.help.aria": "Hilfe: Verknüpfung mit einem Home-Assistant-Gerät",
   "marker.binding_virtual_hint": "Ein virtuelles Gerät ist ein einfacher Marker ohne Verknüpfung.",

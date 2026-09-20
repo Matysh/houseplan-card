@@ -18,8 +18,8 @@ const out = await page.evaluate(async () => {
   card._openMarkerDialog(ordinary);
   await update();
   const noAutomaticSection = !root().querySelector('.radargroup');
-  const manualAction = root().querySelector('.radaradditional button');
-  manualAction?.click();
+  const manualToggle = root().querySelector('#marker-radar-presence');
+  manualToggle?.click();
   await update();
   const declared = !!card._markerDialog?.radar && !!root().querySelector('.radargroup');
 
@@ -57,6 +57,31 @@ const out = await page.evaluate(async () => {
     && card._serverCfg.markers.find((marker) => marker.id === ordinary.id)?.radar === persistedBeforeSave;
 
   card._closeMarkerDialog();
+  // #602: a radar saved in an earlier session reopens as an enabled toggle in
+  // Details, regardless of whether it was once manual or auto-recognized.
+  const savedRadar = {
+    version: 1, enabled: true, show_live: true, profile: 'presence_v1',
+    sources: { occupancy_entity: binary || '' },
+    mount: { installation_id: 'saved-radar-smoke', x: 50, y: 50, heading_deg: 0, range_cm: 500, fov_deg: 120 },
+    room_id: room?.id || '',
+    calibration: { method: 'not_required', mirror: false, cell_cm: card._spaceModelById(ordinary.space)?.cellCm || 5 },
+  };
+  const originalMarker = ordinary.marker;
+  ordinary.marker = { ...(ordinary.marker || {}), id: ordinary.id, binding: `device:${ordinary.bindingRef}`, radar: savedRadar };
+  card._openMarkerDialog(ordinary);
+  await update();
+  const savedToggle = root().querySelector('#marker-radar-presence');
+  const savedReopensInline = savedToggle?.checked === true
+    && !!savedToggle.closest('.hpf-card[data-card="details"] .radaradditional')?.querySelector('.radargroup')
+    && !root().querySelector('.hpf-card[data-card="basics"] .radargroup');
+  savedToggle?.click(); await update();
+  const savedOffKeepsOriginal = card._markerDialog?.radarRemove === true
+    && card._markerDialog?.radar?.original?.mount?.installation_id === 'saved-radar-smoke';
+  root().querySelector('#marker-radar-presence')?.click(); await update();
+  const savedOnRestoresOriginal = card._markerDialog?.radarRemove === false
+    && card._markerDialog?.radar?.original?.mount?.installation_id === 'saved-radar-smoke';
+  card._closeMarkerDialog();
+  ordinary.marker = originalMarker;
   const virtual = card._devices.find((device) => device.bindingKind === 'virtual');
   if (virtual) card._openMarkerDialog(virtual);
   await update();
@@ -65,8 +90,9 @@ const out = await page.evaluate(async () => {
   card._closeMarkerDialog();
   card._setMode('view');
   return {
-    noAutomaticSection, manualActionVisible: !!manualAction, declared, setupOpened,
-    installationDrafted, cancelReleased, virtualHasNoEntry,
+    noAutomaticSection, manualToggleVisible: !!manualToggle, declared, setupOpened,
+    installationDrafted, cancelReleased, savedReopensInline, savedOffKeepsOriginal,
+    savedOnRestoresOriginal, virtualHasNoEntry,
   };
 });
 

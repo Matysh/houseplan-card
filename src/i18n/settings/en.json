@@ -1,6 +1,4 @@
 {
-  "space.title_hint": "Shown in the space tabs.",
-  "space.scale_hint": "Scale of the plan.",
   "space.scale_changed": "Changing the scale recalculates the dimensions of the whole space when you save. Points on the plan stay where they are.",
   "space.plan.help": "Use an image as a background to draw over. Rooms and devices stay editable on top of it. Switching to drawing by hand keeps the uploaded image available to use again.",
   "space.plan.help.aria": "Help: floor plan",
@@ -44,7 +42,6 @@
   "space.error_temp_range": "The maximum must be higher than the minimum.",
   "space.error_north": "Enter a whole number between 0° and 359°.",
   "btn.reset_100": "Reset to 100%",
-  "dialog.unsaved": "Unsaved changes",
   "dialog.review_fields": "Review {n} field(s)",
   "dialog.discard_title": "Discard your changes?",
   "dialog.discard_message": "Your changes haven’t been saved.",
@@ -66,7 +63,6 @@
   "room.sizes_hint": "On top of the space-wide card size ({v}%).",
   "room.error_temp_range": "Enter numbers for the comfort bounds.",
   "room.error_name": "Enter a name or choose an area.",
-  "marker.name_hint": "Shown on the plan.",
   "marker.binding.help": "A bound marker shows the live state of a Home Assistant device or entity and can act on it. A virtual device is a plain marker with no binding.",
   "marker.binding.help.aria": "Help: binding to a Home Assistant device",
   "marker.binding_virtual_hint": "A virtual device is a plain marker with no binding.",

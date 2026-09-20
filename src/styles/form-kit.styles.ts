@@ -279,15 +279,17 @@ function extrasCss(options: FormKitCssOptions): string {
     position: absolute;
     width: 16px;
     height: 16px;
-    top: 14px;
+    top: 50%;
     left: 7px;
     border-radius: 50%;
     background: var(--text-primary-color, #fff);
     box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+    transform: translateY(-50%);
     transition: left .15s;
   }
   .${p}-toggle > input:checked::before { background: var(${tokens.accent}); border-color: var(${tokens.accent}); }
   .${p}-toggle > input:checked::after { left: 21px; }
+  .${p}-toggle.${p}-compact > input { grid-row: 1; }
   .${p}-toggle > input:disabled { cursor: default; }
   .${p}-toggle > input:disabled::before { opacity: .4; }
   .${p}-seg {
@@ -385,7 +387,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-hex { font-size: .875rem; color: var(${tokens.muted}); font-variant-numeric: tabular-nums; }
   .${p}-colorfield > .${p}-opacity { display: flex; align-items: center; gap: 8px; font-size: .875rem; color: var(${tokens.muted}); }
   .${p}-colorfield > .${p}-opacity > .${p}-unit { height: 38px; }
-  .${p}-colorfield > .${p}-opacity > .${p}-unit > input { width: 4em; min-width: 4em; }
+  .${p}-colorfield > .${p}-opacity > .${p}-unit > input { width: 4.8em; min-width: 4.8em; }
   .${p}-colorrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; min-height: 56px; }
   .${p}-colorrow > .${p}-colorfield { justify-self: end; }
   .${p}-colorrow > .${p}-labelrow { min-height: 0; }
@@ -415,11 +417,12 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-callout.${p}-warning { background: color-mix(in srgb, var(--warning-color, #ff9800) 14%, var(${tokens.surface})); }
   .${p}-callout.${p}-warning > ha-icon { color: var(--warning-color, #ff9800); }
   .${p}-callout .${p}-link { padding: 0; font-weight: 600; }
-  .${p}-range { display: flex; align-items: center; gap: 15px; }
-  .${p}-range > input[type="range"], .${p}-range > ha-slider { flex: 1 1 auto; min-width: 0; accent-color: var(${tokens.accent}); }
-  .${p}-range > .${p}-unit { flex: 0 0 auto; }
-  .${p}-range > .${p}-unit > input { width: 5.8em; min-width: 5.8em; }
-  .${p}-range-ends { display: flex; justify-content: space-between; padding-right: 122px; margin-top: -8px; font-size: .875rem; color: var(${tokens.muted}); }
+  .${p}-range { --hpf-range-value-width: 84px; display: grid; grid-template-columns: minmax(0, 1fr) var(--hpf-range-value-width); align-items: center; gap: 15px; }
+  .${p}-range > input[type="range"], .${p}-range > ha-slider { box-sizing: border-box; width: 100%; min-width: 0; margin-inline: 0; accent-color: var(${tokens.accent}); }
+  .${p}-range > .${p}-unit { box-sizing: border-box; width: var(--hpf-range-value-width); min-width: 0; }
+  .${p}-range > .${p}-unit > input { width: 100%; min-width: 0; padding-right: 3px; }
+  .${p}-range-ends { display: grid; grid-template-columns: minmax(0, 1fr) 84px; gap: 15px; margin-top: -4px; font-size: .875rem; line-height: 1.2; color: var(${tokens.muted}); }
+  .${p}-range-ends-track { display: flex; grid-column: 1; align-items: center; justify-content: space-between; min-width: 0; }
   .${p}-headline { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .${p}-north { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 7px 16px; align-items: center; }
   .${p}-north > .${p}-labelrow { grid-area: 1 / 1; min-height: 32px; }
@@ -493,7 +496,6 @@ function extrasCss(options: FormKitCssOptions): string {
     .${p}-radios { margin-left: 0; }
     .${p}-seg { flex-wrap: wrap; }
     .${p}-seg label { flex-basis: 42%; }
-    .${p}-range-ends { padding-right: 125px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .${p}-toggle > input::after { transition: none; }

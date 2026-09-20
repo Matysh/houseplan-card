@@ -143,24 +143,26 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
         ? callout({ kind: 'warning', role: 'alert', text: t('space.delete_blocked', { n: String(d.deleteBlockers) }) })
         : nothing}
     </div>`,
-    footer: html`<div class="row dialog-action-footer hpf-footer" slot="footer">
+    footer: html`<div class="row dialog-action-footer hpf-footer hpf-footer-space" slot="footer">
       ${d.mode === 'edit' && port.copySpace
-        ? html`<div class="dialog-action-group">
-            <button class="btn ghost" @click=${() => port.copySpace!()} ?disabled=${d.busy}>
-              <ha-icon icon="mdi:content-copy"></ha-icon>${t('btn.copy')}
+        ? html`<div class="dialog-action-group dialog-action-copy">
+            <button class="btn ghost hpf-mobile-icon" aria-label=${t('btn.copy')} title=${t('btn.copy')}
+              @click=${() => port.copySpace!()} ?disabled=${d.busy}>
+              <ha-icon icon="mdi:content-copy"></ha-icon><span class="hpf-action-label">${t('btn.copy')}</span>
             </button>
           </div>`
         : nothing}
       ${d.mode === 'edit' && port.deleteSpace
         ? html`<div class="dialog-action-group dialog-action-danger">
-            <button class="btn danger" @click=${() => port.deleteSpace!()} ?disabled=${d.busy}>
-              <ha-icon icon="mdi:delete-outline"></ha-icon>${t('btn.delete')}
+            <button class="btn danger hpf-mobile-icon" aria-label=${t('btn.delete')} title=${t('btn.delete')}
+              @click=${() => port.deleteSpace!()} ?disabled=${d.busy}>
+              <ha-icon icon="mdi:delete-outline"></ha-icon><span class="hpf-action-label">${t('btn.delete')}</span>
             </button>
           </div>`
         : nothing}
       ${footerStatus(problems.length
         ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
-        : { text: dirty ? st('dialog.unsaved') : '' })}
+        : {})}
       <div class="dialog-action-group dialog-action-commit">
         ${host._importTotal > 0 && d.mode === 'create'
           ? html`<button class="btn ghost" @click=${() => port.skipImport()}>${t('btn.skip')}</button>`
@@ -194,7 +196,7 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
     body: html`
       ${fieldGrid([
         field({
-          label: t('space.title_label'), htmlFor: id('title'), hint: st('space.title_hint'),
+          label: t('space.title_label'), htmlFor: id('title'),
           error: titleProblem ? st(titleProblem.message) : undefined,
           control: html`<input id=${id('title')} class="hpf-input" type="text" maxlength="80"
             placeholder=${t('space.title_ph')} .value=${d.title}
@@ -203,7 +205,6 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
         }),
         field({
           label: t('space.scale_label'), htmlFor: id('cell-cm'), help: port.help('space.cell_cm.help'),
-          hint: st('space.scale_hint'),
           control: unitInput({
             id: id('cell-cm'), wide: true,
             value: d.cellCmInput ?? gridCellFieldValue(d.cellCm, host._imperial),
@@ -524,4 +525,3 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id: (n: str
       })}`,
   });
 }
-

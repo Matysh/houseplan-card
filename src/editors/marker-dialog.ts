@@ -251,7 +251,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       body: html`
         ${bindingBanner}
         ${field({
-          label: t('marker.name_label'), htmlFor: 'marker-name', hint: st('marker.name_hint'),
+          label: t('marker.name_label'), htmlFor: 'marker-name',
           control: html`<input id="marker-name" class="hpf-input" type="text" placeholder=${t('marker.name_ph')}
             .value=${d.name}
             @input=${(e: Event) => (this.host._markerDialog = { ...d, name: (e.target as HTMLInputElement).value })} />`,
@@ -316,7 +316,6 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             )}
           </select>`,
         })}
-        ${this._renderRadarSection(d, previewDevice)}
         ${this._renderVacSection(d)}`,
     });
 
@@ -386,7 +385,6 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const controlCands = d.controlsFilter.trim() ? this._controlCandidates(d) : [];
     const tap = formCard({
       id: 'tap',
-      title: t('marker.card_tap'),
       body: html`
         ${field({
           label: t('marker.tap_label'), htmlFor: 'marker-tap-action',
@@ -498,14 +496,6 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       id: 'light',
       title: t('marker.card_light'),
       body: html`
-        ${this.host._bindingHasClimate(d.binding)
-          ? toggleRow({
-              id: 'marker-use-climate-temp', icon: 'mdi:thermometer',
-              title: t('marker.use_climate_temp'), caption: t('marker.use_climate_temp_tip'),
-              checked: d.useClimateTemp,
-              onChange: (v) => (this.host._markerDialog = { ...d, useClimateTemp: v }),
-            })
-          : nothing}
         ${field({
           label: t('marker.light_role_label'), help: this._help('marker.light_role.help'),
           control: segmented<'auto' | 'always' | 'never'>({
@@ -839,7 +829,16 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 @change=${(e: Event) => this._pickMarkerFiles(e)} />
             </div>`,
         })}
-        ${this._renderRadarSection(d, previewDevice, 'additional')}`,
+        ${!isVirtual ? subsection({ title: t('radar.additional_actions') }) : nothing}
+        ${this._renderRadarSection(d, previewDevice, 'additional')}
+        ${this.host._bindingHasClimate(d.binding)
+          ? toggleRow({
+              id: 'marker-use-climate-temp', icon: 'mdi:thermometer',
+              title: t('marker.use_climate_temp'), caption: t('marker.use_climate_temp_tip'),
+              checked: d.useClimateTemp,
+              onChange: (v) => (this.host._markerDialog = { ...d, useClimateTemp: v }),
+            })
+          : nothing}`,
     });
 
     const hidden = d.hideFromPlan || bindingStatus?.kind === 'ha_disabled';
@@ -871,7 +870,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           </div>
           ${footerStatus(problems.length
             ? { action: textLink(st('dialog.review_fields', { n: String(problems.length) }), reviewFirst) }
-            : { text: edit && dirty ? st('dialog.unsaved') : '' })}
+            : {})}
           <div class="dialog-action-group dialog-action-commit">
             <button class="btn ghost" data-hp="dialog-cancel" ?disabled=${d.busy} @click=${requestClose}>${t('btn.cancel')}</button>
             <button class="btn on" data-hp="dialog-confirm" @click=${() => { forgetMarkerBaseline(this.host); void this._saveMarker(); }}

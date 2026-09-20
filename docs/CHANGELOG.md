@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Polished the redesigned settings dialogs: switches, layer rows, opacity and
+  slider values now align correctly; redundant labels and dirty-state text are
+  gone; action buttons remain usable on narrow screens; and presence-radar
+  settings now expand directly below their switch without losing an unsaved
+  draft when toggled back on ([#602](https://github.com/Matysh/houseplan-card/issues/602)).
+
 ## v1.77.0-beta.3 — 2026-09-20
 
 - The four settings dialogs — Space, General settings, Room settings and Device

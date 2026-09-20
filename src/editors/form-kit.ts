@@ -439,11 +439,11 @@ export interface RangeLineOptions {
 }
 
 /** Слайдер + числовое поле с единицей в одну строку (§3.1 «range-line»). */
-export function rangeLine({ min, max, value, unit, ariaLabel, disabled, slider, onInput, id }: RangeLineOptions): TemplateResult {
+export function rangeLine({ min, max, step, value, unit, ariaLabel, disabled, slider, onInput, id }: RangeLineOptions): TemplateResult {
   return html`<div class="hpf-range">
     ${slider}
     ${unitInput({
-      id, value: String(value), unit, min, max, step: 1, ariaLabel, disabled,
+      id, value: String(value), unit, min, max, step, ariaLabel, disabled,
       onInput: (raw) => {
         const n = Number(raw);
         if (Number.isFinite(n)) onInput(Math.min(max, Math.max(min, n)));
@@ -454,7 +454,9 @@ export function rangeLine({ min, max, value, unit, ariaLabel, disabled, slider, 
 
 /** Подписи концов шкалы под слайдером. */
 export function rangeEnds(from: string, to: string): TemplateResult {
-  return html`<div class="hpf-range-ends" aria-hidden="true"><span>${from}</span><span>${to}</span></div>`;
+  return html`<div class="hpf-range-ends" aria-hidden="true">
+    <span class="hpf-range-ends-track"><span>${from}</span><span>${to}</span></span>
+  </div>`;
 }
 
 /**
@@ -476,7 +478,7 @@ export function textLink(label: string, onClick: () => void, { disabled = false 
 }
 
 export interface FooterStatusOptions {
-  /** Текст статуса: «Unsaved changes» или пусто. */
+  /** Необязательный текст статуса; не дублирует состояние кнопки Save. */
   text?: string;
   /** Ссылка «Review N fields» — ведёт к первому ошибочному полю. */
   action?: TemplateResult | typeof nothing;

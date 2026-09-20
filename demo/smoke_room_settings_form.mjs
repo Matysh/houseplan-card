@@ -136,7 +136,7 @@ const out = await page.evaluate(async () => {
   c._openRoomEdit(c._curSpaceCfg.rooms[0]); await upd();
   o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
   input(q('#room-name'), `${c._nameSel} x`); await upd();
-  o.saveEnabledWhenDirty = saveBtn().disabled === false && statusText().length > 0;
+  o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText() === '';
   input(q('#room-name'), c._nameSel.slice(0, -2)); await upd();
   o.cleanAgainWhenReverted = saveBtn().disabled === true && statusText() === '';
   input(q('#room-name'), ''); await upd();
