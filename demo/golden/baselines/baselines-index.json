@@ -1,8 +1,8 @@
 {
   "schema": 2,
   "matrixVersion": 64,
-  "acceptedAt": "2026-09-20T10:47:52.424Z",
-  "sourceFingerprint": "c6e9a7f9c0e3096b40b9ae51df9d052aeddc8359d008fd86a2e4cbef1aba717f",
+  "acceptedAt": "2026-09-20T14:20:33.687Z",
+  "sourceFingerprint": "0cdc9f2c04830cb52c4e16ec0ce41af1a29dc2a68ae01cf02d1d545bc692ba82",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "win32",
@@ -10,19 +10,19 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "c6e9a7f9c0e3096b40b9ae51df9d052aeddc8359d008fd86a2e4cbef1aba717f",
+    "buildFingerprint": "0cdc9f2c04830cb52c4e16ec0ce41af1a29dc2a68ae01cf02d1d545bc692ba82",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 35504549764,
+      "run": 35515236776,
       "attempt": 1,
-      "sha": "504c160963b84cc322c035c7f0e9bc955b09225e"
+      "sha": "ec97fd95243aae8bccf3741f9281c36e3a509201"
     }
   },
   "foreignCapture": {
-    "reason": "acceptance of Linux CI artifact 35504549764 on Windows owner machine (#455)"
+    "reason": "acceptance of Linux CI artifact, #455"
   },
   "witnesses": {
-    "count": 101,
+    "count": 107,
     "floor": 10
   },
   "scenarios": {
@@ -174,7 +174,7 @@
     "room-temperature-dialog-desktop-en": "e987abcbc69dcf86f5c5f70e6b1c8a9033f591a300d4fc6020d8d4b401c442f2",
     "room-temperature-dialog-mobile-ru": "3bf4110596c63f116c09aba813766d65dca2aceaf6fee219e15dfb34b4e8ec68",
     "german-view-mobile-light": "8c079d1574a6fbec478eacc872a46800f4348a9ce6d4dc1b1a11f88df8688e19",
-    "toggle-entity-dialog-desktop-en": "2c00211a34527e430b84c74efe09e4cb49da240a631484d45089fdbc2a26aa6b",
+    "toggle-entity-dialog-desktop-en": "d2bc74705c9687d11bd55d22140635c2fb55de6496c7e85dfbb67ac049483f55",
     "toggle-entity-dialog-mobile-ru": "c5bf5077a33c1acfa5f744e0ab1c15ce6c2147bc3622a7e8754d972aeedb555b",
     "device-help-popover-light-ru": "3afdd57288ef1803681ca3e8ffb77d56107d43ea9698579a92b482b610233df5",
     "decor-color-popover-mobile-ru": "de167d5a363758b26108f08f7e3f0ba7a44c8daf7461d1e54d719698d20ab208",
@@ -189,7 +189,7 @@
     "support-relay-error-light-en": "e63e4e3aec111aa8044f6c99a8d3331801505a0024399293d8d5d53776346b76",
     "support-tablet-preview-dark-ru": "969398341e722f54d56a14084d18c4943f644a98b7772222ee7b601d46ddd866",
     "device-ripple-color-popover-mobile-ru": "e32cd5b2a626c39df4d63ee0ffa56e7f5a2e0579a5e6dae888843572f8a9ad8f",
-    "space-room-color-popover-desktop-ru": "1f8b3c734df780b98da16d17697b6a4f82b56cc4d7230c950999d8b91a064df6",
+    "space-room-color-popover-desktop-ru": "6c5f549bbaf61a53ed5ddd08a8621c5edd36a2ac696127d96917d5f0cd882769",
     "backup-full-preview-desktop-en": "935adb062c28385a89d34716616406e2434d8cdf3daf9cb7abead13df3c6cb81",
     "backup-plan-only-export-desktop-en": "b017b78e75968123011777c27550bf82da6e50267086339b963d8571e8dca679",
     "backup-space-preview-mobile-ru": "5ee8c2651d9814be9d7c76b7692fcf65f4ce341fb4cde1fc3e854df4568994dc",
