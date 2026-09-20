@@ -2957,11 +2957,11 @@ const MUTANT_DEFINITIONS = [
     because: 'a same-binding click silently wiping the configured value source is exactly '
       + 'the #385(a) bug — only the dialog smoke drives the real handler',
     patches: [{
-      // #592: диалог устройства переехал в свой модуль целиком и побайтово —
-      // изменился только путь, текст якоря прежний.
+      // #592: диалог устройства переехал в свой модуль; #600: выбор кандидата —
+      // обработчик onPick кнопки выбора набора, охрана та же.
       file: 'src/editors/marker-dialog.ts',
-      find: "                                if (c.value === d.binding) {\n                                  this.host._markerDialog = { ...d, bindingOpen: false };\n                                  return;\n                                }",
-      replace: "                                if (false) { return; }",
+      find: "            if (value === d.binding) {\n              this.host._markerDialog = { ...d, bindingOpen: false };\n              return;\n            }",
+      replace: "            if (value === d.binding && d.bindingOpen === false) {\n              this.host._markerDialog = { ...d, bindingOpen: false };\n              return;\n            }",
     }],
   },
   {
@@ -10263,9 +10263,10 @@ const MUTANT_DEFINITIONS = [
       + 'узнает о сломанном действии, только если сам откроет подсказку — а подставить туда '
       + 'идентификатор пропавшей цели вообще нечем',
     patches: [{
+      // #600: сообщение — callout набора в карточке Tap action; спрятать его в title так же легко.
       file: 'src/editors/marker-dialog.ts',
-      find: "                    ? html`<div class=\"rhint\">${this.host._t('marker.run_target_gone', { id: d.tapTarget })}</div>`",
-      replace: "                    ? html`<span title=${this.host._t('marker.run_target_gone', { id: d.tapTarget })}></span>`",
+      find: "                ? callout({ kind: 'warning', role: 'status', text: t('marker.run_target_gone', { id: d.tapTarget }) })",
+      replace: "                ? html`<span title=${t('marker.run_target_gone', { id: d.tapTarget })}></span>`",
     }, {
       // Оба сообщения о состоянии — один контракт (К5), поэтому и мутант один:
       // спрятать под «?» можно каждое, и «поймано» обязано означать оба.
@@ -10439,6 +10440,63 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'marker-save-enabled-without-changes',
+    guard: 'node demo/smoke_device_settings_form.mjs',
+    because: '#600 К10/AC6 (Q1) для «Устройства на плане»: в edit Save активен только при '
+      + 'изменениях; без dirty футер снова врёт о том, есть ли что сохранять',
+    patches: [{
+      file: 'src/editors/marker-dialog.ts',
+      find: "      && (edit ? dirty : true);",
+      replace: "      && (edit ? true : true);",
+    }],
+  },
+  {
+    id: 'marker-discard-without-asking',
+    guard: 'node demo/smoke_device_settings_form.mjs',
+    because: '#600 К10 (Q1): закрытие диалога устройства с изменениями обязано спросить. '
+      + 'Перевёрнутое условие закрывает «грязный» диалог молча и спрашивает у чистого',
+    patches: [{
+      file: 'src/editors/marker-dialog.ts',
+      find: "      if (!edit || !dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }",
+      replace: "      if (!edit || dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }",
+    }],
+  },
+  {
+    id: 'marker-confirm-row-shown-for-do-nothing',
+    guard: 'node demo/smoke_device_settings_form.mjs',
+    because: '#600 Q8 (решение владельца): «Ask for confirmation» есть только у действий '
+      + '(toggle/run); при «Do nothing» строке подтверждать нечего, и её показ — ложь формы',
+    patches: [{
+      file: 'src/editors/marker-dialog.ts',
+      find: "        ${effectiveTapAction === 'run' || effectiveTapAction === 'toggle'\n          ? toggleRow({",
+      replace: "        ${effectiveTapAction !== 'info'\n          ? toggleRow({",
+    }],
+  },
+  {
+    id: 'marker-never-keeps-glow-block-live',
+    guard: 'node demo/smoke_device_settings_form.mjs',
+    because: '#600 §7.1: при «Never» блок свечения неактивен целиком и объясняет почему. '
+      + 'Перепутать признак отключения с признаком пассивного источника — блок остаётся '
+      + 'живым на вид, а его контролы уже отключены',
+    patches: [{
+      file: 'src/editors/marker-dialog.ts',
+      find: "        <div class=\"hpf-block markerglowblock ${glowSourceDisabled ? 'hpf-disabled' : ''}\" aria-disabled=${glowSourceDisabled ? 'true' : 'false'}>",
+      replace: "        <div class=\"hpf-block markerglowblock ${passiveSource ? 'hpf-disabled' : ''}\" aria-disabled=${passiveSource ? 'true' : 'false'}>",
+    }],
+  },
+  {
+    id: 'marker-badge-position-forgets-touch',
+    guard: 'node demo/smoke_device_settings_form.mjs',
+    because: '#600 К1: сегмент стороны бейджа заменил select и обязан, как и он, ставить '
+      + 'valueBadgeTouched — иначе выбор человека проигрывает проекции превью при следующем '
+      + 'рендере и в конфиг не попадает',
+    patches: [{
+      file: 'src/editors/marker-dialog.ts',
+      find: "                  valueBadgePosition: position,\n                  valueBadgeTouched: true,",
+      replace: "                  valueBadgePosition: position,\n                  valueBadgeTouched: false,",
+    }],
+  },
+  {
     id: 'form-kit-segment-drops-radio-semantics',
     guard: 'node --test test/form-kit.test.mjs',
     because: '#594 К7: сегментированный переключатель заменил радиосписок, и вся его '
@@ -10446,8 +10504,9 @@ const MUTANT_DEFINITIONS = [
       + 'чекбоксы выглядит идентично и молча ломает стрелки и объявление скринридером',
     patches: [{
       file: 'src/editors/form-kit.ts',
-      find: '      <input type="radio" name=${name} .checked=${option.value === value}',
-      replace: '      <input type="checkbox" name=${name} .checked=${option.value === value}',
+      // #600: у радиокнопки сегмента появился value — якорь дописан.
+      find: '      <input type="radio" name=${name} value=${option.value} .checked=${option.value === value}',
+      replace: '      <input type="checkbox" name=${name} value=${option.value} .checked=${option.value === value}',
     }],
   },
 ];

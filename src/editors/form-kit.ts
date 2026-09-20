@@ -178,6 +178,10 @@ export interface SegmentedOption<T extends string> {
   sample?: 'dashed' | 'solid';
   /** mdi-иконка слева от подписи. */
   icon?: string;
+  /** Отключённый вариант при живой группе (режим свечения без источника). */
+  disabled?: boolean;
+  /** `aria-describedby` варианта — ссылка на объяснение, почему он отключён. */
+  describedBy?: string;
 }
 
 export interface SegmentedOptions<T extends string> {
@@ -205,7 +209,8 @@ export function segmented<T extends string>({
   return html`<div class="hpf-seg" role="radiogroup" aria-label=${ariaLabel ?? nothing}
       aria-disabled=${disabled ? 'true' : nothing}>
     ${options.map((option) => html`<label>
-      <input type="radio" name=${name} .checked=${option.value === value} ?disabled=${disabled}
+      <input type="radio" name=${name} value=${option.value} .checked=${option.value === value}
+        ?disabled=${disabled || !!option.disabled} aria-describedby=${option.describedBy ?? nothing}
         @change=${() => onChange(option.value)} />
       ${option.sample ? html`<span class="hpf-line ${option.sample === 'dashed' ? 'hpf-line-dashed' : ''}" aria-hidden="true"></span>` : nothing}
       ${option.icon ? html`<ha-icon icon=${option.icon} aria-hidden="true"></ha-icon>` : nothing}
@@ -370,7 +375,8 @@ export interface CalloutOptions {
   icon?: string;
   /** Ссылка-действие в конце текста. */
   action?: TemplateResult | typeof nothing;
-  role?: 'status' | 'alert';
+  role?: 'status' | 'alert' | 'note';
+  id?: string;
 }
 
 /**
@@ -378,8 +384,8 @@ export interface CalloutOptions {
  * уезжает. Это не пояснение к настройке, а сигнал, что прямо сейчас что-то
  * сломано или изменится при сохранении.
  */
-export function callout({ text, kind = 'info', icon, action, role }: CalloutOptions): TemplateResult {
-  return html`<div class="hpf-callout ${kind === 'warning' ? 'hpf-warning' : ''}" role=${role ?? nothing}>
+export function callout({ text, kind = 'info', icon, action, role, id }: CalloutOptions): TemplateResult {
+  return html`<div id=${id ?? nothing} class="hpf-callout ${kind === 'warning' ? 'hpf-warning' : ''}" role=${role ?? nothing}>
     <ha-icon icon=${icon ?? (kind === 'warning' ? 'mdi:alert-outline' : 'mdi:information-outline')}></ha-icon>
     <p>${text}${action ? html` ${action}` : nothing}</p>
   </div>`;
@@ -387,6 +393,8 @@ export function callout({ text, kind = 'info', icon, action, role }: CalloutOpti
 
 export interface UnitInputOptions {
   id?: string;
+  /** `aria-describedby` — объяснение состояния поля (например, почему оно отключено). */
+  describedBy?: string;
   value: string;
   unit: string;
   min?: number;
@@ -403,10 +411,10 @@ export interface UnitInputOptions {
 
 /** Числовое поле с единицей внутри рамки (§3.1 «unit-inside»). */
 export function unitInput({
-  id, value, unit, min, max, step, placeholder, ariaLabel, invalid, disabled, wide, onInput,
+  id, describedBy, value, unit, min, max, step, placeholder, ariaLabel, invalid, disabled, wide, onInput,
 }: UnitInputOptions): TemplateResult {
   return html`<span class="hpf-unit ${wide ? 'hpf-unit-wide' : ''}">
-    <input id=${id ?? nothing} type="number" inputmode="decimal" .value=${value}
+    <input id=${id ?? nothing} type="number" inputmode="decimal" .value=${value} aria-describedby=${describedBy ?? nothing}
       min=${min ?? nothing} max=${max ?? nothing} step=${step ?? nothing}
       placeholder=${placeholder ?? nothing} aria-label=${ariaLabel ?? nothing}
       aria-invalid=${invalid ? 'true' : nothing} ?disabled=${disabled}
@@ -548,6 +556,10 @@ export interface SourcePickerOptions {
   onPick: (value: string) => void;
   /** `id` кнопки — для `<label for>` и смоков. */
   id?: string;
+  /** Дополнение к строке поиска в панели (например, чекбокс «Show entities»). */
+  toolbar?: TemplateResult | typeof nothing;
+  /** Отключённая кнопка: панель не открывается. */
+  disabled?: boolean;
 }
 
 /**
@@ -557,20 +569,23 @@ export interface SourcePickerOptions {
  */
 export function sourcePicker({
   open, current, placeholder, ariaLabel, filter, filterPlaceholder, candidates, selected, emptyText,
-  onToggle, onFilter, onPick, id,
+  onToggle, onFilter, onPick, id, toolbar, disabled = false,
 }: SourcePickerOptions): TemplateResult {
   return html`<div class="hpf-picker ${open ? 'open' : ''}">
     <button id=${id ?? nothing} type="button" class="hpf-select hpf-pick" aria-haspopup="listbox"
-      aria-expanded=${open ? 'true' : 'false'} aria-label=${ariaLabel} @click=${onToggle}>
+      aria-expanded=${open ? 'true' : 'false'} aria-label=${ariaLabel} ?disabled=${disabled} @click=${onToggle}>
       ${current
         ? html`<b>${current.label}</b><span class="hpf-pick-ref">${current.sub}</span>`
         : html`<span class="hpf-pick-ph">${placeholder}</span>`}
     </button>
     ${open
       ? html`<div class="hpf-panel">
-          <input class="hpf-input" type="text" autocomplete="off" placeholder=${filterPlaceholder}
-            aria-label=${filterPlaceholder} .value=${filter}
-            @input=${(e: Event) => onFilter((e.target as HTMLInputElement).value)} />
+          <div class="hpf-toolbar">
+            <input class="hpf-input" type="text" autocomplete="off" placeholder=${filterPlaceholder}
+              aria-label=${filterPlaceholder} .value=${filter}
+              @input=${(e: Event) => onFilter((e.target as HTMLInputElement).value)} />
+            ${toolbar ?? nothing}
+          </div>
           <div class="hpf-list" role="listbox" aria-label=${ariaLabel}>
             ${candidates.length
               ? candidates.map((c) => html`<button type="button" role="option" class="hpf-cand ${c.value === selected ? 'sel' : ''}"

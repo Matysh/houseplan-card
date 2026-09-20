@@ -317,6 +317,26 @@
   .hpf-cand.sel { background: var(--hpf-tint); color: var(--hpf-accent); }
   .hpf-cand:focus-visible { outline: 2px solid var(--hpf-accent); outline-offset: -2px; }
   .hpf-templegend { display: flex; justify-content: space-between; margin-top: -6px; font-size: .8125rem; color: var(--hpf-muted); }
+  .hpf-block { display: grid; gap: 15px; }
+  .hpf-block.hpf-disabled > :not(.hpf-sub):not(.hpf-callout) { opacity: .45; }
+  .hpf-block.hpf-disabled .hpf-seg label, .hpf-block.hpf-disabled .hpf-colorfield, .hpf-block.hpf-disabled .hpf-range { pointer-events: none; }
+  .hpf-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+  .hpf-toolbar > .hpf-input { flex: 1 1 200px; width: auto; }
+  .hpf-check { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: .875rem; color: var(--hpf-muted); cursor: pointer; white-space: nowrap; }
+  .hpf-check > input { width: 18px; height: 18px; margin: 0; accent-color: var(--hpf-accent); cursor: pointer; }
+  .hpf-iconfield { display: flex; align-items: center; gap: 8px; }
+  .hpf-iconfield > .hpf-input, .hpf-iconfield > ha-icon-picker { flex: 1 1 auto; min-width: 0; }
+  .hpf-iconpreview { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; border: 1px solid var(--hpf-line); border-radius: 7px; background: var(--hpf-canvas); color: var(--hpf-muted); }
+  .hpf-mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8125rem; }
+  .hpf-hint > .hpf-link { padding: 0; }
+  .hpf-actionrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .hpf-note { display: flex; align-items: flex-start; gap: 6px; }
+  .hpf-note > ha-icon { --mdc-icon-size: 16px; flex: 0 0 auto; margin-top: 2px; }
+  .hpf-note-warning { color: var(--warning-color, #b87940); }
+  .hpf-hint-line { display: block; }
+  .hpf-chip-warning { border-color: var(--warning-color, #b87940); color: var(--warning-color, #b87940); }
+  .hpf-iconclear { flex: 0 0 auto; min-width: 44px; min-height: 44px; padding: 0; }
+  hp-dialog .hpf-form textarea.hpf-input { min-height: 96px; resize: vertical; line-height: 1.5; }
   .hpf-preview { display: flex; justify-content: center; }
   @media (max-width: 480px) {
     .hpf-body { padding: 0 14px 14px; }

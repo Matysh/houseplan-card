@@ -91,8 +91,11 @@ const result = await page.evaluate(async () => {
   const ripple = pickerByLabel(dialog, card._t('marker.activity_color'));
   out.rippleUsesColorOnlyPicker = !!ripple && ripple.showOpacity === false
     && ripple.color === '#3ea6ff' && nativeColors() === 0;
-  const rippleLabelBox = ripple?.renderRoot.querySelector('.label')?.getBoundingClientRect();
-  const rippleSizeBox = dialog.querySelector('.ripple-sizerow .opl')?.getBoundingClientRect();
+  // #600: подпись цвета — подпись поля набора над плашкой (label пикера скрыт,
+  // hide-label), подпись размера — подпись своей строки range-line.
+  const rippleLabelBox = dialog.querySelector('.ripple-colorrow')?.closest('.hpf-field')
+    ?.querySelector('.hpf-label')?.getBoundingClientRect();
+  const rippleSizeBox = dialog.querySelector('.ripple-sizerow .hpf-label')?.getBoundingClientRect();
   out.rippleLabelsDoNotOverlapOnMobile = !!rippleLabelBox && !!rippleSizeBox
     && (rippleLabelBox.bottom <= rippleSizeBox.top || rippleLabelBox.right <= rippleSizeBox.left);
   const rippleSize = card._markerDialog.rippleSize;

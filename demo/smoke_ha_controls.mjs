@@ -1,10 +1,14 @@
-// Native HA controls in dialogs (ha-switch / ha-slider) + the fallback.
+// Native HA controls in dialogs (ha-slider) + the fallback, and the form-kit
+// toggle that stays a native checkbox on purpose.
 // The demo env has no HA frontend, so every OTHER smoke already runs the
-// fallback branch (plain input[type=checkbox|range]). Here we check both:
-// 1) fallback: without ha-* the dialogs render the classic inputs;
+// fallback branch (plain input[type=range]). Here we check both:
+// 1) fallback: without ha-* the dialogs render the classic range input;
 // 2) ha branch: after registering lightweight ha-switch/ha-slider stubs
 //    (checked/value + `change`/`input`, the real contract of the HA ones)
-//    a re-opened dialog renders them, values flow BOTH ways.
+//    a re-opened dialog renders ha-slider for ranges, values flow BOTH ways.
+// #600: the device dialog's toggles are form-kit rows — a native checkbox
+// drawn by CSS (К7: one look in HA, on the demo stand and in golden), so an
+// ha-switch is NOT expected there any more; the checkbox still flows both ways.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
@@ -14,7 +18,7 @@ const res = await page.evaluate(async () => {
 
   // --- 1) fallback branch: no ha-* registered -> classic inputs ----------
   c._openMarkerDialog(c._devices[0]); await c.updateComplete;
-  out.fallbackCheckbox = !!sr().querySelector('hp-dialog .srcrow input[type=checkbox]');
+  out.fallbackCheckbox = !!sr().querySelector('hp-dialog .hpf-toggle > input[type=checkbox]');
   out.fallbackRange = !!sr().querySelector('hp-dialog input[type=range]');
   out.fallbackNoHaSwitch = !sr().querySelector('hp-dialog ha-switch');
   c._markerDialog = null; await c.updateComplete;
@@ -35,27 +39,26 @@ const res = await page.evaluate(async () => {
   });
 
   c._openMarkerDialog(c._devices[0]); await c.updateComplete;
-  const switches = [...sr().querySelectorAll('hp-dialog ha-switch')];
-  out.haSwitchRendered = switches.length >= 2; // confirmation + hide-from-plan at minimum
-  out.haNoPlainCheckbox = !sr().querySelector('hp-dialog .srcrow input[type=checkbox]');
+  c._markerDialog = { ...c._markerDialog, tapAction: 'toggle', tapActionTouched: true }; await c.updateComplete;
+  const toggles = () => [...sr().querySelectorAll('hp-dialog .hpf-toggle > input[type=checkbox]')];
+  out.kitTogglesRendered = toggles().length >= 2; // confirmation + value badge at minimum
+  out.kitToggleIsNotHaSwitch = !sr().querySelector('hp-dialog ha-switch');
   out.lightRoleRadios = sr().querySelectorAll('hp-dialog input[name="marker-light-role"]').length === 3;
   out.glowModeRadios = sr().querySelectorAll('hp-dialog input[name="marker-glow-mode"]').length === 3;
   const sliders = [...sr().querySelectorAll('hp-dialog ha-slider')];
   out.haSliderRendered = sliders.length >= 2; // size + angle
 
   // --- 3) card -> control: state is pushed into the element --------------
-  c._markerDialog = { ...c._markerDialog, tapConfirm: true, hideFromPlan: false };
+  c._markerDialog = { ...c._markerDialog, tapConfirm: true };
   await c.updateComplete;
-  out.downstreamChecked = [...sr().querySelectorAll('hp-dialog ha-switch')].some((el) => el.checked === true);
+  out.downstreamChecked = sr().querySelector('hp-dialog #marker-tap-confirm')?.checked === true;
 
   // --- 4) control -> card: change with .checked lands in the dialog ------
-  const before = c._markerDialog.hideFromPlan;
-  const sw = [...sr().querySelectorAll('hp-dialog ha-switch')].find((el) => el.checked === before);
-  sw.checked = !before;
-  sw.dispatchEvent(new Event('change', { bubbles: true }));
+  const confirmBox = sr().querySelector('hp-dialog #marker-tap-confirm');
+  confirmBox.checked = false;
+  confirmBox.dispatchEvent(new Event('change', { bubbles: true }));
   await c.updateComplete;
-  out.upstreamChecked = c._markerDialog.hideFromPlan === !before
-    || c._markerDialog.useClimateTemp === !before || c._markerDialog.tapConfirm === !before;
+  out.upstreamChecked = c._markerDialog.tapConfirm === false;
 
   // --- 5) slider both ways ----------------------------------------------
   const sizeBefore = c._markerDialog.size;

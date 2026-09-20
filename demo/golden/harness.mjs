@@ -1779,14 +1779,16 @@ export async function prepareGoldenScenario(page, scenario) {
         await card.updateComplete;
         card._setMarkerGlowMode('fixed');
         await card.updateComplete;
+        // #600: роль и режим свечения — сегменты набора; скроллер диалога один —
+        // `.content` в теневом корне hp-dialog (form-shell), а не `.body`.
         const dialog = card.renderRoot.querySelector('hp-dialog');
-        const body = dialog?.querySelector('.body');
-        const roleGroup = dialog?.querySelector('input[name="marker-light-role"]')?.closest('fieldset');
-        const glowGroup = dialog?.querySelector('input[name="marker-glow-mode"]')?.closest('fieldset');
+        const body = dialog?.shadowRoot?.querySelector('.content');
+        const roleGroup = dialog?.querySelector('input[name="marker-light-role"]')?.closest('.hpf-field');
+        const glowGroup = dialog?.querySelector('input[name="marker-glow-mode"]')?.closest('.hpf-block');
         const roleInputs = roleGroup?.querySelectorAll('input[name="marker-light-role"]');
         const glowInputs = glowGroup?.querySelectorAll('input[name="marker-glow-mode"]');
         const color = glowGroup?.querySelector('hp-color-opacity');
-        const brightness = glowGroup?.querySelector('input[type="range"]');
+        const brightness = glowGroup?.querySelector('input[type="range"], ha-slider');
         const radius = dialog?.querySelector('#marker-glow-radius');
         if (!body || !roleGroup || !glowGroup || roleInputs?.length !== 3 || glowInputs?.length !== 3
           || !roleInputs[1]?.checked || !glowInputs[2]?.checked
@@ -1804,7 +1806,7 @@ export async function prepareGoldenScenario(page, scenario) {
       }
       if (scenario.deviceToggleEntity) {
         const dialog = card.renderRoot.querySelector('hp-dialog');
-        const body = dialog?.querySelector('.body');
+        const body = dialog?.shadowRoot?.querySelector('.content'); // #600: единственный скроллер
         const select = dialog?.querySelector('#marker-toggle-entity');
         const warning = dialog?.querySelector('.markertoggleentity [role="status"]');
         const childLock = 'switch.golden_washer_child_lock';

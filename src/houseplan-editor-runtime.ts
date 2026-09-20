@@ -141,6 +141,7 @@ import {
 import { rememberSpaceDialogBaseline } from './editors/space-form-state';
 import { rememberGeneralBaseline } from './editors/general-form-state';
 import { rememberRoomBaseline } from './editors/room-form-state';
+import { rememberMarkerBaseline } from './editors/marker-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
 import { openSpaceCopyDialog, renderSpaceCopyDialog, saveSpaceCopy } from './space-copy-runtime';
 import { mdiHomeCityOutline } from '@mdi/js';
@@ -7694,6 +7695,8 @@ public _openMarkerDialog(d?: DevItem): void {
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       };
     }
+    // #600 К10: снимок черновика — Save только при изменениях в edit
+    if (this.host._markerDialog) rememberMarkerBaseline(this.host, this.host._markerDialog);
   }
 
 public _runCandidates(): { value: string; label: string; sub: string }[] {

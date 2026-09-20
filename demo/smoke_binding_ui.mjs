@@ -7,31 +7,33 @@ const res = await page.evaluate(async () => {
   c._setMode('devices'); await c.updateComplete;
   // новый маркер: радио «Виртуальное» по умолчанию, списка нет
   c._openMarkerDialog(); await c.updateComplete;
-  const radios = () => [...sr().querySelectorAll('.bindsel input[type="radio"]')];
+  // #600: привязка — сегмент набора (те же радио с именем bmode), кнопка выбора
+  // и панель в потоке (#marker-binding, .hpf-panel), «Show entities» — внутри панели (Q8)
+  const radios = () => [...sr().querySelectorAll('input[name="bmode"]')];
   out.twoRadios = radios().length === 2;
   out.virtDefault = radios()[0].checked && !radios()[1].checked;
-  out.noDropWhenVirtual = !sr().querySelector('.dropbtn');
+  out.noDropWhenVirtual = !sr().querySelector('#marker-binding');
   // переключить на «Из списка HA» → появляется дропдаун, открыт (нет выбора), сейв заблокирован
   radios()[1].click(); await c.updateComplete;
-  out.dropShown = !!sr().querySelector('.dropbtn');
-  out.panelOpen = !!sr().querySelector('.droppanel');
+  out.dropShown = !!sr().querySelector('#marker-binding');
+  out.panelOpen = !!sr().querySelector('hp-dialog .hpf-panel');
   const saveBtn = [...sr().querySelectorAll('hp-dialog .btn.on')].pop();
   out.saveDisabled = saveBtn?.disabled === true;
   // без чекбокса в списке нет individual-сущностей устройств
-  const subs = () => [...sr().querySelectorAll('.cand .cs')].map((e) => e.textContent);
+  const subs = () => [...sr().querySelectorAll('.hpf-cand small')].map((e) => e.textContent);
   const entLabel = c._t('marker.sub_entity');
   out.noDeviceEntities = !subs().some((s) => s.includes(entLabel));
   // (группы/хелперы в демо все уже размещены и потому скрыты как занятые —
   // их «всегда в списке» проверяется кодом: блок вне чекбокса)
   // включить чекбокс → сущности появились
-  const cb = sr().querySelector('.entcheck input');
+  const cb = sr().querySelector('hp-dialog .hpf-panel #marker-show-entities');
   cb.click(); await c.updateComplete;
-  out.entitiesShown = [...sr().querySelectorAll('.cand .cs')].some((s) => s.textContent.includes(entLabel));
-  out.tooltip = sr().querySelector('.entcheck').getAttribute('title') === c._t('marker.show_entities_tip');
+  out.entitiesShown = [...sr().querySelectorAll('.hpf-cand small')].some((s) => s.textContent.includes(entLabel));
+  out.tooltip = sr().querySelector('hp-dialog .hpf-panel .hpf-check').getAttribute('title') === c._t('marker.show_entities_tip');
   // выбрать первый кандидат → панель закрылась, сейв разблокирован
-  sr().querySelector('.cand').click(); await c.updateComplete;
+  sr().querySelector('.hpf-cand').click(); await c.updateComplete;
   out.picked = c._markerDialog.binding !== '' && c._markerDialog.binding !== 'virtual';
-  out.panelClosed = !sr().querySelector('.droppanel');
+  out.panelClosed = !sr().querySelector('hp-dialog .hpf-panel');
   out.saveEnabled = [...sr().querySelectorAll('hp-dialog .btn.on')].pop()?.disabled === false;
   // радио назад на «Виртуальное» → binding=virtual
   radios()[0].click(); await c.updateComplete;
@@ -41,8 +43,8 @@ const res = await page.evaluate(async () => {
   const dev = c._devices.find((d) => !d.virtual && d.bindingKind === 'device');
   c._openMarkerDialog(dev); await c.updateComplete;
   out.editHaMode = c._markerDialog.bindingMode === 'ha';
-  out.editShowsCur = sr().querySelector('.dropbtn b') !== null;
-  out.editPanelClosed = !sr().querySelector('.droppanel');
+  out.editShowsCur = sr().querySelector('#marker-binding b') !== null;
+  out.editPanelClosed = !sr().querySelector('hp-dialog .hpf-panel');
   c._markerDialog = null;
   return out;
 });

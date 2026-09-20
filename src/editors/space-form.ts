@@ -33,9 +33,10 @@ import {
   strictNumber, switchSpacePlanSource, touchSpaceDisplay, type SpaceDialogState,
 } from '../space-dialog';
 import { bgModeOf, northDegOf } from '../sun';
-import { langOf, type I18nKey } from '../i18n';
-import { hasSettingsTranslation, settingsT, type SettingsI18nKey } from '../i18n/settings';
+import type { I18nKey } from '../i18n';
+import type { SettingsI18nKey } from '../i18n/settings';
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
+import { settingsCopy } from './settings-copy';
 /* #592: границы шага сетки живут рядом с полем, которое их показывает; кламп
  * записи в редакторском рантайме импортирует их отсюда — одно число, один
  * источник, и направление импорта то же, что у самой функции рисования. */
@@ -73,23 +74,6 @@ const set = (port: SpaceFormPort, next: SpaceDialogState): void => { port.host._
  * и их подписи не должны ехать в первый кадр (К8). Прежние ключи `space.*`
  * остаются в основном каталоге и читаются через `_t`, как раньше.
  */
-interface SettingsCopy {
-  st(key: SettingsI18nKey, vars?: Record<string, string | number>): string;
-  /** «?» из ленивого словаря: текст и aria-подпись обязаны быть оба. */
-  shelp(key: SettingsI18nKey): TemplateResult | typeof nothing;
-}
-function settingsCopy(host: HouseplanEditorHostPort): SettingsCopy {
-  const lang = langOf(host.hass, host._config?.language);
-  return {
-    st: (key, vars) => settingsT(lang, key, vars),
-    shelp: (key) => {
-      const ariaKey = `${key}.aria`;
-      if (!hasSettingsTranslation(lang, key) || !hasSettingsTranslation(lang, ariaKey)) return nothing;
-      return html`<hp-help data-help-key=${key} .text=${settingsT(lang, key)} .ariaLabel=${settingsT(lang, ariaKey)}></hp-help>`;
-    },
-  };
-}
-
 /** Части формы: заголовок и бейдж оболочки, тело из четырёх карточек, футер, закрытие. */
 export interface SpaceFormParts {
   title: string;

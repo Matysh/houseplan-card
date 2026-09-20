@@ -36,9 +36,12 @@ test('persisted dynamic marker selects project their selected option explicitly'
   const byId = new Map(blocks.map((block) => [
     block.match(/\bid="([^"]+)"/)?.[1] || '', block,
   ]));
+  // #600: сторона бейджа (marker-value-badge-position) стала сегментом набора —
+  // радиогруппой, у которой `.checked` ставится на каждом варианте; в списке
+  // селектов её больше нет.
   for (const id of [
     'marker-room', 'marker-tap-action', 'marker-toggle-entity', 'marker-light-entity', 'marker-display',
-    'marker-value-source', 'marker-value-badge-source', 'marker-value-badge-position',
+    'marker-value-source', 'marker-value-badge-source',
   ]) {
     const block = byId.get(id);
     assert.ok(block, id);

@@ -69,9 +69,8 @@ const out3 = await page.evaluate(async () => {
   c._setMode('devices'); await c.updateComplete;
   const dev = c._devices.find((d) => d.space === 'f1');
   c._openMarkerDialog(dev); await c.updateComplete;
-  // строка «размер · угол»: два ползунка, второй — угол
-  const rows = [...sr().querySelectorAll('hp-dialog .colorrow')];
-  const row = rows.find((r) => r.textContent.includes('°'));
+  // #600: «Размер» и «Поворот» — две строки range-line в одной сетке карточки Appearance
+  const row = sr().querySelector('hp-dialog .hpf-card[data-card="appearance"] .hpf-grid');
   const ctl = [...row.querySelectorAll('ha-slider, input[type=range]')];
   const stepOf = (el) => Number(el.step ?? el.getAttribute('step'));
   const maxOf = (el) => Number(el.max ?? el.getAttribute('max'));

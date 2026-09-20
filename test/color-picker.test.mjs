@@ -4,7 +4,6 @@ import test from 'node:test';
 import {
   hexToRgb, hsvToHex, hsvToRgb, normalizeHexColor, normalizeHue, rgbToHex, rgbToHsv,
 } from '../test-build/color-picker.js';
-import { readAllStylesSource } from './styles-source.mjs';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 test('hex drafts accept only three or six digits and normalize on commit', () => {
@@ -107,16 +106,22 @@ test('the hue range exposes one cyclic spectrum without restyling other ranges',
   assert.doesNotMatch(commonRange, /linear-gradient|hp-picker-hue-track/);
 });
 
+/**
+ * #600: цвет и размер пульса — два поля набора друг под другом (плашка цвета
+ * `colorField` и строка `rangeLine`), а не две flex-строки с общим CSS. Порядок
+ * прежний: сначала цвет, потом размер; ширину плашки держит лист набора.
+ */
 test('activity color and ripple size keep independent readable rows', () => {
   const card = readHouseplanProductionSource();
-  const styles = readAllStylesSource();
+  const kit = readFileSync(new URL('../src/styles/form-kit.styles.ts', import.meta.url), 'utf8');
   const start = card.indexOf("d.display === 'icon_ripple'");
   const end = card.indexOf("marker.activity_alarm_note", start);
   const ripple = card.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.match(ripple, /class="colorrow ripple-colorrow"/);
-  assert.match(ripple, /class="colorrow ripple-sizerow"/);
+  assert.match(ripple, /class="ripple-colorrow"/);
+  assert.match(ripple, /class="hpf-field ripple-sizerow"/);
   assert.ok(ripple.indexOf('marker.activity_color') < ripple.indexOf('ripple-sizerow'));
   assert.ok(ripple.indexOf('ripple-sizerow') < ripple.indexOf('marker.ripple_size'));
-  assert.match(styles, /\.ripple-colorrow > hp-color-opacity\s*\{[^}]*width:\s*100%/s);
+  assert.match(kit, /-colorfield \{[^}]*display:\s*flex/);
+  assert.match(kit, /-range \{[^}]*display:\s*flex/);
 });

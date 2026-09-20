@@ -152,7 +152,7 @@ const res = await page.evaluate(async () => {
   const badgeBefore = JSON.stringify({
     e: c._markerDialog?.valueBadgeEnabled, s: c._markerDialog?.valueBadgeSource,
   });
-  sr().querySelector('.cand.sel')?.click();
+  sr().querySelector('.hpf-cand.sel')?.click(); // #600: кандидаты — кнопки панели набора
   await c.updateComplete;
   const sameBindingKeepsSource =
     JSON.stringify(c._markerDialog?.valueSource) === JSON.stringify(source)
@@ -167,7 +167,7 @@ const res = await page.evaluate(async () => {
   c._openMarkerDialog(item());
   await c.updateComplete;
   const virtualBinding = [...sr().querySelectorAll('input[name="bmode"]')]
-    .find((node) => node.parentElement?.textContent?.includes(c._t('marker.virtual_option')));
+    .find((node) => node.closest('label')?.textContent?.includes(c._t('marker.virtual_option')));
   virtualBinding?.click();
   await c.updateComplete;
   const bindingResetToAuto = !!virtualBinding && c._markerDialog?.binding === 'virtual'

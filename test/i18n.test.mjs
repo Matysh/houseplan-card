@@ -465,6 +465,7 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
     'editor.palette',
     'confirm.delete_partition_openings_item',
     'marker.name_ph',
+    'marker.name_label', // #600: «Name» — одно слово в обоих языках
     'marker.pulse_a11y_alarm',
     'marker.state_a11y_alarm',
     'marker.link_label',

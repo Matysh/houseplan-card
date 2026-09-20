@@ -124,7 +124,7 @@ const res = await page.evaluate(async () => {
 
   // Escape dismisses a mouse-hovered bubble without moving keyboard focus
   // away from the form control the user was editing.
-  const nameInput = root().querySelector('hp-dialog .namein');
+  const nameInput = root().querySelector('hp-dialog #marker-name'); // #600: поле набора
   nameInput?.focus();
   enterWithRealMouse(roleButton);
   await wait(330);
@@ -149,15 +149,16 @@ const res = await page.evaluate(async () => {
   await card.updateComplete;
   out.escapeHelpFirst = roleButton?.getAttribute('aria-expanded') === 'false' && !!card._markerDialog;
 
-  // The help in the first legend remains a real enabled target even while the
-  // glow fieldset itself is disabled.
+  // The help in the subsection heading remains a real enabled target even
+  // while the glow block itself is disabled (#600: .hpf-block.hpf-disabled
+  // with aria-disabled replaced the fieldset[disabled]/legend pair).
   card._markerDialog = { ...card._markerDialog, lightRole: 'never' };
   await card.updateComplete;
   const disabledHelpHost = root().querySelector('hp-help[data-help-key="marker.glow_mode.help"]');
   const disabledHelp = helpButton('marker.glow_mode.help');
   out.disabledExplanation = !!disabledHelp && !disabledHelp.disabled
-    && !!disabledHelpHost?.closest('fieldset[disabled]')
-    && !!disabledHelpHost?.closest('legend');
+    && disabledHelpHost?.closest('.hpf-block.hpf-disabled')?.getAttribute('aria-disabled') === 'true'
+    && !!disabledHelpHost?.closest('.hpf-sub');
 
   // Exclusive transient surfaces: opening help dismisses an open colour picker.
   card._markerDialog = { ...card._markerDialog, lightRole: 'always', glowMode: 'fixed' };
@@ -256,7 +257,13 @@ const res = await page.evaluate(async () => {
   finalButton?.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'Escape', bubbles: true, composed: true, cancelable: true,
   }));
-  await card.updateComplete;
+  await card.updateComplete; await frame();
+  // #600 К10: черновик выше менялся (роль, режим свечения) — второй Escape
+  // просит подтвердить сброс изменений, и только «Discard» закрывает диалог.
+  const discardConfirm = root().querySelector('hp-confirm hp-dialog');
+  out.secondEscapeAsksToDiscardDirtyDraft = !!discardConfirm && !!card._markerDialog;
+  discardConfirm?.querySelector('[data-hp="dialog-confirm"]')?.click();
+  await card.updateComplete; await frame();
   out.secondEscapeClosesDialog = !card._markerDialog;
 
   // #86 Party 1: all general-settings placements are real help controls and

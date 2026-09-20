@@ -68,7 +68,11 @@ const res = await page.evaluate(async () => {
   const displaySelect = sr().querySelector('#marker-display');
   const roomSelect = sr().querySelector('#marker-room');
   const badgeSourceSelect = sr().querySelector('#marker-value-badge-source');
-  const badgePositionSelect = sr().querySelector('#marker-value-badge-position');
+  // #600: сторона бейджа — сегмент набора (радио marker-value-badge-position), не select
+  const badgePositionSelect = (() => {
+    const checked = sr().querySelector('input[name="marker-value-badge-position"]:checked');
+    return checked ? { value: checked.value, selectedOptions: [{ value: checked.value }] } : null;
+  })();
   const savedBadgePreview = sr().querySelector('hp-device-preview');
   await savedBadgePreview?.updateComplete;
   const savedDisplaySelected = displaySelect?.value === 'value'

@@ -450,6 +450,26 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-cand.sel { background: var(${tokens.tint}); color: var(${tokens.accent}); }
   .${p}-cand:focus-visible { outline: 2px solid var(${tokens.accent}); outline-offset: -2px; }
   .${p}-templegend { display: flex; justify-content: space-between; margin-top: -6px; font-size: .8125rem; color: var(${tokens.muted}); }
+  .${p}-block { display: grid; gap: 15px; }
+  .${p}-block.${p}-disabled > :not(.${p}-sub):not(.${p}-callout) { opacity: .45; }
+  .${p}-block.${p}-disabled .${p}-seg label, .${p}-block.${p}-disabled .${p}-colorfield, .${p}-block.${p}-disabled .${p}-range { pointer-events: none; }
+  .${p}-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+  .${p}-toolbar > .${p}-input { flex: 1 1 200px; width: auto; }
+  .${p}-check { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: .875rem; color: var(${tokens.muted}); cursor: pointer; white-space: nowrap; }
+  .${p}-check > input { width: 18px; height: 18px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
+  .${p}-iconfield { display: flex; align-items: center; gap: 8px; }
+  .${p}-iconfield > .${p}-input, .${p}-iconfield > ha-icon-picker { flex: 1 1 auto; min-width: 0; }
+  .${p}-iconpreview { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.canvas}); color: var(${tokens.muted}); }
+  .${p}-mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8125rem; }
+  .${p}-hint > .${p}-link { padding: 0; }
+  .${p}-actionrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .${p}-note { display: flex; align-items: flex-start; gap: 6px; }
+  .${p}-note > ha-icon { --mdc-icon-size: 16px; flex: 0 0 auto; margin-top: 2px; }
+  .${p}-note-warning { color: var(--warning-color, #b87940); }
+  .${p}-hint-line { display: block; }
+  .${p}-chip-warning { border-color: var(--warning-color, #b87940); color: var(--warning-color, #b87940); }
+  .${p}-iconclear { flex: 0 0 auto; min-width: 44px; min-height: 44px; padding: 0; }
+  ${form} textarea.${p}-input { min-height: 96px; resize: vertical; line-height: 1.5; }
   .${p}-preview { display: flex; justify-content: center; }
   @media (max-width: 480px) {
     .${p}-body { padding: 0 14px 14px; }

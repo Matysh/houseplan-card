@@ -301,18 +301,22 @@ const out = await page.evaluate(async () => {
   const displayOptions = [...root().querySelectorAll('#marker-display option')]
     .map((option) => option.value);
   const editorShowsValueSource = !!root().querySelector('#marker-value-source');
+  // #600: блок бейджа — .hpf-block с тумблером набора и callout'ом состояния
   const badgeToggle = root().querySelector('.markerbadgegroup input[type="checkbox"]');
   const editorDisablesBadge = !!badgeToggle?.disabled
-    && !!root().querySelector('.markerbadgegroup .markerlightdisabled');
+    && !!root().querySelector('.markerbadgegroup .hpf-callout');
   card._markerDialog = null;
   await update();
   const alarmDevice = card._devices.find((item) => item.id === alarmId);
   card._openMarkerDialog(alarmDevice);
   await update();
-  const editorWarnsAboutAlarm = !!root().querySelector('.habindingbanner');
+  // #600: предупреждение о тревоге — callout набора в карточке Appearance
+  const alarmWarning = () => [...root().querySelectorAll('.hpf-card[data-card="appearance"] .hpf-callout')]
+    .some((node) => node.textContent.includes(card._t('marker.static_alarm_warning')));
+  const editorWarnsAboutAlarm = alarmWarning();
   card._markerDialog = { ...card._markerDialog, display: 'badge' };
   await update();
-  const badgeHidesAlarmWarning = !root().querySelector('.habindingbanner');
+  const badgeHidesAlarmWarning = !alarmWarning();
   card._markerDialog = null;
   await update();
 

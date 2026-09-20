@@ -77,12 +77,16 @@ export function renderRadarSection(
     && (!d.radar || d.radarRemove) && !recognition.eligible;
   if (placement === 'additional') {
     if (!manualEntry) return html``;
-    return html`<details class="markerlightgroup radaradditional">
-      <summary>${options.t('radar.additional_actions')}</summary>
-      <button class="btn ghost" type="button" @click=${begin}>
-        <ha-icon icon="mdi:radar"></ha-icon>${options.t('radar.declare')}
-      </button>
-    </details>`;
+    // #600 §7: подраздел «Additional actions» карточки Details — заголовок
+    // набора и строка действий, без раскрывашки.
+    return html`<div class="radaradditional">
+      <div class="hpf-sub"><h4>${options.t('radar.additional_actions')}</h4></div>
+      <div class="hpf-actions">
+        <button class="btn ghost" type="button" @click=${begin}>
+          <ha-icon icon="mdi:radar"></ha-icon>${options.t('radar.declare')}
+        </button>
+      </div>
+    </div>`;
   }
   if ((!d.radar || d.radarRemove) && options.setup.isActive()) options.setup.reset();
   if (savedUnsupported || d.bindingMode === 'virtual' && !!device.marker?.radar) {
