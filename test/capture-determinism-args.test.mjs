@@ -36,3 +36,13 @@ test('съёмка берёт набор из этого модуля, а не �
   assert.doesNotMatch(source, /const DETERMINISTIC_ARGS\s*=/,
     'собственное объявление в capture.mjs разошлось бы с проверяемым набором');
 });
+
+test('#600 кадр превью крутит единственный скроллер hp-dialog', () => {
+  const source = readFileSync(new URL('../demo/docs/capture.mjs', import.meta.url), 'utf8');
+  const block = source.match(/if \(current\.devicePresentationPreview\) \{([\s\S]*?)\n  \}/)?.[1] || '';
+  assert.match(block, /dialog\?\.renderRoot\?\.querySelector\('\.content'\)/,
+    'после #600 скроллом владеет .content в shadow root оболочки');
+  assert.match(block, /scroller\.scrollTop\s*\+=/);
+  assert.doesNotMatch(block, /querySelector\('\.body'\)/,
+    '.body больше не скроллер: такая съёмка даёт два одинаковых кадра');
+});

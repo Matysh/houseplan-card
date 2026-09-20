@@ -144,18 +144,18 @@ const applyDocumentationState = (page, scenario) => page.evaluate(async (current
 
   if (current.devicePresentationPreview) {
     const dialog = card.renderRoot.querySelector('hp-dialog');
-    const body = dialog?.querySelector('.body');
+    const scroller = dialog?.renderRoot?.querySelector('.content');
     const preview = dialog?.querySelector('hp-device-preview');
     await preview?.updateComplete;
-    if (!body || !preview)
+    if (!scroller || !preview)
       throw new Error('documentation device presentation preview is missing');
-    const bodyRect = body.getBoundingClientRect();
+    const scrollerRect = scroller.getBoundingClientRect();
     const previewRect = preview.getBoundingClientRect();
-    body.scrollTop += previewRect.top - bodyRect.top - 180;
+    scroller.scrollTop += previewRect.top - scrollerRect.top - 180;
     await frame();
-    const visibleBody = body.getBoundingClientRect();
+    const visibleScroller = scroller.getBoundingClientRect();
     const visiblePreview = preview.getBoundingClientRect();
-    if (visiblePreview.top < visibleBody.top - 1 || visiblePreview.bottom > visibleBody.bottom + 1)
+    if (visiblePreview.top < visibleScroller.top - 1 || visiblePreview.bottom > visibleScroller.bottom + 1)
       throw new Error('documentation viewport does not show the device presentation preview');
   }
 
