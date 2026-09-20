@@ -13,19 +13,23 @@ const res = await page.evaluate(async () => {
   c._spaceDialog = null;
   // 1) диалог общих настроек: инвентарь строк и групп (обновлён фичей «Солнце»)
   c._openSettingsDialog(); await c.updateComplete;
-  out.rows = sr().querySelectorAll('.gsrow').length;
-  // #598: форма собрана в карточки. Заголовок группы теперь либо заголовок
-  // карточки (`.hpf-head h3`), либо подзаголовок внутри неё (`.dispsection`).
-  // Снимаются ОБА списка: проверка стала строже, а не мягче — прежняя не видела
-  // карточек вовсе.
+  // #600 §5: инвентарь цветов — плитки (`.hpf-colortile`) и одна плашка стены
+  // (`.hpf-colorrow`); радиус свечения и фон — поля набора. Прежний `.gsrow`
+  // считал всё подряд, теперь каждая поверхность считается своим классом.
+  out.rows = sr().querySelectorAll('hp-dialog .hpf-colortile').length
+    + sr().querySelectorAll('hp-dialog .hpf-colorrow').length
+    + (sr().querySelector('hp-dialog #gs-glow-radius') ? 1 : 0)
+    + (sr().querySelector('hp-dialog input[name="gs-bg-mode"]') ? 1 : 0)
+    + (sr().querySelector('hp-dialog input[name="gs-sun-ray-origin"]') ? 1 : 0)
+    + (sr().querySelector('hp-dialog .alignall') ? 1 : 0);
+  // #598: форма собрана в карточки; #600: подзаголовки внутри — `.hpf-sub h4`.
   out.cards = [...sr().querySelectorAll('hp-dialog .hpf-card > .hpf-head h3')]
     .map((l) => l.textContent.trim());
-  out.groups = [...sr().querySelectorAll('hp-dialog .dispsection')].map((l) => l.textContent.trim());
+  out.groups = [...sr().querySelectorAll('hp-dialog .hpf-sub h4')].map((l) => l.textContent.trim());
   // Каждая карточка обязана быть непустой: пустая — это забытый перенос поля.
   out.everyCardHasContent = [...sr().querySelectorAll('hp-dialog .hpf-card')]
-    .every((card) => card.querySelector('.hpf-head + *'));
-  const glowRadius = [...sr().querySelectorAll('hp-dialog .gsrow')]
-    .find((row) => row.textContent.includes(c._t('gs.glow_radius')));
+    .every((card) => card.querySelector('.hpf-body > *'));
+  const glowRadius = sr().querySelector('hp-dialog #gs-glow-radius');
   const glowCard = [...sr().querySelectorAll('hp-dialog .hpf-card')]
     .find((card) => card.querySelector('.hpf-head h3')?.textContent.trim() === c._t('gs.glow_group'));
   // Радиус свечения обязан лежать ВНУТРИ карточки свечения, а не просто раньше
@@ -33,15 +37,14 @@ const res = await page.evaluate(async () => {
   out.glowRadiusInsideGlowGroup = !!glowRadius && !!glowCard && glowCard.contains(glowRadius);
   // Сообщение о состоянии остаётся абзацем на виду, а не уезжает под «?» (#598 К5).
   out.sunMissingStaysVisible = !sr().querySelector('hp-dialog hp-help[data-help-key="gs.sun_missing.help"]');
-  // Пояснения, которые переехали под «?», обязаны быть доступны кнопкой.
-  out.movedHintsHaveHelp = ['gs.radar_show_live.help', 'gs.card_fills.help',
-    'gs.backup_group.help', 'gs.grid_group.help']
-    .every((key) => !!sr().querySelector(`hp-dialog hp-help[data-help-key="${key}"]`));
-  // И ни одного абзаца-пояснения из тех, что переехали, в форме не осталось.
-  out.noMovedHintParagraphs = ![...sr().querySelectorAll('hp-dialog .rhint')]
-    .some((node) => node.textContent.trim() === c._t('gs.radar_show_live.help')
-      || node.textContent.trim() === c._t('gs.backup_group.help')
-      || node.textContent.trim() === c._t('gs.grid_group.help'));
+  // Пояснения под «?»: заливки, бэкап, обслуживание. Пояснение радара по §5.2
+  // референса — подпись строки-тумблера, а не «?» (текст тот же, ключ тот же).
+  out.movedHintsHaveHelp = ['gs.card_fills.help', 'gs.backup_group.help', 'gs.grid_group.help']
+    .every((key) => !!sr().querySelector(`hp-dialog hp-help[data-help-key="${key}"]`))
+    && [...sr().querySelectorAll('hp-dialog .hpf-toggle-caption')]
+      .filter((node) => node.textContent.trim().length > 0).length >= 2;
+  // И ни одного абзаца-пояснения (`.rhint`) в форме не осталось вовсе (#600 AC7).
+  out.noMovedHintParagraphs = sr().querySelectorAll('hp-dialog .rhint').length === 0;
   // #43: About moved into the dedicated Help & Feedback dialog and must not
   // survive as a duplicate at the bottom of General Settings.
   out.aboutMovedOut = !sr().querySelector('hp-dialog .aboutver')
@@ -76,10 +79,10 @@ const res = await page.evaluate(async () => {
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
-  "rows": 16, // 11 цветов (включая wall_fill) + радиус свечения + фон
-               // + грань окна #577 + «Оптимизировать планы» (docs/CANVAS.md §9)
+  "rows": 15, // 10 плиток + плашка стены + радиус свечения + фон + грань окна #577
+               // + «Оптимизировать планы» (docs/CANVAS.md §9)
   "cards": ["Display", "Zigbee links", "Room fill colors", "Light-source glow", "Plan", "Sun", "Data"],
-  "groups": ["Fill: lights", "Fill: temperature", "Fill: zigbee signal", "Walls", "Stage background", "Backup and transfer", "Plan maintenance"],
+  "groups": ["Lights", "Temperature", "Zigbee signal", "Backup and transfer", "Plan maintenance"],
   "everyCardHasContent": true,
   "sunMissingStaysVisible": true,
   "movedHintsHaveHelp": true,

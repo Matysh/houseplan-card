@@ -52,7 +52,8 @@ const out = await page.evaluate(async () => {
   delete states['sun.sun'];
   c.hass = { ...c.hass, states };
   await c.updateComplete;
-  const sunNote = [...sr().querySelectorAll('hp-dialog .rhint')]
+  // #600 §3.1: сообщение о состоянии — callout набора, а не абзац `.rhint`.
+  const sunNote = [...sr().querySelectorAll('hp-dialog .hpf-callout')]
     .find((node) => node.textContent.trim() === c._t('gs.sun_missing'));
   o.sunMissingStaysVisible = !!sunNote && sunNote.getBoundingClientRect().height > 0
     && !sr().querySelector('hp-dialog hp-help[data-help-key="gs.sun_missing.help"]');

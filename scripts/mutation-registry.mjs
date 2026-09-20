@@ -10269,9 +10269,10 @@ const MUTANT_DEFINITIONS = [
     }, {
       // Оба сообщения о состоянии — один контракт (К5), поэтому и мутант один:
       // спрятать под «?» можно каждое, и «поймано» обязано означать оба.
+      // #600: сообщение — callout набора; спрятать его в title так же легко.
       file: 'src/editors/general-settings-dialog.ts',
-      find: "                ? html`<div class=\"rhint\">${this.host._t('gs.sun_missing')}</div>`",
-      replace: "                ? html`<span title=${this.host._t('gs.sun_missing')}></span>`",
+      find: "            ? callout({ kind: 'warning', role: 'status', text: t('gs.sun_missing') })",
+      replace: "            ? html`<span title=${t('gs.sun_missing')}></span>`",
     }],
   },
   {
@@ -10281,8 +10282,8 @@ const MUTANT_DEFINITIONS = [
       + 'Заголовок и есть то, ради чего задача делалась, и его потеря обязана краснеть',
     patches: [{
       file: 'src/editors/general-settings-dialog.ts',
-      find: "            title: this.host._t('gs.card_fills'),",
-      replace: "            title: '',",
+      find: "        title: t('gs.card_fills'),",
+      replace: "        title: '',",
     }],
   },
   {
@@ -10343,6 +10344,51 @@ const MUTANT_DEFINITIONS = [
       file: 'src/editors/space-form.ts',
       find: "          checked: !d.hideDecor, onChange: (v) => set(port, { ...d, hideDecor: !v }),",
       replace: "          checked: !d.hideDecor, onChange: (v) => set(port, { ...d, hideDecor: v }),",
+    }],
+  },
+  {
+    id: 'general-save-enabled-without-changes',
+    guard: 'node demo/smoke_general_settings_form.mjs',
+    because: '#600 К10/AC6 (Q1) для «Общих настроек»: Save активен только при изменениях; '
+      + 'без dirty футер снова врёт о том, есть ли что сохранять',
+    patches: [{
+      file: 'src/editors/general-settings-dialog.ts',
+      find: '  const canSave = dirty && problems.length === 0 && !d.busy;',
+      replace: '  const canSave = problems.length === 0 && !d.busy;',
+    }],
+  },
+  {
+    id: 'general-tile-opacity-writes-a-neighbour-key',
+    guard: 'node demo/smoke_general_settings_form.mjs',
+    because: '#600 К1/AC3: у плитки цвета своё число прозрачности, и оно обязано писать '
+      + 'в свой цвет палитры. Восемь одинаковых плиток подряд — соседний ключ на глаз '
+      + 'не отличить, а в конфиг уедет чужая прозрачность',
+    patches: [{
+      file: 'src/editors/general-settings-dialog.ts',
+      find: "      onOpacity: (a) => this._setFillColor(key, { c: v.c, a }),",
+      replace: "      onOpacity: (a) => this._setFillColor(key === 'light_on' ? 'light_off' : key, { c: v.c, a }),",
+    }],
+  },
+  {
+    id: 'general-north-clear-writes-zero',
+    guard: 'node demo/smoke_general_settings_form.mjs',
+    because: '#600 §5.2: «Clear» возвращает север в «не задан» (null), а не в 0°: ноль — '
+      + 'это направление, и лучи через окна с ним считаются, а с null — нет',
+    patches: [{
+      file: 'src/editors/general-settings-dialog.ts',
+      find: "textLink(t('gs.north_clear'), () => set({ northDeg: null }))",
+      replace: "textLink(t('gs.north_clear'), () => set({ northDeg: 0 }))",
+    }],
+  },
+  {
+    id: 'topology-embedded-draws-its-own-heading',
+    guard: 'node demo/smoke_general_settings_form.mjs',
+    because: '#600 дефект 1: заголовок «Zigbee links» удваивался — карточка рисовала '
+      + 'свой, компонент внутри — свой. Встроенный режим обязан заголовок не рисовать',
+    patches: [{
+      file: 'src/hp-zigbee-topology-settings.ts',
+      find: '    if (this.embedded) return this._renderEmbedded();',
+      replace: '    if (this.embedded && this.savedEnabled) return this._renderEmbedded();',
     }],
   },
   {

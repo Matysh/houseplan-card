@@ -49,5 +49,13 @@
   "dialog.discard_title": "Discard your changes?",
   "dialog.discard_message": "Your changes haven’t been saved.",
   "dialog.discard_confirm": "Discard changes",
-  "dialog.discard_keep": "Keep editing"
+  "dialog.discard_keep": "Keep editing",
+  "gs.show_room_tooltip_hint": "Hover a room on the plan to see its summary.",
+  "gs.radar_show_live_hint": "Hides or shows all live radar targets. This does not start or stop observation recording.",
+  "gs.bg_custom_hint": "Custom background color.",
+  "gs.bg_theme_hint": "Using the theme background.",
+  "gs.sun_rays_hint": "Draw sun rays through window openings.",
+  "gs.error_glow_radius": "Enter a radius greater than zero.",
+  "gs.error_north": "Enter a whole number between 0° and 359°.",
+  "gs.opacity_of": "{name} opacity"
 }

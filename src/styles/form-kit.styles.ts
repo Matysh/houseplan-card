@@ -205,6 +205,9 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-unit > span { padding: 0 11px 0 3px; white-space: nowrap; color: var(${tokens.muted}); font-size: .875rem; }
   .${p}-unit:focus-within { outline: 2px solid var(${tokens.accent}); outline-offset: 2px; }
   .${p}-unit.${p}-unit-wide, .${p}-unit.${p}-unit-wide > input { width: 100%; min-width: 0; }
+  .${p}-field > .${p}-unit:not(.${p}-unit-wide) { justify-self: start; }
+  .${p}-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .${p}-actions > input[type="file"] { display: none; }
   .${p}-row {
     display: flex;
     min-width: 0;
@@ -413,7 +416,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-north > .${p}-labelrow { grid-area: 1 / 1; min-height: 28px; }
   .${p}-north > .${p}-select, .${p}-north > .${p}-unit, .${p}-north > .${p}-input { grid-area: 2 / 1; }
   .${p}-north > .${p}-north-n { grid-area: 1 / 2; text-align: center; font-size: .875rem; line-height: 28px; color: var(${tokens.muted}); }
-  .${p}-compass { grid-area: 2 / 2; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 50%; background: var(${tokens.canvas}); color: var(${tokens.accent}); }
+  .${p}-compass { grid-area: 2 / 2; box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 50%; background: var(${tokens.canvas}); color: var(${tokens.accent}); }
   .${p}-compass svg { width: 24px; height: 24px; transform-origin: 50% 50%; transform-box: view-box; }
   .${p}-compass.${p}-unset { color: var(${tokens.muted}); }
   .${p}-tint { padding: 14px; border: 1px solid var(${tokens.tintLine}); border-radius: 9px; background: var(${tokens.tint}); }

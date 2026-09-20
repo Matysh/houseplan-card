@@ -128,49 +128,15 @@ export const planStyles = css`
     .sunlayer {
       pointer-events: none;
     }
+    /* #600: компас — индикатор 44 px набора (класс hpf-compass), геометрия и
+       цвета живут в листе набора; здесь только поведение перетаскивания. */
     .compass {
-      width: 120px;
-      height: 120px;
-      flex: none;
       touch-action: none;
       cursor: grab;
       user-select: none;
     }
     .compass:active {
       cursor: grabbing;
-    }
-    .compass .cring {
-      fill: rgba(255, 255, 255, 0.04);
-      stroke: var(--divider-color, #444);
-      stroke-width: 2;
-    }
-    .compass .ctick {
-      stroke: var(--secondary-text-color, #9aa4ad);
-      stroke-width: 2;
-    }
-    .compass .ctick.minor {
-      stroke-width: 1;
-      opacity: 0.6;
-    }
-    .compass .cneedle line {
-      stroke: var(--primary-color, #3ea6ff);
-      stroke-width: 2.5;
-      stroke-linecap: round;
-    }
-    .compass .cneedle path {
-      fill: var(--primary-color, #3ea6ff);
-    }
-    .compass .cneedle text {
-      fill: var(--text-primary-color, #fff);
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .compass .cdeg {
-      fill: var(--secondary-text-color, #9aa4ad);
-      font-size: 13px;
-    }
-    .compass.unset .cneedle {
-      opacity: 0.35;
     }
     /* HP-1552: first-open boot veil — the plan hides until the stage height settles */
     .stage.hpboot .zoomwrap,

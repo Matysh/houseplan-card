@@ -86,7 +86,6 @@ import {
   rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
 } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
-import { renderSunRayOriginSelect } from './sun-settings-view';
 import {
   furnitureDefaultCm,
   furnitureGraphic, furnitureCorners,
@@ -140,6 +139,7 @@ import {
   touchSpaceDisplay, type SpaceDialogState,
 } from './space-dialog';
 import { rememberSpaceDialogBaseline } from './editors/space-form-state';
+import { rememberGeneralBaseline } from './editors/general-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
 import { roomTemperatureControls } from './room-temperature-controls';
 import { openSpaceCopyDialog, renderSpaceCopyDialog, saveSpaceCopy } from './space-copy-runtime';
@@ -8840,6 +8840,8 @@ public _openSettingsDialog = (): void => {
       radarShowLive: this.host._settings.radar?.show_live !== false,
       showRoomTooltip: showRoomTooltipOf(this.host._settings), zigbeeTopology: zigbeeTopologySettingsOf(this.host._settings), busy: false,
     };
+    // #600 К10: снимок на момент открытия — от него считается «есть изменения».
+    rememberGeneralBaseline(this.host, this.host._settingsDialog);
   };
 
 public _openSupportDialog = (): void => {
@@ -10082,20 +10084,6 @@ public _rangeInput(
           .disabled=${disabled} aria-label=${ariaLabel || nothing} @input=${h} @change=${h}></ha-slider>`
       : html`<input type="range" min=${min} max=${max} step=${step} .value=${String(value)}
           ?disabled=${disabled} aria-label=${ariaLabel || nothing} @input=${h} />`;
-  }
-
-public _renderColorRow(key: keyof FillColors, labelKey: string): TemplateResult {
-    const d = this.host._settingsDialog!;
-    const v = d.colors[key];
-    return html`<div class="colorrow gsrow">
-      <hp-color-opacity .label=${this.host._t(labelKey as any)}
-        .opacityLabel=${this.host._t('space.opacity')}
-        .pickerLabels=${this.host._colorPickerLabels}
-        .color=${v.c} .opacity=${v.a} .showOpacity=${true}
-        @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
-          this._setFillColor(key, { c: e.detail.color, a: e.detail.opacity });
-        }}></hp-color-opacity>
-    </div>`;
   }
 
 public _renderAlignDialog(): TemplateResult {

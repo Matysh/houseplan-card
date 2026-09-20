@@ -49,5 +49,13 @@
   "dialog.discard_title": "Änderungen verwerfen?",
   "dialog.discard_message": "Ihre Änderungen wurden nicht gespeichert.",
   "dialog.discard_confirm": "Änderungen verwerfen",
-  "dialog.discard_keep": "Weiter bearbeiten"
+  "dialog.discard_keep": "Weiter bearbeiten",
+  "gs.show_room_tooltip_hint": "Zeigen Sie auf einen Raum im Plan, um seine Übersicht zu sehen.",
+  "gs.radar_show_live_hint": "Blendet alle Live-Radarziele ein oder aus. Die Beobachtungsaufzeichnung wird dadurch nicht gestartet oder gestoppt.",
+  "gs.bg_custom_hint": "Eigene Hintergrundfarbe.",
+  "gs.bg_theme_hint": "Hintergrund des Themes wird verwendet.",
+  "gs.sun_rays_hint": "Sonnenstrahlen durch Fensteröffnungen zeichnen.",
+  "gs.error_glow_radius": "Geben Sie einen Radius größer als null ein.",
+  "gs.error_north": "Geben Sie eine ganze Zahl zwischen 0° und 359° ein.",
+  "gs.opacity_of": "Deckkraft: {name}"
 }

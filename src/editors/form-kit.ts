@@ -281,6 +281,53 @@ export function colorField({
   </div>`;
 }
 
+export interface ColorTileOptions {
+  label: string;
+  /** Текущий цвет `#rrggbb` — фон плитки и печать hex. */
+  hex: string;
+  opacity: number;
+  opacityLabel: string;
+  /** Готовый `hp-color-opacity` (Q5): свотч открывает существующую панель. */
+  picker: TemplateResult;
+  onOpacity: (opacity: number) => void;
+}
+
+/** Светлый ли цвет — для контраста подписи поверх свотча плитки. */
+export function isLightHex(hex: string): boolean {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return true;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255; const g = (n >> 8) & 255; const b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6;
+}
+
+/**
+ * Плитка цвета (§3.1 «Плитки цвета»): название поверх свотча на всю ширину,
+ * ниже hex и число прозрачности. Свотч — trigger существующего пикера.
+ */
+export function colorTile({ label, hex, opacity, opacityLabel, picker, onOpacity }: ColorTileOptions): TemplateResult {
+  const pct = Math.round(Math.min(1, Math.max(0, opacity)) * 100);
+  return html`<div class="hpf-colortile">
+    <div class="hpf-colortile-swatch" style=${`background:${hex};color:${isLightHex(hex) ? '#1f2a30' : '#fff'}`}>
+      ${picker}<span>${label}</span>
+    </div>
+    <div class="hpf-colortile-meta">
+      <code class="hpf-hex">${hex}</code>
+      <span class="hpf-unit" title=${opacityLabel}><input type="number" inputmode="numeric" min="0" max="100" step="1"
+        .value=${String(pct)} aria-label=${opacityLabel}
+        @input=${(e: Event) => {
+          const n = Number((e.target as HTMLInputElement).value);
+          if (Number.isFinite(n)) onOpacity(Math.min(1, Math.max(0, n / 100)));
+        }} /><span>%</span></span>
+    </div>
+  </div>`;
+}
+
+/** Ряд плиток цвета: три колонки, на узком экране две. */
+export function colorTiles(tiles: readonly TemplateResult[]): TemplateResult {
+  return html`<div class="hpf-colortiles">${tiles}</div>`;
+}
+
 export interface ColorRowOptions {
   label: string;
   help?: TemplateResult | typeof nothing;

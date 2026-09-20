@@ -67,20 +67,6 @@ export const dialogsStyles = css`
       opacity: 0.5;
       pointer-events: none;
     }
-    /* the compass dial in the general settings (docs/SUN.md) */
-    .sunrow {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-5);
-      margin: var(--sp-3) 0;
-    }
-    .suncol {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-3);
-      min-width: 0;
-    }
     .recoveryoverlay {
       position: absolute;
       inset: 0;

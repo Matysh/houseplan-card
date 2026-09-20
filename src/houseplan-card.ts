@@ -10651,11 +10651,20 @@ export class HouseplanCard extends LitElement {
     this._settingsDialog = { ...this._settingsDialog!, northDeg: a };
   }
 
-  /** The compass dial: drag the «N» arrow around the ring (docs/SUN.md). */
+  /**
+   * The compass dial: drag around the ring to set north (docs/SUN.md).
+   *
+   * #600 §3.1: the dial is the 44 px indicator of the reference — «N» sits on
+   * the label line outside it, the needle rotates to the effective angle and
+   * the degrees live in the number field next to it. The drag input stayed:
+   * it is an existing way to set north and `smoke_sun` drives it for real.
+   * Classes `.compass` / `.unset` are the stable hooks of that smoke.
+   */
   private _renderCompass(): TemplateResult {
     const d = this._settingsDialog!;
     const deg = d.northDeg;
-    return html`<svg class="compass ${deg === null ? 'unset' : ''}" viewBox="-60 -60 120 120"
+    return html`<span class="hpf-compass compass ${deg === null ? 'hpf-unset unset' : ''}" role="img"
+      aria-label=${this._t('gs.north')}
       @pointerdown=${(e: PointerEvent) => {
         (e.currentTarget as Element).setPointerCapture(e.pointerId);
         this._compassDrag = true;
@@ -10664,18 +10673,10 @@ export class HouseplanCard extends LitElement {
       @pointermove=${(e: PointerEvent) => { if (this._compassDrag) this._compassPoint(e); }}
       @pointerup=${() => (this._compassDrag = false)}
       @pointercancel=${() => (this._compassDrag = false)}>
-      <circle class="cring" r="50"></circle>
-      ${[0, 45, 90, 135, 180, 225, 270, 315].map(
-        (t) => svg`<line class="ctick ${t % 90 ? 'minor' : ''}" x1="0" y1="-50" x2="0" y2="${t % 90 ? -46 : -43}"
-          transform="rotate(${t})"></line>`,
-      )}
-      <g class="cneedle" transform="rotate(${deg ?? 0})">
-        <line x1="0" y1="34" x2="0" y2="-28"></line>
-        <path d="M -7 -24 L 0 -42 L 7 -24 Z"></path>
-        <text x="0" y="-12" text-anchor="middle">${this._t('gs.north_letter')}</text>
-      </g>
-      <text class="cdeg" x="0" y="26" text-anchor="middle">${deg === null ? '—' : deg + '°'}</text>
-    </svg>`;
+      <svg viewBox="0 0 24 24" style=${`transform: rotate(${deg ?? 0}deg)`} aria-hidden="true">
+        <path d="M12 3v18M12 3l-4 7h8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>`;
   }
 
   /**
@@ -10920,9 +10921,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._rangeInput(min, max, step, value, onInput, disabled, ariaLabel);
   }
 
-  private _renderColorRow(key: keyof FillColors, labelKey: string): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderColorRow(key, labelKey);
-  }
 
   /** Glow radius: stored in cm (config.settings.glow_radius_cm), default 3 m. */
   private get _glowRadiusCm(): number {

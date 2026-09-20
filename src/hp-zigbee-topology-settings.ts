@@ -2,6 +2,7 @@ import { LitElement, css, html, nothing, type PropertyValues, type TemplateResul
 import { langOf } from './i18n';
 import { hasTopologyTranslation, topologyT, type TopologyI18nKey } from './i18n/topology';
 import './hp-help';
+import { ensureFormKitStyles } from './editors/form-kit';
 import {
   normalizeZ2mBaseTopic, type ZigbeeTopologySettings,
 } from './zigbee-topology-settings';
@@ -18,6 +19,10 @@ export class HpZigbeeTopologySettings extends LitElement {
   static properties = {
     hass: { attribute: false },
     value: { attribute: false },
+    // #600 §5.1: внутри карточки «Zigbee links» заголовок и «?» рисует карточка,
+    // а блок раскладывается контролами набора: строка-тумблер, callout,
+    // подзаголовки ZHA / Zigbee2MQTT, поле тем и строки действий.
+    embedded: { type: Boolean, reflect: true },
     savedEnabled: { type: Boolean, attribute: 'saved-enabled' },
     devices: { attribute: false },
     registry: { attribute: false },
@@ -63,6 +68,16 @@ export class HpZigbeeTopologySettings extends LitElement {
     }
     button:disabled, textarea:disabled { opacity: .5; cursor: default; }
     .warning { color: var(--warning-color, #d89300); font-size: 12px; line-height: 1.45; }
+    /* #600 embedded: примитивы набора внутри карточки; правила набора, которые
+       привязаны к форме диалога, здесь недоступны — они повторены точечно. */
+    :host([embedded]) { display: grid; gap: 12px; }
+    :host([embedded]) textarea.hpf-input { min-height: 72px; border-radius: 7px; padding: 8px 10px;
+      border-color: var(--hpf-line, var(--divider-color, #666)); background: var(--hpf-surface, var(--card-background-color, #202126)); }
+    :host([embedded]) textarea[aria-invalid="true"] { border-color: var(--hpf-danger, var(--error-color, #db543d)); }
+    :host([embedded]) .hpf-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+    :host([embedded]) button { min-height: 44px; border-radius: 8px; padding: 9px 14px; font-weight: 400;
+      border-color: var(--hpf-line, var(--divider-color, #666)); }
+    :host([embedded]) .hpf-hint { margin: 0; }
   `;
 
   disconnectedCallback(): void {
@@ -89,6 +104,8 @@ export class HpZigbeeTopologySettings extends LitElement {
   }
 
   private get _admin(): boolean { return this.hass?.user?.is_admin === true; }
+  public embedded = false;
+
   private _t(key: TopologyI18nKey, vars?: Record<string, string | number>): string {
     return topologyT(langOf(this.hass), key, vars);
   }
@@ -179,6 +196,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   }
 
   protected render() {
+    if (this.embedded) return this._renderEmbedded();
     const admin = this._admin;
     const enabled = this.value.enabled;
     const mayLoad = admin && this.savedEnabled;
@@ -226,6 +244,59 @@ export class HpZigbeeTopologySettings extends LitElement {
           </div>`)}
         </div>
       </div>` : nothing}
+    `;
+  }
+
+  /**
+   * Раскладка внутри карточки общего набора (#600, §5.1 SPEC.md). Лист набора
+   * вносится в свой теневой корень: селекторы примитивов не привязаны к форме,
+   * а токены `--hpf-*` наследуются с хоста через границу тени. Заголовок и «?»
+   * функции здесь не рисуются — их даёт карточка (`topology.title` /
+   * `topology.help`), иначе заголовок удваивался (дефект 1 из #600).
+   */
+  private _renderEmbedded(): TemplateResult {
+    ensureFormKitStyles(this);
+    const admin = this._admin;
+    const enabled = this.value.enabled;
+    const mayLoad = admin && this.savedEnabled;
+    const topics = this._topics();
+    return html`
+      <label class="hpf-toggle">
+        <span class="hpf-toggle-icon" aria-hidden="true"><ha-icon icon="mdi:zigbee"></ha-icon></span>
+        <span class="hpf-toggle-title"><span>${this._t('toggle')}</span></span>
+        <span class="hpf-toggle-caption">${this._t('hint')}</span>
+        <input type="checkbox" .checked=${enabled} ?disabled=${!admin} aria-label=${this._t('toggle')}
+          @change=${(event: Event) => this._emit({ ...this.value,
+            enabled: (event.target as HTMLInputElement).checked })} />
+      </label>
+      ${!admin ? html`<p class="hpf-hint">${this._t('admin_only')}</p>` : nothing}
+      ${enabled ? html`
+        ${!this.savedEnabled ? html`<div class="hpf-callout"><ha-icon icon="mdi:information-outline"></ha-icon><p>${this._t('save_first')}</p></div>` : nothing}
+        <div class="hpf-sub"><h4>${this._t('zha')}</h4></div>
+        <p class="hpf-hint">${this._t('zha_hint')}</p>
+        <div class="hpf-actions">
+          <button class="btn ghost" ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
+            <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t('zha_read')}
+          </button>
+          <span class="hpf-hint">${this._status('zha')}</span>
+        </div>
+        <div class="hpf-sub"><h4>${this._t('z2m')}</h4></div>
+        <div class="hpf-field">
+          <span class="hpf-label hpf-labelrow"><label for="z2m-topics">${this._t('z2m_topics')}</label></span>
+          <textarea id="z2m-topics" class="hpf-input" rows="2" spellcheck="false" ?disabled=${!admin}
+            aria-invalid=${this._invalidTopic ? 'true' : nothing}
+            .value=${this._topicText} @input=${(event: Event) =>
+              this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
+          ${this._invalidTopic ? html`<p class="hpf-error" role="alert">${this._t('error_invalid_topic')}</p>` : nothing}
+        </div>
+        <div class="hpf-callout hpf-warning"><ha-icon icon="mdi:alert-outline"></ha-icon><p>${this._t('z2m_warning')}</p></div>
+        ${topics.map((topic) => html`<div class="hpf-actions">
+          <button class="btn ghost" ?disabled=${!mayLoad || this._invalidTopic || this._busy(`z2m:${topic}`)}
+            @click=${() => this._refreshZ2m(topic)}>
+            <ha-icon icon="mdi:refresh"></ha-icon>${this._t('z2m_update')} · ${topic}
+          </button>
+          <span class="hpf-hint">${this._status(`z2m:${topic}`)}</span>
+        </div>`)}` : nothing}
     `;
   }
 }

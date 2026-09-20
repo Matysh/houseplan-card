@@ -10,6 +10,7 @@
  * граф, а эта логика нужна только открытому диалогу (К8).
  */
 import type { SpaceDialogState } from '../space-dialog';
+import { dialogDirty, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
 
 /**
  * Ключи, которые не являются настройками: транзиентные поля пикера файлов,
@@ -22,33 +23,24 @@ const SPACE_DIALOG_TRANSIENT_KEYS: ReadonlySet<string> = new Set([
 
 /** Нормализованный отпечаток черновика: только настройки, ключи по алфавиту. */
 export function spaceDialogDraftKey(d: SpaceDialogState): string {
-  const entries = Object.entries(d)
-    .filter(([key]) => !SPACE_DIALOG_TRANSIENT_KEYS.has(key))
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([key, value]) => [key, key === 'planFile' && value ? (value as { name: string }).name : value]);
-  return JSON.stringify(entries);
+  return stableKey(
+    { ...d, planFile: d.planFile ? d.planFile.name : null },
+    SPACE_DIALOG_TRANSIENT_KEYS,
+  );
 }
-
-const spaceBaselines = new WeakMap<object, string>();
 
 /** Запомнить состояние на момент открытия: вызывается тем, кто открыл диалог. */
 export function rememberSpaceDialogBaseline(host: object, d: SpaceDialogState): void {
-  spaceBaselines.set(host, spaceDialogDraftKey(d));
+  rememberDialogBaseline(host, 'space', spaceDialogDraftKey(d));
 }
 
 export function forgetSpaceDialogBaseline(host: object): void {
-  spaceBaselines.delete(host);
+  forgetDialogBaseline(host, 'space');
 }
 
-/**
- * Есть ли несохранённые изменения. Без снимка (диалог открыт путём, который
- * его не сделал) ответ `true`: старое поведение — Save доступен — безопаснее
- * заблокированной кнопки.
- */
+/** Есть ли несохранённые изменения (см. `dialog-baseline.ts` о поведении без снимка). */
 export function spaceDialogDirty(host: object, d: SpaceDialogState): boolean {
-  const baseline = spaceBaselines.get(host);
-  if (baseline === undefined) return true;
-  return baseline !== spaceDialogDraftKey(d);
+  return dialogDirty(host, 'space', spaceDialogDraftKey(d));
 }
 
 export interface SpaceDialogProblem {

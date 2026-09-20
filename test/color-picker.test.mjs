@@ -77,8 +77,11 @@ test('the shared component keeps its API and contains no nested native color pic
   assert.match(defaultPicker, /this\._updateDecorStyle\(\{ \.\.\.this\._decorStyle, \.\.\.e\.detail \}\)/);
   assert.equal((card.match(/\.showOpacity=\$\{false\}/g) || []).length, 4,
     'Glow, ripple and both background pickers stay color-only');
-  assert.equal((card.match(/\.showOpacity=\$\{true\}/g) || []).length, 2,
-    'general fill rows and room color explicitly keep their existing opacity');
+  // #600: плитки палитры (одна общая функция), плашка заливки стен и цвет
+  // границ комнаты — три явных `showOpacity=true`; раньше стена шла общей
+  // строкой с палитрой.
+  assert.equal((card.match(/\.showOpacity=\$\{true\}/g) || []).length, 3,
+    'general fill tiles, the wall-fill plate and room color explicitly keep their existing opacity');
   assert.match(card, /confirm:\s*this\._t\('color_picker\.confirm'\)/);
   for (const locale of ['en', 'ru', 'de', 'fr']) {
     const messages = JSON.parse(readFileSync(new URL(`../src/i18n/${locale}.json`, import.meta.url), 'utf8'));

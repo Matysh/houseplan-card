@@ -71,8 +71,10 @@ test('help accessibility copy is derived from every literal help consumer', () =
   // `space.layers.help` вместо них), плюс шесть новых из ленивого словаря
   // (подложка, границы, слои, названия, размер шрифта, свечение); коллектор
   // научился видеть `help(...)` порта — и `radar.help` из секции радара, который
-  // раньше проходил мимо счётчика, встал на учёт — 30 → 35.
-  assert.equal(consumers.derivedHelpAria.size, 35, 'the current settings surface has 35 statically derived help descriptions');
+  // раньше проходил мимо счётчика, встал на учёт — 30 → 35. Серия 2, «Общие
+  // настройки» по §5: пояснение радара стало подписью строки-тумблера (текст
+  // тот же, «?» у него нет) — 35 → 34.
+  assert.equal(consumers.derivedHelpAria.size, 34, 'the current settings surface has 34 statically derived help descriptions');
   for (const key of consumers.derivedHelpAria) {
     assert.equal(typeof dictionary[key], 'string', `${key} must accompany its .help consumer`);
   }

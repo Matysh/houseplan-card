@@ -59,7 +59,10 @@ export function readHouseplanProductionSource() {
     const fn = file.statements.find((statement) => ts.isFunctionDeclaration(statement)
       && statement.name?.text === exported);
     if (!fn) throw new Error(`Houseplan dialog module is missing ${exported}`);
-    const body = source.slice(source.indexOf('{', fn.getStart(file)), fn.end);
+    // #600: тела диалогов держат `const host = this.host` и пишут `host.…`;
+    // для контрактных регулярок это тот же `this.…`.
+    const body = source.slice(source.indexOf('{', fn.getStart(file)), fn.end)
+      .replaceAll(/(?<!this\.)\bhost\./g, 'this.');
     moved.set(method, body);
   }
   const replacements = [];
@@ -92,7 +95,7 @@ export function readHouseplanProductionSource() {
     const shared = readFileSync(new URL(path, import.meta.url), 'utf8')
       .replaceAll('port.host.', 'this.')
       .replaceAll('port.help(', 'this._help(')
-      .replaceAll(/\bhost\./g, 'this.');
+      .replaceAll(/(?<!this\.)\bhost\./g, 'this.');
     reconstructed += `\n// --- shared dialog module ${path} ---\n${shared}`;
   }
   return reconstructed;
