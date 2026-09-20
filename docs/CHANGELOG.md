@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.77.0-beta.4 — 2026-09-21
+
 - Polished the redesigned settings dialogs: switches, layer rows, opacity and
   slider values now align correctly; redundant labels and dirty-state text are
   gone; action buttons remain usable on narrow screens; and presence-radar
