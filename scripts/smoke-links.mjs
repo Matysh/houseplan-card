@@ -28,15 +28,6 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
-    symbols: ['formKitCss', 'colorField', 'colorTile', 'HpColorOpacity',
-      'renderGeneralSettingsDialog', 'renderMarkerDialog'],
-    smokes: ['smoke_dialog_polish_605.mjs'],
-    because: '#605: real browser geometry proves that opacity digits fit, a colour tile is '
-      + 'one keyboard-accessible hit surface, Wall fill resets only the draft, Data buttons '
-      + 'wrap, and both icon-picker branches keep one preview; source imports cannot observe '
-      + 'the painted controls or Windows input box metrics',
-  },
-  {
     symbols: ['formKitCss', 'renderRoomSettingsDialog'],
     smokes: ['smoke_dialog_polish_603.mjs'],
     because: '#603: the bundled form-kit track/knob box model, localized discard confirmation '
