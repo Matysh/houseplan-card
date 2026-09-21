@@ -3988,6 +3988,30 @@ const MUTANT_DEFINITIONS = [
       replace: '    if (false && evidence.materialSha !== expected.materialSha) errors.push(`shard ${shard}: foreign material SHA`);',
     }],
   },
+  // #604: шард, снятый по таймауту, оставляет лог без строк FAIL и без итоговой
+  // строки; отчёт называл его «ok», а агрегатор — доказанным.
+  {
+    id: 'mutation-report-truncated-log-is-ok',
+    guard: 'node --test --test-name-pattern="#604: лог без итоговой строки" test/mutation-gate-report.test.mjs',
+    because: 'a log cut by timeout-minutes has no FAIL lines only because the run never reached '
+      + 'them; calling it ok published "| 2 | ok |" for the cancelled shard of 21.09 (#604)',
+    patches: [{
+      file: 'scripts/mutation-gate-report.mjs',
+      find: "    else if (INTERRUPTED_OUTCOMES.has(outcome) || !summary) status = 'interrupted';",
+      replace: "    else if (INTERRUPTED_OUTCOMES.has(outcome)) status = 'interrupted'; // mutant: no summary line still ok",
+    }],
+  },
+  {
+    id: 'mutation-evidence-ignores-cancelled-step',
+    guard: 'node --test --test-name-pattern="#604: evidence несёт исход шага" test/mutation-gate-report.test.mjs',
+    because: 'the evidence job proves completeness, not just identity: a shard whose gate step '
+      + 'was cancelled by the job timeout must not count towards a proven material (#604)',
+    patches: [{
+      file: 'scripts/mutation-gate-report.mjs',
+      find: "    if (INTERRUPTED_OUTCOMES.has(evidence.outcome)) {\n      errors.push(`shard ${shard}: run was interrupted (step outcome ${evidence.outcome})`);\n    }",
+      replace: "    if (false && INTERRUPTED_OUTCOMES.has(evidence.outcome)) {\n      errors.push(`shard ${shard}: run was interrupted (step outcome ${evidence.outcome})`);\n    }",
+    }],
+  },
   // #481: журнал пойманных свидетелей — каждый защитный контракт под свидетелем.
   {
     id: 'ledger-records-escaped',

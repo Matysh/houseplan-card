@@ -38,6 +38,16 @@ const RED_GUARD_LINE = /^FAIL чистый прогон: (.+?) красный б
 const UNVERIFIABLE_LINE = /^FAIL (\S+): (неприменимый мутант|ошибка подготовки до заявленного теста|прерывание инфраструктуры)\s*$/;
 const CLEAN_UNVERIFIABLE_LINE = /^FAIL чистая (подготовка|инфраструктура): (.+?)\s*$/;
 const ANY_FAIL_LINE = /^FAIL /;
+// Итоговая строка раннера (`scripts/mutation-gate.mjs`, конец main). Лог без
+// неё — обрыв: шард снят по timeout-minutes или отменён, и «FAIL не встретился»
+// значит лишь «до FAIL не дошли». 21.09 (#604) шард 2/4 умер на 60-й минуте
+// после ≥155 зелёных строк, и отчёт назвал его «ok».
+const SUMMARY_LINE = /^поймано (\d+) из (\d+)\s*$/;
+// Исходы шага GitHub Actions (`steps.<id>.outcome`), которые шард пишет в
+// evidence (#604). `cancelled` — timeout job или отмена прогона; такой шард
+// не завершён независимо от того, что успел попасть в лог.
+export const SHARD_OUTCOMES = Object.freeze(['success', 'failure', 'cancelled', 'skipped']);
+const INTERRUPTED_OUTCOMES = new Set(['cancelled', 'skipped']);
 
 const FULL_SHA = /^[0-9a-f]{40}$/;
 const positiveInteger = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
@@ -54,6 +64,14 @@ export function mutationShardEvidence(input) {
     shard: Number(input.shard),
     shardCount: Number(input.shardCount),
   };
+  // Исход шага прогона — необязателен ради артефактов, записанных до #604;
+  // если назван, обязан быть одним из известных: опечатка в workflow не должна
+  // превращаться в «неизвестно, значит ок».
+  const outcome = input.outcome == null || input.outcome === '' ? undefined : String(input.outcome);
+  if (outcome !== undefined) {
+    if (!SHARD_OUTCOMES.includes(outcome)) throw new Error(`unknown shard outcome: ${outcome}`);
+    evidence.outcome = outcome;
+  }
   if (!FULL_SHA.test(evidence.materialSha) || !FULL_SHA.test(evidence.materialTree)
     || !FULL_SHA.test(evidence.workflowSha) || !positiveInteger(evidence.runId)
     || !positiveInteger(evidence.runAttempt) || !positiveInteger(evidence.shard)
@@ -107,6 +125,12 @@ export function validateMutationShardEvidence(rows, expected) {
       || Number(evidence.runAttempt) > Number(expected.runAttempt)) {
       errors.push(`shard ${shard}: impossible run attempt`);
     }
+    // Полнота — это не только «артефакт пришёл», но и «шард дошёл до конца»
+    // (#604): снятый по таймауту шаг оставляет evidence через `if: always()`,
+    // и без этой проверки агрегатор приписывал material результат, которого нет.
+    if (INTERRUPTED_OUTCOMES.has(evidence.outcome)) {
+      errors.push(`shard ${shard}: run was interrupted (step outcome ${evidence.outcome})`);
+    }
   }
   return { ok: errors.length === 0, errors, selected };
 }
@@ -136,7 +160,11 @@ export function loadMutationShardArtifacts(root, expected) {
   for (let shard = 1; shard <= Number(expected.shardCount); shard++) {
     const row = selectedByShard.get(shard);
     const path = row ? join(dirname(row.file), `mutation-shard-${shard}.log`) : '';
-    logs.push({ shard, text: path && existsSync(path) ? readFileSync(path, 'utf8') : null });
+    logs.push({
+      shard,
+      text: path && existsSync(path) ? readFileSync(path, 'utf8') : null,
+      outcome: row?.evidence?.outcome,
+    });
     if (row && (!path || !existsSync(path))) validation.errors.push(`shard ${shard}: log is missing`);
   }
   validation.ok = validation.errors.length === 0;
@@ -146,10 +174,18 @@ export function loadMutationShardArtifacts(root, expected) {
 /**
  * Разобрать логи шардов.
  *
- * @param {Array<{ shard: number, text: string | null }>} logs — `text: null`
- *   означает, что артефакт шарда не пришёл. Это тоже отказ: «лога нет» не
- *   значит «сбежавших нет», это значит «мы не знаем».
+ * @param {Array<{ shard: number, text: string | null, outcome?: string }>} logs —
+ *   `text: null` означает, что артефакт шарда не пришёл. Это тоже отказ: «лога
+ *   нет» не значит «сбежавших нет», это значит «мы не знаем». `outcome` —
+ *   исход шага прогона из evidence, если записан (#604).
  * @param {Set<string>|string[]} knownIds — id реестра.
+ *
+ * Статусы шарда: `ok` — лог дошёл до итоговой строки `поймано N из M`, N = M,
+ * ни одной строки FAIL, исход шага не назван или `success`; `failed` — есть
+ * FAIL либо итог не сходится либо шаг красный без FAIL; `interrupted` — лог
+ * обрывается до итоговой строки или исход шага `cancelled`/`skipped` (таймаут,
+ * отмена) — тоже отказ, потому что до сбежавших могли не дойти; `missing` —
+ * артефакта нет.
  */
 export function parseShardLogs(logs, knownIds) {
   const known = new Set(knownIds);
@@ -158,11 +194,14 @@ export function parseShardLogs(logs, knownIds) {
   const unverifiable = [];
   const unparsed = [];
   const shards = [];
-  for (const { shard, text } of logs) {
+  for (const { shard, text, outcome } of logs) {
     if (text == null) { shards.push({ shard, status: 'missing' }); continue; }
     let failed = false;
+    let summary = null;
     for (const raw of String(text).split('\n')) {
       const line = raw.replace(/\r$/, '');
+      const asSummary = SUMMARY_LINE.exec(line);
+      if (asSummary) { summary = { caught: Number(asSummary[1]), total: Number(asSummary[2]) }; continue; }
       if (!ANY_FAIL_LINE.test(line)) continue;
       failed = true;
       const asEscaped = ESCAPED_LINE.exec(line);
@@ -181,7 +220,12 @@ export function parseShardLogs(logs, knownIds) {
       }
       unparsed.push({ shard, line });
     }
-    shards.push({ shard, status: failed ? 'failed' : 'ok' });
+    let status;
+    if (failed) status = 'failed';
+    else if (INTERRUPTED_OUTCOMES.has(outcome) || !summary) status = 'interrupted';
+    else if (summary.caught !== summary.total || (outcome !== undefined && outcome !== 'success')) status = 'failed';
+    else status = 'ok';
+    shards.push({ shard, status });
   }
   return {
     escaped: [...escaped].sort(),
@@ -217,7 +261,10 @@ export function mutationGateReport(input) {
   lines.push('| шард | результат |');
   lines.push('|---|---|');
   for (const s of parsed.shards) {
-    const label = s.status === 'ok' ? 'ok' : s.status === 'failed' ? '**красный**' : '**артефакт не пришёл**';
+    const label = s.status === 'ok' ? 'ok'
+      : s.status === 'failed' ? '**красный**'
+        : s.status === 'interrupted' ? '**прерван — лог без итоговой строки (таймаут или отмена)**'
+          : '**артефакт не пришёл**';
     lines.push(`| ${s.shard} | ${label} |`);
   }
   if (evidenceErrors.length) {
@@ -270,6 +317,13 @@ export function mutationGateReport(input) {
     lines.push('');
     lines.push(`Артефакты шардов ${missing.map((s) => s.shard).join(', ')} не пришли — это отказ, а не отсутствие сбежавших.`);
   }
+  const interrupted = parsed.shards.filter((s) => s.status === 'interrupted');
+  if (interrupted.length) {
+    lines.push('');
+    lines.push(`Шарды ${interrupted.map((s) => s.shard).join(', ')} прерваны до итоговой строки \`поймано N из M\` — `
+      + 'timeout-minutes job или отмена прогона (#604). Сбежавших там не разобрано: до них могли не дойти. '
+      + 'Если это таймаут — реестр вырос, шардов не хватает.');
+  }
   return {
     title: `${REPORT_TITLE_MARKER}: ${input.date}`,
     body: `${lines.join('\n')}\n`,
@@ -298,12 +352,12 @@ if (invokedDirectly) {
     return found ? found.slice(name.length + 3) : fallback;
   };
   const writeEvidence = value('write-evidence');
-  const shardCount = Number(value('shards', '4'));
+  const shardCount = Number(value('shards', '6'));
   if (writeEvidence) {
     const evidence = mutationShardEvidence({
       materialSha: value('sha'), materialTree: value('tree'), workflowSha: value('workflow-sha'),
       runId: value('run-id'), runAttempt: value('run-attempt'),
-      shard: value('shard'), shardCount,
+      shard: value('shard'), shardCount, outcome: value('outcome'),
     });
     mkdirSync(dirname(writeEvidence), { recursive: true });
     writeFileSync(writeEvidence, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');

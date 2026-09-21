@@ -305,6 +305,31 @@ test('#472 AC2 / #549: каждый шард сохраняет лог и identi
   assert.match(mutationWorkflow, /--write-evidence=.*evidence\.json/);
 });
 
+// #604. Шард 2/4 снят по timeout-minutes: реестр вырос до 810 мутантов, ~203 на
+// шард, 55–61 мин при потолке 60. Шардов шесть, и делитель повторяется в
+// четырёх местах workflow — тест не даёт им разойтись при следующем делении.
+test('#604: делитель шардов ночного прогона один во всех местах workflow, шардов шесть', () => {
+  const matrix = /shard: \[([0-9, ]+)\]/.exec(mutationWorkflow);
+  assert.ok(matrix, 'matrix.shard объявлена списком');
+  const shards = matrix[1].split(',').map((n) => Number(n.trim()));
+  assert.deepEqual(shards, [1, 2, 3, 4, 5, 6]);
+  const n = shards.length;
+  assert.match(mutationWorkflow, new RegExp(`\\(шард \\$\\{\\{ matrix\\.shard \\}\\} из ${n}\\)`), 'имя job');
+  assert.match(mutationWorkflow, new RegExp(`--shard=\\$\\{\\{ matrix\\.shard \\}\\}/${n} `), 'делитель раннера');
+  // Только строки команд: комментарий про `--shards=6` — не место вызова.
+  const shardsArgs = mutationWorkflow.split('\n').filter((line) => !/^\s*#/.test(line))
+    .flatMap((line) => line.match(/--shards=\d+/g) || []);
+  assert.equal(shardsArgs.length, 3, 'evidence шарда, агрегатор, отчёт');
+  assert.ok(shardsArgs.every((arg) => arg === `--shards=${n}`), shardsArgs.join(' '));
+  assert.ok(!/--shard=\$\{\{ matrix\.shard \}\}\/4\b|--shards=4\b|из 4\)/.test(mutationWorkflow), 'старый делитель 4 не остался');
+  assert.match(mutationWorkflow, /timeout-minutes: 60/, 'потолок остаётся стражем от зависшего Chromium');
+});
+
+test('#604: исход шага прогона едет в evidence шарда', () => {
+  assert.match(mutationWorkflow, /- name: Каждый тест ловит свою поломку\n\s+id: gate\n/);
+  assert.match(mutationWorkflow, /--write-evidence=[^\n]*\n(?:[^\n]*\n){5}\s+--outcome=\$\{\{ steps\.gate\.outcome \}\}/);
+});
+
 test('#472 AC5: job report — только по расписанию, только при не-успехе, с полными правами', () => {
   const report = mutationWorkflow.slice(mutationWorkflow.indexOf('  report:'));
   assert.match(report, /if: always\(\) && github\.event_name == 'schedule' && \(needs\.mutants\.result != 'success' \|\| needs\.evidence\.result != 'success'\)/);

@@ -68,7 +68,7 @@ test('сбежавшие собираются из нескольких шард
   const report = mutationGateReport({ ...meta, guards, logs: [
     { shard: 1, text: 'ok   x\nFAIL beta-mutant: тест остался зелёным на сломанном коде\n     guard: node demo/smoke_b.mjs\n' },
     { shard: 2, text: 'FAIL alpha-mutant: тест остался зелёным на сломанном коде\nFAIL beta-mutant: тест остался зелёным на сломанном коде\n' },
-    { shard: 3, text: 'ok   gamma-mutant: тест покраснел, как обязан\n' },
+    { shard: 3, text: 'ok   gamma-mutant: тест покраснел, как обязан\n\nпоймано 1 из 1\n' },
   ] });
   assert.deepEqual(report.escaped, ['alpha-mutant', 'beta-mutant']);
   assert.deepEqual(report.shards.map((s) => s.status), ['failed', 'failed', 'ok']);
@@ -139,11 +139,54 @@ test('заголовок несёт постоянный маркер, тело 
 
 test('зелёный набор логов даёт failed=false (#472)', () => {
   const report = mutationGateReport({ ...meta, guards, logs: [
-    { shard: 1, text: 'ok   alpha-mutant: тест покраснел, как обязан\n' },
+    { shard: 1, text: 'ok   alpha-mutant: тест покраснел, как обязан\n\nпоймано 1 из 1\n', outcome: 'success' },
     { shard: 2, text: 'поймано 3 из 3\n' },
   ] });
   assert.equal(report.failed, false);
   assert.deepEqual(report.shards.map((s) => s.status), ['ok', 'ok']);
+});
+
+// #604. Шард 2/4 ночного прогона 21.09 снят по timeout-minutes на 60-й минуте
+// после ≥155 зелёных строк; строк FAIL в обрывке нет, и отчёт написал «ok» при
+// красном прогоне. Зелёным считается только лог, дошедший до итоговой строки.
+test('#604: лог без итоговой строки — прерван, а не «ok»', () => {
+  const truncated = 'ok   alpha-mutant: тест покраснел, как обязан\nok   beta-mutant: тест покраснел, как обязан\n';
+  const report = mutationGateReport({ ...meta, guards, logs: [
+    { shard: 1, text: 'поймано 2 из 2\n' },
+    { shard: 2, text: truncated },
+  ] });
+  assert.deepEqual(report.shards.map((s) => s.status), ['ok', 'interrupted']);
+  assert.equal(report.failed, true, 'обрыв — отказ: до сбежавших могли не дойти');
+  assert.deepEqual(report.escaped, [], 'сбежавших из обрывка не выдумывается');
+  assert.match(report.body, /\| 2 \| \*\*прерван — лог без итоговой строки \(таймаут или отмена\)\*\* \|/);
+  assert.match(report.body, /Шарды 2 прерваны до итоговой строки/);
+  assert.match(telegramSummary(report, 'https://x/issues/9'), /2:interrupted/);
+});
+
+test('#604: исход шага cancelled прерывает шард даже при итоговой строке; failure без FAIL — красный', () => {
+  const finished = 'ok   alpha-mutant: тест покраснел, как обязан\n\nпоймано 1 из 1\n';
+  const parsed = parseShardLogs([
+    { shard: 1, text: finished, outcome: 'cancelled' },
+    { shard: 2, text: finished, outcome: 'skipped' },
+    { shard: 3, text: finished, outcome: 'failure' },
+    { shard: 4, text: 'поймано 2 из 3\n', outcome: 'success' },
+    { shard: 5, text: finished, outcome: 'success' },
+    { shard: 6, text: finished },
+  ], KNOWN);
+  assert.deepEqual(parsed.shards.map((s) => s.status), ['interrupted', 'interrupted', 'failed', 'failed', 'ok', 'ok']);
+});
+
+test('#604: evidence несёт исход шага, агрегатор отвергает прерванный шард как неполный', () => {
+  const rows = [1, 2, 3, 4].map((shard) => evidenceRow(shard, { outcome: shard === 2 ? 'cancelled' : 'success' }));
+  assert.equal(rows[1].evidence.outcome, 'cancelled');
+  assert.equal(evidenceRow(1).evidence.outcome, undefined, 'старые артефакты без исхода остаются валидными');
+  const result = validateMutationShardEvidence(rows, expectedEvidence);
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((error) => error.includes('shard 2: run was interrupted (step outcome cancelled)')));
+  // красный шаг — не нарушение identity: красноту называет лог, не агрегатор
+  const red = validateMutationShardEvidence([1, 2, 3, 4].map((shard) => evidenceRow(shard, { outcome: 'failure' })), expectedEvidence);
+  assert.equal(red.ok, true);
+  assert.throws(() => mutationShardEvidence({ ...expectedEvidence, shard: 1, runAttempt: 1, outcome: 'timed-out' }), /unknown shard outcome/);
 });
 
 test('сводка для Telegram коротка и ведёт на issue (#472)', () => {

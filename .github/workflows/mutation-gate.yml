@@ -67,15 +67,21 @@ jobs:
           echo "ref=${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'dev' }}" >> "$GITHUB_OUTPUT"
 
   mutants:
-    name: "Мутанты: каждый обязан красить тесты (шард ${{ matrix.shard }} из 4)"
+    name: "Мутанты: каждый обязан красить тесты (шард ${{ matrix.shard }} из 6)"
     needs: material
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
-    # Шард ~64 мутантов × свой guard; бандл собирают только браузерные гварды.
-    # Час — потолок против зависшего Chromium.
+        shard: [1, 2, 3, 4, 5, 6]
+    # Шесть чересполосных шардов (#604): при четырёх шард нёс ~203 мутанта из
+    # 810 и рос с реестром — 42 мин 10.09, 57 мин 20.09, 61 мин 21.09, и шард
+    # 2/4 был снят по потолку без единого FAIL. Делитель тот же, что у
+    # `changed_mutants` в Validate; число шардов повторяется в `--shard=i/6`,
+    # `--shards=6` и имени job — тест `mutation-gate.test.mjs` держит их
+    # равными. Бандл собирают только браузерные гварды. Час — потолок против
+    # зависшего Chromium, а не бюджет шарда: шард, упёршийся в него, — сигнал
+    # снова делить, и отчёт (#472) называет такой шард прерванным, не «ok».
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -124,10 +130,14 @@ jobs:
       # ЧТО сбежало. Без артефакта отказ безымянный. `PIPESTATUS` — чтобы
       # `tee` не съел код выхода раннера.
       - name: Каждый тест ловит свою поломку
+        id: gate
         run: |
           mkdir -p artifacts/mutation-shard-${{ matrix.shard }}
           set -o pipefail
-          node scripts/mutation-gate.mjs --shard=${{ matrix.shard }}/4 2>&1 | tee artifacts/mutation-shard-${{ matrix.shard }}/mutation-shard-${{ matrix.shard }}.log
+          node scripts/mutation-gate.mjs --shard=${{ matrix.shard }}/6 2>&1 | tee artifacts/mutation-shard-${{ matrix.shard }}/mutation-shard-${{ matrix.shard }}.log
+      # Исход шага едет в evidence (#604): снятый по timeout-minutes шаг даёт
+      # `cancelled`, и агрегатор отвергает такой шард как неполный — лог без
+      # строк FAIL сам по себе зелёным не считается.
       - name: Записать identity шарда
         if: always()
         run: |
@@ -137,7 +147,8 @@ jobs:
             --tree=${{ needs.material.outputs.tree }} \
             --workflow-sha=${{ github.workflow_sha }} \
             --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }} \
-            --shard=${{ matrix.shard }} --shards=4
+            --shard=${{ matrix.shard }} --shards=6 \
+            --outcome=${{ steps.gate.outcome }}
       - name: Сохранить лог и identity шарда
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -147,7 +158,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-  # Результат нельзя приписывать material, пока не доказаны все четыре шарда.
+  # Результат нельзя приписывать material, пока не доказаны все шесть шардов —
+  # каждый с identity и с дошедшим до конца прогоном (#549, #604).
   # always() нужен при красном мутанте: лог красного шарда всё равно evidence.
   evidence:
     name: "Доказать единый material всех шардов"
@@ -171,7 +183,7 @@ jobs:
       - name: Проверить полноту и identity
         run: |
           node scripts/mutation-gate-report.mjs --verify-only \
-            --logs=artifacts/mutation-logs --shards=4 \
+            --logs=artifacts/mutation-logs --shards=6 \
             --sha=${{ needs.material.outputs.sha }} \
             --tree=${{ needs.material.outputs.tree }} \
             --workflow-sha=${{ github.workflow_sha }} \
@@ -214,7 +226,7 @@ jobs:
         run: |
           mkdir -p artifacts
           node scripts/mutation-gate-report.mjs \
-            --require-evidence --logs=artifacts/mutation-logs --shards=4 \
+            --require-evidence --logs=artifacts/mutation-logs --shards=6 \
             --sha=${{ needs.material.outputs.sha }} \
             --tree=${{ needs.material.outputs.tree }} \
             --workflow-sha=${{ github.workflow_sha }} \
