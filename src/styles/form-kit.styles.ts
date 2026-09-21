@@ -267,6 +267,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-toggle > input::before {
     content: '';
     position: absolute;
+    box-sizing: border-box;
     width: 36px;
     height: 22px;
     inset: 11px 4px;

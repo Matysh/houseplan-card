@@ -46,7 +46,7 @@
   "dialog.discard_title": "Abandonner vos modifications ?",
   "dialog.discard_message": "Vos modifications n’ont pas été enregistrées.",
   "dialog.discard_confirm": "Abandonner",
-  "dialog.discard_keep": "Continuer la modification",
+  "dialog.discard_keep": "Continuer",
   "gs.show_room_tooltip_hint": "Survolez une pièce sur le plan pour voir son résumé.",
   "gs.radar_show_live_hint": "Affiche ou masque toutes les cibles radar en direct. Cela ne démarre ni n’arrête l’enregistrement d’observation.",
   "gs.bg_custom_hint": "Couleur de fond personnalisée.",

@@ -34,6 +34,10 @@ const out = await page.evaluate(async () => {
   // --- AC1: четыре карточки по §6.1, старой разметки нет --------------------
   o.fourCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
     === JSON.stringify(['basics', 'fill', 'sources', 'sizes']);
+  o.basicsHasNoHeadingButKeepsFields = !q('.hpf-card[data-card="basics"] .hpf-head')
+    && !!q('.hpf-card[data-card="basics"] #room-name')
+    && !!q('.hpf-card[data-card="basics"] #room-area')
+    && !!q('#room-area')?.closest('.hpf-field')?.querySelector('hp-help');
   o.noLegacyMarkup = qa('.srcrow, .namein, .areasel, .dropbtn, .droppanel, .candlist, .roomtemprange, .hpf-scale, .opv, fieldset').length === 0;
   o.badgeShowsSpaceTitle = dlg().badge === c._spaceModel().title && !!dlg().shadowRoot.querySelector('.badge');
   o.previewKept = !!q('.hpf-card[data-card="sizes"] .hpf-tint.hpf-preview .cardpreview'); // Q2
@@ -147,6 +151,10 @@ const out = await page.evaluate(async () => {
   await upd(); await new Promise((r) => setTimeout(r, 60));
   const confirm = () => sr().querySelector('hp-confirm hp-dialog');
   o.discardAsksFirst = !!confirm() && !!dlg();
+  o.discardLabelsAreShort = ['Продолжить', 'Continue', 'Fortfahren', 'Continuer']
+    .includes(confirm()?.querySelector('[data-hp="dialog-cancel"]')?.textContent.trim())
+    && ['Отменить', 'Discard', 'Verwerfen', 'Abandonner']
+      .includes(confirm()?.querySelector('[data-hp="dialog-confirm"]')?.textContent.trim());
   confirm()?.querySelector('[data-hp="dialog-cancel"]')?.click(); await upd(); await new Promise((r) => setTimeout(r, 60));
   o.keepEditingKeepsDialog = !!dlg() && !confirm() && c._roomDialog === true && c._nameSel === 'Room 600';
   dlg().dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));

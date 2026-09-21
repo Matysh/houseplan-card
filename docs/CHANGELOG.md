@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed settings-dialog polish: the discard prompt's buttons no longer clip,
+  switch knobs sit evenly inside their tracks, and Room settings omit the
+  redundant heading ([#603](https://github.com/Matysh/houseplan-card/issues/603)).
+
 ## v1.77.0-beta.4 — 2026-09-21
 
 - Polished the redesigned settings dialogs: switches, layer rows, opacity and

@@ -781,7 +781,6 @@
   "toast.room_updated": "Raum aktualisiert",
   "space.card_font": "Schriftgröße der Raumkarten",
   "room.sizes_section": "Schriftgrößen",
-  "room.group_basics": "Allgemein",
   "room.group_basics.help": "Der Bereich verbindet den Raum mit einem Home-Assistant-Bereich, aus dem seine Sensoren stammen. Ohne Bereich bleibt er Geometrie.",
   "room.group_basics.help.aria": "Hilfe: Name und Bereich des Raums",
   "room.group_fill": "Füllung",

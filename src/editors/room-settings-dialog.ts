@@ -151,7 +151,6 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
         ${batchProgress ? html`<p class="hpf-hint" role="status" aria-live="polite">${batchProgress}</p>` : nothing}
         ${formCard({
           id: 'basics',
-          title: t('room.group_basics'),
           // §6.1: «?» стоит у зоны — пояснение про свободные зоны относится к ней, а не к карточке
           body: fieldGrid([
             field({

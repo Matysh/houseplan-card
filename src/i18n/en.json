@@ -781,7 +781,6 @@
   "toast.room_updated": "Room updated",
   "space.card_font": "Room-card font size",
   "room.sizes_section": "Font sizes",
-  "room.group_basics": "Basics",
   "room.group_basics.help": "The area links the room to a Home Assistant area, which is where its sensors come from. Without one the room stays geometry.",
   "room.group_basics.help.aria": "Help: room name and area",
   "room.group_fill": "Fill",

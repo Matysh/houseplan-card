@@ -1737,6 +1737,29 @@ export async function prepareGoldenScenario(page, scenario) {
       if (body && body.scrollWidth > body.clientWidth + 1) {
         throw new Error(`golden device lifecycle catalog overflows horizontally: ${scenario.id}`);
       }
+    } else if (scenario.dialog === 'room-discard') {
+      const room = card._curSpaceCfg?.rooms?.[0];
+      if (!room) throw new Error(`golden room is missing: ${scenario.id}`);
+      card._setMode('plan');
+      await card.updateComplete;
+      await settleMode(card);
+      card._openRoomEdit(room);
+      await card.updateComplete;
+      const input = card.renderRoot.querySelector('hp-dialog.roomdialog #room-name');
+      if (!input) throw new Error(`golden room editor is missing: ${scenario.id}`);
+      input.value = `${input.value} changed`;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      await card.updateComplete;
+      card.renderRoot.querySelector('hp-dialog.roomdialog')
+        .dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
+      await card.updateComplete;
+      await frame();
+      const confirm = card.renderRoot.querySelector('hp-confirm hp-dialog');
+      const labels = [...(confirm?.querySelectorAll('.danger-confirm-footer button') || [])]
+        .map((button) => button.textContent.trim());
+      if (JSON.stringify(labels) !== JSON.stringify(['Продолжить', 'Отменить'])) {
+        throw new Error(`golden discard labels are incomplete: ${scenario.id}`);
+      }
     } else if (scenario.dialog === 'room-temperature') {
       const space = card._curSpaceCfg;
       const room = space?.rooms?.[0];

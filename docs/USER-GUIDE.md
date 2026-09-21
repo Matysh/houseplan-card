@@ -520,10 +520,10 @@ smallest to largest. Save creates that room and consumes exactly coincident
 chain walls, Keep as walls rejects only that candidate, and Cancel leaves all
 accepted walls in place with no partial rooms.
 
-The room dialog is grouped into four cards: **Basics** (display name and Home
-Assistant area side by side), **Fill**, **Sensor sources** (temperature and
-humidity) and **Font sizes**. Each card explains itself behind the `?` next to
-its heading.
+The room dialog is grouped into four cards: the first has no heading (display
+name and Home Assistant area side by side), followed by **Fill**, **Sensor
+sources** (temperature and humidity) and **Font sizes**. The area help is next
+to its field; the other cards keep their `?` beside their heading.
 
 **Fill** starts with an **As the space** switch row: while it is on, the room
 follows the space's fill mode and the caption says which one. Turn it off and a

@@ -28,6 +28,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['formKitCss', 'renderRoomSettingsDialog'],
+    smokes: ['smoke_dialog_polish_603.mjs'],
+    because: '#603: the bundled form-kit track/knob box model, localized discard confirmation '
+      + 'and headingless room card are measured in a browser; source imports cannot prove '
+      + 'the rendered geometry or that both actions fit the real modal footer',
+  },
+  {
     symbols: ['displayIsNeutral', 'displayWantsValue'],
     smokes: ['smoke_static_icon.mjs', 'smoke_device_preview_parity.mjs'],
     because: '#588: два предиката режима наблюдаются как следствия — текст значения внутри '

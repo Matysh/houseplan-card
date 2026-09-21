@@ -73,7 +73,7 @@ const res = await page.evaluate(async () => {
   const groupTitles = () => [...sr().querySelectorAll('hp-dialog .hpf-card .hpf-head h3')]
     .map((h) => h.textContent.trim());
   out.createHasGroups = JSON.stringify(groupTitles()) === JSON.stringify([
-    c._t('room.group_basics'), c._t('room.group_fill'),
+    c._t('room.group_fill'),
     c._t('room.group_sources'), c._t('room.sizes_section'),
   ]);
   // #600 (Q4): «Как у пространства» — строка-тумблер, а не радио в списке.

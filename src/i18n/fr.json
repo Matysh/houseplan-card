@@ -781,7 +781,6 @@
   "toast.room_updated": "Pièce mise à jour",
   "space.card_font": "Taille de police des cartes",
   "room.sizes_section": "Tailles de police",
-  "room.group_basics": "Général",
   "room.group_basics.help": "La zone relie la pièce à une zone Home Assistant, d’où viennent ses capteurs. Sans zone, la pièce reste géométrique.",
   "room.group_basics.help.aria": "Aide : nom et zone de la pièce",
   "room.group_fill": "Remplissage",

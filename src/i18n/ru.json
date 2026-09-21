@@ -781,7 +781,6 @@
   "toast.room_updated": "Комната обновлена",
   "space.card_font": "Размер шрифта карточек",
   "room.sizes_section": "Размеры шрифтов",
-  "room.group_basics": "Основное",
   "room.group_basics.help": "Область связывает комнату с зоной Home Assistant: из неё берутся датчики. Без области комната остаётся геометрией.",
   "room.group_basics.help.aria": "Подсказка: имя и область комнаты",
   "room.group_fill": "Заливка",
