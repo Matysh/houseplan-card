@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.77.0-beta.5 — 2026-09-21
+
 - Corrected the furniture library: Exercise equipment is available under Other,
   Plant no longer shows the mislabeled machine, and Bookcase/Floor shelving use
   the matching drawings. Existing Cactus placements remain visible without
