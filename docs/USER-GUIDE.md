@@ -1039,6 +1039,11 @@ The Furniture palette always uses two levels: categories first, then the
 available plan variants. **All categories** returns to the first level and
 disarms the current symbol. Existing placed furniture keeps its saved size and
 position when the built-in artwork is updated.
+The library has 60 top-view symbols in 33 populated categories. **Other →
+Exercise equipment** now contains the exercise machine previously mislabeled
+as Cactus; Plant contains only the plant. Bookcase and floor shelving show
+their corrected drawings. A Cactus item on an older saved plan still appears
+as exercise equipment without changing its saved position, size or styling.
 
 The Image palette stores reusable files privately in House Plan. Each saved
 canonical file is at most 2 MiB; PNG, JPEG, WebP and safe SVG are supported.

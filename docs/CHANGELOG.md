@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Corrected the furniture library: Exercise equipment is available under Other,
+  Plant no longer shows the mislabeled machine, and Bookcase/Floor shelving use
+  the matching drawings. Existing Cactus placements remain visible without
+  changing their saved size, position or styling
+  ([#606](https://github.com/Matysh/houseplan-card/issues/606)).
 - Polished the four settings dialogs: colour tiles show complete opacity values
   and solid swatches with uppercase hex; Wall fill has Reset, Data actions use
   outlined buttons, and the device icon field no longer duplicates its preview

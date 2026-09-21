@@ -9,6 +9,7 @@ import {
   furnitureSignedFieldCm, furnitureSignedFieldValue, type FurnitureGroup,
 } from './furniture';
 import { GENERATED_FURNITURE_MENU } from './furniture-menu-art.generated';
+import { canonicalFurnitureId } from './furniture-id';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import type { I18nKey } from './i18n';
 import { CANVAS_LIMIT, NORM_W, clampCanvasN } from './space-geometry';
@@ -440,7 +441,7 @@ export class DecorImageEditor<Snapshot> {
               })).filter((entry) => entry.symbols.length).map(({ category, symbols }) => html`
                 <optgroup label=${`${this.host._t(`furn.group_${category.group}` as I18nKey)} · ${this.host._t(`furn.cat_${category.id}` as I18nKey)}`}>
                 ${symbols.map((symbol) => html`<option value=${symbol.id}
-                  ?selected=${symbol.id === dialog.symbol}>
+                  ?selected=${symbol.id === canonicalFurnitureId(dialog.symbol || '')}>
                   ${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}
                 </option>`)}
               </optgroup>`)}

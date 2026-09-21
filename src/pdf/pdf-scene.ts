@@ -1,6 +1,7 @@
 import type { DecorShape } from '../editors/decor/types';
 import { boxCorners, decorStrokeCm } from '../editors/decor/geometry';
 import { GENERATED_FURNITURE_ART } from '../furniture-plan-art.generated';
+import { canonicalFurnitureId } from '../furniture-id';
 import { formatArea } from '../area-format';
 import { roomPoly } from '../logic';
 import {
@@ -440,7 +441,7 @@ function buildPdfCandidate(
       angle: Number(shape.angle) || 0,
     });
     else if (shape.kind === 'furniture') {
-      const art = GENERATED_FURNITURE_ART[shape.symbol];
+      const art = GENERATED_FURNITURE_ART[canonicalFurnitureId(shape.symbol)];
       if (art) commands.push({
         kind: 'vector', ops: transformSvgPath(art.d, furnitureMatrix(shape, art.viewW, art.viewH)),
         stroke: INK,

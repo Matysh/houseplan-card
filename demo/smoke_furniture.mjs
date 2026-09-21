@@ -101,13 +101,21 @@ const res = await page.evaluate(async () => {
   out.firstLevelHasNoPlanVariants = !pal()?.querySelector('.furnitem[data-symbol]');
   out.requiredCategoriesArePresent = ['sofa', 'toilet', 'washer']
     .every((id) => !!category(id));
-  // #593: пакет 0.4.0 дал вид сверху `computer`, `hood` и `oven` — три плитки
-  // перестали быть пустыми и появились в палитре. Пустой осталась одна
-  // `exercise`: кактус живёт в «Растении», а тренажёра в поставке нет.
-  out.menuOnlyCategoriesStayHidden = !category('exercise');
-  out.newCategoriesAreVisible = ['computer', 'hood', 'oven'].every((id) => !!category(id));
-  out.paletteShowsThirtyTwoCategories = pal()
-    ? pal().querySelectorAll('.furnitem[data-category]').length === 32 : false;
+  // #606: the former cactus drawing is an exercise machine, so this category
+  // now opens onto a real plan variant instead of being hidden.
+  out.exerciseCategoryIsVisible = !!category('exercise');
+  out.newCategoriesAreVisible = ['computer', 'hood', 'oven', 'exercise'].every((id) => !!category(id));
+  out.paletteShowsThirtyThreeCategories = pal()
+    ? pal().querySelectorAll('.furnitem[data-category]').length === 33 : false;
+  category('exercise')?.click(); await c.updateComplete;
+  out.exerciseCategoryHasOneVariant = pal()?.querySelectorAll('.furnitem[data-symbol]').length === 1
+    && !!pal()?.querySelector('.furnitem[data-symbol="exercise"]')
+    && !pal()?.querySelector('.furnitem[data-symbol="cactus"]');
+  pal()?.querySelector('.furnback')?.click(); await c.updateComplete;
+  category('plant')?.click(); await c.updateComplete;
+  out.plantCategoryHasOnlyPlant = pal()?.querySelectorAll('.furnitem[data-symbol]').length === 1
+    && !!pal()?.querySelector('.furnitem[data-symbol="plant"]');
+  pal()?.querySelector('.furnback')?.click(); await c.updateComplete;
   const categoryD = category('sofa')?.querySelector('svg.furncatprev path')?.getAttribute('d') || '';
   out.categoryUsesFrontArtwork = categoryD.length > 10;
   category('sofa')?.click(); await c.updateComplete;
@@ -634,6 +642,49 @@ const res = await page.evaluate(async () => {
   const left = c._decorList.find((s) => s.kind === 'furniture');
   out.visibleInView = !!left && !!el(left.id);
   out.inertInView = !!left && pe(left.id) === 'none';
+
+  // #606: a saved 0.4.0 cactus is a read-only alias, not a 61st palette item.
+  // It must request the lazy artwork and remain editable without changing the
+  // saved id or transform until the person deliberately changes the variant.
+  const legacy = {
+    id: 'legacy-cactus', kind: 'furniture', symbol: 'cactus',
+    x: 0.3, y: 0.3, w: 0.17, h: 0.29, angle: 30,
+    flip_h: true, color: '#123456', opacity: 0.8, width_cm: 2,
+  };
+  c._curSpaceCfg.decor = [legacy]; c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  const legacyDrawing = attr(legacy.id, 'd');
+  out.savedCactusDrawsInView = typeof legacyDrawing === 'string' && legacyDrawing.length > 20;
+  c._curSpaceCfg.decor = [{ ...legacy, symbol: 'exercise' }];
+  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  out.savedCactusUsesExerciseArtwork = legacyDrawing === attr(legacy.id, 'd');
+  c._curSpaceCfg.decor = [legacy]; c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  sr().querySelectorAll('.modetab')[2].click(); await c.updateComplete;
+  while (c._modeTransitionBusy || c._refitRaf || c._pendingRefitSize) await new Promise(requestAnimationFrame);
+  c._decorTool = 'select'; c._decorShapeDbl({ preventDefault() {}, stopPropagation() {} }, legacy);
+  await c.updateComplete;
+  const symbolSelect = () => sr().querySelector('hp-dialog select.namein');
+  out.legacyPropertiesShowExercise = symbolSelect()?.selectedOptions[0]?.value === 'exercise'
+    && c._decorShapeDialog?.symbol === 'cactus';
+  c._decorSaveShape(); await c.updateComplete;
+  const savedLegacy = c._decorList.find((shape) => shape.id === legacy.id);
+  out.unrelatedSaveKeepsLegacyIdAndTransform = savedLegacy?.symbol === 'cactus'
+    && ['x', 'y', 'w', 'h', 'angle', 'flip_h', 'color', 'opacity', 'width_cm']
+      .every((key) => near(Number(savedLegacy[key]), Number(legacy[key]), 1e-8)
+        || savedLegacy[key] === legacy[key]);
+  if (savedLegacy) {
+    c._decorShapeDbl({ preventDefault() {}, stopPropagation() {} }, savedLegacy);
+    await c.updateComplete;
+    if (symbolSelect()) {
+      symbolSelect().value = 'plant';
+      symbolSelect().dispatchEvent(new Event('change', { bubbles: true }));
+      await c.updateComplete;
+      symbolSelect().value = 'exercise';
+      symbolSelect().dispatchEvent(new Event('change', { bubbles: true }));
+      await c.updateComplete;
+    }
+    c._decorSaveShape(); await c.updateComplete;
+  }
+  out.explicitVariantChangeWritesExercise = c._decorList.find((shape) => shape.id === legacy.id)?.symbol === 'exercise';
   return out;
 });
 

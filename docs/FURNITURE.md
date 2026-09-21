@@ -15,18 +15,22 @@ size, rotation, orientation and styling after an update.
 ## Library and source
 
 The public library contains **60** top-view symbols, all of them designer
-artwork from `assets/furniture/houseplan-0.4.0/svg/plan` (#593). The previous
-split — 44 designer symbols plus 12 built-ins drawn from unit-box primitives —
-is gone: pack 0.4.0 redraws those 12 ids (refrigerator, dishwasher, washer,
-dryer, air conditioner, water heater, shower, sink, stairs, fireplace, plant
-and rug) and adds four new ones: `computer`, `hood`, `oven` and `cactus`.
+artwork from the corrected `assets/furniture/houseplan-0.4.1/svg/plan` (#593,
+#606). The previous split — 44 designer symbols plus 12 built-ins drawn from
+unit-box primitives — is gone: pack 0.4.0 redrew those 12 ids (refrigerator,
+dishwasher, washer, dryer, air conditioner, water heater, shower, sink, stairs,
+fireplace, plant and rug) and added `computer`, `hood`, `oven` and `cactus`.
+Pack 0.4.1 corrects that last public id to `exercise` while retaining the
+original drawing and a read-only alias for saved `cactus` objects.
 
 The designer pack also contains 33 front-view category illustrations in
-`svg/menu`. One of them, `exercise`, has no top-view symbol and is
-intentionally hidden instead of opening an empty category, so the palette shows
-32 categories. The cactus lives under `plant`, not under `exercise`: the
-`exercise` tile draws an exercise machine, and opening it onto a cactus would
-misdescribe the palette (owner's decision in #593).
+`svg/menu`. All 33 categories are populated. Pack 0.4.0 mistakenly labeled
+an exercise-machine drawing as `cactus` and put it under `plant`; 0.4.1 keeps
+that drawing unchanged under public id `exercise` in the `exercise` category.
+The `bookshelf` and `shelf_floor` plan drawings were also exchanged in 0.4.1
+to match their names. Menu artwork is unchanged. A saved `cactus` continues to
+render and edit as an exercise machine without rewriting the stored id; an
+explicit new selection writes `exercise`.
 
 `pack.json` is the source of truth for stable ids, categories, names,
 default centimetre dimensions and SVG paths. Run:
@@ -48,8 +52,9 @@ The generator validates a deliberately small, inert SVG subset and produces:
 Generated files are never edited manually. The 93 drawings were created by
 Sergey Matyunin (`Matysh`) and granted to the project under its MIT License in
 [issue #593](https://github.com/Matysh/houseplan-card/issues/593#issuecomment-5739841899).
-No separate attribution is required in the interface. The pack's own
-`README.md` records the reviewed archive and its SHA-256.
+No separate attribution is required in the interface. The 0.4.1 pack's own
+`README.md` records the reviewed 0.4.0 source archive, its SHA-256 and the
+precise corrections; the historical 0.4.0 README remains unchanged.
 
 ## Palette interaction
 
@@ -142,6 +147,12 @@ existed before #593 still exists and keeps its default centimetre dimensions to
 the number: pack 0.4.0 changes the drawing inside the box, never the box. An
 already saved object's `w` and `h` are never rewritten, and an id unknown to an
 older card remains valid data that simply renders nothing.
+
+Pack 0.4.1 reads legacy `symbol: cactus` as `exercise` in the regular plan,
+editor preview/properties and PDF path. The alias is read-only: ordinary saves
+leave the stored id and all physical/style fields alone. An explicit variant
+change stores the new id. Downgrading to a pre-0.4.1 card does not draw a newly
+placed `exercise`, but does not discard its saved record.
 
 Plan artwork is available in View and kiosk: a plan with furniture requests the
 artwork chunk once per page before its first frame, and the first-open veil

@@ -523,8 +523,6 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
     'confirm.delete_partition_openings_item',
     // #598: 'Plan' — одно и то же слово в EN, DE и FR
     'gs.card_plan',
-    // #593: 'Cactus' пишется одинаково по-английски и по-французски
-    'furn.sym_cactus',
     'decor.rect',
     'decor.image',
     'err.code',

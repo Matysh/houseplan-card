@@ -717,6 +717,15 @@ test('decor toggle uses the canonical designer furniture vector path', () => {
   assert.ok(make(true).commands.some((command) => command.kind === 'vector'
     && command.ops.some((operation) => operation.op === 'C')));
   assert.ok(!make(false).commands.some((command) => command.kind === 'vector'));
+
+  const vectorFor = (symbol) => {
+    decorated.decor[0].symbol = symbol;
+    return make(true).commands.find((command) => command.kind === 'vector');
+  };
+  assert.deepEqual(vectorFor('cactus'), vectorFor('exercise'),
+    'saved 0.4.0 cactus exports the exercise drawing, not a placeholder rectangle');
+  assert.ok(vectorFor('bookshelf'));
+  assert.ok(vectorFor('shelf_floor'));
 });
 
 test('current 20-room large-house space builds from the visible geometry cache under 200 ms', () => {

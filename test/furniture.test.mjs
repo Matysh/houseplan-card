@@ -86,7 +86,16 @@ test('#593: default sizes of the 56 pre-existing ids are byte-for-byte the pack 
   assert.deepEqual(drift, []);
   // Новые ID — единственные, которых в таблице нет.
   const added = FURNITURE.map((s) => s.id).filter((id) => !(id in BEFORE)).sort();
-  assert.deepEqual(added, ['cactus', 'computer', 'hood', 'oven']);
+  assert.deepEqual(added, ['computer', 'exercise', 'hood', 'oven']);
+});
+
+test('#606: saved cactus resolves through catalog, lazy gate and actual artwork without a second visible variant', () => {
+  assert.equal(FURNITURE.some((symbol) => symbol.id === 'cactus'), false);
+  assert.equal(furnitureSymbol('cactus')?.id, 'exercise');
+  assert.equal(furnitureArtIsLazy('cactus'), true);
+  assert.deepEqual(furnitureDefaultCm('cactus'), { w: 70, h: 120 });
+  assert.deepEqual(furnitureGraphic('cactus'), furnitureGraphic('exercise'));
+  assert.equal(furniturePathD('cactus', 70, 120), furniturePathD('exercise', 70, 120));
 });
 
 test('the three groups the owner named are all populated, and every symbol is in exactly one', () => {

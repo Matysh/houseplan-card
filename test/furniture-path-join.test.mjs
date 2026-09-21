@@ -33,14 +33,14 @@ test('AC4: путь без начального moveto — ошибка, а не
   assert.throws(() => joinFurniturePaths(null), /has no paths/);
 });
 
-// #593: пакет 0.4.0 рисует каждый символ ОДНИМ путём — многопутёвых файлов,
+// #593/#606: текущий пакет 0.4.1 рисует каждый символ ОДНИМ путём — многопутёвых файлов,
 // на которых дефект #584 был виден в числах, в нём не осталось. Поэтому
 // свидетель разделён надвое: факт о поставке проверяется на поставке, а
 // арифметика склейки — на реальных байтах пакета плюс относительный путь,
 // который такая поставка однажды снова принесёт. Удалять свидетеля нельзя:
 // склейка живёт в генераторе и обязана остаться правильной.
-test('#593: в поставке 0.4.0 каждый символ — один путь, и склейка на нём тождественна', () => {
-  const dir = new URL('../assets/furniture/houseplan-0.4.0/svg/', import.meta.url);
+test('#606: в поставке 0.4.1 каждый символ — один путь, и склейка на нём тождественна', () => {
+  const dir = new URL('../assets/furniture/houseplan-0.4.1/svg/', import.meta.url);
   let checked = 0;
   for (const kind of ['menu', 'plan']) {
     for (const file of readdirSync(new URL(`${kind}/`, dir))) {
@@ -60,7 +60,7 @@ test('AC4: на реальных байтах пакета склейка не �
   // как это было у `stairs` и `tv` в 0.3.0. Простой `join(' ')` продолжил бы
   // координаты первого, и деталь ушла бы далеко за `viewBox` 110 × 110.
   const source = readFileSync(
-    new URL('../assets/furniture/houseplan-0.4.0/svg/menu/stairs.svg', import.meta.url), 'utf8');
+    new URL('../assets/furniture/houseplan-0.4.1/svg/menu/stairs.svg', import.meta.url), 'utf8');
   const real = [...source.matchAll(/(?:^|\s)d="([^"]*)"/g)].map((match) => match[1])[0];
   const tail = 'm100 100 h5';
   const own = svgPathBounds(`M ${tail.slice(1)}`);

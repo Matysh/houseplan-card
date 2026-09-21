@@ -655,6 +655,22 @@ export const GOLDEN_SCENARIOS = Object.freeze([
         w: 0.07, h: 0.12, color: '#141832', opacity: 1, width_cm: 1.2 },
     ],
     language: 'ru', theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  // #606: the old saved id and the new public id draw the same machine; the
+  // bookshelf/shelf_floor pair must be visibly different in their fixed boxes.
+  { id: 'furniture-corrected-art-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    decorOverride: [
+      { id: 'furn-legacy-cactus', kind: 'furniture', symbol: 'cactus', x: 0.10, y: 0.18,
+        w: 0.07, h: 0.12, angle: 25, flip_h: true,
+        color: '#141832', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-exercise', kind: 'furniture', symbol: 'exercise', x: 0.28, y: 0.18,
+        w: 0.07, h: 0.12, color: '#141832', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-bookshelf', kind: 'furniture', symbol: 'bookshelf', x: 0.14, y: 0.54,
+        w: 0.19, h: 0.07, angle: 20, flip_v: true,
+        color: '#141832', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-shelf-floor', kind: 'furniture', symbol: 'shelf_floor', x: 0.14, y: 0.80,
+        w: 0.19, h: 0.07, color: '#141832', opacity: 1, width_cm: 1.2 },
+    ],
+    language: 'ru', theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'furniture-transform-light', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     decorOverride: [
       ...decorLayerFixture.filter((shape) => shape.kind !== 'furniture'),

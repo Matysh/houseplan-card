@@ -8722,14 +8722,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'furniture-cactus-lands-in-exercise',
+    id: 'furniture-exercise-misfiled-in-plant',
     guard: 'node --test test/furniture-assets.test.mjs',
-    because: '#593: плитка категории «Тренажёр» рисует тренажёр. Открывать её на кактус — '
-      + 'врать о содержимом палитры; решение владельца — кактус в «Растении»',
+    because: '#606: рисунок прежнего cactus — тренажёр; перенос его в «Растение» снова '
+      + 'скроет категорию «Тренажёр» и покажет неверный вариант растения',
     patches: [{
-      file: 'assets/furniture/houseplan-0.4.0/pack.json',
-      find: '      "file": "svg/plan/cactus.svg",\n      "menu_icon": "plant",',
-      replace: '      "file": "svg/plan/cactus.svg",\n      "menu_icon": "exercise",',
+      file: 'assets/furniture/houseplan-0.4.1/pack.json',
+      find: '      "file": "svg/plan/exercise.svg",\n      "menu_icon": "exercise",',
+      replace: '      "file": "svg/plan/exercise.svg",\n      "menu_icon": "plant",',
     }],
   },
   {
@@ -8739,7 +8739,7 @@ const MUTANT_DEFINITIONS = [
       + 'исполнимая защита от повторения истории #159. Если тест их не сверяет, документ '
       + 'провенанса можно переписать под любую поставку, и никто не заметит',
     patches: [{
-      file: 'assets/furniture/houseplan-0.4.0/README.md',
+      file: 'assets/furniture/houseplan-0.4.1/README.md',
       find: '`69BA5E0C398542D59F24269F637F57B8EBF31C2836C9D493F084AD29AB299FDE`',
       replace: '`0000000000000000000000000000000000000000000000000000000000000000`',
     }],
@@ -8771,8 +8771,8 @@ const MUTANT_DEFINITIONS = [
       // A well-meaning "fall back to the bundled artwork" is exactly how the
       // chunk would creep back into the initial graph.
       file: 'src/furniture.ts',
-      find: '  return FURNITURE_ART_RUNTIME.art(id, host) ?? null;',
-      replace: '  return FURNITURE_ART_RUNTIME.art(id, host) ?? EAGER_ART[id] ?? null;',
+      find: '  return FURNITURE_ART_RUNTIME.art(canonicalFurnitureId(id), host) ?? null;',
+      replace: '  return FURNITURE_ART_RUNTIME.art(canonicalFurnitureId(id), host) ?? EAGER_ART[canonicalFurnitureId(id)] ?? null;',
     }],
   },
   {

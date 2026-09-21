@@ -32,6 +32,7 @@
 import { NORM_W, GRID_PITCH, CANVAS_LIMIT } from './space-geometry';
 import { GENERATED_FURNITURE_CATALOG } from './furniture-plan-catalog.generated';
 import { FURNITURE_ART_RUNTIME, type FurnitureArtHost } from './furniture-art-runtime';
+import { canonicalFurnitureId } from './furniture-id';
 
 /** Groups the palette shows, in the order it shows them. */
 export const FURNITURE_GROUPS = ['furniture', 'appliance', 'sanitary', 'other'] as const;
@@ -82,14 +83,14 @@ const BY_ID = new Map(FURNITURE.map((s) => [s.id, s]));
  *  plan written by a newer card must still validate, save and simply render
  *  nothing in an older one. */
 export function furnitureSymbol(id: string | null | undefined): FurnitureSymbol | null {
-  return (id && BY_ID.get(id)) || null;
+  return (id && BY_ID.get(canonicalFurnitureId(id))) || null;
 }
 
 /** Is this a known symbol, and therefore one whose drawing arrives with the
  *  lazy artwork chunk (#474)? Since #593 the two questions have one answer:
  *  every symbol is designer artwork, and an unknown id has no drawing at all. */
 export function furnitureArtIsLazy(id: string): boolean {
-  return BY_ID.has(id);
+  return BY_ID.has(canonicalFurnitureId(id));
 }
 
 /** The symbols of one group, in table order. */
@@ -155,14 +156,14 @@ export function furnitureGraphic(id: string, host?: FurnitureArtHost): Furniture
   // into fallback renders the piece as an unknown symbol — nothing — and a
   // host passed here is re-rendered once the runtime settles. Since #593 that
   // is true for all 60 symbols, including the 12 that used to draw eagerly.
-  return FURNITURE_ART_RUNTIME.art(id, host) ?? null;
+  return FURNITURE_ART_RUNTIME.art(canonicalFurnitureId(id), host) ?? null;
 }
 
 /** Compatibility helper for callers that only need a path string. Designer
  * artwork remains in its native viewBox; use `furnitureGraphic` when sizing it. */
 export function furniturePathD(id: string, w: number, h: number): string {
   if (!furnitureSymbol(id) || !(w > 0) || !(h > 0)) return '';
-  return FURNITURE_ART_RUNTIME.art(id)?.d || '';
+  return FURNITURE_ART_RUNTIME.art(canonicalFurnitureId(id))?.d || '';
 }
 
 /**
