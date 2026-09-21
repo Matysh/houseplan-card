@@ -28,6 +28,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['canonicalFurnitureId'],
+    smokes: ['smoke_furniture.mjs'],
+    because: '#606: the bundled furniture palette and saved cactus object are checked through '
+      + 'the browser DOM; the smoke cannot import the read-only alias resolver by name',
+  },
+  {
     symbols: ['formKitCss', 'renderRoomSettingsDialog'],
     smokes: ['smoke_dialog_polish_603.mjs'],
     because: '#603: the bundled form-kit track/knob box model, localized discard confirmation '
