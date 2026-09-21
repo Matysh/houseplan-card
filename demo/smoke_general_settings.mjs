@@ -16,12 +16,14 @@ const res = await page.evaluate(async () => {
   // #600 §5: инвентарь цветов — плитки (`.hpf-colortile`) и одна плашка стены
   // (`.hpf-colorrow`); радиус свечения и фон — поля набора. Прежний `.gsrow`
   // считал всё подряд, теперь каждая поверхность считается своим классом.
+  const optimizeAction = [...sr().querySelectorAll('hp-dialog [data-card="data"] .hpf-actions button')]
+    .find((button) => button.textContent.trim() === c._t('gs.align_all'));
   out.rows = sr().querySelectorAll('hp-dialog .hpf-colortile').length
     + sr().querySelectorAll('hp-dialog .hpf-colorrow').length
     + (sr().querySelector('hp-dialog #gs-glow-radius') ? 1 : 0)
     + (sr().querySelector('hp-dialog input[name="gs-bg-mode"]') ? 1 : 0)
     + (sr().querySelector('hp-dialog input[name="gs-sun-ray-origin"]') ? 1 : 0)
-    + (sr().querySelector('hp-dialog .alignall') ? 1 : 0);
+    + (optimizeAction ? 1 : 0);
   // #598: форма собрана в карточки; #600: подзаголовки внутри — `.hpf-sub h4`.
   out.cards = [...sr().querySelectorAll('hp-dialog .hpf-card > .hpf-head h3')]
     .map((l) => l.textContent.trim());
@@ -80,7 +82,7 @@ const res = await page.evaluate(async () => {
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(res, {
   "rows": 15, // 10 плиток + плашка стены + радиус свечения + фон + грань окна #577
-               // + «Оптимизировать планы» (docs/CANVAS.md §9)
+               // + «Оптимизировать планы» по действию, а не удалённому #605 классу alignall
   "cards": ["Display", "Zigbee links", "Room fill colors", "Light-source glow", "Plan", "Sun", "Data"],
   "groups": ["Lights", "Temperature", "Zigbee signal", "Backup and transfer", "Plan maintenance"],
   "everyCardHasContent": true,
