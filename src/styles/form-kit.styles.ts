@@ -363,13 +363,16 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-tile:has(input:disabled) input { cursor: default; }
   .${p}-colortiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .${p}-colortile { display: grid; gap: 6px; min-width: 0; padding: 6px 6px 7px; border: 1px solid var(${tokens.line}); border-radius: 8px; background: var(${tokens.surface}); }
-  .${p}-colortile > .${p}-colortile-swatch { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 3px 8px 3px 3px; border: 1px solid var(${tokens.line}); border-radius: 6px; font-size: .875rem; font-weight: 500; line-height: 1.25; }
-  .${p}-colortile > .${p}-colortile-swatch > span { min-width: 0; overflow-wrap: anywhere; }
-  .${p}-colortile > .${p}-colortile-swatch > hp-color-opacity { flex: none; }
-  .${p}-colortile-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .${p}-colortile > .${p}-colortile-swatch { position: relative; min-height: 48px; border: 1px solid var(${tokens.line}); border-radius: 6px; font-size: .875rem; font-weight: 500; line-height: 1.25; }
+  .${p}-colortile > .${p}-colortile-swatch > span { position: absolute; z-index: 1; inset: 0; display: flex; align-items: center; padding: 5px 10px; min-width: 0; overflow-wrap: anywhere; pointer-events: none; }
+  .${p}-colortile > .${p}-colortile-swatch > hp-color-opacity { position: absolute; inset: 0; }
+  .${p}-colortile-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
   .${p}-colortile-meta .${p}-hex { font-size: .8125rem; }
   .${p}-colortile-meta .${p}-unit { height: 32px; }
-  .${p}-colortile-meta .${p}-unit > input { width: 3.2em; min-width: 3em; padding: 4px 4px 4px 7px; font-size: .8125rem; }
+  .${p}-colortile-meta .${p}-unit > input { width: 3.6em; min-width: 3.6em; padding: 4px 4px 4px 7px; font-size: .8125rem; }
+  .${p}-colortile-meta .${p}-unit > input[type='number'] { appearance: textfield; }
+  .${p}-colortile-meta .${p}-unit > input[type='number']::-webkit-inner-spin-button,
+  .${p}-colortile-meta .${p}-unit > input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   .${p}-colortile-meta .${p}-unit > span { padding: 0 7px 0 0; font-size: .8125rem; }
   .${p}-colorfield {
     display: flex;
@@ -389,6 +392,9 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-colorfield > .${p}-opacity { display: flex; align-items: center; gap: 8px; font-size: .875rem; color: var(${tokens.muted}); }
   .${p}-colorfield > .${p}-opacity > .${p}-unit { height: 38px; }
   .${p}-colorfield > .${p}-opacity > .${p}-unit > input { width: 4.8em; min-width: 4.8em; }
+  .${p}-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; }
+  .${p}-actions .btn { box-sizing: border-box; min-height: 44px; max-width: 100%; white-space: normal; text-align: left; }
+  .${p}-actions .backupupload { max-width: 100%; }
   .${p}-colorrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; min-height: 56px; }
   .${p}-colorrow > .${p}-colorfield { justify-self: end; }
   .${p}-colorrow > .${p}-labelrow { min-height: 0; }
@@ -470,9 +476,14 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-toolbar > .${p}-input { flex: 1 1 200px; width: auto; }
   .${p}-check { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: .875rem; color: var(${tokens.muted}); cursor: pointer; white-space: nowrap; }
   .${p}-check > input { width: 18px; height: 18px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
-  .${p}-iconfield { display: flex; align-items: center; gap: 8px; }
-  .${p}-iconfield > .${p}-input, .${p}-iconfield > ha-icon-picker { flex: 1 1 auto; min-width: 0; }
-  .${p}-iconpreview { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.canvas}); color: var(${tokens.muted}); }
+  .${p}-iconfield { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .${p}-iconfield-control { box-sizing: border-box; display: flex; align-items: center; flex: 1 1 auto; min-width: 0; min-height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.canvas}); }
+  .${p}-iconfield-control:focus-within { outline: 2px solid var(${tokens.accent}); outline-offset: 2px; }
+  .${p}-iconfield-control > .${p}-input, .${p}-iconfield-control > ha-icon-picker { flex: 1 1 auto; min-width: 0; width: 100%; }
+  ${form} .${p}-iconfield-control > .${p}-input { min-height: 42px; height: 42px; border: 0; background: transparent; }
+  .${p}-iconfield-control > .${p}-input:focus { outline: 0; }
+  .${p}-iconfield-control > ha-icon-picker { display: block; min-height: 42px; --mdc-text-field-fill-color: transparent; --mdc-text-field-idle-line-color: transparent; --mdc-text-field-hover-line-color: transparent; --mdc-text-field-height: 42px; --mdc-shape-small: 7px; --ha-color-form-background: transparent; --ha-color-border-neutral-loud: transparent; --md-list-item-one-line-container-height: 42px; --md-list-item-two-line-container-height: 42px; }
+  .${p}-iconpreview { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 42px; width: 42px; height: 42px; color: var(${tokens.muted}); }
   .${p}-mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8125rem; }
   .${p}-hint > .${p}-link { padding: 0; }
   .${p}-hint ha-icon { --mdc-icon-size: 16px; display: inline-flex; vertical-align: -3px; }

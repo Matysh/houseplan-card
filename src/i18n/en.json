@@ -256,7 +256,7 @@
   "marker.lqi_a11y_mid": "LQI {value}, medium signal",
   "marker.lqi_a11y_high": "LQI {value}, high signal",
   "marker.size_label": "Icon size and rotation",
-  "marker.angle_label": "Rotate",
+  "marker.angle_label": "Rotation",
   "marker.model_label": "Model",
   "marker.model_ph": "e.g. Aqara T&H",
   "marker.link_label": "Link",

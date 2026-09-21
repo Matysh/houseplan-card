@@ -532,6 +532,8 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
     'gs.about_version',
     'gs.north_letter',
     'gs.unit_m',
+    // #605: Rotation is the same noun in English and French.
+    'marker.angle_label',
     'marker.desc_label',
     'marker.preview.multiple_sources',
     'marker.value_badge_attr_current_position',

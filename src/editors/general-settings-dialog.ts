@@ -64,7 +64,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
     return colorTile({
       label, hex: v.c, opacity: v.a, opacityLabel: st('gs.opacity_of', { name: label }),
       onOpacity: (a) => this._setFillColor(key, { c: v.c, a }),
-      picker: html`<hp-color-opacity .label=${label} hide-label
+      picker: html`<hp-color-opacity .label=${label} hide-label flat-swatch cover-swatch
         .opacityLabel=${t('space.opacity')}
         .pickerLabels=${host._colorPickerLabels}
         .color=${v.c} .opacity=${v.a} .showOpacity=${true}
@@ -144,7 +144,9 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             picker: colorField({
               hex: d.colors.wall_fill.c, opacity: d.colors.wall_fill.a, opacityLabel: t('space.opacity'),
               onOpacity: (a) => this._setFillColor('wall_fill', { c: d.colors.wall_fill.c, a }),
-              picker: html`<hp-color-opacity .label=${t('gs.wall_fill')} hide-label
+              resetLabel: t('btn.reset'),
+              onReset: () => this._setFillColor('wall_fill', { ...DEFAULT_FILL_COLORS.wall_fill }),
+              picker: html`<hp-color-opacity .label=${t('gs.wall_fill')} hide-label flat-swatch
                 .opacityLabel=${t('space.opacity')} .pickerLabels=${host._colorPickerLabels}
                 .color=${d.colors.wall_fill.c} .opacity=${d.colors.wall_fill.a} .showOpacity=${true}
                 @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
@@ -173,7 +175,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
                   hex: d.bgColor || host._stageBgHex(),
                   resetLabel: d.bgColor ? t('gs.bg_default') : undefined,
                   onReset: () => set({ bgColor: null }),
-                  picker: html`<hp-color-opacity .label=${t('gs.bg_color')} hide-label
+                  picker: html`<hp-color-opacity .label=${t('gs.bg_color')} hide-label flat-swatch
                     .pickerLabels=${host._colorPickerLabels}
                     .color=${d.bgColor || host._stageBgHex()} .opacity=${1} .showOpacity=${false}
                     @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => set({ bgColor: e.detail.color })}></hp-color-opacity>`,
@@ -220,28 +222,28 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           ${host._canEdit ? html`
             ${subsection({ title: t('gs.backup_group'), help: this._help('gs.backup_group.help') })}
             <div class="hpf-actions">
-              <button class="btn ghost" @click=${() => this._openBackupExport()}>
+              <button class="btn" @click=${() => this._openBackupExport()}>
                 <ha-icon icon="mdi:download"></ha-icon>${t('backup.export_open')}
               </button>
               <span class="backupupload">
-                <button class="btn ghost" type="button" @click=${(e: Event) =>
+                <button class="btn" type="button" @click=${(e: Event) =>
                   ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
                   <ha-icon icon="mdi:upload"></ha-icon>${t('backup.import_open')}
                 </button>
                 <input type="file" accept="application/json,.json" @change=${(event: Event) => this._pickBackupImport(event)} />
               </span>
               ${host._canOptimizeUndo && host._undoKind === 'import' ? html`
-                <button class="btn ghost" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
+                <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
                   <ha-icon icon="mdi:undo-variant"></ha-icon>${t('backup.undo_import')}
                 </button>` : nothing}
             </div>` : nothing}
           ${subsection({ title: t('gs.grid_group'), help: this._help('gs.grid_group.help') })}
           <div class="hpf-actions">
-            <button class="btn ghost alignall" @click=${() => this._openAlignDialog()}>
+            <button class="btn" @click=${() => this._openAlignDialog()}>
               <ha-icon icon="mdi:broom"></ha-icon>${t('gs.align_all')}
             </button>
             ${host._canOptimizeUndo && host._undoKind !== 'import' ? html`
-              <button class="btn ghost alignall" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
+              <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
                 <ha-icon icon="mdi:undo-variant"></ha-icon>${t('gs.optimize_undo')}
               </button>` : nothing}
           </div>`,

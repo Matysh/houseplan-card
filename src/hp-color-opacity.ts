@@ -40,6 +40,10 @@ export class HpColorOpacity extends LitElement {
   public disabled = false;
   public showOpacity = true;
   public hideLabel = false;
+  /** Settings form-kit uses a solid swatch instead of the alpha checkerboard. */
+  public flatSwatch = false;
+  /** Let the existing trigger cover an entire settings colour tile. */
+  public coverSwatch = false;
   public pickerLabels: ColorPickerLabels = DEFAULT_LABELS;
 
   private _open = false;
@@ -69,6 +73,8 @@ export class HpColorOpacity extends LitElement {
     // #600 Q5: компактная плашка набора рисует подпись сама; `label` при этом
     // остаётся источником title/aria триггера и заголовка панели.
     hideLabel: { type: Boolean, attribute: 'hide-label' },
+    flatSwatch: { type: Boolean, attribute: 'flat-swatch' },
+    coverSwatch: { type: Boolean, attribute: 'cover-swatch' },
     pickerLabels: { attribute: false },
     _open: { state: true },
     _hue: { state: true },
@@ -106,6 +112,13 @@ export class HpColorOpacity extends LitElement {
         linear-gradient(45deg, #b8b8b8 25%, #eee 25%) 5px 5px / 10px 10px;
       cursor: pointer;
     }
+    :host([flat-swatch]) .trigger { background: none; }
+    :host([cover-swatch]) { display: block; width: 100%; height: 100%; }
+    :host([cover-swatch]) .trigger {
+      width: 100%; height: 100%; padding: 0; border: 0; border-radius: 6px;
+    }
+    :host([cover-swatch]) .swatch { border-radius: 6px; box-shadow: none; }
+    :host([cover-swatch]) .trigger:focus-visible { outline-offset: -2px; }
     :host([data-pointer-hover]) .trigger:hover {
       border-color: var(--primary-color, #03a9f4);
     }
@@ -836,7 +849,7 @@ export class HpColorOpacity extends LitElement {
       <button class="trigger" type="button" .disabled=${this.disabled}
         aria-label=${title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
         title=${title} @click=${this._toggle}>
-        <span class="swatch" style=${`background:${color};opacity:${this.showOpacity ? pct / 100 : 1}`}></span>
+        <span class="swatch" style=${`background:${color};opacity:${this.flatSwatch ? 1 : this.showOpacity ? pct / 100 : 1}`}></span>
       </button>
       ${this._open && !this.disabled && this._supportsPopover() ? this._pickerTemplate(true) : nothing}
     `;

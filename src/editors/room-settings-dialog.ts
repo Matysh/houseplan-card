@@ -207,7 +207,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                     onOpacity: (a) => { host._roomCustomFill = { c: customFill.c, a }; host.requestUpdate(); },
                     resetLabel: host._roomCustomFill ? t('btn.reset') : undefined,
                     onReset: () => { host._roomCustomFill = null; host.requestUpdate(); },
-                    picker: html`<hp-color-opacity .label=${customLabel} hide-label
+                    picker: html`<hp-color-opacity .label=${customLabel} hide-label flat-swatch
                       .opacityLabel=${t('space.opacity')}
                       .pickerLabels=${host._colorPickerLabels}
                       .color=${customFill.c}

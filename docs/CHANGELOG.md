@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Polished the four settings dialogs: colour tiles show complete opacity values
+  and solid swatches with uppercase hex; Wall fill has Reset, Data actions use
+  outlined buttons, and the device icon field no longer duplicates its preview
+  ([#605](https://github.com/Matysh/houseplan-card/issues/605)).
 - Fixed settings-dialog polish: the discard prompt's buttons no longer clip,
   switch knobs sit evenly inside their tracks, and Room settings omit the
   redundant heading ([#603](https://github.com/Matysh/houseplan-card/issues/603)).

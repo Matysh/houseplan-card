@@ -256,7 +256,7 @@
   "marker.lqi_a11y_mid": "LQI {value}, mittleres Signal",
   "marker.lqi_a11y_high": "LQI {value}, starkes Signal",
   "marker.size_label": "Symbolgröße und Drehung",
-  "marker.angle_label": "Drehen",
+  "marker.angle_label": "Drehung",
   "marker.model_label": "Modell",
   "marker.model_ph": "z.B. Aqara T&H",
   "marker.link_label": "Link",

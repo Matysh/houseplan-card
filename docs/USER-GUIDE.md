@@ -452,7 +452,7 @@ elements:
 |---|---|---|
 | Switch row | Icon, title, caption and a switch on the right | Turns one setting on or off; the whole row is the tap target |
 | Segment | A few options in one frame, the chosen one highlighted | Picks from a short list instead of a dropdown; arrow keys and screen readers work as with radio buttons |
-| Colour plate | Swatch, `#rrggbb` code, opacity number and Reset | The swatch opens the palette; the number edits opacity directly |
+| Colour plate | Solid swatch, `#RRGGBB` code, opacity number and Reset where available | The swatch opens the palette; the number edits opacity directly. In General settings, **Wall fill** also has Reset, applied when you save |
 | Field with a unit | A number with `cm`, `°C`, `m`, `%` or `°` inside the frame | An empty field means "as in General settings" or "as the space" when the hint says so |
 | Slider with a number | Slider, editable number and "Reset to 100%" | Drag, or type the exact value |
 | Picker button | A dropdown-styled button | Opens a panel with search and a list below it; the panel expands the card instead of floating over it |

@@ -274,7 +274,7 @@ export function colorField({
   const pct = opacity === undefined ? null : Math.round(Math.min(1, Math.max(0, opacity)) * 100);
   return html`<div class="hpf-colorfield">
     ${picker}
-    <code class="hpf-hex">${hex}</code>
+    <code class="hpf-hex">${hex.toUpperCase()}</code>
     ${pct === null ? nothing : html`<span class="hpf-opacity">${opacityLabel ?? ''}
       <span class="hpf-unit"><input type="number" inputmode="numeric" min="0" max="100" step="1"
         .value=${String(pct)} ?disabled=${disabled} aria-label=${opacityLabel ?? 'Opacity'}
@@ -317,7 +317,7 @@ export function colorTile({ label, hex, opacity, opacityLabel, picker, onOpacity
       ${picker}<span>${label}</span>
     </div>
     <div class="hpf-colortile-meta">
-      <code class="hpf-hex">${hex}</code>
+      <code class="hpf-hex">${hex.toUpperCase()}</code>
       <span class="hpf-unit" title=${opacityLabel}><input type="number" inputmode="numeric" min="0" max="100" step="1"
         .value=${String(pct)} aria-label=${opacityLabel}
         @input=${(e: Event) => {

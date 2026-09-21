@@ -280,7 +280,7 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
           onOpacity: (a) => set(port, { ...d, customFill: { c: (d.customFill || DEFAULT_CUSTOM_FILL).c, a } }),
           resetLabel: d.customFill ? t('btn.reset') : undefined,
           onReset: () => set(port, { ...d, customFill: null }),
-          picker: html`<hp-color-opacity .label=${t('space.custom_fill')} hide-label .opacityLabel=${t('space.opacity')}
+          picker: html`<hp-color-opacity .label=${t('space.custom_fill')} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
             .pickerLabels=${host._colorPickerLabels}
             .color=${(d.customFill || DEFAULT_CUSTOM_FILL).c} .opacity=${(d.customFill || DEFAULT_CUSTOM_FILL).a}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
@@ -345,7 +345,7 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
           onOpacity: (a) => set(port, { ...d, roomOpacity: a }),
           resetLabel: d.roomColor !== DEFAULT_ROOM_COLOR || d.roomOpacity !== DEFAULT_ROOM_OPACITY ? t('btn.reset') : undefined,
           onReset: () => set(port, { ...d, roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY }),
-          picker: html`<hp-color-opacity .label=${t('space.room_color')} hide-label .opacityLabel=${t('space.opacity')}
+          picker: html`<hp-color-opacity .label=${t('space.room_color')} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
             .pickerLabels=${host._colorPickerLabels}
             .color=${d.roomColor} .opacity=${d.roomOpacity} .showOpacity=${true}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
@@ -470,7 +470,7 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id: (n: str
               hex: d.bgColor || stageBgOf(host._settings, { bgColor: null }) || host._stageBgHex(),
               resetLabel: d.bgColor ? t('space.bg_inherit') : undefined,
               onReset: () => set(port, { ...d, bgColor: null }),
-              picker: html`<hp-color-opacity .label=${t('space.bg_color')} hide-label .pickerLabels=${host._colorPickerLabels}
+              picker: html`<hp-color-opacity .label=${t('space.bg_color')} hide-label flat-swatch .pickerLabels=${host._colorPickerLabels}
                 .color=${d.bgColor || stageBgOf(host._settings, { bgColor: null }) || host._stageBgHex()}
                 .opacity=${1} .showOpacity=${false}
                 @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => set(port, { ...d, bgColor: e.detail.color })}></hp-color-opacity>`,

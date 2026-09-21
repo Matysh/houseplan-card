@@ -458,7 +458,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           label: t('marker.glow_color'),
           control: colorField({
             hex: d.glowColor, disabled: glowSourceDisabled,
-            picker: html`<hp-color-opacity .label=${t('marker.glow_color')} hide-label
+            picker: html`<hp-color-opacity .label=${t('marker.glow_color')} hide-label flat-swatch
               .color=${d.glowColor} .opacity=${1} .showOpacity=${false}
               .pickerLabels=${this.host._colorPickerLabels}
               .disabled=${glowSourceDisabled}
@@ -575,7 +575,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       // the glyph and the mdi:* label. autoIcon is presentation-only:
       // untouched dialogs still save d.icon as an empty auto override.
       ? html`<ha-icon-picker id="marker-icon" .hass=${this.host.hass} .value=${d.icon || d.autoIcon}
-          .placeholder=${d.autoIcon || undefined}
+          .placeholder=${d.autoIcon || 'mdi:shape-outline'}
           .fallbackPath=${undefined}
           @value-changed=${(e: CustomEvent<{ value?: string }>) => {
             const icon = e.detail.value || '';
@@ -596,8 +596,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         ${field({
           label: t('marker.icon_label'), htmlFor: 'marker-icon', help: shelp('marker.icon.help'),
           control: html`<div class="hpf-iconfield">
-            <span class="hpf-iconpreview" aria-hidden="true"><ha-icon icon=${d.icon || d.autoIcon || 'mdi:shape-outline'}></ha-icon></span>
-            ${iconControl}
+            <div class="hpf-iconfield-control">
+              ${customElements.get('ha-icon-picker') ? nothing : html`
+                <span class="hpf-iconpreview" aria-hidden="true"><ha-icon icon=${d.icon || d.autoIcon || 'mdi:shape-outline'}></ha-icon></span>`}
+              ${iconControl}
+            </div>
             ${d.icon
               ? html`<button class="btn ghost hpf-iconclear" type="button" aria-label=${t('btn.reset')} title=${t('btn.reset')}
                   @click=${() => (this.host._markerDialog = { ...d, icon: '' })}><ha-icon icon="mdi:close"></ha-icon></button>`
@@ -626,7 +629,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               label: t('marker.activity_color'),
               control: html`<div class="ripple-colorrow">${colorField({
                 hex: d.rippleColor || '#3ea6ff',
-                picker: html`<hp-color-opacity .label=${t('marker.activity_color')} hide-label
+                picker: html`<hp-color-opacity .label=${t('marker.activity_color')} hide-label flat-swatch
                   .pickerLabels=${this.host._colorPickerLabels}
                   .color=${d.rippleColor || '#3ea6ff'} .opacity=${1} .showOpacity=${false}
                   @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {

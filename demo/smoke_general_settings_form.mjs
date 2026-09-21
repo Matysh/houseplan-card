@@ -61,7 +61,7 @@ const out = await page.evaluate(async () => {
   o.tileOpacityWritesOwnKey = Math.abs(c._settingsDialog.colors.light_on.a - 0.33) < 1e-9
     && c._settingsDialog.colors.light_on.c === d0.colors.light_on.c
     && c._settingsDialog.colors.light_off.a === d0.colors.light_off.a;
-  o.tileHexPrinted = lightsOnTile.querySelector('.hpf-hex').textContent === d0.colors.light_on.c;
+  o.tileHexPrinted = lightsOnTile.querySelector('.hpf-hex').textContent === d0.colors.light_on.c.toUpperCase();
   input(q('.hpf-card[data-card="plan"] .hpf-colorrow .hpf-opacity input'), '40'); await upd();
   o.wallFillOpacityWritesOwnKey = Math.abs(c._settingsDialog.colors.wall_fill.a - 0.4) < 1e-9;
   input(q('#gs-glow-radius'), '4.5'); await upd();

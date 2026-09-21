@@ -112,7 +112,7 @@ const out = await page.evaluate(async () => {
   o.opacity100FitsTheNumberField = opacityInput.value === '100' && opacityInput.clientWidth >= 60;
   opacityInput.value = '25'; opacityInput.dispatchEvent(new Event('input', { bubbles: true })); await upd();
   o.opacityNumberWritesRoomOpacity = Math.abs(c._spaceDialog.roomOpacity - 0.25) < 1e-9 && c._spaceDialog.roomColor === d0.roomColor;
-  o.hexIsPrinted = q('.hpf-card[data-card="appearance"] .hpf-colorrow .hpf-hex')?.textContent === d0.roomColor;
+  o.hexIsPrinted = q('.hpf-card[data-card="appearance"] .hpf-colorrow .hpf-hex')?.textContent === d0.roomColor.toUpperCase();
   o.noNativeColorInputs = qa('input[type="color"]').length === 0;
 
   const northSelect = q('#space-north-mode');
