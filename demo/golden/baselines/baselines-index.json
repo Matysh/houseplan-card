@@ -1,8 +1,8 @@
 {
   "schema": 2,
   "matrixVersion": 64,
-  "acceptedAt": "2026-09-20T21:22:17.315Z",
-  "sourceFingerprint": "f9056c2ea5d96e83f29e2f1e552bce8e9612fcdc71fe9c0789bfe5892b0cc86c",
+  "acceptedAt": "2026-09-21T06:04:37.162Z",
+  "sourceFingerprint": "44c8db0207714f5476f58cdacdfaae63754967422e492b7fadf3551ecaee4380",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "win32",
@@ -10,19 +10,19 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "f9056c2ea5d96e83f29e2f1e552bce8e9612fcdc71fe9c0789bfe5892b0cc86c",
+    "buildFingerprint": "44c8db0207714f5476f58cdacdfaae63754967422e492b7fadf3551ecaee4380",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 35538133817,
+      "run": 35566453055,
       "attempt": 1,
-      "sha": "8ca877c9f79b5944b4cf829aab9b7eb8981032d8"
+      "sha": "0a3e0674cc85ccb6ade1e45dac1d6fd42234d504"
     }
   },
   "foreignCapture": {
-    "reason": "приёмка Linux CI artifact Validate 35538133817 на Windows автора после визуальной проверки восьми сцен (#602)"
+    "reason": "Приёмка Linux CI артефакта Validate 35566453055 на Windows для #603 (#455)"
   },
   "witnesses": {
-    "count": 104,
+    "count": 106,
     "floor": 10
   },
   "scenarios": {
@@ -171,8 +171,9 @@
     "device-dialog-desktop-en": "0a900ea9f5089843cd441d75c588dc47201b4de8f67c99b9d35ddc4a41924ae9",
     "device-dialog-mobile-ru": "efe8c42a22232ce85d20a7538e57a247bd00fd8fcdeae1d6609f7e09f70434b8",
     "device-dialog-desktop-de": "85fd5f7ded05a5ded2cd83cdb5d6c830400937a7221464c8ba17a98073354a98",
-    "room-temperature-dialog-desktop-en": "e987abcbc69dcf86f5c5f70e6b1c8a9033f591a300d4fc6020d8d4b401c442f2",
-    "room-temperature-dialog-mobile-ru": "3bf4110596c63f116c09aba813766d65dca2aceaf6fee219e15dfb34b4e8ec68",
+    "room-temperature-dialog-desktop-en": "dd42f01dec3f5c69bae9777c39abed5b8e9e3c076f0046779f9b8a65fec4a90c",
+    "room-temperature-dialog-mobile-ru": "5ca1c4f18eab3fb4c0667f76b0d0340df94f24e0457baca89234e0ef159f62d6",
+    "room-discard-dialog-mobile-ru": "4ee1d370e1df82a5464ef5c24103c6563146ec30c3b0e8508830c3b18e79ab5d",
     "german-view-mobile-light": "8c079d1574a6fbec478eacc872a46800f4348a9ce6d4dc1b1a11f88df8688e19",
     "toggle-entity-dialog-desktop-en": "d2bc74705c9687d11bd55d22140635c2fb55de6496c7e85dfbb67ac049483f55",
     "toggle-entity-dialog-mobile-ru": "c5bf5077a33c1acfa5f744e0ab1c15ce6c2147bc3622a7e8754d972aeedb555b",
