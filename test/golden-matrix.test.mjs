@@ -103,8 +103,13 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
     if (scenario.decorOverride) {
       assert.equal(new Set(scenario.decorOverride.map((shape) => shape.id)).size,
         scenario.decorOverride.length, scenario.id);
+      // #606 deliberately isolates four furniture drawings; other decor
+      // override scenes remain the five-kind integration fixtures.
+      const expectedKinds = scenario.id === 'furniture-corrected-art-light'
+        ? new Set(['furniture'])
+        : new Set(['line', 'rect', 'ellipse', 'text', 'furniture']);
       assert.deepEqual(new Set(scenario.decorOverride.map((shape) => shape.kind)),
-        new Set(['line', 'rect', 'ellipse', 'text', 'furniture']), scenario.id);
+        expectedKinds, scenario.id);
     }
     if (scenario.helpTextRegion) {
       assert.match(scenario.helpTextRegion.key, /^[a-z0-9_.-]+\.help$/, scenario.id);
@@ -1063,6 +1068,17 @@ test('issue 159 goldens cover both palette levels and every plan-art compatibili
   assert.deepEqual(new Set(plan.decorOverride.filter((shape) => shape.kind === 'furniture')
     .map((shape) => shape.symbol)),
     new Set(['sofa', 'fridge', 'sofa_corner_right']));
+});
+
+test('issue 606 isolates both corrected drawings and the saved exercise alias', () => {
+  const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'furniture-corrected-art-light');
+  assert.equal(scenario?.mode, 'view');
+  assert.equal(scenario?.fixture, 'visual');
+  assert.deepEqual(scenario.decorOverride.map((shape) => shape.symbol),
+    ['cactus', 'exercise', 'bookshelf', 'shelf_floor']);
+  assert.ok(scenario.decorOverride.every((shape) => shape.kind === 'furniture'));
+  assert.equal(scenario.decorOverride[0].flip_h, true);
+  assert.equal(scenario.decorOverride[2].flip_v, true);
 });
 
 test('issue 359 has one deterministic light-theme furniture placement preview golden', () => {
