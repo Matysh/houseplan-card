@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## v1.77.0 — 2026-09-21
+
+- Refreshed the furniture library with 60 consistently styled symbols, new
+  items, and artwork matching visible dimensions without changing saved sizes
+  or placement ([#593](https://github.com/Matysh/houseplan-card/issues/593),
+  [#584](https://github.com/Matysh/houseplan-card/issues/584)).
+- Redesigned four settings dialogs as grouped cards with contextual help,
+  clearer controls and field validation while preserving saved settings
+  ([#594](https://github.com/Matysh/houseplan-card/issues/594),
+  [#598](https://github.com/Matysh/houseplan-card/issues/598),
+  [#600](https://github.com/Matysh/houseplan-card/issues/600)).
+- Added “Value + static icon” for devices: the value or state remains visible
+  without icon recolouring or pulsing
+  ([#588](https://github.com/Matysh/houseplan-card/issues/588)).
+
 ## v1.77.0-beta.5 — 2026-09-21
 
 - Corrected the furniture library: Exercise equipment is available under Other,

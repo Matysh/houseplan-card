@@ -1,18 +1,20 @@
-<!-- release: v1.77.0-beta.5 -->
+<!-- release: v1.77.0 -->
 
 ## Основное
 
-- Исправлена библиотека мебели: тренажёр доступен в «Прочем», а книжный шкаф и напольный стеллаж получили подходящие рисунки; ранее размещённый «Кактус» остаётся видимым ([#606](https://github.com/Matysh/houseplan-card/issues/606)).
-- Доработаны диалоги настроек: кнопки подтверждения и переключатели выровнены, убраны лишние подписи, а цветовые поля и действия больше не обрезаются ([#603](https://github.com/Matysh/houseplan-card/issues/603), [#605](https://github.com/Matysh/houseplan-card/issues/605)).
+- Обновлена библиотека мебели: 60 символов в едином стиле, новые предметы и визуальный размер, соответствующий заданным габаритам ([#593](https://github.com/Matysh/houseplan-card/issues/593), [#584](https://github.com/Matysh/houseplan-card/issues/584)).
+- Переработаны диалоги настроек пространства, комнаты, устройства и общих параметров: карточки, понятные подсказки, удобные переключатели и проверка полей без изменения сохранённых настроек ([#594](https://github.com/Matysh/houseplan-card/issues/594), [#598](https://github.com/Matysh/houseplan-card/issues/598), [#600](https://github.com/Matysh/houseplan-card/issues/600)).
+- В настройках устройства доступно «Значение + статичный значок»: значение видно, но значок не меняет цвет и не пульсирует ([#588](https://github.com/Matysh/houseplan-card/issues/588)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Corrected the furniture library: Exercise equipment is under Other, Bookcase and Floor shelving have matching artwork, and previously placed Cactus objects remain visible ([#606](https://github.com/Matysh/houseplan-card/issues/606)).
-- Refined the settings dialogs: confirmation buttons and switches align, redundant labels are gone, and colour fields and actions no longer clip ([#603](https://github.com/Matysh/houseplan-card/issues/603), [#605](https://github.com/Matysh/houseplan-card/issues/605)).
+- Refreshed the furniture library with 60 consistently styled symbols, new items, and artwork that matches the specified dimensions ([#593](https://github.com/Matysh/houseplan-card/issues/593), [#584](https://github.com/Matysh/houseplan-card/issues/584)).
+- Redesigned Space, Room, Device and General settings dialogs with grouped cards, contextual help, clearer controls and field validation, without changing saved settings ([#594](https://github.com/Matysh/houseplan-card/issues/594), [#598](https://github.com/Matysh/houseplan-card/issues/598), [#600](https://github.com/Matysh/houseplan-card/issues/600)).
+- Added “Value + static icon” for devices: the value remains visible while the icon neither changes colour nor pulses ([#588](https://github.com/Matysh/houseplan-card/issues/588)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.77.0-beta.5/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.77.0-beta.5/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.77.0/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.77.0/docs/CHANGELOG.md)
