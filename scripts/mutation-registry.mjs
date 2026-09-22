@@ -1467,6 +1467,38 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'dialog-ha-rejected-close-reopen-disabled',
+    guard: 'node demo/smoke_dialog_modal_recovery.mjs',
+    because: 'an HA shell may close outside Lit; rejected close must force live() to reconcile the '
+      + 'same physical modal instead of leaving its preserved draft invisible (#607)',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: '      return html`<ha-dialog\n'
+        + '        .hass=${this.hass}\n'
+        + '        .open=${live(!this._closing)}',
+      replace: '      return html`<ha-dialog\n'
+        + '        .hass=${this.hass}\n'
+        + '        .open=${true}',
+    }],
+  },
+  {
+    id: 'dialog-ha-disconnected-reject-reopen-enabled',
+    guard: 'node demo/smoke_dialog_modal_recovery.mjs',
+    because: 'rejectClose must not schedule a render for a detached HA dialog, otherwise a stale '
+      + 'shell can reopen after its owner has already been removed (#607)',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: '  public rejectClose(): void {\n'
+        + '    this._closing = false;\n'
+        + '    if (this.isConnected) this.requestUpdate();\n'
+        + '  }',
+      replace: '  public rejectClose(): void {\n'
+        + '    this._closing = false;\n'
+        + '    this.requestUpdate();\n'
+        + '  }',
+    }],
+  },
+  {
     id: 'confirm-dialog-loses-alertdialog',
     guard: 'node demo/smoke_danger_confirm_branches.mjs',
     because: 'delete and unlock confirmations must expose the real dialog as an alertdialog '
