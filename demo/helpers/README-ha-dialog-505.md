@@ -5,6 +5,20 @@ producer, or a Home Assistant server. It never connects to a real HA instance.
 Issue/spec: [#505](https://github.com/Matysh/houseplan-card/issues/505),
 [`505-summary-panel-design-parity.md`](../../docs/specs/505-summary-panel-design-parity.md).
 
+The same pinned fixture also verifies #607 against the real HA close button:
+
+```sh
+npm run bundle:sync
+node demo/verify_ha_dialog_discard_recovery.mjs
+```
+
+That diagnostic opens Device, Room, Space and General settings in turn. For
+each form it edits a field, presses HA's own close button, chooses Continue,
+proves that the same modal and draft are interactive again, then covers
+Discard and a clean close. It also fails on duplicate `hp-close` events,
+external requests, WebSockets or browser errors. The ordinary native-fallback
+contract remains in `demo/smoke_dialog_modal_recovery.mjs`.
+
 From a checkout with the usual `npm ci` dependencies and Playwright Chromium:
 
 ```sh

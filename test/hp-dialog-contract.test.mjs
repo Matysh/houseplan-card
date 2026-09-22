@@ -25,3 +25,13 @@ test('#508 AC4: no other dialog opts in — flex-content stays a summary-dialog 
   const optIns = files.flatMap((rel) => (read(rel).match(/<hp-dialog[\s\S]*?>/g) || []).filter((tag) => /\bflex-content\b/.test(tag)));
   assert.equal(optIns.length, 1, optIns.join('\n'));
 });
+
+test('#607: rejected authentic HA closes commit a false -> true open transition', () => {
+  const source = read('hp-dialog.ts');
+  assert.match(source, /import \{ live \} from 'lit\/directives\/live\.js';/);
+  const renders = source.match(/<ha-dialog[\s\S]*?>/g) || [];
+  assert.equal(renders.length, 2, 'two authentic HA render branches');
+  for (const render of renders) assert.match(render, /\.open=\$\{live\(!this\._closing\)\}/, render);
+  assert.match(source, /private _requestClose[\s\S]*?this\._closing = true;[\s\S]*?if \(this\.isConnected\) this\.requestUpdate\(\);[\s\S]*?dispatchEvent/);
+  assert.match(source, /public rejectClose\(\): void \{[\s\S]*?this\._closing = false;[\s\S]*?if \(this\.isConnected\) this\.requestUpdate\(\);/);
+});

@@ -1,4 +1,5 @@
 import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
+import { live } from 'lit/directives/live.js';
 
 type FocusSession = {
   dialogs: Set<HpDialog>;
@@ -449,16 +450,23 @@ export class HpDialog extends LitElement {
   private _requestClose = (): void => {
     if (this._closing) return;
     this._closing = true;
+    // HA's close control can dismiss the nested WebAwesome surface before the
+    // public ha-dialog.open property reflects that transition. Commit an
+    // explicit closed phase so a later rejectClose() has a real false -> true
+    // Lit transition and reopens the same physical modal deterministically.
+    if (this.isConnected) this.requestUpdate();
     this.dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
   };
 
   /**
    * Let an owner reject an asynchronous close request (for example while a
-   * save/send is in flight) and keep the same modal usable afterwards.
+   * save/send is in flight) and keep the same modal usable afterwards. The
+   * close request above first commits an explicit false phase; `live()` also
+   * reconciles a public property changed externally by an HA implementation.
    */
   public rejectClose(): void {
     this._closing = false;
-    this.requestUpdate();
+    if (this.isConnected) this.requestUpdate();
   }
 
   private _pruneOverlays(): void {
@@ -554,7 +562,7 @@ export class HpDialog extends LitElement {
       if (this.describedBy) {
         return html`<ha-dialog
           .hass=${this.hass}
-          .open=${true}
+          .open=${live(!this._closing)}
           width=${this.wide ? 'medium' : 'small'}
           ?flexcontent=${this.flexContent}
           .preventScrimClose=${!this.dismissOnScrim}
@@ -570,7 +578,7 @@ export class HpDialog extends LitElement {
       }
       return html`<ha-dialog
         .hass=${this.hass}
-        .open=${true}
+        .open=${live(!this._closing)}
         width=${this.wide ? 'medium' : 'small'}
         ?flexcontent=${this.flexContent}
         .preventScrimClose=${!this.dismissOnScrim}

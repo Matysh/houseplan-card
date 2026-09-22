@@ -263,11 +263,20 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
   class HaDialogStub extends HTMLElement {
     constructor() {
       super();
+      this._open = false;
       this.attachShadow({ mode: 'open' }).innerHTML = '<slot name="headerTitle"></slot>'
         + '<slot></slot><slot name="footer"></slot>';
     }
+    get open() { return this._open; }
+    set open(value) {
+      const next = Boolean(value);
+      if (next === this._open) return;
+      this._open = next;
+      if (next) queueMicrotask(() => this.dispatchEvent(new Event('opened')));
+      else queueMicrotask(() => this.dispatchEvent(new Event('closed')));
+    }
     connectedCallback() {
-      queueMicrotask(() => this.dispatchEvent(new Event('opened')));
+      if (this._open) queueMicrotask(() => this.dispatchEvent(new Event('opened')));
     }
   }
   customElements.define('ha-dialog', HaDialogStub);
@@ -287,6 +296,38 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
   await settle(lateOrdinary);
   const newOrdinaryUsesOneHaShell = lateOrdinary.shadowRoot.querySelectorAll('ha-dialog').length === 1
     && !lateOrdinary.shadowRoot.querySelector('dialog');
+
+  // #607: an HA-like shell may change its public `open` property outside Lit
+  // before emitting `closed`. Rejecting that close must reconcile the same
+  // physical shell to open=true. The separate pinned authentic diagnostic also
+  // covers the real HA case where the nested modal closes before the public
+  // property catches up.
+  const lateHa = lateOrdinary.shadowRoot.querySelector('ha-dialog');
+  let rejectedCloseCount = 0;
+  lateOrdinary.addEventListener('hp-close', () => {
+    rejectedCloseCount += 1;
+    lateOrdinary.rejectClose();
+  });
+  lateHa.open = false;
+  await settle(lateOrdinary);
+  const rejectedHaCloseReopensSameShell = rejectedCloseCount === 1
+    && lateOrdinary.shadowRoot.querySelector('ha-dialog') === lateHa
+    && lateHa.open === true;
+  lateOrdinary.rejectClose();
+  await settle(lateOrdinary);
+  const repeatedRejectIsIdempotent = rejectedCloseCount === 1 && lateHa.open === true;
+
+  const detached = document.createElement('hp-dialog');
+  detached.title = 'Detached while HA close is pending';
+  document.body.append(detached);
+  await settle(detached);
+  const detachedHa = detached.shadowRoot.querySelector('ha-dialog');
+  detached.addEventListener('hp-close', () => detached.rejectClose());
+  detachedHa.open = false;
+  detached.remove();
+  await frame();
+  await frame();
+  const disconnectedRejectDoesNotReopen = !detached.isConnected && detachedHa.open === false;
 
   const lateAlert = document.createElement('hp-dialog');
   lateAlert.alert = true;
@@ -309,6 +350,9 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
     wideNativeFallbackFitsAndCentresOnNarrowViewport: wideFitsNarrowViewport,
     openFallbackDoesNotSwitchAfterLateHaRegistration: earlyStillNative,
     newOrdinaryUsesExactlyOneHaShell: newOrdinaryUsesOneHaShell,
+    rejectedHaCloseReopensSameShell,
+    repeatedRejectIsIdempotent,
+    disconnectedRejectDoesNotReopen,
     alertAfterHaStillUsesExactlyOneNativeModal: alertAfterHaStaysOneNativeModal,
   };
 });

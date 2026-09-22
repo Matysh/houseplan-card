@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fixed the close button in Home Assistant's real settings dialogs: choosing
+  **Continue** after the unsaved-changes prompt now restores the same editable
+  modal instead of leaving an invisible dialog that required a page reload
+  ([#607](https://github.com/Matysh/houseplan-card/issues/607)).
+
 ## v1.77.0 — 2026-09-21
 
 - Refreshed the furniture library with 60 consistently styled symbols, new

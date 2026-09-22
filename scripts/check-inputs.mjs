@@ -59,6 +59,7 @@ export const NOT_AN_INPUT = [
   ['demo/stand/**', 'seed демо-стенда: ставится на стенде, Validate не исполняет'],
   ['demo/shot_*.mjs', 'ручные съёмки для документации и разбора, не гейты'],
   ['demo/capture_*.mjs', 'ручные съёмки эталонов, запускаются человеком'],
+  ['demo/verify_ha_dialog_discard_recovery.mjs', 'явная тяжёлая диагностика настоящего ha-dialog для #607; запускается человеком'],
   ['demo/helpers/ha-dialog-assets.mjs', 'пиновые HA assets только для явной диагностической съёмки #505; не запускают загрузку в Validate'],
   ['demo/helpers/ha-dialog-fixture.mjs', 'изолированный настоящий ha-dialog только для явной визуальной приёмки #505, не обычный smoke'],
   ['demo/screencast_visual_continuity.mjs', 'ручной скринкаст'],
