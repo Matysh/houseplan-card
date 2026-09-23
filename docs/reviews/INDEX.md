@@ -1,9 +1,10 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1003, issue: 348. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1004, issue: 349. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #640 | [SPEC-REVIEW-640-r1.md](SPEC-REVIEW-640-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | AC3 называет browser-smoke «unit»-тестом | `demo/smoke_furniture_lazy_art.mjs` |
 | #639 | [CODE-REVIEW-639-r1.md](CODE-REVIEW-639-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Новая запись smoke-links.mjs для smoke_space_settings_form.mjs описывает проверку, кото… | `smoke-links.mjs` `smoke_space_settings_form.mjs` `scripts/smoke-links.mjs` `demo/smoke_space_settings_form.mjs` `src/editors/space-form.ts` `form-kit.ts` |
 | #639 | [CODE-REVIEW-639-r2.md](CODE-REVIEW-639-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #637 | [CODE-REVIEW-637-r1.md](CODE-REVIEW-637-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | ложный «—» вместо настоящего «0 ч» в медианах | `scripts/process-metrics.mjs` |
