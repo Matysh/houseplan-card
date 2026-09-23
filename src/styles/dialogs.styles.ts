@@ -579,7 +579,9 @@ export const dialogsStyles = css`
       overflow: visible;
       padding: 16px;
       box-sizing: border-box;
+      background: var(--hpf-canvas, var(--secondary-background-color, color-mix(in srgb, var(--card-background-color, var(--hp-bg, #202126)) 90%, var(--primary-text-color, #000))));
     }
+    hp-dialog[form-shell][ha-dialog-shell] .body { min-height: 100%; }
     @media (max-width: 480px) {
       hp-dialog[form-shell] .body { padding: 12px; }
     }

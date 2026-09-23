@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Settings forms now keep the same reviewed shell inside Home Assistant as in
+  the standalone preview: a 560 px desktop canvas with one scrollbar and a
+  height cap, plus edge-to-edge fullscreen layout on phones. Other dialogs are
+  unchanged ([#609](https://github.com/Matysh/houseplan-card/issues/609)).
 - Fixed the close button in Home Assistant's real settings dialogs: choosing
   **Continue** after the unsaved-changes prompt now restores the same editable
   modal instead of leaving an invisible dialog that required a page reload

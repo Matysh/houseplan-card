@@ -315,7 +315,14 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * `.markerradios`, `.markerlightdisabled`, `.pdftag`, `.descin`, `.togglehint`
  * и др.) — их заменил лист набора в ленивом графе.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 290_900;
+/**
+ * #609: 290 900 → 291 400 (замер 290 445). Публичные CSS-переменные оболочки
+ * настоящего `ha-dialog` и мобильные media rules входят в eager-граф: форма
+ * обязана получить правильную геометрию до загрузки ленивого редактора. Новый
+ * центр оставляет 955 Б сверху и 1 045 Б до нижней границы полосы; общий бюджет
+ * не меняется.
+ */
+export const INITIAL_VIEW_GZIP_CEILING = 291_400;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**

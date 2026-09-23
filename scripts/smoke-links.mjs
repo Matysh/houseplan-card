@@ -140,11 +140,13 @@ export const SMOKE_LINKS = [
       + 'lifecycle effects are not visible to source or pure color conversion tests',
   },
   {
-    symbols: ['HpDialog', '_ensureNativeModal', '_useHaDialog', '_usesHaDialog'],
-    smokes: ['smoke_dialog_modal_recovery.mjs'],
+    symbols: ['HpDialog', '_ensureNativeModal', '_useHaDialog', '_usesHaDialog', 'dialogsStyles'],
+    smokes: ['smoke_dialog_modal_recovery.mjs', 'smoke_ha_form_shell_parity.mjs'],
     because: 'the #463 production-bundle scenario observes native top-layer state, geometric '
       + 'centring, ::backdrop, update/reconnect recovery and late ha-dialog registration; none '
-      + 'of those browser lifecycle effects can be proved from the Lit source alone',
+      + 'of those browser lifecycle effects can be proved from the Lit source alone. The #609 '
+      + 'scenario separately exercises the public HA sizing tokens, one HA body scroller, form '
+      + 'canvas and responsive fullscreen geometry used by all five form-shell consumers',
   },
   {
     symbols: [

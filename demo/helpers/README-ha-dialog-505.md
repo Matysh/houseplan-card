@@ -19,6 +19,23 @@ Discard and a clean close. It also fails on duplicate `hp-close` events,
 external requests, WebSockets or browser errors. The ordinary native-fallback
 contract remains in `demo/smoke_dialog_modal_recovery.mjs`.
 
+Issue #609 uses that same unmodified pinned `ha-dialog` to verify the shared
+settings-form shell rather than the close lifecycle:
+
+```sh
+npm run bundle:sync
+node demo/verify_ha_form_shell_609.mjs --capture
+```
+
+It opens the real Room settings form and checks the settled WebAwesome surface:
+560 px desktop width, the 940 px/viewport height cap, zero duplicate HA body
+padding, one HA-owned scroller, a distinct form canvas, footer containment and
+edge-to-edge layouts at 480×800 and 390×844. It also keeps HA's own fullscreen
+behaviour for a 1280×480 viewport. `--capture` writes the two reviewed diagnostic
+images under `docs/design/600-settings-dialogs/pairs/`; without it the command
+is read-only. The fast Validate witness is
+`demo/smoke_ha_form_shell_parity.mjs`; neither diagnostic is a golden producer.
+
 From a checkout with the usual `npm ci` dependencies and Playwright Chromium:
 
 ```sh

@@ -135,7 +135,11 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
   right-click → more-info (v1.38.1); Esc closes every dialog (v1.30.4).
   Since #607, rejecting the real HA close button after an unsaved-changes
   prompt explicitly reconciles the nested modal before reopening it; the same
-  Device, Room, Space or General-settings draft remains interactive.
+  Device, Room, Space or General-settings draft remains interactive. #609 keeps
+  every shared settings form on the reviewed 560 px canvas and single HA-owned
+  scroller in the authentic Home Assistant branch; at 480 px and below the
+  form is edge-to-edge fullscreen, while generic dialogs retain their previous
+  sizing.
 - **Room settings, tier 3** (v1.42.0): per-room fill/temp-source/label sizes;
   the settings button sits at the room's VISUAL centre (inscribed circle +
   centroid pull), icon-derived size, zooms with the plan (v1.51.0).

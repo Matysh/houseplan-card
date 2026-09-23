@@ -195,7 +195,18 @@ export class HpDialog extends LitElement {
        через переменную, которую уже читает :host([wide]); высота min(940,
        окно − 48); единственный скроллер — .content, тело формы высотой не
        владеет (К6). Generic wide и остальные диалоги не трогаются (Q7). */
-    :host([form-shell]) { --hp-dialog-wide-width: 560px; }
+    :host([form-shell]) {
+      --hp-dialog-wide-width: 560px;
+    }
+    :host([form-shell]) ha-dialog {
+      /* Public HA dialog hooks. Keep the authentic branch on the same outer
+         geometry as the native form shell without reaching into HA's shadow
+         tree. The light-DOM form owns its 16 px canvas padding, so HA must not
+         add a second inset around it. */
+      --ha-dialog-width-md: 560px;
+      --ha-dialog-max-height: min(940px, calc(100dvh - 48px));
+      --dialog-content-padding: 0;
+    }
     :host([form-shell]) .surface { max-height: min(940px, calc(100vh - 48px)); }
     :host([form-shell]) .content {
       flex: 1 1 auto;
@@ -207,8 +218,26 @@ export class HpDialog extends LitElement {
     :host([form-shell]) .close { width: 44px; height: 44px; }
     :host([form-shell]) .header { min-height: 70px; }
     @media (max-width: 480px) {
+      :host([form-shell]) ha-dialog {
+        --ha-dialog-width-md: var(--safe-width, 100vw);
+        --ha-dialog-width-full: var(--safe-width, 100vw);
+        --ha-dialog-min-height: var(--safe-height, 100dvh);
+        --ha-dialog-max-height: var(--safe-height, 100dvh);
+        --ha-dialog-border-radius: 0;
+        --dialog-surface-margin-top: 0;
+      }
       :host([form-shell]) .surface { width: 100vw; max-height: 100vh; border: 0; border-radius: 0; }
       :host([form-shell]) .badge { max-width: 105px; }
+    }
+    /* HA itself switches every dialog to fullscreen when viewport height is
+       500 px or less. Its radius token is inherited from hp-dialog, so mirror
+       the public responsive token here instead of leaving rounded corners on
+       an otherwise edge-to-edge authentic HA surface. */
+    @media (max-height: 500px) {
+      :host([form-shell]) ha-dialog {
+        --ha-dialog-border-radius: 0;
+        --dialog-surface-margin-top: 0;
+      }
     }
 
     .header {
@@ -309,6 +338,10 @@ export class HpDialog extends LitElement {
     if (this._useHaDialog === null) {
       this._useHaDialog = !!customElements.get('ha-dialog');
     }
+    // The branch is immutable for this connected instance. Reflect it only so
+    // the card's light-DOM form canvas can fill HA's body without changing the
+    // already-reviewed native fallback geometry.
+    this.toggleAttribute('ha-dialog-shell', this._usesHaDialog());
     this.addEventListener('keydown', this._onKeyDown, true);
     queueMicrotask(() => {
       // Re-entering the top layer lets the UA choose a default focus target.

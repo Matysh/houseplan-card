@@ -73,6 +73,39 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'ha-form-shell-width-falls-back-to-generic',
+    guard: 'node demo/smoke_ha_form_shell_parity.mjs',
+    because: '#609 AC1/AC8: the authentic HA branch must consume the reviewed 560 px form '
+      + 'width; falling back to HA generic medium width recreates the released/native mismatch',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: '      --ha-dialog-width-md: 560px;',
+      replace: '      --ha-dialog-width-md: 580px;',
+    }],
+  },
+  {
+    id: 'ha-form-shell-loses-canvas',
+    guard: 'node demo/smoke_ha_form_shell_parity.mjs',
+    because: '#609 AC3: forms in HA need the same canvas-and-card hierarchy as the reviewed '
+      + 'native shell; painting the body as the dialog surface erases that hierarchy',
+    patches: [{
+      file: 'src/styles/dialogs.styles.ts',
+      find: '      background: var(--hpf-canvas, var(--secondary-background-color, color-mix(in srgb, var(--card-background-color, var(--hp-bg, #202126)) 90%, var(--primary-text-color, #000))));',
+      replace: '      background: var(--card-background-color, var(--hp-bg, #202126));',
+    }],
+  },
+  {
+    id: 'ha-form-shell-mobile-keeps-desktop-inset',
+    guard: 'node demo/smoke_ha_form_shell_parity.mjs',
+    because: '#609 AC4/AC8: at 480 px and below the form shell is edge-to-edge; retaining the '
+      + 'desktop 48 px height inset clips the reviewed mobile surface and footer',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: '        --ha-dialog-max-height: var(--safe-height, 100dvh);',
+      replace: '        --ha-dialog-max-height: calc(var(--safe-height, 100dvh) - 48px);',
+    }],
+  },
+  {
     id: 'attribution-judges-the-head-definition-on-the-base',
     guard: 'node --test --test-name-pattern="#568" test/mutation-guard-outcome.test.mjs',
     because: '#568: атрибуция обязана сравнивать подобное с подобным — определение БАЗЫ на '
