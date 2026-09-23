@@ -176,6 +176,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         title: st('dialog.discard_title'), message: st('dialog.discard_message'),
         objectName: d.name.trim() || previewDevice?.name || undefined,
         confirmLabel: st('dialog.discard_confirm'), cancelLabel: st('dialog.discard_keep'),
+        icon: 'mdi:content-save-off-outline', confirmIcon: 'mdi:content-save-off-outline',
       });
       if (discard) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); } else dialog?.rejectClose?.();
     };

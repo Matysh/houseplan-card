@@ -56,8 +56,8 @@ export class HpConfirm extends LitElement {
             <button class="btn ${destructive ? 'danger' : 'on'}" type="button"
               data-hp="dialog-confirm"
               @click=${() => this._decide(true)}>
-              <ha-icon icon=${destructive
-                ? 'mdi:trash-can-outline' : 'mdi:lock-open-variant'}></ha-icon>
+              <ha-icon icon=${request.confirmIcon || (destructive
+                ? 'mdi:trash-can-outline' : 'mdi:lock-open-variant')}></ha-icon>
               ${request.confirmLabel}
             </button>
           </span>

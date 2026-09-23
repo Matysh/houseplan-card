@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The unsaved-settings prompt is now unambiguous in Russian: **Return** keeps
+  the draft, **Don't save** discards it, and the discard action no longer uses
+  an open-lock icon ([#610](https://github.com/Matysh/houseplan-card/issues/610)).
 - Numeric fields beside sliders in room, space and device settings now accept
   multi-digit typing without jumping to a limit: the value is committed when
   the field is left,

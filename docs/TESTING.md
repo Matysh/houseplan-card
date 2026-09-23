@@ -1,5 +1,18 @@
 # Manual testing checklist
 
+## Вопрос о несохранённых настройках (#610)
+
+- [ ] В русской локали четыре формы настроек показывают **Вернуться** и
+      **Не сохранять**: первая кнопка сохраняет черновик, вторая закрывает
+      форму без сохранения [auto: `demo/smoke_discard_copy.mjs`].
+- [ ] Заголовок и кнопка потери черновика используют
+      `mdi:content-save-off-outline`; обычный warning без override сохраняет
+      иконки открытого замка [auto: `demo/smoke_discard_copy.mjs`; mutation:
+      `discard-confirm-action-icon-falls-back-to-lock`].
+- [ ] RU/EN/DE/FR на 320–640 px, light/dark и DPR 1/2 сохраняют одну строку,
+      полный текст, безопасный autofocus и возврат к форме
+      [auto: `demo/smoke_dialog_polish_603.mjs`].
+
 ## Числовые поля со слайдером (#608)
 
 - [ ] В настройках комнаты поле размера имени принимает `120` посимвольно:

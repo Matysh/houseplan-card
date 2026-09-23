@@ -73,6 +73,20 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'discard-confirm-action-icon-falls-back-to-lock',
+    guard: 'node demo/smoke_discard_copy.mjs',
+    because: '#610 AC3/AC4: unsaved-settings discard uses save-off in both places, but other '
+      + 'warnings retain the lock fallback. Ignoring the per-request action override silently '
+      + 'restores the misleading open-lock glyph only inside the destructive action button.',
+    patches: [{
+      file: 'src/hp-confirm.ts',
+      find: "              <ha-icon icon=${request.confirmIcon || (destructive\n"
+        + "                ? 'mdi:trash-can-outline' : 'mdi:lock-open-variant')}></ha-icon>",
+      replace: "              <ha-icon icon=${destructive\n"
+        + "                ? 'mdi:trash-can-outline' : 'mdi:lock-open-variant'}></ha-icon>",
+    }],
+  },
+  {
     id: 'range-line-clamps-every-keystroke',
     guard: 'node demo/smoke_range_line_draft.mjs',
     because: '#608 AC1/AC5: partial keyboard text must stay local until commit. Restoring the '

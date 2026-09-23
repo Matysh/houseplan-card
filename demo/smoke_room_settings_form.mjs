@@ -128,7 +128,8 @@ const out = await page.evaluate(async () => {
     && qa('.hpf-card[data-card="sizes"] .hpf-headline .hpf-link').every((l) => l.disabled)
     && qa('.hpf-card[data-card="sizes"] .hpf-range-ends').length === 2
     && q('.hpf-card[data-card="sizes"] > .hpf-body > .hpf-hint')?.textContent.includes('120');
-  input(q('#room-name-scale'), '150'); await upd();
+  input(q('#room-name-scale'), '150');
+  change(q('#room-name-scale')); await upd();
   o.numberWritesNameScaleOnly = Math.abs(c._roomNameScale - 1.5) < 1e-9 && c._roomLabelScale === 1
     && qa('.hpf-card[data-card="sizes"] .hpf-headline .hpf-link')[0].disabled === false
     && qa('.hpf-card[data-card="sizes"] .hpf-headline .hpf-link')[1].disabled === true;
@@ -151,9 +152,9 @@ const out = await page.evaluate(async () => {
   await upd(); await new Promise((r) => setTimeout(r, 60));
   const confirm = () => sr().querySelector('hp-confirm hp-dialog');
   o.discardAsksFirst = !!confirm() && !!dlg();
-  o.discardLabelsAreShort = ['Продолжить', 'Continue', 'Fortfahren', 'Continuer']
+  o.discardLabelsAreShort = ['Вернуться', 'Continue', 'Fortfahren', 'Continuer']
     .includes(confirm()?.querySelector('[data-hp="dialog-cancel"]')?.textContent.trim())
-    && ['Отменить', 'Discard', 'Verwerfen', 'Abandonner']
+    && ['Не сохранять', 'Discard', 'Verwerfen', 'Abandonner']
       .includes(confirm()?.querySelector('[data-hp="dialog-confirm"]')?.textContent.trim());
   confirm()?.querySelector('[data-hp="dialog-cancel"]')?.click(); await upd(); await new Promise((r) => setTimeout(r, 60));
   o.keepEditingKeepsDialog = !!dlg() && !confirm() && c._roomDialog === true && c._nameSel === 'Room 600';

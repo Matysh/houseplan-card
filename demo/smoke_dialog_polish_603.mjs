@@ -3,7 +3,7 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const expected = {
-  ru: ['Продолжить', 'Отменить'],
+  ru: ['Вернуться', 'Не сохранять'],
   en: ['Continue', 'Discard'],
   de: ['Fortfahren', 'Verwerfen'],
   fr: ['Continuer', 'Abandonner'],
@@ -115,6 +115,8 @@ for (const dpr of [1, 2]) {
             && footer.scrollWidth <= footer.clientWidth + 1 && surface.getBoundingClientRect().left >= -1
             && surface.getBoundingClientRect().right <= innerWidth + 1;
           const labels = buttons.map((button) => button.textContent.trim());
+          const discardIcons = confirm?.icon === 'mdi:content-save-off-outline'
+            && buttons[1]?.querySelector('ha-icon')?.getAttribute('icon') === 'mdi:content-save-off-outline';
           const safeFocus = (root().activeElement === buttons[0] || document.activeElement === buttons[0])
             && buttons[0].hasAttribute('autofocus');
           buttons[0].click();
@@ -123,12 +125,12 @@ for (const dpr of [1, 2]) {
             && !root().querySelector('hp-confirm hp-dialog');
           c._roomDialogCancel();
           await settle();
-          return { roomFields, switchAligned, rejectsOldTrack, fits, labels, safeFocus, kept,
+          return { roomFields, switchAligned, rejectsOldTrack, fits, labels, discardIcons, safeFocus, kept,
             gaps: { off: [off.topGap, off.bottomGap, off.leftGap], on: [on.topGap, on.bottomGap, on.rightGap] } };
         }, { language });
         results[key] = result.roomFields && result.switchAligned && result.rejectsOldTrack && result.fits
           && JSON.stringify(result.labels) === JSON.stringify(expected[language])
-          && result.safeFocus && result.kept;
+          && result.discardIcons && result.safeFocus && result.kept;
         if (!results[key]) console.log(key, result);
       }
     }

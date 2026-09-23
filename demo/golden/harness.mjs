@@ -1757,7 +1757,7 @@ export async function prepareGoldenScenario(page, scenario) {
       const confirm = card.renderRoot.querySelector('hp-confirm hp-dialog');
       const labels = [...(confirm?.querySelectorAll('.danger-confirm-footer button') || [])]
         .map((button) => button.textContent.trim());
-      if (JSON.stringify(labels) !== JSON.stringify(['Продолжить', 'Отменить'])) {
+      if (JSON.stringify(labels) !== JSON.stringify(['Вернуться', 'Не сохранять'])) {
         throw new Error(`golden discard labels are incomplete: ${scenario.id}`);
       }
     } else if (scenario.dialog === 'room-temperature') {

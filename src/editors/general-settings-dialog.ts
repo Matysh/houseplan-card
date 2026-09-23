@@ -47,6 +47,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
       key: 'discard-settings-dialog', kind: 'warning',
       title: st('dialog.discard_title'), message: st('dialog.discard_message'),
       confirmLabel: st('dialog.discard_confirm'), cancelLabel: st('dialog.discard_keep'),
+      icon: 'mdi:content-save-off-outline', confirmIcon: 'mdi:content-save-off-outline',
     });
     if (discard) close(); else dialog?.rejectClose?.();
   };

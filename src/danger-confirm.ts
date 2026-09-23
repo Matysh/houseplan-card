@@ -9,6 +9,8 @@ export interface HpConfirmRequest {
   confirmLabel: string;
   cancelLabel: string;
   icon?: string;
+  /** Optional action-glyph override; title and action may share one semantic icon. */
+  confirmIcon?: string;
 }
 
 export interface HpConfirmState {

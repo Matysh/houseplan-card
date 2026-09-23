@@ -28,6 +28,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['confirmIcon', 'HpConfirmRequest'],
+    smokes: ['smoke_discard_copy.mjs', 'smoke_dialog_polish_603.mjs'],
+    because: '#610: the production-bundle witnesses open all four unsaved-settings '
+      + 'confirmations, verify both rendered glyphs and actions, then prove an unrelated warning '
+      + 'still uses the fallback lock glyphs; source imports cannot prove the rendered dialog',
+  },
+  {
     symbols: ['rangeLine', 'committedRangeLineValue'],
     smokes: ['smoke_range_line_draft.mjs', 'smoke_dialog_config_parity.mjs'],
     because: '#608: the production-bundle witnesses type partial numeric text into real settings '
