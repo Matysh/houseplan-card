@@ -8560,6 +8560,29 @@ const MUTANT_DEFINITIONS = [
       replace: "  const codeRounds = completed.map((issue) => issue.s7Requests).filter(Boolean); // mutant: rounds = S7 events",
     }],
   },
+  // #635: индекс ревью — база знаний; молчаливо неполный индекс хуже отсутствующего.
+  {
+    id: 'reviews-index-skips-self-check',
+    guard: 'node --test --test-name-pattern="#635 индекс покрывает" test/reviews-index.test.mjs',
+    because: 'the index must list every review document and never itself; indexing INDEX.md makes '
+      + 'the generator non-deterministic and hides documents behind its own entry (#635)',
+    patches: [{
+      file: 'scripts/reviews-index.mjs',
+      find: "  const names = readdirSync(dir).filter((name) => name.endsWith('.md') && name !== INDEX_FILE).sort();",
+      replace: "  const names = readdirSync(dir).filter((name) => name.endsWith('.md')).sort(); // mutant: indexes itself",
+    }],
+  },
+  {
+    id: 'reviews-index-verdict-substring',
+    guard: 'node --test --test-name-pattern="#635 вердикт" test/reviews-index.test.mjs',
+    because: 'a colour word inside another word is not a verdict; JS \\b is ASCII-only, so the '
+      + 'Cyrillic guard is an explicit negative lookahead (#635)',
+    patches: [{
+      file: 'scripts/reviews-index.mjs',
+      find: "const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)[^\\n]{0,60}?\\**\\s*(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)(?![а-яёa-z])/i;",
+      replace: "const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)[^\\n]{0,60}?\\**\\s*(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)/i; // mutant: substring verdict",
+    }],
+  },
   {
     id: 'process-reconcile-restarts-healthy-run',
     guard: 'node --test test/process-reconcile.test.mjs',
