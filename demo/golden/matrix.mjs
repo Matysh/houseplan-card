@@ -618,7 +618,9 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     viewport: { width: 390, height: 760 }, ...page },
   { id: 'furniture-categories-light', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     furniturePalette: 'categories', language: 'ru', theme: 'light',
-    viewport: { width: 900, height: 820 }, ...page },
+    // #640: keep the appliance row, including Dishwasher, fully visible so a
+    // menu-art replacement cannot pass behind the palette footer or CI reuse.
+    viewport: { width: 900, height: 1050 }, ...page },
   { id: 'furniture-variants-dark', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     furniturePalette: 'variants', furnitureCategory: 'sofa', language: 'en', theme: 'dark',
     viewport: { width: 900, height: 820 }, ...page },
