@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1000, issue: 347. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1003, issue: 348. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -11,10 +11,13 @@
 | #636 | [CODE-REVIEW-636-r1.md](CODE-REVIEW-636-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #635 | [CODE-REVIEW-635-r1.md](CODE-REVIEW-635-r1.md) | code · r1 | 🟡 жёлтый | 1 | 0 | индекс молчаливо теряет находки и врёт числами по текущему | `docs/reviews/CODE-REVIEW-639-r1.md` `CODE-REVIEW-637-r1.md` `docs/reviews/CODE-REVIEW-594-r1.md` `docs/LESSONS.md` |
 | #635 | [CODE-REVIEW-635-r2.md](CODE-REVIEW-635-r2.md) | code · r2 | 🟡 жёлтый | 1 | 1 | docs/reviews/INDEX.md, зафиксированный в материале ревью, устарел на собственном SHA — …; parseFindings/parseFiles: фолбэк «первая строка тела блока» вырезает начало буллета и п… | `docs/reviews/INDEX.md` `SPEC-REVIEW-625-r1.md` `SPEC-REVIEW-625-r2.md` `CODE-REVIEW-625-r1.md` `CODE-REVIEW-625-r2.md` `process.yml` `test/reviews-index.test.mjs` `INDEX.md` |
+| #635 | [CODE-REVIEW-635-r3.md](CODE-REVIEW-635-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | firstParagraph: ветка нет\b в фильтре мёртвая из-за ASCII-only \b в JS-регэкспах, расхо… | `scripts/reviews-index.mjs` |
 | #625 | [SPEC-REVIEW-625-r1.md](SPEC-REVIEW-625-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | новый инвариант markers[].id не описывает исход для уже испорченной хранимой конфигурации; продуктовые формулировки §7.1 неполны; не проговорены явные «нет» по i18n/touch | `validation.py` `__init__.py` |
 | #625 | [SPEC-REVIEW-625-r2.md](SPEC-REVIEW-625-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #625 | [CODE-REVIEW-625-r1.md](CODE-REVIEW-625-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | Три из четырёх точек вызова validate_active_marker_ids не имеют ни одного теста, exerci…; AC5 текстуально обещает «отдельные тесты сохраняют поведение при отсутствующем length» …; store.py:async_save_config_state — controller.async_flush() и последующий controller.re… | `custom_components/houseplan/websocket_api.py` `test_validation.py` |
 | #625 | [CODE-REVIEW-625-r2.md](CODE-REVIEW-625-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #624 | [SPEC-REVIEW-624-r1.md](SPEC-REVIEW-624-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC1-b: «чем краснеет» не соответствует заявленному свидетелю | `scripts/gate-small.mjs` `scripts/bundle-budget.mjs` `scripts/monolith-baseline.json` |
+| #624 | [SPEC-REVIEW-624-r2.md](SPEC-REVIEW-624-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #621 | [CODE-REVIEW-621-r1.md](CODE-REVIEW-621-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #619 | [CODE-REVIEW-619-r1.md](CODE-REVIEW-619-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #614 | [SPEC-REVIEW-614-r1.md](SPEC-REVIEW-614-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
