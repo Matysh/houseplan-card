@@ -21,6 +21,7 @@ const out = await page.evaluate(async () => {
   const saveBtn = () => q('.dialog-action-commit [data-hp="dialog-confirm"]');
   const statusText = () => q('.hpf-status')?.textContent.trim() || '';
   const input = (el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); };
+  const change = (el) => el.dispatchEvent(new Event('change', { bubbles: true }));
   const pickSeg = async (name, value) => {
     const r = qa(`input[name="${name}"]`).find((x) => x.value === value);
     r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); await upd();
@@ -97,7 +98,7 @@ const out = await page.evaluate(async () => {
     && !!q('.markerglowvalue .hpf-colorfield hp-color-opacity[hide-label]') && !!q('.markerglowvalue .hpf-hex')
     && !!q('#marker-glow-brightness') && qa('input[type="color"]').length === 0
     && !q('.markerglowblock.hpf-disabled');
-  input(q('#marker-glow-brightness'), '42'); await upd();
+  input(q('#marker-glow-brightness'), '42'); change(q('#marker-glow-brightness')); await upd();
   o.brightnessNumberWrites = c._markerDialog.glowBrightness === 42 && c._markerDialog.glowTouched === true;
   o.radiusHintWhenEmpty = c._markerDialog.glowRadius === '' && !!q('#marker-glow-radius')?.closest('.hpf-field')?.querySelector('.hpf-hint');
   // Ревью r1 M2: радиус — не условие Save. Нечисло или ноль, как на dev, при
@@ -139,8 +140,8 @@ const out = await page.evaluate(async () => {
     return sliderBox.right < unitBox.left && number.scrollWidth <= number.clientWidth
       && unitBox.right <= range.getBoundingClientRect().right + 3;
   });
-  input(q('#marker-size'), '2'); await upd();
-  input(q('#marker-angle'), '35'); await upd();
+  input(q('#marker-size'), '2'); change(q('#marker-size')); await upd();
+  input(q('#marker-angle'), '35'); change(q('#marker-angle')); await upd();
   o.sizeAndAngleNumbersWrite = c._markerDialog.size === 2 && c._markerDialog.angle === 35;
 
   // --- Details: Model и Link в ряд, описание, вложения ------------------------
