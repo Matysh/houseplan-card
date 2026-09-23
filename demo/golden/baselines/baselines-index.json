@@ -1,8 +1,8 @@
 {
   "schema": 2,
   "matrixVersion": 64,
-  "acceptedAt": "2026-09-21T13:46:27.763Z",
-  "sourceFingerprint": "f375b46ff4913dd2e476de3df2bc2e8ce6fd586b5c580aded9b2e6ce431e9cf1",
+  "acceptedAt": "2026-09-23T14:08:24.123Z",
+  "sourceFingerprint": "2b04d2889e0a5948d73c9e38fc89660ac8a2c64b91e0f4914849c235294f7787",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "win32",
@@ -10,19 +10,19 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "f375b46ff4913dd2e476de3df2bc2e8ce6fd586b5c580aded9b2e6ce431e9cf1",
+    "buildFingerprint": "2b04d2889e0a5948d73c9e38fc89660ac8a2c64b91e0f4914849c235294f7787",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 35606718247,
+      "run": 35870750208,
       "attempt": 1,
-      "sha": "4c26b16b035f3347b1aeb98506d6127749b9ff1f"
+      "sha": "5585bfb730db615831d6f794d56cbb978521d83c"
     }
   },
   "foreignCapture": {
-    "reason": "Reviewed Linux CI artifact 35606718247 for beta.5 (#455)"
+    "reason": "acceptance of Linux CI artifact 35870750208 on Windows owner machine (#455, #640, #610)"
   },
   "witnesses": {
-    "count": 105,
+    "count": 111,
     "floor": 10
   },
   "scenarios": {
@@ -106,7 +106,7 @@
     "tray-medium-group-en": "afdb651c687cabda48e62d426b9ef4926a23caa86904fe6fa2c163930070b2bd",
     "tray-medium-selection-ru": "5d78f5d818514ab80a4fb2949274edffd372e0d2e41bc3ccf39a22fd7c993f6b",
     "tray-narrow-palette-en": "100d7a87eebf6665bf67cdd53b7f23ade885827af8dc6cc7ae27cebc971b8fb9",
-    "furniture-categories-light": "decddc60822ed0d6a04fe5695f3a79bb57ed98aa2103f02e89c68bced313feef",
+    "furniture-categories-light": "36676ada243391e7b3b27974df5db1fd33da45508bdcb879b01be239521b830d",
     "furniture-variants-dark": "7988bb13215657886a1e08ada67317f030c7f99d6d1f483b5d61cebc492cb46b",
     "furniture-variants-light": "d025401492c808b11fc84e862d3154cd7ccd57095436488575d4b23f7b2debff",
     "furniture-placement-preview-light": "eeaea99b86807fcf61960ce7c688d929721a3a3ee47867d564079d86d089f7e5",
@@ -174,7 +174,7 @@
     "device-dialog-desktop-de": "d743bf734ad12f2282e262048eeed97f90c3ca5de2af84bd4d7304794f143351",
     "room-temperature-dialog-desktop-en": "dd42f01dec3f5c69bae9777c39abed5b8e9e3c076f0046779f9b8a65fec4a90c",
     "room-temperature-dialog-mobile-ru": "5ca1c4f18eab3fb4c0667f76b0d0340df94f24e0457baca89234e0ef159f62d6",
-    "room-discard-dialog-mobile-ru": "4ee1d370e1df82a5464ef5c24103c6563146ec30c3b0e8508830c3b18e79ab5d",
+    "room-discard-dialog-mobile-ru": "9c85af0cdbd2842808ef5ac8fdb306f621a726b0ac77c1449722c85399b4cb3f",
     "german-view-mobile-light": "8c079d1574a6fbec478eacc872a46800f4348a9ce6d4dc1b1a11f88df8688e19",
     "toggle-entity-dialog-desktop-en": "d2bc74705c9687d11bd55d22140635c2fb55de6496c7e85dfbb67ac049483f55",
     "toggle-entity-dialog-mobile-ru": "c5bf5077a33c1acfa5f744e0ab1c15ce6c2147bc3622a7e8754d972aeedb555b",
