@@ -9,9 +9,17 @@
 // пересобирается конвейером после публикации каждого документа ревью.
 //
 //   node scripts/reviews-index.mjs [--dir=docs/reviews] [--output=docs/reviews/INDEX.md] [--check]
+//   node scripts/reviews-index.mjs --commit-if-stale --issue=NN [--dir=…]
 //
-// `--check` — не писать, а сравнить с существующим файлом (гейт «индекс свеж»).
+// `--check` — не писать, а сравнить с существующим файлом (гейт «индекс свеж»;
+// тот же инвариант держит тест `#635 индекс свеж`).
+// `--commit-if-stale` — пересобрать и, если файл изменился, закоммитить его
+// коммитом конвейера (класс C). Индекс — снимок каталога: ребейз ветки на
+// dev, получивший новые документы, устаревает его молча (r2 #635 H1), поэтому
+// конвейер зовёт этот режим после каждого своего ребейза — при приведении к
+// dev перед ревью и при слиянии кандидата.
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
 
@@ -119,12 +127,42 @@ function severityBlocks(text) {
   return blocks;
 }
 
+/**
+ * Первый абзац тела секции как заголовок находки без заголовка. Абзац — до
+ * пустой строки, перенесённые строки склеиваются: иначе у буллета, не
+ * уместившегося в одну физическую строку, брался его хвост (r2 #635 M1,
+ * `CODE-REVIEW-485-r4`: «пусто). Не эскалирую…»). Маркер буллета и код
+ * `**M1.**` снимаются; абзац, начинающийся с «не найдено»/«нет», — не находка.
+ */
+function firstParagraph(body) {
+  const paragraphs = [];
+  let current = [];
+  for (const raw of [...body, '']) {
+    const line = raw.trim();
+    if (!line) { if (current.length) paragraphs.push(current.join(' ')); current = []; continue; }
+    if (/^[|#<]/.test(line) || /^<!--/.test(line)) { if (current.length) paragraphs.push(current.join(' ')); current = []; continue; }
+    current.push(line);
+  }
+  for (const paragraph of paragraphs) {
+    const text = paragraph.replace(/^[-*]\s+/, '').replace(/^\**[HML]\d+\**\s*[.:—–-]?\s*/, '').trim();
+    if (!text || text.startsWith('(')) continue; // служебная скобка «(унаследовано из r1…)» — не находка
+    if (NOTHING_RE.test(text) || /^(?:\**(?:High|Medium|Low)\**\s*)?(?:не найдено|не обнаружено|нет находок|нет\b|отсутству)/i.test(text)) return null;
+    return text;
+  }
+  return null;
+}
+
 /** `**M1. …**`, `**H2 — …**`, `- M3: …` в теле секции — пронумерованные находки без заголовка. */
 function numberedItems(body) {
   const items = [];
-  for (const line of body) {
-    const m = /^\s*(?:[-*]\s*)?\**([HML])(\d+)\**\s*[.:—–-]\s*(.+)$/.exec(line);
-    if (m) items.push({ severity: SEVERITY[m[1].toLowerCase()], id: Number(m[2]), title: m[3] });
+  for (const raw of body) {
+    const line = raw.trim();
+    const m = /^(?:[-*]\s*)?\**([HML])(\d+)\**\s*[.:—–-]\s*(.+)$/.exec(line);
+    if (m) { items.push({ severity: SEVERITY[m[1].toLowerCase()], id: Number(m[2]), title: m[3] }); continue; }
+    // Перенесённая строка того же пункта — продолжение заголовка (r2 #635 M1).
+    const last = items[items.length - 1];
+    if (last && line && !/^[|#<>-]/.test(line) && !last.closed) last.title += ` ${line}`;
+    else if (last) last.closed = true;
   }
   return items;
 }
@@ -191,8 +229,8 @@ export function parseFindings(text, limit = 6) {
     if (block.title) { found.push({ line: block.line, title: block.title }); continue; }
     const items = numberedItems(block.body);
     if (items.length) { items.forEach((item, k) => found.push({ line: block.line + k / 100, title: item.title })); continue; }
-    const first = block.body.map((l) => l.trim()).find((l) => l && !/^[|#<-]/.test(l));
-    if (first) found.push({ line: block.line, title: first.replace(/^\**[HML]\d+\**[.:—–-]?\s*/, '') });
+    const first = firstParagraph(block.body);
+    if (first) found.push({ line: block.line, title: first });
   }
   found.sort((a, b) => a.line - b.line);
   for (const item of found) push(item.title);
@@ -278,10 +316,43 @@ export function buildIndex(dir) {
   return renderIndex(collectEntries(dir));
 }
 
+export const CONVEYOR_IDENTITY = ['-c', 'user.name=claude[bot]', '-c', 'user.email=209825114+claude[bot]@users.noreply.github.com'];
+
+/**
+ * Пересобрать индекс и закоммитить, если он изменился. Возвращает
+ * `{ changed, sha }`: `sha` — новый HEAD при коммите, иначе null.
+ * `git` — исполнитель `(args) => { status, stdout, stderr }` (для теста).
+ */
+export function commitIfStale({ dir, output = join(dir, INDEX_FILE), issue, git = defaultGit }) {
+  if (!existsSync(dir)) return { changed: false, sha: null }; // каталога нет — индексировать нечего
+  const markdown = buildIndex(dir);
+  const current = existsSync(output) ? readFileSync(output, 'utf8') : '';
+  if (current === markdown) return { changed: false, sha: null };
+  writeFileSync(output, markdown, 'utf8');
+  const must = (args, what) => {
+    const r = git(args);
+    if (r.status !== 0) throw new Error(`${what}: ${r.stderr || r.stdout}`);
+    return String(r.stdout || '').trim();
+  };
+  must(['add', '--', output], 'git add');
+  const trailer = issue ? `\n\nIssue: #${issue}\nUser-Visible: no\n` : '\n\nUser-Visible: no\n';
+  must([...CONVEYOR_IDENTITY, 'commit', '-q', '-m', `docs(reviews): индекс после сдвига каталога${issue ? ` (#${issue})` : ''}${trailer}`], 'git commit');
+  return { changed: true, sha: must(['rev-parse', 'HEAD'], 'rev-parse') };
+}
+
+function defaultGit(args) {
+  return spawnSync('git', args, { encoding: 'utf8' });
+}
+
 if (isMainModule(import.meta.url)) {
   const arg = (name, fallback) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
   const dir = arg('dir', 'docs/reviews');
   const output = arg('output', join(dir, INDEX_FILE));
+  if (process.argv.includes('--commit-if-stale')) {
+    const { changed, sha } = commitIfStale({ dir, output, issue: arg('issue', '') });
+    console.log(changed ? `${output} пересобран и закоммичен: ${sha}` : `${output} свеж — коммит не нужен`);
+    process.exit(0);
+  }
   const markdown = buildIndex(dir);
   if (process.argv.includes('--check')) {
     const current = existsSync(output) ? readFileSync(output, 'utf8') : '';

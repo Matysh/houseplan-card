@@ -22,9 +22,13 @@
 import { spawnSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { isMainModule } from './spawn-portable.mjs';
+import { fileURLToPath } from 'node:url';
 import {
   CI_PROOF_POLICIES, evaluateCiProof, githubCandidateTree, loadGithubProofContext,
 } from './ci-proof.mjs';
+
+/** Скрипт индекса — по абсолютному пути: слияние работает из чужого cwd (worktree кандидата). */
+const REVIEWS_INDEX_SCRIPT = fileURLToPath(new URL('./reviews-index.mjs', import.meta.url));
 
 export const MAX_ATTEMPTS = 3;
 export const VALIDATE_APPEAR_MS = 3 * 60 * 1000;
@@ -121,7 +125,7 @@ export const sh = (cmd, args, opts = {}) => {
 };
 
 export function realOps({
-  repo, token, workflow = 'validate.yml', sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+  repo, token, issue = '', workflow = 'validate.yml', sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
   now = Date.now, exec = sh,
   candidateTree = (sha) => githubCandidateTree({ repo, sha, token }),
   proofContext = (run) => loadGithubProofContext({ repo, run, token }),
@@ -146,6 +150,11 @@ export function realOps({
       must(git('checkout', '-q', '-B', 'merge-into-dev', branchTip), 'checkout');
       const r = spawnSync('git', ['-c', 'user.name=claude[bot]', '-c', 'user.email=209825114+claude[bot]@users.noreply.github.com', 'rebase', onto], { encoding: 'utf8' });
       if (r.status !== 0) { spawnSync('git', ['rebase', '--abort']); return null; }
+      // #635 r2: dev мог принести новые документы ревью — снимок INDEX.md
+      // в кандидате их не знает. Коммит индекса — doc-коммит конвейера:
+      // patch-id его не видит (`:!docs/reviews`), а тест «индекс свеж» в
+      // Validate кандидата без него был бы красным.
+      must(exec(process.execPath, [REVIEWS_INDEX_SCRIPT, '--dir=docs/reviews', '--commit-if-stale', `--issue=${issue}`]), 'reviews-index --commit-if-stale');
       return must(git('rev-parse', 'HEAD'), 'rev-parse HEAD');
     },
     pushWithLease: (sha, ref, expected) => {
@@ -278,7 +287,7 @@ if (isMainModule(import.meta.url)) { // #496: переносимо для Window
     console.error('usage: merge-candidate.mjs --branch=<issue branch> --material=<sha> --issue=<n> [--repo=owner/name]; HP_PROCESS_TOKEN in env');
     process.exit(2);
   }
-  const ops = realOps({ repo, token });
+  const ops = realOps({ repo, token, issue });
   mergeCandidate({ branch, material, issue, ops }).then((r) => {
     const out = `merged=${r.merged}\nto=${r.to || ''}\naction=${r.action}\ncandidate=${r.candidate}\n`;
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, out);

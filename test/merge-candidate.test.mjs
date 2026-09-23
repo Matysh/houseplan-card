@@ -364,7 +364,7 @@ test('#516 AC1: dev moved only by review documents and the branch carries its ow
     git(work, 'push', '-q', 'origin', 'dev');
 
     const calls = [];
-    const ops = realOps({ repo: 'x/y', token: 'none' });
+    const ops = realOps({ repo: 'x/y', token: 'none', issue: 9 });
     ops.pushWithLease = (sha, ref, expected) => {
       calls.push(['push', ref, expected]);
       const r = spawnSync('git', ['-C', work, 'push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, 'origin', `${sha}:refs/heads/${ref}`], { encoding: 'utf8' });
@@ -385,6 +385,12 @@ test('#516 AC1: dev moved only by review documents and the branch carries its ow
     assert.match(git(work, 'show', `${devTip}:a.mjs`), /a = 21/);
     assert.equal(git(work, 'cat-file', '-t', `${devTip}:docs/reviews/CODE-REVIEW-9-r1.md`), 'blob', 'документ раунда уехал вместе с кодом');
     assert.equal(git(work, 'cat-file', '-t', `${devTip}:docs/reviews/CODE-REVIEW-8-r2.md`), 'blob');
+    // #635 r2 H1: кандидат после ребейза несёт свежий INDEX.md — оба документа
+    // видны через индекс, коммит индекса — doc-коммит конвейера поверх материала.
+    const index = git(work, 'show', `${devTip}:docs/reviews/INDEX.md`);
+    assert.match(index, /CODE-REVIEW-8-r2\.md/);
+    assert.match(index, /CODE-REVIEW-9-r1\.md/);
+    assert.match(git(work, 'log', '-1', '--format=%s', devTip), /^docs\(reviews\): индекс после сдвига каталога \(#9\)/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

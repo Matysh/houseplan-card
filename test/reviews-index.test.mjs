@@ -1,12 +1,13 @@
 // #635: индекс ревью — одна строка на документ, детерминированно, 100 % каталога.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
-  buildIndex, collectEntries, indexEntry, parseCounts, parseDocName, parseFiles, parseFindings, parseVerdict, renderIndex,
+  INDEX_FILE, buildIndex, collectEntries, commitIfStale, indexEntry, parseCounts, parseDocName, parseFiles, parseFindings, parseVerdict, renderIndex,
 } from '../scripts/reviews-index.mjs';
 
 test('#635 имена документов: этап, issue, раунд; INDEX и чужое — вне схемы', () => {
@@ -90,12 +91,26 @@ test('#635 живой каталог docs/reviews: индекс свеж и по
   assert.ok(entries.length > 900);
   const recognised = entries.filter((e) => e.verdict !== '—').length;
   assert.ok(recognised / entries.length > 0.9, `вердикт распознан у ${recognised} из ${entries.length}`);
+  // r2 #635 H1: закоммиченный INDEX.md обязан совпадать с пересборкой по
+  // текущему каталогу — иначе документы, приехавшие ребейзом, невидимы через
+  // индекс. Свежесть держит конвейер (`--commit-if-stale` после ребейзов);
+  // этот тест — гейт, который ловит расхождение в Validate.
+  const dir = fileURLToPath(new URL('../docs/reviews/', import.meta.url));
+  assert.equal(readFileSync(join(dir, INDEX_FILE), 'utf8'), buildIndex(dir),
+    'docs/reviews/INDEX.md устарел — node scripts/reviews-index.mjs');
 });
 
 test('#635 конвейер пересобирает индекс тем же коммитом, что и документ ревью', () => {
   const wf = new URL('../.github/workflows/process.yml', import.meta.url);
   const text = readFileSync(wf, 'utf8');
   assert.match(text, /node scripts\/reviews-index\.mjs --dir=docs\/reviews\n\s+git add -- docs\/reviews\/INDEX\.md/);
+  // r2 H1: после приведения ветки к dev индекс пересобирается коммитом
+  // конвейера до фиксации материала; при слиянии — то же в merge-candidate.
+  const rebase = text.slice(text.indexOf('- name: Привести ветку к dev'), text.indexOf('- name: Зафиксировать SHA материала ревью'));
+  assert.match(rebase, /node scripts\/reviews-index\.mjs --dir=docs\/reviews --commit-if-stale --issue="\$NUM"/);
+  assert.match(rebase, /NUM: \$\{\{ github\.event\.issue\.number \}\}/);
+  const merge = readFileSync(new URL('../scripts/merge-candidate.mjs', import.meta.url), 'utf8');
+  assert.match(merge, /REVIEWS_INDEX_SCRIPT, '--dir=docs\/reviews', '--commit-if-stale'/);
 });
 
 // r1 #635 H1: индекс молчал о находках в живом формате заголовков и брал
@@ -140,7 +155,7 @@ test('#635 r2: находки читаются из живых форматов 
     '### High — нет',
   ].join('\n');
   assert.deepEqual(parseFindings(doc), [
-    'Новая запись smoke-links.mjs для smoke_space_settings_form.mjs',
+    'Новая запись smoke-links.mjs для smoke_space_settings_form.mjs ничего не связывает',
     'ложный «—» вместо настоящего «0 ч» в медианах',
     'калибровка мимо своего этажа',
     'Живой rubber-band превью не рисуется вовсе',
@@ -157,4 +172,65 @@ test('#635 r2: файлы из находок попадают в индекс �
   assert.match(md, /\| Находки \| Файлы \|/);
   assert.match(md, /`src\/form-kit\.ts` `test\/form-kit\.test\.mjs` \|$/m);
   assert.equal(md.split('\n').filter((l) => l.includes('form-kit')).length >= 1, true);
+});
+
+// r2 #635 M1: у секции без заголовка находки брался хвост перенесённого
+// буллета («пусто). Не эскалирую…», CODE-REVIEW-485-r4). Абзац склеивается,
+// маркер снимается, «не найдено» и служебные скобки — не находка.
+test('#635 r2: первый абзац секции берётся целиком, а не хвост перенесённого буллета', () => {
+  const doc = [
+    '### Low',
+    '',
+    '- Нет golden-сцены для радара (`find demo/golden` — по-прежнему',
+    '  пусто). Не эскалирую третий раунд подряд.',
+    '',
+    '### Medium',
+    '',
+    '(унаследовано из r1/r2, перепроверено заново)',
+    '',
+    'High не найдено. Medium вне скоупа не найдено — единственный M1 внутри.',
+    '',
+    '### Medium (в скоупе)',
+    '',
+    '**M1.** Токен `E2E_DISPATCH_TOKEN` scoped только',
+    'на соседний репозиторий.',
+  ].join('\n');
+  const findings = parseFindings(doc);
+  assert.equal(findings.length, 2);
+  assert.match(findings[0], /^Нет golden-сцены для радара \(find demo\/golden — по-прежнему пусто\)\. Не эскалирую/);
+  assert.equal(findings[1], 'Токен E2E_DISPATCH_TOKEN scoped только на соседний репозиторий');
+});
+
+test('#635 r2: --commit-if-stale пересобирает индекс и коммитит его только при расхождении', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'hp-reviews-commit-'));
+  const git = (args) => spawnSync('git', args, { cwd: repo, encoding: 'utf8' });
+  try {
+    git(['init', '-q']);
+    const dir = join(repo, 'docs', 'reviews');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'CODE-REVIEW-1-r1.md'), 'Вердикт: **зелёный** · High: 0 · Medium: 0\n');
+    writeFileSync(join(dir, INDEX_FILE), buildIndex(dir));
+    git(['add', '-A']);
+    git(['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'base']);
+    const base = git(['rev-parse', 'HEAD']).stdout.trim();
+    const fresh = commitIfStale({ dir, issue: '635', git });
+    assert.deepEqual(fresh, { changed: false, sha: null });
+    assert.equal(git(['rev-parse', 'HEAD']).stdout.trim(), base, 'свежий индекс — коммита нет');
+    // «Ребейз» принёс новый документ: индекс устарел.
+    writeFileSync(join(dir, 'CODE-REVIEW-2-r1.md'), 'Вердикт: **жёлтый** · High: 0 · Medium: 1\n### M1 — x\n');
+    git(['add', '-A']);
+    git(['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'rebased doc']);
+    const stale = commitIfStale({ dir, issue: '635', git });
+    assert.equal(stale.changed, true);
+    assert.equal(stale.sha, git(['rev-parse', 'HEAD']).stdout.trim());
+    assert.equal(git(['status', '--porcelain']).stdout.trim(), '', 'рабочая копия чистая');
+    const message = git(['log', '-1', '--format=%B']).stdout;
+    assert.match(message, /^docs\(reviews\): индекс после сдвига каталога \(#635\)/);
+    assert.match(message, /Issue: #635\nUser-Visible: no/);
+    assert.deepEqual(git(['diff', '--name-only', 'HEAD~1', 'HEAD']).stdout.trim().split('\n'), ['docs/reviews/INDEX.md']);
+    assert.match(readFileSync(join(dir, INDEX_FILE), 'utf8'), /CODE-REVIEW-2-r1\.md/);
+    assert.ok(existsSync(join(dir, INDEX_FILE)));
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
 });

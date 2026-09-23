@@ -8595,6 +8595,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'reviews-index-paragraph-tail',
+    guard: 'node --test --test-name-pattern="#635 r2: первый абзац" test/reviews-index.test.mjs',
+    because: 'r2 #635 M1: a finding without a heading is its first paragraph joined from wrapped '
+      + 'lines; taking a single physical line yields the tail of a bullet («пусто). Не эскалирую…»)',
+    patches: [{
+      file: 'scripts/reviews-index.mjs',
+      find: "    current.push(line);\n  }\n  for (const paragraph of paragraphs) {",
+      replace: "    current = [line]; // mutant: last physical line instead of the paragraph\n  }\n  for (const paragraph of paragraphs) {",
+    }],
+  },
+  {
     id: 'process-reconcile-restarts-healthy-run',
     guard: 'node --test test/process-reconcile.test.mjs',
     because: '#555: bounded reconciliation must not duplicate a healthy queued/running review '
