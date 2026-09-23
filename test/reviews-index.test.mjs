@@ -91,13 +91,21 @@ test('#635 живой каталог docs/reviews: индекс свеж и по
   assert.ok(entries.length > 900);
   const recognised = entries.filter((e) => e.verdict !== '—').length;
   assert.ok(recognised / entries.length > 0.9, `вердикт распознан у ${recognised} из ${entries.length}`);
-  // r2 #635 H1: закоммиченный INDEX.md обязан совпадать с пересборкой по
-  // текущему каталогу — иначе документы, приехавшие ребейзом, невидимы через
-  // индекс. Свежесть держит конвейер (`--commit-if-stale` после ребейзов);
-  // этот тест — гейт, который ловит расхождение в Validate.
-  const dir = fileURLToPath(new URL('../docs/reviews/', import.meta.url));
-  assert.equal(readFileSync(join(dir, INDEX_FILE), 'utf8'), buildIndex(dir),
-    'docs/reviews/INDEX.md устарел — node scripts/reviews-index.mjs');
+});
+
+// r2 #635 H1: закоммиченный INDEX.md обязан совпадать с пересборкой — иначе
+// документы, приехавшие ребейзом, невидимы через индекс. Гейт — шаг Validate
+// `reviews-index --check` на push в dev (см. комментарий в validate.yml, почему
+// не на issue-ветках: их переписывает конвейер из ветки по умолчанию, и его
+// коммиты индекс ветки знать не обязан). Свежесть держит `--commit-if-stale`
+// после каждого ребейза конвейера; здесь — свидетель на проводке.
+test('#635 r3: свежесть индекса судится на dev, конвейер пересобирает индекс после своих ребейзов', () => {
+  const validate = readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8');
+  const step = validate.slice(validate.indexOf('id: reviews_index'), validate.indexOf('id: workflow_sync'));
+  assert.match(step, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev'/);
+  assert.match(step, /run: node scripts\/reviews-index\.mjs --dir=docs\/reviews --check/);
+  assert.match(validate, /REVIEWS_INDEX: \$\{\{ steps\.reviews_index\.outcome \}\}/);
+  assert.match(validate, /\[ "\$REVIEWS_INDEX" = "skipped" \] \|\| check "индекс ревью совпадает с каталогом" "\$REVIEWS_INDEX"/);
 });
 
 test('#635 конвейер пересобирает индекс тем же коммитом, что и документ ревью', () => {

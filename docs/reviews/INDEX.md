@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 997, issue: 346. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1000, issue: 347. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -17,6 +17,9 @@
 | #625 | [CODE-REVIEW-625-r2.md](CODE-REVIEW-625-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #621 | [CODE-REVIEW-621-r1.md](CODE-REVIEW-621-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #619 | [CODE-REVIEW-619-r1.md](CODE-REVIEW-619-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #614 | [SPEC-REVIEW-614-r1.md](SPEC-REVIEW-614-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #614 | [CODE-REVIEW-614-r1.md](CODE-REVIEW-614-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC1/AC2/AC3 требуют unit-тест, а он не написан | `test/dialog-baseline.test.mjs` `test/space-dialog.test.mjs` `general-form-state.ts` `space-form-state.ts` `marker-form-state.ts` `tsconfig.test.json` `dialog-baseline.ts` `scripts/mutation-registry.mjs` |
+| #614 | [CODE-REVIEW-614-r2.md](CODE-REVIEW-614-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #613 | [SPEC-REVIEW-613-r1.md](SPEC-REVIEW-613-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | High. Принятое предположение о scroll-инвалидации не работает в основном заявленном сце…; Medium (в скоупе), сопутствует H1. AC1/AC2 не требуют, чтобы smoke-контейнер пересекал … | `demo/serve.mjs` |
 | #613 | [SPEC-REVIEW-613-r2.md](SPEC-REVIEW-613-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #613 | [CODE-REVIEW-613-r1.md](CODE-REVIEW-613-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |

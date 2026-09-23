@@ -92,6 +92,20 @@ jobs:
           echo "скриншоты документации: режим $mode"
           node scripts/check-docs.mjs --external --screenshots=$mode
 
+      # #635: `docs/reviews/INDEX.md` — снимок каталога ревью; расхождение с
+      # каталогом — невидимые через индекс документы (r2 #635 H1). Гейт стоит
+      # только на push в dev: там свежесть держит конвейер — пересборка при
+      # публикации документа и после каждого своего ребейза (приведение к dev,
+      # слияние кандидата). На issue-ветках не судится: их ребейзит и
+      # публикует в них конвейер из ветки по умолчанию, и доехавший туда
+      # документ раунда индекс ветки знать не обязан — красить автора за
+      # коммит конвейера нельзя; расхождение излечивает слияние.
+      - name: "Индекс ревью совпадает с каталогом docs/reviews"
+        id: reviews_index
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        continue-on-error: true
+        run: node scripts/reviews-index.mjs --dir=docs/reviews --check
+
       # Конвейер читает `process.yml` из ветки по умолчанию, поэтому файл обязан
       # совпадать в `main` и `dev`. До этой проверки совпадение держалось на
       # дисциплине: каждая правка требовала двух пушей и ручной сверки.
@@ -196,6 +210,7 @@ jobs:
           PROVENANCE: ${{ steps.provenance.outcome }}
           PROCESS_GATE: ${{ steps.process_gate.outcome }}
           ACTION_PINS: ${{ steps.action_pins.outcome }}
+          REVIEWS_INDEX: ${{ steps.reviews_index.outcome }}
         run: |
           fail=0
           check() {
@@ -213,6 +228,8 @@ jobs:
           check "провенанс коммитов" "$PROVENANCE"
           check "процессный гейт" "$PROCESS_GATE"
           check "пины сторонних Actions" "$ACTION_PINS"
+          # skipped — шаг не судил (не push в dev), это не отказ
+          [ "$REVIEWS_INDEX" = "skipped" ] || check "индекс ревью совпадает с каталогом" "$REVIEWS_INDEX"
           exit $fail
 
   # Классификация изменённых путей: тяжёлые job идут только там, где менялось
