@@ -55,7 +55,17 @@ const out = await page.evaluate(async () => {
     async () => {
       c._setMode('view'); c._openSpaceDialog('edit', spId); await upd();
       const d = c._spaceDialog;
-      c._spaceDialog = { ...d, showBorders: !d.showBorders, fillMode: 'temp', tempMax: 27, northMode: 'custom', northDeg: 90, cardFontScale: 1.5 };
+      c._spaceDialog = {
+        ...d,
+        showBorders: !d.showBorders,
+        fillMode: 'temp',
+        tempMax: 27,
+        tempMaxInput: '27',
+        northMode: 'custom',
+        northDeg: 90,
+        northDegInput: '90',
+        cardFontScale: 1.5,
+      };
       await upd(); await c._saveSpaceDialog(); await settle();
     });
 
