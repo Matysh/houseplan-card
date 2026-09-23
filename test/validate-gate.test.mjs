@@ -170,3 +170,44 @@ test('#510 r1 M1: a cancelled dispatch with no replacement gets one dispatch, no
   assert.equal(outcome.result, 'green');
   assert.deepEqual(fake.dispatched, ['issue/1']);
 });
+
+// #636: раннер конвейера не ждёт Validate внутри job. С `wait: false` гейт
+// возвращает завершённый прогон как раньше, а идущий — `pending`, не поллит его;
+// прогон, который ещё не появился, гейт всё же диспатчит и дожидается его
+// появления на материале (#539), потому что иначе событию завершения нечего
+// будить.
+test('#636: без ожидания завершённый зелёный dispatch принимается сразу, как и красный', async () => {
+  const green = fakeOps({ snapshots: [[run()]] });
+  assert.equal((await validateGate({ ref: 'issue/1', sha: SHA, ops: green.ops, wait: false })).result, 'green');
+  const red = fakeOps({ snapshots: [[run({ conclusion: 'failure', url: 'https://run/red' })]] });
+  assert.equal((await validateGate({ ref: 'issue/1', sha: SHA, ops: red.ops, wait: false })).result, 'failed');
+  assert.deepEqual(green.dispatched, []);
+});
+
+test('#636: идущий dispatch на материале — pending с его id и url, без единого sleep', async () => {
+  const fake = fakeOps({ snapshots: [[run({ status: 'in_progress', conclusion: null, url: 'https://run/live', databaseId: 42 })]] });
+  const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, wait: false, pollMs: 1000 });
+  assert.equal(outcome.result, 'pending');
+  assert.equal(outcome.runId, 42);
+  assert.equal(outcome.url, 'https://run/live');
+  assert.equal(fake.ops.now(), 0, 'гейт не спал');
+  assert.deepEqual(fake.dispatched, []);
+});
+
+test('#636: без прогона гейт диспатчит, ждёт появления и возвращает pending, не завершение', async () => {
+  const pushOnly = [run({ event: 'push', databaseId: 7 })];
+  const live = [...pushOnly, run({ status: 'queued', conclusion: null, databaseId: 9 })];
+  const fake = fakeOps({ snapshots: [pushOnly, pushOnly, live, [...pushOnly, run({ databaseId: 9 })]] });
+  const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, wait: false, pollMs: 1000 });
+  assert.equal(outcome.result, 'pending');
+  assert.equal(outcome.runId, 9);
+  assert.deepEqual(fake.dispatched, ['issue/1']);
+  assert.equal(fake.calls(), 3, 'остановился на первом снимке с прогоном, до его завершения не дошёл');
+});
+
+test('#636: с ожиданием (умолчание) поведение прежнее — идущий прогон дожидается', async () => {
+  const fake = fakeOps({ snapshots: [[run({ status: 'in_progress', conclusion: null })], [run()]] });
+  const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, pollMs: 1000 });
+  assert.equal(outcome.result, 'green');
+  assert.ok(fake.ops.now() > 0, 'один poll прошёл');
+});

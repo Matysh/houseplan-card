@@ -628,7 +628,8 @@ test('#510 AC2: конвейер запускает Validate с мутантам
   assert.match(gateStep, /\{ echo 'proceed=true'; echo 'result=skipped'; \}/, 'skipped = proceed');
   assert.doesNotMatch(workflow.slice(modelJob), /steps\.gate\.outputs/, 'следующие jobs не читают локальные outputs prepare');
   const backStep = workflow.slice(back, deps);
-  assert.match(backStep, /if: steps\.rebase\.outputs\.conflict != 'true' && steps\.gate\.outputs\.proceed != 'true'/);
+  // #636: третий исход гейта — pending (Validate идёт); возврат автору только на явном false
+  assert.match(backStep, /if: steps\.rebase\.outputs\.conflict != 'true' && steps\.gate\.outputs\.proceed == 'false'/);
   assert.match(backStep, /--add-label S6-in-progress --remove-label S7-code-review/);
   assert.match(backStep, /цикл ревью не израсходован/);
   assert.match(workflow.slice(modelJob, deps), /if: needs\.prepare\.outputs\.proceed == 'true'/,

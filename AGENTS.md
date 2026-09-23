@@ -425,7 +425,12 @@ until the verdict or the return arrives: a push on top of a running review cance
 it (10–20 runner minutes) and, after the material is fixed, also the merge (#312).
 Set `S7` once per round, not after every CI fix: the pipeline now runs Validate
 with the diff mutants on the material itself and returns a red one to `S6` without
-spending a review cycle. Mutants by diff run only where they are explicitly
+spending a review cycle; since #636 it does not sleep while Validate runs — the
+prepare stage leaves a sealed `review-pending` marker and exits, and the
+completion of Validate (`process-resume.yml`, `workflow_run`) re-applies `S7`
+so a fresh run finds the finished dispatch; `process-reconcile.yml` is the
+fallback for a lost event. A second `S7` from the pipeline itself is therefore
+normal and is not a new round. Mutants by diff run only where they are explicitly
 requested — the review candidate, the merge candidate (both dispatch Validate
 with `mutants=true`) and PRs (#510, #601). Ordinary pushes, the beta candidate
 (`Release:` trailer) and `full=true` do not request them: a routine push costs

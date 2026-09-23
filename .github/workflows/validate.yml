@@ -101,9 +101,10 @@ jobs:
         run: |
           git fetch --quiet origin main dev
           # #472: расписание mutation-gate.yml тоже исполняется из ветки по
-          # умолчанию — та же ловушка, что у process.yml. Сверяются оба.
+          # умолчанию — та же ловушка, что у process.yml; #636 добавил
+          # process-resume.yml (событие workflow_run). Сверяются все три.
           status=0
-          for file in process.yml mutation-gate.yml; do
+          for file in process.yml mutation-gate.yml process-resume.yml; do
             if diff <(git show "origin/main:.github/workflows/$file") \
                     <(git show "origin/dev:.github/workflows/$file"); then
               echo "$file: main и dev идентичны"

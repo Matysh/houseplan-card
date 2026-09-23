@@ -381,7 +381,7 @@ test('#472 AC7: отсутствие Telegram-секретов не роняет
 });
 
 test('#472 AC8: Validate сверяет mutation-gate.yml между main и dev наравне с process.yml', () => {
-  assert.match(validateWorkflowText, /for file in process\.yml mutation-gate\.yml; do/);
+  assert.match(validateWorkflowText, /for file in process\.yml mutation-gate\.yml process-resume\.yml; do/);
 });
 
 // #475. Свидетель гниёт двумя способами: изменился файл, который он патчит,

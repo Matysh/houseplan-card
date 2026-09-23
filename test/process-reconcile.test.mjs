@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  validateStateOnMaterial,
   alreadyReported, applyReconciliationDecision, decideReconciliation, latestReviewRequest, markerFor,
   parseProcessRun, preparedEvidenceError, reconcileAll, reconciliationKey, relabel,
 } from '../scripts/process-reconcile.mjs';
@@ -35,7 +36,7 @@ test('#555 maps a stable process run-name to issue and stage', () => {
     id: 70, attempt: 2, issue: 555, label: 'S7-code-review', stage: 'code',
     status: 'in_progress', conclusion: '', createdAt: '2026-09-13T10:00:01Z',
     updatedAt: null, url: null, prepared: null, preparedArtifact: false,
-    resultArtifact: false, evidenceError: null,
+    resultArtifact: false, pending: null, pendingValidate: null, evidenceError: null,
   });
   assert.equal(parseProcessRun({ display_title: 'unrelated label event' }), null);
 });
@@ -214,4 +215,42 @@ test('#555 a fresh label/run completion stays inside grace instead of duplicatin
     issue: issue(), request,
     runs: [run({ conclusion: 'cancelled', updatedAt: '2026-09-13T11:58:00Z' })], now: NOW,
   }).action, 'wait');
+});
+
+// #636: подготовка вышла успешно, оставив маркер ожидания — Validate на
+// материале ещё шёл. Это не «успешный прогон без вердикта»: пока Validate идёт,
+// reconcile ждёт; завершился или пропал, а событие раунд не разбудило —
+// повторная метка. Маркер обязателен: без него правило прежнее (escalate),
+// иначе любой успешный прогон без вердикта будил бы модель второй раз.
+test('#636 pending marker: running Validate waits, finished Validate retries, no marker still escalates', () => {
+  const pending = { schema: 1, issue: 636, material_sha: 'a'.repeat(40) };
+  const waiting = decideReconciliation({
+    issue: issue(), request, runs: [run({ conclusion: 'success', pending, pendingValidate: 'active' })], now: NOW,
+  });
+  assert.equal(waiting.action, 'wait');
+  assert.match(waiting.reason, /still running/);
+
+  for (const state of ['completed', 'missing']) {
+    const done = decideReconciliation({
+      issue: issue(), request, runs: [run({ conclusion: 'success', pending, pendingValidate: state })], now: NOW,
+    });
+    assert.equal(done.action, 'retry', state);
+    assert.match(done.reason, /was not resumed/);
+  }
+
+  const noMarker = decideReconciliation({ issue: issue(), request, runs: [run({ conclusion: 'success' })], now: NOW });
+  assert.equal(noMarker.action, 'escalate');
+  const parsed = parseProcessRun({ display_title: 'process #555 · S7-code-review · x', id: 1, pending, pendingValidate: 'active' });
+  assert.equal(parsed.pending, pending);
+  assert.equal(parsed.pendingValidate, 'active');
+});
+
+test('#636 validateStateOnMaterial reads only dispatch runs and prefers active over completed', () => {
+  assert.equal(validateStateOnMaterial([]), 'missing');
+  assert.equal(validateStateOnMaterial([{ event: 'push', status: 'completed' }]), 'missing');
+  assert.equal(validateStateOnMaterial([{ event: 'workflow_dispatch', status: 'completed' }]), 'completed');
+  assert.equal(validateStateOnMaterial([
+    { event: 'workflow_dispatch', status: 'completed' }, { event: 'workflow_dispatch', status: 'in_progress' },
+  ]), 'active');
+  assert.equal(validateStateOnMaterial([{ event: 'workflow_dispatch', status: 'queued' }]), 'active');
 });

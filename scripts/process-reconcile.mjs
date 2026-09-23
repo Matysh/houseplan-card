@@ -50,6 +50,10 @@ export function parseProcessRun(run = {}) {
     prepared: run.prepared || null,
     preparedArtifact: Boolean(run.preparedArtifact),
     resultArtifact: Boolean(run.resultArtifact),
+    // #636: маркер «Validate на материале идёт, раунд продолжит событие» и
+    // состояние этого Validate (`active` | `completed` | `missing`).
+    pending: run.pending || null,
+    pendingValidate: run.pendingValidate || null,
     evidenceError: run.evidenceError || null,
   };
 }
@@ -143,6 +147,16 @@ export function decideReconciliation({
   if (Number.isFinite(settledAt) && now - settledAt < graceMs) {
     return result('wait', 'completed run is still within label-application grace', { label, stage, run });
   }
+  if (run.conclusion === 'success' && run.pending) {
+    // #636: успешный прогон без вердикта — это не потеря, а осознанный выход
+    // подготовки: Validate с мутантами на материале ещё шёл. Пока он идёт —
+    // ждать; завершился или пропал, а событие раунд не разбудило — разбудить
+    // повторной меткой: новый прогон найдёт завершённый dispatch сразу.
+    if (run.pendingValidate === 'active') {
+      return result('wait', 'Validate on the material is still running; the round resumes on its completion', { label, stage, run });
+    }
+    return result('retry', `Validate on the material is ${run.pendingValidate || 'unknown'} but the round was not resumed`, { label, stage, run });
+  }
   if (run.conclusion === 'success') {
     return result('escalate', 'successful run did not move the review label', { label, stage, run });
   }
@@ -202,7 +216,7 @@ function openReviewIssues(repo) {
     .sort((a, b) => a.number - b.number);
 }
 
-function processRuns(repo, issues = []) {
+export function processRuns(repo, issues = []) {
   const pages = [1, 2].flatMap((page) => {
     const response = ghJson(['api', `repos/${repo}/actions/workflows/process.yml/runs?event=issues&per_page=100&page=${page}`]);
     return response.workflow_runs || [];
@@ -227,28 +241,52 @@ function processRuns(repo, issues = []) {
   }).filter(Boolean);
 }
 
-function artifactNames(repo, run) {
+export function artifactNames(repo, run) {
   const response = ghJson(['api', `repos/${repo}/actions/runs/${run.id}/artifacts?per_page=100`]);
   return response.artifacts || [];
 }
 
-function loadPreparedArtifact(repo, run, artifact) {
+/** Sealed JSON artifact of the pipeline: one file plus its sha256 manifest. */
+export function loadSealedArtifact(repo, run, artifact, file) {
   const dir = mkdtempSync(join(tmpdir(), 'houseplan-process-reconcile-'));
   try {
     const downloaded = gh(['run', 'download', String(run.id), '--repo', repo,
       '--name', artifact.name, '--dir', dir], { allowFailure: true });
     if (downloaded.status !== 0) throw new Error(`artifact download failed: ${(downloaded.stderr || '').trim()}`);
-    const file = join(dir, 'prepared.json');
+    const path = join(dir, file);
     const manifest = join(dir, 'manifest.sha256');
-    if (!existsSync(file) || !existsSync(manifest)) throw new Error('prepared artifact is incomplete');
-    const body = readFileSync(file);
+    if (!existsSync(path) || !existsSync(manifest)) throw new Error(`${file} artifact is incomplete`);
+    const body = readFileSync(path);
     const expected = readFileSync(manifest, 'utf8').trim().split(/\s+/)[0];
     const actual = createHash('sha256').update(body).digest('hex');
-    if (expected !== actual) throw new Error('prepared artifact checksum mismatch');
+    if (expected !== actual) throw new Error(`${file} artifact checksum mismatch`);
     return JSON.parse(body.toString('utf8'));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+}
+
+function loadPreparedArtifact(repo, run, artifact) {
+  return loadSealedArtifact(repo, run, artifact, 'prepared.json');
+}
+
+export const pendingArtifactName = (issue, run) => `review-pending-${issue.number ?? issue}-${run.id}-${run.attempt}`;
+
+/**
+ * #636: состояние Validate с мутантами на материале — по dispatch-прогонам на
+ * SHA. `active` пока хоть один не завершён; `completed`, если завершённый есть;
+ * иначе `missing` (диспатч не появился — новый прогон конвейера повторит его).
+ */
+export function validateStateOnMaterial(runs = []) {
+  const dispatches = (runs || []).filter((run) => (run.event || run.workflowEvent) === 'workflow_dispatch');
+  if (dispatches.some((run) => ACTIVE_RUN_STATES.has(String(run.status || '')))) return 'active';
+  if (dispatches.some((run) => String(run.status || '') === 'completed')) return 'completed';
+  return 'missing';
+}
+
+function validateRunsOnSha(repo, sha) {
+  const response = ghJson(['api', `repos/${repo}/actions/workflows/validate.yml/runs?head_sha=${sha}&per_page=20`]);
+  return response.workflow_runs || [];
 }
 
 function hydrateRunEvidence(repo, issue, run) {
@@ -259,8 +297,14 @@ function hydrateRunEvidence(repo, issue, run) {
     const resultName = `review-result-${issue.number}-${run.id}-${run.attempt}`;
     const preparedArtifacts = artifacts.filter((artifact) => artifact.name === preparedName && !artifact.expired);
     const resultArtifacts = artifacts.filter((artifact) => artifact.name === resultName && !artifact.expired);
-    if (preparedArtifacts.length > 1 || resultArtifacts.length > 1) {
-      return { ...run, evidenceError: 'duplicate prepared/result artifacts' };
+    const pendingName = pendingArtifactName(issue, run);
+    const pendingArtifacts = artifacts.filter((artifact) => artifact.name === pendingName && !artifact.expired);
+    if (preparedArtifacts.length > 1 || resultArtifacts.length > 1 || pendingArtifacts.length > 1) {
+      return { ...run, evidenceError: 'duplicate prepared/result/pending artifacts' };
+    }
+    const pending = pendingArtifacts.length === 1 ? loadSealedArtifact(repo, run, pendingArtifacts[0], 'pending.json') : null;
+    if (pending && (String(pending.issue) !== String(issue.number) || String(pending.run_id) !== String(run.id))) {
+      return { ...run, evidenceError: 'pending marker belongs to another issue/run' };
     }
     return {
       ...run,
@@ -268,6 +312,8 @@ function hydrateRunEvidence(repo, issue, run) {
       resultArtifact: resultArtifacts.length === 1,
       prepared: preparedArtifacts.length === 1
         ? loadPreparedArtifact(repo, run, preparedArtifacts[0]) : null,
+      pending,
+      pendingValidate: pending ? validateStateOnMaterial(validateRunsOnSha(repo, pending.material_sha)) : null,
     };
   } catch (error) {
     return { ...run, evidenceError: error instanceof Error ? error.message : String(error) };

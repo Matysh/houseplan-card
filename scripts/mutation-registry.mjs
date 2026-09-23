@@ -8449,6 +8449,51 @@ const MUTANT_DEFINITIONS = [
         + '  никогда — именно оно в этом процессе заменяет тестирование.',
     }],
   },
+  // #636: раунд продолжается по событию завершения Validate, а не сном раннера.
+  // Каждая защита — от второго вызова модели или от вечного ожидания.
+  {
+    id: 'gate-no-wait-still-sleeps',
+    guard: 'node --test --test-name-pattern="#636" test/validate-gate.test.mjs',
+    because: 'with --no-wait the gate must return pending for a running dispatch instead of polling '
+      + 'it inside the pipeline job — otherwise the runner sleeps 28 minutes per round again (#636)',
+    patches: [{
+      file: 'scripts/validate-gate.mjs',
+      find: "      if (!wait) {\n        // #636: прогон найден и идёт — ждать его будет событие, не раннер.",
+      replace: "      if (false && !wait) {\n        // #636: прогон найден и идёт — ждать его будет событие, не раннер.",
+    }],
+  },
+  {
+    id: 'resume-wakes-round-without-marker',
+    guard: 'node --test --test-name-pattern="#636" test/process-resume.test.mjs',
+    because: 'a successful process run without a pending marker did not wait for Validate; relabelling '
+      + 'it would spend the model a second time (#636)',
+    patches: [{
+      file: 'scripts/process-resume.mjs',
+      find: "  if (!pending) return { action: 'noop', reason: 'latest process run left no pending marker — it did not wait for Validate' };",
+      replace: "  if (false && !pending) return { action: 'noop', reason: 'latest process run left no pending marker — it did not wait for Validate' };",
+    }],
+  },
+  {
+    id: 'resume-ignores-active-run',
+    guard: 'node --test --test-name-pattern="#636" test/process-resume.test.mjs',
+    because: 'relabelling while a process run is active queues a second round for the same request (#636)',
+    patches: [{
+      file: 'scripts/process-resume.mjs',
+      find: "  if (mine.some((run) => ACTIVE_RUN_STATES.has(run.status))) return { action: 'noop', reason: 'a process run for this issue is already active' };",
+      replace: "  if (false && mine.some((run) => ACTIVE_RUN_STATES.has(run.status))) return { action: 'noop', reason: 'a process run for this issue is already active' };",
+    }],
+  },
+  {
+    id: 'reconcile-wakes-pending-while-validate-active',
+    guard: 'node --test --test-name-pattern="#636" test/process-reconcile.test.mjs',
+    because: 'reconcile must wait while the Validate the round is pending on still runs; relabelling '
+      + 'early dispatches a second Validate and a second round (#636)',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: "    if (run.pendingValidate === 'active') {",
+      replace: "    if (false && run.pendingValidate === 'active') {",
+    }],
+  },
   {
     id: 'process-reconcile-restarts-healthy-run',
     guard: 'node --test test/process-reconcile.test.mjs',

@@ -7,10 +7,15 @@
  * доказательство для ревью — dispatch-прогон на точном SHA материала. Push-
  * прогон на том же SHA зелёный не считается: в нём мутантов нет.
  *
- *   node scripts/validate-gate.mjs --repo=<owner/repo> --ref=<ветка> --sha=<sha> [--workflow=validate.yml]
+ *   node scripts/validate-gate.mjs --repo=<owner/repo> --ref=<ветка> --sha=<sha> [--workflow=validate.yml] [--no-wait]
  *
- * Печатает `result=green|failed|missing` и `url=…` (и в $GITHUB_OUTPUT, если он
- * задан); код выхода 0 только при green. Логика — чистая функция `validateGate`
+ * Печатает `result=green|failed|missing|pending`, `url=…`, `run_id=…` (и в
+ * $GITHUB_OUTPUT, если он задан); код выхода 0 только при green, 2 — pending.
+ * `--no-wait` (#636): гейт диспатчит прогон и убеждается, что тот появился на
+ * материале, но не ждёт его завершения — раннер конвейера освобождается, а
+ * раунд продолжает `process-resume.yml` по событию `workflow_run` (страховка —
+ * reconcile). Зелёный или красный завершённый прогон и с `--no-wait`
+ * возвращается сразу. Логика — чистая функция `validateGate`
  * поверх инъектируемых `ops`, чтобы тесты и мутанты гоняли её без gh.
  */
 import { spawnSync } from 'node:child_process';
@@ -58,9 +63,14 @@ export function provesMutants(jobs) {
  * @param {string} p.ref     ветка, на которой запускать
  * @param {string} p.sha     SHA материала
  * @param {object} p.ops     GitHub run/proof operations plus dispatch, sleep and clock.
- * @returns {Promise<{result:'green'|'failed'|'missing', url:string|null, note:string}>}
+ * @param {boolean} [p.wait]  `false` — не ждать идущий прогон, а вернуть `pending` (#636):
+ *   раннер конвейера не спит 28 минут; продолжение разбудит событие
+ *   `workflow_run` (process-resume.yml) либо reconcile.
+ * @returns {Promise<{result:'green'|'failed'|'missing'|'pending', url:string|null, note:string, runId?:number}>}
  */
-export async function validateGate({ ref, sha, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS }) {
+export async function validateGate({
+  ref, sha, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS, wait = true,
+}) {
   const started = ops.now();
   const candidateTree = await ops.candidateTree(sha);
   const ignored = new Set(); // завершённые dispatch без применимого proof
@@ -83,6 +93,13 @@ export async function validateGate({ ref, sha, ops, appearMs = VALIDATE_APPEAR_M
         ignored.add(run.databaseId);
         tracked = null;
         continue;
+      }
+      if (!wait) {
+        // #636: прогон найден и идёт — ждать его будет событие, не раннер.
+        return {
+          result: 'pending', url: run.url || null, runId: run.databaseId,
+          note: `Validate с мутантами идёт (${run.status}); продолжение — по завершении прогона`,
+        };
       }
     } else if (dispatchedAt === null) {
       await ops.dispatch(ref);
@@ -151,9 +168,11 @@ if (invokedDirectly) {
     console.error('usage: validate-gate.mjs --repo=<owner/repo> --ref=<branch> --sha=<sha> [--workflow=validate.yml]');
     process.exit(2);
   }
-  const outcome = await validateGate({ ref, sha, ops: realOps({ repo, workflow: arg('workflow') || 'validate.yml' }) });
-  const lines = [`result=${outcome.result}`, `url=${outcome.url || ''}`, `note=${outcome.note}`];
+  const wait = !process.argv.includes('--no-wait');
+  const outcome = await validateGate({ ref, sha, wait, ops: realOps({ repo, workflow: arg('workflow') || 'validate.yml' }) });
+  const lines = [`result=${outcome.result}`, `url=${outcome.url || ''}`, `run_id=${outcome.runId || ''}`, `note=${outcome.note}`];
   for (const line of lines) console.log(line);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`);
-  process.exit(outcome.result === 'green' ? 0 : 1);
+  // 0 — зелёный, 2 — идёт (только с --no-wait), 1 — красный/пропавший.
+  process.exit(outcome.result === 'green' ? 0 : outcome.result === 'pending' ? 2 : 1);
 }
