@@ -1609,6 +1609,19 @@ export async function prepareGoldenScenario(page, scenario) {
         : '.furnitem[data-category]';
       if (!palette.querySelector(selector))
         throw new Error(`golden furniture palette level is empty: ${scenario.id}`);
+      if (scenario.furnitureCategoryArt) {
+        const category = String(scenario.furnitureCategoryArt);
+        if (!/^[a-z][a-z0-9_]*$/.test(category))
+          throw new Error(`invalid golden furniture category: ${category}`);
+        const tile = palette.querySelector(`.furnitem[data-category="${category}"]`);
+        const path = tile?.querySelector('svg path');
+        const tileRect = tile?.getBoundingClientRect();
+        const paletteRect = palette.getBoundingClientRect();
+        if (!path?.getAttribute('d') || !tileRect
+            || tileRect.top < paletteRect.top || tileRect.bottom > paletteRect.bottom) {
+          throw new Error(`golden furniture category art is not fully visible: ${category}`);
+        }
+      }
     }
     if (scenario.furniturePlacementPreview) {
       const { symbol, widthCm, depthCm, pointer, free = false } = scenario.furniturePlacementPreview;
