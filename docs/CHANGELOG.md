@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.78.0-beta.1 — 2026-09-23
+
 - The Furniture palette now shows the revised front-view icon for the
   Dishwasher category; placed dishwashers, their size and plan drawing are
   unchanged ([#640](https://github.com/Matysh/houseplan-card/issues/640)).
