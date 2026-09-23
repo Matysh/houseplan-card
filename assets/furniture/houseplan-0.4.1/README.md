@@ -2,8 +2,8 @@
 
 Corrected derivative of the 0.4.0 built-in furniture artwork (#593, #606).
 
-- `svg/menu/`: the same 33 front-view category illustrations as 0.4.0, used
-  only by the lazy editor bundle.
+- `svg/menu/`: 33 front-view category illustrations, used only by the lazy
+  editor bundle.
 - `svg/plan/`: 60 top-view drawings used on the plan.
 - `pack.json`: stable public ids, category links, default dimensions and names.
   The filename avoids the `*manifest.json` suffix reserved by HACS.
@@ -16,11 +16,18 @@ Corrections to 0.4.0:
    as a read-compatible alias by the application, not duplicated in this pack.
 2. The *contents* of `plan/bookshelf.svg` and `plan/shelf_floor.svg` were swapped
    so each filename and unchanged public id shows the named furniture item.
-3. All 33 menu categories now have a plan variant. No menu artwork was changed.
+3. All 33 menu categories now have a plan variant.
+4. `menu/dishwasher.svg` uses the replacement front-view illustration supplied
+   by JustBusiness in [issue #640](https://github.com/Matysh/houseplan-card/issues/640).
+   Its reviewed source archive is `dishwasher.zip`, SHA-256
+   `1A9B1BDAF490B35812F51E4DD3CB1C425224EC768219C31B979DD6A84E890203`;
+   the path geometry is unchanged apart from safe repository normalization.
+   JustBusiness supplied this asset for House Plan to use, modify and distribute
+   under the repository MIT License without separate UI attribution.
 
-The 93 SVG drawings originated with Sergey Matyunin (`Matysh`). He granted
-House Plan permission to use, modify and distribute them under the repository
-MIT License without separate UI attribution in
+The original 0.4.0 set of 93 SVG drawings originated with Sergey Matyunin
+(`Matysh`). He granted House Plan permission to use, modify and distribute them
+under the repository MIT License without separate UI attribution in
 [issue #593](https://github.com/Matysh/houseplan-card/issues/593#issuecomment-5739841899).
 The reviewed source archive is `houseplan-furniture-0.4.0.zip`, attached to
 [issue #593](https://github.com/Matysh/houseplan-card/issues/593), SHA-256

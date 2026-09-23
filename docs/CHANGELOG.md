@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The Furniture palette now shows the revised front-view icon for the
+  Dishwasher category; placed dishwashers, their size and plan drawing are
+  unchanged ([#640](https://github.com/Matysh/houseplan-card/issues/640)).
 - Empty or invalid required numbers in General and Space settings no longer
   fall back to a hidden previous value: the field keeps the typed draft, shows
   an inline error and blocks saving. A virtual-device name, Run target and

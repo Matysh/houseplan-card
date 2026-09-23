@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, rmSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -86,7 +87,7 @@ test('all 33 category tiles have variants and exercise does not appear among pla
   for (const id of ['computer', 'oven', 'hood']) assert.equal(categories.has(id), true, id);
 });
 
-test('0.4.1 changes precisely the three plan drawings named in #606', () => {
+test('0.4.1 changes only the reviewed plan drawings and dishwasher menu art', () => {
   const oldPlan = (id) => fs.readFileSync(path.join(OLD_PACK, 'svg', 'plan', `${id}.svg`), 'utf8');
   const newPlan = (id) => fs.readFileSync(path.join(PACK, 'svg', 'plan', `${id}.svg`), 'utf8');
   assert.equal(newPlan('exercise'), oldPlan('cactus'));
@@ -99,9 +100,16 @@ test('0.4.1 changes precisely the three plan drawings named in #606', () => {
     assert.equal(newPlan(name.slice(0, -4)), oldPlan(name.slice(0, -4)), name);
   }
   for (const name of fs.readdirSync(path.join(OLD_PACK, 'svg', 'menu'))) {
+    if (name === 'dishwasher.svg') continue;
     assert.equal(fs.readFileSync(path.join(PACK, 'svg', 'menu', name), 'utf8'),
       fs.readFileSync(path.join(OLD_PACK, 'svg', 'menu', name), 'utf8'), name);
   }
+  const dishwasherMenu = fs.readFileSync(path.join(PACK, 'svg', 'menu', 'dishwasher.svg'), 'utf8');
+  assert.notEqual(dishwasherMenu,
+    fs.readFileSync(path.join(OLD_PACK, 'svg', 'menu', 'dishwasher.svg'), 'utf8'));
+  assert.equal(createHash('sha256').update(dishwasherMenu.replaceAll('\r\n', '\n')).digest('hex'),
+    'dd8bceaf329e0c78f9f5c3d7684f69cecc1adbfb6f2cd108306bf70b7c483048');
+  assert.match(dishwasherMenu, /stroke="currentColor"/);
 });
 
 test('front-view menu artwork is reachable only through the lazy editor graph', () => {
@@ -129,6 +137,10 @@ test('release provenance is normalized to the repository MIT grant', () => {
   assert.match(readme, /69BA5E0C398542D59F24269F637F57B8EBF31C2836C9D493F084AD29AB299FDE/);
   assert.match(readme, /60 top-view drawings/);
   assert.match(readme, /corrected derivative/i);
+  assert.match(readme, /issue #640/);
+  assert.match(readme, /dishwasher\.zip/);
+  assert.match(readme, /1A9B1BDAF490B35812F51E4DD3CB1C425224EC768219C31B979DD6A84E890203/);
+  assert.match(readme, /JustBusiness supplied this asset/);
 });
 
 // #593 AC1: «ровно 60 плановых символов» — единственное, что отличает
