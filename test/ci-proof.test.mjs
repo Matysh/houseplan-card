@@ -265,7 +265,10 @@ test('#541: uploaded deflated artifact is read without an external ZIP dependenc
 const KEYS = Object.fromEntries(REUSE_JOBS.map((job, index) => [job, String(index + 1).repeat(64)]));
 const evidenceOf = (over = {}) => ({
   product: { tree: 'p'.repeat(64) },
-  baselines: { tree: 'c'.repeat(40), manifestSha256: 'd'.repeat(64), reviewedRun: 34853080375 },
+  baselines: {
+    tree: 'c'.repeat(40), manifestSha256: 'd'.repeat(64),
+    reviewedRun: 34853080375, reviewedLocal: null,
+  },
   keys: { ...KEYS },
   ...over,
 });
@@ -334,6 +337,10 @@ test('#573 AC4: подмена content-ключа, product tree, overlay, инд
   assert.match(withExpected({ baselines: { tree: 'x'.repeat(40), manifestSha256: 'd'.repeat(64), reviewedRun: 34853080375 } }).note, /baselines\.tree/);
   assert.match(withExpected({ baselines: { tree: 'c'.repeat(40), manifestSha256: 'y'.repeat(64), reviewedRun: 34853080375 } }).note, /manifestSha256/);
   assert.match(withExpected({ baselines: { tree: 'c'.repeat(40), manifestSha256: 'd'.repeat(64), reviewedRun: 1 } }).note, /reviewedRun/);
+  assert.match(withExpected({ baselines: {
+    tree: 'c'.repeat(40), manifestSha256: 'd'.repeat(64),
+    reviewedRun: 34853080375, reviewedLocal: 'a'.repeat(64),
+  } }).note, /reviewedLocal/);
   // маркер реюза ссылается на ключ, отличный от ключа кандидата — внутренняя несогласованность
   const tampered = structuredClone(fixture.proof);
   tampered.checks.smoke.reuse.key = 'a'.repeat(64);
@@ -432,6 +439,7 @@ test('#573: evidence живого дерева считается детерми
   assert.match(first.product.tree, /^[0-9a-f]{64}$/);
   assert.match(first.baselines.tree, /^[0-9a-f]{40}$/);
   assert.match(first.baselines.manifestSha256, /^[0-9a-f]{64}$/);
+  assert.equal(first.baselines.reviewedLocal, null);
   for (const job of REUSE_JOBS) assert.equal(first.keys[job], reuseKey(root, job));
   assert.throws(() => localEvidence(root, { keys: { ...first.keys, smoke: 'f'.repeat(64) } }), /smoke: reuse job key/);
 });

@@ -118,14 +118,21 @@ export function localEvidence(root = process.cwd(), { keys = null, rev = 'HEAD' 
   let baselineTree = null;
   try { baselineTree = gitOut(root, ['rev-parse', `${rev}:${overlayDir}`]).trim() || null; } catch { baselineTree = null; }
   const manifestPath = resolve(root, overlayDir, 'baselines-index.json');
-  const manifestSha256 = existsSync(manifestPath)
-    ? createHash('sha256').update(readFileSync(manifestPath)).digest('hex') : null;
+  const manifestBytes = existsSync(manifestPath) ? readFileSync(manifestPath) : null;
+  const manifestSha256 = manifestBytes
+    ? createHash('sha256').update(manifestBytes).digest('hex') : null;
+  let reviewedLocal = null;
+  if (manifestBytes) {
+    try { reviewedLocal = JSON.parse(manifestBytes).localAttestation?.sha256 ?? null; }
+    catch { reviewedLocal = null; }
+  }
   return {
     product: { tree: productTreeId(gitOut(root, ['ls-tree', '-r', '--full-tree', rev])) },
     baselines: {
       tree: baselineTree,
       manifestSha256,
       reviewedRun: baselineReviewedRun(gitOut(root, ['log', '-1', '--format=%B', rev])),
+      reviewedLocal,
     },
     keys: computed,
   };
@@ -136,6 +143,7 @@ const EVIDENCE_FIELDS = [
   ['baselines.tree', (e) => e?.baselines?.tree ?? null],
   ['baselines.manifestSha256', (e) => e?.baselines?.manifestSha256 ?? null],
   ['baselines.reviewedRun', (e) => e?.baselines?.reviewedRun ?? null],
+  ['baselines.reviewedLocal', (e) => e?.baselines?.reviewedLocal ?? null],
   ...REUSE_JOBS.map((job) => [`keys.${job}`, (e) => e?.keys?.[job]]),
 ];
 
@@ -498,7 +506,8 @@ if (isMainModule(import.meta.url)) {
     writeFileSync(target, `${JSON.stringify(proof, null, 2)}\n`);
     console.log(`CI proof: ${target} (${proof.requiredChecks.join(', ')})`);
     console.log(`product tree ${evidence.product.tree.slice(0, 12)} · baselines ${evidence.baselines.tree?.slice(0, 12) || 'none'}`
-      + ` · reviewed run ${evidence.baselines.reviewedRun || 'none'}`);
+      + ` · reviewed run ${evidence.baselines.reviewedRun || 'none'}`
+      + ` · reviewed local ${evidence.baselines.reviewedLocal?.slice(0, 12) || 'none'}`);
   } else {
     console.error('usage: ci-proof.mjs --emit=<proof.json> | --marker=<.reuse-marker>');
     process.exitCode = 2;

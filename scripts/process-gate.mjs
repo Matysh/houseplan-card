@@ -139,6 +139,7 @@ export function makeCommit({
     userVisible: one('User-Visible'),
     release: one('Release'),
     baselineReviewed: one('Baseline-Reviewed'),
+    baselineReviewedLocal: one('Baseline-Reviewed-Local'),
     gates: one('Gates'),
     // null = вызывающий не доказал содержимое diff. Для stable release это
     // намеренно fail-closed: одного имени разрешённого version source мало.
@@ -245,8 +246,8 @@ export function evaluateCommit(c) {
     warn(4, 'класс A/B без трейлера «User-Visible: yes|no»');
   }
 
-  if (onlyD && !c.release && !c.baselineReviewed) {
-    fail(5, 'изменена только генерируемая часть (класс D) без «Release: vX.Y.Z» либо «Baseline-Reviewed: <ссылка>»');
+  if (onlyD && !c.release && !c.baselineReviewed && !c.baselineReviewedLocal) {
+    fail(5, 'изменена только генерируемая часть (класс D) без «Release: vX.Y.Z», «Baseline-Reviewed: <ссылка>» либо «Baseline-Reviewed-Local: sha256:<хеш>»');
   }
 
   if ((c.gates ?? '').toLowerCase() === 'light' && onlyD) {

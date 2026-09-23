@@ -98,6 +98,10 @@ test('a class D only commit needs a release or a reviewed baseline', () => {
     'demo/golden/baselines/a.png',
   ]);
   assert.deepEqual(rules(evaluateCommit(reviewed)), []);
+  const reviewedLocally = commit('Accept baselines', `Issue: #1\nBaseline-Reviewed-Local: sha256:${'a'.repeat(64)}`, [
+    'demo/golden/baselines/a.png',
+  ]);
+  assert.deepEqual(rules(evaluateCommit(reviewedLocally)), []);
 });
 
 test('beta candidates are ordinary commits, stable releases are not', () => {

@@ -34,6 +34,7 @@
     "benchmark:wall-union-isolation": "node demo/benchmark_wall_union_isolation.mjs",
     "golden:capture": "node demo/golden/run.mjs --mode=capture",
     "golden:verify": "node demo/golden/run.mjs --mode=verify",
+    "golden:wsl:capture": "node scripts/golden-wsl-artifact.mjs",
     "continuity:screencast": "node demo/screencast_visual_continuity.mjs",
     "golden:accept": "node demo/golden/accept.mjs",
     "release:check": "node scripts/release-prerelease.mjs --check",

@@ -14,6 +14,7 @@ import {
   CAPTURE_CANON_PLATFORM, captureEnvironment, environmentNote,
   foreignCaptureAllowance, foreignCaptureRefusal, reportCaptureProvenance,
 } from '../../scripts/capture-environment.mjs';
+import { verifyWslAttestation } from '../../scripts/golden-wsl-artifact.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const reviewed = process.argv.includes('--reviewed');
@@ -80,6 +81,25 @@ if (legacy) {
 }
 if (foreignAllowed) {
   console.log(`Чужая среда разрешена осознанно: ${foreignAllowed}`);
+}
+
+// #641: локальная Linux-съёмка больше не выдаёт себя за «почти CI». У неё
+// отдельный fail-closed паспорт WSL: опубликованный clean SHA, toolchain,
+// полный набор PNG и намерение приёмки. GitHub-артефакт продолжает
+// определяться собственным capture.ci; осознанный foreign override остаётся
+// аварийной веткой старого контракта #455.
+const acceptanceIntent = {
+  expectChange: [...new Set(declared)].sort(),
+  expectNew: [...new Set(declaredNew)].sort(),
+  noWitnesses: skipWitnesses,
+  reason: skipReason,
+};
+const localAttestation = await verifyWslAttestation({
+  root: ROOT, artifactRoot: from, intent: acceptanceIntent,
+});
+if (!provenance?.ci && capturedOn === CAPTURE_CANON_PLATFORM
+  && !localAttestation && !foreignAllowed) {
+  throw new Error('локальная Linux-съёмка не аттестована: используйте npm run golden:wsl:capture внутри WSL; обычный golden:capture остаётся диагностикой');
 }
 
 const refusal = goldenAcceptanceRefusal(report.results, declared, declaredNew);
@@ -177,6 +197,22 @@ writeFileSync(resolve(baselineRoot, GOLDEN_BASELINE_MANIFEST), `${JSON.stringify
   capturedOn: capturedOn,
   acceptedOn: acceptance.platform,
   capture: provenance,
+  // Локальный источник не маскируется под actions run. Хеш паспорта связывает
+  // индекс, терминальный `Baseline-Reviewed-Local` и CI proof финального SHA.
+  localAttestation: localAttestation ? {
+    schema: localAttestation.schema,
+    sha256: localAttestation.sha256,
+    artifactSha256: localAttestation.artifactSha256,
+    createdAt: localAttestation.createdAt,
+    source: localAttestation.source,
+    environment: localAttestation.environment,
+    toolchain: {
+      node: localAttestation.toolchain.node,
+      npm: localAttestation.toolchain.npm,
+      playwright: localAttestation.toolchain.playwright,
+      chromiumExecutableSha256: localAttestation.toolchain.chromiumExecutableSha256,
+    },
+  } : null,
   // Причина осознанного обхода живёт в индексе, а не только в stdout: через
   // неделю stdout нет ни у кого, а индекс лежит в репозитории.
   foreignCapture: foreignAllowed ? { reason: foreignAllowed } : null,

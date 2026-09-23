@@ -79,6 +79,24 @@ test('golden files require exact release-review provenance', () => {
   ), []);
 });
 
+test('#641: a local WSL review trailer is exclusive and bound to the accepted index', () => {
+  const changed = ['demo/golden/baselines/example.png'];
+  const digest = 'a'.repeat(64);
+  const base = 'Update baseline\n\nIssue: #641\nUser-Visible: no\nRelease: v1.2.3-beta.1';
+  const local = `${base}\nBaseline-Reviewed-Local: sha256:${digest}`;
+  const index = { localAttestation: { sha256: digest } };
+  assert.deepEqual(validateCommitMessage(local, changed, { baselineIndex: index }), []);
+  assert.match(validateCommitMessage(local, changed, {
+    baselineIndex: { localAttestation: { sha256: 'b'.repeat(64) } },
+  }).join('\n'), /does not match/);
+  assert.match(validateCommitMessage(
+    `${local}\nBaseline-Reviewed: https:\/\/example.test\/run`, changed, { baselineIndex: index },
+  ).join('\n'), /requires one Baseline-Reviewed or Baseline-Reviewed-Local/);
+  assert.match(validateCommitMessage(
+    `${base}\nBaseline-Reviewed-Local: sha256:ABC`, changed, { baselineIndex: index },
+  ).join('\n'), /64 lowercase hex/);
+});
+
 test('the audited beta.2 baseline exception is exact and golden-only', () => {
   const changed = ['demo/golden/baselines/example.png'];
   const message = 'Update baseline\n\nIssue: #426\nUser-Visible: no';

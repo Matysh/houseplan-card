@@ -8,18 +8,20 @@ import {
 export const GOLDEN_BASELINE_MANIFEST = 'baselines-index.json';
 
 /**
- * Версия индекса эталонов (#571).
+ * Версия индекса эталонов (#571, #641).
  *
  * Схема 1 хранила одно поле `platform`, и заполнял его приёмщик своей
  * платформой. Схема 2 различает `capturedOn` и `acceptedOn`, несёт раздел
- * `capture` из отчёта съёмки и причину осознанного обхода. Читатели обязаны
- * понимать обе: артефакты и индексы живут дольше схем.
+ * `capture` из отчёта съёмки и причину осознанного обхода. Схема 3 добавляет
+ * отдельный `localAttestation` для WSL-источника; `null` означает прежний
+ * CI-источник. Читатели обязаны понимать старые варианты: артефакты и индексы
+ * живут дольше схем.
  */
-export const GOLDEN_INDEX_SCHEMA = 2;
+export const GOLDEN_INDEX_SCHEMA = 3;
 
 /** Платформа кадров по индексу любой схемы: 2 — `capturedOn`, 1 — `platform`. */
 export const indexCapturedOn = (index) => (index && typeof index === 'object'
-  ? (index.capturedOn ?? (Number(index.schema) >= GOLDEN_INDEX_SCHEMA ? null : index.platform ?? null))
+  ? (index.capturedOn ?? (Number(index.schema) >= 2 ? null : index.platform ?? null))
   : null);
 
 /**

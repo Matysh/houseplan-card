@@ -22,7 +22,10 @@ export const REVIEWED_GOLDEN_PROVENANCE_EXCEPTIONS = new Map([
 const GOLDEN_PROVENANCE_ERRORS = new Set([
   'golden baseline commit requires one Release trailer',
   'golden baseline commit requires one Baseline-Reviewed trailer',
+  'golden baseline commit requires one Baseline-Reviewed or Baseline-Reviewed-Local trailer',
 ]);
+const LOCAL_BASELINE = /^sha256:([0-9a-f]{64})$/;
+const BASELINE_INDEX = 'demo/golden/baselines/baselines-index.json';
 
 /** Git invokes commit-msg before it removes the editor template. Ignore the
  * standard comment/scissors suffix exactly as Git will when it records the
@@ -48,7 +51,7 @@ export function terminalTrailers(message) {
   return out;
 }
 
-export function validateCommitMessage(message, changedFiles = []) {
+export function validateCommitMessage(message, changedFiles = [], { baselineIndex = undefined } = {}) {
   const trailers = terminalTrailers(message);
   const errors = [];
   const issues = trailers.get('Issue') || [];
@@ -72,16 +75,34 @@ export function validateCommitMessage(message, changedFiles = []) {
   if (changesGolden) {
     const release = trailers.get('Release') || [];
     const reviewed = trailers.get('Baseline-Reviewed') || [];
+    const reviewedLocal = trailers.get('Baseline-Reviewed-Local') || [];
     if (release.length !== 1 || !release[0]) errors.push('golden baseline commit requires one Release trailer');
-    if (reviewed.length !== 1 || !reviewed[0]) {
-      errors.push('golden baseline commit requires one Baseline-Reviewed trailer');
+    const sources = Number(reviewed.length === 1 && !!reviewed[0])
+      + Number(reviewedLocal.length === 1 && !!reviewedLocal[0]);
+    if (sources !== 1 || reviewed.length > 1 || reviewedLocal.length > 1) {
+      errors.push('golden baseline commit requires one Baseline-Reviewed or Baseline-Reviewed-Local trailer');
+    }
+    if (reviewedLocal.length === 1) {
+      const digest = reviewedLocal[0].match(LOCAL_BASELINE)?.[1] || null;
+      if (!digest) {
+        errors.push("Baseline-Reviewed-Local must be 'sha256:<64 lowercase hex>'");
+      } else if (baselineIndex !== undefined) {
+        try {
+          const index = typeof baselineIndex === 'string' ? JSON.parse(baselineIndex) : baselineIndex;
+          if (index?.localAttestation?.sha256 !== digest) {
+            errors.push('Baseline-Reviewed-Local does not match baselines-index.json localAttestation.sha256');
+          }
+        } catch {
+          errors.push('Baseline-Reviewed-Local requires a readable baselines-index.json');
+        }
+      }
     }
   }
   return errors;
 }
 
-export function validateHistoricalCommit(commit, message, changedFiles = []) {
-  const errors = validateCommitMessage(message, changedFiles);
+export function validateHistoricalCommit(commit, message, changedFiles = [], options = {}) {
+  const errors = validateCommitMessage(message, changedFiles, options);
   if (!REVIEWED_GOLDEN_PROVENANCE_EXCEPTIONS.has(commit)) return errors;
   return errors.filter((error) => !GOLDEN_PROVENANCE_ERRORS.has(error));
 }
@@ -130,8 +151,8 @@ function assertDescendsFromBoundary(commit) {
   }
 }
 
-function validateOne(label, message, files) {
-  const errors = validateCommitMessage(message, files);
+function validateOne(label, message, files, options = {}) {
+  const errors = validateCommitMessage(message, files, options);
   if (errors.length) throw new Error(`${label}:\n- ${errors.join('\n- ')}`);
 }
 
@@ -145,7 +166,11 @@ function main(argv) {
     const files = argv.includes('--staged')
       ? git(['diff', '--cached', '--name-only', '--diff-filter=ACMR']).split('\n').filter(Boolean)
       : [];
-    validateOne('commit message', readFileSync(messageFile, 'utf8'), files);
+    let baselineIndex;
+    if (files.some((file) => /^demo\/golden\/baselines\/.*\.(png|json)$/.test(file))) {
+      try { baselineIndex = git(['show', `:${BASELINE_INDEX}`]); } catch { baselineIndex = null; }
+    }
+    validateOne('commit message', readFileSync(messageFile, 'utf8'), files, { baselineIndex });
   }
   const rangeAt = argv.indexOf('--range');
   const githubRange = argv.includes('--github-range');
@@ -174,7 +199,11 @@ function main(argv) {
       const message = git(['show', '-s', '--format=%B', commit]);
       const files = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', commit])
         .split('\n').filter(Boolean);
-      const errors = validateHistoricalCommit(commit, message, files);
+      let baselineIndex;
+      if (files.some((file) => /^demo\/golden\/baselines\/.*\.(png|json)$/.test(file))) {
+        try { baselineIndex = git(['show', `${commit}:${BASELINE_INDEX}`]); } catch { baselineIndex = null; }
+      }
+      const errors = validateHistoricalCommit(commit, message, files, { baselineIndex });
       if (errors.length) throw new Error(`${commit}:\n- ${errors.join('\n- ')}`);
     }
   }

@@ -93,8 +93,10 @@ from `tests_backend/requirements.txt`, Playwright Chromium from the lockfile).
 `tests_backend/test_ha_setup.py`, builds the card and captures
 `panel-wide-view-light-en` under `artifacts/golden/`; it records elapsed time and
 the resulting PNG path. `HOUSEPLAN_VENV` selects another dedicated venv without
-deleting or rewriting an existing one. The canonical proof still lives in Linux
-CI at the exact SHA — WSL is early feedback.
+deleting or rewriting an existing one. WSL is normally early feedback. For an
+intentional baseline change it may also produce the reviewed candidate with the
+fail-closed command below; the canonical merge/release proof still lives in
+GitHub Linux CI at the final exact SHA.
 It is required only when running the full HA harness locally: current Home
 Assistant imports the Unix-only `fcntl` module and cannot start its pytest plugin
 on native Windows. Keep a WSL clone inside the Linux ext4 filesystem rather than
@@ -195,6 +197,12 @@ npm run golden:capture
 npm run golden:verify
 npm run golden:accept -- --reviewed
 
+# Full attested candidate for baseline acceptance. Run only in the ext4 WSL
+# clone, on a clean named branch whose HEAD already equals origin/<branch>.
+npm run golden:wsl:capture -- --expect-change=<scene-id,scene-id>
+npm run golden:accept -- --reviewed --from=artifacts/golden \
+  --expect-change=<scene-id,scene-id>
+
 # Docs screenshots whose pixels did not change (a version bump, a refactor):
 # re-capture locally, compare decoded RGBA against the committed frames and,
 # if every frame is identical, refresh only the manifest fingerprints (#512).
@@ -205,6 +213,20 @@ Golden frames never show the real card version: the harness sets the test-only
 seam `window.__HP_VERSION_OVERRIDE__ = '0.0.0-golden'` before the card is
 created, so a version bump alone changes no baseline (#512, see
 `demo/golden/README.md`).
+
+`golden:wsl:capture` refuses native Windows, `/mnt/c`, dirty or detached trees,
+unpublished/mismatched branch SHAs, stale source fingerprints, toolchain drift,
+partial matrices, undeclared differences and an insufficient witness floor. It
+writes `artifacts/golden/wsl-attestation.json`, which self-hashes the source
+identity, environment, pinned toolchain, report, every PNG and the acceptance
+intent. Acceptance verifies the passport again and records it under
+`localAttestation` in the baseline index. Copy the printed
+`Baseline-Reviewed-Local: sha256:…` line to the baseline commit together with
+`Release:`; never add the GitHub `Baseline-Reviewed:` trailer to the same commit.
+Push that commit and wait for the full GitHub Validate on its exact SHA before
+S7/merge. The local path removes the earlier expected-red capture run, not this
+independent final check. A downloaded `golden-images` artifact from GitHub stays
+supported and keeps the existing `Baseline-Reviewed: <run URL>` provenance.
 
 The config audit performs no network requests and does not rewrite the input.
 Its registry and lifecycle rules are documented in `CONFIG-COMPATIBILITY.md`.
@@ -495,8 +517,9 @@ when its content-addressed reuse marker names an independently verified
 successful source job. Since #573 the proof also carries composite evidence:
 the identity of the product tree (every tracked path except the accepted
 golden overlay `demo/golden/baselines/**`), the overlay itself (its Git tree,
-the SHA-256 of `baselines-index.json` and the run named by the commit's
-`Baseline-Reviewed:` trailer) and the content key of every reusable job,
+the SHA-256 of `baselines-index.json` and either the run named by the commit's
+`Baseline-Reviewed:` trailer or the attestation hash stored by a
+`Baseline-Reviewed-Local:` commit) and the content key of every reusable job,
 executed or reused. Release consumers standing on the candidate checkout
 (`release-gate.mjs`, `release-prerelease.mjs`) recompute all of it locally and
 fail closed on any mismatch, on a reused marker whose key is not the

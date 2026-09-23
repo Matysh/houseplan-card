@@ -25,9 +25,10 @@ radial spokes visible instead of hiding them under a translucent room fill.
 - `verify` requires every image plus a matching matrix manifest and fails on
   missing/different/error scenarios, browser mismatch or a baseline whose hash
   no longer matches the reviewed manifest.
-- `accept` requires `--reviewed`, a complete candidate report and current
-  source fingerprint. It validates the whole set before copying anything and
-  is the only command allowed to update baselines.
+- `accept` requires `--reviewed`, a complete candidate report, current source
+  fingerprint and one explicit source of provenance: a GitHub Linux capture or
+  the self-hashed WSL passport described below. It validates the whole set
+  before copying anything and is the only command allowed to update baselines.
 - `scripts/golden-accept.mjs` wraps `accept` and additionally requires the
   reviewer to declare intent, with two separate flags because they assert two
   different things. `--expect-change=<id,id>` means "I know why this existing
@@ -54,7 +55,7 @@ changes no golden frame; the version-mismatch scenarios keep their own
 `0.0.0-golden-backend` and still exercise the frontend≠backend relation. The
 product never sets the seam (`src/card-version.ts`).
 
-## Workflow
+## Diagnostic workflow
 
 Build and copy the exact current source first:
 
@@ -65,10 +66,16 @@ npm run golden:capture
 ```
 
 Review `artifacts/golden/actual/` and, when existing references are present,
-`artifacts/golden/diff/`. If every image is intentional:
+`artifacts/golden/diff/`. A plain local capture is diagnostic and cannot be
+accepted. To update references use one of the two reviewed-source workflows
+below.
+
+The CI-artifact path remains unchanged. Download and unpack the complete
+`golden-images` artifact of a Validate run, review every declared frame, then:
 
 ```bash
-node scripts/golden-accept.mjs --reviewed --expect-change=wall-junctions-plan-t-dark
+npm run golden:accept -- --reviewed --from=<unpacked-golden-images> \
+  --expect-change=wall-junctions-plan-t-dark
 npm run golden:verify
 ```
 
@@ -76,41 +83,61 @@ Never accept images merely to make CI green. A matrix/framing change increments
 `GOLDEN_MATRIX_VERSION`; a normal rendering fix does not. The first canonical
 Linux baseline was reviewed and accepted during the v1.60.3-beta.1 gate.
 
-## Capturing candidates without a second CI round trip (#334)
+## Attested WSL acceptance with one GitHub round trip (#641)
 
 Accepting from the `golden-images` CI artifact still works and is still the
 safest route: unpack it and pass `--from=...`. It costs two full CI runs per
 visual fix, though — one to produce the artifact and one to verify the accepted
 baseline — and at matrix version 48 that toll is paid often.
 
-A local capture is admissible instead, because admissibility is now *proved*
-rather than assumed. Desktop font rasterisation can differ from the runner, but
-it cannot differ quietly: it would move every text-bearing scenario, not only
-the ones under edit. So the rule is simply that the capture must reproduce every
-accepted baseline the reviewer did not intend to change:
+A local capture is admissible only through the repository's WSL/ext4 clone,
+because admissibility is now *proved* rather than assumed. Publish the named
+issue branch first and leave its worktree clean. The command refuses native
+Windows, `/mnt/c`, a detached/dirty/unpublished SHA, pin drift and a stale build;
+it then captures the complete current matrix and refuses undeclared changes,
+missing frames or an insufficient byte-identical witness floor:
 
 ```bash
-node scripts/golden-container.mjs                      # capture in the pinned image
-node scripts/golden-accept.mjs --reviewed --expect-change=<the scenarios you changed>
+cd ~/houseplan-card
+git fetch origin
+git switch issue/<NN>-<slug>
+git pull --ff-only origin issue/<NN>-<slug>
+npm run golden:wsl:capture -- --expect-change=<the scenarios you changed>
+
+# Review artifacts/golden/actual and diff, then use exactly the same intent.
+npm run golden:accept -- --reviewed --from=artifacts/golden \
+  --expect-change=<the scenarios you changed>
+npm run golden:verify
 ```
 
-If the environment is not pixel-equivalent, unrelated scenarios come out
-`different`, the wrapper names them and refuses. A wrong container tag or a
-mismatched font set therefore cannot corrupt baselines — it can only fail.
+The capture writes `artifacts/golden/wsl-attestation.json`. Its self-hash binds
+repository/branch/commit/tree and remote SHA, WSL distro/kernel/architecture and
+filesystem, Node/npm/Playwright/Chromium identity, `package-lock.json`, source
+fingerprint, matrix version, every scene's dimensions and PNG checksum, the
+report checksum, witness count/floor and the declared acceptance intent. The
+accept command verifies the same facts again before writing and stores the
+local provenance separately in `baselines-index.json`; it never pretends that a
+local capture came from GitHub Actions.
 
-`scripts/golden-container.mjs` derives the image tag from the `playwright`
-version locked in `package-lock.json`, so the container Chromium equals the
-runner's; `--image=` overrides it when a distro-specific tag is needed
-(`...:v1.62.0-jammy`). The host `node_modules` is shadowed by an anonymous
-volume: the repository copy may be built for Windows, and `npm ci` inside the
-container would otherwise replace it with Linux binaries. The run does write
-`dist/` and the three bundle copies, exactly as a local `npm run bundle:sync`
-would.
+The command prints the exact terminal trailer for the baseline commit:
 
-Docker is not a requirement of the rule, only a convenience: any Linux
-environment that satisfies the parity condition qualifies, WSL included. The
-`chromium` string recorded in the manifest keeps the browser build itself
-pinned, and `golden:verify` rejects a manifest captured by a different build.
+```text
+Release: vX.Y.Z-beta.N
+Baseline-Reviewed-Local: sha256:<wsl-attestation hash>
+```
+
+Use either that local trailer or the existing `Baseline-Reviewed: <GitHub run
+URL>`, never both. The local digest must match
+`baselines-index.json.localAttestation.sha256`, which the commit hook and CI
+provenance job verify. Push the accepted baseline commit and wait for a full
+GitHub Validate on that exact SHA before S7/merge/release. That final run
+captures and checks the matrix independently; the WSL path removes only the
+earlier expected-red artifact-transport run.
+
+`scripts/golden-container.mjs` and plain `golden:capture` remain useful local
+diagnostics, but their output has no WSL attestation and therefore cannot be
+accepted. If the environment is not pixel-equivalent, unrelated scenarios come
+out `different` anyway; a mismatched font set or browser can only fail.
 
 `scripts/golden-accept.mjs` deliberately wraps `demo/golden/accept.mjs` instead
 of replacing its checks: every `.mjs` under `demo/golden` belongs to

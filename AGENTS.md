@@ -133,6 +133,17 @@ Release: v1.62.0-beta.9
 Baseline-Reviewed: https://github.com/Matysh/houseplan-card/actions/runs/<run-id>
 ```
 
+or, for a complete attested capture made in the repository's WSL/ext4 clone:
+
+```text
+Release: v1.62.0-beta.9
+Baseline-Reviewed-Local: sha256:<wsl-attestation hash>
+```
+
+Exactly one of the two `Baseline-Reviewed*` trailers is allowed. The local hash
+must equal `localAttestation.sha256` in the committed baseline index; it does not
+replace the mandatory full GitHub Validate on the final exact SHA.
+
 Never invent a review link and never rewrite published history to satisfy
 trailers. `.githooks/commit-msg` and the `provenance` CI job both run
 `scripts/validate-commit-provenance.mjs`.
@@ -297,8 +308,11 @@ concealment, not repair; the exception is a defect proven to be **in the fixture
 as on #89, where the sun sat at azimuth 180° and the only window faced north, so no
 ray was ever built.
 
-Baselines are still accepted only via `npm run golden:accept -- --reviewed` on a
-complete Linux CI artefact. "So the gate goes green" is not a reason.
+Baselines are still accepted only via `npm run golden:accept -- --reviewed` from
+either a complete Linux CI artefact or a complete attested WSL artefact produced
+by `npm run golden:wsl:capture`. "So the gate goes green" is not a reason, and
+the WSL route never replaces the independent full GitHub Validate on the final
+exact SHA.
 
 The exchange happens in **issue comments** — there is no local message bus. Verdict
 format:
@@ -458,10 +472,16 @@ so no frame ever matches an accepted baseline byte for byte, no environment
 witness can exist, and acceptance would refuse anyway (#401 accepts any
 environment that proves itself with byte-identical undeclared frames — Linux is
 simply the only one we have). The deliberate override is
-`HP_ALLOW_FOREIGN_CAPTURE="reason"`; the reason travels into the output and the
-manifest. Baselines are still accepted only via
-`npm run golden:accept -- --reviewed` on a complete artefact, and the accepted
-index records the platform next to the Chromium build. The one local
+  `HP_ALLOW_FOREIGN_CAPTURE="reason"`; the reason travels into the output and the
+  manifest. Baselines are still accepted only via
+  `npm run golden:accept -- --reviewed` on a complete artefact. A local Linux
+  capture additionally requires the self-hashed WSL passport produced by
+  `npm run golden:wsl:capture`; plain `golden:capture` remains diagnostic. The
+  passport proves a clean published branch SHA, WSL/ext4, pinned toolchain,
+  current fingerprint, complete matrix, PNG hashes and witness floor. The
+  accepted index records that local provenance separately from a GitHub run,
+  and a final full GitHub Validate on the accepted exact SHA remains mandatory.
+  The one local
 shortcut is `npm run docs:accept -- --identical` (#512): it re-captures on this
 machine, compares decoded pixels with the committed frames and, only when every
 frame is identical, refreshes the manifest fingerprints — frames that differ go
@@ -484,9 +504,12 @@ required: `demo/srv/demo.html` stubs `hass`, registries and `callService`.
 
 **Golden images**: `npm run golden:capture` and `npm run golden:verify` refuse a
 stale demo bundle. Build and copy first, then review `artifacts/golden/actual/` and
-`diff/`. Update baselines only with `npm run golden:accept -- --reviewed`, using the
-complete Linux CI artifact; never accept a partial scenario or images merely to make
-CI green. See `demo/golden/README.md`.
+`diff/`. Update baselines only with `npm run golden:accept -- --reviewed`, using a
+complete Linux CI artifact or the attested artefact made in the WSL/ext4 clone by
+`npm run golden:wsl:capture`; never accept a partial scenario or images merely to
+make CI green. The local route saves the first expected-red CI round trip only:
+the accepted commit still needs a full GitHub Validate on its exact SHA. See
+`demo/golden/README.md`.
 
 **Freshness contract**: the embedded fingerprint covers `src/` plus Rollup,
 TypeScript and package-lock build inputs. Every browser check must verify it

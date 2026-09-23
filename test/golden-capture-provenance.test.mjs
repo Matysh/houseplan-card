@@ -65,7 +65,14 @@ function fixture({ platform = 'linux', schema = CAPTURE_PROVENANCE_SCHEMA, captu
   };
   if (schema >= CAPTURE_PROVENANCE_SCHEMA) {
     report.capture = capture === undefined
-      ? { ...captureProvenance({ chromium: index.chromium, buildFingerprint: report.buildFingerprint, env: {} }), platform }
+      ? { ...captureProvenance({
+          chromium: index.chromium,
+          buildFingerprint: report.buildFingerprint,
+          env: {
+            GITHUB_RUN_ID: '1', GITHUB_RUN_ATTEMPT: '1',
+            GITHUB_REPOSITORY: 'Matysh/houseplan-card', GITHUB_SHA: 'a'.repeat(40),
+          },
+        }), platform }
       : capture;
   }
   writeFileSync(resolve(dir, 'golden-report.json'), `${JSON.stringify(report, null, 2)}\n`);
@@ -112,6 +119,7 @@ test('#571 AC1: артефакт Linux принимается, обе сторо
   assert.equal(index.acceptedOn, process.platform, 'платформа приёмки — своя');
   assert.equal(indexCapturedOn(index), 'linux');
   assert.equal(index.capture.chromium, index.chromium);
+  assert.equal(index.localAttestation, null, 'CI source is not presented as local WSL');
   assert.deepEqual(index.foreignCapture, HOST_TEST_ALLOWANCE ? { reason: HOST_TEST_ALLOWANCE } : null,
     'не-Linux хост теста оставляет явный след осознанного обхода');
   rmSync(from, { recursive: true, force: true });
