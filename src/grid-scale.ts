@@ -6,6 +6,10 @@ export const GRID_VISUAL_REFERENCE_CELL_CM = 5;
 /** Canonical centimetres in one imperial grid cell (one inch). */
 export const GRID_IMPERIAL_CELL_CM = 2.54;
 
+/** Persisted grid-cell bounds shared by editors and draft validation. */
+export const GRID_CELL_CM_MIN = 0.1;
+export const GRID_CELL_CM_MAX = 1000;
+
 /** Scale a legacy SVG visual unit without changing physical or screen-space sizes. */
 export function gridVisualScale(cellCm: unknown): number {
   const value = typeof cellCm === 'number' ? cellCm : NaN;

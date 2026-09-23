@@ -82,7 +82,14 @@ export const expiredWarmViewport = (vp: WarmViewport | null): WarmViewport | nul
 
 export type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText'
   | 'decorShape' | 'backdrop' | 'rules' | 'room' | 'info' | 'openingInfo';
-export type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: any }; // any-ok: pre-existing heterogeneous in-memory dialog drafts intentionally retain their runtime shapes
+export type WarmDialog = {
+  kind: WarmDialogKind;
+  space: string;
+  mode: string;
+  data: any; // any-ok: pre-existing heterogeneous in-memory dialog drafts intentionally retain their runtime shapes
+  /** Original dirty baseline for baseline-aware dialogs; never persisted outside this page. */
+  baseline?: string;
+};
 export type WarmEntry = {
   owner: number;
   path: string;

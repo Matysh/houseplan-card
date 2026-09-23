@@ -33,7 +33,8 @@ export function markerDirty(host: object, d: MarkerDialogDraft): boolean {
 
 export interface MarkerProblem {
   field: string;
-  message: 'marker.error_binding';
+  message: 'marker.error_binding' | 'marker.error_virtual_name'
+    | 'marker.error_run_target' | 'marker.error_value_badge_source';
 }
 
 /**
@@ -43,10 +44,19 @@ export interface MarkerProblem {
  * значение при сохранении молча становится «общим радиусом» (`null`), и К10
  * закрытым списком других условий не называет.
  */
-export function markerProblems(d: MarkerDialogDraft): MarkerProblem[] {
+export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapAction): MarkerProblem[] {
   const problems: MarkerProblem[] = [];
+  if (d.binding === 'virtual' && !d.name.trim()) {
+    problems.push({ field: 'marker-name', message: 'marker.error_virtual_name' });
+  }
   if (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual')) {
     problems.push({ field: 'marker-binding', message: 'marker.error_binding' });
+  }
+  if (effectiveTapAction === 'run' && !d.tapTarget) {
+    problems.push({ field: 'marker-run-target', message: 'marker.error_run_target' });
+  }
+  if (d.valueBadgeTouched && d.valueBadgeEnabled && !d.valueBadgeSource) {
+    problems.push({ field: 'marker-value-badge-source', message: 'marker.error_value_badge_source' });
   }
   return problems;
 }

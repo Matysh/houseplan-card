@@ -160,7 +160,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
      * калибровка радара, привязка не выбрана или не подтверждена реестром)
      * остаются; привязка и радиус теперь ещё и названы словами под полем. */
     const edit = !!d.devId;
-    const problems = markerProblems(d);
+    const problems = markerProblems(d, effectiveTapAction);
     const problemFor = (fieldId: string) => problems.find((p) => p.field === fieldId);
     const dirty = markerDirty(this.host, d);
     const bindingUnverified = d.bindingMode === 'ha' && !d.devId && bindingStatus?.kind !== 'active';
@@ -188,6 +188,9 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       node?.focus();
     };
     const bindingProblem = problemFor('marker-binding');
+    const nameProblem = problemFor('marker-name');
+    const runTargetProblem = problemFor('marker-run-target');
+    const valueBadgeSourceProblem = problemFor('marker-value-badge-source');
 
     // ------------------------------------------------------------ Basics
     const bindingBanner = bindingStatus?.kind === 'ha_disabled'
@@ -253,7 +256,9 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
         ${bindingBanner}
         ${field({
           label: t('marker.name_label'), htmlFor: 'marker-name',
+          error: nameProblem ? st(nameProblem.message) : undefined,
           control: html`<input id="marker-name" class="hpf-input" type="text" placeholder=${t('marker.name_ph')}
+            aria-invalid=${nameProblem ? 'true' : nothing}
             .value=${d.name}
             @input=${(e: Event) => (this.host._markerDialog = { ...d, name: (e.target as HTMLInputElement).value })} />`,
         })}
@@ -360,11 +365,13 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           const cur = d.tapTarget ? this._runCandidates().find((c) => c.value === d.tapTarget) : null;
           return field({
             label: t('marker.run_target_label'), htmlFor: 'marker-run-target',
+            error: runTargetProblem ? st(runTargetProblem.message) : undefined,
             control: html`
               ${d.tapTarget && !cur
                 ? callout({ kind: 'warning', role: 'status', text: t('marker.run_target_gone', { id: d.tapTarget }) })
                 : nothing}
               <input id="marker-run-target" class="hpf-input" type="text" placeholder=${t('marker.run_search_ph')}
+                aria-invalid=${runTargetProblem ? 'true' : nothing}
                 .value=${cur ? cur.label : d.runFilter}
                 @focus=${(e: Event) => { (e.target as HTMLInputElement).select(); }}
                 @input=${(e: Event) => (this.host._markerDialog = { ...d, runFilter: (e.target as HTMLInputElement).value, tapTarget: '' })} />
@@ -705,7 +712,9 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           ${effectiveBadgeEnabled ? html`
             ${field({
               label: t('marker.value_badge_source'), htmlFor: 'marker-value-badge-source', help: this._help('marker.value_badge_source.help'),
+              error: valueBadgeSourceProblem ? st(valueBadgeSourceProblem.message) : undefined,
               control: html`<select id="marker-value-badge-source" class="hpf-select"
+                aria-invalid=${valueBadgeSourceProblem ? 'true' : nothing}
                 @change=${(e: Event) => (this.host._markerDialog = {
                   ...d,
                   valueBadgeSource: valueBadgeSourceFromKey((e.target as HTMLSelectElement).value),
@@ -877,7 +886,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             : {})}
           <div class="dialog-action-group dialog-action-commit">
             <button class="btn ghost" data-hp="dialog-cancel" ?disabled=${d.busy} @click=${requestClose}>${t('btn.cancel')}</button>
-            <button class="btn on" data-hp="dialog-confirm" @click=${() => { forgetMarkerBaseline(this.host); void this._saveMarker(); }}
+            <button class="btn on" data-hp="dialog-confirm" @click=${() => { void this._saveMarker(); }}
               ?disabled=${!canSave} title=${saveTitle}>
               <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : t('btn.save')}
             </button>

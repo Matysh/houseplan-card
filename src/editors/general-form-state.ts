@@ -3,11 +3,12 @@
  * Состояние `_settingsDialog` не получает новых ключей — снимок живёт здесь.
  */
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
+import { strictNumber } from '../space-dialog';
 import { dialogDirty, forgetDialogBaseline, rememberDialogBaseline, stableKey } from './dialog-baseline';
 
 export type GeneralSettingsDraft = NonNullable<HouseplanEditorHostPort['_settingsDialog']>;
 
-const TRANSIENT: ReadonlySet<string> = new Set(['busy']);
+const TRANSIENT: ReadonlySet<string> = new Set(['busy', 'glowRadiusInput', 'northDegInput']);
 
 export function generalDraftKey(d: GeneralSettingsDraft): string {
   return stableKey(d as unknown as Record<string, unknown>, TRANSIENT);
@@ -33,8 +34,11 @@ export interface GeneralProblem {
 /** Ошибки черновика в порядке полей формы. */
 export function generalProblems(d: GeneralSettingsDraft): GeneralProblem[] {
   const problems: GeneralProblem[] = [];
-  if (!(Number.isFinite(d.glowRadius) && d.glowRadius > 0)) problems.push({ field: 'gs-glow-radius', message: 'gs.error_glow_radius' });
-  if (d.northDeg !== null && !(Number.isInteger(d.northDeg) && d.northDeg >= 0 && d.northDeg <= 359)) {
+  const glow = strictNumber(d.glowRadiusInput);
+  if (!(glow !== null && glow > 0)) problems.push({ field: 'gs-glow-radius', message: 'gs.error_glow_radius' });
+  const northRaw = d.northDegInput.trim();
+  const north = northRaw === '' ? null : strictNumber(northRaw);
+  if (northRaw !== '' && !(north !== null && Number.isInteger(north) && north >= 0 && north <= 359)) {
     problems.push({ field: 'gs-north', message: 'gs.error_north' });
   }
   return problems;

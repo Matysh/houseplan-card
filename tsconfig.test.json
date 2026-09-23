@@ -23,7 +23,7 @@
     "src/devices.ts", "src/device-inbox.ts",
     "src/virtual-light-state.ts", "src/config-store.ts", "src/config-reload-authority.ts", "src/config-write-conflict.ts", "src/summary-panel.ts", "src/summary-panel-metrics.ts", "src/summary-panel-i18n.ts", "src/summary-panel-identity.ts", "src/summary-panel-picker.ts", "src/summary-panel-runtime-loaded.ts",
     "src/backdrop-probe.ts",
-    "src/types.ts",
+    "src/types.ts", "src/editors/dialog-baseline.ts",
     "src/space-geometry.ts", "src/junction-limits.ts",
     "src/space-order.ts", "src/card-editor-validation.ts",
     "src/signing.ts", "src/initial-load.ts", "src/space-model-selection.ts", "src/space-dialog.ts",

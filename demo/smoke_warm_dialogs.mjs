@@ -42,6 +42,8 @@ const res = await page.evaluate(async () => {
   };
   const rect = (c) => (c._view ? [c._view.x, c._view.y, c._view.w, c._view.h] : null);
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const dialogSave = (card, kind) => (card.shadowRoot || card.renderRoot)
+    .querySelector(`hp-dialog[data-kind="${kind}"] [data-hp="dialog-confirm"]`);
   /** The source instance must contribute its final painted viewport to the
    * memo. Lazy editor chrome can deliver ResizeObserver after updateComplete;
    * a fixed sleep occasionally captured that intermediate box and then asked
@@ -101,6 +103,7 @@ const res = await page.evaluate(async () => {
   out.aPanned = viewA[0] > 1 || viewA[1] > 1;      // sanity: вид действительно смещён
   await c._ensureEditorRuntime();
   c._openSpaceDialog('edit', c._space); await c.updateComplete;
+  const spaceTitle0 = c._spaceDialog.title;
   c._spaceDialog = { ...c._spaceDialog, title: 'ЧЕРНОВИК-42' }; // недосохранённая правка
   await c.updateComplete;
   out.aDialogOpenBefore = !!c._spaceDialog;
@@ -110,6 +113,14 @@ const res = await page.evaluate(async () => {
   out.aViewBitExact = await watchView(c, zoomA, viewA);
   out.aDialogSurvived = !!c._spaceDialog;
   out.aDraftSurvived = c._spaceDialog?.title === 'ЧЕРНОВИК-42';
+  out.aDirtyBaselineSurvived = dialogSave(c, 'space')?.disabled === false;
+  c._spaceDialog = { ...c._spaceDialog, title: spaceTitle0 };
+  c.requestUpdate(); await c.updateComplete;
+  out.aRevertedToClean = dialogSave(c, 'space')?.disabled === true;
+
+  c.remove(); await sleep(20);
+  c = mk(); await waitFor(() => !!c._spaceDialog); await c.updateComplete; await sleep(80);
+  out.aCleanBaselineSurvived = dialogSave(c, 'space')?.disabled === true;
   out.aStillSameSpaceMode = c._mode === 'view';
 
   // ---- воскрешение одноразовое: ещё одно пересоздание диалог не вернёт ----
@@ -126,6 +137,7 @@ const res = await page.evaluate(async () => {
   const zoomB = c._zoom, viewB = rect(c);
   const dev = c._devices.find((d) => d.space === c._space);
   c._openMarkerDialog(dev); await c.updateComplete;
+  const markerName0 = c._markerDialog.name;
   c._markerDialog = { ...c._markerDialog, name: 'ИМЯ-ЧЕРНОВИК' };
   await c.updateComplete;
   out.bDialogOpenBefore = !!c._markerDialog;
@@ -138,6 +150,14 @@ const res = await page.evaluate(async () => {
   out.bViewBitExact = await watchView(c, zoomB, viewB);
   out.bDialogSurvived = !!c._markerDialog;
   out.bDraftSurvived = c._markerDialog?.name === 'ИМЯ-ЧЕРНОВИК';
+  out.bDirtyBaselineSurvived = dialogSave(c, 'marker')?.disabled === false;
+  c._markerDialog = { ...c._markerDialog, name: markerName0 };
+  c.requestUpdate(); await c.updateComplete;
+  out.bRevertedToClean = dialogSave(c, 'marker')?.disabled === true;
+  c.remove(); await sleep(20);
+  c = mk(); await waitFor(() => c._mode === 'devices' && !!c._markerDialog);
+  await c.updateComplete;
+  out.bCleanBaselineSurvived = dialogSave(c, 'marker')?.disabled === true;
 
   // ================= C. Esc = осознанное закрытие ==========================
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
@@ -158,7 +178,62 @@ const res = await page.evaluate(async () => {
   c = mk(); await sleep(120); await c.updateComplete; await sleep(60);
   out.dAlignNotRevived = !c._alignDialog;
 
-  // ================= E. реальный уход с маршрута завершает редактор =======
+  // ================= E. baseline общих настроек: clean и dirty ============
+  c._setMode('view'); await c.updateComplete; await sleep(60);
+  c._openSettingsDialog(); await c.updateComplete; await sleep(80);
+  out.eSettingsCleanBefore = dialogSave(c, 'settings')?.disabled === true;
+  c.remove(); await sleep(20);
+  c = mk();
+  const settingsCleanRevived = await waitFor(() => !!c._settingsDialog);
+  await c.updateComplete; await sleep(80);
+  out.eSettingsCleanAfter = settingsCleanRevived && dialogSave(c, 'settings')?.disabled === true;
+  if (!settingsCleanRevived) { c._openSettingsDialog(); await c.updateComplete; }
+  c._settingsDialog = {
+    ...c._settingsDialog, showRoomTooltip: !c._settingsDialog.showRoomTooltip,
+  };
+  c.requestUpdate(); await c.updateComplete; await sleep(80);
+  out.eSettingsDirtyBefore = dialogSave(c, 'settings')?.disabled === false;
+  c.remove(); await sleep(20);
+  c = mk();
+  const settingsDirtyRevived = await waitFor(() => !!c._settingsDialog);
+  await c.updateComplete; await sleep(80);
+  out.eSettingsDirtyAfter = settingsDirtyRevived && dialogSave(c, 'settings')?.disabled === false;
+  c._settingsDialog = null; c.requestUpdate(); await c.updateComplete;
+
+  // ================= F. baseline комнаты: clean и dirty ===================
+  await c._requestMode('plan'); await c.updateComplete;
+  await waitFor(() => !c._modeTransitionBusy);
+  const room = c._curSpaceCfg?.rooms?.[0];
+  out.fRoomFixtureExists = !!room;
+  if (room) {
+    c._openRoomEdit(room); await c.updateComplete; await sleep(80);
+    const roomName0 = c._nameSel;
+    out.fRoomCleanBefore = dialogSave(c, 'room')?.disabled === true;
+    c.remove(); await sleep(20);
+    c = mk();
+    const roomCleanRevived = await waitFor(() => c._mode === 'plan' && c._roomDialog);
+    await c.updateComplete;
+    out.fRoomCleanAfter = roomCleanRevived && dialogSave(c, 'room')?.disabled === true;
+    if (!roomCleanRevived) { c._openRoomEdit(room); await c.updateComplete; }
+    c._nameSel = `${roomName0} warm`;
+    c.requestUpdate(); await c.updateComplete; await sleep(80);
+    out.fRoomDirtyBefore = dialogSave(c, 'room')?.disabled === false;
+    c.remove(); await sleep(20);
+    c = mk();
+    const roomDirtyRevived = await waitFor(() => c._mode === 'plan' && c._roomDialog);
+    await c.updateComplete;
+    out.fRoomDirtyAfter = roomDirtyRevived && dialogSave(c, 'room')?.disabled === false;
+    c._nameSel = roomName0; c.requestUpdate(); await c.updateComplete; await sleep(80);
+    out.fRoomRevertedToClean = dialogSave(c, 'room')?.disabled === true;
+    c.remove(); await sleep(20);
+    c = mk();
+    const roomRevertedRevived = await waitFor(() => c._mode === 'plan' && c._roomDialog);
+    await c.updateComplete;
+    out.fRoomCleanAfterRevert = roomRevertedRevived && dialogSave(c, 'room')?.disabled === true;
+    c._roomDialog = false; c.requestUpdate(); await c.updateComplete;
+  }
+
+  // ================= G. реальный уход с маршрута завершает редактор =======
   await c._requestMode('devices'); await c.updateComplete; await sleep(60);
   const returnUrl = `${location.pathname}${location.search}${location.hash}`;
   const returnSpace = c._space;
@@ -167,11 +242,11 @@ const res = await page.evaluate(async () => {
   history.pushState({}, '', '/__houseplan-away__');
   window.dispatchEvent(new CustomEvent('location-changed'));
   await c.updateComplete;
-  out.eLiveDepartureEndsEditor = c._mode === 'view' && !c._markerDialog;
+  out.gLiveDepartureEndsEditor = c._mode === 'view' && !c._markerDialog;
   c.remove(); await sleep(20);
   history.replaceState({}, '', returnUrl);
   c = mk(); await sleep(120); await c.updateComplete; await sleep(60);
-  out.eWarmReturnKeepsOnlySpace = c._space === returnSpace
+  out.gWarmReturnKeepsOnlySpace = c._space === returnSpace
     && c._mode === 'view' && !c._markerDialog;
 
   c.remove(); wrap.remove();

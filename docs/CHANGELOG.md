@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Empty or invalid required numbers in General and Space settings no longer
+  fall back to a hidden previous value: the field keeps the typed draft, shows
+  an inline error and blocks saving. A virtual-device name, Run target and
+  value-badge source are now validated beside their fields instead of by a
+  late toast, and open dialogs retain the correct Save state across a warm card
+  remount ([#614](https://github.com/Matysh/houseplan-card/issues/614)).
 - Large exports no longer hold up ordinary House Plan operations, and imports
   no longer block Home Assistant while scanning attachments; uploads now
   reject impossible sizes before streaming, image

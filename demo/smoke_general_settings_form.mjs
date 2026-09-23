@@ -66,15 +66,22 @@ const out = await page.evaluate(async () => {
   o.wallFillOpacityWritesOwnKey = Math.abs(c._settingsDialog.colors.wall_fill.a - 0.4) < 1e-9;
   input(q('#gs-glow-radius'), '4.5'); await upd();
   o.glowRadiusWrites = c._settingsDialog.glowRadius === 4.5;
+  input(q('#gs-glow-radius'), ''); await upd();
+  o.invalidGlowKeepsRawAndBlocksOldValue = c._settingsDialog.glowRadius === 4.5
+    && c._settingsDialog.glowRadiusInput === '' && q('#gs-glow-radius').value === ''
+    && saveBtn().disabled === true && q('#gs-glow-radius').getAttribute('aria-invalid') === 'true';
+  input(q('#gs-glow-radius'), '4.5'); await upd();
+  const northBeforeInvalid = c._settingsDialog.northDeg;
   input(q('#gs-north'), '400'); await upd();
-  o.northOutOfRangeBlocksSave = c._settingsDialog.northDeg === 400 && saveBtn().disabled === true
+  o.northOutOfRangeBlocksSave = c._settingsDialog.northDeg === northBeforeInvalid
+    && c._settingsDialog.northDegInput === '400' && q('#gs-north').value === '400' && saveBtn().disabled === true
     && q('#gs-north').getAttribute('aria-invalid') === 'true' && !!q('.hpf-status .hpf-link');
   input(q('#gs-north'), '45'); await upd();
   o.northWritesAndClearLinkAppears = c._settingsDialog.northDeg === 45
     && q('.compass svg').style.transform === 'rotate(45deg)'
     && [...qa('.hpf-card[data-card="sun"] .hpf-link')].some((l) => l.textContent === c._t('gs.north_clear'));
   [...qa('.hpf-card[data-card="sun"] .hpf-link')].find((l) => l.textContent === c._t('gs.north_clear')).click(); await upd();
-  o.clearResetsNorth = c._settingsDialog.northDeg === null;
+  o.clearResetsNorth = c._settingsDialog.northDeg === null && c._settingsDialog.northDegInput === '';
   const outer = qa('input[name="gs-sun-ray-origin"]').find((r) => !r.checked);
   outer.click(); await upd();
   o.originSegmentWrites = c._settingsDialog.sunRayOrigin !== d0.sunRayOrigin && c._settingsDialog.sunRays === d0.sunRays;

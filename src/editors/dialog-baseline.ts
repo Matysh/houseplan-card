@@ -23,6 +23,33 @@ export function forgetDialogBaseline(host: object, kind: DialogKind): void {
   baselines.get(host)?.delete(kind);
 }
 
+/** Read-only transfer hook for a warm remount. The key is still page-memory only. */
+export function dialogBaseline(host: object, kind: DialogKind): string | undefined {
+  return baselines.get(host)?.get(kind);
+}
+
+/** Install a baseline carried by a warm snapshot onto its replacement host. */
+export function restoreDialogBaseline(host: object, kind: DialogKind, key: string | undefined): void {
+  if (key === undefined) {
+    forgetDialogBaseline(host, kind);
+    return;
+  }
+  rememberDialogBaseline(host, kind, key);
+}
+
+const warmBaselineKind = (kind: string): DialogKind | null =>
+  kind === 'space' || kind === 'marker' || kind === 'settings' || kind === 'room' ? kind : null;
+
+export function warmDialogBaseline(host: object, kind: string): string | undefined {
+  const baselineKind = warmBaselineKind(kind);
+  return baselineKind ? dialogBaseline(host, baselineKind) : undefined;
+}
+
+export function restoreWarmDialogBaseline(host: object, kind: string, key: string | undefined): void {
+  const baselineKind = warmBaselineKind(kind);
+  if (baselineKind) restoreDialogBaseline(host, baselineKind, key);
+}
+
 export function dialogDirty(host: object, kind: DialogKind, key: string): boolean {
   const baseline = baselines.get(host)?.get(kind);
   if (baseline === undefined) return true;

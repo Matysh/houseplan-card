@@ -178,10 +178,19 @@ const out = await page.evaluate(async () => {
   c._closeMarkerDialog(); await upd();
   c._openMarkerDialog(lamp); await upd();
   o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
-  input(q('#marker-name'), `${c._markerDialog.name} x`); await upd();
+  const editName0 = c._markerDialog.name;
+  input(q('#marker-name'), `${editName0} x`); await upd();
   o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText() === '';
-  input(q('#marker-name'), c._markerDialog.name.slice(0, -2)); await upd();
+  input(q('#marker-name'), editName0); await upd();
   o.cleanAgainWhenReverted = saveBtn().disabled === true && statusText() === '';
+  input(q('#marker-name'), `${editName0} staged`); await upd();
+  const runtime = c._editorRuntime;
+  const saveMarker = runtime._saveMarker;
+  runtime._saveMarker = async () => undefined;
+  saveBtn().click(); await upd();
+  runtime._saveMarker = saveMarker;
+  input(q('#marker-name'), editName0); await upd();
+  o.saveAttemptDoesNotForgetBaseline = saveBtn().disabled === true;
   q('.markeractions .btn:not(.danger)').click(); await upd();
   o.hideMakesDirty = c._markerDialog.hideFromPlan === true && saveBtn().disabled === false;
   dlg().dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
@@ -199,17 +208,35 @@ const out = await page.evaluate(async () => {
   await upd(); await new Promise((r) => setTimeout(r, 60));
   o.cleanClosesImmediately = !dlg() && !confirm();
 
-  // --- create-режим: привязка обязательна в HA-режиме, виртуальное — Save сразу
+  // --- create-режим: обязательные поля видны inline до вызова save ----------
   c._openMarkerDialog(); await upd();
-  o.createHasNoHideDelete = !q('.markeractions .btn') && saveBtn().disabled === false && statusText() === '';
+  o.createHasNoHideDelete = !q('.markeractions .btn');
+  o.virtualNameIsAnInlineProblem = saveBtn().disabled === true
+    && q('#marker-name').getAttribute('aria-invalid') === 'true'
+    && !!q('#marker-name').closest('.hpf-field').querySelector('.hpf-error')
+    && /1/.test(q('.hpf-status .hpf-link').textContent);
   await pickSeg('bmode', 'ha');
   o.createHaWithoutBindingIsAProblem = saveBtn().disabled === true && !!q('.hpf-status .hpf-link')
     && !!q('.hpf-card[data-card="basics"] .hpf-error') && q('#marker-binding').getAttribute('aria-expanded') === 'true';
   q('.hpf-status .hpf-link').click(); await upd();
   o.reviewLinkFocusesBinding = (sr().activeElement ?? document.activeElement)?.id === 'marker-binding';
   await pickSeg('bmode', 'virtual');
-  o.createVirtualHasHint = c._markerDialog.binding === 'virtual' && saveBtn().disabled === false
+  o.createVirtualHasHint = c._markerDialog.binding === 'virtual' && saveBtn().disabled === true
     && !!q('input[name="bmode"]')?.closest('.hpf-field')?.querySelector('.hpf-hint');
+  input(q('#marker-name'), 'Virtual sensor'); await upd();
+  o.virtualNameUnblocksSave = saveBtn().disabled === false && !q('#marker-name[aria-invalid="true"]');
+  await select(q('#marker-tap-action'), 'run');
+  o.runWithoutTargetIsInline = saveBtn().disabled === true
+    && q('#marker-run-target').getAttribute('aria-invalid') === 'true'
+    && !!q('#marker-run-target').closest('.hpf-field').querySelector('.hpf-error');
+  c._markerDialog = { ...c._markerDialog, tapTarget: 'script.demo', runFilter: '' }; await upd();
+  o.runTargetUnblocksSave = saveBtn().disabled === false;
+  c._markerDialog = {
+    ...c._markerDialog, valueBadgeTouched: true, valueBadgeEnabled: true, valueBadgeSource: null,
+  }; await upd();
+  o.badgeWithoutSourceIsInline = saveBtn().disabled === true
+    && q('#marker-value-badge-source').getAttribute('aria-invalid') === 'true'
+    && !!q('#marker-value-badge-source').closest('.hpf-field').querySelector('.hpf-error');
   c._markerDialog = null; await upd();
   return o;
 });

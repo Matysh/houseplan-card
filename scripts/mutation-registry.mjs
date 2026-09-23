@@ -10723,8 +10723,30 @@ const MUTANT_DEFINITIONS = [
       + 'это направление, и лучи через окна с ним считаются, а с null — нет',
     patches: [{
       file: 'src/editors/general-settings-dialog.ts',
-      find: "textLink(t('gs.north_clear'), () => set({ northDeg: null }))",
-      replace: "textLink(t('gs.north_clear'), () => set({ northDeg: 0 }))",
+      find: "textLink(t('gs.north_clear'), () => set({ northDeg: null, northDegInput: '' }))",
+      replace: "textLink(t('gs.north_clear'), () => set({ northDeg: 0, northDegInput: '0' }))",
+    }],
+  },
+  {
+    id: 'general-required-number-falls-back-to-hidden-value',
+    guard: 'node demo/smoke_general_settings_form.mjs',
+    because: '#614 AC1: an empty required numeric draft must stay visible and block Save; '
+      + 'validating the last typed number silently restores the pre-fix hidden-value fallback',
+    patches: [{
+      file: 'src/editors/general-form-state.ts',
+      find: '  const glow = strictNumber(d.glowRadiusInput);',
+      replace: '  const glow = d.glowRadius;',
+    }],
+  },
+  {
+    id: 'space-required-temperature-forgets-raw-draft',
+    guard: 'node demo/smoke_space_settings_form.mjs',
+    because: '#614 AC1: each required temperature input owns its raw draft and its own '
+      + 'problem count; consulting the last valid number hides an empty lower bound',
+    patches: [{
+      file: 'src/editors/space-form-state.ts',
+      find: '    const min = strictNumber(d.tempMinInput ?? String(d.tempMin));',
+      replace: '    const min = strictNumber(String(d.tempMin));',
     }],
   },
   {
@@ -10794,6 +10816,39 @@ const MUTANT_DEFINITIONS = [
       file: 'src/editors/marker-dialog.ts',
       find: "      && (edit ? dirty : true);",
       replace: "      && (edit ? true : true);",
+    }],
+  },
+  {
+    id: 'marker-virtual-name-remains-a-late-toast',
+    guard: 'node demo/smoke_device_settings_form.mjs',
+    because: '#614 AC2: a missing virtual name is an inline form problem before Save; '
+      + 'dropping this problem restores the late _saveMarker guard with no field guidance',
+    patches: [{
+      file: 'src/editors/marker-form-state.ts',
+      find: "  if (d.binding === 'virtual' && !d.name.trim()) {",
+      replace: "  if (d.binding === 'virtual' && !d.name.trim() && false) {",
+    }],
+  },
+  {
+    id: 'marker-save-click-forgets-baseline-before-result',
+    guard: 'node demo/smoke_device_settings_form.mjs',
+    because: '#614 AC3: starting Save cannot erase the comparison baseline; only a '
+      + 'successful commit or explicit close may do that',
+    patches: [{
+      file: 'src/editors/marker-dialog.ts',
+      find: '@click=${() => { void this._saveMarker(); }}',
+      replace: '@click=${() => { forgetMarkerBaseline(this.host); void this._saveMarker(); }}',
+    }],
+  },
+  {
+    id: 'warm-dialog-drops-transferred-baseline',
+    guard: 'node demo/smoke_warm_dialogs.mjs',
+    because: '#614 AC4: a warm replacement must receive the original comparison key; '
+      + 'restoring only the visible draft makes every clean dialog spuriously dirty',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    restoreWarmDialogBaseline(this, d.kind, d.baseline);',
+      replace: '    // mutant: the visible draft revives without its dirty baseline',
     }],
   },
   {

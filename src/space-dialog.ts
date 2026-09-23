@@ -34,12 +34,17 @@ export interface SpaceDialogState {
   bgColor: string | null;
   bgMode: 'static' | 'daynight' | null;
   northDeg: number | null;
+  /** Ephemeral text shown by the custom-north input; never persisted. */
+  northDegInput?: string;
   sunRays: boolean | null;
   fillMode: 'none' | 'lqi' | 'light' | 'temp' | 'custom';
   customFill: FillColorEntry | null;
   glowEnabled: boolean;
   tempMin: number;
   tempMax: number;
+  /** Ephemeral text shown by required temperature inputs; never persisted. */
+  tempMinInput?: string;
+  tempMaxInput?: string;
   showLqi: boolean;
   cardFontScale: number;
   labelTemp: boolean;
@@ -185,4 +190,3 @@ export function applyRoomTempThresholdDraft(
   else settings.temp_max = draft.max;
   return true;
 }
-

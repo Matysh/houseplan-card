@@ -20,6 +20,7 @@ const out = await page.evaluate(async () => {
   const qa = (sel) => [...(dlg()?.querySelectorAll(sel) || [])];
   const saveBtn = () => q('[data-hp="dialog-confirm"]');
   const statusText = () => q('.hpf-status')?.textContent.trim() || '';
+  const input = (el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); };
 
   c._setMode('view');
   c._openSpaceDialog('edit', c._space);
@@ -71,6 +72,12 @@ const out = await page.evaluate(async () => {
 
   // --- К10: Save только при изменениях -------------------------------------
   o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
+  const cellBeforeInvalid = c._spaceDialog.cellCm;
+  input(q('#space-cell-cm'), ''); await upd();
+  o.invalidScaleKeepsRawAndBlocksOldValue = c._spaceDialog.cellCm === cellBeforeInvalid
+    && c._spaceDialog.cellCmInput === '' && q('#space-cell-cm').value === ''
+    && saveBtn().disabled === true && q('#space-cell-cm').getAttribute('aria-invalid') === 'true';
+  input(q('#space-cell-cm'), d0.cellCmInput); await upd();
   q('#space-show-borders').click(); await upd();
   o.toggleWritesShowBorders = c._spaceDialog.showBorders === !d0.showBorders && c._spaceDialog.showNames === d0.showNames;
   // #602: доступная Save уже выражает dirty-state; дублирующей строки нет.
@@ -86,14 +93,30 @@ const out = await page.evaluate(async () => {
   o.fillSegmentWritesFillMode = c._spaceDialog.fillMode !== fillBefore && c._spaceDialog.zeroWallStyle === d0.zeroWallStyle;
   c._spaceDialog = { ...c._spaceDialog, fillMode: 'temp' }; await upd();
   o.tempRangeAppearsForTemp = !!q('#space-temp-min') && !!q('#space-temp-max');
-  q('#space-temp-max').value = '10'; q('#space-temp-max').dispatchEvent(new Event('input', { bubbles: true })); await upd();
+  const tempMinBeforeInvalid = c._spaceDialog.tempMin;
+  const tempMaxBeforeInvalid = c._spaceDialog.tempMax;
+  input(q('#space-temp-min'), ''); await upd();
+  input(q('#space-temp-max'), ''); await upd();
+  o.twoInvalidTempsKeepRawAndCountSeparately = c._spaceDialog.tempMin === tempMinBeforeInvalid
+    && c._spaceDialog.tempMax === tempMaxBeforeInvalid
+    && c._spaceDialog.tempMinInput === '' && c._spaceDialog.tempMaxInput === ''
+    && /2/.test(q('.hpf-status .hpf-link').textContent)
+    && q('#space-temp-min').getAttribute('aria-invalid') === 'true'
+    && q('#space-temp-max').getAttribute('aria-invalid') === 'true';
+  q('.hpf-status .hpf-link').click(); await upd();
+  o.reviewLinkFocusesFirstInvalidTemp = (sr().activeElement ?? document.activeElement)?.id === 'space-temp-min';
+  input(q('#space-temp-min'), String(d0.tempMin)); await upd();
+  input(q('#space-temp-max'), '10'); await upd();
   o.tempRangeErrorBlocksSave = c._spaceDialog.tempMax === 10 && c._spaceDialog.tempMin > 10
     && saveBtn().disabled === true && !!q('.hpf-status .hpf-link')
     && /1/.test(q('.hpf-status .hpf-link').textContent)
     && q('#space-temp-max').getAttribute('aria-invalid') === 'true';
   q('.hpf-status .hpf-link').click(); await upd();
   o.reviewLinkFocusesFirstProblem = (sr().activeElement ?? document.activeElement)?.id === 'space-temp-max';
-  c._spaceDialog = { ...c._spaceDialog, fillMode: d0.fillMode, tempMax: d0.tempMax }; await upd();
+  c._spaceDialog = {
+    ...c._spaceDialog, fillMode: d0.fillMode, tempMin: d0.tempMin, tempMax: d0.tempMax,
+    tempMinInput: d0.tempMinInput, tempMaxInput: d0.tempMaxInput,
+  }; await upd();
 
   const tile = q('#space-tile-labelTemp');
   const namesOn = c._spaceDialog.showNames;
@@ -118,9 +141,12 @@ const out = await page.evaluate(async () => {
   const northSelect = q('#space-north-mode');
   northSelect.value = 'custom'; northSelect.dispatchEvent(new Event('change', { bubbles: true })); await upd();
   o.northCustomShowsDegrees = c._spaceDialog.northDeg !== null && !!q('#space-north-deg') && !!q('.hpf-compass');
-  q('#space-north-deg').value = '400'; q('#space-north-deg').dispatchEvent(new Event('input', { bubbles: true })); await upd();
-  o.northOutOfRangeIsAProblem = saveBtn().disabled === true && q('#space-north-deg').getAttribute('aria-invalid') === 'true';
-  q('#space-north-deg').value = '90'; q('#space-north-deg').dispatchEvent(new Event('input', { bubbles: true })); await upd();
+  const northBeforeInvalid = c._spaceDialog.northDeg;
+  input(q('#space-north-deg'), '400'); await upd();
+  o.northOutOfRangeIsAProblem = c._spaceDialog.northDeg === northBeforeInvalid
+    && c._spaceDialog.northDegInput === '400' && q('#space-north-deg').value === '400'
+    && saveBtn().disabled === true && q('#space-north-deg').getAttribute('aria-invalid') === 'true';
+  input(q('#space-north-deg'), '90'); await upd();
   o.northWritesDegrees = c._spaceDialog.northDeg === 90
     && q('.hpf-compass svg').style.transform === 'rotate(90deg)';
   const sunOff = qa('input[name="space-sun-rays"]').find((r) => r.closest('label').textContent.includes(c._t('space.sun_off')));

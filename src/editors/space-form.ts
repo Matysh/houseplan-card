@@ -24,7 +24,9 @@ import {
   textLink, toggleRow, compactList, unitInput, valueTiles,
 } from './form-kit';
 
-import { gridCellFieldToCm, gridCellFieldValue } from '../grid-scale';
+import {
+  GRID_CELL_CM_MAX, GRID_CELL_CM_MIN, gridCellFieldToCm, gridCellFieldValue,
+} from '../grid-scale';
 import {
   DEFAULT_CUSTOM_FILL, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, SPACE_FILL_UI_MODES, stageBgOf,
 } from '../logic';
@@ -40,8 +42,8 @@ import { settingsCopy } from './settings-copy';
 /* #592: границы шага сетки живут рядом с полем, которое их показывает; кламп
  * записи в редакторском рантайме импортирует их отсюда — одно число, один
  * источник, и направление импорта то же, что у самой функции рисования. */
-export const CELL_CM_MIN = 0.1;
-export const CELL_CM_MAX = 1000;
+export const CELL_CM_MIN = GRID_CELL_CM_MIN;
+export const CELL_CM_MAX = GRID_CELL_CM_MAX;
 
 /**
  * Что форме нужно от рантайма. Всё, что у двух рантаймов одинаково, берётся с
@@ -95,7 +97,7 @@ export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
   const t = host._t.bind(host);
   const { st } = settingsCopy(host);
   const id = (name: string) => `${port.idPrefix}-${name}`;
-  const problems = spaceDialogProblems(d, port.idPrefix);
+  const problems = spaceDialogProblems(d, port.idPrefix, host._imperial);
   const problemFor = (fieldId: string) => problems.find((p) => p.field === fieldId);
   const dirty = spaceDialogDirty(host, d);
   const canSave = dirty && problems.length === 0 && !d.busy;
@@ -190,6 +192,7 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
   const savedCellCm = saved && Number(saved.cell_cm) > 0 ? Number(saved.cell_cm) : null;
   const scaleChanged = savedCellCm !== null && Math.abs(d.cellCm - savedCellCm) > 1e-9;
   const titleProblem = problemFor(id('title'));
+  const scaleProblem = problemFor(id('cell-cm'));
   const planProblem = problemFor(id('plan'));
   return formCard({
     id: 'basics',
@@ -206,6 +209,7 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
         }),
         field({
           label: t('space.scale_label'), htmlFor: id('cell-cm'), help: port.help('space.cell_cm.help'),
+          error: scaleProblem ? st(scaleProblem.message) : undefined,
           control: unitInput({
             id: id('cell-cm'), wide: true,
             value: d.cellCmInput ?? gridCellFieldValue(d.cellCm, host._imperial),
@@ -213,13 +217,14 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
             min: Number(gridCellFieldValue(CELL_CM_MIN, host._imperial)),
             max: Number(gridCellFieldValue(CELL_CM_MAX, host._imperial)),
             step: 0.1,
+            invalid: !!scaleProblem,
             onInput: (raw) => {
               const n = strictNumber(raw);
               const canonical = n == null ? null : gridCellFieldToCm(n, host._imperial);
               set(port, {
                 ...d, cellCmInput: raw, cellCmTouched: true,
-                cellCm: canonical != null && canonical > 0
-                  ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, canonical)) : d.cellCm,
+                cellCm: canonical != null && canonical >= CELL_CM_MIN && canonical <= CELL_CM_MAX
+                  ? canonical : d.cellCm,
               });
             },
           }),
@@ -270,7 +275,8 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
   const { host } = port;
   const t = host._t.bind(host);
   const { st, shelp } = settingsCopy(host);
-  const tempProblem = problemFor(id('temp-max'));
+  const tempMinProblem = problemFor(id('temp-min'));
+  const tempMaxProblem = problemFor(id('temp-max'));
   const fillDetail = d.fillMode === 'custom'
     ? colorRow({
         label: t('space.custom_fill'),
@@ -295,17 +301,25 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
           ${fieldGrid([
             field({
               label: st('space.temp_min'), htmlFor: id('temp-min'),
+              error: tempMinProblem ? st(tempMinProblem.message) : undefined,
               control: unitInput({
-                id: id('temp-min'), wide: true, value: String(d.tempMin), unit: '°C', step: 0.5,
-                onInput: (raw) => { const n = strictNumber(raw); if (n != null) set(port, { ...d, tempMin: n }); },
+                id: id('temp-min'), wide: true, value: d.tempMinInput ?? String(d.tempMin), unit: '°C', step: 0.5,
+                invalid: !!tempMinProblem,
+                onInput: (raw) => {
+                  const n = strictNumber(raw);
+                  set(port, { ...d, tempMinInput: raw, ...(n !== null ? { tempMin: n } : {}) });
+                },
               }),
             }),
             field({
               label: st('space.temp_max'), htmlFor: id('temp-max'),
-              error: tempProblem ? st(tempProblem.message) : undefined,
+              error: tempMaxProblem ? st(tempMaxProblem.message) : undefined,
               control: unitInput({
-                id: id('temp-max'), wide: true, value: String(d.tempMax), unit: '°C', step: 0.5, invalid: !!tempProblem,
-                onInput: (raw) => { const n = strictNumber(raw); if (n != null) set(port, { ...d, tempMax: n }); },
+                id: id('temp-max'), wide: true, value: d.tempMaxInput ?? String(d.tempMax), unit: '°C', step: 0.5, invalid: !!tempMaxProblem,
+                onInput: (raw) => {
+                  const n = strictNumber(raw);
+                  set(port, { ...d, tempMaxInput: raw, ...(n !== null ? { tempMax: n } : {}) });
+                },
               }),
             }),
           ])}
@@ -494,7 +508,8 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id: (n: str
         <select id=${id('north-mode')} class="hpf-select"
           @change=${(e: Event) => {
             const custom = (e.target as HTMLSelectElement).value === 'custom';
-            set(port, { ...d, northDeg: custom ? (inheritedNorth ?? 0) : null });
+            const northDeg = custom ? (inheritedNorth ?? 0) : null;
+            set(port, { ...d, northDeg, northDegInput: northDeg === null ? '' : String(northDeg) });
           }}>
           <option value="inherit" ?selected=${d.northDeg === null}>${st('space.north_general', { v: inheritedLabel })}</option>
           <option value="custom" ?selected=${d.northDeg !== null}>${st('space.north_custom')}</option>
@@ -508,13 +523,17 @@ function renderSunAndLight(port: SpaceFormPort, d: SpaceDialogState, id: (n: str
             error: northProblem ? st(northProblem.message) : undefined,
             control: html`<div class="hpf-inline hpf-wrap">
               ${unitInput({
-                id: id('north-deg'), value: String(d.northDeg), unit: '°', min: 0, max: 359, step: 1, invalid: !!northProblem,
+                id: id('north-deg'), value: d.northDegInput ?? String(d.northDeg), unit: '°', min: 0, max: 359, step: 1, invalid: !!northProblem,
                 onInput: (raw) => {
-                  const n = raw.trim() === '' ? NaN : Number(raw);
-                  set(port, { ...d, northDeg: Number.isFinite(n) ? Math.round(n) : d.northDeg });
+                  const n = strictNumber(raw);
+                  set(port, {
+                    ...d,
+                    northDegInput: raw,
+                    ...(n !== null && Number.isInteger(n) && n >= 0 && n <= 359 ? { northDeg: n } : {}),
+                  });
                 },
               })}
-              ${textLink(st('space.sun_inherit_short'), () => set(port, { ...d, northDeg: null }))}
+              ${textLink(st('space.sun_inherit_short'), () => set(port, { ...d, northDeg: null, northDegInput: '' }))}
             </div>`,
           })
         : nothing}

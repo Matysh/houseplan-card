@@ -17,7 +17,7 @@ import {
   createEmptySpaceConfig,
   initialSpaceDisplayDraft,
 } from './space-dialog';
-import { rememberSpaceDialogBaseline } from './editors/space-form-state';
+import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
 import { collectSpaceMarkerDependencies } from './space-deletion';
 import {
   gridCellFieldValue,
@@ -79,8 +79,10 @@ export class HouseplanOnboardingRuntime {
         bgMode: sp.settings?.bg_mode === 'static' || sp.settings?.bg_mode === 'daynight'
           ? sp.settings.bg_mode : null,
         northDeg: northDegOf({}, sp.settings),
+        northDegInput: northDegOf({}, sp.settings) === null ? '' : String(northDegOf({}, sp.settings)),
         sunRays: typeof sp.settings?.sun_rays === 'boolean' ? sp.settings.sun_rays : null,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
+        tempMinInput: String(disp.tempMin), tempMaxInput: String(disp.tempMax),
         showLqi: disp.showLqi ?? this.host._config?.show_signal ?? true,
         cardFontScale: disp.cardFontScale,
         labelTemp: disp.labelTemp, labelHum: disp.labelHum,
@@ -103,8 +105,9 @@ export class HouseplanOnboardingRuntime {
       customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 },
       glowEnabled: true,
       bgColor: null,
-      bgMode: 'daynight', northDeg: null, sunRays: null,
+      bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
+      tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
       showLqi: this.host._config?.show_signal ?? true,
       cardFontScale: 1,
       labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
@@ -285,6 +288,7 @@ export class HouseplanOnboardingRuntime {
   public async _saveSpaceDialog(): Promise<void> {
     const dialog = this.host._spaceDialog;
     if (!dialog || dialog.busy || !dialog.title.trim()) return;
+    if (spaceDialogProblems(dialog, 'space-onboard', this.host._imperial).length) return;
     if (dialog.source === 'file' && !dialog.planFile && !dialog.planUrl) {
       this.host._showToast(this.host._t('toast.plan_required'));
       return;
@@ -535,8 +539,9 @@ export class HouseplanOnboardingRuntime {
       customFill: null,
       glowEnabled: true,
       bgColor: null,
-      bgMode: 'daynight', northDeg: null, sunRays: null,
+      bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
+      tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
       showLqi: this.host._config?.show_signal ?? true,
       cardFontScale: 1,
       labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,

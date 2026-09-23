@@ -127,11 +127,11 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             label: t('gs.glow_radius'), htmlFor: 'gs-glow-radius', help: this._help('gs.glow_radius.help'),
             error: glowProblem ? st(glowProblem.message) : undefined,
             control: unitInput({
-              id: 'gs-glow-radius', value: String(d.glowRadius), min: 0.5, step: 0.5, invalid: !!glowProblem,
+              id: 'gs-glow-radius', value: d.glowRadiusInput, min: 0.5, step: 0.5, invalid: !!glowProblem,
               unit: host._imperial ? t('gs.unit_ft') : t('gs.unit_m'),
               onInput: (raw) => {
                 const v = strictNumber(raw);
-                if (v != null && v > 0) set({ glowRadius: v });
+                set({ glowRadiusInput: raw, ...(v != null && v > 0 ? { glowRadius: v } : {}) });
               },
             }),
           })}`,
@@ -195,15 +195,20 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             <span class="hpf-labelrow"><label for="gs-north">${t('gs.north')}</label>${this._help('gs.north.help')}</span>
             <div class="hpf-inline hpf-wrap">
               ${unitInput({
-                id: 'gs-north', value: d.northDeg === null ? '' : String(d.northDeg), unit: '°',
+                id: 'gs-north', value: d.northDegInput, unit: '°',
                 min: 0, max: 359, step: 1, placeholder: t('gs.north_ph'), invalid: !!northProblem,
                 onInput: (raw) => {
                   const trimmed = raw.trim();
-                  const n = trimmed === '' ? null : Math.round(Number(trimmed));
-                  set({ northDeg: n !== null && Number.isFinite(n) ? n : null });
+                  const n = trimmed === '' ? null : strictNumber(trimmed);
+                  set({
+                    northDegInput: raw,
+                    ...(trimmed === '' ? { northDeg: null }
+                      : n !== null && Number.isInteger(n) && n >= 0 && n <= 359 ? { northDeg: n } : {}),
+                  });
                 },
               })}
-              ${d.northDeg !== null ? textLink(t('gs.north_clear'), () => set({ northDeg: null })) : nothing}
+              ${d.northDeg !== null || d.northDegInput.trim()
+                ? textLink(t('gs.north_clear'), () => set({ northDeg: null, northDegInput: '' })) : nothing}
             </div>
             <span class="hpf-north-n" aria-hidden="true">${t('gs.north_letter')}</span>
             ${host._renderCompass()}
@@ -254,7 +259,8 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
       <div class="dialog-action-group">
         <button class="btn ghost" @click=${() => set({
           colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: host._imperial ? 9.8 : 3,
-          bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner',
+          glowRadiusInput: String(host._imperial ? 9.8 : 3),
+          bgColor: null, northDeg: null, northDegInput: '', bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner',
           showRoomTooltip: true, radarShowLive: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
         })}>${t('gs.reset')}</button>
       </div>

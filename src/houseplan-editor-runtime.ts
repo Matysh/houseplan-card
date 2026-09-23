@@ -138,10 +138,10 @@ import {
   roomTempThresholdDraft, roomTempThresholdInputValues, strictNumber, switchSpacePlanSource,
   touchSpaceDisplay, type SpaceDialogState,
 } from './space-dialog';
-import { rememberSpaceDialogBaseline } from './editors/space-form-state';
-import { rememberGeneralBaseline } from './editors/general-form-state';
+import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
+import { generalProblems, rememberGeneralBaseline } from './editors/general-form-state';
 import { rememberRoomBaseline } from './editors/room-form-state';
-import { rememberMarkerBaseline } from './editors/marker-form-state';
+import { forgetMarkerBaseline, rememberMarkerBaseline } from './editors/marker-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
 import { openSpaceCopyDialog, renderSpaceCopyDialog, saveSpaceCopy } from './space-copy-runtime';
 import { mdiHomeCityOutline } from '@mdi/js';
@@ -514,7 +514,7 @@ const expiredWarmViewport = (vp: WarmViewport | null): WarmViewport | null => {
  *  the live draft OBJECT — the memo is module state, never serialised, so a
  *  half-filled device dialog with its uploaded pdfs survives for free. */
 type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText' | 'decorShape' | 'backdrop' | 'rules' | 'room' | 'info' | 'openingInfo';
-type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: any };
+type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: any; baseline?: string };
 /** AUD-159B1-01: one entry per CARD PLACEMENT, not per key. Two cards with an
  *  identical config on one view share the key, so the key alone cannot say
  *  whose viewport this is; `place`/`idx` (the parent element the card was
@@ -1110,7 +1110,7 @@ export interface HouseplanEditorHostPort {
   _serverStorage: boolean;
   _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
   _terminalFrame: 0 | 1 | 2;
-  _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; busy: boolean; } | null;
+  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
@@ -7871,18 +7871,9 @@ public async _saveMarker(): Promise<void> {
     if (!dlg || dlg.busy) return;
     const effectiveTapAction = this._effectiveMarkerTapAction(dlg);
     if (dlg.bindingMode === 'ha' && (!dlg.binding || dlg.binding === 'virtual')) return;
-    if (dlg.binding === 'virtual' && !dlg.name.trim()) {
-      this.host._showToast(this.host._t('toast.virtual_name_required'));
-      return;
-    }
-    if (effectiveTapAction === 'run' && !dlg.tapTarget) {
-      this.host._showToast(this.host._t('toast.run_target_required'));
-      return;
-    }
-    if (dlg.valueBadgeTouched && dlg.valueBadgeEnabled && !dlg.valueBadgeSource) {
-      this.host._showToast(this.host._t('toast.value_badge_source_required'));
-      return;
-    }
+    if (dlg.binding === 'virtual' && !dlg.name.trim()) return;
+    if (effectiveTapAction === 'run' && !dlg.tapTarget) return;
+    if (dlg.valueBadgeTouched && dlg.valueBadgeEnabled && !dlg.valueBadgeSource) return;
     if (dlg.bindingMode === 'ha') {
       const status = this.host._bindingStatus(dlg.binding);
       const previous = dlg.devId
@@ -8131,6 +8122,7 @@ public async _saveMarker(): Promise<void> {
           .callWS({ type: 'houseplan/files/cleanup', marker_id: fileSrc })
           .catch(() => undefined); // leftovers are harmless; broken links are not
       }
+      forgetMarkerBaseline(this.host);
       this._closeMarkerDialog();
       this.host._cancelDeviceDrag();
       this.host._devicePositionHistory.clear();
@@ -8278,8 +8270,10 @@ public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
         bgColor: disp.bgColor,
         bgMode: sp.settings?.bg_mode === 'static' || sp.settings?.bg_mode === 'daynight' ? sp.settings.bg_mode : null,
         northDeg: northDegOf({}, sp.settings),
+        northDegInput: northDegOf({}, sp.settings) === null ? '' : String(northDegOf({}, sp.settings)),
         sunRays: typeof sp.settings?.sun_rays === 'boolean' ? sp.settings.sun_rays : null,
         tempMin: disp.tempMin, tempMax: disp.tempMax,
+        tempMinInput: String(disp.tempMin), tempMaxInput: String(disp.tempMax),
         showLqi: disp.showLqi ?? this.host._config?.show_signal ?? true,
         cardFontScale: disp.cardFontScale,
         labelTemp: disp.labelTemp, labelHum: disp.labelHum,
@@ -8303,8 +8297,9 @@ public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
         customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 },
         glowEnabled: true,
         bgColor: null,
-        bgMode: 'daynight', northDeg: null, sunRays: null,
+        bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
         tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
+        tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
         showLqi: this.host._config?.show_signal ?? true,
         cardFontScale: 1,
         labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
@@ -8476,6 +8471,7 @@ public _renderServerPlans(d: NonNullable<typeof this.host._spaceDialog>): Templa
 public async _saveSpaceDialog(): Promise<void> {
     const d = this.host._spaceDialog;
     if (!d || d.busy || !d.title.trim()) return;
+    if (spaceDialogProblems(d, 'space-dialog', this.host._imperial).length) return;
     if (d.source === 'file' && !d.planFile && !d.planUrl) {
       this.host._showToast(this.host._t('toast.plan_required'));
       return;
@@ -8770,8 +8766,9 @@ public _openNextImport(): void {
       customFill: null,
       glowEnabled: true,
       bgColor: null,
-      bgMode: 'daynight', northDeg: null, sunRays: null,
+      bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
       tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
+      tempMinInput: String(DEFAULT_TEMP_MIN), tempMaxInput: String(DEFAULT_TEMP_MAX),
       showLqi: this.host._config?.show_signal ?? true,
       cardFontScale: 1,
       labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
@@ -8835,8 +8832,10 @@ public _openSettingsDialog = (): void => {
     this.host._settingsDialog = {
       colors: JSON.parse(JSON.stringify(this.host._fillColors)),
       glowRadius,
+      glowRadiusInput: String(glowRadius),
       bgColor: stageBgOf(this.host._settings, { bgColor: null }) || null,
       northDeg: northDegOf(this.host._settings, {}),
+      northDegInput: northDegOf(this.host._settings, {}) === null ? '' : String(northDegOf(this.host._settings, {})),
       bgMode: bgModeOf(this.host._settings, {}),
       sunRays: sunRaysOn(this.host._settings, {}),
       sunRayOrigin: sunRayOriginOf(this.host._settings),
@@ -10017,6 +10016,7 @@ public _updateDecorStyle(next: DecorStyle): void {
   public async _saveSettingsDialog(): Promise<void> {
     const d = this.host._settingsDialog;
     if (!d || d.busy) return;
+    if (generalProblems(d).length) return;
     this.host._settingsDialog = { ...d, busy: true };
     let attempt: OptimisticAttempt<ServerConfig> | null = null;
     try {

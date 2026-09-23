@@ -11,6 +11,7 @@ import {
   roomTempRangeFromDraft,
   roomTempThresholdDraft,
   roomTempThresholdInputValues,
+  strictNumber,
 } from '../test-build/space-dialog.js';
 
 test('room temperature draft distinguishes inheritance, zero, reversal and invalid text (#487)', () => {
@@ -19,6 +20,14 @@ test('room temperature draft distinguishes inheritance, zero, reversal and inval
   assert.deepEqual(roomTempThresholdDraft('24,5', '18,5'), { valid: true, min: 18.5, max: 24.5 });
   assert.deepEqual(roomTempThresholdDraft('', '19'), { valid: true, min: null, max: 19 });
   assert.deepEqual(roomTempThresholdDraft('oops', '25'), { valid: false, min: null, max: 25 });
+});
+
+test('required dialog numbers preserve strict draft semantics (#614)', () => {
+  assert.equal(strictNumber(''), null);
+  assert.equal(strictNumber('  '), null);
+  assert.equal(strictNumber('12px'), null);
+  assert.equal(strictNumber('1,25'), 1.25);
+  assert.equal(strictNumber('-0.5'), -0.5);
 });
 
 test('room temperature settings writer preserves unknown fields and removes only cleared sides (#487)', () => {

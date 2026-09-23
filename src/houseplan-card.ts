@@ -358,6 +358,7 @@ import {
   type DecorTool, type MarkupTool, type WarmDialog, type WarmDialogKind,
   type WarmEntry, type WarmViewport,
 } from './card-runtime';
+import { restoreWarmDialogBaseline, warmDialogBaseline } from './editors/dialog-baseline';
 
 // Chromium records a FAILED module in the page module map permanently — a
 // retry of the same URL resolves from that map without touching the network.
@@ -2201,12 +2202,10 @@ export class HouseplanCard extends LitElement {
   } | null = null;
 
   private _settingsDialog: {
-    colors: FillColors; glowRadius: number; bgColor: string | null;
+    colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
-    northDeg: number | null; bgMode: 'static' | 'daynight'; sunRays: boolean; sunRayOrigin: SunRayOrigin;
-    showRoomTooltip: boolean; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings;
-    radarShowLive: boolean;
-    busy: boolean;
+    northDeg: number | null; northDegInput: string; bgMode: 'static' | 'daynight'; sunRays: boolean; sunRayOrigin: SunRayOrigin;
+    showRoomTooltip: boolean; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; busy: boolean;
   } | null = null;
   private _pdfDialog = false;
   private _supportDialog: SupportDialogState | null = null;
@@ -3580,8 +3579,9 @@ export class HouseplanCard extends LitElement {
    * "open" as far as the user is concerned.
    */
   private _warmDialogState(): WarmDialog | null {
-    const at = (kind: WarmDialogKind, data: any): WarmDialog =>
-      ({ kind, space: this._space, mode: this._mode, data });
+    const at = (kind: WarmDialogKind, data: any): WarmDialog => ({
+      kind, space: this._space, mode: this._mode, data, baseline: warmDialogBaseline(this, kind),
+    });
     if (this._tapConfirm || this._alignDialog || this._mergeDialog || this._importDialog
         || this._backupExportDialog || this._backupImportDialog) return null;
     if (this._openingInfo) return at('openingInfo', (this._openingInfo as any).id);
@@ -3709,6 +3709,7 @@ export class HouseplanCard extends LitElement {
         break;
       }
     }
+    restoreWarmDialogBaseline(this, d.kind, d.baseline);
     this.requestUpdate();
   }
 
@@ -10657,7 +10658,7 @@ export class HouseplanCard extends LitElement {
     let a = Math.round((Math.atan2(dx, -dy) * 180) / Math.PI);
     if (ev.shiftKey) a = Math.round(a / 15) * 15; // coarse 15° steps with Shift
     a = ((a % 360) + 360) % 360;
-    this._settingsDialog = { ...this._settingsDialog!, northDeg: a };
+    this._settingsDialog = { ...this._settingsDialog!, northDeg: a, northDegInput: String(a) };
   }
 
   /**
