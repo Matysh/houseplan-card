@@ -105,6 +105,29 @@ test('#637 buildReport + renderMarkdown: сводка воспроизводит
   assert.equal(report.jobs, null, 'без jobs job-минуты не выдумываются');
 });
 
+test('#637 buildReport: нулевая медиана не смешивается с отсутствием данных', () => {
+  const issue = { number: 637, title: 'fast', closed_at: T(4 / 60), state_reason: 'completed' };
+  const timelines = new Map([[637, [
+    labeled('S1-new', 0),
+    labeled('S4-spec-review', 0),
+    labeled('S5-ready', 1 / 60),
+    labeled('S7-code-review', 2 / 60),
+    labeled('S8-merged', 3 / 60),
+  ]] ]);
+  const report = buildReport({ since: T(0), until: T(1), issues: [issue], timelines });
+  assert.deepEqual([
+    report.issues.medianLeadToS7Hours,
+    report.issues.medianReviewToMergeHours,
+    report.issues.medianLeadToS8Hours,
+    report.issues.medianSpecLeadHours,
+  ], [0, 0, 0.1, 0]);
+  assert.match(renderMarkdown(report), /Медиана вход → S7 \| 0 ч/);
+
+  const empty = buildReport({ since: T(0), until: T(1) });
+  assert.equal(empty.issues.medianLeadToS7Hours, null);
+  assert.match(renderMarkdown(empty), /Медиана вход → S7 \| —/);
+});
+
 test('#637 workflow: еженедельный запуск читает только, публикует summary и artifact', () => {
   const wf = readFileSync(new URL('../.github/workflows/process-metrics.yml', import.meta.url), 'utf8');
   assert.match(wf, /schedule:\n(?:\s+#[^\n]*\n)*\s+- cron: '/);

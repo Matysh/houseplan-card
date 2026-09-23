@@ -32,6 +32,10 @@ const median = (values) => {
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 };
+const medianHours = (values) => {
+  const value = median(values);
+  return value === null ? null : hours(value);
+};
 const mean = (values) => {
   const finite = values.filter(Number.isFinite);
   return finite.length ? finite.reduce((a, b) => a + b, 0) / finite.length : null;
@@ -159,10 +163,10 @@ export function buildReport({ since, until, issues = [], timelines = new Map(), 
       closed: perIssue.length,
       completed: completed.length,
       notPlanned: perIssue.filter((issue) => issue.stateReason === 'not_planned').length,
-      medianLeadToS7Hours: hours(median(completed.map((i) => i.leadToS7Ms)) ?? NaN) || null,
-      medianReviewToMergeHours: hours(median(completed.map((i) => i.reviewToMergeMs)) ?? NaN) || null,
-      medianLeadToS8Hours: hours(median(completed.map((i) => i.leadToS8Ms)) ?? NaN) || null,
-      medianSpecLeadHours: hours(median(completed.map((i) => i.specLeadMs)) ?? NaN) || null,
+      medianLeadToS7Hours: medianHours(completed.map((i) => i.leadToS7Ms)),
+      medianReviewToMergeHours: medianHours(completed.map((i) => i.reviewToMergeMs)),
+      medianLeadToS8Hours: medianHours(completed.map((i) => i.leadToS8Ms)),
+      medianSpecLeadHours: medianHours(completed.map((i) => i.specLeadMs)),
       codeReviewRounds: { mean: mean(codeRounds), distribution: dist(codeRounds), issues: codeRounds.length },
       specReviewRounds: { mean: mean(specRounds), distribution: dist(specRounds), issues: specRounds.length },
       s7RepeatRequests: completed.filter((i) => i.s7Requests > 1).length,
