@@ -1092,6 +1092,113 @@ async def test_plan_optimize_rejects_new_marker_light_cycle(
     assert stored["rev"] == 1 and stored["config"] == base
 
 
+async def test_config_set_rejects_duplicate_active_marker_ids(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """The ordinary config writer must enforce the active marker id invariant."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    duplicate = {
+        "spaces": [], "settings": {},
+        "markers": [
+            {"id": "duplicate", "binding": "virtual", "name": "First"},
+            {"id": "duplicate", "binding": "virtual", "name": "Second"},
+        ],
+    }
+
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": duplicate, "expected_rev": 0,
+    })
+    response = await client.receive_json()
+    assert not response["success"]
+    assert response["error"] == {
+        "code": "invalid_config", "message": "duplicate active marker id",
+    }
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]
+    assert stored["rev"] == 0 and stored["config"]["markers"] == []
+
+
+async def test_space_delete_rejects_changed_legacy_duplicate_marker_ids(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """A structural writer cannot retain a duplicate group that it changes."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    legacy = {
+        "spaces": [_space("only", "room-only")], "settings": {},
+        "markers": [
+            {
+                "id": "duplicate", "binding": "virtual", "name": "First",
+                "space": "only", "room_id": "room-only",
+            },
+            {
+                "id": "duplicate", "binding": "virtual", "name": "Second",
+                "space": "only", "room_id": "room-only",
+            },
+        ],
+    }
+    before_config = {"config": legacy, "rev": 1}
+    before_layout = {"layout": {}, "rev": 0}
+    await runtime.config_store.async_save(before_config)
+    await runtime.store.async_save(before_layout)
+
+    await client.send_json_auto_id({
+        "type": "houseplan/space/delete", "space_id": "only",
+        "expected_config_rev": 1, "expected_layout_rev": 0,
+    })
+    response = await client.receive_json()
+    assert not response["success"]
+    assert response["error"] == {
+        "code": "invalid_config", "message": "duplicate active marker id",
+    }
+    assert await runtime.config_store.async_load() == before_config
+    assert await runtime.store.async_load() == before_layout
+
+
+async def test_plan_optimize_rejects_duplicate_active_marker_ids(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """Optimize must not bypass the same marker id invariant as config/set."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    base = {"spaces": [], "markers": [], "settings": {}}
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": base, "expected_rev": 0,
+    })
+    seeded = await client.receive_json()
+    assert seeded["success"] and seeded["result"]["rev"] == 1
+    duplicate = {
+        **base,
+        "markers": [
+            {"id": "duplicate", "binding": "virtual", "name": "First"},
+            {"id": "duplicate", "binding": "virtual", "name": "Second"},
+        ],
+    }
+
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize", "config": duplicate, "layout": {},
+        "expected_config_rev": 1, "expected_layout_rev": 0,
+    })
+    response = await client.receive_json()
+    assert not response["success"]
+    assert response["error"] == {
+        "code": "invalid_config", "message": "duplicate active marker id",
+    }
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored_config = (await client.receive_json())["result"]
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    stored_layout = (await client.receive_json())["result"]
+    assert stored_config["rev"] == 1 and stored_config["config"] == base
+    assert stored_layout["rev"] == 0 and stored_layout["layout"] == {}
+
+
 @pytest.mark.parametrize("endpoint", [
     "houseplan/config/set",
     "houseplan/plan/optimize",

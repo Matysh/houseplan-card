@@ -10116,6 +10116,45 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'config-set-skips-active-marker-id-invariant',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'config_set_rejects_duplicate_active_marker_ids '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'config/set is the ordinary and most frequent configuration writer; without its '
+      + 'write-boundary check a crafted client can persist two active markers under one id (#625 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            validate_active_marker_ids(msg["config"], data.get("config"))\n',
+      replace: '            # mutant: config/set skips the active marker id invariant\n',
+    }],
+  },
+  {
+    id: 'space-delete-skips-active-marker-id-invariant',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'space_delete_rejects_changed_legacy_duplicate_marker_ids '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'space/delete rewrites marker placement fields; a changed legacy duplicate group '
+      + 'must not be committed merely because it existed before this structural write (#625 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            validate_active_marker_ids(target_config, current_config)\n',
+      replace: '            # mutant: space/delete skips the active marker id invariant\n',
+    }],
+  },
+  {
+    id: 'plan-optimize-skips-active-marker-id-invariant',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'plan_optimize_rejects_duplicate_active_marker_ids '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'Optimize replaces the whole configuration and cannot be a side door around the '
+      + 'same active marker id invariant enforced by the ordinary writer (#625 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            validate_active_marker_ids(msg["config"], config_data.get("config"))\n',
+      replace: '            # mutant: Optimize skips the active marker id invariant\n',
+    }],
+  },
+  {
     id: 'support-palette-copies-any-key',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'rich_plan_projection_preserves_safe_structure '
