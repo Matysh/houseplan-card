@@ -6,7 +6,6 @@
  * SVG volume layers so the main Lit shell does not also become a renderer.
  */
 import { nothing, svg, type TemplateResult } from 'lit';
-import { guard } from 'lit/directives/guard.js';
 import { clampScale, islandsOf, roomPoly, type SpaceDisplay } from './logic';
 import {
   ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT, ISO_OVERLAY_VISUAL_OFFSET,

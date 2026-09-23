@@ -100,18 +100,6 @@ const simplePolygon = (poly: number[][]): boolean => {
   return polygonArea(poly) > 1e-12;
 };
 
-const simpleOpenPath = (points: number[][]): boolean => {
-  for (let i = 0; i + 1 < points.length; i++) {
-    if (samePoint(points[i], points[i + 1])) return false;
-    for (let j = i + 2; j + 1 < points.length; j++) {
-      if (segmentsProperlyCross(points[i], points[i + 1], points[j], points[j + 1])) {
-        return false;
-      }
-    }
-  }
-  return true;
-};
-
 const replacePoint = (point: number[], move: EndpointMove): number[] => (
   samePoint(point, move.from) ? [...move.to] : [...point]
 );

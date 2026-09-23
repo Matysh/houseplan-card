@@ -820,11 +820,6 @@ export class LoadedSummaryPanelRuntime {
     return resolved === null ? { kind: 'unavailable' } : { kind: 'ready', text: resolved };
   }
 
-  private value(value: SummaryPanelValue): string {
-    const state = this.valueState(value);
-    return state.kind === 'ready' ? state.text : this.t('summary.unavailable');
-  }
-
   private ensureMetrics(): void {
     if (this.metricsModule || this.metricsLoad) return;
     const generation = this.lifecycleGeneration;

@@ -8605,6 +8605,50 @@ const MUTANT_DEFINITIONS = [
       replace: "    current = [line]; // mutant: last physical line instead of the paragraph\n  }\n  for (const paragraph of paragraphs) {",
     }],
   },
+  // #624: гейт мёртвого кода и связности монолита — три защиты, три мутанта.
+  {
+    id: 'unused-gate-allows-everything',
+    guard: 'node --test --test-name-pattern="#624 разбор диагностик" test/monolith-metrics.test.mjs',
+    because: 'the allow-list must admit only private card members read through the port or the '
+      + 'smoke harness; admitting everything hides real dead code behind a green gate (#624 AC1)',
+    patches: [{
+      file: 'scripts/monolith-metrics.mjs',
+      find: "    if (isCard && isPrivateMember && name) {",
+      replace: "    if (name) { // mutant: any named diagnostic is allowed",
+    }],
+  },
+  {
+    id: 'monolith-metrics-baseline-strict',
+    guard: 'node --test --test-name-pattern="#624 храповик" test/monolith-metrics.test.mjs',
+    because: 'the ratchet reddens on a growth of one; a >= comparison lets bundle bytes and '
+      + 'coupling creep up one unit per commit (#624 AC1-b, AC2)',
+    patches: [{
+      file: 'scripts/monolith-metrics.mjs',
+      find: "    if (base == null || now > base + band) grown.push({ name, base: base ?? null, now });",
+      replace: "    if (base == null || now > base + band + 1) grown.push({ name, base: base ?? null, now }); // mutant: one unit of slack",
+    }],
+  },
+  {
+    id: 'monolith-delegates-return-only',
+    guard: 'node --test --test-name-pattern="#624 делегаты" test/monolith-metrics.test.mjs',
+    because: 'a delegate without `return` or with `await` is still a delegate; counting only the '
+      + 'return form undercounts and lets the metric fall without any extraction (#624 AC2)',
+    patches: [{
+      file: 'scripts/monolith-metrics.mjs',
+      find: "  else if (ts.isExpressionStatement(statement)) expression = statement.expression;",
+      replace: "  else if (ts.isExpressionStatement(statement)) return false; // mutant: return-form only",
+    }],
+  },
+  {
+    id: 'monolith-anchors-length-only',
+    guard: 'node --test --test-name-pattern="#624 AC4: подмена" test/monolith-text-anchors.test.mjs',
+    because: 'the freeze compares names, not counts: a renamed anchor test must read as a new one (#624 AC4)',
+    patches: [{
+      file: 'test/monolith-text-anchors.test.mjs',
+      find: "  return actual.filter((name) => !allowed.has(name)).sort();",
+      replace: "  return actual.length > frozen.length ? actual.slice(frozen.length).sort() : []; // mutant: length only",
+    }],
+  },
   {
     id: 'process-reconcile-restarts-healthy-run',
     guard: 'node --test test/process-reconcile.test.mjs',

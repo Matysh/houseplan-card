@@ -4323,9 +4323,6 @@ export function paperRoomShapesWithWalls(
       const rawPaper = exterior.shell?.length
         ? union(exterior.centre, exterior.shell)
         : exterior.centre;
-      const multiWallNodes = multiWallNodesForGeometry(
-        rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
-      );
       const paper = rawPaper;
       const path = polyclipToPathD(paper);
       if (path) return [{ path }];

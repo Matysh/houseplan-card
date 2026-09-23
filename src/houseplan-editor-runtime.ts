@@ -6,7 +6,7 @@
  *  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
-import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
+import { html, svg, nothing, TemplateResult } from 'lit';
 import { displayVersion } from './card-version';
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
@@ -17,7 +17,6 @@ import {
 import { renderGeneralSettingsDialog } from './editors/general-settings-dialog';
 import { renderRoomSettingsDialog } from './editors/room-settings-dialog';
 import { calibrationTarget, planVacuumFit } from './vacuum-route-edit';
-import { repeat } from 'lit/directives/repeat.js';
 import {
   cancelHouseplanPointerMove, flushHouseplanPointerMove, queueHouseplanPointerMove,
 } from './pointer-move-queue';
@@ -39,25 +38,16 @@ import {
   type IconRule, type CompiledIconRule,
 } from './rules';
 import {
-  lqiColor, snapToGrid, snapSegment45, samePoint, pointInPolygon, markerIdForBinding,
-  segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, isExact45Vector, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, roomGlowOf, contentUrl,
-  snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
-  isInteriorLightOpeningType, openingEntityReferences, filterOpeningEntityCandidates,
-  poleOfInaccessibility, subst,
-  averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo,
-  stateIcon, lightColorOf, parseRoomRef, diffNewDevices, resolveGlowValues, resolveGlowAppearance,
-  glowAlpha, normalizeGlowColorOverride, isControllable,
-  spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, DEFAULT_FILL_COLORS,
-  customFillOf, roomCustomFillOf, DEFAULT_CUSTOM_FILL,
-  type FillColors, type FillColorEntry, type ResolvedRoomFill, runServiceFor, RUN_TARGET_DOMAINS,
-  DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf, showRoomTooltipOf,
-  DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
-  referencedContentUrls,
-  DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_UI_MODES, ROOM_FILL_MODES,
-  normalizeDeviceDisplay, isAlarmCapable, displayIsNeutral, displayWantsValue, type DeviceDisplayMode,
-  liveText, liveTextReference, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
-  DECOR_TEXT_BASE,
+  snapToGrid, snapSegment45, samePoint, pointInPolygon, markerIdForBinding, formatLength, roomPoly,
+  pointStrictlyInside, roomsOverlap, pointOnBoundary, mergeRooms, splitRoomPath, polygonArea,
+  closestPointOnBoundary, pointStrictlyInside as ptInside, distToSegment, cutSegments, alignGuides,
+  segmentAngle, type AlignGuide, clampScale, migratePdfUrls, snapToWall, snapPointAlongPoly,
+  openingAmount, openingShoulders, filterOpeningEntityCandidates, poleOfInaccessibility, subst,
+  type FloorInfo, parseRoomRef, resolveGlowValues, normalizeGlowColorOverride, isControllable,
+  spaceDisplayOf, DEFAULT_FILL_COLORS, customFillOf, DEFAULT_CUSTOM_FILL, type FillColors,
+  type FillColorEntry, RUN_TARGET_DOMAINS, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
+  showRoomTooltipOf, DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, normalizeDeviceDisplay,
+  type DeviceDisplayMode, liveTextReference, liveTextToken, DECOR_TEXT_BASE,
 } from './logic';
 import {
   resolveSafeResize,
@@ -79,13 +69,7 @@ import {
   placeResizeAreaLabel, resizeMeasuredEdges,
   type ResizeAreaPlacement,
 } from './resize-labels';
-import {
-  computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf,
-  sunStateOf, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
-  rayStops, resolveDayCycle, dayCycleFingerprint, type DayCycleState,
-  rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
-} from './sun';
-import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
+import { northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf, type SunRayOrigin } from './sun';
 import {
   furnitureDefaultCm,
   furnitureGraphic, furnitureCorners,
@@ -100,24 +84,14 @@ import { FURNITURE_ART_RUNTIME } from './furniture-art-runtime';
 import { FURNITURE_ART_FINGERPRINT, GENERATED_FURNITURE_ART } from './furniture-plan-art.generated';
 import { furnitureWallSurfacesFor, type FurnitureWallSurface } from './furniture-wall-surface';
 import {
-  degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
-  setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
-  multiWallNodesForGeometry,
-  wallEdgeBodies, wallBodiesGeometry, wallBodiesGeometryPath, wallBodiesUnionPath,
-  recutWallBodiesGeometry,
-  floorFootprintGeometry,
-  innerContourForRoom, roomWallProfile, outsetContour,
-  openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
-  openingWallIndex as buildOpeningWallIndex, resolveOpeningWallAssociation,
-  applyWallThicknessToNewRoom,
-  drawWallPreviewD, linearWallJoinPatches, DRAW_WALL_DEFAULT_CM,
-  wallIntervals, materializeWallIntervals,
-  normalizeWallIntervals,
-  intervalCmAt, wallBodyNeedsSolid, wallHatchNeedsSolid, wallHatchStepUnits,
-  HATCH_BASE_STEP_UNITS, type OpeningTunnelGeometry, type OpeningWallIndex,
-  type LinearWallSegment, type WallEntry, type WallInterval,
-  type MultiWallNodeMap,
-  innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
+  degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations, setWallThickness,
+  setWallThicknessForRoom, cmToField, wallCmToUnits, multiWallNodesForGeometry, wallBodiesGeometry,
+  wallBodiesGeometryPath, wallBodiesUnionPath, innerContourForRoom,
+  openingInnerFaceOffsetFromIndex, resolveOpeningWallAssociation, applyWallThicknessToNewRoom,
+  drawWallPreviewD, linearWallJoinPatches, DRAW_WALL_DEFAULT_CM, wallIntervals,
+  materializeWallIntervals, intervalCmAt, wallHatchStepUnits, HATCH_BASE_STEP_UNITS,
+  type OpeningWallIndex, type LinearWallSegment, type WallEntry, type WallInterval,
+  type MultiWallNodeMap, innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
 } from './wall-thickness';
 import {
   junctionLimitViolations, increasedViolations,
@@ -128,96 +102,60 @@ import {
   type OpenSpanEntry,
 } from './open-spans';
 import { ContentSigner } from './signing';
-import {
-  resolveFixedFloor, resolveInitialSpace, settleBestEffort,
-  type FixedFloorSelection, type InitialSpaceSelection,
-} from './initial-load';
-import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
+import { type InitialSpaceSelection } from './initial-load';
+import { selectSpaceModelById } from './space-model-selection';
 import {
   applyRoomTempThresholdDraft, createEmptySpaceConfig, initialSpaceDisplayDraft,
-  roomTempThresholdDraft, roomTempThresholdInputValues, strictNumber, switchSpacePlanSource,
-  touchSpaceDisplay, type SpaceDialogState,
+  roomTempThresholdDraft, roomTempThresholdInputValues, strictNumber, type SpaceDialogState,
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
 import { generalProblems, rememberGeneralBaseline } from './editors/general-form-state';
 import { rememberRoomBaseline } from './editors/room-form-state';
 import { forgetMarkerBaseline, rememberMarkerBaseline } from './editors/marker-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
-import { openSpaceCopyDialog, renderSpaceCopyDialog, saveSpaceCopy } from './space-copy-runtime';
-import { mdiHomeCityOutline } from '@mdi/js';
+import { saveSpaceCopy } from './space-copy-runtime';
 import {
-  Affine, applyAffine, readVacTelemetry,
-  autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, vacMapIdWithFallback,
-  parseVacSourceCandidate, resolveVacSource, resolveCurrentVacPath, trimVacPathTarget, areaCentroid,
-  vacCalibrationResidualCm, vacRoomNameMatchCount, VAC_CALIBRATION_WARN_CM,
-  VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
-  FitParams, fitMatrix, initialFit, reanchorFit, VacRoom,
-  Pt as VacPt, type VacPath, type VacSourceCandidate,
-  type VacSourceResolution, type VacSourceStatus,
+  Affine, applyAffine, readVacTelemetry, autoCalibrate, vacTrailMode, areaCentroid,
+  vacCalibrationResidualCm, vacRoomNameMatchCount, VAC_CALIBRATION_WARN_CM, FitParams, fitMatrix,
+  reanchorFit, VacRoom, Pt as VacPt, type VacSourceCandidate, type VacSourceResolution,
 } from './vacuum';
 import {
-  buildDevices, deviceFromMarkerDraft, effectiveExcludedIntegrations, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
-  areaTemp, areaHum, sourceValue, areaClimateMap,
-  resolvedLightSources, resolvedLightState, resolvedLightStats,
-  hasOwnSpatialSource, hasOwnStatefulLightSource, ownControllableEntities,
-  forcedLightEntityOf,
-  resolveDeviceLightSettings, selectSpatialGlowSource,
-  resolvedDeviceStateEntities, removedPlanBindings, isRemovedPlanEntity,
-  deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
-  removeMarkerControlReferences, rewriteMarkerControlReferences, markerControlWouldCycle,
-  resolveIcon,
-  type AreaClimate,
+  buildDevices, deviceFromMarkerDraft, effectiveExcludedIntegrations, seedHiddenBindings,
+  resolvedLightSources, hasOwnSpatialSource, ownControllableEntities, selectSpatialGlowSource,
+  removedPlanBindings, isRemovedPlanEntity, deletePlanMarkerRecords, effectiveMarkerControls,
+  persistedExternalControls, removeMarkerControlReferences, rewriteMarkerControlReferences,
+  markerControlWouldCycle,
 } from './devices';
 import {
   bindingCandidates, buildDeviceInbox, filterDeviceInbox,
   type DeviceInboxCategory, type DeviceInboxReason, type DeviceInboxRow,
 } from './device-inbox';
 import {
-  formatToggleConfirmation, formatToggleIntent, projectedTapAction, resolveToggleIntent,
-  sameToggleOperationTargets, toggleCoverEntity, toggleIntentName, toggleOperation,
-  toggleEntityCandidates, unavailableToggleTargetNames,
-  type ResolvedToggleIntent, type ResolvedToggleTarget,
-  type ToggleNextEffect, type ToggleNoneReason,
-  type ToggleSkipReason,
+  formatToggleIntent, projectedTapAction, type ResolvedToggleIntent, type ResolvedToggleTarget,
+  type ToggleNextEffect, type ToggleNoneReason, type ToggleSkipReason,
 } from './device-toggle';
 import { toggleEntityWriteFields } from './marker-toggle-entity';
 import { removeMarkerAreaSnapshots } from './device-area-relocation';
-import {
-  adoptVirtualLightServerSnapshot,
-  applyVirtualLightEvent,
-  reconcileVirtualLightSnapshot,
-  virtualLightFingerprint,
-  virtualLightSnapshot,
-  virtualLightWire,
-  type VirtualLightSnapshot,
-} from './virtual-light-state';
+import { type VirtualLightSnapshot } from './virtual-light-state';
 import type {
-  OpeningCfg, PartitionOpeningHost,
-  RoomCfg, PartitionCfg, WallColumnCfg,
-  SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
-  MarkerValueBadge, ValueBadgePosition, ValueBadgeSource, ZeroWallStyle,
+  OpeningCfg, PartitionOpeningHost, RoomCfg, PartitionCfg, WallColumnCfg, SpaceModel, PdfRef,
+  Marker, ServerConfig, DevItem, CardConfig, MarkerValueBadge, ValueBadgePosition,
+  ValueBadgeSource,
 } from './types';
 import {
-  radarAfterBindingChange, radarConfigFromDraft, radarDraft, recognizeRadar,
-  type RadarEditorDraft,
+  radarConfigFromDraft, radarDraft, recognizeRadar, type RadarEditorDraft,
 } from './radar-editor';
 import { finishMarkerDialogClose } from './marker-dialog-close';
 import { renderRadarSection } from './editors/radar-section';
 import { radarDiscardRequest, RadarSetupController } from './radar-setup';
 import {
-  COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
-  directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
-  geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
-  pointInOpaquePlanBody, pointInPhysicalBody, sameColumnPlacement,
-  physicalBodyParts,
-  type PartitionOpeningCut,
+  COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody, floorMinusBodies, geometryArea,
+  partitionBody, pointInPhysicalBody, sameColumnPlacement, type PartitionOpeningCut,
 } from './physical-geometry';
 import {
-  hostedOpeningIntervalsOverlap, materializePartitionOpening,
-  partitionOpeningJambMargin, partitionOpeningNeedsStrictValidation,
-  partitionOpeningFace,
-  partitionPlacementIntervals, resolvePartitionOpeningCompat, resolvePartitionOpeningStrict,
-  type PartitionOpeningOrphanReason, type ResolvedPartitionOpening,
+  hostedOpeningIntervalsOverlap, materializePartitionOpening, partitionOpeningJambMargin,
+  partitionOpeningNeedsStrictValidation, partitionOpeningFace, partitionPlacementIntervals,
+  resolvePartitionOpeningCompat, resolvePartitionOpeningStrict,
 } from './partition-openings';
 import {
   buildHiddenWallDiagnosticGeometry, buildPlanSnapGeometry,
@@ -226,20 +164,14 @@ import {
   type PlanSnapCandidate, type PlanSnapEndpoint, type PlanSnapGeometry, type PlanSnapSegment,
 } from './plan-snap-overlay';
 import {
-  atomizeWallSegments, buildWallFaceGraph, findNewWallFacesInGraphs, findWallFaceAtPoint,
-  normalizeUnifiedWallTool, wallChainSegments, chainSegmentCms,
+  buildWallFaceGraph, findNewWallFacesInGraphs, findWallFaceAtPoint, chainSegmentCms,
   type WallFaceGraph, type WallGraphFace, type WallGraphSourceSegment,
 } from './wall-face-graph';
 import { parameterOnPartition, planRoomDeletion } from './room-deletion';
 import {
   planWallFaceRepair, repairMovesHostedPartition, type WallFaceRepairProposal,
 } from './wall-face-repair';
-import {
-  LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
-} from './light-visibility';
 import './space-card';
-import { cardStyles } from './styles';
-import { editorSecondaryStyles } from './editor-secondary.styles';
 import {
   EditorSecondaryController,
   type EditorSecondaryCopy,
@@ -247,11 +179,8 @@ import {
   type EditorToolbarGroup,
 } from './editor-secondary';
 import {
-  fitInSquare, planRect, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
-  spaceCenter, iconUnit, iconCqw, gridLevels, itemOf, snapPt,
-  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, SANE_LIMIT, GRID_PITCH, GRID_STEP_N,
-  PLAN_SCALE_MIN, PLAN_SCALE_MAX,
-  clampCanvasR, clampCanvasN, type ContentItem, type Rect,
+  spaceModels, iconCqw, gridLevels, CANVAS_LIMIT, SANE_LIMIT, GRID_PITCH, GRID_STEP_N,
+  PLAN_SCALE_MIN, PLAN_SCALE_MAX, clampCanvasR, clampCanvasN, type Rect,
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import {
@@ -260,29 +189,17 @@ import {
   fixedTopologyWallLineageHints,
   resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
 } from './wall-segment-model';
-import {
-  legacyZeroContourLines, resolveZeroWalls, zeroContourLines,
-  zeroWallHasOpening, zeroWallStyleOf,
-} from './zero-walls';
+import { resolveZeroWalls, zeroWallHasOpening, zeroWallStyleOf } from './zero-walls';
 import { snapNearAxisEndpoint } from './near-axis';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
 import { collectSpaceMarkerDependencies, spaceDeletionMessage } from './space-deletion';
 import {
-  checkSpacePhysicalGeometry,
-  checkOptimizeGeometry,
-  geometryOpenCuts,
-  geometryOpenings,
-  geometryPartitionOpeningCuts,
-  geometryRoomOpeningInputs,
-  spacePhysicalGeometryFingerprint,
-  type GeometryOpeningProjection,
+  checkSpacePhysicalGeometry, checkOptimizeGeometry, geometryOpenCuts, geometryOpenings,
+  geometryPartitionOpeningCuts, spacePhysicalGeometryFingerprint,
   type OptimizeGeometryPreflightResult,
 } from './plan-geometry-preflight';
 import {
-  canonicalizeConfigGeometry,
-  canonicalizeLayoutGeometry,
-  canonicalizePosition,
-  formatLatticeShiftCm,
+  canonicalizeConfigGeometry, canonicalizePosition, formatLatticeShiftCm,
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite, type OptimisticAttempt } from './serialized-write-queue';
 import { applyCalibrationProposal, saveAutomaticCalibration, saveManualCalibration, saveVacuumMatrix,
@@ -304,68 +221,29 @@ import {
 import { classifyPlanFile, encodePlanFile, renderBackdropGuard } from './backdrop-pick';
 import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePositionState } from './device-position-history';
-import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
-import {
-  CONTINUITY_LONG_HIDDEN_MS,
-  VisualContinuityController,
-  contentFingerprint,
-  subscribePageVisibility,
-  visualFrameFingerprint,
-  type PageVisibilitySignal,
-} from './visual-continuity';
+import { contentFingerprint } from './visual-continuity';
 import { PointerModalityController } from './pointer-modality';
+import { type ResolvedDevicePresentation } from './device-presentation';
+import { type FiniteActivityRuntime } from './activity-runtime';
 import {
-  entityVisualSample, entityVisualSamplesForDevice,
-  type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
-} from './device-visual';
-import {
-  activitySourceSignature, deviceA11yState, presentationClasses, resolveDevicePresentation,
-  resolvePresentationSources, type ResolvedDevicePresentation,
-} from './device-presentation';
-import {
-  ACTIVITY_WINDOW_MS, advanceFiniteActivity, createFiniteActivityRuntime,
-  resetFiniteActivityRuntime, stampFiniteActivity, type FiniteActivityRuntime,
-} from './activity-runtime';
-import {
-  recommendedValueBadgeSource, valueBadgeCandidates, valueBadgeSourceFromKey,
-  valueBadgeSourceKey, valueBadgeTitle, valueBadgeWriteFields, valueSourceWriteFields,
+  recommendedValueBadgeSource, valueBadgeCandidates, valueBadgeWriteFields, valueSourceWriteFields,
   type ValueBadgeCandidate,
 } from './device-value-badge';
-import {
-  createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
-  type RenderDeviceSnapshot,
-} from './render-device-snapshot';
-import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
-import { effectiveDeviceBaseSize } from './device-marker-geometry';
-import {
-  ModeTransitionController, viewportFromViewBox,
-  type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
-} from './mode-transition';
-import {
-  currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
-} from './labs';
+import { type RenderDeviceSnapshot } from './render-device-snapshot';
+import { type HouseplanMode, type ModeVisualState } from './mode-transition';
 import { projectPlanPoint } from './iso-projection';
-import {
-  acquireHaRegistries, activeRegistryHass, cacheHaBindingStatuses,
-  fullRegistryHass, haRegistryBuildSignature, haRegistryDiagnostics, haRegistrySnapshot,
-  openingEntityAvailable, refreshHaRegistries, renderOpeningEntityAvailable,
-  resolveHaBindingStatus,
-  type HaBindingStatus, type HaRegistrySnapshot,
-} from './ha-binding-status';
+import { type HaBindingStatus, type HaRegistrySnapshot } from './ha-binding-status';
 import type { DecorShape, DecorStyle } from './editors/decor/types';
 import {
   DECOR_ASSETS_API_VERSION, type DecorAsset,
 } from './decor-assets';
 import { DecorImageEditor } from './decor-image-editor';
 import {
-  DEFAULT_DECOR_STYLE, boxAnchors, boxCorners, clamp01, decorCmToUnits,
-  decorStrokeUnits, decorStyleOf, decorStylePatch,
-  decorUnitsToCm, mergeSnapGeometry, normalizeAngle, resizeDecorBox,
-  resizedBoxTopLeft, snapDecorPoint, validDecorDraft,
+  boxAnchors, clamp01, decorCmToUnits, decorStylePatch, decorUnitsToCm, mergeSnapGeometry,
+  normalizeAngle, resizeDecorBox, resizedBoxTopLeft, snapDecorPoint, validDecorDraft,
   type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 import { decorStyleToSettings } from './editors/decor/geometry';
-import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import {
   openingVisibleMetrics, renderOpeningVisibleGeometry,
   type OpeningFaceOffset, type OpeningVisibleSpec,
@@ -381,14 +259,7 @@ import {
 } from './opening-dimensions';
 import type { OpeningPlacementCandidate, OpMeasure, RenderOpening } from './interaction-types';
 import { safeStoredColor } from './color';
-import {
-  gridCellFieldToCm, gridCellFieldValue, gridVisualScale, gridVisualUnits,
-  newSpaceCellCm, wallThickHoverHalfUnits,
-} from './grid-scale';
-import {
-  applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
-  reorderSpaceIds,
-} from './space-order';
+import { gridCellFieldValue, gridVisualUnits, newSpaceCellCm } from './grid-scale';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { reconcileCoincidentPartitions } from './coincident-partitions';
 import { finalizeWallChainSpace } from './writer-fixed-point';
@@ -423,27 +294,6 @@ type ResizeWallUnion = ReturnType<typeof wallBodiesUnionPath>;
 type ResizeWallArtifact = ReturnType<typeof wallBodiesGeometry>;
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
-/** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
- *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
- *  trailing-quiescence requirement (chrome still settling near the cap
- *  extends the wait); BOOT_MAX_MS lifts the veil unconditionally.
- *  BOOT_MIN_MS exceeds the old 600 ms window by a frame-latency margin: a
- *  panel applied right at the window's edge (~590 ms) only materializes in
- *  the stage height a couple of rAF/render frames later. */
-const BOOT_MIN_MS = 700;
-const BOOT_QUIET_MS = 250;
-const BOOT_MAX_MS = 1200;
-/** AUD-1552-02: post-reveal grace during which late chrome shifts glide
- *  (CSS height transition on the stage) instead of snapping. */
-const BOOT_SOFT_MS = 1500;
-type LruRead<V> = { hit: true; value: V } | { hit: false };
-const lruRead = <K, V>(cache: Map<K, V>, key: K): LruRead<V> => {
-  if (!cache.has(key)) return { hit: false };
-  const value = cache.get(key)!;
-  cache.delete(key);
-  cache.set(key, value);
-  return { hit: true, value };
-};
 const lruWrite = <K, V>(cache: Map<K, V>, key: K, value: V, limit: number): void => {
   cache.delete(key);
   cache.set(key, value);
@@ -467,193 +317,14 @@ const lruWrite = <K, V>(cache: Map<K, V>, key: K, value: V, limit: number): void
  *  the key keeps two DIFFERENT cards on one page from adopting each other's
  *  header height (same config twice on one view is indistinguishable — and
  *  then the heights match anyway). */
-/** DEV-B703-03 — what the dead instance was LOOKING at. The header height
- *  alone was not enough: `_view` (the pan) never left the instance, and the
- *  EDITOR zoom is deliberately not persisted (`_saveZoom` is view-only) while
- *  the editor MODE is (LS_NAV). So a re-mount inside an editor came back at
- *  the view-mode zoom, and a panned view came back re-centred on the plan —
- *  the owner's «чуть-чуть дёргается масштаб». The memo now carries the whole
- *  viewport, so the restore is the same rect, not the same zoom number. */
-type WarmViewport = {
-  space: string;
-  mode: 'view' | 'plan' | 'devices' | 'decor';
-  projection: 'flat' | 'iso';
-  activeLabsIso: boolean;
-  logicalCenter: { x: number; y: number } | null;
-  zoom: number;
-  view: { x: number; y: number; w: number; h: number } | null;
-  /** the view-mode viewport an editor was entered from (_viewModeSnap) */
-  snap: { space: string; zoom: number; cx?: number; cy?: number } | null;
-  tool: MarkupTool;
-  decorTool: DecorTool;
-  showHidden: boolean;
-  /** «показать дальние» changes _baseVb, so the restored view rect is only
-   *  the same rect if the frame it was clamped against is the same one */
-  showFar: boolean;
-  selId: string | null;
-  rszSel: string | null;
-  decorSel: string | null;
-};
-const expiredWarmViewport = (vp: WarmViewport | null): WarmViewport | null => {
-  if (!vp || vp.mode === 'view') return vp;
-  return {
-    ...vp,
-    mode: 'view',
-    zoom: vp.snap?.space === vp.space ? vp.snap.zoom : vp.zoom,
-    view: null,
-    snap: null,
-    tool: 'draw',
-    decorTool: 'select',
-    showHidden: false,
-    selId: null,
-    rszSel: null,
-    decorSel: null,
-  };
-};
-/** Which dialog was open and its draft (docs/WARM-REMOUNT.md §3). `data` is
- *  the live draft OBJECT — the memo is module state, never serialised, so a
- *  half-filled device dialog with its uploaded pdfs survives for free. */
-type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText' | 'decorShape' | 'backdrop' | 'rules' | 'room' | 'info' | 'openingInfo';
-type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: unknown; baseline?: string };
-/** AUD-159B1-01: one entry per CARD PLACEMENT, not per key. Two cards with an
- *  identical config on one view share the key, so the key alone cannot say
- *  whose viewport this is; `place`/`idx` (the parent element the card was
- *  mounted in, and its position among that parent's children) identify the
- *  DOM slot, and `owner` the live instance sitting in it. A re-mount into the
- *  same slot inherits the entry; a different card never does. */
-type WarmEntry = {
-  /** generation id of the instance that currently owns the slot */
-  owner: number;
-  /** HA route where this placement was captured. */
-  path: string;
-  /** the parent element the owner was mounted in (weak — never keep DOM alive) */
-  place: WeakRef<Node> | null;
-  /** the owner's index among that parent's children */
-  idx: number;
-  /** the owner is attached; a dead slot is a tombstone waiting for a successor */
-  live: boolean;
-  hdrH: number;
-  stageH: number;
-  vp: WarmViewport | null;
-  /** Last complete visual frame for #73; safe only inside the same placement. */
-  frameFingerprint: string;
-  /** Metadata projection is immutable-by-replacement and avoids an empty
-   *  device layer on a same-document warm remount before registry refresh. */
-  devices: readonly DevItem[] | null;
-  dlg: WarmDialog | null;
-  /** when the instance that wrote `dlg` detached; 0 = it is still alive */
-  freed: number;
-  /** the TTL timer that frees `dlg` once it can no longer be revived */
-  evict: number;
-};
-const warmBoot = new Map<string, WarmEntry[]>();
-let warmGen = 0;
-/** `location.pathname` is the dashboard AND the view path: two Lovelace views
- *  never share a key, so a card that comes back on another view boots cold
- *  instead of inheriting a stranger's viewport (AUD-159B1-01). The hash is
- *  deliberately out — `#space=` is OUR deep link, not another placement. */
-const warmBootKey = (config: unknown): string =>
-  `${window.innerWidth}x${window.innerHeight}|${location.pathname}|${JSON.stringify(config ?? {})}`;
-/** A dialog is revived only if the instance that owned it died THIS long ago.
- *  A Lovelace rebuild detaches and re-attaches within one task; a user who
- *  walked off to another dashboard view and came back later must not be met
- *  by a dialog they have long forgotten opening. */
-let WARM_REVIVE_MS = 10000;
-/** The memo gains a key on every window RESIZE and never loses one; the
- *  values used to be two numbers, and now they can hold a dialog draft (a
- *  plan pdf among it). Keep the last few viewports — a stale entry only
- *  costs the next card at that size a cold boot. */
-const WARM_MAX_KEYS = 8;
-/** How many placements of ONE key are remembered. More identical cards than
- *  this on one view and the oldest dead slot is dropped — it only costs that
- *  placement a cold boot. */
-const WARM_MAX_SLOTS = 4;
 
-/** Which slot of `list` belongs to the instance now claiming it, and may we
- *  trust it with the viewport/dialog (`sure`) or only with the settled height?
- *  Ranked, best first (AUD-159B1-01):
- *    4 — same parent, same index: literally the DOM slot we are standing in,
- *        which is how Lovelace replaces a card (the predecessor may still be
- *        attached for another task — that is the case the audit reproduced);
- *    0 — some OTHER placement whose owner is still attached: a neighbouring
- *        card with an identical config, never ours to inherit;
- *    3 — same parent, shifted index, owner gone: still our placement;
- *    2 — a tombstone whose placement is gone with its subtree — the ordinary
- *        Lovelace rebuild, where the container is rebuilt too.
- *  A tie means two candidates are equally plausible: then only the settled
- *  height is adopted, and it is the same for all of them anyway. */
-const warmMatch = (
-  list: WarmEntry[],
-  gen: number,
-  place: Node | null,
-  idx: number,
-): { slot: WarmEntry | null; sure: boolean } => {
-  const score = (s: WarmEntry): number => {
-    const same = !!place && s.place?.deref() === place;
-    if (same && s.idx === idx) return 4;
-    if (s.live) return 0;
-    return same ? 3 : 2;
-  };
-  let best: WarmEntry | null = null;
-  let bestScore = 0;
-  let ties = 0;
-  let newest: WarmEntry | null = null;
-  for (const s of list) {
-    if (s.owner === gen) continue;
-    newest = s;
-    const sc = score(s);
-    if (sc <= 0) continue;
-    if (sc > bestScore) { best = s; bestScore = sc; ties = 1; }
-    else if (sc === bestScore) ties++;
-  }
-  if (!best || ties > 1) return { slot: best || newest, sure: false };
-  return { slot: best, sure: true };
-};
 /** Rotation step of a decor text block — the same 5° a device icon turns in
  *  (marker dialog). Shift affects angle precision only, never position. */
 const DT_ANGLE_STEP = 5;
-/** Line spacing of a multi-line label, in font sizes. */
-const DT_LINE = 1.2;
-const LS_KEY = 'houseplan_card_layout_v1';
-const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
-const LS_ZOOM = 'houseplan_card_zoom_v1';
-const LS_NAV = 'houseplan_card_nav_v1'; // last space only; editor sessions never survive page navigation
 const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
-const LS_VIEW = 'houseplan_card_view_v1'; // presentation preference per space, Labs-only
-const POINTER_HOVER_TARGET_SELECTOR = 'hp-dialog, hp-help, hp-color-opacity, hp-device-preview';
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
 /** Short semantic-event / direct-terminal-transition window. Event uses
     three sequential 1.1 s waves; motion cool-down itself never animates. */
-/**
- * How finely the lit region is traced where nothing blocks the light. 96 steps
- * put the chord error at 0.05% of the radius — under a tenth of a pixel on a
- * wall tablet, and cheap because only unobstructed directions use them.
- */
-const GLOW_ARC_STEPS = 96;
-/**
- * Width of the lit→unlit ramp along a shadow edge, in SCREEN pixels: the eye
- * reads a perfectly geometric edge as a cut-out, and a real penumbra is never
- * wider than a hair at this scale. Measured on screen on purpose, so zooming in
- * does not turn a hairline into a smear.
- */
-const GLOW_EDGE_FEATHER_PX = 2;
-/**
- * Radial profile of a pool, as [offset %, share of the calibrated alpha].
- * Monotonic all the way out: a lamp is brightest under itself and dies at its
- * radius. The centre keeps the full calibrated alpha, so nothing about the
- * brightness maths (docs/specs/067) changes — only where that alpha is spent.
- */
-const GLOW_FALLOFF: readonly (readonly [number, number])[] = [
-  [0, 1], [45, 0.88], [70, 0.62], [86, 0.32], [100, 0],
-];
-/** A source pool fades in/out without changing its final calibrated alpha. */
-const GLOW_FADE_MS = 500;
-
-/** Smallest rectangle holding both (docs/CANVAS.md §4). */
-const unionRect = (a: Rect, b: Rect): Rect => {
-  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
-  return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
-};
 
 /** #313: one Thickness-tool hit — a room interval or independent masonry. */
 type WallThickSource = { kind: 'room' }
@@ -664,10 +335,6 @@ type WallThickHit = {
 };
 
 type MarkupTool = 'select' | 'draw' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'wallthick' | 'delroom';
-type RoomFillFrame = {
-  byRoom: Map<RoomCfg, ResolvedRoomFill | null>;
-  byId: Map<string, ResolvedRoomFill | null>;
-};
 type WallFaceCandidate = WallGraphFace & {
   split?: { roomId: string; mainPoly: number[][]; newPoly: number[][] };
   consumeAllActive?: boolean;
@@ -689,28 +356,6 @@ type WallFaceBatch = {
   activePath: number[][];
   activeCms: number[];
   activePartitionIds: string[];
-};
-/**
- * The floor a source can see, and nothing else. One region means one clip:
- * a beam through a doorway, the room it lands in and the shadow of a column
- * are all the same computation, so they can never disagree with each other.
- */
-type GlowClipGeometry = { lit: string[] };
-const MARKUP_TOOLS = new Set<MarkupTool>([
-  'select', 'draw', 'column', 'merge', 'split', 'resize',
-  'opening', 'wallthick', 'delroom',
-]);
-/** Warm viewport is page-memory, so it may contain a tool name from the old bundle. */
-const normalizeMarkupTool = (value: unknown): MarkupTool => {
-  // #173 replaces the public one-shot Partition tool with one Walls chain.
-  // A warm page may still carry the old session token; reading it is inert.
-  value = normalizeUnifiedWallTool(value);
-  // Opening placement is valid only together with its explicit session-only
-  // type preset. Warm viewport state does not persist that preset.
-  if (value === 'opening') return 'draw';
-  return typeof value === 'string' && MARKUP_TOOLS.has(value as MarkupTool)
-    ? value as MarkupTool
-    : 'draw';
 };
 const MAX_WALL_CHAIN_POINTS = 500;
 const MAX_PARTITIONS = 2000;
@@ -740,17 +385,6 @@ interface SpaceGeometryState {
  *  (docs/FURNITURE.md): it opens a palette and places a symbol at real size. */
 type DecorTool = 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'image' | 'erase';
 
-const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
-  const ev = new Event(type, { bubbles: true, composed: true }) as any;
-  ev.detail = detail ?? {};
-  node.dispatchEvent(ev);
-};
-
-const navigate = (path: string) => {
-  history.pushState(null, '', path);
-  fireEvent(window, 'location-changed', { replace: false });
-};
-
 /**
  * Debounce with `flush()` and `pending`. Both are load-bearing: a pending
  * config write MUST be flushed before the card adopts a server revision,
@@ -762,36 +396,6 @@ interface Debounced<T extends (...a: any[]) => void> {
   cancel(): void;
   pending(): boolean;
 }
-
-const debounce = <T extends (...a: any[]) => void>(fn: T, ms: number): Debounced<T> => {
-  let t: number | undefined;
-  let last: Parameters<T> | null = null;
-  const wrapped = ((...a: Parameters<T>) => {
-    clearTimeout(t);
-    last = a;
-    t = window.setTimeout(() => {
-      t = undefined;
-      const args = last;
-      last = null;
-      if (args) fn(...args);
-    }, ms);
-  }) as Debounced<T>;
-  wrapped.flush = () => {
-    if (t === undefined) return;
-    clearTimeout(t);
-    t = undefined;
-    const args = last;
-    last = null;
-    if (args) fn(...args);
-  };
-  wrapped.cancel = () => {
-    clearTimeout(t);
-    t = undefined;
-    last = null;
-  };
-  wrapped.pending = () => t !== undefined;
-  return wrapped;
-};
 
 /**
  * Capture the pointer for a drag, tolerating an inactive pointerId.
@@ -824,8 +428,6 @@ interface DeviceInboxDialogState {
   anchor?: string;
   busy?: string;
 }
-
-type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
 
 export interface HouseplanEditorHostPort {
   _ackNewDevice: (id: string) => void;
@@ -6894,8 +6496,6 @@ public _applyWallFaceBatch(): void {
       abort('toast.wall_repair_changed');
       return;
     }
-    const effectiveActivePath = this._activePathWithRepair(batch.activePath, repairs[0]);
-
     if (!accepted.length) {
       if (!this._finalizeWallChainPartitions(batch.activePartitionIds)) return;
       this.host._path = [];

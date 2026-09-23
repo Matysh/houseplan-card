@@ -6,6 +6,7 @@
 // underestimates the coverage that exists (review R5-2). The counts live here
 // now, one command away, and STATUS.md describes the layers instead.
 import { readdirSync, readFileSync } from 'node:fs';
+import { METRIC_NAMES, collectMetrics, readBaseline } from './monolith-metrics.mjs';
 
 const count = (dir, match, re) =>
   readdirSync(dir)
@@ -25,3 +26,17 @@ const rows = [
 ];
 const w = Math.max(...rows.map(([n]) => n.length));
 for (const [name, n] of rows) console.log(`${name.padEnd(w)}  ${n}`);
+
+// #624: связность монолита — те же шесть чисел и тот же модуль, что у гейта
+// `npm run lint:unused` («одно число — один источник»); рядом — база, чтобы
+// движение было видно без git blame. bundleBytes есть только после сборки.
+const { metrics } = collectMetrics(process.cwd());
+const baseline = readBaseline(process.cwd()) || {};
+console.log('\nmonolith (scripts/monolith-metrics.mjs; база scripts/monolith-baseline.json)');
+const mw = Math.max(...METRIC_NAMES.map((n) => n.length));
+for (const name of METRIC_NAMES) {
+  const now = metrics[name];
+  const base = baseline[name];
+  const delta = now != null && base != null && now !== base ? ` (${now > base ? '+' : ''}${now - base} к базе ${base})` : '';
+  console.log(`${name.padEnd(mw)}  ${now ?? 'n/a — npm run build'}${delta}`);
+}

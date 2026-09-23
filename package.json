@@ -14,6 +14,7 @@
     "gate:small": "node scripts/gate-small.mjs",
     "toolchain:check": "node scripts/toolchain-pins.mjs --check",
     "bundle:budget": "node scripts/bundle-budget.mjs",
+    "lint:unused": "node scripts/unused-locals-gate.mjs",
     "invariants": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node scripts/model-invariants.mjs",
     "docs:capture": "node scripts/assert-capture-env.mjs docs && npm run build && node demo/docs/capture.mjs",
     "docs:accept": "node scripts/docs-accept.mjs",

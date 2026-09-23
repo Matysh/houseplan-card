@@ -1,5 +1,5 @@
 import { html, type TemplateResult } from 'lit';
-import type { PdfDialogContext, PdfAssetReference } from './hp-pdf-dialog';
+import type { PdfDialogContext } from './hp-pdf-dialog';
 import './hp-pdf-dialog';
 import { buildPdfPage, type PdfExportOptions, type PdfRasterPlacement } from './pdf-scene';
 import { writePdf } from './pdf-writer';

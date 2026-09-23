@@ -5,7 +5,7 @@ import {
   linearWallBody, linearWallJoinPatches, pairButtEndTrimWedges, wallCmToUnits,
   type LinearWallSegment,
 } from './wall-thickness';
-import type { PartitionCfg, SpaceModel, WallColumnCfg } from './types';
+import type { SpaceModel, WallColumnCfg } from './types';
 
 export const COLUMN_MIN_CM = 1;
 export const COLUMN_MAX_CM = 150;

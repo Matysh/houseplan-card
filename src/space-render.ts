@@ -22,7 +22,7 @@ import {
   wallHatchStepUnits, wallIntervals, innerContourForRoom, HATCH_BASE_STEP_UNITS,
   type WallEntry,
 } from './wall-thickness';
-import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
+import { DEFAULT_ICON_RULES, compileIconRules } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, resolveDayCycle } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';

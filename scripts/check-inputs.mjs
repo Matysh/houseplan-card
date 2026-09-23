@@ -321,9 +321,10 @@ export const CHECKS = {
     roots: ['docs/**', 'README.md', 'README.ru.md', 'PROCESS.md', 'AGENTS.md', 'CONTRIBUTING.md', ...WORKFLOW],
   },
   frontend: {
-    // npm run typecheck, npm test, npm run build, bundle:budget
-    entries: ['test/*.test.mjs', 'scripts/no-new-any.mjs', 'scripts/bundle-budget.mjs', 'scripts/fix-test-build.mjs'],
-    roots: [...BUILD_INPUTS, 'test/**', 'tsconfig*.json', ...WORKFLOW],
+    // npm run typecheck, npm test, npm run build, bundle:budget, lint:unused (#624)
+    entries: ['test/*.test.mjs', 'scripts/no-new-any.mjs', 'scripts/bundle-budget.mjs', 'scripts/fix-test-build.mjs',
+      'scripts/unused-locals-gate.mjs'],
+    roots: [...BUILD_INPUTS, 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', ...WORKFLOW],
   },
   changed_mutants: {
     entries: ['scripts/mutation-*.mjs', 'scripts/*-guard.mjs', 'test/*.test.mjs', 'demo/smoke_*.mjs', 'tests_backend/**/*.py'],

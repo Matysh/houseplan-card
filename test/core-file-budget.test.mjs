@@ -29,7 +29,11 @@ const CAPS = {
   // 2026-09-14, #564: the geometry/index/latch/DOM ownership implementation is
   // isolated in device-hit-owner.ts. These 81 lines are the remaining card
   // lifecycle invalidations and the presentation/action integration seams.
-  'src/houseplan-card.ts': 13732,
+  // 2026-09-23, #624: сняты 112 мёртвых делегатов и полей, которых не читает
+  // ни карточка, ни харнесс (реализация живёт в рантайме и зовётся оттуда),
+  // 190 неиспользуемых импортов и 9 мёртвых констант — 784 строки. Потолок
+  // опущен на выигрыш, запас над фактом три строки.
+  'src/houseplan-card.ts': 12951,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.
@@ -38,7 +42,10 @@ const CAPS = {
   // — 1290 строк. Потолок опущен ровно на эту величину (14100 → 12810), запас
   // над фактом остался прежним, три строки: выигрыш зафиксирован, иначе ядро
   // отыграет его обратно первой же правкой диалога.
-  'src/houseplan-editor-runtime.ts': 12810,
+  // 2026-09-23, #624: снесены мёртвые копии объявлений карточки (warm-boot,
+  // LS_*, GLOW_*, debounce, navigate, lruRead — 31 объявление и 6 типов) и
+  // 196 неиспользуемых импортов — 400 строк. Потолок опущен на выигрыш.
+  'src/houseplan-editor-runtime.ts': 12359,
 };
 
 /**

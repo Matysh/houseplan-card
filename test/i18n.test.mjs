@@ -319,9 +319,13 @@ test('issue 252 Optimize keeps internal ids out of the main orphan report', () =
 });
 
 test('i18n: every literal help call has body and full aria keys in every language', () => {
-  const allCalls = helpSource.match(/this\._help\(/g) || [];
+  // #624: логический исходник теперь включает члены рантайма без делегата в
+  // карточке; среди них — порт общего модуля `help: (key) => this._help(key)`.
+  // Это проброс, а не вызов с ключом: литерал стоит у вызывающей стороны.
+  const allCalls = (helpSource.match(/this\._help\(/g) || []).length
+    - (helpSource.match(/this\._help\(key\)/g) || []).length;
   const helpKeys = [...helpSource.matchAll(/this\._help\('([^']+\.help)'\)/g)].map((match) => match[1]);
-  assert.equal(helpKeys.length, allCalls.length, 'every _help call must use one string literal ending in .help');
+  assert.equal(helpKeys.length, allCalls, 'every _help call must use one string literal ending in .help');
   assert.ok(helpKeys.length > 0, 'the help affordance pilot disappeared');
   for (const key of helpKeys) {
     for (const { code } of LANGUAGE_REGISTRY) {

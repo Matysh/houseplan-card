@@ -73,6 +73,9 @@ export function postBuildSteps() {
     { name: 'юниты (npm test)', cmd: npm, args: ['test'] },
     { name: 'копии бандла совпадают (bundle-tree)', cmd: process.execPath, args: ['scripts/bundle-tree.mjs', 'dist', 'custom_components/houseplan/frontend'], hint: 'npm run bundle:sync' },
     { name: 'бюджет бандла', cmd: npm, args: ['run', 'bundle:budget'] },
+    // #624: мёртвый код по noUnusedLocals и храповик связности монолита; после
+    // сборки, потому что одно из чисел — размер dist/.
+    { name: 'мёртвый код и связность монолита (lint:unused)', cmd: process.execPath, args: ['scripts/unused-locals-gate.mjs'], hint: 'node scripts/unused-locals-gate.mjs --update при осознанном снижении' },
   ];
 }
 

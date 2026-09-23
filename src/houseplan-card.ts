@@ -8,7 +8,6 @@
  */
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { cache as litCache } from 'lit/directives/cache.js';
-import { guard } from 'lit/directives/guard.js';
 import { keyed } from 'lit/directives/keyed.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
@@ -22,48 +21,22 @@ import {
 } from './danger-confirm';
 import type { SupportDialogState } from './support-feedback';
 import type { ColorPickerLabels } from './hp-color-opacity';
+import { compileIconRules, iconFor, type IconRule, type CompiledIconRule } from './rules';
 import {
-  EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
-  type IconRule, type CompiledIconRule,
-} from './rules';
-import {
-  lqiColor, snapToGrid, snapSegment45, samePoint, pointInPolygon, markerIdForBinding,
-  segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, isExact45Vector, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, roomGlowOf, contentUrl,
-  snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
-  isInteriorLightOpeningType, openingLightApertureLength, openingLightStateSignature,
-  quantizeOpeningLightAmount,
-  openingEntityReferences, filterOpeningEntityCandidates,
-  poleOfInaccessibility, subst,
-  averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo,
-  stateIcon, lightColorOf, parseRoomRef, diffNewDevices, resolveGlowValues, resolveGlowAppearance,
-  glowAlpha, normalizeGlowColorOverride, isControllable,
-  spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, DEFAULT_FILL_COLORS,
-  customFillOf, roomCustomFillOf, DEFAULT_CUSTOM_FILL,
-  type FillColors, type FillColorEntry, type ResolvedRoomFill, runServiceFor, RUN_TARGET_DOMAINS,
-  DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf, showRoomTooltipOf,
-  DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
-  referencedContentUrls,
-  DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_UI_MODES, ROOM_FILL_MODES,
-  normalizeDeviceDisplay, isAlarmCapable, displayIsNeutral, type DeviceDisplayMode,
-  liveText, liveTextReference, liveTextToken, hassValue, valueWithUnit, decorTextScale, decorTextLines,
+  snapToGrid, samePoint, pointInPolygon, segmentCm, formatLength, roomEdges, roomPoly,
+  paperRoomShapes, islandsOf, distToSegment, outlineWithout, segmentAngle, is45, isExact45Vector,
+  swipeTarget, clampScale, roomFillModeOf, roomGlowOf, openingAmount, openingEntityReferences,
+  averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo, stateIcon, diffNewDevices,
+  isControllable, spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, customFillOf,
+  roomCustomFillOf, DEFAULT_CUSTOM_FILL, type FillColors, type FillColorEntry,
+  type ResolvedRoomFill, runServiceFor, stageBgOf, showRoomTooltipOf, type SpaceDisplay,
+  referencedContentUrls, normalizeDeviceDisplay, isAlarmCapable, displayIsNeutral,
+  type DeviceDisplayMode, liveText, liveTextReference, hassValue, decorTextScale, decorTextLines,
   DECOR_TEXT_BASE,
 } from './logic';
-import {
-  resolveSafeResize,
-  coalesceResizeRooms,
-  polyIsSimple, MIN_ROOM_CM,
-  type SafeOpeningIn, type SafeResizeObstacle, type SafeResizeOptions,
-  type SafeResizePlan, type SafeResizeReason, type SafeResizeResolution,
-} from './resize';
+import { type SafeResizePlan, type SafeResizeResolution } from './resize';
 import { formatArea } from './area-format';
-import {
-  type ResizeProjectionResult,
-} from './resize-controller';
-import {
-  placeResizeAreaLabel, resizeMeasuredEdges,
-  type ResizeAreaPlacement,
-} from './resize-labels';
+import { type ResizeAreaPlacement } from './resize-labels';
 import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf,
   sunStateOf, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
@@ -78,30 +51,15 @@ import {
   furnitureRenderTransform,
 } from './furniture';
 import {
-  degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
-  setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
-  wallEdgeBodies, wallBodiesGeometry, wallBodiesGeometryPath, wallBodiesUnionPath,
-  recutWallBodiesGeometry,
-  floorFootprintGeometry,
-  innerContourForRoom, roomWallProfile, outsetContour,
-  openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
-  openingWallIndex as buildOpeningWallIndex, resolveOpeningWallAssociation,
-  applyWallThicknessToNewRoom,
-  drawWallPreviewD, linearWallJoinPatches, DRAW_WALL_DEFAULT_CM,
-  wallIntervals, materializeWallIntervals,
-  normalizeWallIntervals,
-  intervalCmAt, wallBodyNeedsSolid, wallHatchNeedsSolid, wallHatchStepUnits,
-  HATCH_BASE_STEP_UNITS, type OpeningTunnelGeometry, type OpeningWallIndex,
-  type LinearWallSegment, type WallEntry, type WallInterval,
-  innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
+  degradeWalls, cmToField, wallCmToUnits, wallEdgeBodies, wallBodiesGeometry, wallBodiesUnionPath,
+  innerContourForRoom, roomWallProfile, outsetContour, openingInnerFaceOffsetFromIndex,
+  openingTunnelGeometriesFromIndex, openingWallIndex as buildOpeningWallIndex, drawWallPreviewD,
+  DRAW_WALL_DEFAULT_CM, normalizeWallIntervals, intervalCmAt, wallBodyNeedsSolid,
+  wallHatchNeedsSolid, wallHatchStepUnits, HATCH_BASE_STEP_UNITS, type OpeningTunnelGeometry,
+  type OpeningWallIndex, type WallEntry, type WallInterval,
 } from './wall-thickness';
-import type {
-  JunctionLimitViolation, JunctionSharedGeometry, LimitSegment,
-} from './junction-limits';
-import {
-  pointOnOpenCut, sanitizeOpenSpans,
-  type OpenSpanEntry,
-} from './open-spans';
+import type { JunctionLimitViolation, JunctionSharedGeometry } from './junction-limits';
+import { type OpenSpanEntry } from './open-spans';
 import { ContentSigner } from './signing';
 import {
   resolveFixedFloor, resolveInitialSpace, settleBestEffort,
@@ -110,20 +68,13 @@ import {
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
 import { DeviceHitController, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
-import {
-  createEmptySpaceConfig, initialSpaceDisplayDraft, roomTempRangeFromDraft, switchSpacePlanSource, touchSpaceDisplay,
-  type SpaceDialogState,
-} from './space-dialog';
+import { roomTempRangeFromDraft, type SpaceDialogState } from './space-dialog';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
-  Affine, applyAffine, readVacTelemetry,
-  autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, vacMapIdWithFallback,
-  parseVacSourceCandidate, resolveVacSource, resolveCurrentVacPath, trimVacPathTarget, normalizeVacPath,
-  smoothVacPath, VAC_TRAIL_SMOOTH_RADIUS_CM, areaCentroid,
-  vacCalibrationResidualCm, vacRoomNameMatchCount, VAC_CALIBRATION_WARN_CM,
-  VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
-  FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
-  Pt as VacPt, type VacPath, type VacSourceCandidate,
+  Affine, applyAffine, readVacTelemetry, pushTrailPoint, isVacMoving, vacTrailMode,
+  vacMapIdWithFallback, parseVacSourceCandidate, resolveVacSource, resolveCurrentVacPath,
+  trimVacPathTarget, normalizeVacPath, smoothVacPath, VAC_TRAIL_SMOOTH_RADIUS_CM,
+  VAC_TELEPORT_GAP_MS, VAC_STALE_MS, FitParams, Pt as VacPt, type VacPath, type VacSourceCandidate,
   type VacSourceResolution, type VacSourceStatus,
 } from './vacuum';
 import {
@@ -131,45 +82,24 @@ import {
   type VacuumMapRoute, type VacuumRouteResolution,
 } from './vacuum-routes';
 import {
-  buildDevices, deviceFromMarkerDraft, seedHiddenBindings, lqiFor, tempFor, climateTempFor,
-  areaTemp, areaHum, effectiveExcludedIntegrations, sourceValue, roomClimateKey, roomClimateMap,
-  resolvedLightSources, resolvedLightState, resolvedLightStats,
-  hasOwnSpatialSource, hasOwnStatefulLightSource, ownControllableEntities,
-  forcedLightEntityOf,
-  resolveDeviceLightSettings, selectSpatialGlowSource,
-  resolvedDeviceStateEntities, removedPlanBindings, isRemovedPlanEntity,
-  deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
-  removeMarkerControlReferences, rewriteMarkerControlReferences, markerControlWouldCycle,
-  resolveIcon,
-  type AreaClimate,
+  buildDevices, seedHiddenBindings, lqiFor, tempFor, climateTempFor, effectiveExcludedIntegrations,
+  sourceValue, roomClimateKey, roomClimateMap, resolvedLightSources, resolvedLightState,
+  resolvedLightStats, removedPlanBindings, isRemovedPlanEntity, resolveIcon, type AreaClimate,
 } from './devices';
+import { type DeviceInboxCategory, type DeviceInboxRow } from './device-inbox';
 import {
-  bindingCandidates, buildDeviceInbox, filterDeviceInbox,
-  type DeviceInboxCategory, type DeviceInboxReason, type DeviceInboxRow,
-} from './device-inbox';
-import {
-  formatToggleConfirmation, formatToggleIntent, projectedTapAction, resolveToggleIntent,
-  sameToggleOperationTargets, toggleCoverEntity, toggleIntentName, toggleOperation,
-  toggleEntityCandidates, unavailableToggleTargetNames,
-  type ResolvedToggleIntent, type ResolvedToggleTarget,
-  type ToggleNextEffect, type ToggleNoneReason,
-  type ToggleSkipReason,
+  formatToggleConfirmation, projectedTapAction, resolveToggleIntent, sameToggleOperationTargets,
+  toggleIntentName, toggleOperation, unavailableToggleTargetNames, type ResolvedToggleIntent,
+  type ResolvedToggleTarget, type ToggleNextEffect,
 } from './device-toggle';
-import { toggleEntityWriteFields } from './marker-toggle-entity';
 import {
-  adoptVirtualLightServerSnapshot,
-  applyVirtualLightEvent,
-  reconcileVirtualLightSnapshot,
-  virtualLightFingerprint,
-  virtualLightSnapshot,
-  virtualLightWire,
-  type VirtualLightSnapshot,
+  applyVirtualLightEvent, reconcileVirtualLightSnapshot, virtualLightFingerprint,
+  virtualLightSnapshot, virtualLightWire, type VirtualLightSnapshot,
 } from './virtual-light-state';
 import type {
-  OpeningCfg, PartitionOpeningHost,
-  RoomCfg, PartitionCfg, WallColumnCfg,
-  SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
-  MarkerValueBadge, ValueBadgePosition, ValueBadgeSource, ZeroWallStyle,
+  OpeningCfg, PartitionOpeningHost, RoomCfg, PartitionCfg, WallColumnCfg, SpaceModel, PdfRef,
+  Marker, ServerConfig, DevItem, CardConfig, MarkerValueBadge, ValueBadgePosition,
+  ValueBadgeSource,
 } from './types';
 import type { RadarEditorDraft } from './radar-editor';
 import {
@@ -185,86 +115,40 @@ import {
 } from './config-reload-authority';
 import type { OptimisticAttempt } from './serialized-write-queue';
 import {
-  COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
-  directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
-  geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
-  pointInOpaquePlanBody, pointInPhysicalBody, sameColumnPlacement,
-  physicalBodyParts, scalePartitionOpeningCut,
-  type PartitionOpeningCut,
+  COLUMN_MAX_CM, directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
+  polyclipPathD, physicalBodyParts, type PartitionOpeningCut,
 } from './physical-geometry';
+import { partitionOpeningFace, resolvePartitionOpeningCompat } from './partition-openings';
 import {
-  hostedOpeningIntervalsOverlap, materializePartitionOpening,
-  partitionOpeningJambMargin, partitionOpeningNeedsStrictValidation,
-  partitionOpeningCut, partitionOpeningFace,
-  partitionPlacementIntervals, resolvePartitionOpeningCompat, resolvePartitionOpeningStrict,
-  type PartitionOpeningOrphanReason, type ResolvedPartitionOpening,
-} from './partition-openings';
-import {
-  buildHiddenWallDiagnosticGeometry, buildPlanSnapGeometry,
-  resolvePlanSnapResult, resolveStrictPlanSnap,
-  type HiddenWallDiagnosticGeometry,
-  type PlanSnapCandidate, type PlanSnapEndpoint, type PlanSnapGeometry, type PlanSnapSegment,
+  type HiddenWallDiagnosticGeometry, type PlanSnapCandidate, type PlanSnapEndpoint,
+  type PlanSnapGeometry,
 } from './plan-snap-overlay';
 import {
-  atomizeWallSegments, buildWallFaceGraph, findNewWallFacesInGraphs, findWallFaceAtPoint,
-  wallChainSegments, chainSegmentCms,
   type WallFaceGraph, type WallGraphFace, type WallGraphSourceSegment,
 } from './wall-face-graph';
-import { parameterOnPartition, planRoomDeletion } from './room-deletion';
-import {
-  planWallFaceRepair, repairMovesHostedPartition, type WallFaceRepairProposal,
-} from './wall-face-repair';
-import {
-  LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
-} from './light-visibility';
+import { type WallFaceRepairProposal } from './wall-face-repair';
+import { LightSegment } from './light-visibility';
 import './space-card';
 import { cardStyles } from './styles';
 import { editorSecondaryStyles } from './editor-secondary.styles';
+import { type EditorSecondaryCopy, type EditorToolbarGroup } from './editor-secondary';
 import {
-  type EditorSecondaryCopy,
-  type EditorSecondaryModel,
-  type EditorToolbarGroup,
-} from './editor-secondary';
-import {
-  fitInSquare, planRect, contentBounds, spaceModels, contentFrame, contentItems, spaceFrame,
-  spaceCenter, iconUnit, iconCqw, gridLevels, itemOf, snapPt,
-  MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, SANE_LIMIT, GRID_PITCH, GRID_STEP_N,
-  PLAN_SCALE_MIN, PLAN_SCALE_MAX,
+  fitInSquare, planRect, spaceModels, contentFrame, contentItems, spaceFrame, spaceCenter,
+  iconUnit, iconCqw, itemOf, snapPt, MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, GRID_PITCH, GRID_STEP_N,
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
-import { optimizePlans, type OptimizeReport } from './plan-optimizer';
+import { type OptimizeReport } from './plan-optimizer';
+import { resolveZeroWalls, zeroWallStyleOf } from './zero-walls';
 import {
-  adoptWallSegmentModelCandidateInPlace, commitWallSegmentModel,
-  fixedTopologyWallLineageHints,
-  resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
-} from './wall-segment-model';
-import {
-  resolveZeroWalls,
-  zeroWallHasOpening, zeroWallStyleOf,
-} from './zero-walls';
-import { snapNearAxisEndpoint } from './near-axis';
-import type { SpaceReferenceRepairContext } from './space-reference-repair';
-import { collectSpaceMarkerDependencies } from './space-deletion';
-import {
-  checkSpacePhysicalGeometry,
-  checkOptimizeGeometry,
-  geometryOpenCuts,
-  geometryOpenings,
-  geometryPartitionOpeningCuts,
-  geometryRoomOpeningInputs,
-  spacePhysicalGeometryFingerprint,
-  type GeometryOpeningProjection,
-  type OptimizeGeometryPreflightResult,
+  geometryOpenings, geometryPartitionOpeningCuts, geometryRoomOpeningInputs,
+  type GeometryOpeningProjection, type OptimizeGeometryPreflightResult,
 } from './plan-geometry-preflight';
 import {
-  canonicalizeConfigGeometry,
-  canonicalizeLayoutGeometry,
-  canonicalizePosition,
-  formatLatticeShiftCm,
+  canonicalizeConfigGeometry, canonicalizeLayoutGeometry, canonicalizePosition,
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import type { CalibrationProposal, VacuumFit } from './vacuum-calibration-write';
-import { hasTranslation, langOf, t, type I18nKey } from './i18n';
+import { langOf, t, type I18nKey } from './i18n';
 import { LANGUAGE_RUNTIME, subscribeLanguageLoadFailures } from './i18n/registry';
 import {
   languageLoadingTemplate, languageRenderGate, type LanguageRenderGate,
@@ -307,10 +191,7 @@ import { cardVersionReloadSafetySnapshot, createCardVersionRecovery, renderVersi
   type AuthoritativeConfigResponse, type ConfigCapabilitiesCardPort,
   type VersionRecoveryCardPort } from './version-recovery-card';
 import { PointerModalityController } from './pointer-modality';
-import {
-  entityVisualSample, entityVisualSamplesForDevice,
-  type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
-} from './device-visual';
+import { type DeviceVisualState, type EntityVisualSample } from './device-visual';
 import {
   activitySourceSignature, deviceAccessibleLabel, deviceA11yState, presentationClasses,
   resolveDevicePresentation,
@@ -320,10 +201,7 @@ import {
   ACTIVITY_WINDOW_MS, advanceFiniteActivity, createFiniteActivityRuntime,
   resetFiniteActivityRuntime, stampFiniteActivity, type FiniteActivityRuntime,
 } from './activity-runtime';
-import {
-  recommendedValueBadgeSource, valueBadgeCandidates, valueBadgeSourceFromKey,
-  valueBadgeSourceKey, valueBadgeTitle, valueBadgeWriteFields, type ValueBadgeCandidate,
-} from './device-value-badge';
+import { valueBadgeTitle } from './device-value-badge';
 import {
   createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
   type RenderDeviceSnapshot,
@@ -368,9 +246,8 @@ import {
   currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
 } from './labs';
 import {
-  ISO_FLOOR_EDGE_HEIGHT, ISO_WALL_HEIGHT, isoFloorMatrixCss,
-  projectPlanPoint, projectedFrame,
-  unprojectFloorPoint, type PlanPoint, type ScenePoint,
+  ISO_FLOOR_EDGE_HEIGHT, ISO_WALL_HEIGHT, isoFloorMatrixCss, projectPlanPoint, projectedFrame,
+  unprojectFloorPoint, type ScenePoint,
 } from './iso-projection';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
@@ -391,11 +268,8 @@ import {
   resolveDecorAssets, type DecorAsset,
 } from './decor-assets';
 import {
-  DEFAULT_DECOR_STYLE, boxAnchors, boxCorners, clamp01, decorCmToUnits,
-  decorStrokeUnits, decorStyleFromSettings, decorStyleOf, decorStylePatch,
-  decorUnitsToCm, mergeSnapGeometry, normalizeAngle, nudgeDecorShape, resizeDecorBox,
-  resizedBoxTopLeft, snapDecorPoint, validDecorDraft,
-  type DecorBox, type SnapGeometry,
+  DEFAULT_DECOR_STYLE, boxCorners, decorCmToUnits, decorStrokeUnits, decorStyleFromSettings,
+  decorStyleOf, decorUnitsToCm, normalizeAngle, nudgeDecorShape, type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import {
@@ -404,27 +278,17 @@ import {
 } from './render/opening-symbol';
 import { openingLockFloorPlacement } from './opening-symbol-placement';
 import {
-  openingDefaultLengthCm, openingPlacementPreset, passagePlacementPreviewGeometry,
-  resolveOpeningPlacementResult, sameOpeningPlacementInput,
-  type OpeningPlacementPreset, type OpeningPlacementType,
+  sameOpeningPlacementInput, type OpeningPlacementPreset, type OpeningPlacementType,
 } from './opening-placement';
-import {
-  buildOpeningDimensionContext, resolveOpeningDimensions,
-  type OpeningDimensionContext,
-} from './opening-dimensions';
+import { type OpeningDimensionContext } from './opening-dimensions';
 import type {
   DeviceDragState, OpeningPlacementCandidate, OpMeasure, RenderOpening,
 } from './interaction-types';
-import { safeStoredColor } from './color';
-import {
-  gridCellFieldToCm, gridCellFieldValue, gridVisualScale, gridVisualUnits,
-  newSpaceCellCm, wallThickHoverHalfUnits,
-} from './grid-scale';
+import { gridVisualScale, gridVisualUnits, wallThickHoverHalfUnits } from './grid-scale';
 import {
   applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
   reorderSpaceIds,
 } from './space-order';
-import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 import { SummaryRuntimeSlot, summaryRuntimeLoader } from './summary-runtime-loader';
 import { displayVersion } from './card-version';
@@ -451,19 +315,8 @@ type ResizeLiveLabel = {
 type ResizePreview = { space: string; sp: any };
 type ResizeWallUnion = ReturnType<typeof wallBodiesUnionPath>;
 type ResizeWallArtifact = ReturnType<typeof wallBodiesGeometry>;
-const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
-  badge: 'display.badge', icon_ripple: 'display.icon_ripple', value: 'display.value',
-  static_icon: 'display.static_icon', value_static_icon: 'display.value_static_icon',
-};
-const DISPLAY_HINT_KEYS: Record<DeviceDisplayMode, I18nKey> = {
-  badge: 'marker.display_hint_badge', icon_ripple: 'marker.display_hint_icon_ripple',
-  value: 'marker.display_hint_value', static_icon: 'marker.display_hint_static_icon',
-  value_static_icon: 'marker.display_hint_value_static_icon',
-};
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
-const CELL_CM_MIN = 0.1;
-const CELL_CM_MAX = 1000;
 /** HP-1552 boot-veil timing (AUD-1552-02). The veil holds for at least
  *  BOOT_MIN_MS; every stage-height change restarts a BOOT_QUIET_MS
  *  trailing-quiescence requirement (chrome still settling near the cap
@@ -510,9 +363,6 @@ const WARM_MAX_KEYS = 8;
  *  placement a cold boot. */
 const WARM_MAX_SLOTS = 4;
 
-/** Rotation step of a decor text block — the same 5° a device icon turns in
- *  (marker dialog). Shift affects angle precision only, never position. */
-const DT_ANGLE_STEP = 5;
 /** Line spacing of a multi-line label, in font sizes. */
 const DT_LINE = 1.2;
 const LS_KEY = 'houseplan_card_layout_v1';
@@ -566,10 +416,6 @@ type WallFaceBatch = {
   activeCms: number[];
   activePartitionIds: string[];
 };
-const MAX_WALL_CHAIN_POINTS = 500;
-const MAX_PARTITIONS = 2000;
-const MAX_ROOMS = 400;
-const MAX_WALL_COLUMNS = 500;
 /** Everything whose topology or wall association changes in the plan editor. */
 interface SpaceGeometryState {
   spaceId: string;
@@ -1951,19 +1797,11 @@ export class HouseplanCard extends LitElement {
   /** Space switching is presentation-only. Keep recently resolved light
    * topology just like wall topology, rather than rebuilding both per tab. */
   private _lightBarrierPool = new Map<string, NonNullable<typeof this._lightBarrierCache>>();
-  /** Freeze the SVG blur while a pinch/pan emits animation frames, then adopt
-   *  the final screen-space value after the gesture. */
-  private get _glowFeatherUnits() { return this._glowRuntimeState.featherUnits; }
-  private set _glowFeatherUnits(value: number | null) { this._glowRuntimeState.featherUnits = value; }
   /** Active pools survive an off transition until their 500 ms fade completes. */
   private get _glowRenderedSources() { return this._glowRuntimeState.renderedSources; }
   private get _glowLastAppearance() { return this._glowRuntimeState.lastAppearance; }
   private get _glowFeatherSuspendUntil() { return this._glowRuntimeState.featherSuspendUntil; }
   private set _glowFeatherSuspendUntil(value: number) { this._glowRuntimeState.featherSuspendUntil = value; }
-  private get _glowFeatherResumeTimer() { return this._glowRuntimeState.featherResumeTimer; }
-  private set _glowFeatherResumeTimer(value: number) { this._glowRuntimeState.featherResumeTimer = value; }
-  private get _glowSourceSeq() { return this._glowRuntimeState.sourceSeq; }
-  private set _glowSourceSeq(value: number) { this._glowRuntimeState.sourceSeq = value; }
   /** Pending/false uses the exact historical normal-layer fallback. */
   private _glowScreenBlend = false;
   private _duplicateColumnId: string | null = null;
@@ -5987,11 +5825,6 @@ export class HouseplanCard extends LitElement {
     };
   }
 
-  /** Localize both parts of a help affordance while hp-help stays presentation-only. */
-  private _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing {
-    return this._editorRuntimeOrThrow()._help(key);
-  }
-
   private get _stageEl(): HTMLElement | null {
     return this.renderRoot.querySelector('.stage') as HTMLElement | null;
   }
@@ -7494,7 +7327,6 @@ export class HouseplanCard extends LitElement {
   }
 
   private get _spaceH(): number {
-    const sp = this._curSpaceCfg;
     return NORM_W; // square canvas
   }
 
@@ -7645,27 +7477,11 @@ export class HouseplanCard extends LitElement {
     return this._tool === 'column' ? COLUMN_MAX_CM : 100;
   }
 
-  private _showPhysicalRange(max = this._drawWallMaxCm, min = 0): void {
-    return this._editorRuntimeOrThrow()._showPhysicalRange(max, min);
-  }
-
   /**
    * Finish the active Walls chain because the user changed tool/mode/space.
    * Every finished segment is already an ordinary selectable partition;
    * finishing only clears the session-only chain state.
    */
-  /**
-   * Collapse collinear partitions of one thickness (issue #229).
-   *
-   * `seedIds` confines the sweep to the connected component containing the
-   * freshly drawn chain; the optimiser calls the pure module without seeds.
-   * Openings ride along: their position is stored as a fraction of the host's
-   * length, so every merge has to rewrite both the fraction and the legacy
-   * `x/y/angle` projection that older readers still consume (#132).
-   */
-  private _mergeSpacePartitions(sp: any, seedIds?: string[]): number {
-    return this._editorRuntimeOrThrow()._mergeSpacePartitions(sp, seedIds);
-  }
 
   private _finishWallChain(): boolean {
     return this._editorRuntimeOrThrow()._finishWallChain();
@@ -7674,10 +7490,6 @@ export class HouseplanCard extends LitElement {
   /** One transition gate for Plan toolbar tools. */
   private _activateMarkupTool(tool: MarkupTool): void {
     return this._editorRuntimeOrThrow()._activateMarkupTool(tool);
-  }
-
-  private _limitReached(kind: 'partition' | 'column'): boolean {
-    return this._editorRuntimeOrThrow()._limitReached(kind);
   }
 
   private _svgPoint(ev: MouseEvent): number[] {
@@ -7694,26 +7506,9 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._snap(p);
   }
 
-  /** Grid snap for the free end of the wall currently being drawn. */
-  private _snapDrawPoint(p: number[], lock45 = false): number[] {
-    return this._editorRuntimeOrThrow()._snapDrawPoint(p, lock45);
-  }
-
-  /** Canonical physical opening slots on room-wall centrelines. */
-  private _planSnapOpeningCuts(space: SpaceModel, openCuts: number[][]): number[][] {
-    return this._editorRuntimeOrThrow()._planSnapOpeningCuts(space, openCuts);
-  }
-
   /** Static presentation axes shared by the overlay and its hit resolver. */
   private _planSnapGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
     return this._editorRuntimeOrThrow()._planSnapGeometrySnapshot();
-  }
-
-  /** Independent sources hidden under another wall, without snap deduplication. */
-  private _hiddenWallDiagnosticSnapshot(): {
-    key: string; value: HiddenWallDiagnosticGeometry;
-  } {
-    return this._editorRuntimeOrThrow()._hiddenWallDiagnosticSnapshot();
   }
 
   /**
@@ -7797,19 +7592,6 @@ export class HouseplanCard extends LitElement {
     fingerprint: string; before: SpaceGeometryState;
   }>();
 
-  /**
-   * A rejected config/set accepted no part of its payload. Restore every
-   * physical space carried by that request to the earliest server-backed
-   * snapshot, including newer edits made on the same unaccepted base while the
-   * request was in flight. Ambiguous persisted walls are never inspected or
-   * cleaned here: this is transaction rollback, not repair (#314).
-   */
-  private _rollbackRejectedPhysicalWrites(
-    entries: Array<[string, { fingerprint: string; before: SpaceGeometryState }]>,
-  ): boolean {
-    return this._editorRuntimeOrThrow()._rollbackRejectedPhysicalWrites(entries);
-  }
-
   /** Revalidate the synchronous rollback after every write already queued. */
   private async _reloadRejectedPhysicalWrite(): Promise<void> {
     return this._editorRuntimeOrThrow()._reloadRejectedPhysicalWrite();
@@ -7875,48 +7657,11 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._recordGeometry(name, before);
   }
 
-  /** Replace only persisted geometry in memory; no history entry and no WS. */
-  private _restoreGeometryStateInConfig(
-    config: any, state: SpaceGeometryState, preserveIdentityHints = false,
-  ): boolean {
-    return this._editorRuntimeOrThrow()._restoreGeometryStateInConfig(config, state, preserveIdentityHints);
-  }
-
-  private _restoreGeometryStateLocal(state: SpaceGeometryState): boolean {
-    return this._editorRuntimeOrThrow()._restoreGeometryStateLocal(state);
-  }
-
-  /** Shared fail-closed transaction boundary for every physical writer. */
-  private _wallModelBlockerLabel(error: unknown): string {
-    return this._editorRuntimeOrThrow()._wallModelBlockerLabel(error);
-  }
-
-  /** A legacy virtual-wall projection is still present only until its first
-   * structural v9 write. Keep its atomic-failure copy distinct from generic
-   * wall-model validation without persisting provenance on the new atoms. */
-  private _hasLegacyZeroWallFields(config: any = this._serverCfg): boolean {
-    return this._editorRuntimeOrThrow()._hasLegacyZeroWallFields(config);
-  }
-
-  private _showWallModelMigrationBlocked(error: unknown): void {
-    return this._editorRuntimeOrThrow()._showWallModelMigrationBlocked(error);
-  }
-
-  /** #329: every wall of a space as the limit checks see it. */
-  private _limitSegmentsOf(space: any): LimitSegment[] {
-    return this._editorRuntimeOrThrow()._limitSegmentsOf(space);
-  }
-
   /** #329 П1-П5 over one space. Pure input, no side effects. */
   private _junctionLimitViolations(config: unknown, spaceId: string,
     sharedGeometry?: JunctionSharedGeometry | null,
     roomIds?: ReadonlySet<string>): JunctionLimitViolation[] {
     return this._editorRuntimeOrThrow()._junctionLimitViolations(config, spaceId, sharedGeometry, roomIds);
-  }
-
-  /** Localised refusal text for the first violation a write introduces. */
-  private _junctionLimitLabel(violation: JunctionLimitViolation): string {
-    return this._editorRuntimeOrThrow()._junctionLimitLabel(violation);
   }
 
   /** #329: violations this write would ADD; inherited ones stay untouched. */
@@ -8045,16 +7790,6 @@ export class HouseplanCard extends LitElement {
       && p[1] >= r.y! && p[1] <= r.y! + r.h!;
   }
 
-  /** A room ring may meet only at the endpoints of neighbouring edges. */
-  private _contourSelfIntersects(poly: number[][]): boolean {
-    return this._editorRuntimeOrThrow()._contourSelfIntersects(poly);
-  }
-
-  /** The same append limits guard both an ordinary point and an auto-close terminal point. */
-  private _canAppendWallPoint(): boolean {
-    return this._editorRuntimeOrThrow()._canAppendWallPoint();
-  }
-
   private _markupClick(ev: MouseEvent): void {
     if (!this._editorRuntime) return;
     return this._editorRuntime._markupClick(ev);
@@ -8063,21 +7798,6 @@ export class HouseplanCard extends LitElement {
   private _wallChainSegmentCms: number[] = [];
   private _closingWallCm: number | null = null;
 
-  private _activeWallSourceKey(index: number): string {
-    return this._editorRuntimeOrThrow()._activeWallSourceKey(index);
-  }
-
-  /** Canonical solid axes plus one immutable projection of the active chain. */
-  private _wallGraphSources(path: readonly (readonly number[])[]): WallGraphSourceSegment[] {
-    return this._editorRuntimeOrThrow()._wallGraphSources(path);
-  }
-
-  private _wallFaceGraph(
-    sources: readonly WallGraphSourceSegment[], epsilon: number,
-  ): WallFaceGraph {
-    return this._editorRuntimeOrThrow()._wallFaceGraph(sources, epsilon);
-  }
-
   /** Detect click-induced faces and open a mutation-free decision queue. */
   private _offerWallFaces(
     beforePath: number[][],
@@ -8085,10 +7805,6 @@ export class HouseplanCard extends LitElement {
     beforeGraphSources?: WallGraphSourceSegment[],
   ): void {
     return this._editorRuntimeOrThrow()._offerWallFaces(beforePath, addedSegmentIndex, beforeGraphSources);
-  }
-
-  private _beginWallFaceBatch(candidates: WallFaceCandidate[]): void {
-    return this._editorRuntimeOrThrow()._beginWallFaceBatch(candidates);
   }
 
   /** Offer the smallest unoccupied exact face under an idle Walls click. */
@@ -8106,26 +7822,12 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._openPhysicalDialog(kind, id);
   }
 
-  private _savePhysicalDialog = (): void => {
-    return this._editorRuntimeOrThrow()._savePhysicalDialog();
-  }
-
   private _deletePhysicalSelection = (): Promise<void> => {
     return this._editorRuntimeOrThrow()._deletePhysicalSelection();
   }
 
   private _confirmPartitionDelete = (): void => {
     return this._editorRuntimeOrThrow()._confirmPartitionDelete();
-  }
-
-  private _physicalDown(ev: PointerEvent, kind: 'partition' | 'column', id: string): void {
-    return this._editorRuntimeOrThrow()._physicalDown(ev, kind, id);
-  }
-
-  private _clampPhysicalDelta(
-    kind: 'partition' | 'column', base: PartitionCfg | WallColumnCfg, delta: number[],
-  ): number[] {
-    return this._editorRuntimeOrThrow()._clampPhysicalDelta(kind, base, delta);
   }
 
   private _physicalMove(ev: PointerEvent): void {
@@ -8136,18 +7838,8 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._physicalUp(ev);
   }
 
-  private _registerPhysicalTap(
-    kind: 'partition' | 'column', id: string,
-  ): void {
-    return this._editorRuntimeOrThrow()._registerPhysicalTap(kind, id);
-  }
-
   private _cancelPhysicalGesture(): void {
     return this._editorRuntimeOrThrow()._cancelPhysicalGesture();
-  }
-
-  private _physicalRotateDown(ev: PointerEvent, c: WallColumnCfg): void {
-    return this._editorRuntimeOrThrow()._physicalRotateDown(ev, c);
   }
 
   private _physicalRotateMove(ev: PointerEvent): void {
@@ -8165,18 +7857,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._rszRooms();
   }
 
-  private _rszOpenings(): SafeOpeningIn[] {
-    return this._editorRuntimeOrThrow()._rszOpenings();
-  }
-
-  private _rszObstacles(): SafeResizeObstacle[] {
-    return this._editorRuntimeOrThrow()._rszObstacles();
-  }
-
-  private _rszOptsFor(a: number[], b: number[]): SafeResizeOptions {
-    return this._editorRuntimeOrThrow()._rszOptsFor(a, b);
-  }
-
   private _rszResolution(
     roomId: string, edge: number, renderSnapshot?: string,
   ): SafeResizeResolution {
@@ -8187,34 +7867,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._rszSnapshot();
   }
 
-  /** Lifecycle reset which cannot leave the memoized model on a discarded preview. */
-  private _rszResetController(): void {
-    return this._editorRuntimeOrThrow()._rszResetController();
-  }
-
-  /** Live preview of the candidate geometry, based on the immutable pre-drag snapshot —
-   *  walls, fills, labels and openings all follow in the same render.
-   *
-   *  HP-1550-01: the preview must NEVER touch _serverCfg. It used to be written
-   *  into the shared mutable space config, and the serialized write chain
-   *  (HP-1454-03) reads `_serverCfg` AT THE MOMENT a write runs — so a debounced
-   *  write still queued from a previous edit carried the mid-drag preview to the
-   *  server before pointerup, and an Esc after that left the abandoned geometry
-   *  persisted (reload resurrected it). Flushing the queue before the drag would
-   *  not close it: the queued write reads the mutable config later anyway. The
-   *  live geometry therefore lives in the controller preview overlay; _curSpaceCfg /
-   *  _renderCfg feed it to every render, and only _rszUp moves it into the real
-   *  config — the single point where a resize becomes visible to _writeConfig. */
-  private _rszProjectPreview(
-    snapshot: string,
-    polys: Record<string, number[][]>,
-    ops: Record<string, [number, number]>,
-    changedRoomIds: readonly string[],
-    sourceRooms: readonly { id: string; poly: number[][]; wall_ids?: string[] }[],
-  ): ResizeProjectionResult<ResizePreview, ResizeWallArtifact> {
-    return this._editorRuntimeOrThrow()._rszProjectPreview(snapshot, polys, ops, changedRoomIds, sourceRooms);
-  }
-
   /** Publish one controller-accepted preview and retain its validated masonry pass. */
   private _rszAcceptPreview(
     preview: ResizePreview | null, wallGeometry: ResizeWallArtifact | null,
@@ -8222,38 +7874,8 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._rszAcceptPreview(preview, wallGeometry);
   }
 
-  /** Validate once and retain the exact geometry pass for the preview render. */
-  private _rszSpaceCandidateGeometry(spaceId: string, sp: any): {
-    ok: boolean;
-    wallGeometry: ReturnType<typeof wallBodiesGeometry> | null;
-  } {
-    return this._editorRuntimeOrThrow()._rszSpaceCandidateGeometry(spaceId, sp);
-  }
-
-  /** Fail-closed check for one exact candidate through the common barrier. */
-  private _rszSpaceCandidateRenderable(spaceId: string, sp: any): boolean {
-    return this._editorRuntimeOrThrow()._rszSpaceCandidateRenderable(spaceId, sp);
-  }
-
-  /** Final identity guard for the exact overlay already shown to the user. */
-  private _rszCandidateRenderable(preview: { space: string; sp: any } | null): boolean {
-    return this._editorRuntimeOrThrow()._rszCandidateRenderable(preview);
-  }
-
   private _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
     return this._editorRuntimeOrThrow()._rszEdgeDown(ev, roomId, edge);
-  }
-
-  private _rszReasonText(reason: SafeResizeReason): string {
-    return this._editorRuntimeOrThrow()._rszReasonText(reason);
-  }
-
-  private _rszDisabledActivate(ev: Event, reason: SafeResizeReason): void {
-    return this._editorRuntimeOrThrow()._rszDisabledActivate(ev, reason);
-  }
-
-  private _rszDisabledKey(ev: KeyboardEvent, reason: SafeResizeReason): void {
-    return this._editorRuntimeOrThrow()._rszDisabledKey(ev, reason);
   }
 
   private _rszMove(ev: PointerEvent): void {
@@ -8266,15 +7888,6 @@ export class HouseplanCard extends LitElement {
 
   private _rszCancelDrag(pointerId?: number): void {
     return this._editorRuntimeOrThrow()._rszCancelDrag(pointerId);
-  }
-
-  /** HP-1550-03: pointercancel / lostpointercapture is an ABORT, not a release —
-   *  the system interrupted the stream (app switch, palm rejection), so the drag
-   *  takes the cancel path: snapshot geometry, no undo step, no write. The pid
-   *  guard also absorbs the lostpointercapture that follows a normal pointerup
-   *  or a pointercancel (the drag is already gone — no double cancel/commit). */
-  private _rszPointerCancel(ev: PointerEvent): void {
-    return this._editorRuntimeOrThrow()._rszPointerCancel(ev);
   }
 
   private _rszEdgeLabels(
@@ -8471,11 +8084,6 @@ export class HouseplanCard extends LitElement {
     };
   }
 
-  /** Magnet candidates are intentionally limited to decor and room contours. */
-  private _decorSnapGeometry(excludeId?: string): SnapGeometry {
-    return this._editorRuntimeOrThrow()._decorSnapGeometry(excludeId);
-  }
-
   private _decorSnap(raw: number[], pointerType = 'mouse', excludeId?: string): number[] {
     return this._editorRuntimeOrThrow()._decorSnap(raw, pointerType, excludeId);
   }
@@ -8548,10 +8156,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._decorOpenText(shape);
   }
 
-  private _decorRememberTextSelection(el: HTMLTextAreaElement): void {
-    return this._editorRuntimeOrThrow()._decorRememberTextSelection(el);
-  }
-
   /** Insert a complete reference without ever truncating it into broken text. */
   private _decorInsertLiveVariable(attr: string | null): void {
     return this._editorRuntimeOrThrow()._decorInsertLiveVariable(attr);
@@ -8588,11 +8192,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._dtPivot(sh);
   }
 
-  /** Write physical text size/angle into the shape — live, without saving. */
-  private _dtApply(id: string, patch: { textSizeCm?: number; angle?: number }): void {
-    return this._editorRuntimeOrThrow()._dtApply(id, patch);
-  }
-
   private _dtStart(
     ev: PointerEvent, kind: 'scale' | 'rotate', corner?: number[], lineEnd?: 0 | 1,
   ): void {
@@ -8618,10 +8217,6 @@ export class HouseplanCard extends LitElement {
    */
   private _dtMeasure(): void {
     return this._editorRuntimeOrThrow()._dtMeasure();
-  }
-
-  private _deleteDecor(id: string): void {
-    return this._editorRuntimeOrThrow()._deleteDecor(id);
   }
 
   private _decorDeleteSel(): void {
@@ -8667,10 +8262,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntime._openBackdropDialog(ev);
   }
 
-  private _saveBackdropDialog(): void {
-    return this._editorRuntimeOrThrow()._saveBackdropDialog();
-  }
-
   /**
    * The transform frame belongs exclusively to the backdrop tool. It is never
    * active in Select and can never swallow a decor gesture.
@@ -8691,20 +8282,6 @@ export class HouseplanCard extends LitElement {
    */
   private get _bdMovable(): boolean {
     return this._mode === 'decor' && this._decorTool === 'backdrop' && !!this._bdRect;
-  }
-
-  /** Write a transform into the space config — live, without saving. */
-  private _bdApply(dx: number, dy: number, sx: number, sy: number, angle: number): void {
-    return this._editorRuntimeOrThrow()._bdApply(dx, dy, sx, sy, angle);
-  }
-
-  /**
-   * Begin a backdrop gesture. `corner` is the DRAGGED corner as a pair of
-   * signs (-1 = the low side of the axis, +1 = the high one); absent = the
-   * body, i.e. a move. Returns false when there is nothing to grab.
-   */
-  private _bdStart(ev: PointerEvent, corner?: number[], rotate = false): boolean {
-    return this._editorRuntimeOrThrow()._bdStart(ev, corner, rotate);
   }
 
   /**
@@ -9025,10 +8602,6 @@ export class HouseplanCard extends LitElement {
     }];
   }
 
-  private _renderEditorGroupLauncher(group: EditorToolbarGroup): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderEditorGroupLauncher(group);
-  }
-
   /** Stable target identity + current config epoch + operation revision. */
   private get _editorSecondaryContextId(): string {
     const base = `editor:${this._mode}:${this._space}:${this._cfgEpoch}`;
@@ -9053,29 +8626,6 @@ export class HouseplanCard extends LitElement {
 
   private _runEditorContext<T>(contextId: string, action: () => T): T | undefined {
     return this._editorRuntimeOrThrow()._runEditorContext(contextId, action);
-  }
-
-  private _renderEditorGroupModel(group: EditorToolbarGroup): EditorSecondaryModel {
-    return this._editorRuntimeOrThrow()._renderEditorGroupModel(group);
-  }
-
-  private _renderDrawWallControl(): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderDrawWallControl();
-  }
-
-  private _renderPlanSecondary(): EditorSecondaryModel | null {
-    return this._editorRuntimeOrThrow()._renderPlanSecondary();
-  }
-
-  private _renderDecorSecondary(): EditorSecondaryModel | null {
-    return this._editorRuntimeOrThrow()._renderDecorSecondary();
-  }
-
-  /** Backdrop reset is a space-level maintenance action, not a tool option.
-   * Keep it reachable from every ordinary decor context as it was before the
-   * contextual tray extraction; an explicit palette keeps priority. */
-  private _withBackdropReset(model: EditorSecondaryModel | null): EditorSecondaryModel | null {
-    return this._editorRuntimeOrThrow()._withBackdropReset(model);
   }
 
   private get _editorSecondaryDialogBlocked(): boolean {
@@ -9112,11 +8662,6 @@ export class HouseplanCard extends LitElement {
 
   private _renderBackdropDialog(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderBackdropDialog();
-  }
-
-  /** CSS-pixel interaction constants stay stable at every plan zoom. */
-  private _cssPxToRender(px: number): number {
-    return this._editorRuntimeOrThrow()._cssPxToRender(px);
   }
 
   /** Zero-thickness walls. Their paint and light policy share one resolver. */
@@ -9763,21 +9308,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._opPointerMove(ev, o);
   }
 
-  /**
-   * Shoulder rulers + the soft centre magnet for an opening of `rlen` sitting
-   * at a wall snap. ONE implementation for both gestures the owner asked to
-   * behave alike (2026-08-03): dragging an existing opening and placing a new
-   * one. `tol` is half a grid step; the centre magnet and along-wall grid step
-   * are mandatory. The returned
-   * x/y are ALREADY magnetised, so the caller just writes them.
-   */
-  private _opRuler(
-    snap: { x: number; y: number; angle: number },
-    rlen: number,
-  ): { x: number; y: number; angle: number; measure: OpMeasure | null } {
-    return this._editorRuntimeOrThrow()._opRuler(snap, rlen);
-  }
-
   private _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
     if (!this._editorRuntime) return;
     return this._editorRuntimeOrThrow()._opPointerUp(ev, o);
@@ -9793,10 +9323,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._saveOpening();
   }
 
-  private _deleteOpening(): void {
-    return this._editorRuntimeOrThrow()._deleteOpening();
-  }
-
   private _rebindPartitionOpening = (): void => {
     return this._editorRuntimeOrThrow()._rebindPartitionOpening();
   }
@@ -9808,18 +9334,6 @@ export class HouseplanCard extends LitElement {
 
   private _lockCandidates(): { value: string; label: string }[] {
     return this._editorRuntimeOrThrow()._lockCandidates();
-  }
-
-  private _toggleOpeningEntityPicker(kind: 'contact' | 'lock'): void {
-    return this._editorRuntimeOrThrow()._toggleOpeningEntityPicker(kind);
-  }
-
-  private _filterOpeningEntities(kind: 'contact' | 'lock', value: string): void {
-    return this._editorRuntimeOrThrow()._filterOpeningEntities(kind, value);
-  }
-
-  private _selectOpeningEntity(kind: 'contact' | 'lock', value: string): void {
-    return this._editorRuntimeOrThrow()._selectOpeningEntity(kind, value);
   }
 
   /** Merge: first click picks a room, second picks the room to merge it with. */
@@ -9881,35 +9395,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._saveRoom();
   }
 
-  private _decideWallFace(create: boolean): void {
-    return this._editorRuntimeOrThrow()._decideWallFace(create);
-  }
-
-  private _wallSourceCmAt(
-    point: number[], activePath: number[][], activeCms: number[],
-  ): number {
-    return this._editorRuntimeOrThrow()._wallSourceCmAt(point, activePath, activeCms);
-  }
-
-  private _activePathWithRepair(
-    path: number[][], proposal: WallFaceRepairProposal | undefined,
-  ): number[][] {
-    return this._editorRuntimeOrThrow()._activePathWithRepair(path, proposal);
-  }
-
-  private _validateWallRepair(
-    proposal: WallFaceRepairProposal, activePath: number[][],
-  ): boolean {
-    return this._editorRuntimeOrThrow()._validateWallRepair(proposal, activePath);
-  }
-
-  /** Apply one revalidated endpoint move inside the surrounding room transaction. */
-  private _applyWallRepair(
-    proposal: WallFaceRepairProposal, batch: WallFaceBatch,
-  ): boolean {
-    return this._editorRuntimeOrThrow()._applyWallRepair(proposal, batch);
-  }
-
   /** Revalidate and apply every queued answer as one geometry transaction. */
   private _applyWallFaceBatch(): void {
     return this._editorRuntimeOrThrow()._applyWallFaceBatch();
@@ -9950,32 +9435,16 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._closeMarkerDialog();
   }
 
-  private _deviceInboxCandidates(showEntities: boolean) {
-    return this._editorRuntimeOrThrow()._deviceInboxCandidates(showEntities);
-  }
-
   private _deviceInboxRows(): DeviceInboxRow[] {
     return this._editorRuntimeOrThrow()._deviceInboxRows();
-  }
-
-  private _deviceForInboxRow(row: DeviceInboxRow): DevItem | null {
-    return this._editorRuntimeOrThrow()._deviceForInboxRow(row);
   }
 
   private _openInboxMarker(row: DeviceInboxRow, add = false): void {
     return this._editorRuntimeOrThrow()._openInboxMarker(row, add);
   }
 
-  private async _setInboxHidden(row: DeviceInboxRow, hidden: boolean): Promise<void> {
-    return this._editorRuntimeOrThrow()._setInboxHidden(row, hidden);
-  }
-
   private _findInboxDevice(row: DeviceInboxRow): void {
     return this._editorRuntimeOrThrow()._findInboxDevice(row);
-  }
-
-  private _deviceInboxTabKey(event: KeyboardEvent): void {
-    return this._editorRuntimeOrThrow()._deviceInboxTabKey(event);
   }
 
   private _openMarkerDialog(d?: DevItem): void {
@@ -9986,11 +9455,6 @@ export class HouseplanCard extends LitElement {
       return;
     }
     return this._editorRuntime._openMarkerDialog(d);
-  }
-
-  /** Runnable targets for the 'run' tap action: automations, scripts, scenes. */
-  private _runCandidates(): { value: string; label: string; sub: string }[] {
-    return this._editorRuntimeOrThrow()._runCandidates();
   }
 
   /** Binding candidates: HA devices + group/helper entities, minus the ones already placed. */
@@ -10175,22 +9639,6 @@ export class HouseplanCard extends LitElement {
     }
   }
 
-  private _backupErrorText(e: any): string {
-    return this._editorRuntimeOrThrow()._backupErrorText(e);
-  }
-
-  /**
-   * Manual files are uploaded via HTTP (multipart) — not via WebSocket, whose message size
-   * limit breaks the connection on large PDFs.
-   */
-  private async _pickMarkerFiles(ev: Event): Promise<void> {
-    return this._editorRuntimeOrThrow()._pickMarkerFiles(ev);
-  }
-
-  private _removeMarkerPdf(url: string): void {
-    return this._editorRuntimeOrThrow()._removeMarkerPdf(url);
-  }
-
   /** Persist only deliberate role/appearance edits; untouched legacy absence stays absent. */
   private _markerLightFields(d: NonNullable<HouseplanCard['_markerDialog']>): Partial<Marker> {
     return this._editorRuntimeOrThrow()._markerLightFields(d);
@@ -10291,35 +9739,11 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._useServerPlan(url);
   }
 
-  /**
-   * Read a stored plan's proportions from the image itself.
-   *
-   * The content endpoint needs a signature, and `_display()` deliberately
-   * returns nothing until one arrives. Loading too early therefore failed and
-   * an earlier version treated that as "unknown ratio" and saved a fallback of
-   * 1.414 — a square plan came out stretched (HP-1470-03). So wait for the
-   * signature, and bind the result to THIS dialog and THIS url, or a late
-   * answer would reshape whatever the user opened next.
-   */
-  private async _readPlanAspect(url: string): Promise<number> {
-    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
-      return this._onboardingRuntime._readPlanAspect(url);
-    }
-    return this._editorRuntimeOrThrow()._readPlanAspect(url);
-  }
-
   private async _deleteServerPlan(name: string): Promise<void> {
     if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
       return this._onboardingRuntime._deleteServerPlan(name);
     }
     return this._editorRuntimeOrThrow()._deleteServerPlan(name);
-  }
-
-  private _renderServerPlans(d: NonNullable<typeof this._spaceDialog>): TemplateResult {
-    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime(d.mode)) {
-      return this._onboardingRuntime._renderServerPlans(d);
-    }
-    return this._editorRuntimeOrThrow()._renderServerPlans(d);
   }
 
   private async _saveSpaceDialog(): Promise<void> {
@@ -10344,11 +9768,6 @@ export class HouseplanCard extends LitElement {
 
 
   // ================= FLOORS IMPORT WIZARD =================
-
-  private _startImport(): void {
-    if (this._onboardingRuntime) return this._onboardingRuntime._startImport();
-    return this._editorRuntimeOrThrow()._startImport();
-  }
 
   /** Open the space dialog for the next queued floor (title prefilled, plan required). */
   private _openNextImport(): void {
@@ -10453,11 +9872,6 @@ export class HouseplanCard extends LitElement {
   }
 
   private _effSunRayOrigin(): SunRayOrigin { return sunRayOriginOf(this._sunGlobal()); }
-
-  /** sun.sun, but only when the feature is armed (north_deg set somewhere). */
-  private _sunNow(): { azimuth: number; elevation: number } | null {
-    return this._effNorth() !== null ? sunStateOf(this._renderPlanHass) : null;
-  }
 
   /**
    * Window light wedges (docs/SUN.md): view/kiosk only. Geometry recomputes
@@ -10787,18 +10201,6 @@ export class HouseplanCard extends LitElement {
    * Preview whole-plan maintenance. Nothing is written here: the pure run
    * produces both the report and the exact config/layout pair to commit.
    */
-  /**
-   * #295: one diagnostics payload for the clipboard, the inline fallback and
-   * the dev log. `origin: runtime` is the honest part of the contract — the
-   * refusal depends on live card state and a saved export may not reproduce
-   * it, so the payload carries what the export cannot.
-   */
-  private _preflightDiagnostics(
-    preflight: OptimizeGeometryPreflightResult,
-    candidate: ServerConfig | null,
-  ): object {
-    return this._editorRuntimeOrThrow()._preflightDiagnostics(preflight, candidate);
-  }
 
   /** #295: dev-log once per distinct failing preflight, not once per render. */
   private _reportedPreflightFingerprint: string | null = null;
@@ -10807,17 +10209,6 @@ export class HouseplanCard extends LitElement {
     candidate: ServerConfig | null,
   ): void {
     return this._editorRuntimeOrThrow()._reportPreflightFailure(preflight, candidate);
-  }
-
-  /**
-   * #295: the «update House Plan» advice only helps when the frontend is
-   * actually stale. houseplan/config/get now reports the integration
-   * version; an old backend does not, and then the advice is simply not
-   * shown — a missing hint is better than a misleading one (the rc.1
-   * report where the owner had nothing newer to update to).
-   */
-  private _preflightVersionsDiffer(): boolean {
-    return this._editorRuntimeOrThrow()._preflightVersionsDiffer();
   }
 
   private async _copyPreflightDiagnostics(): Promise<void> {
@@ -10837,12 +10228,6 @@ export class HouseplanCard extends LitElement {
     ) => void,
   ) {
     return this._editorRuntimeOrThrow()._checkSpacePhysicalGeometryImpl(config, spaceId, captureWallGeometry);
-  }
-
-  private _optimizeReferenceContext(
-    removeLiveMissingPositions: boolean,
-  ): SpaceReferenceRepairContext {
-    return this._editorRuntimeOrThrow()._optimizeReferenceContext(removeLiveMissingPositions);
   }
 
   private _previewAlignDialog(removeLiveMissingPositions: boolean): void {
@@ -10881,14 +10266,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._runBackupExport();
   }
 
-  private async _pickBackupImport(ev: Event): Promise<void> {
-    return this._editorRuntimeOrThrow()._pickBackupImport(ev);
-  }
-
-  private async _setBackupDuplicatePolicy(policy: 'skip' | 'virtual'): Promise<void> {
-    return this._editorRuntimeOrThrow()._setBackupDuplicatePolicy(policy);
-  }
-
   private async _applyBackupImport(): Promise<void> {
     return this._editorRuntimeOrThrow()._applyBackupImport();
   }
@@ -10907,28 +10284,6 @@ export class HouseplanCard extends LitElement {
 
   private async _saveSettingsDialog(): Promise<void> {
     return this._editorRuntimeOrThrow()._saveSettingsDialog();
-  }
-
-  /** Boolean toggle for dialog rows: the native ha-switch when the HA
-   *  frontend provides it, the classic checkbox otherwise (older HA, the
-   *  smoke env). The ha-* API is undocumented and shifts between HA
-   *  releases, so the presence check is the ONLY coupling: both branches
-   *  fire `change` and both are read back via `.checked` off the event
-   *  target - one handler, two renderers. */
-  private _boolInput(checked: boolean, onChange: (v: boolean) => void, disabled = false): TemplateResult {
-    return this._editorRuntimeOrThrow()._boolInput(checked, onChange, disabled);
-  }
-
-  /** Range slider for dialog rows: ha-slider when available, plain
-   *  input[type=range] otherwise. Same fallback contract as _boolInput;
-   *  ha-slider emits `input` while dragging and `change` on release
-   *  (which of the two carries the final value differs between HA
-   *  versions - listen to both, the handler is idempotent). */
-  private _rangeInput(
-    min: number, max: number, step: number, value: number,
-    onInput: (v: number) => void, disabled = false, ariaLabel?: string,
-  ): TemplateResult {
-    return this._editorRuntimeOrThrow()._rangeInput(min, max, step, value, onInput, disabled, ariaLabel);
   }
 
 
@@ -11198,10 +10553,6 @@ export class HouseplanCard extends LitElement {
 
   private _openRulesDialog = (): void => {
     return this._editorRuntimeOrThrow()._openRulesDialog();
-  }
-
-  private _rulesSet(rules: IconRule[]): void {
-    return this._editorRuntimeOrThrow()._rulesSet(rules);
   }
 
   private async _saveRules(): Promise<void> {
@@ -12272,11 +11623,6 @@ export class HouseplanCard extends LitElement {
     return m;
   }
 
-  /** «Живая позиция» in the device dialog — vacuum markers only. */
-  private _renderVacSection(dlg: any): TemplateResult | typeof nothing {
-    return this._editorRuntimeOrThrow()._renderVacSection(dlg);
-  }
-
   /**
    * The active-map id. The camera rarely names its map; Dreame keeps the
    * human-readable one on the vacuum entity (selected_map, verified against a
@@ -12302,22 +11648,6 @@ export class HouseplanCard extends LitElement {
     return tele ? this._vacMapId(d, tele, planHass) : undefined;
   }
 
-  /** Persist a solved matrix into marker.vacuum.calibration[mapId].
-   *  Returns whether the write actually landed — callers must not toast
-   *  success otherwise (HP-1540-01). */
-  private _vacSaveMatrix(
-    markerId: string, source: string, mapId: string, matrix: Affine, routeId = '',
-  ): Promise<boolean> {
-    return this._editorRuntimeOrThrow()._vacSaveMatrix(markerId, source, mapId, matrix, routeId);
-  }
-
-  /** The exact plan-room set accepted by auto-calibration and diagnostics. */
-  private _vacPlanRoomAnchors(spaceId: string | null | undefined): Array<{
-    name: string; cx: number; cy: number;
-  }> {
-    return this._editorRuntimeOrThrow()._vacPlanRoomAnchors(spaceId);
-  }
-
   /** «Настроить автоматически»: robot rooms ↔ plan rooms by name. */
   private _vacAutoCalibrate(d: DevItem): Promise<void> {
     return this._editorRuntimeOrThrow()._vacAutoCalibrate(d);
@@ -12339,19 +11669,6 @@ export class HouseplanCard extends LitElement {
   /** Rotate/mirror around the ghost centre so the map does not fly away. */
   private _vacFitTurn(patch: Partial<FitParams>): void {
     return this._editorRuntimeOrThrow()._vacFitTurn(patch);
-  }
-
-  private _vacGhostCentre(rooms: VacRoom[]): VacPt {
-    return this._editorRuntimeOrThrow()._vacGhostCentre(rooms);
-  }
-
-  /** px→canvas-units for a pointer delta, via the current stage size. */
-  private _vacDelta(view: { w: number; h: number }, dxPx: number, dyPx: number): VacPt {
-    return this._editorRuntimeOrThrow()._vacDelta(view, dxPx, dyPx);
-  }
-
-  private _vacFitPointer(ev: PointerEvent, view: { x: number; y: number; w: number; h: number }): void {
-    return this._editorRuntimeOrThrow()._vacFitPointer(ev, view);
   }
 
   /** The translucent robot map over the plan while fitting. */
@@ -12690,16 +12007,6 @@ export class HouseplanCard extends LitElement {
   /** Save the room edited via the gear (name, area, tier-3 settings). */
   private _saveRoomEdit(): void {
     return this._editorRuntimeOrThrow()._saveRoomEdit();
-  }
-
-  /** Devices + sensor entities for the measurement-source picker. */
-  private _roomSrcCandidates(): { value: string; label: string; sub: string }[] {
-    return this._editorRuntimeOrThrow()._roomSrcCandidates();
-  }
-
-  /** Human label of a picked measurement source. */
-  private _roomSrcLabel(src: string): string {
-    return this._editorRuntimeOrThrow()._roomSrcLabel(src);
   }
 
   /** Saved label position (layout key rl_<roomId>) or the room center. */
@@ -13300,42 +12607,12 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._renderMarkupDefs(_vb);
   }
 
-  private _renderPhysicalEditorLayer(): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderPhysicalEditorLayer();
-  }
-
   private _renderHiddenWallDiagnosticOverlay(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderHiddenWallDiagnosticOverlay();
   }
 
   private _renderPlanSnapOverlay(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderPlanSnapOverlay();
-  }
-
-  /** Update the only pointer-dependent node without scheduling a full card render. */
-  private _syncPlanSnapActiveMarker(candidate: PlanSnapCandidate | null): void {
-    return this._editorRuntimeOrThrow()._syncPlanSnapActiveMarker(candidate);
-  }
-
-  /** Pointer-only ambiguity styling without a full Lit render on large plans. */
-  private _syncPlanSnapConflictMarkers(conflicts: readonly PlanSnapEndpoint[]): void {
-    return this._editorRuntimeOrThrow()._syncPlanSnapConflictMarkers(conflicts);
-  }
-
-  /** Physical depth for one immutable architectural snap segment. */
-  private _planSnapPhysicalSegment(segment: PlanSnapSegment): LinearWallSegment | null {
-    return this._editorRuntimeOrThrow()._planSnapPhysicalSegment(segment);
-  }
-
-  /**
-   * Local target patches make a snapped rubber-band meet saved masonry before
-   * the click. The expensive saved union stays cached; pointermove examines
-   * only immutable snap axes touching a preview vertex.
-   */
-  private _drawPreviewJoinPatchD(
-    points: number[][], halfDepths: number[],
-  ): string {
-    return this._editorRuntimeOrThrow()._drawPreviewJoinPatchD(points, halfDepths);
   }
 
   private _renderMarkupLayer(vb: number[]): TemplateResult {
@@ -13507,27 +12784,9 @@ export class HouseplanCard extends LitElement {
     </hp-dialog>`;
   }
 
-  /** Preserve absence/future fields until the user explicitly edits the badge. */
-  private _markerValueBadgeFields(
-    d: NonNullable<HouseplanCard['_markerDialog']>,
-  ): Pick<Marker, 'value_badge'> | Record<string, never> {
-    return this._editorRuntimeOrThrow()._markerValueBadgeFields(d);
-  }
-
-  /** Convert the transactional dialog state into the marker that Save would write. */
-  private _markerDraft(d: NonNullable<HouseplanCard['_markerDialog']>): Marker | null {
-    return this._editorRuntimeOrThrow()._markerDraft(d);
-  }
-
   /** Runtime device for the unsaved marker, built by the production pipeline. */
   private _markerPreviewDevice(d: NonNullable<HouseplanCard['_markerDialog']>): DevItem | null {
     return this._editorRuntimeOrThrow()._markerPreviewDevice(d);
-  }
-
-  /** Preserve array identity while the dialog draft and runtime roster stay
-   * unchanged, allowing light/value resolvers to reuse their WeakMap caches. */
-  private _markerPreviewDevices(preview: DevItem): readonly DevItem[] {
-    return this._editorRuntimeOrThrow()._markerPreviewDevices(preview);
   }
 
   /**
@@ -13549,12 +12808,6 @@ export class HouseplanCard extends LitElement {
       device,
       virtualLights: this._virtualLights,
     });
-  }
-
-  private _toggleIntentForDialog(
-    d: NonNullable<HouseplanCard['_markerDialog']>,
-  ): ResolvedToggleIntent | null {
-    return this._editorRuntimeOrThrow()._toggleIntentForDialog(d);
   }
 
   public _toggleStateText(entityId: string, fallback: string): string {
@@ -13610,17 +12863,6 @@ export class HouseplanCard extends LitElement {
     });
   }
 
-  private _toggleHintLines(intent: ResolvedToggleIntent | null): string[] {
-    return this._editorRuntimeOrThrow()._toggleHintLines(intent);
-  }
-
-  /** One projection for the untouched select, hints and draft transitions. */
-  private _effectiveStoredTapAction(
-    d: NonNullable<HouseplanCard['_markerDialog']>, primaryDomain?: string,
-  ): string {
-    return this._editorRuntimeOrThrow()._effectiveStoredTapAction(d, primaryDomain);
-  }
-
   private _effectiveMarkerTapAction(
     d: NonNullable<HouseplanCard['_markerDialog']>,
     preview = this._markerPreviewDevice(d),
@@ -13628,38 +12870,12 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._effectiveMarkerTapAction(d, preview);
   }
 
-  /** Store one user-triggered announcement; live HA state ticks do not mutate it. */
-  private _announceToggleDraft(
-    d: NonNullable<HouseplanCard['_markerDialog']>,
-  ): NonNullable<HouseplanCard['_markerDialog']> {
-    return this._editorRuntimeOrThrow()._announceToggleDraft(d);
-  }
-
-  private _valueBadgeForBinding(
-    d: NonNullable<HouseplanCard['_markerDialog']>, binding: string,
-  ): Pick<NonNullable<HouseplanCard['_markerDialog']>,
-    'valueBadgeEnabled' | 'valueBadgeSource' | 'valueBadgeTouched'> {
-    return this._editorRuntimeOrThrow()._valueBadgeForBinding(d, binding);
-  }
-
   private _markerSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>) {
     return this._editorRuntimeOrThrow()._markerSpatialSource(d);
   }
 
-  private _markerAutoHasSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>): boolean {
-    return this._editorRuntimeOrThrow()._markerAutoHasSpatialSource(d);
-  }
-
   private _setMarkerLightRole(role: 'auto' | 'always' | 'never'): void {
     return this._editorRuntimeOrThrow()._setMarkerLightRole(role);
-  }
-
-  private _controlRefInfo(ref: string): { label: string; sub: string; icon: string; warning: boolean } {
-    return this._editorRuntimeOrThrow()._controlRefInfo(ref);
-  }
-
-  private _valueBadgeCandidateLabel(candidate: ValueBadgeCandidate): string {
-    return this._editorRuntimeOrThrow()._valueBadgeCandidateLabel(candidate);
   }
 
   private _controlCandidates(d: NonNullable<HouseplanCard['_markerDialog']>): {

@@ -80,6 +80,7 @@ export function readHouseplanProductionSource() {
       .replace(/^public\b/, visibility)
       .replaceAll('this.host.', 'this.');
     replacements.push({
+      name,
       from: member.getStart(cardFile),
       to: member.end,
       text: implementationText,
@@ -90,6 +91,24 @@ export function readHouseplanProductionSource() {
     reconstructed = reconstructed.slice(0, replacement.from)
       + replacement.text
       + reconstructed.slice(replacement.to);
+  }
+  // #624: мёртвые делегаты карточки удалены — реализация, у которой в
+  // карточке больше нет заглушки, живёт только в рантайме. Логическая
+  // поверхность продукта от этого не меняется, поэтому такие члены
+  // дописываются к исходнику в том же виде, в каком раньше подставлялись на
+  // место делегата. Контракт «что делает продукт» не должен зависеть от того,
+  // есть ли у метода однострочная заглушка в карточке.
+  const delegated = new Set(replacements.map((replacement) => replacement.name));
+  const appended = [];
+  for (const [name, implementation] of implementations) {
+    if (delegated.has(name) || name === 'host') continue;
+    const text = moved.has(name)
+      ? `public ${name}(): TemplateResult ${moved.get(name)}`
+      : runtime.slice(implementation.getStart(runtimeFile), implementation.end);
+    appended.push(text.replace(/^public\b/, 'private').replaceAll('this.host.', 'this.'));
+  }
+  if (appended.length) {
+    reconstructed += `\n// --- editor runtime members without a card delegate (#624) ---\n${appended.join('\n\n')}\n`;
   }
   for (const path of SHARED_DIALOG_MODULES) {
     const shared = readFileSync(new URL(path, import.meta.url), 'utf8')

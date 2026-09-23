@@ -1192,7 +1192,6 @@ export function validateSafeResize(
     }
   }
 
-  const movingRoom = rooms.find((room) => room.id === plan.roomId)!;
   const movingPoly = result.polys[plan.roomId];
   const movingEdge = plan.edgeByRoom[plan.roomId];
   const ma = movingPoly[movingEdge];

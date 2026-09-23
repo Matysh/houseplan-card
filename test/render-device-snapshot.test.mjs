@@ -97,8 +97,10 @@ const methodBody = (source, name) => {
 
 test('atomic plan render paths do not bypass RenderDeviceSnapshot with this.hass', () => {
   const source = readHouseplanProductionSource();
+  // #624: `_sunNow` был мёртвым методом (никто не звал) и снят; путь солнца
+  // читает состояние через `_renderSunRays`, который остаётся в списке.
   for (const name of [
-    '_roomLqi', '_resolvedRoomFills', '_sunNow', '_renderSunRays', '_renderGlowLayer',
+    '_roomLqi', '_resolvedRoomFills', '_renderSunRays', '_renderGlowLayer',
     '_renderVacuums', '_renderVacFit', '_renderDevice', '_roomTemp', '_roomHum', '_openingAmt',
     '_renderOpeningLocks', '_renderDecorLayer',
   ]) {

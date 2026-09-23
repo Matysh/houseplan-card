@@ -760,6 +760,11 @@ jobs:
         run: |
           node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
           npm run bundle:budget
+      # #624: `tsc --noUnusedLocals` чист вне порта/харнесса, шесть чисел
+      # связности монолита не выше scripts/monolith-baseline.json. После
+      # сборки — одно из чисел считает байты dist/.
+      - name: Мёртвый код и связность монолита
+        run: npm run lint:unused
       # Бандл собирается один раз и уезжает артефактом (#336). Прежде каждая из
       # пяти браузерных job собирала его заново: `bundle:sync` — это `tsc
       # --noEmit` плюс rollup, около минуты на job.

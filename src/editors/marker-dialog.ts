@@ -14,8 +14,8 @@
 import { html, nothing, type TemplateResult } from 'lit';
 
 import {
-  callout, chip, colorField, ensureFormKitStyles, field, fieldGrid, footerStatus, formCard, rangeEnds, rangeLine,
-  segmented, sourcePicker, subsection, textLink, tintBlock, toggleRow, unitInput,
+  callout, colorField, ensureFormKitStyles, field, fieldGrid, footerStatus, formCard, rangeEnds,
+  rangeLine, segmented, sourcePicker, subsection, textLink, tintBlock, toggleRow, unitInput,
 } from './form-kit';
 import { forgetMarkerBaseline, markerDirty, markerProblems } from './marker-form-state';
 import { settingsCopy } from './settings-copy';
