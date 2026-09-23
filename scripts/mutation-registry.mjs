@@ -7619,7 +7619,11 @@ const MUTANT_DEFINITIONS = [
       + 'capacity_exceeded may produce HTTP 507 (#440 AC4)',
     patches: [{
       file: 'custom_components/houseplan/http_api.py',
-      find: '            status = 507 if err.code == "capacity_exceeded" else 400\n',
+      find: '            status = (\n'
+        + '                507 if err.code == "capacity_exceeded"\n'
+        + '                else 413 if err.code == "too_large"\n'
+        + '                else 400\n'
+        + '            )\n',
       replace: '            status = 507\n',
     }],
   },
@@ -10074,8 +10078,11 @@ const MUTANT_DEFINITIONS = [
       + 'and as incoming refuses the last file that still fits (#498 AC1)',
     patches: [{
       file: 'custom_components/houseplan/http_api.py',
-      find: '                        MAX_FILES_BYTES, MAX_FILES_COUNT, exclude=tmp_path,\n',
-      replace: '                        MAX_FILES_BYTES, MAX_FILES_COUNT,\n',
+      find: '                    MAX_FILES_BYTES,\n'
+        + '                    MAX_FILES_COUNT,\n'
+        + '                    exclude=tmp_path,\n',
+      replace: '                    MAX_FILES_BYTES,\n'
+        + '                    MAX_FILES_COUNT,\n',
     }],
   },
   {
@@ -10100,8 +10107,8 @@ const MUTANT_DEFINITIONS = [
       + 'size again rejects a rename even when the real reserve is intact (#554 AC5)',
     patches: [{
       file: 'custom_components/houseplan/http_api.py',
-      find: '                        additional_disk_bytes=0,\n',
-      replace: '                        # mutant: staged bytes are reserved a second time\n',
+      find: '                    additional_disk_bytes=0,\n',
+      replace: '                    # mutant: staged bytes are reserved a second time\n',
     }],
   },
   {
