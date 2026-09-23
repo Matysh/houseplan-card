@@ -105,33 +105,38 @@ async def test_issue_498_upload_accepts_the_last_bytes_and_the_last_file_of_the_
     assert sorted(p.name for p in (root / "m1").iterdir()) == ["a.pdf", "b.pdf"]
 
 
-async def test_issue_498_concurrent_uploads_still_count_each_other(
+async def test_issue_625_concurrent_uploads_serialize_exact_quota_check(
     hass: HomeAssistant, hass_client: ClientSessionGenerator, monkeypatch,
 ) -> None:
-    """#498 AC1: excluding one's own staged file must not hide the neighbour's.
-
-    Both uploads are held at the quota check while both staged files exist. Each
-    sees the other's `.upload-*` as usage, so together they cannot exceed the
-    quota; a check that ignored every staged file would promote both.
-    """
+    """#625 AC6: concurrent uploads cannot race their final quota decisions."""
     import asyncio
     import threading
+    import time
 
     from custom_components.houseplan import http_api as hp_http
-    from custom_components.houseplan import plans as hp_plans
 
     await _setup(hass)
     client = await hass_client()
     monkeypatch.setattr(hp_http, "MAX_FILES_BYTES", 1000)
 
-    real_check = hp_plans.check_quota
-    barrier = threading.Barrier(2, timeout=5)
+    real_check = hp_http.check_quota
+    state_lock = threading.Lock()
+    active = 0
+    max_active = 0
 
-    def both_staged_check(*args, **kwargs):
-        barrier.wait()
-        return real_check(*args, **kwargs)
+    def observed_check(*args, **kwargs):
+        nonlocal active, max_active
+        with state_lock:
+            active += 1
+            max_active = max(max_active, active)
+        try:
+            time.sleep(0.05)
+            return real_check(*args, **kwargs)
+        finally:
+            with state_lock:
+                active -= 1
 
-    monkeypatch.setattr(hp_http, "check_quota", both_staged_check)
+    monkeypatch.setattr(hp_http, "check_quota", observed_check)
     responses = await asyncio.gather(
         client.post("/api/houseplan/upload", data=_pdf_form("a.pdf", 600)),
         client.post("/api/houseplan/upload", data=_pdf_form("b.pdf", 600)),
@@ -139,13 +144,14 @@ async def test_issue_498_concurrent_uploads_still_count_each_other(
     statuses = sorted(response.status for response in responses)
     assert statuses != [200, 200], "1200 bytes would be stored against a 1000-byte quota"
     assert all(status in (200, 507) for status in statuses), [await r.text() for r in responses]
+    assert max_active == 1
 
     from pathlib import Path
 
     from custom_components.houseplan.const import FILES_DIR
 
     root = Path(hass.config.path(FILES_DIR))
-    assert not list(root.glob(hp_plans.TMP_PREFIX + "*"))
+    assert not list(root.glob(hp_http.TMP_PREFIX + "*"))
     stored = sum(p.stat().st_size for p in (root / "m1").iterdir()) if (root / "m1").is_dir() else 0
     assert stored <= 1000
 

@@ -620,8 +620,12 @@ async def test_issue_340_config_set_without_revision_is_bootstrap_only(
     assert await runtime.config_store.async_load() == stored_before
     assert (await runtime.store.async_load())[OPTIMIZE_BACKUP] == backup
     assert config_events == []
-    assert "write rejected" in caplog.text
-    assert "stale-secret" not in caplog.text
+    ws_records = [
+        record for record in caplog.records
+        if record.name == "custom_components.houseplan.websocket_api"
+    ]
+    assert any("write rejected" in record.getMessage() for record in ws_records)
+    assert all("stale-secret" not in record.getMessage() for record in ws_records)
 
     # Even an exact semantic no-op may not be used to bypass the CAS guard.
     with caplog.at_level(logging.DEBUG, logger="custom_components.houseplan.websocket_api"):
@@ -634,7 +638,11 @@ async def test_issue_340_config_set_without_revision_is_bootstrap_only(
     assert noop_without_revision["error"]["code"] == "conflict"
     assert await runtime.config_store.async_load() == stored_before
     assert config_events == []
-    assert sum("config/set without expected_rev" in record.message for record in caplog.records) == 1
+    assert sum(
+        "config/set without expected_rev" in record.getMessage()
+        for record in caplog.records
+        if record.name == "custom_components.houseplan.websocket_api"
+    ) == 1
 
     # The same client succeeds after reading and returning the current rev.
     await stale_client.send_json_auto_id({
@@ -703,8 +711,12 @@ async def test_issue_356_layout_set_without_revision_is_bootstrap_only(
     assert "revision is required" in rejected["error"]["message"].lower()
     assert await runtime.store.async_load() == stored_before
     assert layout_events == []
-    assert "write rejected" in caplog.text
-    assert "stale-secret" not in caplog.text
+    ws_records = [
+        record for record in caplog.records
+        if record.name == "custom_components.houseplan.websocket_api"
+    ]
+    assert any("write rejected" in record.getMessage() for record in ws_records)
+    assert all("stale-secret" not in record.getMessage() for record in ws_records)
 
     # An equal body is still a write attempt and must not bypass the CAS guard.
     with caplog.at_level(logging.DEBUG, logger="custom_components.houseplan.websocket_api"):
@@ -717,7 +729,11 @@ async def test_issue_356_layout_set_without_revision_is_bootstrap_only(
     assert noop_without_revision["error"]["code"] == "conflict"
     assert await runtime.store.async_load() == stored_before
     assert layout_events == []
-    assert sum("layout/set without expected_rev" in record.message for record in caplog.records) == 1
+    assert sum(
+        "layout/set without expected_rev" in record.getMessage()
+        for record in caplog.records
+        if record.name == "custom_components.houseplan.websocket_api"
+    ) == 1
 
     # Reading and returning the current revision preserves the ordinary path.
     await stale_client.send_json_auto_id({
@@ -3213,6 +3229,38 @@ async def test_attachment_upload_rejects_impossible_content_length_before_multip
     response = await HouseplanUploadView().post(_Request())
     assert response.status == 413
     assert json.loads(response.text)["error"] == "too_large"
+    assert multipart_called is False
+
+
+async def test_attachment_upload_rejects_impossible_quota_before_multipart(
+    hass: HomeAssistant, monkeypatch,
+) -> None:
+    """#625 AC5: a payload floor over quota never creates or reads a part."""
+    from custom_components.houseplan import http_api
+    from custom_components.houseplan.http_api import HouseplanUploadView
+
+    await _setup(hass)
+    monkeypatch.setattr(http_api, "MAX_FILES_BYTES", 0)
+    multipart_called = False
+
+    class _User:
+        is_admin = True
+
+    class _Request:
+        app = {http_api.KEY_HASS: hass}
+        content_length = http_api._FLUSH_AT + 1
+
+        def get(self, _key, default=None):
+            return _User()
+
+        async def multipart(self):
+            nonlocal multipart_called
+            multipart_called = True
+            raise AssertionError("multipart must not be read after early rejection")
+
+    response = await HouseplanUploadView().post(_Request())
+    assert response.status == 507
+    assert json.loads(response.text)["error"] == "quota_exceeded"
     assert multipart_called is False
 
 

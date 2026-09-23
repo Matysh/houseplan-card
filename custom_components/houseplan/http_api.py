@@ -369,10 +369,12 @@ class HouseplanUploadView(HomeAssistantView):
         if runtime is None:
             return web.json_response({"error": "not_ready"}, status=503)
 
-        # Content-Length includes small multipart overhead, making it a safe
-        # conservative upper bound. Reject impossible requests before reading
-        # or creating a temporary file; the exact staged size is checked again
-        # under the same lock immediately before promotion.
+        # Content-Length includes multipart boundaries and headers, not just
+        # file bytes. Reserve one streaming batch for that overhead and only
+        # preflight the guaranteed payload floor; otherwise a tiny file at the
+        # exact store boundary would be rejected by its envelope (#498). The
+        # exact staged size is checked again under the same lock immediately
+        # before promotion.
         declared_size = getattr(request, "content_length", None)
         if declared_size is not None and declared_size > 0:
             if declared_size > MAX_FILE_BYTES + _FLUSH_AT:
@@ -380,21 +382,23 @@ class HouseplanUploadView(HomeAssistantView):
                     {"error": "too_large", "max_mb": MAX_FILE_BYTES // 1024 // 1024},
                     status=413,
                 )
-            try:
-                async with runtime.upload_lock:
-                    await hass.async_add_executor_job(
-                        partial(
-                            check_quota,
-                            files_root,
-                            declared_size,
-                            MAX_FILES_BYTES,
-                            MAX_FILES_COUNT,
+            payload_floor = max(0, declared_size - _FLUSH_AT)
+            if payload_floor:
+                try:
+                    async with runtime.upload_lock:
+                        await hass.async_add_executor_job(
+                            partial(
+                                check_quota,
+                                files_root,
+                                payload_floor,
+                                MAX_FILES_BYTES,
+                                MAX_FILES_COUNT,
+                            )
                         )
+                except QuotaError as err:
+                    return web.json_response(
+                        {"error": err.reason, "detail": err.detail}, status=507
                     )
-            except QuotaError as err:
-                return web.json_response(
-                    {"error": err.reason, "detail": err.detail}, status=507
-                )
         marker_id = "misc"
         filename: str | None = None
         # Every temporary file this request creates, promoted or not. The outer

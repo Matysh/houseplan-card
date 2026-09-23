@@ -10086,16 +10086,20 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'quota-ignores-foreign-staged-uploads',
+    id: 'quota-check-and-promotion-are-not-serialized',
     guard: 'node scripts/backend-test-guard.mjs '
-      + 'issue_498_concurrent_uploads_still_count_each_other '
+      + 'issue_625_concurrent_uploads_serialize_exact_quota_check '
       + 'tests_backend/test_ha_upload.py',
-    because: 'only the caller\'s own staged file is exempt: skipping every .upload-* would let two '
-      + 'concurrent uploads pass a quota neither of them fits alone (#498 AC1)',
+    because: 'the exact quota decision and promotion must share one bounded critical section; '
+      + 'otherwise concurrent uploads can both decide against stale usage (#625 AC6)',
     patches: [{
-      file: 'custom_components/houseplan/plans.py',
-      find: '        if exclude is not None and item == exclude:\n',
-      replace: '        if item.name.startswith(TMP_PREFIX):  # mutant: every staged file is invisible\n',
+      file: 'custom_components/houseplan/http_api.py',
+      find: '            try:\n'
+        + '                async with runtime.upload_lock:\n'
+        + '                    name = await hass.async_add_executor_job(_check_and_promote)\n',
+      replace: '            try:\n'
+        + '                if True:  # mutant: quota check and promotion race\n'
+        + '                    name = await hass.async_add_executor_job(_check_and_promote)\n',
     }],
   },
   {
