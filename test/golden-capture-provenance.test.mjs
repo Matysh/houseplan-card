@@ -27,7 +27,9 @@ const ROOT = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const BASELINES = resolve(ROOT, 'demo/golden/baselines');
 
 /** Артефакт съёмки: кадры равны принятым эталонам, отчёт — с нужным провенансом. */
-function fixture({ platform = 'linux', schema = CAPTURE_PROVENANCE_SCHEMA, capture = undefined } = {}) {
+function fixture({
+  platform = 'linux', schema = CAPTURE_PROVENANCE_SCHEMA, capture = undefined, captureEnv = undefined,
+} = {}) {
   const dir = mkdtempSync(resolve(tmpdir(), 'hp-golden-571-'));
   mkdirSync(resolve(dir, 'actual'), { recursive: true });
   const index = JSON.parse(readFileSync(resolve(BASELINES, 'baselines-index.json'), 'utf8'));
@@ -68,7 +70,7 @@ function fixture({ platform = 'linux', schema = CAPTURE_PROVENANCE_SCHEMA, captu
       ? { ...captureProvenance({
           chromium: index.chromium,
           buildFingerprint: report.buildFingerprint,
-          env: {
+          env: captureEnv ?? {
             GITHUB_RUN_ID: '1', GITHUB_RUN_ATTEMPT: '1',
             GITHUB_REPOSITORY: 'Matysh/houseplan-card', GITHUB_SHA: 'a'.repeat(40),
           },
@@ -122,6 +124,19 @@ test('#571 AC1: артефакт Linux принимается, обе сторо
   assert.equal(index.localAttestation, null, 'CI source is not presented as local WSL');
   assert.deepEqual(index.foreignCapture, HOST_TEST_ALLOWANCE ? { reason: HOST_TEST_ALLOWANCE } : null,
     'не-Linux хост теста оставляет явный след осознанного обхода');
+  rmSync(from, { recursive: true, force: true });
+});
+
+test('#641: локальная Linux-съёмка без CI и WSL-аттестации отвергается до записи', {
+  skip: process.platform !== 'linux' && 'целевой guard исполняется в канонической Linux-среде приёмки',
+}, () => {
+  const from = fixture({ platform: 'linux', captureEnv: {} });
+  assert.equal(existsSync(resolve(from, 'wsl-attestation.json')), false,
+    'обычный golden:capture не должен неявно получать WSL-аттестацию');
+  const before = JSON.parse(readFileSync(resolve(BASELINES, 'baselines-index.json'), 'utf8'));
+  const { error, index } = accept(from, { reason: '', expectFailure: true });
+  assert.match(error, /локальная Linux-съёмка не аттестована/);
+  assert.deepEqual(index, before, 'отказ обязан произойти до изменения эталонов и индекса');
   rmSync(from, { recursive: true, force: true });
 });
 
