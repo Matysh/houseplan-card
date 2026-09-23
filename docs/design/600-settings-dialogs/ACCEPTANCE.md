@@ -51,12 +51,14 @@ node demo/verify_ha_form_shell_609.mjs --capture
 | Режим | Поверхность | Проверенный результат |
 |---|---:|---|
 | desktop 1600×1000 | 560×940 | канва вокруг карточек, один скроллер `.body` HA, footer внутри |
+| dark + text 200%, 1600×1000 | 560×940 | root font 32 px, один HA-скроллер, footer внутри, канва не сливается с карточками |
 | граница 480×800 | 480×800 | fullscreen, радиус 0, горизонтального переполнения нет |
 | mobile 390×844 | 390×844 | fullscreen, радиус 0, footer внутри |
 | низкое окно 1280×480 | 1280×480 | штатный fullscreen HA сохранён |
 
-Снимки приёмки: `pairs/room-ha-light.png` и
-`pairs/room-ha-mobile-light.png`. Это диагностические доказательства, а не
+Снимки приёмки: `pairs/room-ha-light.png`,
+`pairs/room-ha-dark-text-200.png` и `pairs/room-ha-mobile-light.png`. Это
+диагностические доказательства, а не
 golden-базы; 13 нативных golden-сцен остаются неизменными. Быстрый обязательный
 свидетель тех же публичных CSS-контрактов —
 `demo/smoke_ha_form_shell_parity.mjs`, а перечень пяти потребителей оболочки

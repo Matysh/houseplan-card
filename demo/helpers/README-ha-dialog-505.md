@@ -31,9 +31,12 @@ It opens the real Room settings form and checks the settled WebAwesome surface:
 560 px desktop width, the 940 px/viewport height cap, zero duplicate HA body
 padding, one HA-owned scroller, a distinct form canvas, footer containment and
 edge-to-edge layouts at 480×800 and 390×844. It also keeps HA's own fullscreen
-behaviour for a 1280×480 viewport. `--capture` writes the two reviewed diagnostic
+behaviour for a 1280×480 viewport. `--capture` writes the three reviewed diagnostic
 images under `docs/design/600-settings-dialogs/pairs/`; without it the command
-is read-only. The fast Validate witness is
+is read-only. The authentic diagnostic explicitly applies the light palette,
+then repeats desktop geometry in the dark palette with a 32 px root font and
+proves that canvas contrast, the single HA scroller and the footer survive.
+The fast Validate witness is
 `demo/smoke_ha_form_shell_parity.mjs`; neither diagnostic is a golden producer.
 
 From a checkout with the usual `npm ci` dependencies and Playwright Chromium:

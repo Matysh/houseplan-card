@@ -55,9 +55,15 @@ const inspect = async () => page.evaluate(() => {
   const cardStyle = getComputedStyle(formCard);
   const panelBox = panel.getBoundingClientRect();
   const overflowNodes = [];
+  const scrollOwners = [];
   const visit = (root) => {
     for (const node of root.querySelectorAll('*')) {
       const box = node.getBoundingClientRect();
+      const style = getComputedStyle(node);
+      if (node.scrollHeight > node.clientHeight + 1 && /auto|scroll/.test(style.overflowY)) {
+        scrollOwners.push({ tag: node.localName, id: node.id, className: String(node.className || ''),
+          scrollHeight: node.scrollHeight, clientHeight: node.clientHeight });
+      }
       // wa-dialog itself stays in document flow at the demo host's 8 px page
       // inset; its rendered native dialog is fixed and is the geometry users see.
       if (node.localName !== 'wa-dialog' && box.width > 0
@@ -85,11 +91,31 @@ const inspect = async () => page.evaluate(() => {
     formBodyOverflowY: formBodyStyle.overflowY,
     formBodyBackground: formBodyStyle.backgroundColor,
     cardBackground: cardStyle.backgroundColor,
+    rootFontSize: getComputedStyle(document.documentElement).fontSize,
+    colorScheme: getComputedStyle(document.documentElement).colorScheme,
+    scrollOwners,
     horizontalOverflow: overflowNodes.length > 0,
     documentWidth: [document.documentElement.scrollWidth, document.body.scrollWidth],
     overflowNodes: overflowNodes.slice(0, 20),
   };
 });
+
+const setPresentation = async ({ theme, textSize }) => page.evaluate(async ({ theme, textSize }) => {
+  const dark = theme === 'dark';
+  const colors = dark ? ['#3ea6ff', '#e6e7eb', '#9aa4ad', '#202126', '#3a3d45', '#11151b', '#2b2d33']
+    : ['#0b73b8', '#202124', '#5f6368', '#ffffff', '#d7d9de', '#eef1f4', '#e7eaee'];
+  ['primary-color', 'primary-text-color', 'secondary-text-color', 'card-background-color',
+    'divider-color', 'primary-background-color', 'secondary-background-color']
+    .forEach((key, index) => document.documentElement.style.setProperty(`--${key}`, colors[index]));
+  document.documentElement.style.setProperty('--ha-card-background', colors[3]);
+  document.documentElement.style.colorScheme = theme;
+  document.documentElement.style.fontSize = `${textSize}px`;
+  document.body.style.background = colors[5];
+  const card = window.__card;
+  card.hass = { ...card.hass, themes: { ...card.hass?.themes, darkMode: dark } };
+  card.requestUpdate();
+  await card.updateComplete;
+}, { theme, textSize });
 
 const clipPanel = async (name, state) => {
   if (!capture) return;
@@ -122,6 +148,7 @@ try {
     return ha?.open === true
       && ha.shadowRoot.querySelector('wa-dialog')?.shadowRoot.querySelector('dialog')?.matches(':modal');
   });
+  await setPresentation({ theme: 'light', textSize: 16 });
   await settle();
 
   const desktop = await inspect();
@@ -134,9 +161,35 @@ try {
   assert.equal(desktop.haBodyOverflowY, 'auto');
   assert.equal(desktop.formBodyOverflowY, 'visible');
   assert.notEqual(desktop.formBodyBackground, desktop.cardBackground);
+  assert.equal(desktop.cardBackground, 'rgb(255, 255, 255)');
+  assert.ok(desktop.colorScheme.includes('light'), `desktop scheme ${desktop.colorScheme}`);
+  assert.equal(desktop.rootFontSize, '16px');
+  assert.equal(desktop.scrollOwners.length, 1, JSON.stringify(desktop.scrollOwners));
   assert.ok(desktop.haBodyScroll[0] > desktop.haBodyScroll[1], `desktop scroll ${desktop.haBodyScroll}`);
   assert.ok(desktop.footer.bottom <= desktop.panel.bottom + 1);
   await clipPanel('room-ha-light.png', desktop);
+
+  await setPresentation({ theme: 'dark', textSize: 32 });
+  await settle();
+  const darkText200 = await inspect();
+  assert.ok(Math.abs(darkText200.panel.width - 560) <= 1,
+    `dark 200% width ${darkText200.panel.width}`);
+  assert.ok(darkText200.panel.height <= 941,
+    `dark 200% height ${darkText200.panel.height}`);
+  assert.equal(darkText200.rootFontSize, '32px');
+  assert.ok(darkText200.colorScheme.includes('dark'), `dark scheme ${darkText200.colorScheme}`);
+  assert.equal(darkText200.cardBackground, 'rgb(32, 33, 38)');
+  assert.notEqual(darkText200.formBodyBackground, darkText200.cardBackground);
+  assert.equal(darkText200.haBodyOverflowY, 'auto');
+  assert.equal(darkText200.formBodyOverflowY, 'visible');
+  assert.equal(darkText200.scrollOwners.length, 1, JSON.stringify(darkText200.scrollOwners));
+  assert.ok(darkText200.haBodyScroll[0] > darkText200.haBodyScroll[1],
+    `dark 200% scroll ${darkText200.haBodyScroll}`);
+  assert.equal(darkText200.horizontalOverflow, false, JSON.stringify(darkText200.overflowNodes));
+  assert.ok(darkText200.footer.bottom <= darkText200.panel.bottom + 1);
+  await clipPanel('room-ha-dark-text-200.png', darkText200);
+
+  await setPresentation({ theme: 'light', textSize: 16 });
 
   await page.setViewportSize({ width: 480, height: 800 });
   await settle();
@@ -170,6 +223,7 @@ try {
     authenticHaFrontend: fixture.provenance,
     capture,
     desktop,
+    darkText200,
     edge480: edge,
     mobile390: mobile,
     shortViewport: short,

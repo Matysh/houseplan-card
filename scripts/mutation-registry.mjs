@@ -75,7 +75,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'ha-form-shell-width-falls-back-to-generic',
     guard: 'node demo/smoke_ha_form_shell_parity.mjs',
-    because: '#609 AC1/AC8: the authentic HA branch must consume the reviewed 560 px form '
+    because: '#609 AC1: the authentic HA branch must consume the reviewed 560 px form '
       + 'width; falling back to HA generic medium width recreates the released/native mismatch',
     patches: [{
       file: 'src/hp-dialog.ts',
@@ -97,7 +97,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'ha-form-shell-mobile-keeps-desktop-inset',
     guard: 'node demo/smoke_ha_form_shell_parity.mjs',
-    because: '#609 AC4/AC8: at 480 px and below the form shell is edge-to-edge; retaining the '
+    because: '#609 AC4: at 480 px and below the form shell is edge-to-edge; retaining the '
       + 'desktop 48 px height inset clips the reviewed mobile surface and footer',
     patches: [{
       file: 'src/hp-dialog.ts',
