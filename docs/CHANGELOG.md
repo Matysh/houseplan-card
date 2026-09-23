@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Read-only household and kiosk views no longer show an administrator-only
+  error when Home Assistant discovers a new device; config conflicts in View
+  now refresh safely even though the editor has never been loaded
+  ([#612](https://github.com/Matysh/houseplan-card/issues/612)).
 - The unsaved-settings prompt is now unambiguous in Russian: **Return** keeps
   the draft, **Don't save** discards it, and the discard action no longer uses
   an open-lock icon ([#610](https://github.com/Matysh/houseplan-card/issues/610)).

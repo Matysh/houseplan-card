@@ -176,6 +176,7 @@ import {
   adoptAuthoritativeGated, createConfigAdoption,
   type ConfigAdoption, type ConfigAdoptionHostPort, type GatedAdoptionInput, type GatedAdoptionResult,
 } from './config-adoption';
+import { recoverConfigWriteConflict } from './config-write-conflict';
 import {
   configReloadContext,
   ConfigReloadAuthority,
@@ -5144,7 +5145,7 @@ export class HouseplanCard extends LitElement {
    * so an upgrade never floods the plan with dots.
    */
   private _syncNewDevices(): void {
-    if (!this._norm || !this._loadOk || !this._serverCfg) return;
+    if (!this._norm || !this._loadOk || !this._serverCfg || !this._canEdit) return;
     // only auto-appearing icons: area devices and light groups; markers are user-made
     const autoIds = this._devices.filter((d) => !d.marker && !d.virtual).map((d) => d.id).sort();
     const key = autoIds.join(',');
@@ -5158,7 +5159,6 @@ export class HouseplanCard extends LitElement {
         ...this._serverCfg,
         settings: { ...st, known_devices: known, new_device_ids: newIds },
       };
-      // best-effort persist: non-admins under admin_only just keep the local view
       this._saveConfig();
     }
   }
@@ -8016,8 +8016,7 @@ export class HouseplanCard extends LitElement {
         // a real one now: another window wrote between our read and our write
         this._showToast(this._t('toast.conflict'));
         if (!physicalRollback) {
-          this._cancelPath();
-          void this._reloadConfigOnly(true);
+          recoverConfigWriteConflict(this._editorRuntime, () => this._reloadConfigOnly(true));
         }
       } else {
         this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }));

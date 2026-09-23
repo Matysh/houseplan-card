@@ -39,6 +39,7 @@ const result = await page.evaluate(async (rawFixture) => {
   geometry.id = 'upstairs';
   geometry.title = 'Upstairs';
   fixture.config.spaces = [lighting, geometry];
+  fixture.config.settings.known_devices = Object.keys(fixture.devices).sort();
   fixture.config.markers.push({
     id: 'golden-light-one', binding: 'device:golden-light-one', display: 'value',
   });
@@ -49,7 +50,7 @@ const result = await page.evaluate(async (rawFixture) => {
 
   const base = window.__mkHass();
   const makeHass = (subscriptionMode = 'partial') => {
-    const calls = { configGets: 0, events: {}, unsubscribed: [] };
+    const calls = { configGets: 0, configSets: 0, events: {}, unsubscribed: [] };
     const connection = {
       subscribeEvents: async (callback, event) => {
         calls.events[event] = (calls.events[event] || 0) + 1;
@@ -74,6 +75,12 @@ const result = await page.evaluate(async (rawFixture) => {
         if (message.type === 'houseplan/config/get') {
           calls.configGets += 1;
           return { config: structuredClone(fixture.config), rev: 131, can_write: false };
+        }
+        if (message.type === 'houseplan/config/set') {
+          calls.configSets += 1;
+          const error = new Error('Only administrators may edit the configuration');
+          error.code = 'unauthorized';
+          throw error;
         }
         if (message.type === 'houseplan/layout/get') {
           return { layout: structuredClone(fixture.layout), rev: 131 };
@@ -153,6 +160,51 @@ const result = await page.evaluate(async (rawFixture) => {
   out.activeTabClickIsNoop = JSON.stringify(layerSnapshot(cold.card)) === JSON.stringify(beforeClick);
   await sleep(700);
   out.optionalFailureNoFullRetry = cold.calls.configGets === 1;
+
+  const readonlyToasts = [];
+  cold.card._showToast = (message) => { readonlyToasts.push(message); };
+  const addedDeviceId = 'readonly-added-light';
+  const addedEntityId = 'light.readonly_added_light';
+  cold.card.hass = {
+    ...cold.card.hass,
+    devices: {
+      ...cold.card.hass.devices,
+      [addedDeviceId]: {
+        id: addedDeviceId,
+        name: 'Readonly added light',
+        model: 'READONLY-NEW',
+        area_id: 'golden_light_left',
+        identifiers: [['houseplan_golden', addedDeviceId]],
+        config_entries: ['golden_entry'],
+        entry_type: null,
+        via_device_id: null,
+        disabled_by: null,
+      },
+    },
+    entities: {
+      ...cold.card.hass.entities,
+      [addedEntityId]: {
+        entity_id: addedEntityId,
+        device_id: addedDeviceId,
+        platform: 'houseplan_golden',
+        config_entry_id: 'golden_entry',
+        disabled_by: null,
+      },
+    },
+    states: {
+      ...cold.card.hass.states,
+      [addedEntityId]: {
+        entity_id: addedEntityId,
+        state: 'off',
+        attributes: { friendly_name: 'Readonly added light' },
+      },
+    },
+  };
+  await cold.card.updateComplete;
+  await sleep(700);
+  out.readonlyNewDeviceDoesNotWrite = cold.calls.configSets === 0;
+  out.readonlyNewDeviceDoesNotToast = readonlyToasts.length === 0;
+  out.readonlyKnownDevicesStayAuthoritative = !cold.card._settings.known_devices.includes(addedDeviceId);
   cold.card.remove();
   await sleep(20);
   out.successfulSubscriptionCleanedUp = cold.calls.unsubscribed.includes('houseplan_layout_updated');

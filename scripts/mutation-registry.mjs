@@ -73,6 +73,30 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'view-conflict-requires-editor-runtime',
+    guard: 'node --test test/config-write-conflict.test.mjs',
+    because: '#612 AC1: View legitimately has no editor runtime, but its background config writes '
+      + 'can still conflict. Requiring the editor restores the unhandled exception and prevents the '
+      + 'authoritative reload.',
+    patches: [{
+      file: 'src/config-write-conflict.ts',
+      find: '  editorRuntime?._cancelPath();\n  void reload();',
+      replace: '  editorRuntime!._cancelPath(); // mutant: View has no runtime\n  void reload();',
+    }],
+  },
+  {
+    id: 'readonly-view-syncs-new-devices',
+    guard: 'node demo/smoke_readonly_cold_start.mjs',
+    because: '#612 AC2: a read-only household or kiosk View must never attempt the shared '
+      + 'known_devices write. Removing the authority guard restores the unauthorized toast for '
+      + 'every newly discovered HA device.',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (!this._norm || !this._loadOk || !this._serverCfg || !this._canEdit) return;',
+      replace: '    if (!this._norm || !this._loadOk || !this._serverCfg) return; // mutant: ignore write authority',
+    }],
+  },
+  {
     id: 'discard-confirm-action-icon-falls-back-to-lock',
     guard: 'node demo/smoke_discard_copy.mjs',
     because: '#610 AC3/AC4: unsaved-settings discard uses save-off in both places, but other '
