@@ -514,7 +514,7 @@ const expiredWarmViewport = (vp: WarmViewport | null): WarmViewport | null => {
  *  the live draft OBJECT — the memo is module state, never serialised, so a
  *  half-filled device dialog with its uploaded pdfs survives for free. */
 type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText' | 'decorShape' | 'backdrop' | 'rules' | 'room' | 'info' | 'openingInfo';
-type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: any; baseline?: string };
+type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: unknown; baseline?: string };
 /** AUD-159B1-01: one entry per CARD PLACEMENT, not per key. Two cards with an
  *  identical config on one view share the key, so the key alone cannot say
  *  whose viewport this is; `place`/`idx` (the parent element the card was

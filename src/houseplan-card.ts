@@ -3579,7 +3579,7 @@ export class HouseplanCard extends LitElement {
    * "open" as far as the user is concerned.
    */
   private _warmDialogState(): WarmDialog | null {
-    const at = (kind: WarmDialogKind, data: any): WarmDialog => ({
+    const at = (kind: WarmDialogKind, data: WarmDialog['data']): WarmDialog => ({
       kind, space: this._space, mode: this._mode, data, baseline: warmDialogBaseline(this, kind),
     });
     if (this._tapConfirm || this._alignDialog || this._mergeDialog || this._importDialog
