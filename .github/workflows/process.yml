@@ -162,15 +162,28 @@ jobs:
             done
             target="${branch:-dev}"
             names=$(mktemp); docs=$(mktemp -d)
-            if ! gh api "repos/$REPO/contents/docs/reviews?ref=$target" --jq '.[].name' \
-              > "$names" 2>/dev/null; then
+            # #621: каталог перечисляется Git Trees API, а не `contents`.
+            # У `contents` потолок 1 000 записей, после которого ответ молча
+            # обрезается; docs/reviews подошёл к нему (986 файлов на 23.09,
+            # +≈60 в неделю), и счёт по файлам начал бы занижаться — то есть
+            # повторять номер захода и класть документ поверх предыдущего.
+            # Дерево спускается по одному уровню: commit → root → docs →
+            # reviews; лимит дерева — 100 000 записей, флаг `truncated` здесь
+            # трактуется как отказ, а не как частичный список.
+            tree_names() {
+              local sha entry
+              sha=$(gh api "repos/$REPO/commits/$1" --jq '.commit.tree.sha') || return 1
+              for entry in docs reviews; do
+                sha=$(gh api "repos/$REPO/git/trees/$sha" \
+                  --jq ".tree[] | select(.type == \"tree\" and .path == \"$entry\") | .sha") || return 1
+                [ -n "$sha" ] || return 1
+              done
+              gh api "repos/$REPO/git/trees/$sha" \
+                --jq 'if .truncated then error("truncated") else .tree[] | select(.type == "blob") | .path end'
+            }
+            if ! tree_names "$target" > "$names" 2>/dev/null; then
               : > "$names"
-              echo "::warning::список docs/reviews на $target не получен — счёт по файлам отключён"
-            fi
-            # Каталог перечисляется одним ответом до 1000 записей; за этой
-            # границей ответ молча обрежется, и счёт по файлам занизится.
-            if [ "$(grep -c . "$names")" -ge 1000 ]; then
-              echo "::warning::в docs/reviews не меньше 1000 файлов — листинг contents обрезается, счёт по файлам ненадёжен"
+              echo "::warning::дерево docs/reviews на $target не получено — счёт по файлам отключён"
             fi
             # Тела нужны только своим документам этапа: их единицы.
             for name in $(grep -E "^${marker}-${NUM}-r[0-9]+\\.md$" "$names" || true); do
