@@ -42,6 +42,14 @@ export const SMOKE_LINKS = [
       + 'synchronisation; neither browser smoke imports the form-kit helper',
   },
   {
+    symbols: ['rangeLine', 'unitInput'],
+    smokes: ['smoke_room_settings_form.mjs', 'smoke_device_settings_form.mjs', 'smoke_space_settings_form.mjs'],
+    because: '#639: the three settings-form smokes drive range-line numbers (room name/label scale, '
+      + 'device brightness/size/angle, space card font) through the DOM and assert the host draft; '
+      + 'they never name the form-kit helper, so #608 changed the commit event and only the nightly '
+      + 'registry saw them turn red',
+  },
+  {
     symbols: ['canonicalFurnitureId'],
     smokes: ['smoke_furniture.mjs'],
     because: '#606: the bundled furniture palette and saved cactus object are checked through '
