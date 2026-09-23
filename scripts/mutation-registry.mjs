@@ -101,8 +101,10 @@ const MUTANT_DEFINITIONS = [
       + 'desktop 48 px height inset clips the reviewed mobile surface and footer',
     patches: [{
       file: 'src/hp-dialog.ts',
-      find: '        --ha-dialog-max-height: var(--safe-height, 100dvh);',
-      replace: '        --ha-dialog-max-height: calc(var(--safe-height, 100dvh) - 48px);',
+      find: '        --ha-dialog-min-height: var(--safe-height, 100dvh);\n'
+        + '        --ha-dialog-max-height: var(--safe-height, 100dvh);',
+      replace: '        --ha-dialog-min-height: calc(var(--safe-height, 100dvh) - 48px);\n'
+        + '        --ha-dialog-max-height: calc(var(--safe-height, 100dvh) - 48px);',
     }],
   },
   {
