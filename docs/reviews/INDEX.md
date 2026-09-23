@@ -1,996 +1,998 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 990, issue: 343. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 992, issue: 345. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
-| Issue | Документ | Этап · раунд | Вердикт | H | M | Находки |
-|---|---|---|---|---:|---:|---|
-| #639 | [CODE-REVIEW-639-r1.md](CODE-REVIEW-639-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #639 | [CODE-REVIEW-639-r2.md](CODE-REVIEW-639-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #637 | [CODE-REVIEW-637-r1.md](CODE-REVIEW-637-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #637 | [CODE-REVIEW-637-r2.md](CODE-REVIEW-637-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #636 | [CODE-REVIEW-636-r1.md](CODE-REVIEW-636-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #619 | [CODE-REVIEW-619-r1.md](CODE-REVIEW-619-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #613 | [SPEC-REVIEW-613-r1.md](SPEC-REVIEW-613-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | High. Принятое предположение о scroll-инвалидации не работает в основном заявленном сце…; Medium (в скоупе), сопутствует H1. AC1/AC2 не требуют, чтобы smoke-контейнер пересекал … |
-| #613 | [SPEC-REVIEW-613-r2.md](SPEC-REVIEW-613-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #613 | [CODE-REVIEW-613-r1.md](CODE-REVIEW-613-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #612 | [CODE-REVIEW-612-r1.md](CODE-REVIEW-612-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #611 | [SPEC-REVIEW-611-r1.md](SPEC-REVIEW-611-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #611 | [SPEC-REVIEW-611-r2.md](SPEC-REVIEW-611-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #611 | [CODE-REVIEW-611-r1.md](CODE-REVIEW-611-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #610 | [SPEC-REVIEW-610-r1.md](SPEC-REVIEW-610-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #610 | [CODE-REVIEW-610-r1.md](CODE-REVIEW-610-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #610 | [CODE-REVIEW-610-r2.md](CODE-REVIEW-610-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #609 | [SPEC-REVIEW-609-r1.md](SPEC-REVIEW-609-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #609 | [CODE-REVIEW-609-r1.md](CODE-REVIEW-609-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #609 | [CODE-REVIEW-609-r2.md](CODE-REVIEW-609-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #608 | [SPEC-REVIEW-608-r1.md](SPEC-REVIEW-608-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «Шесть потребителей» на самом деле семь вызовов rangeLine; Ответ владельца на Q1–Q3 не оставлен отдельным комментарием |
-| #608 | [CODE-REVIEW-608-r1.md](CODE-REVIEW-608-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Русский changelog: сломанное предложение (Medium, в скоупе — правится в этой же задаче) |
-| #608 | [CODE-REVIEW-608-r2.md](CODE-REVIEW-608-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #607 | [SPEC-REVIEW-607-r1.md](SPEC-REVIEW-607-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #607 | [CODE-REVIEW-607-r1.md](CODE-REVIEW-607-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #607 | [CODE-REVIEW-607-r2.md](CODE-REVIEW-607-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #606 | [SPEC-REVIEW-606-r1.md](SPEC-REVIEW-606-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #606 | [CODE-REVIEW-606-r1.md](CODE-REVIEW-606-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #605 | [SPEC-REVIEW-605-r1.md](SPEC-REVIEW-605-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #605 | [CODE-REVIEW-605-r1.md](CODE-REVIEW-605-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #604 | [CODE-REVIEW-604-r1.md](CODE-REVIEW-604-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #603 | [SPEC-REVIEW-603-r1.md](SPEC-REVIEW-603-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #603 | [CODE-REVIEW-603-r1.md](CODE-REVIEW-603-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #602 | [SPEC-REVIEW-602-r1.md](SPEC-REVIEW-602-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #602 | [SPEC-REVIEW-602-r2.md](SPEC-REVIEW-602-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #602 | [CODE-REVIEW-602-r1.md](CODE-REVIEW-602-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #602 | [CODE-REVIEW-602-r2.md](CODE-REVIEW-602-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #601 | [CODE-REVIEW-601-r1.md](CODE-REVIEW-601-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #600 | [SPEC-REVIEW-600-r1.md](SPEC-REVIEW-600-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | регресс-гарантия для существующих кнопок действий не названа отдельным AC |
-| #600 | [CODE-REVIEW-600-r1.md](CODE-REVIEW-600-r1.md) | code · r1 | 🟡 жёлтый | 0 | 4 | Room settings: подпись «Temperature» в 5-сегменте переносится посреди слова; Device dialog: у Glow radius появилась не согласованная владельцем блокировка Save; Дефект №5 (поповер «?» обрезается границей диалога комнаты) не имеет свидетеля закрытия; ACCEPTANCE.md: заявлено 11 эталонных сцен, фактически принято 13; docs/USER-GUIDE.ru.md:529 — испорченная строка таблицы |
-| #600 | [CODE-REVIEW-600-r2.md](CODE-REVIEW-600-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | .hpf-seg label: min-width: fit-content (колонка не сжимается ниже слова) + overflow-wra…; glowRadiusValid/проблема marker-glow-radius удалены целиком; marker-dialog.ts больше не…; Свидетель добавлен: новый смок доказывает исполнением, что подсказка живёт вне скроллер…; Абзац переписан: явно «13 сцен» = 11 из ТЗ + 2 room-temperature-dialog-, с объяснением … |
-| #598 | [SPEC-REVIEW-598-r1.md](SPEC-REVIEW-598-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #598 | [SPEC-REVIEW-598-r2.md](SPEC-REVIEW-598-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #598 | [CODE-REVIEW-598-r1.md](CODE-REVIEW-598-r1.md) | code · r1 | 🔴 красный | 1 | 3 | AC8 (эталоны) не выполнен: golden:verify красный на этом SHA; AC2/AC3 нарушены: изменён один из «неприкосновенных» .srcrow-смоков; Сегментированный переключатель обещан в семи местах ТЗ, реализован в одном; AC5 доказан мутантом только наполовину; AC1 не имеет обещанного автотеста для диалога «Пространство» (закрыто чтением) |
-| #598 | [CODE-REVIEW-598-r2.md](CODE-REVIEW-598-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #597 | [SPEC-REVIEW-597-r1.md](SPEC-REVIEW-597-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #597 | [SPEC-REVIEW-597-r2.md](SPEC-REVIEW-597-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #597 | [CODE-REVIEW-597-r1.md](CODE-REVIEW-597-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #597 | [CODE-REVIEW-597-r2.md](CODE-REVIEW-597-r2.md) | code · r2 | 🟢 зелёный | 0 | 1 | — |
-| #596 | [CODE-REVIEW-596-r1.md](CODE-REVIEW-596-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #595 | [CODE-REVIEW-595-r1.md](CODE-REVIEW-595-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #594 | [SPEC-REVIEW-594-r2.md](SPEC-REVIEW-594-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #594 | [SPEC-REVIEW-594-r3.md](SPEC-REVIEW-594-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — |
-| #594 | [CODE-REVIEW-594-r1.md](CODE-REVIEW-594-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #594 | [CODE-REVIEW-594-r2.md](CODE-REVIEW-594-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #594 | [CODE-REVIEW-594-r3.md](CODE-REVIEW-594-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #593 | [SPEC-REVIEW-593-r1.md](SPEC-REVIEW-593-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | — |
-| #593 | [SPEC-REVIEW-593-r2.md](SPEC-REVIEW-593-r2.md) | spec · r2 | 🟢 зелёный | 1 | 0 | — |
-| #593 | [SPEC-REVIEW-593-r3.md](SPEC-REVIEW-593-r3.md) | spec · r3 | 🔴 красный | 0 | 0 | — |
-| #593 | [CODE-REVIEW-593-r1.md](CODE-REVIEW-593-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #593 | [CODE-REVIEW-593-r2.md](CODE-REVIEW-593-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #592 | [SPEC-REVIEW-592-r1.md](SPEC-REVIEW-592-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #592 | [SPEC-REVIEW-592-r2.md](SPEC-REVIEW-592-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #592 | [CODE-REVIEW-592-r1.md](CODE-REVIEW-592-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #592 | [CODE-REVIEW-592-r2.md](CODE-REVIEW-592-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #588 | [SPEC-REVIEW-588-r1.md](SPEC-REVIEW-588-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #588 | [SPEC-REVIEW-588-r2.md](SPEC-REVIEW-588-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #588 | [SPEC-REVIEW-588-r3.md](SPEC-REVIEW-588-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #588 | [CODE-REVIEW-588-r1.md](CODE-REVIEW-588-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #587 | [CODE-REVIEW-587-r1.md](CODE-REVIEW-587-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #586 | [CODE-REVIEW-586-r1.md](CODE-REVIEW-586-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #585 | [SPEC-REVIEW-585-r1.md](SPEC-REVIEW-585-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #585 | [CODE-REVIEW-585-r1.md](CODE-REVIEW-585-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #585 | [CODE-REVIEW-585-r2.md](CODE-REVIEW-585-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #584 | [SPEC-REVIEW-584-r1.md](SPEC-REVIEW-584-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #584 | [SPEC-REVIEW-584-r2.md](SPEC-REVIEW-584-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #584 | [CODE-REVIEW-584-r1.md](CODE-REVIEW-584-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | рост ленивого чанка furniture-plan-art.generated не назван числом, как того требует соб… |
-| #584 | [CODE-REVIEW-584-r2.md](CODE-REVIEW-584-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #583 | [SPEC-REVIEW-583-r1.md](SPEC-REVIEW-583-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #583 | [CODE-REVIEW-583-r1.md](CODE-REVIEW-583-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #583 | [CODE-REVIEW-583-r2.md](CODE-REVIEW-583-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #582 | [SPEC-REVIEW-582-r1.md](SPEC-REVIEW-582-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #582 | [CODE-REVIEW-582-r1.md](CODE-REVIEW-582-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #582 | [CODE-REVIEW-582-r2.md](CODE-REVIEW-582-r2.md) | code · r2 | 🔴 красный | 0 | 0 | — |
-| #582 | [CODE-REVIEW-582-r3.md](CODE-REVIEW-582-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #581 | [SPEC-REVIEW-581-r1.md](SPEC-REVIEW-581-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #581 | [CODE-REVIEW-581-r1.md](CODE-REVIEW-581-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #580 | [SPEC-REVIEW-580-r1.md](SPEC-REVIEW-580-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #580 | [SPEC-REVIEW-580-r2.md](SPEC-REVIEW-580-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #580 | [CODE-REVIEW-580-r1.md](CODE-REVIEW-580-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #580 | [CODE-REVIEW-580-r2.md](CODE-REVIEW-580-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #579 | [SPEC-REVIEW-579-r1.md](SPEC-REVIEW-579-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #579 | [CODE-REVIEW-579-r1.md](CODE-REVIEW-579-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #579 | [CODE-REVIEW-579-r2.md](CODE-REVIEW-579-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #578 | [SPEC-REVIEW-578-r1.md](SPEC-REVIEW-578-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #578 | [CODE-REVIEW-578-r1.md](CODE-REVIEW-578-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #577 | [SPEC-REVIEW-577-r1.md](SPEC-REVIEW-577-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #577 | [SPEC-REVIEW-577-r2.md](SPEC-REVIEW-577-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #577 | [CODE-REVIEW-577-r1.md](CODE-REVIEW-577-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #577 | [CODE-REVIEW-577-r2.md](CODE-REVIEW-577-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #576 | [CODE-REVIEW-576-r1.md](CODE-REVIEW-576-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #573 | [CODE-REVIEW-573-r1.md](CODE-REVIEW-573-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #573 | [CODE-REVIEW-573-r2.md](CODE-REVIEW-573-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #571 | [CODE-REVIEW-571-r1.md](CODE-REVIEW-571-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #570 | [SPEC-REVIEW-570-r1.md](SPEC-REVIEW-570-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #570 | [CODE-REVIEW-570-r1.md](CODE-REVIEW-570-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #569 | [CODE-REVIEW-569-r1.md](CODE-REVIEW-569-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #568 | [CODE-REVIEW-568-r1.md](CODE-REVIEW-568-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #567 | [CODE-REVIEW-567-r1.md](CODE-REVIEW-567-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #566 | [CODE-REVIEW-566-r1.md](CODE-REVIEW-566-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #566 | [CODE-REVIEW-566-r2.md](CODE-REVIEW-566-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #565 | [SPEC-REVIEW-565-r1.md](SPEC-REVIEW-565-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #565 | [CODE-REVIEW-565-r1.md](CODE-REVIEW-565-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #565 | [CODE-REVIEW-565-r2.md](CODE-REVIEW-565-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #564 | [SPEC-REVIEW-564-r1.md](SPEC-REVIEW-564-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | DoR: «затронутые файлы и модули» не названы (Medium, в скоупе); «Сценарий» и «Что человек увидит» объединены без явной персоны на |
-| #564 | [SPEC-REVIEW-564-r2.md](SPEC-REVIEW-564-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #564 | [CODE-REVIEW-564-r1.md](CODE-REVIEW-564-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #564 | [CODE-REVIEW-564-r2.md](CODE-REVIEW-564-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #563 | [SPEC-REVIEW-563-r1.md](SPEC-REVIEW-563-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #563 | [CODE-REVIEW-563-r1.md](CODE-REVIEW-563-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #562 | [CODE-REVIEW-562-r1.md](CODE-REVIEW-562-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #562 | [CODE-REVIEW-562-r2.md](CODE-REVIEW-562-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #562 | [CODE-REVIEW-562-r3.md](CODE-REVIEW-562-r3.md) | code · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #561 | [SPEC-REVIEW-561-r1.md](SPEC-REVIEW-561-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #561 | [SPEC-REVIEW-561-r2.md](SPEC-REVIEW-561-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #561 | [CODE-REVIEW-561-r1.md](CODE-REVIEW-561-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #560 | [CODE-REVIEW-560-r1.md](CODE-REVIEW-560-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #558 | [CODE-REVIEW-558-r1.md](CODE-REVIEW-558-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #557 | [CODE-REVIEW-557-r1.md](CODE-REVIEW-557-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #556 | [CODE-REVIEW-556-r1.md](CODE-REVIEW-556-r1.md) | code · r1 | 🔴 красный | 1 | 0 | — |
-| #556 | [CODE-REVIEW-556-r2.md](CODE-REVIEW-556-r2.md) | code · r2 | 🔴 красный | 0 | 0 | — |
-| #555 | [CODE-REVIEW-555-r1.md](CODE-REVIEW-555-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #555 | [CODE-REVIEW-555-r2.md](CODE-REVIEW-555-r2.md) | code · r2 | 🔴 красный | 0 | 0 | — |
-| #554 | [SPEC-REVIEW-554-r1.md](SPEC-REVIEW-554-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #554 | [CODE-REVIEW-554-r1.md](CODE-REVIEW-554-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #553 | [CODE-REVIEW-553-r2.md](CODE-REVIEW-553-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #553 | [CODE-REVIEW-553-r3.md](CODE-REVIEW-553-r3.md) | code · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #551 | [CODE-REVIEW-551-r1.md](CODE-REVIEW-551-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #551 | [CODE-REVIEW-551-r4.md](CODE-REVIEW-551-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — |
-| #550 | [CODE-REVIEW-550-r1.md](CODE-REVIEW-550-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #549 | [CODE-REVIEW-549-r1.md](CODE-REVIEW-549-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #549 | [CODE-REVIEW-549-r2.md](CODE-REVIEW-549-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #548 | [CODE-REVIEW-548-r1.md](CODE-REVIEW-548-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #547 | [CODE-REVIEW-547-r1.md](CODE-REVIEW-547-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #546 | [CODE-REVIEW-546-r1.md](CODE-REVIEW-546-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #545 | [SPEC-REVIEW-545-r1.md](SPEC-REVIEW-545-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #545 | [CODE-REVIEW-545-r1.md](CODE-REVIEW-545-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #544 | [SPEC-REVIEW-544-r1.md](SPEC-REVIEW-544-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #544 | [CODE-REVIEW-544-r1.md](CODE-REVIEW-544-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #543 | [SPEC-REVIEW-543-r1.md](SPEC-REVIEW-543-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #543 | [SPEC-REVIEW-543-r2.md](SPEC-REVIEW-543-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #543 | [CODE-REVIEW-543-r1.md](CODE-REVIEW-543-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #542 | [CODE-REVIEW-542-r1.md](CODE-REVIEW-542-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #541 | [CODE-REVIEW-541-r1.md](CODE-REVIEW-541-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #536 | [SPEC-REVIEW-536-r1.md](SPEC-REVIEW-536-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #536 | [CODE-REVIEW-536-r1.md](CODE-REVIEW-536-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #535 | [SPEC-REVIEW-535-r1.md](SPEC-REVIEW-535-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #535 | [CODE-REVIEW-535-r1.md](CODE-REVIEW-535-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #534 | [SPEC-REVIEW-534-r1.md](SPEC-REVIEW-534-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #534 | [SPEC-REVIEW-534-r2.md](SPEC-REVIEW-534-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #534 | [SPEC-REVIEW-534-r3.md](SPEC-REVIEW-534-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — |
-| #534 | [CODE-REVIEW-534-r1.md](CODE-REVIEW-534-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #533 | [CODE-REVIEW-533-r1.md](CODE-REVIEW-533-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #533 | [CODE-REVIEW-533-r2.md](CODE-REVIEW-533-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #533 | [CODE-REVIEW-533-r3.md](CODE-REVIEW-533-r3.md) | code · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #532 | [SPEC-REVIEW-532-r1.md](SPEC-REVIEW-532-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #532 | [SPEC-REVIEW-532-r2.md](SPEC-REVIEW-532-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #532 | [CODE-REVIEW-532-r1.md](CODE-REVIEW-532-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #532 | [CODE-REVIEW-532-r2.md](CODE-REVIEW-532-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #531 | [SPEC-REVIEW-531-r1.md](SPEC-REVIEW-531-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #531 | [SPEC-REVIEW-531-r2.md](SPEC-REVIEW-531-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #531 | [CODE-REVIEW-531-r1.md](CODE-REVIEW-531-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #531 | [CODE-REVIEW-531-r2.md](CODE-REVIEW-531-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #530 | [SPEC-REVIEW-530-r1.md](SPEC-REVIEW-530-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #530 | [SPEC-REVIEW-530-r2.md](SPEC-REVIEW-530-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #530 | [CODE-REVIEW-530-r1.md](CODE-REVIEW-530-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #529 | [SPEC-REVIEW-529-r1.md](SPEC-REVIEW-529-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #529 | [SPEC-REVIEW-529-r2.md](SPEC-REVIEW-529-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #529 | [CODE-REVIEW-529-r1.md](CODE-REVIEW-529-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #528 | [CODE-REVIEW-528-r1.md](CODE-REVIEW-528-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #526 | [SPEC-REVIEW-526-r1.md](SPEC-REVIEW-526-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #526 | [SPEC-REVIEW-526-r2.md](SPEC-REVIEW-526-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #526 | [CODE-REVIEW-526-r1.md](CODE-REVIEW-526-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #525 | [SPEC-REVIEW-525-r1.md](SPEC-REVIEW-525-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #525 | [CODE-REVIEW-525-r1.md](CODE-REVIEW-525-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #524 | [SPEC-REVIEW-524-r1.md](SPEC-REVIEW-524-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #524 | [CODE-REVIEW-524-r1.md](CODE-REVIEW-524-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #522 | [SPEC-REVIEW-522-r1.md](SPEC-REVIEW-522-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #521 | [SPEC-REVIEW-521-r1.md](SPEC-REVIEW-521-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #521 | [SPEC-REVIEW-521-r2.md](SPEC-REVIEW-521-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #521 | [SPEC-REVIEW-521-r3.md](SPEC-REVIEW-521-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #521 | [CODE-REVIEW-521-r1.md](CODE-REVIEW-521-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #521 | [CODE-REVIEW-521-r2.md](CODE-REVIEW-521-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #520 | [SPEC-REVIEW-520-r1.md](SPEC-REVIEW-520-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | — |
-| #520 | [SPEC-REVIEW-520-r2.md](SPEC-REVIEW-520-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #520 | [SPEC-REVIEW-520-r3.md](SPEC-REVIEW-520-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — |
-| #520 | [CODE-REVIEW-520-r1.md](CODE-REVIEW-520-r1.md) | code · r1 | 🔴 красный | 1 | 0 | — |
-| #520 | [CODE-REVIEW-520-r2.md](CODE-REVIEW-520-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #520 | [CODE-REVIEW-520-r3.md](CODE-REVIEW-520-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #517 | [SPEC-REVIEW-517-r1.md](SPEC-REVIEW-517-r1.md) | spec · r1 | 🟢 зелёный | 0 | 2 | — |
-| #517 | [SPEC-REVIEW-517-r2.md](SPEC-REVIEW-517-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | — |
-| #517 | [CODE-REVIEW-517-r1.md](CODE-REVIEW-517-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #516 | [CODE-REVIEW-516-r1.md](CODE-REVIEW-516-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #516 | [CODE-REVIEW-516-r2.md](CODE-REVIEW-516-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #515 | [CODE-REVIEW-515-r1.md](CODE-REVIEW-515-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #514 | [SPEC-REVIEW-514-r1.md](SPEC-REVIEW-514-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #514 | [CODE-REVIEW-514-r1.md](CODE-REVIEW-514-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #514 | [CODE-REVIEW-514-r2.md](CODE-REVIEW-514-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #514 | [CODE-REVIEW-514-r3.md](CODE-REVIEW-514-r3.md) | code · r3 | 🟡 жёлтый | 0 | 1 | — |
-| #514 | [CODE-REVIEW-514-r4.md](CODE-REVIEW-514-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — |
-| #513 | [CODE-REVIEW-513-r1.md](CODE-REVIEW-513-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #513 | [CODE-REVIEW-513-r2.md](CODE-REVIEW-513-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #512 | [SPEC-REVIEW-512-r1.md](SPEC-REVIEW-512-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | ТЗ не учитывает, что правка demo/docs/capture.mjs ломает captureScriptSha256 и красит d… |
-| #512 | [SPEC-REVIEW-512-r2.md](SPEC-REVIEW-512-r2.md) | spec · r2 | 🔴 красный | 0 | 0 | — |
-| #512 | [CODE-REVIEW-512-r1.md](CODE-REVIEW-512-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #511 | [SPEC-REVIEW-511-r1.md](SPEC-REVIEW-511-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #511 | [SPEC-REVIEW-511-r2.md](SPEC-REVIEW-511-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #511 | [CODE-REVIEW-511-r1.md](CODE-REVIEW-511-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #510 | [SPEC-REVIEW-510-r1.md](SPEC-REVIEW-510-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #510 | [SPEC-REVIEW-510-r2.md](SPEC-REVIEW-510-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #510 | [SPEC-REVIEW-510-r3.md](SPEC-REVIEW-510-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #510 | [SPEC-REVIEW-510-r4.md](SPEC-REVIEW-510-r4.md) | spec · r4 | 🟡 жёлтый | 0 | 0 | — |
-| #510 | [CODE-REVIEW-510-r1.md](CODE-REVIEW-510-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #510 | [CODE-REVIEW-510-r2.md](CODE-REVIEW-510-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #510 | [CODE-REVIEW-510-r3.md](CODE-REVIEW-510-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #509 | [SPEC-REVIEW-509-r1.md](SPEC-REVIEW-509-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #509 | [SPEC-REVIEW-509-r2.md](SPEC-REVIEW-509-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #509 | [CODE-REVIEW-509-r1.md](CODE-REVIEW-509-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #508 | [SPEC-REVIEW-508-r1.md](SPEC-REVIEW-508-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #508 | [SPEC-REVIEW-508-r2.md](SPEC-REVIEW-508-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #508 | [CODE-REVIEW-508-r1.md](CODE-REVIEW-508-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #508 | [CODE-REVIEW-508-r2.md](CODE-REVIEW-508-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #508 | [CODE-REVIEW-508-r3.md](CODE-REVIEW-508-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #506 | [SPEC-REVIEW-506-r1.md](SPEC-REVIEW-506-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #506 | [CODE-REVIEW-506-r1.md](CODE-REVIEW-506-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #505 | [SPEC-REVIEW-505-r1.md](SPEC-REVIEW-505-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #505 | [SPEC-REVIEW-505-r2.md](SPEC-REVIEW-505-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #505 | [CODE-REVIEW-505-r1.md](CODE-REVIEW-505-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #505 | [CODE-REVIEW-505-r2.md](CODE-REVIEW-505-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #502 | [SPEC-REVIEW-502-r1.md](SPEC-REVIEW-502-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #502 | [CODE-REVIEW-502-r1.md](CODE-REVIEW-502-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #500 | [SPEC-REVIEW-500-r1.md](SPEC-REVIEW-500-r1.md) | spec · r1 | 🟡 жёлтый | 2 | 0 | — |
-| #500 | [SPEC-REVIEW-500-r2.md](SPEC-REVIEW-500-r2.md) | spec · r2 | 🟡 жёлтый | 1 | 0 | — |
-| #500 | [SPEC-REVIEW-500-r3.md](SPEC-REVIEW-500-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — |
-| #500 | [CODE-REVIEW-500-r1.md](CODE-REVIEW-500-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #500 | [CODE-REVIEW-500-r2.md](CODE-REVIEW-500-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #500 | [CODE-REVIEW-500-r3.md](CODE-REVIEW-500-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #498 | [SPEC-REVIEW-498-r1.md](SPEC-REVIEW-498-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #498 | [SPEC-REVIEW-498-r2.md](SPEC-REVIEW-498-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | — |
-| #498 | [CODE-REVIEW-498-r1.md](CODE-REVIEW-498-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #495 | [SPEC-REVIEW-495-r1.md](SPEC-REVIEW-495-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #495 | [CODE-REVIEW-495-r1.md](CODE-REVIEW-495-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #493 | [SPEC-REVIEW-493-r1.md](SPEC-REVIEW-493-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #493 | [CODE-REVIEW-493-r1.md](CODE-REVIEW-493-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #492 | [SPEC-REVIEW-492-r1.md](SPEC-REVIEW-492-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #492 | [SPEC-REVIEW-492-r2.md](SPEC-REVIEW-492-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #492 | [CODE-REVIEW-492-r1.md](CODE-REVIEW-492-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #491 | [SPEC-REVIEW-491-r1.md](SPEC-REVIEW-491-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #491 | [CODE-REVIEW-491-r1.md](CODE-REVIEW-491-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #491 | [CODE-REVIEW-491-r2.md](CODE-REVIEW-491-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #490 | [SPEC-REVIEW-490-r1.md](SPEC-REVIEW-490-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #490 | [CODE-REVIEW-490-r1.md](CODE-REVIEW-490-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Recovery-адаптация обходит asset-readiness gate и continuity-overlay (в скоупе, Medium) |
-| #490 | [CODE-REVIEW-490-r2.md](CODE-REVIEW-490-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #489 | [SPEC-REVIEW-489-r1.md](SPEC-REVIEW-489-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | Условие существования зум-кнопок противоречит текущему рендеру и не-скоупу (Medium, в с…; Гейт свежести документации (check-docs) не назван обязательным при правке src/ (Medium,…; data-hp-mode="device" расходится с уже опубликованным именем mode-devices (Medium, в ск… |
-| #489 | [SPEC-REVIEW-489-r2.md](SPEC-REVIEW-489-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #489 | [CODE-REVIEW-489-r1.md](CODE-REVIEW-489-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #488 | [CODE-REVIEW-488-r1.md](CODE-REVIEW-488-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #487 | [SPEC-REVIEW-487-r1.md](SPEC-REVIEW-487-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #487 | [CODE-REVIEW-487-r1.md](CODE-REVIEW-487-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #486 | [SPEC-REVIEW-486-r1.md](SPEC-REVIEW-486-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | Сверка утверждений о текущем коде с фактическим origin/dev; Проверка полномочий продуктовых решений; Проверка обязательных разделов ТЗ (PROCESS.md §7.1); Проверка непротиворечивости с продуктовым скоупом |
-| #486 | [CODE-REVIEW-486-r1.md](CODE-REVIEW-486-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | 1 Дешёвые гейты — приняты по ссылке, не перегонялись; 2 Тяжёлые гейты — не приняты вслепую, прослежены по истории CI ветки; 3 Что прогнал/перепроверил сам; 4 Вывод smoke-select.mjs (для протокола); 5 Таблица гейтов; 1 High — нет |
-| #485 | [SPEC-REVIEW-485-r1.md](SPEC-REVIEW-485-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #485 | [SPEC-REVIEW-485-r2.md](SPEC-REVIEW-485-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #485 | [SPEC-REVIEW-485-r3.md](SPEC-REVIEW-485-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #485 | [SPEC-REVIEW-485-r4.md](SPEC-REVIEW-485-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — |
-| #485 | [CODE-REVIEW-485-r1.md](CODE-REVIEW-485-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #485 | [CODE-REVIEW-485-r2.md](CODE-REVIEW-485-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #485 | [CODE-REVIEW-485-r3.md](CODE-REVIEW-485-r3.md) | code · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #485 | [CODE-REVIEW-485-r4.md](CODE-REVIEW-485-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — |
-| #484 | [SPEC-REVIEW-484-r1.md](SPEC-REVIEW-484-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #484 | [CODE-REVIEW-484-r1.md](CODE-REVIEW-484-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #483 | [CODE-REVIEW-483-r1.md](CODE-REVIEW-483-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #482 | [SPEC-REVIEW-482-r1.md](SPEC-REVIEW-482-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #482 | [SPEC-REVIEW-482-r2.md](SPEC-REVIEW-482-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #482 | [CODE-REVIEW-482-r1.md](CODE-REVIEW-482-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #481 | [SPEC-REVIEW-481-r1.md](SPEC-REVIEW-481-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #481 | [SPEC-REVIEW-481-r2.md](SPEC-REVIEW-481-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | — |
-| #481 | [CODE-REVIEW-481-r1.md](CODE-REVIEW-481-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #478 | [SPEC-REVIEW-478-r1.md](SPEC-REVIEW-478-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #478 | [CODE-REVIEW-478-r1.md](CODE-REVIEW-478-r1.md) | code · r1 | 🔴 красный | 2 | 4 | — |
-| #478 | [CODE-REVIEW-478-r2.md](CODE-REVIEW-478-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #478 | [CODE-REVIEW-478-r3.md](CODE-REVIEW-478-r3.md) | code · r3 | 🔴 красный | 0 | 0 | — |
-| #477 | [SPEC-REVIEW-477-r1.md](SPEC-REVIEW-477-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #477 | [CODE-REVIEW-477-r1.md](CODE-REVIEW-477-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #476 | [SPEC-REVIEW-476-r1.md](SPEC-REVIEW-476-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #476 | [SPEC-REVIEW-476-r2.md](SPEC-REVIEW-476-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #476 | [CODE-REVIEW-476-r1.md](CODE-REVIEW-476-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #476 | [CODE-REVIEW-476-r2.md](CODE-REVIEW-476-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #476 | [CODE-REVIEW-476-r3.md](CODE-REVIEW-476-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #475 | [SPEC-REVIEW-475-r1.md](SPEC-REVIEW-475-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #475 | [SPEC-REVIEW-475-r2.md](SPEC-REVIEW-475-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #475 | [CODE-REVIEW-475-r1.md](CODE-REVIEW-475-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #475 | [CODE-REVIEW-475-r2.md](CODE-REVIEW-475-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #474 | [SPEC-REVIEW-474-r1.md](SPEC-REVIEW-474-r1.md) | spec · r1 | 🔴 красный | 0 | 0 | — |
-| #474 | [SPEC-REVIEW-474-r2.md](SPEC-REVIEW-474-r2.md) | spec · r2 | 🔴 красный | 0 | 0 | — |
-| #474 | [CODE-REVIEW-474-r1.md](CODE-REVIEW-474-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #473 | [SPEC-REVIEW-473-r1.md](SPEC-REVIEW-473-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #473 | [SPEC-REVIEW-473-r2.md](SPEC-REVIEW-473-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #473 | [CODE-REVIEW-473-r1.md](CODE-REVIEW-473-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #472 | [SPEC-REVIEW-472-r1.md](SPEC-REVIEW-472-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #472 | [SPEC-REVIEW-472-r2.md](SPEC-REVIEW-472-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #472 | [CODE-REVIEW-472-r1.md](CODE-REVIEW-472-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Medium, в скоупе. SHA в отчёте — не тот, что был протестирован; Low, не блокирует. Поиск открытого issue по заголовку не проверен вживую |
-| #472 | [CODE-REVIEW-472-r2.md](CODE-REVIEW-472-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #471 | [SPEC-REVIEW-471-r1.md](SPEC-REVIEW-471-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #471 | [CODE-REVIEW-471-r1.md](CODE-REVIEW-471-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #464 | [SPEC-REVIEW-464-r1.md](SPEC-REVIEW-464-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #464 | [CODE-REVIEW-464-r1.md](CODE-REVIEW-464-r1.md) | code · r1 | 🟡 жёлтый | 1 | 0 | — |
-| #464 | [CODE-REVIEW-464-r2.md](CODE-REVIEW-464-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #463 | [SPEC-REVIEW-463-r1.md](SPEC-REVIEW-463-r1.md) | spec · r1 | ⚪ — | 0 | 0 | — |
-| #463 | [SPEC-REVIEW-463-r2.md](SPEC-REVIEW-463-r2.md) | spec · r2 | 🔴 красный | 0 | 0 | — |
-| #463 | [CODE-REVIEW-463-r1.md](CODE-REVIEW-463-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #462 | [SPEC-REVIEW-462-r1.md](SPEC-REVIEW-462-r1.md) | spec · r1 | ⚪ — | 0 | 0 | — |
-| #462 | [SPEC-REVIEW-462-r2.md](SPEC-REVIEW-462-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #462 | [SPEC-REVIEW-462-r3.md](SPEC-REVIEW-462-r3.md) | spec · r3 | 🔴 красный | 1 | 0 | — |
-| #462 | [CODE-REVIEW-462-r1.md](CODE-REVIEW-462-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | 1 Backend (AC2, AC3, AC4, AC5, AC11); 2 Frontend (AC6–AC10, AC12); 3 Документация (AC1) и артефакты сборки (AC13) |
-| #461 | [SPEC-REVIEW-461-r1.md](SPEC-REVIEW-461-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #461 | [CODE-REVIEW-461-r1.md](CODE-REVIEW-461-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #461 | [CODE-REVIEW-461-r2.md](CODE-REVIEW-461-r2.md) | code · r2 | 🟢 зелёный | 0 | 1 | — |
-| #460 | [SPEC-REVIEW-460-r1.md](SPEC-REVIEW-460-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #460 | [CODE-REVIEW-460-r1.md](CODE-REVIEW-460-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #459 | [SPEC-REVIEW-459-r1.md](SPEC-REVIEW-459-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #459 | [SPEC-REVIEW-459-r2.md](SPEC-REVIEW-459-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #459 | [CODE-REVIEW-459-r1.md](CODE-REVIEW-459-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #459 | [CODE-REVIEW-459-r2.md](CODE-REVIEW-459-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #457 | [SPEC-REVIEW-457-r1.md](SPEC-REVIEW-457-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #457 | [CODE-REVIEW-457-r1.md](CODE-REVIEW-457-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #457 | [CODE-REVIEW-457-r2.md](CODE-REVIEW-457-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #456 | [SPEC-REVIEW-456-r1.md](SPEC-REVIEW-456-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #456 | [CODE-REVIEW-456-r1.md](CODE-REVIEW-456-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | 1 Дешёвые гейты (гоняю сам — зелёного Validate на этом SHA нет); 2 Живой браузерный прогон новой фичи (нет закоммиченного смока — см. M3); check-docs.mjs красный: отпечаток скриншотов устарел; golden:verify красный: footer диалога пространства изменился, эталон не обновлён; заявленный в ТЗ browser smoke для Copy отсутствует |
-| #456 | [CODE-REVIEW-456-r2.md](CODE-REVIEW-456-r2.md) | code · r2 | 🟡 жёлтый | 0 | 3 | 1 Дешёвые гейты — прогнаны заново (код изменился, стоят минуты); 2 Гейты, закрывающие находки r1 — прогнаны целиком (не только для проверки на слово авт…; 3 Не прогонялось повторно — обосновано в §5 «Унаследовано» |
-| #454 | [SPEC-REVIEW-454-r1.md](SPEC-REVIEW-454-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #454 | [SPEC-REVIEW-454-r2.md](SPEC-REVIEW-454-r2.md) | spec · r2 | 🔴 красный | 0 | 0 | — |
-| #454 | [CODE-REVIEW-454-r3.md](CODE-REVIEW-454-r3.md) | code · r3 | 🟢 зелёный | 0 | 1 | — |
-| #454 | [CODE-REVIEW-454-r4.md](CODE-REVIEW-454-r4.md) | code · r4 | 🟡 жёлтый | 0 | 0 | — |
-| #451 | [SPEC-REVIEW-451-r1.md](SPEC-REVIEW-451-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | docs/PERFORMANCE.md не существует, но назван обязательным артефактом (Medium, в скоупе); docs/SCREENSHOTS.md не существует (Medium, в скоупе); верхняя граница диапазона «наблюдавшихся» замеров в §11.3 не подтверждена ни одним исто… |
-| #451 | [SPEC-REVIEW-451-r2.md](SPEC-REVIEW-451-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #451 | [CODE-REVIEW-451-r1.md](CODE-REVIEW-451-r1.md) | code · r1 | 🔴 красный | 1 | 2 | — |
-| #451 | [CODE-REVIEW-451-r2.md](CODE-REVIEW-451-r2.md) | code · r2 | 🔴 красный | 3 | 0 | — |
-| #451 | [CODE-REVIEW-451-r3.md](CODE-REVIEW-451-r3.md) | code · r3 | 🟡 жёлтый | 3 | 1 | не заявленный в ТЗ постоянный отказ от live-preflight на больших планах, противоречит с… |
-| #451 | [CODE-REVIEW-451-r4.md](CODE-REVIEW-451-r4.md) | code · r4 | 🟡 жёлтый | 0 | 1 | — |
-| #450 | [CODE-REVIEW-450-r1.md](CODE-REVIEW-450-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #449 | [SPEC-REVIEW-449-r1.md](SPEC-REVIEW-449-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #449 | [SPEC-REVIEW-449-r2.md](SPEC-REVIEW-449-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #449 | [CODE-REVIEW-449-r1.md](CODE-REVIEW-449-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #449 | [CODE-REVIEW-449-r2.md](CODE-REVIEW-449-r2.md) | code · r2 | 🔴 красный | 3 | 2 | — |
-| #448 | [SPEC-REVIEW-448-r1.md](SPEC-REVIEW-448-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #448 | [SPEC-REVIEW-448-r2.md](SPEC-REVIEW-448-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #448 | [CODE-REVIEW-448-r1.md](CODE-REVIEW-448-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #448 | [CODE-REVIEW-448-r2.md](CODE-REVIEW-448-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #447 | [SPEC-REVIEW-447-r1.md](SPEC-REVIEW-447-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | AC4 и §3 путают единицы «шага сетки»: render-space gridPitch vs normalised GRIDSTEPN, ч… |
-| #447 | [SPEC-REVIEW-447-r2.md](SPEC-REVIEW-447-r2.md) | spec · r2 | 🔴 красный | 0 | 0 | — |
-| #447 | [CODE-REVIEW-447-r1.md](CODE-REVIEW-447-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #445 | [SPEC-REVIEW-445-r1.md](SPEC-REVIEW-445-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #445 | [SPEC-REVIEW-445-r2.md](SPEC-REVIEW-445-r2.md) | spec · r2 | 🟢 зелёный | 0 | 1 | — |
-| #445 | [CODE-REVIEW-445-r1.md](CODE-REVIEW-445-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #443 | [SPEC-REVIEW-443-r1.md](SPEC-REVIEW-443-r1.md) | spec · r1 | ⚪ — | 0 | 0 | — |
-| #443 | [SPEC-REVIEW-443-r2.md](SPEC-REVIEW-443-r2.md) | spec · r2 | ⚪ — | 0 | 0 | — |
-| #443 | [CODE-REVIEW-443-r1.md](CODE-REVIEW-443-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #442 | [SPEC-REVIEW-442-r1.md](SPEC-REVIEW-442-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #442 | [CODE-REVIEW-442-r1.md](CODE-REVIEW-442-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #441 | [CODE-REVIEW-441-r1.md](CODE-REVIEW-441-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #440 | [SPEC-REVIEW-440-r1.md](SPEC-REVIEW-440-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #440 | [CODE-REVIEW-440-r1.md](CODE-REVIEW-440-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #439 | [CODE-REVIEW-439-r1.md](CODE-REVIEW-439-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #437 | [SPEC-REVIEW-437-r1.md](SPEC-REVIEW-437-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #437 | [SPEC-REVIEW-437-r2.md](SPEC-REVIEW-437-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #437 | [CODE-REVIEW-437-r1.md](CODE-REVIEW-437-r1.md) | code · r1 | 🟡 жёлтый | 0 | 4 | существующий смок demo/smokekiosk.mjs падает необработанным исключением на этом SHA; исключение «удалённого устройства» в подсчёте Q2 не имеет свидетеля; tap-target реордер/удаления в форме настроек меньше заявленных 44×44 CSS px; идентичность карточки (AC21) не имеет ни выделенного резолвера, ни свидетеля теста |
-| #437 | [CODE-REVIEW-437-r2.md](CODE-REVIEW-437-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #437 | [CODE-REVIEW-437-r3.md](CODE-REVIEW-437-r3.md) | code · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #437 | [CODE-REVIEW-437-r4.md](CODE-REVIEW-437-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — |
-| #434 | [SPEC-REVIEW-434-r1.md](SPEC-REVIEW-434-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #434 | [SPEC-REVIEW-434-r2.md](SPEC-REVIEW-434-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #434 | [CODE-REVIEW-434-r1.md](CODE-REVIEW-434-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #434 | [CODE-REVIEW-434-r2.md](CODE-REVIEW-434-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #432 | [SPEC-REVIEW-432-r1.md](SPEC-REVIEW-432-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #432 | [CODE-REVIEW-432-r1.md](CODE-REVIEW-432-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #431 | [SPEC-REVIEW-431-r1.md](SPEC-REVIEW-431-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #431 | [CODE-REVIEW-431-r1.md](CODE-REVIEW-431-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #428 | [SPEC-REVIEW-428-r1.md](SPEC-REVIEW-428-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #428 | [CODE-REVIEW-428-r1.md](CODE-REVIEW-428-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | Первопричина и правка contentstate(); contentmanifest() (exporter); Plan-only проекция (projectplanonlydecor, validateplanonlydocument); Тесты (testsbackend/testhaimportexport.py); Документация и changelog (AC8) |
-| #427 | [CODE-REVIEW-427-r1.md](CODE-REVIEW-427-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #426 | [SPEC-REVIEW-426-r1.md](SPEC-REVIEW-426-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #426 | [CODE-REVIEW-426-r1.md](CODE-REVIEW-426-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #425 | [SPEC-REVIEW-425-r1.md](SPEC-REVIEW-425-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #425 | [SPEC-REVIEW-425-r2.md](SPEC-REVIEW-425-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #425 | [CODE-REVIEW-425-r1.md](CODE-REVIEW-425-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #424 | [CODE-REVIEW-424-r2.md](CODE-REVIEW-424-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #423 | [SPEC-REVIEW-423-r1.md](SPEC-REVIEW-423-r1.md) | spec · r1 | ⚪ — | 0 | 0 | — |
-| #423 | [CODE-REVIEW-423-r1.md](CODE-REVIEW-423-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #422 | [SPEC-REVIEW-422-r1.md](SPEC-REVIEW-422-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #422 | [CODE-REVIEW-422-r1.md](CODE-REVIEW-422-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #422 | [CODE-REVIEW-422-r2.md](CODE-REVIEW-422-r2.md) | code · r2 | 🔴 красный | 1 | 2 | — |
-| #421 | [SPEC-REVIEW-421-r1.md](SPEC-REVIEW-421-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #421 | [SPEC-REVIEW-421-r2.md](SPEC-REVIEW-421-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #421 | [CODE-REVIEW-421-r1.md](CODE-REVIEW-421-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #420 | [CODE-REVIEW-420-r1.md](CODE-REVIEW-420-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #419 | [SPEC-REVIEW-419-r1.md](SPEC-REVIEW-419-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #419 | [CODE-REVIEW-419-r1.md](CODE-REVIEW-419-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #418 | [SPEC-REVIEW-418-r1.md](SPEC-REVIEW-418-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #418 | [CODE-REVIEW-418-r1.md](CODE-REVIEW-418-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #417 | [CODE-REVIEW-417-r1.md](CODE-REVIEW-417-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #415 | [CODE-REVIEW-415-r1.md](CODE-REVIEW-415-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #415 | [CODE-REVIEW-415-r2.md](CODE-REVIEW-415-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #411 | [CODE-REVIEW-411-r1.md](CODE-REVIEW-411-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #406 | [SPEC-REVIEW-406-r1.md](SPEC-REVIEW-406-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #406 | [SPEC-REVIEW-406-r2.md](SPEC-REVIEW-406-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | — |
-| #406 | [SPEC-REVIEW-406-r3.md](SPEC-REVIEW-406-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | — |
-| #406 | [SPEC-REVIEW-406-r4.md](SPEC-REVIEW-406-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — |
-| #406 | [CODE-REVIEW-406-r1.md](CODE-REVIEW-406-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #406 | [CODE-REVIEW-406-r2.md](CODE-REVIEW-406-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #405 | [SPEC-REVIEW-405-r1.md](SPEC-REVIEW-405-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | a (Medium, в скоупе) — таблица «Место» неполна: пропущена обёртка houseplan-card.ts:785…; b (Low) — ссылка «#406 «д»» на несуществующий пункт |
-| #405 | [SPEC-REVIEW-405-r2.md](SPEC-REVIEW-405-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #405 | [CODE-REVIEW-405-r1.md](CODE-REVIEW-405-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #403 | [SPEC-REVIEW-403-r1.md](SPEC-REVIEW-403-r1.md) | spec · r1 | ⚪ — | 1 | 0 | — |
-| #403 | [SPEC-REVIEW-403-r2.md](SPEC-REVIEW-403-r2.md) | spec · r2 | 🟢 зелёный | 1 | 0 | — |
-| #403 | [CODE-REVIEW-403-r1.md](CODE-REVIEW-403-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #402 | [SPEC-REVIEW-402-r1.md](SPEC-REVIEW-402-r1.md) | spec · r1 | ⚪ — | 1 | 1 | — |
-| #402 | [SPEC-REVIEW-402-r2.md](SPEC-REVIEW-402-r2.md) | spec · r2 | 🔴 красный | 1 | 1 | — |
-| #402 | [CODE-REVIEW-402-r1.md](CODE-REVIEW-402-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | AC2 не покрыт смоком буквально (ветки fixedfloor pending/invalid, !space); AC3 не проверен буквальным сценарием issue (клик по корзине → deleteServerPlan); AC8: тап по scrim не проверен явно; confirmDanger не проверяет языковой гейт warm явно |
-| #400 | [SPEC-REVIEW-400-r1.md](SPEC-REVIEW-400-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #400 | [CODE-REVIEW-400-r1.md](CODE-REVIEW-400-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #400 | [CODE-REVIEW-400-r2.md](CODE-REVIEW-400-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #400 | [CODE-REVIEW-400-r3.md](CODE-REVIEW-400-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #399 | [SPEC-REVIEW-399-r1.md](SPEC-REVIEW-399-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #399 | [SPEC-REVIEW-399-r2.md](SPEC-REVIEW-399-r2.md) | spec · r2 | 🟢 зелёный | 0 | 1 | — |
-| #399 | [CODE-REVIEW-399-r1.md](CODE-REVIEW-399-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #399 | [CODE-REVIEW-399-r2.md](CODE-REVIEW-399-r2.md) | code · r2 | 🟡 жёлтый | 1 | 0 | — |
-| #398 | [SPEC-REVIEW-398-r1.md](SPEC-REVIEW-398-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #398 | [SPEC-REVIEW-398-r2.md](SPEC-REVIEW-398-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #398 | [SPEC-REVIEW-398-r3.md](SPEC-REVIEW-398-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #398 | [CODE-REVIEW-398-r1.md](CODE-REVIEW-398-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #397 | [SPEC-REVIEW-397-r1.md](SPEC-REVIEW-397-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #397 | [SPEC-REVIEW-397-r2.md](SPEC-REVIEW-397-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #397 | [CODE-REVIEW-397-r1.md](CODE-REVIEW-397-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #397 | [CODE-REVIEW-397-r2.md](CODE-REVIEW-397-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #396 | [SPEC-REVIEW-396-r1.md](SPEC-REVIEW-396-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | — |
-| #396 | [SPEC-REVIEW-396-r2.md](SPEC-REVIEW-396-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #396 | [SPEC-REVIEW-396-r3.md](SPEC-REVIEW-396-r3.md) | spec · r3 | 🔴 красный | 0 | 0 | — |
-| #396 | [CODE-REVIEW-396-r1.md](CODE-REVIEW-396-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #396 | [CODE-REVIEW-396-r2.md](CODE-REVIEW-396-r2.md) | code · r2 | ⚪ — | 0 | 0 | — |
-| #391 | [SPEC-REVIEW-391-r1.md](SPEC-REVIEW-391-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #391 | [CODE-REVIEW-391-r1.md](CODE-REVIEW-391-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #391 | [CODE-REVIEW-391-r2.md](CODE-REVIEW-391-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #390 | [CODE-REVIEW-390-r1.md](CODE-REVIEW-390-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #389 | [CODE-REVIEW-389-r1.md](CODE-REVIEW-389-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #385 | [SPEC-REVIEW-385-r1.md](SPEC-REVIEW-385-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #385 | [SPEC-REVIEW-385-r2.md](SPEC-REVIEW-385-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #385 | [CODE-REVIEW-385-r1.md](CODE-REVIEW-385-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #385 | [CODE-REVIEW-385-r2.md](CODE-REVIEW-385-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #385 | [CODE-REVIEW-385-r3.md](CODE-REVIEW-385-r3.md) | code · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #384 | [SPEC-REVIEW-384-r1.md](SPEC-REVIEW-384-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #384 | [SPEC-REVIEW-384-r2.md](SPEC-REVIEW-384-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #384 | [CODE-REVIEW-384-r1.md](CODE-REVIEW-384-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #383 | [SPEC-REVIEW-383-r1.md](SPEC-REVIEW-383-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #383 | [CODE-REVIEW-383-r1.md](CODE-REVIEW-383-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #383 | [CODE-REVIEW-383-r2.md](CODE-REVIEW-383-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #381 | [SPEC-REVIEW-381-r1.md](SPEC-REVIEW-381-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #381 | [SPEC-REVIEW-381-r2.md](SPEC-REVIEW-381-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #381 | [CODE-REVIEW-381-r1.md](CODE-REVIEW-381-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #378 | [SPEC-REVIEW-378-r1.md](SPEC-REVIEW-378-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #378 | [CODE-REVIEW-378-r1.md](CODE-REVIEW-378-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #378 | [CODE-REVIEW-378-r2.md](CODE-REVIEW-378-r2.md) | code · r2 | 🟢 зелёный | 0 | 1 | — |
-| #377 | [SPEC-REVIEW-377-r1.md](SPEC-REVIEW-377-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #377 | [SPEC-REVIEW-377-r2.md](SPEC-REVIEW-377-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #377 | [CODE-REVIEW-377-r1.md](CODE-REVIEW-377-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #377 | [CODE-REVIEW-377-r2.md](CODE-REVIEW-377-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #376 | [SPEC-REVIEW-376-r1.md](SPEC-REVIEW-376-r1.md) | spec · r1 | 🔴 красный | 1 | 2 | — |
-| #376 | [SPEC-REVIEW-376-r2.md](SPEC-REVIEW-376-r2.md) | spec · r2 | 🟢 зелёный | 1 | 2 | Тело issue #376, строка сразу после заголовка «# ТЗ (лёгкий трек, редакция 2)»; gh issu…; Тело issue #376, раздел 6 (отсутствовал в редакции 1); Тело issue #376, раздел «2. AC», пункты 2 и 4 (в редакции 1 их не было — было только AC… |
-| #376 | [CODE-REVIEW-376-r1.md](CODE-REVIEW-376-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #376 | [CODE-REVIEW-376-r2.md](CODE-REVIEW-376-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #376 | [CODE-REVIEW-376-r3.md](CODE-REVIEW-376-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #375 | [SPEC-REVIEW-375-r1.md](SPEC-REVIEW-375-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #375 | [SPEC-REVIEW-375-r2.md](SPEC-REVIEW-375-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #375 | [CODE-REVIEW-375-r1.md](CODE-REVIEW-375-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #374 | [SPEC-REVIEW-374-r1.md](SPEC-REVIEW-374-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #374 | [CODE-REVIEW-374-r1.md](CODE-REVIEW-374-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #373 | [SPEC-REVIEW-373-r1.md](SPEC-REVIEW-373-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #373 | [CODE-REVIEW-373-r1.md](CODE-REVIEW-373-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #373 | [CODE-REVIEW-373-r2.md](CODE-REVIEW-373-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #372 | [SPEC-REVIEW-372-r1.md](SPEC-REVIEW-372-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #372 | [CODE-REVIEW-372-r1.md](CODE-REVIEW-372-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #371 | [SPEC-REVIEW-371-r1.md](SPEC-REVIEW-371-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #371 | [SPEC-REVIEW-371-r2.md](SPEC-REVIEW-371-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #371 | [CODE-REVIEW-371-r1.md](CODE-REVIEW-371-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #371 | [CODE-REVIEW-371-r2.md](CODE-REVIEW-371-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #369 | [SPEC-REVIEW-369-r1.md](SPEC-REVIEW-369-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | — |
-| #369 | [CODE-REVIEW-369-r3.md](CODE-REVIEW-369-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #368 | [CODE-REVIEW-368-r1.md](CODE-REVIEW-368-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #366 | [SPEC-REVIEW-366-r1.md](SPEC-REVIEW-366-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #366 | [SPEC-REVIEW-366-r2.md](SPEC-REVIEW-366-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #366 | [CODE-REVIEW-366-r1.md](CODE-REVIEW-366-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #363 | [SPEC-REVIEW-363-r1.md](SPEC-REVIEW-363-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | — |
-| #363 | [CODE-REVIEW-363-r2.md](CODE-REVIEW-363-r2.md) | code · r2 | ⚪ — | 0 | 0 | — |
-| #362 | [SPEC-REVIEW-362-r1.md](SPEC-REVIEW-362-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #362 | [CODE-REVIEW-362-r1.md](CODE-REVIEW-362-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #361 | [SPEC-REVIEW-361-r1.md](SPEC-REVIEW-361-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #361 | [SPEC-REVIEW-361-r2.md](SPEC-REVIEW-361-r2.md) | spec · r2 | 🟢 зелёный | 0 | 1 | — |
-| #361 | [CODE-REVIEW-361-r1.md](CODE-REVIEW-361-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #361 | [CODE-REVIEW-361-r2.md](CODE-REVIEW-361-r2.md) | code · r2 | ⚪ — | 0 | 1 | — |
-| #360 | [SPEC-REVIEW-360-r1.md](SPEC-REVIEW-360-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #360 | [SPEC-REVIEW-360-r2.md](SPEC-REVIEW-360-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #360 | [CODE-REVIEW-360-r1.md](CODE-REVIEW-360-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #360 | [CODE-REVIEW-360-r2.md](CODE-REVIEW-360-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #359 | [SPEC-REVIEW-359-r1.md](SPEC-REVIEW-359-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #359 | [SPEC-REVIEW-359-r2.md](SPEC-REVIEW-359-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #359 | [CODE-REVIEW-359-r1.md](CODE-REVIEW-359-r1.md) | code · r1 | 🔴 красный | 1 | 0 | — |
-| #359 | [CODE-REVIEW-359-r2.md](CODE-REVIEW-359-r2.md) | code · r2 | 🔴 красный | 0 | 0 | — |
-| #358 | [SPEC-REVIEW-358-r1.md](SPEC-REVIEW-358-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #358 | [CODE-REVIEW-358-r1.md](CODE-REVIEW-358-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #357 | [SPEC-REVIEW-357-r1.md](SPEC-REVIEW-357-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #357 | [CODE-REVIEW-357-r1.md](CODE-REVIEW-357-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #356 | [CODE-REVIEW-356-r1.md](CODE-REVIEW-356-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #354 | [SPEC-REVIEW-354-r1.md](SPEC-REVIEW-354-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #354 | [CODE-REVIEW-354-r1.md](CODE-REVIEW-354-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #354 | [CODE-REVIEW-354-r2.md](CODE-REVIEW-354-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #353 | [SPEC-REVIEW-353-r1.md](SPEC-REVIEW-353-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | — |
-| #353 | [SPEC-REVIEW-353-r2.md](SPEC-REVIEW-353-r2.md) | spec · r2 | 🟡 жёлтый | 1 | 1 | — |
-| #353 | [CODE-REVIEW-353-r1.md](CODE-REVIEW-353-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #348 | [SPEC-REVIEW-348-r1.md](SPEC-REVIEW-348-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | de-CH унаследует «ß», хотя стандартная швейцарская орфография его не использует; явного блока «принято предположительно, поменять свободно» в конце документа нет |
-| #348 | [CODE-REVIEW-348-r1.md](CODE-REVIEW-348-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #348 | [CODE-REVIEW-348-r2.md](CODE-REVIEW-348-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #341 | [CODE-REVIEW-341-r1.md](CODE-REVIEW-341-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #340 | [SPEC-REVIEW-340-r1.md](SPEC-REVIEW-340-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | — |
-| #340 | [CODE-REVIEW-340-r1.md](CODE-REVIEW-340-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #339 | [CODE-REVIEW-339-r1.md](CODE-REVIEW-339-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #337 | [SPEC-REVIEW-337-r1.md](SPEC-REVIEW-337-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #337 | [CODE-REVIEW-337-r1.md](CODE-REVIEW-337-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #337 | [CODE-REVIEW-337-r2.md](CODE-REVIEW-337-r2.md) | code · r2 | 🔴 красный | 0 | 0 | — |
-| #337 | [CODE-REVIEW-337-r3.md](CODE-REVIEW-337-r3.md) | code · r3 | 🔴 красный | 1 | 0 | — |
-| #337 | [CODE-REVIEW-337-r4.md](CODE-REVIEW-337-r4.md) | code · r4 | 🟢 зелёный | 1 | 0 | — |
-| #335 | [SPEC-REVIEW-335-r1.md](SPEC-REVIEW-335-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | — |
-| #335 | [SPEC-REVIEW-335-r2.md](SPEC-REVIEW-335-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #335 | [CODE-REVIEW-335-r1.md](CODE-REVIEW-335-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #333 | [SPEC-REVIEW-333-r1.md](SPEC-REVIEW-333-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC4 называет способ доказательства, который не проверяет заявленное (Medium, в скоупе з… |
-| #333 | [SPEC-REVIEW-333-r2.md](SPEC-REVIEW-333-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #333 | [CODE-REVIEW-333-r1.md](CODE-REVIEW-333-r1.md) | code · r1 | 🟡 жёлтый | 1 | 1 | — |
-| #333 | [CODE-REVIEW-333-r2.md](CODE-REVIEW-333-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #331 | [SPEC-REVIEW-331-r1.md](SPEC-REVIEW-331-r1.md) | spec · r1 | 🔴 красный | 1 | 4 | — |
-| #331 | [SPEC-REVIEW-331-r2.md](SPEC-REVIEW-331-r2.md) | spec · r2 | 🔴 красный | 0 | 1 | — |
-| #331 | [SPEC-REVIEW-331-r3.md](SPEC-REVIEW-331-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #331 | [CODE-REVIEW-331-r1.md](CODE-REVIEW-331-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #330 | [SPEC-REVIEW-330-r1.md](SPEC-REVIEW-330-r1.md) | spec · r1 | ⚪ — | 2 | 1 | Перф-бюджеты §5 недостижимы решением из §4: AC2 и AC6 непроверяемы как написаны; AC4 ссылается на бенч, который не вызывает изменяемый код; Отсутствуют обязательные разделы ТЗ по §7.1: i18n, touch, риски, release-артефакты |
-| #330 | [SPEC-REVIEW-330-r2.md](SPEC-REVIEW-330-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #330 | [CODE-REVIEW-330-r2.md](CODE-REVIEW-330-r2.md) | code · r2 | ⚪ — | 0 | 1 | — |
-| #330 | [CODE-REVIEW-330-r3.md](CODE-REVIEW-330-r3.md) | code · r3 | 🔴 красный | 1 | 0 | докс-гейт красный на HEAD ревью (в скоупе, блокирует) |
-| #330 | [CODE-REVIEW-330-r4.md](CODE-REVIEW-330-r4.md) | code · r4 | 🟡 жёлтый | 1 | 0 | — |
-| #329 | [SPEC-REVIEW-329-r1.md](SPEC-REVIEW-329-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #329 | [SPEC-REVIEW-329-r2.md](SPEC-REVIEW-329-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #329 | [SPEC-REVIEW-329-r3.md](SPEC-REVIEW-329-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #329 | [CODE-REVIEW-329-r1.md](CODE-REVIEW-329-r1.md) | code · r1 | 🔴 красный | 1 | 4 | — |
-| #329 | [CODE-REVIEW-329-r2.md](CODE-REVIEW-329-r2.md) | code · r2 | 🔴 красный | 1 | 4 | — |
-| #329 | [CODE-REVIEW-329-r3.md](CODE-REVIEW-329-r3.md) | code · r3 | 🔴 красный | 0 | 0 | — |
-| #324 | [CODE-REVIEW-324-r1.md](CODE-REVIEW-324-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #323 | [CODE-REVIEW-323-r1.md](CODE-REVIEW-323-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #319 | [SPEC-REVIEW-319-r1.md](SPEC-REVIEW-319-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #319 | [CODE-REVIEW-319-r1.md](CODE-REVIEW-319-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #318 | [SPEC-REVIEW-318-r1.md](SPEC-REVIEW-318-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #318 | [CODE-REVIEW-318-r1.md](CODE-REVIEW-318-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #317 | [SPEC-REVIEW-317-r1.md](SPEC-REVIEW-317-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #317 | [CODE-REVIEW-317-r1.md](CODE-REVIEW-317-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #316 | [SPEC-REVIEW-316-r1.md](SPEC-REVIEW-316-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #316 | [SPEC-REVIEW-316-r2.md](SPEC-REVIEW-316-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | — |
-| #316 | [SPEC-REVIEW-316-r3.md](SPEC-REVIEW-316-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | — |
-| #316 | [SPEC-REVIEW-316-r4.md](SPEC-REVIEW-316-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — |
-| #316 | [CODE-REVIEW-316-r1.md](CODE-REVIEW-316-r1.md) | code · r1 | 🔴 красный | 1 | 1 | — |
-| #316 | [CODE-REVIEW-316-r2.md](CODE-REVIEW-316-r2.md) | code · r2 | 🔴 красный | 1 | 1 | — |
-| #314 | [SPEC-REVIEW-314-r1.md](SPEC-REVIEW-314-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #314 | [CODE-REVIEW-314-r1.md](CODE-REVIEW-314-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #313 | [SPEC-REVIEW-313-r1.md](SPEC-REVIEW-313-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #313 | [CODE-REVIEW-313-r1.md](CODE-REVIEW-313-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #313 | [CODE-REVIEW-313-r2.md](CODE-REVIEW-313-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #310 | [SPEC-REVIEW-310-r1.md](SPEC-REVIEW-310-r1.md) | spec · r1 | 🔴 красный | 0 | 0 | — |
-| #310 | [SPEC-REVIEW-310-r2.md](SPEC-REVIEW-310-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #310 | [CODE-REVIEW-310-r1.md](CODE-REVIEW-310-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #310 | [CODE-REVIEW-310-r2.md](CODE-REVIEW-310-r2.md) | code · r2 | 🟡 жёлтый | 1 | 1 | 1 Честность нового Baseline-Reviewed; 2 Новый юнит-тест — умеет падать |
-| #309 | [SPEC-REVIEW-309-r1.md](SPEC-REVIEW-309-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #309 | [SPEC-REVIEW-309-r2.md](SPEC-REVIEW-309-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #309 | [SPEC-REVIEW-309-r3.md](SPEC-REVIEW-309-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | — |
-| #309 | [CODE-REVIEW-309-r1.md](CODE-REVIEW-309-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #309 | [CODE-REVIEW-309-r2.md](CODE-REVIEW-309-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #307 | [SPEC-REVIEW-307-r1.md](SPEC-REVIEW-307-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #307 | [CODE-REVIEW-307-r1.md](CODE-REVIEW-307-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #306 | [SPEC-REVIEW-306-r1.md](SPEC-REVIEW-306-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #306 | [SPEC-REVIEW-306-r2.md](SPEC-REVIEW-306-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #306 | [CODE-REVIEW-306-r1.md](CODE-REVIEW-306-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | 1 Гейты — что прогнано; 2 Что НЕ прогонялось и почему |
-| #306 | [CODE-REVIEW-306-r2.md](CODE-REVIEW-306-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | 1 Гейты — что прогнано лично; 2 Что НЕ прогонялось и почему; 3 Разбор смок-выборки по дельте |
-| #304 | [SPEC-REVIEW-304-r1.md](SPEC-REVIEW-304-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #304 | [CODE-REVIEW-304-r1.md](CODE-REVIEW-304-r1.md) | code · r1 | 🟡 жёлтый | 1 | 0 | — |
-| #304 | [CODE-REVIEW-304-r2.md](CODE-REVIEW-304-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #303 | [SPEC-REVIEW-303-r1.md](SPEC-REVIEW-303-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #303 | [CODE-REVIEW-303-r1.md](CODE-REVIEW-303-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | счёт unit-тестов в отчёте разработчика на единицу отличается от факта |
-| #302 | [SPEC-REVIEW-302-r1.md](SPEC-REVIEW-302-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #302 | [CODE-REVIEW-302-r1.md](CODE-REVIEW-302-r1.md) | code · r1 | ⚪ — | 0 | 2 | — |
-| #302 | [CODE-REVIEW-302-r2.md](CODE-REVIEW-302-r2.md) | code · r2 | ⚪ — | 0 | 1 | — |
-| #302 | [CODE-REVIEW-302-r4.md](CODE-REVIEW-302-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — |
-| #301 | [SPEC-REVIEW-301-r1.md](SPEC-REVIEW-301-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #301 | [CODE-REVIEW-301-r1.md](CODE-REVIEW-301-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #300 | [SPEC-REVIEW-300-r1.md](SPEC-REVIEW-300-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #300 | [SPEC-REVIEW-300-r2.md](SPEC-REVIEW-300-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #300 | [SPEC-REVIEW-300-r3.md](SPEC-REVIEW-300-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | — |
-| #300 | [SPEC-REVIEW-300-r4.md](SPEC-REVIEW-300-r4.md) | spec · r4 | 🟡 жёлтый | 0 | 0 | — |
-| #299 | [SPEC-REVIEW-299-r1.md](SPEC-REVIEW-299-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #298 | [SPEC-REVIEW-298-r1.md](SPEC-REVIEW-298-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #298 | [SPEC-REVIEW-298-r2.md](SPEC-REVIEW-298-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #298 | [CODE-REVIEW-298-r1.md](CODE-REVIEW-298-r1.md) | code · r1 | 🔴 красный | 2 | 0 | — |
-| #296 | [SPEC-REVIEW-296-r1.md](SPEC-REVIEW-296-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #296 | [CODE-REVIEW-296-r1.md](CODE-REVIEW-296-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #295 | [SPEC-REVIEW-295-r1.md](SPEC-REVIEW-295-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | — |
-| #295 | [SPEC-REVIEW-295-r2.md](SPEC-REVIEW-295-r2.md) | spec · r2 | 🟡 жёлтый | 1 | 1 | — |
-| #295 | [CODE-REVIEW-295-r1.md](CODE-REVIEW-295-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #295 | [CODE-REVIEW-295-r2.md](CODE-REVIEW-295-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #294 | [SPEC-REVIEW-294-r1.md](SPEC-REVIEW-294-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #294 | [SPEC-REVIEW-294-r2.md](SPEC-REVIEW-294-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #294 | [CODE-REVIEW-294-r1.md](CODE-REVIEW-294-r1.md) | code · r1 | 🔴 красный | 0 | 2 | — |
-| #294 | [CODE-REVIEW-294-r2.md](CODE-REVIEW-294-r2.md) | code · r2 | 🟢 зелёный | 0 | 2 | — |
-| #293 | [SPEC-REVIEW-293-r1.md](SPEC-REVIEW-293-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #293 | [SPEC-REVIEW-293-r2.md](SPEC-REVIEW-293-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #293 | [CODE-REVIEW-293-r1.md](CODE-REVIEW-293-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #292 | [SPEC-REVIEW-292-r1.md](SPEC-REVIEW-292-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #292 | [SPEC-REVIEW-292-r2.md](SPEC-REVIEW-292-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #292 | [CODE-REVIEW-292-r1.md](CODE-REVIEW-292-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #291 | [SPEC-REVIEW-291-r1.md](SPEC-REVIEW-291-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #291 | [SPEC-REVIEW-291-r2.md](SPEC-REVIEW-291-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #291 | [SPEC-REVIEW-291-r3.md](SPEC-REVIEW-291-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #291 | [CODE-REVIEW-291-r1.md](CODE-REVIEW-291-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #291 | [CODE-REVIEW-291-r2.md](CODE-REVIEW-291-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #290 | [SPEC-REVIEW-290-r1.md](SPEC-REVIEW-290-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #290 | [SPEC-REVIEW-290-r2.md](SPEC-REVIEW-290-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #290 | [CODE-REVIEW-290-r1.md](CODE-REVIEW-290-r1.md) | code · r1 | 🔴 красный | 1 | 2 | 1 Смок-выборка; 2 Инварианты и AC10 — реальные планы |
-| #290 | [CODE-REVIEW-290-r2.md](CODE-REVIEW-290-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | 1 Смок-выборка; 1 Проверка закрытия High H1 (не декларативно — воспроизведением на обоих состояниях кода); 2 Проверка закрытия Medium M1 (mutation-gate); 3 Проверка закрытия Medium M2 (AC10 автотест) |
-| #290 | [CODE-REVIEW-290-r3.md](CODE-REVIEW-290-r3.md) | code · r3 | ⚪ — | 0 | 0 | — |
-| #290 | [CODE-REVIEW-290-r4.md](CODE-REVIEW-290-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — |
-| #289 | [SPEC-REVIEW-289-r1.md](SPEC-REVIEW-289-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | — |
-| #289 | [SPEC-REVIEW-289-r2.md](SPEC-REVIEW-289-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #289 | [CODE-REVIEW-289-r1.md](CODE-REVIEW-289-r1.md) | code · r1 | 🟢 зелёный | 1 | 1 | Незапланированный код #260 в ветке #289 ломает два golden-эталона, третий не принят (Hi…; Golden-эталон safe-resize-handles-clamp-{dark,light} не обновлён под настоящее поведени… |
-| #289 | [CODE-REVIEW-289-r2.md](CODE-REVIEW-289-r2.md) | code · r2 | 🟢 зелёный | 1 | 1 | — |
-| #288 | [SPEC-REVIEW-288-r1.md](SPEC-REVIEW-288-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | — |
-| #288 | [SPEC-REVIEW-288-r2.md](SPEC-REVIEW-288-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #288 | [CODE-REVIEW-288-r1.md](CODE-REVIEW-288-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #288 | [CODE-REVIEW-288-r2.md](CODE-REVIEW-288-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #288 | [CODE-REVIEW-288-r3.md](CODE-REVIEW-288-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #282 | [SPEC-REVIEW-282-r1.md](SPEC-REVIEW-282-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #282 | [SPEC-REVIEW-282-r2.md](SPEC-REVIEW-282-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | — |
-| #282 | [CODE-REVIEW-282-r1.md](CODE-REVIEW-282-r1.md) | code · r1 | 🔴 красный | 2 | 4 | #278-guard «отклонить правку деградированного пространства» больше не срабатывает; Широкая регрессия структурных операций редактирования; AC15 добавил новую строку в Optimize-диалог — golden baseline не обновлён; AC5 «executable source/AST guard + bypass mutant for each writer family» реализован уже…; wallmodelclientoutdated не срабатывает в реалистичном сценарии старого клиента; Регрессионный тест issue #248 ослаблен без обновления фикстуры |
-| #282 | [CODE-REVIEW-282-r2.md](CODE-REVIEW-282-r2.md) | code · r2 | 🔴 красный | 2 | 0 | npm test красный: диагностика больше не соответствует контракту, который сама же проверяет; AC7 нарушен: opening на обычной стене исчезает со Static-карточки после миграции в v8 |
-| #282 | [CODE-REVIEW-282-r3.md](CODE-REVIEW-282-r3.md) | code · r3 | 🔴 красный | 1 | 0 | AC7 всё ещё нарушен: Static-карточка рисует сплошную стену прямо по месту прохода после… |
-| #282 | [CODE-REVIEW-282-r4.md](CODE-REVIEW-282-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — |
-| #278 | [SPEC-REVIEW-278-r1.md](SPEC-REVIEW-278-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #278 | [SPEC-REVIEW-278-r2.md](SPEC-REVIEW-278-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #278 | [CODE-REVIEW-278-r1.md](CODE-REVIEW-278-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #278 | [CODE-REVIEW-278-r2.md](CODE-REVIEW-278-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #277 | [SPEC-REVIEW-277-r1.md](SPEC-REVIEW-277-r1.md) | spec · r1 | ⚪ — | 0 | 3 | нет обязательного раздела «риски» (§7.1); нет обязательного «что человек увидит до и после» одной фразой без терминов реализации …; из плана тестов выпала обязательная анонимизированная fixture реального плана |
-| #277 | [SPEC-REVIEW-277-r2.md](SPEC-REVIEW-277-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #277 | [CODE-REVIEW-277-r1.md](CODE-REVIEW-277-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #277 | [CODE-REVIEW-277-r2.md](CODE-REVIEW-277-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #276 | [SPEC-REVIEW-276-r1.md](SPEC-REVIEW-276-r1.md) | spec · r1 | 🔴 красный | 1 | 3 | — |
-| #276 | [SPEC-REVIEW-276-r2.md](SPEC-REVIEW-276-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #276 | [SPEC-REVIEW-276-r3.md](SPEC-REVIEW-276-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — |
-| #276 | [CODE-REVIEW-276-r1.md](CODE-REVIEW-276-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | AC11 (перф-бюджет §10) не доказан ни автотестом, ни явным; AC3 «несколько hosted openings на одной partition» не покрыто тестом; AC5 «targeted golden» не добавлен ни в каком виде |
-| #276 | [CODE-REVIEW-276-r2.md](CODE-REVIEW-276-r2.md) | code · r2 | 🟡 жёлтый | 0 | 3 | r2 (Medium, в скоупе, чинится тем же автором) — benchmark:coincident-partitions даёт си… |
-| #276 | [CODE-REVIEW-276-r3.md](CODE-REVIEW-276-r3.md) | code · r3 | 🟡 жёлтый | 0 | 1 | — |
-| #275 | [SPEC-REVIEW-275-r1.md](SPEC-REVIEW-275-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #275 | [SPEC-REVIEW-275-r2.md](SPEC-REVIEW-275-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #275 | [SPEC-REVIEW-275-r3.md](SPEC-REVIEW-275-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #275 | [CODE-REVIEW-275-r1.md](CODE-REVIEW-275-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #274 | [SPEC-REVIEW-274-r1.md](SPEC-REVIEW-274-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #274 | [CODE-REVIEW-274-r1.md](CODE-REVIEW-274-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #273 | [SPEC-REVIEW-273-r1.md](SPEC-REVIEW-273-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #273 | [SPEC-REVIEW-273-r2.md](SPEC-REVIEW-273-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #273 | [CODE-REVIEW-273-r1.md](CODE-REVIEW-273-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #272 | [SPEC-REVIEW-272-r1.md](SPEC-REVIEW-272-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #272 | [SPEC-REVIEW-272-r2.md](SPEC-REVIEW-272-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #272 | [CODE-REVIEW-272-r1.md](CODE-REVIEW-272-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #271 | [SPEC-REVIEW-271-r1.md](SPEC-REVIEW-271-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #271 | [CODE-REVIEW-271-r1.md](CODE-REVIEW-271-r1.md) | code · r1 | 🔴 красный | 1 | 1 | — |
-| #271 | [CODE-REVIEW-271-r2.md](CODE-REVIEW-271-r2.md) | code · r2 | 🟢 зелёный | 1 | 1 | — |
-| #271 | [CODE-REVIEW-271-r3.md](CODE-REVIEW-271-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #269 | [CODE-REVIEW-269-r1.md](CODE-REVIEW-269-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #267 | [SPEC-REVIEW-267-r1.md](SPEC-REVIEW-267-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #267 | [CODE-REVIEW-267-r1.md](CODE-REVIEW-267-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #267 | [CODE-REVIEW-267-r2.md](CODE-REVIEW-267-r2.md) | code · r2 | 🔴 красный | 0 | 0 | — |
-| #266 | [SPEC-REVIEW-266-r1.md](SPEC-REVIEW-266-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Medium (в скоупе) — заявленный «объективный критерий» (golden) не видит два реальных CS…; Low — неверная классификация вспомогательного скрипта; Low (наблюдение, не требует правки ТЗ) — лимит «≤ 1200 строк» на файл (AC2) может не вы… |
-| #266 | [SPEC-REVIEW-266-r2.md](SPEC-REVIEW-266-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | Medium (в скоупе) — новый AC2 противоречит сам себе: заявленный порог суммы уже нарушен… |
-| #266 | [SPEC-REVIEW-266-r3.md](SPEC-REVIEW-266-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #266 | [CODE-REVIEW-266-r1.md](CODE-REVIEW-266-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #265 | [SPEC-REVIEW-265-r1.md](SPEC-REVIEW-265-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 4 | «что человек увидит» слито со сценарием и написано языком реализации; поверхность/touch…; AC10 хеджирует «если отчёт станет виден пользователю», хотя §9 безусловно описывает нов…; AC1–AC9 не называют способ доказательства (в отличие от требования DoR и от прямого сос…; нет отдельного обязательного раздела «Риски» |
-| #265 | [SPEC-REVIEW-265-r2.md](SPEC-REVIEW-265-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | AC10 называет несуществующий гейт check-i18n как обязательное доказательство (Medium, в… |
-| #265 | [SPEC-REVIEW-265-r3.md](SPEC-REVIEW-265-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — |
-| #265 | [CODE-REVIEW-265-r1.md](CODE-REVIEW-265-r1.md) | code · r1 | 🔴 красный | 1 | 2 | — |
-| #264 | [SPEC-REVIEW-264-r1.md](SPEC-REVIEW-264-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #264 | [SPEC-REVIEW-264-r2.md](SPEC-REVIEW-264-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #264 | [CODE-REVIEW-264-r1.md](CODE-REVIEW-264-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #262 | [SPEC-REVIEW-262-r1.md](SPEC-REVIEW-262-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #262 | [CODE-REVIEW-262-r1.md](CODE-REVIEW-262-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #261 | [SPEC-REVIEW-261-r1.md](SPEC-REVIEW-261-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #261 | [CODE-REVIEW-261-r1.md](CODE-REVIEW-261-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #258 | [SPEC-REVIEW-258-r1.md](SPEC-REVIEW-258-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #258 | [CODE-REVIEW-258-r1.md](CODE-REVIEW-258-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #258 | [CODE-REVIEW-258-r2.md](CODE-REVIEW-258-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #256 | [CODE-REVIEW-256-r1.md](CODE-REVIEW-256-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #253 | [SPEC-REVIEW-253-r1.md](SPEC-REVIEW-253-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #253 | [CODE-REVIEW-253-r1.md](CODE-REVIEW-253-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #252 | [SPEC-REVIEW-252-r1.md](SPEC-REVIEW-252-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #252 | [SPEC-REVIEW-252-r2.md](SPEC-REVIEW-252-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #252 | [CODE-REVIEW-252-r1.md](CODE-REVIEW-252-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #252 | [CODE-REVIEW-252-r2.md](CODE-REVIEW-252-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #251 | [SPEC-REVIEW-251-r1.md](SPEC-REVIEW-251-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | не проговорено соответствие toast'а формулировке владельца «стандартными средствами HA»; не решён смешанный secure + unavailable случай в группе controls |
-| #251 | [CODE-REVIEW-251-r1.md](CODE-REVIEW-251-r1.md) | code · r1 | ⚪ — | 1 | 0 | — |
-| #251 | [CODE-REVIEW-251-r2.md](CODE-REVIEW-251-r2.md) | code · r2 | 🔴 красный | 1 | 0 | — |
-| #251 | [CODE-REVIEW-251-r3.md](CODE-REVIEW-251-r3.md) | code · r3 | 🔴 красный | 1 | 0 | — |
-| #250 | [SPEC-REVIEW-250-r1.md](SPEC-REVIEW-250-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #250 | [CODE-REVIEW-250-r1.md](CODE-REVIEW-250-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #250 | [CODE-REVIEW-250-r2.md](CODE-REVIEW-250-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #249 | [SPEC-REVIEW-249-r1.md](SPEC-REVIEW-249-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #249 | [SPEC-REVIEW-249-r2.md](SPEC-REVIEW-249-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #249 | [CODE-REVIEW-249-r1.md](CODE-REVIEW-249-r1.md) | code · r1 | 🔴 красный | 1 | 1 | — |
-| #249 | [CODE-REVIEW-249-r2.md](CODE-REVIEW-249-r2.md) | code · r2 | ⚪ — | 0 | 0 | — |
-| #248 | [SPEC-REVIEW-248-r1.md](SPEC-REVIEW-248-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #248 | [CODE-REVIEW-248-r1.md](CODE-REVIEW-248-r1.md) | code · r1 | 🟢 зелёный | 1 | 0 | — |
-| #244 | [SPEC-REVIEW-244-r1.md](SPEC-REVIEW-244-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #244 | [SPEC-REVIEW-244-r2.md](SPEC-REVIEW-244-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #244 | [CODE-REVIEW-244-r1.md](CODE-REVIEW-244-r1.md) | code · r1 | 🔴 красный | 2 | 0 | — |
-| #244 | [CODE-REVIEW-244-r2.md](CODE-REVIEW-244-r2.md) | code · r2 | ⚪ — | 2 | 0 | — |
-| #244 | [CODE-REVIEW-244-r3.md](CODE-REVIEW-244-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #243 | [SPEC-REVIEW-243-r1.md](SPEC-REVIEW-243-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #243 | [CODE-REVIEW-243-r1.md](CODE-REVIEW-243-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #243 | [CODE-REVIEW-243-r2.md](CODE-REVIEW-243-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #242 | [SPEC-REVIEW-242-r1.md](SPEC-REVIEW-242-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #242 | [CODE-REVIEW-242-r1.md](CODE-REVIEW-242-r1.md) | code · r1 | 🟡 жёлтый | 1 | 1 | — |
-| #242 | [CODE-REVIEW-242-r2.md](CODE-REVIEW-242-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #239 | [SPEC-REVIEW-239-r1.md](SPEC-REVIEW-239-r1.md) | spec · r1 | ⚪ — | 0 | 0 | — |
-| #239 | [SPEC-REVIEW-239-r2.md](SPEC-REVIEW-239-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #239 | [CODE-REVIEW-239-r1.md](CODE-REVIEW-239-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #239 | [CODE-REVIEW-239-r2.md](CODE-REVIEW-239-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #238 | [SPEC-REVIEW-238-r1.md](SPEC-REVIEW-238-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #238 | [CODE-REVIEW-238-r1.md](CODE-REVIEW-238-r1.md) | code · r1 | 🔴 красный | 1 | 0 | Продуктовый коммит не обновил скомпилированный бандл; закоммиченный артефакт не содержи… |
-| #238 | [CODE-REVIEW-238-r2.md](CODE-REVIEW-238-r2.md) | code · r2 | 🔴 красный | 0 | 0 | — |
-| #238 | [CODE-REVIEW-238-r3.md](CODE-REVIEW-238-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #234 | [SPEC-REVIEW-234-r1.md](SPEC-REVIEW-234-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #234 | [SPEC-REVIEW-234-r2.md](SPEC-REVIEW-234-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #234 | [CODE-REVIEW-234-r2.md](CODE-REVIEW-234-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | Диагноз и контракт по коду; Гейты — прогнаны на HEAD (c8e9597) в этой сессии; AC — чем доказано; Взаимодействие с #229 (ребейз) |
-| #233 | [SPEC-REVIEW-233-r1.md](SPEC-REVIEW-233-r1.md) | spec · r1 | ⚪ — | 2 | 0 | Контракт §6 не покрывает открытую сторону, к которой ведёт продуктовое решение §4.3 (High); §7 приписывает thicknessCmAt поведение, которого у неё нет: заявлено фактом, не провере… |
-| #233 | [SPEC-REVIEW-233-r2.md](SPEC-REVIEW-233-r2.md) | spec · r2 | 🔴 красный | 0 | 0 | — |
-| #233 | [CODE-REVIEW-233-r1.md](CODE-REVIEW-233-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | тест AC6b не строит сценарий, который он заявляет (и который был H2); не хватает мутанта из принятого §11 ТЗ |
-| #233 | [CODE-REVIEW-233-r2.md](CODE-REVIEW-233-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #231 | [SPEC-REVIEW-231-r1.md](SPEC-REVIEW-231-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #231 | [SPEC-REVIEW-231-r2.md](SPEC-REVIEW-231-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #231 | [CODE-REVIEW-231-r1.md](CODE-REVIEW-231-r1.md) | code · r1 | ⚪ — | 0 | 1 | — |
-| #231 | [CODE-REVIEW-231-r2.md](CODE-REVIEW-231-r2.md) | code · r2 | ⚪ — | 0 | 0 | — |
-| #230 | [SPEC-REVIEW-230-r1.md](SPEC-REVIEW-230-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #230 | [SPEC-REVIEW-230-r2.md](SPEC-REVIEW-230-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #230 | [CODE-REVIEW-230-r1.md](CODE-REVIEW-230-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #230 | [CODE-REVIEW-230-r2.md](CODE-REVIEW-230-r2.md) | code · r2 | 🟡 жёлтый | 2 | 0 | — |
-| #229 | [SPEC-REVIEW-229-r1.md](SPEC-REVIEW-229-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #229 | [SPEC-REVIEW-229-r2.md](SPEC-REVIEW-229-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #229 | [SPEC-REVIEW-229-r3.md](SPEC-REVIEW-229-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #229 | [CODE-REVIEW-229-r1.md](CODE-REVIEW-229-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #229 | [CODE-REVIEW-229-r2.md](CODE-REVIEW-229-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #229 | [CODE-REVIEW-229-r3.md](CODE-REVIEW-229-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #228 | [SPEC-REVIEW-228-r1.md](SPEC-REVIEW-228-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #228 | [CODE-REVIEW-228-r1.md](CODE-REVIEW-228-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #228 | [CODE-REVIEW-228-r2.md](CODE-REVIEW-228-r2.md) | code · r2 | 🟢 зелёный | 0 | 2 | — |
-| #228 | [CODE-REVIEW-228-r3.md](CODE-REVIEW-228-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #226 | [SPEC-REVIEW-226-r1.md](SPEC-REVIEW-226-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #226 | [SPEC-REVIEW-226-r2.md](SPEC-REVIEW-226-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #226 | [CODE-REVIEW-226-r1.md](CODE-REVIEW-226-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #225 | [SPEC-REVIEW-225-r1.md](SPEC-REVIEW-225-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #225 | [SPEC-REVIEW-225-r2.md](SPEC-REVIEW-225-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #225 | [CODE-REVIEW-225-r1.md](CODE-REVIEW-225-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #225 | [CODE-REVIEW-225-r2.md](CODE-REVIEW-225-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #224 | [SPEC-REVIEW-224-r1.md](SPEC-REVIEW-224-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #224 | [CODE-REVIEW-224-r1.md](CODE-REVIEW-224-r1.md) | code · r1 | 🔴 красный | 1 | 2 | golden не остаётся прежним, вопреки AC12 и §2/§15 ТЗ (High, в скоупе); check-docs.mjs красный: отпечаток скриншотов не обновлён (Medium, в скоупе); AC6 заявляет доказательство, которого нет (Medium, в скоупе); двойной инкремент cfgEpoch в writeConfig (Low) |
-| #224 | [CODE-REVIEW-224-r2.md](CODE-REVIEW-224-r2.md) | code · r2 | 🔴 красный | 0 | 0 | — |
-| #223 | [SPEC-REVIEW-223-r1.md](SPEC-REVIEW-223-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #223 | [SPEC-REVIEW-223-r2.md](SPEC-REVIEW-223-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | — |
-| #223 | [SPEC-REVIEW-223-r3.md](SPEC-REVIEW-223-r3.md) | spec · r3 | 🟢 зелёный | 0 | 1 | — |
-| #223 | [CODE-REVIEW-223-r1.md](CODE-REVIEW-223-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #220 | [SPEC-REVIEW-220-r1.md](SPEC-REVIEW-220-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | Medium, в скоупе. Отсутствует обязательная touch-классификация; Medium, в скоупе. §9 утверждает «нет нового поля», хотя §8.3/§17.3 предполагают обратное |
-| #220 | [SPEC-REVIEW-220-r2.md](SPEC-REVIEW-220-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | Medium, в скоупе. §17.3 маркирует нормативное требование как «свободно меняемое» |
-| #220 | [SPEC-REVIEW-220-r3.md](SPEC-REVIEW-220-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — |
-| #220 | [CODE-REVIEW-220-r1.md](CODE-REVIEW-220-r1.md) | code · r1 | 🔴 красный | 1 | 2 | — |
-| #219 | [SPEC-REVIEW-219-r1.md](SPEC-REVIEW-219-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #219 | [SPEC-REVIEW-219-r2.md](SPEC-REVIEW-219-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #219 | [CODE-REVIEW-219-r1.md](CODE-REVIEW-219-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #218 | [SPEC-REVIEW-218-r1.md](SPEC-REVIEW-218-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #218 | [SPEC-REVIEW-218-r2.md](SPEC-REVIEW-218-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #218 | [CODE-REVIEW-218-r1.md](CODE-REVIEW-218-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #217 | [SPEC-REVIEW-217-r1.md](SPEC-REVIEW-217-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #217 | [CODE-REVIEW-217-r1.md](CODE-REVIEW-217-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #213 | [SPEC-REVIEW-213-r1.md](SPEC-REVIEW-213-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #213 | [CODE-REVIEW-213-r1.md](CODE-REVIEW-213-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #212 | [SPEC-REVIEW-212-r1.md](SPEC-REVIEW-212-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #212 | [CODE-REVIEW-212-r1.md](CODE-REVIEW-212-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | три существующих regression-смока сломаны миграцией mouse→pointer событий (Medium, в ск…; hp-device-preview.ts гейтирует hover, но никто не выставляет ему атрибут (Medium, в ско… |
-| #212 | [CODE-REVIEW-212-r2.md](CODE-REVIEW-212-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | исправлено, доказано реальным поведением, не только тестом; исправлено, доказано смоком, который умеет упасть |
-| #211 | [SPEC-REVIEW-211-r1.md](SPEC-REVIEW-211-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | целевое соотношение «MDI viewport = 0.5 × core» не подтверждено ни одним источником арх…; §4 называет нормативным источником несуществующий файл COMPARISONNOTES.md; обязательный тег Touch editor: … присутствует по смыслу, но не дословно |
-| #211 | [SPEC-REVIEW-211-r2.md](SPEC-REVIEW-211-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #211 | [CODE-REVIEW-211-r1.md](CODE-REVIEW-211-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #211 | [CODE-REVIEW-211-r2.md](CODE-REVIEW-211-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #210 | [SPEC-REVIEW-210-r1.md](SPEC-REVIEW-210-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | контракт не говорит явно, что очистка floor в GUI должна удалять ключ, а не записывать …; обязательный раздел «i18n» присутствует по содержанию, но не оформлен отдельным заголовком |
-| #210 | [SPEC-REVIEW-210-r2.md](SPEC-REVIEW-210-r2.md) | spec · r2 | 🟢 зелёный | 0 | 1 | — |
-| #210 | [CODE-REVIEW-210-r1.md](CODE-REVIEW-210-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #209 | [SPEC-REVIEW-209-r1.md](SPEC-REVIEW-209-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #209 | [CODE-REVIEW-209-r1.md](CODE-REVIEW-209-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #205 | [SPEC-REVIEW-205-r1.md](SPEC-REVIEW-205-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #205 | [CODE-REVIEW-205-r1.md](CODE-REVIEW-205-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #205 | [CODE-REVIEW-205-r2.md](CODE-REVIEW-205-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #204 | [SPEC-REVIEW-204-r1.md](SPEC-REVIEW-204-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #204 | [CODE-REVIEW-204-r1.md](CODE-REVIEW-204-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #203 | [SPEC-REVIEW-203-r1.md](SPEC-REVIEW-203-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #203 | [SPEC-REVIEW-203-r2.md](SPEC-REVIEW-203-r2.md) | spec · r2 | 🟢 зелёный | 0 | 1 | — |
-| #203 | [CODE-REVIEW-203-r1.md](CODE-REVIEW-203-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #201 | [SPEC-REVIEW-201-r1.md](SPEC-REVIEW-201-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #201 | [CODE-REVIEW-201-r1.md](CODE-REVIEW-201-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #200 | [SPEC-REVIEW-200-r1.md](SPEC-REVIEW-200-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #200 | [CODE-REVIEW-200-r1.md](CODE-REVIEW-200-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #199 | [SPEC-REVIEW-199-r1.md](SPEC-REVIEW-199-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #199 | [SPEC-REVIEW-199-r2.md](SPEC-REVIEW-199-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #199 | [CODE-REVIEW-199-r1.md](CODE-REVIEW-199-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #198 | [SPEC-REVIEW-198-r1.md](SPEC-REVIEW-198-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #198 | [CODE-REVIEW-198-r1.md](CODE-REVIEW-198-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #198 | [CODE-REVIEW-198-r2.md](CODE-REVIEW-198-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #198 | [CODE-REVIEW-198-r3.md](CODE-REVIEW-198-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #197 | [SPEC-REVIEW-197-r1.md](SPEC-REVIEW-197-r1.md) | spec · r1 | 🔴 красный | 1 | 1 | — |
-| #197 | [SPEC-REVIEW-197-r3.md](SPEC-REVIEW-197-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — |
-| #197 | [CODE-REVIEW-197-r1.md](CODE-REVIEW-197-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #196 | [SPEC-REVIEW-196-r1.md](SPEC-REVIEW-196-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #196 | [CODE-REVIEW-196-r1.md](CODE-REVIEW-196-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #195 | [CODE-REVIEW-195-r1.md](CODE-REVIEW-195-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #195 | [CODE-REVIEW-195-r2.md](CODE-REVIEW-195-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #193 | [SPEC-REVIEW-193-r1.md](SPEC-REVIEW-193-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #193 | [CODE-REVIEW-193-r1.md](CODE-REVIEW-193-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #192 | [SPEC-REVIEW-192-r1.md](SPEC-REVIEW-192-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #192 | [CODE-REVIEW-192-r1.md](CODE-REVIEW-192-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #192 | [CODE-REVIEW-192-r2.md](CODE-REVIEW-192-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #189 | [CODE-REVIEW-189-r1.md](CODE-REVIEW-189-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #187 | [CODE-REVIEW-187-r1.md](CODE-REVIEW-187-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #186 | [SPEC-REVIEW-186-r1.md](SPEC-REVIEW-186-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | — |
-| #186 | [SPEC-REVIEW-186-r2.md](SPEC-REVIEW-186-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #186 | [CODE-REVIEW-186-r1.md](CODE-REVIEW-186-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #184 | [CODE-REVIEW-184-r1.md](CODE-REVIEW-184-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #180 | [SPEC-REVIEW-180-r1.md](SPEC-REVIEW-180-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #180 | [CODE-REVIEW-180-r1.md](CODE-REVIEW-180-r1.md) | code · r1 | 🔴 красный | 1 | 0 | — |
-| #180 | [CODE-REVIEW-180-r2.md](CODE-REVIEW-180-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #179 | [SPEC-REVIEW-179-r1.md](SPEC-REVIEW-179-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 5 | цвет внешней тени искажён относительно нормативного источника; цвет continuous-пульсации для reason presence не определён; easing для Short и Alert не зафиксирован; стоимость и выбор backdrop-blur для Dark не решены; не назван обязательный тег Touch editor: из TOUCH-SUPPORT.md; Light-only combo-эталоны (Selected + Hover/Working/Green/Alert, |
-| #179 | [SPEC-REVIEW-179-r2.md](SPEC-REVIEW-179-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | Обе Light-тени переписаны на rgb(37 40 45 / 12%) / rgb(37 40 45 / 18%); §10.1/§10.4 получили mapping presence→green, running/working/open/unlocked→amber, neutr…; Обе секции получили cubic-bezier(.22,.61,.36,1); §7.1 фиксирует production = Dark/Icon Default No Blur.svg, backdrop-filter запрещён; ри…; Добавлена строка Touch editor: best effort / intentionally degraded в §11 |
-| #179 | [CODE-REVIEW-179-r1.md](CODE-REVIEW-179-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #179 | [CODE-REVIEW-179-r2.md](CODE-REVIEW-179-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #178 | [SPEC-REVIEW-178-r1.md](SPEC-REVIEW-178-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | — |
-| #178 | [SPEC-REVIEW-178-r2.md](SPEC-REVIEW-178-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #178 | [CODE-REVIEW-178-r1.md](CODE-REVIEW-178-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #176 | [SPEC-REVIEW-176-r1.md](SPEC-REVIEW-176-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #176 | [CODE-REVIEW-176-r1.md](CODE-REVIEW-176-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #174 | [SPEC-REVIEW-174-r1.md](SPEC-REVIEW-174-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #174 | [CODE-REVIEW-174-r1.md](CODE-REVIEW-174-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #173 | [SPEC-REVIEW-173-r1.md](SPEC-REVIEW-173-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #173 | [CODE-REVIEW-173-r1.md](CODE-REVIEW-173-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #173 | [CODE-REVIEW-173-r2.md](CODE-REVIEW-173-r2.md) | code · r2 | 🟢 зелёный | 0 | 2 | — |
-| #172 | [SPEC-REVIEW-172-r1.md](SPEC-REVIEW-172-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #172 | [CODE-REVIEW-172-r1.md](CODE-REVIEW-172-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #172 | [CODE-REVIEW-172-r2.md](CODE-REVIEW-172-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #162 | [SPEC-REVIEW-162-r1.md](SPEC-REVIEW-162-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #162 | [SPEC-REVIEW-162-r2.md](SPEC-REVIEW-162-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #162 | [CODE-REVIEW-162-r1.md](CODE-REVIEW-162-r1.md) | code · r1 | 🔴 красный | 1 | 1 | — |
-| #162 | [CODE-REVIEW-162-r2.md](CODE-REVIEW-162-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #160 | [SPEC-REVIEW-160-r1.md](SPEC-REVIEW-160-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #160 | [CODE-REVIEW-160-r1.md](CODE-REVIEW-160-r1.md) | code · r1 | 🔴 красный | 1 | 3 | node scripts/check-docs.mjs красный: скриншоты документации не пересняты (High, блокирует); floor anchor opening lock badge вычисляется двумя независимыми формулами (Medium, в ско…; реальный алгоритм isoRoomSafePoint (grid-search fallback) не покрыт ни одним тестом (Me…; leafBasis (src/iso-openings.ts:187-209): flipH не тестируется независимо от flipV (Medi… |
-| #160 | [CODE-REVIEW-160-r2.md](CODE-REVIEW-160-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | новый M2-тест не независимо доказывает «вне любой дыры» (Low, запись без блокировки); приёмка скриншотов сменила заявленную платформу на win32 без видимого основания в хендо… |
-| #159 | [SPEC-REVIEW-159-r1.md](SPEC-REVIEW-159-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #159 | [CODE-REVIEW-159-r1.md](CODE-REVIEW-159-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #159 | [CODE-REVIEW-159-r2.md](CODE-REVIEW-159-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #156 | [CODE-REVIEW-156-r1.md](CODE-REVIEW-156-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #152 | [SPEC-REVIEW-152-r1.md](SPEC-REVIEW-152-r1.md) | spec · r1 | 🔴 красный | 2 | 2 | — |
-| #152 | [SPEC-REVIEW-152-r2.md](SPEC-REVIEW-152-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #152 | [CODE-REVIEW-152-r1.md](CODE-REVIEW-152-r1.md) | code · r1 | 🔴 красный | 1 | 2 | — |
-| #152 | [CODE-REVIEW-152-r2.md](CODE-REVIEW-152-r2.md) | code · r2 | 🔴 красный | 1 | 2 | — |
-| #150 | [CODE-REVIEW-150-r1.md](CODE-REVIEW-150-r1.md) | code · r1 | 🔴 красный | 1 | 0 | — |
-| #146 | [SPEC-REVIEW-146-r1.md](SPEC-REVIEW-146-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | — |
-| #146 | [CODE-REVIEW-146-r1.md](CODE-REVIEW-146-r1.md) | code · r1 | 🔴 красный | 1 | 0 | — |
-| #146 | [CODE-REVIEW-146-r2.md](CODE-REVIEW-146-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #141 | [SPEC-REVIEW-141-r1.md](SPEC-REVIEW-141-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #141 | [CODE-REVIEW-141-r1.md](CODE-REVIEW-141-r1.md) | code · r1 | 🔴 красный | 1 | 0 | — |
-| #140 | [CODE-REVIEW-140-r1.md](CODE-REVIEW-140-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #138 | [SPEC-REVIEW-138-r1.md](SPEC-REVIEW-138-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | — |
-| #138 | [SPEC-REVIEW-138-r2.md](SPEC-REVIEW-138-r2.md) | spec · r2 | 🔴 красный | 1 | 0 | — |
-| #137 | [SPEC-REVIEW-137-r1.md](SPEC-REVIEW-137-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #132 | [SPEC-REVIEW-132-r1.md](SPEC-REVIEW-132-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #132 | [CODE-REVIEW-132-r1.md](CODE-REVIEW-132-r1.md) | code · r1 | 🔴 красный | 1 | 3 | — |
-| #132 | [CODE-REVIEW-132-r2.md](CODE-REVIEW-132-r2.md) | code · r2 | 🟢 зелёный | 1 | 3 | — |
-| #131 | [SPEC-REVIEW-131-r1.md](SPEC-REVIEW-131-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #126 | [SPEC-REVIEW-126-r1.md](SPEC-REVIEW-126-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #126 | [SPEC-REVIEW-126-r2.md](SPEC-REVIEW-126-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #126 | [CODE-REVIEW-126-r1.md](CODE-REVIEW-126-r1.md) | code · r1 | 🟡 жёлтый | 1 | 1 | — |
-| #126 | [CODE-REVIEW-126-r2.md](CODE-REVIEW-126-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #123 | [SPEC-REVIEW-123-r1.md](SPEC-REVIEW-123-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #123 | [CODE-REVIEW-123-r1.md](CODE-REVIEW-123-r1.md) | code · r1 | 🔴 красный | 1 | 0 | — |
-| #122 | [SPEC-REVIEW-122-r1.md](SPEC-REVIEW-122-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #122 | [CODE-REVIEW-122-r1.md](CODE-REVIEW-122-r1.md) | code · r1 | 🔴 красный | 2 | 1 | — |
-| #122 | [CODE-REVIEW-122-r2.md](CODE-REVIEW-122-r2.md) | code · r2 | 🟢 зелёный | 2 | 1 | — |
-| #117 | [SPEC-REVIEW-117-r1.md](SPEC-REVIEW-117-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #117 | [CODE-REVIEW-117-r1.md](CODE-REVIEW-117-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #117 | [CODE-REVIEW-117-r2.md](CODE-REVIEW-117-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #113 | [SPEC-REVIEW-113-r1.md](SPEC-REVIEW-113-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | — |
-| #113 | [CODE-REVIEW-113-r1.md](CODE-REVIEW-113-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #113 | [CODE-REVIEW-113-r2.md](CODE-REVIEW-113-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #113 | [CODE-REVIEW-113-r3.md](CODE-REVIEW-113-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #107 | [SPEC-REVIEW-107-r1.md](SPEC-REVIEW-107-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #107 | [CODE-REVIEW-107-r1.md](CODE-REVIEW-107-r1.md) | code · r1 | 🔴 красный | 1 | 1 | — |
-| #103 | [SPEC-REVIEW-103-r1.md](SPEC-REVIEW-103-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #103 | [CODE-REVIEW-103-r1.md](CODE-REVIEW-103-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #94 | [CODE-REVIEW-issue-094-2026-08-12.md](CODE-REVIEW-issue-094-2026-08-12.md) | code · 2026-08-12 | ⚪ — | 0 | 0 | — |
-| #89 | [SPEC-REVIEW-089-isometric-view-stage1.md](SPEC-REVIEW-089-isometric-view-stage1.md) | spec · isometric-view-stage1 | 🔴 красный | 0 | 8 | Spike ADR должен фиксировать больше, чем выбор renderer; Fingerprint перечисляет не все входы iso geometry; since/expires требуют точной version semantics; Не определён runtime owner механизма Labs; Scope houseplan-space-card не указан; Performance contract не совпадает с существующей инфраструктурой |
-| #89 | [SPEC-REVIEW-89-r1.md](SPEC-REVIEW-89-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | риски не собраны в отдельный раздел; «нормативная» таблица слоёв формально противоречит собственному запрету ТЗ на новый око… |
-| #89 | [CODE-REVIEW-89-r2.md](CODE-REVIEW-89-r2.md) | code · r2 | 🔴 красный | 1 | 0 | обязательный по ТЗ смок demo/smokeisometriclivetouch.mjs красный на сданном коммите; три файла с лишней пустой строкой в конце (git diff --check) |
-| #89 | [CODE-REVIEW-89-r3.md](CODE-REVIEW-89-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — |
-| #86 | [CODE-REVIEW-86-r1.md](CODE-REVIEW-86-r1.md) | code · r1 | ⚪ — | 2 | 1 | Манифест скриншотов документации подделан, а не пересчитан (High, в скоупе); npm run golden:verify красный: 6 эталонов расходятся с рендером (High, в скоупе); Onboarding-путь 5 space-подсказок не доказан исполнением (Medium, в скоупе); .help-ключ не совпадает буквально с ключом видимого label (Low, снимается без правки) |
-| #86 | [CODE-REVIEW-86-r2.md](CODE-REVIEW-86-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | AC7 «browser zoom 200%» не доказан ничем (Medium, в скоупе); .help-ключ не совпадает буквально с ключом видимого label (Low, снимается без правки) |
-| #86 | [CODE-REVIEW-86-r3.md](CODE-REVIEW-86-r3.md) | code · r3 | 🟡 жёлтый | 0 | 1 | AC7 «представительный reviewed golden» для browser zoom 200% так и не появился (Medium,…; .help-ключ не совпадает буквально с ключом видимого label (Low, снимается без правки) |
-| #86 | [CODE-REVIEW-86-r4.md](CODE-REVIEW-86-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — |
-| #86 | [CODE-REVIEW-86-r5.md](CODE-REVIEW-86-r5.md) | code · r5 | 🟢 зелёный | 0 | 0 | — |
-| #82 | [SPEC-REVIEW-82-r1.md](SPEC-REVIEW-82-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #82 | [CODE-REVIEW-82-r1.md](CODE-REVIEW-82-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #82 | [CODE-REVIEW-82-r2.md](CODE-REVIEW-82-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #74 | [SPEC-REVIEW-74-r1.md](SPEC-REVIEW-74-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #74 | [CODE-REVIEW-74-r1.md](CODE-REVIEW-74-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #74 | [CODE-REVIEW-74-r2.md](CODE-REVIEW-74-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #68 | [CODE-REVIEW-issue-068-2026-08-12.md](CODE-REVIEW-issue-068-2026-08-12.md) | code · 2026-08-12 | ⚪ — | 0 | 0 | — |
-| #62 | [SPEC-REVIEW-62-r1.md](SPEC-REVIEW-62-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #62 | [SPEC-REVIEW-62-r2.md](SPEC-REVIEW-62-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — |
-| #62 | [CODE-REVIEW-62-r1.md](CODE-REVIEW-62-r1.md) | code · r1 | 🔴 красный | 1 | 0 | — |
-| #62 | [CODE-REVIEW-62-r2.md](CODE-REVIEW-62-r2.md) | code · r2 | 🔴 красный | 1 | 0 | — |
-| #57 | [SPEC-REVIEW-57-r1.md](SPEC-REVIEW-57-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | — |
-| #57 | [CODE-REVIEW-57-r1.md](CODE-REVIEW-57-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #54 | [SPEC-REVIEW-54-r1.md](SPEC-REVIEW-54-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #54 | [SPEC-REVIEW-54-r2.md](SPEC-REVIEW-54-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #54 | [CODE-REVIEW-54-r1.md](CODE-REVIEW-54-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | — |
-| #54 | [CODE-REVIEW-54-r2.md](CODE-REVIEW-54-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #53 | [SPEC-REVIEW-53-r1.md](SPEC-REVIEW-53-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 4 | — |
-| #53 | [SPEC-REVIEW-53-r2.md](SPEC-REVIEW-53-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #53 | [CODE-REVIEW-53-r1.md](CODE-REVIEW-53-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
-| #51 | [SPEC-REVIEW-51-r1.md](SPEC-REVIEW-51-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #51 | [CODE-REVIEW-51-r1.md](CODE-REVIEW-51-r1.md) | code · r1 | ⚪ — | 0 | 0 | — |
-| #51 | [CODE-REVIEW-51-r2.md](CODE-REVIEW-51-r2.md) | code · r2 | 🟡 жёлтый | 1 | 3 | — |
-| #51 | [CODE-REVIEW-51-r3.md](CODE-REVIEW-51-r3.md) | code · r3 | 🟡 жёлтый | 0 | 1 | — |
-| #51 | [CODE-REVIEW-51-r4.md](CODE-REVIEW-51-r4.md) | code · r4 | ⚪ — | 0 | 0 | — |
-| #44 | [SPEC-REVIEW-44-r1.md](SPEC-REVIEW-44-r1.md) | spec · r1 | 🔴 красный | 2 | 0 | Сценарий и AC4 построены на неверном факте: причина «исключена; Контракт №3 («оба значения читаются из одного источника всеми; Название вкладки инбокса не совпадает с интерфейсным словарём |
-| #44 | [SPEC-REVIEW-44-r2.md](SPEC-REVIEW-44-r2.md) | spec · r2 | 🔴 красный | 0 | 1 | Ревизия 3 не убрала два места, где документ прямо утверждает то, что H1 уже опроверг: п… |
-| #44 | [SPEC-REVIEW-44-r3.md](SPEC-REVIEW-44-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #44 | [CODE-REVIEW-44-r1.md](CODE-REVIEW-44-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #43 | [SPEC-REVIEW-43-r1.md](SPEC-REVIEW-43-r1.md) | spec · r1 | ⚪ — | 0 | 0 | — |
-| #43 | [SPEC-REVIEW-43-r2.md](SPEC-REVIEW-43-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #43 | [SPEC-REVIEW-43-r3.md](SPEC-REVIEW-43-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — |
-| #43 | [SPEC-REVIEW-43-r4.md](SPEC-REVIEW-43-r4.md) | spec · r4 | 🟡 жёлтый | 0 | 0 | — |
-| #43 | [SPEC-REVIEW-43-r5.md](SPEC-REVIEW-43-r5.md) | spec · r5 | 🟢 зелёный | 0 | 0 | — |
-| #43 | [CODE-REVIEW-43-r1.md](CODE-REVIEW-43-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | 1 Дешёвые гейты (прогнаны лично, HEAD 1ba53630); 2 Бэкенд Python (доступность харнесса); 3 Relay (scripts/support-relay/); 4 Смоки и golden; 5 Инварианты модели; 6 Одно число — один источник |
-| #43 | [CODE-REVIEW-43-r2.md](CODE-REVIEW-43-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #42 | [SPEC-REVIEW-42-r1.md](SPEC-REVIEW-42-r1.md) | spec · r1 | ⚪ — | 0 | 0 | — |
-| #42 | [SPEC-REVIEW-42-r2.md](SPEC-REVIEW-42-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #42 | [SPEC-REVIEW-42-r3.md](SPEC-REVIEW-42-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #42 | [SPEC-REVIEW-42-r4.md](SPEC-REVIEW-42-r4.md) | spec · r4 | 🟡 жёлтый | 0 | 0 | — |
-| #42 | [CODE-REVIEW-42-r1.md](CODE-REVIEW-42-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — |
-| #42 | [CODE-REVIEW-42-r2.md](CODE-REVIEW-42-r2.md) | code · r2 | 🔴 красный | 2 | 0 | — |
-| #42 | [CODE-REVIEW-42-r6.md](CODE-REVIEW-42-r6.md) | code · r6 | 🟡 жёлтый | 0 | 1 | — |
-| #39 | [SPEC-REVIEW-39-r1.md](SPEC-REVIEW-39-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 4 | нет обязательных продуктовых разделов §7.1 «сценарий» и «что человек увидит»; i18n-раздел не перечисляет ключи, DoR §2.5 не закрыть; нет разделов «Риски» и «Release-артефакты», обязательных по §7.1; AC4 объединяет два разных момента наступления hard без единого UI-контракта |
-| #39 | [SPEC-REVIEW-39-r2.md](SPEC-REVIEW-39-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | — |
-| #39 | [SPEC-REVIEW-39-r3.md](SPEC-REVIEW-39-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | — |
-| #39 | [CODE-REVIEW-39-r1.md](CODE-REVIEW-39-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | отмена гард-диалога во время busy не отменяет применение; «одно число, один источник» нарушено для HARDDIMENSION; AC8 (EXIF-ориентация) не доказан ни тестом, ни явной записью |
-| #39 | [CODE-REVIEW-39-r2.md](CODE-REVIEW-39-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | два из трёх новых stillCurrent()-чеков не имеют собственного мутанта |
-| #33 | [SPEC-REVIEW-33-r1.md](SPEC-REVIEW-33-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | статус implemented не существует ни в перечислении, ни в каноне; 4 из 7 «const-деклараций фронта» для parity-теста не существуют; AC6 описывает несуществующее поведение как «расширение теста» |
-| #33 | [SPEC-REVIEW-33-r2.md](SPEC-REVIEW-33-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — |
-| #33 | [CODE-REVIEW-33-r1.md](CODE-REVIEW-33-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | AC7-тест не может поймать то, для чего он написан; Дубликат записи в обоих CHANGELOG и в ARCHITECTURE.md; config-audit.mjs расширил exit-code 3 за пределы согласованного контракта, и для decisi… |
-| #33 | [CODE-REVIEW-33-r2.md](CODE-REVIEW-33-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | AC6 не имеет штатного регрессионного теста на изолированные decision-required/drop-on-v… |
-| #32 | [SPEC-REVIEW-32-r1.md](SPEC-REVIEW-32-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — |
-| #32 | [SPEC-REVIEW-32-r2.md](SPEC-REVIEW-32-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #32 | [CODE-REVIEW-32-r1.md](CODE-REVIEW-32-r1.md) | code · r1 | 🟡 жёлтый | 1 | 0 | миграция ломает существующие смоки: 2 дают неверный вердикт, 3 виснут навсегда; шесть старых односложных ключей i18n остались без потребителей |
-| #32 | [CODE-REVIEW-32-r2.md](CODE-REVIEW-32-r2.md) | code · r2 | 🟡 жёлтый | 1 | 0 | — |
-| #29 | [SPEC-REVIEW-29-r1.md](SPEC-REVIEW-29-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | — |
-| #29 | [SPEC-REVIEW-29-r2.md](SPEC-REVIEW-29-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — |
-| #29 | [CODE-REVIEW-29-r1.md](CODE-REVIEW-29-r1.md) | code · r1 | ⚪ — | 1 | 1 | demo/smokeeditortabs.mjs сломан этим диффом (High, в скоупе); «комната» в каталоге — это имя HA-зоны, а не название комнаты плана (Medium, в скоупе); DeviceInboxRow.canOpenHa — мёртвое поле (Low) |
-| #29 | [CODE-REVIEW-29-r2.md](CODE-REVIEW-29-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — |
-| #20 | [SPEC-REVIEW-20-r1.md](SPEC-REVIEW-20-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — |
-| #20 | [CODE-REVIEW-20-r1.md](CODE-REVIEW-20-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — |
+| Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
+|---|---|---|---|---:|---:|---|---|
+| #639 | [CODE-REVIEW-639-r1.md](CODE-REVIEW-639-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Новая запись smoke-links.mjs для smoke_space_settings_form.mjs | `smoke-links.mjs` `smoke_space_settings_form.mjs` `scripts/smoke-links.mjs` `demo/smoke_space_settings_form.mjs` `src/editors/space-form.ts` `form-kit.ts` |
+| #639 | [CODE-REVIEW-639-r2.md](CODE-REVIEW-639-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #637 | [CODE-REVIEW-637-r1.md](CODE-REVIEW-637-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | ложный «—» вместо настоящего «0 ч» в медианах | `scripts/process-metrics.mjs` |
+| #637 | [CODE-REVIEW-637-r2.md](CODE-REVIEW-637-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #636 | [CODE-REVIEW-636-r1.md](CODE-REVIEW-636-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #635 | [CODE-REVIEW-635-r1.md](CODE-REVIEW-635-r1.md) | code · r1 | 🟡 жёлтый | 1 | 0 | индекс молчаливо теряет находки и врёт числами по текущему | `docs/reviews/CODE-REVIEW-639-r1.md` `CODE-REVIEW-637-r1.md` `docs/reviews/CODE-REVIEW-594-r1.md` `docs/LESSONS.md` |
+| #621 | [CODE-REVIEW-621-r1.md](CODE-REVIEW-621-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #619 | [CODE-REVIEW-619-r1.md](CODE-REVIEW-619-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #613 | [SPEC-REVIEW-613-r1.md](SPEC-REVIEW-613-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | High. Принятое предположение о scroll-инвалидации не работает в основном заявленном сце…; Medium (в скоупе), сопутствует H1. AC1/AC2 не требуют, чтобы smoke-контейнер пересекал … | `demo/serve.mjs` |
+| #613 | [SPEC-REVIEW-613-r2.md](SPEC-REVIEW-613-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #613 | [CODE-REVIEW-613-r1.md](CODE-REVIEW-613-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #612 | [CODE-REVIEW-612-r1.md](CODE-REVIEW-612-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #611 | [SPEC-REVIEW-611-r1.md](SPEC-REVIEW-611-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | контракт не называет второй код-путь с идентичным дефектом (_repair_target_space_refs) | `custom_components/houseplan/import_export.py` `import_export.py` |
+| #611 | [SPEC-REVIEW-611-r2.md](SPEC-REVIEW-611-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #611 | [CODE-REVIEW-611-r1.md](CODE-REVIEW-611-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | ветки live/ambiguous AC2 не имеют собственного мутанта | `import_export.py` `scripts/mutation-registry.mjs` |
+| #610 | [SPEC-REVIEW-610-r1.md](SPEC-REVIEW-610-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #610 | [CODE-REVIEW-610-r1.md](CODE-REVIEW-610-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #610 | [CODE-REVIEW-610-r2.md](CODE-REVIEW-610-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #609 | [SPEC-REVIEW-609-r1.md](SPEC-REVIEW-609-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | строки :558/574 для ветки ha-dialog в преамбуле устарели на ~8 строк; план автотестов не называет явно «влияние на производительность: нет» | `PROCESS.md` |
+| #609 | [CODE-REVIEW-609-r1.md](CODE-REVIEW-609-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC5 не доказан ни одним добавленным свидетелем; некорректная ссылка на AC в mutation-registry.mjs | `demo/verify_ha_form_shell_609.mjs` `demo/smoke_ha_form_shell_parity.mjs` `demo/srv/demo.html` `verify_ha_form_shell_609.mjs` `mutation-registry.mjs` `hp-dialog.ts` `scripts/mutation-registry.mjs` |
+| #609 | [CODE-REVIEW-609-r2.md](CODE-REVIEW-609-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #608 | [SPEC-REVIEW-608-r1.md](SPEC-REVIEW-608-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «Шесть потребителей» на самом деле семь вызовов rangeLine; Ответ владельца на Q1–Q3 не оставлен отдельным комментарием | `marker-dialog.ts` `form-kit.ts` `docs/SCOPE.md` |
+| #608 | [CODE-REVIEW-608-r1.md](CODE-REVIEW-608-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Русский changelog: сломанное предложение (Medium, в скоупе — правится в этой же задаче) | `docs/CHANGELOG.ru.md` `docs/CHANGELOG.md` |
+| #608 | [CODE-REVIEW-608-r2.md](CODE-REVIEW-608-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #607 | [SPEC-REVIEW-607-r1.md](SPEC-REVIEW-607-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | предварительный блок ## AC в начале тела issue называет несуществующую кнопку | — |
+| #607 | [CODE-REVIEW-607-r1.md](CODE-REVIEW-607-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | новые guard'ы AC4 проверяются только смоком, но не зарегистрированы в scripts/mutation-… | `scripts/mutation-registry.mjs` `demo/smoke_dialog_modal_recovery.mjs` `scripts/mutation-gate.mjs` |
+| #607 | [CODE-REVIEW-607-r2.md](CODE-REVIEW-607-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #606 | [SPEC-REVIEW-606-r1.md](SPEC-REVIEW-606-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | 1. Предположение 1 («резолвер покрывает арт и lazy-gate») по буквальному | `src/decor-image-editor.ts` `demo/smoke_furniture.mjs` `test/furniture-assets.test.mjs` |
+| #606 | [CODE-REVIEW-606-r1.md](CODE-REVIEW-606-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #605 | [SPEC-REVIEW-605-r1.md](SPEC-REVIEW-605-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #605 | [CODE-REVIEW-605-r1.md](CODE-REVIEW-605-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #604 | [CODE-REVIEW-604-r1.md](CODE-REVIEW-604-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #603 | [SPEC-REVIEW-603-r1.md](SPEC-REVIEW-603-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «Отменить» в discard-confirm пересекается с уже существующим термином «Отменить» = Undo | `docs/USER-GUIDE.ru.md` |
+| #603 | [CODE-REVIEW-603-r1.md](CODE-REVIEW-603-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #602 | [SPEC-REVIEW-602-r1.md](SPEC-REVIEW-602-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | неоднозначность «уже настроенного» radar-toggle; неверная пара changelog-файлов | `src/editors/radar-section.ts` `src/radar-editor.ts` `src/radar-model.ts` `CHANGELOG.md` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `AGENTS.md` `scripts/validate-commit-provenance.mjs` |
+| #602 | [SPEC-REVIEW-602-r2.md](SPEC-REVIEW-602-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #602 | [CODE-REVIEW-602-r1.md](CODE-REVIEW-602-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | golden:verify красный на материале ревью, обновление golden-сцен из плана тестирования … | `demo/golden/policy.mjs` `check-docs.mjs` `scripts/validate-commit-provenance.mjs` |
+| #602 | [CODE-REVIEW-602-r2.md](CODE-REVIEW-602-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #601 | [CODE-REVIEW-601-r1.md](CODE-REVIEW-601-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #600 | [SPEC-REVIEW-600-r1.md](SPEC-REVIEW-600-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | регресс-гарантия для существующих кнопок действий не названа отдельным AC | `SPEC.md` `marker-dialog.ts` `test/space-copy-runtime.test.mjs` `test/space-dialog.test.mjs` `demo/smoke_danger_confirmation.mjs` `test/zigbee-topology.test.mjs` `demo/smoke_zigbee_topology_hover.mjs` `demo/smoke_space_copy.mjs` |
+| #600 | [CODE-REVIEW-600-r1.md](CODE-REVIEW-600-r1.md) | code · r1 | 🟡 жёлтый | 0 | 4 | Room settings: подпись «Temperature» в 5-сегменте переносится посреди слова; Device dialog: у Glow radius появилась не согласованная владельцем блокировка Save; Дефект №5 (поповер «?» обрезается границей диалога комнаты) не имеет свидетеля закрытия; ACCEPTANCE.md: заявлено 11 эталонных сцен, фактически принято 13; docs/USER-GUIDE.ru.md:529 — испорченная строка таблицы | — |
+| #600 | [CODE-REVIEW-600-r2.md](CODE-REVIEW-600-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | .hpf-seg label: min-width: fit-content (колонка не сжимается ниже слова) + overflow-wra…; glowRadiusValid/проблема marker-glow-radius удалены целиком; marker-dialog.ts больше не…; Свидетель добавлен: новый смок доказывает исполнением, что подсказка живёт вне скроллер…; Абзац переписан: явно «13 сцен» = 11 из ТЗ + 2 room-temperature-dialog-, с объяснением … | — |
+| #598 | [SPEC-REVIEW-598-r1.md](SPEC-REVIEW-598-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | судьба marker.run_target_gone не решена, счётчик i18n не сходится | `src/editors/marker-dialog.ts` |
+| #598 | [SPEC-REVIEW-598-r2.md](SPEC-REVIEW-598-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #598 | [CODE-REVIEW-598-r1.md](CODE-REVIEW-598-r1.md) | code · r1 | 🔴 красный | 1 | 3 | AC8 (эталоны) не выполнен: golden:verify красный на этом SHA; AC2/AC3 нарушены: изменён один из «неприкосновенных» .srcrow-смоков; Сегментированный переключатель обещан в семи местах ТЗ, реализован в одном; AC5 доказан мутантом только наполовину; AC1 не имеет обещанного автотеста для диалога «Пространство» (закрыто чтением) | `src/editors/general-settings-dialog.ts` `src/editors/space-settings-dialog.ts` `src/editors/marker-dialog.ts` `demo/smoke_tap_run.mjs` `smoke_general_settings.mjs` `smoke_tap_run.mjs` `demo/smoke_marker_dialog_cards.mjs` `space-settings-dialog.ts` |
+| #598 | [CODE-REVIEW-598-r2.md](CODE-REVIEW-598-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #597 | [SPEC-REVIEW-597-r1.md](SPEC-REVIEW-597-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | AC2 заявляет проверку «ни одно из пяти правил не лежит в листе панели литералом», но; К3/AC3 заявляют байт-в-байт неизменность выхода formKitCss(CARD_DIALOG_FORM_KIT), но | `src/summary-panel-editor-style.ts` `test/form-kit.test.mjs` `test/styles-split.test.mjs` `styles-split.test.mjs` |
+| #597 | [SPEC-REVIEW-597-r2.md](SPEC-REVIEW-597-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #597 | [CODE-REVIEW-597-r1.md](CODE-REVIEW-597-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | устаревший обязательный гейт check-docs не закрыт | `src/styles/form-kit.styles.ts` `src/summary-panel-editor-style.ts` `USER-GUIDE.ru.md` `docs/images/screenshots.json` |
+| #597 | [CODE-REVIEW-597-r2.md](CODE-REVIEW-597-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #596 | [CODE-REVIEW-596-r1.md](CODE-REVIEW-596-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #595 | [CODE-REVIEW-595-r1.md](CODE-REVIEW-595-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #594 | [SPEC-REVIEW-594-r2.md](SPEC-REVIEW-594-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | Раздел «i18n» ТЗ не называет ключи для текста заголовков четырёх новых карточек-групп | — |
+| #594 | [SPEC-REVIEW-594-r3.md](SPEC-REVIEW-594-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #594 | [CODE-REVIEW-594-r1.md](CODE-REVIEW-594-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | AC7 не закрыт до конца — эталоны не приняты; отпечаток скриншотов документации не обновлён; AC1 доказан у́же, чем заявлено | `docs/images/screenshots.json` `test/form-kit.test.mjs` `demo/smoke_room_settings.mjs` `smoke_color_picker_consumers.mjs` `smoke_room_temperature_thresholds.mjs` |
+| #594 | [CODE-REVIEW-594-r2.md](CODE-REVIEW-594-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #594 | [CODE-REVIEW-594-r3.md](CODE-REVIEW-594-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #593 | [SPEC-REVIEW-593-r1.md](SPEC-REVIEW-593-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | Оба продуктовых решения (Р1 «кактус → plant», Р2 «при отказе чанка не рисуется ничего»)…; М1. AC9 и §7 заявляют защиту трёх бюджетов через npm run bundle:budget, но код гейта фа… | `PROCESS.md` `docs/FURNITURE.md` `scripts/bundle-manifest.mjs` `furniture-plan-art.generated.ts` `furniture-menu-art.generated.ts` `scripts/bundle-budget.mjs` |
+| #593 | [SPEC-REVIEW-593-r2.md](SPEC-REVIEW-593-r2.md) | spec · r2 | 🔴 красный | 1 | 0 | (new). Раздел §3 Q3 и AC10 заявляют, что владелец «публично подтвердил... авторство и M… | `test/furniture-assets.test.mjs` `assets/furniture/houseplan-0.3.0/README.md` `pack.json` `LICENSE.md` `README.md` `assets/furniture/houseplan-0.3.0/pack.json` `PROCESS.md` |
+| #593 | [SPEC-REVIEW-593-r3.md](SPEC-REVIEW-593-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #593 | [CODE-REVIEW-593-r1.md](CODE-REVIEW-593-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | docs/ARCHITECTURE.md не обновлён, хотя ТЗ явно называет это условием; сцена tray-narrow-palette-en меняется, но не объявлена в списке golden-приёмки | `docs/ARCHITECTURE.md` `docs/FURNITURE.md` `docs/images/screenshots.json` `demo/golden/matrix.mjs` `scripts/golden-acceptance.mjs` `artifacts/golden/golden-report.json` |
+| #593 | [CODE-REVIEW-593-r2.md](CODE-REVIEW-593-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #592 | [SPEC-REVIEW-592-r1.md](SPEC-REVIEW-592-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | М1. AC2 не называет один из golden-эталонов, который рендерит код именно внутри перенос…; Шапка «Аналитика» называет запас обоих ядер «4», фактический запас (по мере, которую ис… | `demo/golden/matrix.mjs` `demo/golden/harness.mjs` |
+| #592 | [SPEC-REVIEW-592-r2.md](SPEC-REVIEW-592-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #592 | [CODE-REVIEW-592-r1.md](CODE-REVIEW-592-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | «перенесённая» строка в гейте no-new-any матчится по всему диффу, а не по паре файлов р…; Нет — все второстепенные наблюдения либо покрыты объяснением автора (device-icon-state-… | `scripts/no-new-any.mjs` `brand-new-feature.ts` `room-settings-dialog.ts` `space-settings-dialog.ts` `test/no-new-any.test.mjs` `test/houseplan-source.mjs` |
+| #592 | [CODE-REVIEW-592-r2.md](CODE-REVIEW-592-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #588 | [SPEC-REVIEW-588-r1.md](SPEC-REVIEW-588-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | М1. Три ветки пылесоса, явно включённые в скоуп, не имеют ни одного AC/теста/мутанта; М2. docs/USER-GUIDE.ru.md и docs/FILTERING.md описывают «подсветку убираемой комнаты» п…; Не найдено значимых Low-находок сверх М1/М2. Формулировка «чем краснеет» AC6 («правка л… | `src/houseplan-card.ts` `houseplan-card.ts` `test/device-presentation-policy.test.mjs` `smoke_static_icon.mjs` `device-value-badge.ts` `device-pulse.ts` `demo/smoke_static_icon.mjs` `docs/USER-GUIDE.ru.md` |
+| #588 | [SPEC-REVIEW-588-r2.md](SPEC-REVIEW-588-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | Третий факт AC6 (отсутствие .vacwarn) не доказывается способом, который сам же AC6 назы…; Новых Low-находок в дельте не найдено. Low из r1 (нечёткость «чем краснеет» AC7/бывший … | `demo/smoke_static_icon.mjs` `src/vacuum-routes.ts` `demo/smoke_vacuum_multifloor.mjs` `smoke_vacuum_multifloor.mjs` |
+| #588 | [SPEC-REVIEW-588-r3.md](SPEC-REVIEW-588-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #588 | [CODE-REVIEW-588-r1.md](CODE-REVIEW-588-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | docs/TESTING.md называет непроверяемую поверхность «PDF» | `docs/TESTING.md` `src/pdf/pdf-export.ts` `pdf-scene.ts` `src/pdf/pdf-scene.ts` `pdf-export.ts` `src/device-presentation.ts` |
+| #587 | [CODE-REVIEW-587-r1.md](CODE-REVIEW-587-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #586 | [CODE-REVIEW-586-r1.md](CODE-REVIEW-586-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #585 | [SPEC-REVIEW-585-r1.md](SPEC-REVIEW-585-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #585 | [CODE-REVIEW-585-r1.md](CODE-REVIEW-585-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | устаревшая строка docs/STATUS.md и отсутствующий хендофф evidence | `docs/STATUS.md` |
+| #585 | [CODE-REVIEW-585-r2.md](CODE-REVIEW-585-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #584 | [SPEC-REVIEW-584-r1.md](SPEC-REVIEW-584-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | влияние на touch не названо; 1. Раздел «UX» и «скоуп/не-скоуп» не оформлены отдельными заголовками | `docs/TOUCH-SUPPORT.md` |
+| #584 | [SPEC-REVIEW-584-r2.md](SPEC-REVIEW-584-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #584 | [CODE-REVIEW-584-r1.md](CODE-REVIEW-584-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | рост ленивого чанка furniture-plan-art.generated не назван числом, как того требует соб… | `scripts/bundle-budget.mjs` |
+| #584 | [CODE-REVIEW-584-r2.md](CODE-REVIEW-584-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #583 | [SPEC-REVIEW-583-r1.md](SPEC-REVIEW-583-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | 1, снята решением ревьюера с записью | — |
+| #583 | [CODE-REVIEW-583-r1.md](CODE-REVIEW-583-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Золотой (golden) семантический контракт для iso-дверей не обновлён под новое | `demo/golden/run.mjs` `demo/golden/matrix.mjs` `src/iso-openings.ts` `test/iso-openings.test.mjs` `test/isometric-contract.test.mjs` `demo/smoke_isometric_contract.mjs` `matrix.mjs` |
+| #583 | [CODE-REVIEW-583-r2.md](CODE-REVIEW-583-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | — | — |
+| #582 | [SPEC-REVIEW-582-r1.md](SPEC-REVIEW-582-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | AC5 не несёт собственного независимого доказательства (снято ревьюером) | `houseplan-card.ts` |
+| #582 | [CODE-REVIEW-582-r1.md](CODE-REVIEW-582-r1.md) | code · r1 | 🔴 красный | 0 | 0 | — | — |
+| #582 | [CODE-REVIEW-582-r2.md](CODE-REVIEW-582-r2.md) | code · r2 | 🔴 красный | 0 | 0 | — | — |
+| #582 | [CODE-REVIEW-582-r3.md](CODE-REVIEW-582-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #581 | [SPEC-REVIEW-581-r1.md](SPEC-REVIEW-581-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #581 | [CODE-REVIEW-581-r1.md](CODE-REVIEW-581-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #580 | [SPEC-REVIEW-580-r1.md](SPEC-REVIEW-580-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | ТЗ не отвечает на несколько обязательных пунктов §7.1 / чек-листа DoR; Контракт п.4 использует немодальную формулировку («может оставаться | `docs/SCOPE.md` `PROCESS.md` `docs/TOUCH-SUPPORT.md` `docs/SUN.md` |
+| #580 | [SPEC-REVIEW-580-r2.md](SPEC-REVIEW-580-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #580 | [CODE-REVIEW-580-r1.md](CODE-REVIEW-580-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #580 | [CODE-REVIEW-580-r2.md](CODE-REVIEW-580-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #579 | [SPEC-REVIEW-579-r1.md](SPEC-REVIEW-579-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #579 | [CODE-REVIEW-579-r1.md](CODE-REVIEW-579-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC4 (матрица day cycle/Glow/room fills/hatching/фон) не имеет тестового доказательства; AC2 не имеет именованного мутанта. У AC2 («бюджет сохранён») нет специального | `test/live-viewport.test.mjs` `demo/smoke_live_pan_coverage.mjs` `demo/screencast_visual_continuity.mjs` `demo/srv/demo.html` `src/houseplan-card.ts` |
+| #579 | [CODE-REVIEW-579-r2.md](CODE-REVIEW-579-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #578 | [SPEC-REVIEW-578-r1.md](SPEC-REVIEW-578-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | i18n закрыт только косвенно; сценарий «новый mouse pointerdown сразу после pinch» не назван явно ни в одном AC | `test/touch-gesture-click-guard.test.mjs` |
+| #578 | [CODE-REVIEW-578-r1.md](CODE-REVIEW-578-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #577 | [SPEC-REVIEW-577-r1.md](SPEC-REVIEW-577-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | раздел «Release-артефакты» не называет два документа, которые эта же задача обязана обн… | `docs/CHANGELOG.md` `.ru.md` `docs/SUN.md` `docs/USER-GUIDE.ru.md` `docs/TESTING.md` `docs/WALL-THICKNESS.md` `docs/CONFIG-COMPATIBILITY.md` `WALL-THICKNESS.md` |
+| #577 | [SPEC-REVIEW-577-r2.md](SPEC-REVIEW-577-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #577 | [CODE-REVIEW-577-r1.md](CODE-REVIEW-577-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC4 и AC7 объявляют доказательство golden, но ни один golden-сценарий и | `demo/golden/matrix.mjs` `demo/smoke_sun.mjs` `test/sun.test.mjs` |
+| #577 | [CODE-REVIEW-577-r2.md](CODE-REVIEW-577-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #576 | [CODE-REVIEW-576-r1.md](CODE-REVIEW-576-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #573 | [CODE-REVIEW-573-r1.md](CODE-REVIEW-573-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | evaluateCiProof меняет поведение merge/review-потребителей без теста и | `scripts/ci-proof.mjs` `scripts/merge-candidate.mjs` `scripts/validate-gate.mjs` `validate.yml` `merge-candidate.mjs` `validate-gate.mjs` `test/ci-proof.test.mjs` `test/merge-candidate.test.mjs` |
+| #573 | [CODE-REVIEW-573-r2.md](CODE-REVIEW-573-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #571 | [CODE-REVIEW-571-r1.md](CODE-REVIEW-571-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #570 | [SPEC-REVIEW-570-r1.md](SPEC-REVIEW-570-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #570 | [CODE-REVIEW-570-r1.md](CODE-REVIEW-570-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #569 | [CODE-REVIEW-569-r1.md](CODE-REVIEW-569-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #568 | [CODE-REVIEW-568-r1.md](CODE-REVIEW-568-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #567 | [CODE-REVIEW-567-r1.md](CODE-REVIEW-567-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #566 | [CODE-REVIEW-566-r1.md](CODE-REVIEW-566-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | «наблюдение» ложно утверждает «владелец жив» там, где владелец не подтверждён | `scripts/model-invariants.mjs` `src/space-reference-repair.ts` `test/model-invariants.test.mjs` |
+| #566 | [CODE-REVIEW-566-r2.md](CODE-REVIEW-566-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — | — |
+| #565 | [SPEC-REVIEW-565-r1.md](SPEC-REVIEW-565-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #565 | [CODE-REVIEW-565-r1.md](CODE-REVIEW-565-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Клавиатурная focus-tooltip тихо стирается наведением мыши на комнату — нарушает контрак… | `src/houseplan-card.ts` `src/logic.ts` `houseplan-card.ts` `docs/UX-MODES.md` `demo/smoke_household_journeys.mjs` |
+| #565 | [CODE-REVIEW-565-r2.md](CODE-REVIEW-565-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #564 | [SPEC-REVIEW-564-r1.md](SPEC-REVIEW-564-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | DoR: «затронутые файлы и модули» не названы (Medium, в скоупе); «Сценарий» и «Что человек увидит» объединены без явной персоны на | `PROCESS.md` `src/styles/devices.styles.ts` `src/houseplan-card.ts` `src/houseplan-editor-runtime.ts` `hp-device-preview.ts` `docs/specs/213-device-marker-geometry.md` `docs/SCOPE.md` |
+| #564 | [SPEC-REVIEW-564-r2.md](SPEC-REVIEW-564-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #564 | [CODE-REVIEW-564-r1.md](CODE-REVIEW-564-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC2 не имеет заявленного browser-smoke доказательства для Icon/Text/Double/legacy и чет… | `test/device-hit-owner.test.mjs` `docs/device-hit-owner.test.mjs` `demo/smoke_household_journeys.mjs` `src/device-hit-owner.ts` `src/styles/devices.styles.ts` `smoke_household_journeys.mjs` `test/device-hit-owner-contract.test.mjs` |
+| #564 | [CODE-REVIEW-564-r2.md](CODE-REVIEW-564-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #563 | [SPEC-REVIEW-563-r1.md](SPEC-REVIEW-563-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | сценарий и «что человек увидит» не выделены отдельными первыми | `PROCESS.md` `docs/SCOPE.md` |
+| #563 | [CODE-REVIEW-563-r1.md](CODE-REVIEW-563-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #562 | [CODE-REVIEW-562-r1.md](CODE-REVIEW-562-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | task-packet.mjs определяет инфра-трек и право трогать класс A по тематической метке inf… | `task-packet.mjs` `PROCESS.md` `AGENTS.md` `scripts/process-gate.mjs` `process-gate.mjs` `test/task-packet.test.mjs` |
+| #562 | [CODE-REVIEW-562-r2.md](CODE-REVIEW-562-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | после фикса статусless infra-issue без опубликованной ветки получает заведомо неверную … | `scripts/task-packet.mjs` `AGENTS.md` `task-packet.mjs` `process-gate.mjs` `PROCESS.md` |
+| #562 | [CODE-REVIEW-562-r3.md](CODE-REVIEW-562-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #561 | [SPEC-REVIEW-561-r1.md](SPEC-REVIEW-561-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | ТЗ не называет явно влияние на touch/View/kiosk — обязательный, блокирующий; Разделы «сценарий» и «что человек увидит до/после» не оформлены отдельными | `docs/TOUCH-SUPPORT.md` |
+| #561 | [SPEC-REVIEW-561-r2.md](SPEC-REVIEW-561-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — | — |
+| #561 | [CODE-REVIEW-561-r1.md](CODE-REVIEW-561-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #560 | [CODE-REVIEW-560-r1.md](CODE-REVIEW-560-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | process-gate даёт 1 предупреждение, а хендофф заявляет «предупреждений 0» | `scripts/process-gate.mjs` |
+| #558 | [CODE-REVIEW-558-r1.md](CODE-REVIEW-558-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #557 | [CODE-REVIEW-557-r1.md](CODE-REVIEW-557-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #556 | [CODE-REVIEW-556-r1.md](CODE-REVIEW-556-r1.md) | code · r1 | 🔴 красный | 1 | 0 | Границу «модель не пишет в issue» PR не строит — permissions: per-job не влияет на реал… | `.github/workflows/process.yml` `src/github/token.ts` `process.yml` `docs/security.md` |
+| #556 | [CODE-REVIEW-556-r2.md](CODE-REVIEW-556-r2.md) | code · r2 | 🔴 красный | 0 | 0 | — | — |
+| #555 | [CODE-REVIEW-555-r1.md](CODE-REVIEW-555-r1.md) | code · r1 | 🔴 красный | 1 | 0 | relabel() может уронить весь прогон и никогда не эскалировать именно тот случай, ради к… | `scripts/process-reconcile.mjs` `process-reconcile.mjs` `process-reconcile.yml` `test/process-reconcile.test.mjs` `summary.json` |
+| #555 | [CODE-REVIEW-555-r2.md](CODE-REVIEW-555-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #554 | [SPEC-REVIEW-554-r1.md](SPEC-REVIEW-554-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #554 | [CODE-REVIEW-554-r1.md](CODE-REVIEW-554-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #553 | [CODE-REVIEW-553-r2.md](CODE-REVIEW-553-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | Регрессионный тест #553 не защищает от отката формулировки, ради которого; Стале-цитата правила в §11.4 после правки формулировки §5 | `test/review-doc-guard.test.mjs` `PROCESS.md` `AGENTS.md` |
+| #553 | [CODE-REVIEW-553-r3.md](CODE-REVIEW-553-r3.md) | code · r3 | 🟡 жёлтый | 0 | 0 | — | — |
+| #551 | [CODE-REVIEW-551-r1.md](CODE-REVIEW-551-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #551 | [CODE-REVIEW-551-r4.md](CODE-REVIEW-551-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #550 | [CODE-REVIEW-550-r1.md](CODE-REVIEW-550-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #549 | [CODE-REVIEW-549-r1.md](CODE-REVIEW-549-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #549 | [CODE-REVIEW-549-r2.md](CODE-REVIEW-549-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #548 | [CODE-REVIEW-548-r1.md](CODE-REVIEW-548-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #547 | [CODE-REVIEW-547-r1.md](CODE-REVIEW-547-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #546 | [CODE-REVIEW-546-r1.md](CODE-REVIEW-546-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #545 | [SPEC-REVIEW-545-r1.md](SPEC-REVIEW-545-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #545 | [CODE-REVIEW-545-r1.md](CODE-REVIEW-545-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #544 | [SPEC-REVIEW-544-r1.md](SPEC-REVIEW-544-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #544 | [CODE-REVIEW-544-r1.md](CODE-REVIEW-544-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #543 | [SPEC-REVIEW-543-r1.md](SPEC-REVIEW-543-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | двусмысленная ссылка на тестовый артефакт в AC7 и списке файлов | `test/config-adoption-ownership.test.mjs` `docs/ARCHITECTURE.md` `test/config-adoption.test.mjs` `docs/CONFIG-COMPATIBILITY.md` `test/config-adoption-attempt.test.mjs` `config-adoption.test.mjs` `config-adoption-ownership.test.mjs` |
+| #543 | [SPEC-REVIEW-543-r2.md](SPEC-REVIEW-543-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #543 | [CODE-REVIEW-543-r1.md](CODE-REVIEW-543-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #542 | [CODE-REVIEW-542-r1.md](CODE-REVIEW-542-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #541 | [CODE-REVIEW-541-r1.md](CODE-REVIEW-541-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #536 | [SPEC-REVIEW-536-r1.md](SPEC-REVIEW-536-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | 1. «До/После» использует термин реализации. Формулировка «уходит тогда | — |
+| #536 | [CODE-REVIEW-536-r1.md](CODE-REVIEW-536-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #535 | [SPEC-REVIEW-535-r1.md](SPEC-REVIEW-535-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | 1. Не-скоуп не продублирован внутри ## ТЗ. Перечень «чего в этой задаче | — |
+| #535 | [CODE-REVIEW-535-r1.md](CODE-REVIEW-535-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | текст console.error панели изменён вопреки букве К2 ТЗ | `scripts/bundle-manifest.mjs` |
+| #534 | [SPEC-REVIEW-534-r1.md](SPEC-REVIEW-534-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | ключевое техническое допущение К2/«Принято предположительно» №2 неверно, и это открывае…; «их единицы» (К3) неточно описывает число проёмов | `src/styles/devices.styles.ts` `demo/smoke_space_switch_transitions.mjs` `test/device-marker-polish-contract.test.mjs` `test/space-order.test.mjs` `test/device-face.test.mjs` |
+| #534 | [SPEC-REVIEW-534-r2.md](SPEC-REVIEW-534-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | К2 распространяет keyed+repeat на список проёмов «для единообразия», но обоснование (К3… | `src/styles/plan.styles.ts` `src/houseplan-card.ts` |
+| #534 | [SPEC-REVIEW-534-r3.md](SPEC-REVIEW-534-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | АС2а/К3 называют триггер проёмов «Plan ↔ View», код переключает шире | `src/houseplan-card.ts` |
+| #534 | [CODE-REVIEW-534-r1.md](CODE-REVIEW-534-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #533 | [CODE-REVIEW-533-r1.md](CODE-REVIEW-533-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC1 закрыт частично: 19 из 22 вызовов pointer() не проверяют доставку события | `demo/smoke_room_resize.mjs` |
+| #533 | [CODE-REVIEW-533-r2.md](CODE-REVIEW-533-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — | — |
+| #533 | [CODE-REVIEW-533-r3.md](CODE-REVIEW-533-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #532 | [SPEC-REVIEW-532-r1.md](SPEC-REVIEW-532-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #532 | [SPEC-REVIEW-532-r2.md](SPEC-REVIEW-532-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #532 | [CODE-REVIEW-532-r1.md](CODE-REVIEW-532-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | чейнджлог утверждает то, что опровергает сам контракт задачи; docs/SUN.md приписывает измерение в Chromium браузеру Firefox | `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `docs/SUN.md` |
+| #532 | [CODE-REVIEW-532-r2.md](CODE-REVIEW-532-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #531 | [SPEC-REVIEW-531-r1.md](SPEC-REVIEW-531-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | второй триггер бюджета (К2) не имеет ни одного AC и ни одной названной константы; обязательные разделы §7.1 присутствуют по содержанию, но не как отдельные заголовки; сн… | `demo/benchmark_large_house.mjs` |
+| #531 | [SPEC-REVIEW-531-r2.md](SPEC-REVIEW-531-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #531 | [CODE-REVIEW-531-r1.md](CODE-REVIEW-531-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | устаревший отпечаток скриншотов документации | `src/live-viewport.ts` `docs/images/screenshots.json` |
+| #531 | [CODE-REVIEW-531-r2.md](CODE-REVIEW-531-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #530 | [SPEC-REVIEW-530-r1.md](SPEC-REVIEW-530-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | правка меняет два поведения, задокументированных в docs/PDF-EXPORT.md, но документ не н…; существующий мутант pdf-room-edge-dropped защищает ровно ту гарантию, которую контракт … | `docs/PDF-EXPORT.md` `src/pdf/pdf-scene.ts` `PDF-EXPORT.md` `scripts/mutation-gate.mjs` |
+| #530 | [SPEC-REVIEW-530-r2.md](SPEC-REVIEW-530-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #530 | [CODE-REVIEW-530-r1.md](CODE-REVIEW-530-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #529 | [SPEC-REVIEW-529-r1.md](SPEC-REVIEW-529-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | К4/AC5 описывают механизм самолечения, который не соответствует реальному пути записи c… | — |
+| #529 | [SPEC-REVIEW-529-r2.md](SPEC-REVIEW-529-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #529 | [CODE-REVIEW-529-r1.md](CODE-REVIEW-529-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #528 | [CODE-REVIEW-528-r1.md](CODE-REVIEW-528-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #526 | [SPEC-REVIEW-526-r1.md](SPEC-REVIEW-526-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Отсутствуют оба обязательных продуктовых раздела ТЗ: «сценарий» и «что человек увидит д…; Раздел «UX» не выделен явно. §7.1 перечисляет UX отдельным обязательным разделом. По со… | `docs/SCOPE.md` |
+| #526 | [SPEC-REVIEW-526-r2.md](SPEC-REVIEW-526-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #526 | [CODE-REVIEW-526-r1.md](CODE-REVIEW-526-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #525 | [SPEC-REVIEW-525-r1.md](SPEC-REVIEW-525-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | не проговорены явные «нет» по четырём пунктам DoR; формулировка changelog называет только «открытие» | — |
+| #525 | [CODE-REVIEW-525-r1.md](CODE-REVIEW-525-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #524 | [SPEC-REVIEW-524-r1.md](SPEC-REVIEW-524-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | ТЗ не выделяет отдельными разделами «сценарий» и «что человек увидит до/после» (снято) | — |
+| #524 | [CODE-REVIEW-524-r1.md](CODE-REVIEW-524-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #522 | [SPEC-REVIEW-522-r1.md](SPEC-REVIEW-522-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | К3 называет неверное число диалогов с объявленным autofocus; К1 называет .close/ha-dialog «фолбэками без изменений», хотя их достижимость меняется | `hp-confirm.ts` `src/hp-dialog.ts` |
+| #521 | [SPEC-REVIEW-521-r1.md](SPEC-REVIEW-521-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | заявленный источник поведения не существует в названном документе | `docs/USER-GUIDE.ru.md` `AGENTS.md` `USER-GUIDE.ru.md` |
+| #521 | [SPEC-REVIEW-521-r2.md](SPEC-REVIEW-521-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | новая ссылка на несуществующий документ в том же абзаце, который правил находку r1 | `docs/USER-GUIDE.ru.md` `AGENTS.md` `CLAUDE.md` `PROCESS.md` `docs/SCOPE.md` |
+| #521 | [SPEC-REVIEW-521-r3.md](SPEC-REVIEW-521-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #521 | [CODE-REVIEW-521-r1.md](CODE-REVIEW-521-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC5 заявляет доказательство, которого смок не даёт | `src/live-editor.ts` `demo/smoke_align_guides.mjs` `houseplan-card.ts` |
+| #521 | [CODE-REVIEW-521-r2.md](CODE-REVIEW-521-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | тело issue правилось после зелёного ревью ТЗ без нового цикла S4-spec-review | — |
+| #520 | [SPEC-REVIEW-520-r1.md](SPEC-REVIEW-520-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | обязательный раздел «Риски» отсутствует (§7.1); AC3 не имеет дешёвого воспроизводимого способа доказательства; регрессия профиля изометрии показана в «Симптоме», но не отражена в контракте/AC | `PROCESS.md` `docs/specs/506-startup-performance.md` `test/config-adoption-ownership.test.mjs` `demo/benchmark_large_house.mjs` `demo/performance/budgets-large-house-isometric.json` `demo/performance/evaluate.mjs` |
+| #520 | [SPEC-REVIEW-520-r2.md](SPEC-REVIEW-520-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | амендированный AC4 не покрывает второе число из того же предложения «Симптома»: firstSt… | `demo/performance/evaluate.mjs` `budgets-large-house-isometric.json` |
+| #520 | [SPEC-REVIEW-520-r3.md](SPEC-REVIEW-520-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #520 | [CODE-REVIEW-520-r1.md](CODE-REVIEW-520-r1.md) | code · r1 | 🔴 красный | 1 | 0 | правка не устраняет регрессию, которую должна была устранить | — |
+| #520 | [CODE-REVIEW-520-r2.md](CODE-REVIEW-520-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | node scripts/check-docs.mjs красный на материале ревью: отпечаток скриншотов документац… | `src/houseplan-card.ts` `src/config-adoption.ts` `scripts/source-fingerprint.mjs` `config-adoption.ts` `docs/images/screenshots.json` |
+| #520 | [CODE-REVIEW-520-r3.md](CODE-REVIEW-520-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #517 | [SPEC-REVIEW-517-r1.md](SPEC-REVIEW-517-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | Гарантия AC2 не держится при повторном применении зелёного вердикта (#499); Метка small не соответствует собственному описанию задачи как полнотрековой; У1 содержит неточное утверждение о текущем коде (не блокирует, для протокола) | `scripts/review-doc-guard.mjs` `process.yml` `scripts/process-gate.mjs` `task-packet.mjs` |
+| #517 | [SPEC-REVIEW-517-r2.md](SPEC-REVIEW-517-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | Полнотрековый статус этой задачи формально расходится с ещё не изменённым §2.3 | `PROCESS.md` |
+| #517 | [CODE-REVIEW-517-r1.md](CODE-REVIEW-517-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #516 | [CODE-REVIEW-516-r1.md](CODE-REVIEW-516-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #516 | [CODE-REVIEW-516-r2.md](CODE-REVIEW-516-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #515 | [CODE-REVIEW-515-r1.md](CODE-REVIEW-515-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #514 | [SPEC-REVIEW-514-r1.md](SPEC-REVIEW-514-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #514 | [CODE-REVIEW-514-r1.md](CODE-REVIEW-514-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #514 | [CODE-REVIEW-514-r2.md](CODE-REVIEW-514-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #514 | [CODE-REVIEW-514-r3.md](CODE-REVIEW-514-r3.md) | code · r3 | 🟡 жёлтый | 0 | 1 | фолбэк-токен E2E_DISPATCH_TOKEN, если он scoped только на houseplan-e2e, молча ломает p…; High не найдено. Medium вне скоупа не найдено — единственный Medium (M1) целиком внутри… | `release.yml` `scripts/e2e-gate.mjs` `e2e-gate.mjs` `.github/workflows/release.yml` `houseplan-e2e/e2e.yml` `e2e.yml` `validate-gate.mjs` `PROCESS.md` |
+| #514 | [CODE-REVIEW-514-r4.md](CODE-REVIEW-514-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | docs/specs/514-e2e-stable-release-gate.md:38 дословно цитирует старый текст TOKEN_HINT,… | `docs/specs/514-e2e-stable-release-gate.md` `scripts/e2e-gate.mjs` |
+| #513 | [CODE-REVIEW-513-r1.md](CODE-REVIEW-513-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | scripts/pre-push-gate.mjs продолжает называть полный мутационный реестр предрелизным ге… | `scripts/pre-push-gate.mjs` `mutation-gate.yml` `docs/TESTING.md` `pre-push-gate.mjs` `scripts/mutation-gate.mjs` `mutation-gate.mjs` |
+| #513 | [CODE-REVIEW-513-r2.md](CODE-REVIEW-513-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #512 | [SPEC-REVIEW-512-r1.md](SPEC-REVIEW-512-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | ТЗ не учитывает, что правка demo/docs/capture.mjs ломает captureScriptSha256 и красит d… | `demo/docs/capture.mjs` `docs/specs/512-golden-version-seam-and-docs-identical-accept.md` `scripts/check-docs.mjs` `scripts/source-fingerprint.mjs` `capture.mjs` `scripts/capture-environment.mjs` `accept.mjs` `policy.mjs` |
+| #512 | [SPEC-REVIEW-512-r2.md](SPEC-REVIEW-512-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #512 | [CODE-REVIEW-512-r1.md](CODE-REVIEW-512-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #511 | [SPEC-REVIEW-511-r1.md](SPEC-REVIEW-511-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC3 указывает не туда, реальный источник искажения не назван | `docs/performance/README.md` `docs/TESTING.md` `docs/DEVELOPMENT.md` |
+| #511 | [SPEC-REVIEW-511-r2.md](SPEC-REVIEW-511-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #511 | [CODE-REVIEW-511-r1.md](CODE-REVIEW-511-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #510 | [SPEC-REVIEW-510-r1.md](SPEC-REVIEW-510-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | 1: место шага gate относительно reuse не зафиксировано и рискует сломать fast-path #499; 2: критерий «подходящий прогон» в validate-gate.mjs/merge-candidate.mjs не проверяет, ч…; 1: нет явной декларации «пользовательское поведение не меняется» и N/A по i18n/UX/модел… | `docs/specs/510-mutants-on-candidate-and-review-waits-validate.md` `process.yml` `review-doc-guard.test.mjs` `validate-gate.mjs` `merge-candidate.mjs` `validate-gate.test.mjs` `merge-candidate.test.mjs` `docs/specs/README.md` |
+| #510 | [SPEC-REVIEW-510-r2.md](SPEC-REVIEW-510-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | 1: проводка gate → красный-возврат / продолжение ревью использует в трёх соседних предл… | `docs/specs/510-mutants-on-candidate-and-review-waits-validate.md` |
+| #510 | [SPEC-REVIEW-510-r3.md](SPEC-REVIEW-510-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 0 | 1: унификация «всё через proceed» ломает reuse-fast-path (#499) — деплой-зависимости, C… | `docs/specs/510-mutants-on-candidate-and-review-waits-validate.md` `process.yml` `test/review-doc-guard.test.mjs` |
+| #510 | [SPEC-REVIEW-510-r4.md](SPEC-REVIEW-510-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #510 | [CODE-REVIEW-510-r1.md](CODE-REVIEW-510-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Отменённый (cancelled) dispatch-прогон читается как красный, а не игнорируется — то же …; Не найдено требующих записи — единственная спорная деталь (M1) достаточно | `scripts/validate-gate.mjs` `scripts/merge-candidate.mjs` `validate.yml` `validate-gate.mjs` `test/validate-gate.test.mjs` `test/merge-candidate.test.mjs` `scripts/release-gate.mjs` |
+| #510 | [CODE-REVIEW-510-r2.md](CODE-REVIEW-510-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | (новая, r2). Закрытие M1(r1) асимметрично: половина фикса в; Не найдено требующих записи | `scripts/merge-candidate.mjs` `test/merge-candidate.test.mjs` `merge-candidate.mjs` `scripts/validate-gate.mjs` |
+| #510 | [CODE-REVIEW-510-r3.md](CODE-REVIEW-510-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #509 | [SPEC-REVIEW-509-r1.md](SPEC-REVIEW-509-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | отсутствует раздел «Принятые технические предположения» (PROCESS.md §7.1); контракт п.4 (прежнее значение при инвалидации мемо, без скелета) не доказан ни одним AC; критерий отказа от лёгкого трека не назван явно | `SPEC-REVIEW-505-r1.md` `docs/specs/493-...md` |
+| #509 | [SPEC-REVIEW-509-r2.md](SPEC-REVIEW-509-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | способ инъекции счётчика вызовов для AC3 остался неназванным | `wall-thickness.ts` |
+| #509 | [CODE-REVIEW-509-r1.md](CODE-REVIEW-509-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #508 | [SPEC-REVIEW-508-r1.md](SPEC-REVIEW-508-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | AC3 называет несуществующее доказательство: golden-сценариев summary- в; В ТЗ лёгкого трека нет раздела «откат»; Целевой файл документации для фразы про футер не определён; Влияние на производительность не названо явно | `demo/capture_summary_panel_505.mjs` `docs/UX-MODES.md` `docs/ARCHITECTURE.md` |
+| #508 | [SPEC-REVIEW-508-r2.md](SPEC-REVIEW-508-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #508 | [CODE-REVIEW-508-r1.md](CODE-REVIEW-508-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #508 | [CODE-REVIEW-508-r2.md](CODE-REVIEW-508-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #508 | [CODE-REVIEW-508-r3.md](CODE-REVIEW-508-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #506 | [SPEC-REVIEW-506-r1.md](SPEC-REVIEW-506-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #506 | [CODE-REVIEW-506-r1.md](CODE-REVIEW-506-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #505 | [SPEC-REVIEW-505-r1.md](SPEC-REVIEW-505-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | отсутствуют обязательные первые разделы «Сценарий» и «Что человек увидит до и после» (P…; отсутствует обязательный раздел «Принятые технические предположения» (PROCESS.md §7.1/§7); неполный список визуальных пар в разделе доказательств (§8) | `docs/specs/505-summary-panel-design-parity.md` `docs/SCOPE.md` `docs/specs/493-summary-panel-hardening.md` |
+| #505 | [SPEC-REVIEW-505-r2.md](SPEC-REVIEW-505-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #505 | [CODE-REVIEW-505-r1.md](CODE-REVIEW-505-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | неиспользуемый ключ локализации summary.block_visible | `src/summary-panel-editor.ts` |
+| #505 | [CODE-REVIEW-505-r2.md](CODE-REVIEW-505-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #502 | [SPEC-REVIEW-502-r1.md](SPEC-REVIEW-502-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | `src/radar-setup.ts` `test/helpers/i18n-consumers.mjs` `test/i18n-dead-keys.test.mjs` |
+| #502 | [CODE-REVIEW-502-r1.md](CODE-REVIEW-502-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #500 | [SPEC-REVIEW-500-r1.md](SPEC-REVIEW-500-r1.md) | spec · r1 | 🟡 жёлтый | 2 | 0 | Инвентаризация вызывающих adoptStructuralResponses неполна: 4 названных против 7 фактич…; Инвентаризация писателей тела serverCfg = тоже неполна: 6/16 названо, фактически 8 моду… | `houseplan-editor-runtime.ts` `houseplan-onboarding-runtime.ts` `demo/smoke_space_delete_adoption.mjs` `houseplan-card.ts` `plan-optimize-write.ts` `serialized-write-queue.ts` `space-copy-runtime.ts` `summary-panel-runtime-loaded.ts` |
+| #500 | [SPEC-REVIEW-500-r2.md](SPEC-REVIEW-500-r2.md) | spec · r2 | 🟡 жёлтый | 1 | 0 | новый текст r2 неверно утверждает, что adoptInitialSpace сегодня не вызывается ни на од… | `docs/specs/500-config-adoption-boundary.md` `src/houseplan-editor-runtime.ts` `houseplan-card.ts` |
+| #500 | [SPEC-REVIEW-500-r3.md](SPEC-REVIEW-500-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #500 | [CODE-REVIEW-500-r1.md](CODE-REVIEW-500-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Post-write гейт: отказ (asset-wait) не останавливает хвост вызывающего ни в одном из че…; Риск-таблица ТЗ §12 содержит неверный факт о static properties, но код всё равно корректен | `src/houseplan-editor-runtime.ts` `src/houseplan-onboarding-runtime.ts` `demo/smoke_post_write_adoption.mjs` `test/config-adoption.test.mjs` |
+| #500 | [CODE-REVIEW-500-r2.md](CODE-REVIEW-500-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | Единственный автоматический свидетель AC4/M1 красный на материале ревью — demo/smoke_po… | `demo/smoke_post_write_adoption.mjs` |
+| #500 | [CODE-REVIEW-500-r3.md](CODE-REVIEW-500-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #498 | [SPEC-REVIEW-498-r1.md](SPEC-REVIEW-498-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | обязательный раздел «AC1…ACn» отсутствует, часть пунктов DoR не названа явно; предложенный алгоритм обхода графа ссылок (§6) не гарантирует заявленный предел глубины…; «После» в §1.2 смешивает пользовательский язык с деталями реализации | `decor_assets.py` `src/decor-image-editor.ts` |
+| #498 | [SPEC-REVIEW-498-r2.md](SPEC-REVIEW-498-r2.md) | spec · r2 | 🟢 зелёный | 0 | 2 | нумерация разделов «## 8» / «## 8.0» после вставки AC-раздела | — |
+| #498 | [CODE-REVIEW-498-r1.md](CODE-REVIEW-498-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #495 | [SPEC-REVIEW-495-r1.md](SPEC-REVIEW-495-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #495 | [CODE-REVIEW-495-r1.md](CODE-REVIEW-495-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #493 | [SPEC-REVIEW-493-r1.md](SPEC-REVIEW-493-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | лишняя пустая строка в конце файла ТЗ | `docs/specs/493-summary-panel-hardening.md` |
+| #493 | [CODE-REVIEW-493-r1.md](CODE-REVIEW-493-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #492 | [SPEC-REVIEW-492-r1.md](SPEC-REVIEW-492-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC6 не называет способ доказательства | `docs/specs/492-exact-candidate-and-input-manifest.md` `check-inputs.mjs` `src/houseplan-card.ts` `test/gate-reuse.test.mjs` |
+| #492 | [SPEC-REVIEW-492-r2.md](SPEC-REVIEW-492-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #492 | [CODE-REVIEW-492-r1.md](CODE-REVIEW-492-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #491 | [SPEC-REVIEW-491-r1.md](SPEC-REVIEW-491-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #491 | [CODE-REVIEW-491-r1.md](CODE-REVIEW-491-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | 1; 0 | `custom_components/houseplan/websocket_api.py` `scripts/mutation-gate.mjs` |
+| #491 | [CODE-REVIEW-491-r2.md](CODE-REVIEW-491-r2.md) | code · r2 | 🟢 зелёный | 1 | 2 | 0; в скоупе — 0; вне скоупа — 1, заведена отдельным issue; 1 | `scripts/process-gate.mjs` `docs/TESTING.md` `TESTING.md` `scripts/mutation-gate.mjs` |
+| #490 | [SPEC-REVIEW-490-r1.md](SPEC-REVIEW-490-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #490 | [CODE-REVIEW-490-r1.md](CODE-REVIEW-490-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Recovery-адаптация обходит asset-readiness gate и continuity-overlay (в скоупе, Medium) | `src/summary-panel-runtime-loaded.ts` `houseplan-card.ts` `space-card.ts` `src/signing.ts` `visual-continuity.ts` `signing.ts` `demo/smoke_summary_panel.mjs` |
+| #490 | [CODE-REVIEW-490-r2.md](CODE-REVIEW-490-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #489 | [SPEC-REVIEW-489-r1.md](SPEC-REVIEW-489-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | Условие существования зум-кнопок противоречит текущему рендеру и не-скоупу (Medium, в с…; Гейт свежести документации (check-docs) не назван обязательным при правке src/ (Medium,…; data-hp-mode="device" расходится с уже опубликованным именем mode-devices (Medium, в ск… | `docs/specs/489-data-hp-contract.md` `src/houseplan-card.ts` `src/styles/chrome.styles.ts` `docs/data-hp-contract.json` `STYLING-HOOKS.md` `demo/smoke_styling_hooks.mjs` `src/houseplan-editor-runtime.ts` `src/hp-dialog.ts` |
+| #489 | [SPEC-REVIEW-489-r2.md](SPEC-REVIEW-489-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #489 | [CODE-REVIEW-489-r1.md](CODE-REVIEW-489-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #488 | [CODE-REVIEW-488-r1.md](CODE-REVIEW-488-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #487 | [SPEC-REVIEW-487-r1.md](SPEC-REVIEW-487-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | расхождение с уже принятой формулировкой «наследовать» (в скоупе, не блокирует) | `docs/specs/487-room-temperature-thresholds.md` `src/houseplan-editor-runtime.ts` |
+| #487 | [CODE-REVIEW-487-r1.md](CODE-REVIEW-487-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #486 | [SPEC-REVIEW-486-r1.md](SPEC-REVIEW-486-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | Сверка утверждений о текущем коде с фактическим origin/dev; Проверка полномочий продуктовых решений; Проверка обязательных разделов ТЗ (PROCESS.md §7.1); Проверка непротиворечивости с продуктовым скоупом | — |
+| #486 | [CODE-REVIEW-486-r1.md](CODE-REVIEW-486-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | 1 Дешёвые гейты — приняты по ссылке, не перегонялись; 2 Тяжёлые гейты — не приняты вслепую, прослежены по истории CI ветки; 3 Что прогнал/перепроверил сам; 4 Вывод smoke-select.mjs (для протокола); 5 Таблица гейтов; 1 High — нет | — |
+| #485 | [SPEC-REVIEW-485-r1.md](SPEC-REVIEW-485-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | исключение из SCOPE.md для истории/тепловой карты не зафиксировано в самом SCOPE.md; этап 1 не декларирует touch-классификацию нового редактора (обязательное требование TOU… | `docs/SCOPE.md` `485-radar-presence.md` `docs/TOUCH-SUPPORT.md` `485-radar-presence-stage2.md` `485-radar-presence-stage3.md` `485-radar-presence-stage1.md` |
+| #485 | [SPEC-REVIEW-485-r2.md](SPEC-REVIEW-485-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #485 | [SPEC-REVIEW-485-r3.md](SPEC-REVIEW-485-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | новый гейт видимости, по тексту, исключает ранее принятый адаптер «любой числовой сенсо… | `docs/specs/485-radar-presence-stage1.md` `stage1.md` `485-radar-presence.md` |
+| #485 | [SPEC-REVIEW-485-r4.md](SPEC-REVIEW-485-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #485 | [CODE-REVIEW-485-r1.md](CODE-REVIEW-485-r1.md) | code · r1 | 🔴 красный | 6 | 6 | «partial» не существует как состояние здоровья; смешанные и полностью; гонка teardown/await воскрешает HA-подписки после выгрузки интеграции; нет проверки «то же устройство» для верифицированного адаптера LD2450; «Настроить на плане» отказывает для комнаты без контура вместо; известные занятые зоны (zones_v1) никогда не рисуются на плане; смена HA-привязки маркера может молча удалить уже сохранённую | `custom_components/houseplan/radar.py` `__init__.py` `custom_components/houseplan/radar_validation.py` `radar.py` `src/editors/radar-section.ts` `radar-model.ts` `radar-editor.ts` `editors/radar-section.ts` |
+| #485 | [CODE-REVIEW-485-r2.md](CODE-REVIEW-485-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | M-1 (продолжение M6 из r1, закрыто частично). Три из четырёх числовых гардов; чтению (src/editors/radar-section.ts:185-197, ключ radar.no_contour | `radar_geometry.py` `src/radar-geometry.ts` `test/radar-geometry.test.mjs` `radar_websocket.py` `test_ha_radar_websocket.py` `custom_components/houseplan/websocket_api.py` `docs/specs/485-radar-presence-stage1.md` `custom_components/houseplan/__init__.py` |
+| #485 | [CODE-REVIEW-485-r3.md](CODE-REVIEW-485-r3.md) | code · r3 | 🟡 жёлтый | 0 | 1 | M-1 (новая). Четвёртый числовой гвард двухточечного решателя | `custom_components/houseplan/radar_geometry.py` `src/radar-geometry.ts` |
+| #485 | [CODE-REVIEW-485-r4.md](CODE-REVIEW-485-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | пусто). Не эскалирую третий раунд подряд по той же логике r2/r3: защитные | `radar.py` |
+| #484 | [SPEC-REVIEW-484-r1.md](SPEC-REVIEW-484-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #484 | [CODE-REVIEW-484-r1.md](CODE-REVIEW-484-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #483 | [CODE-REVIEW-483-r1.md](CODE-REVIEW-483-r1.md) | code · r1 | ⚪ — | 0 | 0 | — | — |
+| #482 | [SPEC-REVIEW-482-r1.md](SPEC-REVIEW-482-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | источник и лицензия векторного компаса заявлены как факт без | `docs/specs/482-pdf-export-polish.md` `docs/FURNITURE.md` `docs/PDF-EXPORT.md` `SPEC-REVIEW-159-r1.md` |
+| #482 | [SPEC-REVIEW-482-r2.md](SPEC-REVIEW-482-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #482 | [CODE-REVIEW-482-r1.md](CODE-REVIEW-482-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #481 | [SPEC-REVIEW-481-r1.md](SPEC-REVIEW-481-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | в скоупе задачи, чинится в этом же issue; снимаю с записью, не блокирует | `validate.yml` `test/mutation-gate.test.mjs` `test/validate-workflow.test.mjs` |
+| #481 | [SPEC-REVIEW-481-r2.md](SPEC-REVIEW-481-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #481 | [CODE-REVIEW-481-r1.md](CODE-REVIEW-481-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #478 | [SPEC-REVIEW-478-r1.md](SPEC-REVIEW-478-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #478 | [CODE-REVIEW-478-r1.md](CODE-REVIEW-478-r1.md) | code · r1 | 🔴 красный | 2 | 4 | TS и Python дают разные ID и разные решения accept/reject на одном и том же legacy JSON…; устаревшая v9-запись поверх уже мигрированного v10-документа не отклоняется (нарушение …; golden-харнесс не переименован вслед за полем, из-за чего сценарий превью толщины цепоч…; путь поглощения комнаты не атомарен при вырожденном spaceModel() (в скоупе, риск для AC9); AC13 (фикс-пойнт Optimize сразу после accept) не доказан через реальный путь редактора; мёртвые поля redundantDraftsRemoved/removedDrafts в моке смока | `src/wall-segment-model.ts` `custom_components/houseplan/wall_segment_model.py` `test-build/wall-segment-model.js` `wall_segment_model.py` `src/logic.ts` `test/wall-segment-model.test.mjs` `tests_backend/test_wall_segment_model.py` `custom_components/houseplan/validation.py` |
+| #478 | [CODE-REVIEW-478-r2.md](CODE-REVIEW-478-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | канонический документ подсистемы утверждает поведение, которого дельта только что лишил… | `docs/CONFIG-COMPATIBILITY.md` `test/fixtures/478-room-draft-migration-vectors.json` `wall-segment-model.ts` `src/wall-segment-model.ts` `custom_components/houseplan/wall_segment_model.py` `validation.py` |
+| #478 | [CODE-REVIEW-478-r3.md](CODE-REVIEW-478-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #477 | [SPEC-REVIEW-477-r1.md](SPEC-REVIEW-477-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #477 | [CODE-REVIEW-477-r1.md](CODE-REVIEW-477-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #476 | [SPEC-REVIEW-476-r1.md](SPEC-REVIEW-476-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | §18 противоречит §7.3/AC4; §7.2 нумерованный список читается как безусловный | `docs/specs/476-color-picker-ok.md` `hp-color-opacity.ts` |
+| #476 | [SPEC-REVIEW-476-r2.md](SPEC-REVIEW-476-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #476 | [CODE-REVIEW-476-r1.md](CODE-REVIEW-476-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | AC4: защита от обхода невалидного HEX повторным «ОК» не имеет постоянного; AC3/§7.2.4: заявленная защита «клик не проваливается в план/toolbar под; (git diff слепил две записи объекта). Чисто косметика, синтаксис и typecheck | `scripts/mutation-gate.mjs` `SPEC-REVIEW-476-r1.md` `demo/smoke_color_picker.mjs` `scripts/smoke-links.mjs` `src/houseplan-card.ts` |
+| #476 | [CODE-REVIEW-476-r2.md](CODE-REVIEW-476-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #476 | [CODE-REVIEW-476-r3.md](CODE-REVIEW-476-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #475 | [SPEC-REVIEW-475-r1.md](SPEC-REVIEW-475-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | job и guardFiles() не покрывают гарды бэкенда, хотя они уже есть в реестре | `.test.mjs` `scripts/mutation-gate.mjs` `custom_components/houseplan/frontend_registration.py` `tests_backend/test_ha_frontend_registration.py` `mutation-gate.mjs` `.github/workflows/validate.yml` `src/wall-merge.ts` |
+| #475 | [SPEC-REVIEW-475-r2.md](SPEC-REVIEW-475-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #475 | [CODE-REVIEW-475-r1.md](CODE-REVIEW-475-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | триггер job не покрывает третье условие контракта; тест AC7 не покрывает четвёртый бэкенд-мутант, хотя код это делает | `.github/workflows/validate.yml` `scripts/mutation-gate.mjs` `test/validate-workflow.test.mjs` `validate.yml` `test/mutation-gate.test.mjs` `custom_components/houseplan/frontend_registration.py` `tests_backend/test_ha_frontend_registration.py` |
+| #475 | [CODE-REVIEW-475-r2.md](CODE-REVIEW-475-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #474 | [SPEC-REVIEW-474-r1.md](SPEC-REVIEW-474-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | Контракт §4.2–4.3 не даёт ensure() для палитры мебели без уже существующей мебели в кон… | `docs/specs/474-lazy-furniture-art.md` `decor-image-editor.ts` `src/i18n/language-runtime.ts` `furniture-plan-art.generated.ts` `src/decor-image-editor.ts` `src/houseplan-editor-runtime.ts` `demo/srv/demo.html` `demo/smoke_furniture.mjs` |
+| #474 | [SPEC-REVIEW-474-r2.md](SPEC-REVIEW-474-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | , в скоупе] Счётчик свидетелей в AC9 и §8 не обновлён после добавления седьмого | `docs/specs/474-lazy-furniture-art.md` `docs/reviews/SPEC-REVIEW-474-r1.md` `scripts/mutation-gate.mjs` `mutation-gate.mjs` |
+| #474 | [CODE-REVIEW-474-r1.md](CODE-REVIEW-474-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | scripts/bundle-budget.mjs: печать не называет новый ленивый граф | `scripts/bundle-budget.mjs` `test/bundle-assets.test.mjs` |
+| #473 | [SPEC-REVIEW-473-r1.md](SPEC-REVIEW-473-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | AC7 недоказуем предписанным способом; --variants=60 не поддерживается скриптом, на который распространён контракт; четыре обязательных раздела §7.1 отсутствуют без пометки «не применимо» | `docs/specs/473-iso-perf-witnesses-and-smoke.md` `src/houseplan-render-lifecycle.ts` `src/houseplan-card.ts` `validate.yml` `scripts/mutation-gate.mjs` `.github/workflows/validate.yml` `houseplan-card.ts` `performance.yml` |
+| #473 | [SPEC-REVIEW-473-r2.md](SPEC-REVIEW-473-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | риск «хрупкость мутантов к рефакторингу подписи кэша» не вошёл в таблицу §7.2 | `docs/specs/473-iso-perf-witnesses-and-smoke.md` |
+| #473 | [CODE-REVIEW-473-r1.md](CODE-REVIEW-473-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #472 | [SPEC-REVIEW-472-r1.md](SPEC-REVIEW-472-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | 2; 1 (не блокирует, на усмотрение автора) | `scripts/mutation-gate.mjs` `validate.yml` `mutation-gate.yml` |
+| #472 | [SPEC-REVIEW-472-r2.md](SPEC-REVIEW-472-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | 1; 1 (не блокирует, на усмотрение автора) | `scripts/mutation-gate.mjs` |
+| #472 | [CODE-REVIEW-472-r1.md](CODE-REVIEW-472-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Medium, в скоупе. SHA в отчёте — не тот, что был протестирован; Low, не блокирует. Поиск открытого issue по заголовку не проверен вживую | — |
+| #472 | [CODE-REVIEW-472-r2.md](CODE-REVIEW-472-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #471 | [SPEC-REVIEW-471-r1.md](SPEC-REVIEW-471-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #471 | [CODE-REVIEW-471-r1.md](CODE-REVIEW-471-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #464 | [SPEC-REVIEW-464-r1.md](SPEC-REVIEW-464-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #464 | [CODE-REVIEW-464-r1.md](CODE-REVIEW-464-r1.md) | code · r1 | 🟡 жёлтый | 1 | 0 | реальный hover курсора оставляет hovered-source МАРКЕР под топологией, а не над ней (на… | `src/styles/devices.styles.ts` `src/hp-zigbee-topology-overlay.ts` `smoke_zigbee_topology_hover.mjs` `docs/SCOPE.md` `mutation-gate.mjs` |
+| #464 | [CODE-REVIEW-464-r2.md](CODE-REVIEW-464-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #463 | [SPEC-REVIEW-463-r1.md](SPEC-REVIEW-463-r1.md) | spec · r1 | ⚪ — | 1 | 0 | Раздел «Release-артефакты» содержит опровергнутое фактом утверждение: golden обязателен…; AC1: формулировка «backdrop непрозрачен» неоднозначна относительно действующей CSS | `demo/golden/harness.mjs` `demo/serve.mjs` `demo/srv/demo.html` `matrix.mjs` `docs/specs/README.md` `src/hp-dialog.ts` |
+| #463 | [SPEC-REVIEW-463-r2.md](SPEC-REVIEW-463-r2.md) | spec · r2 | 🔴 красный | 0 | 0 | — | — |
+| #463 | [CODE-REVIEW-463-r1.md](CODE-REVIEW-463-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #462 | [SPEC-REVIEW-462-r1.md](SPEC-REVIEW-462-r1.md) | spec · r1 | ⚪ — | 0 | 1 | пересечение нового баннера с существующим тостом #353; числовой touch-target 44×44 не имеет источника в каноне | `docs/USER-GUIDE.ru.md` `src/editor-runtime-loader.ts` `src/houseplan-card.ts` `PROCESS.md` `docs/TOUCH-SUPPORT.md` `docs/UX-MODES.md` |
+| #462 | [SPEC-REVIEW-462-r2.md](SPEC-REVIEW-462-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | новый контракт lovelace.resource_mode: yaml не подтверждён и; числовой touch-target 44×44; SHA не назван в вердикт-комментарии r1 | `SPEC-REVIEW-462-r1.md` |
+| #462 | [SPEC-REVIEW-462-r3.md](SPEC-REVIEW-462-r3.md) | spec · r3 | 🔴 красный | 1 | 0 | — | — |
+| #462 | [CODE-REVIEW-462-r1.md](CODE-REVIEW-462-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | 1 Backend (AC2, AC3, AC4, AC5, AC11); 2 Frontend (AC6–AC10, AC12); 3 Документация (AC1) и артефакты сборки (AC13) | — |
+| #461 | [SPEC-REVIEW-461-r1.md](SPEC-REVIEW-461-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | 1. §9.3, formula несогласованность между двумя scaling-проверками не | — |
+| #461 | [CODE-REVIEW-461-r1.md](CODE-REVIEW-461-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC4 заявляет метод доказательства «unit + mutation witness» для; §6.4 против фактической обработки !safe в commitDraftSegmentGeometry | `scripts/mutation-gate.mjs` `test/draft-live-preflight.test.mjs` `test/wall-union-isolation.test.mjs` `demo/smoke_wall_draw_click.mjs` `smoke_junction_limits.mjs` `smoke_wall_junctions.mjs` `smoke_multiwall_junction.mjs` `smoke_near_orthogonal_junction.mjs` |
+| #461 | [CODE-REVIEW-461-r2.md](CODE-REVIEW-461-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #460 | [SPEC-REVIEW-460-r1.md](SPEC-REVIEW-460-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #460 | [CODE-REVIEW-460-r1.md](CODE-REVIEW-460-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #459 | [SPEC-REVIEW-459-r1.md](SPEC-REVIEW-459-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC не покрывают главное новое содержимое подсказки; фикстура для AC2 не покрыта в «Затронутых файлах» | `src/i18n/topology.ts` `src/houseplan-editor-runtime.ts` |
+| #459 | [SPEC-REVIEW-459-r2.md](SPEC-REVIEW-459-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | help_aria не соответствует заявленному образцу; контракт и AC3 говорят «шесть пунктов легенды», перечисляя семь | `src/i18n/ru.json` |
+| #459 | [CODE-REVIEW-459-r1.md](CODE-REVIEW-459-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #459 | [CODE-REVIEW-459-r2.md](CODE-REVIEW-459-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #457 | [SPEC-REVIEW-457-r1.md](SPEC-REVIEW-457-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | зафиксировано, без правки | — |
+| #457 | [CODE-REVIEW-457-r1.md](CODE-REVIEW-457-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | нормализация relationship отступает от принятого ТЗ §6.3; доказательство AC9 неполно: нет browser-smoke на аспектах/zoom | `src/zigbee-topology.ts` `test/zigbee-topology.test.mjs` `demo/smoke_zigbee_topology_hover.mjs` `src/live-viewport.ts` `zigbee-topology-overlay-bridge.ts` |
+| #457 | [CODE-REVIEW-457-r2.md](CODE-REVIEW-457-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #456 | [SPEC-REVIEW-456-r1.md](SPEC-REVIEW-456-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #456 | [CODE-REVIEW-456-r1.md](CODE-REVIEW-456-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | 1 Дешёвые гейты (гоняю сам — зелёного Validate на этом SHA нет); 2 Живой браузерный прогон новой фичи (нет закоммиченного смока — см. M3); check-docs.mjs красный: отпечаток скриншотов устарел; golden:verify красный: footer диалога пространства изменился, эталон не обновлён; заявленный в ТЗ browser smoke для Copy отсутствует; Фокус поля имени при возврате из отменённого Optimize-warning (§6.2, §11 | `check-docs.mjs` `docs/images/screenshots.json` `space-copy.ts` `space-copy-runtime.ts` `plan-optimize-write.ts` `space-dialog.ts` `houseplan-editor-runtime.ts` `houseplan-card.ts` |
+| #456 | [CODE-REVIEW-456-r2.md](CODE-REVIEW-456-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | 1 Дешёвые гейты — прогнаны заново (код изменился, стоят минуты); 2 Гейты, закрывающие находки r1 — прогнаны целиком (не только для проверки на слово авт…; 3 Не прогонялось повторно — обосновано в §5 «Унаследовано» | — |
+| #454 | [SPEC-REVIEW-454-r1.md](SPEC-REVIEW-454-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC2 не доказуем тем способом, который сам называет; нет явных разделов «UX» и «i18n»; cohesion review-doc-guard.mjs | `SPEC-REVIEW-449-r1.md` `-r2.md` `-r1.md` `PROCESS.md` `review-doc-guard.mjs` `scripts/review-doc-guard.mjs` `scripts/review-round-counter.mjs` |
+| #454 | [SPEC-REVIEW-454-r2.md](SPEC-REVIEW-454-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #454 | [CODE-REVIEW-454-r3.md](CODE-REVIEW-454-r3.md) | code · r3 | 🟢 зелёный | 0 | 1 | страховка по комментариям может завысить и attempt, и spent через посторонний маркер в … | `process.yml` `CODE-REVIEW-441-r1.md` `CODE-REVIEW-230-r2.md` `test/review-doc-guard.test.mjs` `CODE-REVIEW-454-r3.md` `docs/specs/454-review-round-counter.md` |
+| #454 | [CODE-REVIEW-454-r4.md](CODE-REVIEW-454-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #451 | [SPEC-REVIEW-451-r1.md](SPEC-REVIEW-451-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | docs/PERFORMANCE.md не существует, но назван обязательным артефактом (Medium, в скоупе); docs/SCREENSHOTS.md не существует (Medium, в скоупе); верхняя граница диапазона «наблюдавшихся» замеров в §11.3 не подтверждена ни одним исто… | `docs/PERFORMANCE.md` `docs/specs/451-render-performance.md` `demo/performance/README.md` `docs/DEVELOPMENT.md` `docs/SCREENSHOTS.md` `docs/reviews/CODE-REVIEW-126-r1.md` `PROCESS.md` `scripts/check-docs.mjs` |
+| #451 | [SPEC-REVIEW-451-r2.md](SPEC-REVIEW-451-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #451 | [CODE-REVIEW-451-r1.md](CODE-REVIEW-451-r1.md) | code · r1 | 🔴 красный | 1 | 2 | новый performance-профиль large-house-interaction-v1 не проходит собственный бюджет; обещанный в самом ТЗ «targeted production-bundle smoke» не создан; нет мутанта в scripts/mutation-gate.mjs для новых защитных механизмов; известная нестабильность smoke_smooth_zoom.mjs под нагрузкой (не регрессия, к сведению) | `demo/performance/budgets-large-house-interaction.json` `smoke_decor.mjs` `smoke_furniture.mjs` `smoke_decor_text.mjs` `smoke_resize_pointer_real_plan.mjs` `smoke_pan_any_zoom.mjs` `smoke_room_fit.mjs` `smoke_infinite_canvas.mjs` |
+| #451 | [CODE-REVIEW-451-r2.md](CODE-REVIEW-451-r2.md) | code · r2 | 🔴 красный | 3 | 0 | отпечаток скриншотов документации устарел, docs-джоба красная; новый код добавляет 11 непрокомментированных any, гейт красный; resize потерял видимую fail-closed реакцию на невозможную геометрию посреди жеста | `validate.yml` `src/houseplan-card.ts` `src/houseplan-editor-runtime.ts` `src/junction-limits.ts` `src/live-editor.ts` `src/resize-controller.ts` |
+| #451 | [CODE-REVIEW-451-r3.md](CODE-REVIEW-451-r3.md) | code · r3 | 🟡 жёлтый | 0 | 1 | не заявленный в ТЗ постоянный отказ от live-preflight на больших планах, противоречит с… | `src/resize-controller.ts` `src/houseplan-editor-runtime.ts` `demo/fixtures/large-house.mjs` `docs/CHANGELOG.md` `.ru.md` |
+| #451 | [CODE-REVIEW-451-r4.md](CODE-REVIEW-451-r4.md) | code · r4 | 🟡 жёлтый | 0 | 1 | локальный кандидат для physical-geometry исключает соседнюю комнату, от которой зависит… | `src/resize-live-preflight.ts` `src/houseplan-editor-runtime.ts` `test/fixtures/278-wall-union-isolation.json` `test/resize-controller.test.mjs` `demo/benchmark_large_house.mjs` `smoke_room_resize.mjs` |
+| #450 | [CODE-REVIEW-450-r1.md](CODE-REVIEW-450-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #449 | [SPEC-REVIEW-449-r1.md](SPEC-REVIEW-449-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | Строка Touch editor: not exposed, закрывающая M1, называет; / Low | `docs/specs/449-double-fit-all.md` `docs/USER-GUIDE.ru.md` `docs/UX-MODES.md` `scripts/check-docs.mjs` |
+| #449 | [SPEC-REVIEW-449-r2.md](SPEC-REVIEW-449-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #449 | [CODE-REVIEW-449-r1.md](CODE-REVIEW-449-r1.md) | code · r1 | 🔴 красный | 3 | 3 | custom_components/houseplan/frontend/ не синхронизирован с dist/: пользователь не получ…; docs-гейт красный: скрипты не пересняты после правки src/; заявленное доказательство AC3 красное: demo/smoke_kiosk_pan_lock.mjs; bundle budget: запас ушёл ниже шумовой полосы; мутант room-fit-enters-kiosk-double-tap-sequence больше ничего не ловит; ТЗ (AC5) обещает «targeted production-bundle smoke для device, opening и room | `dist/houseplan-assets/houseplan-card-CbNfZuwV.js` `custom_components/houseplan/frontend/houseplan-assets/houseplan-card-BgNWi9NC.js` `test/bundle-tree-committed.test.mjs` `test/release-contract.test.mjs` `dist/houseplan-card.js` `src/houseplan-card.ts` `src/room-fit.ts` `demo/smoke_kiosk_pan_lock.mjs` |
+| #449 | [CODE-REVIEW-449-r2.md](CODE-REVIEW-449-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #448 | [SPEC-REVIEW-448-r1.md](SPEC-REVIEW-448-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | ТЗ не закрывает обязательный пункт DoR «влияние на touch» (docs/TOUCH-SUPPORT.md) | `docs/TOUCH-SUPPORT.md` `docs/specs/448-alpha-switch.md` `src/houseplan-card.ts` |
+| #448 | [SPEC-REVIEW-448-r2.md](SPEC-REVIEW-448-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #448 | [CODE-REVIEW-448-r1.md](CODE-REVIEW-448-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | docs/RELEASE-NOTES.md потерял пункт #447 в обеих секциях; AGENTS.md §«Labs flags» не обновлён и описывает контракт, которого больше нет; Не найдено сверх M1/M2 | `docs/RELEASE-NOTES.md` `docs/DEVELOPMENT.md` `AGENTS.md` `src/labs.ts` `docs/ISOMETRIC.md` `docs/STATUS.md` |
+| #448 | [CODE-REVIEW-448-r2.md](CODE-REVIEW-448-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #447 | [SPEC-REVIEW-447-r1.md](SPEC-REVIEW-447-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | AC4 и §3 путают единицы «шага сетки»: render-space gridPitch vs normalised GRID_STEP_N,… | `docs/specs/447-exterior-furniture-snap-keyboard-nudge.md` `src/space-geometry.ts` `space-render.ts` `houseplan-card.ts` `src/houseplan-editor-runtime.ts` |
+| #447 | [SPEC-REVIEW-447-r2.md](SPEC-REVIEW-447-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #447 | [CODE-REVIEW-447-r1.md](CODE-REVIEW-447-r1.md) | code · r1 | ⚪ — | 0 | 0 | — | — |
+| #445 | [SPEC-REVIEW-445-r1.md](SPEC-REVIEW-445-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | угловой tie-break не имеет доказательства | `docs/specs/445-furniture-wall-face-snap.md` |
+| #445 | [SPEC-REVIEW-445-r2.md](SPEC-REVIEW-445-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #445 | [CODE-REVIEW-445-r1.md](CODE-REVIEW-445-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #443 | [SPEC-REVIEW-443-r1.md](SPEC-REVIEW-443-r1.md) | spec · r1 | ⚪ — | 0 | 1 | раздел «Release-артефакты» не называет два канонических документа, которые эта же правк…; «Карта реализации» называет несуществующий путь для i18n | `docs/specs/README.md` `docs/VACUUM.md` `docs/CONFIG-COMPATIBILITY.md` `CONFIG-COMPATIBILITY.md` `docs/USER-GUIDE.ru.md` |
+| #443 | [SPEC-REVIEW-443-r2.md](SPEC-REVIEW-443-r2.md) | spec · r2 | ⚪ — | 0 | 0 | — | — |
+| #443 | [CODE-REVIEW-443-r1.md](CODE-REVIEW-443-r1.md) | code · r1 | ⚪ — | 0 | 0 | — | — |
+| #442 | [SPEC-REVIEW-442-r1.md](SPEC-REVIEW-442-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | Неточное имя функции в теле issue (не в ТЗ); Явного раздела «i18n» нет — контент есть, но не под заголовком | `src/houseplan-editor-runtime.ts` |
+| #442 | [CODE-REVIEW-442-r1.md](CODE-REVIEW-442-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #441 | [CODE-REVIEW-441-r1.md](CODE-REVIEW-441-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — | — |
+| #440 | [SPEC-REVIEW-440-r1.md](SPEC-REVIEW-440-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #440 | [CODE-REVIEW-440-r1.md](CODE-REVIEW-440-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | предсуществующий (не #440) неточный мутант, вне блокировки | `scripts/mutation-gate.mjs` |
+| #439 | [CODE-REVIEW-439-r1.md](CODE-REVIEW-439-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #437 | [SPEC-REVIEW-437-r1.md](SPEC-REVIEW-437-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Раздел 10 «i18n и визуальное соответствие» пропускает французскую; Термин viewAllowed в формуле §5.3 не введён явно; Систематически пропущены пробелы перед числами в ряде мест текста | `docs/specs/437-summary-panel.md` `src/i18n/fr.json` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `docs/USER-GUIDE.ru.md` `CONTRIBUTING.md` |
+| #437 | [SPEC-REVIEW-437-r2.md](SPEC-REVIEW-437-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #437 | [CODE-REVIEW-437-r1.md](CODE-REVIEW-437-r1.md) | code · r1 | 🟡 жёлтый | 0 | 4 | существующий смок demo/smoke_kiosk.mjs падает необработанным исключением на этом SHA; исключение «удалённого устройства» в подсчёте Q2 не имеет свидетеля; tap-target реордер/удаления в форме настроек меньше заявленных 44×44 CSS px; идентичность карточки (AC21) не имеет ни выделенного резолвера, ни свидетеля теста | `demo/smoke_kiosk.mjs` `src/houseplan-card.ts` `scripts/smoke-select.mjs` `src/summary-panel-metrics.ts` `test/summary-panel.test.mjs` `src/summary-panel-style.ts` `summary-panel-editor.ts` `docs/TOUCH-SUPPORT.md` |
+| #437 | [CODE-REVIEW-437-r2.md](CODE-REVIEW-437-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | регресс восстановления камеры View при возврате из редактора, унаследован из r1-материа…; prepareCameraCommand, bootSoftCancel, stagePointerDown (houseplan-card.ts) объединяют п…; та же строка import { measuredCardHeaderHeight, settleSoftStageLayout } from './boot-so…; src/summary-panel-identity.ts: structuralPath() по-прежнему строит идентичность через c… | `demo/smoke_zoom_out.mjs` `docs/houseplan-card.ts` `smoke_zoom_out.mjs` `houseplan-editor-runtime.ts` `src/boot-soft-layout.ts` `houseplan-card.ts` `src/summary-panel-identity.ts` |
+| #437 | [CODE-REVIEW-437-r3.md](CODE-REVIEW-437-r3.md) | code · r3 | 🟡 жёлтый | 0 | 0 | src/houseplan-card.ts:1448: measuredCardHeaderHeight(this.renderRoot, this._stageEl!, t…; docs/CHANGELOG.md/docs/CHANGELOG.ru.md (правка в этом же коммите, трейлеры соблюдены) о… | `src/houseplan-card.ts` `src/boot-soft-layout.ts` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` |
+| #437 | [CODE-REVIEW-437-r4.md](CODE-REVIEW-437-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #434 | [SPEC-REVIEW-434-r1.md](SPEC-REVIEW-434-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | , в скоупе] Неверная цифра «20-минутный timeout» job smoke — фактическая ошибка, а не п… | `.github/workflows/validate.yml` `validate.yml` |
+| #434 | [SPEC-REVIEW-434-r2.md](SPEC-REVIEW-434-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #434 | [CODE-REVIEW-434-r1.md](CODE-REVIEW-434-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | decorAssetsCapabilityChanged в space-card.ts:711-732 не влияет на; dangerConfirmLocaleGate геттер может вызвать languageRenderGate() | `space-card.ts` `smoke_space_card_decor_capability.mjs` `config-store.ts` `test/space-card-audit-lows.test.mjs` `src/i18n/language-runtime.ts` `houseplan-card.ts` |
+| #434 | [CODE-REVIEW-434-r2.md](CODE-REVIEW-434-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #432 | [SPEC-REVIEW-432-r1.md](SPEC-REVIEW-432-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #432 | [CODE-REVIEW-432-r1.md](CODE-REVIEW-432-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #431 | [SPEC-REVIEW-431-r1.md](SPEC-REVIEW-431-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #431 | [CODE-REVIEW-431-r1.md](CODE-REVIEW-431-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #428 | [SPEC-REVIEW-428-r1.md](SPEC-REVIEW-428-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | формулировка граничного значения mime: "" в таблице раздела 2 неполна | — |
+| #428 | [CODE-REVIEW-428-r1.md](CODE-REVIEW-428-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | Первопричина и правка content_state(); content_manifest() (exporter); Plan-only проекция (_project_plan_only_decor, validate_plan_only_document); Тесты (tests_backend/test_ha_import_export.py); Документация и changelog (AC8) | — |
+| #427 | [CODE-REVIEW-427-r1.md](CODE-REVIEW-427-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #426 | [SPEC-REVIEW-426-r1.md](SPEC-REVIEW-426-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #426 | [CODE-REVIEW-426-r1.md](CODE-REVIEW-426-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #425 | [SPEC-REVIEW-425-r1.md](SPEC-REVIEW-425-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | нет обязательных разделов «Сценарий» и «Что человек увидит до и после» (§7.1); AC4 (и частично AC5) не называют способ доказательства; раздел «Откат» задублирован | `docs/specs/425-core-file-budget.md` |
+| #425 | [SPEC-REVIEW-425-r2.md](SPEC-REVIEW-425-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #425 | [CODE-REVIEW-425-r1.md](CODE-REVIEW-425-r1.md) | code · r1 | ⚪ — | 0 | 0 | — | — |
+| #424 | [CODE-REVIEW-424-r2.md](CODE-REVIEW-424-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #423 | [SPEC-REVIEW-423-r1.md](SPEC-REVIEW-423-r1.md) | spec · r1 | ⚪ — | 0 | 0 | — | — |
+| #423 | [CODE-REVIEW-423-r1.md](CODE-REVIEW-423-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #422 | [SPEC-REVIEW-422-r1.md](SPEC-REVIEW-422-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | AC9 не называет способ доказательства (снято) | `docs/specs/422-capture-and-anchor-gates.md` |
+| #422 | [CODE-REVIEW-422-r1.md](CODE-REVIEW-422-r1.md) | code · r1 | ⚪ — | 1 | 2 | коммит 653b9a76 кладёт в манифест неверный captureScriptSha256, гейт docs красный на эт…; AC8 не доказан: замера времени конвейера нет ни в issue, ни в коммитах; комитченный мутант AC1/AC2 не проверяет сам новый гейт; frameHashes/driftBetweenRuns бе…; комментарий в docs-screenshots.yml про «третий прогон» | `docs/images/screenshots.json` `demo/docs/capture.mjs` `capture.mjs` `clip.mjs` `check-docs.mjs` `validate.yml` `scripts/mutation-gate.mjs` `demo/docs/clip.mjs` |
+| #422 | [CODE-REVIEW-422-r2.md](CODE-REVIEW-422-r2.md) | code · r2 | 🔴 красный | 1 | 2 | — | — |
+| #421 | [SPEC-REVIEW-421-r1.md](SPEC-REVIEW-421-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | отсутствуют обязательные разделы §7.1; неточная формулировка каденции новой browser probe (снимаю с записью) | `docs/specs/421-negative-test-proofs.md` `screenshots.json` `CONFIG-COMPATIBILITY.md` `verify-guard.mjs` `.github/workflows/validate.yml` `scripts/mutation-gate.mjs` `mutation-gate.mjs` |
+| #421 | [SPEC-REVIEW-421-r2.md](SPEC-REVIEW-421-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #421 | [CODE-REVIEW-421-r1.md](CODE-REVIEW-421-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #420 | [CODE-REVIEW-420-r1.md](CODE-REVIEW-420-r1.md) | code · r1 | ⚪ — | 0 | 0 | — | — |
+| #419 | [SPEC-REVIEW-419-r1.md](SPEC-REVIEW-419-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | Формулировка «Full import/export и space-only import сохраняют; Контракт «второе подтверждение» (§3 п.4, AC6) и «ровно один | `CONFIG-COMPATIBILITY.md` |
+| #419 | [CODE-REVIEW-419-r1.md](CODE-REVIEW-419-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #418 | [SPEC-REVIEW-418-r1.md](SPEC-REVIEW-418-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | нет отдельных разделов «Сценарий» и «Что человек увидит до/после» (waived) | `PROCESS.md` `docs/SCOPE.md` |
+| #418 | [CODE-REVIEW-418-r1.md](CODE-REVIEW-418-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #417 | [CODE-REVIEW-417-r1.md](CODE-REVIEW-417-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #415 | [CODE-REVIEW-415-r1.md](CODE-REVIEW-415-r1.md) | code · r1 | ⚪ — | 1 | 0 | check-docs: отпечаток скриншотов документации устарел | `validate.yml` `src/houseplan-card.ts` `src/styles/plan.styles.ts` `src/styles/dialogs.styles.ts` |
+| #415 | [CODE-REVIEW-415-r2.md](CODE-REVIEW-415-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #411 | [CODE-REVIEW-411-r1.md](CODE-REVIEW-411-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #406 | [SPEC-REVIEW-406-r1.md](SPEC-REVIEW-406-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | , в скоупе] (а) Инвентарь мёртвых ключей .help.aria неверен — все 19, а не 6 из 19, исп…; , в скоупе] (б) AC6/AC7 не решают роль для HpConfirmKind.warning (диалог разблокировки) | `docs/specs/406-beta2-polish.md` `en.json` `houseplan-editor-runtime.ts` `houseplan-onboarding-runtime.ts` `houseplan-card.ts` `docs/SCOPE.md` |
+| #406 | [SPEC-REVIEW-406-r2.md](SPEC-REVIEW-406-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | , в скоупе] №1 — (д) контракт описывает уже исправленный дефект и расходится с тем, что…; , в скоупе] №2 — (б) контракт не называет механизм, которым HA-ветка hp-dialog получает… | `docs/specs/406-beta2-polish.md` `docs-accept.mjs` `test/docs-accept.test.mjs` `test/docs-acceptance.test.mjs` `demo/smoke_free_walls.mjs` `src/hp-dialog.ts` `demo/smoke_esc_dialogs.mjs` |
+| #406 | [SPEC-REVIEW-406-r3.md](SPEC-REVIEW-406-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | , в скоупе] №1 — UX и Release-артефакты утверждают «оформление не меняется», хотя разде… | `docs/specs/406-beta2-polish.md` `hp-dialog.ts` `hp-confirm.ts` |
+| #406 | [SPEC-REVIEW-406-r4.md](SPEC-REVIEW-406-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #406 | [CODE-REVIEW-406-r1.md](CODE-REVIEW-406-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | стал устаревшим отпечаток скриншотов документации | `scripts/source-fingerprint.mjs` `src/hp-dialog.ts` `src/hp-confirm.ts` `src/device-area-relocation.ts` `docs/images/screenshots.json` `demo/docs/screenshots.mjs` `check-docs.mjs` |
+| #406 | [CODE-REVIEW-406-r2.md](CODE-REVIEW-406-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | правка fix: preserve the ordinary dialog path не имеет собственного быстрого регресс-теста | `src/hp-dialog.ts` `check-docs.mjs` `docs/images/screenshots.json` `demo/smoke_danger_confirm_branches.mjs` `mutation-gate.mjs` |
+| #405 | [SPEC-REVIEW-405-r1.md](SPEC-REVIEW-405-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | таблица «Место» неполна: пропущена обёртка houseplan-card.ts:7856, и без неё правка не …; ссылка «#406 «д»» на несуществующий пункт | `houseplan-card.ts` `docs/specs/405-dropped-promise-and-witness-floor.md` `houseplan-editor-runtime.ts` `demo/srv/demo.html` `demo/serve.mjs` `src/houseplan-card.ts` `editor-secondary.ts` `scripts/docs-accept.mjs` |
+| #405 | [SPEC-REVIEW-405-r2.md](SPEC-REVIEW-405-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #405 | [CODE-REVIEW-405-r1.md](CODE-REVIEW-405-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #403 | [SPEC-REVIEW-403-r1.md](SPEC-REVIEW-403-r1.md) | spec · r1 | ⚪ — | 1 | 0 | ТЗ не называет два обязательных пункта DoR — влияние на touch/kiosk и на производительн…; Номер строк для сниппета M1 отстал от кода на SHA 1f9d9014 | `docs/specs/403-area-relocation-safety.md` `TOUCH-SUPPORT.md` `docs/TOUCH-SUPPORT.md` `docs/SCOPE.md` `docs/USER-GUIDE.ru.md` `USER-GUIDE.ru.md` `src/houseplan-card.ts` |
+| #403 | [SPEC-REVIEW-403-r2.md](SPEC-REVIEW-403-r2.md) | spec · r2 | 🟡 жёлтый | 1 | 0 | — | — |
+| #403 | [CODE-REVIEW-403-r1.md](CODE-REVIEW-403-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #402 | [SPEC-REVIEW-402-r1.md](SPEC-REVIEW-402-r1.md) | spec · r1 | ⚪ — | 1 | 1 | ТЗ не называет влияние на touch/kiosk — обязательный, объявленный блокирующим пункт DoR; «Не-скоуп»-обоснование для tapConfirm/_vacCalConfirm содержит фактическую неточность | `docs/specs/402-confirm-outside-main-branch.md` `TOUCH-SUPPORT.md` `docs/TOUCH-SUPPORT.md` `houseplan-editor-runtime.ts` `src/houseplan-card.ts` `docs/SCOPE.md` |
+| #402 | [SPEC-REVIEW-402-r2.md](SPEC-REVIEW-402-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | Число в цитате TOUCH-SUPPORT.md неверно; Явного упоминания touch-статуса пяти вызовов из houseplan-editor-runtime.ts по-прежнему… | `docs/specs/402-confirm-outside-main-branch.md` `docs/TOUCH-SUPPORT.md` `houseplan-editor-runtime.ts` |
+| #402 | [CODE-REVIEW-402-r1.md](CODE-REVIEW-402-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | AC2 не покрыт смоком буквально (ветки fixed_floor pending/invalid, !space); AC3 не проверен буквальным сценарием issue (клик по корзине → deleteServerPlan); AC8: тап по scrim не проверен явно; confirmDanger не проверяет языковой гейт warm явно | `smoke_danger_confirm_branches.mjs` `src/houseplan-card.ts` `houseplan-onboarding-runtime.ts` `houseplan-card.ts` `smoke_danger_confirmation.mjs` `src/i18n/language-runtime.ts` |
+| #400 | [SPEC-REVIEW-400-r1.md](SPEC-REVIEW-400-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #400 | [CODE-REVIEW-400-r1.md](CODE-REVIEW-400-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Мутант furniture-edge-handles-steal-the-corner не воспроизводит регрессию, которую обяз…; AC4 доказан не тем видом теста, что назван в ТЗ; Число «2 654 Б gzip» для 38 help-строк в docs/ARCHITECTURE.md не | `scripts/mutation-gate.mjs` `src/houseplan-card.ts` `.github/workflows/mutation-gate.yml` `test/align-candidates.test.mjs` `demo/smoke_align_guides.mjs` `docs/ARCHITECTURE.md` |
+| #400 | [CODE-REVIEW-400-r2.md](CODE-REVIEW-400-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | (перенесена из r1, не закрыта). Мутационный гейт | `src/houseplan-card.ts` `smoke_furniture.mjs` |
+| #400 | [CODE-REVIEW-400-r3.md](CODE-REVIEW-400-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #399 | [SPEC-REVIEW-399-r1.md](SPEC-REVIEW-399-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «План автотестов» (п.4) не обновлён вслед за AC5 и описывает как раз ту слабую версию, … | `docs/specs/399-backend-gate-honesty.md` `validate.yml` `mutation-gate.yml` |
+| #399 | [SPEC-REVIEW-399-r2.md](SPEC-REVIEW-399-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #399 | [CODE-REVIEW-399-r1.md](CODE-REVIEW-399-r1.md) | code · r1 | ⚪ — | 1 | 0 | AC5 не доказан автотестом: возврат к прежнему хардкод-списку из | `test/validate-workflow.test.mjs` |
+| #399 | [CODE-REVIEW-399-r2.md](CODE-REVIEW-399-r2.md) | code · r2 | 🟡 жёлтый | 1 | 0 | — | — |
+| #398 | [SPEC-REVIEW-398-r1.md](SPEC-REVIEW-398-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC3 разрешает «путь 2», AC4 делает его невозможным | `docs/specs/398-sysmodules-guard-scope.md` `pure_imports.py` `conftest.py` |
+| #398 | [SPEC-REVIEW-398-r2.md](SPEC-REVIEW-398-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | устранение «пути 2» открывает новый конфликт: AC1/AC2 не совместимы с AC3 для tests_bac… | `tests_backend/pure_imports.py` `tests_backend/conftest.py` `tests_backend/test_junction_limits.py` `pure_imports.py` `test/backend-test-hygiene.test.mjs` `test_junction_limits.py` `conftest.py` |
+| #398 | [SPEC-REVIEW-398-r3.md](SPEC-REVIEW-398-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | план автотестов не называет явно позитивный контракт-тест для pure_imports.py как второ…; нумерация критериев приёмки нарушена: AC8 вставлен между AC3 и AC4, AC7 не существует | `pure_imports.py` `docs/specs/398-sysmodules-guard-scope.md` `conftest.py` `tests_backend/pure_imports.py` `test/backend-test-hygiene.test.mjs` |
+| #398 | [CODE-REVIEW-398-r1.md](CODE-REVIEW-398-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #397 | [SPEC-REVIEW-397-r1.md](SPEC-REVIEW-397-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC7 и половина AC5 не имеют способа доказательства; обрыв диапазона строк для persistDevicePlacement; отсутствует фраза "Доказательство" у AC3 | `PROCESS.md` `demo/smoke_layout_sync.mjs` `test/device-position-persist.test.mjs` `demo/smoke_device_position_history.mjs` `src/houseplan-card.ts` |
+| #397 | [SPEC-REVIEW-397-r2.md](SPEC-REVIEW-397-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | SHA не назван в комментарии-вердикте r1 | — |
+| #397 | [CODE-REVIEW-397-r1.md](CODE-REVIEW-397-r1.md) | code · r1 | ⚪ — | 0 | 1 | AC3 не имеет ни одного; AC1 доказан не тем способом, что назвало ТЗ; Юнит-план, пункт 3 («каноническая позиция не создаёт лишней | `docs/specs/397-device-position-echo.md` `demo/smoke_device_position_history.mjs` `test/device-position-echo.test.mjs` `test/device-position-persist.test.mjs` |
+| #397 | [CODE-REVIEW-397-r2.md](CODE-REVIEW-397-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #396 | [SPEC-REVIEW-396-r1.md](SPEC-REVIEW-396-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | центральное фактическое утверждение B1 («семь мест») не совпадает с реальными вызовами … | `docs/specs/396-camera-transition-fixes.md` `houseplan-card.ts` |
+| #396 | [SPEC-REVIEW-396-r2.md](SPEC-REVIEW-396-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | таблица приписывает строки :4188/:4216 несуществующей функции load; вторая функция в строке :1159/:2363 не названа | `docs/specs/396-camera-transition-fixes.md` `src/houseplan-card.ts` |
+| #396 | [SPEC-REVIEW-396-r3.md](SPEC-REVIEW-396-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #396 | [CODE-REVIEW-396-r1.md](CODE-REVIEW-396-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #396 | [CODE-REVIEW-396-r2.md](CODE-REVIEW-396-r2.md) | code · r2 | ⚪ — | 0 | 0 | — | — |
+| #391 | [SPEC-REVIEW-391-r1.md](SPEC-REVIEW-391-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | нет явного раздела «откат» | `PROCESS.md` |
+| #391 | [CODE-REVIEW-391-r1.md](CODE-REVIEW-391-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | стал протухшим отпечаток скриншотов документации | `scripts/source-fingerprint.mjs` `src/houseplan-editor-runtime.ts` `docs/images/screenshots.json` |
+| #391 | [CODE-REVIEW-391-r2.md](CODE-REVIEW-391-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #390 | [CODE-REVIEW-390-r1.md](CODE-REVIEW-390-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | Утверждение в сообщении коммита неверно | — |
+| #389 | [CODE-REVIEW-389-r1.md](CODE-REVIEW-389-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #385 | [SPEC-REVIEW-385-r1.md](SPEC-REVIEW-385-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Контракт (в) описывает предикат isRelease неполно, что рискует; «План автотестов» ссылается на несуществующий тестовый паттерн; DoR-примечание не называет явно влияние на производительность; Формулировка «(б)–(г) — «мелкие уточнения»» в Release-артефактах | `docs/specs/385-audit-lows.md` `scripts/process-gate.mjs` `AGENTS.md` `src/houseplan-editor-runtime.ts` `src/houseplan-card.ts` |
+| #385 | [SPEC-REVIEW-385-r2.md](SPEC-REVIEW-385-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | Абзац-обоснование перед «Контрактом» (в) сохраняет старую неточную | `docs/specs/385-audit-lows.md` |
+| #385 | [CODE-REVIEW-385-r1.md](CODE-REVIEW-385-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #385 | [CODE-REVIEW-385-r2.md](CODE-REVIEW-385-r2.md) | code · r2 | 🟡 жёлтый | 0 | 0 | — | — |
+| #385 | [CODE-REVIEW-385-r3.md](CODE-REVIEW-385-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #384 | [SPEC-REVIEW-384-r1.md](SPEC-REVIEW-384-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «Доки не задеты» неверно: три документа обещают безусловное участие стен/колонн в кадре | `docs/USER-GUIDE.md` `docs/USER-GUIDE.ru.md` `docs/CANVAS.md` |
+| #384 | [SPEC-REVIEW-384-r2.md](SPEC-REVIEW-384-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — | — |
+| #384 | [CODE-REVIEW-384-r1.md](CODE-REVIEW-384-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #383 | [SPEC-REVIEW-383-r1.md](SPEC-REVIEW-383-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | i18n-ключи галочек отражения не в том namespace; переиспользование имён flip_h/flip_v без ссылки на существующий смысл | `src/i18n/ru.json` `houseplan-editor-runtime.ts` `docs/USER-GUIDE.ru.md` `validation.py` `coordinate_canonicalization.py` `import_export.py` `docs/CONFIG-COMPATIBILITY.md` |
+| #383 | [CODE-REVIEW-383-r1.md](CODE-REVIEW-383-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | скриншоты документации не пересняты, docs станет красным на dev; расхождение числа в хендоффе (не блокирует) | `src/houseplan-card.ts` `src/houseplan-editor-runtime.ts` `src/furniture.ts` `src/styles/plan.styles.ts` |
+| #383 | [CODE-REVIEW-383-r2.md](CODE-REVIEW-383-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #381 | [SPEC-REVIEW-381-r1.md](SPEC-REVIEW-381-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | отсутствуют обязательные разделы «Риски» и «Откат» (§7.1); AC4 называет способ доказательства словом вне канонического словаря | `docs/specs/381-no-op-tap-action.md` `docs/specs/377-decor-default-persist.md` `docs/specs/378-value-face-source.md` `SPEC-REVIEW-376-r1.md` |
+| #381 | [SPEC-REVIEW-381-r2.md](SPEC-REVIEW-381-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — | — |
+| #381 | [CODE-REVIEW-381-r1.md](CODE-REVIEW-381-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #378 | [SPEC-REVIEW-378-r1.md](SPEC-REVIEW-378-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #378 | [CODE-REVIEW-378-r1.md](CODE-REVIEW-378-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC2 не доказан golden-сценарием, как того явно требует принятое ТЗ; index-таблица docs/specs/README.md нарушает сортировку по номеру issue | `docs/specs/378-value-face-source.md` `demo/golden/matrix.mjs` `demo/smoke_value_face_source.mjs` `docs/specs/README.md` |
+| #378 | [CODE-REVIEW-378-r2.md](CODE-REVIEW-378-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | нет новых. Low из r1 (docs/specs/README.md:113, нарушение | `docs/specs/README.md` |
+| #377 | [SPEC-REVIEW-377-r1.md](SPEC-REVIEW-377-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | контракт называет формат ключа DecorStyle неверно и не как предположение, а как провере… | `docs/specs/377-decor-default-persist.md` `src/editors/decor/types.ts` `src/editors/decor/geometry.ts` `types.ts` |
+| #377 | [SPEC-REVIEW-377-r2.md](SPEC-REVIEW-377-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #377 | [CODE-REVIEW-377-r1.md](CODE-REVIEW-377-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #377 | [CODE-REVIEW-377-r2.md](CODE-REVIEW-377-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #376 | [SPEC-REVIEW-376-r1.md](SPEC-REVIEW-376-r1.md) | spec · r1 | 🔴 красный | 1 | 2 | трек small не проходит собственные критерии §5 одновременно; прямой прецедент #369 уже …; раздел «откат» отсутствует полностью; пункты (б) и (д) заявлены в скоупе, но не имеют собственного AC | `space-card.ts` `houseplan-card.ts` `houseplan-editor-runtime.ts` `validation.py` `docs/CONFIG-COMPATIBILITY.md` `SPEC-REVIEW-369-r1.md` `SPEC-REVIEW-369-r2.md` `docs/specs/369-audit-lows.md` |
+| #376 | [SPEC-REVIEW-376-r2.md](SPEC-REVIEW-376-r2.md) | spec · r2 | 🟢 зелёный | 1 | 2 | Тело issue #376, строка сразу после заголовка «# ТЗ (лёгкий трек, редакция 2)»; gh issu…; Тело issue #376, раздел 6 (отсутствовал в редакции 1); Тело issue #376, раздел «2. AC», пункты 2 и 4 (в редакции 1 их не было — было только AC… | — |
+| #376 | [CODE-REVIEW-376-r1.md](CODE-REVIEW-376-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #376 | [CODE-REVIEW-376-r2.md](CODE-REVIEW-376-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #376 | [CODE-REVIEW-376-r3.md](CODE-REVIEW-376-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #375 | [SPEC-REVIEW-375-r1.md](SPEC-REVIEW-375-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | , в скоупе] Отсутствует обязательный раздел «Откат»; , не блокирует] DoR-пункты «миграция/compatibility» и «touch» не проговорены явно; , снято ревьюером] Заявленная сложность 4/10 против порога small ≤3 | `AGENTS.md` `PROCESS.md` `docs/CONFIG-COMPATIBILITY.md` `docs/TOUCH-SUPPORT.md` `glow-scene.ts` `space-render.ts` |
+| #375 | [SPEC-REVIEW-375-r2.md](SPEC-REVIEW-375-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #375 | [CODE-REVIEW-375-r1.md](CODE-REVIEW-375-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #374 | [SPEC-REVIEW-374-r1.md](SPEC-REVIEW-374-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #374 | [CODE-REVIEW-374-r1.md](CODE-REVIEW-374-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #373 | [SPEC-REVIEW-373-r1.md](SPEC-REVIEW-373-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | docs/specs/README.md не обновлён | `docs/specs/README.md` `docs/specs/373-space-card-house-fit.md` |
+| #373 | [CODE-REVIEW-373-r1.md](CODE-REVIEW-373-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | тест-план AC4/AC6 (state-tick + узкая/широкая ширина для house) не реализован в смоке, …; фолбэк «пустая/только-подложка структура → content-frame» не покрыт ни юнитом, ни смоко…; константы половины штриха (2.5, 0.6) в структурной рамке дублируют магические числа рен… | `demo/smoke_space_card.mjs` `src/space-render.ts` `test/canvas.test.mjs` `test/single-source-numbers.test.mjs` |
+| #373 | [CODE-REVIEW-373-r2.md](CODE-REVIEW-373-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #372 | [SPEC-REVIEW-372-r1.md](SPEC-REVIEW-372-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #372 | [CODE-REVIEW-372-r1.md](CODE-REVIEW-372-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #371 | [SPEC-REVIEW-371-r1.md](SPEC-REVIEW-371-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | К2 не покрывает второй файл в bundle-manifest.mjs, который тоже хардкодит список локалей; AC1 не решает судьбу двух German-специфичных тестов качества, добавленных как часть ори…; формулировка AC5 избыточна и путает мутанта; DoR-пункты touch/perf не проговорены явным предложением | `scripts/bundle-manifest.mjs` `bundle-manifest.mjs` `test/i18n.test.mjs` |
+| #371 | [SPEC-REVIEW-371-r2.md](SPEC-REVIEW-371-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #371 | [CODE-REVIEW-371-r1.md](CODE-REVIEW-371-r1.md) | code · r1 | ⚪ — | 0 | 0 | — | — |
+| #371 | [CODE-REVIEW-371-r2.md](CODE-REVIEW-371-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #369 | [SPEC-REVIEW-369-r1.md](SPEC-REVIEW-369-r1.md) | spec · r1 | 🟢 зелёный | 0 | 3 | AC7 не станет буквально «grep по репо пуст» даже после точечной правки; положительная п… | `docs/specs/369-audit-lows.md` `docs/FURNITURE.md` `docs/reviews/CODE-REVIEW-269-r1.md` |
+| #369 | [CODE-REVIEW-369-r3.md](CODE-REVIEW-369-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #368 | [CODE-REVIEW-368-r1.md](CODE-REVIEW-368-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #366 | [SPEC-REVIEW-366-r1.md](SPEC-REVIEW-366-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | AC4 не называет проверяемое доказательство однозначно; визуальная деградация подана как факт, а не как решение с owner-видимостью; строки в ТЗ отстали от dev на единицы; docs/LIGHT.md не назван в release-артефактах | `demo/smoke_glow.mjs` `docs/LIGHT.md` `houseplan-card.ts` `AGENTS.md` |
+| #366 | [SPEC-REVIEW-366-r2.md](SPEC-REVIEW-366-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | ′ (Low, не блокирует) — расхождение футера ревизии 2 с фактическим текстом ТЗ | `docs/LIGHT.md` `LIGHT.md` |
+| #366 | [CODE-REVIEW-366-r1.md](CODE-REVIEW-366-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #363 | [SPEC-REVIEW-363-r1.md](SPEC-REVIEW-363-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #363 | [CODE-REVIEW-363-r2.md](CODE-REVIEW-363-r2.md) | code · r2 | ⚪ — | 0 | 0 | — | — |
+| #362 | [SPEC-REVIEW-362-r1.md](SPEC-REVIEW-362-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #362 | [CODE-REVIEW-362-r1.md](CODE-REVIEW-362-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | верифицировано чтением, фикс не требуется | `src/houseplan-card.ts` `smoke_decor.mjs` `dialogs.styles.ts` `plan.styles.ts` |
+| #361 | [SPEC-REVIEW-361-r1.md](SPEC-REVIEW-361-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | план автотестов противоречит порядку гейтов из AGENTS.md | `AGENTS.md` `docs/specs/361-furniture-stroke-zoom.md` `demo/smoke_furniture.mjs` |
+| #361 | [SPEC-REVIEW-361-r2.md](SPEC-REVIEW-361-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #361 | [CODE-REVIEW-361-r1.md](CODE-REVIEW-361-r1.md) | code · r1 | ⚪ — | 0 | 1 | Golden-бейзлайны с реальной мебелью не обновлены под новый физический stroke; npm run | `.github/workflows/validate.yml` `demo/golden/matrix.mjs` |
+| #361 | [CODE-REVIEW-361-r2.md](CODE-REVIEW-361-r2.md) | code · r2 | ⚪ — | 0 | 0 | — | — |
+| #360 | [SPEC-REVIEW-360-r1.md](SPEC-REVIEW-360-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | не назван обязательный touch-статус фичи; не описано, что сохранение свойств уже существующего объекта; Не найдено содержательных Low-находок сверх названных Medium; текст ТЗ | `docs/TOUCH-SUPPORT.md` `houseplan-editor-runtime.ts` |
+| #360 | [SPEC-REVIEW-360-r2.md](SPEC-REVIEW-360-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #360 | [CODE-REVIEW-360-r1.md](CODE-REVIEW-360-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #360 | [CODE-REVIEW-360-r2.md](CODE-REVIEW-360-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #359 | [SPEC-REVIEW-359-r1.md](SPEC-REVIEW-359-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | контрактный пункт 9 (invalid/unknown symbol) не имеет доказательства; «golden не требуется» слабо обосновано на фоне уже существующей практики | `docs/specs/359-furniture-placement-preview.md` `src/furniture.ts` `demo/golden/matrix.mjs` |
+| #359 | [SPEC-REVIEW-359-r2.md](SPEC-REVIEW-359-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #359 | [CODE-REVIEW-359-r1.md](CODE-REVIEW-359-r1.md) | code · r1 | 🔴 красный | 1 | 0 | 1 | `docs/images/screenshots.json` `src/furniture.ts` `src/houseplan-card.ts` `src/houseplan-editor-runtime.ts` `src/styles/plan.styles.ts` `validate.yml` `docs/FURNITURE.md` `docs/USER-GUIDE.ru.md` |
+| #359 | [CODE-REVIEW-359-r2.md](CODE-REVIEW-359-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #358 | [SPEC-REVIEW-358-r1.md](SPEC-REVIEW-358-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #358 | [CODE-REVIEW-358-r1.md](CODE-REVIEW-358-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #357 | [SPEC-REVIEW-357-r1.md](SPEC-REVIEW-357-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #357 | [CODE-REVIEW-357-r1.md](CODE-REVIEW-357-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #356 | [CODE-REVIEW-356-r1.md](CODE-REVIEW-356-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #354 | [SPEC-REVIEW-354-r1.md](SPEC-REVIEW-354-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #354 | [CODE-REVIEW-354-r1.md](CODE-REVIEW-354-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | юнит AC4 не проверяет то, что заявляет; docs/USER-GUIDE.ru.md не упоminает новый тост | `test/i18n-runtime.test.mjs` `src/i18n/registry.ts` `demo/smoke_german_locale.mjs` `docs/USER-GUIDE.ru.md` `USER-GUIDE.ru.md` |
+| #354 | [CODE-REVIEW-354-r2.md](CODE-REVIEW-354-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #353 | [SPEC-REVIEW-353-r1.md](SPEC-REVIEW-353-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | K3: замена статического реэкспорта на «голый» import().catch() рвёт гарантию await impo…; , в скоупе] K2 не имеет ни одного AC/доказательства; , снято с запиской] docs/USER-GUIDE.ru.md не упомянут в объёме задачи, хотя описывает к… | `dist/houseplan-card.js` `houseplan-card.ts` `demo/srv/demo.html` `demo/docs/capture.mjs` `demo/smoke_entry_stale.mjs` `editor-runtime-loader.test.mjs` `docs/USER-GUIDE.ru.md` |
+| #353 | [SPEC-REVIEW-353-r2.md](SPEC-REVIEW-353-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | , снято с запиской] AC5 не проговаривает, что структурная проверка обязана отличать «па… | `test/houseplan-source.mjs` |
+| #353 | [CODE-REVIEW-353-r1.md](CODE-REVIEW-353-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #348 | [SPEC-REVIEW-348-r1.md](SPEC-REVIEW-348-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | de-CH унаследует «ß», хотя стандартная швейцарская орфография его не использует; явного блока «принято предположительно, поменять свободно» в конце документа нет | `docs/specs/348-german-localization.md` |
+| #348 | [CODE-REVIEW-348-r1.md](CODE-REVIEW-348-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC8 не имеет обещанного в ТЗ smoke-доказательства «нет overflow»; src/i18n/language-runtime.ts определяет полноценный переиспользуемый класс; Initial View budget после follow-up-коммита — 255 986 / 256 000 B gzip, запас; scripts/bundle-manifest.mjs: классификация editorRoots/onboardingRoots/; Удалённые из en.json/ru.json ключи (title.add_device, title.show_all | `docs/specs/348-german-localization.md` `demo/smoke_dialog_footer_width.mjs` `demo/smoke_german_locale.mjs` `smoke_dialog_footer_width.mjs` `smoke_german_locale.mjs` `src/i18n/language-runtime.ts` `test/i18n-runtime.test.mjs` `src/i18n/registry.ts` |
+| #348 | [CODE-REVIEW-348-r2.md](CODE-REVIEW-348-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #341 | [CODE-REVIEW-341-r1.md](CODE-REVIEW-341-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #340 | [SPEC-REVIEW-340-r1.md](SPEC-REVIEW-340-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | заведён отдельный issue; не блокирует, отмечено с решением «оставить как есть» | `custom_components/houseplan/websocket_api.py` `tests_backend/test_ha_websocket.py` `docs/TESTING.md` `docs/ARCHITECTURE.md` `docs/specs/340-config-set-revision.md` |
+| #340 | [CODE-REVIEW-340-r1.md](CODE-REVIEW-340-r1.md) | code · r1 | ⚪ — | 0 | 0 | — | — |
+| #339 | [CODE-REVIEW-339-r1.md](CODE-REVIEW-339-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #337 | [SPEC-REVIEW-337-r1.md](SPEC-REVIEW-337-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #337 | [CODE-REVIEW-337-r1.md](CODE-REVIEW-337-r1.md) | code · r1 | 🔴 красный | 5 | 3 | Warm-remount коммитит editor mode в обход loader-гейта — падения на; Kiosk-контролы, явно названные в принятом ТЗ eager (§6.3: «kiosk; Безопасность resize «fail-closed» сломана: принудительный отказ; Стрелочная навигация по вкладкам инвентаря устройств падает с; Визуальная порча вторичного тулбара Device editor + 3 неподтверждённых; Два существующих smoke ожидают, что houseplan-card-editor уже | `src/houseplan-card.ts` `docs/WARM-REMOUNT.md` `demo/smoke_preloader_lifecycle.mjs` `demo/smoke_warm_dialogs.mjs` `demo/smoke_warm_owners.mjs` `docs/SCOPE.md` `demo/smoke_kiosk.mjs` `demo/smoke_room_resize.mjs` |
+| #337 | [CODE-REVIEW-337-r2.md](CODE-REVIEW-337-r2.md) | code · r2 | 🔴 красный | 2 | 1 | Warm-remount editor-камера теряет бит-точность — визуальный «прыжок»; фикс устранил исключение, но обнажил под ним ещё один, ранее не наблюдаемый; (→ [#346](https://github.com/Matysh/houseplan-card/issues/346)). Golden-эталоны | `demo/smoke_warm_dialogs.mjs` `docs/WARM-REMOUNT.md` `src/houseplan-card.ts` |
+| #337 | [CODE-REVIEW-337-r3.md](CODE-REVIEW-337-r3.md) | code · r3 | 🔴 красный | 1 | 0 | check-docs красный на ревьюемом SHA — стало устаревшим ровно из-за; Нет находок этого уровня в дельте r2→r3 | `scripts/source-fingerprint.mjs` `src/houseplan-card.ts` `docs/images/screenshots.json` `docs/specs/337-lazy-editor-chunk.md` `PROCESS.md` |
+| #337 | [CODE-REVIEW-337-r4.md](CODE-REVIEW-337-r4.md) | code · r4 | 🟢 зелёный | 1 | 0 | — | — |
+| #335 | [SPEC-REVIEW-335-r1.md](SPEC-REVIEW-335-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | определение «маркер существует» игнорирует tombstone removed: true, из-за чего AC1 не з…; release-артефакты / User-Visible не названы | `src/devices.ts` `custom_components/houseplan/validation.py` `trails.py` `tests_backend/test_trail_recorder.py` `import_export.py` `src/houseplan-editor-runtime.ts` `docs/VACUUM.md` `houseplan-editor-runtime.ts` |
+| #335 | [SPEC-REVIEW-335-r2.md](SPEC-REVIEW-335-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #335 | [CODE-REVIEW-335-r1.md](CODE-REVIEW-335-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #333 | [SPEC-REVIEW-333-r1.md](SPEC-REVIEW-333-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC4 называет способ доказательства, который не проверяет заявленное (Medium, в скоупе з… | `scripts/check-docs.mjs` `README.md` `README.ru.md` `docs/USER-GUIDE.md` `.ru.md` `docs/TOUCH-SUPPORT.md` `docs/DECOR-EDITOR.md` `docs/VACUUM.md` |
+| #333 | [SPEC-REVIEW-333-r2.md](SPEC-REVIEW-333-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | — | — |
+| #333 | [CODE-REVIEW-333-r1.md](CODE-REVIEW-333-r1.md) | code · r1 | 🟡 жёлтый | 1 | 1 | Optimize новым гейтом ломает существующий бэкенд-тест — подтверждённая регрессия | `junction_limits.py` `tests_backend/test_ha_websocket.py` `test/fixtures/optimize-storage-roundtrip.json` `optimize-storage-roundtrip.json` |
+| #333 | [CODE-REVIEW-333-r2.md](CODE-REVIEW-333-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #331 | [SPEC-REVIEW-331-r1.md](SPEC-REVIEW-331-r1.md) | spec · r1 | 🔴 красный | 1 | 4 | Ключ узла квантуется через round(), а не через уже принятый в этом; Собственный пример AC1 не проходит собственный порог инцидентности; Не решено, распространяется ли fail-closed §2.6 на сторону; Максимальная ветвь ищется DFS-перебором вариантов; наихудшая; Release-артефакты не называют docs/USER-GUIDE.ru.md; §1 не отвечает на два обязательных продуктовых вопроса ТЗ в открытой | `docs/specs/331-junction-limit-precision.md` `src/coordinate-canonicalization.ts` `custom_components/houseplan/coordinate_canonicalization.py` `coordinate_canonicalization.py` `custom_components/houseplan/junction_limits.py` `docs/USER-GUIDE.ru.md` `check-docs.mjs` `docs/SCOPE.md` |
+| #331 | [SPEC-REVIEW-331-r2.md](SPEC-REVIEW-331-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | M-r2-1 (наследник M2, закрыт частично). AC6 не различает сторону; §6 «Риски» (2) описывает механизм, которого §2.3 больше не содержит | `docs/specs/331-junction-limit-precision.md` |
+| #331 | [SPEC-REVIEW-331-r3.md](SPEC-REVIEW-331-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #331 | [CODE-REVIEW-331-r1.md](CODE-REVIEW-331-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #330 | [SPEC-REVIEW-330-r1.md](SPEC-REVIEW-330-r1.md) | spec · r1 | ⚪ — | 2 | 1 | Перф-бюджеты §5 недостижимы решением из §4: AC2 и AC6 непроверяемы как написаны; AC4 ссылается на бенч, который не вызывает изменяемый код; Отсутствуют обязательные разделы ТЗ по §7.1: i18n, touch, риски, release-артефакты | `docs/specs/330-junction-limits-performance.md` `junction_limits.py` `src/houseplan-card.ts` `benchmark_junction_limits.mjs` `demo/benchmark_safe_resize.mjs` `test-build/resize.js` `test-build/plan-geometry-preflight.js` `benchmark_safe_resize.mjs` |
+| #330 | [SPEC-REVIEW-330-r2.md](SPEC-REVIEW-330-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #330 | [CODE-REVIEW-330-r2.md](CODE-REVIEW-330-r2.md) | code · r2 | ⚪ — | 0 | 1 | заявленная «поведенческая половина» AC4 не различает наличие и отсутствие кэша | `demo/smoke_junction_limits.mjs` `scripts/mutation-gate.mjs` `test/junction-limits.test.mjs` |
+| #330 | [CODE-REVIEW-330-r3.md](CODE-REVIEW-330-r3.md) | code · r3 | 🔴 красный | 1 | 0 | докс-гейт красный на HEAD ревью (в скоупе, блокирует) | `src/houseplan-card.ts` `docs/images/screenshots.json` |
+| #330 | [CODE-REVIEW-330-r4.md](CODE-REVIEW-330-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #329 | [SPEC-REVIEW-329-r1.md](SPEC-REVIEW-329-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | UX отказа записи заявлен как факт, а не как решение, и не согласован с уже существующим…; AC5 описывает два разных теста одной фразой и непроверяем в текущей формулировке; параллель «5 см = 1 клетка» вводит в заблуждение при нестандартном cell_cm | `docs/specs/329-junction-limits.md` `docs/USER-GUIDE.ru.md` `houseplan-space-test2-2026-08-27_16-14-48.json` `src/grid-scale.ts` `src/plan-optimizer.ts` |
+| #329 | [SPEC-REVIEW-329-r2.md](SPEC-REVIEW-329-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — | — |
+| #329 | [SPEC-REVIEW-329-r3.md](SPEC-REVIEW-329-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #329 | [CODE-REVIEW-329-r1.md](CODE-REVIEW-329-r1.md) | code · r1 | 🔴 красный | 1 | 4 | Бэкенд отказывает в легитимной правке легаси-плана — прямое нарушение §3; Мёртвый код в wall-thickness.ts, чьё удаление коммит уже задекларировал; Дублированный раздел в docs/USER-GUIDE.ru.md; USER-GUIDE описывает канал Resize неполно — читатель не узнает про тост; AC10 (постусловие Optimize) не доказан ни тестом, ни явным разбором | `import_export.py` `test_junction_limits.py` `wall-thickness.ts` `src/wall-thickness.ts` `docs/USER-GUIDE.ru.md` `docs/USER-GUIDE.md` `src/houseplan-card.ts` `smoke_junction_limits.mjs` |
+| #329 | [CODE-REVIEW-329-r2.md](CODE-REVIEW-329-r2.md) | code · r2 | 🔴 красный | 1 | 4 | — | — |
+| #329 | [CODE-REVIEW-329-r3.md](CODE-REVIEW-329-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #324 | [CODE-REVIEW-324-r1.md](CODE-REVIEW-324-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | избыточный повторный config/get при physicalGeometryRolledBack | `src/houseplan-card.ts` |
+| #323 | [CODE-REVIEW-323-r1.md](CODE-REVIEW-323-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #319 | [SPEC-REVIEW-319-r1.md](SPEC-REVIEW-319-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #319 | [CODE-REVIEW-319-r1.md](CODE-REVIEW-319-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #318 | [SPEC-REVIEW-318-r1.md](SPEC-REVIEW-318-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #318 | [CODE-REVIEW-318-r1.md](CODE-REVIEW-318-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #317 | [SPEC-REVIEW-317-r1.md](SPEC-REVIEW-317-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | 1. Терминология HA Area/HA-зона в плане документации. ТЗ систематически | `docs/USER-GUIDE.ru.md` `USER-GUIDE.ru.md` |
+| #317 | [CODE-REVIEW-317-r1.md](CODE-REVIEW-317-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | 1. Нет юнит-теста на дублирующиеся live-маркеры одного binding в | `src/devices.ts` |
+| #316 | [SPEC-REVIEW-316-r1.md](SPEC-REVIEW-316-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | ТЗ не закрывает несколько обязательных разделов §7.1 / чек-листа DoR §2.5; AC3 описывает фикстуру, не достижимую в названном ею механизме; коллизия термина «инертный» | `ru.json` `en.json` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `docs/specs/README.md` `wall-segment-model.ts` `scripts/config-field-registry.mjs` `docs/CONFIG-COMPATIBILITY.md` |
+| #316 | [SPEC-REVIEW-316-r2.md](SPEC-REVIEW-316-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | §5.1 указывает не тот абзац docs/CONFIG-COMPATIBILITY.md; §5.3 неточно утверждает отсутствие span+проём в существующих golden-сценах | `docs/CONFIG-COMPATIBILITY.md` `demo/golden/harness.mjs` `demo/golden/matrix.mjs` `baselines-index.json` |
+| #316 | [SPEC-REVIEW-316-r3.md](SPEC-REVIEW-316-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | §5.3 обосновывает «без изменений» неточным утверждением о контурных/независимых атомах | `demo/golden/harness.mjs` `276-coincident-partition.json` `src/wall-segment-model.ts` `matrix.mjs` `src/houseplan-card.ts` |
+| #316 | [SPEC-REVIEW-316-r4.md](SPEC-REVIEW-316-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #316 | [CODE-REVIEW-316-r1.md](CODE-REVIEW-316-r1.md) | code · r1 | 🔴 красный | 1 | 0 | деградированный host (§3.3) может завести данные, которые бэкенд тут же отклоняет: мигр…; CHANGELOG заявляет то, чего код не гарантирует | `src/wall-segment-model.ts` `custom_components/houseplan/wall_segment_model.py` `websocket_api.py` `custom_components/houseplan/validation.py` `space-render.ts` `houseplan-card.ts` `physical-geometry.ts` `wall-segment-model.ts` |
+| #316 | [CODE-REVIEW-316-r2.md](CODE-REVIEW-316-r2.md) | code · r2 | 🔴 красный | 1 | 1 | история ветки переписана поверх уже отревьюженного коммита r1; бэкенд-релаксация host-проверки шире границы, заявленной в §2 ТЗ | `docs/reviews/CODE-REVIEW-316-r1.md` `docs/specs/316-opening-host-auto-resolution.md` `custom_components/houseplan/validation.py` `houseplan-card.ts` `demo/golden/harness.mjs` |
+| #314 | [SPEC-REVIEW-314-r1.md](SPEC-REVIEW-314-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | Сценарий не называет персону/job явно; Нет отдельного раздела «план автотестов» | `docs/specs/314-v8-draft-write-regression.md` `docs/SCOPE.md` |
+| #314 | [CODE-REVIEW-314-r1.md](CODE-REVIEW-314-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #313 | [SPEC-REVIEW-313-r1.md](SPEC-REVIEW-313-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #313 | [CODE-REVIEW-313-r1.md](CODE-REVIEW-313-r1.md) | code · r1 | 🔴 красный | 1 | 1 | 1; 1, в скоупе | `src/houseplan-card.ts` `src/types.ts` `docs/WALL-THICKNESS.md` `demo/serve.mjs` `scripts/mutation-gate.mjs` `test/wall-union-isolation.test.mjs` `mutation-gate.mjs` `demo/smoke_wallthick_standalone.mjs` |
+| #313 | [CODE-REVIEW-313-r2.md](CODE-REVIEW-313-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #310 | [SPEC-REVIEW-310-r1.md](SPEC-REVIEW-310-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | AC5 и Риск №2 называют детектор, который структурно не видит узел-пару — риск «дыры на …; Технические решения реализации не оформлены явным блоком «принято предположительно, пом… | `docs/specs/310-pair-apex.md` `wall-thickness.ts` `test/fixtures/309-junction-teeth.json` `test/wall-thickness.test.mjs` |
+| #310 | [SPEC-REVIEW-310-r2.md](SPEC-REVIEW-310-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #310 | [CODE-REVIEW-310-r1.md](CODE-REVIEW-310-r1.md) | code · r1 | ⚪ — | 1 | 1 | недостоверный Baseline-Reviewed в коммите 0e6fbfb0; обещанный тест на пересечение #271+#310 отсутствует | `.github/workflows/validate.yml` `demo/golden/README.md` `PROCESS.md` `AGENTS.md` `validate-commit-provenance.mjs` `test/wall-thickness.test.mjs` |
+| #310 | [CODE-REVIEW-310-r2.md](CODE-REVIEW-310-r2.md) | code · r2 | 🟢 зелёный | 1 | 1 | 1 Честность нового Baseline-Reviewed; 2 Новый юнит-тест — умеет падать | — |
+| #309 | [SPEC-REVIEW-309-r1.md](SPEC-REVIEW-309-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Отсутствуют несколько обязательных разделов §7.1, включая оба продуктовых; docs/WALL-THICKNESS.md («Junction tooling»: «sixteen close-up golden scenes | `docs/specs/309-junction-visual-limit.md` `docs/WALL-THICKNESS.md` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `docs/specs/README.md` `demo/golden/matrix.mjs` `AGENTS.md` |
+| #309 | [SPEC-REVIEW-309-r2.md](SPEC-REVIEW-309-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | Раздел «Скоуп и не-скоуп» (§3.6) не закрывает находку r1 полностью, и одна из | `src/wall-thickness.ts` `docs/WALL-THICKNESS.md` `PROCESS.md` `docs/TOUCH-SUPPORT.md` |
+| #309 | [SPEC-REVIEW-309-r3.md](SPEC-REVIEW-309-r3.md) | spec · r3 | 🟢 зелёный | 0 | 1 | Нумерация AC в §5 разъезжается: новая строка помечена «7a», но названа в | `PROCESS.md` |
+| #309 | [CODE-REVIEW-309-r1.md](CODE-REVIEW-309-r1.md) | code · r1 | 🔴 красный | 0 | 1 | npm test красный на проверяемом SHA; AC5 доказана не буквально как записано в ТЗ | `test/golden-matrix.test.mjs` `demo/golden/matrix.mjs` `demo/golden/README.md` `docs/specs/309-junction-visual-limit.md` `test/fixtures/309-junction-teeth.json` `smoke_junction_holes.mjs` `302-junction-artifacts.json` `scripts/wall-strip-containment.mjs` |
+| #309 | [CODE-REVIEW-309-r2.md](CODE-REVIEW-309-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #307 | [SPEC-REVIEW-307-r1.md](SPEC-REVIEW-307-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #307 | [CODE-REVIEW-307-r1.md](CODE-REVIEW-307-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #306 | [SPEC-REVIEW-306-r1.md](SPEC-REVIEW-306-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | лимит wall_segments[] в ТЗ устарел и противоречит уже слитому #282 | `docs/specs/306-zero-thickness-walls.md` `custom_components/houseplan/validation.py` `docs/specs/282-stable-wall-segment-identity.md` `docs/specs/282-...md` |
+| #306 | [SPEC-REVIEW-306-r2.md](SPEC-REVIEW-306-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #306 | [CODE-REVIEW-306-r1.md](CODE-REVIEW-306-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | 1 Гейты — что прогнано; 2 Что НЕ прогонялось и почему; Отчёт «Оптимизировать планы» показывает退ый термин «виртуальный»/«virtual»; docs/CHANGELOG.md/docs/CHANGELOG.ru.md не содержат обязательного; Четыре i18n-ключа из таблицы §15 ТЗ реализованы не под тем именем/точным | `src/i18n/en.json` `ru.json` `src/houseplan-card.ts` `src/plan-optimizer.ts` `plan-optimizer.ts` `houseplan-card.ts` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` |
+| #306 | [CODE-REVIEW-306-r2.md](CODE-REVIEW-306-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | 1 Гейты — что прогнано лично; 2 Что НЕ прогонялось и почему; 3 Разбор смок-выборки по дельте | — |
+| #304 | [SPEC-REVIEW-304-r1.md](SPEC-REVIEW-304-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #304 | [CODE-REVIEW-304-r1.md](CODE-REVIEW-304-r1.md) | code · r1 | 🟡 жёлтый | 1 | 0 | два golden-сценария неродственных фич стали «different» на канонической Linux CI и не п…; буквально такой же топологией (golden использует смежный, но не идентичный golden-coinc… | `demo/golden/harness.mjs` `demo/golden/matrix.mjs` |
+| #304 | [CODE-REVIEW-304-r2.md](CODE-REVIEW-304-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #303 | [SPEC-REVIEW-303-r1.md](SPEC-REVIEW-303-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #303 | [CODE-REVIEW-303-r1.md](CODE-REVIEW-303-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | счёт unit-тестов в отчёте разработчика на единицу отличается от факта | — |
+| #302 | [SPEC-REVIEW-302-r1.md](SPEC-REVIEW-302-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #302 | [CODE-REVIEW-302-r1.md](CODE-REVIEW-302-r1.md) | code · r1 | ⚪ — | 0 | 2 | docs/WALL-THICKNESS.md не переписан под решение №5, хотя спека требовала это явно; мутант junction-fans-disabled не работает, вопреки заявлению «краснота проверена исполн…; bevelMultiWallPaper осталась мёртвым кодом | `docs/WALL-THICKNESS.md` `docs/specs/302-junction-node-material.md` `wall-thickness.ts` `PROCESS.md` `AGENTS.md` `scripts/mutation-gate.mjs` `demo/smoke_junction_holes.mjs` `../test-build/wall-thickness.js` |
+| #302 | [CODE-REVIEW-302-r2.md](CODE-REVIEW-302-r2.md) | code · r2 | ⚪ — | 0 | 1 | AC6 не выполнен: узловая механика не «безоперационна по difference», спека это не признаёт | `src/wall-thickness.ts` `docs/specs/302-junction-node-material.md` `test/wall-thickness.test.mjs` `docs/WALL-THICKNESS.md` |
+| #302 | [CODE-REVIEW-302-r4.md](CODE-REVIEW-302-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | стек-документация JunctionNodeGeometry описывает не тот контракт | `src/wall-thickness.ts` `docs/WALL-THICKNESS.md` |
+| #301 | [SPEC-REVIEW-301-r1.md](SPEC-REVIEW-301-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | Контракт п.4.1/4.2 требует показывать entity_id вторичной подписью в двух местах (закры… | `PROCESS.md` |
+| #301 | [CODE-REVIEW-301-r1.md](CODE-REVIEW-301-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #300 | [SPEC-REVIEW-300-r1.md](SPEC-REVIEW-300-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | временное скрытие кнопки настроек комнаты — недекларированная догадка, выданная за прин…; AC11 требует относительный регресс-бюджет, которого не существует у названного инструмента | `docs/specs/300-resize-measurement-layout.md` `docs/RESIZE.md` `docs/UX-MODES.md` `docs/USER-GUIDE.ru.md` `demo/benchmark_safe_resize_render.mjs` `demo/benchmark_safe_resize.mjs` `benchmark_safe_resize.mjs` |
+| #300 | [SPEC-REVIEW-300-r2.md](SPEC-REVIEW-300-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | новый текст утверждает, что footprint .rlgearbtn «screen-fixed», хотя размер кнопки явн… | `docs/specs/300-resize-measurement-layout.md` `styles.ts` |
+| #300 | [SPEC-REVIEW-300-r3.md](SPEC-REVIEW-300-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | §4 п.6 («Зафиксированные продуктовые решения») по-прежнему называет footprint кнопки «s… | `docs/specs/300-resize-measurement-layout.md` `src/space-geometry.ts` `src/styles.ts` |
+| #300 | [SPEC-REVIEW-300-r4.md](SPEC-REVIEW-300-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #299 | [SPEC-REVIEW-299-r1.md](SPEC-REVIEW-299-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #298 | [SPEC-REVIEW-298-r1.md](SPEC-REVIEW-298-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | отсутствуют обязательные продуктовые разделы §7.1; способ доказательства не назван явно у двух AC; разделы «UX» и «i18n» не выделены явно | `PROCESS.md` `AGENTS.md` `docs/SCOPE.md` `demo/smoke_room_resize.mjs` `RESIZE.md` |
+| #298 | [SPEC-REVIEW-298-r2.md](SPEC-REVIEW-298-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #298 | [CODE-REVIEW-298-r1.md](CODE-REVIEW-298-r1.md) | code · r1 | 🔴 красный | 2 | 0 | AC4 (legacy/key-only записи) не реализован: fail-closed контракт §3.3 отсутствует, дефе…; AC2 не доказан: нет отдельного теста на репродукцию первого этажа | `src/wall-thickness.ts` `wall-thickness.ts` `real-plan-first-floor.json` `test/wall-thickness.test.mjs` `smoke_edit_walk.mjs` |
+| #296 | [SPEC-REVIEW-296-r1.md](SPEC-REVIEW-296-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #296 | [CODE-REVIEW-296-r1.md](CODE-REVIEW-296-r1.md) | code · r1 | 🔴 красный | 3 | 6 | backend не доказывает удаление partition без hosted opening (§8, AC6); AC7 нарушен: диагностический слой не виден в инструменте Draw (§9.2); smoke_edit_walk.mjs красный на новой фикстуре (AC6, §253-класс дефекта); check-docs красный, скриншоты не пересняты; счётчик удаления drafts делит сообщение с «мусором сетки» (одно число, два разных источ…; порядок слоёв: диагностика рисуется НАД transient-превью инструмента «Проём» | `custom_components/houseplan/validation.py` `tests_backend/test_validation.py` `src/houseplan-card.ts` `demo/smoke_plan_snap_overlay.mjs` `smoke_edit_walk.mjs` `demo/smoke_edit_walk.mjs` `real-plan-second-floor.json` `test/fixtures/real-plan-second-floor.json` |
+| #295 | [SPEC-REVIEW-295-r1.md](SPEC-REVIEW-295-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | контракт реверсит документированный и протестированный барьер #199 без единого слова об…; предикат «версия карточки ≠ версия интеграции» (§1.5) ссылается на несуществующий канал…; несогласованность detail: null в примере блока; влияние на производительность не названо явно | `src/plan-geometry-preflight.ts` `docs/CANVAS.md` `docs/ARCHITECTURE.md` `test/plan-geometry-preflight.test.mjs` `ARCHITECTURE.md` `custom_components/houseplan/websocket_api.py` `custom_components/houseplan/__init__.py` `import_export.py` |
+| #295 | [SPEC-REVIEW-295-r2.md](SPEC-REVIEW-295-r2.md) | spec · r2 | 🟡 жёлтый | 1 | 1 | — | — |
+| #295 | [CODE-REVIEW-295-r1.md](CODE-REVIEW-295-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | диагностика меряет не тот отпечаток; фолбэк-блок диагностики не сбрасывается и может показать чужой отказ | `src/houseplan-card.ts` `smoke_preflight_diagnostics.mjs` |
+| #295 | [CODE-REVIEW-295-r2.md](CODE-REVIEW-295-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #294 | [SPEC-REVIEW-294-r1.md](SPEC-REVIEW-294-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC7 уже формулировкой не покрывает весь текст, который спецификация обязана исправить | `docs/specs/294-wall-esc-detach.md` `docs/USER-GUIDE.md` `docs/USER-GUIDE.ru.md` |
+| #294 | [SPEC-REVIEW-294-r2.md](SPEC-REVIEW-294-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #294 | [CODE-REVIEW-294-r1.md](CODE-REVIEW-294-r1.md) | code · r1 | 🔴 красный | 0 | 2 | Обязательный гейт node scripts/check-docs.mjs красный на ревьюемом SHA; Новый таргетированный смок demo/smoke_unified_wall_tool.mjs падает на | `src/houseplan-card.ts` `docs/images/screenshots.json` `demo/smoke_unified_wall_tool.mjs` |
+| #294 | [CODE-REVIEW-294-r2.md](CODE-REVIEW-294-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #293 | [SPEC-REVIEW-293-r1.md](SPEC-REVIEW-293-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Отсутствуют два обязательных раздела §7.1 — «риски» и «откат»; docs/specs/293-resize-pointer-noop.md не добавлен в индекс docs/specs/README.md | `docs/specs/293-resize-pointer-noop.md` `docs/specs/README.md` |
+| #293 | [SPEC-REVIEW-293-r2.md](SPEC-REVIEW-293-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #293 | [CODE-REVIEW-293-r1.md](CODE-REVIEW-293-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #292 | [SPEC-REVIEW-292-r1.md](SPEC-REVIEW-292-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | обещание в §5 не имеет технической опоры и не проверяется ни одним AC; отсутствуют разделы, обязательные по PROCESS.md §7.1 и принятые в соседних ТЗ той же по…; AC1–AC8 не помечают явно способ доказательства | `docs/specs/292-resize-availability-audit.md` `src/resize.ts` `src/i18n/en.json` `src/i18n/ru.json` `PROCESS.md` `292-resize-availability-audit.md` `277-safe-resize.md` `276-coincident-partition-reconciliation.md` |
+| #292 | [SPEC-REVIEW-292-r2.md](SPEC-REVIEW-292-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #292 | [CODE-REVIEW-292-r1.md](CODE-REVIEW-292-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #291 | [SPEC-REVIEW-291-r1.md](SPEC-REVIEW-291-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | Отсутствуют обе обязательные продуктовые секции §7.1, и новый видимый UI; Нет разделов «Риски» и «Откат», обязательных по DoR (§2.5) и присутствующих; AC3 иллюстрирует вывод CLI текстом, который не совпадает с реальным; Issue #291 называет себя «Стадия 1 из ADR #282», хотя реальная Stage 1 | `docs/specs/291-lattice-coordinate-write-barrier.md` `docs/SCOPE.md` `src/i18n/ru.json` `docs/specs/252-optimize-orphan-layout-report.md` `docs/specs/279-near-orthogonal-junction.md` `docs/specs/226-entity-parent-dedup.md` `scripts/model-invariants.mjs` `docs/adr/282-wall-geometry-representation.md` |
+| #291 | [SPEC-REVIEW-291-r2.md](SPEC-REVIEW-291-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | Раздел «i18n», обязательный по цепочке §7.1, отсутствует; новые строки; (из r1) — пример CLI-вывода в AC3 остаётся текстово рассинхронизирован | `docs/specs/291-lattice-coordinate-write-barrier.md` `PROCESS.md` `src/i18n/en.json` `src/i18n/ru.json` `docs/specs/252-optimize-orphan-layout-report.md` `docs/specs/094-universal-state-toggle.md` |
+| #291 | [SPEC-REVIEW-291-r3.md](SPEC-REVIEW-291-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | Точность (число знаков/округление) нового placeholder {cm} в; (из r1) — тело issue #291 всё ещё называет задачу «Стадия 1 из ADR | `docs/specs/291-lattice-coordinate-write-barrier.md` `src/houseplan-card.ts` `model-invariants.mjs` |
+| #291 | [CODE-REVIEW-291-r1.md](CODE-REVIEW-291-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | AC4 не доказан ни автотестом, ни явной записью; docs/USER-GUIDE.ru.md не обновлён; не блокируют, зафиксированы без правки | `smoke_lattice_write_barrier.mjs` `smoke_optimize_coordinate_canonicalization.mjs` `docs/USER-GUIDE.ru.md` `docs/USER-GUIDE.md` `src/i18n/ru.json` |
+| #291 | [CODE-REVIEW-291-r2.md](CODE-REVIEW-291-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #290 | [SPEC-REVIEW-290-r1.md](SPEC-REVIEW-290-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | Отсутствуют обязательные разделы §7.1 «риски» и «откат»; AC исходного issue про npm run invariants на реальных данных и; AC4 неточно называет источник fixture | `docs/specs/290-near-axis-authoring-and-repair.md` `docs/specs/277-safe-resize.md` `docs/specs/279-near-orthogonal-junction.md` `scripts/model-invariants.mjs` `44.json` `test/fixtures/279-near-orthogonal-junction.json` |
+| #290 | [SPEC-REVIEW-290-r2.md](SPEC-REVIEW-290-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #290 | [CODE-REVIEW-290-r1.md](CODE-REVIEW-290-r1.md) | code · r1 | 🔴 красный | 1 | 2 | 1 Смок-выборка; 2 Инварианты и AC10 — реальные планы; Resize отключается на всей комнате из-за чужой, нетронутой near-axis стены (AC3 нарушен…; AC9: 3 из 6 обязательных мутантов отсутствуют; AC10: нет автотеста на двух реальных фикстурах; AC1 «source guard» не механизирован | `src/resize.ts` `test/fixtures/real-plan-second-floor.json` `scripts/mutation-gate.mjs` `test/near-axis.test.mjs` `mutation-gate.mjs` `smoke_near_axis_optimize.mjs` `test/model-invariants.test.mjs` `test/plan-optimizer.test.mjs` |
+| #290 | [CODE-REVIEW-290-r2.md](CODE-REVIEW-290-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | 1 Смок-выборка; 1 Проверка закрытия High H1 (не декларативно — воспроизведением на обоих состояниях кода); 2 Проверка закрытия Medium M1 (mutation-gate); 3 Проверка закрытия Medium M2 (AC10 автотест) | — |
+| #290 | [CODE-REVIEW-290-r3.md](CODE-REVIEW-290-r3.md) | code · r3 | ⚪ — | 0 | 0 | ТЗ AC1 (docs/specs/290-near-axis-authoring-and-repair.md:173-174) прямо | `docs/specs/290-near-axis-authoring-and-repair.md` `src/wall-thickness.ts` `test/near-axis.test.mjs` `test/single-source-numbers.test.mjs` `src/near-axis.ts` `wall-thickness.ts` |
+| #290 | [CODE-REVIEW-290-r4.md](CODE-REVIEW-290-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #289 | [SPEC-REVIEW-289-r1.md](SPEC-REVIEW-289-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | раздел «Риски» отсутствует полностью; раздел «Откат» отсутствует полностью; 6 из 9 AC не указывают способ доказательства; терминология «рукоятка» вместо канонической «ручка»; i18n-ключ не назван по имени | `docs/RESIZE.md` `demo/smoke_room_resize.mjs` `test/resize.test.mjs` `docs/USER-GUIDE.ru.md` `src/resize.ts` `src/i18n/en.json` `ru.json` |
+| #289 | [SPEC-REVIEW-289-r2.md](SPEC-REVIEW-289-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #289 | [CODE-REVIEW-289-r1.md](CODE-REVIEW-289-r1.md) | code · r1 | 🟢 зелёный | 1 | 1 | Незапланированный код #260 в ветке #289 ломает два golden-эталона, третий не принят (Hi…; Golden-эталон safe-resize-handles-clamp-{dark,light} не обновлён под настоящее поведени… | `demo/fixtures/wall-key.mjs` `test/fixture-wall-key.test.mjs` `demo/fixtures/large-house.mjs` `demo/fixtures/visual-matrix.mjs` `test/model-invariants.test.mjs` `demo/golden/harness.mjs` `large-house.mjs` `visual-matrix.mjs` |
+| #289 | [CODE-REVIEW-289-r2.md](CODE-REVIEW-289-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #288 | [SPEC-REVIEW-288-r1.md](SPEC-REVIEW-288-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Отсутствуют обязательные разделы «Риски» и «Откат» (§7.1, DoR §2.5); «Связано» в шапке не включает #279, хотя AC4 явно на него ссылается | `docs/specs/288-bounded-multiwall-corridor.md` `docs/specs/275-multiwall-strip-containment.md` `docs/specs/278-wall-union-isolation.md` |
+| #288 | [SPEC-REVIEW-288-r2.md](SPEC-REVIEW-288-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #288 | [CODE-REVIEW-288-r1.md](CODE-REVIEW-288-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | нарушен собственный порядок релиза из §10/issue; AC3 не проверяет геометрию тела, только метаданные continuations | `docs/specs/288-bounded-multiwall-corridor.md` `demo/fixtures/wall-key.mjs` `check-docs.mjs` `wall-thickness.ts` `test/wall-thickness.test.mjs` `demo/smoke_real_plan_masonry.mjs` |
+| #288 | [CODE-REVIEW-288-r2.md](CODE-REVIEW-288-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #288 | [CODE-REVIEW-288-r3.md](CODE-REVIEW-288-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #282 | [SPEC-REVIEW-282-r1.md](SPEC-REVIEW-282-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | Не специфицирован порядок атомизации Stage 1 относительно уже существующего lattice-бар…; Заявленный UX отказа («предлагает Optimize либо исправление») не совпадает с фактически… | `docs/specs/282-stable-wall-segment-identity.md` `src/coordinate-canonicalization.ts` `docs/WALL-THICKNESS.md` |
+| #282 | [SPEC-REVIEW-282-r2.md](SPEC-REVIEW-282-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #282 | [CODE-REVIEW-282-r1.md](CODE-REVIEW-282-r1.md) | code · r1 | 🔴 красный | 2 | 4 | #278-guard «отклонить правку деградированного пространства» больше не срабатывает; Широкая регрессия структурных операций редактирования; AC15 добавил новую строку в Optimize-диалог — golden baseline не обновлён; AC5 «executable source/AST guard + bypass mutant for each writer family» реализован уже…; wall_model_client_outdated не срабатывает в реалистичном сценарии старого клиента; Регрессионный тест issue #248 ослаблен без обновления фикстуры | `demo/smoke_wall_union_isolation.mjs` `src/houseplan-card.ts` `wall-segment-model.ts` `smoke_resize_pointer_real_plan.mjs` `smoke_wall_chain_thickness.mjs` `smoke_unified_wall_tool.mjs` `smoke_wall_face_overlap.mjs` `smoke_edit_walk.mjs` |
+| #282 | [CODE-REVIEW-282-r2.md](CODE-REVIEW-282-r2.md) | code · r2 | 🔴 красный | 2 | 0 | npm test красный: диагностика больше не соответствует контракту, который сама же проверяет; AC7 нарушен: opening на обычной стене исчезает со Static-карточки после миграции в v8 | `test/open-passage-contract.test.mjs` `demo/smoke_open_passage.mjs` `src/space-render.ts` `space-card.ts` `ARCHITECTURE.md` `src/wall-segment-model.ts` `space-render.ts` `src/houseplan-card.ts` |
+| #282 | [CODE-REVIEW-282-r3.md](CODE-REVIEW-282-r3.md) | code · r3 | 🔴 красный | 1 | 0 | AC7 всё ещё нарушен: Static-карточка рисует сплошную стену прямо по месту прохода после… | `src/space-render.ts` `src/wall-segment-model.ts` `space-render.ts` `houseplan-card.ts` `demo/smoke_open_passage.mjs` `src/logic.ts` `docs/SCOPE.md` `smoke_open_passage.mjs` |
+| #282 | [CODE-REVIEW-282-r4.md](CODE-REVIEW-282-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #278 | [SPEC-REVIEW-278-r1.md](SPEC-REVIEW-278-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | отсутствует обязательный раздел «Риски» | `docs/specs/278-wall-union-isolation.md` `docs/specs/253-resize-wall-thickness.md` `docs/specs/275-multiwall-strip-containment.md` |
+| #278 | [SPEC-REVIEW-278-r2.md](SPEC-REVIEW-278-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #278 | [CODE-REVIEW-278-r1.md](CODE-REVIEW-278-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | docs/TESTING.md называет несуществующие id мутантов | `docs/TESTING.md` `scripts/mutation-gate.mjs` `TESTING.md` `mutation-gate.mjs` |
+| #278 | [CODE-REVIEW-278-r2.md](CODE-REVIEW-278-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #277 | [SPEC-REVIEW-277-r1.md](SPEC-REVIEW-277-r1.md) | spec · r1 | ⚪ — | 0 | 3 | нет обязательного раздела «риски» (§7.1); нет обязательного «что человек увидит до и после» одной фразой без терминов реализации …; из плана тестов выпала обязательная анонимизированная fixture реального плана | `docs/specs/277-safe-resize.md` |
+| #277 | [SPEC-REVIEW-277-r2.md](SPEC-REVIEW-277-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #277 | [CODE-REVIEW-277-r1.md](CODE-REVIEW-277-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Кэш допустимости (eligibility) на самом деле не memo­изирует дорогую; Мёртвый код и устаревший комментарий: rszSel теперь ничего не | `src/houseplan-card.ts` `docs/ARCHITECTURE.md` `demo/fixtures/large-house.mjs` `benchmark_safe_resize.mjs` |
+| #277 | [CODE-REVIEW-277-r2.md](CODE-REVIEW-277-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | (процессная, повтор паттерна из SPEC-REVIEW-277-r2/L2). Вердикт-комментарий | `docs/reviews/CODE-REVIEW-277-r1.md` `src/houseplan-card.ts` |
+| #276 | [SPEC-REVIEW-276-r1.md](SPEC-REVIEW-276-r1.md) | spec · r1 | 🔴 красный | 1 | 3 | Заявленный Redo для серверной отмены Optimize не существует и не заявлен как новая работа; Раздел «Риски» отсутствует — обязательный пункт DoR; Не перечислены затронутые файлы и модули — обязательный пункт DoR; Ссылка на несуществующий канонический документ docs/PLAN-OPTIMIZE.md | `src/houseplan-card.ts` `docs/USER-GUIDE.ru.md` `docs/ARCHITECTURE.md` `docs/specs/275-multiwall-strip-containment.md` `src/plan-optimizer.ts` `src/wall-merge.ts` `src/physical-geometry.ts` `docs/PLAN-OPTIMIZE.md` |
+| #276 | [SPEC-REVIEW-276-r2.md](SPEC-REVIEW-276-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #276 | [SPEC-REVIEW-276-r3.md](SPEC-REVIEW-276-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | Разное именование одной переменной в двух соседних формулах; AC1 сохраняет квалификатор «same-thickness», хотя условие эксплицитно расширено дельтой; Второй подряд неверный SHA в хендофф-комментарии автора — повтор находки r2 | `docs/reviews/SPEC-REVIEW-276-r2.md` |
+| #276 | [CODE-REVIEW-276-r1.md](CODE-REVIEW-276-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | AC11 (перф-бюджет §10) не доказан ни автотестом, ни явным; AC3 «несколько hosted openings на одной partition» не покрыто тестом; AC5 «targeted golden» не добавлен ни в каком виде | `docs/specs/276-coincident-partition-reconciliation.md` `demo/benchmark_large_house.mjs` `demo/benchmark_optimize_geometry_preflight.mjs` `test/fixtures/276-coincident-partition.json` `test/coincident-partitions.test.mjs` `test/plan-optimizer.test.mjs` `src/coincident-partitions.ts` `demo/golden/matrix.mjs` |
+| #276 | [CODE-REVIEW-276-r2.md](CODE-REVIEW-276-r2.md) | code · r2 | 🟡 жёлтый | 0 | 3 | 2 (Medium, в скоупе, чинится тем же автором) — benchmark:coincident-partitions даёт сис… | `demo/benchmark_coincident_partitions.mjs` `demo/benchmark_optimize_geometry_preflight.mjs` |
+| #276 | [CODE-REVIEW-276-r3.md](CODE-REVIEW-276-r3.md) | code · r3 | 🟢 зелёный | 0 | 1 | — | — |
+| #275 | [SPEC-REVIEW-275-r1.md](SPEC-REVIEW-275-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | 1: делегирование доказательства AC3 существующей конвенции хендоффа, не тексту ТЗ; 2: план автотестов не выделен отдельным заголовком | `docs/specs/275-multiwall-strip-containment.md` `docs/specs/272-no-multiwall-holes.md` |
+| #275 | [SPEC-REVIEW-275-r2.md](SPEC-REVIEW-275-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | 1: контракт не определяет узлы, где ray-пары смешивают rectilinear и non-rectilinear; 1 (снимаю без правки документа): величина angle-epsilon в §6.1 не названа числом | `docs/specs/275-multiwall-strip-containment.md` `docs/WALL-THICKNESS.md` |
+| #275 | [SPEC-REVIEW-275-r3.md](SPEC-REVIEW-275-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | 1 (новая, снимаю без правки документа): числа «110 из 437» / «100 из 382» из хендоффа н… | `1.json` `2.json` |
+| #275 | [CODE-REVIEW-275-r1.md](CODE-REVIEW-275-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | незадокументированный golden-impact на двух существующих сценах | `src/wall-thickness.ts` `docs/TESTING.md` |
+| #274 | [SPEC-REVIEW-274-r1.md](SPEC-REVIEW-274-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «До»-описание в §2 использует внутренний термин вместо простой фразы (снято); DoR-пункт «затронутые файлы и модули» не оформлен отдельным списком (снято) | `docs/specs/274-wireless-controller-presentation-parity.md` |
+| #274 | [CODE-REVIEW-274-r1.md](CODE-REVIEW-274-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #273 | [SPEC-REVIEW-273-r1.md](SPEC-REVIEW-273-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | заявленная защита от partition/draft-границы не имеет ни доказательства, ни видимого ме…; не все AC называют способ доказательства явным словом по шаблону §2.5 | `docs/specs/273-optimize-topology-island.md` `src/plan-optimizer.ts` `src/wall-thickness.ts` `test/plan-optimizer.test.mjs` |
+| #273 | [SPEC-REVIEW-273-r2.md](SPEC-REVIEW-273-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #273 | [CODE-REVIEW-273-r1.md](CODE-REVIEW-273-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #272 | [SPEC-REVIEW-272-r1.md](SPEC-REVIEW-272-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | 1: у большинства AC нет явной строки «Доказательство»; 2: «объявленный exterior sector» не определён алгоритмически; 1: неполное попадание в Core user jobs (снято, без правки документа) | `docs/specs/272-no-multiwall-holes.md` `docs/specs/261-white-wedges-root-cause.md` `docs/SCOPE.md` |
+| #272 | [SPEC-REVIEW-272-r2.md](SPEC-REVIEW-272-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #272 | [CODE-REVIEW-272-r1.md](CODE-REVIEW-272-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #271 | [SPEC-REVIEW-271-r1.md](SPEC-REVIEW-271-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #271 | [CODE-REVIEW-271-r1.md](CODE-REVIEW-271-r1.md) | code · r1 | 🔴 красный | 1 | 1 | AC6 не выполняется: собственная семантическая golden-проверка issue падает на обоих сце…; , в скоупе] AC4 не имеет собственного fixture/smoke с проёмом | `demo/golden/harness.mjs` `test/wall-thickness.test.mjs` `test/fixtures/197-junction-patch.json` `test/fixtures/249-multiwall-junction.json` `smoke_junction_patch_resilience.mjs` `src/wall-thickness.ts` |
+| #271 | [CODE-REVIEW-271-r2.md](CODE-REVIEW-271-r2.md) | code · r2 | 🟢 зелёный | 1 | 1 | — | — |
+| #271 | [CODE-REVIEW-271-r3.md](CODE-REVIEW-271-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #269 | [CODE-REVIEW-269-r1.md](CODE-REVIEW-269-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | буквальная формулировка AC2 не выполняется, хотя цель AC2 достигнута | `docs/USER-GUIDE.ru.md` |
+| #267 | [SPEC-REVIEW-267-r1.md](SPEC-REVIEW-267-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | заявление «git diff --check — green» в хендоффе не совпадает с фактом | `check-docs.mjs` |
+| #267 | [CODE-REVIEW-267-r1.md](CODE-REVIEW-267-r1.md) | code · r1 | 🔴 красный | 1 | 1 | три из сорока четырёх рядов не имеют реальной мутационной защиты, вопреки AC5; unverified в BindingPresentationLifecycle недостижим ни в одном реальном сценарии; правило «неизвестный decision ID ломает тест» (ТЗ §8, п.5) не реализовано | `scripts/mutation-gate.mjs` `test/fixtures/device-presentation-decisions.mjs` `src/device-presentation-policy.ts` `device-presentation-policy.ts` `src/device-presentation.ts` `docs/DEVICE-PRESENTATION.md` `src/devices.ts` `test/device-presentation-policy.test.mjs` |
+| #267 | [CODE-REVIEW-267-r2.md](CODE-REVIEW-267-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #266 | [SPEC-REVIEW-266-r1.md](SPEC-REVIEW-266-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Medium (в скоупе) — заявленный «объективный критерий» (golden) не видит два реальных CS…; Low — неверная классификация вспомогательного скрипта; Low (наблюдение, не требует правки ТЗ) — лимит «≤ 1200 строк» на файл (AC2) может не вы… | `src/styles.ts` `demo/golden/harness.mjs` `demo/golden/run.mjs` `smoke_plan_snap_overlay.mjs` `smoke_preloader.mjs` `test/isometric-contract.test.mjs` `plan.styles.ts` `demo/smoke_plan_snap_overlay.mjs` |
+| #266 | [SPEC-REVIEW-266-r2.md](SPEC-REVIEW-266-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | Medium (в скоупе) — новый AC2 противоречит сам себе: заявленный порог суммы уже нарушен… | `docs/specs/266-split-styles.md` |
+| #266 | [SPEC-REVIEW-266-r3.md](SPEC-REVIEW-266-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #266 | [CODE-REVIEW-266-r1.md](CODE-REVIEW-266-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #265 | [SPEC-REVIEW-265-r1.md](SPEC-REVIEW-265-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 4 | «что человек увидит» слито со сценарием и написано языком реализации; поверхность/touch…; AC10 хеджирует «если отчёт станет виден пользователю», хотя §9 безусловно описывает нов…; AC1–AC9 не называют способ доказательства (в отличие от требования DoR и от прямого сос…; нет отдельного обязательного раздела «Риски» | `docs/specs/265-import-reference-seam.md` `244-orphan-space-references.md` `252-optimize-orphan-layout-report.md` `docs/TOUCH-SUPPORT.md` `docs/specs/244-orphan-space-references.md` |
+| #265 | [SPEC-REVIEW-265-r2.md](SPEC-REVIEW-265-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | AC10 называет несуществующий гейт check-i18n как обязательное доказательство (Medium, в… | `docs/specs/265-import-reference-seam.md` `package.json` `test/i18n.test.mjs` `scripts/check-i18n.mjs` `check-docs.mjs` `scripts/check-docs.mjs` |
+| #265 | [SPEC-REVIEW-265-r3.md](SPEC-REVIEW-265-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #265 | [CODE-REVIEW-265-r1.md](CODE-REVIEW-265-r1.md) | code · r1 | 🔴 красный | 1 | 2 | golden красный на заявленном SHA для самого нового экрана; заявление автора о зелёном g…; нет backend-теста на успешный cross-generation lineage repair (только exact-map и ambig…; нет synthetic maximum-size backend теста, требуемого AC9 | `demo/golden/harness.mjs` `src/houseplan-card.ts` `src/i18n/ru.json` `demo/golden/README.md` `AGENTS.md` `tests_backend/test_ha_import_export.py` `test/space-reference-repair.test.mjs` `custom_components/houseplan/import_export.py` |
+| #264 | [SPEC-REVIEW-264-r1.md](SPEC-REVIEW-264-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | утверждение «Escape в idle Resize уже сейчас сразу возвращает Draw» не соответствует коду; несуществующий файл смока в планируемом diff | `docs/specs/264-resize-controller.md` `src/houseplan-card.ts` `demo/smoke_hide_layers.mjs` `demo/smoke_pan_any_zoom.mjs` `demo/smoke_safe_resize.mjs` `demo/smoke_resize_wall_thickness.mjs` `demo/smoke_resize_inner_dimensions.mjs` `docs/RESIZE.md` |
+| #264 | [SPEC-REVIEW-264-r2.md](SPEC-REVIEW-264-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #264 | [CODE-REVIEW-264-r1.md](CODE-REVIEW-264-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #262 | [SPEC-REVIEW-262-r1.md](SPEC-REVIEW-262-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | вне скоупа (не блокирует, заводится отдельным issue по §12 PROCESS.md) | `docs/USER-GUIDE.ru.md` `src/i18n/ru.json` `houseplan-card.ts` `ru.json` |
+| #262 | [CODE-REVIEW-262-r1.md](CODE-REVIEW-262-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #261 | [SPEC-REVIEW-261-r1.md](SPEC-REVIEW-261-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «Что человек увидит до и после» смешивает продуктовое и техническое | `docs/specs/261-white-wedges-root-cause.md` |
+| #261 | [CODE-REVIEW-261-r1.md](CODE-REVIEW-261-r1.md) | code · r1 | ⚪ — | 0 | 0 | — | — |
+| #258 | [SPEC-REVIEW-258-r1.md](SPEC-REVIEW-258-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «Что человек увидит» смешивает продуктовую и техническую лексику | `docs/specs/258-wall-key-storage-roundtrip.md` |
+| #258 | [CODE-REVIEW-258-r1.md](CODE-REVIEW-258-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Release-артефакты заявляют больше, чем доказано, и противоречат собственному; 'Записи толщины, которые не найдутся по ключу' теперь мёртв — wall_key | `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `CHANGELOG.md` `.ru.md` `scripts/model-invariants.mjs` |
+| #258 | [CODE-REVIEW-258-r2.md](CODE-REVIEW-258-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #256 | [CODE-REVIEW-256-r1.md](CODE-REVIEW-256-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #253 | [SPEC-REVIEW-253-r1.md](SPEC-REVIEW-253-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | риск MAX_WALLS=500 от роста числа записей не упомянут в разделе рисков | `custom_components/houseplan/validation.py` |
+| #253 | [CODE-REVIEW-253-r1.md](CODE-REVIEW-253-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #252 | [SPEC-REVIEW-252-r1.md](SPEC-REVIEW-252-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | ТЗ меняет задокументированный и опубликованный инвариант Optimize, не | `docs/CANVAS.md` `docs/CHANGELOG.md` `docs/specs/252-optimize-orphan-layout-report.md` |
+| #252 | [SPEC-REVIEW-252-r2.md](SPEC-REVIEW-252-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #252 | [CODE-REVIEW-252-r1.md](CODE-REVIEW-252-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #252 | [CODE-REVIEW-252-r2.md](CODE-REVIEW-252-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #251 | [SPEC-REVIEW-251-r1.md](SPEC-REVIEW-251-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | не проговорено соответствие toast'а формулировке владельца «стандартными средствами HA»; не решён смешанный secure + unavailable случай в группе controls | `device-toggle.ts` `SCOPE.md` |
+| #251 | [CODE-REVIEW-251-r1.md](CODE-REVIEW-251-r1.md) | code · r1 | ⚪ — | 1 | 0 | golden-эталон device-icon-state-table-{light,dark} сломан этим же diff'ом, приёмки base… | `demo/golden/matrix.mjs` `artifacts/golden/golden-report.json` `.github/workflows/validate.yml` `docs/TESTING.md` `test/golden-matrix.test.mjs` `test/device-presentation.test.mjs` |
+| #251 | [CODE-REVIEW-251-r2.md](CODE-REVIEW-251-r2.md) | code · r2 | 🟢 зелёный | 1 | 0 | — | — |
+| #251 | [CODE-REVIEW-251-r3.md](CODE-REVIEW-251-r3.md) | code · r3 | 🟢 зелёный | 1 | 0 | — | — |
+| #250 | [SPEC-REVIEW-250-r1.md](SPEC-REVIEW-250-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #250 | [CODE-REVIEW-250-r1.md](CODE-REVIEW-250-r1.md) | code · r1 | ⚪ — | 0 | 0 | — | — |
+| #250 | [CODE-REVIEW-250-r2.md](CODE-REVIEW-250-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #249 | [SPEC-REVIEW-249-r1.md](SPEC-REVIEW-249-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | в скоупе задачи, чинится в этом же ТЗ; не блокирует, снимается ревьюером с записью | `PROCESS.md` |
+| #249 | [SPEC-REVIEW-249-r2.md](SPEC-REVIEW-249-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #249 | [CODE-REVIEW-249-r1.md](CODE-REVIEW-249-r1.md) | code · r1 | 🔴 красный | 1 | 1 | innerContourForRoom (clean floor) получает; AC2 не покрыт буквально | `src/wall-thickness.ts` `test/wall-thickness.test.mjs` `demo/smoke_multiwall_junction.mjs` |
+| #249 | [CODE-REVIEW-249-r2.md](CODE-REVIEW-249-r2.md) | code · r2 | ⚪ — | 0 | 0 | Два из восьми вызовов innerContourForRoom не получили sharedRoomWallGeometry | `src/houseplan-card.ts` |
+| #248 | [SPEC-REVIEW-248-r1.md](SPEC-REVIEW-248-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | не блокирует, оставлено на усмотрение автора | `docs/USER-GUIDE.ru.md` `USER-GUIDE.ru.md` |
+| #248 | [CODE-REVIEW-248-r1.md](CODE-REVIEW-248-r1.md) | code · r1 | 🟢 зелёный | 1 | 0 | — | — |
+| #244 | [SPEC-REVIEW-244-r1.md](SPEC-REVIEW-244-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Не назван пункт DoR «влияние на touch» | `docs/TOUCH-SUPPORT.md` |
+| #244 | [SPEC-REVIEW-244-r2.md](SPEC-REVIEW-244-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #244 | [CODE-REVIEW-244-r1.md](CODE-REVIEW-244-r1.md) | code · r1 | 🔴 красный | 2 | 0 | Именованный в АС смок demo/smoke_orphan_space_references.mjs красный; Регрессия контракта #113: последнее занятое пространство больше не удаляется | `demo/smoke_orphan_space_references.mjs` `space-deletion.test.mjs` `test_ha_websocket.py` `CONFIG-COMPATIBILITY.md` `USER-GUIDE.md` `demo/smoke_optional_space_model.mjs` |
+| #244 | [CODE-REVIEW-244-r2.md](CODE-REVIEW-244-r2.md) | code · r2 | ⚪ — | 2 | 0 | — | — |
+| #244 | [CODE-REVIEW-244-r3.md](CODE-REVIEW-244-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #243 | [SPEC-REVIEW-243-r1.md](SPEC-REVIEW-243-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #243 | [CODE-REVIEW-243-r1.md](CODE-REVIEW-243-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #243 | [CODE-REVIEW-243-r2.md](CODE-REVIEW-243-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #242 | [SPEC-REVIEW-242-r1.md](SPEC-REVIEW-242-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #242 | [CODE-REVIEW-242-r1.md](CODE-REVIEW-242-r1.md) | code · r1 | 🟡 жёлтый | 1 | 1 | AC4 не выполнен: flip_v не меняет направление 10° поворота ворот на общей стене и на не…; заявленный golden-охват в handoff занижен на порядок; обязательные по §12.3 новые сцены… | `src/houseplan-card.ts` `src/render/opening-symbol.ts` `wall-thickness.ts` `docs/WALL-THICKNESS.md` `docs/ARCHITECTURE.md` `docs/ISOMETRIC.md` `docs/USER-GUIDE.ru.md` `test/opening-symbol.test.mjs` |
+| #242 | [CODE-REVIEW-242-r2.md](CODE-REVIEW-242-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | точный список из 67 существующих golden-сцен на самом деле содержит 2 сцены, не задетые… | `docs/TESTING.md` `demo/golden/matrix.mjs` `test/golden-matrix.test.mjs` |
+| #239 | [SPEC-REVIEW-239-r1.md](SPEC-REVIEW-239-r1.md) | spec · r1 | ⚪ — | 0 | 1 | §13 Acceptance criteria не указывает способ доказательства для AC13; §10 «Данные, i18n...» не называет конкретный текст/ключ новой imperial | `docs/specs/230-hatch-density-normalization.md` `docs/specs/238-opening-inner-distances.md` |
+| #239 | [SPEC-REVIEW-239-r2.md](SPEC-REVIEW-239-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — | — |
+| #239 | [CODE-REVIEW-239-r1.md](CODE-REVIEW-239-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | demo/smoke_grid_scale_invariance.mjs нестабилен на проверке darkViewPixelsMatch — ~43% … | `demo/smoke_grid_scale_invariance.mjs` `src/styles.ts` `AGENTS.md` |
+| #239 | [CODE-REVIEW-239-r2.md](CODE-REVIEW-239-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #238 | [SPEC-REVIEW-238-r1.md](SPEC-REVIEW-238-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #238 | [CODE-REVIEW-238-r1.md](CODE-REVIEW-238-r1.md) | code · r1 | 🔴 красный | 1 | 0 | Продуктовый коммит не обновил скомпилированный бандл; закоммиченный артефакт не содержи… | `dist/houseplan-card.js` `custom_components/houseplan/frontend/houseplan-card.js` `demo/srv/assets/houseplan-card.js` `src/houseplan-card.ts` `src/opening-dimensions.ts` `src/styles.ts` |
+| #238 | [CODE-REVIEW-238-r2.md](CODE-REVIEW-238-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #238 | [CODE-REVIEW-238-r3.md](CODE-REVIEW-238-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #234 | [SPEC-REVIEW-234-r1.md](SPEC-REVIEW-234-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | раздел i18n из обязательного списка §7.1 отсутствует в документе целиком; граница > 0 vs текущее >= 0 не отражена явно в примерах AC1 | `PROCESS.md` `docs/specs/234-chain-segment-thickness.md` `wall-face-graph.ts` `docs/WALL-THICKNESS.md` |
+| #234 | [SPEC-REVIEW-234-r2.md](SPEC-REVIEW-234-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #234 | [CODE-REVIEW-234-r2.md](CODE-REVIEW-234-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | Диагноз и контракт по коду; Гейты — прогнаны на HEAD (c8e9597) в этой сессии; AC — чем доказано; Взаимодействие с #229 (ребейз) | — |
+| #233 | [SPEC-REVIEW-233-r1.md](SPEC-REVIEW-233-r1.md) | spec · r1 | ⚪ — | 2 | 0 | Контракт §6 не покрывает открытую сторону, к которой ведёт продуктовое решение §4.3 (High); §7 приписывает thicknessCmAt поведение, которого у неё нет: заявлено фактом, не провере… | `docs/specs/233-resize-inner-dimensions.md` `src/wall-thickness.ts` `docs/WALL-THICKNESS.md` `test/wall-thickness.test.mjs` `wall-thickness.ts` |
+| #233 | [SPEC-REVIEW-233-r2.md](SPEC-REVIEW-233-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #233 | [CODE-REVIEW-233-r1.md](CODE-REVIEW-233-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | тест AC6b не строит сценарий, который он заявляет (и который был H2); не хватает мутанта из принятого §11 ТЗ | `test/wall-thickness.test.mjs` `docs/specs/233-resize-inner-dimensions.md` `scripts/mutation-gate.mjs` |
+| #233 | [CODE-REVIEW-233-r2.md](CODE-REVIEW-233-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #231 | [SPEC-REVIEW-231-r1.md](SPEC-REVIEW-231-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Нормативная позиция decor относительно room hover fill не имеет | `docs/specs/231-decor-layer-order.md` `demo/smoke_glow.mjs` `smoke_glow.mjs` |
+| #231 | [SPEC-REVIEW-231-r2.md](SPEC-REVIEW-231-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #231 | [CODE-REVIEW-231-r1.md](CODE-REVIEW-231-r1.md) | code · r1 | ⚪ — | 0 | 1 | golden regression на трёх существующих large-house сценах не определена и не учтена | `demo/fixtures/large-house.mjs` `large-house.mjs` `docs/TESTING.md` |
+| #231 | [CODE-REVIEW-231-r2.md](CODE-REVIEW-231-r2.md) | code · r2 | ⚪ — | 0 | 0 | — | — |
+| #230 | [SPEC-REVIEW-230-r1.md](SPEC-REVIEW-230-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | риск-анализ и AC10 построены на неверной посылке о golden-фикстурах; контракт «оба рендерера» не имеет собственного доказательства для статического рендерера; канонический документ подсистемы не входит в release-артефакты | `docs/specs/230-hatch-density-normalization.md` `demo/golden/harness.mjs` `demo/fixtures/large-house.mjs` `demo/fixtures/visual-matrix.mjs` `demo/golden/matrix.mjs` `houseplan-card.ts` `space-render.ts` `demo/smoke_wall_hatch_density.mjs` |
+| #230 | [SPEC-REVIEW-230-r2.md](SPEC-REVIEW-230-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | §5 «Цели» не обновлён вслед за исправлением §11/AC10–11 и противоречит им | `docs/specs/230-hatch-density-normalization.md` |
+| #230 | [CODE-REVIEW-230-r1.md](CODE-REVIEW-230-r1.md) | code · r1 | 🟡 жёлтый | 2 | 0 | Коммит с golden-эталонами не несёт обязательных трейлеров — CI уже красный на этом SHA; Четыре из семи новых мутантов не работают — гейт красен без мутации; AC7 не перепроверяет отсутствие scale на втором cell_cm | `demo/golden/baselines/baselines-index.json` `AGENTS.md` `scripts/validate-commit-provenance.mjs` `validate.yml` `scripts/mutation-gate.mjs` `mutation-gate.mjs` `test/mutation-gate.test.mjs` `.github/workflows/mutation-gate.yml` |
+| #230 | [CODE-REVIEW-230-r2.md](CODE-REVIEW-230-r2.md) | code · r2 | 🟢 зелёный | 2 | 0 | — | — |
+| #229 | [SPEC-REVIEW-229-r1.md](SPEC-REVIEW-229-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | момент слияния при завершении цепочки шире, чем решение владельца о старых планах; допуск «есть причина оставить узел» не определён для трёх из четырёх причин; §8.4 не упоминает материализованную legacy-проекцию проёма (x/y/angle) | `docs/specs/229-merge-collinear-partitions.md` `1.json` `docs/CONFIG-COMPATIBILITY.md` `houseplan-card.ts` |
+| #229 | [SPEC-REVIEW-229-r2.md](SPEC-REVIEW-229-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | критерий «ребро комнаты» для допуска EPS_JOIN (правка M2) сам по себе противоречит кано… | `docs/specs/229-merge-collinear-partitions.md` `docs/specs/141-wall-junctions.md` `src/plan-snap-overlay.ts` `src/logic.ts` `plan-snap-overlay.ts` |
+| #229 | [SPEC-REVIEW-229-r3.md](SPEC-REVIEW-229-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | новый абзац §8.2 цитирует §13.1 фразой, которая на самом деле находится в §13.2 | `docs/specs/229-merge-collinear-partitions.md` `docs/specs/141-wall-junctions.md` |
+| #229 | [CODE-REVIEW-229-r1.md](CODE-REVIEW-229-r1.md) | code · r1 | 🔴 красный | 2 | 0 | «узел на стыке с комнатой» не работает: слияние проходит сквозь T-стык к стене комнаты …; слияние «во что упёрлась цепочка» не работает через реальный клик-путь (§8.6); комментарий про допуски (EPS_ANGLE) не соответствует реализации, поведение корректно | `src/houseplan-card.ts` `src/plan-optimizer.ts` `houseplan-card.ts` `plan-optimizer.ts` `test-build/plan-optimizer.js` `docs/specs/141-wall-junctions.md` `test/wall-merge.test.mjs` `test/plan-optimizer.test.mjs` |
+| #229 | [CODE-REVIEW-229-r2.md](CODE-REVIEW-229-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | регрессионное покрытие High-1 закрывает только один из двух исправленных вызовов; точный SHA предыдущего вердикта не был назван явно | `src/houseplan-card.ts` `src/plan-optimizer.ts` `test/plan-optimizer.test.mjs` `scripts/mutation-gate.mjs` `plan-optimizer.ts` `houseplan-card.ts` `demo/smoke_wall_chain_merge.mjs` `plan-optimizer.test.mjs` |
+| #229 | [CODE-REVIEW-229-r3.md](CODE-REVIEW-229-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #228 | [SPEC-REVIEW-228-r1.md](SPEC-REVIEW-228-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #228 | [CODE-REVIEW-228-r1.md](CODE-REVIEW-228-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | негативный сценарий «hosted opening» не доказан автотестом; неоднозначный «gap > 2 см» диагностируется как единственный | `src/houseplan-card.ts` `docs/specs/228-plan-drawing-problems.md` `test/wall-face-repair.test.mjs` `demo/smoke_plan_drawing_repairs.mjs` |
+| #228 | [CODE-REVIEW-228-r2.md](CODE-REVIEW-228-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #228 | [CODE-REVIEW-228-r3.md](CODE-REVIEW-228-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #226 | [SPEC-REVIEW-226-r1.md](SPEC-REVIEW-226-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | в скоупе задачи; Не найдено находок, которые стоило бы фиксировать отдельно и не чинить | `docs/FILTERING.md` `PROCESS.md` |
+| #226 | [SPEC-REVIEW-226-r2.md](SPEC-REVIEW-226-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #226 | [CODE-REVIEW-226-r1.md](CODE-REVIEW-226-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #225 | [SPEC-REVIEW-225-r1.md](SPEC-REVIEW-225-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | в скоупе задачи; Не найдено находок, которые стоило бы фиксировать отдельно и не | `import_export.py` |
+| #225 | [SPEC-REVIEW-225-r2.md](SPEC-REVIEW-225-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #225 | [CODE-REVIEW-225-r1.md](CODE-REVIEW-225-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | internal_path доверяет path даже при непустых scheme/netloc; заявленный мутационный гейт не зарегистрирован | `scripts/mutation-gate.mjs` `import_export.py` `scripts/backend-test-guard.mjs` `test_ha_import_export.py` `.github/workflows/mutation-gate.yml` |
+| #225 | [CODE-REVIEW-225-r2.md](CODE-REVIEW-225-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #224 | [SPEC-REVIEW-224-r1.md](SPEC-REVIEW-224-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #224 | [CODE-REVIEW-224-r1.md](CODE-REVIEW-224-r1.md) | code · r1 | 🔴 красный | 1 | 2 | golden не остаётся прежним, вопреки AC12 и §2/§15 ТЗ (High, в скоупе); check-docs.mjs красный: отпечаток скриншотов не обновлён (Medium, в скоупе); AC6 заявляет доказательство, которого нет (Medium, в скоупе); двойной инкремент cfgEpoch в writeConfig (Low) | `golden-report.json` `demo/fixtures/visual-matrix.mjs` `demo/golden/harness.mjs` `check-docs.mjs` `src/houseplan-card.ts` `src/coordinate-canonicalization.ts` `docs/images/screenshots.json` `test/coordinate-canonicalization.test.mjs` |
+| #224 | [CODE-REVIEW-224-r2.md](CODE-REVIEW-224-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #223 | [SPEC-REVIEW-223-r1.md](SPEC-REVIEW-223-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | AC4 не покрывает партиции и колонны, где snapN() вызывается безусловно, а результат при…; новый показатель делит слово «канонизировано» с уже существующим показателем другого см… | `src/align-grid.ts` `docs/CANVAS.md` `align-grid.ts` `src/i18n/ru.json` `src/i18n/en.json` `src/plan-optimizer.ts` |
+| #223 | [SPEC-REVIEW-223-r2.md](SPEC-REVIEW-223-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | замена термина для находки r1 №2 меняет одну коллизию на другую: «нормализовано»/«norma… | `docs/specs/223-optimize-coordinate-canonicalization.md` `docs/CANVAS.md` `docs/ARCHITECTURE.md` `align-grid.ts` |
+| #223 | [SPEC-REVIEW-223-r3.md](SPEC-REVIEW-223-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #223 | [CODE-REVIEW-223-r1.md](CODE-REVIEW-223-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | AC2 (неконечные числа) не имеет отдельного unit-доказательства | `src/align-grid.ts` `docs/specs/223-optimize-coordinate-canonicalization.md` `test/align-grid.test.mjs` |
+| #220 | [SPEC-REVIEW-220-r1.md](SPEC-REVIEW-220-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | Medium, в скоупе. Отсутствует обязательная touch-классификация; Medium, в скоупе. §9 утверждает «нет нового поля», хотя §8.3/§17.3 предполагают обратное; не является блокирующим, не требует правки | `docs/TOUCH-SUPPORT.md` `devices.ts` `houseplan-card.ts` `PROCESS.md` `docs/CONFIG-COMPATIBILITY.md` |
+| #220 | [SPEC-REVIEW-220-r2.md](SPEC-REVIEW-220-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | Medium, в скоупе. §17.3 маркирует нормативное требование как «свободно меняемое» | `docs/specs/220-space-tab-reorder.md` |
+| #220 | [SPEC-REVIEW-220-r3.md](SPEC-REVIEW-220-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #220 | [CODE-REVIEW-220-r1.md](CODE-REVIEW-220-r1.md) | code · r1 | 🔴 красный | 1 | 2 | материализация неверно определяет «зависимые от порядка» маркеры: обычный маркер устрой…; перетаскивание вкладки не захватывает указатель: отпускание за пределами панели оставля…; мутационный гейт реализован не полностью относительно принятого §14 ТЗ | `src/space-order.ts` `src/devices.ts` `houseplan-card.ts` `test/space-order.test.mjs` `docs/TOUCH-SUPPORT.md` `demo/smoke_space_tab_reorder.mjs` `docs/specs/220-space-tab-reorder.md` `scripts/mutation-gate.mjs` |
+| #219 | [SPEC-REVIEW-219-r1.md](SPEC-REVIEW-219-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | в скоупе задачи; Не найдено находок, которые стоило бы фиксировать отдельно и не чинить | `docs/USER-GUIDE.ru.md` `AGENTS.md` `docs/TESTING.md` `TESTING.md` `USER-GUIDE.ru.md` |
+| #219 | [SPEC-REVIEW-219-r2.md](SPEC-REVIEW-219-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #219 | [CODE-REVIEW-219-r1.md](CODE-REVIEW-219-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | AC7/§16 не называют все golden-сцены, которые изменит эта правка | — |
+| #218 | [SPEC-REVIEW-218-r1.md](SPEC-REVIEW-218-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | отсутствует обязательный раздел «Риски»; §8.1 ТЗ утверждает: «quantum 1e-6 единицы плана = 10⁻⁹ м». Пересчёт по | `docs/specs/218-glow-floor-geometry.md` `SPEC-REVIEW-217-r1.md` `mutation-gate.mjs` `src/space-geometry.ts` `src/houseplan-card.ts` |
+| #218 | [SPEC-REVIEW-218-r2.md](SPEC-REVIEW-218-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #218 | [CODE-REVIEW-218-r1.md](CODE-REVIEW-218-r1.md) | code · r1 | ⚪ — | 0 | 0 | двойной проход нормализации на здоровом пути (не блокирует, снято с записью) | `src/physical-geometry.ts` `budgets-glow-smoke.json` |
+| #217 | [SPEC-REVIEW-217-r1.md](SPEC-REVIEW-217-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #217 | [CODE-REVIEW-217-r1.md](CODE-REVIEW-217-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #213 | [SPEC-REVIEW-213-r1.md](SPEC-REVIEW-213-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | оставлено с запиской (не блокирует) | `src/styles.ts` |
+| #213 | [CODE-REVIEW-213-r1.md](CODE-REVIEW-213-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #212 | [SPEC-REVIEW-212-r1.md](SPEC-REVIEW-212-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | межевой случай «plan-wide setting» из #22 закрыт молча, без явной пометки | `docs/specs/212-device-icons-polish.md` |
+| #212 | [CODE-REVIEW-212-r1.md](CODE-REVIEW-212-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | три существующих regression-смока сломаны миграцией mouse→pointer событий (Medium, в ск…; hp-device-preview.ts гейтирует hover, но никто не выставляет ему атрибут (Medium, в ско… | `src/houseplan-card.ts` `smoke_touch_tips.mjs` `smoke_feedback_v2.mjs` `smoke_help_affordance.mjs` `smoke_device_icon_design.mjs` `demo/smoke_glow.mjs` `demo/smoke_room_settings.mjs` `demo/smoke_ux_fixes.mjs` |
+| #212 | [CODE-REVIEW-212-r2.md](CODE-REVIEW-212-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | исправлено, доказано реальным поведением, не только тестом; исправлено, доказано смоком, который умеет упасть | `src/houseplan-card.ts` `smoke_ux_fixes.mjs` `smoke_device_preview_parity.mjs` `device-marker-polish-contract.test.mjs` `hp-device-preview.ts` |
+| #211 | [SPEC-REVIEW-211-r1.md](SPEC-REVIEW-211-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | целевое соотношение «MDI viewport = 0.5 × core» не подтверждено ни одним источником арх…; §4 называет нормативным источником несуществующий файл COMPARISON_NOTES.md; обязательный тег Touch editor: … присутствует по смыслу, но не дословно | `docs/specs/211-device-icons-visual-parity.md` `SPECIFICATION.md` `DEVELOPER_HANDOFF.md` `ACTIVE_ANIMATION_SPEC.md` `Index.html` `COMPARISON_NOTES.md` `README.md` `manifest.json` |
+| #211 | [SPEC-REVIEW-211-r2.md](SPEC-REVIEW-211-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #211 | [CODE-REVIEW-211-r1.md](CODE-REVIEW-211-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #211 | [CODE-REVIEW-211-r2.md](CODE-REVIEW-211-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #210 | [SPEC-REVIEW-210-r1.md](SPEC-REVIEW-210-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | контракт не говорит явно, что очистка floor в GUI должна удалять ключ, а не записывать …; обязательный раздел «i18n» присутствует по содержанию, но не оформлен отдельным заголовком | `docs/specs/210-fixed-floor-card.md` `src/editor.ts` `en.json` `ru.json` |
+| #210 | [SPEC-REVIEW-210-r2.md](SPEC-REVIEW-210-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | закрыто | `en.json` `ru.json` |
+| #210 | [CODE-REVIEW-210-r1.md](CODE-REVIEW-210-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #209 | [SPEC-REVIEW-209-r1.md](SPEC-REVIEW-209-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #209 | [CODE-REVIEW-209-r1.md](CODE-REVIEW-209-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #205 | [SPEC-REVIEW-205-r1.md](SPEC-REVIEW-205-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | раздел 1 не называет персону и поверхность по имени (снято ревьюером) | `docs/specs/205-vacuum-trail-resume-grace.md` `docs/SCOPE.md` |
+| #205 | [CODE-REVIEW-205-r1.md](CODE-REVIEW-205-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #205 | [CODE-REVIEW-205-r2.md](CODE-REVIEW-205-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #204 | [SPEC-REVIEW-204-r1.md](SPEC-REVIEW-204-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #204 | [CODE-REVIEW-204-r1.md](CODE-REVIEW-204-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #203 | [SPEC-REVIEW-203-r1.md](SPEC-REVIEW-203-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | план тестов не даёт мутанта третьей, независимо ломающейся ветке (форсированная HTML-по…; истёкший Labs-флаг iso не упомянут, хотя ТЗ строит на нём AC3; «затронутые файлы и модули» (DoR, §2.5) не собраны в один список | `docs/specs/203-hide-room-names.md` `houseplan-card.ts` `space-render.ts` `src/houseplan-card.ts` `docs/TESTING.md` `src/labs.ts` `demo/smoke_isometric_contract.mjs` `AGENTS.md` |
+| #203 | [SPEC-REVIEW-203-r2.md](SPEC-REVIEW-203-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | таблица «What a space may choose not to draw» в docs/UX-MODES.md не получает строку sho…; release-артефакты не называют явно, что запись в changelog обязана отметить снятие .rla… | `docs/UX-MODES.md` `docs/specs/203-hide-room-names.md` `USER-GUIDE.ru.md` `STYLING-HOOKS.md` `TESTING.md` `UX-MODES.md` `docs/STYLING-HOOKS.md` |
+| #203 | [CODE-REVIEW-203-r1.md](CODE-REVIEW-203-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | новая строка show_names в docs/UX-MODES.md цитирует не тот UI-текст; два предсуществующих golden-сценария теперь показывают «different» и не названы в хендоффе | `docs/UX-MODES.md` `src/i18n/ru.json` `docs/USER-GUIDE.ru.md` `UX-MODES.md` `demo/golden/matrix.mjs` `demo/golden/harness.mjs` `AGENTS.md` `PROCESS.md` |
+| #201 | [SPEC-REVIEW-201-r1.md](SPEC-REVIEW-201-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | release-артефакты не называют обновление docs/WALL-THICKNESS.md §8 | `docs/WALL-THICKNESS.md` `docs/specs/201-atomic-thickness-lookup.md` `docs/TESTING.md` `WALL-THICKNESS.md` |
+| #201 | [CODE-REVIEW-201-r1.md](CODE-REVIEW-201-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #200 | [SPEC-REVIEW-200-r1.md](SPEC-REVIEW-200-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | неточная формулировка причины дефекта в §3 ТЗ | `docs/specs/200-room-label-parity.md` `houseplan-card.ts` |
+| #200 | [CODE-REVIEW-200-r1.md](CODE-REVIEW-200-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #199 | [SPEC-REVIEW-199-r1.md](SPEC-REVIEW-199-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Английский текст сообщения об отказе и подсказки не зафиксирован; $sha.» — переменная не подставлена. Это дефект комментария, не ТЗ; на | `docs/specs/199-optimize-geometry-preflight.md` `docs/specs/223-optimize-coordinate-canonicalization.md` |
+| #199 | [SPEC-REVIEW-199-r2.md](SPEC-REVIEW-199-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #199 | [CODE-REVIEW-199-r1.md](CODE-REVIEW-199-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | / информационная — абсолютный p95-бюджет §10 нестабилен в CI-песочнице (не блокирует) | `validate.yml` `performance.yml` |
+| #198 | [SPEC-REVIEW-198-r1.md](SPEC-REVIEW-198-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #198 | [CODE-REVIEW-198-r1.md](CODE-REVIEW-198-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | AC5 не доказан заявленным способом; AC8 не доказан заявленным способом | `test/plan-optimizer.test.mjs` `test-build/plan-optimizer.js` `docs/WALL-THICKNESS.md` `test/wall-thickness.test.mjs` `src/wall-thickness.ts` `src/plan-optimizer.ts` `test-build/wall-thickness.js` `plan-optimizer.test.mjs` |
+| #198 | [CODE-REVIEW-198-r2.md](CODE-REVIEW-198-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | новый AC5-тест не хермитичен к сценарию входной мутации, который он должен доказывать; нет (закрыта) | `test/plan-optimizer.test.mjs` `src/plan-optimizer.ts` `test-build/plan-optimizer.js` `test/wall-thickness.test.mjs` `docs/WALL-THICKNESS.md` |
+| #198 | [CODE-REVIEW-198-r3.md](CODE-REVIEW-198-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #197 | [SPEC-REVIEW-197-r1.md](SPEC-REVIEW-197-r1.md) | spec · r1 | 🔴 красный | 1 | 1 | центральное фактическое утверждение ТЗ (единственный патч → | `docs/specs/197-junction-patch-fail-dark.md` `src/wall-thickness.ts` |
+| #197 | [SPEC-REVIEW-197-r3.md](SPEC-REVIEW-197-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | одно диагностическое утверждение §3 не воспроизводится буквально при разумной интерпрет… | `docs/specs/197-junction-patch-fail-dark.md` |
+| #197 | [CODE-REVIEW-197-r1.md](CODE-REVIEW-197-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #196 | [SPEC-REVIEW-196-r1.md](SPEC-REVIEW-196-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | AC2 частично привязывает smoke-доказательство к утверждению, проверяемому только кодом | — |
+| #196 | [CODE-REVIEW-196-r1.md](CODE-REVIEW-196-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #195 | [CODE-REVIEW-195-r1.md](CODE-REVIEW-195-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #195 | [CODE-REVIEW-195-r2.md](CODE-REVIEW-195-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #193 | [SPEC-REVIEW-193-r1.md](SPEC-REVIEW-193-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | отсутствует обязательная декларация Touch editor: … | `docs/specs/193-passage-placement-preview.md` `docs/TOUCH-SUPPORT.md` |
+| #193 | [CODE-REVIEW-193-r1.md](CODE-REVIEW-193-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #192 | [SPEC-REVIEW-192-r1.md](SPEC-REVIEW-192-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | AC3 не разделяет явно, какая часть критерия доказывается golden, а какая — только чтени… | — |
+| #192 | [CODE-REVIEW-192-r1.md](CODE-REVIEW-192-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | thumb hue-шкалы теряет контраст с треком в диапазоне циан/синий/индиго (~195°–260°) | `src/hp-color-opacity.ts` `demo/smoke_color_picker.mjs` `demo/serve.mjs` |
+| #192 | [CODE-REVIEW-192-r2.md](CODE-REVIEW-192-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #189 | [CODE-REVIEW-189-r1.md](CODE-REVIEW-189-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | нет теста на composite-hosted проём после этого диффа | `src/houseplan-card.ts` `src/partition-openings.ts` |
+| #187 | [CODE-REVIEW-187-r1.md](CODE-REVIEW-187-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | AC1 помечен «unit», но фактическую регрессию покрывает только smoke | `test/physical-geometry.test.mjs` `demo/smoke_glow_fail_dark.mjs` `physical-geometry.ts` `houseplan-card.ts` |
+| #186 | [SPEC-REVIEW-186-r1.md](SPEC-REVIEW-186-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | «строгая» проверка full import противоречит уже принятому владельцем round-trip-инвариа…; нет отдельного раздела «Проблема» | `docs/specs/186-partition-opening-jamb-margin.md` `docs/USER-GUIDE.ru.md` `docs/SCOPE.md` `websocket_api.py` `import_export.py` |
+| #186 | [SPEC-REVIEW-186-r2.md](SPEC-REVIEW-186-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | «что человек увидит» использует термины реализации | `docs/specs/186-partition-opening-jamb-margin.md` |
+| #186 | [CODE-REVIEW-186-r1.md](CODE-REVIEW-186-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #184 | [CODE-REVIEW-184-r1.md](CODE-REVIEW-184-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #180 | [SPEC-REVIEW-180-r1.md](SPEC-REVIEW-180-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | CSS-селектор input[type='color'] не упомянут в плане очистки | `src/styles.ts` `styles.ts` `houseplan-card.ts` |
+| #180 | [CODE-REVIEW-180-r1.md](CODE-REVIEW-180-r1.md) | code · r1 | 🔴 красный | 1 | 0 | перекрывающиеся, нечитаемые подписи в строке "Цвет пульсации / Размер пульсации" на узк… | `src/houseplan-card.ts` `src/hp-color-opacity.ts` |
+| #180 | [CODE-REVIEW-180-r2.md](CODE-REVIEW-180-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #179 | [SPEC-REVIEW-179-r1.md](SPEC-REVIEW-179-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 5 | цвет внешней тени искажён относительно нормативного источника; цвет continuous-пульсации для reason presence не определён; easing для Short и Alert не зафиксирован; стоимость и выбор backdrop-blur для Dark не решены; не назван обязательный тег Touch editor: из TOUCH-SUPPORT.md; Light-only combo-эталоны (Selected + Hover/Working/Green/Alert | `docs/specs/179-device-icons-redesign.md` `SPECIFICATION.md` `ACTIVE_ANIMATION_SPEC.md` `DEVELOPER_HANDOFF.md` `src/device-pulse.ts` `manifest.json` `docs/SCOPE.md` `docs/TOUCH-SUPPORT.md` |
+| #179 | [SPEC-REVIEW-179-r2.md](SPEC-REVIEW-179-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | Обе Light-тени переписаны на rgb(37 40 45 / 12%) / rgb(37 40 45 / 18%); §10.1/§10.4 получили mapping presence→green, running/working/open/unlocked→amber, neutr…; Обе секции получили cubic-bezier(.22,.61,.36,1); §7.1 фиксирует production = Dark/Icon Default No Blur.svg, backdrop-filter запрещён; ри…; Добавлена строка Touch editor: best effort / intentionally degraded в §11 | — |
+| #179 | [CODE-REVIEW-179-r1.md](CODE-REVIEW-179-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #179 | [CODE-REVIEW-179-r2.md](CODE-REVIEW-179-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #178 | [SPEC-REVIEW-178-r1.md](SPEC-REVIEW-178-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | отсутствуют обязательные разделы: риски, откат, влияние на touch/производительность; способ доказательства не привязан к номеру AC явно | `docs/specs/178-toggle-entity.md` `docs/TOUCH-SUPPORT.md` `docs/specs/174-linked-virtual-light-controller.md` `docs/specs/164-washer-active-cycle.md` |
+| #178 | [SPEC-REVIEW-178-r2.md](SPEC-REVIEW-178-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | раздел touch не называет явно runtime-эффект на View/kiosk | `docs/specs/178-toggle-entity.md` `docs/PROCESS.md` `docs/TOUCH-SUPPORT.md` `src/device-toggle.ts` |
+| #178 | [CODE-REVIEW-178-r1.md](CODE-REVIEW-178-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #176 | [SPEC-REVIEW-176-r1.md](SPEC-REVIEW-176-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #176 | [CODE-REVIEW-176-r1.md](CODE-REVIEW-176-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #174 | [SPEC-REVIEW-174-r1.md](SPEC-REVIEW-174-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | формулировка AC6 читается двусмысленно в отрыве от §9.1 | `docs/specs/174-linked-virtual-light-controller.md` `devices.ts` |
+| #174 | [CODE-REVIEW-174-r1.md](CODE-REVIEW-174-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #173 | [SPEC-REVIEW-173-r1.md](SPEC-REVIEW-173-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | нет отдельного раздела «Проблема»; docs/UX-MODES.md уже называет текущий инструмент «Walls»; опечатка в AC17 | `docs/specs/173-unified-wall-tool.md` `138-adjacent-room-autoclose.md` `172-zero-divider-taper.md` `docs/UX-MODES.md` `UX-MODES.md` |
+| #173 | [CODE-REVIEW-173-r1.md](CODE-REVIEW-173-r1.md) | code · r1 | 🟢 зелёный | 0 | 2 | мёртвый код старого инструмента partition не удалён; AC8 не имеет unit/smoke-доказательства именно для новой интеграции; activateMarkupTool использует if/else без скобок на одной значимой ветке; accepted-click измерение не оформлено как отдельный отслеживаемый бюджет | `src/i18n/en.json` `ru.json` `test/wall-face-graph.test.mjs` `demo/smoke_unified_wall_tool.mjs` `demo/smoke_room_autoclose.mjs` `wall-face-graph.test.mjs` `src/houseplan-card.ts` `wall-face-graph.ts` |
+| #173 | [CODE-REVIEW-173-r2.md](CODE-REVIEW-173-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #172 | [SPEC-REVIEW-172-r1.md](SPEC-REVIEW-172-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «что человек увидит» длиннее одной фразы; эпсилон/half-depth границы локального cap не формализованы числом | `docs/specs/172-zero-divider-taper.md` `docs/WALL-THICKNESS.md` `src/wall-thickness.ts` |
+| #172 | [CODE-REVIEW-172-r1.md](CODE-REVIEW-172-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | AC4 не имеет отдельного исполняемого теста на fixture из АК1; неверная ссылка на процесс в хендоффе при пропуске named-smoke | `test/wall-thickness.test.mjs` `AGENTS.md` `demo/smoke_zero_divider_taper.mjs` |
+| #172 | [CODE-REVIEW-172-r2.md](CODE-REVIEW-172-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | AC4 не имеет отдельного исполняемого теста на fixture из АК1; неточная ссылка на процесс в хендоффе первого цикла | — |
+| #162 | [SPEC-REVIEW-162-r1.md](SPEC-REVIEW-162-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «compatible source» в §11.3.2 не определено и не проверяемо по факту схемы run | `docs/specs/162-vacuum-map-space-routing.md` `custom_components/houseplan/trails.py` |
+| #162 | [SPEC-REVIEW-162-r2.md](SPEC-REVIEW-162-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #162 | [CODE-REVIEW-162-r1.md](CODE-REVIEW-162-r1.md) | code · r1 | 🔴 красный | 1 | 1 | калибровка мимо своего этажа в пути «высокий residual → ручная подгонка»; §9.3 «Добавить источник карты» не реализован | `src/houseplan-editor-runtime.ts` `smoke_vacuum_firstuse.mjs` `smoke_vacuum_multifloor.mjs` `src/houseplan-card.ts` `src/editors/vacuum-maps-section.ts` |
+| #162 | [CODE-REVIEW-162-r2.md](CODE-REVIEW-162-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #160 | [SPEC-REVIEW-160-r1.md](SPEC-REVIEW-160-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «Workflow boundary» (§16) ссылается на устное решение владельца, не отражённое в issue | — |
+| #160 | [CODE-REVIEW-160-r1.md](CODE-REVIEW-160-r1.md) | code · r1 | 🔴 красный | 1 | 3 | node scripts/check-docs.mjs красный: скриншоты документации не пересняты (High, блокирует); floor anchor opening lock badge вычисляется двумя независимыми формулами (Medium, в ско…; реальный алгоритм isoRoomSafePoint (grid-search fallback) не покрыт ни одним тестом (Me…; leafBasis (src/iso-openings.ts:187-209): flipH не тестируется независимо от flipV (Medi…; не блокируют, оставлены с записью | `docs/images/screenshots.json` `scripts/source-fingerprint.mjs` `src/iso-projection.ts` `src/iso-overlays.ts` `src/iso-openings.ts` `src/iso-scene-render.ts` `src/houseplan-card.ts` `src/styles/plan.styles.ts` |
+| #160 | [CODE-REVIEW-160-r2.md](CODE-REVIEW-160-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | новый M2-тест не независимо доказывает «вне любой дыры» (Low, запись без блокировки); приёмка скриншотов сменила заявленную платформу на win32 без видимого основания в хендо… | `test/iso-overlays.test.mjs` `iso-overlays.ts` `docs/images/screenshots.json` `scripts/docs-accept.mjs` `scripts/capture-environment.mjs` |
+| #159 | [SPEC-REVIEW-159-r1.md](SPEC-REVIEW-159-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #159 | [CODE-REVIEW-159-r1.md](CODE-REVIEW-159-r1.md) | code · r1 | ⚪ — | 1 | 1 | AC4 и AC9 не доказаны: golden:verify красный на финальном SHA, эталоны не приняты; README пакета не фиксирует SHA-256 исходного архива | `golden-report.json` `PROCESS.md` `AGENTS.md` `assets/furniture/houseplan-0.3.0/README.md` `README.md` `pack.json` `docs/FURNITURE.md` `docs/specs/159-furniture-pack.md` |
+| #159 | [CODE-REVIEW-159-r2.md](CODE-REVIEW-159-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #156 | [CODE-REVIEW-156-r1.md](CODE-REVIEW-156-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #152 | [SPEC-REVIEW-152-r1.md](SPEC-REVIEW-152-r1.md) | spec · r1 | 🔴 красный | 2 | 2 | ни один AC не указывает способ доказательства; потерян отдельный проверяемый AC про синхронность hit targets во время перехода; accessibility-раздел выдаёт «существующую accessible-подпись» за факт, хотя такой досту…; «существующий» double-click/tap fit-all на фоне на деле существует только в kiosk; «нужно изменить UX». По факту #28 закрыт not_planned 2026-08-14 — до | `docs/specs/152-room-click-fit.md` `docs/specs/146-four-phase-sun-background.md` `docs/specs/138-adjacent-room-autoclose.md` `docs/specs/146-...md` `AGENTS.md` `src/houseplan-card.ts` `docs/SCOPE.md` `docs/UX-MODES.md` |
+| #152 | [SPEC-REVIEW-152-r2.md](SPEC-REVIEW-152-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #152 | [CODE-REVIEW-152-r1.md](CODE-REVIEW-152-r1.md) | code · r1 | 🔴 красный | 1 | 2 | demo/smoke_pan_any_zoom.mjs падает необработанным исключением — новый код не переживает…; Подпись комнаты в редакторах Devices/Decor получает нерабочую клавиатурную кнопку — нар…; Защита AC15 (запрет saveZoom для reason room) не зарегистрирована в mutation-gate, хотя…; 1. AC5 (вложенные комнаты) и AC9 (retarget между двумя разными комнатами | `demo/smoke_pan_any_zoom.mjs` `src/houseplan-card.ts` `smoke_backdrop.mjs` `smoke_editor_gestures.mjs` `smoke_hide_layers.mjs` `smoke_pan_any_zoom.mjs` `houseplan-card.ts` `validate.yml` |
+| #152 | [CODE-REVIEW-152-r2.md](CODE-REVIEW-152-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #150 | [CODE-REVIEW-150-r1.md](CODE-REVIEW-150-r1.md) | code · r1 | 🔴 красный | 1 | 0 | Собственный AC7-smoke красный при первом запуске — фикстура не включает show_borders, а… | `demo/smoke_wall_thickness_transition.mjs` `src/wall-thickness.ts` `src/houseplan-card.ts` `demo/smoke_split_corner_wall.mjs` `AGENTS.md` `docs/WALL-THICKNESS.md` `docs/TESTING.md` `smoke_split_corner_wall.mjs` |
+| #146 | [SPEC-REVIEW-146-r1.md](SPEC-REVIEW-146-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | azimuth тайно расширяет owner-решение о fallback-триггерах на саму фазу; «что человек увидит» длиннее одной фразы и использует термины реализации; нет буквальной touch-editor метки по docs/TOUCH-SUPPORT.md | `docs/specs/146-four-phase-sun-background.md` `docs/TOUCH-SUPPORT.md` |
+| #146 | [CODE-REVIEW-146-r1.md](CODE-REVIEW-146-r1.md) | code · r1 | 🔴 красный | 1 | 0 | .zoomwrap's новый z-index: 1 прячет .zoombadge за планом на любом zoom>100% — независим… | `src/styles.ts` `src/houseplan-card.ts` `styles.ts` |
+| #146 | [CODE-REVIEW-146-r2.md](CODE-REVIEW-146-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #141 | [SPEC-REVIEW-141-r1.md](SPEC-REVIEW-141-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | нет явной метки touch-контракта по docs/TOUCH-SUPPORT.md; «что человек увидит» длиннее одной фразы; доказательство AC10 («code review») до кода не проверяемо, но это ожидаемо для code-rev… | `docs/TOUCH-SUPPORT.md` `docs/specs/141-wall-junctions.md` `PROCESS.md` |
+| #141 | [CODE-REVIEW-141-r1.md](CODE-REVIEW-141-r1.md) | code · r1 | 🔴 красный | 1 | 0 | Живой rubber-band превью первого сегмента контура/перегородки не рисуется вовсе | `src/wall-thickness.ts` `test-build/wall-thickness.js` `demo/smoke_wall_junctions.mjs` `docs/SCOPE.md` `physical-geometry.ts` |
+| #140 | [CODE-REVIEW-140-r1.md](CODE-REVIEW-140-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #138 | [SPEC-REVIEW-138-r1.md](SPEC-REVIEW-138-r1.md) | spec · r1 | 🔴 красный | 1 | 0 | контракт автозамыкания перехватывает и блокирует обычный второй клик по той же стене | `docs/specs/138-adjacent-room-autoclose.md` `houseplan-card.ts` |
+| #138 | [SPEC-REVIEW-138-r2.md](SPEC-REVIEW-138-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | из r1 — статус: исправлено | — |
+| #137 | [SPEC-REVIEW-137-r1.md](SPEC-REVIEW-137-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | терминология инструмента «Контур» вместо «Контур комнаты»; «что человек увидит» длиннее одной фразы; типы доказательства AC12–AC14 не входят буквально в перечень §2.5; план golden не описывает явно, чем доказывается forced-colours | `docs/specs/137-plan-snap-overlay.md` `src/i18n/ru.json` `docs/USER-GUIDE.ru.md` `PROCESS.md` `demo/golden/matrix.mjs` `harness.mjs` |
+| #132 | [SPEC-REVIEW-132-r1.md](SPEC-REVIEW-132-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | §2 использует термин реализации «host-сегмент»; нет обязательного маркера Touch editor: … по docs/TOUCH-SUPPORT.md; i18n-раздел не перечисляет конкретные ключи en/ru | `docs/specs/132-partition-openings.md` `PROCESS.md` `docs/USER-GUIDE.ru.md` `docs/TOUCH-SUPPORT.md` |
+| #132 | [CODE-REVIEW-132-r1.md](CODE-REVIEW-132-r1.md) | code · r1 | 🔴 красный | 1 | 3 | импорт/дублирование space с partition-hosted проёмом всегда отклоняется; находки (заведены отдельными issue); → #186 — нет jamb safety margin; → #187 — fallback-гвард источника света не fail-dark «по построению»; → #188 — тест junction-patch не умеет падать | `custom_components/houseplan/import_export.py` `custom_components/houseplan/validation.py` `validation.py` `tests_backend/test_ha_import_export.py` `src/partition-openings.ts` `src/space-render.ts` `src/houseplan-card.ts` `src/wall-thickness.ts` |
+| #132 | [CODE-REVIEW-132-r2.md](CODE-REVIEW-132-r2.md) | code · r2 | 🟢 зелёный | 0 | 1 | Нет. High-1 из r1 исправлен корректно (см. «Как проверялось» — фикс, тест и; Второй компонент этого коммита восстанавливает presentation-cut для; → #189 — presentation snap-overlay не режет ось независимой перегородки в месте её собс…; Нет новых Low в этом цикле. Три Low из SPEC-REVIEW-132-r1 были закрыты до | `demo/serve.mjs` `src/houseplan-card.ts` `src/plan-snap-overlay.ts` `docs/CANVAS.md` `smoke_partition_openings.mjs` |
+| #131 | [SPEC-REVIEW-131-r1.md](SPEC-REVIEW-131-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | плотная формулировка §7.2 про hash/warm-viewport взаимодействие | `docs/specs/131-readonly-cold-start.md` `src/houseplan-card.ts` |
+| #126 | [SPEC-REVIEW-126-r1.md](SPEC-REVIEW-126-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | в скоупе задачи (возврат автору); снимаются с записью (реализатор решает сам, без возврата цикла) | `docs/specs/126-ha-area-marker-relocation.md` `src/types.ts` `src/houseplan-card.ts` `custom_components/houseplan/validation.py` `src/devices.ts` |
+| #126 | [SPEC-REVIEW-126-r2.md](SPEC-REVIEW-126-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #126 | [CODE-REVIEW-126-r1.md](CODE-REVIEW-126-r1.md) | code · r1 | 🟡 жёлтый | 1 | 1 | Save диалога устройства без изменения комнаты больше не пишет явный room override; регр…; Browser smoke не покрывает 4 из 8 сценариев, обязательных по §19 ТЗ | `src/houseplan-editor-runtime.ts` `houseplan-editor-runtime.ts` `demo/smoke_subarea.mjs` `demo/smoke_marker_stay.mjs` `smoke_subarea.mjs` `smoke_marker_stay.mjs` `docs/specs/126-ha-area-marker-relocation.md` `demo/smoke_area_relocation.mjs` |
+| #126 | [CODE-REVIEW-126-r2.md](CODE-REVIEW-126-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #123 | [SPEC-REVIEW-123-r1.md](SPEC-REVIEW-123-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | тип доказательства AC11 не входит буквально в перечень §2.5 | `docs/specs/123-corner-split-wall.md` `PROCESS.md` |
+| #123 | [CODE-REVIEW-123-r1.md](CODE-REVIEW-123-r1.md) | code · r1 | 🔴 красный | 1 | 0 | новый браузерный смок падает на первой же строке и не подтверждает ни один AC | `demo/smoke_split_corner_wall.mjs` `src/houseplan-card.ts` `demo/srv/assets/houseplan-card.js` `docs/WALL-THICKNESS.md` `src/wall-thickness.ts` `src/space-render.ts` `smoke_opening_measure.mjs` `AGENTS.md` |
+| #122 | [SPEC-REVIEW-122-r1.md](SPEC-REVIEW-122-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | отсутствует буквальная декларация «Touch editor: …»; три AC используют тип доказательства вне буквального перечня §2.5 | `docs/specs/122-isometric-stage2.md` `docs/TOUCH-SUPPORT.md` `docs/specs/089-isometric-view-stage1.md` `TOUCH-SUPPORT.md` `PROCESS.md` |
+| #122 | [CODE-REVIEW-122-r1.md](CODE-REVIEW-122-r1.md) | code · r1 | 🔴 красный | 2 | 1 | три копии бандла не пересобраны; CI уже красный на этом SHA; show_borders:false в Iso не сохраняет пиксель-идентичный Stage-1 «no-volume» сценарий; регрессия пикселей во Flat-сценарии при выключенном Labs → #134 | `dist/houseplan-card.js` `custom_components/houseplan/frontend/houseplan-card.js` `demo/srv/assets/houseplan-card.js` `artifacts/golden/golden-report.json` `src/houseplan-card.ts` `demo/golden/matrix.mjs` `docs/ISOMETRIC.md` |
+| #122 | [CODE-REVIEW-122-r2.md](CODE-REVIEW-122-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #117 | [SPEC-REVIEW-117-r1.md](SPEC-REVIEW-117-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | нет отдельных разделов «Сценарий» и «Что человек увидит»; AC1–AC10 (§11) не несут инлайн-тег способа доказательства; матрица (§6) не содержит отдельной строки для registry-less entity в состоянии unavaila… | `docs/specs/117-registryless-opening-entity.md` `PROCESS.md` `ha-binding-status.test.mjs` `demo/smoke_lock_action.mjs` `demo/smoke_lock_invariant.mjs` `smoke_lock_action.mjs` `smoke_lock_invariant.mjs` `src/logic.ts` |
+| #117 | [CODE-REVIEW-117-r1.md](CODE-REVIEW-117-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #117 | [CODE-REVIEW-117-r2.md](CODE-REVIEW-117-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #113 | [SPEC-REVIEW-113-r1.md](SPEC-REVIEW-113-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | AC8 не имеет предъявленного механизма доказательства; риск и контракт расходятся; нет отдельных заголовков «Сценарий» и «Что человек увидит до/после»; AC1…AC10 не несут явной пометки способа доказательства; нет буквальной метки touch-контракта по docs/TOUCH-SUPPORT.md | `docs/specs/113-optional-space-model.md` `houseplan-card.ts` `113-optional-space-model.md` `PROCESS.md` `docs/TOUCH-SUPPORT.md` |
+| #113 | [CODE-REVIEW-113-r1.md](CODE-REVIEW-113-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #113 | [CODE-REVIEW-113-r2.md](CODE-REVIEW-113-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #113 | [CODE-REVIEW-113-r3.md](CODE-REVIEW-113-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #107 | [SPEC-REVIEW-107-r1.md](SPEC-REVIEW-107-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | раздел «Проблема» не выделен отдельно; нет консолидированного раздела «Риски» | `docs/specs/107-virtual-light-toggle.md` `docs/specs/131-readonly-cold-start.md` |
+| #107 | [CODE-REVIEW-107-r1.md](CODE-REVIEW-107-r1.md) | code · r1 | 🔴 красный | 1 | 1 | Собственная презентация маркера (иконка/CSS-класс on/off) не отражает ручное состояние,…; tests_backend/test_virtual_lights.py не собирается pytest без установленного homeassist… | `src/device-presentation.ts` `src/houseplan-card.ts` `src/space-card.ts` `src/space-render.ts` `demo/smoke_virtual_light_toggle.mjs` `devices.test.mjs` `device-toggle.test.mjs` `tests_backend/test_virtual_lights.py` |
+| #103 | [SPEC-REVIEW-103-r1.md](SPEC-REVIEW-103-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | сценарий не называет персону/поверхность явной фразой; AC1–AC10 не промаркированы построчно типом доказательства; нормативная матрица §6 группирует cover-состояния не так, как резолвер | `docs/specs/103-toggle-confirmation-state.md` `docs/SCOPE.md` `TOUCH-SUPPORT.md` `SCOPE.md` `PROCESS.md` `src/device-toggle.ts` |
+| #103 | [CODE-REVIEW-103-r1.md](CODE-REVIEW-103-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #94 | [CODE-REVIEW-issue-094-2026-08-12.md](CODE-REVIEW-issue-094-2026-08-12.md) | code · 2026-08-12 | ⚪ — | 0 | 0 | — | — |
+| #89 | [SPEC-REVIEW-089-isometric-view-stage1.md](SPEC-REVIEW-089-isometric-view-stage1.md) | spec · isometric-view-stage1 | 🔴 красный | 0 | 8 | Spike ADR должен фиксировать больше, чем выбор renderer; Fingerprint перечисляет не все входы iso geometry; since/expires требуют точной version semantics; Не определён runtime owner механизма Labs; Scope houseplan-space-card не указан; Performance contract не совпадает с существующей инфраструктурой | `src/space-card.ts` `src/space-render.ts` `compare.mjs` |
+| #89 | [SPEC-REVIEW-89-r1.md](SPEC-REVIEW-89-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | риски не собраны в отдельный раздел; «нормативная» таблица слоёв формально противоречит собственному запрету ТЗ на новый око… | `089-isometric-view-stage1.md` `089-isometric-view.md` |
+| #89 | [CODE-REVIEW-89-r2.md](CODE-REVIEW-89-r2.md) | code · r2 | 🔴 красный | 1 | 0 | обязательный по ТЗ смок demo/smoke_isometric_live_touch.mjs красный на сданном коммите; три файла с лишней пустой строкой в конце (git diff --check) | `demo/smoke_isometric_live_touch.mjs` `src/sun.ts` `AGENTS.md` `089-isometric-view-stage1.md` `docs/adr/089-isometric-stage1-renderer.md` `src/iso-projection.ts` `test/iso-projection.test.mjs` |
+| #89 | [CODE-REVIEW-89-r3.md](CODE-REVIEW-89-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | три файла с лишней пустой строкой в конце; коллизия имени файла ревью из-за смешанной нумерации циклов | `docs/adr/089-isometric-stage1-renderer.md` `src/iso-projection.ts` `test/iso-projection.test.mjs` `docs/reviews/CODE-REVIEW-89-r2.md` |
+| #86 | [CODE-REVIEW-86-r1.md](CODE-REVIEW-86-r1.md) | code · r1 | ⚪ — | 2 | 1 | Манифест скриншотов документации подделан, а не пересчитан (High, в скоупе); npm run golden:verify красный: 6 эталонов расходятся с рендером (High, в скоупе); Onboarding-путь 5 space-подсказок не доказан исполнением (Medium, в скоупе); .help-ключ не совпадает буквально с ключом видимого label (Low, снимается без правки) | `docs/images/screenshots.json` `scripts/docs-accept.mjs` `docs-accept.mjs` `houseplan-onboarding-runtime.ts` `demo/golden/matrix.mjs` `houseplan-editor-runtime.ts` `matrix.mjs` `demo/smoke_help_affordance.mjs` |
+| #86 | [CODE-REVIEW-86-r2.md](CODE-REVIEW-86-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | AC7 «browser zoom 200%» не доказан ничем (Medium, в скоупе); .help-ключ не совпадает буквально с ключом видимого label (Low, снимается без правки) | `src/styles/dialogs.styles.ts` |
+| #86 | [CODE-REVIEW-86-r3.md](CODE-REVIEW-86-r3.md) | code · r3 | 🟡 жёлтый | 0 | 1 | AC7 «представительный reviewed golden» для browser zoom 200% так и не появился (Medium,…; .help-ключ не совпадает буквально с ключом видимого label (Low, снимается без правки) | `demo/golden/matrix.mjs` |
+| #86 | [CODE-REVIEW-86-r4.md](CODE-REVIEW-86-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #86 | [CODE-REVIEW-86-r5.md](CODE-REVIEW-86-r5.md) | code · r5 | 🟢 зелёный | 0 | 0 | — | — |
+| #82 | [SPEC-REVIEW-82-r1.md](SPEC-REVIEW-82-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | AC13 частично доказывается гейтом, недоступным на этой стадии цикла; общий easing-хелпер между ModeTransitionController и новым camera controller не специфи…; «дальний hint «Показать»» добавлен в матрицу §6, не упомянутый в исходном тексте issue | `docs/STATUS.md` `docs/superpowers/specs/2026-08-10-plan-visual-continuity-design.md` `src/mode-transition.ts` `src/houseplan-card.ts` |
+| #82 | [CODE-REVIEW-82-r1.md](CODE-REVIEW-82-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | 1. Коммит 55cf36d6 fix: preserve structural adoption guard — не функциональный фикс. Ди… | `src/houseplan-card.ts` `src/viewport-transition.ts` `smoke_smooth_zoom.mjs` |
+| #82 | [CODE-REVIEW-82-r2.md](CODE-REVIEW-82-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #74 | [SPEC-REVIEW-74-r1.md](SPEC-REVIEW-74-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | неверные пути трёх скриптов в §14 «Регрессия и gates»; нет явного блока «принято предположительно, поменять свободно» и явной строки про bundl… | `docs/specs/074-device-position-undo.md` `scripts/check-docs.mjs` `scripts/no-new-any.mjs` `scripts/smoke-select.mjs` `src/device-position-history.ts` `AGENTS.md` |
+| #74 | [CODE-REVIEW-74-r1.md](CODE-REVIEW-74-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | новый Undo/Redo toolbar рендерится без иконок из-за неактуального demo/srv/assets/icons…; AC2 «два устройства в LIFO-порядке» не продемонстрирован реальным перетаскиванием двух …; AC13 «доступные имена на поддерживаемых ширинах» проверены на одной ширине/теме | `demo/srv/assets/icons.js` `docs/specs/074-device-position-undo.md` `demo/smoke_device_position_history.mjs` `src/command-stack.ts` `test/command-stack.test.mjs` `src/houseplan-card.ts` `demo/golden/matrix.mjs` `demo/smoke_editor_tabs.mjs` |
+| #74 | [CODE-REVIEW-74-r2.md](CODE-REVIEW-74-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #68 | [CODE-REVIEW-issue-068-2026-08-12.md](CODE-REVIEW-issue-068-2026-08-12.md) | code · 2026-08-12 | ⚪ — | 0 | 0 | — | — |
+| #62 | [SPEC-REVIEW-62-r1.md](SPEC-REVIEW-62-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | CONTRIBUTING.md останется противоречить новому contribution flow; AC2 не имеет явного маркера «Доказательство:» в отличие от остальных; AC5 и AC8 подмешивают в доказательство слово «inspection» (inspection | `CONTRIBUTING.md` `docs/specs/062-i18n-registry.md` `src/i18n.ts` `src/i18n/registry.ts` `src/editor.ts` |
+| #62 | [SPEC-REVIEW-62-r2.md](SPEC-REVIEW-62-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #62 | [CODE-REVIEW-62-r1.md](CODE-REVIEW-62-r1.md) | code · r1 | 🔴 красный | 1 | 0 | 1 | `src/i18n/registry.ts` `src/i18n.ts` `CONTRIBUTING.md` `registry.ts` `test/i18n.test.mjs` |
+| #62 | [CODE-REVIEW-62-r2.md](CODE-REVIEW-62-r2.md) | code · r2 | 🟢 зелёный | 1 | 0 | — | — |
+| #57 | [SPEC-REVIEW-57-r1.md](SPEC-REVIEW-57-r1.md) | spec · r1 | 🟢 зелёный | 0 | 1 | ТЗ молча сужает названные в issue call sites: «ripple» пропущен, параллельная семья «Об…; нет буквальной декларации Touch editor: … по docs/TOUCH-SUPPORT.md | `docs/specs/057-color-opacity-picker.md` `src/houseplan-card.ts` `houseplan-card.ts` `docs/TOUCH-SUPPORT.md` `docs/specs/068-help-affordance.md` |
+| #57 | [CODE-REVIEW-57-r1.md](CODE-REVIEW-57-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | реализация меняет визуальный рендер ещё в 4 golden-сценариях, не названных нигде в ТЗ/T… | `docs/TESTING.md` |
+| #54 | [SPEC-REVIEW-54-r1.md](SPEC-REVIEW-54-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | нет обязательного раздела «Затронутые файлы и модули»; имя персоны не совпадает с таблицей docs/SCOPE.md; формулировка AC14 «backend/HA contract smoke on Linux CI» не согласована; численные performance-бюджеты не зафиксированы в ТЗ, откладываются на | `PROCESS.md` `226-entity-parent-dedup.md` `238-opening-inner-distances.md` `264-resize-controller.md` `340-config-set-revision.md` `348-german-localization.md` `docs/SCOPE.md` `AGENTS.md` |
+| #54 | [SPEC-REVIEW-54-r2.md](SPEC-REVIEW-54-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #54 | [CODE-REVIEW-54-r1.md](CODE-REVIEW-54-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | невалидный ответ Zigbee2MQTT на верном топике зависает на полный 150-секундный таймаут …; custom_components/houseplan/diagnostics.py:41 отдаёт config.get("settings", {}) без фил…; pushDirectionalLink (zigbee-topology.ts:114-126) маркирует код duplicate_link как для б…; плотность диффа в нескольких местах указывает на автоматическую вставку без переноса ст… | `src/zigbee-topology-runtime.ts` `custom_components/houseplan/diagnostics.py` `docs/CONFIG-COMPATIBILITY.md` `docs/SUPPORT-PRIVACY.md` `support_package.py` `diagnostics.py` `zigbee-topology.ts` `houseplan-card.ts` |
+| #54 | [CODE-REVIEW-54-r2.md](CODE-REVIEW-54-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #53 | [SPEC-REVIEW-53-r1.md](SPEC-REVIEW-53-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 4 | docs/SCOPE.md не содержит заявленного исключения для #53; Коллизионное правило противоречит гарантии «нельзя опускать» для непрямоугольных комнат; AC6 проверяет правило, которого нет в контракте внешних размеров; Порог производительности ссылается на несуществующую конфигурацию фикстуры | `docs/SCOPE.md` `SCOPE.md` `AGENTS.md` `demo/fixtures/large-house.mjs` |
+| #53 | [SPEC-REVIEW-53-r2.md](SPEC-REVIEW-53-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | предложение об i18n-потребителях в §9 не покрывает новый ключ на листе | — |
+| #53 | [CODE-REVIEW-53-r1.md](CODE-REVIEW-53-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | расхождение текста ТЗ §8.3 с фактическим поведением фолбэка шрифта | `docs/specs/053-pdf-export.md` `src/pdf/pdf-writer.ts` `src/pdf/pdf-font.generated.ts` |
+| #51 | [SPEC-REVIEW-51-r1.md](SPEC-REVIEW-51-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | отсутствует обязательная литеральная строка Touch editor: … | `docs/TOUCH-SUPPORT.md` `TOUCH-SUPPORT.md` |
+| #51 | [CODE-REVIEW-51-r1.md](CODE-REVIEW-51-r1.md) | code · r1 | ⚪ — | 0 | 0 | — | — |
+| #51 | [CODE-REVIEW-51-r2.md](CODE-REVIEW-51-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | — | — |
+| #51 | [CODE-REVIEW-51-r3.md](CODE-REVIEW-51-r3.md) | code · r3 | 🟡 жёлтый | 0 | 1 | — | — |
+| #51 | [CODE-REVIEW-51-r4.md](CODE-REVIEW-51-r4.md) | code · r4 | ⚪ — | 0 | 0 | — | — |
+| #44 | [SPEC-REVIEW-44-r1.md](SPEC-REVIEW-44-r1.md) | spec · r1 | 🔴 красный | 2 | 0 | Сценарий и AC4 построены на неверном факте: причина «исключена; Контракт №3 («оба значения читаются из одного источника всеми; Название вкладки инбокса не совпадает с интерфейсным словарём | `docs/specs/044-filter-grouping-policy.md` `src/i18n/en.json` `de.json` `fr.json` `ru.json` `src/houseplan-editor-runtime.ts` `src/device-inbox.ts` `houseplan-editor-runtime.ts` |
+| #44 | [SPEC-REVIEW-44-r2.md](SPEC-REVIEW-44-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | Ревизия 3 не убрала два места, где документ прямо утверждает то, что H1 уже опроверг: п…; Термин вкладки всё ещё «Доступные» в трёх местах, «Доступны» — в одном | `docs/specs/044-filter-grouping-policy.md` `docs/USER-GUIDE.ru.md` |
+| #44 | [SPEC-REVIEW-44-r3.md](SPEC-REVIEW-44-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #44 | [CODE-REVIEW-44-r1.md](CODE-REVIEW-44-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | у M1/M2 нет отдельного регресс-теста, доказательство — чтение + обратное воспроизведение | — |
+| #43 | [SPEC-REVIEW-43-r1.md](SPEC-REVIEW-43-r1.md) | spec · r1 | ⚪ — | 0 | 1 | support-relay/ не попадает ни в один класс изменений; отсутствует явная пометка Touch editor: … | `docs/specs/043-private-support-report.md` `AGENTS.md` `process-gate.mjs` `docs/ARCHITECTURE.md` `docs/SUPPORT-PRIVACY.md` `docs/TESTING.md` `docs/TOUCH-SUPPORT.md` |
+| #43 | [SPEC-REVIEW-43-r2.md](SPEC-REVIEW-43-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 0 | — | — |
+| #43 | [SPEC-REVIEW-43-r3.md](SPEC-REVIEW-43-r3.md) | spec · r3 | 🟢 зелёный | 0 | 1 | Требование к источнику rate-limit не зафиксировано в ТЗ, хотя код и тесты; Продакшн-канал ha_webhook целиком зависит от одной автоматизации на личном | `docs/specs/043-private-support-report.md` `scripts/support-relay/tests/test_relay.py` `hp_relay/app.py` `app.py` `scripts/support-relay/README.md` |
+| #43 | [SPEC-REVIEW-43-r4.md](SPEC-REVIEW-43-r4.md) | spec · r4 | 🟡 жёлтый | 0 | 1 | §9.2 закрывает находку r3 частично: описывает доверие к X-Forwarded-For | `scripts/support-relay/hp_relay/app.py` `config.py` `hp_relay/app.py` |
+| #43 | [SPEC-REVIEW-43-r5.md](SPEC-REVIEW-43-r5.md) | spec · r5 | 🟢 зелёный | 0 | 0 | — | — |
+| #43 | [CODE-REVIEW-43-r1.md](CODE-REVIEW-43-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | 1 Дешёвые гейты (прогнаны лично, HEAD 1ba53630); 2 Бэкенд Python (доступность харнесса); 3 Relay (scripts/support-relay/); 4 Смоки и golden; 5 Инварианты модели; 6 Одно число — один источник | `AGENTS.md` `PROCESS.md` `docs/images/screenshots.json` `houseplan-card.ts` `houseplan-editor-runtime.ts` `validate.yml` `demo/smoke_feedback_v2.mjs` `demo/smoke_help_affordance.mjs` |
+| #43 | [CODE-REVIEW-43-r2.md](CODE-REVIEW-43-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #42 | [SPEC-REVIEW-42-r1.md](SPEC-REVIEW-42-r1.md) | spec · r1 | ⚪ — | 0 | 2 | AC5 не покрывает коды, эмитируемые не литералом в send_error(...); раздел «i18n» (обязателен по PROCESS.md §7.1) отсутствует; повторное использование err.…; Разделы «UX» и «Модель данных и миграция», формально обязательные по | `docs/specs/042-backend-engineering-quality.md` `websocket_api.py` `validation.py` `junction_limits.py` `houseplan-card.ts` `src/i18n/en.json` `src/i18n/ru.json` |
+| #42 | [SPEC-REVIEW-42-r2.md](SPEC-REVIEW-42-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | AC5 и её мутант не синхронизированы с исправленным блоком 5; критерий приёмки снова нед… | `docs/specs/042-backend-engineering-quality.md` |
+| #42 | [SPEC-REVIEW-42-r3.md](SPEC-REVIEW-42-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 1 | MarkerControlError описан в блоке 5/AC5 только по двум префиксным семействам; ~14 её ли… | `docs/specs/042-backend-engineering-quality.md` `validation.py` `websocket_api.py` |
+| #42 | [SPEC-REVIEW-42-r4.md](SPEC-REVIEW-42-r4.md) | spec · r4 | 🔴 красный | 0 | 1 | заявленный метод извлечения кода MarkerControlError («regex по вызовам MarkerControlErr… | `docs/specs/042-backend-engineering-quality.md` `validation.py` |
+| #42 | [CODE-REVIEW-42-r1.md](CODE-REVIEW-42-r1.md) | code · r1 | 🔴 красный | 2 | 0 | no-new-any красный на HEAD: новый необоснованный any; requirements_test.txt невозможно установить: бэкенд-CI не работал ни разу | `src/houseplan-card.ts` `scripts/no-new-any.mjs` `.github/workflows/mutation-gate.yml` |
+| #42 | [CODE-REVIEW-42-r2.md](CODE-REVIEW-42-r2.md) | code · r2 | 🔴 красный | 2 | 0 | docs-гейт красный: манифест скриншотов не совпадает ни с одним закоммиченным файлом; AC1 (coverage-baseline) недоказан прогоном ветки, но блокер внешний и уже заведён; ruff-долг scripts/+tests_backend/ шире объявленного include, но вне CI-скоупа; golden-расхождений на самом деле 8, не 4, но все вне скоупа #42 | `docs/images/screenshots.json` `capture.mjs` `validate.yml` `tests_backend/test_backend_quality.py` |
+| #42 | [CODE-REVIEW-42-r6.md](CODE-REVIEW-42-r6.md) | code · r6 | 🟡 жёлтый | 0 | 1 | Mypy strict (блок 3, AC4) не имеет механизма исполнения в CI — только; 1. pyproject.toml [tool.ruff] include перечисляет | `validate.yml` `mutation-gate.yml` `const.py` `projection.py` `plans.py` `scripts/gate-reuse.mjs` `tests_backend/test_validation.py` `scripts/process-gate.mjs` |
+| #39 | [SPEC-REVIEW-39-r1.md](SPEC-REVIEW-39-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 4 | нет обязательных продуктовых разделов §7.1 «сценарий» и «что человек увидит»; i18n-раздел не перечисляет ключи, DoR §2.5 не закрыть; нет разделов «Риски» и «Release-артефакты», обязательных по §7.1; AC4 объединяет два разных момента наступления hard без единого UI-контракта | `docs/specs/039-large-backdrops.md` |
+| #39 | [SPEC-REVIEW-39-r2.md](SPEC-REVIEW-39-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 2 | — | — |
+| #39 | [SPEC-REVIEW-39-r3.md](SPEC-REVIEW-39-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #39 | [CODE-REVIEW-39-r1.md](CODE-REVIEW-39-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | отмена гард-диалога во время busy не отменяет применение; «одно число, один источник» нарушено для HARD_DIMENSION; AC8 (EXIF-ориентация) не доказан ни тестом, ни явной записью; AC3/AC9 в ТЗ помечены «паритет-юнит», а по факту паритет base64 | `src/backdrop-pick.ts` `src/hp-dialog.ts` `demo/serve.mjs` `backdrop-pick.ts` `backdrop-probe.ts` `PROCESS.md` `docs/TESTING.md` `demo/smoke_backdrop_guard.mjs` |
+| #39 | [CODE-REVIEW-39-r2.md](CODE-REVIEW-39-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | два из трёх новых stillCurrent()-чеков не имеют собственного мутанта | `src/backdrop-pick.ts` `src/backdrop-probe.ts` `smoke_backdrop_guard.mjs` |
+| #33 | [SPEC-REVIEW-33-r1.md](SPEC-REVIEW-33-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 3 | статус implemented не существует ни в перечислении, ни в каноне; 4 из 7 «const-деклараций фронта» для parity-теста не существуют; AC6 описывает несуществующее поведение как «расширение теста» | `scripts/config-field-registry.mjs` `docs/CONFIG-COMPATIBILITY.md` `houseplan-card.ts` `houseplan-editor-runtime.ts` `CONFIG-COMPATIBILITY.md` `src/logic.ts` `src/types.ts` `src/plan-optimizer.ts` |
+| #33 | [SPEC-REVIEW-33-r2.md](SPEC-REVIEW-33-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #33 | [CODE-REVIEW-33-r1.md](CODE-REVIEW-33-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | AC7-тест не может поймать то, для чего он написан; Дубликат записи в обоих CHANGELOG и в ARCHITECTURE.md; config-audit.mjs расширил exit-code 3 за пределы согласованного контракта, и для decisi… | `test/config-schema-parity.test.mjs` `scripts/config-schema-manifest.json` `scripts/config-schema.json` `src/houseplan-card.ts` `config-schema.json` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `docs/ARCHITECTURE.md` |
+| #33 | [CODE-REVIEW-33-r2.md](CODE-REVIEW-33-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | AC6 не имеет штатного регрессионного теста на изолированные decision-required/drop-on-v… | `test/config-audit.test.mjs` `oldest-supported.json` |
+| #32 | [SPEC-REVIEW-32-r1.md](SPEC-REVIEW-32-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | DoR-пункт «влияние на производительность и бюджеты названо» не закрыт | `docs/specs/032-unified-danger-confirmation.md` `hp-confirm.ts` `AGENTS.md` `docs/specs/337-lazy-editor-chunk.md` `bundle-budget.mjs` |
+| #32 | [SPEC-REVIEW-32-r2.md](SPEC-REVIEW-32-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #32 | [CODE-REVIEW-32-r1.md](CODE-REVIEW-32-r1.md) | code · r1 | 🟡 жёлтый | 1 | 0 | миграция ломает существующие смоки: 2 дают неверный вердикт, 3 виснут навсегда; шесть старых односложных ключей i18n остались без потребителей | `demo/smoke_free_walls.mjs` `demo/smoke_registryless_opening.mjs` `demo/smoke_binding_picker.mjs` `demo/smoke_hidden_flag.mjs` `demo/smoke_optional_space_model.mjs` `smoke_lock_action.mjs` `smoke_lock_invariant.mjs` `smoke_saved_plans.mjs` |
+| #32 | [CODE-REVIEW-32-r2.md](CODE-REVIEW-32-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | из r1 — статус: снимаю решением ревьюера, с записью | `test/i18n.test.mjs` |
+| #29 | [SPEC-REVIEW-29-r1.md](SPEC-REVIEW-29-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | исчезновение призрачного показа скрытых/HA-disabled маркеров на плане не названо как пр…; устаревающая строка i18n не включена в план обновления | `docs/specs/029-device-inbox-lifecycle.md` `docs/FILTERING.md` `docs/USER-GUIDE.ru.md` `demo/smoke_hidden_flag.mjs` `src/i18n/ru.json` `src/i18n/en.json` |
+| #29 | [SPEC-REVIEW-29-r2.md](SPEC-REVIEW-29-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | риск в §18 ссылается не на тот AC | `docs/specs/029-device-inbox-lifecycle.md` |
+| #29 | [CODE-REVIEW-29-r1.md](CODE-REVIEW-29-r1.md) | code · r1 | ⚪ — | 1 | 1 | demo/smoke_editor_tabs.mjs сломан этим диффом (High, в скоупе); «комната» в каталоге — это имя HA-зоны, а не название комнаты плана (Medium, в скоупе); DeviceInboxRow.canOpenHa — мёртвое поле (Low) | `demo/smoke_editor_tabs.mjs` `AGENTS.md` `src/houseplan-card.ts` `src/device-inbox.ts` `docs/USER-GUIDE.ru.md` `houseplan-card.ts` |
+| #29 | [CODE-REVIEW-29-r2.md](CODE-REVIEW-29-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #20 | [SPEC-REVIEW-20-r1.md](SPEC-REVIEW-20-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | влияние на touch не названо отдельной строкой | `PROCESS.md` `docs/TOUCH-SUPPORT.md` |
+| #20 | [CODE-REVIEW-20-r1.md](CODE-REVIEW-20-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | AC7 для контурной (не partition) стены доказан только чтением кода, не тестом | `test/physical-geometry.test.mjs` `demo/smoke_glow.mjs` `src/houseplan-card.ts` `test/houseplan-runtime-contract.test.mjs` |

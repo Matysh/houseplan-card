@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
-  buildIndex, collectEntries, indexEntry, parseCounts, parseDocName, parseFindings, parseVerdict, renderIndex,
+  buildIndex, collectEntries, indexEntry, parseCounts, parseDocName, parseFiles, parseFindings, parseVerdict, renderIndex,
 } from '../scripts/reviews-index.mjs';
 
 test('#635 имена документов: этап, issue, раунд; INDEX и чужое — вне схемы', () => {
@@ -96,4 +96,65 @@ test('#635 конвейер пересобирает индекс тем же к
   const wf = new URL('../.github/workflows/process.yml', import.meta.url);
   const text = readFileSync(wf, 'utf8');
   assert.match(text, /node scripts\/reviews-index\.mjs --dir=docs\/reviews\n\s+git add -- docs\/reviews\/INDEX\.md/);
+});
+
+// r1 #635 H1: индекс молчал о находках в живом формате заголовков и брал
+// счётчик из цитаты чужого документа. Строка «0 0 —» неотличима от «находок
+// не было» — поэтому оба регресса закреплены фикстурами с реальных документов.
+test('#635 r2: счётчик берётся из своего вердикта, а не из первого «High:» по тексту (CODE-REVIEW-594-r1)', () => {
+  const doc = [
+    '# CODE-REVIEW-594-r1',
+    'ТЗ прошло ревью зелёным на r3 (SPEC-REVIEW-594-r3, High: 0, Medium: 0).',
+    '## Находки',
+    '### Medium (в скоупе задачи) — M1: AC7 не закрыт до конца — эталоны не приняты',
+    'текст',
+    '### Medium (в скоупе задачи) — M2: отпечаток скриншотов не обновлён',
+    '### Low — не блокирует',
+    '## Вердикт',
+    'Жёлтый. High: 0, Medium: 3.',
+  ].join('\n');
+  assert.deepEqual(parseCounts(doc), { high: 0, medium: 3 });
+  assert.equal(parseVerdict(doc), 'жёлтый');
+  assert.deepEqual(parseFindings(doc), ['AC7 не закрыт до конца — эталоны не приняты', 'отпечаток скриншотов не обновлён']);
+  // Пересказ чужого раунда строчными в шапке не перебивает свой вердикт (CODE-REVIEW-152-r2).
+  const retold = 'r1: вердикт красный, High: 1 · Medium: 2 (оба в скоупе)\n\n## Вердикт\n\n**Вердикт: зелёный · заход r2 · High: 0 · Medium: 0**\n';
+  assert.equal(parseVerdict(retold), 'зелёный');
+  assert.deepEqual(parseCounts(retold), { high: 0, medium: 0 });
+  // Без строки счётчика — по заголовкам: секция с нумерованными пунктами считается по пунктам.
+  const headings = '### High (блокирует)\n\n**H1. один**\n\n**H2 — два**\n\n### Medium (в скоупе)\n\nтекст без номера\n\n### Low — нет\n';
+  assert.deepEqual(parseCounts(headings), { high: 2, medium: 1 });
+});
+
+test('#635 r2: находки читаются из живых форматов заголовков (CODE-REVIEW-639-r1, 637-r1, 162-r1, 141-r1)', () => {
+  const doc = [
+    '### Medium (в скоупе — чинится в этой же ветке)',
+    '',
+    '**M1. Новая запись `smoke-links.mjs` для `smoke_space_settings_form.mjs`',
+    'ничего не связывает**',
+    '### Medium (в скоупе задачи) — ложный «—» вместо настоящего «0 ч» в медианах',
+    '## Находка 1 (High, в скоупе) — калибровка мимо своего этажа',
+    'тело',
+    '### [High] Живой rubber-band превью не рисуется вовсе',
+    '### Low L1 — ветки live/ambiguous без мутанта',
+    '### Low — не найдено',
+    '### High — нет',
+  ].join('\n');
+  assert.deepEqual(parseFindings(doc), [
+    'Новая запись smoke-links.mjs для smoke_space_settings_form.mjs',
+    'ложный «—» вместо настоящего «0 ч» в медианах',
+    'калибровка мимо своего этажа',
+    'Живой rubber-band превью не рисуется вовсе',
+    'ветки live/ambiguous без мутанта',
+  ]);
+  assert.deepEqual(parseCounts(doc), { high: 2, medium: 2 });
+});
+
+test('#635 r2: файлы из находок попадают в индекс — «что находили по файлу X» отвечает grep', () => {
+  const doc = '### Medium (в скоупе) — подпись переносится\n\nВ `src/form-kit.ts:412` и `test/form-kit.test.mjs` … `src/form-kit.ts:420-431`.\n\n## Что проверено\n\n`src/other.ts` не считается.\n';
+  assert.deepEqual(parseFiles(doc), ['src/form-kit.ts', 'test/form-kit.test.mjs']);
+  const entry = indexEntry('CODE-REVIEW-594-r1.md', doc);
+  const md = renderIndex({ entries: [entry] });
+  assert.match(md, /\| Находки \| Файлы \|/);
+  assert.match(md, /`src\/form-kit\.ts` `test\/form-kit\.test\.mjs` \|$/m);
+  assert.equal(md.split('\n').filter((l) => l.includes('form-kit')).length >= 1, true);
 });

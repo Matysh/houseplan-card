@@ -8584,6 +8584,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'reviews-index-counts-first-match',
+    guard: 'node --test --test-name-pattern="#635 r2: счётчик" test/reviews-index.test.mjs',
+    because: 'r1 #635 H1: the first «High: N» in a review document is often a quote of another '
+      + 'round; counts must come from the document\'s own verdict line or section',
+    patches: [{
+      file: 'scripts/reviews-index.mjs',
+      find: "  for (const scope of [verdictLine(text, true), verdictSection(text), verdictLine(text)]) {",
+      replace: "  for (const scope of [text]) { // mutant: first match anywhere in the document",
+    }],
+  },
+  {
     id: 'process-reconcile-restarts-healthy-run',
     guard: 'node --test test/process-reconcile.test.mjs',
     because: '#555: bounded reconciliation must not duplicate a healthy queued/running review '

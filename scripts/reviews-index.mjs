@@ -24,6 +24,9 @@ const COLOUR = {
 };
 const COLOUR_RE = /(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)(?![а-яёa-z])/i;
 const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)[^\n]{0,60}?\**\s*(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)(?![а-яёa-z])/i;
+/** Строка, НАЧИНАЮЩАЯСЯ с «Вердикт» (с заглавной, после `- `/`**`): своя, а не пересказ чужого раунда. */
+// Без флага `i`: строчное «вердикт красный» в шапке — пересказ, а не свой вердикт.
+const VERDICT_OWN_LINE_RE = /^[ \t]*(?:[-*]\s*)?\**(?:Вердикт|Verdict)[^\n]{0,60}?\**\s*([Зз]елёный|[Зз]еленый|[Жж]ёлтый|[Жж]елтый|[Кк]расный|[Gg]reen|[Yy]ellow|[Rr]ed)(?![а-яёa-z])/m;
 
 /** Разобрать имя документа: этап, issue, раунд. */
 export function parseDocName(name) {
@@ -37,49 +40,183 @@ export function parseDocName(name) {
   };
 }
 
-/** Вердикт: явная строка «Вердикт: **цвет**», иначе — по разделу «Вердикт», иначе «—». */
+/**
+ * Вердикт. Порядок доверия: своя строка «Вердикт: цвет» с начала строки →
+ * секция «## Вердикт» → упоминание «вердикт цвет» где угодно → свободная
+ * форма хвоста → «—». r1 #635: документ r2 пересказывал вердикт r1
+ * («вердикт красный, High: 1») в шапке, и первое совпадение по тексту
+ * выдавало чужой цвет.
+ */
 export function parseVerdict(text) {
-  const explicit = VERDICT_LINE_RE.exec(text);
-  if (explicit) return COLOUR[explicit[1].toLowerCase()];
-  const heading = /^#{1,4}\s*(?:\d+\.\s*)?(?:Вердикт|Verdict|Итог)(?![а-яё])[^\n]*\n([\s\S]*?)(?=\n#{1,4}\s|(?![\s\S]))/m.exec(text);
-  if (heading) {
-    const section = heading[1];
+  const own = VERDICT_OWN_LINE_RE.exec(text);
+  if (own) return COLOUR[own[1].toLowerCase()];
+  const section = verdictSection(text);
+  if (section != null) {
     const colour = COLOUR_RE.exec(section);
     if (colour) return COLOUR[colour[1].toLowerCase()];
     if (/блокиру|не принят|отклон|red/i.test(section)) return 'красный';
     if (/принят|принимается|готов|без замечаний|можно сливать|регрессий нет|proceed|approved/i.test(section)) return 'зелёный';
   }
+  const explicit = VERDICT_LINE_RE.exec(text);
+  if (explicit) return COLOUR[explicit[1].toLowerCase()];
   // Старые документы пишут «зелёный вердикт» в свободной форме — ищем в хвосте.
   const tail = /(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)\**\s+вердикт/i.exec(text.slice(-2500));
   if (tail) return COLOUR[tail[1].toLowerCase()];
   return '—';
 }
 
-/** Числа High/Medium из строки вердикта либо из заголовков находок. */
-export function parseCounts(text) {
-  const high = /High:\s*(\d+)/.exec(text);
-  const medium = /Medium:\s*(\d+)/.exec(text);
-  if (high || medium) return { high: high ? Number(high[1]) : 0, medium: medium ? Number(medium[1]) : 0 };
-  const headings = [...text.matchAll(/^#{2,4}\s*(H\d+|M\d+)\b/gm)].map((m) => m[1][0]);
-  return { high: headings.filter((h) => h === 'H').length, medium: headings.filter((h) => h === 'M').length };
+const VERDICT_SECTION_RE = /^#{1,4}\s*(?:\d+\.\s*)?(?:Вердикт|Verdict|Итог)(?![а-яё])[^\n]*\n([\s\S]*?)(?=\n#{1,4}\s|(?![\s\S]))/m;
+const SEVERITY = { high: 'high', h: 'high', medium: 'medium', m: 'medium', low: 'low', l: 'low' };
+/** Заголовок находки: `### H1 — …`, `### Medium-2 (…) — …`, `### Medium (в скоупе) — …`, `### Low`. */
+const SEVERITY_HEADING_RE = /^(#{2,4})\s*\**\[?(High|Medium|Low|[HML])(?:[-\s]?(?:[HML])?(\d+)[a-z-]*)?\]?\**(?:\s*\([^)\n]*\))?\s*(?:[—–:.-]\s*)?(.*)$/gmi;
+/** `## Находка 1 (High, в скоупе) — title` — форма ранних документов; группы те же, что у SEVERITY_HEADING_RE. */
+const FINDING_HEADING_RE = /^(#{2,4})\s*Находка\s*(\d+)?\s*\((High|Medium|Low)[^)\n]*\)\s*(?:[—–:.-]\s*)?(.*)$/i;
+const NOTHING_RE = /^\s*[—–-]?\s*(?:нет|не найдено|не обнаружено|отсутствуют|не блокиру\S*|снима\S*(?:\s+с\s+записью)?|none|no|—)\s*[.,;]?\s*$/i;
+
+/** Строка вердикта — та, где стоит слово «Вердикт» и рядом счётчик High/Medium. */
+function verdictLine(text, own = false) {
+  const marker = own ? /^[ \t]*(?:[-*]\s*)?\**(?:Вердикт|Verdict)/ : /(?:[Вв]ердикт|[Vv]erdict)/;
+  return text.split('\n').find((line) => marker.test(line) && /(?:High|Medium):\s*\d+/.test(line)) || null;
+}
+
+/** Секция «## Вердикт» (тело до следующего заголовка) либо null. */
+function verdictSection(text) {
+  const match = VERDICT_SECTION_RE.exec(text);
+  return match ? match[1] : null;
+}
+
+const countsIn = (scope) => {
+  const high = /High:\s*(\d+)/.exec(scope);
+  const medium = /Medium:\s*(\d+)/.exec(scope);
+  return high || medium ? { high: high ? Number(high[1]) : 0, medium: medium ? Number(medium[1]) : 0 } : null;
+};
+
+/**
+ * Заголовки находок с их severity и телом секции. Тело — строки до
+ * следующего заголовка того же или более высокого уровня.
+ */
+function severityBlocks(text) {
+  const lines = text.split('\n');
+  const blocks = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    SEVERITY_HEADING_RE.lastIndex = 0;
+    let m = SEVERITY_HEADING_RE.exec(lines[i]);
+    let [severity, id] = m ? [m[2], m[3]] : [];
+    if (!m) {
+      m = FINDING_HEADING_RE.exec(lines[i]);
+      if (!m) continue;
+      [severity, id] = [m[3], m[2]];
+    }
+    const level = m[1].length;
+    const body = [];
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const next = /^(#{1,4})\s/.exec(lines[j]);
+      if (next && next[1].length <= level) break;
+      body.push(lines[j]);
+    }
+    blocks.push({ line: i, severity: SEVERITY[severity.toLowerCase()], id: id ? Number(id) : null, title: (m[4] || '').trim(), body });
+  }
+  return blocks;
+}
+
+/** `**M1. …**`, `**H2 — …**`, `- M3: …` в теле секции — пронумерованные находки без заголовка. */
+function numberedItems(body) {
+  const items = [];
+  for (const line of body) {
+    const m = /^\s*(?:[-*]\s*)?\**([HML])(\d+)\**\s*[.:—–-]\s*(.+)$/.exec(line);
+    if (m) items.push({ severity: SEVERITY[m[1].toLowerCase()], id: Number(m[2]), title: m[3] });
+  }
+  return items;
 }
 
 /**
- * Заголовки находок: `### 1. …`, `### H1 — …`, `### M2: …`, строки таблиц с
- * severity в первых ячейках. Обрезаются до 90 символов; не больше `limit`.
+ * Числа High/Medium. Порядок доверия: счётчик в строке или секции «Вердикт»
+ * собственного документа → счётчик, единственный во всём тексте → подсчёт по
+ * заголовкам и нумерованным находкам. Первое попавшееся `High: N` по всему
+ * файлу больше не берётся: r1 #635 показал, что оно бывает цитатой чужого
+ * документа («ТЗ прошло зелёным на r3 (High: 0, Medium: 0)»).
+ */
+export function parseCounts(text) {
+  for (const scope of [verdictLine(text, true), verdictSection(text), verdictLine(text)]) {
+    const counts = scope ? countsIn(scope) : null;
+    if (counts) return counts;
+  }
+  const highs = new Set([...text.matchAll(/High:\s*(\d+)/g)].map((m) => m[1]));
+  const mediums = new Set([...text.matchAll(/Medium:\s*(\d+)/g)].map((m) => m[1]));
+  if ((highs.size || mediums.size) && highs.size <= 1 && mediums.size <= 1) {
+    return { high: Number([...highs][0] || 0), medium: Number([...mediums][0] || 0) };
+  }
+  const ids = { high: new Set(), medium: new Set() };
+  let anonymous = { high: 0, medium: 0 };
+  for (const block of severityBlocks(text)) {
+    if (block.severity === 'low') continue;
+    if (block.id != null) { ids[block.severity].add(block.id); continue; }
+    const items = numberedItems(block.body).filter((item) => item.severity === block.severity);
+    if (items.length) { for (const item of items) ids[block.severity].add(item.id); continue; }
+    const first = block.body.map((l) => l.trim()).find(Boolean) || '';
+    if (NOTHING_RE.test(block.title || first) || (!block.title && !first)) continue;
+    anonymous = { ...anonymous, [block.severity]: anonymous[block.severity] + 1 };
+  }
+  return { high: ids.high.size + anonymous.high, medium: ids.medium.size + anonymous.medium };
+}
+
+/**
+ * Заголовки находок: `### 1. …`, `### H1 — …`, `### M2: …`,
+ * `### Medium (в скоупе) — …`, секция `### Medium` с `**M1. …**` внутри или
+ * с первым абзацем как заголовком, строки таблиц с severity в первых
+ * ячейках. Обрезаются до 90 символов; не больше `limit`.
  */
 export function parseFindings(text, limit = 6) {
   const out = [];
   const seen = new Set();
   const push = (raw) => {
-    const title = String(raw).replace(/[`*_]/g, '').replace(/\s+/g, ' ').trim().replace(/[.:;—–-]+$/, '').trim();
-    if (!title || seen.has(title)) return;
+    // Снимается разметка, а не символы: `_` внутри `smoke_links.mjs` — часть имени.
+    const title = String(raw).replace(/[`*]/g, '').replace(/(^|\s)_+|_+(\s|$)/g, '$1$2').replace(/\s+/g, ' ').trim()
+      .replace(/^[HML]\d+\s*[.:—–-]\s*/, '').replace(/[.,:;—–-]+$/, '').trim();
+    if (!title || NOTHING_RE.test(title) || seen.has(title)) return;
     seen.add(title);
     out.push(title.length > 90 ? `${title.slice(0, 87)}…` : title);
   };
-  for (const m of text.matchAll(/^#{3,4}\s*(?:(?:H|M|L)\d+\s*[—–:.-]\s*|\d+\.\s*)([^\n]+)/gm)) push(m[1]);
-  for (const m of text.matchAll(/^\|\s*(?:\*\*)?(?:H\d+|M\d+|High|Medium)(?:\*\*)?\s*\|(?:[^|\n]*\|)?\s*([^|\n]+)\|/gm)) push(m[1]);
+  // Источники сливаются в порядке документа: заголовок r1 не должен уступать
+  // место таблице из конца файла только потому, что он другой формы.
+  const found = [];
+  const lines = text.split('\n');
+  lines.forEach((line, index) => {
+    const numbered = /^#{3,4}\s*\d+\.\s*([^\n]+)/.exec(line);
+    if (numbered) found.push({ line: index, title: numbered[1] });
+    const row = /^\|\s*(?:\*\*)?(?:H\d+|M\d+|High|Medium)(?:\*\*)?\s*\|(?:[^|\n]*\|)?\s*([^|\n]+)\|/.exec(line);
+    if (row) found.push({ line: index, title: row[1] });
+  });
+  for (const block of severityBlocks(text)) {
+    if (block.title) { found.push({ line: block.line, title: block.title }); continue; }
+    const items = numberedItems(block.body);
+    if (items.length) { items.forEach((item, k) => found.push({ line: block.line + k / 100, title: item.title })); continue; }
+    const first = block.body.map((l) => l.trim()).find((l) => l && !/^[|#<-]/.test(l));
+    if (first) found.push({ line: block.line, title: first.replace(/^\**[HML]\d+\**[.:—–-]?\s*/, '') });
+  }
+  found.sort((a, b) => a.line - b.line);
+  for (const item of found) push(item.title);
   return out.slice(0, limit);
+}
+
+/**
+ * Файлы, названные в находках: пути в обратных кавычках внутри секций
+ * High/Medium/Low (с номером строки или без). Это и есть ответ на «что
+ * находили по файлу X» — `grep 'form-kit' INDEX.md` (r1 #635 AC2).
+ */
+export function parseFiles(text, limit = 8) {
+  const out = [];
+  const seen = new Set();
+  const blocks = severityBlocks(text);
+  const scope = blocks.length ? blocks.map((b) => [b.title, ...b.body].join('\n')).join('\n') : '';
+  for (const m of scope.matchAll(/`((?:[\w@.-]+\/)*[\w@.-]+\.(?:ts|mjs|js|py|md|yml|yaml|json|css|html|sh|ps1|mermaid))(?::\d+(?:[-–]\d+)?)?`/g)) {
+    const file = m[1].replace(/^\.\//, '');
+    if (seen.has(file)) continue;
+    seen.add(file);
+    out.push(file);
+    if (out.length >= limit) break;
+  }
+  return out;
 }
 
 /** Одна запись индекса по документу. */
@@ -91,6 +228,7 @@ export function indexEntry(name, text) {
     verdict: parseVerdict(text),
     ...parseCounts(text),
     findings: parseFindings(text),
+    files: parseFiles(text),
   };
 }
 
@@ -118,15 +256,15 @@ export function renderIndex({ entries, skipped = [] }) {
   const lines = [];
   lines.push('# Индекс ревью');
   lines.push('');
-  lines.push(`Генерируется \`node scripts/reviews-index.mjs\` (#635) — не редактировать руками. Документов: ${entries.length}, issue: ${issues.length}. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок.`);
+  lines.push(`Генерируется \`node scripts/reviews-index.mjs\` (#635) — не редактировать руками. Документов: ${entries.length}, issue: ${issues.length}. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: \`grep form-kit INDEX.md\`.`);
   lines.push('');
-  lines.push('| Issue | Документ | Этап · раунд | Вердикт | H | M | Находки |');
-  lines.push('|---|---|---|---|---:|---:|---|');
+  lines.push('| Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |');
+  lines.push('|---|---|---|---|---:|---:|---|---|');
   for (const issue of issues) {
     const docs = byIssue.get(issue).sort((a, b) => (a.stage === b.stage ? (a.round || 0) - (b.round || 0) : a.stage === 'spec' ? -1 : 1));
     for (const doc of docs) {
       const round = doc.round ? `r${doc.round}` : (doc.suffix || '—');
-      lines.push(`| #${issue} | [${doc.name}](${doc.name}) | ${doc.stage} · ${round} | ${badge(doc.verdict)} ${doc.verdict} | ${doc.high} | ${doc.medium} | ${doc.findings.join('; ').replace(/\|/g, '\\|') || '—'} |`);
+      lines.push(`| #${issue} | [${doc.name}](${doc.name}) | ${doc.stage} · ${round} | ${badge(doc.verdict)} ${doc.verdict} | ${doc.high} | ${doc.medium} | ${doc.findings.join('; ').replace(/\|/g, '\\|') || '—'} | ${(doc.files || []).map((f) => `\`${f}\``).join(' ') || '—'} |`);
     }
   }
   if (skipped.length) {
