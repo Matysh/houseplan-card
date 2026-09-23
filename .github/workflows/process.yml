@@ -582,14 +582,64 @@ jobs:
             { echo 'proceed=true'; echo 'result=skipped'; } >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if node scripts/validate-gate.mjs --repo="${{ github.repository }}" --ref="$BRANCH" --sha="$SHA"; then
-            echo 'proceed=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'proceed=false' >> "$GITHUB_OUTPUT"
-          fi
+          # #636: раннер не спит, пока идёт Validate (28 минут на раунд при
+          # 10–12 минутах работы модели). Гейт диспатчит прогон, убеждается, что
+          # тот встал на материал, и выходит с кодом 2 — «идёт». Раунд продолжит
+          # событие завершения Validate (process-resume.yml переставит метку
+          # S7), страховка — process-reconcile. Зелёный или красный завершённый
+          # прогон гейт и без ожидания возвращает сразу.
+          set +e
+          node scripts/validate-gate.mjs --repo="${{ github.repository }}" --ref="$BRANCH" --sha="$SHA" --no-wait
+          code=$?
+          set -e
+          case "$code" in
+            0) echo 'proceed=true' >> "$GITHUB_OUTPUT" ;;
+            2) echo 'proceed=pending' >> "$GITHUB_OUTPUT" ;;
+            *) echo 'proceed=false' >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      # #636: прогон на материале идёт — записать маркер ожидания и освободить
+      # раннер. Метка S7 остаётся; событие `workflow_run` по завершении Validate
+      # переставит её, и новый прогон конвейера найдёт завершённый dispatch
+      # сразу. Маркер читают process-resume.mjs и process-reconcile.mjs: без
+      # него ни один из них не имеет права будить раунд — иначе «успешный
+      # прогон без вердикта» неотличим от потерянного запроса.
+      - name: Validate идёт — раунд продолжит событие
+        id: pending
+        if: steps.rebase.outputs.conflict != 'true' && steps.gate.outputs.proceed == 'pending'
+        env:
+          NUM: ${{ github.event.issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          SHA: ${{ steps.material.outputs.sha }}
+          VALIDATE_RUN_ID: ${{ steps.gate.outputs.run_id }}
+          VALIDATE_URL: ${{ steps.gate.outputs.url }}
+        run: |
+          dir="$RUNNER_TEMP/review-pending"
+          mkdir -p "$dir"
+          jq -n -S \
+            --arg run_id "$GITHUB_RUN_ID" --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg issue "$NUM" --arg stage "$STAGE" --arg branch "$BRANCH" \
+            --arg material_sha "$SHA" --arg validate_run_id "$VALIDATE_RUN_ID" \
+            --arg validate_url "$VALIDATE_URL" \
+            '{schema:1,run_id:$run_id,run_attempt:$run_attempt,issue:$issue,stage:$stage,branch:$branch,material_sha:$material_sha,validate_run_id:$validate_run_id,validate_url:$validate_url}' \
+            > "$dir/pending.json"
+          (cd "$dir" && sha256sum pending.json > manifest.sha256)
+          echo "artifact=review-pending-${NUM}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+          short=$(git rev-parse --short "$SHA")
+          echo "Validate с мутантами на \`$short\` идёт — раннер освобождён, раунд продолжится по завершении прогона${VALIDATE_URL:+ ($VALIDATE_URL)}." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Сохранить маркер ожидания
+        if: steps.gate.outputs.proceed == 'pending'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.pending.outputs.artifact }}
+          path: ${{ runner.temp }}/review-pending
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Validate красный — вернуть автору без ревью
-        if: steps.rebase.outputs.conflict != 'true' && steps.gate.outputs.proceed != 'true'
+        if: steps.rebase.outputs.conflict != 'true' && steps.gate.outputs.proceed == 'false'
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           NUM: ${{ github.event.issue.number }}
@@ -1180,6 +1230,11 @@ jobs:
           if [ "$PREPARE_RESULT" != "success" ]; then
             echo "::error::стадия deterministic prerequisites завершилась: $PREPARE_RESULT"
             exit 1
+          fi
+          if [ "$PROCEED" = "pending" ]; then
+            echo "Validate на материале ещё идёт — раунд продолжит событие завершения (#636); интегрировать нечего"
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           if [ "$PROCEED" != "true" ]; then
             echo "подготовка уже вернула задачу автору; интегрировать нечего"
