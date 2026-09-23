@@ -136,7 +136,13 @@ const out = await page.evaluate(async () => {
     && Math.abs(sliderBox.right - endsBox.right) <= 1
     && endsBox.bottom <= cardFontRange.nextElementSibling.getBoundingClientRect().bottom + 1;
   o.resetDisabledAt100 = resetLink.disabled === true;
-  c._spaceDialog = { ...c._spaceDialog, cardFontScale: 1.5 }; await upd();
+  const cardFontInput = q('#space-card-font');
+  cardFontInput.value = '150';
+  cardFontInput.dispatchEvent(new Event('input', { bubbles: true }));
+  o.fontDraftWaitsForChange = c._spaceDialog.cardFontScale === 1;
+  cardFontInput.dispatchEvent(new Event('change', { bubbles: true })); await upd();
+  o.fontNumberCommitsThroughDom = c._spaceDialog.cardFontScale === 1.5
+    && [...qa('.hpf-headline .hpf-link')][0].disabled === false;
   [...qa('.hpf-headline .hpf-link')][0].click(); await upd();
   o.resetRestores100 = c._spaceDialog.cardFontScale === 1;
 
