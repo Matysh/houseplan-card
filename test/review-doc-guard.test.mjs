@@ -932,3 +932,37 @@ test('ревью: модель работает job-scoped токеном, а н
   assert.doesNotMatch(model.slice(0, model.indexOf('steps:')), /id-token: write/,
     'OIDC этой стадии больше не выдаётся');
 });
+
+// #621: каталог docs/reviews перевалил за 1 000 файлов, а `contents` API
+// перечисляет не больше 1 000 записей и обрезает молча. Занижённый счёт по
+// файлам — это повтор номера захода и документ поверх предыдущего (#454).
+// Счёт обязан не зависеть от размера каталога, а листинг в workflow — идти
+// через Git Trees API, где потолок 100 000 и обрезка объявлена флагом.
+test('счёт раундов не зависит от числа файлов в каталоге (#621 AC1)', () => {
+  const names = [];
+  for (let i = 1; i <= 1_200; i += 1) names.push(`CODE-REVIEW-${i}-r1.md`, `SPEC-REVIEW-${i}-r1.md`);
+  // Свои документы — в хвосте списка, за пределами первой тысячи: обрезанный
+  // листинг их бы не увидел.
+  names.push('CODE-REVIEW-621-r2.md', 'CODE-REVIEW-621-r3.md');
+  assert.ok(names.length > 1_000);
+  const { rounds, skipped } = reviewRoundsFromFiles(names, 'CODE-REVIEW', '621');
+  assert.deepEqual(rounds, [1, 2, 3]);
+  assert.deepEqual(skipped, []);
+  assert.equal(attemptFromRounds(rounds), 4);
+});
+
+test('guard перечисляет docs/reviews деревом, а не contents, и без предупреждения о потолке (#621 AC2)', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const guard = workflow.slice(workflow.indexOf('\n  guard:\n'), workflow.indexOf('\n  prepare:\n'));
+  assert.doesNotMatch(guard, /contents\/docs\/reviews\?ref=/, 'листинг каталога через contents API снят');
+  assert.doesNotMatch(guard, /1000 файлов/, 'предупреждение о потолке удалено вместе с зависимостью');
+  assert.match(guard, /gh api "repos\/\$REPO\/commits\/\$1" --jq '\.commit\.tree\.sha'/, 'дерево берётся от коммита ветки задачи');
+  assert.match(guard, /for entry in docs reviews; do/, 'спуск по уровням docs → reviews');
+  assert.match(guard, /gh api "repos\/\$REPO\/git\/trees\/\$sha"/, 'листинг — Git Trees API');
+  assert.match(guard, /if \.truncated then error\("truncated"\)/, 'обрезанное дерево — отказ, не частичный список');
+  assert.match(guard, /if ! tree_names "\$target" > "\$names" 2>\/dev\/null; then\n\s+: > "\$names"/,
+    'отказ листинга отключает счёт по файлам, страховка по комментариям остаётся');
+  // Тела своих документов по-прежнему читаются поштучно: у одиночного файла
+  // потолка нет.
+  assert.match(guard, /contents\/docs\/reviews\/\$name\?ref=\$target/);
+});
