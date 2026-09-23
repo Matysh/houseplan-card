@@ -1,0 +1,60 @@
+name: Метрики процесса
+
+# #637: еженедельный замер вместо ощущений — lead time S→S7→S8, раунды ревью,
+# прогоны Validate по исходам, минуты конвейера в S4/S7. Только чтение: отчёт
+# идёт в step summary и артефакт; в issue и репозиторий ничего не пишется.
+# Цифры аудита 22.09 (1,57 раунда код-ревью, S7 ≈ 36 мин/раунд, 226 Validate
+# за неделю) были собраны руками за час — теперь они стоят один запуск.
+
+on:
+  schedule:
+    # Понедельник 05:00 UTC — после ночных прогонов, до рабочего дня.
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Окно в днях"
+        required: false
+        default: "7"
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  issues: read
+
+jobs:
+  metrics:
+    name: "Снимок недели: issue, раунды, прогоны"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Код — из dev, как у reconcile: расписание читается из main, а исполняется
+      # версия, которую проверил CI.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: dev
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+      - name: Собрать отчёт
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+          DAYS: ${{ inputs.days || '7' }}
+        run: |
+          mkdir -p artifacts/process-metrics
+          node scripts/process-metrics.mjs --repo="$REPO" --days="$DAYS" \
+            --output=artifacts/process-metrics/report.md \
+            --json=artifacts/process-metrics/report.json > /dev/null
+          cat artifacts/process-metrics/report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Сохранить отчёт
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: process-metrics-${{ github.run_id }}
+          path: artifacts/process-metrics
+          if-no-files-found: error
+          retention-days: 90

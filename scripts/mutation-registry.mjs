@@ -8532,6 +8532,30 @@ const MUTANT_DEFINITIONS = [
       replace: "    if (false && run.pendingValidate === 'active') {",
     }],
   },
+  // #637: метрики процесса — цифры, по которым судят об ускорении; ошибка счёта
+  // хуже отсутствия счёта.
+  {
+    id: 'metrics-count-skipped-pipeline-runs',
+    guard: 'node --test --test-name-pattern="#637 pipelineMetrics" test/process-metrics.test.mjs',
+    because: 'process.yml runs on every label event and most runs are skipped by the guard; counting '
+      + 'them as review rounds would inflate S7 minutes and per-run averages (#637)',
+    patches: [{
+      file: 'scripts/process-metrics.mjs',
+      find: "    if (!match || run.conclusion === 'skipped') continue;",
+      replace: "    if (!match) continue; // mutant: skipped runs counted",
+    }],
+  },
+  {
+    id: 'metrics-rounds-by-s7-events',
+    guard: 'node --test --test-name-pattern="#637 buildReport" test/process-metrics.test.mjs',
+    because: 'review rounds come from review documents, not from S7 label events — the pipeline '
+      + 're-applies S7 itself after a pending Validate (#636), so events would overcount (#637)',
+    patches: [{
+      file: 'scripts/process-metrics.mjs',
+      find: "  const codeRounds = completed.map((issue) => rounds.get(`CODE:${issue.number}`)).filter(Boolean);",
+      replace: "  const codeRounds = completed.map((issue) => issue.s7Requests).filter(Boolean); // mutant: rounds = S7 events",
+    }],
+  },
   {
     id: 'process-reconcile-restarts-healthy-run',
     guard: 'node --test test/process-reconcile.test.mjs',
