@@ -1504,6 +1504,156 @@ def test_space_remap_covers_marker_id_layout_and_vacuum_segment_map(tmp_path: Pa
     assert marker["id"] in layout and "lamp" not in layout
 
 
+def _issue_611_space_document(tmp_path: Path) -> dict[str, Any]:
+    config = _config()
+    config["markers"][0]["vacuum"] = {
+        "source": "camera.robot",
+        "map_routes": [{
+            "id": "route-ground", "source": "camera.robot", "map_id": "ground-map",
+            "space": "ground", "calibration": [1, 0, 0, 0, 1, 0],
+        }],
+    }
+    document, _filename = create_export(
+        SimpleNamespace(instance_id="instance-a"),
+        {"config": config, "rev": 2},
+        {"layout": {"lamp": {"x": 0.4, "y": 0.5, "s": "ground"}}, "rev": 3},
+        kind="space", space_id="ground", card_version="review", config_root=tmp_path,
+    )
+    return parse_document(json.dumps(document).encode())
+
+
+@pytest.mark.parametrize("same_source", [False, True], ids=["foreign", "same-instance"])
+def test_issue_611_incoming_route_follows_fresh_space(
+    tmp_path: Path, same_source: bool,
+) -> None:
+    document = _issue_611_space_document(tmp_path)
+    current = _config() if same_source else {"spaces": [], "markers": [], "settings": {}}
+    if same_source:
+        current["markers"] = []
+
+    merged, _layout, details = build_space_merge(
+        document, current, {}, "skip", same_source=same_source,
+    )
+    marker = next(
+        item for item in merged["markers"]
+        if item.get("space") == details["space_id"]
+    )
+
+    assert marker["space"] != "ground"
+    assert marker["vacuum"]["map_routes"][0]["space"] == details["space_id"]
+    assert details["reference_report"]["remapped"]["incoming"] == {
+        "marker.space": 1,
+        "marker.room_id": 1,
+        "marker.vacuum.map_routes.space": 1,
+        "layout.owner": 1,
+        "layout.space": 1,
+    }
+
+
+@pytest.mark.parametrize(
+    "dead_space", ["ground", "space_ground_aaaaaaaa"], ids=["exact", "lineage"],
+)
+def test_issue_611_target_route_follows_safe_space_repair(
+    tmp_path: Path, dead_space: str,
+) -> None:
+    document = _document(tmp_path, "space")
+    current = {
+        "spaces": [],
+        "markers": [{
+            "id": "target-vac", "binding": "virtual", "space": dead_space,
+            "vacuum": {
+                "source": "camera.robot",
+                "map_routes": [{
+                    "id": "route-ground", "source": "camera.robot",
+                    "map_id": "ground-map", "space": dead_space,
+                    "calibration": [1, 0, 0, 0, 1, 0],
+                }],
+            },
+        }],
+        "settings": {},
+    }
+
+    merged, _layout, details = build_space_merge(document, current, {}, "skip")
+    marker = next(item for item in merged["markers"] if item["id"] == "target-vac")
+
+    assert marker["space"] == details["space_id"]
+    assert marker["vacuum"]["map_routes"][0]["space"] == details["space_id"]
+    assert details["repaired_target_refs"] == 2
+    assert details["reference_report"]["remapped"]["target"] == {
+        "marker.space": 1,
+        "marker.vacuum.map_routes.space": 1,
+    }
+
+
+def test_issue_611_live_target_route_is_not_rebound(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    current = _config()
+    current["markers"][0]["vacuum"] = {
+        "source": "camera.robot",
+        "map_routes": [{
+            "id": "route-ground", "source": "camera.robot", "map_id": "ground-map",
+            "space": "ground", "calibration": [1, 0, 0, 0, 1, 0],
+        }],
+    }
+
+    merged, _layout, details = build_space_merge(document, current, {}, "skip")
+    marker = next(item for item in merged["markers"] if item["id"] == "lamp")
+
+    assert marker["space"] == "ground"
+    assert marker["vacuum"]["map_routes"][0]["space"] == "ground"
+    assert details["repaired_target_refs"] == 0
+    assert "marker.vacuum.map_routes.space" not in \
+        details["reference_report"]["remapped"]["target"]
+
+
+def test_issue_611_ambiguous_target_route_is_preserved_and_reported() -> None:
+    current = {
+        "spaces": [{
+            "id": "space_ground_aaaaaaaa", "title": "Existing",
+            "view_box": [0, 0, 1, 1], "rooms": [],
+        }],
+        "markers": [{
+            "id": "target-vac", "binding": "virtual", "space": "space_ground_aaaaaaaa",
+            "vacuum": {"map_routes": [{"space": "space_ground_bbbbbbbb"}]},
+        }],
+        "settings": {},
+    }
+    report = import_export_api._empty_reference_report()
+
+    repaired, _layout, count = import_export_api._repair_target_space_refs(
+        current, {}, {"space": {"ground": "space_ground_cccccccc"}}, {}, report, set(),
+    )
+
+    assert repaired["markers"][0]["vacuum"]["map_routes"][0]["space"] == \
+        "space_ground_bbbbbbbb"
+    assert count == 0
+    assert report["preservedUnresolved"] == {
+        "marker.vacuum.map_routes.space": 1,
+    }
+
+
+@pytest.mark.parametrize(
+    "vacuum",
+    [
+        {"source": "camera.robot", "map_routes": []},
+        {"source": "camera.robot", "calibration": {"ground-map": [1, 0, 0, 0, 1, 0]}},
+    ],
+    ids=["empty-explicit-routes", "legacy-calibration"],
+)
+def test_issue_611_non_route_vacuum_shapes_stay_unchanged(
+    tmp_path: Path, vacuum: dict[str, Any],
+) -> None:
+    document = _document(tmp_path, "space")
+    document["payload"]["config"]["markers"][0]["vacuum"] = copy.deepcopy(vacuum)
+
+    merged, _layout, details = build_space_merge(
+        document, {"spaces": [], "markers": [], "settings": {}}, {}, "skip",
+    )
+    marker = next(item for item in merged["markers"] if item["space"] == details["space_id"])
+
+    assert marker["vacuum"] == vacuum
+
+
 def test_issue_244_space_import_repairs_existing_target_refs_with_exact_map(tmp_path: Path) -> None:
     document = _document(tmp_path, "space")
     current = {

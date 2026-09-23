@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Space imports now keep robot map routes on the imported copy: transfers to
+  another Home Assistant instance no longer fail on the old floor ID, and
+  same-instance copies no longer leave the robot trail on the source floor
+  ([#611](https://github.com/Matysh/houseplan-card/issues/611)).
 - Settings forms now keep the same reviewed shell inside Home Assistant as in
   the standalone preview: a 560 px desktop canvas with one scrollbar and a
   height cap, plus edge-to-edge fullscreen layout on phones. Other dialogs are

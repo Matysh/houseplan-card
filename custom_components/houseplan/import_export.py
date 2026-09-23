@@ -1177,6 +1177,17 @@ def _repair_target_space_refs(
                     preserve_related(
                         marker_id, "marker.vacuum.segment_map", room_id, resolve_room,
                     )
+        routes = vacuum.get("map_routes") if isinstance(vacuum, dict) else None
+        if isinstance(routes, list):
+            for route in routes:
+                if not isinstance(route, dict):
+                    continue
+                mapped = replace(
+                    marker_id, "marker.vacuum.map_routes.space",
+                    route.get("space"), resolve_space,
+                )
+                if mapped is not None:
+                    route["space"] = mapped
         controls = marker.get("controls")
         if isinstance(controls, list):
             for index, ref in enumerate(controls):
@@ -1464,6 +1475,21 @@ def build_space_merge(
                         new_id, old_room_id,
                     )
             vacuum["segment_map"] = remapped_segments
+        # A single-space export can retain only routes owned by that space.
+        # The copy itself gets a fresh id, so the retained route must follow
+        # it just like marker.space does; otherwise foreign imports fail the
+        # referential validator and same-instance imports silently target the
+        # source floor (#611).
+        if isinstance(vacuum, dict) and isinstance(vacuum.get("map_routes"), list):
+            for route in vacuum["map_routes"]:
+                if not isinstance(route, dict) \
+                        or str(route.get("space")) != old_space_id:
+                    continue
+                route["space"] = new_space_id
+                _report_remap(
+                    reference_report, "incoming", "marker.vacuum.map_routes.space",
+                    new_id, old_space_id,
+                )
         if binding in duplicate and duplicate_policy == "virtual":
             virtualized += 1
             virtualized_targets.add(old_id)

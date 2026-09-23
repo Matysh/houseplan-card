@@ -5621,6 +5621,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'space-import-keeps-incoming-vacuum-route-space',
+    guard: 'node scripts/backend-test-guard.mjs issue_611_incoming_route_follows_fresh_space',
+    because: 'a copied vacuum route must follow the fresh space id on both foreign and '
+      + 'same-instance imports instead of failing validation or silently targeting the source floor',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '                route["space"] = new_space_id\n'
+        + '                _report_remap(',
+      replace: '                route["space"] = old_space_id  # mutant: keep source floor\n'
+        + '                _report_remap(',
+    }],
+  },
+  {
+    id: 'space-import-keeps-target-vacuum-route-space',
+    guard: 'node scripts/backend-test-guard.mjs issue_611_target_route_follows_safe_space_repair',
+    because: 'the second-pass target repair must apply its proven exact/lineage space mapping to '
+      + 'vacuum routes as well as marker.space',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '                    route["space"] = mapped\n',
+      replace: '                    route["space"] = route.get("space")  # mutant: ignore mapping\n',
+    }],
+  },
+  {
     id: 'plan-only-revalidate-flag-dropped',
     guard: 'node scripts/backend-test-guard.mjs plan_only_export_projects',
     because: 'revalidate не имеет права превращать plan-only preview в обычный space preview; '
