@@ -706,6 +706,23 @@ full/space transfer preserve, remap or report/drop `derived_marker_state.ref`
 through the same reference seam as controls and value badges. Older clients
 ignore the field and may erase it if they reconstruct the marker.
 
+## Active marker ID uniqueness (#625)
+
+At every write boundary, a marker `id` may identify at most one active record
+(`removed` is not `true`). A tombstone and one active marker with the same id
+remain valid: the tombstone records lifecycle history and does not suppress the
+live marker's layout update.
+
+The structural `CONFIG_SCHEMA` remains permissive so an installation that
+already contains two active legacy records is still readable. The semantic
+validator compares the candidate with the previously stored document: an
+unchanged duplicate group may survive an unrelated save, but a new duplicate
+or any edit that leaves the group ambiguous is rejected as `invalid_config`
+with the stable detail `duplicate active marker id`. Removing/tombstoning enough
+records to leave one active marker is the supported repair. A full import is authoritative and therefore
+strict even when its source document contains legacy duplicates; there is no
+automatic deletion or migration.
+
 ## Atomic marker writes (#442)
 
 The Device editor builds a separate complete config candidate and treats a

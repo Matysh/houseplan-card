@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import os
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -23,6 +24,21 @@ _LOGGER = logging.getLogger(__name__)
 # collide with an attachment (sanitize_filename strips leading dots) and is easy
 # to sweep.
 TMP_PREFIX = ".upload-"
+
+
+def atomic_write(path: Path, data: bytes, *, prefix: str = ".upload-") -> None:
+    """Durably replace ``path`` without exposing a partial destination file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temp_name = tempfile.mkstemp(prefix=prefix, dir=str(path.parent))
+    temp = Path(temp_name)
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temp, path)
+    finally:
+        temp.unlink(missing_ok=True)
 
 
 def reserve_filename(directory: Path, name: str) -> str:

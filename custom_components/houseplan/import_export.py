@@ -45,12 +45,14 @@ from .validation import (
     MAX_LAYOUT,
     MAX_MARKERS,
     MAX_SPACES,
+    DuplicateMarkerIdError,
     MarkerControlError,
     OpeningPassageError,
     PartitionOpeningHostError,
     PartitionOpeningJambMarginError,
     sanitize_filename,
     sanitize_marker_id,
+    validate_active_marker_ids,
     validate_marker_controls,
     validate_marker_light_entities,
     validate_marker_vacuum_routes,
@@ -1887,6 +1889,14 @@ def _materialize_import_candidate(
         config = CONFIG_SCHEMA(config)
     except vol.Invalid as err:
         raise ImportFailure("invalid_config", str(err)) from err
+    try:
+        validate_active_marker_ids(
+            config,
+            current_config if prepared["kind"] == "space" else None,
+            validate_all=prepared["kind"] == "full",
+        )
+    except DuplicateMarkerIdError as err:
+        raise ImportFailure(err.code, str(err)) from err
     try:
         layout = LAYOUT_SCHEMA(layout)
     except vol.Invalid as err:

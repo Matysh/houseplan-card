@@ -81,6 +81,7 @@ class HouseplanData:
     store: HouseplanStore
     config_store: HouseplanStore
     virtual_light_store: HouseplanStore
+    virtual_lights: Any | None = None
     # One lock for every load→modify→save cycle of both stores: prevents
     # lost updates from concurrent WS calls and makes the rev check atomic.
     write_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
@@ -118,7 +119,7 @@ HouseplanConfigEntry = ConfigEntry[HouseplanData]
 
 def create_data(hass: HomeAssistant) -> HouseplanData:
     """Create the stores for a config entry."""
-    return HouseplanData(
+    data = HouseplanData(
         store=HouseplanStore(hass, STORAGE_VERSION, STORAGE_KEY, minor_version=STORAGE_MINOR_VERSION),
         config_store=HouseplanStore(
             hass, STORAGE_VERSION, STORAGE_CONFIG_KEY, minor_version=STORAGE_MINOR_VERSION
@@ -130,6 +131,10 @@ def create_data(hass: HomeAssistant) -> HouseplanData:
             minor_version=STORAGE_MINOR_VERSION,
         ),
     )
+    from .virtual_lights import VirtualLightController
+
+    data.virtual_lights = VirtualLightController(data.virtual_light_store)
+    return data
 
 
 def get_data(hass: HomeAssistant) -> HouseplanData | None:
@@ -229,12 +234,17 @@ async def async_save_config_state(
     from .virtual_lights import async_reconcile_virtual_lights
 
     try:
+        controller = getattr(runtime, "virtual_lights", None)
+        if controller is not None:
+            await controller.async_flush()
         await async_reconcile_virtual_lights(
             runtime.virtual_light_store,
             canonical_config,
             rev,
             previous_config_rev=previous_rev,
         )
+        if controller is not None:
+            controller.reset()
     except Exception:  # noqa: BLE001 - config commit already stands
         _LOGGER.exception("House Plan: virtual-light state reconciliation failed")
     return payload

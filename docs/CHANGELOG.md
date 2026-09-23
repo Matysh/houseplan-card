@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Large exports no longer hold up ordinary House Plan operations, and imports
+  no longer block Home Assistant while scanning attachments; uploads now
+  reject impossible sizes before streaming, image
+  validation is memory-bounded, rapid virtual-light toggles avoid redundant
+  disk writes, and ambiguous duplicate active devices are rejected without
+  stranding existing legacy configurations
+  ([#625](https://github.com/Matysh/houseplan-card/issues/625)).
 - Read-only household and kiosk views no longer show an administrator-only
   error when Home Assistant discovers a new device; config conflicts in View
   now refresh safely even though the editor has never been loaded

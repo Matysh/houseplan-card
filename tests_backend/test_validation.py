@@ -115,6 +115,35 @@ plans = _load_pure("plans")
 const = importlib.import_module("hp_pure.const")
 
 
+def test_active_marker_id_uniqueness_is_delta_safe_for_legacy_documents():
+    legacy = {"markers": [
+        {"id": "same", "binding": "virtual", "name": "A"},
+        {"id": "same", "binding": "virtual", "name": "B"},
+    ]}
+    # Structural validation deliberately remains migration-compatible; the
+    # semantic write boundary owns the uniqueness invariant.
+    assert len(v.CONFIG_SCHEMA({"spaces": [], **legacy})["markers"]) == 2
+    with pytest.raises(v.DuplicateMarkerIdError) as strict:
+        v.validate_active_marker_ids(legacy, validate_all=True)
+    assert strict.value.code == "invalid_config"
+
+    reordered = {"markers": list(reversed(legacy["markers"]))}
+    v.validate_active_marker_ids(reordered, legacy)
+
+    changed = {"markers": [legacy["markers"][0], {**legacy["markers"][1], "name": "C"}]}
+    with pytest.raises(v.DuplicateMarkerIdError):
+        v.validate_active_marker_ids(changed, legacy)
+
+    v.validate_active_marker_ids({"markers": [legacy["markers"][0]]}, legacy)
+
+
+def test_active_marker_id_allows_one_live_record_and_tombstones():
+    v.validate_active_marker_ids({"markers": [
+        {"id": "same", "binding": "virtual"},
+        {"id": "same", "binding": "virtual", "removed": True},
+    ]}, validate_all=True)
+
+
 def test_sanitize_marker_id():
     assert v.sanitize_marker_id("../etc/passwd") == "_etc_passwd"
     assert v.sanitize_marker_id("..") == "misc"       # pure traversal → misc
@@ -1065,6 +1094,23 @@ def test_every_room_fill_mode_the_editor_offers_is_accepted():
 
 
 # ---------- attachments & inner limits (HP-1454-02, -05) ----------
+
+
+def test_atomic_write_keeps_destination_and_cleans_temp_when_replace_fails(
+    tmp_path, monkeypatch,
+):
+    target = tmp_path / "plan.svg"
+    target.write_bytes(b"old")
+
+    def fail_replace(_source, _target):
+        raise OSError("replace failed")
+
+    monkeypatch.setattr(plans.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="replace failed"):
+        plans.atomic_write(target, b"new", prefix=".plan-upload-")
+
+    assert target.read_bytes() == b"old"
+    assert list(tmp_path.glob(".plan-upload-*")) == []
 
 
 def test_reserve_filename_claims_the_name_atomically(tmp_path):

@@ -263,7 +263,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) -
     remove_panel_registration(hass)
     rec = hass.data.get(DOMAIN, {}).pop("trail_recorder", None)
     if rec:
-        rec.teardown()
+        await rec.async_teardown()
+    virtual_lights = getattr(entry.runtime_data, "virtual_lights", None)
+    if virtual_lights is not None:
+        await virtual_lights.async_flush()
     if entry.runtime_data.radar_coordinator:
         entry.runtime_data.radar_coordinator.teardown()
         entry.runtime_data.radar_coordinator = None

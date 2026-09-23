@@ -3,6 +3,8 @@ import asyncio
 import copy
 import json
 import logging
+import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -311,6 +313,8 @@ async def test_deleted_marker_rejects_a_stale_layout_update(
         "spaces": [],
         "markers": [
             {"id": "dev1", "binding": "device:dev1", "removed": True},
+            {"id": "dev_both", "binding": "device:old", "removed": True},
+            {"id": "dev_both", "binding": "device:current"},
             {"id": "v_live", "binding": "virtual", "name": "Still here"},
             {"id": "v_real", "binding": "device:real-device"},
         ],
@@ -328,6 +332,15 @@ async def test_deleted_marker_rejects_a_stale_layout_update(
     })
     ignored = await client.receive_json()
     assert ignored["success"] and ignored["result"]["ignored"] == "removed"
+
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/update",
+        "device_id": "dev_both",
+        "pos": {"s": "f1", "x": 0.15, "y": 0.25},
+    })
+    tombstone_and_live = await client.receive_json()
+    assert tombstone_and_live["success"]
+    assert "ignored" not in tombstone_and_live["result"]
 
     await client.send_json_auto_id({
         "type": "houseplan/layout/update",
@@ -350,6 +363,7 @@ async def test_deleted_marker_rejects_a_stale_layout_update(
 
     await client.send_json_auto_id({"type": "houseplan/layout/get"})
     assert (await client.receive_json())["result"]["layout"] == {
+        "dev_both": {"s": "f1", "x": 0.15, "y": 0.25},
         "v_real": {"s": "f1", "x": 0.2, "y": 0.25},
     }
 
@@ -364,7 +378,7 @@ async def test_deleted_marker_rejects_a_stale_layout_update(
             "rl_r1": {"s": "f1", "x": 0.35, "y": 0.45},
             "ordinary_auto_device": {"s": "f1", "x": 0.5, "y": 0.6},
         },
-        "expected_rev": 1,
+        "expected_rev": 2,
     })
     assert (await client.receive_json())["success"]
     await client.send_json_auto_id({"type": "houseplan/layout/get"})
@@ -548,8 +562,10 @@ async def test_issue_340_config_set_without_revision_is_bootstrap_only(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """A missing revision may initialise an empty store, never replace it."""
+    from custom_components.houseplan import websocket_api as wsapi
     from custom_components.houseplan.store import OPTIMIZE_BACKUP, get_data
 
+    wsapi._MISSING_REV_DEBUGGED.discard("config/set")
     await _setup(hass)
     first_client = await hass_ws_client(hass)
     stale_client = await hass_ws_client(hass)
@@ -592,7 +608,7 @@ async def test_issue_340_config_set_without_revision_is_bootstrap_only(
     })
     config_events.clear()
 
-    with caplog.at_level(logging.WARNING, logger="custom_components.houseplan.websocket_api"):
+    with caplog.at_level(logging.DEBUG, logger="custom_components.houseplan.websocket_api"):
         await stale_client.send_json_auto_id({
             "type": "houseplan/config/set", "config": copy.deepcopy(stale_config),
         })
@@ -608,15 +624,17 @@ async def test_issue_340_config_set_without_revision_is_bootstrap_only(
     assert "stale-secret" not in caplog.text
 
     # Even an exact semantic no-op may not be used to bypass the CAS guard.
-    await stale_client.send_json_auto_id({
-        "type": "houseplan/config/set", "config": copy.deepcopy(first_config),
-    })
-    noop_without_revision = await stale_client.receive_json()
+    with caplog.at_level(logging.DEBUG, logger="custom_components.houseplan.websocket_api"):
+        await stale_client.send_json_auto_id({
+            "type": "houseplan/config/set", "config": copy.deepcopy(first_config),
+        })
+        noop_without_revision = await stale_client.receive_json()
     await hass.async_block_till_done()
     assert not noop_without_revision["success"]
     assert noop_without_revision["error"]["code"] == "conflict"
     assert await runtime.config_store.async_load() == stored_before
     assert config_events == []
+    assert sum("config/set without expected_rev" in record.message for record in caplog.records) == 1
 
     # The same client succeeds after reading and returning the current rev.
     await stale_client.send_json_auto_id({
@@ -633,8 +651,10 @@ async def test_issue_356_layout_set_without_revision_is_bootstrap_only(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """A revision-less wholesale layout may initialise, never replace, a store."""
+    from custom_components.houseplan import websocket_api as wsapi
     from custom_components.houseplan.store import OPTIMIZE_BACKUP, get_data
 
+    wsapi._MISSING_REV_DEBUGGED.discard("layout/set")
     await _setup(hass)
     first_client = await hass_ws_client(hass)
     stale_client = await hass_ws_client(hass)
@@ -671,7 +691,7 @@ async def test_issue_356_layout_set_without_revision_is_bootstrap_only(
     layout_events.clear()
 
     with caplog.at_level(
-        logging.WARNING, logger="custom_components.houseplan.websocket_api",
+        logging.DEBUG, logger="custom_components.houseplan.websocket_api",
     ):
         await stale_client.send_json_auto_id({
             "type": "houseplan/layout/set", "layout": copy.deepcopy(stale_layout),
@@ -687,15 +707,17 @@ async def test_issue_356_layout_set_without_revision_is_bootstrap_only(
     assert "stale-secret" not in caplog.text
 
     # An equal body is still a write attempt and must not bypass the CAS guard.
-    await stale_client.send_json_auto_id({
-        "type": "houseplan/layout/set", "layout": copy.deepcopy(first_layout),
-    })
-    noop_without_revision = await stale_client.receive_json()
+    with caplog.at_level(logging.DEBUG, logger="custom_components.houseplan.websocket_api"):
+        await stale_client.send_json_auto_id({
+            "type": "houseplan/layout/set", "layout": copy.deepcopy(first_layout),
+        })
+        noop_without_revision = await stale_client.receive_json()
     await hass.async_block_till_done()
     assert not noop_without_revision["success"]
     assert noop_without_revision["error"]["code"] == "conflict"
     assert await runtime.store.async_load() == stored_before
     assert layout_events == []
+    assert sum("layout/set without expected_rev" in record.message for record in caplog.records) == 1
 
     # Reading and returning the current revision preserves the ordinary path.
     await stale_client.send_json_auto_id({
@@ -2673,9 +2695,28 @@ async def test_decor_asset_upload_deduplicates_and_rejects_mime_spoofing(
             return _Reader(self._mime)
 
     view = HouseplanDecorAssetUploadView()
+    real_validate = hp_http.validate_asset
+    validation_lock = threading.Lock()
+    active_validations = 0
+    max_active_validations = 0
+
+    def observed_validate(*args, **kwargs):
+        nonlocal active_validations, max_active_validations
+        with validation_lock:
+            active_validations += 1
+            max_active_validations = max(max_active_validations, active_validations)
+        try:
+            time.sleep(0.03)
+            return real_validate(*args, **kwargs)
+        finally:
+            with validation_lock:
+                active_validations -= 1
+
+    monkeypatch.setattr(hp_http, "validate_asset", observed_validate)
     first, duplicate = await asyncio.gather(
         view.post(_Request("image/png")), view.post(_Request("image/png")),
     )
+    assert max_active_validations == 1
     rows = [json.loads(first.text), json.loads(duplicate.text)]
     assert {row["reused"] for row in rows} == {False, True}
     assert rows[0]["asset"]["asset_id"] == rows[1]["asset"]["asset_id"]
@@ -3143,6 +3184,36 @@ async def test_upload_never_overwrites_an_existing_attachment(
     assert await got.read() == b"ONE", "the first file is untouched"
     got2 = await http.get(second)
     assert await got2.read() == b"TWO"
+
+
+async def test_attachment_upload_rejects_impossible_content_length_before_multipart(
+    hass: HomeAssistant,
+) -> None:
+    from custom_components.houseplan import http_api
+    from custom_components.houseplan.http_api import HouseplanUploadView
+
+    await _setup(hass)
+    multipart_called = False
+
+    class _User:
+        is_admin = True
+
+    class _Request:
+        app = {http_api.KEY_HASS: hass}
+        content_length = http_api.MAX_FILE_BYTES + http_api._FLUSH_AT + 1
+
+        def get(self, _key, default=None):
+            return _User()
+
+        async def multipart(self):
+            nonlocal multipart_called
+            multipart_called = True
+            raise AssertionError("multipart must not be read after early rejection")
+
+    response = await HouseplanUploadView().post(_Request())
+    assert response.status == 413
+    assert json.loads(response.text)["error"] == "too_large"
+    assert multipart_called is False
 
 
 async def test_upload_leaves_no_temporary_behind(

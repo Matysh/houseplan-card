@@ -843,6 +843,30 @@ def test_overlapping_refreshes_leave_one_subscription_teardown_zero():
         trails.async_track_state_change_event = old_track
 
 
+def test_async_teardown_flushes_pending_debounced_state_and_closes_handles():
+    rec, _hass, _states = _rec()
+    saved = []
+    cancelled = []
+    untracked = []
+
+    class TrailStore:
+        async def async_save(self, data):
+            saved.append(json.loads(json.dumps(data)))
+
+    rec.store = TrailStore()
+    rec.book.data = {"m1": {"current": {"points": [[1, 2]]}}}
+    rec._unsub_save = lambda: cancelled.append(True)
+    rec._unsub_track = lambda: untracked.append(True)
+
+    _run_isolated(rec.async_teardown())
+
+    assert saved == [rec.book.data]
+    assert cancelled == [True]
+    assert untracked == [True]
+    assert rec._unsub_save is None and rec._unsub_track is None
+    assert rec._closed is True
+
+
 def test_refresh_watches_every_route_source_not_only_the_root(monkeypatch):
     """#162: карты одного робота могут идти через разные камеры."""
     import asyncio

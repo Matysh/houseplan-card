@@ -1282,7 +1282,13 @@ is persisted; Apply still sends only the exact ordinary config/layout pair that
 was previewed.
 
 Manual attachments upload over HTTP (streaming, transactional staging), not WS —
-the old `houseplan/file/set` was removed in v1.10.0.
+the old `houseplan/file/set` was removed in v1.10.0. A usable
+`Content-Length` is checked conservatively against the hard limit, aggregate
+quota and free-space floor before multipart streaming begins; chunked uploads
+retain the streaming cap. The exact staged size is checked again under the
+runtime `upload_lock` immediately before promotion. Decor-image decoding is
+also serialized by that lock so compressed images cannot multiply peak Pillow
+memory across concurrent requests.
 
 Manual virtual-light state is operational data, not plan configuration. The
 integration owns a separate versioned `houseplan.virtual_lights` Store whose
@@ -1291,8 +1297,11 @@ write lock serializes config reconciliation and atomic toggles. Eligibility is
 always recalculated from server config; the toggle command accepts no desired
 state, entity id or service. It is intentionally available to every
 authenticated View user, while config writers remain governed by `may_write`.
-The durable save precedes both reply and event. A config-revision gap from an
-older writer clears manual off bits to the compatibility default `on`.
+The runtime revision, reply and event are immediate; rapid toggles are
+coalesced into one delayed durable write of the latest state. Config
+transitions and integration unload flush pending state before continuing. A
+config-revision gap from an older writer clears manual off bits to the
+compatibility default `on`.
 
 The first `config/get` frame carries the coherent operational snapshot. Full
 cards subscribe directly to the update event; all `houseplan-space-card`
@@ -1315,6 +1324,13 @@ only canonical room-label placements, and copies one space through explicit
 geometry/presentation allowlists. The parser recomputes that projection and
 its placement manifest before showing a plan-only preview, so manually adding
 a private field while keeping `transfer.plan_only: true` is rejected.
+
+Export snapshots config and layout as one coherent deep copy while holding the
+shared write lock, then releases the lock before schema projection and content
+hashing in the executor. Thus an export reflects exactly one stored pair while
+ordinary reads and later writes do not wait for archive materialization.
+Import attachment/asset scans likewise run in the executor; only the paired
+revision check and commit remain serialized.
 
 The browser never parses imported configuration. Optimize, Optimize Undo, full
 import, space deletion and maintenance share the `optimize_pending`

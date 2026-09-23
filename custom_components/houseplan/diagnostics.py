@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from .store import HouseplanConfigEntry
 
 # Marker metadata may contain personal notes, external links and manual filenames.
-TO_REDACT = {"link", "description", "pdfs", "name"}
+TO_REDACT = {"link", "description", "pdfs", "name", "binding", "settings"}
 
 
 async def async_get_config_entry_diagnostics(
@@ -37,6 +37,8 @@ async def async_get_config_entry_diagnostics(
             for s in config.get("spaces", [])
         ],
         "markers": async_redact_data(config.get("markers", []), TO_REDACT),
-        "settings": config.get("settings", {}),
+        "settings": async_redact_data(
+            {"settings": config.get("settings", {})}, TO_REDACT
+        )["settings"],
         "layout_entries": len(layout),
     }

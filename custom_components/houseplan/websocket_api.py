@@ -72,6 +72,7 @@ from .import_export import (
 from .junction_limits import JunctionLimitError, validate_junction_limits
 from .plans import (
     QuotaError,
+    atomic_write,
     check_quota,
     collect_attachments,
     collect_plans,
@@ -113,6 +114,7 @@ from .validation import (
     MAX_PLAN_BYTES,
     PLAN_EXTENSIONS,
     POS_SCHEMA,
+    DuplicateMarkerIdError,
     MarkerControlError,
     OpeningPassageError,
     PartitionOpeningHostError,
@@ -121,6 +123,7 @@ from .validation import (
     prepare_ordinary_summary_candidate,
     sanitize_filename,
     valid_space_id,
+    validate_active_marker_ids,
     validate_marker_controls,
     validate_marker_light_entities,
     validate_marker_vacuum_routes,
@@ -141,6 +144,19 @@ from .wall_segment_model import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+_MISSING_REV_DEBUGGED: set[str] = set()
+
+
+def _debug_missing_revision_once(command: str, current_rev: int) -> None:
+    """Log one low-noise diagnostic per legacy write command."""
+    if command in _MISSING_REV_DEBUGGED:
+        return
+    _MISSING_REV_DEBUGGED.add(command)
+    _LOGGER.debug(
+        "House Plan: %s without expected_rev over rev %s; write rejected",
+        command,
+        current_rev,
+    )
 
 def _optimizer_backup_is_current(config_data: dict[str, Any], layout_data: dict[str, Any]) -> bool:
     """An optimization can be undone before any later ordinary plan edit."""
@@ -440,21 +456,23 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
         return
     try:
         async with rt.write_lock:
-            config_data = await rt.config_store.async_load() or {}
-            layout_data = await rt.store.async_load() or {}
-            document, filename = await hass.async_add_executor_job(
-                partial(
-                    create_export,
-                    rt,
-                    config_data,
-                    layout_data,
-                    kind=msg["kind"],
-                    space_id=msg.get("space_id"),
-                    plan_only=msg.get("plan_only", False),
-                    card_version=msg.get("card_version", ""),
-                    config_root=Path(hass.config.path("")),
-                )
+            # Copy one coherent pair while writers are excluded, then release
+            # the global lock before hashing assets and building the document.
+            config_data = copy.deepcopy(await rt.config_store.async_load() or {})
+            layout_data = copy.deepcopy(await rt.store.async_load() or {})
+        document, filename = await hass.async_add_executor_job(
+            partial(
+                create_export,
+                rt,
+                config_data,
+                layout_data,
+                kind=msg["kind"],
+                space_id=msg.get("space_id"),
+                plan_only=msg.get("plan_only", False),
+                card_version=msg.get("card_version", ""),
+                config_root=Path(hass.config.path("")),
             )
+        )
     except ImportFailure as err:
         _send_import_error(connection, msg["id"], err)
         return
@@ -575,8 +593,11 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                     "missing_plan",
                     "Plan file no longer exists: " + ", ".join(sorted(missing)),
                 )
-            missing_attachments = _missing_internal_attachments(
-                Path(hass.config.path("")), target_config, config_data.get("config")
+            missing_attachments = await hass.async_add_executor_job(
+                _missing_internal_attachments,
+                Path(hass.config.path("")),
+                target_config,
+                config_data.get("config"),
             )
             if missing_attachments:
                 raise ImportFailure(
@@ -751,11 +772,7 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             # indistinguishable from a stale writer.  Keep the schema field
             # optional only for rev-zero bootstrap and return the stable domain
             # conflict here rather than allowing canonical no-op to bypass CAS.
-            _LOGGER.warning(
-                "House Plan: layout/set without expected_rev over rev %s — "
-                "write rejected (outdated client?)",
-                current_rev,
-            )
+            _debug_missing_revision_once("layout/set", current_rev)
             connection.send_error(
                 msg["id"], "conflict",
                 f"Layout revision is required; reload the layout, or — for "
@@ -808,10 +825,6 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
         config_data = resolved.config_data
         config = config_data.get("config") or {}
         markers = config.get("markers") or []
-        deleted = any(
-            str(m.get("id")) == msg["device_id"] and m.get("removed") is True
-            for m in markers
-        )
         live_virtual = any(
             str(m.get("id")) == msg["device_id"] and m.get("removed") is not True
             and m.get("binding") == "virtual"
@@ -819,6 +832,10 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
         )
         live_explicit = any(
             str(m.get("id")) == msg["device_id"] and m.get("removed") is not True
+            for m in markers
+        )
+        deleted = not live_explicit and any(
+            str(m.get("id")) == msg["device_id"] and m.get("removed") is True
             for m in markers
         )
         orphan_virtual = (
@@ -1429,10 +1446,10 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         config = {**DEFAULT_CONFIG, **data.get("config", {})}
         config_rev = int(data.get("rev", 0))
         try:
-            virtual_lights = await async_virtual_light_snapshot(
-                rt.virtual_light_store,
-                config,
-                config_rev,
+            virtual_lights = await (
+                rt.virtual_lights.async_snapshot(config, config_rev)
+                if rt.virtual_lights is not None
+                else async_virtual_light_snapshot(rt.virtual_light_store, config, config_rev)
             )
         except Exception:  # noqa: BLE001 - config remains independently readable
             _LOGGER.exception("House Plan: reading virtual-light state failed")
@@ -1482,11 +1499,17 @@ async def ws_virtual_light_toggle(
     async with rt.write_lock:
         data = await rt.config_store.async_load() or {}
         config = {**DEFAULT_CONFIG, **data.get("config", {})}
-        result = await async_toggle_virtual_light(
-            rt.virtual_light_store,
-            config,
-            int(data.get("rev", 0)),
-            msg["marker_id"],
+        result = await (
+            rt.virtual_lights.async_toggle(
+                config, int(data.get("rev", 0)), msg["marker_id"]
+            )
+            if rt.virtual_lights is not None
+            else async_toggle_virtual_light(
+                rt.virtual_light_store,
+                config,
+                int(data.get("rev", 0)),
+                msg["marker_id"],
+            )
         )
         if result is None:
             connection.send_error(
@@ -1495,8 +1518,8 @@ async def ws_virtual_light_toggle(
                 "Marker is not an active virtual light with tap_action=toggle",
             )
             return
-    # Both the reply and event follow the durable Store write.  There is no
-    # optimistic client state, so all cards converge on this revision.
+    # The runtime revision is immediate; durable writes are coalesced and
+    # flushed before config transitions/unload.
     connection.send_result(msg["id"], result)
     hass.bus.async_fire(EVENT_VIRTUAL_LIGHT_UPDATED, result)
 
@@ -1627,11 +1650,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             # empty-store bootstrap and so this path can return the same stable
             # domain error as an explicit stale revision.  Accepting it over a
             # saved document would bypass optimistic locking entirely.
-            _LOGGER.warning(
-                "House Plan: config/set without expected_rev over rev %s — "
-                "write rejected (outdated client?)",
-                current_rev,
-            )
+            _debug_missing_revision_once("config/set", current_rev)
             connection.send_error(
                 msg["id"], "conflict",
                 f"Configuration revision is required; reload the configuration, "
@@ -1670,6 +1689,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             )
             msg["config"].clear()
             msg["config"].update(checked)
+            validate_active_marker_ids(msg["config"], data.get("config"))
             validate_marker_controls(msg["config"], data.get("config"))
             validate_marker_light_entities(msg["config"], data.get("config"))
             validate_marker_radars(
@@ -1686,7 +1706,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         try:
             candidate_counts = await hass.async_add_executor_job(_validate_config_cpu)
         except (
-            JunctionLimitError, MarkerControlError, OpeningPassageError,
+            DuplicateMarkerIdError, JunctionLimitError, MarkerControlError, OpeningPassageError,
             PartitionOpeningHostError, PartitionOpeningJambMarginError,
             WallModelClientOutdatedError,
         ) as err:
@@ -1916,6 +1936,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                 )
                 return
             target_config = CONFIG_SCHEMA(target_config)
+            validate_active_marker_ids(target_config, current_config)
             target_layout = LAYOUT_SCHEMA(target_layout)
             new_config_rev = config_rev + 1
             new_layout_rev = layout_rev + 1
@@ -1951,6 +1972,9 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
         return
     except ImportFailure as err:
         _send_import_error(connection, msg["id"], err)
+        return
+    except DuplicateMarkerIdError as err:
+        connection.send_error(msg["id"], err.code, str(err))
         return
     except vol.Invalid as err:
         connection.send_error(msg["id"], "invalid_config", str(err))
@@ -2058,6 +2082,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
                 return None, migrated_size
             msg["config"].clear()
             msg["config"].update(checked)
+            validate_active_marker_ids(msg["config"], config_data.get("config"))
             validate_marker_controls(msg["config"], config_data.get("config"))
             validate_marker_light_entities(msg["config"], config_data.get("config"))
             validate_marker_radars(
@@ -2093,7 +2118,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
                 )
                 return
         except (
-            JunctionLimitError, MarkerControlError, OpeningPassageError,
+            DuplicateMarkerIdError, JunctionLimitError, MarkerControlError, OpeningPassageError,
             PartitionOpeningHostError, PartitionOpeningJambMarginError,
             WallModelClientOutdatedError,
             WallSegmentMigrationError,
@@ -2347,8 +2372,7 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
         # (HP-1490-02). A failed write reserves nothing — the file either
         # exists and is counted by the next scan, or does not and is not.
         check_quota(plans_dir, len(raw), MAX_PLANS_BYTES, MAX_PLANS_FILES)
-        plans_dir.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(raw)
+        atomic_write(path, raw, prefix=".plan-upload-")
 
     data = _runtime(hass, connection, msg["id"])
     if data is None:

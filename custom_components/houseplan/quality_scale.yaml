@@ -123,4 +123,7 @@ rules:
     comment: No dependencies.
   inject-websession:
     status: exempt
-    comment: No outgoing HTTP.
+    comment: >-
+      The optional user-confirmed support relay is the integration's only
+      outgoing HTTP path and creates its bounded ClientSession explicitly;
+      ordinary plan, device and asset operation remains local.

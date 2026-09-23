@@ -111,6 +111,25 @@ async def test_read_only_authenticated_user_can_toggle(
     assert response["result"]["on"] is False
 
 
+async def test_unload_flushes_a_toggle_still_inside_the_debounce_window(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    monkeypatch,
+) -> None:
+    from custom_components.houseplan import virtual_lights as virtual_lights_module
+
+    monkeypatch.setattr(virtual_lights_module, "SAVE_DELAY_S", 3600)
+    entry = await _setup(hass)
+    client = await hass_ws_client(hass)
+    await _set_config(client, _config(_manual()), 0)
+    assert (await _toggle(client))["result"]["on"] is False
+    assert (await entry.runtime_data.virtual_light_store.async_load())["off"] == []
+
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    restarted = await hass_ws_client(hass)
+    assert (await _get_config(restarted))["virtual_lights"]["off"] == ["lamp"]
+
+
 async def test_lifecycle_preserves_hidden_and_prunes_when_eligibility_ends(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
 ) -> None:
@@ -156,7 +175,7 @@ async def test_invalid_target_and_concurrent_toggles_are_server_atomic(
     assert (await _get_config(client))["virtual_lights"]["off"] == []
 
 
-async def test_failed_durable_save_emits_neither_success_nor_event(
+async def test_failed_delayed_save_keeps_immediate_result_and_is_flushable(
     hass: HomeAssistant,
     hass_ws_client: WebSocketGenerator,
     monkeypatch,
@@ -173,9 +192,21 @@ async def test_failed_durable_save_emits_neither_success_nor_event(
     async def fail_save(_data):
         raise OSError("disk full")
 
+    from custom_components.houseplan import virtual_lights as virtual_lights_module
+
+    original_save = entry.runtime_data.virtual_light_store.async_save
+    monkeypatch.setattr(virtual_lights_module, "SAVE_DELAY_S", 0)
     monkeypatch.setattr(entry.runtime_data.virtual_light_store, "async_save", fail_save)
     response = await _toggle(client)
     await hass.async_block_till_done()
+    assert response["success"]
+    assert events == [response["result"]]
+    assert entry.runtime_data.virtual_lights._dirty is True
+
+    monkeypatch.setattr(entry.runtime_data.virtual_light_store, "async_save", original_save)
+    await entry.runtime_data.virtual_lights.async_flush()
     remove()
-    assert not response["success"]
-    assert events == []
+    assert entry.runtime_data.virtual_lights._dirty is False
+    assert await entry.runtime_data.virtual_light_store.async_load() == {
+        "rev": 1, "config_rev": 1, "off": ["lamp"],
+    }

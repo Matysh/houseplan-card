@@ -455,16 +455,30 @@ class TrailRecorder:
                 self.hass, sorted(ents), self._on_state
             )
 
-    def teardown(self) -> None:
+    def _close_subscriptions(self) -> bool:
+        """Stop callbacks/timers and report whether a save was pending."""
         # HP-1540-05: flag FIRST — a refresh parked on its awaited load must
-        # not re-subscribe after this cleanup has already run
+        # not re-subscribe after this cleanup has already run.
         self._closed = True
         if self._unsub_track:
             self._unsub_track()
             self._unsub_track = None
+        pending = self._unsub_save is not None
         if self._unsub_save:
             self._unsub_save()
             self._unsub_save = None
+        return pending
+
+    async def async_teardown(self) -> None:
+        """Stop the recorder and durably flush a pending debounced save."""
+        async with self._refresh_lock:
+            pending = self._close_subscriptions()
+            if pending:
+                await self.store.async_save(self.book.data)
+
+    def teardown(self) -> None:
+        """Synchronous emergency cleanup for already-closing event loops."""
+        self._close_subscriptions()
 
     def _vacuum_entity(self, m: dict[str, Any]) -> str | None:
         b = str(m.get("binding") or "")

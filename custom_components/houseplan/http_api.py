@@ -255,13 +255,6 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
         if not filename:
             return web.json_response({"error": "invalid_format"}, status=400)
 
-        try:
-            validated = await hass.async_add_executor_job(
-                validate_asset, b"".join(blocks), filename, declared_mime,
-            )
-        except DecorAssetError as err:
-            return web.json_response({"error": err.code, "message": str(err)}, status=413 if err.code == "too_large" else 400)
-
         root = Path(hass.config.path(ASSETS_DIR))
 
         def _store() -> tuple[dict, bool]:
@@ -339,9 +332,19 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
 
         try:
             async with runtime.upload_lock:
+                # Pillow may consume far more RSS than the compressed body.
+                # Serialise decode/validation as well as quota+promotion so N
+                # parallel uploads cannot become N simultaneous decoders.
+                validated = await hass.async_add_executor_job(
+                    validate_asset, b"".join(blocks), filename, declared_mime,
+                )
                 row, reused = await hass.async_add_executor_job(_store)
         except DecorAssetError as err:
-            status = 507 if err.code == "capacity_exceeded" else 400
+            status = (
+                507 if err.code == "capacity_exceeded"
+                else 413 if err.code == "too_large"
+                else 400
+            )
             return web.json_response({"error": err.code, "message": str(err)}, status=status)
         except OSError as err:
             _LOGGER.warning("House Plan decor asset upload: store failed: %s", err)
@@ -362,6 +365,36 @@ class HouseplanUploadView(HomeAssistantView):
             return web.json_response({"error": "unauthorized"}, status=403)
 
         files_root = Path(hass.config.path(FILES_DIR))
+        runtime = get_data(hass)
+        if runtime is None:
+            return web.json_response({"error": "not_ready"}, status=503)
+
+        # Content-Length includes small multipart overhead, making it a safe
+        # conservative upper bound. Reject impossible requests before reading
+        # or creating a temporary file; the exact staged size is checked again
+        # under the same lock immediately before promotion.
+        declared_size = getattr(request, "content_length", None)
+        if declared_size is not None and declared_size > 0:
+            if declared_size > MAX_FILE_BYTES + _FLUSH_AT:
+                return web.json_response(
+                    {"error": "too_large", "max_mb": MAX_FILE_BYTES // 1024 // 1024},
+                    status=413,
+                )
+            try:
+                async with runtime.upload_lock:
+                    await hass.async_add_executor_job(
+                        partial(
+                            check_quota,
+                            files_root,
+                            declared_size,
+                            MAX_FILES_BYTES,
+                            MAX_FILES_COUNT,
+                        )
+                    )
+            except QuotaError as err:
+                return web.json_response(
+                    {"error": err.reason, "detail": err.detail}, status=507
+                )
         marker_id = "misc"
         filename: str | None = None
         # Every temporary file this request creates, promoted or not. The outer
@@ -444,21 +477,6 @@ class HouseplanUploadView(HomeAssistantView):
                 return web.json_response({"error": "no_file"}, status=400)
 
             tmp_path = temps[0]
-            try:
-                # The staged file already sits under files_root: hand it to
-                # the quota as `incoming` only, not as stored usage too (#498).
-                await hass.async_add_executor_job(
-                    partial(
-                        check_quota, files_root, tmp_path.stat().st_size,
-                        MAX_FILES_BYTES, MAX_FILES_COUNT, exclude=tmp_path,
-                        additional_disk_bytes=0,
-                    ),
-                )
-            except QuotaError as err:
-                _LOGGER.warning("House Plan upload refused: %s", err.detail)
-                return web.json_response({"error": err.reason, "detail": err.detail}, status=507)
-            except OSError:
-                pass
             target_dir = files_root / marker_id
             safe_name = filename
 
@@ -480,8 +498,27 @@ class HouseplanUploadView(HomeAssistantView):
                     raise
                 return name
 
+            def _check_and_promote() -> str:
+                # The staged file already sits under files_root: hand it to
+                # the quota as `incoming` only, not as stored usage too (#498).
+                check_quota(
+                    files_root,
+                    tmp_path.stat().st_size,
+                    MAX_FILES_BYTES,
+                    MAX_FILES_COUNT,
+                    exclude=tmp_path,
+                    additional_disk_bytes=0,
+                )
+                return _promote()
+
             try:
-                name = await hass.async_add_executor_job(_promote)
+                async with runtime.upload_lock:
+                    name = await hass.async_add_executor_job(_check_and_promote)
+            except QuotaError as err:
+                _LOGGER.warning("House Plan upload refused: %s", err.detail)
+                return web.json_response(
+                    {"error": err.reason, "detail": err.detail}, status=507
+                )
             except OSError as err:
                 _LOGGER.warning("House Plan upload: could not store the file: %s", err)
                 return web.json_response({"error": "io_error"}, status=500)

@@ -42,6 +42,62 @@ class MarkerControlError(ValueError):
         self.code = code
 
 
+class DuplicateMarkerIdError(ValueError):
+    """A write introduced or retained a changed duplicate active marker id."""
+
+    code = "invalid_config"
+
+    def __init__(self) -> None:
+        # Marker ids may contain user-controlled entity/device identifiers. A
+        # stable message is enough and does not leak the value into logs.
+        super().__init__("duplicate active marker id")
+
+
+def _active_marker_groups(config: dict | None) -> dict[str, list[str]]:
+    """Return order-independent structural signatures grouped by live id."""
+    groups: dict[str, list[str]] = {}
+    for marker in (config or {}).get("markers") or []:
+        if not isinstance(marker, dict) or marker.get("removed") is True:
+            continue
+        marker_id = marker.get("id")
+        if not isinstance(marker_id, str) or not marker_id:
+            continue
+        groups.setdefault(marker_id, []).append(
+            json.dumps(marker, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+        )
+    for signatures in groups.values():
+        signatures.sort()
+    return groups
+
+
+def validate_active_marker_ids(
+    config: dict,
+    previous: dict | None = None,
+    *,
+    validate_all: bool = False,
+) -> None:
+    """Reject new active-id ambiguity without stranding legacy documents.
+
+    Existing duplicate groups may round-trip unchanged so an unrelated save
+    remains possible. Once any member changes, the candidate must repair the
+    group down to at most one active marker. Authoritative imports pass
+    ``validate_all=True`` because they have no local legacy group to preserve.
+    """
+    candidate = _active_marker_groups(config)
+    duplicates = {
+        marker_id: signatures
+        for marker_id, signatures in candidate.items()
+        if len(signatures) > 1
+    }
+    if not duplicates:
+        return
+    if validate_all or previous is None:
+        raise DuplicateMarkerIdError()
+    old = _active_marker_groups(previous)
+    if any(old.get(marker_id) != signatures for marker_id, signatures in duplicates.items()):
+        raise DuplicateMarkerIdError()
+
+
 class OpeningPassageError(ValueError):
     """Semantic open-passage error with a stable public code and payload."""
 

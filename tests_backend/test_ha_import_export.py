@@ -10,6 +10,7 @@ import asyncio
 import copy
 import hashlib
 import json
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -702,6 +703,22 @@ def test_full_preview_drops_dormant_broken_and_duplicate_links(tmp_path: Path) -
     imported = candidate["document"]["payload"]["config"]
     controller = next(marker for marker in imported["markers"] if marker["id"] == "controller")
     assert controller["controls"] == ["marker:dumb", "switch.keep"]
+
+
+def test_full_import_rejects_duplicate_active_marker_ids(tmp_path: Path) -> None:
+    document = _document(tmp_path)
+    document["payload"]["config"]["markers"].append({
+        "id": "lamp", "binding": "virtual", "name": "Ambiguous duplicate",
+    })
+    with pytest.raises(ImportFailure) as invalid:
+        create_preview(
+            SimpleNamespace(instance_id="instance-a", import_previews={}),
+            json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+            current_config_data={"config": _config(), "rev": 1},
+            current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+        )
+    assert invalid.value.code == "invalid_config"
+    assert str(invalid.value) == "duplicate active marker id"
 
 
 @pytest.mark.parametrize("kind", ["self", "cycle"])
@@ -2357,6 +2374,64 @@ async def test_full_export_waits_for_a_concurrent_paired_write(
     payload = exported.result["document"]["payload"]
     assert payload["config"]["spaces"][0]["title"] == "Concurrent target"
     assert payload["layout"] == new_layout
+
+
+async def test_config_get_does_not_wait_for_slow_export_materialization(
+    hass: HomeAssistant, monkeypatch,
+) -> None:
+    await _setup(hass)
+    rt = get_data(hass)
+    assert rt is not None
+    await rt.config_store.async_save({"config": _config(), "rev": 1})
+    await rt.store.async_save({"layout": {}, "rev": 1})
+
+    started = threading.Event()
+    release = threading.Event()
+    original = wsapi.create_export
+
+    def slow_export(*args, **kwargs):
+        started.set()
+        assert release.wait(5), "test did not release the delayed export"
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(wsapi, "create_export", slow_export)
+    exported = _Connection()
+    export_task = asyncio.create_task(wsapi.ws_export_create.__wrapped__(hass, exported, {
+        "id": 45, "type": "houseplan/export/create", "kind": "full",
+        "card_version": "review",
+    }))
+    try:
+        assert await hass.async_add_executor_job(started.wait, 2)
+        read = _Connection()
+        await asyncio.wait_for(
+            wsapi.ws_config_get.__wrapped__(
+                hass, read, {"id": 46, "type": "houseplan/config/get"},
+            ),
+            timeout=1,
+        )
+        assert read.error is None and read.result is not None
+        assert not export_task.done()
+    finally:
+        release.set()
+        await export_task
+
+
+async def test_import_attachment_scan_runs_in_executor(
+    hass: HomeAssistant, tmp_path: Path, monkeypatch,
+) -> None:
+    await _setup(hass)
+    _rt, response, _document_value = await _candidate(hass, tmp_path)
+    loop_thread = threading.get_ident()
+    called_from: list[int] = []
+
+    def observed_scan(*_args):
+        called_from.append(threading.get_ident())
+        return set()
+
+    monkeypatch.setattr(wsapi, "_missing_internal_attachments", observed_scan)
+    connection = await _apply(hass, response)
+    assert connection.error is None and connection.result is not None
+    assert called_from and all(thread_id != loop_thread for thread_id in called_from)
 
 
 @pytest.mark.parametrize(("endpoint", "message"), [

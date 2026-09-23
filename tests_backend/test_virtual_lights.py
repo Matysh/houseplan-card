@@ -23,6 +23,7 @@ async_reconcile_virtual_lights = _vl.async_reconcile_virtual_lights
 async_toggle_virtual_light = _vl.async_toggle_virtual_light
 async_virtual_light_snapshot = _vl.async_virtual_light_snapshot
 eligible_virtual_light_ids = _vl.eligible_virtual_light_ids
+VirtualLightController = _vl.VirtualLightController
 
 
 class FakeStore:
@@ -94,3 +95,23 @@ def test_toggle_accepts_only_an_id_and_inverts_server_current_state():
     assert first == {"marker_id": "lamp", "on": False, "rev": 1}
     assert second == {"marker_id": "lamp", "on": True, "rev": 2}
     assert _run(async_toggle_virtual_light(store, config, 1, "missing")) is None
+
+
+def test_runtime_controller_coalesces_rapid_toggles_into_one_durable_write():
+    async def exercise():
+        old_delay = _vl.SAVE_DELAY_S
+        _vl.SAVE_DELAY_S = 0.01
+        try:
+            store = FakeStore()
+            controller = VirtualLightController(store)
+            first = await controller.async_toggle(_config(_manual("lamp")), 1, "lamp")
+            second = await controller.async_toggle(_config(_manual("lamp")), 1, "lamp")
+            await controller.async_flush()
+            return first, second, store
+        finally:
+            _vl.SAVE_DELAY_S = old_delay
+
+    first, second, store = _run(exercise())
+    assert first == {"marker_id": "lamp", "on": False, "rev": 1}
+    assert second == {"marker_id": "lamp", "on": True, "rev": 2}
+    assert store.writes == [{"rev": 2, "config_rev": 1, "off": []}]
