@@ -447,8 +447,11 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 17_900;
  *   классов из разметки): итог #600 — 222 900 → 243 900 (+21 000, из них
  *   ≈ 12 000 — четыре словаря `i18n/settings`, остальное — лист набора и
  *   разметка четырёх форм с валидацией и dirty).
+ * - #608: 243 900 → 244 400 (замер 243 597). Атомарный commit числового поля
+ *   добавил общий normalizer и обработчик change в form-kit; новый потолок
+ *   оставляет 803 Б сверху и 1 197 Б до нижней границы полосы.
  */
-export const LAZY_EDITOR_GZIP_CEILING = 243_900;
+export const LAZY_EDITOR_GZIP_CEILING = 244_400;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

@@ -16,7 +16,11 @@ const out = await page.evaluate(async () => {
   const settle = async () => { for (let i = 0; i < 6; i++) { await c.updateComplete; await new Promise((r) => setTimeout(r, 40)); } };
   const q = (kind, sel) => sr().querySelector(`hp-dialog[data-kind="${kind}"]`)?.querySelector(sel);
   const qa = (kind, sel) => [...(sr().querySelector(`hp-dialog[data-kind="${kind}"]`)?.querySelectorAll(sel) || [])];
-  const input = (el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); };
+  const input = (el, value) => {
+    el.value = value;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  };
   const change = (el, value) => { if (value !== undefined) el.value = value; el.dispatchEvent(new Event('change', { bubbles: true })); };
   const radio = (kind, name, value) => { const r = qa(kind, `input[name="${name}"]`).find((x) => x.value === value); r.checked = true; change(r); };
   const saveViaUi = async (kind) => { q(kind, '.dialog-action-commit [data-hp="dialog-confirm"]').click(); await settle(); };

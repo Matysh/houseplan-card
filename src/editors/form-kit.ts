@@ -407,18 +407,25 @@ export interface UnitInputOptions {
   /** Растянуть на всю ширину контейнера. */
   wide?: boolean;
   onInput: (raw: string) => void;
+  /** Необязательный атомарный commit для полей с промежуточным текстовым вводом. */
+  onChange?: (raw: string, input: HTMLInputElement) => void;
 }
 
 /** Числовое поле с единицей внутри рамки (§3.1 «unit-inside»). */
 export function unitInput({
-  id, describedBy, value, unit, min, max, step, placeholder, ariaLabel, invalid, disabled, wide, onInput,
+  id, describedBy, value, unit, min, max, step, placeholder, ariaLabel, invalid, disabled, wide,
+  onInput, onChange,
 }: UnitInputOptions): TemplateResult {
   return html`<span class="hpf-unit ${wide ? 'hpf-unit-wide' : ''}">
-    <input id=${id ?? nothing} type="number" inputmode="decimal" .value=${value} aria-describedby=${describedBy ?? nothing}
+    <input id=${id ?? nothing} type="number" inputmode="decimal" .value=${value}
+      aria-describedby=${describedBy ?? nothing}
       min=${min ?? nothing} max=${max ?? nothing} step=${step ?? nothing}
       placeholder=${placeholder ?? nothing} aria-label=${ariaLabel ?? nothing}
       aria-invalid=${invalid ? 'true' : nothing} ?disabled=${disabled}
-      @input=${(e: Event) => onInput((e.target as HTMLInputElement).value)} />
+      @input=${(e: Event) => onInput((e.target as HTMLInputElement).value)}
+      @change=${onChange
+        ? (e: Event) => onChange((e.target as HTMLInputElement).value, e.target as HTMLInputElement)
+        : nothing} />
     <span>${unit}</span>
   </span>`;
 }
@@ -438,15 +445,45 @@ export interface RangeLineOptions {
   id?: string;
 }
 
+function stepPrecision(step: number): number {
+  const text = String(step).toLowerCase();
+  if (!text.includes('e')) return (text.split('.')[1] || '').length;
+  const [coefficient, exponentText] = text.split('e');
+  const fraction = (coefficient.split('.')[1] || '').length;
+  return Math.max(0, fraction - Number(exponentText));
+}
+
+/** Convert a committed range-line draft into the exact value its slider can represent. */
+export function committedRangeLineValue(
+  raw: string, min: number, max: number, step: number,
+): number | null {
+  if (!raw.trim()) return null;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || !Number.isFinite(step) || step <= 0) return null;
+  const clamped = Math.min(max, Math.max(min, parsed));
+  const snapped = min + Math.round((clamped - min) / step) * step;
+  const precision = stepPrecision(step);
+  return Math.min(max, Math.max(min, Number(snapped.toFixed(precision))));
+}
+
 /** Слайдер + числовое поле с единицей в одну строку (§3.1 «range-line»). */
 export function rangeLine({ min, max, step, value, unit, ariaLabel, disabled, slider, onInput, id }: RangeLineOptions): TemplateResult {
   return html`<div class="hpf-range">
     ${slider}
     ${unitInput({
       id, value: String(value), unit, min, max, step, ariaLabel, disabled,
-      onInput: (raw) => {
-        const n = Number(raw);
-        if (Number.isFinite(n)) onInput(Math.min(max, Math.max(min, n)));
+      // A partial string is not product state. Commit it atomically on change;
+      // Lit preserves it across renders while the confirmed value is stable,
+      // but an intervening slider change produces a new value and wins.
+      onInput: () => undefined,
+      onChange: (raw, input) => {
+        const next = committedRangeLineValue(raw, min, max, step);
+        if (next === null) {
+          input.value = String(value);
+          return;
+        }
+        input.value = String(next);
+        onInput(next);
       },
     })}
   </div>`;

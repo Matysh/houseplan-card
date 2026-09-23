@@ -73,6 +73,21 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'range-line-clamps-every-keystroke',
+    guard: 'node demo/smoke_range_line_draft.mjs',
+    because: '#608 AC1/AC5: partial keyboard text must stay local until commit. Restoring the '
+      + 'old per-input clamp mutates the host draft on the first digit and makes 120 impossible '
+      + 'to enter as a sequence.',
+    patches: [{
+      file: 'src/editors/form-kit.ts',
+      find: '      onInput: () => undefined,',
+      replace: '      onInput: (raw) => {\n'
+        + '        const n = Number(raw);\n'
+        + '        if (Number.isFinite(n)) onInput(Math.min(max, Math.max(min, n)));\n'
+        + '      },',
+    }],
+  },
+  {
     id: 'ha-form-shell-width-falls-back-to-generic',
     guard: 'node demo/smoke_ha_form_shell_parity.mjs',
     because: '#609 AC1: the authentic HA branch must consume the reviewed 560 px form '

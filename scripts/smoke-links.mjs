@@ -28,6 +28,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['rangeLine', 'committedRangeLineValue'],
+    smokes: ['smoke_range_line_draft.mjs', 'smoke_dialog_config_parity.mjs'],
+    because: '#608: the production-bundle witnesses type partial numeric text into real settings '
+      + 'dialogs, observe that host drafts stay unchanged until commit, and verify field/slider '
+      + 'synchronisation; neither browser smoke imports the form-kit helper',
+  },
+  {
     symbols: ['canonicalFurnitureId'],
     smokes: ['smoke_furniture.mjs'],
     because: '#606: the bundled furniture palette and saved cactus object are checked through '
