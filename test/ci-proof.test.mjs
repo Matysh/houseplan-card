@@ -133,6 +133,8 @@ test('#541 AC: full red followed by light green still blocks release; a later fu
   assert.equal(selectCiProofVerdict([light, red]).status, 'failed');
   const newerFull = evaluateCiProof({ ...proofFixture({ id: 22 }), policy: CI_PROOF_POLICIES.release });
   assert.equal(selectCiProofVerdict([newerFull, light, red]).status, 'green');
+  assert.equal(selectCiProofVerdict([red, newerFull]).status, 'green',
+    '#619: a failed duplicate cannot hide a complete green proof for the same candidate');
 });
 
 test('#601 AC3: release policy accepts a full proof without requested mutants; light stays stale; review/merge still demand them', () => {

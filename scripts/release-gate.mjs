@@ -76,7 +76,11 @@ export async function classifyValidateProofs({
       }
     }
     const current = evaluations.at(-1);
-    if (current.status !== 'cancelled' && current.status !== 'stale') break;
+    // #619: a complete proof is immutable evidence for this exact SHA/tree.
+    // A later duplicate may fail for workflow topology rather than product
+    // content, so only a green proof ends the search; failures remain the
+    // fallback verdict when no run proves the candidate green.
+    if (current.status === 'green') break;
   }
   return selectCiProofVerdict(evaluations);
 }

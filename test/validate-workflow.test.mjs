@@ -167,15 +167,32 @@ test('классификация опирается на завершённый 
   assert.match(changes, /actions: read/, 'чтение прогонов требует прав');
   // У PR диапазон задан событием, считать его нечем и незачем.
   assert.match(changes, /if: github\.event_name != 'pull_request'/);
-  // На dev классификации нет вовсе — там всё true; шаг там считает базу
-  // диапазона для другого потребителя (#388), и это разные выходы.
-  assert.match(changes, /dev: без фильтров, всё true/);
+  // На dev/main классификации нет вовсе — там всё true; шаг там считает базу
+  // диапазона для другого потребителя (#388, #619), и это разные выходы.
+  assert.match(changes, /dev\/main: без фильтров, всё true/);
   assert.match(changes, /--name=range_base/);
   // Пустая база означает «доказательства нет» и обязана вести к полному
   // прогону, а не к пустому диффу, который выглядел бы как «ничего не менялось».
   const empty = changes.slice(changes.indexOf('if [ -z "$base" ]'));
   assert.match(empty, /node scripts\/classify-changes\.mjs --all >> "\$GITHUB_OUTPUT"/,
     'без базы классификация обязана раскрываться в полный прогон');
+});
+
+test('#619: Validate на main раскрывает полный набор так же, как на dev', () => {
+  const workflow = read('validate.yml');
+  const changes = workflow.slice(
+    workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'),
+  );
+  const integrationRefs = /\[ "\$REF" = "refs\/heads\/dev" \] \|\| \[ "\$REF" = "refs\/heads\/main" \]/g;
+  assert.equal(changes.match(integrationRefs)?.length, 2,
+    'base и classify обязаны одинаково распознавать dev/main');
+  assert.match(changes, /dev\/main: без фильтров, всё true/);
+
+  const frontend = workflow.slice(
+    workflow.indexOf('\n  frontend:\n'), workflow.indexOf('\n  smoke:\n'),
+  );
+  assert.match(frontend, integrationRefs,
+    'no-new-any на main обязан судить диапазон от доказанного предка, а не HEAD..HEAD');
 });
 
 test('перф-смок добавляет профиль ровно при своём выходе changes (#473 AC3)', () => {

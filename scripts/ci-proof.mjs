@@ -355,12 +355,18 @@ export function evaluateCiProof({
   return result('green', `${policy?.name || 'consumer'} proof is complete`);
 }
 
-/** Newest relevant proof wins; cancelled and policy-inadequate stale runs do not. */
+/**
+ * A complete green proof is content-addressed evidence for the candidate and
+ * remains valid regardless of a later duplicate run (#619). When no green
+ * proof exists, keep the newest decisive state so failures still fail closed.
+ */
 export function selectCiProofVerdict(evaluations) {
-  for (const item of evaluations || []) {
-    if (item?.status === 'cancelled' || item?.status === 'stale') continue;
-    return item;
-  }
+  const relevant = (evaluations || []).filter(
+    (item) => item?.status !== 'cancelled' && item?.status !== 'stale',
+  );
+  const green = relevant.find((item) => item?.status === 'green');
+  if (green) return green;
+  if (relevant.length) return relevant[0];
   return { status: 'missing', note: 'no run carries a proof for the requested policy', url: null };
 }
 
