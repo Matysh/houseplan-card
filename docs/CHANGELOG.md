@@ -3,8 +3,8 @@
 ## Unreleased
 
 - Numeric fields beside sliders in room, space and device settings now accept
-  multi-digit typing without jumping to a limit: the value is committed on
-  leaving the field,
+  multi-digit typing without jumping to a limit: the value is committed when
+  the field is left,
   snaps to the slider step and stays synchronized with the slider
   ([#608](https://github.com/Matysh/houseplan-card/issues/608)).
 - After scrolling a dashboard, taps once again belong to the device directly
