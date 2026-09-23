@@ -21,6 +21,76 @@ export interface DeviceHitCandidate {
   floorRadius: number;
 }
 
+/**
+ * Every target whose own scroll can move a card in client coordinates.
+ *
+ * `scroll` is neither bubbling nor composed. A listener on `document` cannot
+ * see a Home Assistant dashboard scroller behind a shadow boundary, so walk
+ * the rendered (slot/shadow-host) ancestry and listen to each target directly.
+ */
+export function deviceHitScrollSources(host: Node): EventTarget[] {
+  const sources: EventTarget[] = [];
+  const seen = new Set<EventTarget>();
+  const add = (source: EventTarget | null | undefined): void => {
+    if (!source || seen.has(source)) return;
+    seen.add(source);
+    sources.push(source);
+  };
+
+  let current: Node | null = host;
+  while (current) {
+    if (current.nodeType === 1 || current.nodeType === 9) add(current);
+    const assignedSlot = current.nodeType === 1
+      ? (current as Element).assignedSlot : null;
+    if (assignedSlot) {
+      current = assignedSlot;
+      continue;
+    }
+    if (current.parentElement) {
+      current = current.parentElement;
+      continue;
+    }
+    const root = current.getRootNode();
+    const shadowHost = root.nodeType === 11 && 'host' in root
+      ? (root as ShadowRoot).host : null;
+    if (shadowHost) {
+      current = shadowHost;
+      continue;
+    }
+    const document = current.ownerDocument;
+    current = document && current !== document ? document : null;
+  }
+
+  const document = host.nodeType === 9 ? host as Document : host.ownerDocument;
+  add(document?.defaultView);
+  return sources;
+}
+
+/** Subscribe to client-coordinate shifts and return an idempotent teardown. */
+export function observeDeviceHitGeometryScroll(
+  host: Node,
+  invalidate: () => void,
+): () => void {
+  const sources = deviceHitScrollSources(host);
+  const document = host.nodeType === 9 ? host as Document : host.ownerDocument;
+  const viewport = document?.defaultView?.visualViewport;
+  const handler = (): void => invalidate();
+  for (const source of sources) {
+    source.addEventListener('scroll', handler, { passive: true });
+  }
+  viewport?.addEventListener('scroll', handler, { passive: true });
+  viewport?.addEventListener('resize', handler, { passive: true });
+
+  let active = true;
+  return (): void => {
+    if (!active) return;
+    active = false;
+    for (const source of sources) source.removeEventListener('scroll', handler);
+    viewport?.removeEventListener('scroll', handler);
+    viewport?.removeEventListener('resize', handler);
+  };
+}
+
 const EPSILON = 1e-7;
 
 const distanceSquared = (a: DeviceHitPoint, b: DeviceHitPoint): number => {

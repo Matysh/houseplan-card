@@ -26,6 +26,104 @@ out.pinchZoomsInPlanEditor = await page.evaluate(() => {
   return zoomed && c._path.length === 0;
 });
 
+// #613: persistence is a gesture terminal effect, not synchronous work in
+// either pointermove path. Count only the zoom key and exercise both the plain
+// stage pipeline and the capture path used when a device swallows bubbling.
+Object.assign(out, await page.evaluate(async () => {
+  const c = window.__card;
+  const storagePrototype = Object.getPrototypeOf(localStorage);
+  const originalSetItem = storagePrototype.setItem;
+  let zoomWrites = 0;
+  storagePrototype.setItem = function setItem(key, value) {
+    if (key === 'houseplan_card_zoom_v1') zoomWrites += 1;
+    return originalSetItem.call(this, key, value);
+  };
+  const resetPointers = () => {
+    c._pointers.clear();
+    c._touchContacts.clear();
+    c._pinchStart = null;
+    c._panStart = null;
+    c._panLock = null;
+    c._pinchZoomDirty = false;
+    c._viewportGestureDirty = false;
+  };
+  const directPointer = (id, x, target = c._stageEl) => ({
+    pointerId: id, pointerType: 'touch', clientX: x, clientY: 300,
+    target, button: 0, isPrimary: id % 2 === 1, composedPath: () => [target],
+    preventDefault() {},
+  });
+
+  try {
+    c._setMode('view');
+    await c.updateComplete;
+    c._cancelCameraTransition(false);
+    resetPointers();
+    const directStart = zoomWrites;
+    c._stagePointerDown(directPointer(201, 300));
+    c._stagePointerDown(directPointer(202, 400));
+    for (const [left, right] of [[285, 415], [270, 430], [250, 450]]) {
+      c._stagePointerMove(directPointer(201, left));
+      c._stagePointerMove(directPointer(202, right));
+    }
+    const directMoveWrites = zoomWrites - directStart;
+    c._stagePointerUp(directPointer(201, 250));
+    const directFirstTerminalWrites = zoomWrites - directStart;
+    c._stagePointerUp(directPointer(202, 450));
+    const directTotalWrites = zoomWrites - directStart;
+
+    const stage = c._stageEl;
+    const marker = c.renderRoot.querySelector('.dev[data-entity]')
+      || c.renderRoot.querySelector('.dev');
+    const pointer = (type, id, target, x) => target.dispatchEvent(new PointerEvent(type, {
+      bubbles: true, composed: true, cancelable: true, pointerId: id,
+      pointerType: 'touch', clientX: x, clientY: 300,
+      button: type === 'pointerdown' ? 0 : -1,
+    }));
+    const captureGesture = (firstTerminal, secondTerminal, base) => {
+      resetPointers();
+      const start = zoomWrites;
+      pointer('pointerdown', base, stage, 400);
+      pointer('pointerdown', base + 1, marker, 300);
+      pointer('pointermove', base, stage, 450);
+      pointer('pointermove', base + 1, marker, 250);
+      pointer('pointermove', base, stage, 470);
+      const moveWrites = zoomWrites - start;
+      pointer(firstTerminal, base + 1, marker, 250);
+      const firstWrites = zoomWrites - start;
+      pointer(secondTerminal, base, stage, 470);
+      return { moveWrites, firstWrites, totalWrites: zoomWrites - start };
+    };
+    const captureTerminals = marker ? [
+      captureGesture('pointerup', 'pointerup', 210),
+      captureGesture('pointercancel', 'pointerup', 220),
+      captureGesture('lostpointercapture', 'pointercancel', 230),
+    ] : [];
+
+    c._setMode('plan');
+    await c.updateComplete;
+    resetPointers();
+    const editorStart = zoomWrites;
+    c._stagePointerDown(directPointer(241, 300));
+    c._stagePointerDown(directPointer(242, 400));
+    c._stagePointerMove(directPointer(241, 250));
+    c._stagePointerMove(directPointer(242, 450));
+    c._stagePointerUp(directPointer(241, 250));
+    c._stagePointerUp(directPointer(242, 450));
+    const editorWrites = zoomWrites - editorStart;
+
+    return {
+      directPinchWritesOnlyAtFinalTerminal: directMoveWrites === 0
+        && directFirstTerminalWrites === 0 && directTotalWrites === 1,
+      capturedPinchWritesOnlyAtFinalTerminal: captureTerminals.length === 3
+        && captureTerminals.every((entry) => entry.moveWrites === 0
+          && entry.firstWrites === 0 && entry.totalWrites === 1),
+      editorPinchDoesNotPersistViewZoom: editorWrites === 0,
+    };
+  } finally {
+    storagePrototype.setItem = originalSetItem;
+  }
+}));
+
 // A real device is the safety boundary: neither order of a pinch may arm the
 // marker's long press, and both click and contextmenu compatibility events stay
 // owned by that gesture. Exercise every terminal path because touch browsers

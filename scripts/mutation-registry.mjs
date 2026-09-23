@@ -272,6 +272,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-hit-scroll-observer-disabled',
+    guard: 'node demo/smoke_device_hit_capsules.mjs',
+    because: '#613 AC1/AC2: scroll inside a Home Assistant shadow-root ancestor must invalidate '
+      + 'the client-coordinate hit index; document-level observation alone cannot see that event',
+    patches: [{
+      file: 'src/device-hit-owner.ts',
+      find: "    source.addEventListener('scroll', handler, { passive: true });",
+      replace: "    if (false) source.addEventListener('scroll', handler, { passive: true });",
+    }],
+  },
+  {
     id: 'radar-sources-compared-as-text',
     guard: 'node --test --test-name-pattern="#567" test/radar-editor.test.mjs',
     because: '#567: порядок ключей `sources` меняет сам билдер, поэтому текстовое сравнение '
@@ -7972,6 +7983,17 @@ const MUTANT_DEFINITIONS = [
       file: 'src/houseplan-card.ts',
       find: "    if (this._mode === 'view' && ev.pointerType === 'touch' && this._touchSequenceMultitouch) return;",
       replace: "    if (this._mode === 'view' && ev.pointerType === 'touch' && false) return; // mutant: re-arm hold",
+    }],
+  },
+  {
+    id: 'touch-pinch-zoom-persists-per-frame',
+    guard: 'node demo/smoke_editor_gestures.mjs',
+    because: '#613 AC3/AC4: synchronous localStorage writes must happen once at the final '
+      + 'terminal boundary, never on every direct or capture-path pointermove',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '  private _markPinchZoomDirty(): void { this._pinchZoomDirty = true; }',
+      replace: '  private _markPinchZoomDirty(): void { this._saveZoom(); } // mutant: per-frame write',
     }],
   },
   {

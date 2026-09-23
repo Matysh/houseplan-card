@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- After scrolling a dashboard, taps once again belong to the device directly
+  under the finger, including inside nested Home Assistant panels; pinch now
+  saves its final zoom once after the gesture instead of writing local storage
+  on every move ([#613](https://github.com/Matysh/houseplan-card/issues/613)).
 - Space imports now keep robot map routes on the imported copy: transfers to
   another Home Assistant instance no longer fail on the old floor ID, and
   same-instance copies no longer leave the robot trail on the source floor

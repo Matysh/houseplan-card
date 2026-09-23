@@ -232,6 +232,81 @@ for (const [type, targetId] of Object.entries(ids)) {
   }
 }
 
+// #613: Home Assistant nests cards below several shadow roots. Element scroll
+// is not composed, so a document listener cannot see the dashboard scroller.
+// Move the real card below an external shadow-root scroller, build the cached
+// index, then shift it by exactly the distance between two real markers. A
+// stale index deterministically returns the former upper marker at the lower
+// marker's new painted centre.
+const scrollPrepared = await page.evaluate(async () => {
+  const card = window.__card;
+  const outer = document.createElement('div');
+  outer.style.cssText = 'display:block;width:760px;height:620px;';
+  document.body.replaceChildren(outer);
+  const root = outer.attachShadow({ mode: 'open' });
+  const scroller = document.createElement('div');
+  scroller.style.cssText = 'display:block;width:760px;height:560px;overflow:auto;';
+  const spacer = document.createElement('div');
+  spacer.style.height = '90px';
+  const tail = document.createElement('div');
+  tail.style.height = '180px';
+  card.style.cssText = 'display:block;width:760px;height:720px;';
+  scroller.append(spacer, card, tail);
+  root.append(scroller);
+  await card.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+  const upper = card.renderRoot.querySelector('[data-hp="device"][data-id="d_light1"]');
+  const lower = card.renderRoot.querySelector('[data-hp="device"][data-id="hit-neighbour"]');
+  const stage = card.renderRoot.querySelector('.stage');
+  if (!upper || !lower || !stage) return { ready: false };
+  for (const node of card.renderRoot.querySelectorAll('[data-hp="device"]')) {
+    node.style.display = node === upper || node === lower ? '' : 'none';
+  }
+  const stageRect = stage.getBoundingClientRect();
+  const x = stageRect.width / 2;
+  upper.style.left = `${x}px`;
+  upper.style.top = '190px';
+  lower.style.left = `${x}px`;
+  lower.style.top = '250px';
+  card._deviceHits.invalidate();
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+  const centre = (node) => {
+    const rect = node.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  };
+  const beforePoint = centre(lower);
+  const before = card._deviceHitOwnerAt(beforePoint.x, beforePoint.y)?.id || null;
+
+  let scrollInvalidations = 0;
+  const originalInvalidate = card._deviceHits.invalidate.bind(card._deviceHits);
+  card._deviceHits.invalidate = () => { scrollInvalidations += 1; originalInvalidate(); };
+  scroller.scrollTop = 60;
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const afterPoint = centre(lower);
+  const after = card._deviceHitOwnerAt(afterPoint.x, afterPoint.y)?.id || null;
+  window.__hitScrollFixture = { scroller, originalInvalidate };
+  return {
+    ready: true,
+    before,
+    after,
+    afterPoint,
+    shiftedBy: Math.round(beforePoint.y - afterPoint.y),
+    scrollInvalidations,
+  };
+});
+
+let scrollClicked = null;
+if (scrollPrepared.ready) {
+  await page.mouse.click(scrollPrepared.afterPoint.x, scrollPrepared.afterPoint.y);
+  scrollClicked = await page.evaluate(async () => {
+    const card = window.__card;
+    await card.updateComplete;
+    return card._infoCard?.id || null;
+  });
+}
+
 const out = {
   realFaceKinds: setup.icon.includes('device-shell')
     && !setup.icon.includes('with-values') && !setup.icon.includes('text-shell')
@@ -244,6 +319,11 @@ const out = {
     && entry.neighbourFloor && !entry.neighbourPainted
     && entry.native === entry.targetId && entry.semantic === entry.targetId),
   everyPaintedPointOwnsClick: cases.every((entry) => entry.clicked === entry.targetId),
+  shadowScrollInvalidatesCachedGeometry: scrollPrepared.ready
+    && scrollPrepared.shiftedBy === 60 && scrollPrepared.scrollInvalidations >= 1,
+  shadowScrollResolvesNewPaintedOwner: scrollPrepared.before === 'hit-neighbour'
+    && scrollPrepared.after === 'hit-neighbour',
+  shadowScrollClickUsesNewPaintedOwner: scrollClicked === 'hit-neighbour',
 };
 
 if (Object.values(out).some((value) => value !== true)) {

@@ -108,7 +108,7 @@ import {
   type FixedFloorSelection, type InitialSpaceSelection,
 } from './initial-load';
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
-import { DeviceHitController } from './device-hit-owner';
+import { DeviceHitController, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import {
   createEmptySpaceConfig, initialSpaceDisplayDraft, roomTempRangeFromDraft, switchSpacePlanSource, touchSpaceDisplay,
@@ -2048,7 +2048,7 @@ export class HouseplanCard extends LitElement {
   private _roomFocus: { spaceId: string; roomId: string } | null = null;
   /** Pointer owner captured from the actually painted event path. */
   private _roomPointer: RoomFitGestureCandidate | null = null; private readonly _doubleFit = new DoubleFitGestureRecognizer();
-  private readonly _deviceHits = new DeviceHitController();
+  private readonly _deviceHits = new DeviceHitController(); private _deviceHitScrollUnsub?: () => void;
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
   /**
@@ -2061,7 +2061,7 @@ export class HouseplanCard extends LitElement {
   private _pinchStart: { dist: number; zoom: number } | null = null;
   private _safeDayCycleOutline = false;
   private _suppressClick = false;
-  private _viewportGestureDirty = false;
+  private _viewportGestureDirty = false; private _pinchZoomDirty = false;
   private _activateSafeDayCycleOutline(): void { this._safeDayCycleOutline = true; this._stageEl?.classList.add('hp-safe-daycycle-outline'); }
   /**
    * Pointer events from an interactive child may stop before the stage sees
@@ -2695,6 +2695,8 @@ export class HouseplanCard extends LitElement {
     this._summarySlot.connect();
     void this._ensureLiveRuntime().catch(() => this.requestUpdate());
     this._pointerModality.connect(this.ownerDocument.defaultView);
+    this._deviceHitScrollUnsub?.();
+    this._deviceHitScrollUnsub = observeDeviceHitGeometryScroll(this, () => this._invalidateDeviceHitGeometry());
     const PointerHoverObserver = this.ownerDocument.defaultView?.MutationObserver;
     if (PointerHoverObserver) {
       this._pointerHoverObserver = new PointerHoverObserver((records) => {
@@ -2803,6 +2805,7 @@ export class HouseplanCard extends LitElement {
     this._languageFailureUnsub = undefined;
     this._motionMedia?.removeEventListener?.('change', this._onMotionChange);
     this._motionMedia = undefined;
+    this._deviceHitScrollUnsub?.(); this._deviceHitScrollUnsub = undefined; this._pinchZoomDirty = false;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
     this._warmModeRequest = 0;
@@ -6789,6 +6792,17 @@ export class HouseplanCard extends LitElement {
     }
   }
 
+  private _markPinchZoomDirty(): void { this._pinchZoomDirty = true; }
+
+  /** Both capture and stage see terminal events; clearing first makes this idempotent. */
+  private _finishViewportGesture(): void {
+    const saveZoom = this._pinchZoomDirty; this._pinchZoomDirty = false;
+    if (saveZoom) this._saveZoom();
+    if (!this._viewportGestureDirty) return;
+    this._viewportGestureDirty = false;
+    this.requestUpdate();
+  }
+
   /** Restore the saved space zoom and center the plan. */
   private _restoreZoom(): void {
     this._clearRoomFocus(true);
@@ -6964,8 +6978,8 @@ export class HouseplanCard extends LitElement {
       const cy = (pts[0].y + pts[1].y) / 2 - r.top;
       this._zoomAt(cx, cy, this._pinchStart.zoom * scale);
       this._viewportGestureDirty = true;
+      this._markPinchZoomDirty();
       this._suppressClick = true;
-      this._saveZoom();
     } else if (this._panStart) {
       const ddx = ev.clientX - this._panStart.sx;
       const ddy = ev.clientY - this._panStart.sy;
@@ -7104,10 +7118,7 @@ export class HouseplanCard extends LitElement {
       // reset click suppression on the next tick (so that a click right after a pan does not fire)
       if (this._suppressClick) setTimeout(() => (this._suppressClick = false), 0);
     }
-    if (this._viewportGestureDirty && this._pointers.size === 0 && !acceptedRoom) {
-      this._viewportGestureDirty = false;
-      this.requestUpdate();
-    }
+    if (this._pointers.size === 0 && !acceptedRoom) this._finishViewportGesture();
     if (acceptedRoom) this._fitRoom(acceptedRoom);
   }
 
@@ -7385,7 +7396,8 @@ export class HouseplanCard extends LitElement {
           const rect = this._stageEl.getBoundingClientRect();
           this._zoomAt((a.x + b.x) / 2 - rect.left, (a.y + b.y) / 2 - rect.top,
             this._pinchStart.zoom * scale);
-          this._saveZoom();
+          this._viewportGestureDirty = true;
+          this._markPinchZoomDirty();
         }
       }
       return;
@@ -7408,6 +7420,7 @@ export class HouseplanCard extends LitElement {
       if (this._pointers.size === 0) {
         this._panStart = null;
         this._panLock = null;
+        this._finishViewportGesture();
       }
     }
   }
@@ -7974,10 +7987,7 @@ export class HouseplanCard extends LitElement {
       this._panLock = null;
       this._swipeStart = null;
     }
-    if (this._viewportGestureDirty && this._pointers.size === 0) {
-      this._viewportGestureDirty = false;
-      this.requestUpdate();
-    }
+    if (this._pointers.size === 0) this._finishViewportGesture();
   }
 
   private _applyGeometryState(

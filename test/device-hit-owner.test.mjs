@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  DeviceHitIndex, DevicePointerOwnerLatch, pointInDeviceCapsule, resolveDeviceHitOwner,
+  DeviceHitIndex, DevicePointerOwnerLatch, deviceHitScrollSources,
+  observeDeviceHitGeometryScroll, pointInDeviceCapsule, resolveDeviceHitOwner,
 } from '../test-build/device-hit-owner.js';
 
 const candidate = (id, x, y, width = 12, height = 12, floorRadius = 22) => ({
@@ -74,4 +75,58 @@ test('#564 pointer owner is held through release and consumed by click', () => {
   assert.equal(latch.cancel(8), 'right');
   assert.equal(latch.release(8), null);
   latch.clear();
+});
+
+test('#613 scroll observation crosses shadow hosts and tears down exactly once', () => {
+  const target = (fields = {}) => Object.assign(new EventTarget(), fields);
+  const viewport = new EventTarget();
+  const win = target({ visualViewport: viewport });
+  const document = target({
+    nodeType: 9, parentElement: null, ownerDocument: null, defaultView: win,
+    getRootNode() { return this; },
+  });
+  const body = target({
+    nodeType: 1, assignedSlot: null, parentElement: null, ownerDocument: document,
+    getRootNode: () => document,
+  });
+  const dashboardScroller = target({
+    nodeType: 1, assignedSlot: null, parentElement: body, ownerDocument: document,
+    getRootNode: () => document,
+  });
+  const dashboardHost = target({
+    nodeType: 1, assignedSlot: null, parentElement: dashboardScroller,
+    ownerDocument: document, getRootNode: () => document,
+  });
+  const dashboardRoot = { nodeType: 11, host: dashboardHost };
+  const shadowScroller = target({
+    nodeType: 1, assignedSlot: null, parentElement: null, ownerDocument: document,
+    getRootNode: () => dashboardRoot,
+  });
+  const card = target({
+    nodeType: 1, assignedSlot: null, parentElement: shadowScroller,
+    ownerDocument: document, getRootNode: () => dashboardRoot,
+  });
+
+  assert.deepEqual(deviceHitScrollSources(card), [
+    card, shadowScroller, dashboardHost, dashboardScroller, body, document, win,
+  ]);
+
+  let invalidations = 0;
+  const disconnect = observeDeviceHitGeometryScroll(card, () => { invalidations += 1; });
+  shadowScroller.dispatchEvent(new Event('scroll'));
+  dashboardScroller.dispatchEvent(new Event('scroll'));
+  viewport.dispatchEvent(new Event('resize'));
+  assert.equal(invalidations, 3);
+
+  disconnect();
+  disconnect();
+  shadowScroller.dispatchEvent(new Event('scroll'));
+  dashboardScroller.dispatchEvent(new Event('scroll'));
+  viewport.dispatchEvent(new Event('scroll'));
+  assert.equal(invalidations, 3);
+
+  const reconnect = observeDeviceHitGeometryScroll(card, () => { invalidations += 1; });
+  dashboardScroller.dispatchEvent(new Event('scroll'));
+  assert.equal(invalidations, 4);
+  reconnect();
 });
