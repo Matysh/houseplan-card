@@ -74,7 +74,9 @@ test('предполётные проверки не прячут друг др�
   // #556 добавил пятый сигнал — пины сторонних Actions. Число берётся из
   // списка, а не из магической константы: иначе каждая новая проверка красит
   // тест, который про другое.
-  const checks = ['docs', 'workflow_sync', 'provenance', 'process_gate', 'action_pins'];
+  // #635 добавил шестой — свежесть индекса ревью (судится только на push в dev,
+  // skipped в вердикте не считается отказом).
+  const checks = ['docs', 'reviews_index', 'workflow_sync', 'provenance', 'process_gate', 'action_pins'];
   for (const id of checks) {
     assert.ok(preflight.includes(`id: ${id}`), `нет шага ${id}`);
     assert.ok(preflight.includes(`steps.${id}.outcome`), `вердикт не читает ${id}`);
