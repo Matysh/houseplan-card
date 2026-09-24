@@ -314,12 +314,23 @@ async def test_issue_617_plan_upload_validates_fields_like_ws_plan_set(
     assert bad_ext.status == 400
     assert (await bad_ext.json())["error"] == "bad_ext"
 
-    no_file = FormData()
+    # Without a file field aiohttp's FormData falls back to
+    # application/x-www-form-urlencoded, which is not multipart at all: the
+    # view answers bad_request for it (the card never sends such a body). The
+    # "multipart without a file part" case has to be forced explicitly.
+    no_file = FormData(default_to_multipart=True)
     no_file.add_field("space_id", "f1")
     no_file.add_field("ext", "png")
     missing = await client.post("/api/houseplan/plans/upload", data=no_file)
     assert missing.status == 400
     assert (await missing.json())["error"] == "no_file"
+
+    urlencoded = FormData()
+    urlencoded.add_field("space_id", "f1")
+    urlencoded.add_field("ext", "png")
+    not_multipart = await client.post("/api/houseplan/plans/upload", data=urlencoded)
+    assert not_multipart.status == 400
+    assert (await not_multipart.json())["error"] == "bad_request"
 
     two = await client.post("/api/houseplan/plans/upload", data=_plan_form(b"x", files=2))
     assert two.status == 400
