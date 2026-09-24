@@ -1,11 +1,12 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1042, issue: 367. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1043, issue: 367. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #646 | [CODE-REVIEW-646-r1.md](CODE-REVIEW-646-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #645 | [SPEC-REVIEW-645-r1.md](SPEC-REVIEW-645-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | Отсутствует обязательная строка Touch editor: … из docs/TOUCH-SUPPORT.md → «Documentati…; ТЗ не учитывает существующую зависимость live-подписей Resize от позиции кнопки «Настро…; / Low | `docs/TOUCH-SUPPORT.md` `docs/reviews/SPEC-REVIEW-449-r1.md` `docs/specs/359-furniture-placement-preview.md` `docs/specs/449-double-fit-all.md` `src/houseplan-editor-runtime.ts` `src/houseplan-card.ts` `src/resize-labels.ts` `docs/process/REVIEWER.md` |
+| #645 | [SPEC-REVIEW-645-r2.md](SPEC-REVIEW-645-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #643 | [CODE-REVIEW-643-r1.md](CODE-REVIEW-643-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #642 | [SPEC-REVIEW-642-r1.md](SPEC-REVIEW-642-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #642 | [CODE-REVIEW-642-r1.md](CODE-REVIEW-642-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
