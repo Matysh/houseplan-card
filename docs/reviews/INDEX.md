@@ -1,9 +1,10 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1013, issue: 355. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1014, issue: 356. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #642 | [SPEC-REVIEW-642-r1.md](SPEC-REVIEW-642-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #641 | [CODE-REVIEW-641-r1.md](CODE-REVIEW-641-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | нет исполняемого автотеста на ключевой guard в accept.mjs | `accept.mjs` `demo/golden/accept.mjs` `test/golden-wsl-artifact.test.mjs` `wsl-attestation.json` `test/golden-capture-provenance.test.mjs` `scripts/mutation-registry.mjs` `scripts/golden-wsl-artifact.mjs` |
 | #641 | [CODE-REVIEW-641-r2.md](CODE-REVIEW-641-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #640 | [SPEC-REVIEW-640-r1.md](SPEC-REVIEW-640-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | AC3 называет browser-smoke «unit»-тестом | `demo/smoke_furniture_lazy_art.mjs` |
