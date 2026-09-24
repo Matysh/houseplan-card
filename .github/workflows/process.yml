@@ -413,11 +413,27 @@ jobs:
           behind=$(git rev-list --count "HEAD..origin/dev")
           before=$(git rev-parse "origin/$BRANCH")
           echo "dev впереди на $behind коммит(ов) — привожу ветку"
-          if ! git rebase origin/dev; then
-            # Список снимается ДО abort: он же снимает состояние конфликта, и
-            # тогда автору достаётся «не ребейзится» без единого имени файла (#364).
-            files=$(git diff --name-only --diff-filter=U | sort -u | paste -sd'\n' -)
-            git rebase --abort || true
+          # #643: doc-коммит ветки конфликтует с документами других задач в dev
+          # только в генерируемом docs/reviews/INDEX.md — всегда, на каждом
+          # сдвиге dev. Помощник ребейза пересобирает индекс по каталогу, если
+          # ВСЕ конфликты остановки — индекс, и отказывает (с abort) на любом
+          # другом. Список конфликтов он снимает ДО abort (#364) и печатает в
+          # stdout по строке. Помощник берётся из dev, а не из ветки: ветка,
+          # отставшая от dev, его ещё не несёт.
+          tools="$RUNNER_TEMP/rebase-tools"
+          rm -rf "$tools" && mkdir -p "$tools"
+          git archive origin/dev scripts | tar -x -C "$tools"
+          code=0
+          files=$(node "$tools/scripts/rebase-generated.mjs" --onto=origin/dev) || code=$?
+          # Код 3 — отказ с перечнем (ребейз отменён); любой другой ненулевой —
+          # сбой самого помощника, конфликтом ветки он не выдаётся.
+          if [ "$code" -ne 0 ] && [ "$code" -ne 3 ]; then
+            git rebase --abort 2>/dev/null || true
+            echo "::error::помощник ребейза упал (код $code) — это сбой конвейера, а не конфликт ветки"
+            exit 1
+          fi
+          if [ "$code" -eq 3 ]; then
+            files=$(printf '%s\n' "$files" | sed '/^$/d' | sort -u | paste -sd'\n' -)
             {
               echo 'conflict=true'
               echo 'conflicts<<EOF_FILES'
