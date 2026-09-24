@@ -19,6 +19,13 @@ name: Мутационный гейт
 # tsc), а реестр режется на четыре чересполосных шарда — полный прогон
 # укладывается в десятки минут вместо часов. Локальный дифф-режим:
 # node scripts/mutation-gate.mjs --changed origin/dev..HEAD
+#
+# #620: ночь по расписанию на дереве, уже доказанном зелёным полным прогоном
+# (тот же tree материала, тот же SHA workflow, маркер не старше недели), шарды не
+# гоняет — в сводке «reused from run N». Маркер пишет только зелёный агрегатор,
+# поэтому красный не переносится: следующая ночь гонит реестр заново и снова
+# заводит issue (#472). Ручной dispatch гонит полный реестр всегда. Решение —
+# чистая функция scripts/mutation-nightly-reuse.mjs.
 
 on:
   workflow_dispatch:
@@ -54,6 +61,8 @@ jobs:
       sha: ${{ steps.identity.outputs.sha }}
       tree: ${{ steps.identity.outputs.tree }}
       ref: ${{ steps.identity.outputs.ref }}
+      reuse: ${{ steps.reuse.outputs.reuse }}
+      reused_run: ${{ steps.reuse.outputs.reused_run }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -65,10 +74,48 @@ jobs:
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
           echo "ref=${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'dev' }}" >> "$GITHUB_OUTPUT"
+      # #620: самый свежий маркер зелёного прогона этого tree и этого workflow.
+      # Ключ уникален на прогон (кэш неизменяем), восстанавливается по префиксу —
+      # иначе перепроверка после недели не смогла бы освежить маркер.
+      - name: Маркер зелёного прогона этого дерева
+        if: github.event_name == 'schedule'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: artifacts/mutation-green
+          key: mutation-green-v1-${{ steps.identity.outputs.tree }}-${{ github.workflow_sha }}-${{ github.run_id }}
+          restore-keys: |
+            mutation-green-v1-${{ steps.identity.outputs.tree }}-${{ github.workflow_sha }}-
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+      # Любой сбой решения — полный прогон: пропуск должен быть доказан, а не
+      # выведен из ошибки. Материал без скрипта (dispatch старого ref) — тоже.
+      - name: Нужен ли прогон
+        id: reuse
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TREE: ${{ steps.identity.outputs.tree }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+          RUN_URL_BASE: ${{ github.server_url }}/${{ github.repository }}/actions/runs
+        run: |
+          decision="$RUNNER_TEMP/mutation-reuse.txt"
+          if [ -f scripts/mutation-nightly-reuse.mjs ] && node scripts/mutation-nightly-reuse.mjs --decide \
+               --event="$EVENT_NAME" --tree="$TREE" --workflow-sha="$WORKFLOW_SHA" \
+               --marker=artifacts/mutation-green/marker.json \
+               --summary="$GITHUB_STEP_SUMMARY" --run-url-base="$RUN_URL_BASE" > "$decision"; then
+            cat "$decision" >> "$GITHUB_OUTPUT"
+            if grep -qx 'reuse=true' "$decision"; then
+              echo "::notice::reused from run $(sed -n 's/^reused_run=//p' "$decision")"
+            fi
+          else
+            echo "::warning::решение о повторном использовании не получено — полный прогон"
+            echo "reuse=false" >> "$GITHUB_OUTPUT"
+          fi
 
   mutants:
     name: "Мутанты: каждый обязан красить тесты (шард ${{ matrix.shard }} из 6)"
     needs: material
+    if: needs.material.outputs.reuse != 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -164,7 +211,7 @@ jobs:
   evidence:
     name: "Доказать единый material всех шардов"
     needs: [material, mutants]
-    if: always()
+    if: always() && needs.material.outputs.reuse != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -189,6 +236,36 @@ jobs:
             --workflow-sha=${{ github.workflow_sha }} \
             --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }}
 
+  # #620: маркер пишется ТОЛЬКО после зелёного агрегатора — все шесть шардов
+  # доказаны на одном material. Красный или неполный прогон маркера не оставляет,
+  # и следующая ночь гонит реестр заново.
+  green_marker:
+    name: "Записать маркер зелёного прогона"
+    needs: [material, mutants, evidence]
+    if: needs.material.outputs.reuse != 'true' && needs.mutants.result == 'success' && needs.evidence.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.material.outputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+      - name: Маркер
+        run: |
+          node scripts/mutation-nightly-reuse.mjs \
+            --write-marker=artifacts/mutation-green/marker.json \
+            --tree=${{ needs.material.outputs.tree }} \
+            --sha=${{ needs.material.outputs.sha }} \
+            --workflow-sha=${{ github.workflow_sha }} \
+            --run-id=${{ github.run_id }} --run-attempt=${{ github.run_attempt }} \
+            --event=${{ github.event_name }}
+      - name: Сохранить маркер
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: artifacts/mutation-green
+          key: mutation-green-v1-${{ needs.material.outputs.tree }}-${{ github.workflow_sha }}-${{ github.run_id }}
+
   # Адресат у отказа (#472). Только по расписанию: ручной dispatch остаётся
   # для отладки самого гейта, его результат смотрят в прогоне — issue на
   # каждый такой отказ был бы шумом, который снова перестанут читать.
@@ -198,7 +275,10 @@ jobs:
   report:
     name: "Отказ расписания: issue и Telegram"
     needs: [material, mutants, evidence]
-    if: always() && github.event_name == 'schedule' && (needs.mutants.result != 'success' || needs.evidence.result != 'success')
+    # #620: ночь, принявшая доказательство прошлого зелёного прогона, отказом не
+    # является — её шарды пропущены намеренно. Любой другой пропуск шардов
+    # (упал material) по-прежнему заводит issue.
+    if: always() && github.event_name == 'schedule' && needs.material.outputs.reuse != 'true' && (needs.mutants.result != 'success' || needs.evidence.result != 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: read
