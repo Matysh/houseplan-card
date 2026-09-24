@@ -131,10 +131,15 @@ const PRE_CODE_STATUSES = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review',
  * сразу на S7 и никогда не несёт S1–S5, ТЗ и ревью ТЗ; поэтому любой из этих
  * признаков делает эвристику «дифф без класса A» неприменимой. S6/S7/S8 сами по
  * себе признаком не являются: их носит и инфраструктурная задача после ревью.
+ * Метка `trivial` — признак сама по себе (r1 #632): короткий трек (PROCESS §5.1)
+ * идёт S2 → S5 без ТЗ и без ревью ТЗ, и в S6/S7 никакого другого следа потока у
+ * него нет. Ускоренный инфраструктурный вход понятия трека не имеет, поэтому
+ * `trivial` на нём не бывает; `infra` рядом с ней — тематическая метка.
  */
-export function productFlowEvidence({ status = null, issue = {}, specs = [], reviewDocs = [], comments = [] } = {}) {
+export function productFlowEvidence({ status = null, labels = [], issue = {}, specs = [], reviewDocs = [], comments = [] } = {}) {
   const reasons = [];
   if (PRE_CODE_STATUSES.includes(status)) reasons.push(`статус ${status}`);
+  if (labels.includes('trivial')) reasons.push('короткий трек trivial (ТЗ не пишется, §5.1)');
   if (/^#{1,3}\s*ТЗ(?![\p{L}\p{N}_])/mu.test(String(issue?.body ?? ''))) reasons.push('раздел «## ТЗ» в теле issue');
   if (specs.length) reasons.push('файл ТЗ в docs/specs');
   if (reviewDocs.some((d) => String(d.name).startsWith('SPEC-REVIEW-'))) reasons.push('документ ревью ТЗ');
@@ -150,7 +155,7 @@ export function buildPacket(inputs) {
   // Трек сначала определяется статусом и историей issue (#632): прошедшая
   // S3/S4/S5 или несущая ТЗ задача — продуктовая, и её право на класс A в
   // S5–S7 не отнимается пустым пока диффом.
-  const productFlow = productFlowEvidence({ status, issue, specs, reviewDocs, comments });
+  const productFlow = productFlowEvidence({ status, labels, issue, specs, reviewDocs, comments });
   // `infra` — тематическая метка и не даёт процессных прав. Ускоренный трек
   // доказывается тем же механическим признаком, что process-gate: в реальном
   // diff опубликованной ветки нет ни одного файла класса A — и только вне

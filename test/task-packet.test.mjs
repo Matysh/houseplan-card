@@ -182,6 +182,26 @@ test('#632: statusless or returned infra issue without spec keeps the class A ba
   }
 });
 
+test('#632 r1: trivial issue in S6/S7 keeps class A rights without any spec artefact', () => {
+  // Форма реального trivial-бага #612: дефекты и AC в теле, без «## ТЗ», без
+  // docs/specs и без ревью ТЗ — короткий трек их не пишет (PROCESS §5.1).
+  const body = '## Дефект 1\nx\n\n## Дефект 2\ny\n\n## AC\n- AC1. a\n- AC2. b\n- AC3. c\n';
+  for (const labels of [['bug', 'P2', 'trivial', 'S6-in-progress'], ['bug', 'P2', 'trivial', 'infra', 'S7-code-review']]) {
+    const packet = buildPacket({
+      issue: { number: 612, title: 'trivial bug', state: 'OPEN', url: 'u', body },
+      labels,
+      branch: { name: 'issue/612-x', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: true },
+    });
+    assert.equal(packet.track, 'trivial', labels.join(','));
+    assert.ok(packet.rights.some((l) => l.includes('продуктовый код трогать МОЖНО')), labels.join(','));
+    assert.ok(packet.rights.every((l) => !l.includes('файлы класса A трогать НЕЛЬЗЯ')), labels.join(','));
+  }
+  assert.deepEqual(productFlowEvidence({ status: 'S6-in-progress', labels: ['trivial'], issue: { body } }),
+    ['короткий трек trivial (ТЗ не пишется, §5.1)']);
+  assert.deepEqual(productFlowEvidence({ status: 'S6-in-progress', labels: ['small', 'infra'], issue: { body } }), [],
+    'только trivial: small несёт ТЗ в теле и доказывается разделом «## ТЗ»');
+});
+
 test('#517 AC5: AC берутся из тела issue, файл ТЗ — только когда в теле их нет', () => {
   const base = {
     issue: { number: 700, title: 'x', state: 'OPEN', url: 'u', body: '## ТЗ\n\n- AC1. Из тела\n' },

@@ -3163,6 +3163,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'task-packet-trivial-is-product-flow',
+    guard: 'node --test test/task-packet.test.mjs',
+    because: 'the trivial short track writes no spec and no spec review, so in S6/S7 its label is '
+      + 'the only product-flow evidence; dropping it prints the false class A ban of #632 again (r1)',
+    patches: [{
+      file: 'scripts/task-packet.mjs',
+      find: "  if (labels.includes('trivial')) reasons.push('короткий трек trivial (ТЗ не пишется, §5.1)');",
+      replace: "",
+    }],
+  },
+  {
     id: 'fit-house-hidden-walls-vote',
     guard: 'node demo/smoke_space_card.mjs',
     because: 'hidden architecture silently widening the tight frame is exactly the #384 bug: '
