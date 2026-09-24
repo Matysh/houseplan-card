@@ -1,12 +1,13 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1028, issue: 365. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1029, issue: 365. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #643 | [CODE-REVIEW-643-r1.md](CODE-REVIEW-643-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #642 | [SPEC-REVIEW-642-r1.md](SPEC-REVIEW-642-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #642 | [CODE-REVIEW-642-r1.md](CODE-REVIEW-642-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #642 | [CODE-REVIEW-642-r2.md](CODE-REVIEW-642-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | Идентичность дерева коду, который уже разобрал r1; Что именно принёс второй ребейз (до 7bb55c2a) — не заявление, а diff; Полный построчный разбор диффа origin/dev...HEAD (72 файла); Гейты — что унаследовано, что перепрогнано лично на этом SHA | — |
 | #641 | [CODE-REVIEW-641-r1.md](CODE-REVIEW-641-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | нет исполняемого автотеста на ключевой guard в accept.mjs | `accept.mjs` `demo/golden/accept.mjs` `test/golden-wsl-artifact.test.mjs` `wsl-attestation.json` `test/golden-capture-provenance.test.mjs` `scripts/mutation-registry.mjs` `scripts/golden-wsl-artifact.mjs` |
 | #641 | [CODE-REVIEW-641-r2.md](CODE-REVIEW-641-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #640 | [SPEC-REVIEW-640-r1.md](SPEC-REVIEW-640-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | AC3 называет browser-smoke «unit»-тестом | `demo/smoke_furniture_lazy_art.mjs` |
