@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1010, issue: 352. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1011, issue: 353. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -26,6 +26,7 @@
 | #621 | [CODE-REVIEW-621-r1.md](CODE-REVIEW-621-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #619 | [CODE-REVIEW-619-r1.md](CODE-REVIEW-619-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #618 | [SPEC-REVIEW-618-r1.md](SPEC-REVIEW-618-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | нотация h<ref> в B5 не встречается в коде | `docs/FILTERING.md` |
+| #617 | [SPEC-REVIEW-617-r1.md](SPEC-REVIEW-617-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «новый необязательный параметр» уже существует | `src/backdrop-pick.ts` `houseplan-editor-runtime.ts` |
 | #615 | [SPEC-REVIEW-615-r1.md](SPEC-REVIEW-615-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC3 называет несуществующую защиту от расползания на плашки цвета | `smoke_room_settings_form.mjs` `smoke_space_settings_form.mjs` `smoke_device_settings_form.mjs` `smoke_dialog_polish_605.mjs` `smoke_general_settings_form.mjs` |
 | #614 | [SPEC-REVIEW-614-r1.md](SPEC-REVIEW-614-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #614 | [CODE-REVIEW-614-r1.md](CODE-REVIEW-614-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC1/AC2/AC3 требуют unit-тест, а он не написан | `test/dialog-baseline.test.mjs` `test/space-dialog.test.mjs` `general-form-state.ts` `space-form-state.ts` `marker-form-state.ts` `tsconfig.test.json` `dialog-baseline.ts` `scripts/mutation-registry.mjs` |
