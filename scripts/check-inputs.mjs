@@ -70,7 +70,6 @@ export const NOT_AN_INPUT = [
   ['scripts/install-hooks.mjs', 'установка git-хуков при npm ci'],
   ['scripts/golden-accept.mjs', 'приёмка эталонов человеком, после прогона (#344)'],
   ['scripts/golden-container.mjs', 'локальная съёмка в пиновом образе (#334), ручной запуск'],
-  ['scripts/inventory.mjs', 'отчёт для аудита, не гейт'],
   ['scripts/benchmark-wall-segment-model.mjs', 'ручной бенчмарк (npm run benchmark:wall-model)'],
   ['scripts/wall-strip-containment.mjs', 'ручной гейт внешних бэкапов планов (docs/WALL-THICKNESS.md)'],
   ['scripts/sh3d-convert/cli.mjs', 'CLI конвертера для человека'],

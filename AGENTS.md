@@ -22,11 +22,22 @@ For work that changes visible behaviour, also read `docs/USER-GUIDE.ru.md` —
 interface wording comes from there and is not invented, or the UI starts speaking
 developer.
 
-Then `PROCESS.md` (the full process), `docs/STATUS.md` (where the release line
-is), and for non-trivial changes `docs/ARCHITECTURE.md` plus the canonical
-document of the subsystem you touch: `SUN.md`, `LIGHT.md`, `CANVAS.md`,
-`WALL-THICKNESS.md`, `UX-MODES.md`, `CONFIG-COMPATIBILITY.md`,
-`TOUCH-SUPPORT.md`.
+**Reading order by role** (#634). `node scripts/entry-cost.mjs` measures each
+route and `test/entry-cost.test.mjs` keeps this list equal to its routes:
+
+- author (analysis, spec, implementation, infrastructure): `docs/SCOPE.md` →
+  `AGENTS.md` → `docs/process/AUTHOR.md` → `docs/STATUS.md`;
+- reviewer (spec or code): `docs/SCOPE.md` → `AGENTS.md` →
+  `docs/process/REVIEWER.md`, then the issue body and its comments;
+- changing the pipeline, the gates or the process itself: `docs/SCOPE.md` →
+  `AGENTS.md` → `PROCESS.md` → `docs/STATUS.md`.
+
+The two digests quote and link `PROCESS.md` section by section; it stays the
+only complete canon and wins any disagreement, so open the linked section
+whenever a digest line governs your current step. For non-trivial changes add
+`docs/ARCHITECTURE.md` plus the canonical document of the subsystem you touch:
+`SUN.md`, `LIGHT.md`, `CANVAS.md`, `WALL-THICKNESS.md`, `UX-MODES.md`,
+`CONFIG-COMPATIBILITY.md`, `TOUCH-SUPPORT.md`.
 
 Standard commands live in `package.json` scripts, `CONTRIBUTING.md` and
 `docs/DEVELOPMENT.md`.

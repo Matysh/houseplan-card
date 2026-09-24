@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import test from 'node:test';
 import { prepareGoldenFixture } from '../demo/golden/harness.mjs';
 import {
@@ -847,7 +847,12 @@ test('opening symbol goldens lock room, diagonal, flip-pair and hidden Iso contr
   assert.equal(OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT.length, 67);
   assert.equal(new Set(OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT).size, 67);
   const scenarioIds = new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.id));
-  const testingDoc = readFileSync(new URL('../docs/TESTING.md', import.meta.url), 'utf8');
+  // #634: чек-листы по issue перенесены в docs/testing-notes/ — документация
+  // тестирования это TESTING.md вместе с приложениями.
+  const notesDir = new URL('../docs/testing-notes/', import.meta.url);
+  const testingDoc = [new URL('../docs/TESTING.md', import.meta.url),
+    ...readdirSync(notesDir).filter((name) => name.endsWith('.md')).sort().map((name) => new URL(name, notesDir))]
+    .map((url) => readFileSync(url, 'utf8')).join('\n');
   for (const id of OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT) {
     assert.equal(scenarioIds.has(id), true, id);
     assert.match(testingDoc, new RegExp(`\\b${id}\\b`), id);

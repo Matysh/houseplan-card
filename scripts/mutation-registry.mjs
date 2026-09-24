@@ -8627,6 +8627,86 @@ const MUTANT_DEFINITIONS = [
       replace: "    current = [line]; // mutant: last physical line instead of the paragraph\n  }\n  for (const paragraph of paragraphs) {",
     }],
   },
+  // #634: ролевые конспекты PROCESS.md, цена входа агента, генерируемый
+  // Snapshot и индекс приложений TESTING.md. Каждая защита — от тихого
+  // расхождения выжимки с каноном или тихого роста входа.
+  {
+    id: 'process-digest-dead-anchor',
+    guard: 'node --test --test-name-pattern="#634 конспект: каждая ссылка" test/process-digests.test.mjs',
+    because: 'a digest link to a PROCESS.md heading that does not exist sends the agent nowhere; '
+      + 'the digest must fail as soon as an anchor goes stale (#634 AC2)',
+    patches: [{
+      file: 'docs/process/AUTHOR.md',
+      find: '[§5.1](../../PROCESS.md#51-короткий-трек-метка-trivial)',
+      replace: '[§5.1](../../PROCESS.md#51-короткий-трек)',
+    }],
+  },
+  {
+    id: 'process-digest-bullet-without-canon-link',
+    guard: 'node --test --test-name-pattern="#634 конспект: каждый пункт" test/process-digests.test.mjs',
+    because: 'every digest item cites its canon section; an item without a link is a rule the '
+      + 'digest invented or a paraphrase nobody can check (#634 AC2)',
+    patches: [{
+      file: 'docs/process/AUTHOR.md',
+      find: '  нечего ([§5.1](../../PROCESS.md#51-короткий-трек-метка-trivial)).',
+      replace: '  нечего.',
+    }],
+  },
+  {
+    id: 'process-digest-key-rule-dropped',
+    guard: 'node --test --test-name-pattern="#634 конспект: ключевые правила" test/process-digests.test.mjs',
+    because: 'the empty third column is a Medium finding (PROCESS §2.7, #435); a reviewer digest '
+      + 'that softens it must fail, not pass as a shorter paraphrase (#634)',
+    patches: [{
+      file: 'docs/process/REVIEWER.md',
+      find: '  результатом прогона. Пустой третий столбец — находка Medium, а не\n  примечание.',
+      replace: '  результатом прогона. Пустой третий столбец желательно заполнить.',
+    }],
+  },
+  {
+    id: 'entry-cost-author-route-over-budget',
+    guard: 'node --test --test-name-pattern="#634 entry-cost: вход автора" test/entry-cost.test.mjs',
+    because: 'AC1 #634: the author entry route stays within 12 000 words; a digest that grows '
+      + 'back into the canon must redden the measurement, not the next audit',
+    patches: [{
+      file: 'docs/process/AUTHOR.md',
+      find: '## Запрещено\n',
+      replace: `## Запрещено\n\n${'слово '.repeat(2000)}\n`,
+    }],
+  },
+  {
+    id: 'entry-cost-budget-never-over',
+    guard: 'node --test --test-name-pattern="#634 entry-cost: превышение" test/entry-cost.test.mjs',
+    because: 'the budget verdict is the whole point of the measurement; a comparison that never '
+      + 'reports «over» turns --check into a word counter (#634 AC1)',
+    patches: [{
+      file: 'scripts/entry-cost.mjs',
+      find: '  const over = route.budget != null && total > route.budget;',
+      replace: '  const over = false; // mutant: budget never exceeded',
+    }],
+  },
+  {
+    id: 'status-snapshot-hides-version-mismatch',
+    guard: 'node --test --test-name-pattern="#634 status-snapshot: рассинхрон" test/status-snapshot.test.mjs',
+    because: 'a snapshot that reports the majority version and drops the odd source repeats the '
+      + 'hand-written row it replaced: it looks current while the tree disagrees (#634)',
+    patches: [{
+      file: 'scripts/status-snapshot.mjs',
+      find: "  const version = versions.mismatches.length\n",
+      replace: "  const version = false // mutant: mismatches hidden\n",
+    }],
+  },
+  {
+    id: 'testing-notes-index-drops-section',
+    guard: 'node --test --test-name-pattern="#634 индекс приложений" test/testing-notes-index.test.mjs',
+    because: 'AC3 #634: appendices moved out of TESTING.md stay reachable only through the index; '
+      + 'a section missing from it is text nobody will find again',
+    patches: [{
+      file: 'docs/testing-notes/README.md',
+      find: '- [Open passage (#157)](geometry.md#open-passage-157)\n',
+      replace: '',
+    }],
+  },
   // #624: гейт мёртвого кода и связности монолита — три защиты, три мутанта.
   {
     id: 'unused-gate-allows-everything',

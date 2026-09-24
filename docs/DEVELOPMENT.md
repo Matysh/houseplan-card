@@ -714,5 +714,6 @@ mode before dispatching synthetic gestures, it must also wait for the observable
 mode-transition and viewport-refit state to settle, because the stage can finish
 its physical resize after the Lit update (#460).
 
-When adding a checklist line marked `[auto: ...]` in docs/TESTING.md, add the
-failing check in the same commit — that is what the marker now promises.
+When adding a checklist line marked `[auto: ...]` in docs/TESTING.md or its
+appendices in docs/testing-notes/, add the failing check in the same commit —
+that is what the marker now promises.
