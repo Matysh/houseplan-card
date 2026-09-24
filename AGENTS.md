@@ -493,9 +493,11 @@ sets it.
 **Backend.** A full Home Assistant harness cannot run on native Windows at all:
 Home Assistant imports the Unix-only `fcntl` module. Its canon is Linux CI or WSL.
 Locally only the pure subset runs; `python -m pytest tests_backend/ -q` without
-Home Assistant **silently skips** `test_ha_*.py` (`conftest.py` ignores them when
-`homeassistant` is not importable), so a green result proves nothing. Say so in the
-report instead of claiming the backend was verified. Cloud agents have the harness
+Home Assistant **does not collect** `test_ha_*.py` at all (`conftest.py`
+`collect_ignore_glob` when `homeassistant` is not importable — not a skip) and, since
+#630, prints `HA harness NOT collected: N files (M tests)` with the canon to run
+them. A green result there proves nothing about the harness. Say so in the report
+instead of claiming the backend was verified. Cloud agents have the harness
 at `.venv-backend/bin/python`.
 
 **Running the app / smoke suite**: build a fresh bundle and copy it into the demo

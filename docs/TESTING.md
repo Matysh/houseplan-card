@@ -215,6 +215,18 @@ manifest читают и `classify-changes.mjs` (job `changes`: job запуск
 доказывается unit/smoke-счётчиками и состоянием runtime, а не regex по исходнику
 (#440).
 
+Без установленного Home Assistant (нативная Windows, песочница) HA-харнесс
+`tests_backend/test_ha_*.py` **не собирается вовсе** — `conftest.py` исключает
+эти файлы через `collect_ignore_glob`, поэтому их нет ни в `passed`, ни в
+`skipped`, и зелёная итоговая строка про них ничего не говорит. С #630 pytest в
+таком прогоне печатает в шапке и в итоге строку `HA harness NOT collected: N
+test_ha_*.py files (M tests)` со ссылкой на канон — Linux CI или WSL
+(`bash scripts/wsl-setup.sh --verify`). N и M считаются при каждом запуске по
+тому же glob (объявления `def test_*`/`async def test_*`, без размножения
+параметризацией), в документах их не переписывают. Проверка —
+`tests_backend/test_conftest_harness_notice.py`, мутанты
+`ha-harness-notice-silent` и `ha-harness-notice-count-frozen`.
+
 ## PDF export polish (#482)
 
 - [ ] Нормализация контура сначала схлопывает соседние и шовные дубли в
@@ -2441,7 +2453,7 @@ separately promised workflows:
 
 - [ ] Browser console has zero errors from houseplan-card.js on: dashboard load, markup, dialogs, zoom
 - [ ] HA log has zero houseplan errors/warnings after restart
-- [ ] `npm test` (frontend), `pytest tests_backend` (pure), CI HA-harness — all green
+- [ ] `npm test` (frontend), `pytest tests_backend` (pure only without HA: `test_ha_*.py` are not collected, the run prints how many — #630), CI HA-harness — all green
 - [ ] README screenshots/GIF still match the current UI (synthetic home only)
 
 ---

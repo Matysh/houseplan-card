@@ -2881,6 +2881,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'ha-harness-notice-silent',
+    guard: 'python3 -m pytest tests_backend/test_conftest_harness_notice.py -q -p no:cacheprovider',
+    because: 'without Home Assistant test_ha_*.py are not collected at all; a run that '
+      + 'does not say so in its -q summary looks like a full backend check (#630 AC1)',
+    patches: [{
+      file: 'tests_backend/conftest.py',
+      find: '    terminalreporter.write_line(ha_harness_warning(*HA_HARNESS_IGNORED), yellow=True)',
+      replace: '    pass',
+    }],
+  },
+  {
+    id: 'ha-harness-notice-count-frozen',
+    guard: 'python3 -m pytest tests_backend/test_conftest_harness_notice.py -q -p no:cacheprovider',
+    because: 'the number of ignored HA tests must follow the files, not a figure copied '
+      + 'from one audit — a frozen count drifts the day a harness test is added (#630 AC1)',
+    patches: [{
+      file: 'tests_backend/conftest.py',
+      find: '    tests = sum(len(_TEST_DEF.findall(path.read_text(encoding="utf-8"))) for path in files)',
+      replace: '    tests = 292',
+    }],
+  },
+  {
     id: 'device-echo-keeps-local-noncanonical',
     guard: 'node demo/smoke_device_position_history.mjs',
     because: 'a card that keeps the raw position while sending the canonical '
