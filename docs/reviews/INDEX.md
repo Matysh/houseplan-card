@@ -27,6 +27,7 @@
 | #624 | [SPEC-REVIEW-624-r1.md](SPEC-REVIEW-624-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC1-b: «чем краснеет» не соответствует заявленному свидетелю | `scripts/gate-small.mjs` `scripts/bundle-budget.mjs` `scripts/monolith-baseline.json` |
 | #624 | [SPEC-REVIEW-624-r2.md](SPEC-REVIEW-624-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #624 | [CODE-REVIEW-624-r1.md](CODE-REVIEW-624-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #622 | [CODE-REVIEW-622-r1.md](CODE-REVIEW-622-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #621 | [CODE-REVIEW-621-r1.md](CODE-REVIEW-621-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #619 | [CODE-REVIEW-619-r1.md](CODE-REVIEW-619-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #618 | [SPEC-REVIEW-618-r1.md](SPEC-REVIEW-618-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | нотация h<ref> в B5 не встречается в коде | `docs/FILTERING.md` |
