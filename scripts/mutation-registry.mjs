@@ -8782,6 +8782,75 @@ const MUTANT_DEFINITIONS = [
       replace: "    current = [line]; // mutant: last physical line instead of the paragraph\n  }\n  for (const paragraph of paragraphs) {",
     }],
   },
+  // #643: ребейз разрешает конфликт в генерируемом docs/reviews/INDEX.md
+  // пересборкой — и только когда ВСЕ конфликты остановки — индекс.
+  {
+    id: 'rebase-index-resolves-mixed-conflicts',
+    guard: 'node --test --test-name-pattern="#643 (planStop|AC2)" test/rebase-generated.test.mjs',
+    because: '#643 AC2: a stop where the index conflicts together with any other path is a real '
+      + 'conflict; resolving it because the index is among the paths commits conflict markers or '
+      + 'loops the rebase instead of refusing with the list of files',
+    patches: [{
+      file: 'scripts/rebase-generated.mjs',
+      find: "  if (manual.length) return { action: 'abort', reason: 'manual', manual, conflicts };",
+      replace: "  if (manual.length && !conflicts.includes(REVIEWS_INDEX_PATH)) return { action: 'abort', reason: 'manual', manual, conflicts }; // mutant: index anywhere unlocks the stop",
+    }],
+  },
+  {
+    id: 'rebase-index-takes-a-side',
+    guard: 'node --test --test-name-pattern="#643 AC1" test/rebase-generated.test.mjs',
+    because: '#643 AC1: neither side of the rebase knows the other side\'s review documents; taking '
+      + '--ours (dev) drops the branch\'s own document from the index, the result must be a rebuild',
+    patches: [{
+      file: 'scripts/rebase-generated.mjs',
+      find: '        rebuildIndex();\n',
+      replace: "        git(['checkout', '--ours', '--', REVIEWS_INDEX_PATH]); // mutant: take dev's index\n",
+    }],
+  },
+  {
+    id: 'rebase-index-failure-leaves-half-rebase',
+    guard: 'node --test --test-name-pattern="#643: сбой пересборки" test/rebase-generated.test.mjs',
+    because: 'a crash in the middle of the rebase (the generator failed) must abort it; otherwise '
+      + 'the caller\'s tree is left mid-rebase and the next step works on a detached half-result',
+    patches: [{
+      file: 'scripts/rebase-generated.mjs',
+      find: "    if (rebaseInProgress(git, cwd)) git(['rebase', '--abort'], { allowFailure: true });\n",
+      replace: '    // mutant: no abort on failure\n',
+    }],
+  },
+  {
+    id: 'rebase-index-refusal-exits-like-a-crash',
+    guard: 'node --test --test-name-pattern="#643 CLI" test/rebase-generated.test.mjs',
+    because: 'Node exits with 1 on its own uncaught errors; a refusal reported as 1 is '
+      + 'indistinguishable from a crashed helper, and the pipeline would call a broken tool a branch conflict',
+    patches: [{
+      file: 'scripts/rebase-generated.mjs',
+      find: '    process.exit(EXIT_CONFLICT);',
+      replace: '    process.exit(1); // mutant: refusal = generic failure code',
+    }],
+  },
+  {
+    id: 'merge-rebase-refuses-index-conflict',
+    guard: 'node --test --test-name-pattern="#643 AC1" test/merge-candidate.test.mjs',
+    because: '#643: a green task whose doc commit conflicts with dev only in the generated INDEX.md '
+      + 'must merge through Validate; a plain rebase sends it back to S6 on every move of dev',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: '      const r = rebaseRegenerating({ onto, gitPrefix: CONVEYOR_IDENTITY });',
+      replace: "      const r = spawnSync('git', [...CONVEYOR_IDENTITY, 'rebase', onto]).status === 0 ? { ok: true } : (spawnSync('git', ['rebase', '--abort']), { ok: false, conflicts: [] }); // mutant: plain rebase",
+    }],
+  },
+  {
+    id: 'rebase-on-dev-stages-index-unrebuilt',
+    guard: 'node --test --test-name-pattern="#643 AC3" test/rebase-on-dev.test.mjs',
+    because: '#643 AC3: the author\'s rebase must rebuild INDEX.md like the pipeline does; staging '
+      + 'the conflicted file as-is commits conflict markers into a generated file',
+    patches: [{
+      file: 'scripts/rebase-on-dev.mjs',
+      find: '    onto: upstream, cwd, git,\n',
+      replace: '    onto: upstream, cwd, git, rebuildIndex: () => {}, // mutant: index staged as-is\n',
+    }],
+  },
   // #634: ролевые конспекты PROCESS.md, цена входа агента, генерируемый
   // Snapshot и индекс приложений TESTING.md. Каждая защита — от тихого
   // расхождения выжимки с каноном или тихого роста входа.

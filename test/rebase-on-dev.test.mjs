@@ -5,6 +5,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { rebaseOnDev, splitConflicts } from '../scripts/rebase-on-dev.mjs';
+import { buildIndex } from '../scripts/reviews-index.mjs';
 
 // #479 AC5: конфликт только в бандле решается пересборкой, конфликт в src/**
 // останавливает ребейз, не тронув дерево. Сценарий — настоящий git в temp.
@@ -14,6 +15,9 @@ import { rebaseOnDev, splitConflicts } from '../scripts/rebase-on-dev.mjs';
 // Windows с глобальным `core.autocrlf=true` checkout давал `dev\r\n` вместо
 // `dev\n`, и тест краснел на переводе строки, а не на ребейзе. Менять глобальный
 // конфиг владельца ради теста нельзя — конфиг передаётся окружением.
+// #643: GIT_* родителя снимаются целиком (урок #633) — запущенный из pre-push
+// хука тест иначе унаследует GIT_DIR и ребейзит репозиторий хука.
+for (const key of Object.keys(process.env)) if (/^GIT_/i.test(key)) delete process.env[key];
 Object.assign(process.env, {
   GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t',
   GIT_CONFIG_COUNT: '2',
@@ -28,7 +32,7 @@ const git = (cwd, ...args) => execFileSync('git', args, {
 const SYNC = [process.execPath, '-e',
   "const fs=require('fs');fs.writeFileSync('dist/a.js','built:'+fs.readFileSync('src/x.ts','utf8'))"];
 
-function repo({ conflictInSrc }) {
+function repo({ conflictInSrc, reviews = false }) {
   const root = mkdtempSync(join(tmpdir(), 'hp-rebase-'));
   const origin = join(root, 'origin.git'); const work = join(root, 'work');
   git(root, 'init', '--bare', '-q', '-b', 'dev', origin);
@@ -38,19 +42,30 @@ function repo({ conflictInSrc }) {
   writeFileSync(join(work, 'src/x.ts'), 'base\n');
   writeFileSync(join(work, 'src/y.ts'), 'y0\n');
   writeFileSync(join(work, 'dist/a.js'), 'built:base\n');
+  if (reviews) review(work, 1);
   git(work, 'add', '-A'); git(work, 'commit', '-q', '-m', 'base'); git(work, 'push', '-q', '-u', 'origin', 'dev');
   // Ветка задачи: правит src/x.ts (или src/y.ts) и бандл.
   git(work, 'checkout', '-q', '-b', 'issue/1-x');
   writeFileSync(join(work, conflictInSrc ? 'src/y.ts' : 'src/x.ts'), 'branch\n');
   writeFileSync(join(work, 'dist/a.js'), 'built:branch\n');
+  if (reviews) review(work, 9);
   git(work, 'add', '-A'); git(work, 'commit', '-q', '-m', 'feat: branch');
   // dev уходит вперёд: другой файл (или тот же y.ts) и тот же бандл.
   git(work, 'checkout', '-q', 'dev');
   writeFileSync(join(work, conflictInSrc ? 'src/y.ts' : 'src/z.ts'), 'dev\n');
   writeFileSync(join(work, 'dist/a.js'), 'built:dev\n');
+  if (reviews) review(work, 8);
   git(work, 'add', '-A'); git(work, 'commit', '-q', '-m', 'dev moves'); git(work, 'push', '-q', 'origin', 'dev');
   git(work, 'checkout', '-q', 'issue/1-x');
   return { root, work };
+}
+
+// Документ ревью задачи N и индекс, пересобранный по каталогу, — как коммитит конвейер.
+function review(work, n) {
+  const dir = join(work, 'docs', 'reviews');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, `CODE-REVIEW-${n}-r1.md`), `# CODE-REVIEW-${n}-r1\nВердикт: **зелёный** · High: 0 · Medium: 0\n`);
+  writeFileSync(join(dir, 'INDEX.md'), buildIndex(dir));
 }
 
 test('splitConflicts делит пути на сгенерированные и ручные (#479)', () => {
@@ -60,6 +75,26 @@ test('splitConflicts делит пути на сгенерированные и 
   ]);
   assert.deepEqual(generated, ['dist/houseplan-card.js', 'custom_components/houseplan/frontend/houseplan-assets.json']);
   assert.deepEqual(manual, ['src/houseplan-card.ts', 'custom_components/houseplan/const.py']);
+  // #643: индекс ревью — генерируемый путь рядом с бандлом, прочие docs — нет.
+  assert.deepEqual(splitConflicts(['docs/reviews/INDEX.md', 'docs/reviews/CODE-REVIEW-9-r1.md']),
+    { generated: [], regenerated: ['docs/reviews/INDEX.md'], manual: ['docs/reviews/CODE-REVIEW-9-r1.md'] });
+});
+
+test('#643 AC3: бандл и INDEX.md конфликтуют в одном коммите — бандл пересобран, индекс = пересборка каталога', () => {
+  const { root, work } = repo({ conflictInSrc: false, reviews: true });
+  try {
+    const result = rebaseOnDev({ cwd: work, syncCommand: SYNC, log: () => {} });
+    assert.equal(result.rebased, true);
+    assert.ok(result.resolved.includes('docs/reviews/INDEX.md ← пересборка'), JSON.stringify(result.resolved));
+    assert.ok(result.resolved.some((r) => r.startsWith('dist/a.js')), 'бандл решён в той же остановке');
+    assert.equal(git(work, 'status', '--porcelain'), '');
+    assert.equal(git(work, 'rev-list', '--count', 'HEAD..origin/dev'), '0');
+    const index = git(work, 'show', 'HEAD:docs/reviews/INDEX.md') + '\n';
+    assert.equal(index, buildIndex(join(work, 'docs', 'reviews')), 'индекс = пересборка, не версия dev и не ветки');
+    assert.match(index, /CODE-REVIEW-8-r1\.md/);
+    assert.match(index, /CODE-REVIEW-9-r1\.md/);
+    assert.equal(readFileSync(join(work, 'dist/a.js'), 'utf8'), 'built:branch\n');
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
 test('конфликт только в бандле: ребейз доведён, бандл пересобран и зааменден (#479 AC5)', () => {

@@ -7,7 +7,10 @@
 // content-hashed чанки. Руками это не решается, решается пересборкой. Скрипт
 // делает ровно это: при конфликте ТОЛЬКО в сгенерированных путях берёт версию
 // dev, доводит ребейз до конца, пересобирает бандл (`npm run bundle:sync`) и,
-// если он отличается, амендит последний коммит ветки. Конфликт в любом другом
+// если он отличается, амендит последний коммит ветки. Индекс ревью
+// `docs/reviews/INDEX.md` (#643) — тоже генерируемый: при конфликте он
+// пересобирается по каталогу в дереве остановки (общий помощник
+// `rebase-generated.mjs`, тот же, что у конвейера). Конфликт в любом другом
 // пути — останов с `git rebase --abort`: содержательные конфликты решает автор.
 //
 //   node scripts/rebase-on-dev.mjs            # ребейз текущей ветки
@@ -20,17 +23,21 @@ import { existsSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { portableCommand } from './spawn-portable.mjs';
+import { REVIEWS_INDEX_PATH, rebaseRegenerating } from './rebase-generated.mjs';
 
 export const GENERATED_ROOTS = ['dist/', 'custom_components/houseplan/frontend/'];
 export const isGenerated = (path) => GENERATED_ROOTS.some((root) => path.startsWith(root));
+/** Генерируемые пути, которые решаются пересборкой в момент остановки, а не версией dev (#643). */
+export const REGENERATED_PATHS = [REVIEWS_INDEX_PATH];
+export const isRegenerated = (path) => REGENERATED_PATHS.includes(path);
 
-/** Разделить конфликтующие пути: сгенерированные решаем сами, остальные — нет. */
+/** Разделить конфликтующие пути: бандл и индекс решаем сами, остальные — нет. */
 export function splitConflicts(paths) {
-  const generated = []; const manual = [];
+  const generated = []; const regenerated = []; const manual = [];
   for (const path of paths.map((p) => p.trim()).filter(Boolean)) {
-    (isGenerated(path) ? generated : manual).push(path);
+    (isGenerated(path) ? generated : isRegenerated(path) ? regenerated : manual).push(path);
   }
-  return { generated, manual };
+  return { generated, regenerated, manual };
 }
 
 export function makeGit(cwd) {
@@ -91,25 +98,23 @@ export function rebaseOnDev({
   const both = theirs.filter((path) => ours.has(path));
   const predicted = splitConflicts(both);
   if (predicted.generated.length) log(`бандл менялся с обеих сторон: ${predicted.generated.length} файл(ов) — решится пересборкой`);
+  if (predicted.regenerated.length) log(`индекс ревью менялся с обеих сторон — решится пересборкой по каталогу: ${predicted.regenerated.join(', ')}`);
   if (predicted.manual.length) log(`менялись с обеих сторон и НЕ сгенерированы (возможен ручной конфликт): ${predicted.manual.join(', ')}`);
   if (dryRun) { log('--dry-run: дерево не тронуто'); return { branch, rebased: false, resolved: [], rebuilt: false, predicted }; }
 
-  const resolved = [];
-  let step = git(['rebase', upstream], { allowFailure: true });
-  while (!step.ok) {
-    const conflicts = git(['diff', '--name-only', '--diff-filter=U']).stdout.split('\n').filter(Boolean);
-    if (!conflicts.length) {
-      git(['rebase', '--abort'], { allowFailure: true });
-      throw new Error(`rebase остановился без конфликтов:\n${step.stderr || step.stdout}`);
+  // Цикл остановок — общий с конвейером (#643): индекс ревью пересобирается
+  // помощником, бандл — версией dev здесь, всё прочее — отказ с abort.
+  const outcome = rebaseRegenerating({
+    onto: upstream, cwd, git,
+    extra: { match: isGenerated, resolve: (path) => resolveGeneratedConflict(git, path) },
+  });
+  if (!outcome.ok) {
+    if (outcome.reason === 'manual') {
+      throw new Error(`конфликт вне сгенерированных путей — ребейз отменён, дерево как было:\n  ${outcome.manual.join('\n  ')}`);
     }
-    const { generated, manual } = splitConflicts(conflicts);
-    if (manual.length) {
-      git(['rebase', '--abort']);
-      throw new Error(`конфликт вне сгенерированных путей — ребейз отменён, дерево как было:\n  ${manual.join('\n  ')}`);
-    }
-    for (const path of generated) resolved.push(`${path} ← ${resolveGeneratedConflict(git, path)}`);
-    step = git(['rebase', '--continue'], { allowFailure: true });
+    throw new Error(`rebase остановился без конфликтов (${outcome.reason}) — ребейз отменён:\n${outcome.output}`);
   }
+  const { resolved } = outcome;
   log(`ребейз завершён; сгенерированных конфликтов решено: ${resolved.length}`);
 
   // Пересборка: версия dev в бандле — не версия этой ветки. Собираем и, если

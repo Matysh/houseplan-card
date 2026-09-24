@@ -184,8 +184,10 @@ remaining work is the rebase. When the conflict is only in the committed bundle
 (`dist/**`, `custom_components/houseplan/frontend/**` — the usual case when two
 tasks built it in parallel), run `node scripts/rebase-on-dev.mjs` (#479): it takes
 `dev`'s copy through the rebase, rebuilds with `npm run bundle:sync` and amends
-the result into your last commit; a conflict anywhere else aborts and leaves the
-tree as it was. Then push the branch and re-apply `S7-code-review`. When the
+the result into your last commit; a conflict in `docs/reviews/INDEX.md` is
+rebuilt from the directory (#643, the same helper the pipeline uses, so the
+pipeline no longer bounces a task on it); a conflict anywhere else aborts and
+leaves the tree as it was. Then push the branch and re-apply `S7-code-review`. When the
 only difference from the reviewed material is the pipeline's own review-document
 commit, the next run re-applies the green verdict without calling the model
 (#499); any other change to the tree — a rebase included — gets a full review.

@@ -26,6 +26,9 @@ import { fileURLToPath } from 'node:url';
 import {
   CI_PROOF_POLICIES, evaluateCiProof, githubCandidateTree, loadGithubProofContext,
 } from './ci-proof.mjs';
+import { rebaseRegenerating } from './rebase-generated.mjs';
+// Личность конвейера — одна на ребейз и на коммит индекса (#643).
+import { CONVEYOR_IDENTITY } from './reviews-index.mjs';
 
 /** Скрипт индекса — по абсолютному пути: слияние работает из чужого cwd (worktree кандидата). */
 const REVIEWS_INDEX_SCRIPT = fileURLToPath(new URL('./reviews-index.mjs', import.meta.url));
@@ -148,8 +151,15 @@ export function realOps({
     },
     rebaseOnto: (branchTip, onto) => {
       must(git('checkout', '-q', '-B', 'merge-into-dev', branchTip), 'checkout');
-      const r = spawnSync('git', ['-c', 'user.name=claude[bot]', '-c', 'user.email=209825114+claude[bot]@users.noreply.github.com', 'rebase', onto], { encoding: 'utf8' });
-      if (r.status !== 0) { spawnSync('git', ['rebase', '--abort']); return null; }
+      // #643: doc-коммит ветки конфликтует с документами других задач в dev
+      // только в генерируемом INDEX.md — это решается пересборкой индекса, а
+      // не возвратом зелёной задачи в S6. Любой другой конфликт — отказ, как
+      // был; ребейз при отказе уже отменён помощником.
+      const r = rebaseRegenerating({ onto, gitPrefix: CONVEYOR_IDENTITY });
+      if (!r.ok) {
+        console.log(`ребейз на ${onto} отменён: ${r.conflicts.join(', ') || r.reason}`);
+        return null;
+      }
       // #635 r2: dev мог принести новые документы ревью — снимок INDEX.md
       // в кандидате их не знает. Коммит индекса — doc-коммит конвейера:
       // patch-id его не видит (`:!docs/reviews`), а тест «индекс свеж» в

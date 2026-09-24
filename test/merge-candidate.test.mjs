@@ -9,6 +9,11 @@ import {
   MAX_ATTEMPTS, MAX_COMMAND_OUTPUT_BYTES, commentFor, decideMerge, mergeCandidate, realOps, sh,
 } from '../scripts/merge-candidate.mjs';
 import { buildCiProof } from '../scripts/ci-proof.mjs';
+import { buildIndex } from '../scripts/reviews-index.mjs';
+
+// #643: сценарии на настоящем git ведут временные репозитории — GIT_* родителя
+// (GIT_DIR из pre-push хука, урок #633) направили бы их в чужой репозиторий.
+for (const key of Object.keys(process.env)) if (/^GIT_/i.test(key)) delete process.env[key];
 import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
 
 // #622: имена и число экземпляров job — из validate.yml, не копией строк.
@@ -390,6 +395,82 @@ test('#516 AC1: dev moved only by review documents and the branch carries its ow
     assert.match(index, /CODE-REVIEW-8-r2\.md/);
     assert.match(index, /CODE-REVIEW-9-r1\.md/);
     assert.match(git(work, 'log', '-1', '--format=%s', devTip), /^docs\(reviews\): индекс после сдвига каталога \(#9\)/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ---------- #643: doc-коммит ветки конфликтует с dev только в INDEX.md ----------
+
+test('#643 AC1: dev сдвинулся документами ревью другой задачи, ветка несёт свой doc-коммит с INDEX — слияние через Validate, не S6', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-merge-643-'));
+  try {
+    const origin = join(dir, 'origin.git');
+    const work = join(dir, 'work');
+    execFileSync('git', ['init', '-q', '--bare', origin]);
+    execFileSync('git', ['clone', '-q', origin, work]);
+    const cfg = ['-c', 'user.name=t', '-c', 'user.email=t@x'];
+    const git = (cwd, ...args) => execFileSync('git', ['-C', cwd, ...cfg, ...args], { encoding: 'utf8' }).trim();
+    const reviews = join(work, 'docs', 'reviews');
+    // Как делает шаг публикации: документ раунда и индекс, пересобранный по каталогу, — одним коммитом.
+    const publish = (name, msg) => {
+      writeFileSync(join(reviews, name), `# ${name}\nВердикт: **зелёный** · High: 0 · Medium: 0\n`);
+      writeFileSync(join(reviews, 'INDEX.md'), buildIndex(reviews));
+      git(work, 'add', '-A');
+      git(work, 'commit', '-q', '-m', msg);
+    };
+    mkdirSync(reviews, { recursive: true });
+    writeFileSync(join(work, 'a.mjs'), 'export const a = 20;\n');
+    git(work, 'add', '.');
+    publish('CODE-REVIEW-1-r1.md', 'base');
+    git(work, 'branch', '-M', 'dev');
+    git(work, 'push', '-q', '-u', 'origin', 'dev');
+    git(work, 'checkout', '-q', '-b', 'issue/9-fix');
+    writeFileSync(join(work, 'a.mjs'), 'export const a = 21;\n');
+    git(work, 'commit', '-q', '-am', 'fix');
+    const material = git(work, 'rev-parse', 'HEAD');
+    publish('CODE-REVIEW-9-r1.md', 'docs: review document for #9');
+    git(work, 'push', '-q', '-u', 'origin', 'issue/9-fix');
+    git(work, 'checkout', '-q', 'dev');
+    publish('CODE-REVIEW-8-r2.md', 'docs: review document for #8');
+    git(work, 'push', '-q', 'origin', 'dev');
+    git(work, 'checkout', '-q', 'issue/9-fix');
+    // Предусловие: обычный ребейз на этом дереве действительно конфликтует в индексе.
+    const probe = spawnSync('git', ['-C', work, ...cfg, 'rebase', 'origin/dev'], { encoding: 'utf8' });
+    assert.notEqual(probe.status, 0, 'без помощника doc-коммит конфликтует');
+    assert.equal(git(work, 'diff', '--name-only', '--diff-filter=U'), 'docs/reviews/INDEX.md');
+    git(work, 'rebase', '--abort');
+
+    const calls = [];
+    const ops = realOps({ repo: 'x/y', token: 'none', issue: 9 });
+    ops.pushWithLease = (sha, ref, expected) => {
+      calls.push(['push', ref, expected]);
+      const r = spawnSync('git', ['-C', work, 'push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, 'origin', `${sha}:refs/heads/${ref}`], { encoding: 'utf8' });
+      return r.status === 0;
+    };
+    ops.dispatchValidate = (ref) => { calls.push(['dispatch', ref]); };
+    ops.waitValidate = async (sha) => { calls.push(['validate', sha]); return { result: 'green', url: 'https://run/1' }; };
+    ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 60)]); };
+    ops.log = () => {};
+    const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
+    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto']) ops[name] = inWork(ops[name]);
+
+    const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });
+    assert.equal(r.action, 'push', JSON.stringify(calls));
+    assert.ok(!calls.some((c) => c[0] === 'comment' && /конфликтует/.test(c[1])), 'нет возврата в S6 «конфликтует с dev»');
+    const validateAt = calls.findIndex((c) => c[0] === 'validate');
+    const devPushAt = calls.findIndex((c) => c[0] === 'push' && c[1] === 'dev');
+    assert.ok(validateAt >= 0 && validateAt < devPushAt, 'кандидат уходит в dev только после Validate');
+    const devTip = git(work, 'rev-parse', 'origin/dev');
+    assert.equal(devTip, r.candidate);
+    const index = `${git(work, 'show', `${devTip}:docs/reviews/INDEX.md`)}\n`;
+    git(work, 'checkout', '-q', devTip);
+    assert.equal(index, buildIndex(reviews), 'индекс кандидата = пересборка каталога');
+    assert.match(index, /CODE-REVIEW-8-r2\.md/);
+    assert.match(index, /CODE-REVIEW-9-r1\.md/);
+    assert.match(git(work, 'show', `${devTip}:a.mjs`), /a = 21/);
+    // Личность конвейера на переписанных коммитах сохранена.
+    assert.equal(git(work, 'log', '-1', '--format=%cn', devTip), 'claude[bot]');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
