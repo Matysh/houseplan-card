@@ -405,6 +405,11 @@ use `[data-hp="tool"][data-tool="…"]`; the complete `data-tool` vocabulary is
 in the JSON inventory. The toolbar X and the X on the active mode tab use
 `[data-hp="editor-close"]` while retaining `data-editor-navigation="view"`.
 
+The three editor mode tabs are `[data-hp="mode-tab"][data-mode="plan|devices|decor"]`
+(#629) and keep `data-editor-navigation`. Like the tabs themselves, the hook is
+present only for a user allowed to edit. Nothing in the card's styles selects
+it; its audience is `test`.
+
 The one visible secondary/context surface uses `[data-hp="tray"]`. Its
 `data-kind` is the stable launcher id when a grouped launcher owns it and the
 broad secondary kind otherwise. A closed placeholder does not carry the hook.

@@ -10803,7 +10803,7 @@ export class HouseplanCard extends LitElement {
             ? html`<div class="modes">
                 ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant'], ['decor', 'mdi:draw']] as const).map(
                   ([m, ic]) => html`<button class="modetab ${this._mode === m ? 'active' : ''}"
-                    data-editor-navigation=${m}
+                    data-hp="mode-tab" data-mode=${m} data-editor-navigation=${m}
                     title=${this._t(('mode.' + m + '_tip') as any)}
                     @click=${() => this._setMode(m)}>
                     <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>

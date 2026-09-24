@@ -69,6 +69,12 @@
       "since": "1.73.0-beta.7",
       "audience": ["test"]
     },
+    "mode-tab": {
+      "elements": ["button"],
+      "since": "1.78.0-beta.2",
+      "audience": ["test"],
+      "attributes": { "data-mode": ["plan", "devices", "decor"] }
+    },
     "opening": {
       "elements": ["g"],
       "since": "1.59.0-beta.3",
