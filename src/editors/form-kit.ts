@@ -13,6 +13,7 @@
 import { html, nothing, type TemplateResult } from 'lit';
 
 import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from '../styles/form-kit.styles';
+import { colorTileInk } from './color-tile-ink';
 
 /**
  * Лист набора живёт в ленивом редакторском графе, а не в `cardStyles` (#594 AC8).
@@ -297,23 +298,20 @@ export interface ColorTileOptions {
   onOpacity: (opacity: number) => void;
 }
 
-/** Светлый ли цвет — для контраста подписи поверх свотча плитки. */
-export function isLightHex(hex: string): boolean {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return true;
-  const n = parseInt(m[1], 16);
-  const r = (n >> 16) & 255; const g = (n >> 8) & 255; const b = n & 255;
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6;
-}
+export { isLightHex } from './color-tile-ink';
 
 /**
  * Плитка цвета (§3.1 «Плитки цвета»): название поверх свотча на всю ширину,
  * ниже hex и число прозрачности. Свотч — trigger существующего пикера.
+ *
+ * #615: поверхность рисует сам trigger (`cover-swatch`) — шахматка и цвет
+ * поверх неё с непрозрачностью α, поэтому у обёртки своего фона нет. Подпись
+ * выбирается по видимому цвету (`colorTileInk`), а не по одному `hex`.
  */
 export function colorTile({ label, hex, opacity, opacityLabel, picker, onOpacity }: ColorTileOptions): TemplateResult {
   const pct = Math.round(Math.min(1, Math.max(0, opacity)) * 100);
   return html`<div class="hpf-colortile">
-    <div class="hpf-colortile-swatch" style=${`background:${hex};color:${isLightHex(hex) ? '#1f2a30' : '#fff'}`}>
+    <div class="hpf-colortile-swatch" style=${`color:${colorTileInk(hex, opacity)}`}>
       ${picker}<span>${label}</span>
     </div>
     <div class="hpf-colortile-meta">

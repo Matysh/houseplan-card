@@ -6,6 +6,9 @@ import {
   CARD_DIALOG_FORM_KIT, SUMMARY_PANEL_FORM_KIT, formKitCss,
 } from '../test-build/styles/form-kit.styles.js';
 import { summaryPanelEditorCss } from '../test-build/summary-panel-editor-style.js';
+import {
+  TILE_INK_DARK, TILE_INK_LIGHT, colorTileInk, isLightHex,
+} from '../test-build/editors/color-tile-ink.js';
 
 /**
  * #594. Набор контролов поднят из редактора боковой панели, и главный вопрос к
@@ -163,4 +166,29 @@ test('#594 сегментированный переключатель оста�
     'цель нажатия сегмента опустилась ниже 44 px');
   assert.match(css, /\.hpf-seg input \{[\s\S]*?opacity: 0;/,
     'радиокнопка перестала быть скрытой — сегмент нарисуется дважды');
+});
+
+test('#615: подпись плитки цвета выбирается по видимому цвету, а не по одному hex', () => {
+  // Плитка показывает α шахматкой. При α=0 под подписью только светлая
+  // шахматка, и белая подпись на ней пропадает даже у почти чёрного цвета —
+  // ровно тот случай, который ловит мутант M-615-label (подпись по hex без α).
+  assert.equal(colorTileInk('#0d1b2a', 0), TILE_INK_DARK, 'α=0: тёмный цвет, но видна шахматка — подпись тёмная');
+  assert.equal(colorTileInk('#0d1b2a', 1), TILE_INK_LIGHT, 'α=1: плотный тёмный цвет — подпись белая');
+  for (const a of [0, 0.18, 0.5, 1]) {
+    assert.equal(colorTileInk('#ffd45c', a), TILE_INK_DARK, `светлый #ffd45c при α=${a} — подпись тёмная`);
+  }
+  // `light_none` по умолчанию: #6b7480 при 0 %.
+  assert.equal(colorTileInk('#6b7480', 0), TILE_INK_DARK);
+  // При α=1 выбор обязан совпасть с прежним правилом `isLightHex(hex)`.
+  for (const hex of ['#0d1b2a', '#ffd45c', '#6b7480', '#ffffff', '#000000', '#3f8f5a', '#e05252', '#9aa4ad']) {
+    assert.equal(colorTileInk(hex, 1), isLightHex(hex) ? TILE_INK_DARK : TILE_INK_LIGHT, `α=1 для ${hex}`);
+  }
+  // Смешивание монотонно по α: у тёмного цвета подпись переключается ровно
+  // один раз — с тёмной на белую.
+  const flips = [...Array(101).keys()].map((i) => colorTileInk('#0d1b2a', i / 100))
+    .filter((ink, i, all) => i > 0 && ink !== all[i - 1]).length;
+  assert.equal(flips, 1);
+  // Некорректный hex и нечисловая α не роняют плитку.
+  assert.equal(colorTileInk('nope', 0.5), TILE_INK_DARK);
+  assert.equal(colorTileInk('#0d1b2a', Number.NaN), TILE_INK_LIGHT);
 });

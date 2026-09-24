@@ -11559,6 +11559,45 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'M-615-tile',
+    guard: 'node demo/smoke_dialog_polish_605.mjs',
+    because: '#615 AC1: плитка цвета General обязана показывать прозрачность шахматкой — '
+      + 'при 0 % видна одна шахматка, при 100 % плотный цвет. Если плитка снова считается '
+      + 'сплошной плашкой, «No light sources» на 0 % опять выглядит насыщенным серым, '
+      + 'а единственным признаком остаётся число рядом',
+    patches: [{
+      file: 'src/hp-color-opacity.ts',
+      find: '    return this.flatSwatch && !this.coverSwatch;',
+      replace: '    return this.flatSwatch;',
+    }],
+  },
+  {
+    id: 'M-615-plate',
+    guard: 'node demo/smoke_dialog_polish_605.mjs',
+    because: '#615 AC3 (б): режим шахматки привязан к cover-swatch, а плашки цвета '
+      + '(flat-swatch без cover-swatch) остаются сплошными при любом α. Если режим включается '
+      + 'по flat-swatch, шахматка протекает на Wall fill, фон и плашки Space/Room/Device — '
+      + 'до #615 это не проверял ни один смок',
+    patches: [{
+      file: 'src/hp-color-opacity.ts',
+      find: '    return this.flatSwatch && !this.coverSwatch;',
+      replace: '    return !this.flatSwatch && this.coverSwatch;',
+    }],
+  },
+  {
+    id: 'M-615-label',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#615" test/form-kit.test.mjs',
+    because: '#615 AC2: подпись плитки выбирается по видимому цвету — hex, смешанному с '
+      + 'шахматкой по α. По одному hex тёмный цвет на 0 % получает белую подпись на светлой '
+      + 'шахматке, и название плитки пропадает',
+    patches: [{
+      file: 'src/editors/color-tile-ink.ts',
+      find: '  const a = Number.isFinite(alpha) ? Math.min(1, Math.max(0, alpha)) : 1;',
+      replace: '  const a = 1;',
+    }],
+  },
+  {
     id: 'general-north-clear-writes-zero',
     guard: 'node demo/smoke_general_settings_form.mjs',
     because: '#600 §5.2: «Clear» возвращает север в «не задан» (null), а не в 0°: ноль — '

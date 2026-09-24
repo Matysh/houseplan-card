@@ -15,6 +15,11 @@
   with a toast such as “Hidden: 7”; a failed save changes nothing and keeps the
   selection. Rows disabled or missing in Home Assistant cannot be selected
   ([#618](https://github.com/Matysh/houseplan-card/issues/618)).
+- Colour tiles in General settings (room fill and glow colours) show their
+  opacity again: a checkerboard shows through the colour, so **No light
+  sources** at 0 % no longer looks like solid grey, and the tile name stays
+  readable on what is actually visible. Colour plates stay solid
+  ([#615](https://github.com/Matysh/houseplan-card/issues/615)).
 
 ## v1.78.0-beta.1 — 2026-09-23
 

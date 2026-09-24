@@ -42,7 +42,11 @@ export class HpColorOpacity extends LitElement {
   public hideLabel = false;
   /** Settings form-kit uses a solid swatch instead of the alpha checkerboard. */
   public flatSwatch = false;
-  /** Let the existing trigger cover an entire settings colour tile. */
+  /**
+   * Let the existing trigger cover an entire settings colour tile. #615: the
+   * tile is the one flat-swatch surface that still shows alpha — checkerboard
+   * under the colour, colour at its opacity — so the picture matches the `%`.
+   */
   public coverSwatch = false;
   public pickerLabels: ColorPickerLabels = DEFAULT_LABELS;
 
@@ -112,7 +116,7 @@ export class HpColorOpacity extends LitElement {
         linear-gradient(45deg, #b8b8b8 25%, #eee 25%) 5px 5px / 10px 10px;
       cursor: pointer;
     }
-    :host([flat-swatch]) .trigger { background: none; }
+    .trigger.solid { background: none; }
     :host([cover-swatch]) { display: block; width: 100%; height: 100%; }
     :host([cover-swatch]) .trigger {
       width: 100%; height: 100%; padding: 0; border: 0; border-radius: 6px;
@@ -838,18 +842,28 @@ export class HpColorOpacity extends LitElement {
       </div>`;
   }
 
+  /**
+   * Solid plate (#600/#605): flat-swatch without cover-swatch paints the colour
+   * opaque with no checkerboard. Colour tiles (cover-swatch) keep the alpha
+   * checkerboard (#615). One condition for both the background and the opacity.
+   */
+  private get _solidSwatch(): boolean {
+    return this.flatSwatch && !this.coverSwatch;
+  }
+
   render() {
     const pct = Math.round(Math.min(1, Math.max(0, Number(this.opacity) || 0)) * 100);
+    const solid = this._solidSwatch;
     const color = safeStoredColor(this.color, '#607d8b');
     const title = this.showOpacity
       ? `${this.label || 'Color'}: ${color}, ${pct}%`
       : `${this.label || 'Color'}: ${color}`;
     return html`
       ${this.label && !this.hideLabel ? html`<span class="label">${this.label}</span>` : nothing}
-      <button class="trigger" type="button" .disabled=${this.disabled}
+      <button class=${solid ? 'trigger solid' : 'trigger'} type="button" .disabled=${this.disabled}
         aria-label=${title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
         title=${title} @click=${this._toggle}>
-        <span class="swatch" style=${`background:${color};opacity:${this.flatSwatch ? 1 : this.showOpacity ? pct / 100 : 1}`}></span>
+        <span class="swatch" style=${`background:${color};opacity:${solid ? 1 : this.showOpacity ? pct / 100 : 1}`}></span>
       </button>
       ${this._open && !this.disabled && this._supportsPopover() ? this._pickerTemplate(true) : nothing}
     `;
