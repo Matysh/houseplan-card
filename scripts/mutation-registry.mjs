@@ -10148,6 +10148,85 @@ const MUTANT_DEFINITIONS = [
       replace: '      if (body !== null) continue; // mutant: only the file counts',
     }],
   },
+  // #633: локальный контур — хук pre-push гонит gate:small, деление юнитов на части.
+  {
+    id: 'pre-push-hook-ignores-red-gate-small',
+    guard: 'node --test test/pre-push-gate.test.mjs',
+    because: 'хук, который печатает «красный» и всё равно пускает push, — ровно то, что #633 AC1 '
+      + 'запрещает: ошибка gate:small снова всплывает в Validate через полчаса',
+    patches: [{
+      file: 'scripts/pre-push-gate.mjs',
+      find: '  const code = runGate(plan.base);',
+      replace: '  const code = runGate(plan.base) && 0; // mutant: red gate passes',
+    }],
+  },
+  {
+    id: 'pre-push-gate-inherits-git-dir',
+    guard: 'node --test test/pre-push-gate.test.mjs',
+    because: 'хук git запускает набор с GIT_DIR репозитория; юниты с временными репозиториями '
+      + 'тогда пишут в настоящий — bare-флаг, коммиты фикстур, ветка dev перезаписана (#633, '
+      + 'первый живой прогон)',
+    patches: [{
+      file: 'scripts/pre-push-gate.mjs',
+      find: "      { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'], shell, env: gateEnv(env) }).status ?? 1;",
+      replace: "      { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'], shell, env }).status ?? 1;",
+    }],
+  },
+  {
+    id: 'pre-push-shell-drops-gate-status',
+    guard: 'node --test test/pre-push-gate.test.mjs',
+    because: 'pre-push-gate.mjs может вернуть 1, но решает код выхода самого .githooks/pre-push: '
+      + 'потерянный статус в шелле пропускает красный gate:small (#633 AC1)',
+    patches: [{
+      file: '.githooks/pre-push',
+      find: '    gate_status=1\n',
+      replace: '    gate_status=0\n',
+    }],
+  },
+  {
+    id: 'pre-push-hook-misses-issue-branches',
+    guard: 'node --test test/pre-push-gate.test.mjs',
+    because: 'префикс веток задач — единственное, что включает набор по умолчанию; опечатка в нём '
+      + 'молча возвращает opt-in, который #633 отменил',
+    patches: [{
+      file: 'scripts/pre-push-gate.mjs',
+      find: "    && (mode === 'force' || ref.remoteRef.startsWith('refs/heads/issue/')));",
+      replace: "    && (mode === 'force' || ref.remoteRef.startsWith('refs/heads/issues/')));",
+    }],
+  },
+  {
+    id: 'pre-push-docs-filter-swallows-executable-diff',
+    guard: 'node --test test/pre-push-gate.test.mjs',
+    because: 'пропуск «только C/D» должен требовать, чтобы ВСЕ файлы были документами; some вместо '
+      + 'every пропускает код, приложенный к одной строке документации (#633)',
+    patches: [{
+      file: 'scripts/pre-push-gate.mjs',
+      find: "  return files.length > 0 && files.every((file) => ['C', 'D'].includes(classify(file)));",
+      replace: "  return files.length > 0 && files.some((file) => ['C', 'D'].includes(classify(file)));",
+    }],
+  },
+  {
+    id: 'pre-push-hook-judges-foreign-tree',
+    guard: 'node --test test/pre-push-gate.test.mjs',
+    because: 'gate:small проверяет рабочее дерево; пуш не-HEAD ветки без отказа получает зелёный '
+      + 'вердикт чужому коду (#633)',
+    patches: [{
+      file: 'scripts/pre-push-gate.mjs',
+      find: '  const foreign = needing.filter((ref) => ref.localSha !== headSha);',
+      replace: '  const foreign = needing.filter(() => false); // mutant: any tree will do',
+    }],
+  },
+  {
+    id: 'test-chunk-drops-last-file',
+    guard: 'node --test test/test-chunk.test.mjs',
+    because: 'деление, теряющее файл, даёт зелёные части при непрогнанном тесте — ровно то, от '
+      + 'чего #633 AC3 требует «каждый файл ровно в одной части»',
+    patches: [{
+      file: 'scripts/test-chunk.mjs',
+      find: '  return sorted.filter((_, i) => i % total === index - 1);',
+      replace: '  return sorted.filter((_, i) => i % total === index - 1 && i < sorted.length - 1);',
+    }],
+  },
   {
     id: 'review-returns-task-on-cancelled-dispatch',
     guard: 'node --test test/ci-proof.test.mjs test/validate-gate.test.mjs',

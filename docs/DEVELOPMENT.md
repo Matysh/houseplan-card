@@ -39,6 +39,57 @@ the degradation is accepted.
 - GitHub pushes: classic PAT (repo+workflow scopes), created via the user's Chrome;
   stored in `~/.git-credentials` for the session.
 
+## Local contour in 5 minutes (локальный контур за 5 минут, #633)
+
+Three commands take a fresh Linux sandbox (agent session, WSL, a clean VM) from
+nothing to a green smoke, a full unit run in parts and a pre-push gate. Each
+step fits the ≈3-minute limit of one sandbox command; everything is idempotent,
+so after a timeout or a sandbox restart the same command is simply repeated.
+
+```bash
+# 1. Worktree + dependencies + Chromium + bundle + one Playwright page.
+#    HP_BRANCH picks the branch (taken from origin if it exists there);
+#    without it the worktree is a detached origin/dev.
+HP_BRANCH=issue/NNN-slug HP_WORKTREE=/tmp/w-NNN bash scripts/sandbox-bootstrap.sh
+#    or step by step: worktree | deps | chromium | bundle | check
+cd /tmp/w-NNN && node demo/smoke_edge_cases.mjs     # AC2 of #633: green
+
+# 2. The full unit suite in parts that each fit one command.
+npm run test:chunk -- 1/6          # builds test-build/, then the first sixth
+npm run test:chunk -- 2/6 --no-build
+npm run test:chunk -- 3/6 --list   # only print the files of the part
+
+# 3. Push: the pre-push hook runs npm run gate:small for issue/* branches.
+git push origin issue/NNN-slug
+HP_PREPUSH_GATE=0 git push origin issue/NNN-slug   # explicit opt-out
+```
+
+What each command guarantees:
+
+- **`scripts/sandbox-bootstrap.sh`** — the worktree comes from the clone the
+  script lives in (`HP_CLONE` overrides), `npm ci --ignore-scripts` runs only
+  when `package-lock.json` changed (`HP_SHARED_NODE_MODULES` links a ready
+  `node_modules` instead), Chromium comes from the npm package
+  `@sparticuz/chromium@152.0.0` (the Playwright CDN is closed in the sandbox,
+  the npm registry is not) and gets a shim at every path Playwright expects —
+  a real browser already there is left alone. `bundle` is `npm run
+  bundle:sync`; `check` opens one page in Playwright. The script carries no
+  owner paths and no credentials: pushing is configured separately. Golden
+  frames are still captured only in Linux CI (#455).
+- **`npm run test:chunk -- N/M`** — `test/*.test.mjs` sorted by code point,
+  file *i* goes to part *i* mod M + 1 (round-robin). Chosen over size-balanced
+  parts so that a file stays in the same part while tests are edited; the M
+  parts together cover every file exactly once (`test/test-chunk.test.mjs`).
+  The test build runs in every part unless `--no-build`, so a part is
+  self-contained after a sandbox restart.
+- **pre-push** — see [TESTING.md «Локальный набор перед пушем»](TESTING.md#локальный-набор-перед-пушем-343):
+  on by default for `issue/*` branches with an executable diff, skipped when the
+  branch diff against `origin/dev` is class C/D only (review documents,
+  changelogs, bundle), off with `HP_PREPUSH_GATE=0`, forced for any branch with
+  `HP_PREPUSH_GATE=1`. `gate:small` takes minutes; when a push must fit a
+  3-minute command, run `npm run gate:small` separately and push with
+  `HP_PREPUSH_GATE=0`.
+
 ## Local Windows workstation
 
 The CI contract is **Node.js 22 + Python 3.14**. Do not use Codex's bundled

@@ -68,7 +68,6 @@ export const NOT_AN_INPUT = [
   ['demo/downgrade_open_passage.mjs', 'ручной инструмент миграции фикстур'],
   ['scripts/dev/**', 'локальные утилиты разработчика'],
   ['scripts/install-hooks.mjs', 'установка git-хуков при npm ci'],
-  ['scripts/pre-push-gate.mjs', 'локальный pre-push набор (HP_PREPUSH_GATE), в CI не исполняется'],
   ['scripts/golden-accept.mjs', 'приёмка эталонов человеком, после прогона (#344)'],
   ['scripts/golden-container.mjs', 'локальная съёмка в пиновом образе (#334), ручной запуск'],
   ['scripts/inventory.mjs', 'отчёт для аудита, не гейт'],

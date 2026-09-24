@@ -30,20 +30,14 @@ else
 fi
 
 status=0
+gate_status=0
 
-# Локальный набор гейтов (#343). Выключен по умолчанию намеренно: 20-45 секунд на
-# каждый пуш, включая пуши одной строки документации, — цена, которую стоит
-# платить осознанно. Документация: docs/TESTING.md.
-if [ "${HP_PREPUSH_GATE:-}" = "1" ] && [ -f "$repo_root/scripts/pre-push-gate.mjs" ]; then
-  echo "pre-push-gate: HP_PREPUSH_GATE=1, прогоняю локальный набор" >&2
-  if ! node "$repo_root/scripts/pre-push-gate.mjs" >&2; then
-    status=1
-  fi
-fi
+# Строки git читаются один раз: их нужно и локальному набору, и процессному гейту.
+refs=$(cat)
 
 while read -r local_ref local_sha remote_ref remote_sha; do
-  # Deleting a remote branch pushes nothing to examine.
-  if [ "$local_sha" = "$zero" ]; then
+  # An empty line (nothing on stdin) and deleting a remote branch push nothing to examine.
+  if [ -z "$local_sha" ] || [ "$local_sha" = "$zero" ]; then
     continue
   fi
 
@@ -71,10 +65,25 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   if ! node "$gate" --range "${base}..${local_sha}" --target-ref "$remote_ref" $issues_flag >&2; then
     status=1
   fi
-done
+done <<EOF
+$refs
+EOF
+
+# Локальный набор gate:small (#633, прежде opt-in #343) — после процессного
+# гейта: тот отвечает за секунды, а набор идёт минуты; прогоняются оба, чтобы
+# автор узнал обо всех провалах одним кругом. По умолчанию включён для
+# веток issue/* с исполняемым диффом; дифф только класса C/D (документы ревью,
+# changelog, бандл) и ветки вне issue/* его не запускают. Выключение — явное:
+# HP_PREPUSH_GATE=0; HP_PREPUSH_GATE=1 — прогнать для любой ветки. Документация:
+# docs/TESTING.md, docs/DEVELOPMENT.md «Локальный контур за 5 минут».
+if [ -f "$repo_root/scripts/pre-push-gate.mjs" ]; then
+  if ! printf '%s\n' "$refs" | node "$repo_root/scripts/pre-push-gate.mjs" --hook >&2; then
+    gate_status=1
+  fi
+fi
 
 if [ "$status" -ne 0 ]; then
-  cat >&2 <<'EOF'
+  cat >&2 <<'MSG'
 
 Push остановлен: нарушен процесс (PROCESS.md §10.2).
 
@@ -84,7 +93,12 @@ Push остановлен: нарушен процесс (PROCESS.md §10.2).
 
 Обойти проверку можно через `git push --no-verify`, и тогда то же самое найдёт
 job `process-gate` в Validate — уже после того, как код окажется в dev.
-EOF
+MSG
+fi
+
+if [ "$gate_status" -ne 0 ]; then
+  echo "Push остановлен: красный локальный набор gate:small (см. вывод выше)." >&2
+  exit 1
 fi
 
 exit "$status"
