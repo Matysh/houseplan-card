@@ -3130,6 +3130,39 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'task-packet-product-flow-overrides-diff',
+    guard: 'node --test test/task-packet.test.mjs',
+    because: 'a product S6 issue whose branch holds no class A yet must keep its class A rights; '
+      + 'letting the diff heuristic win again prints the false infrastructure ban of #632',
+    patches: [{
+      file: 'scripts/task-packet.mjs',
+      find: "  const infrastructure = branch?.infrastructure === true && productFlow.length === 0;",
+      replace: "  const infrastructure = branch?.infrastructure === true;",
+    }],
+  },
+  {
+    id: 'task-packet-review-docs-not-material',
+    guard: 'node --test test/task-packet.test.mjs',
+    because: 'docs/reviews/** is written by the pipeline, not by the task: counting it as '
+      + 'material makes a spec-review-only product branch look like infrastructure (#632)',
+    patches: [{
+      file: 'scripts/task-packet.mjs',
+      find: "  const material = changedFiles.filter((name) => !name.startsWith('docs/reviews/'));",
+      replace: "  const material = changedFiles;",
+    }],
+  },
+  {
+    id: 'task-packet-s6-s7-alone-not-product-flow',
+    guard: 'node --test test/task-packet.test.mjs',
+    because: 'infrastructure issues enter at S7 and return to S6, so S6/S7 alone must not '
+      + 'count as product flow — otherwise a returned infra task loses the class A ban (#632)',
+    patches: [{
+      file: 'scripts/task-packet.mjs',
+      find: "  if (PRE_CODE_STATUSES.includes(status)) reasons.push(`статус ${status}`);",
+      replace: "  if (STATUS_LABELS.includes(status)) reasons.push(`статус ${status}`);",
+    }],
+  },
+  {
     id: 'fit-house-hidden-walls-vote',
     guard: 'node demo/smoke_space_card.mjs',
     because: 'hidden architecture silently widening the tight frame is exactly the #384 bug: '

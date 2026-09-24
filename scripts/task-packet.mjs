@@ -112,16 +112,51 @@ export function lastVerdict(comments, docs, stage) {
   };
 }
 
+/**
+ * Дифф ветки как доказательство ускоренного инфраструктурного трека (#562).
+ * Документы ревью (`docs/reviews/**`, класс C) пишет конвейер и сама ветка
+ * ревью ТЗ — они не материал задачи и классификацию не двигают (#632): ветка
+ * продуктовой S6-задачи до первого кодового коммита содержит только
+ * SPEC-REVIEW и не должна выглядеть инфраструктурной.
+ */
+export function branchIsInfrastructure(changedFiles = []) {
+  const material = changedFiles.filter((name) => !name.startsWith('docs/reviews/'));
+  return material.length > 0 && !material.some((name) => classify(name) === 'A');
+}
+
+const PRE_CODE_STATUSES = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready'];
+
+/**
+ * Признаки продуктового S-flow (#632). Инфраструктурная задача входит в поток
+ * сразу на S7 и никогда не несёт S1–S5, ТЗ и ревью ТЗ; поэтому любой из этих
+ * признаков делает эвристику «дифф без класса A» неприменимой. S6/S7/S8 сами по
+ * себе признаком не являются: их носит и инфраструктурная задача после ревью.
+ */
+export function productFlowEvidence({ status = null, issue = {}, specs = [], reviewDocs = [], comments = [] } = {}) {
+  const reasons = [];
+  if (PRE_CODE_STATUSES.includes(status)) reasons.push(`статус ${status}`);
+  if (/^#{1,3}\s*ТЗ(?![\p{L}\p{N}_])/mu.test(String(issue?.body ?? ''))) reasons.push('раздел «## ТЗ» в теле issue');
+  if (specs.length) reasons.push('файл ТЗ в docs/specs');
+  if (reviewDocs.some((d) => String(d.name).startsWith('SPEC-REVIEW-'))) reasons.push('документ ревью ТЗ');
+  else if (comments.some((c) => verdictDeclaration(c.body) && /SPEC-REVIEW-\d+/.test(String(c.body)))) reasons.push('вердикт ревью ТЗ в комментариях');
+  return reasons;
+}
+
 export function buildPacket(inputs) {
   const {
     issue, labels = [], comments = [], owner = 'Matysh', branch = null, specs = [], reviewDocs = [], validate = null,
   } = inputs;
   const status = STATUS_LABELS.find((l) => labels.includes(l)) || null;
+  // Трек сначала определяется статусом и историей issue (#632): прошедшая
+  // S3/S4/S5 или несущая ТЗ задача — продуктовая, и её право на класс A в
+  // S5–S7 не отнимается пустым пока диффом.
+  const productFlow = productFlowEvidence({ status, issue, specs, reviewDocs, comments });
   // `infra` — тематическая метка и не даёт процессных прав. Ускоренный трек
   // доказывается тем же механическим признаком, что process-gate: в реальном
-  // diff опубликованной ветки нет ни одного файла класса A.
-  const infrastructure = branch?.infrastructure === true;
-  const infrastructureHint = branch == null && status == null && labels.includes('infra');
+  // diff опубликованной ветки нет ни одного файла класса A — и только вне
+  // продуктового потока.
+  const infrastructure = branch?.infrastructure === true && productFlow.length === 0;
+  const infrastructureHint = branch == null && status == null && labels.includes('infra') && productFlow.length === 0;
   const track = infrastructure
     ? 'инфраструктурный'
     : infrastructureHint ? 'инфраструктурный (предварительно; подтвердить путями/diff)'
@@ -139,7 +174,7 @@ export function buildPacket(inputs) {
   const unverified = acs.filter((a) => a.evidence.startsWith('без записи'));
   const packet = {
     issue: { number: issue.number, title: issue.title, state: issue.state, url: issue.url },
-    status, track, labels, rights: rightsFor(status, labels, { infrastructure, infrastructureHint }),
+    status, track, labels, productFlow, rights: rightsFor(status, labels, { infrastructure, infrastructureHint }),
     decisions: ownerDecisions(comments, owner),
     material: branch ? {
       branch: branch.name, tip: branch.tip, base: branch.base, ahead: branch.ahead, behind: branch.behind,
@@ -158,6 +193,7 @@ export function renderPacket(p) {
   L.push(`# Пакет задачи #${p.issue.number} — ${p.issue.title}`);
   L.push('');
   L.push(`Статус: **${p.status || 'без S-метки'}** · трек: ${p.track} · метки: ${p.labels.join(', ') || '—'} · issue ${p.issue.state}`);
+  if (p.productFlow?.length) L.push(`Продуктовый поток: ${p.productFlow.join(', ')} — дифф без класса A трек не меняет (#632)`);
   L.push('');
   L.push('## Права и следующий шаг');
   for (const r of p.rights) L.push(`- ${r}`);
@@ -214,7 +250,7 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
     const ahead = Number(sh('git', ['rev-list', '--count', `origin/dev..${ref}`], { cwd }));
     const behind = Number(sh('git', ['rev-list', '--count', `${ref}..origin/dev`], { cwd }));
     const changedFiles = sh('git', ['diff', '--name-only', `${base}..${ref}`], { cwd }).split('\n').filter(Boolean);
-    const infrastructure = changedFiles.length > 0 && !changedFiles.some((name) => classify(name) === 'A');
+    const infrastructure = branchIsInfrastructure(changedFiles);
     // Дерево без docs/reviews — для сравнения с якорем вердикта: git сам его не даёт,
     // поэтому сравнение делается diff'ом при известном якоре (см. ниже).
     const names = sh('git', ['ls-tree', '--name-only', `${ref}:docs/reviews`], { cwd }).split('\n').filter((n) => new RegExp(`-${number}-r\\d+\\.md$`).test(n));

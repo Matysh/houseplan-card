@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  buildPacket, evidenceFor, extractAcceptanceCriteria, lastVerdict, ownerDecisions, renderPacket, rightsFor,
+  branchIsInfrastructure, buildPacket, evidenceFor, productFlowEvidence, extractAcceptanceCriteria, lastVerdict, ownerDecisions, renderPacket, rightsFor,
 } from '../scripts/task-packet.mjs';
 import { materialAnchorBlock } from '../scripts/review-doc-guard.mjs';
 
@@ -133,6 +133,53 @@ test('#562: before a branch exists the infra label prompts classification but gr
   assert.ok(packet.rights.some((l) => l.includes('без class A начинай сразу')));
   assert.ok(packet.rights.some((l) => l.includes('не доказательство и не право')));
   assert.ok(packet.rights.every((l) => !l.includes('продуктовый код трогать МОЖНО')));
+});
+
+test('#632: review documents never classify a branch as infrastructure', () => {
+  assert.equal(branchIsInfrastructure(['docs/reviews/SPEC-REVIEW-607-r1.md']), false,
+    'a product branch holding only its spec review is not an infrastructure diff');
+  assert.equal(branchIsInfrastructure(['docs/reviews/SPEC-REVIEW-607-r1.md', 'scripts/task-packet.mjs']), true);
+  assert.equal(branchIsInfrastructure(['scripts/task-packet.mjs', 'src/space-render.ts']), false);
+  assert.equal(branchIsInfrastructure([]), false);
+});
+
+test('#632: product S6 issue keeps class A rights while its diff has no class A yet', () => {
+  const packet = buildPacket({
+    issue: { number: 607, title: 'HA dialog close', state: 'OPEN', url: 'u', body: '## ТЗ\n\n| AC1 | диалог закрывается | смок |\n' },
+    labels: ['bug', 'P2', 'S6-in-progress', 'small'],
+    // Даже если сборщик входов счёл дифф инфраструктурным (старый collectInputs
+    // или дифф только из class B/C), продуктовый поток сильнее эвристики.
+    branch: { name: 'issue/607-ha-dialog-close', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: true },
+    reviewDocs: [{ name: 'SPEC-REVIEW-607-r1.md', text: 'Вердикт: зелёный' }],
+  });
+  assert.equal(packet.track, 'small');
+  assert.ok(packet.rights.some((l) => l.includes('продуктовый код трогать МОЖНО')));
+  assert.ok(packet.rights.every((l) => !l.includes('файлы класса A трогать НЕЛЬЗЯ')));
+  assert.match(renderPacket(packet), /Продуктовый поток: .*ТЗ/);
+
+  // Каждый признак потока по отдельности достаточен.
+  const bare = { issue: { number: 1, body: '' } };
+  assert.deepEqual(productFlowEvidence({ ...bare, status: 'S5-ready' }), ['статус S5-ready']);
+  assert.deepEqual(productFlowEvidence({ status: 'S6-in-progress', issue: { body: 'x\n## ТЗ\n- AC1: y' } }), ['раздел «## ТЗ» в теле issue']);
+  assert.deepEqual(productFlowEvidence({ status: 'S6-in-progress', issue: { body: '## ТЗшка не раздел' } }), []);
+  assert.equal(productFlowEvidence({ ...bare, status: 'S6-in-progress', specs: [{ name: '1-x.md' }] }).length, 1);
+  assert.equal(productFlowEvidence({ ...bare, status: 'S7-code-review', reviewDocs: [{ name: 'SPEC-REVIEW-1-r2.md' }] }).length, 1);
+  assert.equal(productFlowEvidence({ ...bare, comments: [{ body: 'SPEC-REVIEW-1-r1\nВердикт: зелёный · цикл r1/4 · High: 0 · Medium: 0' }] }).length, 1);
+});
+
+test('#632: statusless or returned infra issue without spec keeps the class A ban', () => {
+  for (const labels of [['bug', 'infra', 'process'], ['infra', 'S6-in-progress'], ['infra', 'S7-code-review']]) {
+    const packet = buildPacket({
+      issue: { number: 632, title: 'task packet', state: 'OPEN', url: 'u', body: 'Симптом и ожидаемое поведение, без ТЗ.' },
+      labels,
+      branch: { name: 'issue/632-task-packet-track', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: true },
+      reviewDocs: [{ name: 'CODE-REVIEW-632-r1.md', text: 'Вердикт: жёлтый' }],
+    });
+    assert.deepEqual(packet.productFlow, [], labels.join(','));
+    assert.equal(packet.track, 'инфраструктурный', labels.join(','));
+    assert.ok(packet.rights.some((l) => l.includes('файлы класса A трогать НЕЛЬЗЯ')), labels.join(','));
+    assert.ok(packet.rights.every((l) => !l.includes('продуктовый код трогать МОЖНО')), labels.join(','));
+  }
 });
 
 test('#517 AC5: AC берутся из тела issue, файл ТЗ — только когда в теле их нет', () => {
