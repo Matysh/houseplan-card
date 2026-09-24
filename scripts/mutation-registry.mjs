@@ -11099,7 +11099,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'general-required-number-falls-back-to-hidden-value',
-    guard: 'node demo/smoke_general_settings_form.mjs',
+    // #631 AC3: гард — юнит test-build (секунды) вместо смока с браузером.
+    guard: 'node --test test/dialog-form-problems.test.mjs',
     because: '#614 AC1: an empty required numeric draft must stay visible and block Save; '
       + 'validating the last typed number silently restores the pre-fix hidden-value fallback',
     patches: [{
@@ -11110,7 +11111,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'space-required-temperature-forgets-raw-draft',
-    guard: 'node demo/smoke_space_settings_form.mjs',
+    // #631 AC3: гард — юнит test-build (секунды) вместо смока с браузером.
+    guard: 'node --test test/dialog-form-problems.test.mjs',
     because: '#614 AC1: each required temperature input owns its raw draft and its own '
       + 'problem count; consulting the last valid number hides an empty lower bound',
     patches: [{
@@ -11190,13 +11192,83 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'marker-virtual-name-remains-a-late-toast',
-    guard: 'node demo/smoke_device_settings_form.mjs',
+    // #631 AC3: гард — юнит test-build (секунды) вместо смока с браузером.
+    guard: 'node --test test/dialog-form-problems.test.mjs',
     because: '#614 AC2: a missing virtual name is an inline form problem before Save; '
       + 'dropping this problem restores the late _saveMarker guard with no field guidance',
     patches: [{
       file: 'src/editors/marker-form-state.ts',
       find: "  if (d.binding === 'virtual' && !d.name.trim()) {",
       replace: "  if (d.binding === 'virtual' && !d.name.trim() && false) {",
+    }],
+  },
+  // #631: контракты снимка и валидации четырёх диалогов — юнитами test-build.
+  {
+    id: 'dialog-baseline-key-order-sensitive',
+    guard: 'node --test --test-name-pattern="#631" test/dialog-baseline.test.mjs',
+    because: '#631 AC1: одинаковый черновик с другим порядком ключей верхнего уровня — '
+      + 'не изменение. Без сортировки «Сохранить» загорается у нетронутого диалога, а '
+      + 'закрытие спрашивает о правках, которых не было',
+    patches: [{
+      file: 'src/editors/dialog-baseline.ts',
+      find: '    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));',
+      replace: '    ;',
+    }],
+  },
+  {
+    id: 'dialog-baseline-missing-reads-clean',
+    guard: 'node --test --test-name-pattern="#631" test/dialog-baseline.test.mjs',
+    because: '#631 AC1: без снимка диалог считается изменённым — Save доступен. Обратный '
+      + 'ответ блокирует кнопку у диалога, открытого путём без снимка, и правку нельзя сохранить',
+    patches: [{
+      file: 'src/editors/dialog-baseline.ts',
+      find: '  if (baseline === undefined) return true;',
+      replace: '  if (baseline === undefined) return false;',
+    }],
+  },
+  {
+    id: 'space-dialog-key-counts-raw-scale-input',
+    guard: 'node --test --test-name-pattern="#631" test/dialog-baseline.test.mjs',
+    because: '#631 AC1: сырой текст поля масштаба транзиентен — значение судится по cellCm. '
+      + 'Включить его в отпечаток — и «5» против «5,0» делает нетронутый диалог изменённым',
+    patches: [{
+      file: 'src/editors/space-form-state.ts',
+      find: "  'busy', 'pickSaved', 'saved', 'savedBusy', 'savedAspect', 'cellCmInput',",
+      replace: "  'busy', 'pickSaved', 'saved', 'savedBusy', 'savedAspect',",
+    }],
+  },
+  {
+    id: 'room-draft-key-drops-label-scale',
+    guard: 'node --test --test-name-pattern="#631" test/dialog-baseline.test.mjs',
+    because: '#631 AC1: отпечаток комнаты собирает все десять полей черновика. Потерять одно — '
+      + 'и правка размера подписей не делает диалог изменённым: Save не загорается, закрытие '
+      + 'не спрашивает',
+    patches: [{
+      file: 'src/editors/room-form-state.ts',
+      find: '    nameScale: h._roomNameScale, labelScale: h._roomLabelScale,',
+      replace: '    nameScale: h._roomNameScale,',
+    }],
+  },
+  {
+    id: 'room-create-ignores-area',
+    guard: 'node --test --test-name-pattern="#631" test/dialog-form-problems.test.mjs',
+    because: '#631 AC2 (§6.2 #600): новая комната создаётся по зоне без имени. Требовать имя '
+      + 'и в create — ложная ошибка под полем и заблокированный Save у корректного черновика',
+    patches: [{
+      file: 'src/editors/room-form-state.ts',
+      find: '  if (edit ? !h._nameSel.trim() : !(h._areaSel || h._nameSel.trim())) {',
+      replace: '  if (!h._nameSel.trim()) {',
+    }],
+  },
+  {
+    id: 'marker-ha-binding-accepts-virtual',
+    guard: 'node --test --test-name-pattern="#631" test/dialog-form-problems.test.mjs',
+    because: '#631 AC2: в режиме HA «virtual» — не привязка. Принять его — и маркер сохраняется '
+      + 'без сущности, хотя форма обещала привязку к Home Assistant',
+    patches: [{
+      file: 'src/editors/marker-form-state.ts',
+      find: "  if (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual')) {",
+      replace: "  if (d.bindingMode === 'ha' && !d.binding) {",
     }],
   },
   {
