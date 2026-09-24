@@ -183,6 +183,10 @@ const result = await page.evaluate(async () => {
   card._config = { ...card._config, language: 'ru' };
   card.requestUpdate();
   await card.updateComplete;
+  // #627: editor-dialog ru strings are a lazy chunk; the live switch holds the
+  // previous frame (inert + aria-busy) until it settles — wait for the gate.
+  for (let i = 0; i < 250 && card.hasAttribute('aria-busy'); i++) await new Promise((r) => setTimeout(r, 20));
+  await card.updateComplete;
   await picker.updateComplete;
   out.cardLanguageOwnsCopy = surface()?.getAttribute('aria-label') === 'Выбор цвета'
     && surface()?.querySelector('input[type="text"]')?.getAttribute('aria-label') === 'Цвет HEX'

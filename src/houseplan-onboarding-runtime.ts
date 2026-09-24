@@ -1,6 +1,8 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { classifyPlanFile, encodePlanFile, renderBackdropGuard } from './backdrop-pick';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
+import { SETTINGS_LANGUAGE_RUNTIME } from './i18n/settings';
+import { surfaceLanguageRuntime } from './i18n/namespace-language';
 import './hp-help';
 
 import {
@@ -39,7 +41,11 @@ const BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
  */
 export const ONBOARDING_RUNTIME_FINGERPRINT = BUILD_FINGERPRINT;
 
+/** #627: the first-run space form paints only the `settings` namespace. */
+export const ONBOARDING_LANGUAGE_RUNTIME = surfaceLanguageRuntime([SETTINGS_LANGUAGE_RUNTIME]);
+
 export class HouseplanOnboardingRuntime {
+  public readonly languageRuntime = ONBOARDING_LANGUAGE_RUNTIME;
   public constructor(public readonly host: HouseplanEditorHostPort) {}
 
   private _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing {

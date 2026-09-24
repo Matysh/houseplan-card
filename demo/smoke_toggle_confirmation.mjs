@@ -45,6 +45,10 @@ const out = await page.evaluate(async () => {
     card._config = { ...card._config, language };
     card.requestUpdate();
     await card.updateComplete;
+    // #627: the live switch holds the previous frame until the lazy editor
+    // dictionaries of this language settle (inert + aria-busy).
+    for (let i = 0; i < 250 && card.hasAttribute('aria-busy'); i++) await new Promise((r) => setTimeout(r, 20));
+    await card.updateComplete;
   };
   const rebuildGate = async () => {
     card._serverCfg = {

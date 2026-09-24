@@ -2479,6 +2479,63 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'i18n-namespace-eager-locale',
+    guard: 'node --test test/i18n-lazy-namespaces.test.mjs',
+    because: 'a static import of one ru/de/fr dictionary of a namespace puts all of it back into '
+      + 'the static editor and onboarding graphs — every new string costs ×4 again, the exact '
+      + 'growth #627 removes (13.9 → 34.5 KB gzip of first-run onboarding)',
+    patches: [{
+      file: 'src/i18n/settings.ts',
+      find: "import en from './settings/en.json' with { type: 'json' };\n",
+      replace: "import en from './settings/en.json' with { type: 'json' };\n"
+        + "import ru from './settings/ru.json' with { type: 'json' };\n",
+    }, {
+      file: 'src/i18n/settings.ts',
+      find: '  SETTINGS_LANGUAGE_RUNTIME.dictionary(lang)?.[key] ?? en[key];',
+      replace: "  (lang === 'ru' ? ru[key] : SETTINGS_LANGUAGE_RUNTIME.dictionary(lang)?.[key]) ?? en[key];",
+    }],
+  },
+  {
+    id: 'locale-gate-ignores-namespaces',
+    guard: 'node --test --test-name-pattern="#627 AC5" test/i18n-runtime.test.mjs',
+    because: 'a host gate that asks only the main catalog paints the open settings dialog in '
+      + 'English for one frame after a live language switch — the flash #348 forbids, now for '
+      + 'the lazy namespace dictionaries (#627 AC5)',
+    patches: [{
+      file: 'src/i18n/namespace-language.ts',
+      find: '    state: (code) => {\n'
+        + '      const state = primary.state(code);\n'
+        + "      return state !== 'pending' && namespaces.some((runtime) => runtime.state(code) === 'pending')\n"
+        + "        ? 'pending' : state;\n"
+        + '    },',
+      replace: '    state: (code) => primary.state(code),',
+    }],
+  },
+  {
+    id: 'onboarding-loader-skips-namespace-ensure',
+    guard: 'node demo/smoke_lazy_admin_locale.mjs',
+    because: 'an onboarding runtime installed before its settings dictionary settled forces the '
+      + 'host into the warm branch: the first-run form waits behind an inert, busy card instead '
+      + 'of the existing runtime indicator — a new interface state the contract rules out (#627 AC4)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      if (module.ONBOARDING_RUNTIME_FINGERPRINT === ENTRY_BUILD_FINGERPRINT) await module.ONBOARDING_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)); // #627\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'namespace-loader-returns-english',
+    guard: 'node demo/smoke_lazy_admin_locale.mjs',
+    because: 'a German administrator silently reading the English settings dialog is invisible '
+      + 'to parity units — only the bundle smoke proves the de loader commits the de chunk (#627 AC6)',
+    patches: [{
+      file: 'src/i18n/settings.ts',
+      find: "    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_DE_RETRY_ASSET__'))),\n",
+      replace: "    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_DE_RETRY_ASSET__')))\n"
+        + '    .then((module) => ({ dictionary: en, fingerprint: module.fingerprint })),\n',
+    }],
+  },
+  {
     id: 'static-glow-light-cache-spread',
     guard: 'node --test test/space-render-caches.test.mjs',
     because: 'a fresh spread on the devices array silently defeats RESOLVED_LIGHT_CACHE '
@@ -2668,8 +2725,9 @@ const MUTANT_DEFINITIONS = [
       find: "  /** Synchronize host/runtime language state and return the current branch. */\n"
         + '  private _syncDangerConfirmLocaleGate(): LanguageRenderGate {\n'
         + "    if (!this._config || !this.hass) return 'ready';\n"
-        + '    return languageRenderGate(\n'
-        + '      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),\n'
+        + '    return languageRenderGate( // #627: + dictionaries of the surfaces loaded on THIS host\n'
+        + '      this, this._editorRuntime?.languageRuntime ?? this._onboardingRuntime?.languageRuntime ?? LANGUAGE_RUNTIME,\n'
+        + '      langOf(this.hass, this._config.language),\n'
         + '    );\n'
         + '  }',
       replace: "  private _dangerConfirmLocaleGate: LanguageRenderGate = 'ready';\n"
@@ -2681,7 +2739,8 @@ const MUTANT_DEFINITIONS = [
       find: '    const localeGate = this._syncDangerConfirmLocaleGate();\n'
         + "    if (localeGate === 'cold') return languageLoadingTemplate();",
       replace: '    const localeGate = languageRenderGate(\n'
-        + '      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),\n'
+        + '      this, this._editorRuntime?.languageRuntime ?? this._onboardingRuntime?.languageRuntime ?? LANGUAGE_RUNTIME,\n'
+        + '      langOf(this.hass, this._config.language),\n'
         + '    );\n'
         + '    this._dangerConfirmLocaleGate = localeGate;\n'
         + "    if (localeGate === 'cold') return languageLoadingTemplate();",
@@ -8133,8 +8192,8 @@ const MUTANT_DEFINITIONS = [
       + 'dictionary, not of the resolved string (#459 AC2)',
     patches: [{
       file: 'src/i18n/topology.ts',
-      find: '  const value = DICTIONARIES[lang]?.[key] ?? en[key];',
-      replace: '  const value = DICTIONARIES[lang]?.[key] ?? en[key] ?? key;',
+      find: '  const value = TOPOLOGY_LANGUAGE_RUNTIME.dictionary(lang)?.[key] ?? en[key];',
+      replace: '  const value = TOPOLOGY_LANGUAGE_RUNTIME.dictionary(lang)?.[key] ?? en[key] ?? key;',
     }],
   },
   {
@@ -9522,6 +9581,18 @@ const MUTANT_DEFINITIONS = [
       find: 'export function lazyGraphCeilingViolation(bytes, { ceiling, label, band = LAZY_GRAPH_CEILING_BAND } = {}) {',
       replace: 'export function lazyGraphCeilingViolation(bytes, { ceiling, label, band = LAZY_GRAPH_CEILING_BAND } = {}) {\n'
         + '  if (Number.isFinite(bytes)) return null;  // mutant',
+    }],
+  },
+  {
+    id: 'bundle-budget-onboarding-ceiling-dropped',
+    guard: 'node --test --test-name-pattern="#627 AC1" test/bundle-assets.test.mjs',
+    because: '#627: the first-run graph grew 13.9 → 34.5 KB gzip unnoticed because it was only '
+      + 'counted, never compared. Dropping it from the ceiling loop returns exactly that state — '
+      + 'a declared ceiling nobody enforces',
+    patches: [{
+      file: 'scripts/bundle-budget.mjs',
+      find: "    [manifest.lazyOnboardingGzipBytes, lazyOnboardingCeiling, 'lazy onboarding graph'],\n",
+      replace: '',
     }],
   },
   {

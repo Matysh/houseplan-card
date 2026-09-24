@@ -8,13 +8,14 @@ import test from 'node:test';
 
 import {
   buildBundleManifest, buildFingerprintPlugin, editorRuntimeRetryUrlPlugin,
-  entryFallbackPlugin,
+  entryFallbackPlugin, NAMESPACE_LOCALE_CHUNKS,
 } from '../scripts/bundle-manifest.mjs';
 import {
   INITIAL_PANEL_ONLY_GZIP_BUDGET, INITIAL_VIEW_CEILING_BAND,
   INITIAL_VIEW_GZIP_BUDGET, INITIAL_VIEW_GZIP_CEILING,
   LAZY_EDITOR_GZIP_CEILING, LAZY_FURNITURE_ART_GZIP_CEILING, LAZY_GRAPH_CEILING_BAND,
-  lazyGraphCeilingViolation,
+  LAZY_ONBOARDING_GZIP_CEILING, lazyGraphCeilingViolation,
+  assertNamespaceLocaleOwnership, namespaceLocaleMarkers,
   LOW_HEADROOM_ACKNOWLEDGED_CEILING, LOW_HEADROOM_WARNING_BYTES,
   SUPPORT_LAZY_MARKERS,
   assertBundleBudget, assertSupportBundleOwnership, initialViewCeilingViolation,
@@ -27,6 +28,15 @@ import {
 import {
   cssTemplateMinifier, minifyCssText, minifyStaticCssTemplates,
 } from '../scripts/css-template-minifier.mjs';
+
+/** #627: the nine namespace × language chunks, each a dynamic import of a lazy chunk. */
+const namespaceLocaleChunkPath = (entry) => `houseplan-assets/${entry.namespace}-${entry.language}-HASH.js`;
+const namespaceLocaleBundleChunks = (code = (entry) => `${entry.namespace} ${entry.language}`) => Object.fromEntries(
+  NAMESPACE_LOCALE_CHUNKS.map((entry) => [namespaceLocaleChunkPath(entry), {
+    type: 'chunk', fileName: namespaceLocaleChunkPath(entry), code: code(entry), isEntry: false,
+    imports: [], dynamicImports: [], modules: { [`/repo${entry.module}`]: {} },
+  }]),
+);
 
 const minimalTwoEntryBundle = () => ({
   'houseplan-panel.js': {
@@ -171,8 +181,11 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       type: 'chunk', fileName: 'houseplan-assets/editor.js', code: 'editor', isEntry: false,
       // #474: the editor imports the furniture artwork statically; the View
       // reaches the same chunk only dynamically, so it stays out of initial.
-      imports: ['shared.js', 'houseplan-assets/furniture-plan-art.generated-HASH.js'], dynamicImports: [],
+      imports: ['shared.js', 'houseplan-assets/furniture-plan-art.generated-HASH.js'],
+      // #627: namespace dictionaries are dynamic imports of a LAZY chunk.
+      dynamicImports: NAMESPACE_LOCALE_CHUNKS.map(namespaceLocaleChunkPath),
     },
+    ...namespaceLocaleBundleChunks(),
     'houseplan-assets/furniture-plan-art.generated-HASH.js': {
       type: 'chunk', fileName: 'houseplan-assets/furniture-plan-art.generated-HASH.js',
       code: 'furniture artwork', isEntry: false, imports: [], dynamicImports: [],
@@ -219,6 +232,11 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
   assert.deepEqual(manifest.lazyFurnitureArtFiles, ['houseplan-assets/furniture-plan-art.generated-HASH.js']);
   assert.deepEqual(manifest.lazyPdfFiles, ['houseplan-assets/pdf-export-HASH.js']);
   assert.deepEqual(manifest.lazyEditorFiles, ['houseplan-assets/editor.js', 'houseplan-assets/furniture-plan-art.generated-HASH.js']);
+  // #627: found by module, not as a root of the initial graph; own graph.
+  assert.deepEqual(manifest.lazyNamespaceLocaleFiles, NAMESPACE_LOCALE_CHUNKS.map(namespaceLocaleChunkPath).sort());
+  assert.equal(manifest.lazyNamespaceLocaleGzipBytes, manifest.files
+    .filter((file) => manifest.lazyNamespaceLocaleFiles.includes(file.path))
+    .reduce((total, file) => total + file.gzipBytes, 0));
   assert.deepEqual(manifest.lazyFiles, [
     'houseplan-assets/de-HASH.js', 'houseplan-assets/editor.js',
     'houseplan-assets/furniture-plan-art.generated-HASH.js',
@@ -228,13 +246,30 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
   ]);
   // Этот тест про РАЗДЕЛЕНИЕ графов, а не про их размеры: потолки ленивых
   // графов (#593) задаются по самой фикстуре, чтобы она не проверяла лишнего.
-  const lazyCeilings = [manifest.lazyFurnitureArtGzipBytes, manifest.lazyEditorGzipBytes];
+  const lazyCeilings = [
+    manifest.lazyFurnitureArtGzipBytes, manifest.lazyEditorGzipBytes, manifest.lazyOnboardingGzipBytes,
+  ];
   assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000, undefined, ...lazyCeilings));
   assert.throws(() => assertBundleBudget(manifest, 1, undefined, ...lazyCeilings), /exceeds/);
   assert.throws(
     () => assertBundleBudget(manifest, 1_000_000, manifest.initialPanelOnlyGzipBytes - 1, ...lazyCeilings),
     /panel-only graph.*exceeds/,
   );
+  // #627 AC3: a namespace chunk pulled into a static graph is refused by name.
+  // A chunk reached from the initial graph never enters the namespace graph
+  // at all (the builder subtracts initial), so that leak surfaces as the
+  // count refusal below; the static editor graphs are checked by name.
+  for (const [graph, label] of [
+    ['lazyEditorFiles', 'lazy editor graph'],
+    ['lazyOnboardingFiles', 'lazy onboarding graph'],
+  ]) {
+    const leaked = { ...manifest, [graph]: [...manifest[graph], manifest.lazyNamespaceLocaleFiles[0]] };
+    assert.throws(() => assertBundleBudget(leaked, 1_000_000, undefined, ...lazyCeilings),
+      new RegExp(`${label} overlaps lazy namespace locale graph`));
+  }
+  assert.throws(() => assertBundleBudget({
+    ...manifest, lazyNamespaceLocaleFiles: manifest.lazyNamespaceLocaleFiles.slice(1),
+  }, 1_000_000, undefined, ...lazyCeilings), /lazy namespace locale graph has 8 files, expected 9/);
 });
 
 test('#486 Rollup names both stable entries explicitly', async () => {
@@ -401,13 +436,29 @@ test('#423 support form copy belongs only to the lazy editor graph', () => {
   const temp = mkdtempSync(join(tmpdir(), 'houseplan-support-graph-'));
   try {
     writeFileSync(join(temp, 'initial.js'), 'header only');
-    writeFileSync(join(temp, 'editor.js'), 'lazy English marker · lazy Russian marker');
+    writeFileSync(join(temp, 'editor.js'), 'lazy English marker');
+    writeFileSync(join(temp, 'support-ru.js'), 'lazy Russian marker');
     const manifest = {
       initialViewFiles: ['initial.js'],
       lazyEditorFiles: ['editor.js'],
+      lazyNamespaceLocaleFiles: ['support-ru.js'],
     };
-    const markers = ['lazy English marker', 'lazy Russian marker'];
+    const markers = [
+      { text: 'lazy English marker', graph: 'lazyEditorFiles' },
+      { text: 'lazy Russian marker', graph: 'lazyNamespaceLocaleFiles' },
+    ];
     assert.doesNotThrow(() => assertSupportBundleOwnership(manifest, temp, markers));
+    // #627: the Russian copy statically in the editor again is the ×4 regression.
+    writeFileSync(join(temp, 'editor.js'), 'lazy English marker · lazy Russian marker');
+    assert.throws(
+      () => assertSupportBundleOwnership(manifest, temp, markers),
+      /lazy locale leaked into lazy editor graph/,
+    );
+    writeFileSync(join(temp, 'editor.js'), 'lazy English marker');
+    assert.throws(
+      () => assertSupportBundleOwnership({ ...manifest, lazyNamespaceLocaleFiles: [] }, temp, markers),
+      /missing from lazy namespace locale graph/,
+    );
     writeFileSync(join(temp, 'initial.js'), 'lazy English marker');
     assert.throws(
       () => assertSupportBundleOwnership(manifest, temp, markers),
@@ -416,7 +467,7 @@ test('#423 support form copy belongs only to the lazy editor graph', () => {
     writeFileSync(join(temp, 'initial.js'), 'header only');
     assert.throws(
       () => assertSupportBundleOwnership(
-        { initialViewFiles: ['initial.js'], lazyEditorFiles: [] }, temp, markers,
+        { ...manifest, lazyEditorFiles: [] }, temp, markers,
       ),
       /missing from lazy editor graph/,
     );
@@ -448,6 +499,12 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
         + 'new URL("__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_PDF_RETRY_ASSET__", import.meta.url)', modules: {},
     },
+    // #627: the lazy namespace chunk that owns the nine second-attempt tokens.
+    'houseplan-assets/backdrop-pick-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/backdrop-pick-HASH.js', modules: {},
+      code: NAMESPACE_LOCALE_CHUNKS.map((entry) => `import("${entry.token}?retry")`).join(';'),
+    },
+    ...namespaceLocaleBundleChunks(() => ''),
     'houseplan-assets/houseplan-editor-runtime-HASH.js': {
       type: 'chunk', fileName: 'houseplan-assets/houseplan-editor-runtime-HASH.js', code: '',
       modules: { '/repo/src/houseplan-editor-runtime.ts': {} },
@@ -488,6 +545,50 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       + 'new URL("./furniture-plan-art.generated-HASH.js", import.meta.url);'
       + 'new URL("./pdf-export-HASH.js", import.meta.url)',
   );
+  assert.equal(
+    bundle['houseplan-assets/backdrop-pick-HASH.js'].code,
+    NAMESPACE_LOCALE_CHUNKS.map((entry) => `import("./${entry.namespace}-${entry.language}-HASH.js?retry")`).join(';'),
+  );
+});
+
+test('#627 namespace retry tokens stay strict: exactly one each, every chunk emitted', () => {
+  const run = (mutate) => {
+    const bundle = {
+      'houseplan-assets/houseplan-card.js': {
+        type: 'chunk', fileName: 'houseplan-assets/houseplan-card.js', modules: {},
+        code: ['EDITOR', 'ONBOARDING', 'ISO', 'DE', 'FR', 'FURNITURE_ART', 'PDF']
+          .map((name) => `"__HOUSEPLAN_${name}_RETRY_ASSET__"`).join(';'),
+      },
+      ...Object.fromEntries([
+        ['houseplan-editor-runtime', '/src/houseplan-editor-runtime.ts'],
+        ['houseplan-onboarding-runtime', '/src/houseplan-onboarding-runtime.ts'],
+        ['iso-scene-render', '/src/iso-scene-render.ts'], ['de', '/src/i18n/de.ts'],
+        ['fr', '/src/i18n/fr.ts'], ['furniture-plan-art.generated', '/src/furniture-plan-art.generated.ts'],
+        ['pdf-export', '/src/pdf/pdf-export.ts'],
+      ].map(([name, module]) => [`houseplan-assets/${name}-HASH.js`, {
+        type: 'chunk', fileName: `houseplan-assets/${name}-HASH.js`, code: '', modules: { [`/repo${module}`]: {} },
+      }])),
+      'houseplan-assets/lazy-HASH.js': {
+        type: 'chunk', fileName: 'houseplan-assets/lazy-HASH.js', modules: {},
+        code: NAMESPACE_LOCALE_CHUNKS.map((entry) => `"${entry.token}"`).join(';'),
+      },
+      ...namespaceLocaleBundleChunks(() => ''),
+    };
+    mutate(bundle);
+    editorRuntimeRetryUrlPlugin().generateBundle({}, bundle);
+    return bundle;
+  };
+  assert.doesNotThrow(() => run(() => {}));
+  const token = NAMESPACE_LOCALE_CHUNKS[4].token;
+  assert.throws(() => run((bundle) => {
+    bundle['houseplan-assets/lazy-HASH.js'].code = bundle['houseplan-assets/lazy-HASH.js'].code.replace(`"${token}"`, '""');
+  }), /namespace locale retry URL placeholder counts are support-de=0, expected exactly 1 each/);
+  assert.throws(() => run((bundle) => {
+    bundle['houseplan-assets/lazy-HASH.js'].code += `;"${token}"`;
+  }), /support-de=2/);
+  assert.throws(() => run((bundle) => {
+    delete bundle[namespaceLocaleChunkPath(NAMESPACE_LOCALE_CHUNKS[8])];
+  }), /topology fr locale chunk was not emitted/);
 });
 
 test('bundle tree verification fails for a missing or tampered manifest asset', () => {
@@ -710,9 +811,16 @@ test('#429 проверка владения не судит размер гра
   const temp = mkdtempSync(join(tmpdir(), 'houseplan-support-size-'));
   try {
     writeFileSync(join(temp, 'initial.js'), 'header only');
-    writeFileSync(join(temp, 'editor.js'), 'lazy English marker · lazy Russian marker');
-    const markers = ['lazy English marker', 'lazy Russian marker'];
-    const base = { initialViewFiles: ['initial.js'], lazyEditorFiles: ['editor.js'] };
+    writeFileSync(join(temp, 'editor.js'), 'lazy English marker');
+    writeFileSync(join(temp, 'support-ru.js'), 'lazy Russian marker');
+    const markers = [
+      { text: 'lazy English marker', graph: 'lazyEditorFiles' },
+      { text: 'lazy Russian marker', graph: 'lazyNamespaceLocaleFiles' },
+    ];
+    const base = {
+      initialViewFiles: ['initial.js'], lazyEditorFiles: ['editor.js'],
+      lazyNamespaceLocaleFiles: ['support-ru.js'],
+    };
     for (const initialViewGzipBytes of [0, 291_046, 10_000_000, undefined]) {
       assert.doesNotThrow(
         () => assertSupportBundleOwnership({ ...base, initialViewGzipBytes }, temp, markers),
@@ -831,7 +939,23 @@ const runBudgetCli = (initialViewGzipBytes) => {
     mkdirSync(join(dir, 'dist'));
     writeFileSync(join(dir, 'dist/houseplan-card.js'), 'view graph without support copy');
     writeFileSync(join(dir, 'dist/houseplan-panel.js'), 'panel shell');
-    writeFileSync(join(dir, 'dist/editor.js'), SUPPORT_LAZY_MARKERS.join('\n'));
+    // #627: the CLI judges ownership by content — each marker in its own graph.
+    const namespaceMarkers = namespaceLocaleMarkers();
+    const english = (namespace) => namespaceMarkers
+      .find((marker) => marker.namespace === namespace && marker.language === 'en').text;
+    writeFileSync(join(dir, 'dist/editor.js'), [
+      ...SUPPORT_LAZY_MARKERS.filter((marker) => marker.graph === 'lazyEditorFiles').map((marker) => marker.text),
+      english('settings'), english('support'), english('topology'),
+    ].join('\n'));
+    writeFileSync(join(dir, 'dist/onboarding.js'), english('settings'));
+    for (const entry of NAMESPACE_LOCALE_CHUNKS) {
+      const marker = namespaceMarkers.find((candidate) => candidate.namespace === entry.namespace
+        && candidate.language === entry.language).text;
+      const support = entry.namespace === 'support' && entry.language === 'ru'
+        ? SUPPORT_LAZY_MARKERS.filter((candidate) => candidate.graph === 'lazyNamespaceLocaleFiles')
+          .map((candidate) => candidate.text) : [];
+      writeFileSync(join(dir, `dist/${entry.namespace}-${entry.language}.js`), [marker, ...support].join('\n'));
+    }
     writeFileSync(join(dir, 'dist/locale.js'), 'lazy locale dictionary');
     writeFileSync(join(dir, 'dist/isometric.js'), 'lazy isometric runtime');
     writeFileSync(join(dir, 'dist/furniture-art.js'), 'lazy furniture artwork');
@@ -865,7 +989,11 @@ const runBudgetCli = (initialViewGzipBytes) => {
       lazyFurnitureArtGzipBytes: LAZY_FURNITURE_ART_GZIP_CEILING - 1_000,
       lazyPdfFiles: ['pdf.js'],
       lazyPdfGzipBytes: 100,
-      lazyOnboardingFiles: [],
+      lazyOnboardingFiles: ['onboarding.js'],
+      lazyOnboardingGzipBytes: LAZY_ONBOARDING_GZIP_CEILING - 1_000,
+      lazyNamespaceLocaleFiles: NAMESPACE_LOCALE_CHUNKS
+        .map((entry) => `${entry.namespace}-${entry.language}.js`),
+      lazyNamespaceLocaleGzipBytes: 900,
     }));
     const script = fileURLToPath(new URL('../scripts/bundle-budget.mjs', import.meta.url));
     const run = spawnSync(process.execPath, [script], { cwd: dir, encoding: 'utf8' });
@@ -878,6 +1006,9 @@ const runBudgetCli = (initialViewGzipBytes) => {
 test('#438 CLI действительно применяет потолок, а не только объявляет его', () => {
   const inside = runBudgetCli(INITIAL_VIEW_GZIP_CEILING - 500);
   assert.equal(inside.status, 0, inside.output);
+  // #627 AC1: the onboarding graph is printed with its ceiling and band.
+  assert.match(inside.output, new RegExp(`lazy onboarding: ${LAZY_ONBOARDING_GZIP_CEILING - 1_000} B gzip`
+    + ` \\(потолок ${LAZY_ONBOARDING_GZIP_CEILING} B ±${LAZY_GRAPH_CEILING_BAND}\\)`));
 
   const grew = runBudgetCli(INITIAL_VIEW_GZIP_CEILING + 1);
   assert.equal(grew.status, 1, grew.output);
@@ -905,6 +1036,8 @@ test('#593 потолки ленивых графов — гейт, а не ст
   for (const [bytes, ceiling, label] of [
     [manifest.lazyFurnitureArtGzipBytes, LAZY_FURNITURE_ART_GZIP_CEILING, 'lazy furniture art graph'],
     [manifest.lazyEditorGzipBytes, LAZY_EDITOR_GZIP_CEILING, 'lazy editor graph'],
+    // #627 AC1: the first-run graph is the third gated lazy graph.
+    [manifest.lazyOnboardingGzipBytes, LAZY_ONBOARDING_GZIP_CEILING, 'lazy onboarding graph'],
   ]) {
     const violation = lazyGraphCeilingViolation(bytes, { ceiling, label });
     assert.equal(violation, null, violation?.text);
@@ -928,4 +1061,88 @@ test('#593 потолки ленивых графов — гейт, а не ст
   // Текст обязан называть граф: «graph выше потолка» не говорит, куда смотреть.
   assert.match(lazyGraphCeilingViolation(NaN, { ceiling: 1, label: 'lazy editor graph' }).text,
     /lazy editor graph/);
+});
+
+const shippedManifest = () => JSON.parse(
+  readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
+);
+const shippedDist = fileURLToPath(new URL('../dist/', import.meta.url));
+
+test('#627 AC1 граф онбординга гейтится тем же потолком с полосой, что editor и furniture art', () => {
+  const manifest = shippedManifest();
+  const ceilings = (onboarding) => [
+    manifest.lazyFurnitureArtGzipBytes, manifest.lazyEditorGzipBytes, onboarding,
+  ];
+  const bytes = manifest.lazyOnboardingGzipBytes;
+  assert.ok(Number.isFinite(bytes) && bytes > 0, 'манифест обязан измерять граф онбординга');
+  assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes)));
+  assert.throws(
+    () => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes - 1)),
+    new RegExp(`lazy onboarding graph ${bytes} B gzip выше потолка ${bytes - 1} B на 1 B`),
+  );
+  assert.throws(
+    () => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes + LAZY_GRAPH_CEILING_BAND + 1)),
+    /lazy onboarding graph \d+ B gzip ниже потолка .*Опустите потолок/,
+  );
+  // Потолок по умолчанию — поставляемый, и поставляемый граф в его полосе.
+  assert.doesNotThrow(() => assertBundleBudget(manifest));
+});
+
+test('#627 AC3 словари пространств: девять ленивых чанков, английский — у потребителя', () => {
+  const manifest = shippedManifest();
+  assert.equal(manifest.lazyNamespaceLocaleFiles.length, NAMESPACE_LOCALE_CHUNKS.length);
+  for (const entry of NAMESPACE_LOCALE_CHUNKS) {
+    const own = manifest.lazyNamespaceLocaleFiles
+      .filter((path) => path.startsWith(`houseplan-assets/${entry.namespace}-${entry.language}-`));
+    assert.equal(own.length, 1, `${entry.namespace}-${entry.language}: ровно один отдельный чанк`);
+  }
+  for (const graph of ['initialViewFiles', 'lazyEditorFiles', 'lazyOnboardingFiles']) {
+    assert.deepEqual(manifest.lazyNamespaceLocaleFiles.filter((path) => manifest[graph].includes(path)), [],
+      `${graph} не содержит ни одного чанка словаря пространства`);
+  }
+  // По содержимому: en — статически у каждого потребителя и не в первом кадре;
+  // ru/de/fr — только в своём чанке.
+  assert.doesNotThrow(() => assertNamespaceLocaleOwnership(manifest, shippedDist));
+  assert.doesNotThrow(() => assertSupportBundleOwnership(manifest, shippedDist));
+});
+
+test('#627 AC3 проверка владения краснеет на каждом нарушении', () => {
+  const temp = mkdtempSync(join(tmpdir(), 'houseplan-namespace-owner-'));
+  const marker = (namespace, language) => ({ namespace, language, text: `${namespace} ${language} marker` });
+  const markers = [marker('settings', 'en'), marker('settings', 'ru'), marker('topology', 'en')];
+  const manifest = {
+    initialViewFiles: ['initial.js'], lazyEditorFiles: ['editor.js'],
+    lazyOnboardingFiles: ['onboarding.js'], lazyNamespaceLocaleFiles: ['settings-ru.js'],
+  };
+  const write = (files) => {
+    for (const [name, text] of Object.entries({
+      'initial.js': 'view', 'editor.js': 'settings en marker topology en marker',
+      'onboarding.js': 'settings en marker', 'settings-ru.js': 'settings ru marker', ...files,
+    })) writeFileSync(join(temp, name), text);
+  };
+  try {
+    write({});
+    assert.doesNotThrow(() => assertNamespaceLocaleOwnership(manifest, temp, markers));
+    write({ 'editor.js': 'settings en marker topology en marker settings ru marker' });
+    assert.throws(() => assertNamespaceLocaleOwnership(manifest, temp, markers),
+      /settings\/ru dictionary is static in lazy editor graph/);
+    write({ 'onboarding.js': 'settings en marker settings ru marker' });
+    assert.throws(() => assertNamespaceLocaleOwnership(manifest, temp, markers),
+      /settings\/ru dictionary is static in lazy onboarding graph/);
+    write({ 'initial.js': 'topology en marker' });
+    assert.throws(() => assertNamespaceLocaleOwnership(manifest, temp, markers),
+      /topology\/en dictionary leaked into initial View graph/);
+    write({ 'onboarding.js': 'form only' });
+    assert.throws(() => assertNamespaceLocaleOwnership(manifest, temp, markers),
+      /settings\/en dictionary missing from lazy onboarding graph/);
+    write({ 'settings-ru.js': 'empty' });
+    assert.throws(() => assertNamespaceLocaleOwnership(manifest, temp, markers),
+      /settings\/ru dictionary missing from lazy namespace locale graph/);
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+  // Маркеры реальных словарей не совпадают ни с одной строкой основного каталога.
+  const real = namespaceLocaleMarkers();
+  assert.equal(real.length, 12);
+  assert.equal(new Set(real.map((entry) => entry.text)).size, 12);
 });

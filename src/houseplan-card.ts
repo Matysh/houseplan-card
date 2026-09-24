@@ -569,6 +569,7 @@ export class HouseplanCard extends LitElement {
             url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
             return url.href;
           })()) as typeof import('./houseplan-editor-runtime');
+      if (module.EDITOR_RUNTIME_FINGERPRINT === ENTRY_BUILD_FINGERPRINT) await module.EDITOR_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)); // #627: dictionaries settle before install
       return {
         fingerprint: module.EDITOR_RUNTIME_FINGERPRINT,
         create: () => new module.HouseplanEditorRuntime(
@@ -602,6 +603,7 @@ export class HouseplanCard extends LitElement {
             url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
             return url.href;
           })()) as typeof import('./houseplan-onboarding-runtime');
+      if (module.ONBOARDING_RUNTIME_FINGERPRINT === ENTRY_BUILD_FINGERPRINT) await module.ONBOARDING_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)); // #627
       return {
         fingerprint: module.ONBOARDING_RUNTIME_FINGERPRINT,
         create: () => new module.HouseplanOnboardingRuntime(
@@ -1965,8 +1967,9 @@ export class HouseplanCard extends LitElement {
   /** Synchronize host/runtime language state and return the current branch. */
   private _syncDangerConfirmLocaleGate(): LanguageRenderGate {
     if (!this._config || !this.hass) return 'ready';
-    return languageRenderGate(
-      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
+    return languageRenderGate( // #627: + dictionaries of the surfaces loaded on THIS host
+      this, this._editorRuntime?.languageRuntime ?? this._onboardingRuntime?.languageRuntime ?? LANGUAGE_RUNTIME,
+      langOf(this.hass, this._config.language),
     );
   }
   private readonly _dangerConfirmController = new HpConfirmController((state) => {

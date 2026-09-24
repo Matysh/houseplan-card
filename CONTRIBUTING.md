@@ -38,6 +38,17 @@ an eager import. Extend the runtime, manifest, file/key/placeholder parity and
 regional-locale tests together; never bypass the registry by importing a locale
 directly in a component.
 
+Administrator-only copy lives in three lazy namespace dictionaries —
+`src/i18n/settings/`, `src/i18n/support/` and `src/i18n/topology/` (#627). Their
+English file is static (the synchronous fallback); every other language is one
+lazy chunk per namespace × language: a two-line loader module
+`src/i18n/<namespace>/<namespace>-<code>.ts`, one `import()` with a
+content-hashed retry token in `src/i18n/<namespace>.ts`, and one entry in
+`NAMESPACE_LOCALE_CHUNKS` in `scripts/bundle-manifest.mjs`. The lazy surfaces
+(onboarding, editor runtime, Zigbee overlay) wait for their dictionaries before
+painting; never import a non-English namespace JSON statically — the budget
+gate and `test/i18n-lazy-namespaces.test.mjs` refuse it.
+
 The current `subst()` helper does not implement plural rules. Phrase strings so
 their grammar does not depend on the numeric value (for example, use a neutral
 label followed by `{n}` rather than an English singular/plural pair).

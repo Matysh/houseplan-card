@@ -302,6 +302,10 @@ const responsiveForm = async ({ width, language, dark, canWrite, kiosk }) => {
     document.documentElement.toggleAttribute('dark', dark);
     card._config = { ...card._config, language, kiosk };
     card._serverCanWrite = canWrite;
+    // #627: this harness preloads the editor runtime, so a live language
+    // switch also waits for its lazy dictionaries (inert + aria-busy).
+    card.requestUpdate(); await card.updateComplete;
+    for (let i = 0; i < 250 && card.hasAttribute('aria-busy'); i++) await new Promise((r) => setTimeout(r, 20));
     card._summary.updated();
     await card._summary.openDialog();
     await card.updateComplete;

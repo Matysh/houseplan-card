@@ -500,7 +500,14 @@ test('словари topology несут один и тот же набор кл
 });
 
 test('кружок справки не рисуется без подписи для скринридера (#459 AC2)', async () => {
-  const { hasTopologyTranslation } = await import('../test-build/i18n/topology.js');
+  const { hasTopologyTranslation, topologyT, TOPOLOGY_LANGUAGE_RUNTIME } =
+    await import('../test-build/i18n/topology.js');
+  // #627: ru/de are lazy chunks. Without `ensure` this would prove the English
+  // fallback layer, not the Russian dictionary.
+  await TOPOLOGY_LANGUAGE_RUNTIME.ensure('ru');
+  await TOPOLOGY_LANGUAGE_RUNTIME.ensure('de');
+  assert.equal(TOPOLOGY_LANGUAGE_RUNTIME.state('ru'), 'ready');
+  assert.notEqual(topologyT('ru', 'help_aria'), topologyT('en', 'help_aria'));
   // Проверка идёт по СЛОВАРЮ, а не по строке: topologyT на отсутствующий ключ
   // отвечает именем ключа, и «help» — вполне непустая строка.
   assert.equal(hasTopologyTranslation('ru', 'help'), true);

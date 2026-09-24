@@ -12,6 +12,22 @@ const FR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FR_RETRY_ASSET__';
 const FURNITURE_ART_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__';
 const PDF_RETRY_ASSET_TOKEN = '__HOUSEPLAN_PDF_RETRY_ASSET__';
 
+/**
+ * #627: ru/de/fr of the three lazy dictionary namespaces are one chunk per
+ * namespace × language. Their loader modules are the recognition marker for
+ * the manifest graph and the target of each second-attempt retry token.
+ */
+export const NAMESPACE_LOCALE_CHUNKS = ['settings', 'support', 'topology']
+  .flatMap((namespace) => ['ru', 'de', 'fr'].map((language) => ({
+    namespace,
+    language,
+    module: `/src/i18n/${namespace}/${namespace}-${language}.ts`,
+    token: `__HOUSEPLAN_${namespace.toUpperCase()}_${language.toUpperCase()}_RETRY_ASSET__`,
+  })));
+
+const isNamespaceLocaleModule = (id) => NAMESPACE_LOCALE_CHUNKS
+  .some((chunk) => id.endsWith(chunk.module));
+
 export const CARD_ENTRY_FILE = 'houseplan-card.js';
 export const PANEL_ENTRY_FILE = 'houseplan-panel.js';
 
@@ -84,6 +100,8 @@ export function buildBundleManifest(bundle, fingerprint) {
       const modules = Object.keys(chunk.modules || {}).map((id) => id.replaceAll('\\', '/'));
       const role = modules.some((id) => id.endsWith('/src/i18n/de.ts') || id.endsWith('/src/i18n/fr.ts'))
         ? 'locale'
+        : modules.some(isNamespaceLocaleModule)
+          ? 'namespace-locale'
         : modules.some((id) => id.endsWith('/src/houseplan-onboarding-runtime.ts'))
           ? 'onboarding'
           : modules.some((id) => id.endsWith('/src/houseplan-editor-runtime.ts'))
@@ -135,6 +153,10 @@ export function buildBundleManifest(bundle, fingerprint) {
   const furnitureArtRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'furniture-art');
   const pdfRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'pdf'
     || path.includes('pdf-export-'));
+  // #627: namespace dictionaries are dynamic imports of LAZY chunks, never of
+  // the initial graph, so they are found by their module, not as a root.
+  const namespaceLocaleRoots = files.filter((file) => file._role === 'namespace-locale')
+    .map((file) => file.path);
   const graphFrom = (roots) => {
     const graph = new Set();
     for (const root of roots) {
@@ -148,6 +170,7 @@ export function buildBundleManifest(bundle, fingerprint) {
   const lazyIsometric = graphFrom(isometricRoots);
   const lazyFurnitureArt = graphFrom(furnitureArtRoots);
   const lazyPdf = graphFrom(pdfRoots);
+  const lazyNamespaceLocale = graphFrom(namespaceLocaleRoots);
   const sum = (paths) => [...paths]
     .reduce((total, path) => total + (byPath.get(path)?.gzipBytes || 0), 0);
   return {
@@ -175,6 +198,8 @@ export function buildBundleManifest(bundle, fingerprint) {
     lazyFurnitureArtGzipBytes: sum(lazyFurnitureArt),
     lazyPdfFiles: [...lazyPdf].sort(),
     lazyPdfGzipBytes: sum(lazyPdf),
+    lazyNamespaceLocaleFiles: [...lazyNamespaceLocale].sort(),
+    lazyNamespaceLocaleGzipBytes: sum(lazyNamespaceLocale),
     files: files.map(({ _role, ...file }) => file),
   };
 }
@@ -239,6 +264,14 @@ export function editorRuntimeRetryUrlPlugin() {
       if (!french) throw new Error('French locale chunk was not emitted');
       if (!furnitureArt) throw new Error('furniture artwork chunk was not emitted');
       if (!pdf) throw new Error('PDF export runtime chunk was not emitted');
+      const namespaceLocales = NAMESPACE_LOCALE_CHUNKS.map((entry) => {
+        const chunk = chunks.find((candidate) => Object.keys(candidate.modules)
+          .some((id) => id.replaceAll('\\', '/').endsWith(entry.module)));
+        if (!chunk) {
+          throw new Error(`${entry.namespace} ${entry.language} locale chunk was not emitted`);
+        }
+        return { ...entry, chunk, replacements: 0 };
+      });
       let furnitureArtReplacements = 0;
       let editorReplacements = 0;
       let onboardingReplacements = 0;
@@ -289,12 +322,27 @@ export function editorRuntimeRetryUrlPlugin() {
           pdfReplacements += chunk.code.split(PDF_RETRY_ASSET_TOKEN).length - 1;
           chunk.code = chunk.code.replaceAll(PDF_RETRY_ASSET_TOKEN, asset);
         }
+        for (const entry of namespaceLocales) {
+          if (!chunk.code.includes(entry.token)) continue;
+          let asset = posix.relative(posix.dirname(chunk.fileName), entry.chunk.fileName);
+          if (!asset.startsWith('.')) asset = `./${asset}`;
+          entry.replacements += chunk.code.split(entry.token).length - 1;
+          chunk.code = chunk.code.replaceAll(entry.token, asset);
+        }
       }
       if (editorReplacements !== 1 || onboardingReplacements !== 1 || isometricReplacements !== 1
           || germanReplacements !== 1 || frenchReplacements !== 1 || furnitureArtReplacements !== 1
           || pdfReplacements !== 1) {
         throw new Error('lazy retry URL placeholder counts are '
           + `${editorReplacements}/${onboardingReplacements}/${isometricReplacements}/${germanReplacements}/${frenchReplacements}/${furnitureArtReplacements}/${pdfReplacements}, expected 1/1/1/1/1/1/1`);
+      }
+      // #627: the same strict rule for every namespace × language token —
+      // exactly one second-attempt URL each, never zero and never two.
+      const namespaceMismatch = namespaceLocales.filter((entry) => entry.replacements !== 1);
+      if (namespaceMismatch.length) {
+        throw new Error('namespace locale retry URL placeholder counts are '
+          + namespaceMismatch.map((entry) => `${entry.namespace}-${entry.language}=${entry.replacements}`).join(', ')
+          + ', expected exactly 1 each');
       }
     },
   };

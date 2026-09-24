@@ -32,6 +32,10 @@ const res = await page.evaluate(async () => {
     },
   };
   await c.updateComplete;
+  // #627: ru strings of the editor dialogs are a lazy chunk; the switch to ru
+  // above holds the previous frame (inert + aria-busy) until it settles.
+  for (let i = 0; i < 250 && c.hasAttribute('aria-busy'); i++) await new Promise((r) => setTimeout(r, 20));
+  await c.updateComplete;
   // заливка temp вкл → класс filled и тултип с температурой
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({ ...s,
     settings: { show_borders: true, show_names: true, fill_mode: 'temp', temp_min: 20, temp_max: 25 } })) };

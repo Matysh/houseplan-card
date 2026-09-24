@@ -22,6 +22,10 @@ const out = await page.evaluate(async () => {
       },
     };
     await update();
+    // #627: a live language switch holds the previous frame until the lazy
+    // editor dictionaries settle (inert + aria-busy).
+    for (let i = 0; i < 250 && card.hasAttribute('aria-busy'); i++) await new Promise((r) => setTimeout(r, 20));
+    await update();
   };
   const fieldState = () => {
     // #600 §4.2: масштаб — поле с единицей внутри рамки (`hpf-unit`).

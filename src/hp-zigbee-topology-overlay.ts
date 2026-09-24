@@ -1,7 +1,7 @@
 import { LitElement, css, html, svg, nothing, type PropertyValues } from 'lit';
 import { langOf } from './i18n';
 import { lqiColor } from './logic';
-import { topologyT } from './i18n/topology';
+import { TOPOLOGY_LANGUAGE_RUNTIME, topologyT } from './i18n/topology';
 import {
   mapTopologies, resolveMappedTopologyHover, type ZigbeeMappedTopology,
   type ZigbeeParentTarget,
@@ -266,6 +266,17 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   }
 
   protected render() {
+    // #627: the ru/de/fr topology strings are a lazy chunk. Request it once on
+    // mount — before the first hover can paint a label — and draw nothing
+    // until it settled (ready or bounded English fallback).
+    const lang = langOf(this.hass);
+    if (TOPOLOGY_LANGUAGE_RUNTIME.state(lang) === 'pending') {
+      void TOPOLOGY_LANGUAGE_RUNTIME.ensure(lang).then(() => {
+        if (this.isConnected) this.requestUpdate();
+      });
+      this._setDesiredEndpointIds([]);
+      return nothing;
+    }
     if (!this._hovered || !this.registry || !this._runtime.topologies.length) {
       this._setDesiredEndpointIds([]);
       return nothing;

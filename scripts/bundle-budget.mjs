@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertBundleManifest } from './bundle-tree.mjs';
+import { NAMESPACE_LOCALE_CHUNKS } from './bundle-manifest.mjs';
 
 // #352: the budget guards the CLASS of regression — tens of kilobytes from
 // an accidentally imported dependency or an eagerly bundled dictionary —
@@ -349,18 +350,32 @@ export const INITIAL_VIEW_CEILING_BAND = 2_000;
  */
 export const LOW_HEADROOM_ACKNOWLEDGED_CEILING = null;
 
+/**
+ * Маркеры формы поддержки и граф, которому каждый принадлежит.
+ *
+ * #627: английский — слой отката словаря `support`, он статически в графе
+ * редактора. Русский с этой задачи — отдельный ленивый чанк `support`-ru: в
+ * статическом графе редактора его быть НЕ должно, иначе ×4 словарь вернулся.
+ */
 export const SUPPORT_LAZY_MARKERS = [
-  'Contact details (email/tg/WhatsApp), optional.',
-  'Контакт для связи (email/tg/WhatsApp), необязательно.',
+  { text: 'Contact details (email/tg/WhatsApp), optional.', graph: 'lazyEditorFiles' },
+  { text: 'Контакт для связи (email/tg/WhatsApp), необязательно.', graph: 'lazyNamespaceLocaleFiles' },
 ];
 
+const GRAPH_LABELS = {
+  lazyEditorFiles: 'lazy editor graph',
+  lazyOnboardingFiles: 'lazy onboarding graph',
+  lazyNamespaceLocaleFiles: 'lazy namespace locale graph',
+};
+
 /**
- * Форма поддержки живёт только в ленивом графе редактора (#423).
+ * Форма поддержки живёт только в ленивых графах (#423, #627).
  *
- * Функция судит ВЛАДЕНИЕ, а не размер: маркеры формы обязаны отсутствовать в
- * `initialViewFiles` и присутствовать в `lazyEditorFiles`. Размер охраняют
- * `assertBundleBudget` и `lowHeadroomWarning` — им для этого не нужен чужой
- * номер issue (#429).
+ * Функция судит ВЛАДЕНИЕ, а не размер: маркер обязан отсутствовать в
+ * `initialViewFiles` и присутствовать в своём графе; маркер ленивого словаря
+ * вдобавок обязан отсутствовать в статических графах редактора и онбординга.
+ * Размер охраняют `assertBundleBudget` и `lowHeadroomWarning` — им для этого не
+ * нужен чужой номер issue (#429).
  */
 export function assertSupportBundleOwnership(
   manifest,
@@ -371,13 +386,85 @@ export function assertSupportBundleOwnership(
     .map((path) => readFileSync(resolve(root, path), 'utf8'))
     .join('\n');
   const initial = graphText(manifest.initialViewFiles || []);
-  const editor = graphText(manifest.lazyEditorFiles || []);
-  for (const marker of markers) {
-    if (initial.includes(marker)) {
-      throw new Error(`support form copy leaked into initial View graph: ${marker}`);
+  for (const { text, graph } of markers) {
+    if (initial.includes(text)) {
+      throw new Error(`support form copy leaked into initial View graph: ${text}`);
     }
-    if (!editor.includes(marker)) {
-      throw new Error(`support form copy missing from lazy editor graph: ${marker}`);
+    if (!graphText(manifest[graph] || []).includes(text)) {
+      throw new Error(`support form copy missing from ${GRAPH_LABELS[graph] || graph}: ${text}`);
+    }
+    if (graph === 'lazyNamespaceLocaleFiles') {
+      for (const staticGraph of ['lazyEditorFiles', 'lazyOnboardingFiles']) {
+        if (graphText(manifest[staticGraph] || []).includes(text)) {
+          throw new Error(`support form copy of a lazy locale leaked into ${GRAPH_LABELS[staticGraph]}: ${text}`);
+        }
+      }
+    }
+  }
+}
+
+/** #627: кто статически несёт английский слой каждого пространства. */
+export const NAMESPACE_ENGLISH_CONSUMERS = {
+  settings: ['lazyEditorFiles', 'lazyOnboardingFiles'],
+  support: ['lazyEditorFiles'],
+  topology: ['lazyEditorFiles'],
+};
+
+/**
+ * #627 AC3: владение словарей пространств по СОДЕРЖИМОМУ собранных файлов.
+ *
+ * Маркер — самая длинная строка словаря, которой нет ни в одном словаре
+ * основного каталога (иначе совпадение с первым кадром было бы ложным).
+ * Английский обязан лежать в статическом графе каждого потребителя и не лежать
+ * в initial View; ru/de/fr — только в своём ленивом чанке: ни в initial View,
+ * ни в статических графах редактора и онбординга.
+ */
+export function namespaceLocaleMarkers(source = fileURLToPath(new URL('../src/i18n/', import.meta.url))) {
+  const read = (path) => JSON.parse(readFileSync(resolve(source, path), 'utf8'));
+  const main = ['en', 'ru', 'de', 'fr'].map((code) => JSON.stringify(read(`${code}.json`)));
+  const printable = (value) => typeof value === 'string' && value.length >= 12
+    && !/["'`\\\n$]/.test(value) && !main.some((dictionary) => dictionary.includes(value));
+  const markers = [];
+  for (const namespace of Object.keys(NAMESPACE_ENGLISH_CONSUMERS)) {
+    for (const language of ['en', 'ru', 'de', 'fr']) {
+      const values = Object.values(read(`${namespace}/${language}.json`)).filter(printable)
+        .sort((left, right) => right.length - left.length || left.localeCompare(right));
+      if (!values.length) throw new Error(`${namespace}/${language}: no unique marker string`);
+      markers.push({ namespace, language, text: values[0] });
+    }
+  }
+  return markers;
+}
+
+export function assertNamespaceLocaleOwnership(
+  manifest,
+  root = 'dist',
+  markers = namespaceLocaleMarkers(),
+) {
+  const graphText = (paths) => paths
+    .map((path) => readFileSync(resolve(root, path), 'utf8'))
+    .join('\n');
+  const text = Object.fromEntries(['initialViewFiles', ...Object.keys(GRAPH_LABELS)]
+    .map((graph) => [graph, graphText(manifest[graph] || [])]));
+  for (const marker of markers) {
+    const where = `${marker.namespace}/${marker.language}`;
+    if (text.initialViewFiles.includes(marker.text)) {
+      throw new Error(`${where} dictionary leaked into initial View graph: ${marker.text}`);
+    }
+    const owners = marker.language === 'en'
+      ? NAMESPACE_ENGLISH_CONSUMERS[marker.namespace]
+      : ['lazyNamespaceLocaleFiles'];
+    for (const graph of owners) {
+      if (!text[graph].includes(marker.text)) {
+        throw new Error(`${where} dictionary missing from ${GRAPH_LABELS[graph]}: ${marker.text}`);
+      }
+    }
+    if (marker.language !== 'en') {
+      for (const graph of ['lazyEditorFiles', 'lazyOnboardingFiles']) {
+        if (text[graph].includes(marker.text)) {
+          throw new Error(`${where} dictionary is static in ${GRAPH_LABELS[graph]} — it must be its own lazy chunk: ${marker.text}`);
+        }
+      }
     }
   }
 }
@@ -472,9 +559,30 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 17_900;
  *   адаптер порта из 18 членов уникальны, а сжатие соседних `this.host._t(`
  *   в рантайме их не покрывает. Старый центр оставлял 425 Б сверху, меньше
  *   порога шума #593; новый — 1 025 Б сверху и 975 Б до нижней границы.
+ * - #627: 246 000 → 229 500 (замер XXX). ru/de/fr словарей `settings`,
+ *   `support`, `topology` ушли из статического графа в девять ленивых чанков
+ *   (по одному на пару «пространство × язык», грузится только язык на экране);
+ *   в графе остался английский слой отката и загрузчик. Новая строка любого из
+ *   трёх словарей теперь стоит здесь ×1, а не ×4. Центр оставляет XXX Б
+ *   сверху и XXX Б до нижней границы полосы.
  */
-export const LAZY_EDITOR_GZIP_CEILING = 246_000;
+export const LAZY_EDITOR_GZIP_CEILING = 229_500;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
+
+/**
+ * #627: граф первого запуска (форма «Пространство») впервые под потолком.
+ * До этой задачи он только считался манифестом и не печатался даже в отчёт —
+ * и вырос 13 918 → 34 526 Б (+148 %) незаметно: общая форма #600 утащила в
+ * него form-kit, `hp-color-opacity` и четыре словаря `settings`.
+ *
+ * Потолок 28 500 (замер 27 470): ru/de/fr словаря `settings` — ленивые чанки,
+ * в графе остались английский слой и загрузчик. Центр оставляет 1 030 Б
+ * сверху и 970 Б до нижней границы полосы. Исходная цель ≤ 20 КБ этим не
+ * достигается: остаток — form-kit, `space-form`, `hp-help` и стили набора
+ * (форма #600), не словари; их вынос заметен пользователю (задержка на первом
+ * «?») и в скоуп #627 не входит.
+ */
+export const LAZY_ONBOARDING_GZIP_CEILING = 28_500;
 
 /**
  * Потолок ленивого графа: `null`, пока значение внутри полосы.
@@ -537,6 +645,7 @@ export function assertBundleBudget(
   panelOnlyBudget = INITIAL_PANEL_ONLY_GZIP_BUDGET,
   lazyFurnitureArtCeiling = LAZY_FURNITURE_ART_GZIP_CEILING,
   lazyEditorCeiling = LAZY_EDITOR_GZIP_CEILING,
+  lazyOnboardingCeiling = LAZY_ONBOARDING_GZIP_CEILING,
 ) {
   assertBundleManifest(manifest);
   if (!manifest.lazyEditorFiles?.length) {
@@ -575,6 +684,22 @@ export function assertBundleBudget(
       || manifest.lazyOnboardingFiles?.includes(path))) {
     throw new Error('lazy locale graph overlaps an editor graph');
   }
+  // #627 AC3: ru/de/fr трёх словарей пространств — девять отдельных чанков,
+  // ни один не входит ни в первый кадр, ни в статический граф редакторов.
+  const namespaceLocales = manifest.lazyNamespaceLocaleFiles;
+  if (!Array.isArray(namespaceLocales) || namespaceLocales.length !== NAMESPACE_LOCALE_CHUNKS.length) {
+    throw new Error(`lazy namespace locale graph has ${namespaceLocales?.length ?? 0} files,`
+      + ` expected ${NAMESPACE_LOCALE_CHUNKS.length} (settings/support/topology × ru/de/fr)`);
+  }
+  for (const [graph, label] of [
+    ['initialViewFiles', 'initial View graph'],
+    ['lazyEditorFiles', 'lazy editor graph'],
+    ['lazyOnboardingFiles', 'lazy onboarding graph'],
+  ]) {
+    if (namespaceLocales.some((path) => manifest[graph]?.includes(path))) {
+      throw new Error(`${label} overlaps lazy namespace locale graph`);
+    }
+  }
   if (manifest.initialViewGzipBytes > budget) {
     throw new Error(
       `initial View graph ${manifest.initialViewGzipBytes} B gzip exceeds ${budget} B budget`,
@@ -590,6 +715,8 @@ export function assertBundleBudget(
   for (const [bytes, ceiling, label] of [
     [manifest.lazyFurnitureArtGzipBytes, lazyFurnitureArtCeiling, 'lazy furniture art graph'],
     [manifest.lazyEditorGzipBytes, lazyEditorCeiling, 'lazy editor graph'],
+    // #627: граф первого запуска — третий гейт, тем же правилом.
+    [manifest.lazyOnboardingGzipBytes, lazyOnboardingCeiling, 'lazy onboarding graph'],
   ]) {
     const violation = lazyGraphCeilingViolation(bytes, { ceiling, label });
     if (violation) throw new Error(violation.text);
@@ -599,6 +726,8 @@ export function assertBundleBudget(
     initialPanelGzipBytes: manifest.initialPanelGzipBytes,
     initialPanelOnlyGzipBytes: manifest.initialPanelOnlyGzipBytes,
     lazyEditorGzipBytes: manifest.lazyEditorGzipBytes,
+    lazyOnboardingGzipBytes: manifest.lazyOnboardingGzipBytes,
+    lazyNamespaceLocaleGzipBytes: manifest.lazyNamespaceLocaleGzipBytes,
     lazyLocaleGzipBytes: manifest.lazyLocaleGzipBytes,
     lazyIsometricGzipBytes: manifest.lazyIsometricGzipBytes,
     lazyFurnitureArtGzipBytes: manifest.lazyFurnitureArtGzipBytes,
@@ -611,6 +740,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     const manifest = JSON.parse(readFileSync(resolve('dist/houseplan-assets.json'), 'utf8'));
     const result = assertBundleBudget(manifest);
     assertSupportBundleOwnership(manifest);
+    assertNamespaceLocaleOwnership(manifest);
     const ceiling = initialViewCeilingViolation(result.initialViewGzipBytes);
     if (ceiling) throw new Error(ceiling.text);
     const headroom = INITIAL_VIEW_GZIP_BUDGET - result.initialViewGzipBytes;
@@ -623,6 +753,10 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
         + ` (budget ${INITIAL_PANEL_ONLY_GZIP_BUDGET} B,`
         + ` headroom ${INITIAL_PANEL_ONLY_GZIP_BUDGET - result.initialPanelOnlyGzipBytes} B)`,
       `lazy editor: ${result.lazyEditorGzipBytes} B gzip (потолок ${LAZY_EDITOR_GZIP_CEILING} B ±${LAZY_GRAPH_CEILING_BAND})`,
+      `lazy onboarding: ${result.lazyOnboardingGzipBytes} B gzip`
+        + ` (потолок ${LAZY_ONBOARDING_GZIP_CEILING} B ±${LAZY_GRAPH_CEILING_BAND})`,
+      `lazy namespace locales: ${result.lazyNamespaceLocaleGzipBytes} B gzip`
+        + ` (${NAMESPACE_LOCALE_CHUNKS.length} chunks, по одному грузится на пространство)`,
       `lazy furniture art: ${result.lazyFurnitureArtGzipBytes} B gzip`
         + ` (потолок ${LAZY_FURNITURE_ART_GZIP_CEILING} B ±${LAZY_GRAPH_CEILING_BAND})`,
       `lazy locale: ${result.lazyLocaleGzipBytes} B gzip`,

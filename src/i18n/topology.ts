@@ -1,13 +1,25 @@
 import { subst } from '../logic';
 import type { Lang } from './registry';
-import de from './topology/de.json' with { type: 'json' };
 import en from './topology/en.json' with { type: 'json' };
-import fr from './topology/fr.json' with { type: 'json' };
-import ru from './topology/ru.json' with { type: 'json' };
+import { namespaceLanguageRuntime } from './namespace-language';
 
 export type TopologyI18nKey = keyof typeof en;
 
-const DICTIONARIES: Record<Lang, Record<TopologyI18nKey, string>> = { en, ru, de, fr };
+const retryUrl = (asset: string): string => new URL(`${asset}?retry`, import.meta.url).href;
+
+/**
+ * #627: English is static (the synchronous fallback); ru/de/fr are separate
+ * lazy chunks. The View overlay and the editor runtime both wait for this
+ * runtime before they paint topology copy.
+ */
+export const TOPOLOGY_LANGUAGE_RUNTIME = namespaceLanguageRuntime(en, {
+  ru: (attempt) => (attempt === 0 ? import('./topology/topology-ru')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_TOPOLOGY_RU_RETRY_ASSET__'))),
+  de: (attempt) => (attempt === 0 ? import('./topology/topology-de')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_TOPOLOGY_DE_RETRY_ASSET__'))),
+  fr: (attempt) => (attempt === 0 ? import('./topology/topology-fr')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_TOPOLOGY_FR_RETRY_ASSET__'))),
+});
 
 /**
  * Whether the namespace really carries this string (#459).
@@ -20,12 +32,12 @@ const DICTIONARIES: Record<Lang, Record<TopologyI18nKey, string>> = { en, ru, de
  * missing in one locale still counts as available.
  */
 export function hasTopologyTranslation(lang: Lang, key: TopologyI18nKey): boolean {
-  const value = DICTIONARIES[lang]?.[key] ?? en[key];
+  const value = TOPOLOGY_LANGUAGE_RUNTIME.dictionary(lang)?.[key] ?? en[key];
   return typeof value === 'string' && value.trim().length > 0;
 }
 
 export function topologyT(
   lang: Lang, key: TopologyI18nKey, vars?: Record<string, string | number>,
 ): string {
-  return subst(DICTIONARIES[lang]?.[key] ?? en[key] ?? key, vars);
+  return subst(TOPOLOGY_LANGUAGE_RUNTIME.dictionary(lang)?.[key] ?? en[key] ?? key, vars);
 }

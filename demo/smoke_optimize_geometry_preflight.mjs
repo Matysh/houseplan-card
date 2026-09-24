@@ -137,6 +137,10 @@ const out = await page.evaluate(async () => {
   // The same bounded copy and fallback/count policy is localized in Russian.
   forceRed = true;
   setCandidate('ru');
+  // #627: a live switch to ru holds the previous frame until the lazy editor
+  // dictionaries settle; the dialog is judged after the language gate.
+  card.requestUpdate(); await card.updateComplete;
+  for (let i = 0; i < 250 && card.hasAttribute('aria-busy'); i++) await new Promise((r) => setTimeout(r, 20));
   card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const russianText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.russianFailureHasExactCopy = russianText.includes(

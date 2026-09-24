@@ -57,6 +57,10 @@ const out = await page.evaluate(async () => {
   c._saveConfig = () => { c._cfgEpoch++; c._modelCache = null; c.requestUpdate(); };
   c.requestUpdate();
   await c.updateComplete;
+  // #627: ru strings of the editor dialogs are a lazy chunk; the switch to ru
+  // above holds the previous frame (inert + aria-busy) until it settles.
+  for (let i = 0; i < 250 && c.hasAttribute('aria-busy'); i++) await new Promise((r) => setTimeout(r, 20));
+  await c.updateComplete;
 
   const stage = (c.shadowRoot || c.renderRoot).querySelector('.stage');
   const clickAt = (x, y) => {

@@ -244,6 +244,10 @@ const res = await page.evaluate(async () => {
   card._config = { ...card._config, language: 'ru' };
   card.requestUpdate();
   await card.updateComplete;
+  // #627: the ru strings of the editor dialogs are a lazy chunk; a live switch
+  // holds the previous frame (inert + aria-busy) until it settles.
+  for (let i = 0; i < 250 && card.hasAttribute('aria-busy'); i++) await wait(20);
+  await card.updateComplete;
   out.cardLanguage = /Определяет|источник/.test(root()
     .querySelector('hp-help[data-help-key="marker.light_role.help"]')?.text || '');
 

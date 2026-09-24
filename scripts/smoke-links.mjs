@@ -285,6 +285,17 @@ export const SMOKE_LINKS = [
   },
   {
     symbols: [
+      'namespaceLanguageRuntime', 'composeLanguageRuntimes', 'surfaceLanguageRuntime',
+      'SETTINGS_LANGUAGE_RUNTIME', 'SUPPORT_LANGUAGE_RUNTIME', 'TOPOLOGY_LANGUAGE_RUNTIME',
+      'EDITOR_LANGUAGE_RUNTIME', 'ONBOARDING_LANGUAGE_RUNTIME', 'settingsT', 'supportT', 'topologyT',
+    ],
+    smokes: ['smoke_lazy_admin_locale.mjs', 'smoke_dialog_segments_i18n.mjs'],
+    because: 'the ru/de/fr namespace dictionaries are separate lazy chunks: only the production '
+      + 'bundle shows the per-frame dialog text on a cold open, the held frame on a live switch, '
+      + 'the bounded retry-to-English path and the exact chunk requests of each surface (#627)',
+  },
+  {
+    symbols: [
       'probeBackdrop', 'classifyPlanFile', 'downscaleBackdrop', 'renderBackdropGuard',
       'WARN_DECODED_BYTES', 'HARD_DIMENSION', 'DOWNSCALE_TARGET_PX',
     ],

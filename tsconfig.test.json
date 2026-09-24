@@ -10,7 +10,7 @@
     "tsBuildInfoFile": "test-build/.tsbuildinfo"
   },
   "include": [
-    "src/color.ts", "src/styles.ts", "src/styles/*.styles.ts", "src/logic.ts", "src/i18n.ts", "src/i18n/registry.ts", "src/i18n/language-runtime.ts", "src/glow-blend.ts", "src/grid-scale.ts", "src/device-visual.ts", "src/device-pulse.ts", "src/device-presentation.ts", "src/device-marker-geometry.ts",
+    "src/color.ts", "src/styles.ts", "src/styles/*.styles.ts", "src/logic.ts", "src/i18n.ts", "src/i18n/registry.ts", "src/i18n/language-runtime.ts", "src/i18n/namespace-language.ts", "src/i18n/settings.ts", "src/i18n/support.ts", "src/i18n/topology.ts", "src/glow-blend.ts", "src/grid-scale.ts", "src/device-visual.ts", "src/device-pulse.ts", "src/device-presentation.ts", "src/device-marker-geometry.ts",
     "src/device-face.ts", "src/device-hit-owner.ts", "src/device-toggle.ts", "src/marker-toggle-entity.ts", "src/activity-runtime.ts", "src/summary-runtime-loader.ts", "src/card-version.ts", "src/device-area-relocation.ts",
     "src/ha-binding-status.ts",
     "src/zigbee-topology-settings.ts", "src/zigbee-topology.ts", "src/zigbee-topology-geometry.ts", "src/zigbee-topology-runtime.ts",

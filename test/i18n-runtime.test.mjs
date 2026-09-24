@@ -189,3 +189,63 @@ test('language load failure subscription delivers codes and unsubscribes (#354)'
   notifyLanguageLoadFailures('de');
   assert.deepEqual(seen, ['de', '2:de', '2:de'], 'no listeners — no deliveries');
 });
+
+test('#627 AC5 составной гейт ждёт словарь пространства и не роняет lang в en при его отказе', async () => {
+  const { composeLanguageRuntimes } = await import('../test-build/i18n/namespace-language.js');
+  const primary = new LanguageRuntime([
+    { code: 'en', dictionary: {} }, { code: 'ru', dictionary: {} },
+  ], 'build');
+  const namespaceLoad = deferred();
+  const loads = [];
+  const namespace = new LanguageRuntime([
+    { code: 'en', dictionary: { title: 'Settings' } },
+    { code: 'ru', loadDictionary: async (attempt) => { loads.push(attempt); return namespaceLoad.promise; } },
+  ], 'build', () => {});
+  const host = new FakeHost();
+  const composite = composeLanguageRuntimes(primary, [namespace]);
+  assert.equal(languageRenderGate(host, composite, 'en'), 'ready', 'en of the namespace is static');
+  assert.deepEqual(loads, [], 'English never requests a namespace chunk');
+  // Live switch en → ru: the main catalog is ready, the namespace is not.
+  assert.equal(composite.state('ru'), 'pending');
+  assert.equal(languageRenderGate(host, composite, 'ru'), 'warm');
+  assert.equal(host.inert, true);
+  assert.equal(host.attrs.get('aria-busy'), 'true');
+  assert.equal(host.attrs.get('lang'), 'en', 'the previous frame keeps its language while pending');
+  namespaceLoad.resolve({ dictionary: { title: 'Настройки' }, fingerprint: 'build' });
+  await composite.ensure('ru');
+  await Promise.resolve();
+  assert.equal(host.updates, 1, 'the host re-renders once the namespace settled');
+  assert.equal(languageRenderGate(host, composite, 'ru'), 'ready');
+  assert.equal(host.inert, false);
+  assert.equal(host.attrs.get('lang'), 'ru');
+  assert.equal(namespace.dictionary('ru').title, 'Настройки');
+  assert.deepEqual(loads, [0], 'one request per page, deduplicated');
+
+  // A failed namespace settles as fallback: the host unblocks, and its `lang`
+  // stays the main catalog language — only the namespace strings are English.
+  const failing = new LanguageRuntime([
+    { code: 'en', dictionary: {} },
+    { code: 'ru', loadDictionary: async () => { throw new Error('offline'); } },
+  ], 'build', () => {});
+  const failedHost = new FakeHost();
+  const failedComposite = composeLanguageRuntimes(primary, [failing]);
+  assert.equal(languageRenderGate(failedHost, failedComposite, 'ru'), 'cold');
+  await failedComposite.ensure('ru');
+  assert.equal(failing.state('ru'), 'fallback');
+  assert.equal(failedComposite.state('ru'), 'ready');
+  assert.equal(languageRenderGate(failedHost, failedComposite, 'ru'), 'ready');
+  assert.equal(failedHost.attrs.get('lang'), 'ru');
+  assert.equal(failedHost.hasAttribute('aria-busy'), false);
+
+  // The main catalog still decides the fallback `lang` on its own failure.
+  const mainFailing = new LanguageRuntime([
+    { code: 'en', dictionary: {} },
+    { code: 'de', loadDictionary: async () => { throw new Error('offline'); } },
+  ], 'build', () => {});
+  const settledNamespace = new LanguageRuntime([
+    { code: 'en', dictionary: {} }, { code: 'de', dictionary: {} },
+  ], 'build');
+  const mainComposite = composeLanguageRuntimes(mainFailing, [settledNamespace]);
+  await mainComposite.ensure('de');
+  assert.equal(mainComposite.state('de'), 'fallback');
+});

@@ -205,7 +205,7 @@ import { enqueueSerializedWrite, type OptimisticAttempt } from './serialized-wri
 import { applyCalibrationProposal, saveAutomaticCalibration, saveManualCalibration, saveVacuumMatrix,
   type CalibrationProposal, type VacuumFit } from './vacuum-calibration-write';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
-import { supportT, type SupportI18nKey } from './i18n/support'; import { writeZigbeeTopologySettings, zigbeeTopologySettingsOf, type ZigbeeTopologySettings } from './zigbee-topology-settings';
+import { supportT, type SupportI18nKey } from './i18n/support'; import { EDITOR_LANGUAGE_RUNTIME } from './i18n/editor-language'; import { writeZigbeeTopologySettings, zigbeeTopologySettingsOf, type ZigbeeTopologySettings } from './zigbee-topology-settings';
 import {
   newSupportDialogState,
   supportApiCompatible,
@@ -793,7 +793,10 @@ export interface HouseplanEditorHostPort {
 /** Lazily loaded implementation of editor-only interaction and rendering. */
 export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
+export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
+
 export class HouseplanEditorRuntime {
+  public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
   private _junctionBaselineCache = new WeakMap<object, {
     spaceId: string; fingerprint: string; violations: JunctionLimitViolation[];
   }>();
