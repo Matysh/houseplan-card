@@ -9694,7 +9694,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntime._openSpaceDialog(mode, spaceId);
   }
 
-  /** Background file selection: read base64 and determine the aspect ratio. */
+  /** Background file selection: stage the file (limit, #39 guard) and read its aspect ratio. */
   private async _pickPlanFile(ev: Event): Promise<void> {
     if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
       return this._onboardingRuntime._pickPlanFile(ev);

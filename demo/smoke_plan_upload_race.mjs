@@ -12,14 +12,20 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const base = c.hass.callWS;
   let reloadDuringUpload = 0;
+  let wsUploads = 0;
 
-  c.hass = { ...c.hass, callWS: async (m) => {
-    if (m.type === 'houseplan/plan/set') {
-      // пока файл «загружается», прилетает чужая ревизия конфига
-      reloadDuringUpload++;
-      await c._reloadConfigOnly(true);
-      return { ok: true, url: '/api/houseplan/content/plans/_/' + m.space_id + '.png?v=42' };
-    }
+  // #617: план уходит по HTTP (`/api/houseplan/plans/upload`), не по WS
+  c.hass = { ...c.hass, fetchWithAuth: async (url, init) => {
+    if (url !== '/api/houseplan/plans/upload') throw new Error('unexpected fetch ' + url);
+    // пока файл «загружается», прилетает чужая ревизия конфига
+    reloadDuringUpload++;
+    await c._reloadConfigOnly(true);
+    const spaceId = init.body.get('space_id');
+    return { ok: true, status: 200, json: async () => ({
+      ok: true, url: '/api/houseplan/content/plans/_/' + spaceId + '.png?v=42',
+    }) };
+  }, callWS: async (m) => {
+    if (m.type === 'houseplan/plan/set') { wsUploads++; throw new Error('plan/set must not be used'); }
     if (m.type === 'houseplan/config/set') { c.__sent = m.config; return { ok: true, rev: 99 }; }
     if (m.type === 'houseplan/config/get') {
       // сервер отдаёт СВЕЖИЙ объект, а не тот же самый — как в реальном HA
@@ -32,7 +38,7 @@ const res = await page.evaluate(async () => {
   // редактирование существующего пространства: подложка + новый заголовок
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
   c._spaceDialog = { ...c._spaceDialog, title: 'Ground', source: 'file',
-    planFile: { ext: 'png', b64: 'AAAA', aspect: 1.6 } };
+    planFile: { ext: 'png', blob: new Blob([new Uint8Array([1])]), aspect: 1.6, name: 'a.png' } };
   await c._saveSpaceDialog(); await c.updateComplete;
 
   out.reloadHappened = reloadDuringUpload === 1;
@@ -47,12 +53,13 @@ const res = await page.evaluate(async () => {
   // создание пространства при том же сбое: оно должно доехать целиком
   c._openSpaceDialog('create'); await c.updateComplete;
   c._spaceDialog = { ...c._spaceDialog, title: 'Attic', source: 'file',
-    planFile: { ext: 'png', b64: 'BBBB', aspect: 0.8 } };
+    planFile: { ext: 'png', blob: new Blob([new Uint8Array([2])]), aspect: 0.8, name: 'b.png' } };
   await c._saveSpaceDialog(); await c.updateComplete;
   const attic = (c.__sent?.spaces || []).find((s) => s.title === 'Attic');
   out.atticSaved = !!attic;
   out.atticHasPlan = !!attic && typeof attic.plan_url === 'string' && attic.plan_url.includes('/content/plans/');
   out.atticPlanAspect = attic?.plan_aspect;
+  out.wsUploads = wsUploads;
   return out;
 });
 // зафиксировано прогоном на v1.44.8 и сверено с кодом
@@ -66,5 +73,6 @@ checkAll(res, {
   atticSaved: true,
   atticHasPlan: true,
   atticPlanAspect: 0.8,
+  wsUploads: 0,
 });
 await finish(browser);

@@ -48,11 +48,13 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
         HouseplanContentView,
         HouseplanDecorAssetUploadView,
         HouseplanImportPreviewView,
+        HouseplanPlanUploadView,
         HouseplanUploadView,
     )
 
     hass.http.register_view(HouseplanUploadView())
     hass.http.register_view(HouseplanDecorAssetUploadView())
+    hass.http.register_view(HouseplanPlanUploadView())
     hass.http.register_view(HouseplanContentView())
     hass.http.register_view(HouseplanImportPreviewView())
     hass.http.register_view(HouseplanFrontendAssetView())

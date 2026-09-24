@@ -3510,6 +3510,65 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'plan-upload-client-limit',
+    guard: 'node demo/smoke_plan_upload_limit.mjs',
+    because: 'an SVG above the plan limit must be refused at pick time with a toast naming the '
+      + 'limit — otherwise it is staged and only fails after Save, or, on an old backend, closes '
+      + 'the socket (#617 AC2)',
+    patches: [{
+      file: 'src/backdrop-pick.ts',
+      find: "  if (file.size > MAX_PLAN_BYTES) return refuse('toast.plan_too_large', { mb: MAX_PLAN_MB });\n",
+      replace: '  // mutant: no client-side plan limit\n',
+    }],
+  },
+  {
+    id: 'plan-upload-guard-original',
+    guard: 'node demo/smoke_plan_upload_limit.mjs',
+    because: 'above the plan limit the original cannot be stored — offering «Keep the original» '
+      + 'sends a file the server must refuse; only the reduced copy may be offered (#617 AC3)',
+    patches: [{
+      file: 'src/backdrop-pick.ts',
+      find: '  return renderBackdropGuard(host, apply, close, hass, undefined, size <= MAX_PLAN_BYTES, '
+        + 'MAX_PLAN_BYTES);',
+      replace: '  return renderBackdropGuard(host, apply, close, hass, undefined, true, MAX_PLAN_BYTES);',
+    }],
+  },
+  {
+    id: 'plan-upload-reduced-over-limit-staged',
+    guard: 'node demo/smoke_plan_upload_limit.mjs',
+    because: 'a reduced copy of a huge scan can still exceed the plan limit; staging it defers '
+      + 'the refusal to a 413 after Save instead of saying so at once (#617 AC3)',
+    patches: [{
+      file: 'src/backdrop-pick.ts',
+      find: '      if (planLimitBytes !== undefined && out.blob.size > planLimitBytes) {',
+      replace: '      if (planLimitBytes !== undefined && out.blob.size < 0) { // mutant: never over',
+    }],
+  },
+  {
+    id: 'plan-upload-413-text-dropped',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/plan-upload-limit.test.mjs',
+    because: 'a 413 must read as «file larger than 8 MB», not «too_large» or «HTTP 413»; the '
+      + 'user has to learn the limit from the error (#617 AC5)',
+    patches: [{
+      file: 'src/backdrop-pick.ts',
+      find: "      too_large: t('err.too_large', { mb: json.max_mb || MAX_PLAN_MB }),\n",
+      replace: '',
+    }],
+  },
+  {
+    id: 'plan-upload-server-bound',
+    guard: 'python3 -m pytest tests_backend/test_plan_upload.py -q -p no:cacheprovider',
+    because: 'the streaming bound is inclusive: MAX_PLAN_BYTES passes and one byte more is refused '
+      + 'before the body is buffered whole; a bound that slips by a chunk stores an oversized '
+      + 'plan (#617 AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/plans.py',
+      find: '        if size > limit:\n            return None\n',
+      replace: '        if size > limit + chunk:\n            return None\n',
+    }],
+  },
+  {
     id: 'cold-view-vacuum-mapid-delegated',
     guard: 'node demo/smoke_cold_view_vacuum.mjs',
     because: 'map-id resolution runs inside willUpdate for every vacuum with telemetry — the '

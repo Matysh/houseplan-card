@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Plan files up to 8 MB now actually upload: the plan is sent over HTTP
+  instead of the Home Assistant WebSocket, whose message limit used to drop
+  the connection for any plan above about 3 MB. A file over 8 MB is refused
+  when it is picked, with a message naming the limit; for a raster image the
+  card offers to upload a reduced copy instead
+  ([#617](https://github.com/Matysh/houseplan-card/issues/617)).
+
 ## v1.78.0-beta.1 — 2026-09-23
 
 - The Furniture palette now shows the revised front-view icon for the

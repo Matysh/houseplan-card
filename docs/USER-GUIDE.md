@@ -1383,6 +1383,8 @@ reports conflicts, update House Plan and refresh the dashboard.
 ### Files and quotas
 
 Plan files accept SVG/PNG/JPG/WebP up to 8 MB, with a 200-file/256-MB total.
+A plan file above that limit is not sent: the card names the limit at once
+and, for a raster image, offers to upload a reduced copy.
 Marker attachments accept PDF/PNG/JPG/WebP/TXT up to 50 MB, with a
 1000-file/1-GB total and 50 links per marker. Writes are also refused below
 512 MB free disk space. Detached files remain until explicitly deleted.

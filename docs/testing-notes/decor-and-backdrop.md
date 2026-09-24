@@ -228,8 +228,8 @@
 - [ ] «Reduced copy» honours aspect and alpha: longest side 4096, PNG with
       alpha stays PNG, opaque becomes JPEG; the result flows through the
       ordinary planFile → upload path [auto: `smoke_backdrop_guard`].
-- [ ] «Keep the original» is byte-identical to the legacy path (base64
-      parity) [auto: `smoke_backdrop_guard`].
+- [ ] «Keep the original» stages exactly the picked bytes (blob parity; #617
+      replaced base64 with a Blob) [auto: `smoke_backdrop_guard`].
 - [ ] Beyond 16384 px per side the dialog offers only Cancel; a failed or
       timed-out reduce shows the toast, leaves staging clean and never
       uploads the declined original [auto: `smoke_backdrop_guard`].
@@ -241,6 +241,26 @@
       `imageOrientation: 'from-image'`, and the reduced copy comes out
       portrait; dismissal during a running reduce is ignored and a stale flow
       never applies its result [auto: `smoke_backdrop_guard`].
+
+## Plan upload over HTTP and the 8 MB limit (#617)
+
+- [ ] A 5 MiB plan is sent as ONE multipart `POST /api/houseplan/plans/upload`
+      and no `houseplan/plan/set`, from the editor and from onboarding; the
+      space gets the returned `plan_url` [auto: `smoke_plan_upload_limit`,
+      `plan-upload-limit.test`; backend `test_ha_upload.py` stores 5 MiB
+      byte for byte].
+- [ ] An SVG over the limit is refused at pick time with a toast naming «8»;
+      nothing is staged or sent. A raster over the limit opens the #39 dialog
+      without «Keep the original»; a reduced copy still over the limit is
+      refused with the same toast [auto: `smoke_plan_upload_limit`].
+- [ ] A 413 from the server shows «Error: file larger than 8 MB», the dialog
+      stays open and not busy, no `config/set` [auto: `smoke_plan_upload_limit`].
+- [ ] Server: exactly `MAX_PLAN_BYTES` → 200, one byte more → 413
+      `too_large`/`max_mb: 8` with nothing left on disk; non-admin 403;
+      bad space id / extension 400; quota 507 [HA: `test_ha_upload.py`;
+      pure: `test_plan_upload.py`].
+- [ ] One number: TS `MAX_PLAN_BYTES` = Python `MAX_PLAN_BYTES` = the «8» in
+      both USER-GUIDEs [unit: `plan-upload-limit.test`].
 
 ## Hiding layers: decor, openings, zero-thickness walls (docs/UX-MODES.md)
 

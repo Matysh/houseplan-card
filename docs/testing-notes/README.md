@@ -82,6 +82,7 @@
 - [The furniture library (docs/FURNITURE.md, dev, unreleased)](decor-and-backdrop.md#the-furniture-library-docsfurnituremd-dev-unreleased)
 - [The furniture library (docs/FURNITURE.md, dev, unreleased)](decor-and-backdrop.md#the-furniture-library-docsfurnituremd-dev-unreleased-1)
 - [Large backdrops (#39, docs/specs/039-large-backdrops.md)](decor-and-backdrop.md#large-backdrops-39-docsspecs039-large-backdropsmd)
+- [Plan upload over HTTP and the 8 MB limit (#617)](decor-and-backdrop.md#plan-upload-over-http-and-the-8-mb-limit-617)
 - [Hiding layers: decor, openings, zero-thickness walls (docs/UX-MODES.md)](decor-and-backdrop.md#hiding-layers-decor-openings-zero-thickness-walls-docsux-modesmd)
 
 ## [Живые слои и интеграции](live-and-integrations.md)

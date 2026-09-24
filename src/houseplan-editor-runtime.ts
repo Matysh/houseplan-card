@@ -218,7 +218,7 @@ import {
   type SupportDialogState,
   type SupportPreview,
 } from './support-feedback';
-import { classifyPlanFile, encodePlanFile, renderBackdropGuard } from './backdrop-pick';
+import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlanFile } from './backdrop-pick';
 import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePositionState } from './device-position-history';
 import { contentFingerprint } from './visual-continuity';
@@ -7943,17 +7943,10 @@ public async _pickPlanFile(ev: Event): Promise<void> {
     // #39: re-selecting the same file after a guard decision must fire again.
     input.value = '';
     this._decorAssetGuardReplace = null;
-    const classified = await classifyPlanFile(file);
-    if (classified.kind === 'reject') {
-      this.host._showToast(this.host._t('toast.plan_formats'));
-      return;
-    }
-    if (classified.kind === 'guard') {
-      this.host._backdropGuard = classified.state;
-      return;
-    }
-    const payload = await encodePlanFile(file, classified.ext, file.name);
-    if (!this.host._spaceDialog) return;
+    // #617: the plan limit, the format check and the #39 guard live in one
+    // shared helper, so the editor and onboarding cannot drift apart.
+    const payload = await stagePlanFile(this.host, file);
+    if (!payload || !this.host._spaceDialog) return;
     this.host._spaceDialog = { ...this.host._spaceDialog, planFile: payload };
   }
 
@@ -7972,7 +7965,7 @@ public _renderBackdropGuard(): TemplateResult | typeof nothing {
         (this.host._backdropGuard?.file.size || 0) <= 2 * 1024 * 1024,
       ) ?? nothing;
     }
-    return renderBackdropGuard(
+    return renderPlanBackdropGuard(
       this.host,
       (payload) => {
         if (this.host._spaceDialog) {
@@ -8113,9 +8106,10 @@ public async _saveSpaceDialog(): Promise<void> {
          appears, and re-saving does not help (owner's install, 2026-07-27). */
       let uploaded: { url: string; aspect: number } | null = null;
       if (d.source === 'file' && d.planFile) {
-        const resp = await this.host.hass.callWS({
-          type: 'houseplan/plan/set', space_id: spaceId, ext: d.planFile.ext, data: d.planFile.b64,
-        });
+        // #617: over HTTP, never WebSocket — a big plan used to close the socket.
+        const resp = await uploadPlanFile(
+          this.host.hass, (key, vars) => this.host._t(key, vars), spaceId, d.planFile,
+        );
         uploaded = { url: resp.url, aspect: d.planFile.aspect };
       }
 

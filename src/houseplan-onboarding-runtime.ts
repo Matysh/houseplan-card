@@ -1,5 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
-import { classifyPlanFile, encodePlanFile, renderBackdropGuard } from './backdrop-pick';
+import { renderPlanBackdropGuard, stagePlanFile, uploadPlanFile } from './backdrop-pick';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { SETTINGS_LANGUAGE_RUNTIME } from './i18n/settings';
 import { surfaceLanguageRuntime } from './i18n/namespace-language';
@@ -132,22 +132,15 @@ export class HouseplanOnboardingRuntime {
     if (!file || !this.host._spaceDialog) return;
     // #39: re-selecting the same file after a guard decision must fire again.
     input.value = '';
-    const classified = await classifyPlanFile(file);
-    if (classified.kind === 'reject') {
-      this.host._showToast(this.host._t('toast.plan_formats'));
-      return;
-    }
-    if (classified.kind === 'guard') {
-      this.host._backdropGuard = classified.state;
-      return;
-    }
-    const payload = await encodePlanFile(file, classified.ext, file.name);
-    if (!this.host._spaceDialog) return;
+    // #617: the plan limit, the format check and the #39 guard live in one
+    // shared helper, so the editor and onboarding cannot drift apart.
+    const payload = await stagePlanFile(this.host, file);
+    if (!payload || !this.host._spaceDialog) return;
     this.host._spaceDialog = { ...this.host._spaceDialog, planFile: payload };
   }
 
   public _renderBackdropGuard(): TemplateResult | typeof nothing {
-    return renderBackdropGuard(
+    return renderPlanBackdropGuard(
       this.host,
       (payload) => {
         if (this.host._spaceDialog) {
@@ -306,12 +299,10 @@ export class HouseplanOnboardingRuntime {
         ? `s${Date.now().toString(36)}` : dialog.spaceId!;
       let uploaded: { url: string; aspect: number } | null = null;
       if (dialog.source === 'file' && dialog.planFile) {
-        const response: { url: string } = await this.host.hass.callWS({
-          type: 'houseplan/plan/set',
-          space_id: spaceId,
-          ext: dialog.planFile.ext,
-          data: dialog.planFile.b64,
-        });
+        // #617: over HTTP, never WebSocket — a big plan used to close the socket.
+        const response = await uploadPlanFile(
+          this.host.hass, (key, vars) => this.host._t(key, vars), spaceId, dialog.planFile,
+        );
         uploaded = { url: response.url, aspect: dialog.planFile.aspect };
       }
       let pickedAspect: number | null = dialog.savedAspect || null;

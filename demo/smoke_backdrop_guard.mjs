@@ -70,18 +70,20 @@ const out = await page.evaluate(async () => {
     && /\d+ (MB|МБ)/.test(dialogText());
   out.noDecodeBeforeChoice = decodeCalls === 0;
 
-  // ── AC3: «Оставить оригинал» — паритет b64 со старым циклом ──────────────
+  // ── AC3: «Оставить оригинал» — в staging ровно байты выбранного файла ────
+  // #617: base64 больше нет, план едет Blob-ом по HTTP; паритет «оригинал =
+  // выбранные байты» проверяется побайтово по blob, а не по b64.
   const originalBytes = pngHeader(10000, 10000);
-  let bin = '';
-  for (let i = 0; i < originalBytes.length; i += 32768) {
-    bin += String.fromCharCode(...originalBytes.subarray(i, i + 32768));
-  }
-  const legacyB64 = btoa(bin);
+  const sameBytes = async (blob) => {
+    if (!blob) return false;
+    const got = new Uint8Array(await blob.arrayBuffer());
+    return got.length === originalBytes.length && got.every((v, i) => v === originalBytes[i]);
+  };
   guardButtons().find((b) => b.textContent.includes(card._t('backdrop.keep_original')))?.click();
   out.keepOriginalSetsPlanFile = await waitFor(() =>
-    card._spaceDialog?.planFile?.b64 === legacyB64 && !card._backdropGuard);
+    !!card._spaceDialog?.planFile?.blob && !card._backdropGuard);
   out.keepOriginalKeepsName = card._spaceDialog?.planFile?.name === 'huge.png';
-  out.b64ParityWithLegacyLoop = card._spaceDialog?.planFile?.b64 === legacyB64;
+  out.blobParityWithOriginalBytes = await sameBytes(card._spaceDialog?.planFile?.blob);
   card._spaceDialog = { ...card._spaceDialog, planFile: null };
 
   // ── AC2: настоящая уменьшенная копия (опак 6200² JPEG → jpg 4096) ────────
@@ -105,7 +107,7 @@ const out = await page.evaluate(async () => {
     const image = new Image();
     image.onload = () => resolve([image.naturalWidth, image.naturalHeight]);
     image.onerror = () => resolve([0, 0]);
-    image.src = `data:image/jpeg;base64,${reduced?.b64}`;
+    image.src = reduced?.blob ? URL.createObjectURL(reduced.blob) : '';
   });
   out.reducedTo4096 = reducedDims[0] === 4096 && reducedDims[1] === 4096;
   card._spaceDialog = { ...card._spaceDialog, planFile: null };
@@ -267,7 +269,8 @@ const out = await page.evaluate(async () => {
     const image = new Image();
     image.onload = () => resolve([image.naturalWidth, image.naturalHeight]);
     image.onerror = () => resolve([0, 0]);
-    image.src = `data:image/jpeg;base64,${card._spaceDialog?.planFile?.b64}`;
+    const blob = card._spaceDialog?.planFile?.blob;
+    image.src = blob ? URL.createObjectURL(blob) : '';
   });
   // уменьшенная копия ПОВЁРНУТА: портрет 2048×4096, а не пейзаж
   out.exifReducedRotated = exifDims[0] === 2048 && exifDims[1] === 4096;

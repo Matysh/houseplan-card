@@ -14,7 +14,7 @@ export interface SpaceDialogState {
   spaceId?: string;
   title: string;
   planUrl: string | null;
-  planFile: { ext: string; b64: string; aspect: number; name: string } | null;
+  planFile: { ext: string; blob: Blob; aspect: number; name: string } | null;
   /** Server-side plan picker state; asset files are never inferred garbage. */
   pickSaved?: boolean;
   saved?: Array<{

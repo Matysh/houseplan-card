@@ -13,10 +13,23 @@ import type { I18nKey } from './i18n';
 
 export interface PlanFilePayload {
   ext: string;
-  b64: string;
+  /** The bytes as picked (or the reduced copy); uploaded as-is over HTTP (#617). */
+  blob: Blob;
   aspect: number;
   name: string;
 }
+
+/**
+ * #617: the plan file limit, in raw file bytes. The SAME number as
+ * `MAX_PLAN_BYTES` in `custom_components/houseplan/validation.py` and the "8"
+ * in both USER-GUIDEs — `test/plan-upload-limit.test.mjs` holds them together.
+ * Inclusive: a file of exactly this size is accepted on both sides.
+ */
+export const MAX_PLAN_BYTES = 8 * 1024 * 1024;
+/** The limit as users read it ("8 MB"), derived — never a second literal. */
+export const MAX_PLAN_MB = MAX_PLAN_BYTES / 1048576;
+
+export const PLAN_UPLOAD_PATH = '/api/houseplan/plans/upload';
 
 export interface BackdropGuardState {
   file: File;
@@ -40,25 +53,6 @@ export function planFileExt(file: File): string {
   return EXT_BY_MIME[file.type] || (file.name.toLowerCase().endsWith('.svg') ? 'svg' : '');
 }
 
-/**
- * Base64 via FileReader: the browser encodes natively instead of the old
- * char-by-char string build, cutting the JS-heap peak roughly in half on
- * every upload (spec §UX/safe). Output is byte-identical to btoa(binary).
- */
-export function fileToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(reader.error || new Error('read failed'));
-    reader.onload = () => {
-      const url = String(reader.result || '');
-      const comma = url.indexOf(',');
-      if (comma < 0) { reject(new Error('unexpected data url')); return; }
-      resolve(url.slice(comma + 1));
-    };
-    reader.readAsDataURL(blob);
-  });
-}
-
 async function aspectOf(blob: Blob, fallback = 1.414): Promise<number> {
   const url = URL.createObjectURL(blob);
   try {
@@ -74,9 +68,81 @@ async function aspectOf(blob: Blob, fallback = 1.414): Promise<number> {
   }
 }
 
+/**
+ * Stage a plan file for upload. No base64 any more (#617): the bytes travel
+ * as multipart over HTTP, so the payload keeps the Blob itself and only the
+ * aspect ratio has to be read here.
+ */
 export async function encodePlanFile(blob: Blob, ext: string, name: string): Promise<PlanFilePayload> {
-  const [b64, aspect] = await Promise.all([fileToBase64(blob), aspectOf(blob)]);
-  return { ext, b64, aspect, name };
+  return { ext, blob, aspect: await aspectOf(blob), name };
+}
+
+/**
+ * #617: one pick path for BOTH runtimes (editor space dialog and onboarding).
+ * Returns the staged payload, or null when the file was refused (toast shown)
+ * or handed to the #39 guard dialog. A raster above the plan limit always goes
+ * to the guard — which then offers only the reduced copy — and anything else
+ * above the limit (SVG) is refused right here, before a single byte is sent.
+ */
+export async function stagePlanFile(host: BackdropPickHost, file: File): Promise<PlanFilePayload | null> {
+  const refuse = (key: I18nKey, vars?: Record<string, string | number>): null => {
+    host._showToast(host._t(key, vars));
+    return null;
+  };
+  const classified = await classifyPlanFile(file, MAX_PLAN_BYTES);
+  if (classified.kind === 'reject') return refuse('toast.plan_formats');
+  if (classified.kind === 'guard') {
+    host._backdropGuard = classified.state;
+    return null;
+  }
+  if (file.size > MAX_PLAN_BYTES) return refuse('toast.plan_too_large', { mb: MAX_PLAN_MB });
+  return encodePlanFile(file, classified.ext, file.name);
+}
+
+/** Minimal slice of `hass` the upload needs — the same two paths `_pickMarkerFiles` uses. */
+export interface PlanUploadHass {
+  fetchWithAuth?: (path: string, init?: RequestInit) => Promise<Response>;
+  auth?: { data?: { access_token?: string } };
+}
+
+/**
+ * #617: upload a staged plan over HTTP and return its URL. WebSocket is not
+ * involved: a base64 frame above ~3 MiB used to close the card's socket
+ * before the server could even answer `too_large`. Errors are thrown as
+ * user-facing text; a 413 without a JSON body (a proxy in front of HA)
+ * still names the limit.
+ */
+export async function uploadPlanFile(
+  hass: PlanUploadHass | null | undefined,
+  t: BackdropPickHost['_t'],
+  spaceId: string,
+  payload: PlanFilePayload,
+): Promise<{ url: string }> {
+  const body = new FormData();
+  body.append('space_id', spaceId);
+  body.append('ext', payload.ext);
+  body.append('file', payload.blob, payload.name || `plan.${payload.ext}`);
+  // fetchWithAuth refreshes a stale access_token itself; the fallback is the raw token
+  const response: Response = hass?.fetchWithAuth
+    ? await hass.fetchWithAuth(PLAN_UPLOAD_PATH, { method: 'POST', body })
+    : await fetch(PLAN_UPLOAD_PATH, {
+      method: 'POST',
+      body,
+      headers: hass?.auth?.data?.access_token
+        ? { authorization: `Bearer ${hass.auth.data.access_token}` } : {},
+    });
+  const json: { error?: string; max_mb?: number; url?: string } =
+    await response.json().catch(() => ({}));
+  if (!response.ok || json.error || typeof json.url !== 'string') {
+    const code = json.error || (response.status === 413 ? 'too_large' : '');
+    const messages: Record<string, string> = {
+      too_large: t('err.too_large', { mb: json.max_mb || MAX_PLAN_MB }),
+      bad_ext: t('err.bad_ext'),
+      unauthorized: t('err.unauthorized'),
+    };
+    throw new Error(messages[code] || code || `HTTP ${response.status}`);
+  }
+  return { url: json.url };
 }
 
 /**
@@ -161,6 +227,7 @@ export function renderBackdropGuard(
   hass: unknown,
   blobApply?: (blob: Blob, name: string) => Promise<void>,
   allowOriginal = true,
+  planLimitBytes?: number,
 ): TemplateResult | null {
   const guard = host._backdropGuard;
   if (!guard) return null;
@@ -169,18 +236,23 @@ export function renderBackdropGuard(
   const reducedDimensions = probe.width && probe.height
     ? downscaleDimensions(probe.width, probe.height, DOWNSCALE_TARGET_PX)
     : null;
+  const overPlanLimit = planLimitBytes !== undefined && guard.file.size > planLimitBytes;
   const body = hard
     ? host._t('backdrop.too_large_body', {
       w: probe.width ?? 0, h: probe.height ?? 0, limit: HARD_DIMENSION,
     })
     : probe.kind === 'unknown'
       ? host._t('backdrop.unknown_body')
-      : host._t('backdrop.large_body', {
-        w: probe.width ?? 0,
-        h: probe.height ?? 0,
-        fileMb: megabytes(guard.file.size),
-        decodedMb: megabytes(probe.decodedBytes ?? 0),
-      });
+      : overPlanLimit
+        ? host._t('backdrop.over_limit_body', {
+          fileMb: megabytes(guard.file.size), mb: (planLimitBytes ?? 0) / 1048576,
+        })
+        : host._t('backdrop.large_body', {
+          w: probe.width ?? 0,
+          h: probe.height ?? 0,
+          fileMb: megabytes(guard.file.size),
+          decodedMb: megabytes(probe.decodedBytes ?? 0),
+        });
   // r1-M1: while a decision is executing, dismissal must not race it — the
   // dialog stays up (buttons are disabled), and even if the guard somehow
   // vanished mid-flight, a stale flow must not apply its result silently.
@@ -212,6 +284,14 @@ export function renderBackdropGuard(
       if (blobApply) {
         await blobApply(out.blob, out.name);
         if (stillCurrent()) close();
+        return;
+      }
+      // #617: the reduced copy of a huge scan can still be over the plan
+      // limit — refuse it here instead of letting the server answer 413.
+      if (planLimitBytes !== undefined && out.blob.size > planLimitBytes) {
+        if (!stillCurrent()) return;
+        close();
+        host._showToast(host._t('toast.plan_too_large', { mb: planLimitBytes / 1048576 }));
         return;
       }
       const payload = await encodePlanFile(out.blob, out.ext, out.name);
@@ -250,4 +330,19 @@ export function renderBackdropGuard(
         </button>`}
     </div>
   </hp-dialog>`;
+}
+
+/**
+ * #617: the guard dialog for a PLAN file, shared by both runtimes. Above the
+ * plan limit the original cannot be uploaded at all, so only the reduced copy
+ * is offered — the same shape the decor path uses for its 2 MiB limit.
+ */
+export function renderPlanBackdropGuard(
+  host: BackdropPickHost,
+  apply: (payload: PlanFilePayload) => void,
+  close: () => void,
+  hass: unknown,
+): TemplateResult | null {
+  const size = host._backdropGuard?.file.size ?? 0;
+  return renderBackdropGuard(host, apply, close, hass, undefined, size <= MAX_PLAN_BYTES, MAX_PLAN_BYTES);
 }

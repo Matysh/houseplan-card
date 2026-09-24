@@ -72,14 +72,13 @@ from .import_export import (
 from .junction_limits import JunctionLimitError, validate_junction_limits
 from .plans import (
     QuotaError,
-    atomic_write,
-    check_quota,
     collect_attachments,
     collect_plans,
     is_plan_file,
     plan_basename,
     plan_refs,
     reserve_filename,
+    store_plan_upload,
 )
 from .projection import project_config, project_layout
 from .radar_validation import (
@@ -2349,37 +2348,25 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
         connection.send_error(msg["id"], "too_large", f"Plan is larger than {MAX_PLAN_BYTES // 1024 // 1024} MB")
         return
 
-    # Copy-on-write: a plan is written under a NEW unique name and nothing is
-    # deleted here (review R2-1). The old name stays readable, so a config write
-    # that is later rejected — revision conflict, validation, lost connection —
-    # leaves the stored plan exactly as it was. The card calls
-    # nothing here; the file a commit REPLACES is collected by `config/set`
-    # itself, inside the write lock (review R3-1). An upload that never gets
-    # committed is not collected at all — it is offered back in the space
-    # dialog's "already uploaded" list, where the user can attach or delete it.
-    # Every attempt to age these out ended in data loss or a race (v1.46.4-6).
-    #
-    # `.` separates the id from the token because a space id cannot contain one
-    # (SPACE_ID_RE), so "<space>.<token>.<ext>" can never be confused with the
-    # files of a differently named space.
+    # Kept for cards cached from before #617: they still upload over WS. A
+    # current card uses POST /api/houseplan/plans/upload instead, because the
+    # base64 frame of a plan above ~3 MiB exceeds the 4 MiB WebSocket message
+    # limit and the socket closes before this handler runs — the size check
+    # above is reachable only for small files on this path. Both transports
+    # write through the same `store_plan_upload` (copy-on-write naming, quota,
+    # atomic write), so the contract below cannot drift between them.
     plans_dir = Path(hass.config.path(PLANS_DIR))
-    name = f"{space_id}.{secrets.token_hex(4)}.{msg['ext']}"
-    path = plans_dir / name
-
-    def _check_and_write() -> None:
-        # one executor job for the pair, under upload_lock: the measurement
-        # is only a bound if nothing else writes between it and our write
-        # (HP-1490-02). A failed write reserves nothing — the file either
-        # exists and is counted by the next scan, or does not and is not.
-        check_quota(plans_dir, len(raw), MAX_PLANS_BYTES, MAX_PLANS_FILES)
-        atomic_write(path, raw, prefix=".plan-upload-")
-
     data = _runtime(hass, connection, msg["id"])
     if data is None:
         return
     async with data.upload_lock:
         try:
-            await hass.async_add_executor_job(_check_and_write)
+            name = await hass.async_add_executor_job(
+                partial(
+                    store_plan_upload, plans_dir, space_id, msg["ext"], raw,
+                    max_bytes=MAX_PLANS_BYTES, max_files=MAX_PLANS_FILES,
+                )
+            )
         except QuotaError as err:
             connection.send_error(msg["id"], err.reason, err.detail)
             return

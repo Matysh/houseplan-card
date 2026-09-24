@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import logging
 import os
+import secrets
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from .const import MIN_FREE_BYTES, PLAN_ORPHAN_TTL_S
 from .validation import MAX_FILENAME, PLAN_EXTENSIONS, sanitize_filename
@@ -275,6 +276,63 @@ def check_quota(
     disk_incoming = incoming if additional_disk_bytes is None else additional_disk_bytes
     if free - disk_incoming < MIN_FREE_BYTES:
         raise QuotaError("low_disk_space", f"only {free // 1024 // 1024} MB free on the disk")
+
+
+class _ChunkReader(Protocol):
+    async def read_chunk(self, size: int = ...) -> bytes: ...
+
+
+async def read_bounded(part: _ChunkReader, limit: int, chunk: int) -> bytes | None:
+    """Read one multipart part into memory, or None once it passes ``limit``.
+
+    The bound is inclusive: exactly ``limit`` bytes is accepted, one more is
+    refused. Reading stops at the first block that crosses it, so an oversized
+    upload never costs more than ``limit + chunk`` bytes of memory and nothing
+    touches the disk (#617). Pure — the part only has to offer ``read_chunk``.
+    """
+    blocks: list[bytes] = []
+    size = 0
+    while block := await part.read_chunk(chunk):
+        size += len(block)
+        if size > limit:
+            return None
+        blocks.append(block)
+    return b"".join(blocks)
+
+
+def store_plan_upload(
+    plans_dir: Path,
+    space_id: str,
+    ext: str,
+    raw: bytes,
+    *,
+    max_bytes: int,
+    max_files: int,
+) -> str:
+    """Write one validated plan upload under a new name and return that name.
+
+    The single writer behind both transports — the HTTP view and the legacy
+    WebSocket ``houseplan/plan/set`` (#617) — so naming, quota and the atomic
+    write cannot drift between them. The caller has already checked
+    ``space_id``, ``ext`` and the size, holds ``runtime.upload_lock`` and runs
+    this as ONE executor job: the quota measurement is only a bound if nothing
+    else writes between it and our write (HP-1490-02). A failed write reserves
+    nothing — the file either exists and is counted by the next scan, or does
+    not and is not.
+
+    Copy-on-write: a plan is written under a NEW unique name and nothing is
+    deleted here (review R2-1). The old name stays readable, so a config write
+    that is later rejected leaves the stored plan exactly as it was; the file a
+    commit REPLACES is collected by ``config/set`` itself (review R3-1).
+
+    ``.`` separates the id from the token because a space id cannot contain one
+    (SPACE_ID_RE), so "<space>.<token>.<ext>" can never be confused with the
+    files of a differently named space.
+    """
+    name = f"{space_id}.{secrets.token_hex(4)}.{ext}"
+    check_quota(plans_dir, len(raw), max_bytes, max_files)
+    atomic_write(plans_dir / name, raw, prefix=".plan-upload-")
+    return name
 
 
 def plan_basename(url: Any) -> str:

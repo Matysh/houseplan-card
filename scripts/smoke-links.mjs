@@ -306,6 +306,20 @@ export const SMOKE_LINKS = [
       + 'clean staging, no silent original upload) and the SVG bypass (#39)',
   },
   {
+    symbols: [
+      'stagePlanFile', 'uploadPlanFile', 'renderPlanBackdropGuard',
+      'MAX_PLAN_BYTES', 'MAX_PLAN_MB', 'PLAN_UPLOAD_PATH',
+    ],
+    smokes: [
+      'smoke_plan_upload_limit.mjs', 'smoke_plan_upload_race.mjs',
+      'smoke_plan_upload_reject.mjs', 'smoke_backdrop_guard.mjs',
+    ],
+    because: '#617: the smokes drive _pickPlanFile/_saveSpaceDialog of both runtimes on the '
+      + 'production bundle and observe the transport (one multipart POST, zero plan/set), the '
+      + 'pre-send limit toast, the reduced-copy-only guard and the 413 text; none of them names '
+      + 'the shared helpers, so a name search cannot find them',
+  },
+  {
     symbols: ['vacMapIdWithFallback', 'vacMapIdFromAttrs', 'readVacTelemetry'],
     smokes: ['smoke_cold_view_vacuum.mjs'],
     because: 'the telemetry-bearing cold scenario proves the vacuum render path (willUpdate '

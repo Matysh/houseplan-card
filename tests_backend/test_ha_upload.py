@@ -214,3 +214,141 @@ async def test_issue_498_decor_upload_refuses_a_deep_reference_chain_with_a_code
     ok.add_field("file", _svg_chain(64), filename="chain64.svg", content_type="image/svg+xml")
     accepted = await client.post("/api/houseplan/assets/upload", data=ok)
     assert accepted.status == 200, await accepted.text()
+
+
+# ---------------- #617: plan upload over HTTP ----------------
+
+
+def _plan_form(data: bytes, space_id: str = "f1", ext: str = "png", files: int = 1) -> FormData:
+    fd = FormData()
+    fd.add_field("space_id", space_id)
+    fd.add_field("ext", ext)
+    for _ in range(files):
+        fd.add_field("file", data, filename=f"plan.{ext}", content_type="application/octet-stream")
+    return fd
+
+
+def _plans_listing(hass: HomeAssistant) -> list[str]:
+    from pathlib import Path
+
+    from custom_components.houseplan.const import PLANS_DIR
+
+    root = Path(hass.config.path(PLANS_DIR))
+    return sorted(p.name for p in root.iterdir()) if root.is_dir() else []
+
+
+async def test_issue_617_plan_upload_stores_a_5_mib_plan_byte_for_byte(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator,
+) -> None:
+    """#617 AC1: a 5 MiB plan — above the old ~3 MiB WebSocket ceiling — is stored."""
+    import hashlib
+    from pathlib import Path
+
+    from custom_components.houseplan.const import PLANS_DIR
+
+    await _setup(hass)
+    client = await hass_client()
+    raw = b"\x89PNG\r\n\x1a\n" + bytes(range(256)) * (5 * 1024 * 4 - 1) + b"x" * 248
+    assert len(raw) == 5 * 1024 * 1024
+    resp = await client.post("/api/houseplan/plans/upload", data=_plan_form(raw))
+    assert resp.status == 200, await resp.text()
+    body = await resp.json()
+    assert body["ok"] is True
+    assert body["url"].startswith("/api/houseplan/content/plans/_/f1.")
+    assert body["url"].endswith(".png")
+    name = body["url"].rsplit("/", 1)[-1]
+    stored = Path(hass.config.path(PLANS_DIR)) / name
+    digest = await hass.async_add_executor_job(lambda: hashlib.sha256(stored.read_bytes()).hexdigest())
+    assert digest == hashlib.sha256(raw).hexdigest()
+
+
+async def test_issue_617_plan_upload_limit_is_inclusive_and_refusal_leaves_nothing(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator,
+) -> None:
+    """#617 AC4: exactly MAX_PLAN_BYTES passes; one byte more is 413 with max_mb, no file."""
+    from custom_components.houseplan.validation import MAX_PLAN_BYTES
+
+    await _setup(hass)
+    client = await hass_client()
+    exact = await client.post(
+        "/api/houseplan/plans/upload", data=_plan_form(b"\0" * MAX_PLAN_BYTES, "fexact"),
+    )
+    assert exact.status == 200, await exact.text()
+
+    before = await hass.async_add_executor_job(_plans_listing, hass)
+    over = await client.post(
+        "/api/houseplan/plans/upload", data=_plan_form(b"\0" * (MAX_PLAN_BYTES + 1), "fover"),
+    )
+    assert over.status == 413
+    assert await over.json() == {"error": "too_large", "max_mb": 8}
+    after = await hass.async_add_executor_job(_plans_listing, hass)
+    assert after == before, "a refused plan leaves neither a file nor a temporary behind"
+
+
+async def test_issue_617_plan_upload_refuses_non_admin(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator, hass_read_only_access_token: str,
+) -> None:
+    """#617 AC4: the same write policy as ws_plan_set."""
+    await _setup(hass)
+    client = await hass_client(hass_read_only_access_token)
+    before = await hass.async_add_executor_job(_plans_listing, hass)
+    resp = await client.post("/api/houseplan/plans/upload", data=_plan_form(b"PLAN"))
+    assert resp.status == 403
+    assert (await resp.json())["error"] == "unauthorized"
+    assert await hass.async_add_executor_job(_plans_listing, hass) == before
+
+
+async def test_issue_617_plan_upload_validates_fields_like_ws_plan_set(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator,
+) -> None:
+    """#617 AC4: space id and extension are checked; one file per request."""
+    await _setup(hass)
+    client = await hass_client()
+    before = await hass.async_add_executor_job(_plans_listing, hass)
+
+    bad_space = await client.post("/api/houseplan/plans/upload", data=_plan_form(b"x", "../evil"))
+    assert bad_space.status == 400
+    assert (await bad_space.json())["error"] == "invalid_space_id"
+
+    bad_ext = await client.post("/api/houseplan/plans/upload", data=_plan_form(b"x", "f1", "gif"))
+    assert bad_ext.status == 400
+    assert (await bad_ext.json())["error"] == "bad_ext"
+
+    no_file = FormData()
+    no_file.add_field("space_id", "f1")
+    no_file.add_field("ext", "png")
+    missing = await client.post("/api/houseplan/plans/upload", data=no_file)
+    assert missing.status == 400
+    assert (await missing.json())["error"] == "no_file"
+
+    two = await client.post("/api/houseplan/plans/upload", data=_plan_form(b"x", files=2))
+    assert two.status == 400
+    assert (await two.json())["error"] == "one_file_only"
+
+    assert await hass.async_add_executor_job(_plans_listing, hass) == before
+
+
+async def test_issue_617_plan_upload_quota_answers_507_with_reason(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator, monkeypatch,
+) -> None:
+    """#617 AC4: the plan store quota is the one ws_plan_set enforces."""
+    from pathlib import Path
+
+    from custom_components.houseplan import http_api as hp_http
+    from custom_components.houseplan.const import PLANS_DIR
+    from custom_components.houseplan.plans import dir_usage
+
+    await _setup(hass)
+    client = await hass_client()
+    _bytes, stored = await hass.async_add_executor_job(
+        dir_usage, Path(hass.config.path(PLANS_DIR)),
+    )
+    monkeypatch.setattr(hp_http, "MAX_PLANS_FILES", stored)  # no room for one more
+    resp = await client.post("/api/houseplan/plans/upload", data=_plan_form(b"PLAN"))
+    assert resp.status == 507
+    body = await resp.json()
+    assert body["error"] == "too_many_files" and body["detail"]
+    _bytes2, after = await hass.async_add_executor_job(
+        dir_usage, Path(hass.config.path(PLANS_DIR)),
+    )
+    assert after == stored

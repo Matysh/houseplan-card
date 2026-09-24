@@ -36,6 +36,8 @@ from .const import (
     MAX_EXPORT_BYTES,
     MAX_FILES_BYTES,
     MAX_FILES_COUNT,
+    MAX_PLANS_BYTES,
+    MAX_PLANS_FILES,
     MIN_FREE_BYTES,
     PLANS_DIR,
 )
@@ -50,15 +52,25 @@ from .decor_assets import (
     validate_asset,
 )
 from .import_export import ImportFailure, create_preview
-from .plans import TMP_PREFIX, QuotaError, check_quota, reserve_filename
+from .plans import (
+    TMP_PREFIX,
+    QuotaError,
+    check_quota,
+    read_bounded,
+    reserve_filename,
+    store_plan_upload,
+)
 from .registry_snapshot import import_registry_snapshot
 from .store import get_data
 from .validation import (
     FILE_EXTENSIONS,
     MAX_FILE_BYTES,
+    MAX_PLAN_BYTES,
+    PLAN_EXTENSIONS,
     file_ext,
     sanitize_filename,
     sanitize_marker_id,
+    valid_space_id,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -350,6 +362,90 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
             _LOGGER.warning("House Plan decor asset upload: store failed: %s", err)
             return web.json_response({"error": "io_error"}, status=500)
         return web.json_response({"ok": True, "reused": reused, "asset": public_asset(row)})
+
+
+# Form fields other than the file are a space id (<= 64 chars) and an
+# extension; a kilobyte is generous and keeps a hostile field from buffering.
+_PLAN_FIELD_BYTES = 1024
+
+
+class HouseplanPlanUploadView(HomeAssistantView):
+    """POST /api/houseplan/plans/upload — store one space plan, return its URL.
+
+    The card used to send plans base64-encoded over WebSocket; above ~3 MiB the
+    frame passed the 4 MiB message limit and HA closed the socket before
+    `houseplan/plan/set` ever ran, so the advertised 8 MiB limit was a lie
+    (#617). Multipart over HTTP has no such frame, and the body is bounded
+    while it streams. The body is buffered in memory (<= MAX_PLAN_BYTES plus
+    one chunk), like the decor view, and written by the same
+    `store_plan_upload` that the WebSocket command uses.
+    """
+
+    url = "/api/houseplan/plans/upload"
+    name = "api:houseplan:plan-upload"
+    requires_auth = True
+
+    async def post(self, request: web.Request) -> web.Response:
+        hass: HomeAssistant = request.app[KEY_HASS]
+        if not may_write(hass, request.get("hass_user")):
+            return web.json_response({"error": "unauthorized"}, status=403)
+        runtime = get_data(hass)
+        if runtime is None:
+            return web.json_response({"error": "not_ready"}, status=503)
+        too_large = web.json_response(
+            {"error": "too_large", "max_mb": MAX_PLAN_BYTES // 1024 // 1024}, status=413,
+        )
+        # Content-Length covers the multipart envelope too: reserve one batch
+        # for it, like the other upload views, and let the streaming bound
+        # below decide exactly.
+        declared = request.content_length
+        if declared is not None and declared > MAX_PLAN_BYTES + _FLUSH_AT:
+            return too_large
+        space_id: str | None = None
+        ext: str | None = None
+        raw: bytes | None = None
+        try:
+            reader = await request.multipart()
+            async for part in reader:
+                if part.name == "file":
+                    if raw is not None:
+                        return web.json_response({"error": "one_file_only"}, status=400)
+                    raw = await read_bounded(part, MAX_PLAN_BYTES, _CHUNK)
+                    if raw is None:
+                        return too_large
+                elif part.name in ("space_id", "ext"):
+                    field = await read_bounded(part, _PLAN_FIELD_BYTES, _CHUNK)
+                    value = field.decode("utf-8", "replace") if field is not None else ""
+                    if part.name == "space_id":
+                        space_id = value
+                    else:
+                        ext = value
+        except Exception as err:  # noqa: BLE001 - a broken multipart stream must answer 400, not crash the view
+            _LOGGER.warning("House Plan plan upload: multipart read error: %s", err)
+            return web.json_response({"error": "bad_request"}, status=400)
+        if space_id is None or not valid_space_id(space_id):
+            return web.json_response({"error": "invalid_space_id"}, status=400)
+        if ext not in PLAN_EXTENSIONS:
+            return web.json_response({"error": "bad_ext"}, status=400)
+        if raw is None:
+            return web.json_response({"error": "no_file"}, status=400)
+
+        plans_dir = Path(hass.config.path(PLANS_DIR))
+        try:
+            async with runtime.upload_lock:
+                name = await hass.async_add_executor_job(
+                    partial(
+                        store_plan_upload, plans_dir, space_id, ext, raw,
+                        max_bytes=MAX_PLANS_BYTES, max_files=MAX_PLANS_FILES,
+                    )
+                )
+        except QuotaError as err:
+            _LOGGER.warning("House Plan plan upload refused: %s", err.detail)
+            return web.json_response({"error": err.reason, "detail": err.detail}, status=507)
+        except OSError as err:
+            _LOGGER.warning("House Plan plan upload: could not store the file: %s", err)
+            return web.json_response({"error": "io_error"}, status=500)
+        return web.json_response({"ok": True, "url": f"{CONTENT_URL}/plans/_/{name}"})
 
 
 class HouseplanUploadView(HomeAssistantView):

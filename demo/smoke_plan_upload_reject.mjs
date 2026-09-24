@@ -14,12 +14,18 @@ const res = await page.evaluate(async () => {
   let uploads = 0;
   const cleanups = [];
   let rejectSave = true;
+  let wsUploads = 0;
 
-  c.hass = { ...c.hass, callWS: async (m) => {
-    if (m.type === 'houseplan/plan/set') {
-      uploads++;
-      return { ok: true, url: '/api/houseplan/content/plans/_/' + m.space_id + '.tok' + uploads + '.png' };
-    }
+  // #617: план уходит по HTTP (`/api/houseplan/plans/upload`), не по WS
+  c.hass = { ...c.hass, fetchWithAuth: async (url, init) => {
+    if (url !== '/api/houseplan/plans/upload') throw new Error('unexpected fetch ' + url);
+    uploads++;
+    const spaceId = init.body.get('space_id');
+    return { ok: true, status: 200, json: async () => ({
+      ok: true, url: '/api/houseplan/content/plans/_/' + spaceId + '.tok' + uploads + '.png',
+    }) };
+  }, callWS: async (m) => {
+    if (m.type === 'houseplan/plan/set') { wsUploads++; throw new Error('plan/set must not be used'); }
     // любая команда удаления файлов от клиента — нарушение контракта R3-1
     if (m.type === 'houseplan/plan/cleanup' || m.type === 'houseplan/plan/delete') { cleanups.push(m); return { ok: true }; }
     if (m.type === 'houseplan/config/set') {
@@ -36,7 +42,7 @@ const res = await page.evaluate(async () => {
   const attach = async () => {
     c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
     c._spaceDialog = { ...c._spaceDialog, title: 'Ground', source: 'file',
-      planFile: { ext: 'png', b64: 'AAAA', aspect: 1.6 } };
+      planFile: { ext: 'png', blob: new Blob([new Uint8Array([0, 0, 0])]), aspect: 1.6, name: 'p.png' } };
     await c._saveSpaceDialog(); await c.updateComplete;
   };
 
@@ -56,6 +62,7 @@ const res = await page.evaluate(async () => {
   out.dialogClosedOnAccept = c._spaceDialog === null;
   // вторая загрузка не переиспользует имя первой: старый файл жив до коммита
   out.versionedNames = uploads === 2;
+  out.wsUploads = wsUploads;
   return out;
 });
 // зафиксировано прогоном на v1.45.0 и сверено с кодом
@@ -67,5 +74,6 @@ checkAll(res, {
   savedPlanUrl: '/api/houseplan/content/plans/_/f1.tok2.png',
   dialogClosedOnAccept: true,
   versionedNames: true,
+  wsUploads: 0,
 });
 await finish(browser);
