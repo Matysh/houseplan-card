@@ -1,9 +1,31 @@
 // #32: one House Plan confirmation surface owns destructive actions in View,
 // onboarding and every editor.  This smoke covers the real dialog contract,
 // then exercises every migrated mutation class through both lazy runtimes.
+import { readFileSync } from 'node:fs';
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 320, height: 760 });
+// #627 r1 M1: de/fr strings of the `settings` namespace are lazy chunks that
+// settle after the main catalog. While one is pending the host language gate
+// is `warm`, and #417 refuses/cancels a danger request in that state — a
+// request made as soon as `btn.cancel` is translated used to be lost silently
+// whenever the namespace chunk was the slower one. The delay makes that order
+// deterministic instead of a CI-speed coincidence.
+const manifest = JSON.parse(readFileSync('dist/houseplan-assets.json', 'utf8'));
+const delayedNamespaceChunks = ['de', 'fr'].map((language) => {
+  const name = (manifest.lazyNamespaceLocaleFiles || []).map((path) => path.split('/').at(-1))
+    .find((candidate) => candidate.startsWith(`settings-${language}-`));
+  if (!name) throw new Error(`namespace chunk settings-${language} is absent from the manifest`);
+  return name;
+});
+let delayedNamespaceServed = 0;
+for (const name of delayedNamespaceChunks) {
+  await page.route(`**/${name}*`, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    delayedNamespaceServed++;
+    await route.fallback();
+  });
+}
 const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
@@ -97,18 +119,27 @@ const out = await page.evaluate(async () => {
   const localeFits = async (language, expectedCancel) => {
     card._config = { ...(card._config || {}), language };
     card.requestUpdate();
-    for (let attempt = 0; attempt < 50 && card._t('btn.cancel') !== expectedCancel; attempt++) {
+    await settle();
+    // #627 r1 M1: the translated main catalog is not the whole language. The
+    // live switch holds the previous frame (inert + aria-busy) until every
+    // dictionary of the loaded surface settles; only then may a caller ask.
+    for (let attempt = 0; attempt < 250
+      && (card._t('btn.cancel') !== expectedCancel || card.hasAttribute('aria-busy')); attempt++) {
       await new Promise((resolve) => setTimeout(resolve, 10));
       await settle();
     }
+    result[`${language}GateSettledBeforeAsking`] = card._t('btn.cancel') === expectedCancel
+      && !card.hasAttribute('aria-busy');
     const pending = card._confirmDanger(request(`locale-${language}`));
     await settle();
     const current = visible();
+    result[`${language}DialogShown`] = !!current.native?.open && !!current.buttons[0];
     const fits = current.buttons[0]?.textContent.trim() === expectedCancel
+      && !!current.surface && !!current.footer
       && current.surface.scrollWidth <= current.surface.clientWidth + 1
       && current.footer.scrollWidth <= current.footer.clientWidth + 1;
-    current.buttons[0].click();
-    await pending;
+    current.buttons[0]?.click();
+    result[`${language}CancelResolvesFalse`] = await pending === false;
     return fits;
   };
   result.germanNarrowFits = await localeFits('de', 'Abbrechen');
@@ -236,6 +267,8 @@ const out = await page.evaluate(async () => {
   card._confirmDanger = originalConfirm;
   return result;
 });
+// The delay is only proof if the delayed chunks were really on the path.
+out.delayedNamespaceChunksServed = delayedNamespaceServed === delayedNamespaceChunks.length;
 
 checkAll(out);
 await finish(browser, out);
