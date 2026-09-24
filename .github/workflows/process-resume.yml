@@ -1,19 +1,13 @@
 name: Продолжение ревью после Validate
 run-name: "resume · ${{ github.event.workflow_run.head_branch }} · ${{ github.event.workflow_run.conclusion }}"
 
-# #636. Стадия `prepare` конвейера (process.yml) больше не ждёт Validate с
-# мутантами на материале внутри job — раннер спал ≈ 28 минут на раунд при
-# 10–12 минутах работы модели. Она диспатчит прогон, кладёт запечатанный
-# маркер `review-pending-…` и выходит. Этот workflow просыпается на завершение
-# любого Validate и, если раунд ждал именно этот прогон (маркер на материале,
-# метка S7 стоит, активного прогона конвейера нет), переставляет метку S7 —
-# новый прогон `prepare` находит завершённый dispatch и продолжает раунд.
-# Ничего не оценивает: зелёный/красный разбирает сам конвейер. Страховка на
-# потерянное событие — process-reconcile.yml с тем же маркером.
-#
-# Как и process.yml, файл исполняется из ветки по умолчанию (main): для
-# события `workflow_run` GitHub берёт workflow только оттуда. Сверка копий —
-# в preflight validate.yml.
+# Тонкий вызывающий файл (#623). Для этого события GitHub берёт workflow из
+# ветки по умолчанию (`main`), поэтому здесь только то, что обязано жить там:
+# триггеры, run-name, права и concurrency. Тело — `_process-resume.yml` по ссылке
+# `@dev`: правка конвейера — один коммит в `dev`, зеркало в `main` не нужно.
+# Этот файл меняется, только когда меняются сами триггеры или потолок прав;
+# тогда он зеркалится в `main`, и preflight `workflow_sync` (validate.yml)
+# держит копии равными.
 
 on:
   workflow_run:
@@ -25,36 +19,15 @@ permissions:
   actions: read
 
 jobs:
-  resume:
-    name: "Разбудить раунд, ждавший этот Validate"
+  # Потолок прав тела: объединение job-level прав `_process-resume.yml`. Вызываемый
+  # workflow может права только сузить, поэтому каждая его job по-прежнему
+  # получает свой прежний минимум (#556), а шире этого набора не получит никто.
+  dev:
+    # Тот же фильтр, что у job `resume` тела: посторонние события не
+    # поднимают вызов, а прогон остаётся skipped, как до #623.
     if: github.event.workflow_run.event == 'workflow_dispatch' && startsWith(github.event.workflow_run.head_branch, 'issue/')
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    concurrency:
-      group: process-resume-${{ github.event.workflow_run.head_branch }}
-      cancel-in-progress: false
-    steps:
-      # Код берётся из dev, как у reconcile: после штатного слияния действует
-      # версия, которую проверил CI, а не копия из main.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: dev
-          fetch-depth: 1
-          persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: 22
-      # Метка переставляется HP_PROCESS_TOKEN: событие от GITHUB_TOKEN не
-      # запустило бы process.yml (см. шапку process.yml, п. 1).
-      - name: Решить по маркеру ожидания и переставить S7
-        env:
-          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
-          REPO: ${{ github.repository }}
-          BRANCH: ${{ github.event.workflow_run.head_branch }}
-          SHA: ${{ github.event.workflow_run.head_sha }}
-          EVENT: ${{ github.event.workflow_run.event }}
-          STATUS: ${{ github.event.workflow_run.status }}
-        run: |
-          node scripts/process-resume.mjs \
-            --repo="$REPO" --branch="$BRANCH" --sha="$SHA" \
-            --event="$EVENT" --status="$STATUS" --apply=true | tee -a "$GITHUB_STEP_SUMMARY"
+    permissions:
+      contents: read
+      actions: read
+    uses: Matysh/houseplan-card/.github/workflows/_process-resume.yml@dev # #623: тело конвейера из dev
+    secrets: inherit
