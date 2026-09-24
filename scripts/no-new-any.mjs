@@ -70,7 +70,17 @@ const MIN_REASON_LENGTH = 12;
  * `ok: false` означает, что маркер есть, но обоснования в нём нет.
  */
 export function parseAnyOk(lineText) {
-  const match = /\/\/\s*any-ok\b\s*:?\s*(.*)$/.exec(String(lineText ?? ''));
+  return parseExemption(lineText, 'any-ok');
+}
+
+/**
+ * То же правило для любого маркера исключения вида `// <marker>: <причина>`.
+ * Общее с `no-new-private-writes` (#629): требования к причине не должны
+ * расходиться между гейтами.
+ */
+export function parseExemption(lineText, marker) {
+  const escaped = String(marker).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = new RegExp(`\\/\\/\\s*${escaped}\\b\\s*:?\\s*(.*)$`).exec(String(lineText ?? ''));
   if (!match) return null;
   const reason = match[1].trim().replace(/\s+/g, ' ');
   const bare = reason.replace(/[.…!?—–-]+$/g, '').trim().toLowerCase();
@@ -158,7 +168,7 @@ export const MOVED_BLOCK_MIN = 5;
  * Возвращает по файлу номера таких строк. Сравнение точное, без обрезки
  * пробелов: перенос с изменённым отступом — уже правка, и судить её гейт обязан.
  */
-export function movedLinesByFile(diff, { minBlock = MOVED_BLOCK_MIN } = {}) {
+export function movedLinesByFile(diff, { minBlock = MOVED_BLOCK_MIN, details } = {}) {
   const removedByFile = new Map();
   const addedByFile = new Map();
   let target = null;
@@ -245,6 +255,12 @@ export function movedLinesByFile(diff, { minBlock = MOVED_BLOCK_MIN } = {}) {
         at += best.length;
       }
     }
+  }
+  // Удалённые строки и те из них, что ушли на оплату переноса, — для гейтов,
+  // которым нужен зачёт правок без двойного счёта (#629).
+  if (details) {
+    details.removedByFile = removedByFile;
+    details.spent = spent;
   }
   return moved;
 }

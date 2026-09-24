@@ -742,8 +742,10 @@ jobs:
         run: npm run typecheck
       # Долг типизации снимается при извлечении подсистем (#34), а не разовой
       # заменой: в src/** его 1034 вхождения в 49 файлах. Гейт держит приращение
-      # на нуле — судит только добавленные строки (#342).
-      - name: "Новый код не добавляет any"
+      # на нуле — судит только добавленные строки (#342). Тем же диапазоном
+      # судится и приращение записей смоков в приватное состояние карточки
+      # (#629): больше двух тысяч старых не трогаем, новых не добавляем.
+      - name: "Новый код не добавляет any и приватных записей в смоках"
         env:
           EVENT_NAME: ${{ github.event_name }}
           BEFORE_SHA: ${{ github.event.before }}
@@ -774,7 +776,10 @@ jobs:
             echo "не нашёл базу диапазона — гейт пропущен, это увидит следующий пуш"
             exit 0
           fi
-          node scripts/no-new-any.mjs --base "$base" --head "$HEAD_SHA"
+          status=0
+          node scripts/no-new-any.mjs --base "$base" --head "$HEAD_SHA" || status=1
+          node scripts/no-new-private-writes.mjs --base "$base" --head "$HEAD_SHA" || status=1
+          exit "$status"
       - name: Unit tests
         run: npm test
       - name: Build

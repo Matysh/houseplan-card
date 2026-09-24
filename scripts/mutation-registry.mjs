@@ -4933,6 +4933,51 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'private-writes-ignores-update-expressions',
+    guard: 'node --test --test-name-pattern="во всех формах" test/no-new-private-writes.test.mjs',
+    because: '`c._cfgEpoch++` — одна из самых частых записей смоков в приватное состояние '
+      + '(202 на 22.09); гейт, не видящий ++/--, пропускает ровно тот обход, ради которого '
+      + 'заведён (#629 AC1)',
+    patches: [{
+      file: 'scripts/no-new-private-writes.mjs',
+      find: '    if ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) && UPDATE_OPERATORS.has(node.operator)) {',
+      replace: '    if (false) {',
+    }],
+  },
+  {
+    id: 'private-writes-credits-any-field',
+    guard: 'node --test --test-name-pattern="правка зачитывается только" test/no-new-private-writes.test.mjs',
+    because: 'зачёт правки без сверки поля превращает любую уборку старой записи в индульгенцию '
+      + 'на новую запись в другое поле — гейт перестаёт держать приращение (#629 AC2)',
+    patches: [{
+      file: 'scripts/no-new-private-writes.mjs',
+      find: 'const creditKey = (site) => `${site.kind}:${site.field}`;',
+      replace: 'const creditKey = (site) => site.kind;',
+    }],
+  },
+  {
+    id: 'private-writes-accepts-bare-marker',
+    guard: 'node --test --test-name-pattern="private-ok проходит только" test/no-new-private-writes.test.mjs',
+    because: 'голый `// private-ok` — обход гейта одной строкой; без проверки причины исключение '
+      + 'перестаёт что-либо значить, как и у any-ok (#342, #629 AC3)',
+    patches: [{
+      file: 'scripts/no-new-private-writes.mjs',
+      find: '      if (exempt && exempt.ok) continue;',
+      replace: '      if (exempt) continue;',
+    }],
+  },
+  {
+    id: 'private-writes-skips-covered-calls',
+    guard: 'node --test --test-name-pattern="вызов, покрытый фасадом" test/no-new-private-writes.test.mjs',
+    because: '265 вызовов `_setMode(` продолжали бы расти рядом с фасадом, который нажимает '
+      + 'настоящую вкладку режима; без G5 фасад необязателен (#629 AC4)',
+    patches: [{
+      file: 'scripts/no-new-private-writes.mjs',
+      find: '    if (ts.isCallExpression(node)) {',
+      replace: '    if (false) {',
+    }],
+  },
+  {
     id: 'invariant-hidden-counts-corner-touch',
     guard: 'node --test --test-name-pattern="касание углом" test/model-invariants.test.mjs',
     because: 'перегородка, продолжающая стену за угол, законна: общего с ребром у неё ровно '
@@ -10623,6 +10668,40 @@ const MUTANT_DEFINITIONS = [
       file: 'src/hp-dialog.ts',
       find: "        ?flexcontent=${this.flexContent}\n        .preventScrimClose=${!this.dismissOnScrim}\n        .ariaLabelledBy=${this._titleId}\n        @opened=${this._focusInitial}",
       replace: "        .preventScrimClose=${!this.dismissOnScrim}\n        .ariaLabelledBy=${this._titleId}\n        @opened=${this._focusInitial}",
+    }],
+  },
+  {
+    id: 'room-settings-click-does-not-open',
+    guard: 'node demo/smoke_test_facade.mjs',
+    because: 'смоки открывали диалог комнаты вызовом `_openRoomEdit` и оставались зелёными при '
+      + 'сломанной шестерёнке; фасад нажимает её по-настоящему и обязан это заметить (#629 AC6)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>',
+      replace: '      @click=${(e: Event) => { e.stopPropagation(); }}>',
+    }],
+  },
+  {
+    id: 'hp-dialog-escape-does-not-close',
+    guard: 'node demo/smoke_test_facade.mjs',
+    because: 'путь закрытия Escape не проверял ни один из 260 смоков — они закрывали диалог присваиванием null; '
+      + '`__hpTest.close` шлёт настоящий keydown и обязан увидеть, что диалог остался (#629 AC6)',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: "        this._closeOverlay(overlay, 'escape');\n        return;\n      }\n      this._requestClose();\n      return;",
+      replace: "        this._closeOverlay(overlay, 'escape');\n        return;\n      }\n      return;",
+    }],
+  },
+  {
+    id: 'config-updated-event-ignored',
+    guard: 'node demo/smoke_test_facade.mjs',
+    because: '`setServerConfig` доставляет конфиг событием houseplan_config_updated, как другой '
+      + 'клиент HA; карточка, пропускающая событие, должна краснить фасад, а не молча '
+      + 'показывать старый план (#629 AC6)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        if (observedRev !== this._cfgRev) void this._reloadConfigOnly(false, observedRev);',
+      replace: '        void observedRev;',
     }],
   },
   {

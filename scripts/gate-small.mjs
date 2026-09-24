@@ -63,6 +63,8 @@ export function parallelSteps(base) {
   return [
     { name: 'сборка + typecheck (npm run build)', cmd: npm, args: ['run', 'build'] },
     { name: 'новый код не добавляет any', cmd: process.execPath, args: ['scripts/no-new-any.mjs', '--base', base, '--head', 'HEAD'] },
+    // #629: смоки не добавляют записей в приватное состояние карточки.
+    { name: 'смоки не пишут в приватное состояние', cmd: process.execPath, args: ['scripts/no-new-private-writes.mjs', '--base', base, '--head', 'HEAD'], hint: 'window.__hpTest (docs/TESTING.md) или // private-ok: <причина>' },
     { name: 'смоки по диффу (smoke-select)', cmd: process.execPath, args: ['scripts/smoke-select.mjs', '--base', base, '--head', 'HEAD', '--json'], informational: true },
   ];
 }
@@ -106,7 +108,7 @@ export function summarize(results) {
 
 export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = false, jobs = 2, log = console.log } = {}) {
   const started = Date.now();
-  log(`gate:small — база диапазона ${base}; параллельно: сборка, no-new-any, smoke-select; после сборки: юниты и проверки артефакта${smokes ? `; затем bundle-sync и смоки по диффу (×${jobs})` : ''}`);
+  log(`gate:small — база диапазона ${base}; параллельно: сборка, no-new-any, no-new-private-writes, smoke-select; после сборки: юниты и проверки артефакта${smokes ? `; затем bundle-sync и смоки по диффу (×${jobs})` : ''}`);
   const parallel = await Promise.all(parallelSteps(base).map((step) => runStep(step, cwd)));
   const buildOk = parallel.find((r) => r.args.includes('build'))?.code === 0;
   const serial = [];

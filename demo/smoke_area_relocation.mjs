@@ -5,7 +5,21 @@ import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 1000, height: 850 }, 1);
 const res = await page.evaluate(async () => {
   const c = window.__card;
+  // #629: исходное состояние сервера доставляется так, как его доставил бы
+  // другой клиент, — событием через фасад; карточка сама перечитывает конфиг и
+  // перестраивает устройства. Диалог маркера открывается настоящим кликом.
+  const hp = window.__hpTest;
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  /** Слить `patch` в settings.marker_area_snapshot серверного конфига. */
+  const withSnapshot = (cfg, patch, extra = {}) => ({
+    ...cfg,
+    ...extra,
+    settings: {
+      ...cfg.settings,
+      ...(extra.settings || {}),
+      marker_area_snapshot: { ...(cfg.settings.marker_area_snapshot || {}), ...patch },
+    },
+  });
   const paint = async (card = c) => {
     card.requestUpdate();
     await card.updateComplete;
@@ -26,20 +40,10 @@ const res = await page.evaluate(async () => {
   c.hass = hass;
   await paint();
 
-  c._serverCfg = {
-    ...c._serverCfg,
-    settings: {
-      ...c._serverCfg.settings,
-      marker_area_snapshot: {
-        ...(c._serverCfg.settings.marker_area_snapshot || {}),
-        d_light1: { binding: 'device:d_light1', area: 'living_room' },
-      },
-      new_device_ids: [],
-    },
-  };
-  c._layout = { ...c._layout, d_light1: { s: 'f1', x: 0.22, y: 0.22 } };
-  c._regSignature = '';
-  c._maybeRebuildDevices();
+  await hp.setServerConfig((cfg) => withSnapshot(cfg, {
+    d_light1: { binding: 'device:d_light1', area: 'living_room' },
+  }, { settings: { new_device_ids: [] } }));
+  await hp.setLayout((layout) => ({ ...layout, d_light1: { s: 'f1', x: 0.22, y: 0.22 } }));
   await paint();
   const oldLeft = Number.parseFloat(
     c.renderRoot.querySelector('.dev[data-id="d_light1"]')?.style.left || '0',
@@ -67,48 +71,32 @@ const res = await page.evaluate(async () => {
   // A dialog opened before another Area transition may show the effective
   // room, but saving an unrelated field must not persist that stale display as
   // an explicit House Plan override.
-  c._serverCfg = {
-    ...c._serverCfg,
-    settings: {
-      ...c._serverCfg.settings,
-      marker_area_snapshot: {
-        ...c._serverCfg.settings.marker_area_snapshot,
-        d_lamp: { binding: 'device:d_lamp', area: 'living_room' },
-      },
-    },
-  };
-  c._layout = { ...c._layout, d_lamp: { s: 'f1', x: 0.42, y: 0.5 } };
-  c._regSignature = '';
-  c._maybeRebuildDevices();
-  c._setMode('devices');
-  c._openMarkerDialog(c._devices.find((device) => device.id === 'd_lamp'));
+  await hp.setServerConfig((cfg) => withSnapshot(cfg, {
+    d_lamp: { binding: 'device:d_lamp', area: 'living_room' },
+  }));
+  await hp.setLayout((layout) => ({ ...layout, d_lamp: { s: 'f1', x: 0.42, y: 0.5 } }));
+  await hp.setMode('devices');
+  const lampDialog = await hp.openMarkerDialog('d_lamp');
   await paint();
   window.__setRegistryArea('device', 'd_lamp', 'kitchen');
   await wait(450);
   const roomDraftRefreshed = c._markerDialog?.room === 'f1#kitchen'
     && c._markerDialog?.roomTouched === false;
-  c._markerDialog = { ...c._markerDialog, name: 'Floor lamp renamed' };
-  await c._saveMarker();
+  await hp.input(lampDialog.querySelector('#marker-name'), 'Floor lamp renamed');
+  lampDialog.querySelector('[data-hp="dialog-confirm"]').click();
+  for (let attempt = 0; attempt < 40 && lampDialog.isConnected; attempt += 1) await wait(50);
+  await paint();
   const savedLamp = c._serverCfg.markers.find((marker) => marker.id === 'd_lamp');
-  c._setMode('view');
+  await hp.setMode('view');
   await paint();
 
   // Delete is committed before provenance. A rejected config write restores
   // the old local snapshot and the next authoritative pass retries safely.
-  c._serverCfg = {
-    ...c._serverCfg,
-    settings: {
-      ...c._serverCfg.settings,
-      marker_area_snapshot: {
-        ...c._serverCfg.settings.marker_area_snapshot,
-        d_kettle: { binding: 'device:d_kettle', area: 'kitchen' },
-      },
-    },
-  };
+  await hp.setServerConfig((cfg) => withSnapshot(cfg, {
+    d_kettle: { binding: 'device:d_kettle', area: 'kitchen' },
+  }));
   const kettlePoint = { s: 'f1', x: 0.72, y: 0.15 };
-  c._layout = { ...c._layout, d_kettle: kettlePoint };
-  c._regSignature = '';
-  c._maybeRebuildDevices();
+  await hp.setLayout((layout) => ({ ...layout, d_kettle: kettlePoint }));
   rejectKettleRelocation = true;
   window.__setRegistryArea('device', 'd_kettle', 'living_room');
   await wait(500);
@@ -127,19 +115,10 @@ const res = await page.evaluate(async () => {
 
   // Cross-space registry movement uses the same production coordinator: the
   // old Garden point is deleted and the device joins the f1 autogrid.
-  c._serverCfg = {
-    ...c._serverCfg,
-    settings: {
-      ...c._serverCfg.settings,
-      marker_area_snapshot: {
-        ...c._serverCfg.settings.marker_area_snapshot,
-        d_gate: { binding: 'device:d_gate', area: 'garden' },
-      },
-    },
-  };
-  c._layout = { ...c._layout, d_gate: { s: 'garden', x: 0.73, y: 0.22 } };
-  c._regSignature = '';
-  c._maybeRebuildDevices();
+  await hp.setServerConfig((cfg) => withSnapshot(cfg, {
+    d_gate: { binding: 'device:d_gate', area: 'garden' },
+  }));
+  await hp.setLayout((layout) => ({ ...layout, d_gate: { s: 'garden', x: 0.73, y: 0.22 } }));
   window.__setRegistryArea('device', 'd_gate', 'living_room');
   await wait(450);
   await paint();
@@ -151,47 +130,31 @@ const res = await page.evaluate(async () => {
   // An explicitly persisted entity binding follows its own registry Area,
   // independently of a device marker.
   window.__setRegistryArea('entity', 'sun.sun', 'living_room');
-  c._serverCfg = {
-    ...c._serverCfg,
+  await hp.setServerConfig((cfg) => withSnapshot(cfg, {
+    entity_sun: { binding: 'entity:sun.sun', area: 'living_room' },
+  }, {
     markers: [
-      ...c._serverCfg.markers.filter((marker) => marker.id !== 'entity_sun'),
+      ...cfg.markers.filter((marker) => marker.id !== 'entity_sun'),
       { id: 'entity_sun', binding: 'entity:sun.sun' },
     ],
-    settings: {
-      ...c._serverCfg.settings,
-      marker_area_snapshot: {
-        ...c._serverCfg.settings.marker_area_snapshot,
-        entity_sun: { binding: 'entity:sun.sun', area: 'living_room' },
-      },
-    },
-  };
-  c._layout = { ...c._layout, entity_sun: { s: 'f1', x: 0.20, y: 0.30 } };
-  c._regSignature = '';
-  c._maybeRebuildDevices();
+  }));
+  await hp.setLayout((layout) => ({ ...layout, entity_sun: { s: 'f1', x: 0.20, y: 0.30 } }));
   window.__setRegistryArea('entity', 'sun.sun', 'kitchen');
   await wait(450);
   await paint();
   const entityDevice = c._devices.find((device) => device.id === 'entity_sun');
 
   // A user-owned room override remains authoritative when HA changes Area.
-  c._serverCfg = {
-    ...c._serverCfg,
+  await hp.setServerConfig((cfg) => withSnapshot(cfg, {
+    d_tv: { binding: 'device:d_tv', area: 'living_room' },
+  }, {
     markers: [
-      ...c._serverCfg.markers.filter((marker) => marker.id !== 'd_tv'),
+      ...cfg.markers.filter((marker) => marker.id !== 'd_tv'),
       { id: 'd_tv', binding: 'device:d_tv', space: 'f1', area: 'living_room' },
     ],
-    settings: {
-      ...c._serverCfg.settings,
-      marker_area_snapshot: {
-        ...c._serverCfg.settings.marker_area_snapshot,
-        d_tv: { binding: 'device:d_tv', area: 'living_room' },
-      },
-    },
-  };
+  }));
   const explicitPoint = { s: 'f1', x: 0.13, y: 0.50 };
-  c._layout = { ...c._layout, d_tv: explicitPoint };
-  c._regSignature = '';
-  c._maybeRebuildDevices();
+  await hp.setLayout((layout) => ({ ...layout, d_tv: explicitPoint }));
   const explicitDeletesBefore = calls.filter(
     (message) => message.type === 'houseplan/layout/delete' && message.device_id === 'd_tv',
   ).length;
@@ -207,22 +170,13 @@ const res = await page.evaluate(async () => {
   // Area may change, but #126 must not discard its saved point or flag it.
   window.__addRegistryEntity('light.area_group', 'living_room', 'on', 'group');
   await wait(150);
-  c._regSignature = '';
-  c._maybeRebuildDevices();
   await paint();
   const compositeId = 'lg_light.area_group';
   const compositePoint = { s: 'f1', x: 0.30, y: 0.40 };
-  c._layout = { ...c._layout, [compositeId]: compositePoint };
-  c._serverCfg = {
-    ...c._serverCfg,
-    settings: {
-      ...c._serverCfg.settings,
-      marker_area_snapshot: {
-        ...c._serverCfg.settings.marker_area_snapshot,
-        [compositeId]: { binding: 'entity:light.area_group', area: 'living_room' },
-      },
-    },
-  };
+  await hp.setLayout((layout) => ({ ...layout, [compositeId]: compositePoint }));
+  await hp.setServerConfig((cfg) => withSnapshot(cfg, {
+    [compositeId]: { binding: 'entity:light.area_group', area: 'living_room' },
+  }));
   const compositeDeletesBefore = calls.filter(
     (message) => message.type === 'houseplan/layout/delete' && message.device_id === compositeId,
   ).length;
@@ -333,18 +287,9 @@ const res = await page.evaluate(async () => {
   // explicit editor cleanup alone. A disappeared device with no saved marker
   // must lose its snapshot on the next full pass.
   const orphanId = 'device-that-disappeared';
-  c._serverCfg = {
-    ...c._serverCfg,
-    settings: {
-      ...c._serverCfg.settings,
-      marker_area_snapshot: {
-        ...c._serverCfg.settings.marker_area_snapshot,
-        [orphanId]: { binding: `device:${orphanId}`, area: 'living_room' },
-      },
-    },
-  };
-  c._regSignature = '';
-  c._maybeRebuildDevices();
+  await hp.setServerConfig((cfg) => withSnapshot(cfg, {
+    [orphanId]: { binding: `device:${orphanId}`, area: 'living_room' },
+  }));
   await wait(450);
   const authoritativeOrphanRemoved = !c._serverCfg.settings.marker_area_snapshot?.[orphanId];
 
@@ -404,10 +349,17 @@ const res = await page.evaluate(async () => {
     let rejected = false;
     let rev = 100;
     const base = window.__mkHass();
+    // The retrying probe gets a registry that can announce a change: that is
+    // the product's own reason to run the pass again after a failed write.
+    const registryListeners = new Set();
     const probeHass = {
       ...base,
       connection: {
-        subscribeEvents: async () => () => {},
+        subscribeEvents: async (callback, event) => {
+          if (!rejectFirstCleanup || event !== 'device_registry_updated') return () => {};
+          registryListeners.add(callback);
+          return () => registryListeners.delete(callback);
+        },
         subscribeMessage: async () => () => {},
       },
       devices: liveDevices,
@@ -453,8 +405,7 @@ const res = await page.evaluate(async () => {
     for (let attempt = 0; attempt < 20 && !card._loadedOnce; attempt += 1) await wait(100);
     await wait(550);
     if (rejectFirstCleanup) {
-      card._regSignature = '';
-      card._maybeRebuildDevices();
+      for (const callback of registryListeners) callback({ action: 'update', id: 'still-live' });
       await wait(450);
     }
     const result = {

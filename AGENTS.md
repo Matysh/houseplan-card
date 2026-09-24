@@ -408,7 +408,7 @@ npm run bundle:budget # initial View graph <= 256000 B gzip (#337)
 ```
 
 `npm run gate:small` runs the mandatory part of PROCESS §8 in one go (#479,
-#576): build with typecheck, `no-new-any` and `smoke-select` start in parallel;
+#576): build with typecheck, `no-new-any`, `no-new-private-writes` and `smoke-select` start in parallel;
 unit tests follow the completed build because their bundle-contract witnesses
 read the freshly produced `dist`, then the bundle-tree comparison and the
 bundle budget run. It prints the smokes the
@@ -430,7 +430,7 @@ push (#479).** `smoke`, `golden` and `performance_smoke` in Validate are gated
 on the `heavy` output: true for a head commit carrying a `Release:` trailer, for
 `workflow_dispatch full=true` (which `nightly.yml` issues on `dev` every night)
 and for pull requests. A plain push to `dev` runs preflight, frontend (types,
-units, build, bundle sync, no-new-any), the narrow TS/Python geometry parity
+units, build, bundle sync, no-new-any, no-new-private-writes), the narrow TS/Python geometry parity
 guard when its inputs changed, backend, hacs and hassfest. Screenshot
 freshness in `check-docs` is likewise a warning on a plain push and an error on
 the candidate; `publish-prerelease.yml` and `release.yml` refuse a candidate
@@ -444,6 +444,11 @@ environment, which changes one thing (#151): **before moving an issue to
 demo/smoke_<name>.mjs`. A red smoke that reaches the review costs a cycle; run
 locally it costs a minute. Precedent: on #89 a fixture error lived through a
 whole review round that a local run would have caught immediately.
+
+**A smoke enters through the public surface (#629)**: contract `data-hp` hooks,
+HA/fixture events and the harness facade `window.__hpTest`
+(`docs/TESTING.md`); private card fields are read-only in assertions, and a new
+write needs `// private-ok: <reason>` or the `no-new-private-writes` gate fails.
 
 **One handoff, one push (#510).** Run `node scripts/process-gate.mjs --issues`
 locally with `gh` available before pushing (without `gh` the hook cannot check the

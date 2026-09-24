@@ -49,7 +49,7 @@ class HaCard extends HTMLElement{
 customElements.define('ha-card',HaCard);
 </script>
 <script type="module">
-const CFG = {
+let CFG = {
   spaces: [
     { id:'f1', title:'Ground floor', plan_url:'/assets/f1.svg', plan_aspect:1.25,
       view_box:[0,0,1,1],
@@ -66,7 +66,7 @@ const CFG = {
   markers: [],
   settings: {}
 };
-const LAYOUT = {
+let LAYOUT = {
   d_light1:{s:'f1',x:0.22,y:0.22}, d_lamp:{s:'f1',x:0.42,y:0.5}, d_tv:{s:'f1',x:0.13,y:0.5},
   d_temp:{s:'f1',x:0.33,y:0.35}, d_kettle:{s:'f1',x:0.72,y:0.15}, d_leak:{s:'f1',x:0.88,y:0.34},
   d_bedlight:{s:'f1',x:0.75,y:0.6}, d_window:{s:'f1',x:0.9,y:0.85}, d_lock:{s:'f1',x:0.1,y:0.88},
@@ -108,8 +108,14 @@ const ENTITIES={
 };
 let REGISTRY_ACCESS='full';
 const REGISTRY_LISTENERS={device_registry_updated:new Set(),entity_registry_updated:new Set()};
+// #629: server events, delivered only when a smoke pushes a new revision
+// through __pushServerConfig/__pushServerLayout (test facade setServerConfig/setLayout).
+const SERVER_LISTENERS={houseplan_config_updated:new Set(),houseplan_layout_updated:new Set()};
+const SERVED={config:0,layout:0};
+let PUSHED_CFG_REV=0;
+window.__servedRevision=SERVED;
 const CONNECTION={subscribeEvents:async(cb,event)=>{
-  const listeners=REGISTRY_LISTENERS[event];
+  const listeners=REGISTRY_LISTENERS[event]||SERVER_LISTENERS[event];
   if(!listeners)return()=>{};
   listeners.add(cb);
   return()=>listeners.delete(cb);
@@ -168,9 +174,17 @@ function mkHass(){
       }
       if(m.type==='config_entries/get')return[{entry_id:'ce_demo',domain:'demo',title:'Synthetic Home'}];
       if(m.type==='manifest/list')return[{domain:'demo',name:'House Plan Demo'}];
-      if(m.type==='houseplan/config/get')return{config:CFG,rev:CFG_REV,can_write:true};
-      if(m.type==='houseplan/layout/get')return{layout:LAYOUT,rev:LAYOUT_REV};
-      if(m.type==='houseplan/config/set')return{ok:true,rev:++CFG_REV};
+      if(m.type==='houseplan/config/get'){SERVED.config=CFG_REV;return{config:CFG,rev:CFG_REV,can_write:true};}
+      if(m.type==='houseplan/layout/get'){SERVED.layout=LAYOUT_REV;return{layout:LAYOUT,rev:LAYOUT_REV};}
+      if(m.type==='houseplan/config/set'){
+        // #629: like the real server, a write based on a revision older than
+        // one pushed by another client is a conflict. Only pushes arm this, so
+        // smokes that never push see the fixture exactly as before.
+        if(PUSHED_CFG_REV&&typeof m.expected_rev==='number'&&m.expected_rev<PUSHED_CFG_REV){
+          const error=new Error('config changed on the server');error.code='conflict';throw error;
+        }
+        return{ok:true,rev:++CFG_REV};
+      }
       if(['houseplan/layout/set','houseplan/layout/update','houseplan/layout/delete'].includes(m.type))
         return{ok:true,rev:++LAYOUT_REV};
       if(m.type==='houseplan/plan/optimize')return{
@@ -216,6 +230,18 @@ window.__setRegistryArea=(kind,id,areaId)=>{
     const event=kind==='device'?'device_registry_updated':'entity_registry_updated';
     for(const cb of REGISTRY_LISTENERS[event])cb({action:'update',id});
   }
+};
+// #629: "the config changed on the server" — another client wrote it. The card
+// re-reads houseplan/config/get (or layout/get) on its own, as in production.
+window.__pushServerConfig=(cfg)=>{
+  CFG=cfg; CFG_REV+=1; PUSHED_CFG_REV=CFG_REV;
+  for(const cb of SERVER_LISTENERS.houseplan_config_updated)cb({event_type:'houseplan_config_updated',data:{rev:CFG_REV}});
+  return CFG_REV;
+};
+window.__pushServerLayout=(layout)=>{
+  LAYOUT=layout; LAYOUT_REV+=1;
+  for(const cb of SERVER_LISTENERS.houseplan_layout_updated)cb({event_type:'houseplan_layout_updated',data:{rev:LAYOUT_REV}});
+  return LAYOUT_REV;
 };
 window.__addRegistryEntity=(id,areaId,state='on',platform='demo')=>{
   ENTITIES[id]={entity_id:id,device_id:null,area_id:areaId,platform,disabled_by:null};

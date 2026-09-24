@@ -14,6 +14,10 @@ const { page, browser } = await launch({ width: 900, height: 820 }, 1);
 const out = await page.evaluate(async () => {
   const o = {};
   const c = window.__card;
+  // #629: режимы и инструменты — настоящими кнопками, конфиг и раскладка —
+  // событием сервера через фасад. Состояние жестов (_drag, _path, черновики
+  // декора) по-прежнему выставляется напрямую: операций для него нет.
+  const hp = window.__hpTest;
   const sr = () => c.shadowRoot || c.renderRoot;
   const NORM_W = 1000, GRID_N = 240;
   const PITCH = NORM_W / GRID_N;
@@ -31,9 +35,11 @@ const out = await page.evaluate(async () => {
       }));
     });
   };
-  c._serverCfg.model_version = 7;
-  makePhysical(c._serverCfg.spaces.find((space) => space.id === c._space));
-  c._modelCache = null; c._frame = null; c._cfgEpoch++;
+  const firstSpace = c._space;
+  await hp.setServerConfig((cfg) => {
+    cfg.model_version = 7;
+    makePhysical(cfg.spaces.find((space) => space.id === firstSpace));
+  });
   const onGridN = (v) => Math.abs(v * GRID_N - Math.round(v * GRID_N)) < 1e-9;
   const onGridR = (v) => Math.abs(v / PITCH - Math.round(v / PITCH)) < 1e-7;
 
@@ -60,7 +66,7 @@ const out = await page.evaluate(async () => {
   o.pitchIsTheCanvasFreeConstant = Math.abs(c._gridPitch - PITCH) < 1e-12;
 
   // ---- 1b) a DEVICE dropped with the mouse lands on a node --------------
-  c._setMode('devices'); await c.updateComplete;
+  await hp.setMode('devices');
   const dev = c._devices.find((d) => !d.virtual);
   const p0 = c._pos(dev);
   const mkDelta = (dxu, dyu, extra = {}) => {
@@ -90,7 +96,7 @@ const out = await page.evaluate(async () => {
   o.deviceLandsOnANode = onGridN(c._layout[dev.id].x) && onGridN(c._layout[dev.id].y);
 
   // ---- 1c) a ROOM LABEL too ---------------------------------------------
-  c._setMode('plan'); await c.updateComplete;
+  await hp.setMode('plan');
   const room = c._spaceModel(c._space).rooms.find((r) => r.name);
   const lp = c._labelPos(room, c._space);
   c._drag = { id: 'rl_' + room.id, sx: 400, sy: 400, ox: lp.x, oy: lp.y, moved: false };
@@ -104,8 +110,8 @@ const out = await page.evaluate(async () => {
   o.untouchedLabelIsOnANode = onGridR(op.x) && onGridR(op.y);
 
   // ---- 1d) DECOR: draft, text anchor, and a move ------------------------
-  c._setMode('decor'); await c.updateComplete;
-  c._decorTool = 'rect';
+  await hp.setMode('decor');
+  await hp.setTool('rect');
   // dispatched for real, so the handler sees a target (it looks for .dshape)
   sr().querySelector('.stage').dispatchEvent(at(300 + OFF, 300 + OFF, 'pointerdown', { pointerId: 21 }));
   o.decorDraftStartsOnANode = onGridR(c._decorDraft.a[0]) && onGridR(c._decorDraft.a[1]);
@@ -114,16 +120,18 @@ const out = await page.evaluate(async () => {
   const dsh = c._decorList[c._decorList.length - 1];
   o.decorShapeIsOnNodes = onGridN(dsh.x) && onGridN(dsh.y)
     && onGridN(dsh.x + dsh.w) && onGridN(dsh.y + dsh.h);
-  c._decorTool = 'text';
+  await hp.setTool('text');
   sr().querySelector('.stage').dispatchEvent(at(500 + OFF, 500 + OFF, 'pointerdown', { pointerId: 22 }));
   o.decorTextAnchorIsOnANode = onGridN(c._decorTextDialog.x) && onGridN(c._decorTextDialog.y);
   c._decorTextDialog = null;
   // a shape that is ALREADY off the grid is put on it by one drag: the mover
   // snaps the resulting anchor, not the delta (which used to preserve the drift)
-  const sp = c._curSpaceCfg;
-  sp.decor = [...c._decorList, { id: 'dcOff', kind: 'rect',
-    x: 0.3013, y: 0.4017, w: 0.1, h: 0.05, color: '#889', width: 2 }];
-  c.requestUpdate(); await c.updateComplete;
+  const decorSpace = c._space;
+  await hp.setServerConfig((cfg) => {
+    const space = cfg.spaces.find((item) => item.id === decorSpace);
+    space.decor = [...(space.decor || []), { id: 'dcOff', kind: 'rect',
+      x: 0.3013, y: 0.4017, w: 0.1, h: 0.05, color: '#889', width: 2 }];
+  });
   const off = c._decorList.find((x) => x.id === 'dcOff');
   c._decorMove = { id: 'dcOff', start: c._svgPoint(at(301.3, 401.7)),
     orig: JSON.parse(JSON.stringify(off)), pid: 9, moved: false };
@@ -132,10 +140,13 @@ const out = await page.evaluate(async () => {
   const off2 = c._decorList.find((x) => x.id === 'dcOff');
   o.oneDragPutsADriftedShapeOnTheGrid = onGridN(off2.x) && onGridN(off2.y);
   c._decorMove = null;
-  sp.decor = sp.decor.filter((x) => x.id !== 'dcOff' && x.id !== dsh.id);
+  await hp.setServerConfig((cfg) => {
+    const space = cfg.spaces.find((item) => item.id === decorSpace);
+    space.decor = (space.decor || []).filter((x) => x.id !== 'dcOff' && x.id !== dsh.id);
+  });
 
   // ---- 1e) an OPENING is WALL-bound: on its wall, whole steps along it ---
-  c._setMode('plan'); await c.updateComplete;
+  await hp.setMode('plan');
   c._activateOpeningPlacement('door');
   const spm = c._spaceModel(c._space);
   const wall = (() => {
@@ -174,7 +185,7 @@ const out = await page.evaluate(async () => {
   }
 
   // ---- 1f) a room VERTEX drawn by hand ----------------------------------
-  c._tool = 'draw'; c._path = [];
+  await hp.setTool('draw'); c._path = [];
   c._markupClick(at(220 + OFF, 220 + OFF, 'click'));
   o.roomVertexOnANode = c._path.length === 1 && onGridR(c._path[0][0]) && onGridR(c._path[0][1]);
   c._path = [[200, 200]];
@@ -184,10 +195,10 @@ const out = await page.evaluate(async () => {
   o.shiftLocksRoomWallTo45 = c._path.length === 2
     && (ldx < 1e-7 || ldy < 1e-7 || Math.abs(ldx - ldy) < 1e-7)
     && onGridR(locked[0]) && onGridR(locked[1]);
-  c._path = []; c._tool = 'draw';
+  c._path = []; await hp.setTool('draw');
 
   // ---- 2) «Оптимизировать планы» -----------------------------------------
-  c._setMode('view'); await c.updateComplete;
+  await hp.setMode('view');
   // The preceding real editor gestures schedule a physical config write.
   // Finish it before replacing the whole server snapshot with the next
   // synthetic fixture: production adoption does this at a revision boundary,
@@ -211,10 +222,9 @@ const out = await page.evaluate(async () => {
     decor: [{ id: 'd1', kind: 'line', x1: 0.1 + D, y1: 0.7, x2: 0.9, y2: 0.7 - D }],
   }], markers: [], settings: {} };
   const FIXLAY = { d_light1: { s: 'g1', x: 0.3 + D, y: 0.3 }, rl_r1: { s: 'g1', x: 0.25 + D, y: 0.25 } };
-  c._serverCfg = JSON.parse(JSON.stringify(FIX));
-  c._layout = JSON.parse(JSON.stringify(FIXLAY));
-  c._modelCache = null; c._frame = null; c._space = 'g1';
-  c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig(structuredClone(FIX));
+  await hp.setLayout(structuredClone(FIXLAY));
+  await hp.switchSpace('g1');
 
   c._editorRuntime.optimizePlans.open();
   await c.updateComplete;
@@ -268,10 +278,9 @@ const out = await page.evaluate(async () => {
       rooms: [{ id: 'mb', name: 'B', area: 'kitchen',
         poly: [[0.2 + 1 / GRID_N / 2, 0.2], [0.4, 0.2], [0.4, 0.4], [0.2, 0.4]] }] },
   ], markers: [], settings: {} };
-  c._serverCfg = JSON.parse(JSON.stringify(MULTI));
-  c._layout = {};
-  c._modelCache = null; c._frame = null; c._space = 'm1';
-  c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig(structuredClone(MULTI));
+  await hp.setLayout({});
+  await hp.switchSpace('m1');
   c._editorRuntime.optimizePlans.open(); await c.updateComplete;
   const md = c._alignDialog;
   o.alignPromiseUsesTheOwnScaleOfEachSpace = !!md && md.cm >= 50 && md.cm < 51;
@@ -288,10 +297,9 @@ const out = await page.evaluate(async () => {
     walls: [{ key: 'r1-top', a: [0.2, 0.2], b: [0.5, 0.2], cm: 15 }],
     openings: [{ id: 'oa', type: 'window', x: 0.35, y: 0.2, angle: 90, length: 0.1 }],
   }], markers: [], settings: {} };
-  c._serverCfg = JSON.parse(JSON.stringify(TURN));
-  c._layout = {};
-  c._modelCache = null; c._frame = null; c._space = 'a1';
-  c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig(structuredClone(TURN));
+  await hp.setLayout({});
+  await hp.switchSpace('a1');
   c._editorRuntime.optimizePlans.open(); await c.updateComplete;
   const ad = c._alignDialog;
   o.angleOnlyOpeningCounts = !!ad && ad.report.moved === 1 && ad.report.rotated === 1;

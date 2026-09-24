@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import { assertFreshDemoBundleUnlessAllowed } from './bundle-freshness.mjs';
 import { ensureHarnessEditorRuntime } from './editor-runtime-compat.mjs';
 import { installHarnessIsoRuntimeHelper } from './iso-runtime-compat.mjs';
+import { installHpTestOnPage } from './helpers/hp-test.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
@@ -17,6 +18,8 @@ const CT = { '.html': 'text/html', '.js': 'text/javascript', '.svg': 'image/svg+
 // build reported success. `check()` accumulates named failures, `finish()`
 // prints them and sets the exit code.
 const _failures = [];
+/** Имена всех проверок прогона — для `HP_SMOKE_CHECKS=1` (#629). */
+const _checkNames = new Set();
 let _pageErrors = 0;
 /**
  * Открытые страницы — для round-trip'а перед чтением счётчика (#404).
@@ -66,6 +69,7 @@ export function watchPage(page) {
 
 /** Assert one named fact. `expected` defaults to true. */
 export function check(name, actual, expected = true) {
+  _checkNames.add(String(name));
   const ok = JSON.stringify(actual) === JSON.stringify(expected);
   if (!ok) _failures.push(`${name}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
   return ok;
@@ -112,6 +116,11 @@ export async function finish(browser, out) {
   await roundTripLivePages();
   if (_pageErrors) _failures.push(`${_pageErrors} uncaught exception(s) inside the card`);
   await browser?.close?.();
+  // #629: доказательство «перевод без потери утверждений» — отсортированный
+  // список имён проверок; без переменной вывод прежний.
+  if (process.env.HP_SMOKE_CHECKS === '1') {
+    console.log('HP_SMOKE_CHECKS ' + JSON.stringify([..._checkNames].sort()));
+  }
   if (_failures.length) {
     console.error('\nFAILED (' + _failures.length + '):');
     for (const f of _failures) console.error('  - ' + f);
@@ -151,7 +160,10 @@ async function launchInternal(
   });
   await page.goto(`http://demo.local${entry}`, { waitUntil: 'domcontentloaded' });
   await installHarnessIsoRuntimeHelper(page);
-  if (!waitForCard) return { page, browser };
+  if (!waitForCard) {
+    await installHpTestOnPage(page);
+    return { page, browser };
+  }
   await page.waitForFunction(() => window.__card?._model?.length > 0, { timeout: 9000 });
   // Свежесть бандла проверяется здесь, а не в каждом смоке (#236). Смок читает
   // demo/srv/assets/houseplan-card.js; если туда не скопирован свежий dist,
@@ -178,6 +190,10 @@ async function launchInternal(
     const ready = await page.evaluate(ensureHarnessEditorRuntime);
     if (!ready) throw new Error('editor runtime did not preload for browser smoke');
   }
+  // #629: тестовый фасад window.__hpTest — публичный вход смока в сценарий.
+  // Ставится последним: бандл к этому моменту исполнен, и `preinstalled`
+  // честно отвечает, не определил ли его кто-то раньше харнесса.
+  await installHpTestOnPage(page);
   return { page, browser };
 }
 

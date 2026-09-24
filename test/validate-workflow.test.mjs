@@ -117,6 +117,10 @@ test('гейт «новый код не добавляет any» вызывае�
   );
   assert.match(frontend, /node scripts\/no-new-any\.mjs --base/,
     'гейт обязан вызываться, иначе долг типизации снова начнёт расти');
+  // #629: тот же шаг и та же база судят записи смоков в приватное состояние.
+  assert.match(frontend, /node scripts\/no-new-private-writes\.mjs --base "\$base" --head "\$HEAD_SHA"/,
+    'гейт приватных записей обязан вызываться с той же базой, что no-new-any');
+  assert.match(frontend, /exit "\$status"/, 'падение первого гейта не должно прятать второй');
   // Гейт diff-aware, поэтому без истории он бессмысленен: на глубине 1
   // merge-base не считается и диапазон выродится в «всё».
   assert.match(frontend, /fetch-depth: 0, filter: 'blob:none'/);

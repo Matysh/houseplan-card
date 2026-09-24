@@ -61,8 +61,8 @@ export const NOT_AN_INPUT = [
   ['demo/capture_*.mjs', 'ручные съёмки эталонов, запускаются человеком'],
   ['demo/verify_ha_dialog_discard_recovery.mjs', 'явная тяжёлая диагностика настоящего ha-dialog для #607; запускается человеком'],
   ['demo/verify_ha_form_shell_609.mjs', 'явная тяжёлая диагностика оболочки форм в настоящем ha-dialog для #609; запускается человеком'],
-  ['demo/helpers/ha-dialog-assets.mjs', 'пиновые HA assets только для явной диагностической съёмки #505; не запускают загрузку в Validate'],
-  ['demo/helpers/ha-dialog-fixture.mjs', 'изолированный настоящий ha-dialog только для явной визуальной приёмки #505, не обычный smoke'],
+  // demo/helpers/** больше не здесь (#629): их текст судит no-new-private-writes
+  // в job frontend, так что фикстуры ha-dialog #505 стали её входом.
   ['demo/screencast_visual_continuity.mjs', 'ручной скринкаст'],
   ['demo/gen_icons.mjs', 'генератор иконок демо-страницы, запускается вручную; результат в demo/srv/assets (класс D)'],
   ['demo/downgrade_open_passage.mjs', 'ручной инструмент миграции фикстур'],
@@ -291,7 +291,7 @@ const BUILD_INPUTS = ['src/**', 'package.json', 'package-lock.json', 'rollup.con
   'scripts/bundle-sync.mjs', 'scripts/bundle-tree.mjs'];
 /** Протокол браузерного харнеса: страница, сервер, гард исключений, compat-хелперы. */
 const BROWSER_PROTOCOL = ['demo/serve.mjs', 'demo/srv/demo.html', 'demo/bundle-freshness.mjs',
-  'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'demo/guard/**'];
+  'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'demo/guard/**', 'demo/helpers/hp-test.mjs'];
 const WORKFLOW = ['.github/workflows/validate.yml'];
 /** Протокол реюза: кто считает ключ, тот и вход (§5.1 protocol). */
 const REUSE_PROTOCOL = ['scripts/gate-reuse.mjs', 'scripts/check-inputs.mjs', 'scripts/ci-proof.mjs'];
@@ -320,9 +320,10 @@ export const CHECKS = {
   },
   frontend: {
     // npm run typecheck, npm test, npm run build, bundle:budget, lint:unused (#624)
-    entries: ['test/*.test.mjs', 'scripts/no-new-any.mjs', 'scripts/bundle-budget.mjs', 'scripts/fix-test-build.mjs',
-      'scripts/unused-locals-gate.mjs'],
-    roots: [...BUILD_INPUTS, 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', ...WORKFLOW],
+    entries: ['test/*.test.mjs', 'scripts/no-new-any.mjs', 'scripts/no-new-private-writes.mjs', 'scripts/bundle-budget.mjs',
+      'scripts/fix-test-build.mjs', 'scripts/unused-locals-gate.mjs'],
+    // demo/helpers/** — область no-new-private-writes (#629): гейт читает их текст.
+    roots: [...BUILD_INPUTS, 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', 'demo/helpers/**', ...WORKFLOW],
   },
   changed_mutants: {
     entries: ['scripts/mutation-*.mjs', 'scripts/*-guard.mjs', 'test/*.test.mjs', 'demo/smoke_*.mjs', 'tests_backend/**/*.py'],

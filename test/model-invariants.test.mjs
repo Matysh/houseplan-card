@@ -192,7 +192,9 @@ const demoStandModel = () => {
   // сменил форму, и проверять его надо заново.
   const html = readFileSync(resolve(repoRoot, 'demo/srv/demo.html'), 'utf8');
   const block = (name) => {
-    const declaration = html.indexOf(`const ${name} = `);
+    // `let` с #629: фикстура подменяет конфиг и раскладку, когда смок
+    // доставляет их событием сервера (__pushServerConfig/__pushServerLayout).
+    const declaration = html.search(new RegExp(`\\b(?:const|let) ${name} = `));
     assert.ok(declaration >= 0, `в demo.html не найден блок ${name}`);
     const from = html.indexOf('{', declaration);
     let depth = 0, index = from;

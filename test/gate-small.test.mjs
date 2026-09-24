@@ -13,6 +13,8 @@ test('gate:small гоняет обязательную часть PROCESS §8 и
     'юниты не должны гоняться одновременно со сборкой, которая пересоздаёт dist');
   assert.ok(names.some((n) => n.includes('run build')));
   assert.ok(names.some((n) => n.includes('scripts/no-new-any.mjs --base origin/dev --head HEAD')));
+  assert.ok(names.some((n) => n.includes('scripts/no-new-private-writes.mjs --base origin/dev --head HEAD')),
+    '#629: гейт приватных записей смоков обязан идти в локальном наборе');
   assert.ok(names.some((n) => n.includes('scripts/smoke-select.mjs --base origin/dev --head HEAD')));
   const serial = postBuildSteps().map((s) => s.args.join(' '));
   assert.equal(serial[0], 'test', 'юниты первыми читают уже готовый свежий dist');

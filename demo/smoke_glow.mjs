@@ -3,12 +3,15 @@ const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
+  // #629: план меняется так, как его меняет другой клиент HA, — событием
+  // сервера через фасад, а не присваиванием приватного состояния карточки.
+  const hp = window.__hpTest;
   const sr = () => c.shadowRoot || c.renderRoot;
   const spId = c._space;
+  const inSpace = (cfg, patch) => ({ ...cfg, spaces: cfg.spaces.map((s) => s.id !== spId ? s : patch(s)) });
   // включить glow-режим
-  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
-    ...s, settings: { ...(s.settings || {}), fill_mode: 'glow' } })) };
-  c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig((cfg) => inSpace(cfg, (s) => ({
+    ...s, settings: { ...(s.settings || {}), fill_mode: 'glow' } })));
   await new Promise((r) => setTimeout(r, 250));
   // 1) legacy glow переносится в отдельный base-overlay, не в data-fill комнат
   const modelRooms = c._spaceModel().rooms.length;
@@ -60,13 +63,11 @@ const res = await page.evaluate(async () => {
     }
     return best;
   })();
-  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
-    ...s, openings: [{ id: 'gd', type: 'door', x: doorPt[0] / 1000, y: doorPt[1] / H, angle: 90, length: 0.09 }] })) };
-  c._cfgEpoch++; c._glowClipCache.clear();
-  c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig((cfg) => inSpace(cfg, (s) => ({
+    ...s, openings: [{ id: 'gd', type: 'door', x: doorPt[0] / 1000, y: doorPt[1] / H, angle: 90, length: 0.09 }] })));
   // источник детерминированно ставим в центр r1 (двигаем реальную включённую лампу)
   const c1 = c._roomCenter(r1);
-  c._layout = { ...c._layout, [litLight.id]: { s: spId, x: c1[0] / 1000, y: c1[1] / 1000 } };
+  await hp.setLayout((layout) => ({ ...layout, [litLight.id]: { s: spId, x: c1[0] / 1000, y: c1[1] / 1000 } }));
   // Give the shadow assertion a real physical body. The original fixture has
   // no walls/partitions/columns, so no shadow mask can legitimately exist.
   const shadowCenter = [
@@ -74,10 +75,8 @@ const res = await page.evaluate(async () => {
     c1[1] + (doorPt[1] - c1[1]) * 0.35,
   ];
   // радиус 6 м, чтобы дверь заведомо была в зоне досягаемости
-  c._serverCfg = {
-    ...c._serverCfg,
-    settings: { ...(c._serverCfg.settings || {}), glow_radius_cm: 600 },
-    spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
+  await hp.setServerConfig((cfg) => ({
+    ...inSpace(cfg, (s) => ({
       ...s,
       wall_columns: [
         ...(s.wall_columns || []).filter((column) => column.id !== 'glow-shadow-column'),
@@ -87,9 +86,8 @@ const res = await page.evaluate(async () => {
         },
       ],
     })),
-  };
-  c._cfgEpoch++; c._glowClipCache.clear();
-  c.requestUpdate(); await c.updateComplete;
+    settings: { ...(cfg.settings || {}), glow_radius_cm: 600 },
+  }));
   // One source, one shape: the floor this lamp can see. A doorway, the room
   // behind it and the shadow of a column are the same region, so they can never
   // disagree — which is what every earlier bug in this area was made of.
@@ -120,10 +118,8 @@ const res = await page.evaluate(async () => {
   // Дверь наружу: свет через неё не выходит — есть проём, но за ним нет пола.
   const minX = Math.min(...poly1.map((p) => p[0]));
   const yMid = (Math.min(...poly1.map((p) => p[1])) + Math.max(...poly1.map((p) => p[1]))) / 2;
-  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
-    ...s, openings: [{ id: 'gd2', type: 'door', x: minX / 1000, y: yMid / 1000, angle: 90, length: 0.09 }] })) };
-  c._cfgEpoch++; c._glowClipCache.clear();
-  c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig((cfg) => inSpace(cfg, (s) => ({
+    ...s, openings: [{ id: 'gd2', type: 'door', x: minX / 1000, y: yMid / 1000, angle: 90, length: 0.09 }] })));
   const roomsBox = (() => {
     const xs = [], ys = [];
     for (const room of c._spaceModel().rooms) {
@@ -147,10 +143,7 @@ const res = await page.evaluate(async () => {
   const litPath = () => [...sr().querySelectorAll('defs clipPath[id^="hp-glowclip"] path.glow-lit')]
     .map((p) => p.getAttribute('d')).join('|');
   const withEntrance = litPath();
-  c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
-    ...s, openings: [] })) };
-  c._cfgEpoch++; c._glowClipCache.clear();
-  c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig((cfg) => inSpace(cfg, (s) => ({ ...s, openings: [] })));
   out.entranceChangesNothing = withEntrance.length > 0 && litPath() === withEntrance;
   // 6б) профиль градиента: монотонное затухание по всему радиусу. Плато до
   // 70% превращало любую обрезанную форму в плашку сплошного цвета с каймой —
@@ -184,54 +177,42 @@ const res = await page.evaluate(async () => {
     ? 'virtual'
     : litLight.bindingKind + ':' + litLight.bindingRef;
   const autoSpotCount = sr().querySelectorAll('.glowlayer circle').length;
-  c._serverCfg = { ...c._serverCfg, markers: [
-    ...(c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId),
-    { id: litMarkerId, binding: litBinding, is_light: false },
-  ] };
-  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  const withoutMarker = (cfg, id) => ({ ...cfg, markers: (cfg.markers || []).filter((m) => m.id !== id) });
+  const withMarker = (cfg, marker) => ({ ...cfg, markers: [...withoutMarker(cfg, marker.id).markers, marker] });
+  await hp.setServerConfig((cfg) => withMarker(cfg, { id: litMarkerId, binding: litBinding, is_light: false }));
   out.roleNeverHidesOwnPool = sr().querySelectorAll('.glowlayer circle').length === autoSpotCount - 1;
-  c._serverCfg = { ...c._serverCfg, markers: (c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId) };
-  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig((cfg) => withoutMarker(cfg, litMarkerId));
   out.roleAutoRestoresOwnPool = sr().querySelectorAll('.glowlayer circle').length === autoSpotCount;
   // 7а) персональный радиус источника перекрывает глобальный
-  c._serverCfg = { ...c._serverCfg, markers: [
-    ...(c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId),
-    {
-      id: litMarkerId,
-      binding: litBinding,
-      glow_radius_cm: 150,
-      glow_color: { c: '#123456', bri: 0.25 },
-    },
-  ] };
-  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig((cfg) => withMarker(cfg, {
+    id: litMarkerId,
+    binding: litBinding,
+    glow_radius_cm: 150,
+    glow_color: { c: '#123456', bri: 0.25 },
+  }));
   const rOwn = Number(sr().querySelector('.glowlayer circle')?.getAttribute('r'));
   out.perSourceRadius = Math.abs(rOwn - c._cmToUnits(150)) < 0.5;
   const ownStop = sr().querySelector('defs radialGradient stop');
   out.perSourceAppearance = ownStop?.getAttribute('stop-color') === '#123456'
     && Math.abs(Number(ownStop.getAttribute('stop-opacity')) - 0.428) < 0.002
     && !sr().querySelector('.glow-pools-frame')?.hasAttribute('opacity');
-  c._serverCfg = { ...c._serverCfg, markers: (c._serverCfg.markers || []).filter((m) => m.id !== litMarkerId) };
-  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig((cfg) => withoutMarker(cfg, litMarkerId));
   // 6в) флаг «источник света»: умный выключатель с обычными светильниками
   const swDev = c._devices.find((d) => d.space === spId && d.entities.some((e) => e.startsWith('switch.')));
   if (swDev) {
     const swEid = swDev.entities.find((e) => e.startsWith('switch.'));
     c.hass = { ...c.hass, states: { ...c.hass.states, [swEid]: { ...c.hass.states[swEid], state: 'on' } } };
     const spotsBefore = sr().querySelectorAll('.glowlayer circle').length;
-    c._serverCfg = { ...c._serverCfg, markers: [
-      ...(c._serverCfg.markers || []).filter((m) => m.id !== swDev.id),
-      { id: swDev.id, binding: swDev.bindingKind + ':' + swDev.bindingRef, is_light: true },
-    ] };
-    c._regSignature = ''; c._maybeRebuildDevices(); c._saveConfig(); c.requestUpdate(); await c.updateComplete;
+    await hp.setServerConfig((cfg) => withMarker(cfg, {
+      id: swDev.id, binding: swDev.bindingKind + ':' + swDev.bindingRef, is_light: true,
+    }));
     out.switchGlows = sr().querySelectorAll('.glowlayer circle').length === spotsBefore + 1;
-    c._serverCfg = { ...c._serverCfg, markers: (c._serverCfg.markers || []).filter((m) => m.id !== swDev.id) };
-    c._regSignature = ''; c._maybeRebuildDevices(); c._saveConfig(); c.requestUpdate(); await c.updateComplete;
+    await hp.setServerConfig((cfg) => withoutMarker(cfg, swDev.id));
     out.switchGlowsOffByDefault = sr().querySelectorAll('.glowlayer circle').length === spotsBefore;
   } else { out.switchGlows = 'no-switch'; out.switchGlowsOffByDefault = 'no-switch'; }
   // 7) радиус из настроек: 600 см против 300 см — вдвое больше
   const r600 = Number(sr().querySelector('.glowlayer circle')?.getAttribute('r'));
-  c._serverCfg = { ...c._serverCfg, settings: { ...(c._serverCfg.settings || {}), glow_radius_cm: 300 } };
-  c.requestUpdate(); await c.updateComplete;
+  await hp.setServerConfig((cfg) => ({ ...cfg, settings: { ...(cfg.settings || {}), glow_radius_cm: 300 } }));
   const r300 = Number(sr().querySelector('.glowlayer circle')?.getAttribute('r'));
   out.radiusReacts = Math.abs(r600 / r300 - 2) < 0.01;
   // Hover must not promote a filtered SVG sibling and flash the screen-blended
@@ -326,11 +307,11 @@ const rasterFixture = await page.evaluate(async () => {
       ))),
     }))
     .sort((left, right) => right.clearance - left.clearance)[0]?.point;
-  c._serverCfg = {
-    ...c._serverCfg,
-    settings: { ...(c._serverCfg.settings || {}), glow_radius_cm: 600 },
-    markers: (c._serverCfg.markers || []).filter((marker) => marker.id !== source.id),
-    spaces: c._serverCfg.spaces.map((space) => space.id !== spaceId ? space : ({
+  await window.__hpTest.setServerConfig((cfg) => ({
+    ...cfg,
+    settings: { ...(cfg.settings || {}), glow_radius_cm: 600 },
+    markers: (cfg.markers || []).filter((marker) => marker.id !== source.id),
+    spaces: cfg.spaces.map((space) => space.id !== spaceId ? space : ({
       ...space,
       settings: {
         ...(space.settings || {}), fill_mode: 'custom',
@@ -344,8 +325,8 @@ const rasterFixture = await page.evaluate(async () => {
       }],
       partitions: [],
     })),
-  };
-  c._layout = { ...c._layout, [source.id]: { s: spaceId, x: 0.295, y: 0.36 } };
+  }));
+  await window.__hpTest.setLayout((layout) => ({ ...layout, [source.id]: { s: spaceId, x: 0.295, y: 0.36 } }));
   const states = { ...c.hass.states };
   for (const [eid, state] of Object.entries(states)) {
     if (eid.startsWith('light.')) states[eid] = { ...state, state: 'off' };
@@ -363,11 +344,6 @@ const rasterFixture = await page.evaluate(async () => {
     context: { id: 'glow-dynamic-door', parent_id: null, user_id: null },
   };
   c.hass = { ...c.hass, states };
-  c._cfgEpoch++;
-  c._glowClipCache.clear();
-  c._regSignature = '';
-  c._maybeRebuildDevices();
-  c.requestUpdate();
   await c.updateComplete;
   await new Promise((resolve) => setTimeout(resolve, 600));
 
@@ -680,16 +656,14 @@ if (rasterFixture.ready) {
     if (!wallSource) return false;
     const c = window.__card;
     const state = c.hass.states[sourceEid];
-    c._layout = {
-      ...c._layout,
+    await window.__hpTest.setLayout((layout) => ({
+      ...layout,
       [sourceId]: { s: c._space, x: wallSource[0], y: wallSource[1] },
-    };
+    }));
     c.hass = {
       ...c.hass,
       states: { ...c.hass.states, [sourceEid]: { ...state, state: 'on' } },
     };
-    c._glowClipCache.clear();
-    c.requestUpdate();
     await c.updateComplete;
     // The continuity contract may keep the last complete device frame briefly
     // while the moved source and its HA snapshot are staged atomically. Wait

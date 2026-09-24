@@ -35,6 +35,13 @@
 5. **Тавтологический ассерт — читающий то же свойство, которое код только что
    выставил, — не пишется вовсе.** Он может упасть только при удалении строки,
    но не при её неработоспособности.
+6. **Смок входит в сценарий через публичную поверхность** (#629): DOM с
+   контрактными хуками (`docs/data-hp-contract.json`), события HA и фикстуры,
+   тестовый фасад `window.__hpTest`. Приватное поле карточки допускается только
+   для **чтения** в ассертах. Смок, открывший диалог присваиванием
+   `c._roomDialog = …`, зелёный и при сломанной кнопке, — это тот же «ничего не
+   проверено», что в правилах 1–5. Новые записи держит гейт
+   `no-new-private-writes`, остальное — ревью (раздел ниже).
 
 Проверка: `node scripts/mutation-gate.mjs --check` — якоря патчей живы;
 полный прогон — workflow `mutation-gate.yml` (шесть чересполосных шардов
@@ -172,6 +179,79 @@ const raw = (event as any).detail; // any-ok: форма события HA не 
 В CI гейт вызывается в job `frontend`; её checkout получил полную историю без
 блобов, потому что diff-aware проверке нужен диапазон, а содержимое старых
 ревизий — нет.
+
+## Тестовый фасад и приватное состояние (#629)
+
+На 22.09 смоки писали в приватное состояние карточки больше двух тысяч раз и
+поэтому не видели обработчиков ввода и путей закрытия: шестерёнку, поле имени,
+Escape и крестик не нажимал никто. Фасад харнесса `window.__hpTest`
+(`demo/helpers/hp-test.mjs`) делает то же, что человек или другой клиент HA.
+Он ставится `launch()`, `launchColdView()` и `launchPanelCold()`; смок,
+перезагрузивший страницу, зовёт `installHpTestOnPage(page)` заново. Кода фасада в
+бандле нет — `window.__hpTest.preinstalled` обязан быть `false`.
+
+| Операция | Что нажимает или шлёт | Готово, когда |
+|---|---|---|
+| `setMode(m)` | `[data-hp="mode-tab"][data-mode=m]`; для `view` — `[data-hp="editor-close"]` | `ha-card[data-hp-mode=m]` |
+| `setTool(t)` | `[data-hp="toolbar"] [data-hp="tool"][data-tool=t]` | кнопка нажата, `updateComplete` |
+| `switchSpace(id)` | `[data-hp="space-tab"][data-id=id]` | вкладка `aria-current="page"` |
+| `openRoomEdit(roomId)` | `[data-hp="room-settings"][data-room=roomId]` (режим plan) | открыт `[data-kind="room"]`, возвращается он |
+| `openMarkerDialog(id?)` | без id — `add-device`; с id — `[data-hp="device"][data-id]` в режиме devices | открыт `[data-kind="marker"]` |
+| `openSpaceDialog('create' \| 'edit', id?)` | `space-add` / `create-space`; `space-settings[data-id]` | открыт `[data-kind="space"]` |
+| `setServerConfig(next \| fn)` | фикстура `__pushServerConfig`: событие `houseplan_config_updated`, карточка сама читает `houseplan/config/get` | карточка приняла ревизию (тайм-аут 5 с) |
+| `setLayout(next \| fn)` | то же через `houseplan_layout_updated` (у карточки дебаунс 200 мс) | ревизия раскладки принята |
+| `input(el, text, {clear})` | `keydown` → значение → `InputEvent(insertText)` → `keyup` на символ, в конце `change` | `updateComplete` |
+| `close(dialog?, {via})` | `escape` — keydown на активном элементе; `x` — крестик окна; `cancel` — `[data-hp="dialog-cancel"]` содержимого | диалог отсоединён или открыт `[data-kind="confirm"]`; `{closed, confirm}` |
+
+`settled()` — `updateComplete` и два кадра, общий шаг ожидания.
+
+Правила фасада:
+
+- элемент ищется **только** по таблице `SELECTORS`, и каждый её селектор объявлен
+  в JSON-контракте с аудиторией `test` (`test/hp-test-facade.test.mjs`). Если
+  элемента нет — именованная ошибка с селектором и режимом, без отката на
+  приватный метод;
+- фасад ничего не пишет в карточку и читает только `_cfgRev`, `_layoutRev`,
+  `_serverCfg`, `_layout` — то, что читает и сам продукт;
+- `setServerConfig`/`setLayout` означают «план изменили на сервере», а не
+  «несохранённая правка»: функциональный аргумент получает `structuredClone`
+  текущего конфига карточки. Правку в редакторе смок делает через UI.
+  Фикстура, как настоящий сервер, отвечает `conflict` на запись с
+  `expected_rev` старше доставленной ревизии — только после первой доставки,
+  чтобы смоки без фасада видели прежнюю фикстуру;
+- крестик `ha-dialog` HA живёт в его приватном shadow root: `via: 'x'` там —
+  ошибка, Escape и cancel работают.
+
+Гейт и счётчик:
+
+```bash
+node scripts/no-new-private-writes.mjs                              # origin/dev...HEAD
+node scripts/no-new-private-writes.mjs --base origin/dev --head HEAD
+node scripts/no-new-private-writes.mjs --diff patch.diff            # или `-`
+node scripts/no-new-private-writes.mjs --count                      # остаток на HEAD, не гейт
+```
+
+Судятся добавленные строки `demo/smoke_*.mjs` и `demo/helpers/**`. Записью
+считаются присваивание любым оператором, `++`/`--` и `delete`, если в цепочке
+левой части есть сегмент `_x`: `c._serverCfg.model_version = 7` — запись в
+`_serverCfg`, а `window.__card = …`, `o.ok = …` и цепочки от `this` — нет. Вызовы
+`._setMode(`, `._openRoomEdit(`, `._openMarkerDialog(`, `._openSpaceDialog(` —
+тоже нарушение, с подсказкой операции фасада. Правка строки зачитывается
+удалённой записью в то же поле того же файла; перенос непрерывного куска — как
+у `no-new-any`. Исключение — на той же строке:
+
+```js
+c._drag = { id, sx, sy }; // private-ok: #NNN состояние жеста, операции фасада для него нет
+```
+
+с теми же требованиями к причине, что у `any-ok`. Мутации через вызовы
+(`c._serverCfg.spaces.push(…)`) и через локальный псевдоним гейт не видит — их
+ловит ревью по правилу №6 выше. Гейт идёт в `gate:small` и в шаге job
+`frontend` рядом с `no-new-any`, с той же базой.
+
+`HP_SMOKE_CHECKS=1 node demo/smoke_<имя>.mjs` печатает в `finish()`
+отсортированный список имён проверок — так перевод смока доказывается «без
+потери утверждений»: список до и после сравнивается построчно.
 
 ## Локальный набор перед пушем (#343)
 
