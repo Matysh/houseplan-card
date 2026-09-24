@@ -19,6 +19,7 @@
 | #635 | [CODE-REVIEW-635-r3.md](CODE-REVIEW-635-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | firstParagraph: ветка нет\b в фильтре мёртвая из-за ASCII-only \b в JS-регэкспах, расхо… | `scripts/reviews-index.mjs` |
 | #634 | [CODE-REVIEW-634-r1.md](CODE-REVIEW-634-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #633 | [CODE-REVIEW-633-r1.md](CODE-REVIEW-633-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #632 | [CODE-REVIEW-632-r1.md](CODE-REVIEW-632-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | trivial-трек не входит в признаки продуктового потока | `scripts/task-packet.mjs` `task-packet.mjs` |
 | #630 | [CODE-REVIEW-630-r1.md](CODE-REVIEW-630-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #629 | [SPEC-REVIEW-629-r1.md](SPEC-REVIEW-629-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #627 | [SPEC-REVIEW-627-r1.md](SPEC-REVIEW-627-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | избыточное (не противоречивое) условие в AC2; влияние на touch не названо явным пунктом | `docs/TOUCH-SUPPORT.md` |
