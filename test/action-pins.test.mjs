@@ -8,7 +8,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 
 import {
-  auditRepository, auditWorkflowSource, isLocal, isPinned, hasVersionNote, listWorkflows,
+  auditRepository, auditWorkflowSource, isLocal, isOwnDevReusable, isPinned, hasVersionNote, listWorkflows,
 } from '../scripts/action-pins.mjs';
 
 test('#556: в репозитории не осталось незакреплённых Actions', () => {
@@ -64,4 +64,33 @@ test('#556: preflight Validate считает пины частью вердик
   assert.match(preflight, /ACTION_PINS: \$\{\{ steps\.action_pins\.outcome \}\}/);
   assert.match(preflight, /^\s+check "пины сторонних Actions" "\$ACTION_PINS"$/m,
     'исход попадает в вердикт, а не теряется в continue-on-error');
+});
+
+// #623: тонкие файлы в main вызывают тело из dev этого же репозитория. Исключение
+// обязано быть узким: другой ref, другой репозиторий или файл вне `_*.yml`
+// остаются находкой, иначе «@dev» стал бы дверью для любой перемещаемой ссылки.
+test('#623: тело этого репозитория по ссылке @dev пина не требует, но требует причины', () => {
+  const own = 'Matysh/houseplan-card/.github/workflows/_process.yml@dev';
+  assert.equal(isOwnDevReusable(own), true);
+  assert.deepEqual(auditWorkflowSource('x.yml', `    uses: ${own} # #623: тело из dev\n`), []);
+  const bare = auditWorkflowSource('x.yml', `    uses: ${own}\n`);
+  assert.equal(bare.length, 1);
+  assert.match(bare[0], /без комментария с причиной/);
+});
+
+test('#623: исключение @dev не распространяется на другие ref, репозитории и пути', () => {
+  for (const spec of [
+    'Matysh/houseplan-card/.github/workflows/_process.yml@main',
+    'Matysh/houseplan-card/.github/workflows/_process.yml@issue/623-x',
+    'Matysh/houseplan-card/.github/workflows/process.yml@dev',
+    'Matysh/houseplan-card/scripts/_x.yml@dev',
+    'Matysh/houseplan-card-fork/.github/workflows/_process.yml@dev',
+    'Other/houseplan-card/.github/workflows/_process.yml@dev',
+    'actions/checkout@dev',
+  ]) {
+    assert.equal(isOwnDevReusable(spec), false, spec);
+    const found = auditWorkflowSource('x.yml', `    uses: ${spec} # comment\n`);
+    assert.equal(found.length, 1, spec);
+    assert.match(found[0], /не закреплён полным SHA/, spec);
+  }
 });

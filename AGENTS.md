@@ -466,6 +466,18 @@ cancelled by the next push), and by the beta every issue has already been
 mutated twice — on review and on the rebased merge candidate; the night runs
 the full registry (`mutation-gate.yml`), not a diff subset.
 
+**Workflows run from the default branch are thin callers (#623).** For
+`issues`, `schedule` and `workflow_run` GitHub executes the file from `main`.
+The six such files (`process.yml`, `process-resume.yml`,
+`process-reconcile.yml`, `mutation-gate.yml`, `nightly.yml`,
+`process-metrics.yml`) carry only triggers, run-name, permissions and
+concurrency and call their body `_<name>.yml` at `@dev` with
+`secrets: inherit`. A pipeline change is one commit to `dev` — edit the
+`_<name>.yml` body; no mirror into `main`, no merge-back before promotion.
+Only a change of triggers, dispatch inputs or the permission ceiling touches the
+thin file, and then it is mirrored into `main` (preflight `workflow_sync`
+compares exactly these six; `PROCESS.md` §10.4).
+
 The full smoke set, `golden` and `performance_smoke` still belong to the
 pre-beta run — which is then mandatory and complete. WSL runs of the full HA
 harness (`~/houseplan-card`, venv) are advisory; **the canon does not move**:

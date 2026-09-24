@@ -406,8 +406,9 @@ test('смоки, golden и performance_smoke условны по heavy (#479)',
 });
 
 test('ночной прогон — dispatch Validate на dev с full=true (#479)', () => {
-  const text = read('nightly.yml');
-  assert.match(text, /schedule:\n\s+- cron:/);
+  const text = read('_nightly.yml');
+  // #623: расписание — у тонкого вызывающего `nightly.yml`, тело — в `_nightly.yml`.
+  assert.match(read('nightly.yml'), /schedule:\n\s+- cron:/);
   assert.match(text, /gh workflow run validate\.yml --repo "\$REPO" --ref dev -f full=true/);
   assert.match(text, /actions: write/);
 });

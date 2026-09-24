@@ -129,7 +129,7 @@ test('#556: разбор строки sha256sum терпит и пробел, и
 // Проверка обязана стоять на пути привилегированной стадии, а не просто
 // существовать в репозитории.
 test('#556: integrate пропускает artifact только через гейт', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const integrate = workflow.slice(workflow.indexOf('\n  integrate:\n'));
   const step = integrate.slice(
     integrate.indexOf('      - name: Проверить полноту и происхождение результата'),

@@ -129,9 +129,12 @@ test('#637 buildReport: нулевая медиана не смешиваетс�
 });
 
 test('#637 workflow: еженедельный запуск читает только, публикует summary и artifact', () => {
-  const wf = readFileSync(new URL('../.github/workflows/process-metrics.yml', import.meta.url), 'utf8');
-  assert.match(wf, /schedule:\n(?:\s+#[^\n]*\n)*\s+- cron: '/);
-  assert.match(wf, /workflow_dispatch:/);
+  const wf = readFileSync(new URL('../.github/workflows/_process-metrics.yml', import.meta.url), 'utf8');
+  // #623: расписание — у тонкого вызывающего файла, тело — в `_process-metrics.yml`.
+  const caller = readFileSync(new URL('../.github/workflows/process-metrics.yml', import.meta.url), 'utf8');
+  assert.match(caller, /schedule:\n(?:\s+#[^\n]*\n)*\s+- cron: '/);
+  assert.match(caller, /workflow_dispatch:/);
+  assert.ok(!/issues: write/.test(caller), 'потолок прав вызывающего тоже без записи в issue');
   assert.match(wf, /permissions:\n\s+contents: read\n\s+actions: read\n\s+issues: read/);
   assert.match(wf, /node scripts\/process-metrics\.mjs[\s\S]*--output=artifacts\/process-metrics\/report\.md/);
   assert.match(wf, /GITHUB_STEP_SUMMARY/);

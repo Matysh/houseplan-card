@@ -17,7 +17,7 @@ const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
 // Дешёвая половина гейта, идёт с обычными юнитами на каждом прогоне. Полный
 // прогон с пересборкой бандла на мутанта — ночное расписание (#513), он в
-// .github/workflows/mutation-gate.yml.
+// .github/workflows/_mutation-gate.yml.
 //
 // Реестр, отставший от кода, хуже отсутствующего: он выглядит защитой. Поэтому
 // дрейф якорей ловится здесь, а не при редком полном прогоне.
@@ -281,6 +281,10 @@ test('#458 у каждого модуля горячего пути отрисо
 // всё позволяла ручному запуску молча отменить расписание.
 import { readFileSync as readWorkflowFile } from 'node:fs';
 const mutationWorkflow = readWorkflowFile(
+  new URL('../.github/workflows/_mutation-gate.yml', import.meta.url), 'utf8',
+);
+// #623: триггеры и concurrency — у тонкого вызывающего файла, тело — в `_mutation-gate.yml`.
+const mutationCaller = readWorkflowFile(
   new URL('../.github/workflows/mutation-gate.yml', import.meta.url), 'utf8',
 );
 const validateWorkflowText = readWorkflowFile(
@@ -288,13 +292,13 @@ const validateWorkflowText = readWorkflowFile(
 );
 
 test('#513 AC1: полный мутационный прогон идёт каждую ночь, не раз в неделю и не перед релизом', () => {
-  assert.match(mutationWorkflow, /- cron: '0 1 \* \* \*'/, 'ежедневно 01:00 UTC');
-  assert.ok(!/cron: '[^']*\* [0-6]'/.test(mutationWorkflow), 'недельного расписания (день недели) быть не должно');
+  assert.match(mutationCaller, /- cron: '0 1 \* \* \*'/, 'ежедневно 01:00 UTC');
+  assert.ok(!/cron: '[^']*\* [0-6]'/.test(mutationCaller), 'недельного расписания (день недели) быть не должно');
   assert.ok(!mutationWorkflow.includes('перед стабильным релизом'), 'полный прогон — не шаг релиза');
 });
 
 test('#472 AC1: у расписания и ручного запуска разные concurrency-группы', () => {
-  assert.match(mutationWorkflow, /group: mutation-gate-\$\{\{ github\.event_name \}\}/);
+  assert.match(mutationCaller, /^concurrency:\n  group: mutation-gate-\$\{\{ github\.event_name \}\}/m);
 });
 
 test('#472 AC2 / #549: каждый шард сохраняет лог и identity при любом исходе', () => {
@@ -358,11 +362,11 @@ test('#549: агрегатор требует четыре evidence одного
   assert.match(evidence, /ref: \$\{\{ needs\.material\.outputs\.sha \}\}/);
   assert.match(evidence, /--sha=\$\{\{ needs\.material\.outputs\.sha \}\}/);
   assert.match(evidence, /--tree=\$\{\{ needs\.material\.outputs\.tree \}\}/);
-  assert.match(evidence, /--workflow-sha=\$\{\{ github\.workflow_sha \}\}/);
+  assert.match(evidence, /--workflow-sha=\$\{\{ job\.workflow_sha \}\}/);
   assert.match(evidence, /--run-id=\$\{\{ github\.run_id \}\} --run-attempt=\$\{\{ github\.run_attempt \}\}/);
   assert.match(report, /--require-evidence/);
   assert.match(report, /ref: \$\{\{ needs\.material\.outputs\.sha \}\}/);
-  assert.match(report, /--workflow-sha=\$\{\{ github\.workflow_sha \}\}/);
+  assert.match(report, /--workflow-sha=\$\{\{ job\.workflow_sha \}\}/);
   assert.ok(!report.includes('git rev-parse HEAD'));
   assert.ok(!report.includes('ref: dev'));
   assert.ok(!report.includes('ref: ${{ github.sha }}'), 'main может не содержать dev-CLI отчётчика');
@@ -381,8 +385,8 @@ test('#472 AC7: отсутствие Telegram-секретов не роняет
   assert.match(telegram, /if \[ -z "\$TOKEN" \] \|\| \[ -z "\$CHAT" \]; then\n\s+echo "::warning::[^\n]*"\n\s+exit 0/);
 });
 
-test('#472 AC8: Validate сверяет mutation-gate.yml между main и dev наравне с process.yml', () => {
-  assert.match(validateWorkflowText, /for file in process\.yml mutation-gate\.yml process-resume\.yml; do/);
+test('#472 AC8 / #623: Validate сверяет тонкий mutation-gate.yml между main и dev наравне с process.yml', () => {
+  assert.match(validateWorkflowText, /for file in process\.yml mutation-gate\.yml process-resume\.yml [^\n]*; do/);
 });
 
 // #475. Свидетель гниёт двумя способами: изменился файл, который он патчит,
@@ -1022,7 +1026,7 @@ test('#620: пропуск ночи — только по маркеру, мар
   const restore = material.slice(material.indexOf('actions/cache/restore@'), material.indexOf('- name: Нужен ли прогон'));
   assert.match(material.slice(material.lastIndexOf('- name:', material.indexOf('actions/cache/restore@'))),
     /^- name: [^\n]*\n\s+if: github\.event_name == 'schedule'\n/);
-  assert.match(restore, /restore-keys: \|\n\s+mutation-green-v1-\$\{\{ steps\.identity\.outputs\.tree \}\}-\$\{\{ github\.workflow_sha \}\}-\n/);
+  assert.match(restore, /restore-keys: \|\n\s+mutation-green-v1-\$\{\{ steps\.identity\.outputs\.tree \}\}-\$\{\{ job\.workflow_sha \}\}-\n/);
   // Сбой решения — полный прогон.
   assert.match(material, /else\n\s+echo "::warning::[^\n]*"\n\s+echo "reuse=false" >> "\$GITHUB_OUTPUT"/);
   assert.match(material, /--decide/);
@@ -1030,7 +1034,7 @@ test('#620: пропуск ночи — только по маркеру, мар
   assert.match(evidence, /\n    if: always\(\) && needs\.material\.outputs\.reuse != 'true'\n/);
   assert.match(marker, /\n    if: needs\.material\.outputs\.reuse != 'true' && needs\.mutants\.result == 'success' && needs\.evidence\.result == 'success'\n/);
   assert.match(marker, /--write-marker=artifacts\/mutation-green\/marker\.json/);
-  assert.match(marker, /key: mutation-green-v1-\$\{\{ needs\.material\.outputs\.tree \}\}-\$\{\{ github\.workflow_sha \}\}-\$\{\{ github\.run_id \}\}/);
+  assert.match(marker, /key: mutation-green-v1-\$\{\{ needs\.material\.outputs\.tree \}\}-\$\{\{ job\.workflow_sha \}\}-\$\{\{ github\.run_id \}\}/);
   // Отказ по-прежнему заводит issue; не заводит только принятое доказательство.
   assert.match(report, /\n    if: always\(\) && github\.event_name == 'schedule' && needs\.material\.outputs\.reuse != 'true' && \(needs\.mutants\.result != 'success' \|\| needs\.evidence\.result != 'success'\)\n/);
 });

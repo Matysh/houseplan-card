@@ -12,6 +12,16 @@
  * (`./.github/…`), либо `<owner>/<repo>[/<path>]@<40 hex>` с комментарием, где
  * записана человекочитаемая версия — то, что при обновлении сверяет человек.
  *
+ * Одно исключение (#623): тело workflow этого же репозитория из ветки `dev` —
+ * `Matysh/houseplan-card/.github/workflows/_<имя>.yml@dev`. Для событий
+ * `issues`/`schedule`/`workflow_run` GitHub исполняет файл из `main`, а локальный
+ * `./…` взял бы тело из того же коммита `main` — и правку конвейера снова
+ * пришлось бы зеркалить. Это не чужой код: `dev` — наша ветка, её коммиты
+ * проходят тот же процессный гейт и ревью, что и всё остальное. Исключение
+ * узкое: только этот репозиторий, только `_*.yml` в `.github/workflows`, только
+ * ссылка `@dev` и только с комментарием о причине. Любой другой ref или
+ * репозиторий — прежняя находка.
+ *
  *   node scripts/action-pins.mjs            # проверить
  *   node scripts/action-pins.mjs --list     # что и к чему закреплено
  *
@@ -29,6 +39,9 @@ const USES = /^\s*(?:-\s*)?uses:\s*(\S+)(.*)$/;
 
 /** Локальная переиспользуемая workflow — не сторонний код, пина не требует. */
 export const isLocal = (spec) => spec.startsWith('./');
+/** #623: тело workflow этого репозитория из `dev` — наш код, а не сторонний. */
+export const OWN_DEV_REUSABLE = /^Matysh\/houseplan-card\/\.github\/workflows\/_[\w.-]+\.ya?ml@dev$/;
+export const isOwnDevReusable = (spec) => OWN_DEV_REUSABLE.test(spec);
 export const isPinned = (spec) => /^[\w.-]+\/[\w./-]+@[0-9a-f]{40}$/.test(spec);
 /** Комментарий обязателен: без него человек не знает, какую версию он закрепил. */
 export const hasVersionNote = (tail) => /#\s*\S/.test(tail);
@@ -41,6 +54,10 @@ export function auditWorkflowSource(file, source) {
     const [, spec, tail] = match;
     const at = `${file}:${index + 1}`;
     if (isLocal(spec)) return;
+    if (isOwnDevReusable(spec)) {
+      if (!hasVersionNote(tail)) problems.push(`${at}: «${spec}» без комментария с причиной ссылки на dev`);
+      return;
+    }
     if (!isPinned(spec)) {
       problems.push(`${at}: «${spec}» не закреплён полным SHA`);
       return;

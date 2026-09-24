@@ -154,7 +154,7 @@ test('#634 конспект: объявляет себя выжимкой, ка�
 });
 
 test('#634 промпт ревьюера: конспект вместо пересказа, машинные требования на месте', () => {
-  const workflow = read('.github/workflows/process.yml');
+  const workflow = read('.github/workflows/_process.yml');
   const start = workflow.indexOf('          prompt: |\n');
   const end = workflow.indexOf('          claude_args: |', start);
   assert.ok(start > 0 && end > start, 'блок prompt найден');

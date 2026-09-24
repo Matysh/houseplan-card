@@ -66,7 +66,7 @@ jobs:
       #
       # Коммиты и деревья скачиваются целиком, поэтому диапазоны и `merge-base`
       # работают как раньше. Единственная догрузка по требованию здесь —
-      # `git show origin/main:.github/workflows/process.yml`: один блоб.
+      # `git show origin/main:.github/workflows/<тонкий файл>`: по блобу на файл.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: { fetch-depth: 0, filter: 'blob:none' }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -106,26 +106,32 @@ jobs:
         continue-on-error: true
         run: node scripts/reviews-index.mjs --dir=docs/reviews --check
 
-      # Конвейер читает `process.yml` из ветки по умолчанию, поэтому файл обязан
-      # совпадать в `main` и `dev`. До этой проверки совпадение держалось на
-      # дисциплине: каждая правка требовала двух пушей и ручной сверки.
-      - name: "Процесс: process.yml и mutation-gate.yml идентичны в main и dev"
+      # #623: для событий `issues`, `schedule` и `workflow_run` GitHub берёт
+      # workflow из ветки по умолчанию (`main`). Там лежат тонкие вызывающие
+      # файлы — триггеры, run-name, права, concurrency, — а тело каждого
+      # (`_<имя>.yml`) они вызывают по ссылке `@dev`. Правка конвейера — один
+      # коммит в `dev`; тела здесь не сверяются: их копия в `main` не исполняется
+      # ни одним событием. Тонкий файл сверяется: правка триггера или потолка
+      # прав, не доехавшая до `main`, действовала бы только в dev-копии.
+      #
+      # `performance.yml` не входит: по расписанию он судит `main` собственным
+      # телом из `main`, расхождение с `dev` до промоушена законно. Список ниже
+      # держит равным множеству файлов с такими триггерами
+      # test/default-branch-workflows.test.mjs.
+      - name: "Процесс: тонкие вызывающие workflow идентичны в main и dev"
         id: workflow_sync
         continue-on-error: true
         run: |
           git fetch --quiet origin main dev
-          # #472: расписание mutation-gate.yml тоже исполняется из ветки по
-          # умолчанию — та же ловушка, что у process.yml; #636 добавил
-          # process-resume.yml (событие workflow_run). Сверяются все три.
           status=0
-          for file in process.yml mutation-gate.yml process-resume.yml; do
+          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml process-metrics.yml; do
             if diff <(git show "origin/main:.github/workflows/$file") \
                     <(git show "origin/dev:.github/workflows/$file"); then
               echo "$file: main и dev идентичны"
             else
               echo "РАСХОЖДЕНИЕ: $file в main и dev различаются."
-              echo "Файл исполняется из ветки по умолчанию, поэтому"
-              echo "правку нужно отправить в обе ветки."
+              echo "Тонкий вызывающий файл исполняется из ветки по умолчанию,"
+              echo "поэтому правку триггеров или прав нужно зеркалить в main (#623)."
               status=1
             fi
           done
@@ -224,7 +230,7 @@ jobs:
           }
           echo "### Предполётные проверки" >> "$GITHUB_STEP_SUMMARY"
           check "документация" "$DOCS"
-          check "process.yml и mutation-gate.yml в main и dev" "$WORKFLOW_SYNC"
+          check "тонкие вызывающие workflow в main и dev" "$WORKFLOW_SYNC"
           check "провенанс коммитов" "$PROVENANCE"
           check "процессный гейт" "$PROCESS_GATE"
           check "пины сторонних Actions" "$ACTION_PINS"

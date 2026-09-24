@@ -109,7 +109,7 @@ test('#635 r3: свежесть индекса судится на dev, конв
 });
 
 test('#635 конвейер пересобирает индекс тем же коммитом, что и документ ревью', () => {
-  const wf = new URL('../.github/workflows/process.yml', import.meta.url);
+  const wf = new URL('../.github/workflows/_process.yml', import.meta.url);
   const text = readFileSync(wf, 'utf8');
   assert.match(text, /node scripts\/reviews-index\.mjs --dir=docs\/reviews\n\s+git add -- docs\/reviews\/INDEX\.md/);
   // r2 H1: после приведения ветки к dev индекс пересобирается коммитом

@@ -200,7 +200,7 @@ test('#643 CLI: отказ — код 3 и по строке на конфлик
 
 // ---------- проводка в process.yml: свидетели и настоящий bash ----------
 
-const WORKFLOW = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+const WORKFLOW = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
 const rebaseStep = () => WORKFLOW.slice(
   WORKFLOW.indexOf('      - name: Привести ветку к dev\n'),
   WORKFLOW.indexOf('      - name: Зафиксировать SHA материала ревью'),

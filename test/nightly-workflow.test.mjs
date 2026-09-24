@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 const read = (name) => readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8');
 
 test('nightly ждёт запущенный Validate и падает вместе с ним (#492 §7)', () => {
-  const nightly = read('nightly.yml');
+  const nightly = read('_nightly.yml');
   assert.match(nightly, /gh workflow run validate\.yml --repo "\$REPO" --ref dev -f full=true/);
   // найти именно свой прогон: dispatch на dev, созданный не раньше запуска
   assert.match(nightly, /gh run list --repo "\$REPO" --workflow validate\.yml --branch dev/);
@@ -23,7 +23,7 @@ test('nightly ждёт запущенный Validate и падает вмест�
 });
 
 test('ночная job носит русское имя и не выдаёт очередь за результат (#327, #492)', () => {
-  const nightly = read('nightly.yml');
+  const nightly = read('_nightly.yml');
   assert.match(nightly, /name: "Запустить Validate на dev с полным набором и дождаться результата"/);
   assert.ok(!/поставлен в очередь[^\n]*\n\s*$/.test(nightly), 'echo про очередь не может быть последним шагом');
 });

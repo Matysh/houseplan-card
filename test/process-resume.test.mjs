@@ -93,19 +93,22 @@ test('#636 resume() relabels only on a resume decision and only with apply', asy
 });
 
 test('#636 workflows: prepare exits pending with a sealed marker, resume relabels by the marker, preflight mirrors the new file', () => {
-  const process = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
-  const resumeWf = readFileSync(new URL('../.github/workflows/process-resume.yml', import.meta.url), 'utf8');
+  const process = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
+  const resumeWf = readFileSync(new URL('../.github/workflows/_process-resume.yml', import.meta.url), 'utf8');
+  // #623: триггер — у тонкого вызывающего файла, тело — в `_process-resume.yml`.
+  const resumeCaller = readFileSync(new URL('../.github/workflows/process-resume.yml', import.meta.url), 'utf8');
   const validate = readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8');
   assert.match(process, /validate-gate\.mjs --repo="\$\{\{ github\.repository \}\}" --ref="\$BRANCH" --sha="\$SHA" --no-wait/);
   assert.match(process, /2\) echo 'proceed=pending' >> "\$GITHUB_OUTPUT"/);
   assert.match(process, /review-pending-\$\{NUM\}-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}/);
   assert.match(process, /sha256sum pending\.json > manifest\.sha256/);
   assert.match(process, /Validate красный — вернуть автору без ревью\n\s+if: steps\.rebase\.outputs\.conflict != 'true' && steps\.gate\.outputs\.proceed == 'false'/);
-  assert.match(resumeWf, /workflow_run:\n\s+workflows: \["Проверка \(CI\)"\]\n\s+types: \[completed\]/);
+  assert.match(resumeCaller, /workflow_run:\n\s+workflows: \["Проверка \(CI\)"\]\n\s+types: \[completed\]/);
   assert.match(resumeWf, /github\.event\.workflow_run\.event == 'workflow_dispatch' && startsWith\(github\.event\.workflow_run\.head_branch, 'issue\/'\)/);
   assert.match(resumeWf, /GH_TOKEN: \$\{\{ secrets\.HP_PROCESS_TOKEN \}\}/);
   assert.match(resumeWf, /node scripts\/process-resume\.mjs/);
   assert.ok(!/issues: write/.test(resumeWf), 'resume relabels with HP_PROCESS_TOKEN only');
-  assert.match(validate, /for file in process\.yml mutation-gate\.yml process-resume\.yml; do/);
+  assert.ok(!/issues: write/.test(resumeCaller), 'the caller ceiling does not grant issues: write either');
+  assert.match(validate, /for file in process\.yml mutation-gate\.yml process-resume\.yml [^\n]*; do/);
   assert.equal(readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8').includes('name: Проверка (CI)'), true, 'workflow_run listens to the Validate workflow name');
 });

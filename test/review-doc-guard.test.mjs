@@ -63,7 +63,7 @@ test('allowlist задаётся снаружи и по умолчанию то�
 
 test('шаг публикации в конвейере проверяет и индекс, и то, что уедет (#365 AC4)', () => {
   const workflow = readFileSync(
-    new URL('../.github/workflows/process.yml', import.meta.url), 'utf8',
+    new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8',
   );
   const step = workflow.slice(
     workflow.indexOf('- name: Опубликовать документ ревью'),
@@ -448,7 +448,7 @@ test('момент коллизии на #449: файлы дали бы своб
 
 test('guard считает раунды скриптом, а не inline-shell (#454 AC9)', () => {
   const workflow = readFileSync(
-    new URL('../.github/workflows/process.yml', import.meta.url), 'utf8',
+    new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8',
   );
   const step = workflow.slice(
     workflow.indexOf('      - id: decide'),
@@ -575,7 +575,7 @@ test('изменённое дерево, жёлтый вердикт, High>0 и�
 });
 
 test('конвейер: посторонняя метка не входит в concurrency, guard читает текущие метки (#499)', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   // Concurrency — на job, не на workflow: иначе любой `labeled` вытеснял ожидающий S7.
   const head = workflow.slice(0, workflow.indexOf('\njobs:'));
   assert.doesNotMatch(head, /^concurrency:/m, 'concurrency на уровне workflow снова пустит в группу все метки');
@@ -594,7 +594,7 @@ test('конвейер: посторонняя метка не входит в c
 });
 
 test('конвейер: зелёный вердикт применяется повторно без модели, вердикт пишется в якоря (#499)', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   assert.match(workflow, /review-doc-guard\.mjs --reuse --marker=CODE-REVIEW --num="\$NUM" --head=HEAD/);
   const modelJob = workflow.slice(workflow.indexOf('\n  model_review:'), workflow.indexOf('\n  integrate:'));
   assert.match(modelJob, /if: needs\.prepare\.outputs\.proceed == 'true' && needs\.prepare\.outputs\.reuse != 'true'/,
@@ -608,7 +608,7 @@ test('конвейер: зелёный вердикт применяется п�
 });
 
 test('#510 AC2: конвейер запускает Validate с мутантами на материале и не ревьюит красный', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const at = (marker) => { const i = workflow.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
   const material = at('      - name: Зафиксировать SHA материала ревью\n');
   const reuse = at('      - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"\n');
@@ -641,7 +641,7 @@ test('#510 AC2: конвейер запускает Validate с мутантам
 });
 
 test('#515: якоря материала снимаются ПОСЛЕ ребейза конвейером и публикуются из шага material', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const at = (marker) => { const i = workflow.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
   const rebase = at('      - name: Привести ветку к dev\n');
   const material = at('      - name: Зафиксировать SHA материала ревью\n');
@@ -716,7 +716,7 @@ test('#517 AC6: reuse не применяет зелёный вердикт, е�
 });
 
 test('#517: конвейер снимает хеш тела на материале и передаёт его в якоря, reuse и ревьюеру', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const at = (marker) => { const i = workflow.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
   const material = at('      - name: Зафиксировать SHA материала ревью\n');
   const reuse = at('      - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"\n');
@@ -773,7 +773,9 @@ test('#553: канон разделяет review и исполнение тес�
 
 test('#555: bounded reconciler wakes only lost review requests and emits one machine summary', () => {
   const read = (rel) => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
-  const workflow = read('.github/workflows/process-reconcile.yml');
+  const workflow = read('.github/workflows/_process-reconcile.yml');
+  // #623: run-name и расписание — у тонких вызывающих файлов, тела — в `_*.yml`.
+  const caller = read('.github/workflows/process-reconcile.yml');
   const processWorkflow = read('.github/workflows/process.yml');
   const process = read('PROCESS.md');
   const agents = read('AGENTS.md');
@@ -781,8 +783,8 @@ test('#555: bounded reconciler wakes only lost review requests and emits one mac
   assert.match(processWorkflow,
     /run-name: "process #\$\{\{ github\.event\.issue\.number \}\} · \$\{\{ github\.event\.label\.name \}\}/,
     'run identity includes issue and requested stage');
-  assert.match(workflow, /cron: '7,37 \* \* \* \*'/);
-  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(caller, /cron: '7,37 \* \* \* \*'/);
+  assert.match(caller, /workflow_dispatch:/);
   assert.match(workflow, /ref: dev/);
   assert.match(workflow, /secrets\.HP_PROCESS_TOKEN/);
   assert.match(workflow, /node scripts\/process-reconcile\.mjs[\s\S]*--apply="\$APPLY"/);
@@ -796,7 +798,7 @@ test('#555: bounded reconciler wakes only lost review requests and emits one mac
 });
 
 test('#551: gates, модель и интеграция имеют независимые jobs, contracts и бюджеты', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const job = (name, next) => {
     const start = workflow.indexOf(`\n  ${name}:`);
     assert.ok(start > 0, `job ${name} найден`);
@@ -868,7 +870,7 @@ test('#551: gates, модель и интеграция имеют незави�
 // обязан дождаться, что ссылка доехала, и спрашивать об этом REST — через него
 // же идёт диспатч.
 test('конвейер: ребейз не заканчивается, пока ссылка не укажет на новую вершину (#539)', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const rebase = workflow.slice(
     workflow.indexOf('      - name: Привести ветку к dev\n'),
     workflow.indexOf('      - name: Зафиксировать SHA материала ревью\n'),
@@ -891,7 +893,7 @@ test('конвейер: ребейз не заканчивается, пока �
 // `issues: write` и OIDC каждой стадии, включая единственную недоверенную —
 // работу модели. Права выдаются по job и по факту использования.
 test('конвейер: права выдаются по job, модель не пишет в issue (#556)', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const head = workflow.slice(0, workflow.indexOf('\njobs:'));
   assert.match(head, /^permissions:\n  contents: read\n/m, 'на уровне workflow остаётся только чтение');
   assert.doesNotMatch(head, /^\s+issues: write$/m, 'issues: write на весь workflow больше не выдаётся');
@@ -920,7 +922,7 @@ test('конвейер: права выдаются по job, модель не 
 // `setupGitHubToken`. Свидетель стоит на проводке, потому что снятие одной
 // строки возвращает модели запись в репозиторий молча — прогон остаётся зелёным.
 test('ревью: модель работает job-scoped токеном, а не App-обменом (#556)', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const model = workflow.slice(workflow.indexOf('\n  model_review:\n'), workflow.indexOf('\n  integrate:\n'));
   const review = model.slice(model.indexOf('      - name: Review\n'));
   const withBlock = review.slice(review.indexOf('        with:'), review.indexOf('          prompt: |'));
@@ -952,7 +954,7 @@ test('счёт раундов не зависит от числа файлов �
 });
 
 test('guard перечисляет docs/reviews деревом, а не contents, и без предупреждения о потолке (#621 AC2)', () => {
-  const workflow = readFileSync(new URL('../.github/workflows/process.yml', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const guard = workflow.slice(workflow.indexOf('\n  guard:\n'), workflow.indexOf('\n  prepare:\n'));
   assert.doesNotMatch(guard, /contents\/docs\/reviews\?ref=/, 'листинг каталога через contents API снят');
   assert.doesNotMatch(guard, /1000 файлов/, 'предупреждение о потолке удалено вместе с зависимостью');

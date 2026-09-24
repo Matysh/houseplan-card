@@ -4249,7 +4249,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a marker written after a red or partial run would let the next night skip the registry '
       + 'and never file the failure issue again (#620, #472)',
     patches: [{
-      file: '.github/workflows/mutation-gate.yml',
+      file: '.github/workflows/_mutation-gate.yml',
       find: "    if: needs.material.outputs.reuse != 'true' && needs.mutants.result == 'success' && needs.evidence.result == 'success'",
       replace: "    if: always() && needs.material.outputs.reuse != 'true'",
     }],
@@ -4260,7 +4260,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a skipped night must be proved by a marker; a failed decision step has to mean '
       + 'a full run, not a silent skip (#620)',
     patches: [{
-      file: '.github/workflows/mutation-gate.yml',
+      file: '.github/workflows/_mutation-gate.yml',
       find: '            echo "reuse=false" >> "$GITHUB_OUTPUT"',
       replace: '            echo "reuse=true" >> "$GITHUB_OUTPUT"',
     }],
@@ -4620,7 +4620,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a nightly that returns green at dispatch time hides a red full run; the job must wait '
       + 'for the child and inherit its conclusion (#492 §7)',
     patches: [{
-      file: '.github/workflows/nightly.yml',
+      file: '.github/workflows/_nightly.yml',
       find: '          gh run watch "$run_id" --repo "$REPO" --exit-status --interval 30',
       replace: '          echo "watching skipped"  # mutant: dispatch counted as success',
     }],
@@ -8617,7 +8617,7 @@ const MUTANT_DEFINITIONS = [
       + 'ветки. Без ожидания шаг возвращается сразу после push, и запуск встаёт на вершину, '
       + 'которой на ветке уже нет',
     patches: [{
-      file: '.github/workflows/process.yml',
+      file: '.github/workflows/_process.yml',
       find: '            if [ "$seen" = "$after" ]; then settled=true; break; fi',
       replace: '            settled=true; break',
     }],
@@ -8628,7 +8628,7 @@ const MUTANT_DEFINITIONS = [
     because: '#551: модель должна читать exact material, подготовленный до её запуска; checkout '
       + 'подвижного dev разрывает контракт между зелёным gate и вердиктом',
     patches: [{
-      file: '.github/workflows/process.yml',
+      file: '.github/workflows/_process.yml',
       find: '          ref: ${{ needs.prepare.outputs.material_sha }}',
       replace: '          ref: dev # mutant: moving material',
     }],
@@ -8639,7 +8639,7 @@ const MUTANT_DEFINITIONS = [
     because: '#551: результат JSON-schema review должен дойти до интеграции объектом; '
       + 'перенаправление stdout предиката jq записывает boolean true и роняет публикацию',
     patches: [{
-      file: '.github/workflows/process.yml',
+      file: '.github/workflows/_process.yml',
       find: '          printf \'%s\' "$OUT" > "$RUNNER_TEMP/verdict.json"',
       replace: '          printf \'%s\' "$OUT" | jq -e \'true\' > "$RUNNER_TEMP/verdict.json" # mutant: boolean payload',
     }],
@@ -8650,7 +8650,7 @@ const MUTANT_DEFINITIONS = [
     because: '#551: structured verdict записан через printf без финального LF; GitHub output '
       + 'delimiter обязан начинаться с новой строки, иначе integration падает после зелёной модели',
     patches: [{
-      file: '.github/workflows/process.yml',
+      file: '.github/workflows/_process.yml',
       find: '          printf \'\\nEOF_RESULT\\n\' >> "$GITHUB_OUTPUT"',
       replace: '          printf \'EOF_RESULT\\n\' >> "$GITHUB_OUTPUT" # mutant: delimiter glued to JSON',
     }],
@@ -9113,13 +9113,80 @@ const MUTANT_DEFINITIONS = [
       replace: "export const isPinned = (spec) => /^[\\w.-]+\\/[\\w./-]+@\\S+$/.test(spec);",
     }],
   },
+  // #623: тонкие вызывающие файлы в main и их тела из dev.
+  {
+    id: 'own-reusable-accepts-any-ref',
+    guard: 'node --test --test-name-pattern="#623" test/action-pins.test.mjs',
+    because: '#623: исключение пина для тела из dev этого репозитория, расширенное на любой ref, '
+      + 'пропустило бы перемещаемую ссылку `@main` или `@feature` мимо #556',
+    patches: [{
+      file: 'scripts/action-pins.mjs',
+      find: "export const OWN_DEV_REUSABLE = /^Matysh\\/houseplan-card\\/\\.github\\/workflows\\/_[\\w.-]+\\.ya?ml@dev$/;",
+      replace: "export const OWN_DEV_REUSABLE = /^Matysh\\/houseplan-card\\/\\.github\\/workflows\\/_[\\w.-]+\\.ya?ml@[\\w./-]+$/;",
+    }],
+  },
+  {
+    id: 'workflow-sync-forgets-a-thin-caller',
+    guard: 'node --test test/default-branch-workflows.test.mjs',
+    because: '#623: preflight сверял 3 файла из 6 исполняемых из main — правка четвёртого '
+      + 'доезжала до dev и молча не действовала',
+    patches: [{
+      file: '.github/workflows/validate.yml',
+      find: '          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml process-metrics.yml; do',
+      replace: '          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml; do',
+    }],
+  },
+  {
+    id: 'thin-caller-runs-the-main-body',
+    guard: 'node --test test/default-branch-workflows.test.mjs',
+    because: '#623: ссылка на тело не из dev (локальный `./` или `@main`) исполняла бы копию из '
+      + 'main — ровно то зеркалирование, которое снимает задача',
+    patches: [{
+      file: '.github/workflows/process.yml',
+      find: '    uses: Matysh/houseplan-card/.github/workflows/_process.yml@dev # #623: тело конвейера из dev',
+      replace: '    uses: ./.github/workflows/_process.yml',
+    }],
+  },
+  {
+    id: 'thin-caller-widens-permissions',
+    guard: 'node --test test/default-branch-workflows.test.mjs',
+    because: '#623/#556: потолок прав вызывающей job шире объединения прав тела отдал бы '
+      + 'лишнее право каждой job тела без собственного блока permissions',
+    patches: [{
+      file: '.github/workflows/mutation-gate.yml',
+      find: '      issues: write\n    uses: Matysh/houseplan-card/.github/workflows/_mutation-gate.yml@dev',
+      replace: '      issues: write\n      contents: write\n    uses: Matysh/houseplan-card/.github/workflows/_mutation-gate.yml@dev',
+    }],
+  },
+  {
+    id: 'thin-caller-drops-secrets',
+    guard: 'node --test test/default-branch-workflows.test.mjs',
+    because: '#623: без `secrets: inherit` тело получает пустые HP_PROCESS_TOKEN и '
+      + 'CLAUDE_CODE_OAUTH_TOKEN — конвейер падает на первом шаге с меткой',
+    patches: [{
+      file: '.github/workflows/process-reconcile.yml',
+      find: '    secrets: inherit\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'mutation-body-keys-marker-on-caller-sha',
+    guard: 'node --test test/default-branch-workflows.test.mjs',
+    because: '#623: в вызываемом workflow github.workflow_sha — SHA вызывающего файла из main; '
+      + 'маркер повторного использования перестал бы зависеть от версии тела',
+    patches: [{
+      file: '.github/workflows/_mutation-gate.yml',
+      find: '          WORKFLOW_SHA: ${{ job.workflow_sha }}',
+      replace: '          WORKFLOW_SHA: ${{ github.workflow_sha }}',
+    }],
+  },
   {
     id: 'review-model-gets-repository-write',
     guard: 'node --test --test-name-pattern="по job" test/review-doc-guard.test.mjs',
     because: '#556: недоверенная стадия с правом записи в репозиторий может положить коммит в '
       + 'ветку задачи в обход ревью и слияния — потолок прав этой job проверяется дословно',
     patches: [{
-      file: '.github/workflows/process.yml',
+      file: '.github/workflows/_process.yml',
       find: '    permissions:\n      contents: read\n      issues: write\n    needs: [guard, prepare]\n',
       replace: '    permissions:\n      contents: write\n      issues: write\n    needs: [guard, prepare]\n',
     }],
@@ -9131,7 +9198,7 @@ const MUTANT_DEFINITIONS = [
       + 'собственный App-токен с дефолтом contents/issues/pull_requests: write, и объявленные '
       + '`permissions:` недоверенной стадии перестают быть потолком — молча, зелёным прогоном',
     patches: [{
-      file: '.github/workflows/process.yml',
+      file: '.github/workflows/_process.yml',
       find: '          github_token: ${{ secrets.GITHUB_TOKEN }}\n',
       replace: '',
     }],
@@ -9142,7 +9209,7 @@ const MUTANT_DEFINITIONS = [
     because: '#551: timeout/cancel/failure модели не является вердиктом; интеграция обязана '
       + 'остановиться, сохранить метку и назвать упавшую стадию',
     patches: [{
-      file: '.github/workflows/process.yml',
+      file: '.github/workflows/_process.yml',
       find: '          if [ "$REUSE" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then',
       replace: '          if false; then # mutant: every model result is accepted',
     }],
