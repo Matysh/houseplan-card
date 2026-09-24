@@ -23,6 +23,7 @@ import {
   LEDGER_SCHEMA, readLedger, recordCaught, splitByLedger, witnessFingerprint,
 } from './mutation-evidence.mjs';
 import { attributeSetupFailure } from './mutation-attribution.mjs';
+import { guardEnvironment, planEnvironment, planEnvironmentLines } from './mutation-environment.mjs';
 import { MUTATION_OUTCOME, isProofOutcome } from './mutation-guard-outcome.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -215,6 +216,11 @@ export async function main(argv) {
   // ДО установки окружения (npm ci, python, Chromium ≈ 3 минуты на шард).
   if (argv.includes('--plan-only')) {
     console.log(`plan=${toRun.length}`);
+    // #620: и какое окружение нужно гардам плана — шаг ставит только его.
+    const exists = (file) => existsSync(join(repoRoot, file));
+    const read = (file) => (exists(file) ? readFileSync(join(repoRoot, file), 'utf8') : '');
+    const need = planEnvironment(toRun, (guard) => guardEnvironment(guard, { read, exists }));
+    for (const line of planEnvironmentLines(need)) console.log(line);
     reportPlanMetrics();
     return 0;
   }

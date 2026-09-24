@@ -332,7 +332,8 @@ test('#604: исход шага прогона едет в evidence шарда',
 
 test('#472 AC5: job report — только по расписанию, только при не-успехе, с полными правами', () => {
   const report = mutationWorkflow.slice(mutationWorkflow.indexOf('  report:'));
-  assert.match(report, /if: always\(\) && github\.event_name == 'schedule' && \(needs\.mutants\.result != 'success' \|\| needs\.evidence\.result != 'success'\)/);
+  // #620: принятое доказательство прошлого зелёного прогона отказом не считается.
+  assert.match(report, /if: always\(\) && github\.event_name == 'schedule' && needs\.material\.outputs\.reuse != 'true' && \(needs\.mutants\.result != 'success' \|\| needs\.evidence\.result != 'success'\)/);
   const permissions = report.slice(report.indexOf('permissions:'), report.indexOf('steps:'));
   for (const grant of ['contents: read', 'actions: read', 'issues: write']) {
     assert.ok(permissions.includes(grant), `нет права ${grant} у job report`);
@@ -914,4 +915,122 @@ test('#496: добавленный script в package.json гварды не за
   const deps = JSON.stringify({ name: 'x', scripts: { test: 'node --test', build: 'rollup -c' }, devDependencies: { playwright: '^1.63.0' } });
   assert.equal(packageJsonRelevance(base, deps).relevant, true);
   assert.equal(packageJsonRelevance('{not json', added).relevant, true, 'неразобранное — задевает: сторона ошибки — лишний прогон');
+});
+
+// #620. План шарда называет окружение своих гардов, и `changed_mutants` ставит
+// Python и Chromium только шарду, которому они нужны. Ложной зелени отсюда не
+// бывает (гард без среды краснеет чистым прогоном), но недоустановка стоит
+// лишнего круга задачи — поэтому признаки проверяются на обе стороны.
+import {
+  guardEnvironment, guardRuntimeFiles, planEnvironment, planEnvironmentLines,
+} from '../scripts/mutation-environment.mjs';
+
+function fakeRepo(files) {
+  return { read: (file) => files[file] ?? '', exists: (file) => Object.hasOwn(files, file) };
+}
+
+test('#620: юнит-гард без браузера и Python не требует окружения', () => {
+  const io = fakeRepo({
+    'test/pure.test.mjs': "import { f } from '../scripts/pure.mjs';\n// python3 в комментарии без кавычек — не запуск",
+    'scripts/pure.mjs': 'export const f = () => 1;',
+  });
+  assert.deepEqual(guardEnvironment('node --test test/pure.test.mjs', io), { browser: false, python: false });
+  assert.deepEqual(guardRuntimeFiles('node --test test/pure.test.mjs', io), ['scripts/pure.mjs', 'test/pure.test.mjs']);
+});
+
+test('#620: браузер нужен смоку и юниту, чей граф импортов дотягивается до Playwright', () => {
+  const io = fakeRepo({
+    'demo/smoke_x.mjs': "import { serve } from './serve.mjs';",
+    'demo/serve.mjs': "import { chromium } from 'playwright';",
+    'test/uses-browser.test.mjs': "import { page } from './helpers/page.mjs';",
+    'test/helpers/page.mjs': "export const page = async () => (await import('playwright')).chromium;",
+  });
+  assert.equal(guardEnvironment('node demo/smoke_x.mjs', io).browser, true, 'смок');
+  assert.equal(guardEnvironment('node --test test/uses-browser.test.mjs', io).browser, true,
+    'юнит через динамический импорт помощника');
+});
+
+test('#620: Python нужен pytest-гарду, обёртке и тесту, запускающему скрипт с python3', () => {
+  const io = fakeRepo({
+    'scripts/backend-test-guard.mjs': "export const GUARD_INPUTS = ['tests_backend/test_a.py'];\nspawnSync(python, ['-m', mod]);",
+    'tests_backend/test_a.py': 'def test_a(): pass',
+    'test/spawns.test.mjs': "spawnSync(process.execPath, ['scripts/runner.mjs']);",
+    'scripts/runner.mjs': "spawnSync('python3', ['x.py']);",
+  });
+  assert.equal(guardEnvironment('python3 -m pytest tests_backend/test_a.py -q', io).python, true, 'строка гарда');
+  assert.equal(guardEnvironment('node scripts/backend-test-guard.mjs pattern', io).python, true, 'обёртка → .py');
+  assert.equal(guardEnvironment('node --test test/spawns.test.mjs', io).python, true,
+    'путь-литерал точки входа — порождённый процесс');
+  assert.equal(guardEnvironment('node --test test/spawns.test.mjs', io).browser, false);
+});
+
+test('#620: окружение шарда — объединение гардов; пустой план не требует ничего', () => {
+  const env = { a: { browser: true, python: false }, b: { browser: false, python: true }, c: { browser: false, python: false } };
+  const of = (guard) => env[guard];
+  assert.deepEqual(planEnvironment([], of), { browser: false, python: false });
+  assert.deepEqual(planEnvironment([{ guard: 'c' }, { guard: 'c' }], of), { browser: false, python: false });
+  assert.deepEqual(planEnvironment([{ guard: 'a' }, { guard: 'c' }], of), { browser: true, python: false });
+  assert.deepEqual(planEnvironment([{ guard: 'a' }, { guard: 'b' }], of), { browser: true, python: true });
+  assert.deepEqual(planEnvironmentLines({ browser: true, python: false }), ['plan-browser=true', 'plan-python=false']);
+});
+
+test('#620 (реестр): каждый смок-гард получает браузер, каждый pytest-гард — Python, юниты — не все', () => {
+  const io = {
+    read: (file) => (existsSync(join(repoRoot, file)) ? readFileSync(join(repoRoot, file), 'utf8') : ''),
+    exists: (file) => existsSync(join(repoRoot, file)),
+  };
+  const guards = [...new Set(MUTANTS.map((mutant) => mutant.guard))];
+  let bare = 0;
+  for (const guard of guards) {
+    const env = guardEnvironment(guard, io);
+    if (/\bnode demo\//.test(guard)) assert.equal(env.browser, true, `смок без браузера: ${guard}`);
+    if (/python3? -m pytest|backend-test-guard\.mjs/.test(guard)) assert.equal(env.python, true, `pytest без Python: ${guard}`);
+    if (!env.browser && !env.python) bare++;
+  }
+  // Без этого признак выродился бы в «ставить всё» — и правило перестало бы экономить.
+  assert.ok(bare > guards.length / 3, `гардов без окружения ${bare} из ${guards.length}`);
+});
+
+test('#620: --plan-only печатает окружение плана', () => {
+  const script = join(repoRoot, 'scripts/mutation-gate.mjs');
+  const plan = (id) => spawnSync(process.execPath, [script, `--id=${id}`, '--plan-only'], { encoding: 'utf8' });
+  const smoke = plan('discard-confirm-action-icon-falls-back-to-lock');
+  assert.equal(smoke.status, 0, smoke.stderr);
+  assert.match(smoke.stdout, /^plan=1$/m);
+  assert.match(smoke.stdout, /^plan-browser=true$/m);
+  const pytest = plan('frontend-registration-skips-retry');
+  assert.match(pytest.stdout, /^plan-python=true$/m);
+  assert.match(pytest.stdout, /^plan-browser=false$/m);
+  const unit = plan('view-conflict-requires-editor-runtime');
+  assert.match(unit.stdout, /^plan-browser=false$/m);
+  assert.match(unit.stdout, /^plan-python=false$/m);
+});
+
+// #620. Ночь по расписанию не гоняет реестр на дереве, уже доказанном зелёным
+// полным прогоном. Решение — чистая функция (test/mutation-nightly-reuse.test.mjs);
+// здесь — что workflow пропускает ровно шарды и не глушит адресата отказа.
+test('#620: пропуск ночи — только по маркеру, маркер — только после зелёного агрегатора', () => {
+  const job = (name, next) => mutationWorkflow.slice(mutationWorkflow.indexOf(`\n  ${name}:\n`),
+    next ? mutationWorkflow.indexOf(`\n  ${next}:\n`) : undefined);
+  const material = job('material', 'mutants');
+  const mutants = job('mutants', 'evidence');
+  const evidence = job('evidence', 'green_marker');
+  const marker = job('green_marker', 'report');
+  const report = job('report');
+  assert.match(material, /reuse: \$\{\{ steps\.reuse\.outputs\.reuse \}\}/);
+  // Маркер читается только по расписанию и только для своего tree и workflow.
+  const restore = material.slice(material.indexOf('actions/cache/restore@'), material.indexOf('- name: Нужен ли прогон'));
+  assert.match(material.slice(material.lastIndexOf('- name:', material.indexOf('actions/cache/restore@'))),
+    /^- name: [^\n]*\n\s+if: github\.event_name == 'schedule'\n/);
+  assert.match(restore, /restore-keys: \|\n\s+mutation-green-v1-\$\{\{ steps\.identity\.outputs\.tree \}\}-\$\{\{ github\.workflow_sha \}\}-\n/);
+  // Сбой решения — полный прогон.
+  assert.match(material, /else\n\s+echo "::warning::[^\n]*"\n\s+echo "reuse=false" >> "\$GITHUB_OUTPUT"/);
+  assert.match(material, /--decide/);
+  assert.match(mutants, /\n    if: needs\.material\.outputs\.reuse != 'true'\n/);
+  assert.match(evidence, /\n    if: always\(\) && needs\.material\.outputs\.reuse != 'true'\n/);
+  assert.match(marker, /\n    if: needs\.material\.outputs\.reuse != 'true' && needs\.mutants\.result == 'success' && needs\.evidence\.result == 'success'\n/);
+  assert.match(marker, /--write-marker=artifacts\/mutation-green\/marker\.json/);
+  assert.match(marker, /key: mutation-green-v1-\$\{\{ needs\.material\.outputs\.tree \}\}-\$\{\{ github\.workflow_sha \}\}-\$\{\{ github\.run_id \}\}/);
+  // Отказ по-прежнему заводит issue; не заводит только принятое доказательство.
+  assert.match(report, /\n    if: always\(\) && github\.event_name == 'schedule' && needs\.material\.outputs\.reuse != 'true' && \(needs\.mutants\.result != 'success' \|\| needs\.evidence\.result != 'success'\)\n/);
 });

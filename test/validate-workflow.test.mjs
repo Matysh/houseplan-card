@@ -482,6 +482,36 @@ test('#518: пустой план шарда не ставит окружени�
   assert.match(save, /if: always\(\)/);
 });
 
+test('#620 AC2: Python и Chromium ставятся только шарду, чьим гардам они нужны', () => {
+  const workflow = read('validate.yml');
+  const start = workflow.indexOf('\n  changed_mutants:\n');
+  const job = workflow.slice(start, workflow.indexOf('\n  frontend:\n', start));
+  const stepOf = (needle) => {
+    const at = job.indexOf(needle);
+    assert.ok(at > 0, `нет шага ${needle}`);
+    const from = job.lastIndexOf('\n      - ', at);
+    const to = job.indexOf('\n      - ', at + needle.length);
+    return job.slice(from, to < 0 ? job.length : to);
+  };
+  // План называет окружение; при непустом плане непрочитанная строка — «ставить».
+  const plan = stepOf('name: План шарда');
+  assert.match(plan, /echo "browser=\$\{browser:-true\}" >> "\$GITHUB_OUTPUT"/);
+  assert.match(plan, /echo "python=\$\{python:-true\}" >> "\$GITHUB_OUTPUT"/);
+  assert.match(plan, /sed -n 's\/\^plan-browser=\/\/p'/);
+  assert.match(plan, /sed -n 's\/\^plan-python=\/\/p'/);
+  for (const step of ['actions/setup-python@', 'pip install -r tests_backend/requirements.txt']) {
+    assert.match(stepOf(step), /if: steps\.plan\.outputs\.count != '0' && steps\.plan\.outputs\.python == 'true'\n/, step);
+  }
+  for (const step of ['name: Кэш браузеров Playwright', 'npx playwright install --with-deps chromium']) {
+    assert.match(stepOf(step), /if: steps\.plan\.outputs\.count != '0' && steps\.plan\.outputs\.browser == 'true'/, step);
+  }
+  // npm ci и сам прогон нужны любому непустому плану — без условия по окружению.
+  for (const step of ['run: npm ci', 'name: Затронутые мутанты ловятся']) {
+    assert.doesNotMatch(stepOf(step), /outputs\.(browser|python)/, step);
+  }
+  assert.match(stepOf('actions/setup-python@'), /cache: pip\n\s+cache-dependency-path: tests_backend\/requirements\.txt/);
+});
+
 test('ручной/ночной полный прогон не делит concurrency с push (#479)', () => {
   const text = read('validate.yml');
   assert.match(text, /group: validate-\$\{\{ github\.event_name == 'workflow_dispatch' && 'dispatch-' \|\| '' \}\}/);

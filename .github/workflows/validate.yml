@@ -652,29 +652,47 @@ jobs:
           fi
           echo "диапазон: $base..$HEAD_SHA"
           echo "base=$base" >> "$GITHUB_OUTPUT"
-          count=$(node scripts/mutation-gate.mjs --changed="$base..$HEAD_SHA" --shard="$SHARD/6" \
-            --ledger="artifacts/mutation-ledger/shard-$SHARD.json" --plan-only \
-            | tee /dev/stderr | sed -n 's/^plan=//p' | tail -1)
+          plan="$RUNNER_TEMP/mutation-plan-$SHARD.txt"
+          node scripts/mutation-gate.mjs --changed="$base..$HEAD_SHA" --shard="$SHARD/6" \
+            --ledger="artifacts/mutation-ledger/shard-$SHARD.json" --plan-only > "$plan"
+          cat "$plan"
+          count=$(sed -n 's/^plan=//p' "$plan" | tail -1)
           echo "к прогону в этом шарде: ${count:-0}"
           echo "count=${count:-0}" >> "$GITHUB_OUTPUT"
+          # #620: план называет и окружение своих гардов. Непрочитанная строка
+          # при непустом плане значит «ставить»: лишняя установка стоит минуты,
+          # недоустановка — красный чистый прогон и лишний круг задачи.
+          if [ "${count:-0}" != "0" ]; then
+            browser=$(sed -n 's/^plan-browser=//p' "$plan" | tail -1)
+            python=$(sed -n 's/^plan-python=//p' "$plan" | tail -1)
+            echo "окружение шарда: браузер ${browser:-true}, Python ${python:-true}"
+            echo "browser=${browser:-true}" >> "$GITHUB_OUTPUT"
+            echo "python=${python:-true}" >> "$GITHUB_OUTPUT"
+          fi
       - if: steps.plan.outputs.count != '0'
         run: npm ci
-      - if: steps.plan.outputs.count != '0'
+      # Python и зависимости бэкенда — только шарду с pytest-гардами (#620);
+      # колёса pip кэшируются по requirements.txt.
+      - if: steps.plan.outputs.count != '0' && steps.plan.outputs.python == 'true'
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.14'
+          cache: pip
+          cache-dependency-path: tests_backend/requirements.txt
       - name: Backend test dependencies
-        if: steps.plan.outputs.count != '0'
+        if: steps.plan.outputs.count != '0' && steps.plan.outputs.python == 'true'
         run: pip install -r tests_backend/requirements.txt
+      # Chromium — только шарду с браузерными гардами (#620): смоки, golden и
+      # юниты, чей граф исполнения импортирует Playwright.
       - name: Кэш браузеров Playwright
         id: pw
-        if: steps.plan.outputs.count != '0'
+        if: steps.plan.outputs.count != '0' && steps.plan.outputs.browser == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Установить Chromium
-        if: steps.plan.outputs.count != '0' && steps.pw.outputs.cache-hit != 'true'
+        if: steps.plan.outputs.count != '0' && steps.plan.outputs.browser == 'true' && steps.pw.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
       - name: Затронутые мутанты ловятся
         if: steps.plan.outputs.count != '0'

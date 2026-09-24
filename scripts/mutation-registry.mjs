@@ -4209,6 +4209,117 @@ const MUTANT_DEFINITIONS = [
       replace: "    if (false && INTERRUPTED_OUTCOMES.has(evidence.outcome)) {\n      errors.push(`shard ${shard}: run was interrupted (step outcome ${evidence.outcome})`);\n    }",
     }],
   },
+  // #620: ночь по неизменённому дереву и окружение шарда по гардам плана.
+  {
+    id: 'nightly-reuse-ignores-tree',
+    guard: 'node --test --test-name-pattern="маркер другого дерева" test/mutation-nightly-reuse.test.mjs',
+    because: 'a green marker proves exactly one tree; accepting it for another tree would skip the '
+      + 'nightly registry on changed code and hide rotted witnesses until release (#620)',
+    patches: [{
+      file: 'scripts/mutation-nightly-reuse.mjs',
+      find: "  if (marker.tree !== tree) return no('marker proves another tree');",
+      replace: "  if (false && marker.tree !== tree) return no('marker proves another tree');",
+    }],
+  },
+  {
+    id: 'nightly-reuse-accepts-stale-marker',
+    guard: 'node --test --test-name-pattern="старше" test/mutation-nightly-reuse.test.mjs',
+    because: 'the tree pins code, not the runner; without the age limit an unchanged dev would never '
+      + 'run the registry on a fresh environment again (#620)',
+    patches: [{
+      file: 'scripts/mutation-nightly-reuse.mjs',
+      find: '  if (now - provenAt > maxAgeDays * DAY_MS) return no(',
+      replace: '  if (now - provenAt > maxAgeDays * DAY_MS * 1000) return no(',
+    }],
+  },
+  {
+    id: 'nightly-reuse-on-manual-dispatch',
+    guard: 'node --test --test-name-pattern="ручной dispatch" test/mutation-nightly-reuse.test.mjs',
+    because: 'manual dispatch is how the gate itself is debugged; reusing a marker there would '
+      + 'answer a debugging run with an old result (#620)',
+    patches: [{
+      file: 'scripts/mutation-nightly-reuse.mjs',
+      find: "  if (event !== 'schedule') return no(",
+      replace: "  if (event === 'mutant-never-an-event') return no(",
+    }],
+  },
+  {
+    id: 'green-marker-without-green-aggregator',
+    guard: 'node --test --test-name-pattern="#620: пропуск ночи" test/mutation-gate.test.mjs',
+    because: 'a marker written after a red or partial run would let the next night skip the registry '
+      + 'and never file the failure issue again (#620, #472)',
+    patches: [{
+      file: '.github/workflows/mutation-gate.yml',
+      find: "    if: needs.material.outputs.reuse != 'true' && needs.mutants.result == 'success' && needs.evidence.result == 'success'",
+      replace: "    if: always() && needs.material.outputs.reuse != 'true'",
+    }],
+  },
+  {
+    id: 'nightly-reuse-decision-error-skips-registry',
+    guard: 'node --test --test-name-pattern="#620: пропуск ночи" test/mutation-gate.test.mjs',
+    because: 'a skipped night must be proved by a marker; a failed decision step has to mean '
+      + 'a full run, not a silent skip (#620)',
+    patches: [{
+      file: '.github/workflows/mutation-gate.yml',
+      find: '            echo "reuse=false" >> "$GITHUB_OUTPUT"',
+      replace: '            echo "reuse=true" >> "$GITHUB_OUTPUT"',
+    }],
+  },
+  {
+    id: 'browser-shard-skips-chromium',
+    guard: 'node --test --test-name-pattern="#620 AC2" test/validate-workflow.test.mjs',
+    because: 'a shard whose guards open a browser must install Chromium, or its clean run goes red '
+      + 'and the task loses a review round for nothing (#620)',
+    patches: [{
+      file: '.github/workflows/validate.yml',
+      find: "        if: steps.plan.outputs.count != '0' && steps.plan.outputs.browser == 'true' && steps.pw.outputs.cache-hit != 'true'",
+      replace: "        if: steps.plan.outputs.count != '0' && steps.plan.outputs.browser == 'yes' && steps.pw.outputs.cache-hit != 'true'",
+    }],
+  },
+  {
+    id: 'unread-plan-environment-skips-install',
+    guard: 'node --test --test-name-pattern="#620 AC2" test/validate-workflow.test.mjs',
+    because: 'a plan line that was not read must mean "install": skipping the environment on an '
+      + 'unknown need trades minutes for a red shard (#620)',
+    patches: [{
+      file: '.github/workflows/validate.yml',
+      find: '            echo "browser=${browser:-true}" >> "$GITHUB_OUTPUT"',
+      replace: '            echo "browser=${browser:-false}" >> "$GITHUB_OUTPUT"',
+    }],
+  },
+  {
+    id: 'environment-misses-playwright-import',
+    guard: 'node --test --test-name-pattern="#620: браузер нужен" test/mutation-gate.test.mjs',
+    because: 'a unit guard that reaches Playwright through an import still needs Chromium; the '
+      + 'command line alone does not show it (#620)',
+    patches: [{
+      file: 'scripts/mutation-environment.mjs',
+      find: '      || sources.some((source) => SOURCE_BROWSER_RE.test(source)),',
+      replace: '      || sources.length < 0,',
+    }],
+  },
+  {
+    id: 'environment-misses-backend-files',
+    guard: 'node --test --test-name-pattern="#620: Python нужен" test/mutation-gate.test.mjs',
+    because: 'a wrapper guard runs pytest on the declared .py files; missing them leaves the shard '
+      + 'without backend dependencies (#620)',
+    patches: [{
+      file: 'scripts/mutation-environment.mjs',
+      find: "    python: GUARD_PYTHON_RE.test(text) || files.some((file) => file.endsWith('.py'))",
+      replace: "    python: GUARD_PYTHON_RE.test(text) || files.some((file) => file.endsWith('.pyc'))",
+    }],
+  },
+  {
+    id: 'environment-ignores-spawned-scripts',
+    guard: 'node --test --test-name-pattern="#620: Python нужен" test/mutation-gate.test.mjs',
+    because: 'a test that spawns a script runs that script as a process; its needs are the '
+      + "guard's needs (#620)",
+    patches: [{
+      file: 'scripts/mutation-environment.mjs',
+      find: '    if (entry) {',
+      replace: '    if (entry && file.length < 0) {',
+    }],
+  },
   // #481: журнал пойманных свидетелей — каждый защитный контракт под свидетелем.
   {
     id: 'ledger-records-escaped',
