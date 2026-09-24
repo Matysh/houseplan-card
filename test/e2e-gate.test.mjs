@@ -2,7 +2,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { classifyRun, e2eGate, isOurRun, previousStable, realOps, TOKEN_HINT } from '../scripts/e2e-gate.mjs';
+import {
+  classifyRun, E2E_JOB_NAME, e2eGate, e2eJobName, isNamedE2eJob, isOurRun, previousStable, realOps, TAG_SUITES, TOKEN_HINT,
+} from '../scripts/e2e-gate.mjs';
 
 const TAG = 'v1.74.0';
 const ours = (suffix = '') => [{ name: `journeys · HP ${TAG} · HA stable${suffix}`, conclusion: 'success' }, { name: 'upgrade · HP stable · HA stable', conclusion: 'success' }];
@@ -181,4 +183,35 @@ test('#540: without --ref the gate behaves exactly as before — the tag is the 
   const outcome = await e2eGate({ tag: TAG, ops: fake.ops, pollMs: 1000 });
   assert.equal(outcome.result, 'green');
   assert.deepEqual(fake.dispatched, [[TAG, 'v1.73.0']]);
+});
+
+// #622: имя job живёт в чужом репозитории (Matysh/houseplan-e2e), поэтому
+// тест держит зеркало его строки `name:` и доказывает две вещи: гейт узнаёт
+// ровно те имена, которые этот шаблон порождает, и разрыв контракта виден
+// в исходе громко, а не как молчаливое «не появился».
+// Зеркало: houseplan-e2e .github/workflows/e2e.yml, job `e2e`, коммит 43899da5.
+const E2E_YML_NAME_LINE = '    name: "${{ matrix.suite }} · HP ${{ matrix.ref }} · HA ${{ matrix.ha }}"';
+
+test('#622: the job-name contract mirrors houseplan-e2e e2e.yml and drives recognition', () => {
+  assert.equal(`    name: "${E2E_JOB_NAME}"`, E2E_YML_NAME_LINE, 'e2e-gate and the pinned e2e.yml line disagree — change both sides together');
+  for (const suite of [...TAG_SUITES, 'upgrade']) {
+    assert.equal(isNamedE2eJob({ name: e2eJobName({ suite, ref: TAG, ha: 'stable' }) }), true, suite);
+  }
+  assert.equal(isNamedE2eJob({ name: 'Матрица прогона' }), false);
+  for (const suite of TAG_SUITES) {
+    assert.equal(classifyRun([{ name: e2eJobName({ suite, ref: TAG, ha: '2026.9.1' }) }], TAG), 'ours', suite);
+  }
+  assert.equal(classifyRun([{ name: e2eJobName({ suite: 'upgrade', ref: TAG, ha: 'stable' }) }], TAG), 'foreign',
+    'upgrade carries upgrade_from, not the candidate');
+  assert.throws(() => e2eJobName({ suite: 'journeys', ref: TAG }), /no value for matrix\.ha/);
+});
+
+test('#622: completed runs whose jobs do not follow the contract make «missing» name the broken contract', async () => {
+  const renamed = run({ databaseId: 4, url: 'https://e2e/run/4' });
+  const fake = fakeOps({ snapshots: [[renamed]], jobsById: { 4: [{ name: 'Матрица прогона' }, { name: `journeys / ${TAG} / stable`, conclusion: 'success' }] } });
+  const outcome = await e2eGate({ tag: TAG, ops: fake.ops, appearMs: 5000, pollMs: 1000 });
+  assert.equal(outcome.result, 'missing');
+  assert.match(outcome.note, /1 завершённых прогона без job по контракту E2E_JOB_NAME/);
+  const nothing = await e2eGate({ tag: TAG, ops: fakeOps({ snapshots: [[]] }).ops, appearMs: 5000, pollMs: 1000 });
+  assert.doesNotMatch(nothing.note, /E2E_JOB_NAME/, 'no runs at all is plain missing');
 });

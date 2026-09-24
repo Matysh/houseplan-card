@@ -9881,8 +9881,64 @@ const MUTANT_DEFINITIONS = [
       + 'the independently fetched successful source job (#541)',
     patches: [{
       file: 'scripts/ci-proof.mjs',
-      find: "    if (!source || runIdOf(source.run) !== reuse.sourceRun || runAttemptOf(source.run) !== reuse.sourceAttempt\n      || runShaOf(source.run) !== reuse.sourceSha\n      || !executedCheckIsGreen(id, source.jobs)) {",
-      replace: "    if (false && (!source || runIdOf(source.run) !== reuse.sourceRun || runAttemptOf(source.run) !== reuse.sourceAttempt\n      || runShaOf(source.run) !== reuse.sourceSha\n      || !executedCheckIsGreen(id, source.jobs))) {",
+      find: "    if (!source || runIdOf(source.run) !== reuse.sourceRun || runAttemptOf(source.run) !== reuse.sourceAttempt\n      || runShaOf(source.run) !== reuse.sourceSha\n      || !executedCheckIsGreen(rules[id], source.jobs)) {",
+      replace: "    if (false && (!source || runIdOf(source.run) !== reuse.sourceRun || runAttemptOf(source.run) !== reuse.sourceAttempt\n      || runShaOf(source.run) !== reuse.sourceSha\n      || !executedCheckIsGreen(rules[id], source.jobs))) {",
+    }],
+  },
+  // #622: контракт имён job validate.yml с ci-proof / validate-gate / e2e-gate.
+  {
+    id: 'ci-proof-mutant-shards-are-a-constant',
+    guard: 'node --test --test-name-pattern="#622" test/ci-proof.test.mjs',
+    because: 'the number of mutant jobs a proof must show is the validate.yml matrix size; a fixed six '
+      + 'silently accepts an incomplete run once the matrix grows (#622 AC2)',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: '    return { job: rule.job, names: jobInstanceNames(job) };',
+      replace: '    return { job: rule.job, names: jobInstanceNames(job).slice(0, 6) };',
+    }],
+  },
+  {
+    id: 'ci-proof-skips-job-name-contract',
+    guard: 'node --test --test-name-pattern="#622" test/ci-proof.test.mjs',
+    because: 'a job renamed in validate.yml must fail the proof with the job named, not pass on names '
+      + 'the scripts no longer declare nor surface later as an absent execution (#622 AC1)',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: '    if (actual !== rule.name) {\n      throw new Error(',
+      replace: '    if (false && actual !== rule.name) {\n      throw new Error(',
+    }],
+  },
+  {
+    id: 'ci-proof-rule-name-drifts-from-workflow',
+    guard: 'node --test test/workflow-jobs.test.mjs',
+    because: 'a rule string edited in ci-proof without the same rename in validate.yml must turn the '
+      + 'contract test red (#622 AC1)',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: "  backend: [{ job: 'backend', name: 'Бэкенд: pytest в Home Assistant' }],",
+      replace: "  backend: [{ job: 'backend', name: 'Бэкенд: pytest в HA' }],",
+    }],
+  },
+  {
+    id: 'job-contract-ignores-undeclared-jobs',
+    guard: 'node --test test/workflow-jobs.test.mjs',
+    because: 'a new validate.yml job is a decision — consumed by a rule or declared unconsumed — '
+      + 'not a silent gap in the contract (#622 AC1)',
+    patches: [{
+      file: 'scripts/ci-proof.mjs',
+      find: '    if (!declared.has(job)) problems.push(',
+      replace: '    if (false && !declared.has(job)) problems.push(',
+    }],
+  },
+  {
+    id: 'e2e-gate-hides-broken-name-contract',
+    guard: 'node --test --test-name-pattern="#622" test/e2e-gate.test.mjs',
+    because: 'the e2e job name lives in houseplan-e2e; when it drifts, «missing» must name the broken '
+      + 'contract instead of a plain «did not appear» (#622)',
+    patches: [{
+      file: 'scripts/e2e-gate.mjs',
+      find: "        if (kind === 'unknown' && candidate.status === 'completed' && jobs.length) offContract.add(candidate.databaseId);",
+      replace: "        if (false && kind === 'unknown' && candidate.status === 'completed' && jobs.length) offContract.add(candidate.databaseId);",
     }],
   },
   {

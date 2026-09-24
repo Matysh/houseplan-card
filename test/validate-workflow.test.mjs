@@ -4,6 +4,8 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { JOB_RULES } from '../scripts/ci-proof.mjs';
+import { validateJobs } from '../scripts/workflow-jobs.mjs';
 
 // #336. Воркфлоу — не текст, а контракт, и ломается он молча: висячая
 // зависимость `needs` не роняет YAML, а просто навсегда пропускает job, и
@@ -493,8 +495,10 @@ test('журнал свидетелей changed_mutants: rerun продолжа�
   assert.match(restore, /key: mutation-ledger-\$\{\{ matrix\.shard \}\}-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
   assert.match(restore, /mutation-ledger-\$\{\{ matrix\.shard \}\}-\$\{\{ github\.run_id \}\}-/, 'rerun обязан восстановить предыдущую попытку того же run');
   assert.match(restore, /^\s+mutation-ledger-\$\{\{ matrix\.shard \}\}-\s*$/m, 'новый run обязан найти последний журнал шарда');
-  assert.match(job, /--changed="\$base\.\.\$HEAD_SHA" --shard="\$SHARD\/6" \\\n\s+--ledger="artifacts\/mutation-ledger\/shard-\$SHARD\.json" --plan-only/);
-  assert.match(job, /--changed="\$BASE\.\.\$HEAD_SHA" --shard="\$SHARD\/6" \\\n\s+--ledger="artifacts\/mutation-ledger\/shard-\$SHARD\.json"/);
+  // #622: число шардов — из матрицы, а не отдельной шестёркой в тесте.
+  const shards = validateJobs().get('changed_mutants').size;
+  assert.match(job, new RegExp(`--changed="\\$base\\.\\.\\$HEAD_SHA" --shard="\\$SHARD/${shards}" \\\\\\n\\s+--ledger="artifacts/mutation-ledger/shard-\\$SHARD\\.json" --plan-only`));
+  assert.match(job, new RegExp(`--changed="\\$BASE\\.\\.\\$HEAD_SHA" --shard="\\$SHARD/${shards}" \\\\\\n\\s+--ledger="artifacts/mutation-ledger/shard-\\$SHARD\\.json"`));
   // #518: журнал обязан восстанавливаться ДО плана, иначе план не увидит
   // уже пойманных и шард заплатит за окружение впустую.
   assert.ok(job.indexOf('actions/cache/restore@') < job.indexOf('name: План шарда'), 'restore журнала идёт до плана');
@@ -508,7 +512,7 @@ test('журнал свидетелей changed_mutants: rerun продолжа�
 test('#541: Validate всегда публикует proof точной попытки, а reuse раскрывает источник', () => {
   const workflow = read('validate.yml');
   const preflightName = workflow.match(/\n  preflight:\n    name: "([^"]+)"/)?.[1];
-  assert.equal(preflightName, 'Предполёт: документация, провенанс, процесс');
+  assert.equal(preflightName, JOB_RULES.preflight[0].name, '#622: имя — контракт ci-proof, не своя копия');
   assert.ok(Buffer.byteLength(preflightName, 'utf8') <= 100,
     'GitHub Jobs API truncates job names longer than 100 UTF-8 bytes');
   assert.doesNotMatch(workflow, /with:\s*\{[^\n]*\$\{\{/,

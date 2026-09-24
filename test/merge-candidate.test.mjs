@@ -9,6 +9,10 @@ import {
   MAX_ATTEMPTS, MAX_COMMAND_OUTPUT_BYTES, commentFor, decideMerge, mergeCandidate, realOps, sh,
 } from '../scripts/merge-candidate.mjs';
 import { buildCiProof } from '../scripts/ci-proof.mjs';
+import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
+
+// #622: имена и число экземпляров job — из validate.yml, не копией строк.
+const WORKFLOW = validateJobs();
 
 const mergeProofContext = (row, sha, tree) => {
   const proof = buildCiProof({
@@ -25,13 +29,8 @@ const mergeProofContext = (row, sha, tree) => {
     },
   });
   const success = (name) => ({ name, conclusion: 'success' });
-  return { proof, reuseRuns: new Map(), jobs: [
-    success('Предполёт: документация, провенанс, процесс'),
-    success('Классификация изменённых файлов'),
-    success('Переиспользование: это дерево уже проверено'),
-    success('Фронтенд: типы, юниты, мутанты, синхрон бандла'),
-    ...Array.from({ length: 6 }, (_, i) => success(`Мутанты по диффу (${i + 1}/6): затронутые свидетели краснеют`)),
-  ] };
+  return { proof, reuseRuns: new Map(), jobs: ['preflight', 'changes', 'reuse', 'frontend', 'changed_mutants']
+    .flatMap((id) => jobInstanceNames(WORKFLOW.get(id)).map(success)) };
 };
 
 // #492 §4 / §8.4: слияние точного кандидата. Таблица решений — на чистой

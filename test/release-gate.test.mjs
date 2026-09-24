@@ -7,10 +7,14 @@ import {
   candidateExpectations, classifyValidateProofs, classifyValidateRuns, latestRelevantRun, workflowRunsUrl,
 } from '../scripts/release-gate.mjs';
 import { buildCiProof, localEvidence } from '../scripts/ci-proof.mjs';
+import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
 
 const SHA = 'a'.repeat(40);
 const TREE = 'b'.repeat(40);
 const greenJob = (name) => ({ name, conclusion: 'success' });
+// #622: имена и число экземпляров — из validate.yml, не копией строк.
+const WORKFLOW = validateJobs();
+const greenJobs = (...ids) => ids.flatMap((id) => jobInstanceNames(WORKFLOW.get(id)).map(greenJob));
 const proofContext = ({ id, full = true, conclusion = 'success' }) => {
   const needs = {
     preflight: { result: 'success' }, changes: { result: 'success', outputs: {
@@ -24,18 +28,8 @@ const proofContext = ({ id, full = true, conclusion = 'success' }) => {
     performance_smoke: { result: full ? 'success' : 'skipped' }, backend: { result: full ? 'success' : 'skipped' },
   };
   const proof = buildCiProof({ candidateSha: SHA, candidateTree: TREE, runId: id, attempt: 1, event: 'workflow_dispatch', needs });
-  const jobs = [
-    greenJob('Предполёт: документация, провенанс, процесс'),
-    greenJob('Классификация изменённых файлов'), greenJob('Переиспользование: это дерево уже проверено'),
-    greenJob('Фронтенд: типы, юниты, мутанты, синхрон бандла'),
-    ...Array.from({ length: 6 }, (_, i) => greenJob(`Мутанты по диффу (${i + 1}/6): затронутые свидетели краснеют`)),
-  ];
-  if (full) jobs.push(
-    greenJob('HACS: валидация репозитория'), greenJob('Hassfest: манифест интеграции'),
-    ...Array.from({ length: 3 }, (_, i) => greenJob(`Смоки в браузере (шард ${i + 1} из 3)`)),
-    greenJob('Смоки: все шарды зелёные'), greenJob('Golden-кадры против принятых эталонов'),
-    greenJob('Перф-смок: бюджет времени кадра'), greenJob('Бэкенд: pytest в Home Assistant'),
-  );
+  const jobs = greenJobs('preflight', 'changes', 'reuse', 'frontend', 'changed_mutants');
+  if (full) jobs.push(...greenJobs('hacs', 'hassfest', 'smoke', 'smoke_done', 'golden', 'performance_smoke', 'backend'));
   const run = {
     databaseId: id, attempt: 1, status: 'completed', conclusion, event: 'workflow_dispatch',
     headSha: SHA, url: `https://run/${id}`, startedAt: `2026-09-13T10:${id}:00Z`,

@@ -47,26 +47,55 @@ export function previousStable(releases, tag) {
 }
 
 /**
- * Прогон — наш, если сьют, ставящий сам кандидат, назван по нему: имя job в
- * e2e.yml — `"${suite} · HP ${ref} · HA ${ha}"`, и у `journeys`/`first-run`
- * `ref` — это `houseplan_ref` (тег или SHA, #540). Сьют `upgrade` носит
- * `upgrade_from` — тег ПРЕДЫДУЩЕГО stable, поэтому «любая job с HP <ref>»
- * приняла бы прогон нового релиза за прогон старого (живой прогон 09.09:
- * v1.72.0 ← run для v1.73.0).
+ * Контракт имени job с houseplan-e2e (#622). Строка — дословная копия `name:`
+ * матричной job в `Matysh/houseplan-e2e` `.github/workflows/e2e.yml` (сверено
+ * на 43899da5, 24.09.2026). Другого способа узнать свой прогон нет: dispatch
+ * API не возвращает id запуска, а `inputs` в ответе run не видны. Имя живёт в
+ * чужом репозитории, поэтому юнит-тест здесь ловит только правку этой
+ * стороны; переименование там — правка обеих сторон в один день, а разрыв
+ * виден громко: `missing` называет завершённые прогоны без job по контракту.
+ */
+export const E2E_JOB_NAME = '${{ matrix.suite }} · HP ${{ matrix.ref }} · HA ${{ matrix.ha }}';
+const PLACEHOLDER = /\$\{\{\s*matrix\.([A-Za-z0-9_-]+)\s*\}\}/g;
+
+/** Имя экземпляра job e2e.yml для значений матрицы; незаданная ось — ошибка. */
+export function e2eJobName(values) {
+  return E2E_JOB_NAME.replace(PLACEHOLDER, (whole, axis) => {
+    if (values?.[axis] === undefined) throw new Error(`e2e job name: no value for matrix.${axis}`);
+    return String(values[axis]);
+  });
+}
+
+// Любой экземпляр по контракту: литералы шаблона как есть, оси — непустые.
+const escapeRe = (text) => text.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&');
+const NAMED_JOB = new RegExp(`^${E2E_JOB_NAME.split(PLACEHOLDER)
+  .map((part, index) => (index % 2 ? '.+' : escapeRe(part))).join('')}$`);
+const CUT = '\u0000';
+
+/**
+ * Прогон — наш, если сьют, ставящий сам кандидат, назван по нему: у
+ * `journeys`/`first-run` ось `ref` — это `houseplan_ref` (тег или SHA, #540).
+ * Сьют `upgrade` носит `upgrade_from` — тег ПРЕДЫДУЩЕГО stable, поэтому
+ * «любая job с HP <ref>» приняла бы прогон нового релиза за прогон старого
+ * (живой прогон 09.09: v1.72.0 ← run для v1.73.0). Сравнивается всё имя до
+ * оси `ha`: версия HA в выборе не участвует.
  */
 export const TAG_SUITES = ['journeys', 'first-run'];
 export function isOurRun(jobs, ref) {
-  const needles = TAG_SUITES.map((suite) => `${suite} · HP ${ref} · `);
+  const needles = TAG_SUITES.map((suite) => e2eJobName({ suite, ref, ha: CUT }).split(CUT)[0]);
   return (Array.isArray(jobs) ? jobs : []).some((job) => needles.some((needle) => String(job?.name || '').startsWith(needle)));
 }
 
+/** Job, названная по контракту E2E_JOB_NAME (а не служебная «Матрица прогона»). */
+export const isNamedE2eJob = (job) => NAMED_JOB.test(String(job?.name || ''));
+
 /**
- * Прогон, у которого ещё нет ни одной job `· HP … ·`, решать рано: e2e.yml
+ * Прогон, у которого ещё нет ни одной job по контракту, решать рано: e2e.yml
  * сначала планирует матрицу отдельной job, и первые секунды виден только
  * «Матрица прогона». Живой прогон 09.09 записал такой run в чужие навсегда.
  */
 export function classifyRun(jobs, ref) {
-  const named = (Array.isArray(jobs) ? jobs : []).filter((job) => / · HP .+ · /.test(String(job?.name || '')));
+  const named = (Array.isArray(jobs) ? jobs : []).filter(isNamedE2eJob);
   if (!named.length) return 'unknown';
   return isOurRun(named, ref) ? 'ours' : 'foreign';
 }
@@ -91,6 +120,7 @@ export async function e2eGate({ tag, ref = tag, ops, appearMs = VALIDATE_APPEAR_
     return { result: 'error', url: null, note: `запуск e2e.yml не удался: ${message}${forbidden ? ` — ${TOKEN_HINT}` : ''}` };
   }
   const foreign = new Set(); // dispatch-прогоны без нашего тега в именах job
+  const offContract = new Set(); // завершились, а ни одной job по E2E_JOB_NAME (#622)
   let tracked = null;
   while (ops.now() - started < totalMs) {
     const runs = (await ops.listRuns()).filter((run) => !foreign.has(run.databaseId));
@@ -100,8 +130,10 @@ export async function e2eGate({ tag, ref = tag, ops, appearMs = VALIDATE_APPEAR_
       for (const candidate of runs) {
         const createdAt = Date.parse(candidate.createdAt || '') || 0;
         if (createdAt < started - CLOCK_SKEW_MS) continue;
-        const kind = classifyRun(await ops.jobs(candidate.databaseId), ref);
+        const jobs = await ops.jobs(candidate.databaseId);
+        const kind = classifyRun(jobs, ref);
         if (kind === 'ours') { run = candidate; break; }
+        if (kind === 'unknown' && candidate.status === 'completed' && jobs.length) offContract.add(candidate.databaseId);
         if (kind === 'foreign' || candidate.status === 'completed') foreign.add(candidate.databaseId);
       }
     }
@@ -113,7 +145,10 @@ export async function e2eGate({ tag, ref = tag, ops, appearMs = VALIDATE_APPEAR_
         return { result: 'red', url: run.url, note: `E2E на ${ref} завершился: ${run.conclusion}` };
       }
     } else if (ops.now() - started > appearMs) {
-      return { result: 'missing', url: null, note: `dispatch e2e.yml на ${ref} не появился за ${Math.round(appearMs / 60000)} мин` };
+      const contract = offContract.size
+        ? `; ${offContract.size} завершённых прогона без job по контракту E2E_JOB_NAME — имя job в e2e.yml разошлось с scripts/e2e-gate.mjs (#622)`
+        : '';
+      return { result: 'missing', url: null, note: `dispatch e2e.yml на ${ref} не появился за ${Math.round(appearMs / 60000)} мин${contract}` };
     }
     await ops.sleep(pollMs);
   }

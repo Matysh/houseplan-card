@@ -4,18 +4,18 @@ import test from 'node:test';
 
 import { validateGate, isMutantRun, provesMutants } from '../scripts/validate-gate.mjs';
 import { buildCiProof } from '../scripts/ci-proof.mjs';
+import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
 
 const SHA = 'a'.repeat(40);
 const TREE = 'b'.repeat(40);
 
 /** Fake gh: a scripted list of run snapshots per call, a virtual clock. */
-const MUTANT_JOBS = [1, 2, 3, 4, 5, 6].map((n) => ({ name: `Мутанты по диффу (${n}/6): затронутые свидетели краснеют`, conclusion: 'success' }));
-const OTHER_JOBS = [{ name: 'Фронтенд: типы, юниты, мутанты, синхрон бандла', conclusion: 'success' }];
-const BASE_JOBS = [
-  { name: 'Предполёт: документация, провенанс, процесс', conclusion: 'success' },
-  { name: 'Классификация изменённых файлов', conclusion: 'success' },
-  { name: 'Переиспользование: это дерево уже проверено', conclusion: 'success' },
-];
+// #622: имена и число экземпляров job — из validate.yml, не копией строк.
+const WORKFLOW = validateJobs();
+const jobsOf = (...ids) => ids.flatMap((id) => jobInstanceNames(WORKFLOW.get(id)).map((name) => ({ name, conclusion: 'success' })));
+const MUTANT_JOBS = jobsOf('changed_mutants');
+const OTHER_JOBS = jobsOf('frontend');
+const BASE_JOBS = jobsOf('preflight', 'changes', 'reuse');
 
 function fakeOps({ snapshots, onRef = [], jobsById = {} }) {
   let clock = 0;

@@ -5,11 +5,13 @@ import { deflateRawSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 import {
-  CI_PROOF_POLICIES, baselineReviewedRun, buildCiProof, evaluateCiProof, loadGithubProofContext, localEvidence,
+  CI_PROOF_POLICIES, MUTANT_JOB_PREFIX, baselineReviewedRun, buildCiProof, evaluateCiProof, loadGithubProofContext, localEvidence,
   parseReuseMarker, productTreeId, readCiProofArtifact, requiredCheckIds, selectCiProofVerdict,
 } from '../scripts/ci-proof.mjs';
 import { REUSE_JOBS } from '../scripts/check-inputs.mjs';
 import { reuseKey } from '../scripts/gate-reuse.mjs';
+import { jobInstanceNames, parseWorkflowJobs, validateJobs, VALIDATE_WORKFLOW_PATH } from '../scripts/workflow-jobs.mjs';
+import { readFileSync } from 'node:fs';
 
 export const SHA = 'a'.repeat(40);
 export const TREE = 'b'.repeat(40);
@@ -33,27 +35,27 @@ function zipWith(proof) {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 }
 
+// #622: имена job — из validate.yml, а не копией строк: тест, который держит
+// свои имена, зеленеет и тогда, когда потребитель с файлом разошёлся.
+const WORKFLOW = validateJobs();
+const namesOf = (id) => jobInstanceNames(WORKFLOW.get(id));
 const names = {
-  preflight: 'Предполёт: документация, провенанс, процесс',
-  changes: 'Классификация изменённых файлов',
-  reuse: 'Переиспользование: это дерево уже проверено',
-  frontend: 'Фронтенд: типы, юниты, мутанты, синхрон бандла',
-  hacs: 'HACS: валидация репозитория',
-  hassfest: 'Hassfest: манифест интеграции',
-  smokeDone: 'Смоки: все шарды зелёные',
-  golden: 'Golden-кадры против принятых эталонов',
-  performance: 'Перф-смок: бюджет времени кадра',
-  geometryParity: 'Геометрия: TS/Python parity исполнена',
-  backend: 'Бэкенд: pytest в Home Assistant',
+  preflight: namesOf('preflight')[0],
+  changes: namesOf('changes')[0],
+  reuse: namesOf('reuse')[0],
+  frontend: namesOf('frontend')[0],
+  hacs: namesOf('hacs')[0],
+  hassfest: namesOf('hassfest')[0],
+  smokeDone: namesOf('smoke_done')[0],
+  golden: namesOf('golden')[0],
+  performance: namesOf('performance_smoke')[0],
+  geometryParity: namesOf('geometry_parity')[0],
+  backend: namesOf('backend')[0],
 };
 
 const success = (name) => ({ name, conclusion: 'success' });
-const mutantJobs = () => Array.from({ length: 6 }, (_, index) => (
-  success(`Мутанты по диффу (${index + 1}/6): затронутые свидетели краснеют`)
-));
-const smokeJobs = () => Array.from({ length: 3 }, (_, index) => (
-  success(`Смоки в браузере (шард ${index + 1} из 3)`)
-));
+const mutantJobs = () => namesOf('changed_mutants').map(success);
+const smokeJobs = () => namesOf('smoke').map(success);
 
 export function proofFixture({
   id = 10, attempt = 2, full = true, mutants = true,
@@ -158,14 +160,59 @@ test('#601 AC3: release policy accepts a full proof without requested mutants; l
   }
 });
 
-test('#541 AC: green dispatch without six executed mutant jobs proves neither review nor merge', () => {
+test('#541 AC: green dispatch without the executed mutant jobs proves neither review nor merge', () => {
   const fixture = proofFixture({ full: false, backend: false, integration: false });
-  fixture.jobs = fixture.jobs.filter((job) => !job.name.startsWith('Мутанты по диффу'));
+  fixture.jobs = fixture.jobs.filter((job) => !job.name.startsWith(MUTANT_JOB_PREFIX));
   for (const policy of [CI_PROOF_POLICIES.review, CI_PROOF_POLICIES.merge]) {
     const verdict = evaluateCiProof({ ...fixture, policy });
     assert.equal(verdict.status, 'failed', policy.name);
     assert.match(verdict.note, /mutants: claimed execution/);
   }
+});
+
+// #622 AC2: сколько mutant-jobs обязано исполниться — говорит матрица
+// validate.yml. Тот же набор job против файла с семью шардами — не
+// доказательство; семь job по файлу с семью — доказательство.
+const WORKFLOW_TEXT = readFileSync(VALIDATE_WORKFLOW_PATH, 'utf8').replace(/\r\n/g, '\n');
+const withMutantShards = (count) => {
+  const shards = Array.from({ length: count }, (_, i) => i + 1).join(', ');
+  const text = WORKFLOW_TEXT.replace(/(\n  changed_mutants:\n[\s\S]*?\n        shard: )\[[^\]]*\]/, `$1[${shards}]`);
+  assert.notEqual(text, WORKFLOW_TEXT, 'fixture must rewrite the changed_mutants matrix');
+  return parseWorkflowJobs(text, 'validate.yml (fixture)');
+};
+
+test('#622 AC2: the number of mutant shards comes from the validate.yml matrix, not a constant', () => {
+  assert.equal(namesOf('changed_mutants').length, WORKFLOW.get('changed_mutants').size);
+  const policy = CI_PROOF_POLICIES.review;
+  const fixture = proofFixture({ full: false, backend: false, integration: false });
+  assert.equal(evaluateCiProof({ ...fixture, policy }).status, 'green');
+  const oneShardShort = { ...fixture, jobs: fixture.jobs.filter((job) => job.name !== namesOf('changed_mutants').at(-1)) };
+  assert.match(evaluateCiProof({ ...oneShardShort, policy }).note, /mutants: claimed execution/);
+  const seven = withMutantShards(7);
+  const verdict = evaluateCiProof({ ...fixture, policy, workflowJobs: seven });
+  assert.equal(verdict.status, 'failed', 'six jobs do not prove a seven-shard matrix');
+  assert.match(verdict.note, /mutants: claimed execution/);
+  const sevenJobs = [
+    ...fixture.jobs.filter((job) => !job.name.startsWith(MUTANT_JOB_PREFIX)),
+    ...jobInstanceNames(seven.get('changed_mutants')).map(success),
+  ];
+  assert.equal(sevenJobs.filter((job) => job.name.startsWith(MUTANT_JOB_PREFIX)).length, 7);
+  assert.equal(evaluateCiProof({ ...fixture, jobs: sevenJobs, policy, workflowJobs: seven }).status, 'green');
+  const duplicated = { ...fixture, jobs: [...fixture.jobs, success(namesOf('changed_mutants')[0])] };
+  assert.equal(evaluateCiProof({ ...duplicated, policy }).status, 'failed', 'an instance reported twice is ambiguous, not proof');
+});
+
+test('#622 AC1: a job renamed in validate.yml fails the proof with the named job, not as an absent execution', () => {
+  const fixture = proofFixture();
+  const renamed = WORKFLOW_TEXT.replace('name: "Бэкенд: pytest в Home Assistant"', 'name: "Бэкенд: pytest в HA"');
+  assert.notEqual(renamed, WORKFLOW_TEXT);
+  const workflowJobs = parseWorkflowJobs(renamed, 'validate.yml (fixture)');
+  // Имена job в прогоне — по тому же переименованному файлу: без сверки
+  // контракта такой прогон прошёл бы, а rules в скриптах молча устарели.
+  const jobs = fixture.jobs.map((job) => (job.name === names.backend ? { ...job, name: 'Бэкенд: pytest в HA' } : job));
+  const verdict = evaluateCiProof({ ...fixture, jobs, workflowJobs, policy: CI_PROOF_POLICIES.release });
+  assert.equal(verdict.status, 'failed');
+  assert.match(verdict.note, /job-name contract with validate\.yml is broken \(#622\): backend: validate\.yml job backend is named/);
 });
 
 test('#541 AC: SHA, tree, run attempt, event and proof inventories cannot drift', () => {
@@ -319,7 +366,7 @@ test('#573 AC1: baseline-only коммит — reused smoke/perf из красн
 test('#573 AC3: красный smoke кандидата не прячется за зелёной golden — источник reuse обязан быть зелёной job', () => {
   const fixture = baselineOnlyFixture();
   fixture.reuseRuns.get('10:1').jobs = fixture.reuseRuns.get('10:1').jobs
-    .map((job) => (job.name.startsWith('Смоки в браузере (шард 2') ? { ...job, conclusion: 'failure' } : job));
+    .map((job) => (job.name === namesOf('smoke')[1] ? { ...job, conclusion: 'failure' } : job));
   const verdict = evaluateCiProof({ ...fixture, policy: CI_PROOF_POLICIES.release });
   assert.equal(verdict.status, 'failed');
   assert.match(verdict.note, /smoke: source run does not verify/);

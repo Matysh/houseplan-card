@@ -11,6 +11,7 @@ import { dirname, resolve } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
 import { BASELINE_OVERLAY, REUSE_JOBS, globToRegExp } from './check-inputs.mjs';
 import { reuseKey } from './gate-reuse.mjs';
+import { jobInstanceNames, staticNamePrefix, validateJobs } from './workflow-jobs.mjs';
 
 export const CI_PROOF_SCHEMA = 'houseplan-ci-proof/v1';
 export const CI_PROOF_ARTIFACT_PREFIX = 'ci-proof';
@@ -18,8 +19,9 @@ export const CI_PROOF_STATES = Object.freeze([
   'green', 'missing', 'pending', 'cancelled', 'stale', 'failed',
 ]);
 
-// Мутанты по диффу — доказательство для ревью и слияния (#510): без шести
-// исполненных mutant-jobs ни то ни другое не разрешается. Релиз их не
+// Мутанты по диффу — доказательство для ревью и слияния (#510): без всех
+// исполненных mutant-jobs (сколько их — говорит матрица validate.yml, #622)
+// ни то ни другое не разрешается. Релиз их не
 // требует (#601): к кандидату беты каждая задача прогнана ими на ревью и на
 // слитом кандидате, а `Release:` мутантов больше не запрашивает — политика
 // с `mutants: true` объявляла бы каждый кандидат беты `stale`.
@@ -29,25 +31,86 @@ export const CI_PROOF_POLICIES = Object.freeze({
   release: Object.freeze({ name: 'release', full: true, mutants: false }),
 });
 
-const JOB_RULES = Object.freeze({
-  preflight: [{ exact: 'Предполёт: документация, провенанс, процесс', count: 1 }],
-  changes: [{ exact: 'Классификация изменённых файлов', count: 1 }],
-  reuse: [{ exact: 'Переиспользование: это дерево уже проверено', count: 1 }],
-  frontend: [{ exact: 'Фронтенд: типы, юниты, мутанты, синхрон бандла', count: 1 }],
+// #622: какие job `validate.yml` доказывают проверку. `name` — контракт имени
+// (у матричной job — неизменная часть до `${{`); его сверяет с YAML
+// test/workflow-jobs.test.mjs, а здесь — resolveJobRules на каждом вызове
+// evaluateCiProof. Сколько экземпляров и как точно они названы, читается из
+// самого validate.yml (`strategy.matrix`): константа `count: 6` жила отдельно
+// от матрицы и при смене шардов молча давала «claimed execution is absent».
+export const JOB_RULES = Object.freeze({
+  preflight: [{ job: 'preflight', name: 'Предполёт: документация, провенанс, процесс' }],
+  changes: [{ job: 'changes', name: 'Классификация изменённых файлов' }],
+  reuse: [{ job: 'reuse', name: 'Переиспользование: это дерево уже проверено' }],
+  frontend: [{ job: 'frontend', name: 'Фронтенд: типы, юниты, мутанты, синхрон бандла' }],
   integration: [
-    { exact: 'HACS: валидация репозитория', count: 1 },
-    { exact: 'Hassfest: манифест интеграции', count: 1 },
+    { job: 'hacs', name: 'HACS: валидация репозитория' },
+    { job: 'hassfest', name: 'Hassfest: манифест интеграции' },
   ],
-  mutants: [{ prefix: 'Мутанты по диффу (', count: 6 }],
+  mutants: [{ job: 'changed_mutants', name: 'Мутанты по диффу (' }],
   smoke: [
-    { prefix: 'Смоки в браузере (шард ', count: 3 },
-    { exact: 'Смоки: все шарды зелёные', count: 1 },
+    { job: 'smoke', name: 'Смоки в браузере (шард ' },
+    { job: 'smoke_done', name: 'Смоки: все шарды зелёные' },
   ],
-  golden: [{ exact: 'Golden-кадры против принятых эталонов', count: 1 }],
-  performance_smoke: [{ exact: 'Перф-смок: бюджет времени кадра', count: 1 }],
-  geometry_parity: [{ exact: 'Геометрия: TS/Python parity исполнена', count: 1 }],
-  backend: [{ exact: 'Бэкенд: pytest в Home Assistant', count: 1 }],
+  golden: [{ job: 'golden', name: 'Golden-кадры против принятых эталонов' }],
+  performance_smoke: [{ job: 'performance_smoke', name: 'Перф-смок: бюджет времени кадра' }],
+  geometry_parity: [{ job: 'geometry_parity', name: 'Геометрия: TS/Python parity исполнена' }],
+  backend: [{ job: 'backend', name: 'Бэкенд: pytest в Home Assistant' }],
 });
+
+/**
+ * Job validate.yml, чьё имя ни одно правило не читает. Записаны с именем,
+ * чтобы контрактный тест видел ВСЕ job в обе стороны (#622 AC1): новая job
+ * или переименование любой — решение, а не тихое расхождение.
+ */
+export const UNCONSUMED_JOBS = Object.freeze({ proof: 'Доказательство выполненных проверок' });
+
+/** Общий префикс имён mutant-jobs — единственный источник для validate-gate. */
+export const MUTANT_JOB_PREFIX = JOB_RULES.mutants[0].name;
+
+/**
+ * Правила с точными именами экземпляров из validate.yml. Расхождение
+ * контракта с файлом — ошибка с названной job, а не пустое совпадение:
+ * иначе ревью, слияние и релиз узнали бы о переименовании как о
+ * «claimed execution is absent» (#622).
+ */
+export function resolveJobRules(workflowJobs = validateJobs()) {
+  return Object.fromEntries(Object.entries(JOB_RULES).map(([id, rules]) => [id, rules.map((rule) => {
+    const job = workflowJobs.get(rule.job);
+    if (!job) throw new Error(`${id}: validate.yml has no job ${rule.job}`);
+    const actual = job.matrix ? staticNamePrefix(job.name) : job.name;
+    if (actual !== rule.name) {
+      throw new Error(`${id}: validate.yml job ${rule.job} is named ${JSON.stringify(job.name)}, ci-proof expects ${JSON.stringify(rule.name)}${job.matrix ? ' as its prefix' : ''}`);
+    }
+    return { job: rule.job, names: jobInstanceNames(job) };
+  })]));
+}
+
+/**
+ * Все расхождения контракта имён с validate.yml — в обе стороны (#622 AC1):
+ * правило без job, job с другим именем, job без записи. Пустой список —
+ * контракт цел. Рантайм сверяет только читаемые job (resolveJobRules), тест —
+ * все.
+ */
+export function jobContractProblems(workflowJobs = validateJobs()) {
+  const problems = [];
+  const declared = new Map();
+  const declare = (job, name, owner) => {
+    if (declared.has(job)) problems.push(`${job}: declared twice (${declared.get(job).owner}, ${owner})`);
+    declared.set(job, { name, owner });
+  };
+  for (const [id, rules] of Object.entries(JOB_RULES)) for (const rule of rules) declare(rule.job, rule.name, `JOB_RULES.${id}`);
+  for (const [job, name] of Object.entries(UNCONSUMED_JOBS)) declare(job, name, 'UNCONSUMED_JOBS');
+  for (const [job, { name, owner }] of declared) {
+    const entry = workflowJobs.get(job);
+    if (!entry) { problems.push(`${job}: ${owner} names a job that validate.yml does not have`); continue; }
+    const actual = entry.matrix ? staticNamePrefix(entry.name) : entry.name;
+    if (actual !== name) problems.push(`${job}: validate.yml names it ${JSON.stringify(entry.name)}, ${owner} expects ${JSON.stringify(name)}${entry.matrix ? ' as its prefix' : ''}`);
+  }
+  for (const job of workflowJobs.keys()) {
+    if (!declared.has(job)) problems.push(`${job}: validate.yml job is in neither JOB_RULES nor UNCONSUMED_JOBS`);
+  }
+  return problems;
+}
 
 const asBool = (value) => value === true || String(value) === 'true';
 const runIdOf = (run) => Number(run?.id ?? run?.databaseId ?? 0);
@@ -262,15 +325,15 @@ export function buildCiProof({
 
 const sortedUnique = (values) => [...new Set(values)].sort();
 const sameSet = (a, b) => JSON.stringify(sortedUnique(a)) === JSON.stringify(sortedUnique(b));
-const jobsMatching = (jobs, rule) => (Array.isArray(jobs) ? jobs : []).filter((job) => (
-  rule.exact ? job?.name === rule.exact : String(job?.name || '').startsWith(rule.prefix)
-));
-
-function executedCheckIsGreen(id, jobs) {
-  return (JOB_RULES[id] || []).every((rule) => {
-    const matches = jobsMatching(jobs, rule);
-    return matches.length === rule.count && matches.every((job) => job.conclusion === 'success');
-  });
+// Каждый экземпляр — ровно одна job с этим именем, и она зелёная. Лишняя job
+// с похожим именем (другой размер матрицы в чужом YAML) доказательством не
+// считается, недостающая — проваливает проверку.
+function executedCheckIsGreen(rules, jobs) {
+  const list = Array.isArray(jobs) ? jobs : [];
+  return (rules || []).every((rule) => rule.names.every((name) => {
+    const matches = list.filter((job) => job?.name === name);
+    return matches.length === 1 && matches[0].conclusion === 'success';
+  }));
 }
 
 /**
@@ -279,6 +342,7 @@ function executedCheckIsGreen(id, jobs) {
  */
 export function evaluateCiProof({
   run, proof, jobs = [], reuseRuns = new Map(), candidate = {}, policy, expected = null, reviewedRun = undefined,
+  workflowJobs = undefined,
 }) {
   const result = (status, note) => ({ status, note, url: runUrlOf(run) });
   if (!run) return result('missing', 'Validate run is missing');
@@ -336,11 +400,17 @@ export function evaluateCiProof({
   }
   if (run.conclusion !== 'success')
     return result('failed', `Validate run ${runIdOf(run)} concluded ${run.conclusion || 'without success'}`);
+  let rules;
+  try {
+    rules = resolveJobRules(workflowJobs);
+  } catch (error) {
+    return result('failed', `job-name contract with validate.yml is broken (#622): ${error.message}`);
+  }
   for (const id of derived) {
     const claim = proof.checks?.[id];
     if (!claim || claim.result !== 'success') return result('failed', `${id}: proof result is ${claim?.result || 'missing'}`);
     if (claim.mode === 'executed') {
-      if (!executedCheckIsGreen(id, jobs)) return result('failed', `${id}: claimed execution is absent, incomplete or not green`);
+      if (!executedCheckIsGreen(rules[id], jobs)) return result('failed', `${id}: claimed execution is absent, incomplete or not green`);
       continue;
     }
     if (claim.mode !== 'reused'
@@ -356,7 +426,7 @@ export function evaluateCiProof({
     const source = reuseRuns instanceof Map ? reuseRuns.get(sourceKey) : reuseRuns?.[sourceKey];
     if (!source || runIdOf(source.run) !== reuse.sourceRun || runAttemptOf(source.run) !== reuse.sourceAttempt
       || runShaOf(source.run) !== reuse.sourceSha
-      || !executedCheckIsGreen(id, source.jobs)) {
+      || !executedCheckIsGreen(rules[id], source.jobs)) {
       return result('failed', `${id}: source run does not verify the reused successful job`);
     }
   }

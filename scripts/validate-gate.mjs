@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { VALIDATE_APPEAR_MS, VALIDATE_TOTAL_MS } from './merge-candidate.mjs';
 import {
-  CI_PROOF_POLICIES, evaluateCiProof, githubCandidateTree, loadGithubProofContext,
+  CI_PROOF_POLICIES, MUTANT_JOB_PREFIX, evaluateCiProof, githubCandidateTree, loadGithubProofContext,
 } from './ci-proof.mjs';
 
 export const POLL_MS = 20_000;
@@ -45,7 +45,9 @@ export function isMutantRun(run) {
   return run?.event === 'workflow_dispatch';
 }
 
-export const MUTANT_JOB_PREFIX = 'Мутанты по диффу';
+// #622: префикс — из контракта ci-proof (JOB_RULES.mutants), который сверяется
+// с validate.yml; своей строки здесь больше нет.
+export { MUTANT_JOB_PREFIX };
 
 /**
  * Зелёный dispatch доказывает мутанты, только если их job реально исполнены
