@@ -32,8 +32,8 @@ const out = await page.evaluate(async () => {
       { spaceId: 'bad2', displayName: 'Second', status: 'failed', reason: 'floor-null' },
     ],
   };
-  card._reportPreflightFailure(preflight);
-  card._reportPreflightFailure(preflight); // dedup: same fingerprint logs once
+  card._editorRuntime.optimizePlans.reportPreflightFailure(preflight);
+  card._editorRuntime.optimizePlans.reportPreflightFailure(preflight); // dedup: same fingerprint logs once
   result.devLogOnce = warns.filter((w) => String(w[0]).includes('optimize preflight failed')).length === 1;
   const logged = warns.find((w) => String(w[0]).includes('optimize preflight failed'))?.[1];
   result.devLogShape = !!logged && logged.kind === 'houseplan-optimize-preflight'
@@ -77,7 +77,7 @@ const out = await page.evaluate(async () => {
   let copied = null;
   const clipboard = { writeText: async (text) => { copied = text; } };
   Object.defineProperty(navigator, 'clipboard', { value: clipboard, configurable: true });
-  await card._copyPreflightDiagnostics(); await update();
+  await card._editorRuntime.optimizePlans.copyDiagnostics(); await update();
   let block = null;
   try { block = JSON.parse(copied); } catch { /* keep null */ }
   result.copiedBlock = !!block && block.kind === 'houseplan-optimize-preflight'
@@ -91,7 +91,7 @@ const out = await page.evaluate(async () => {
   const saved = card._alignDialog;
   card._alignDialog = { ...saved, config: card._serverCfg };
   copied = null;
-  await card._copyPreflightDiagnostics(); await update();
+  await card._editorRuntime.optimizePlans.copyDiagnostics(); await update();
   const savedHash = JSON.parse(copied).failures[0].spaceGeometryFingerprint;
   card._alignDialog = saved; await update();
   result.fingerprintTracksCandidate = typeof candidateHash === 'string'
@@ -103,7 +103,7 @@ const out = await page.evaluate(async () => {
   Object.defineProperty(navigator, 'clipboard', {
     value: { writeText: async () => { throw new Error('denied'); } }, configurable: true,
   });
-  await card._copyPreflightDiagnostics(); await update();
+  await card._editorRuntime.optimizePlans.copyDiagnostics(); await update();
   const pre = root().querySelector('hp-dialog details pre');
   result.inlineFallback = !!pre && pre.textContent.includes('houseplan-optimize-preflight');
 
@@ -115,7 +115,7 @@ const out = await page.evaluate(async () => {
   ));
   await update();
   result.fallbackClearedOnClose = card._alignDialog === null
-    && card._preflightClipboardFallback === null;
+    && card._editorRuntime.optimizePlans.clipboardFallback === null;
 
   console.warn = origWarn;
   return result;

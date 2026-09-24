@@ -69,7 +69,7 @@ const out = await page.evaluate(async () => {
     configRev: card._cfgRev, layoutRev: card._layoutRev,
     canUndo: card._canOptimizeUndo, undoKind: card._undoKind,
   };
-  card._openAlignDialog(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const englishText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.englishFailureNamesThreeAndCountsRest = englishText.includes(
     'Could not safely verify the geometry of the following spaces: Alpha, beta, Space 3, and 1 more.',
@@ -84,7 +84,7 @@ const out = await page.evaluate(async () => {
     && englishText.includes('Alpha: The wall body did not build (the union came back empty)')
     && englishText.includes('<img id="preflight-injection" src=x>');
   result.failureRendersNoApply = !card.renderRoot.querySelector('hp-dialog .btn.on');
-  await card._runAlignToGrid(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
   result.redPreflightMakesZeroWrites = sent.length === 0;
   result.redPreflightPreservesAllState =
     JSON.stringify(card._serverCfg) === JSON.stringify(beforeRed.config)
@@ -96,12 +96,12 @@ const out = await page.evaluate(async () => {
   // newly red result replaces the dialog and still cannot write.
   forceRed = false;
   setCandidate('en');
-  card._openAlignDialog(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const checksAfterGreenPreview = checks;
   result.greenPreviewOffersApply = !!card.renderRoot.querySelector('hp-dialog .btn.on');
   card._alignDialog.config.spaces[0].title = 'Changed after preview';
   forceRed = true;
-  await card._runAlignToGrid(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
   result.changedFingerprintRechecks = checks === checksAfterGreenPreview + 1;
   result.changedFingerprintFailsClosed = sent.length === 0
     && !card._alignDialog.preflight.ok
@@ -112,10 +112,10 @@ const out = await page.evaluate(async () => {
   forceRed = false;
   setCandidate('en');
   const callsBeforeGreen = sent.length;
-  card._openAlignDialog(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const checksBeforeApply = checks;
   const previewCandidate = clone(card._alignDialog.config);
-  await card._runAlignToGrid(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
   result.unchangedApplyDoesNotRecheck = checks === checksBeforeApply;
   result.greenApplyMakesOneAtomicWrite = sent.length === callsBeforeGreen + 1
     && JSON.stringify(sent.at(-1).config) === JSON.stringify(previewCandidate);
@@ -125,7 +125,7 @@ const out = await page.evaluate(async () => {
   // The just-written candidate is now a no-op: it skips the geometry pass and
   // retains the established message/absence of Apply.
   const checksBeforeNoOp = checks;
-  card._openAlignDialog(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const noOpText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.noOpSkipsPreflight = checks === checksBeforeNoOp
     && card._alignDialog.preflight === null;
@@ -137,7 +137,7 @@ const out = await page.evaluate(async () => {
   // The same bounded copy and fallback/count policy is localized in Russian.
   forceRed = true;
   setCandidate('ru');
-  card._openAlignDialog(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const russianText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.russianFailureHasExactCopy = russianText.includes(
     'Не удалось безопасно проверить геометрию следующих пространств: Alpha, beta, Пространство 3 и ещё 1.',

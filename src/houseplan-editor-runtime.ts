@@ -148,6 +148,7 @@ import {
 import { finishMarkerDialogClose } from './marker-dialog-close';
 import { renderRadarSection } from './editors/radar-section';
 import { radarDiscardRequest, RadarSetupController } from './radar-setup';
+import { OptimizePlansDialog, type OptimizePlansDialogState } from './optimize-plans-dialog';
 import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody, floorMinusBodies, geometryArea,
   partitionBody, pointInPhysicalBody, sameColumnPlacement, type PartitionOpeningCut,
@@ -182,7 +183,6 @@ import {
   spaceModels, iconCqw, gridLevels, CANVAS_LIMIT, SANE_LIMIT, GRID_PITCH, GRID_STEP_N,
   PLAN_SCALE_MIN, PLAN_SCALE_MAX, clampCanvasR, clampCanvasN, type Rect,
 } from './space-geometry';
-import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import {
   WALL_SEGMENT_MODEL_VERSION,
   adoptWallSegmentModelCandidateInPlace, commitWallSegmentModel,
@@ -199,7 +199,7 @@ import {
   type OptimizeGeometryPreflightResult,
 } from './plan-geometry-preflight';
 import {
-  canonicalizeConfigGeometry, canonicalizePosition, formatLatticeShiftCm,
+  canonicalizeConfigGeometry, canonicalizePosition,
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite, type OptimisticAttempt } from './serialized-write-queue';
 import { applyCalibrationProposal, saveAutomaticCalibration, saveManualCalibration, saveVacuumMatrix,
@@ -440,7 +440,7 @@ export interface HouseplanEditorHostPort {
   _adoptAuthoritative: (input: GatedAdoptionInput) => Promise<GatedAdoptionResult>; // #500: the one adoption entry
   _rollbackOptimistic: (attempt: OptimisticAttempt<ServerConfig>) => boolean;
   readonly _adoption: ConfigAdoption; // #500: identity owner; _serverCfg/_cfgRev/_layout/_layoutRev delegate to it
-  _alignDialog: { report: OptimizeReport; config: any; layout: Record<string, any>; preflight: OptimizeGeometryPreflightResult | null; cm: number; where: string; changed: boolean; busy: boolean; removeLiveMissingPositions: boolean; } | null;
+  _alignDialog: OptimizePlansDialogState | null;
   _alignPoint: number[] | null;
   _allRoomsFlat: () => { value: string; label: string; }[];
   _angleField: (value: unknown) => string;
@@ -668,7 +668,6 @@ export interface HouseplanEditorHostPort {
   _pointerModality: PointerModalityController;
   _pointers: Map<number, { x: number; y: number; }>;
   _pos: (d: DevItem) => { x: number; y: number; };
-  _preflightClipboardFallback: string | null;
   _prepareModeTransition: (request: number, from: ModeVisualState, targetMode: HouseplanMode, targetZoom: number, targetCenterX?: number, targetCenterY?: number) => void;
   _reducedMotion: boolean;
   _rawPhysicalBodiesR: () => number[][][];
@@ -678,7 +677,6 @@ export interface HouseplanEditorHostPort {
   _renderCardPreview: (spaceScale: number, nameScale: number, labelScale: number) => TemplateResult;
   _renderCompass: () => TemplateResult;
   _renderPlanHass: any;
-  _reportedPreflightFingerprint: string | null;
   _resign: () => void;
   _resize: ResizeController<
     ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
@@ -810,6 +808,8 @@ export class HouseplanEditorRuntime {
   // к контроллеру оттуда. Остальной класс использует `public _x` — поле
   // следует той же договорённости, а не заводит обёртку ради одного слова.
   public readonly _radarSetup: RadarSetupController;
+  /** #642: «Оптимизировать планы» — свой модуль с узким портом, не делегаты карточки. */
+  public readonly optimizePlans: OptimizePlansDialog;
   public constructor(public readonly host: HouseplanEditorHostPort) {
     this._decorImages = new DecorImageEditor(host, {
       decorSnap: (raw, pointerType) => this._decorSnap(raw, pointerType),
@@ -835,6 +835,26 @@ export class HouseplanEditorRuntime {
         };
       },
       confirmDiscard: () => host._confirmDanger(radarDiscardRequest((key) => host._t(key))),
+    });
+    this.optimizePlans = new OptimizePlansDialog({
+      dialog: () => host._alignDialog,
+      setDialog: (next) => { host._alignDialog = next; },
+      t: (key, vars) => host._t(key, vars),
+      hass: () => host.hass,
+      config: () => host._serverCfg,
+      planReady: () => !!host._norm,
+      layout: () => host._layout,
+      integrationVersion: () => host._haIntegrationVersion,
+      cardVersion: () => displayVersion(CARD_VERSION),
+      requestUpdate: () => host.requestUpdate(),
+      showToast: (message) => host._showToast(message),
+      errorText: (error) => host._errText(error),
+      checkGeometry: (config) => host._checkOptimizeGeometry(config),
+      referenceContext: (removeLive) => this._optimizeReferenceContext(removeLive),
+      showMigrationBlocked: (error) => this._showWallModelMigrationBlocked(error),
+      clearGeometryGesture: () => this._clearGeometryGesture(),
+      commit: (config, layout) => commitPlanOptimization(host, config, layout),
+      reloadAfterConflict: () => Promise.all([host._reloadConfigOnly(true), host._reloadLayoutOnly()]),
     });
     host._editorSecondary = new EditorSecondaryController({
       root: () => host.renderRoot as ShadowRoot,
@@ -8334,7 +8354,7 @@ public _saveSpaceCopy(): Promise<void> {
     return saveSpaceCopy(this.host, {
       clearGeometryGesture: () => this._clearGeometryGesture(),
       optimizeReferenceContext: () => this._optimizeReferenceContext(false),
-      reportPreflightFailure: (result, config) => this._reportPreflightFailure(result, config),
+      reportPreflightFailure: (result, config) => this.optimizePlans.reportPreflightFailure(result, config),
       saveConfigNow: (attempt) => this._saveConfigNow(attempt),
       setMode: () => this._setMode('plan'),
       showWallModelMigrationBlocked: (error) => this._showWallModelMigrationBlocked(error),
@@ -8931,67 +8951,6 @@ public _renderSupportDialog(): TemplateResult {
     </hp-dialog>`;
   }
 
-public _preflightDiagnostics(
-    preflight: OptimizeGeometryPreflightResult,
-    candidate: ServerConfig | null,
-  ): object {
-    // CODE-REVIEW-295-r1 M1: hash the CANDIDATE spaces the preflight judged,
-    // not the already-saved config — a saved-config hash is exactly what a
-    // space export would reproduce, and the block promises what the export
-    // does not carry.
-    const spacesById = new Map(((candidate as any)?.spaces || [])
-      .map((space) => [String(space?.id || ''), space]));
-    return {
-      kind: 'houseplan-optimize-preflight',
-      origin: 'runtime',
-      cardVersion: displayVersion(CARD_VERSION),
-      checkedAt: new Date().toISOString(),
-      preflightFingerprint: preflight.fingerprint,
-      failures: preflight.failures.map((failure) => ({
-        spaceId: failure.spaceId,
-        displayName: failure.displayName,
-        reason: failure.reason,
-        detail: failure.detail ?? null,
-        spaceGeometryFingerprint: spacesById.has(failure.spaceId)
-          ? spacePhysicalGeometryFingerprint(spacesById.get(failure.spaceId))
-          : null,
-      })),
-    };
-  }
-
-public _reportPreflightFailure(
-    preflight: OptimizeGeometryPreflightResult,
-    candidate: ServerConfig | null,
-  ): void {
-    if (preflight.ok || preflight.fingerprint === this.host._reportedPreflightFingerprint) return;
-    this.host._reportedPreflightFingerprint = preflight.fingerprint;
-    // eslint-disable-next-line no-console
-    console.warn('[houseplan] optimize preflight failed', this._preflightDiagnostics(preflight, candidate));
-  }
-
-public _preflightVersionsDiffer(): boolean {
-    const integration = this.host._haIntegrationVersion;
-    return typeof integration === 'string' && integration.length > 0
-      && integration !== displayVersion(CARD_VERSION);
-  }
-
-public async _copyPreflightDiagnostics(): Promise<void> {
-    const preflight = this.host._alignDialog?.preflight;
-    if (!preflight || preflight.ok) return;
-    const text = JSON.stringify(
-      this._preflightDiagnostics(preflight, this.host._alignDialog?.config ?? null), null, 2,
-    );
-    try {
-      await navigator.clipboard.writeText(text);
-      this.host._preflightClipboardFallback = null;
-      this.host._showToast(this.host._t('gs.preflight_copied'));
-    } catch {
-      // Insecure context / embedded webview: surface the block inline so the
-      // owner can select and copy it by hand.
-      this.host._preflightClipboardFallback = text;
-    }
-  }
-
 public _checkOptimizeGeometryImpl(config: ServerConfig): OptimizeGeometryPreflightResult {
     return checkOptimizeGeometry(config, {
       fallbackSpaceName: (index) => this.host._t('gs.align_preflight_space', {
@@ -9073,90 +9032,6 @@ public _optimizeReferenceContext(
       },
       removeLiveMissingPositions,
     };
-  }
-
-public _previewAlignDialog(removeLiveMissingPositions: boolean): void {
-    if (!this.host._norm || !this.host._serverCfg) return;
-    const spaces = this.host._serverCfg.spaces || [];
-    let r;
-    try {
-      r = optimizePlans(
-        this.host._serverCfg,
-        this.host._layout || {},
-        this._optimizeReferenceContext(removeLiveMissingPositions),
-      );
-    } catch (error) {
-      this._showWallModelMigrationBlocked(error);
-      return;
-    }
-    const preflight = r.changed ? this.host._checkOptimizeGeometry(r.config) : null;
-    if (preflight) this._reportPreflightFailure(preflight, r.config);
-    // The maximum geometry shift is an UPPER BOUND, not a sample. The run
-    // measured every element in the centimetres of ITS OWN space — converting
-    // one normalised maximum through the first space's `cell_cm` understated
-    // a two-scale plan twentyfold (AUD-158B1-01) — and the last tenth is
-    // rounded UP, so the promise can never be smaller than the deed.
-    const cm = Math.ceil(r.report.maxShiftCm * 10) / 10;
-    const sp = spaces.find((x: any) => x?.id != null && String(x.id) === r.report.maxSpace);
-    const where = spaces.length > 1 && sp ? String(sp.title || sp.id) : '';
-    // CODE-REVIEW-295-r1 M2: the inline clipboard fallback belongs to one
-    // dialog showing — a reopened dialog must not display the previous
-    // refusal's JSON while the visible reasons already describe a new one.
-    this.host._preflightClipboardFallback = null;
-    this.host._alignDialog = {
-      report: r.report, config: r.config, layout: r.layout, cm, where,
-      preflight, changed: r.changed, busy: false, removeLiveMissingPositions,
-    };
-  }
-
-public _openAlignDialog = (): void => this._previewAlignDialog(false);
-
-public _toggleOptimizeLivePositions = (): void => {
-    const dialog = this.host._alignDialog;
-    if (!dialog || dialog.busy || !dialog.report.liveMissingPositions.length) return;
-    this._previewAlignDialog(!dialog.removeLiveMissingPositions);
-  };
-
-public async _runAlignToGrid(): Promise<void> {
-    let d = this.host._alignDialog;
-    if (!d || d.busy || !this.host._serverCfg || !d.changed || !d.preflight?.ok) return;
-    const fingerprint = contentFingerprint(d.config);
-    if (d.preflight.fingerprint !== fingerprint) {
-      const preflight = this.host._checkOptimizeGeometry(d.config);
-      this._reportPreflightFailure(preflight, d.config);
-      d = { ...d, preflight };
-      this.host._alignDialog = d;
-      if (!preflight.ok) return;
-    }
-    this._clearGeometryGesture();
-    this.host._alignDialog = { ...d, busy: true };
-    try {
-      await commitPlanOptimization(this.host, d.config, d.layout);
-      this.host._alignDialog = null;
-      this.host._preflightClipboardFallback = null;
-      this.host._showToast(this.host._t('gs.align_done', {
-        n: String(d.report.moved),
-        m: String(d.report.migrated + d.report.canonicalized
-          + d.report.coordsCanonicalized + d.report.latticeCoordinatesCanonicalized
-          + d.report.wallsMerged + d.report.spansMerged
-          + d.report.partitionsMerged + d.report.partitionsReconciled
-          + d.report.openingsRehosted + d.report.wallsStraightened),
-        r: String(d.report.spaceRefsRemapped + d.report.roomRefsRemapped
-          + d.report.positionsRemapped + d.report.markersDetached
-          + d.report.orphanRoomLabelsRemoved + d.report.orphanDevicePositionsRemoved
-          + d.report.orphanGroupPositionsRemoved),
-      }));
-    } catch (e: any) {
-      if (this.host._alignDialog) this.host._alignDialog = { ...this.host._alignDialog, busy: false };
-      if (e?.code === 'wall_model_client_outdated') {
-        this.host._showToast(this.host._t('toast.wall_model_client_outdated'));
-        return;
-      }
-      if (e?.code === 'conflict') {
-        await Promise.all([this.host._reloadConfigOnly(true), this.host._reloadLayoutOnly()]);
-      }
-      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
-    }
   }
 
 public async _undoPlanOptimization(): Promise<void> {
@@ -9687,243 +9562,6 @@ public _rangeInput(
           .disabled=${disabled} aria-label=${ariaLabel || nothing} @input=${h} @change=${h}></ha-slider>`
       : html`<input type="range" min=${min} max=${max} step=${step} .value=${String(value)}
           ?disabled=${disabled} aria-label=${ariaLabel || nothing} @input=${h} />`;
-  }
-
-public _renderAlignDialog(): TemplateResult {
-    const d = this.host._alignDialog!;
-    const r = d.report;
-    const failed = d.changed && !d.preflight?.ok;
-    const failures = d.preflight?.failures || [];
-    const visibleNames = failures.slice(0, 3).map((failure) => failure.displayName);
-    const spaces = visibleNames.length
-      ? visibleNames.join(', ')
-      : this.host._t('gs.align_preflight_space', { n: '1' });
-    const remaining = Math.max(0, failures.length - visibleNames.length);
-    const more = remaining
-      ? this.host._t('gs.align_preflight_more', { n: String(remaining) })
-      : '';
-    const repaired = r.spaceRefsRemapped + r.roomRefsRemapped
-      + r.positionsRemapped + r.markersDetached;
-    const modelMaintenance = r.migrated + r.canonicalized + r.coordsCanonicalized
-      + r.wallSegmentsMigrated
-      + r.roomDraftsMigrated + r.roomDraftSegmentsMigrated
-      + r.wallsMerged + r.spansMerged + r.partitionsMerged
-      + r.partitionsReconciled + r.openingsRehosted;
-    const gridWarning = r.moved + r.rotated + r.coordsCanonicalized + r.wallsStraightened;
-    const straightenCm = Math.ceil(r.maxStraightenShiftCm * 10) / 10;
-    const straightenSpace = (this.host._serverCfg?.spaces || []).find(
-      (space) => String(space?.id || '') === r.maxStraightenSpace,
-    );
-    const straightenWhere = (this.host._serverCfg?.spaces || []).length > 1 && straightenSpace
-      ? String(straightenSpace.title || straightenSpace.id) : '';
-    const removed = r.orphanRoomLabelsRemoved + r.orphanDevicePositionsRemoved
-      + r.orphanGroupPositionsRemoved;
-    const liveNames = r.liveMissingPositions.map((item) => item.name).filter(Boolean);
-    const visibleLiveNames = liveNames.slice(0, 3).join(', ');
-    const remainingLiveNames = Math.max(0, liveNames.length - 3);
-    const liveNamesText = visibleLiveNames
-      ? this.host._t('gs.optimize_live_names', {
-          names: visibleLiveNames,
-          more: remainingLiveNames
-            ? this.host._t('gs.optimize_reference_more', { n: String(remainingLiveNames) }) : '',
-        })
-      : '';
-    const registryLimited = r.unverifiedPositions.some(
-      (item) => item.reason === 'registry_unavailable',
-    );
-    const detailStatus = (item: typeof r.removedPositions[number]): string => {
-      if (r.removedPositions.some((removedItem) => removedItem.id === item.id)) {
-        return this.host._t('gs.optimize_detail_removed');
-      }
-      if (r.liveMissingPositions.some((liveItem) => liveItem.id === item.id)) {
-        return this.host._t('gs.optimize_detail_live');
-      }
-      return this.host._t('gs.optimize_detail_unverified');
-    };
-    const detailKind = (kind: typeof r.removedPositions[number]['kind']): string => this.host._t(
-      kind === 'room_label' ? 'gs.optimize_detail_room_label'
-        : kind === 'group' ? 'gs.optimize_detail_group'
-        : kind === 'device' ? 'gs.optimize_detail_device'
-        : 'gs.optimize_detail_unknown',
-    );
-    const referenceDetails = [
-      ...r.removedPositions,
-      ...r.liveMissingPositions.filter((item) => (
-        !r.removedPositions.some((removedItem) => removedItem.id === item.id)
-      )),
-      ...r.unverifiedPositions,
-    ];
-    const visibleDetails = referenceDetails.slice(0, 10);
-    const remainingDetails = Math.max(0, referenceDetails.length - visibleDetails.length);
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="settings" .title=${this.host._t('gs.align_title')} icon="mdi:broom"
-      dismiss-on-scrim @hp-close=${() => { this.host._alignDialog = null; this.host._preflightClipboardFallback = null; }}>
-        <div class="body">
-          ${failed
-            ? html`
-              <p class="alignmsg">${this.host._t('gs.align_preflight_failed', { spaces, more })}</p>
-              ${failures.slice(0, 10).map((failure) => html`<p class="alignmsg">
-                ${failure.displayName}: ${this.host._t(`gs.preflight_reason_${failure.reason}` as I18nKey)}
-              </p>`)}
-              ${failures.length > 10 ? html`<p class="alignmsg">
-                ${this.host._t('gs.align_preflight_more', { n: String(failures.length - 10) })}
-              </p>` : nothing}
-              <div class="rhint">${this.host._t('gs.align_preflight_hint')}</div>
-              ${this._preflightVersionsDiffer() ? html`
-                <div class="rhint">${this.host._t('gs.preflight_update_hint')}</div>` : nothing}
-              <div class="row">
-                <button class="btn ghost" @click=${() => this._copyPreflightDiagnostics()}>
-                  <ha-icon icon="mdi:content-copy"></ha-icon>
-                  ${this.host._t('gs.preflight_copy')}
-                </button>
-              </div>
-              ${this.host._preflightClipboardFallback ? html`<details open>
-                <summary>${this.host._t('gs.preflight_copy')}</summary>
-                <pre style="user-select:text;white-space:pre-wrap">${this.host._preflightClipboardFallback}</pre>
-              </details>` : nothing}`
-            : !d.changed
-            ? html`<p class="alignmsg">${this.host._t(
-                r.liveMissingPositions.length || r.unverifiedPositions.length
-                  || r.nestedRefsUnresolved
-                  ? 'gs.optimize_no_automatic_changes' : 'gs.align_none',
-              )}</p>`
-            : html`
-              ${r.moved ? html`<p class="alignmsg">${this.host._t('gs.align_count', {
-                  n: String(r.moved), total: String(r.total), cm: String(d.cm),
-                })}</p>` : nothing}
-              ${r.latticeCoordinatesCanonicalized ? html`
-                <p class="alignmsg">${this.host._t('gs.optimize_lattice_summary', {
-                  n: String(r.latticeCoordinatesCanonicalized),
-                  cm: formatLatticeShiftCm(r.latticeMaxShiftCm),
-                })}</p>
-                ${r.latticeSpaces.map((space) => html`<p class="alignmsg">${this.host._t(
-                  'gs.optimize_lattice_space', {
-                    space: space.space,
-                    n: String(space.canonicalized),
-                    far: String(space.far),
-                  },
-                )}</p>`)}
-              ` : nothing}
-              ${d.where
-                ? html`<p class="alignmsg">${this.host._t('gs.align_where', { s: d.where })}</p>`
-                : nothing}
-              ${r.rotated
-                ? html`<p class="alignmsg">${this.host._t('gs.align_turned', { n: String(r.rotated) })}</p>`
-                : nothing}
-              ${r.wallSegmentsMigrated ? html`<p class="alignmsg">${this.host._t(
-                  'gs.wall_segments_migrated', { n: String(r.wallSegmentsMigrated) },
-                )}</p>` : nothing}
-              ${r.roomDraftsMigrated || r.roomDraftSegmentsMigrated ? html`
-                <p class="alignmsg">${this.host._t('gs.room_drafts_migrated', {
-                  drafts: String(r.roomDraftsMigrated),
-                  segments: String(r.roomDraftSegmentsMigrated),
-                })}</p>` : nothing}
-              ${r.legacyZeroWallsMigrated ? html`<p class="alignmsg">${this.host._t(
-                  'gs.zero_walls_migrated', { n: String(r.legacyZeroWallsMigrated) },
-                )}</p>` : nothing}
-              ${modelMaintenance ? html`<p class="alignmsg">${this.host._t('gs.optimize_changes', {
-                  m: String(r.migrated), c: String(r.canonicalized),
-                  p: String(r.coordsCanonicalized), w: String(r.wallsMerged),
-                  s: String(r.spansMerged), i: String(r.partitionsMerged),
-                })}</p>` : nothing}
-              ${r.partitionsReconciled ? html`<p class="alignmsg">${this.host._t(
-                  'gs.optimize_coincident_partitions', { n: String(r.partitionsReconciled) },
-                )}</p>` : nothing}
-              ${r.openingsRehosted ? html`<p class="alignmsg">${this.host._t(
-                  'gs.optimize_openings_rehosted', { n: String(r.openingsRehosted) },
-                )}</p>` : nothing}
-              ${r.wallsStraightened ? html`<p class="alignmsg">${this.host._t(
-                  'gs.optimize_walls_straightened', {
-                    n: String(r.wallsStraightened), cm: String(straightenCm),
-                  },
-                )}</p>` : nothing}
-              ${straightenWhere ? html`<p class="alignmsg">${this.host._t(
-                  'gs.optimize_walls_straightened_where', { s: straightenWhere },
-                )}</p>` : nothing}
-              ${r.glowSpacesMigrated || r.glowRoomsMigrated
-                ? html`<p class="alignmsg">${this.host._t('gs.optimize_glow_migration', {
-                    spaces: String(r.glowSpacesMigrated),
-                    rooms: String(r.glowRoomsMigrated),
-                  })}</p>`
-                : nothing}
-              ${gridWarning ? html`<div class="rhint">${this.host._t('gs.align_warn')}</div>` : nothing}`}
-          ${!failed && r.wallsStraightenSkipped ? html`<p class="rhint">${this.host._t(
-              'gs.optimize_walls_straighten_skipped', {
-                n: String(r.wallsStraightenSkipped),
-              },
-            )}</p>` : nothing}
-          ${repaired
-            ? html`<p class="alignmsg">${this.host._t('gs.optimize_references', {
-                spaces: String(r.spaceRefsRemapped), rooms: String(r.roomRefsRemapped),
-                positions: String(r.positionsRemapped), detached: String(r.markersDetached),
-              })}</p>`
-            : nothing}
-          ${removed
-            ? html`<p class="alignmsg">${this.host._t('gs.optimize_orphans_removed', {
-                total: String(removed),
-                rooms: String(r.orphanRoomLabelsRemoved),
-                devices: String(r.orphanDevicePositionsRemoved),
-                groups: String(r.orphanGroupPositionsRemoved),
-              })}</p>`
-            : nothing}
-          ${r.liveMissingPositions.length
-            ? html`<div class="optimize-live">
-                <p class="alignmsg">${this.host._t(d.removeLiveMissingPositions
-                  ? 'gs.optimize_live_positions_remove' : 'gs.optimize_live_positions', {
-                  n: String(r.liveMissingPositions.length), names: liveNamesText,
-                })}</p>
-                <button class="btn ghost optimize-cleanup" type="button"
-                  aria-pressed=${d.removeLiveMissingPositions ? 'true' : 'false'}
-                  @click=${() => this._toggleOptimizeLivePositions()} ?disabled=${d.busy}>
-                  <ha-icon icon=${d.removeLiveMissingPositions ? 'mdi:undo' : 'mdi:map-marker-remove-outline'}></ha-icon>
-                  ${this.host._t(d.removeLiveMissingPositions
-                    ? 'gs.optimize_live_keep' : 'gs.optimize_live_remove')}
-                </button>
-                ${d.removeLiveMissingPositions
-                  ? html`<div class="rhint optimize-selected" role="status">
-                      ${this.host._t('gs.optimize_live_selected')}
-                    </div>`
-                  : nothing}
-              </div>`
-            : nothing}
-          ${r.unverifiedPositions.length
-            ? html`<div class="rhint" role="alert">
-                ${this.host._t('gs.optimize_unverified', {
-                  n: String(r.unverifiedPositions.length),
-                })}
-                ${registryLimited ? ` ${this.host._t('gs.optimize_registry_limited')}` : ''}
-              </div>`
-            : nothing}
-          ${r.nestedRefsUnresolved
-            ? html`<div class="rhint" role="alert">${this.host._t('gs.optimize_vacuum_warning', {
-                n: String(r.nestedRefsUnresolved),
-              })}</div>`
-            : nothing}
-          ${referenceDetails.length
-            ? html`<details class="optimize-details">
-                <summary>${this.host._t('gs.optimize_details')}</summary>
-                <ul>
-                  ${visibleDetails.map((item) => html`<li>${this.host._t('gs.optimize_detail_item', {
-                    status: detailStatus(item), kind: detailKind(item.kind),
-                    id: item.id, space: item.spaceId,
-                  })}</li>`)}
-                </ul>
-                ${remainingDetails
-                  ? html`<div class="rhint">${this.host._t('gs.optimize_details_more', {
-                      n: String(remainingDetails),
-                    })}</div>`
-                  : nothing}
-              </details>`
-            : nothing}
-        </div>
-        <div class="row" slot="footer">
-          <span class="spacer"></span>
-          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => { this.host._alignDialog = null; this.host._preflightClipboardFallback = null; }}>${this.host._t('btn.cancel')}</button>
-          ${!d.changed || !d.preflight?.ok ? nothing : html`
-            <button class="btn on" data-hp="dialog-confirm" @click=${() => this._runAlignToGrid()} ?disabled=${d.busy}>
-              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this.host._t('gs.align_run')}
-            </button>`}
-        </div>
-    </hp-dialog>`;
   }
 
 public _renderSettingsDialog(): TemplateResult { return renderGeneralSettingsDialog.call(this); }

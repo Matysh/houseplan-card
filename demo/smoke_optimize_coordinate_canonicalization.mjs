@@ -95,7 +95,7 @@ const out = await page.evaluate(async () => {
   card._modelCache = null; card._frame = null; card._space = 'noisy';
   card.requestUpdate(); await card.updateComplete;
 
-  card._openAlignDialog(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const preview = card._alignDialog;
   const previewText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.previewOffersInvisibleCleanup = !!preview?.changed
@@ -121,8 +121,8 @@ const out = await page.evaluate(async () => {
   result.cancelDoesNotWrite = sent.length === 0
     && JSON.stringify(card._serverCfg) === JSON.stringify(original);
 
-  card._openAlignDialog(); await card.updateComplete;
-  await card._runAlignToGrid(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
   result.applyUsesOneAtomicWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   result.applyStoresOnlyCanonicalRoomCoordinates = card._serverCfg.spaces[0].rooms
     .every((room) => room.poly.every(([x, y]) => isCanonical(x) && isCanonical(y)));
@@ -135,7 +135,7 @@ const out = await page.evaluate(async () => {
     && !lastToast.includes('0 records maintained');
 
   await Promise.all([card._reloadConfigOnly(true), card._reloadLayoutOnly()]);
-  card._openAlignDialog(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   result.serverEventReloadIsExactNoOp = card._alignDialog?.changed === false
     && card._alignDialog.report.latticeCoordinatesCanonicalized === 0
     && !card.renderRoot.querySelector('hp-dialog .btn.on');
@@ -145,7 +145,7 @@ const out = await page.evaluate(async () => {
   card._cfgContentFingerprint = ''; card._layoutContentFingerprint = '';
   card._loadOk = false;
   await card._loadFromServer();
-  card._openAlignDialog(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   result.coldReloadIsExactNoOp = card._alignDialog?.changed === false
     && card._alignDialog.report.latticeCoordinatesCanonicalized === 0
     && !card.renderRoot.querySelector('hp-dialog .btn.on');

@@ -216,7 +216,7 @@ const out = await page.evaluate(async () => {
   c._modelCache = null; c._frame = null; c._space = 'g1';
   c.requestUpdate(); await c.updateComplete;
 
-  c._openAlignDialog();
+  c._editorRuntime.optimizePlans.open();
   await c.updateComplete;
   const dlg = c._alignDialog;
   o.alignDialogOpens = !!dlg && !!sr().querySelector('hp-dialog .alignmsg');
@@ -229,7 +229,7 @@ const out = await page.evaluate(async () => {
   const sent = [];
   const base = c.hass.callWS;
   c.hass = { ...c.hass, callWS: async (m) => { sent.push(m.type); return base(m); } };
-  await c._runAlignToGrid();
+  await c._editorRuntime.optimizePlans.run();
   await c.updateComplete;
   o.alignDialogClosed = c._alignDialog === null;
   o.alignUsedAtomicConfigLayoutWrite = sent.filter((t) => t === 'houseplan/plan/optimize').length === 1;
@@ -249,7 +249,7 @@ const out = await page.evaluate(async () => {
     g.openings[0].y - (w0[1] + tt * (w1[1] - w0[1]))) < 1e-9;
 
   // ---- 2b) …and the second run has nothing to do ------------------------
-  c._openAlignDialog();
+  c._editorRuntime.optimizePlans.open();
   await c.updateComplete;
   o.secondRunMovesNothing = c._alignDialog.report.moved === 0;
   o.secondRunOffersNoButton = !sr().querySelector('hp-dialog .btn.on');
@@ -272,7 +272,7 @@ const out = await page.evaluate(async () => {
   c._layout = {};
   c._modelCache = null; c._frame = null; c._space = 'm1';
   c.requestUpdate(); await c.updateComplete;
-  c._openAlignDialog(); await c.updateComplete;
+  c._editorRuntime.optimizePlans.open(); await c.updateComplete;
   const md = c._alignDialog;
   o.alignPromiseUsesTheOwnScaleOfEachSpace = !!md && md.cm >= 50 && md.cm < 51;
   o.alignPromiseNamesTheSpaceItBelongsTo = !!md && md.where === 'Attic'
@@ -292,11 +292,11 @@ const out = await page.evaluate(async () => {
   c._layout = {};
   c._modelCache = null; c._frame = null; c._space = 'a1';
   c.requestUpdate(); await c.updateComplete;
-  c._openAlignDialog(); await c.updateComplete;
+  c._editorRuntime.optimizePlans.open(); await c.updateComplete;
   const ad = c._alignDialog;
   o.angleOnlyOpeningCounts = !!ad && ad.report.moved === 1 && ad.report.rotated === 1;
   o.angleOnlyOpeningOffersTheButton = !!sr().querySelector('hp-dialog .btn.on');
-  await c._runAlignToGrid();
+  await c._editorRuntime.optimizePlans.run();
   await c.updateComplete;
   o.angleOnlyOpeningIsActuallyFixed = c._serverCfg.spaces[0].openings[0].angle === 0;
 

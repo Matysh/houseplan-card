@@ -92,7 +92,7 @@ const out = await page.evaluate(async () => {
   card.requestUpdate();
   await card.updateComplete;
 
-  card._openAlignDialog();
+  card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
   const preview = card._alignDialog;
   const previewBody = card.renderRoot.querySelector('hp-dialog .body');
@@ -134,9 +134,9 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   result.cancelWritesNothing = calls.length === 0;
 
-  card._openAlignDialog();
+  card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
-  card._toggleOptimizeLivePositions();
+  card._editorRuntime.optimizePlans.toggleLivePositions();
   await card.updateComplete;
   const selectedText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.explicitCleanupRebuildsPreviewWithoutWriting = calls.length === 0
@@ -146,7 +146,7 @@ const out = await page.evaluate(async () => {
     && card.renderRoot.querySelector('.optimize-cleanup')?.getAttribute('aria-pressed') === 'true'
     && selectedText.includes('They are selected for removal.')
     && !selectedText.includes('They will be kept.');
-  await card._runAlignToGrid();
+  await card._editorRuntime.optimizePlans.run();
   await card.updateComplete;
   result.applyUsesExactAtomicEndpoint = calls.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   const restored = card._devices.find((device) => device.id === 'orphan');
@@ -154,7 +154,7 @@ const out = await page.evaluate(async () => {
     && restored.icon === 'mdi:washing-machine'
     && !!card.renderRoot.querySelector('.dev[data-id="orphan"]');
 
-  card._openAlignDialog();
+  card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
   const noOpText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.remainingOnlyWarningHasNoApply = card._alignDialog?.changed === false

@@ -64,7 +64,7 @@ const out = await page.evaluate(async () => {
   card._modelCache = null; card._frame = null; card._space = 'coincident';
   card.requestUpdate(); await card.updateComplete;
 
-  card._openAlignDialog(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const preview = card._alignDialog;
   const previewSpace = preview?.config?.spaces?.[0];
   result.previewIsExact = !!preview?.changed && preview.preflight?.ok === true
@@ -77,7 +77,7 @@ const out = await page.evaluate(async () => {
     && JSON.stringify(card._serverCfg) === JSON.stringify(original);
   result.reportRendersBothCounters = card.renderRoot.querySelectorAll('hp-dialog .alignmsg').length >= 2;
 
-  await card._runAlignToGrid(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
   const applied = card._serverCfg.spaces[0];
   result.applyUsesOneAtomicWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   result.applyKeepsOpeningFields = applied.partitions == null
@@ -103,8 +103,8 @@ const out = await page.evaluate(async () => {
 
   // Apply once more and prove the ordinary shared wall is no longer hidden
   // underneath an independent-wall blocker in the remaining Thickness tool.
-  card._openAlignDialog(); await card.updateComplete;
-  await card._runAlignToGrid(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
   card._setMode('plan'); card._markup = true;
   card._modelCache = null; card.requestUpdate(); await card.updateComplete;
   card._tool = 'wallthick';

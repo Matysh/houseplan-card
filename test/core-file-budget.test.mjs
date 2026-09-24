@@ -33,7 +33,11 @@ const CAPS = {
   // ни карточка, ни харнесс (реализация живёт в рантайме и зовётся оттуда),
   // 190 неиспользуемых импортов и 9 мёртвых констант — 784 строки. Потолок
   // опущен на выигрыш, запас над фактом три строки.
-  'src/houseplan-card.ts': 12951,
+  // 2026-09-24, #642: диалог «Оптимизировать планы» уехал в
+  // src/optimize-plans-dialog.ts — ушли пять делегатов, две стрелки-заглушки,
+  // поле фолбэка буфера обмена, дедуп dev-лога и литерал типа состояния,
+  // 62 строки. Потолок опущен на выигрыш, запас прежний.
+  'src/houseplan-card.ts': 12889,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.
@@ -45,7 +49,10 @@ const CAPS = {
   // 2026-09-23, #624: снесены мёртвые копии объявлений карточки (warm-boot,
   // LS_*, GLOW_*, debounce, navigate, lruRead — 31 объявление и 6 типов) и
   // 196 неиспользуемых импортов — 400 строк. Потолок опущен на выигрыш.
-  'src/houseplan-editor-runtime.ts': 12359,
+  // 2026-09-24, #642: диалог «Оптимизировать планы» (превью, запуск,
+  // диагностика preflight, разметка) уехал в src/optimize-plans-dialog.ts за
+  // узкий порт из 18 членов — 362 строки. Потолок опущен на выигрыш.
+  'src/houseplan-editor-runtime.ts': 11997,
 };
 
 /**

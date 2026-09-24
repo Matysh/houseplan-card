@@ -245,7 +245,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             </div>` : nothing}
           ${subsection({ title: t('gs.grid_group'), help: this._help('gs.grid_group.help') })}
           <div class="hpf-actions">
-            <button class="btn" @click=${() => this._openAlignDialog()}>
+            <button class="btn" @click=${() => this.optimizePlans.open()}>
               <ha-icon icon="mdi:broom"></ha-icon>${t('gs.align_all')}
             </button>
             ${host._canOptimizeUndo && host._undoKind !== 'import' ? html`

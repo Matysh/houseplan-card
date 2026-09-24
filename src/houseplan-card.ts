@@ -12,6 +12,7 @@ import { keyed } from 'lit/directives/keyed.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
+import type { OptimizePlansDialogState } from './optimize-plans-dialog';
 import './hp-confirm';
 import {
   HpConfirmController,
@@ -137,7 +138,6 @@ import {
   iconUnit, iconCqw, itemOf, snapPt, MIN_ZOOM, PAN_SLACK, CANVAS_LIMIT, GRID_PITCH, GRID_STEP_N,
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
-import { type OptimizeReport } from './plan-optimizer';
 import { resolveZeroWalls, zeroWallStyleOf } from './zero-walls';
 import {
   geometryOpenings, geometryPartitionOpeningCuts, geometryRoomOpeningInputs,
@@ -2003,9 +2003,6 @@ export class HouseplanCard extends LitElement {
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
-  /** Optimization preview plus the exact pair, so commit cannot differ from it. */
-  /** #295: diagnostics text shown inline when the clipboard is unavailable. */
-  private _preflightClipboardFallback: string | null = null;
   /** #295: integration version from houseplan/config/get; null on old backends. */
   private _haIntegrationVersion: string | null = null;
   /** #462: eager full-card recovery; the static space card never owns one. */
@@ -2026,18 +2023,7 @@ export class HouseplanCard extends LitElement {
   private _haRadarStage1Api: number | null = null;
   private readonly _radarLive = new RadarLiveController(this);
   private _decorAssetSyncToken = 0;
-  private _alignDialog: {
-    report: OptimizeReport; config: any; layout: Record<string, any>;
-    preflight: OptimizeGeometryPreflightResult | null;
-    /** the promised maximum, in centimetres, ALREADY rounded up (AUD-158B1-01) */
-    cm: number;
-    /** the space that maximum belongs to, named only when there are several */
-    where: string;
-    changed: boolean;
-    busy: boolean;
-    /** False by default; true only after the secondary preview action. */
-    removeLiveMissingPositions: boolean;
-  } | null = null;
+  private _alignDialog: OptimizePlansDialogState | null = null;
 
   private _settingsDialog: {
     colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null;
@@ -2500,7 +2486,6 @@ export class HouseplanCard extends LitElement {
     _pdfDialog: { state: true },
     _supportDialog: { state: true },
     _alignDialog: { state: true },
-    _preflightClipboardFallback: { state: true },
     _backupExportDialog: { state: true },
     _backupImportDialog: { state: true },
     _importDialog: { state: true },
@@ -2789,7 +2774,7 @@ export class HouseplanCard extends LitElement {
       if (this._openingInfo) { this._openingInfo = null; return; }
       if (this._infoCard) { this._closeInfoCard(); return; }
       if (this._rulesDialog) { this._rulesDialog = null; return; }
-      if (this._alignDialog) { this._alignDialog = null; this._preflightClipboardFallback = null; return; }
+      if (this._alignDialog) { this._alignDialog = null; return; }
       if (this._backupImportDialog) { this._backupImportDialog = null; return; }
       if (this._backupExportDialog) { this._backupExportDialog = null; return; }
       if (this._pdfDialog) { this._pdfDialog = false; return; }
@@ -7393,7 +7378,6 @@ export class HouseplanCard extends LitElement {
     this._closeInfoCard();
     this._rulesDialog = null;
     this._alignDialog = null;
-    this._preflightClipboardFallback = null;
     this._backupImportDialog = null;
     this._backupExportDialog = null;
     this._pdfDialog = false;
@@ -10197,24 +10181,6 @@ export class HouseplanCard extends LitElement {
     });
   }
 
-  /**
-   * Preview whole-plan maintenance. Nothing is written here: the pure run
-   * produces both the report and the exact config/layout pair to commit.
-   */
-
-  /** #295: dev-log once per distinct failing preflight, not once per render. */
-  private _reportedPreflightFingerprint: string | null = null;
-  private _reportPreflightFailure(
-    preflight: OptimizeGeometryPreflightResult,
-    candidate: ServerConfig | null,
-  ): void {
-    return this._editorRuntimeOrThrow()._reportPreflightFailure(preflight, candidate);
-  }
-
-  private async _copyPreflightDiagnostics(): Promise<void> {
-    return this._editorRuntimeOrThrow()._copyPreflightDiagnostics();
-  }
-
   private _checkOptimizeGeometry(config: ServerConfig): OptimizeGeometryPreflightResult {
     return this._editorRuntimeOrThrow()._checkOptimizeGeometryImpl(config);
   }
@@ -10228,26 +10194,6 @@ export class HouseplanCard extends LitElement {
     ) => void,
   ) {
     return this._editorRuntimeOrThrow()._checkSpacePhysicalGeometryImpl(config, spaceId, captureWallGeometry);
-  }
-
-  private _previewAlignDialog(removeLiveMissingPositions: boolean): void {
-    return this._editorRuntimeOrThrow()._previewAlignDialog(removeLiveMissingPositions);
-  }
-
-  private _openAlignDialog = (): void => {
-    return this._editorRuntimeOrThrow()._openAlignDialog();
-  }
-
-  private _toggleOptimizeLivePositions = (): void => {
-    return this._editorRuntimeOrThrow()._toggleOptimizeLivePositions();
-  }
-
-  /**
-   * The backend persists an intent before either store changes, then keeps a
-   * one-deep snapshot that remains undoable until the next plan edit.
-   */
-  private async _runAlignToGrid(): Promise<void> {
-    return this._editorRuntimeOrThrow()._runAlignToGrid();
   }
 
   /** Prevent a double click from sending two restores of the same snapshot. */
@@ -10531,14 +10477,6 @@ export class HouseplanCard extends LitElement {
       featherEnabled: feather.enabled,
       screenBlend: this._glowScreenBlend,
     });
-  }
-
-  /**
-   * The confirmation separates geometry movement from lossless maintenance,
-   * and promises the one-deep undo before either store is changed.
-   */
-  private _renderAlignDialog(): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderAlignDialog();
   }
 
   private _renderSettingsDialog(): TemplateResult {
@@ -11305,7 +11243,7 @@ export class HouseplanCard extends LitElement {
         ${this._settingsDialog ? this._editorRuntime ? this._renderSettingsDialog() : nothing : nothing}
         ${this._supportDialog ? this._editorRuntime ? this._renderSupportDialog() : nothing : nothing}
         ${this._pdfDialog ? this._renderPdfDialog() : nothing}
-        ${this._alignDialog ? this._editorRuntime ? this._renderAlignDialog() : nothing : nothing}
+        ${this._alignDialog && this._editorRuntime ? this._editorRuntime.optimizePlans.render() : nothing}
         ${this._backupExportDialog ? this._editorRuntime ? this._renderBackupExportDialog() : nothing : nothing}
         ${this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing}
         ${this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing}

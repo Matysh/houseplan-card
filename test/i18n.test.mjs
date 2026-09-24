@@ -244,14 +244,8 @@ test('Optimize distinguishes updated spaces from cleaned coordinate noise', () =
   );
   assert.equal(en['gs.zero_walls_migrated'], 'Virtual wall spans converted: {n}.');
   assert.equal(ru['gs.zero_walls_migrated'], 'Преобразовано виртуальных участков: {n}.');
-  assert.match(cardSource, /gs\.zero_walls_migrated/);
-  assert.match(cardSource, /p: String\(r\.coordsCanonicalized\)/);
-  // #229: the independent-wall counter is reported, not silently accumulated
-  assert.match(cardSource, /i: String\(r\.partitionsMerged\)/);
-  assert.match(cardSource, /gs\.optimize_coincident_partitions/);
-  assert.match(cardSource, /gs\.optimize_openings_rehosted/);
-  assert.match(cardSource,
-    /d\.report\.coordsCanonicalized \+ d\.report\.latticeCoordinatesCanonicalized/);
+  // #642: разметка и тост диалога проверяются исполнением —
+  // test/optimize-plans-dialog.test.mjs.
 });
 
 test('issue 306 zero-wall failures have dedicated symmetric copy', () => {
@@ -293,8 +287,8 @@ test('issue 291 Optimize reports lattice cleanup separately in both languages', 
     ru['gs.optimize_lattice_space'],
     '{space}: канонизировано значений координат: {n}; оставлено значений вне сетки: {far}.',
   );
-  assert.match(cardSource, /formatLatticeShiftCm\(r\.latticeMaxShiftCm\)/);
-  assert.match(cardSource, /r\.latticeSpaces\.map/);
+  // #642: вывод сдвига и строк по пространствам — исполнением в
+  // test/optimize-plans-dialog.test.mjs.
 });
 
 test('issue 252 Optimize keeps internal ids out of the main orphan report', () => {
@@ -306,9 +300,7 @@ test('issue 252 Optimize keeps internal ids out of the main orphan report', () =
     ru['gs.optimize_orphans_removed'],
     'Убрано забытых записей: {total} — подписи комнат: {rooms}; устройства: {devices}; групповые метки: {groups}. Все они принадлежали пространствам, удалённым ранее.',
   );
-  assert.match(cardSource, /gs\.optimize_orphans_removed/);
-  assert.match(cardSource, /<details class="optimize-details">/);
-  assert.doesNotMatch(cardSource, /this\._t\('gs\.optimize_reference_warning'/);
+  // #642: сам отчёт диалога — исполнением в test/optimize-plans-dialog.test.mjs.
   for (const key of [
     'gs.optimize_orphans_removed', 'gs.optimize_live_positions',
     'gs.optimize_unverified', 'gs.optimize_vacuum_warning',

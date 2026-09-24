@@ -156,7 +156,7 @@ const result = await page.evaluate(async () => {
     && JSON.stringify(unrelated) === JSON.stringify({
       id: 'foreign-unrelated', a: [0.6, 0.5], b: [0.7, 0.5], cm: 15,
     });
-  card._openAlignDialog(); await update();
+  card._editorRuntime.optimizePlans.open(); await update();
   out.acceptedRoomIsOptimizeFixedPoint = card._alignDialog?.report?.partitionsReconciled === 0
     && card._alignDialog?.changed === false;
   return out;

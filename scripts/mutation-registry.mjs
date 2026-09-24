@@ -5254,13 +5254,18 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'optimize-preflight-bypassed',
-    guard: 'node demo/smoke_optimize_geometry_preflight.mjs',
+    // #642: диалог вынесен в свой модуль, гвард — его юнит.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="red preflight is a hard write barrier" '
+      + 'test/optimize-plans-dialog.test.mjs',
     because: 'a red preview must remain a hard write barrier even if a caller invokes the '
       + 'private Apply method directly instead of clicking the deliberately absent button (#199)',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '    if (!d || d.busy || !this._serverCfg || !d.changed || !d.preflight?.ok) return;',
-      replace: '    if (!d || d.busy || !this._serverCfg || !d.changed) return;',
+      file: 'src/optimize-plans-dialog.ts',
+      find: '    if (!d || d.busy || !this.port.config() || !d.changed || !d.preflight?.ok) return;',
+      // `!d.preflight` остаётся ради сужения типа: иначе мутант не компилируется
+      // и ловится компилятором, а не тестом.
+      replace: '    if (!d || d.busy || !this.port.config() || !d.changed || !d.preflight) return;',
     }],
   },
   {
@@ -5291,11 +5296,14 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'optimize-preflight-renders-apply-on-failure',
-    guard: 'node demo/smoke_optimize_geometry_preflight.mjs',
+    // #642: разметка диалога — исполнением в юните модуля.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="failed preflight names each reason and offers no Apply" '
+      + 'test/optimize-plans-dialog.test.mjs',
     because: 'the failure state is not a dismissible warning: rendering Apply invites a person '
       + 'to treat an unsafe whole-plan candidate as an accepted risk (#199)',
     patches: [{
-      file: 'src/houseplan-card.ts',
+      file: 'src/optimize-plans-dialog.ts',
       find: '          ${!d.changed || !d.preflight?.ok ? nothing : html`',
       replace: '          ${!d.changed ? nothing : html`',
     }],
@@ -5402,15 +5410,18 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'near-axis-optimize-confirmation-bypassed',
-    guard: 'node demo/smoke_near_axis_optimize.mjs',
+    // #642: открытие — метод модуля диалога; гвард — его юнит.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="preview never writes" '
+      + 'test/optimize-plans-dialog.test.mjs',
     because: 'opening the Optimize preview or cancelling it must never persist a lossy repair (#290)',
     patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: 'public _openAlignDialog = (): void => this._previewAlignDialog(false);',
-      replace: 'public _openAlignDialog = (): void => {\n'
-        + '    this._previewAlignDialog(false);\n'
-        + '    void this._runAlignToGrid();\n'
-        + '  };',
+      file: 'src/optimize-plans-dialog.ts',
+      find: '  public open(): void { this.preview(false); }',
+      replace: '  public open(): void {\n'
+        + '    this.preview(false);\n'
+        + '    void this.run();\n'
+        + '  }',
     }],
   },
   {
@@ -6622,12 +6633,14 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'preflight-reason-lost-in-dialog',
     // #295: диалог обязан называть причину отказа по каждому пространству.
+    // #642: гвард — юнит модуля диалога, разметка исполнением.
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node demo/smoke_preflight_diagnostics.mjs',
+      + '&& node --test --test-name-pattern="failed preflight names each reason and offers no Apply" '
+      + 'test/optimize-plans-dialog.test.mjs',
     because: 'отказ preflight без причины недиагностируем — ровно исходный дефект #295',
     patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: "                ${failure.displayName}: ${this.host._t(`gs.preflight_reason_${failure.reason}` as I18nKey)}",
+      file: 'src/optimize-plans-dialog.ts',
+      find: "                ${failure.displayName}: ${this.port.t(`gs.preflight_reason_${failure.reason}` as I18nKey)}",
       replace: "                ${failure.displayName}",
     }],
   },
@@ -6636,15 +6649,16 @@ const MUTANT_DEFINITIONS = [
     // CODE-REVIEW-295-r1 M1: хэш геометрии обязан браться из кандидата,
     // который проверял preflight, а не из сохранённого конфига — иначе блок
     // повторяет то, что и так даст экспорт пространства.
+    // #642: сборка блока — чистая функция, сохранённый конфиг ей не виден;
+    // подмена кандидата сохранённым конфигом возможна только у вызова.
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node demo/smoke_preflight_diagnostics.mjs',
+      + '&& node --test --test-name-pattern="hashes the candidate, not the saved config" '
+      + 'test/optimize-plans-dialog.test.mjs',
     because: 'диагностика с хэшем сохранённой геометрии не несёт ничего сверх экспорта (AC4)',
     patches: [{
-      // This method lives on HouseplanEditorRuntime after the editor split;
-      // the saved config belongs to the typed host, not to the runtime itself.
-      file: 'src/houseplan-editor-runtime.ts',
-      find: "    const spacesById = new Map(((candidate as any)?.spaces || [])",
-      replace: "    const spacesById = new Map(((this.host._serverCfg as any)?.spaces || [])",
+      file: 'src/optimize-plans-dialog.ts',
+      find: "      this.diagnostics(preflight, dialog.config ?? null), null, 2,",
+      replace: "      this.diagnostics(preflight, this.port.config()), null, 2,",
     }],
   },
   {
@@ -6679,37 +6693,69 @@ const MUTANT_DEFINITIONS = [
     id: 'preflight-fallback-survives-dialog-close',
     // CODE-REVIEW-295-r1 M2: инлайн-фолбэк живёт одно показание диалога;
     // переживший закрытие блок подсунет в отчёт диагностику чужого отказа.
+    // #642: защита — ключ WeakMap по объекту диалога. Мутант подменяет его
+    // общим ключом (сам контроллер), и фолбэк переживает закрытие.
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node demo/smoke_preflight_diagnostics.mjs',
+      + '&& node --test --test-name-pattern="belongs to one dialog showing" '
+      + 'test/optimize-plans-dialog.test.mjs',
     because: 'застрявший фолбэк отдаёт в баг-репорт JSON предыдущего отказа, не текущего (AC4)',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "dismiss-on-scrim @hp-close=${() => { this._alignDialog = null; this._preflightClipboardFallback = null; }}>",
-      replace: "dismiss-on-scrim @hp-close=${() => { this._alignDialog = null; }}>",
+      file: 'src/optimize-plans-dialog.ts',
+      find: "      this.fallbacks.set(dialog, text);",
+      replace: "      this.fallbacks.set(this, text);",
+    }, {
+      file: 'src/optimize-plans-dialog.ts',
+      find: "    return dialog ? this.fallbacks.get(dialog) ?? null : null;",
+      replace: "    return dialog ? this.fallbacks.get(this) ?? null : null;",
     }],
   },
   {
     id: 'preflight-diagnostics-without-reason',
     // #295: копируемый блок без reason бесполезен для отчёта об ошибке.
+    // #642: блок собирает чистая функция модуля диалога.
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node demo/smoke_preflight_diagnostics.mjs',
+      + '&& node --test --test-name-pattern="preflightDiagnostics: candidate hash, reason" '
+      + 'test/optimize-plans-dialog.test.mjs',
     because: 'диагностический блок обязан нести reason каждого отказа',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "        reason: failure.reason,",
-      replace: "        reason: undefined,",
+      file: 'src/optimize-plans-dialog.ts',
+      find: "      reason: failure.reason,",
+      replace: "      reason: undefined,",
     }],
   },
   {
     id: 'preflight-dev-log-disabled',
     // #295: dev-лог — второй канал диагностики, его потерю обязан ловить смок.
+    // #642: dev-лог и его дедуп живут в модуле диалога.
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node demo/smoke_preflight_diagnostics.mjs',
+      + '&& node --test --test-name-pattern="logs one structured record per distinct fingerprint" '
+      + 'test/optimize-plans-dialog.test.mjs',
     because: 'структурированная запись отказа в консоли — часть контракта диагностики #295',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "    console.warn('[houseplan] optimize preflight failed', this._preflightDiagnostics(preflight, candidate));",
+      file: 'src/optimize-plans-dialog.ts',
+      find: "    console.warn('[houseplan] optimize preflight failed', this.diagnostics(preflight, candidate));",
       replace: "    void preflight; void candidate;",
+    }],
+  },
+  {
+    id: 'optimize-dialog-imports-host-port',
+    // #642 AC2: смысл выноса — узкий порт. Модуль, который снова тянет
+    // широкий порт редактора, возвращает связность, ради снижения которой
+    // и выносился, а юнит должен это увидеть даже для `import type`.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="the dialog port is narrow" '
+      + 'test/optimize-plans-dialog.test.mjs',
+    because: 'диалог, получивший HouseplanEditorHostPort, снова связан с 350 членами карточки (#642)',
+    patches: [{
+      file: 'src/optimize-plans-dialog.ts',
+      find: "import { html, nothing, type TemplateResult } from 'lit';\n",
+      replace: "import { html, nothing, type TemplateResult } from 'lit';\n"
+        + "import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';\n",
+    }, {
+      file: 'src/optimize-plans-dialog.ts',
+      find: "  private reportedFingerprint: string | null = null;\n",
+      replace: "  private reportedFingerprint: string | null = null;\n"
+        + "  public host: HouseplanEditorHostPort | null = null;\n",
     }],
   },
   {

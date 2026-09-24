@@ -83,7 +83,7 @@ const out = await page.evaluate(async () => {
   card._modelCache = null; card._frame = null; card._space = 'micro';
   card.requestUpdate(); await card.updateComplete;
 
-  card._openAlignDialog(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   const preview = card._alignDialog;
   result.previewOffersRoleAwareChange = !!preview?.changed
     && preview.report.canonicalized === 1 && preview.report.wallsMerged === 0
@@ -96,8 +96,8 @@ const out = await page.evaluate(async () => {
   result.cancelDoesNotWrite = sent.length === 0
     && JSON.stringify(card._serverCfg) === JSON.stringify(original);
 
-  card._openAlignDialog(); await card.updateComplete;
-  await card._runAlignToGrid(); await card.updateComplete;
+  card._editorRuntime.optimizePlans.open(); await card.updateComplete;
+  await card._editorRuntime.optimizePlans.run(); await card.updateComplete;
   const appliedWalls = card._serverCfg.spaces[0].walls;
   result.applyUsesOneAtomicWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   result.applyStoresRoleAwareRuns = hasRoleAwareCanonicalRuns(appliedWalls);

@@ -79,8 +79,10 @@ test('#550: assertion witnesses have no behavioural oracle hidden in setup', () 
 test('#550: preflight saved-config mutant targets the editor host and still compiles', () => {
   const mutant = MUTANTS.find(({ id }) => id === 'preflight-fingerprint-from-saved-config');
   assert.ok(mutant);
-  assert.equal(mutant.patches[0].file, 'src/houseplan-editor-runtime.ts');
-  assert.match(mutant.patches[0].replace, /this\.host\._serverCfg/);
+  // #642: диалог уехал в свой модуль; сохранённый конфиг там — член узкого
+  // порта, и подмена кандидата им по-прежнему типизирована.
+  assert.equal(mutant.patches[0].file, 'src/optimize-plans-dialog.ts');
+  assert.match(mutant.patches[0].replace, /this\.port\.config\(\)/);
 });
 
 test('#486 panel registration, cleanup and read-only protections have mutation witnesses', () => {

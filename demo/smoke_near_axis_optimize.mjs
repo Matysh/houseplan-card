@@ -50,7 +50,7 @@ const out = await page.evaluate(async (sourceSpace) => {
   card.requestUpdate();
   await card.updateComplete;
 
-  card._openAlignDialog();
+  card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
   const preview = card._alignDialog;
   const dialogText = card.renderRoot.querySelector('hp-dialog')?.textContent || '';
@@ -68,9 +68,9 @@ const out = await page.evaluate(async (sourceSpace) => {
   await card.updateComplete;
   result.cancelDoesNotWrite = sent.length === 0;
 
-  card._openAlignDialog();
+  card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
-  await card._runAlignToGrid();
+  await card._editorRuntime.optimizePlans.run();
   await card.updateComplete;
   const north = card._serverCfg.spaces[0].rooms.find((room) => room.id === 'north-west');
   const south = card._serverCfg.spaces[0].rooms.find((room) => room.id === 'south-west');
@@ -85,7 +85,7 @@ const out = await page.evaluate(async (sourceSpace) => {
 
   await card._loadFromServer();
   await card.updateComplete;
-  card._openAlignDialog();
+  card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
   result.reloadIsIdempotent = card._alignDialog.report.wallsStraightened === 0;
   card._alignDialog = null;

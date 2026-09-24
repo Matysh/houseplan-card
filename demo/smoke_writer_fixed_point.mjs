@@ -12,7 +12,7 @@ const chain = await runWallDrawFinishProfile(page);
 const chainHistory = await page.evaluate(async (chainIds) => {
   const card = window.__card;
   const optimizeNoop = () => {
-    card._previewAlignDialog(false);
+    card._editorRuntime.optimizePlans.preview(false);
     const changed = card._alignDialog?.changed;
     card._alignDialog = null;
     return changed === false;

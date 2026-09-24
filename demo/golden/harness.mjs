@@ -1666,7 +1666,7 @@ export async function prepareGoldenScenario(page, scenario) {
       await card.updateComplete;
     }
     if (scenario.dialog === 'optimize-orphan-references') {
-      card._openAlignDialog();
+      card._editorRuntime.optimizePlans.open();
       await card.updateComplete;
       // This golden owns orphan-reference copy/layout only. The shared visual
       // fixture is intentionally v7, but wall-model migration has its own
@@ -1710,7 +1710,7 @@ export async function prepareGoldenScenario(page, scenario) {
         status: 'failed',
         reason: 'wall-null',
       }));
-      card._openAlignDialog();
+      card._editorRuntime.optimizePlans.open();
       card._alignDialog = {
         ...card._alignDialog,
         preflight: {

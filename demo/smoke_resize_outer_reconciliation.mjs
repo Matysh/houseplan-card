@@ -79,7 +79,7 @@ const out = await page.evaluate(async (fixture) => {
   result.disabledCapturesNothing = !card._resize.dragging
     && card._geometryHistory.size === 0;
 
-  card._openAlignDialog();
+  card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
   const previewSpace = card._alignDialog?.config?.spaces?.[0];
   result.previewProvesOuterRewrite = card._alignDialog?.changed === true
@@ -89,7 +89,7 @@ const out = await page.evaluate(async (fixture) => {
     && card._alignDialog?.config?.model_version === 10
     && previewSpace?.partitions == null
     && previewSpace?.openings?.every((opening) => wallHostResolves(previewSpace, opening));
-  await card._runAlignToGrid();
+  await card._editorRuntime.optimizePlans.run();
   await card.updateComplete;
   result.optimizeUsesOneWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   const optimized = card._serverCfg.spaces[0];

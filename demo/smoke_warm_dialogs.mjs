@@ -171,7 +171,7 @@ const res = await page.evaluate(async () => {
   c._setMode('view'); await c.updateComplete; await sleep(60);
   // Use the production preview instead of a partial synthetic report: report
   // fields grow with the optimizer contract and the dialog renders all of them.
-  c._openAlignDialog();
+  c._editorRuntime.optimizePlans.open();
   await c.updateComplete;
   out.dAlignOpenBefore = !!c._alignDialog;
   c.remove(); await sleep(20);
