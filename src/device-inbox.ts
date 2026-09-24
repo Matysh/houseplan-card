@@ -7,6 +7,7 @@
  */
 import type { HaBindingStatus } from './ha-binding-status';
 import { isRemovedPlanEntity, removedPlanBindings } from './devices';
+import { markerIdForBinding } from './logic';
 import type { DevItem, Marker } from './types';
 
 export type DeviceInboxCategory = 'on_plan' | 'available' | 'hidden' | 'readd';
@@ -239,6 +240,7 @@ export function buildDeviceInbox(input: DeviceInboxInput): DeviceInboxRow[] {
             : areaId && spaceId ? 'available' : 'no_bound_room');
     const isRendered = !!runtime && (!runtime.hidden || showHiddenOnPlan);
     const active = status.kind === 'active';
+    const visibilityAllowed = inboxVisibilityAllowed(category, status);
     const canFind = isRendered && (active
       || (status.kind === 'ha_disabled' && showHiddenOnPlan));
     const searchText = [
@@ -256,8 +258,8 @@ export function buildDeviceInbox(input: DeviceInboxInput): DeviceInboxRow[] {
       kind, isNew: !!runtime && newDeviceIds.has(runtime.id), searchText,
       canFind,
       canEdit: !!runtime || !!live,
-      canHide: category === 'on_plan' && active,
-      canShow: category === 'hidden' && active,
+      canHide: category === 'on_plan' && visibilityAllowed,
+      canShow: category === 'hidden' && visibilityAllowed,
       canAdd: (category === 'available' || category === 'readd') && active,
     });
   }
@@ -275,4 +277,76 @@ export function filterDeviceInbox(
   return rows.filter((row) => row.category === category
     && (!onlyNew || row.isNew)
     && (!needle || row.searchText.includes(needle)));
+}
+
+/** #618: the two catalog tabs whose rows can be selected for a batch. */
+export type DeviceInboxBatchTab = 'on_plan' | 'hidden';
+
+export function isInboxBatchTab(category: DeviceInboxCategory): category is DeviceInboxBatchTab {
+  return category === 'on_plan' || category === 'hidden';
+}
+
+/** #618 B2: one source for "Hide"/"Show" availability.  The single-row
+ * buttons (`canHide`/`canShow`) and batch selection both read it, so a row
+ * that cannot be hidden alone can never be hidden in a batch either. */
+export function inboxVisibilityAllowed(category: DeviceInboxCategory, status: HaBindingStatus): boolean {
+  return isInboxBatchTab(category) && status.kind === 'active';
+}
+
+/** #618 B2/B3: rows of an already filtered tab that may be selected.  The
+ * caller passes the full filtered set (search and "New only" applied, but not
+ * the "Show more" limit), so "Select all (N)" covers rows below the fold. */
+export function selectableInboxRows(rows: readonly DeviceInboxRow[]): DeviceInboxRow[] {
+  return rows.filter((row) => inboxVisibilityAllowed(row.category, row.status));
+}
+
+/** #618 B4/B9: the part of a stored selection that is still actionable, in
+ * row order.  Keys that stopped being selectable drop out silently. */
+export function effectiveInboxSelection(
+  selected: readonly string[] | undefined, selectable: readonly DeviceInboxRow[],
+): DeviceInboxRow[] {
+  if (!selected?.length) return [];
+  const wanted = new Set(selected);
+  return selectable.filter((row) => wanted.has(row.key));
+}
+
+export interface InboxVisibilityResult {
+  markers: Marker[];
+  /** Markers whose saved `hidden` value actually changed (or were created). */
+  changed: number;
+}
+
+/** #618 B5: apply Hide/Show to exact bindings.  A single-row action is a
+ * batch of one; a batch equals the left fold of single-row actions, so the
+ * config is the same whichever path wrote it.
+ *
+ * - Show keeps the marker with `hidden: false` (an automatically hidden stub
+ *   is kept too; it is the anti-reseed guard of docs/FILTERING.md);
+ * - Hide of an automatic device without a marker creates `{id, binding,
+ *   hidden: true}` with the id of `markerIdForBinding`;
+ * - only `hidden` changes on a marker with settings;
+ * - an exact binding never ends up with two live markers. */
+export function applyInboxVisibility(
+  markers: readonly Marker[],
+  rows: readonly Pick<DeviceInboxRow, 'binding' | 'markerId'>[],
+  hidden: boolean,
+  newId: () => string,
+): InboxVisibilityResult {
+  let next: Marker[] = [...markers];
+  let changed = 0;
+  for (const row of rows) {
+    const live = next.find((marker) => !marker.removed && marker.binding === row.binding);
+    if (!hidden && !live) continue;
+    const id = live?.id || markerIdForBinding(row.binding, row.markerId, newId);
+    const updated: Marker = live
+      ? { ...live, hidden }
+      : { id, binding: row.binding, hidden: true };
+    if (!live || live.hidden !== hidden) changed += 1;
+    next = [
+      ...next.filter((marker) => marker.id !== id
+        && (marker.binding !== row.binding || marker.removed === true)),
+      updated,
+    ];
+  }
+  return { markers: next, changed };
 }

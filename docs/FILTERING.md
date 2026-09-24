@@ -117,6 +117,11 @@ the old behaviour until an editing client materialises it.
 - Light fill and glow do NOT count hidden devices — an invisible device casts
   no visible light (owner's decision). Room climate is registry-wide and
   unaffected, as before.
+- Batch Hide/Show (#618) on the catalog's `on_plan` / `hidden` tabs writes the
+  same markers as the single-row action (`applyInboxVisibility` is shared: a
+  single row is a batch of one) in ONE `houseplan/config/set`. Show keeps the
+  marker with `hidden: false`, including an automatic `h…` stub, so the seeder
+  does not re-hide it. Only active HA bindings are selectable.
 - Hide/Show is also available from the lifecycle catalog; the bottom-left
   "Hide" / "Show" action remains in the dialog of every
   existing device kind, virtual included; changing it is applied by "Save".

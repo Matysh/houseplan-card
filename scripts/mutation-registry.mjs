@@ -2064,6 +2064,55 @@ const MUTANT_DEFINITIONS = [
       replace: '      if (isRemovedPlanEntity(h, eid, removed) && !removedBindings.has(value)) continue;',
     }],
   },
+  // #618: batch Hide/Show in the Devices catalog.
+  {
+    id: 'device-inbox-batch-eligibility-active',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 618" test/device-inbox.test.mjs',
+    because: 'an HA-disabled, orphaned or unverified binding must be neither selectable nor counted in '
+      + '"Select all (N)"; otherwise a batch writes hidden flags the single-row action refuses (#618 B2)',
+    patches: [{
+      file: 'src/device-inbox.ts',
+      find: "  return isInboxBatchTab(category) && status.kind === 'active';",
+      replace: '  return isInboxBatchTab(category) && !!status.kind;',
+    }],
+  },
+  {
+    id: 'device-inbox-show-keeps-stub',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 618" test/device-inbox.test.mjs',
+    because: 'Show must keep the marker with hidden:false; dropping an automatic stub lets the seeder '
+      + 'hide the device again on the next rebuild (docs/FILTERING.md, #618 B5)',
+    patches: [{
+      file: 'src/device-inbox.ts',
+      find: '        && (marker.binding !== row.binding || marker.removed === true)),\n      updated,\n    ];',
+      replace: '        && (marker.binding !== row.binding || marker.removed === true)),\n'
+        + '      ...(hidden ? [updated] : []),\n    ];',
+    }],
+  },
+  {
+    id: 'device-inbox-batch-single-write',
+    guard: 'node demo/smoke_device_inbox_batch.mjs',
+    because: 'a batch of K rows must be exactly one houseplan/config/set with expected_rev; K writes '
+      + 'mean K revisions and K inert waits, the problem #618 exists to remove',
+    patches: [{
+      file: 'src/device-inbox-batch.ts',
+      find: '    await deps.saveConfigNow(); // #618 B5: one write per batch',
+      replace: '    for (let write = 0; write < rows.length; write += 1) await deps.saveConfigNow(); '
+        + '// #618 B5: one write per batch',
+    }],
+  },
+  {
+    id: 'device-inbox-batch-rollback',
+    guard: 'node demo/smoke_device_inbox_batch.mjs',
+    because: 'a rejected batch write must leave every marker unchanged; without the rollback the '
+      + 'catalog shows K rows moved that the server never accepted (#618 B8)',
+    patches: [{
+      file: 'src/device-inbox-batch.ts',
+      find: '    if (host._serverCfg === cfg) cfg.markers = previousMarkers; // #618 B8 rollback',
+      replace: '    // rollback removed by mutant',
+    }],
+  },
   {
     id: 'live-child-still-suppressed-by-parent-tombstone',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '

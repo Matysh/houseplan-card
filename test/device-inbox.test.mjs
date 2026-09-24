@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  bindingCandidates, buildDeviceInbox, filterDeviceInbox,
+  applyInboxVisibility, bindingCandidates, buildDeviceInbox, effectiveInboxSelection,
+  filterDeviceInbox, inboxVisibilityAllowed, selectableInboxRows,
 } from '../test-build/device-inbox.js';
 
 const active = { kind: 'active', enabledEntityIds: [], allEntityIds: [] };
@@ -151,4 +152,159 @@ test('full lifecycle matrix keeps intent category separate from HA status and re
   assert.equal(row('device:no-room').reason, 'no_bound_room');
   assert.equal(row('entity:sensor.child').reason, 'represented_by_parent');
   assert.equal(row('device:gone'), undefined);
+});
+
+// ---- #618: batch Hide/Show -------------------------------------------------
+
+function batchFixture() {
+  const disabled = { kind: 'ha_disabled', reason: 'device', enabledEntityIds: [], allEntityIds: [] };
+  const orphaned = { kind: 'orphaned', reason: 'entity', enabledEntityIds: [], allEntityIds: [] };
+  const unverified = { kind: 'unverified', enabledEntityIds: [], allEntityIds: [] };
+  const markers = [
+    { id: 'explicit', binding: 'device:explicit', hidden: false, name: 'Explicit', icon: 'mdi:fan' },
+    { id: 'hstub', binding: 'device:stub', hidden: true },
+    { id: 'manual', binding: 'device:manual', hidden: true, name: 'Manual' },
+    { id: 'hidden-off', binding: 'device:hidden-off', hidden: true },
+    { id: 'orphan', binding: 'entity:sensor.orphan', hidden: false },
+    { id: 'unknown', binding: 'entity:sensor.unknown', hidden: false },
+  ];
+  const devices = [
+    dev('auto', 'device:auto', { isNew: true }),
+    dev('explicit', 'device:explicit', { marker: markers[0] }),
+    dev('stub', 'device:stub', { marker: markers[1], hidden: true, userHidden: true }),
+    dev('manual', 'device:manual', { marker: markers[2], hidden: true, userHidden: true }),
+    dev('hidden-off', 'device:hidden-off', {
+      marker: markers[3], hidden: true, userHidden: true, bindingStatus: disabled,
+    }),
+    dev('lg_sensor.temp', 'entity:sensor.temp'),
+  ];
+  const candidates = [
+    { value: 'device:available', label: 'Available', sub: 'device', kind: 'device', ref: 'available', areaId: 'living', model: '' },
+  ];
+  const statuses = new Map([
+    ['device:available', active], ['entity:sensor.orphan', orphaned], ['entity:sensor.unknown', unverified],
+  ]);
+  const rows = buildDeviceInbox({
+    devices, markers, candidates, statuses, newDeviceIds: new Set(['auto']),
+    showHiddenOnPlan: false, spaceByArea: { living: 'f1' },
+  });
+  return { markers, rows };
+}
+
+test('issue 618: only active rows of On plan / Hidden are selectable', () => {
+  const { rows } = batchFixture();
+  const keys = (list) => list.map((row) => row.key).sort();
+  assert.deepEqual(keys(selectableInboxRows(filterDeviceInbox(rows, 'on_plan', ''))),
+    ['device:auto', 'device:explicit', 'entity:sensor.temp']);
+  assert.deepEqual(keys(selectableInboxRows(filterDeviceInbox(rows, 'hidden', ''))),
+    ['device:manual', 'device:stub']);
+  assert.deepEqual(selectableInboxRows(filterDeviceInbox(rows, 'available', '')), []);
+  // Inactive HA statuses are listed but never selectable.
+  for (const binding of ['entity:sensor.orphan', 'entity:sensor.unknown', 'device:hidden-off']) {
+    const row = rows.find((item) => item.binding === binding);
+    assert.ok(row, binding);
+    assert.equal(inboxVisibilityAllowed(row.category, row.status), false, binding);
+    assert.equal(row.canHide || row.canShow, false, binding);
+  }
+  // Single-row buttons read the same predicate.
+  for (const row of rows) {
+    assert.equal(row.canHide || row.canShow, inboxVisibilityAllowed(row.category, row.status), row.key);
+  }
+  assert.equal(inboxVisibilityAllowed('available', active), false);
+  assert.equal(inboxVisibilityAllowed('readd', active), false);
+});
+
+test('issue 618: Select all counts the whole filtered set, not the Show more page', () => {
+  const devices = [];
+  for (let index = 0; index < 150; index++) {
+    devices.push(dev(`d${index}`, `device:d${index}`, { name: `Lamp ${index}` }));
+  }
+  devices.push(dev('fan', 'device:fan', { name: 'Fan' }));
+  const rows = buildDeviceInbox({
+    devices, markers: [], candidates: [], statuses: new Map(),
+    newDeviceIds: new Set(['d1', 'd2']), showHiddenOnPlan: false,
+  });
+  assert.equal(selectableInboxRows(filterDeviceInbox(rows, 'on_plan', '')).length, 151);
+  assert.equal(selectableInboxRows(filterDeviceInbox(rows, 'on_plan', 'lamp')).length, 150);
+  assert.equal(selectableInboxRows(filterDeviceInbox(rows, 'on_plan', '', true)).length, 2);
+});
+
+test('issue 618: effective selection keeps only still-selectable keys in row order', () => {
+  const { rows } = batchFixture();
+  const selectable = selectableInboxRows(filterDeviceInbox(rows, 'on_plan', ''));
+  const chosen = effectiveInboxSelection(
+    ['entity:sensor.orphan', 'device:explicit', 'device:gone', 'device:auto'], selectable,
+  );
+  assert.deepEqual(chosen.map((row) => row.key), ['device:auto', 'device:explicit']);
+  assert.deepEqual(effectiveInboxSelection(undefined, selectable), []);
+  assert.deepEqual(effectiveInboxSelection([], selectable), []);
+});
+
+test('issue 618: Hide/Show keeps settings, keeps automatic stubs and creates exact-id stubs', () => {
+  const { markers, rows } = batchFixture();
+  const row = (binding) => rows.find((item) => item.binding === binding);
+  const newId = () => { throw new Error('device/entity bindings never need a random id'); };
+
+  const hidden = applyInboxVisibility(markers,
+    [row('device:explicit'), row('device:auto'), row('entity:sensor.temp')], true, newId);
+  assert.equal(hidden.changed, 3);
+  const byBinding = (list, binding) => list.filter((marker) => marker.binding === binding && !marker.removed);
+  assert.deepEqual(byBinding(hidden.markers, 'device:explicit'),
+    [{ id: 'explicit', binding: 'device:explicit', hidden: true, name: 'Explicit', icon: 'mdi:fan' }]);
+  assert.deepEqual(byBinding(hidden.markers, 'device:auto'),
+    [{ id: 'auto', binding: 'device:auto', hidden: true }]);
+  assert.deepEqual(byBinding(hidden.markers, 'entity:sensor.temp'),
+    [{ id: 'lg_sensor.temp', binding: 'entity:sensor.temp', hidden: true }]);
+
+  const shown = applyInboxVisibility(markers, [row('device:stub'), row('device:manual')], false, newId);
+  assert.equal(shown.changed, 2);
+  // The automatic stub survives with hidden:false — the anti-reseed guard.
+  assert.deepEqual(byBinding(shown.markers, 'device:stub'),
+    [{ id: 'hstub', binding: 'device:stub', hidden: false }]);
+  assert.deepEqual(byBinding(shown.markers, 'device:manual'),
+    [{ id: 'manual', binding: 'device:manual', hidden: false, name: 'Manual' }]);
+  // Untouched markers are carried over as-is.
+  assert.deepEqual(byBinding(shown.markers, 'device:hidden-off'), [markers[3]]);
+
+  // Show without a live marker is a no-op, exactly like the single action.
+  const noop = applyInboxVisibility(markers, [{ binding: 'device:nothing' }], false, newId);
+  assert.equal(noop.changed, 0);
+  assert.deepEqual(noop.markers, markers);
+  // Inputs are never mutated.
+  assert.deepEqual(markers, batchFixture().markers);
+});
+
+test('issue 618: a batch equals the fold of single-row actions and never duplicates a binding', () => {
+  const { markers, rows } = batchFixture();
+  const row = (binding) => rows.find((item) => item.binding === binding);
+  const newId = () => 'unused';
+  const cases = [
+    { hidden: true, list: [row('device:auto'), row('device:explicit'), row('entity:sensor.temp')] },
+    { hidden: false, list: [row('device:stub'), row('device:manual')] },
+  ];
+  // A corrupted config with two live markers for one binding plus a tombstone.
+  const dirty = [
+    ...markers,
+    { id: 'explicit-dup', binding: 'device:explicit', hidden: false },
+    { id: 'old-auto', binding: 'device:auto', removed: true, hidden: true },
+  ];
+  for (const base of [markers, dirty]) {
+    for (const { hidden, list } of cases) {
+      const batch = applyInboxVisibility(base, list, hidden, newId);
+      let fold = base;
+      let changed = 0;
+      for (const single of list) {
+        const step = applyInboxVisibility(fold, [single], hidden, newId);
+        fold = step.markers;
+        changed += step.changed;
+      }
+      assert.equal(JSON.stringify(batch.markers), JSON.stringify(fold));
+      assert.equal(batch.changed, changed);
+      for (const single of list) {
+        const live = batch.markers.filter((marker) => marker.binding === single.binding && !marker.removed);
+        assert.equal(live.length, 1, single.binding);
+        assert.equal(live[0].hidden, hidden, single.binding);
+      }
+    }
+  }
 });

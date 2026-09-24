@@ -131,6 +131,9 @@ import {
   type DeviceInboxCategory, type DeviceInboxReason, type DeviceInboxRow,
 } from './device-inbox';
 import {
+  inboxBatchView, renderInboxBatchPanel, renderInboxRowSelect, writeInboxVisibility, type InboxBatchDeps,
+} from './device-inbox-batch';
+import {
   formatToggleIntent, projectedTapAction, type ResolvedToggleIntent, type ResolvedToggleTarget,
   type ToggleNextEffect, type ToggleNoneReason, type ToggleSkipReason,
 } from './device-toggle';
@@ -427,6 +430,9 @@ interface DeviceInboxDialogState {
   /** Logical row restored after a nested marker dialog closes. */
   anchor?: string;
   busy?: string;
+  /** #618: exact bindings selected for a batch Hide/Show.  Ephemeral, lives
+   * only in this dialog state (and therefore survives `_deviceInboxReturn`). */
+  selected?: string[];
 }
 
 export interface HouseplanEditorHostPort {
@@ -7112,36 +7118,11 @@ public _openInboxMarker(row: DeviceInboxRow, add = false): void {
   }
 
 public async _setInboxHidden(row: DeviceInboxRow, hidden: boolean): Promise<void> {
-    const dialog = this.host._deviceInbox;
-    const cfg = this.host._serverCfg;
-    if (!dialog || !cfg || dialog.busy || row.status.kind !== 'active') return;
-    const previous = cfg.markers || [];
-    const live = previous.find((marker) => !marker.removed && marker.binding === row.binding);
-    if (!hidden && !live) return;
-    const id = live?.id || markerIdForBinding(
-      row.binding, row.markerId, () => `m_${Date.now().toString(36)}`,
-    );
-    const next: Marker = live
-      ? { ...live, hidden }
-      : { id, binding: row.binding, hidden: true };
-    cfg.markers = [
-      ...previous.filter((marker) => marker.id !== id
-        && (marker.binding !== row.binding || marker.removed === true)),
-      next,
-    ];
-    this.host._deviceInbox = { ...dialog, busy: row.key, anchor: row.key };
-    try {
-      await this._saveConfigNow();
-      this.host._regSignature = '';
-      this.host._deviceInboxMemo = null;
-      this.host._maybeRebuildDevices();
-      if (this.host._deviceInbox) this.host._deviceInbox = { ...this.host._deviceInbox, busy: undefined };
-      this.host._showToast(this.host._t('device_inbox.saved'));
-    } catch (error: any) {
-      if (this.host._serverCfg === cfg) cfg.markers = previous;
-      if (this.host._deviceInbox) this.host._deviceInbox = { ...this.host._deviceInbox, busy: undefined };
-      this.host._showToast(this.host._t('toast.error', { err: this.host._errText(error) }));
-    }
+    if (row.status.kind !== 'active') return;
+    await writeInboxVisibility(this.host, this._inboxBatchDeps(), [row], hidden, false);
+  }
+private _inboxBatchDeps(): InboxBatchDeps {
+    return { rows: () => this._deviceInboxRows(), saveConfigNow: () => this._saveConfigNow() };
   }
 
 public _findInboxDevice(row: DeviceInboxRow): void {
@@ -7176,7 +7157,7 @@ public _deviceInboxTabKey = (event: KeyboardEvent): void => {
     const tabs: DeviceInboxCategory[] = ['on_plan', 'available', 'hidden', 'readd'];
     const offset = event.key === 'ArrowRight' ? 1 : -1;
     const index = (tabs.indexOf(dialog.tab) + offset + tabs.length) % tabs.length;
-    this.host._deviceInbox = { ...dialog, tab: tabs[index], limit: 100, onlyNew: false };
+    this.host._deviceInbox = { ...dialog, tab: tabs[index], limit: 100, onlyNew: false, selected: [] };
     event.preventDefault();
   };
 
@@ -11406,6 +11387,7 @@ public _renderDeviceInbox(): TemplateResult {
       rows, dialog.tab, dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew,
     );
     const visible = filtered.slice(0, dialog.limit);
+    const batch = inboxBatchView(dialog, filtered); // #618 B1: On plan / Hidden only
     const tabLabel = (tab: DeviceInboxCategory) => this.host._t(`device_inbox.tab_${tab}` as I18nKey);
     const emptyKey = `device_inbox.empty_${dialog.tab}` as I18nKey;
     const openVirtual = () => {
@@ -11423,7 +11405,7 @@ public _renderDeviceInbox(): TemplateResult {
           <input class="device-inbox-search" type="search" autofocus
             placeholder=${this.host._t('device_inbox.search')} .value=${dialog.search}
             @input=${(event: Event) => (this.host._deviceInbox = {
-              ...dialog, search: (event.target as HTMLInputElement).value, limit: 100,
+              ...dialog, search: (event.target as HTMLInputElement).value, limit: 100, selected: [],
             })} />
           <button type="button" class="btn" @click=${openVirtual}>
             <ha-icon icon="mdi:map-marker-plus-outline"></ha-icon>
@@ -11434,7 +11416,9 @@ public _renderDeviceInbox(): TemplateResult {
           ${(['on_plan', 'available', 'hidden', 'readd'] as DeviceInboxCategory[]).map((tab) => html`
             <button type="button" role="tab" aria-selected=${dialog.tab === tab ? 'true' : 'false'}
               class=${dialog.tab === tab ? 'on' : ''}
-              @click=${() => (this.host._deviceInbox = { ...dialog, tab, limit: 100, onlyNew: false })}>
+              @click=${() => (this.host._deviceInbox = {
+                ...dialog, tab, limit: 100, onlyNew: false, selected: [],
+              })}>
               ${tabLabel(tab)} <span>${counts[tab]}</span>
             </button>`)}
         </div>
@@ -11442,7 +11426,7 @@ public _renderDeviceInbox(): TemplateResult {
           ${dialog.tab === 'on_plan' ? html`<label>
             <input type="checkbox" .checked=${dialog.onlyNew}
               @change=${(event: Event) => (this.host._deviceInbox = {
-                ...dialog, onlyNew: (event.target as HTMLInputElement).checked, limit: 100,
+                ...dialog, onlyNew: (event.target as HTMLInputElement).checked, limit: 100, selected: [],
               })} />${this.host._t('device_inbox.only_new')}
           </label>` : nothing}
           ${dialog.tab === 'available' ? html`<label>
@@ -11466,6 +11450,7 @@ public _renderDeviceInbox(): TemplateResult {
             ${this._help('device_inbox.show_hidden.help')}
           </span>
         </div>
+        ${renderInboxBatchPanel(this.host, this._inboxBatchDeps(), dialog, batch)}
         ${dialog.tab === 'available' ? this._renderDiscoveryFilters(dialog) : nothing}
         <div class="device-inbox-results" aria-live="polite">
           ${visible.length ? visible.map((row) => {
@@ -11483,8 +11468,9 @@ public _renderDeviceInbox(): TemplateResult {
                       ? 'device_inbox.readd' : 'device_inbox.add')}</button>`;
             const status = row.status.kind === 'active' ? ''
               : this.host._t(`device_inbox.status_${row.status.kind}` as I18nKey);
-            return html`<article class="device-inbox-row" data-binding=${row.binding}
-              data-category=${row.category} data-status=${row.status.kind}>
+            return html`<article class=${batch.batchTab ? 'device-inbox-row has-select' : 'device-inbox-row'}
+              data-binding=${row.binding} data-category=${row.category} data-status=${row.status.kind}>
+              ${renderInboxRowSelect(this.host, dialog, batch, row)}
               <ha-icon class="device-inbox-icon" .icon=${row.icon}></ha-icon>
               <div class="device-inbox-copy">
                 <div class="device-inbox-name"><b>${row.name}</b>

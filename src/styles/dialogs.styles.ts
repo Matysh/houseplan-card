@@ -1480,6 +1480,30 @@ export const dialogsStyles = css`
       gap: var(--sp-1);
       min-width: 0;
     }
+    /* #618: batch selection lives outside .device-inbox-filters. */
+    .device-inbox-batch {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-2) var(--sp-4);
+      min-width: 0;
+    }
+    .device-inbox-select-all,
+    .device-inbox-select {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      cursor: pointer;
+    }
+    .device-inbox-batch-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--sp-2);
+      min-width: 0;
+    }
+    .device-inbox-selected { color: var(--hp-muted); }
     .device-inbox-results { display: grid; gap: var(--sp-3); min-width: 0; }
     .device-inbox-row {
       display: grid;
@@ -1492,6 +1516,10 @@ export const dialogsStyles = css`
       padding: var(--sp-4);
       background: color-mix(in srgb, var(--hp-txt) 3%, transparent);
     }
+    .device-inbox-row.has-select {
+      grid-template-columns: 24px 42px minmax(180px, 1fr) minmax(180px, auto);
+    }
+    .device-inbox-select { justify-self: center; }
     .device-inbox-icon { --mdc-icon-size: 28px; color: var(--hp-txt); justify-self: center; }
     .device-inbox-copy { min-width: 0; }
     .device-inbox-name { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); }
@@ -1554,6 +1582,7 @@ export const dialogsStyles = css`
         overflow-wrap: anywhere;
       }
       .device-inbox-row { grid-template-columns: 36px minmax(0, 1fr); }
+      .device-inbox-row.has-select { grid-template-columns: 24px 36px minmax(0, 1fr); }
       .device-inbox-actions { grid-column: 1 / -1; justify-content: flex-start; }
     }
 `;

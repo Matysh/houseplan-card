@@ -761,6 +761,17 @@ and its other entities remain deleted. The complete device stays available in
 - **Devices** opens one searchable lifecycle catalog. Its **On plan**,
   **Available**, **Hidden** and **Available again** tabs explain where every
   exact HA binding is and offer the next valid action;
+- **Hide selected** / **Show selected** (#618): the **On plan** and **Hidden**
+  tabs have a checkbox on every row and **Select all (N)** above the list. N
+  counts every eligible row of the tab after search and **New only**,
+  including rows behind **Show more**. With a selection the panel shows
+  “Selected: K”, the action button with the count and **Clear selection**. The
+  whole batch is saved in one write and confirmed by a “Hidden: K” / “Shown: K”
+  toast. There is no confirmation prompt — the same tab reverses it. Rows that
+  are disabled or missing in Home Assistant, or unverified, cannot be
+  selected. The selection resets when you switch tabs, edit the search or
+  toggle **New only**, survives opening a device from the catalog, and is
+  cleared after a successful save; a failed save changes nothing and keeps it;
 - **Discovery filters** (#44) live on the **Available** tab: a switch that
   groups room lights into one marker (on by default) and the list of excluded
   integrations with search and a "Restore recommended" reset. Changes show

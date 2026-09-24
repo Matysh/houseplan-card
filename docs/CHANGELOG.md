@@ -8,6 +8,13 @@
   when it is picked, with a message naming the limit; for a raster image the
   card offers to upload a reduced copy instead
   ([#617](https://github.com/Matysh/houseplan-card/issues/617)).
+- The **Devices** catalog can now hide or show many devices at once. On the
+  **On plan** and **Hidden** tabs, tick rows or **Select all (N)** — N covers
+  every matching row, including those behind **Show more** — and press
+  **Hide selected** / **Show selected**. The whole batch is one config save
+  with a toast such as “Hidden: 7”; a failed save changes nothing and keeps the
+  selection. Rows disabled or missing in Home Assistant cannot be selected
+  ([#618](https://github.com/Matysh/houseplan-card/issues/618)).
 
 ## v1.78.0-beta.1 — 2026-09-23
 

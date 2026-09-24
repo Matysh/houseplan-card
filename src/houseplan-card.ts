@@ -514,6 +514,8 @@ interface DeviceInboxDialogState {
   /** Logical row restored after a nested marker dialog closes. */
   anchor?: string;
   busy?: string;
+  /** #618: exact bindings selected for a batch Hide/Show. */
+  selected?: string[];
 }
 
 type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
