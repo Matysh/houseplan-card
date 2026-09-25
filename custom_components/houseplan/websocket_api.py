@@ -1056,6 +1056,9 @@ async def ws_plans_list(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     works as a policy if the user can see them: detaching a plan keeps the
     image, and this is how it gets picked up again — or deleted on purpose.
     """
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only writers may list plans")
+        return
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
@@ -2386,12 +2389,27 @@ async def _purge_trail_recorder(hass: HomeAssistant, config: dict[str, Any]) -> 
     return await rec.async_purge_orphans(config) if rec else 0
 
 
+def _public_trails(value: Any) -> Any:
+    """Copy the trail book for View without exposing source entity ids (#626)."""
+    if isinstance(value, dict):
+        return {
+            key: _public_trails(item)
+            for key, item in value.items()
+            if key != "source"
+        }
+    if isinstance(value, list):
+        return [_public_trails(item) for item in value]
+    return value
+
+
 @websocket_api.websocket_command({vol.Required("type"): "houseplan/trail/get"})
 @websocket_api.async_response
 async def ws_trail_get(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
-    """Current + previous cleanup runs per marker, raw robot coordinates."""
+    """Current + previous runs and raw coordinates, without source entity ids."""
     rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
-    connection.send_result(msg["id"], {"trails": rec.book.data if rec else {}})
+    connection.send_result(
+        msg["id"], {"trails": _public_trails(rec.book.data) if rec else {}}
+    )
 
 
 @websocket_api.websocket_command(

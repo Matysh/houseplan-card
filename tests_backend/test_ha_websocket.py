@@ -6,6 +6,7 @@ import logging
 import threading
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -15,6 +16,7 @@ def _enable_custom_integrations(enable_custom_integrations):
     """Allow loading custom_components in the test hass."""
     yield
 
+from homeassistant.auth.const import GROUP_ID_READ_ONLY, GROUP_ID_USER
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.typing import WebSocketGenerator
@@ -31,12 +33,25 @@ from custom_components.houseplan.websocket_api import (
 )
 
 
-async def _setup(hass: HomeAssistant) -> MockConfigEntry:
-    entry = MockConfigEntry(domain=DOMAIN, title="House Plan", data={}, options={})
+async def _setup(
+    hass: HomeAssistant, *, options: dict | None = None
+) -> MockConfigEntry:
+    entry = MockConfigEntry(
+        domain=DOMAIN, title="House Plan", data={}, options=options or {}
+    )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     return entry
+
+
+async def _access_token_for_group(hass: HomeAssistant, group_id: str) -> str:
+    """Create an authenticated non-owner client for one real HA system group."""
+    user = await hass.auth.async_create_user(
+        f"House Plan {group_id}", group_ids=[group_id]
+    )
+    refresh_token = await hass.auth.async_create_refresh_token(user)
+    return hass.auth.async_create_access_token(refresh_token)
 
 
 async def test_config_get_advertises_radar_only_while_coordinator_is_ready(
@@ -1950,7 +1965,7 @@ async def test_may_write_defaults_admin_only_when_option_missing(hass):
 
 
 async def test_may_write_honours_explicit_admin_only_false(hass):
-    """Household users may write only when the option is explicitly off."""
+    """#626: admin_only off admits household users, never HA read-only users."""
     from custom_components.houseplan.auth import may_write
 
     entry = MockConfigEntry(
@@ -1960,10 +1975,125 @@ async def test_may_write_honours_explicit_admin_only_false(hass):
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    class _User:
-        is_admin = False
+    household = SimpleNamespace(
+        is_admin=False, groups=[SimpleNamespace(id=GROUP_ID_USER)]
+    )
+    read_only = SimpleNamespace(
+        is_admin=False, groups=[SimpleNamespace(id=GROUP_ID_READ_ONLY)]
+    )
+    mixed = SimpleNamespace(
+        is_admin=False,
+        groups=[
+            SimpleNamespace(id=GROUP_ID_USER),
+            SimpleNamespace(id=GROUP_ID_READ_ONLY),
+        ],
+    )
+    admin = SimpleNamespace(is_admin=True)
 
-    assert may_write(hass, _User()) is True
+    assert may_write(hass, admin) is True
+    assert may_write(hass, household) is True
+    assert may_write(hass, read_only) is False
+    assert may_write(hass, mixed) is False
+    assert may_write(hass, SimpleNamespace(is_admin=False, groups=[])) is False
+    assert may_write(hass, SimpleNamespace(is_admin=False)) is False
+    assert may_write(
+        hass, SimpleNamespace(is_admin=False, groups=[SimpleNamespace()])
+    ) is False
+
+
+async def test_issue_626_authenticated_read_acl_matrix_and_trail_projection(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+) -> None:
+    """#626 AC2/AC4/AC5/AC7: one observable matrix pins every read role."""
+    await _setup(hass, options={CONF_ADMIN_ONLY: False})
+    admin = await hass_ws_client(hass)
+    household = await hass_ws_client(
+        hass, access_token=await _access_token_for_group(hass, GROUP_ID_USER)
+    )
+    read_only = await hass_ws_client(
+        hass, access_token=hass_read_only_access_token
+    )
+
+    recorder = hass.data[DOMAIN]["trail_recorder"]
+    stored_trails = {
+        "robot": {
+            "current": {
+                "source": "camera.private_map",
+                "route": {"source": "camera.private_route", "id": "ground"},
+                "points": [[10.0, 20.0]],
+            },
+            "previous": {
+                "source": "sensor.private_map",
+                "points": [[30.0, 40.0]],
+            },
+        }
+    }
+    recorder.book.data = copy.deepcopy(stored_trails)
+
+    for client, can_write in (
+        (admin, True),
+        (household, True),
+        (read_only, False),
+    ):
+        await client.send_json_auto_id({"type": "houseplan/config/get"})
+        config = await client.receive_json()
+        assert config["success"] and config["result"]["can_write"] is can_write
+
+        await client.send_json_auto_id({"type": "houseplan/layout/get"})
+        assert (await client.receive_json())["success"]
+
+        await client.send_json_auto_id({"type": "houseplan/trail/get"})
+        trails_response = await client.receive_json()
+        assert trails_response["success"]
+        public_trails = trails_response["result"]["trails"]
+        assert public_trails["robot"]["current"]["points"] == [[10.0, 20.0]]
+        assert "source" not in json.dumps(public_trails)
+
+        for command in ("houseplan/plans/list", "houseplan/assets/list"):
+            await client.send_json_auto_id({"type": command})
+            response = await client.receive_json()
+            if can_write:
+                assert response["success"], (command, response)
+            else:
+                assert not response["success"]
+                assert response["error"]["code"] == "unauthorized"
+
+    assert recorder.book.data == stored_trails, "View projection must not mutate storage"
+
+    candidate = {"spaces": [], "markers": [], "settings": {}}
+    await household.send_json_auto_id({
+        "type": "houseplan/config/set", "config": candidate, "expected_rev": 0,
+    })
+    assert (await household.receive_json())["success"]
+    await read_only.send_json_auto_id({
+        "type": "houseplan/config/set", "config": candidate, "expected_rev": 1,
+    })
+    refused = await read_only.receive_json()
+    assert not refused["success"] and refused["error"]["code"] == "unauthorized"
+
+
+async def test_issue_626_plans_list_refuses_viewer_before_scanning(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """#626 AC3: refusal happens before filesystem work or catalog disclosure."""
+    await _setup(hass, options={CONF_ADMIN_ONLY: False})
+    read_only = await hass_ws_client(
+        hass, access_token=hass_read_only_access_token
+    )
+
+    def unexpected_executor_call(*_args, **_kwargs):
+        raise AssertionError("plans/list touched the filesystem for a viewer")
+
+    monkeypatch.setattr(hass, "async_add_executor_job", unexpected_executor_call)
+    await read_only.send_json_auto_id({"type": "houseplan/plans/list"})
+    response = await read_only.receive_json()
+    assert not response["success"]
+    assert response["error"]["code"] == "unauthorized"
 
 
 async def test_config_get_reports_can_write(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
@@ -2955,7 +3085,6 @@ async def test_decor_asset_resolve_readonly_is_limited_to_referenced_ids(
 async def test_decor_asset_resolve_non_admin_is_writer_when_admin_only_is_off(
     hass: HomeAssistant,
     hass_ws_client: WebSocketGenerator,
-    hass_read_only_access_token: str,
 ) -> None:
     """#432 AC2: resolve follows may_write instead of hard-coding admin."""
     import hashlib
@@ -2979,7 +3108,9 @@ async def test_decor_asset_resolve_non_admin_is_writer_when_admin_only_is_off(
         "created_at": "2026-01-01T00:00:00Z",
     }), encoding="utf-8")
 
-    client = await hass_ws_client(hass, access_token=hass_read_only_access_token)
+    client = await hass_ws_client(
+        hass, access_token=await _access_token_for_group(hass, GROUP_ID_USER)
+    )
     await client.send_json_auto_id({
         "type": "houseplan/assets/resolve", "asset_ids": [aid],
     })

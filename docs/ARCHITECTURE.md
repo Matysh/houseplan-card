@@ -1220,6 +1220,17 @@ transmit light is the separate `zero_wall_style` policy.
 
 ## Integration WS API
 
+`may_write` is the single writer policy for WebSocket and HTTP: administrators
+always write; with `admin_only=true` nobody else writes; with
+`admin_only=false` ordinary non-admin groups write while
+`system-read-only` remains denied. Missing or incomplete user/group data fails
+closed. Read ACL is intentionally different: authenticated View receives the
+complete config and layout without per-entity projection. The maintenance
+catalogs `plans/list` and `assets/list` are writer-only; `trail/get` keeps the
+coordinates needed by View but projects every `source` entity ID out of the
+response without mutating the recorder store. `virtual_light/toggle` remains an
+authenticated View action, not a writer operation.
+
 | Command | Parameters | Response |
 |---|---|---|
 | `houseplan/layout/get` | — | `{layout: {device_id: {x,y}}, rev}` |
@@ -1227,13 +1238,13 @@ transmit light is the separate `zero_wall_style` policy.
 | `houseplan/layout/update` | `device_id`, `pos` | `{ok, rev}`; event `houseplan_layout_updated` |
 | `houseplan/config/get` | — | `{config, rev, virtual_lights:{rev,config_rev,off[]}, decor_assets_api?}` (runtime capabilities are optional for rolling compatibility) |
 | `houseplan/virtual_light/toggle` | `marker_id` | `{marker_id,on,rev}` / err `not_toggleable`; event `houseplan_virtual_light_updated` |
-| `houseplan/trail/get` | — | `{trails: {marker: {current, previous}}}` — vacuum runs, raw robot coords |
+| `houseplan/trail/get` | — | `{trails: {marker: {current, previous}}}` — vacuum runs and raw robot coords, with internal `source` entity IDs removed |
 | `houseplan/trail/delete` | `marker_id` | `{ok, removed}` — erase current/previous runs after marker deletion |
 | `houseplan/config/set` | `config`, `expected_rev` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
 | `houseplan/plan/optimize` | `config`, `layout`, both expected revisions | crash-resumable two-store commit + one-deep backup |
 | `houseplan/plan/optimize_undo` | both expected revisions | restores backup only before any later edit |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` — writes `<space>.<token>.<ext>`, deletes nothing |
-| `houseplan/plans/list` | — | `{plans: [{name, url, size, modified, used_by}], total}` (newest 60) |
+| `houseplan/plans/list` | — | writer-only `{plans: [{name, url, size, modified, used_by}], total}` (newest 60) |
 | `houseplan/plans/delete` | `name` | `{ok, removed}` / err `in_use` |
 | `houseplan/layout/delete` | `device_id` | `{ok, rev}`; event `houseplan_layout_updated` |
 | `houseplan/geometry/repair` | `space_id`, `aspect`, `dry_run?`, `undo?` | preview / `{ok, rev, moved}` / `{restored}`; errs `nothing_to_repair`, `no_backup` |

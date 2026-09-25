@@ -73,6 +73,48 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'acl-readonly-group-becomes-writer',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'may_write_honours_explicit_admin_only_false '
+      + 'tests_backend/test_ha_websocket.py',
+    because: '#626 AC1/AC5: disabling admin_only admits household editors, but HA system-read-only '
+      + 'must remain unable to mutate config or upload content.',
+    patches: [{
+      file: 'custom_components/houseplan/auth.py',
+      find: '    return GROUP_ID_READ_ONLY not in group_ids\n',
+      replace: '    return True  # mutant: read-only group inherits household writer access\n',
+    }],
+  },
+  {
+    id: 'acl-plan-catalog-open-to-viewers',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_626_plans_list_refuses_viewer_before_scanning '
+      + 'tests_backend/test_ha_websocket.py',
+    because: '#626 AC2/AC3: the stored plan filename and usage catalog is maintenance data for '
+      + 'writers, not part of authenticated View.',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '    if not _check_write(hass, connection):\n'
+        + '        connection.send_error(msg["id"], "unauthorized", "Only writers may list plans")\n'
+        + '        return\n'
+        + '    rt = _runtime(hass, connection, msg["id"])\n',
+      replace: '    rt = _runtime(hass, connection, msg["id"])  # mutant: viewers list plan files\n',
+    }],
+  },
+  {
+    id: 'acl-trail-view-exposes-source-entity',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_626_authenticated_read_acl_matrix_and_trail_projection '
+      + 'tests_backend/test_ha_websocket.py',
+    because: '#626 AC4: View needs robot coordinates, not private source entity ids embedded at '
+      + 'arbitrary levels of current and previous route records.',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            if key != "source"\n',
+      replace: '            if True  # mutant: expose source entity ids\n',
+    }],
+  },
+  {
     id: 'view-conflict-requires-editor-runtime',
     guard: 'node --test test/config-write-conflict.test.mjs',
     because: '#612 AC1: View legitimately has no editor runtime, but its background config writes '

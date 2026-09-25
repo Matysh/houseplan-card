@@ -154,8 +154,10 @@ update: it shows a panel asking to reload the page.
 
 Every signed-in user can view the plan. Home Assistant permissions still govern
 device service calls. With the default integration option, only administrators
-can edit configuration or upload files. Plan optimization and its undo always
-require an administrator.
+can edit configuration or upload files. If that option is disabled, ordinary
+household users may edit, but members of Home Assistant's `system-read-only`
+group never become writers. Plan optimization and its undo always require an
+administrator.
 
 The **House Plan** sidebar item is visible to every signed-in user. A user who
 cannot edit gets the complete View experience without editor controls. On an
@@ -1288,6 +1290,24 @@ the recovery record remains for another attempt or a Home Assistant restart.
 <!-- docs-section: multiple-cards -->
 
 ## 20. Storage, multiple cards and backups
+
+### Who can see and change shared data
+
+| Home Assistant role | Visible in House Plan | May change House Plan |
+|---|---|---|
+| Administrator | The complete plan, represented devices and the maintenance catalog of plan files | Yes |
+| Ordinary user | The complete plan and every device represented on it | Only when “administrators only” editing is disabled for the integration |
+| `system-read-only` user | The complete plan and every device represented on it | Never |
+
+House Plan is a shared spatial map of the home, not a separate per-entity
+privacy boundary. The plan configuration is therefore not filtered through the
+viewer's entity permissions: a household member who can open View sees its rooms
+and represented devices. Normal Home Assistant permissions still govern actions
+against real devices.
+
+The maintenance catalog of stored plan files (names, sizes and usage) is
+writer-only. Vacuum coordinates remain available because View renders the path,
+but the map source's internal entity ID is removed from the response.
 
 ### Portable JSON backup
 

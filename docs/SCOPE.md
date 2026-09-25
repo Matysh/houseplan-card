@@ -30,8 +30,13 @@ obvious" is somebody else's job.
 | **Guests / kiosk** | View-only glance at the home | Wall tablet |
 
 Design consequence: **View mode is the product** for two of the three personas.
-Editors are admin-only tools and must never leak interactions into View
-(established by UX-MODES; lock guard, inert openings, no drag in View).
+Editors are writer-only tools and must never leak interactions into View
+(established by UX-MODES; lock guard, inert openings, no drag in View). By
+default only administrators are writers; an installation may explicitly let
+ordinary household users edit, but Home Assistant's `system-read-only` group
+never becomes a writer. Authenticated View deliberately shares the complete
+spatial plan and represented-device configuration with household members rather
+than pretending to be an entity-by-entity privacy boundary.
 The desktop browser with mouse/keyboard is the reference and recommended
 editing environment. Editor parity on touch is outside the product guarantee;
 deliberate degradation is allowed under `TOUCH-SUPPORT.md`.

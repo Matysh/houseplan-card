@@ -8,18 +8,29 @@ def _enable_custom_integrations(enable_custom_integrations):
     yield
 
 from aiohttp import FormData
+from homeassistant.auth.const import GROUP_ID_USER
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
 
-from custom_components.houseplan.const import DOMAIN
+from custom_components.houseplan.const import CONF_ADMIN_ONLY, DOMAIN
 
 
-async def _setup(hass: HomeAssistant) -> None:
-    entry = MockConfigEntry(domain=DOMAIN, title="House Plan", data={}, options={})
+async def _setup(hass: HomeAssistant, *, options: dict | None = None) -> None:
+    entry = MockConfigEntry(
+        domain=DOMAIN, title="House Plan", data={}, options=options or {}
+    )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
+
+
+async def _household_access_token(hass: HomeAssistant) -> str:
+    user = await hass.auth.async_create_user(
+        "House Plan household", group_ids=[GROUP_ID_USER]
+    )
+    refresh_token = await hass.auth.async_create_refresh_token(user)
+    return hass.auth.async_create_access_token(refresh_token)
 
 
 async def test_upload_ok(hass: HomeAssistant, hass_client: ClientSessionGenerator) -> None:
@@ -285,17 +296,23 @@ async def test_issue_617_plan_upload_limit_is_inclusive_and_refusal_leaves_nothi
     assert after == before, "a refused plan leaves neither a file nor a temporary behind"
 
 
-async def test_issue_617_plan_upload_refuses_non_admin(
+async def test_issue_626_plan_upload_refuses_read_only_but_allows_household(
     hass: HomeAssistant, hass_client: ClientSessionGenerator, hass_read_only_access_token: str,
 ) -> None:
-    """#617 AC4: the same write policy as ws_plan_set."""
-    await _setup(hass)
+    """#626 AC5: HTTP upload follows the same group-aware writer policy as WS."""
+    await _setup(hass, options={CONF_ADMIN_ONLY: False})
     client = await hass_client(hass_read_only_access_token)
     before = await hass.async_add_executor_job(_plans_listing, hass)
     resp = await client.post("/api/houseplan/plans/upload", data=_plan_form(b"PLAN"))
     assert resp.status == 403
     assert (await resp.json())["error"] == "unauthorized"
     assert await hass.async_add_executor_job(_plans_listing, hass) == before
+
+    household = await hass_client(await _household_access_token(hass))
+    allowed = await household.post(
+        "/api/houseplan/plans/upload", data=_plan_form(b"PLAN", "household")
+    )
+    assert allowed.status == 200, await allowed.text()
 
 
 async def test_issue_617_plan_upload_validates_fields_like_ws_plan_set(
