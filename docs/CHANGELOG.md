@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.78.0-beta.2 — 2026-09-25
+
 - In the Plan editor, the **Room settings** button can now be moved temporarily
   within its room when it covers a wall, opening or another element. The
   position lasts until the editor is closed and does not change the plan; a
