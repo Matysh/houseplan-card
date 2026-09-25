@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1040, issue: 366. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1041, issue: 366. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -32,6 +32,7 @@
 | #630 | [CODE-REVIEW-630-r1.md](CODE-REVIEW-630-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #629 | [SPEC-REVIEW-629-r1.md](SPEC-REVIEW-629-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #629 | [CODE-REVIEW-629-r1.md](CODE-REVIEW-629-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #629 | [CODE-REVIEW-629-r2.md](CODE-REVIEW-629-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #627 | [SPEC-REVIEW-627-r1.md](SPEC-REVIEW-627-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | избыточное (не противоречивое) условие в AC2; влияние на touch не названо явным пунктом | `docs/TOUCH-SUPPORT.md` |
 | #627 | [CODE-REVIEW-627-r1.md](CODE-REVIEW-627-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | demo/smoke_danger_confirmation.mjs не переведён на ожидание составного гейта; диалог оп… | `demo/smoke_danger_confirmation.mjs` `src/houseplan-card.ts` `de.ts` `smoke_danger_confirm_branches.mjs` |
 | #627 | [CODE-REVIEW-627-r2.md](CODE-REVIEW-627-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
