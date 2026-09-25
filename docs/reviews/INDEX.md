@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1052, issue: 371. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1053, issue: 372. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -47,6 +47,7 @@
 | #627 | [CODE-REVIEW-627-r1.md](CODE-REVIEW-627-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | demo/smoke_danger_confirmation.mjs не переведён на ожидание составного гейта; диалог оп… | `demo/smoke_danger_confirmation.mjs` `src/houseplan-card.ts` `de.ts` `smoke_danger_confirm_branches.mjs` |
 | #627 | [CODE-REVIEW-627-r2.md](CODE-REVIEW-627-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #627 | [CODE-REVIEW-627-r3.md](CODE-REVIEW-627-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #626 | [SPEC-REVIEW-626-r1.md](SPEC-REVIEW-626-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | Раздел «что человек увидит» | — |
 | #625 | [SPEC-REVIEW-625-r1.md](SPEC-REVIEW-625-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | новый инвариант markers[].id не описывает исход для уже испорченной хранимой конфигурации; продуктовые формулировки §7.1 неполны; не проговорены явные «нет» по i18n/touch | `validation.py` `__init__.py` |
 | #625 | [SPEC-REVIEW-625-r2.md](SPEC-REVIEW-625-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #625 | [CODE-REVIEW-625-r1.md](CODE-REVIEW-625-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | Три из четырёх точек вызова validate_active_marker_ids не имеют ни одного теста, exerci…; AC5 текстуально обещает «отдельные тесты сохраняют поведение при отсутствующем length» …; store.py:async_save_config_state — controller.async_flush() и последующий controller.re… | `custom_components/houseplan/websocket_api.py` `test_validation.py` |
