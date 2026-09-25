@@ -51,6 +51,16 @@ const configOf = (cfgResp: AuthoritativeConfigResponse | undefined | null): Serv
   return raw && Array.isArray((raw as ServerConfig).spaces) ? raw as ServerConfig : null;
 };
 
+/** An immutable top-level settings/markers replacement cannot alter geometry
+ * while it retains the exact spaces snapshot. Deserialised server responses
+ * own a new array and deliberately fail this fast path. */
+export function preservesSpaceGeometry(
+  previous: ServerConfig | null | undefined,
+  next: ServerConfig | null | undefined,
+): boolean {
+  return !!previous && !!next && previous.spaces === next.spaces;
+}
+
 const finiteRevision = (value: unknown, fallback: number): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 

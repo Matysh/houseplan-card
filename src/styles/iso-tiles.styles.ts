@@ -74,8 +74,22 @@ const isoTilesStatic = css`
     inset: 0;
     pointer-events: none;
     z-index: -1;
+    /* This absolute layer has no layout influence outside itself. Isolating
+       style/layout keeps a 200-marker shadow tree out of the rest of the
+       stage's toggle recalculation without clipping the deliberately
+       overflowing blur at individual marker bounds. */
+    contain: layout style;
   }
-  .stage.projection-iso.mode-view .iso-tile-shadow { pointer-events: none; }
+  /* The twin's root already has exactly the core/lock box. Paint its shadow
+     there instead of creating two hidden descendants for every marker. Badge
+     twins retain only the flex spacer and their extra value boxes. */
+  .stage.projection-iso.mode-view .iso-tile-shadow {
+    pointer-events: none;
+    contain: layout style;
+    border-radius: var(--iso-radius);
+    box-shadow: var(--iso-sh-dx) calc(var(--iso-sh-dy) + var(--iso-depth)) var(--iso-sh-blur)
+      calc(var(--iso-shadow-inset) * -1) rgb(28 32 28 / var(--iso-sh-a));
+  }
   .stage.projection-iso.mode-view .iso-tile-shadow::before { display: none; }
   .stage.projection-iso.mode-view .iso-tile-shadow > :not(.device-shell):not(.oplock-shell),
   .stage.projection-iso.mode-view .iso-tile-shadow .device-shell-frame,
@@ -84,8 +98,7 @@ const isoTilesStatic = css`
   .stage.projection-iso.mode-view .iso-tile-shadow .oplock-core {
     background: transparent;
     color: transparent;
-    box-shadow: var(--iso-sh-dx) calc(var(--iso-sh-dy) + var(--iso-depth)) var(--iso-sh-blur)
-      calc(var(--iso-shadow-inset) * -1) rgb(28 32 28 / var(--iso-sh-a));
+    box-shadow: none;
   }
   .stage.projection-iso.mode-view .iso-tile-shadow .value-badge {
     background: transparent;

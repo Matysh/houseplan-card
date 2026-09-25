@@ -23,7 +23,7 @@ const read = (ids) => page.evaluate(([white, tinted]) => {
   const marker = (id) => root.querySelector(`.devlayer .dev:not(.iso-tile-shadow)[data-id="${id}"]`);
   const twin = (id) => root.querySelector(`.iso-tile-shadows .iso-tile-shadow[data-shadow-of="${id}"]`);
   const shadow = (id) => {
-    const s = twin(id)?.querySelector('.device-core');
+    const s = twin(id);
     const m = s && getComputedStyle(s).boxShadow
       .match(/rgba?\(28, 32, 28(?:, ([\d.]+))?\) (-?[\d.]+)px (-?[\d.]+)px ([\d.]+)px (-?[\d.]+)px/);
     return m ? { a: Number(m[1] ?? 1), dx: +m[2], dy: +m[3], blur: +m[4], spread: +m[5] } : null;
@@ -36,7 +36,7 @@ const read = (ids) => page.evaluate(([white, tinted]) => {
     const edge = cs.boxShadow.match(/^(rgba?\([^)]*\)) 0px ([\d.]+)px 0px/);
     const frame = dev.querySelector('.device-shell-frame');
     const rect = core.getBoundingClientRect();
-    const twinCore = twin(id)?.querySelector('.device-core')?.getBoundingClientRect();
+    const twinCore = twin(id)?.getBoundingClientRect();
     return {
       w: rect.width, h: rect.height, top: rect.top,
       radius: px(cs.borderTopLeftRadius), bg: cs.backgroundColor,
@@ -59,7 +59,8 @@ const read = (ids) => page.evaluate(([white, tinted]) => {
     twinsInert: [...root.querySelectorAll('.iso-tile-shadow')].every((s) => getComputedStyle(s).pointerEvents === 'none'
       && s.getAttribute('aria-hidden') === 'true' && !s.hasAttribute('tabindex')),
     twinsGeometryOnly: [...root.querySelectorAll('.iso-tile-shadows .dev.iso-tile-shadow')]
-      .every((s) => !s.querySelector('ha-icon, .device-pulse, .activity-dot, .newdot, .habadge, .lqi')),
+      .every((s) => !s.querySelector('ha-icon, .device-pulse, .activity-dot, .newdot, .habadge, .lqi')
+        && (s.querySelector('.value-badge') || s.childElementCount === 0)),
     badgeGap: (() => {
       const dev = marker('d_temp');
       const core = dev?.querySelector('.device-core')?.getBoundingClientRect();

@@ -104,7 +104,7 @@ import type {
 } from './types';
 import type { RadarEditorDraft } from './radar-editor';
 import {
-  adoptAuthoritativeGated, createConfigAdoption,
+  adoptAuthoritativeGated, createConfigAdoption, preservesSpaceGeometry,
   type ConfigAdoption, type ConfigAdoptionHostPort, type GatedAdoptionInput, type GatedAdoptionResult,
 } from './config-adoption';
 import { recoverConfigWriteConflict } from './config-write-conflict';
@@ -3994,10 +3994,16 @@ export class HouseplanCard extends LitElement {
     // `_serverCfg` is the root of every geometry cache. Keep the epoch
     // invariant local to that reactive assignment so imports, reconnects and
     // demo harnesses cannot accidentally reuse an older config object's data.
-    // #126's provenance/new-device write is the one exact exception: it changes
-    // no space input, and rebuilding a 20-room floor here doubled cold work.
+    // #126's provenance/new-device write is one exact exception. A second safe
+    // case is an immutable top-level settings/markers replacement that keeps
+    // the SAME spaces array: no room, wall, opening or decor input can have
+    // changed, so rebuilding every room and structural cache only to toggle
+    // the installation-wide 2.5D setting is pure waste (#649 release gate).
+    // A deserialised server response owns a new spaces array and stays conservative.
     if (changed.has('_serverCfg')) {
-      const preserveGeometry = this._cfgEpochPreservedConfig === this._serverCfg;
+      const before = changed.get('_serverCfg') as ServerConfig | null | undefined;
+      const preserveGeometry = this._cfgEpochPreservedConfig === this._serverCfg
+        || preservesSpaceGeometry(before, this._serverCfg);
       this._cfgEpochPreservedConfig = null;
       if (!preserveGeometry) this._cfgEpoch++;
       this._renderLife.invalidate();
@@ -12408,7 +12414,7 @@ export class HouseplanCard extends LitElement {
       const left = ((point[0] - view.x) / view.w) * 100;
       const top = ((point[1] - view.y) / view.h) * 100;
       const lockState = `${locked ? 'locked' : known ? 'unlocked' : 'unknown'} ${this._isoLightFloors?.has(isoPlacement?.owner?.id ?? '') ? 'iso-floor-light' : ''}`;
-      if (ghost) return renderIsoTileShadow('oplock', String(o.id), `${deviceThemeClass(this._renderPlanHass)} ${lockState}`, `left:${left}%;top:${top}%`, html`<span class="oplock-shell"><span class="oplock-core"></span></span>`);
+      if (ghost) return renderIsoTileShadow('oplock', String(o.id), `${deviceThemeClass(this._renderPlanHass)} ${lockState}`, `left:${left}%;top:${top}%`, nothing);
       return html`<div class="oplock ${deviceThemeClass(this._renderPlanHass)} ${lockState}"
         data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'opening-lock' : nothing}
         data-hp-iso-raised=${isoPlacement?.plane === 'raised' ? 'true' : nothing}

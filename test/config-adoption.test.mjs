@@ -5,6 +5,7 @@ import {
   createConfigAdoption,
   adoptAuthoritativeGated,
   adoptStructuralResponses,
+  preservesSpaceGeometry,
 } from '../test-build/config-adoption.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
 import { virtualLightSnapshot } from '../test-build/virtual-light-state.js';
@@ -17,6 +18,14 @@ import { virtualLightSnapshot } from '../test-build/virtual-light-state.js';
 
 const cfg = (title, extra = {}) => ({ spaces: [{ id: 'f1', title }], settings: {}, ...extra });
 const cloneOf = (value) => JSON.parse(JSON.stringify(value));
+
+test('#649 settings-only replacement preserves only the identical spaces snapshot', () => {
+  const spaces = [{ id: 'f1', title: 'One' }];
+  const before = { spaces, markers: [], settings: {} };
+  assert.equal(preservesSpaceGeometry(before, { ...before, settings: { volumetric_view: true } }), true);
+  assert.equal(preservesSpaceGeometry(before, { ...before, spaces: cloneOf(spaces) }), false);
+  assert.equal(preservesSpaceGeometry(null, before), false);
+});
 
 /** A host stub recording every side effect the adoption may trigger, in order. */
 function hostStub(adoption, overrides = {}) {

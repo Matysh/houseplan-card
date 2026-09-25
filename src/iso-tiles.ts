@@ -13,7 +13,7 @@
  * Flat never reaches this module: every selector is scoped to
  * `.stage.projection-iso.mode-view`.
  */
-import { html, type TemplateResult } from 'lit';
+import { html, nothing, type TemplateResult } from 'lit';
 import { colorLuma, parseHexColor, type Rgb } from './iso-materials';
 
 export const ISO_ICON_SCALE = 1.12;
@@ -163,7 +163,7 @@ ${S} .oplock { --iso-radius: min(${u(ISO_TILE.radius)}, calc(var(--oplock-core-s
  * layer under every marker, so a shadow never lands on a neighbour's tile.
  */
 export function renderIsoTileShadow(kind: 'dev' | 'oplock', owner: string, classes: string, style: string,
-  face: TemplateResult): TemplateResult {
+  face: TemplateResult | typeof nothing): TemplateResult {
   return html`<div class="${kind} iso-tile-shadow ${classes}" data-shadow-of=${owner} style=${style}
     aria-hidden="true">${face}</div>`;
 }

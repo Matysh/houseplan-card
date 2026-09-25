@@ -156,27 +156,24 @@ export function renderDeviceFace(
  */
 export function renderDeviceShadowFace(
   presentation: ResolvedDevicePresentation,
-): TemplateResult {
+): TemplateResult | typeof nothing {
   const legacyMetrics = legacySupplementalMetrics(presentation);
   const badge = presentation.valueBadge;
+  // The shadow root itself owns the core-sized shadow. Most markers therefore
+  // need no descendant DOM at all; only a badge/legacy section needs the flex
+  // geometry below to place its additional shadow beside the core (#649).
+  if (!badge && legacyMetrics.length === 0) return nothing;
   const shellPosition = badge?.position || 'right';
-  const hasSections = !!badge || legacyMetrics.length > 0;
   const shellClasses = [
     'device-shell',
     presentation.valueText != null ? 'text-shell' : '',
-    hasSections ? `with-values pos-${shellPosition}` : '',
+    `with-values pos-${shellPosition}`,
     legacyMetrics.length ? 'with-legacy' : '',
   ].filter(Boolean).join(' ');
   return html`
     <span class=${shellClasses} aria-hidden="true">
-      <span class="device-core">
-        ${presentation.valueText != null
-          ? html`<span class="valtext"
-              style=${`--value-font-scale:${deviceTextScale(presentation.valueFullText || presentation.valueText)}`}
-            >${presentation.valueText}</span>`
-          : nothing}
-      </span>
-      ${hasSections ? html`<span class="device-sections">
+      <span class="device-core"></span>
+      <span class="device-sections">
         ${badge
           ? html`<span
               class=${valueBadgeClassName(badge)}
@@ -187,7 +184,7 @@ export function renderDeviceShadowFace(
           class="value-badge legacy-secondary available tone-${metric.kind}"
           style=${`--value-font-scale:${deviceTextScale(metric.text + metric.suffix)}`}
         >${metric.text}${metric.suffix}</span>`)}
-      </span>` : nothing}
+      </span>
     </span>
   `;
 }
