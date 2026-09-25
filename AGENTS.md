@@ -567,7 +567,11 @@ development cycle never run E2E. Stable installable assets (`houseplan.zip`,
 `houseplan-card.js` and their `SHA256SUMS`) reach the public stable release only
 from `release.yml` after those gates; a release published by hand is turned back
 into a draft first (#540). The prerelease publisher additionally ships a
-candidate-bound `RELEASE-MEMBERSHIP.json` covered by the same passport (#547).
+candidate-bound `RELEASE-MEMBERSHIP.json` covered by the same passport (#547). Before
+every stable release `release.yml` also queues an independent review of the
+whole beta line (`release-review.yml`, `PROCESS.md` §11.5, #638): no specs, no
+review rounds, output `docs/reviews/RELEASE-REVIEW-vX.Y.Z.md`; it runs in
+parallel and never blocks the release.
 
 **"Verified" without a named command and its result is not evidence.**
 

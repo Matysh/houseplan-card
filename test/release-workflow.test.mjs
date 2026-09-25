@@ -29,7 +29,7 @@ test('#540 AC1: exactly one workflow reacts to the release event, and none of th
   assert.ok(!readdirSync(WORKFLOWS).includes('release-zip.yml'));
   // asset uploads live only in the job that needs the gate
   const jobs = [...workflow.slice(at('\njobs:\n')).matchAll(/^ {2}([a-z-]+):\n/gm)].map((m) => m[1]);
-  assert.deepEqual(jobs, ['candidate', 'gate', 'stage', 'publish', 'announce', 'hacs-discovery']);
+  assert.deepEqual(jobs, ['candidate', 'independent-review', 'gate', 'stage', 'publish', 'announce', 'hacs-discovery']);
   const uploads = jobs.filter((name) => /gh release upload|softprops\/action-gh-release/.test(job(name)));
   assert.deepEqual(uploads, ['stage'], 'the one uploading job');
   assert.deepEqual(jobNeeds('stage'), ['candidate', 'gate']);
@@ -115,4 +115,22 @@ test('#538 AC2 / #540: release.yml зовёт анонс только после
   assert.match(block, /prerelease: \$\{\{ needs\.candidate\.outputs\.prerelease == 'true' \}\}/,
     'беты остаются тихими по признаку тега');
   assert.match(block, /secrets: inherit/);
+});
+
+// #638, PROCESS.md §11.5: независимое ревью линии запускается параллельно и
+// выпуск не блокирует (решение владельца 2026-09-25). Ни один job выпуска не
+// может зависеть от него: иначе «рекомендация» молча превращается в гейт.
+test('#638 AC2: ревью линии ставится в очередь параллельно гейтам и ни один job выпуска его не ждёт', () => {
+  const block = job('independent-review');
+  assert.deepEqual(jobNeeds('independent-review'), ['candidate'], 'стартует сразу после закрепления SHA');
+  assert.match(block, /^ {4}continue-on-error: true$/m, 'отказ запуска — не красный релиз');
+  assert.match(block, /if: \$\{\{ needs\.candidate\.outputs\.prerelease != 'true' \}\}/, 'только стабильные');
+  assert.match(block, /gh workflow run release-review\.yml --repo "\$\{\{ github\.repository \}\}" --ref dev/);
+  assert.match(block, /-f tag="\$TAG" -f candidate="\$SHA"/, 'ревью судит тот же SHA, что гейты');
+  assert.match(block, /^ {4}permissions:\n {6}actions: write\n {4}steps:/m, 'единственное право — поставить workflow в очередь');
+  const jobs = [...workflow.slice(at('\njobs:\n')).matchAll(/^ {2}([a-z-]+):\n/gm)].map((m) => m[1]);
+  for (const name of jobs) {
+    assert.ok(!jobNeeds(name).includes('independent-review'), `${name} не зависит от ревью линии`);
+    assert.ok(!/needs\.independent-review/.test(job(name)), `${name} не читает результат ревью линии`);
+  }
 });

@@ -11052,6 +11052,50 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'release-waits-for-line-review',
+    guard: 'node --test test/release-workflow.test.mjs',
+    because: 'the independent line review is a recommendation, not a gate: a release job that needs it '
+      + 'turns the owner decision "never blocks the release" into a silent blocker (#638 AC2)',
+    patches: [{
+      file: '.github/workflows/release.yml',
+      find: '    name: "Гейт: контракт, Validate, Full Performance и E2E на точном SHA"\n    needs: candidate\n',
+      replace: '    name: "Гейт: контракт, Validate, Full Performance и E2E на точном SHA"\n    needs: [candidate, independent-review]\n',
+    }],
+  },
+  {
+    id: 'release-review-base-accepts-beta',
+    guard: 'node --test test/release-review.test.mjs',
+    because: 'the line starts at the previous STABLE tag; taking the last beta shrinks the review of '
+      + 'the whole line to its tail and hides the defects #607/#608/#611/#619 were found in (#638 AC1)',
+    patches: [{
+      file: 'scripts/release-review.mjs',
+      find: "  const older = reachable.filter((name) => STABLE_TAG_RE.test(name) && compare(name, tag) < 0);",
+      replace: "  const older = reachable.filter((name) => /^v\\d+\\.\\d+\\.\\d+/.test(name) && name !== tag && compare(name.split('-')[0], tag) <= 0);",
+    }],
+  },
+  {
+    id: 'release-review-model-gets-github-tools',
+    guard: 'node --test test/release-review.test.mjs',
+    because: 'the release reviewer is the untrusted stage and must not write anywhere; GitHub tools '
+      + 'would let it file issues and comments the owner never took into work (#638, #556)',
+    patches: [{
+      file: '.github/workflows/release-review.yml',
+      find: '            --allowedTools Read,Write,Grep,Glob,Bash\n',
+      replace: '            --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment\n',
+    }],
+  },
+  {
+    id: 'release-review-reruns-existing-doc',
+    guard: 'node --test test/release-review.test.mjs',
+    because: 'a repeated dispatch for a tag whose document is already in dev must not pay for a second '
+      + 'model run and overwrite the published review (#638)',
+    patches: [{
+      file: '.github/workflows/release-review.yml',
+      find: '          if [ "$FORCE" != "true" ] && git cat-file -e "origin/dev:$doc" 2>/dev/null; then\n',
+      replace: '          if false; then\n',
+    }],
+  },
+  {
     id: 'review-trusts-push-run-without-mutants',
     guard: 'node --test test/validate-gate.test.mjs',
     because: 'a green push run on the same SHA holds no mutants and is not proof; the gate must '

@@ -1,0 +1,335 @@
+name: "Релиз: независимое ревью линии"
+run-name: "Release review ${{ inputs.tag }}"
+
+# #638, PROCESS.md §11.5: перед стабильным релизом — одно независимое ревью
+# поверхностей, изменённых всей линией бет, «с нуля»: без ТЗ и документов
+# раундов, по SCOPE и USER-GUIDE. Инкрементальное ревью судит дифф задачи
+# против её ТЗ; четыре дефекта линии 1.77 (#607, #608, #611, #619) не входили
+# ни в один AC и нашлись только так.
+#
+# Решение владельца 2026-09-25: ревью НЕ блокирует выпуск. `release.yml`
+# запускает этот workflow параллельно гейтам из job, от которого не зависит ни
+# один job выпуска; документ — рекомендация, в работу его берёт владелец.
+#
+# Только `workflow_dispatch`: GitHub исполняет файл с той ветки, на которой
+# запущен прогон (`release.yml` зовёт `--ref dev`), поэтому зеркало в `main`
+# не нужно, а правка — один коммит в `dev`.
+#
+# Три job, как у конвейера (#551, #556): детерминированная подготовка,
+# недоверенная модель без единого права на запись, детерминированная
+# публикация документа в `dev`.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Stable release tag, for example v1.78.0"
+        required: true
+        type: string
+      candidate:
+        description: "Exact candidate SHA; empty = the commit of the tag"
+        required: false
+        type: string
+        default: ""
+      force:
+        description: "Review again even when the document already exists in dev"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-review-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: "Ревью релиза: вход линии"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      proceed: ${{ steps.line.outputs.proceed }}
+      candidate: ${{ steps.line.outputs.candidate }}
+      base: ${{ steps.line.outputs.base }}
+      doc: ${{ steps.line.outputs.doc }}
+      issues: ${{ steps.line.outputs.issues }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          ref: dev
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+
+      - name: Кандидат, база и issue линии
+        id: line
+        env:
+          TAG: ${{ inputs.tag }}
+          CANDIDATE: ${{ inputs.candidate }}
+          FORCE: ${{ inputs.force }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          doc=$(node scripts/release-review.mjs doc --tag="$TAG")
+          git fetch -q --tags origin
+          if [ -z "$CANDIDATE" ]; then
+            CANDIDATE=$(git rev-parse --verify -q "refs/tags/$TAG^{commit}") || {
+              echo "::error::тега $TAG нет, а кандидат не передан"; exit 1; }
+          fi
+          git cat-file -e "$CANDIDATE^{commit}"
+          CANDIDATE=$(git rev-parse "$CANDIDATE^{commit}")
+          # Повтор на тот же тег не тратит модель: документ уже есть (§11.5).
+          if [ "$FORCE" != "true" ] && git cat-file -e "origin/dev:$doc" 2>/dev/null; then
+            echo "::notice::$doc уже есть в dev — повторное ревью не запускается (force=true, чтобы переснять)"
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          out="$RUNNER_TEMP/release-review-input"
+          node scripts/release-review.mjs prepare --tag="$TAG" --candidate="$CANDIDATE" \
+            --out="$out" --run-url="$RUN_URL" | tee -a "$GITHUB_OUTPUT"
+          echo "candidate=$CANDIDATE" >> "$GITHUB_OUTPUT"
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+          (cd "$out" && sha256sum brief.md line-membership.json > manifest.sha256)
+          cat "$out/brief.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Передать вход модели
+        if: steps.line.outputs.proceed == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-review-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-review-input
+          if-no-files-found: error
+          retention-days: 3
+
+  model_review:
+    name: "Ревью релиза: работа модели"
+    needs: prepare
+    if: needs.prepare.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # Недоверенная стадия. Прав на запись нет никаких: ни в репозиторий, ни в
+    # issue. Документ публикует `publish`; находки в issue превращает владелец.
+    # `github_token` у шага Review обязателен (#556): без него action меняет
+    # OIDC на собственный App-токен с правом записи.
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.prepare.outputs.candidate }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Получить вход линии
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-review-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-review-input
+
+      - name: Проверить вход и кандидата
+        env:
+          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
+        run: |
+          (cd "$RUNNER_TEMP/release-review-input" && sha256sum -c manifest.sha256)
+          test "$(git rev-parse HEAD)" = "$CANDIDATE"
+
+      - name: Установить зависимости
+        run: npm ci
+
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Установить Chromium
+        if: steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+
+      # Тот же обход, что у конвейера (_process.yml, anthropics issue 1817).
+      - name: Установить Claude Code детерминированно
+        id: claude_bin
+        run: |
+          src=$(ls "$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-*/v1/src/entrypoints/run.ts 2>/dev/null | head -1)
+          ver=$(grep -oE 'claudeCodeVersion = "[0-9]+\.[0-9]+\.[0-9]+"' "$src" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
+          ver="${ver:-2.1.265}"
+          base=https://downloads.claude.ai/claude-code-releases
+          bin="$HOME/.local/bin/claude"
+          mkdir -p "$(dirname "$bin")"
+          curl -fsSL --retry 3 "$base/$ver/linux-x64/claude" -o "$bin"
+          sum=$(curl -fsSL --retry 3 "$base/$ver/manifest.json" | jq -r '.platforms["linux-x64"].checksum')
+          echo "$sum  $bin" | sha256sum -c -
+          chmod +x "$bin"
+          "$bin" --version
+          echo "path=$bin" >> "$GITHUB_OUTPUT"
+
+      - name: Review
+        id: review
+        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520 # v1
+        env:
+          REVIEW_DOC: ${{ runner.temp }}/release-review.md
+          REVIEW_INPUT: ${{ runner.temp }}/release-review-input
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
+          prompt: |
+            Ты независимый ревьюер релиза House Plan. Язык ответа — русский.
+
+            Релиз: ${{ inputs.tag }} · кандидат ${{ needs.prepare.outputs.candidate }}
+            (рабочая копия уже на нём) · база линии: ${{ needs.prepare.outputs.base || 'нет' }}.
+            Вход линии — файл $REVIEW_INPUT/brief.md (issue линии, доказанные
+            трейлерами, и изменённые продуктовые файлы) и
+            $REVIEW_INPUT/line-membership.json.
+
+            Правила этого ревью — docs/process/REVIEWER.md, раздел «Независимое
+            ревью линии», канон — PROCESS.md §11.5. Прочитай их первыми.
+
+            Главное, что нельзя пропустить:
+            - Ты судишь ПОВЕРХНОСТИ, изменённые линией, против ПОЛЬЗОВАТЕЛЯ, а
+              не дифф против ТЗ. Не читай ТЗ задач (раздел «## ТЗ» в issue,
+              docs/specs/**) и документы раундов (docs/reviews/**): независимость
+              и есть смысл шага. Основа суждения — docs/SCOPE.md (персоны и
+              работы) и docs/USER-GUIDE.ru.md (что обещано пользователю).
+            - Проверяй исполнением, а не чтением: собери бандл
+              (`npm run bundle:sync`), открой затронутые поверхности в браузере
+              (стенд `demo/`, смоки `demo/smoke_*.mjs`), вводи текст
+              посимвольно, закрывай диалоги настоящим Escape и крестиком. Где
+              есть диалоги HA — пиннутая фикстура `ha-dialog` (#505,
+              demo/helpers/README-ha-dialog-505.md,
+              `node demo/verify_ha_dialog_discard_recovery.mjs`).
+            - Для каждой поверхности: обычный сценарий и самый рискованный
+              соседний, шесть классов риска (async, данные/права, геометрия,
+              визуал, объём/perf, host/input) — PROCESS.md §2.6.
+            - Ты ничего не правишь и не публикуешь: ни код, ни issue, ни
+              комментарии. Права на запись у тебя нет. Любые изменения рабочей
+              копии будут отброшены — после проверок восстанови её сам
+              (`git checkout -- . && git clean -fd`), если что-то менял.
+
+            Находки: High / Medium / Low, у каждой — поверхность, воспроизведение
+            (команда или шаги), что увидит пользователь, какая персона задета.
+            Выпуск это ревью не останавливает: документ — рекомендация владельцу.
+
+            Напиши полный документ в файл по пути из переменной REVIEW_DOC
+            (абсолютный, вне репозитория). Разделы: что входило в линию,
+            поверхности и как каждая проверялась (команда → результат),
+            находки, что проверено и корректно, чего не проверял и почему.
+            Первой строкой после заголовка — `Итог: High N · Medium N · Low N`.
+
+            Затем верни JSON по схеме — последнее обязательное действие.
+          claude_args: |
+            --max-turns 200
+            --allowedTools Read,Write,Grep,Glob,Bash
+            --json-schema '{"type":"object","properties":{"high":{"type":"integer"},"medium":{"type":"integer"},"low":{"type":"integer"},"summary":{"type":"string"}},"required":["high","medium","low","summary"]}'
+
+      - name: Запечатать результат модели
+        env:
+          SOURCE: ${{ runner.temp }}/release-review.md
+          OUT: ${{ steps.review.outputs.structured_output }}
+        run: |
+          test -s "$SOURCE" || { echo "::error::модель не оставила документ ревью"; exit 1; }
+          dir="$RUNNER_TEMP/release-review-result"
+          mkdir -p "$dir"
+          printf '%s' "$OUT" > "$dir/result.json"
+          jq -e '(.high|type=="number") and (.medium|type=="number") and (.low|type=="number") and (.summary|type=="string")' \
+            "$dir/result.json" >/dev/null
+          cp "$SOURCE" "$dir/release-review.md"
+          (cd "$dir" && sha256sum release-review.md result.json > manifest.sha256)
+
+      - name: Передать результат публикации
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-review-result-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-review-result
+          if-no-files-found: error
+          retention-days: 3
+
+  publish:
+    name: "Ревью релиза: документ в dev"
+    needs: [prepare, model_review]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          ref: dev
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+
+      - name: Получить результат модели
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-review-result-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-review-result
+
+      # Модель пишет только текст документа. Путь, машинный блок, индекс и
+      # коммит решает этот шаг; всё остальное в рабочей копии не существует.
+      - name: Опубликовать документ
+        env:
+          TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          DOC: ${{ needs.prepare.outputs.doc }}
+          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
+          BASE: ${{ needs.prepare.outputs.base }}
+          ISSUES: ${{ needs.prepare.outputs.issues }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          dir="$RUNNER_TEMP/release-review-result"
+          (cd "$dir" && sha256sum -c manifest.sha256)
+          test "$DOC" = "$(node scripts/release-review.mjs doc --tag="$TAG")"
+          counts=$(jq -r '"High \(.high) · Medium \(.medium) · Low \(.low)"' "$dir/result.json")
+          for attempt in 1 2 3; do
+            git fetch -q origin dev
+            git reset -q --hard origin/dev
+            git clean -fdq
+            mkdir -p docs/reviews
+            {
+              cat "$dir/release-review.md"
+              printf '\n\n<!-- hp-release-review-anchors -->\n### Материал ревью\n\n```\n'
+              printf 'tag %s\ncandidate %s\nbase %s\nissues %s\nrun %s\n' \
+                "$TAG" "$CANDIDATE" "${BASE:-—}" "${ISSUES:-—}" "$RUN_URL"
+              printf '```\n'
+            } > "$DOC"
+            node scripts/reviews-index.mjs --dir=docs/reviews
+            git add -- "$DOC" docs/reviews/INDEX.md
+            git diff --cached --name-only | node scripts/review-doc-guard.mjs
+            git -c user.name="claude[bot]" \
+                -c user.email="209825114+claude[bot]@users.noreply.github.com" \
+                commit -q -F - <<MSG
+          docs: release review for $TAG
+
+          Независимое ревью линии перед стабильным релизом (PROCESS.md §11.5).
+          Итог: $counts. Выпуск не блокирует; решение по находкам — за владельцем.
+
+          Issue: #638
+          User-Visible: no
+          MSG
+            git diff --name-only "origin/dev...HEAD" | node scripts/review-doc-guard.mjs
+            if git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev; then
+              echo "### Независимое ревью $TAG" >> "$GITHUB_STEP_SUMMARY"
+              echo "Итог: $counts — \`$DOC\` в dev. Выпуск не блокируется." >> "$GITHUB_STEP_SUMMARY"
+              echo "::notice::$DOC опубликован: $counts"
+              exit 0
+            fi
+            echo "::warning::dev ушёл вперёд — попытка $attempt из 3, документ собирается заново"
+            sleep $((attempt * 10))
+          done
+          echo "::error::документ ревью не опубликован в dev за три попытки"
+          exit 1

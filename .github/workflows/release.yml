@@ -131,6 +131,36 @@ jobs:
             echo "release $TAG is public: repair mode — only missing assets may be added"
           fi
 
+  independent-review:
+    name: "Независимое ревью линии (не блокирует выпуск)"
+    # #638, PROCESS.md §11.5. Решение владельца 2026-09-25: ревью идёт
+    # параллельно гейтам и выпуск не ждёт и не останавливает. Поэтому этот job
+    # только ставит в очередь `release-review.yml` на `dev` и ни один job
+    # выпуска от него не зависит (`needs` на него запрещён тестом
+    # release-workflow); его отказ — предупреждение, а не красный релиз.
+    # Беты пропускаются: ревью линии — перед стабильным.
+    needs: candidate
+    if: ${{ needs.candidate.outputs.prerelease != 'true' }}
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Поставить в очередь ревью линии
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.candidate.outputs.tag }}
+          SHA: ${{ needs.candidate.outputs.sha }}
+        run: |
+          if gh workflow run release-review.yml --repo "${{ github.repository }}" --ref dev \
+               -f tag="$TAG" -f candidate="$SHA"; then
+            echo "Независимое ревью $TAG поставлено в очередь: release-review.yml на dev" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::ревью линии $TAG не запущено — выпуск продолжается; запустить руками: gh workflow run release-review.yml --ref dev -f tag=$TAG -f candidate=$SHA"
+            exit 1
+          fi
+
   gate:
     name: "Гейт: контракт, Validate, Full Performance и E2E на точном SHA"
     needs: candidate

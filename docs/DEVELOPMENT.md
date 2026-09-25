@@ -555,6 +555,17 @@ verification, so work merged later remains open and an accepted external issue
 is treated like an owner-authored one. A retry reuses the published manifest and
 resumes bookkeeping even when the release is already public (#120, #547).
 
+**Independent line review (#638, `PROCESS.md` §11.5).** Right after the
+candidate SHA is pinned, the `independent-review` job of `release.yml` queues
+`.github/workflows/release-review.yml` on `dev` for the same tag and SHA. It
+reviews every product surface changed since the previous stable tag against
+`docs/SCOPE.md` and `docs/USER-GUIDE.ru.md` — without specs or review rounds —
+and publishes `docs/reviews/RELEASE-REVIEW-vX.Y.Z.md` to `dev`. It runs in
+parallel and **never blocks the release**: no release job needs it, a failure
+is a warning, and the findings are the owner's call. Manual run:
+`gh workflow run release-review.yml --ref dev -f tag=vX.Y.Z`; a repeat for a
+tag whose document already exists is skipped unless `-f force=true`.
+
 **Stable releases** go through `.github/workflows/release.yml`, the only
 publisher of installable assets (#540). Run it with `workflow_dispatch` on
 `main` with the exact tag: when the tag does not exist yet it is created on the
