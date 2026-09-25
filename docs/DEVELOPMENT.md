@@ -165,6 +165,15 @@ git config core.fsmonitor true
 git config core.untrackedCache true
 ```
 
+### ⚠️ File-sync pitfalls (critical)
+1. The network mount sometimes serves files **truncated/scrambled** — edits via the Edit tool
+   from the Windows side are unreliable. Rule: **apply python patches against a clean copy in /tmp,
+   write via bash**, with an assert that count(old)==1.
+2. **Run the rollup build ONLY in /tmp/hpc** (`npm ci` is already done). A build on the mount once
+   produced a syntactically valid but broken bundle ("wi is not defined") that crashed the rendering
+   of ALL HA dashboards (the card is loaded as an extra_module on every page!).
+3. `.git` cannot be created on the mount ("Operation not permitted" on dot-directories) — hence the bundle.
+
 ## Local repository maintenance (#628)
 
 Owner decision on 2026-09-25: use only a one-time local garbage collection for
@@ -191,15 +200,6 @@ the meaningful total (`size` + `size-pack`) fell from 1,084.39 MiB to
 This post-GC value is the #628 monthly-growth baseline. To evaluate AC2 on or
 after 2026-10-25, run the same GC and `count-objects` sequence and compare the
 new `size-pack` with 467.63 MiB; the accepted upper bound is 487.63 MiB.
-
-### ⚠️ File-sync pitfalls (critical)
-1. The network mount sometimes serves files **truncated/scrambled** — edits via the Edit tool
-   from the Windows side are unreliable. Rule: **apply python patches against a clean copy in /tmp,
-   write via bash**, with an assert that count(old)==1.
-2. **Run the rollup build ONLY in /tmp/hpc** (`npm ci` is already done). A build on the mount once
-   produced a syntactically valid but broken bundle ("wi is not defined") that crashed the rendering
-   of ALL HA dashboards (the card is loaded as an extra_module on every page!).
-3. `.git` cannot be created on the mount ("Operation not permitted" on dot-directories) — hence the bundle.
 
 ## Tests
 
