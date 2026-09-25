@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1051, issue: 370. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1052, issue: 371. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -65,6 +65,7 @@
 | #617 | [SPEC-REVIEW-617-r1.md](SPEC-REVIEW-617-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «новый необязательный параметр» уже существует | `src/backdrop-pick.ts` `houseplan-editor-runtime.ts` |
 | #617 | [CODE-REVIEW-617-r1.md](CODE-REVIEW-617-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #617 | [CODE-REVIEW-617-r2.md](CODE-REVIEW-617-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #616 | [SPEC-REVIEW-616-r1.md](SPEC-REVIEW-616-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | AC8 не перечисляет поимённо весь набор golden-фикстур; AC2 не называет .projection-toggle в списке скрытых классов | `demo/golden/matrix.mjs` `houseplan-card.ts` |
 | #615 | [SPEC-REVIEW-615-r1.md](SPEC-REVIEW-615-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC3 называет несуществующую защиту от расползания на плашки цвета | `smoke_room_settings_form.mjs` `smoke_space_settings_form.mjs` `smoke_device_settings_form.mjs` `smoke_dialog_polish_605.mjs` `smoke_general_settings_form.mjs` |
 | #615 | [SPEC-REVIEW-615-r2.md](SPEC-REVIEW-615-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #615 | [CODE-REVIEW-615-r1.md](CODE-REVIEW-615-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
