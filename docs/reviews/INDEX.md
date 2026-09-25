@@ -1,12 +1,13 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1062, issue: 375. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1063, issue: 375. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #650 | [CODE-REVIEW-650-r1.md](CODE-REVIEW-650-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #649 | [SPEC-REVIEW-649-r1.md](SPEC-REVIEW-649-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | в скоупе задачи (возвращается автору); принято ревьюером с записью, правки не требует | `lab.js` `houseplan-card.ts` |
 | #649 | [SPEC-REVIEW-649-r2.md](SPEC-REVIEW-649-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #649 | [CODE-REVIEW-649-r1.md](CODE-REVIEW-649-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC7: обрезка барьерами (физические тела и Solid-перегородки) луча света в 2.5D нигде не…; Устаревшие «alpha/hidden»-формулировки, оставшиеся рядом с уже исправленным текстом в т…; Число в хендоффе не совпадает с фактическим значением в диффе. Комментарий автора в iss…; isoTileStateCss() жёстко считает торец состояний в theme: 'light' без ветки .theme-dark…; AC5: явно не проверены «Alert > чистый Hover» и «Alert > чистый Selected» по отдельност…; Нет отдельного теста на виртуальные устройства (Q1: «без пунктира, как обычные»). noRin… | `src/iso-sun.ts` `physical-geometry.ts` `houseplan-card.ts` `test/iso-stage6.test.mjs` `demo/smoke_iso_sun.mjs` `docs/DEVELOPMENT.md` `docs/ARCHITECTURE.md` `iso-scene-render.ts` |
 | #648 | [SPEC-REVIEW-648-r1.md](SPEC-REVIEW-648-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «Сценарий» не называет персону и; AC10 называет provenance-gate | `docs/SCOPE.md` `scripts/validate-commit-provenance.mjs` `validate.yml` |
 | #648 | [CODE-REVIEW-648-r1.md](CODE-REVIEW-648-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC3 документально обещает browser smoke | `demo/smoke_sections_resize.mjs` `docs/TESTING.md` `smoke_sections_resize.mjs` |
 | #648 | [CODE-REVIEW-648-r3.md](CODE-REVIEW-648-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
