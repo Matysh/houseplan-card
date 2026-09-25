@@ -298,6 +298,21 @@ async def test_issue_617_plan_upload_limit_is_inclusive_and_refusal_leaves_nothi
     assert after == before, "a refused plan leaves neither a file nor a temporary behind"
 
 
+async def test_issue_617_plan_upload_refuses_non_admin_by_default(
+    hass: HomeAssistant,
+    hass_client: ClientSessionGenerator,
+    hass_read_only_access_token: str,
+) -> None:
+    """#617 AC4: default admin-only policy rejects non-admin HTTP uploads."""
+    await _setup(hass)
+    client = await hass_client(hass_read_only_access_token)
+    before = await hass.async_add_executor_job(_plans_listing, hass)
+    resp = await client.post("/api/houseplan/plans/upload", data=_plan_form(b"PLAN"))
+    assert resp.status == 403
+    assert (await resp.json())["error"] == "unauthorized"
+    assert await hass.async_add_executor_job(_plans_listing, hass) == before
+
+
 async def test_issue_626_plan_upload_refuses_read_only_but_allows_household(
     hass: HomeAssistant, hass_client: ClientSessionGenerator, hass_read_only_access_token: str,
 ) -> None:
