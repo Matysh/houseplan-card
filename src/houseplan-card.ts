@@ -291,6 +291,7 @@ import {
 } from './space-order';
 import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 import { SummaryRuntimeSlot, summaryRuntimeLoader } from './summary-runtime-loader';
+import { HeaderMenu, headerMenuItems, renderHeaderActions } from './header-menu';
 import { displayVersion } from './card-version';
 
 const CARD_VERSION = '1.78.0-beta.2';
@@ -2167,6 +2168,7 @@ export class HouseplanCard extends LitElement {
   private _renderProjection: 'flat' | 'iso' = 'flat';
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 }; private _kioskDialog = false;
+  private readonly _headerMenu = new HeaderMenu(this);
   private _summary?: import('./summary-panel-runtime-loaded').LoadedSummaryPanelRuntime; private readonly _summarySlot = new SummaryRuntimeSlot(summaryRuntimeLoader, this, (runtime) => { this._summary = runtime; this._capturedSnapshotSequence = -1; /* summary entities (re)join the live subscription */ if (this.isConnected) { runtime.connect(); if (this.hasUpdated) this.requestUpdate(); } }); // #506: warm code attaches before the first render
   /**
    * Previous entity states + the short event/terminal-transition window for
@@ -2652,7 +2654,7 @@ export class HouseplanCard extends LitElement {
     this._tabSuppressClickTimer = undefined;
     this._tabSuppressClick = false;
     clearInterval(this._cycleTimer);
-    clearTimeout(this._kioskDotsTimer);
+    clearTimeout(this._kioskDotsTimer); this._headerMenu.disconnect();
     clearTimeout(this._kioskHoldTimer);
     clearTimeout(this._reloadRetry);
     clearTimeout(this._loadRetryTimer);
@@ -4031,7 +4033,7 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(): void {
-    this._summary?.updated(); this._liveRt?.commit();
+    this._summary?.updated(); this._liveRt?.commit(); this._headerMenu.revealActiveTab();
     this._editorRuntime?._commitLiveEditor();
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
@@ -10775,7 +10777,7 @@ export class HouseplanCard extends LitElement {
                 @pointercancel=${() => this._endTabDrag()}
                 @click=${() => this._tabClick(s.id)}
               >
-                ${s.title}${this._norm && this._canEdit
+                <span class="tabtitle">${s.title}</span>${this._norm && this._canEdit
                   ? html`<ha-icon class="tabedit" icon="mdi:cog-outline"
                       data-hp="space-settings" data-id=${s.id}
                       title=${this._t('title.configure_space')}
@@ -10835,20 +10837,14 @@ export class HouseplanCard extends LitElement {
               title=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
             <button class="btn zb" data-hp="zoom-in" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
-          ${this._norm && this._canEdit
-            ? html`<button class="btn header-action settings-button" data-hp="settings" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
-                <ha-icon icon="mdi:cog-outline"></ha-icon>
-              </button>
-              <button class="btn header-action pdf-button" data-hp="pdf" @click=${this._openPdfDialog}
-                title=${this._t('title.export_pdf')} aria-label=${this._t('title.export_pdf')}>
-                <ha-icon icon="mdi:printer-outline"></ha-icon>
-              </button>
-              <button class="btn header-action support-button" data-hp="support" @click=${this._openSupportDialog}
-                title=${this._t('support.title')} aria-label=${this._t('support.title')}>
-                <ha-icon icon="mdi:help-circle-outline"></ha-icon>
-              </button>`
-            : nothing}
+          ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog }) : nothing}
           ${!this._kiosk ? this._summary?.renderControls(false) : nothing}
+          ${''/* #616: ≤ 480 px — one gear holds everything the phone row drops */}${this._kiosk ? nothing : this._headerMenu.render(headerMenuItems({
+            canEdit: this._norm && this._canEdit, kiosk: this._kiosk, mode: this._mode, hasFixedFloor: this._hasFixedFloor, labsIso: this._labsIso, iso,
+            summary: this._summary?.menuItems() ?? [], t: (k) => this._t(k),
+            actions: { setMode: (m) => this._setMode(m), configureSpace: () => this._openSpaceDialog('edit', this._space), addSpace: () => this._openSpaceDialog('create'),
+              settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog, projection: (next) => this._setProjection(next) },
+          }), this._t('title.header_menu'))}
         </div>
         ${this._canEdit && !this._kiosk
           ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"

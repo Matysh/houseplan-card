@@ -22,6 +22,7 @@ import { summaryIcon } from './summary-panel-icons';
 import { SummaryPanelPresentation } from './summary-panel-presentation';
 import { summaryPanelText } from './summary-panel-i18n';
 import type { SummaryPanelHost } from './summary-panel-host';
+import type { HeaderMenuItem } from './header-menu';
 import { stableSummaryPlacementSlot } from './summary-panel-identity';
 import {
   refreshSummaryEntityIndex, type SummaryEntityIndex,
@@ -233,8 +234,18 @@ export class LoadedSummaryPanelRuntime {
     </aside>`;
   }
 
-  public renderControls(kiosk = false): TemplateResult | typeof nothing {
-    if (this.host._mode !== 'view') return nothing;
+  /** #616: the same two actions as `renderControls` — items of the phone header menu
+   *  (the menu itself offers them only in View, as `renderControls` does). */
+  public menuItems(): HeaderMenuItem[] {
+    const toggleTitle = this.toggleTitle();
+    return [
+      { id: 'summary-settings', glyph: summaryIcon('settings'), label: this.t('summary.settings'), run: () => void this.openDialog() },
+      { id: 'summary-toggle', glyph: summaryIcon('sidebar'), label: toggleTitle, pressed: this.local.show,
+        run: () => this.saveLocal({ show: !this.local.show }) },
+    ];
+  }
+
+  private toggleTitle(): string {
     const resolved = this.config();
     const layout = this.layout();
     const temporaryReason = this.local.show && (
@@ -245,7 +256,12 @@ export class LoadedSummaryPanelRuntime {
           ? this.t('summary.hidden_narrow_unknown')
           : !layout.fits ? this.t('summary.hidden_small') : ''
     );
-    const toggleTitle = temporaryReason || this.t(this.local.show ? 'summary.hide' : 'summary.show');
+    return temporaryReason || this.t(this.local.show ? 'summary.hide' : 'summary.show');
+  }
+
+  public renderControls(kiosk = false): TemplateResult | typeof nothing {
+    if (this.host._mode !== 'view') return nothing;
+    const toggleTitle = this.toggleTitle();
     const stop = (event: Event) => event.stopPropagation();
     return html`<div class="summary-control ${kiosk ? 'kiosk' : ''}" role="group"
         aria-label=${this.t('summary.controls')} @click=${stop} @dblclick=${stop}

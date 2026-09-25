@@ -21,13 +21,18 @@ for (const width of WIDTHS) {
     const head = () => sr().querySelector('.head');
     const slot = () => sr().querySelector('.editor-close-slot');
     const cross = () => sr().querySelector('.editor-close-slot .closex');
-    const tabs = () => [...sr().querySelectorAll('[data-hp="mode-tab"]')];
+    // #616: на ≤ 480 px кнопки режимов живут в меню шестерёнки; соседи × в строке —
+    // вкладки пространств, зум и шестерёнка, их положение и меряется.
+    const phone = width <= 480;
+    const tabs = () => [...sr().querySelectorAll(phone
+      ? '.head > .tabs, .head > .zoomctl, [data-hp="header-menu"]' : '[data-hp="mode-tab"]')];
     await hp.setMode('view');
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     // Позиции — относительно левого края шапки: прокрутка страницы их не меняет.
     const measure = () => {
       const origin = head().getBoundingClientRect().left;
-      const nextEl = slot()?.nextElementSibling;
+      let nextEl = slot()?.nextElementSibling;
+      while (nextEl && !nextEl.getClientRects().length) nextEl = nextEl.nextElementSibling;
       return {
         head: head().getBoundingClientRect().width,
         tabs: tabs().map((t) => t.getBoundingClientRect().left - origin),
@@ -35,7 +40,8 @@ for (const width of WIDTHS) {
         next: nextEl ? nextEl.getBoundingClientRect().left - origin : null,
       };
     };
-    const visibleTabs = tabs().filter((t) => t.getBoundingClientRect().width > 0).length === 3;
+    const visibleTabs = tabs().filter((t) => t.getBoundingClientRect().width > 0).length === 3
+      && (!phone || [...sr().querySelectorAll('[data-hp="mode-tab"]')].every((t) => !t.getClientRects().length));
     o.tabsVisible = visibleTabs;
 
     // AC1: числа нет — ни узла, ни текста вида «N dev.».

@@ -33,6 +33,9 @@ editor parity with desktop is not promised.
 On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
 
 - render the plan and current states correctly;
+- on a phone (≤ 480 px) keep the header to one row of at most 56 px — space
+  tabs, zoom and one gear whose menu holds every other header action, each
+  item a 44 px target (#616);
 - support convenient pan, pinch zoom and space switching;
 - fit the whole plan after two clean taps on free scene background, while one
   tap on a room keeps the immediate room-fit action;

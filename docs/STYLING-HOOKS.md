@@ -397,6 +397,19 @@ Zoom controls remain in the DOM inside the CSS-hidden kiosk header, exactly as
 before. `space-add` keeps its stricter existing rule and is not rendered in
 kiosk mode.
 
+### 7.3a Phone header menu (#616)
+
+At a window width of 480 px or less the header is one row: space tabs, zoom
+and a gear `[data-hp="header-menu"]` (44 × 44, `aria-haspopup`,
+`aria-expanded`). Everything the row drops — editor tabs, space settings, add
+space, general settings, PDF, help, the summary-panel pair and the alpha
+projection toggle — is a `[data-hp="header-menu-item"][data-id="…"]` button of
+its menu (`#hp-header-menu`, `role="group"`), each at least 44 px high; the
+vocabulary of `data-id` is in the JSON inventory. While the menu is open a
+transparent `[data-hp="header-menu-scrim"]` swallows the tap that dismisses it.
+Above 480 px the gear is in the DOM but hidden, and the ordinary buttons are
+unchanged. Kiosk renders neither.
+
 ### 7.4 Editors
 
 Each active editor exposes one primary

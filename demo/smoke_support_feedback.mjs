@@ -426,7 +426,16 @@ const responsive = async (viewport) => {
     if (card._supportDialog) await card._editorRuntime._closeSupportDialog();
     card._setMode('view');
     await card.updateComplete;
-    const button = card.renderRoot.querySelector('.support-button');
+    // #616: at ≤ 480 px the entry point is the header menu item, not the header
+    // button (hidden there); its hit target is what the phone user taps.
+    let button = card.renderRoot.querySelector('.support-button');
+    let entryRect = null;
+    if (innerWidth <= 480) {
+      card.renderRoot.querySelector('[data-hp="header-menu"]')?.click();
+      await card.updateComplete;
+      button = card.renderRoot.querySelector('[data-hp="header-menu-item"][data-id="support"]');
+      entryRect = button?.getBoundingClientRect();
+    }
     button?.click();
     await card.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -434,7 +443,7 @@ const responsive = async (viewport) => {
     const body = dialog?.querySelector('.supportbody');
     const footer = dialog?.querySelector('.supportfooter');
     const dialogRect = dialog?.getBoundingClientRect();
-    const buttonRect = button?.getBoundingClientRect();
+    const buttonRect = entryRect ?? button?.getBoundingClientRect();
     return !!dialog && !!body && !!footer && !!dialogRect && !!buttonRect
       && dialogRect.left >= -1 && dialogRect.right <= innerWidth + 1
       && dialogRect.top >= -1 && dialogRect.bottom <= innerHeight + 1

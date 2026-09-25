@@ -34,6 +34,7 @@ const chromeCoreStyles = css`
     :host([data-pointer-hover]) .tab:hover {
       color: var(--hp-txt);
     }
+    .tab .tabtitle { pointer-events: none; }
     .tab.active {
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);
@@ -96,6 +97,75 @@ const chromeCoreStyles = css`
       margin-top: -4px;
     }
     .hdr.kioskhide { display: none; }
+    .header-menu-wrap { display: none; position: relative; flex: none; }
+    .header-menu-button {
+      min-width: 44px;
+      min-height: 44px;
+      justify-content: center;
+      padding: var(--sp-3);
+    }
+    .header-menu-scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background: transparent;
+    }
+    .header-menu {
+      position: absolute;
+      top: calc(100% + var(--sp-2));
+      right: 0;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      width: max-content;
+      min-width: 220px;
+      max-width: calc(100vw - 16px);
+      max-height: calc(100dvh - 120px);
+      overflow-y: auto;
+      padding: var(--sp-2);
+      border: 1px solid var(--hp-line);
+      border-radius: var(--rad-m);
+      background: var(--card-background-color, var(--hp-bg));
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    }
+    .header-menu-item {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-4);
+      min-height: 44px;
+      padding: 0 var(--sp-4);
+      border: 0;
+      border-radius: var(--rad-s);
+      background: transparent;
+      color: var(--hp-txt);
+      font: inherit;
+      font-size: var(--fs-m);
+      text-align: start;
+      cursor: pointer;
+    }
+    .header-menu-item ha-icon, .header-menu-item svg { --mdc-icon-size: 20px; width: 20px; height: 20px; flex: none; }
+    .header-menu-item.on { color: var(--hp-accent); font-weight: 600; }
+    :host([data-pointer-hover]) .header-menu-item:hover { background: rgba(127, 127, 127, 0.14); }
+    .header-menu-item:focus-visible { outline: 2px solid var(--hp-accent); outline-offset: -2px; }
+    @media (max-width: 480px) {
+      .hdr > .head { flex-wrap: nowrap; padding: 5px 8px; gap: 6px; }
+      .head > .title, .head > .modes, .head > .spacer, .head > .header-action,
+      .head > .summary-control, .head > .projection-toggle { display: none; }
+      .head > .tabs {
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+      }
+      .head > .tabs::-webkit-scrollbar { display: none; }
+      .head > .tabs .tab { flex: none; white-space: nowrap; max-width: 100%; }
+      .head > .tabs .tabtitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .head > .tabs .tabedit, .head > .tabs .tabadd { display: none; }
+      .head > .zoomctl, .head > .editor-close-slot { flex: none; }
+      .header-menu-wrap { display: inline-flex; }
+    }
     .decorbar .dcolor {
       width: 30px; height: 26px; padding: 0; border: none; background: none; cursor: pointer;
     }

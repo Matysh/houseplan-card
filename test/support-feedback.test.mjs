@@ -123,7 +123,13 @@ test('Help is lazy, ordered after settings, and owns the single About/Guide surf
   assert.equal((runtime.match(/_t\('gs\.about_version'/g) || []).length, 1);
   assert.match(runtime, /docs\/USER-GUIDE\.ru\.md/);
   assert.match(runtime, /docs\/USER-GUIDE\.md/);
-  assert.equal((header.match(/header-action/g) || []).length, 3);
+  // #616: the three header buttons are rendered by src/header-menu.ts (the card
+  // passes the openers in the same order); on a phone they are its menu items.
+  const headerMenu = readFileSync(new URL('../src/header-menu.ts', import.meta.url), 'utf8');
+  const actions = headerMenu.slice(headerMenu.indexOf('export function renderHeaderActions'));
+  assert.equal((actions.match(/header-action/g) || []).length, 3);
+  assert.ok(actions.indexOf('open.settings') < actions.indexOf('open.pdf'));
+  assert.ok(actions.indexOf('open.pdf') < actions.indexOf('open.support'));
   assert.match(styles, /\.header-action\s*\{[\s\S]*?min-width:\s*44px;[\s\S]*?min-height:\s*44px;/);
   assert.match(dialogStyles, /\.supportmessage\s*\{[\s\S]*?background:\s*var\(--hp-bg\);/);
 });

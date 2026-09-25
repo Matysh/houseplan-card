@@ -439,6 +439,7 @@
   "editor.button_target": "Chemin du tableau de bord cible",
   "marker.sub_entity": "entité",
   "title.general_settings": "Paramètres généraux",
+  "title.header_menu": "Actions et réglages",
   "title.export_pdf": "Enregistrer en PDF",
   "pdf.title": "Enregistrement en PDF",
   "pdf.dimensions": "Afficher les dimensions et les surfaces",

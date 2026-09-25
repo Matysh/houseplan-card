@@ -14,6 +14,19 @@ full card used on dashboards. In panel-host mode only the duplicated product
 title disappears; space tabs, editor navigation, zoom and actions remain (the
 header device count was removed in #647). Dashboard and kiosk behaviour is unchanged.
 
+**Phone header (≤ 480 px window width, #616).** The header is a single row of at
+most 56 px: space tabs (one line, scrolling sideways, the active tab scrolled
+into view; no per-tab gear and no «+»), the zoom cluster, one gear and — for an
+admin — the editor X slot of #647. The card title is hidden. Everything else is
+an item of the gear's menu, in a fixed order: the three editors (current one
+marked), Configure space, Add space (not with a fixed space), General settings,
+Save as PDF, Help and feedback; in View also the summary-panel settings and
+show/hide pair and, with `hp_alpha`, the volumetric/flat toggle. An item does
+exactly what the button it replaces does and closes the menu; Escape closes it
+and returns focus to the gear; a tap outside only closes it and never reaches
+the plan. A user without write access sees just the summary-panel items. Wider
+windows and kiosk are unchanged.
+
 A segmented control in the card header with three tabs; the active one is visually
 highlighted, and edit modes add a colored frame around the stage so the mode is
 obvious at a glance:
@@ -128,7 +141,7 @@ Removed from this mode (they move, not die):
 - every edit button in the header (+device, 👁 show-all, ↺ reset, ⬡ rules, ⚙ general,
   per-space gear, markup toggle).
 
-Header in View: space tabs, device count, summary control and zoom cluster.
+Header in View: space tabs, summary control and zoom cluster; on a phone (≤ 480 px) space tabs, zoom and one gear whose menu holds the rest (#616).
 
 ## Plan — geometry and appearance of the space
 

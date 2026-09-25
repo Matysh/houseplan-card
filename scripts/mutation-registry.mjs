@@ -7385,6 +7385,107 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'phone-header-shows-title',
+    guard: 'node demo/smoke_mobile_view_header.mjs',
+    because: '#616 AC1: on a phone the card title alone takes a row; the one-row header must hide it',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: '      .head > .title, .head > .modes, .head > .spacer, .head > .header-action,',
+      replace: '      .head > .modes, .head > .spacer, .head > .header-action,',
+    }],
+  },
+  {
+    id: 'tab-editing-without-write-access',
+    guard: 'node demo/smoke_mobile_view_header.mjs',
+    because: '#616 AC1: a household member has no write access — per-tab gears must not render for them at any width',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '                <span class="tabtitle">${s.title}</span>${this._norm && this._canEdit\n',
+      replace: '                <span class="tabtitle">${s.title}</span>${this._norm\n',
+    }],
+  },
+  {
+    id: 'phone-header-wraps',
+    guard: 'node demo/smoke_mobile_view_header.mjs',
+    because: '#616 AC2: the phone header is one row of at most 56 px; wrapping brings back the three-row chrome',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: '      .hdr > .head { flex-wrap: nowrap; padding: 5px 8px; gap: 6px; }',
+      replace: '      .hdr > .head { flex-wrap: wrap; padding: 5px 8px; gap: 6px; }',
+    }],
+  },
+  {
+    id: 'header-menu-drops-pdf',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/header-menu.test.mjs',
+    because: '#616 AC3: every header action the phone row drops must be an item of the gear menu',
+    patches: [{
+      file: 'src/header-menu.ts',
+      find: "      { id: 'pdf', icon: 'mdi:printer-outline', label: t('title.export_pdf'), run: actions.pdf },\n",
+      replace: '',
+    }],
+  },
+  {
+    id: 'header-menu-item-keeps-menu-open',
+    guard: 'node demo/smoke_mobile_view_header.mjs',
+    because: '#616 AC3: an item does what its button did and closes the menu; a menu left open covers the plan',
+    patches: [{
+      file: 'src/header-menu.ts',
+      find: '    const run = (item: HeaderMenuItem) => { this.close(false); item.run(); };',
+      replace: '    const run = (item: HeaderMenuItem) => { item.run(); };',
+    }],
+  },
+  {
+    id: 'header-menu-outside-tap-reaches-plan',
+    guard: 'node demo/smoke_mobile_view_header.mjs',
+    because: '#616 AC4: the tap that dismisses the menu must not toggle a light under it',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: '      position: fixed;\n      inset: 0;\n      z-index: 1;\n      background: transparent;',
+      replace: '      position: fixed;\n      inset: auto;\n      z-index: 1;\n      background: transparent;',
+    }],
+  },
+  {
+    id: 'header-menu-escape-ignored',
+    guard: 'node demo/smoke_mobile_view_header.mjs',
+    because: '#616 AC4: Escape closes the menu and returns focus to the gear',
+    patches: [{
+      file: 'src/header-menu.ts',
+      find: "    if (event.key !== 'Escape' || !this.open) return;",
+      replace: "    if (event.key !== 'Esc' || !this.open) return;",
+    }],
+  },
+  {
+    id: 'active-tab-not-revealed',
+    guard: 'node demo/smoke_mobile_view_header.mjs',
+    because: '#616 AC5: with many spaces the active tab must be scrolled into view on load and on switch',
+    patches: [{
+      file: 'src/header-menu.ts',
+      find: '    if (!nav || !tab || nav.clientWidth === 0) return;',
+      replace: '    if (!nav || !tab || nav.clientWidth >= 0) return;',
+    }],
+  },
+  {
+    id: 'header-menu-item-below-44',
+    guard: 'node demo/smoke_mobile_view_header.mjs',
+    because: '#616 AC6: menu items are touch targets of at least 44 px',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: '      min-height: 44px;\n      padding: 0 var(--sp-4);',
+      replace: '      min-height: 30px;\n      padding: 0 var(--sp-4);',
+    }],
+  },
+  {
+    id: 'phone-header-at-tablet-width',
+    guard: 'node demo/smoke_mobile_view_header.mjs',
+    because: '#616 AC7: above 480 px the ordinary header stays exactly as it was',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: '    @media (max-width: 480px) {\n      .hdr > .head',
+      replace: '    @media (max-width: 768px) {\n      .hdr > .head',
+    }],
+  },
+  {
     id: 'tab-reorder-not-persisted',
     guard: 'node demo/smoke_space_tab_reorder.mjs',
     because: 'перестановка вкладок, оставшаяся только в памяти, выглядит рабочей ровно до '

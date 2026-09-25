@@ -9,6 +9,15 @@
   vacuum responses no longer expose the internal map-source entity ID;
   administrators retain full access
   ([#626](https://github.com/Matysh/houseplan-card/issues/626)).
+- On a phone (a window 480 px wide or less) the header now takes a single row:
+  space tabs, zoom and one **Actions and settings** gear. The tabs scroll
+  sideways and keep the current one in view; the card title is hidden. The
+  gear's menu holds everything the row no longer shows — the editors, space
+  settings, adding a space, general settings, PDF, help, and the summary-panel
+  settings and show/hide — each doing exactly what its old button did. A tap
+  outside the menu only closes it. Users without edit rights see only the
+  summary-panel items; wider screens and kiosk are unchanged
+  ([#616](https://github.com/Matysh/houseplan-card/issues/616)).
 - The main toolbar no longer shows the device count (“37 dev.”), and it stops
   jumping sideways when you open, close or switch editors: the editor’s close
   **×** now has its own fixed place right after the mode buttons, kept empty

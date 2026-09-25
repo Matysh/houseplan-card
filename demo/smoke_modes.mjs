@@ -10,7 +10,8 @@ const st = () => page.evaluate(() => {
     mode: c._mode,
     modeTabs: sr.querySelectorAll('.modetab').length,
     active: sr.querySelector('.modetab.active')?.textContent.trim(),
-    editBtns: sr.querySelectorAll('.head .btn:not(.zb)').length,
+    // #616: the phone gear (.header-menu-button) is in the DOM but hidden above 480 px.
+    editBtns: sr.querySelectorAll('.head .btn:not(.zb):not(.header-menu-button)').length,
     gears: sr.querySelectorAll('.tabedit').length,
     // The last bar stays mounted for the exit animation; only an open chrome
     // is an active/visible editor bar.

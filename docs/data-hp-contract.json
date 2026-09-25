@@ -69,6 +69,22 @@
       "since": "1.73.0-beta.7",
       "audience": ["test"]
     },
+    "header-menu": {
+      "elements": ["button"],
+      "since": "1.78.0-beta.3",
+      "audience": ["styling", "test"]
+    },
+    "header-menu-item": {
+      "elements": ["button"],
+      "since": "1.78.0-beta.3",
+      "audience": ["styling", "test"],
+      "attributes": { "data-id": ["mode-plan", "mode-devices", "mode-decor", "space-settings", "space-add", "settings", "pdf", "support", "summary-settings", "summary-toggle", "projection"] }
+    },
+    "header-menu-scrim": {
+      "elements": ["div"],
+      "since": "1.78.0-beta.3",
+      "audience": ["test"]
+    },
     "mode-tab": {
       "elements": ["button"],
       "since": "1.78.0-beta.2",

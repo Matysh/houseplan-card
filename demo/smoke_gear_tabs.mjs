@@ -81,7 +81,8 @@ const kio = await page.evaluate(() => {
 });
 for (const [k, v] of Object.entries(kio)) check(k, v);
 
-// мобильный вид: ряд вкладок переносится, а не выезжает за карточку
+// мобильный вид (#616): ряд вкладок не выезжает за карточку, а «+» на ≤ 480 px
+// живёт в меню шестерёнки — пункт есть, внутри карточки и попадает под палец.
 await page.setViewportSize({ width: 390, height: 760 });
 const narrow = await page.evaluate(async () => {
   const out = {};
@@ -90,19 +91,25 @@ const narrow = await page.evaluate(async () => {
   c.requestUpdate(); await c.updateComplete;
   const sr = c.shadowRoot || c.renderRoot;
   const head = sr.querySelector('.head');
-  const btn = sr.querySelector('.tab.tabadd');
-  out.narrowAddPresent = !!btn;
   out.narrowNoHOverflow = head.scrollWidth <= head.clientWidth + 1
     ? true : `scrollW=${head.scrollWidth} > clientW=${head.clientWidth}`;
+  out.narrowInlineAddHidden = !sr.querySelector('.tab.tabadd')?.getClientRects().length;
+  sr.querySelector('[data-hp="header-menu"]')?.click();
+  await c.updateComplete;
+  const btn = sr.querySelector('[data-hp="header-menu-item"][data-id="space-add"]');
+  out.narrowAddPresent = !!btn;
+  btn?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   const cr = sr.querySelector('ha-card').getBoundingClientRect();
   const br = btn ? btn.getBoundingClientRect() : null;
-  out.narrowAddInsideCard = !br ? 'нет кнопки'
+  out.narrowAddInsideCard = !br ? 'нет пункта'
     : br.right <= cr.right + 1 && br.left >= cr.left - 1 ? true
     : `btn ${Math.round(br.left)}..${Math.round(br.right)} vs card ${Math.round(cr.left)}..${Math.round(cr.right)}`;
-  out.narrowAddHittable = !br ? 'нет кнопки' : (() => {
+  out.narrowAddHittable = !br ? 'нет пункта' : (() => {
     const hit = sr.elementFromPoint(br.left + br.width / 2, br.top + br.height / 2);
-    return hit && hit.closest && hit.closest('.tab.tabadd') === btn ? true : 'перекрыта';
+    return hit && hit.closest && hit.closest('[data-hp="header-menu-item"]') === btn ? true : 'перекрыта';
   })();
+  sr.querySelector('[data-hp="header-menu"]')?.click();
+  await c.updateComplete;
   return out;
 });
 for (const [k, v] of Object.entries(narrow)) check(k, v);

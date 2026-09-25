@@ -439,6 +439,7 @@
   "editor.button_target": "Target dashboard path",
   "marker.sub_entity": "entity",
   "title.general_settings": "General settings",
+  "title.header_menu": "Actions and settings",
   "title.export_pdf": "Save as PDF",
   "pdf.title": "Save as PDF",
   "pdf.dimensions": "Show dimensions and areas",

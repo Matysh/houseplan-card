@@ -439,6 +439,7 @@
   "editor.button_target": "Путь дашборда (куда вести)",
   "marker.sub_entity": "сущность",
   "title.general_settings": "Общие настройки",
+  "title.header_menu": "Действия и настройки",
   "title.export_pdf": "Сохранить в PDF",
   "pdf.title": "Сохранение в PDF",
   "pdf.dimensions": "Отображать размеры и площади",

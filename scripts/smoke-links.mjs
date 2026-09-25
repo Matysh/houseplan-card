@@ -29,10 +29,17 @@
 export const SMOKE_LINKS = [
   {
     symbols: ['chromeStyles', 'dialogsStyles'],
-    smokes: ['smoke_toolbar_stable_width.mjs', 'smoke_editor_tabs.mjs'],
+    smokes: ['smoke_toolbar_stable_width.mjs', 'smoke_editor_tabs.mjs', 'smoke_mobile_view_header.mjs'],
     because: '#647: the header X slot (.editor-close-slot) and the removed .head .count rule are '
       + 'CSS in these sheets; the smokes measure the rendered header width, tab offsets, the X '
-      + 'hit target and its visibility at 1400/1000/768/390 px — no TS symbol names that layout',
+      + 'hit target and its visibility at 1400/1000/768/390 px — no TS symbol names that layout; '
+      + '#616: the phone one-row header rules live in chromeStyles too',
+  },
+  {
+    symbols: ['HeaderMenu', 'headerMenuItems', 'renderHeaderActions'],
+    smokes: ['smoke_mobile_view_header.mjs', 'smoke_support_feedback.mjs', 'smoke_gear_tabs.mjs'],
+    because: '#616: the one-row phone header (<= 480 px) and its gear menu are a media query plus '
+      + 'these symbols; the smokes tap the real gear and items at 320/390 px and prove >480 px is unchanged',
   },
   {
     symbols: ['confirmIcon', 'HpConfirmRequest'],
