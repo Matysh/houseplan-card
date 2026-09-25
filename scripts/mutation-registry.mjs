@@ -10452,7 +10452,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stage3-w12-separate-alpha-url-key-restored',
-    guard: 'node --test --test-name-pattern="Labs iso is presentation-only" '
+    guard: 'node --test --test-name-pattern="2.5D is the General settings switch, presentation-only" '
       + 'test/isometric-contract.test.mjs',
     because: 'W12: Stage 4 shares the one permanent hp_alpha switch; a feature-specific URL '
       + 'key or expiry must not return (#570)',
