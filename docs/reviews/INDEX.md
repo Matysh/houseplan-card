@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1050, issue: 370. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1051, issue: 370. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -42,6 +42,7 @@
 | #629 | [CODE-REVIEW-629-r1.md](CODE-REVIEW-629-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #629 | [CODE-REVIEW-629-r2.md](CODE-REVIEW-629-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #628 | [CODE-REVIEW-628-r1.md](CODE-REVIEW-628-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Новый раздел разрывает существующую секцию «Local Windows workstation» и меняет владель… | `docs/DEVELOPMENT.md` |
+| #628 | [CODE-REVIEW-628-r2.md](CODE-REVIEW-628-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #627 | [SPEC-REVIEW-627-r1.md](SPEC-REVIEW-627-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | избыточное (не противоречивое) условие в AC2; влияние на touch не названо явным пунктом | `docs/TOUCH-SUPPORT.md` |
 | #627 | [CODE-REVIEW-627-r1.md](CODE-REVIEW-627-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | demo/smoke_danger_confirmation.mjs не переведён на ожидание составного гейта; диалог оп… | `demo/smoke_danger_confirmation.mjs` `src/houseplan-card.ts` `de.ts` `smoke_danger_confirm_branches.mjs` |
 | #627 | [CODE-REVIEW-627-r2.md](CODE-REVIEW-627-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
