@@ -1,11 +1,12 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1058, issue: 373. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1059, issue: 374. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #649 | [SPEC-REVIEW-649-r1.md](SPEC-REVIEW-649-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | в скоупе задачи (возвращается автору); принято ревьюером с записью, правки не требует | `lab.js` `houseplan-card.ts` |
 | #649 | [SPEC-REVIEW-649-r2.md](SPEC-REVIEW-649-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #648 | [SPEC-REVIEW-648-r1.md](SPEC-REVIEW-648-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | «Сценарий» не называет персону и; AC10 называет provenance-gate | `docs/SCOPE.md` `scripts/validate-commit-provenance.mjs` `validate.yml` |
 | #647 | [SPEC-REVIEW-647-r1.md](SPEC-REVIEW-647-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | П.4 ТЗ переносит на новый слот прежнее; ТЗ не упоминает и не защищает документированный | `src/styles/dialogs.styles.ts` `src/styles.ts` `smoke_glow_blending.mjs` `smoke_test_facade.mjs` `smoke_unified_wall_tool.mjs` `docs/UX-MODES.md` `docs/reviews/CODE-REVIEW-195-r1.md` `src/styles/chrome.styles.ts` |
 | #647 | [SPEC-REVIEW-647-r2.md](SPEC-REVIEW-647-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #647 | [CODE-REVIEW-647-r1.md](CODE-REVIEW-647-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
