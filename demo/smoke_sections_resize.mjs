@@ -126,10 +126,19 @@ const out = await page.evaluate(async () => {
   // than forcing the private settled state.
   let editorsContained = true;
   let editorsSettle = true;
+  let transitionsUseSlotHeight = true;
   for (const rows of [10, 6]) {
     await setRows(rows);
     for (const mode of ['plan', 'devices', 'decor']) {
-      await window.__hpTest.setMode(mode);
+      const entering = window.__hpTest.setMode(mode);
+      const enteringStage = await waitFor(() => {
+        const stage = root.querySelector('.stage');
+        return card._modeTransitionBusy && stage.style.height.endsWith('px') ? stage : null;
+      }, `${mode} transition frame at ${rows} rows`);
+      const enteringHeader = root.querySelector('.hdr').getBoundingClientRect().height;
+      transitionsUseSlotHeight &&= Number.parseFloat(enteringStage.style.height)
+        <= rowHeight(rows) - enteringHeader + 1;
+      await entering;
       await waitFor(() => card._mode === mode && !card._modeTransitionBusy,
         `${mode} enter at ${rows} rows`);
       await settle();
@@ -137,7 +146,15 @@ const out = await page.evaluate(async () => {
       editorsContained &&= fillsSlot(entered, rowHeight(rows));
       editorsSettle &&= !root.querySelector('.stage').hasAttribute('inert')
         && !root.querySelector('.editorchrome')?.classList.contains('transitioning');
-      await window.__hpTest.setMode('view');
+      const leaving = window.__hpTest.setMode('view');
+      const leavingStage = await waitFor(() => {
+        const stage = root.querySelector('.stage');
+        return card._modeTransitionBusy && stage.style.height.endsWith('px') ? stage : null;
+      }, `${mode} exit transition frame at ${rows} rows`);
+      const leavingHeader = root.querySelector('.hdr').getBoundingClientRect().height;
+      transitionsUseSlotHeight &&= Number.parseFloat(leavingStage.style.height)
+        <= rowHeight(rows) - leavingHeader + 1;
+      await leaving;
       await waitFor(() => card._mode === 'view' && !card._modeTransitionBusy,
         `${mode} exit at ${rows} rows`);
       await settle();
@@ -178,6 +195,7 @@ const out = await page.evaluate(async () => {
       && !Object.prototype.hasOwnProperty.call(defaults, 'max_rows')
       && card.getCardSize() === 12,
     gridSignalReflectsForScopedCss: card.getAttribute('layout') === 'grid',
+    gridUsesContainerOwnedInlineHeight: defaultGeometry.stageStyle === 'auto',
     defaultTenRowsFillTheSlot: fillsSlot(defaultGeometry, rowHeight(10)),
     minimumSixRowsStayContained: fillsSlot(minimumGeometry.sample, rowHeight(6))
       && minimumGeometry.headerContained && minimumGeometry.menuReachable,
@@ -189,6 +207,7 @@ const out = await page.evaluate(async () => {
     resizePreservesCameraAndIntent: stableView && card._space === stableSpace
       && stableMode === 'view' && moreInfo === 0,
     allEditorsStayInsideTheFixedSlot: editorsContained,
+    editorTransitionFramesUseTheFixedSlot: transitionsUseSlotHeight,
     editorTransitionsLeaveNoBusyTail: editorsSettle && card._mode === 'view'
       && !card._modeTransitionBusy,
     resizeStormSettlesWithoutLoop: fillsSlot(finalGeometry, rowHeight(10))
