@@ -24,7 +24,9 @@ import {
 } from './mutation-evidence.mjs';
 import { attributeSetupFailure } from './mutation-attribution.mjs';
 import { guardEnvironment, planEnvironment, planEnvironmentLines } from './mutation-environment.mjs';
-import { MUTATION_OUTCOME, isProofOutcome } from './mutation-guard-outcome.mjs';
+import {
+  MUTATION_OUTCOME, isProofOutcome, staticTestSelectionProblems,
+} from './mutation-guard-outcome.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -151,6 +153,11 @@ export async function main(argv) {
 
   if (argv.includes('--check')) {
     let stale = 0;
+    let warned = 0;
+    const readTest = (file) => {
+      const path = join(repoRoot, file);
+      return existsSync(path) ? readFileSync(path, 'utf8') : null;
+    };
     for (const m of selected) {
       try {
         // #499: бандл мутанта собирает раннер (`buildBundle`, только rollup +
@@ -165,12 +172,21 @@ export async function main(argv) {
           const hits = source.split(patch.find).length - 1;
           if (hits !== 1) throw new Error(`якорь найден ${hits} раз(а)`);
         }
+        // #650: a name filter that matches nothing makes the witness vacuous.
+        const selection = staticTestSelectionProblems(m.guard, readTest);
+        const error = selection.find((problem) => problem.level === 'error');
+        if (error) throw new Error(error.text);
+        for (const problem of selection) {
+          console.log(`WARN ${m.id}: ${problem.text}`);
+          warned++;
+        }
         console.log(`ok   ${m.id}`);
       } catch (error) {
         console.log(`FAIL ${m.id}: ${error.message}`);
         stale++;
       }
     }
+    if (warned) console.log(`предупреждений о шаблонах имён: ${warned}`);
     reportPlanMetrics();
     return stale ? 2 : 0;
   }

@@ -105,6 +105,7 @@
 - [Lazy editor runtime and frontend asset tree (#337)](infrastructure.md#lazy-editor-runtime-and-frontend-asset-tree-337)
 - [Съёмка документации запускается с флагами детерминизма (#424)](infrastructure.md#съёмка-документации-запускается-с-флагами-детерминизма-424)
 - [Воспроизводимость съёмки документации (#410, #422)](infrastructure.md#воспроизводимость-съёмки-документации-410-422)
+- [Пустое совпадение `--test-name-pattern` (#650)](infrastructure.md#пустое-совпадение---test-name-pattern-650)
 
 ## [История прогонов и партий](history.md)
 

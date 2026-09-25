@@ -222,3 +222,98 @@ test('#568: раннер не красит гейт предсуществующ
   assert.match(source, /pre-existing-setup-failures=/,
     'список назван машиночитаемой строкой: его читает человек и CI');
 });
+
+// ---- #650: a name filter that matches no test is a setup failure ----------
+import { mkdtempSync, rmSync, writeFileSync as writeFixture } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import {
+  emptyTestSelection, executedTestNames, nodeTestSelection, shellWords,
+  staticTestNames, staticTestSelectionProblems,
+} from '../scripts/mutation-guard-outcome.mjs';
+import { MUTANTS } from '../scripts/mutation-registry.mjs';
+
+const EMPTY_TAP = 'TAP version 13\n# Subtest: test/x.test.mjs\nok 1 - test/x.test.mjs\n  ---\n'
+  + '  duration_ms: 40\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n';
+const NAMED_TAP = 'TAP version 13\n# Subtest: \\#650 named\nok 1 - \\#650 named\n  ---\n  ...\n'
+  + '1..1\n# tests 1\n# pass 1\n# fail 0\n';
+
+test('#650 selection: patterns and files of a name-filtered node --test, POSIX quoting', () => {
+  assert.deepEqual(nodeTestSelection('node --test --test-name-pattern="#518 AC1/AC2 \\(отбор\\)" test/a.test.mjs'),
+    { patterns: ['#518 AC1/AC2 \\(отбор\\)'], files: ['test/a.test.mjs'] },
+    'inside "…" a backslash before ( stays: it is part of the RegExp');
+  assert.deepEqual(nodeTestSelection("node --test --test-name-pattern 'a|b' --test-name-pattern=c x.test.mjs y.test.mjs"),
+    { patterns: ['a|b', 'c'], files: ['x.test.mjs', 'y.test.mjs'] });
+  assert.equal(nodeTestSelection('node --test test/a.test.mjs'), null, 'no filter — nothing to prove empty');
+  assert.equal(nodeTestSelection('node demo/smoke_x.mjs'), null);
+  assert.deepEqual(shellWords('a "b \\" c" d\\ e'), ['a', 'b " c', 'd e']);
+});
+
+test('#650 clean run: zero executed tests under a name filter is setup, not a healthy witness', () => {
+  const guard = 'node --test --test-name-pattern="renamed test" test/x.test.mjs';
+  const outcome = runGuardPhases(guard, { execute: () => result(0, EMPTY_TAP) });
+  assert.equal(outcome.kind, MUTATION_OUTCOME.SETUP);
+  assert.match(outcome.detail, /не совпал ни с одним тестом в test\/x\.test\.mjs/);
+  assert.equal(isProofOutcome(outcome), false);
+  assert.equal(runGuardPhases(guard, { execute: () => result(0, NAMED_TAP) }).kind,
+    MUTATION_OUTCOME.SURVIVED, 'a matched green test is an honest survivor');
+  assert.equal(runGuardPhases('node --test test/x.test.mjs', { execute: () => result(0, EMPTY_TAP) }).kind,
+    MUTATION_OUTCOME.SURVIVED, 'without a filter an empty file is not this rule');
+  assert.equal(emptyTestSelection(guard, 'no reporter output'), null, 'no summary — nothing to judge');
+  assert.deepEqual(executedTestNames(NAMED_TAP), ['#650 named']);
+  assert.deepEqual(executedTestNames('ok 1 - t # SKIP test name does not match\n# tests 1\n'), []);
+});
+
+test('#650 mutant run: an empty selection on the head, healthy on the base, is introduced by the diff', () => {
+  const guard = 'node --test --test-name-pattern="renamed test" test/x.test.mjs';
+  const head = runGuardPhases(guard, { execute: () => result(0, EMPTY_TAP) });
+  const base = runGuardPhases(guard, { execute: () => result(1, 'not ok 1 - renamed test\ncode: ERR_ASSERTION') });
+  assert.equal(head.kind, MUTATION_OUTCOME.SETUP);
+  assert.equal(setupFailureOwner(head, base), 'introduced');
+  assert.equal(setupFailureOwner(head, runGuardPhases(guard, { execute: () => result(0, EMPTY_TAP) })),
+    'pre-existing');
+});
+
+test('#650 the installed node really reports an unmatched filter as the file alone', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-650-'));
+  try {
+    const file = join(dir, 'x.test.mjs');
+    writeFixture(file, "import test from 'node:test';\ntest('real name', () => {});\n");
+    const run = (pattern) => {
+      const command = `node --test --test-name-pattern=${JSON.stringify(pattern)} ${JSON.stringify(file)}`;
+      // Outside a test runner, as the gate runs guards: NODE_TEST_CONTEXT would
+      // switch the child to the parent's serialized protocol.
+      const { NODE_TEST_CONTEXT: _context, ...env } = process.env;
+      const r = spawnSync(command, { shell: true, encoding: 'utf8', env });
+      return runGuardPhases(command, { execute: () => r });
+    };
+    assert.equal(run('no such name').kind, MUTATION_OUTCOME.SETUP);
+    assert.equal(run('real name').kind, MUTATION_OUTCOME.SURVIVED);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('#650 static check: names, regex escapes, dynamic names only warn', () => {
+  const source = "test('#518 AC1/AC2 (отбор): x', () => {});\nt.test(\"inner\", () => {});\n"
+    + 'test(`dyn ${n}`, () => {});\n';
+  assert.deepEqual(staticTestNames(source), { names: ['#518 AC1/AC2 (отбор): x', 'inner'], dynamic: true });
+  const read = (file) => (file === 'a.test.mjs' ? source : file === 'b.test.mjs' ? "test('b', () => {});" : null);
+  assert.deepEqual(staticTestSelectionProblems('node --test --test-name-pattern="AC2 \\(отбор\\)" a.test.mjs', read), []);
+  assert.deepEqual(staticTestSelectionProblems('tsc && node --test --test-name-pattern="nope" b.test.mjs', read)
+    .map((p) => p.level), ['error']);
+  assert.deepEqual(staticTestSelectionProblems('node --test --test-name-pattern="nope" a.test.mjs', read)
+    .map((p) => p.level), ['warn'], 'a ${…} name could match at run time');
+  assert.deepEqual(staticTestSelectionProblems('node --test --test-name-pattern="x" gone.test.mjs', read)
+    .map((p) => p.level), ['error']);
+});
+
+test('#650 registry: every name-filtered guard matches a static test name', () => {
+  const read = (file) => {
+    try { return readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'); } catch { return null; }
+  };
+  const errors = MUTANTS.flatMap((m) => staticTestSelectionProblems(m.guard, read)
+    .filter((p) => p.level === 'error').map((p) => `${m.id}: ${p.text}`));
+  assert.deepEqual(errors, []);
+});

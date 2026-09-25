@@ -4753,6 +4753,27 @@ const MUTANT_DEFINITIONS = [
       replace: '  if (!hunks || !hunks.length) return false;',
     }],
   },
+  // #650: a --test-name-pattern that matches nothing is a vacuous witness.
+  {
+    id: 'empty-test-selection-reads-as-survived',
+    guard: "node --test --test-name-pattern=\"#650 (clean run|mutant run|the installed node)\" test/mutation-guard-outcome.test.mjs",
+    because: '#650: a green oracle that executed no named test proves nothing; calling it '
+      + 'survived blames the code, and a clean run calls it a healthy witness',
+    patches: [{ file: 'scripts/mutation-guard-outcome.mjs', find: "    const empty = phase === 'oracle' ? emptyTestSelection(result?.command, outputOf(result)) : null;", replace: "    const empty = null;" }],
+  },
+  {
+    id: 'static-test-selection-accepts-unmatched',
+    guard: "node --test --test-name-pattern=\"#650 static check\" test/mutation-guard-outcome.test.mjs",
+    because: '#650: mutation-gate --check must name an unmatched name filter before CI spends a shard on it',
+    patches: [{ file: 'scripts/mutation-guard-outcome.mjs', find: "    if (names.some((name) => regexps.some((regexp) => regexp.test(name)))) continue;", replace: "    if (names.length || !names.length) continue;" }],
+  },
+  {
+    id: 'shell-words-drops-regex-escape',
+    guard: "node --test --test-name-pattern=\"#650 (selection|static check)\" test/mutation-guard-outcome.test.mjs",
+    because: '#650: inside double quotes the shell keeps a backslash before ( — dropping it turns an '
+      + 'escaped pattern into a group and flags healthy guards as empty',
+    patches: [{ file: 'scripts/mutation-guard-outcome.mjs', find: "      if (char === '\\\\' && quote === '\"' && /[$`\"\\\\\\n]/.test(text[index + 1] || '')) {", replace: "      if (char === '\\\\' && quote === '\"' && index + 1 < text.length) {" }],
+  },
   {
     id: 'ledger-version-sensitive',
     guard: 'node --test --test-name-pattern="#481 AC1" test/mutation-gate.test.mjs',
