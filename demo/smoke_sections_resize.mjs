@@ -88,17 +88,20 @@ const out = await page.evaluate(async () => {
   card.layout = 'grid';
   await setRows(10);
 
-  const minimumGeometry = await (async () => {
+  const minimumGeometry = [];
+  for (const language of ['ru', 'de']) {
+    card.setConfig(Object.freeze({ ...config, language }));
+    await settle();
     host.style.width = '390px';
     const sample = await setRows(6);
     const header = root.querySelector('.hdr');
-    return {
-      sample,
+    minimumGeometry.push({
+      language, sample,
       headerContained: header.scrollHeight - header.clientHeight <= 1,
       menuReachable: !!root.querySelector('[data-hp="header-menu"]')
         || !!root.querySelector('[data-hp="mode-tab"]'),
-    };
-  })();
+    });
+  }
   host.style.width = '780px';
   await setRows(10);
 
@@ -193,8 +196,9 @@ const out = await page.evaluate(async () => {
     gridSignalReflectsForScopedCss: card.getAttribute('layout') === 'grid',
     gridUsesContainerOwnedInlineHeight: defaultGeometry.stageStyle === 'auto',
     defaultTenRowsFillTheSlot: fillsSlot(defaultGeometry, rowHeight(10)),
-    minimumSixRowsStayContained: fillsSlot(minimumGeometry.sample, rowHeight(6))
-      && minimumGeometry.headerContained && minimumGeometry.menuReachable,
+    minimumSixRowsStayContainedInRuAndDe: minimumGeometry.length === 2
+      && minimumGeometry.every((entry) => fillsSlot(entry.sample, rowHeight(6))
+        && entry.headerContained && entry.menuReachable),
     ordinaryCardKeepsViewportHeight: ordinary.stageStyle.includes('100dvh'),
     explicitGridOptionsStayExternal: JSON.stringify(config) === configBefore
       && card._config.grid_options === config.grid_options,
