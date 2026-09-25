@@ -764,8 +764,11 @@ export class HouseplanCard extends LitElement {
     this._setMode(mode, animate);
   }
   public hass?: any;
-  public panelHost = false; public narrow: boolean | null = null;
+  public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
   private _config?: CardConfig;
+
+  /** HA owns the vertical slot in sidebar panel and Sections grid layouts. */
+  private get _containerOwnedHeight(): boolean { return this.panelHost || this.layout === 'grid'; }
 
   private _space = 'f1';
   /**
@@ -1340,7 +1343,9 @@ export class HouseplanCard extends LitElement {
       const inner = this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null;
       const targetChromeHeight = targetMode === 'view' ? 0 : inner?.scrollHeight || 0;
       // updateComplete guarantees that this stage already belongs to the rendered ha-card.
-      const targetStageHeight = Math.max(1, (this.panelHost ? this.clientHeight : innerHeight) - measuredCardHeaderHeight(this.renderRoot, this._stageEl!, this.panelHost)!);
+      const containerOwnedHeight = this._containerOwnedHeight;
+      const targetStageHeight = Math.max(1, (containerOwnedHeight ? this.clientHeight : innerHeight)
+        - measuredCardHeaderHeight(this.renderRoot, this._stageEl!, containerOwnedHeight)!);
       const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
       const targetView = this._viewForModeTarget(
         targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,
@@ -2421,6 +2426,7 @@ export class HouseplanCard extends LitElement {
     _dangerConfirm: { state: true },
     hass: { attribute: false },
     panelHost: { type: Boolean, attribute: 'panel-host', reflect: true },
+    layout: { type: String, reflect: true },
     narrow: { attribute: false },
     _config: { state: true },
     _space: { state: true },
@@ -3753,7 +3759,7 @@ export class HouseplanCard extends LitElement {
     return 12;
   }
 
-  public getGridOptions(): { columns: 'full' } { return { columns: 'full' }; }
+  public getGridOptions(): { columns: 'full'; rows: number; min_rows: number } { return { columns: 'full', rows: 10, min_rows: 6 }; }
 
   // ================= MODEL RESOLUTION (server configuration) =================
 
@@ -4063,7 +4069,7 @@ export class HouseplanCard extends LitElement {
     const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
     if (hdr && stage && !this._roHdr) {
       const measure = () => {
-        const t = measuredCardHeaderHeight(this.renderRoot, stage, this.panelHost); if (t === null) return;
+        const t = measuredCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight); if (t === null) return;
         // `t` is already an integer. Ignoring a one-pixel delta left the View
         // stage one pixel shorter after an editor collapse and made the fitted
         // viewport drift; changing stage height cannot feed back into its top.
@@ -6418,7 +6424,7 @@ export class HouseplanCard extends LitElement {
     if (!this._bootSoft) return;
     clearTimeout(this._bootSoftTimer);
     this._bootSoft = false;
-    const settled = settleSoftStageLayout(this.renderRoot, this._stageEl, this.panelHost, this._kiosk);
+    const settled = settleSoftStageLayout(this.renderRoot, this._stageEl, this._containerOwnedHeight, this._kiosk);
     if (!settled) return; if (settled.headerHeight !== null) this._hdrH = settled.headerHeight;
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
     this._pendingRefitSize = null; this._lastValidStageSize = settled.size; const current = this._view;
@@ -10868,7 +10874,7 @@ export class HouseplanCard extends LitElement {
         <div class="stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           ?inert=${this._modeTransitionBusy}
-          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this.panelHost ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}"
+          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}

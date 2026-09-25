@@ -7,13 +7,13 @@ export type SettledSoftStage = {
 export function measuredCardHeaderHeight(
   root: ParentNode,
   stage: HTMLElement,
-  panelHost: boolean,
+  containerOwnedHeight: boolean,
 ): number | null {
   const card = root.querySelector<HTMLElement>('ha-card');
   if (!card) return null;
   const cardRect = card.getBoundingClientRect();
   const own = stage.getBoundingClientRect().top - cardRect.top;
-  const above = panelHost ? 0 : Math.min(Math.max(cardRect.top, 0), 120);
+  const above = containerOwnedHeight ? 0 : Math.min(Math.max(cardRect.top, 0), 120);
   const height = Math.round(own + above);
   return height >= 0 ? height : null;
 }
@@ -26,12 +26,12 @@ export function measuredCardHeaderHeight(
 export function settleSoftStageLayout(
   root: ParentNode,
   stage: HTMLElement | null,
-  panelHost: boolean,
+  containerOwnedHeight: boolean,
   kiosk: boolean,
 ): SettledSoftStage | null {
   if (!stage) return null;
-  const headerHeight = measuredCardHeaderHeight(root, stage, panelHost);
-  if (!panelHost && !kiosk && headerHeight !== null) {
+  const headerHeight = measuredCardHeaderHeight(root, stage, containerOwnedHeight);
+  if (!containerOwnedHeight && !kiosk && headerHeight !== null) {
     stage.style.height = `calc(100dvh - ${headerHeight}px)`;
   }
   stage.classList.remove('hpsettle');

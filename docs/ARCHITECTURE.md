@@ -161,6 +161,15 @@ the same profiler available between stable promotions.
    generation before unload removes `/houseplan`; foreign or newer panels are
    never overwritten or removed. System Health exposes bounded status codes and
    public URLs without exception text or private filesystem data.
+   The dashboard card also accepts Home Assistant's `layout="grid"` host signal.
+   In that Sections-only branch HA owns a fixed vertical slot: `:host` and
+   `ha-card` fill it, while the header is fixed and `.stage` is the shrinking
+   flex child. `getGridOptions()` advertises full width, 10 default rows and a
+   6-row minimum; explicit dashboard `grid_options` still win in HA's merge.
+   Mode transitions and soft-boot settling use the card's measured height in
+   this branch, never `window.innerHeight`. Other dashboard layouts retain the
+   viewport-height contract, and the compact space card advertises no grid
+   defaults (#648).
 2. **Icon layout lives on the server.** `helpers.storage.Store(1, "houseplan.layout")` →
    `.storage/houseplan.layout`. The card reads/writes via `hass.callWS`
    (`houseplan/layout/get|set|update`). Fallback — localStorage (when the integration is absent).
@@ -463,8 +472,10 @@ container-type: inline-size }` + sizes in `cqw`. Legacy px values (>8) are ignor
 
 ## Sticky header
 
-`.head { position: sticky; top: var(--header-height, 56px) }`; it is MANDATORY that
-`ha-card { overflow: visible }` — `overflow: hidden` breaks sticky.
+`.head { position: sticky; top: var(--header-height, 56px) }`; ordinary dashboard
+cards keep `ha-card { overflow: visible }` because hidden overflow breaks sticky.
+The bounded `panel-host` and Sections `layout="grid"` branches deliberately own
+their complete height chain and clip at the external slot instead.
 
 ## Device markers (v1.6.0+)
 

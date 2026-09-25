@@ -296,7 +296,8 @@ const result = await page.evaluate(async () => {
       && fitEnvelope[1] >= viewBox.y - 0.01
       && fitEnvelope[0] + fitEnvelope[2] <= viewBox.x + viewBox.w + 0.01
       && fitEnvelope[1] + fitEnvelope[3] <= viewBox.y + viewBox.h + 0.01,
-    sectionsDefaultIsFull: JSON.stringify(card.getGridOptions()) === JSON.stringify({ columns: 'full' })
+    sectionsDefaultsRemainAvailableInPanel: JSON.stringify(card.getGridOptions())
+      === JSON.stringify({ columns: 'full', rows: 10, min_rows: 6 })
       && card.getCardSize() === 12,
   };
 

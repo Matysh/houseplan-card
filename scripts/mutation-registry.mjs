@@ -1200,6 +1200,52 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'sections-grid-falls-back-to-viewport-height',
+    guard: 'node demo/smoke_sections_resize.mjs',
+    because: 'HA Sections owns a fixed row slot; treating grid like an ordinary dashboard card '
+      + 'restores the 100dvh stage and makes the card overflow its selected height (#648 AC2/AC7)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "  private get _containerOwnedHeight(): boolean { return this.panelHost || this.layout === 'grid'; }",
+      replace: '  private get _containerOwnedHeight(): boolean { return this.panelHost; } // mutant: viewport height',
+    }],
+  },
+  {
+    id: 'sections-editor-transition-uses-window-height',
+    guard: 'node demo/smoke_sections_resize.mjs',
+    because: 'editor chrome must borrow space inside the selected Sections row slot; using '
+      + 'window.innerHeight makes the animated stage escape the card at minimum height (#648 AC5)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '(containerOwnedHeight ? this.clientHeight : innerHeight)',
+      replace: 'innerHeight /* mutant: ignore the fixed Sections slot */',
+    }],
+  },
+  {
+    id: 'sections-grid-drops-stage-flex-chain',
+    guard: 'node demo/smoke_sections_resize.mjs',
+    because: 'host and ha-card height are insufficient when the stage is not the shrinking flex '
+      + 'child; header plus scene then leave a gap or overflow the Sections slot (#648 AC2/AC5)',
+    patches: [{
+      file: 'src/styles/base.styles.ts',
+      find: '    :host([layout="grid"]) .stage,\n'
+        + '    :host([layout="grid"]) .empty {',
+      replace: '    :host([layout="grid-disabled"]) .stage,\n'
+        + '    :host([layout="grid-disabled"]) .empty { /* mutant: grid stage is not flex */',
+    }],
+  },
+  {
+    id: 'sections-resize-drops-stage-refit-observer',
+    guard: 'node demo/smoke_sections_resize.mjs',
+    because: 'a row resize changes the stage aspect and hit geometry; without the existing stage '
+      + 'observer the camera retains a stale aspect even though CSS resized the box (#648 AC4/AC8)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      this._roViewport.observe(stage);',
+      replace: '      // mutant: Sections resizes never reach camera refit',
+    }],
+  },
+  {
     id: 'panel-ignores-pre-upgrade-properties',
     guard: 'node demo/smoke_houseplan_panel.mjs',
     because: 'HA assigns hass/narrow/route/panel before the top-level-await entry defines the '

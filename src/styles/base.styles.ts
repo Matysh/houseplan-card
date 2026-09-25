@@ -37,14 +37,16 @@ export const baseStyles = css`
       display: block;
       position: relative;
     }
-    :host([panel-host]) {
+    :host([panel-host]),
+    :host([layout="grid"]) {
       width: 100%;
       height: 100%;
       min-width: 0;
       min-height: 0;
       overflow: hidden;
     }
-    :host([panel-host]) ha-card {
+    :host([panel-host]) ha-card,
+    :host([layout="grid"]) ha-card {
       box-sizing: border-box;
       width: 100%;
       height: 100%;
@@ -65,15 +67,22 @@ export const baseStyles = css`
       flex: 0 0 auto;
       border-radius: 0;
     }
+    :host([layout="grid"]) .hdr {
+      flex: 0 0 auto;
+    }
     :host([panel-host]) .stage,
-    :host([panel-host]) .empty {
+    :host([panel-host]) .empty,
+    :host([layout="grid"]) .stage,
+    :host([layout="grid"]) .empty {
       flex: 1 1 auto;
       min-height: 0;
     }
-    :host([panel-host]) .stage.mode-transition {
+    :host([panel-host]) .stage.mode-transition,
+    :host([layout="grid"]) .stage.mode-transition {
       flex: 0 0 auto;
     }
-    :host([panel-host]) .empty {
+    :host([panel-host]) .empty,
+    :host([layout="grid"]) .empty {
       box-sizing: border-box;
       overflow: auto;
     }

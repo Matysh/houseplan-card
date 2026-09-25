@@ -45,10 +45,10 @@ test('#488 the shell sizes itself from the viewport and adopts pre-upgrade HA pr
   assert.match(panel, /if \(!Object\.prototype\.hasOwnProperty\.call\(this, key\)\) continue;[\s\S]*?delete \(this as unknown as Record<string, unknown>\)\[key\];/);
 });
 
-test('#486 only the full card advertises a full-width Sections default', () => {
+test('#648 only the full card advertises resizable Sections defaults', () => {
   const card = source('src/houseplan-card.ts');
   const spaceCard = source('src/space-card.ts');
-  assert.match(card, /getGridOptions\(\): \{ columns: 'full' \} \{\s*return \{ columns: 'full' \};\s*\}/);
+  assert.match(card, /getGridOptions\(\): \{ columns: 'full'; rows: number; min_rows: number \} \{\s*return \{ columns: 'full', rows: 10, min_rows: 6 \};\s*\}/);
   assert.match(card, /getCardSize\(\): number/);
   assert.doesNotMatch(spaceCard, /getGridOptions/);
 });

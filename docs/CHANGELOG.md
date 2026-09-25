@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- The full House Plan card can now be resized vertically with Home Assistant's
+  standard handle in a Sections dashboard. It starts at 10 rows, has a 6-row
+  minimum, and View plus all three editors fill the chosen slot without making
+  the dashboard jump. Explicit Home Assistant sizing remains authoritative;
+  existing auto-height Sections cards adopt the new 10-row default once. Thanks
+  to @pando80 for reporting the limitation and proposing the initial direction
+  ([#648](https://github.com/Matysh/houseplan-card/issues/648)).
 - Home Assistant's `system-read-only` users now remain read-only even when
   House Plan editing is opened to ordinary household members. They keep the
   complete View experience, including vacuum paths, but cannot edit, upload or

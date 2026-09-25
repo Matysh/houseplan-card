@@ -36,7 +36,10 @@
   editor lifecycle stay shared; only the duplicated product title and outer
   dashboard-card chrome are removed. Failure to register the panel is isolated
   and reported in System Health. The optional full dashboard card requests full
-  width in Sections by default; explicit HA sizing remains authoritative.
+  width in Sections by default. It also uses Home Assistant's standard vertical
+  resize: 10 rows by default, a 6-row minimum, and a container-owned height for
+  View and all editors. Explicit `grid_options` remain authoritative; panel,
+  Masonry and the compact space card keep their existing sizing (#648).
 - **Three editors + View**: Plan / Devices / Background (decor layer v1.33) as
   tabs with an X to close; View is the default; only the last space persists,
   while reload/return from another HA route always starts in View (#93).

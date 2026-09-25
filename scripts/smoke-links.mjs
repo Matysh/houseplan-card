@@ -28,6 +28,14 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['baseStyles', '_containerOwnedHeight', 'measuredCardHeaderHeight',
+      'settleSoftStageLayout'],
+    smokes: ['smoke_sections_resize.mjs'],
+    because: '#648: the production-bundle witness measures the HA Sections slot, card, header '
+      + 'and stage through repeated row resizes and every editor transition; the CSS height chain '
+      + 'and helper boolean do not otherwise share a runtime symbol with those DOM measurements',
+  },
+  {
     symbols: ['chromeStyles', 'dialogsStyles'],
     smokes: ['smoke_toolbar_stable_width.mjs', 'smoke_editor_tabs.mjs', 'smoke_mobile_view_header.mjs'],
     because: '#647: the header X slot (.editor-close-slot) and the removed .head .count rule are '

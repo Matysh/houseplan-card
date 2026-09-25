@@ -713,11 +713,11 @@ See `demo/performance/README.md` for commands and the budget-review contract.
       composed `hass-toggle-menu`; `hass`, `narrow`, `route` and `panel` updates
       preserve one child card; leaving the route keeps only the space and returns
       in View [auto: `smoke_houseplan_panel`; golden: panel matrix].
-- [ ] The dashboard full card advertises `{columns:"full"}` to Sections while
-      retaining `getCardSize`; the compact space card has no grid default. Both
-      stable JS entries and their exact graphs/hashes are verified, the card graph
-      excludes the panel root, and panel-only gzip stays within 8 KiB [unit:
-      `houseplan-panel`, bundle manifest/budget/tree/freshness].
+- [ ] The dashboard full card advertises `{columns:"full",rows:10,min_rows:6}`
+      to Sections; the compact card has no grid default. Fixed 6/10/14-row slots,
+      all editors and a 30-step storm stay bounded and preserve camera intent;
+      other layouts stay unchanged [browser: `smoke_sections_resize`,
+      `smoke_houseplan_panel`; unit/mutation: `houseplan-panel`, four grid witnesses].
 - [ ] README and User Guide in EN/RU each separate Storage mode, HA 2026.2+
       `resource_mode: yaml` and legacy HA 2024.6–2026.1 full-YAML dashboard
       setup; both hard-reload shortcuts are present and a flat top-level

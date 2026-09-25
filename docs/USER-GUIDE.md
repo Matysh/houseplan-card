@@ -172,8 +172,12 @@ does not duplicate the product title inside the plan. Leaving the page ends an
 editor session; returning keeps the last space and opens View.
 
 The dashboard card remains available for layouts that intentionally embed the
-plan. In a Sections view it requests full width by default; a size explicitly
-chosen in Home Assistant remains authoritative.
+plan. In a Sections view it requests full width and 10 rows by default, with a
+minimum of 6 rows. Use Home Assistant's standard resize handle while editing
+the dashboard to make the plan taller or shorter; View and every editor fill
+the selected height. A size explicitly chosen in Home Assistant remains
+authoritative. Existing Sections cards that did not have an explicit row count
+adopt the new 10-row default once after this update.
 
 Minimal configuration:
 
