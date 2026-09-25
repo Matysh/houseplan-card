@@ -41,10 +41,11 @@ const devices = [
 ];
 
 test('Stage 3 topology smoke follows actual raised DOM centres before and after pan/zoom', () => {
-  assert.match(topologySmoke, /#space=f1&hp_alpha=1/);
+  // #649: 2.5D is the General settings switch; the harness applies it like a save.
+  assert.doesNotMatch(topologySmoke, /hp_alpha/);
   assert.match(topologySmoke,
-    /card\._setProjection\('iso'\);\s*await window\.__hpEnsureHarnessIsoRuntime\(card\)/,
-    'the witness must enter real alpha Iso and await its lazy runtime');
+    /window\.__hpHarnessProjection\(card, 'iso'\);\s*await window\.__hpEnsureHarnessIsoRuntime\(card\)/,
+    'the witness must enter real 2.5D and await its lazy runtime');
   assert.match(topologySmoke, /data-hp-iso-overlay-kind/,
     'the witness must prove both marker roots are raised');
   assert.match(topologySmoke, /svg\?\.getScreenCTM\(\)/,

@@ -42,6 +42,9 @@ sync across screens.
   show temperature, humidity, light state and average LQI.
 - **Light and environment.** Room fills, lamp Glow, wall shadows, a day-cycle
   backdrop and sunlight through windows.
+- **Flat or 2.5D.** One switch in General settings › Display shows the plan
+  with depth everywhere: raised device tiles with soft floor shadows and a soft
+  wash of sunlight; decor and wall colours stay as you set them.
 - **Doors, windows, gates and vacuums.** Openings follow real contacts and locks;
   a robot can show its position, dock and travelled path.
 - **Several floors and screens.** Space tabs, swipe navigation, local viewport,

@@ -169,12 +169,6 @@ export const planStyles = css`
       opacity: 0.4;
       pointer-events: none;
     }
-    .projection-toggle {
-      min-width: 44px;
-      min-height: 44px;
-      justify-content: center;
-      padding: var(--sp-3);
-    }
     .header-action {
       min-width: 44px;
       min-height: 44px;
@@ -257,18 +251,21 @@ export const planStyles = css`
     .iso-openings {
       pointer-events: none;
     }
-    .iso-side-hi { stop-color: #b9bdbe; }
-    .iso-side-lo { stop-color: #969c9f; }
-    .iso-top-hi { stop-color: #fafaf7; }
-    .iso-top-lo { stop-color: #e2e4e2; }
+    /* #649 3b: the user's wall colour (fill_colors.wall_fill), stage vars from
+       src/iso-materials.ts; the fallbacks are the default white. */
+    .iso-side-hi { stop-color: var(--iso-side-hi, #c4c4c4); }
+    .iso-side-mid { stop-color: var(--iso-side-mid, #adadad); }
+    .iso-side-lo { stop-color: var(--iso-side-lo, #999999); }
+    .iso-top-hi { stop-color: var(--iso-top-hi, #ffffff); }
+    .iso-top-lo { stop-color: var(--iso-top-lo, #ededed); }
     .iso-wall-side {
-      fill: url(#hp-iso-wall-side) #a8acae;
+      fill: url(#hp-iso-wall-side) var(--iso-side-mid, #adadad);
       stroke: #92989b;
       stroke-width: 0.7;
       vector-effect: non-scaling-stroke;
     }
     .iso-wall-top {
-      fill: url(#hp-iso-wall-top) #f3f3f1;
+      fill: url(#hp-iso-wall-top) var(--iso-top-hi, #ffffff);
       stroke: #d7d9d8;
       stroke-width: 0.8;
       vector-effect: non-scaling-stroke;
@@ -335,59 +332,12 @@ export const planStyles = css`
       fill: rgba(15, 21, 25, 0.22);
       filter: url(#hp-iso-ambient-shadow);
     }
-    .stage.theme-dark .iso-side-hi { stop-color: #4c555a; }
-    .stage.theme-dark .iso-side-lo { stop-color: #343c40; }
-    .stage.theme-dark .iso-top-hi { stop-color: #687176; }
-    .stage.theme-dark .iso-top-lo { stop-color: #50585d; }
-    .stage.theme-dark .iso-wall-side { stroke: #30373b; }
-    .stage.theme-dark .iso-wall-top { stroke: #7b858a; }
-    .stage.theme-dark .iso-floor-side { fill: #2d3438; stroke: #20272a; }
-    .stage.theme-dark .iso-opening-panel { fill: #626b70; stroke: #899399; }
-    .stage.theme-dark .iso-opening-panel.iso-window { fill: #75919b; stroke: #abc6ce; }
-    .stage.theme-dark .iso-opening-panel.iso-material-reveal { fill: #454e52; stroke: #727d82; }
-    .stage.theme-dark .iso-opening-panel.iso-material-matte-leaf { fill: #626a6e; stroke: none; }
-    .stage.theme-dark .iso-opening-panel.iso-opening-leaf-edge,
-    .stage.theme-dark .iso-opening-panel.iso-opening-leaf-top { fill: #4b5458; }
-    .stage.theme-dark .iso-opening-panel.iso-material-light-frame,
-    .stage.theme-dark .iso-opening-panel.iso-material-light-sill {
-      fill: #e8e7df;
-      stroke: #a9aca7;
-    }
-    .stage.theme-dark .iso-opening-panel.iso-material-light-window,
-    .stage.theme-dark .iso-opening-panel.iso-material-glass-side {
-      fill: #8fbfd5;
-      stroke: #bad9e6;
-    }
-    .stage.theme-dark .iso-opening-panel.iso-material-glass-top {
-      fill: #c9e6f2;
-      stroke: #d9eef6;
-    }
+    /* #649 3b: walls, openings, floor edge, wall texture and room labels do
+       not follow the HA theme in 2.5D — only the building's ambient shadow on
+       the card background may. */
     .stage.theme-dark .iso-ambient-shadow { fill: rgba(0, 0, 0, 0.34); }
-    .stage.theme-dark .iso-texture-mark { fill: rgba(255, 255, 255, 0.24); }
-    .stage.theme-dark .iso-texture-line { stroke: rgba(255, 255, 255, 0.18); }
     @media (prefers-color-scheme: dark) {
-      /* HA's explicit theme wins over the operating-system preference. */
-      .stage:not(.theme-light) .iso-side-hi { stop-color: #4c555a; }
-      .stage:not(.theme-light) .iso-side-lo { stop-color: #343c40; }
-      .stage:not(.theme-light) .iso-top-hi { stop-color: #687176; }
-      .stage:not(.theme-light) .iso-top-lo { stop-color: #50585d; }
-      .stage:not(.theme-light) .iso-wall-side { stroke: #30373b; }
-      .stage:not(.theme-light) .iso-wall-top { stroke: #7b858a; }
-      .stage:not(.theme-light) .iso-floor-side { fill: #2d3438; stroke: #20272a; }
-      .stage:not(.theme-light) .iso-opening-panel { fill: #626b70; stroke: #899399; }
-      .stage:not(.theme-light) .iso-opening-panel.iso-window { fill: #75919b; stroke: #abc6ce; }
-      .stage:not(.theme-light) .iso-opening-panel.iso-material-reveal { fill: #454e52; stroke: #727d82; }
-      .stage:not(.theme-light) .iso-opening-panel.iso-material-matte-leaf { fill: #626a6e; stroke: none; }
-      .stage:not(.theme-light) .iso-opening-panel.iso-opening-leaf-edge,
-      .stage:not(.theme-light) .iso-opening-panel.iso-opening-leaf-top { fill: #4b5458; }
-      .stage:not(.theme-light) .iso-opening-panel.iso-material-light-frame,
-      .stage:not(.theme-light) .iso-opening-panel.iso-material-light-sill { fill: #e8e7df; stroke: #a9aca7; }
-      .stage:not(.theme-light) .iso-opening-panel.iso-material-light-window,
-      .stage:not(.theme-light) .iso-opening-panel.iso-material-glass-side { fill: #8fbfd5; stroke: #bad9e6; }
-      .stage:not(.theme-light) .iso-opening-panel.iso-material-glass-top { fill: #c9e6f2; stroke: #d9eef6; }
       .stage:not(.theme-light) .iso-ambient-shadow { fill: rgba(0, 0, 0, 0.34); }
-      .stage:not(.theme-light) .iso-texture-mark { fill: rgba(255, 255, 255, 0.24); }
-      .stage:not(.theme-light) .iso-texture-line { stroke: rgba(255, 255, 255, 0.18); }
     }
     @media (forced-colors: active) {
       .iso-wall-side, .iso-wall-top, .iso-floor-side, .iso-opening-panel {
@@ -745,19 +695,13 @@ export const planStyles = css`
       text-shadow: none;
       filter: none;
       -webkit-text-stroke: 0 transparent;
-      /* Flat writes the configured room color inline. Iso View owns the
-         approved contrast palette, so it must explicitly override that
-         presentation-only inline value. */
-      color: #303936 !important;
+      /* #649 3b: the configured room label colour (inline, as in Flat) is
+         kept in both themes; 2.5D only drops stroke, shadow and halo. */
     }
     /* Interactive raised overlays stay above passive room names. Collision
        placement never needs to move or promote a label to make a device usable. */
     .stage.projection-iso.mode-view .dev,
     .stage.projection-iso.mode-view .oplock { z-index: 2; }
-    .stage.projection-iso.theme-dark.mode-view .roomlabel { color: #f2f0e8 !important; }
-    @media (prefers-color-scheme: dark) {
-      .stage.projection-iso:not(.theme-light).mode-view .roomlabel { color: #f2f0e8 !important; }
-    }
     .stage.mode-view .roomlabel:focus-visible {
       outline: 2px solid var(--hp-accent);
       outline-offset: 4px;

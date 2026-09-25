@@ -46,7 +46,7 @@ import {
   type FloorInfo, parseRoomRef, resolveGlowValues, normalizeGlowColorOverride, isControllable,
   spaceDisplayOf, DEFAULT_FILL_COLORS, customFillOf, DEFAULT_CUSTOM_FILL, type FillColors,
   type FillColorEntry, RUN_TARGET_DOMAINS, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
-  showRoomTooltipOf, DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, normalizeDeviceDisplay,
+  showRoomTooltipOf, volumetricViewOf, DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, normalizeDeviceDisplay,
   type DeviceDisplayMode, liveTextReference, liveTextToken, DECOR_TEXT_BASE,
 } from './logic';
 import {
@@ -599,7 +599,7 @@ export interface HouseplanEditorHostPort {
   _kioskDialog: boolean;
   _kioskHoldTimer: number | undefined;
   _kioskScale: { icon: number; font: number; };
-  _labsIso: boolean;
+  _isoEnabled: boolean;
   _lastValidStageSize: [number, number] | null;
   _layout: DeviceLayout;
   readonly _layoutRev: number;
@@ -717,7 +717,7 @@ export interface HouseplanEditorHostPort {
   _serverStorage: boolean;
   _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
   _terminalFrame: 0 | 1 | 2;
-  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; busy: boolean; } | null;
+  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
@@ -764,7 +764,6 @@ export interface HouseplanEditorHostPort {
   _viewportGestureDirty: boolean;
   _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; w?: number; } | null;
   _viewOr: (vb: number[]) => { x: number; y: number; w: number; h: number; };
-  _viewPreference: Record<string, "flat" | "iso">;
   _virtualLights: VirtualLightSnapshot;
   _visibleDeviceSnapshot: RenderDeviceSnapshot | null;
   _wallDialog: { a: number[]; b: number[]; value: string; roomId: string | null; source: WallThickSource; sx: number; sy: number; } | null;
@@ -1029,8 +1028,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       // restore the snapshot only for the space it was taken in
       if (snap && snap.space === this.host._space) {
         targetZoom = snap.zoom;
-        const targetProjection = this.host._labsIso && this.host._viewPreference[this.host._space] === 'iso'
-          ? 'iso' : 'flat';
+        const targetProjection = this.host._isoEnabled ? 'iso' : 'flat';
         const center = snap.cx != null && snap.cy != null && targetProjection === 'iso'
           ? projectPlanPoint([snap.cx, snap.cy], 0) : null;
         targetCenterX = center?.[0] ?? snap.cx;
@@ -1058,7 +1056,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     this.host._modeTransitionTargetCenterX = targetCenterX;
     this.host._modeTransitionTargetCenterY = targetCenterY;
     if (previousProjection === 'iso'
-        || (mode === 'view' && this.host._labsIso && this.host._viewPreference[this.host._space] === 'iso')) {
+        || (mode === 'view' && this.host._isoEnabled)) {
       this.host._modeTransitionForceAtomic = true;
     }
     const request = ++this.host._modeTransitionRequest;
@@ -8455,7 +8453,7 @@ public _openSettingsDialog = (): void => {
       bgMode: bgModeOf(this.host._settings, {}),
       sunRays: sunRaysOn(this.host._settings, {}),
       sunRayOrigin: sunRayOriginOf(this.host._settings),
-      radarShowLive: this.host._settings.radar?.show_live !== false,
+      radarShowLive: this.host._settings.radar?.show_live !== false, volumetricView: volumetricViewOf(this.host._settings),
       showRoomTooltip: showRoomTooltipOf(this.host._settings), zigbeeTopology: zigbeeTopologySettingsOf(this.host._settings), busy: false,
     };
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
@@ -9511,6 +9509,8 @@ public _updateDecorStyle(next: DecorStyle): void {
       settings.sun_ray_origin = d.sunRayOrigin;
       if (d.showRoomTooltip) delete settings.show_room_tooltip;
       else settings.show_room_tooltip = false;
+      if (d.volumetricView) settings.volumetric_view = true;
+      else delete settings.volumetric_view;
       const radarSettings = settings.radar;
       if (!radarSettings || radarSettings.version == null || radarSettings.version === 1) {
         settings.radar = { ...(radarSettings || {}), version: 1 };

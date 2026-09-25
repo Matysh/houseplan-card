@@ -1,4 +1,4 @@
-// #122/#160/#570 Stage 4: alpha lifecycle, visual handoff and flat editor boundary.
+// #122/#160/#570 Stage 4 + #649: settings lifecycle, visual handoff and flat editor boundary.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
@@ -45,10 +45,12 @@ const out = await page.evaluate(async () => {
       return hit === element || !!hit && element.contains(hit);
     });
   };
+  // #649: 2.5D is the installation-wide General settings switch.
+  // The switch arrives as a server config push: re-bind the space the smoke edits.
+  const rebind = () => { configSpace = card._serverCfg.spaces.find((space) => space.id === 'f1'); };
   const enable = async () => {
-    history.replaceState(null, '', '#space=f1&hp_alpha=1');
-    dispatchEvent(new HashChangeEvent('hashchange'));
-    await card.updateComplete;
+    await window.__hpTest.setVolumetricView(true);
+    rebind();
     await ensureIsoRuntime();
     await frame();
   };
@@ -59,7 +61,7 @@ const out = await page.evaluate(async () => {
     && ![...root().querySelector('.stage').classList]
       .some((name) => name.startsWith('projection-'));
   result.cleanAlphaOffSkipsIsoRuntimeRequest = isoRuntimeRequests() === 0;
-  const configSpace = card._serverCfg.spaces.find((space) => space.id === 'f1');
+  let configSpace = card._serverCfg.spaces.find((space) => space.id === 'f1');
   configSpace.settings = {
     ...(configSpace.settings || {}), show_borders: true, show_names: true,
   };
@@ -80,8 +82,18 @@ const out = await page.evaluate(async () => {
   card._cfgEpoch++;
   card.requestUpdate();
   await card.updateComplete;
+  // #649 AC11: the alpha switch no longer enables 2.5D and loads nothing.
+  history.replaceState(null, '', '#space=f1&hp_alpha=1');
+  dispatchEvent(new HashChangeEvent('hashchange'));
+  await card.updateComplete;
+  await frame();
+  result.alphaDoesNotEnableIso = window.__hpAlpha === true && JSON.stringify(window.__hpLabs) === '[]'
+    && !root().querySelector('[data-hp="iso-walls"]') && isoRuntimeRequests() === 0;
+  history.replaceState(null, '', '#space=f1&hp_alpha=0');
+  dispatchEvent(new HashChangeEvent('hashchange'));
+  await card.updateComplete;
   await enable();
-  result.alphaOnLoadsIsoRuntimeOnce = isoRuntimeRequests() === 1;
+  result.settingLoadsIsoRuntimeOnce = isoRuntimeRequests() === 1;
   const openingBases = card._isoSource()?.build().openings || [];
   const basis = (id) => openingBases.find((opening) => opening.id === id);
   const centredDoor = basis('iso-centred-door');
@@ -111,27 +123,13 @@ const out = await page.evaluate(async () => {
     && flippedGate.leaves.every((leaf) => Math.abs(leaf.turnDeg) === 10);
   result.isoGateFlipReversesTurn = centredGate?.leaves[0]?.turnDeg
     === -flippedGate?.leaves[0]?.turnDeg;
-  const toggle = root().querySelector('[data-hp="projection-toggle"]');
-  result.alphaSnapshotFrozen = window.__hpAlpha === true && Object.isFrozen(window.__hpLabs)
-    && JSON.stringify(window.__hpLabs) === '["iso"]';
-  result.alphaStored = localStorage.getItem('houseplan_card_alpha_v1') === '1';
-  result.toggleShown = !!toggle;
-  result.toggleMinHitTarget = toggle && toggle.getBoundingClientRect().width >= 44
-    && toggle.getBoundingClientRect().height >= 44;
-  result.flatDefault = toggle?.getAttribute('aria-pressed') === 'false'
-    && !root().querySelector('[data-hp="iso-walls"]');
-
-  toggle?.click();
-  await ensureIsoRuntime();
-  await card.updateComplete;
-  await frame();
-  const isoToggle = root().querySelector('[data-hp="projection-toggle"]');
+  result.settingStored = card._serverCfg.settings?.volumetric_view === true;
+  result.noCardToggle = !root().querySelector('[data-hp="projection-toggle"]');
   const device = root().querySelector('[data-hp="device"]');
   const roomLabel = root().querySelector('[data-hp="room-label"]');
   const openingLock = root().querySelector('.oplock');
   const stage = root().querySelector('.stage');
-  result.isoRendered = isoToggle?.getAttribute('aria-pressed') === 'true'
-    && !!root().querySelector('[data-hp="iso-underlay"] .iso-floor-side')
+  result.isoRendered = !!root().querySelector('[data-hp="iso-underlay"] .iso-floor-side')
     && !!root().querySelector('[data-hp="iso-walls"] .iso-wall-top');
   result.stage4RevisionAdvertised = stage?.getAttribute('data-hp-iso-stage') === '4';
   result.sharedProjectionSnapshot = [
@@ -187,7 +185,7 @@ const out = await page.evaluate(async () => {
   result.raisedFootprintsStayInvisible = !root().querySelector(
     '.iso-overlay-plate, .iso-overlay-plate-texture, #hp-iso-overlay-texture',
   );
-  result.preferenceStored = JSON.parse(localStorage.getItem('houseplan_card_view_v1') || '{}').f1 === 'iso';
+  result.noDevicePreference = localStorage.getItem('houseplan_card_view_v1') === null;
   result.anchorsFinite = [device, roomLabel, openingLock].every((node) => node
     && center(node).every((value) => Number.isFinite(value)));
   card._fitAll();
@@ -335,7 +333,7 @@ const out = await page.evaluate(async () => {
   const areaLink = root().querySelector('.roomlabel[data-id="r1"] .rlgo');
   areaLink?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
   const areaPath = location.pathname;
-  history.replaceState(null, '', '/#space=f1&hp_alpha=1');
+  history.replaceState(null, '', '/#space=f1');
   const lockRoot = root().querySelector('.oplock');
   lockRoot?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
   result.raisedActionsRemainOwned = moreInfoCalls === 1 && keyboardOpenedDeviceCard
@@ -354,7 +352,7 @@ const out = await page.evaluate(async () => {
   card._setMode('view');
   await card.updateComplete;
   while (card._modeTransitionBusy) await frame();
-  result.viewRestoresIso = root().querySelector('[data-hp="projection-toggle"]')?.getAttribute('aria-pressed') === 'true'
+  result.viewRestoresIso = !!root().querySelector('.stage.projection-iso')
     && !!root().querySelector('[data-hp="iso-walls"]');
 
   const nativeCssSupports = CSS.supports;
@@ -403,8 +401,9 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   result.latchedFallbackKeepsFlatCamera = JSON.stringify(card._view) === JSON.stringify(fallbackFlatCamera);
   card._isoSource = healthySource;
-  card._setProjection('iso');
-  await card.updateComplete;
+  await window.__hpTest.setVolumetricView(false);
+  await window.__hpTest.setVolumetricView(true);
+  rebind();
   result.invalidSourceExplicitRetryRestoresIso = !card._isoFallback.has(firstInvalidKey)
     && !!root().querySelector('[data-hp="iso-walls"]');
 
@@ -459,15 +458,16 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   result.fallbackLatched = attempts === 1
     && card._viewModeSnap === null
-    && root().querySelector('[data-hp="projection-toggle"]')?.getAttribute('aria-pressed') === 'false'
+    && !root().querySelector('.stage.projection-iso')
     && !root().querySelector('[data-hp="iso-walls"]')
-    && JSON.parse(localStorage.getItem('houseplan_card_view_v1') || '{}').f1 === 'iso';
+    && card._serverCfg.settings?.volumetric_view === true;
   shouldFail = false;
-  card._setProjection('iso');
-  await card.updateComplete;
-  result.explicitRetryRestoresIso = attempts === 2
+  await window.__hpTest.setVolumetricView(false);
+  await window.__hpTest.setVolumetricView(true);
+  rebind();
+  result.explicitRetryRestoresIso = attempts >= 2
     && !!root().querySelector('[data-hp="iso-walls"]')
-    && root().querySelector('[data-hp="projection-toggle"]')?.getAttribute('aria-pressed') === 'true';
+    && !!root().querySelector('.stage.projection-iso');
   card._isoSource = source;
   card._isoGeometryCache.delete(fallbackKey);
   card._isoFallback.delete(fallbackKey);
@@ -532,28 +532,25 @@ const out = await page.evaluate(async () => {
     && /"terminal":true/.test(fallbackWarnings[0])
     && !/(private_identifier|sensor\.|https?:|token=|stack)/i.test(fallbackWarnings[0])
     && !root().querySelector('[data-hp="iso-walls"]')
-    && JSON.parse(localStorage.getItem('houseplan_card_view_v1') || '{}').f1 === 'iso';
+    && card._serverCfg.settings?.volumetric_view === true;
   card._isoSceneRuntime = runtime;
-  card._setProjection('iso');
-  await card.updateComplete;
+  await window.__hpTest.setVolumetricView(false);
+  await window.__hpTest.setVolumetricView(true);
+  rebind();
+
   result.lateFailureExplicitRetryRestoresIso = !!root().querySelector('[data-hp="iso-walls"]');
   console.warn = warning;
 
-  history.replaceState(null, '', '#space=f1&hp_alpha=0');
-  dispatchEvent(new HashChangeEvent('hashchange'));
-  await card.updateComplete;
+  await window.__hpTest.setVolumetricView(false);
   await frame();
-  result.removalIsImmediateFlat = window.__hpAlpha === false
-    && localStorage.getItem('houseplan_card_alpha_v1') === '0'
-    && JSON.stringify(window.__hpLabs) === '[]'
+  result.removalIsImmediateFlat = card._serverCfg.settings?.volumetric_view === false
     && !root().querySelector('[data-hp="projection-toggle"]')
     && !root().querySelector('[data-hp="iso-walls"]')
     && !root().querySelector('[id^="hp-iso-"]')
     && ![...root().querySelector('.stage').classList]
       .some((name) => name.startsWith('projection-'));
   await enable();
-  result.reenableRestoresPreference = window.__hpAlpha === true
-    && root().querySelector('[data-hp="projection-toggle"]')?.getAttribute('aria-pressed') === 'true'
+  result.reenableRestoresIso = !!root().querySelector('.stage.projection-iso')
     && !!root().querySelector('[data-hp="iso-walls"]');
   return result;
 });

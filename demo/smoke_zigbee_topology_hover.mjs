@@ -126,10 +126,7 @@ const result = await page.evaluate(async () => {
   card._cfgEpoch++;
   card.requestUpdate();
   await card.updateComplete;
-  history.replaceState(null, '', '#space=f1&hp_alpha=1');
-  dispatchEvent(new HashChangeEvent('hashchange'));
-  await wait(() => card._labsIso === true, 'alpha enabled');
-  card._setProjection('iso');
+  await window.__hpHarnessProjection(card, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(card);
   await wait(() => !!root().querySelector('[data-hp="iso-walls"]'), 'Iso walls');
   const isoBeforePanZoom = await isoTopologyGeometry();
@@ -151,7 +148,7 @@ const result = await page.evaluate(async () => {
   ) > 1;
 
   currentSource.dispatchEvent(mouse('pointerout', root().querySelector('.stage')));
-  card._setProjection('flat');
+  await window.__hpHarnessProjection(card, 'flat');
   await card.updateComplete;
   await frame();
 

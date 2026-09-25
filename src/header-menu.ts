@@ -34,7 +34,6 @@ export type HeaderMenuActions = {
   settings(): void;
   pdf(): void;
   support(): void;
-  projection(next: 'flat' | 'iso'): void;
 };
 
 export type HeaderMenuInput = {
@@ -42,8 +41,6 @@ export type HeaderMenuInput = {
   kiosk: boolean;
   mode: HeaderMode;
   hasFixedFloor: boolean;
-  labsIso: boolean;
-  iso: boolean;
   /** Пункты сводной панели (её рантайм отдаёт их только в просмотре). */
   summary: HeaderMenuItem[];
   t: (key: I18nKey) => string;
@@ -56,7 +53,7 @@ const EDITORS = [['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant'], ['
  * Состав меню по роли и режиму (ТЗ #616 п.4). Условия — те же, что у
  * прежних кнопок шапки: редакторы, пространство и настройки — `canEdit`;
  * «Добавить пространство» — ещё и без фиксированного пространства; сводная
- * панель и объёмный вид — только в просмотре; в киоске меню нет.
+ * панель — только в просмотре; 2.5D включается в «Общих настройках» (#649), пункта в меню нет; в киоске меню нет.
  */
 export function headerMenuItems(input: HeaderMenuInput): HeaderMenuItem[] {
   if (input.kiosk) return [];
@@ -79,16 +76,7 @@ export function headerMenuItems(input: HeaderMenuInput): HeaderMenuItem[] {
       { id: 'support', icon: 'mdi:help-circle-outline', label: t('support.title'), run: actions.support },
     );
   }
-  if (input.mode === 'view') {
-    items.push(...input.summary);
-    if (input.labsIso) {
-      items.push({
-        id: 'projection', icon: input.iso ? 'mdi:view-grid-outline' : 'mdi:cube-outline',
-        label: t(input.iso ? 'view.flat' : 'view.volumetric'), pressed: input.iso,
-        run: () => actions.projection(input.iso ? 'flat' : 'iso'),
-      });
-    }
-  }
+  if (input.mode === 'view') items.push(...input.summary);
   return items;
 }
 

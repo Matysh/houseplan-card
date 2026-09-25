@@ -209,18 +209,13 @@ const result = await page.evaluate(async (source) => {
       === path?.getAttribute('d');
     out[`${prefix}_static_has_all_strips`] = svgMisses(staticPath, samples) === 0;
     staticCard.remove();
-
-    const labs = Object.freeze(['iso']);
-    card._onLabsSnapshot({ alpha: true, active: labs, space: '' });
-    window.__hpAlpha = true;
-    window.__hpLabs = labs;
-    card._setProjection('iso');
+    await window.__hpHarnessProjection(card, 'iso');
     await window.__hpEnsureHarnessIsoRuntime(card);
     await update(false);
     const isoWalls = card._isoSource().build().walls;
     out[`${prefix}_hidden_iso_has_all_strips`] = samples.every((point) =>
       pointInGeometry(point, isoWalls));
-    card._setProjection('plan');
+    await window.__hpHarnessProjection(card, 'flat');
     out[`${prefix}_render_never_writes_config`] = JSON.stringify(
       card._serverCfg.spaces[0],
     ) === persisted;

@@ -306,6 +306,16 @@ but hide the floating room summary, turn off **General settings → Show the roo
 information window on hover**. The option is on by default and does not affect
 device tooltips.
 
+An administrator turns the volumetric plan on once: **General settings →
+Display → Show the plan in 2.5D**. After saving, View and kiosk in every space
+and on every device show walls, doors, windows and device markers with depth:
+markers are raised tiles with a soft shadow on the floor, and windows cast a
+soft wash of sunlight (when sun rays are on and north is set). Walls keep the
+wall colour from General settings in light and dark themes alike; furniture and
+other decor look exactly as on the flat plan. Editors are always flat. The
+option is off by default; turning it off or **Reset** returns the flat plan.
+There is no separate button on the card.
+
 For an occasional Zigbee placement check, an administrator can enable
 **General settings → Show Zigbee links when hovering over a device**. The option
 is off by default. Load the provider snapshot there: **Read ZHA data** reads

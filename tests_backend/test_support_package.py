@@ -217,6 +217,7 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
             "north_deg": 30,
             "sun_ray_origin": "outer",
             "show_room_tooltip": False,
+            "volumetric_view": True,
             "zigbee_topology": {
                 "enabled": True,
                 "z2m_base_topics": ["private/site/zigbee2mqtt"],
@@ -316,6 +317,7 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
     assert plan["settings"]["fill_colors"] == {"temp_hot": {"a": 0.5, "c": "#ffaa00"}}
     assert b"private-owner" not in raw and b"example.test" not in raw
     assert plan["settings"]["show_room_tooltip"] is False
+    assert plan["settings"]["volumetric_view"] is True
     assert plan["settings"]["sun_ray_origin"] == "outer"
     assert "zigbee_topology" not in plan["settings"]
     assert b"private/site/zigbee2mqtt" not in raw
@@ -365,6 +367,7 @@ def test_projection_helpers_fail_closed_on_malformed_shapes():
     assert support_package._custom_fill(None) is None
     assert support_package._global_settings(None) == {}
     assert support_package._global_settings({"show_room_tooltip": "false"}) == {}
+    assert support_package._global_settings({"volumetric_view": "true"}) == {}
     assert support_package._global_settings({"sun_ray_origin": "invalid"}) == {}
     assert support_package._room_settings(ids, None) == {}
     assert support_package._project_layout(ids, None) == {}

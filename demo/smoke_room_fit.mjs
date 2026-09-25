@@ -241,9 +241,7 @@ const out = await page.evaluate(async () => {
   c.style.width = '1000px';
   await new Promise((resolve) => setTimeout(resolve, 100));
   c._clearRoomFocus(true);
-  c._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
-  await c.updateComplete;
-  c._setProjection('iso');
+  await window.__hpHarnessProjection(c, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(c);
   await c.updateComplete;
   pointer(roomNode(), 'pointerdown', 15207);

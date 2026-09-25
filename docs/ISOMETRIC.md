@@ -1,30 +1,31 @@
-# Hidden Isometric View internals
+# Isometric (2.5D) View internals
 
-Issue [#89](https://github.com/Matysh/houseplan-card/issues/89) implements a
-hidden, presentation-only volumetric View experiment. The normative contract is
-`docs/specs/089-isometric-view-stage1.md`; the fixed rendering decisions are in
-`docs/adr/089-isometric-stage1-renderer.md`.
+Issue [#89](https://github.com/Matysh/houseplan-card/issues/89) started a
+presentation-only volumetric View experiment; the normative Stage 1 contract is
+`docs/specs/089-isometric-view-stage1.md`, the fixed rendering decisions are in
+`docs/adr/089-isometric-stage1-renderer.md`. Since Stage 6
+([#649](https://github.com/Matysh/houseplan-card/issues/649)) the 2.5D View is a
+public mode, see [Stage 6](#stage-6-public-mode-tiles-sun-and-materials-649).
 
 ## Activation
 
-The feature belongs to the single hidden alpha set in `src/labs.ts`. Enable all
-experiments in the current build with either `?hp_alpha=1` or
-`#hp_alpha=1&space=<id>`; disable them with `hp_alpha=0`. Query operations are
-applied first, hash operations second, and the last exact `1`/`0` wins. A known
-operation is persisted as that exact string in `houseplan_card_alpha_v1`; the
-URL itself is not rewritten. Unknown values fail closed for the current
-resolution and do not overwrite storage.
+One installation-wide setting, `settings.volumetric_view: boolean`, switched in
+**General settings › Display › Show the plan in 2.5D** (third item after «Show
+live presence on the plan»). It is stored only when `true`; missing or `false`
+means Flat, which is also the rollback. The rule is one for the card, the
+sidebar page and the kiosk: the View is 2.5D when the setting is on and Flat
+otherwise. Editors and `houseplan-space-card` are always Flat.
 
-The selected presentation is stored per space in `houseplan_card_view_v1`. Flat
-is always the initial default. Kiosk has no toggle but reads the saved preference.
-Editors and `houseplan-space-card` are always flat.
+Saving the setting switches the View at once, without a reload, and the view
+centre is carried over through the logical plan (#583 §6.3). The lazy
+`iso-scene-render` graph is loaded only while the setting is on. The fingerprint
+fallback (#89) is unchanged: a failed scene falls back to Flat for that key.
 
-The switch has no version expiry and enables the complete capability set known
-to the installed build. The legacy `hp-labs` URL and
-`houseplan_card_labs_v1` storage are not read or migrated, so former testers
-must enable `hp_alpha` once. Malformed registry entries and duplicate ids fail
-closed. Alpha never gates schemas, migrations, plan stores, service calls or
-network requests.
+There is no toggle on the card and no alpha entry: `iso` is gone from
+`LABS_FLAGS`, the header `projection-toggle` and the phone-menu item
+`projection` (#616) are removed, and the former per-device, per-space choice
+`houseplan_card_view_v1` is no longer read (owner decision: not migrated). The
+`hp_alpha` switch itself remains as a mechanism without experiments.
 
 ## Coordinate systems
 
@@ -266,3 +267,65 @@ opening amount, hover/selection, theme, SUN and filter capability. The lazy
 projection or module mismatch still enters the established fingerprint-latched
 Flat fallback. Linux exact-SHA goldens and performance profiles remain the
 canonical release evidence.
+
+## Stage 6: public mode, tiles, sun and materials (#649)
+
+The visual language and the numbers come from the designer lab (sketch 07,
+attachments 09–13 of #649); the lab's code, coordinates and ids are not carried
+over. Lab units are converted into two bases:
+
+- **D** — the base marker core diameter of the space (`--device-base-size`)
+  already × `ISO_ICON_SCALE = 1.12`; the lab disc is 80 units.
+- **H** — the 2.5D wall height (`gridVisualUnits(ISO_WALL_HEIGHT, cellCm)`); the
+  lab wall is 218.8 units.
+
+Everything below applies only to `.stage.projection-iso.mode-view`; Flat is
+byte-for-byte unchanged. Side-by-side acceptance frames:
+`docs/design/649-25d-stage6/ACCEPTANCE.md`.
+
+### Raised tiles (`src/iso-tiles.ts`, `src/styles/iso-tiles.styles.ts`)
+
+- Every marker body (core, value pill, lock core) is a rounded rectangle with
+  radius `min(0.275 D, 0.3·h)`; the ring is not drawn (virtual markers too).
+- A solid edge 0.1 D straight down, the body colour through
+  `brightness(.7) saturate(.85)` (`brightness(.82) saturate(.8)` on a light
+  floor); bodies with luma < 70 → `#5b5e5a`, white and dark bodies in the dark
+  theme → `#4a4a4a`. The colours are evaluated once in TypeScript
+  (`isoEdgeColor`) and emitted as a generated state table.
+- Marker and lock are 1.12 × Flat; layout and collisions
+  (`iso-scene-render`) use the same factor. The whole marker is lifted 0.075 D.
+- **One floor-shadow layer** `.iso-tile-shadows` inside `.devlayer`, rendered
+  after the markers in DOM order but with `z-index: -1` (`.devlayer` is a
+  stacking context), so no shadow ever lands on a neighbour's tile. Each marker
+  and lock has an inert twin (`data-shadow-of`, `aria-hidden`, no pointer
+  events) painted only as its inset, blurred box-shadow. Offset, blur and
+  opacity follow the theme × floor table of the ТЗ (`isoTileShadow`).
+- Light or dark floor is decided per room: the room fill at its opacity over
+  the plan paper, luma > 0.55 is light (`isoLightFloorRooms`). A marker belongs
+  to the room of its overlay owner or, without walls, to the room under it.
+- Hover / focus-visible / selected / alert frames hug tile and edge
+  (bbox + 0.075 D per side, + edge height) and float with the tile: `#0C82F0`,
+  `#0C82F0`, `#F0A00C`, `#F0410C`, priority Alert > Focus > Selected > Hover.
+  The body is not repainted on hover.
+- `forced-colors: active` or no `filter` support: no edge and no shadow; size,
+  tiles and frames stay.
+
+### Soft sun wash (`src/iso-sun.ts`)
+
+In 2.5D the Flat wedges of `sun_rays` are replaced by a soft wash; the gates are
+the Flat ones (`sun_rays`, `north_deg`, `sun.sun`, elevation ≥ 3°, fade, no light
+in editors or at night) and so are the windows (`windowLit()`). Details:
+`docs/SUN.md` § 2.5D.
+
+### Walls, openings and labels (`src/iso-materials.ts`)
+
+- The top face is the user's `fill_colors.wall_fill.c`, opaque (the Flat opacity
+  does not apply to the prism), gradient to `c × 0.93`; the side face is
+  `c × 0.77 → × 0.68 @0.58 → × 0.60`. The stage carries them as
+  `--iso-top-hi/lo` and `--iso-side-hi/mid/lo`.
+- The theme never repaints walls, openings, the floor edge, the texture or room
+  labels: the `theme-dark` and `prefers-color-scheme: dark` rules for `.iso-*`
+  are gone. Room labels use the Flat label colour. The building ambient shadow
+  on the card background may follow the theme.
+- Furniture keeps its Flat line width: stroke px = width × the plan screen scale
+  in both views (the former iso constant 1 made it thicker).

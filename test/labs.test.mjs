@@ -6,17 +6,21 @@ import {
   validLabsRegistry,
 } from '../test-build/labs.js';
 
-const resolve = (search = '', hash = '', storage = null, registry = LABS_FLAGS) =>
+// #649: the product registry is empty (2.5D graduated to General settings); the
+// mechanism is exercised with a synthetic capability.
+const PROBE = Object.freeze([Object.freeze({ id: 'probe', issue: 1, summary: 'Synthetic capability' })]);
+const resolve = (search = '', hash = '', storage = null, registry = PROBE) =>
   resolveLabs({ search, hash }, storage, registry);
 
 test('alpha capability registry is timeless and fails closed when malformed', () => {
   assert.equal(ALPHA_STORAGE_KEY, 'houseplan_card_alpha_v1');
-  assert.equal(LABS_FLAGS.every(validLabsFlag), true);
-  assert.deepEqual(LABS_FLAGS.map(({ id, issue }) => [id, issue]), [['iso', 89]]);
-  assert.equal(LABS_FLAGS.some((flag) => 'since' in flag || 'expires' in flag), false);
-  assert.equal(validLabsRegistry([LABS_FLAGS[0], { ...LABS_FLAGS[0] }]), false);
+  // #649: no experiment ships behind alpha; 2.5D is settings.volumetric_view.
+  assert.deepEqual(LABS_FLAGS, []);
+  assert.equal(PROBE.every(validLabsFlag), true);
+  assert.equal(PROBE.some((flag) => 'since' in flag || 'expires' in flag), false);
+  assert.equal(validLabsRegistry([PROBE[0], { ...PROBE[0] }]), false);
   const malformed = resolve('?hp_alpha=1', '', null, [
-    LABS_FLAGS[0], { ...LABS_FLAGS[0] },
+    PROBE[0], { ...PROBE[0] },
   ]);
   assert.equal(malformed.alpha, false);
   assert.deepEqual(malformed.active, []);
@@ -28,7 +32,8 @@ test('alpha capability registry is timeless and fails closed when malformed', ()
 
 test('hp_alpha applies query before hash and the last recognised value wins', () => {
   assert.equal(resolve('?hp_alpha=1').alpha, true);
-  assert.deepEqual(resolve('?hp_alpha=1').active, ['iso']);
+  assert.deepEqual(resolve('?hp_alpha=1').active, ['probe']);
+  assert.deepEqual(resolveLabs({ search: '?hp_alpha=1', hash: '' }, null).active, [], 'product: nothing to enable');
   assert.equal(resolve('?hp_alpha=0').alpha, false);
   assert.equal(resolve('?hp_alpha=0&hp_alpha=1').alpha, true);
   assert.equal(resolve('?hp_alpha=1&hp_alpha=0').alpha, false);
@@ -57,7 +62,7 @@ test('hash parser keeps space routing alongside the alpha operation', () => {
   const result = resolve('', '#space=ground&hp_alpha=1');
   assert.equal(result.space, 'ground');
   assert.equal(result.alpha, true);
-  assert.deepEqual(result.active, ['iso']);
+  assert.deepEqual(result.active, ['probe']);
 });
 
 test('only canonical alpha storage is read and legacy Labs inputs do not migrate', () => {
@@ -108,7 +113,7 @@ test('a reloaded alpha module replaces both browser location listeners', async (
     assert.equal(firstSnapshots.at(-1).alpha, true);
     assert.equal(values.get(ALPHA_STORAGE_KEY), '1');
     assert.equal(fakeWindow.__hpAlpha, true);
-    assert.deepEqual(fakeWindow.__hpLabs, ['iso']);
+    assert.deepEqual(fakeWindow.__hpLabs, [], '#649: the shipped registry is empty');
 
     const second = await import('../test-build/labs.js?listener-instance=second');
     let secondPublishes = 0;
@@ -152,7 +157,7 @@ test('storage failures keep the current URL decision safe and usable', async () 
     let current;
     const unsubscribe = module.subscribeLabs((value) => { current = value; });
     assert.equal(current.alpha, true);
-    assert.deepEqual(current.active, ['iso']);
+    assert.deepEqual(current.active, []);
     assert.equal(current.space, 'f1');
     unsubscribe();
   } finally {

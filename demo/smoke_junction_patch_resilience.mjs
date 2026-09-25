@@ -208,12 +208,7 @@ const result = await page.evaluate(async (spaceFixture) => {
     staticCard.renderRoot?.querySelector('[data-hp="wall"]'), finiteRayDoorApproachProbe,
   );
   staticCard.remove();
-
-  const labs = Object.freeze(['iso']);
-  card._onLabsSnapshot({ alpha: true, active: labs, space: '' });
-  window.__hpAlpha = true;
-  window.__hpLabs = labs;
-  card._setProjection('iso');
+  await window.__hpHarnessProjection(card, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(card);
   await update(false);
   const isoWalls = card._isoSource().build().walls;
@@ -238,7 +233,7 @@ const result = await page.evaluate(async (spaceFixture) => {
     angle: 0, length: 0.025,
   }];
   card._serverCfg = openingCfg;
-  card._setProjection('flat');
+  await window.__hpHarnessProjection(card, 'flat');
   card._setMode('plan');
   await update(true);
   const openingSource = JSON.stringify(card._serverCfg.spaces[0]);

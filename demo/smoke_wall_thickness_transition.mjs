@@ -130,11 +130,7 @@ const result = await page.evaluate(async () => {
   out.staticMatchesPlan = staticPath?.getAttribute('d') === planD
     && !containsPath(staticPath, 700, 96) && containsPath(staticPath, 300, 96);
   staticCard.remove();
-
-  const active = Object.freeze(['iso']);
-  card._onLabsSnapshot({ active, space: '' });
-  window.__hpLabs = active;
-  card._setProjection('iso');
+  await window.__hpHarnessProjection(card, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(card);
   await settle();
   const isoWalls = card._isoSource().build().walls;

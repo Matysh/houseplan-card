@@ -83,9 +83,9 @@ lazy runtime.
 generated asset. View loads only the initial graph; Plan, Devices and Background
 share one editor runtime loaded on first intent. An empty installation loads a
 separate onboarding dialog chunk, so creating the first space does not require
-the editor asset; saving it then continues into Plan as before. The hidden
-isometric renderer is a third independent runtime and is not requested while
-`hp_alpha` is off. Its first load and cache-busted retry use the same exact-build
+the editor asset; saving it then continues into Plan as before. The
+isometric (2.5D) renderer is a third independent runtime and is not requested
+while `settings.volumetric_view` is off (#649). Its first load and cache-busted retry use the same exact-build
 fingerprint handshake and atomic install contract. The backend keeps the public
 entry URL stable and serves only manifest-listed JS basenames below
 `/houseplan_files/houseplan-assets/`. Performance, golden and smoke tooling

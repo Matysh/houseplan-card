@@ -5,6 +5,9 @@
  * module owns the presentation-only structural cache, overlay projection and
  * SVG volume layers so the main Lit shell does not also become a renderer.
  */
+import { ISO_ICON_SCALE } from './iso-tiles';
+// #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
+export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
 import { clampScale, islandsOf, roomPoly, type SpaceDisplay } from './logic';
 import {
@@ -889,7 +892,8 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
   for (const device of input.devices) {
     const pos = input.positionOf(device);
     const presentation = input.presentationOf(device, input.showLqi);
-    const core = baseDeviceUnits * presentation.scale;
+    // #649: the 2.5D tile is ICON_SCALE larger; layout and collision see that size.
+    const core = baseDeviceUnits * presentation.scale * ISO_ICON_SCALE;
     const halfSize = isoRaisedOverlayHalfSize({ kind: 'device', core, presentation });
     const preferredRoomId = device.marker?.room_id
       || roomRows.find((row) => !!device.area && row.room.area === device.area)?.overlayRoom.id
@@ -940,7 +944,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     for (const opening of lockItems) {
       const lockPlacement = isoOpeningLockPlacement(opening, openingWallIndex, input.cellCm);
       const floorAnchor = lockPlacement.floorAnchor;
-      const size = baseIconUnits * 0.62;
+      const size = baseIconUnits * 0.62 * ISO_ICON_SCALE;
       const halfSize = isoRaisedOverlayHalfSize({ kind: 'opening-lock', size });
       const placement = place(
         'opening-lock', String(opening.id), floorAnchor,
@@ -1171,7 +1175,7 @@ function renderIsoDefs(
   return svg`<defs>
     ${root === 'walls' && layers.materialNuance ? svg`
       <linearGradient id="hp-iso-wall-side" data-hp-iso-material-def x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" class="iso-side-hi"></stop><stop offset="1" class="iso-side-lo"></stop>
+        <stop offset="0" class="iso-side-hi"></stop><stop offset="0.58" class="iso-side-mid"></stop><stop offset="1" class="iso-side-lo"></stop>
       </linearGradient>
       <linearGradient id="hp-iso-wall-top" data-hp-iso-material-def x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" class="iso-top-hi"></stop><stop offset="1" class="iso-top-lo"></stop>

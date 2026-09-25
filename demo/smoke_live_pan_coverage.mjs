@@ -450,16 +450,15 @@ for (const dayCycle of [false, true]) {
 }
 
 await page.evaluate(async () => {
-  history.replaceState(null, '', '?hp_alpha=1#space=f1');
-  dispatchEvent(new HashChangeEvent('hashchange'));
+  history.replaceState(null, '', '#space=f1');
   const card = document.querySelector('houseplan-card');
   await card.updateComplete;
   await window.__hpEnsureHarnessIsoRuntime(card);
-  card._setProjection('iso');
+  await window.__hpHarnessProjection(card, 'iso');
   await card.updateComplete;
   await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
 });
-checks.alphaIsoEnabled = await page.evaluate(() => {
+checks.isoEnabled = await page.evaluate(() => {
   const card = document.querySelector('houseplan-card');
   return card._effectiveProjection() === 'iso'
     && card.renderRoot.querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '4';
@@ -469,7 +468,7 @@ await runTouchZoomOut({ name: 'isoTouchZoomOut' });
 
 await page.evaluate(async () => {
   const card = document.querySelector('houseplan-card');
-  card._setProjection('flat');
+  await window.__hpHarnessProjection(card, 'flat');
   card.setConfig({ type: 'custom:houseplan-card', kiosk: true });
   await card.updateComplete;
   await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));

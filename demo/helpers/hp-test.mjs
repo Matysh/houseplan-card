@@ -204,6 +204,25 @@ export function installHpTest(selectors) {
       return rev;
     },
 
+    /**
+     * #649: 2.5D is the installation-wide «General settings › Display» switch.
+     * Delivered the way another client's save arrives (setServerConfig keeps
+     * the card's current config); the oracle is the rendered stage class.
+     */
+    async setVolumetricView(on = true) {
+      const c = need('setVolumetricView');
+      await facade.setServerConfig((cfg) => {
+        cfg.settings = { ...(cfg.settings || {}), volumetric_view: !!on };
+        return cfg;
+      });
+      const stage = () => rootOf(c)?.querySelector('.stage');
+      await waitFor('setVolumetricView',
+        () => !!stage() && stage().classList.contains('projection-iso') === !!on,
+        () => `вид не стал ${on ? '2.5D' : 'Flat'} (.stage: ${stage()?.className || 'нет'})`,
+        10000);
+      await settled();
+    },
+
     /** То же для раскладки: событие houseplan_layout_updated (у карточки дебаунс 200 мс). */
     async setLayout(next) {
       const c = need('setLayout');

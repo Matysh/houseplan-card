@@ -1,7 +1,7 @@
 // #616: состав меню шестерёнки телефонной шапки — ТЗ п.4. Порядок фиксирован,
 // условия те же, что у прежних кнопок: редакторы и настройки — только с правом
 // записи, «Добавить пространство» — без фиксированного пространства, сводная
-// панель и объёмный вид — только в просмотре, в киоске меню нет.
+// панель — только в просмотре, в киоске меню нет; 2.5D — не пункт меню (#649).
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { headerMenuItems } from '../test-build/header-menu.js';
@@ -10,12 +10,12 @@ const calls = [];
 const actions = {
   setMode: (m) => calls.push(`mode:${m}`), configureSpace: () => calls.push('configure'),
   addSpace: () => calls.push('add'), settings: () => calls.push('settings'), pdf: () => calls.push('pdf'),
-  support: () => calls.push('support'), projection: (p) => calls.push(`projection:${p}`),
+  support: () => calls.push('support'),
 };
 const summary = [{ id: 'summary-settings', label: 's', run: () => calls.push('summary-settings') },
   { id: 'summary-toggle', label: 't', pressed: false, run: () => calls.push('summary-toggle') }];
 const input = (over = {}) => ({
-  canEdit: true, kiosk: false, mode: 'view', hasFixedFloor: false, labsIso: false, iso: false,
+  canEdit: true, kiosk: false, mode: 'view', hasFixedFloor: false,
   summary, t: (key) => `«${key}»`, actions, ...over,
 });
 const ids = (over) => headerMenuItems(input(over)).map((item) => item.id);
@@ -30,8 +30,8 @@ test('#616 не-админ: только сводная панель; без н�
   assert.deepEqual(ids({ canEdit: false, summary: [] }), []);
 });
 
-test('#616 редактор: сводной панели и объёмного вида нет, текущий редактор отмечен', () => {
-  const items = headerMenuItems(input({ mode: 'devices', labsIso: true }));
+test('#616 редактор: сводной панели нет, текущий редактор отмечен', () => {
+  const items = headerMenuItems(input({ mode: 'devices' }));
   assert.deepEqual(items.map((i) => i.id), ADMIN);
   assert.deepEqual(items.filter((i) => i.current).map((i) => i.id), ['mode-devices']);
 });
@@ -43,19 +43,17 @@ test('#616 фиксированное пространство убирает «
   assert.deepEqual(ids({ kiosk: true, canEdit: false }), []);
 });
 
-test('#616 объёмный вид — только с hp_alpha и в просмотре; пункт — переключатель', () => {
-  assert.ok(!ids().includes('projection'));
-  const flat = headerMenuItems(input({ labsIso: true })).at(-1);
-  assert.deepEqual([flat.id, flat.pressed, flat.label], ['projection', false, '«view.volumetric»']);
-  const iso = headerMenuItems(input({ labsIso: true, iso: true, canEdit: false })).at(-1);
-  assert.deepEqual([iso.id, iso.pressed, iso.label], ['projection', true, '«view.flat»']);
+test('#649 2.5D не пункт меню: он в «Общих настройках», для всех ролей и режимов', () => {
+  for (const over of [{}, { canEdit: false }, { mode: 'plan' }]) {
+    assert.ok(!ids(over).includes('projection'), JSON.stringify(over));
+  }
 });
 
 test('#616 каждый пункт вызывает то же действие, что прежняя кнопка', () => {
   calls.length = 0;
-  for (const item of headerMenuItems(input({ labsIso: true }))) item.run();
+  for (const item of headerMenuItems(input())) item.run();
   assert.deepEqual(calls, ['mode:plan', 'mode:devices', 'mode:decor', 'configure', 'add', 'settings', 'pdf', 'support',
-    'summary-settings', 'summary-toggle', 'projection:iso']);
+    'summary-settings', 'summary-toggle']);
 });
 
 test('#616 подписи — существующие ключи интерфейса', () => {

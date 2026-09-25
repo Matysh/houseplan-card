@@ -3414,14 +3414,165 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'furniture-stroke-iso-camera-mismatch',
+    id: 'furniture-stroke-iso-constant-returns',
     guard: 'node --test test/furniture-stroke-contract.test.mjs',
-    because: 'the stroke compensation models the flat camera; applying it in the labs iso '
-      + 'projection diverges furniture from ordinary decor by a wrong-camera factor (#376г)',
+    because: '#649 3a: the 2.5D View must use the Flat camera rule for furniture strokes; the '
+      + 'former iso constant 1 made furniture several times thicker there (attachments 14/15)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    const furnitureScreenScale = this._renderProjection === 'iso' ? 1 : furniturePlanScreenScale(",
-      replace: "    const furnitureScreenScale = furniturePlanScreenScale(",
+      find: "    const furnitureScreenScale = furniturePlanScreenScale(",
+      replace: "    const furnitureScreenScale = this._renderProjection === 'iso' ? 1 : furniturePlanScreenScale(",
+    }],
+  },
+  // #649 Stage 6 (docs/ISOMETRIC.md): tiles, shadows, frames, sun, walls, setting.
+  {
+    id: 'iso-tile-ring-visible',
+    guard: 'node demo/smoke_iso_tiles.mjs',
+    because: '#649 AC2: a 2.5D tile has no ring; the Flat shell ring must not show through',
+    patches: [{
+      file: 'src/styles/iso-tiles.styles.ts',
+      find: '  .stage.projection-iso.mode-view .dev .device-shell-frame {\n    border-color: transparent;',
+      replace: '  .stage.projection-iso.mode-view .dev .device-shell-frame-mutant {\n    border-color: transparent;',
+    }],
+  },
+  {
+    id: 'iso-tile-edge-zero',
+    guard: 'node demo/smoke_iso_tiles.mjs',
+    because: '#649 AC2: the tile edge is 0.1 D straight down (lab ICON_TILE_DEPTH 8 of 80)',
+    patches: [{ file: 'src/iso-tiles.ts', find: '  depth: 8 / 80,', replace: '  depth: 0,' }],
+  },
+  {
+    id: 'iso-tile-badge-gap-dropped',
+    guard: 'node demo/smoke_iso_tiles.mjs',
+    because: '#649 AC2: a value badge sits 0.075 D from its tile, not at the Flat gap',
+    patches: [{
+      file: 'src/iso-tiles.ts',
+      find: '${S} .dev .device-shell.with-values { gap:',
+      replace: '${S} .dev .device-shell.with-values-mutant { gap:',
+    }],
+  },
+  {
+    id: 'iso-collision-without-icon-scale',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="AC3 layout" test/iso-stage6.test.mjs',
+    because: '#649 AC3: layout and collisions must see the 1.12 tile, otherwise raised tiles overlap',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: '    const core = baseDeviceUnits * presentation.scale * ISO_ICON_SCALE;',
+      replace: '    const core = baseDeviceUnits * presentation.scale;',
+    }],
+  },
+  {
+    id: 'iso-tile-shadow-layer-above',
+    guard: 'node demo/smoke_iso_tiles.mjs',
+    because: '#649 AC4: floor shadows live in one layer under every marker; above them a shadow '
+      + 'lands on the neighbour tile (attachment 09, Kitchen & Living column)',
+    patches: [{
+      file: 'src/styles/iso-tiles.styles.ts',
+      find: '    pointer-events: none;\n    z-index: -1;',
+      replace: '    pointer-events: none;\n    z-index: 10;',
+    }],
+  },
+  {
+    id: 'iso-frame-selected-beats-focus',
+    guard: 'node demo/smoke_iso_tiles.mjs',
+    because: '#649 AC5: frame priority is Alert > Focus > Selected > Hover (icon package SPECIFICATION.md)',
+    patches: [{
+      file: 'src/styles/iso-tiles.styles.ts',
+      find: '.dev.sel:not(:focus-visible) { --iso-frame: #F0A00C; }',
+      replace: '.dev.sel.sel.sel { --iso-frame: #F0A00C; }',
+    }],
+  },
+  {
+    id: 'iso-shadow-in-forced-colors',
+    guard: 'node demo/smoke_iso_tiles.mjs',
+    because: '#649 AC6: forced colours draw no edge and no floor shadow',
+    patches: [{
+      file: 'src/styles/iso-tiles.styles.ts',
+      find: '  @media (forced-colors: active) {\n    .stage.projection-iso.mode-view .iso-tile-shadows { display: none; }',
+      replace: '  @media (forced-colors: active) {\n    .stage.projection-iso.mode-view .iso-tile-shadows-mutant { display: none; }',
+    }],
+  },
+  {
+    id: 'iso-sun-length-ignores-elevation',
+    guard: 'node demo/smoke_iso_sun.mjs',
+    because: '#649 AC7: the beam length follows the elevation (low sun = long beam)',
+    patches: [{
+      file: 'src/iso-sun.ts',
+      find: '  const e = Math.min(90, Math.max(0, elevation));',
+      replace: '  const e = 45 + 0 * elevation;',
+    }],
+  },
+  {
+    id: 'iso-sun-streaks-on-dark-floor',
+    guard: 'node demo/smoke_iso_sun.mjs',
+    because: '#649 AC7: the two streaks belong to light floors only',
+    patches: [{
+      file: 'src/iso-sun.ts',
+      find: '        const streaks = beam.lightFloor ? [inset / length, 1 - inset / length] : [];',
+      replace: '        const streaks = [inset / length, 1 - inset / length];',
+    }],
+  },
+  {
+    id: 'iso-sun-flat-wedges-remain',
+    guard: 'node demo/smoke_iso_sun.mjs',
+    because: '#649 AC7: in 2.5D the soft wash replaces the projected Flat wedges',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    const isoSun = this._renderProjection === 'iso' ? this._isoSceneRuntime : null;",
+      replace: "    const isoSun = this._renderProjection === 'iso' && this._editing ? this._isoSceneRuntime : null;",
+    }],
+  },
+  {
+    id: 'iso-theme-dark-wall-rule-returns',
+    guard: 'node demo/smoke_iso_theme_walls.mjs',
+    because: '#649 AC9: the theme never repaints walls — the colour is the user\'s',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '    .iso-top-lo { stop-color: var(--iso-top-lo, #ededed); }',
+      replace: '    .iso-top-lo { stop-color: var(--iso-top-lo, #ededed); }\n'
+        + '    .stage.theme-dark .iso-top-hi, .stage.theme-dark .iso-side-hi { stop-color: #3a3f44; }',
+    }],
+  },
+  {
+    id: 'iso-wall-top-constant',
+    guard: 'node demo/smoke_iso_theme_walls.mjs',
+    because: '#649 AC9: the wall top is the user\'s fill_colors.wall_fill, not a constant',
+    patches: [{
+      file: 'src/iso-materials.ts',
+      find: '  const base = parseHexColor(wallFill) ?? [255, 255, 255];',
+      replace: '  const base = parseHexColor(\'#ffffff\') ?? [255, 255, 255];',
+    }],
+  },
+  {
+    id: 'volumetric-kiosk-ignores-setting',
+    guard: 'node demo/smoke_volumetric_setting.mjs',
+    because: '#649 AC10: the one installation setting rules the card, the sidebar page and the kiosk',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    return this._mode === 'view' && this._isoEnabled ? 'iso' : 'flat';",
+      replace: "    return this._mode === 'view' && this._isoEnabled && !this._kiosk ? 'iso' : 'flat';",
+    }],
+  },
+  {
+    id: 'volumetric-validation-drops-field',
+    guard: 'python3 -m pytest tests_backend/test_validation.py -q -p no:cacheprovider '
+      + '-k volumetric_view',
+    because: '#649 AC10: the backend accepts only a boolean volumetric_view',
+    patches: [{
+      file: 'custom_components/houseplan/validation.py',
+      find: '                    vol.Optional("volumetric_view"): bool,\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'labs-iso-returns',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/labs.test.mjs',
+    because: '#649 AC11: 2.5D left alpha; hp_alpha=1 must not bring it back',
+    patches: [{
+      file: 'src/labs.ts',
+      find: 'export const LABS_FLAGS: readonly LabsFlag[] = Object.freeze([]);',
+      replace: "export const LABS_FLAGS: readonly LabsFlag[] = Object.freeze([{ id: 'iso', issue: 89, summary: 'Isometric View' }]);",
     }],
   },
   {

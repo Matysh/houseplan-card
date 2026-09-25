@@ -80,18 +80,14 @@ const out = await page.evaluate(async () => {
   await waitMode();
   const viewAfterPlanStillHidden = labels().length === 0;
 
-  // The Labs registry flag is intentionally expired; use the same dormant
-  // renderer fixture hook as the canonical Stage 2 smokes.
-  const active = Object.freeze(['iso']);
-  card._onLabsSnapshot({ active, space: '' });
-  window.__hpLabs = active;
+  // #649: 2.5D through the installation setting (shared harness helper).
   await settle();
-  card._setProjection('iso');
+  await window.__hpHarnessProjection(card, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(card);
   await settle();
   const isoFalseHasNoLabels = !!root().querySelector('[data-hp="iso-walls"]')
     && labels().length === 0;
-  card._setProjection('flat');
+  await window.__hpHarnessProjection(card, 'flat');
   await settle();
 
   await customElements.whenDefined('houseplan-space-card');
@@ -131,8 +127,7 @@ const out = await page.evaluate(async () => {
     && JSON.stringify(card._layout[layoutKey]) === savedLayout;
 
   host.remove();
-  card._onLabsSnapshot({ active: Object.freeze([]), space: '' });
-  window.__hpLabs = Object.freeze([]);
+  await window.__hpHarnessProjection(card, 'flat');
   await settle();
 
   return {

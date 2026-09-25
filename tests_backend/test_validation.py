@@ -560,6 +560,20 @@ def test_room_tooltip_global_setting_is_strict_boolean_and_round_trips():
             )
 
 
+def test_volumetric_view_global_setting_is_strict_boolean_and_round_trips():
+    """#649: 2.5D is one installation-wide General settings switch."""
+    for value in (True, False):
+        out = v.CONFIG_SCHEMA(
+            {"spaces": [], "settings": {"volumetric_view": value}}
+        )
+        assert out["settings"]["volumetric_view"] is value
+    for bad in (None, 0, 1, "true", "iso", [], {}):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA(
+                {"spaces": [], "settings": {"volumetric_view": bad}}
+            )
+
+
 def test_marker_area_snapshot_is_strict_and_bounded():
     """#126: Area provenance accepts only exact direct bindings and non-empty Areas."""
     snapshot = {

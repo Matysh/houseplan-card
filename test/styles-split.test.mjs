@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { cardStyles, baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles }
   from '../test-build/styles.js';
 import { CARD_DIALOG_FORM_KIT, formKitCss } from '../test-build/styles/form-kit.styles.js';
+import { isoTilesStyles } from '../test-build/styles/iso-tiles.styles.js';
 
 const FILES = ['base', 'plan', 'devices', 'chrome', 'dialogs'];
 const sourceOf = (name) =>
@@ -46,8 +47,41 @@ test('issue 266 the aggregator is exactly the five surface files in the cascade 
   // 2026-09-18, #594: набор контролов формы в этот массив НЕ входит — он живёт
   // в ленивом редакторском графе и вносится в теневой корень при открытии
   // диалога. Пятёрка и её порядок неприкосновенны.
-  assert.deepEqual(cardStyles, [baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles],
+  // #649: the 2.5D tile sheet follows the five and is scoped to the 2.5D View
+  // only (next test), so no accepted Flat frame can change through it.
+  assert.deepEqual(cardStyles, [baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles, isoTilesStyles],
     'the cascade order is a contract — the golden set was accepted against it');
+});
+
+test('#649 every 2.5D tile rule is scoped to the 2.5D View stage', () => {
+  const text = isoTilesStyles.map((sheet) => sheet.cssText).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
+  const headers = [];
+  const walk = (chunk) => {
+    let i = 0;
+    while (i < chunk.length) {
+      const open = chunk.indexOf('{', i);
+      if (open === -1) break;
+      const header = chunk.slice(i, open).replace(/\s+/g, ' ').trim();
+      let depth = 1, j = open + 1;
+      while (j < chunk.length && depth > 0) { if (chunk[j] === '{') depth++; else if (chunk[j] === '}') depth--; j++; }
+      if (header.startsWith('@')) walk(chunk.slice(open + 1, j - 1)); else headers.push(header);
+      i = j;
+    }
+  };
+  walk(text);
+  assert.ok(headers.length > 40, `expected the generated tables, got ${headers.length} rules`);
+  for (const header of headers) {
+    const parts = [];
+    let depth = 0, from = 0;
+    for (let k = 0; k < header.length; k++) {
+      if (header[k] === '(') depth++; else if (header[k] === ')') depth--;
+      else if (header[k] === ',' && depth === 0) { parts.push(header.slice(from, k)); from = k + 1; }
+    }
+    parts.push(header.slice(from));
+    for (const selector of parts) {
+      assert.match(selector, /\.stage\.projection-iso\.mode-view /, `unscoped 2.5D rule: ${selector}`);
+    }
+  }
 });
 
 test('#594 the form kit adds selectors instead of overriding existing ones', () => {

@@ -8,13 +8,8 @@ export interface LabsFlag {
 
 export const ALPHA_STORAGE_KEY = 'houseplan_card_alpha_v1';
 
-export const LABS_FLAGS: readonly LabsFlag[] = Object.freeze([
-  Object.freeze({
-    id: 'iso',
-    issue: 89,
-    summary: 'Volumetric plan renderer',
-  }),
-]);
+/** #649: 2.5D graduated to General settings; the alpha switch has no capabilities now. */
+export const LABS_FLAGS: readonly LabsFlag[] = Object.freeze([]);
 
 export interface LabsLocation {
   search: string;

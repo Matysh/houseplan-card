@@ -291,6 +291,9 @@ try {
           fixture.config.spaces.map((space) => [space.id, 'iso']),
         )));
         history.replaceState(null, '', '?hp_alpha=1');
+        // #649: current bundles read the installation setting; the alpha
+        // storage above stays for comparison bundles before it.
+        fixture.config.settings = { ...(fixture.config.settings || {}), volumetric_view: true };
       } else history.replaceState(null, '', location.pathname);
       const host = document.getElementById('host');
       const card = document.createElement('houseplan-card');
@@ -386,7 +389,7 @@ try {
         throw new Error('large-house editor runtime did not preload');
       if (isometric) await ensureIsoRuntime(card);
       window.__hpAssertCardContract(card, cardContract);
-      if (requiresIsometric && (typeof card._setProjection !== 'function'
+      if (requiresIsometric && (typeof card._effectiveProjection !== 'function'
           || !(card._isoGeometryCache instanceof Map))) {
         throw new Error('large-house-isometric-v1 candidate has no renderer contract');
       }
@@ -445,9 +448,18 @@ try {
       }
       const viewToggle = isometric ? await duration(async () => {
         if (typeof card._setProjection === 'function') {
+          // Comparison bundles before #649: the per-device alpha preference.
           card._setProjection('flat');
           await card.updateComplete;
           card._setProjection('iso');
+          await ensureIsoRuntime(card);
+          await card.updateComplete;
+        } else if (typeof card._syncVolumetricSetting === 'function') {
+          // #649: the installation-wide General settings switch, as a save applies it.
+          const cfg = card._serverCfg;
+          card._serverCfg = { ...cfg, settings: { ...(cfg.settings || {}), volumetric_view: false } };
+          await card.updateComplete;
+          card._serverCfg = { ...cfg, settings: { ...(cfg.settings || {}), volumetric_view: true } };
           await ensureIsoRuntime(card);
           await card.updateComplete;
         } else {

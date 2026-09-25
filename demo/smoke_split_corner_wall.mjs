@@ -110,15 +110,13 @@ const res = await page.evaluate(async () => {
   out.kioskParity = sr().querySelector('.wallbody')?.getAttribute('d') === planD;
   c._config.kiosk = kioskBefore;
 
-  history.replaceState(null, '', `?hp_alpha=1#space=${encodeURIComponent(c._space)}`);
-  dispatchEvent(new HashChangeEvent('hashchange'));
-  await c.updateComplete;
-  c._setProjection('iso');
+  history.replaceState(null, '', `#space=${encodeURIComponent(c._space)}`);
+  await window.__hpHarnessProjection(c, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(c);
   await update();
   out.isoUsesCanonicalBody = !!sr().querySelector('.iso-walls .iso-wall-top')
     && c._isoSource().build().walls.flat(2).length > 0;
-  c._setProjection('flat');
+  await window.__hpHarnessProjection(c, 'flat');
   await update();
 
   await customElements.whenDefined('houseplan-space-card');

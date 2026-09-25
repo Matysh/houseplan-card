@@ -2254,6 +2254,8 @@ CONFIG_SCHEMA = vol.All(
                     vol.Optional("sun_rays"): bool,
                     vol.Optional("sun_ray_origin"): _SUN_RAY_ORIGIN,
                     vol.Optional("show_room_tooltip"): bool,
+                    # #649: installation-wide 2.5D View; absent/false keeps Flat.
+                    vol.Optional("volumetric_view"): bool,
                     vol.Optional("summary_panel"): SUMMARY_PANEL_WIRE_SCHEMA,
                     vol.Optional("radar"): vol.Schema({}, extra=vol.ALLOW_EXTRA),
                     # Removed from the UI/runtime in 2026-08-08. Keep accepting the

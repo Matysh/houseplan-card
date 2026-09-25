@@ -97,6 +97,21 @@ new frontend restores the disabled behavior after upgrade. Full backup/import
 preserves the setting and the privacy-safe support projection includes only a
 validated boolean.
 
+## 2.5D View setting (#649)
+
+`settings.volumetric_view` is an optional global boolean for the whole
+installation — every space, user, device and kiosk. Only exact `true` turns the
+View into 2.5D; absence, `false` or anything else read as Flat. Saving `false`
+removes the key. The backend accepts only a boolean
+(`vol.Optional("volumetric_view"): bool`), and the privacy-safe support
+projection copies only a validated boolean. There is no migration: the former
+per-device, per-space alpha choice (`houseplan_card_view_v1` in the browser)
+was never part of the config and is no longer read.
+
+An older frontend ignores the field and shows Flat. An older backend preserves
+it through the unknown-settings policy. Full backup/import carries `settings`
+whole, so the value survives.
+
 ## Sun-ray window face (#577)
 
 `settings.sun_ray_origin` is an optional global enum: `inner` or `outer`.

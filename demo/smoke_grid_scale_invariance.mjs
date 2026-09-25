@@ -101,13 +101,7 @@ await page.evaluate(async () => {
     // raster pair and prove the precision ratio separately below.
     runtime._gridLevels = mode === 'view' ? originalGridLevels : () => null;
     card._gridLevels = () => runtime._gridLevels();
-    card._labs = {
-      ...card._labs,
-      alpha: projection === 'iso',
-      active: projection === 'iso' ? ['iso'] : [],
-    };
-    if (projection === 'iso') await card._ensureIsoSceneRuntime();
-    card._viewPreference = { ...card._viewPreference, f1: projection };
+    await window.__hpHarnessProjection(card, projection);
     card._isoFallback.clear();
     card._isoGeometryCache.clear();
     await settle();
@@ -469,9 +463,10 @@ const out = {
   isoLightPixelsMatch: pixelEquivalent(isoLightDiff),
   isoDarkCriticalMetricsMatch: metricPairsNear(isoDark.reference.metrics, isoDark.detailed.metrics),
   isoDarkPixelsMatch: pixelEquivalent(isoDarkDiff),
-  isoRemainsLabsOnly: referenceView.metrics.projectionToggleCount === 0
+  // #649: 2.5D is the General settings switch; the card never shows a toggle.
+  isoHasNoCardToggle: referenceView.metrics.projectionToggleCount === 0
     && isoLight.reference.metrics.projection === 'iso'
-    && isoLight.reference.metrics.projectionToggleCount === 1,
+    && isoLight.reference.metrics.projectionToggleCount === 0,
 };
 
 if (Object.values(out).some((value) => !value)) {

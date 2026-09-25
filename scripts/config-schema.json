@@ -456,6 +456,10 @@
       "required": false,
       "type": "bool"
     },
+    "config.settings.volumetric_view": {
+      "required": false,
+      "type": "bool"
+    },
     "config.settings.weather_entity": {
       "maxLength": 500,
       "nullable": true,

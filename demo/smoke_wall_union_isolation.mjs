@@ -71,12 +71,7 @@ const result = await page.evaluate(async (fixtureConfig) => {
     '.wallbody[data-component]',
   )].map((path) => path.getAttribute('d')).sort()) === JSON.stringify(planPaths);
   staticCard.remove();
-
-  const labs = Object.freeze(['iso']);
-  card._onLabsSnapshot({ alpha: true, active: labs, space: '' });
-  window.__hpAlpha = true;
-  window.__hpLabs = labs;
-  card._setProjection('iso');
+  await window.__hpHarnessProjection(card, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(card);
   card.requestUpdate();
   await settle();
@@ -91,7 +86,7 @@ const result = await page.evaluate(async (fixtureConfig) => {
     if (message.type === 'houseplan/config/set') { writes++; return { rev: 9 }; }
     return baseCall(message);
   } };
-  card._setProjection('flat');
+  await window.__hpHarnessProjection(card, 'flat');
   card._setMode('plan');
   await settle();
   card._geometryHistory.clear();

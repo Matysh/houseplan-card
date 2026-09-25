@@ -246,7 +246,9 @@ applied before hash and the last exact `1`/`0` wins. The URL is not rewritten,
 unknown values fail closed for the current resolution, and the legacy
 `hp-labs`/`houseplan_card_labs_v1` inputs are not read or migrated. Diagnostics
 expose the boolean `window.__hpAlpha` together with the frozen sorted
-`window.__hpLabs` capability array.
+`window.__hpLabs` capability array. Since #649 the registry is empty: 2.5D left
+alpha for the General settings switch `settings.volumetric_view`; smokes turn it
+on with `window.__hpTest.setVolumetricView(true)`.
 
 To add a capability, add one unique lowercase id plus issue and a non-empty
 summary to `LABS_FLAGS`, then cover registry validation and the alpha-on active

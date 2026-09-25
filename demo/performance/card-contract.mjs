@@ -67,9 +67,13 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_effectiveProjection', '_ensureIsoSceneRuntime',
     '_isoGeometryCache', '_isoStructuralBuildCount', '_offerWallFaces',
     '_liveEditorPaintCount', '_onLabsSnapshot',
-    '_planSnapGeometryCache', '_roomDialog', '_setProjection', '_wallFaceBatch',
+    '_planSnapGeometryCache', '_roomDialog', '_syncVolumetricSetting', '_wallFaceBatch',
     '_wallFaceGraphCache',
   ]),
+  // #649: members that only comparison bundles own. The benchmark feature-probes
+  // them (`typeof card._setProjection === 'function'`); the current card no
+  // longer has them, so they are declared but never required.
+  legacyOnlyFields: Object.freeze(['_setProjection']),
   // #380: v1.68.1 owns the same resize session directly on the card; newer
   // bundles moved it into ResizeController. A comparison target must expose
   // one of the two explicit shapes; the current member retains its object
@@ -111,7 +115,7 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     _planSnapGeometryCache: 'object',
     _roomDialog: 'boolean',
     _resize: 'object',
-    _setProjection: 'function',
+    _syncVolumetricSetting: 'function',
     _serverCfg: 'object',
     _space: 'string',
     _tool: 'string',

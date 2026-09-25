@@ -150,7 +150,7 @@ const chromeCoreStyles = css`
     @media (max-width: 480px) {
       .hdr > .head { flex-wrap: nowrap; padding: 5px 8px; gap: 6px; }
       .head > .title, .head > .modes, .head > .spacer, .head > .header-action,
-      .head > .summary-control, .head > .projection-toggle { display: none; }
+      .head > .summary-control { display: none; }
       .head > .tabs {
         flex: 1 1 auto;
         min-width: 0;

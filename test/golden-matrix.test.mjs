@@ -25,12 +25,9 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.equal(Number.isInteger(region.minPixels) && region.minPixels > 0, true, scenario.id);
       assert.equal(region.minRedBlueDelta > 0, true, scenario.id);
     }
-    if (scenario.alpha) {
-      assert.equal(scenario.alpha, true, scenario.id);
-      assert.equal(scenario.projection, 'iso', scenario.id);
-      assert.equal(scenario.mode, 'view', scenario.id);
-    }
-    if (scenario.projection === 'iso') assert.equal(scenario.alpha, true, scenario.id);
+    // #649: 2.5D is enabled by settings.volumetric_view, never by the alpha switch.
+    assert.equal('alpha' in scenario, false, scenario.id);
+    if (scenario.projection === 'iso') assert.equal(scenario.mode, 'view', scenario.id);
     assert.equal('labs' in scenario, false, scenario.id);
     assert.equal('testOnlyLabsSnapshot' in scenario, false, scenario.id);
     if (scenario.sunRayPixels) {
@@ -868,7 +865,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
     'isometric-stage3-forced-colors-dark',
     'isometric-stage3-no-filter-dark',
   ]);
-  assert.equal(scenarios.every((item) => item.alpha && item.projection === 'iso'
+  assert.equal(scenarios.every((item) => item.projection === 'iso'
     && item.mode === 'view' && item.capture === 'stage'), true);
   const overlays = scenarios.filter((item) => item.id.includes('-overlays-'));
   assert.deepEqual(new Set(overlays.map((item) => item.theme)), new Set(['light', 'dark']));

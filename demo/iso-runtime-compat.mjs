@@ -19,5 +19,23 @@ export async function installHarnessIsoRuntimeHelper(page) {
       await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       return true;
     };
+    /**
+     * #649: select Flat or 2.5D for geometry smokes. Current bundles read the
+     * installation-wide `settings.volumetric_view`; this assigns it exactly as a
+     * General settings save does (`_serverCfg = { ...cfg, settings }`, spaces
+     * untouched, so a smoke's local fixture edits survive). Bundles before
+     * #649 keep their per-device `_setProjection`.
+     */
+    window.__hpHarnessProjection = async (card, projection) => {
+      if (typeof card._setProjection === 'function') card._setProjection(projection);
+      else {
+        const cfg = card._serverCfg;
+        card._serverCfg = { ...cfg, settings: { ...(cfg?.settings || {}), volumetric_view: projection === 'iso' } };
+        card.requestUpdate();
+      }
+      await card.updateComplete;
+      if (projection === 'iso') await window.__hpEnsureHarnessIsoRuntime(card);
+      await card.updateComplete;
+    };
   });
 }

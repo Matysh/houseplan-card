@@ -17,11 +17,9 @@ const out = await page.evaluate(async () => {
     await card.updateComplete;
     await frame();
   };
-  history.replaceState(null, '', '?hp_alpha=1#space=f1');
-  dispatchEvent(new HashChangeEvent('hashchange'));
-  await original.updateComplete;
+  history.replaceState(null, '', '#space=f1');
   await ensureIsoRuntime(original);
-  const configSpace = original._serverCfg.spaces.find((space) => space.id === 'f1');
+  let configSpace = original._serverCfg.spaces.find((space) => space.id === 'f1');
   configSpace.settings = {
     ...(configSpace.settings || {}), fill_mode: 'custom',
     custom_fill: { c: '#31465f', a: 0.42 }, glow_enabled: true,
@@ -109,7 +107,9 @@ const out = await page.evaluate(async () => {
   const flat = layers();
   const flatSpillParts = [...root(original).querySelectorAll('.glow-pool')]
     .map((node) => node.getAttribute('data-lit-parts'));
-  root(original).querySelector('[data-hp="projection-toggle"]')?.click();
+  // #649: the General settings switch, delivered as a server config push.
+  await window.__hpTest.setVolumetricView(true);
+  configSpace = original._serverCfg.spaces.find((space) => space.id === 'f1');
   await ensureIsoRuntime(original);
   await original.updateComplete;
   await frame();
@@ -390,14 +390,13 @@ const out = await page.evaluate(async () => {
   await original.updateComplete;
   root(original).querySelector('[data-entity="light.ceiling"]')?.click();
   await frame();
-  original._setProjection('flat');
-  await original.updateComplete;
+  await window.__hpTest.setVolumetricView(false);
   root(original).querySelector('[data-entity="light.ceiling"]')?.click();
   await frame();
   result.flatIsoActionParity = calls.length === 2
     && JSON.stringify(calls[0]) === JSON.stringify(calls[1]);
-  original._setProjection('iso');
-  await original.updateComplete;
+  await window.__hpTest.setVolumetricView(true);
+  configSpace = original._serverCfg.spaces.find((space) => space.id === 'f1');
 
   const stage = root(original).querySelector('.stage');
   const stageRect = stage.getBoundingClientRect();
@@ -444,15 +443,15 @@ const out = await page.evaluate(async () => {
     original._closeInfoCard();
   } else result.touchLongPressHitsDevice = false;
 
+  // #649: one installation-wide switch — every space is 2.5D, no per-space choice.
   original._pickSpace('garden');
   await wait(230);
-  original._setProjection('iso');
   await original.updateComplete;
   const gardenIso = original._space === 'garden'
-    && root(original).querySelector('[data-hp="projection-toggle"]')?.getAttribute('aria-pressed') === 'true';
+    && !!root(original).querySelector('.stage.projection-iso');
   original._pickSpace('f1');
   await wait(230);
-  result.touchSpaceSwitchKeepsPerSpaceIso = gardenIso && original._space === 'f1'
+  result.touchSpaceSwitchKeepsIso = gardenIso && original._space === 'f1'
     && !!root(original).querySelector('[data-hp="iso-walls"]');
 
   const ownVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
@@ -488,10 +487,11 @@ const out = await page.evaluate(async () => {
   const warm = await mount(false);
   result.warmRemountIso = !warm._booting
     && !!root(warm).querySelector('[data-hp="iso-walls"]')
-    && root(warm).querySelector('[data-hp="projection-toggle"]')?.getAttribute('aria-pressed') === 'true';
+    && !!root(warm).querySelector('.stage.projection-iso')
+    && !root(warm).querySelector('[data-hp="projection-toggle"]');
   warm.remove();
   const kiosk = await mount(true);
-  result.kioskReadsPreference = !!root(kiosk).querySelector('[data-hp="iso-walls"]');
+  result.kioskReadsSetting = !!root(kiosk).querySelector('[data-hp="iso-walls"]');
   result.kioskHasNoToggle = !root(kiosk).querySelector('[data-hp="projection-toggle"]');
   const kioskStage = root(kiosk).querySelector('.stage');
   const kioskRect = kioskStage?.getBoundingClientRect();
@@ -521,15 +521,18 @@ out.orientationResizeKeepsIso = await page.evaluate(async () => {
   return !!card.renderRoot.querySelector('[data-hp="iso-walls"]')
     && !!anchor && [anchor.left, anchor.top, anchor.width, anchor.height].every(Number.isFinite);
 });
-out.kioskEmergencyOffIsFlat = await page.evaluate(async () => {
+out.kioskSettingOffIsFlat = await page.evaluate(async () => {
   const card = document.querySelector('houseplan-card');
-  history.replaceState(null, '', '?hp_alpha=0#space=f1');
-  dispatchEvent(new HashChangeEvent('hashchange'));
+  // #649: the admin switches 2.5D off in General settings; the kiosk follows the push.
+  const cfg = structuredClone(card._serverCfg);
+  cfg.settings = { ...(cfg.settings || {}), volumetric_view: false };
+  const rev = window.__pushServerConfig(cfg);
+  const started = performance.now();
+  while (card._cfgRev < rev && performance.now() - started < 5000) await new Promise((done) => setTimeout(done, 30));
   await card.updateComplete;
   await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-  return window.__hpAlpha === false
-    && localStorage.getItem('houseplan_card_alpha_v1') === '0'
-    && !card.renderRoot.querySelector('[data-hp="iso-walls"]')
+  return !card.renderRoot.querySelector('[data-hp="iso-walls"]')
+    && !card.renderRoot.querySelector('.stage.projection-iso')
     && !card.renderRoot.querySelector('[data-hp="projection-toggle"]');
 });
 

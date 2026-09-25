@@ -96,6 +96,11 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             id: 'gs-radar-live', icon: 'mdi:radar',
             title: t('gs.radar_show_live'), caption: st('gs.radar_show_live_hint'),
             checked: d.radarShowLive, onChange: (v) => set({ radarShowLive: v }),
+          })}
+          ${toggleRow({
+            id: 'gs-volumetric-view', icon: 'mdi:cube-outline',
+            title: t('gs.volumetric_view'), caption: st('gs.volumetric_view_hint'),
+            checked: d.volumetricView, onChange: (v) => set({ volumetricView: v }),
           })}`,
       })}
       ${formCard({
@@ -261,7 +266,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: host._imperial ? 9.8 : 3,
           glowRadiusInput: String(host._imperial ? 9.8 : 3),
           bgColor: null, northDeg: null, northDegInput: '', bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner',
-          showRoomTooltip: true, radarShowLive: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
+          showRoomTooltip: true, radarShowLive: true, volumetricView: false, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
         })}>${t('gs.reset')}</button>
       </div>
       ${footerStatus(problems.length

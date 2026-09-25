@@ -23,10 +23,10 @@ test('#361 saved furniture and placement preview share the physical screen resol
     'preview must not bypass the camera-aware furniture resolver',
   );
 
-  // #376(г): the compensation models the flat camera; the labs iso projection
-  // must fall back to 1 so furniture strokes track ordinary decor there.
-  assert.match(layer,
-    /const furnitureScreenScale = this\._renderProjection === 'iso' \? 1 : furniturePlanScreenScale\(/);
+  // #649 3a: 2.5D uses the same camera rule as Flat — no projection constant
+  // (the former iso fallback 1 made furniture several times thicker there).
+  assert.match(layer, /const furnitureScreenScale = furniturePlanScreenScale\(/);
+  assert.doesNotMatch(layer, /_renderProjection === 'iso' \? 1 : furniturePlanScreenScale/);
   assert.match(layer, /const visibleStrokePx = furnitureStrokePx\(strokeWidth, furnitureScreenScale\)/);
   assert.match(layer, /stroke-width="\$\{visibleStrokePx\}"/);
   assert.match(layer, /_renderFurniturePlacementPreview\(furnitureScreenScale\)/);

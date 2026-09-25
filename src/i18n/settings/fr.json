@@ -51,6 +51,7 @@
   "dialog.discard_keep": "Continuer",
   "gs.show_room_tooltip_hint": "Survolez une pièce sur le plan pour voir son résumé.",
   "gs.radar_show_live_hint": "Affiche ou masque toutes les cibles radar en direct. Cela ne démarre ni n’arrête l’enregistrement d’observation.",
+  "gs.volumetric_view_hint": "Murs, portes, fenêtres et icônes d'appareils en relief. La décoration et le plan à plat ne changent pas.",
   "gs.bg_custom_hint": "Couleur de fond personnalisée.",
   "gs.bg_theme_hint": "Fond du thème utilisé.",
   "gs.sun_rays_hint": "Tracer les rayons du soleil à travers les ouvertures des fenêtres.",

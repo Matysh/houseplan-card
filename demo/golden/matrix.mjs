@@ -265,28 +265,28 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     cornerSplitWall: 'zero-taper', mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-geometry-view-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     // Stage 2 material/floor-edge plus door, window, gate and nested-room coverage.
-    alpha: true, projection: 'iso',
+    projection: 'iso',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-geometry-view-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
-    alpha: true, projection: 'iso',
+    projection: 'iso',
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-live-layers-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
-    alpha: true, projection: 'iso',
+    projection: 'iso',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-no-borders-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
-    alpha: true, projection: 'iso', showBorders: false, fillMode: 'custom',
+    projection: 'iso', showBorders: false, fillMode: 'custom',
     customFill: { c: '#486a8f', a: 0.42 }, glowEnabled: true,
     stage3Golden: { noBorders: true },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-touch-kiosk-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
-    alpha: true, projection: 'iso', kiosk: true,
+    projection: 'iso', kiosk: true,
     theme: 'dark', viewport: { width: 390, height: 760 }, ...stage },
   { id: 'isometric-large-warm-remount-dark', fixture: 'large', space: 'perf-floor-2', mode: 'view',
-    alpha: true, projection: 'iso', warmRemount: true,
+    projection: 'iso', warmRemount: true,
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...stage },
   ...['light', 'dark'].map((theme) => ({
     id: `isometric-stage3-overlays-${theme}`, fixture: 'visual',
-    space: 'golden-lighting', mode: 'view', alpha: true, projection: 'iso',
+    space: 'golden-lighting', mode: 'view', projection: 'iso',
     stage3Fixture: {
       roomMetrics: true, lockOpening: 'light-door', lockState: 'locked',
       newDevice: 'golden-presence',
@@ -331,7 +331,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme, viewport: { width: 1000, height: 900 }, ...stage,
   })),
   { id: 'isometric-stage3-openings-dark', fixture: 'visual',
-    space: 'golden-lighting', mode: 'view', alpha: true, projection: 'iso',
+    space: 'golden-lighting', mode: 'view', projection: 'iso',
     showNames: false, glowEnabled: false, sunRays: false,
     stage3Fixture: { lockOpening: 'light-door', lockState: 'unlocked' },
     extraOpenings: [{
@@ -345,7 +345,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-stage3-forced-colors-dark', fixture: 'visual',
-    space: 'golden-lighting', mode: 'view', alpha: true, projection: 'iso',
+    space: 'golden-lighting', mode: 'view', projection: 'iso',
     forcedColors: true,
     stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
     stage3Golden: {
@@ -355,7 +355,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     layoutOverrides: stage3DenseLayout,
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-stage3-no-filter-dark', fixture: 'visual',
-    space: 'golden-lighting', mode: 'view', alpha: true, projection: 'iso',
+    space: 'golden-lighting', mode: 'view', projection: 'iso',
     disableIsoFilters: true,
     stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
     stage3Golden: {
@@ -555,7 +555,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-wall-junctions-dark', fixture: 'visual',
     space: 'golden-wall-junctions', wallJunctions: true, mode: 'view',
-    alpha: true, projection: 'iso',
+    projection: 'iso',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'opening-placement-door-thick-wall-dark', fixture: 'visual', space: 'golden-geometry',
     // The shared centre edge is a long 25 cm physical wall. It can contain the
@@ -582,7 +582,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     mode: 'view', openingSymbolContract: openingFlipContract,
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-opening-symbol-parity-dark', fixture: 'visual', space: 'golden-opening-symbols',
-    mode: 'view', alpha: true, projection: 'iso',
+    mode: 'view', projection: 'iso',
     openingSymbolContract: openingIsoContract,
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-devices-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'devices',
@@ -1194,4 +1194,48 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'card-editor-invalid-default-floor-dark-ru', fixture: 'visual',
     cardEditorInvalidDefaultFloor: 'removed-floor', language: 'ru', theme: 'dark',
     viewport: { width: 900, height: 760 }, ...page },
+]);
+
+/**
+ * #649 Stage 6 acceptance scenes (docs/design/649-25d-stage6/ACCEPTANCE.md):
+ * tiles, floor shadows, soft sun wash and theme-free walls in the four
+ * theme × floor combinations of the approved sketch 07 (attachments 09, 10,
+ * 12, 13) plus the lifted hover frame (attachment 11); sun as the lab default
+ * 10:00. They join GOLDEN_SCENARIOS in the same class D commit as their
+ * baselines captured on Linux CI (#455): every matrix scene needs a reviewed
+ * baseline (test/golden-wsl-artifact.test.mjs, #641), and a baseline cannot be
+ * captured before the scene exists. Until then they drive the diagnostic
+ * side-by-side frames only.
+ */
+export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
+  ...[['light', 'light'], ['light', 'dark'], ['dark', 'dark'], ['dark', 'light']].map(([theme, floor]) => ({
+    id: `isometric-stage6-${theme}-${floor}floor`, fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', projection: 'iso',
+    stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
+    stage3Golden: { requiredKinds: stage3RequiredOverlays },
+    markerOverrides: stage3DenseMarkers,
+    layoutOverrides: stage3DenseLayout,
+    stateOverrides: {
+      'light.golden_light_one': { attributes: { lqi: 40 } },
+      'light.golden_light_two': { attributes: { lqi: 120 } },
+      'sensor.golden_right_linkquality': { state: '210' },
+      'sun.sun': { attributes: { azimuth: 150, elevation: 52 } },
+    },
+    fillMode: 'custom', customFill: { c: floor === 'light' ? '#eee8de' : '#737777', a: 1 },
+    glowEnabled: false, sunRays: true, northDeg: 180,
+    // The lab's walls are the default white; the colour is the user's either way.
+    wallFill: { c: '#ffffff', a: 1 },
+    theme, viewport: { width: 1000, height: 900 }, ...stage,
+  })),
+  { id: 'isometric-stage6-hover-light', fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', projection: 'iso',
+    stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
+    stage3Golden: { requiredKinds: stage3RequiredOverlays },
+    markerOverrides: stage3DenseMarkers,
+    layoutOverrides: stage3DenseLayout,
+    fillMode: 'custom', customFill: { c: '#eee8de', a: 1 },
+    glowEnabled: false, sunRays: false,
+    hoverDevice: 'golden-light-two',
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...stage,
+  },
 ]);

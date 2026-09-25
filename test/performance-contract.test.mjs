@@ -22,6 +22,7 @@ const directCardMembers = (relativePath) => {
 const declaredMembers = (contract) => new Set([
   ...contract.methods, ...contract.fields, ...(contract.optionalFields || []),
   ...(contract.fieldAlternatives || []).flatMap((choice) => Object.values(choice)),
+  ...(contract.legacyOnlyFields || []),
 ]);
 
 const currentProductionMembers = (contract) => new Set([
@@ -89,6 +90,11 @@ test('performance contracts reference real production members', () => {
       ),
         `${contract.label} declares missing production member ${name}`);
     }
+  }
+  // A legacy-only member that production still declares belongs in the contract proper.
+  for (const name of LARGE_HOUSE_CARD_CONTRACT.legacyOnlyFields || []) {
+    assert.doesNotMatch(source, new RegExp(`\\b(?:private|public)\\s+(?:async\\s+)?${name}\\b`),
+      `${name} is declared legacy-only but production still has it`);
   }
   const staticSource = readFileSync(new URL('../src/space-card.ts', import.meta.url), 'utf8');
   for (const name of declaredMembers(SPACE_GLOW_CARD_CONTRACT)) {

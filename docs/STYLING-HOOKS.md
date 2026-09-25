@@ -402,8 +402,8 @@ kiosk mode.
 At a window width of 480 px or less the header is one row: space tabs, zoom
 and a gear `[data-hp="header-menu"]` (44 × 44, `aria-haspopup`,
 `aria-expanded`). Everything the row drops — editor tabs, space settings, add
-space, general settings, PDF, help, the summary-panel pair and the alpha
-projection toggle — is a `[data-hp="header-menu-item"][data-id="…"]` button of
+space, general settings, PDF, help and the summary-panel pair (the projection
+item is gone since #649) — is a `[data-hp="header-menu-item"][data-id="…"]` button of
 its menu (`#hp-header-menu`, `role="group"`), each at least 44 px high; the
 vocabulary of `data-id` is in the JSON inventory. While the menu is open a
 transparent `[data-hp="header-menu-scrim"]` swallows the tap that dismisses it.

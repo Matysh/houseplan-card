@@ -46,7 +46,7 @@ const result = await page.evaluate(async (source) => {
     card._serverCfg = structuredClone(cfg);
     card._layout = {};
     card._space = space.id;
-    card._setProjection('flat');
+    await window.__hpHarnessProjection(card, 'flat');
     card._setMode('plan');
     card._tool = 'select';
     await update(true);
@@ -112,12 +112,7 @@ const result = await page.evaluate(async (source) => {
     out[`${prefix}static_matches_plan`] = staticCard.renderRoot
       ?.querySelector('[data-hp="wall"]')?.getAttribute('d') === planD;
     staticCard.remove();
-
-    const labs = Object.freeze(['iso']);
-    card._onLabsSnapshot({ alpha: true, active: labs, space: '' });
-    window.__hpAlpha = true;
-    window.__hpLabs = labs;
-    card._setProjection('iso');
+    await window.__hpHarnessProjection(card, 'iso');
     await window.__hpEnsureHarnessIsoRuntime(card);
     await update(false);
     out[`${prefix}hidden_iso_uses_masonry`] = !!root().querySelector('[data-hp="iso-walls"]')

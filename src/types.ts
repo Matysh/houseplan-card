@@ -301,6 +301,8 @@ export interface ServerConfig {
     icon_rules?: { pattern: string; icon: string }[];
     /** Only an explicit false hides the room hover information window. */
     show_room_tooltip?: boolean;
+    /** #649: the whole installation views plans in 2.5D; absent or false keeps Flat. */
+    volumetric_view?: boolean;
     north_deg?: number;
     bg_mode?: 'static' | 'daynight';
     sun_rays?: boolean;

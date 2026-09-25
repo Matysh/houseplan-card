@@ -390,6 +390,41 @@ Layer order: ABOVE room fills (and the glow layer), BELOW devices and
 labels (those live in the HTML `devlayer` anyway). Night
 (`elevation ≤ 0`) → no wedges. Wedges work under BOTH `bg_mode`s.
 
+## 2.5D: the soft sun wash (#649)
+
+In the 2.5D View (General settings › Display › Show the plan in 2.5D) the Flat
+wedges above give way to a soft wash along the real sun (`src/iso-sun.ts`). Flat
+and its wedges are unchanged. Everything that gates the wedges gates the wash:
+`sun_rays` (global or per space), `north_deg`, `sun.sun`, elevation ≥ 3° with the
+2-second fade, nothing in editors or at night, and the same windows
+(`windowLit()`: an exterior window not on a partition facing the sun).
+
+H is the 2.5D wall height; the lab (sketch 07) numbers are converted into it.
+
+- **Base** — the two inner corners of the opening on the inner wall face
+  (`openingInnerFaceOffsetFromIndex`, as in Flat).
+- **Length along the window normal** —
+  `L = H · min(4.16, max(0.98, 1.865 · (0.55 + 1.4 · (1 − e/90)^1.6)))`, e the
+  elevation in degrees: a low sun throws a long beam.
+- **Shape** — the parallelogram `a0, a1, a1 + s, a0 + s`,
+  `s = n·L + t·L·(dir·t)/(dir·n)`, clipped by the room's inner outline and the
+  Flat occluders; the fill is blurred by 0.064 H, the sides are not blurred
+  separately.
+- **Gradient** along the normal, opacity × 1 (there is no brightness setting;
+  the lab default 72 % is the constant): dark floor `#ffe9b4` .62 → `#fff0cb`
+  .38 @.3 → `#fff6e0` .12 @.65 → `#fff8e8` 0; light floor `#e2b95e` .46 →
+  `#e9c97e` .30 @.3 → `#f0dcaa` .10 @.65 → `#f4e6c4` 0.
+- **Streaks — light floor only**: two lines 0.018 H inside the sides, 0.018 H
+  wide, 85 % of s long, `#ecc46a` .8 → `#f1d48f` .35 @.55 → `#f7e6bf` 0.
+- **Sill** — a line along the inner face over the opening width, 0.073 H thick,
+  `#efd493` (light floor) or `#fff3cf`, opacity .6, blur 0.023 H.
+- **Light floor** — the window room's fill at its opacity over the plan paper,
+  luma > 0.55.
+
+The wash lives where the Flat `.sunlayer` lives (floor group, above room fills
+and Glow) as `.sunlayer.iso-sunwash`, one `.iso-sunbeam[data-opening]` per lit
+window. Witness: `demo/smoke_iso_sun.mjs`.
+
 ## Weather independence and legacy `weather_entity`
 
 Weather never changes the window rays. Once the feature, compass,

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- The 2.5D plan is now available to everyone: **General settings → Display →
+  Show the plan in 2.5D** turns it on once for the whole installation — every
+  space, device and kiosk — and saving switches the View at once. Device
+  markers become raised tiles 12 % larger with a soft shadow on the floor and
+  a frame that follows the tile on hover, focus and selection; windows cast a
+  soft wash of sunlight that follows the real sun (longer when the sun is low,
+  amber with fine streaks on light floors). Walls keep the wall colour from
+  General settings in light and dark themes alike, and furniture keeps the
+  same line width as on the flat plan. The cube button in the header, the
+  phone-menu item and the hidden `hp_alpha` entry are gone; the flat plan
+  remains the default and is unchanged
+  ([#649](https://github.com/Matysh/houseplan-card/issues/649)).
 - The full House Plan card can now be resized vertically with Home Assistant's
   standard handle in a Sections dashboard. It starts at 10 rows, has a 6-row
   minimum, and View plus all three editors fill the chosen slot without making

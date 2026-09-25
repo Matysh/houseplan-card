@@ -155,6 +155,9 @@ def _global_settings(value: object) -> dict[str, Any]:
     show_room_tooltip = value.get("show_room_tooltip")
     if isinstance(show_room_tooltip, bool):
         out["show_room_tooltip"] = show_room_tooltip
+    volumetric_view = value.get("volumetric_view")
+    if isinstance(volumetric_view, bool):
+        out["volumetric_view"] = volumetric_view
     fill_colors = value.get("fill_colors")
     if isinstance(fill_colors, dict):
         palette = {

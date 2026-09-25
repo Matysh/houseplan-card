@@ -21,7 +21,8 @@ admin — the editor X slot of #647. The card title is hidden. Everything else i
 an item of the gear's menu, in a fixed order: the three editors (current one
 marked), Configure space, Add space (not with a fixed space), General settings,
 Save as PDF, Help and feedback; in View also the summary-panel settings and
-show/hide pair and, with `hp_alpha`, the volumetric/flat toggle. An item does
+show/hide pair (2.5D has no card toggle since #649: it is a General settings
+switch). An item does
 exactly what the button it replaces does and closes the menu; Escape closes it
 and returns focus to the gear; a tap outside only closes it and never reaches
 the plan. A user without write access sees just the summary-panel items. Wider

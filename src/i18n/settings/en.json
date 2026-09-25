@@ -51,6 +51,7 @@
   "dialog.discard_keep": "Continue",
   "gs.show_room_tooltip_hint": "Hover a room on the plan to see its summary.",
   "gs.radar_show_live_hint": "Hides or shows all live radar targets. This does not start or stop observation recording.",
+  "gs.volumetric_view_hint": "Renders walls, doors, windows and device markers with depth. Decor and the flat plan stay unchanged.",
   "gs.bg_custom_hint": "Custom background color.",
   "gs.bg_theme_hint": "Using the theme background.",
   "gs.sun_rays_hint": "Draw sun rays through window openings.",

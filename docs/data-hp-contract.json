@@ -78,7 +78,7 @@
       "elements": ["button"],
       "since": "1.78.0-beta.3",
       "audience": ["styling", "test"],
-      "attributes": { "data-id": ["mode-plan", "mode-devices", "mode-decor", "space-settings", "space-add", "settings", "pdf", "support", "summary-settings", "summary-toggle", "projection"] }
+      "attributes": { "data-id": ["mode-plan", "mode-devices", "mode-decor", "space-settings", "space-add", "settings", "pdf", "support", "summary-settings", "summary-toggle"] }
     },
     "header-menu-scrim": {
       "elements": ["div"],
@@ -120,11 +120,6 @@
       "elements": ["button"],
       "since": "1.73.0-beta.7",
       "audience": ["test"]
-    },
-    "projection-toggle": {
-      "elements": ["button"],
-      "since": "1.63.0",
-      "audience": ["styling", "test"]
     },
     "room": {
       "elements": ["path", "polygon", "rect"],

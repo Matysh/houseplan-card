@@ -199,12 +199,7 @@ const result = await page.evaluate(async (source) => {
     staticCard.renderRoot?.querySelector('[data-hp="wall"]'), node,
   ) === 0;
   staticCard.remove();
-
-  const labs = Object.freeze(['iso']);
-  card._onLabsSnapshot({ alpha: true, active: labs, space: '' });
-  window.__hpAlpha = true;
-  window.__hpLabs = labs;
-  card._setProjection('iso');
+  await window.__hpHarnessProjection(card, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(card);
   await update(false);
   const isoWalls = card._isoSource().build().walls;

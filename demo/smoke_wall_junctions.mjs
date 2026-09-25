@@ -117,15 +117,13 @@ const out = await page.evaluate(async () => {
   await update();
   result.planViewParity = !!planD && root().querySelector('.wallbody')?.getAttribute('d') === planD;
 
-  history.replaceState(null, '', '?hp_alpha=1#space=junctions');
-  dispatchEvent(new HashChangeEvent('hashchange'));
-  await card.updateComplete;
-  card._setProjection('iso');
+  history.replaceState(null, '', '#space=junctions');
+  await window.__hpHarnessProjection(card, 'iso');
   await window.__hpEnsureHarnessIsoRuntime(card);
   await update();
   result.isoUsesJoinedFootprint = !!root().querySelector('.iso-walls .iso-wall-top')
     && card._isoSource().build().walls.flat(2).length > 0;
-  card._setProjection('flat');
+  await window.__hpHarnessProjection(card, 'flat');
   await update();
 
   await customElements.whenDefined('houseplan-space-card');

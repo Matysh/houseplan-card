@@ -51,6 +51,7 @@
   "dialog.discard_keep": "Fortfahren",
   "gs.show_room_tooltip_hint": "Zeigen Sie auf einen Raum im Plan, um seine Übersicht zu sehen.",
   "gs.radar_show_live_hint": "Blendet alle Live-Radarziele ein oder aus. Die Beobachtungsaufzeichnung wird dadurch nicht gestartet oder gestoppt.",
+  "gs.volumetric_view_hint": "Wände, Türen, Fenster und Gerätesymbole mit Tiefe. Dekor und der flache Plan bleiben unverändert.",
   "gs.bg_custom_hint": "Eigene Hintergrundfarbe.",
   "gs.bg_theme_hint": "Hintergrund des Themes wird verwendet.",
   "gs.sun_rays_hint": "Sonnenstrahlen durch Fensteröffnungen zeichnen.",

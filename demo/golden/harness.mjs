@@ -696,6 +696,13 @@ export function prepareGoldenFixture(scenario) {
       sun_ray_origin: scenario.sunRayOrigin,
     };
   }
+  // #649: the user's wall colour is global (General settings › Plan).
+  if (scenario.wallFill) {
+    fixture.config.settings = {
+      ...(fixture.config.settings || {}),
+      fill_colors: { ...(fixture.config.settings?.fill_colors || {}), wall_fill: scenario.wallFill },
+    };
+  }
   if (scenario.extraOpenings?.length) {
     const space = requireSpace();
     const known = new Set((space.openings || []).map((opening) => opening.id));
@@ -862,6 +869,11 @@ export function prepareGoldenFixture(scenario) {
     }];
   }
 
+  // #649: 2.5D is the installation-wide General settings switch, not alpha.
+  if (scenario.projection === 'iso') {
+    fixture.config.settings = { ...(fixture.config.settings || {}), volumetric_view: true };
+  }
+
   return fixture;
 }
 
@@ -911,15 +923,7 @@ export async function prepareGoldenScenario(page, scenario) {
     document.getElementById('golden-pdf-page')?.remove();
     localStorage.clear();
     const scenarioPath = scenario.panelHost ? '/houseplan' : '/demo.html';
-    history.replaceState(null, '', `${scenarioPath}${scenario.alpha ? '?hp_alpha=1' : ''}`);
-    if (scenario.alpha) {
-      localStorage.setItem('houseplan_card_alpha_v1', '1');
-    }
-    if (scenario.projection && scenario.space) {
-      localStorage.setItem('houseplan_card_view_v1', JSON.stringify({
-        [scenario.space]: scenario.projection,
-      }));
-    }
+    history.replaceState(null, '', scenarioPath);
     const host = document.getElementById('host');
     const cardConfig = {
       type: 'custom:houseplan-card', title: `Golden ${scenario.id}`,
@@ -1013,10 +1017,6 @@ export async function prepareGoldenScenario(page, scenario) {
         if (drawn < expectedFurniture) {
           throw new Error(`golden furniture artwork missing: ${scenario.id} (${drawn}/${expectedFurniture})`);
         }
-      }
-      if (scenario.alpha
-          && (window.__hpAlpha !== true || JSON.stringify(window.__hpLabs) !== '["iso"]')) {
-        throw new Error(`alpha contract did not activate isometric capability: ${scenario.id}`);
       }
       if (scenario.projection === 'iso' || scenario.stage3Golden) {
         await ensureIsoRuntime(card);
@@ -1265,8 +1265,7 @@ export async function prepareGoldenScenario(page, scenario) {
         throw new Error(`golden room-label parity core is incomplete: ${scenario.id}`);
       }
     }
-    if (scenario.projection === 'iso' && typeof card._setProjection === 'function') {
-      card._setProjection('iso');
+    if (scenario.projection === 'iso') {
       await ensureIsoRuntime(card);
       await card.updateComplete;
       await frame();

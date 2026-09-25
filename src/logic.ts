@@ -1407,6 +1407,11 @@ export function showRoomTooltipOf(settings: unknown): boolean {
     ?.show_room_tooltip !== false;
 }
 
+/** #649: 2.5D is one installation-wide View choice; only an explicit true enables it. */
+export function volumetricViewOf(settings: unknown): boolean {
+  return (settings as { volumetric_view?: unknown } | null | undefined)?.volumetric_view === true;
+}
+
 // ---------------- global fill colors ----------------
 
 export interface FillColorEntry {

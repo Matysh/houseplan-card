@@ -30,7 +30,7 @@ const header = () => page.evaluate(() => {
     zoom: shown(head.querySelector(':scope > .zoomctl')),
     gear: shown(gear),
     gear44: !!g && g.width >= 44 && g.height >= 44,
-    hiddenInline: ['.modes', '.header-action', '.summary-control', '.projection-toggle', '.tabedit', '.tabadd']
+    hiddenInline: ['.modes', '.header-action', '.summary-control', '.tabedit', '.tabadd']
       .filter((selector) => [...head.querySelectorAll(selector)].some(shown)),
     tabEditInDom: !!head.querySelector('.tabedit, .tabadd'),
     inlineVisible: ['.header-action', '.summary-control'].filter((selector) => [...head.querySelectorAll(selector)].some(shown)),

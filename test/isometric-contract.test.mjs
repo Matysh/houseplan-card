@@ -28,10 +28,12 @@ const styleBodiesFor = (...selectorParts) => [...styles.matchAll(/([^{}]+)\{([^{
   .map((match) => match[2])
   .join('\n');
 
-test('Labs iso is presentation-only and absent from the secondary space card', () => {
-  assert.match(card, /subscribeLabs\(this\._onLabsSnapshot\)/);
-  assert.match(card, /data-hp="projection-toggle"/);
-  assert.match(card, /this\._labsIso && this\._mode === 'view' && !this\._kiosk/);
+test('#649 2.5D is the General settings switch, presentation-only and absent from the space card', () => {
+  assert.match(card, /private get _isoEnabled\(\): boolean \{ return volumetricViewOf\(this\._settings\); \}/);
+  assert.match(card, /return this\._mode === 'view' && this\._isoEnabled \? 'iso' : 'flat';/);
+  assert.doesNotMatch(card, /data-hp="projection-toggle"|_viewPreference|houseplan_card_view_v1|_labsIso/,
+    'no per-device choice, no header button, no alpha gate');
+  assert.doesNotMatch(labs, /id: 'iso'/, 'the alpha registry no longer ships 2.5D');
   assert.match(card, /iso \? `projection-iso \$\{deviceThemeClass\(this\._renderPlanHass\)\}` : ''/);
   assert.doesNotMatch(card, /projection-\$\{projection\}/,
     'Flat/editor DOM must not gain a projection marker');
@@ -53,7 +55,7 @@ test('Stage 4 code is loaded only through the hidden alpha runtime boundary', ()
     assert.match(sceneRender, new RegExp(`from './${module}'`));
   assert.match(card, /const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__'/);
   assert.match(sceneRender, /ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__'/);
-  assert.match(card, /if \(this\._labsIso\) void this\._ensureIsoSceneRuntime\(\)/);
+  assert.match(card, /if \(this\._isoEnabled\) void this\._ensureIsoSceneRuntime\(\)/);
 });
 
 test('Stage 4 browser harnesses await the lazy runtime and cold alpha-off skips its chunk', () => {
@@ -79,12 +81,18 @@ test('every browser smoke that explicitly selects Iso waits for its lazy runtime
   const consumers = [];
   for (const name of readdirSync(demo).filter((item) => /^smoke_.*\.mjs$/.test(item))) {
     const source = readFileSync(new URL(name, demo), 'utf8');
-    if (!source.includes("_setProjection('iso')")) continue;
+    // #649: 2.5D is selected through the shared harness helper or the facade.
+    if (!/__hpHarnessProjection\(\w+, 'iso'\)|setVolumetricView\(true\)/.test(source)) continue;
     consumers.push(name);
-    assert.match(source, /await (?:window\.)?(?:__hpEnsureHarnessIsoRuntime|ensureIsoRuntime)\(/,
+    assert.doesNotMatch(source, /_setProjection\(/, `${name} still selects 2.5D the pre-#649 way`);
+    // The facade waits for `.stage.projection-iso`, which the card sets only
+    // once the lazy runtime is installed (_effectiveProjection).
+    assert.match(source, /await (?:window\.)?(?:__hpHarnessProjection|__hpEnsureHarnessIsoRuntime|ensureIsoRuntime|(?:__hpTest|\w+)\.setVolumetricView)\(/,
       `${name} selects Iso without waiting for the lazy runtime`);
   }
   assert.ok(consumers.length >= 14, 'the guard unexpectedly lost known Iso smoke consumers');
+  assert.match(isoRuntimeCompat, /window\.__hpHarnessProjection = async[\s\S]*?await window\.__hpEnsureHarnessIsoRuntime\(card\)/,
+    'the shared projection helper must await the lazy runtime');
   assert.match(serveHarness,
     /installHarnessIsoRuntimeHelper\(page\)/,
     'the shared browser helper is not installed by the smoke launcher');
@@ -127,7 +135,10 @@ test('Stage 4 composes ordered inert SVG surfaces below screen-facing HTML', () 
     'export function renderIsoRaisedOverlays');
   assert.match(grounds, /return emptySvg\(\)/);
   assert.doesNotMatch(styles, /perspective\s*:|preserve-3d|rotateX\(|rotateZ\(/);
-  assert.doesNotMatch(sceneRender, /window-light|iso-window-light|iso-glow|iso-sun/);
+  // #649: the 2.5D window light is its own module re-exported through this lazy
+  // graph; the structural renderer itself still paints no light.
+  assert.doesNotMatch(sceneRender, /window-light|iso-window-light|iso-glow/);
+  assert.equal([...sceneRender.matchAll(/iso-sun/g)].length, 1, 'only the lazy re-export mentions iso-sun');
 });
 
 test('Stage 4 keeps device, room and lock roots on one corrected low visual plane', () => {
@@ -282,14 +293,17 @@ test('low-plane DOM roots expose one floor/visual identity and preserve existing
   assert.match(styles, /\.iso-overlays-svg,[\s\S]*?pointer-events:\s*none/);
 });
 
-test('Stage 4 materials and ambient shadow are bounded, theme-aware and capability-safe', () => {
+test('Stage 4 materials are bounded and capability-safe; #649 walls follow the user colour, not the theme', () => {
   const materialIds = [...sceneRender.matchAll(/id="(hp-iso-[^"]+)" data-hp-iso-material-def/g)]
     .map((match) => match[1]);
   assert.ok(materialIds.length >= 5 && materialIds.length <= 12,
     `expected a bounded shared definition set, got ${materialIds.length}`);
   assert.equal(new Set(materialIds).size, materialIds.length, 'material ids must be unique');
-  assert.match(styles, /\.stage\.theme-dark \.iso-wall-side/);
-  assert.match(styles, /\.stage:not\(\.theme-light\) \.iso-wall-side/);
+  // #649 3b: no theme rule for walls, openings, floor edge or wall texture.
+  assert.doesNotMatch(styles, /\.stage(?:\.theme-dark|:not\(\.theme-light\)) \.iso-(?:side|top|wall|floor-side|opening|texture)/);
+  assert.match(styles, /\.iso-top-hi\s*\{\s*stop-color:\s*var\(--iso-top-hi/);
+  assert.match(styles, /\.iso-side-mid\s*\{\s*stop-color:\s*var\(--iso-side-mid/);
+  assert.match(card, /\$\{iso \? `;\$\{isoWallMaterialVars\(this\._fillColors\.wall_fill\.c\)\}` : ''\}/);
   assert.doesNotMatch(styles, /iso-overlay-plate|hp-iso-overlay-texture/,
     'themes and forced colors must not recreate a painted footprint');
   assert.doesNotMatch(styles, /iso-overlay-ground|iso-overlay-tether/,
@@ -303,8 +317,6 @@ test('Stage 4 materials and ambient shadow are bounded, theme-aware and capabili
   assert.doesNotMatch(sceneRender, /hp-iso-contact-shadow|hp-iso-leaf-shadow|iso-contact-shadow|iso-leaf-shadow/);
   assert.doesNotMatch(styles, /\.iso-contact-shadow|\.iso-leaf-shadow/);
   assert.match(styles, /\.iso-opening-panel\.iso-material-matte-leaf\s*\{[\s\S]*?stroke:\s*none/);
-  assert.match(styles, /\.stage\.theme-dark \.iso-opening-panel\.iso-material-matte-leaf\s*\{[^}]*stroke:\s*none/);
-  assert.match(styles, /\.stage:not\(\.theme-light\) \.iso-opening-panel\.iso-material-matte-leaf\s*\{[^}]*stroke:\s*none/);
   assert.match(styles, /iso-material-glass-side[\s\S]*?stroke:\s*#8fb4c7/,
     'window glass keeps its thin border');
   assert.match(styles,
@@ -313,15 +325,13 @@ test('Stage 4 materials and ambient shadow are bounded, theme-aware and capabili
   assert.doesNotMatch(rendering, /sunState|_renderSun|Date\.now|Math\.random/);
 });
 
-test('Stage 4 room labels override Flat inline colors with the approved clean palette', () => {
-  const lightLabel = styleBodiesFor('projection-iso', 'mode-view', '.roomlabel');
-  const darkLabel = styleBodiesFor('projection-iso', 'theme-dark', 'mode-view', '.roomlabel');
-  assert.match(lightLabel, /text-shadow:\s*none/);
-  assert.match(lightLabel, /filter:\s*none/);
-  assert.match(lightLabel, /-webkit-text-stroke:\s*0 transparent/);
-  assert.match(lightLabel, /color:\s*#303936\s*!important/,
-    'Iso palette must win over the room color written inline for Flat');
-  assert.match(darkLabel, /color:\s*#f2f0e8\s*!important/);
+test('#649 room labels keep the configured colour in both themes; 2.5D only drops stroke and shadow', () => {
+  const label = styleBodiesFor('projection-iso', 'mode-view', '.roomlabel');
+  assert.match(label, /text-shadow:\s*none/);
+  assert.match(label, /filter:\s*none/);
+  assert.match(label, /-webkit-text-stroke:\s*0 transparent/);
+  assert.doesNotMatch(label, /(?:^|[;\s])color:/, 'the inline Flat colour must win in 2.5D');
+  assert.equal(styleBodiesFor('projection-iso', 'theme-dark', '.roomlabel'), '');
 });
 
 test('Stage 4 adds no schema, dependency, storage, network or HA action surface', () => {
