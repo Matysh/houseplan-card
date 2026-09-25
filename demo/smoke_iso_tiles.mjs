@@ -194,8 +194,33 @@ const frames = await page.evaluate(async (id) => {
   dev.classList.remove('alarm', 'sel');
   out.focusOnly = colour();
   dev.blur();
+  // CODE-REVIEW-649-r1 L4: Alert also beats a plain Selected.
+  dev.classList.add('sel', 'alarm');
+  out.alarmOverSelected = colour();
+  dev.classList.remove('sel', 'alarm');
+  // L5 (Q1): a virtual marker has no dashed contour in 2.5D either.
+  dev.classList.add('virtual');
+  const shell = dev.querySelector('.device-shell-frame');
+  out.virtualRing = shell ? getComputedStyle(shell).borderTopColor : null;
+  dev.classList.remove('virtual');
   return out;
 }, WHITE);
+// L4: Alert beats a plain Hover.
+await page.evaluate((id) => window.__card.renderRoot
+  .querySelector(`.devlayer .dev:not(.iso-tile-shadow)[data-id="${id}"]`).classList.add('alarm'), WHITE);
+await page.mouse.move(centre[0], centre[1]);
+await page.waitForTimeout(80);
+const alarmHover = await page.evaluate((id) => {
+  const dev = window.__card.renderRoot.querySelector(`.devlayer .dev:not(.iso-tile-shadow)[data-id="${id}"]`);
+  const hovered = dev.hasAttribute('data-hp-device-hover');
+  const colour = getComputedStyle(dev.querySelector('.device-core'), '::after').borderTopColor;
+  dev.classList.remove('alarm');
+  return { hovered, colour };
+}, WHITE);
+await page.mouse.move(5, 5);
+res.alarmBeatsHover = alarmHover.hovered && alarmHover.colour === 'rgb(240, 65, 12)';
+res.alarmBeatsSelected = frames.alarmOverSelected === 'rgb(240, 65, 12)';
+res.virtualNoDashedRing = /rgba\(0, 0, 0, 0\)/.test(frames.virtualRing || '');
 res.selectedAmber = frames.selected === 'rgb(240, 160, 12)';
 res.focusBeatsSelected = !frames.focusVisible || frames.focusOverSelected === 'rgb(12, 130, 240)';
 res.alarmBeatsFocus = frames.alarmOverFocus === 'rgb(240, 65, 12)';
@@ -213,6 +238,24 @@ res.forcedNoShadow = forced.layerDisplay === 'none';
 res.forcedNoEdge = forced.white.edgeColor === null;
 res.forcedKeepsSize = near(forced.white.w, D, 0.05);
 await page.emulateMedia({ forcedColors: 'none' });
+
+// ---- L6: without walls (show_borders off) tiles and shadows stay -----------
+await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
+  const space = cfg.spaces.find((item) => item.id === 'f1');
+  space.settings = { ...(space.settings || {}), show_borders: false };
+  return cfg;
+}));
+await page.waitForTimeout(250);
+const noBorders = await read([WHITE, TINTED]);
+res.noBordersKeepsTiles = noBorders.iso && near(noBorders.white.radius, Math.min(0.275 * D, 0.3 * noBorders.white.h), 0.05)
+  && near(noBorders.white.edgeDepth, 0.1 * D, 0.05);
+res.noBordersKeepsShadows = noBorders.layer && noBorders.twinCount === noBorders.markerCount
+  && !!noBorders.white.shadow;
+await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
+  const space = cfg.spaces.find((item) => item.id === 'f1');
+  space.settings = { ...(space.settings || {}), show_borders: true };
+  return cfg;
+}));
 
 // ---- editors are Flat; switching off restores Flat --------------------------
 await page.evaluate(() => window.__hpTest.setMode('plan'));

@@ -99,6 +99,36 @@ const res = await page.evaluate(async () => {
   out.shearFollowsSun = east !== 0 && west === -east;
   out.clippedToRoom = beams().every((b) => /url\(#hp-iso-sun-clip-/.test(b.getAttribute('clip-path') || ''));
 
+  // The same physical bodies as Flat cut the beam (CODE-REVIEW-649-r1 M1): a
+  // Solid partition across the south beam removes the floor behind it.
+  const litArea = (id) => {
+    const beam = beams().find((b) => b.dataset.opening === id);
+    return !beam ? 0 : [...beam.querySelectorAll('.iso-sun-fill')].reduce((sum, poly) => {
+      const pts = poly.getAttribute('points').trim().split(/\s+/).map((q) => q.split(',').map(Number));
+      return sum + Math.abs(pts.reduce((acc, point, i) => {
+        const next = pts[(i + 1) % pts.length];
+        return acc + point[0] * next[1] - next[0] * point[1];
+      }, 0)) / 2;
+    }, 0);
+  };
+  await setSun(180, 30);
+  const openArea = litArea('wS');
+  await t.setServerConfig((cfg) => {
+    const space = cfg.spaces.find((item) => item.id === 'f1');
+    space.partitions = [...(space.partitions || []), { id: 'sun-cut', a: [0.22, 0.76], b: [0.38, 0.76], cm: 15 }];
+    return cfg;
+  });
+  await setSun(180, 31);
+  const cutArea = litArea('wS');
+  out.bodyCutsTheBeam = openArea > 0 && cutArea > 0 && cutArea < openArea * 0.9;
+  await t.setServerConfig((cfg) => {
+    const space = cfg.spaces.find((item) => item.id === 'f1');
+    space.partitions = (space.partitions || []).filter((item) => item.id !== 'sun-cut');
+    return cfg;
+  });
+  await setSun(180, 30);
+  out.beamBackWithoutBody = Math.abs(litArea('wS') - openArea) < 1;
+
   // Tone by the floor: dark floor warm-white, no streaks; light floor amber with two streaks.
   const dark = beams()[0];
   out.darkFloorStops = !!dark && JSON.stringify(firstStop(dark)) === JSON.stringify(['#ffe9b4', 0.62])

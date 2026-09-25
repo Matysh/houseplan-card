@@ -28,7 +28,7 @@ houseplan-card/
 │  ├─ houseplan-editor-runtime.ts # Plan/Devices/Background composition root
 │  ├─ decor-image-editor.ts      # lazy Background/Furniture image palette, upload and properties controller
 │  ├─ houseplan-onboarding-runtime.ts # first-space/import dialogs, independent of editor
-│  ├─ iso-scene-render.ts        # hidden alpha-only Stage 4 scene/runtime boundary
+│  ├─ iso-scene-render.ts        # lazy 2.5D scene/runtime boundary (settings.volumetric_view, #649)
 │  ├─ furniture-art-runtime.ts   # page-scoped lazy designer furniture artwork (ready/pending/fallback)
 │  ├─ pdf/                       # lazy read-only A4 scene, writer, dialog and embedded font
 │  ├─ iso-overlays.ts            # pure raised-overlay ownership, collision and nudge

@@ -625,7 +625,7 @@ export class HouseplanCard extends LitElement {
   });
 
   /**
-   * Stage 4 is an opt-in alpha surface. Keep its renderer and geometry outside
+   * 2.5D is opt-in (General settings, #649). Keep its renderer and geometry outside
    * the ordinary View graph, but use the same exact-build, atomic installation
    * contract as the editor runtimes so a stale chunk can never half-install.
    */

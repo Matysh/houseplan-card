@@ -3524,6 +3524,26 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'iso-sun-occluders-toward-sun',
+    guard: "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern=\"AC7 the 2.5D beam is cut\" test/iso-stage6.test.mjs",
+    because: '#649 AC7 (CODE-REVIEW-649-r1 M1): a body shades the floor behind it, away from the sun — '
+      + 'extruded toward the sun it darkens the lit floor between window and body',
+    patches: [{ file: 'src/iso-sun.ts', find: "      const shadows = directionalOccluders(input.occluders, away, travel);", replace: "      const shadows = directionalOccluders(input.occluders, toSun, travel);" }],
+  },
+  {
+    id: 'iso-sun-occluders-ignored',
+    guard: "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern=\"AC7 the 2.5D beam is cut\" test/iso-stage6.test.mjs",
+    because: '#649 AC7 (CODE-REVIEW-649-r1 M1): the 2.5D beam is cut by the same physical bodies as Flat',
+    patches: [{ file: 'src/iso-sun.ts', find: "    if (polys.length && input.occluders?.length) {", replace: "    if (polys.length && input.occluders?.length && input.elevation > 90) {" }],
+  },
+  {
+    id: 'iso-sun-card-drops-occluders',
+    guard: 'node demo/smoke_iso_sun.mjs',
+    because: '#649 AC7 (CODE-REVIEW-649-r1 M1): the card hands the 2.5D beam the same physical bodies '
+      + 'as the Flat wedges (`_sunInputs`); without them light passes through a partition',
+    patches: [{ file: 'src/houseplan-card.ts', find: "beams: isoSun.computeIsoSunBeams({ ...inputs, azimuth:", replace: "beams: isoSun.computeIsoSunBeams({ ...inputs, occluders: [], azimuth:" }],
+  },
+  {
     id: 'iso-theme-dark-wall-rule-returns',
     guard: 'node demo/smoke_iso_theme_walls.mjs',
     because: '#649 AC9: the theme never repaints walls — the colour is the user\'s',

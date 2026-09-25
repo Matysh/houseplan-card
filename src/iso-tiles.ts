@@ -111,7 +111,9 @@ export function isoTileStateCss(): string {
       + ` --iso-edge: ${edge(body, 'light', false)}; }`);
     rules.push(`${S} .dev.${state}.iso-floor-light { --iso-edge: ${edge(body, 'light', true)}; }`);
     rules.push(`${S} .dev.theme-light.${state} { --iso-fg: #fff; }`);
-    rules.push(`${S} .dev.theme-dark.${state} { --iso-fg: #252525; }`);
+    // The edge follows the theme too (a dark state body would take #4a4a4a there).
+    rules.push(`${S} .dev.theme-dark.${state} { --iso-fg: #252525; --iso-edge: ${edge(body, 'dark', false)}; }`);
+    rules.push(`${S} .dev.theme-dark.${state}.iso-floor-light { --iso-edge: ${edge(body, 'dark', true)}; }`);
   }
   // Locks: the same body language.
   rules.push(`${S} .oplock { --iso-body: var(--oplock-core-bg); --iso-fg: var(--oplock-core-fg);`

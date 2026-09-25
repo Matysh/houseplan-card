@@ -65,6 +65,9 @@ test('#649 п.1 edge colours: brightness/saturate of the body, dark bodies fixed
   for (const [state, body] of Object.entries(ISO_STATE_BODIES)) {
     assert.match(css, new RegExp(`\\.dev\\.${state} \\{ --iso-body: ${body}; [^}]*--iso-edge: ${isoEdgeColor(body, 'light', false)};`));
     assert.match(css, new RegExp(`\\.dev\\.${state}\\.iso-floor-light \\{ --iso-edge: ${isoEdgeColor(body, 'light', true)}; \\}`));
+    // CODE-REVIEW-649-r1 L3: the dark theme computes its own state edge.
+    assert.match(css, new RegExp(`\\.dev\\.theme-dark\\.${state} \\{ [^}]*--iso-edge: ${isoEdgeColor(body, 'dark', false)}; \\}`));
+    assert.match(css, new RegExp(`\\.dev\\.theme-dark\\.${state}\\.iso-floor-light \\{ --iso-edge: ${isoEdgeColor(body, 'dark', true)}; \\}`));
   }
 });
 
@@ -143,4 +146,34 @@ test('#649 AC3 layout and collisions see the 2.5D tile size (× ISO_ICON_SCALE)'
   const flat = isoRaisedOverlayHalfSize({ kind: 'device', core: base, presentation })[0];
   assert.ok(Math.abs(half - scaled) < 1e-6, `footprint half ${half} = the 1.12 tile ${scaled}`);
   assert.ok(half > flat * 1.1, 'the Flat size would let 2.5D tiles overlap');
+});
+
+test('#649 AC7 the 2.5D beam is cut by the same physical bodies as Flat, on the far side of the body', () => {
+  const rooms = [{ id: 'r', poly: [[0, 0], [400, 0], [400, 400], [0, 400]] }];
+  const windows = [{ id: 'south', x: 200, y: 400, angle: 0, length: 80 }];
+  // Sun due south: the light goes straight north (−y) from the south window.
+  const base = { rooms, windows, azimuth: 180, elevation: 30, northDeg: 0, wallHeight: 84 };
+  const inside = (p, poly) => {
+    let hit = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [xi, yi] = poly[i]; const [xj, yj] = poly[j];
+      if ((yi > p[1]) !== (yj > p[1]) && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) hit = !hit;
+    }
+    return hit;
+  };
+  const lit = (beam, p) => beam.polys.some((poly) => inside(p, poly));
+  const area = (beam) => beam.polys.reduce((sum, poly) => sum + Math.abs(poly.reduce((s, p, i) => {
+    const q = poly[(i + 1) % poly.length];
+    return s + p[0] * q[1] - q[0] * p[1];
+  }, 0)) / 2, 0);
+  const [open] = computeIsoSunBeams(base);
+  assert.ok(open.depth > 150, 'the beam reaches past the body');
+  for (const p of [[200, 360], [200, 250], [170, 250]]) assert.ok(lit(open, p), `lit without a body at ${p}`);
+  // A column in the middle of the beam, 80–100 units into the room.
+  const column = [[190, 300], [210, 300], [210, 320], [190, 320]];
+  const [cut] = computeIsoSunBeams({ ...base, occluders: [column] });
+  assert.ok(lit(cut, [200, 360]), 'between the window and the body the floor stays lit');
+  assert.ok(!lit(cut, [200, 250]), 'behind the body, away from the sun, the floor is in shadow');
+  assert.ok(lit(cut, [170, 250]), 'beside the shadow the beam goes on');
+  assert.ok(area(cut) < area(open) - 20 * 50, 'the shadow runs along the whole remaining beam');
 });

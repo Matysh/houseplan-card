@@ -142,7 +142,7 @@ try {
           longTasks: await longTasks.stop(),
         };
       };
-      // Current candidates split the experimental Iso runtime out of the initial graph. Comparison
+      // Current candidates split the lazy 2.5D runtime out of the initial graph. Comparison
       // bundles remain valid: their older monolithic renderer has no preload
       // hook and is already available synchronously.
       const ensureIsoRuntime = async (card) => {
