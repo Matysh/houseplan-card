@@ -50,7 +50,9 @@ async def _access_token_for_group(hass: HomeAssistant, group_id: str) -> str:
     user = await hass.auth.async_create_user(
         f"House Plan {group_id}", group_ids=[group_id]
     )
-    refresh_token = await hass.auth.async_create_refresh_token(user)
+    refresh_token = await hass.auth.async_create_refresh_token(
+        user, client_id="http://houseplan.test"
+    )
     return hass.auth.async_create_access_token(refresh_token)
 
 

@@ -32,6 +32,12 @@ def may_write(hass: HomeAssistant, user) -> bool:
     if admin_only:
         return is_admin
 
+    # Administrators retain write access regardless of their group payload.
+    # HA normally exposes admin groups too, but authorization must be based on
+    # the explicit admin flag rather than incidental group serialization.
+    if is_admin:
+        return True
+
     # Turning off ``admin_only`` grants editing to ordinary household users,
     # not to HA's explicitly read-only role (#626).  ``groups`` is part of the
     # supported HA User model; if a non-admin connection cannot provide a

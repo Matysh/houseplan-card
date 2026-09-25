@@ -6,7 +6,8 @@
   House Plan editing is opened to ordinary household members. They keep the
   complete View experience, including vacuum paths, but cannot edit, upload or
   delete data; the maintenance list of stored plan files is writer-only and
-  vacuum responses no longer expose the internal map-source entity ID
+  vacuum responses no longer expose the internal map-source entity ID;
+  administrators retain full access
   ([#626](https://github.com/Matysh/houseplan-card/issues/626)).
 - The main toolbar no longer shows the device count (“37 dev.”), and it stops
   jumping sideways when you open, close or switch editors: the editor’s close

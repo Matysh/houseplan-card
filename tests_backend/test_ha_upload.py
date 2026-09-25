@@ -29,7 +29,9 @@ async def _household_access_token(hass: HomeAssistant) -> str:
     user = await hass.auth.async_create_user(
         "House Plan household", group_ids=[GROUP_ID_USER]
     )
-    refresh_token = await hass.auth.async_create_refresh_token(user)
+    refresh_token = await hass.auth.async_create_refresh_token(
+        user, client_id="http://houseplan.test"
+    )
     return hass.auth.async_create_access_token(refresh_token)
 
 
