@@ -402,7 +402,7 @@ kiosk mode.
 Each active editor exposes one primary
 `[data-hp="toolbar"][data-kind="plan|device|decor"]`. Tool and command launchers
 use `[data-hp="tool"][data-tool="…"]`; the complete `data-tool` vocabulary is
-in the JSON inventory. The toolbar X and the X on the active mode tab use
+in the JSON inventory. The toolbar X and the header X (its own slot after the mode tabs, #647) use
 `[data-hp="editor-close"]` while retaining `data-editor-navigation="view"`.
 
 The three editor mode tabs are `[data-hp="mode-tab"][data-mode="plan|devices|decor"]`

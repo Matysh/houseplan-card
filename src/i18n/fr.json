@@ -50,7 +50,6 @@
   "physical.allowed_range": "Autorisé : {min}–{max} {unit}",
   "physical.column_size_title": "Côté extérieur de la colonne carrée placée par le clic (1–150 cm).",
   "card.title": "Plan de la maison",
-  "count.devices": "{n} app.",
   "empty.no_spaces": "Aucun espace pour le moment.",
   "nav.spaces": "Espaces House Plan",
   "empty.add_first": "Ajoutez le premier espace et importez un plan.",

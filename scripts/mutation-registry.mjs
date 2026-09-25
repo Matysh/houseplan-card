@@ -7281,6 +7281,67 @@ const MUTANT_DEFINITIONS = [
       replace: '        if (false) continue;',
     }],
   },
+  // #647: шапка — без счётчика, × в собственном слоте постоянного размера.
+  {
+    id: 'toolbar-device-count-returns',
+    guard: 'node demo/smoke_toolbar_stable_width.mjs',
+    because: '#647 AC1: the header must not show a device count in any mode or locale',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "              <span class=\"editor-close-slot\" aria-hidden=",
+      replace: "              <span class=\"count\">${this._devices.length} dev.</span><span class=\"editor-close-slot\" aria-hidden=",
+    }],
+  },
+  {
+    id: 'toolbar-close-slot-collapses-outside-editor',
+    guard: 'node demo/smoke_toolbar_stable_width.mjs',
+    because: '#647 AC2: an empty slot that collapses outside an editor brings back the header width jump',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: "    .editor-close-slot[aria-hidden='true'] { pointer-events: none; }",
+      replace: "    .editor-close-slot[aria-hidden='true'] { pointer-events: none; display: none; }",
+    }],
+  },
+  {
+    id: 'toolbar-close-back-inside-tab',
+    guard: 'node demo/smoke_toolbar_stable_width.mjs',
+    because: '#647 AC3: an X inside the active mode tab widens that tab and moves its neighbours',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "                    <ha-icon icon=${ic}></ha-icon><span class=\"ml\">${this._t(('mode.' + m) as any)}</span>\n                  </button>`,",
+      replace: "                    <ha-icon icon=${ic}></ha-icon><span class=\"ml\">${this._t(('mode.' + m) as any)}</span>${this._mode === m ? html`<ha-icon class=\"closex\" icon=\"mdi:close\"></ha-icon>` : nothing}\n                  </button>`,",
+    }],
+  },
+  {
+    id: 'toolbar-close-slot-idle-focusable',
+    guard: 'node demo/smoke_toolbar_stable_width.mjs',
+    because: '#647 AC4: outside an editor the reserve is inert and hidden from assistive technology',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "              <span class=\"editor-close-slot\" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>",
+      replace: "              <span class=\"editor-close-slot\" tabindex=\"0\">",
+    }],
+  },
+  {
+    id: 'toolbar-close-target-below-24',
+    guard: 'node demo/smoke_toolbar_stable_width.mjs',
+    because: '#647 AC5 / #195: the X keeps a hit target of at least 24 x 24 px around its 13 px glyph',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: "      --hp-editor-close-size: 24px;",
+      replace: "      --hp-editor-close-size: 13px;",
+    }],
+  },
+  {
+    id: 'toolbar-close-hidden-at-medium-width',
+    guard: 'node demo/smoke_toolbar_stable_width.mjs',
+    because: '#647 AC6: the X must stay visible on ordinary 721-1100 px windows, where the old count was hidden',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: "    .editor-close-slot .closex ha-icon { --mdc-icon-size: 13px; }",
+      replace: "    .editor-close-slot .closex ha-icon { --mdc-icon-size: 13px; }\n    @media (max-width: 1100px) { .editor-close-slot .closex { display: none; } }",
+    }],
+  },
   {
     id: 'tab-reorder-not-persisted',
     guard: 'node demo/smoke_space_tab_reorder.mjs',

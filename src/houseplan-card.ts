@@ -10807,17 +10807,15 @@ export class HouseplanCard extends LitElement {
                     title=${this._t(('mode.' + m + '_tip') as any)}
                     @click=${() => this._setMode(m)}>
                     <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>
-                    ${this._mode === m
-                      ? html`<ha-icon class="closex" icon="mdi:close" title=${this._t('title.close_editor')}
-                          data-hp="editor-close"
-                          data-editor-navigation="view"
-                          @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}></ha-icon>`
-                      : nothing}
                   </button>`,
                 )}
-              </div>`
+              </div>${''/* #647: X owns a fixed slot (the old device-count place): header width never changes */}
+              <span class="editor-close-slot" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>${this._mode !== 'view'
+                ? html`<button class="closex" title=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')}
+                    data-hp="editor-close" data-editor-navigation="view"
+                    @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`
+                : nothing}</span>`
             : nothing}
-          <span class="count">${this._t('count.devices', { n: devs.filter((d) => !d.hidden).length })}</span>
           <span class="spacer"></span>
           ${this._labsIso && this._mode === 'view' && !this._kiosk
             ? html`<button class="btn projection-toggle ${iso ? 'on' : ''}"

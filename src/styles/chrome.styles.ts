@@ -151,25 +151,45 @@ const chromeCoreStyles = css`
     .tab.dragging { cursor: grabbing; opacity: 0.55; }
     .tab.drop-before { box-shadow: inset 2px 0 0 0 var(--primary-color, #03a9f4); }
     .tab.drop-after { box-shadow: inset -2px 0 0 0 var(--primary-color, #03a9f4); }
-    .modetab .closex {
-      --mdc-icon-size: 13px;
+    /* #647: the editor X owns a fixed slot right after the mode tabs (where
+       the device count used to be). One size for both states, so entering,
+       leaving or switching editors never changes the header width; the slot is
+       the X's pointer target (>= 24 x 24, #195) around a 13 px glyph. */
+    .editor-close-slot {
+      --hp-editor-close-size: 24px;
+      box-sizing: border-box;
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      justify-content: center;
+      width: var(--hp-editor-close-size);
+      height: var(--hp-editor-close-size);
+    }
+    .editor-close-slot[aria-hidden='true'] { pointer-events: none; }
+    .editor-close-slot .closex {
       box-sizing: border-box;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 24px;
-      height: 24px;
-      min-width: 24px;
-      min-height: 24px;
-      /* Keep the old 13 × 13 flex footprint (+2 px left margin) while the
-         pointer target grows around it. Header width, height and wrapping do
-         not move; only near-misses that used to hit the active tab reach X. */
-      margin: -5.5px -5.5px -5.5px -3.5px;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--hp-muted);
       opacity: 0.75;
       cursor: pointer;
       border-radius: var(--rad-s);
+      font: inherit;
     }
-    :host([data-pointer-hover]) .modetab .closex:hover { opacity: 1; }
+    .editor-close-slot .closex ha-icon { --mdc-icon-size: 13px; }
+    :host([data-pointer-hover]) .editor-close-slot .closex:hover { opacity: 1; }
+    .editor-close-slot .closex:focus-visible {
+      outline: 2px solid var(--primary-color, #03a9f4);
+      outline-offset: 1px;
+      opacity: 1;
+    }
     .editbar .barclose {
       box-sizing: border-box;
       width: 40px;

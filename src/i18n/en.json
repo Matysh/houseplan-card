@@ -50,7 +50,6 @@
   "physical.allowed_range": "Allowed: {min}–{max} {unit}",
   "physical.column_size_title": "Outer side of the square column placed by the click (1–150 cm).",
   "card.title": "House plan",
-  "count.devices": "{n} dev.",
   "empty.no_spaces": "No spaces yet.",
   "nav.spaces": "House Plan spaces",
   "empty.add_first": "Add the first space and upload a floor plan.",

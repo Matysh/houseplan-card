@@ -28,6 +28,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['chromeStyles', 'dialogsStyles'],
+    smokes: ['smoke_toolbar_stable_width.mjs', 'smoke_editor_tabs.mjs'],
+    because: '#647: the header X slot (.editor-close-slot) and the removed .head .count rule are '
+      + 'CSS in these sheets; the smokes measure the rendered header width, tab offsets, the X '
+      + 'hit target and its visibility at 1400/1000/768/390 px — no TS symbol names that layout',
+  },
+  {
     symbols: ['confirmIcon', 'HpConfirmRequest'],
     smokes: ['smoke_discard_copy.mjs', 'smoke_dialog_polish_603.mjs'],
     because: '#610: the production-bundle witnesses open all four unsaved-settings '

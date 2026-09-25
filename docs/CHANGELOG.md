@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- The main toolbar no longer shows the device count (“37 dev.”), and it stops
+  jumping sideways when you open, close or switch editors: the editor’s close
+  **×** now has its own fixed place right after the mode buttons, kept empty
+  outside the editors. The × is as easy to hit as before (a 24 × 24 px target)
+  and stays visible on medium-width windows too. The **Device count** value of
+  the summary panel is unchanged
+  ([#647](https://github.com/Matysh/houseplan-card/issues/647)).
+
 ## v1.78.0-beta.2 — 2026-09-25
 
 - In the Plan editor, the **Room settings** button can now be moved temporarily

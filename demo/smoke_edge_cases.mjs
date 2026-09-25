@@ -19,7 +19,8 @@ const res = await page.evaluate(async () => {
   await c1.updateComplete; await new Promise(r=>setTimeout(r,50)); await c1.updateComplete;
   out.emptyDevices = c1._devices.length;
   out.emptyRenders = !!sr(c1).querySelector('.stage');
-  out.emptyCount = sr(c1).querySelector('.count')?.textContent.trim();
+  // #647: the header no longer shows a device count at all.
+  out.emptyNoHeaderCount = !sr(c1).querySelector('.head .count');
   c1.remove();
 
   // 2) XSS в именах комнат и устройств
@@ -79,7 +80,7 @@ delete res.bigBuildMs;
 delete res.bigRenderMs;
 checkAll(res, {
   "emptyDevices": 0,
-  "emptyCount": "0 dev.",
+  "emptyNoHeaderCount": true,
   "xssPwned": false,
   "xssDeviceRendered": 1,
   "bigCount": 162,

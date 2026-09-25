@@ -60,7 +60,7 @@
       "audience": ["test"]
     },
     "editor-close": {
-      "elements": ["button", "ha-icon"],
+      "elements": ["button"],
       "since": "1.73.0-beta.7",
       "audience": ["test"]
     },

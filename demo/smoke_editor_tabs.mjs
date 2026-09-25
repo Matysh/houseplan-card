@@ -5,6 +5,7 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const tabs = () => [...sr().querySelectorAll('.modetab')];
+  const headerCross = () => sr().querySelector('.editor-close-slot .closex');
   const settleMode = async () => {
     const started = performance.now();
     do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
@@ -14,7 +15,10 @@ const res = await page.evaluate(async () => {
   // 1) две вкладки, Просмотра нет, крестиков в неактивных нет
   out.twoTabs = tabs().length === 3; // третья — Редактор подложки (v1.33.0)
   out.labels = tabs().map((t) => t.textContent.trim());
-  out.noCrossIdle = sr().querySelectorAll('.modetab .closex').length === 0;
+  // #647: X no longer lives inside a mode tab; its own slot after the tabs is
+  // empty (but keeps its size) outside an editor.
+  out.noCrossIdle = sr().querySelectorAll('.modetab .closex').length === 0
+    && !sr().querySelector('.editor-close-slot .closex');
   out.startView = c._mode === 'view';
   // 2) клик по «Редактор плана» → активна, панель с крестиком
   tabs()[0].click(); await c.updateComplete;
@@ -46,11 +50,11 @@ const res = await page.evaluate(async () => {
       - (barCloseRect.left + barCloseRect.width / 2)) <= 1
     && Math.abs((barCloseIconRect.top + barCloseIconRect.height / 2)
       - (barCloseRect.top + barCloseRect.height / 2)) <= 1;
-  out.tabCross = !!tabs()[0].querySelector('.closex');
+  out.tabCross = !!headerCross() && !tabs()[0].querySelector('.closex');
   // 3) повторный клик по активной вкладке — ничего
   tabs()[0].click(); await c.updateComplete;
   out.reclickNoop = c._mode === 'plan';
-  const enteringTabCross = tabs()[0].querySelector('.closex');
+  const enteringTabCross = headerCross();
   out.tabCrossCloseStartsDuringEnter = c._modeTransitionBusy;
   enteringTabCross.click();
   await settleMode();
@@ -194,21 +198,19 @@ const res = await page.evaluate(async () => {
   out.barCloseWorks = c._mode === 'view'
     && getComputedStyle(chrome).visibility === 'hidden'
     && chrome.getBoundingClientRect().height < 1;
-  // 7) X in every active tab keeps its 13 px glyph/layout footprint, but its
-  // real hit target is at least 24 px. Exercise the newly covered edge rather
-  // than calling the element's centre programmatically.
+  // 7) #647 (+#195): the header X sits in a fixed 24 x 24 slot after the mode
+  // tabs; the slot is its hit target around a 13 px glyph and has the same size
+  // outside an editor, so the header never changes width. Exercise the slot's
+  // edge rather than calling the element's centre programmatically.
   const tabCrossChecks = [];
   for (let index = 0; index < tabs().length; index++) {
     tabs()[index].click(); await settleMode();
-    const cross = tabs()[index].querySelector('.closex');
+    const cross = headerCross();
     const rect = cross.getBoundingClientRect();
-    const style = getComputedStyle(cross);
+    const slot = sr().querySelector('.editor-close-slot').getBoundingClientRect();
+    const glyph = cross.querySelector('ha-icon');
     const hit = sr().elementFromPoint(rect.left + 1, rect.top + rect.height / 2);
-    const horizontalFootprint = rect.width
-      + parseFloat(style.marginLeft) + parseFloat(style.marginRight);
-    const verticalFootprint = rect.height
-      + parseFloat(style.marginTop) + parseFloat(style.marginBottom);
-    const glyphStays13 = style.getPropertyValue('--mdc-icon-size').trim() === '13px';
+    const glyphStays13 = getComputedStyle(glyph).getPropertyValue('--mdc-icon-size').trim() === '13px';
     hit?.dispatchEvent(new MouseEvent('click', {
       bubbles: true,
       composed: true,
@@ -216,13 +218,14 @@ const res = await page.evaluate(async () => {
       clientY: rect.top + rect.height / 2,
     }));
     await settleMode();
+    const idleSlot = sr().querySelector('.editor-close-slot').getBoundingClientRect();
     tabCrossChecks.push({
       target: rect.width >= 24 && rect.height >= 24,
-      // Capture computed style before the click removes the active X from DOM.
       glyph: glyphStays13,
-      footprint: Math.abs(horizontalFootprint - 15) <= 0.1
-        && Math.abs(verticalFootprint - 13) <= 0.1,
-      edgeHit: hit === cross,
+      // The slot is the footprint: same box in the editor and after closing it.
+      footprint: Math.abs(slot.width - idleSlot.width) <= 0.5
+        && Math.abs(slot.height - idleSlot.height) <= 0.5 && Math.abs(slot.width - 24) <= 0.5,
+      edgeHit: !!hit && (hit === cross || cross.contains(hit)),
       closed: c._mode === 'view',
     });
   }
@@ -249,7 +252,7 @@ const res = await page.evaluate(async () => {
   c._activeWallChainPartitionIds = tabChainIds;
   c._path = [[100, 100], [200, 100], [250, 150]];
   c._wallChainSegmentCms = [15, 15];
-  tabs()[0].querySelector('.closex').click(); await settleMode();
+  headerCross().click(); await settleMode();
   out.tabCrossFinishesWallChain = c._mode === 'view'
     && (chainSpace.partitions || []).length === partitionCount + 2
     && c._path.length === 0 && !c._activeWallChainId;

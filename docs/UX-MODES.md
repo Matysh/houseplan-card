@@ -11,8 +11,8 @@
 The dedicated **House Plan** sidebar panel is the primary host for this mode
 system. It contributes the HA app bar and drawer button, then embeds the same
 full card used on dashboards. In panel-host mode only the duplicated product
-title disappears; space tabs, editor navigation, device count, zoom and actions
-remain. Dashboard and kiosk behaviour is unchanged.
+title disappears; space tabs, editor navigation, zoom and actions remain (the
+header device count was removed in #647). Dashboard and kiosk behaviour is unchanged.
 
 A segmented control in the card header with three tabs; the active one is visually
 highlighted, and edit modes add a colored frame around the stage so the mode is
@@ -31,7 +31,7 @@ inert everywhere outside its editor).
   state. A purely technical same-route Lovelace remount may preserve an
   unfinished editor session so an internal DOM rebuild does not destroy work.
 - Activating an editor tab highlights it and opens that editor's bottom toolbar
-  (all three editors have one). The toolbar and the active tab each
+  (all three editors have one). The toolbar and the header each
   carry an **X** that closes the editor back to View; re-clicking the active tab
   does nothing; editors switch directly with a short content fade and an
   interpolation between their measured toolbar heights, including wrapped
@@ -39,9 +39,12 @@ inert everywhere outside its editor).
   background and editor-specific layers move on one short timeline, so opening
   an editor never flashes a default scale or a mixed dark/white frame. A rapid
   second choice retargets from the visible intermediate frame. Reduced-motion
-  preferences apply the same final state immediately. The header X keeps its
-  compact 13 px glyph but owns a hit target of at least 24 × 24 px without
-  changing the tab's layout footprint.
+  preferences apply the same final state immediately. The header X sits in
+  its own fixed 24 × 24 px slot right after the mode tabs (#647): the slot keeps
+  its size, empty and hidden from assistive technology, outside the editors,
+  so entering, leaving or switching editors never changes the header width or
+  moves a tab; the X keeps its compact 13 px glyph and the whole slot is its
+  hit target (≥ 24 × 24 px, #195).
 - An editor's primary toolbar contains only persistent tools. Close is pinned
   in its own end cap. Selection actions, active-tool parameters, operation
   hints and palettes appear in one translucent context tray over the top of the

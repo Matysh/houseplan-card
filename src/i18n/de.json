@@ -50,7 +50,6 @@
   "physical.allowed_range": "Erlaubt: {min}–{max} {unit}",
   "physical.column_size_title": "Außenmaß der per Klick platzierten quadratischen Säule (1–150 cm).",
   "card.title": "Hausplan",
-  "count.devices": "{n} Entwicklung",
   "empty.no_spaces": "Noch keine Bereiche.",
   "nav.spaces": "House-Plan-Bereiche",
   "empty.add_first": "Ersten Bereich hinzufügen und einen Grundriss hochladen.",

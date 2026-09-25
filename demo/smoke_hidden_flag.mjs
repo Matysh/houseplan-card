@@ -32,7 +32,10 @@ Object.assign(out, await page.evaluate(async () => {
   o.hiddenNotRendered = visibleIds() === before - 1;
   const built = c._devices.find((x) => x.id === d.id);
   o.stillBuilt = !!built && built.hidden === true;
-  o.countExcludesHidden = (sr().querySelector('.count')?.textContent || '').includes(String(before - 1));
+  // #647 removed the header counter; the same rule is now asserted on the
+  // device list the counter used to read (hidden markers are not counted).
+  o.countExcludesHidden = c._devices.filter((x) => x.space === 'f1' && !x.hidden).length
+    === c._devices.filter((x) => x.space === 'f1').length - 1;
 
   // Ghost-режим теперь включается из единого каталога. В View каталога нет,
   // а призраки по-прежнему существуют только в Device editor.
