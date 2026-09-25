@@ -1,8 +1,8 @@
 {
-  "schema": 2,
+  "schema": 3,
   "matrixVersion": 64,
-  "acceptedAt": "2026-09-23T14:08:24.123Z",
-  "sourceFingerprint": "2b04d2889e0a5948d73c9e38fc89660ac8a2c64b91e0f4914849c235294f7787",
+  "acceptedAt": "2026-09-25T08:23:19.883Z",
+  "sourceFingerprint": "284838429ce80f96cfa10fb791c6aa3b837dcbbc3c2cf62cdc47d7e6bb6df108",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "win32",
@@ -10,19 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "2b04d2889e0a5948d73c9e38fc89660ac8a2c64b91e0f4914849c235294f7787",
+    "buildFingerprint": "284838429ce80f96cfa10fb791c6aa3b837dcbbc3c2cf62cdc47d7e6bb6df108",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 35870750208,
+      "run": 36111677966,
       "attempt": 1,
-      "sha": "5585bfb730db615831d6f794d56cbb978521d83c"
+      "sha": "27d78801d0436f5bd496699a6ee201f8276956a9"
     }
   },
+  "localAttestation": null,
   "foreignCapture": {
-    "reason": "acceptance of Linux CI artifact 35870750208 on Windows owner machine (#455, #640, #610)"
+    "reason": "visual acceptance of full Linux CI artifact 36111677966 for v1.78.0-beta.2 on Windows owner workstation"
   },
   "witnesses": {
-    "count": 111,
+    "count": 108,
     "floor": 10
   },
   "scenarios": {
@@ -97,9 +98,9 @@
     "opening-symbol-flip-pairs-light": "693fe97bae8375c6a16244fbb4ddaa1ed447732382a45d4629e1711e0aa0d45a",
     "isometric-opening-symbol-parity-dark": "cad79850e1477f4a014cd2cf42c4d8d29e96e3cf3190afc6f3336841eff26bfb",
     "geometry-devices-editor-dark": "e273c4fe49619a5856a9212ff6261803640e5afa79b841edfccf5a4056e0264d",
-    "device-inbox-desktop-en-light": "2556b2ca3916c016bec58767acc3eab445e32ef29ae59e8ef3580f27cdee9f21",
-    "device-inbox-desktop-ru-dark": "f6da7aca353c904e37f2aae9bda9ef79b0c102926f9b9dbab5f6d9b7a14bbfb3",
-    "device-inbox-narrow-ru-dark": "48336c685b2c6a25cae422912973b1e0876e38c2d2ddc92a643e6d121410af35",
+    "device-inbox-desktop-en-light": "f90cdc008a7fdadb7fa859776089ce1f0667ef2f764d61e7bd31ae3f4c1033c1",
+    "device-inbox-desktop-ru-dark": "0c45e46ff313540c428ae57e70d0c56e43eeb7a13bf730ecb22ace7bb0b2788e",
+    "device-inbox-narrow-ru-dark": "7b760c9cf4bee09066ee6fde1dc90a93da97d9eaa96a12cee773b8fd596fe5d8",
     "geometry-decor-editor-dark": "2f8a3742166c10c0a5aa1239c9b6b7d908e7e578dc43229274b17d015c47503c",
     "tray-wide-selection-en": "5a535b457b8b274ff25085ee992aebd95d756415afe1321d0aadee70610d5801",
     "tray-wide-tool-ru": "99abefe9c5b0f21356e87b46fc6d6d615cf9b799614c14bf8fffa0261fd9059a",
@@ -181,8 +182,8 @@
     "device-help-popover-light-ru": "0c2f92e0da2546222e8f870cbdadc90775016f9b5f77ae5b5159b790b706b65e",
     "decor-color-popover-mobile-ru": "de167d5a363758b26108f08f7e3f0ba7a44c8daf7461d1e54d719698d20ab208",
     "decor-color-popover-desktop-en": "ce6e85df6417dc8912ff7119c9851a7e15c4f28ed4097aa21e973e9da8d1ca0e",
-    "general-color-popover-desktop-en": "0844739f83194c57eb06d7684764ddf96f681690a58e0e4879c1d7771fe3d6e8",
-    "settings-help-zoom-200-en-light": "e18e1f3d74b7dcdf51391a99e354f812167af99fe22425a3fe8bb5e52f04f973",
+    "general-color-popover-desktop-en": "9aca14f12cd35f51df24ee2af87d61dff5b6e75926439c054adcc334b1ea60d8",
+    "settings-help-zoom-200-en-light": "9d9cdc0d849afc821efdf4451be40a1d32ecdff06a91b1d517b46c3f45cbcff0",
     "settings-help-zoom-200-ru-dark": "cb2a9f210b19057e26d42ca8975c3a888fb95de3f6cbd03515d1eccff39de387",
     "support-desktop-empty-light-en": "ec60104cb98b646db22089c93f70f78c3a13cdb7001782b2981ce19800ce3cee",
     "support-desktop-preview-dark-en": "37707b251c117eb381f7ddd6ad13a235be82c139a4d92dc07789a76cc425e946",
