@@ -10677,8 +10677,8 @@ const MUTANT_DEFINITIONS = [
       + 'сломанной шестерёнке; фасад нажимает её по-настоящему и обязан это заметить (#629 AC6)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: '      @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>',
-      replace: '      @click=${(e: Event) => { e.stopPropagation(); }}>',
+      find: '      @click=${(e: MouseEvent) => this.roomGear.click(e, r)}>',
+      replace: '      @click=${(e: MouseEvent) => e.stopPropagation()}>',
     }],
   },
   {
@@ -11979,6 +11979,41 @@ const MUTANT_DEFINITIONS = [
       // #600: у радиокнопки сегмента появился value — якорь дописан.
       find: '      <input type="radio" name=${name} value=${option.value} .checked=${option.value === value}',
       replace: '      <input type="checkbox" name=${name} value=${option.value} .checked=${option.value === value}',
+    }],
+  },
+  {
+    id: 'room-gear-drag-reopens-settings',
+    guard: 'node demo/smoke_room_gear_drag.mjs',
+    because: '#645 AC3: pointerup after moving the room-settings capsule must consume the '
+      + 'browser synthetic click once; removing the barrier reopens the dialog over the element '
+      + 'the user just uncovered',
+    patches: [{
+      file: 'src/room-gear-drag.ts',
+      find: '      this.suppressClickUntil = performance.now() + 700;',
+      replace: '      this.suppressClickUntil = 0; // mutant: drag click reopens settings',
+    }],
+  },
+  {
+    id: 'room-gear-second-touch-keeps-drag',
+    guard: 'node demo/smoke_room_gear_drag.mjs',
+    because: '#645 AC6: the second touch must cancel and roll back a room-button drag before '
+      + 'the sequence becomes pinch navigation; skipping this hook leaves the capsule grabbed '
+      + 'and may also activate it at gesture end',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: 'if (this._editorRuntime?._cancelRoomGearForMultitouch()) this._roomGearTouchNavigation = true;',
+      replace: '        void this._editorRuntime; // mutant: room-button drag survives second touch',
+    }],
+  },
+  {
+    id: 'resize-label-uses-old-room-gear-centre',
+    guard: 'node demo/smoke_resize_labels.mjs',
+    because: '#645 AC11: live Resize area labels must avoid the session position actually '
+      + 'rendered for the room button, not reserve the now-empty automatic centre',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '        ? (this.roomGear.center(room, poly, space!.id) || poleOfInaccessibility(poly))',
+      replace: '        ? poleOfInaccessibility(poly) // mutant: ignore the moved room button',
     }],
   },
 ];

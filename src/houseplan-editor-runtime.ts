@@ -69,6 +69,7 @@ import {
   placeResizeAreaLabel, resizeMeasuredEdges,
   type ResizeAreaPlacement,
 } from './resize-labels';
+import { RoomGearDragController } from './room-gear-drag';
 import { northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf, type SunRayOrigin } from './sun';
 import {
   furnitureDefaultCm,
@@ -812,6 +813,7 @@ export class HouseplanEditorRuntime {
   private _supportExpiryTimer?: number;
   private _supportPreviewGeneration = 0;
   private _decorAssetGuardReplace: boolean | null = null;
+  public readonly roomGear: RoomGearDragController;
   private readonly _decorImages: DecorImageEditor<SpaceGeometryState | null>;
   // #592: маркерный диалог уехал в src/editors/marker-dialog.ts и обращается
   // к контроллеру оттуда. Остальной класс использует `public _x` — поле
@@ -820,6 +822,15 @@ export class HouseplanEditorRuntime {
   /** #642: «Оптимизировать планы» — свой модуль с узким портом, не делегаты карточки. */
   public readonly optimizePlans: OptimizePlansDialog;
   public constructor(public readonly host: HouseplanEditorHostPort) {
+    const owner = host;
+    this.roomGear = new RoomGearDragController({
+      mode: () => owner._mode, spaceId: () => owner._space,
+      currentRoom: (roomId) => owner._spaceModel()?.rooms.find((room) => room.id === roomId),
+      planPoint: (event) => this._svgPoint(event),
+      queueMove: (run) => this._queuePointerMove('room-gear', run), flushMove: () => this._flushPointerMove('room-gear'),
+      cancelMove: () => this._cancelPointerMove('room-gear'), requestUpdate: () => owner.requestUpdate(),
+      openRoom: (room) => this._openRoomEdit(room),
+    });
     this._decorImages = new DecorImageEditor(host, {
       decorSnap: (raw, pointerType) => this._decorSnap(raw, pointerType),
       geometrySnapshot: () => this._geometrySnapshot(),
@@ -876,12 +887,14 @@ export class HouseplanEditorRuntime {
     >();
   }
 public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
+    const gearSpace = this.host._mode === 'plan' ? this.host._spaceModel() : null;
+    if (gearSpace) this.roomGear.adoptPlan(gearSpace);
     const live = routeHouseplanEditorUpdate(this.host, name, oldValue);
     if (!live && this.host._resize.preview) this._resizeBaseFrameStable = false;
     return live;
   }
 public _commitLiveEditor(): void { commitHouseplanEditor(this.host); }
-public _disposeLiveEditor(): void { this._radarSetup.reset(); disposeHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
   // An already queued pointer calculation runs before this continuation.
@@ -996,6 +1009,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       }
     }
     this.host._mode = mode;
+    if (previousMode === 'plan' && mode !== 'plan') this.roomGear.reset();
     if (previousMode === 'devices' && mode !== 'devices') {
       this.host._showHidden = false;
       this.host._deviceInbox = null;
@@ -3416,6 +3430,10 @@ public _rszEdgeLabels(
     );
     for (const id of ids) {
       const poly = res.polys[id] || rooms.find((r) => r.id === id)!.poly;
+      const room = space?.rooms.find((candidate) => candidate.id === id);
+      const gearCenter = room
+        ? (this.roomGear.center(room, poly, space!.id) || poleOfInaccessibility(poly))
+        : poleOfInaccessibility(poly);
       // The preview is already the active render model. Reuse the same shared
       // masonry union + contour cache that the following render consumes;
       // rebuilding both independently here doubled one Resize frame.
@@ -3435,7 +3453,7 @@ public _rszEdgeLabels(
         edge: plan.edgeByRoom[id],
         text,
         view,
-        gearCenter: poleOfInaccessibility(poly),
+        gearCenter,
         gearWidthPx,
         gearHeightPx,
       });
@@ -10254,28 +10272,28 @@ public _rlResizeUp(): void {
     this.host._persistLayout();
   }
 
+public _cancelRoomGearForMultitouch(): boolean { return this.roomGear.cancelForMultitouch(); }
+
 public _renderRoomGear(
     r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number },
   ): TemplateResult | typeof nothing {
     if (!r.id) return nothing;
-    let c: number[] | null = null;
-    if (r.poly) {
-      // the VISUAL centre (largest inscribed circle) — interiorPoint only
-      // promises "inside", which sat visibly off-centre on an L-shaped room.
-      // The model is memoized, so the poly array is a stable cache key.
-      c = this.host._gearPtCache.get(r.poly) || null;
-      if (!c) { c = poleOfInaccessibility(r.poly); this.host._gearPtCache.set(r.poly, c); }
-    } else if (r.x != null && r.y != null) {
-      c = [r.x + (r.w || 0) / 2, r.y + (r.h || 0) / 2];
-    }
+    this.roomGear.adoptPlan(space);
+    const c = this.roomGear.center(r, roomPoly(r), space.id);
     if (!c) return nothing;
     const left = ((c[0] - view.x) / view.w) * 100;
     const top = ((c[1] - view.y) / view.h) * 100;
-    return html`<button class="rlgearbtn" data-hp="room-settings" data-room=${r.id}
+    const dragging = this.roomGear.dragging(this.roomGear.key(r.id, space.id));
+    return html`<button class="rlgearbtn ${dragging ? 'dragging' : ''}"
+      data-hp="room-settings" data-room=${r.id}
       style="left:${left}%;top:${top}%"
       title=${this.host._t('room.settings_title')}
-      @pointerdown=${(e: Event) => e.stopPropagation()}
-      @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
+      @pointerdown=${(e: PointerEvent) => this.roomGear.pointerDown(e, r)}
+      @pointermove=${(e: PointerEvent) => this.roomGear.pointerMove(e)}
+      @pointerup=${(e: PointerEvent) => this.roomGear.pointerUp(e)}
+      @pointercancel=${(e: PointerEvent) => this.roomGear.pointerCancel(e)}
+      @lostpointercapture=${(e: PointerEvent) => this.roomGear.pointerCancel(e)}
+      @click=${(e: MouseEvent) => this.roomGear.click(e, r)}>
       <ha-icon icon="mdi:cog-outline"></ha-icon>
       <span class="rlgeartext">${this.host._t('room.settings_short')}</span>
     </button>`;

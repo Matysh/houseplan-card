@@ -1912,7 +1912,7 @@ export class HouseplanCard extends LitElement {
    * a synthetic tap on a device, room link, opening badge or editor control.
    */
   private _touchContacts = new Map<number, { x: number; y: number; inStage: boolean }>();
-  private readonly _touchClickGuard = new TouchGestureClickGuard();
+  private readonly _touchClickGuard = new TouchGestureClickGuard(); private _roomGearTouchNavigation = false;
   private get _touchSequenceMultitouch(): boolean {
     return this._touchClickGuard.sequenceMultitouch;
   }
@@ -2739,7 +2739,7 @@ export class HouseplanCard extends LitElement {
     // #369(д) r2-H1: the Shift listeners hold the runtime (and the card) in
     // their closure — a disconnected card must not stay pinned to window.
     this._editorRuntime?._furnShiftDetach();
-    this._touchContacts.clear();
+    this._touchContacts.clear(); this._roomGearTouchNavigation = false;
     this._touchClickGuard.reset();
     this._resetDeviceHitState();
     this._clearTransientHover(true);
@@ -7175,7 +7175,7 @@ export class HouseplanCard extends LitElement {
         y: pointer.clientY,
         inStage: !!(pointer.target as Element | null)?.closest?.('.stage'),
       });
-      if (this._touchContacts.size >= 2) {
+      if (this._touchContacts.size >= 2) { if (this._editorRuntime?._cancelRoomGearForMultitouch()) this._roomGearTouchNavigation = true;
         this._deviceHits.clearPointers();
         this._clearRoomFocus(true);
         this._clearTransientHover();
@@ -7185,7 +7185,7 @@ export class HouseplanCard extends LitElement {
         // Viewing is the guaranteed touch surface. Seed its existing stage
         // pinch pipeline even when a child swallowed the first pointerdown.
         const contacts = [...this._touchContacts.values()];
-        if (this._mode === 'view' && !this._vacFit
+        if ((this._mode === 'view' || this._roomGearTouchNavigation) && !this._vacFit
             && contacts.every((contact) => contact.inStage)) {
           this._pointers = new Map([...this._touchContacts].map(([id, contact]) => [
             id, { x: contact.x, y: contact.y },
@@ -7208,7 +7208,7 @@ export class HouseplanCard extends LitElement {
       if (!contact) return;
       const next = { ...contact, x: pointer.clientX, y: pointer.clientY };
       this._touchContacts.set(pointer.pointerId, next);
-      if (this._touchSequenceMultitouch && this._mode === 'view' && !this._vacFit && this._pinchStart
+      if (this._touchSequenceMultitouch && (this._mode === 'view' || this._roomGearTouchNavigation) && !this._vacFit && this._pinchStart
           && [...this._touchContacts.values()].every((item) => item.inStage)) {
         this._activateSafeDayCycleOutline(); this._pointers.set(pointer.pointerId, { x: pointer.clientX, y: pointer.clientY });
         const contacts = [...this._touchContacts.values()];
@@ -7230,7 +7230,7 @@ export class HouseplanCard extends LitElement {
       pointer.pointerId, pointer.pointerType,
     );
     this._clearTransientHover();
-    this._touchContacts.delete(pointer.pointerId);
+    this._touchContacts.delete(pointer.pointerId); if (!this._touchContacts.size) this._roomGearTouchNavigation = false;
     if (wasMultitouch) {
       this._pointers.delete(pointer.pointerId);
       if (!this._vacFit && this._pointers.size >= 2) {

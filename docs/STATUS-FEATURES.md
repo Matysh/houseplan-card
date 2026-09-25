@@ -108,7 +108,8 @@
   sizing.
 - **Room settings, tier 3** (v1.42.0): per-room fill/temp-source/label sizes;
   the settings button sits at the room's VISUAL centre (inscribed circle +
-  centroid pull), icon-derived size, zooms with the plan (v1.51.0).
+  centroid pull), icon-derived size, zooms with the plan (v1.51.0), and can be
+  moved temporarily inside the room for the current Plan-editor session (#645).
 - **Files & plans** (v1.44–v1.50): signed content urls with sandbox CSP,
   copy-on-write plan files, "already uploaded" picker + explicit delete
   (v1.47.0), store quotas instead of any age-based deletion (v1.49.0),

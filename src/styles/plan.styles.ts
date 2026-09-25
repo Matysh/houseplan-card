@@ -628,6 +628,7 @@ export const planStyles = css`
     @media (prefers-reduced-motion: reduce) {
       .zoomwrap.slide-left,
       .zoomwrap.slide-right { animation: none; }
+      .rlgearbtn { transition: none !important; }
     }
     /* The name is the anchor: the label box is centred on the room point, so
        anything that takes part in its layout SHIFTS THE NAME. The gear button
@@ -656,13 +657,20 @@ export const planStyles = css`
       font-weight: 600;
       line-height: 1;
       white-space: nowrap;
-      cursor: pointer;
+      cursor: grab;
       pointer-events: auto;
+      touch-action: none;
       opacity: 0.92;
       box-shadow: var(--shadow-1);
       z-index: 2;
     }
-    .rlgearbtn { transition: opacity 0.15s, filter 0.15s; }
+    .rlgearbtn { transition: opacity 0.15s, filter 0.15s, box-shadow 0.15s; }
+    .rlgearbtn.dragging {
+      cursor: grabbing;
+      opacity: 1;
+      filter: brightness(1.1);
+      box-shadow: var(--shadow-3, 0 8px 20px rgb(0 0 0 / 0.28));
+    }
     :host([data-pointer-hover]) .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
     .rlgearbtn ha-icon { --mdc-icon-size: calc(var(--gear-h) * 0.55); display: inline-flex; }
     .rlgear {

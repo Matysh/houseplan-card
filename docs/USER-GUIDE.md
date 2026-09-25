@@ -558,6 +558,12 @@ shows the final result. A real diagonal remains unchanged. Older invisible
 one-grid-step slopes are offered separately by **Optimize plans**, with the
 number of walls and maximum movement shown before confirmation.
 
+If **Room settings** covers an element you need, drag anywhere on its capsule.
+It stays inside that room and remembers the temporary position until you leave
+the Plan editor; zooming, panning or visiting another floor does not reset it.
+This is session-only assistance: it writes neither config nor Undo history. A
+plain click or tap without a drag still opens Room settings.
+
 ### Plan tools at a glance
 
 | Tool | Result | Room area | Light and shadow | Main limit |

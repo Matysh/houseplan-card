@@ -38,6 +38,11 @@ const result = await page.evaluate(async () => {
   card._resize.reset();
   await update();
 
+  // #645: place the left room's session-only gear beside the live area label.
+  // Resize must use this rendered centre, not the old pole-of-inaccessibility.
+  card._editorRuntime.roomGear.positions.set(`${space.id}\u0000label-left`, [292, 300]);
+  await update();
+
   const handle = [...card.renderRoot.querySelectorAll('.rszhandle')]
     .find((node) => Math.abs(Number(node.getAttribute('cx')) - 300) < 1
       && Math.abs(Number(node.getAttribute('cy')) - 300) < 1
@@ -93,6 +98,9 @@ const result = await page.evaluate(async () => {
     return a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom;
   });
   out.tangentAvoidanceUsed = areas.some((label) => Math.abs(label.placement.tangentOffsetPx) > 0);
+  out.movedGearDrivesResizePlacement = Math.abs(
+    areas.find((label) => label.roomId === 'label-left')?.placement.tangentOffsetPx || 0,
+  ) > 0;
 
   dispatch('pointerup', tx, sy);
   await update();

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- In the Plan editor, the **Room settings** button can now be moved temporarily
+  within its room when it covers a wall, opening or another element. The
+  position lasts until the editor is closed and does not change the plan; a
+  normal click still opens settings
+  ([#645](https://github.com/Matysh/houseplan-card/issues/645)).
 - Plan files up to 8 MB now actually upload: the plan is sent over HTTP
   instead of the Home Assistant WebSocket, whose message limit used to drop
   the connection for any plan above about 3 MB. A file over 8 MB is refused

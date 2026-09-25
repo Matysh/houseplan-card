@@ -367,6 +367,17 @@ export const SMOKE_LINKS = [
   },
   {
     symbols: [
+      'ROOM_GEAR_DRAG_THRESHOLD_PX', 'roomGearPointAllowed', 'roomGearAutoCenter',
+      'resolveRoomGearCenter', 'roomGearDragMoved', 'clampRoomGearPointAlongPath',
+      'RoomGearDragController', '_cancelRoomGearForMultitouch',
+    ],
+    smokes: ['smoke_room_gear_drag.mjs', 'smoke_resize_labels.mjs'],
+    because: 'the #645 production gestures prove temporary room-button movement, click/drag '
+      + 'arbitration, room-boundary clamping, cancel/multitouch rollback and session reset; the '
+      + 'Resize smoke proves its live area labels avoid the actually rendered room button',
+  },
+  {
+    symbols: [
       'placeResizeAreaLabel', 'resizeInwardNormal', 'resizeMeasuredEdges',
       'ResizeAreaPlacement', 'ResizeAreaPlacementInput', 'ResizeLabelView',
     ],
