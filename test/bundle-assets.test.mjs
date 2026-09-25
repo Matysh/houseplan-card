@@ -709,12 +709,13 @@ test('#535 no built entry reaches the card by an address without a version', () 
     'сам фасад остаётся стабильным входом Lovelace-ресурса и тянет хешированный чанк');
 });
 
-test('bundle tree verification rejects orphan chunks (#353 AC4)', async () => {
+test('bundle tree verification rejects orphan chunks (#353 AC4)', async (t) => {
   const { mkdtempSync, writeFileSync, mkdirSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
   const { verifyBundleTree, sha256Bytes } = await import('../scripts/bundle-tree.mjs');
   const root = mkdtempSync(join(tmpdir(), 'hp-tree-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, 'houseplan-assets'));
   const entryCode = 'try{await import("./houseplan-assets/main-abc.js")}catch(e){}';
   const panelCode = 'try{await import("./houseplan-card.js")}catch(e){}';

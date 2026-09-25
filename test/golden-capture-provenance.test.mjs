@@ -87,34 +87,47 @@ const HOST_TEST_ALLOWANCE = process.platform === 'linux'
   : '#576: unit-тест приёмки из закреплённого Windows toolchain';
 
 function accept(from, { reason = HOST_TEST_ALLOWANCE, expectFailure = false } = {}) {
+  // #646: каталог эталонов ≈ 20 МБ, и прежде он оставался в TMPDIR после
+  // каждого вызова — 433 копии за серию прогонов, 8,5 ГБ, ENOSPC. Всё, что
+  // тесту нужно из песочницы, читается здесь; наружу она не отдаётся.
   const sandbox = mkdtempSync(resolve(tmpdir(), 'hp-golden-571-baselines-'));
-  cpSync(BASELINES, sandbox, { recursive: true });
-  const env = { ...process.env };
-  if (reason) env.HP_ALLOW_FOREIGN_CAPTURE = reason; else delete env.HP_ALLOW_FOREIGN_CAPTURE;
   try {
-    // Сцены без эталона объявляются явно: `--expect-new` — это утверждение
-    // «я посмотрел на новый кадр», и обойти его фикстура не должна.
-    const fresh = GOLDEN_SCENARIOS
-      .filter((scenario) => !existsSync(resolve(BASELINES, `${scenario.id}.png`)))
-      .map((scenario) => scenario.id);
-    const stdout = execFileSync(process.execPath,
-      [resolve(ROOT, 'demo/golden/accept.mjs'), '--reviewed', `--from=${from}`, `--baselines=${sandbox}`,
-        ...(fresh.length ? [`--expect-new=${fresh.join(',')}`] : [])],
-      { cwd: ROOT, env, encoding: 'utf8' });
-    if (expectFailure) throw new Error('приёмка обязана была отказать, а прошла');
-    return { stdout, index: JSON.parse(readFileSync(resolve(sandbox, 'baselines-index.json'), 'utf8')), sandbox };
-  } catch (error) {
-    if (!expectFailure) throw error;
-    return {
-      error: String(error.stderr || error.message),
-      index: JSON.parse(readFileSync(resolve(sandbox, 'baselines-index.json'), 'utf8')),
-      sandbox,
-    };
+    cpSync(BASELINES, sandbox, { recursive: true });
+    const env = { ...process.env };
+    if (reason) env.HP_ALLOW_FOREIGN_CAPTURE = reason; else delete env.HP_ALLOW_FOREIGN_CAPTURE;
+    try {
+      // Сцены без эталона объявляются явно: `--expect-new` — это утверждение
+      // «я посмотрел на новый кадр», и обойти его фикстура не должна.
+      const fresh = GOLDEN_SCENARIOS
+        .filter((scenario) => !existsSync(resolve(BASELINES, `${scenario.id}.png`)))
+        .map((scenario) => scenario.id);
+      const stdout = execFileSync(process.execPath,
+        [resolve(ROOT, 'demo/golden/accept.mjs'), '--reviewed', `--from=${from}`, `--baselines=${sandbox}`,
+          ...(fresh.length ? [`--expect-new=${fresh.join(',')}`] : [])],
+        { cwd: ROOT, env, encoding: 'utf8' });
+      if (expectFailure) throw new Error('приёмка обязана была отказать, а прошла');
+      return { stdout, index: JSON.parse(readFileSync(resolve(sandbox, 'baselines-index.json'), 'utf8')) };
+    } catch (error) {
+      if (!expectFailure) throw error;
+      return {
+        error: String(error.stderr || error.message),
+        index: JSON.parse(readFileSync(resolve(sandbox, 'baselines-index.json'), 'utf8')),
+      };
+    }
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
   }
 }
 
-test('#571 AC1: артефакт Linux принимается, обе стороны провенанса записаны', () => {
-  const from = fixture({ platform: 'linux' });
+/** Артефакт съёмки, который убирается по завершении теста, даже упавшего (#646). */
+function artifact(t, options) {
+  const dir = fixture(options);
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  return dir;
+}
+
+test('#571 AC1: артефакт Linux принимается, обе стороны провенанса записаны', (t) => {
+  const from = artifact(t, { platform: 'linux' });
   const { index } = accept(from);
   assert.equal(index.schema, GOLDEN_INDEX_SCHEMA);
   assert.equal(index.capturedOn, 'linux', 'платформа КАДРОВ — из отчёта');
@@ -124,61 +137,55 @@ test('#571 AC1: артефакт Linux принимается, обе сторо
   assert.equal(index.localAttestation, null, 'CI source is not presented as local WSL');
   assert.deepEqual(index.foreignCapture, HOST_TEST_ALLOWANCE ? { reason: HOST_TEST_ALLOWANCE } : null,
     'не-Linux хост теста оставляет явный след осознанного обхода');
-  rmSync(from, { recursive: true, force: true });
 });
 
 test('#641: локальная Linux-съёмка без CI и WSL-аттестации отвергается до записи', {
   skip: process.platform !== 'linux' && 'целевой guard исполняется в канонической Linux-среде приёмки',
-}, () => {
-  const from = fixture({ platform: 'linux', captureEnv: {} });
+}, (t) => {
+  const from = artifact(t, { platform: 'linux', captureEnv: {} });
   assert.equal(existsSync(resolve(from, 'wsl-attestation.json')), false,
     'обычный golden:capture не должен неявно получать WSL-аттестацию');
   const before = JSON.parse(readFileSync(resolve(BASELINES, 'baselines-index.json'), 'utf8'));
   const { error, index } = accept(from, { reason: '', expectFailure: true });
   assert.match(error, /локальная Linux-съёмка не аттестована/);
   assert.deepEqual(index, before, 'отказ обязан произойти до изменения эталонов и индекса');
-  rmSync(from, { recursive: true, force: true });
 });
 
-test('#571 AC2: чужая среда съёмки без причины — отказ до записи', () => {
-  const from = fixture({ platform: 'win32' });
+test('#571 AC2: чужая среда съёмки без причины — отказ до записи', (t) => {
+  const from = artifact(t, { platform: 'win32' });
   const before = readFileSync(resolve(BASELINES, 'baselines-index.json'), 'utf8');
   const { error, index } = accept(from, { reason: '', expectFailure: true });
   assert.match(error, /приёмка отказана/);
   assert.match(error, /win32/);
   assert.equal(index.capturedOn ?? null, JSON.parse(before).capturedOn ?? null,
     'индекс обязан остаться нетронутым: отказ до записи');
-  rmSync(from, { recursive: true, force: true });
 });
 
-test('#571 AC1: чужая среда съёмки с причиной — причина уезжает в индекс', () => {
-  const from = fixture({ platform: 'win32' });
+test('#571 AC1: чужая среда съёмки с причиной — причина уезжает в индекс', (t) => {
+  const from = artifact(t, { platform: 'win32' });
   const reason = 'аудит #571: проверяю ветку осознанного обхода';
   const { index, stdout } = accept(from, { reason });
   assert.equal(index.capturedOn, 'win32');
   assert.equal(index.acceptedOn, process.platform);
   assert.deepEqual(index.foreignCapture, { reason });
   assert.match(stdout, /Чужая среда разрешена осознанно/);
-  rmSync(from, { recursive: true, force: true });
 });
 
-test('#571 схема 2 fail-closed: раздел capture обязателен', () => {
+test('#571 схема 2 fail-closed: раздел capture обязателен', (t) => {
   assert.throws(() => reportCaptureProvenance({ schema: 2 }), /обязан нести раздел capture/);
   assert.throws(() => reportCaptureProvenance({ schema: 2, capture: { arch: 'x64' } }), /не называет платформу/);
-  const from = fixture({ capture: { arch: 'x64', chromium: '1' } });
+  const from = artifact(t, { capture: { arch: 'x64', chromium: '1' } });
   const { error } = accept(from, { expectFailure: true });
   assert.match(error, /не называет платформу съёмки/);
-  rmSync(from, { recursive: true, force: true });
 });
 
-test('#571 старая схема — отдельная явная ветка, а не подстановка своей платформы', () => {
+test('#571 старая схема — отдельная явная ветка, а не подстановка своей платформы', (t) => {
   assert.deepEqual(reportCaptureProvenance({ schema: 1 }), { provenance: null, legacy: true });
-  const from = fixture({ schema: 1 });
+  const from = artifact(t, { schema: 1 });
   const { index, stdout } = accept(from);
   assert.equal(index.capturedOn, null, 'выдумывать платформу кадров нельзя');
   assert.equal(index.acceptedOn, process.platform);
   assert.match(stdout, /Отчёт старой схемы/);
-  rmSync(from, { recursive: true, force: true });
 });
 
 test('#571 индекс любой схемы читается одним правилом', () => {
@@ -188,15 +195,13 @@ test('#571 индекс любой схемы читается одним пра
   assert.equal(indexCapturedOn(null), null);
 });
 
-test('#571 подмена PNG и неполный артефакт по-прежнему fail-closed', () => {
-  const tampered = fixture();
+test('#571 подмена PNG и неполный артефакт по-прежнему fail-closed', (t) => {
+  const tampered = artifact(t);
   const victim = resolve(tampered, 'actual', `${GOLDEN_SCENARIOS[0].id}.png`);
   writeFileSync(victim, Buffer.concat([readFileSync(victim), Buffer.from([0])]));
   assert.match(accept(tampered, { expectFailure: true }).error, /candidate changed after capture/);
-  rmSync(tampered, { recursive: true, force: true });
 
-  const incomplete = fixture();
+  const incomplete = artifact(t);
   rmSync(resolve(incomplete, 'actual', `${GOLDEN_SCENARIOS[1].id}.png`));
   assert.match(accept(incomplete, { expectFailure: true }).error, /review candidate missing/);
-  rmSync(incomplete, { recursive: true, force: true });
 });

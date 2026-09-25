@@ -238,15 +238,17 @@ function runStepRebase(work) {
   const to = body.indexOf('# #635 r2:');
   assert.ok(from >= 0 && to > from, 'ребейзная часть шага найдена');
   const temp = mkdtempSync(join(tmpdir(), 'hp-runner-'));
-  const output = join(temp, 'output');
-  writeFileSync(output, '');
-  const script = `${body.slice(from, to)}\necho REBASED\n`;
-  const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
-    cwd: work, encoding: 'utf8', env: { ...ENV, RUNNER_TEMP: temp, GITHUB_OUTPUT: output, BRANCH: 'issue/9-fix' },
-  });
-  const result = { status: r.status, stdout: r.stdout, stderr: r.stderr, output: readFileSync(output, 'utf8') };
-  rmSync(temp, { recursive: true, force: true });
-  return result;
+  try {
+    const output = join(temp, 'output');
+    writeFileSync(output, '');
+    const script = `${body.slice(from, to)}\necho REBASED\n`;
+    const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
+      cwd: work, encoding: 'utf8', env: { ...ENV, RUNNER_TEMP: temp, GITHUB_OUTPUT: output, BRANCH: 'issue/9-fix' },
+    });
+    return { status: r.status, stdout: r.stdout, stderr: r.stderr, output: readFileSync(output, 'utf8') };
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
 }
 
 const hasBash = () => process.platform !== 'win32' && spawnSync('bash', ['--version']).status === 0

@@ -3,7 +3,7 @@ import test from 'node:test';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { acceptIdentical, acceptedDocsManifest, identicalDecision, identicalDocsManifest, verifyDocsCandidate } from '../scripts/docs-accept.mjs';
@@ -213,8 +213,9 @@ test('#455 принятый манифест несёт среду приёмк�
 
 // ---------- #512: --identical ----------
 
-const identicalRoot = (frames) => {
+const identicalRoot = (t, frames) => {
   const root = mkdtempSync(join(tmpdir(), 'hp-identical-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, 'docs', 'images'), { recursive: true });
   const scenarios = {};
   for (const scenario of DOC_SCREENSHOTS) {
@@ -241,8 +242,8 @@ const identicalRoot = (frames) => {
   return { root, manifest, capture, compare };
 };
 
-test('#512 AC3: identical frames accept only the source fingerprint; bytes and provenance stay committed', async () => {
-  const { root, manifest, capture, compare } = identicalRoot({});
+test('#512 AC3: identical frames accept only the source fingerprint; bytes and provenance stay committed', async (t) => {
+  const { root, manifest, capture, compare } = identicalRoot(t, {});
   const log = [];
   const code = await acceptIdentical({ root, capture, compare, log: (line) => log.push(line) });
   assert.equal(code, 0);
@@ -259,8 +260,8 @@ test('#512 AC3: identical frames accept only the source fingerprint; bytes and p
   assert.match(log[0], /попиксельно совпали/);
 });
 
-test('#512 AC3: one differing pixel refuses, names the frame and leaves everything committed as it was', async () => {
-  const { root, manifest, capture, compare } = identicalRoot({ 'view-desktop': { identical: false, differing: 3, sizeMismatch: false } });
+test('#512 AC3: one differing pixel refuses, names the frame and leaves everything committed as it was', async (t) => {
+  const { root, manifest, capture, compare } = identicalRoot(t, { 'view-desktop': { identical: false, differing: 3, sizeMismatch: false } });
   const log = [];
   const code = await acceptIdentical({ root, capture, compare, log: (line) => log.push(line) });
   assert.equal(code, 1);

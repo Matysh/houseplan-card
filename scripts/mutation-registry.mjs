@@ -2989,6 +2989,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'golden-accept-sandbox-leaks',
+    guard: 'node --test test/temp-dir-hygiene.test.mjs',
+    because: 'the ~20 MB baselines sandbox of accept() outliving every call is what filled the '
+      + 'shared TMPDIR to 8.5 GB and ENOSPC (#646 AC2)',
+    patches: [{
+      file: 'test/golden-capture-provenance.test.mjs',
+      find: '    rmSync(sandbox, { recursive: true, force: true });',
+      replace: '    // sandbox is left for inspection',
+    }],
+  },
+  {
+    id: 'temp-hygiene-accepts-cleanup-outside-finally',
+    guard: 'node --test test/temp-dir-hygiene.test.mjs',
+    because: 'a trailing rmSync after the asserts does not run when an assert fails, so a red '
+      + 'test still leaks; the lint must not count it as cleanup (#646 AC2)',
+    patches: [{
+      file: 'test/temp-dir-hygiene.test.mjs',
+      find: 'function inCleanupPosition(node, scope) {',
+      replace: 'function inCleanupPosition(node, scope) {\n  if (node) return true;',
+    }],
+  },
+  {
     id: 'ha-harness-notice-silent',
     guard: 'python3 -m pytest tests_backend/test_conftest_harness_notice.py -q -p no:cacheprovider',
     because: 'without Home Assistant test_ha_*.py are not collected at all; a run that '
