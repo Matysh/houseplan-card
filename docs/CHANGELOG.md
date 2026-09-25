@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.78.0-beta.3 — 2026-09-25
+
 - The 2.5D plan is now available to everyone: **General settings → Display →
   Show the plan in 2.5D** turns it on once for the whole installation — every
   space, device and kiosk — and saving switches the View at once. Device

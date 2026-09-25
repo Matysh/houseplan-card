@@ -1,20 +1,20 @@
-<!-- release: v1.78.0-beta.2 -->
+<!-- release: v1.78.0-beta.3 -->
 
 ## Основное
 
-- Кнопку **«Настройки комнаты»** теперь можно временно перетащить внутри комнаты, чтобы освободить перекрытый элемент; отмена Resize не сбрасывает выбранное положение ([#645](https://github.com/Matysh/houseplan-card/issues/645)).
-- Планы до 8 МБ теперь загружаются по HTTP без обрыва WebSocket, а каталог устройств получил надёжные пакетные действия **Скрыть выбранные** и **Показать выбранные** ([#617](https://github.com/Matysh/houseplan-card/issues/617), [#618](https://github.com/Matysh/houseplan-card/issues/618)).
-- Плитки цветов заливки и свечения снова наглядно показывают прозрачность поверх шахматного фона ([#615](https://github.com/Matysh/houseplan-card/issues/615)).
+- Объёмный вид 2.5D вышел из экспериментального режима: он включается в общих настройках и добавляет приподнятые плитки устройств, мягкие тени и свет из окон, не меняя обычный плоский план ([#649](https://github.com/Matysh/houseplan-card/issues/649)).
+- На телефоне шапка помещается в одну строку с меню действий, а на широких экранах основная панель больше не показывает счётчик устройств и не меняет ширину при входе в редакторы ([#616](https://github.com/Matysh/houseplan-card/issues/616), [#647](https://github.com/Matysh/houseplan-card/issues/647)).
+- Карточка в Sections получила штатное изменение высоты; пользователи Home Assistant с ролью `system-read-only` теперь гарантированно остаются только зрителями House Plan ([#648](https://github.com/Matysh/houseplan-card/issues/648), [#626](https://github.com/Matysh/houseplan-card/issues/626)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- The **Room settings** button can now be moved temporarily within its room to uncover another element; cancelling Resize preserves the chosen position ([#645](https://github.com/Matysh/houseplan-card/issues/645)).
-- Plans up to 8 MB now upload over HTTP without hitting Home Assistant's WebSocket limit, and the device catalog adds reliable **Hide selected** and **Show selected** batch actions ([#617](https://github.com/Matysh/houseplan-card/issues/617), [#618](https://github.com/Matysh/houseplan-card/issues/618)).
-- Room-fill and glow colour tiles once again display opacity clearly over a checkerboard background ([#615](https://github.com/Matysh/houseplan-card/issues/615)).
+- The 2.5D view has left experimental mode: it is enabled in General settings and adds raised device tiles, soft shadows and window light without changing the ordinary flat plan ([#649](https://github.com/Matysh/houseplan-card/issues/649)).
+- On phones the header now fits in one row with an actions menu, while on wider screens the main toolbar no longer shows the device count or changes width when entering an editor ([#616](https://github.com/Matysh/houseplan-card/issues/616), [#647](https://github.com/Matysh/houseplan-card/issues/647)).
+- Cards in Sections can now be resized vertically with Home Assistant's standard handle; Home Assistant `system-read-only` users are now guaranteed to remain House Plan viewers only ([#648](https://github.com/Matysh/houseplan-card/issues/648), [#626](https://github.com/Matysh/houseplan-card/issues/626)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.2/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.2/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.3/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.3/docs/CHANGELOG.md)

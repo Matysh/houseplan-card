@@ -296,7 +296,7 @@ import { isoLightFloorRooms, isoWallMaterialVars, parseCssColor } from './iso-ma
 import { renderIsoTileShadow } from './iso-tiles';
 import { displayVersion } from './card-version';
 
-const CARD_VERSION = '1.78.0-beta.2';
+const CARD_VERSION = '1.78.0-beta.3';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
