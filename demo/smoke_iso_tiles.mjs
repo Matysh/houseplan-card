@@ -58,6 +58,8 @@ const read = (ids) => page.evaluate(([white, tinted]) => {
     twinsInLayerOnly: [...root.querySelectorAll('.iso-tile-shadow')].every((s) => s.parentElement === shadows),
     twinsInert: [...root.querySelectorAll('.iso-tile-shadow')].every((s) => getComputedStyle(s).pointerEvents === 'none'
       && s.getAttribute('aria-hidden') === 'true' && !s.hasAttribute('tabindex')),
+    twinsGeometryOnly: [...root.querySelectorAll('.iso-tile-shadows .dev.iso-tile-shadow')]
+      .every((s) => !s.querySelector('ha-icon, .device-pulse, .activity-dot, .newdot, .habadge, .lqi')),
     badgeGap: (() => {
       const dev = marker('d_temp');
       const core = dev?.querySelector('.device-core')?.getBoundingClientRect();
@@ -117,6 +119,7 @@ res.hitTarget44 = iso.white.hit[0] >= 44 && iso.white.hit[1] >= 44;
 // ---- AC4: one shadow layer, table per theme × floor -------------------------
 res.oneShadowLayer = iso.layer && iso.twinsInLayerOnly && iso.twinCount === iso.markerCount;
 res.shadowsInert = iso.twinsInert;
+res.shadowTwinsAreGeometryOnly = iso.twinsGeometryOnly;
 const TABLE = {
   'light-dark': { dy: 0.375, sigma: 0.275, white: 0.34, tinted: 0.5 },
   'light-light': { dy: 0.425, sigma: 0.1375, white: 0.3, tinted: 0.42 },

@@ -144,3 +144,50 @@ export function renderDeviceFace(
       : nothing}
   `;
 }
+
+/**
+ * Geometry-only twin used by the common 2.5D floor-shadow layer.
+ *
+ * The shadow needs the same core/badge boxes and text measurements as the
+ * visible face, but none of its custom elements, activity indicators,
+ * accessibility decorations or satellites. Rendering the complete face for
+ * every twin doubled the expensive marker subtree on large plans even though
+ * CSS immediately hid those nodes (#649 pre-release performance gate).
+ */
+export function renderDeviceShadowFace(
+  presentation: ResolvedDevicePresentation,
+): TemplateResult {
+  const legacyMetrics = legacySupplementalMetrics(presentation);
+  const badge = presentation.valueBadge;
+  const shellPosition = badge?.position || 'right';
+  const hasSections = !!badge || legacyMetrics.length > 0;
+  const shellClasses = [
+    'device-shell',
+    presentation.valueText != null ? 'text-shell' : '',
+    hasSections ? `with-values pos-${shellPosition}` : '',
+    legacyMetrics.length ? 'with-legacy' : '',
+  ].filter(Boolean).join(' ');
+  return html`
+    <span class=${shellClasses} aria-hidden="true">
+      <span class="device-core">
+        ${presentation.valueText != null
+          ? html`<span class="valtext"
+              style=${`--value-font-scale:${deviceTextScale(presentation.valueFullText || presentation.valueText)}`}
+            >${presentation.valueText}</span>`
+          : nothing}
+      </span>
+      ${hasSections ? html`<span class="device-sections">
+        ${badge
+          ? html`<span
+              class=${valueBadgeClassName(badge)}
+              style=${`--value-font-scale:${deviceTextScale(badge.fullText || badge.text)}`}
+            >${badge.text}</span>`
+          : nothing}
+        ${legacyMetrics.map((metric) => html`<span
+          class="value-badge legacy-secondary available tone-${metric.kind}"
+          style=${`--value-font-scale:${deviceTextScale(metric.text + metric.suffix)}`}
+        >${metric.text}${metric.suffix}</span>`)}
+      </span>` : nothing}
+    </span>
+  `;
+}

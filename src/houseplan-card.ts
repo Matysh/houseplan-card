@@ -211,7 +211,9 @@ import { RadarLiveController } from './radar-live';
 import { renderRadarLive } from './radar-render';
 import { isMarkerRadarV1, radarHealthI18nKey, radarMarkerLiveInSpace } from './radar-model';
 import type { HassRenderSnapshot } from './render-invalidation';
-import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
+import {
+  deviceFaceStyle, deviceThemeClass, renderDeviceFace, renderDeviceShadowFace,
+} from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
 import {
   ModeTransitionController, viewportFromViewBox,
@@ -11761,7 +11763,7 @@ export class HouseplanCard extends LitElement {
     const presentation = this._devicePresentation(d, showLqi);
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
     const floorLight = this._isoLightFloors?.has(isoPlacement?.owner?.id ?? (this._isoLightFloors.size ? this._spaceModel()?.rooms.find((r) => this._pointInRoom([pos.x, pos.y], r))?.id : '') ?? '') ? 'iso-floor-light' : '';
-    if (ghost) return renderIsoTileShadow('dev', d.id, `${deviceThemeClass(this._renderPlanHass)} ${presentation.classes.join(' ')} ${floorLight}`, st.join(';'), renderDeviceFace(presentation, { surface: 'interactive-plan' }));
+    if (ghost) return renderIsoTileShadow('dev', d.id, `${deviceThemeClass(this._renderPlanHass)} ${presentation.classes.join(' ')} ${floorLight}`, st.join(';'), renderDeviceShadowFace(presentation));
     const disabledReason = presentation.disabledReason;
     const ghostLabel = presentation.haDisabled
       ? this._t((`marker.ha_disabled_${disabledReason}`) as any)
