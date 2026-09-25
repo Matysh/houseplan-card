@@ -289,10 +289,11 @@ function main(argv) {
     const byFile = countWrites(ROOT);
     const writes = byFile.reduce((sum, f) => sum + f.writes, 0);
     const calls = byFile.reduce((sum, f) => sum + f.calls, 0);
-    for (const f of byFile.sort((a, b) => b.writes - a.writes || a.path.localeCompare(b.path))) {
-      console.log(`${String(f.writes).padStart(5)} ${String(f.calls).padStart(5)}  ${f.path}`);
-    }
-    console.log(`Итого: записей ${writes}, покрытых фасадом вызовов ${calls} в ${byFile.length} файл(ах).`);
+    const lines = byFile
+      .sort((a, b) => b.writes - a.writes || a.path.localeCompare(b.path))
+      .map((f) => `${String(f.writes).padStart(5)} ${String(f.calls).padStart(5)}  ${f.path}`);
+    lines.push(`Итого: записей ${writes}, покрытых фасадом вызовов ${calls} в ${byFile.length} файл(ах).`);
+    process.stdout.write(`${lines.join('\n')}\n`);
     return 0;
   }
 
