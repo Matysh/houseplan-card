@@ -131,13 +131,11 @@ const out = await page.evaluate(async () => {
     await setRows(rows);
     for (const mode of ['plan', 'devices', 'decor']) {
       const entering = window.__hpTest.setMode(mode);
-      const enteringStage = await waitFor(() => {
-        const stage = root.querySelector('.stage');
-        return card._modeTransitionBusy && stage.style.height.endsWith('px') ? stage : null;
+      const enteringState = await waitFor(() => {
+        const state = card._modeTransition.state;
+        return state?.targetMode === mode ? state : null;
       }, `${mode} transition frame at ${rows} rows`);
-      const enteringHeader = root.querySelector('.hdr').getBoundingClientRect().height;
-      transitionsUseSlotHeight &&= Number.parseFloat(enteringStage.style.height)
-        <= rowHeight(rows) - enteringHeader + 1;
+      transitionsUseSlotHeight &&= enteringState.to.stageHeight <= card.clientHeight + 1;
       await entering;
       await waitFor(() => card._mode === mode && !card._modeTransitionBusy,
         `${mode} enter at ${rows} rows`);
@@ -147,13 +145,11 @@ const out = await page.evaluate(async () => {
       editorsSettle &&= !root.querySelector('.stage').hasAttribute('inert')
         && !root.querySelector('.editorchrome')?.classList.contains('transitioning');
       const leaving = window.__hpTest.setMode('view');
-      const leavingStage = await waitFor(() => {
-        const stage = root.querySelector('.stage');
-        return card._modeTransitionBusy && stage.style.height.endsWith('px') ? stage : null;
+      const leavingState = await waitFor(() => {
+        const state = card._modeTransition.state;
+        return state?.targetMode === 'view' ? state : null;
       }, `${mode} exit transition frame at ${rows} rows`);
-      const leavingHeader = root.querySelector('.hdr').getBoundingClientRect().height;
-      transitionsUseSlotHeight &&= Number.parseFloat(leavingStage.style.height)
-        <= rowHeight(rows) - leavingHeader + 1;
+      transitionsUseSlotHeight &&= leavingState.to.stageHeight <= card.clientHeight + 1;
       await leaving;
       await waitFor(() => card._mode === 'view' && !card._modeTransitionBusy,
         `${mode} exit at ${rows} rows`);
