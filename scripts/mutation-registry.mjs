@@ -12012,8 +12012,20 @@ const MUTANT_DEFINITIONS = [
       + 'rendered for the room button, not reserve the now-empty automatic centre',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: '        ? (this.roomGear.center(room, poly, space!.id) || poleOfInaccessibility(poly))',
+      find: '        ? (this.roomGear.previewCenter(room, poly, space!.id) || poleOfInaccessibility(poly))',
       replace: '        ? poleOfInaccessibility(poly) // mutant: ignore the moved room button',
+    }],
+  },
+  {
+    id: 'room-gear-preview-prunes-session-position',
+    guard: 'node --test --test-name-pattern="Resize preview cannot prune" test/room-gear-drag.test.mjs',
+    because: '#645 review r1 M1: a transient Resize polygon may exclude the moved room button, '
+      + 'but cancelling that preview must preserve the session position that remains valid in the '
+      + 'committed room geometry',
+    patches: [{
+      file: 'src/room-gear-drag.ts',
+      find: '    return resolveRoomGearCenter(\n      room, this.positions.get(this.key(room.id, spaceId)), polygonOverride,\n    ).point;',
+      replace: '    return this.center(room, polygonOverride, spaceId); // mutant: preview prunes state',
     }],
   },
 ];

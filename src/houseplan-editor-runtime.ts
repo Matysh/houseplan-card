@@ -3432,7 +3432,7 @@ public _rszEdgeLabels(
       const poly = res.polys[id] || rooms.find((r) => r.id === id)!.poly;
       const room = space?.rooms.find((candidate) => candidate.id === id);
       const gearCenter = room
-        ? (this.roomGear.center(room, poly, space!.id) || poleOfInaccessibility(poly))
+        ? (this.roomGear.previewCenter(room, poly, space!.id) || poleOfInaccessibility(poly))
         : poleOfInaccessibility(poly);
       // The preview is already the active render model. Reuse the same shared
       // masonry union + contour cache that the following render consumes;
@@ -10275,11 +10275,12 @@ public _rlResizeUp(): void {
 public _cancelRoomGearForMultitouch(): boolean { return this.roomGear.cancelForMultitouch(); }
 
 public _renderRoomGear(
-    r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number },
+    r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number }, preview: boolean,
   ): TemplateResult | typeof nothing {
     if (!r.id) return nothing;
     this.roomGear.adoptPlan(space);
-    const c = this.roomGear.center(r, roomPoly(r), space.id);
+    const polygon = roomPoly(r);
+    const c = preview ? this.roomGear.previewCenter(r, polygon, space.id) : this.roomGear.center(r, polygon, space.id);
     if (!c) return nothing;
     const left = ((c[0] - view.x) / view.w) * 100;
     const top = ((c[1] - view.y) / view.h) * 100;

@@ -200,6 +200,19 @@ export class RoomGearDragController {
     return resolved.point;
   }
 
+  /**
+   * Resolve against a transient geometry preview without pruning the saved
+   * session position. A cancelled preview must not become a permanent move.
+   */
+  public previewCenter(
+    room: RoomCfg, polygonOverride?: number[][] | null, spaceId = this.input.spaceId(),
+  ): RoomGearPoint | null {
+    if (!room.id) return null;
+    return resolveRoomGearCenter(
+      room, this.positions.get(this.key(room.id, spaceId)), polygonOverride,
+    ).point;
+  }
+
   public dragging(key: string): boolean { return this.drag?.key === key; }
 
   public reset(): void {

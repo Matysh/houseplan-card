@@ -562,7 +562,9 @@ If **Room settings** covers an element you need, drag anywhere on its capsule.
 It stays inside that room and remembers the temporary position until you leave
 the Plan editor; zooming, panning or visiting another floor does not reset it.
 This is session-only assistance: it writes neither config nor Undo history. A
-plain click or tap without a drag still opens Room settings.
+plain click or tap without a drag still opens Room settings. A wall-resize
+preview does not discard the position when cancelled; after a confirmed room
+shape change it is retained only while it remains inside the room.
 
 ### Plan tools at a glance
 

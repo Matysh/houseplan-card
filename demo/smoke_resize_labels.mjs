@@ -44,10 +44,11 @@ const result = await page.evaluate(async () => {
   card._editorRuntime.roomGear.positions.set(`${space.id}\u0000label-left`, [292, 140]);
   await update();
 
-  const handle = [...card.renderRoot.querySelectorAll('.rszhandle')]
+  const resizeHandle = () => [...card.renderRoot.querySelectorAll('.rszhandle')]
     .find((node) => Math.abs(Number(node.getAttribute('cx')) - 300) < 1
       && Math.abs(Number(node.getAttribute('cy')) - 300) < 1
       && node.getAttribute('aria-disabled') === 'false');
+  let handle = resizeHandle();
   const stage = card.renderRoot.querySelector('.stage');
   const stageRect = stage.getBoundingClientRect();
   const svg = stage.querySelector('svg');
@@ -58,10 +59,29 @@ const result = await page.evaluate(async () => {
   ];
   const [sx, sy] = screen(300, 300);
   const [tx] = screen(325, 300);
+  const [shrinkX] = screen(275, 300);
   const dispatch = (type, x, y) => handle?.dispatchEvent(new PointerEvent(type, {
     bubbles: true, cancelable: true, pointerId: 300, pointerType: 'mouse',
     clientX: x, clientY: y, buttons: type === 'pointerup' ? 0 : 1,
   }));
+
+  // Review r1 M1: this preview temporarily excludes the moved button from the
+  // left room. It may use an automatic centre for label placement, but it must
+  // not erase the session position because pointercancel restores the room.
+  const movedGearKey = `${space.id}\u0000label-left`;
+  dispatch('pointerdown', sx, sy);
+  dispatch('pointermove', shrinkX, sy);
+  await update();
+  out.previewKeepsMovedGear = JSON.stringify(
+    card._editorRuntime.roomGear.positions.get(movedGearKey),
+  ) === JSON.stringify([292, 140]);
+  dispatch('pointercancel', shrinkX, sy);
+  await update();
+  out.cancelRestoresMovedGear = JSON.stringify(
+    card._editorRuntime.roomGear.positions.get(movedGearKey),
+  ) === JSON.stringify([292, 140]);
+
+  handle = resizeHandle();
   dispatch('pointerdown', sx, sy);
   dispatch('pointermove', tx, sy);
   await update();

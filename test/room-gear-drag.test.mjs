@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   clampRoomGearPointAlongPath,
+  RoomGearDragController,
   resolveRoomGearCenter,
   roomGearDragMoved,
   roomGearPointAllowed,
@@ -41,4 +42,29 @@ test('#645 cannot jump across a concave room cut-out', () => {
 
 test('#645 permits movement along the room boundary', () => {
   assert.deepEqual(clampRoomGearPointAlongPath([0, 2], [0, 8], SQUARE), [0, 8]);
+});
+
+test('#645 Resize preview cannot prune a session position that is valid after cancel', () => {
+  const controller = new RoomGearDragController({
+    mode: () => 'plan',
+    spaceId: () => 'space',
+    currentRoom: () => undefined,
+    planPoint: () => [0, 0],
+    queueMove: (run) => run(),
+    flushMove: () => {},
+    cancelMove: () => {},
+    requestUpdate: () => {},
+    openRoom: () => {},
+  });
+  const room = { id: 'room', name: 'Room', area: null, poly: SQUARE };
+  const key = controller.key(room.id);
+  controller.positions.set(key, [9, 9]);
+
+  const preview = [[0, 0], [8, 0], [8, 10], [0, 10]];
+  assert.notDeepEqual(controller.previewCenter(room, preview), [9, 9]);
+  assert.deepEqual(controller.positions.get(key), [9, 9]);
+  assert.deepEqual(controller.center(room, SQUARE), [9, 9]);
+
+  controller.center(room, preview);
+  assert.equal(controller.positions.has(key), false, 'committed geometry still prunes stale state');
 });

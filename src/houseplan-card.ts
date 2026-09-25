@@ -12005,7 +12005,7 @@ export class HouseplanCard extends LitElement {
   private _renderRoomGear(
     r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number },
   ): TemplateResult | typeof nothing {
-    return this._editorRuntimeOrThrow()._renderRoomGear(r, space, view);
+    return this._editorRuntimeOrThrow()._renderRoomGear(r, space, view, this._resize.dragging);
   }
 
   private _renderRoomLabel(
