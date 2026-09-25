@@ -165,6 +165,33 @@ git config core.fsmonitor true
 git config core.untrackedCache true
 ```
 
+## Local repository maintenance (#628)
+
+Owner decision on 2026-09-25: use only a one-time local garbage collection for
+the Windows clone. This issue does **not** introduce Git LFS, stop tracking
+`dist/**`, remove the committed integration bundle, or rewrite published Git
+history.
+
+Run the maintenance command only when no Git process is active in the shared
+clone (all worktrees use the same object database):
+
+```powershell
+git gc --prune=now
+git count-objects -vH
+git fsck --no-dangling --no-progress
+```
+
+The 2026-09-25 measurement before GC was 26,243 loose objects / 749.84 MiB,
+41 packs / 334.55 MiB and 98 garbage entries / 959.60 KiB. After GC it is zero
+loose objects, two packs / 467.63 MiB, zero `tmp_obj_*` files, and a clean
+`git fsck`. `size-pack` grew because reachable loose objects moved into packs;
+the meaningful total (`size` + `size-pack`) fell from 1,084.39 MiB to
+467.63 MiB, a reduction of 616.76 MiB.
+
+This post-GC value is the #628 monthly-growth baseline. To evaluate AC2 on or
+after 2026-10-25, run the same GC and `count-objects` sequence and compare the
+new `size-pack` with 467.63 MiB; the accepted upper bound is 487.63 MiB.
+
 ### ⚠️ File-sync pitfalls (critical)
 1. The network mount sometimes serves files **truncated/scrambled** — edits via the Edit tool
    from the Windows side are unreliable. Rule: **apply python patches against a clean copy in /tmp,
