@@ -3983,7 +3983,7 @@ export class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    this._syncVolumetricSetting(); this._isoProjectionSnapshot = null; this._summary?.willUpdate();
+    this._isoProjectionSnapshot = null; this._syncVolumetricSetting(); this._summary?.willUpdate();
     if (changed.has('hass')) {
       // Observe every user/connection transition, including A→B→A while an
       // old promise is waiting. Equality at completion must not revive it.
