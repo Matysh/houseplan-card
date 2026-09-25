@@ -13,25 +13,27 @@ const result = await page.evaluate(async () => {
     await card.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   };
-  card._setMode('plan', false);
-  const space = card._serverCfg.spaces.find((candidate) => candidate.id === card._space);
-  space.rooms = [{
-    id: 'drag-room', name: 'Drag room', area: null,
-    poly: [[200, 100], [600, 100], [600, 500], [200, 500]]
-      .map(([x, y]) => [x / 1000, y / 1000]),
-  }, {
-    id: 'other-room', name: 'Other room', area: null,
-    poly: [[650, 100], [900, 100], [900, 500], [650, 500]]
-      .map(([x, y]) => [x / 1000, y / 1000]),
-  }];
-  space.openings = [];
-  delete space.walls;
-  delete space.open_spans;
-  delete space.partitions;
-  delete space.room_drafts;
-  delete space.wall_columns;
-  card._cfgEpoch++;
-  await update();
+  await window.__hpTest.setMode('plan');
+  const activeSpaceId = card._space;
+  await window.__hpTest.setServerConfig((cfg) => {
+    const edited = cfg.spaces.find((candidate) => candidate.id === activeSpaceId);
+    edited.rooms = [{
+      id: 'drag-room', name: 'Drag room', area: null,
+      poly: [[200, 100], [600, 100], [600, 500], [200, 500]]
+        .map(([x, y]) => [x / 1000, y / 1000]),
+    }, {
+      id: 'other-room', name: 'Other room', area: null,
+      poly: [[650, 100], [900, 100], [900, 500], [650, 500]]
+        .map(([x, y]) => [x / 1000, y / 1000]),
+    }];
+    edited.openings = [];
+    delete edited.walls;
+    delete edited.open_spans;
+    delete edited.partitions;
+    delete edited.room_drafts;
+    delete edited.wall_columns;
+  });
+  const space = card._serverCfg.spaces.find((candidate) => candidate.id === activeSpaceId);
   const configBaseline = JSON.stringify(card._serverCfg);
   const layoutBaseline = JSON.stringify(card._layout);
 
@@ -59,9 +61,10 @@ const result = await page.evaluate(async () => {
     return card._editorRuntime.roomGear.positions.get(key)?.slice() || null;
   };
 
-  const [sx, sy] = screen(400, 300);
+  const initialGearRect = gear().getBoundingClientRect();
+  const sx = initialGearRect.left + initialGearRect.width / 2;
+  const sy = initialGearRect.top + initialGearRect.height / 2;
   const [tx, ty] = screen(520, 300);
-  const initialOwnsPoint = gear().contains(card.renderRoot.elementFromPoint(sx, sy));
   fire(gear(), 'pointerdown', sx, sy);
   fire(gear(), 'pointermove', tx, ty);
   await update();
@@ -70,8 +73,9 @@ const result = await page.evaluate(async () => {
   const moved = position();
   out.dragUsesPlanCoordinates = !!moved && Math.abs(moved[0] - 520) < 1
     && Math.abs(moved[1] - 300) < 1;
-  out.freesCoveredPoint = initialOwnsPoint
-    && !gear().contains(card.renderRoot.elementFromPoint(sx, sy));
+  const movedGearHit = gear().getBoundingClientRect();
+  out.freesCoveredPoint = sx < movedGearHit.left || sx > movedGearHit.right
+    || sy < movedGearHit.top || sy > movedGearHit.bottom;
   out.otherRoomStaysIndependent = !card._editorRuntime.roomGear.positions.has(
     `${space.id}\u0000other-room`,
   );
@@ -182,23 +186,33 @@ const result = await page.evaluate(async () => {
   // A geometry edit that excludes the temporary point falls back immediately
   // and removes the stale record. Removing the room also leaves no record.
   const beforeGeometry = position();
-  space.rooms[0].poly = [[150, 80], [650, 80], [650, 520], [150, 520]]
-    .map(([x, y]) => [x / 1000, y / 1000]);
-  card._cfgEpoch++;
-  await update();
+  await window.__hpTest.setServerConfig((cfg) => {
+    cfg.spaces.find((candidate) => candidate.id === activeSpaceId).rooms[0].poly = [
+      [150, 80], [650, 80], [650, 520], [150, 520],
+    ].map(([x, y]) => [x / 1000, y / 1000]);
+  });
   out.validGeometryKeepsPosition = JSON.stringify(position()) === JSON.stringify(beforeGeometry);
-  space.rooms[0].poly = [[200, 100], [450, 100], [450, 500], [200, 500]]
-    .map(([x, y]) => [x / 1000, y / 1000]);
-  card._cfgEpoch++;
-  await update();
+  await window.__hpTest.setServerConfig((cfg) => {
+    cfg.spaces.find((candidate) => candidate.id === activeSpaceId).rooms[0].poly = [
+      [200, 100], [450, 100], [450, 500], [200, 500],
+    ].map(([x, y]) => [x / 1000, y / 1000]);
+  });
   out.geometryInvalidationFallsBack = position() === null && !!gear();
-  space.rooms = space.rooms.filter((room) => room.id !== 'drag-room');
-  card._cfgEpoch++;
-  await update();
+  await window.__hpTest.setServerConfig((cfg) => {
+    const edited = cfg.spaces.find((candidate) => candidate.id === activeSpaceId);
+    edited.rooms = edited.rooms.filter((room) => room.id !== 'drag-room');
+  });
   out.roomDeletionPrunesPosition = position() === null && !gear();
 
-  card._setMode('view', false);
-  await update();
+  // End the preceding touch sequence with a fresh mouse pointerdown, exactly
+  // as the deliberate click on the editor Close button does in production.
+  const close = card.renderRoot.querySelector('[data-hp="editor-close"]');
+  const closeRect = close.getBoundingClientRect();
+  const closeX = closeRect.left + closeRect.width / 2;
+  const closeY = closeRect.top + closeRect.height / 2;
+  fire(close, 'pointerdown', closeX, closeY, { pointerId: 652 });
+  fire(close, 'pointerup', closeX, closeY, { pointerId: 652 });
+  await window.__hpTest.setMode('view');
   out.leavingEditorResetsSession = card._editorRuntime.roomGear.positions.size === 0;
   return out;
 });
