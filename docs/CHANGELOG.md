@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.78.0-beta.5 — 2026-09-26
+
 - In the 2.5D plan the metrics row under a room name (temperature, humidity,
   Zigbee signal, lights) no longer drifts while zooming: it keeps the same
   distance from the name at every zoom, exactly as on the flat plan. The room
@@ -14,7 +16,6 @@
   header keep their size and position; on a phone, where the mode tabs are
   hidden, the cross is unchanged
   ([#666](https://github.com/Matysh/houseplan-card/issues/666)).
-
 - The static space card (`houseplan-space-card`) no longer shows a hand cursor
   over device markers and no longer swallows clicks there: the whole schematic
   is inert again, as documented, with an ordinary cursor everywhere and the
