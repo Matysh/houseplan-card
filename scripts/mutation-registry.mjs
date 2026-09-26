@@ -9498,6 +9498,12 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: "scripts/release-prerelease.mjs", find: "    assertCommittedBundleFresh(manifest, sourceFingerprint(root));\n", replace: "" }],
   },
   {
+    id: "merge-ff-skips-review-index",
+    guard: "node --test --test-name-pattern=\"#657 r1 H1\" test/merge-candidate.test.mjs",
+    because: "#657 r1 H1: the task branch no longer carries INDEX.md, so a fast-forward merge must rebuild it or dev turns red on reviews_index",
+    patches: [{ file: "scripts/merge-candidate.mjs", find: "      const target = ops.freshIndex(tip);", replace: "      const target = tip;" }],
+  },
+  {
     id: "provenance-skips-bundle-rule",
     guard: "node --test --test-name-pattern=\"#657 \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0435\u0442 validate-commit-provenance\" test/bundle-policy.test.mjs",
     because: "#657: the commit-msg hook and the CI history check are where the bundle rule actually bites",

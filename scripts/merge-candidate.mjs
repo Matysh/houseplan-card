@@ -167,6 +167,17 @@ export function realOps({
       must(exec(process.execPath, [REVIEWS_INDEX_SCRIPT, '--dir=docs/reviews', '--commit-if-stale', `--issue=${issue}`]), 'reviews-index --commit-if-stale');
       return must(git('rev-parse', 'HEAD'), 'rev-parse HEAD');
     },
+    // #657 (1б) r1 H1: документ ревью ветки задачи больше не несёт индекс —
+    // его пересобирают только коммиты, идущие в dev. Ребейз делает это сам
+    // (выше); fast-forward, когда dev не двигался, ребейза не знает, и без
+    // этого шага в dev уехал бы устаревший INDEX.md — красный `reviews_index`
+    // на голове dev. Коммит индекса — doc-коммит конвейера поверх материала,
+    // слияние остаётся fast-forward.
+    freshIndex: (tip) => {
+      must(git('checkout', '-q', '-B', 'merge-into-dev', tip), 'checkout');
+      must(exec(process.execPath, [REVIEWS_INDEX_SCRIPT, '--dir=docs/reviews', '--commit-if-stale', `--issue=${issue}`]), 'reviews-index --commit-if-stale');
+      return must(git('rev-parse', 'HEAD'), 'rev-parse HEAD');
+    },
     pushWithLease: (sha, ref, expected) => {
       const r = git('push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, pushUrl, `${sha}:refs/heads/${ref}`);
       if (r.status === 0) return true;
@@ -249,10 +260,11 @@ export async function mergeCandidate({ branch, material, issue, ops, maxAttempts
     ops.log(`попытка ${attempt}: dev@${devNow.slice(0, 8)}, база материала ${materialBase.slice(0, 8)}, dev ${devMoved ? 'двигался' : 'на месте'}`);
 
     if (!devMoved) {
-      const pushed = ops.pushWithLease(tip, 'dev', devNow);
+      const target = ops.freshIndex(tip);
+      const pushed = ops.pushWithLease(target, 'dev', devNow);
       const decision = decideMerge({ fresh: true, devMoved: false, leaseRejected: !pushed });
       if (decision.action === 'retry') continue;
-      return finish(decision, { candidate: tip, devNow });
+      return finish(decision, { candidate: target, devNow });
     }
 
     const candidate = ops.rebaseOnto(tip, 'origin/dev');

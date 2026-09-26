@@ -4,6 +4,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   MAX_ATTEMPTS, MAX_COMMAND_OUTPUT_BYTES, commentFor, decideMerge, mergeCandidate, realOps, sh,
@@ -81,7 +82,7 @@ test('каждый исход, меняющий метку, объясняетс
  * dev по порядку (следующая после каждого отклонённого lease), ответы
  * Validate — по порядку кандидатов.
  */
-function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseRejects = 0, patchIds = {}, branchTip, material, conflictOnce = false }) {
+function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseRejects = 0, patchIds = {}, branchTip, material, conflictOnce = false, indexStale = false }) {
   const calls = [];
   let devIndex = 0;
   let validateIndex = 0;
@@ -104,6 +105,10 @@ function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseReject
       calls.push(['rebase', tip, onto]);
       if (conflict) { conflict = false; return null; }
       return `cand-${tip}-on-${dev()}`;
+    },
+    freshIndex: (tip) => {
+      calls.push(['index', tip]);
+      return indexStale ? `idx-${tip}` : tip;
     },
     pushWithLease: (sha, ref, expected) => {
       calls.push(['push', sha, ref, expected]);
@@ -129,6 +134,17 @@ test('dev не двигался: push кандидата как есть, с lea
   assert.equal(r.merged, true);
   assert.deepEqual(ops.calls.filter((c) => c[0] === 'push'), [['push', 'mat', 'dev', 'dev0']]);
   assert.ok(!ops.calls.some((c) => c[0] === 'validate'), 'без движения dev Validate не ждётся');
+});
+
+test('#657 r1 H1: dev не двигался — индекс пересобирается поверх материала, в dev уходит вершина с индексом', async () => {
+  const ops = fakeOps({ devTips: ['dev0'], branchTip: 'mat', material: 'mat', indexStale: true });
+  const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
+  assert.equal(r.action, 'fast-forward');
+  assert.equal(r.candidate, 'idx-mat');
+  const indexAt = ops.calls.findIndex((c) => c[0] === 'index');
+  const pushAt = ops.calls.findIndex((c) => c[0] === 'push');
+  assert.ok(indexAt >= 0 && indexAt < pushAt, 'индекс пересобран до push');
+  assert.deepEqual(ops.calls[pushAt], ['push', 'idx-mat', 'dev', 'dev0']);
 });
 
 test('эксперимент аудита: dev двигался, ребейз чистый, patch-id равен — Validate ОБЯЗАТЕЛЕН до push', async () => {
@@ -239,7 +255,7 @@ test('на настоящем git: чистый ребейз с равным pat
     ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 40)]); };
     ops.log = () => {};
     const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
-    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto']) ops[name] = inWork(ops[name]);
+    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/7-double', material, issue: 7, ops });
     assert.equal(r.action, 'push', JSON.stringify(calls));
@@ -379,7 +395,7 @@ test('#516 AC1: dev moved only by review documents and the branch carries its ow
     ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 60)]); };
     ops.log = () => {};
     const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
-    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto']) ops[name] = inWork(ops[name]);
+    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });
     assert.equal(r.action, 'push', JSON.stringify(calls));
@@ -453,7 +469,7 @@ test('#643 AC1: dev сдвинулся документами ревью дру�
     ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 60)]); };
     ops.log = () => {};
     const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
-    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto']) ops[name] = inWork(ops[name]);
+    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });
     assert.equal(r.action, 'push', JSON.stringify(calls));
@@ -495,4 +511,66 @@ test('#596: сбой запуска называет причину, а не п�
   assert.equal(r.status, 1);
   assert.match(r.stderr, /houseplan-no-such-command-596 не выполнился: ENOENT/);
   assert.equal(r.stdout, '');
+});
+
+// #657 r1 H1: документ код-ревью уезжает в ветку без индекса (1б), dev не
+// двигался — fast-forward. Индекс на голове dev обязан быть свежим, иначе
+// `reviews-index --check` в Validate красит dev на первом же тихом слиянии.
+test('#657 r1 H1 на настоящем git: fast-forward несёт свежий INDEX.md, --check на голове dev зелёный', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-merge-ff-index-'));
+  try {
+    const bare = join(dir, 'origin.git');
+    execFileSync('git', ['init', '-q', '--bare', bare]);
+    const work = join(dir, 'work');
+    execFileSync('git', ['clone', '-q', bare, work]);
+    const cfg = ['-c', 'user.name=t', '-c', 'user.email=t@x'];
+    const git = (cwd, ...args) => execFileSync('git', ['-C', cwd, ...cfg, ...args], { encoding: 'utf8' }).trim();
+    const commit = (msg) => execFileSync('git', ['-C', work, ...cfg, 'commit', '-q', '-am', msg]);
+    mkdirSync(join(work, 'docs', 'reviews'), { recursive: true });
+    writeFileSync(join(work, 'a.mjs'), 'export const a = 20;\n');
+    writeFileSync(join(work, 'docs', 'reviews', 'CODE-REVIEW-8-r1.md'), '# CODE-REVIEW-8-r1\n');
+    writeFileSync(join(work, 'docs', 'reviews', 'INDEX.md'), buildIndex(join(work, 'docs', 'reviews')));
+    git(work, 'add', '.');
+    commit('base');
+    git(work, 'branch', '-M', 'dev');
+    git(work, 'push', '-q', '-u', 'origin', 'dev');
+    git(work, 'checkout', '-q', '-b', 'issue/9-fix');
+    writeFileSync(join(work, 'a.mjs'), 'export const a = 21;\n');
+    commit('fix');
+    const material = git(work, 'rev-parse', 'HEAD');
+    // публикация документа в ветку задачи — без индекса (1б)
+    writeFileSync(join(work, 'docs', 'reviews', 'CODE-REVIEW-9-r1.md'), '# CODE-REVIEW-9-r1\nVerdict: green\n');
+    git(work, 'add', '.');
+    commit('docs: review document for #9');
+    git(work, 'push', '-q', '-u', 'origin', 'issue/9-fix');
+
+    const calls = [];
+    const ops = realOps({ repo: 'x/y', token: 'none', issue: 9 });
+    ops.pushWithLease = (sha, ref, expected) => {
+      calls.push(['push', ref, expected]);
+      const r = spawnSync('git', ['-C', work, 'push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, 'origin', `${sha}:refs/heads/${ref}`], { encoding: 'utf8' });
+      return r.status === 0;
+    };
+    ops.dispatchValidate = (ref) => { calls.push(['dispatch', ref]); };
+    ops.waitValidate = async (sha) => { calls.push(['validate', sha]); return { result: 'green', url: 'https://run/1' }; };
+    ops.comment = (issue, body) => { calls.push(['comment', body.slice(0, 60)]); };
+    ops.log = () => {};
+    const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
+    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
+
+    const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });
+    assert.equal(r.action, 'fast-forward', JSON.stringify(calls));
+    git(work, 'fetch', '-q', 'origin');
+    const devTip = git(work, 'rev-parse', 'origin/dev');
+    assert.equal(devTip, r.candidate);
+    assert.equal(git(work, 'merge-base', '--is-ancestor', material, devTip) , '', 'материал — предок головы dev: слияние fast-forward');
+    const index = git(work, 'show', `${devTip}:docs/reviews/INDEX.md`);
+    assert.match(index, /CODE-REVIEW-9-r1\.md/, 'документ раунда виден через индекс');
+    assert.match(index, /CODE-REVIEW-8-r1\.md/);
+    git(work, 'checkout', '-q', '--detach', devTip);
+    const check = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/reviews-index.mjs', import.meta.url)), '--dir=docs/reviews', '--check'], { cwd: work, encoding: 'utf8' });
+    assert.equal(check.status, 0, `reviews-index --check на голове dev: ${check.stdout}${check.stderr}`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
