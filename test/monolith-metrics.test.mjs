@@ -154,8 +154,8 @@ test('#624 живое дерево: база равна текущим числ�
   const { metrics, violations } = collectMetrics(root);
   assert.deepEqual(violations, [], 'мёртвый код по noUnusedLocals вне порта и харнесса');
   const { grown, shrunk } = compareWithBaseline(metrics, baseline);
-  // bundleBytes судит гейт после сборки (Validate: Unit tests идут до Build,
-  // локально dist может быть от другого дерева) — здесь пять чисел исходника.
+  // bundleBytes судит гейт после сборки; здесь пять чисел исходника, а
+  // фактический свежий dist отдельно проверяют bundle-budget и lint:unused.
   const source = (list) => list.filter((s) => s.name !== 'bundleBytes');
   assert.deepEqual(source(grown), [], 'связность выросла — вернуть или обосновать');
   assert.deepEqual(source(shrunk), [], 'связность упала — опустить базу: node scripts/unused-locals-gate.mjs --update');

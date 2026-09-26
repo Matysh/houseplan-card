@@ -68,6 +68,16 @@ test('бандл собирается один раз и приезжает бр
   assert.equal(workflow.match(/node scripts\/bundle-sync\.mjs/g)?.length, 3);
 });
 
+test('frontend собирает свежий dist до unit-контрактов бюджета (#663)', () => {
+  const workflow = read('validate.yml');
+  const frontend = workflow.slice(workflow.indexOf('\n  frontend:\n'), workflow.indexOf('\n  dev_build:\n'));
+  const build = frontend.indexOf('- name: Build');
+  const unit = frontend.indexOf('- name: Unit tests');
+  assert.ok(build >= 0 && unit >= 0, 'в frontend должны существовать Build и Unit tests');
+  assert.ok(build < unit,
+    'unit-контракты читают dist/ и обязаны идти после свежей сборки, как в gate:small');
+});
+
 test('#657 копии бандла сверяются только на релизном коммите, стенд dev — из артефакта', () => {
   const workflow = read('validate.yml');
   const frontend = workflow.slice(workflow.indexOf('\n  frontend:\n'), workflow.indexOf('\n  dev_build:\n'));

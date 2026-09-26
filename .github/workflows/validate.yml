@@ -780,10 +780,14 @@ jobs:
           node scripts/no-new-any.mjs --base "$base" --head "$HEAD_SHA" || status=1
           node scripts/no-new-private-writes.mjs --base "$base" --head "$HEAD_SHA" || status=1
           exit "$status"
-      - name: Unit tests
-        run: npm test
       - name: Build
         run: npm run build
+      # Часть unit-контрактов проверяет размеры реально поставляемых графов в
+      # dist/ (#438, #593, #627). В issue-ветке закоммиченный dist законно
+      # отстаёт от исходников (#657), поэтому юниты обязаны читать свежую
+      # сборку — тот же порядок закреплён локальным gate:small.
+      - name: Unit tests
+        run: npm test
       # Entry, manifest and every content-hashed chunk are one artifact (#337).
       # #657: the committed bundle changes only in a release candidate, so the
       # fresh build must equal it only there; elsewhere the committed copy
