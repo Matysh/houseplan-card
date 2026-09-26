@@ -28,6 +28,14 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['memoIsoLightFloorRooms', 'IsoFirstFrameState', 'isoPaperContext'],
+    smokes: ['smoke_iso_first_frame.mjs'],
+    because: '#654: the production-bundle witness delays and rejects the lazy 2.5D chunk, then '
+      + 'samples every animation frame in normal, kiosk and Flat views; no pure import can prove '
+      + 'that the loading veil hides the transient Flat render or that the first visible marker '
+      + 'already uses the settled paper-dependent floor class',
+  },
+  {
     symbols: ['baseStyles', '_containerOwnedHeight', 'measuredCardHeaderHeight',
       'settleSoftStageLayout'],
     smokes: ['smoke_sections_resize.mjs'],

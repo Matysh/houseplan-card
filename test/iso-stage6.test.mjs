@@ -4,9 +4,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  colorLuma, compositeFloor, isLightFloor, isoLightFloorRooms, isoWallMaterial, isoWallMaterialVars,
+  colorLuma, compositeFloor, isLightFloor, isoLightFloorRooms, memoIsoLightFloorRooms,
+  isoWallMaterial, isoWallMaterialVars,
   parseCssColor, parseHexColor,
 } from '../test-build/iso-materials.js';
+import { IsoFirstFrameState, isoPaperContext } from '../test-build/iso-first-frame.js';
 import {
   ISO_ICON_SCALE, ISO_STATE_BODIES, ISO_TILE, isoEdgeColor, isoTileShadow, isoTileStateCss,
 } from '../test-build/iso-tiles.js';
@@ -44,6 +46,68 @@ test('#649 light floor: lab luma > 0.55 on the fill composited over the paper', 
     ['light', null], ['dark', { color: '#0d1b2a', opacity: 0.5 }], ['half', { color: '#486a8f', opacity: 0.42 }],
   ]), [255, 255, 255]);
   assert.deepEqual([...rooms].sort(), ['half', 'light']);
+});
+
+test('#654 light-floor memo reuses unchanged inputs and invalidates every visible input', () => {
+  const base = new Map([
+    ['light', null],
+    ['tinted', { color: '#486a8f', opacity: 0.42 }],
+  ]);
+  const first = memoIsoLightFloorRooms(null, base, [255, 255, 255]);
+  const same = memoIsoLightFloorRooms(first, new Map(base), [255, 255, 255]);
+  assert.equal(same, first, 'equivalent paper/fills/rooms reuse the memo object');
+  assert.equal(same.rooms, first.rooms, 'the hot render path reuses the Set too');
+
+  const paperChanged = memoIsoLightFloorRooms(first, base, [20, 20, 20]);
+  assert.notEqual(paperChanged, first, 'paper RGB participates in the key');
+  assert.deepEqual([...paperChanged.rooms], [], 'dark paper changes an unfilled room');
+
+  const fillChanged = memoIsoLightFloorRooms(first, new Map([
+    ['light', { color: '#000000', opacity: 1 }],
+    ['tinted', { color: '#486a8f', opacity: 0.42 }],
+  ]), [255, 255, 255]);
+  assert.notEqual(fillChanged, first, 'resolved fill participates in the key');
+  assert.equal(fillChanged.rooms.has('light'), false);
+
+  const roomsChanged = memoIsoLightFloorRooms(first, new Map([
+    ...base,
+    ['new-room', null],
+  ]), [255, 255, 255]);
+  assert.notEqual(roomsChanged, first, 'room membership participates in the key');
+  assert.equal(roomsChanged.rooms.has('new-room'), true);
+});
+
+test('#654 first-frame state resolves paper after commit and releases failure to Flat', () => {
+  const state = new IsoFirstFrameState();
+  const light = isoPaperContext('floor', 'view', true, { darkMode: false, theme: 'light' });
+  state.prepare('iso', light);
+  assert.equal(state.pending('iso', false), true, 'runtime and image-paper are both cold');
+  let resolves = 0;
+  assert.equal(state.sync('iso', light, () => { resolves += 1; return [250, 250, 250]; }), true);
+  assert.equal(state.sync('iso', light, () => { resolves += 1; return [0, 0, 0]; }), false);
+  assert.equal(resolves, 1, 'unchanged HA updates do not resolve computed colour again');
+  state.runtimeReady();
+  assert.equal(state.readiness('iso', 'iso', true), 'ready');
+
+  const dark = isoPaperContext('floor', 'view', true, { darkMode: true, theme: 'dark' });
+  state.prepare('iso', dark);
+  assert.equal(state.pending('iso', true), true, 'a theme change hides the stale classification');
+  state.sync('iso', dark, () => { resolves += 1; return [17, 17, 17]; });
+  assert.equal(resolves, 2);
+
+  state.runtimeFailure();
+  assert.equal(state.pending('iso', false), false, 'a failed chunk cannot leave the veil stuck');
+  assert.equal(state.readiness('iso', 'flat', false), 'fallback');
+  assert.equal(state.readiness('flat', 'flat', false), null, 'Flat never inherits 2.5D waiting');
+});
+
+test('#654 a drawn plan has deterministic white paper before its first render', () => {
+  const state = new IsoFirstFrameState();
+  state.prepare('iso', isoPaperContext('floor', 'view', false));
+  assert.equal(state.pending('iso', true), false);
+  assert.equal(state.sync('iso', isoPaperContext('floor', 'view', false), () => {
+    assert.fail('drawn paper must not ask the DOM for its colour');
+  }), false);
 });
 
 test('#649 п.1 tile numbers are the lab units / 80 and the scale 1.12', () => {

@@ -21,7 +21,7 @@
     "src/resize.ts", "src/resize-labels.ts", "src/resize-controller.ts", "src/wall-record-preservation.ts",
     "src/rules.ts",
     "src/devices.ts", "src/device-inbox.ts",
-    "src/virtual-light-state.ts", "src/config-store.ts", "src/config-reload-authority.ts", "src/config-write-conflict.ts", "src/summary-panel.ts", "src/summary-panel-metrics.ts", "src/summary-panel-i18n.ts", "src/summary-panel-identity.ts", "src/summary-panel-picker.ts", "src/summary-panel-runtime-loaded.ts", "src/header-menu.ts", "src/iso-materials.ts", "src/iso-tiles.ts", "src/iso-sun.ts",
+    "src/virtual-light-state.ts", "src/config-store.ts", "src/config-reload-authority.ts", "src/config-write-conflict.ts", "src/summary-panel.ts", "src/summary-panel-metrics.ts", "src/summary-panel-i18n.ts", "src/summary-panel-identity.ts", "src/summary-panel-picker.ts", "src/summary-panel-runtime-loaded.ts", "src/header-menu.ts", "src/iso-materials.ts", "src/iso-first-frame.ts", "src/iso-tiles.ts", "src/iso-sun.ts",
     "src/backdrop-probe.ts",
     "src/types.ts", "src/editors/dialog-baseline.ts", "src/editors/color-tile-ink.ts", "src/editors/general-form-state.ts", "src/editors/space-form-state.ts", "src/editors/marker-form-state.ts", "src/editors/room-form-state.ts",
     "src/space-geometry.ts", "src/junction-limits.ts", "src/room-gear-drag.ts",

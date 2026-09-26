@@ -12568,6 +12568,42 @@ const MUTANT_DEFINITIONS = [
       replace: '    return this.center(room, polygonOverride, spaceId); // mutant: preview prunes state',
     }],
   },
+  {
+    id: 'iso-first-frame-reads-paper-during-render',
+    guard: 'node scripts/render-layout-read.mjs',
+    because: '#654 AC2: reading computed paper colour in _renderBody forces layout and sees the '
+      + 'host fallback before .hp-paper exists on the cold first render; the AST guard forbids '
+      + 'that regression independently of formatting or comments',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: 'this._isoFirstFrame.lightFloors(new Map([...roomFills.byId].map(([id, fill]) => [id, fill && fill.opacity > 0 ? fill : glowBase.byId.get(id) ?? null])))',
+      replace: "memoIsoLightFloorRooms(null, new Map([...roomFills.byId].map(([id, fill]) => [id, fill && fill.opacity > 0 ? fill : glowBase.byId.get(id) ?? null])), parseCssColor(getComputedStyle(this.renderRoot.querySelector('.hp-paper') ?? this).fill) ?? [255, 255, 255]).rooms",
+    }],
+  },
+  {
+    id: 'iso-first-frame-reveals-flat-during-lazy-load',
+    guard: 'node demo/smoke_iso_first_frame.mjs',
+    because: '#654 AC1/AC3: removing the pending class exposes the effective Flat projection '
+      + 'while the 2.5D chunk is still loading, most visibly in kiosk mode after the ordinary '
+      + 'boot window has elapsed',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "${isoFirstFramePending ? ' hpiso-pending' : ''}",
+      replace: "${isoFirstFramePending ? '' : ''}",
+    }],
+  },
+  {
+    id: 'iso-light-floor-memo-never-reuses',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#654 light-floor memo" test/iso-stage6.test.mjs',
+    because: '#654 AC4: HA state churn that leaves paper, fills and room membership unchanged '
+      + 'must reuse the classification Set instead of rebuilding it on every card render',
+    patches: [{
+      file: 'src/iso-materials.ts',
+      find: '  return previous?.key === key',
+      replace: "  return previous?.key === '__never__'",
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

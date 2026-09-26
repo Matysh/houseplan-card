@@ -21,6 +21,17 @@ centre is carried over through the logical plan (#583 §6.3). The lazy
 `iso-scene-render` graph is loaded only while the setting is on. The fingerprint
 fallback (#89) is unchanged: a failed scene falls back to Flat for that key.
 
+On a cold dashboard load, the first visible successful frame is already 2.5D:
+the existing neutral House Plan loading surface remains above the plan until
+both the lazy graph and the paper-dependent floor classification are ready.
+This is the same in the ordinary card and kiosk mode. A real lazy-load failure
+releases that surface and uses the existing safe Flat fallback; it does not
+change the saved setting. Flat View and every editor do not wait for the 2.5D
+runtime. Paper colour is resolved after the DOM commit (white for a drawn plan,
+the theme card background under an image plan) and the resulting light-floor
+set is reused until the paper, resolved room fills or room membership changes
+([#654](https://github.com/Matysh/houseplan-card/issues/654)).
+
 There is no toggle on the card and no alpha entry: `iso` is gone from
 `LABS_FLAGS`, the header `projection-toggle` and the phone-menu item
 `projection` (#616) are removed, and the former per-device, per-space choice

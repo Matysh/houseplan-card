@@ -15,6 +15,11 @@
 
 export type Rgb = readonly [number, number, number];
 
+export interface IsoLightFloorMemo {
+  readonly key: string;
+  readonly rooms: ReadonlySet<string>;
+}
+
 /** `#rgb` / `#rrggbb` → 0..255 channels, or null for anything else. */
 export function parseHexColor(value: unknown): Rgb | null {
   const text = String(value ?? '').trim();
@@ -98,4 +103,21 @@ export function isoLightFloorRooms(
     if (isLightFloor(floor)) light.add(id);
   }
   return light;
+}
+
+/**
+ * #654: one pure memo boundary for the render hot path. The key contains every
+ * observable input (room ids/order, resolved fill and paper), so HA state churn
+ * that leaves the floor presentation unchanged reuses the same Set instance.
+ */
+export function memoIsoLightFloorRooms(
+  previous: IsoLightFloorMemo | null,
+  fills: ReadonlyMap<string, { color: string; opacity: number } | null>,
+  paper: Rgb,
+): IsoLightFloorMemo {
+  const key = `${paper.join(',')}|${[...fills].map(([id, fill]) =>
+    `${id}:${fill?.color ?? ''}:${fill?.opacity ?? ''}`).join('|')}`;
+  return previous?.key === key
+    ? previous
+    : { key, rooms: isoLightFloorRooms(fills, paper) };
 }

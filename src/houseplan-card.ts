@@ -294,10 +294,9 @@ import {
 import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 import { SummaryRuntimeSlot, summaryRuntimeLoader } from './summary-runtime-loader';
 import { HeaderMenu, headerMenuItems, renderHeaderActions } from './header-menu';
-import { isoLightFloorRooms, isoWallMaterialVars, parseCssColor } from './iso-materials';
+import { isoWallMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
 import { renderIsoTileShadow } from './iso-tiles';
 import { displayVersion } from './card-version';
-
 const CARD_VERSION = '1.78.0-beta.3';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
@@ -650,7 +649,7 @@ export class HouseplanCard extends LitElement {
       };
     },
     install: (runtime) => {
-      const from = this._effectiveProjection();
+      const from = this._effectiveProjection(); this._isoFirstFrame.runtimeReady();
       this._isoSceneRuntime = runtime;
       this._isoProjectionSnapshot = null;
       const to = this._effectiveProjection();
@@ -658,7 +657,7 @@ export class HouseplanCard extends LitElement {
       if (this.isConnected) this.requestUpdate();
     },
     failed: (_ignored, info) => {
-      console.warn('[houseplan] hidden isometric runtime diagnostic', safeRuntimeDiagnostic('runtime-load', 'unverified', info.terminal));
+      this._isoFirstFrame.runtimeFailure(); console.warn('[houseplan] hidden isometric runtime diagnostic', safeRuntimeDiagnostic('runtime-load', 'unverified', info.terminal));
       if (this.isConnected) this.requestUpdate();
     },
   });
@@ -711,7 +710,7 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Test/performance hook; product callers trigger it only while alpha is active. */
-  public async _ensureIsoSceneRuntime(): Promise<boolean> { return this._isoSceneRuntimeLoader.ensure(); }
+  public async _ensureIsoSceneRuntime(): Promise<boolean> { if (this._isoSceneRuntimeLoader.state === 'idle') { this._isoFirstFrame.runtimeLoading(); this.requestUpdate(); } return this._isoSceneRuntimeLoader.ensure(); }
 
   private _editorRuntimeStateChanged(state: EditorRuntimeLoaderState): void {
     clearTimeout(this._editorRuntimeLoadingTimer);
@@ -2173,7 +2172,7 @@ export class HouseplanCard extends LitElement {
   private _navApplied = false; // the saved space was restored (or the user navigated)
   private _labs: LabsSnapshot = { alpha: false, active: Object.freeze([]), space: '' };
   private _labsUnsub?: () => void;
-  private _isoEnabledSeen = false; private _isoLightFloors: ReadonlySet<string> | null = null; // #649: settings + light-floor rooms
+  private _isoEnabledSeen = false; private _isoLightFloors: ReadonlySet<string> | null = null; private readonly _isoFirstFrame = new IsoFirstFrameState(); // #649/#654
   private _renderProjection: 'flat' | 'iso' = 'flat';
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 }; private _kioskDialog = false;
@@ -3985,7 +3984,7 @@ export class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    this._isoProjectionSnapshot = null; this._syncVolumetricSetting(); this._summary?.willUpdate();
+    this._isoProjectionSnapshot = null; this._isoFirstFrame.prepare(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes)); this._syncVolumetricSetting(); this._summary?.willUpdate();
     if (changed.has('hass')) {
       // Observe every user/connection transition, including A→B→A while an
       // old promise is waiting. Equality at completion must not revive it.
@@ -4027,7 +4026,7 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(): void {
-    this._summary?.updated(); this._liveRt?.commit(); this._headerMenu.revealActiveTab();
+    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); this._liveRt?.commit(); this._headerMenu.revealActiveTab();
     this._editorRuntime?._commitLiveEditor();
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
@@ -10698,7 +10697,7 @@ export class HouseplanCard extends LitElement {
     const disp = this._spaceDisplayForRender();
     const roomFills = this._resolvedRoomFills(space, disp);
     const glowBase = this._resolvedGlowBase(space, disp, roomFills);
-    this._isoLightFloors = iso ? isoLightFloorRooms(new Map([...roomFills.byId].map(([id, f]) => [id, f && f.opacity > 0 ? f : glowBase.byId.get(id) ?? null])), parseCssColor(getComputedStyle(this.renderRoot.querySelector('.hp-paper') ?? this).fill) ?? [255, 255, 255]) : null;
+    this._isoLightFloors = iso ? this._isoFirstFrame.lightFloors(new Map([...roomFills.byId].map(([id, fill]) => [id, fill && fill.opacity > 0 ? fill : glowBase.byId.get(id) ?? null]))) : null;
     const showLqi = disp.showLqi ?? this._config.show_signal ?? true;
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
@@ -10736,7 +10735,7 @@ export class HouseplanCard extends LitElement {
     const modeVisual = this._modeTransitionVisual;
     const dayCycle = this._dayCycleState();
     const dayCycleWeight = modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
-    const paperShapes = this._paperShapes(space.rooms);
+    const paperShapes = this._paperShapes(space.rooms); const isoFirstFramePending = this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime);
     const transitionFromMode = this._modeTransition.state?.from.presentedMode;
     const glowLayerVisible = !this._markup || !!modeVisual && (
       modeVisual.presentedMode === 'view' || modeVisual.presentedMode === 'devices'
@@ -10864,8 +10863,9 @@ export class HouseplanCard extends LitElement {
           : nothing}
         </div>
 
-        <div class="stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
+        <div class="stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
+          data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
           ?inert=${this._modeTransitionBusy}
           style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}${iso ? `;${isoWallMaterialVars(this._fillColors.wall_fill.c)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
@@ -11188,8 +11188,8 @@ export class HouseplanCard extends LitElement {
           ${this._summary?.renderMeasure()}
           ${this._kiosk ? this._summary?.renderControls(true) : nothing}
           ${this._summary?.renderPanel()}
-          ${this._booting || this._bootFading
-            ? html`<div class="bootveil ${this._booting ? '' : 'off'}" aria-hidden="true">
+          ${this._booting || this._bootFading || isoFirstFramePending
+            ? html`<div class="bootveil ${this._booting || isoFirstFramePending ? '' : 'off'}" aria-hidden="true">
                 <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
               </div>`
             : nothing}

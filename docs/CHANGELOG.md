@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- A cold dashboard load with 2.5D enabled no longer briefly shows the flat plan
+  or classifies every floor as dark on its first frame. The neutral House Plan
+  loading surface now stays in place until the 2.5D renderer and the actual plan
+  paper colour are ready, including in kiosk mode; a genuine renderer-load
+  failure still opens the safe flat fallback instead of leaving the card stuck
+  ([#654](https://github.com/Matysh/houseplan-card/issues/654)).
 - Device and door-lock markers in the 2.5D plan no longer change their scene
   positions while the plan is zoomed or panned. Nearby markers now move away
   from a wall as one rigid group, so rows and the spacing between their

@@ -140,7 +140,9 @@ export const planStyles = css`
     }
     /* HP-1552: first-open boot veil — the plan hides until the stage height settles */
     .stage.hpboot .zoomwrap,
-    .stage.hpboot .zoombadge {
+    .stage.hpboot .zoombadge,
+    .stage.hpiso-pending .zoomwrap,
+    .stage.hpiso-pending .zoombadge {
       visibility: hidden;
     }
     /* AUD-1552-02: post-veil grace — HA chrome landing after the cap moves

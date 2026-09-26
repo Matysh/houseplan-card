@@ -63,6 +63,7 @@ export function parallelSteps(base) {
   return [
     { name: 'сборка + typecheck (npm run build)', cmd: npm, args: ['run', 'build'] },
     { name: 'новый код не добавляет any', cmd: process.execPath, args: ['scripts/no-new-any.mjs', '--base', base, '--head', 'HEAD'] },
+    { name: 'render не читает layout синхронно', cmd: process.execPath, args: ['scripts/render-layout-read.mjs'] },
     // #629: смоки не добавляют записей в приватное состояние карточки.
     { name: 'смоки не пишут в приватное состояние', cmd: process.execPath, args: ['scripts/no-new-private-writes.mjs', '--base', base, '--head', 'HEAD'], hint: 'window.__hpTest (docs/TESTING.md) или // private-ok: <причина>' },
     { name: 'смоки по диффу (smoke-select)', cmd: process.execPath, args: ['scripts/smoke-select.mjs', '--base', base, '--head', 'HEAD', '--json'], informational: true },
