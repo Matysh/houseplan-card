@@ -9,7 +9,7 @@ import { innerContourForRoom, multiWallNodesForGeometry, wallBodiesGeometry } fr
 import type { Marker, ServerConfig, SpaceModel, SummaryPanelSource } from './types';
 import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { SummaryHass } from './summary-panel-host';
-import { geometryMinusStairs } from './stairs';
+import { geometryMinusStairsSteps } from './stairs';
 
 /** Count the unique real HA devices represented anywhere on the plan. */
 export function representedHaDeviceIds(input: {
@@ -119,9 +119,16 @@ export function* cleanFloorAreaSteps(
         spaceFloor = unionGeometry(spaceFloor, clean);
         yield;
       }
-      // Difference distributes over union. Subtracting the shared stair set once
-      // avoids rooms x stairs polygon clips on dense plans (#663).
-      spaceFloor = geometryMinusStairs(spaceFloor || [], space.stairs);
+      // Difference distributes over union. Subtract the shared stair set once,
+      // but in bounded batches: 250 footprints in one polyclip sweep becomes a
+      // visible long task on slower clients (#663).
+      const stairSteps = geometryMinusStairsSteps(spaceFloor || [], space.stairs);
+      let stairStep = stairSteps.next();
+      while (!stairStep.done) {
+        yield;
+        stairStep = stairSteps.next();
+      }
+      spaceFloor = stairStep.value;
       const cmPerUnit = prepared.cellCm / GRID_PITCH;
       total += geometryArea(spaceFloor) * cmPerUnit * cmPerUnit / 1e4;
     }

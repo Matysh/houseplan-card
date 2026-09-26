@@ -247,3 +247,33 @@ export function geometryMinusStairs(
     return geometry;
   }
 }
+
+/**
+ * The summary panel calculates floor area after the first paint. A maximum
+ * size space may contain 250 stairs; clipping all their footprints in one
+ * polyclip call is observably one long main-thread task on slower clients.
+ * Keep the synchronous helper above for ordinary room-sized callers, while
+ * this iterator bounds each background slice and lets the scheduler yield.
+ */
+export function* geometryMinusStairsSteps(
+  source: Geom,
+  stairs: readonly Stair[] | null | undefined,
+  scale = NORM_W,
+  batchSize = 24,
+): Generator<void, Geom, void> {
+  const footprints = stairList(stairs).map((stair) => stairFootprintGeometry(stair, scale));
+  const size = Math.max(1, Math.floor(batchSize));
+  let geometry = source;
+  for (let index = 0; index < footprints.length; index += size) {
+    const batch = footprints.slice(index, index + size);
+    try {
+      geometry = difference(geometry, ...batch);
+    } catch {
+      for (const footprint of batch) {
+        try { geometry = difference(geometry, footprint); } catch { /* skip only the bad record */ }
+      }
+    }
+    yield;
+  }
+  return geometry;
+}

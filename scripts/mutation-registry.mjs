@@ -97,6 +97,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'stairs-summary-area-clips-all-footprints-in-one-task',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/stairs.test.mjs',
+    because: '#663 AC13: the maximum 250 stair footprints must be clipped in bounded slices; '
+      + 'one polyclip sweep blocks the summary panel main thread on slower clients.',
+    patches: [{
+      file: 'src/stairs.ts',
+      find: '  batchSize = 24,\n',
+      replace: '  batchSize = MAX_STAIRS_PER_SPACE, // mutant: one long main-thread clip\n',
+    }],
+  },
+  {
     id: 'stairs-view-pan-opens-target-floor',
     guard: 'node demo/smoke_stairs.mjs',
     because: '#663 AC6: a pan or pinch beginning on a stair must not be promoted to the '

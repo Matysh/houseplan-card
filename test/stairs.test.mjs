@@ -6,6 +6,7 @@ import {
   cachedStairRenderGeometry,
   floorAreaMinusStairs,
   geometryAreaMinusStairs,
+  geometryMinusStairsSteps,
   isStair,
   stairRenderGeometry,
 } from '../test-build/stairs.js';
@@ -126,6 +127,31 @@ test('#663 area removes only stair overlap and never becomes negative', () => {
     '64-segment circle remains physically accurate');
   const source = [[[[0, 0], [100, 0], [100, 100], [0, 100], [0, 0]]]];
   assert.equal(geometryAreaMinusStairs(source, [straight({ length: 2, width: 2 })]), 0);
+});
+
+test('#663 dense stair subtraction yields between bounded polygon batches', () => {
+  const source = [[[[0, 0], [1000, 0], [1000, 1000], [0, 1000], [0, 0]]]];
+  const stairs = Array.from({ length: 5 }, (_, index) => straight({
+    id: `stair-${index}`, x: 0.15 + index * 0.16, length: 0.1, width: 0.1,
+  }));
+  const steps = geometryMinusStairsSteps(source, stairs, 1000, 2);
+  assert.equal(steps.next().done, false);
+  assert.equal(steps.next().done, false);
+  assert.equal(steps.next().done, false);
+  const finished = steps.next();
+  assert.equal(finished.done, true);
+  assert.equal(geometryAreaMinusStairs(finished.value, []), 950_000);
+
+  const denseSteps = geometryMinusStairsSteps(source, Array.from({ length: 49 }, (_, index) => (
+    straight({ id: `dense-${index}` })
+  )));
+  let slices = 0;
+  let denseStep = denseSteps.next();
+  while (!denseStep.done) {
+    slices += 1;
+    denseStep = denseSteps.next();
+  }
+  assert.equal(slices, 3, 'the default keeps a 49-stair calculation out of one main-thread task');
 });
 
 test('#663 target states distinguish active, missing, self, deleted and fixed', () => {
