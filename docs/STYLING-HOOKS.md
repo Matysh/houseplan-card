@@ -273,9 +273,11 @@ target the icon element itself.
 
 **`houseplan-space-card` is a different card.** The read-only space card is
 its own custom element with its own shadow root, so it needs its own card-mod
-block. It carries the same `data-hp` attributes for the objects it draws
-(rooms, room labels, device markers); it draws no openings and no decor
-layer, so those simply are not there.
+block. It carries the same `data-hp` attributes for the objects it draws:
+rooms, room labels, device markers, openings (`data-hp="opening"` with
+`data-id`/`data-kind`, class `.static-opening`) and decor images
+(`data-hp="decor"`, class `.dimage`). Vector decor shapes and furniture are not
+drawn there, so their hooks simply are not there.
 
 **The kiosk header is visually absent.** The full header is hidden by CSS in
 kiosk mode, but most of its existing children remain in the DOM. A selector

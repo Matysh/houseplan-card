@@ -28,7 +28,7 @@
       reserved/colliding deterministic IDs receive stable `-2`, `-3` suffixes.
 - [ ] The three structural writer families — interactive commit, Undo/Redo
       restore and Optimize — are enumerated by the source guard and each has an
-      independent bypass mutant in `scripts/mutation-gate.mjs`. A rejected
+      independent bypass mutant in `scripts/mutation-registry.mjs`. A rejected
       migration changes neither config, Undo history nor revision.
 - [ ] Full/space imports cover v7→v7 (no upgrade), v7→v8 and v8→v8; copy/merge
       remaps every ID and reference together. A byte-equivalent legacy-client
@@ -90,7 +90,7 @@
 - [ ] `test/align-grid.test.mjs` proves Optimize leaves complete furniture/image
       transforms byte-equivalent while an ordinary decor rectangle remains
       grid-bound.
-- [ ] The `writer-*` mutations in `scripts/mutation-gate.mjs` remove one finish
+- [ ] The `writer-*` mutations in `scripts/mutation-registry.mjs` remove one finish
       owner, pre-adoption safety, history normalization, direct/vacuum reference
       rewrite, free-transform exclusion, terminal-click separation, seed merge
       and seed reconciliation; each named witness must turn red.
@@ -254,7 +254,7 @@
       неприменимых ключей, Cancel не меняет config. [auto: open-passage-contract, smoke_open_passage]
 - [ ] Full/space import отвергает forged binding до preview, а старое битое
       значение можно прочитать и очистить. [auto: test_validation, test_ha_import_export]
-- [ ] Пять passage-мутантов из `scripts/mutation-gate.mjs` пойманы своими
+- [ ] Пять passage-мутантов из `scripts/mutation-registry.mjs` пойманы своими
       guards до передачи в review. [auto: mutation-gate]
 
 ## Independent-wall openings and structural axes (#132, #185)

@@ -2,7 +2,7 @@
 
 Этот документ — developer-facing канон для issue
 [#267](https://github.com/Matysh/houseplan-card/issues/267). Пользовательские
-названия и обещания остаются в [USER-GUIDE.ru.md](USER-GUIDE.ru.md#12-отображение-устройств);
+названия и обещания остаются в [USER-GUIDE.ru.md](USER-GUIDE.ru.md#12-визуальные-состояния-устройств);
 здесь зафиксировано, как уже разрешённые факты превращаются в одно «лицо»
 маркера. Любое изменение результата требует изменения строки, fixture и
 mutation evidence в одном pull request.

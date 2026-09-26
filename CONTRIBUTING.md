@@ -104,9 +104,12 @@ tree repeatedly. Do **not** replace it with `--depth=1`: a shallow clone is abou
 the same size but has no `merge-base`, so the process gate, `smoke-select` and
 every `origin/dev..HEAD` range stop working.
 
-The HA-harness backend tests (`tests_backend/test_ha_*.py`) need Python ≥3.13 and
-`pytest-homeassistant-custom-component home-assistant-frontend`; CI runs them on
-every push — locally they are skipped when `homeassistant` is not importable.
+The HA-harness backend tests (`tests_backend/test_ha_*.py`) need the
+repository-pinned Python (`.python-version`) and
+`pytest-homeassistant-custom-component home-assistant-frontend`; their canon is
+Linux CI or WSL (`bash scripts/wsl-setup.sh --verify`). Without an importable
+`homeassistant` they are not collected at all — not skipped — and pytest prints
+`HA harness NOT collected: …` (#630).
 
 ## Ground rules
 
@@ -114,8 +117,10 @@ every push — locally they are skipped when `homeassistant` is not importable.
   `docs/STATUS.md` for state changes; `docs/DEVELOPMENT.md` for new gotchas.
 - Every UI string goes through `src/i18n/<lang>.json`; follow the
   [Translations](#translations) flow for registry and backend parity.
-- The built card must be committed in sync: `cp dist/houseplan-card.js
-  custom_components/houseplan/frontend/` (CI compares them byte-for-byte).
+- The committed bundle changes only in a release candidate: `npm run
+  bundle:release` in a commit with a `Release:` trailer (#657). An ordinary task
+  restores it with `npm run bundle:clean` before committing — the `commit-msg`
+  hook refuses a bundle change otherwise.
 - Tap actions have a security model (locks/alarms never toggle from the plan) —
   see `resolveToggleIntent` in `src/device-toggle.ts`; don't weaken it.
 - Every commit follows the issue and trailer contract in `PROCESS.md`.
@@ -125,6 +130,8 @@ every push — locally they are skipped when `homeassistant` is not importable.
 ## Architecture
 
 Start with `docs/ARCHITECTURE.md` (data model, WS API, coordinate system) and
-`docs/STATUS.md` (current state). Release: bump the version in `package.json`,
-`manifest.json`, `const.py`, `CARD_VERSION`, tag `vX.Y.Z`, publish a GitHub release —
-the workflow attaches the card bundle.
+`docs/STATUS.md` (current state). Release mechanics live in `docs/STATUS.md` › Workflow: the version sources are
+the ones checked by `scripts/release-contract.mjs`, prereleases go through
+`npm run release:prerelease -- <tag> --issues=… --yes` (or the manual
+`Publish prerelease` workflow), and stable installable assets are published only
+by `release.yml` (#540).

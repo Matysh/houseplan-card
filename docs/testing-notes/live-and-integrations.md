@@ -38,7 +38,7 @@
       [auto: `demo/smoke_pdf_export.mjs`].
 - [ ] Каждый поведенческий барьер выше защищён соответствующим мутантом, а
       обновлённый PDF golden принят только после визуальной проверки Linux CI
-      [mutation: `scripts/mutation-gate.mjs`; golden: `demo/golden/`].
+      [mutation: `scripts/mutation-registry.mjs`; golden: `demo/golden/`].
 
 ## Многоэтажный робот: карты и пространства (#162)
 
@@ -72,7 +72,7 @@
       `vacuum-run-forgets-its-route`, `vacuum-retargeted-route-keeps-its-old-trails`,
       `vacuum-route-validation-accepts-a-dead-space` и
       `space-delete-keeps-foreign-vacuum-routes`
-      [mutation: `scripts/mutation-gate.mjs`].
+      [mutation: `scripts/mutation-registry.mjs`].
 - [ ] Продакшен-бандл показывает робота на этаже активной карты, а на этаже дока
       не показывает; предупреждение у дока появляется на движущемся роботе с
       несопоставленной картой; донастройка предложения с высоким residual

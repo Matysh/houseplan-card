@@ -6,6 +6,9 @@
 - Normative spec: `docs/specs/089-isometric-view-stage1.md`, revision 3
 - Activation superseded by #448: the renderer remains authoritative, but its
   historical per-feature URL/storage lifetime is replaced by `hp_alpha`.
+- Activation superseded by #649: 2.5D is a public View mode behind
+  `settings.volumetric_view`; `hp_alpha` no longer gates it (`docs/ISOMETRIC.md` ›
+  Activation). The activation text below is historical.
 
 ## Context
 

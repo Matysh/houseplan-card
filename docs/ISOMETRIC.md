@@ -119,6 +119,9 @@ the exact Linux CI SHA.
 
 ## Stage 2 composition (#122)
 
+> Historical: written while 2.5D was a hidden `hp_alpha` experiment. Since #649
+> it is public; activation is described in [Activation](#activation).
+
 Stage 2 evolves the same hidden `iso` experiment; it does not add a flag,
 setting or public activation path. The accepted implementation contract is
 `docs/specs/122-isometric-stage2.md` and the fixed composition decisions are in
@@ -203,6 +206,9 @@ view-toggle performance debt remains tracked in #124; #122 neither weakens its
 budget nor treats fallback as benchmark success.
 
 ## Stage 4 visual handoff (#570)
+
+> Historical: written while 2.5D was a hidden `hp_alpha` experiment. Since #649
+> it is public; activation is described in [Activation](#activation).
 
 Stage 4 refines the same hidden `iso` presentation behind `hp_alpha`; it adds no
 public switch, configuration field or experiment id. Stage 3 history remains in
