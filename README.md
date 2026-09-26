@@ -61,8 +61,8 @@ sync across screens.
 1. Install the integration and open **House Plan** in the Home Assistant sidebar.
 2. Create the first **space**: upload SVG/PNG/JPG/WebP, reuse an uploaded image,
    or choose no image and draw the plan by hand.
-3. In Plan, select **Room outline**, place vertices, and click the first point to
-   close the outline.
+3. In Plan, select **Walls** and draw one continuous chain around the room: when
+   it closes an area, the room dialog opens.
 4. Name the room and bind it to a Home Assistant area. Use “No area” for a room
    that has no devices.
 5. Open Device: devices from the bound area are already placed; drag their

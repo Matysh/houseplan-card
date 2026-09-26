@@ -77,8 +77,8 @@ Track progress in `custom_components/houseplan/quality_scale.yaml` (done/exempt 
 
 ## Phase 10 — Community & distribution
 
-- [ ] hacs/default PR **#9004** through moderation (#8995 was bot-closed for a
-  non-template body; #9004 is queued with the label since 2026-07-22).
+- [x] hacs/default PR **#9004** merged on 2026-08-25: House Plan is in the HACS
+  default catalog (#8995 was bot-closed earlier for a non-template body).
 - [ ] Demo GIF/video for README (the single biggest driver of adoption for dashboard cards).
 - [ ] Forum post in the Floorplan category + Reddit r/homeassistant showcase once
   the demo assets exist.

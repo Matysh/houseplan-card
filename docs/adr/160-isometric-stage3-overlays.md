@@ -8,6 +8,9 @@
 - Amended by: #471 (`docs/specs/471-isometric-overlay-white-plates.md`) removes
   visible raised plates while retaining their geometry as an invisible safety
   footprint.
+- Activation superseded by #649: 2.5D is a public View mode behind
+  `settings.volumetric_view`; `hp_alpha` no longer gates it (`docs/ISOMETRIC.md` ›
+  Activation). The activation text below is historical.
 
 ## Context
 

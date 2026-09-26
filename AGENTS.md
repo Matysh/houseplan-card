@@ -406,7 +406,7 @@ committed copy (#657):
 npm run bundle:sync    # build + dist → demo/srv/assets (#255)
 npm run bundle:clean   # before an ordinary commit: dist back to the committed copy (#657)
 npm run bundle:release # candidate only: build + dist → custom_components + demo/srv/assets
-npm run bundle:budget  # initial View graph <= 256000 B gzip (#337)
+npm run bundle:budget  # initial View graph within INITIAL_VIEW_GZIP_BUDGET (scripts/bundle-budget.mjs, #337/#367)
 ```
 
 CI (`bundle-policy --verify`) checks the fresh build's integrity on every push

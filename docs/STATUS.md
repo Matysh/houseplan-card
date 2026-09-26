@@ -63,10 +63,11 @@ same commit as the behaviour.
 
 ## Where things live
 
-- **Source of truth:** the git repo (GitHub `main`). In a sandbox session: clone from GitHub or
-  from `houseplan-card.git.bundle` (kept fresh in the user folder root *and* in `houseplan-card/`).
-- **User folder** `houseplan/houseplan-card/` — a file mirror of the repo (synced after every
-  commit; the mount cannot delete files, so a few stale artifacts linger — git is authoritative).
+- **Source of truth:** the git repo on GitHub — work lands on `dev`, stable releases on
+  `main`. In a sandbox session clone it from GitHub.
+- **Owner's folder:** `houseplan-card-src/houseplan-card` is the author's tree and
+  `houseplan-card-src/hp-dev` the owner's worktree on `dev` (`AGENTS.md` › Working
+  trees). The former file mirror `houseplan/houseplan-card/` is no longer maintained.
 - **Production config:** server-side on the HA instance, `.storage/houseplan.config` +
   `.storage/houseplan.layout` (backups `.bak-v1100` exist on the box).
 
@@ -78,39 +79,34 @@ same commit as the behaviour.
    The former local product plan is preserved only as a snapshot at
    [`legacy/docs/PRODUCT-IMPROVEMENT-PLAN.ru.md`](../legacy/docs/PRODUCT-IMPROVEMENT-PLAN.ru.md)
    and must not be updated or used as a backlog.
-1. **hacs/default PR #9004** — accepted by the bot into the review queue ('New default
-   repository' label). Minor issues ⇒ the bot drafts the PR (fix and re-ready).
-2. GitHub auth: fine-grained PAT (Contents R/W, issued 2026-07-23) in the sandbox
-   `~/.git-credentials`; pushes go over SSH with the `ha_jb` key. The old classic PAT
-   expired and is gone.
-3. Privacy: legacy real-house plan sources (`assets/`) and screenshots were
+1. Privacy: legacy real-house plan sources (`assets/`) and screenshots were
 removed from the current tree. Public documentation images are generated
    from synthetic fixtures by the `Docs screenshots` workflow, accepted with `npm run docs:accept -- --reviewed`, and indexed in
    `docs/images/screenshots.json`. Old images persist in git history and release
    archives; history rewrite is deliberately not done because it would break
    release tags and HACS installs.
-4. Stale files on the mount that cannot be deleted from the sandbox: `src/data/` leftovers,
-   `brand_preview.png`, old nested bundle copies — ignore, git is authoritative.
-5. Roadmap: phases 7–10 are DONE (v1.12.0 quality scale, v1.13.0 universality,
+2. Roadmap: phases 7–10 are DONE (v1.12.0 quality scale, v1.13.0 universality,
    v1.13.1 distribution). Next candidates: measure backend coverage (>95% goal);
    mypy strict.
-6. The public-doc screenshot harness is versioned in `demo/docs/capture.mjs` and
+3. The public-doc screenshot harness is versioned in `demo/docs/capture.mjs` and
    reuses the production component plus deterministic golden fixtures.
 
 ## How to resume work in a fresh session (checklist)
 
-1. Read this file, then CHANGELOG.md (top entries), DEVELOPMENT.md (environment gotchas).
-2. Restore the repo: `git clone <user-folder>/houseplan-card.git.bundle hpcN` in `/tmp`
-   (files from *previous* sandbox sessions in `/tmp` belong to `nobody` and are unreadable —
-   always clone into a fresh directory; `npm ci` again).
-3. Deployment needs the `ha_jb` SSH key — it lives in the user folder at
-   `houseplan/.secrets/ha_jb` (outside git) and often survives in the sandbox home
-   `~/.ssh/ha_jb`; copy with chmod 600. Only ask the user if both are gone.
-4. Build only in `/tmp` (never on the mount), `npm run build` (starts with `tsc --noEmit`),
-   md5-verify after every deploy, restart HA via
-   `nohup ha core restart >/dev/null 2>&1 </dev/null &` (otherwise the SSH session hangs).
-5. GitHub pushes: SSH remote with the `ha_jb` key; API releases with the fine-grained
-   PAT from `~/.git-credentials` (see the watchlist).
+1. Read by role, as `AGENTS.md` › Read this first lists it: author — `docs/SCOPE.md` →
+   `AGENTS.md` → `docs/process/AUTHOR.md` → this file; reviewer — `docs/SCOPE.md` →
+   `AGENTS.md` → `docs/process/REVIEWER.md`; pipeline, gates or process — through
+   `PROCESS.md`.
+2. Clone `https://github.com/Matysh/houseplan-card` and run `npm ci` — it installs the
+   hooks (`git config core.hooksPath` → `.githooks`). On the owner's Windows machine use
+   `scripts/windows-toolchain.ps1`; in WSL, an ext4 clone and
+   `bash scripts/wsl-setup.sh --verify`.
+3. Start a task from its packet: `node scripts/task-packet.mjs --issue NN`.
+4. Build only through `npm run build`; the task's local gate is `npm run gate:small`
+   (`AGENTS.md` › Gates).
+5. Nothing is copied to the home instance by hand (`PROCESS.md` §12): it updates
+   through HACS by tag, and the dev stand takes the head of `dev` from the
+   `dev-build` branch.
 
 ## Product scope
 

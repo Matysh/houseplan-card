@@ -7,6 +7,9 @@
 - Predecessor: `docs/adr/089-isometric-stage1-renderer.md`
 - Activation superseded by #448: Stage 2 remains hidden, now behind the single
   indefinite `hp_alpha` switch instead of the historical `iso` lifetime.
+- Activation superseded by #649: 2.5D is a public View mode behind
+  `settings.volumetric_view`; `hp_alpha` no longer gates it (`docs/ISOMETRIC.md` ›
+  Activation). The activation text below is historical.
 
 ## Context
 

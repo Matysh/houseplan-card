@@ -44,10 +44,7 @@ houseplan-card/
 │  ├─ space-model-selection.ts   # active-or-first and exact optional space selectors
 │  ├─ render/opening-tunnels.ts  # immutable SVG projection of resolved tunnel geometry/fills
 │  ├─ editor.ts                  # GUI config editor (ha-form + selectors)
-│  ├─ rules.ts                   # icon rules (iconFor), filtering, groups, fallback order
-│  └─ data/
-│     ├─ house.ts                # geometry: ROOMS (rooms→area), FLOOR_VB (viewBox), names
-│     └─ backgrounds.ts          # VECTOR plans (SVG base64) + FLOOR_BG_RECT (positioning)
+│  └─ rules.ts                   # icon rules (iconFor), filtering, groups, fallback order
 ├─ dist/                         # entry + manifest + content-hashed JS chunks
 ├─ demo/golden/                  # deterministic HP-QA-01 matrix, capture/verify/accept
 ├─ demo/performance/             # large-house budgets and same-runner comparison

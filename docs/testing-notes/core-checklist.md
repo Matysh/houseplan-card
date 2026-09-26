@@ -449,7 +449,7 @@
       saved plan and hit Save before the thumbnail loads — the stored aspect is
       the real one, never the previous file's [auto: smoke_audit_1490]
 - [ ] Zoom goes below the fit (v1.50.0): minus past 100% floats the plan
-      centred, floor at 0.4x; entering an editor keeps the stage inside the
+      centred, floor at 1/3 (`MIN_ZOOM`, `src/space-geometry.ts`); entering an editor keeps the stage inside the
       viewport [auto: smoke_zoom_out]
 - [ ] Migration crash recovery (v1.50.0, HP-1490-01): kill HA between the two
       store writes of the square migration — the next start finishes the layout

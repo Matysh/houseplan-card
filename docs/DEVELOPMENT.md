@@ -341,7 +341,7 @@ commands and the explicit review workflow are documented in
 ```bash
 cd /tmp/hpc && npm ci        # once
 npm run bundle:sync          # build + entry/manifest/chunks → demo
-npm run bundle:budget        # initial View graph must stay <= 256000 B gzip
+npm run bundle:budget        # initial View graph within INITIAL_VIEW_GZIP_BUDGET (scripts/bundle-budget.mjs)
 npm run bundle:clean         # before an ordinary commit (#657)
 npm run bundle:release       # candidate only: also → custom_components/houseplan/frontend
 node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend   # candidate parity

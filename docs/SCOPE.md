@@ -48,9 +48,9 @@ deliberate degradation is allowed under `TOUCH-SUPPORT.md`.
 | J1 | "Show the whole home and what's happening right now" — live spatial overview: device states, room fills (light/temp/LQI), values, multi-floor tabs | **Closed** |
 | J2 | "Something is wrong — show me *where*" — leak/smoke/gas pulse, open doors/windows, unlocked locks, red dot on devices HA added silently | **Closed** |
 | J3 | "Let me act on the obvious right from the plan" — tap-to-toggle for safe domains, info cards, guarded lock action | **Closed** |
-| J4 | "From zero to a working plan in one evening, no Inkscape/YAML" — image/PDF/draw, floors-import wizard, room polygons bound to areas, filtered auto-placement, editable icon rules | **Closed**; onboarding polish is *partial* (no registry-driven room suggestions) |
+| J4 | "From zero to a working plan in one evening, no Inkscape/YAML" — image (SVG/PNG/JPG/WebP) or draw, floors-import wizard, room polygons bound to areas, filtered auto-placement, editable icon rules | **Closed**; onboarding polish is *partial* (no registry-driven room suggestions) |
 | J5 | "Room climate at a glance" — per-room temperature/humidity, comfort-range fills, room-card metrics | **Closed** |
-| J6 | "Keep the plan true as the home evolves" — new-device flag, two editors, drag/resize, merge/split, multi-client live sync, optimistic locking | **Closed** |
+| J6 | "Keep the plan true as the home evolves" — new-device flag, three editors (plan, devices, background), drag/resize, merge/split, multi-client live sync, optimistic locking | **Closed** |
 | J7 | "Is my Zigbee mesh healthy *here*?" — LQI badges, per-room average/fill and opt-in direct-neighbour links for one hovered device | **Closed** (spatial diagnostics; no persistent full-mesh graph) |
 
 ## Partially covered — improvement backlog stays inside these
@@ -62,11 +62,14 @@ deliberate degradation is allowed under `TOUCH-SUPPORT.md`.
   formatting only.
 - **Accessibility**: `prefers-reduced-motion` only; no keyboard navigation in
   editors, no ARIA labelling of the plan.
-- **Docs/screenshots**: README predates the two-editor redesign.
+- **Docs**: the English user guide covers less than the Russian one
+  ([#668](https://github.com/Matysh/houseplan-card/issues/668)).
 
 ## Known gaps that fit the mission (build only on owner's request)
 
-- Person/presence shown in rooms (classic floorplan ask; pure J1).
+- Person/presence shown in rooms (classic floorplan ask; pure J1). Started on the
+  owner's request with mmWave radar presence, [#485](https://github.com/Matysh/houseplan-card/issues/485)
+  (`docs/RADAR.md`); anything beyond it stays here.
 ### The lock invariant, stated precisely (review CR-1)
 
 No lock or alarm panel is ever actuated **by a tap on the plan**: icons, lock
@@ -158,8 +161,8 @@ the file — and if a future version wants to reclaim that space, it asks.
 > a plan image (or draw one), outline rooms and bind them to HA areas — your
 > devices appear in place, automatically, with live states. Glance at the wall
 > tablet: what's on, what's open, what's too cold, what's leaking, what's new.
-> Tap to act — safely: locks never toggle by accident. Two built-in editors
-> (plan and devices) mean no Inkscape, no YAML, no external tools — ever.
+> Tap to act — safely: locks never toggle by accident. Three built-in editors
+> (plan, devices and background) mean no Inkscape, no YAML, no external tools — ever.
 
 **Tasks it closes:** whole-home live overview · spatial alerts (leak/smoke/open/
 unlocked/new device) · safe quick actions · per-room climate · Zigbee mesh

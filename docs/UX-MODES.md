@@ -92,9 +92,10 @@ support. User documentation recommends desktop for creation and maintenance.
 
 Allowed: pan/zoom (wheel, pinch, buttons, double-click/tap on free background
 to Fit all), switching spaces, device tap
-(info / more-info / toggle per settings), long-press → info card, opening tap →
-door/lock info card (with an explicit Unlock/Lock button when a lock is bound —
-the only way to operate a lock from the card; plan-icon taps never toggle locks),
+(info / more-info / toggle per settings), long-press → info card, lock-badge tap
+→ door/lock info card (openings themselves are inert in View; the card carries an
+explicit Unlock/Lock button — the only way to operate a lock from the card;
+plan-icon taps never toggle locks),
 room-card link icon → HA area, clean room click/tap → room fit, room hover
 highlight, hover tooltips (name, clean-floor area, temperature, signal).
 
