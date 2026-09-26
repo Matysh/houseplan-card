@@ -847,6 +847,13 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
+      # download-artifact распаковывает поверх checkout и не удаляет старые
+      # content-hashed чанки закоммиченного release-бандла (#657). Свежий
+      # артефакт должен быть единственным содержимым dist, иначе bundle-tree
+      # справедливо видит оставшиеся файлы как orphan assets.
+      - name: Очистить закоммиченный dist перед артефактом
+        run: |
+          node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })"
       - name: Забрать собранный бандл
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
@@ -893,6 +900,9 @@ jobs:
       # Бандл приходит артефактом из job `frontend` (#336): та же сборка, но
       # один раз на прогон. Свежесть проверяет сам продукт — `assertFreshDemoBundle`
       # сверяет вшитый отпечаток с исходниками этого дерева.
+      - name: Очистить закоммиченный dist перед артефактом
+        run: |
+          node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })"
       - name: Забрать собранный бандл
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
@@ -1013,6 +1023,9 @@ jobs:
       # Бандл приходит артефактом из job `frontend` (#336): та же сборка, но
       # один раз на прогон. Свежесть проверяет сам продукт — `assertFreshDemoBundle`
       # сверяет вшитый отпечаток с исходниками этого дерева.
+      - name: Очистить закоммиченный dist перед артефактом
+        run: |
+          node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })"
       - name: Забрать собранный бандл
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
@@ -1117,6 +1130,9 @@ jobs:
       # Бандл приходит артефактом из job `frontend` (#336): та же сборка, но
       # один раз на прогон. Свежесть проверяет сам продукт — `assertFreshDemoBundle`
       # сверяет вшитый отпечаток с исходниками этого дерева.
+      - name: Очистить закоммиченный dist перед артефактом
+        run: |
+          node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })"
       - name: Забрать собранный бандл
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:

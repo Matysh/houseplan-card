@@ -57,6 +57,11 @@ test('бандл собирается один раз и приезжает бр
   assert.equal(builds.length, 1, 'бандл должен собираться ровно в одной job');
   assert.equal(workflow.match(/name: card-bundle/g)?.length, 5,
     'один upload и четыре download артефакта бандла (три браузерные job и стенд dev, #657)');
+  const cleanDownloads = workflow.match(
+    /- name: Очистить закоммиченный dist перед артефактом\n\s+run: \|\n\s+node -e "require\('node:fs'\)\.rmSync\('dist', \{ recursive: true, force: true \}\)"\n\s+- name: Забрать собранный бандл\n\s+uses: actions\/download-artifact@[0-9a-f]+ # v7\n\s+with:\n\s+name: card-bundle\n\s+path: dist/g,
+  ) || [];
+  assert.equal(cleanDownloads.length, 4,
+    'каждый download свежего бандла обязан сначала удалить старые content-hashed чанки checkout');
   assert.equal(workflow.match(/name: card-test-build/g)?.length, 2,
     'один upload и один download тестового дерева для smoke job');
   assert.match(workflow, /name: card-test-build\n\s+path: test-build\//,
