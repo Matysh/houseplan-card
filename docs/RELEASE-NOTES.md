@@ -1,20 +1,20 @@
-<!-- release: v1.78.0-beta.3 -->
+<!-- release: v1.78.0-beta.4 -->
 
 ## Основное
 
-- Объёмный вид 2.5D вышел из экспериментального режима: он включается в общих настройках и добавляет приподнятые плитки устройств, мягкие тени и свет из окон, не меняя обычный плоский план ([#649](https://github.com/Matysh/houseplan-card/issues/649)).
-- На телефоне шапка помещается в одну строку с меню действий, а на широких экранах основная панель больше не показывает счётчик устройств и не меняет ширину при входе в редакторы ([#616](https://github.com/Matysh/houseplan-card/issues/616), [#647](https://github.com/Matysh/houseplan-card/issues/647)).
-- Карточка в Sections получила штатное изменение высоты; пользователи Home Assistant с ролью `system-read-only` теперь гарантированно остаются только зрителями House Plan ([#648](https://github.com/Matysh/houseplan-card/issues/648), [#626](https://github.com/Matysh/houseplan-card/issues/626)).
+- Значки устройств и замков дверей в 2.5D больше не смещаются при зуме и перемещении плана, сохраняя взаимное выравнивание как в обычном виде ([#651](https://github.com/Matysh/houseplan-card/issues/651)).
+- При холодной загрузке 2.5D больше не появляется вспышка плоского плана и не применяется ошибочная тёмная заливка пола на первом кадре ([#654](https://github.com/Matysh/houseplan-card/issues/654)).
+- Основная панель стала компактнее и стабильнее: её ширина не меняется между редакторами, кнопки сводной панели остаются доступны, а Escape закрывает любой редактор ([#660](https://github.com/Matysh/houseplan-card/issues/660)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- The 2.5D view has left experimental mode: it is enabled in General settings and adds raised device tiles, soft shadows and window light without changing the ordinary flat plan ([#649](https://github.com/Matysh/houseplan-card/issues/649)).
-- On phones the header now fits in one row with an actions menu, while on wider screens the main toolbar no longer shows the device count or changes width when entering an editor ([#616](https://github.com/Matysh/houseplan-card/issues/616), [#647](https://github.com/Matysh/houseplan-card/issues/647)).
-- Cards in Sections can now be resized vertically with Home Assistant's standard handle; Home Assistant `system-read-only` users are now guaranteed to remain House Plan viewers only ([#648](https://github.com/Matysh/houseplan-card/issues/648), [#626](https://github.com/Matysh/houseplan-card/issues/626)).
+- Device and door-lock markers in 2.5D no longer shift while the plan is zoomed or panned, preserving the same relative alignment as in the flat view ([#651](https://github.com/Matysh/houseplan-card/issues/651)).
+- A cold 2.5D load no longer flashes the flat plan or applies an incorrect dark floor treatment on the first frame ([#654](https://github.com/Matysh/houseplan-card/issues/654)).
+- The main toolbar is more compact and stable: its width stays fixed across editors, summary-panel controls remain available, and Escape closes any editor ([#660](https://github.com/Matysh/houseplan-card/issues/660)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.3/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.3/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.4/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.4/docs/CHANGELOG.md)

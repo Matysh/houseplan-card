@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.78.0-beta.4 — 2026-09-26
+
 - The main toolbar is steadier and more compact: its editor close **×** now
   occupies the reserved place immediately after the active editor button, the
   gap before zoom is halved, and the header width stays fixed while switching
