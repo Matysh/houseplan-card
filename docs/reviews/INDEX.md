@@ -1,9 +1,10 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1072, issue: 378. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1073, issue: 379. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #660 | [SPEC-REVIEW-660-r1.md](SPEC-REVIEW-660-r1.md) | spec · r1 | 🔴 красный | 2 | 1 | Раздел ## ТЗ в теле issue отсутствует целиком; Изменение прямо противоречит двум местам; AC «расстояние уменьшено ровно вдвое» не | `docs/process/AUTHOR.md` `REVIEWER.md` `test/core-file-budget.test.mjs` `scripts/smoke-select.mjs` `demo/helpers/hp-test.mjs` `docs/UX-MODES.md` `docs/reviews/SPEC-REVIEW-647-r1.md` |
 | #656 | [CODE-REVIEW-656-r1.md](CODE-REVIEW-656-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #654 | [SPEC-REVIEW-654-r1.md](SPEC-REVIEW-654-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «Release-артефакты» не называют обновление docs/ISOMETRIC.md | `docs/ISOMETRIC.md` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `docs/reviews/INDEX.md` |
 | #654 | [SPEC-REVIEW-654-r2.md](SPEC-REVIEW-654-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
