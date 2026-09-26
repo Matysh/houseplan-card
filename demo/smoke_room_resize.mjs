@@ -70,14 +70,23 @@ const pointer = (type, planX, planY, { cx, cy, pointerId = 77, nudge } = {}) =>
     const clientX = point.x + (args.nudge ? args.nudge[0] : 0);
     const clientY = point.y + (args.nudge ? args.nudge[1] : 0);
     const handles = [...card.renderRoot.querySelectorAll('.rszhandle')];
-    const target = args.cx == null ? handles.find((handle) => !handle.classList.contains('disabled'))
+    // Synthetic PointerEvent cannot establish native pointer capture. Preserve
+    // the down target ourselves so preview re-rendering may move its cx/cy
+    // before pointerup without turning a valid gesture into a missing target.
+    // This mirrors the real browser contract exercised by capturePointer().
+    const captured = window.__hpResizeSmokeTargets ||= new Map();
+    const found = args.cx == null ? handles.find((handle) => !handle.classList.contains('disabled'))
       : handles.find((handle) => Math.abs(Number(handle.getAttribute('cx')) - args.cx) < 1
         && Math.abs(Number(handle.getAttribute('cy')) - args.cy) < 1);
+    const reusedCapture = args.type !== 'pointerdown' && captured.has(args.pointerId);
+    const target = args.type === 'pointerdown' ? found : (captured.get(args.pointerId) || found);
+    if (args.type === 'pointerdown' && target) captured.set(args.pointerId, target);
     target?.dispatchEvent(new PointerEvent(args.type, {
       bubbles: true, cancelable: true, pointerId: args.pointerId,
       clientX, clientY, pointerType: 'mouse', buttons: args.type === 'pointerup' ? 0 : 1,
     }));
-    return { sent: !!target, scale: matrix.a, client: [clientX, clientY],
+    if (args.type === 'pointerup' || args.type === 'pointercancel') captured.delete(args.pointerId);
+    return { sent: !!target, reusedCapture, scale: matrix.a, client: [clientX, clientY],
       stage: [stage.clientWidth, stage.clientHeight] };
   }, { type, planX, planY, cx, cy, pointerId, nudge });
 
@@ -140,7 +149,8 @@ await settle();
 const safeResizePreviewLeft = await edgeX('left', 1, true);
 check('safe_resize.preview_moved', Math.abs(safeResizePreviewLeft - 450) < 6, true);
 check('safe_resize.preview_not_persisted', Math.abs((await edgeX('left', 1, false)) - 400) < 1e-6, true);
-sent('safe_resize.up_sent', await pointer('pointerup', 450, 250, { cx: 400, cy: 250 }));
+const released = sent('safe_resize.up_sent', await pointer('pointerup', 450, 250, { cx: 400, cy: 250 }));
+check('safe_resize.up_reuses_pointer_capture', released.reusedCapture, true);
 await settle();
 const safeResizeCommitLeft = await edgeX('left', 1, false);
 const safeResizeCommitRight = await edgeX('right', 3, false);
