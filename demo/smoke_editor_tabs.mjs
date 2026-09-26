@@ -3,6 +3,7 @@ const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
+  const hp = window.__hpTest;
   const sr = () => c.shadowRoot || c.renderRoot;
   const tabs = () => [...sr().querySelectorAll('.modetab')];
   const headerCross = () => sr().querySelector('.editor-close-slot .closex');
@@ -369,21 +370,21 @@ const res = await page.evaluate(async () => {
   c._wallChainSegmentCms = [];
   c._roomDialog = savedRoomDialog;
   c._nameSel = savedNameSel;
-  c._areaSel = savedAreaSel;
+  c._areaSel = savedAreaSel; // private-ok: #660 restore of an existing room-dialog draft; the facade has no draft-state setter
 
   // #660: an internal Plan/Background action consumes the first Escape; the
   // next neutral Escape leaves the editor. Device editor exits immediately.
-  c._setMode('plan', false); await settleMode();
-  c._tool = 'opening'; c.requestUpdate(); await c.updateComplete;
+  await hp.setMode('plan');
+  await hp.setTool('column');
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await c.updateComplete;
   out.planEscapeKeepsInternalPriority = c._mode === 'plan' && c._tool === 'draw';
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await settleMode();
   out.planNeutralEscapeExits = c._mode === 'view';
-  c._setMode('devices', false); await settleMode();
+  await hp.setMode('devices');
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await settleMode();
   out.deviceNeutralEscapeExits = c._mode === 'view';
-  c._setMode('decor', false); await settleMode();
-  c._decorTool = 'line'; c.requestUpdate(); await c.updateComplete;
+  await hp.setMode('decor');
+  await hp.setTool('line');
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await c.updateComplete;
   out.decorEscapeKeepsInternalPriority = c._mode === 'decor' && c._decorTool === 'select';
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await settleMode();
