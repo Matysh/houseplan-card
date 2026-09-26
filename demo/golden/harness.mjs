@@ -1551,6 +1551,8 @@ export async function prepareGoldenScenario(page, scenario) {
       }
     }
     if (scenario.stairSelection) {
+      card._activateMarkupTool('select');
+      await card.updateComplete;
       const target = card.renderRoot.querySelector(
         `[data-hp="stair"][data-id="${CSS.escape(scenario.stairSelection)}"] .hp-stair-hit`,
       );
