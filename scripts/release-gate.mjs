@@ -76,11 +76,11 @@ export async function classifyValidateProofs({
       }
     }
     const current = evaluations.at(-1);
-    // #619: a complete proof is immutable evidence for this exact SHA/tree.
-    // A later duplicate may fail for workflow topology rather than product
-    // content, so only a green proof ends the search; failures remain the
-    // fallback verdict when no run proves the candidate green.
-    if (current.status === 'green') break;
+    // #656: runs are newest first. A stale/light or cancelled run does not
+    // answer the release policy, so search past it. Every compatible state —
+    // including pending, missing and failed — is decisive and fails closed;
+    // an older green proof must not hide a newer full failure.
+    if (current.status !== 'cancelled' && current.status !== 'stale') break;
   }
   return selectCiProofVerdict(evaluations);
 }

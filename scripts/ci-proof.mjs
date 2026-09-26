@@ -434,16 +434,15 @@ export function evaluateCiProof({
 }
 
 /**
- * A complete green proof is content-addressed evidence for the candidate and
- * remains valid regardless of a later duplicate run (#619). When no green
- * proof exists, keep the newest decisive state so failures still fail closed.
+ * Evaluations arrive newest first. Cancelled and stale runs do not describe
+ * the requested policy; the newest remaining run is the verdict. In
+ * particular, a later failed full run must not be hidden by an older green
+ * proof for the same candidate (#656).
  */
 export function selectCiProofVerdict(evaluations) {
   const relevant = (evaluations || []).filter(
     (item) => item?.status !== 'cancelled' && item?.status !== 'stale',
   );
-  const green = relevant.find((item) => item?.status === 'green');
-  if (green) return green;
   if (relevant.length) return relevant[0];
   return { status: 'missing', note: 'no run carries a proof for the requested policy', url: null };
 }

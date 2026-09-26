@@ -93,6 +93,18 @@ test('#541: release skips a newer light proof but does not let it hide an older 
   assert.equal(verdict.url, 'https://run/10');
 });
 
+test('#656: a newer failed light proof cannot hide an older compatible green proof', async () => {
+  const older = proofContext({ id: 10 });
+  const newer = proofContext({ id: 11, full: false, conclusion: 'failure' });
+  const contexts = new Map([[10, older.context], [11, newer.context]]);
+  const verdict = await classifyValidateProofs({
+    runs: [older.run, newer.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x',
+    loadContext: async (run) => contexts.get(run.databaseId),
+  });
+  assert.equal(verdict.status, 'green');
+  assert.equal(verdict.url, 'https://run/10');
+});
+
 test('#541: a later complete full proof refreshes an older red release candidate', async () => {
   const older = proofContext({ id: 10, conclusion: 'failure' });
   const newer = proofContext({ id: 12 });
@@ -105,7 +117,7 @@ test('#541: a later complete full proof refreshes an older red release candidate
   assert.equal(verdict.url, 'https://run/12');
 });
 
-test('#619: any complete green proof on the exact SHA survives a newer failed duplicate', async () => {
+test('#656: a newer failed full proof blocks an older green proof on the exact SHA', async () => {
   const older = proofContext({ id: 13 });
   const newer = proofContext({ id: 14, conclusion: 'failure' });
   const contexts = new Map([[13, older.context], [14, newer.context]]);
@@ -113,8 +125,8 @@ test('#619: any complete green proof on the exact SHA survives a newer failed du
     runs: [newer.run, older.run], repo: 'x/y', sha: SHA, tree: TREE, token: 'x',
     loadContext: async (run) => contexts.get(run.databaseId),
   });
-  assert.equal(verdict.status, 'green');
-  assert.equal(verdict.url, 'https://run/13');
+  assert.equal(verdict.status, 'failed');
+  assert.equal(verdict.url, 'https://run/14');
 });
 
 test('release gate can target the dedicated exact-SHA performance workflow', () => {
@@ -127,7 +139,8 @@ test('release gate can target the dedicated exact-SHA performance workflow', () 
 test('#541: the release documents describe proof semantics', () => {
   const development = readFileSync(new URL('../docs/DEVELOPMENT.md', import.meta.url), 'utf8');
   assert.match(development, /requires a complete Validate proof for its SHA and\nGit tree/);
-  assert.match(development, /Any complete green full proof on the exact SHA\n\s*is sufficient/);
+  assert.match(development, /The newest compatible full run is the verdict/);
+  assert.match(development, /a later failed full run blocks an older green proof/);
   assert.match(development, /Review, merge and release use the\nsame `missing` \/ `pending` \/ `cancelled` \/ `stale` \/ `failed` state machine/);
   const performance = readFileSync(new URL('../demo/performance/README.md', import.meta.url), 'utf8');
   assert.match(performance, /latest\nnon-cancelled run on the SHA/);

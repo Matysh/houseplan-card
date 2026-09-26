@@ -623,9 +623,11 @@ then a baseline-only commit that reuses smoke, performance smoke, parity and
 backend from the candidate's green jobs, skips every caught witness in the
 mutation ledger and re-runs golden, preflight and frontend only. Review, merge and release use the
 same `missing` / `pending` / `cancelled` / `stale` / `failed` state machine. A
-cancelled or light run is not a release verdict. Any complete green full proof on the exact SHA
-is sufficient: its content-addressed evidence remains valid
-even when a later duplicate run fails (#511, #619). The release also requires Full
+cancelled or light run is not a release verdict. The newest compatible full run is the verdict:
+a later failed full run blocks an older green proof, while a later cancelled,
+light or otherwise stale run is skipped because it does not answer the same
+release policy. A later complete green full run can refresh an older failure
+(#511, #619, #656). The release also requires Full
 Performance and a green E2E run on a
 real Home Assistant — `e2e-gate.mjs --ref=<sha>` dispatches `e2e.yml` in
 `Matysh/houseplan-e2e` on the **candidate commit**, whose

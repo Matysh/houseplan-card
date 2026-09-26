@@ -126,7 +126,7 @@ test('#541 AC: one state machine gives review, merge and release the same termin
   }
 });
 
-test('#541 AC: full red followed by light green still blocks release; a later full green refreshes it', () => {
+test('#656 AC: newest compatible full proof decides; light proofs do not', () => {
   const redFull = proofFixture({ id: 20, conclusion: 'failure' });
   const lightGreen = proofFixture({ id: 21, full: false, backend: false, integration: false });
   const red = evaluateCiProof({ ...redFull, policy: CI_PROOF_POLICIES.release });
@@ -135,8 +135,8 @@ test('#541 AC: full red followed by light green still blocks release; a later fu
   assert.equal(selectCiProofVerdict([light, red]).status, 'failed');
   const newerFull = evaluateCiProof({ ...proofFixture({ id: 22 }), policy: CI_PROOF_POLICIES.release });
   assert.equal(selectCiProofVerdict([newerFull, light, red]).status, 'green');
-  assert.equal(selectCiProofVerdict([red, newerFull]).status, 'green',
-    '#619: a failed duplicate cannot hide a complete green proof for the same candidate');
+  assert.equal(selectCiProofVerdict([red, newerFull]).status, 'failed',
+    '#656: a newer failed full run must block an older green proof for the same candidate');
 });
 
 test('#601 AC3: release policy accepts a full proof without requested mutants; light stays stale; review/merge still demand them', () => {
