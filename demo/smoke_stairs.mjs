@@ -65,6 +65,9 @@ const out = await page.evaluate(async () => {
   await hp.setServerConfig((config) => {
     for (const space of config.spaces) delete space.stairs;
     const first = config.spaces.find((space) => space.id === 'f1');
+    // Keep the scale explicit: this witness must prove a 20 cm physical face,
+    // not inherit whichever default a fixture migration happens to exercise.
+    first.cell_cm = 5;
     first.partitions = [...(first.partitions || []), {
       id: 'stair-smoke-wall', a: [0.15, 0.60], b: [0.85, 0.60], cm: 20,
     }];
@@ -74,7 +77,9 @@ const out = await page.evaluate(async () => {
   await hp.setMode('plan');
 
   result.straightToolExists = await chooseStair('straight');
-  await clickPlan([400, 650]);
+  // 625 is within the wall magnet's reach but is not itself the flush centre
+  // (658.33...). The previous 650 accidentally passed even without a snap.
+  await clickPlan([400, 625]);
   const straight = stairs().find((stair) => stair.kind === 'straight');
   result.straightCreatedOnlyOnCurrentFloor = !!straight && stairs('garden').length === 0;
   result.wallMagnetUsesPhysicalFace = !!straight
