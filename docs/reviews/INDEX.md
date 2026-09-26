@@ -1,11 +1,12 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1070, issue: 377. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1071, issue: 377. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #654 | [SPEC-REVIEW-654-r1.md](SPEC-REVIEW-654-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «Release-артефакты» не называют обновление docs/ISOMETRIC.md | `docs/ISOMETRIC.md` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `docs/reviews/INDEX.md` |
 | #654 | [SPEC-REVIEW-654-r2.md](SPEC-REVIEW-654-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #654 | [CODE-REVIEW-654-r1.md](CODE-REVIEW-654-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #651 | [SPEC-REVIEW-651-r1.md](SPEC-REVIEW-651-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | устаревшая формулировка «экспериментальный 2.5D-вид» противоречит текущему статусу функции | `CHANGELOG.md` `CHANGELOG.ru.md` `docs/ISOMETRIC.md` `docs/USER-GUIDE.ru.md` `docs/STATUS.md` `USER-GUIDE.ru.md` |
 | #651 | [SPEC-REVIEW-651-r2.md](SPEC-REVIEW-651-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #651 | [CODE-REVIEW-651-r1.md](CODE-REVIEW-651-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | AC1 «другая комната исключена» не доказан ни тестом, ни мутацией; AC4 «деградированный fallback группы» не доказан ни тестом, ни мутацией; неточная формулировка в комментарии к реализации (снято без правки) | `src/iso-overlays.ts` `test/iso-overlays.test.mjs` `scripts/mutation-registry.mjs` |
