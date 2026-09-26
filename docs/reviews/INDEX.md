@@ -1,9 +1,10 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1077, issue: 380. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1078, issue: 381. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #661 | [SPEC-REVIEW-661-r1.md](SPEC-REVIEW-661-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #660 | [SPEC-REVIEW-660-r1.md](SPEC-REVIEW-660-r1.md) | spec · r1 | 🔴 красный | 2 | 1 | Раздел ## ТЗ в теле issue отсутствует целиком; Изменение прямо противоречит двум местам; AC «расстояние уменьшено ровно вдвое» не | `docs/process/AUTHOR.md` `REVIEWER.md` `test/core-file-budget.test.mjs` `scripts/smoke-select.mjs` `demo/helpers/hp-test.mjs` `docs/UX-MODES.md` `docs/reviews/SPEC-REVIEW-647-r1.md` |
 | #660 | [SPEC-REVIEW-660-r2.md](SPEC-REVIEW-660-r2.md) | spec · r2 | 🔴 красный | 1 | 0 | Скоуп п.3 переносит крестик внутрь .modes, но .modes | `src/styles/chrome.styles.ts` `src/houseplan-card.ts` `docs/USER-GUIDE.ru.md` `docs/UX-MODES.md` `src/houseplan-editor-runtime.ts` `src/header-menu.ts` `smoke_mobile_view_header.mjs` |
 | #660 | [SPEC-REVIEW-660-r3.md](SPEC-REVIEW-660-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
