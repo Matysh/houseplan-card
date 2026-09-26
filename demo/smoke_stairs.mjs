@@ -60,6 +60,10 @@ const out = await page.evaluate(async () => {
   const activeSpace = () => root().querySelector('[data-hp="space-tab"][aria-current="page"]')
     ?.getAttribute('data-id');
   const closeTo = (a, b, tolerance = 1e-5) => Math.abs(a - b) <= tolerance;
+  const axisAngleDistance = (angle) => {
+    const normalized = ((angle % 180) + 180) % 180;
+    return Math.min(normalized, 180 - normalized);
+  };
   const result = {};
 
   await hp.setServerConfig((config) => {
@@ -84,7 +88,7 @@ const out = await page.evaluate(async () => {
   result.straightCreatedOnlyOnCurrentFloor = !!straight && stairs('garden').length === 0;
   result.wallMagnetUsesPhysicalFace = !!straight
     && closeTo(Math.abs(straight.y * 1000 - 600), straight.width * 500 + (20 / 5) * (1000 / 240) / 2, 2)
-    && closeTo(((straight.angle % 180) + 180) % 180, 0);
+    && closeTo(axisAngleDistance(straight.angle), 0);
 
   result.spiralToolExists = await chooseStair('spiral');
   await clickPlan([580, 650]);
