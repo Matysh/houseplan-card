@@ -18,6 +18,8 @@ test('large-house fixture meets the HP-PERF-01 reference counts', () => {
   assert.equal(Object.keys(fixture.entities).length, LARGE_HOUSE_COUNTS.devices);
   assert.equal(fixture.config.markers.length > 0, true);
   assert.equal(fixture.config.markers.every((marker) => marker.is_light === true), true);
+  assert.equal(makeLargeHouseFixture({ includeStairs: false }).config.spaces
+    .some((space) => space.stairs?.length), false, 'visual goldens can omit the stress-only collection');
 });
 
 test('large-house fixture is deterministic and geometry ids are unique per space', () => {
@@ -26,8 +28,8 @@ test('large-house fixture is deterministic and geometry ids are unique per space
   assert.deepEqual(first, second);
 
   for (const space of first.config.spaces) {
-    const ids = ['rooms', 'openings', 'partitions', 'wall_columns', 'decor']
-      .flatMap((field) => space[field].map((item) => item.id));
+    const ids = ['rooms', 'openings', 'partitions', 'wall_columns', 'decor', 'stairs']
+      .flatMap((field) => (space[field] || []).map((item) => item.id));
     assert.equal(new Set(ids).size, ids.length, space.id);
   }
 });

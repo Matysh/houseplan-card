@@ -209,7 +209,7 @@ export const LARGE_HOUSE_COUNTS = Object.freeze({
   stairs: STAIR_COUNT,
 });
 
-export const makeLargeHouseFixture = () => {
+export const makeLargeHouseFixture = ({ includeStairs = true } = {}) => {
   let openingsLeft = OPENING_COUNT;
   let partitionsLeft = PARTITION_COUNT;
   let columnsLeft = COLUMN_COUNT;
@@ -247,7 +247,7 @@ export const makeLargeHouseFixture = () => {
       partitions: makePartitions(floor, rooms, partitionCount),
       wall_columns: makeColumns(floor, rooms, columnCount),
       decor: makeDecor(floor, decorCount),
-      ...(floor === 0 ? { stairs: makeStairs(floor, STAIR_COUNT) } : {}),
+      ...(includeStairs && floor === 0 ? { stairs: makeStairs(floor, STAIR_COUNT) } : {}),
     };
   });
   const runtime = makeRuntime(spaces);
