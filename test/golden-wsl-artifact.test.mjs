@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { CAPTURE_PROVENANCE_SCHEMA } from '../scripts/capture-environment.mjs';
 import {
   WSL_ATTESTATION_FILE, createWslAttestation, environmentRefusal,
-  repositoryRefusal, verifyWslAttestation,
+  repositoryRefusal, verifyWslAttestation, withoutBundlePaths,
 } from '../scripts/golden-wsl-artifact.mjs';
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
@@ -203,4 +203,17 @@ test('#641: stale fingerprints, toolchain drift and undeclared diffs cannot be a
     rmSync(drifted, { recursive: true, force: true });
     rmSync(unexpected, { recursive: true, force: true });
   }
+});
+
+test('#657 WSL golden: пересобранный бандл не считается правкой источника, остальное — считается', () => {
+  // Первая строка приходит обрезанной (`command` делает trim) — без ведущего пробела.
+  const status = [
+    'M dist/houseplan-card.js',
+    '?? dist/houseplan-assets/houseplan-view-runtime-abc123.js',
+    ' M custom_components/houseplan/frontend/houseplan-card.js',
+    ' M src/editor-panel.ts',
+    '?? demo/golden/notes.txt',
+  ].join('\n');
+  assert.equal(withoutBundlePaths(status), [' M src/editor-panel.ts', '?? demo/golden/notes.txt'].join('\n'));
+  assert.equal(withoutBundlePaths('M dist/houseplan-card.js'), '');
 });

@@ -218,12 +218,17 @@ new `size-pack` with 467.63 MiB; the accepted upper bound is 487.63 MiB.
 - IMPORTANT (audit lesson): the rollup typescript plugin reports a syntax error as a WARNING and still
   builds the bundle — a truncated file can "pass". That is why the build starts with `tsc --noEmit`,
   which fails on such errors. Always build with `npm run build`, never bare `rollup -c`.
-- Before committing a frontend source change, run `npm run bundle:sync`. Rollup writes
+- The committed bundle changes only in a beta/release candidate (#657). Rollup writes
   `dist/houseplan-card.js`, `dist/houseplan-assets.json` and content-hashed chunks under
-  `dist/houseplan-assets/`; the command synchronizes that complete tree to the committed
-  integration snapshot and the untracked demo copy, then verifies every manifest hash.
-  `node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend` is the
-  read-only parity check used by CI and release automation.
+  `dist/houseplan-assets/`; `npm run bundle:sync` builds and lays that tree out into the
+  untracked demo copy, and `npm run bundle:clean` restores the tracked `dist/` before an
+  ordinary commit (the `commit-msg` hook refuses bundle paths without a `Release:`
+  trailer). The candidate runs `npm run bundle:release`, which also updates the
+  integration snapshot `custom_components/houseplan/frontend`.
+  `node scripts/bundle-policy.mjs --verify HEAD` is the check CI and `gate:small` run:
+  build integrity always, byte parity with the committed copy only on a commit that
+  changes the bundle or is a candidate; `node scripts/bundle-tree.mjs dist
+  custom_components/houseplan/frontend` stays the read-only parity check of release automation.
 - The first-space/import dialog is a separate `houseplan-onboarding-runtime-*`
   chunk. Do not fold it into `houseplan-editor-runtime-*`: empty-install
   onboarding is a View prerequisite, while a configured View must request
@@ -335,9 +340,11 @@ commands and the explicit review workflow are documented in
 
 ```bash
 cd /tmp/hpc && npm ci        # once
-npm run bundle:sync          # build + entry/manifest/chunks → integration + demo
+npm run bundle:sync          # build + entry/manifest/chunks → demo
 npm run bundle:budget        # initial View graph must stay <= 256000 B gzip
-node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
+npm run bundle:clean         # before an ordinary commit (#657)
+npm run bundle:release       # candidate only: also → custom_components/houseplan/frontend
+node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend   # candidate parity
 ```
 
 ## Deployment to the dacha (ha.jbstudio.pro)
@@ -525,7 +532,9 @@ edits — not a commit, not a merge (that is decided in `integrate` from the sea
 ### Primary prerelease path
 
 Prepare the candidate as usual: synchronize every version field, add dated RU
-and EN changelog sections, update the production bundle snapshots and write the
+and EN changelog sections, update the production bundle snapshots with
+`npm run bundle:release` (since #657 the only commit that may change them; it
+carries the `Release:` trailer) and write the
 short bilingual body in `docs/RELEASE-NOTES.md`. That file is the one current
 instance of the canonical `## Основное` / `## Highlights` template; its two
 changelog links must be pinned to the new tag.

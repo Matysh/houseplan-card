@@ -131,11 +131,14 @@
 ## Гейты перед хендоффом
 
 - Минимальный набор по изменённым поверхностям: `npx tsc --noEmit`,
-  `npm test`, `npm run build` со сверкой копий бандла, `smoke-select` и
+  `npm test`, `npm run build` + `bundle-policy --verify`, `smoke-select` и
   целевые смоки, `no-new-any`; по диффу — `golden:verify`, `check-docs`,
   `model-invariants`, `pytest tests_backend`, junction parity. Команды —
   в каноне ([§8](../../PROCESS.md#8-гейты)); `npm run gate:small` собирает
   обязательную часть (`AGENTS.md`, «Gates»).
+- Бандл в коммит задачи не идёт: сборка переписывает отслеживаемый `dist/`,
+  перед коммитом — `npm run bundle:clean`; хук `commit-msg` отклоняет пути
+  бандла без трейлера `Release:` (#657, [§1](../../PROCESS.md#1-основное-правило)).
 - Новый код не добавляет `any`: гейт судит добавленные строки; исключение —
   `// any-ok: <конкретная причина>` на той же строке
   ([§8](../../PROCESS.md#8-гейты)).

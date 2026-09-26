@@ -9460,6 +9460,73 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   // #635: индекс ревью — база знаний; молчаливо неполный индекс хуже отсутствующего.
+  // #657: бандл меняет только кандидат, индекс ревью — только коммиты в dev.
+  {
+    id: "bundle-policy-rule-off",
+    guard: "node --test --test-name-pattern=\"#657 \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u043a\u043e\u043c\u043c\u0438\u0442\u0430\" test/bundle-policy.test.mjs",
+    because: "#657: a non-release commit must not carry the bundle \u2014 otherwise every task rebuilds and commits it again",
+    patches: [{ file: "scripts/bundle-policy.mjs", find: "  if (!files.some(isBundlePath)) return [];", replace: "  if (files.length >= 0) return [];" }],
+  },
+  {
+    id: "bundle-policy-cutoff-inverted",
+    guard: "node --test --test-name-pattern=\"#657 \u0438\u0441\u0442\u043e\u0440\u0438\u044f \u0434\u043e \u043f\u0440\u0430\u0432\u0438\u043b\u0430\" test/bundle-policy.test.mjs",
+    because: "#657: history before the rule is grandfathered, after it is judged \u2014 an inverted cutoff blocks old branches and frees new ones",
+    patches: [{ file: "scripts/bundle-policy.mjs", find: "  if (authorDate && Date.parse(authorDate) < Date.parse(since)) return [];", replace: "  if (authorDate && Date.parse(authorDate) > Date.parse(since)) return [];" }],
+  },
+  {
+    id: "bundle-policy-always-compares",
+    guard: "node --test --test-name-pattern=\"#657 CLI --verify\" test/bundle-policy.test.mjs",
+    because: "#657: comparing the committed copy on an ordinary commit would redden every task that no longer commits the bundle",
+    patches: [{ file: "scripts/bundle-policy.mjs", find: "  return files.some(isBundlePath) || isCandidateSubject(subject);", replace: "  return files.length >= 0 || isCandidateSubject(subject);" }],
+  },
+  {
+    id: "bundle-policy-candidate-not-compared",
+    guard: "node --test --test-name-pattern=\"#657 \u0441\u0432\u0435\u0440\u043a\u0430 \u043a\u043e\u043f\u0438\u0439\" test/bundle-policy.test.mjs",
+    because: "#657: a candidate whose bundle was forgotten must still be compared, or a stale bundle ships",
+    patches: [{ file: "scripts/bundle-policy.mjs", find: "  return files.some(isBundlePath) || isCandidateSubject(subject);", replace: "  return files.some(isBundlePath);" }],
+  },
+  {
+    id: "bundle-policy-fresh-check-off",
+    guard: "node --test --test-name-pattern=\"#657 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u044f \u0431\u0435\u0442\u044b\" test/bundle-policy.test.mjs",
+    because: "#657: a hotfix on top of a beta candidate must not publish the candidate's stale bundle",
+    patches: [{ file: "scripts/bundle-policy.mjs", find: "  if (!actual || actual !== expectedFingerprint) {", replace: "  if (!actual) {" }],
+  },
+  {
+    id: "release-prerelease-skips-fresh-bundle",
+    guard: "node --test --test-name-pattern=\"#657 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u044f \u0431\u0435\u0442\u044b\" test/bundle-policy.test.mjs",
+    because: "#657: the freshness check has to run in the publishing orchestrator, not only in a unit",
+    patches: [{ file: "scripts/release-prerelease.mjs", find: "    assertCommittedBundleFresh(manifest, sourceFingerprint(root));\n", replace: "" }],
+  },
+  {
+    id: "provenance-skips-bundle-rule",
+    guard: "node --test --test-name-pattern=\"#657 \u043f\u0440\u0430\u0432\u0438\u043b\u043e \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0435\u0442 validate-commit-provenance\" test/bundle-policy.test.mjs",
+    because: "#657: the commit-msg hook and the CI history check are where the bundle rule actually bites",
+    patches: [{ file: "scripts/validate-commit-provenance.mjs", find: "  errors.push(...bundleCommitErrors(message, normalizedFiles, { authorDate }));", replace: "  void bundleCommitErrors;" }],
+  },
+  {
+    id: "bundle-sync-release-by-default",
+    guard: "node --test --test-name-pattern=\"#486/#657 bundle sync\" test/bundle-sync.test.mjs",
+    because: "#657: an ordinary sync must not touch the committed HACS copy",
+    patches: [{ file: "scripts/bundle-sync.mjs", find: "const TARGETS = process.argv.includes('--release') ? [RELEASE_TARGET, DEMO_TARGET] : [DEMO_TARGET];", replace: "const TARGETS = [RELEASE_TARGET, DEMO_TARGET];" }],
+  },
+  {
+    id: "dev-build-publishes-stale-head",
+    guard: "node --test --test-name-pattern=\"#657 dev-build: dev \u0443\u0448\u0451\u043b \u0432\u043f\u0435\u0440\u0451\u0434\" test/dev-build.test.mjs",
+    because: "#657: an older run finishing late must not overwrite the stand bundle of a newer dev head",
+    patches: [{ file: "scripts/dev-build.mjs", find: "  if (head && head !== sha) {", replace: "  if (head && head === '') {" }],
+  },
+  {
+    id: "dev-build-keeps-history",
+    guard: "node --test --test-name-pattern=\"#657 dev-build: \u043e\u0434\u043d\u0430 \u0432\u0435\u0442\u043a\u0430 \u0431\u0435\u0437 \u0438\u0441\u0442\u043e\u0440\u0438\u0438\" test/dev-build.test.mjs",
+    because: "#657: dev-build is replaced, not appended \u2014 a growing branch would bring the bundle history back",
+    patches: [{ file: "scripts/dev-build.mjs", find: "      'commit-tree', tree, '-m',", replace: "      'commit-tree', tree, '-p', git(['rev-parse', 'HEAD']).out, '-m'," }],
+  },
+  {
+    id: "process-index-on-task-branch",
+    guard: "node --test --test-name-pattern=\"#635/#657 \\\\(1\u0431\\\\)\" test/reviews-index.test.mjs",
+    because: "#657 (1b): the review index is rebuilt only by commits that go to dev; in a task branch it conflicts by construction",
+    patches: [{ file: ".github/workflows/_process.yml", find: "          if [ -f \"$doc\" ] && [ \"$target\" = \"dev\" ]; then", replace: "          if [ -f \"$doc\" ] && [ -n \"$target\" ]; then" }],
+  },
   {
     id: 'reviews-index-skips-self-check',
     guard: 'node --test --test-name-pattern="#635 индекс покрывает" test/reviews-index.test.mjs',

@@ -62,7 +62,11 @@ export const JOB_RULES = Object.freeze({
  * чтобы контрактный тест видел ВСЕ job в обе стороны (#622 AC1): новая job
  * или переименование любой — решение, а не тихое расхождение.
  */
-export const UNCONSUMED_JOBS = Object.freeze({ proof: 'Доказательство выполненных проверок' });
+export const UNCONSUMED_JOBS = Object.freeze({
+  proof: 'Доказательство выполненных проверок',
+  // #657: публикация бандла для стенда — не проверка кода и не вход proof.
+  dev_build: 'Бандл головы dev для стенда',
+});
 
 /** Общий префикс имён mutant-jobs — единственный источник для validate-gate. */
 export const MUTANT_JOB_PREFIX = JOB_RULES.mutants[0].name;

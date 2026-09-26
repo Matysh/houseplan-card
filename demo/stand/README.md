@@ -28,6 +28,22 @@ of the shipped integration.
   is the dev-stand counterpart: a single `console.info` saying the dev stand
   only resets on deploy.
 
+- `update-dev-bundle.sh` — the dev stand's card bundle (#657). Since #657 the
+  committed bundle changes only in a beta/release candidate, so the `dev` tree
+  between betas carries the last beta's bundle. Validate publishes the bundle
+  it built for the head of `dev` into the orphan branch `dev-build` (one commit,
+  force-pushed, `DEV-BUILD.json` names the source SHA; `scripts/dev-build.mjs`).
+  The host deploy script must overlay it after `git pull`:
+
+  ```sh
+  demo/stand/update-dev-bundle.sh --reset <checkout>   # before git pull: restore the tracked copy
+  git -C <checkout> pull --ff-only
+  demo/stand/update-dev-bundle.sh <checkout>           # after: frontend ← origin/dev-build
+  ```
+
+  Until `/opt/hp/bin/hp-update-dev.sh` does this, the dev stand shows the last
+  beta's bundle instead of the head of `dev`.
+
 ## Why the manifests are templates
 
 Both components ship their manifest as `manifest.template.json`, and

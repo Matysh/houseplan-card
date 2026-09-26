@@ -158,7 +158,7 @@ step_bundle() {
   [ -x "$WT/node_modules/.bin/tsc" ] || die "нет node_modules — сначала шаг deps"
   (cd "$WT" && npm run --silent bundle:sync >/tmp/hp-bootstrap-bundle.log 2>&1) \
     || { tail -30 /tmp/hp-bootstrap-bundle.log >&2; die "npm run bundle:sync не удался (лог: /tmp/hp-bootstrap-bundle.log)"; }
-  say "bundle: npm run bundle:sync — ok (dist, custom_components/houseplan/frontend, demo/srv/assets)"
+  say "bundle: npm run bundle:sync — ok (dist, demo/srv/assets; custom_components — только кандидат, #657)"
 }
 
 step_check() {

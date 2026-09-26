@@ -2,12 +2,17 @@
 /**
  * Разложить собранный бандл по местам, которым он нужен (#255).
  *
- * Копий две с половиной. `custom_components/houseplan/frontend` — та, что
- * ставит HACS, она в репозитории и обязана совпадать с `dist` побайтово.
- * `demo/srv/assets` — рабочая копия стенда: её читают браузерные смоки, golden
- * и съёмка скриншотов, но в репозитории её больше нет. Раньше «скопировать
- * туда» жило шестью разными `cp` в воркфлоу и трижды в документации; когда
- * копию забывали, смок врал согласованно (#236).
+ * Копий две с половиной. `demo/srv/assets` — рабочая копия стенда: её читают
+ * браузерные смоки, golden и съёмка скриншотов, в репозитории её нет (#255).
+ * `custom_components/houseplan/frontend` — та, что ставит HACS; с #657 она
+ * обновляется только для релизного кандидата (`--release`, `npm run
+ * bundle:release`): в остальных коммитах закоммиченный бандл законно отстаёт
+ * от исходников, и обычная задача его не трогает. Раньше «скопировать туда»
+ * жило шестью разными `cp` в воркфлоу и трижды в документации; когда копию
+ * забывали, смок врал согласованно (#236).
+ *
+ *   node scripts/bundle-sync.mjs             # dist → demo/srv/assets
+ *   node scripts/bundle-sync.mjs --release   # и в custom_components/houseplan/frontend
  */
 import { createHash } from 'node:crypto';
 import {
@@ -22,10 +27,9 @@ import {
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE_ROOT = resolve(ROOT, 'dist');
 const MANIFEST_NAME = 'houseplan-assets.json';
-const TARGETS = [
-  'custom_components/houseplan/frontend',
-  'demo/srv/assets',
-];
+const DEMO_TARGET = 'demo/srv/assets';
+const RELEASE_TARGET = 'custom_components/houseplan/frontend';
+const TARGETS = process.argv.includes('--release') ? [RELEASE_TARGET, DEMO_TARGET] : [DEMO_TARGET];
 
 const manifestPath = resolve(SOURCE_ROOT, MANIFEST_NAME);
 if (!existsSync(manifestPath)) {

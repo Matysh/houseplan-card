@@ -18,7 +18,7 @@ test('gate:small гоняет обязательную часть PROCESS §8 и
   assert.ok(names.some((n) => n.includes('scripts/smoke-select.mjs --base origin/dev --head HEAD')));
   const serial = postBuildSteps().map((s) => s.args.join(' '));
   assert.equal(serial[0], 'test', 'юниты первыми читают уже готовый свежий dist');
-  assert.ok(serial.some((s) => s.includes('bundle-tree.mjs dist custom_components/houseplan/frontend')));
+  assert.ok(serial.some((s) => s.includes('bundle-policy.mjs --verify HEAD')));
   assert.ok(serial.some((s) => s.includes('bundle:budget')));
   assert.equal(parseArgs(['--base=abc']).base, 'abc');
   assert.equal(parseArgs([]).base, 'origin/dev');

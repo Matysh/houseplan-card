@@ -28,9 +28,6 @@ const git = (cwd, ...args) => execFileSync('git', args, {
   cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
 }).trim();
 
-// Фальшивая сборка: dist/a.js = 'built:' + содержимое src/x.ts.
-const SYNC = [process.execPath, '-e',
-  "const fs=require('fs');fs.writeFileSync('dist/a.js','built:'+fs.readFileSync('src/x.ts','utf8'))"];
 
 function repo({ conflictInSrc, reviews = false }) {
   const root = mkdtempSync(join(tmpdir(), 'hp-rebase-'));
@@ -80,10 +77,10 @@ test('splitConflicts делит пути на сгенерированные и 
     { generated: [], regenerated: ['docs/reviews/INDEX.md'], manual: ['docs/reviews/CODE-REVIEW-9-r1.md'] });
 });
 
-test('#643 AC3: бандл и INDEX.md конфликтуют в одном коммите — бандл пересобран, индекс = пересборка каталога', () => {
+test('#643 AC3/#657: бандл и INDEX.md конфликтуют в одном коммите — бандл = версия dev, индекс = пересборка каталога', () => {
   const { root, work } = repo({ conflictInSrc: false, reviews: true });
   try {
-    const result = rebaseOnDev({ cwd: work, syncCommand: SYNC, log: () => {} });
+    const result = rebaseOnDev({ cwd: work, log: () => {} });
     assert.equal(result.rebased, true);
     assert.ok(result.resolved.includes('docs/reviews/INDEX.md ← пересборка'), JSON.stringify(result.resolved));
     assert.ok(result.resolved.some((r) => r.startsWith('dist/a.js')), 'бандл решён в той же остановке');
@@ -93,21 +90,22 @@ test('#643 AC3: бандл и INDEX.md конфликтуют в одном ко
     assert.equal(index, buildIndex(join(work, 'docs', 'reviews')), 'индекс = пересборка, не версия dev и не ветки');
     assert.match(index, /CODE-REVIEW-8-r1\.md/);
     assert.match(index, /CODE-REVIEW-9-r1\.md/);
-    assert.equal(readFileSync(join(work, 'dist/a.js'), 'utf8'), 'built:branch\n');
+    assert.equal(readFileSync(join(work, 'dist/a.js'), 'utf8'), 'built:dev\n', '#657: бандл ветки не пересобирается');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('конфликт только в бандле: ребейз доведён, бандл пересобран и зааменден (#479 AC5)', () => {
+test('конфликт только в бандле: ребейз доведён, бандл = версия dev, без пересборки и амендинга (#479 AC5, #657)', () => {
   const { root, work } = repo({ conflictInSrc: false });
   try {
-    const result = rebaseOnDev({ cwd: work, syncCommand: SYNC, log: () => {} });
+    const result = rebaseOnDev({ cwd: work, log: () => {} });
     assert.equal(result.rebased, true);
     assert.equal(result.resolved.length, 1);
-    assert.equal(result.rebuilt, true);
+    assert.equal('rebuilt' in result, false, 'пересборки в ветке больше нет');
     assert.equal(git(work, 'status', '--porcelain'), '');
     assert.equal(git(work, 'rev-list', '--count', 'origin/dev..HEAD'), '1', 'один коммит ветки поверх dev');
     assert.equal(git(work, 'rev-list', '--count', 'HEAD..origin/dev'), '0', 'dev полностью под веткой');
-    assert.equal(readFileSync(join(work, 'dist/a.js'), 'utf8'), 'built:branch\n', 'бандл собран из src ветки, а не dev');
+    assert.equal(readFileSync(join(work, 'dist/a.js'), 'utf8'), 'built:dev\n', 'бандл — версия dev, ветка его не несёт (#657)');
+    assert.equal(git(work, 'diff', '--name-only', 'origin/dev', 'HEAD', '--', 'dist'), '', 'бандл ветки совпал с dev');
     assert.equal(readFileSync(join(work, 'src/z.ts'), 'utf8'), 'dev\n', 'правка dev на месте');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
@@ -116,7 +114,7 @@ test('конфликт в src/**: ребейз отменён, дерево и H
   const { root, work } = repo({ conflictInSrc: true });
   try {
     const before = git(work, 'rev-parse', 'HEAD');
-    assert.throws(() => rebaseOnDev({ cwd: work, syncCommand: SYNC, log: () => {} }), /src\/y\.ts/);
+    assert.throws(() => rebaseOnDev({ cwd: work, log: () => {} }), /src\/y\.ts/);
     assert.equal(git(work, 'rev-parse', 'HEAD'), before);
     assert.equal(git(work, 'status', '--porcelain'), '');
     assert.equal(readFileSync(join(work, 'src/y.ts'), 'utf8'), 'branch\n');
@@ -128,7 +126,7 @@ test('--dry-run предсказывает конфликт по бандлу и
   try {
     const before = git(work, 'rev-parse', 'HEAD');
     const lines = [];
-    const result = rebaseOnDev({ cwd: work, dryRun: true, syncCommand: SYNC, log: (l) => lines.push(l) });
+    const result = rebaseOnDev({ cwd: work, dryRun: true, log: (l) => lines.push(l) });
     assert.equal(result.rebased, false);
     assert.deepEqual(result.predicted.generated, ['dist/a.js']);
     assert.equal(git(work, 'rev-parse', 'HEAD'), before);
@@ -140,9 +138,9 @@ test('грязное дерево и ветка dev отвергаются до 
   const { root, work } = repo({ conflictInSrc: false });
   try {
     writeFileSync(join(work, 'src/x.ts'), 'dirty\n');
-    assert.throws(() => rebaseOnDev({ cwd: work, syncCommand: SYNC, log: () => {} }), /не чистое/);
+    assert.throws(() => rebaseOnDev({ cwd: work, log: () => {} }), /не чистое/);
     git(work, 'checkout', '-q', '--', 'src/x.ts');
     git(work, 'checkout', '-q', 'dev');
-    assert.throws(() => rebaseOnDev({ cwd: work, syncCommand: SYNC, log: () => {} }), /ветка dev/);
+    assert.throws(() => rebaseOnDev({ cwd: work, log: () => {} }), /ветка dev/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

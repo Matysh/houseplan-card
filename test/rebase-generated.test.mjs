@@ -214,8 +214,10 @@ test('#643 process.yml: шаг «Привести ветку к dev» ребей
   assert.match(step, /files=\$\(node "\$tools\/scripts\/rebase-generated\.mjs" --onto=origin\/dev\) \|\| code=\$\?/);
   assert.match(step, /if \[ "\$code" -ne 0 \] && \[ "\$code" -ne 3 \]; then/, 'сбой помощника — не конфликт');
   assert.match(step, /echo 'conflict=true'\n\s+echo 'conflicts<<EOF_FILES'/, 'выход conflict/conflicts на месте');
-  // Порядок: ребейз → индекс свеж → push с lease → ожидание ссылки.
-  const order = ['rebase-generated.mjs', '--commit-if-stale --issue="$NUM"', '--force-with-lease="refs/heads/$BRANCH:$before"', 'if [ "$seen" = "$after" ]; then settled=true'];
+  // Порядок: ребейз → push с lease → ожидание ссылки. Индекс в ветке задачи
+  // не пересобирается (#657, 1б): его догоняет слияние кандидата в dev.
+  assert.doesNotMatch(step, /--commit-if-stale/);
+  const order = ['rebase-generated.mjs', '--force-with-lease="refs/heads/$BRANCH:$before"', 'if [ "$seen" = "$after" ]; then settled=true'];
   const at = order.map((needle) => step.indexOf(needle));
   assert.ok(at.every((i) => i >= 0), JSON.stringify(at));
   assert.deepEqual([...at].sort((a, b) => a - b), at, 'порядок шагов сохранён');
@@ -235,7 +237,7 @@ function runStepRebase(work) {
   const body = step.slice(step.indexOf('        run: |\n') + '        run: |\n'.length)
     .split('\n').map((line) => line.replace(/^ {10}/, '')).join('\n');
   const from = body.indexOf('tools="$RUNNER_TEMP/rebase-tools"');
-  const to = body.indexOf('# #635 r2:');
+  const to = body.indexOf('# #657 (1б): индекс ревью в ветке');
   assert.ok(from >= 0 && to > from, 'ребейзная часть шага найдена');
   const temp = mkdtempSync(join(tmpdir(), 'hp-runner-'));
   try {

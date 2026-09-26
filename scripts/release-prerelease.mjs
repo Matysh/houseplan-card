@@ -14,6 +14,8 @@ import { stdin, stdout } from 'node:process';
 import { assertReleaseContract } from './release-contract.mjs';
 import { candidateExpectations, classifyValidateProofs } from './release-gate.mjs';
 import { assertBundleManifest } from './bundle-tree.mjs';
+import { assertCommittedBundleFresh } from './bundle-policy.mjs';
+import { sourceFingerprint } from './source-fingerprint.mjs';
 import { SUMS_FILE, compareSums, formatSums, parseSums, sumsOfDirectory } from './release-assets.mjs';
 import {
   MEMBERSHIP_FILE, buildReleaseMembership, readCandidateHistory,
@@ -294,6 +296,9 @@ if (invokedDirectly) {
         throw new Error(`Committed bundle asset hash mismatch: ${file.path}`);
       }
     }
+    // Рабочее дерево чисто и стоит на `sha` (проверено выше), поэтому его
+    // отпечаток — отпечаток публикуемого коммита (#657).
+    assertCommittedBundleFresh(manifest, sourceFingerprint(root));
     const entry = manifest.files.find((file) => file.path === manifest.entry);
     return { manifest, entrySha256: entry.sha256 };
   };

@@ -97,8 +97,8 @@ test('#635 живой каталог docs/reviews: индекс свеж и по
 // документы, приехавшие ребейзом, невидимы через индекс. Гейт — шаг Validate
 // `reviews-index --check` на push в dev (см. комментарий в validate.yml, почему
 // не на issue-ветках: их переписывает конвейер из ветки по умолчанию, и его
-// коммиты индекс ветки знать не обязан). Свежесть держит `--commit-if-stale`
-// после каждого ребейза конвейера; здесь — свидетель на проводке.
+// коммиты индекс ветки знать не обязан). С #657 ветка задачи индекс не несёт
+// вовсе; свежесть dev держит `--commit-if-stale` слияния кандидата.
 test('#635 r3: свежесть индекса судится на dev, конвейер пересобирает индекс после своих ребейзов', () => {
   const validate = readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8');
   const step = validate.slice(validate.indexOf('id: reviews_index'), validate.indexOf('id: workflow_sync'));
@@ -108,15 +108,16 @@ test('#635 r3: свежесть индекса судится на dev, конв
   assert.match(validate, /\[ "\$REVIEWS_INDEX" = "skipped" \] \|\| check "индекс ревью совпадает с каталогом" "\$REVIEWS_INDEX"/);
 });
 
-test('#635 конвейер пересобирает индекс тем же коммитом, что и документ ревью', () => {
+test('#635/#657 (1б): индекс пересобирается только коммитами, идущими в dev', () => {
   const wf = new URL('../.github/workflows/_process.yml', import.meta.url);
   const text = readFileSync(wf, 'utf8');
-  assert.match(text, /node scripts\/reviews-index\.mjs --dir=docs\/reviews\n\s+git add -- docs\/reviews\/INDEX\.md/);
-  // r2 H1: после приведения ветки к dev индекс пересобирается коммитом
-  // конвейера до фиксации материала; при слиянии — то же в merge-candidate.
+  // Публикация документа: индекс — тем же коммитом, только если цель — dev
+  // (ревью ТЗ). В ветку задачи — один документ.
+  assert.match(text, /if \[ -f "\$doc" \] && \[ "\$target" = "dev" \]; then\n\s+node scripts\/reviews-index\.mjs --dir=docs\/reviews\n\s+git add -- docs\/reviews\/INDEX\.md/);
+  // Приведение ветки к dev индекс больше не коммитит: ветка задачи его не несёт.
   const rebase = text.slice(text.indexOf('- name: Привести ветку к dev'), text.indexOf('- name: Зафиксировать SHA материала ревью'));
-  assert.match(rebase, /node scripts\/reviews-index\.mjs --dir=docs\/reviews --commit-if-stale --issue="\$NUM"/);
-  assert.match(rebase, /NUM: \$\{\{ github\.event\.issue\.number \}\}/);
+  assert.doesNotMatch(rebase, /reviews-index\.mjs/, 'в ветке задачи индекс не пересобирается (#657)');
+  // Слияние кандидата в dev — единственная точка, где индекс задачи догоняет каталог.
   const merge = readFileSync(new URL('../scripts/merge-candidate.mjs', import.meta.url), 'utf8');
   assert.match(merge, /REVIEWS_INDEX_SCRIPT, '--dir=docs\/reviews', '--commit-if-stale'/);
 });

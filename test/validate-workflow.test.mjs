@@ -55,8 +55,8 @@ test('бандл собирается один раз и приезжает бр
   // ~10 джобо-минут на каждом непереиспользованном прогоне.
   const builds = [...workflow.matchAll(/^ +run: npm run (build|bundle:sync)$/gm)];
   assert.equal(builds.length, 1, 'бандл должен собираться ровно в одной job');
-  assert.equal(workflow.match(/name: card-bundle/g)?.length, 4,
-    'один upload и три download артефакта бандла');
+  assert.equal(workflow.match(/name: card-bundle/g)?.length, 5,
+    'один upload и четыре download артефакта бандла (три браузерные job и стенд dev, #657)');
   assert.equal(workflow.match(/name: card-test-build/g)?.length, 2,
     'один upload и один download тестового дерева для smoke job');
   assert.match(workflow, /name: card-test-build\n\s+path: test-build\//,
@@ -66,6 +66,25 @@ test('бандл собирается один раз и приезжает бр
   // Каждая браузерная job раскладывает скачанный бандл по копиям: без этого
   // стенд читает вчерашний файл, а смок врёт согласованно (#236).
   assert.equal(workflow.match(/node scripts\/bundle-sync\.mjs/g)?.length, 3);
+});
+
+test('#657 копии бандла сверяются только на релизном коммите, стенд dev — из артефакта', () => {
+  const workflow = read('validate.yml');
+  const frontend = workflow.slice(workflow.indexOf('\n  frontend:\n'), workflow.indexOf('\n  dev_build:\n'));
+  assert.match(frontend, /name: Card bundle trees in sync\n\s+run: \|\n\s+node scripts\/bundle-policy\.mjs --verify HEAD/,
+    'решение «сверять ли закоммиченную копию» принимает bundle-policy, а не безусловный bundle-tree');
+  assert.doesNotMatch(frontend, /bundle-tree\.mjs dist custom_components/,
+    'безусловная сверка красила бы каждую задачу, не коммитящую бандл');
+  const devBuild = workflow.slice(workflow.indexOf('\n  dev_build:\n'), workflow.indexOf('\n  smoke:\n'));
+  assert.match(devBuild, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev'/);
+  assert.match(devBuild, /needs: frontend/);
+  assert.match(devBuild, /contents: write/);
+  assert.match(devBuild, /name: card-bundle\n\s+path: dist/);
+  assert.match(devBuild, /node scripts\/dev-build\.mjs --sha "\$GITHUB_SHA" --dist dist/);
+  assert.match(devBuild, /continue-on-error: true/, 'сбой публикации для стенда не красит проверку кода');
+  const proof = workflow.slice(workflow.indexOf('\n  proof:\n'));
+  assert.doesNotMatch(proof.split('\n').find((line) => /needs:/.test(line)) || '', /dev_build/,
+    'стенд — не вход доказательства');
 });
 
 test('предполётные проверки не прячут друг друга (#336)', () => {

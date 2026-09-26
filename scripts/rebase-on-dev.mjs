@@ -2,12 +2,11 @@
 // Ребейз ветки задачи на origin/dev без ручных конфликтов в бандле (#479).
 //
 // Бандл лежит в репозитории (класс D: dist/**, custom_components/houseplan/
-// frontend/**), поэтому две задачи, собравшие его параллельно, конфликтуют на
-// нём всегда — 1.16 МБ минифицированного текста плюс переименованные
-// content-hashed чанки. Руками это не решается, решается пересборкой. Скрипт
-// делает ровно это: при конфликте ТОЛЬКО в сгенерированных путях берёт версию
-// dev, доводит ребейз до конца, пересобирает бандл (`npm run bundle:sync`) и,
-// если он отличается, амендит последний коммит ветки. Индекс ревью
+// frontend/**). С #657 его меняет только релизный кандидат, а ветка задачи не
+// несёт его вовсе; конфликт на нём остаётся возможен лишь у ветки, начатой до
+// правила. Такой конфликт решается версией dev — без пересборки и без
+// амендинга: собранный бандл в ветке был бы коммитом, который правило
+// отклонит (`scripts/bundle-policy.mjs`). Индекс ревью
 // `docs/reviews/INDEX.md` (#643) — тоже генерируемый: при конфликте он
 // пересобирается по каталогу в дереве остановки (общий помощник
 // `rebase-generated.mjs`, тот же, что у конвейера). Конфликт в любом другом
@@ -19,13 +18,13 @@
 // Дерево должно быть чистым. Ветка `dev` сама себя не ребейзит.
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, rmSync } from 'node:fs';
+import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { portableCommand } from './spawn-portable.mjs';
 import { REVIEWS_INDEX_PATH, rebaseRegenerating } from './rebase-generated.mjs';
+import { BUNDLE_ROOTS } from './bundle-policy.mjs';
 
-export const GENERATED_ROOTS = ['dist/', 'custom_components/houseplan/frontend/'];
+export const GENERATED_ROOTS = BUNDLE_ROOTS;
 export const isGenerated = (path) => GENERATED_ROOTS.some((root) => path.startsWith(root));
 /** Генерируемые пути, которые решаются пересборкой в момент остановки, а не версией dev (#643). */
 export const REGENERATED_PATHS = [REVIEWS_INDEX_PATH];
@@ -73,7 +72,7 @@ export function resolveGeneratedConflict(git, path) {
 
 export function rebaseOnDev({
   cwd = process.cwd(), upstream = 'origin/dev', dryRun = false,
-  syncCommand = ['npm', 'run', 'bundle:sync'], log = console.log, fetch = true,
+  log = console.log, fetch = true,
 } = {}) {
   const git = Object.assign(makeGit(cwd), { cwd });
   const dirty = git(['status', '--porcelain']).stdout;
@@ -89,7 +88,7 @@ export function rebaseOnDev({
   const ahead = Number(git(['rev-list', '--count', `${upstream}..HEAD`]).stdout);
   const behind = Number(git(['rev-list', '--count', `HEAD..${upstream}`]).stdout);
   log(`ветка ${branch}: впереди ${upstream} на ${ahead}, позади на ${behind}`);
-  if (behind === 0) { log('ребейз не нужен'); return { branch, rebased: false, resolved: [], rebuilt: false }; }
+  if (behind === 0) { log('ребейз не нужен'); return { branch, rebased: false, resolved: [] }; }
 
   // Предсказание конфликтов по сгенерированным путям: файлы, которые менялись
   // по обе стороны от merge-base. Точный список даёт только сам ребейз.
@@ -97,10 +96,10 @@ export function rebaseOnDev({
   const theirs = git(['diff', '--name-only', base, upstream]).stdout.split('\n').filter(Boolean);
   const both = theirs.filter((path) => ours.has(path));
   const predicted = splitConflicts(both);
-  if (predicted.generated.length) log(`бандл менялся с обеих сторон: ${predicted.generated.length} файл(ов) — решится пересборкой`);
+  if (predicted.generated.length) log(`бандл менялся с обеих сторон: ${predicted.generated.length} файл(ов) — возьмётся версия dev (#657)`);
   if (predicted.regenerated.length) log(`индекс ревью менялся с обеих сторон — решится пересборкой по каталогу: ${predicted.regenerated.join(', ')}`);
   if (predicted.manual.length) log(`менялись с обеих сторон и НЕ сгенерированы (возможен ручной конфликт): ${predicted.manual.join(', ')}`);
-  if (dryRun) { log('--dry-run: дерево не тронуто'); return { branch, rebased: false, resolved: [], rebuilt: false, predicted }; }
+  if (dryRun) { log('--dry-run: дерево не тронуто'); return { branch, rebased: false, resolved: [], predicted }; }
 
   // Цикл остановок — общий с конвейером (#643): индекс ревью пересобирается
   // помощником, бандл — версией dev здесь, всё прочее — отказ с abort.
@@ -116,25 +115,9 @@ export function rebaseOnDev({
   }
   const { resolved } = outcome;
   log(`ребейз завершён; сгенерированных конфликтов решено: ${resolved.length}`);
-
-  // Пересборка: версия dev в бандле — не версия этой ветки. Собираем и, если
-  // бандл отличается, амендим последний коммит ветки.
-  const [cmd, ...args] = syncCommand;
-  // Оболочка только для npm.cmd на Windows (#496): `node -e "…"` из теста и
-  // любая команда с кавычками через shell разваливаются.
-  const portable = portableCommand(cmd);
-  const sync = spawnSync(portable.cmd, args, { cwd, stdio: 'inherit', shell: portable.shell });
-  if (sync.status !== 0) throw new Error(`${syncCommand.join(' ')} завершился с кодом ${sync.status}; ребейз сделан, бандл не закоммичен`);
-  git(['add', '-A', '--', ...GENERATED_ROOTS.filter((root) => existsSync(resolve(cwd, root)))]);
-  const staged = git(['diff', '--cached', '--name-only']).stdout;
-  const rebuilt = staged.length > 0;
-  if (rebuilt) {
-    git(['commit', '--amend', '--no-edit', '--quiet']);
-    log(`бандл пересобран и добавлен в последний коммит (${staged.split('\n').length} файл(ов))`);
-  } else {
-    log('бандл после пересборки совпал с dev — амендить нечего');
-  }
-  return { branch, rebased: true, resolved, rebuilt };
+  // #657: бандл в ветке задачи не пересобирается и не коммитится — его
+  // меняет только кандидат (npm run bundle:release).
+  return { branch, rebased: true, resolved };
 }
 
 const invokedDirectly = process.argv[1]

@@ -71,7 +71,7 @@
 
 ## Объём гейтов
 
-- Всегда: `typecheck`, `npm test`, `npm run build` со сверкой копий бандла; при
+- Всегда: `typecheck`, `npm test`, `npm run build` + `bundle-policy --verify` (копии сверяются только на кандидате, #657); при
   диффе по `src/**` — ещё `node scripts/check-docs.mjs`. Зелёный Validate на
   SHA материала подтверждает дешёвые гейты ([§8](../../PROCESS.md#8-гейты)).
 - По диффу и AC: смоки — названные в AC плюс вывод

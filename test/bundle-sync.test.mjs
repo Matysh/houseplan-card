@@ -69,7 +69,7 @@ const writeLegacyTarget = (root, target) => {
   }));
 };
 
-test('#486 bundle sync materializes both entries and removes the legacy inventory', () => {
+test('#486/#657 bundle sync materializes both entries, the HACS copy only with --release', () => {
   const root = mkdtempSync(join(tmpdir(), 'houseplan-bundle-sync-'));
   try {
     mkdirSync(join(root, 'scripts'), { recursive: true });
@@ -84,7 +84,17 @@ test('#486 bundle sync materializes both entries and removes the legacy inventor
       'custom_components/houseplan/frontend', 'demo/srv/assets',
     ]) writeLegacyTarget(root, target);
 
-    const run = spawnSync(process.execPath, ['scripts/bundle-sync.mjs'], {
+    // #657: без --release копия HACS не трогается — бандл меняет только кандидат.
+    const demoOnly = spawnSync(process.execPath, ['scripts/bundle-sync.mjs'], {
+      cwd: root, encoding: 'utf8',
+    });
+    assert.equal(demoOnly.status, 0, `${demoOnly.stdout}\n${demoOnly.stderr}`);
+    assert.equal(readFileSync(join(root, 'demo/srv/assets/houseplan-card.js'), 'utf8'), 'card facade');
+    assert.equal(readFileSync(join(root, 'custom_components/houseplan/frontend/houseplan-card.js'), 'utf8'), 'old card',
+      'обычная раскладка не должна менять закоммиченный бандл (#657)');
+    assert.equal(existsSync(join(root, 'custom_components/houseplan/frontend/houseplan-legacy.js')), true);
+
+    const run = spawnSync(process.execPath, ['scripts/bundle-sync.mjs', '--release'], {
       cwd: root, encoding: 'utf8',
     });
     assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);

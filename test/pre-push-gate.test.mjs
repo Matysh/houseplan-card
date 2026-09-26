@@ -135,6 +135,8 @@ const HOOK_FILES = [
   'scripts/branch-state.mjs',
   'scripts/process-gate.mjs',
   'scripts/validate-commit-provenance.mjs',
+  'scripts/bundle-policy.mjs', // #657: правило бандла в проверке происхождения
+  'scripts/bundle-tree.mjs',
   'scripts/spawn-portable.mjs',
 ];
 // Заглушка набора: код выхода и журнал вызовов задаёт тест.

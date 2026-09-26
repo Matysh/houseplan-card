@@ -110,7 +110,7 @@ Start with the spec?" is the correct answer, not a smaller patch.
 | **A — product** | `src/**`, `custom_components/houseplan/**/*.py`, `manifest.json`, `hacs.json`, i18n, `custom_components/**/translations/**` | yes |
 | **B — gates and tooling** | `test/**`, `tests_backend/**`, `demo/**`, `scripts/**`, `.github/workflows/**`, `rollup.config.mjs`, `tsconfig*.json` | yes; may reuse the issue it covers |
 | **C — documentation** | `docs/**`, `README*`, `CHANGELOG*`, `AGENTS.md` | not if it is part of its issue's DoD |
-| **D — generated** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/golden/baselines/**` | never changes on its own. The stand copy `demo/srv/assets/**` is no longer committed (#255): build the complete tree with `npm run bundle:sync` |
+| **D — generated** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/golden/baselines/**` | never changes on its own. The stand copy `demo/srv/assets/**` is no longer committed (#255): build it with `npm run bundle:sync`. The bundle (`dist/**`, `custom_components/houseplan/frontend/**`) changes only in a commit with a `Release:` trailer — the beta/release candidate, `npm run bundle:release` (#657); an ordinary task leaves it behind the sources and restores the build with `npm run bundle:clean` before committing |
 
 The table above is a summary; `PROCESS.md` §1 is the authority and now covers the
 configuration files this one omits — `package.json`, `package-lock.json`,
@@ -180,11 +180,11 @@ in between.
 
 If the rebase conflicts the pipeline says so in the issue and sends the task back
 to `S6-in-progress`. The verdict still stands: nothing needs reviewing again, the
-remaining work is the rebase. When the conflict is only in the committed bundle
-(`dist/**`, `custom_components/houseplan/frontend/**` — the usual case when two
-tasks built it in parallel), run `node scripts/rebase-on-dev.mjs` (#479): it takes
-`dev`'s copy through the rebase, rebuilds with `npm run bundle:sync` and amends
-the result into your last commit; a conflict in `docs/reviews/INDEX.md` is
+remaining work is the rebase. When the conflict is only in generated files, run
+`node scripts/rebase-on-dev.mjs` (#479): a conflict in the committed bundle
+(`dist/**`, `custom_components/houseplan/frontend/**` — possible only for a branch
+started before #657, which stopped tasks from committing it) takes `dev`'s copy
+and continues, with no rebuild and no amend; a conflict in `docs/reviews/INDEX.md` is
 rebuilt from the directory (#643, the same helper the pipeline uses, so the
 pipeline no longer bounces a task on it); a conflict anywhere else aborts and
 leaves the tree as it was. Then push the branch and re-apply `S7-code-review`. When the
@@ -399,13 +399,22 @@ npm run inventory        # the only correct way to get test counts
 
 Never copy test counts into documents by hand; they go stale in days.
 
-After building, keep the complete manifest-driven bundle trees in sync — CI
-verifies every listed file byte-for-byte:
+After building, lay the bundle out for the stand; only a candidate updates the
+committed copy (#657):
 
 ```
-npm run bundle:sync   # dist → custom_components + demo/srv/assets (#255)
-npm run bundle:budget # initial View graph <= 256000 B gzip (#337)
+npm run bundle:sync    # build + dist → demo/srv/assets (#255)
+npm run bundle:clean   # before an ordinary commit: dist back to the committed copy (#657)
+npm run bundle:release # candidate only: build + dist → custom_components + demo/srv/assets
+npm run bundle:budget  # initial View graph <= 256000 B gzip (#337)
 ```
+
+CI (`bundle-policy --verify`) checks the fresh build's integrity on every push
+and compares it byte-for-byte with the committed copy only where the commit
+changes the bundle or is a candidate. Publishing a beta additionally refuses a
+committed bundle whose embedded source fingerprint differs from the tree. The
+dev stand gets the head of `dev` from the Validate artifact via the `dev-build`
+branch, not from the tree (`demo/stand/README.md`).
 
 `npm run gate:small` runs the mandatory part of PROCESS §8 in one go (#479,
 #576): build with typecheck, `no-new-any`, `no-new-private-writes` and `smoke-select` start in parallel;

@@ -74,7 +74,9 @@ export function parallelSteps(base) {
 export function postBuildSteps() {
   return [
     { name: 'юниты (npm test)', cmd: npm, args: ['test'] },
-    { name: 'копии бандла совпадают (bundle-tree)', cmd: process.execPath, args: ['scripts/bundle-tree.mjs', 'dist', 'custom_components/houseplan/frontend'], hint: 'npm run bundle:sync' },
+    // #657: сборка цела всегда; с закоммиченной копией сверяется только
+    // кандидат — обычная задача бандл не коммитит.
+    { name: 'сборка бандла цела (bundle-policy --verify)', cmd: process.execPath, args: ['scripts/bundle-policy.mjs', '--verify', 'HEAD'], hint: 'кандидат: npm run bundle:release' },
     { name: 'бюджет бандла', cmd: npm, args: ['run', 'bundle:budget'] },
     // #624: мёртвый код по noUnusedLocals и храповик связности монолита; после
     // сборки, потому что одно из чисел — размер dist/.

@@ -24,6 +24,7 @@ import {
 import { reportCaptureProvenance } from './capture-environment.mjs';
 import { sourceFingerprint } from './source-fingerprint.mjs';
 import { pinsFromSources } from './toolchain-pins.mjs';
+import { isBundlePath } from './bundle-policy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const WSL_ATTESTATION_FILE = 'wsl-attestation.json';
@@ -59,11 +60,23 @@ const normalizeRepository = (remote) => {
   return text.match(/github\.com[/:]([^/]+\/[^/]+)$/i)?.[1] || text;
 };
 
-export function repositorySnapshot(root = ROOT, run = command) {
+/**
+ * Строки porcelain без путей бандла. С #657 закоммиченный бандл законно
+ * отстаёт от исходников, и `npm run bundle:sync` перед съёмкой переписывает
+ * отслеживаемый `dist/`: это не правка источника, а сборка того же дерева.
+ */
+export const withoutBundlePaths = (status) => String(status || '').split('\n')
+  // `command` обрезает вывод, и у первой строки пропадает ведущий пробел
+  // статуса — путь берётся после кода статуса, а не фиксированным срезом.
+  .filter((line) => line && !isBundlePath(line.replace(/^\s*\S{1,2}\s+/, '').replace(/^"|"$/g, '').split(' -> ').at(-1)))
+  .join('\n');
+
+export function repositorySnapshot(root = ROOT, run = command, { ignoreBundle = false } = {}) {
   const branch = run(root, 'git', ['symbolic-ref', '--quiet', '--short', 'HEAD']);
   const commit = run(root, 'git', ['rev-parse', 'HEAD']);
   const tree = run(root, 'git', ['rev-parse', 'HEAD^{tree}']);
-  const status = run(root, 'git', ['status', '--porcelain=v1', '--untracked-files=all']);
+  const rawStatus = run(root, 'git', ['status', '--porcelain=v1', '--untracked-files=all']);
+  const status = ignoreBundle ? withoutBundlePaths(rawStatus) : rawStatus;
   const remoteUrl = run(root, 'git', ['remote', 'get-url', 'origin']);
   const remoteLine = run(root, 'git', ['ls-remote', '--exit-code', 'origin', `refs/heads/${branch}`]);
   const remoteSha = remoteLine.split(/\s+/)[0] || '';
@@ -330,11 +343,14 @@ async function main() {
   rmSync(artifactRoot, { recursive: true, force: true });
   mkdirSync(artifactRoot, { recursive: true });
   runNpm(['run', 'bundle:sync']);
-  const built = repositorySnapshot(ROOT);
+  const built = repositorySnapshot(ROOT, command, { ignoreBundle: true });
   if (repositoryRefusal(built) || !matchingSource({ source: before }, built)) {
     throw new Error('bundle:sync changed the published source tree; commit and push it before capture');
   }
   runNpm(['run', 'golden:capture']);
+  // Стенд уже прочитал свою копию; отслеживаемый бандл возвращается к
+  // закоммиченному, чтобы приёмка увидела чистое дерево (#657).
+  runNpm(['run', 'bundle:clean']);
   const after = repositorySnapshot(ROOT);
   if (repositoryRefusal(after) || !matchingSource({ source: before }, after)) {
     throw new Error('repository changed while the WSL golden artifact was captured');

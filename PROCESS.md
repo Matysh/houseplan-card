@@ -50,7 +50,7 @@
 | **A. Продукт** | `src/**`, `custom_components/houseplan/**/*.py`, `manifest.json`, `hacs.json`, `src/i18n/*.json`, `custom_components/**/translations/*` | **Да, обязательно.** Только из «Готово к разработке» или дальше |
 | **B. Гейты и инструменты** | `test/**`, `tests_backend/**`, `demo/**`, `scripts/**`, весь `.github/**`, `.githooks/**`, `rollup.config.mjs`, `tsconfig*.json`, `package.json`, `package-lock.json`, `pytest.ini`, `.gitignore`, `.gitattributes` | **Да.** Может использовать issue того изменения, которое покрывает; самостоятельная работа над гейтом получает свой issue (тип `tech-debt`) |
 | **C. Документация** | `docs/**`, `README*`, `CHANGELOG*`, `AGENTS.md`, `CONTRIBUTING.md`, `PROCESS*.md`, `LICENSE`, `(CODE\|SPEC)-REVIEW-*.md` | Документирование A/B в том же коммите — часть DoD своего issue. Самостоятельная работа над документацией — свой issue |
-| **D. Сгенерированное** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/golden/baselines/**` (копия стенда `demo/srv/assets/houseplan-card.js` с #255 не коммитится вовсе) | Никогда не меняется само по себе. Коммит **только** класса D допустим лишь как релизный промоушен или как принятие эталонов с доказательством ревью |
+| **D. Сгенерированное** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/golden/baselines/**` (копия стенда `demo/srv/assets/houseplan-card.js` с #255 не коммитится вовсе) | Никогда не меняется само по себе. Коммит **только** класса D допустим лишь как релизный промоушен или как принятие эталонов с доказательством ревью. **Бандл** (`dist/**`, `custom_components/houseplan/frontend/**`) с #657 меняет только коммит с трейлером `Release:` — кандидат беты или релиза (`npm run bundle:release`); в обычной задаче закоммиченный бандл законно отстаёт от исходников, сборка в коммит не идёт (`npm run bundle:clean`). Судит `validate-commit-provenance.mjs` — хук `commit-msg` и история в CI |
 
 Практический смысл таблицы: «я только поправил тест» и «я только пересобрал
 бандл» перестают быть лазейками.
@@ -363,10 +363,12 @@ S1-new → S2-analysis → S3-spec → S4-spec-review ⟲ → S5-ready →
 **Индекс документов ревью** — `docs/reviews/INDEX.md` (#635): одна строка на
 документ — issue, этап, раунд, вердикт, число High/Medium, заголовки находок,
 файлы из находок (искать по имени файла: `grep form-kit docs/reviews/INDEX.md`).
-Файл генерируется `node scripts/reviews-index.mjs` и пересобирается конвейером
-тем же коммитом, что публикует документ, а также после каждого его ребейза
-(приведение к dev перед ревью, слияние кандидата — `--commit-if-stale`, коммит
-класса C); руками не правится. Конфликт ребейза, в котором **все** пути —
+Файл генерируется `node scripts/reviews-index.mjs` и пересобирается **только
+коммитами, идущими в `dev`** (#657, решение 1б): слиянием кандидата после
+ребейза (`--commit-if-stale`, коммит класса C) и публикацией документа ревью ТЗ
+прямо в `dev`. В ветке задачи индекс не пересобирается — ни при приведении к
+dev, ни при публикации документа код-ревью: иначе две параллельные задачи
+конфликтуют на нём по построению. Руками не правится. Конфликт ребейза, в котором **все** пути —
 `INDEX.md`, отказом не считается (#643): `scripts/rebase-generated.mjs`
 пересобирает индекс по каталогу на остановке и продолжает ребейз — так делают
 приведение к dev, слияние кандидата и авторский `rebase-on-dev.mjs`; индекс
@@ -388,7 +390,7 @@ S1-new → S2-analysis → S3-spec → S4-spec-review ⟲ → S5-ready →
 перечисляет только живые. Перенос — часть чеклиста стабильного релиза, не
 отдельная задача.
 
-Дешёвые гейты (`typecheck`, `test`, `build` со сверкой копий бандла) гоняются в
+Дешёвые гейты (`typecheck`, `test`, `build` с проверкой целостности сборки, `bundle-policy --verify`) гоняются в
 каждом раунде: код изменился, а стоят они минуты. Тяжёлые — по дельте (§10.2).
 
 **Разбор остаётся полным**, если дельта не локальна: ребейз на ушедший вперёд
@@ -707,8 +709,9 @@ issue #NN
 ```
 npx tsc --noEmit
 npm test
-npm run build && cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js \
-              # копия стенда собирается `npm run bundle:sync`, в репозитории её нет (#255)
+npm run build && node scripts/bundle-policy.mjs --verify HEAD
+              # сборка цела; копии сверяются только на кандидате (#657).
+              # Копия стенда — `npm run bundle:sync` (#255); перед коммитом `npm run bundle:clean`
 node scripts/smoke-select.mjs --base origin/dev --head HEAD   # какие смоки относятся к диффу
 node demo/smoke_<целевые>.mjs
 node scripts/no-new-any.mjs --base origin/dev --head HEAD     # новый код не добавляет any
@@ -732,7 +735,7 @@ npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs \
 комментарии, строке или идентификаторе ложных срабатываний не даёт.
 
 **Объём гейтов на код-ревью соразмерен задаче** (issue #127). Всегда:
-`typecheck`, `npm test`, `npm run build` со сверкой трёх копий бандла, а при
+`typecheck`, `npm test`, `npm run build` с `bundle-policy --verify` (копии сверяются на кандидате, #657), а при
 любом diff'е по `src/**` — ещё и `node scripts/check-docs.mjs`. По
 необходимости, определяемой diff'ом и AC: браузерные смоки (сколько их —
 считает `ls demo/smoke_*.mjs | wc -l`, вшитое число здесь трижды отставало от

@@ -785,9 +785,12 @@ jobs:
       - name: Build
         run: npm run build
       # Entry, manifest and every content-hashed chunk are one artifact (#337).
+      # #657: the committed bundle changes only in a release candidate, so the
+      # fresh build must equal it only there; elsewhere the committed copy
+      # legitimately lags and only the fresh dist is verified.
       - name: Card bundle trees in sync
         run: |
-          node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
+          node scripts/bundle-policy.mjs --verify HEAD
           npm run bundle:budget
       # #624: `tsc --noUnusedLocals` чист вне порта/харнесса, шесть чисел
       # связности монолита не выше scripts/monolith-baseline.json. После
@@ -818,6 +821,35 @@ jobs:
           path: test-build/
           retention-days: 1
           if-no-files-found: error
+
+  # #657 (2б): бандл в дереве dev меняет только кандидат беты, поэтому стенд
+  # dev.houseplan.tech берёт его не из дерева, а из этого артефакта: после
+  # зелёного фронтенда на push в dev собранный `dist/` публикуется в служебную
+  # ветку `dev-build` одним коммитом без истории (scripts/dev-build.mjs), хост
+  # забирает его demo/stand/update-dev-bundle.sh. Опубликуется только голова:
+  # если dev ушёл вперёд, пушит следующий прогон. Не вход доказательства:
+  # стенд — не гейт, и сбой публикации не красит проверку кода.
+  dev_build:
+    name: "Бандл головы dev для стенда"
+    needs: frontend
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && needs.frontend.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+      - name: Забрать собранный бандл
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: card-bundle
+          path: dist
+      - name: Опубликовать в dev-build
+        run: node scripts/dev-build.mjs --sha "$GITHUB_SHA" --dist dist
 
   smoke:
     name: Смоки в браузере (шард ${{ matrix.shard }} из 3)

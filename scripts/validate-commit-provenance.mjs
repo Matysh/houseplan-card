@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { basename } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { bundleCommitErrors } from './bundle-policy.mjs';
 
 const TRAILER = /^([A-Za-z][A-Za-z0-9-]*):\s*(.*?)\s*$/;
 export const ENFORCEMENT_BOUNDARY = '8e2973fa7a7cb1a80204ff95ecf3f2d7c36ed2ce';
@@ -51,7 +52,7 @@ export function terminalTrailers(message) {
   return out;
 }
 
-export function validateCommitMessage(message, changedFiles = [], { baselineIndex = undefined } = {}) {
+export function validateCommitMessage(message, changedFiles = [], { baselineIndex = undefined, authorDate = null } = {}) {
   const trailers = terminalTrailers(message);
   const errors = [];
   const issues = trailers.get('Issue') || [];
@@ -70,6 +71,9 @@ export function validateCommitMessage(message, changedFiles = [], { baselineInde
       }
     }
   }
+  // #657: бандл меняет только релизный кандидат. В хуке даты нет — судится
+  // всегда; в истории коммиты раньше BUNDLE_RELEASE_ONLY_SINCE не судятся.
+  errors.push(...bundleCommitErrors(message, normalizedFiles, { authorDate }));
   const changesGolden = changedFiles.some((file) =>
     /^demo\/golden\/baselines\/.*\.(png|json)$/.test(file.replaceAll('\\', '/')));
   if (changesGolden) {
@@ -197,13 +201,14 @@ function main(argv) {
       const parentCount = Number(git(['rev-list', '--parents', '-n', '1', commit]).split(/\s+/).length) - 1;
       if (parentCount > 1) continue;
       const message = git(['show', '-s', '--format=%B', commit]);
+      const authorDate = git(['show', '-s', '--format=%aI', commit]);
       const files = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', commit])
         .split('\n').filter(Boolean);
       let baselineIndex;
       if (files.some((file) => /^demo\/golden\/baselines\/.*\.(png|json)$/.test(file))) {
         try { baselineIndex = git(['show', `${commit}:${BASELINE_INDEX}`]); } catch { baselineIndex = null; }
       }
-      const errors = validateHistoricalCommit(commit, message, files, { baselineIndex });
+      const errors = validateHistoricalCommit(commit, message, files, { baselineIndex, authorDate });
       if (errors.length) throw new Error(`${commit}:\n- ${errors.join('\n- ')}`);
     }
   }
