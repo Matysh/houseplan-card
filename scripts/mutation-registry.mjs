@@ -157,6 +157,45 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'stairs-broken-targets-become-active',
+    guard: 'node demo/smoke_stairs.mjs',
+    because: '#663 AC7: missing, self and deleted targets must stay visible and repairable, '
+      + 'but must never navigate or hide their repair warning.',
+    patches: [{
+      file: 'src/stairs-editor-model.ts',
+      find: "  if (!stair.target_space_id) return 'missing';\n"
+        + "  if (stair.target_space_id === currentSpaceId) return 'self';\n"
+        + "  return spaceIds.has(stair.target_space_id) ? 'active' : 'deleted';\n",
+      replace: "  return 'active'; // mutant: every broken target looks navigable\n",
+    }],
+  },
+  {
+    id: 'stairs-legacy-config-materializes-empty-collection',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern=legacy-no-stairs-config test/stairs.test.mjs',
+    because: '#663 AC11: reading or optimizing a legacy space must not add an empty stairs '
+      + 'collection to a configuration that never had the feature.',
+    patches: [{
+      file: 'src/plan-optimizer.ts',
+      find: '  const beforeSpaces = clone(config.spaces || []);\n',
+      replace: '  const beforeSpaces = clone(config.spaces || []);\n'
+        + '  for (const space of config.spaces || []) space.stairs ??= []; // mutant\n',
+    }],
+  },
+  {
+    id: 'stairs-import-skips-target-space-remap',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_663_full_import_repairs_stair_floor_target_by_exact_space_map '
+      + 'tests_backend/test_ha_import_export.py',
+    because: '#663 AC11: a full import must remap a stair target through the exact space-id '
+      + 'map instead of retaining the source document id.',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '            if mapped is not None:\n                stair["target_space_id"] = mapped\n',
+      replace: '            if mapped is not None:\n                stair["target_space_id"] = target  # mutant\n',
+    }],
+  },
+  {
     id: 'stairs-backend-allows-251-items',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'issue_663_stair_schema_is_discriminated_bounded_and_forward_compatible '

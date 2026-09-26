@@ -71,6 +71,16 @@ test('#663 straight stair treads keep exact 30 cm intervals and top remainder', 
     'zoom changes only pixels, never the physical tread count');
   assert.equal(zoomed.treads[1].a[0] - zoomed.treads[0].a[0], 12.5,
     'the same 30 cm interval scales with the symbol, not with viewport zoom');
+
+  const backward = stairRenderGeometry(straight({ direction: 'backward' }), 5);
+  assert.equal(backward.treads.length, geometry.treads.length);
+  for (let index = 1; index < backward.treads.length; index++) {
+    assert.equal(backward.treads[index].a[0] - backward.treads[index - 1].a[0], -25);
+  }
+  assert.equal(backward.treads[0].a[0], 595,
+    'backward starts its full intervals at the opposite lower edge');
+  assert.equal(backward.treads.at(-1).a[0], 395,
+    'the short remainder stays before the backward top edge');
 });
 
 test('#663 spiral stair uses one turn with 30 cm travel-line spacing', () => {
@@ -181,4 +191,19 @@ test('#663 Optimize preserves continuous authored stair transforms exactly', () 
   };
   const result = optimizePlans(config, {});
   assert.deepEqual(result.config.spaces[0].stairs[0], authored);
+});
+
+test('#663 legacy-no-stairs-config never materializes an empty stair collection', () => {
+  const legacy = {
+    model_version: 10,
+    spaces: [{
+      id: 'legacy', title: 'Legacy', cell_cm: 5, view_box: [0, 0, 1, 1],
+      rooms: [], wall_segments: [],
+    }],
+    markers: [], settings: {},
+  };
+  const before = structuredClone(legacy);
+  const result = optimizePlans(legacy, {});
+  assert.equal(Object.hasOwn(result.config.spaces[0], 'stairs'), false);
+  assert.deepEqual(legacy, before, 'Optimize remains immutable for the caller');
 });

@@ -8,6 +8,8 @@
   footprint is deducted from clean room area without cutting the visible
   floor. An optional one-way target turns a stair into safe floor navigation
   in View, while gestures, broken targets and fixed-floor cards remain inert.
+  In either ascent direction, full treads are counted from the lower edge and
+  the short remainder stays at the upper edge.
   The target floor is never changed automatically, and the first 2.5D version
   stays flat on the floor plane
   ([#663](https://github.com/Matysh/houseplan-card/issues/663)).

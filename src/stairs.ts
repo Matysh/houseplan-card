@@ -148,17 +148,18 @@ export function stairRenderGeometry(
   const outline = stairOutline(stair, scale);
   const treadN = cmToNorm(STAIR_TREAD_CM, cellCm);
   if (stair.kind === 'straight') {
+    const forward = stair.direction === 'forward';
     const count = Math.max(0, Math.floor(stair.length / treadN));
     const treads: StairLine[] = [];
     for (let index = 1; index <= count; index++) {
-      const x = -stair.length / 2 + index * treadN;
-      if (x >= stair.length / 2 - 1e-10) break;
+      const x = (forward ? -1 : 1) * stair.length / 2
+        + (forward ? 1 : -1) * index * treadN;
+      if (forward ? x >= stair.length / 2 - 1e-10 : x <= -stair.length / 2 + 1e-10) break;
       treads.push({
         a: worldPoint(stair, x, -stair.width / 2, scale),
         b: worldPoint(stair, x, stair.width / 2, scale),
       });
     }
-    const forward = stair.direction === 'forward';
     const fromX = (forward ? -0.3 : 0.3) * stair.length;
     const toX = (forward ? 0.3 : -0.3) * stair.length;
     const from = worldPoint(stair, fromX, 0, scale);
