@@ -104,7 +104,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/stairs-view.ts',
       find: '        if (!active || this.owner._suppressClick || this.suppressClick\n',
-      replace: '        if (!active || this.suppressClick\n',
+      replace: '        if (!active\n',
     }],
   },
   {
@@ -127,7 +127,7 @@ const MUTANT_DEFINITIONS = [
       find: '    this.write(this.stairs.map((item) => item.id === next.id ? next : item));\n'
         + '    this.owner._recordGeometry(this.owner._t(\'history.stair_edit\'), before);\n',
       replace: '    this.write(this.stairs.map((item) => item.id === next.id ? next : item));\n'
-        + '    const mirror = this.owner._model.find((item) => item.id === dialog.targetSpaceId);\n'
+        + '    const mirror = (this.owner as unknown as { _serverCfg: { spaces: Array<{ id: string; stairs?: Stair[] }> } })._serverCfg.spaces.find((item) => item.id === dialog.targetSpaceId);\n'
         + '    if (mirror) mirror.stairs = [...(mirror.stairs || []), { ...next, id: `${next.id}-mirror` }];\n'
         + '    this.owner._recordGeometry(this.owner._t(\'history.stair_edit\'), before);\n',
     }],
