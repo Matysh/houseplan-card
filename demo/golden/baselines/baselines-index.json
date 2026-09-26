@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 65,
-  "acceptedAt": "2026-09-26T20:53:02.167Z",
-  "sourceFingerprint": "cd741f9e9a6865b0290a4bdf76eb7df6bf27913f1ce022adaed598fbc15c81f1",
+  "acceptedAt": "2026-09-26T23:17:44.919Z",
+  "sourceFingerprint": "9bb09d76ea3da4947f323b4d6ea8357c400b85e885183ddae93cb60ea35e83f4",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,20 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "cd741f9e9a6865b0290a4bdf76eb7df6bf27913f1ce022adaed598fbc15c81f1",
+    "buildFingerprint": "9bb09d76ea3da4947f323b4d6ea8357c400b85e885183ddae93cb60ea35e83f4",
     "ci": null
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v1",
-    "sha256": "fee8da264cf23f9cab943ced0d0c4c6f21d2c568daaa6d8890a13d6011626597",
-    "artifactSha256": "d9872e03f158b42edc6374f46c5821d07b3d3249baa03bb0690279297cdb0603",
-    "createdAt": "2026-09-26T20:52:54.996Z",
+    "sha256": "d6725147cfe96217ca01c22b86bc05eb4b69dd9c73402d88b57e071adfb4e181",
+    "artifactSha256": "648226068e30e6ea11eedec1189869f1f3d97e92d03ffdbefbef17ef9058f8ba",
+    "createdAt": "2026-09-26T23:16:50.075Z",
     "source": {
       "repository": "Matysh/houseplan-card",
       "branch": "issue/663-stairs",
-      "commit": "ea1f19c352e596adfab323cb1e9c099a0348a905",
-      "tree": "6bb2476c94579e6f7bf86e75ac0bbdac36ac3b3c",
-      "remoteSha": "ea1f19c352e596adfab323cb1e9c099a0348a905",
+      "commit": "8852207b187ece1eb05afaa21827eb97b2f04bee",
+      "tree": "234fa9424095d10ac4d651a6aafbdf80a4c3a7c7",
+      "remoteSha": "8852207b187ece1eb05afaa21827eb97b2f04bee",
       "clean": true,
       "status": ""
     },
@@ -44,14 +44,14 @@
   },
   "foreignCapture": null,
   "witnesses": {
-    "count": 126,
+    "count": 121,
     "floor": 10
   },
   "scenarios": {
-    "stairs-flat-normal-light": "71798b8363b5b3c6a79efb238c6b1ae103855a61558c51a5f68095df9e0b4af5",
-    "stairs-flat-hover-dark": "933e50232d3d3b930bae7a02a97ac9d42c2abd1224953f376a5a93570806c74a",
-    "stairs-flat-selected-light": "9029499368c2070f5b9e7814ae0de80b293a1bd068c594a1aabfd4a0bfa41ee6",
-    "stairs-isometric-dark": "f565add5fef1a094aa440928f6e1592f53033620dc1c0fbc46e41f5a77d1ee0c",
+    "stairs-flat-normal-light": "df6600545ffbc7611b764eb489e6e3f625ccf51b6ed2f8f83e4df5b7e1565d08",
+    "stairs-flat-hover-dark": "e642373ea6680a978219622105552d4afbf2311eebf101a7c8db280373c9eca3",
+    "stairs-flat-selected-light": "4b37e663d5689c3288ad7dc956b2ec0b42e406d418873c0ea6089c1caf92ec83",
+    "stairs-isometric-dark": "901bc1eee214d179aff13bc7f192a9e270688aa59b2744f3b361e653dc2d0af5",
     "panel-wide-view-light-en": "275d09b3730361bb491a832fbb76723d90a7327086f042cbf0fdd79f4a002800",
     "panel-wide-plan-editor-dark-en": "093a3fd1022755f5128261796e009383d7e7a23e9e50f193ab1987d30f9313b2",
     "panel-narrow-read-only-empty-light-en": "99b8f1af82b1ad13f237125aab8f7e7da0563c138e9da2ddf06e54c2d56138c4",
