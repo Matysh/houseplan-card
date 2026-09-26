@@ -7604,6 +7604,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'toolbar-active-highlight-stops-at-tab',
+    guard: 'node demo/smoke_toolbar_stable_width.mjs',
+    because: '#666: the active editor tab highlight must cover the gap and the X slot, measured as painted pixels',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: "      right: calc(-1 * (var(--sp-1) + var(--hp-editor-close-size)));",
+      replace: "      right: 0;",
+    }],
+  },
+  {
     id: 'toolbar-close-slot-idle-focusable',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
     because: '#647 AC4: outside an editor the reserve is inert and hidden from assistive technology',

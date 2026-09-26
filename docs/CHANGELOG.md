@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- The close **×** of the active editor now sits inside the highlighted tab: the
+  accent fill of the active Plan, Devices or Decor tab continues over the
+  cross, which is drawn in the tab's text colour, and the keyboard focus ring
+  outlines the whole highlighted zone. The tab, the cross and the
+  header keep their size and position; on a phone, where the mode tabs are
+  hidden, the cross is unchanged
+  ([#666](https://github.com/Matysh/houseplan-card/issues/666)).
+
 - The static space card (`houseplan-space-card`) no longer shows a hand cursor
   over device markers and no longer swallows clicks there: the whole schematic
   is inert again, as documented, with an ordinary cursor everywhere and the

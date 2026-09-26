@@ -205,11 +205,18 @@ const chromeCoreStyles = css`
     }
     .decorbar hp-color-opacity { flex: 0 0 auto; }
     .modes {
+      /* #666: one source for the X slot size — the slot and the active tab's
+         highlight both read it. */
+      --hp-editor-close-size: 24px;
       display: inline-flex;
       gap: var(--sp-1);
       background: rgba(127, 127, 127, 0.12);
       border-radius: var(--rad-l);
       padding: var(--sp-2);
+      /* #666: a stacking context of its own, so the active tab's highlight
+         (z-index -1) paints above the group background and below the tab and
+         X contents. */
+      isolation: isolate;
     }
     .modetab {
       display: inline-flex;
@@ -236,7 +243,6 @@ const chromeCoreStyles = css`
     /* #660: the fixed X slot lives inside the mode group, immediately after
        the active editor; in View the same reserve sits at the group end. */
     .editor-close-slot {
-      --hp-editor-close-size: 24px;
       box-sizing: border-box;
       display: inline-flex;
       flex: none;
@@ -283,9 +289,38 @@ const chromeCoreStyles = css`
       line-height: 0;
     }
     .editbar .barclose ha-icon { flex: none; margin: 0; }
+    /* #666: the highlight of the active editor tab also covers the X that
+       closes it. It is a pseudo-element stretched over the group gap and the
+       fixed X slot, so no box moves: the tab, the slot and the X keep their
+       #660 geometry, and the X keeps its own 24 px target. On a phone the mode
+       tabs are hidden, and with them the highlight. */
     .modetab.active {
-      background: var(--hp-accent);
+      position: relative;
+      background: transparent;
       color: var(--text-primary-color, #fff);
+    }
+    .modetab.active::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: calc(-1 * (var(--sp-1) + var(--hp-editor-close-size)));
+      z-index: -1;
+      border-radius: var(--rad-m);
+      background: var(--hp-accent);
+      pointer-events: none;
+    }
+    /* The keyboard focus ring follows the highlight, so it does not cut the
+       zone between the tab and its X; the UA ring style is kept. */
+    .modetab.active:focus-visible { outline: none; }
+    .modetab.active:focus-visible::after { outline: auto; }
+    .modetab.active + .editor-close-slot .closex {
+      color: var(--text-primary-color, #fff);
+      opacity: 0.9;
+    }
+    .modetab.active + .editor-close-slot .closex:focus-visible {
+      outline-color: var(--text-primary-color, #fff);
     }
     @media (max-width: 720px) {
       .modetab .ml { display: none; }

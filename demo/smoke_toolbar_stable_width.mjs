@@ -1,3 +1,5 @@
+// #666: подсветка активной вкладки редактора накрывает промежуток и слот ×
+// (пиксельные пробы), не выходя за слот; × на подсветке — цветом текста вкладки.
 // #647/#660: основная панель — нет счётчика устройств, крестик редактора в
 // постоянном слоте внутри группы режимов, ширина шапки и группы не меняются,
 // выходе и переключении редакторов; кликабельная зона × не меньше 24 × 24
@@ -121,6 +123,73 @@ for (const width of WIDTHS) {
     return o;
   }, width);
   for (const [key, value] of Object.entries(r)) if (key !== 'width') out[`w${width}_${key}`] = value;
+
+  // #666: the active tab's highlight covers the gap and the X slot — as painted
+  // pixels, not as a style name. On a phone the mode tabs (and the highlight
+  // with them) are hidden: nothing to check there.
+  if (width > 480) {
+    for (const mode of ['plan', 'devices', 'decor']) {
+      const geo = await page.evaluate(async (mode) => {
+        const c = window.__card;
+        const sr = c.shadowRoot || c.renderRoot;
+        await window.__hpTest.setMode(mode);
+        await window.__hpTest.settled();
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        // The tab colour eases over 140 ms (chrome.styles .modetab transition).
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        // Leaving View focuses the active tab (a11y); its focus ring sits in the
+        // 2 px gap and is not what this probe measures.
+        sr.activeElement?.blur?.();
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const modes = sr.querySelector('.modes');
+        modes.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        const tab = sr.querySelector('.modetab.active');
+        const slot = sr.querySelector('.editor-close-slot');
+        const cross = slot?.querySelector('.closex');
+        const base = modes.getBoundingClientRect();
+        const t = tab.getBoundingClientRect();
+        const b = slot.getBoundingClientRect();
+        const rel = (x, y) => [x - base.left, y - base.top];
+        const midY = t.top + t.height / 2;
+        return {
+          modes: { width: base.width, height: base.height },
+          accent: getComputedStyle(tab, '::after').backgroundColor,
+          probes: {
+            gap: rel((t.right + b.left) / 2, midY),
+            slotEdge: rel(b.right - 2, midY),
+            slotTop: rel(b.left + b.width / 2, t.top + 2),
+            tabBody: rel(t.left + 3, midY),
+            outside: rel(b.right + 2, midY),
+          },
+          crossColour: cross ? getComputedStyle(cross).color : null,
+          tabColour: getComputedStyle(tab).color,
+        };
+      }, mode);
+      // Playwright CSS locators pierce the open shadow root of the card.
+      const shot = await page.locator('.head .modes').first().screenshot({ animations: 'disabled' });
+      const pixels = await page.evaluate(async ([bytes, info]) => {
+        const bitmap = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/png' }));
+        const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        const sx = bitmap.width / info.modes.width;
+        const sy = bitmap.height / info.modes.height;
+        const rgb = (value) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+        const accent = rgb(info.accent);
+        const at = ([x, y]) => {
+          const d = ctx.getImageData(Math.round(x * sx), Math.round(y * sy), 1, 1).data;
+          return [d[0], d[1], d[2]];
+        };
+        const isAccent = (p) => accent.length === 3 && p.every((v, i) => Math.abs(v - accent[i]) <= 8);
+        return Object.fromEntries(Object.entries(info.probes).map(([k, point]) => [k, isAccent(at(point))]));
+      }, [[...shot], geo]);
+      if (!(pixels.gap && pixels.slotEdge && pixels.slotTop && pixels.tabBody)) console.log(`#666 probes w${width} ${mode}`, JSON.stringify({ pixels, geo }));
+      out[`w${width}_${mode}_highlightCoversGapAndSlot`] = pixels.gap && pixels.slotEdge && pixels.slotTop && pixels.tabBody;
+      out[`w${width}_${mode}_highlightStopsAtSlot`] = !pixels.outside;
+      out[`w${width}_${mode}_crossReadsOnHighlight`] = !!geo.crossColour && geo.crossColour === geo.tabColour;
+    }
+    await page.evaluate(() => window.__hpTest.setMode('view'));
+  }
 }
 
 // AC1 в русской локали на широком окне.
