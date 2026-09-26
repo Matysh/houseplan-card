@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1089, issue: 387. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1092, issue: 387. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -12,6 +12,9 @@
 | #664 | [CODE-REVIEW-664-r1.md](CODE-REVIEW-664-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #663 | [SPEC-REVIEW-663-r1.md](SPEC-REVIEW-663-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 0 | §6.2 (wall snap) и §8 (canonicalization/Optimize) описывают два; AC7 называет четыре состояния сломанной; AC13 не называет конкретный бюджет | `docs/CANVAS.md` `docs/WALL-THICKNESS.md` |
 | #663 | [SPEC-REVIEW-663-r2.md](SPEC-REVIEW-663-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #663 | [CODE-REVIEW-663-r1.md](CODE-REVIEW-663-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | AC3 разметка ступеней неверна для direction: 'backward'; защитный AC7 (состояния битой ссылки) без mutation witness; защитный AC11 (round-trip/совместимость) без mutation witness | `src/stairs.ts` `stairs.ts` `test/stairs.test.mjs` `scripts/mutation-registry.mjs` `demo/smoke_stairs.mjs` `custom_components/houseplan/import_export.py` |
+| #663 | [CODE-REVIEW-663-r2.md](CODE-REVIEW-663-r2.md) | code · r2 | 🟡 жёлтый | 0 | 2 | AC12: golden-эталон устарел для 4 сцен с лестницами, фикс AC3 не сопровождён обновление…; AC2 smoke-свидетель wallMagnetUsesPhysicalFace статистически ненадёжен из-за бага в соб… | `demo/golden/matrix.mjs` `src/stairs.ts` `demo/smoke_stairs.mjs` `src/junction-limits.ts` |
+| #663 | [CODE-REVIEW-663-r3.md](CODE-REVIEW-663-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #662 | [SPEC-REVIEW-662-r1.md](SPEC-REVIEW-662-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «Входящие» не существует в UI, и текущая классификация каталога кладёт неразмещённую ле…; «Не скоуп» отсутствует внутри формального ## ТЗ | `src/device-inbox.ts` `USER-GUIDE.ru.md` `docs/USER-GUIDE.ru.md` `demo/smoke_led_strip_bind.mjs` `device-inbox.ts` `SPEC-REVIEW-661-r1.md` |
 | #662 | [SPEC-REVIEW-662-r2.md](SPEC-REVIEW-662-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #661 | [SPEC-REVIEW-661-r1.md](SPEC-REVIEW-661-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
