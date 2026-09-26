@@ -10338,6 +10338,33 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'iso-rigid-groups-cross-room-boundary',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="never join close markers" test/iso-overlays.test.mjs',
+    because: '#651 groups markers only within one owning room. Removing the owner check lets a '
+      + 'close pair across a shared wall move as one group and cross the room boundary',
+    patches: [{
+      file: 'src/iso-overlays.ts',
+      find: '      if (stable[right].placement.owner?.id !== owner) continue;',
+      replace: '      if (false) continue;  // mutant: room ownership no longer separates groups',
+    }],
+  },
+  {
+    id: 'iso-rigid-fallback-drops-room-wall-overlap-priority',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="rigid fallback prioritizes" test/iso-overlays.test.mjs',
+    because: '#651 degraded placement must preserve room ownership first, clear walls second and '
+      + 'accept inter-group overlap only last. Distance-only fallback can pin a marker in masonry',
+    patches: [{
+      file: 'src/iso-overlays.ts',
+      find: '  return left.roomViolations - right.roomViolations\n'
+        + '    || left.wallViolations - right.wallViolations\n'
+        + '    || left.overlapPenalty - right.overlapPenalty\n'
+        + '    || rigidOffsetOrder(left.offset, right.offset);',
+      replace: '  return rigidOffsetOrder(left.offset, right.offset);',
+    }],
+  },
+  {
     id: 'iso-scene-restores-per-marker-collision-resolver',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="keeps a close device cluster rigid" test/iso-scene-render.test.mjs',

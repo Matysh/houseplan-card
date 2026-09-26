@@ -146,6 +146,66 @@ test('rigid overlay groups preserve a row and use one deterministic wall displac
   }
 });
 
+test('rigid overlay groups never join close markers owned by different rooms', () => {
+  const left = square('left', 0, 0, 100, 160, [50, 80]);
+  const right = square('right', 100, 0, 200, 160, [150, 80]);
+  const wall = { outer: [[94, 0], [106, 0], [106, 160], [94, 160]] };
+  const make = (id, room, x) => ({
+    id,
+    kind: 'device',
+    placement: placement({
+      floorAnchor: [x, 80], rooms: [left, right], preferredRoomId: room.id,
+      wallSilhouettes: [wall], footprintHalfSize: [5, 5], wallHeight: 0,
+      visualOffset: 0, sceneUnitsPerCssPixel: 1, camera: identityCamera,
+    }),
+    screenHalfSize: [7, 7],
+  });
+  const leftItem = make('left-device', left, 90);
+  const rightItem = make('right-device', right, 110);
+  const result = resolveIsoOverlayRigidGroups({
+    items: [leftItem, rightItem], rooms: [left, right], wallSilhouettes: [wall],
+    sceneUnitsPerCssPixel: 1, visualOffset: 0, camera: identityCamera,
+  });
+  const leftPlacement = result.placements.get(isoOverlayCollisionKey('device', leftItem.id));
+  const rightPlacement = result.placements.get(isoOverlayCollisionKey('device', rightItem.id));
+  assert.ok(leftPlacement.nudgeCss[0] < 0,
+    'the left-room marker clears the shared wall into its own room');
+  assert.ok(rightPlacement.nudgeCss[0] > 0,
+    'the right-room marker clears the shared wall into its own room');
+  assert.notDeepEqual(leftPlacement.nudgeCss, rightPlacement.nudgeCss,
+    'close markers across a room boundary must remain separate groups');
+});
+
+test('rigid fallback prioritizes room, then wall, then overlap inside the 48px cap', () => {
+  const obstacleRoom = square('obstacle-room', 40, 0, 60, 40, [50, 30]);
+  const targetRoom = square('target-room', 40, 0, 60, 40, [50, 30]);
+  const wall = { outer: [[40, 0], [60, 0], [60, 14], [40, 14]] };
+  const make = (id, room, y) => ({
+    id,
+    kind: 'device',
+    placement: placement({
+      floorAnchor: [50, y], rooms: [obstacleRoom, targetRoom], preferredRoomId: room.id,
+      wallSilhouettes: [wall], footprintHalfSize: [5, 5], wallHeight: 0,
+      visualOffset: 0, sceneUnitsPerCssPixel: 1, camera: identityCamera,
+    }),
+    screenHalfSize: [9, 9],
+  });
+  const obstacle = make('a-obstacle', obstacleRoom, 30);
+  const target = make('b-target', targetRoom, 18);
+  const result = resolveIsoOverlayRigidGroups({
+    items: [obstacle, target], rooms: [obstacleRoom, targetRoom], wallSilhouettes: [wall],
+    sceneUnitsPerCssPixel: 1, visualOffset: 0, camera: identityCamera,
+  });
+  const resolved = result.placements.get(isoOverlayCollisionKey('device', target.id));
+  assert.equal(resolved.status, 'degraded', 'the narrow room has no conflict-free placement');
+  assert.equal(resolved.reason, 'overlay-collision',
+    'after preserving room ownership and clearing the wall, overlap is the remaining debt');
+  assert.equal(resolved.nearWallAfter, false,
+    'wall clearance outranks overlap with the previously accepted group');
+  assert.ok(resolved.nudgeCss[1] > 0 && resolved.nudgeDistanceCss <= 48,
+    'the fallback moves into the room without exceeding the global cap');
+});
+
 test('group collision checks room-edge events before accepting a legal farther hint', () => {
   const room = {
     id: 'diagonal-strip',
