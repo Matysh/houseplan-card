@@ -1,5 +1,5 @@
-// #647: основная панель — нет счётчика устройств, крестик редактора в своём
-// слоте, ширина шапки и положение кнопок режимов не меняются при входе,
+// #647/#660: основная панель — нет счётчика устройств, крестик редактора в
+// постоянном слоте внутри группы режимов, ширина шапки и группы не меняются,
 // выходе и переключении редакторов; кликабельная зона × не меньше 24 × 24
 // (#195); × виден на обычных ширинах (721–1100 px — там раньше скрывался
 // счётчик). Режимы переключаются настоящими кнопками через фасад #629;
@@ -8,7 +8,7 @@ import { launch, check, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1400, height: 820 }, 1);
 
-const WIDTHS = [1400, 1000, 768, 390];
+const WIDTHS = [1400, 1200, 1000, 768, 620, 481, 390];
 const out = {};
 
 for (const width of WIDTHS) {
@@ -31,13 +31,22 @@ for (const width of WIDTHS) {
     // Позиции — относительно левого края шапки: прокрутка страницы их не меняет.
     const measure = () => {
       const origin = head().getBoundingClientRect().left;
-      let nextEl = slot()?.nextElementSibling;
-      while (nextEl && !nextEl.getClientRects().length) nextEl = nextEl.nextElementSibling;
+      const modes = sr().querySelector('.modes');
+      const zoom = sr().querySelector('.zoomctl');
+      const modesBox = modes?.getBoundingClientRect();
+      const zoomBox = zoom?.getBoundingClientRect();
+      const active = modes?.querySelector('.modetab.active');
       return {
         head: head().getBoundingClientRect().width,
-        tabs: tabs().map((t) => t.getBoundingClientRect().left - origin),
+        modesLeft: modesBox ? modesBox.left - origin : null,
+        modesWidth: modesBox?.width ?? null,
+        zoomLeft: zoomBox ? zoomBox.left - origin : null,
+        gap: modesBox && zoomBox ? zoomBox.left - modesBox.right : null,
         slot: slot()?.getBoundingClientRect(),
-        next: nextEl ? nextEl.getBoundingClientRect().left - origin : null,
+        slotInside: slot()?.parentElement === modes,
+        slotOrder: c._mode === 'view'
+          ? slot() === modes?.lastElementChild
+          : slot()?.previousElementSibling === active,
       };
     };
     const visibleTabs = tabs().filter((t) => t.getBoundingClientRect().width > 0).length === 3
@@ -56,8 +65,9 @@ for (const width of WIDTHS) {
     o.idleSlotKeepsSize = !!idle.slot && Math.abs(idle.slot.width - 24) <= 0.5 && Math.abs(idle.slot.height - 24) <= 0.5;
 
     const same = (a, b) => Math.abs(a.head - b.head) <= 1
-      && a.tabs.every((left, i) => Math.abs(left - b.tabs[i]) <= 1)
-      && (a.next === null || Math.abs(a.next - b.next) <= 1);
+      && Math.abs(a.modesLeft - b.modesLeft) <= 1
+      && Math.abs(a.modesWidth - b.modesWidth) <= 1
+      && Math.abs(a.zoomLeft - b.zoomLeft) <= 1;
     const steps = [];
     const hits = [];
     // View → каждый редактор → View, и прямые переключения между редакторами.
@@ -66,7 +76,9 @@ for (const width of WIDTHS) {
         await hp.setMode(next);
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const now = measure();
-        steps.push({ next, stable: same(idle, now) });
+        const expectedGap = width <= 620 ? 40.5 : 50;
+        steps.push({ next, stable: same(idle, now), inside: now.slotInside,
+          order: now.slotOrder, gap: phone || Math.abs(now.gap - expectedGap) <= 1 });
         if (next !== 'view' && cross()) {
           // На 390 px карточка демо-стенда шире окна (так и на dev) — докрутить × в видимую область.
           cross().scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -81,8 +93,12 @@ for (const width of WIDTHS) {
         }
       }
     }
-    // AC2/AC3: ширина шапки и левые границы кнопок режимов и контрола справа стабильны.
+    // AC2/AC3: ширина шапки, группы режимов и контрола справа стабильны.
     o.widthAndTabsStable = steps.every((s) => s.stable);
+    o.closeSlotLivesInsideModes = idle.slotInside && idle.slotOrder
+      && steps.every((s) => s.inside && s.order);
+    o.modeToZoomGapMatchesSpec = (phone || Math.abs(idle.gap - (width <= 620 ? 40.5 : 50)) <= 1)
+      && steps.every((s) => s.gap);
     // AC5/AC6: × виден, ≥ 24 × 24, глиф 13 px, центр слота — это ×, кнопки режимов без ×.
     o.crossVisibleAndSized = hits.length === 7 && hits.every((h) => h.visible && h.glyph13);
     o.crossHitTarget = hits.every((h) => h.centreHitsCross);

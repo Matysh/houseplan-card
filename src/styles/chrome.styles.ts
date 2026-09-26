@@ -147,10 +147,22 @@ const chromeCoreStyles = css`
     .header-menu-item.on { color: var(--hp-accent); font-weight: 600; }
     :host([data-pointer-hover]) .header-menu-item:hover { background: rgba(127, 127, 127, 0.14); }
     .header-menu-item:focus-visible { outline: 2px solid var(--hp-accent); outline-offset: -2px; }
+    .head > .spacer { flex: 0 0 30px; }
+    @media (max-width: 620px) and (min-width: 481px) {
+      .head > .spacer { flex-basis: 28.5px; }
+    }
     @media (max-width: 480px) {
       .hdr > .head { flex-wrap: nowrap; padding: 5px 8px; gap: 6px; }
-      .head > .title, .head > .modes, .head > .spacer, .head > .header-action,
+      .head > .title, .head > .spacer, .head > .header-action,
       .head > .summary-control { display: none; }
+      .head > .modes {
+        flex: 0 0 24px;
+        width: 24px;
+        padding: 0;
+        gap: 0;
+        background: transparent;
+      }
+      .head > .modes .modetab { display: none; }
       .head > .tabs {
         flex: 1 1 auto;
         min-width: 0;
@@ -163,7 +175,7 @@ const chromeCoreStyles = css`
       .head > .tabs .tab { flex: none; white-space: nowrap; max-width: 100%; }
       .head > .tabs .tabtitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
       .head > .tabs .tabedit, .head > .tabs .tabadd { display: none; }
-      .head > .zoomctl, .head > .editor-close-slot { flex: none; }
+      .head > .zoomctl, .head > .modes > .editor-close-slot { flex: none; }
       .header-menu-wrap { display: inline-flex; }
     }
     .decorbar .dcolor {
@@ -221,10 +233,8 @@ const chromeCoreStyles = css`
     .tab.dragging { cursor: grabbing; opacity: 0.55; }
     .tab.drop-before { box-shadow: inset 2px 0 0 0 var(--primary-color, #03a9f4); }
     .tab.drop-after { box-shadow: inset -2px 0 0 0 var(--primary-color, #03a9f4); }
-    /* #647: the editor X owns a fixed slot right after the mode tabs (where
-       the device count used to be). One size for both states, so entering,
-       leaving or switching editors never changes the header width; the slot is
-       the X's pointer target (>= 24 x 24, #195) around a 13 px glyph. */
+    /* #660: the fixed X slot lives inside the mode group, immediately after
+       the active editor; in View the same reserve sits at the group end. */
     .editor-close-slot {
       --hp-editor-close-size: 24px;
       box-sizing: border-box;

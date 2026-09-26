@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- The main toolbar is steadier and more compact: its editor close **×** now
+  occupies the reserved place immediately after the active editor button, the
+  gap before zoom is halved, and the header width stays fixed while switching
+  modes. On desktop the summary-panel settings and show/hide buttons remain
+  available in every editor (the panel itself still appears only in View),
+  while the phone menu remains View-only. Escape now leaves any editor after
+  first dismissing its active tool, selection, drag, popover or dialog
+  ([#660](https://github.com/Matysh/houseplan-card/issues/660)).
 - A cold dashboard load with 2.5D enabled no longer briefly shows the flat plan
   or classifies every floor as dark on its first frame. The neutral House Plan
   loading surface now stays in place until the 2.5D renderer and the actual plan

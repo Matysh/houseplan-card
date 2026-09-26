@@ -2764,7 +2764,6 @@ export class HouseplanCard extends LitElement {
       return;
     }
     if (e.key === 'Escape') {
-      // close the topmost open dialog; info popups first, then editors
       if (this._tapConfirm) { this._tapConfirm = null; return; }
       if (this._vacCalConfirm) {
         if (!this._vacCalConfirm.busy) this._vacCalConfirm = null;
@@ -2858,8 +2857,6 @@ export class HouseplanCard extends LitElement {
         e.preventDefault();
         if (this._decorDraft) this._decorDraft = null;
         else if (this._decorMove || this._dtDrag || this._bdDrag) this._cancelDecorGesture();
-        // The palette is one explicit surface: Escape closes it and returns
-        // to Select in one step, regardless of whether a symbol was armed.
         else if (this._decorTool === 'furniture') {
           this._editorRuntime?._clearFurniturePreview();
           this._editorRuntime?._furnShiftDetach(); // #369(д) r2-H1
@@ -2885,9 +2882,10 @@ export class HouseplanCard extends LitElement {
         this._undoDevicePosition();
         return;
       }
-      if (e.key === 'Escape' && this._deviceDrag) {
+      if (e.key === 'Escape') {
         e.preventDefault();
-        this._cancelDeviceDrag();
+        if (this._deviceDrag) this._cancelDeviceDrag();
+        else this._setMode('view');
       }
       return;
     }
@@ -2998,9 +2996,11 @@ export class HouseplanCard extends LitElement {
       e.preventDefault();
       if (this._tool === 'opening') this._clearOpeningPlacement(true);
       this._tool = 'draw';
+      return;
     }
+    e.preventDefault();
+    this._setMode('view');
   }
-
   /** Remove the last transient point or undo the terminal persisted wall. */
   private _undoPoint(): void {
     if (!this._path.length) return;
@@ -10743,6 +10743,10 @@ export class HouseplanCard extends LitElement {
     );
     const transitionStageBg = modeVisual?.stageColor || stageBg;
     const transitionBrightness = modeVisual?.sceneBrightness ?? 1;
+    const editorClose = html`<span class="editor-close-slot" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>${this._mode !== 'view' ? html`<button
+          class="closex" title=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')} data-hp="editor-close" data-editor-navigation="view"
+          @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`
+      : nothing}</span>`;
     return html`
       <ha-card
         data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
@@ -10816,14 +10820,10 @@ export class HouseplanCard extends LitElement {
                     title=${this._t(('mode.' + m + '_tip') as any)}
                     @click=${() => this._setMode(m)}>
                     <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>
-                  </button>`,
+                  </button>${this._mode === m ? editorClose : nothing}`,
                 )}
-              </div>${''/* #647: X owns a fixed slot (the old device-count place): header width never changes */}
-              <span class="editor-close-slot" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>${this._mode !== 'view'
-                ? html`<button class="closex" title=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')}
-                    data-hp="editor-close" data-editor-navigation="view"
-                    @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`
-                : nothing}</span>`
+                ${this._mode === 'view' ? editorClose : nothing}
+              </div>`
             : nothing}
           <span class="spacer"></span>
           <div class="zoomctl">

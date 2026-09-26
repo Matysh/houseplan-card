@@ -41,7 +41,7 @@ export type HeaderMenuInput = {
   kiosk: boolean;
   mode: HeaderMode;
   hasFixedFloor: boolean;
-  /** Пункты сводной панели (её рантайм отдаёт их только в просмотре). */
+  /** Пункты сводной панели; мобильное меню добавляет их только в просмотре. */
   summary: HeaderMenuItem[];
   t: (key: I18nKey) => string;
   actions: HeaderMenuActions;

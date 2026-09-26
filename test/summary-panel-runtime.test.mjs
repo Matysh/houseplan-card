@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { nothing } from 'lit';
 
 import { SUMMARY_PANEL_API_VERSION } from '../test-build/summary-panel-api.js';
 import { SUMMARY_PANEL_LEGACY_SCALE_KEY, summaryLocalKey } from '../test-build/summary-panel.js';
@@ -71,6 +72,16 @@ const hostFixture = () => {
     _cacheSnapshot: () => undefined,
   };
 };
+
+test('#660 desktop summary controls stay available in editors while kiosk controls stay View-only', () => {
+  const host = hostFixture();
+  const runtime = new LoadedSummaryPanelRuntime(host);
+  for (const mode of ['plan', 'devices', 'decor']) {
+    host._mode = mode;
+    assert.notEqual(runtime.renderControls(false), nothing, `${mode}: desktop controls`);
+    assert.equal(runtime.renderControls(true), nothing, `${mode}: kiosk controls`);
+  }
+});
 
 test('#561 unresolved Masonry stays session-only and never imports an old DOM-path preference', () => {
   const browser = installBrowserGlobals();

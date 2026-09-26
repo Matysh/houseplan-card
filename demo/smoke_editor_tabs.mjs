@@ -15,8 +15,8 @@ const res = await page.evaluate(async () => {
   // 1) две вкладки, Просмотра нет, крестиков в неактивных нет
   out.twoTabs = tabs().length === 3; // третья — Редактор подложки (v1.33.0)
   out.labels = tabs().map((t) => t.textContent.trim());
-  // #647: X no longer lives inside a mode tab; its own slot after the tabs is
-  // empty (but keeps its size) outside an editor.
+  // #660: X does not live inside a mode button; its slot follows the active
+  // button and moves to the group end (empty but same size) in View.
   out.noCrossIdle = sr().querySelectorAll('.modetab .closex').length === 0
     && !sr().querySelector('.editor-close-slot .closex');
   out.startView = c._mode === 'view';
@@ -51,6 +51,14 @@ const res = await page.evaluate(async () => {
     && Math.abs((barCloseIconRect.top + barCloseIconRect.height / 2)
       - (barCloseRect.top + barCloseRect.height / 2)) <= 1;
   out.tabCross = !!headerCross() && !tabs()[0].querySelector('.closex');
+  const planSummary = sr().querySelector('.summary-control');
+  const summaryToggle = planSummary?.querySelector('button:last-child');
+  const summaryBefore = summaryToggle?.getAttribute('aria-pressed');
+  summaryToggle?.click(); await c.updateComplete;
+  out.summaryControlsStayInPlan = planSummary?.querySelectorAll('button').length === 2
+    && summaryToggle?.getAttribute('aria-pressed') !== summaryBefore
+    && !sr().querySelector('.summary-overlay');
+  summaryToggle?.click(); await c.updateComplete;
   // 3) повторный клик по активной вкладке — ничего
   tabs()[0].click(); await c.updateComplete;
   out.reclickNoop = c._mode === 'plan';
@@ -198,8 +206,8 @@ const res = await page.evaluate(async () => {
   out.barCloseWorks = c._mode === 'view'
     && getComputedStyle(chrome).visibility === 'hidden'
     && chrome.getBoundingClientRect().height < 1;
-  // 7) #647 (+#195): the header X sits in a fixed 24 x 24 slot after the mode
-  // tabs; the slot is its hit target around a 13 px glyph and has the same size
+  // 7) #660 (+#195): the header X sits in a fixed 24 x 24 slot after the active
+  // mode; the slot is its hit target around a 13 px glyph and has the same size
   // outside an editor, so the header never changes width. Exercise the slot's
   // edge rather than calling the element's centre programmatically.
   const tabCrossChecks = [];
@@ -210,6 +218,8 @@ const res = await page.evaluate(async () => {
     const slot = sr().querySelector('.editor-close-slot').getBoundingClientRect();
     const glyph = cross.querySelector('ha-icon');
     const hit = sr().elementFromPoint(rect.left + 1, rect.top + rect.height / 2);
+    const editorSummaryVisible = sr().querySelectorAll('.summary-control button').length === 2
+      && !sr().querySelector('.summary-overlay');
     const glyphStays13 = getComputedStyle(glyph).getPropertyValue('--mdc-icon-size').trim() === '13px';
     hit?.dispatchEvent(new MouseEvent('click', {
       bubbles: true,
@@ -226,6 +236,7 @@ const res = await page.evaluate(async () => {
       footprint: Math.abs(slot.width - idleSlot.width) <= 0.5
         && Math.abs(slot.height - idleSlot.height) <= 0.5 && Math.abs(slot.width - 24) <= 0.5,
       edgeHit: !!hit && (hit === cross || cross.contains(hit)),
+      summary: editorSummaryVisible,
       closed: c._mode === 'view',
     });
   }
@@ -234,6 +245,7 @@ const res = await page.evaluate(async () => {
   out.tabCrossKeepsLayoutFootprint = tabCrossChecks.every((check) => check.footprint);
   out.tabCrossExpandedEdgeWorks = tabCrossChecks.every((check) => check.edgeHit && check.closed);
   out.tabCrossWorks = tabCrossChecks.every((check) => check.closed);
+  out.summaryControlsStayInEveryEditor = tabCrossChecks.every((check) => check.summary);
 
   // Closing the editor only drops session state: every accepted segment was
   // already persisted as an ordinary partition by its own click.
@@ -358,6 +370,24 @@ const res = await page.evaluate(async () => {
   c._roomDialog = savedRoomDialog;
   c._nameSel = savedNameSel;
   c._areaSel = savedAreaSel;
+
+  // #660: an internal Plan/Background action consumes the first Escape; the
+  // next neutral Escape leaves the editor. Device editor exits immediately.
+  c._setMode('plan', false); await settleMode();
+  c._tool = 'opening'; c.requestUpdate(); await c.updateComplete;
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await c.updateComplete;
+  out.planEscapeKeepsInternalPriority = c._mode === 'plan' && c._tool === 'draw';
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await settleMode();
+  out.planNeutralEscapeExits = c._mode === 'view';
+  c._setMode('devices', false); await settleMode();
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await settleMode();
+  out.deviceNeutralEscapeExits = c._mode === 'view';
+  c._setMode('decor', false); await settleMode();
+  c._decorTool = 'line'; c.requestUpdate(); await c.updateComplete;
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await c.updateComplete;
+  out.decorEscapeKeepsInternalPriority = c._mode === 'decor' && c._decorTool === 'select';
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await settleMode();
+  out.decorNeutralEscapeExits = c._mode === 'view';
   return out;
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)

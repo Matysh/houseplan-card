@@ -240,6 +240,8 @@ product surfaces after setup.
 ## 5. Interface modes
 
 View is the state with no editor open. Close the active editor to return to it.
+Escape first cancels the current dialog, popover, drag, selection or tool; press
+it again after the editor is neutral to return to View.
 
 | Mode | Devices | Geometry | Background/openings |
 |---|---|---|---|
@@ -298,8 +300,11 @@ bottom otherwise. It temporarily hides when the card cannot fit a readable
 panel, and restores itself after the card grows. Turning off **Display on
 mobile devices** also hides it whenever Home Assistant reports a narrow view;
 the show/hide button remains pressed because the local choice was not erased.
-The panel and its controls are absent from all three editors and from the
-static space card.
+The panel itself is absent from all three editors and from the static space
+card. On a screen wider than 480 px, its two header buttons stay available in
+the editors: you can open settings or change the local show/hide choice there,
+but the panel appears only after you return to View. On a phone those two gear
+menu items remain available only in View.
 
 The room highlight remains available in View and kiosk. To keep that highlight
 but hide the floating room summary, turn off **General settings → Show the room

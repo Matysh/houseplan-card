@@ -7568,8 +7568,8 @@ const MUTANT_DEFINITIONS = [
     because: '#647 AC1: the header must not show a device count in any mode or locale',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "              <span class=\"editor-close-slot\" aria-hidden=",
-      replace: "              <span class=\"count\">${this._devices.length} dev.</span><span class=\"editor-close-slot\" aria-hidden=",
+      find: "    const editorClose = html`<span class=\"editor-close-slot\" aria-hidden=",
+      replace: "    const editorClose = html`<span class=\"count\">${this._devices.length} dev.</span><span class=\"editor-close-slot\" aria-hidden=",
     }],
   },
   {
@@ -7588,8 +7588,8 @@ const MUTANT_DEFINITIONS = [
     because: '#647 AC3: an X inside the active mode tab widens that tab and moves its neighbours',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "                    <ha-icon icon=${ic}></ha-icon><span class=\"ml\">${this._t(('mode.' + m) as any)}</span>\n                  </button>`,",
-      replace: "                    <ha-icon icon=${ic}></ha-icon><span class=\"ml\">${this._t(('mode.' + m) as any)}</span>${this._mode === m ? html`<ha-icon class=\"closex\" icon=\"mdi:close\"></ha-icon>` : nothing}\n                  </button>`,",
+      find: "                    <ha-icon icon=${ic}></ha-icon><span class=\"ml\">${this._t(('mode.' + m) as any)}</span>\n                  </button>${this._mode === m ? editorClose : nothing}`",
+      replace: "                    <ha-icon icon=${ic}></ha-icon><span class=\"ml\">${this._t(('mode.' + m) as any)}</span>${this._mode === m ? html`<ha-icon class=\"closex\" icon=\"mdi:close\"></ha-icon>` : nothing}\n                  </button>${this._mode === m ? editorClose : nothing}`",
     }],
   },
   {
@@ -7598,8 +7598,8 @@ const MUTANT_DEFINITIONS = [
     because: '#647 AC4: outside an editor the reserve is inert and hidden from assistive technology',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "              <span class=\"editor-close-slot\" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>",
-      replace: "              <span class=\"editor-close-slot\" tabindex=\"0\">",
+      find: "<span class=\"editor-close-slot\" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>",
+      replace: "<span class=\"editor-close-slot\" tabindex=\"0\">",
     }],
   },
   {
@@ -7622,14 +7622,70 @@ const MUTANT_DEFINITIONS = [
       replace: "    .editor-close-slot .closex ha-icon { --mdc-icon-size: 13px; }\n    @media (max-width: 1100px) { .editor-close-slot .closex { display: none; } }",
     }],
   },
+  // #660: compact stable header, desktop summary controls and neutral Escape.
+  {
+    id: 'toolbar-close-slot-leaves-mode-group',
+    guard: 'node demo/smoke_toolbar_stable_width.mjs',
+    because: '#660 AC2: the one fixed X reserve belongs inside the segmented mode group, after the active button',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '                  </button>${this._mode === m ? editorClose : nothing}`',
+      replace: '                  </button>`',
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: "                ${this._mode === 'view' ? editorClose : nothing}\n              </div>`",
+      replace: '              </div>${editorClose}`',
+    }],
+  },
+  {
+    id: 'toolbar-mode-zoom-gap-regresses',
+    guard: 'node demo/smoke_toolbar_stable_width.mjs',
+    because: '#660 AC3: the modes-to-zoom distance is the specified compact 50/40.5 px, not the old flexible gap',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: '    .head > .spacer { flex: 0 0 30px; }',
+      replace: '    .head > .spacer { flex: 0 0 80px; }',
+    }],
+  },
+  {
+    id: 'editor-summary-controls-return-to-view-only',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/summary-panel-runtime.test.mjs',
+    because: '#660 AC1: wide-screen inline summary actions remain usable in all three editors',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: "    if (kiosk && this.host._mode !== 'view') return nothing;",
+      replace: "    if (this.host._mode !== 'view') return nothing;",
+    }],
+  },
+  {
+    id: 'phone-editor-close-hidden-with-mode-buttons',
+    guard: 'node demo/smoke_mobile_view_header.mjs',
+    because: '#660 AC4: hiding desktop mode buttons on a phone must leave the editor X slot visible',
+    patches: [{
+      file: 'src/styles/chrome.styles.ts',
+      find: '      .head > .title, .head > .spacer, .head > .header-action,',
+      replace: '      .head > .title, .head > .modes, .head > .spacer, .head > .header-action,',
+    }],
+  },
+  {
+    id: 'editor-neutral-escape-does-not-exit',
+    guard: 'node demo/smoke_editor_tabs.mjs',
+    because: '#660 AC5: after inner actions have had priority, a neutral Escape returns every editor to View',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    e.preventDefault();\n    this._setMode('view');\n  }\n  /** Remove the last transient point",
+      replace: "    e.preventDefault();\n  }\n  /** Remove the last transient point",
+    }],
+  },
   {
     id: 'phone-header-shows-title',
     guard: 'node demo/smoke_mobile_view_header.mjs',
     because: '#616 AC1: on a phone the card title alone takes a row; the one-row header must hide it',
     patches: [{
       file: 'src/styles/chrome.styles.ts',
-      find: '      .head > .title, .head > .modes, .head > .spacer, .head > .header-action,',
-      replace: '      .head > .modes, .head > .spacer, .head > .header-action,',
+      find: '      .head > .title, .head > .spacer, .head > .header-action,',
+      replace: '      .head > .spacer, .head > .header-action,',
     }],
   },
   {

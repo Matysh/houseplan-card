@@ -28,9 +28,12 @@ const header = () => page.evaluate(() => {
     title: shown(head.querySelector(':scope > .title')),
     tabs: shown(head.querySelector(':scope > .tabs')),
     zoom: shown(head.querySelector(':scope > .zoomctl')),
+    modeSlot: shown(head.querySelector(':scope > .modes'))
+      && Math.abs(head.querySelector(':scope > .modes').getBoundingClientRect().width - 24) <= 0.5,
+    cross: shown(head.querySelector('[data-hp="editor-close"]')),
     gear: shown(gear),
     gear44: !!g && g.width >= 44 && g.height >= 44,
-    hiddenInline: ['.modes', '.header-action', '.summary-control', '.tabedit', '.tabadd']
+    hiddenInline: ['.modes .modetab', '.header-action', '.summary-control', '.tabedit', '.tabadd']
       .filter((selector) => [...head.querySelectorAll(selector)].some(shown)),
     tabEditInDom: !!head.querySelector('.tabedit, .tabadd'),
     inlineVisible: ['.header-action', '.summary-control'].filter((selector) => [...head.querySelectorAll(selector)].some(shown)),
@@ -85,7 +88,7 @@ for (const width of [390, 320]) {
   await size(width);
   const h = await header();
   out[`admin${width}_oneRow56`] = h.oneRow && h.height <= 56;
-  out[`admin${width}_rowContent`] = !h.title && h.tabs && h.zoom && h.gear && h.gear44;
+  out[`admin${width}_rowContent`] = !h.title && h.tabs && h.modeSlot && h.zoom && h.gear && h.gear44;
   out[`admin${width}_inlineHidden`] = h.hiddenInline.length === 0 ? true : h.hiddenInline.join(',');
   await openMenu();
   const m = await menuState();
@@ -135,7 +138,8 @@ await clickAt('[data-hp="header-menu-item"][data-id="mode-plan"]');
 await page.waitForTimeout(300);
 out.editorFromMenu = (await mode()) === 'plan';
 const inEditor = await header();
-out.editorOneRow56 = inEditor.oneRow && inEditor.height <= 56 && inEditor.hiddenInline.length === 0;
+out.editorOneRow56 = inEditor.oneRow && inEditor.height <= 56 && inEditor.modeSlot
+  && inEditor.cross && inEditor.hiddenInline.length === 0;
 await openMenu();
 const editorMenu = await menuState();
 out.editorMenuMarksCurrent = editorMenu.current.join() === 'mode-plan' && !editorMenu.ids.includes('summary-toggle');

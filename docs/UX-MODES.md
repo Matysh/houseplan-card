@@ -53,12 +53,14 @@ inert everywhere outside its editor).
   background and editor-specific layers move on one short timeline, so opening
   an editor never flashes a default scale or a mixed dark/white frame. A rapid
   second choice retargets from the visible intermediate frame. Reduced-motion
-  preferences apply the same final state immediately. The header X sits in
-  its own fixed 24 × 24 px slot right after the mode tabs (#647): the slot keeps
-  its size, empty and hidden from assistive technology, outside the editors,
-  so entering, leaving or switching editors never changes the header width or
-  moves a tab; the X keeps its compact 13 px glyph and the whole slot is its
-  hit target (≥ 24 × 24 px, #195).
+  preferences apply the same final state immediately. The header X sits in a
+  fixed 24 × 24 px slot inside the segmented control, immediately after the
+  active editor (#660); in View the same empty, assistive-technology-hidden
+  reserve sits at the end. The group width therefore stays fixed while buttons
+  to the right of the active editor yield the reserved place. The X keeps its
+  compact 13 px glyph and the whole slot is its hit target (≥ 24 × 24 px,
+  #195). On a phone the mode buttons remain in the gear menu, while this one
+  slot stays visible in the header so the editor still has a direct exit.
 - An editor's primary toolbar contains only persistent tools. Close is pinned
   in its own end cap. Selection actions, active-tool parameters, operation
   hints and palettes appear in one translucent context tray over the top of the
@@ -121,8 +123,11 @@ local show and View-size controls only. In a landscape/square House Plan stage
 the panel is on the right; in a portrait stage it is centred at the bottom.
 Native HA `narrow` controls the independent mobile permission. Insufficient
 measured stage space temporarily hides the overlay without changing the saved
-local choice. All summary surfaces disappear in Plan, Devices and Background;
-`houseplan-space-card` never renders them.
+local choice. The overlay remains View-only. On windows wider than 480 px its
+settings and local show/hide buttons stay in the header in all three editors:
+settings can be opened there and the local choice can be changed, but the
+overlay appears only after returning to View. The phone gear keeps those two
+entries View-only. `houseplan-space-card` never renders any summary surface.
 
 The admin-only **General settings → Show Zigbee links on device hover** option
 is off by default. Once an admin explicitly reads cached ZHA data or updates a
@@ -142,7 +147,10 @@ Removed from this mode (they move, not die):
 - every edit button in the header (+device, 👁 show-all, ↺ reset, ⬡ rules, ⚙ general,
   per-space gear, markup toggle).
 
-Header in View: space tabs, summary control and zoom cluster; on a phone (≤ 480 px) space tabs, zoom and one gear whose menu holds the rest (#616).
+Header in View: space tabs, summary control and zoom cluster. On wider screens
+the summary control also remains available in editors; the fixed distance from
+the editor group to zoom is half the former gap. On a phone (≤ 480 px): space
+tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
 
 ## Plan — geometry and appearance of the space
 

@@ -234,8 +234,7 @@ export class LoadedSummaryPanelRuntime {
     </aside>`;
   }
 
-  /** #616: the same two actions as `renderControls` — items of the phone header menu
-   *  (the menu itself offers them only in View, as `renderControls` does). */
+  /** #616: the same two actions as `renderControls`; the phone menu offers them only in View. */
   public menuItems(): HeaderMenuItem[] {
     const toggleTitle = this.toggleTitle();
     return [
@@ -260,7 +259,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   public renderControls(kiosk = false): TemplateResult | typeof nothing {
-    if (this.host._mode !== 'view') return nothing;
+    if (kiosk && this.host._mode !== 'view') return nothing;
     const toggleTitle = this.toggleTitle();
     const stop = (event: Event) => event.stopPropagation();
     return html`<div class="summary-control ${kiosk ? 'kiosk' : ''}" role="group"
