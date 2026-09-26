@@ -758,7 +758,10 @@ test('decor toggle uses the canonical designer furniture vector path', () => {
 });
 
 test('current 20-room large-house space builds from the visible geometry cache under 200 ms', () => {
-  const fixture = makeLargeHouseFixture();
+  // Здесь охраняется построение PDF из кеша видимой геометрии. Стресс-набор
+  // лестниц остаётся в общем large-house benchmark, чтобы этот узкий witness
+  // не смешивал два независимых бюджета (#663).
+  const fixture = makeLargeHouseFixture({ includeStairs: false });
   const largeConfig = { ...fixture.config, model_version: 9 };
   const largeRaw = largeConfig.spaces[0];
   const largeSpace = spaceModels(largeConfig)[0];

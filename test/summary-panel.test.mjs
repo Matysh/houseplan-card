@@ -479,7 +479,10 @@ test('#509 AC3: один этаж большого дома считается �
   // shared-аргументов та объединяет кладку заново для каждой комнаты, и
   // единственный наблюдаемый признак — время (S2: 176 мс на комнату).
   // Разрыв семикратный, поэтому порог грубый и не флейкует.
-  const fixture = makeLargeHouseFixture();
+  // Этот AC измеряет повторное построение кладки. Максимальные 250 лестниц
+  // отдельно входят в общий large-house benchmark и не должны превращать
+  // узкий wall-cache witness в тест другой подсистемы (#663).
+  const fixture = makeLargeHouseFixture({ includeStairs: false });
   const config = { ...fixture.config, spaces: fixture.config.spaces.slice(0, 1) };
   const model = spaceModels(config);
   assert.equal(model[0].rooms.length, 20, 'фикстура даёт этаж из 20 комнат');

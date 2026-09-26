@@ -486,7 +486,10 @@ test('#573: evidence живого дерева считается детерми
   assert.match(first.product.tree, /^[0-9a-f]{64}$/);
   assert.match(first.baselines.tree, /^[0-9a-f]{40}$/);
   assert.match(first.baselines.manifestSha256, /^[0-9a-f]{64}$/);
-  assert.equal(first.baselines.reviewedLocal, null);
+  const baselineIndex = JSON.parse(readFileSync(
+    new URL('../demo/golden/baselines/baselines-index.json', import.meta.url), 'utf8',
+  ));
+  assert.equal(first.baselines.reviewedLocal, baselineIndex.localAttestation?.sha256 ?? null);
   for (const job of REUSE_JOBS) assert.equal(first.keys[job], reuseKey(root, job));
   assert.throws(() => localEvidence(root, { keys: { ...first.keys, smoke: 'f'.repeat(64) } }), /smoke: reuse job key/);
 });
