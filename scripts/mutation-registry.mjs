@@ -1217,8 +1217,8 @@ const MUTANT_DEFINITIONS = [
       + 'window.innerHeight makes the animated stage escape the card at minimum height (#648 AC5)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '(containerOwnedHeight ? this.clientHeight : innerHeight)',
-      replace: 'innerHeight /* mutant: ignore the fixed Sections slot */',
+      find: 'from.stageHeight + from.editorChromeHeight - targetChromeHeight',
+      replace: 'innerHeight - targetChromeHeight /* mutant: ignore the fixed card budget */',
     }],
   },
   {

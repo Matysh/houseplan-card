@@ -1344,11 +1344,8 @@ export class HouseplanCard extends LitElement {
       }
       const inner = this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null;
       const targetChromeHeight = targetMode === 'view' ? 0 : inner?.scrollHeight || 0;
-      // The hidden measurement frame deliberately keeps the painted source
-      // chrome/stage coordinates inline. Measuring stage.top here therefore
-      // still reports the source header, not the incoming editor chrome. The
-      // shared controller owns a constant stage + editor-chrome budget, so
-      // derive the target from that budget and let each RAF move both edges.
+      // The hidden frame preserves source sizes; keep the stage + chrome budget
+      // constant so every RAF moves both edges without a final layout jump.
       const targetStageHeight = Math.max(1,
         from.stageHeight + from.editorChromeHeight - targetChromeHeight);
       const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
