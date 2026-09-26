@@ -1344,10 +1344,13 @@ export class HouseplanCard extends LitElement {
       }
       const inner = this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null;
       const targetChromeHeight = targetMode === 'view' ? 0 : inner?.scrollHeight || 0;
-      // updateComplete guarantees that this stage already belongs to the rendered ha-card.
-      const containerOwnedHeight = this._containerOwnedHeight;
-      const targetStageHeight = Math.max(1, (containerOwnedHeight ? this.clientHeight : innerHeight)
-        - measuredCardHeaderHeight(this.renderRoot, this._stageEl!, containerOwnedHeight)!);
+      // The hidden measurement frame deliberately keeps the painted source
+      // chrome/stage coordinates inline. Measuring stage.top here therefore
+      // still reports the source header, not the incoming editor chrome. The
+      // shared controller owns a constant stage + editor-chrome budget, so
+      // derive the target from that budget and let each RAF move both edges.
+      const targetStageHeight = Math.max(1,
+        from.stageHeight + from.editorChromeHeight - targetChromeHeight);
       const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
       const targetView = this._viewForModeTarget(
         targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,
