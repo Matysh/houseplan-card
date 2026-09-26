@@ -6051,8 +6051,9 @@ export class HouseplanCard extends LitElement {
   ): IsoOverlayRenderScene | null {
     const runtime = this._isoSceneRuntime;
     if (!runtime || !layers?.structural || !structural) return null;
+    const [x, y, w, h] = this._baseVb('iso', structural);
     return runtime.buildIsoOverlayRenderScene({
-      space, devices: devs, openings: this._openingsR, view, display: disp,
+      space, devices: devs, openings: this._openingsR, view, referenceView: { x, y, w, h }, display: disp,
       wallSilhouettes: structural.wallSilhouettes,
       resolveCollisions,
       iconPct, deviceBasePct, showLqi, cellCm: this._cellCm,
@@ -6067,7 +6068,6 @@ export class HouseplanCard extends LitElement {
       openingWallIndex: () => this._openingWallIndexFor(space, this._openCuts()).value,
     });
   }
-
   private _baseVb(
     projection: 'flat' | 'iso' = this._effectiveProjection(),
     scene: IsoRenderScene | null = this._renderIsoScene,

@@ -205,6 +205,22 @@ const out = await page.evaluate(async () => {
   result.raisedGeometryTracksHtml = raisedNodes.every(raisedGeometryMatches);
   result.raisedTargetsOwn44Pixels = ['device', 'room-label', 'opening-lock'].every((kind) =>
     raisedNodes.filter((node) => node.getAttribute('data-hp-iso-overlay-kind') === kind).some(owns44));
+  const overlaySceneSnapshot = () => [...root().querySelectorAll(
+    '[data-hp-iso-raised="true"][data-hp-iso-visual]',
+  )].map((node) => [
+    node.getAttribute('data-hp-iso-overlay-kind'),
+    node.getAttribute('data-hp-iso-floor'),
+    node.getAttribute('data-hp-iso-visual'),
+  ].join('|')).sort();
+  const overlaysBeforeZoom = overlaySceneSnapshot();
+  card._stepZoom(1);
+  for (let guard = 0; card._cameraTransition.active && guard < 90; guard++) await frame();
+  const overlaysAfterZoomIn = overlaySceneSnapshot();
+  card._stepZoom(-1);
+  for (let guard = 0; card._cameraTransition.active && guard < 90; guard++) await frame();
+  result.desktopZoomKeepsOverlayScene = overlaysBeforeZoom.length >= 3
+    && JSON.stringify(overlaysAfterZoomIn) === JSON.stringify(overlaysBeforeZoom)
+    && JSON.stringify(overlaySceneSnapshot()) === JSON.stringify(overlaysBeforeZoom);
   const deviceBefore = device ? center(device) : null;
   const fingerprintBeforeLive = root().querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint;
   const geometryBeforeLive = card._isoGeometryCache.get(fingerprintBeforeLive)?.geometry;

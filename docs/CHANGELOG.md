@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Device and door-lock markers in the 2.5D plan no longer change their scene
+  positions while the plan is zoomed or panned. Nearby markers now move away
+  from a wall as one rigid group, so rows and the spacing between their
+  members stay the same as on the flat plan instead of fanning into a diagonal
+  or being rearranged at a different zoom
+  ([#651](https://github.com/Matysh/houseplan-card/issues/651)).
+
 ## v1.78.0-beta.3 — 2026-09-25
 
 - The 2.5D plan is now available to everyone: **General settings → Display →

@@ -11,6 +11,7 @@ import {
   resolveIsoOverlayCollisions,
   resolveIsoOverlayOwner,
   resolveIsoOverlayPlacement,
+  resolveIsoOverlayRigidGroups,
 } from '../test-build/iso-overlays.js';
 import {
   ISO_RAISED_OVERLAY_HEIGHT,
@@ -105,6 +106,44 @@ test('group collision separates a solvable dense set independently of input orde
   const hinted = solve(hintedItems);
   for (const key of keys) assert.deepEqual(hinted.placements.get(key), normal.placements.get(key),
     'a previous exact placement is only an upper bound and cannot change the nearest result');
+});
+
+test('rigid overlay groups preserve a row and use one deterministic wall displacement', () => {
+  const room = square('room', 0, 0, 240, 160, [120, 80]);
+  const wall = { outer: [[0, 0], [240, 0], [240, 14], [0, 14]] };
+  const make = (id, x) => ({
+    id,
+    kind: id === 'lock' ? 'opening-lock' : 'device',
+    placement: placement({
+      kind: id === 'lock' ? 'opening-lock' : 'device',
+      floorAnchor: [x, 18], rooms: [room], preferredRoomId: room.id,
+      wallSilhouettes: [wall], footprintHalfSize: [5, 5], wallHeight: 0,
+      visualOffset: 0, sceneUnitsPerCssPixel: 1, camera: identityCamera,
+    }),
+    screenHalfSize: [7, 7],
+  });
+  const items = [make('a', 70), make('lock', 90), make('b', 110)];
+  const solve = (value) => resolveIsoOverlayRigidGroups({
+    items: value, rooms: [room], wallSilhouettes: [wall],
+    sceneUnitsPerCssPixel: 1, visualOffset: 0, camera: identityCamera,
+  });
+  const normal = solve(items);
+  const reversed = solve([...items].reverse());
+  const placements = items.map((item) => normal.placements.get(
+    isoOverlayCollisionKey(item.kind, item.id),
+  ));
+  const nudges = placements.map((value) => value.nudgeCss);
+  nudges.slice(1).forEach((value) => assert.deepEqual(value, nudges[0],
+    'every member receives the exact same group vector'));
+  assert.ok(nudges[0][1] > 0, 'the complete row moves away from the wall');
+  assert.deepEqual(placements.map((value) => value.visualScene[1]),
+    [placements[0].visualScene[1], placements[0].visualScene[1], placements[0].visualScene[1]],
+    'a horizontal canonical row stays horizontal');
+  for (const item of items) {
+    const key = isoOverlayCollisionKey(item.kind, item.id);
+    assert.deepEqual(reversed.placements.get(key), normal.placements.get(key),
+      'input order cannot change a rigid layout');
+  }
 });
 
 test('group collision checks room-edge events before accepting a legal farther hint', () => {

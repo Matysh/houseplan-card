@@ -10327,6 +10327,46 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'iso-rigid-groups-use-live-zoom-scale',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#651 supersedes" test/iso-scene-render.test.mjs',
+    because: '#651 makes the fit-scale viewport the only layout scale. Falling back to the live '
+      + 'view makes every pinch or wheel zoom a fresh placement event and the device row drifts again',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: '  const layoutView = input.referenceView || input.view;',
+      replace: '  const layoutView = input.view;  // mutant: live zoom drives layout again',
+    }],
+  },
+  {
+    id: 'iso-rigid-groups-split-close-row',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="rigid overlay groups preserve" test/iso-overlays.test.mjs',
+    because: '#651 treats intersecting same-room markers as one rigid perceptual group. Disabling '
+      + 'the join silently returns independent offsets and destroys the row alignment',
+    patches: [{
+      file: 'src/iso-overlays.ts',
+      find: '      if (boundsIntersect(groupBounds[left], groupBounds[right])) join(left, right);',
+      replace: '      if (false && boundsIntersect(groupBounds[left], groupBounds[right])) join(left, right);',
+    }],
+  },
+  {
+    id: 'iso-scene-restores-per-marker-collision-resolver',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="keeps a close device cluster rigid" test/iso-scene-render.test.mjs',
+    because: '#651 is ineffective unless the production scene uses the rigid-group resolver. The '
+      + 'legacy per-marker resolver may still pass its own geometry tests while moving neighbours apart',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: '  resolveIsoOverlayOwner, resolveIsoOverlayPlacement, resolveIsoOverlayRigidGroups,',
+      replace: '  resolveIsoOverlayCollisions, resolveIsoOverlayOwner, resolveIsoOverlayPlacement, resolveIsoOverlayRigidGroups,',
+    }, {
+      file: 'src/iso-scene-render.ts',
+      find: "  const collision = mode === 'live' ? resolveIsoOverlayRigidGroups({",
+      replace: "  const collision = mode === 'live' ? resolveIsoOverlayCollisions({",
+    }],
+  },
+  {
     id: 'stage4-w1-camera-rotation-regresses',
     guard: 'node --test --test-name-pattern="exact fixed" test/iso-projection.test.mjs',
     because: 'W1: the reviewed Stage 4 camera is exactly 0 degrees; restoring the old +4 degree '

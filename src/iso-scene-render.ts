@@ -27,7 +27,7 @@ import {
 } from './iso-openings';
 import {
   ISO_OVERLAY_MAX_NUDGE_CSS_PX, isoOverlayCollisionKey, isoRoomSafePoint,
-  resolveIsoOverlayCollisions, resolveIsoOverlayOwner, resolveIsoOverlayPlacement,
+  resolveIsoOverlayOwner, resolveIsoOverlayPlacement, resolveIsoOverlayRigidGroups,
   type IsoOverlayPlacement, type IsoOverlayRoom, type IsoRaisedOverlayKind,
   type IsoWallSilhouette,
 } from './iso-overlays';
@@ -719,6 +719,8 @@ export interface IsoOverlaySceneInput {
   devices: readonly DevItem[];
   openings: readonly RenderOpening[];
   view: Rect;
+  /** Fit-scale viewport used only for deterministic overlay layout. */
+  referenceView?: Rect;
   display: SpaceDisplay;
   wallSilhouettes: readonly IsoWallSilhouette[];
   /** Fit-envelope probes need unnudged bounds only, not wall collision search. */
@@ -801,9 +803,10 @@ export function isoOverlayRooms(space: SpaceModel): readonly IsoOverlayRoomRow[]
 
 /** Build the one-frame mapping from immutable floor anchors to raised visuals. */
 export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOverlayRenderScene {
+  const layoutView = input.referenceView || input.view;
   const unitsPerPixel = input.stageSize && input.stageSize.width > 0 && input.stageSize.height > 0
-    ? Math.max(input.view.w / input.stageSize.width, input.view.h / input.stageSize.height)
-    : Math.max(input.view.w, input.view.h) / 1000;
+    ? Math.max(layoutView.w / input.stageSize.width, layoutView.h / input.stageSize.height)
+    : Math.max(layoutView.w, layoutView.h) / 1000;
   const roomRows = isoOverlayRooms(input.space);
   const rooms = roomRows.map((row) => row.overlayRoom);
   const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);
@@ -981,7 +984,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     `${entry.kind}\u0000${entry.id}`, entry,
   ]) || []);
 
-  const collision = mode === 'live' ? resolveIsoOverlayCollisions({
+  const collision = mode === 'live' ? resolveIsoOverlayRigidGroups({
     items: entries.flatMap((entry) => {
       if (entry.kind === 'room-label') return [];
       const before = previousEntries.get(`${entry.kind}\u0000${entry.id}`);

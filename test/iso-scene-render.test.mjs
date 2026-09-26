@@ -418,6 +418,7 @@ test('Stage 4 reuses pure overlay placements and fit probes skip collision searc
     devices: [{ id: 'device', space: 'floor', marker: { room_id: 'owner' } }],
     openings: [],
     view: { x: 0, y: 0, w: 100, h: 100 },
+    referenceView: { x: 0, y: 0, w: 100, h: 100 },
     display: { showNames: false, cardFontScale: 1 },
     layers: { structural: true, shadows: true },
     wallSilhouettes,
@@ -460,13 +461,14 @@ test('Stage 4 reuses pure overlay placements and fit probes skip collision searc
   assert.notStrictEqual(fit.devices.get('device'), live.devices.get('device'),
     'fit and live placements use separate bounded cache entries');
 
-  const zoomed = buildIsoOverlayRenderScene({ ...input, view: { x: 0, y: 0, w: 120, h: 120 } });
-  assert.notStrictEqual(zoomed, live, 'a changed placement produces a new render-scene snapshot');
-  assert.notStrictEqual(zoomed.devices.get('device'), live.devices.get('device'),
-    'view scale invalidates the placement signature');
+  const zoomed = buildIsoOverlayRenderScene({ ...input, view: { x: -10, y: -10, w: 120, h: 120 } });
+  assert.strictEqual(zoomed, live,
+    'zooming out and panning reuse the same immutable scene placement');
+  assert.strictEqual(zoomed.devices.get('device'), live.devices.get('device'),
+    'live view is absent from the placement signature');
 });
 
-test('render scene separates device roots without moving labels and caches permutations', () => {
+test('render scene keeps a close device cluster rigid without moving labels and caches permutations', () => {
   const owner = {
     ...room('owner', 0, 0, 400, 400),
     name: 'Owner label', area: 'living', settings: {},
@@ -500,17 +502,16 @@ test('render scene separates device roots without moving labels and caches permu
     openingWallIndex: () => ({ adjacencyEps: 0.1, edges: [] }),
   };
   const scene = buildIsoOverlayRenderScene(input);
-  assert.deepEqual(scene.residualPairs, [], 'the roomy fixture must fully separate all roots');
+  assert.deepEqual(scene.residualPairs, [], 'intra-group overlap is not reported as inter-group debt');
   const deviceEntries = scene.entries.filter((entry) => entry.kind === 'device');
   for (let index = 0; index < deviceEntries.length; index++) {
     assert.ok(deviceEntries[index].placement.nudgeDistanceCss <= 48);
     for (let other = 0; other < index; other++) {
       const a = deviceEntries[index], b = deviceEntries[other];
-      const dx = Math.abs(a.placement.visualScene[0] - b.placement.visualScene[0]);
-      const dy = Math.abs(a.placement.visualScene[1] - b.placement.visualScene[1]);
-      assert.ok(dx >= a.screenHalfSize[0] + b.screenHalfSize[0] + 8 - 1e-7
-        || dy >= a.screenHalfSize[1] + b.screenHalfSize[1] + 8 - 1e-7,
-      `device roots ${a.id}/${b.id} must not overlap after the 4 CSS px gap`);
+      assert.deepEqual(a.placement.visualScene, b.placement.visualScene,
+        `device roots ${a.id}/${b.id} keep their canonical coincident relationship`);
+      assert.deepEqual(a.placement.nudgeCss, b.placement.nudgeCss,
+        `device roots ${a.id}/${b.id} receive one rigid displacement`);
     }
   }
   const label = scene.entries.find((entry) => entry.kind === 'room-label');
@@ -854,6 +855,7 @@ const perfFixture = () => {
     devices: [{ id: 'device', space: 'floor', marker: { room_id: 'owner' } }],
     openings: [],
     view: { x: 0, y: 0, w: 100, h: 100 },
+    referenceView: { x: 0, y: 0, w: 100, h: 100 },
     display: { showNames: false, cardFontScale: 1 },
     layers: { structural: true, shadows: true },
     wallSilhouettes,
@@ -897,7 +899,7 @@ test('#473 W2: кэш размещений привязан к идентичн�
   assert.notStrictEqual(noWalls, withWall);
 });
 
-test('#473 W3: при зуме внутрь плита у стены не переиспользуется вслепую', () => {
+test('#651 supersedes #473 W3: live zoom never recomputes scene placement', () => {
   const { input } = perfFixture();
   // Далёкая плита: зум внутрь переиспользует доказанно безопасное размещение.
   const far = { ...input, positionOf: () => ({ x: 60, y: 20 }) };
@@ -906,9 +908,9 @@ test('#473 W3: при зуме внутрь плита у стены не пер
   const farZoomed = buildIsoOverlayRenderScene({ ...far, view: { x: 0, y: 0, w: 80, h: 80 } })
     .devices.get('device');
   assert.strictEqual(farZoomed, farLive, 'не у стены — переиспользуется');
-  // Плита у стены, которую не удалось очистить: зум внутрь обязан идти в
-  // точный резолвер. Гард `!nearWallBefore || cleared && …` без первой
-  // половины переиспользовал бы её на масштабе, где она уже режет стену.
+  // Плита у стены, которую не удалось очистить, также остаётся в тех же
+  // координатах сцены. Иначе экранный zoom снова становится layout-событием
+  // и возвращает пользовательский дрейф #651.
   const pinned = {
     ...input,
     // упор со всех сторон: узкая комната не даёт места для nudge
@@ -924,7 +926,8 @@ test('#473 W3: при зуме внутрь плита у стены не пер
   }
   const pinnedZoomed = buildIsoOverlayRenderScene({ ...pinned, view: { x: 0, y: 0, w: 80, h: 80 } })
     .devices.get('device');
-  assert.notStrictEqual(pinnedZoomed, pinnedLive, 'у стены и не очищена — точный резолвер, не кэш');
+  assert.strictEqual(pinnedZoomed, pinnedLive,
+    'у стены и не очищена — тот же структурный layout, без zoom-feedback');
 });
 
 test('#473 W4: AABB-отсечение учитывает зазор безопасности', () => {

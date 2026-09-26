@@ -401,6 +401,14 @@ const out = await page.evaluate(async () => {
   const stage = root(original).querySelector('.stage');
   const stageRect = stage.getBoundingClientRect();
   const zoomBefore = original._zoom;
+  const overlaySceneSnapshot = () => [...root(original).querySelectorAll(
+    '[data-hp-iso-raised="true"][data-hp-iso-visual]',
+  )].map((node) => [
+    node.getAttribute('data-hp-iso-overlay-kind'),
+    node.getAttribute('data-hp-iso-floor'),
+    node.getAttribute('data-hp-iso-visual'),
+  ].join('|')).sort();
+  const overlaysBeforePinch = overlaySceneSnapshot();
   const pointer = (type, id, x, y, buttons) => new PointerEvent(type, {
     bubbles: true, composed: true, pointerId: id, pointerType: 'touch',
     clientX: x, clientY: y, button: type === 'pointerdown' ? 0 : -1, buttons,
@@ -413,8 +421,11 @@ const out = await page.evaluate(async () => {
   stage.dispatchEvent(pointer('pointerup', 8902, stageRect.left + 115, cy, 0));
   stage.dispatchEvent(pointer('pointerup', 8903, stageRect.left + 305, cy, 0));
   await original.updateComplete;
+  await frame();
   result.touchPinchKeepsIso = original._zoom > zoomBefore
     && !!root(original).querySelector('[data-hp="iso-walls"]');
+  result.touchPinchKeepsOverlayScene = overlaysBeforePinch.length >= 2
+    && JSON.stringify(overlaySceneSnapshot()) === JSON.stringify(overlaysBeforePinch);
 
   const opening = root(original).querySelector('.iso-opening-panel[data-id="iso-door"]');
   const openingOwner = opening?.closest('[data-hp="iso-openings"]');

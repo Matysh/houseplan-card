@@ -181,7 +181,7 @@ try {
         const overlaySelectors = {
           device: '[data-hp="device"]',
           'room-label': '[data-hp="room-label"]',
-          'opening-lock': '.oplock',
+          'opening-lock': '.oplock:not(.iso-tile-shadow)',
         };
         const totalRootsByKind = Object.fromEntries(Object.entries(overlaySelectors)
           .map(([kind, selector]) => [kind, card.renderRoot.querySelectorAll(selector).length]));

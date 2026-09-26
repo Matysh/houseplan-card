@@ -207,21 +207,31 @@ inverse hit mapping, invisible collision footprints and fit bounds share that
 one affine authority.
 
 Device markers, room labels/cards and opening-lock badges keep their canonical
-floor anchors but render on a low plane four visual units above the floor. Each
-first clears wall silhouettes. A second deterministic group pass separates the
-complete screen-space footprints of devices and lock badges from one another
-within one absolute 48 CSS-pixel budget, using a bounded spatial index and
-stable kind/id tie-break; it never writes the correction back to configuration.
-The live pass enumerates one-pixel lattice candidates only at critical edges
-and intersections of the forbidden screen-space roots it actually encounters;
-it does not scan the area of the displacement disk or depend on a coarse grid.
-Room, wall-silhouette and radius checks remain exact final filters, so a legal
-slit narrower than four CSS pixels is still found without weakening masonry or
-ownership safety. The two full isometric profiles therefore use the ordinary
-150/60/75 ms resize/pan/state noise allowances again (#585).
-Room labels do not enter that mutual pass and stay below interactive roots. If
-the owning room truly has no legal placement, the least-overlapping result is
-kept as an explicit degraded diagnostic without hiding or shrinking an item.
+floor anchors but render on a low plane four visual units above the floor.
+Devices and lock badges in the same room whose canonical reference-fit bounds
+(expanded by 12 CSS px) connect form one rigid cluster. Every member receives
+the same scene-space displacement, so pairwise vectors, rows and intervals are
+the affine projection of the Flat layout rather than a per-marker fan toward a
+room safe point. Room labels never enter a cluster and stay below interactive
+roots.
+
+The reference-fit view, not the current live view, converts CSS safety values
+into scene units. Wheel/button zoom, pinch and pan therefore transform an
+already resolved scene and cannot invalidate placement. Structural changes —
+stage/camera, walls, rooms, marker membership or canonical anchors — rebuild it
+deterministically; viewport movement and HA-only state do not. One common
+vector clears the exact wall silhouettes and already placed clusters within an
+absolute 48 CSS-pixel reference-fit budget, using stable size/required-shift/
+kind-id order and boundary candidates instead of scanning the displacement
+disk. The correction is runtime-only and is never written to configuration.
+
+If no completely legal common vector exists, the nearest deterministic result
+keeps the cluster rigid and prioritises room ownership, then wall clearance,
+then overlap with an earlier cluster. It never splits or shrinks a cluster;
+residual overlap is an explicit degraded diagnostic. This supersedes the old
+single-marker fallback while retaining the 48 px cap. The two full isometric
+profiles keep the ordinary 150/60/75 ms resize/pan/state noise allowances
+(#585, #651).
 Fit probes reserve the maximum correction but do not execute live collision
 search. There is no painted plate, long tether, ground dot or per-marker
 shadow. The original screen-facing HTML root remains the only hit, focus,
