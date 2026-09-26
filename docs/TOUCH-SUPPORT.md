@@ -37,6 +37,8 @@ On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
   tabs, zoom and one gear whose menu holds every other header action, each
   item a 44 px target (#616);
 - support convenient pan, pinch zoom and space switching;
+- treat a linked stair as a floor-navigation target only after a clean tap;
+  pan, pinch, long press, swipe and cancellation tails must stay inert;
 - fit the whole plan after two clean taps on free scene background, while one
   tap on a room keeps the immediate room-fit action;
 - provide a touch path for essential information that desktop exposes through
@@ -157,6 +159,11 @@ room without drawing another segment; the tap is resolved again at commit time.
 Desktop `Shift` bypasses that offer and constrains drawing to an exact 45° ray;
 touch has no separate modifier gesture. A pan, pinch, cancellation or second
 pointer never accepts a face, applies a small-gap repair or creates a room.
+
+Stair placement and transforms remain best-effort editor interactions on
+touch, but the safety floor is strict: cancellation and navigation gestures do
+not create, move, save or follow a stair. A long press in View does not activate
+its target floor, and the next deliberate tap is re-armed immediately.
 
 During a View/editor visual transition the moving stage is inert while the
 header tabs remain available. A pinch, cancelled pointer or synthetic click

@@ -26,6 +26,62 @@ _HOUSEPLAN_ROOT = os.path.join(_PACKAGE_ROOT, "houseplan")
 v = load_pure("hp_validation", Path(_HOUSEPLAN_ROOT) / "validation.py")
 
 
+def _stair_space(stairs):
+    return {
+        "id": "ground", "title": "Ground", "view_box": [0, 0, 1, 1],
+        "rooms": [], "wall_segments": [], "stairs": stairs,
+    }
+
+
+def test_issue_663_stair_schema_is_discriminated_bounded_and_forward_compatible():
+    straight = {
+        "id": "straight", "kind": "straight", "x": 0.123456789,
+        "y": -0.25, "angle": 17.5, "direction": "forward",
+        "length": 0.24, "width": 0.1, "target_space_id": "upper",
+        "future": {"keep": True},
+    }
+    spiral = {
+        "id": "spiral", "kind": "spiral", "x": 0.6, "y": 0.4,
+        "angle": -30, "direction": "counterclockwise", "radius": 0.08,
+        "target_space_id": None,
+    }
+    validated = v.CONFIG_SCHEMA({
+        "spaces": [_stair_space([straight, spiral]), {
+            "id": "upper", "title": "Upper", "view_box": [0, 0, 1, 1],
+            "rooms": [], "wall_segments": [],
+        }],
+    })
+    assert validated["spaces"][0]["stairs"][0] == straight
+    assert validated["spaces"][0]["stairs"][1] == spiral
+
+    broken = [
+        {**straight, "width": 0},
+        {**straight, "direction": "clockwise"},
+        {**straight, "radius": 0.1},
+        {key: value for key, value in straight.items() if key != "length"},
+        {**spiral, "direction": "forward"},
+        {**spiral, "length": 0.2},
+        {**spiral, "radius": float("nan")},
+    ]
+    for stair in broken:
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [_stair_space([stair])]})
+
+    duplicate = {**straight, "id": "same"}
+    with pytest.raises(vol.Invalid, match="geometry object ids"):
+        v.CONFIG_SCHEMA({"spaces": [{
+            **_stair_space([duplicate]),
+            "decor": [{
+                "id": "same", "kind": "line", "x1": 0, "y1": 0,
+                "x2": 0.1, "y2": 0.1,
+            }],
+        }]})
+
+    too_many = [{**straight, "id": f"stair-{index}"} for index in range(v.MAX_STAIRS + 1)]
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [_stair_space(too_many)]})
+
+
 def test_backend_model_version_matches_frontend_constant():
     root = os.path.dirname(os.path.dirname(__file__))
     source = open(os.path.join(root, "src", "plan-optimizer.ts"), encoding="utf-8").read()

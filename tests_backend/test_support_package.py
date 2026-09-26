@@ -272,6 +272,11 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
                 {"id": "line-a", "kind": "line", "x1": 0, "y1": 0, "x2": 1, "y2": 1},
                 {"id": "text-a", "kind": "text", "text": "private"},
             ],
+            "stairs": [{
+                "id": "private-stair", "kind": "straight", "x": 0.25, "y": 0.5,
+                "angle": 15, "direction": "forward", "length": 0.2, "width": 0.1,
+                "target_space_id": "private-target", "unknown": "drop",
+            }],
             "open_spans": [{"a": [0, 0], "b": [0, 1]}, "bad"],
         }],
         "markers": [
@@ -326,6 +331,12 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
     assert space["rooms"][0]["settings"]["temp_source_kind"] == "entity"
     assert space["rooms"][0]["settings"]["hum_source_kind"] == "unknown"
     assert len(space["walls"]) == 2
+    assert space["stairs"] == [{
+        "id": "stair-rich-1", "kind": "straight", "x": 0.25, "y": 0.5,
+        "angle": 15, "direction": "forward", "length": 0.2, "width": 0.1,
+        "target_space_id": "space-rich-2",
+    }]
+    assert package["summary"]["stairs"] == 1
     assert space["walls"][1] == {"cm": 12, "key": "wall-rich-2"}
     assert "room_drafts" not in space
     assert space["partitions"][0]["cm"] == 8

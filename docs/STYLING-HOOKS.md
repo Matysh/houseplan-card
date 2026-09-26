@@ -98,6 +98,7 @@ Everything in this table is **public API**.
 | Wall body (thickness) | `path` (SVG) | `wall` | `data-id` = segment key, `data-kind` = `shared` \| `outer` | `.wallbody` |
 | Independent partition | `path` (SVG editor hit target) | `partition` | `data-id` = partition id, `data-kind` = `partition` | `.physical-hit` |
 | Wall column | `path` / `circle` (SVG editor hit target) | `wall-column` | `data-id` = column id, `data-kind` = `square` \| `circle` | `.physical-hit` |
+| Stair | `g` (SVG) | `stair` | `data-id` = stair id, `data-kind` = `straight` \| `spiral`, `data-target-state` = `active` \| `missing` \| `self` \| `deleted` \| `fixed` | `.hp-stair` |
 | Decor shape | `line` / `rect` / `ellipse` / `text` (SVG) | `decor` | `data-id` = shape id, `data-kind` = `line` \| `rect` \| `ellipse` \| `text` | `.dshape` (`.dtext` on text); persisted colour/alpha are inline SVG attributes and therefore win over weak CSS selectors |
 | Furniture | `path` (SVG) | `decor` | `data-id` = shape id, `data-kind` = `furniture`, `data-symbol` = the symbol id (`sofa`, `toilet`, …) | `.dshape .dfurn` |
 | Floor / space tab | `button` (HTML, header) | `space-tab` | `data-id` = space id | `.tab` |

@@ -92,7 +92,7 @@ Composition remains SVG-first:
 3. screen-facing HTML overlays.
 
 The floor keeps the same nodes and order for paper/backdrop, room fills/hover,
-Glow/spill, sun, decor/furniture, opening symbols and vacuum path/outline. Stage
+Glow/spill, sun, decor/furniture, flat stair symbols, opening symbols and vacuum path/outline. Stage
 1 does not add a second light source/layer. Markers and room cards intentionally
 remain above walls without geometric occlusion.
 
@@ -248,7 +248,7 @@ search. There is no painted plate, long tether, ground dot or per-marker
 shadow. The original screen-facing HTML root remains the only hit, focus,
 tooltip and action target, and selection/hover cannot invalidate the placement
 cache. Vacuum, Glow/spill, SUN, room fills/hover, arbitrary decor,
-furniture/backdrop and every persisted coordinate remain on `z=0`.
+furniture/backdrop, stairs and every persisted coordinate remain on `z=0`.
 
 Room names remain screen-facing and lose stroke, text shadow, drop shadow and
 halo. Iso uses `#303936` on a light presentation and `#f2f0e8` on a dark one;

@@ -26,6 +26,11 @@ houseplan-card/
 │  ├─ houseplan-panel.ts         # HA sidebar/app-bar host for the same full card
 │  ├─ editor-runtime-loader.ts   # lazy loader: dedupe, retry and build handshake
 │  ├─ houseplan-editor-runtime.ts # Plan/Devices/Background composition root
+│  ├─ stairs-view.ts             # eager read-only stair symbols, links and gesture guards
+│  ├─ stairs-editor.ts           # lazy Plan stair tools, transforms and properties
+│  ├─ stairs-editor-model.ts     # pure editor transforms, snapping and target-state helpers
+│  ├─ stairs.ts                  # stair model, render geometry and area math
+│  ├─ clean-floor.ts             # shared room-floor subtraction including stair footprints
 │  ├─ decor-image-editor.ts      # lazy Background/Furniture image palette, upload and properties controller
 │  ├─ houseplan-onboarding-runtime.ts # first-space/import dialogs, independent of editor
 │  ├─ iso-scene-render.ts        # lazy 2.5D scene/runtime boundary (settings.volumetric_view, #649)
@@ -656,7 +661,7 @@ not be added to an individual sink.
                "rooms":[{"id","name","area","poly|x/y/w/h","wall_ids":[…],"settings"}],
                "wall_segments":[{"id","a","b","cm","owners":[…]}],
                "partitions":[…], "wall_columns":[…],
-               "openings":[…], "decor":[…], "settings":{…} }],
+               "openings":[…], "decor":[…], "stairs":[…], "settings":{…} }],
   "markers": [{ "id","binding":"device:<id>|entity:<eid>|virtual","hidden","removed",
                 "name","icon","display","controls","is_light","glow_color","tap_action",
                 "room_id","pdfs",… }],
@@ -940,7 +945,7 @@ designer handoff are attached to issue #570.
 ## Markup editor (v1.4.0+)
 
 State inside the card: `_markup` (mode), `_tool` (draw/column/merge/split/resize/opening/
-wallthick/delroom), `_path` (the current outline,
+stairs/wallthick/delroom), `_path` (the current outline,
 vertices on the GRID_N=240 grid). Clicks on the stage → `_svgPoint`→`_snap`. The outline is closed
 = a click on the first vertex → area select (hass.areas) + name → room {poly}. Polygon rooms and
 rectangles are rendered uniformly (hit-test: point-in-polygon / rect).
@@ -1124,6 +1129,28 @@ While drawing, the length of the current segment follows the cursor (`_fmtLen` �
 `formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is
 per-space `cell_cm` — canonical centimetres represented by one grid cell; new
 spaces use 1 cm or 2.54 cm/1 inch, while missing legacy values fall back to 5 cm.
+
+### Stairs (#663)
+
+Stairs are a separate Plan entity, not decor. The lazy `StairEditorRuntime`
+owns the straight/spiral tool group, selection, continuous
+move/resize/rotation, wall/stair magnet and properties. The eager
+`StairViewRuntime` owns only read-only symbols, guarded navigation and gesture
+suppression, so opening a plan does not load the editor graph. The root card
+owns lifecycle composition, shared Plan history/persistence and stage pointer
+terminals. `stairs.ts` is the pure boundary for the discriminated model, exact
+30 cm tread geometry, cached render projection and footprint containment;
+`stairs-editor-model.ts` contains the pure transform, target-state and
+footprint-to-footprint snapping helpers used by the editor.
+
+`spaces[].stairs[]` is optional and capped at 250 records. A record exists on
+one space only; `target_space_id` is a one-way navigation reference and never
+creates target geometry. Straight footprints are rotated rectangles; spiral
+footprints are circles. `clean-floor.ts` subtracts their geometric overlap
+from the same clean-area result used by room cards and summary metrics, without
+cutting the painted floor or changing walls/light/vacuum. PDF and full/static
+renderers consume the same stair geometry. The 2.5D scene keeps the SVG object
+on its floor plane with no height or shadow. See `docs/STAIRS.md`.
 
 ## Editor chrome and contextual controls
 

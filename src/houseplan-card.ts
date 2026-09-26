@@ -116,7 +116,7 @@ import {
 } from './config-reload-authority';
 import type { OptimisticAttempt } from './serialized-write-queue';
 import {
-  COLUMN_MAX_CM, directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
+  COLUMN_MAX_CM, directionalOccluders, floorMinusBodies, geometryOuterRings,
   polyclipPathD, physicalBodyParts, type PartitionOpeningCut,
 } from './physical-geometry';
 import { partitionOpeningFace, resolvePartitionOpeningCompat } from './partition-openings';
@@ -265,6 +265,8 @@ import {
   type HaBindingStatus, type HaRegistrySnapshot,
 } from './ha-binding-status';
 import type { DecorShape, DecorStyle } from './editors/decor/types';
+import { StairViewRuntime, type StairViewHostPort } from './stairs-view';
+import { cleanFloorForRoom, type CleanFloorResult } from './clean-floor';
 import {
   DECOR_ASSETS_API_VERSION, decorAssetIds, projectDecorImage,
   resolveDecorAssets, type DecorAsset,
@@ -430,6 +432,7 @@ interface SpaceGeometryState {
   partitions?: PartitionCfg[];
   wall_columns?: WallColumnCfg[];
   decor?: DecorShape[];
+  stairs?: import('./stairs').Stair[];
   plan_transform: {
     plan_x?: number; plan_y?: number; plan_scale?: number;
     plan_scale_x?: number; plan_scale_y?: number; plan_angle?: number;
@@ -1675,6 +1678,7 @@ export class HouseplanCard extends LitElement {
     return this._mode === 'plan';
   }
   private _tool: MarkupTool = 'draw';
+  private _stairsView = new StairViewRuntime(this as unknown as StairViewHostPort);
   /** UX-04: one named, 50-step command history for every plan-geometry tool. */
   private _geometryHistory = new CommandStack<SpaceGeometryState>(50);
   /** #74: independent session-local history for manual device placements. */
@@ -1783,9 +1787,7 @@ export class HouseplanCard extends LitElement {
   /** Light cuts are type/floor-specific and differ from drawn masonry, but HA
    * state ticks must not rebuild independent-wall topology. */
   private _lightPhysicalBodiesCache: { key: string; all: number[][][] } | null = null;
-  private _cleanFloorCache = new Map<string, {
-    floor: number[][]; geom: any; path: string; area: number;
-  }>();
+  private _cleanFloorCache = new Map<string, CleanFloorResult>();
   private _innerContourCache = new Map<string, number[][] | null>();
   private readonly _glowRuntimeState: GlowRuntimeState = createGlowRuntimeState();
   private readonly _glowRuntimeHost: GlowRuntimeHost = {
@@ -2891,6 +2893,10 @@ export class HouseplanCard extends LitElement {
     }
     if (!this._markup) return;
     if ((undo || redo) && inField) return; // keep native text-field history
+    if ((e.key === 'Delete' || e.key === 'Backspace')
+        && !inField && !inEditorSecondary && this._editorRuntime?.stairs.deleteSelected()) {
+      e.preventDefault(); return;
+    }
     if ((e.key === 'Delete' || e.key === 'Backspace') && this._physicalSel
         && !inField && !inEditorSecondary) {
       e.preventDefault();
@@ -2904,6 +2910,7 @@ export class HouseplanCard extends LitElement {
     }
     if (undo) {
       e.preventDefault();
+      if (this._editorRuntime?.stairs.undoActiveDrag()) return;
       if (this._resize?.dragging) {
         this._rszCancelDrag();
         return;
@@ -2932,6 +2939,7 @@ export class HouseplanCard extends LitElement {
       return;
     }
     if (e.key !== 'Escape') return;
+    if (this._editorRuntime?.stairs.escape()) { e.preventDefault(); return; }
     if (this._physicalDrag || this._physicalRotate) {
       e.preventDefault();
       this._cancelPhysicalGesture();
@@ -6732,6 +6740,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
+    if (this._editorRuntime?.stairs.pointerMove(ev)) return;
     if (this._physicalRotate?.pid === ev.pointerId) {
       this._physicalRotateMove(ev);
       return;
@@ -6902,6 +6911,8 @@ export class HouseplanCard extends LitElement {
         }
       }
     }
+    this._stairsView.pointerUp(ev);
+    if (this._editorRuntime?.stairs.pointerUp(ev)) return;
     if (this._physicalDrag?.pid === ev.pointerId) {
       this._physicalUp(ev);
       return;
@@ -7431,7 +7442,8 @@ export class HouseplanCard extends LitElement {
       void this._requestMode(mode, animate);
       return;
     }
-    return this._editorRuntime._setMode(mode, animate);
+    this._editorRuntime.stairs.beforeModeChange(mode); this._editorRuntime._setMode(mode, animate);
+    this._editorRuntime.stairs.afterModeChange(); this._stairsView.clearGesture();
   }
 
   /** Prime the Draw thickness field to 15 cm once per Plan session. */
@@ -7696,8 +7708,10 @@ export class HouseplanCard extends LitElement {
       this._decorMove = null;
       this._dtDrag = null;
       this._bdDrag = null;
+      this._stairsView.clearGesture();
       return;
     }
+    this._editorRuntime.stairs.clearGesture();
     return this._editorRuntimeOrThrow()._clearGeometryGesture();
   }
 
@@ -7707,6 +7721,8 @@ export class HouseplanCard extends LitElement {
     this._flushHa();
     this._editorRuntime?._cancelPointerMove('markup-hover');
     if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null; this._doubleFit.clear();
+    this._stairsView.pointerCancel(ev);
+    if (this._editorRuntime?.stairs.pointerCancel(ev)) return;
     if (this._editorRuntime) return this._editorRuntime._stagePointerCancel(ev);
     this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
@@ -7714,6 +7730,9 @@ export class HouseplanCard extends LitElement {
       this._panStart = null;
       this._panLock = null;
       this._swipeStart = null;
+      // Keep the compatibility click from this cancelled pointer blocked, but
+      // do not poison the next deliberate gesture indefinitely.
+      if (this._suppressClick) setTimeout(() => (this._suppressClick = false), 0);
     }
     if (this._pointers.size === 0) this._finishViewportGesture();
   }
@@ -8580,7 +8599,7 @@ export class HouseplanCard extends LitElement {
           role: 'tool', invoke: () => this._activateOpeningPlacement('gate'),
         },
       ],
-    }];
+    }, this._editorRuntimeOrThrow().stairs.toolbarGroup()];
   }
 
   /** Stable target identity + current config epoch + operation revision. */
@@ -8591,6 +8610,8 @@ export class HouseplanCard extends LitElement {
     if (this._mode === 'plan') {
       const sel = this._physicalSel;
       if (sel) return `${base}:selection:${sel.kind}:${sel.id}`;
+      const stairKey = this._editorRuntime?.stairs.selectionKey();
+      if (stairKey) return `${base}:${stairKey}`;
       return `${base}:tool:${this._tool}:${this._path.length}`;
     }
     if (this._mode === 'decor') {
@@ -8618,7 +8639,7 @@ export class HouseplanCard extends LitElement {
       || this._infoCard || this._rulesDialog || this._settingsDialog || this._supportDialog
       || this._alignDialog || this._importDialog || this._kioskDialog || this._summary?.blocksOtherDialogs()
       || this._backupExportDialog || this._backupImportDialog
-      || this._wallDialog);
+      || this._wallDialog || this._editorRuntime?.stairs.dialogOpen);
   }
 
   private _renderEditorSecondary(): TemplateResult | typeof nothing {
@@ -9474,37 +9495,13 @@ export class HouseplanCard extends LitElement {
    * rooms which touch only a small subset of independent bodies. */
   private _cleanFloor(
     room: RoomCfg, floor: number[][], space: SpaceModel | undefined = this._spaceModel(),
-  ): { floor: number[][]; geom: any; path: string; area: number } {
-    if (!space) {
-      return {
-        floor, geom: null, path: '',
-        area: geometryArea([[[...floor, floor[0]]]]),
-      };
-    }
-    const roomKey = room.id || `#${space.rooms.indexOf(room)}`;
-    const key = `${space.id}|${this._cfgEpoch}|${roomKey}`;
-    if (!this._resize?.preview) {
-      const cached = lruRead(this._cleanFloorCache, key);
-      if (cached.hit) return cached.value;
-    }
-    const xs = floor.map((p) => p[0]), ys = floor.map((p) => p[1]);
-    const box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
-    const candidates = this._physicalBodiesR(space).filter((body) => {
-      const bx = body.map((p) => p[0]), by = body.map((p) => p[1]);
-      return Math.max(...bx) >= box[0] && Math.min(...bx) <= box[2]
-        && Math.max(...by) >= box[1] && Math.min(...by) <= box[3];
+  ): CleanFloorResult {
+    return cleanFloorForRoom({
+      room, floor, space, configEpoch: this._cfgEpoch,
+      resizePreview: !!this._resize?.preview,
+      cache: this._cleanFloorCache,
+      physicalBodies: (model) => this._physicalBodiesR(model),
     });
-    const geom = candidates.length ? floorMinusBodies(floor, candidates) : null;
-    const result = {
-      floor,
-      geom,
-      path: geom ? polyclipPathD(geom) : '',
-      area: geom ? geometryArea(geom) : geometryArea([[[...floor, floor[0]]]]),
-    };
-    if (!this._resize?.preview) {
-      lruWrite(this._cleanFloorCache, key, result, 600);
-    }
-    return result;
   }
 
   /** Effective auto icon for a binding selected but not saved yet. */
@@ -11069,6 +11066,8 @@ export class HouseplanCard extends LitElement {
                    hide_decor visual-only: the decor editor must always paint
                    stored shapes so they remain editable. */}
             ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view)}
+            ${this._mode === 'plan' && this._editorRuntime
+              ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer()}
             ${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}
             ${this._renderSunRays(space)}
             ${this._editing ? svg`<g class="hp-editor-only-layer"
@@ -11206,6 +11205,7 @@ export class HouseplanCard extends LitElement {
         ${this._decorShapeDialog ? this._editorRuntime ? this._renderDecorShapeDialog() : nothing : nothing}
         ${this._backdropDialog ? this._editorRuntime ? this._renderBackdropDialog() : nothing : nothing}
         ${this._decorEraseConfirm ? this._editorRuntime ? this._renderDecorEraseConfirm() : nothing : nothing}
+        ${this._editorRuntime?.stairs.dialogOpen ? this._editorRuntime.stairs.renderDialog() : nothing}
         ${this._spaceDialog
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
           : nothing}

@@ -110,6 +110,11 @@ def test_issue_244_space_delete_dependency_and_tombstone_candidate() -> None:
             "future_namespace": {"sentinel": "kept"},
         },
     }
+    config["spaces"][1]["stairs"] = [{
+        "id": "stairs", "kind": "spiral", "x": 0.5, "y": 0.5,
+        "angle": 0, "direction": "clockwise", "radius": 0.1,
+        "target_space_id": "f1",
+    }]
     layout = {"all": {"s": "f1"}, "position": {"s": "f1"}, "removed": {"s": "f1"}}
     assert _space_marker_dependencies(config, layout, "f1") == ["all", "position"]
 
@@ -119,6 +124,7 @@ def test_issue_244_space_delete_dependency_and_tombstone_candidate() -> None:
     )
     assert dependencies == []
     assert [item["id"] for item in candidate["spaces"]] == ["f2"]
+    assert candidate["spaces"][0]["stairs"][0]["target_space_id"] is None
     assert candidate["markers"][0] == {
         "id": "removed", "binding": "entity:light.old", "removed": True, "name": "Kept",
     }
@@ -126,6 +132,7 @@ def test_issue_244_space_delete_dependency_and_tombstone_candidate() -> None:
     assert removed_layout == 3
     assert candidate["settings"] == config["settings"]
     assert config["markers"][0]["space"] == "f1"
+    assert config["spaces"][1]["stairs"][0]["target_space_id"] == "f1"
 
 
 def test_issue_244_last_occupied_space_candidate_detaches_all_affected_markers() -> None:

@@ -16,7 +16,7 @@ coordinate system.
 
 ## Principle
 
-1. **Coordinates keep their meaning.** Rooms, openings, decor and
+1. **Coordinates keep their meaning.** Rooms, openings, decor, stairs and
    device positions are still stored normalised. `1.0` is still the
    same distance it always was; `cell_cm` still ties a grid cell to
    real centimetres. **No data migration.** An existing plan opens as
@@ -56,8 +56,10 @@ Negative zero becomes positive zero.
 
 The lattice allow-list covers room outlines/extents, exact wall endpoints,
 opening `x/y`, decor origins/sizes/endpoints, drafts, partitions, columns, open
-spans and layout `x/y`. Angles, opening length/host `t`, decor scale and
-backdrop transforms retain the nine-decimal scalar contract. The traversal
+spans and layout `x/y`. Angles, opening length/host `t`, decor scale, backdrop
+transforms and every stair transform field retain the nine-decimal scalar
+contract. Stairs are deliberately excluded even when a value is near a grid
+node: their continuous wall-face magnet position is authored data. The traversal
 deliberately excludes `cell_cm`, `plan_aspect`, `view_box`,
 physical centimetre fields, colours/opacities/live values, presentation scales
 and vacuum affine calibration. Unknown/future numeric fields round-trip
@@ -113,6 +115,7 @@ the exact target atomically without exposing a default-fit frame.
 | `_GEOM` (room x/y, poly points, opening x/y, `view_box` origin) | `-4 .. 4` | `-5000 .. 5000` | coordinate |
 | `_EXTENT` (room w/h, `view_box` w/h) | `0.001 .. 4` | `0.001 .. 5000` | size — strictly positive |
 | `_NORM` (decor x/y/w/h) | `-1 .. 2` | `-5000 .. 5000` | coordinate |
+| stair `x/y`, `length/width/radius` | — | `-5000 .. 5000`; sizes positive | continuous transform |
 | opening `length` | `0.001 .. 1` | `0.001 .. 5000` | size — strictly positive |
 
 `+/-5000` is **garbage insurance, not a frame**. At the historical compatibility
@@ -132,6 +135,7 @@ tested. Input is a list of **items**, one per drawn/placed object:
 * the backdrop image rectangle, when the space has one;
 * every opening (door/window/gate) end-to-end segment;
 * every decor shape;
+* every stair, using its complete rotated rectangle or circular footprint;
 * every device the layout actually places in this space **and that the card
   actually draws** — a HIDDEN device (docs/FILTERING.md) is not content: the
   frame is presentation, and an object nobody can see must not decide what the
@@ -276,7 +280,7 @@ produce a zero-sized SVG `viewBox`.
   in the decision — `_clampView` alone says how far you may walk.
 * **Who owns the pointer.** A drag pans only when it starts on empty
   scene: the room-resize handles, device badges, openings, room labels
-  and the decor shapes take the pointer first (`_stagePointerDown`
+  stairs and the decor shapes take the pointer first (`_stagePointerDown`
   bails out on them), and a drawing tool that consumes the press —
   decor line/rect/ellipse/text — bails out too. Two fingers are always
   a pinch, never a pan. On a **kiosk** screen at swipe zoom (`≤ 1`,
@@ -526,10 +530,18 @@ exception to positional quantisation: it is continuous in both modes, with
 Shift selecting independent axes, while Shift on its rotation handle snaps to
 45°. Furniture placement and movement remain grid-bound.
 
+Stairs use the continuous branch of this contract for their complete
+transform. Move and resize stay off-grid when authored there; Shift snaps only
+rotation to 45°. Wall magnet resolves the visible physical face (including
+half-thickness) and stair magnet resolves outer footprint-to-footprint contact.
+Neither save/load nor Optimize may replace that contact with a nearby lattice
+node.
+
 ### 9.5 «Оптимизировать планы» — explicit whole-plan maintenance
 
-Existing and imported plans may still hold coordinates between the
-nodes. New editor operations cannot create more. General settings contain
+Existing and imported plans may still hold grid-bound coordinates between the
+nodes. Ordinary grid-bound editor operations do not create more; explicitly
+continuous objects are exempt. General settings contain
 a **Plan maintenance** group whose action previews and then repairs old
 data through all current passes: model upgrades, mandatory grid
 alignment, exact open-span canonicalisation and wall-interval compaction.
@@ -585,9 +597,9 @@ either store changes, commits both revisions, and retains one snapshot.
 has changed since the optimization. A crash between store writes is
 completed from the intent on the next integration setup.
 
-The grid pass deliberately excludes the complete transform of `furniture` and
-uploaded `image` decor. Their position, size and rotation are continuously
-authored values (#383), so changing even one of those fields would make
+The grid pass deliberately excludes the complete transform of `furniture`,
+uploaded `image` decor and `spaces[].stairs[]`. Their position, size and
+rotation are continuously authored values (#383, #663), so changing even one of those fields would make
 Optimize create debt from a normal editor operation. Other decor kinds and
 storage-level numeric canonicalization keep their existing grid contract
 (#477).

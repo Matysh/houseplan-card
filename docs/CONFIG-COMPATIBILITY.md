@@ -112,6 +112,28 @@ An older frontend ignores the field and shows Flat. An older backend preserves
 it through the unknown-settings policy. Full backup/import carries `settings`
 whole, so the value survives.
 
+## Stairs (#663)
+
+`spaces[].stairs[]` is an optional bounded (250 records per space)
+discriminated collection. `kind: "straight"` stores positive `length` and
+`width` plus `direction: "forward" | "backward"`; `kind: "spiral"` stores a
+positive `radius` plus `direction: "clockwise" | "counterclockwise"`. Both
+variants carry stable `id`, continuous normalized centre `x/y`, scalar
+`angle`, and an optional nullable `target_space_id`.
+
+Stair transforms follow furniture's continuous contract. Config writes apply
+only the nine-decimal scalar cleanup to position, size and angle; they do not
+use near-lattice snapping, and Optimize does not move them. Full backup,
+support data and diagnostics retain the bounded records. Full import remaps a
+known target space id and clears a target that was not imported; single-space
+transfer cannot invent a link to an external floor. Deleting a target space
+clears incoming links without deleting the source stair.
+
+The collection is additive and requires no model/store version migration. A
+current frontend renders and edits it; a legacy frontend ignores the objects.
+The current backend preserves valid records through unrelated writes, while a
+backend predating the field must not be used to edit a newer configuration.
+
 ## Sun-ray window face (#577)
 
 `settings.sun_ray_origin` is an optional global enum: `inner` or `outer`.

@@ -515,3 +515,4 @@ async def test_system_health_reports_complete_panel_matrix(
     result = await system_health.system_health_info(hass)
 
     assert {key: result[key] for key in expected} == expected
+    assert result["stairs"] == 0

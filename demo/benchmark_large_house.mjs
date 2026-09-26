@@ -40,6 +40,7 @@ const requiresIsoStructuralBuildCounter = requiresIsometric
 const requiresPlanSnap = planSnap && existsSync(resolve(targetRoot, 'src/plan-snap-overlay.ts'));
 const requiresWallFace = planSnap && existsSync(resolve(targetRoot, 'src/wall-face-graph.ts'));
 const requiresInteraction = interaction && existsSync(resolve(targetRoot, 'src/live-viewport.ts'));
+const requiresStairs = existsSync(resolve(targetRoot, 'src/stairs.ts'));
 const fixture = stage3Dense ? makeIsometricStage3DenseFixture() : makeLargeHouseFixture();
 const fixtureCounts = stage3Dense ? fixture.counts : LARGE_HOUSE_COUNTS;
 const sourceSha = (() => {
@@ -100,7 +101,7 @@ try {
     const row = await page.evaluate(async ({
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
       requiresWallFace, interaction, requiresInteraction, stage3Dense, requireStage3,
-      requiresIsoStructuralBuildCounter, profile,
+      requiresIsoStructuralBuildCounter, requiresStairs, profile,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -400,6 +401,10 @@ try {
       await until(() => card._booting === false);
       if (interaction && '_bootSoft' in card) await until(() => card._bootSoft === false);
       await frame();
+      if (requiresStairs
+          && card.renderRoot.querySelectorAll('[data-hp="stair"]').length !== fixture.counts.stairs) {
+        throw new Error(`${profile} did not render the bounded maximum stair collection`);
+      }
       const firstStableRenderMs = Number((performance.now() - loadStarted).toFixed(2));
       const bootDiag = {
         updates: card.__diag.updates,
@@ -1219,7 +1224,7 @@ try {
       fixture, sample: measuredSample, cardContract: LARGE_HOUSE_CARD_CONTRACT,
       isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
       interaction, requiresInteraction, stage3Dense, requireStage3,
-      requiresIsoStructuralBuildCounter, profile,
+      requiresIsoStructuralBuildCounter, requiresStairs, profile,
     });
     // #520: диагностика печатается в лог прогона и в запись не попадает.
     const { bootDiag, ...measured } = row;

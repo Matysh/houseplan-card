@@ -12,6 +12,8 @@ test('large-house fixture meets the HP-PERF-01 reference counts', () => {
   assert.equal(count('partitions'), LARGE_HOUSE_COUNTS.partitions);
   assert.equal(count('wall_columns'), LARGE_HOUSE_COUNTS.columns);
   assert.equal(count('decor'), LARGE_HOUSE_COUNTS.decor);
+  assert.equal(count('stairs'), LARGE_HOUSE_COUNTS.stairs);
+  assert.equal(fixture.config.spaces[0].stairs.length, 250, 'one floor exercises the backend cap');
   assert.equal(Object.keys(fixture.devices).length, LARGE_HOUSE_COUNTS.devices);
   assert.equal(Object.keys(fixture.entities).length, LARGE_HOUSE_COUNTS.devices);
   assert.equal(fixture.config.markers.length > 0, true);

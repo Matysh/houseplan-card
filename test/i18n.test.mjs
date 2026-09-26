@@ -492,6 +492,7 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
     'vac.diag_position',
     'version_mismatch.backend',
     'radar.source_optional',
+    'stairs.radius', // #663: Radius is the same engineering term in EN and DE.
   ]);
   const equalKeys = Object.keys(en).filter((key) => en[key] === de[key]);
   assert.deepEqual(new Set(equalKeys), allowed);
@@ -544,6 +545,8 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
     'wallthick.unit_cm',
     'radar.heading',
     'radar.radians',
+    'stairs.type', // #663: Type and Rotation are valid French/English homographs.
+    'stairs.rotation',
   ]);
   const equalKeys = Object.keys(en).filter((key) => en[key] === fr[key]);
   assert.deepEqual(new Set(equalKeys), allowed);

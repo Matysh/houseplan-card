@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- The Plan editor can now place straight and one-turn spiral stair objects with
+  physical sizes, automatic 30 cm treads and an ascent arrow. Stairs move,
+  resize, rotate and snap continuously to wall faces or each other; their
+  footprint is deducted from clean room area without cutting the visible
+  floor. An optional one-way target turns a stair into safe floor navigation
+  in View, while gestures, broken targets and fixed-floor cards remain inert.
+  The target floor is never changed automatically, and the first 2.5D version
+  stays flat on the floor plane
+  ([#663](https://github.com/Matysh/houseplan-card/issues/663)).
+
 ## v1.78.0-beta.5 — 2026-09-26
 
 - In the 2.5D plan the metrics row under a room name (temperature, humidity,
@@ -22,7 +32,6 @@
   footer button as the only clickable control. The regression came with the
   overlapping-marker fix in v1.76.0-beta.2
   ([#664](https://github.com/Matysh/houseplan-card/issues/664)).
-
 ## v1.78.0-beta.4 — 2026-09-26
 
 - The main toolbar is steadier and more compact: its editor close **×** now

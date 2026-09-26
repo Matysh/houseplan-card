@@ -158,6 +158,12 @@ def canonicalize_config_geometry(config: Any) -> Any:
                 _lattice_fields(decor, ("x", "y"))
                 _scalar_fields(decor, ("scale", "angle"))
 
+        for stair in _records(space.get("stairs")):
+            # #663: wall/stair magnet placement is continuous like furniture.
+            # Scalar cleanup removes JSON tails without moving an authored
+            # physical-face contact onto the plan grid.
+            _scalar_fields(stair, ("x", "y", "length", "width", "radius", "angle"))
+
         # Legacy-only read boundary: v9 drafts are canonicalized before the
         # wall-model migration turns their edges into current partitions.
         for draft in _records(space.get("room_drafts")):

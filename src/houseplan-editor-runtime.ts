@@ -222,7 +222,7 @@ import {
   type SupportDialogState,
   type SupportPreview,
 } from './support-feedback';
-import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlanFile } from './backdrop-pick';
+import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlanFile } from './backdrop-pick'; import { StairEditorRuntime, type StairEditorHostPort } from './stairs-editor';
 import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePositionState } from './device-position-history';
 import { contentFingerprint } from './visual-continuity';
@@ -333,12 +333,10 @@ const NORM_W = 1000; // side of the render space — the canvas is square (v1.48
 /** #313: one Thickness-tool hit — a room interval or independent masonry. */
 type WallThickSource = { kind: 'room' }
   | { kind: 'partition'; id: string };
-type WallThickHit = {
-  a: number[]; b: number[]; roomId: string; segs: number[][];
-  open: boolean; cm: number; source: WallThickSource;
-};
+type WallThickHit = { a: number[]; b: number[]; roomId: string; segs: number[][];
+  open: boolean; cm: number; source: WallThickSource };
 
-type MarkupTool = 'select' | 'draw' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'wallthick' | 'delroom';
+type MarkupTool = 'select' | 'draw' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'stairs' | 'wallthick' | 'delroom';
 type WallFaceCandidate = WallGraphFace & {
   split?: { roomId: string; mainPoly: number[][]; newPoly: number[][] };
   consumeAllActive?: boolean;
@@ -375,7 +373,7 @@ interface SpaceGeometryState {
   open_spans?: OpenSpanEntry[];
   partitions?: PartitionCfg[];
   wall_columns?: WallColumnCfg[];
-  decor?: DecorShape[];
+  decor?: DecorShape[]; stairs?: import('./stairs').Stair[];
   plan_transform: {
     plan_x?: number; plan_y?: number; plan_scale?: number;
     plan_scale_x?: number; plan_scale_y?: number; plan_angle?: number;
@@ -803,6 +801,7 @@ export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
+  public readonly stairs = new StairEditorRuntime(this.host as unknown as StairEditorHostPort);
   private _junctionBaselineCache = new WeakMap<object, {
     spaceId: string; fingerprint: string; violations: JunctionLimitViolation[];
   }>();
@@ -1224,6 +1223,7 @@ public _activateMarkupTool(tool: MarkupTool): void {
       else this.host._resize.reset();
     }
     this.host._tool = tool;
+    if (tool !== 'select' && tool !== 'stairs') this.stairs.clearSelection();
     if (tool === 'resize') this.host._resize.selectRoom(null);
     if (tool === 'wallthick') this.host._wallDialog = null;
   }
@@ -1567,7 +1567,7 @@ public _geometrySnapshotFromConfig(config: any, spaceId: string): SpaceGeometryS
       ...(Array.isArray((sp as any).wall_columns)
         ? { wall_columns: copy((sp as any).wall_columns) }
         : {}),
-      ...(Array.isArray(sp.decor) ? { decor: copy(sp.decor) } : {}),
+      ...(Array.isArray(sp.decor) ? { decor: copy(sp.decor) } : {}), ...(Array.isArray(sp.stairs) ? { stairs: copy(sp.stairs) } : {}),
       plan_transform,
     };
   }
@@ -1609,7 +1609,7 @@ public _restoreGeometryStateInConfig(
       }
     }
     const assign = (key: 'openings' | 'walls' | 'wall_segments' | 'open_spans'
-      | 'partitions' | 'wall_columns' | 'decor', value: unknown): void => {
+      | 'partitions' | 'wall_columns' | 'decor' | 'stairs', value: unknown): void => {
       if (value !== undefined) (sp as any)[key] = copy(value);
       else if (!(preserveIdentityHints && key === 'wall_segments')) delete (sp as any)[key];
     };
@@ -1620,7 +1620,7 @@ public _restoreGeometryStateInConfig(
     assign('open_spans', state.open_spans);
     assign('partitions', state.partitions);
     assign('wall_columns', state.wall_columns);
-    assign('decor', state.decor);
+    assign('decor', state.decor); assign('stairs', state.stairs);
     if (preserveIdentityHints) {
       for (const opening of sp.openings || []) {
         const old: any = oldOpenings.get(opening.id);
@@ -2008,7 +2008,7 @@ public _stagePointerCancel(ev: PointerEvent): void {
     if (this.host._pointers.size < 2) this.host._pinchStart = null;
     if (this.host._pointers.size === 0) {
       this.host._panStart = null;
-      this.host._panLock = null;
+      this.host._panLock = null; if (this['host']._suppressClick) setTimeout(() => (this['host']._suppressClick = false), 0);
     }
     if (this.host._viewportGestureDirty && this.host._pointers.size === 0) {
       this.host._viewportGestureDirty = false;
@@ -2231,7 +2231,7 @@ public _markupClick(ev: MouseEvent): void {
     if (path.some((n) => n?.classList?.contains?.('physical-hit'))) return;
     const raw = this._svgPoint(ev);
     if (this.host._tool === 'select') {
-      this.host._physicalSel = null;
+      this.host._physicalSel = null; this.stairs.clearSelection();
       return;
     }
     if (this.host._tool === 'resize') {
@@ -2266,6 +2266,7 @@ public _markupClick(ev: MouseEvent): void {
       this._columnClick(raw);
       return;
     }
+    if (this['host']._tool === 'stairs') { this.stairs.placeAt(raw); return; }
     // Walls: every completed segment is immediately an ordinary independent wall.
     this.host._wallRepairDiagnostic = null;
     const resolved = this._resolvePlanDrawPoint(raw, ev.shiftKey);

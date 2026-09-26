@@ -73,6 +73,91 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'stairs-continuous-transform-snaps-to-lattice',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/coordinate-canonicalization.test.mjs',
+    because: '#663 AC2/AC9/AC11: a wall-face magnet is continuous and save/load or Optimize '
+      + 'must not pull the stair back to a grid node.',
+    patches: [{
+      file: 'src/coordinate-canonicalization.ts',
+      find: "      scalarFields(stair, ['x', 'y', 'length', 'width', 'radius', 'angle']);\n",
+      replace: "      latticeFields(stair, ['x', 'y', 'length', 'width', 'radius', 'angle']); // mutant\n",
+    }],
+  },
+  {
+    id: 'stairs-area-does-not-subtract-footprints',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/stairs.test.mjs',
+    because: '#663 AC4: stair footprints reduce the clean room area once while leaving the '
+      + 'visible floor polygon intact.',
+    patches: [{
+      file: 'src/stairs.ts',
+      find: '    return difference(source, ...footprints);\n',
+      replace: '    return source; // mutant: footprints no longer affect clean area\n',
+    }],
+  },
+  {
+    id: 'stairs-view-pan-opens-target-floor',
+    guard: 'node demo/smoke_stairs.mjs',
+    because: '#663 AC6: a pan or pinch beginning on a stair must not be promoted to the '
+      + 'compatibility click that navigates to another floor.',
+    patches: [{
+      file: 'src/stairs-view.ts',
+      find: '        if (!active || this.owner._suppressClick || this.suppressClick\n',
+      replace: '        if (!active || this.suppressClick\n',
+    }],
+  },
+  {
+    id: 'stairs-fixed-floor-still-navigates',
+    guard: 'node demo/smoke_stairs.mjs',
+    because: '#663 AC8: fixed-floor cards show stairs but never promise or perform navigation.',
+    patches: [{
+      file: 'src/stairs-editor-model.ts',
+      find: "  if (fixedFloor) return 'fixed';\n",
+      replace: '  if (false && fixedFloor) return \'fixed\'; // mutant: fixed-floor guard removed\n',
+    }],
+  },
+  {
+    id: 'stairs-link-auto-creates-target-object',
+    guard: 'node demo/smoke_stairs.mjs',
+    because: '#663 AC5: assigning a target is a one-way link and must not invent a mirrored '
+      + 'stair on the destination floor.',
+    patches: [{
+      file: 'src/stairs-editor.ts',
+      find: '    this.write(this.stairs.map((item) => item.id === next.id ? next : item));\n'
+        + '    this.owner._recordGeometry(this.owner._t(\'history.stair_edit\'), before);\n',
+      replace: '    this.write(this.stairs.map((item) => item.id === next.id ? next : item));\n'
+        + '    const mirror = this.owner._model.find((item) => item.id === dialog.targetSpaceId);\n'
+        + '    if (mirror) mirror.stairs = [...(mirror.stairs || []), { ...next, id: `${next.id}-mirror` }];\n'
+        + '    this.owner._recordGeometry(this.owner._t(\'history.stair_edit\'), before);\n',
+    }],
+  },
+  {
+    id: 'stairs-tread-count-depends-on-render-scale',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/stairs.test.mjs',
+    because: '#663 AC3: 30 cm is a physical interval; viewport scale may change pixels but '
+      + 'must not change the number or placement of treads.',
+    patches: [{
+      file: 'src/stairs.ts',
+      find: '  const treadN = cmToNorm(STAIR_TREAD_CM, cellCm);\n',
+      replace: '  const treadN = cmToNorm(STAIR_TREAD_CM, cellCm) * NORM_W / scale; // mutant\n',
+    }],
+  },
+  {
+    id: 'stairs-backend-allows-251-items',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_663_stair_schema_is_discriminated_bounded_and_forward_compatible '
+      + 'tests_backend/test_validation.py',
+    because: '#663 AC13: persisted stair collections are bounded at 250 before render and '
+      + 'support/diagnostic paths can receive them.',
+    patches: [{
+      file: 'custom_components/houseplan/validation.py',
+      find: '        vol.Optional("stairs"): vol.All([STAIR_SCHEMA], vol.Length(max=MAX_STAIRS)),\n',
+      replace: '        vol.Optional("stairs"): vol.All([STAIR_SCHEMA], vol.Length(max=MAX_STAIRS + 1)),  # mutant\n',
+    }],
+  },
+  {
     id: 'acl-readonly-group-becomes-writer',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'may_write_honours_explicit_admin_only_false '
@@ -6648,6 +6733,7 @@ const MUTANT_DEFINITIONS = [
       file: 'src/space-render.ts',
       find: '        ${passageGlowTunnels}\n'
         + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
+        + '        <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>\n'
         + '        ${glowPools}\n        ${wallUnion',
       replace: '        ${passageGlowTunnels}\n'
         + '        ${!space.bg && !disp.showNames ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
@@ -6656,6 +6742,7 @@ const MUTANT_DEFINITIONS = [
         + '            data-area=${room.area || nothing} x=${center[0]} y=${center[1]}>${room.name}</text>`;\n'
         + '        })}</g>` : nothing}\n'
         + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
+        + '        <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>\n'
         + '        ${glowPools}\n'
         + '        ${wallUnion',
     }],

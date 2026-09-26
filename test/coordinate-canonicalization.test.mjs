@@ -163,6 +163,21 @@ test('#383 furniture flip flags survive frontend canonicalization unchanged', ()
   assert.equal(furniture.flip_v, false);
 });
 
+test('#663 stair transforms keep continuous wall-face magnet positions', () => {
+  const stair = {
+    id: 'stair', kind: 'straight', direction: 'forward', target_space_id: 'upper',
+    x: 0.5000001, y: 0.3999999, length: 0.2000001, width: 0.0999999,
+    angle: 17.1234567896,
+  };
+  const output = canonicalizeConfigGeometry({ spaces: [{ id: 'ground', stairs: [stair] }] })
+    .spaces[0].stairs[0];
+  assert.deepEqual(output, {
+    ...stair,
+    x: 0.5000001, y: 0.3999999, length: 0.2000001, width: 0.0999999,
+    angle: 17.12345679,
+  });
+});
+
 test('one position changes only x/y and preserves future metadata (#224)', () => {
   const input = {
     s: 'floor', x: 0.1000000006, y: -0.0000000004,

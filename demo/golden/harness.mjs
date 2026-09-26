@@ -727,6 +727,18 @@ export function prepareGoldenFixture(scenario) {
     }
     space.decor = structuredClone(scenario.decorOverride);
   }
+  if (scenario.stairsOverride) {
+    const space = requireSpace();
+    const known = new Set();
+    for (const stair of scenario.stairsOverride) {
+      if (!stair?.id || known.has(stair.id))
+        throw new Error(`golden stairsOverride has missing/duplicate id: ${stair?.id || '<empty>'}`);
+      if (!['straight', 'spiral'].includes(stair.kind))
+        throw new Error(`golden stairsOverride has unknown kind: ${stair.kind}`);
+      known.add(stair.id);
+    }
+    space.stairs = structuredClone(scenario.stairsOverride);
+  }
   if (scenario.openingGeometry) {
     const space = requireSpace();
     const opening = (space.openings || []).find(
@@ -1538,6 +1550,17 @@ export async function prepareGoldenScenario(page, scenario) {
         throw new Error(`golden furniture transform frame is incomplete: ${scenario.id}`);
       }
     }
+    if (scenario.stairSelection) {
+      const target = card.renderRoot.querySelector(
+        `[data-hp="stair"][data-id="${CSS.escape(scenario.stairSelection)}"] .hp-stair-hit`,
+      );
+      target?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+      await card.updateComplete;
+      await frame();
+      if (!target || !card.renderRoot.querySelector(
+        `[data-hp="stair"][data-id="${CSS.escape(scenario.stairSelection)}"].selected`,
+      )) throw new Error(`golden stair selection missing: ${scenario.id}`);
+    }
     if (scenario.editorTray) {
       let expectedKind = '';
       if (scenario.editorTray === 'plan-selection') {
@@ -2346,6 +2369,18 @@ export async function prepareGoldenScenario(page, scenario) {
         await card.updateComplete;
       });
     }
+  }
+  if (scenario.hoverStair) {
+    const point = await page.evaluate((id) => {
+      const stair = window.__goldenCard?.renderRoot?.querySelector(
+        `[data-hp="stair"][data-id="${CSS.escape(id)}"] .hp-stair-hit`,
+      );
+      if (!stair) return null;
+      const rect = stair.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }, scenario.hoverStair);
+    if (!point) throw new Error(`golden hover stair missing: ${scenario.hoverStair}`);
+    await page.mouse.move(point.x, point.y);
   }
   return result;
 }

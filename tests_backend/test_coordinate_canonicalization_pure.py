@@ -85,6 +85,27 @@ def test_scalar_contract_is_symmetric_and_keeps_off_grid_geometry() -> None:
     assert canonicalize_number(float("inf")) == float("inf")
 
 
+def test_stair_transform_keeps_continuous_wall_face_magnet_position() -> None:
+    stair = {
+        "id": "stair",
+        "kind": "straight",
+        "direction": "forward",
+        "target_space_id": "upper",
+        "x": 0.5000001,
+        "y": 0.3999999,
+        "length": 0.2000001,
+        "width": 0.0999999,
+        "angle": 17.1234567896,
+    }
+    output = canonicalize_config_geometry(
+        {"spaces": [{"id": "ground", "stairs": [stair]}]}
+    )["spaces"][0]["stairs"][0]
+    assert output == {
+        **stair,
+        "angle": 17.12345679,
+    }
+
+
 def test_all_4801_lattice_nodes_and_nine_decimal_forms_share_exact_bits() -> None:
     assert LATTICE_GRID_N == 240
     assert LATTICE_NOISE_STEPS == 1e-4

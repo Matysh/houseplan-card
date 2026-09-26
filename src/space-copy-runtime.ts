@@ -31,6 +31,7 @@ const ERROR_KEYS: Record<SpaceCopyErrorCode, I18nKey> = {
   partitions_limit: 'space.copy_error_partitions_limit',
   openings_limit: 'space.copy_error_openings_limit',
   decor_limit: 'space.copy_error_decor_limit',
+  stairs_limit: 'space.copy_error_stairs_limit',
   columns_limit: 'space.copy_error_columns_limit',
   opening_host_missing: 'space.copy_error_opening_host',
   opening_host_unknown: 'space.copy_error_opening_host',

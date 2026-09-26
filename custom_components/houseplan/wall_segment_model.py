@@ -439,7 +439,7 @@ def _thickness(space: dict[str, Any], atom: dict[str, Any], previous: dict[str, 
 
 def _non_catalog_ids(space: dict[str, Any]) -> set[str]:
     result: set[str] = set()
-    for name in ("rooms", "openings", "decor", "room_drafts", "partitions", "wall_columns"):
+    for name in ("rooms", "openings", "decor", "stairs", "room_drafts", "partitions", "wall_columns"):
         for item in space.get(name) or []:
             if isinstance(item, dict) and isinstance(item.get("id"), str) and item["id"]:
                 result.add(item["id"])
@@ -661,7 +661,7 @@ def _migrate_room_drafts_to_partitions(space: dict[str, Any]) -> tuple[int, int]
         return 0, 0
     used = {
         str(item["id"])
-        for name in ("rooms", "openings", "decor", "partitions",
+        for name in ("rooms", "openings", "decor", "stairs", "partitions",
                      "wall_columns", "wall_segments")
         for item in space.get(name) or []
         if isinstance(item, dict) and isinstance(item.get("id"), str) and item["id"]

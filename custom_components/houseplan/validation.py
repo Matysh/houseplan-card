@@ -1198,6 +1198,7 @@ MAX_ROOMS = 400
 MAX_MARKERS = 2000
 MAX_OPENINGS = 500
 MAX_DECOR = 1000
+MAX_STAIRS = 250
 # v8 atomises room boundaries. The 2 MiB wire cap is the practical bound; this
 # structural cap mirrors MAX_ROOMS * MAX_POLY_POINTS without depending on the
 # later constant declaration.
@@ -1532,6 +1533,57 @@ DECOR_SCHEMA = vol.Any(
 )
 
 
+def _strict_stair(value: dict) -> dict:
+    """A discriminated stair record carries dimensions for exactly one kind."""
+    if value["kind"] == "straight":
+        if "radius" in value:
+            raise vol.Invalid("radius is allowed only for spiral stairs")
+        if value["direction"] not in ("forward", "backward"):
+            raise vol.Invalid("straight stair direction must be forward or backward")
+    else:
+        if "length" in value or "width" in value:
+            raise vol.Invalid("length and width are allowed only for straight stairs")
+        if value["direction"] not in ("clockwise", "counterclockwise"):
+            raise vol.Invalid("spiral stair direction must be clockwise or counterclockwise")
+    return value
+
+
+def _stair_dimensions(value: dict) -> dict:
+    """Require the dimension fields owned by the selected stair kind."""
+    complete = (
+        value["kind"] == "straight" and "length" in value and "width" in value
+        or value["kind"] == "spiral" and "radius" in value
+    )
+    if not complete:
+        raise vol.Invalid("stair kind requires its dimensions")
+    return value
+
+
+STAIR_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("kind"): vol.In(["straight", "spiral"]),
+            vol.Required("x"): _NORM,
+            vol.Required("y"): _NORM,
+            vol.Required("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
+            vol.Required("direction"): vol.In([
+                "forward", "backward", "clockwise", "counterclockwise",
+            ]),
+            vol.Optional("target_space_id"): vol.Any(
+                None, vol.All(str, vol.Match(SPACE_ID_RE.pattern))
+            ),
+            vol.Optional("length"): _FURN_SIZE,
+            vol.Optional("width"): _FURN_SIZE,
+            vol.Optional("radius"): _FURN_SIZE,
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _stair_dimensions,
+    _strict_stair,
+)
+
+
 def _wall_endpoints_pair(entry: dict) -> dict:
     """Exact wall endpoints are useful only as a complete a/b pair."""
     if ("a" in entry) != ("b" in entry):
@@ -1673,7 +1725,7 @@ OPENING_HOST_SCHEMA = vol.Any(PARTITION_OPENING_HOST_SCHEMA, WALL_OPENING_HOST_S
 def _space_geometry_invariants(value: dict) -> dict:
     """All stored geometry shares ids; draft segments also have a space cap."""
     seen: set[str] = set()
-    for key in ("rooms", "openings", "decor", "room_drafts", "partitions", "wall_columns", "wall_segments"):
+    for key in ("rooms", "openings", "decor", "stairs", "room_drafts", "partitions", "wall_columns", "wall_segments"):
         for item in value.get(key, []):
             item_id = item.get("id")
             if not item_id:
@@ -1768,6 +1820,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
         vol.Required("view_box"): _view_box,
         vol.Required("rooms"): vol.All([ROOM_SCHEMA], vol.Length(max=MAX_ROOMS)),
         vol.Optional("decor"): vol.All([DECOR_SCHEMA], vol.Length(max=MAX_DECOR)),
+        vol.Optional("stairs"): vol.All([STAIR_SCHEMA], vol.Length(max=MAX_STAIRS)),
         vol.Optional("openings"): vol.All([
             vol.Schema(
                 {

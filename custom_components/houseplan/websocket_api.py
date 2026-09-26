@@ -1848,6 +1848,10 @@ def _space_delete_candidate(
         item for item in candidate_config.get("spaces") or []
         if item.get("id") != space_id
     ]
+    for remaining_space in candidate_config["spaces"]:
+        for stair in remaining_space.get("stairs") or []:
+            if isinstance(stair, dict) and stair.get("target_space_id") == space_id:
+                stair["target_space_id"] = None
     for marker in candidate_config.get("markers") or []:
         marker_id = str(marker.get("id")) if marker.get("id") is not None else None
         marker_position = candidate_layout.get(marker_id) if marker_id is not None else None

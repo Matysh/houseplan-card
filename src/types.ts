@@ -84,6 +84,8 @@ export interface SpaceModel {
   wall_segments: WallSegmentEntry[];
   partitions: PartitionCfg[];
   wall_columns: WallColumnCfg[];
+  /** Independent continuous plan objects linking this floor to another one. */
+  stairs: import('./stairs').Stair[];
 }
 
 export interface PdfRef {

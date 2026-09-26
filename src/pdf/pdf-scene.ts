@@ -5,7 +5,7 @@ import { canonicalFurnitureId } from '../furniture-id';
 import { formatArea } from '../area-format';
 import { roomPoly } from '../logic';
 import {
-  floorMinusBodies, geometryAllRings, geometryArea, geometryOuterRings, physicalBodyParts,
+  floorMinusBodies, geometryAllRings, geometryOuterRings, physicalBodyParts,
   pointInPhysicalGeometry,
 } from '../physical-geometry';
 import {
@@ -13,6 +13,9 @@ import {
   type GeometryOpeningProjection,
 } from '../plan-geometry-preflight';
 import { labelPos, GRID_PITCH, GRID_STEP_N, NORM_W } from '../space-geometry';
+import {
+  cachedStairRenderGeometry, geometryAreaMinusStairs, stairOutline, type Stair,
+} from '../stairs';
 import type { ServerConfig, SpaceModel } from '../types';
 import {
   innerContourForRoom, openingInnerFaceOffset, wallBodiesGeometry,
@@ -62,6 +65,7 @@ export interface PdfRawSpace {
   cell_cm?: unknown;
   walls?: WallEntry[];
   decor?: DecorShape[];
+  stairs?: Stair[];
   settings?: Record<string, unknown>;
   [key: string]: unknown;
 }
@@ -301,13 +305,10 @@ function preparePdfScene(input: PdfSceneInput): PreparedPdfScene {
     const localBodies = !Number.isFinite(cachedArea)
       ? bodiesOverlappingRing(contour, built.extras) : [];
     const candidates = localBodies.length ? floorMinusBodies(contour, localBodies) : null;
+    const cleanGeometry = candidates || [[[...contour, contour[0]]]];
     const areaUnits = Number.isFinite(cachedArea) && (cachedArea as number) >= 0
       ? cachedArea as number
-      : candidates ? geometryArea(candidates) : Math.abs(
-        contour.reduce((sum, point, index) => {
-          const next = contour[(index + 1) % contour.length];
-          return sum + point[0] * next[1] - next[0] * point[1];
-        }, 0) / 2);
+      : geometryAreaMinusStairs(cleanGeometry, input.space.stairs);
     roomAreas.set(room, areaUnits);
   }
   const architectureRings = built.geometry.status === 'failed-core'
@@ -315,6 +316,7 @@ function preparePdfScene(input: PdfSceneInput): PreparedPdfScene {
     : built.geometry.components.flatMap((component) => geometryAllRings(component.geom));
   const allBounds = [...architectureRings, ...built.zero.lines.map((line) => [[line[0], line[1]], [line[2], line[3]]])];
   if (input.options.decor) allBounds.push(...decorBounds(input.rawSpace, true));
+  allBounds.push(...input.space.stairs.map((stair) => stairOutline(stair)));
   for (const raster of input.rasters || []) allBounds.push(rotatedRectRing(
     raster.x, raster.y, raster.drawWidth, raster.drawHeight, raster.angle,
   ));
@@ -458,6 +460,27 @@ function buildPdfCandidate(
         : boxCorners(shape).map(([x, y]) => [x * NORM_W, y * NORM_W]);
       commands.push({ kind: 'path', rings: [ring.map(pt)], stroke: INK, width: 0.25 * MM });
     }
+  }
+
+  // Stairs are plan geometry, not optional decor. Keep their PDF symbol and
+  // physical area semantics aligned with the two on-screen renderers.
+  const stairMatrix = {
+    a: pointPerUnit, b: 0, c: 0, d: pointPerUnit,
+    e: left - bounds.minX * pointPerUnit,
+    f: top - bounds.minY * pointPerUnit,
+  };
+  for (const stair of input.space.stairs) {
+    const geometry = cachedStairRenderGeometry(stair, built.cellCm);
+    commands.push({
+      kind: 'path', rings: [geometry.outline.map(pt)], stroke: INK, width: 0.25 * MM,
+    });
+    for (const tread of geometry.treads) commands.push({
+      kind: 'line', points: [pt(tread.a), pt(tread.b)], stroke: INK, width: 0.2 * MM,
+    });
+    commands.push({
+      kind: 'vector', ops: transformSvgPath(geometry.arrowPath, stairMatrix),
+      stroke: INK, width: 0.3 * MM,
+    });
   }
 
   if (input.options.dimensions && built.geometry.roomGeom) {

@@ -361,8 +361,14 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * нельзя положить внутрь охраняемого ею чанка. Геометрия и сам рендер остаются
  * ленивыми. Факт оставляет 953 Б сверху и 1 047 Б до нижней границы; общий
  * бюджет не меняется.
+ *
+ * 2026-09-26, #663: 296 000 → 299 700 (замер 298 722). Read-only геометрия
+ * двух типов лестниц, межэтажный link hit-target и вычитание их footprint из
+ * чистой площади нужны непосредственно в View. Placement, transform и
+ * properties вынесены в lazy editor; общий бюджет 301 066 Б не меняется.
+ * Центр оставляет 978 Б сверху и 1 022 Б до нижней границы полосы.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 296_000;
+export const INITIAL_VIEW_GZIP_CEILING = 299_700;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**
@@ -606,8 +612,14 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 17_900;
  *   контроллер хранит сессионные позиции, ограничивает их геометрией комнаты
  *   и арбитрирует pointer/pinch/cancel. Центр оставляет 1 012 Б сверху и
  *   988 Б до нижней границы полосы.
+ * - #663: 232 900 → 236 400 (замер 235 443). В ленивый редактор вошёл
+ *   отдельный runtime двух типов лестниц: placement, wall/stair magnet,
+ *   continuous move/resize/rotate, properties dialog и undo/redo. Read-only
+ *   символ и межэтажный переход отделены в eager runtime; первый View не
+ *   загружает эти editor-only ветки. Центр оставляет 957 Б сверху и 1 043 Б
+ *   до нижней границы полосы.
  */
-export const LAZY_EDITOR_GZIP_CEILING = 232_900;
+export const LAZY_EDITOR_GZIP_CEILING = 236_400;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

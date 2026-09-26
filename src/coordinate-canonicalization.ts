@@ -357,6 +357,13 @@ export function canonicalizeConfigGeometryInPlace<T>(config: T): T {
         scalarFields(decor, ['scale', 'angle']);
       }
     }
+    for (const stair of records(space.stairs)) {
+      // #663 stairs inherit furniture's continuous transform contract. A wall
+      // face may be an arbitrary half-thickness away from the grid, so only
+      // remove insignificant JSON noise; never pull the magnet result onto a
+      // lattice node.
+      scalarFields(stair, ['x', 'y', 'length', 'width', 'radius', 'angle']);
+    }
 
     // Legacy-only read boundary; current v10 documents reject this field.
     for (const draft of records(space.room_drafts)) latticePoints(draft.points);

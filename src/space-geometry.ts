@@ -8,8 +8,10 @@ import type { ServerConfig, SpaceModel, RoomCfg, DevItem, OpeningCfg } from './t
 import { boxCorners, normalizeAngle } from './editors/decor/geometry';
 import { canonicalColumnAngle } from './physical-geometry';
 import { gridVisualScale } from './grid-scale';
+import { stairList, stairOutline } from './stairs';
+import { CANVAS_LIMIT, GRID_N, GRID_PITCH, NORM_W } from './canvas-constants';
 
-export const NORM_W = 1000; // side of the render space — the canvas is square
+export { CANVAS_LIMIT, GRID_N, GRID_PITCH, GRID_STEP_N, NORM_W } from './canvas-constants';
 
 export type StaticPassageOpening = OpeningCfg & {
   type: 'passage'; rx: number; ry: number; rlen: number;
@@ -184,6 +186,7 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
         cm: Number(c.cm),
         ...(c.shape === 'circle' ? {} : { angle: canonicalColumnAngle(c.angle) }),
       })),
+      stairs: stairList(s.stairs),
     } as SpaceModel;
   });
 }
@@ -194,18 +197,12 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
 
 /** Sane coordinate range in NORMALISED units — mirrors validation.py.
  *  Not a frame: insurance against a stored 1e100 (HP-1500-03/HP-1501-01). */
-export const CANVAS_LIMIT = 5000;
 /** The same range in RENDER units. */
 export const SANE_LIMIT = CANVAS_LIMIT * NORM_W;
 
 /** Grid points across the plan width — the lattice the editor snaps to.
  *  It is derived from NORM_W alone, so it is the SAME step for every plan and
  *  it did NOT change when the canvas became infinite (docs/CANVAS.md §9). */
-export const GRID_N = 240;
-/** One grid step in RENDER units. */
-export const GRID_PITCH = NORM_W / GRID_N;
-/** One grid step in NORMALISED units — what the config and the layout store. */
-export const GRID_STEP_N = 1 / GRID_N;
 
 /** Snap a RENDER-unit coordinate to the editor's grid (docs/CANVAS.md §9). */
 export function snapR(v: number): number {
@@ -328,6 +325,10 @@ export function contentItems(
 ): ContentItem[] {
   const out: ContentItem[] = [];
   for (const r of space.rooms || []) { const it = roomItem(r); if (it) out.push(it); }
+  for (const stair of space.stairs || []) {
+    const item = itemOf(stairOutline(stair));
+    if (item) out.push(item);
+  }
   // The backdrop image is ONE OF the objects of the space, exactly like a room
   // (docs/BACKDROP.md §4): cropping to the outlined rooms would hide the parts
   // of the picture nobody has drawn over yet, and — since v1.58.0 — the

@@ -12,6 +12,7 @@ const OPENING_COUNT = 100;
 const PARTITION_COUNT = 60;
 const COLUMN_COUNT = 40;
 const DECOR_COUNT = 500;
+const STAIR_COUNT = 250;
 
 const round = (value) => Number(value.toFixed(6));
 
@@ -119,6 +120,23 @@ const makeDecor = (floor, count) => Array.from({ length: count }, (_, index) => 
   };
 });
 
+const makeStairs = (floor, count) => Array.from({ length: count }, (_, index) => {
+  const column = index % 25;
+  const row = Math.floor(index / 25);
+  const common = {
+    id: `perf-stair-${floor}-${index}`,
+    x: round(0.025 + column * 0.039),
+    y: round(0.03 + row * 0.1),
+    angle: (index % 8) * 45,
+    target_space_id: 'perf-floor-2',
+  };
+  return index % 2 === 0
+    ? { ...common, kind: 'straight', direction: index % 4 ? 'forward' : 'backward',
+      length: 0.12, width: 0.045 }
+    : { ...common, kind: 'spiral', direction: index % 4 ? 'clockwise' : 'counterclockwise',
+      radius: 0.05 };
+});
+
 const entityKinds = [
   ['light', 'on'],
   ['switch', 'off'],
@@ -188,6 +206,7 @@ export const LARGE_HOUSE_COUNTS = Object.freeze({
   partitions: PARTITION_COUNT,
   columns: COLUMN_COUNT,
   decor: DECOR_COUNT,
+  stairs: STAIR_COUNT,
 });
 
 export const makeLargeHouseFixture = () => {
@@ -228,6 +247,7 @@ export const makeLargeHouseFixture = () => {
       partitions: makePartitions(floor, rooms, partitionCount),
       wall_columns: makeColumns(floor, rooms, columnCount),
       decor: makeDecor(floor, decorCount),
+      ...(floor === 0 ? { stairs: makeStairs(floor, STAIR_COUNT) } : {}),
     };
   });
   const runtime = makeRuntime(spaces);

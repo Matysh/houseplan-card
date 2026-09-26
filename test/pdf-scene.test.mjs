@@ -170,6 +170,35 @@ test('PDF scene includes architecture and respects names/dimensions switches', (
     'door leaf/arc is represented by vector lines');
 });
 
+test('#663 PDF renders both stair symbols and uses stair-adjusted clean area', () => {
+  const withStairs = structuredClone(rawSpace);
+  withStairs.stairs = [
+    {
+      id: 'straight', kind: 'straight', x: 0.4, y: 0.4, angle: 0,
+      direction: 'forward', length: 0.2, width: 0.1, target_space_id: 'upper',
+    },
+    {
+      id: 'spiral', kind: 'spiral', x: 0.68, y: 0.5, angle: 30,
+      direction: 'counterclockwise', radius: 0.06, target_space_id: null,
+    },
+  ];
+  const output = buildRawPage(withStairs, {
+    dimensions: true, roomNames: false, decor: false, backdrop: false,
+  });
+  const stairOutlines = output.commands.filter((command) => command.kind === 'path'
+    && (command.rings[0]?.length === 4 || command.rings[0]?.length === 64));
+  assert.equal(stairOutlines.length, 2, 'stairs are architectural output even when decor is hidden');
+  assert.equal(output.commands.filter((command) => command.kind === 'vector').length, 2,
+    'each stair keeps its direction arrow');
+  const area = output.commands.find((command) => command.kind === 'text'
+    && /m²/.test(command.text));
+  assert.ok(area, 'room area is printed');
+  // Base room: 700×600 render units. The two non-overlapping footprints are
+  // 200×100 and a 60-unit-radius circle; cmPerUnit is 1.2.
+  const expectedM2 = (420_000 - 20_000 - Math.PI * 60 ** 2) * 1.2 ** 2 / 10_000;
+  assert.match(area.text, new RegExp(`^${expectedM2.toFixed(1).replace('.', '[.,]')}\\s*m²$`));
+});
+
 test('shared wall architecture is emitted once and devices never enter the PDF scene', () => {
   const output = sharedPage({ dimensions: false, roomNames: false, decor: false, backdrop: false });
   const architecture = output.commands.filter((command) => command.kind === 'path');

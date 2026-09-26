@@ -27,7 +27,7 @@ async def test_diagnostics_redact_marker_bindings_and_all_settings(hass) -> None
         "spaces": [{
             "id": "floor", "aspect": 1.5, "plan_url": None,
             "rooms": [{"area": "private-area"}],
-            "partitions": [], "wall_columns": [],
+            "partitions": [], "wall_columns": [], "stairs": [{"id": "private-stair"}],
         }],
         "markers": [{
             "id": "marker", "binding": "device:private-device",
@@ -55,3 +55,4 @@ async def test_diagnostics_redact_marker_bindings_and_all_settings(hass) -> None
     assert result["rev"] == 7
     assert result["layout_entries"] == 1
     assert result["spaces"][0]["rooms"] == 1
+    assert result["spaces"][0]["stairs"] == 1

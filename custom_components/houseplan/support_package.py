@@ -374,6 +374,17 @@ def _project_space(ids: _Pseudonyms, space: dict[str, Any], index: int) -> dict[
     out["decor"] = [
         _project_decor(ids, item) for item in space.get("decor") or [] if isinstance(item, dict)
     ]
+    out["stairs"] = []
+    for item in space.get("stairs") or []:
+        if not isinstance(item, dict):
+            continue
+        projected = {"id": ids.get("stair", item.get("id"))}
+        projected.update(_copy_keys(item, (
+            "kind", "x", "y", "angle", "direction", "length", "width", "radius",
+        )))
+        if item.get("target_space_id"):
+            projected["target_space_id"] = ids.get("space", item.get("target_space_id"))
+        out["stairs"].append(projected)
     out["open_spans"] = [
         {"a": _point(item.get("a")), "b": _point(item.get("b"))}
         for item in space.get("open_spans") or [] if isinstance(item, dict)
@@ -436,6 +447,7 @@ def _summary(config: object, layout: object) -> dict[str, Any]:
         "columns": sum(len(space.get("wall_columns") or []) for space in spaces if isinstance(space, dict)),
         "openings": dict(sorted(kinds.items())),
         "decor": dict(sorted(decor_kinds.items())),
+        "stairs": sum(len(space.get("stairs") or []) for space in spaces if isinstance(space, dict)),
         "markers": {
             "total": len(markers),
             "lifecycle": dict(sorted(lifecycles.items())),

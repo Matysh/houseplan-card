@@ -27,13 +27,13 @@ export const lruWrite = <K, V>(cache: Map<K, V>, key: K, value: V, limit: number
 };
 
 export type MarkupTool = 'select' | 'draw' | 'column' | 'merge' | 'split' | 'resize'
-  | 'opening' | 'wallthick' | 'delroom';
+  | 'opening' | 'stairs' | 'wallthick' | 'delroom';
 export type DecorTool = 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text'
   | 'furniture' | 'image' | 'erase';
 
 const MARKUP_TOOLS = new Set<MarkupTool>([
   'select', 'draw', 'column', 'merge', 'split', 'resize',
-  'opening', 'wallthick', 'delroom',
+  'opening', 'stairs', 'wallthick', 'delroom',
 ]);
 
 /** Warm viewport may contain a tool token written by an older bundle. */

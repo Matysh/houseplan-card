@@ -594,6 +594,7 @@ shape change it is retained only while it remains inside the room.
 | Walls | Continuous wall chain; offers rooms when it closes faces and finishes open chains as independent walls | Only a confirmed room has area | Positive thickness blocks light; zero thickness follows the space's dashed/solid policy | Partial room overlap is rejected; there is no separate Partition or Boundary drawing tool |
 | Column | Square or circular support | Does not change area | Blocks light inside its shape | One shape/size/rotation; not a wall or room |
 | Opening | Door, window or gate | Does not change area | Door/gate passage follows state; window may cast sun | Must fit completely on a suitable wall segment |
+| Stairs | Straight flight or one-turn spiral with automatic 30 cm treads and an ascent arrow | Subtracts only its footprint overlap from clean area | No effect on Glow, sun or walls | Lives on this floor only; a valid optional target makes it a View link |
 
 Other operations edit existing geometry:
 
@@ -604,6 +605,16 @@ Other operations edit existing geometry:
 | Resize | Moves one eligible horizontal/vertical wall without changing room topology. Live labels report the two changing **inner** side-wall dimensions, highlight those walls, and place each affected room's area beside its side of the moving wall |
 | Thickness | Changes one span or every wall of a room, including zero-thickness walls |
 | Delete room | Deletes the room after choosing whether its exclusive physical walls remain; shared walls always remain |
+
+Choose **Stairs → Straight** or **Stairs → Spiral**, then click the plan. A
+selected stair moves and resizes smoothly like furniture; `Shift` snaps its
+rotation to 45°. It snaps to the visible physical face of a wall or flush to
+another stair, and **Optimize plans** preserves that exact continuous
+transform. Double click opens size, direction, angle and target-floor
+properties. In View a clean activation switches to the valid target and
+restores that floor's saved view; gesture tails, broken links and fixed-floor
+cards do nothing. The target floor is never changed automatically. In 2.5D the
+symbol is flat on the floor. See [Stairs](STAIRS.md).
 
 ![Selected partition and its Plan context tray](images/05-plan-context-tray.png)
 

@@ -931,6 +931,11 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
         "walls": [],
         "partitions": [{"id": "partition", "a": [0, 0.5], "b": [1, 0.5], "cm": 12}],
         "wall_columns": [{"id": "column", "shape": "circle", "center": [0.2, 0.2], "cm": 30}],
+        "stairs": [{
+            "id": "stairs", "kind": "straight", "x": 0.35, "y": 0.45,
+            "angle": 12.5, "direction": "forward", "length": 0.2, "width": 0.1,
+            "target_space_id": "upper", "future_stair": "drop",
+        }],
         "decor": [
             {
                 "id": "modern", "kind": "text", "x": 0.2, "y": 0.2,
@@ -1025,6 +1030,11 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert by_id["furniture"]["symbol"] == "sofa"
     assert by_id["furniture"]["flip_h"] is True
     assert by_id["furniture"]["flip_v"] is False
+    assert exported["stairs"] == [{
+        "id": "stairs", "kind": "straight", "x": 0.35, "y": 0.45,
+        "angle": 12.5, "direction": "forward", "target_space_id": "upper",
+        "length": 0.2, "width": 0.1,
+    }]
 
     parsed = parse_document(json.dumps(document).encode())
     preview = create_preview(
@@ -1054,6 +1064,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert merged["markers"] == []
     imported_room = merged["spaces"][0]["rooms"][0]
     assert imported_room.get("area") is None
+    assert merged["spaces"][0]["stairs"][0]["target_space_id"] is None
     assert merged_layout == {
         "rl_" + imported_room["id"]: {
             "x": 0.45, "y": 0.55, "s": details["space_id"], "k": 1.4,
@@ -1647,6 +1658,31 @@ def test_issue_611_ambiguous_target_route_is_preserved_and_reported() -> None:
     assert report["preservedUnresolved"] == {
         "marker.vacuum.map_routes.space": 1,
     }
+
+
+def test_issue_663_full_import_repairs_stair_floor_target_by_exact_space_map() -> None:
+    current = {
+        "spaces": [{
+            "id": "space-ground", "title": "Ground", "view_box": [0, 0, 1, 1],
+            "rooms": [], "stairs": [{
+                "id": "stair-new", "kind": "straight", "x": 0.5, "y": 0.5,
+                "angle": 0, "direction": "forward", "length": 0.2, "width": 0.1,
+                "target_space_id": "upper",
+            }],
+        }, {
+            "id": "space-upper", "title": "Upper", "view_box": [0, 0, 1, 1],
+            "rooms": [],
+        }],
+        "markers": [], "settings": {},
+    }
+    report = import_export_api._empty_reference_report()
+    repaired, _layout, count = import_export_api._repair_target_space_refs(
+        current, {}, {"space": {"ground": "space-ground", "upper": "space-upper"}},
+        {}, report, set(),
+    )
+    assert repaired["spaces"][0]["stairs"][0]["target_space_id"] == "space-upper"
+    assert count == 1
+    assert report["remapped"]["target"] == {"stair.target_space_id": 1}
 
 
 @pytest.mark.parametrize(

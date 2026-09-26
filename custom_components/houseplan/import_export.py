@@ -73,7 +73,7 @@ _LIVE_TEXT_ENTITY = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 _LIVE_TEXT_ATTRIBUTE = re.compile(r"^[a-zA-Z0-9_.-]+$")
 _PLAN_ONLY_DASH = "—"
 _IMPORT_ID_NAMESPACES = {
-    "space", "room", "marker", "partition", "wall", "opening", "decor", "column",
+    "space", "room", "marker", "partition", "wall", "opening", "decor", "column", "stair",
 }
 _MAX_IMPORT_LINEAGE_DEPTH = 16
 _REPORT_EXAMPLE_LIMIT = 24
@@ -293,6 +293,14 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
     if "decor" in space:
         projected["decor"] = [
             _project_plan_only_decor(shape) for shape in space.get("decor") or []
+        ]
+    if "stairs" in space:
+        projected["stairs"] = [
+            _pick_fields(stair, (
+                "id", "kind", "x", "y", "angle", "direction",
+                "target_space_id", "length", "width", "radius",
+            ))
+            for stair in space.get("stairs") or []
         ]
     return projected
 
@@ -742,6 +750,7 @@ def _counts(config: dict[str, Any], layout: dict[str, Any]) -> dict[str, int]:
         "markers": len(config.get("markers") or []),
         "openings": sum(len(sp.get("openings") or []) for sp in spaces),
         "decor": sum(len(sp.get("decor") or []) for sp in spaces),
+        "stairs": sum(len(sp.get("stairs") or []) for sp in spaces),
         "layout": len(layout),
     }
 
@@ -1132,6 +1141,14 @@ def _repair_target_space_refs(
 
     for space in spaces:
         space_id = str(space.get("id", "?"))
+        for stair in space.get("stairs") or []:
+            target = stair.get("target_space_id") if isinstance(stair, dict) else None
+            mapped = replace(
+                f"{space_id}:{stair.get('id', '?')}", "stair.target_space_id",
+                target, resolve_space,
+            )
+            if mapped is not None:
+                stair["target_space_id"] = mapped
         for room in space.get("rooms") or []:
             room_id = str(room.get("id", "?"))
             values = room.get("open_to")
@@ -1322,7 +1339,7 @@ def build_space_merge(
             (sp,), sp.get("rooms") or [],
             sp.get("partitions") or [], sp.get("wall_segments") or [],
             sp.get("wall_columns") or [],
-            sp.get("openings") or [], sp.get("decor") or [],
+            sp.get("openings") or [], sp.get("decor") or [], sp.get("stairs") or [],
         )
         for item in collection
         if isinstance(item, dict)
@@ -1338,7 +1355,7 @@ def build_space_merge(
             (incoming_space,), incoming_space.get("rooms") or [],
             incoming_space.get("partitions") or [], incoming_space.get("wall_segments") or [],
             incoming_space.get("wall_columns") or [],
-            incoming_space.get("openings") or [], incoming_space.get("decor") or [],
+            incoming_space.get("openings") or [], incoming_space.get("decor") or [], incoming_space.get("stairs") or [],
         )
         for item in collection
         if isinstance(item, dict)
@@ -1362,6 +1379,7 @@ def build_space_merge(
         ("rooms", "room"), ("partitions", "partition"),
         ("wall_segments", "wall"),
         ("wall_columns", "column"), ("openings", "opening"), ("decor", "decor"),
+        ("stairs", "stair"),
     ):
         for item in space.get(collection) or []:
             if isinstance(item, dict) and item.get("id") is not None:
@@ -1405,6 +1423,16 @@ def build_space_merge(
                     reference_report, "incoming", "opening.host",
                     str(opening.get("id", "?")), old_host_id,
                 )
+    # A one-space export cannot carry a trustworthy external floor target.
+    # Self-links are invalid too because the imported source gets a new id.
+    for stair in space.get("stairs") or []:
+        target = stair.get("target_space_id") if isinstance(stair, dict) else None
+        if target is not None:
+            stair["target_space_id"] = None
+            _report_remap(
+                reference_report, "incoming", "stair.target_space_id",
+                str(stair.get("id", "?")), str(target),
+            )
     space["id"] = new_space_id
     space["title"] = _unique_title(
         str(space.get("title") or old_space_id), current_config.get("spaces") or []

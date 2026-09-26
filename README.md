@@ -186,6 +186,7 @@ concurrent clients, but avoid editing the same object in two browsers at once.
 - [Full user guide](docs/USER-GUIDE.md)
 - [Mouse/touch/keyboard matrix](docs/USER-GUIDE.md#6-navigation-zoom-and-input)
 - [Plan tools](docs/USER-GUIDE.md#plan-tools-at-a-glance)
+- [Stairs and floor links](docs/STAIRS.md)
 - [Background editor](docs/DECOR-EDITOR.md)
 - [Robot vacuums](docs/VACUUM.md)
 - [Touch support](docs/TOUCH-SUPPORT.md)

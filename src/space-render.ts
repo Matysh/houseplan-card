@@ -60,6 +60,7 @@ import { geometryOpenings } from './plan-geometry-preflight';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { projectDecorImage } from './decor-assets';
 import type { DecorShape } from './editors/decor/types';
+import { cachedStairRenderGeometry, stairOutline } from './stairs';
 import {
   buildGlowClipGeometry, buildLightBarrierScene, forgetGlowSource, forgetGlowSpace,
   glowSourceInOpaqueBody, pruneGlowSources, readGlowClip, renderGlowPools,
@@ -381,6 +382,14 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     minX: Math.min(line[0], line[2]), minY: Math.min(line[1], line[3]),
     maxX: Math.max(line[0], line[2]), maxY: Math.max(line[1], line[3]),
   });
+  for (const stair of space.stairs) {
+    const outline = stairOutline(stair);
+    const xs = outline.map((point) => point[0]), ys = outline.map((point) => point[1]);
+    if (xs.length) placed.push({
+      minX: Math.min(...xs), minY: Math.min(...ys),
+      maxX: Math.max(...xs), maxY: Math.max(...ys),
+    });
+  }
 
   // Resolve architectural opening hosts before framing: tight house mode must
   // include their maximum painted envelope without consulting live state.
@@ -893,6 +902,17 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       ${renderOpeningVisibleGeometry(spec)}
     </g>`;
   });
+  const stairShapes = space.stairs.map((stair) => {
+    const geometry = cachedStairRenderGeometry(stair, cellCm);
+    return svg`<g class="hp-stair" data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
+      data-target-state="fixed"
+      aria-hidden="true" pointer-events="none">
+      <polygon class="hp-stair-outline" points=${geometry.outline.map((point) => point.join(',')).join(' ')}></polygon>
+      ${geometry.treads.map((line) => svg`<line class="hp-stair-tread"
+        x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
+      <path class="hp-stair-arrow" d=${geometry.arrowPath}></path>
+    </g>`;
+  });
 
   return html`
     <div class="hp-static-stage${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}"
@@ -941,6 +961,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           : nothing}
         ${passageGlowTunnels}
         <g class="decorlayer" pointer-events="none">${decorImages}</g>
+        <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>
         ${glowPools}
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">

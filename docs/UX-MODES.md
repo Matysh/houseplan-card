@@ -269,6 +269,11 @@ layer you cannot see is a layer you cannot edit.
 - Door, window, gate and passage may be hosted by one finished independent wall
   segment. Drafts and columns are never opening targets. Missing hosts fail
   dark and expose a rebind action only in Plan.
+- **Stairs** places a straight flight or a one-turn spiral as a separate Plan
+  object. It uses furniture-like continuous move/resize/rotation and physical
+  wall/stair magnet rather than the grid-bound wall contract. Its optional
+  one-way target is edited in properties; in View only a clean activation of a
+  valid target switches floors. The target floor is never modified.
 - **Select** is the only mode in which these objects intercept input. It offers
   rigid grid-bound drag, double-click/tap properties, Delete, and a rotate
   handle for square columns (5° steps; Shift is free). Draft Delete removes the

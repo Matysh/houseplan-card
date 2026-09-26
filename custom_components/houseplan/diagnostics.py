@@ -33,6 +33,7 @@ async def async_get_config_entry_diagnostics(
                 "rooms_with_area": sum(1 for r in s.get("rooms", []) if r.get("area")),
                 "partitions": len(s.get("partitions", [])),
                 "wall_columns": len(s.get("wall_columns", [])),
+                "stairs": len(s.get("stairs", [])),
             }
             for s in config.get("spaces", [])
         ],

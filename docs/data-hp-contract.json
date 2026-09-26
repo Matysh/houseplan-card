@@ -43,6 +43,7 @@
           "rules",
           "settings",
           "space",
+          "stairs",
           "summary",
           "support",
           "vacuum"
@@ -156,6 +157,11 @@
       "since": "1.59.0-beta.3",
       "audience": ["styling", "test"]
     },
+    "stair": {
+      "elements": ["g"],
+      "since": "1.78.0-beta.5",
+      "audience": ["styling", "test"]
+    },
     "support": {
       "elements": ["button"],
       "since": "1.73.0-beta.7",
@@ -193,6 +199,7 @@
           "resize",
           "select",
           "split",
+          "stairs",
           "text",
           "wall-thickness"
         ]

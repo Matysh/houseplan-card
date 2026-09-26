@@ -1563,5 +1563,50 @@ export const planStyles = css`
       transform: translate(-50%, -50%);
       border: 1px solid var(--hp-accent);
     }
+    .stage.markup.tool-stairs { cursor: crosshair; }
+    .hp-stair-outline {
+      fill: color-mix(in srgb, var(--hp-accent) 12%, transparent);
+      stroke: var(--primary-text-color, #202124);
+      stroke-width: calc(2px / var(--hp-plan-screen-scale, 1));
+      vector-effect: non-scaling-stroke;
+    }
+    .hp-stair-tread,
+    .hp-stair-arrow {
+      fill: none;
+      stroke: var(--primary-text-color, #202124);
+      stroke-width: calc(1.5px / var(--hp-plan-screen-scale, 1));
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .hp-stair-arrow { stroke-width: calc(2.5px / var(--hp-plan-screen-scale, 1)); }
+    .hp-stair-hit { fill: transparent; stroke: transparent; stroke-width: 14px; pointer-events: none; }
+    .hp-stair.input-enabled .hp-stair-hit { pointer-events: all; }
+    .hp-stair.navigable { cursor: pointer; }
+    :host([data-pointer-hover]) .hp-stair.navigable:hover .hp-stair-outline {
+      stroke: var(--hp-accent);
+      stroke-width: calc(2.5px / var(--hp-plan-screen-scale, 1));
+    }
+    .hp-stair.selected .hp-stair-outline {
+      stroke: var(--hp-accent);
+      stroke-width: calc(3px / var(--hp-plan-screen-scale, 1));
+    }
+    .hp-stair-handle {
+      fill: var(--hp-accent);
+      stroke: var(--hp-bg, #fff);
+      stroke-width: 2px;
+      vector-effect: non-scaling-stroke;
+      pointer-events: all;
+      touch-action: none;
+    }
+    .hp-stair-resize { cursor: nwse-resize; }
+    .hp-stair-rotate { cursor: grab; }
+    .hp-stair-rotate-leader {
+      stroke: var(--hp-accent);
+      stroke-width: 1.5px;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
     .alignmsg { margin: 0 0 8px; font-size: 13px; line-height: 1.45; }
 `;

@@ -1379,6 +1379,76 @@
       "required": false,
       "type": "float"
     },
+    "config.spaces[].stairs": {
+      "required": false
+    },
+    "config.spaces[].stairs[]": {
+      "allowExtra": true
+    },
+    "config.spaces[].stairs[].angle": {
+      "max": 360.0,
+      "min": -360.0,
+      "opaque": "<function _finite>",
+      "required": true
+    },
+    "config.spaces[].stairs[].direction": {
+      "enum": [
+        "backward",
+        "clockwise",
+        "counterclockwise",
+        "forward"
+      ],
+      "required": true
+    },
+    "config.spaces[].stairs[].id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "required": true,
+      "type": "str"
+    },
+    "config.spaces[].stairs[].kind": {
+      "enum": [
+        "spiral",
+        "straight"
+      ],
+      "required": true
+    },
+    "config.spaces[].stairs[].length": {
+      "max": 5000.0,
+      "min": 1e-07,
+      "opaque": "<function _finite>",
+      "required": false
+    },
+    "config.spaces[].stairs[].radius": {
+      "max": 5000.0,
+      "min": 1e-07,
+      "opaque": "<function _finite>",
+      "required": false
+    },
+    "config.spaces[].stairs[].target_space_id": {
+      "nullable": true,
+      "opaque": "Match('^[a-z0-9_-]{1,64}$', msg=None)",
+      "required": false,
+      "type": "str"
+    },
+    "config.spaces[].stairs[].width": {
+      "max": 5000.0,
+      "min": 1e-07,
+      "opaque": "<function _finite>",
+      "required": false
+    },
+    "config.spaces[].stairs[].x": {
+      "max": 5000.0,
+      "min": -5000.0,
+      "opaque": "<function _finite>",
+      "required": true
+    },
+    "config.spaces[].stairs[].y": {
+      "max": 5000.0,
+      "min": -5000.0,
+      "opaque": "<function _finite>",
+      "required": true
+    },
     "config.spaces[].title": {
       "required": true,
       "type": "str"

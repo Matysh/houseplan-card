@@ -31,6 +31,29 @@ test('typical small plan: the frame is exactly what is drawn (unchanged behaviou
   assert.deepEqual(contentBounds(withVb), { x: 390, y: 390, w: 220, h: 220 });
 });
 
+test('#663 stairs contribute their exact rotated and circular footprints to fit-all', () => {
+  const rotated = model({ id: 's', stairs: [{
+    id: 'straight', kind: 'straight', x: 0.5, y: 0.5, angle: 45,
+    direction: 'forward', length: 0.2, width: 0.1,
+  }] });
+  const [box] = contentItems(rotated);
+  const half = 150 / Math.sqrt(2);
+  assert.ok(Math.abs(box.minX - (500 - half)) < 1e-9);
+  assert.ok(Math.abs(box.maxX - (500 + half)) < 1e-9);
+  assert.ok(Math.abs(box.minY - (500 - half)) < 1e-9);
+  assert.ok(Math.abs(box.maxY - (500 + half)) < 1e-9);
+
+  const round = model({ id: 's', stairs: [{
+    id: 'spiral', kind: 'spiral', x: 0.25, y: 0.4, angle: 17,
+    direction: 'counterclockwise', radius: 0.08,
+  }] });
+  const circle = contentItems(round)[0];
+  assert.ok(Math.abs(circle.minX - 170) < 1e-9);
+  assert.ok(Math.abs(circle.minY - 320) < 1e-9);
+  assert.ok(Math.abs(circle.maxX - 330) < 1e-9);
+  assert.ok(Math.abs(circle.maxY - 480) < 1e-9);
+});
+
 test('per-edge frame padding can remove only the top inset', () => {
   const m = model({ id: 's', rooms: [{
     id: 'r', poly: [[0.2, 0.3], [0.8, 0.3], [0.8, 0.7], [0.2, 0.7]],

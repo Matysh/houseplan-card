@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 64;
+export const GOLDEN_MATRIX_VERSION = 65;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -203,7 +203,36 @@ const decorLayerProbes = {
   ],
 };
 
+const stairLayerFixture = [
+  { id: 'golden-stair-straight-large', kind: 'straight', x: 0.25, y: 0.27,
+    length: 0.28, width: 0.10, angle: 0, direction: 'forward',
+    target_space_id: 'golden-lighting' },
+  { id: 'golden-stair-straight-small', kind: 'straight', x: 0.72, y: 0.27,
+    length: 0.14, width: 0.065, angle: 45, direction: 'backward',
+    target_space_id: 'golden-lighting' },
+  { id: 'golden-stair-spiral-large', kind: 'spiral', x: 0.25, y: 0.73,
+    radius: 0.10, angle: 15, direction: 'clockwise',
+    target_space_id: 'golden-lighting' },
+  { id: 'golden-stair-spiral-small', kind: 'spiral', x: 0.72, y: 0.73,
+    radius: 0.06, angle: 210, direction: 'counterclockwise',
+    target_space_id: 'golden-lighting' },
+];
+
 export const GOLDEN_SCENARIOS = Object.freeze([
+  // #663 AC3/AC10/AC12: both stair geometries, both rise directions and
+  // small/large footprints across themes, flat/2.5D and interaction states.
+  { id: 'stairs-flat-normal-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    stairsOverride: stairLayerFixture, language: 'en', theme: 'light',
+    viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'stairs-flat-hover-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    stairsOverride: stairLayerFixture, hoverStair: 'golden-stair-straight-large',
+    language: 'ru', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'stairs-flat-selected-light', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
+    stairsOverride: stairLayerFixture, stairSelection: 'golden-stair-spiral-large',
+    language: 'en', theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'stairs-isometric-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    projection: 'iso', stairsOverride: stairLayerFixture,
+    language: 'en', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   // #486 AC7: the custom HA panel owns the full viewport. These three focused
   // frames pin its populated View, its Plan-editor chrome and the deliberately
   // inert read-only first-run state without duplicating the card matrix below.

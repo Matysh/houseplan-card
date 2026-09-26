@@ -6,6 +6,7 @@ export const SPACE_COPY_LIMITS = Object.freeze({
   openings: 500,
   decor: 1000,
   columns: 500,
+  stairs: 250,
 });
 
 export type SpaceCopyErrorCode =
@@ -16,6 +17,7 @@ export type SpaceCopyErrorCode =
   | 'openings_limit'
   | 'decor_limit'
   | 'columns_limit'
+  | 'stairs_limit'
   | 'opening_host_missing'
   | 'opening_host_unknown'
   | 'geometry_unsafe';
@@ -113,11 +115,13 @@ export function createSpaceCopyCandidate(
   const openings = geometryList(source.openings);
   const decor = geometryList(source.decor);
   const columns = geometryList(source.wall_columns);
+  const stairs = geometryList(source.stairs);
   const partitionCount = wallSegments.length + sourcePartitions.length;
   if (partitionCount > SPACE_COPY_LIMITS.partitions) throw new SpaceCopyError('partitions_limit');
   if (openings.length > SPACE_COPY_LIMITS.openings) throw new SpaceCopyError('openings_limit');
   if (decor.length > SPACE_COPY_LIMITS.decor) throw new SpaceCopyError('decor_limit');
   if (columns.length > SPACE_COPY_LIMITS.columns) throw new SpaceCopyError('columns_limit');
+  if (stairs.length > SPACE_COPY_LIMITS.stairs) throw new SpaceCopyError('stairs_limit');
 
   let serial = 0;
   const nextId = (prefix: string): string => `${prefix}${seed}${(serial++).toString(36)}`;
@@ -164,6 +168,7 @@ export function createSpaceCopyCandidate(
   });
   const copiedDecor = decor.map((item) => ({ ...clone(item), id: nextId('cd') }));
   const copiedColumns = columns.map((item) => ({ ...clone(item), id: nextId('cc') }));
+  const copiedStairs = stairs.map((item) => ({ ...clone(item), id: nextId('cs') }));
 
   const newSpaceId = `s${seed}`;
   if (spaces.some((item) => item.id === newSpaceId)) throw new SpaceCopyError('source_invalid');
@@ -181,6 +186,7 @@ export function createSpaceCopyCandidate(
   if (copiedOpenings.length) copiedSpace.openings = copiedOpenings;
   if (copiedDecor.length) copiedSpace.decor = copiedDecor;
   if (copiedColumns.length) copiedSpace.wall_columns = copiedColumns;
+  if (copiedStairs.length) copiedSpace.stairs = copiedStairs;
 
   const config = clone(input);
   config.spaces.splice(sourceIndex + 1, 0, copiedSpace);
