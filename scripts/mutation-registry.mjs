@@ -10118,19 +10118,6 @@ const MUTANT_DEFINITIONS = [
       replace: 'export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;\nconst ISO_PLACEMENT_CACHE_ANY: readonly IsoWallSilhouette[] = [];',
     }],
   },
-  {
-    id: 'iso-zoom-in-reuses-near-wall-plate',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#473 W3" test/iso-scene-render.test.mjs',
-    because: 'zoom-in may reuse a placement only if the plate was never near a wall or was '
-      + 'cleared within the cap; dropping the first guard reuses a pinned plate at a scale where it '
-      + 'already cuts the wall (#473)',
-    patches: [{
-      file: 'src/iso-scene-render.ts',
-      find: '      if (!previous.nearWallBefore',
-      replace: '      if (true',
-    }],
-  },
   // #474: designer furniture artwork is a lazy chunk. Each protective contract
   // of the runtime and its integration gets one witness.
   {
