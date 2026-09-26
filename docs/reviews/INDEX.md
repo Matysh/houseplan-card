@@ -1,11 +1,13 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1086, issue: 386. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1088, issue: 386. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #666 | [CODE-REVIEW-666-r1.md](CODE-REVIEW-666-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #665 | [SPEC-REVIEW-665-r1.md](SPEC-REVIEW-665-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | заявленная правка docs/ISOMETRIC.md | `docs/ISOMETRIC.md` `docs/adr/160-isometric-stage3-overlays.md` `check-docs.mjs` `ISOMETRIC.md` |
+| #665 | [CODE-REVIEW-665-r1.md](CODE-REVIEW-665-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | golden-влияние диффа занижено в отчёте автора вдвое-без-остатка: 0 заявлено, 8 подтверж…; , снято без возврата — расположение строки в docs/ISOMETRIC.md | `golden-report.json` `demo/golden/matrix.mjs` `demo/golden/harness.mjs` `AGENTS.md` `docs/ISOMETRIC.md` `src/iso-tiles.ts` `src/styles/iso-tiles.styles.ts` `src/styles/plan.styles.ts` |
+| #665 | [CODE-REVIEW-665-r2.md](CODE-REVIEW-665-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #664 | [CODE-REVIEW-664-r1.md](CODE-REVIEW-664-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #663 | [SPEC-REVIEW-663-r1.md](SPEC-REVIEW-663-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 0 | §6.2 (wall snap) и §8 (canonicalization/Optimize) описывают два; AC7 называет четыре состояния сломанной; AC13 не называет конкретный бюджет | `docs/CANVAS.md` `docs/WALL-THICKNESS.md` |
 | #663 | [SPEC-REVIEW-663-r2.md](SPEC-REVIEW-663-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
