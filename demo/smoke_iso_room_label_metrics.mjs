@@ -30,25 +30,27 @@ const out = await page.evaluate(async () => {
     const metrics = label.querySelector('.rlmetrics').getBoundingClientRect();
     return { id: label.dataset.id, name: name.height, gap: metrics.top - name.bottom };
   });
-  // Two cameras around the same centre: the label font follows the zoom.
-  const atZooms = async () => {
-    const base = { ...card._view };
-    const rows = [];
-    for (const factor of [1.6, 0.35]) {
-      const w = base.w * factor;
-      const h = base.h * factor;
-      card._view = { x: base.x + (base.w - w) / 2, y: base.y + (base.h - h) / 2, w, h };
-      card.requestUpdate();
-      await card.updateComplete;
-      await frame();
-      await frame();
-      rows.push(measure());
-    }
-    card._view = base;
-    card.requestUpdate();
+  // Two cameras through the public zoom controls: fit, then zoomed in until
+  // the label font has at least doubled (the font follows the zoom).
+  const settleCamera = async () => {
+    for (let guard = 0; card._cameraTransition?.active && guard < 90; guard++) await frame();
     await card.updateComplete;
     await frame();
-    return rows;
+  };
+  const press = async (hp) => {
+    root().querySelector(`[data-hp="${hp}"]`)?.click();
+    await settleCamera();
+  };
+  const atZooms = async () => {
+    await press('zoom-fit');
+    const first = measure();
+    let last = first;
+    for (let step = 0; step < 8 && last[0] && last[0].name < first[0].name * 2.2; step++) {
+      await press('zoom-in');
+      last = measure();
+    }
+    await press('zoom-fit');
+    return [first, last];
   };
 
   await window.__hpTest.setVolumetricView(false);
