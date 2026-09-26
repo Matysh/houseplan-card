@@ -324,6 +324,9 @@ byte-for-byte unchanged. Side-by-side acceptance frames:
 - Light or dark floor is decided per room: the room fill at its opacity over
   the plan paper, luma > 0.55 is light (`isoLightFloorRooms`). A marker belongs
   to the room of its overlay owner or, without walls, to the room under it.
+- A raised room label keeps its 44 × 44 px touch floor in an invisible
+  `::before`, like door locks; the label box itself is sized by its text, so
+  the metrics row keeps the Flat distance from the name at every zoom (#665).
 - Hover / focus-visible / selected / alert frames hug tile and edge
   (bbox + 0.075 D per side, + edge height) and float with the tile: `#0C82F0`,
   `#0C82F0`, `#F0A00C`, `#F0410C`, priority Alert > Focus > Selected > Hover.

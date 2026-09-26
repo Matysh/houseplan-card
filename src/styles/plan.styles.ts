@@ -691,14 +691,28 @@ export const planStyles = css`
     }
     .stage.projection-iso.mode-view .roomlabel {
       box-sizing: border-box;
-      min-width: 44px;
-      min-height: 44px;
-      justify-content: center;
       text-shadow: none;
       filter: none;
       -webkit-text-stroke: 0 transparent;
       /* #649 3b: the configured room label colour (inline, as in Flat) is
          kept in both themes; 2.5D only drops stroke, shadow and halo. */
+    }
+    /* #665: the 44 x 44 px touch floor of a raised room label is an invisible
+       pseudo-element, as on door locks: sizing the label box itself centred the
+       name in 44 px and pushed the absolutely placed metrics row away from it
+       by (44 - name height) / 2, so the metrics drifted as the zoom changed the
+       font. z-index -1 paints the floor below the label content, inside the
+       label's own stacking context (z-index 1). */
+    .stage.projection-iso.mode-view .roomlabel::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: max(44px, 100%);
+      height: max(44px, 100%);
+      transform: translate(-50%, -50%);
+      z-index: -1;
+      pointer-events: auto;
     }
     /* Interactive raised overlays stay above passive room names. Collision
        placement never needs to move or promote a label to make a device usable. */

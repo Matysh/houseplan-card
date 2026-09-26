@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- In the 2.5D plan the metrics row under a room name (temperature, humidity,
+  Zigbee signal, lights) no longer drifts while zooming: it keeps the same
+  distance from the name at every zoom, exactly as on the flat plan. The room
+  label keeps its 44 × 44 px touch target
+  ([#665](https://github.com/Matysh/houseplan-card/issues/665)).
 - The close **×** of the active editor now sits inside the highlighted tab: the
   accent fill of the active Plan, Devices or Decor tab continues over the
   cross, which is drawn in the tab's text colour, and the keyboard focus ring

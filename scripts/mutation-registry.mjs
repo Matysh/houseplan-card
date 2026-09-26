@@ -3392,6 +3392,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'iso-room-label-44-box-centres-name',
+    guard: 'node demo/smoke_iso_room_label_metrics.mjs',
+    because: '#665: sizing the raised label box to 44 px centres the name in it and pushes the metrics row away by (44 - name) / 2, so the gap drifts with zoom',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: "    .stage.projection-iso.mode-view .roomlabel {\n      box-sizing: border-box;\n",
+      replace: "    .stage.projection-iso.mode-view .roomlabel {\n      box-sizing: border-box;\n      min-height: 44px;\n      justify-content: center;\n",
+    }],
+  },
+  {
     id: 'static-card-descendants-hit-testable',
     guard: 'node demo/smoke_space_card.mjs',
     because: '#664: pointer-events:none on the stage does not stop a descendant that opts back in; '
