@@ -1665,7 +1665,14 @@ Shared, framework-light modules keep the two views from diverging:
   clearing the visible static snapshot.
 
 **Static contract:** the schematic layer (`.hp-static-stage`) is `pointer-events:none`; the
-footer button lives outside it and stays clickable.
+footer button lives outside it and stays clickable. `pointer-events` is not an
+inherited ban, so the card also closes every descendant opt-in
+(`.hp-static-stage *, *::before, *::after`): the shared marker styles re-enable
+the 44 px floor and painted capsule for the interactive plan (#564), and
+without that rule the schematic showed a pointer cursor over markers and
+swallowed clicks (#664). `demo/smoke_space_card.mjs` asserts it with the
+browser's own hit test (`elementFromPoint` over the marker and a grid across
+the stage), not with the stage's computed style.
 
 **Static frame contract:** `fit` is normalised to `content | house`, with every
 missing, empty or unknown value resolving to `content`. The default calls the

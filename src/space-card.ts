@@ -949,6 +949,18 @@ class HouseplanSpaceCard extends LitElement {
         pointer-events: none; /* kill ALL interaction on the schematic (§4) */
         background: var(--ha-card-background, var(--card-background-color, #111));
       }
+      /* #664: pointer-events is not an inherited ban — a descendant with its
+         own 'pointer-events: auto' becomes a hit target again. The shared
+         marker styles opt the 44 px floor (.dev::before) and the painted
+         capsule (.device-shell-frame) back in for the interactive plan
+         (#564), and this card imports them whole: the schematic then showed a
+         pointer cursor over every marker and swallowed clicks that do nothing.
+         Close every opt-in for the whole subtree, pseudo-elements included. */
+      .hp-static-stage *,
+      .hp-static-stage *::before,
+      .hp-static-stage *::after {
+        pointer-events: none;
+      }
       .hp-static-stage > svg {
         position: absolute;
         inset: 0;

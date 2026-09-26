@@ -3392,6 +3392,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'static-card-descendants-hit-testable',
+    guard: 'node demo/smoke_space_card.mjs',
+    because: '#664: pointer-events:none on the stage does not stop a descendant that opts back in; '
+      + 'without the subtree rule the shared #564 capsule shows a pointer cursor and swallows clicks',
+    patches: [{
+      file: 'src/space-card.ts',
+      find: "      .hp-static-stage *,\n      .hp-static-stage *::before,\n      .hp-static-stage *::after {\n        pointer-events: none;\n      }\n",
+      replace: "",
+    }],
+  },
+  {
     id: 'fit-house-hidden-walls-vote',
     guard: 'node demo/smoke_space_card.mjs',
     because: 'hidden architecture silently widening the tight frame is exactly the #384 bug: '

@@ -138,6 +138,31 @@ const res = await page.evaluate(async () => {
     .map((value) => value.trim().toLowerCase()).filter(Boolean);
   const btn = card.renderRoot.querySelector('.hp-static-btn');
 
+  // #664: the stage is pointer-events:none, but that is not an inherited ban —
+  // a descendant that opts back in (the shared 44 px floor and painted capsule
+  // of #564) becomes a hit target again, shows a pointer cursor and swallows
+  // clicks that do nothing. Ask the browser's hit test itself, not the stage's
+  // computed style: nothing inside the schematic may be under the pointer.
+  litMarker?.scrollIntoView({ block: 'center', inline: 'center' });
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const hitAt = (x, y) => card.renderRoot.elementFromPoint(x, y);
+  const insideStage = (el) => !!el && !!stage && (el === stage || stage.contains(el));
+  const markerBox = litMarker?.getBoundingClientRect();
+  const markerHit = markerBox
+    ? hitAt(markerBox.left + markerBox.width / 2, markerBox.top + markerBox.height / 2) : null;
+  const stageBox = stage?.getBoundingClientRect();
+  const gridHits = [];
+  if (stageBox) {
+    for (let i = 1; i < 10; i += 1) {
+      for (let j = 1; j < 10; j += 1) {
+        const x = stageBox.left + (stageBox.width * i) / 10;
+        const y = stageBox.top + (stageBox.height * j) / 10;
+        if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
+        gridHits.push(hitAt(x, y));
+      }
+    }
+  }
+
   // deep-link: clicking the button pushes #space=<id>
   let pushed = null;
   const orig = history.pushState;
@@ -152,6 +177,14 @@ const res = await page.evaluate(async () => {
 
   return {
     stagePointerEvents: pe,
+    markerProbe: markerHit ? {
+      insideStage: insideStage(markerHit),
+      element: `${markerHit.tagName.toLowerCase()}.${[...markerHit.classList].join('.')}`,
+      cursor: getComputedStyle(markerHit).cursor,
+    } : null,
+    stageGridProbes: gridHits.length,
+    stageGridHitsInside: gridHits.filter(insideStage).length,
+    stageGridPointerCursors: gridHits.filter((el) => el && getComputedStyle(el).cursor === 'pointer').length,
     markers,
     litMarkerOn: !!litMarker?.classList.contains('on'),
     sharedFacePresent: !!litMarker?.querySelector('ha-icon'),
@@ -221,6 +254,10 @@ const res = await page.evaluate(async () => {
 await browser.close();
 const ok =
   res.stagePointerEvents === 'none' &&
+  // #664 AC1/AC2: the browser's hit test finds nothing inside the schematic —
+  // not the marker, not the paper — and no probe shows a pointer cursor.
+  res.markerProbe && !res.markerProbe.insideStage && res.markerProbe.cursor !== 'pointer' &&
+  res.stageGridProbes >= 40 && res.stageGridHitsInside === 0 && res.stageGridPointerCursors === 0 &&
   res.markers > 0 &&
   res.litMarkerOn &&
   res.sharedFacePresent &&
@@ -263,4 +300,4 @@ console.log(JSON.stringify(res));
 // именно остановить: иначе строка успеха печатается после «FAILED».
 if (await reportPageErrors()) process.exit(1);
 if (!ok) { console.error('FAIL space-card smoke'); process.exit(1); }
-console.log('OK space-card: live shared marker face, pointer-events:none, deep-link button, error card');
+console.log('OK space-card: live shared marker face, pointer-events:none, nothing hit-testable in the schematic (#664), deep-link button, error card');

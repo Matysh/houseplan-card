@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- The static space card (`houseplan-space-card`) no longer shows a hand cursor
+  over device markers and no longer swallows clicks there: the whole schematic
+  is inert again, as documented, with an ordinary cursor everywhere and the
+  footer button as the only clickable control. The regression came with the
+  overlapping-marker fix in v1.76.0-beta.2
+  ([#664](https://github.com/Matysh/houseplan-card/issues/664)).
+
 ## v1.78.0-beta.4 — 2026-09-26
 
 - The main toolbar is steadier and more compact: its editor close **×** now
