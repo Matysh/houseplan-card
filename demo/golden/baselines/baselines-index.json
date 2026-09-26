@@ -1,7 +1,7 @@
 {
   "schema": 3,
   "matrixVersion": 65,
-  "acceptedAt": "2026-09-26T20:01:26.797Z",
+  "acceptedAt": "2026-09-26T20:22:29.170Z",
   "sourceFingerprint": "7e028199e7544b3dde07a114c45da5b8210b48cb4acc36fda89afed623c8eea3",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
@@ -15,15 +15,15 @@
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v1",
-    "sha256": "77197ca53de1a025863f8213f5239f8122b2b844a8b77a8d485e27caa65a3a98",
-    "artifactSha256": "513a5fe71303935f127a9c0995fa904cc085ee7112821224bee1fa33b68aa1c1",
-    "createdAt": "2026-09-26T20:01:18.977Z",
+    "sha256": "d5dabad3567794d874ee57e8b233990f1d801511c5e56ff08fdf6706c71d8464",
+    "artifactSha256": "a700e4de18f2bea58646b227f95927803dbced5444ba9e60a4ce873a68aac584",
+    "createdAt": "2026-09-26T20:22:22.375Z",
     "source": {
       "repository": "Matysh/houseplan-card",
       "branch": "issue/663-stairs",
-      "commit": "16ede0c0277b576acb079b3cffa8292de72a499a",
-      "tree": "c90d133f2e4637e341fd81d76bcb6efddd29aa56",
-      "remoteSha": "16ede0c0277b576acb079b3cffa8292de72a499a",
+      "commit": "ce26a051e626481cd3ac852be8d1418b860d9ef9",
+      "tree": "e8016bcf943a1a986e3cd2e812ab8e766c3e26f8",
+      "remoteSha": "ce26a051e626481cd3ac852be8d1418b860d9ef9",
       "clean": true,
       "status": ""
     },
@@ -44,7 +44,7 @@
   },
   "foreignCapture": null,
   "witnesses": {
-    "count": 128,
+    "count": 126,
     "floor": 10
   },
   "scenarios": {
