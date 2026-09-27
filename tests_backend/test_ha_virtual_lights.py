@@ -130,6 +130,50 @@ async def test_unload_flushes_a_toggle_still_inside_the_debounce_window(
     assert (await _get_config(restarted))["virtual_lights"]["off"] == ["lamp"]
 
 
+async def test_home_assistant_stop_flushes_pending_virtual_light_and_trail(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    monkeypatch,
+) -> None:
+    from custom_components.houseplan import trails as trails_module
+    from custom_components.houseplan import virtual_lights as virtual_lights_module
+
+    monkeypatch.setattr(virtual_lights_module, "SAVE_DELAY_S", 3600)
+    monkeypatch.setattr(trails_module, "SAVE_DELAY_S", 3600)
+    entry = await _setup(hass)
+    client = await hass_ws_client(hass)
+    await _set_config(client, _config(_manual()), 0)
+    assert (await _toggle(client))["result"]["on"] is False
+
+    recorder = hass.data[DOMAIN]["trail_recorder"]
+    assert recorder.book.on_point("vacuum", "floor", 1.0, 2.0, 10.0)
+    assert recorder.book.end_run("vacuum", 11.0)
+    recorder._schedule_save()
+    expected_trails = {
+        "vacuum": {
+            "current": {
+                "map_id": "floor",
+                "started": 10.0,
+                "ended": 11.0,
+                "points": [[1.0, 2.0]],
+            },
+        },
+    }
+
+    assert (await entry.runtime_data.virtual_light_store.async_load())["off"] == []
+    assert await recorder.store.async_load() is None
+    await client.close()
+
+    await hass.async_stop()
+
+    assert await entry.runtime_data.virtual_light_store.async_load() == {
+        "rev": 1,
+        "config_rev": 1,
+        "off": ["lamp"],
+    }
+    assert await recorder.store.async_load() == expected_trails
+
+
 async def test_lifecycle_preserves_hidden_and_prunes_when_eligibility_ends(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
 ) -> None:

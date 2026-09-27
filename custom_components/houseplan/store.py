@@ -133,7 +133,7 @@ def create_data(hass: HomeAssistant) -> HouseplanData:
     )
     from .virtual_lights import VirtualLightController
 
-    data.virtual_lights = VirtualLightController(data.virtual_light_store)
+    data.virtual_lights = VirtualLightController(hass, data.virtual_light_store)
     return data
 
 

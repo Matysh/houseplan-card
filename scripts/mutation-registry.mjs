@@ -13015,6 +13015,32 @@ const MUTANT_DEFINITIONS = [
       replace: "  return previous?.key === '__never__'",
     }],
   },
+  {
+    id: 'shutdown-skips-deferred-store-flush',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'home_assistant_stop_flushes_pending_virtual_light_and_trail '
+      + 'tests_backend/test_ha_virtual_lights.py',
+    because: '#655 AC1/AC2: the HA stop event must synchronously flush both deferred stores; '
+      + 'otherwise the latest virtual-light toggle and vacuum-trail points disappear on restart',
+    patches: [{
+      file: 'custom_components/houseplan/__init__.py',
+      find: '        await _async_flush_runtime(hass, entry)\n\n    stop_listener = [',
+      replace: '        return  # mutant: shutdown drops both pending stores\n\n    stop_listener = [',
+    }],
+  },
+  {
+    id: 'virtual-light-save-bypasses-ha-task-tracking',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'runtime_controller_coalesces_rapid_toggles '
+      + 'tests_backend/test_virtual_lights.py',
+    because: '#655 AC4: HA must own the delayed writer so normal shutdown waits for it; a raw '
+      + 'asyncio task can be cancelled before its 0.5 second debounce reaches durable storage',
+    patches: [{
+      file: 'custom_components/houseplan/virtual_lights.py',
+      find: '            self._save_task = self.hass.async_create_task(self._delayed_save())\n',
+      replace: '            self._save_task = asyncio.create_task(self._delayed_save())\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

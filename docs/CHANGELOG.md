@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Manual virtual-light state and the latest vacuum-trail points are now flushed
+  when Home Assistant stops, so changes still inside their 0.5 s / 10 s write
+  debounce windows survive an ordinary restart
+  ([#655](https://github.com/Matysh/houseplan-card/issues/655)).
+
 ## v1.78.0-beta.5 — 2026-09-27
 
 - The Plan editor can now place straight and one-turn spiral stair objects with

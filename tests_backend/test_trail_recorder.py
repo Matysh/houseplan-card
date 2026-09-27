@@ -859,11 +859,28 @@ def test_async_teardown_flushes_pending_debounced_state_and_closes_handles():
     rec._unsub_track = lambda: untracked.append(True)
 
     _run_isolated(rec.async_teardown())
+    _run_isolated(rec.async_teardown())
 
     assert saved == [rec.book.data]
     assert cancelled == [True]
     assert untracked == [True]
     assert rec._unsub_save is None and rec._unsub_track is None
+    assert rec._closed is True
+
+
+def test_async_teardown_is_idempotent_and_never_writes_without_pending_state():
+    rec, _hass, _states = _rec()
+    saved = []
+
+    class TrailStore:
+        async def async_save(self, data):
+            saved.append(json.loads(json.dumps(data)))
+
+    rec.store = TrailStore()
+    _run_isolated(rec.async_teardown())
+    _run_isolated(rec.async_teardown())
+
+    assert saved == []
     assert rec._closed is True
 
 

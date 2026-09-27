@@ -39,6 +39,15 @@ class FakeStore:
         self.writes.append(data)
 
 
+class FakeHass:
+    def __init__(self):
+        self.created_tasks = 0
+
+    def async_create_task(self, coroutine):
+        self.created_tasks += 1
+        return asyncio.create_task(coroutine)
+
+
 def _config(*markers):
     return {"spaces": [], "markers": list(markers), "settings": {}}
 
@@ -102,16 +111,18 @@ def test_runtime_controller_coalesces_rapid_toggles_into_one_durable_write():
         old_delay = _vl.SAVE_DELAY_S
         _vl.SAVE_DELAY_S = 0.01
         try:
+            hass = FakeHass()
             store = FakeStore()
-            controller = VirtualLightController(store)
+            controller = VirtualLightController(hass, store)
             first = await controller.async_toggle(_config(_manual("lamp")), 1, "lamp")
             second = await controller.async_toggle(_config(_manual("lamp")), 1, "lamp")
             await controller.async_flush()
-            return first, second, store
+            return first, second, store, hass
         finally:
             _vl.SAVE_DELAY_S = old_delay
 
-    first, second, store = _run(exercise())
+    first, second, store, hass = _run(exercise())
     assert first == {"marker_id": "lamp", "on": False, "rev": 1}
     assert second == {"marker_id": "lamp", "on": True, "rev": 2}
     assert store.writes == [{"rev": 2, "config_rev": 1, "off": []}]
+    assert hass.created_tasks == 1, "the delayed writer must be tracked by HA"

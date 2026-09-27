@@ -7,6 +7,8 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+
     from .store import HouseplanStore
 
 
@@ -81,12 +83,14 @@ def _snapshot_payload(
 class VirtualLightController:
     """Runtime cache with coalesced durable writes for rapid toggles."""
 
-    def __init__(self, store: HouseplanStore) -> None:
+    def __init__(self, hass: HomeAssistant, store: HouseplanStore) -> None:
+        self.hass = hass
         self.store = store
         self._state: dict[str, Any] | None = None
         self._dirty = False
         self._save_task: asyncio.Task[None] | None = None
         self._flush_event = asyncio.Event()
+        self._flush_lock = asyncio.Lock()
 
     async def async_snapshot(
         self, config: dict[str, Any], config_rev: int,
@@ -127,7 +131,7 @@ class VirtualLightController:
 
     def _schedule_save(self) -> None:
         if self._save_task is None or self._save_task.done():
-            self._save_task = asyncio.create_task(self._delayed_save())
+            self._save_task = self.hass.async_create_task(self._delayed_save())
 
     async def _delayed_save(self) -> None:
         try:
@@ -156,16 +160,17 @@ class VirtualLightController:
 
     async def async_flush(self) -> None:
         """Persist the latest state before config transitions or unload."""
-        task = self._save_task
-        if task is not None:
-            self._flush_event.set()
-            await task
-        if self._dirty and self._state is not None:
-            payload = copy.deepcopy(self._state)
-            await self.store.async_save(payload)
-            self._dirty = False
-        if not self._dirty:
-            self._flush_event.clear()
+        async with self._flush_lock:
+            task = self._save_task
+            if task is not None:
+                self._flush_event.set()
+                await task
+            if self._dirty and self._state is not None:
+                payload = copy.deepcopy(self._state)
+                await self.store.async_save(payload)
+                self._dirty = False
+            if not self._dirty:
+                self._flush_event.clear()
 
     def reset(self) -> None:
         """Forget cache after an external reconciliation wrote the store."""

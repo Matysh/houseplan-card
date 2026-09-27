@@ -6,6 +6,7 @@ import logging
 from datetime import timedelta
 from pathlib import Path
 
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.event import async_track_time_interval
@@ -37,6 +38,30 @@ from .store import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+async def _async_flush_runtime(
+    hass: HomeAssistant, entry: HouseplanConfigEntry,
+) -> None:
+    """Stop deferred writers and persist their latest state once.
+
+    Home Assistant stop and config-entry unload share this exact path.  Both
+    writers are independently guarded so one failed store cannot prevent the
+    other from reaching disk during shutdown.
+    """
+    recorder = hass.data.get(DOMAIN, {}).get("trail_recorder")
+    if recorder is not None:
+        try:
+            await recorder.async_teardown()
+        except Exception:  # noqa: BLE001 - shutdown must continue with other stores
+            _LOGGER.exception("House Plan: flushing vacuum trails failed")
+
+    virtual_lights = getattr(entry.runtime_data, "virtual_lights", None)
+    if virtual_lights is not None:
+        try:
+            await virtual_lights.async_flush()
+        except Exception:  # noqa: BLE001 - shutdown must continue with other stores
+            _LOGGER.exception("House Plan: flushing virtual-light state failed")
 
 
 async def async_setup(hass: HomeAssistant, config) -> bool:
@@ -252,6 +277,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     # sidebar entry after a migration, repair or initial housekeeping failure.
     panel_path = Path(__file__).parent / "frontend" / "houseplan-panel.js"
     await async_setup_panel_registration(hass, entry, panel_path)
+
+    async def _flush_on_stop(_event) -> None:
+        stop_listener[0] = None
+        await _async_flush_runtime(hass, entry)
+
+    stop_listener = [hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _flush_on_stop)]
+
+    def _remove_stop_listener() -> None:
+        if stop_listener[0] is not None:
+            stop_listener[0]()
+            stop_listener[0] = None
+
+    entry.async_on_unload(_remove_stop_listener)
     return True
 
 
@@ -263,12 +301,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) -
     entry is loaded. Static paths cannot be unregistered by design.
     """
     remove_panel_registration(hass)
-    rec = hass.data.get(DOMAIN, {}).pop("trail_recorder", None)
-    if rec:
-        await rec.async_teardown()
-    virtual_lights = getattr(entry.runtime_data, "virtual_lights", None)
-    if virtual_lights is not None:
-        await virtual_lights.async_flush()
+    await _async_flush_runtime(hass, entry)
+    hass.data.get(DOMAIN, {}).pop("trail_recorder", None)
     if entry.runtime_data.radar_coordinator:
         entry.runtime_data.radar_coordinator.teardown()
         entry.runtime_data.radar_coordinator = None
