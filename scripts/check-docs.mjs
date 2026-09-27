@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
 import { visualFingerprint } from './source-fingerprint.mjs';
 import { freshnessSink, screenshotsMode } from './docs-freshness.mjs';
+import { guideParityErrors } from './user-guide-parity.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const EXTERNAL = process.argv.includes('--external');
@@ -183,6 +184,11 @@ for (const [en, ru, required] of [
     if (!enMarkers.includes(marker)) errors.push(`${en} / ${ru}: missing required section marker ${marker}`);
   }
 }
+
+errors.push(...guideParityErrors(
+  canonicalText(resolve(ROOT, 'docs/USER-GUIDE.md')),
+  canonicalText(resolve(ROOT, 'docs/USER-GUIDE.ru.md')),
+));
 
 const staleTerms = [
   [/\bMarkup (?:tab|mode|editor)\b/gi, 'Plan'],

@@ -1,6 +1,6 @@
 # House Plan — complete user guide
 
-Current for **v1.73.0**. This guide describes the interface implemented by the
+Current for **v1.78.0-beta.5**. This guide describes the interface implemented by the
 current source. [Русская версия](USER-GUIDE.ru.md).
 
 House Plan adds a dedicated **House Plan** page to the Home Assistant sidebar.
@@ -57,16 +57,17 @@ override them; a room may override its space; a marker may override its room.
 | Level | Meaning | Stored data |
 |---|---|---|
 | Panel/card | Primary sidebar page or one optional dashboard instance | Last/initial space; dashboard cards may additionally set language, icon size, value/LQI display, kiosk and cycle |
-| Global settings | Defaults for all spaces | Fill palette, background, Glow radius, north, sun, room-hover information and icon rules |
+| Global settings | Defaults for all spaces | Fill palette, background, Glow radius, north, sun, room-hover information, 2.5D view and icon rules |
 | Space | Floor, yard, garage or building | Plan image, scale, rooms, walls, openings, decor and display settings |
 | Room | A closed outline | Name, optional HA area, temperature/humidity source and local fill |
 | Wall | A room-contour or independent segment | Stable identity and thickness from 0 to 100 cm; zero-thickness appearance is selected per space |
-| Opening | Door, window or gate on a wall | Size, orientation, contact and optional lock |
+| Opening | Door, window, open passage or gate on a room wall or completed independent wall | Size, orientation where applicable, contact and optional lock |
 | Marker | A device shown on the plan | HA binding, room, action, presentation, light role and attachments |
-| Background item | Visual context | Line, shape, text, furniture or plan-image transform |
+| Decor | Background-layer item | Line, shape, text, furniture or plan-image transform |
 
-A room is the spatial unit that owns area and an optional HA area. A partition
-or column affects the physical rendering and light but does not create a room.
+Room walls are derived from the room's closed contour. Open and free-standing
+walls are stored separately as independent walls; they do not create a room or
+floor on their own.
 
 <!-- docs-section: installation -->
 
@@ -252,6 +253,19 @@ it again after the editor is neutral to return to View.
 | Kiosk | Actionable as in View | Read-only | Read-only; no editors |
 | Static card | Live states, values and alarms as in View (`live_states`), no tooltips or more-info | Render only | Render only; not interactive |
 
+### Phone header
+
+At a width of 480 px or less, the header stays on one row: the horizontally
+scrollable space tabs, zoom controls and one **Actions and settings** gear. The
+card title is hidden and the current tab remains visible. The gear contains
+**Plan editor**, **Device editor**, **Background editor**, **Configure space**,
+**Add space**, **General settings**, **Save as PDF** and **Help & feedback** for
+an administrator. In View it also contains **Summary panel settings** and the
+local show/hide action for every user. Selecting an item closes the menu;
+Escape or a tap outside only closes it and never activates the plan below. In
+an editor the close button remains in the row, while the editor buttons live
+in the menu. Wider screens keep the regular header; kiosk has no header.
+
 ### Summary panel
 
 The two-part control at the end of the View header opens **Summary panel
@@ -351,7 +365,8 @@ path approximation derived from the neighbour snapshot, not the route used by
 every current packet. The layer does not appear on touch/pen, in kiosk, in
 editors or in the static card, and hovering never starts a scan.
 
-Each editor has a stable primary toolbar. Tool parameters and selected-object
+The editor grid continues across the whole working canvas; View does not show
+it. Each editor has a stable primary toolbar. Tool parameters and selected-object
 actions appear in a context tray over the top of the canvas. On a narrow screen
 the tray scrolls horizontally instead of shrinking the plan.
 
@@ -369,12 +384,52 @@ have opacity show it in the picker; colour-only settings do not acquire one.
 **Default** and **Inherited** background actions remain beside the colour
 sample and do not save the displayed fallback unless a colour is changed.
 
+### Contextual setting help
+
+A circled question mark beside a complex setting opens a short explanation
+without changing the value. It works with mouse, keyboard and tap, closes on
+`Escape` before the owning dialog and does not add another scrollbar. Help is
+available for space scale, global and local background, north, room fill,
+global and per-marker Glow radius, zero-thickness wall style, light-source role
+and links, binding, icon, marker display and size, and **Show hidden on plan**.
+The zero-thickness help also states that dashed lines pass Glow and sunlight,
+while solid lines block them.
+
+### How settings dialogs work
+
+The four dialogs — **Space**, **General settings**, **Room settings** and
+**Device on the plan** — use the same 560 px-wide form with one scrollbar.
+Settings are grouped into cards; a card or field may carry a `?` help action.
+
+| Element | Appearance | Behaviour |
+|---|---|---|
+| Switch row | Icon, title, caption and switch on the right | The whole row toggles one setting |
+| Segment | A short set of choices in one frame | Works like a radio group, including arrow keys and screen readers |
+| Colour plate/tile | Colour, HEX and opacity where supported | Opens the House Plan picker; the number edits opacity directly |
+| Field with a unit | Number plus `cm`, `°C`, `m`, `%` or `°` | Empty means inheritance only where the help explicitly says so |
+| Slider with a number | Slider, editable value and optional reset | Drag the slider or type an exact value |
+| Picker button | Dropdown-styled button | Expands search and results inside the card, not over it |
+| Chips | Selected items with remove buttons | Used for linked lights and attachments |
+| State message | Tinted row with an icon | Explains a current problem or a consequence of Save; it is never hidden under `?` |
+
+**Save** is enabled only after a change; no footer sentence duplicates that
+state. Closing with an unsaved draft through the close button, **Cancel** or a
+click outside first asks whether to discard it. **Continue** keeps the draft and
+reopens the form; **Discard** closes it. Invalid required values are explained
+under the field, and **Review N fields** moves to the first problem. Empty room
+temperature bounds are the deliberate exception: each inherits its space
+value. If Home Assistant recreates the card without a full page reload, an
+open dialog, its draft and its original comparison point are restored for a
+short window; a full reload does not restore drafts.
+
 <!-- docs-section: input -->
 
 ## 6. Navigation, zoom and input
 
-The canvas grows with actual content. **Fit all** frames rooms and any distant
-objects; each space keeps its local View viewport.
+The canvas is effectively infinite: objects may be drawn outside the original
+plan square. **Fit all** frames the actual content. The View and kiosk touch
+gestures below are supported; editor touch is best effort, so use a desktop for
+precise drawing, Resize, keyboard modifiers and double-click properties.
 
 | Scenario | Mouse | Touch View | Touch editors | Keyboard |
 |---|---|---|---|---|
@@ -386,24 +441,43 @@ objects; each space keeps its local View viewport.
 | Editor history | Undo/Redo controls | Not applicable | Controls may work; no gesture guarantee | `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, `Ctrl+Y` |
 | Kiosk sizing | — | Hold empty space for 3 seconds | — | — |
 
-At zoom above 1:1 a horizontal kiosk gesture pans instead of changing space.
-Any manual kiosk operation pauses auto-cycle for 60 seconds.
+Important details:
 
-Wheel, `−`/`+`, **Fit all**, the return arrow and a free-background
-double-click/tap in View or kiosk use a short smooth camera transition. Rapid
-wheel input changes the current destination
-instead of building a queue. Pinch and pan stay directly under the fingers.
-With the operating system's reduced-motion preference enabled, every zoom
-command is immediate.
+- wheel, `−`/`+`, **Fit all**, the return arrow and a free-background
+  double-click/tap in View or kiosk use a short smooth camera transition;
+  rapid wheel events update one destination instead of building a queue;
+- pinch and pan remain directly under the fingers; reduced motion makes every
+  commanded zoom immediate, and panning works at every zoom;
+- fitting a room uses its visible floor and walls, but not markers, labels,
+  Glow, sun rays, backdrop or decor. Manual pan/zoom and **Fit all** release the
+  fitted-room hold on the next resize;
+- each space keeps its own local View viewport. Editor pan/zoom is a working
+  view and does not replace it;
+- a hint appears when objects lie far away from the main plan;
+- above 1:1, a horizontal kiosk gesture pans instead of changing space. Any
+  manual kiosk operation pauses auto-cycle for 60 seconds;
+- `Shift` keeps positional grid snapping. For room walls it locks the current
+  segment to the nearest 45° direction; in Background it creates a square or
+  circle, allows independent axes for ordinary decor, unlocks furniture
+  proportions and snaps furniture rotation to 45°. On the compass it enables
+  a 15° step.
 
 ### Cancel and undo
 
-- `Esc` finishes an active Walls chain without deleting its accepted segments.
-  In Split and other tools it cancels the unfinished path, current
-  drag/resize/rotation, or the top dialog without undoing an already committed
-  action.
-- `Ctrl/Cmd+Z` undoes an editor command; redo is `Ctrl/Cmd+Shift+Z` or `Ctrl+Y`.
-- Undo/Redo stores up to 50 named commands for Plan and Background.
+| Context | `Esc` | `Ctrl+Z` / `Cmd+Z` | `Ctrl+Shift+Z` / `Ctrl+Y` |
+|---|---|---|---|
+| Active **Walls** chain | Finishes accepted segments as independent walls and keeps the tool active | Removes the last accepted point and segment | — |
+| Unfinished Split | Removes the last point or leaves the tool | Removes the unfinished point first | — |
+| Any other Plan tool | Cancels the current gesture or selection | Undoes the last named geometry command | Redoes it |
+| Background | Cancels unfinished drawing or restores the state from before the active move/resize/rotate | Undoes the last named decor/backdrop command | Redoes it |
+| Text field | Closes the top dialog | Browser text undo | Browser text redo |
+
+Plan and Background share one 50-command geometry history. Both toolbars have
+**Undo** and **Redo**, whose tooltip names the next command. The history lasts
+for the current card session and resets safely when a newer external plan
+revision arrives. In every dialog, `Tab` and `Shift+Tab` stay inside the open
+surface; `Esc` closes the top one and focus returns to the control that opened
+it, including through nested dialogs.
 
 <!-- docs-section: spaces -->
 
@@ -414,33 +488,23 @@ its image, grid scale, geometry, Background layer and display overrides.
 
 ### Plan source
 
-- upload SVG, PNG, JPG or WebP;
-  Very large rasters (roughly 32 megapixels and up) are recognised from the
-  file header before anything heavy happens: a dialog shows the exact
-  resolution and memory numbers and offers a safe reduced copy. Your original
-  file is never modified and the current plan stays untouched in every
-  outcome. Images wider than 16384 px per side cannot be displayed by
-  browsers at all — reduce those on a desktop first. SVG uploads as-is and is
-  never rasterised.
-- select a previously uploaded plan;
-- choose no image and draw the geometry by hand.
+| Choice | Use it when | Behaviour |
+|---|---|---|
+| Image | You already have a drawing or photo | SVG, PNG, JPG or WebP; proportions are preserved and Background can move, scale or rotate it later |
+| Previously uploaded file | A plan is reused or already stored on the server | Pick it from the server list; a file used by a space cannot be deleted |
+| No image | You will draw directly in House Plan | The paper follows room contours; borders and names start enabled |
+| Import HA floors | Home Assistant already has a floor registry | A wizard creates spaces in order and lets you skip any floor |
 
-The plan image keeps its proportions initially. Background can later move,
-scale or rotate it. Detaching a plan never deletes its server file; deletion
-requires an explicit user action.
+Very large rasters (roughly 32 megapixels and up) are recognised from the file
+header before heavy work starts. A dialog shows exact resolution and memory
+figures and offers a safe reduced copy. The original and the current plan stay
+untouched in every outcome. Browsers cannot display a side wider than 16384 px;
+reduce such an image on a desktop first. SVG is never rasterised.
 
-### Grid scale
-
-The scale field is the real size of one grid cell. A new metric space starts at
-**1 cm per cell**; with an imperial Home Assistant unit system it starts at
-**1 in per cell** and the field is shown in inches. Floor import uses the same
-default for every new space.
-
-Choose a finer cell when you need more precise snap points. It changes only the
-number of grid points per metre, not how the finished plan looks: physically
-equal rooms, walls, openings, labels and markers retain the same appearance.
-Existing spaces keep their stored scale. A legacy space without a scale still
-uses the 5 cm compatibility fallback and is not silently migrated.
+An image-backed new space starts with borders and names off. **No image** starts
+with both on. Once either choice is edited, switching source no longer resets
+it. Every floor-import step receives its own clean defaults. Detaching an image
+never deletes the server file; deletion always requires an explicit action.
 
 ### Tab order
 
@@ -461,45 +525,27 @@ number means a position: after a reorder such a card shows a different floor.
 The card warns about this once. Pin the floor by space id instead of a number to
 avoid it entirely.
 
-### How the settings dialogs work
+### Space settings
 
-The four settings dialogs — **Space**, **General settings**, **Room settings**
-and **Device on the plan** — share one layout: a 560 px form with a single
-scrollbar and the space name in the title, with settings grouped into flat
-cards that carry a heading and a `?`. Inside the cards you meet the same
-elements:
-
-| Element | Looks like | Does |
+| Card | Setting | Result |
 |---|---|---|
-| Switch row | Icon, title, caption and a switch on the right | Turns one setting on or off; the whole row is the tap target |
-| Segment | A few options in one frame, the chosen one highlighted | Picks from a short list instead of a dropdown; arrow keys and screen readers work as with radio buttons |
-| Colour plate | Solid swatch, `#RRGGBB` code, opacity number and Reset where available | The swatch opens the palette; the number edits opacity directly. In General settings, **Wall fill** also has Reset, applied when you save |
-| Colour tile | The name on the colour; a checkerboard under the colour shows through by its opacity; below it the `#RRGGBB` code and the `%` number | Used in General settings for fill and glow colours. The whole upper part opens the palette; the number edits opacity. At 0 % only the checkerboard is visible — rooms are not filled with this colour |
-| Field with a unit | A number with `cm`, `°C`, `m`, `%` or `°` inside the frame | An empty field means "as in General settings" or "as the space" when the hint says so |
-| Slider with a number | Slider, editable number and "Reset to 100%" | Drag, or type the exact value |
-| Picker button | A dropdown-styled button | Opens a panel with search and a list below it; the panel expands the card instead of floating over it |
-| Chips | Selected items with a remove button | Linked lights, manuals |
-| State message | A tinted note with an icon among the settings | Says that something is broken right now or will change on save — a missing `sun.sun` entity, a tap target that disappeared. These never hide behind `?` |
+| Scale | Centimetres or inches per cell | Converts the grid to physical dimensions and area; a new space starts at 1 cm or 1 in according to HA units |
+| Appearance | Always show room borders | Draws room outlines in View |
+| Appearance | Zero-thickness walls | **Dashed / Solid**, with a line sample |
+| Appearance | Visible layers | Separate switches for **Decorative layer** and **Doors, windows and gates**; hiding symbols does not disable sunlight, light transport or sensors |
+| Appearance | Room colour and fill | Colour/opacity plus None, Custom, Zigbee, Lights or Temperature; temperature adds two °C bounds and a legend |
+| Room cards | Show room names | Draws room cards in View, kiosk and the static card; no fallback label remains when off |
+| Room cards | Temperature, humidity, signal and light | Four metric tiles; they are disabled until names are on |
+| Room cards | Card font size | 50–300% slider, exact number, reset and a live sample |
+| Sun and light | Background | As general, Static or Follow the sun |
+| Sun and light | North and rays | Inherit N°, or use a custom compass; rays can inherit, turn on or turn off |
+| Sun and light | Glow | Independent switch; base dimming is used only when no other visible fill exists |
 
-**Save** is enabled only when something changed; the dialog does not repeat
-that state as a separate footer message. Closing a dialog with unsaved changes
-— by the close button, **Cancel** or a click outside — asks first whether to
-discard them. An invalid
-value — an empty or non-numeric temperature bound, a north outside 0–359°, a
-missing binding — is named in red under the field,
-and the **Review N fields** link in the footer jumps to the first one.
-
-### Display settings
-
-A space's **Appearance** card has switch rows for room borders and the two
-visible layers (**Decorative layer**, **Doors, windows and gates** — on means
-visible), a segment for zero-thickness walls, a colour plate for rooms and the
-fill segment (Custom / Zigbee / Lights / Temperature, with two
-°C bound fields for temperature). **Room cards** holds the names switch, four
-metric tiles, the card font slider and a sample card; **Sun and light** holds
-the background segment, north (as general or a custom direction with a compass),
-sun rays and the glow switch. All of it overrides the general settings for this
-space only.
+The scale is the real size of one grid cell. A finer cell adds snap points per
+metre but does not change the finished appearance: physically equal rooms,
+walls, openings, labels and markers look the same at 1 and 5 cm per cell.
+Existing spaces keep their value; a legacy space without `cell_cm` keeps the
+5 cm compatibility fallback and is not silently migrated.
 
 Room cards are positioned and scaled on the plan. View renders only the metrics
 enabled for that space.
@@ -542,6 +588,13 @@ smallest to largest. Save creates that room and consumes exactly coincident
 chain walls, Keep as walls rejects only that candidate, and Cancel leaves all
 accepted walls in place with no partial rooms.
 
+If the walls were completed earlier, a plain click inside the smallest free
+closed area opens the same room dialog. `Shift+click` deliberately starts a
+new chain instead; a click on an axis or node still draws. An opening does not
+break the structural wall axis, and a zero-thickness axis remains part of the
+closure graph. A new room may not partially overlap another room, while a
+fully nested island room is supported.
+
 The room dialog is grouped into four cards: the first has no heading (display
 name and Home Assistant area side by side), followed by **Fill**, **Sensor
 sources** (temperature and humidity) and **Font sizes**. The area help is next
@@ -571,7 +624,19 @@ pinch and `pointercancel` neither finish the chain nor add geometry.
 
 Existing segment endpoints and lines appear above walls while drawing. An
 endpoint grows when the next click will join it. A point on a line shows where
-the click will create a valid junction.
+the click will create a valid T-junction without splitting the existing wall.
+The active thick wall also shows its centre axis, exact endpoint, length and
+angle. Only an actually 45°-multiple vector is green. Hold `Shift` to lock the
+segment to the nearest such direction: a compatible endpoint or exact ray/wall
+intersection is accepted and an incompatible snap target is ignored. If
+several different endpoints look like one at the current zoom, no wall is
+added; the conflict is highlighted and asks you to zoom in.
+
+When explicitly creating a room, one unambiguous contour gap up to 2 cm may be
+repaired exactly to an endpoint or solid wall axis. A red dashed preview shows
+the repair. It is saved in the same Undo command as the room; Cancel and **Keep
+as walls** repair nothing. Larger, ambiguous or multiply matching gaps must be
+joined manually.
 
 A segment which is visually horizontal or vertical within `0.25°` is stored as
 an exact axis: House Plan moves only the free endpoint, and preview already
@@ -587,7 +652,43 @@ plain click or tap without a drag still opens Room settings. A wall-resize
 preview does not discard the position when cancelled; after a confirmed room
 shape change it is retained only while it remains inside the room.
 
-### Plan tools at a glance
+### Wall junction limits
+
+To keep the plan physically meaningful, House Plan refuses a write that would
+create an impossible junction. These are absolute physical limits and do not
+scale with `cell_cm`:
+
+| Rule | Threshold |
+|---|---|
+| Angle between neighbouring walls at one node | at least 15° |
+| Walls meeting at one node | at most 6 |
+| Complete wall length | at least 20 cm and never below its own thickness |
+| Distance from a non-incident node to another node or foreign wall | at least 5 cm |
+| Room interior after subtracting masonry | at least 25 cm² |
+
+Length is measured along the complete wall, not one contour atom: a short
+filler that compensates a thickness step is legal when the wall as a whole is
+long enough. A T-junction is not rejected by the distance rule. If the check
+itself fails, nothing is saved and a toast says that the junction check could
+not run; a write is never allowed on faith.
+
+Checks run only when geometry is written. Existing plans, migrations, imports
+and backup restores are not re-judged, and an edit that does not touch the old
+problem still passes. Drawing and **Thickness** leave a refused value unapplied
+and name the rule; Resize stops at the last valid position and explains once
+per gesture what the next step would break.
+
+### HA area binding
+
+One HA area may be bound to one room. It drives automatic device placement,
+room LQI, light and climate averages. A real temperature or humidity sensor
+manually assigned to another House Plan room follows that placement instead of
+its registry area. This also works in a room without an HA area. An explicitly
+selected room measurement source still has priority over the automatic average.
+
+### Plan tools
+
+#### Plan tools at a glance
 
 | Tool | Result | Room area | Light and shadow | Main limit |
 |---|---|---|---|---|
@@ -618,28 +719,41 @@ symbol is flat on the floor. See [Stairs](STAIRS.md).
 
 ![Selected partition and its Plan context tray](images/05-plan-context-tray.png)
 
+### Merge
+
+- Rooms must share a boundary.
+- Choose which room keeps its identity, name and HA area.
+- The other room's name, HA area and area-discovered devices are not silently
+  copied. Assign the area elsewhere if those devices should reappear.
+- Nested or geometrically incompatible candidates may be refused.
+
 Deleting a room also clears that exact room from direct device assignments and
 vacuum segment maps, including maps owned by a vacuum on another floor.
 Merging rooms redirects the same references to the surviving room. The change
 is part of the room command: Undo and Redo restore or reapply geometry and
 references together without changing unrelated marker settings.
 
-Wall thickness is stored in real units. A room may have different thicknesses
-on different spans. Open wall branches and T-junctions are allowed; shared
-geometry remains joined without painted end caps. At a saved T-junction both
-physical half-walls stay solid: the bounded bevel removes only an excessive
-projecting corner and never leaves a white triangular gap. A short arm stops at
-its real endpoint; the join repair never draws a cap, shadow or light barrier
-where no wall was saved. At junctions of three or more walls the removed bevel
-remains connected to the surrounding room/background rather than becoming a
-small enclosed hole. At a perpendicular T/X junction, the complete physical
-width of every participating wall remains solid through the node, including
-closely spaced neighbouring junctions. This is a rendering correction: a valid
-plan may remain unchanged when **Optimize plans** is run.
-Legacy near-axis walls are different: **Optimize plans** may explicitly
-straighten them, counts a shared wall once across both rooms and leaves an
-unsafe candidate unchanged. Cancel writes nothing and the confirmed batch has
-the normal one-deep Undo.
+When deleting a room, choose whether its exclusive physical walls remain.
+Keeping walls converts positive-thickness pieces into independent walls and
+reattaches their openings; zero-thickness pieces remain independent `0 cm`
+walls. Removing walls deletes only openings hosted by exclusive room masonry.
+Shared walls, coincident independent walls and their openings remain. Thickness
+records are normalised by their new physical role, never across an outer/shared
+transition or between different room pairs.
+
+### Split
+
+- The first and last points must lie on the selected room boundary.
+- Intermediate points stay inside the room and may not cross the contour or
+  the cut itself.
+- The larger result keeps the original room and its devices; the room dialog
+  opens for the smaller result.
+- A cut may start or end at an existing corner. Even when the new shared wall
+  is thicker than the facade, it joins the facade from the inside and does not
+  change the outer shape.
+
+### Resize
+
 Resize changes one room, or exactly two rooms when their shared wall coincides
 endpoint-to-endpoint. The wall stops at the first corner, opening, foreign room
 or other position that would change topology; no more than two rooms can change.
@@ -657,6 +771,53 @@ opening on the moving wall follows it once; a side-wall opening stops the
 moving masonry at its physical jamb. Release creates one Undo step, while Esc
 or an interrupted pointer writes nothing.
 
+The moving wall has no redundant length badge. An outer wall shows one clean
+area; a shared wall shows two on opposite sides with short leaders. In a narrow
+room a label may extend outside the room rather than overlap the other area or
+the Room settings button. Live dimensions are measured to the inner faces of
+the two changing side walls and those walls are highlighted.
+
+| Scenario | Result |
+|---|---|
+| Outer wall | Only the selected room changes |
+| Endpoint-to-endpoint shared wall | Exactly two rooms change |
+| Irregular room | Movement is allowed only until the first corner that would change the wall extent |
+| Opening on the moving wall | Follows the wall once |
+| Opening on a side wall | Masonry stops at the nearest jamb, including half its thickness |
+| Side material would switch between shared and outer | Movement stops at the exact role boundary; if neither direction has a safe step, the handle explains that only part of a shared wall cannot move |
+| Partial/diagonal shared wall, third room, overlapping partition or column | Handle remains visible but dimmed and explains why movement is unavailable |
+| Room becomes too small | Stops at the last position preserving the 30 cm minimum without deleting a vertex |
+
+### Wall thickness
+
+| Property | Behaviour |
+|---|---|
+| Value | 0–100 cm for room and independent walls; empty/non-numeric input is rejected |
+| Geometry | Grows by half the value on both sides of the axis; a shared boundary is one physical wall |
+| Clean area | Measured to the inner wall faces |
+| Hatching | 9.6 cm physical pitch, independent of grid scale and zoom |
+| Junctions | Exact shared nodes form one bounded mitre/bevel; a T-junction does not split the through wall |
+| Equal adjacent pieces | Normalised only when thickness, direction and physical role match |
+
+Wall thickness is stored in real units, and one room may use different values
+on different spans. Open branches and T-junctions are allowed. At a saved
+T/X-junction the complete physical width stays solid through the node: the
+bounded bevel removes only an excessive corner and never creates a white
+triangle, painted cap, invented shadow or light barrier. A short arm stops at
+its saved endpoint; the removed bevel remains connected to the surrounding
+room/background instead of becoming a tiny enclosed hole. This is a rendering
+correction, so a valid plan may remain unchanged after **Optimize plans**.
+
+Legacy near-axis walls are different: Optimize can explicitly straighten them,
+counts a shared wall once and leaves unsafe candidates unchanged. Cancel writes
+nothing; Apply is one server-side Undo step. Independent walls and columns can
+be dragged on the grid and edited by double-click. An independent wall accepts
+0–100 cm. A column is square or circular, 1–150 cm; a square rotates and a
+circle uses the size as its diameter. They subtract from clean area and block
+Glow/sun, but Resize does not move them. Outside rooms they create no floor.
+
+### Zero-thickness walls
+
 A wall thickness of **0 cm** is a real wall-axis record without a masonry body:
 it does not create hatch, wall area, an opening tunnel or a valid opening host.
 It is drawn and edited with the same Walls and Thickness tools as every other
@@ -666,59 +827,21 @@ walls are zero-area light barriers. Missing settings use Dashed. Changing the
 style affects every `0 cm` wall in that space; there is no separate Boundary
 tool or separate virtual-wall type.
 
-During the drag, the moving wall itself has no redundant length badge. An outer
-wall shows one area badge; a shared wall shows two on opposite sides, each with
-a short leader. In a narrow room the area stays visible and may extend outside
-the room rather than overlap another area or the room-settings button.
-
-### Wall junction limits
-
-To keep a plan physically meaningful, the editor refuses a write that would
-create an impossible junction. The thresholds are absolute — they do not scale
-with `cell_cm`:
-
-| Rule | Threshold |
-|---|---|
-| Angle between neighbouring walls of one node | at least 15° |
-| Walls meeting in one node | at most 6 |
-| Wall length | at least 20 cm and never below its own thickness |
-| Distance between non-incident nodes, and node to foreign wall | at least 5 cm |
-| Room interior left after subtracting the masonry | at least 25 cm² |
-
-Length is measured along the WALL, not along a single contour piece: a short
-filler segment that compensates a thickness step is legal as long as the whole
-wall is longer than 20 cm. A T-joint (a wall end landing on the middle of
-another wall) is not forbidden by the distance rule.
-
-If the check itself cannot run (an internal error), the change is not saved
-either — a "The junction check could not run" toast appears: the editor
-never waves a write through on faith.
-
-The check runs on writes only. An already saved plan is never re-judged:
-migration, import and backup restore are never blocked, and an edit that does
-not touch the offending element passes as usual. The refusal appears where you
-work: drawing and Thickness leave the value unapplied and raise a toast naming
-the rule, while Resize stops the wall at the last allowed position and, once
-per gesture, names the rule the next step would break.
-
-### HA area binding
-
-One HA area may be bound to one room. The binding drives automatic device
-placement, room LQI, light and aggregate climate. A real temperature or
-humidity sensor manually assigned to another House Plan room follows that
-placement for the automatic room average instead of remaining in its registry
-HA area. This also works for a room without an area; its manually assigned real
-sensors provide the automatic average, while an explicit room measurement
-source still takes priority.
+An opening cannot be placed on a zero wall, and changing an occupied span to
+`0 cm` is rejected atomically. When room borders are hidden, the line is hidden
+in View/kiosk but its light semantics stay active; every editor still shows the
+axis.
 
 ## 9. Doors, windows, gates and locks
 
-Choose Opening, select door/window/open passage/gate, and click a wall. Defaults
-are 90 cm, 120 cm, 90 cm and 300 cm. The complete opening must fit on the wall.
-Before the click, door, window and gate show their translucent architectural
-symbol. An open passage instead shows the exact future wall cut as a translucent
-wall-coloured segment with an orange boundary mark at each end. Its depth follows
-the real wall thickness; after saving it has no standalone symbol.
+An opening belongs to one room-wall segment or one completed independent Walls
+segment. Door and open passage default to 90 cm, window to 120 cm and gate to
+300 cm; the UI accepts 20–600 cm in 5 cm steps. **Opening** first opens a compact
+Window / Door / Open passage / Gate menu. Hover a physical wall: door, window
+and gate show the exact translucent symbol and opening side, while a passage
+shows the future wall-coloured cut and two orange boundary marks. Click opens
+properties and **Save** creates it. The selected type remains armed for a
+series; `Esc`, another tool/editor or another space ends the series.
 
 The placement preview also draws a thin dimension line from each jamb to the
 physical inner end of the wall. On a wall shared by two rooms, four values are
@@ -735,19 +858,75 @@ same limit applies to placement, drag, rebind and length edits. Existing
 near-end openings remain visible and are not moved until their geometry is
 edited.
 
-An opening may bind a contact; doors and gates may also bind a lock. View paints
-the moving leaf and state. A lock badge is green when locked and red when
-unlocked. A plan tap never toggles a lock. The opening
-card provides a labelled
-lock/unlock control, with confirmation before unlocking.
+Clicking the body of a thick wall works without a prior hover: the editor finds
+its axis and opens the same dialog. A zero wall cannot host an opening. An exact
+independent wall over room masonry is an explicit host and cuts the one combined
+body; an ambiguous junction is never guessed. Deleting a host wall asks about
+all attached openings and removes them in the same Undo step only after
+confirmation. A legacy opening whose host disappeared is marked for rebind in
+Plan and omitted from View and light transport.
 
-Openings may slide along joined wall corners. A double click in Plan opens
-properties. Thick walls keep visible jambs and align the symbol to the correct
-face.
+A gate behaves like a door in data and light, but uses two half leaves without
+a large arc. It may have a contact and lock. An open passage has no leaf, sensor,
+lock, inversion or swing: it is simply an always-open cut through masonry.
+Changing a door/gate into a passage warns that Save removes its contact and
+lock; Cancel preserves the original.
+
+### Opening settings
+
+| Field | Door | Window | Open passage | Gate |
+|---|---:|---:|---:|---:|
+| Size | Yes | Yes | Yes | Yes |
+| Contact sensor | Yes | Yes | No | Yes |
+| Invert sensor | Yes | Yes | No | Yes |
+| Hinges on the other side | Yes | Yes | No | No — leaves are symmetric |
+| Opens the other way | Yes | Yes | No | Yes; outward by default |
+| `lock.*` | Yes | No | No | Yes |
+
+Contacts come from suitable `binary_sensor` entities and door covers. The
+contact animates the leaf; inversion handles integrations with opposite logic.
+Contacts and locks are exact opening bindings: removing a separate marker for
+the same entity does not clear them. A live YAML entity without a registry row
+also works while HA supplies its exact state; a disabled, missing or unavailable
+entity does not. Search by friendly name or `entity_id`; **— none —** stays
+first and clears the binding.
+
+### Behaviour by mode
+
+| Mode | Activation | Drag |
+|---|---|---|
+| View | The opening body is inert; only its lock badge opens the opening card | No |
+| Plan editor | Opens properties | Along the host wall, snapping to its centre or grid step |
+| Other editors | Inert | No |
+
+### Lock
+
+- `locked` uses a closed lock on green; `unlocked`/`open` uses an open lock on red;
+- an unknown state uses neutral unknown styling;
+- the badge opens the opening card; a plan tap never toggles a lock;
+- locking needs no extra confirmation; unlocking uses the common House Plan
+  confirmation with the lock name and **Cancel** as the safe initial action;
+- marker actions never toggle `lock.*` or disarm `alarm_control_panel.*`.
+
+### Thick walls
+
+The opening cuts the full masonry depth and keeps visible jambs. Door, window
+and gate symbols stay centred on the wall; **Opens the other way** mirrors only
+the leaf direction, not the symbol position. Internal light passes through a
+door, gate or passage along the tunnel and is clipped by its reveals. A sun ray
+starts at the inner or outer window-tunnel corners according to General
+settings (inner is the default). Only exterior room windows cast sun; internal
+windows and windows on independent walls do not.
+
+Openings may slide along joined corners. Double-click in Plan opens properties.
+The static card also cuts an open passage through the wall and carries the
+current fill/Glow base through its tunnel.
 
 <!-- docs-section: devices -->
 
 ## 10. Devices
+
+### How markers appear automatically
 
 House Plan reads Home Assistant device, entity and area registries. A device in
 a bound HA area receives an automatic marker. Service-only records, bridges and
@@ -760,6 +939,15 @@ previous manual drag is layout, not a room override: it is discarded, the
 ordinary room grid chooses the new position and the red attention dot appears.
 Selecting a room explicitly in the marker settings overrides HA Area placement.
 Ambiguous or unbound Areas never make House Plan guess a destination.
+
+Service and non-spatial integrations such as HACS, system records, bridges,
+scenes and some aggregates are filtered when the list is first materialised.
+Room light members may be replaced by one group marker. Newly discovered
+devices receive a red attention dot until their marker settings are first
+opened. The compact marker size is stored directly in its base geometry, so
+its saved point remains the centre and the action target does not shrink. In
+Value mode the inner number capsule has true semicircular ends and even inset
+inside the outer shell.
 
 ### Bindings
 
@@ -836,6 +1024,8 @@ binding to **Available again**. A disabled or missing binding keeps its saved
 category and receives a separate Home Assistant status instead of silently
 moving to another tab.
 
+### Marker basics
+
 The dialog has five cards: **Basics**, a compact tap-action card without a
 repeated heading, **Light and glow**, **Appearance** and **Details**. **Hide**
 and **Delete** sit on the left of the
@@ -855,13 +1045,91 @@ rotation are two sliders with compact numbers. **Additional actions** are near
 the end of **Details**; the device-temperature switch follows them. A saved
 missing source is shown as missing rather than silently replaced.
 
+| Field | Purpose |
+|---|---|
+| Name | Plan label and House Plan card title |
+| Binding | Virtual device or an HA picker with search and **Show entities**; Save stays disabled until a required binding is chosen |
+| Room | Automatic HA area or an explicit room, including one with no HA area |
+| Tap action | House Plan card, HA more-info, Toggle, Run or **Do nothing**, with the exact target/result shown below |
+| Controls other light sources | Other placed `light.*`/`switch.*` markers or forced sources; the marker's own entities are not listed |
+| Is a light source | **Auto / Always / Never**; Auto shows its resolved result, Always may choose a leading entity, Never disables only the marker's own source |
+| Glow colour and brightness | From source, fixed colour, or fixed colour and brightness; manual brightness is 1–100% |
+| Glow radius | Empty means the current General setting; valid stored range is 0.1–100 m |
+| Icon and display | Automatic or manual `mdi:*`; icon/state/activity, value/state, static icon or value/static icon |
+| Icon size and rotation | ×0.5–×3 and a 5° angle step |
+| Device temperature | After **Additional actions**; includes climate `current_temperature` in the marker and its room average |
+| Model, link, description and instructions | Informational card data and multiple PDF/PNG/JPG/WebP/TXT attachments |
+
+The footer keeps **Hide** and **Delete** on the left and **Cancel**/**Save** on
+the right. Hide preserves configuration and may preserve aggregate room data;
+Delete removes the marker and its layout after confirmation.
+
 ![Device editor with binding provenance and the exact action result](images/06-device-editor.png)
 
 ![Live preview of the selected device presentation](images/06-device-display-preview.png)
 
-Hidden markers keep configuration and may still contribute to area aggregates.
-An HA-disabled binding is excluded from rendering, state, actions, light and
-aggregates until the same ID becomes active again.
+### A “dumb” lamp with a smart switch
+
+1. Add a virtual marker at the lamp's real position.
+2. Set **Is a light source → Always**. With no HA entity it becomes a passive
+   source; choose its colour, brightness and radius manually.
+3. Open the smart-switch marker and add that lamp under **Controls other light
+   sources**.
+
+The switch now reports aggregate work, while the floor pool, room fill and
+statistics belong to the lamp and its room. Several switches use OR. A
+`marker:*` value is only an internal plan link and is never sent to HA as an
+entity ID. Tapping the linked virtual lamp with **Toggle state** toggles the
+union of its real incoming controllers; tapping a switch controls only that
+switch's own group. Live HA state remains authoritative, so physical switches,
+automations and other dashboards update both markers and all lighting effects.
+
+Without incoming controllers, the same virtual **Always + Toggle** combination
+uses the manual lifecycle: a new lamp starts on, the state is shared by full
+and static cards and survives reloads and HA restarts. Saved outgoing controls
+are retained but do not call services in that unlinked mode. Adding/removing
+the last incoming link does not erase the previous manual state. Hide preserves
+it; deleting the marker clears it. It is not an HA helper and is not included
+in plan import/export.
+
+Delete and Hide are different. Delete removes the marker from LQI, climate,
+light, Glow, room cards, actions, live text and other markers' external
+controls; its binding moves to **Available again**. An exact opening contact or
+lock remains a separate binding. Re-adding creates a new position and restores
+saved references without duplicating the opening binding. Marker position,
+attachments and a vacuum trail are deleted with the marker.
+
+### Hidden devices
+
+A hidden marker:
+
+- is absent from View and appears in Device only while **Show hidden on plan**
+  is enabled;
+- has no state colour, value, temperature, humidity, LQI, Glow or light-source
+  contribution;
+- may still contribute LQI and climate data to the explicitly assigned room.
+
+Use **Devices → On plan**, row checkboxes or **Select all (N)** and **Hide
+selected** for a batch; reverse it under **Hidden → Show selected**. Disabled,
+missing or unverified bindings cannot be selected and explain why. Selection
+resets on tab/search/**New only** changes, survives opening one device, clears
+after a successful save and remains after a failed one.
+
+### Disabled in Home Assistant
+
+When a device, exact entity or every entity of a device has `disabled_by`, its
+binding is temporarily excluded from markers, LQI, climate, light, Glow, live
+text, openings, actions and vacuum position/trail. Configuration, layout,
+attachments and server history are retained. The catalog keeps the marker in
+its lifecycle tab with **Disabled in Home Assistant** status; **Show hidden on
+plan** reveals a gray service ghost. You may inspect it, edit description,
+remove it from the plan or open HA settings, but Show is unavailable until HA
+enables it. The same ID then returns with its old settings and position,
+including the user's separate Hidden choice.
+
+If the current account cannot read the complete HA registry, House Plan does
+not infer disabled state from a missing row. Proven live bindings continue to
+work; unverified ones safely stay out of the plan until registry access returns.
 
 ### Presence radars
 
@@ -888,11 +1156,21 @@ layer. See [Presence radars](RADAR.md) for supported profiles, setup and privacy
 
 ## 11. Tap actions
 
+### Marker gestures
+
 | Gesture | View | Device editor |
 |---|---|---|
 | Short click/tap | Configured action | Open marker settings |
 | Hold 600 ms | House Plan device card | No device control |
 | Right click | Native HA more-info for the primary entity | Browser/editor context |
+
+When a short activation actually sends a device command, the marker gently
+shrinks by 5% and returns over 0.2 s. Merely opening information, an editor or a
+confirmation does not trigger feedback; with confirmation it starts only after
+approval and dispatch. Reduced motion replaces the scale with a brief steady
+accent.
+
+### Actions
 
 | Action | Behaviour | Safety |
 |---|---|---|
@@ -931,6 +1209,14 @@ choice. This setting is independent from **Leading light entity**. With an
 explicit external controls group, an explicitly selected own entity joins the
 group; without a selection existing groups remain external-only.
 
+Toggle remains selectable for every marker, including virtual ones. A marker
+with no suitable target states the no-op directly; House Plan does not silently
+replace it with a card. An exact entity binding never substitutes a sibling
+relay. With several controlled sources, any active source makes the next action
+turn all off; if all are off, it turns all on. Only available targets receive
+the command, and the hint names every skipped target. The controller's own
+availability remains independent from that aggregate work state.
+
 ![House Plan device card with state and safe actions](images/09-device-info.png)
 
 <!-- docs-section: visual-states -->
@@ -940,6 +1226,14 @@ group; without a selection existing groups remain external-only.
 Presentation uses one shared outer shell around three independent layers:
 stable core, icon or value, and optional activity pulse. Visual priority is
 **alarm → keyboard focus → selected → hover → semantic state → neutral**.
+
+Unavailable markers keep the normal presentation with reduced icon opacity,
+no visual hover and no pulse, but their ordinary activation may still open
+information or settings. A media player in `off` uses the same dimmed treatment.
+Hover starts only from a real hover-capable mouse. Finger or pen input clears
+tooltip/highlight immediately; later mouse movement restores desktop hover.
+
+### Background and stable status
 
 | State | Meaning | Examples |
 |---|---|---|
@@ -975,6 +1269,19 @@ even if the lifecycle value is stale. Mode, Program, Stage and remaining time
 are not treated as independent proof of work, and an ordinary lone relay keeps
 its existing yellow-on behaviour.
 
+### Activity
+
+Ordinary activity appears only for **Icon + state and activity** while live
+states are enabled; a critical alarm remains a separate signal in every dynamic
+mode.
+
+| Activity | Duration | Sources |
+|---|---|---|
+| Short event, three waves | about 3.3 s | motion/vibration/sound trigger, contact opening, button/event change, manual Run, terminal transition without a travelling state |
+| Persistent presence | while active | occupancy/presence binary sensor |
+| Persistent transition | while moving | cover opening/closing, lock locking/unlocking, valve opening/closing, moving sensor, vacuum returning |
+| Persistent work | while working | lights, switches, fans, humidifiers, climate work, vacuum cleaning, scripts and known appliance lifecycle states |
+
 Activity may be a finite three-wave event, persistent presence, a travelling
 transition, or persistent work. Continuous motion uses a 3.6 s cycle (green
 presence, amber work, blue neutral transition), a short event lasts 3.3 s, and
@@ -983,10 +1290,18 @@ authoritative; the package size default is 1.5 diameters. `prefers-reduced-motio
 replaces ordinary motion with a compact colored indicator while the static red
 alarm remains clear.
 
+### Five Display modes
+
+| Choice | Icon | Status background | Activity | Value |
+|---|---:|---:|---:|---:|
+| Icon + state | Yes | Yes | Alarm only | Optional compact °/% and LQI |
+| Icon + state and activity | Yes | Yes | Yes | Optional compact °/% and LQI |
+| Value + state | Automatic fallback when no unambiguous value; a virtual marker keeps an icon fallback | Yes | Alarm only | Automatic or explicitly selected state, attribute, LQI or linked-light state |
+| Always-static icon | Yes | Theme-neutral | No | No |
+| Value + static icon | Same value/fallback rules as Value + state | Theme-neutral | No | Same source as Value + state |
+
 The five display choices are icon + state; icon + state + activity; value +
-state; always-static icon; and value + static icon. A separate value badge can
-show an entity state,
-useful attribute, average LQI or linked light state on any side of the marker.
+state; always-static icon; and value + static icon.
 **Value + static icon** combines the two: the marker content follows the same
 rules as **value + state** — the same Value source, the same numbers and
 localized states, the same icon fallback with its reason — while the colour
@@ -1008,6 +1323,57 @@ The complete visible value capsule is one hover and action target: clicking or
 tapping its value section runs exactly the same configured action and safety
 checks as the icon core.
 
+### Value badge beside a device
+
+The editor may add an independent badge, select a state, useful attribute,
+average LQI or linked-light state, and place it on the right, bottom, left or
+top. A missing saved source stays selected and shows `—`. It may accompany a
+normal icon or Value + state. Bottom placement puts system LQI on a second row;
+when the badge itself is LQI, the duplicate row is hidden. Old markers keep
+their automatic °/% badge; explicitly turning the badge off suppresses that
+legacy heuristic. The badge does not depend on the general temperature option,
+which now affects only room averaging.
+
+The whole outer capsule is one hover and activation target. Always-static icon
+and Value + static icon temporarily hide the badge without deleting its setup.
+The preview uses the unsaved form and live HA state, and may run a local short
+or persistent pulse sample without touching HA, the saved config or the marker
+on the plan.
+
+### Icon changes by state
+
+With live states enabled, known pairs change automatically:
+
+- door/window/garage: closed/open;
+- blinds, shutters, gates and other covers: closed/open;
+- lock: locked/unlocked;
+- standard bulb: off/on.
+
+A manual icon normally stays fixed. A known `cover.*` pair may still change so
+the open state is not hidden.
+
+### Matrix by device type
+
+| Type | Stable status | Activity in Icon + activity | Default short click |
+|---|---|---|---|
+| `light.*` | Yellow while on | Work while on | Toggle |
+| `switch.*`, `fan.*`, `humidifier.*` | Yellow while on | Work while on | House Plan card unless Toggle is explicit |
+| Composite appliance with Power | Power on alone is neutral; explicit active lifecycle is yellow; Power off/unavailable dims | Work only from an explicit lifecycle | House Plan card |
+| Motion/vibration/sound sensor | Neutral | Short event on off→on | House Plan card |
+| Occupancy/presence sensor | Neutral | While presence is active | House Plan card |
+| Door/window/garage contact | Orange while open | Short opening event | House Plan card |
+| Ordinary `cover.*` | Neutral | Travelling while opening/closing | House Plan card; explicit Toggle does open/close/stop |
+| Protective garage/door/gate cover | Neutral | Travelling | Saved Toggle is a stated safe no-op |
+| `lock.*` | Red unlocked, green locked | Travelling while locking/unlocking | Card; Toggle forbidden |
+| `valve.*` | Orange while open/moving | Travelling | Card; Toggle may be explicit |
+| `climate.*` | Yellow for real heating/cooling/work; HVAC mode fallback only when action is absent | Work | House Plan card |
+| `media_player.*` | Neutral when active, dimmed at off | None | House Plan card |
+| `vacuum.*` | Yellow cleaning/returning | Work/travelling | House Plan card; live puck opens HA more-info |
+| `script.*` / `automation.*` | Script yellow while on; automation stays neutral | Work / short explicit Run event | Card or explicit Run |
+| `button.*` / `event.*` | Neutral | Short event on change | House Plan card |
+| Smoke/gas/CO/moisture/safety/tamper/problem, siren, triggered alarm | Red alarm | Alarm has priority | Card; dangerous Toggle forbidden |
+| Virtual marker | Neutral | None without an HA source | Card or explicit Run |
+
 Virtual devices use the ordinary neutral/hover background with a dashed outer
 circle. An HA-less virtual device does not invent unavailable or activity;
 a linked virtual light may still follow its real controller. Unavailable keeps the ordinary
@@ -1026,11 +1392,38 @@ non-interactive.
 
 ## 13. Room fills and light
 
+### Space fill modes
+
+| Mode | Source | Colour/behaviour | No data |
+|---|---|---|---|
+| None | — | Transparent room / border only | — |
+| Zigbee signal | Average LQI for room devices | Red at ≤40 through green at ≥180 | No fill |
+| Lights | One resolved set of visible sources: external controls plus own Auto/Always/Never source | Configured on/off/no-source colours | No-source colour when its opacity is above zero |
+| Temperature | Room source or sensor average | Cold below minimum, comfort between bounds, hot above maximum | No fill |
+| Custom color | Space or room setting | Constant colour and opacity | Safe `#607d8b` at 18% |
+
+**Light-source Glow** is an independent switch and works with every fill. With
+no data, room-level None or a zero-opacity custom colour it adds base dimming
+plus light pools. When an LQI, light, temperature or visible custom fill exists,
+base dimming is omitted and the chosen colour/opacity stays exact while pools
+remain visible. A new manual space starts with Custom color at 0% and Glow on,
+which looks like the former None default. Legacy light-source and None settings
+are read without visual change and migrate on the next normal save.
+
 Space fill modes include user colour, temperature comfort range and LQI. Room
 settings may override the space. A room has its own colour only while its fill
 is set to its own **Custom color**; choosing **As the space** forgets that
 colour and the room is painted like the rest of the space. Glow is independent
 from the base fill.
+
+### Inheritance
+
+| Level | Overrides |
+|---|---|
+| General settings | Fill-state colours/opacity, Glow colours and radius, wall colour |
+| Space | Fill mode and custom colour, Glow switch, temperature bounds, LQI display and background |
+| Room | Inherit or select None/LQI/Lights/Temperature/Custom; independent lower/upper temperature bounds and a colour only in room Custom mode |
+| Device | Auto/Always/Never own light role, Glow colour, brightness and radius |
 
 When a room effectively uses the temperature fill, its settings show optional
 lower and upper comfort bounds. Each blank field independently inherits the
@@ -1039,10 +1432,37 @@ both overrides. The range
 changes only the room floor and opening-tunnel fill; room-card and tooltip
 temperature values are unchanged.
 
+### What counts as light
+
+| Source | Lights fill | Glow pool | Yellow marker |
+|---|---:|---:|---:|
+| Visible `light.* = on` | Yes | Yes | Yes |
+| Ordinary `switch.* = on` | No | No | Yes |
+| `switch.* = on` with **Always** | Yes | Yes | Yes |
+| Passive **Always**, no controllers | Always on | Yes, manual/fallback parameters | By resolved marker state |
+| Passive source linked from controllers | OR of active controllers | At the passive lamp position | Controller shows aggregate work |
+| External `controls` group | Yes, by group state | Only at separate real/Always source markers | Yes when any source works |
+| Hidden marker | No | No | Not drawn |
+
 A light source may come from automatic classification, an explicit Always
 role, or a controlled source group. Walls, partitions and columns occlude Glow;
 open passages transmit it. When a configured light source disappears or loses
 its valid binding, its contribution is removed instead of keeping stale light.
+
+Glow, Lights fill, the room-card light row and group Toggle use the same
+deduplicated source set. `controls` describes state and control, not the
+switch's physical light position. **Never** removes only the marker's own
+source, not external controls. A manually assigned room wins over HA Area.
+Manual brightness uses the same perceptual curve as live `brightness`: 100%
+keeps the old ceiling and low values remain visible; use **Never** instead of a
+nonexistent 0% to disable it. An off/unavailable source draws no pool.
+
+Walls block by their true thickness; partitions and columns block too. Doors,
+gates and passages transmit light through their tunnels. Dashed zero walls are
+transparent; solid zero walls are zero-area barriers. Overlap is additive where
+the browser supports SVG blending. Colour priority is live RGB, then colour
+temperature, then the configured general light colour; brightness has a 15%
+visual floor.
 
 Overlapping Glow pools add brightness and colour where browser SVG blending is
 supported; otherwise House Plan uses a safe normal blend without changing the
@@ -1061,6 +1481,8 @@ pointer (#362, #376): drawing works right through them.
 The main-toolbar default colour and style for new objects is saved with the
 plan (#377): it survives a page reload and is shared by everyone who edits
 this plan.
+
+### Tools
 
 | Tool | Create | Edit |
 |---|---|---|
@@ -1087,6 +1509,47 @@ furniture and uploaded images; these authored transforms are not grid debt.
 The plan image is interactive only with Backdrop selected. Undo/Redo shares the
 50-command editor history.
 
+New shapes are at least half a grid cell. The created object stays selected.
+Arrow keys in **Select** move the chosen decor by exactly one current grid cell
+without re-running wall/decor magnetism; `Shift` does not accelerate the step,
+and each press is one Undo command. The backdrop is fully opaque outside this
+editor and at 0.5 opacity here unless Backdrop itself is selected. The main
+toolbar colour applies only to new objects; selecting an existing object's
+colour makes it the next default without recolouring other objects. Outline and
+text sizes are physical centimetres/inches, so zoom changes their on-screen
+width consistently rather than changing the saved line weight.
+
+### Double-click in Select
+
+| Object | Properties opened |
+|---|---|
+| Text | Full text and HA-token dialog |
+| Line | Length, angle, colour/opacity and physical thickness; endpoints also have handles |
+| Rectangle/oval | Width, height, angle, stroke and independent translucent fill |
+| Furniture | Symbol, signed width/depth, horizontal/vertical mirror, angle, colour/opacity and physical outline |
+| Backdrop | Width, height and angle, while the Backdrop tool is active |
+
+### Live Home Assistant text
+
+Text accepts ordinary content and any number of brace tokens within the
+200-character limit:
+
+```text
+Outside {sensor.outdoor_temperature}, humidity {sensor.outdoor_humidity}%
+Boiler: {climate.boiler:hvac_action}
+```
+
+Use `{sensor.room_temperature}` for formatted state and either
+`{climate.living_room:current_temperature}` or
+`{climate.living_room.current_temperature}` for an attribute. The entity and
+state/attribute pickers insert at the caret or replace the current selection;
+tokens may also be typed. Missing, unknown and unavailable values render `—`,
+arrays join with commas, objects are omitted, malformed braces remain text and
+values longer than 60 characters are shortened. `Ctrl/Cmd+Enter` saves;
+newlines are preserved and do not auto-wrap.
+
+### Furniture
+
 The Furniture palette always uses two levels: categories first, then the
 available plan variants. **All categories** returns to the first level and
 disarms the current symbol. Existing placed furniture keeps its saved size and
@@ -1096,6 +1559,16 @@ Exercise equipment** now contains the exercise machine previously mislabeled
 as Cactus; Plant contains only the plant. Bookcase and floor shelving show
 their corrected drawings. A Cactus item on an older saved plan still appears
 as exercise equipment without changing its saved position, size or styling.
+
+After choosing a symbol, mouse hover shows the exact future position, size and
+rotation; editing width/depth updates that preview and a click places it there.
+Leaving the plan, `Esc`, changing tool/space/editor cancels it. On touch there
+is no hover preview: a clean tap places, while movement, pointer cancellation
+or a second finger cancels. Near a wall, furniture aligns to the nearest
+physical face and rotates parallel. `Shift` bypasses only wall magnetism while
+decor/room/grid snapping still applies.
+
+### Custom images
 
 The Image palette stores reusable files privately in House Plan. Each saved
 canonical file is at most 2 MiB; PNG, JPEG, WebP and safe SVG are supported.
@@ -1117,55 +1590,135 @@ keeps the same repairable placeholder instead of rejecting the whole plan.
 
 ![Selected line in the Background editor](images/07-background-editor.png)
 
-Live text accepts `{sensor.entity}` and
-`{climate.entity:current_temperature}` tokens. Missing, unavailable or complex
-object values render as `—`; long values are shortened.
-
 ## 15. Sun background and window rays
 
-These are independent features. **Follow the sun** changes the background from
-day through golden hour to night and can fall back to browser time. Window rays
-require `sun.sun`, a configured north direction and suitable exterior windows.
-Weather cloud cover may reduce ray intensity.
+These are independent features. **Follow the sun** needs no compass: it uses
+valid `sun.sun` data and otherwise falls back to the browser clock. North and
+`sun.sun` are required only for window rays. A space may override the General
+settings.
 
-For window rays, point the compass N arrow toward the place where true north
-actually lies on the drawing. The value is the literal clockwise direction
-from canvas-up to north, not an opposite correction for a rotated plan. If you
-previously mirrored the compass to compensate for the old ray-direction bug,
-return it to the real north after updating.
+### Setup
 
-Rays remain visual only: they do not change Home Assistant state. Walls and
-physical obstacles clip them; changing north or window geometry recalculates
-the result.
+1. Choose **Follow the sun** for the background if desired.
+2. For rays, enter north as 0–359° or rotate the compass. The N arrow must
+   literally point to true north on the drawing, not to an inverse correction.
+3. Turn on **Sunlight through windows**.
+4. Choose ray origin from the inner window corners (the existing default) or
+   the outer corners. This General setting remains editable while rays are off.
+5. For one floor, inherit or override north/background/rays.
+
+If an old setup mirrored the compass to compensate for the former direction
+bug, return N to real north after updating.
+
+### Behaviour
+
+| Condition | Result |
+|---|---|
+| Any editor open | Rays are hidden |
+| Sun below 3° | No rays |
+| Crossing 3° | Layer fades in/out over 2 seconds |
+| Internal window or window facing away | No ray |
+| Thick exterior wall, inner-corner mode | Ray starts on the room side of the tunnel |
+| Thick exterior wall, outer-corner mode | Ray starts at the facade and reaches the room only through the tunnel |
+| Zero-thickness wall | Both origin modes look the same |
+| Opening-symbol layer hidden | Window symbol is hidden; its ray still works |
+| White plan | A thin 1 px dark edge keeps the ray readable |
+| Any weather, including rain or snow | Weather does not alter rays |
+
+Rays are clipped by the clean room contour, have crisp sides and fade along
+their length. They are visual only and never change HA state.
+
+The background has dawn, day, sunset and night. With `sun.sun`, elevation and
+direction of travel choose the phase; clock fallback uses 05:00–08:00,
+08:00–18:00, 18:00–21:00 and 21:00–05:00. Environment transition lasts 1.1 s
+or is immediate with reduced motion. Only the area around the plan and its
+outer translucent outline change: rooms, fill, Glow, markers, labels, decor,
+backdrop, vacuum, hover and window rays are not recoloured. Full card, kiosk and
+static card share the phase; editors keep their normal background. New installs
+and spaces default to Follow the sun; upgrades/imports preserve their existing
+choice. Shadows from trees, awnings or other building wings are not modelled.
 
 ## 16. Robot vacuums
 
-The dock marker stays at its saved location while a live puck and path follow a
-supported map source. Calibration maps source coordinates to plan coordinates.
-Automatic room-name matching is a starting point; manual drag/stretch corrects
-it. A diagnostic source picker reports missing or incompatible sources instead
-of silently rebinding.
+Live position needs finite `vacuum_position` or `robot_position` coordinates.
+Xiaomi Cloud Map Extractor, Tasshack dreame-vacuum and Valetudo-like cameras are
+supported; Roomba's string `position` is not. **Live position** reports source,
+integration, health, position, rooms, path and map ID. A source belonging to
+the same device is selected deterministically; an unrelated XCME camera must be
+chosen explicitly through **All cameras**. A saved source is pinned and is not
+silently replaced when it is disabled, missing, unavailable or unreadable.
 
-Multiple maps are represented as distinct sources/calibrations. A vacuum is
-shown only in the space whose saved mapping currently matches the active map;
-the dock remains in its configured space. Deleting a vacuum marker erases its
-server-side trail immediately; adding the marker again starts the trail from
-scratch. See [VACUUM.md](VACUUM.md) for the source dialect and calibration
-contract.
+### Calibration
+
+| Mode | Requirement | Result |
+|---|---|---|
+| Automatic | At least three matching room names in robot map and plan | Computes an affine transform and saves it immediately when maximum error is at most 40 cm |
+| Manual | Robot map/contours are available | Move, scale, rotate by 90° and mirror a translucent map overlay |
+
+A multi-floor robot uses **Maps and floors**: map every distinct map ID to one
+space and calibrate it there. The dock marker remains in its configured space;
+live puck and trail appear only in the space mapped to the current map. Until a
+map is identified, mapped and calibrated, no puck is guessed and the dock shows
+the reason. Routes referencing a deleted space remain in a separate **Space
+deleted** group for explicit remap or removal. Above 40 cm error, nothing
+changes until **Apply**; manual fitting and Cancel remain available.
+
+### Position and path
+
+| Path setting | During cleaning | Afterwards |
+|---|---|---|
+| Never | No path | No path |
+| During cleaning | Current path | Hidden |
+| Always | Current path | Last completed path |
+
+- Position appears for cleaning/returning/on with valid data; a moving puck
+  opens the vacuum's HA more-info, while the dock marker remains separate.
+- The server path survives card reloads and is shared across clients. Current
+  and previous runs are kept; raw storage is bounded to 2,000 points, the live
+  browser buffer to 600.
+- A position older than 60 seconds is visually stale. Integration gaps remain
+  separate segments (up to 64 drawn segments / 4,000 points), never false
+  connecting lines.
+- Current and previous trails use bounded curves that preserve endpoints and
+  gaps and deviate no more than 17.5 cm from the recorded polyline.
+- Current-path priority is integration path, then server current run, then the
+  local buffer; an empty or one-point segment cannot steal priority.
+- Stop, pause or docking hides the current trail in **During cleaning**. Motion
+  on the same map within 30 minutes resumes that run; another map or a longer
+  stop starts a new one. Mere entity unavailability does not end a run.
+
+Deleting the marker erases its server trail immediately; adding it again starts
+from scratch. See [VACUUM.md](VACUUM.md) for the source and calibration contract.
 
 ## 17. Kiosk
 
-Set `kiosk: true` on a card in a Panel view. Editors and the ordinary header are
-removed. Pinch/drag navigate, double-tap on free background fits the whole plan, and a 1:1 horizontal swipe
-changes space. Holding empty space for three seconds opens per-display icon and
-text sizing. `cycle` enables automatic space changes; interaction pauses it for
-60 seconds.
+```yaml
+type: custom:houseplan-card
+kiosk: true
+cycle: 30
+```
+
+| Capability | Behaviour |
+|---|---|
+| Card header | Hidden |
+| Editors | Unavailable |
+| Height | `100dvh` |
+| Swipe | Cycles spaces at 1:1 |
+| Pinch/pan | Zooms and moves the plan |
+| Double-tap free background | Fits all content |
+| Hold empty space for 3 seconds | Opens per-display icon/text sizing |
+| `cycle` | Automatically advances; any interaction pauses it for 60 seconds |
+
+Kiosk sizing is stored in that display's browser, so one tablet may use larger
+markers without affecting other clients. House Plan hides only its own header;
+hide the Home Assistant header with Companion App or a separate kiosk tool.
 
 ## 18. Static space card
 
-`custom:houseplan-space-card` renders one configured space without live states,
-hover, drag, more-info or actions. A footer button opens the full plan. Use it
-for compact dashboard navigation, not for home control.
+`custom:houseplan-space-card` renders one space as a non-interactive live
+diagram. Markers use the same states, values, alarms and effects as the full
+plan, but never open tooltips or more-info. The footer link is its only action;
+use it for compact dashboard navigation, not direct control.
 
 The compact card keeps radial light pools and wall shadows off by default, so
 existing dashboards retain the cheapest render path. Set `light_pools: true`
@@ -1178,9 +1731,31 @@ default because every visible source needs clipped floor visibility geometry.
 ```yaml
 type: custom:houseplan-space-card
 space: ground
+title: Ground floor
 fit: house
+show_button: true
+button_label: Open full plan
+button_target: /lovelace/house
+icon_size: 2.5
+live_states: true
+show_temperature: true
+show_signal: true
 light_pools: true
 ```
+
+| Field | Default | Purpose |
+|---|---:|---|
+| `space` | required | Space ID |
+| `title` | space name | Header; exact `""` removes it and only the top scene padding |
+| `fit` | `content` | `content` fits visible content with 5%; `house` tightly fits structural geometry |
+| `show_button` | `true` | Shows the footer link |
+| `button_label` | localized | Link label |
+| `button_target` | `/plan-doma` | Full-plan path; the card adds `#space=<id>` |
+| `icon_size` | base | Static marker size |
+| `live_states` | `true` | Work/open/unavailable state, icon changes and activity; alarms always remain |
+| `show_temperature` | `true` | Compact temperature/humidity values |
+| `show_signal` | `true` | Marker LQI when available |
+| `light_pools` | `false` | Full Glow transport and wall shadows; the heavier render path |
 
 `fit` controls only this compact card's frame:
 
@@ -1203,6 +1778,10 @@ the top of the stage, while the normal left, right and bottom breathing room is
 kept. Omitting `title` is not the same as setting it to an empty string.
 With `fit: house` all four intentional paddings are already zero, so
 `title: ""` removes only the header and leaves the same structural frame.
+
+The old `aspect_ratio` YAML field has had no effect since v1.59.1 and is no
+longer offered by the visual editor. The canvas is square and content controls
+the card size; the field may be removed safely.
 
 ## 19. Plan maintenance
 
@@ -1232,6 +1811,15 @@ Rectangular facade steps keep a complete reconstructable dimension chain:
 both adjacent exterior sections, the height of the step and one copy of its
 depth remain visible without adding diagonal measurements.
 
+### What Optimize plans does
+
+Ordinary config or marker-position saves remove invisible numeric noise without
+snapping legitimate diagonal walls or free decor to the grid. Import and
+server Undo use the same canonical boundary. Saving an unchanged plan creates
+no revision and does not consume the last maintenance Undo. Simply opening an
+old plan still writes nothing; its geometry is cleaned on the next edit, or all
+at once through **General settings → Optimize plans** after preview.
+
 Current plans give every stored wall segment a stable internal identity. This
 keeps the wall's thickness and its door, window, gate or passage attached while
 Resize, Split, Merge and other structural tools change surrounding geometry.
@@ -1257,6 +1845,8 @@ maximum physical movement and only the affected spaces. This cleanup does not
 pull intentional off-grid or diagonal geometry to a node. Current ordinary
 edits apply the same invisible boundary automatically, so the noise cannot
 return after a later room, opening, decor or marker-position save.
+
+### What optimization preserves
 
 Equal neighbouring wall-thickness fragments are compacted only while they have
 the same physical role: one outer room or the same pair of shared rooms. A
@@ -1304,6 +1894,8 @@ collapsed **Details**, and vacuum room mappings remain a separate warning for
 manual review. Preview, the secondary option and Cancel do not write anything.
 Plan images and attachments are never deleted merely because nothing currently
 references them.
+
+### Risk and Undo
 
 Optimization creates one server-side undo point which restores automatically
 and explicitly removed positions with the rest of the previous layout. Any
@@ -1407,7 +1999,22 @@ anything.
 | Vacuum path | Separate House Plan HA storage |
 | Cache, viewport and kiosk scale | That browser's `localStorage` |
 
-### Several cards and clients
+A normal Home Assistant backup that includes `config` preserves House Plan
+configuration and files. Make a fresh HA backup before major manual plan work.
+
+### Several clients
+
+- Configuration and positions are shared by every card and user; point updates
+  do not overwrite unrelated simultaneous marker moves.
+- WebSocket broadcasts saved changes without a page reload. Viewport, last
+  space and kiosk sizing remain local to the browser/card.
+- A quickly rebuilt Lovelace card attempts to restore an unsaved dialog draft
+  for a short window.
+- Every save after initial empty storage must return the revision obtained from
+  `houseplan/config/get`; a stale revision is rejected rather than overwriting
+  another client. Refresh an old cached card that repeatedly reports conflicts.
+
+### Several cards and starting spaces
 
 Use `floor` when separate card instances must stay on separate spaces. A stable
 space ID is recommended:
@@ -1466,8 +2073,10 @@ Marker attachments accept PDF/PNG/JPG/WebP/TXT up to 50 MB, with a
 | Limitation | Practical effect |
 |---|---|
 | Rooms must be closed | An open path is walls, not a room with area |
+| An unfinished chain does not remain a draft | Changing tool or leaving the editor keeps accepted segments as ordinary independent walls; the chain is not resumed later |
 | One HA area per room | To split one HA area visually, assign devices manually |
 | Zero-thickness walls cannot host openings | Give the target wall a positive thickness before adding a door, window, gate or passage |
+| Opening bodies are inert in View | Only a separate lock badge is interactive |
 | Editors are desktop-first | Touch editing may be awkward, limited or absent |
 | Room details use hover in View | A touch-only user may need an editor or another visible metric |
 | Sun has no exterior 3D model | It cannot know shadows from trees, awnings or neighbouring structures |
@@ -1488,6 +2097,7 @@ per space. The configuration package is limited to 2 MB.
 | `Custom element doesn't exist: houseplan-card` | Integration loaded; resource is `/houseplan_files/houseplan-card.js` with type `module`; restart HA, then hard-refresh with `Ctrl+F5` (Windows/Linux) or `Cmd+Shift+R` (macOS) |
 | MIME `text/plain` | Replace `/custom_components/...` with `/houseplan_files/...` |
 | Integration missing | Folder is exactly `custom_components/houseplan`; restart HA; inspect import errors |
+| Old version after update | Restart HA and reload resources/browser; the integration maintains the resource version query |
 
 ### Devices or values are missing
 
@@ -1518,6 +2128,21 @@ per space. The configuration package is limited to 2 MB.
 When reporting a problem, include House Plan version, HA version, browser,
 console/server errors and reproducible steps. Replace private entity IDs and
 plans with synthetic equivalents.
+
+## Quick safety checklist
+
+- Keep administrator-only editing enabled unless other users truly need to
+  upload files and modify the complete shared plan.
+- Removing a device, independent wall, plan file or space, and unlocking a
+  lock, use the common House Plan confirmation. **Cancel** has initial focus;
+  close, backdrop click and `Esc` change nothing. If the target changed or
+  disappeared, confirmation is not applied to a different object.
+- Enable confirmation for potentially dangerous Toggle, Run and cover actions.
+- Unlock only through the dedicated opening card; marker configuration cannot
+  bypass that path.
+- Make an HA backup before deleting a space, large room merges or optimization.
+- Read the optimization report: old/imported coordinates between grid nodes may
+  be corrected together.
 
 <!-- docs-section: support -->
 
