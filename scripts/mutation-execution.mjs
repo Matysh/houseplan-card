@@ -12,6 +12,14 @@ import { fileURLToPath } from 'node:url';
 import {
   MUTATION_OUTCOME, MUTATION_PROOF, runGuardPhases, runMutationLifecycle, setupFailureOwner,
 } from './mutation-guard-outcome.mjs';
+import {
+  captureBundleSeed, guardNeedsBundle, mutantBundleStrategy, restoreBundleSeed,
+} from './mutation-bundle-cache.mjs';
+
+export {
+  dropBundleSeed, guardNeedsBundle, makeBundleSeed, mutantBundleStrategy,
+  mutantPatchesNeedBundle, planNeedsBundleSeed,
+} from './mutation-bundle-cache.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -88,12 +96,6 @@ export function guardNeedsTestBuild(guard) {
  * самая дорогая часть прогона (255 мутантов × ~15-20 с), поэтому она
  * выполняется только там, где её результат кто-то откроет.
  */
-export function guardNeedsBundle(guard) {
-  // `bundle:sync` в гварде реестр больше не допускает (--check, #499), но
-  // распознавание остаётся: чужой или старый гвард со сборкой всё равно
-  // браузерный, и бандл ему нужен.
-  return guard.includes('demo/') || guard.includes('bundle:sync');
-}
 
 /**
  * Тёплый старт компиляции мутанта (#332): скопировать `test-build/` вместе с
@@ -168,14 +170,16 @@ function printMutantOutcome(mutant, outcome) {
   if (outcome.detail) console.log(`     ${outcome.detail}`);
 }
 
-export function runMutant(mutant, { ref = 'HEAD' } = {}) {
+export function runMutant(mutant, { ref = 'HEAD', bundleSeed = null } = {}) {
   let dir;
   try {
     dir = makeWorktree(ref);
     const outcome = runMutationLifecycle({
       apply: () => applyPatches(dir, mutant.patches),
       prepare: () => {
-        if (guardNeedsBundle(mutant.guard)) buildBundle(dir);
+        const bundle = mutantBundleStrategy(mutant, { seedAvailable: Boolean(bundleSeed) });
+        if (bundle === 'seed') restoreBundleSeed(bundleSeed, dir);
+        else if (bundle === 'build') buildBundle(dir);
         if (guardNeedsTestBuild(mutant.guard)) buildTestBuild(dir);
       },
       guard: mutant.guard,
@@ -199,12 +203,15 @@ export function runMutant(mutant, { ref = 'HEAD' } = {}) {
 
 // Чистый прогон каждого guard ровно один раз: тест, красный и без мутанта,
 // «ловит» поломку тривиально и не доказывает ничего.
-export function runCleanGuards(mutants) {
+export function runCleanGuards(mutants, { bundleSeed = null } = {}) {
   const guards = [...new Set(mutants.map((m) => m.guard))];
   const dir = makeWorktree();
   try {
     try {
-      if (guards.some(guardNeedsBundle)) buildBundle(dir);
+      if (guards.some(guardNeedsBundle)) {
+        buildBundle(dir);
+        if (bundleSeed) captureBundleSeed(dir, bundleSeed);
+      }
       // Один worktree на все чистые гварды — значит и компиляция одна.
       if (guards.some(guardNeedsTestBuild)) buildTestBuild(dir);
     } catch (error) {

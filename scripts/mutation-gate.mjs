@@ -10,9 +10,11 @@ import { fileURLToPath } from 'node:url';
 
 import { MUTANTS } from './mutation-registry.mjs';
 import {
-  applyPatches, buildBundle, dropWorktree, guardNeedsBundle, guardNeedsTestBuild,
-  makeWorktree, runCleanGuards, runMutant,
+  applyPatches, buildBundle, dropBundleSeed, dropWorktree, guardNeedsBundle, guardNeedsTestBuild,
+  makeBundleSeed, makeWorktree, mutantBundleStrategy, mutantPatchesNeedBundle,
+  planNeedsBundleSeed, runCleanGuards, runMutant,
 } from './mutation-execution.mjs';
+import { checkMutationRegistry } from './mutation-registry-check.mjs';
 import {
   ANCHOR_RADIUS_LINES, MUTATION_REGISTRY_FILES, anchorRegion, anchorSpan,
   baseRegistry, createGuardInputResolver, guardFiles, guardInputs,
@@ -24,9 +26,7 @@ import {
 } from './mutation-evidence.mjs';
 import { attributeSetupFailure } from './mutation-attribution.mjs';
 import { guardEnvironment, planEnvironment, planEnvironmentLines } from './mutation-environment.mjs';
-import {
-  MUTATION_OUTCOME, isProofOutcome, staticTestSelectionProblems,
-} from './mutation-guard-outcome.mjs';
+import { MUTATION_OUTCOME, isProofOutcome } from './mutation-guard-outcome.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -36,6 +36,7 @@ export {
   ANCHOR_RADIUS_LINES, LEDGER_SCHEMA, MUTANTS, MUTATION_REGISTRY_FILES,
   anchorRegion, anchorSpan, applyPatches, baseRegistry, createGuardInputResolver,
   guardFiles, guardInputs, guardNeedsBundle, guardNeedsTestBuild,
+  mutantBundleStrategy, mutantPatchesNeedBundle,
   packageJsonRelevance, parseDiffRanges, patchTouched, readLedger, recordCaught,
   registryDelta, selectChangedMutants, selectForDiff, shardMutants,
   splitByLedger, witnessFingerprint, wrapperInputs,
@@ -152,43 +153,9 @@ export async function main(argv) {
   }
 
   if (argv.includes('--check')) {
-    let stale = 0;
-    let warned = 0;
-    const readTest = (file) => {
-      const path = join(repoRoot, file);
-      return existsSync(path) ? readFileSync(path, 'utf8') : null;
-    };
-    for (const m of selected) {
-      try {
-        // #499: бандл мутанта собирает раннер (`buildBundle`, только rollup +
-        // sync). Гвард с собственным `npm run bundle:sync` собирал бы его второй
-        // раз — плюс `tsc --noEmit`, который на нестрогом мутанте падает сам и
-        // красит гвард ещё до теста: «мутант пойман» без единого запуска смока.
-        if (/bundle:sync|bundle-sync\.mjs|rollup -c/.test(m.guard)) {
-          throw new Error('гвард сам собирает бандл — сборку делает раннер (#499)');
-        }
-        for (const patch of m.patches) {
-          const source = readFileSync(join(repoRoot, patch.file), 'utf8');
-          const hits = source.split(patch.find).length - 1;
-          if (hits !== 1) throw new Error(`якорь найден ${hits} раз(а)`);
-        }
-        // #650: a name filter that matches nothing makes the witness vacuous.
-        const selection = staticTestSelectionProblems(m.guard, readTest);
-        const error = selection.find((problem) => problem.level === 'error');
-        if (error) throw new Error(error.text);
-        for (const problem of selection) {
-          console.log(`WARN ${m.id}: ${problem.text}`);
-          warned++;
-        }
-        console.log(`ok   ${m.id}`);
-      } catch (error) {
-        console.log(`FAIL ${m.id}: ${error.message}`);
-        stale++;
-      }
-    }
-    if (warned) console.log(`предупреждений о шаблонах имён: ${warned}`);
+    const result = checkMutationRegistry(selected, { allMutants: MUTANTS, root: repoRoot });
     reportPlanMetrics();
-    return stale ? 2 : 0;
+    return result;
   }
 
   if (argv.includes('--build-only')) {
@@ -241,7 +208,9 @@ export async function main(argv) {
     return 0;
   }
   reportPlanMetrics();
-  if (!runCleanGuards(toRun)) return 2;
+  const bundleSeed = planNeedsBundleSeed(toRun) ? makeBundleSeed() : null;
+  try {
+  if (!runCleanGuards(toRun, { bundleSeed })) return 2;
   let caught = 0;
   let unverifiable = false;
   // #568: свидетель, который не готовится к прогону, ломает гейт той задачи,
@@ -252,7 +221,7 @@ export async function main(argv) {
   // прогона одного и того же мутанта, а не код с ожиданием.
   const preExisting = [];
   for (const entry of plan) {
-    const outcome = runMutant(entry.mutant);
+    const outcome = runMutant(entry.mutant, { bundleSeed });
     if (!isProofOutcome(outcome)) {
       if (outcome.kind === MUTATION_OUTCOME.SETUP) {
         const verdict = await attributeSetupFailure(entry.mutant, outcome, rangeBase);
@@ -285,6 +254,9 @@ export async function main(argv) {
   }
   if (unverifiable) return 2;
   return caught === toRun.length - preExisting.length ? 0 : 1;
+  } finally {
+    dropBundleSeed(bundleSeed);
+  }
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

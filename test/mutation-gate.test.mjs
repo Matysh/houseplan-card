@@ -7,11 +7,15 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  MUTANTS, applyPatches, guardNeedsBundle, guardNeedsTestBuild, selectChangedMutants, shardMutants, guardFiles, packageJsonRelevance,
+  MUTANTS, applyPatches, guardNeedsBundle, guardNeedsTestBuild, mutantBundleStrategy,
+  mutantPatchesNeedBundle, selectChangedMutants, shardMutants, guardFiles, packageJsonRelevance,
   anchorSpan, anchorRegion, parseDiffRanges, ANCHOR_RADIUS_LINES,
   witnessFingerprint, readLedger, recordCaught, splitByLedger, LEDGER_SCHEMA,
 } from '../scripts/mutation-gate.mjs';
 import { guardPhases } from '../scripts/mutation-guard-outcome.mjs';
+import {
+  BROWSER_GUARD_LIMIT, browserGuardPolicy, documentedBrowserGuards,
+} from '../scripts/mutation-browser-policy.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -200,6 +204,26 @@ test('#332: каждый гвард реестра классифицирует�
   const rest = MUTANTS.length - bundle;
   assert.ok(bundle >= 40, `браузерных гвардов подозрительно мало: ${bundle}`);
   assert.ok(rest >= 150, `небраузерных гвардов подозрительно мало: ${rest}`);
+});
+
+test('#659: browser guard inventory is reviewed, capped and exact', () => {
+  const markdown = readFileSync(join(repoRoot, 'docs/testing-notes/mutation-browser-guards.md'), 'utf8');
+  const policy = browserGuardPolicy(MUTANTS, documentedBrowserGuards(markdown));
+  assert.equal(policy.count, BROWSER_GUARD_LIMIT);
+  assert.deepEqual(policy.missingReasons, []);
+  assert.deepEqual(policy.staleReasons, []);
+});
+
+test('#659: browser-only mutations reuse one clean bundle unless their patch is bundled', () => {
+  const corpus = new Set(['src/card.ts', 'scripts/source-fingerprint.mjs']);
+  const smoke = (file) => ({ guard: 'node demo/smoke_x.mjs', patches: [{ file }] });
+  assert.equal(mutantPatchesNeedBundle(smoke('src/card.ts').patches, corpus), true);
+  assert.equal(mutantPatchesNeedBundle(smoke('scripts/check.mjs').patches, corpus), false);
+  assert.equal(mutantBundleStrategy(smoke('scripts/check.mjs'), { seedAvailable: true, corpus }), 'seed');
+  assert.equal(mutantBundleStrategy(smoke('tests_backend/test_x.py'), { seedAvailable: true, corpus }), 'seed');
+  assert.equal(mutantBundleStrategy(smoke('src/card.ts'), { seedAvailable: true, corpus }), 'build');
+  assert.equal(mutantBundleStrategy({ guard: 'node --test test/x.test.mjs', patches: [] },
+    { seedAvailable: true, corpus }), 'none');
 });
 
 // --- #332: дифф-режим и шарды ---
@@ -717,7 +741,7 @@ test('#499: ни один гвард реестра не собирает бан
   const guard = 'npm run bundle:sync && node demo/smoke_furniture.mjs';
   assert.ok(/bundle:sync|bundle-sync\.mjs|rollup -c/.test(guard));
   assert.equal(guardNeedsBundle('node demo/smoke_furniture.mjs'), true, 'без префикса гвард остаётся браузерным');
-  const source = readFileSync(new URL('../scripts/mutation-gate.mjs', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../scripts/mutation-registry-check.mjs', import.meta.url), 'utf8');
   assert.match(source, /гвард сам собирает бандл — сборку делает раннер \(#499\)/);
 });
 
@@ -1000,7 +1024,7 @@ test('#620 (реестр): каждый смок-гард получает бр�
 test('#620: --plan-only печатает окружение плана', () => {
   const script = join(repoRoot, 'scripts/mutation-gate.mjs');
   const plan = (id) => spawnSync(process.execPath, [script, `--id=${id}`, '--plan-only'], { encoding: 'utf8' });
-  const smoke = plan('discard-confirm-action-icon-falls-back-to-lock');
+  const smoke = plan('dense-device-hit-browser-skips-painted-priority');
   assert.equal(smoke.status, 0, smoke.stderr);
   assert.match(smoke.stdout, /^plan=1$/m);
   assert.match(smoke.stdout, /^plan-browser=true$/m);

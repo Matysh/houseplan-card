@@ -107,6 +107,16 @@
 - [Воспроизводимость съёмки документации (#410, #422)](infrastructure.md#воспроизводимость-съёмки-документации-410-422)
 - [Пустое совпадение `--test-name-pattern` (#650)](infrastructure.md#пустое-совпадение---test-name-pattern-650)
 
+## [Browser guards mutation registry (#659)](mutation-browser-guards.md)
+
+- [Reviewed per-mutant inventory](mutation-browser-guards.md#reviewed-per-mutant-inventory)
+- [Performance threshold](mutation-browser-guards.md#performance-threshold)
+- [Browser harness integrity](mutation-browser-guards.md#browser-harness-integrity)
+- [Paint, cascade and layer composition](mutation-browser-guards.md#paint-cascade-and-layer-composition)
+- [Pointer geometry and trusted interaction](mutation-browser-guards.md#pointer-geometry-and-trusted-interaction)
+- [Responsive DOM layout](mutation-browser-guards.md#responsive-dom-layout)
+- [Custom-element and HA browser lifecycle](mutation-browser-guards.md#custom-element-and-ha-browser-lifecycle)
+
 ## [История прогонов и партий](history.md)
 
 - [Last self-run](history.md#last-self-run)

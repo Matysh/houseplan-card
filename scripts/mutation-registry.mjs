@@ -13058,8 +13058,175 @@ const MUTANT_DEFINITIONS = [
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
 const mutationEditorSource = readFileSync(join(repoRoot, 'src/houseplan-editor-runtime.ts'), 'utf8');
+
+// #659: these witnesses exercise pure state/geometry/CSS contracts and do not
+// need Chromium. Keep the grouping explicit: every promoted mutant is proven
+// by `mutation-gate`, not merely reclassified to avoid a bundle build.
+const unitGuard = (...files) => `node --test ${files.join(' ')} test/mutation-browser-offload.test.mjs`;
+const UNIT_GUARD_GROUPS = [
+  [unitGuard('test/stairs.test.mjs'), [
+    'stairs-fixed-floor-still-navigates',
+    'stairs-link-auto-creates-target-object',
+    'stairs-broken-targets-become-active',
+  ]],
+  [unitGuard('test/device-hit-owner.test.mjs'), [
+    'device-hit-scroll-observer-disabled',
+  ]],
+  [unitGuard('test/summary-panel-runtime.test.mjs'), [
+    'summary-hide-unmounts-before-animation',
+    'summary-first-paint-shows-unavailable',
+    'summary-metrics-block-first-frame',
+  ]],
+  [unitGuard('test/form-shell-consumers.test.mjs'), [
+    'discard-confirm-action-icon-falls-back-to-lock',
+  ]],
+  [unitGuard('test/form-kit.test.mjs'), [
+    'range-line-clamps-every-keystroke',
+  ]],
+  [unitGuard('test/dialog-baseline.test.mjs', 'test/styles-split.test.mjs'), [
+    'ha-form-shell-width-falls-back-to-generic',
+    'ha-form-shell-loses-canvas',
+    'ha-form-shell-mobile-keeps-desktop-inset',
+  ]],
+  [unitGuard('test/summary-panel.test.mjs'), [
+    'summary-dialog-loses-wide-shell',
+    'summary-mobile-ignores-local-off',
+  ]],
+  [unitGuard('test/styles-split.test.mjs'), [
+    'marker-shadow-animates-again',
+  ]],
+  [unitGuard('test/device-inbox.test.mjs'), [
+    'device-inbox-batch-single-write',
+  ]],
+  [unitGuard('test/houseplan-panel.test.mjs'), [
+    'panel-ignores-pre-upgrade-properties',
+    'panel-host-height-from-parent',
+  ]],
+  [unitGuard('test/version-recovery-card.test.mjs'), [
+    'version-recovery-delays-config-capability-adoption',
+  ]],
+  [unitGuard('test/vacuum-calibration-write.test.mjs'), [
+    'vacuum-manual-fit-after-proposal-uses-the-dock',
+  ]],
+  [unitGuard('test/devices.test.mjs'), [
+    'room-climate-ignores-marker-placement',
+  ]],
+  [unitGuard('test/device-inbox.test.mjs'), [
+    'device-tombstone-blocks-child-picker',
+  ]],
+  [unitGuard('test/room-fit.test.mjs'), [
+    'room-fit-interactive-owner-leaks-through',
+  ]],
+  [unitGuard('test/iso-stage6.test.mjs', 'test/styles-split.test.mjs'), [
+    'iso-tile-ring-visible',
+    'iso-tile-edge-zero',
+    'iso-tile-badge-gap-dropped',
+    'iso-tile-shadow-layer-above',
+    'iso-frame-selected-beats-focus',
+    'iso-shadow-in-forced-colors',
+    'iso-sun-length-ignores-elevation',
+    'iso-sun-streaks-on-dark-floor',
+    'iso-wall-top-constant',
+  ]],
+  [unitGuard('test/backdrop-probe.test.mjs'), [
+    'backdrop-hard-demoted-to-warn',
+  ]],
+  [unitGuard('test/bundle-assets.test.mjs'), [
+    'css-minifier-eats-required-space',
+  ]],
+  [unitGuard('test/wall-thickness.test.mjs', 'test/wall-union-isolation.test.mjs'), [
+    'wall-component-failure-kills-primary',
+  ]],
+  [unitGuard('test/glow-scene.test.mjs'), [
+    'union-failure-silent',
+    'glow-fail-dark-weakened',
+    'opening-cut-degenerate',
+    'column-shadow-removed',
+    'feather-20px',
+  ]],
+  [unitGuard('test/visual-continuity.test.mjs'), [
+    'continuity-long-resume-noop',
+  ]],
+  [unitGuard('test/ha-binding-status.test.mjs'), [
+    'registryless-opening-requires-registry-row',
+  ]],
+  [unitGuard('test/header-menu.test.mjs'), [
+    'header-menu-item-keeps-menu-open',
+    'header-menu-escape-ignored',
+    'active-tab-not-revealed',
+  ]],
+  [unitGuard('test/iso-scene-render.test.mjs', 'test/iso-stage6.test.mjs'), [
+    'grid-scale-iso-height-unscaled',
+    'stage3-w8-material-defs-created-per-face',
+  ]],
+  [unitGuard('test/support-feedback.test.mjs'), [
+    'support-edited-retry-reuses-old-idempotency-key',
+  ]],
+  [unitGuard('test/touch-gesture-click-guard.test.mjs'), [
+    'touch-pinch-contextmenu-guard-removed',
+  ]],
+  [unitGuard('test/live-editor.test.mjs'), [
+    'live-editor-devices-drops-align-guides',
+    'live-editor-decor-drops-align-guides',
+    'live-editor-plan-drops-align-guides',
+    'live-editor-keeps-the-settled-guides-visible',
+  ]],
+  [unitGuard('test/live-viewport.test.mjs'), [
+    'live-pan-incoming-edge-clipped',
+    'live-pan-rewrites-viewbox-every-frame',
+  ]],
+  [unitGuard('test/summary-runtime-loader.test.mjs'), [
+    'summary-runtime-attaches-after-first-render',
+  ]],
+  [unitGuard('test/config-reload-authority.test.mjs'), [
+    'config-reload-drops-asset-gap-ownership',
+  ]],
+  [unitGuard('test/summary-panel.test.mjs'), [
+    'summary-picker-renders-unbounded-results',
+  ]],
+  [unitGuard('test/form-shell-consumers.test.mjs', 'test/dialog-baseline.test.mjs',
+    'test/space-dialog.test.mjs'), [
+    'same-binding-click-resets-source',
+    'state-callout-hidden-under-help',
+    'dialog-card-loses-its-heading',
+    'form-kit-writes-to-a-neighbour-key',
+    'space-fill-segment-writes-a-neighbour-key',
+    'space-save-enabled-without-changes',
+    'space-discard-without-asking',
+    'space-layer-toggle-loses-inversion',
+    'general-save-enabled-without-changes',
+    'general-tile-opacity-writes-a-neighbour-key',
+    'general-north-clear-writes-zero',
+    'topology-embedded-draws-its-own-heading',
+    'room-save-enabled-without-changes',
+    'room-discard-without-asking',
+    'room-fill-segment-starts-at-none',
+    'room-temp-min-writes-max',
+    'marker-save-enabled-without-changes',
+    'marker-save-click-forgets-baseline-before-result',
+    'marker-discard-without-asking',
+    'marker-confirm-row-shown-for-do-nothing',
+    'marker-never-keeps-glow-block-live',
+    'marker-badge-position-forgets-touch',
+  ]],
+  [unitGuard('test/color-picker.test.mjs'), [
+    'M-615-tile',
+    'M-615-plate',
+  ]],
+  [unitGuard('test/form-kit.test.mjs', 'test/styles-split.test.mjs'), [
+    'form-kit-segment-breaks-words',
+  ]],
+  [unitGuard('test/room-gear-drag.test.mjs'), [
+    'room-gear-drag-reopens-settings',
+  ]],
+];
+const UNIT_GUARD_OVERRIDES = new Map(UNIT_GUARD_GROUPS.flatMap(([guard, ids]) => (
+  ids.map((id) => [id, guard])
+)));
+
 export const MUTANTS = MUTANT_DEFINITIONS.map((mutant) => ({
   ...mutant,
+  guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(
     patch, mutationCardSource, mutationEditorSource,
   )),

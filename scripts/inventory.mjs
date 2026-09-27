@@ -8,6 +8,10 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { METRIC_NAMES, collectMetrics, readBaseline } from './monolith-metrics.mjs';
+import { MUTANTS } from './mutation-registry.mjs';
+import {
+  BROWSER_GUARD_LIMIT, browserGuardPolicy, readDocumentedBrowserGuards,
+} from './mutation-browser-policy.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 
 const count = (root, dir, match, re) =>
@@ -38,6 +42,12 @@ if (isMainModule(import.meta.url)) {
   const rows = testInventory().map(({ label, count: n }) => [label, n]);
   const w = Math.max(...rows.map(([n]) => n.length));
   for (const [name, n] of rows) console.log(`${name.padEnd(w)}  ${n}`);
+
+  const browser = browserGuardPolicy(MUTANTS, readDocumentedBrowserGuards(process.cwd()));
+  console.log(`\nmutation browser guards  ${browser.count}/${BROWSER_GUARD_LIMIT}`);
+  if (browser.missingReasons.length || browser.staleReasons.length) {
+    console.log(`mutation browser inventory drift  +${browser.missingReasons.length} / -${browser.staleReasons.length}`);
+  }
 
   // #624: связность монолита — те же шесть чисел и тот же модуль, что у гейта
   // `npm run lint:unused` («одно число — один источник»); рядом — база, чтобы

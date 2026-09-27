@@ -1,0 +1,252 @@
+# Browser guards mutation registry (#659)
+
+This is the reviewed classification of every mutation witness that still needs a browser.
+The executable limit is `200`; `mutation-gate --check`, `npm run inventory` and the unit
+contract all read this same inventory. A new browser guard must be added deliberately under
+one reason below, and its mutant `because` must explain the concrete browser-only invariant.
+
+Converted witnesses are not listed here: their registry guard names an explicit `node --test`
+suite plus `test/mutation-browser-offload.test.mjs`, and every converted mutant is run once
+to prove that the Node witness actually kills it.
+
+| Category | Count | Why a browser is still required |
+| --- | ---: | --- |
+| Performance threshold | 4 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
+| Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
+| Paint, cascade and layer composition | 26 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 45 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Responsive DOM layout | 36 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Custom-element and HA browser lifecycle | 85 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **200 / 200** | Growth above the cap fails `mutation-gate --check`. |
+
+## Reviewed per-mutant inventory
+
+### Performance threshold
+
+The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget.
+
+- `junction-limit-p3-quadratic-again`
+- `junction-limit-p4-bruteforce-again`
+- `wall-draw-full-preflight-again`
+- `wall-draw-wall-artifact-discarded`
+
+### Browser harness integrity
+
+The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself.
+
+- `benchmark-page-verdict-unwatched`
+- `report-page-errors-skips-round-trip`
+- `smoke-guard-blind-to-tail`
+- `smoke-guard-forgets-to-register-pages`
+
+### Paint, cascade and layer composition
+
+The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium.
+
+- `daycycle-outline-not-promoted`
+- `daycycle-outline-promoted-on-inner-paper`
+- `daycycle-static-outline-promoted-on-inner-paper`
+- `decor-restored-below-room-fills`
+- `device-keyboard-bypasses-click-path`
+- `device-long-value-ellipsis-restored`
+- `device-unavailable-hover-restored`
+- `golden-filled-tunnel-removed`
+- `golden-lamp-out-of-reach`
+- `hatch-static-renderer-untouched`
+- `hatch-stroke-not-scaled`
+- `hatch-zoom-compensation-back`
+- `iso-first-frame-reveals-flat-during-lazy-load`
+- `iso-room-label-44-box-centres-name`
+- `iso-sun-card-drops-occluders`
+- `iso-sun-flat-wedges-remain`
+- `iso-theme-dark-wall-rule-returns`
+- `stage3-w4-device-target-loses-44px-floor`
+- `stage3-w5-runtime-nudge-writes-storage`
+- `stage3-w6-no-borders-keeps-raised-plates`
+- `stage3-w7-sun-state-enters-structural-key`
+- `sun-ray-origin-cache-ignored`
+- `sun-ray-origin-save-forced-inner`
+- `value-static-icon-keeps-live-vacuum`
+- `value-static-icon-keeps-route-warning`
+- `value-static-icon-keeps-vacuum-overlay`
+
+### Pointer geometry and trusted interaction
+
+The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry.
+
+- `align-guides-exclude-dead-source`
+- `align-point-reads-frozen-snapshot`
+- `decor-default-style-debounce-cut`
+- `decor-default-style-seed-cut`
+- `decor-keyboard-nudge-drops-focus-dialog-guards`
+- `decor-keyboard-nudge-reruns-magnet`
+- `dense-device-hit-browser-skips-painted-priority`
+- `double-fit-bypasses-canonical-fit-all`
+- `furniture-art-editor-adopt-skipped`
+- `furniture-edge-handles-steal-the-corner`
+- `furniture-exterior-surface-removed`
+- `furniture-shift-listeners-not-attached`
+- `furniture-wall-runtime-drops-drag-side`
+- `furniture-wall-runtime-drops-raw-intent`
+- `live-pinch-compositor-demoted-on-active-lit-commit`
+- `opening-dimension-overlay-hidden`
+- `opening-search-hides-none`
+- `opening-search-select-not-wired`
+- `placement-accepts-any-mouse-button`
+- `reorder-skips-materialization`
+- `resize-history-boundary-repair-removed`
+- `resize-label-uses-old-room-gear-centre`
+- `resize-labels-hide-narrow-area`
+- `resize-pointer-capture-removed`
+- `resize-preview-reject-silent`
+- `room-fit-html-overlay-jumps-ahead`
+- `room-fit-pan-release-reaccepted`
+- `room-fit-persists-zoom`
+- `safe-resize-commit-preflight-bypassed`
+- `sections-editor-transition-uses-window-height`
+- `sections-grid-drops-stage-flex-chain`
+- `sections-grid-falls-back-to-viewport-height`
+- `sections-resize-drops-stage-refit-observer`
+- `space-card-decor-capability-change-not-adopted`
+- `space-card-decor-capability-downgrade-does-not-clear-assets`
+- `tab-drag-outlives-the-card`
+- `tab-drag-survives-release-outside`
+- `tab-drag-target-follows-captured-source`
+- `tab-drop-indicator-always-before`
+- `tab-drop-outside-commits-last-target`
+- `tab-reorder-not-persisted`
+- `touch-pinch-marker-hold-rearmed`
+- `touch-pinch-zoom-persists-per-frame`
+- `unavailable-toggle-stays-silent`
+- `wall-draw-rejection-rollback-skipped`
+
+### Responsive DOM layout
+
+The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size.
+
+- `dialog-ha-disconnected-reject-reopen-enabled`
+- `dialog-ha-rejected-close-reopen-disabled`
+- `dialog-native-reconnect-recovery-disabled`
+- `dialog-native-surface-stretches-to-viewport`
+- `dialog-native-update-recovery-disabled`
+- `fit-house-hidden-walls-vote`
+- `grid-scale-imperial-roundtrip-drift`
+- `grid-scale-opening-hit-unscaled`
+- `grid-scale-opening-symbol-unscaled`
+- `grid-scale-plan-chrome-unscaled`
+- `grid-scale-static-factor-missing`
+- `header-menu-item-below-44`
+- `header-menu-outside-tap-reaches-plan`
+- `hidden-room-names-compact-svg-fallback`
+- `hidden-room-names-full-svg-fallback`
+- `hidden-room-names-iso-override`
+- `hp-dialog-ignores-flex-content`
+- `panel-readonly-empty-bypasses-write-capability`
+- `phone-editor-close-hidden-with-mode-buttons`
+- `phone-header-at-tablet-width`
+- `phone-header-shows-title`
+- `phone-header-wraps`
+- `static-card-descendants-hit-testable`
+- `summary-dialog-drops-flex-content`
+- `summary-picker-hot-add-stays-filtered`
+- `tab-editing-without-write-access`
+- `toolbar-active-highlight-stops-at-tab`
+- `toolbar-close-back-inside-tab`
+- `toolbar-close-hidden-at-medium-width`
+- `toolbar-close-slot-collapses-outside-editor`
+- `toolbar-close-slot-idle-focusable`
+- `toolbar-close-slot-leaves-mode-group`
+- `toolbar-close-target-below-24`
+- `toolbar-device-count-returns`
+- `toolbar-mode-zoom-gap-regresses`
+- `warm-dialog-drops-transferred-baseline`
+
+### Custom-element and HA browser lifecycle
+
+The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition.
+
+- `accepted-marker-rolled-back-by-layout-failure`
+- `area-relocation-clears-whole-history`
+- `area-relocation-loses-position-on-refusal`
+- `backdrop-busy-dismiss-races-decision`
+- `backdrop-downscale-drops-alpha`
+- `backdrop-phase2-falls-back-to-original`
+- `backdrop-probe-always-safe`
+- `barrier-cache-never-invalidated`
+- `camera-anchor-from-presented`
+- `camera-cancel-loses-zoom`
+- `child-readd-clears-parent-tombstone`
+- `cold-view-toggle-delegated-to-runtime`
+- `cold-view-vacuum-mapid-delegated`
+- `color-picker-confirm-click-through`
+- `color-picker-invalid-confirm-latch-removed`
+- `config-updated-event-ignored`
+- `confirm-dialog-loses-alertdialog`
+- `current-rejected-physical-write-keeps-optimistic-wall`
+- `danger-confirm-back-into-the-branch`
+- `danger-confirm-lost-space-request-guard-removed`
+- `danger-confirm-lost-space-transition-cancel-removed`
+- `danger-confirm-uses-last-rendered-language-gate`
+- `danger-confirm-warm-language-guard-removed`
+- `danger-confirm-warm-transition-cancel-removed`
+- `daycycle-programmatic-camera-skips-safe-outline`
+- `device-echo-keeps-local-noncanonical`
+- `device-focus-tooltip-blur-cleanup-removed`
+- `device-focus-tooltip-handler-removed`
+- `device-focus-tooltip-room-hover-overwrites`
+- `device-inbox-batch-rollback`
+- `household-enter-stops-acting`
+- `household-marker-drops-keyboard-reach`
+- `device-markers-rendered-without-keys`
+- `device-pointer-leave-clears-focus-fallback`
+- `device-position-cancel-routed-to-commit`
+- `discovery-reset-writes-a-copy`
+- `editor-neutral-escape-does-not-exit`
+- `empty-space-cleanup-disabled`
+- `fixed-floor-transition-guard-bypassed`
+- `french-locale-wrong-dictionary`
+- `hp-dialog-escape-does-not-close`
+- `junction-limit-baseline-cache-stale`
+- `junction-limit-candidate-fail-open`
+- `junction-limit-write-gate-removed`
+- `locale-failure-toast-dropped`
+- `marker-reject-keeps-optimistic-candidate`
+- `marker-rollback-keeps-enqueue-time-revision`
+- `namespace-loader-returns-english`
+- `near-axis-authoring-snap-bypassed`
+- `onboarding-loader-skips-namespace-ensure`
+- `openings-rendered-without-keys`
+- `plan-only-preview-label-hidden`
+- `plan-room-area-icon-hidden`
+- `plan-room-area-icon-navigates`
+- `plan-upload-client-limit`
+- `plan-upload-guard-original`
+- `plan-upload-reduced-over-limit-staged`
+- `post-write-tail-runs-on-refused-gate`
+- `readonly-view-syncs-new-devices`
+- `render-invalidation-renders-irrelevant-ha`
+- `reopened-room-from-registry-space`
+- `room-accept-leaves-coincident-partitions`
+- `room-gear-second-touch-keeps-drag`
+- `room-settings-click-does-not-open`
+- `room-tooltip-off-skips-pointer-modality`
+- `same-space-room-change-recenters`
+- `space-create-hidden-display-override`
+- `stairs-view-pan-opens-target-floor`
+- `support-invalid-response-leaks-issued-token`
+- `support-stale-preview-response-revives-consent`
+- `support-timeout-claims-success`
+- `vacuum-overlay-back-to-the-dock-space-filter`
+- `volumetric-kiosk-ignores-setting`
+- `view-current-space-aria-removed`
+- `wall-face-apply-skips-overlap-guard`
+- `wallthick-hit-narrowed`
+- `writer-history-skips-finished-chain-normalization`
+- `zigbee-topology-endpoint-cleanup-skipped`
+- `zigbee-topology-endpoint-elevation-removed`
+- `zigbee-topology-hovered-endpoint-elevation-removed`
+- `zigbee-topology-overlay-double-live-projection`
+- `zigbee-topology-overlay-layer-lowered`
+- `zigbee-topology-unknown-casing-gaps-filled`
+- `zigbee-topology-unknown-casing-removed`
+- `zigbee-topology-unrelated-markers-raised`
