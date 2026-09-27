@@ -1,9 +1,12 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1119, issue: 403. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1122, issue: 404. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #683 | [SPEC-REVIEW-683-r1.md](SPEC-REVIEW-683-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #683 | [CODE-REVIEW-683-r1.md](CODE-REVIEW-683-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC13 не показывает «пользовательские цвета» в golden | `demo/golden/matrix.mjs` `demo/golden/harness.mjs` `demo/smoke_stairs.mjs` `plan.styles.ts` |
+| #683 | [CODE-REVIEW-683-r2.md](CODE-REVIEW-683-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #681 | [CODE-REVIEW-681-r1.md](CODE-REVIEW-681-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #680 | [CODE-REVIEW-680-r1.md](CODE-REVIEW-680-r1.md) | code · r1 | 🟢 зелёный | 0 | 1 | вне скоупа (заведён отдельный issue) | `docs/UX-MODES.md` `docs/TOUCH-SUPPORT.md` `docs/WALL-THICKNESS.md` `UX-MODES.md` `TOUCH-SUPPORT.md` `src/houseplan-card.ts` `src/houseplan-editor-runtime.ts` `src/writer-fixed-point.ts` |
 | #679 | [CODE-REVIEW-679-r1.md](CODE-REVIEW-679-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
