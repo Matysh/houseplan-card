@@ -10,8 +10,8 @@
   с сохранением стен
 - **Модель данных:** schema и `PLAN_MODEL_VERSION` не меняются
 - **Связано:** #198, #228, #253, #287, #289, #298,
-  [ADR #282](../adr/282-wall-geometry-representation.md),
-  [WALL-THICKNESS.md](../WALL-THICKNESS.md)
+  [ADR #282](../../docs/adr/282-wall-geometry-representation.md),
+  [WALL-THICKNESS.md](../../docs/WALL-THICKNESS.md)
 
 ## 1. Сценарий
 

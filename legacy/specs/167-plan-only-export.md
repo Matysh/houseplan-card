@@ -12,11 +12,11 @@ Issue: [#167](https://github.com/Matysh/houseplan-card/issues/167)
 Зависимость: [#50](https://github.com/Matysh/houseplan-card/issues/50) — выполнена
 и выпущена в stable v1.62.0.
 
-Канонические документы: [SCOPE](../SCOPE.md),
-[CONFIG-COMPATIBILITY](../CONFIG-COMPATIBILITY.md),
-[TOUCH-SUPPORT](../TOUCH-SUPPORT.md), [USER-GUIDE](../USER-GUIDE.md),
-[USER-GUIDE.ru](../USER-GUIDE.ru.md),
-[ТЗ #50](050-config-export-import.md).
+Канонические документы: [SCOPE](../../docs/SCOPE.md),
+[CONFIG-COMPATIBILITY](../../docs/CONFIG-COMPATIBILITY.md),
+[TOUCH-SUPPORT](../../docs/TOUCH-SUPPORT.md), [USER-GUIDE](../../docs/USER-GUIDE.md),
+[USER-GUIDE.ru](../../docs/USER-GUIDE.ru.md),
+[ТЗ #50](../../docs/specs/050-config-export-import.md).
 
 ## 1. Сценарий и персона
 

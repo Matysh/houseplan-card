@@ -1,7 +1,7 @@
 # Issue #282 — стабильная идентичность сегментов стен (ADR Stage 1)
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/282
-- **ADR:** [`docs/adr/282-wall-geometry-representation.md`](../adr/282-wall-geometry-representation.md)
+- **ADR:** [`docs/adr/282-wall-geometry-representation.md`](../../docs/adr/282-wall-geometry-representation.md)
 - **Статус:** принято независимым ревью; Stage 1 реализован и проверен
 - **Тип / приоритет:** tech-debt / P1
 - **Поставляемый этап:** Stage 1 — stored identity

@@ -1,7 +1,7 @@
 # ТЗ #20 — Glow проходит через дверь по её фактическому состоянию
 
 - Issue: https://github.com/Matysh/houseplan-card/issues/20
-- Каноническая модель света: [`docs/LIGHT.md`](../LIGHT.md)
+- Каноническая модель света: [`docs/LIGHT.md`](../../docs/LIGHT.md)
 - Связано: #19, #55, #71, #92, #306
 
 ## Сценарий

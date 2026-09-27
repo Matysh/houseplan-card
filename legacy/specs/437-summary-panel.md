@@ -17,7 +17,7 @@ Issue: [#437](https://github.com/Matysh/houseplan-card/issues/437).
 настраиваются одним окном и не меняют размер самого плана.
 
 Это ограниченное исключение из запрета general dashboard framework в
-[SCOPE](../SCOPE.md), одобренное владельцем 2026-09-03: контекстная read-only
+[SCOPE](../../docs/SCOPE.md), одобренное владельцем 2026-09-03: контекстная read-only
 сводка при пространственном View, не новый конструктор dashboard.
 Поглощённые сценарии: [#83](https://github.com/Matysh/houseplan-card/issues/83)
 и [#149](https://github.com/Matysh/houseplan-card/issues/149).
@@ -261,7 +261,7 @@ Auto-hide не меняет localShow и не запускает WS save. Resize
 
 **Touch View: supported. Touch editor: supported только для новой простой
 формы сводки.** Гарантии остальных редакторов остаются по
-[TOUCH-SUPPORT](../TOUCH-SUPPORT.md); task не расширяет их.
+[TOUCH-SUPPORT](../../docs/TOUCH-SUPPORT.md); task не расширяет их.
 
 Размер tappable зоны каждого контрола ≥44×44 CSS px; иконка может быть меньше
 по макету. Кнопки не накладываются зонами. Составной контрол остаётся
@@ -415,7 +415,7 @@ Shared-форма и runtime Save guard: `!kiosk && _canManageConfiguration`.
 Сервер по-прежнему проверяет `may_write`/`admin_only`; не заменять контракт
 безусловным `hass.user.is_admin`. До получения прав fail closed, локальные
 настройки не открывают server writes. Kiosk не даёт редактор даже admin,
-согласно [UX-MODES](../UX-MODES.md). Текущий `_canEdit` сам по себе этого
+согласно [UX-MODES](../../docs/UX-MODES.md). Текущий `_canEdit` сам по себе этого
 не гарантирует — нужен явный kiosk guard в новом handler.
 
 ### 8.2 Как различать карточки

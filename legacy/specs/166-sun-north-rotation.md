@@ -6,10 +6,10 @@
 
 Issue: [#166](https://github.com/Matysh/houseplan-card/issues/166)  
 Ветка: `issue/166-sun-north-rotation`  
-Канонические документы: [SCOPE](../SCOPE.md), [SUN](../SUN.md),
-[USER-GUIDE](../USER-GUIDE.md), [USER-GUIDE.ru](../USER-GUIDE.ru.md),
-[TOUCH-SUPPORT](../TOUCH-SUPPORT.md), [TESTING](../TESTING.md),
-[CONFIG-COMPATIBILITY](../CONFIG-COMPATIBILITY.md).
+Канонические документы: [SCOPE](../../docs/SCOPE.md), [SUN](../../docs/SUN.md),
+[USER-GUIDE](../../docs/USER-GUIDE.md), [USER-GUIDE.ru](../../docs/USER-GUIDE.ru.md),
+[TOUCH-SUPPORT](../../docs/TOUCH-SUPPORT.md), [TESTING](../../docs/TESTING.md),
+[CONFIG-COMPATIBILITY](../../docs/CONFIG-COMPATIBILITY.md).
 
 ## 1. Сценарий и продуктовый контекст
 

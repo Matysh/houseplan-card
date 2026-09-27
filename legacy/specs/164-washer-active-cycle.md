@@ -11,10 +11,10 @@ Issue: [#164](https://github.com/Matysh/houseplan-card/issues/164)
 
 Ветка: `issue/164-washer-active-cycle`
 
-Канонические документы: [SCOPE](../SCOPE.md),
-[TOUCH-SUPPORT](../TOUCH-SUPPORT.md), [USER-GUIDE](../USER-GUIDE.md),
-[USER-GUIDE.ru](../USER-GUIDE.ru.md),
-[CONFIG-COMPATIBILITY](../CONFIG-COMPATIBILITY.md).
+Канонические документы: [SCOPE](../../docs/SCOPE.md),
+[TOUCH-SUPPORT](../../docs/TOUCH-SUPPORT.md), [USER-GUIDE](../../docs/USER-GUIDE.md),
+[USER-GUIDE.ru](../../docs/USER-GUIDE.ru.md),
+[CONFIG-COMPATIBILITY](../../docs/CONFIG-COMPATIBILITY.md).
 
 ## 1. Сценарий и персона
 
