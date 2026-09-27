@@ -307,7 +307,7 @@ jobs:
                 "$TAG" "$CANDIDATE" "${BASE:-—}" "${ISSUES:-—}" "$RUN_URL"
               printf '```\n'
             } > "$DOC"
-            node scripts/reviews-index.mjs --dir=docs/reviews
+            node scripts/reviews-index.mjs --dir=docs/reviews --strict
             git add -- "$DOC" docs/reviews/INDEX.md
             git diff --cached --name-only | node scripts/review-doc-guard.mjs
             git -c user.name="claude[bot]" \

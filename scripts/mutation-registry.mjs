@@ -9833,6 +9833,46 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'reviews-index-release-name-unsupported',
+    guard: 'node --test --test-name-pattern="#635 индекс покрывает|#670" test/reviews-index.test.mjs',
+    because: '#670: the first line review document must be indexed instead of making the next dev Validate red',
+    patches: [{
+      file: 'scripts/reviews-index.mjs',
+      find: "  if (release) return { stage: 'release', issue: null, round: null, suffix: null, tag: release[1] };",
+      replace: "  if (false && release) return { stage: 'release', issue: null, round: null, suffix: null, tag: release[1] }; // mutant: release review is unknown",
+    }],
+  },
+  {
+    id: 'reviews-index-release-counts-ignored',
+    guard: 'node --test --test-name-pattern="#635 счётчики|#635 индекс покрывает" test/reviews-index.test.mjs',
+    because: '#670: release reviews use the mandated `Итог: High N · Medium N` summary without colons',
+    patches: [{
+      file: 'scripts/reviews-index.mjs',
+      find: '  if (release) return release;\n  for (const scope of [verdictLine(text, true), verdictSection(text), verdictLine(text)]) {',
+      replace: '  void release; // mutant: ignore the release summary\n  for (const scope of [verdictLine(text, true), verdictSection(text), verdictLine(text)]) {',
+    }],
+  },
+  {
+    id: 'reviews-index-strict-cli-disabled',
+    guard: 'node --test --test-name-pattern="#670" test/reviews-index.test.mjs',
+    because: '#670: strict publication must reject a new unknown document before it writes an incomplete index',
+    patches: [{
+      file: 'scripts/reviews-index.mjs',
+      find: "  if (process.argv.includes('--strict')) assertAllDocumentsIndexed(collected);",
+      replace: "  if (false && process.argv.includes('--strict')) assertAllDocumentsIndexed(collected); // mutant: strict is disabled",
+    }],
+  },
+  {
+    id: 'release-review-index-without-strict',
+    guard: 'node --test --test-name-pattern="#638" test/release-review.test.mjs',
+    because: '#670: the publisher itself must opt into strict indexing so a future filename drift fails at its source',
+    patches: [{
+      file: '.github/workflows/release-review.yml',
+      find: 'node scripts/reviews-index.mjs --dir=docs/reviews --strict',
+      replace: 'node scripts/reviews-index.mjs --dir=docs/reviews',
+    }],
+  },
+  {
     id: 'reviews-index-verdict-substring',
     guard: 'node --test --test-name-pattern="#635 вердикт" test/reviews-index.test.mjs',
     because: 'a colour word inside another word is not a verdict; JS \\b is ASCII-only, so the '

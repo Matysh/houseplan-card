@@ -8,11 +8,13 @@
 // заголовки находок. Он генерируется (класс C), а не пишется руками, и
 // пересобирается конвейером после публикации каждого документа ревью.
 //
-//   node scripts/reviews-index.mjs [--dir=docs/reviews] [--output=docs/reviews/INDEX.md] [--check]
+//   node scripts/reviews-index.mjs [--dir=docs/reviews] [--output=docs/reviews/INDEX.md] [--check] [--strict]
 //   node scripts/reviews-index.mjs --commit-if-stale --issue=NN [--dir=…]
 //
 // `--check` — не писать, а сравнить с существующим файлом (гейт «индекс свеж»;
 // тот же инвариант держит тест `#635 индекс свеж`).
+// `--strict` — отказать до записи, если в каталоге есть неизвестное имя
+// документа; точка публикации release-review использует этот режим.
 // `--commit-if-stale` — пересобрать и, если файл изменился, закоммитить его
 // коммитом конвейера (класс C). Индекс — снимок каталога: ребейз ветки на
 // dev, получивший новые документы, устаревает его молча (r2 #635 H1), поэтому
@@ -25,6 +27,7 @@ import { isMainModule } from './spawn-portable.mjs';
 
 export const INDEX_FILE = 'INDEX.md';
 const DOC_NAME = /^(CODE|SPEC)-REVIEW-(?:issue-)?(\d+)(?:-r(\d+))?(?:-([a-z0-9-]+))?\.md$/i;
+const RELEASE_DOC_NAME = /^RELEASE-REVIEW-(v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))\.md$/i;
 const COLOUR = {
   'зелёный': 'зелёный', 'зеленый': 'зелёный', green: 'зелёный',
   'жёлтый': 'жёлтый', 'желтый': 'жёлтый', yellow: 'жёлтый',
@@ -38,6 +41,8 @@ const VERDICT_OWN_LINE_RE = /^[ \t]*(?:[-*]\s*)?\**(?:Вердикт|Verdict)[^\
 
 /** Разобрать имя документа: этап, issue, раунд. */
 export function parseDocName(name) {
+  const release = RELEASE_DOC_NAME.exec(String(name));
+  if (release) return { stage: 'release', issue: null, round: null, suffix: null, tag: release[1] };
   const match = DOC_NAME.exec(String(name));
   if (!match) return null;
   return {
@@ -97,6 +102,11 @@ const countsIn = (scope) => {
   const high = /High:\s*(\d+)/.exec(scope);
   const medium = /Medium:\s*(\d+)/.exec(scope);
   return high || medium ? { high: high ? Number(high[1]) : 0, medium: medium ? Number(medium[1]) : 0 } : null;
+};
+
+const releaseCounts = (text) => {
+  const match = /(?:^|\n)Итог:\s*High\s+(\d+)\s*·\s*Medium\s+(\d+)(?:\s*·\s*Low\s+\d+)?(?:\s|$)/i.exec(text);
+  return match ? { high: Number(match[1]), medium: Number(match[2]) } : null;
 };
 
 /**
@@ -175,6 +185,8 @@ function numberedItems(body) {
  * документа («ТЗ прошло зелёным на r3 (High: 0, Medium: 0)»).
  */
 export function parseCounts(text) {
+  const release = releaseCounts(text);
+  if (release) return release;
   for (const scope of [verdictLine(text, true), verdictSection(text), verdictLine(text)]) {
     const counts = scope ? countsIn(scope) : null;
     if (counts) return counts;
@@ -281,11 +293,22 @@ export function collectEntries(dir, read = (name) => readFileSync(join(dir, name
   return { entries, skipped };
 }
 
+/** Строгая граница публикации: новый документ обязан попасть в индекс сразу. */
+export function assertAllDocumentsIndexed({ skipped }) {
+  if (skipped.length) throw new Error(`вне схемы имён: ${skipped.join(', ')}`);
+}
+
 const badge = (verdict) => ({ 'зелёный': '🟢', 'жёлтый': '🟡', 'красный': '🔴' }[verdict] || '⚪');
 
 export function renderIndex({ entries, skipped = [] }) {
+  const releaseDocs = entries.filter((entry) => entry.stage === 'release').sort((a, b) => {
+    const av = a.tag.slice(1).split('.').map(Number);
+    const bv = b.tag.slice(1).split('.').map(Number);
+    for (let i = 0; i < 3; i += 1) if (av[i] !== bv[i]) return bv[i] - av[i];
+    return 0;
+  });
   const byIssue = new Map();
-  for (const entry of entries) {
+  for (const entry of entries.filter((item) => item.stage !== 'release')) {
     const list = byIssue.get(entry.issue) || [];
     list.push(entry);
     byIssue.set(entry.issue, list);
@@ -298,6 +321,9 @@ export function renderIndex({ entries, skipped = [] }) {
   lines.push('');
   lines.push('| Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |');
   lines.push('|---|---|---|---|---:|---:|---|---|');
+  for (const doc of releaseDocs) {
+    lines.push(`| линия ${doc.tag} | [${doc.name}](${doc.name}) | ревью линии · — | ${badge(doc.verdict)} ${doc.verdict} | ${doc.high} | ${doc.medium} | ${doc.findings.join('; ').replace(/\|/g, '\\|') || '—'} | ${(doc.files || []).map((f) => `\`${f}\``).join(' ') || '—'} |`);
+  }
   for (const issue of issues) {
     const docs = byIssue.get(issue).sort((a, b) => (a.stage === b.stage ? (a.round || 0) - (b.round || 0) : a.stage === 'spec' ? -1 : 1));
     for (const doc of docs) {
@@ -353,7 +379,9 @@ if (isMainModule(import.meta.url)) {
     console.log(changed ? `${output} пересобран и закоммичен: ${sha}` : `${output} свеж — коммит не нужен`);
     process.exit(0);
   }
-  const markdown = buildIndex(dir);
+  const collected = collectEntries(dir);
+  if (process.argv.includes('--strict')) assertAllDocumentsIndexed(collected);
+  const markdown = renderIndex(collected);
   if (process.argv.includes('--check')) {
     const current = existsSync(output) ? readFileSync(output, 'utf8') : '';
     if (current !== markdown) {

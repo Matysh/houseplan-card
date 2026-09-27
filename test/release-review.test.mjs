@@ -84,7 +84,7 @@ test('#638: только ручной/вызванный запуск на dev, 
   const publish = jobBlock('publish');
   assert.match(publish, /secrets\.HP_PROCESS_TOKEN/);
   assert.match(publish, /review-doc-guard\.mjs/, 'в dev уходит только docs\/reviews');
-  assert.match(publish, /reviews-index\.mjs --dir=docs\/reviews/, 'индекс тем же коммитом');
+  assert.match(publish, /reviews-index\.mjs --dir=docs\/reviews --strict/, 'индекс тем же коммитом и неизвестное имя сразу блокирует публикацию');
   assert.match(publish, /Issue: #638\n\s+User-Visible: no/, 'трейлеры провенанса');
 });
 

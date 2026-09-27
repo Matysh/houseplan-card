@@ -7,13 +7,17 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
-  INDEX_FILE, buildIndex, collectEntries, commitIfStale, indexEntry, parseCounts, parseDocName, parseFiles, parseFindings, parseVerdict, renderIndex,
+  INDEX_FILE, assertAllDocumentsIndexed, buildIndex, collectEntries, commitIfStale, indexEntry, parseCounts, parseDocName, parseFiles, parseFindings, parseVerdict, renderIndex,
 } from '../scripts/reviews-index.mjs';
 
 test('#635 имена документов: этап, issue, раунд; INDEX и чужое — вне схемы', () => {
   assert.deepEqual(parseDocName('CODE-REVIEW-600-r2.md'), { stage: 'code', issue: 600, round: 2, suffix: null });
   assert.deepEqual(parseDocName('SPEC-REVIEW-7-r1.md'), { stage: 'spec', issue: 7, round: 1, suffix: null });
   assert.deepEqual(parseDocName('CODE-REVIEW-issue-5.md'), { stage: 'code', issue: 5, round: null, suffix: null });
+  assert.deepEqual(parseDocName('RELEASE-REVIEW-v1.78.0.md'), {
+    stage: 'release', issue: null, round: null, suffix: null, tag: 'v1.78.0',
+  });
+  assert.equal(parseDocName('RELEASE-REVIEW-v1.78.0-beta.1.md'), null);
   assert.equal(parseDocName('INDEX.md'), null);
   assert.equal(parseDocName('README.md'), null);
 });
@@ -32,6 +36,7 @@ test('#635 вердикт: явная строка, раздел «Вердик�
 
 test('#635 счётчики и находки', () => {
   assert.deepEqual(parseCounts('Вердикт: жёлтый · High: 1 · Medium: 3'), { high: 1, medium: 3 });
+  assert.deepEqual(parseCounts('Итог: High 2 · Medium 4 · Low 1'), { high: 2, medium: 4 });
   assert.deepEqual(parseCounts('### H1 — a\n### M1 — b\n### M2 — c\n### L1 — d'), { high: 1, medium: 2 });
   assert.deepEqual(parseCounts('ничего'), { high: 0, medium: 0 });
   const findings = parseFindings([
@@ -59,14 +64,17 @@ test('#635 индекс покрывает каталог целиком, дет
     writeFileSync(join(dir, 'CODE-REVIEW-600-r2.md'), '# x\nВердикт: **зелёный** · High: 0 · Medium: 0\n');
     writeFileSync(join(dir, 'SPEC-REVIEW-600-r1.md'), '- Вердикт: **зелёный**\n');
     writeFileSync(join(dir, 'CODE-REVIEW-601-r1.md'), '## Вердикт\n\nсвободная форма\n');
+    writeFileSync(join(dir, 'RELEASE-REVIEW-v1.78.0.md'), '# Ревью линии\nИтог: High 1 · Medium 2 · Low 0\n### High — риск линии\n');
     writeFileSync(join(dir, 'INDEX.md'), 'старый индекс');
     writeFileSync(join(dir, 'notes.md'), 'постороннее');
     const { entries, skipped } = collectEntries(dir);
-    assert.equal(entries.length, 4);
+    assert.equal(entries.length, 5);
     assert.deepEqual(skipped, ['notes.md']);
+    assert.doesNotThrow(() => assertAllDocumentsIndexed({ skipped: [] }));
+    assert.throws(() => assertAllDocumentsIndexed({ skipped }), /вне схемы имён: notes\.md/);
     const md = buildIndex(dir);
     assert.equal(md, buildIndex(dir), 'детерминирован');
-    assert.match(md, /Документов: 4, issue: 2/);
+    assert.match(md, /Документов: 5, issue: 2/);
     const rows = md.split('\n').filter((l) => l.startsWith('| #'));
     assert.deepEqual(rows.map((r) => r.split('|')[2].trim()), [
       '[CODE-REVIEW-601-r1.md](CODE-REVIEW-601-r1.md)',
@@ -76,10 +84,33 @@ test('#635 индекс покрывает каталог целиком, дет
     ], 'новые issue сверху; внутри issue — ТЗ, затем код по раундам');
     assert.match(md, /\| #600 \| \[CODE-REVIEW-600-r1\.md\][^\n]*\| code · r1 \| 🟡 жёлтый \| 0 \| 4 \| Первая; Вторая \|/);
     assert.match(md, /\| #601 \|[^\n]*⚪ — \|/);
+    assert.match(md, /\| линия v1\.78\.0 \| \[RELEASE-REVIEW-v1\.78\.0\.md\][^\n]*\| ревью линии · — \| [^|]* \| 1 \| 2 \|/);
     assert.match(md, /Вне схемы имён[^\n]*`notes\.md`/);
     assert.ok(!md.includes('INDEX.md](INDEX.md)'), 'индекс не индексирует себя');
     assert.equal(indexEntry('INDEX.md', 'x'), null);
     assert.equal(renderIndex({ entries: [] }).includes('Документов: 0'), true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('#670 CLI --strict принимает ревью линии и отклоняет неизвестное имя до записи индекса', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-reviews-index-strict-'));
+  const script = fileURLToPath(new URL('../scripts/reviews-index.mjs', import.meta.url));
+  const output = join(dir, INDEX_FILE);
+  const run = () => spawnSync(process.execPath, [script, `--dir=${dir}`, `--output=${output}`, '--strict'], { encoding: 'utf8' });
+  try {
+    writeFileSync(join(dir, 'RELEASE-REVIEW-v1.78.0.md'), 'Итог: High 1 · Medium 2 · Low 0\n');
+    const accepted = run();
+    assert.equal(accepted.status, 0, accepted.stderr || accepted.stdout);
+    assert.match(readFileSync(output, 'utf8'), /\| линия v1\.78\.0 \|/);
+
+    writeFileSync(join(dir, 'notes.md'), 'неизвестный документ\n');
+    const before = readFileSync(output, 'utf8');
+    const rejected = run();
+    assert.notEqual(rejected.status, 0, 'неизвестное имя обязано остановить публикацию');
+    assert.match(rejected.stderr, /вне схемы имён: notes\.md/);
+    assert.equal(readFileSync(output, 'utf8'), before, 'strict падает до перезаписи индекса');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
