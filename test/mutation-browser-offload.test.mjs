@@ -150,3 +150,27 @@ test('#659 room gear drag keeps the click suppression window after a real move',
   contains('src/room-gear-drag.ts',
     'this.suppressClickUntil = performance.now() + 700;');
 });
+
+test('#676 stair gestures swallow the synthesized click and the View tooltip keeps the link condition', () => {
+  // Gesture → click suppression: the drag end (draft or handle) arms the host's
+  // `_suppressClick` for one tick, and every frame handle stops its own click.
+  // `demo/smoke_stairs.mjs` proves the behaviour in Chromium (AC6/AC8); this is
+  // the Node witness for the wiring that Lit templates cannot expose.
+  const editor = contains('src/stairs-editor.ts',
+    '    this.owner._suppressClick = true;\n'
+      + '    setTimeout(() => { this.owner._suppressClick = false; }, 0);\n',
+    '      this.draft = null;\n      this.swallowNextClick();\n',
+    '    if (!drag || drag.pid !== event.pointerId) return false;\n    this.swallowNextClick();\n',
+    "@pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, 'resize', { sx: handle.sx, sy: handle.sy })}\n"
+      + '        @click=${stop}></circle>',
+    "@pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, 'rotate')}\n"
+      + '          @click=${stop}></circle>',
+  );
+  assert.equal((editor.match(/@click=\$\{stop\}/g) || []).length, 2, 'both handle kinds stop their click');
+  // Tooltip only where the stair is a link: the same `active` that gates navigation.
+  const view = contains('src/stairs-view.ts',
+    '      const tip = (event: PointerEvent): void => {\n        if (!active) return;\n',
+    "this.owner._showTip(event, this.owner._t('stairs.tooltip_navigate', { title: targetTitle }), '');",
+  );
+  assert.doesNotMatch(view, /const tip = \(event: PointerEvent\): void => \{\n\s*this\.owner\._showTip/);
+});

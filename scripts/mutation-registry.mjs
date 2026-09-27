@@ -13149,6 +13149,12 @@ const UNIT_GUARD_GROUPS = [
     'stairs-link-auto-creates-target-object',
     'stairs-broken-targets-become-active',
   ]],
+  // #676: gesture-click suppression and the tooltip's `active` gate are template
+  // wiring; the box model beside them is pure and tested in stairs-box.test.mjs.
+  [unitGuard('test/stairs-box.test.mjs'), [
+    'stairs-gesture-click-reaches-plan-tool',
+    'stairs-view-tooltip-ignores-target-state',
+  ]],
   [unitGuard('test/device-hit-owner.test.mjs'), [
     'device-hit-scroll-observer-disabled',
   ]],
