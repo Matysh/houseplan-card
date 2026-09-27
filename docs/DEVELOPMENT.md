@@ -20,25 +20,6 @@ Existing touch editor behaviour is not silently disposable: when changing a
 covered workflow, update its test and documentation explicitly and record why
 the degradation is accepted.
 
-## Environment (cowork sessions)
-
-- The source of truth is **GitHub `main`** (https://github.com/Matysh/houseplan-card).
-  In a sandbox session restore from it or from `houseplan-card.git.bundle`
-  (`git clone houseplan-card.git.bundle hpcN` into a **fresh** /tmp directory).
-- The user's folder `houseplan/houseplan-card/` is a file mirror (synced after every commit)
-  + an up-to-date `houseplan-card.git.bundle`. The mount cannot delete files — stale
-  artifacts linger there; git is authoritative.
-- `/tmp` persists between sessions, **but files created in previous sessions belong to
-  `nobody` and are unreadable** (this hit `/tmp/hpc`, `/tmp/ha_jb`, `/tmp/shots/srv`).
-  Always clone into a new directory and re-run `npm ci`; ask the user to re-upload `ha_jb`.
-- Headless Chromium for smoke tests: `PLAYWRIGHT_BROWSERS_PATH=/tmp/pw npx playwright
-  install chromium-headless-shell`, then run with `LD_LIBRARY_PATH` pointing to the
-  extracted lib dirs (`libs/lib/x86_64-linux-gnu:libs/usr/lib/x86_64-linux-gnu:.../nss`).
-- Restart HA over SSH with `nohup ha core restart >/dev/null 2>&1 </dev/null &` —
-  a plain `ha core restart` holds the SSH session until the sandbox call times out.
-- GitHub pushes: classic PAT (repo+workflow scopes), created via the user's Chrome;
-  stored in `~/.git-credentials` for the session.
-
 ## Local contour in 5 minutes (локальный контур за 5 минут, #633)
 
 Three commands take a fresh Linux sandbox (agent session, WSL, a clean VM) from
@@ -347,35 +328,11 @@ npm run bundle:release       # candidate only: also → custom_components/housep
 node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend   # candidate parity
 ```
 
-## Deployment to the dacha (ha.jbstudio.pro)
+## Deployment
 
-- SSH: port **22222**, root, key `ha_jb` (lives in the user folder `houseplan/.secrets/ha_jb`,
-  outside git; copy into the sandbox with chmod 600 — only ask the user if it is gone).
-- **The HA config root is `/mnt/data/supervisor/homeassistant`** — in this SSH
-  environment `/config` does not exist; a deploy aimed at `/config/...` fails
-  with "No such file or directory".
-- Frontend: copy the complete `custom_components/houseplan/frontend/` tree.
-  Copying only `houseplan-card.js` is unsupported: the entry imports hashed chunks and
-  validates its editor runtime against the build fingerprint.
-- Cache busting: `sed` the `?v=` version in `.storage/lovelace_resources`, then restart HA.
-- **The `frontend/` subfolder is not optional.** `__init__.py` registers
-  `Path(__file__).parent / "frontend" / "houseplan-card.js"` as the static path.
-  A copy dropped next to `__init__.py` (…/houseplan/houseplan-card.js) is served
-  by nobody: md5 on the server matches, the browser still gets the old bundle,
-  and hours go into debugging a bug that was already fixed. Cost this mistake
-  once: 2026-07-27, two releases deployed into the void.
-- The whole integration: tar c custom_components/houseplan (--exclude __pycache__) → tar x on the server.
-- **Verification is mandatory, and it must go over HTTP** — comparing md5 against
-  the file you just copied proves nothing about what the browser receives. The
-  one check that counts:
-  `curl -s https://ha.jbstudio.pro/houseplan_files/houseplan-card.js | grep -o '1\.[0-9]*\.[0-9]*' | sort -u`
-  must print the version just built. (Inside the SSH add-on `localhost` is NOT
-  HA — use the host `homeassistant`.)
-- Python changes require an HA restart (`ha core restart`, holds the connection until it finishes, HTTP
-  comes back up in 1–3 min). JS changes — just a page refresh (the static path is served
-  with no-cache).
-- After deploying JS — check in the browser (Ctrl+F5) and the console (there must be no errors from
-  houseplan-card.js; a broken bundle takes down all dashboards).
+Installations update themselves through HACS by release tag (`PROCESS.md` §12: no
+manual copying into a running Home Assistant); the closed dev stand auto-deploys
+the `dev` branch. Access to the owner's instances is not documented here.
 
 ## Frontend cache and the "empty view"
 
@@ -762,14 +719,6 @@ emergency hotfix, and document the exception in the handoff.
 - Extracting the geometry/backgrounds from the prototype and generating `src/data/*` — see the commit
   history and docs/ARCHITECTURE.md (SVG→base-space transforms: f1 0.647/(490,27), f2 0.896/(351,21)).
 - Room fitting: render the plan with rectangles overlaid (cv2) → snap to walls → manual fine-tuning.
-
-## Production objects in HA (the dacha)
-
-- Dashboard `plan-doma`, panel view, card `custom:houseplan-card` (icon_size 2.5).
-- The houseplan integration: entry loaded, `.storage/houseplan.layout` — the layout (server-side).
-- The old prototype `/config/www/houseplan/` (iframe) is kept as a fallback, do not touch.
-- configuration.yaml backups: `.bak-avgtemp` (before the average-temperature sensor edit).
-
 
 ## Smoke tests (since 2026-07-27)
 
