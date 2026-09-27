@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 65;
+export const GOLDEN_MATRIX_VERSION = 66;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -218,7 +218,50 @@ const stairLayerFixture = [
     target_space_id: 'golden-lighting' },
 ];
 
+/**
+ * #649/#673 Stage 6 acceptance scenes
+ * (docs/design/649-25d-stage6/ACCEPTANCE.md): tiles, floor shadows, soft sun
+ * wash and theme-free walls in the four theme × floor combinations of the
+ * approved sketch 07 (attachments 09, 10, 12, 13) plus the lifted hover frame
+ * (attachment 11); sun as the lab default 10:00. These exact objects are part
+ * of GOLDEN_SCENARIOS below; the separate export keeps the focused diagnostic
+ * side-by-side capture script useful without defining a second matrix.
+ */
+export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
+  ...[['light', 'light'], ['light', 'dark'], ['dark', 'dark'], ['dark', 'light']].map(([theme, floor]) => ({
+    id: `isometric-stage6-${theme}-${floor}floor`, fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', projection: 'iso',
+    stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
+    stage3Golden: { requiredKinds: stage3RequiredOverlays },
+    markerOverrides: stage3DenseMarkers,
+    layoutOverrides: stage3DenseLayout,
+    stateOverrides: {
+      'light.golden_light_one': { attributes: { lqi: 40 } },
+      'light.golden_light_two': { attributes: { lqi: 120 } },
+      'sensor.golden_right_linkquality': { state: '210' },
+      'sun.sun': { attributes: { azimuth: 150, elevation: 52 } },
+    },
+    fillMode: 'custom', customFill: { c: floor === 'light' ? '#eee8de' : '#737777', a: 1 },
+    glowEnabled: false, sunRays: true, northDeg: 180,
+    // The lab's walls are the default white; the colour is the user's either way.
+    wallFill: { c: '#ffffff', a: 1 },
+    theme, viewport: { width: 1000, height: 900 }, ...stage,
+  })),
+  { id: 'isometric-stage6-hover-light', fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', projection: 'iso',
+    stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
+    stage3Golden: { requiredKinds: stage3RequiredOverlays },
+    markerOverrides: stage3DenseMarkers,
+    layoutOverrides: stage3DenseLayout,
+    fillMode: 'custom', customFill: { c: '#eee8de', a: 1 },
+    glowEnabled: false, sunRays: false,
+    hoverDevice: 'golden-light-two',
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...stage,
+  },
+]);
+
 export const GOLDEN_SCENARIOS = Object.freeze([
+  ...STAGE6_ACCEPTANCE_SCENARIOS,
   // #663 AC3/AC10/AC12: both stair geometries, both rise directions and
   // small/large footprints across themes, flat/2.5D and interaction states.
   { id: 'stairs-flat-normal-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
@@ -1223,48 +1266,4 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'card-editor-invalid-default-floor-dark-ru', fixture: 'visual',
     cardEditorInvalidDefaultFloor: 'removed-floor', language: 'ru', theme: 'dark',
     viewport: { width: 900, height: 760 }, ...page },
-]);
-
-/**
- * #649 Stage 6 acceptance scenes (docs/design/649-25d-stage6/ACCEPTANCE.md):
- * tiles, floor shadows, soft sun wash and theme-free walls in the four
- * theme × floor combinations of the approved sketch 07 (attachments 09, 10,
- * 12, 13) plus the lifted hover frame (attachment 11); sun as the lab default
- * 10:00. They join GOLDEN_SCENARIOS in the same class D commit as their
- * baselines captured on Linux CI (#455): every matrix scene needs a reviewed
- * baseline (test/golden-wsl-artifact.test.mjs, #641), and a baseline cannot be
- * captured before the scene exists. Until then they drive the diagnostic
- * side-by-side frames only.
- */
-export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
-  ...[['light', 'light'], ['light', 'dark'], ['dark', 'dark'], ['dark', 'light']].map(([theme, floor]) => ({
-    id: `isometric-stage6-${theme}-${floor}floor`, fixture: 'visual',
-    space: 'golden-lighting', mode: 'view', projection: 'iso',
-    stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
-    stage3Golden: { requiredKinds: stage3RequiredOverlays },
-    markerOverrides: stage3DenseMarkers,
-    layoutOverrides: stage3DenseLayout,
-    stateOverrides: {
-      'light.golden_light_one': { attributes: { lqi: 40 } },
-      'light.golden_light_two': { attributes: { lqi: 120 } },
-      'sensor.golden_right_linkquality': { state: '210' },
-      'sun.sun': { attributes: { azimuth: 150, elevation: 52 } },
-    },
-    fillMode: 'custom', customFill: { c: floor === 'light' ? '#eee8de' : '#737777', a: 1 },
-    glowEnabled: false, sunRays: true, northDeg: 180,
-    // The lab's walls are the default white; the colour is the user's either way.
-    wallFill: { c: '#ffffff', a: 1 },
-    theme, viewport: { width: 1000, height: 900 }, ...stage,
-  })),
-  { id: 'isometric-stage6-hover-light', fixture: 'visual',
-    space: 'golden-lighting', mode: 'view', projection: 'iso',
-    stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
-    stage3Golden: { requiredKinds: stage3RequiredOverlays },
-    markerOverrides: stage3DenseMarkers,
-    layoutOverrides: stage3DenseLayout,
-    fillMode: 'custom', customFill: { c: '#eee8de', a: 1 },
-    glowEnabled: false, sunRays: false,
-    hoverDevice: 'golden-light-two',
-    theme: 'light', viewport: { width: 1000, height: 900 }, ...stage,
-  },
 ]);

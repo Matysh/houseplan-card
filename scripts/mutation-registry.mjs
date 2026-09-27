@@ -10793,6 +10793,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'stage6-acceptance-left-diagnostic-only',
+    guard: 'node --test --test-name-pattern="#673" test/golden-matrix.test.mjs',
+    because: '#673: the five approved Stage 6 frames must be in the canonical matrix, not only the diagnostic exporter',
+    patches: [{
+      file: 'demo/golden/matrix.mjs',
+      find: '  ...STAGE6_ACCEPTANCE_SCENARIOS,\n  // #663 AC3/AC10/AC12:',
+      replace: '  // mutant: Stage 6 acceptance remains diagnostic-only\n  // #663 AC3/AC10/AC12:',
+    }],
+  },
+  {
     id: 'stage3-w2-room-label-left-on-floor',
     guard: 'node --test --test-name-pattern="exact Stage 4 overlay matrix" test/iso-overlays.test.mjs',
     because: 'W2: room labels/cards and value-bearing device roots belong to the raised plane; '

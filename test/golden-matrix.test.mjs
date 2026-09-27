@@ -4,6 +4,7 @@ import test from 'node:test';
 import { prepareGoldenFixture } from '../demo/golden/harness.mjs';
 import {
   GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS, OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT,
+  STAGE6_ACCEPTANCE_SCENARIOS,
 } from '../demo/golden/matrix.mjs';
 import { fixtureWallKey } from '../demo/fixtures/visual-matrix.mjs';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
@@ -445,7 +446,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 65);
+  assert.equal(GOLDEN_MATRIX_VERSION, 66);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -939,6 +940,39 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
   assert.ok(harness.lastIndexOf('Stage 4 combined golden lacks')
     > harness.lastIndexOf("await until(() => !!card.renderRoot.querySelector('.vactrail > path.case'))"),
   'combined live-layer preflight must run after the async vacuum fixture settles');
+});
+
+test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
+  const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
+  assert.equal(GOLDEN_MATRIX_VERSION, 66);
+  assert.deepEqual(ids, [
+    'isometric-stage6-light-lightfloor',
+    'isometric-stage6-light-darkfloor',
+    'isometric-stage6-dark-darkfloor',
+    'isometric-stage6-dark-lightfloor',
+    'isometric-stage6-hover-light',
+  ]);
+  for (const scenario of STAGE6_ACCEPTANCE_SCENARIOS) {
+    assert.strictEqual(GOLDEN_SCENARIOS.find((item) => item.id === scenario.id), scenario,
+      `${scenario.id} must be the exact reviewed matrix object, not a drifting copy`);
+    assert.equal(scenario.projection, 'iso');
+    assert.equal(scenario.mode, 'view');
+    assert.equal(scenario.capture, 'stage');
+    assert.deepEqual(scenario.stage3Golden.requiredKinds,
+      ['device', 'room-label', 'opening-lock']);
+  }
+  const themeFloor = STAGE6_ACCEPTANCE_SCENARIOS.slice(0, 4);
+  assert.deepEqual(themeFloor.map((scenario) => [scenario.theme, scenario.customFill.c]), [
+    ['light', '#eee8de'], ['light', '#737777'],
+    ['dark', '#737777'], ['dark', '#eee8de'],
+  ]);
+  assert.equal(themeFloor.every((scenario) => scenario.sunRays === true
+    && scenario.northDeg === 180
+    && scenario.stateOverrides['sun.sun'].attributes.azimuth === 150
+    && scenario.stateOverrides['sun.sun'].attributes.elevation === 52), true);
+  const hover = STAGE6_ACCEPTANCE_SCENARIOS[4];
+  assert.equal(hover.hoverDevice, 'golden-light-two');
+  assert.equal(hover.sunRays, false);
 });
 
 test('golden harness applies doorway, state and layout overrides to a cloned fixture', () => {

@@ -21,12 +21,11 @@ issue body; implementation notes: `docs/ISOMETRIC.md` § Stage 6, `docs/SUN.md`
   `node demo/capture_stage6_acceptance_649.mjs` on a built bundle. The
   furniture and settings frames come from the demo fixture.
 
-These are **diagnostic** frames, not golden baselines. The five scenes join
-`GOLDEN_SCENARIOS` together with their baselines captured and accepted on
-Linux CI (#455) — a matrix scene without a reviewed baseline turns
-`test/golden-wsl-artifact.test.mjs` (#641) red, and a baseline cannot exist
-before its scene. PNGs are
-reduced to a 256-colour palette; that is enough to compare layout and tone.
+The five product scenes are canonical entries of `GOLDEN_SCENARIOS` (#673),
+with reviewed baselines captured and accepted through the Linux/WSL contract
+(#455, #641). The side-by-side PNGs in this document remain diagnostic copies:
+they are reduced to a 256-colour palette, which is enough to compare layout and
+tone, while the golden baselines retain their canonical bytes.
 
 The two plans differ (the lab is its own SVG snapshot of a first floor; the
 product frame is the golden lighting fixture), so the comparison is of the
