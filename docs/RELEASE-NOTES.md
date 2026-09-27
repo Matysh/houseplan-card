@@ -2,16 +2,16 @@
 
 ## Основное
 
+- В редакторе плана появились прямые и винтовые лестницы: они настраиваются как отдельные объекты, магнитятся к стенам, вычитаются из площади комнаты и могут переводить на связанный этаж ([#663](https://github.com/Matysh/houseplan-card/issues/663)).
 - На объёмном плане (2.5D) строка показателей под названием комнаты больше не «плавает» при зуме: расстояние до названия одно и то же на любом масштабе, как на плоском плане ([#665](https://github.com/Matysh/houseplan-card/issues/665)).
-- Крестик закрытия активного редактора теперь внутри подсвеченной вкладки, а рамка фокуса обводит всю зону; размеры и положение вкладок не изменились ([#666](https://github.com/Matysh/houseplan-card/issues/666)).
-- Статическая карточка пространства снова полностью инертна: над значками устройств обычный курсор, клики не перехватываются, кликабельна только кнопка в подвале ([#664](https://github.com/Matysh/houseplan-card/issues/664)).
+- Отполирован интерфейс: крестик активного редактора теперь находится внутри подсвеченной вкладки, а статическая карточка пространства снова полностью инертна ([#666](https://github.com/Matysh/houseplan-card/issues/666), [#664](https://github.com/Matysh/houseplan-card/issues/664)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
+- The Plan editor now supports straight and spiral stairs as configurable objects: they snap to walls, subtract from room area and can navigate to a linked floor ([#663](https://github.com/Matysh/houseplan-card/issues/663)).
 - In the 2.5D plan the metrics row under a room name no longer drifts while zooming: it keeps the same distance from the name at every zoom, as on the flat plan ([#665](https://github.com/Matysh/houseplan-card/issues/665)).
-- The close cross of the active editor now sits inside the highlighted tab, and the keyboard focus ring outlines the whole zone; tab sizes and positions are unchanged ([#666](https://github.com/Matysh/houseplan-card/issues/666)).
-- The static space card is fully inert again: an ordinary cursor over device markers, no swallowed clicks, and the footer button as the only clickable control ([#664](https://github.com/Matysh/houseplan-card/issues/664)).
+- Interface polish: the active editor's close cross now sits inside its highlighted tab, and the static space card is fully inert again ([#666](https://github.com/Matysh/houseplan-card/issues/666), [#664](https://github.com/Matysh/houseplan-card/issues/664)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
