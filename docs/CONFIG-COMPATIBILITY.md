@@ -16,10 +16,12 @@ The machine-readable source of truth is
 - the read-compatibility decision.
 
 The registry started from the compatibility and internal-field debt identified
-by HP-DATA-01 and has grown with every model change since; the TypeScript model
-and the backend Voluptuous schema are checked against each other by tests
-(#33), so a field that is missing here is a documentation gap, not an unknown
-schema.
+by HP-DATA-01 and has grown with every model change since. The schema itself is
+machine-checked by `test/config-schema-parity.test.mjs` (#33): backend and
+frontend enums agree except through an explicit allow-list, and every entry of
+this registry resolves to a path of the generated schema manifest or to an
+explicit passport. A field missing here is therefore a documentation gap, not
+an unknown schema.
 
 ## Offline inventory
 
