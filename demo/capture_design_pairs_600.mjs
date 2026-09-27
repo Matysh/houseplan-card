@@ -1,8 +1,9 @@
 // #600 AC1: парные кадры продукта для сравнения с референсом
 // docs/design/600-settings-dialogs/ (ACCEPTANCE.md). Диагностическая съёмка, не
 // golden: кадры не принимаются golden:accept и не участвуют в golden:verify.
+// Кадры — артефакт проверки, в репозиторий не коммитятся (#681).
 //
-//   node demo/capture_design_pairs_600.mjs [--out=docs/design/600-settings-dialogs/pairs]
+//   node demo/capture_design_pairs_600.mjs [--out=artifacts/design-pairs-600]
 //
 // Четыре диалога × две темы, ширина поверхности 560, скроллер раскрыт на всю
 // высоту, чтобы кадр показывал форму целиком, как макет референса. Состояния —
@@ -14,7 +15,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { launch } from './serve.mjs';
 
-const out = resolve(process.argv.find((a) => a.startsWith('--out='))?.slice(6) || 'docs/design/600-settings-dialogs/pairs');
+const out = resolve(process.argv.find((a) => a.startsWith('--out='))?.slice(6) || 'artifacts/design-pairs-600');
 mkdirSync(out, { recursive: true });
 
 const THEMES = {

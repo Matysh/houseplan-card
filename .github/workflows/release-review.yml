@@ -207,7 +207,7 @@ jobs:
               (стенд `demo/`, смоки `demo/smoke_*.mjs`), вводи текст
               посимвольно, закрывай диалоги настоящим Escape и крестиком. Где
               есть диалоги HA — пиннутая фикстура `ha-dialog` (#505,
-              demo/helpers/README-ha-dialog-505.md,
+              demo/helpers/README-ha-dialog.md,
               `node demo/verify_ha_dialog_discard_recovery.mjs`).
             - Для каждой поверхности: обычный сценарий и самый рискованный
               соседний, шесть классов риска (async, данные/права, геометрия,

@@ -139,7 +139,8 @@ function sharedCss(options: FormKitCssOptions, withSwitch: boolean): string {
 
 /**
  * Контролы, которых у панели нет (#594, расширено в #600 по референсу
- * `docs/design/600-settings-dialogs/reference/styles.css`).
+ * `docs/design/600-settings-dialogs/reference/styles.css` — с #681 только в
+ * истории git, см. README той папки).
  *
  * Числа — из §3.1 `SPEC.md` референса; цвета — через переменные темы HA, а не
  * hex прототипа: тёмная тема обязательна. Всё здесь видит только ленивый

@@ -70,10 +70,7 @@ export async function launchHaDialogFixture({
       } else {
         let base = join(REPO, 'demo/srv'), relative = pathname;
         if (pathname === '/product.html') relative = '/demo.html';
-        if (pathname.startsWith('/reference/')) {
-          base = join(REPO, 'docs/design/505-summary-panel/reference');
-          relative = pathname.slice('/reference'.length);
-        } else if (ha && (pathname.startsWith('/frontend_latest/') || pathname.startsWith('/static/'))) base = ha.root;
+        if (ha && (pathname.startsWith('/frontend_latest/') || pathname.startsWith('/static/'))) base = ha.root;
         const file = resolve(base, '.' + relative);
         if (!file.startsWith(resolve(base) + sep) || !existsSync(file) || !statSync(file).isFile()) {
           response.writeHead(404).end('Not found'); return;

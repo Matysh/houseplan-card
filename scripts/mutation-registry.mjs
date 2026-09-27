@@ -10124,14 +10124,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'testing-notes-index-drops-section',
-    guard: 'node --test --test-name-pattern="#634 индекс приложений" test/testing-notes-index.test.mjs',
-    because: 'AC3 #634: appendices moved out of TESTING.md stay reachable only through the index; '
-      + 'a section missing from it is text nobody will find again',
+    id: 'testing-doc-drops-manual-section',
+    guard: 'node --test --test-name-pattern="#681 TESTING.md" test/testing-doc.test.mjs',
+    because: 'the per-surface checklists were removed in #681 on the promise that what automation '
+      + 'cannot see is named in one TESTING.md section; losing that section leaves manual checks '
+      + 'with no home and invites the checklists back',
     patches: [{
-      file: 'docs/testing-notes/README.md',
-      find: '- [Open passage (#157)](geometry.md#open-passage-157)\n',
-      replace: '',
+      file: 'docs/TESTING.md',
+      find: '## Чего не проверяет автоматика\n',
+      replace: '## Ручные заметки\n',
     }],
   },
   // #624: гейт мёртвого кода и связности монолита — три защиты, три мутанта.

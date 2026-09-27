@@ -1,11 +1,11 @@
 # Testing
 
 Действующая инструкция: правила для новых тестов, гейты, локальный набор и
-матрицы релизной проверки. Ручные чек-листы по поверхностям и приложения по
-отдельным issue перенесены дословно в [`testing-notes/`](testing-notes/README.md)
-(#634) — индекс там же, по заголовку и номеру issue. Новый чек-лист по задаче
-ложится в приложение своей подсистемы; сюда — только то, что действует для
-любой задачи. Маркер `[auto: …]` у пункта в любом из этих файлов обещает
+матрицы релизной проверки. Ручных чек-листов по поверхностям и приложений по
+отдельным issue больше нет (#681, после #634): поведение держат тесты, смоки и
+golden, а то, чего автоматика не видит, собрано в разделе
+[«Чего не проверяет автоматика»](#чего-не-проверяет-автоматика). Сюда пишется
+только то, что действует для любой задачи; маркер `[auto: …]` у пункта обещает
 падающую проверку в том же коммите (`docs/DEVELOPMENT.md`).
 
 ## Правила для новых тестов (issue #85) — обязательны
@@ -90,7 +90,7 @@ ledger. Compile-time проверка допустима как самостоя
 явным полем определения `oracle: 'compile'`; прятать её в префиксе обычного
 browser/backend guard нельзя. Все недоказанные исходы завершают гейт кодом 2 и
 отдельно называются в ночном отчёте. Гвард с `--test-name-pattern`, не исполнивший
-ни одного теста, — тоже `setup-failure` ([#650](testing-notes/infrastructure.md#пустое-совпадение---test-name-pattern-650)).
+ни одного теста, — тоже `setup-failure` ([#650](#пустое-совпадение---test-name-pattern-650)).
 
 С #568 `setup-failure` в дифф-режиме **атрибутируется**: раннер прогоняет
 ОПРЕДЕЛЕНИЕ БАЗЫ диапазона на дереве базы и говорит, чей это отказ.
@@ -142,6 +142,20 @@ mutant-jobs в доказательстве ревью (#541) не меняют�
 Журнал живёт в кэше Actions по шарду, сохраняется при любом исходе шага, так
 что отменённый пуш или таймаут не пропадают даром. Полный прогон и `--id`
 журнал не читают; `--ledger` без `--changed` — ошибка.
+
+## Пустое совпадение `--test-name-pattern` (#650)
+
+Зелёный `node --test` с `--test-name-pattern`, который не исполнил ни одного
+теста: TAP называет только сам файл (`ok 1 - test/x.test.mjs`), ассертов не было
+ни в чистом прогоне, ни на мутанте. Так бывает, когда задача переименовала тест,
+а гвард реестра остался со старым именем. Шаблон — это RegExp: `(`, `+`, `?` в
+имени экранируются (в команде гварда `\(отбор\)`, в JS-строке реестра
+`\\(отбор\\)`). `mutation-gate --check` проверяет то же статически: шаблон
+обязан совпасть хотя бы с одним литеральным именем `test(`/`it(`/`describe(` в
+файлах гварда; если в файле есть имена `${…}`, несовпадение — `WARN`, иначе
+`FAIL`. Это `setup-failure` (#550) и атрибутируется как любой другой (#568):
+переименование теста в задаче даёт `introduced`, старый пустой шаблон —
+`pre-existing`. Свидетель — `test/mutation-guard-outcome.test.mjs` (тесты `#650 …`).
 
 ## Новый код не добавляет any (#342)
 
@@ -503,79 +517,6 @@ documentation and test classification in the same change. “Best effort” cann
 be used to waive data corruption, unsafe service calls, permission failures,
 missing destructive confirmation or an editor exception that breaks View.
 
-- [ ] Smoke harness itself (v1.43.2, audit T1/T2): every smoke asserts named
-      facts via `check`/`checkAll` and exits non-zero on any mismatch or
-      uncaught in-card exception; the suite runs in CI against a FRESHLY built
-      bundle. Sanity ritual: break one invariant on purpose (e.g. remove the
-      kiosk editor guard) and confirm the matching smoke goes red [auto: CI job "smoke"]
-
-- [ ] Room gear discoverability (v1.43.3, user feedback): in the Plan editor
-      every room card carries a pill button "⚙ Room" of a FIXED readable size
-      (independent of the card font) — including rooms without a name; it opens
-      Room settings [auto: smoke_feedback_v2]
-- [ ] Metrics readability (v1.43.3): the metrics line is 0.75 of the room name
-      (was 0.62 — unreadable on tablets); per-room sliders still apply on top [auto: smoke_feedback_v2]
-- [ ] Touch tooltips: touch/pen immediately clears hover even if the browser
-      claims hover support; compatibility mouse is ignored, while a later real
-      paired-mouse event restores desktop hover without reload
-      [auto: smoke_feedback_v2]
-
-- [ ] Light-source flag (v1.44.0, user feedback): a smart SWITCH driving dumb
-      fixtures creates a Glow pool only once "This device is a
-      light source" is ticked. External targets under "Controls" still feed
-      group state/statistics but never create a pool at the switch coordinates;
-      unticked devices without a light entity never glow [auto: smoke_glow]
-- [ ] Device card controls (v1.44.0): the device card opens with its
-      controllable entities FIRST — toggles right there (≥30 px tap targets),
-      cover/lock/climate open HA more-info; model, links and manuals moved
-      below; config/diagnostic entities are not listed; locks never toggle from
-      the card [auto: smoke_card_controls]
-
-- [ ] Lock invariant, all paths (v1.44.2, review CR-1): icon tap, controls[],
-      device card and _cardToggle refuse locks/alarm panels entirely; the door
-      card's Unlock asks for confirmation, Lock does not [auto: smoke_lock_invariant]
-- [ ] Attachment migration is transactional (v1.44.2, review CR-2/CR-3):
-      rebinding COPIES files, saves the config, and only then deletes the old
-      folder; a rejected save leaves the old files and urls intact; a name
-      collision in the destination gets a unique name (the pre-existing file is
-      never silently linked); urls are rewritten only for confirmed copies
-      [auto: unit logic.test + tests_backend]
-
-- [ ] Plans and PDFs load in a real browser (v1.44.3, B1 regression): open a
-      dashboard with an uploaded plan — the background renders and a manual link
-      opens; DevTools shows /api/houseplan/content/... returning 200 via a
-      signed url, while the same url without authSig returns 401
-      [auto: tests_backend + manual]
-- [ ] Auth policy is single-sourced (v1.44.4, B2): the HTTP upload and every WS
-      write use the same `may_write`, which denies non-admins when the config
-      entry is unavailable [auto: tests_backend]
-- [ ] Coordinates and caps (v1.44.4, B5): NaN/Infinity are refused on room
-      rects, polygon vertices, view_box and openings — not only in layout; the
-      openings list honours MAX_OPENINGS [auto: tests_backend]
-- [ ] Drag hardening (v1.44.4, L4 sub-item): every drag pipeline captures the
-      pointer through the tolerant helper; decor follows the infinite canvas
-      and stops only at the shared normalized ±5000 garbage bound
-      [auto: smoke_decor, smoke_drag_bounds]
-
-- [ ] Room climate counts hidden sensors (v1.44.5): a thermometer that is NOT
-      placed on the plan (hidden by filtering or by the user) still feeds the
-      room card, the tooltip and the temperature fill; fridges/TRVs still do
-      not; an explicit per-room source still wins [auto: unit devices.test]
-- [ ] Room climate follows explicit House Plan placement (#317): a real
-      temperature/humidity sensor moved away from registry Area A votes exactly
-      once in its marker target, including an area-less `space + room_id` room;
-      hidden markers still vote, while removed/HA-disabled ones do not. Exact
-      entity placement wins over its parent device only for that entity, and
-      explicit room sources remain authoritative [auto:
-      smoke_room_climate_placement; units: test/devices.test.mjs; mutation:
-      room-climate-ignores-marker-placement]
-- [ ] Room hover + tooltip: in View, hovering any room visibly highlights it
-      (filled, transparent and area-less alike) and shows its name plus clean-
-      floor area; temperature/signal follow when available. Thick walls reduce
-      the area to the inner contour. The wash/halo use plain SVG without CSS
-      filters, and hovering never replaces or flashes the Glow pool/gradient
-      DOM. Editors do neither [auto: smoke_ux_fixes + smoke_glow; manual visual]
-
 ## Golden-image regression matrix
 
 `npm run golden:capture` records the data-only scenarios from
@@ -591,87 +532,19 @@ whose hashes no longer match the reviewed manifest. `golden:accept --
 error-free report captured from the current source fingerprint; the entire set
 is validated before any reference is copied.
 
-The matrix covers thick wall junctions, the full #197 multi-room
-virtual-junction resilience fixture in Plan and View (including the #261
-measured exterior-wedge fill probe), the #249 three-ray
-unequal-thickness fixture with a semantic filled-node/empty-old-wedge gate,
-the two #275 orthogonal-strip fixtures at `cell_cm: 5/1` with dense
-`isPointInFill()` containment before raster comparison,
-virtual/physical boundaries,
-partitions/columns, axis-aligned and 45° door/window/gate tunnels, hidden
-opening symbols, Glow and sun, live/manual Glow overlap and light through a doorway,
-light/temperature/LQI fill splits on a wall axis, hover over Glow and nested rooms, all three editors, dark/light themes,
-0.4×/fit/2.5×, warm remount and adaptive RU/EN dialogs including focus and the
-decor colour popover. The two device-dialog scenes deliberately bind a real
-light, select Always plus fixed colour/brightness, and scroll the complete
-role/colour/brightness/radius block into the captured viewport; a screenshot
-that contains only its heading is a scenario error, not an acceptable baseline. In the
-canonical Linux CI profile Chromium, viewport, DPR, locale, timezone, colour
-profile, font rendering, animations and caret are deterministic. The separate
-CI job captures review candidates until the first baseline is accepted; after
-that it automatically runs blocking verification. Review and accept the
+What each scene covers — junctions, boundaries, openings, Glow and sun, fills,
+hover, all three editors, themes, zoom levels, warm remount, dialogs — is
+declared next to the scene in `demo/golden/matrix.mjs`; semantic assertions
+(`enclosedHoles`, `isPointInFill()` containment, opening-symbol contracts) run
+before the raster comparison, so a scene fails on meaning before pixels. A
+dialog scene whose screenshot shows only a heading instead of the block it
+exists for is a scenario error, not an acceptable baseline. In the canonical
+Linux CI profile Chromium, viewport, DPR, locale, timezone, colour profile,
+font rendering, animations and caret are deterministic. The separate CI job
+captures review candidates until the first baseline is accepted; after that it
+automatically runs blocking verification. Review and accept the
 `golden-images` CI artifact rather than treating a developer OS raster as the
 canonical set. See `demo/golden/README.md`.
-
-For #249, `test/wall-thickness.test.mjs` additionally covers equal and unequal
-three-/four-ray nodes (including literal 15/50/70 cm arms), reversed input,
-winding/order changes, production `coordScale = 1000`, unchanged two-ray joins
-and the anonymised regression fixture in
-`test/fixtures/249-multiwall-junction.json`. The asymmetric corner-Split case
-also proves that the union of clean-room floors equals the original room union
-minus canonical bounded masonry and that every floor vertex remains inside the
-source building.
-`demo/smoke_multiwall_junction.mjs` checks Plan/View/kiosk/Static/hidden-Iso
-parity, paper and clean-floor presence, shared Glow/sun masonry, cache reuse on
-HA/theme ticks, no saved-config mutation, a filled node and the removed old
-spike. Full golden/smoke/performance remain pre-beta gates.
-
-For #272 the same fixture and table-driven equal/mixed T/X fans inventory every
-polygon hole fully enclosed in the local degree-3+ node window. The matrix runs
-at `cell_cm: 5` and `cell_cm: 1`, reversed/permuted input and production scale;
-`roomGeom`, final masonry and paper must all report zero local holes while the
-existing discarded-wedge probe remains empty. The browser smoke repeats a
-local flood-fill with real `SVGGeometryElement.isPointInFill()` in Plan, View,
-kiosk and Static, and inspects hidden-Iso and light/sun source rings. The golden
-scenario declares `enclosedHoles: 0`, so semantic failure happens before the
-whole-frame pixel threshold. Mutation `multi-wall-exterior-corridor-disabled`
-restores point-only contact and must be caught by the hole inventory even while
-the legacy single-point probes remain green.
-
-For #275, `test/fixtures/275-orthogonal-strip-containment.json` contains only
-the minimized coordinates and wall depths needed from both owner backups. The
-unit oracle classifies perpendicular ray pairs independently, differences their
-finite strip union against `roomGeom`/paper, covers adjacent overlapping repair
-masks and keeps the non-orthogonal #249 discarded wedge empty. The production-
-bundle smoke densely samples the same strips through Plan, View, kiosk, Static,
-hidden Iso and light barriers. Golden scenes
-`orthogonal-strip-cell-5-view-dark` and
-`orthogonal-strip-cell-1-view-dark` repeat that semantic containment before
-pixel comparison; `enclosedHoles: 0` remains a separate #272 assertion and can
-no longer approve an exterior-connected notch. For private full-plan evidence,
-`scripts/wall-strip-containment.mjs <backup...>` checks raw, Optimize preview,
-applied canonical storage and JSON reload without printing or committing plan
-contents. Mutation `multi-wall-orthogonal-strip-protection-disabled` restores
-the release escape and must be killed by the containment tests.
-
-For #288, the node-map unit fixes the real topology class: `349 / 120 / 5`
-steps, a 30 cm short ray and a perpendicular 20 cm shared wall beginning at its
-far endpoint. It runs at scales corresponding to `cell_cm: 1/5/30`, reversed
-endpoints and input permutations, while an outer continuation remains under
-the established #271 contract. `demo/smoke_real_plan_masonry.mjs` loads both
-tracked real-plan fixtures through the production bundle and densely samples
-every undeclared room edge with `SVGGeometryElement.isPointInFill()`. Both
-plans require exact `gapCount: 0` and `totalGapSteps: 0`. Mutation
-`multi-wall-shared-continuation-protection-disabled` removes the endpoint
-handoff and must be killed by the unit before the real-plan smoke.
-
-For #261, the anonymised #197 fixture also probes the real regression point
-`(895.5, 556)`: `roomGeom`, final masonry and paper must fill it, while every
-clean-floor contour must exclude it. The browser smoke repeats semantic point
-coverage in Plan, View, kiosk, Static, hidden Iso and light/sun masonry; the two
-existing #197 goldens require `SVGGeometryElement.isPointInFill()` at the same
-point. Mutation `multi-wall-paper-full-origin-cut` restores the faulty
-offset-origin cut and must make that regression test fail.
 
 ## Large-house performance gate
 
@@ -791,6 +664,44 @@ See `demo/performance/README.md` for commands and the budget-review contract.
       render; a version mismatch follows the one-safe-attempt contract from the
       installation section instead of flashing or entering a reload loop
       [auto: `smoke_version_recovery`].
+
+## Чего не проверяет автоматика
+
+Сводка того, что удалённые чек-листы `testing-notes/` (#681) помечали
+`[manual]` без автоматического свидетеля. Проверяется на кандидате беты руками —
+на демо-стенде (`demo/stand/README.md`, там же «чего на стенде нет») или у
+владельца:
+
+- **Реальный Home Assistant.** Пользователь без прав администратора не видит «+»
+  пространства и шестерёнок (`_canEdit`); мастер импорта этажей на экземпляре с
+  настоящими этажами HA (порядок по уровню, Skip/Cancel); фильтрация мостов,
+  групп и сцен, нумерация дублей и свёртка групп света на настоящих реестрах;
+  лампа, чья сущность скрыта в реестре (свёрнута в группу), переключает и
+  показывает лампу; правило card-mod по `data-hp` действует в установленном
+  card-mod.
+- **Сенсорный экран на устройстве.** Долгое нажатие 600 мс, `pointercancel` без
+  фантомной карточки, свайп пространств в киоске, панорама, начатая на значке в
+  View, — на планшете или телефоне, не в эмуляции.
+- **Ресурсы сервера.** Файл ~50 МБ скачивается дважды параллельно без роста
+  памяти HA; перепривязка маркера переносит `/files/<id>/` с PDF; удаление
+  пространства снимает предупреждение Repairs о пропавшем плане.
+- **Несколько клиентов и представлений.** Статическая карточка на том же
+  дашборде следует за перетаскиванием на полной без записи конфига; два
+  представления одного дашборда не делят viewport и диалоги; перезагрузка во
+  время записи не предлагает «Сохранить» повторно.
+- **Визуальная оценка.** Центровка подложки и глифа значка (без сдвига на 1 px),
+  читаемость рамок и подписей на белой бумаге, цвета и градиенты заливок
+  «Свет», «Температура» и LQI, свет через туннель двери в толстой стене,
+  кромка солнечного луча на тёмной сцене (тонкий край, не контур), раскладка
+  карточки комнаты.
+- **Пользовательское содержимое.** `javascript:` в поле ссылки маркера не
+  становится ссылкой.
+
+Остальные пункты с пометкой `[manual]` описывали обычное поведение режимов,
+редакторов, диалогов, правил значков и `houseplan-space-card`. Для них нужен
+смок, а не ручная проверка: задача, которая трогает такую поверхность без
+смока, пишет его в том же коммите (правило `[auto: …]` выше). Пункты
+`[manual]` разделов ниже остаются как есть.
 
 ## Release regression quickies
 

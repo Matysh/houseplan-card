@@ -41,8 +41,9 @@ camera/layout changes, new panel-placement setting or modification of HA chrome.
 
 ## 2. Design authority and reproducible reference
 
-[Designer reference](../design/505-summary-panel/README.md), including original
-[index.html](../design/505-summary-panel/reference/index.html), CSS, JS and SVG.
+Designer reference `docs/design/505-summary-panel/` (README, original
+`reference/index.html`, CSS, JS and SVG) — removed from the tree by #681 after
+the task shipped; recover it from git history (`git show f989fbfe:docs/design/505-summary-panel/README.md`).
 Archive received from owner: `макет.zip`, SHA-256
 `bc754c16c9d9fc79dbbf093fcf8e14b96f8826fa01d1f0c8eccf68ab95357e15`.
 Open index.html in a browser; press the last header button, then its adjacent gear.

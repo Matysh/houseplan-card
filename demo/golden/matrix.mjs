@@ -107,9 +107,13 @@ const stage3VacuumTrail = {
 
 const stage3RequiredOverlays = ['device', 'room-label', 'opening-lock'];
 
-/** Exact existing baseline impact measured against origin/dev with the same
- * Chromium build. Keep this list reviewable: shared visual fixtures make an
- * opening-only change visible in editor/dialog captures too. */
+/** Exact existing baseline impact of the opening-symbol change (#242/#250, matrix
+ * v37): measured by comparing `actualSha256` for HEAD and origin/dev under the
+ * same Chromium build (baseline status alone was not used — dev already had
+ * unrelated pending candidates). Every listed frame uses a shared fixture with
+ * an affected opening or keeps that plan behind an editor/dialog; no other
+ * existing frame changed. Keep this list reviewable: this is its only copy
+ * since the testing-notes checklists were removed (#681). */
 export const OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT = Object.freeze([
   'isometric-geometry-view-dark',
   'isometric-geometry-view-light',

@@ -3,13 +3,16 @@
 // Room settings form, and verifies the public ha-dialog geometry on desktop
 // and both sides of HA's built-in 450 px mobile breakpoint.
 import assert from 'node:assert/strict';
+import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { launchHaDialogFixture } from './helpers/ha-dialog-fixture.mjs';
 
 const capture = process.argv.includes('--capture');
-const pairDir = fileURLToPath(new URL('../docs/design/600-settings-dialogs/pairs/', import.meta.url));
+// `--capture` writes diagnostic images into ignored artifacts/, never into docs (#681).
+const pairDir = fileURLToPath(new URL('../artifacts/ha-form-shell-609/', import.meta.url));
+if (capture) mkdirSync(pairDir, { recursive: true });
 const fixture = await launchHaDialogFixture({
   authentic: true,
   viewport: { width: 1600, height: 1000 },
