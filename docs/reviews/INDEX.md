@@ -1,10 +1,11 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1118, issue: 402. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1119, issue: 403. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #681 | [CODE-REVIEW-681-r1.md](CODE-REVIEW-681-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #680 | [CODE-REVIEW-680-r1.md](CODE-REVIEW-680-r1.md) | code · r1 | 🟢 зелёный | 0 | 1 | вне скоупа (заведён отдельный issue) | `docs/UX-MODES.md` `docs/TOUCH-SUPPORT.md` `docs/WALL-THICKNESS.md` `UX-MODES.md` `TOUCH-SUPPORT.md` `src/houseplan-card.ts` `src/houseplan-editor-runtime.ts` `src/writer-fixed-point.ts` |
 | #679 | [CODE-REVIEW-679-r1.md](CODE-REVIEW-679-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #678 | [CODE-REVIEW-678-r1.md](CODE-REVIEW-678-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #677 | [CODE-REVIEW-677-r1.md](CODE-REVIEW-677-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | раздел «Environment (cowork sessions)» снят сверх заявленного объёма ТЗ | `docs/DEVELOPMENT.md` `STATUS.md` `DEVELOPMENT.md` `PROCESS.md` |
