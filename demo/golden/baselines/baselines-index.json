@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 66,
-  "acceptedAt": "2026-09-27T13:57:53.353Z",
-  "sourceFingerprint": "759c152cd8e59330f4a0efed0b464684aac9863b417653c26aca97595f977d72",
+  "acceptedAt": "2026-09-27T19:49:05.828Z",
+  "sourceFingerprint": "544dbaa4ef82cb2f54ce260873dda701021b2516f2002309d35d5980415f6039",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,41 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "759c152cd8e59330f4a0efed0b464684aac9863b417653c26aca97595f977d72",
-    "ci": {
+    "buildFingerprint": "544dbaa4ef82cb2f54ce260873dda701021b2516f2002309d35d5980415f6039",
+    "ci": null
+  },
+  "localAttestation": {
+    "schema": "houseplan-golden-wsl/v1",
+    "sha256": "d6b6c013e9be0dda05a7a1615b48dcfb0d5d0a8312415df2e0e13aef47f281bc",
+    "artifactSha256": "c1859ded65f14b39d9c33df551bf475609ea64d83fc78c4fbc671dd2f972b8a2",
+    "createdAt": "2026-09-27T19:47:55.891Z",
+    "source": {
       "repository": "Matysh/houseplan-card",
-      "run": 36320878644,
-      "attempt": 1,
-      "sha": "193d7b0d3020cd69798fbe90c3aceb06dd221a45"
+      "branch": "issue/683-stair-visuals",
+      "commit": "0141b34df803e6d7236573fd4d3e97a46126dad1",
+      "tree": "a3dba9a1f0390c7deac61e82bc9767430ac365dd",
+      "remoteSha": "0141b34df803e6d7236573fd4d3e97a46126dad1",
+      "clean": true,
+      "status": ""
+    },
+    "environment": {
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.33.2-microsoft-standard-WSL2",
+      "wsl": true,
+      "distro": "Ubuntu",
+      "filesystem": "ext2/ext3"
+    },
+    "toolchain": {
+      "node": "22.23.2",
+      "npm": "10.9.8",
+      "playwright": "1.62.0",
+      "chromiumExecutableSha256": "0b20b130e7edd9dd51873be867761295fe0cfad490c2b9a64f95bd3cfc08fa71"
     }
   },
-  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 131,
+    "count": 126,
     "floor": 10
   },
   "scenarios": {
@@ -30,10 +53,10 @@
     "isometric-stage6-dark-darkfloor": "5b76746846c13c2dbca9ade31d4e6cb891a9a486029ebcf4008539a4a92b47fc",
     "isometric-stage6-dark-lightfloor": "157e0aaf68396b8ed5acc0d2caed935dc0d17c014c265cb2aaeda66944bba8c2",
     "isometric-stage6-hover-light": "3f8dc5052e883a30e3cf89c1a0fdea0af3bae3c763b6ebaa50e41cba9cdb3bfd",
-    "stairs-flat-normal-light": "df6600545ffbc7611b764eb489e6e3f625ccf51b6ed2f8f83e4df5b7e1565d08",
-    "stairs-flat-hover-dark": "e642373ea6680a978219622105552d4afbf2311eebf101a7c8db280373c9eca3",
-    "stairs-flat-selected-light": "17387bddf46a7506f7f578242161c91391fd15998aa68aa1e022073113d0c7ac",
-    "stairs-isometric-dark": "901bc1eee214d179aff13bc7f192a9e270688aa59b2744f3b361e653dc2d0af5",
+    "stairs-flat-normal-light": "d3fad5233388d258cfc14c8b2663b235737ce902ca05eec0b791fed2bfcc522b",
+    "stairs-flat-hover-dark": "22b98fffc66db83ea451b048a826618f95df40e55898df92f57e70dd4e8b99bd",
+    "stairs-flat-selected-light": "8db7b81b858f3d612dd85fdabd1d7b2a898961825837c9dc5e2c95fcc1a47aa9",
+    "stairs-isometric-dark": "e60eb70e9c57049ee5d7eef3cd1630f45aabbcd0286c4057f071497bfa2921b5",
     "panel-wide-view-light-en": "275d09b3730361bb491a832fbb76723d90a7327086f042cbf0fdd79f4a002800",
     "panel-wide-plan-editor-dark-en": "093a3fd1022755f5128261796e009383d7e7a23e9e50f193ab1987d30f9313b2",
     "panel-narrow-read-only-empty-light-en": "99b8f1af82b1ad13f237125aab8f7e7da0563c138e9da2ddf06e54c2d56138c4",
