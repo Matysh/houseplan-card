@@ -84,3 +84,18 @@ interface languages. The bundled font is distributed under the Apache License
 The resulting file is named
 `houseplan-<space-name>-<YYYY-MM-DD>.pdf`. Browser and Home Assistant mobile-app
 download handling determines its final Downloads location.
+
+## Implementation boundary
+
+PDF export is a lazy read-only runtime (`src/pdf/`, `lazyPdfFiles`); View
+carries only the administrator trigger and the shared exact-build loader. It
+reads the already normalised current space through the same physical-geometry
+resolvers as View, produces one deterministic A4 document and never writes
+config or layout. Dimension input is normalised before collinear compaction and
+keeps only canonical horizontal/vertical edges; text bounds use the writer's
+real font metrics and transform; lanes test exact box/segment intersections
+against wall rings, never sampled points; parallel facade steps stay in
+independent collinear groups. Only exterior extension lines use the
+source-aware collision state machine; dimension lines, shelves, labels and
+internal dimensions stay on the strict path. Physical walls are even-odd clipped
+paths with a page-anchored hatch.

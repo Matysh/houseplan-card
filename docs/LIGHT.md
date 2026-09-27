@@ -123,6 +123,17 @@ A shadow currently keeps no light at all. This follows from "objects do not let
 light through" and is the owner's standing decision; a residual term would be
 one constant if a pitch-black corner next to a bright area ever needs softening.
 
+The formula is `paletteAlpha × 0.7 × (0.4 + 0.6 × bri^(1/2.2))`
+(`GLOW_SCALE_MAX`, `GLOW_MIN_FRAC`, `GLOW_GAMMA`); `resolveGlowAppearance()`
+supplies the marker-owned live or manual colour and brightness, and the radius
+is `settings.glow_radius_cm` unless the marker sets `glow_radius_cm`. Sources add
+up (#19): each circle keeps its own gradient and clip, and all circles share one
+isolated parent with no outer opacity and `mix-blend-mode: screen`. Screen
+blending is enabled only after a cached per-`Document` raster probe
+(`src/glow-blend.ts`) proves real SVG pixels; pending, unsupported, error and
+timeout states render normal blending, and a successful probe requests one
+update.
+
 ## Penumbra
 
 One SVG `feGaussianBlur` over the whole light layer, sized in SCREEN pixels
@@ -358,6 +369,20 @@ cycles and cross-space transfer — `tests_backend/`.
   second layer of light, no barrier cache keyed by the epoch.
 - Golden: `lighting-opaque-glow-two-doorways-dark` and the other `lighting-*`
   scenes, re-shot and approved 2026-08-11.
+
+## Glow over the data fill (#55)
+
+Glow is an overlay, not a fill mode: space `settings.glow_enabled` and room
+`settings.glow` (`null` inherits) are independent of the data `fill_mode`; the
+legacy `fill_mode: 'glow'` projection is in `CONFIG-COMPATIBILITY.md`. Floor
+order is paper → resolved data room/tunnel fill → Glow base → decor
+(`DECOR-EDITOR.md` §3.3) → radial pools → sun and interactive layers. The dark,
+pointer-free Glow base is painted only for rooms whose fill resolver returned
+nothing or a fully transparent colour: explicit `none`, a zero-opacity
+`custom`, a dynamic mode without usable data. A resolved `lqi`, `light`, `temp`
+or `custom` fill never receives it, so its exact colour and alpha stay visible.
+Pools render independently of the base; the static card uses the same data/base
+projection and omits empty base groups.
 
 ## Which surfaces render pools
 

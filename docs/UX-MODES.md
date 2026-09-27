@@ -39,7 +39,11 @@ above room fills and Glow base and below live Glow, walls, devices and labels �
 `DECOR-EDITOR.md` §1; inert everywhere outside its editor).
 
 - **View** is the implicit default state: no editor tab is active. Navigation
-  persistence remembers only the last space. Reloading the page or leaving
+  persistence remembers only the last space. Cold-start precedence for an
+  unpinned card is a valid `#space=` hash → the `LS_NAV` space → `default_floor`
+  → the first space, each checked against the live model (`resolveInitialSpace`,
+  `src/initial-load.ts`); a card with `floor` neither reads nor writes `LS_NAV`
+  (#93, #210). Reloading the page or leaving
   `/houseplan` (or a dashboard hosting the card) for another Home Assistant
   route and returning always opens View
   for that space; editor mode, selection and open editor dialogs are session

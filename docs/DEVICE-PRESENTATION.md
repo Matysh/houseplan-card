@@ -19,6 +19,10 @@ cover → light sources → device role, шторы и медиаплееры) �
 - `device-pulse.ts` — единственный владелец эффекта activity.
 - `device-face.ts` только рисует готовую проекцию.
 - View, static card и preview получают один `ResolvedDevicePresentation`.
+- Черновик диалога маркера проецируется `deviceFromMarkerDraft()` через
+  `buildDevices` по полному сохранённому roster, где заменён только
+  редактируемый маркер; поэтому владение целями, tombstones и лицо контроллера в
+  preview совпадают с планом (#274).
 
 `decisionIds` — внутренний bounded trace. Он не показывается человеку, не
 содержит entity IDs и не сохраняется в конфигурацию.
@@ -105,6 +109,46 @@ cover → light sources → device role, шторы и медиаплееры) �
 Неуказанная ось не влияет на строку. Новая комбинация получает новый ряд
 только тогда, когда меняет победившее решение или наблюдаемый результат; полное
 декартово произведение binding × source × display × activity запрещено.
+
+## Implementation notes
+
+- `device-value-badge.ts` owns candidate discovery, source keys, HA formatting,
+  units and unavailable handling for `marker.value_source` (inner Value face)
+  and `marker.value_badge` (satellite). Absent `value_source` keeps the legacy
+  automatic face resolver; absent `value_badge` keeps the legacy
+  temperature/humidity satellite. Bottom badges stack above the system LQI row;
+  a derived-LQI badge or value source suppresses that row.
+- LQI: `devices.ts` averages Z2M `*_linkquality`, ZHA `*_lqi`/unit `lqi` sensors
+  or a `linkquality`/`lqi` attribute. `logic.ts::lqiColor()` maps 40→180 to hue
+  0→120; `markerLqiColor()` delegates to it; `markerLqiBand()` is marker-only
+  accessibility metadata.
+- Face geometry: the saved coordinate is the icon-core centre; Text is
+  shell-centred and a Double shell extends around the anchored core. The
+  101.5/80 shell/core ratio (`--device-shell-size`), shared centre, Light/Dark
+  context, full-text fitting and the 44×44 core-centred interaction floor are
+  renderer facts, not surface DOM. A positioned shell frame owns the whole
+  visible capsule hit area and bubbles to the marker's one action path;
+  Enter/Space call the same `_clickDevice()` path as pointer activation.
+- Hit ownership: painted shells share one layer above all invisible 44 px
+  floors, so DOM order never decides. `device-hit-owner.ts` resolves the owner in
+  screen coordinates (painted capsule, else nearest core, stable id tie-break)
+  from a small spatial index measured only after render/resize invalidation,
+  never per pointer move, and latches it from pointerdown through
+  hover/action/long-press/context menu and Devices-editor drag.
+- Pulse storage: `ripple_color`/`ripple_size` remain the stored names for every
+  pulse kind (alarm keeps safety red); absent size is 1.5; explicit colour/size
+  wins, then live RGB, then presence-green/work-amber/transition-blue. The
+  backend accepts legacy `display: ripple` only for compatibility;
+  `normalizeDeviceDisplay()` maps it to `icon_ripple`.
+- Activity baselines are seeded as soon as a rebuilt registry becomes
+  authoritative, before the next HA snapshot is classified; a source-key change
+  resets any finite effect immediately.
+- The marker dialog builds its draft through `buildDevices`; `hp-device-preview`
+  shows the actual projection, integration provenance from registry/config-entry
+  metadata and isolated short/continuous demonstrations, fitting and centring the
+  complete face bounding box so satellites never clip.
+- Glow never replaces the yellow working plate: a light pool is spatial
+  information, not a status indicator.
 
 ## Source precedence: what a marker shows
 
@@ -194,6 +238,22 @@ then the device's resolved functional role. Presentation adopts cover semantics
 only when that same result selected the cover, so the option, hint, service call
 and state shown cannot disagree. A no-target or unsupported result falls through
 to ordinary light/device-role presentation and never invents a service target.
+
+### Action authority (#94, #381)
+
+`src/device-toggle.ts` is the only authority for Toggle: origin, exact target,
+capability/security filtering, next effect and service command. The dialog hint,
+click path, confirmation re-resolution and cover presentation consume the same
+immutable `resolveToggleIntent` result. Exact `entity:` bindings never retarget
+to siblings, persisted `controls` never fall back to the controller's own
+entity, and secure targets are explicit no-ops. `POWER_ADAPTERS` is the explicit
+domain allow-list and carries per-entity HA feature masks where a domain-wide
+service is no capability proof; the HA service catalog is a second fail-closed
+guard. `_clickDevice()`, shared by pointer and Enter/Space, stops propagation,
+re-resolves the current marker by stable id (a retained #73 visual snapshot is
+read-only presentation) and returns on explicit `tap_action: none` before
+capability lookup, confirmation, cards/toasts, press feedback or HA dispatch;
+hold and context-menu handlers stay independent.
 
 ### A media player is powered, not "working" (owner 2026-08-07)
 

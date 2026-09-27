@@ -98,6 +98,25 @@ The asymmetry is the whole argument. Wasted disk is visible, cheap and
 reversible; a deleted file is none of those. Where the evidence is weak, keep
 the file — and if a future version wants to reclaim that space, it asks.
 
+Collection classifies by **owner**, not by "is it referenced" (HP-1465-01):
+`config/set` removes only what its own commit replaced.
+
+| Case | What it means | Rule |
+|---|---|---|
+| Space in both, plan A → plan B | the user picked another image | removed immediately |
+| Space in both, plan → none | detached; one click undoes it | **kept** |
+| Space gone | deliberate, but the image was imported and may be nowhere else | **kept** |
+| Space has a plan, plus another file of its own | an upload whose save was rejected | **kept** — ageing these out raced the retry that referenced them |
+| Marker in both, attachment dropped from its list | a trash button, promising nothing | removed immediately |
+| Marker gone | same call as a deleted space's plan | **kept** |
+| Attachment in `up_*` | a dialog that was never saved; no device owns it | `PLAN_ORPHAN_TTL_S` (1 h) |
+| Marker there, file it never listed | a rejected upload | **kept**, same reason |
+
+Nothing is deleted for being old except a per-dialog staging folder (`up_*`)
+after `PLAN_ORPHAN_TTL_S`; `houseplan/plans/list` and `houseplan/plans/delete`
+(refusing while a space still references the plan) make "we never delete"
+livable.
+
 ## Out of scope — never build, point users to the right tool
 
 - Automations, scenes, scripts, notifications → HA core.

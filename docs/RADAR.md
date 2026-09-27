@@ -98,6 +98,33 @@ the source integration may independently keep their normal entity history.
 Virtualized plan imports intentionally drop hardware-specific radar bindings.
 Unknown future radar versions remain preserved but inert until supported.
 
+## Implementation map
+
+- Persistence: `marker.radar` is saved only by the ordinary revisioned config
+  transaction. `radar_validation.py` validates only a changed known version;
+  untouched future versions stay inert. `settings.radar.show_live` is a display
+  preference and never authorizes discovery, recording or hardware writes.
+- Backend: one `RadarCoordinator` (`radar.py`) per integration entry owns exact
+  HA source listeners, report-time freshness, independent-pair skew,
+  source/calibration epochs, projection, real-room clipping and bounded public
+  frames; it reconciles on config revision and closes all listeners/timers on
+  unload. The explicit profile/source-role inventory (`occupancy_entity`,
+  `count_entity`, `availability_entity`; Cartesian `x_entity`/`y_entity`; polar
+  `distance_entity`/`angle_entity`; range/zone `entity_id`; slot/range
+  `presence_entity`) is the single authority for live listeners, setup listeners
+  and per-entity read ACLs; unknown future fields never become sources by naming
+  convention. Only the backend interprets raw HA states.
+- Eager View: `radar-model.ts` (frame validation/ordering/leasing),
+  `radar-live.ts` (one active-space subscription and lifecycle),
+  `radar-render.ts` (pointer-transparent SVG below ordinary device markers).
+  Range segments arrive already clipped; an empty list is authoritative and never
+  falls back to an unclipped arc. Transition eligibility is a server fact: only a
+  current same-slot step of at most 100 cm in a convex room may animate.
+- Lazy editor: `radar-editor.ts` (recognition/draft round-trip),
+  `editors/radar-section.ts` (marker dialog), `radar-setup.ts` (session-only
+  on-plan wizard). A two-reference result changes only the open draft; the
+  ordinary marker Save is the only write.
+
 ## Troubleshooting
 
 - **The section is absent:** only positively recognized hardware or an already

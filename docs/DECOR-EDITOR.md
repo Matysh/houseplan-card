@@ -361,6 +361,23 @@ replace it without losing position, size, rotation, mirror or layer order.
 Export v2 records hashes and availability but never embeds image bytes; an
 import with missing bytes requires confirmation and preserves that placeholder.
 
+**Backend invariants.** Raster input is fully decoded and SVG passes a strict
+allowlist before promotion. `houseplan/assets/resolve` takes its reference
+snapshot under the config write lock, does file I/O after releasing it and reads
+only the requested sidecars. Resolve and HTTP GET share one memory-only
+`AssetIntegrityVerifier` per HA instance: streamed SHA-256, at most 256 digests
+keyed by canonical path plus size/mtime/ctime, per-file-version single-flight
+with a bounded follower wait. Both stat signatures must be a regular file, so
+bytes changed mid-read never enter the cache; missing, changed, non-regular or
+corrupt files fail dark. The frontend `ContentSigner` batches `<image>`
+signatures. Quota counts every regular `<sha256><allowed-ext>` blob by actual
+size, including blobs with absent or malformed sidecars; a sidecar without a
+blob does not count, and entries vanishing mid-scan are skipped. Delete rechecks
+references across every space under the config write lock and removes only the
+exact sidecar and allow-listed blob names under the reference/upload locks:
+never a prefix, temp file, directory or unknown extension. There is no automatic
+orphan collector. Failed resolve transport calls are not cached.
+
 ## 8. Code ownership
 
 | Concern | File |

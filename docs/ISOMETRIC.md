@@ -107,6 +107,12 @@ data. The saved iso preference is retained; an explicit iso request retries the
 fingerprint, and changed geometry receives a new fingerprint. Flat rendering is
 the rollback path and does not depend on the iso cache.
 
+Internal fail-closed evidence, not public API (`STYLING-HOOKS.md` §7.7):
+`.stage[data-hp-iso-stage="4"]` with `data-hp-iso-structural-builds`,
+`data-hp-iso-overlay-kind|raised|nudged` on low-plane roots, and
+`data-hp-iso-material-def` on shared material definitions. The structural LRU is
+`_isoGeometryCache`.
+
 ## Limits
 
 - No volumetric editor and no volumetric `houseplan-space-card`: editors and
@@ -177,6 +183,8 @@ material config, network request or HA service path.
 door has one jamb-hinged leaf, gate has two leaves with the established
 0–10° exterior-face turn, and window has two light neutral casements. A saved
 `passage` keeps the same full-height masonry cut but has zero leaves/panels.
+Door/gate leaves are matte prisms `0.04H` thick with state-independent
+full-depth reveals.
 Heights are fixed presentation ratios of `ISO_WALL_HEIGHT`; there is no schema
 field. The saved opening axis and Flat symbol remain on their canonical
 centreline. Derived 2.5D door/gate leaves pivot on the selected physical host
@@ -216,6 +224,9 @@ The camera is orthographic `rotDeg=0`, `tiltDeg=20`, with the `[500,500]`
 pivot and scale-aware 84-unit wall height. Floor SVG, wall/opening projection,
 inverse hit mapping, invisible collision footprints and fit bounds share that
 one affine authority.
+`isoPlaneMatrix()` (`src/iso-projection.ts`) is that authority. The projected
+frame also includes the low overlay plane; blur and shadow extents never enter
+fit.
 
 Device markers, room labels/cards and opening-lock badges keep their canonical
 floor anchors but render on a low plane four visual units above the floor.
@@ -225,6 +236,16 @@ the same scene-space displacement, so pairwise vectors, rows and intervals are
 the affine projection of the Flat layout rather than a per-marker fan toward a
 room safe point. Room labels never enter a cluster and stay below interactive
 roots.
+
+`src/iso-overlays.ts` is the pure placement boundary. A device accepts its
+explicit room only when that room strictly contains its floor anchor, otherwise
+the smallest strictly containing room (stable id tie-break); room labels use
+their own room; lock badges inherit the physical room side selected by
+opening-host geometry. Wall clearance uses a 4 CSS px safety gap
+(`ISO_OVERLAY_SAFETY_GAP_CSS_PX`), and every candidate path must stay strictly
+inside the owner and outside its island holes. Boundary candidates are evaluated
+on the integer CSS-pixel lattice through a bounded spatial grid (#585), so
+sub-4 px legal slits are found without an all-pairs or disk scan.
 
 The reference-fit view, not the current live view, converts CSS safety values
 into scene units. Wheel/button zoom, pinch and pan therefore transform an

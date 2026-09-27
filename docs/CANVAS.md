@@ -42,8 +42,10 @@ A finer grid changes precision only. Raw SVG constants inherited from the
 historical 5 cm renderer are **visual units** and use
 `gridVisualScale(cell_cm) = 5 / cell_cm`. Physical sizes already converted from
 centimetres, screen-fixed strokes/handles, plan-relative icon sizes and the
-grid pitch must not receive that factor again. Full, static and hidden
-isometric renderers share this classification.
+grid pitch must not receive that factor again. Full, static and 2.5D
+renderers share this classification. Full and static roots expose the factor as
+`--hp-cell-visual-scale`; 2.5D heights and user-space shadows include it in
+their structural cache inputs.
 
 ### Persisted coordinate canonicalisation
 
@@ -71,6 +73,10 @@ startup-recovery writers. A canonical read/write echo is a no-op: optimistic
 locking is still checked, but the revision, update event and maintenance Undo
 snapshot do not move. Existing stores are not rewritten on read; Optimize Plans
 remains the explicit bulk-cleanup path.
+`scripts/coordinate-write-barrier-guard.mjs` inventories every outbound
+config/layout writer and permits direct plan-Store writes only inside
+`async_save_config_state()`/`async_save_layout_state()`; the trail recorder's
+operational Store is the one explicit exception (#291).
 
 ## Model
 
@@ -373,6 +379,12 @@ from `--dev-size`. The full card and the static
 `houseplan-space-card` call the same `iconCqw()` — the static card has
 no zoom, but its frame is the content now, so a bare `iconPct` would
 have made its markers shrink as the frame tightened.
+
+Public `icon_size` (default 2.5, UI range 1–6) is a compatibility unit: a
+value > 8 is a legacy pixel size and falls back to 2.5, and the surface boundary
+converts it through `effectiveDeviceBaseSize()` (2.5 → 2.25, #212/#213) before
+`device-face.ts` sees it; the face applies no late visual factor. Marker sizes
+are `cqw` inside `.stage { container-type: inline-size }`.
 
 **Auto-placement spacing** (`defaultPositions` -> `declump`) is measured
 in render units and uses the same `iconUnit`, so the icon's footprint

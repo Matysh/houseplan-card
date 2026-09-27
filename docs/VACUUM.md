@@ -229,6 +229,35 @@ successful config change, so an interrupted browser-side cleanup is repaired.
 An initial position sampled during integration startup follows the same
 debounced persistence and live-update path as a later state event.
 
+## Code ownership
+
+- `src/vacuum-routes.ts` is the only answer to "which map is on which floor":
+  `effectiveRoutes()` (explicit `map_routes`, or the legacy `calibration`
+  dictionary as routes into the dock's space) and `resolveRoute()` (the six
+  results above, never a guess). The result is computed once per frame into
+  `render-device-snapshot.ts` (`facts.get('vacuum:<id>')`) so `render()` cannot
+  derive a second answer; `planVacuumOverlay()` decides what the visible space
+  draws.
+- Route editing lives only in the lazy editor graph (`vacuum-route-edit.ts`,
+  `editors/vacuum-maps-section.ts`); the View card never loads it.
+- `custom_components/houseplan/vacuum_routes.py` mirrors the resolver and the
+  legacy-run adoption rule byte for byte, driven by `test/fixtures/vacuum-routes/`;
+  a divergence shows up as a robot on the wrong floor.
+- `src/vacuum.ts` owns pure normalization/arbitration: paths are always
+  `Pt[][]`; `resolveCurrentVacPath()` is the only integration → server → local
+  decision; `resolveVacSource()` pins saved sources and limits automatic
+  selection to compatible same-device entities; the card adds registry status
+  through `resolveHaBindingStatus()`.
+- `smoothVacPath()` takes calibrated flat plan coordinates and returns typed
+  `move|line|quadratic` commands for a caller-supplied physical radius; the card
+  then projects (flat/2.5D) and serializes. Each corner is a quadratic inside the
+  adjacent-segment convex hull, bounded by half of both segment lengths, which
+  makes the 17.5 cm limit, exact endpoints and subpath gaps structural.
+- Auto-calibration uses the same shoelace `areaCentroid()` for plan polygons and
+  robot outlines; residuals go through resolved grid pitch and `cell_cm`.
+  `trails.py` owns current/previous runs and the refresh-time `(marker, source)`
+  health state.
+
 ## Troubleshooting
 
 1. Open the vacuum's device settings and read the source diagnostics.

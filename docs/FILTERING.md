@@ -52,6 +52,15 @@ as the SEEDER of initial hidden flags.
 "Group", scene-like models, bridges, myheat children, and individual lamp
 devices in an area covered by a light group (when group folding is on).
 
+The two inputs of that rule are visible settings, not hidden knobs (#44):
+`settings.group_lights` and `settings.exclude_integrations` are edited in the
+Devices catalog's **Discovery filters** section. One resolver,
+`effectiveExcludedIntegrations()` (`devices.ts`), feeds discovery, the
+materialisation seed and room climate on both cards; the section's preview diffs
+the real `seedHiddenBindings()` and `buildDevices()` outputs for current and
+draft settings, so no second copy of the filter logic exists. Both fields are
+`current` in the field registry (#33).
+
 The seeder runs on the editing client (write permission required) whenever
 devices rebuild, and creates `hidden: true` stub markers for non-physical
 devices in BOUND areas that have NO marker. It is idempotent: marked devices
@@ -89,6 +98,11 @@ the old behaviour until an editing client materialises it.
   `device-inbox.ts` projection. Exact bindings stay in one user-intent category
   (`on_plan`, `available`, `hidden`, `readd`); HA disabled/orphaned/unverified
   is an independent operational status and never silently moves a row.
+  The binding picker and the catalog share the pure `bindingCandidates()`
+  eligibility helper; filtering and paging run only after the full candidate
+  snapshot, so large registries cannot hide later exact entities.
+  `buildDeviceInbox()` combines runtime devices, markers, tombstones, HA binding
+  statuses and `new_device_ids` without owning persistence or Lit state.
 - **Show hidden on plan** in that catalog is LOCAL, ephemeral state of the
   current editor session. A disabled ghost is grey and explicitly labelled;
   it cannot be dragged or shown until the binding is activated in HA. Its

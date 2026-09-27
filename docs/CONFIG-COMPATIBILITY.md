@@ -23,6 +23,24 @@ this registry resolves to a path of the generated schema manifest or to an
 explicit passport. A field missing here is therefore a documentation gap, not
 an unknown schema.
 
+## Schema manifest and parity (#33)
+
+The Voluptuous schema in `custom_components/houseplan/validation.py` is the only
+owner of the persisted config/layout shape. `scripts/dump-config-schema.py`
+walks it into the deterministic `scripts/config-schema.json`;
+`tests_backend/test_config_schema_manifest.py` regenerates the manifest and fails
+on uncommitted drift. `test/config-schema-parity.test.mjs` compares manifest
+enums with the exported frontend lists (`DISPLAY_MODES`, `TAP_ACTIONS`,
+`SPACE_FILL_MODES`/`ROOM_FILL_MODES`, `OPENING_TYPES`, `VACUUM_TRAIL_MODES`,
+`ZERO_WALL_STYLES`, `BG_MODES`, `SUN_RAY_ORIGINS`). Every divergence is blessed
+in `scripts/schema-compat-allowlist.mjs` with a reason and an owning issue; an
+entry that no longer matches a real divergence fails the test, so the list
+cannot rot. Registry entries resolve to a manifest path or carry an explicit
+`schema: 'allow-extra' | 'lovelace-card'` passport; implemented mechanisms cite
+their code point in `enforcedBy`. `test/fixtures/config-lifecycle/`
+(`oldest-supported`, `current`, `future-fields`) pins the load contract: each
+passes the schema losslessly and future fields round-trip exactly.
+
 ## Offline inventory
 
 Exported JSON can be inspected without uploading it or changing it:
@@ -65,6 +83,7 @@ revision. Without a server-issued token, an old client and a stale concurrent
 writer produce the same request; accepting either would reopen last-writer-wins
 data loss. This changes only the WebSocket write contract. Stored config,
 model/store versions, exports and read compatibility are unchanged.
+The same rule applies to `layout/set` (#356).
 
 ## Crash-resumable config/layout pairs (#491)
 
@@ -169,6 +188,17 @@ View scale preferences, HA states, registry snapshots, computed totals and
 clock values are browser runtime data and never enter server config, exports or
 support packages. `config/get.summary_panel_api === 1` is a runtime capability,
 not persisted user configuration and not a store/model version bump.
+
+Browser-local summary preferences are keyed by HA user, route, host and logical
+card slot; the resolved summary-local key is the scale authority and the legacy
+kiosk key only seeds its first load. A native Masonry slot is the top-level
+card's index in `hui-masonry-view.cards` (dashboard config order, stable while
+HA moves cards between responsive columns); a nested stack/conditional appends
+only its composed descendant path. The `masonry-v2` marker separates these keys
+from the older ambiguous DOM-path keys (#561), so earlier per-card Masonry
+choices may need to be set again. While the canonical array or matching ancestor
+is not available yet, preferences stay session-only and no guessed persistent
+key is read or written (`summary-panel-identity.ts`).
 
 The writer authority is explicit:
 
@@ -577,6 +607,8 @@ unrelated marker field preserves the literal `cover` token; once the user edits
 the action selector, the current canonical `toggle` token is written. The UI
 never creates new `cover` values. Unknown or unavailable cover capabilities
 remain a safe no-op and are never replaced by a guessed service call.
+An absent action on a primary `light.*` likewise stays absent on an untouched
+Open → Save.
 
 The universal `toggle` resolver uses the current HA registry as its capability
 boundary. A disabled, orphaned or not-yet-verified device target is therefore
@@ -1032,3 +1064,28 @@ does not absorb this storage-only work.
 One undo is available until the next config or layout edit. It restores
 the stored snapshot; re-running optimization itself is never treated as
 undo because a grid projection is not invertible.
+
+## Square canvas and legacy `aspect` (v1.48)
+
+Until v1.48 a space stored `aspect` and coordinates were normalised x by width,
+y by height. The render space is now `NORM_W × NORM_W`; a plan image is fitted
+by its own ratio (`fitInSquare`) and that ratio is stored as `plan_aspect` so
+the layout does not jump before the file loads. Setup still upgrades a legacy
+`aspect` once through `geometry_migration`: the box is padded to a square and
+every coordinate re-expressed as one uniform scale plus offset in render units
+(angles and proportions exact), with `cell_cm` scaled for tall plans. A durable
+`geom_pending` intent is written to the layout store before the config half
+removes `aspect`; the next start finishes whichever half is missing
+(HP-1490-01), and update events fire only after both halves are durable.
+Installations stranded before that intent existed are repaired only explicitly
+with `houseplan/geometry/repair` (HP-1500-01).
+
+## Legacy content URLs
+
+`/houseplan_files/…` is a public static path for frontend code only (card,
+panel, lazy chunks), because a Lovelace resource must load without
+authentication. Plans and marker files are served only by the authenticated
+`HouseplanContentView` (`/api/houseplan/content/<plans|files>/…`, signed URLs).
+Stored configs may still hold older `/houseplan_files/plans|files/…` URLs:
+`contentUrl()` rewrites them on every read and portable import accepts both
+prefixes, so there is no storage migration.

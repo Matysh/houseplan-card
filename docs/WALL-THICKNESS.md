@@ -45,6 +45,15 @@ keeps the parent ID on the child containing the old midpoint (then the old first
 endpoint on a tie), while the other child receives a new UUID. Merge, Resize,
 room deletion, opening edits, Undo/Redo/recovery, Optimize and import/export
 apply the same lineage and validation rules before one atomic persistence write.
+Initial legacy IDs are deterministic, so frontend, backend and repeated
+migrations converge; only genuinely new segments get UUIDs.
+`src/wall-segment-model.ts` and `custom_components/houseplan/wall_segment_model.py`
+share `test/fixtures/282-wall-identity-parity.json`. Writer-bypass mutants in
+`scripts/mutation-registry.mjs` guard every structural writer entrance. A `cm:0`
+atom or partition keeps its structural axis and stable identity but contributes
+no masonry body, floor subtraction, paper, opening tunnel or opening host; one
+resolver, `src/zero-walls.ts`, applies `space.zero_wall_style` to flat, static,
+2.5D and light.
 
 Per space: `walls: [{ key, cm, a?, b? }]`. `key` remains the quantised midpoint
 and direction (modulo 180°) compatibility lookup; new or rewritten entries also
@@ -80,6 +89,9 @@ shared rooms. A different thickness, outer/shared transition or change of
 shared-room pair remains a real break. Adjacent zero atoms follow the same
 role-aware compaction; the canonical current model never writes compatibility
 `open_spans` or `open_to`.
+`normalizeWallIntervals()` is the single implementation, shared by explicit
+Optimize and the room-deletion transaction; ambiguous multi-owner geometry is a
+hard breakpoint and fails closed per atom (#299).
 When a maximal wall run crosses a collinear vertex belonging to another room,
 its exact endpoints cover that room's shorter child side too; lookup does not
 depend on the compacted run's midpoint remaining inside every room.
@@ -137,6 +149,13 @@ Geometry tolerances are render-space distances and are converted to a local
 dimensionless edge fraction before breakpoint comparison or de-duplication.
 This preserves the same `0 ↔ h` and `h1 ↔ h2` transition at normalized and
 production (`coordScale = 1000`) scales.
+
+Per-room rings remain the interior-join and nested-room representation; when an
+acute child ring cannot be subtracted, its atomic interval quads provide the
+safe physical fallback. The full card keeps the structural result in
+`_wallUnionCache`; static cards use a weak server-snapshot cache guarded by a
+structural geometry fingerprint, and cursor or HA state updates never repeat the
+O(N²) `physicalBodySet()` node search.
 
 ## 3. Body render
 
@@ -370,6 +389,20 @@ invoke it.
 - Displayed **m²** = area of the inner contour (clean floor). Wall-length
   rulers and opening anchors stay on the centreline.
 - With no thickness, inner = poly (parity with pre-thickness behaviour).
+- View room hover is a late plain-SVG wash plus wide/narrow accent strokes over
+  the clean-floor geometry; the room information window shows the room's average
+  LQI and the formatted clean-floor area. The hover deliberately uses no CSS/SVG
+  filters: promoting a filtered sibling makes Chromium briefly recompose and
+  brighten the isolated screen-blended Glow layer.
+- Opening-tunnel faces are one simple union contour per connected physical span:
+  thickness steps are vertices on the outer envelope, never touching translucent
+  rectangles, and both halves use the same nonzero winding across their tiny
+  centre overlap, so fractional rasterisation can neither cancel the fill into a
+  seam nor stack its opacity. `render/opening-tunnels.ts` only projects these
+  immutable inputs.
+- A fully nested room is legal (`polyContainsPoly`): the parent's floor, data
+  fill and Glow base are evenodd paths with the island rings as holes
+  (`islandsOf`).
 
 ## 5. Sun
 
@@ -386,7 +419,10 @@ modes identical. `hide_openings` hides the symbol only.
 
 Plan-editor tool «Thickness»; hover whole wall; cm/in from HA; exact `0..100`
 is valid for room walls and partitions, while empty/invalid input is
-rejected; apply-to-room. Hooks: `data-hp="wall"`. i18n en/ru.
+rejected; apply-to-room. Hooks: `data-hp="wall"`. i18n en/ru. Changing a
+positive wall to `0` is rejected atomically while any opening uses it. Hit
+widths and junction ambiguity are measured in CSS pixels through the live
+viewBox, so a zero wall stays editable although it paints as a one-pixel line.
 
 **Draw with thickness.** The Plan toolbar's **Walls** button carries its session
 thickness field immediately on the right (default **15 cm**, or inches when HA
@@ -412,6 +448,13 @@ partitions and openings are one Undo/Redo and persistence transaction. The
 remaining wall profile is normalised against its post-delete ownership, so an
 equal thickness cannot be compacted across an outer/shared boundary or across
 two different shared-room pairs.
+`src/room-deletion.ts` plans the whole operation before any mutation;
+confirmation is an accessible `hp-dialog`, never native `confirm()`. The same
+command rewrites room references in every marker: a direct `room_id` is deleted
+(remapped to the survivor for Merge) and exact values in cross-space
+`vacuum.segment_map` are deleted/remapped. History snapshots only these fields,
+so Undo/Redo and write rollback stay atomic with geometry while unrelated marker
+and vacuum fields remain live (#477).
 
 ## 7. Out of scope
 
@@ -476,6 +519,11 @@ Boundary/Thickness targets (`demo/smoke_optimize_coincident_partition.mjs`). The
 copying their contents into Git and checks raw, Optimize preview, applied
 canonical storage and reload states.
 
+`OptimizeDependencies` (`src/plan-optimizer.ts`) is a narrow seam: the
+large-house benchmark substitutes a no-op and the unit contract counts
+per-space calls; a source-ownership assertion fails if a render/pointer module
+imports the reconciliation helper.
+
 ### Junction tooling (#302)
 
 Purpose-built checks for node material: `junctionContractHoles` (the objective
@@ -507,6 +555,8 @@ Plan, View, Static, hidden Iso, paper and light use the same components, while
 `roomGeom` excludes independent bodies so room area remains unchanged. This is
 read-only recovery: strict Optimize and every physical-geometry edit reject a
 degraded candidate and never silently delete or rewrite the offending object.
+A core room-body failure is `failed-core`: it sits outside the optional-union
+fallback and activates fail-dark rendering.
 
 An opening with explicit `host:{kind:'partition',id,t}` is resolved from that
 partition alone and subtracted full-depth from its raw body before the joined
@@ -598,6 +648,8 @@ physical gap created by an `open_span` or absent wall remains a gap. A door,
 window, gate or passage is a property of a wall and preserves connectivity. A clean divider across
 one room reuses the Split contract: the larger side keeps the room identity,
 metadata and device binding, and only the smaller side is offered.
+`splitRoomPath()` is a strict partition: the two parts' areas must sum to the
+original within a relative 1e-6 epsilon, otherwise the cut is rejected.
 
 The terminal active path remains session-local while the resulting room dialogs
 are open. Create/Keep-as-walls answers are buffered; Cancel/Esc discards all
@@ -606,3 +658,32 @@ revalidates the whole batch and applies accepted rooms while consuming only the
 coincident partitions used by those rooms in one history/config transaction.
 Graph construction never runs on pointermove, Home Assistant state updates or
 ordinary rendering.
+
+**Finishing a chain (#294, #477).** Changing Plan tool, editor or floor, `Esc`,
+the tray's Reset, route/hash departure and a room-face batch whose every face
+was rejected all finish an open chain through one bounded lossless finalizer
+(`finalizeWallChainSpace`, `src/writer-fixed-point.ts`). It merges only the
+seed-connected compatible collinear run, rehosts its openings and reconciles
+only surviving positive seed partitions proven coincident with room masonry; the
+cloned candidate crosses the current-model identity barrier, one local
+physical/junction proof and storage canonicalization before atomic adoption.
+Rejection keeps the visible chain and the original config. It adds no history
+command and never sweeps unrelated legacy debt. Pan, pinch, pointer cancellation
+and suppressed clicks never finish a chain or append a segment; a finished chain
+is not resumed after reload or remount.
+
+Active-chain Undo preserves the complete record of every surviving partition,
+including its stable id; only a genuinely new edge receives a new identity. Each
+segment history snapshot carries session-only chain seed ids: while the chain is
+active the snapshot is literal and Undo removes one point; after finish,
+Undo/Redo passes that seed scope through the same lossless finalizer, so hidden
+collinear seams cannot return as durable Optimize debt (#477).
+
+**Room from an existing face.** With no active chain, a Walls click queries the
+smallest exact unoccupied bounded face at the raw point; boundary/snap hits and
+desktop `Shift+click` still draw. Without an exact face, `src/wall-face-repair.ts`
+may plan one endpoint→endpoint or endpoint→solid-line move of at most 2 physical
+cm. Room vertices and endpoints of partitions that host an opening never move,
+multiple valid repairs fail closed, and the immutable proposal is revalidated
+against current geometry before use. Move and room are one history/config
+transaction; cancelling or rejecting the room applies nothing.

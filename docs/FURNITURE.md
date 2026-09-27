@@ -161,6 +161,9 @@ be loaded, **nothing** is drawn until the page reloads, and a toast says so
 once. Before #593 the 12 primitive symbols drew regardless; that promise was
 withdrawn deliberately when they became designer artwork, so the failure now
 behaves the same way for all 60 pieces instead of for 48 of them. Front-view
-menu art is imported only after the editor runtime is requested. Touch View/kiosk support is
+menu art is imported only after the editor runtime is requested. The editor
+hands its statically imported drawings over synchronously (`adopt`), a chunk
+from another build counts as a failed load, and the boot veil waits for the
+artwork only up to the card's `BOOT_MAX_MS` cap. Touch View/kiosk support is
 blocking; editor ergonomics on touch remain best effort under
 `docs/TOUCH-SUPPORT.md`.
