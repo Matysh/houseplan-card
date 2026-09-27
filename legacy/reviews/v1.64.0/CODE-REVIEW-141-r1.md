@@ -4,7 +4,7 @@
 
 Ветка: `issue/141-wall-joints` · implementation-коммит
 [`3e33f4a`](https://github.com/Matysh/houseplan-card/commit/3e33f4a5845a29694473697bea916bb3e2490ac2)
-· ТЗ: [`docs/specs/141-wall-junctions.md`](../specs/141-wall-junctions.md)
+· ТЗ: [`docs/specs/141-wall-junctions.md`](../../../docs/specs/141-wall-junctions.md)
 (reviewed `2858175`, зелёный SPEC-REVIEW-141-r1).
 
 ## Скоуп проверки

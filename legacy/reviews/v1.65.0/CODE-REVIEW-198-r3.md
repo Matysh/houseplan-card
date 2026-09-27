@@ -9,7 +9,7 @@
   r2), `5ce3cee` (исправление находки r2 — изоляция AC5-фикстуры), `2d5fec0`
   (обновление screenshot provenance после технического ребейза)
 - Диапазон диффа: `git diff origin/dev...HEAD`
-- ТЗ: [`docs/specs/198-optimize-micro-interval.md`](../specs/198-optimize-micro-interval.md)
+- ТЗ: [`docs/specs/198-optimize-micro-interval.md`](../../specs/198-optimize-micro-interval.md)
   (ревью ТЗ зелёное, r1)
 - Предыдущий цикл: [`docs/reviews/CODE-REVIEW-198-r2.md`](CODE-REVIEW-198-r2.md)
   (жёлтый · Medium-1 — новый AC5-тест не хермитичен к сценарию входной

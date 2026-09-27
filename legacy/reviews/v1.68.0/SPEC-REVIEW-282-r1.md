@@ -3,9 +3,9 @@
 - **Issue:** [#282 — Геометрия стен: сменить представление, а не чинить последствия](https://github.com/Matysh/houseplan-card/issues/282)
 - **Этап:** spec (PROCESS.md §2.4)
 - **Заход:** r1 (первый; дельта-режим §2.10 не применяется)
-- **Артефакт ТЗ:** [`docs/specs/282-stable-wall-segment-identity.md`](../specs/282-stable-wall-segment-identity.md)
+- **Артефакт ТЗ:** [`docs/specs/282-stable-wall-segment-identity.md`](../../specs/282-stable-wall-segment-identity.md)
 - **SHA ТЗ на момент ревью:** `8856fbda` (`docs: specify stable wall segment identity`, единственный коммит в ветке поверх `dev`)
-- **Нормативный документ:** [`docs/adr/282-wall-geometry-representation.md`](../adr/282-wall-geometry-representation.md), статус: Stage 0 принят и реализован (#283), Stage 1 — предмет этого ТЗ
+- **Нормативный документ:** [`docs/adr/282-wall-geometry-representation.md`](../../../docs/adr/282-wall-geometry-representation.md), статус: Stage 0 принят и реализован (#283), Stage 1 — предмет этого ТЗ
 - **Поставляемый этап:** ADR Stage 1 — stored identity сегментов contour walls
 
 ## Скоуп ревью

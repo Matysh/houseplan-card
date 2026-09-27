@@ -1,7 +1,7 @@
 # Код-ревью issue #107 — переключение виртуального источника света «Всегда» (r1)
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/107
-- **ТЗ:** [`docs/specs/107-virtual-light-toggle.md`](../specs/107-virtual-light-toggle.md), ревью
+- **ТЗ:** [`docs/specs/107-virtual-light-toggle.md`](../../specs/107-virtual-light-toggle.md), ревью
   [`SPEC-REVIEW-107-r1.md`](SPEC-REVIEW-107-r1.md) — зелёное, High 0 / Medium 0.
 - **Диапазон:** `origin/dev...HEAD`, коммит `1079cdfab25617df924b8c3592631aa40e078d87`
   ("feat: add persistent virtual light toggles"), ветка `issue/107-virtual-light-toggle`.

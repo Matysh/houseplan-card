@@ -1,7 +1,7 @@
 # Ревью ТЗ — issue #201, цикл r1
 
 - Этап: `S4-spec-review` (PROCESS.md §2.4)
-- Артефакт ТЗ: [`docs/specs/201-atomic-thickness-lookup.md`](../specs/201-atomic-thickness-lookup.md),
+- Артефакт ТЗ: [`docs/specs/201-atomic-thickness-lookup.md`](../../specs/201-atomic-thickness-lookup.md),
   коммит `7b759f3` на ветке `issue/201-atomic-thickness-lookup`
 - Issue: [#201](https://github.com/Matysh/houseplan-card/issues/201)
 - Ревьюер: Claude (роль «ревьюер ТЗ», отдельная сессия от аналитика/автора)

@@ -2,7 +2,7 @@
 
 - Issue: [#223](https://github.com/Matysh/houseplan-card/issues/223) «Оптимизировать планы» должна
   канонизировать координаты, а не консервировать floating-point шум
-- ТЗ: [`docs/specs/223-optimize-coordinate-canonicalization.md`](../specs/223-optimize-coordinate-canonicalization.md)
+- ТЗ: [`docs/specs/223-optimize-coordinate-canonicalization.md`](../../specs/223-optimize-coordinate-canonicalization.md)
   на коммите `8c9e5feae3503c086cc9f987d57f676e5435e537` (HEAD)
 - Раунд: r3/4
 - Вердикт: **зелёный**

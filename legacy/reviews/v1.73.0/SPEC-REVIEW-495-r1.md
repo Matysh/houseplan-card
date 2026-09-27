@@ -2,7 +2,7 @@
 
 - Issue: [#495](https://github.com/Matysh/houseplan-card/issues/495)
 - Этап: `spec` (PROCESS.md §2.4)
-- ТЗ под ревью: [`docs/specs/495-import-commit-and-route-runs-durability.md`](../specs/495-import-commit-and-route-runs-durability.md)
+- ТЗ под ревью: [`docs/specs/495-import-commit-and-route-runs-durability.md`](../../specs/495-import-commit-and-route-runs-durability.md)
 - Материал: HEAD `70a394d2` (detached), содержит коммит ТЗ
   `70a394d2 docs: spec for #495 — import result follows the commit, dropped route runs reach the store`
 - Заход: **r1**, блокирующих циклов израсходовано 0/4 (первый раунд — раздел

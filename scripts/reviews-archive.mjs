@@ -28,9 +28,16 @@
  *    сам документ — первым стабильным тегом, содержащим его добавление;
  *  - имя вне схемы и документ, не попавший ни в одну линию, остаются на месте
  *    и печатаются — решает человек.
+ *
+ * Перенос добавляет документу уровень вложенности (`docs/reviews/X.md` →
+ * `legacy/reviews/<тег>/X.md`), поэтому `--apply` переписывает относительные
+ * Markdown-ссылки — и внутри перенесённых файлов, и в соседях, которые на них
+ * ссылаются (`repairLinks`, ревью #682 r1). `--repair-links=<rev>` делает то же
+ * для всех переименований `<rev>..HEAD`, `--check-links` печатает битые
+ * относительные ссылки архива и живых каталогов.
  */
-import { existsSync, mkdirSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, posix, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { isMainModule } from './spawn-portable.mjs';
@@ -150,6 +157,100 @@ export function addedLines({ names, through, head = 'HEAD', cwd = ROOT }) {
   return result;
 }
 
+const LINK_RE = /(\]\()([^)\s]+)(\))/g;
+const EXTERNAL = /^(?:[a-z][a-z0-9+.-]*:|#|\/)/i;
+
+/**
+ * Переписать относительные ссылки одного Markdown-файла после переносов.
+ *
+ * `path` — где файл лежит сейчас, `oldPath` — где лежал до переноса (для
+ * неперенесённого совпадает). Ссылка, которая и так резолвится от `path`,
+ * не трогается. Иначе цель ищется от `path` и от `oldPath`, проводится через
+ * `moved` (старый путь → новый), и если так найден существующий файл — ссылка
+ * пересчитывается от нового места. Ссылка, битая и до переноса, остаётся как
+ * была: чинить чужую историю — не дело архива.
+ *
+ * @returns {{ text: string, fixed: number }}
+ */
+export function repairLinks({ text, path, oldPath = path, moved, exists }) {
+  let fixed = 0;
+  const out = String(text).replace(LINK_RE, (whole, open, target, close) => {
+    if (EXTERNAL.test(target)) return whole;
+    const hash = target.indexOf('#');
+    const file = hash >= 0 ? target.slice(0, hash) : target;
+    const anchor = hash >= 0 ? target.slice(hash) : '';
+    if (!file) return whole;
+    let decoded;
+    try { decoded = decodeURI(file); } catch { decoded = file; }
+    const here = posix.normalize(posix.join(posix.dirname(path), decoded));
+    if (exists(here)) return whole;
+    for (const base of [path, oldPath]) {
+      const candidate = posix.normalize(posix.join(posix.dirname(base), decoded));
+      const now = moved.get(candidate) ?? candidate;
+      if (now !== here && exists(now)) {
+        fixed += 1;
+        let rel = posix.relative(posix.dirname(path), now);
+        if (!rel.startsWith('.')) rel = rel || posix.basename(now);
+        return `${open}${rel}${anchor}${close}`;
+      }
+    }
+    return whole;
+  });
+  return { text: out, fixed };
+}
+
+/** Все отслеживаемые Markdown-файлы: ссылаться на перенесённый документ может любой. */
+function trackedMarkdown(cwd) {
+  return git(['ls-files', '-z', '--', '*.md'], cwd).split('\0').filter(Boolean);
+}
+
+/**
+ * Прогнать `repairLinks` по всем Markdown-файлам дерева.
+ * @param moved Map<старый путь, новый путь>
+ */
+export function repairTreeLinks({ moved, cwd = ROOT }) {
+  const inverse = new Map([...moved].map(([from, to]) => [to, from]));
+  const exists = (rel) => existsSync(join(cwd, rel));
+  let files = 0; let links = 0;
+  for (const path of trackedMarkdown(cwd)) {
+    const full = join(cwd, path);
+    if (!existsSync(full)) continue;
+    const text = readFileSync(full, 'utf8');
+    const result = repairLinks({ text, path, oldPath: inverse.get(path) ?? path, moved, exists });
+    if (result.fixed) {
+      writeFileSync(full, result.text);
+      files += 1; links += result.fixed;
+    }
+  }
+  return { files, links };
+}
+
+/** Переименования `rev..HEAD` (`git diff -M`): карта старый путь → новый. */
+export function renamesSince(rev, cwd = ROOT) {
+  const out = git(['diff', '-M', '--name-status', '--diff-filter=R', '-z', rev, 'HEAD'], cwd).split('\0').filter(Boolean);
+  const moved = new Map();
+  for (let i = 0; i < out.length; i += 3) moved.set(out[i + 1], out[i + 2]);
+  return moved;
+}
+
+/** Битые относительные ссылки в архиве и живых каталогах документов ревью и ТЗ. */
+export function brokenLinks({ cwd = ROOT, roots = [LIVE_DIR, ARCHIVE_DIR, 'docs/specs', 'legacy/specs'] } = {}) {
+  const broken = [];
+  for (const path of trackedMarkdown(cwd).filter((p) => roots.some((root) => p.startsWith(`${root}/`)))) {
+    const text = readFileSync(join(cwd, path), 'utf8');
+    for (const [, , target] of text.matchAll(LINK_RE)) {
+      if (EXTERNAL.test(target)) continue;
+      const file = target.split('#')[0];
+      if (!file) continue;
+      let decoded;
+      try { decoded = decodeURI(file); } catch { decoded = file; }
+      const resolved = posix.normalize(posix.join(posix.dirname(path), decoded));
+      if (!existsSync(join(cwd, resolved))) broken.push({ path, target });
+    }
+  }
+  return broken;
+}
+
 export function applyPlan({ moves, cwd = ROOT }) {
   const dirty = git(['status', '--porcelain', '--', LIVE_DIR, ARCHIVE_DIR], cwd).trim();
   if (dirty) throw new Error(`рабочее дерево ${LIVE_DIR}/${ARCHIVE_DIR} не чистое:\n${dirty}`);
@@ -158,16 +259,30 @@ export function applyPlan({ moves, cwd = ROOT }) {
     mkdirSync(join(cwd, dirname(move.to)), { recursive: true });
     git(['mv', move.from, move.to], cwd);
   }
+  const repaired = repairTreeLinks({ moved: new Map(moves.map((move) => [move.from, move.to])), cwd });
+  if (repaired.files) git(['add', '-u', '--', '.'], cwd);
   const index = spawnSync(process.execPath, [join(ROOT, 'scripts/reviews-index.mjs'), `--dir=${LIVE_DIR}`], { cwd, encoding: 'utf8' });
   if (index.status !== 0) throw new Error(`reviews-index: ${index.stderr || index.stdout}`);
   git(['add', '--', join(LIVE_DIR, INDEX_FILE)], cwd);
+  return repaired;
 }
 
 if (isMainModule(import.meta.url)) {
   const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
+  if (arg('repair-links')) {
+    const result = repairTreeLinks({ moved: renamesSince(arg('repair-links')) });
+    console.log(`ссылок переписано ${result.links} в ${result.files} файл(ах)`);
+    process.exit(0);
+  }
+  if (process.argv.includes('--check-links')) {
+    const broken = brokenLinks();
+    for (const item of broken) console.log(`${item.path}: ${item.target}`);
+    console.log(`битых относительных ссылок: ${broken.length}`);
+    process.exit(broken.length ? 1 : 0);
+  }
   const through = arg('through');
   if (!through || !STABLE_TAG_RE.test(through)) {
-    console.error('usage: node scripts/reviews-archive.mjs --through=vX.Y.Z [--head=HEAD] [--apply]');
+    console.error('usage: node scripts/reviews-archive.mjs --through=vX.Y.Z [--head=HEAD] [--apply] | --repair-links=<rev> | --check-links');
     process.exit(2);
   }
   const head = arg('head') || 'HEAD';
@@ -179,8 +294,8 @@ if (isMainModule(import.meta.url)) {
     : first;
   console.log(renderPlan({ ...plan, through }));
   if (process.argv.includes('--apply')) {
-    applyPlan({ moves: plan.moves });
-    console.log(`перенесено ${plan.moves.length}; ${LIVE_DIR}/${INDEX_FILE} пересобран. Коммит — класс C, с трейлером задачи.`);
+    const repaired = applyPlan({ moves: plan.moves });
+    console.log(`перенесено ${plan.moves.length}; ссылок переписано ${repaired.links} в ${repaired.files} файл(ах); ${LIVE_DIR}/${INDEX_FILE} пересобран. Коммит — класс C, с трейлером задачи.`);
   } else {
     console.log('план (--apply выполнит git mv и пересоберёт индекс)');
   }

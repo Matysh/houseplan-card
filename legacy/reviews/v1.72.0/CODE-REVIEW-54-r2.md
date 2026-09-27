@@ -5,7 +5,7 @@
 - Диапазон общий: `origin/dev...HEAD`, `origin/dev` = `ec9824f2`, `HEAD` = `f0ed526a`
   (ветка `issue/54-zigbee-topology-hover`, детач `HEAD`, merge-base с `origin/dev`
   не сдвинулся — `ec9824f2` тот же, что в r1, ребейза не было)
-- ТЗ: [`docs/specs/054-zigbee-topology-overlay.md`](../specs/054-zigbee-topology-overlay.md),
+- ТЗ: [`docs/specs/054-zigbee-topology-overlay.md`](../../specs/054-zigbee-topology-overlay.md),
   ревью ТЗ зелёное на заходе r2 — [`SPEC-REVIEW-54-r2.md`](SPEC-REVIEW-54-r2.md)
 - Заход: **r2** код-ревью
 - Блокирующих циклов израсходовано: **1/4** (зелёных вердиктов ревью ТЗ бюджет

@@ -1,7 +1,7 @@
 # SPEC-REVIEW-174-r1
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/174
-- **ТЗ:** [`docs/specs/174-linked-virtual-light-controller.md`](../specs/174-linked-virtual-light-controller.md)
+- **ТЗ:** [`docs/specs/174-linked-virtual-light-controller.md`](../../specs/174-linked-virtual-light-controller.md)
   (commit `4a8958291d28fbd86d0233e6ac9208b068b24f76`, ветка `issue/174-linked-virtual-light`)
 - **Ревьюер:** Claude (ревью ТЗ ≠ автор), этап `S4-spec-review`
 - **Цикл:** r1/4 (обычный трек — issue не `small`/`trivial`, что подтверждено

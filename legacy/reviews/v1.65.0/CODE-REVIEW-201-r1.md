@@ -1,7 +1,7 @@
 # Код-ревью #201 — r1
 
 - Issue: [#201](https://github.com/Matysh/houseplan-card/issues/201)
-- ТЗ: [docs/specs/201-atomic-thickness-lookup.md](../specs/201-atomic-thickness-lookup.md)
+- ТЗ: [docs/specs/201-atomic-thickness-lookup.md](../../specs/201-atomic-thickness-lookup.md)
   (ревью ТЗ зелёное: [SPEC-REVIEW-201-r1.md](SPEC-REVIEW-201-r1.md))
 - Диапазон: `git log --oneline origin/dev..HEAD`
   - `f7abf14` fix: inherit parent thickness for atomic walls (`Issue: #201`, `User-Visible: yes`)

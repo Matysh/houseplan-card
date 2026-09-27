@@ -2,7 +2,7 @@
 
 Issue: [#359](https://github.com/Matysh/houseplan-card/issues/359) — Предпросмотр мебели на плане перед размещением
 SHA: `fd762fa7` (`issue/359-furniture-placement-preview`)
-Предыдущий раунд: [CODE-REVIEW-359-r1](../reviews/CODE-REVIEW-359-r1.md) (в дереве: `docs/reviews/CODE-REVIEW-359-r1.md`) — вердикт красный, SHA `8b66d67d`
+Предыдущий раунд: [CODE-REVIEW-359-r1](CODE-REVIEW-359-r1.md) (в дереве: `docs/reviews/CODE-REVIEW-359-r1.md`) — вердикт красный, SHA `8b66d67d`
 Заход: r2 · блокирующих циклов израсходовано 1 из 4 (r1 — красный, потратил цикл)
 
 ## Скоуп проверки
@@ -50,7 +50,7 @@ r1 (красный) содержал ровно одну находку — High
 
 Без повторной проверки — код не менялся с `8b66d67d`, на котором это было
 проверено чтением и тестами в
-[CODE-REVIEW-359-r1.md](../reviews/CODE-REVIEW-359-r1.md):
+[CODE-REVIEW-359-r1.md](CODE-REVIEW-359-r1.md):
 
 - **AC1–AC9** (появление preview, геометрический паритет preview/commit через
   единый `resolveFurniturePlacement`, живое обновление по полям размера,

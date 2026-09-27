@@ -648,8 +648,9 @@ and what HACS downloads.
 (`RELEASE-REVIEW-vX.Y.Z.md`) is in `dev` and the `S7-code-review` queue is
 empty, archive the line's review documents (`PROCESS.md` §2.10):
 `node scripts/reviews-archive.mjs --through=vX.Y.Z` prints the plan,
-`--apply` moves the files into `legacy/reviews/vX.Y.Z/` with `git mv` and
-rebuilds `docs/reviews/INDEX.md`; commit the result as one class C commit
+`--apply` moves the files into `legacy/reviews/vX.Y.Z/` with `git mv`, rewrites
+the relative Markdown links in and to the moved documents and rebuilds
+`docs/reviews/INDEX.md` (`--check-links` lists what is still broken); commit the result as one class C commit
 whose `Issue:` trailer names the issue doing the move or the repository-hygiene
 umbrella (`PROCESS.md` §11.3).
 

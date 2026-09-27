@@ -5,7 +5,7 @@
 Ветка: `issue/150-wall-thickness-transition-fix` · implementation-коммит
 [`1975d1a`](https://github.com/Matysh/houseplan-card/commit/1975d1ae3784a0b98cf2f489910370f37417a1c6)
 на базе `origin/dev` (`a05aa5d`) · ТЗ:
-[`docs/specs/150-wall-thickness-transition.md`](../specs/150-wall-thickness-transition.md)
+[`docs/specs/150-wall-thickness-transition.md`](../../specs/150-wall-thickness-transition.md)
 (r2, зелёный `SPEC-REVIEW-150-r2`, High: 0 · Medium: 1 → #171, комментарий issue
 от 2026-08-18T08:40:34Z).
 

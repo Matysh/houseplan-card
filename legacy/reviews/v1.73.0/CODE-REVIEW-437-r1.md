@@ -2,7 +2,7 @@
 
 Issue: [#437](https://github.com/Matysh/houseplan-card/issues/437) — конфигурируемая read-only сводная панель поверх плана.
 Материал: `git log --oneline origin/dev..HEAD` / `git diff origin/dev...HEAD` на SHA `96e07b9a0255eef3a55cd6c3be08198a0adcc7ba`.
-ТЗ: [docs/specs/437-summary-panel.md](../specs/437-summary-panel.md), принято ревью ТЗ r2 (зелёное, High 0/Medium 0).
+ТЗ: [docs/specs/437-summary-panel.md](../../specs/437-summary-panel.md), принято ревью ТЗ r2 (зелёное, High 0/Medium 0).
 Этап: код-ревью, заход r1, лимит циклов 4/4 (полный трек).
 
 ## Скоуп диффа

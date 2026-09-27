@@ -5,7 +5,7 @@
 - Диапазон: `git log --oneline origin/dev..HEAD` = `0df8051` (реализация),
   `8c9241b` (ревью ТЗ r1), `9d6cd8b` (ТЗ)
 - Диапазон диффа: `git diff origin/dev...HEAD`
-- ТЗ: [`docs/specs/198-optimize-micro-interval.md`](../specs/198-optimize-micro-interval.md)
+- ТЗ: [`docs/specs/198-optimize-micro-interval.md`](../../specs/198-optimize-micro-interval.md)
   (ревью ТЗ зелёное, r1)
 
 ## Скоуп

@@ -1,7 +1,7 @@
 # CODE-REVIEW-218-r1
 
 - **Issue:** [#218](https://github.com/Matysh/houseplan-card/issues/218) — floating-point шум одной комнаты гасит Glow всего пространства
-- **ТЗ:** [docs/specs/218-glow-floor-geometry.md](../specs/218-glow-floor-geometry.md), принято на [SPEC-REVIEW-218-r2](SPEC-REVIEW-218-r2.md) (зелёный, r2/2)
+- **ТЗ:** [docs/specs/218-glow-floor-geometry.md](../../specs/218-glow-floor-geometry.md), принято на [SPEC-REVIEW-218-r2](SPEC-REVIEW-218-r2.md) (зелёный, r2/2)
 - **Диапазон:** `origin/dev...HEAD`, продуктовый коммит `3d11758` (единственный коммит с изменением кода; `c6ff34c`…`4c512fa` — ТЗ и его ревью)
 - **Ветка:** `issue/218-glow-floor-geometry`
 - **Цикл:** r1/4

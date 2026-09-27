@@ -4,7 +4,7 @@
 
 Ветка: `issue/146-four-phase-sun-background` · implementation-коммит
 [`debb13b`](https://github.com/Matysh/houseplan-card/commit/debb13baa280042c79a004c97152e3b1be5ab11b)
-· ТЗ: [`docs/specs/146-four-phase-sun-background.md`](../specs/146-four-phase-sun-background.md)
+· ТЗ: [`docs/specs/146-four-phase-sun-background.md`](../../../docs/specs/146-four-phase-sun-background.md)
 (зелёный [`SPEC-REVIEW-146-r1`](SPEC-REVIEW-146-r1.md), High:0, Medium:1 → #147,
 не блокирует).
 

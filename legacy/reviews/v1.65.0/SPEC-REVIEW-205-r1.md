@@ -1,7 +1,7 @@
 # SPEC-REVIEW-205-r1
 
 - Issue: [#205](https://github.com/Matysh/houseplan-card/issues/205) — след пылесоса обнуляется после мойки швабр
-- ТЗ: [docs/specs/205-vacuum-trail-resume-grace.md](../specs/205-vacuum-trail-resume-grace.md)
+- ТЗ: [docs/specs/205-vacuum-trail-resume-grace.md](../../specs/205-vacuum-trail-resume-grace.md)
 - Ветка: `issue/205-vacuum-trail-grace`, коммит спеки: `f3472de` ("docs: specify vacuum trail resume grace")
 - Этап: ТЗ на ревью (PROCESS.md §2.4)
 - Цикл: r1/4 (лёгкий трек не применяется — `small` не выставлен, сложность 4, риск 7)

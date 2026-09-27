@@ -21,7 +21,7 @@ Issue: [#593](https://github.com/Matysh/houseplan-card/issues/593)
   был учтён r2; новые — полноценный грант `#issuecomment-5739841899` (2026-09-19T06:09:00Z)
   и ответ на красный вердикт r2 `#issuecomment-5739855252` (06:12:00Z), которым
   поставлена `S4-spec-review`, заход r3).
-- Предыдущий раунд: [`docs/reviews/SPEC-REVIEW-593-r2.md`](../../docs/reviews/SPEC-REVIEW-593-r2.md),
+- Предыдущий раунд: [`docs/reviews/SPEC-REVIEW-593-r2.md`](SPEC-REVIEW-593-r2.md),
   вердикт красный, материал зафиксирован в его собственном машинном блоке якорей:
   ветка `dev`, коммит `dcd6657581ba205edb63713e011a498b51983a20`, дерево
   `0b48707268e99ee38221c8e74fb1c48ce6793e35`, тело issue sha256
@@ -73,10 +73,10 @@ Issue: [#593](https://github.com/Matysh/houseplan-card/issues/593)
 
 Дельта r2→r3 ограничена §3 Q3, §4 п.10–11, §8 (абзац «провенанс»), §10 AC10, §11 —
 всё остальное принято без повторной проверки в этом раунде, со ссылкой на
-[`SPEC-REVIEW-593-r2.md`](../../docs/reviews/SPEC-REVIEW-593-r2.md) (материал: ветка
+[`SPEC-REVIEW-593-r2.md`](SPEC-REVIEW-593-r2.md) (материал: ветка
 `dev`, коммит `dcd6657581ba205edb63713e011a498b51983a20`, дерево
 `0b48707268e99ee38221c8e74fb1c48ce6793e35`) и, где отмечено, на
-[`SPEC-REVIEW-593-r1.md`](../../docs/reviews/SPEC-REVIEW-593-r1.md) (коммит
+[`SPEC-REVIEW-593-r1.md`](SPEC-REVIEW-593-r1.md) (коммит
 `073c45b04308cd613182c700f30c75ebfa8d2ca7`):
 
 - Комплектность обязательных разделов §7.1 — проверена r1, дельта их не убирала.

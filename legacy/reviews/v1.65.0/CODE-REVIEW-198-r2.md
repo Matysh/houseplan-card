@@ -7,7 +7,7 @@
   `1c9575a` (follow-up тесты на замечания r1), `0625b6f` (обновление
   provenance скриншотов после изменения `src/`)
 - Диапазон диффа: `git diff origin/dev...HEAD`
-- ТЗ: [`docs/specs/198-optimize-micro-interval.md`](../specs/198-optimize-micro-interval.md)
+- ТЗ: [`docs/specs/198-optimize-micro-interval.md`](../../specs/198-optimize-micro-interval.md)
   (ревью ТЗ зелёное, r1)
 - Предыдущий цикл: [`docs/reviews/CODE-REVIEW-198-r1.md`](CODE-REVIEW-198-r1.md)
   (жёлтый · Medium-1 AC5, Medium-2 AC8 — обе «доказательство обещанным

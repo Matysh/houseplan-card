@@ -1,7 +1,7 @@
 // #682: архив документов ревью выпущенных линий — кому куда, решают трейлеры.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ARCHIVE_DIR, LIVE_DIR, archivePlan, renderPlan, stableTagsThrough } from '../scripts/reviews-archive.mjs';
+import { ARCHIVE_DIR, LIVE_DIR, archivePlan, brokenLinks, renderPlan, repairLinks, stableTagsThrough } from '../scripts/reviews-archive.mjs';
 
 const lines = [
   { tag: 'v1.76.0', issues: [500, 510, 520] },
@@ -66,3 +66,55 @@ test('#682 архив: линии — только стабильные теги
   assert.throws(() => stableTagsThrough([], 'v1.78.0-beta.1'), /not a stable release tag/);
   assert.throws(() => archivePlan({ names: [], lines: [{ tag: 'v1.78.0', issues: [] }], open: [], through: 'v1.77.0' }), /newer than/);
 });
+
+// Ревью #682 r1 (Medium): перенос добавляет уровень вложенности, и относительные
+// ссылки внутри перенесённых документов и в соседях, которые на них ссылаются,
+// ломались молча — ни один гейт не смотрит в архив.
+const tree = new Set([
+  'docs/specs/089-stage1.md',
+  'docs/reviews/CODE-REVIEW-635-r1.md',
+  'legacy/reviews/v1.77.0/CODE-REVIEW-594-r1.md',
+  'legacy/reviews/v1.77.0/CODE-REVIEW-594-r2.md',
+  'legacy/reviews/v1.68.0/SPEC-REVIEW-262-r1.md',
+  'legacy/specs/262-readd.md',
+]);
+const exists = (path) => tree.has(path);
+const moved = new Map([
+  ['docs/reviews/CODE-REVIEW-594-r1.md', 'legacy/reviews/v1.77.0/CODE-REVIEW-594-r1.md'],
+  ['docs/reviews/CODE-REVIEW-594-r2.md', 'legacy/reviews/v1.77.0/CODE-REVIEW-594-r2.md'],
+  ['docs/reviews/SPEC-REVIEW-262-r1.md', 'legacy/reviews/v1.68.0/SPEC-REVIEW-262-r1.md'],
+  ['docs/specs/262-readd.md', 'legacy/specs/262-readd.md'],
+]);
+
+test('#682 r1 ссылки: перенесённый документ пересчитывает свои ссылки от нового места', () => {
+  const result = repairLinks({
+    text: 'ТЗ: [s](../specs/089-stage1.md#ac2); прошлый раунд: [r1](CODE-REVIEW-594-r1.md); сайт: [x](https://example.org/a.md)',
+    path: 'legacy/reviews/v1.77.0/CODE-REVIEW-594-r2.md',
+    oldPath: 'docs/reviews/CODE-REVIEW-594-r2.md',
+    moved, exists,
+  });
+  assert.equal(result.text, 'ТЗ: [s](../../../docs/specs/089-stage1.md#ac2); прошлый раунд: [r1](CODE-REVIEW-594-r1.md); сайт: [x](https://example.org/a.md)');
+  assert.equal(result.fixed, 1);
+});
+
+test('#682 r1 ссылки: сосед, ссылавшийся на перенесённый документ, ведёт в архив', () => {
+  const live = repairLinks({ text: '[r1](CODE-REVIEW-594-r1.md)', path: 'docs/reviews/CODE-REVIEW-635-r1.md', moved, exists });
+  assert.equal(live.text, '[r1](../../legacy/reviews/v1.77.0/CODE-REVIEW-594-r1.md)');
+  // Ссылка, уже переписанная прошлым переносом (ТЗ ушло в legacy/specs раньше документа ревью).
+  const spec = repairLinks({
+    text: '[r](../../docs/reviews/SPEC-REVIEW-262-r1.md)', path: 'legacy/specs/262-readd.md', oldPath: 'docs/specs/262-readd.md', moved, exists,
+  });
+  assert.equal(spec.text, '[r](../reviews/v1.68.0/SPEC-REVIEW-262-r1.md)');
+});
+
+test('#682 r1 ссылки: битая и до переноса ссылка не «чинится» наугад', () => {
+  const result = repairLinks({ text: '[x](...), [y](nowhere.md)', path: 'legacy/reviews/v1.72.0/CODE-REVIEW-448-r2.md', oldPath: 'docs/reviews/CODE-REVIEW-448-r2.md', moved, exists });
+  assert.equal(result.fixed, 0);
+  assert.equal(result.text, '[x](...), [y](nowhere.md)');
+});
+
+test('#682 r1 архив legacy/: относительные ссылки резолвятся (кроме известных «...»-заглушек)', () => {
+  const broken = brokenLinks({ roots: ['legacy/reviews', 'legacy/specs'] }).filter((item) => item.target !== '...');
+  assert.deepEqual(broken, []);
+});
+

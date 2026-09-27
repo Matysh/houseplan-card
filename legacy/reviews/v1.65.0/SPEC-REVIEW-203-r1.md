@@ -1,7 +1,7 @@
 # Ревью ТЗ — issue #203, цикл r1
 
 - Этап: `S4-spec-review` (PROCESS.md §2.4)
-- Артефакт ТЗ: [`docs/specs/203-hide-room-names.md`](../specs/203-hide-room-names.md),
+- Артефакт ТЗ: [`docs/specs/203-hide-room-names.md`](../../specs/203-hide-room-names.md),
   коммит `009fed9` на ветке `issue/203-hide-room-names`
 - Issue: [#203](https://github.com/Matysh/houseplan-card/issues/203)
 - Ревьюер: Claude (роль «ревьюер ТЗ», отдельная сессия от аналитика/автора)

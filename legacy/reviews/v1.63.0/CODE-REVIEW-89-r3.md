@@ -5,7 +5,7 @@
 - Диапазон: `origin/dev...HEAD`, `origin/dev` = `869fe16`, `HEAD` = `7a2577d`
   (ветка `issue/89-isometric-stage1`, детач `HEAD`); мёрж-база с `origin/dev` —
   `9f02d88`
-- ТЗ: [`docs/specs/089-isometric-view-stage1.md`](../specs/089-isometric-view-stage1.md),
+- ТЗ: [`docs/specs/089-isometric-view-stage1.md`](../../../docs/specs/089-isometric-view-stage1.md),
   ревизия 3, ревью ТЗ зелёное — [`SPEC-REVIEW-89-r1.md`](SPEC-REVIEW-89-r1.md)
 - Предыдущий цикл код-ревью: [`CODE-REVIEW-89-r2.md`](CODE-REVIEW-89-r2.md)
   (красный, High H1 — обязательный смок красный на исполнении)

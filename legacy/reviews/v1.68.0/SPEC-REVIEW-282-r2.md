@@ -3,7 +3,7 @@
 - **Issue:** [#282 — Геометрия стен: сменить представление, а не чинить последствия](https://github.com/Matysh/houseplan-card/issues/282)
 - **Этап:** spec (PROCESS.md §2.4)
 - **Заход:** r2 · блокирующих циклов израсходовано 1 из 4 (§2.10, §4: зелёный вердикт r1 не был — r1 был жёлтым и потратил цикл 1; если этот заход зелёный, он сам цикла не образует)
-- **Артефакт ТЗ:** [`docs/specs/282-stable-wall-segment-identity.md`](../specs/282-stable-wall-segment-identity.md)
+- **Артефакт ТЗ:** [`docs/specs/282-stable-wall-segment-identity.md`](../../specs/282-stable-wall-segment-identity.md)
 - **SHA ТЗ на момент этого ревью:** `2f30c481` (`docs: address wall identity spec review`)
 - **SHA предыдущего ревью (r1):** `8856fbda` (`docs: specify stable wall segment identity`)
 - **Документ r1:** [`docs/reviews/SPEC-REVIEW-282-r1.md`](./SPEC-REVIEW-282-r1.md), вердикт жёлтый, High: 0, Medium: 2 (обе в скоупе)

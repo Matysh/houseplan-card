@@ -4,7 +4,7 @@
 - Этап: `code` (PROCESS.md §2.7)
 - Диапазон: `origin/dev...HEAD`, `origin/dev` = `ad8e7a5`, `HEAD` = `11b0283`
   (ветка `issue/205-vacuum-trail-grace`, detached `HEAD`); merge-base — `f287bdd`
-- ТЗ: [`docs/specs/205-vacuum-trail-resume-grace.md`](../specs/205-vacuum-trail-resume-grace.md),
+- ТЗ: [`docs/specs/205-vacuum-trail-resume-grace.md`](../../specs/205-vacuum-trail-resume-grace.md),
   ревью ТЗ зелёное — [`SPEC-REVIEW-205-r1.md`](SPEC-REVIEW-205-r1.md)
 - Цикл: **r1/4**
 - Ревьюер: Claude, свежая сессия, без переписки с автором реализации

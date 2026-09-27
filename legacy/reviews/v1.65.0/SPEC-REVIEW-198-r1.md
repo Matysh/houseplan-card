@@ -1,7 +1,7 @@
 # Ревью ТЗ — issue #198, цикл r1
 
 - Этап: `S4-spec-review` (PROCESS.md §2.4)
-- Артефакт ТЗ: [`docs/specs/198-optimize-micro-interval.md`](../specs/198-optimize-micro-interval.md),
+- Артефакт ТЗ: [`docs/specs/198-optimize-micro-interval.md`](../../specs/198-optimize-micro-interval.md),
   коммит `9d6cd8b` на ветке `issue/198-optimize-micro-interval`
 - Issue: [#198](https://github.com/Matysh/houseplan-card/issues/198)
 - Ревьюер: Claude (роль «ревьюер ТЗ», отдельная сессия от аналитика/автора)

@@ -1,7 +1,7 @@
 # SPEC-REVIEW-178-r2
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/178
-- **ТЗ:** [`docs/specs/178-toggle-entity.md`](../specs/178-toggle-entity.md)
+- **ТЗ:** [`docs/specs/178-toggle-entity.md`](../../specs/178-toggle-entity.md)
   (commit `76f75f85aafabcf9f698c85de0185e2ee64a98b5`, ветка `issue/178-toggle-entity`)
 - **Ревьюер:** Claude (ревью ТЗ ≠ автор), этап `S4-spec-review`, сессия без
   контекста написания ТЗ и без контекста r1

@@ -4,7 +4,7 @@
 - Этап: `code` (PROCESS.md §2.7)
 - Диапазон: `origin/dev...HEAD`, `origin/dev` = `ec9824f2`, `HEAD` = `a2867df9`
   (ветка `issue/54-zigbee-topology-hover`, детач `HEAD`)
-- ТЗ: [`docs/specs/054-zigbee-topology-overlay.md`](../specs/054-zigbee-topology-overlay.md),
+- ТЗ: [`docs/specs/054-zigbee-topology-overlay.md`](../../specs/054-zigbee-topology-overlay.md),
   ревью ТЗ зелёное на заходе r2 — [`SPEC-REVIEW-54-r2.md`](SPEC-REVIEW-54-r2.md)
   (r1 → M1/L1-L3 закрыты правкой `aed0b5b6`, подтверждено r2 зелёным)
 - Заход: **r1** код-ревью (первый заход этого этапа для #54; ревью ТЗ и код-ревью

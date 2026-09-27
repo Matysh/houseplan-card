@@ -1,7 +1,7 @@
 # CODE-REVIEW-204-r1
 
 - Issue: [#204](https://github.com/Matysh/houseplan-card/issues/204)
-- ТЗ: [docs/specs/204-space-create-display-defaults.md](../specs/204-space-create-display-defaults.md)
+- ТЗ: [docs/specs/204-space-create-display-defaults.md](../../specs/204-space-create-display-defaults.md)
 - Ветка: `issue/204-space-create-display-defaults`, коммит `12c4f77`
 - Диапазон: `origin/dev..HEAD` = `f703242` (spec) → `ec0ccaf` (spec review doc) → `12c4f77` (реализация)
 - Вердикт: **зелёный**

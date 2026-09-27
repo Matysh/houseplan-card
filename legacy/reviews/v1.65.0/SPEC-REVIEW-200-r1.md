@@ -1,7 +1,7 @@
 # Ревью ТЗ — issue #200, цикл r1
 
 - Этап: `S4-spec-review` (PROCESS.md §2.4)
-- Артефакт ТЗ: [`docs/specs/200-room-label-parity.md`](../specs/200-room-label-parity.md),
+- Артефакт ТЗ: [`docs/specs/200-room-label-parity.md`](../../specs/200-room-label-parity.md),
   коммит `4089c91` на ветке `issue/200-room-label-parity`
 - Issue: [#200](https://github.com/Matysh/houseplan-card/issues/200)
 - Ревьюер: Claude (роль «ревьюер ТЗ», отдельная сессия от аналитика/автора)

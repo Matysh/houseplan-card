@@ -1,7 +1,7 @@
 # Код-ревью #226 — r1
 
 - Issue: [#226](https://github.com/Matysh/houseplan-card/issues/226)
-- ТЗ: [`docs/specs/226-entity-parent-dedup.md`](../specs/226-entity-parent-dedup.md)
+- ТЗ: [`docs/specs/226-entity-parent-dedup.md`](../../specs/226-entity-parent-dedup.md)
   (зелёное ревью r2: [`SPEC-REVIEW-226-r2.md`](SPEC-REVIEW-226-r2.md))
 - Ветка: `issue/226-entity-parent-dedup`, коммит реализации `f151e70`
 - Материал: `git diff origin/dev...HEAD`, `git log --oneline origin/dev..HEAD`

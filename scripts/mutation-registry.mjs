@@ -9970,6 +9970,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'reviews-archive-links-from-new-place-only',
+    guard: 'node --test --test-name-pattern="#682 r1 ссылки: перенесённый документ" test/reviews-archive.test.mjs',
+    because: 'review #682 r1: a moved document keeps links written for its old folder; resolving '
+      + 'them only from the new place leaves every ../specs/ and sibling link broken in the archive',
+    patches: [{
+      file: 'scripts/reviews-archive.mjs',
+      find: '    for (const base of [path, oldPath]) {',
+      replace: '    for (const base of [path]) { // mutant: old location ignored',
+    }],
+  },
+  {
     id: 'reviews-index-release-counts-ignored',
     guard: 'node --test --test-name-pattern="#635 счётчики|#635 индекс покрывает" test/reviews-index.test.mjs',
     because: '#670: release reviews use the mandated `Итог: High N · Medium N` summary without colons',

@@ -5,7 +5,7 @@
 - Диапазон: `origin/dev...HEAD`, `origin/dev` = `5dc9016` («docs: review document
   for #204»), `HEAD` = `e158f8f` (ветка `issue/205-vacuum-trail-grace`, detached
   `HEAD`); merge-base — `5dc9016`
-- ТЗ: [`docs/specs/205-vacuum-trail-resume-grace.md`](../specs/205-vacuum-trail-resume-grace.md),
+- ТЗ: [`docs/specs/205-vacuum-trail-resume-grace.md`](../../specs/205-vacuum-trail-resume-grace.md),
   ревью ТЗ зелёное — [`SPEC-REVIEW-205-r1.md`](SPEC-REVIEW-205-r1.md)
 - Предыдущий цикл: [`CODE-REVIEW-205-r1.md`](CODE-REVIEW-205-r1.md) —
   **зелёный**, High: 0, Medium: 0; вернулся не по замечаниям, а из-за конфликта

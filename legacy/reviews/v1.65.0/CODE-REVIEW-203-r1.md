@@ -5,7 +5,7 @@
   `1290927 fix: hide disabled room names` (`Issue: #203`, `User-Visible: yes`),
   плюс два уже смёрженных документа ревью ТЗ (`84e62dc`, `950403d`,
   `f7b811a`, `009fed9`) — без продуктового кода.
-- ТЗ: [`docs/specs/203-hide-room-names.md`](../specs/203-hide-room-names.md),
+- ТЗ: [`docs/specs/203-hide-room-names.md`](../../specs/203-hide-room-names.md),
   ревью ТЗ зелёное на r2: [`SPEC-REVIEW-203-r2.md`](SPEC-REVIEW-203-r2.md).
 - Issue: [#203](https://github.com/Matysh/houseplan-card/issues/203)
 - Ревьюер: Claude (роль «ревьюер кода»), свежая сессия без контекста реализации.

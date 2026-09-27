@@ -1,7 +1,7 @@
 # SPEC-REVIEW-204-r1
 
 - Issue: [#204](https://github.com/Matysh/houseplan-card/issues/204)
-- ТЗ: [docs/specs/204-space-create-display-defaults.md](../specs/204-space-create-display-defaults.md)
+- ТЗ: [docs/specs/204-space-create-display-defaults.md](../../specs/204-space-create-display-defaults.md)
 - Ветка: `issue/204-space-create-display-defaults`, коммит `f703242`
 - Трек: обычный (метка `small` не выставлена — файл ТЗ обязателен и присутствует)
 - Вердикт: **зелёный**

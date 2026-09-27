@@ -2,7 +2,7 @@
 
 - Issue: [#89](https://github.com/Matysh/houseplan-card/issues/89)
 - Этап: `spec` (PROCESS.md §2.4)
-- ТЗ под ревью: [`docs/specs/089-isometric-view-stage1.md`](../specs/089-isometric-view-stage1.md), ревизия 3
+- ТЗ под ревью: [`docs/specs/089-isometric-view-stage1.md`](../../../docs/specs/089-isometric-view-stage1.md), ревизия 3
 - Диапазон: `origin/dev...74b08df` (ветка `issue/89-isometric-stage1`, детач `HEAD`)
 - Цикл: **r1/4** (первый независимый ревью-артефакт этой задачи в `docs/reviews/`;
   «историческое ревью ревизии 1», упомянутое в теле issue и в самом ТЗ, честно

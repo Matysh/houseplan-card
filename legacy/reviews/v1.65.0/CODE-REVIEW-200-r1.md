@@ -1,7 +1,7 @@
 # Код-ревью issue #200 — r1
 
 - Issue: [#200](https://github.com/Matysh/houseplan-card/issues/200)
-- ТЗ: [docs/specs/200-room-label-parity.md](../specs/200-room-label-parity.md)
+- ТЗ: [docs/specs/200-room-label-parity.md](../../specs/200-room-label-parity.md)
 - ТЗ-ревью: [SPEC-REVIEW-200-r1.md](SPEC-REVIEW-200-r1.md) — зелёный
 - Диапазон: `origin/dev..HEAD` (детач на `origin/issue/200-room-label-parity`),
   коммиты `4089c91`, `bf83246`, `cd029a0`, `88a2877`

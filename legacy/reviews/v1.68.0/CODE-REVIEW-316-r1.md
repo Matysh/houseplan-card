@@ -6,7 +6,7 @@
   `HEAD` = `ee672dcd` (ветка `issue/316-migration-auto-resolve`, ребейз на `dev` выполнен
   автором до этого ревью — коммент issue от 2026-08-26T19:12:24Z, конфликт был только
   в `CHANGELOG`)
-- ТЗ: [`docs/specs/316-opening-host-auto-resolution.md`](../specs/316-opening-host-auto-resolution.md),
+- ТЗ: [`docs/specs/316-opening-host-auto-resolution.md`](../../specs/316-opening-host-auto-resolution.md),
   ревизия 4, ревью ТЗ зелёное — [`SPEC-REVIEW-316-r4.md`](SPEC-REVIEW-316-r4.md)
 - Заход ревью: **r1**, блокирующих циклов код-ревью израсходовано **0/4**
 - Вердикт: **красный**

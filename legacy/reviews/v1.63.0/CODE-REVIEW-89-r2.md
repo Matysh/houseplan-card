@@ -4,7 +4,7 @@
 - Этап: `code` (PROCESS.md §2.7)
 - Диапазон: `origin/dev...HEAD`, `origin/dev` = `22e98c5`, `HEAD` = `6ea3ebf`
   (ветка `issue/89-isometric-stage1`, детач `HEAD`)
-- ТЗ: [`docs/specs/089-isometric-view-stage1.md`](../specs/089-isometric-view-stage1.md),
+- ТЗ: [`docs/specs/089-isometric-view-stage1.md`](../../../docs/specs/089-isometric-view-stage1.md),
   ревизия 3, ревью ТЗ зелёное — [`SPEC-REVIEW-89-r1.md`](SPEC-REVIEW-89-r1.md)
 - Цикл: **r2/4**
 - Вердикт: **красный**
