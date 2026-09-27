@@ -109,6 +109,7 @@
 
 ## [Browser guards mutation registry (#659)](mutation-browser-guards.md)
 
+- [Measured effect](mutation-browser-guards.md#measured-effect)
 - [Reviewed per-mutant inventory](mutation-browser-guards.md#reviewed-per-mutant-inventory)
 - [Performance threshold](mutation-browser-guards.md#performance-threshold)
 - [Browser harness integrity](mutation-browser-guards.md#browser-harness-integrity)

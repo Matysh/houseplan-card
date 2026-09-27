@@ -19,6 +19,36 @@ to prove that the Node witness actually kills it.
 | Custom-element and HA browser lifecycle | 85 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
 | **Total** | **200 / 200** | Growth above the cap fails `mutation-gate --check`. |
 
+## Measured effect
+
+The measurements below are GitHub-hosted Linux runs from 2026-09-27. They are
+recorded separately from the policy limit: the limit proves that browser guards
+cannot grow unnoticed, while timings show the effect actually observed on the
+shared runners.
+
+| Measurement | Before | After | Observed change |
+| --- | ---: | ---: | ---: |
+| Full-registry wall time | [54:18](https://github.com/Matysh/houseplan-card/actions/runs/36298676826) (1,017 mutants) | [48:08](https://github.com/Matysh/houseplan-card/actions/runs/36316263355) (1,028 mutants) | **-6:10 (-11.4%)**, despite 11 additional mutants |
+| Sum of the six `Each test catches its breakage` steps | 4:17:19 | 4:12:32 | **-4:47 (-1.9%)** |
+| Longest full-registry shard step | 50:45 | 45:13 | **-5:32 (-10.9%)** |
+| Same converted-witness slice, aggregate time | 33:43.9 | 12:07.7 | **-21:36.2 (-64.0%)** |
+| Same converted-witness slice, critical shard | 8:05.1 | 2:19.3 | **-5:45.8 (-71.3%)** |
+
+The candidate slice compares the same 83 converted mutant ids in the baseline
+full-registry log and in the S7 candidate Validate
+[36316464432](https://github.com/Matysh/houseplan-card/actions/runs/36316464432).
+It sums the interval between consecutive per-mutant completion timestamps on
+each of the six shards. One of the 84 converted ids, `active-tab-not-revealed`,
+was the first completed mutant in its shard, so the log cannot isolate its time
+from clean-guard setup and it is excluded from both sides. The complete candidate
+run, which also selected registry/tooling mutants outside this converted slice,
+finished in 10:03.
+
+The original estimate of three to four hours saved on a full-registry run is not
+supported by this A/B evidence. The directly converted slice is materially
+faster, but registry growth and shared-runner variance consume most of that gain
+in the end-to-end total; only the measured reductions above are claimed.
+
 ## Reviewed per-mutant inventory
 
 ### Performance threshold
