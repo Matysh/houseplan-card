@@ -147,11 +147,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'stairs-handle-cursor-ignores-bearing',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test test/stairs-editor-model.test.mjs',
+      + '&& node --test test/stairs-box.test.mjs',
     because: '#676 AC4: the cursor over a handle must say which way it moves in world terms, '
       + 'so a rotated stair cannot show one diagonal arrow on every node.',
     patches: [{
-      file: 'src/stairs-editor-model.ts',
+      file: 'src/stairs-box.ts',
       find: "  if (sector === 0 || sector === 4) return 'ew';\n",
       replace: "  if (sector >= 0) return 'nwse'; // mutant: one cursor for every handle\n",
     }],
@@ -159,11 +159,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'stairs-dialog-clamps-to-wall-thickness',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test test/stairs-editor-model.test.mjs',
+      + '&& node --test test/stairs-box.test.mjs',
     because: '#676 AC5: the properties dialog converts stair sizes, not wall thickness; a '
       + '100 cm ceiling silently shrinks every real flight on save.',
     patches: [{
-      file: 'src/stairs-editor-model.ts',
+      file: 'src/stairs-box.ts',
       find: '  return cm >= STAIR_MIN_CM && cm <= STAIR_MAX_CM ? cm : null;\n',
       replace: '  return Math.max(1, Math.min(100, cm)); // mutant: the wall-thickness clamp is back\n',
     }],
@@ -171,11 +171,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'stairs-resize-mirrors-past-anchor',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test test/stairs-editor-model.test.mjs',
+      + '&& node --test test/stairs-box.test.mjs',
     because: '#676 AC2: a pointer dragged past the anchor side clamps at the minimum size; '
       + 'mirroring would silently move the ascent to the other side of the anchor.',
     patches: [{
-      file: 'src/stairs-editor-model.ts',
+      file: 'src/stairs-box.ts',
       find: '  let w = handle.sx ? Math.max(minimum, handle.sx * lx + box.w / 2) : box.w;\n',
       replace: '  let w = handle.sx ? Math.max(minimum, Math.abs(handle.sx * lx + box.w / 2)) : box.w; // mutant: mirrors\n',
     }],
@@ -183,11 +183,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'stairs-move-magnet-turns-any-angle',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test test/stairs-editor-model.test.mjs',
+      + '&& node --test test/stairs-box.test.mjs',
     because: '#676 AC3: the move magnet may align a nearly parallel side by the tolerance only; '
       + 'turning a stair standing at 30° to the wall changes its orientation behind the user.',
     patches: [{
-      file: 'src/stairs-editor-model.ts',
+      file: 'src/stairs-box.ts',
       find: '    const snap = snapEdgeToFaces(edge, surfaces, reach, angleTolDeg);\n'
         + '    if (snap && (!best || Math.abs(snap.offset) < Math.abs(best.snap.offset))) best = { edge, snap };\n',
       replace: '    const snap = snapEdgeToFaces(edge, surfaces, reach, 89); // mutant: any angle snaps\n'

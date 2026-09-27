@@ -5,8 +5,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { defaultStair } from '../test-build/stairs-editor-model.js';
 import {
-  defaultStair,
   draftLeadingHandle,
   draftStair,
   magnetStairMove,
@@ -26,7 +26,7 @@ import {
   STAIR_MAGNET_ANGLE_DEG,
   STAIR_MAX_CM,
   STAIR_MIN_CM,
-} from '../test-build/stairs-editor-model.js';
+} from '../test-build/stairs-box.js';
 
 const CELL = 5;
 const SCALE = 1000;

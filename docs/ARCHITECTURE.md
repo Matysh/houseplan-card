@@ -28,7 +28,8 @@ houseplan-card/
 │  ├─ houseplan-editor-runtime.ts # Plan/Devices/Background composition root
 │  ├─ stairs-view.ts             # eager read-only stair symbols, links and gesture guards
 │  ├─ stairs-editor.ts           # lazy Plan stair tools, transforms and properties
-│  ├─ stairs-editor-model.ts     # pure editor transforms, snapping and target-state helpers
+│  ├─ stairs-editor-model.ts     # eager-safe stair helpers: defaults, kind conversion, target state, stair magnet
+│  ├─ stairs-box.ts              # editor-only box transforms: drag-to-draw, resize, edge magnets, cursors, dialog units
 │  ├─ stairs.ts                  # stair model, render geometry and area math
 │  ├─ clean-floor.ts             # shared room-floor subtraction including stair footprints
 │  ├─ decor-image-editor.ts      # lazy Background/Furniture image palette, upload and properties controller
@@ -1130,15 +1131,20 @@ spaces use 1 cm or 2.54 cm/1 inch, while missing legacy values fall back to 5 cm
 ### Stairs (#663)
 
 Stairs are a separate Plan entity, not decor. The lazy `StairEditorRuntime`
-owns the straight/spiral tool group, selection, continuous
-move/resize/rotation, wall/stair magnet and properties. The eager
-`StairViewRuntime` owns only read-only symbols, guarded navigation and gesture
-suppression, so opening a plan does not load the editor graph. The root card
-owns lifecycle composition, shared Plan history/persistence and stage pointer
-terminals. `stairs.ts` is the pure boundary for the discriminated model, exact
-30 cm tread geometry, cached render projection and footprint containment;
-`stairs-editor-model.ts` contains the pure transform, target-state and
-footprint-to-footprint snapping helpers used by the editor.
+owns the straight/spiral tool group, drag-to-draw placement, selection,
+continuous move/resize/rotation, edge magnets and properties, and renders the
+selection frame that the root card places in its top overlay above wall bodies
+(#676). The eager `StairViewRuntime` owns only read-only symbols, the hover
+tooltip, guarded navigation and gesture suppression, so opening a plan does not
+load the editor graph. The root card owns lifecycle composition, shared Plan
+history/persistence and stage pointer terminals. `stairs.ts` is the pure
+boundary for the discriminated model, exact 30 cm tread geometry, cached render
+projection and footprint containment; `stairs-editor-model.ts` keeps the small
+eager-safe helpers (defaults, kind conversion, target state, stair-to-stair
+snapping) the View runtime shares, while `stairs-box.ts` holds the editor-only
+oriented-box transforms — drawing, resizing about the anchor, wall-face edge
+magnets with the outward faces of physical bodies, handle bearings and cursors,
+dialog unit conversion — imported only by the lazy editor chunk.
 
 `spaces[].stairs[]` is optional and capped at 250 records. A record exists on
 one space only; `target_space_id` is a one-way navigation reference and never

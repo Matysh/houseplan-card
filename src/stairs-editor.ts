@@ -8,10 +8,12 @@ import type { EditorToolbarGroup } from './editor-secondary';
 import type { I18nKey } from './i18n';
 import { clampCanvasN, NORM_W } from './space-geometry';
 import {
-  convertStairKind, draftLeadingHandle, draftStair, magnetStairMove, magnetStairResize,
-  normalizeStairAngle, physicalStairSurfaces, resizeCursor, resizeStair, snapStairToStairs, stairBox,
-  stairFieldOf, stairHandles, stairMinN, stairRotateHandle, stairSizeFromField,
-  stairTargetState, STAIR_MAX_CM, STAIR_MIN_CM, type StairHandleSign,
+  draftLeadingHandle, draftStair, magnetStairMove, magnetStairResize, physicalStairSurfaces,
+  resizeCursor, resizeStair, stairBox, stairFieldOf, stairHandles, stairMinN,
+  stairRotateHandle, stairSizeFromField, STAIR_MAX_CM, STAIR_MIN_CM, type StairHandleSign,
+} from './stairs-box';
+import {
+  convertStairKind, normalizeStairAngle, snapStairToStairs, stairTargetState,
 } from './stairs-editor-model';
 import {
   cachedStairRenderGeometry, MAX_STAIRS_PER_SPACE, stairList, type Stair,

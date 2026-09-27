@@ -116,11 +116,13 @@ links are cleared; a one-space transfer cannot invent an external target.
   primitives.
 - `src/stairs-view.ts` is the eager read-only boundary for symbols, guarded
   navigation and touch/pointer gesture suppression.
-- `src/stairs-editor-model.ts` owns pure Plan transforms — the oriented box,
+- `src/stairs-editor-model.ts` keeps the eager-safe helpers the View runtime
+  shares (defaults, kind conversion, target state, stair-to-stair magnet);
+  `src/stairs-box.ts` owns the editor-only oriented-box transforms —
   drag-to-draw, resize about the anchor, edge magnets, handle bearings and
-  cursors, dialog conversion — plus target state and stair-to-stair magnet
-  math; `src/stairs-editor.ts` owns the lazy Plan UI (gestures, the frame
-  rendered by the card in its top overlay, properties).
+  cursors, dialog conversion — and is imported only by the lazy editor chunk;
+  `src/stairs-editor.ts` owns the lazy Plan UI (gestures, the frame rendered
+  by the card in its top overlay, properties).
 - `src/clean-floor.ts` and `src/summary-panel-metrics.ts` consume the same
   footprint subtraction for room cards and summary totals; PDF rendering uses
   the same stair outline/tread geometry without changing the room floor paint.

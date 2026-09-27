@@ -333,7 +333,7 @@ const out = await page.evaluate(async () => {
   // stays silent (#676 AC8). The mouse pointer type enables hover.
   const hoverCenter = [linked.x * 1000, linked.y * 1000];
   const hoverTip = async (node, expectTip) => {
-    card._tip = null;
+    // Every step ends with a pointerleave, so `_tip` is null at the start.
     pointer(node, 'pointermove', hoverCenter, 6660);
     await settled();
     const shown = card._tip?.title ?? null;
