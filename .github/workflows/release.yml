@@ -48,7 +48,8 @@ jobs:
     name: "Кандидат: точный SHA, режим и черновик"
     # Публикация беты руками — не наш случай: у бет свой staged-путь.
     if: ${{ github.event_name == 'workflow_dispatch' || !github.event.release.prerelease }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     outputs:
       sha: ${{ steps.resolve.outputs.sha }}
       tag: ${{ steps.resolve.outputs.tag }}
@@ -142,7 +143,7 @@ jobs:
     needs: candidate
     if: ${{ needs.candidate.outputs.prerelease != 'true' }}
     continue-on-error: true
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       actions: write
@@ -164,7 +165,10 @@ jobs:
   gate:
     name: "Гейт: контракт, Validate, Full Performance и E2E на точном SHA"
     needs: candidate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    # Больше суммы собственных ожиданий job: Validate и Full Performance ждутся
+    # до 60 мин каждый (release-gate.mjs), E2E — до 45 (e2e-gate.mjs): 165 < 180 (#658).
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -234,7 +238,8 @@ jobs:
   stage:
     name: "Сборка: ассеты, SHA256SUMS и загрузка в черновик"
     needs: [candidate, gate]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -374,7 +379,8 @@ jobs:
   publish:
     name: "Публикация и сверка публичных байтов"
     needs: [candidate, gate, stage]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     outputs:
       url: ${{ steps.verify.outputs.url }}
       name: ${{ steps.verify.outputs.name }}
@@ -474,7 +480,8 @@ jobs:
     # make that distribution failure impossible to miss in the release run.
     if: ${{ needs.candidate.outputs.prerelease == 'true' }}
     needs: [candidate, publish]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - name: Verify the published tag is the prerelease HACS will discover
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9

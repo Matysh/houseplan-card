@@ -28,7 +28,7 @@ jobs:
   resume:
     name: "Разбудить раунд, ждавший этот Validate"
     if: github.event.workflow_run.event == 'workflow_dispatch' && startsWith(github.event.workflow_run.head_branch, 'issue/')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: process-resume-${{ github.event.workflow_run.head_branch }}

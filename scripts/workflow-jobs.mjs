@@ -125,6 +125,45 @@ export function parseWorkflowJobs(text, file = 'workflow') {
   return jobs;
 }
 
+/**
+ * Скалярные ключи уровня job для любого workflow (#658): id →
+ * { runsOn, timeoutMinutes, uses }. Матрицу и шаги не разбирает — только
+ * строки `ключ: значение` на четырёх пробелах, поэтому годится и для файлов с
+ * блочными матрицами, которые `parseWorkflowJobs` честно отвергает.
+ */
+export function parseJobSettings(text, file = 'workflow') {
+  const lines = String(text).split(/\r?\n/);
+  const start = lines.findIndex((line) => /^jobs:\s*(#.*)?$/.test(line));
+  if (start < 0) throw new Error(`${file}: no top-level "jobs:" key`);
+  const jobs = new Map();
+  let job = null;
+  for (let i = start + 1; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (isBlank(line)) continue;
+    const indent = indentOf(line);
+    const where = `${file}:${i + 1}`;
+    if (indent === 0) break;
+    const key = line.trim().match(/^([A-Za-z0-9_-]+):(.*)$/);
+    if (indent === 2) {
+      if (!key || key[2].trim()) throw new Error(`${where}: expected a job id, got ${JSON.stringify(line.trim())}`);
+      if (jobs.has(key[1])) throw new Error(`${where}: duplicate job id ${key[1]}`);
+      job = { id: key[1], runsOn: null, timeoutMinutes: null, uses: null };
+      jobs.set(job.id, job);
+      continue;
+    }
+    if (!job) throw new Error(`${where}: content before the first job id`);
+    if (indent !== 4 || !key) continue;
+    const value = unquote(key[2], where);
+    if (key[1] === 'runs-on') job.runsOn = value;
+    else if (key[1] === 'timeout-minutes') {
+      if (!/^\d+$/.test(value)) throw new Error(`${where}: job ${job.id}: timeout-minutes must be a literal integer, got ${JSON.stringify(value)}`);
+      job.timeoutMinutes = Number(value);
+    } else if (key[1] === 'uses') job.uses = value;
+  }
+  if (!jobs.size) throw new Error(`${file}: "jobs:" has no jobs`);
+  return jobs;
+}
+
 /** Неизменная часть имени: всё до первого `${{`. У матричной job это общий префикс её экземпляров. */
 export const staticNamePrefix = (name) => String(name).split('${{')[0];
 

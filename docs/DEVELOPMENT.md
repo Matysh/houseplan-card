@@ -479,6 +479,36 @@ Two of these are branches upstream, not releases — `home-assistant/actions`
 branch head was read. They have no tags to follow; the only honest record is
 "this commit, read on this day".
 
+## Moving the runner image (#658)
+
+Every job that runs on a GitHub runner names an explicit image version in
+`runs-on:`, and all workflows name the same one; `test/workflow-hygiene.test.mjs`
+rejects a floating label such as `ubuntu-latest` and any drift between files.
+The reason is the evidence tied to the image: golden baselines, documentation
+screenshots and performance budgets were captured on it with the pinned
+Playwright/Chromium (#455, #557), and Chromium's system libraries come from the
+image itself (the install steps deliberately skip `--with-deps`). A floating
+label moves under that evidence — `ubuntu-latest` becomes Ubuntu 26 from
+2026-10-19 (actions/runner-images#14748) — and would turn a day with no change
+into mass golden `different` and a red performance smoke.
+
+Move the image on purpose, as its own infra issue:
+
+1. change `runs-on:` in every workflow in one commit;
+2. capture golden in CI on the new image and accept the differences with
+   review (`npm run golden:accept -- --reviewed …`), re-capture the documentation
+   screenshots (`demo/docs/capture.mjs`);
+3. run the full Validate and `performance.yml`, and recalibrate a budget only
+   with measured evidence next to the number (the #483 and #675 pattern);
+4. mirror the thin callers into `main` (see `workflow_sync` in `validate.yml`)
+   and remember that `release.yml`, `performance.yml` and the other files `main`
+   executes pick the new image up only with the next stable promotion.
+
+The same test requires `timeout-minutes` on every runner job (at most 180; the
+default is 360) and keeps `cron` off minutes 0/15/30/45, which GitHub's
+scheduler delays by hours. A job that waits for other runs, such as the release
+gate, gets a timeout above the sum of its own waits and says so in a comment.
+
 ## What the review model is allowed to do (#556)
 
 The `model_review` job is the only untrusted stage of the review pipeline: it

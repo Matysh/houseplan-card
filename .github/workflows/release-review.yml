@@ -46,7 +46,7 @@ concurrency:
 jobs:
   prepare:
     name: "Ревью релиза: вход линии"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -110,7 +110,7 @@ jobs:
     name: "Ревью релиза: работа модели"
     needs: prepare
     if: needs.prepare.outputs.proceed == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     # Недоверенная стадия. Прав на запись нет никаких: ни в репозиторий, ни в
     # issue. Документ публикует `publish`; находки в issue превращает владелец.
@@ -258,7 +258,7 @@ jobs:
   publish:
     name: "Ревью релиза: документ в dev"
     needs: [prepare, model_review]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read

@@ -10,7 +10,8 @@ on:
       - ".github/workflows/**"
       - "docs/**"
   schedule:
-    - cron: "0 4 * * 1"
+    # Минута не круглая (#658): доходит до main вместе со стабильным релизом.
+    - cron: "11 4 * * 1"
   workflow_dispatch:
     inputs:
       comparison_ref:
@@ -31,7 +32,7 @@ jobs:
     # Every profile keeps base and candidate sequential on one hosted runner.
     # Independent profile pairs run in parallel: cross-profile timing is never
     # compared, while serialising all profile pairs cannot fit the job timeout.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
       fail-fast: false

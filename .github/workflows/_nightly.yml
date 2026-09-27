@@ -32,9 +32,29 @@ permissions:
 jobs:
   dispatch:
     name: "Запустить Validate на dev с полным набором и дождаться результата"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
+      # #658: при плане 02:30 UTC ночь фактически стартовала в 07:42–08:05 и
+      # кончалась в рабочее время владельца. Сдвиг старта больше часа — видимое
+      # предупреждение, а не молча съеденная ночь. `github.event.schedule` —
+      # строка cron вызывающего `nightly.yml`; NOW_EPOCH подставляет только тест.
+      - name: "Сдвиг старта ночи против расписания"
+        if: github.event_name == 'schedule'
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          set -euo pipefail
+          read -r minute hour _ <<< "$SCHEDULE"
+          now=${NOW_EPOCH:-$(date -u +%s)}
+          planned=$(date -u -d "@$now" +%F)
+          planned=$(date -u -d "$planned $hour:$minute" +%s)
+          [ "$planned" -le "$now" ] || planned=$((planned - 86400))
+          lag=$(( (now - planned) / 60 ))
+          echo "- Старт по расписанию \`$SCHEDULE\` (UTC): сдвиг $lag мин" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$lag" -gt 60 ]; then
+            echo "::warning::ночной прогон стартовал на $lag мин позже расписания ($SCHEDULE UTC) — очередь расписаний GitHub (#658)"
+          fi
       - env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}

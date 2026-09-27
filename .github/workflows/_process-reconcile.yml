@@ -19,7 +19,7 @@ permissions:
 jobs:
   reconcile:
     name: "Один снимок S4/S7 без polling модели"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: process-reconcile

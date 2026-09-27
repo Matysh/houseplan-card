@@ -52,7 +52,8 @@ jobs:
   # commit/tree, а не самостоятельно читают dev в разное время.
   material:
     name: "Зафиксировать неизменяемый материал"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     outputs:
       sha: ${{ steps.identity.outputs.sha }}
       tree: ${{ steps.identity.outputs.tree }}
@@ -112,7 +113,7 @@ jobs:
     name: "Мутанты: каждый обязан красить тесты (шард ${{ matrix.shard }} из 6)"
     needs: material
     if: needs.material.outputs.reuse != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -208,7 +209,8 @@ jobs:
     name: "Доказать единый material всех шардов"
     needs: [material, mutants]
     if: always() && needs.material.outputs.reuse != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -239,7 +241,8 @@ jobs:
     name: "Записать маркер зелёного прогона"
     needs: [material, mutants, evidence]
     if: needs.material.outputs.reuse != 'true' && needs.mutants.result == 'success' && needs.evidence.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -275,7 +278,8 @@ jobs:
     # является — её шарды пропущены намеренно. Любой другой пропуск шардов
     # (упал material) по-прежнему заводит issue.
     if: always() && github.event_name == 'schedule' && needs.material.outputs.reuse != 'true' && (needs.mutants.result != 'success' || needs.evidence.result != 'success')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: read
       actions: read

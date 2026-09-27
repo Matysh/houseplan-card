@@ -294,7 +294,7 @@ const validateWorkflowText = readWorkflowFile(
 );
 
 test('#513 AC1: полный мутационный прогон идёт каждую ночь, не раз в неделю и не перед релизом', () => {
-  assert.match(mutationCaller, /- cron: '0 1 \* \* \*'/, 'ежедневно 01:00 UTC');
+  assert.match(mutationCaller, /- cron: '43 0 \* \* \*'/, 'ежедневно 00:43 UTC (#658: минута не круглая)');
   assert.ok(!/cron: '[^']*\* [0-6]'/.test(mutationCaller), 'недельного расписания (день недели) быть не должно');
   assert.ok(!mutationWorkflow.includes('перед стабильным релизом'), 'полный прогон — не шаг релиза');
 });

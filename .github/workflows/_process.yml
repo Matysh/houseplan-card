@@ -48,7 +48,8 @@ jobs:
     # Только статусные метки этапов ревью запускают конвейер (#499). Остальные
     # события помечаются skipped и не занимают место в группе concurrency.
     if: github.event.label.name == 'S4-spec-review' || github.event.label.name == 'S7-code-review'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     concurrency:
       group: process-issue-${{ github.event.issue.number }}
       cancel-in-progress: false
@@ -282,7 +283,7 @@ jobs:
       issues: write
     needs: guard
     if: needs.guard.outputs.stage != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       group: process-issue-${{ github.event.issue.number }}
       cancel-in-progress: false
@@ -852,7 +853,7 @@ jobs:
       issues: write
     needs: [guard, prepare]
     if: needs.prepare.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       group: process-issue-${{ github.event.issue.number }}
       cancel-in-progress: false
@@ -934,7 +935,7 @@ jobs:
       - name: Установить Chromium
         if: steps.pw.outputs.cache-hit != 'true'
         # Без --with-deps: системные библиотеки Chromium предустановлены в
-        # образе ubuntu-latest, а apt при промахе кэша съедал минуты из бюджета
+        # образе раннера, а apt при промахе кэша съедал минуты из бюджета
         # ревью и подолгу перебирал недоступное azure-зеркало (#175). Если
         # библиотека когда-нибудь пропадёт из образа, Chromium не запустится с
         # внятной ошибкой — тогда флаг вернуть.
@@ -1196,7 +1197,7 @@ jobs:
       issues: write
     needs: [guard, prepare, model_review]
     if: always() && needs.guard.outputs.stage != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       group: process-issue-${{ github.event.issue.number }}
       cancel-in-progress: false

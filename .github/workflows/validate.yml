@@ -50,7 +50,8 @@ jobs:
   # действовать — на уровне шагов, с той же гранулярностью в логе.
   preflight:
     name: "Предполёт: документация, провенанс, процесс"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     # `actions: read` — чтение списка прогонов Validate (#388), `issues: read` —
     # проверка 8 процессного гейта. Права перечислены явно, потому что job
     # обращается к API сверх содержимого репозитория.
@@ -247,7 +248,8 @@ jobs:
   # там делает код-ревью, которое гоняет гейты само (#127).
   changes:
     name: Классификация изменённых файлов
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     # Чтение списка прогонов Validate — единственное, что этой job нужно сверх
     # содержимого репозитория (#387).
     permissions:
@@ -406,7 +408,8 @@ jobs:
     # performance_smoke включает набор, иначе glow-only результат засчитался бы
     # прогону, которому нужен изометрический профиль.
     needs: changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     outputs:
       smoke: ${{ steps.probe.outputs.smoke }}
       golden: ${{ steps.probe.outputs.golden }}
@@ -555,7 +558,8 @@ jobs:
     name: "HACS: валидация репозитория"
     needs: changes
     if: needs.changes.outputs.integration == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: HACS validation
@@ -567,7 +571,8 @@ jobs:
     name: "Hassfest: манифест интеграции"
     needs: changes
     if: needs.changes.outputs.integration == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Hassfest validation
@@ -598,7 +603,7 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2, 3, 4, 5, 6]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -727,7 +732,8 @@ jobs:
     name: "Фронтенд: типы, юниты, мутанты, синхрон бандла"
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
     steps:
       # Полная история без блобов (#342): гейт «новый код не добавляет any»
       # diff-aware, ему нужен диапазон, а содержимое старых ревизий — нет.
@@ -837,7 +843,7 @@ jobs:
     name: "Бандл головы dev для стенда"
     needs: frontend
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && needs.frontend.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     continue-on-error: true
     permissions:
@@ -867,7 +873,7 @@ jobs:
     # Gated on `frontend` so a typecheck failure does not burn browser minutes.
     needs: [changes, frontend, reuse]
     if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     # Смоки шардируются: последовательный прогон занимал ~7.5 минут и был
     # критическим путём всего Validate. Три шарда режут его примерно вдвое;
@@ -974,7 +980,8 @@ jobs:
     name: "Смоки: все шарды зелёные"
     needs: [changes, smoke, reuse]
     if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - name: Записать маркер успеха
         run: |
@@ -998,7 +1005,8 @@ jobs:
     # inexpensive and catches a different class of regressions than timings.
     needs: [changes, frontend, reuse]
     if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.golden != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -1100,7 +1108,7 @@ jobs:
     # prereleases. The expensive same-runner comparison lives in performance.yml.
     needs: [changes, frontend, reuse]
     if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.performance_smoke != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # 15 минут не хватало, когда установка браузера шла через apt: замер
     # начинался на исходе окна (#206). Запас на холодный кэш — при попадании
     # job укладывается в те же минуты, что и раньше. Диффозависимые профили
@@ -1196,7 +1204,8 @@ jobs:
     name: "Геометрия: TS/Python parity исполнена"
     needs: [changes, reuse]
     if: needs.changes.outputs.geometry_parity == 'true' && needs.reuse.outputs.geometry_parity != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -1230,7 +1239,8 @@ jobs:
     name: "Бэкенд: pytest в Home Assistant"
     needs: [changes, reuse]
     if: needs.changes.outputs.backend == 'true' && needs.reuse.outputs.backend != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # Browser fixtures are generated by their real ESM factories and then
@@ -1316,7 +1326,8 @@ jobs:
     name: "Доказательство выполненных проверок"
     if: always()
     needs: [preflight, changes, reuse, hacs, hassfest, changed_mutants, frontend, smoke, smoke_done, golden, performance_smoke, geometry_parity, backend]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:

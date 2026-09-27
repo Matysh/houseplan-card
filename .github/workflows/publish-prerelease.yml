@@ -21,7 +21,9 @@ concurrency:
 jobs:
   gate:
     name: "Гейт: зелёная Проверка и релизный контракт"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    # Больше ожидания зелёного Validate в release-gate.mjs (до 60 мин) (#658).
+    timeout-minutes: 75
     outputs:
       sha: ${{ steps.candidate.outputs.sha }}
       tag: ${{ steps.candidate.outputs.tag }}
@@ -122,7 +124,8 @@ jobs:
   publish:
     name: Публикация тега и релиза
     needs: gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     outputs:
       url: ${{ steps.verify.outputs.url }}
       newly_published: ${{ steps.release.outputs.newly_published }}
@@ -289,7 +292,8 @@ jobs:
   close-merged:
     name: Закрытие вошедших issue
     needs: [gate, publish]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     permissions:
       contents: read
       actions: read
