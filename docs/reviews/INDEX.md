@@ -1,10 +1,11 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1115, issue: 399. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1116, issue: 400. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #678 | [CODE-REVIEW-678-r1.md](CODE-REVIEW-678-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #677 | [CODE-REVIEW-677-r1.md](CODE-REVIEW-677-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | раздел «Environment (cowork sessions)» снят сверх заявленного объёма ТЗ | `docs/DEVELOPMENT.md` `STATUS.md` `DEVELOPMENT.md` `PROCESS.md` |
 | #676 | [SPEC-REVIEW-676-r1.md](SPEC-REVIEW-676-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 2 | AC8 не называет проверку двух из трёх ветвей подавления подсказки; риск «рамка перехватывает события под другим инструментом» не привязан ни к одному AC; не задан tie-break для равного протяжки по обеим осям (снимаю сам) | `src/stairs-editor-model.ts` `stairs-view.ts` `demo/smoke_stairs.mjs` `src/furniture.ts` |
 | #676 | [SPEC-REVIEW-676-r2.md](SPEC-REVIEW-676-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | AC8/К8 перечисляют четыре ветви stairTargetState, а не пять; состояние self выпадает из… | `src/stairs-editor-model.ts` `docs/STAIRS.md` `src/stairs.ts` `stairs-view.ts` |
 | #676 | [SPEC-REVIEW-676-r3.md](SPEC-REVIEW-676-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
