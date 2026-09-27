@@ -1,4 +1,4 @@
-// Значения форматирует HOME ASSISTANT (docs/STYLING-HOOKS.md §6, docs/LIVE-TEXT.md §2.1).
+// Значения форматирует HOME ASSISTANT (docs/STYLING-HOOKS.md §6, docs/DECOR-EDITOR.md §5.2).
 // Везде, где карточка печатает состояние ОДНОЙ сущности, она зовёт
 // hass.formatEntityState (и hass.formatEntityAttributeValue для атрибута) —
 // значит, работают display_precision, локальный разделитель дробной части и

@@ -189,6 +189,8 @@ concurrent clients, but avoid editing the same object in two browsers at once.
 - [Stairs and floor links](docs/STAIRS.md)
 - [Background editor](docs/DECOR-EDITOR.md)
 - [Robot vacuums](docs/VACUUM.md)
+- [Presence radars](docs/RADAR.md)
+- [PDF export](docs/PDF-EXPORT.md)
 - [Touch support](docs/TOUCH-SUPPORT.md)
 
 <!-- docs-section: support -->
@@ -200,10 +202,5 @@ concurrent clients, but avoid editing the same object in two browsers at once.
 - Before reporting, update House Plan, restart HA and hard-refresh the page.
   Include the version, browser, logs and reproduction steps; private entity IDs
   may be replaced with fictional ones.
-
-Documentation screenshots are produced by the reproducible
-`npm run build && node demo/docs/capture.mjs` command using synthetic data only. Scenario version,
-source fingerprint and every image hash are recorded in the
-[screenshot index](docs/images/screenshots.json).
 
 License: [MIT](LICENSE).

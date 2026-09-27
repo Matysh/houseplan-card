@@ -1,5 +1,5 @@
 /**
- * Backdrop image: move, uniform scale, and the new paper rule (docs/BACKDROP.md).
+ * Backdrop image: move, uniform scale, and the new paper rule (docs/DECOR-EDITOR.md §3).
  *
  * The whole contract, on the demo's f1 — which IS an image plan, so every
  * assertion here lands on exactly the case that used to behave differently:
@@ -234,7 +234,7 @@ check('reset_button_gone_again', await q('.editor-secondary .bdreset'), 0);
 
 // ---------- 5b) the SELECT tool still pans right over the picture ---------
 // The body of the picture is most of the screen; claiming it outside its own
-// tool would take away the one-finger pan (docs/BACKDROP.md §2), which is why
+// tool would take away the one-finger pan (docs/DECOR-EDITOR.md §3.2), which is why
 // moving is a tool. smoke_pan_any_zoom guards the same thing from the outside.
 await tool('select');
 await settle();

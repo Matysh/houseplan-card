@@ -1,4 +1,4 @@
-// Backdrop image (docs/BACKDROP.md) — two shots for the owner:
+// Backdrop image (docs/DECOR-EDITOR.md §3) — two shots for the owner:
 //   backdrop_frame — the transform frame mid-gesture: dashed outline, four
 //                    finger-sized corner handles, and the live "W × H" badge
 //                    stating the picture's real size through cell_cm;

@@ -74,15 +74,16 @@ remains the explicit bulk-cleanup path.
 
 ## Model
 
-| Concept | Before | Now |
-| --- | --- | --- |
-| Canvas | square `0..1`, rendered `0..1000` | unbounded plane, same units |
-| `space.view_box` | the frame; everything was clamped into it | an OPTIONAL hint for the very first frame; used only when there is nothing to frame |
-| "fit" rectangle | `view_box` (or the content bbox in view mode) | always the **content frame** (§4) |
-| Zoom out floor | `ZOOM_MIN = 0.4` (fraction of `view_box`) | 3x the content frame (`MIN_ZOOM = 1/3`) |
-| Pan bounds | content must cover the scene, and only above 100% zoom | content frame + one screen of slack in each direction, at any zoom |
-| Icon size | % of `view_box`, i.e. grew with zoom | % of `iconUnit` — still grows with zoom (§6) |
-| Validation range | `+/-4` | `+/-5000` (§3) |
+- Canvas: an unbounded plane in the same units as the historical square
+  (`0..1`, rendered `0..1000`).
+- `space.view_box`: an OPTIONAL hint for the very first frame, used only when
+  there is nothing to frame.
+- "fit" rectangle: always the **content frame** (§4).
+- Zoom-out floor: 3× the content frame (`MIN_ZOOM = 1/3`).
+- Pan bounds: the content frame plus one screen of slack in each direction, at
+  any zoom (§5).
+- Icon size: a percentage of `iconUnit`, so it still grows with zoom (§6).
+- Validation range: `±5000` (§3).
 
 ### Render frame vs. view
 
@@ -109,14 +110,14 @@ the exact target atomically without exposing a default-fit frame.
 
 `custom_components/houseplan/validation.py`:
 
-| Symbol | Before | Now | What it is |
-| --- | --- | --- | --- |
-| `_COORD` (layout x/y) | `-4 .. 4` | `-5000 .. 5000` | coordinate |
-| `_GEOM` (room x/y, poly points, opening x/y, `view_box` origin) | `-4 .. 4` | `-5000 .. 5000` | coordinate |
-| `_EXTENT` (room w/h, `view_box` w/h) | `0.001 .. 4` | `0.001 .. 5000` | size — strictly positive |
-| `_NORM` (decor x/y/w/h) | `-1 .. 2` | `-5000 .. 5000` | coordinate |
-| stair `x/y`, `length/width/radius` | — | `-5000 .. 5000`; sizes positive | continuous transform |
-| opening `length` | `0.001 .. 1` | `0.001 .. 5000` | size — strictly positive |
+| Symbol | Range | What it is |
+| --- | --- | --- |
+| `_COORD` (layout x/y) | `-5000 .. 5000` | coordinate |
+| `_GEOM` (room x/y, poly points, opening x/y, `view_box` origin) | `-5000 .. 5000` | coordinate |
+| `_EXTENT` (room w/h, `view_box` w/h) | `0.001 .. 5000` | size — strictly positive |
+| `_NORM` (decor x/y/w/h) | `-5000 .. 5000` | coordinate |
+| stair `x/y`, `length/width/radius` | `-5000 .. 5000`; sizes positive | continuous transform |
+| opening `length` | `0.001 .. 5000` | size — strictly positive |
 
 `+/-5000` is **garbage insurance, not a frame**. At the historical compatibility
 scale (`cell_cm` = 5, 240 grid cells across the unit width)
@@ -417,16 +418,7 @@ fits `all`.
 
 ### 9.1 One bound, and it is the backend's
 
-v1.57.0 freed the FRAME and the DRAWING, but not the drag handlers. Two
-of them still clamped, and the owner and a user hit both:
-
-| Handler | Old clamp | Effect |
-| --- | --- | --- |
-| `_pointerMove` (device marker) | `_baseVb()` ± a 0.8 % inset — the CONTENT FRAME | a marker could never be dragged past the outline of what was already drawn, so a plan could not be extended by putting a device where the next room was going to be |
-| `_labelMove` (room label) | `_spaceModel().vb` — the space's STORED `view_box` | worse: that is `[0,0,1,1]` for every plan the card has ever written, i.e. literally the old square. A room drawn at 2.5 had a name that could not reach its own room |
-| `_decorCommitDraft` / decor text anchor | *none at all* | asymmetric with `_decorMoveUpdate`, which did clamp — a draft could be born outside the range the mover then refused to leave |
-
-The rule now: **an editor gesture has exactly one bound, `±CANVAS_LIMIT`
+The rule: **an editor gesture has exactly one bound, `±CANVAS_LIMIT`
 (±5000 normalised, ±`SANE_LIMIT` in render units), and it is the same
 number `validation.py` enforces.** It is a garbage limit — insurance
 against a stored `1e100` — and never a frame. `clampCanvasR` /
@@ -462,7 +454,7 @@ wall runs diagonally is broken geometry, not a tidy plan:
 
 | Element | Where |
 | --- | --- |
-| the backdrop picture: move (its top-left corner) and proportional/independent corner scale | `_bdMove` → `_snap` / `snapToGrid` (docs/BACKDROP.md) |
+| the backdrop picture: move (its top-left corner) and proportional/independent corner scale | `_bdMove` → `_snap` / `snapToGrid` (docs/DECOR-EDITOR.md §3) |
 | room vertices (draw tool) | `_markupClick` → `_snap` |
 | split tool's interior vertices | `_splitClick` → `_snap` |
 | fixed-topology room-wall resize | `_rszMove` → `_snap`; the last safe node before a corner/opening/third room wins |
@@ -537,191 +529,13 @@ half-thickness) and stair magnet resolves outer footprint-to-footprint contact.
 Neither save/load nor Optimize may replace that contact with a nearby lattice
 node.
 
-### 9.5 «Оптимизировать планы» — explicit whole-plan maintenance
+### 9.5 «Оптимизировать планы»
 
-Existing and imported plans may still hold grid-bound coordinates between the
-nodes. Ordinary grid-bound editor operations do not create more; explicitly
-continuous objects are exempt. General settings contain
-a **Plan maintenance** group whose action previews and then repairs old
-data through all current passes: model upgrades, mandatory grid
-alignment, exact open-span canonicalisation and wall-interval compaction.
-Unlike live snapping, the explicit maintenance pass also replaces a stored
-coordinate which is only one or several ULPs away from its node with the exact
-computed node. That has no visible displacement but removes topology noise at
-its persisted source.
-
-Why an action rather than a silent migration:
-
-1. It moves the user's data without asking. A house plan is a drawing;
-   the card has no mandate to redraw it on a version bump.
-2. A silent migration is unattributable. When a room looks 3 cm wrong
-   the owner cannot tell whether the card did it or they did.
-3. An update that touches stored geometry cannot be rolled back by
-   downgrading the card. The explicit action has a one-deep snapshot and
-   can also simply not be pressed.
-
-`optimizePlans(config, layout)` (`src/plan-optimizer.ts`) is the pure
-orchestrator. It converts legacy fields with an exact mapping, projects
-`open_spans` (or the `open_to` fallback) into stable zero-thickness wall atoms,
-calls the grid projection, rekeys exact wall endpoints onto moved rooms,
-compacts consecutive atoms only when thickness and physical ownership both
-match, and stamps `model_version`. Outer/shared transitions and changes of
-shared-room pair remain exact breakpoints even at equal thickness. Unknown
-fields are preserved and every pass is idempotent.
-
-The explicit pass also repairs pre-existing near-axis room walls, saved wall
-chains and independent walls after ordinary grid alignment (#290). Coincident
-room-owner copies count as one physical wall and move as one endpoint
-equivalence class. The preview reports the unique count, maximum physical
-movement and unsafe skipped candidates; only Confirm writes, and Undo restores
-the prior geometry. Exact axes and true diagonals are not candidates.
-
-The optimizer deliberately does **not** alter backdrop calibration or saved
-view boxes, deduplicate markers, or delete files. It may delete an unattached
-layout entry only after classifying its owner against current rooms, marker
-tombstones and an authoritative HA device/entity roster. Proven-absent room
-labels, devices and group markers are cleaned; live owners are preserved unless
-the administrator explicitly opts into removing their old positions, and an
-incomplete registry or unknown namespace always fails closed. The cleanup is
-part of the pure candidate, Undo and idempotence contract. File collection
-remains the backend's reference-aware scheduled job.
-
-`alignAllToGrid(spaces, layout)` (`src/align-grid.ts`) is pure: it
-copies its input, never mutates it, and returns the new spaces, the new
-layout and the report. The dialog therefore measures and commits the
-**same object** — the numbers it promises cannot differ from what it
-does. The resulting config+layout pair is sent to
-`houseplan/plan/optimize`; the backend persists a durable intent before
-either store changes, commits both revisions, and retains one snapshot.
-`houseplan/plan/optimize_undo` restores it only while neither revision
-has changed since the optimization. A crash between store writes is
-completed from the intent on the next integration setup.
-
-The grid pass deliberately excludes the complete transform of `furniture`,
-uploaded `image` decor and `spaces[].stairs[]`. Their position, size and
-rotation are continuously authored values (#383, #663), so changing even one of those fields would make
-Optimize create debt from a normal editor operation. Other decor kinds and
-storage-level numeric canonicalization keep their existing grid contract
-(#477).
-
-The pair returned by `optimizePlans` passes the same lattice-aware boundary as
-the storage writers **before** visible Align and before `changed` is computed.
-This boundary is required because the normalized grid step `1 / 240` has no
-finite decimal representation: an exact node and a nine-decimal JSON echo may
-be visually identical but not `===`. Update-event reload and a cold read
-therefore receive exactly the pair retained by the preview, and a second run
-cannot manufacture fresh coordinate noise (#248, #291).
-
-Model v8 adds a second, identity-preserving stage at this write boundary
-(#282). `materializeWallSegmentModel()` atomizes canonical room contours into
-`wall_segments[]`, keeps the deterministic parent ID on one split child, emits
-UUIDs only for genuinely new v8 atoms, and refreshes `rooms[].wall_ids[]`,
-draft IDs and tagged opening hosts together. The historical `walls[]` entries
-are regenerated from this catalog as a compatibility view. Reading or fitting
-the canvas never runs this migration; only physical edits, Optimize and a
-v7-to-v8 import may materialise it. Failure keeps the previous view, history
-and persisted revision intact.
-
-Guarantees are covered by `test/align-grid.test.mjs` and the orchestration/
-idempotence case in `test/plan-optimizer.test.mjs`:
-
-* every grid-bound element ends on a node; a rect's FAR corner too (a
-  snapped *size* on an off-grid origin leaves the other side between
-  the nodes);
-* an opening ends on its wall, at whole steps along it, inside it, and
-  **with the wall's own angle** — the angle is written, so it is part of
-  the diff (AUD-158B1-02: an opening already on its wall with a wrong
-  angle used to be returned changed inside `changed: false`, which made
-  it unfixable);
-* a stray opening with no wall within 6 steps is left exactly where it
-  is rather than teleported;
-* **idempotent across storage**: a second run in memory, after the lattice-aware
-  writer round-trip, after update-event reload or after a cold read reports
-  `moved: 0`, `changed: false`, and `latticeCoordinatesCanonicalized: 0`, and returns
-  objects deep-equal to the first persisted result;
-* the report is an **upper bound**, not a sample (AUD-158B1-01).
-
-Before a changed preview can expose Apply, `checkOptimizeGeometry(config)`
-(`src/plan-geometry-preflight.ts`) runs the exact candidate through the shared
-production input projection and canonical wall/floor boolean builders for every
-space. `failed-core`, `degraded-extra` or an exception is a structural failure;
-an empty successful geometry and an empty/image-only space are not. One failure
-blocks the whole operation and the endpoint is not called. The dialog retains
-only bounded statuses plus `contentFingerprint(candidate.config)`: unchanged
-Apply reuses that result, while a changed fingerprint is checked again and
-fails closed.
-This frontend barrier does not replace backend permission, schema, revision or
-crash-recovery checks and is not a security attestation from an untrusted
-client.
-
-The same projection has a one-space transaction entry point for ordinary
-physical edits (#278). Room/wall/open-span/opening/partition/column
-candidates are validated before entering Undo or the save queue. A physical
-fingerprint is rechecked immediately before the deferred config write; failure
-restores the saved geometry and produces no WebSocket call. Presentation-only
-edits deliberately do not invoke this barrier, so a legacy degraded plan can
-still be renamed, exported and inspected.
-
-### The report is a promise
-
-The confirmation is the decision gate in front of a geometry rewrite, so
-`maxShift`/`maxShiftCm` must never be smaller than what the run does:
-
-* displacement is measured on the geometry **actually written back** —
-  all FOUR corners of a rect, minimum-size correction included. The two
-  corners nobody used to measure are exactly the two that can be worst:
-  they carry the X error of one side together with the Y error of the
-  other, which is √2 of either;
-* an opening is measured on its **ends**, flip-invariantly, so turning
-  it in place costs what it really costs and a 180° rewrite costs
-  nothing;
-* the maximum is accumulated in **centimetres**, each space through its
-  own `cell_cm`, and the report names the space it belongs to. One
-  normalised maximum converted through the *first* space's cell size
-  promised 2.5 cm for a vertex that moved 50 cm on a 100 cm floor;
-* the dialog rounds the last tenth **up** and, on a multi-space plan,
-  says which space the maximum is in; openings corrected in angle alone
-  are counted on a line of their own.
-
-`latticeCoordinatesCanonicalized` counts individual near-node coordinate
-components actually rewritten by the storage boundary. Its maximum is measured
-in each value's own `cell_cm`, displayed with three significant digits and kept
-separate from visible `moved/maxShift*`. Only touched spaces receive a detail
-line; each line also states how many authored off-grid components were observed
-and left unchanged. Layout values without a named space contribute only to the
-summary. The older `coordsCanonicalized` remains an internal Align counter and
-does not absorb this storage-only work.
-
-One undo is available until the next config or layout edit. It restores
-the stored snapshot; re-running optimization itself is never treated as
-undo because a grid projection is not invertible.
-
-## Every place that assumed the unit square
-
-
-| Place | Assumption | Decision |
-| --- | --- | --- |
-| `contentBounds` envelope `-25 %..125 %` | content outside the square does not count | **removed** — replaced by §4.1 outlier rejection |
-| `_baseVb()` `if (mode !== 'view') return m.vb` | editors need the whole square to have room to draw | **removed** — the content frame plus §5 pan slack and 3x zoom-out gives more room than the square ever did |
-| `_baseVb()` `if (m.bg) return m.vb` | image plans frame on the square | image rect is now just one content item (§4) |
-| `--icon-size` scaled by `vb.w / view.w` | the canvas is what an icon is a fraction OF | numerator becomes `iconUnit()`; the icon still scales with the plan (§6) |
-| `defaultPositions` `minDist` from `NORM_W` | one canvas = one plan | `iconUnit()` (§6) |
-| `markerPos` / `_pos` fallback = `view_box` centre | a device with no position belongs in the middle of the square | `spaceCenter()` — the middle of the content |
-| grid `<rect>` over `vb` | the grid ends with the square | rect follows the view (§7) |
-| grid pitch fixed | fine at 1 canvas wide | `gridLevels()` (§7) |
-| `_clampView` pinned content over the scene | you cannot pan past the edge | §5 pan slack |
-| `_stagePointerMove` panned only while `zoom > 1` | below 100% the content already covered the scene, so a drag had nowhere to go | **removed** — §5, panning at every zoom |
-| `ZOOM_MIN = 0.4` | fraction of the square | `MIN_ZOOM = 1/3` of the content frame (§5) |
-| `_decorMoveUpdate` clamp `-0.25 .. 1.25` | decor may hang a quarter past the edge | clamp widened to the sane range (`+/-CANVAS_LIMIT`) — corruption insurance, not a frame |
-| `_pointerMove` clamp to `_baseVb()`, `_labelMove` clamp to `view_box` | a marker/label belongs inside the canvas | **removed** — §9.1; missed in v1.57.0 and reported by the owner |
-| static card `aspect-ratio` + `viewBox` from `space.vb` | the static card frames the square | `spaceFrame()` — same content frame as the full card |
-| `validation.py` `+/-4`, `_EXTENT <= 4`, decor `-1..2`, opening `length <= 1` | the square plus slack | §3 |
-| `safeViewBox` fallback `[0,0,1,1]` | a broken `view_box` means the square | kept — it is only the last-resort hint (§4) |
-| `fitInSquare` (image placement) | image is centred in the square | **kept** — it defines the image's own rectangle in canvas units, which is exactly what §4 wants as a content item. It is only the DEFAULT placement: `planRect()` adds `plan_x/y`, per-axis scale and angle on top (with legacy `plan_scale` as fallback), and the transformed corners are what §4 counts (docs/BACKDROP.md) |
-| image plan papers the image rect | the picture IS the sheet | **removed** in v1.58.0 — the opaque paper is the room contours in every case, and the picture is drawn on top of it (docs/BACKDROP.md §3) |
-| `_spaceH` / `_decorH` = `NORM_W` | the canvas is square | **kept** — this is the coordinate system's aspect, not a frame |
-| `_gridPitch = NORM_W / GRID_N` | grid pitch is tied to the canvas unit | **kept** — the pitch is the real-world cell (`cell_cm`), it must not change with the plan's size |
-| sun wedges / glow radii / resize maths | all in render units, relative to their own geometry | **unaffected** — verified: no `NORM_W`-relative constants |
+Explicit whole-plan maintenance — the preview/apply pass that repairs stored
+off-node coordinates, model upgrades, open spans and wall intervals — is a
+storage contract, not a canvas one: `CONFIG-COMPATIBILITY.md`, section
+«Optimize plans: explicit whole-plan maintenance». Ordinary grid-bound
+editing never performs it implicitly.
 
 ## What is deliberately NOT done
 
@@ -743,69 +557,7 @@ both endpoints, so it cannot deform the segment or let its far endpoint cross
 the backend boundary. Hit areas and drag thresholds are expressed in CSS
 pixels, therefore selection remains usable at every zoom.
 
-## Architectural connection overlay
-
-When **Walls** is active in the Plan editor, a derived
-pointer-transparent SVG layer exposes the centre axes of completed room walls
-and independent partitions. It is painted after their
-physical wall bodies, but before interactive editor chrome. Columns, decor,
-devices, the active wall chain and its live preview are not candidates. Door,
-window, gate and intentionally open-span intervals are cut from presentation
-axes; a cut boundary does not become a new endpoint.
-
-The layer and hit resolver share one immutable geometry snapshot. Original
-segment endpoints are deduplicated and drawn at a physical radius of 5 cm.
-Inside a 12 CSS px hit zone, an endpoint wins over every line and grows to
-10 cm. Otherwise the nearest solid line receives one 10 cm dynamic node: the
-raw pointer is projected onto that line, then quantized by the grid step along
-the line from its stable start. This keeps diagonal connections wall-bound even
-when neither resulting coordinate is a global grid multiple. The same resolver
-runs again on click, so hover is only a preview and never authoritative.
-
-Endpoint and line candidates override the normal grid and Shift/45° result.
-Outside the hit zone, §9.3–9.4 remain unchanged. A line connection adds only the
-new segment endpoint; it does not split or rewrite the existing wall. The
-current anchor is excluded to prevent zero-length segments. The static geometry
-is cached by structural editor state; pointer movement changes at most the
-single active candidate and never writes config, layout or storage.
-
-A separate diagnostic projection is present throughout the Plan editor (#296),
-including tools other than **Walls**. For every independent wall
-segment with a positive exact collinear overlap against another wall, it keeps
-that source segment's complete axis and original endpoints visible. It is
-painted after every wall body and zero-thickness axis and before openings, selection
-chrome and transient previews. The layer is `pointer-events:none`,
-`aria-hidden`, absent from View and cached by structural revision; it neither
-deduplicates source identities nor participates in the architectural snap
-resolver above. The 1 CSS px non-scaling axis and physical 5 cm nodes therefore
-diagnose an otherwise invisible Resize blocker without changing any hit target.
-
-## Planar wall faces
-
-Every completed Walls segment is persisted immediately as an ordinary
-`partition`; only its ordered chain membership remains in memory. On the click
-path only, an immutable planar graph is built from structural room edges and
-partitions both before and after the latest segment. Unlike the
-presentation/snap snapshot, this
-face graph ignores door/window/gate/passage cuts; zero-thickness wall axes remain
-structural graph edges even though they have no masonry body.
-Endpoint, T, X and
-collinear-overlap junctions atomize that computed graph without rewriting any
-saved wall. A deterministic half-edge walk extracts bounded faces; canonical
-identity ignores winding, cyclic start and derived collinear subdivision.
-
-Only faces added by the latest segment and containing one of its atoms are
-offered. They are ordered by area and then canonical key. Existing exact or
-partially overlapping rooms are excluded, nested rooms remain legal, and any
-physical gap created by an `open_span` or absent wall remains a gap. A door,
-window, gate or passage is a property of a wall and preserves connectivity. A clean divider across
-one room reuses the Split contract: the larger side keeps the room identity,
-metadata and device binding, and only the smaller side is offered.
-
-The terminal active path remains session-local while the resulting room dialogs
-are open. Create/Keep-as-walls answers are buffered; Cancel/Esc discards all
-answers and leaves the already persisted partitions unchanged. The final answer
-revalidates the whole batch and applies accepted rooms while consuming only the
-coincident partitions used by those rooms in one history/config transaction.
-Graph construction never runs on pointermove, Home Assistant state updates or
-ordinary rendering.
+The architectural connection overlay of the **Walls** tool and the planar
+face graph that offers rooms after a closed chain are wall contracts:
+`WALL-THICKNESS.md`, sections «Architectural connection overlay» and «Planar
+wall faces».

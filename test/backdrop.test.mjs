@@ -1,5 +1,5 @@
 /**
- * The backdrop transform and the paper contract (docs/BACKDROP.md).
+ * The backdrop transform and the paper contract (docs/DECOR-EDITOR.md §3).
  *
  * Two questions only, and both are pure geometry:
  *   1. where the picture ends up once it has been moved and scaled, and
@@ -86,7 +86,7 @@ test('the content frame follows the picture (Вписать всё never loses i
   assert.ok(sb.w < 400, `a quarter-scale picture frames tight, got ${sb.w}`);
 });
 
-test('the paper is the ROOMS, image or no image (docs/BACKDROP.md §3)', () => {
+test('the paper is the ROOMS, image or no image (docs/DECOR-EDITOR.md §3.3)', () => {
   // paperRoomShapes knows nothing about plan_url — which is the whole point:
   // there is no longer a branch where the picture makes paper of its own.
   const rooms = [{ id: 'r', name: 'r', poly: [[100, 100], [500, 100], [500, 500], [100, 500]] }];

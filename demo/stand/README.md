@@ -9,8 +9,7 @@ of the shipped integration.
   stand picks it up automatically from this path
   (`/opt/hp/bin/hp-update-dev.sh`, which calls the same script). The rest of the stand-only config
   (template LQI sensors, alarm helpers, the smoke automation) lives in the
-  seeds on the stand host — see `docs/TESTING-DEMO.md` and the memory note
-  `houseplan-demo-stand`.
+  seeds on the stand host; the demo home itself is described below.
 
 - `demo_guard/` — stand-only guard (2026-07-31). Visitors log in as an
   administrator (the card editor is gated on `is_admin`) and kept restarting
@@ -56,3 +55,53 @@ refuses anything that does not have exactly one
 manifests turned the Hassfest job of PR #9004 red on 2026-08-11, five weeks into
 the review queue. `test/repo-hygiene.test.mjs` now fails if a second one
 appears, so this cannot be rediscovered by a reviewer again.
+
+## The demo home
+
+**https://demo.houseplan.tech** — public, login `demo` / `demo` (an
+administrator). **https://dev.houseplan.tech** — the closed stand behind basic
+auth (access with the owner), auto-deploys `dev`. The public stand **resets
+every hour** to a pristine synthetic home — break it freely, delete rooms,
+upload plans, an hour later everything is back (the countdown is printed to the
+DevTools console). Long-lived checks («the file is gone a day later», «survived
+a restart») therefore cannot live on the stand, and restarting HA from inside is
+blocked by `demo_guard`.
+
+Demo home v2 is an anonymised layout of a real country house: dashboard
+«House plan» (`/house-plan/0`; views Plan / Kiosk / Schema) and three spaces —
+**Ground Floor** (Kitchen & Living, Hallway, Guest Bedroom, Guest WC, Boiler
+Room, Sauna, Under-Stairs Closet, Outdoor Storage — hand-drawn, thick hatched
+walls), **First Floor** (Kids Room A, Kids Room B, Upstairs Hall, Kids
+Bathroom, Master Bathroom, Bedroom, Study — with a plan image backdrop) and
+**Yard** (the Yard room plus a decor outline of the garage). 97 markers in
+total: ~51 on Ground Floor, 23 on First Floor, 2 in the yard. Key demo devices:
+the robot vacuum `vacuum.demo_robot` (dock in Under-Stairs Closet), leak
+sensors (toggled by the helper `input_boolean.demo_leak`), smoke sensors (fire
+by themselves every 10 minutes), the boiler and the water tank in Boiler Room
+(value markers plus live text labels), the Front Door and Terrace locks,
+curtains in Study, the garage gate in Yard, a TV with speakers, the kitchen
+hood, the air conditioner in Bedroom, the composite Smart Plug, the
+permanently unavailable Pantry Light, and the weather
+`weather.demo_weather_south` (sun in the windows and the day/night cycle).
+Everything is in English; the demo user's language is Auto, so the interface
+follows the browser. **Smart Plug 2** is deactivated in the HA registry on
+purpose — it is the ready-made example for the disabled-devices behaviour.
+
+The public demo user is an administrator, so the full registry scenario can be
+checked on the stand; a limited/read-only user needs the local harness or a
+separate unprivileged user.
+
+## What the stand cannot show
+
+- Real Zigbee/Z-Wave hardware, real robots (Dreame/Xiaomi/Valetudo), a real
+  wall tablet.
+- The HACS install/update path, YAML-mode Lovelace, reinstalling the
+  integration while keeping its config.
+- Restarting HA from inside — blocked by `demo_guard` (the hourly container
+  reset is the only «restart»).
+- Anything that needs the stand's file system: broken stores, `kill -9`
+  between writes, unreadable folders, watching process memory.
+- Long-lived scenarios (a day-long sweep, «an hour later») — the reset comes
+  first.
+- A non-admin user (`admin_only`, hidden tabs) — the stand has the single
+  admin `demo`.

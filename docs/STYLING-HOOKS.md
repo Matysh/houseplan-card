@@ -1,6 +1,6 @@
 # Styling hooks — the selectors card-mod may rely on
 
-Status: **implemented (v1.59.0-beta.3).** Code: `src/houseplan-card.ts`
+Code: `src/houseplan-card.ts`
 (`_renderDevice`, `_renderRoomLabel`, `_renderOpenings`, `_renderDecorLayer`,
 the room shapes in `render()`, the space tabs in the header),
 `src/space-render.ts` (the static `houseplan-space-card`).
@@ -310,7 +310,7 @@ translations (`on` → *Включено*). One wrapper owns it — `hassValue()
 | Where | What it prints |
 | --- | --- |
 | Value badge (`display: value`) | the acting entity's state |
-| Decor live text (docs/LIVE-TEXT.md) | the linked entity's state or attribute |
+| Decor live text (docs/DECOR-EDITOR.md §5) | the linked entity's state or attribute |
 | Device info card | the primary state and every listed entity |
 
 **Fallbacks are silent.** An older Home Assistant without

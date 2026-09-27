@@ -151,8 +151,8 @@ const out = await page.evaluate(async () => {
   // the cover, which is what this section pins.) Same cause, same helper:
   // _stateClass and
   // the icon morph read d.primary, so the plan reported the state of
-  // `switch.*_reverse_direction`. The rule (docs/FILTERING.md «What a marker
-  // SHOWS»): the marker indicates the entity its tap ACTS ON — the cover
+  // `switch.*_reverse_direction`. The rule (docs/DEVICE-PRESENTATION.md «Source precedence: what a marker
+  // shows»): the marker indicates the entity its tap ACTS ON — the cover
   // exactly when the owner has explicitly chosen «Открыть/закрыть».
   const devEl = (dev) => {
     // The viewport may refit asynchronously after an editor transition. Use

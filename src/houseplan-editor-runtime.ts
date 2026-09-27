@@ -3730,7 +3730,7 @@ public _decorPointerDown(ev: PointerEvent): boolean {
     // between letters appear to erase only the selection outline.
     if (t === 'select') this.host._decorSel = null;
     // …and under its own tool the picture is grabbable by its body
-    // (docs/BACKDROP.md §2). Only INSIDE the image rect: press beside the
+    // (docs/DECOR-EDITOR.md §3.2). Only INSIDE the image rect: press beside the
     // picture and the plane still pans with one finger.
     if (this.host._bdMovable) {
       const r = this.host._bdRect!;
@@ -4450,7 +4450,7 @@ public _furnPlace(raw: number[], free = false, pointerType = 'mouse'): void {
       ...decorStylePatch(this.host._decorStyle, false),
     };
     // a straight piece stores no angle at all, exactly as a straight label
-    // stores none (docs/LIVE-TEXT.md §3)
+    // stores none (docs/DECOR-EDITOR.md §5.3)
     if (placement.angle) shape.angle = placement.angle;
     sp.decor = [...this.host._decorList, shape];
     this.host._decorSel = id;
@@ -4797,7 +4797,7 @@ public _bdUp(): void {
 public _renderBackdropFrame(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
     const r = this.host._bdRect;
     if (!this.host._bdActive || !r) return nothing;
-    // Two radii, one gesture — the split the text frame uses (docs/LIVE-TEXT.md
+    // Two radii, one gesture — the split the text frame uses (docs/DECOR-EDITOR.md §5
     // §3) and, since 2026-08-05, every corner handle in the card. `hr` is the
     // HIT radius: a fraction of the visible view, so the target stays
     // finger-sized at any zoom. `kr` is what you SEE — a quarter of it, because
@@ -5066,7 +5066,7 @@ public _renderEditorSecondary(): TemplateResult | typeof nothing {
 public _renderDecorBar(): TemplateResult {
     const tools = [
       ['select', 'mdi:cursor-default-outline', 'decor.select'],
-      // moving the picture is a TOOL (docs/BACKDROP.md §2) — offered only when
+      // moving the picture is a TOOL (docs/DECOR-EDITOR.md §3.2) — offered only when
       // there IS a picture, so a hand-drawn space's bar is unchanged
       ...(this.host._bdRect ? [['backdrop', 'mdi:image-move', 'decor.backdrop'] as const] : []),
       ['line', 'mdi:vector-line', 'decor.line'],
@@ -8147,7 +8147,7 @@ public async _saveSpaceDialog(): Promise<void> {
       // (the uploaded file stays on disk; only the reference is cleared).
       // Its transform goes with it — there is nothing left for plan_x/plan_y/
       // plan_scale to describe, and a stale one would silently apply to the
-      // NEXT picture uploaded here (docs/BACKDROP.md §1).
+      // NEXT picture uploaded here (docs/DECOR-EDITOR.md §3 §1).
       if (d.source === 'draw') {
         sp.plan_url = null; sp.plan_aspect = null;
         delete sp.plan_x; delete sp.plan_y; delete sp.plan_scale;

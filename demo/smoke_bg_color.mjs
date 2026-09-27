@@ -211,7 +211,7 @@ checkAll(res);
 // .hp-paper shapes sit under everything the plan draws. Since v1.58.0 the
 // paper is the ROOM CONTOURS and ONLY them — one shape per room, never their
 // bounding box (section 12), and never the backdrop image rect either
-// (docs/BACKDROP.md §3). The demo's f1 IS an image plan, so this section now
+// (docs/DECOR-EDITOR.md §3.3). The demo's f1 IS an image plan, so this section now
 // asserts the new rule on exactly the case that used to be the exception.
 // The scene colour is visible ONLY around the paper. The four-phase
 // environment changes only outside it and adds an alpha-aware outer outline.

@@ -666,7 +666,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     ? resolveDayCycle(planHass, o.dayCycleNow ?? new Date()) : null;
   const stageBg = stageBgOf(o.cfg?.settings, disp);
 
-  // Opaque plan paper, same contract as the full card (docs/BACKDROP.md §3):
+  // Opaque plan paper, same contract as the full card (docs/DECOR-EDITOR.md §3.3):
   // the paper is ALWAYS the ROOM CONTOURS and only them — never their bounding
   // box, and (since v1.58.0) never the backdrop image rect either. The scene
   // colour therefore reaches the exterior walls of an L-shaped house, fills the

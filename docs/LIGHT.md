@@ -214,8 +214,121 @@ is retained and visibly warned about; runtime uses the fallback until it
 returns. Capability comes from binding/registry metadata, never from a
 transient `unknown`, `unavailable` or missing state snapshot.
 
-The complete UI and runtime truth table lives in
-[`DEVICE-LIGHT-SETTINGS-MATRIX.ru.md`](DEVICE-LIGHT-SETTINGS-MATRIX.ru.md).
+The complete UI and runtime truth table is the next section.
+
+## Device light settings: role × source × mode (#84, #88)
+
+Legend: **A** — «Auto» found the device's own spatial source; **S** — the
+device has its own controllable `light.*`/`switch.*` able to report state and
+take a service call; **Source** — the device takes part in Glow, the «Light»
+fill, the room card and room statistics; **Live** — the «From source» colour
+mode is available; **Manual** — manual colour and manual brightness are
+available; **R** — the local Glow radius is available. `Auto → fixed` — the
+stored mode is not rewritten, but UI and runtime give a passive source the safe
+fallback: the shared colour at 100 % brightness.
+
+The combination `A = yes, S = no` is listed for completeness of the contract
+and for mutation tests; the resolver cannot reach it (an automatically found
+source always has a real `light.*`). The other 27 rows are reachable.
+
+| # | Role | A | S | Stored mode | Source | Passive | Live | Manual | R | Effective mode |
+|---:|---|:---:|:---:|---|:---:|:---:|:---:|:---:|:---:|---|
+| 1 | Auto | no | no | From source | no | no | no | no | no | From source, disabled |
+| 2 | Auto | no | no | Set colour | no | no | no | no | no | Set colour, disabled |
+| 3 | Auto | no | no | Colour and brightness | no | no | no | no | no | Colour and brightness, disabled |
+| 4 | Auto | no | yes | From source | no | no | no | no | no | From source, disabled |
+| 5 | Auto | no | yes | Set colour | no | no | no | no | no | Set colour, disabled |
+| 6 | Auto | no | yes | Colour and brightness | no | no | no | no | no | Colour and brightness, disabled |
+| 7 | Auto | yes | no | From source | yes | yes | no | yes | yes | Auto → fixed (theoretical) |
+| 8 | Auto | yes | no | Set colour | yes | yes | no | yes | yes | Set colour (theoretical) |
+| 9 | Auto | yes | no | Colour and brightness | yes | yes | no | yes | yes | Colour and brightness (theoretical) |
+| 10 | Auto | yes | yes | From source | yes | no | yes | yes | yes | From source |
+| 11 | Auto | yes | yes | Set colour | yes | no | yes | yes | yes | Set colour |
+| 12 | Auto | yes | yes | Colour and brightness | yes | no | yes | yes | yes | Colour and brightness |
+| 13 | Always | no | no | From source | yes | yes | no | yes | yes | Auto → fixed |
+| 14 | Always | no | no | Set colour | yes | yes | no | yes | yes | Set colour |
+| 15 | Always | no | no | Colour and brightness | yes | yes | no | yes | yes | Colour and brightness |
+| 16 | Always | no | yes | From source | yes | no | yes | yes | yes | From source |
+| 17 | Always | no | yes | Set colour | yes | no | yes | yes | yes | Set colour |
+| 18 | Always | no | yes | Colour and brightness | yes | no | yes | yes | yes | Colour and brightness |
+| 19 | Always | yes | no | From source | yes | yes | no | yes | yes | Auto → fixed (theoretical) |
+| 20 | Always | yes | no | Set colour | yes | yes | no | yes | yes | Set colour (theoretical) |
+| 21 | Always | yes | no | Colour and brightness | yes | yes | no | yes | yes | Colour and brightness (theoretical) |
+| 22 | Always | yes | yes | From source | yes | no | yes | yes | yes | From source |
+| 23 | Always | yes | yes | Set colour | yes | no | yes | yes | yes | Set colour |
+| 24 | Always | yes | yes | Colour and brightness | yes | no | yes | yes | yes | Colour and brightness |
+| 25 | Never | no | no | From source | no | no | no | no | no | From source, disabled |
+| 26 | Never | no | no | Set colour | no | no | no | no | no | Set colour, disabled |
+| 27 | Never | no | no | Colour and brightness | no | no | no | no | no | Colour and brightness, disabled |
+| 28 | Never | no | yes | From source | no | no | no | no | no | From source, disabled |
+| 29 | Never | no | yes | Set colour | no | no | no | no | no | Set colour, disabled |
+| 30 | Never | no | yes | Colour and brightness | no | no | no | no | no | Colour and brightness, disabled |
+| 31 | Never | yes | no | From source | no | no | no | no | no | From source, disabled (theoretical) |
+| 32 | Never | yes | no | Set colour | no | no | no | no | no | Set colour, disabled (theoretical) |
+| 33 | Never | yes | no | Colour and brightness | no | no | no | no | no | Colour and brightness, disabled (theoretical) |
+| 34 | Never | yes | yes | From source | no | no | no | no | no | From source, disabled |
+| 35 | Never | yes | yes | Set colour | no | no | no | no | no | Set colour, disabled |
+| 36 | Never | yes | yes | Colour and brightness | no | no | no | no | no | Colour and brightness, disabled |
+
+A manual colour on a stateful source keeps the live brightness; «Colour and
+brightness» fixes both. A passive source has no live brightness, so «Set
+colour» means 100 % and «Colour and brightness» uses the stored value.
+
+### Leading entity (#88)
+
+| Role | Own controllable entities | Stored `light_entity` | UI and runtime |
+|---|---:|---|---|
+| Auto / Never | any number | any value | Selector hidden; the field is kept unchanged but does not affect the current role |
+| Always | 0 | absent | Passive source, selector hidden |
+| Always | 1 | absent | The only entity is chosen automatically, selector hidden |
+| Always | 2+ | absent | Selector shown; fallback `binding → primary → first controllable` |
+| Always | 1+ | valid value | The chosen entity provides state and the service target |
+| Always | any number | entity disappeared | Warning; temporary fallback, the stored reference is not erased |
+
+The choice does not depend on the current `on/off/unavailable`: capability
+comes from the binding and the HA registry, live state is handled separately.
+
+### «Controls other light sources» links (#84)
+
+| Target in `controls` | Target state | Controller's service call | Glow and statistics |
+|---|---|---|---|
+| `light.*` / `switch.*` | The entity's actual state; a group — `any(on)` | Real entity ids only | A real separate marker owns the position; otherwise the target takes part without a separate pool at the controller |
+| `marker:<id>` stateful | The target's leading entity state | The target's leading entity, deduplicated | Position, room, colour and radius belong to the marker target |
+| `marker:<id>` passive, one controller | Its real targets, otherwise its own leading entity | `marker:*` itself is never sent to HA | The passive lamp follows the controller and shines at its own position |
+| Passive, several controllers | OR of all active driver entities | Per action — only its real targets | One source and one room vote, no duplicates |
+| Exact `virtual` + «Always» + Toggle, links present | OR of all active driver entities; the manual bit temporarily abstains | Controller click — its group; lamp click — deduplicated union of all its drivers | HA state alone drives Glow, fill, statistics and both markers |
+| Exact `virtual` + «Always» + Toggle, no links | Operational Store #107; no record = `on` | Lamp click changes only the operational state, no HA service | Manual state is shared by full/static cards and survives a restart |
+| Passive without stored links, not the exact mode of #107 | Always `on` | No own call | Constant Glow and `1 of 1` |
+| Links present, but every driver is hidden/disabled/removed | `off` / dormant | No call on a broken target | The link is kept, no pool |
+| Direct entity + `marker:` on the same stateful source | One effective state | One service target | One source and one vote |
+| Target moved from «Always» to «Auto without source»/«Never» | Dormant | No marker service | The link is kept and revives on return to «Always» |
+| Target hidden or HA-disabled | Dormant | No marker service | Not drawn, no effect on the room |
+| Target removed from the plan | The reference is removed atomically | No | The device can be added again |
+| Broken legacy ref | Ignored with a diagnostic | No | Open → Save does not destroy the reference |
+| Self-link / new cycle | Forbidden | — | The UI does not offer it, the backend rejects the write/import |
+
+Links are allowed across rooms and spaces of one plan. Exporting a single
+space remaps internal `marker:` references together with marker ids and drops
+external ones with a warning in the preview.
+
+### Independent display switches
+
+| Setting | Effect on the light model |
+|---|---|
+| «Icon + state» | The device shell shows its resolved working state; Glow follows the matrix above |
+| «Icon + state and activity» | Additionally a short or constant ripple; the light source does not change |
+| «Value + state» | Changes only the marker content; the light source does not change |
+| «Always static icon» | Blocks the dynamics of the icon/shell itself but does not cancel separately configured Glow, «Light» fill and room statistics |
+| Glow off for the space | Pools are not drawn, but the source, the room state and the «Light» fill are still computed |
+| Marker hidden / HA-disabled | The marker and its own source take no part in the plan regardless of other settings |
+
+What holds this section: all 36 rows of the first table —
+`test/devices.test.mjs`, «issues 84/88: exhaustive 36-case light settings
+matrix is internally consistent»; the leading-entity choice, stale fallback,
+passive OR, dormant links, alias dedupe, lifecycle and the ban on sending
+`marker:*` to HA — the neighbouring unit tests of the same file; the context
+selector, passive gating and plan-source picker — browser smokes; new links,
+cycles and cross-space transfer — `tests_backend/`.
 
 ## What the tests hold
 

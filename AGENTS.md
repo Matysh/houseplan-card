@@ -35,9 +35,12 @@ route and `test/entry-cost.test.mjs` keeps this list equal to its routes:
 The two digests quote and link `PROCESS.md` section by section; it stays the
 only complete canon and wins any disagreement, so open the linked section
 whenever a digest line governs your current step. For non-trivial changes add
-`docs/ARCHITECTURE.md` plus the canonical document of the subsystem you touch:
+`docs/ARCHITECTURE.md` plus the canonical document of the subsystem you touch
+(one list, the same one the reviewer prompt in `_process.yml` reads):
 `SUN.md`, `LIGHT.md`, `CANVAS.md`, `WALL-THICKNESS.md`, `UX-MODES.md`,
-`CONFIG-COMPATIBILITY.md`, `TOUCH-SUPPORT.md`.
+`CONFIG-COMPATIBILITY.md`, `TOUCH-SUPPORT.md`, `ISOMETRIC.md`, `VACUUM.md`,
+`DECOR-EDITOR.md`, `DEVICE-PRESENTATION.md`, `FILTERING.md`, `STAIRS.md`,
+`RADAR.md`, `PDF-EXPORT.md`, `STYLING-HOOKS.md`.
 
 Standard commands live in `package.json` scripts, `CONTRIBUTING.md` and
 `docs/DEVELOPMENT.md`.

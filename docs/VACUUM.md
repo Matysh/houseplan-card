@@ -1,8 +1,7 @@
 # Live robot vacuums on the plan
 
-Status: implemented contract for the v1.61 development cycle. Stage 1 covers
-Tier-A integrations. Roomba string-position support remains a separate Stage 2
-issue and is not claimed here.
+This is the contract for the integration families in the coverage table
+below. Roomba's core `position` string is not covered.
 
 ## What the user sees
 
@@ -18,7 +17,7 @@ HA-disabled or `static_icon` marker has no puck, trail or room overlay.
 | Xiaomi Cloud Map Extractor | Yes, when the attributes below are enabled | Yes | Yes, including `path.path` subpaths | `map_name` when exposed | Usually explicit camera selection |
 | dreame-vacuum (Tasshack) | Yes | Yes; explicit room `x/y` is the anchor | No | Vacuum `selected_map` fallback | Automatic on the same HA device |
 | Valetudo camera conventions | Yes | Yes when room data is exposed | No | Often `default`; no stable multi-floor promise | Automatic on the same HA device |
-| Roomba core `position` string | Not in Stage 1 | No | No | — | Stage 2 |
+| Roomba core `position` string | Not covered | No | No | — | not covered |
 
 For Xiaomi Cloud Map Extractor the camera must expose:
 
@@ -185,7 +184,7 @@ Server recording is independent of the display mode. The source
 health monitor checks saved marker/source pairs on config refresh and restart:
 one warning is emitted for a missing/disabled incident, reason changes are
 deduplicated, and another warning is possible only after proven recovery.
-Detection is intentionally refresh/restart based in Stage 1; no extra entity
+Detection is intentionally refresh/restart based; no extra entity
 registry subscription is installed.
 
 ## Storage and lifecycle
@@ -242,7 +241,7 @@ debounced persistence and live-update path as a later state event.
    Plan will not guess a replacement.
 
 Commands, zones/no-go polygons, cleaning-history UI and Roomba string parsing
-are outside Stage 1.
+are outside this contract.
 
 ## Deleting and restoring a vacuum marker (#369)
 

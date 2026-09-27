@@ -15,10 +15,11 @@ The machine-readable source of truth is
 - migration behaviour;
 - the read-compatibility decision.
 
-This registry initially covers the known compatibility and internal-field debt
-identified by HP-DATA-01. It is not yet the complete canonical schema. The next
-stage is to register all current public fields and add automated parity against
-the TypeScript model and backend Voluptuous validation.
+The registry started from the compatibility and internal-field debt identified
+by HP-DATA-01 and has grown with every model change since; the TypeScript model
+and the backend Voluptuous schema are checked against each other by tests
+(#33), so a field that is missing here is a documentation gap, not an unknown
+schema.
 
 ## Offline inventory
 
@@ -870,3 +871,162 @@ retain the full-space migration, physical and junction barrier. Old frontends
 and old backends therefore see no new field or protocol, and a backend rejection
 still rolls the complete pending physical transaction back to its earliest
 snapshot.
+
+## Optimize plans: explicit whole-plan maintenance («Оптимизировать планы»)
+
+Existing and imported plans may still hold grid-bound coordinates between the
+nodes. Ordinary grid-bound editor operations do not create more; explicitly
+continuous objects are exempt (the snap contract itself is `CANVAS.md` §9). General settings contain
+a **Plan maintenance** group whose action previews and then repairs old
+data through all current passes: model upgrades, mandatory grid
+alignment, exact open-span canonicalisation and wall-interval compaction.
+Unlike live snapping, the explicit maintenance pass also replaces a stored
+coordinate which is only one or several ULPs away from its node with the exact
+computed node. That has no visible displacement but removes topology noise at
+its persisted source.
+
+Why an action rather than a silent migration:
+
+1. It moves the user's data without asking. A house plan is a drawing;
+   the card has no mandate to redraw it on a version bump.
+2. A silent migration is unattributable. When a room looks 3 cm wrong
+   the owner cannot tell whether the card did it or they did.
+3. An update that touches stored geometry cannot be rolled back by
+   downgrading the card. The explicit action has a one-deep snapshot and
+   can also simply not be pressed.
+
+`optimizePlans(config, layout)` (`src/plan-optimizer.ts`) is the pure
+orchestrator. It converts legacy fields with an exact mapping, projects
+`open_spans` (or the `open_to` fallback) into stable zero-thickness wall atoms,
+calls the grid projection, rekeys exact wall endpoints onto moved rooms,
+compacts consecutive atoms only when thickness and physical ownership both
+match, and stamps `model_version`. Outer/shared transitions and changes of
+shared-room pair remain exact breakpoints even at equal thickness. Unknown
+fields are preserved and every pass is idempotent.
+
+The explicit pass also repairs pre-existing near-axis room walls, saved wall
+chains and independent walls after ordinary grid alignment (#290). Coincident
+room-owner copies count as one physical wall and move as one endpoint
+equivalence class. The preview reports the unique count, maximum physical
+movement and unsafe skipped candidates; only Confirm writes, and Undo restores
+the prior geometry. Exact axes and true diagonals are not candidates.
+
+The optimizer deliberately does **not** alter backdrop calibration or saved
+view boxes, deduplicate markers, or delete files. It may delete an unattached
+layout entry only after classifying its owner against current rooms, marker
+tombstones and an authoritative HA device/entity roster. Proven-absent room
+labels, devices and group markers are cleaned; live owners are preserved unless
+the administrator explicitly opts into removing their old positions, and an
+incomplete registry or unknown namespace always fails closed. The cleanup is
+part of the pure candidate, Undo and idempotence contract. File collection
+remains the backend's reference-aware scheduled job.
+
+`alignAllToGrid(spaces, layout)` (`src/align-grid.ts`) is pure: it
+copies its input, never mutates it, and returns the new spaces, the new
+layout and the report. The dialog therefore measures and commits the
+**same object** — the numbers it promises cannot differ from what it
+does. The resulting config+layout pair is sent to
+`houseplan/plan/optimize`; the backend persists a durable intent before
+either store changes, commits both revisions, and retains one snapshot.
+`houseplan/plan/optimize_undo` restores it only while neither revision
+has changed since the optimization. A crash between store writes is
+completed from the intent on the next integration setup.
+
+The grid pass deliberately excludes the complete transform of `furniture`,
+uploaded `image` decor and `spaces[].stairs[]`. Their position, size and
+rotation are continuously authored values (#383, #663), so changing even one of those fields would make
+Optimize create debt from a normal editor operation. Other decor kinds and
+storage-level numeric canonicalization keep their existing grid contract
+(#477).
+
+The pair returned by `optimizePlans` passes the same lattice-aware boundary as
+the storage writers **before** visible Align and before `changed` is computed.
+This boundary is required because the normalized grid step `1 / 240` has no
+finite decimal representation: an exact node and a nine-decimal JSON echo may
+be visually identical but not `===`. Update-event reload and a cold read
+therefore receive exactly the pair retained by the preview, and a second run
+cannot manufacture fresh coordinate noise (#248, #291).
+
+Model v8 adds a second, identity-preserving stage at this write boundary
+(#282). `materializeWallSegmentModel()` atomizes canonical room contours into
+`wall_segments[]`, keeps the deterministic parent ID on one split child, emits
+UUIDs only for genuinely new v8 atoms, and refreshes `rooms[].wall_ids[]`,
+draft IDs and tagged opening hosts together. The historical `walls[]` entries
+are regenerated from this catalog as a compatibility view. Reading or fitting
+the canvas never runs this migration; only physical edits, Optimize and a
+v7-to-v8 import may materialise it. Failure keeps the previous view, history
+and persisted revision intact.
+
+Guarantees are covered by `test/align-grid.test.mjs` and the orchestration/
+idempotence case in `test/plan-optimizer.test.mjs`:
+
+* every grid-bound element ends on a node; a rect's FAR corner too (a
+  snapped *size* on an off-grid origin leaves the other side between
+  the nodes);
+* an opening ends on its wall, at whole steps along it, inside it, and
+  **with the wall's own angle** — the angle is written, so it is part of
+  the diff (AUD-158B1-02: an opening already on its wall with a wrong
+  angle used to be returned changed inside `changed: false`, which made
+  it unfixable);
+* a stray opening with no wall within 6 steps is left exactly where it
+  is rather than teleported;
+* **idempotent across storage**: a second run in memory, after the lattice-aware
+  writer round-trip, after update-event reload or after a cold read reports
+  `moved: 0`, `changed: false`, and `latticeCoordinatesCanonicalized: 0`, and returns
+  objects deep-equal to the first persisted result;
+* the report is an **upper bound**, not a sample (AUD-158B1-01).
+
+Before a changed preview can expose Apply, `checkOptimizeGeometry(config)`
+(`src/plan-geometry-preflight.ts`) runs the exact candidate through the shared
+production input projection and canonical wall/floor boolean builders for every
+space. `failed-core`, `degraded-extra` or an exception is a structural failure;
+an empty successful geometry and an empty/image-only space are not. One failure
+blocks the whole operation and the endpoint is not called. The dialog retains
+only bounded statuses plus `contentFingerprint(candidate.config)`: unchanged
+Apply reuses that result, while a changed fingerprint is checked again and
+fails closed.
+This frontend barrier does not replace backend permission, schema, revision or
+crash-recovery checks and is not a security attestation from an untrusted
+client.
+
+The same projection has a one-space transaction entry point for ordinary
+physical edits (#278). Room/wall/open-span/opening/partition/column
+candidates are validated before entering Undo or the save queue. A physical
+fingerprint is rechecked immediately before the deferred config write; failure
+restores the saved geometry and produces no WebSocket call. Presentation-only
+edits deliberately do not invoke this barrier, so a legacy degraded plan can
+still be renamed, exported and inspected.
+
+### The report is a promise
+
+The confirmation is the decision gate in front of a geometry rewrite, so
+`maxShift`/`maxShiftCm` must never be smaller than what the run does:
+
+* displacement is measured on the geometry **actually written back** —
+  all FOUR corners of a rect, minimum-size correction included. The two
+  corners nobody used to measure are exactly the two that can be worst:
+  they carry the X error of one side together with the Y error of the
+  other, which is √2 of either;
+* an opening is measured on its **ends**, flip-invariantly, so turning
+  it in place costs what it really costs and a 180° rewrite costs
+  nothing;
+* the maximum is accumulated in **centimetres**, each space through its
+  own `cell_cm`, and the report names the space it belongs to. One
+  normalised maximum converted through the *first* space's cell size
+  promised 2.5 cm for a vertex that moved 50 cm on a 100 cm floor;
+* the dialog rounds the last tenth **up** and, on a multi-space plan,
+  says which space the maximum is in; openings corrected in angle alone
+  are counted on a line of their own.
+
+`latticeCoordinatesCanonicalized` counts individual near-node coordinate
+components actually rewritten by the storage boundary. Its maximum is measured
+in each value's own `cell_cm`, displayed with three significant digits and kept
+separate from visible `moved/maxShift*`. Only touched spaces receive a detail
+line; each line also states how many authored off-grid components were observed
+and left unchanged. Layout values without a named space contribute only to the
+summary. The older `coordsCanonicalized` remains an internal Align counter and
+does not absorb this storage-only work.
+
+One undo is available until the next config or layout edit. It restores
+the stored snapshot; re-running optimization itself is never treated as
+undo because a grid projection is not invertible.

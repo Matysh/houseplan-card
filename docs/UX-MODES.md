@@ -34,8 +34,9 @@ obvious at a glance:
 
 **[ 📐 Plan editor ] [ 🔧 Device editor ] [ ✏️ Background editor ]** — View has
 NO tab (since v1.30.2). The Background editor (v1.33.0) manages a purely visual
-decor layer (lines/rects/ovals/text in `space.decor`, drawn under the rooms,
-inert everywhere outside its editor).
+decor layer (lines/rects/ovals/text/furniture/images in `space.decor`, one layer
+above room fills and Glow base and below live Glow, walls, devices and labels —
+`DECOR-EDITOR.md` §1; inert everywhere outside its editor).
 
 - **View** is the implicit default state: no editor tab is active. Navigation
   persistence remembers only the last space. Reloading the page or leaving
@@ -202,8 +203,8 @@ layer you cannot see is a layer you cannot edit.
   while editing a plan, device placement or its underlay makes those modes
   visually ambiguous. Their solid/dashed choice still affects light while the
   line itself is hidden.
-- **`show_names: false` means no permanent fallback label.** View, kiosk,
-  hidden isometric and `houseplan-space-card` all omit the room name. Plan may
+- **`show_names: false` means no permanent fallback label.** View (Flat and
+  2.5D), kiosk and `houseplan-space-card` all omit the room name. Plan may
   show the same HTML card temporarily so its saved position remains editable;
   returning to View hides it again. Re-enabling names restores the saved
   layout rather than creating a new one.
@@ -290,25 +291,16 @@ layer you cannot see is a layer you cannot edit.
 4. Legacy localStorage mode (card without the integration) — candidate for removal
    in the next major; adds branching for a half-working scenario.
 
-## Approved follow-up features (from issue #3, by priority)
+## Follow-up features from issue #3 — all shipped
 
-1. State-reflecting icons (open/closed door variants etc., like core HA).
-2. `display: value` — show the measurement instead of an icon.
-3. Light color in the activity effect (RGB lights). *(Shipped in v1.27.0;
-   superseded in v1.52.0: the colour lives in the glow spot and the activity
-   fallback only, the icon tint was removed by the owner's rule.)*
-4. Alarm visual (leak/smoke/doorbell): red pulse overlay.
-5. Rooms as sub-areas without an HA area + manual device placement by room id.
-6. Backlog (not planned): music notes for players, directional TV effects.
-
-## Implementation iterations
-
-- **It.1 — mode shell:** the segmented control, mode state, View-mode gating of all
-  edit interactions/buttons (biggest UX win, smallest surface).
-- **It.2 — Plan tab:** move markup tools + space dialogs + labels drag + openings
-  editing under Plan; colored frame indicator.
-- **It.3 — Devices tab:** drag + direct-edit click + filtering tools under Devices.
-- **It.4+:** follow-up features 1–5 above, each its own release.
+The five follow-ups approved with this design are in the product: state-
+reflecting icons and the alarm pulse (`DEVICE-PRESENTATION.md`), `display:
+value` (the value face), the light colour in the activity effect (v1.27.0,
+narrowed in v1.52.0 to the Glow spot and the activity fallback — the icon tint
+was removed by the owner's rule) and rooms without an HA area with manual
+placement by room id. The three implementation iterations (mode shell, Plan
+tab, Devices tab) are history in the changelog. Not planned: music notes for
+players, directional TV effects.
 
 
 ## Kiosk mode (v1.41.0)

@@ -1280,7 +1280,7 @@ _GEOM = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
 # than the old unit square — while staying strictly positive.
 _EXTENT = vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT))
 
-# The backdrop's uniform scale (docs/BACKDROP.md). A MULTIPLIER, not a
+# The backdrop's uniform scale (docs/DECOR-EDITOR.md §3). A MULTIPLIER, not a
 # coordinate: strictly positive, and bounded by what a person could mean —
 # a hundredth of the canvas is already a thumbnail, a hundred canvases is
 # already absurd. Mirrored by PLAN_SCALE_MIN/MAX in src/space-geometry.ts.
@@ -1428,7 +1428,7 @@ SPACE_DISPLAY_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
-# Live text on a decor label (docs/LIVE-TEXT.md). An entity id is
+# Live text on a decor label (docs/DECOR-EDITOR.md §5). An entity id is
 # `<domain>.<object_id>`; HA itself allows only lowercase letters, digits and
 # underscores in both halves. The bound is a sanity limit, not a policy.
 MAX_ENTITY_ID = 255
@@ -1490,7 +1490,7 @@ DECOR_SCHEMA = vol.Any(
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "text",
                 vol.Required("x"): _NORM, vol.Required("y"): _NORM,
                 # the template: newlines are the user's own line breaks and are
-                # kept verbatim (docs/LIVE-TEXT.md); the label never wraps itself
+                # kept verbatim (docs/DECOR-EDITOR.md §5); the label never wraps itself
                 vol.Required("text"): vol.All(str, vol.Length(min=1, max=MAX_DECOR_TEXT)),
                 # legacy font size ('s'|'m'|'l'). The dialog no longer offers it
                 # — the block is scaled by its corner handles — but a plan
@@ -1795,7 +1795,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
         vol.Optional("plan_aspect"): vol.Any(
             None, vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20))
         ),
-        # Backdrop placement (docs/BACKDROP.md): the picture may be moved,
+        # Backdrop placement (docs/DECOR-EDITOR.md §3): the picture may be moved,
         # resized per axis and rotated. Every transform field is optional; its
         # complete absence is the pre-v1.58.0 behaviour exactly, and an old
         # config validates unchanged. The offset is a normalised

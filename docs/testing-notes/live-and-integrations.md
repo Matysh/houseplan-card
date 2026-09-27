@@ -249,7 +249,7 @@
 - [ ] Smoke: `node demo/smoke_sun.mjs`; units: `test/sun.test.mjs`;
       backend: `tests_backend/test_validation.py` (sun settings)
 
-## The text block on the plan (docs/LIVE-TEXT.md, dev, unreleased)
+## The text block on the plan (docs/DECOR-EDITOR.md §5, dev, unreleased)
 
 - [ ] **One text, many HA variables**: write `Бак {sensor.tank}, зал
       {climate.hall:current_temperature}` — both values render and update

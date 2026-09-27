@@ -1019,9 +1019,13 @@ jobs:
               4. Тело issue #${{ github.event.issue.number }} и все комментарии.
               5. Если меняется видимое поведение — docs/USER-GUIDE.ru.md:
                  терминология интерфейса берётся оттуда, а не изобретается.
-              6. Канонический документ затронутой подсистемы: docs/SUN.md,
-                 LIGHT.md, CANVAS.md, WALL-THICKNESS.md, UX-MODES.md,
-                 CONFIG-COMPATIBILITY.md, TOUCH-SUPPORT.md.
+              6. Канонический документ затронутой подсистемы (тот же список,
+                 что в AGENTS.md «Read this first»): docs/SUN.md, LIGHT.md,
+                 CANVAS.md, WALL-THICKNESS.md, UX-MODES.md,
+                 CONFIG-COMPATIBILITY.md, TOUCH-SUPPORT.md, ISOMETRIC.md,
+                 VACUUM.md, DECOR-EDITOR.md, DEVICE-PRESENTATION.md,
+                 FILTERING.md, STAIRS.md, RADAR.md, PDF-EXPORT.md,
+                 STYLING-HOOKS.md.
 
             **Если цикл не первый — объём разбора по дельте, а не заново**
             (PROCESS.md §2.10, issue #214): найди вердикт и материал

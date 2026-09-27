@@ -89,7 +89,7 @@ const res = await page.evaluate(async () => {
   const y0 = tsp[0] ? +tsp[0].getAttribute('y') : NaN;
   const y1 = tsp[1] ? +tsp[1].getAttribute('y') : NaN;
   out.blockCentredVertically = Math.abs((y0 + y1) / 2 - ay) < 0.01 && y1 > y0;
-  // длинная строка НЕ переносится сама (docs/LIVE-TEXT.md: никаких автопереносов)
+  // длинная строка НЕ переносится сама (docs/DECOR-EDITOR.md §5: никаких автопереносов)
   open(multi); await c.updateComplete;
   c._decorTextDialog = { ...c._decorTextDialog, text: 'x'.repeat(120) };
   c._decorSaveText(); await c.updateComplete;
@@ -109,7 +109,7 @@ const res = await page.evaluate(async () => {
     && frame().querySelectorAll('.dthandle').length === 5
     && !!frame().querySelector('.dtrot');
 
-  // --- визуал в 4 раза меньше, хит-зона прежняя (docs/LIVE-TEXT.md §3) ---
+  // --- визуал в 4 раза меньше, хит-зона прежняя (docs/DECOR-EDITOR.md §5.3) ---
   out.fiveVisibleKnobs = frame()?.querySelectorAll('.dtknob').length === 5;
   const rOf = (sel) => { const e = frame()?.querySelector(sel); return e ? +e.getAttribute('r') : NaN; };
   const hitR = rOf('.dthandle.dtrot');

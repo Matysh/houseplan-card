@@ -888,7 +888,7 @@ export const planStyles = css`
       outline: 2px solid #26a69a;
       outline-offset: -2px;
     }
-    /* backdrop transform frame (docs/BACKDROP.md §2). Editor chrome: the
+    /* backdrop transform frame (docs/DECOR-EDITOR.md §3.2). Editor chrome: the
        outline never takes a pointer, the four corner handles do — and they are
        finger-sized (r = 2 % of the visible view), because this is dragged on a
        tablet as often as with a mouse. */

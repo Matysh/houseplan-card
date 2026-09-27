@@ -979,7 +979,7 @@ export function floorsOf(hass: any): FloorInfo[] {
   return list;
 }
 
-// ---------------- live text on a decor label (docs/LIVE-TEXT.md) -------------
+// ---------------- live text on a decor label (docs/DECOR-EDITOR.md §5) -------------
 
 /** What a dead sensor says. A label that vanishes with its entity is worse
  *  than one that admits it has no data. */
@@ -1149,7 +1149,7 @@ export function valueWithUnit(v: HassValue, own: string, explicit?: string | nul
 
 /**
  * The live value of a linked label, unit included — formatted the way HOME
- * ASSISTANT formats it (docs/LIVE-TEXT.md §2.1, docs/STYLING-HOOKS.md §6).
+ * ASSISTANT formats it (docs/DECOR-EDITOR.md §5.2, docs/STYLING-HOOKS.md §6).
  *
  * We still write no rounding logic of our own: the value goes through
  * `hassValue`, which hands it to HA's formatter, so `display_precision`, the

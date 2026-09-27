@@ -56,12 +56,12 @@ export function fitInSquare(ratio: number | null | undefined, side: number) {
   return { x: (side - w) / 2, y: (side - h) / 2, w, h };
 }
 
-/** Per-axis backdrop scale bounds — mirrors validation.py (docs/BACKDROP.md). */
+/** Per-axis backdrop scale bounds — mirrors validation.py (docs/DECOR-EDITOR.md §3). */
 export const PLAN_SCALE_MIN = 0.01;
 export const PLAN_SCALE_MAX = 100;
 
 /**
- * WHERE THE BACKDROP IMAGE SITS (docs/BACKDROP.md).
+ * WHERE THE BACKDROP IMAGE SITS (docs/DECOR-EDITOR.md §3).
  *
  * `fitInSquare` is only the DEFAULT placement: the image centred in the square
  * canvas at its own proportions. On top of it a space may carry an optional
@@ -330,7 +330,7 @@ export function contentItems(
     if (item) out.push(item);
   }
   // The backdrop image is ONE OF the objects of the space, exactly like a room
-  // (docs/BACKDROP.md §4): cropping to the outlined rooms would hide the parts
+  // (docs/DECOR-EDITOR.md §3 §4): cropping to the outlined rooms would hide the parts
   // of the picture nobody has drawn over yet, and — since v1.58.0 — the
   // rectangle here is the MOVED and SCALED one, so «Вписать всё» follows the
   // picture wherever the owner has dragged it.

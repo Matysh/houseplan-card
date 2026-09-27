@@ -1341,7 +1341,7 @@ test('openingShoulders: angled wall measures along the wall direction', () => {
 });
 
 
-// ---------------- live text on a decor label (docs/LIVE-TEXT.md) ------------
+// ---------------- live text on a decor label (docs/DECOR-EDITOR.md §5) ------------
 
 const hassLive = {
   states: {

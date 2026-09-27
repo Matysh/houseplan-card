@@ -58,6 +58,18 @@ set; maintain the existing English and Russian documentation according to the
 project's normal rules. Right-to-left layout is a separate product project,
 because the plan canvas and editors cannot be mirrored by translations alone.
 
+## Documentation screenshots
+
+The images under `docs/images/` are produced only from synthetic data by the
+`Docs screenshots` workflow (`demo/docs/capture.mjs` on the pinned Chromium)
+and accepted locally with `npm run docs:accept -- --reviewed --from=<unpacked
+artifact>`; when a change cannot move a pixel, `npm run docs:accept --
+--identical` re-captures locally, compares decoded pixels and refreshes only the
+source fingerprint. Scenario version, source fingerprint and every image hash
+are recorded in the [screenshot index](docs/images/screenshots.json), and
+`node scripts/check-docs.mjs` reports a stale fingerprint before a beta
+candidate. The full rule is in `PROCESS.md` (documentation screenshots).
+
 ## Where to ask
 
 Not sure whether something is a bug, or just want to discuss an idea before

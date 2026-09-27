@@ -102,6 +102,20 @@ The public setting remains a two-value selector. `static` uses `bg_color`.
   static.
 - The background is independent of `north_deg`. North remains required only
   for direction-dependent window rays.
+- **The scene background never bleeds through the plan** (owner, 2026-08-03).
+  In both modes the background — `bg_color` or the day-cycle environment — is
+  visible only AROUND the plan: opaque `.hp-paper` shapes sit under everything
+  the plan draws. The paper is the ROOM CONTOURS in every case — one shape per
+  room in exactly the room's own geometry (fill only, no stroke), never their
+  bounding box, so the background reaches the exterior walls of an L-shaped
+  house and fills the gaps between detached buildings; an empty drawn space
+  has no paper, and a plan image does not paper its own rectangle (it is drawn
+  on top of the room paper, `DECOR-EDITOR.md` §3.3). Open (virtual)
+  boundaries do not affect the paper; a live resize preview moves it together
+  with the rooms. Its colour is the pre-`bg_color` canvas — white for
+  hand-drawn plans, the theme card background under an image — and its alpha
+  never changes. Applies to view/kiosk/editors and the static space card alike
+  (`demo/smoke_bg_color.mjs`).
 
 New installations materialize global `daynight`; every manually or
 Floors/Areas-created space materializes its own `daynight`. The storage v1.2
@@ -114,81 +128,6 @@ carries its effective mode and a legacy space import without one becomes
 
 The exact palette, positioning formulas, migration matrix, lifecycle, and
 acceptance criteria are in `docs/specs/146-four-phase-sun-background.md`.
-
-## Historical continuous background (removed by #146)
-
-The remainder of this section documents the pre-#146 elevation-interpolated
-implementation for archaeology only. It is not a current runtime or UX
-contract: the 45-second sky glide, `skysnap`, compass gate, and night
-brightness filter described below were removed.
-
-- Global default in the general settings, per-space override (null =
-  inherit). Default `'static'`.
-- `'static'` — the existing `bg_color` behaviour, color picker and
-  all. Nothing changes for existing installs.
-- `'daynight'` — the stage background follows the sun's elevation:
-  WHITE at full day (the brightest moment of the day is white — owner,
-  2026-08-03), a warm bright shift in the golden hour (elevation below
-  ~10°), cooling through dusk, deep darkening at night. The scale
-  (piecewise-linear between stops, `BG_STOPS` in `src/sun.ts`):
-
-  | elevation | color | phase |
-  | --- | --- | --- |
-  | −90°…−12° | `#070c14` | deep night |
-  | −4° | `#131a28` | dusk cools down |
-  | 0° | `#4a3527` | warm band right at the horizon |
-  | +10° | `#e8ddcf` | morning light — warm and bright |
-  | +30°…+90° | `#ffffff` | plain day, white |
- The PLAN
-  itself dims only ~10% at night (`filter: brightness(.9)`), so the
-  daytime room fills stay readable. Transitions are a CSS
-  background/filter transition tens of seconds long;
-  `prefers-reduced-motion` gets the current colors statically.
-- **Glide, but never lag behind reality** (owner 2026-08-04: «цвет фона
-  не меняется сам с течением времени суток, только после
-  обновления страницы»). The sky colour and the plan dimming are
-  delivered by a 45 s CSS transition, and a CSS transition only advances
-  while the card is being PAINTED. A card that was not painting — a
-  background tab, another dashboard view, a sleeping wall tablet, an
-  editor session — comes back holding a stale sky and then crawls toward
-  the truth 45 s at a time; a page reload, by contrast, paints the right
-  colour outright, because a freshly mounted element has nothing to
-  transition FROM. So the card measures the gap: HA refreshes `sun.sun`
-  every ~4 minutes by day, i.e. ≤1° per update, and anything from
-  `SKY_SNAP_DEG` = 3° up therefore means "we were not watching". Such a
-  step is applied with `transition: none` for a single frame
-  (`.stage.daynight.skysnap`, released on the next
-  `requestAnimationFrame`); everything smaller keeps the 45 s breathing.
-  Returning after a genuinely long browser suspension arms the catch-up
-  outright. A quick tab switch or a short browser minimise preserves the
-  already painted sky and hover, so it cannot introduce a one-frame flash.
-- The elevation the sky is computed from is rounded to 0.1°
-  (`skyElevation()`) — finer than the eye can tell across a 45 s glide,
-  and it keeps `dayPhase` (and the style attribute lit has to commit)
-  from churning on every `hass` tick. The wedge GEOMETRY keeps its own,
-  coarser memo: the two have deliberately different granularity — the
-  sky is cheap, the polygon clipping is not.
-- The UI is a two-option selector; the color picker shows only for
-  `'static'`.
-- Backend validation: `In(['static', 'daynight'])` at both levels.
-- `'daynight'` follows the general gate: without `north_deg` (or
-  without `sun.sun`) it behaves as `'static'`.
-- **The scene background never bleeds through the plan** (owner,
-  2026-08-03). In BOTH modes the background — `bg_color` or the
-  daynight sky — is visible only AROUND the plan: opaque `.hp-paper`
-  shapes sit under everything the plan draws. An image plan papers the
-  backdrop image rect (the canvas IS the paper); a hand-drawn plan
-  papers the ROOM CONTOURS — one shape per room in exactly the room's
-  own geometry (fill only, no stroke), never their bounding box, so
-  the background reaches the exterior walls of an L-shaped house and
-  fills the gaps between detached buildings (an empty drawn space has
-  no paper). Open (virtual) boundaries do not affect the paper; a live
-  resize preview moves it together with the rooms. Its colour is the
-  pre-bg_color canvas — white for hand-drawn plans, the theme card
-  background under an image. The night dimming above is the
-  `brightness` filter on the zoomwrap ONLY; the paper's alpha never
-  changes. Applies to view/kiosk/editors and the static space-card
-  alike (smoke_bg_color).
 
 ## Window light wedges — `settings.sun_rays`
 

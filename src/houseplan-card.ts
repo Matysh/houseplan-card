@@ -887,7 +887,7 @@ export class HouseplanCard extends LitElement {
    *  command for an explicitly selected object. */
   private _decorEraseConfirm: { id: string; kind: DecorShape['kind'] } | null = null;
   /** The text dialog. Live references are part of `text`; `pickerEntity` is
-   *  only transient UI state and is never persisted (docs/LIVE-TEXT.md). */
+   *  only transient UI state and is never persisted (docs/DECOR-EDITOR.md §5). */
   private _decorTextDialog: {
     id?: string; x: number; y: number; text: string; color: string;
     opacity: number; angle: string; sizeCm: number;
@@ -953,7 +953,7 @@ export class HouseplanCard extends LitElement {
     moved: boolean;
   } | null = null;
   /**
-   * The live backdrop gesture (docs/BACKDROP.md §2): moving the picture by its
+   * The live backdrop gesture (docs/DECOR-EDITOR.md §3.2): moving the picture by its
    * body, scaling it by a corner handle or rotating it by the upper handle.
    * `base` is the untransformed, centred rectangle the transform is measured
    * from, so a gesture never accumulates rounding of its own.
@@ -3782,7 +3782,7 @@ export class HouseplanCard extends LitElement {
       s += (x.id || '') + ',' + (x.plan_aspect || '') + ',' + (x.plan_url || '').length + ','
         // the backdrop transform is geometry: without it in the key a drag of
         // the picture would leave the memoized model (and the content frame
-        // built from it) showing the old rectangle (docs/BACKDROP.md §5)
+        // built from it) showing the old rectangle (docs/DECOR-EDITOR.md §3.2)
         + (x.plan_x ?? '') + ',' + (x.plan_y ?? '') + ',' + (x.plan_scale ?? '') + ','
         + (x.plan_scale_x ?? '') + ',' + (x.plan_scale_y ?? '') + ',' + (x.plan_angle ?? '') + ','
         + (x.rooms?.length || 0) + ',' + (x.openings?.length || 0) + ',' + (x.decor?.length || 0) + ';';
@@ -5913,7 +5913,7 @@ export class HouseplanCard extends LitElement {
     // far away in the Plan editor kept View framing the empty ground it left
     // behind, until some unrelated model change happened to invalidate memo.
     const grow = this._mode !== 'view';
-    // A LIVE BACKDROP GESTURE FREEZES THE FRAME (docs/BACKDROP.md §2). The
+    // A LIVE BACKDROP GESTURE FREEZES THE FRAME (docs/DECOR-EDITOR.md §3.2). The
     // picture is a content item, so dragging it grows the frame — which
     // rescales the view, which changes how many plan units a screen pixel is
     // worth, mid-gesture: the picture then runs away from the finger and no
@@ -8172,7 +8172,7 @@ export class HouseplanCard extends LitElement {
   }
 
   // ---- common decor transform controller ----
-  // The mechanics are the backdrop frame's (docs/BACKDROP.md), reused
+  // The mechanics are the backdrop frame's (docs/DECOR-EDITOR.md §3), reused
   // rather than reinvented: chrome that never takes a pointer, finger-sized
   // handles that always do, the gesture written live into the config and
   // PERSISTED only if something actually moved. What differs is the pivot —
@@ -8229,7 +8229,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._confirmDecorErase();
   }
 
-  // ============ backdrop transform frame (docs/BACKDROP.md) ============
+  // ============ backdrop transform frame (docs/DECOR-EDITOR.md §3) ============
 
   /** The centred, UNTRANSFORMED rectangle of the current backdrop image. */
   private get _bdBase(): Rect | null {
@@ -8346,7 +8346,7 @@ export class HouseplanCard extends LitElement {
   /**
    * The common selected-object frame: line endpoints, or a dashed outline,
    * four corner handles and one rotation handle. Same
-   * mechanics and same handle size as the backdrop frame (docs/BACKDROP.md
+   * mechanics and same handle size as the backdrop frame (docs/DECOR-EDITOR.md §3
    * §2) — finger-sized in SCREEN terms, so it stays grabbable at any zoom —
    * and it rides the block's own rotation, so the corners stay at the corners.
    */
@@ -8530,7 +8530,7 @@ export class HouseplanCard extends LitElement {
         // The label is painted from the LIVE value on every render — the same
         // `hass` the rest of the card reads, no polling of its own. Without an
         // entity `liveText` gives the stored text back byte-for-byte, so a
-        // plain label is the plain label it always was (docs/LIVE-TEXT.md).
+        // plain label is the plain label it always was (docs/DECOR-EDITOR.md §5).
         const fs = this._decorTextUnits(sh);
         const frozenText = this._renderDeviceSnapshot?.facts.get(`decor:${this._space}:${sh.id}`);
         const lines = decorTextLines(typeof frozenText === 'string' ? frozenText : liveText(
@@ -10897,7 +10897,7 @@ export class HouseplanCard extends LitElement {
             preserveAspectRatio="xMidYMid meet">
             <g class=${iso ? 'iso-floor-scene' : nothing}
               transform=${iso ? isoFloorMatrixCss() : nothing}>
-            ${''/* THE PAPER IS THE ROOMS (docs/BACKDROP.md §3, owner
+            ${''/* THE PAPER IS THE ROOMS (docs/DECOR-EDITOR.md §3.3, owner
                    2026-08-04). Opaque shapes stop the scene background —
                    bg_color or the day-cycle environment — from bleeding through the
                    plan. They follow the ROOM CONTOURS and nothing else: one
@@ -11119,7 +11119,7 @@ export class HouseplanCard extends LitElement {
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
             ${''/* editor chrome, not plan content: the backdrop frame sits on
                    top of everything the plan draws so its handles stay
-                   grabbable (docs/BACKDROP.md §2). It exists only in the
+                   grabbable (docs/DECOR-EDITOR.md §3.2). It exists only in the
                    backdrop editor, where rooms and devices are pointer-inert. */}
             ${this._renderBackdropFrame(view)}
             ${this._renderTextFrame(view)}

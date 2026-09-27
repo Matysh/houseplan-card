@@ -255,7 +255,7 @@ def test_space_schema_drops_the_old_aspect_and_bounds_the_image_ratio():
 
 
 def test_space_backdrop_transform_is_optional_and_bounded():
-    """plan_x / plan_y / plan_scale — the backdrop placement (docs/BACKDROP.md).
+    """plan_x / plan_y / plan_scale — the backdrop placement (docs/DECOR-EDITOR.md §3).
 
     Optional to the letter: a space that has never been through the backdrop
     editor validates exactly as it did before, and the keys stay absent (there
@@ -1782,7 +1782,7 @@ class TestVacuum:
 
 
 def test_decor_text_live_fields():
-    """docs/LIVE-TEXT.md: new references live in `text`; the bounded legacy
+    """docs/DECOR-EDITOR.md §5: new references live in `text`; the bounded legacy
     entity/attribute/unit fields remain valid until an old label is edited."""
     base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
     txt = {"id": "d", "kind": "text", "x": 0.5, "y": 0.5,

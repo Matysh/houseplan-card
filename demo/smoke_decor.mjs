@@ -225,7 +225,7 @@ const res = await page.evaluate(async () => {
   await popoverPicker?.updateComplete;
   // seven tools (the six drawing ones + «Мебель», docs/FURNITURE.md) plus
   // «Картинка-подложка», which f1 offers because it HAS a picture
-  // (docs/BACKDROP.md §2); a hand-drawn space still shows seven
+  // (docs/DECOR-EDITOR.md §3.2); a hand-drawn space still shows seven
   out.toolBtns = sr().querySelectorAll('.decorbar .btn.dtool').length === 8;
   // 2) нарисовать прямоугольник drag-ом (через прямые вызовы)
   c._decorTool = 'rect'; c._decorStyle = { color: '#ff0000', width: 3, fill: true }; await c.updateComplete;

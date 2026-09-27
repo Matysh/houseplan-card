@@ -654,7 +654,7 @@ not be added to an individual sink.
 ```json
 { "spaces": [{ "id","title","plan_url","plan_aspect",
                "plan_x","plan_y","plan_scale_x","plan_scale_y","plan_angle",
-               "plan_scale",   // legacy optional fallback, docs/BACKDROP.md
+               "plan_scale",   // legacy optional fallback, docs/DECOR-EDITOR.md §3
                "view_box":[4],
                "rooms":[{"id","name","area","poly|x/y/w/h","wall_ids":[…],"settings"}],
                "wall_segments":[{"id","a","b","cm","owners":[…]}],
@@ -671,7 +671,7 @@ All coordinates are **normalized (0..1 of the canvas)**; the canvas is always
 **square** (v1.48.0), render space `NORM_W × NORM_W` (1000×1000). A space has no
 proportions of its own — `plan_aspect` is the IMAGE's ratio, used to letterbox
 it centred on the square; optional `plan_x/y`, independent `plan_scale_x/y`
-and `plan_angle` then transform that rectangle (`planRect`, docs/BACKDROP.md).
+and `plan_angle` then transform that rectangle (`planRect`, docs/DECOR-EDITOR.md §3).
 Legacy `plan_scale` feeds both axes, and the absence of every transform field
 is the centred default exactly. The schema bounds geometry to ±5000 with strictly
 positive sizes (HP-1501/1502). `device_overrides`/`virtual_devices` are long
@@ -1744,7 +1744,7 @@ its configured space.
   `plan_x/y`, independent `plan_scale_x/y` and `plan_angle`; legacy
   `plan_scale` feeds both axes. The image is interactive only in its own
   Background tool, rotated corners contribute to content bounds, and the
-  static card uses the same model. See `DECOR-EDITOR.md` and `BACKDROP.md`.
+  static card uses the same model. See `DECOR-EDITOR.md` §3.
 - **Independent Glow overlay** (#55): `settings.glow_enabled` is orthogonal to
   the data `fill_mode`; room `settings.glow` is the tri-state-compatible model
   foundation for #36. Legacy `fill_mode: 'glow'` remains a permanent read

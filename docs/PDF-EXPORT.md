@@ -59,10 +59,8 @@ in consistent lanes clear of the wall body. Units follow Home Assistant. Very
 short internal edges use a tick instead of unreadable text. A value that has no
 room beside its own wall is not printed at all: it is never pushed through a
 wall, a room name or an area, and it is not moved to a separate list beside the
-plan. Until v1.74.0-beta.2 such values went into a numbered "Internal
-dimensions" column; that column cost the drawing a whole step of the scale
-series and turned the sheet sideways, so it was removed and the drawing grew by
-about a third instead.
+plan: a separate list would cost the drawing a whole step of the scale series
+and turn the sheet sideways.
 
 For a rectangular step in an exterior facade, the chain retains enough
 horizontal and vertical values to reconstruct the outline: both neighbouring

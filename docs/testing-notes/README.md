@@ -77,7 +77,7 @@
 
 - [Decor composition order (#231)](decor-and-backdrop.md#decor-composition-order-231)
 - [Custom decor images (#51)](decor-and-backdrop.md#custom-decor-images-51)
-- [Backdrop picture: move & scale (docs/BACKDROP.md, dev)](decor-and-backdrop.md#backdrop-picture-move--scale-docsbackdropmd-dev)
+- [Backdrop picture: move & scale (docs/DECOR-EDITOR.md §3, dev)](decor-and-backdrop.md#backdrop-picture-move--scale-docsdecor-editormd-3-dev)
 - [«Already uploaded» plan picker (dev, unreleased)](decor-and-backdrop.md#already-uploaded-plan-picker-dev-unreleased)
 - [The furniture library (docs/FURNITURE.md, dev, unreleased)](decor-and-backdrop.md#the-furniture-library-docsfurnituremd-dev-unreleased)
 - [The furniture library (docs/FURNITURE.md, dev, unreleased)](decor-and-backdrop.md#the-furniture-library-docsfurnituremd-dev-unreleased-1)
@@ -92,7 +92,7 @@
 - [Vacuum trail smoothing (#209)](live-and-integrations.md#vacuum-trail-smoothing-209)
 - [Live vacuums (docs/VACUUM.md)](live-and-integrations.md#live-vacuums-docsvacuummd)
 - [Sun on the plan (docs/SUN.md)](live-and-integrations.md#sun-on-the-plan-docssunmd)
-- [The text block on the plan (docs/LIVE-TEXT.md, dev, unreleased)](live-and-integrations.md#the-text-block-on-the-plan-docslive-textmd-dev-unreleased)
+- [The text block on the plan (docs/DECOR-EDITOR.md §5, dev, unreleased)](live-and-integrations.md#the-text-block-on-the-plan-docsdecor-editormd-5-dev-unreleased)
 - [Sun ray rim (docs/SUN.md «The rim», dev, unreleased)](live-and-integrations.md#sun-ray-rim-docssunmd-the-rim-dev-unreleased)
 - [Coming back to the tab (docs/WARM-REMOUNT.md, dev, unreleased)](live-and-integrations.md#coming-back-to-the-tab-docswarm-remountmd-dev-unreleased)
 - [Реальная raw-карта Zigbee2MQTT (#450)](live-and-integrations.md#реальная-raw-карта-zigbee2mqtt-450)

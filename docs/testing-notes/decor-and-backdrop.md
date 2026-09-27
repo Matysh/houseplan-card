@@ -54,7 +54,7 @@
       `decor-assets.test.mjs`, `test_decor_assets.py`,
       `test_ha_import_export.py`].
 
-## Backdrop picture: move & scale (docs/BACKDROP.md, dev)
+## Backdrop picture: move & scale (docs/DECOR-EDITOR.md §3, dev)
 
 - [ ] **The frame is there, and only there** (owner 2026-08-04): open a space
       that HAS an uploaded plan image → **Редактор подложки**. It opens on

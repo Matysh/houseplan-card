@@ -1,6 +1,6 @@
 # Wall thickness — the spec
 
-Status: **implemented / evolving** (post beta.4 redesign). Visual reference:
+Visual reference:
 [docs/assets/wall-thickness-reference.png](assets/wall-thickness-reference.png)
 (look at wall bodies only).
 
@@ -16,6 +16,10 @@ Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 ## 1. Model
 
 ### Stable stored identity and zero walls (model v10, #282/#306/#478)
+
+The decision record behind the stored representation — what the code calls
+«ADR 282» — is `docs/adr/282-wall-geometry-representation.md`; the migration
+matrix is in `CONFIG-COMPATIBILITY.md` (model v8–v10).
 
 From model v8 every atomic room-wall interval has a stable record in
 `space.wall_segments[]`. Its `id`, endpoints and `cm` are authoritative;
@@ -535,3 +539,70 @@ pass, so an old butt face cannot become a visible seam or a false light barrier.
 Exact near-misses remain separate, an interior↔interior X crossing keeps normal
 boolean-union semantics, and malformed legacy segments fall back opaque without
 writing configuration.
+
+## 10. Architectural connection overlay (Walls tool)
+
+When **Walls** is active in the Plan editor, a derived
+pointer-transparent SVG layer exposes the centre axes of completed room walls
+and independent partitions. It is painted after their
+physical wall bodies, but before interactive editor chrome. Columns, decor,
+devices, the active wall chain and its live preview are not candidates. Door,
+window, gate and intentionally open-span intervals are cut from presentation
+axes; a cut boundary does not become a new endpoint.
+
+The layer and hit resolver share one immutable geometry snapshot. Original
+segment endpoints are deduplicated and drawn at a physical radius of 5 cm.
+Inside a 12 CSS px hit zone, an endpoint wins over every line and grows to
+10 cm. Otherwise the nearest solid line receives one 10 cm dynamic node: the
+raw pointer is projected onto that line, then quantized by the grid step along
+the line from its stable start. This keeps diagonal connections wall-bound even
+when neither resulting coordinate is a global grid multiple. The same resolver
+runs again on click, so hover is only a preview and never authoritative.
+
+Endpoint and line candidates override the normal grid and Shift/45° result.
+Outside the hit zone, the ordinary snap contract (`CANVAS.md` §9.3–9.4) is unchanged. A line connection adds only the
+new segment endpoint; it does not split or rewrite the existing wall. The
+current anchor is excluded to prevent zero-length segments. The static geometry
+is cached by structural editor state; pointer movement changes at most the
+single active candidate and never writes config, layout or storage.
+
+A separate diagnostic projection is present throughout the Plan editor (#296),
+including tools other than **Walls**. For every independent wall
+segment with a positive exact collinear overlap against another wall, it keeps
+that source segment's complete axis and original endpoints visible. It is
+painted after every wall body and zero-thickness axis and before openings, selection
+chrome and transient previews. The layer is `pointer-events:none`,
+`aria-hidden`, absent from View and cached by structural revision; it neither
+deduplicates source identities nor participates in the architectural snap
+resolver above. The 1 CSS px non-scaling axis and physical 5 cm nodes therefore
+diagnose an otherwise invisible Resize blocker without changing any hit target.
+
+## 11. Planar wall faces
+
+Every completed Walls segment is persisted immediately as an ordinary
+`partition`; only its ordered chain membership remains in memory. On the click
+path only, an immutable planar graph is built from structural room edges and
+partitions both before and after the latest segment. Unlike the
+presentation/snap snapshot, this
+face graph ignores door/window/gate/passage cuts; zero-thickness wall axes remain
+structural graph edges even though they have no masonry body.
+Endpoint, T, X and
+collinear-overlap junctions atomize that computed graph without rewriting any
+saved wall. A deterministic half-edge walk extracts bounded faces; canonical
+identity ignores winding, cyclic start and derived collinear subdivision.
+
+Only faces added by the latest segment and containing one of its atoms are
+offered. They are ordered by area and then canonical key. Existing exact or
+partially overlapping rooms are excluded, nested rooms remain legal, and any
+physical gap created by an `open_span` or absent wall remains a gap. A door,
+window, gate or passage is a property of a wall and preserves connectivity. A clean divider across
+one room reuses the Split contract: the larger side keeps the room identity,
+metadata and device binding, and only the smaller side is offered.
+
+The terminal active path remains session-local while the resulting room dialogs
+are open. Create/Keep-as-walls answers are buffered; Cancel/Esc discards all
+answers and leaves the already persisted partitions unchanged. The final answer
+revalidates the whole batch and applies accepted rooms while consuming only the
+coincident partitions used by those rooms in one history/config transaction.
+Graph construction never runs on pointermove, Home Assistant state updates or
+ordinary rendering.
