@@ -8,8 +8,11 @@ export type CleanFloorResult = {
   floor: number[][];
   geom: Geom | null;
   path: string;
-  area: number;
+  /** Clean-floor area minus stairs, computed on the first read (#669). */
+  readonly area: number;
 };
+
+type StairAreaFn = (source: Geom, stairs: SpaceModel['stairs'] | undefined) => number;
 
 export function cleanFloorForRoom(input: {
   room: RoomCfg;
@@ -19,6 +22,8 @@ export function cleanFloorForRoom(input: {
   resizePreview: boolean;
   cache: Map<string, CleanFloorResult>;
   physicalBodies(space: SpaceModel): number[][][];
+  /** Test seam (#669): the stair subtraction behind `area`. */
+  areaMinusStairs?: StairAreaFn;
 }): CleanFloorResult {
   const { room, floor, space } = input;
   if (!space) return {
@@ -40,11 +45,21 @@ export function cleanFloorForRoom(input: {
       && Math.max(...by) >= box[1] && Math.min(...by) <= box[3];
   });
   const geom = candidates.length ? floorMinusBodies(floor, candidates) : null;
-  const result = {
+  const subject = (geom || [[[...floor, floor[0]]]]) as Geom;
+  const stairs = space.stairs;
+  const areaMinusStairs: StairAreaFn = input.areaMinusStairs ?? geometryAreaMinusStairs;
+  let area: number | undefined;
+  const result: CleanFloorResult = {
     floor,
     geom,
     path: geom ? polyclipPathD(geom) : '',
-    area: geometryAreaMinusStairs(geom || [[[...floor, floor[0]]]], space.stairs),
+    // #669: four render paths read only `path`; the room tooltip and the PDF
+    // read the area. Subtracting up to 250 stair footprints per room belongs
+    // to that first read, not to every render of the floor.
+    get area() {
+      if (area === undefined) area = areaMinusStairs(subject, stairs);
+      return area;
+    },
   };
   if (!input.resizePreview) lruWrite(input.cache, key, result, 600);
   return result;

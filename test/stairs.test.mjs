@@ -8,8 +8,12 @@ import {
   geometryAreaMinusStairs,
   geometryMinusStairsSteps,
   isStair,
+  stairFootprintGeometry,
+  stairFootprintsTouching,
   stairRenderGeometry,
 } from '../test-build/stairs.js';
+import { geometryArea } from '../test-build/physical-geometry.js';
+import { difference } from 'polyclip-ts';
 import {
   convertStairKind,
   defaultStair,
@@ -206,4 +210,57 @@ test('#663 legacy-no-stairs-config never materializes an empty stair collection'
   const result = optimizePlans(legacy, {});
   assert.equal(Object.hasOwn(result.config.spaces[0], 'stairs'), false);
   assert.deepEqual(legacy, before, 'Optimize remains immutable for the caller');
+});
+
+// #669 AC2: the bounds filter must not change the subtraction it shortens.
+const unfilteredArea = (source, stairs) => {
+  const footprints = stairs.map((stair) => stairFootprintGeometry(stair));
+  return Math.max(0, geometryArea(footprints.length ? difference(source, ...footprints) : source));
+};
+
+test('#669 AC2 stair area with the bounds filter equals the unfiltered subtraction', () => {
+  const room = [[[[200, 200], [600, 200], [600, 600], [200, 600], [200, 200]]]];
+  const stairs = [
+    straight({ id: 'inside', x: 0.3, y: 0.3, length: 0.1, width: 0.05 }),
+    straight({ id: 'rotated', x: 0.45, y: 0.45, angle: 45, length: 0.12, width: 0.04 }),
+    straight({ id: 'edge', x: 0.6, y: 0.4, angle: 90, length: 0.1, width: 0.05 }),
+    straight({ id: 'corner', x: 0.2, y: 0.2, angle: 135, length: 0.08, width: 0.05 }),
+    spiral({ id: 'spiral-inside', x: 0.5, y: 0.3, radius: 0.04 }),
+    spiral({ id: 'spiral-edge', x: 0.4, y: 0.6, radius: 0.05 }),
+    straight({ id: 'overlap-a', x: 0.35, y: 0.5, length: 0.1, width: 0.06 }),
+    straight({ id: 'overlap-b', x: 0.36, y: 0.52, angle: 90, length: 0.1, width: 0.06 }),
+    straight({ id: 'far-a', x: 0.9, y: 0.9, length: 0.1, width: 0.05 }),
+    spiral({ id: 'far-b', x: 0.05, y: 0.9, radius: 0.03 }),
+  ];
+  const expected = unfilteredArea(room, stairs);
+  const actual = geometryAreaMinusStairs(room, stairs);
+  assert.ok(Math.abs(actual - expected) <= expected * 1e-9, `${actual} vs ${expected}`);
+  assert.ok(actual < 160_000, 'the touching stairs are subtracted');
+});
+
+test('#669 AC2 stairs whose bounds miss the room never reach polyclip', () => {
+  const room = [[[[200, 200], [600, 200], [600, 600], [200, 600], [200, 200]]]];
+  const stairs = [
+    straight({ id: 'inside', x: 0.3, y: 0.3, length: 0.1, width: 0.05 }),
+    spiral({ id: 'edge', x: 0.4, y: 0.6, radius: 0.05 }),
+    straight({ id: 'far-a', x: 0.9, y: 0.9, length: 0.1, width: 0.05 }),
+    spiral({ id: 'far-b', x: 0.05, y: 0.9, radius: 0.03 }),
+  ];
+  const touching = stairFootprintsTouching(room, stairs);
+  assert.equal(touching.length, 2, 'only the inside and the edge stair are passed on');
+  assert.deepEqual(stairFootprintsTouching([], stairs), [], 'an empty subject touches nothing');
+});
+
+test('#669 AC2 a maximum stair collection keeps the room area and passes a bounded subset', () => {
+  const stairs = Array.from({ length: 250 }, (_, index) => {
+    const common = { id: `grid-${index}`, x: 0.025 + (index % 25) * 0.039, y: 0.03 + Math.floor(index / 25) * 0.1,
+      angle: (index % 8) * 45 };
+    return index % 2 ? spiral({ ...common, radius: 0.05 }) : straight({ ...common, length: 0.12, width: 0.045 });
+  });
+  const room = [[[[100, 100], [300, 100], [300, 300], [100, 300], [100, 100]]]];
+  const touching = stairFootprintsTouching(room, stairs);
+  assert.ok(touching.length > 0 && touching.length < 50, `${touching.length} of 250 touch the room bounds`);
+  const expected = unfilteredArea(room, stairs);
+  const actual = geometryAreaMinusStairs(room, stairs);
+  assert.ok(Math.abs(actual - expected) <= Math.max(expected, 1) * 1e-9, `${actual} vs ${expected}`);
 });

@@ -234,7 +234,7 @@ export function geometryAreaMinusStairs(
 export function geometryMinusStairs(
   source: Geom, stairs: readonly Stair[] | null | undefined, scale = NORM_W,
 ): Geom {
-  const footprints = stairList(stairs).map((stair) => stairFootprintGeometry(stair, scale));
+  const footprints = stairFootprintsTouching(source, stairs, scale);
   if (!footprints.length) return source;
   try {
     // A single sweep avoids repeatedly rebuilding the same subject for dense floors.
@@ -247,6 +247,48 @@ export function geometryMinusStairs(
     }
     return geometry;
   }
+}
+
+type Bounds = readonly [number, number, number, number];
+
+function geometryBounds(geometry: Geom): Bounds | null {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  const visit = (value: unknown): void => {
+    if (!Array.isArray(value)) return;
+    if (typeof value[0] === 'number') {
+      const x = value[0];
+      const y = value[1] as number;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      return;
+    }
+    for (const item of value) visit(item);
+  };
+  visit(geometry);
+  return minX <= maxX && minY <= maxY ? [minX, minY, maxX, maxY] : null;
+}
+
+const boundsOverlap = (a: Bounds, b: Bounds | null): boolean => !!b
+  && a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && b[1] <= a[3];
+
+/**
+ * #669: only a footprint whose bounds overlap the subject can change the
+ * difference. A room on a maximum-size floor otherwise sends all 250 stair
+ * footprints into one polyclip sweep, and the room count multiplies it.
+ */
+export function stairFootprintsTouching(
+  source: Geom, stairs: readonly Stair[] | null | undefined, scale = NORM_W,
+): Geom[] {
+  const bounds = geometryBounds(source);
+  if (!bounds) return [];
+  return stairList(stairs)
+    .map((stair) => stairFootprintGeometry(stair, scale))
+    .filter((footprint) => boundsOverlap(bounds, geometryBounds(footprint)));
 }
 
 /**
