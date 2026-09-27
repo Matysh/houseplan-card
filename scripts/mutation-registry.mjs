@@ -13041,6 +13041,19 @@ const MUTANT_DEFINITIONS = [
       replace: '            self._save_task = asyncio.create_task(self._delayed_save())\n',
     }],
   },
+  {
+    id: 'virtual-light-concurrent-flushes-bypass-lock',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'concurrent_flushes_after_failed_delayed_save_write_once '
+      + 'tests_backend/test_virtual_lights.py',
+    because: '#655 AC3 / review r1: stop and config transitions may flush the same dirty '
+      + 'post-failure state concurrently; the lock must keep the Store write idempotent',
+    patches: [{
+      file: 'custom_components/houseplan/virtual_lights.py',
+      find: '        async with self._flush_lock:\n',
+      replace: '        if True:  # mutant: concurrent flushes are not serialised\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

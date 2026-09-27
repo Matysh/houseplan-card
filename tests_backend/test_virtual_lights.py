@@ -126,3 +126,38 @@ def test_runtime_controller_coalesces_rapid_toggles_into_one_durable_write():
     assert second == {"marker_id": "lamp", "on": True, "rev": 2}
     assert store.writes == [{"rev": 2, "config_rev": 1, "off": []}]
     assert hass.created_tasks == 1, "the delayed writer must be tracked by HA"
+
+
+def test_concurrent_flushes_after_failed_delayed_save_write_once():
+    class BlockingStore(FakeStore):
+        def __init__(self):
+            super().__init__()
+            self.entered = 0
+            self.release = asyncio.Event()
+
+        async def async_save(self, data):
+            self.entered += 1
+            await self.release.wait()
+            await super().async_save(data)
+
+    async def exercise():
+        store = BlockingStore()
+        controller = VirtualLightController(FakeHass(), store)
+        # This is the exact state left by a failed delayed save: the newest
+        # payload is dirty, while its completed task has already detached.
+        controller._state = {"rev": 1, "config_rev": 1, "off": ["lamp"]}
+        controller._dirty = True
+        controller._save_task = None
+
+        first = asyncio.create_task(controller.async_flush())
+        second = asyncio.create_task(controller.async_flush())
+        for _ in range(3):
+            await asyncio.sleep(0)
+        entered_before_release = store.entered
+        store.release.set()
+        await asyncio.gather(first, second)
+        return entered_before_release, store.writes
+
+    entered, writes = _run(exercise())
+    assert entered == 1, "only one concurrent flush may reach durable storage"
+    assert writes == [{"rev": 1, "config_rev": 1, "off": ["lamp"]}]
