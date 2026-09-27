@@ -136,12 +136,92 @@ const MUTANT_DEFINITIONS = [
       + 'stair on the destination floor.',
     patches: [{
       file: 'src/stairs-editor.ts',
-      find: '    this.write(this.stairs.map((item) => item.id === next.id ? next : item));\n'
+      find: '    this.replace(next);\n'
         + '    this.owner._recordGeometry(this.owner._t(\'history.stair_edit\'), before);\n',
-      replace: '    this.write(this.stairs.map((item) => item.id === next.id ? next : item));\n'
+      replace: '    this.replace(next);\n'
         + '    const mirror = (this.owner as unknown as { _serverCfg: { spaces: Array<{ id: string; stairs?: Stair[] }> } })._serverCfg.spaces.find((item) => item.id === dialog.targetSpaceId);\n'
         + '    if (mirror) mirror.stairs = [...(mirror.stairs || []), { ...next, id: `${next.id}-mirror` }];\n'
         + '    this.owner._recordGeometry(this.owner._t(\'history.stair_edit\'), before);\n',
+    }],
+  },
+  {
+    id: 'stairs-handle-cursor-ignores-bearing',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/stairs-editor-model.test.mjs',
+    because: '#676 AC4: the cursor over a handle must say which way it moves in world terms, '
+      + 'so a rotated stair cannot show one diagonal arrow on every node.',
+    patches: [{
+      file: 'src/stairs-editor-model.ts',
+      find: "  if (sector === 0 || sector === 4) return 'ew';\n",
+      replace: "  if (sector >= 0) return 'nwse'; // mutant: one cursor for every handle\n",
+    }],
+  },
+  {
+    id: 'stairs-dialog-clamps-to-wall-thickness',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/stairs-editor-model.test.mjs',
+    because: '#676 AC5: the properties dialog converts stair sizes, not wall thickness; a '
+      + '100 cm ceiling silently shrinks every real flight on save.',
+    patches: [{
+      file: 'src/stairs-editor-model.ts',
+      find: '  return cm >= STAIR_MIN_CM && cm <= STAIR_MAX_CM ? cm : null;\n',
+      replace: '  return Math.max(1, Math.min(100, cm)); // mutant: the wall-thickness clamp is back\n',
+    }],
+  },
+  {
+    id: 'stairs-resize-mirrors-past-anchor',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/stairs-editor-model.test.mjs',
+    because: '#676 AC2: a pointer dragged past the anchor side clamps at the minimum size; '
+      + 'mirroring would silently move the ascent to the other side of the anchor.',
+    patches: [{
+      file: 'src/stairs-editor-model.ts',
+      find: '  let w = handle.sx ? Math.max(minimum, handle.sx * lx + box.w / 2) : box.w;\n',
+      replace: '  let w = handle.sx ? Math.max(minimum, Math.abs(handle.sx * lx + box.w / 2)) : box.w; // mutant: mirrors\n',
+    }],
+  },
+  {
+    id: 'stairs-move-magnet-turns-any-angle',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/stairs-editor-model.test.mjs',
+    because: '#676 AC3: the move magnet may align a nearly parallel side by the tolerance only; '
+      + 'turning a stair standing at 30° to the wall changes its orientation behind the user.',
+    patches: [{
+      file: 'src/stairs-editor-model.ts',
+      find: '    const snap = snapEdgeToFaces(edge, surfaces, reach, angleTolDeg);\n'
+        + '    if (snap && (!best || Math.abs(snap.offset) < Math.abs(best.snap.offset))) best = { edge, snap };\n',
+      replace: '    const snap = snapEdgeToFaces(edge, surfaces, reach, 89); // mutant: any angle snaps\n'
+        + '    if (snap && (!best || Math.abs(snap.offset) < Math.abs(best.snap.offset))) best = { edge, snap };\n',
+    }],
+  },
+  {
+    id: 'stairs-gesture-click-reaches-plan-tool',
+    guard: 'node demo/smoke_stairs.mjs',
+    because: '#676 AC6: the click the browser synthesizes after a handle drag must not reach '
+      + 'the plan tool: under Stairs it placed a copy, under Select it dropped the selection.',
+    patches: [{
+      file: 'src/stairs-editor.ts',
+      find: '    this.owner._suppressClick = true;\n'
+        + '    setTimeout(() => { this.owner._suppressClick = false; }, 0);\n',
+      replace: '    // mutant: the click is free to reach the stage\n',
+    }, {
+      file: 'src/stairs-editor.ts',
+      find: '        @pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, \'resize\', { sx: handle.sx, sy: handle.sy })}\n'
+        + '        @click=${stop}></circle>\n',
+      replace: '        @pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, \'resize\', { sx: handle.sx, sy: handle.sy })}></circle>\n',
+    }],
+  },
+  {
+    id: 'stairs-view-tooltip-ignores-target-state',
+    guard: 'node demo/smoke_stairs.mjs',
+    because: '#676 AC8: the hover tooltip has exactly the link condition; a missing, self, '
+      + 'deleted or fixed-floor target must never announce a floor to go to.',
+    patches: [{
+      file: 'src/stairs-view.ts',
+      find: '      const tip = (event: PointerEvent): void => {\n'
+        + '        if (!active) return;\n',
+      replace: '      const tip = (event: PointerEvent): void => {\n'
+        + '        // mutant: every stair announces something\n',
     }],
   },
   {

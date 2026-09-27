@@ -6,6 +6,19 @@
   when Home Assistant stops, so changes still inside their 0.5 s / 10 s write
   debounce windows survive an ordinary restart
   ([#655](https://github.com/Matysh/houseplan-card/issues/655)).
+- Stairs in the Plan editor are drawn like decor shapes: press, drag and
+  release to draw a straight flight (the drag direction is the ascent) or the
+  square of a spiral stair, while a click still places the default size. The
+  selected stair now has the same frame as furniture, painted above wall
+  bodies with corner, side and rotation handles whose cursors follow the
+  handle's real direction. Resizing moves one side about the opposite one,
+  never mirrors or turns the stair, and snaps the dragged side flush to a
+  parallel wall face; moving snaps the nearest side and turns the stair by at
+  most 5°. A resize or rotation no longer places a copy under the Stairs tool
+  or drops the selection under Select, the properties dialog saves sizes above
+  one metre exactly as shown, and hovering a stair with a valid target in View
+  shows "Go to floor …"
+  ([#676](https://github.com/Matysh/houseplan-card/issues/676)).
 
 ## v1.78.0-beta.5 — 2026-09-27
 

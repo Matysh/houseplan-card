@@ -6700,6 +6700,9 @@ export class HouseplanCard extends LitElement {
       // (owner's report). Pointers that begin on interactive children still
       // stay out — labels and handles run their own drags.
       if ((ev.target as HTMLElement).closest?.('.roomlabel, .rlhandle, .rszhandle, .dev, .oplock, .op-hit, button')) return;
+      // #676 К1: under the Stairs tool a press on the stage starts a drag-to-draw
+      // draft; the release places the stair. The stage keeps pan/pinch otherwise.
+      if (this._editorRuntime?.stairs.stagePointerDown(ev)) return;
     }
     if (this._mode === 'devices' && (ev.target as HTMLElement).closest('.dev')) return;
     if (this._mode === 'decor' && this._decorPointerDown(ev)) return;
@@ -11122,6 +11125,11 @@ export class HouseplanCard extends LitElement {
                    backdrop editor, where rooms and devices are pointer-inert. */}
             ${this._renderBackdropFrame(view)}
             ${this._renderTextFrame(view)}
+            ${''/* #676 К2: the selected stair's frame paints above wall bodies,
+                   where the decor frame paints, so its handles never hide
+                   under masonry. */}
+            ${this._mode === 'plan' && this._editorRuntime
+              ? this._editorRuntime.stairs.renderFrame(view) : nothing}
             <g data-hp-live-editor></g>
             </g>
           </svg>

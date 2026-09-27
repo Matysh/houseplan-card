@@ -707,15 +707,22 @@ Other operations edit existing geometry:
 | Thickness | Changes one span or every wall of a room, including zero-thickness walls |
 | Delete room | Deletes the room after choosing whether its exclusive physical walls remain; shared walls always remain |
 
-Choose **Stairs → Straight** or **Stairs → Spiral**, then click the plan. A
-selected stair moves and resizes smoothly like furniture; `Shift` snaps its
-rotation to 45°. It snaps to the visible physical face of a wall or flush to
-another stair, and **Optimize plans** preserves that exact continuous
-transform. Double click opens size, direction, angle and target-floor
-properties. In View a clean activation switches to the valid target and
-restores that floor's saved view; gesture tails, broken links and fixed-floor
-cards do nothing. The target floor is never changed automatically. In 2.5D the
-symbol is flat on the floor. See [Stairs](STAIRS.md).
+Choose **Stairs → Straight** or **Stairs → Spiral**, then draw on the plan
+like a decor shape: press, drag and release. The drag direction is the
+direction of ascent, the drawn extents are the size, and a plain click still
+places the default size. The selected stair shows a frame above the walls with
+corner, side and rotation handles; the cursor over a handle shows which way it
+moves. A handle resizes about the opposite side without turning or mirroring
+the stair and snaps the dragged side flush to a parallel wall; dragging the
+body snaps the nearest side to a wall (turning the stair by at most 5°) or
+flush to another stair; `Shift` snaps rotation to 45°. **Optimize plans**
+preserves the exact continuous transform. Double click opens size (30 cm to
+100 m, saved exactly as shown), direction, angle and target-floor properties.
+In View, hovering a stair with a valid target shows "Go to floor …", and a
+clean activation switches to that target and restores its saved view; gesture
+tails, broken links and fixed-floor cards do nothing. The target floor is
+never changed automatically. In 2.5D the symbol is flat on the floor. See
+[Stairs](STAIRS.md).
 
 ![Selected partition and its Plan context tray](images/05-plan-context-tray.png)
 

@@ -1,22 +1,22 @@
 import { html, nothing, svg, type TemplateResult } from 'lit';
-import { resizeFurnitureTransform } from './furniture';
-import { FURN_WALL_CELLS, snapFurnitureToWall } from './furniture-placement';
+import { FURN_WALL_CELLS } from './furniture-placement';
 import {
-  furnitureWallSurfacesFor, type FurnitureWallSurfaceSource,
+  furnitureWallSurfacesFor, type FurnitureWallSurface, type FurnitureWallSurfaceSource,
 } from './furniture-wall-surface';
 import { strictNumber, type MarkupTool } from './card-runtime';
 import type { EditorToolbarGroup } from './editor-secondary';
 import type { I18nKey } from './i18n';
 import { clampCanvasN, NORM_W } from './space-geometry';
 import {
-  convertStairKind, defaultStair, normalizeStairAngle, snapStairToStairs,
-  stairPhysicalSizeCm, stairTargetState, STAIR_MIN_N,
+  convertStairKind, draftLeadingHandle, draftStair, magnetStairMove, magnetStairResize,
+  normalizeStairAngle, physicalStairSurfaces, resizeCursor, resizeStair, snapStairToStairs, stairBox,
+  stairFieldOf, stairHandles, stairMinN, stairRotateHandle, stairSizeFromField,
+  stairTargetState, STAIR_MAX_CM, STAIR_MIN_CM, type StairHandleSign,
 } from './stairs-editor-model';
 import {
   cachedStairRenderGeometry, MAX_STAIRS_PER_SPACE, stairList, type Stair,
 } from './stairs';
 import type { SpaceModel } from './types';
-import { cmToField, fieldToCm } from './wall-thickness';
 
 type StairDialog = {
   id: string;
@@ -27,18 +27,31 @@ type StairDialog = {
   angle: string;
   direction: Stair['direction'];
   targetSpaceId: string;
+  /** Field values at open time: an untouched field keeps the stored number bit for bit (#676 К7). */
+  opened: { length: string; width: string; radius: string; angle: string };
 };
 
 type StairDrag = {
   pid: number;
   id: string;
   mode: 'move' | 'resize' | 'rotate';
-  resizeX: -1 | 0 | 1;
-  resizeY: -1 | 0 | 1;
+  handle: StairHandleSign;
   start: number[];
   original: Stair;
   before: unknown;
   moved: boolean;
+  /** Wall faces are read once per gesture: each write bumps the epoch that keys their cache. */
+  surfaces: readonly FurnitureWallSurface[];
+};
+
+type StairDraft = {
+  pid: number;
+  kind: Stair['kind'];
+  id: string;
+  a: number[];
+  b: number[];
+  stair: Stair;
+  surfaces: readonly FurnitureWallSurface[];
 };
 
 /** Narrow internal seam owned by HouseplanCard. The cast at construction keeps
@@ -65,23 +78,26 @@ export interface StairEditorHostPort {
   _geometrySnapshot(): unknown;
   _recordGeometry(name: string, before: unknown): void;
   _saveConfigDebounced(): void;
-  _cmToUnits(cm: number): number;
   _svgPoint(event: MouseEvent): number[];
   _tabClick(spaceId: string): void;
   _activateMarkupTool(tool: MarkupTool): void;
 }
+
+const newStairId = (): string => `stair-${crypto.randomUUID?.()
+  || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`}`;
 
 export class StairEditorRuntime {
   private preset: Stair['kind'] = 'straight';
   private selectedId: string | null = null;
   private dialog: StairDialog | null = null;
   private drag: StairDrag | null = null;
+  private draft: StairDraft | null = null;
 
   public constructor(private readonly owner: StairEditorHostPort) {}
 
   public get selected(): string | null { return this.selectedId; }
   public get dialogOpen(): boolean { return this.dialog !== null; }
-  public get dragging(): boolean { return this.drag !== null; }
+  public get dragging(): boolean { return this.drag !== null || this.draft !== null; }
 
   public clearSelection(): void {
     this.selectedId = null;
@@ -96,6 +112,24 @@ export class StairEditorRuntime {
     return stairList((this.owner._curSpaceCfg as { stairs?: unknown } | null)?.stairs);
   }
 
+  private get inputEnabled(): boolean {
+    return this.owner._mode === 'plan'
+      && (this.owner._tool === 'select' || this.owner._tool === 'stairs');
+  }
+
+  private get reach(): number { return this.owner._gridPitch * FURN_WALL_CELLS; }
+
+  private get minUnits(): number { return stairMinN(this.owner._cellCm) * NORM_W; }
+
+  /** Room faces from the furniture magnet plus physical bodies with an outward side (#676). */
+  private surfaces(): readonly FurnitureWallSurface[] {
+    const source = this.owner as unknown as FurnitureWallSurfaceSource;
+    return [
+      ...furnitureWallSurfacesFor(source).filter((surface) => surface.owner === 'room'),
+      ...physicalStairSurfaces(source._rawPhysicalBodiesR()),
+    ];
+  }
+
   private write(stairs: Stair[]): void {
     const space = this.owner._curSpaceCfg as { stairs?: Stair[] } | null;
     if (!space) return;
@@ -107,27 +141,27 @@ export class StairEditorRuntime {
     this.owner.requestUpdate();
   }
 
-  private withMagnet(stair: Stair, center: readonly number[]): Stair {
-    let cx = center[0], cy = center[1], angle = stair.angle;
-    const depth = (stair.kind === 'straight' ? stair.width : stair.radius * 2) * NORM_W;
-    const wall = snapFurnitureToWall(
-      cx, cy, depth,
-      furnitureWallSurfacesFor(this.owner as unknown as FurnitureWallSurfaceSource),
-      this.owner._gridPitch * FURN_WALL_CELLS, 0, [cx, cy],
-    );
-    if (wall) {
-      cx = wall.cx;
-      cy = wall.cy;
-      if (stair.kind === 'straight') angle = wall.angle;
-    }
+  private replace(next: Stair): void {
+    this.write(this.stairs.map((item) => item.id === next.id ? next : item));
+  }
 
-    const moved = { ...stair, x: cx / NORM_W, y: cy / NORM_W, angle } as Stair;
-    [cx, cy] = snapStairToStairs(
-      moved, [cx, cy], this.stairs, this.owner._gridPitch * FURN_WALL_CELLS,
+  /**
+   * The synthesized `click` after any gesture on the stair or its handles
+   * must never reach the plan tool underneath: under «Stairs» it would place
+   * another stair, under «Select» it would drop the selection (#676 К6).
+   */
+  private swallowNextClick(): void {
+    this.owner._suppressClick = true;
+    setTimeout(() => { this.owner._suppressClick = false; }, 0);
+  }
+
+  private withMoveMagnet(stair: Stair, center: readonly number[], surfaces: readonly FurnitureWallSurface[]): Stair {
+    const moved = { ...stair, x: center[0] / NORM_W, y: center[1] / NORM_W } as Stair;
+    const snapped = magnetStairMove(moved, surfaces, this.reach);
+    const [cx, cy] = snapStairToStairs(
+      snapped, [snapped.x * NORM_W, snapped.y * NORM_W], this.stairs, this.reach,
     );
-    return {
-      ...stair, x: clampCanvasN(cx / NORM_W), y: clampCanvasN(cy / NORM_W), angle,
-    } as Stair;
+    return { ...snapped, x: clampCanvasN(cx / NORM_W), y: clampCanvasN(cy / NORM_W) } as Stair;
   }
 
   public activatePlacement(kind: Stair['kind']): void {
@@ -136,6 +170,64 @@ export class StairEditorRuntime {
     this.owner._activateMarkupTool('stairs');
   }
 
+  private placeStair(stair: Stair, before: unknown): void {
+    this.write([...this.stairs, stair]);
+    this.selectedId = stair.id;
+    this.owner._recordGeometry(this.owner._t('history.stair_add'), before);
+    this.owner._saveConfigDebounced();
+  }
+
+  /**
+   * Drag-to-draw under the Stairs tool (#676 К1): the press starts a draft on
+   * the stage, the release commits it. Returns false when the press is not a
+   * placement (secondary button, second finger, no space, limit reached), so
+   * the stage keeps its ordinary pan/pinch handling.
+   */
+  public stagePointerDown(event: PointerEvent): boolean {
+    if (this.owner._mode !== 'plan' || this.owner._tool !== 'stairs') return false;
+    if (this.draft) {
+      // A second contact turns the gesture into navigation: the draft is gone.
+      if (this.draft.pid !== event.pointerId) this.cancelDraft();
+      return false;
+    }
+    if (this.drag || (event.pointerType === 'mouse' && event.button !== 0) || !event.isPrimary) return false;
+    const space = this.owner._curSpaceCfg as { stairs?: Stair[] } | null;
+    if (!space) return false;
+    if (this.stairs.length >= MAX_STAIRS_PER_SPACE) {
+      this.owner._showToast(this.owner._t('toast.physical_limit'));
+      return false;
+    }
+    event.preventDefault();
+    const point = this.owner._svgPoint(event as unknown as MouseEvent);
+    const id = newStairId();
+    this.draft = {
+      pid: event.pointerId, kind: this.preset, id, a: point, b: point,
+      stair: draftStair(this.preset, point, point, this.owner._cellCm, id, this.owner._gridPitch),
+      surfaces: this.surfaces(),
+    };
+    this.selectedId = null;
+    try { (event.currentTarget as Element).setPointerCapture(event.pointerId); }
+    catch { /* synthetic event */ }
+    this.owner.requestUpdate();
+    return true;
+  }
+
+  private draftAt(draft: StairDraft, point: number[]): Stair {
+    const drawn = draftStair(draft.kind, draft.a, point, this.owner._cellCm, draft.id, this.owner._gridPitch);
+    const isClick = Math.max(Math.abs(point[0] - draft.a[0]), Math.abs(point[1] - draft.a[1])) < this.owner._gridPitch;
+    if (isClick) return this.withMoveMagnet(drawn, [drawn.x * NORM_W, drawn.y * NORM_W], draft.surfaces);
+    return magnetStairResize(
+      drawn, draftLeadingHandle(drawn, draft.a, point), draft.surfaces, this.reach, this.minUnits,
+    );
+  }
+
+  private cancelDraft(): void {
+    if (!this.draft) return;
+    this.draft = null;
+    this.owner.requestUpdate();
+  }
+
+  /** Programmatic placement kept for the harness and tests: a click at `point`. */
   public placeAt(point: number[]): void {
     const space = this.owner._curSpaceCfg as { stairs?: Stair[] } | null;
     if (!space || this.stairs.length >= MAX_STAIRS_PER_SPACE) {
@@ -143,28 +235,30 @@ export class StairEditorRuntime {
       return;
     }
     const before = this.owner._geometrySnapshot();
-    const id = `stair-${crypto.randomUUID?.()
-      || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`}`;
-    const stair = this.withMagnet(
-      defaultStair(this.preset, point[0], point[1], this.owner._cellCm, id), point,
+    const id = newStairId();
+    const stair = this.withMoveMagnet(
+      draftStair(this.preset, point, point, this.owner._cellCm, id, this.owner._gridPitch),
+      [point[0], point[1]], this.surfaces(),
     );
-    this.write([...this.stairs, stair]);
-    this.selectedId = id;
-    this.owner._recordGeometry(this.owner._t('history.stair_add'), before);
-    this.owner._saveConfigDebounced();
+    this.placeStair(stair, before);
   }
 
   private openDialog(stair: Stair): void {
-    const sizes = stairPhysicalSizeCm(stair, this.owner._cellCm);
+    const cellCm = this.owner._cellCm;
+    const imperial = this.owner._imperial;
+    const fields = {
+      length: stairFieldOf(stair.kind === 'straight' ? stair.length : stair.radius * 2, cellCm, imperial),
+      width: stairFieldOf(stair.kind === 'straight' ? stair.width : stair.radius * 2, cellCm, imperial),
+      radius: stairFieldOf(stair.kind === 'spiral' ? stair.radius : Math.max(stair.length, stair.width) / 2, cellCm, imperial),
+      angle: String(stair.angle),
+    };
     this.dialog = {
       id: stair.id,
       kind: stair.kind,
-      length: cmToField(stair.kind === 'straight' ? sizes[0] : 100, this.owner._imperial),
-      width: cmToField(stair.kind === 'straight' ? sizes[1] : 100, this.owner._imperial),
-      radius: cmToField(stair.kind === 'spiral' ? sizes[0] : 90, this.owner._imperial),
-      angle: String(stair.angle),
+      ...fields,
       direction: stair.direction,
       targetSpaceId: stair.target_space_id || '',
+      opened: fields,
     };
     this.owner.requestUpdate();
   }
@@ -179,34 +273,42 @@ export class StairEditorRuntime {
     const dialog = this.dialog;
     const current = this.stairs.find((item) => item.id === dialog?.id);
     if (!dialog || !current) return;
-    const lengthCm = fieldToCm(dialog.length, this.owner._imperial);
-    const widthCm = fieldToCm(dialog.width, this.owner._imperial);
-    const radiusCm = fieldToCm(dialog.radius, this.owner._imperial);
-    const angle = strictNumber(dialog.angle);
-    if (angle == null || (dialog.kind === 'straight'
-      ? !(lengthCm && widthCm) : !radiusCm)) return;
-    const before = this.owner._geometrySnapshot();
+    const cellCm = this.owner._cellCm;
+    const imperial = this.owner._imperial;
+    const angle = dialog.angle === dialog.opened.angle ? current.angle : strictNumber(dialog.angle);
+    if (angle == null) return;
     let next = convertStairKind(current, dialog.kind);
-    if (next.kind === 'straight') next = {
-      ...next,
-      length: Math.max(STAIR_MIN_N, this.owner._cmToUnits(lengthCm!) / NORM_W),
-      width: Math.max(STAIR_MIN_N, this.owner._cmToUnits(widthCm!) / NORM_W),
-      direction: dialog.direction === 'backward' ? 'backward' : 'forward',
-    };
-    else next = {
-      ...next,
-      radius: Math.max(STAIR_MIN_N, this.owner._cmToUnits(radiusCm!) / NORM_W),
-      direction: dialog.direction === 'counterclockwise' ? 'counterclockwise' : 'clockwise',
-    };
+    if (next.kind === 'straight') {
+      const length = stairSizeFromField(dialog.length, dialog.opened.length, next.length, cellCm, imperial);
+      const width = stairSizeFromField(dialog.width, dialog.opened.width, next.width, cellCm, imperial);
+      if (length == null || width == null) return;
+      next = {
+        ...next, length, width,
+        direction: dialog.direction === 'backward' ? 'backward' : 'forward',
+      };
+    } else {
+      const radius = stairSizeFromField(dialog.radius, dialog.opened.radius, next.radius, cellCm, imperial);
+      if (radius == null) return;
+      next = {
+        ...next, radius,
+        direction: dialog.direction === 'counterclockwise' ? 'counterclockwise' : 'clockwise',
+      };
+    }
     next = {
       ...next,
       angle: normalizeStairAngle(angle),
       target_space_id: dialog.targetSpaceId || null,
     } as Stair;
-    this.write(this.stairs.map((item) => item.id === next.id ? next : item));
+    this.dialog = null;
+    const unchanged = JSON.stringify(next) === JSON.stringify({ ...current, target_space_id: current.target_space_id ?? null });
+    if (unchanged) {
+      this.owner.requestUpdate();
+      return;
+    }
+    const before = this.owner._geometrySnapshot();
+    this.replace(next);
     this.owner._recordGeometry(this.owner._t('history.stair_edit'), before);
     this.owner._saveConfigDebounced();
-    this.dialog = null;
   }
 
   private delete(id: string): void {
@@ -228,11 +330,9 @@ export class StairEditorRuntime {
     event: PointerEvent,
     stair: Stair,
     mode: 'move' | 'resize' | 'rotate',
-    resizeX: -1 | 0 | 1 = 1,
-    resizeY: -1 | 0 | 1 = 1,
+    handle: StairHandleSign = { sx: 0, sy: 0 },
   ): void {
-    if (this.owner._mode !== 'plan'
-      || (this.owner._tool !== 'select' && this.owner._tool !== 'stairs')) return;
+    if (!this.inputEnabled || this.draft) return;
     event.preventDefault();
     event.stopPropagation();
     this.selectedId = stair.id;
@@ -240,12 +340,12 @@ export class StairEditorRuntime {
       pid: event.pointerId,
       id: stair.id,
       mode,
-      resizeX,
-      resizeY,
+      handle,
       start: this.owner._svgPoint(event as unknown as MouseEvent),
       original: structuredClone(stair),
       before: this.owner._geometrySnapshot(),
       moved: false,
+      surfaces: this.surfaces(),
     };
     try { (event.currentTarget as Element).setPointerCapture(event.pointerId); }
     catch { /* synthetic event */ }
@@ -253,53 +353,57 @@ export class StairEditorRuntime {
   }
 
   public pointerMove(event: PointerEvent): boolean {
+    if (this.draft?.pid === event.pointerId) {
+      const point = this.owner._svgPoint(event as unknown as MouseEvent);
+      this.draft.b = point;
+      this.draft.stair = this.draftAt(this.draft, point);
+      this.owner.requestUpdate();
+      return true;
+    }
     const drag = this.drag;
     if (!drag || drag.pid !== event.pointerId) return false;
     const point = this.owner._svgPoint(event as unknown as MouseEvent);
     let next: Stair = { ...drag.original };
     if (drag.mode === 'move') {
-      const center = [
+      next = this.withMoveMagnet(next, [
         drag.original.x * NORM_W + point[0] - drag.start[0],
         drag.original.y * NORM_W + point[1] - drag.start[1],
-      ];
-      next = this.withMagnet(next, center);
+      ], drag.surfaces);
     } else if (drag.mode === 'rotate') {
       next.angle = normalizeStairAngle(
         Math.atan2(point[1] - next.y * NORM_W, point[0] - next.x * NORM_W)
           * 180 / Math.PI + 90,
       );
-      if (event.shiftKey) next.angle = Math.round(next.angle / 45) * 45;
-    } else if (next.kind === 'spiral') {
-      next.radius = Math.max(STAIR_MIN_N,
-        Math.hypot(point[0] - next.x * NORM_W, point[1] - next.y * NORM_W) / NORM_W);
+      if (event.shiftKey) next.angle = normalizeStairAngle(Math.round(next.angle / 45) * 45);
     } else {
-      const resized = resizeFurnitureTransform({
-        x: (next.x - next.length / 2) * NORM_W,
-        y: (next.y - next.width / 2) * NORM_W,
-        w: next.length * NORM_W,
-        h: next.width * NORM_W,
-        angle: next.angle,
-      }, drag.resizeX, drag.resizeY, point[0], point[1], false, STAIR_MIN_N * NORM_W);
-      next = {
-        ...next,
-        x: (resized.x + resized.w / 2) / NORM_W,
-        y: (resized.y + resized.h / 2) / NORM_W,
-        length: resized.w / NORM_W,
-        width: resized.h / NORM_W,
-      };
+      next = magnetStairResize(
+        resizeStair(next, drag.handle, point, { minUnits: this.minUnits, keepAspect: event.shiftKey }),
+        drag.handle, drag.surfaces, this.reach, this.minUnits,
+      );
     }
     drag.moved ||= Math.hypot(point[0] - drag.start[0], point[1] - drag.start[1]) > 0.5;
-    this.write(this.stairs.map((item) => item.id === next.id ? next : item));
+    this.replace(next);
     return true;
   }
 
   private endDrag(event: PointerEvent, cancelled: boolean): boolean {
+    if (this.draft?.pid === event.pointerId) {
+      const draft = this.draft;
+      this.draft = null;
+      this.swallowNextClick();
+      if (cancelled) { this.owner.requestUpdate(); return true; }
+      this.placeStair(this.draftAt(draft, draft.b), this.owner._geometrySnapshot());
+      return true;
+    }
     const drag = this.drag;
     if (!drag || drag.pid !== event.pointerId) return false;
+    this.swallowNextClick();
     if (cancelled) {
-      this.write(this.stairs.map((item) => item.id === drag.id ? drag.original : item));
+      this.replace(drag.original);
     } else if (drag.moved) {
-      this.owner._recordGeometry(this.owner._t('history.stair_move'), drag.before);
+      const label = drag.mode === 'resize' ? 'history.stair_resize'
+        : drag.mode === 'rotate' ? 'history.stair_rotate' : 'history.stair_move';
+      this.owner._recordGeometry(this.owner._t(label), drag.before);
       this.owner._saveConfigDebounced();
     }
     this.drag = null;
@@ -315,9 +419,10 @@ export class StairEditorRuntime {
   }
 
   public undoActiveDrag(): boolean {
+    if (this.draft) { this.cancelDraft(); return true; }
     if (!this.drag) return false;
     const drag = this.drag;
-    this.write(this.stairs.map((item) => item.id === drag.id ? drag.original : item));
+    this.replace(drag.original);
     this.drag = null;
     return true;
   }
@@ -340,6 +445,7 @@ export class StairEditorRuntime {
 
   public clearGesture(): void {
     this.drag = null;
+    this.draft = null;
     this.selectedId = null;
   }
 
@@ -365,79 +471,83 @@ export class StairEditorRuntime {
     };
   }
 
+  private renderStair(stair: Stair, spaceIds: ReadonlySet<string>, selected: boolean, draft: boolean): TemplateResult {
+    const geometry = cachedStairRenderGeometry(stair, this.owner._cellCm);
+    const outline = geometry.outline.map((point) => point.join(',')).join(' ');
+    const targetState = stairTargetState(
+      stair, this.owner._space, spaceIds, this.owner._hasFixedFloor,
+    );
+    const inputEnabled = this.inputEnabled && !draft;
+    const select = (event: Event): void => {
+      if (this.owner._mode === 'plan') {
+        event.stopPropagation();
+        this.selectedId = stair.id;
+        this.owner.requestUpdate();
+      }
+    };
+    return svg`<g class="hp-stair ${selected ? 'selected' : ''} ${inputEnabled ? 'input-enabled' : ''} ${draft ? 'draft' : ''}"
+      data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
+      data-target-state=${targetState}
+      role="img"
+      aria-label=${this.owner._t('markup.stairs')}
+      @dblclick=${(event: MouseEvent) => {
+        event.stopPropagation();
+        if (this.owner._mode === 'plan' && !draft) this.openDialog(stair);
+      }}>
+      <polygon class="hp-stair-outline" points=${outline}></polygon>
+      <polygon class="hp-stair-hit" points=${outline}
+        @pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, 'move')}
+        @click=${select}></polygon>
+      ${geometry.treads.map((line) => svg`<line class="hp-stair-tread"
+        x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
+      <path class="hp-stair-arrow" d=${geometry.arrowPath}></path>
+    </g>` as unknown as TemplateResult;
+  }
+
   public renderLayer(): TemplateResult {
     const spaceIds = new Set(this.owner._model.map((item) => item.id));
-    const items = this.stairs.map((stair) => {
-      const geometry = cachedStairRenderGeometry(stair, this.owner._cellCm);
-      const outline = geometry.outline.map((point) => point.join(',')).join(' ');
-      const selected = this.owner._mode === 'plan'
-        && (this.owner._tool === 'select' || this.owner._tool === 'stairs')
-        && this.selectedId === stair.id;
-      const targetState = stairTargetState(
-        stair, this.owner._space, spaceIds, this.owner._hasFixedFloor,
-      );
-      const inputEnabled = this.owner._mode === 'plan'
-        && (this.owner._tool === 'select' || this.owner._tool === 'stairs');
-      const select = (event: Event): void => {
-        if (this.owner._mode === 'plan') {
-          event.stopPropagation();
-          this.selectedId = stair.id;
-          this.owner.requestUpdate();
-        }
-      };
-      const resizeHandles = stair.kind === 'spiral'
-        ? [{ point: [stair.x * NORM_W + stair.radius * NORM_W, stair.y * NORM_W], sx: 1, sy: 1 }]
-        : [
-          { point: geometry.outline[0], sx: -1, sy: -1 },
-          { point: geometry.outline[1], sx: 1, sy: -1 },
-          { point: geometry.outline[2], sx: 1, sy: 1 },
-          { point: geometry.outline[3], sx: -1, sy: 1 },
-          { point: geometry.outline[0].map((value, axis) =>
-            (value + geometry.outline[1][axis]) / 2), sx: 0, sy: -1 },
-          { point: geometry.outline[1].map((value, axis) =>
-            (value + geometry.outline[2][axis]) / 2), sx: 1, sy: 0 },
-          { point: geometry.outline[2].map((value, axis) =>
-            (value + geometry.outline[3][axis]) / 2), sx: 0, sy: 1 },
-          { point: geometry.outline[3].map((value, axis) =>
-            (value + geometry.outline[0][axis]) / 2), sx: -1, sy: 0 },
-        ];
-      const bearing = stair.angle * Math.PI / 180;
-      const outer = (stair.kind === 'spiral' ? stair.radius : stair.width / 2) * NORM_W;
-      const rotatePoint = [
-        stair.x * NORM_W + Math.sin(bearing) * (outer + this.owner._gridPitch * 2),
-        stair.y * NORM_W - Math.cos(bearing) * (outer + this.owner._gridPitch * 2),
-      ];
-      return svg`<g class="hp-stair ${selected ? 'selected' : ''} ${inputEnabled ? 'input-enabled' : ''}"
-        data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
-        data-target-state=${targetState}
-        role="img"
-        aria-label=${this.owner._t('markup.stairs')}
-        @dblclick=${(event: MouseEvent) => {
-          event.stopPropagation();
-          if (this.owner._mode === 'plan') this.openDialog(stair);
-        }}>
-        <polygon class="hp-stair-outline" points=${outline}></polygon>
-        <polygon class="hp-stair-hit" points=${outline}
-          @pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, 'move')}
-          @click=${select}></polygon>
-        ${geometry.treads.map((line) => svg`<line class="hp-stair-tread"
-          x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
-        <path class="hp-stair-arrow" d=${geometry.arrowPath}></path>
-        ${selected ? svg`
-          ${resizeHandles.map((handle) => svg`<circle class="hp-stair-handle hp-stair-resize"
-            cx=${handle.point[0]} cy=${handle.point[1]} r=${this.owner._gridPitch * 0.65}
-            @pointerdown=${(event: PointerEvent) => this.pointerDown(
-              event, stair, 'resize', handle.sx as -1 | 0 | 1, handle.sy as -1 | 0 | 1,
-            )}></circle>`)}
-          <line class="hp-stair-rotate-leader" x1=${stair.x * NORM_W} y1=${stair.y * NORM_W}
-            x2=${rotatePoint[0]} y2=${rotatePoint[1]}></line>
-          <circle class="hp-stair-handle hp-stair-rotate"
-            cx=${rotatePoint[0]} cy=${rotatePoint[1]} r=${this.owner._gridPitch * 0.65}
-            @pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, 'rotate')}></circle>
-        ` : nothing}
-      </g>`;
-    });
-    return svg`<g class="hp-stairs-layer">${items}</g>` as unknown as TemplateResult;
+    const items = this.stairs.map((stair) => this.renderStair(
+      stair, spaceIds, this.inputEnabled && this.selectedId === stair.id, false,
+    ));
+    const draft = this.draft ? this.renderStair(this.draft.stair, spaceIds, true, true) : nothing;
+    return svg`<g class="hp-stairs-layer">${items}${draft}</g>` as unknown as TemplateResult;
+  }
+
+  /**
+   * The selection frame (#676 К2) lives in the card's top overlay, above wall
+   * bodies, with the decor frame's chrome: finger-sized invisible hit circles,
+   * quarter-size visible beads, cursors by the world bearing of each handle.
+   */
+  public renderFrame(view: { w: number; h: number }): TemplateResult | typeof nothing {
+    if (!this.inputEnabled) return nothing;
+    const stair = this.draft?.stair ?? this.stairs.find((item) => item.id === this.selectedId);
+    if (!stair) return nothing;
+    const hr = Math.max(view.w, view.h) * 0.018;
+    const kr = hr / 4;
+    const stem = stairRotateHandle(stair, hr * 2.2);
+    const box = stairBox(stair);
+    const geometry = cachedStairRenderGeometry(stair, this.owner._cellCm);
+    const stop = (event: Event): void => { event.stopPropagation(); };
+    const handles = stairHandles(stair).map((handle) => svg`<circle
+        class="dthandle hp-stair-resize dt-${resizeCursor(handle.normalDeg)}"
+        cx=${handle.point[0]} cy=${handle.point[1]} r=${hr.toFixed(1)}
+        @pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, 'resize', { sx: handle.sx, sy: handle.sy })}
+        @click=${stop}></circle>
+      <circle class="dtknob" cx=${handle.point[0]} cy=${handle.point[1]} r=${kr.toFixed(2)}></circle>`);
+    const outline = stair.kind === 'spiral'
+      ? svg`<circle class="dtbox" cx=${box.cx} cy=${box.cy} r=${box.w / 2}></circle>`
+      : svg`<polygon class="dtbox" points=${geometry.outline.map((point) => point.join(',')).join(' ')}></polygon>`;
+    // A draft has no handles yet: the pointer that draws it is the only gesture.
+    return svg`<g class="dtframe hp-stair-frame" data-hp="stair-frame" data-id=${stair.id}>
+      ${outline}
+      ${this.draft ? nothing : svg`
+        <line class="dtstem" x1=${stem.from[0]} y1=${stem.from[1]} x2=${stem.to[0]} y2=${stem.to[1]}></line>
+        <circle class="dthandle dtrot hp-stair-rotate" cx=${stem.to[0]} cy=${stem.to[1]} r=${hr.toFixed(1)}
+          @pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, 'rotate')}
+          @click=${stop}></circle>
+        <circle class="dtknob" cx=${stem.to[0]} cy=${stem.to[1]} r=${kr.toFixed(2)}></circle>
+        ${handles}`}
+    </g>` as unknown as TemplateResult;
   }
 
   public renderDialog(): TemplateResult | typeof nothing {
@@ -452,14 +562,17 @@ export class StairEditorRuntime {
     const directionOptions: ReadonlyArray<readonly [string, I18nKey]> = dialog.kind === 'straight'
       ? [['forward', 'stairs.forward'], ['backward', 'stairs.backward']] as const
       : [['clockwise', 'stairs.clockwise'], ['counterclockwise', 'stairs.counterclockwise']] as const;
+    const imperial = this.owner._imperial;
+    const bound = (cm: number): string => String(Math.round((imperial ? cm / 2.54 : cm) * 100) / 100);
     const field = (key: 'length' | 'width' | 'radius', label: I18nKey) => html`
       <label>${this.owner._t(label)}</label>
-      <div class="row"><input class="namein tempin" type="number" min="0.01" step="any"
+      <div class="row"><input class="namein tempin" type="number"
+        min=${bound(STAIR_MIN_CM)} max=${bound(STAIR_MAX_CM)} step="any"
         .value=${dialog[key]}
         @input=${(event: Event) => this.updateDialog({
           [key]: (event.target as HTMLInputElement).value,
         })}><span class="opl">${this.owner._t(
-          this.owner._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm',
+          imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm',
         )}</span></div>`;
     return html`<hp-dialog .hass=${this.owner.hass} data-kind="stairs" wide
       .title=${this.owner._t('stairs.properties')} icon="mdi:stairs"
@@ -470,12 +583,12 @@ export class StairEditorRuntime {
           @change=${(event: Event) => {
             const kind = (event.target as HTMLSelectElement).value as Stair['kind'];
             const converted = convertStairKind(current, kind);
-            const sizes = stairPhysicalSizeCm(converted, this.owner._cellCm);
+            const cellCm = this.owner._cellCm;
             this.updateDialog({
               kind,
-              length: cmToField(kind === 'straight' ? sizes[0] : 100, this.owner._imperial),
-              width: cmToField(kind === 'straight' ? sizes[1] : 100, this.owner._imperial),
-              radius: cmToField(kind === 'spiral' ? sizes[0] : 90, this.owner._imperial),
+              length: stairFieldOf(converted.kind === 'straight' ? converted.length : converted.radius * 2, cellCm, imperial),
+              width: stairFieldOf(converted.kind === 'straight' ? converted.width : converted.radius * 2, cellCm, imperial),
+              radius: stairFieldOf(converted.kind === 'spiral' ? converted.radius : Math.max(converted.length, converted.width) / 2, cellCm, imperial),
               direction: converted.direction,
             });
           }}>

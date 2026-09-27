@@ -14,7 +14,10 @@ export interface StairViewHostPort {
   _suppressClick: boolean;
   _cellCm: number;
   _tabClick(spaceId: string): void;
-  _t(key: 'markup.stairs'): string;
+  _t(key: 'markup.stairs' | 'stairs.tooltip_navigate', vars?: Record<string, string | number>): string;
+  /** The card's pointer tooltip: shown only for a hover-capable pointer. */
+  _showTip(event: PointerEvent, title: string, meta: string): void;
+  _clearPointerHover(): void;
 }
 
 type ViewPress = { pid: number; startedAt: number };
@@ -65,6 +68,15 @@ export class StairViewRuntime {
         stair, this.owner._space, spaceIds, this.owner._hasFixedFloor,
       );
       const active = interactive && targetState === 'active';
+      // #676 К8: the tooltip has exactly the link's condition — `active` — so a
+      // missing, self, deleted or fixed-floor target never announces a floor.
+      const targetTitle = active
+        ? this.owner._model.find((item) => item.id === stair.target_space_id)?.title ?? ''
+        : '';
+      const tip = (event: PointerEvent): void => {
+        if (!active) return;
+        this.owner._showTip(event, this.owner._t('stairs.tooltip_navigate', { title: targetTitle }), '');
+      };
       const navigate = (event: Event): void => {
         event.stopPropagation();
         if (event.type === 'keydown') this.suppressClick = false;
@@ -78,6 +90,9 @@ export class StairViewRuntime {
         role=${active ? 'link' : 'img'} tabindex=${active ? '0' : nothing}
         aria-label=${this.owner._t('markup.stairs')}
         @click=${navigate}
+        @pointerenter=${tip}
+        @pointermove=${tip}
+        @pointerleave=${() => { if (active) this.owner._clearPointerHover(); }}
         @keydown=${(event: KeyboardEvent) => {
           if (active && (event.key === 'Enter' || event.key === ' ')) {
             event.preventDefault();

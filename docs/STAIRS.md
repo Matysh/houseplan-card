@@ -8,19 +8,45 @@ creates or changes anything on the target floor.
 ## User contract
 
 The Plan editor has one **Stairs** group with **Straight** and **Spiral** tools.
-A click places the chosen default; the object remains selected. Drag moves it,
-the visible handles resize it, and the upper handle rotates it. Straight stairs
-have corner and one-axis edge handles. A spiral stair remains a circle and has
-one radial resize handle. Rotation is continuous; holding `Shift` snaps to the
-nearest multiple of 45 degrees. `Esc` cancels an active transform or clears the
-selection; Delete/Backspace removes the selected stair; the ordinary Plan
-Undo/Redo history covers create, edit, transform and delete.
+Stairs are drawn like decor shapes (#676): press on the plan, drag and release.
+The dominant drag axis is the rise axis, the ascent points from the press to
+the release ("draw from the bottom up"), the sizes are the drawn extents (never
+below one 30 cm tread) and the angle is 0°, 90°, 180° or 270°; equal extents
+prefer the horizontal. A spiral stair takes the square of the drag, anchored at
+the press. A drag shorter than one grid cell is a click and places the default
+size (240 × 100 cm straight, R 90 cm spiral) at the press. The new stair stays
+selected and the tool remains armed; `Esc` during the drag discards the draft.
+
+The selected stair shows the same frame as furniture in the decor editor,
+painted above wall bodies: a dashed outline, four corner and four side handles
+(a spiral stair has four handles on its axis tangents), a stem with the
+rotation handle above the local top side. Handle hit areas are finger-sized on
+screen at every zoom. The cursor over a handle follows the handle's world
+direction — `ew`/`ns` when it moves along an axis, a diagonal arrow otherwise —
+and the rotation handle shows the circular cursor. Drag the body to move, a
+handle to resize about the opposite side or corner (sizes stop at 30 cm and a
+pointer dragged past the anchor never mirrors the stair; `Shift` keeps the
+proportions), and the upper handle to rotate. Resizing never changes the angle.
+Rotation is continuous; holding `Shift` snaps to the nearest multiple of 45
+degrees. `Esc` cancels an active transform or clears the selection;
+Delete/Backspace removes the selected stair; the ordinary Plan Undo/Redo
+history covers create, edit, move, resize, rotate and delete. The click a
+browser synthesizes after a gesture never reaches the plan tool: it places no
+copy under Stairs and keeps the selection under Select. Under any other plan
+tool the frame is not rendered at all.
 
 Double click opens properties. A straight stair stores positive length and
-width; a spiral stair stores a positive radius. The dialog also selects the
-rise direction, rotation and an optional target space. A target cannot be the
-current space. A missing, self or deleted target leaves the stair visible and
-editable but shows a repair warning and makes View activation a no-op.
+width; a spiral stair stores a positive radius. The fields accept 30–10000 cm
+(inches when Home Assistant is imperial); a field left untouched keeps the
+stored number bit for bit, and saving without changes writes nothing. The
+dialog also selects the rise direction, rotation and an optional target space.
+A target cannot be the current space. A missing, self or deleted target leaves
+the stair visible and editable but shows a repair warning and makes View
+activation a no-op.
+
+In View, hovering a stair with a mouse shows the card tooltip "Go to floor
+<title>" when — and only when — the stair is a valid link (`active` target
+state); a missing, self, deleted or fixed-floor target shows no tooltip.
 
 In an ordinary multi-space card, a clean click/tap or keyboard activation on a
 valid stair switches to the target tab and restores that floor's remembered
@@ -32,10 +58,17 @@ floor receives no automatic stair, highlight or camera centring.
 
 Both variants use the same continuous transform contract as furniture: their
 authored position, size and angle are not grid-quantised on save or by
-**Optimize plans**. A stair near a wall snaps to the visible physical wall face;
-a straight stair also becomes parallel to that face. Any straight/circular pair
-of stairs can snap footprint-to-footprint. The other stair is never modified or
-linked by the magnet.
+**Optimize plans**. The wall magnet works per side (#676): a side of the box
+(a tangent of the circle) that is parallel to a visible physical wall face
+within 5° and within six grid cells of it lands flush on that face. While
+moving, the nearest such side wins and a straight stair turns by at most 5° to
+become exactly parallel — a stair standing end-on to a wall snaps with its end
+and keeps its angle. While resizing or drawing, only the dragged sides snap
+and the angle never changes. Room faces are one-sided; the exposed faces of
+partitions and columns are derived from the body's winding, so a stair
+straddling a thin wall never snaps to the face hidden inside the masonry. Any
+straight/circular pair of stairs can snap footprint-to-footprint. The other
+stair is never modified or linked by the magnet.
 
 Straight tread lines are perpendicular to the rise axis and start at the lower
 edge every 30 cm. A remainder shorter than 30 cm stays at the upper edge.
@@ -83,9 +116,11 @@ links are cleared; a one-space transfer cannot invent an external target.
   primitives.
 - `src/stairs-view.ts` is the eager read-only boundary for symbols, guarded
   navigation and touch/pointer gesture suppression.
-- `src/stairs-editor-model.ts` owns pure Plan transforms, target state and
-  stair-to-stair magnet math; `src/stairs-editor.ts` owns the lazy Plan UI and
-  properties.
+- `src/stairs-editor-model.ts` owns pure Plan transforms — the oriented box,
+  drag-to-draw, resize about the anchor, edge magnets, handle bearings and
+  cursors, dialog conversion — plus target state and stair-to-stair magnet
+  math; `src/stairs-editor.ts` owns the lazy Plan UI (gestures, the frame
+  rendered by the card in its top overlay, properties).
 - `src/clean-floor.ts` and `src/summary-panel-metrics.ts` consume the same
   footprint subtraction for room cards and summary totals; PDF rendering uses
   the same stair outline/tread geometry without changing the room floor paint.

@@ -976,10 +976,12 @@ export const planStyles = css`
     .dtframe .dtrot { cursor: grab; }
     .dtframe .dt-ew { cursor: ew-resize; }
     .dtframe .dt-ns { cursor: ns-resize; }
-    .dtfurnitureframe .dtrot {
+    .dtfurnitureframe .dtrot,
+    .hp-stair-frame .dtrot {
       cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M18.4 7.2A8 8 0 1 0 20 12' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='m15.5 3.8 3.2 3.5-4.6.8' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, grab;
     }
-    .dtfurnitureframe .dtrot:active { cursor: grabbing; }
+    .dtfurnitureframe .dtrot:active,
+    .hp-stair-frame .dtrot:active { cursor: grabbing; }
     .dtframe .dtendpoint { cursor: crosshair; }
     .bdframe .dtrot { cursor: grab; }
     .dtarea {
@@ -1592,21 +1594,10 @@ export const planStyles = css`
       stroke: var(--hp-accent);
       stroke-width: calc(3px / var(--hp-plan-screen-scale, 1));
     }
-    .hp-stair-handle {
-      fill: var(--hp-accent);
-      stroke: var(--hp-bg, #fff);
-      stroke-width: 2px;
-      vector-effect: non-scaling-stroke;
-      pointer-events: all;
-      touch-action: none;
-    }
-    .hp-stair-resize { cursor: nwse-resize; }
-    .hp-stair-rotate { cursor: grab; }
-    .hp-stair-rotate-leader {
-      stroke: var(--hp-accent);
-      stroke-width: 1.5px;
-      vector-effect: non-scaling-stroke;
-      pointer-events: none;
-    }
+    /* #676: the frame and its handles are the decor frame's chrome (.dtframe,
+       .dthandle, .dtknob, dt-* cursors) painted in the top overlay; the draft
+       being drawn is inert until it is placed */
+    .hp-stair.draft .hp-stair-hit { pointer-events: none; }
+    .hp-stair.input-enabled .hp-stair-hit { cursor: move; }
     .alignmsg { margin: 0 0 8px; font-size: 13px; line-height: 1.45; }
 `;

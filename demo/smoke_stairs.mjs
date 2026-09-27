@@ -1,6 +1,9 @@
 // #663: straight and spiral stairs are plan-editor objects, clean View links
-// between spaces, and flat floor content in 2.5D. Exercise only public DOM
-// hooks and the harness facade for writes; card internals are read-only oracles.
+// between spaces, and flat floor content in 2.5D. #676: the editing layer is
+// drag-to-draw, an overlay frame with bearing-aware cursors, edge magnets and
+// a dialog that keeps untouched sizes; View hover announces the target floor.
+// Exercise only public DOM hooks and the harness facade for writes; card
+// internals are read-only oracles.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1100, height: 850 });
@@ -17,6 +20,28 @@ const out = await page.evaluate(async () => {
   const spaceCfg = (id) => card._serverCfg.spaces.find((space) => space.id === id);
   const stairs = (id = 'f1') => spaceCfg(id)?.stairs || [];
   const stairNode = (id) => root().querySelector(`[data-hp="stair"][data-id="${id}"]`);
+  const frame = () => root().querySelector('[data-hp="stair-frame"]');
+  const handleAt = (index) => frame()?.querySelectorAll('.hp-stair-resize')[index];
+  const handlePoint = (node) => [Number(node?.getAttribute('cx')), Number(node?.getAttribute('cy'))];
+  const selectStair = async (id) => {
+    stairNode(id)?.querySelector('.hp-stair-hit')?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    );
+    await settled();
+  };
+  // The browser synthesizes a click on the pressed element after every
+  // pointerup; a gesture witness must send that click too (#676 К6).
+  const clickOn = (node) => node?.dispatchEvent(new MouseEvent('click', {
+    bubbles: true, composed: true, cancelable: true,
+  }));
+  const dragStage = async (from, to, id, extra = {}) => {
+    pointer(stage(), 'pointerdown', from, id, extra);
+    pointer(stage(), 'pointermove', [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2], id, extra);
+    pointer(stage(), 'pointermove', to, id, extra);
+    pointer(stage(), 'pointerup', to, id, extra);
+    clickOn(stage());
+    await settled();
+  };
   const planSvg = () => root().querySelector('.plan-svg');
   const stage = () => root().querySelector('.stage');
   const screen = ([x, y]) => {
@@ -72,8 +97,11 @@ const out = await page.evaluate(async () => {
     // Keep the scale explicit: this witness must prove a 20 cm physical face,
     // not inherit whichever default a fixture migration happens to exercise.
     first.cell_cm = 5;
+    // The partition sits well away from the r1/r4 room boundary (y = 0.58):
+    // the #676 magnet measures from the stair's own side, and the nearest
+    // parallel face wins, so the fixture must not put two faces within reach.
     first.partitions = [...(first.partitions || []), {
-      id: 'stair-smoke-wall', a: [0.15, 0.60], b: [0.85, 0.60], cm: 20,
+      id: 'stair-smoke-wall', a: [0.15, 0.65], b: [0.85, 0.65], cm: 20,
     }];
     return config;
   });
@@ -81,17 +109,19 @@ const out = await page.evaluate(async () => {
   await hp.setMode('plan');
 
   result.straightToolExists = await chooseStair('straight');
-  // 625 is within the wall magnet's reach but is not itself the flush centre
-  // (658.33...). The previous 650 accidentally passed even without a snap.
-  await clickPlan([400, 625]);
+  // A default stair centred at 680 has its upper side at 638.3: 20 units below
+  // the partition's lower face (658.3), within the 25-unit reach but not flush
+  // (#676 К3 measures from the side). The exposed side of the body is the only
+  // candidate: the face hidden inside the masonry never pulls the stair up.
+  await clickPlan([400, 680]);
   const straight = stairs().find((stair) => stair.kind === 'straight');
   result.straightCreatedOnlyOnCurrentFloor = !!straight && stairs('garden').length === 0;
   result.wallMagnetUsesPhysicalFace = !!straight
-    && closeTo(Math.abs(straight.y * 1000 - 600), straight.width * 500 + (20 / 5) * (1000 / 240) / 2, 2)
+    && closeTo(straight.y * 1000 - 650, straight.width * 500 + (20 / 5) * (1000 / 240) / 2, 0.01)
     && closeTo(axisAngleDistance(straight.angle), 0);
 
   result.spiralToolExists = await chooseStair('spiral');
-  await clickPlan([580, 650]);
+  await clickPlan([580, straight.y * 1000]);
   const spiral = stairs().find((stair) => stair.kind === 'spiral');
   result.spiralCreated = !!spiral && stairs().length === 2;
   result.stairMagnetTouchesOtherFootprint = !!straight && !!spiral
@@ -100,6 +130,48 @@ const out = await page.evaluate(async () => {
   result.renderedTypesAndDirections = !!root().querySelector(
     '[data-hp="stair"][data-kind="straight"] .hp-stair-arrow',
   ) && !!root().querySelector('[data-hp="stair"][data-kind="spiral"] .hp-stair-arrow');
+
+  // Drag-to-draw (#676 AC1): a press-drag-release on the stage draws the
+  // straight stair at the drawn size with the ascent along the drag; the
+  // draft is visible while the pointer is down; a spiral takes the square.
+  await chooseStair('straight');
+  const drawnBefore = stairs().length;
+  // Room r1 spans x 40–550, y 140–580: every drawn side stays farther than
+  // the magnet reach from its walls, so the drawn size is exactly the drag.
+  pointer(stage(), 'pointerdown', [200, 300], 6650);
+  pointer(stage(), 'pointermove', [260, 280], 6650);
+  await settled();
+  result.draftIsVisibleWhileDrawing = !!root().querySelector('.hp-stair.draft')
+    && !!frame() && stairs().length === drawnBefore;
+  pointer(stage(), 'pointermove', [200 + 150, 300 - 50], 6650);
+  pointer(stage(), 'pointerup', [200 + 150, 300 - 50], 6650);
+  clickOn(stage());
+  await settled();
+  const drawn = stairs().filter((stair) => stair.kind === 'straight').pop();
+  result.dragDrawsTheDrawnSize = stairs().length === drawnBefore + 1 && !!drawn
+    && closeTo(drawn.length * 1000, 150, 0.01) && closeTo(drawn.width * 1000, 50, 0.01)
+    && drawn.angle === 0 && drawn.direction === 'forward'
+    && closeTo(drawn.x * 1000, 275, 0.01) && closeTo(drawn.y * 1000, 275, 0.01)
+    && !root().querySelector('.hp-stair.draft');
+  await dragStage([300, 500], [320, 300], 6651);
+  const drawnUp = stairs().filter((stair) => stair.kind === 'straight').pop();
+  result.dragUpwardRisesUpward = !!drawnUp && drawnUp.angle === 270
+    && closeTo(drawnUp.length * 1000, 200, 0.01)
+    && closeTo(drawnUp.width * 1000, (30 / 5) * (1000 / 240), 0.01);
+  await chooseStair('spiral');
+  await dragStage([700, 300], [760, 340], 6652);
+  const drawnRound = stairs().filter((stair) => stair.kind === 'spiral').pop();
+  result.dragDrawsTheSpiralSquare = !!drawnRound && closeTo(drawnRound.radius * 1000, 30, 0.01)
+    && closeTo(drawnRound.x * 1000, 730, 0.01) && closeTo(drawnRound.y * 1000, 330, 0.01);
+  // The stairs drawn here are not part of the rest of the scenario.
+  await hp.setServerConfig((config) => {
+    const first = config.spaces.find((space) => space.id === 'f1');
+    first.stairs = first.stairs.filter((stair) => ![drawn?.id, drawnUp?.id, drawnRound?.id].includes(stair.id));
+    return config;
+  });
+  await hp.switchSpace('f1');
+  await hp.setMode('plan');
+  await chooseStair('straight');
 
   // Select and move the straight stair through its actual hit target.
   const start = { x: straight.x, y: straight.y };
@@ -127,32 +199,118 @@ const out = await page.evaluate(async () => {
     && closeTo(undone.x, start.x) && closeTo(undone.y, start.y)
     && closeTo(redone.x, moved.x) && closeTo(redone.y, moved.y);
 
-  // Resize and Shift-rotate through the visible handles.
-  stairNode(straight.id)?.querySelector('.hp-stair-hit')?.dispatchEvent(
-    new MouseEvent('click', { bubbles: true, composed: true }),
-  );
-  await settled();
+  // Resize and Shift-rotate through the visible handles of the overlay frame.
+  // The Stairs tool is still armed: the click after the gesture must not
+  // place another stair (#676 AC6), and the angle must survive (AC11).
+  await selectStair(straight.id);
+  const stairsBeforeResize = stairs().length;
   const beforeResize = stairs().find((stair) => stair.id === straight.id);
-  const resize = stairNode(straight.id)?.querySelector('.hp-stair-resize');
-  const resizePoint = [Number(resize?.getAttribute('cx')), Number(resize?.getAttribute('cy'))];
+  result.frameHasEightHandlesAndRotation = frame()?.querySelectorAll('.hp-stair-resize').length === 8
+    && !!frame()?.querySelector('.hp-stair-rotate');
+  const resize = handleAt(0); // (-1, -1) corner
+  const resizePoint = handlePoint(resize);
   pointer(resize, 'pointerdown', resizePoint, 6632);
   pointer(stage(), 'pointermove', [resizePoint[0] - 35, resizePoint[1] - 25], 6632);
   pointer(stage(), 'pointerup', [resizePoint[0] - 35, resizePoint[1] - 25], 6632);
+  clickOn(resize);
   await settled();
   const resized = stairs().find((stair) => stair.id === straight.id);
   result.resizeIsContinuous = !!beforeResize && !!resized
     && (!closeTo(beforeResize.length, resized.length) || !closeTo(beforeResize.width, resized.width));
-  const rotate = stairNode(straight.id)?.querySelector('.hp-stair-rotate');
-  const rotatePoint = [Number(rotate?.getAttribute('cx')), Number(rotate?.getAttribute('cy'))];
+  result.resizeUnderStairsToolAddsNoStair = stairs().length === stairsBeforeResize
+    && !!root().querySelector('.hp-stair.selected');
+  result.cornerResizeKeepsAngle = !!resized && closeTo(resized.angle, beforeResize.angle, 1e-9);
+  const side = handleAt(5); // (1, 0) side
+  const sidePoint = handlePoint(side);
+  pointer(side, 'pointerdown', sidePoint, 6645);
+  pointer(stage(), 'pointermove', [sidePoint[0] + 30, sidePoint[1] + 6], 6645);
+  pointer(stage(), 'pointerup', [sidePoint[0] + 30, sidePoint[1] + 6], 6645);
+  clickOn(side);
+  await settled();
+  const sideResized = stairs().find((stair) => stair.id === straight.id);
+  result.sideResizeMovesOneDimension = !!sideResized && sideResized.length > resized.length
+    && closeTo(sideResized.width, resized.width, 1e-9)
+    && closeTo(sideResized.angle, resized.angle, 1e-9);
+  const rotate = frame()?.querySelector('.hp-stair-rotate');
+  const rotatePoint = handlePoint(rotate);
   pointer(rotate, 'pointerdown', rotatePoint, 6633);
   pointer(stage(), 'pointermove', [rotatePoint[0] + 47, rotatePoint[1] + 19], 6633, { shiftKey: true });
   pointer(stage(), 'pointerup', [rotatePoint[0] + 47, rotatePoint[1] + 19], 6633, { shiftKey: true });
+  clickOn(rotate);
   await settled();
   const rotated = stairs().find((stair) => stair.id === straight.id);
   result.shiftRotationSnaps45 = !!rotated && closeTo(rotated.angle / 45, Math.round(rotated.angle / 45));
+  result.rotateUnderStairsToolAddsNoStair = stairs().length === stairsBeforeResize;
+
+  // Cursors follow the world bearing of each handle (#676 AC4): the stair is
+  // now rotated by 45°, so a side handle points diagonally and a corner
+  // handle points along an axis; the rotation handle keeps the circular cursor.
+  const cursorOf = (node) => getComputedStyle(node).cursor;
+  const sideCursor = cursorOf(handleAt(5));
+  const cornerCursor = cursorOf(handleAt(2));
+  result.cursorsFollowHandleBearing = rotated.angle % 90 === 45
+    ? /nwse-resize|nesw-resize/.test(sideCursor) && /ns-resize|ew-resize/.test(cornerCursor)
+    : /ns-resize|ew-resize/.test(sideCursor) && /nwse-resize|nesw-resize/.test(cornerCursor);
+  result.rotationHandleHasCircularCursor = /url\(/.test(cursorOf(frame().querySelector('.hp-stair-rotate')));
+
+  // The frame paints above wall bodies and its hit radius is constant on screen (#676 AC7).
+  const wallBodies = root().querySelector('.wallbodies');
+  result.frameAboveWallBodies = !!wallBodies && !!frame()
+    && !!(wallBodies.compareDocumentPosition(frame()) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const screenRadius = () => {
+    const ctm = planSvg().getScreenCTM();
+    return Number(handleAt(0)?.getAttribute('r')) * Math.hypot(ctm.a, ctm.b);
+  };
+  const radiusAtOne = screenRadius();
+  root().querySelector('[data-hp="zoom-in"]')?.click();
+  root().querySelector('[data-hp="zoom-in"]')?.click();
+  await settleCamera();
+  const radiusZoomed = screenRadius();
+  root().querySelector('[data-hp="zoom-fit"]')?.click();
+  await settleCamera();
+  result.handleRadiusConstantOnScreen = radiusAtOne > 0
+    && Math.abs(radiusAtOne - radiusZoomed) <= 1;
+
+  // Under «Select» a handle gesture keeps the selection (#676 AC6).
+  await hp.setTool('select');
+  await selectStair(straight.id);
+  const selectHandle = handleAt(6);
+  const selectPoint = handlePoint(selectHandle);
+  pointer(selectHandle, 'pointerdown', selectPoint, 6646);
+  pointer(stage(), 'pointermove', [selectPoint[0] + 10, selectPoint[1] + 12], 6646);
+  pointer(stage(), 'pointerup', [selectPoint[0] + 10, selectPoint[1] + 12], 6646);
+  clickOn(selectHandle);
+  await settled();
+  result.resizeUnderSelectKeepsSelection = !!root().querySelector('.hp-stair.selected') && !!frame();
+
+  // Under «Walls» the frame is gone and a former handle position is plain
+  // canvas (#676 AC12); back under «Select» the frame returns.
+  const formerHandle = handlePoint(handleAt(6));
+  await hp.setTool('draw');
+  result.frameGoneUnderWallsTool = !frame();
+  const pathBefore = card._path.length;
+  await clickPlan(formerHandle);
+  result.wallsToolClickIsAWallPoint = card._path.length === pathBefore + 1;
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+  await settled();
+  await hp.setTool('select');
+  await selectStair(straight.id);
+  result.frameReturnsUnderSelect = !!frame();
+  await hp.setTool('stairs');
+
+  // Saving the properties dialog untouched changes nothing (#676 AC5):
+  // sizes above one metre survive and no history entry is written.
+  const untouched = JSON.stringify(stairs().find((stair) => stair.id === straight.id));
+  const historyBefore = card._geometryHistory.size;
+  let dialog = await openStairDialog(straight.id);
+  const fieldsShown = [...dialog.querySelectorAll('input[type="number"]')].map((input) => input.value);
+  await saveDialog(dialog);
+  result.untouchedDialogSaveKeepsSizes = JSON.stringify(stairs().find((stair) => stair.id === straight.id)) === untouched
+    && Number(fieldsShown[0]) > 100;
+  result.untouchedDialogSaveWritesNoHistory = card._geometryHistory.size === historyBefore;
 
   // Properties switch kind without changing identity, then switch it back and link Garden.
-  let dialog = await openStairDialog(straight.id);
+  dialog = await openStairDialog(straight.id);
   const selects = dialog ? [...dialog.querySelectorAll('select')] : [];
   if (selects[0]) setDialogSelect(selects[0], 'spiral');
   await saveDialog(dialog);
@@ -167,9 +325,48 @@ const out = await page.evaluate(async () => {
     && linked?.kind === 'straight' && linked.target_space_id === 'garden';
 
   await hp.setMode('view');
-  const linkedNode = stairNode(straight.id);
+  let linkedNode = stairNode(straight.id);
   result.validLinkIsAccessible = linkedNode?.getAttribute('role') === 'link'
     && linkedNode?.getAttribute('data-target-state') === 'active';
+
+  // Hover on a link announces the target floor; every other target state
+  // stays silent (#676 AC8). The mouse pointer type enables hover.
+  const hoverCenter = [linked.x * 1000, linked.y * 1000];
+  const hoverTip = async (node, expectTip) => {
+    card._tip = null;
+    pointer(node, 'pointermove', hoverCenter, 6660);
+    await settled();
+    const shown = card._tip?.title ?? null;
+    node?.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 6660, pointerType: 'mouse' }));
+    await settled();
+    return expectTip ? shown === expectTip && card._tip === null : shown === null;
+  };
+  result.activeLinkHoverShowsTargetFloor = await hoverTip(linkedNode, 'Go to floor Garden');
+  const withTarget = async (target) => {
+    await hp.setServerConfig((config) => {
+      config.spaces.find((space) => space.id === 'f1').stairs
+        .find((stair) => stair.id === linked.id).target_space_id = target;
+      return config;
+    });
+    await hp.switchSpace('f1');
+    return stairNode(linked.id);
+  };
+  result.missingTargetHoverIsSilent = await hoverTip(await withTarget(null), null)
+    && stairNode(linked.id)?.getAttribute('data-target-state') === 'missing';
+  result.selfTargetHoverIsSilent = await hoverTip(await withTarget('f1'), null)
+    && stairNode(linked.id)?.getAttribute('data-target-state') === 'self';
+  result.deletedTargetHoverIsSilent = await hoverTip(await withTarget('no-such-space'), null)
+    && stairNode(linked.id)?.getAttribute('data-target-state') === 'deleted';
+  await withTarget('garden');
+  card.setConfig({ type: 'custom:houseplan-card', title: 'House Plan', icon_size: 3.4, floor: 'f1' });
+  await settled();
+  result.fixedFloorHoverIsSilent = await hoverTip(stairNode(linked.id), null)
+    && stairNode(linked.id)?.getAttribute('data-target-state') === 'fixed';
+  card.setConfig({ type: 'custom:houseplan-card', title: 'House Plan', icon_size: 3.4 });
+  await settled();
+  await hp.switchSpace('f1');
+  await hp.setMode('view');
+  linkedNode = stairNode(straight.id);
 
   // A pan ending on the stair owns its compatibility click and cannot navigate.
   const linkedCenter = [linked.x * 1000, linked.y * 1000];
