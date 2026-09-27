@@ -1,9 +1,11 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1098, issue: 391. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1100, issue: 392. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #673 | [CODE-REVIEW-673-r1.md](CODE-REVIEW-673-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | docs/images/screenshots.json: закоммиченный sourceFingerprint не совпадает с тем, что р…; Комментарий автора в issue #673 называет SHA реализации 557d4e38e26b647437f2c931454737f… | `docs/images/screenshots.json` `demo/golden/matrix.mjs` `scripts/source-fingerprint.mjs` `accept.mjs` `policy.mjs` `AGENTS.md` `baselines-index.json` |
+| #673 | [CODE-REVIEW-673-r2.md](CODE-REVIEW-673-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #672 | [CODE-REVIEW-672-r1.md](CODE-REVIEW-672-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #671 | [CODE-REVIEW-671-r1.md](CODE-REVIEW-671-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #670 | [CODE-REVIEW-670-r1.md](CODE-REVIEW-670-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
