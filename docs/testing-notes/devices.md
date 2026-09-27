@@ -129,7 +129,7 @@
 ## HA-disabled binding gate
 
 The source-of-truth matrix is
-`docs/superpowers/specs/2026-08-08-ha-disabled-devices-design.md` §17.
+`legacy/docs/superpowers/specs/2026-08-08-ha-disabled-devices-design.md` §17.
 `test/ha-binding-status.test.mjs` covers full/limited registry decisions and
 the active-only state projection. The standalone demo exposes complete
 `disabled_by` rows through both registry list WS commands plus
@@ -182,7 +182,7 @@ the active-only state projection. The standalone demo exposes complete
 ## Device display preview and face parity
 
 The behaviour matrix is defined in
-`docs/superpowers/specs/2026-08-08-device-display-preview-design.md` §22.
+`legacy/docs/superpowers/specs/2026-08-08-device-display-preview-design.md` §22.
 Pure source/value/presentation rules live in `test/device-presentation.test.mjs`.
 `demo/smoke_device_preview_parity.mjs` compares the same live fixture across
 the interactive plan, `hp-device-preview` and `houseplan-space-card`, including

@@ -3,7 +3,7 @@
 - Issue: https://github.com/Matysh/houseplan-card/issues/58
 - Приоритет: P1
 - Статус ТЗ: реализовано с owner override F6; целевой gate v1.61.0-beta.1 пройден, ожидается публикация
-- Полная нормативная спецификация: `docs/superpowers/specs/2026-08-09-vacuum-integration-coverage-design.md`
+- Полная нормативная спецификация: `legacy/docs/superpowers/specs/2026-08-09-vacuum-integration-coverage-design.md`
 
 ## Назначение документа
 

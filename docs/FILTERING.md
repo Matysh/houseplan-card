@@ -4,7 +4,7 @@ Agreed with the owner 2026-07-29. This document is the source of truth for the
 mechanism; the code follows it.
 
 HA registry deactivation is a separate runtime condition. Its full contract is
-specified in `docs/superpowers/specs/2026-08-08-ha-disabled-devices-design.md`.
+specified in `legacy/docs/superpowers/specs/2026-08-08-ha-disabled-devices-design.md`.
 
 ## Principle
 

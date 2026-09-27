@@ -6,8 +6,7 @@ flexible (options instead of assumptions), and measured against the official
 **Integration Quality Scale** even though custom integrations are not formally graded.
 Current tasks and priorities live only in
 [GitHub Issues](https://github.com/Matysh/houseplan-card/issues) and their labels
-(`PROCESS.md` §9); this file keeps historical engineering direction. The original market rationale is archived at
-`legacy/docs/PRODUCT-2026-07-05.md`.
+(`PROCESS.md` §9); this file keeps historical engineering direction. The original market rationale lives only in git history (#678).
 
 Phases 0–6 of the original plan (server-side config, room markup editor, device
 management, virtual devices, publication) are **done** — see CHANGELOG v1.3.0–v1.11.2.

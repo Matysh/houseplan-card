@@ -6,11 +6,11 @@ idea appears, first find its row in this file; if there is none — it belongs t
 HA core, to another card, or nowhere. The current order of work lives only in
 [GitHub Issues](https://github.com/Matysh/houseplan-card/issues) and their
 status labels (Project v2 was dropped on 2026-08-14, #139). Companion
-documents: ROADMAP.md (historical engineering direction), UX-MODES.md
-(interaction model).
+documents: UX-MODES.md (interaction model); the historical engineering
+direction is archived in `legacy/docs/ROADMAP.md`.
 TOUCH-SUPPORT.md fixes the input-support contract: touch is a guaranteed View
 surface, while every editor is desktop-first and best effort on touch.
-The old market snapshot is archived at `legacy/docs/PRODUCT-2026-07-05.md`.*
+The old market snapshot lives only in git history (removed by #678).*
 
 ## Mission
 

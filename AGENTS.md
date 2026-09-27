@@ -5,7 +5,7 @@ House Plan is one HACS package with two parts plus a demo harness:
 - **Lovelace card** (`src/`, TypeScript + Lit) — the primary product, bundled to
   the entry, manifest and hashed chunks under `dist/`.
 - **Storage integration** (`custom_components/houseplan/`, Python) — the Home Assistant backend.
-- **Demo harness** (`demo/`) — a self-contained Playwright page (`demo/srv/demo.html`) that renders the card against a fake `hass`, used for screenshots and the `smoke_*.mjs` end-to-end suite.
+- **Demo harness** (`demo/`) — a self-contained Playwright page (`demo/srv/demo.html`) that renders the card against a fake `hass`, used for screenshots and the `smoke_*.mjs` end-to-end suite. The synthetic home is fully fictional (no real home data in public materials); the launcher is `demo/serve.mjs`, the stand copy of the bundle comes from `npm run bundle:sync`, golden scenes live in `demo/golden/` (its README), performance smokes in `demo/performance/`, the guard suite in `demo/guard/` and the live stand seed in `demo/stand/`.
 
 ## Read this first
 

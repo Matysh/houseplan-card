@@ -1,5 +1,5 @@
 /**
- * Partial open (virtual) wall spans — docs/superpowers/specs/2026-08-05-open-spans-delete-design.md
+ * Partial open (virtual) wall spans — legacy/docs/superpowers/specs/2026-08-05-open-spans-delete-design.md
  *
  * Stored on the space as `open_spans: [{ a, b }]` in normalised 0..1 coords.
  * `rooms[].open_to` remains the light-zone connectivity index derived from spans.

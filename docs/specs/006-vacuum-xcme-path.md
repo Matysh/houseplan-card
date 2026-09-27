@@ -3,7 +3,7 @@
 - Issue: https://github.com/Matysh/houseplan-card/issues/6
 - Приоритет: P1
 - Статус ТЗ: реализовано по HP-VAC-02 rev.7; целевой gate v1.61.0-beta.1 пройден, ожидается публикация
-- Родительский контракт: `docs/superpowers/specs/2026-08-09-vacuum-integration-coverage-design.md`, §4.1
+- Родительский контракт: `legacy/docs/superpowers/specs/2026-08-09-vacuum-integration-coverage-design.md`, §4.1
 
 ## Цель
 

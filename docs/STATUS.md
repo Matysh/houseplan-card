@@ -57,9 +57,9 @@ same commit as the change it describes.
 | Product scope | `docs/SCOPE.md` is the feature guard rail; `docs/TOUCH-SUPPORT.md` is the input-support contract — check both before accepting interaction work |
 
 The feature surface since the 2026-07-17 snapshot and the early release
-milestones moved to [`STATUS-FEATURES.md`](STATUS-FEATURES.md) (#634): they
-are reference, not session entry. New feature-surface bullets go there, in the
-same commit as the behaviour.
+milestones are archived in [`legacy/docs/STATUS-FEATURES.md`](../legacy/docs/STATUS-FEATURES.md)
+(#634, archived by #678): the feature surface is described by the changelog and
+the user guide, not by a parallel list.
 
 ## Where things live
 
@@ -75,10 +75,9 @@ same commit as the behaviour.
 
 0. **Canonical backlog** — [GitHub Issues](https://github.com/Matysh/houseplan-card/issues)
    contain task scope and acceptance criteria; their **labels** carry priority
-   and workflow status (`PROCESS.md` §9). GitHub Projects is no longer used.
-   The former local product plan is preserved only as a snapshot at
-   [`legacy/docs/PRODUCT-IMPROVEMENT-PLAN.ru.md`](../legacy/docs/PRODUCT-IMPROVEMENT-PLAN.ru.md)
-   and must not be updated or used as a backlog.
+   and workflow status (`PROCESS.md` §9). GitHub Projects is no longer used;
+   the former local product plan was removed from the tree (#678, git history
+   keeps it) and must not be used as a backlog.
 1. Privacy: legacy real-house plan sources (`assets/`) and screenshots were
 removed from the current tree. Public documentation images are generated
    from synthetic fixtures by the `Docs screenshots` workflow, accepted with `npm run docs:accept -- --reviewed`, and indexed in

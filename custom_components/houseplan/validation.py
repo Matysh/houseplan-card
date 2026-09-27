@@ -1208,7 +1208,7 @@ _LEGACY_MAX_ROOM_DRAFTS = 200
 _LEGACY_MAX_DRAFT_SEGMENTS = 2000
 MAX_PARTITIONS = 2000
 MAX_WALL_COLUMNS = 500
-# Open (virtual) wall stretches, docs/superpowers/specs/2026-08-05-open-spans-delete-design.md.
+# Open (virtual) wall stretches, legacy/docs/superpowers/specs/2026-08-05-open-spans-delete-design.md.
 # Every span is a piece of a shared boundary, so there can never be more of
 # them than there are wall segments — the cap is the walls' one (AUD-159B6-03).
 MAX_OPEN_SPANS = 500

@@ -618,8 +618,7 @@
       their boundary clones have zero noise, every required truncation/
       threshold/layout/frontend/backend/recursive mutant is killed, and the
       large-house boundary p95 is no more than 20% over the same-run full-clone
-      baseline [auto: `model-invariants.test`, `mutation-gate`,
-      `benchmark_coordinate_write_barrier`].
+      baseline [auto: `model-invariants.test`, `mutation-gate`].
 - [ ] Rejected save leaves the plan intact (v1.45.0, review R2-1): attach a new
       background, make the config write fail (a second tab saving first is
       enough) — the previously stored plan is still served, with the same or a
