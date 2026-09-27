@@ -28,6 +28,27 @@ import {
 import {
   cssTemplateMinifier, minifyCssText, minifyStaticCssTemplates,
 } from '../scripts/css-template-minifier.mjs';
+import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
+
+// Поставляемый манифест — закоммиченный `dist/houseplan-assets.json`. С #657
+// бандл меняет только кандидат беты/релиза, поэтому между кандидатами манифест
+// законно отстаёт от исходников — и от потолков, которые задачи поднимают
+// вслед за своим графом в том же коммите. «Поставляемый граф лежит в полосе
+// потолка» (#438, #593, #627) поэтому судится только по СВЕЖЕМУ бандлу: у
+// кандидата (его бандл и есть закоммиченный) и после `npm run build` в Validate
+// и gate:small. Отстающий манифест против нового потолка — не измерение:
+// после слияния #663 бандл беты.4 лежал ниже поднятой полосы редактора, после
+// #676 — бандл беты.5, и на чистом чекауте эти тесты краснели до кандидата, а
+// в мутантном worktree CI (`git worktree` без сборки) роняли чистый прогон.
+// Свежесть — тот же отпечаток, которым `bundle-policy` судит кандидата (#657).
+const SHIPPED_MANIFEST_URL = new URL('../dist/houseplan-assets.json', import.meta.url);
+const shippedManifest = () => JSON.parse(readFileSync(SHIPPED_MANIFEST_URL, 'utf8'));
+const shippedDist = fileURLToPath(new URL('../dist/', import.meta.url));
+const shippedBundleIsFresh = (manifest) => (
+  manifest.fingerprint === sourceFingerprint(fileURLToPath(new URL('..', import.meta.url)))
+);
+const STALE_SHIPPED_BUNDLE = '#657: закоммиченный бандл отстаёт от исходников до кандидата — '
+  + 'полосу потолка судит `npm run bundle:budget` по свежей сборке, здесь сравнивать не с чем';
 
 /** #627: the nine namespace × language chunks, each a dynamic import of a lazy chunk. */
 const namespaceLocaleChunkPath = (entry) => `houseplan-assets/${entry.namespace}-${entry.language}-HASH.js`;
@@ -847,13 +868,13 @@ test('#429 проверка владения не судит размер гра
 
 // --- #438: потолок графа с полосой ------------------------------------------
 
-test('#438 поставляемый граф лежит внутри полосы потолка', () => {
+test('#438 поставляемый граф лежит внутри полосы потолка', (t) => {
   // Гейт живёт и здесь, а не только в `npm run bundle:budget`: манифест
   // закоммичен, значит проверка стоит ровно там, где её увидит любой прогон
   // тестов. Рост, который не заметили в бете.2, краснел бы на этом тесте.
-  const manifest = JSON.parse(
-    readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
-  );
+  // С #657 — только пока бандл свежий, см. `shippedBundleIsFresh`.
+  const manifest = shippedManifest();
+  if (!shippedBundleIsFresh(manifest)) { t.diagnostic(STALE_SHIPPED_BUNDLE); return; }
   const violation = initialViewCeilingViolation(manifest.initialViewGzipBytes);
   assert.equal(violation, null, violation?.text);
 });
@@ -884,7 +905,7 @@ test('#438 падение ниже полосы требует опустить 
   assert.equal(initialViewCeilingViolation(undefined).kind, 'missing');
 });
 
-test('#438 полоса шире наблюдаемого шума метрики', () => {
+test('#438 полоса шире наблюдаемого шума метрики', (t) => {
   // gzip не монотонен по исходнику: на beta.2 initial-чанк стал меньше на 344
   // сырых байта и на 40 байт больше в сжатом виде. Полоса обязана быть заметно
   // шире таких колебаний, иначе гейт краснеет на коммитах, сокращающих код, —
@@ -894,9 +915,9 @@ test('#438 полоса шире наблюдаемого шума метрик�
   // И потолок обязан оставаться под общим бюджетом: иначе он ничего не значит.
   assert.ok(INITIAL_VIEW_GZIP_CEILING < INITIAL_VIEW_GZIP_BUDGET);
   // Факт лежит не у края полосы: до отказа есть место в обе стороны.
-  const shipped = JSON.parse(
-    readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
-  ).initialViewGzipBytes;
+  const manifest = shippedManifest();
+  if (!shippedBundleIsFresh(manifest)) { t.diagnostic(STALE_SHIPPED_BUNDLE); return; }
+  const shipped = manifest.initialViewGzipBytes;
   assert.ok(INITIAL_VIEW_GZIP_CEILING - shipped > 500, 'сверху меньше 500 Б — это шум');
   assert.ok(shipped - (INITIAL_VIEW_GZIP_CEILING - INITIAL_VIEW_CEILING_BAND) > 500,
     'снизу меньше 500 Б — гейт потребует опустить потолок из-за шума');
@@ -1030,16 +1051,17 @@ test('#438 CLI действительно применяет потолок, а 
 // #593: до этой задачи размеры ленивых графов только печатались в отчёт. Тогда
 // «бюджет ленивого графа защищён» было заявлением без гейта — сравнения не
 // существовало ни одного, и рост уезжал молча.
-test('#593 потолки ленивых графов — гейт, а не строка отчёта', () => {
-  const manifest = JSON.parse(
-    readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
-  );
-  for (const [bytes, ceiling, label] of [
+test('#593 потолки ленивых графов — гейт, а не строка отчёта', (t) => {
+  const manifest = shippedManifest();
+  // Поставляемые графы против потолков — только по свежему бандлу (#657).
+  const fresh = shippedBundleIsFresh(manifest);
+  if (!fresh) t.diagnostic(STALE_SHIPPED_BUNDLE);
+  for (const [bytes, ceiling, label] of fresh ? [
     [manifest.lazyFurnitureArtGzipBytes, LAZY_FURNITURE_ART_GZIP_CEILING, 'lazy furniture art graph'],
     [manifest.lazyEditorGzipBytes, LAZY_EDITOR_GZIP_CEILING, 'lazy editor graph'],
     // #627 AC1: the first-run graph is the third gated lazy graph.
     [manifest.lazyOnboardingGzipBytes, LAZY_ONBOARDING_GZIP_CEILING, 'lazy onboarding graph'],
-  ]) {
+  ] : []) {
     const violation = lazyGraphCeilingViolation(bytes, { ceiling, label });
     assert.equal(violation, null, violation?.text);
     // Факт лежит не у края полосы — с тем же запасом, что у стартового графа.
@@ -1047,7 +1069,9 @@ test('#593 потолки ленивых графов — гейт, а не ст
     assert.ok(bytes - (ceiling - LAZY_GRAPH_CEILING_BAND) > 500,
       `${label}: снизу меньше 500 Б — гейт потребует опустить потолок из-за шума`);
   }
-  // Гейт обязан быть исполняемым и на синтетике, обе стороны.
+  // Гейт обязан быть исполняемым и на синтетике, обе стороны — и это не
+  // зависит от свежести бандла: мутант «потолок никогда не срабатывает»
+  // ловится здесь.
   const grew = lazyGraphCeilingViolation(20_000, { ceiling: 17_900, label: 'lazy furniture art graph' });
   assert.equal(grew.kind, 'grew');
   assert.equal(grew.over, 2_100);
@@ -1064,12 +1088,7 @@ test('#593 потолки ленивых графов — гейт, а не ст
     /lazy editor graph/);
 });
 
-const shippedManifest = () => JSON.parse(
-  readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
-);
-const shippedDist = fileURLToPath(new URL('../dist/', import.meta.url));
-
-test('#627 AC1 граф онбординга гейтится тем же потолком с полосой, что editor и furniture art', () => {
+test('#627 AC1 граф онбординга гейтится тем же потолком с полосой, что editor и furniture art', (t) => {
   const manifest = shippedManifest();
   const ceilings = (onboarding) => [
     manifest.lazyFurnitureArtGzipBytes, manifest.lazyEditorGzipBytes, onboarding,
@@ -1085,7 +1104,9 @@ test('#627 AC1 граф онбординга гейтится тем же пот
     () => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes + LAZY_GRAPH_CEILING_BAND + 1)),
     /lazy onboarding graph \d+ B gzip ниже потолка .*Опустите потолок/,
   );
-  // Потолок по умолчанию — поставляемый, и поставляемый граф в его полосе.
+  // Потолок по умолчанию — поставляемый, и поставляемый граф в его полосе —
+  // пока бандл свежий (#657); синтетика выше от свежести не зависит.
+  if (!shippedBundleIsFresh(manifest)) { t.diagnostic(STALE_SHIPPED_BUNDLE); return; }
   assert.doesNotThrow(() => assertBundleBudget(manifest));
 });
 
