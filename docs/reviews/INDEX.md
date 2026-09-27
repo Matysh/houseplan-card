@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1109, issue: 397. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 1111, issue: 397. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -42,6 +42,8 @@
 | #657 | [CODE-REVIEW-657-r2.md](CODE-REVIEW-657-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | из r1 — проверка закрытия | `scripts/merge-candidate.mjs` `PROCESS.md` `mutation-registry.mjs` `INDEX.md` |
 | #656 | [CODE-REVIEW-656-r1.md](CODE-REVIEW-656-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #655 | [SPEC-REVIEW-655-r1.md](SPEC-REVIEW-655-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #655 | [CODE-REVIEW-655-r1.md](CODE-REVIEW-655-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | защитный flush_lock в VirtualLightController не имеет собственного доказательства (в ск… | `custom_components/houseplan/virtual_lights.py` `store.py` `__init__.py` |
+| #655 | [CODE-REVIEW-655-r2.md](CODE-REVIEW-655-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #654 | [SPEC-REVIEW-654-r1.md](SPEC-REVIEW-654-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «Release-артефакты» не называют обновление docs/ISOMETRIC.md | `docs/ISOMETRIC.md` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` `docs/reviews/INDEX.md` |
 | #654 | [SPEC-REVIEW-654-r2.md](SPEC-REVIEW-654-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #654 | [CODE-REVIEW-654-r1.md](CODE-REVIEW-654-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
