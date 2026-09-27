@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.78.0-beta.6 — 2026-09-27
+
 - Manual virtual-light state and the latest vacuum-trail points are now flushed
   when Home Assistant stops, so changes still inside their 0.5 s / 10 s write
   debounce windows survive an ordinary restart

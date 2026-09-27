@@ -1,20 +1,18 @@
-<!-- release: v1.78.0-beta.5 -->
+<!-- release: v1.78.0-beta.6 -->
 
 ## Основное
 
-- В редакторе плана появились прямые и винтовые лестницы: они настраиваются как отдельные объекты, магнитятся к стенам, вычитаются из площади комнаты и могут переводить на связанный этаж ([#663](https://github.com/Matysh/houseplan-card/issues/663)).
-- На объёмном плане (2.5D) строка показателей под названием комнаты больше не «плавает» при зуме: расстояние до названия одно и то же на любом масштабе, как на плоском плане ([#665](https://github.com/Matysh/houseplan-card/issues/665)).
-- Отполирован интерфейс: крестик активного редактора теперь находится внутри подсвеченной вкладки, а статическая карточка пространства снова полностью инертна ([#666](https://github.com/Matysh/houseplan-card/issues/666), [#664](https://github.com/Matysh/houseplan-card/issues/664)).
+- Лестницы в редакторе плана теперь редактируются так же предсказуемо, как мебель: протяжкой задаются размер и направление подъёма, рамка и узлы остаются поверх стен, а ресайз, поворот и магнит больше не создают копии и не сбрасывают выбор ([#676](https://github.com/Matysh/houseplan-card/issues/676)).
+- Home Assistant теперь сохраняет последние изменения виртуальных источников света и маршрута пылесоса даже при остановке внутри окна отложенной записи ([#655](https://github.com/Matysh/houseplan-card/issues/655)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- The Plan editor now supports straight and spiral stairs as configurable objects: they snap to walls, subtract from room area and can navigate to a linked floor ([#663](https://github.com/Matysh/houseplan-card/issues/663)).
-- In the 2.5D plan the metrics row under a room name no longer drifts while zooming: it keeps the same distance from the name at every zoom, as on the flat plan ([#665](https://github.com/Matysh/houseplan-card/issues/665)).
-- Interface polish: the active editor's close cross now sits inside its highlighted tab, and the static space card is fully inert again ([#666](https://github.com/Matysh/houseplan-card/issues/666), [#664](https://github.com/Matysh/houseplan-card/issues/664)).
+- Stairs in the Plan editor now edit as predictably as furniture: dragging sets their size and ascent direction, the frame and handles stay above walls, and resizing, rotation and snapping no longer create copies or drop the selection ([#676](https://github.com/Matysh/houseplan-card/issues/676)).
+- Home Assistant now preserves the latest virtual-light state and vacuum-trail points even when it stops inside their deferred-write window ([#655](https://github.com/Matysh/houseplan-card/issues/655)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.5/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.5/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.6/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.6/docs/CHANGELOG.md)
