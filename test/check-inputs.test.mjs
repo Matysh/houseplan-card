@@ -77,7 +77,7 @@ test('ссылки: Python — пакеты репозитория, относи
   assert.ok(refs.data.includes('scripts/config-schema.json'));
 });
 
-test('замыкание: код транзитивно, данные — листья, каталог — все текстовые файлы под ним', () => {
+test('замыкание: код транзитивно, данные — листья, каталог — runtime-файлы под ним', () => {
   const files = {
     'demo/smoke_a.mjs': "import './serve.mjs';\nconst x = 'demo/fixtures';\n",
     'demo/serve.mjs': "import './compat.mjs';\n",
@@ -86,6 +86,7 @@ test('замыкание: код транзитивно, данные — лис
     'scripts/never.mjs': '',
     'demo/fixtures/one.mjs': "import '../deep.mjs';\n",
     'demo/fixtures/two.json': '{}',
+    'demo/fixtures/README.md': 'documentation',
     'demo/fixtures/pic.png': 'binary',
     'demo/deep.mjs': '',
   };
@@ -100,6 +101,7 @@ test('замыкание: код транзитивно, данные — лис
   // картинка под каталогом не берётся, комментарий не ссылка
   assert.ok(!reached.includes('demo/deep.mjs'));
   assert.ok(!reached.includes('demo/fixtures/pic.png'));
+  assert.ok(!reached.includes('demo/fixtures/README.md'));
   assert.ok(!reached.includes('scripts/never.mjs'));
   assert.equal(parents.get('scripts/helper.mjs'), 'demo/compat.mjs');
 });
@@ -128,13 +130,47 @@ test('#573: раскрытие каталога не выдаёт overlay эта
   // раскрытием, а явным корнем manifest (CHECKS.golden.roots)
   const viaGolden = closure('/virtual', ['demo/golden/run.mjs'], { tracked, read: (f) => files[f] });
   assert.ok(!viaGolden.some(isBaselineOverlay), 'каталог overlay по строке — тоже не раскрывается');
-  assert.ok(CHECKS.golden.roots.includes('demo/golden/**'), 'эталоны входят в golden корнем');
+  assert.ok(CHECKS.golden.roots.includes('demo/golden/baselines/**'), 'эталоны входят в golden корнем');
+  assert.ok(!CHECKS.golden.roots.includes('demo/golden/**'), 'весь каталог golden не должен захватывать README');
   // явная ссылка на файл overlay — честная зависимость, она остаётся
   const viaTest = closure('/virtual', ['test/golden-index.test.mjs'], { tracked, read: (f) => files[f] });
   assert.ok(viaTest.includes('demo/golden/baselines/baselines-index.json'));
   assert.deepEqual(BASELINE_OVERLAY, ['demo/golden/baselines/**']);
   assert.equal(isBaselineOverlay('demo/golden/baselines/baselines-index.json'), true);
   assert.equal(isBaselineOverlay('demo/golden/matrix.mjs'), false);
+});
+
+test('#672: документация каталога не раскрывается, но явно читаемый Markdown остаётся входом', () => {
+  const files = {
+    'demo/runner.mjs': "const root = 'demo/harness';\n",
+    'demo/harness/runtime.mjs': 'export const runtime = true;\n',
+    'demo/harness/config.json': '{}\n',
+    'demo/harness/README.md': 'not an implicit input\n',
+    'test/read-doc.test.mjs': "readFileSync(new URL('../demo/harness/README.md', import.meta.url), 'utf8');\n",
+  };
+  const tracked = Object.keys(files).sort();
+  const implicit = closure('/virtual', ['demo/runner.mjs'], { tracked, read: (f) => files[f] });
+  assert.ok(implicit.includes('demo/harness/runtime.mjs'));
+  assert.ok(implicit.includes('demo/harness/config.json'));
+  assert.ok(!implicit.includes('demo/harness/README.md'));
+  const explicit = closure('/virtual', ['test/read-doc.test.mjs'], { tracked, read: (f) => files[f] });
+  assert.ok(explicit.includes('demo/harness/README.md'));
+});
+
+test('#672: README каталогов харнесса не выбирают проверки; реально читаемый README выбирает', () => {
+  const implicitDocs = [
+    p('demo', 'golden', 'README.md'),
+    p('demo', 'guard', 'README.md'),
+    p('demo', 'srv', 'reference', 'device-icons', 'README.md'),
+  ];
+  for (const file of implicitDocs) {
+    const { affected, unknown } = checksAffectedBy([file], ROOT, { manifest: MANIFEST });
+    assert.deepEqual(unknown, [], file);
+    assert.deepEqual([...affected], [], `${file}: ${[...affected].join(', ')}`);
+  }
+  const readByReleaseGate = p('demo', 'performance', 'README.md');
+  assert.ok(MANIFEST.frontend.has(readByReleaseGate), 'явное чтение в release-gate.test.mjs — вход frontend');
+  assert.ok(MANIFEST.performance_smoke.has(readByReleaseGate), 'performance README остаётся входом performance_smoke');
 });
 
 test('#573: на живом дереве индекс эталонов — вход golden и ничьей другой реюзной job', () => {

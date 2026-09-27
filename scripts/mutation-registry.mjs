@@ -5219,6 +5219,47 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'harness-directory-docs-leak-into-inputs',
+    guard: 'node --test --test-name-pattern="#672" test/check-inputs.test.mjs test/gate-reuse.test.mjs',
+    because: '#672: строка-каталог обозначает runtime-корпус, а не документацию рядом с ним; '
+      + 'без фильтра README снова выбирает тяжёлые jobs и меняет их reuse keys',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: '          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !DIRECTORY_DOCUMENTATION.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }',
+      replace: '          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }',
+    }],
+  },
+  {
+    id: 'explicit-markdown-read-dropped-from-inputs',
+    guard: 'node --test --test-name-pattern="#672: документация каталога" test/check-inputs.test.mjs',
+    because: '#672: фильтр каталогов не должен скрывать Markdown, который код читает по точному пути',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: '    for (const m of text.matchAll(REL_DOC_LITERAL)) {',
+      replace: "    for (const m of ''.matchAll(REL_DOC_LITERAL)) {  // mutant: explicit docs disappear",
+    }],
+  },
+  {
+    id: 'browser-protocol-recaptures-guard-readme',
+    guard: 'node --test --test-name-pattern="#672: README каталогов" test/check-inputs.test.mjs',
+    because: '#672: browser protocol must name executable guards, not every document in demo/guard',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: "  'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'demo/guard/*.mjs', 'demo/helpers/hp-test.mjs'];",
+      replace: "  'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'demo/guard/**', 'demo/helpers/hp-test.mjs'];",
+    }],
+  },
+  {
+    id: 'golden-root-recaptures-golden-readme',
+    guard: 'node --test --test-name-pattern="#672: README каталогов" test/check-inputs.test.mjs',
+    because: '#672: golden needs the accepted baseline overlay, not a broad root that also owns README',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: '    roots: [...BUILD_INPUTS, ...BASELINE_OVERLAY, ...BROWSER_PROTOCOL, ...REUSE_PROTOCOL, ...WORKFLOW],',
+      replace: "    roots: [...BUILD_INPUTS, 'demo/golden/**', ...BROWSER_PROTOCOL, ...REUSE_PROTOCOL, ...WORKFLOW],",
+    }],
+  },
+  {
     id: 'guard-inputs-ignore-wrapper-defaults',
     guard: 'node --test --test-name-pattern="#492 §8.2" test/mutation-gate.test.mjs',
     because: 'ten backend wrappers run tests_backend/test_ha_import_export.py by default without naming '
@@ -12140,8 +12181,8 @@ const MUTANT_DEFINITIONS = [
       + 'а ключи, которые proof предъявляет как «те же входы», меняются от PNG',
     patches: [{
       file: 'scripts/check-inputs.mjs',
-      find: "          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }",
-      replace: "          if (f.startsWith(`${ref}/`) && !BINARY.test(f)) { note(f, file); seen.add(f); }",
+      find: "          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !DIRECTORY_DOCUMENTATION.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }",
+      replace: "          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !DIRECTORY_DOCUMENTATION.test(f)) { note(f, file); seen.add(f); }",
     }],
   },
   {

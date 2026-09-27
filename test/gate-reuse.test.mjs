@@ -171,6 +171,22 @@ test('#573: приёмка эталонов меняет только ключ g
   }
 });
 
+test('#672: README внутри каталогов харнесса не меняют ключи тяжёлых проверок', () => {
+  const { dir, put } = makeTree();
+  try {
+    put('scripts/source-fingerprint.mjs', "const corpus = ['demo/fixtures', 'demo/golden'];\nexport const fp = 1;\n");
+    put('demo/bundle-freshness.mjs', "import '../scripts/source-fingerprint.mjs';\nexport const fresh = 1;\n");
+    put('demo/benchmark_glow.mjs', "import './serve.mjs';\nconst serverRoot = 'demo/srv';\n");
+    const before = keys(dir);
+    put(['demo', 'golden', 'README.md'].join('/'), 'golden docs\n');
+    put(['demo', 'guard', 'README.md'].join('/'), 'guard docs\n');
+    put(['demo', 'srv', 'reference', 'device-icons', 'README.md'].join('/'), 'reference docs\n');
+    assert.deepEqual(keys(dir), before);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('harness edits are isolated to their own job (#208)', () => {
   const { dir, put } = makeTree();
   const only = (changed) => {

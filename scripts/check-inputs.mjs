@@ -143,9 +143,11 @@ const PY_FROM = /^\s*from\s+([\w.]+)\s+import/gm;
 const PY_IMPORT = /^\s*import\s+([\w.]+)/gm;
 const PY_PATH_JOIN = /((?:"[\w.-]+"\s*\/\s*)+"[\w.-]+")/g;
 const REL_EXEC_LITERAL = /['"]((?:\.\.?\/)*[\w.-]+(?:\/[\w.-]+)*\.(?:mjs|py))['"]/g;
+const REL_DOC_LITERAL = /['"]((?:\.\.?\/)+[\w.-]+(?:\/[\w.@-]+)*\.md)['"]/gi;
 
 const toPosix = (p) => p.replaceAll('\\', '/');
 const BINARY = /\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf|pdf|zip)$/i;
+const DIRECTORY_DOCUMENTATION = /\.md$/i;
 
 /** `test-build/foo.js` — скомпилированный `src/foo.ts` (tsconfig.test.json). */
 const mapTestBuild = (rel) => {
@@ -199,6 +201,13 @@ export function referencesOf(file, rawText) {
   if (/\.(mjs|cjs|js|ts)$/.test(file)) {
     for (const re of [JS_IMPORT, JS_DYNAMIC, JS_REQUIRE]) {
       for (const m of text.matchAll(re)) resolveJsSpecifier(file, m[1]).forEach((p) => code.add(norm(p)));
+    }
+    // Документ внутри названного каталога не является runtime-входом сам по
+    // себе. Но точный относительный путь к Markdown в исполняемом коде — это
+    // явная зависимость (например, release-gate действительно читает README).
+    for (const m of text.matchAll(REL_DOC_LITERAL)) {
+      const rel = norm(posix.join(posix.dirname(file), m[1]));
+      if (!rel.startsWith('..')) data.add(rel);
     }
   }
   if (file.endsWith('.py')) {
@@ -279,12 +288,12 @@ export function closure(root, entries, { tracked = trackedFiles(root), stopAt = 
     }
     for (const ref of data) {
       if (trackedSet.has(ref)) { note(ref, file); seen.add(ref); continue; }
-      // каталог по строке — данные; бинарные файлы под ним код по строке не
-      // читает, а overlay эталонов принадлежит только своей проверке (#573):
-      // и то и другое входит в golden явным корнем
+      // Каталог по строке — данные. Бинарные файлы и документация под ним код
+      // по одной строке-каталогу не читает; точный Markdown-путь выше остаётся
+      // честной зависимостью. Overlay эталонов принадлежит только golden (#573).
       if (isDir(ref)) {
         for (const f of tracked) {
-          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }
+          if (f.startsWith(`${ref}/`) && !BINARY.test(f) && !DIRECTORY_DOCUMENTATION.test(f) && !isBaselineOverlay(f)) { note(f, file); seen.add(f); }
         }
       }
     }
@@ -301,7 +310,7 @@ const BUILD_INPUTS = ['src/**', 'package.json', 'package-lock.json', 'rollup.con
   'scripts/bundle-sync.mjs', 'scripts/bundle-tree.mjs'];
 /** Протокол браузерного харнеса: страница, сервер, гард исключений, compat-хелперы. */
 const BROWSER_PROTOCOL = ['demo/serve.mjs', 'demo/srv/demo.html', 'demo/bundle-freshness.mjs',
-  'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'demo/guard/**', 'demo/helpers/hp-test.mjs'];
+  'demo/editor-runtime-compat.mjs', 'demo/iso-runtime-compat.mjs', 'demo/guard/*.mjs', 'demo/helpers/hp-test.mjs'];
 const WORKFLOW = ['.github/workflows/validate.yml'];
 /** Протокол реюза: кто считает ключ, тот и вход (§5.1 protocol). */
 const REUSE_PROTOCOL = ['scripts/gate-reuse.mjs', 'scripts/check-inputs.mjs', 'scripts/ci-proof.mjs'];
@@ -351,7 +360,7 @@ export const CHECKS = {
   },
   golden: {
     entries: ['demo/golden/run.mjs'],
-    roots: [...BUILD_INPUTS, 'demo/golden/**', ...BROWSER_PROTOCOL, ...REUSE_PROTOCOL, ...WORKFLOW],
+    roots: [...BUILD_INPUTS, ...BASELINE_OVERLAY, ...BROWSER_PROTOCOL, ...REUSE_PROTOCOL, ...WORKFLOW],
     reuse: true,
   },
   performance_smoke: {
