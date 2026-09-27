@@ -146,15 +146,6 @@ git config core.fsmonitor true
 git config core.untrackedCache true
 ```
 
-### ⚠️ File-sync pitfalls (critical)
-1. The network mount sometimes serves files **truncated/scrambled** — edits via the Edit tool
-   from the Windows side are unreliable. Rule: **apply python patches against a clean copy in /tmp,
-   write via bash**, with an assert that count(old)==1.
-2. **Run the rollup build ONLY in /tmp/hpc** (`npm ci` is already done). A build on the mount once
-   produced a syntactically valid but broken bundle ("wi is not defined") that crashed the rendering
-   of ALL HA dashboards (the card is loaded as an extra_module on every page!).
-3. `.git` cannot be created on the mount ("Operation not permitted" on dot-directories) — hence the bundle.
-
 ## Local repository maintenance (#628)
 
 Owner decision on 2026-09-25: use only a one-time local garbage collection for
@@ -238,7 +229,7 @@ on with `window.__hpTest.setVolumetricView(true)`.
 
 To add a capability, add one unique lowercase id plus issue and a non-empty
 summary to `LABS_FLAGS`, then cover registry validation and the alpha-on active
-set. Capabilities have no individual public key or version lifetime: the one
+set; invalid or duplicate entries fail closed. Capabilities have no individual public key or version lifetime: the one
 persisted alpha switch is deliberately indefinite until the owner changes the
 contract. See `docs/ISOMETRIC.md` for the current use.
 
@@ -313,14 +304,15 @@ smoke launcher continues to default to the current repository root.
 Both browser diagnostics require a freshly built/copied demo bundle. Rollup
 embeds a SHA-256 fingerprint of `src/` plus the locked package and
 Rollup/TypeScript build inputs; benchmark/golden runners fail before
-capturing anything when `demo/srv/assets/houseplan-card.js` is stale. Golden
-commands and the explicit review workflow are documented in
-`demo/golden/README.md`.
+capturing anything when `demo/srv/assets/houseplan-card.js` is stale;
+`demo/bundle-freshness.mjs` also verifies every manifest-listed asset hash, so a
+partially copied tree fails too. Golden commands and the explicit review
+workflow are documented in `demo/golden/README.md`.
 
 ## Build
 
 ```bash
-cd /tmp/hpc && npm ci        # once
+npm ci                       # once
 npm run bundle:sync          # build + entry/manifest/chunks → demo
 npm run bundle:budget        # initial View graph within INITIAL_VIEW_GZIP_BUDGET (scripts/bundle-budget.mjs)
 npm run bundle:clean         # before an ordinary commit (#657)
@@ -516,6 +508,18 @@ edits — not a commit, not a merge (that is decided in `integrate` from the sea
 
 ## Release
 
+This section is the only home of the release mechanics; `docs/STATUS.md`,
+`docs/ARCHITECTURE.md`, `AGENTS.md` and `CONTRIBUTING.md` link here instead of
+retelling it. The process side — when an issue closes, what a stable commit may
+contain, the independent line review — is `PROCESS.md` §2.8, §3 and §11.5.
+
+The shape in one paragraph: a pre-release is one tested `dev` commit and tag
+with `prerelease=true`, published from `dev`; `main` stays untouched. A stable
+release fast-forwards `main` to the exact tested `dev` SHA and is produced only
+by `release.yml`. Installations then update through HACS by tag («Deployment»
+above); the dev stand takes the head of `dev` from the `dev-build` branch
+(`demo/stand/README.md`).
+
 ### Primary prerelease path
 
 Prepare the candidate as usual: synchronize every version field, add dated RU
@@ -541,7 +545,9 @@ npm run release:check -- v1.61.0-beta.4 --issues=63,64
 ```
 
 The orchestrator requires a clean, synchronized `dev`, byte-identical bundle
-snapshots and a completed green Validate for `HEAD`. Snapshot hashes and the
+snapshots and a completed green Validate for `HEAD`; like `release.yml`, it
+refuses a candidate without the `Release:` trailer and a committed bundle whose
+embedded source fingerprint differs from the tree. Snapshot hashes and the
 uploaded standalone JS are read from the exact Git blobs rather than checkout
 bytes, so Windows CRLF conversion cannot disagree with the LF-tagged archive.
 The archive command additionally forces `core.autocrlf=false` for that one
@@ -631,7 +637,10 @@ real Home Assistant — `e2e-gate.mjs --ref=<sha>` dispatches `e2e.yml` in
 (#514, #540) — then builds once, archives `houseplan.zip` from that same tree
 (`git archive <sha>:custom_components/houseplan`, deterministic), writes
 `SHA256SUMS`, uploads everything into a draft, publishes, downloads the public
-assets back and checks them against the passport, and only then announces. The
+assets back and checks them against the passport, and only then announces.
+Before staging, a stable release also runs `npm run continuity:screencast`: the
+CDP compositor screencast fails the run on an empty or black presented frame and
+uploads the failed frames as `continuity-screencast`. The
 tree hash printed in the run summary is the identity between what E2E installed
 and what HACS downloads.
 
@@ -644,12 +653,16 @@ then cut a new tag. Re-dispatching the workflow on an already public tag is a
 **repair**: the gates run again on the SHA, missing assets are added, and an
 existing asset whose hash differs from the rebuilt one fails the run instead of
 being replaced. Hand-published betas are ignored by this workflow — prereleases
-have their own staged path above. Bump the version
-everywhere in sync: `src/houseplan-card.ts` (CARD_VERSION), `package.json`,
-`custom_components/houseplan/manifest.json`, `custom_components/houseplan/const.py`.
+have their own staged path above. Bump the version in every source
+`scripts/release-contract.mjs` reads (`parseVersionSources`: `package.json`,
+`package-lock.json`, the integration `manifest.json` and `const.py`,
+`CARD_VERSION` in the card and in the editor runtime); the snapshot table in
+`docs/STATUS.md` reports whether they agree.
 
 Validate intentionally runs on branch pushes, not tag pushes, so an annotated
-release tag does not duplicate the expensive browser/performance matrix. Every
+release tag does not duplicate the expensive browser/performance matrix; a new
+push cancels an unfinished Validate for the same branch, and the gates accept
+only a completed run for the exact SHA, never "the last green one". Every
 tagged SHA must therefore already be pushed to a branch and have a completed
 green full exact-SHA Validate proof. For an owner-approved emergency hotfix, push a
 temporary `hotfix/*` branch and wait for Validate before creating the tag;
@@ -666,6 +679,18 @@ body short because HACS displays it inside Home Assistant and concatenates the
 bodies of skipped releases. The full detail remains in both
 `docs/CHANGELOG.ru.md` and `docs/CHANGELOG.md`; finish every release body with
 two explicit links, one to each language version of the changelog.
+
+A **stable** body aggregates the changelog since the previous **stable**
+release, never since the last beta (#328, owner rules 2026-08-27): everything
+the line's beta changelogs describe reaches it, while a bug introduced and fixed
+strictly inside the beta line — never shipped in any stable — stays out. Every
+bullet links its GitHub issue so the rules stay machine-checkable. Draft with
+`npm run release:notes -- <tag>` (it lists each candidate item with its source
+section so the curator can strike in-line-only fixes), curate by hand, then
+`npm run release:notes -- <tag> --verify` must pass. The small-fixes bullet is
+allowed only when the range really contains user-visible work the body does not
+itemise; a single-issue hotfix ships without it (the verifier enforces this).
+Open or partially delivered issues are never presented as shipped.
 
 Changelog entries may link directly to a **closed** GitHub Issue when that
 issue is the canonical task for the shipped change. Append a normal Markdown
@@ -712,13 +737,9 @@ behaviour change must spend at least one published beta/RC before stable. A
 stable release commit may change only version fields, generated bundle
 snapshots and changelog/release metadata; feature source changes belong in the
 preceding pre-release commit. Skip this step only for an explicit owner-approved
-emergency hotfix, and document the exception in the handoff.
-
-## Reproducible scripts (data)
-
-- Extracting the geometry/backgrounds from the prototype and generating `src/data/*` — see the commit
-  history and docs/ARCHITECTURE.md (SVG→base-space transforms: f1 0.647/(490,27), f2 0.896/(351,21)).
-- Room fitting: render the plan with rectangles overlaid (cv2) → snap to walls → manual fine-tuning.
+emergency hotfix, and document the exception in the handoff. A
+`Release vX.Y.Z-beta.N candidate` commit is **not** promotion-only: it carries
+the work itself and follows the ordinary rules, trailers included.
 
 ## Smoke tests (since 2026-07-27)
 
@@ -746,3 +767,15 @@ its physical resize after the Lit update (#460).
 
 When adding a checklist line marked `[auto: ...]` in docs/TESTING.md, add the
 failing check in the same commit — that is what the marker now promises.
+
+The fake `hass` in `demo/srv/demo.html` is set once: opened directly in a
+browser, the page renders the plan but **device icons appear only after a
+re-render** (F5, or `card.hass = {...card.hass}`). `demo/serve.mjs` does that
+nudge for smokes; a plain browser session does not. It is a harness limitation,
+not a card bug.
+
+Known environment-sensitive smoke: `demo/smoke_opening_measure.mjs` fails two
+sub-checks (`place_dialog_x_magnetised`, `place_committed_x_center`) under the
+pinned Chromium — a `1e-6`-tolerance magnet snap on the opening *placement*
+path. It reproduces against the pristine committed bundle: pre-existing pixel
+precision, not a regression of the change under test.

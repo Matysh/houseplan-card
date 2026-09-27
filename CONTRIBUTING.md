@@ -67,8 +67,9 @@ artifact>`; when a change cannot move a pixel, `npm run docs:accept --
 --identical` re-captures locally, compares decoded pixels and refreshes only the
 source fingerprint. Scenario version, source fingerprint and every image hash
 are recorded in the [screenshot index](docs/images/screenshots.json), and
-`node scripts/check-docs.mjs` reports a stale fingerprint before a beta
-candidate. The full rule is in `PROCESS.md` (documentation screenshots).
+`node scripts/check-docs.mjs` reports a stale fingerprint: a warning on an
+ordinary push, an error on a beta candidate (a commit with a `Release:`
+trailer). The full rule is in `PROCESS.md` §8.
 
 ## Where to ask
 
@@ -100,16 +101,13 @@ npm install                # also installs .githooks through the prepare script
 
 ### Why `--filter=blob:none` (#345)
 
-A full clone is **215 MB of `.git`**; a blobless one is **26 MB** — measured, not
-estimated. Both carry all 1611 commits and all 182 tags, so ranges, `merge-base`
-and `git diff` across history work identically; `git diff origin/dev~3..origin/dev`
-in a blobless clone takes about a second and grows `.git` by one megabyte.
-
-The difference is that historical *file contents* are fetched only if something
-actually asks for them. That matters here because 32% of the pack is documentation
-screenshots — ten PNGs re-captured 196 times — and another sizeable share is the
-committed bundle, one 1.16 MB file per product change. Almost nobody ever reads an
-old revision of either.
+A blobless clone keeps every commit and tag, so ranges, `merge-base` and
+`git diff` across history work exactly as in a full clone; only historical *file
+contents* are fetched on demand. Most of the pack is exactly such content that
+almost nobody reads again — documentation screenshots re-captured with the UI and
+the committed bundle rewritten by every release candidate — so a blobless clone
+is several times smaller. To see the numbers for your own clone, compare
+`git count-objects -vH` in a blobless and in a full one.
 
 Drop the flag if you work offline with history, or need `git log -p` over the whole
 tree repeatedly. Do **not** replace it with `--depth=1`: a shallow clone is about
@@ -142,8 +140,5 @@ Linux CI or WSL (`bash scripts/wsl-setup.sh --verify`). Without an importable
 ## Architecture
 
 Start with `docs/ARCHITECTURE.md` (data model, WS API, coordinate system) and
-`docs/STATUS.md` (current state). Release mechanics live in `docs/STATUS.md` › Workflow: the version sources are
-the ones checked by `scripts/release-contract.mjs`, prereleases go through
-`npm run release:prerelease -- <tag> --issues=… --yes` (or the manual
-`Publish prerelease` workflow), and stable installable assets are published only
-by `release.yml` (#540).
+`docs/STATUS.md` (current state). Release mechanics live in one place:
+`docs/DEVELOPMENT.md` › Release.

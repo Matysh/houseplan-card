@@ -4,13 +4,13 @@ import assert from 'node:assert/strict';
 import {
   MOVED_BLOCK_MIN,
   addedLinesByFile, anyKeywordLines, blameLine, findNewAnyViolations, formatViolation,
-  movedLinesByFile, parseAnyOk,
+  movedLinesByFile, parseAnyOk, totalAny,
 } from '../scripts/no-new-any.mjs';
 
 // #342. Цель гейта — не перетипизировать монолит, а не давать долгу расти. В
-// src/** сейчас 1034 вхождения явного any в 49 файлах; разовая замена — месяц
-// риска ради нуля пользовательской ценности, поэтому долг снимается при
-// извлечении подсистем (#34), а гейт держит приращение на нуле.
+// src/** сотни вхождений явного any (`node scripts/no-new-any.mjs --total`);
+// разовая замена — месяц риска ради нуля пользовательской ценности, поэтому
+// долг снимается при извлечении подсистем (#34), а гейт держит приращение на нуле.
 
 const file = (text, addedLines) => ({
   path: 'src/probe.ts', text, addedLines: new Set(addedLines),
@@ -240,4 +240,13 @@ test('#592 перенос с изменённым отступом перено�
     ...body.map((line) => `+  ${line.trim()}`),
   ].join('\n');
   assert.equal(movedLinesByFile(diff).size, 0);
+});
+
+test('#680 --total: считает узлы AnyKeyword и файлы с ними, не слово any в прозе', () => {
+  const total = totalAny([
+    { path: 'src/a.ts', text: 'let a: any; const b = x as any; // any в комментарии\n' },
+    { path: 'src/b.ts', text: 'const company = "any"; function f(v: unknown) { return v; }\n' },
+    { path: 'src/c.ts', text: 'type T = Record<string, any>;\n' },
+  ]);
+  assert.deepEqual(total, { occurrences: 3, files: 2 });
 });

@@ -163,37 +163,17 @@ mutant-jobs в доказательстве ревью (#541) не меняют�
 node scripts/no-new-any.mjs                              # origin/dev...HEAD
 node scripts/no-new-any.mjs --base origin/dev --head HEAD
 node scripts/no-new-any.mjs --diff patch.diff            # или `-` для stdin
+node scripts/no-new-any.mjs --total                      # весь долг src/**
 ```
 
-В `src/**` сейчас **1034 вхождения** явного `any` в 49 файлах — больше, чем
-называл аудит (330), потому что монолит с тех пор разделился и его обвязка
-уехала в `houseplan-editor-runtime.ts`. Разовая замена такого объёма — месяц
-риска ради нуля пользовательской ценности, поэтому долг снимается при плановом
-извлечении подсистем (#425, прежний #34). Гейт держит приращение на нуле.
-
-Что он судит: **только добавленные строки** диапазона. Существующий `any` на
-нетронутой строке законен. Правка строки со старым `any` считается новой
-ответственностью — изменённая строка в диффе выглядит добавленной, и это
-намеренно: тронул, значит либо типизируй, либо обоснуй.
-
-Исключение объявляется на той же строке:
-
-```ts
-const raw = (event as any).detail; // any-ok: форма события HA не типизирована в @types
-```
-
-Голый `// any-ok`, пустая причина и шаблоны вроде `todo`, `hack`, `потом` не
-проходят: причина обязана быть не короче 12 символов и не совпадать со списком
-заглушек в скрипте.
-
-Ложных срабатываний нет по построению, а не по старанию: текст разбирается
-парсером TypeScript, и нарушением считается узел `AnyKeyword`. Слово «any» в
-комментарии, в строковом литерале, в многострочном шаблоне `html` и в
-идентификаторах `company`, `anyOf`, `manyRooms` таким узлом не является.
-
-В CI гейт вызывается в job `frontend`; её checkout получил полную историю без
-блобов, потому что diff-aware проверке нужен диапазон, а содержимое старых
-ревизий — нет.
+Правило — `PROCESS.md` §8 «Новый код не добавляет `any`»: судятся только
+добавленные строки, исключение — `// any-ok: <конкретная причина>` на той же
+строке, текст разбирает парсер TypeScript. Здесь — только механика: причина
+короче 12 символов или из списка заглушек скрипта (`todo`, `hack`, `потом`…) не
+проходит; код, дословно перенесённый блоком в другой файл того же диапазона,
+новым не считается (#592). В CI гейт вызывается в job `frontend`; её checkout
+получил полную историю без блобов, потому что diff-aware проверке нужен
+диапазон, а содержимое старых ревизий — нет.
 
 ## Тестовый фасад и приватное состояние (#629)
 
@@ -288,7 +268,7 @@ node scripts/pre-push-gate.mjs --max-smokes=3 --max-mutants=1
 Отставание от `dev` — предупреждение, а не провал набора: гейтом остаётся
 конвейер, который приводит ветку сам (#257) и забыть не может. Смысл локальной
 проверки в другом: после любого ребейза разбор на ревью становится полным, а не
-по дельте (§7.2), а конфликт всё равно чинится на машине автора — дешевле
+по дельте (PROCESS §2.10), а конфликт всё равно чинится на машине автора — дешевле
 узнать об этом до пуша, чем из комментария через сорок минут (#364). Отключается
 флагом `--no-rebase-check`. Замер на реальном
 диапазоне (`953f675~1..953f675`, правка `src/houseplan-card.ts`): типы 5 с,
@@ -346,6 +326,31 @@ tsc, юниты, смоки и мутанты по диффу. Решение х
 
 Обойти, как и процессный гейт, можно через `git push --no-verify` — и тогда то же
 самое найдёт Validate, уже после того как код окажется в `dev`.
+
+## Браузерные проверки до ревью: свежесть бандла и где снимать кадры
+
+- **Смоки из AC — локально до `S7-code-review`** (#151): `node
+  demo/smoke_<имя>.mjs`. Красный смок, доехавший до ревью, стоит цикла; на
+  своей машине — минуту (на #89 ошибка фикстуры прожила целый раунд ревью).
+- **Свежесть бандла** (#236). Отпечаток, вшитый сборкой, покрывает `src/`,
+  конфигурацию Rollup и TypeScript и `package-lock.json`; бенчмарки, golden и
+  съёмка документации зовут `assertFreshDemoBundle` сами, смоки получают его из
+  `launch()` в `demo/serve.mjs`. Несовпадение — жёсткий отказ, а не
+  предупреждение: смок на несвежем бандле краснеет частично и читается как
+  дефект логики. `HP_ALLOW_STALE_BUNDLE=1` отключает проверку для отладки и
+  говорит об этом вслух.
+- **Сверять и снимать — разные вещи** (#455). `golden:verify` — совещательный
+  и законный где угодно, Windows включительно: он сообщает разницу и ничего не
+  принимает. **Съёмка** кадров вне Linux отказывает ещё до запуска браузера —
+  `golden:capture` через `demo/golden/policy.mjs`, скриншоты документации через
+  `npm run docs:capture` (именно скрипт, не голый `node demo/docs/capture.mjs`:
+  правка скрипта съёмки сама обесценивает индекс скриншотов). Причина — физика,
+  а не политика: Windows растеризует текст через DirectWrite, и кадр байт в байт
+  не совпадёт ни с одним эталоном. Осознанный обход —
+  `HP_ALLOW_FOREIGN_CAPTURE="причина"`, причина уходит в вывод и манифест.
+  Принимаются эталоны только `npm run golden:accept -- --reviewed` по полному
+  артефакту (`demo/golden/README.md`); единственный локальный короткий путь —
+  `npm run docs:accept -- --identical` (раздел про версию в кадрах ниже).
 
 ## Manifest входов: какие job запускать и что хешировать (#492)
 
@@ -460,6 +465,37 @@ golden отображаемая версия идёт через seam `displayVe
       `bash scripts/wsl-setup.sh --verify` проходит `test_ha_setup.py` без skip,
       создаёт непустой `panel-wide-view-light-en.png` и печатает длительность.
       Это ранняя обратная связь; независимый exact-SHA Validate остаётся каноном.
+
+## Backend quality gates (#42)
+
+- `tests_backend/requirements.txt` is the single source of backend CI
+  dependencies; `validate.yml` and `mutation-gate.yml` install from it (#392;
+  #42 added ruff and mypy).
+- `pyproject.toml` configures ruff (`E/F/B/I`, `E501` ignored by decision) and
+  strict mypy for a grow-only allowlist of pure modules;
+  `tests_backend/test_backend_quality.py` guards completeness. The CI typing step
+  derives its module list from that allowlist, refuses an empty list and is
+  guarded by a test plus the `typing-gate-stops-running` mutant — a configured
+  but unexecuted gate measures nothing.
+- `test/backend-test-hygiene.test.mjs` refuses any write into `sys.modules` from
+  a backend test by the fact of the write, not its spelling (#398). Exemptions:
+  `conftest.py` (stub only when Home Assistant is absent) and `pure_imports.py`
+  (registers a module only for `exec_module`, then removes the whole
+  `custom_components` difference — proven by an executable test).
+- The backend job measures branch coverage (pure + HA harness combined), fails
+  below `scripts/backend-coverage-baseline.txt` and refuses to run when the HA
+  harness would silently skip.
+- The clean-runner `geometry_parity` job (#548) compiles only the TypeScript
+  graph rooted at `src/junction-limits.ts`, loads the production Python module
+  without Home Assistant and compares both over
+  `test/fixtures/junction-limits-parity.json`. It fails closed on missing
+  prerequisites, announces the number of executed scenarios and reuses a result
+  only when both mirrors, the fixture, toolchain pins and harness inputs are
+  byte-identical.
+- The error-code scanner proves every emitted code (`send_error` literals,
+  exception class attributes, literal and variable-passed `MarkerControlError`
+  codes, f-string families) is in `const.ERROR_CODES` / `ERROR_CODE_FAMILIES` and
+  localized.
 
 ## E2E на реальном Home Assistant (#514)
 

@@ -5,11 +5,13 @@
  *   node scripts/no-new-any.mjs                        # origin/dev...HEAD
  *   node scripts/no-new-any.mjs --base origin/dev --head HEAD
  *   node scripts/no-new-any.mjs --diff patch.diff      # или `-` для stdin
+ *   node scripts/no-new-any.mjs --total                # весь долг src/** (#680)
  *
- * Зачем гейт, а не разовая типизация. В `src/**` сейчас 1034 вхождения явного
- * `any` в 49 файлах — перетипизировать это одним заходом значит месяц риска ради
- * нуля пользовательской ценности. Долг снимается при плановом извлечении
- * подсистем (#425, прежний #34). Задача гейта одна: не давать долгу расти.
+ * Зачем гейт, а не разовая типизация. Явного `any` в `src/**` — сотни
+ * вхождений (точное число печатает `--total`); перетипизировать это одним
+ * заходом значит месяц риска ради нуля пользовательской ценности. Долг
+ * снимается при плановом извлечении подсистем (#425, прежний #34). Задача
+ * гейта одна: не давать долгу расти.
  *
  * Практический вред уже случался: несоответствие форм (`d.source.kind` против
  * строкового `source`) компилятор не поймал, потому что путь был через `any`, и
@@ -51,8 +53,8 @@
  * добавление: повторная вставка того же блока остаётся новым кодом.
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
@@ -101,6 +103,34 @@ export function anyKeywordLines(path, text) {
   };
   visit(source);
   return lines;
+}
+
+/**
+ * Весь существующий долг (#680): число узлов `AnyKeyword` и файлов с ними по
+ * продуктовому TypeScript. Документы называют эту команду вместо числа — число в
+ * прозе отставало от дерева с первой недели.
+ */
+export function totalAny(files) {
+  let occurrences = 0;
+  let withAny = 0;
+  for (const file of files) {
+    let count = 0;
+    for (const perLine of anyKeywordLines(file.path, file.text).values()) count += perLine;
+    occurrences += count;
+    if (count) withAny += 1;
+  }
+  return { occurrences, files: withAny };
+}
+
+function productTypeScriptFiles(dir = join(ROOT, 'src')) {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) { out.push(...productTypeScriptFiles(full)); continue; }
+    const path = relative(ROOT, full).split('\\').join('/');
+    if (isProductTypeScript(path)) out.push({ path, text: readFileSync(full, 'utf8') });
+  }
+  return out;
 }
 
 /**
@@ -303,6 +333,11 @@ function main(argv) {
     return index >= 0 && argv[index + 1] && !argv[index + 1].startsWith('--')
       ? argv[index + 1] : fallback;
   };
+  if (argv.includes('--total')) {
+    const total = totalAny(productTypeScriptFiles());
+    console.log(`Явный any в src/**/*.ts: ${total.occurrences} вхождений в ${total.files} файл(ах).`);
+    return 0;
+  }
   const diffArg = value('diff');
   let diff;
   if (diffArg) {
@@ -352,7 +387,7 @@ function main(argv) {
   console.error('\nЛибо типизируйте, либо обоснуйте на той же строке:');
   console.error('  // any-ok: <конкретная причина, почему тип недоступен>');
   console.error('Существующий долг снимается при извлечении подсистем (#34, #342),');
-  console.error('а не разовой заменой: в src/** его 1034 вхождения в 49 файлах.');
+  console.error('а не разовой заменой; сколько его — node scripts/no-new-any.mjs --total.');
   return 1;
 }
 

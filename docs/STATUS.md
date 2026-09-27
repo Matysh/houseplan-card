@@ -1,21 +1,10 @@
-# Project status & session context
+# Project status
 
-> **Purpose of this file.** Cowork/AI sessions lose context (overflow, new session).
-> This file is the **first thing to read** when resuming work. It captures the current
-> state, where everything lives, and how to continue safely.
->
-> **Documentation policy (mandatory):** every change is documented *in the same
-> commit* — a CHANGELOG entry for anything user-visible **in BOTH
-> `docs/CHANGELOG.md` (English) and `docs/CHANGELOG.ru.md` (Russian, since
-> v1.42.0 — the user base is largely Russian-speaking, see the Telegram chat)**, STATUS.md for state changes
-> (versions, publication, infrastructure), DEVELOPMENT.md for new gotchas,
-> ARCHITECTURE.md for design changes. Work scope and status live in GitHub
-> Issues and their labels, not in a parallel backlog document.
-
-**Promotion rule (2026-08-08):** every new feature or material behaviour
-change must pass through a published beta/RC before stable. Stable release
-commits are promotion-only (versions, generated bundles and release/changelog
-metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
+> The current state for a resuming session: a generated snapshot, the current
+> cycle and the standing decisions that explain it. Rules are not here — the
+> process is `PROCESS.md`, release mechanics are `docs/DEVELOPMENT.md` › Release,
+> and task scope and status live in GitHub Issues and their labels. Update a row
+> in the same commit as the change it describes (`PROCESS.md` §2.6).
 
 ## Snapshot
 
@@ -32,82 +21,41 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Tests | Node unit 3140 · pure backend 393 · HA-harness backend 302 · browser smokes 278 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
-## Standing state and decisions
-
-Prose kept by hand: decisions and the state they explain. Update a row in the
-same commit as the change it describes.
+## Current cycle and standing decisions
 
 | Item | State |
 |---|---|
 | Current local cycle | **Beta v1.78.0-beta.6 candidate** — refreshed on the exact integrated `dev` tree after seven S8 items landed. It makes stair drawing, selection, resizing, rotation and snapping follow the decor box contract (#676), and flushes deferred virtual-light and vacuum-trail state during Home Assistant shutdown (#655). The candidate also synchronizes the English user guide (#668), tightens CI scheduling and runner hygiene (#658), reduces browser mutation guards and records their policy (#659), removes private infrastructure details from public documentation (#677), and archives obsolete scripts and documents (#678). `main` remains on stable v1.77.0. |
-| 2.5D View | #89 Stage 1 ships in v1.63.0-beta.1, #122 Stage 2 in v1.64.0, #160 Stage 3 in v1.73.0-beta.1, #570/#583 Stage 4 on `dev`. #649 Stage 6 makes it public: the installation-wide General settings switch `settings.volumetric_view` (Display, third item) replaces the alpha entry, the header toggle and the phone-menu item; raised tiles with one floor-shadow layer, a soft sun wash instead of Flat wedges, user wall colours independent of the theme, furniture at the Flat line width. #651 keeps device/lock clusters rigid and independent of live zoom/pan. Flat remains default and byte-for-byte unchanged; editors and `houseplan-space-card` stay Flat. Acceptance frames: `docs/design/649-25d-stage6/ACCEPTANCE.md`. |
-| Workflow | Superseded 2026-08-12: the pre-1.62 rule of "local edits without tests or commits" is **dead** — since release 1.62 every product change follows `PROCESS.md` (issue in `S5-ready`+, branch `issue/<NN>-slug`, trailers on every commit, review pipeline; `AGENTS.md` is the summary). Release mechanics below remain current. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the stable release is produced by `release.yml` (`workflow_dispatch` on `main` with the tag) — the only publisher of installable assets since #540: gates on the exact SHA (Validate, Full Performance, E2E on the candidate commit), one build, `houseplan.zip` archived from the committed tree, `SHA256SUMS`, draft → publish → read-back verification; a release published by hand in the GitHub form is turned back into a draft and walked through the same path, and a re-dispatch on a public tag is a repair that adds only missing assets. Release bodies are short and bilingual (Russian first); every bullet links its GitHub issue (#NN) so the #328 rules stay machine-checkable. A STABLE body aggregates the changelog since the PREVIOUS STABLE release (never since the last beta): features/fixes described across the line's beta changelogs must appear, while bugs that were introduced and fixed strictly inside the beta line (never shipped in any stable) are excluded — draft with `npm run release:notes -- <tag>`, curate by hand, then `npm run release:notes -- <tag> --verify` must pass. `Мелкие исправления и улучшения` / `Small fixes and improvements` is allowed only when the range really contains user-visible work not itemised in the body; a single-issue hotfix ships without it (the verifier enforces this). Every body ends with separate links to the Russian and English changelogs. Open or partially delivered issues are never presented as shipped. Telegram announcements are sent only for stable releases; beta and RC publication is silent. `docs/RELEASE-NOTES.md` is the current canonical body instance; `npm run release:prerelease -- <tag> --issues=… --yes` is the primary local publication path and the manual `Publish prerelease` workflow is its GitHub-only equivalent once present on `main`. Nothing is copied to the home instance by hand |
-| GitHub | https://github.com/Matysh/houseplan-card — [Issues](https://github.com/Matysh/houseplan-card/issues) are the canonical task records; their labels carry priority and workflow status (`PROCESS.md` §9). GitHub Projects is no longer used. `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. |
-| CI | #541 replaces three incompatible meanings of “green” with one machine-verifiable Validate proof: candidate SHA/tree, run ID/attempt, requested checks, actually executed jobs and independently checked content-addressed reuse. Review, merge and release share the same closed state machine; a light green dispatch cannot hide a full red run, and a dispatch without six executed mutant jobs cannot authorize review or merge. #656 makes repeated release proofs fail closed: among compatible full runs on one SHA the newest decides, so a later full red blocks an older green while light, stale and cancelled runs are skipped. #573 makes the proof composite — product-tree identity, accepted golden overlay (tree, index hash, either a `Baseline-Reviewed` run or a `Baseline-Reviewed-Local` attestation) and the content key of every reusable job — and release consumers on the candidate checkout recompute and compare all of it; the accepted overlay is an input of `golden` only, so a baseline-only commit after a golden-red candidate reuses smoke, performance smoke, parity and backend, skips caught witnesses and re-runs golden alone. #641 permits a complete attested WSL/ext4 capture from a clean published SHA to replace the first expected-red artifact-transport run, while a full independent GitHub Validate on the accepted exact SHA remains mandatory. Prerelease publication requires a green full exact-SHA proof covering frontend/backend, smoke (including the #73 rAF frame sampler), golden, HACS/Hassfest and the short absolute-ceiling performance smoke. Obsolete same-ref Validate runs are cancelled. Full seven-sample base/candidate performance remains in `performance.yml` (`main` push excluding workflow/docs-only mirrors, weekly, manual); stable release assets fail closed unless Validate and Full Performance are green for the exact tagged SHA and the stable-only CDP compositor screencast finds no empty/black presented frame. |
-| Local toolchain | #557 removes ambient-PATH claims from the owner's workstation: `scripts/windows-toolchain.ps1` keeps verified portable repository-pinned Node and a dedicated repository-pinned Python `.venv-ci` without changing system defaults; `toolchain:check` reports the current versions and exact executable/package/browser paths. #576 verifies the actual owner setup end to end: repeated Windows setup reuses the existing Node/Python/Chromium, the pinned small gate and pure backend subset are green, and repeated WSL `--verify` runs from an ext4 clone pass the real HA subset without skips and produce a Linux golden capture. The WSL entrypoint uses its own nvm + `.venv-ci`. #641 adds `golden:wsl:capture`: only the ext4 clone, clean named branch at its published remote SHA, pinned toolchain, current source fingerprint, complete matrix and witness floor can produce the self-hashed local passport; plain local capture remains diagnostic. The passport can source baseline review, but exact-SHA Linux CI remains the merge/release canon. |
-| HACS | **In the default catalog since 2026-08-25** (hacs/default#9004 merged). Install = plain HACS search. `houseplan.zip` is attached to stable tags automatically (verified on v1.72.0); forum/4pda announcement still pending |
-| Localization | UI en/ru/de (src/i18n/*.json), everything user-visible localized incl. kiosk popover; German is loaded lazily through the registry introduced by #62 |
-| Furniture | #159 replaces the flat ~30-item picker with a two-level category/variant palette; #593 raises it to 60 top-view symbols, all designer artwork. #606 derives corrected pack 0.4.1 from the reviewed 93-SVG MIT source pack 0.4.0: exercise is a visible category, bookshelf/shelf_floor art matches their names, and old cactus objects resolve without rewriting saved data. The active pack is `assets/furniture/houseplan-0.4.1`; plan art is lazy (#474), front-view menu art stays in the lazy editor graph, and saved geometry/default dimensions remain unchanged. |
-| Tests | Four layers: Node unit (`npm test`: frontend pure modules + tooling policy), pure backend (`pytest tests_backend`, runs anywhere), HA-harness backend (same folder, CI only — uses repository-pinned Python plus pytest-homeassistant-custom-component), and browser smokes (`demo/smoke_*.mjs`, headless chromium). **Counts and runtime pins are not duplicated here** — they drift faster than release prose; run `npm run inventory` for current counts and `npm run toolchain:check` for the executable pins, or read them from the exact CI run |
-| Input support | Owner's rule since 2026-08-08: View and kiosk are fully supported and release-blocking on touch. All three editors are desktop-first; touch editing is best effort and may be awkward, reduced or absent when parity is expensive. `docs/TOUCH-SUPPORT.md` defines the non-negotiable safety floor and documentation/test rules |
-| Vacuums | Live puck, server-side trails and fit calibration are shipped. The local v1.61 Stage 1 contract in docs/VACUUM.md adds explicit Dreame/XCME/Valetudo coverage, registry-less source selection, capability diagnostics, path-gap preservation and source-health warnings; #205 resumes one ended same-map run through an inclusive 30-minute station/pause grace. #209 renders current and previous trails through the same bounded 17.5 cm rounded-corner curve without changing stored points or gaps. Roomba remains Stage 2 |
-| Demo stand | **https://demo.houseplan.tech** — public, login `demo`/`demo`, resets to a pristine synthetic home every hour. **https://dev.houseplan.tech** — closed (basic auth), auto-deploys the `dev` branch every 10 min. Since 2026-07-31 the stand covers most of the manual checklist: a scripted robot vacuum (`demo/stand/demo_robot` — Tasshack-shaped map sensor, serpentine run, pre-solved calibration, seeded server trail), Zigbee-style LQI template sensors, hand/auto-triggered leak+smoke alarms, an hvac_action climate marker and working script/scene/automation targets for tap-run. The demo home and what the stand cannot show: `demo/stand/README.md` |
-| Community | **Telegram chat: https://t.me/ha_houseplan** (created 2026-07-27) — the primary user-facing support channel; GitHub issues stay for bugs/features. Link it from any new release notes and posts |
-| Product scope | `docs/SCOPE.md` is the feature guard rail; `docs/TOUCH-SUPPORT.md` is the input-support contract — check both before accepting interaction work |
+| Branches | `main` carries stable releases only; pre-release tags point at `dev`. Work lands on `dev`, which is equal to or ahead of `main`, never behind. |
+| 2.5D View | Public since #649: the installation-wide General settings switch `settings.volumetric_view` (Display). Flat stays the default and byte-for-byte unchanged; editors and `houseplan-space-card` stay Flat. Canonical: `docs/ISOMETRIC.md`. |
+| Input support | Owner's rule since 2026-08-08: View and kiosk are fully supported and release-blocking on touch; the three editors are desktop-first, touch editing is best effort. Canonical: `docs/TOUCH-SUPPORT.md`. |
+| Localization | UI in en/ru/de/fr (`src/i18n/*.json`); German and French load lazily through the registry introduced by #62. |
+| HACS and community | In the HACS default catalog since 2026-08-25 (hacs/default#9004): install is a plain HACS search, `houseplan.zip` is attached to stable tags. Support channel — Telegram chat https://t.me/ha_houseplan; GitHub Issues stay for bugs and features. |
+| Furniture | Top-view category/variant palette (#159, #593) from the MIT pack `assets/furniture/houseplan-0.4.1` (#606); plan art is lazy (#474), saved geometry and default dimensions never change with the pack. |
+| Vacuums | Live puck, server-side trails and fit calibration are shipped; Roomba is not covered. Canonical: `docs/VACUUM.md`. |
+| Demo stand | **https://demo.houseplan.tech** — public, login `demo`/`demo`, resets to a synthetic home every hour. **https://dev.houseplan.tech** — closed, auto-deploys the head of `dev`. The demo home and what the stand cannot show: `demo/stand/README.md`. |
+| Privacy | Real-house plan sources and screenshots are gone from the tree; public images are generated from synthetic fixtures (`docs/images/screenshots.json`). Old images persist in git history and release archives — history is deliberately not rewritten, because that would break release tags and HACS installs. |
 
-The feature surface since the 2026-07-17 snapshot and the early release
-milestones are archived in [`legacy/docs/STATUS-FEATURES.md`](../legacy/docs/STATUS-FEATURES.md)
-(#634, archived by #678): the feature surface is described by the changelog and
-the user guide, not by a parallel list.
+The feature surface and early milestones are described by the changelog and the
+user guide; the former parallel list is archived in
+[`legacy/docs/STATUS-FEATURES.md`](../legacy/docs/STATUS-FEATURES.md).
 
-## Where things live
+## Where the rest lives
 
-- **Source of truth:** the git repo on GitHub — work lands on `dev`, stable releases on
-  `main`. In a sandbox session clone it from GitHub.
-- **Owner's folder:** `houseplan-card-src/houseplan-card` is the author's tree and
-  `houseplan-card-src/hp-dev` the owner's worktree on `dev` (`AGENTS.md` › Working
-  trees). The former file mirror `houseplan/houseplan-card/` is no longer maintained.
-- **Production config:** server-side on the HA instance, `.storage/houseplan.config` +
-  `.storage/houseplan.layout` (backups `.bak-v1100` exist on the box).
+- Scope and personas — `docs/SCOPE.md`; process, statuses and gates —
+  `PROCESS.md` (role digests in `docs/process/`).
+- Release mechanics, CI proof semantics and publication — `docs/DEVELOPMENT.md` › Release.
+- Local toolchain (Windows, WSL, the five-minute contour) — `docs/DEVELOPMENT.md`.
+- Tests — `docs/TESTING.md`: Node unit, pure backend, HA-harness backend (CI or
+  WSL only; it uses repository-pinned Python plus
+  pytest-homeassistant-custom-component) and browser smokes. Counts and runtime
+  pins are never copied into prose: `npm run inventory`, `npm run toolchain:check`.
 
-## Open items / watchlist
+## How to resume work in a fresh session
 
-0. **Canonical backlog** — [GitHub Issues](https://github.com/Matysh/houseplan-card/issues)
-   contain task scope and acceptance criteria; their **labels** carry priority
-   and workflow status (`PROCESS.md` §9). GitHub Projects is no longer used;
-   the former local product plan was removed from the tree (#678, git history
-   keeps it) and must not be used as a backlog.
-1. Privacy: legacy real-house plan sources (`assets/`) and screenshots were
-removed from the current tree. Public documentation images are generated
-   from synthetic fixtures by the `Docs screenshots` workflow, accepted with `npm run docs:accept -- --reviewed`, and indexed in
-   `docs/images/screenshots.json`. Old images persist in git history and release
-   archives; history rewrite is deliberately not done because it would break
-   release tags and HACS installs.
-2. Roadmap: phases 7–10 are DONE (v1.12.0 quality scale, v1.13.0 universality,
-   v1.13.1 distribution). Next candidates: measure backend coverage (>95% goal);
-   mypy strict.
-3. The public-doc screenshot harness is versioned in `demo/docs/capture.mjs` and
-   reuses the production component plus deterministic golden fixtures.
-
-## How to resume work in a fresh session (checklist)
-
-1. Read by role, as `AGENTS.md` › Read this first lists it: author — `docs/SCOPE.md` →
-   `AGENTS.md` → `docs/process/AUTHOR.md` → this file; reviewer — `docs/SCOPE.md` →
-   `AGENTS.md` → `docs/process/REVIEWER.md`; pipeline, gates or process — through
-   `PROCESS.md`.
-2. Clone `https://github.com/Matysh/houseplan-card` and run `npm ci` — it installs the
-   hooks (`git config core.hooksPath` → `.githooks`). On the owner's Windows machine use
-   `scripts/windows-toolchain.ps1`; in WSL, an ext4 clone and
-   `bash scripts/wsl-setup.sh --verify`.
+1. Read by role, as `AGENTS.md` › Read this first lists it.
+2. Clone `https://github.com/Matysh/houseplan-card` and run `npm ci` — it installs
+   the hooks (`git config core.hooksPath` → `.githooks`).
 3. Start a task from its packet: `node scripts/task-packet.mjs --issue NN`.
-4. Build only through `npm run build`; the task's local gate is `npm run gate:small`
-   (`AGENTS.md` › Gates).
-5. Nothing is copied to the home instance by hand (`PROCESS.md` §12): it updates
-   through HACS by tag, and the dev stand takes the head of `dev` from the
-   `dev-build` branch.
-
-## Product scope
-
-docs/SCOPE.md (fixed 2026-07-22) is the guard rail for all feature work: mission,
-personas, jobs J1–J7, partial/out-of-scope lists, excess audit. Check it before
-accepting or proposing any feature.
+4. The task's local gate is `npm run gate:small`; nothing is copied to a Home
+   Assistant instance by hand (`PROCESS.md` §12).
