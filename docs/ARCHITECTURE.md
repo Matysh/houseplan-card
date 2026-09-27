@@ -423,6 +423,21 @@ still recognised in stored config but no longer served
   newly referenced internal plan must exist (`missing_plan`; import also checks
   attachments). A usable `Content-Length` is checked before streaming, the
   staged size again under `upload_lock`, which also serialises image decoding.
+  Collection classifies by **owner**, not by "is it referenced" (HP-1465-01);
+  nothing is deleted for being old except `up_*` staging after
+  `PLAN_ORPHAN_TTL_S` (1 h), and `plans/list`/`plans/delete` make "we never
+  delete" livable:
+
+  | Case | Rule |
+  |---|---|
+  | Space in both, plan A → plan B (the user picked another image) | removed immediately |
+  | Space in both, plan → none (detached; one click undoes it) | **kept** |
+  | Space gone (the image was imported and may be nowhere else) | **kept** |
+  | Space has a plan plus another file of its own (a rejected save) | **kept** — ageing these out raced the retry |
+  | Marker in both, attachment dropped from its list | removed immediately |
+  | Marker gone | **kept** |
+  | Attachment in `up_*` (a dialog never saved) | removed after `PLAN_ORPHAN_TTL_S` |
+  | Marker there, file it never listed (a rejected upload) | **kept** |
 - *Import preview* streams ≤8 MiB, rejects duplicate/prototype keys,
   non-finite numbers and future model versions, and keeps the candidate in
   memory for 10 min behind a token bound to the user, candidate digest and
