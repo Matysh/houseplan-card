@@ -1391,6 +1391,10 @@
       "opaque": "<function _finite>",
       "required": true
     },
+    "config.spaces[].stairs[].color": {
+      "opaque": "Match('\\\\A#[0-9a-fA-F]{6}\\\\Z', msg=None)",
+      "required": false
+    },
     "config.spaces[].stairs[].direction": {
       "enum": [
         "backward",
@@ -1399,6 +1403,16 @@
         "forward"
       ],
       "required": true
+    },
+    "config.spaces[].stairs[].fill_color": {
+      "opaque": "Match('\\\\A#[0-9a-fA-F]{6}\\\\Z', msg=None)",
+      "required": false
+    },
+    "config.spaces[].stairs[].fill_opacity": {
+      "max": 1.0,
+      "min": 0.0,
+      "opaque": "<function _finite>",
+      "required": false
     },
     "config.spaces[].stairs[].id": {
       "maxLength": 64,
@@ -1416,6 +1430,12 @@
     "config.spaces[].stairs[].length": {
       "max": 5000.0,
       "min": 1e-07,
+      "opaque": "<function _finite>",
+      "required": false
+    },
+    "config.spaces[].stairs[].opacity": {
+      "max": 1.0,
+      "min": 0.0,
       "opaque": "<function _finite>",
       "required": false
     },
