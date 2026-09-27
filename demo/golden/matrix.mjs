@@ -213,6 +213,8 @@ const stairLayerFixture = [
     target_space_id: 'golden-lighting' },
   { id: 'golden-stair-straight-small', kind: 'straight', x: 0.72, y: 0.27,
     length: 0.14, width: 0.065, angle: 45, direction: 'backward',
+    // #683 AC13: explicit user-owned style stays identical in light/dark themes.
+    color: '#0066cc', opacity: 0.85, fill_color: '#ffd23f', fill_opacity: 0.55,
     target_space_id: 'golden-lighting' },
   { id: 'golden-stair-spiral-large', kind: 'spiral', x: 0.25, y: 0.73,
     radius: 0.10, angle: 15, direction: 'clockwise',
