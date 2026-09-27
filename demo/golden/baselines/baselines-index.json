@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 66,
-  "acceptedAt": "2026-09-27T07:07:07.508Z",
-  "sourceFingerprint": "9f31bdc1556b108a5f8910aa9f246ba40507335bdeb00c8b1b2d960f72f84ce7",
+  "acceptedAt": "2026-09-27T13:57:53.353Z",
+  "sourceFingerprint": "759c152cd8e59330f4a0efed0b464684aac9863b417653c26aca97595f977d72",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,41 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "9f31bdc1556b108a5f8910aa9f246ba40507335bdeb00c8b1b2d960f72f84ce7",
-    "ci": null
-  },
-  "localAttestation": {
-    "schema": "houseplan-golden-wsl/v1",
-    "sha256": "adb377c40236510ed767a5a829dbbc88e51156e8d1f6eb206166fd3a7c61f921",
-    "artifactSha256": "bbcaf4d2621c381224d34fa24d7c14bebb357d2de6342d4ba278a8b9f48556dd",
-    "createdAt": "2026-09-27T07:05:53.848Z",
-    "source": {
+    "buildFingerprint": "759c152cd8e59330f4a0efed0b464684aac9863b417653c26aca97595f977d72",
+    "ci": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/673-stage6-golden",
-      "commit": "c9a5df602becb3f402cf906c8d9b6b30898439fd",
-      "tree": "d7f59614ce1d307175670c39687e4988b41aaaf8",
-      "remoteSha": "c9a5df602becb3f402cf906c8d9b6b30898439fd",
-      "clean": true,
-      "status": ""
-    },
-    "environment": {
-      "platform": "linux",
-      "arch": "x64",
-      "kernel": "6.18.33.2-microsoft-standard-WSL2",
-      "wsl": true,
-      "distro": "Ubuntu",
-      "filesystem": "ext2/ext3"
-    },
-    "toolchain": {
-      "node": "22.23.2",
-      "npm": "10.9.8",
-      "playwright": "1.62.0",
-      "chromiumExecutableSha256": "0b20b130e7edd9dd51873be867761295fe0cfad490c2b9a64f95bd3cfc08fa71"
+      "run": 36320878644,
+      "attempt": 1,
+      "sha": "193d7b0d3020cd69798fbe90c3aceb06dd221a45"
     }
   },
+  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 126,
+    "count": 131,
     "floor": 10
   },
   "scenarios": {
@@ -55,7 +32,7 @@
     "isometric-stage6-hover-light": "3f8dc5052e883a30e3cf89c1a0fdea0af3bae3c763b6ebaa50e41cba9cdb3bfd",
     "stairs-flat-normal-light": "df6600545ffbc7611b764eb489e6e3f625ccf51b6ed2f8f83e4df5b7e1565d08",
     "stairs-flat-hover-dark": "e642373ea6680a978219622105552d4afbf2311eebf101a7c8db280373c9eca3",
-    "stairs-flat-selected-light": "4b37e663d5689c3288ad7dc956b2ec0b42e406d418873c0ea6089c1caf92ec83",
+    "stairs-flat-selected-light": "17387bddf46a7506f7f578242161c91391fd15998aa68aa1e022073113d0c7ac",
     "stairs-isometric-dark": "901bc1eee214d179aff13bc7f192a9e270688aa59b2744f3b361e653dc2d0af5",
     "panel-wide-view-light-en": "275d09b3730361bb491a832fbb76723d90a7327086f042cbf0fdd79f4a002800",
     "panel-wide-plan-editor-dark-en": "093a3fd1022755f5128261796e009383d7e7a23e9e50f193ab1987d30f9313b2",
