@@ -10094,11 +10094,12 @@ const MUTANT_DEFINITIONS = [
     id: 'entry-cost-author-route-over-budget',
     guard: 'node --test --test-name-pattern="#634 entry-cost: вход автора" test/entry-cost.test.mjs',
     because: 'AC1 #634: the author entry route stays within 12 000 words; a digest that grows '
-      + 'back into the canon must redden the measurement, not the next audit',
+      + 'back into the canon must redden the measurement, not the next audit. The patch alone '
+      + 'exceeds the budget (#680 halved the route, and 2 000 extra words stayed green)',
     patches: [{
       file: 'docs/process/AUTHOR.md',
       find: '## Запрещено\n',
-      replace: `## Запрещено\n\n${'слово '.repeat(2000)}\n`,
+      replace: `## Запрещено\n\n${'слово '.repeat(12001)}\n`,
     }],
   },
   {
