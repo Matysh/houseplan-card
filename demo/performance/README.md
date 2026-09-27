@@ -99,6 +99,22 @@ still below the known failed pre-optimization result (3501.5 ms). This aggregate
 is a catastrophic guard; the full workflow's base-relative comparison remains
 the detector for smaller regressions.
 
+The isometric `spaceSwitchMs` ceiling is 2200 ms, shared by the smoke, the full
+isometric profile and its Stage 3 dense twin (#675). The metric is one cold
+floor switch that builds the second floor's 2.5D geometry, so it grows with
+every 2.5D stage, and the original 1800 ms from #89 stage 1 had become the level
+itself. The hosted-runner smoke median rose from 1500 ms (2026-09-09 to 09-12,
+12 runs) to 1668 ms (09-19 to 09-25, 6 runs) and 1798 ms after #649 (9 runs, σ
+42 ms, maximum 1867.7 ms). The median inside a run is already stable (re-run
+attempts of one SHA differ by 0.4 %), separate runs of one SHA differ by up to
+5.5 %, and the level itself moved by 20 %: more samples would not change the
+verdict, so the ceiling is the lever. 2200 ms leaves 17.8 % over that maximum
+and stays below the only real isometric regression of the window, 2719.6 ms
+(#583 before its lattice fix, 2026-09-16); doubling today's level fails by a
+wide margin. Occasional hosted runners are about a quarter faster, which a
+ceiling does not mind. Smaller growth stays the job of the full workflow's
+base-relative comparison.
+
 The dedicated `performance.yml` workflow is the full comparison. It runs on
 every `main` promotion, weekly and on manual dispatch for an important beta or
 performance-sensitive change. It checks out the candidate and its base SHA,

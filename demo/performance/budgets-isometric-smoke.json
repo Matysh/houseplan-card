@@ -17,7 +17,7 @@
     },
     "spaceSwitchMs": {
       "stat": "median",
-      "hardMaxMs": 1800
+      "hardMaxMs": 2200
     },
     "stateUpdateMs": {
       "stat": "median",

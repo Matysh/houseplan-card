@@ -188,6 +188,33 @@ import { readFileSync } from 'node:fs';
 
 const readBudget = (name) => JSON.parse(readFileSync(new URL(`../demo/performance/${name}`, import.meta.url), 'utf8'));
 
+// Синтетический отчёт для `compare --absolute-only`: все метрики по 1 мс,
+// кроме переданных в `timings`.
+const absoluteSmokeReport = (smoke, timings = {}) => ({
+  schema: 2, profile: smoke.profile, sourceSha: '1'.repeat(40), buildFingerprint: 'fixture',
+  runtime: { node: 'v22.0.0', chromium: '1.2.3', platform: 'linux', arch: 'x64' },
+  fixture: { rooms: 60 },
+  summary: Object.fromEntries(Object.keys(smoke.timings).map((metric) => {
+    const value = timings[metric] ?? 1;
+    return [metric, { median: value, p95: value, min: value, max: value }];
+  })),
+  longTasks: { maxSingleMs: 1, countP95: 1, totalP95Ms: 1 },
+  ...(smoke.profile === 'large-house-isometric-v1' ? { effectiveProjection: ['iso'] } : {}),
+  rows: [0, 1, 2].map(() => ({
+    heapGrowthBytes: 1, preciseGc: true,
+    longTasks: Object.fromEntries(['load', ...Object.keys(smoke.longTaskWindows ?? {})]
+      .map((name) => [name, { supported: true, count: 1, maxMs: 1, totalMs: 1 }])),
+    cacheEntries: { ...smoke.cacheEntries },
+    cacheGrowth: Object.fromEntries(Object.keys(smoke.cacheGrowth).map((key) => [key, 0])),
+    renderedDevices: smoke.renderedDevices,
+    ...(smoke.profile === 'large-house-isometric-v1'
+      ? {
+        effectiveProjection: 'iso',
+        isoStructuralBuilds: { supported: true, initial: 1, beforeHaUpdate: 2, afterHaUpdate: 2, haUpdateDelta: 0 },
+      } : {}),
+  })),
+});
+
 for (const [smokeName, fullName] of [
   ['budgets-isometric-smoke.json', 'budgets-large-house-isometric.json'],
   ['budgets-interaction-smoke.json', 'budgets-large-house-interaction.json'],
@@ -214,33 +241,11 @@ for (const [smokeName, fullName] of [
 
     // Пригодность для --absolute-only: синтетический отчёт под потолками
     // проходит, первый кадр как у de215578 (9 870 мс) — красный.
-    const build = (firstFrame) => ({
-      schema: 2, profile: smoke.profile, sourceSha: '1'.repeat(40), buildFingerprint: 'fixture',
-      runtime: { node: 'v22.0.0', chromium: '1.2.3', platform: 'linux', arch: 'x64' },
-      fixture: { rooms: 60 },
-      summary: Object.fromEntries(Object.keys(smoke.timings).map((metric) => {
-        const value = metric === 'firstStableRenderMs' ? firstFrame : 1;
-        return [metric, { median: value, p95: value, min: value, max: value }];
-      })),
-      longTasks: { maxSingleMs: 1, countP95: 1, totalP95Ms: 1 },
-      ...(smoke.profile === 'large-house-isometric-v1' ? { effectiveProjection: ['iso'] } : {}),
-      rows: [0, 1, 2].map(() => ({
-        heapGrowthBytes: 1, preciseGc: true,
-        longTasks: Object.fromEntries(['load', ...Object.keys(smoke.longTaskWindows ?? {})]
-          .map((name) => [name, { supported: true, count: 1, maxMs: 1, totalMs: 1 }])),
-        cacheEntries: { ...smoke.cacheEntries },
-        cacheGrowth: Object.fromEntries(Object.keys(smoke.cacheGrowth).map((key) => [key, 0])),
-        renderedDevices: smoke.renderedDevices,
-        ...(smoke.profile === 'large-house-isometric-v1'
-          ? {
-            effectiveProjection: 'iso',
-            isoStructuralBuilds: { supported: true, initial: 1, beforeHaUpdate: 2, afterHaUpdate: 2, haUpdateDelta: 0 },
-          } : {}),
-      })),
-    });
-    const ok = evaluatePerformanceBudget({ candidate: build(1), budgets: smoke, absoluteOnly: true });
+    const ok = evaluatePerformanceBudget({ candidate: absoluteSmokeReport(smoke), budgets: smoke, absoluteOnly: true });
     assert.deepEqual(ok.failures, [], 'отчёт под потолками обязан проходить');
-    const regressed = evaluatePerformanceBudget({ candidate: build(9870), budgets: smoke, absoluteOnly: true });
+    const regressed = evaluatePerformanceBudget({
+      candidate: absoluteSmokeReport(smoke, { firstStableRenderMs: 9870 }), budgets: smoke, absoluteOnly: true,
+    });
     assert.ok(regressed.failures.some((check) => check.id === 'timing.firstStableRenderMs.median'),
       'первый кадр 9 870 мс обязан краснеть');
   });
@@ -255,6 +260,33 @@ test('interaction aggregate keeps hosted-runner headroom without weakening compo
   assert.equal(smoke.timings.panSeriesMs.hardMaxMs, 500);
   assert.equal(smoke.timings.cameraSeriesMs.hardMaxMs, 500);
   assert.equal(smoke.timings.editorSeriesMs.hardMaxMs, 750);
+});
+
+// #675: обоснование потолка и ряд замеров — demo/performance/README.md,
+// «CI contracts». Три файла держат одно число: смок повторяет полный профиль
+// (#473 AC4), плотный двойник — исторический (#160).
+test('isometric space switch ceiling covers the 2.5D runner level and still catches #583 (#675)', () => {
+  const files = [
+    'budgets-isometric-smoke.json',
+    'budgets-large-house-isometric.json',
+    'budgets-isometric-stage3-dense.json',
+  ];
+  for (const file of files)
+    assert.equal(readBudget(file).timings.spaceSwitchMs.hardMaxMs, 2200, `${file}: общий потолок spaceSwitchMs`);
+  const smoke = readBudget('budgets-isometric-smoke.json');
+  const red = (ms) => evaluatePerformanceBudget({
+    candidate: absoluteSmokeReport(smoke, { spaceSwitchMs: ms }), budgets: smoke, absoluteOnly: true,
+  }).failures.some((check) => check.id === 'timing.spaceSwitchMs.median');
+  assert.equal(red(1867.7), false, 'максимум уровня 2.5D на hosted-раннере (прогон 36306131709) проходит');
+  assert.equal(red(2719.6), true, 'провал #583 до решётки (прогон 35070397356) краснеет и по spaceSwitchMs');
+  assert.equal(red(2 * 1798.3), true, 'удвоение текущего уровня краснеет');
+  // Потолок — не детектор тренда: полный прогон по-прежнему сравнивает с базой
+  // того же раннера, и рычагом не стали ни коэффициент, ни допуск.
+  for (const file of files.slice(1)) {
+    const budget = readBudget(file).timings.spaceSwitchMs;
+    assert.equal(budget.maxRegressionRatio, 0.2, `${file}: коэффициент не рычаг`);
+    assert.equal(budget.noiseAllowanceMs, 100, `${file}: допуск не рычаг`);
+  }
 });
 
 test('boundary collision search restores the ordinary isometric allowances (#585)', () => {

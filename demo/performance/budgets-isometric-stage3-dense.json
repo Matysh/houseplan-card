@@ -8,7 +8,7 @@
     "viewToggleMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 1500 },
     "openingUpdateMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 75, "hardMaxMs": 1000 },
     "overlayInteractionMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 75, "hardMaxMs": 1000 },
-    "spaceSwitchMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 1800 },
+    "spaceSwitchMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 2200 },
     "stateUpdateMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 75, "hardMaxMs": 1000 },
     "resizePreviewMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 150, "hardMaxMs": 2200 },
     "panZoomMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 60, "hardMaxMs": 600 },
