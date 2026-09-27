@@ -16,9 +16,10 @@ on:
         required: false
         default: dev
   schedule:
-    # Каждую ночь, 01:00 UTC (04:00 MSK) — после суток правок и до ночного
-    # полного Validate (nightly.yml, 02:30 UTC), чтобы не делить раннеры (#513).
-    - cron: '0 1 * * *'
+    # Каждую ночь, 00:43 UTC (03:43 MSK) — после суток правок и до ночного
+    # полного Validate (nightly.yml, 02:17 UTC), чтобы не делить раннеры (#513).
+    # Минута не круглая: такие старты GitHub сдвигает меньше (#658).
+    - cron: '43 0 * * *'
 
 permissions:
   contents: read
