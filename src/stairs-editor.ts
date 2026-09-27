@@ -16,7 +16,8 @@ import {
   convertStairKind, normalizeStairAngle, snapStairToStairs, stairTargetState,
 } from './stairs-editor-model';
 import {
-  cachedStairRenderGeometry, MAX_STAIRS_PER_SPACE, stairList, type Stair,
+  cachedStairRenderGeometry, MAX_STAIRS_PER_SPACE, stairList, stairStyleVars,
+  stairVisualFields, stairVisualStyle, type Stair, type StairVisualStyle,
 } from './stairs';
 import type { SpaceModel } from './types';
 
@@ -29,6 +30,10 @@ type StairDialog = {
   angle: string;
   direction: Stair['direction'];
   targetSpaceId: string;
+  color: string;
+  opacity: number;
+  fillColor: string;
+  fillOpacity: number;
   /** Field values at open time: an untouched field keeps the stored number bit for bit (#676 К7). */
   opened: { length: string; width: string; radius: string; angle: string };
 };
@@ -73,6 +78,7 @@ export interface StairEditorHostPort {
   _model: SpaceModel[];
   _space: string;
   _hasFixedFloor: boolean;
+  _decorStyle: { color: string; opacity: number };
   _suppressClick: boolean;
   requestUpdate(): void;
   _showToast(message: string): void;
@@ -122,6 +128,15 @@ export class StairEditorRuntime {
   private get reach(): number { return this.owner._gridPitch * FURN_WALL_CELLS; }
 
   private get minUnits(): number { return stairMinN(this.owner._cellCm) * NORM_W; }
+
+  private creationVisualStyle(): StairVisualStyle {
+    return {
+      color: this.owner._decorStyle.color,
+      opacity: this.owner._decorStyle.opacity,
+      fillColor: this.owner._decorStyle.color,
+      fillOpacity: 0,
+    };
+  }
 
   /** Room faces from the furniture magnet plus physical bodies with an outward side (#676). */
   private surfaces(): readonly FurnitureWallSurface[] {
@@ -204,7 +219,10 @@ export class StairEditorRuntime {
     const id = newStairId();
     this.draft = {
       pid: event.pointerId, kind: this.preset, id, a: point, b: point,
-      stair: draftStair(this.preset, point, point, this.owner._cellCm, id, this.owner._gridPitch),
+      stair: draftStair(
+        this.preset, point, point, this.owner._cellCm, id, this.owner._gridPitch,
+        NORM_W, this.creationVisualStyle(),
+      ),
       surfaces: this.surfaces(),
     };
     this.selectedId = null;
@@ -215,7 +233,10 @@ export class StairEditorRuntime {
   }
 
   private draftAt(draft: StairDraft, point: number[]): Stair {
-    const drawn = draftStair(draft.kind, draft.a, point, this.owner._cellCm, draft.id, this.owner._gridPitch);
+    const drawn = draftStair(
+      draft.kind, draft.a, point, this.owner._cellCm, draft.id, this.owner._gridPitch,
+      NORM_W, stairVisualStyle(draft.stair, this.creationVisualStyle()),
+    );
     const isClick = Math.max(Math.abs(point[0] - draft.a[0]), Math.abs(point[1] - draft.a[1])) < this.owner._gridPitch;
     if (isClick) return this.withMoveMagnet(drawn, [drawn.x * NORM_W, drawn.y * NORM_W], draft.surfaces);
     return magnetStairResize(
@@ -239,7 +260,10 @@ export class StairEditorRuntime {
     const before = this.owner._geometrySnapshot();
     const id = newStairId();
     const stair = this.withMoveMagnet(
-      draftStair(this.preset, point, point, this.owner._cellCm, id, this.owner._gridPitch),
+      draftStair(
+        this.preset, point, point, this.owner._cellCm, id, this.owner._gridPitch,
+        NORM_W, this.creationVisualStyle(),
+      ),
       [point[0], point[1]], this.surfaces(),
     );
     this.placeStair(stair, before);
@@ -254,12 +278,14 @@ export class StairEditorRuntime {
       radius: stairFieldOf(stair.kind === 'spiral' ? stair.radius : Math.max(stair.length, stair.width) / 2, cellCm, imperial),
       angle: String(stair.angle),
     };
+    const visual = stairVisualStyle(stair, this.creationVisualStyle());
     this.dialog = {
       id: stair.id,
       kind: stair.kind,
       ...fields,
       direction: stair.direction,
       targetSpaceId: stair.target_space_id || '',
+      ...visual,
       opened: fields,
     };
     this.owner.requestUpdate();
@@ -300,6 +326,7 @@ export class StairEditorRuntime {
       ...next,
       angle: normalizeStairAngle(angle),
       target_space_id: dialog.targetSpaceId || null,
+      ...stairVisualFields(dialog),
     } as Stair;
     this.dialog = null;
     const unchanged = JSON.stringify(next) === JSON.stringify({ ...current, target_space_id: current.target_space_id ?? null });
@@ -490,6 +517,7 @@ export class StairEditorRuntime {
     return svg`<g class="hp-stair ${selected ? 'selected' : ''} ${inputEnabled ? 'input-enabled' : ''} ${draft ? 'draft' : ''}"
       data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
       data-target-state=${targetState}
+      style=${stairStyleVars(stair, this.creationVisualStyle())}
       role="img"
       aria-label=${this.owner._t('markup.stairs')}
       @dblclick=${(event: MouseEvent) => {
@@ -500,6 +528,8 @@ export class StairEditorRuntime {
       <polygon class="hp-stair-hit" points=${outline}
         @pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, 'move')}
         @click=${select}></polygon>
+      ${geometry.trapezoid.map((line) => svg`<line class="hp-stair-trapezoid"
+        x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
       ${geometry.treads.map((line) => svg`<line class="hp-stair-tread"
         x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
       <path class="hp-stair-arrow" d=${geometry.arrowPath}></path>
@@ -562,7 +592,7 @@ export class StairEditorRuntime {
       this.owner._hasFixedFloor,
     );
     const directionOptions: ReadonlyArray<readonly [string, I18nKey]> = dialog.kind === 'straight'
-      ? [['forward', 'stairs.forward'], ['backward', 'stairs.backward']] as const
+      ? [['forward', 'stairs.up'], ['backward', 'stairs.down']] as const
       : [['clockwise', 'stairs.clockwise'], ['counterclockwise', 'stairs.counterclockwise']] as const;
     const imperial = this.owner._imperial;
     const bound = (cm: number): string => String(Math.round((imperial ? cm / 2.54 : cm) * 100) / 100);
@@ -600,6 +630,18 @@ export class StairEditorRuntime {
         ${dialog.kind === 'straight'
           ? html`${field('length', 'stairs.length')}${field('width', 'stairs.width')}`
           : field('radius', 'stairs.radius')}
+        <hp-color-opacity .label=${this.owner._t('stairs.line_color')}
+          .color=${dialog.color} .opacity=${dialog.opacity}
+          .opacityLabel=${this.owner._t('space.opacity')}
+          @hp-color-opacity-change=${(event: CustomEvent<{ color: string; opacity: number }>) =>
+            this.updateDialog({ color: event.detail.color, opacity: event.detail.opacity })}>
+        </hp-color-opacity>
+        <hp-color-opacity .label=${this.owner._t('stairs.fill_color')}
+          .color=${dialog.fillColor} .opacity=${dialog.fillOpacity}
+          .opacityLabel=${this.owner._t('space.opacity')}
+          @hp-color-opacity-change=${(event: CustomEvent<{ color: string; opacity: number }>) =>
+            this.updateDialog({ fillColor: event.detail.color, fillOpacity: event.detail.opacity })}>
+        </hp-color-opacity>
         <label>${this.owner._t('stairs.rotation')}</label>
         <input class="namein tempin" type="number" step="any" .value=${dialog.angle}
           @input=${(event: Event) => this.updateDialog({

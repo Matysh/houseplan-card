@@ -717,7 +717,11 @@ the stair and snaps the dragged side flush to a parallel wall; dragging the
 body snaps the nearest side to a wall (turning the stair by at most 5°) or
 flush to another stair; `Shift` snaps rotation to 45°. **Optimize plans**
 preserves the exact continuous transform. Double click opens size (30 cm to
-100 m, saved exactly as shown), direction, angle and target-floor properties.
+100 m, saved exactly as shown), direction, angle, line/fill colour and opacity,
+and target-floor properties. A new stair copies the main decor colour and has
+no visible fill. Straight **Up/Down** changes the 100%/80% taper but not the
+arrow direction; rotate the whole stair to turn the arrow. Treads and spiral
+sectors divide the full run evenly at the closest possible step to 30 cm.
 In View, hovering a stair with a valid target shows "Go to floor …", and a
 clean activation switches to that target and restores its saved view; gesture
 tails, broken links and fixed-floor cards do nothing. The target floor is

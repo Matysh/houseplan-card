@@ -228,12 +228,36 @@ const MUTANT_DEFINITIONS = [
     id: 'stairs-tread-count-depends-on-render-scale',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/stairs.test.mjs',
-    because: '#663 AC3: 30 cm is a physical interval; viewport scale may change pixels but '
-      + 'must not change the number or placement of treads.',
+    because: '#683 AC6: the equal interval nearest 30 cm is physical; viewport scale may '
+      + 'change pixels but must not change the number or placement of treads.',
     patches: [{
       file: 'src/stairs.ts',
-      find: '  const treadN = cmToNorm(STAIR_TREAD_CM, cellCm);\n',
-      replace: '  const treadN = cmToNorm(STAIR_TREAD_CM, cellCm) * NORM_W / scale; // mutant\n',
+      find: '    const count = stairIntervalCount(stair.length * cellCm * GRID_N);\n',
+      replace: '    const count = stairIntervalCount(stair.length * cellCm * GRID_N * NORM_W / scale); // mutant\n',
+    }],
+  },
+  {
+    id: 'stairs-legacy-save-keeps-implicit-style',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern=legacy test/stairs.test.mjs',
+    because: '#683 AC8: reading a legacy stair stays non-mutating, but its first explicit Save '
+      + 'must materialize the complete visual quartet so the result no longer follows global defaults.',
+    patches: [{
+      file: 'src/stairs.ts',
+      find: '    fill_opacity: resolved.fillOpacity,\n',
+      replace: '    fill_opacity: 0, // mutant: one explicit field is not materialized\n',
+    }],
+  },
+  {
+    id: 'stairs-active-link-loses-pointer-cursor',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern=cursor test/stairs.test.mjs',
+    because: '#683 AC12: only a stair with an active floor target promises navigation with the '
+      + 'standard pointer cursor; removing it makes the clickable symbol look inert.',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '    .hp-stair.navigable { cursor: pointer; }\n',
+      replace: '    .hp-stair.navigable { cursor: default; } /* mutant */\n',
     }],
   },
   {

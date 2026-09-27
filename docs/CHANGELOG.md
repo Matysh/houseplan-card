@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Stairs now have two independent line and fill colours with opacity controls. A
+  new stair snapshots the current main decor colour and starts with a fully
+  transparent fill. Straight flights show an internal 100%/80% trapezoid:
+  **Up/Down** flips the taper while the ascent arrow keeps its canonical
+  direction, so rotating the whole stair is the way to point the arrow. Both
+  straight and spiral stairs now divide their full run into equal intervals
+  whose physical size is as close as possible to 30 cm, without a short last
+  tread or sector. Valid floor links also consistently use the hand cursor
+  ([#683](https://github.com/Matysh/houseplan-card/issues/683)).
+
 ## v1.78.0-beta.6 — 2026-09-27
 
 - Manual virtual-light state and the latest vacuum-trail points are now flushed

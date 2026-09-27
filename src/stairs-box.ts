@@ -1,6 +1,6 @@
 import { GRID_N, NORM_W } from './canvas-constants';
 import type { FurnitureWallSurface } from './furniture-wall-surface';
-import type { Stair } from './stairs';
+import { stairVisualFields, type Stair, type StairVisualStyle } from './stairs';
 import { defaultStair, normalizeStairAngle } from './stairs-editor-model';
 
 // #676: the editing layer works on an oriented box — centre, length along the
@@ -147,9 +147,12 @@ export const stairMinN = (cellCm: number): number => cmToNorm(STAIR_MIN_CM, cell
 export function draftStair(
   kind: Stair['kind'], a: readonly number[], b: readonly number[],
   cellCm: number, id: string, clickUnits: number, scale = NORM_W,
+  visual?: StairVisualStyle,
 ): Stair {
   const dx = b[0] - a[0], dy = b[1] - a[1];
-  if (Math.max(Math.abs(dx), Math.abs(dy)) < clickUnits) return defaultStair(kind, a[0], a[1], cellCm, id);
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < clickUnits)
+    return defaultStair(kind, a[0], a[1], cellCm, id, visual);
+  const style = visual ? stairVisualFields(visual) : {};
   const minUnits = stairMinN(cellCm) * scale;
   if (kind === 'spiral') {
     const side = Math.max(Math.abs(dx), Math.abs(dy));
@@ -159,6 +162,7 @@ export function draftStair(
     return {
       id, kind, x: cx / scale, y: cy / scale, angle: 0,
       direction: 'clockwise', radius: radius / scale, target_space_id: null,
+      ...style,
     };
   }
   const alongX = Math.abs(dx) >= Math.abs(dy);
@@ -168,6 +172,7 @@ export function draftStair(
   return {
     id, kind, x: (a[0] + dx / 2) / scale, y: (a[1] + dy / 2) / scale, angle,
     direction: 'forward', length: length / scale, width: width / scale, target_space_id: null,
+    ...style,
   };
 }
 

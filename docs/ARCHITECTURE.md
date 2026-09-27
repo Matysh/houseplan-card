@@ -311,7 +311,14 @@ ordinary saves. Saves strip the legacy root `space.segments`.
 Separate Plan entity, not decor (`STAIRS.md`). Eager `StairViewRuntime`:
 symbols, tooltip, guarded navigation; lazy `StairEditorRuntime`: drawing,
 transforms, magnets, properties (a plan never loads the editor graph). The root
-card keeps lifecycle, shared history/persistence and stage pointer terminals.
+card keeps lifecycle, shared history/persistence and stage pointer terminals;
+pure model, tread/trapezoid geometry and style resolution stay in `stairs.ts`.
+
+The optional `color`/`opacity` and `fill_color`/`fill_opacity` fields are a
+snapshot owned by the stair. Missing legacy fields resolve at render/dialog
+time from the current decor default but are not written until the user saves
+that stair. Screen renderers consume the colour fields; PDF deliberately uses
+the same geometry with its existing monochrome ink palette.
 
 ## Editor chrome and contextual controls
 

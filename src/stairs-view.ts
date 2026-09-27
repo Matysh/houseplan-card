@@ -1,6 +1,6 @@
 import { nothing, svg, type TemplateResult } from 'lit';
 import {
-  cachedStairRenderGeometry, stairList, type Stair,
+  cachedStairRenderGeometry, stairList, stairStyleVars, type Stair,
 } from './stairs';
 import { stairTargetState } from './stairs-editor-model';
 import type { SpaceModel } from './types';
@@ -13,6 +13,7 @@ export interface StairViewHostPort {
   _hasFixedFloor: boolean;
   _suppressClick: boolean;
   _cellCm: number;
+  _decorStyle: { color: string; opacity: number };
   _tabClick(spaceId: string): void;
   _t(key: 'markup.stairs' | 'stairs.tooltip_navigate', vars?: Record<string, string | number>): string;
   /** The card's pointer tooltip: shown only for a hover-capable pointer. */
@@ -87,6 +88,7 @@ export class StairViewRuntime {
       return svg`<g class="hp-stair ${active ? 'navigable' : ''} ${interactive ? 'input-enabled' : ''}"
         data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
         data-target-state=${targetState}
+        style=${stairStyleVars(stair, this.owner._decorStyle)}
         role=${active ? 'link' : 'img'} tabindex=${active ? '0' : nothing}
         aria-label=${this.owner._t('markup.stairs')}
         @click=${navigate}
@@ -102,6 +104,8 @@ export class StairViewRuntime {
         <polygon class="hp-stair-outline" points=${outline}></polygon>
         <polygon class="hp-stair-hit" points=${outline}
           @pointerdown=${(event: PointerEvent) => this.pointerDown(event)}></polygon>
+        ${geometry.trapezoid.map((line) => svg`<line class="hp-stair-trapezoid"
+          x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
         ${geometry.treads.map((line) => svg`<line class="hp-stair-tread"
           x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
         <path class="hp-stair-arrow" d=${geometry.arrowPath}></path>

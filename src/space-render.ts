@@ -60,7 +60,7 @@ import { geometryOpenings } from './plan-geometry-preflight';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { projectDecorImage } from './decor-assets';
 import type { DecorShape } from './editors/decor/types';
-import { cachedStairRenderGeometry, stairOutline } from './stairs';
+import { cachedStairRenderGeometry, stairOutline, stairStyleVars } from './stairs';
 import {
   buildGlowClipGeometry, buildLightBarrierScene, forgetGlowSource, forgetGlowSpace,
   glowSourceInOpaqueBody, pruneGlowSources, readGlowClip, renderGlowPools,
@@ -279,6 +279,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   if (!space) return null;
   const disp = spaceDisplayOf(o.cfg.spaces.find((s: any) => s.id === o.spaceId));
   const colors = fillColorsOf(o.cfg.settings);
+  const storedDecor = (o.cfg.settings as { decor_default_style?: Record<string, unknown> })
+    ?.decor_default_style;
+  const stairFallback = {
+    color: typeof storedDecor?.color === 'string' ? storedDecor.color : '#607d8b',
+    opacity: Number.isFinite(Number(storedDecor?.opacity)) ? Number(storedDecor?.opacity) : 1,
+  };
   const cfgSize = o.iconSize ?? 2.5;
   const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
   const deviceBasePct = effectiveDeviceBaseSize(iconPct);
@@ -906,8 +912,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     const geometry = cachedStairRenderGeometry(stair, cellCm);
     return svg`<g class="hp-stair" data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
       data-target-state="fixed"
+      style=${stairStyleVars(stair, stairFallback)}
       aria-hidden="true" pointer-events="none">
       <polygon class="hp-stair-outline" points=${geometry.outline.map((point) => point.join(',')).join(' ')}></polygon>
+      ${geometry.trapezoid.map((line) => svg`<line class="hp-stair-trapezoid"
+        x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
       ${geometry.treads.map((line) => svg`<line class="hp-stair-tread"
         x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
       <path class="hp-stair-arrow" d=${geometry.arrowPath}></path>

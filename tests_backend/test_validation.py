@@ -38,6 +38,8 @@ def test_issue_663_stair_schema_is_discriminated_bounded_and_forward_compatible(
         "id": "straight", "kind": "straight", "x": 0.123456789,
         "y": -0.25, "angle": 17.5, "direction": "forward",
         "length": 0.24, "width": 0.1, "target_space_id": "upper",
+        "color": "#123456", "opacity": 0.75,
+        "fill_color": "#abcdef", "fill_opacity": 0.2,
         "future": {"keep": True},
     }
     spiral = {
@@ -62,6 +64,10 @@ def test_issue_663_stair_schema_is_discriminated_bounded_and_forward_compatible(
         {**spiral, "direction": "forward"},
         {**spiral, "length": 0.2},
         {**spiral, "radius": float("nan")},
+        {**straight, "color": "red"},
+        {**straight, "opacity": 1.01},
+        {**straight, "fill_color": "#abcd"},
+        {**straight, "fill_opacity": -0.01},
     ]
     for stair in broken:
         with pytest.raises(vol.Invalid):

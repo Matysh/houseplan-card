@@ -275,6 +275,8 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
             "stairs": [{
                 "id": "private-stair", "kind": "straight", "x": 0.25, "y": 0.5,
                 "angle": 15, "direction": "forward", "length": 0.2, "width": 0.1,
+                "color": "#123456", "opacity": 0.75,
+                "fill_color": "#abcdef", "fill_opacity": 0.2,
                 "target_space_id": "private-target", "unknown": "drop",
             }],
             "open_spans": [{"a": [0, 0], "b": [0, 1]}, "bad"],
@@ -334,6 +336,8 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
     assert space["stairs"] == [{
         "id": "stair-rich-1", "kind": "straight", "x": 0.25, "y": 0.5,
         "angle": 15, "direction": "forward", "length": 0.2, "width": 0.1,
+        "color": "#123456", "opacity": 0.75,
+        "fill_color": "#abcdef", "fill_opacity": 0.2,
         "target_space_id": "space-rich-2",
     }]
     assert package["summary"]["stairs"] == 1

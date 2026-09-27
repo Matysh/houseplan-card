@@ -299,6 +299,7 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
             _pick_fields(stair, (
                 "id", "kind", "x", "y", "angle", "direction",
                 "target_space_id", "length", "width", "radius",
+                "color", "opacity", "fill_color", "fill_opacity",
             ))
             for stair in space.get("stairs") or []
         ]

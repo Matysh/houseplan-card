@@ -1,5 +1,5 @@
 import { GRID_N, NORM_W } from './canvas-constants';
-import type { Stair } from './stairs';
+import { stairVisualFields, type Stair, type StairVisualStyle } from './stairs';
 
 // Eager module: the View runtime imports `stairTargetState` from here, so this
 // file must stay small. The editor-only box transforms live in
@@ -26,31 +26,39 @@ export function normalizeStairAngle(value: unknown): number {
 
 export function defaultStair(
   kind: Stair['kind'], x: number, y: number, cellCm: number, id: string,
+  visual?: StairVisualStyle,
 ): Stair {
+  const style = visual ? stairVisualFields(visual) : {};
   if (kind === 'spiral') return {
     id, kind, x: x / NORM_W, y: y / NORM_W, angle: 0,
     direction: 'clockwise', radius: cmToNorm(90, cellCm), target_space_id: null,
+    ...style,
   };
   return {
     id, kind, x: x / NORM_W, y: y / NORM_W, angle: 0,
     direction: 'forward', length: cmToNorm(240, cellCm), width: cmToNorm(100, cellCm),
     target_space_id: null,
+    ...style,
   };
 }
 
 export function convertStairKind(stair: Stair, kind: Stair['kind']): Stair {
   if (stair.kind === kind) return { ...stair };
-  if (stair.kind === 'straight') return {
-    id: stair.id, kind: 'spiral', x: stair.x, y: stair.y, angle: stair.angle,
-    direction: stair.direction === 'backward' ? 'counterclockwise' : 'clockwise',
-    radius: Math.max(stair.length, stair.width) / 2,
-    target_space_id: stair.target_space_id ?? null,
-  };
+  if (stair.kind === 'straight') {
+    const { kind: _kind, direction: _direction, length, width, ...common } = stair;
+    return {
+      ...common, kind: 'spiral',
+      direction: stair.direction === 'backward' ? 'counterclockwise' : 'clockwise',
+      radius: Math.max(length, width) / 2,
+      target_space_id: common.target_space_id ?? null,
+    };
+  }
+  const { kind: _kind, direction: _direction, radius, ...common } = stair;
   return {
-    id: stair.id, kind: 'straight', x: stair.x, y: stair.y, angle: stair.angle,
+    ...common, kind: 'straight',
     direction: stair.direction === 'counterclockwise' ? 'backward' : 'forward',
-    length: stair.radius * 2, width: stair.radius * 2,
-    target_space_id: stair.target_space_id ?? null,
+    length: radius * 2, width: radius * 2,
+    target_space_id: common.target_space_id ?? null,
   };
 }
 

@@ -1567,16 +1567,20 @@ export const planStyles = css`
     }
     .stage.markup.tool-stairs { cursor: crosshair; }
     .hp-stair-outline {
-      fill: color-mix(in srgb, var(--hp-accent) 12%, transparent);
-      stroke: var(--primary-text-color, #202124);
+      fill: var(--hp-stair-fill, #607d8b);
+      fill-opacity: var(--hp-stair-fill-opacity, 0);
+      stroke: var(--hp-stair-line, #607d8b);
+      stroke-opacity: var(--hp-stair-line-opacity, 1);
       stroke-width: calc(2px / var(--hp-plan-screen-scale, 1));
       vector-effect: non-scaling-stroke;
     }
+    .hp-stair-trapezoid,
     .hp-stair-tread,
     .hp-stair-arrow {
       fill: none;
-      stroke: var(--primary-text-color, #202124);
-      stroke-width: calc(1.5px / var(--hp-plan-screen-scale, 1));
+      stroke: var(--hp-stair-line, #607d8b);
+      stroke-opacity: var(--hp-stair-line-opacity, 1);
+      stroke-width: calc(2px / var(--hp-plan-screen-scale, 1));
       stroke-linecap: round;
       stroke-linejoin: round;
       vector-effect: non-scaling-stroke;
@@ -1588,10 +1592,12 @@ export const planStyles = css`
     .hp-stair.navigable { cursor: pointer; }
     :host([data-pointer-hover]) .hp-stair.navigable:hover .hp-stair-outline {
       stroke: var(--hp-accent);
+      stroke-opacity: 1;
       stroke-width: calc(2.5px / var(--hp-plan-screen-scale, 1));
     }
     .hp-stair.selected .hp-stair-outline {
       stroke: var(--hp-accent);
+      stroke-opacity: 1;
       stroke-width: calc(3px / var(--hp-plan-screen-scale, 1));
     }
     /* #676: the frame and its handles are the decor frame's chrome (.dtframe,

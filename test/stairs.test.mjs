@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { optimizePlans } from '../test-build/plan-optimizer.js';
@@ -10,7 +11,10 @@ import {
   isStair,
   stairFootprintGeometry,
   stairFootprintsTouching,
+  stairIntervalCount,
   stairRenderGeometry,
+  stairVisualFields,
+  stairVisualStyle,
 } from '../test-build/stairs.js';
 import { geometryArea } from '../test-build/physical-geometry.js';
 import { difference } from 'polyclip-ts';
@@ -45,7 +49,9 @@ test('#663 validates the discriminated stair model and preserves future fields',
 });
 
 test('#663 default physical sizes and type conversion are predictable', () => {
-  const first = defaultStair('straight', 500, 400, 5, 'a');
+  const first = defaultStair('straight', 500, 400, 5, 'a', {
+    color: '#123456', opacity: 0.75, fillColor: '#abcdef', fillOpacity: 0.2,
+  });
   assert.equal(first.kind, 'straight');
   assert.deepEqual(stairPhysicalSizeCm(first, 5).map(Math.round), [240, 100]);
   first.target_space_id = 'upper';
@@ -56,40 +62,86 @@ test('#663 default physical sizes and type conversion are predictable', () => {
   assert.equal(restored.kind, 'straight');
   assert.deepEqual(stairPhysicalSizeCm(restored, 5).map(Math.round), [240, 240]);
   assert.equal(restored.target_space_id, 'upper');
+  assert.deepEqual(
+    { color: restored.color, opacity: restored.opacity,
+      fill_color: restored.fill_color, fill_opacity: restored.fill_opacity },
+    { color: '#123456', opacity: 0.75, fill_color: '#abcdef', fill_opacity: 0.2 },
+    'kind conversion preserves the independent visual style',
+  );
 });
 
-test('#663 straight stair treads keep exact 30 cm intervals and top remainder', () => {
+test('#683 legacy stairs resolve style without mutation and new fields stay optional', () => {
+  const legacy = straight();
+  const before = structuredClone(legacy);
+  assert.deepEqual(stairVisualStyle(legacy, { color: '#112233', opacity: 0.6 }), {
+    color: '#112233', opacity: 0.6, fillColor: '#112233', fillOpacity: 0,
+  });
+  assert.deepEqual(legacy, before, 'render fallback never materializes fields');
+  assert.deepEqual(stairVisualStyle({
+    ...legacy, color: 'red', opacity: 3, fill_color: '#aabbcc', fill_opacity: -1,
+  }, { color: '#112233', opacity: 0.6 }), {
+    color: '#112233', opacity: 1, fillColor: '#aabbcc', fillOpacity: 0,
+  });
+  assert.equal(isStair({ ...legacy, color: '#abcdef', opacity: 0.4 }), true);
+  assert.deepEqual(stairVisualFields({
+    color: '#123456', opacity: 0.7, fillColor: '#abcdef', fillOpacity: 0.25,
+  }), {
+    color: '#123456', opacity: 0.7, fill_color: '#abcdef', fill_opacity: 0.25,
+  }, 'an explicit Save can materialize the complete visual quartet');
+});
+
+test('#683 active target cursor is pointer-only', () => {
+  const styles = readFileSync(new URL('../src/styles/plan.styles.ts', import.meta.url), 'utf8');
+  assert.match(styles, /\.hp-stair\.navigable \{ cursor: pointer; \}/,
+    'only the active-link class advertises navigation');
+  assert.doesNotMatch(styles, /\.hp-stair(?:\.input-enabled)? \{ cursor: pointer; \}/,
+    'ordinary and broken stairs stay visually inert');
+});
+
+test('#683 interval count minimizes distance from 30 cm and resolves ties upward', () => {
+  assert.equal(stairIntervalCount(288), 10);
+  assert.equal(stairIntervalCount(40), 2, '20 cm and 40 cm are tied; more intervals win');
+  assert.equal(stairIntervalCount(0), 1);
+});
+
+test('#683 straight stair divides the trapezoid into equal near-30 cm intervals', () => {
   const geometry = stairRenderGeometry(straight(), 5);
   assert.equal(geometry.treads.length, 9);
+  assert.equal(geometry.trapezoid.length, 3, 'the shared 100% base is not drawn twice');
   for (let index = 1; index < geometry.treads.length; index++) {
-    assert.equal(geometry.treads[index].a[0] - geometry.treads[index - 1].a[0], 25);
+    assert.equal(geometry.treads[index].a[0] - geometry.treads[index - 1].a[0], 24);
   }
-  assert.equal(geometry.treads[0].a[0], 405, 'first line is 30 cm after the lower edge');
-  assert.equal(geometry.treads.at(-1).a[0], 605, 'the short remainder stays before the top edge');
+  assert.equal(geometry.treads[0].a[0], 404);
+  assert.equal(geometry.treads.at(-1).a[0], 596);
   assert.deepEqual(
     geometry.treads.map((line) => line.b[1] - line.a[1]),
-    Array(9).fill(100),
+    [82, 84, 86, 88, 90, 92, 94, 96, 98],
+    'treads stop at the sloped trapezoid sides',
   );
   const zoomed = stairRenderGeometry(straight(), 5, 500);
   assert.equal(zoomed.treads.length, geometry.treads.length,
     'zoom changes only pixels, never the physical tread count');
-  assert.equal(zoomed.treads[1].a[0] - zoomed.treads[0].a[0], 12.5,
-    'the same 30 cm interval scales with the symbol, not with viewport zoom');
+  assert.equal(zoomed.treads[1].a[0] - zoomed.treads[0].a[0], 12,
+    'the same equal interval scales with the symbol, not with viewport zoom');
 
   const backward = stairRenderGeometry(straight({ direction: 'backward' }), 5);
   assert.equal(backward.treads.length, geometry.treads.length);
   for (let index = 1; index < backward.treads.length; index++) {
-    assert.equal(backward.treads[index].a[0] - backward.treads[index - 1].a[0], -25);
+    assert.equal(backward.treads[index].a[0] - backward.treads[index - 1].a[0], 24);
   }
-  assert.equal(backward.treads[0].a[0], 595,
-    'backward starts its full intervals at the opposite lower edge');
-  assert.equal(backward.treads.at(-1).a[0], 395,
-    'the short remainder stays before the backward top edge');
+  assert.deepEqual(
+    backward.treads.map((line) => line.b[1] - line.a[1]),
+    [98, 96, 94, 92, 90, 88, 86, 84, 82],
+    'Down flips only the trapezoid taper',
+  );
+  assert.equal(backward.arrowPath, geometry.arrowPath,
+    'direction never flips the canonical arrow');
 });
 
-test('#663 spiral stair uses one turn with 30 cm travel-line spacing', () => {
+test('#683 spiral stair divides the full turn into equal near-30 cm sectors', () => {
   const geometry = stairRenderGeometry(spiral({ angle: 30 }), 5);
-  assert.equal(geometry.treads.length, 16);
+  assert.equal(geometry.treads.length, 17);
+  assert.deepEqual(geometry.trapezoid, []);
   const center = geometry.center;
   const angles = geometry.treads.map((line) => Math.atan2(
     line.b[1] - center[1], line.b[0] - center[0],
@@ -100,7 +152,7 @@ test('#663 spiral stair uses one turn with 30 cm travel-line spacing', () => {
     result.push(value);
     return result;
   }, []);
-  const expected = 25 / (100 * 2 / 3);
+  const expected = Math.PI * 2 / 17;
   for (let index = 1; index < unwrapped.length; index++) {
     assert.ok(Math.abs((unwrapped[index] - unwrapped[index - 1]) - expected) < 1e-10);
   }
@@ -108,11 +160,17 @@ test('#663 spiral stair uses one turn with 30 cm travel-line spacing', () => {
   assert.ok(reverse.treads[1].b[1] < reverse.treads[0].b[1]);
 });
 
-test('#663 cached render geometry survives live repaints and invalidates on transform', () => {
+test('#663 cached render geometry survives live repaints and invalidates only on geometry', () => {
   const item = straight();
   const first = cachedStairRenderGeometry(item, 5);
   const second = cachedStairRenderGeometry(item, 5);
   assert.equal(second, first, 'unchanged stair reuses the dense render geometry');
+  item.color = '#123456';
+  item.opacity = 0.4;
+  item.fill_color = '#abcdef';
+  item.fill_opacity = 0.25;
+  assert.equal(cachedStairRenderGeometry(item, 5), first,
+    'visual-only edits do not invalidate the geometry cache');
   item.angle = 45;
   const changed = cachedStairRenderGeometry(item, 5);
   assert.notEqual(changed, first, 'in-place edits cannot leave a stale cache entry');

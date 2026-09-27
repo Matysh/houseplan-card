@@ -39,7 +39,14 @@ Double click opens properties. A straight stair stores positive length and
 width; a spiral stair stores a positive radius. The fields accept 30–10000 cm
 (inches when Home Assistant is imperial); a field left untouched keeps the
 stored number bit for bit, and saving without changes writes nothing. The
-dialog also selects the rise direction, rotation and an optional target space.
+dialog also selects the rise direction, rotation, two colour/opacity pairs
+(all linework; full-footprint fill) and an optional target space. A new stair
+snapshots the current main decor colour for its outline, treads, trapezoid and
+arrow; its full rectangle/circle fill starts completely transparent. The
+colours then belong to that stair and do not follow later default-decor changes.
+For a straight stair the choices are **Up** and **Down**. They flip only the
+100%/80% trapezoid; the arrow always points along the canonical local axis, so
+turn the whole stair to point the arrow elsewhere.
 A target cannot be the current space. A missing, self or deleted target leaves
 the stair visible and editable but shows a repair warning and makes View
 activation a no-op.
@@ -70,10 +77,14 @@ straddling a thin wall never snaps to the face hidden inside the masonry. Any
 straight/circular pair of stairs can snap footprint-to-footprint. The other
 stair is never modified or linked by the magnet.
 
-Straight tread lines are perpendicular to the rise axis and start at the lower
-edge every 30 cm. A remainder shorter than 30 cm stays at the upper edge.
-Spiral stairs make one full turn; radial treads use the same 30 cm physical step
-measured on the travel line at two thirds of the radius. Their direction is
+The straight symbol contains a centred full-length trapezoid. Its wide base is
+100% of the stair width and its narrow base is 80%, with symmetric 10% side
+insets. **Up** widens toward the arrow tip; **Down** narrows toward it. Treads
+end on the trapezoid sides and never enter the side strips. The full physical
+length is divided into an integer number of equal intervals whose size is
+closest to 30 cm (a tie chooses the larger count), so there is no remainder.
+Spiral stairs similarly divide the complete travel-line circumference at two
+thirds of the radius into equal sectors closest to 30 cm. Their direction is
 clockwise or counter-clockwise when viewed from above. The arrow always means
 physical ascent, not the direction of navigation between named tabs.
 
@@ -97,17 +108,25 @@ Each space may contain `stairs: []`, bounded to 250 valid records:
   "length": 0.24,
   "width": 0.10,
   "direction": "forward",
-  "target_space_id": "floor-2"
+  "target_space_id": "floor-2",
+  "color": "#607d8b",
+  "opacity": 1,
+  "fill_color": "#607d8b",
+  "fill_opacity": 0
 }
 ```
 
 `kind:"spiral"` replaces `length`/`width` with `radius` and uses direction
 `clockwise` or `counterclockwise`. Coordinates and sizes use the normalized
 plan coordinate system; physical labels are derived through `cell_cm`.
-`target_space_id` is nullable. Unknown sibling fields survive validation and
-round trips for forward compatibility. Full backup/import/export, one-space
-transfer, plan-only transfer, diagnostics and support packages preserve the
-same records. When a complete backup removes a target space its incoming stair
+`target_space_id` is nullable. The four visual fields are optional for backward
+compatibility. A legacy record resolves missing fields from the current main
+decor colour without being rewritten; its first successful Properties save
+materialises the complete visual quartet. Unknown sibling fields survive
+validation and round trips for forward compatibility. Full backup/import/export,
+one-space transfer, plan-only transfer, diagnostics and support packages
+preserve the same records. When a complete backup removes a target space its
+incoming stair
 links are cleared; a one-space transfer cannot invent an external target.
 
 ## Implementation boundary

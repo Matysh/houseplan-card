@@ -381,6 +381,7 @@ def _project_space(ids: _Pseudonyms, space: dict[str, Any], index: int) -> dict[
         projected = {"id": ids.get("stair", item.get("id"))}
         projected.update(_copy_keys(item, (
             "kind", "x", "y", "angle", "direction", "length", "width", "radius",
+            "color", "opacity", "fill_color", "fill_opacity",
         )))
         if item.get("target_space_id"):
             projected["target_space_id"] = ids.get("space", item.get("target_space_id"))

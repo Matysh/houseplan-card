@@ -1,6 +1,7 @@
 import { difference, type Geom } from 'polyclip-ts';
 import { geometryArea } from './physical-geometry';
 import { CANVAS_LIMIT, GRID_N, NORM_W } from './canvas-constants';
+import { safeStoredColor } from './color';
 
 export const STAIR_TREAD_CM = 30;
 export const MAX_STAIRS_PER_SPACE = 250;
@@ -14,7 +15,29 @@ interface StairCommon {
   y: number;
   angle: number;
   target_space_id?: string | null;
+  color?: string;
+  opacity?: number;
+  fill_color?: string;
+  fill_opacity?: number;
 }
+
+export interface StairVisualStyle {
+  color: string;
+  opacity: number;
+  fillColor: string;
+  fillOpacity: number;
+}
+
+export type StairVisualFields = Pick<
+  StairCommon, 'color' | 'opacity' | 'fill_color' | 'fill_opacity'
+>;
+
+export const DEFAULT_STAIR_VISUAL_STYLE: StairVisualStyle = {
+  color: '#607d8b',
+  opacity: 1,
+  fillColor: '#607d8b',
+  fillOpacity: 0,
+};
 
 export interface StraightStair extends StairCommon {
   kind: 'straight';
@@ -38,6 +61,7 @@ export interface StairLine {
 
 export interface StairRenderGeometry {
   outline: number[][];
+  trapezoid: StairLine[];
   treads: StairLine[];
   arrowPath: string;
   center: [number, number];
@@ -70,9 +94,60 @@ const finite = (value: unknown): number | null => {
   return Number.isFinite(number) ? number : null;
 };
 
-const cmToNorm = (cm: number, cellCm: number): number => (
-  Number(cm) / ((Number(cellCm) > 0 ? Number(cellCm) : 5) * GRID_N)
-);
+const clamp01 = (value: unknown, fallback: number): number => {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(1, Math.max(0, number)) : fallback;
+};
+
+/** Resolve optional persisted colours without mutating a legacy stair record. */
+export function stairVisualStyle(
+  stair: StairVisualFields,
+  fallback: Pick<StairVisualStyle, 'color' | 'opacity'> = DEFAULT_STAIR_VISUAL_STYLE,
+): StairVisualStyle {
+  const fallbackColor = safeStoredColor(fallback.color, DEFAULT_STAIR_VISUAL_STYLE.color);
+  const color = safeStoredColor(stair.color, fallbackColor);
+  return {
+    color,
+    opacity: clamp01(stair.opacity, clamp01(fallback.opacity, 1)),
+    fillColor: safeStoredColor(stair.fill_color, color),
+    fillOpacity: clamp01(stair.fill_opacity, 0),
+  };
+}
+
+export function stairVisualFields(style: StairVisualStyle): StairVisualFields {
+  const resolved = stairVisualStyle({
+    color: style.color,
+    opacity: style.opacity,
+    fill_color: style.fillColor,
+    fill_opacity: style.fillOpacity,
+  });
+  return {
+    color: resolved.color,
+    opacity: resolved.opacity,
+    fill_color: resolved.fillColor,
+    fill_opacity: resolved.fillOpacity,
+  };
+}
+
+export function stairStyleVars(
+  stair: Stair,
+  fallback: Pick<StairVisualStyle, 'color' | 'opacity'> = DEFAULT_STAIR_VISUAL_STYLE,
+): string {
+  const style = stairVisualStyle(stair, fallback);
+  return `--hp-stair-line:${style.color};--hp-stair-line-opacity:${style.opacity};`
+    + `--hp-stair-fill:${style.fillColor};--hp-stair-fill-opacity:${style.fillOpacity}`;
+}
+
+/** Number of equal intervals whose physical size is closest to 30 cm. */
+export function stairIntervalCount(pathCm: number): number {
+  const length = Number(pathCm);
+  if (!(length > 0) || !Number.isFinite(length)) return 1;
+  const quotient = length / STAIR_TREAD_CM;
+  const lower = Math.max(1, Math.floor(quotient));
+  const upper = Math.max(1, Math.ceil(quotient));
+  const error = (count: number): number => Math.abs(length / count - STAIR_TREAD_CM);
+  return error(upper) <= error(lower) ? upper : lower;
+}
 
 export function isStair(value: unknown): value is Stair {
   if (!value || typeof value !== 'object') return false;
@@ -146,39 +221,52 @@ export function stairRenderGeometry(
 ): StairRenderGeometry {
   const center: [number, number] = [stair.x * scale, stair.y * scale];
   const outline = stairOutline(stair, scale);
-  const treadN = cmToNorm(STAIR_TREAD_CM, cellCm);
   if (stair.kind === 'straight') {
-    const forward = stair.direction === 'forward';
-    const count = Math.max(0, Math.floor(stair.length / treadN));
+    const count = stairIntervalCount(stair.length * cellCm * GRID_N);
+    const startHalfWidth = stair.width * (stair.direction === 'forward' ? 0.4 : 0.5);
+    const endHalfWidth = stair.width * (stair.direction === 'forward' ? 0.5 : 0.4);
+    const startX = -stair.length / 2;
+    const endX = stair.length / 2;
+    const startTop = worldPoint(stair, startX, -startHalfWidth, scale);
+    const startBottom = worldPoint(stair, startX, startHalfWidth, scale);
+    const endTop = worldPoint(stair, endX, -endHalfWidth, scale);
+    const endBottom = worldPoint(stair, endX, endHalfWidth, scale);
+    // The 100% base is already the matching short side of the outer outline.
+    // Draw it only once; the trapezoid contributes its two legs and 80% base.
+    const trapezoid: StairLine[] = [
+      { a: startTop, b: endTop },
+      { a: startBottom, b: endBottom },
+      stair.direction === 'forward'
+        ? { a: startTop, b: startBottom }
+        : { a: endTop, b: endBottom },
+    ];
     const treads: StairLine[] = [];
-    for (let index = 1; index <= count; index++) {
-      const x = (forward ? -1 : 1) * stair.length / 2
-        + (forward ? 1 : -1) * index * treadN;
-      if (forward ? x >= stair.length / 2 - 1e-10 : x <= -stair.length / 2 + 1e-10) break;
+    for (let index = 1; index < count; index++) {
+      const fraction = index / count;
+      const x = startX + stair.length * fraction;
+      const halfWidth = startHalfWidth + (endHalfWidth - startHalfWidth) * fraction;
       treads.push({
-        a: worldPoint(stair, x, -stair.width / 2, scale),
-        b: worldPoint(stair, x, stair.width / 2, scale),
+        a: worldPoint(stair, x, -halfWidth, scale),
+        b: worldPoint(stair, x, halfWidth, scale),
       });
     }
-    const fromX = (forward ? -0.3 : 0.3) * stair.length;
-    const toX = (forward ? 0.3 : -0.3) * stair.length;
-    const from = worldPoint(stair, fromX, 0, scale);
-    const tip = worldPoint(stair, toX, 0, scale);
-    const bearing = stair.angle + (forward ? 0 : 180);
+    const from = worldPoint(stair, -0.3 * stair.length, 0, scale);
+    const tip = worldPoint(stair, 0.3 * stair.length, 0, scale);
+    const bearing = stair.angle;
     const size = Math.min(stair.width, stair.length) * scale * 0.16;
     return {
-      outline, treads, center,
+      outline, trapezoid, treads, center,
       arrowPath: `M ${from[0]} ${from[1]} L ${tip[0]} ${tip[1]} ${arrowHead(tip, bearing, size)}`,
     };
   }
 
   const travelRadius = stair.radius * 2 / 3;
   const circumference = Math.PI * 2 * travelRadius;
-  const count = Math.max(1, Math.floor(circumference / treadN));
+  const count = stairIntervalCount(circumference * cellCm * GRID_N);
   const sign = stair.direction === 'clockwise' ? 1 : -1;
   const treads: StairLine[] = [];
   for (let index = 0; index < count; index++) {
-    const localAngle = index * (treadN / travelRadius) * sign;
+    const localAngle = index * (Math.PI * 2 / count) * sign;
     const degrees = stair.angle + localAngle * 180 / Math.PI;
     const inner = rotate(stair.radius * scale * 0.18, 0, degrees);
     const outer = rotate(stair.radius * scale, 0, degrees);
@@ -196,7 +284,7 @@ export function stairRenderGeometry(
   const sweepFlag = sign > 0 ? 1 : 0;
   const tangent = end * 180 / Math.PI + (sign > 0 ? 90 : -90);
   return {
-    outline, treads, center,
+    outline, trapezoid: [], treads, center,
     arrowPath: `M ${from[0]} ${from[1]} A ${radius} ${radius} 0 1 ${sweepFlag} ${tip[0]} ${tip[1]} ${arrowHead(tip, tangent, stair.radius * scale * 0.16)}`,
   };
 }

@@ -474,8 +474,11 @@ function buildPdfCandidate(
     commands.push({
       kind: 'path', rings: [geometry.outline.map(pt)], stroke: INK, width: 0.25 * MM,
     });
+    for (const edge of geometry.trapezoid) commands.push({
+      kind: 'line', points: [pt(edge.a), pt(edge.b)], stroke: INK, width: 0.25 * MM,
+    });
     for (const tread of geometry.treads) commands.push({
-      kind: 'line', points: [pt(tread.a), pt(tread.b)], stroke: INK, width: 0.2 * MM,
+      kind: 'line', points: [pt(tread.a), pt(tread.b)], stroke: INK, width: 0.25 * MM,
     });
     commands.push({
       kind: 'vector', ops: transformSvgPath(geometry.arrowPath, stairMatrix),

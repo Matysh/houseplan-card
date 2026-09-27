@@ -85,11 +85,23 @@ const out = await page.evaluate(async () => {
   const activeSpace = () => root().querySelector('[data-hp="space-tab"][aria-current="page"]')
     ?.getAttribute('data-id');
   const closeTo = (a, b, tolerance = 1e-5) => Math.abs(a - b) <= tolerance;
+  const pathClose = (a, b, tolerance = 1e-5) => {
+    const numbers = (value) => String(value || '').match(/-?\d+(?:\.\d+)?/g)?.map(Number) || [];
+    const left = numbers(a);
+    const right = numbers(b);
+    return left.length === right.length
+      && left.every((value, index) => closeTo(value, right[index], tolerance));
+  };
+  const stairStyle = (stair) => ({
+    color: stair?.color, opacity: stair?.opacity,
+    fill_color: stair?.fill_color, fill_opacity: stair?.fill_opacity,
+  });
   const axisAngleDistance = (angle) => {
     const normalized = ((angle % 180) + 180) % 180;
     return Math.min(normalized, 180 - normalized);
   };
   const result = {};
+  let dialog;
 
   await hp.setServerConfig((config) => {
     for (const space of config.spaces) delete space.stairs;
@@ -130,6 +142,38 @@ const out = await page.evaluate(async () => {
   result.renderedTypesAndDirections = !!root().querySelector(
     '[data-hp="stair"][data-kind="straight"] .hp-stair-arrow',
   ) && !!root().querySelector('[data-hp="stair"][data-kind="spiral"] .hp-stair-arrow');
+  result.newStairsSnapshotCurrentDecorStyle = [straight, spiral].every((stair) =>
+    stair.color === card._decorStyle.color
+      && stair.opacity === card._decorStyle.opacity
+      && stair.fill_color === card._decorStyle.color
+      && stair.fill_opacity === 0);
+  result.straightHasTrapezoidAndSpiralDoesNot =
+    stairNode(straight.id)?.querySelectorAll('.hp-stair-trapezoid').length === 3
+    && stairNode(spiral.id)?.querySelectorAll('.hp-stair-trapezoid').length === 0;
+
+  // A legacy record remains untouched on read; its first explicit Save writes
+  // the complete visual quartet using the current decor fallback.
+  await hp.setServerConfig((config) => {
+    const legacy = config.spaces.find((space) => space.id === 'f1').stairs
+      .find((stair) => stair.id === spiral.id);
+    delete legacy.color;
+    delete legacy.opacity;
+    delete legacy.fill_color;
+    delete legacy.fill_opacity;
+    return config;
+  });
+  await hp.switchSpace('f1');
+  await hp.setMode('plan');
+  const legacyRead = stairs().find((stair) => stair.id === spiral.id);
+  result.legacyReadDoesNotMaterializeStyle = !Object.hasOwn(legacyRead, 'color')
+    && stairNode(spiral.id)?.style.getPropertyValue('--hp-stair-line') === card._decorStyle.color;
+  dialog = await openStairDialog(spiral.id);
+  await saveDialog(dialog);
+  const materialized = stairs().find((stair) => stair.id === spiral.id);
+  result.firstLegacySaveMaterializesStyle = materialized.color === card._decorStyle.color
+    && materialized.opacity === card._decorStyle.opacity
+    && materialized.fill_color === card._decorStyle.color
+    && materialized.fill_opacity === 0;
 
   // Drag-to-draw (#676 AC1): a press-drag-release on the stage draws the
   // straight stair at the drawn size with the ascent along the drag; the
@@ -302,12 +346,64 @@ const out = await page.evaluate(async () => {
   // sizes above one metre survive and no history entry is written.
   const untouched = JSON.stringify(stairs().find((stair) => stair.id === straight.id));
   const historyBefore = card._geometryHistory.size;
-  let dialog = await openStairDialog(straight.id);
+  dialog = await openStairDialog(straight.id);
   const fieldsShown = [...dialog.querySelectorAll('input[type="number"]')].map((input) => input.value);
   await saveDialog(dialog);
   result.untouchedDialogSaveKeepsSizes = JSON.stringify(stairs().find((stair) => stair.id === straight.id)) === untouched
     && Number(fieldsShown[0]) > 100;
   result.untouchedDialogSaveWritesNoHistory = card._geometryHistory.size === historyBefore;
+
+  // Both standard colour controls are persisted together. Down flips only the
+  // trapezoid: the canonical arrow path does not move (#683 owner decision).
+  const arrowBeforeDirection = stairNode(straight.id)?.querySelector('.hp-stair-arrow')?.getAttribute('d');
+  const trapezoidBeforeDirection = [...(stairNode(straight.id)
+    ?.querySelectorAll('.hp-stair-trapezoid') || [])].map((line) => line.outerHTML).join('');
+  const beforeCancelledStyle = structuredClone(stairs().find((stair) => stair.id === straight.id));
+  dialog = await openStairDialog(straight.id);
+  let colorPickers = dialog ? [...dialog.querySelectorAll('hp-color-opacity')] : [];
+  result.propertiesExposeBothColourControls = colorPickers.length === 2
+    && colorPickers[0].label === 'Tread and arrow colour'
+    && colorPickers[1].label === 'Fill colour';
+  colorPickers[0]?.dispatchEvent(new CustomEvent('hp-color-opacity-change', {
+    detail: { color: '#ff0000', opacity: 0.1 }, bubbles: true, composed: true,
+  }));
+  colorPickers[1]?.dispatchEvent(new CustomEvent('hp-color-opacity-change', {
+    detail: { color: '#00ff00', opacity: 0.9 }, bubbles: true, composed: true,
+  }));
+  await hp.close(dialog, { via: 'cancel' });
+  result.cancelKeepsStairVisualStyle = JSON.stringify(stairStyle(
+    stairs().find((stair) => stair.id === straight.id),
+  )) === JSON.stringify(stairStyle(beforeCancelledStyle));
+
+  dialog = await openStairDialog(straight.id);
+  colorPickers = dialog ? [...dialog.querySelectorAll('hp-color-opacity')] : [];
+  result.reopenRestoresPersistedStyle = colorPickers[0]?.color === beforeCancelledStyle.color
+    && colorPickers[0]?.opacity === beforeCancelledStyle.opacity
+    && colorPickers[1]?.color === beforeCancelledStyle.fill_color
+    && colorPickers[1]?.opacity === beforeCancelledStyle.fill_opacity;
+  colorPickers[0]?.dispatchEvent(new CustomEvent('hp-color-opacity-change', {
+    detail: { color: '#123456', opacity: 0.7 }, bubbles: true, composed: true,
+  }));
+  colorPickers[1]?.dispatchEvent(new CustomEvent('hp-color-opacity-change', {
+    detail: { color: '#abcdef', opacity: 0.25 }, bubbles: true, composed: true,
+  }));
+  await settled();
+  dialog = root().querySelector('[data-hp="dialog"][data-kind="stairs"]');
+  const down = [...(dialog?.querySelectorAll('.segmented .btn') || [])]
+    .find((button) => button.textContent.trim() === 'Down');
+  down?.click();
+  await saveDialog(dialog);
+  const styled = stairs().find((stair) => stair.id === straight.id);
+  const styledNode = stairNode(straight.id);
+  result.coloursAndOpacityPersistAsOneEdit = styled?.color === '#123456'
+    && styled.opacity === 0.7 && styled.fill_color === '#abcdef'
+    && styled.fill_opacity === 0.25
+    && styledNode?.style.getPropertyValue('--hp-stair-line') === '#123456'
+    && styledNode?.style.getPropertyValue('--hp-stair-fill') === '#abcdef';
+  result.downFlipsOnlyTrapezoid = styled?.direction === 'backward'
+    && pathClose(styledNode?.querySelector('.hp-stair-arrow')?.getAttribute('d'), arrowBeforeDirection)
+    && [...(styledNode?.querySelectorAll('.hp-stair-trapezoid') || [])]
+      .map((line) => line.outerHTML).join('') !== trapezoidBeforeDirection;
 
   // Properties switch kind without changing identity, then switch it back and link Garden.
   dialog = await openStairDialog(straight.id);
@@ -322,12 +418,14 @@ const out = await page.evaluate(async () => {
   await saveDialog(dialog);
   const linked = stairs().find((stair) => stair.id === straight.id);
   result.kindSwitchKeepsIdentityAndLink = converted?.kind === 'spiral'
-    && linked?.kind === 'straight' && linked.target_space_id === 'garden';
+    && linked?.kind === 'straight' && linked.target_space_id === 'garden'
+    && linked.color === '#123456' && linked.fill_color === '#abcdef';
 
   await hp.setMode('view');
   let linkedNode = stairNode(straight.id);
   result.validLinkIsAccessible = linkedNode?.getAttribute('role') === 'link'
-    && linkedNode?.getAttribute('data-target-state') === 'active';
+    && linkedNode?.getAttribute('data-target-state') === 'active'
+    && getComputedStyle(linkedNode).cursor === 'pointer';
 
   // Hover on a link announces the target floor; every other target state
   // stays silent (#676 AC8). The mouse pointer type enables hover.

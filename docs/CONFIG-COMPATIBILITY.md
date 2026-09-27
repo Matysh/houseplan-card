@@ -141,7 +141,12 @@ discriminated collection. `kind: "straight"` stores positive `length` and
 `width` plus `direction: "forward" | "backward"`; `kind: "spiral"` stores a
 positive `radius` plus `direction: "clockwise" | "counterclockwise"`. Both
 variants carry stable `id`, continuous normalized centre `x/y`, scalar
-`angle`, and an optional nullable `target_space_id`.
+`angle`, and an optional nullable `target_space_id`. Optional `color`,
+`opacity`, `fill_color` and `fill_opacity` store the stair-owned screen style.
+Their absence is the legacy form: renderers/dialogs resolve the current decor
+default without rewriting the config, and the first successful Properties save
+materialises all four fields. Changing the global decor default later does not
+recolour a stair that already owns the fields.
 
 Stair transforms follow furniture's continuous contract. Config writes apply
 only the nine-decimal scalar cleanup to position, size and angle; they do not

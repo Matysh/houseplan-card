@@ -934,6 +934,8 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
         "stairs": [{
             "id": "stairs", "kind": "straight", "x": 0.35, "y": 0.45,
             "angle": 12.5, "direction": "forward", "length": 0.2, "width": 0.1,
+            "color": "#123456", "opacity": 0.75,
+            "fill_color": "#abcdef", "fill_opacity": 0.2,
             "target_space_id": "upper", "future_stair": "drop",
         }],
         "decor": [
@@ -1034,6 +1036,8 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
         "id": "stairs", "kind": "straight", "x": 0.35, "y": 0.45,
         "angle": 12.5, "direction": "forward", "target_space_id": "upper",
         "length": 0.2, "width": 0.1,
+        "color": "#123456", "opacity": 0.75,
+        "fill_color": "#abcdef", "fill_opacity": 0.2,
     }]
 
     parsed = parse_document(json.dumps(document).encode())

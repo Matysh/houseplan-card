@@ -199,6 +199,27 @@ test('#663 PDF renders both stair symbols and uses stair-adjusted clean area', (
   assert.match(area.text, new RegExp(`^${expectedM2.toFixed(1).replace('.', '[.,]')}\\s*m²$`));
 });
 
+test('#683 PDF keeps stair visual styling monochrome and includes trapezoid linework', () => {
+  const plain = structuredClone(rawSpace);
+  plain.stairs = [{
+    id: 'straight', kind: 'straight', x: 0.4, y: 0.4, angle: 0,
+    direction: 'forward', length: 0.2, width: 0.1, target_space_id: 'upper',
+  }];
+  const styled = structuredClone(plain);
+  Object.assign(styled.stairs[0], {
+    color: '#ff00ff', opacity: 0.17, fill_color: '#00ffff', fill_opacity: 0.83,
+  });
+  const options = { dimensions: false, roomNames: false, decor: false, backdrop: false };
+  const plainOutput = buildRawPage(plain, options);
+  const styledOutput = buildRawPage(styled, options);
+  assert.deepEqual(styledOutput.commands, plainOutput.commands,
+    'screen colours and fill never leak into the monochrome PDF contract');
+  const stairLines = styledOutput.commands.filter((command) => command.kind === 'line'
+    && command.width === 0.25 * MM);
+  assert.ok(stairLines.length >= 5,
+    'the straight symbol exports its three trapezoid edges and equal treads');
+});
+
 test('shared wall architecture is emitted once and devices never enter the PDF scene', () => {
   const output = sharedPage({ dimensions: false, roomNames: false, decor: false, backdrop: false });
   const architecture = output.commands.filter((command) => command.kind === 'path');
