@@ -528,7 +528,8 @@ export function anchorVerdictFrom(text) {
  *  - последний опубликованный документ этапа несёт записанный КОНВЕЙЕРОМ
  *    вердикт `green` с High 0 (из structured_output модели, не из прозы);
  *  - его якорь «дерево материала» снят конвейером (#414), а не написан рукой;
- *  - текущее дерево отличается от якоря НИЧЕМ, кроме docs/reviews/** —
+ *  - текущее дерево отличается от якоря НИЧЕМ, кроме docs/reviews/** (и
+ *    переноса выпущенных документов в legacy/reviews/**, #682) —
  *    сравнение делает git по содержимому, так что ребейз на ушедший dev,
  *    правка теста, фикстуры, скрипта или ТЗ в docs/specs дают отличие и
  *    полный разбор (§2.10). Смена базы без изменения дерева невозможна:
@@ -762,7 +763,8 @@ if (invokedDirectly) {
       // Сначала дерево обязано существовать: неизвестный объект — не «совпало».
       const exists = spawnSync('git', ['cat-file', '-e', `${tree}^{tree}`], { encoding: 'utf8' });
       if (exists.status !== 0) return true;
-      const diff = spawnSync('git', ['diff', '--quiet', tree, head, '--', '.', ':!docs/reviews'], { encoding: 'utf8' });
+      // #682: перенос выпущенных документов в legacy/reviews/ — тоже не материал.
+      const diff = spawnSync('git', ['diff', '--quiet', tree, head, '--', '.', ':!docs/reviews', ':!legacy/reviews'], { encoding: 'utf8' });
       return diff.status !== 0;
     };
     const found = reusableGreenVerdict(docs, differs, value('issue-body'));

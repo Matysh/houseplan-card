@@ -49,6 +49,8 @@ test('paths classify into A/B/C/D with the generated tree winning over source', 
   assert.equal(classify('docs/SCOPE.md'), 'C');
   assert.equal(classify('PROCESS.md'), 'C');
   assert.equal(classify('CODE-REVIEW-111-r1.md'), 'C');
+  assert.equal(classify('legacy/reviews/v1.77.0/CODE-REVIEW-111-r1.md'), 'C'); // #682
+  assert.equal(classify('legacy/README.md'), 'C');
   assert.equal(classify('something-unheard-of.xyz'), '?');
 });
 

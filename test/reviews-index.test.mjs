@@ -119,7 +119,9 @@ test('#670 CLI --strict принимает ревью линии и отклон
 test('#635 живой каталог docs/reviews: индекс свеж и покрывает все документы', () => {
   const { entries, skipped } = collectEntries(fileURLToPath(new URL('../docs/reviews/', import.meta.url)));
   assert.equal(skipped.length, 0, `вне схемы имён: ${skipped.join(', ')}`);
-  assert.ok(entries.length > 900);
+  // #682: выпущенные линии уезжают в legacy/reviews/<тег>/ — здесь только
+  // текущая линия, и её размер не константа. Пустой каталог — тоже поломка.
+  assert.ok(entries.length > 0);
   const recognised = entries.filter((e) => e.verdict !== '—').length;
   assert.ok(recognised / entries.length > 0.9, `вердикт распознан у ${recognised} из ${entries.length}`);
 });

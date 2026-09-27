@@ -644,6 +644,15 @@ uploads the failed frames as `continuity-screencast`. The
 tree hash printed in the run summary is the identity between what E2E installed
 and what HACS downloads.
 
+**After a stable release**, once its line review
+(`RELEASE-REVIEW-vX.Y.Z.md`) is in `dev` and the `S7-code-review` queue is
+empty, archive the line's review documents (`PROCESS.md` §2.10):
+`node scripts/reviews-archive.mjs --through=vX.Y.Z` prints the plan,
+`--apply` moves the files into `legacy/reviews/vX.Y.Z/` with `git mv` and
+rebuilds `docs/reviews/INDEX.md`; commit the result as one class C commit
+whose `Issue:` trailer names the issue doing the move or the repository-hygiene
+umbrella (`PROCESS.md` §11.3).
+
 Publishing a stable release by hand in the GitHub form still works, but
 fail-closed: `release: published` starts the same workflow, which immediately
 turns the release back into a draft and walks the same path; nothing installable

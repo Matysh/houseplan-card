@@ -78,6 +78,17 @@ export function issueMetrics(issue, events = []) {
   };
 }
 
+/**
+ * Имена документов ревью из `git ls-tree -r --name-only` по живому каталогу и
+ * архиву (#682): после стабильного релиза документы линии уезжают в
+ * `legacy/reviews/<тег>/`, и счёт раундов за окно не должен от этого меняться.
+ */
+export function reviewDocNames(listing = '') {
+  return String(listing).split('\n').map((path) => path.trim()).filter(Boolean)
+    .filter((path) => path.startsWith('docs/reviews/') || path.startsWith('legacy/reviews/'))
+    .map((path) => path.slice(path.lastIndexOf('/') + 1));
+}
+
 /** Раунды ревью по именам документов `docs/reviews/*-REVIEW-<NN>-r<K>.md`. */
 export function reviewRounds(fileNames = []) {
   const rounds = new Map();
@@ -268,7 +279,7 @@ export function fetchSnapshot({ repo, since, until, gh = ghJson, git = null }) {
     if (rows.length < 100) break;
   }
   const reviewFiles = git
-    ? git(['ls-tree', '--name-only', 'HEAD:docs/reviews']).split('\n').filter(Boolean)
+    ? reviewDocNames(git(['ls-tree', '-r', '--name-only', 'HEAD', '--', 'docs/reviews', 'legacy/reviews']))
     : [];
   return { issues, timelines, runs, reviewFiles };
 }

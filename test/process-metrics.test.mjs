@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  buildReport, issueMetrics, jobMinutes, pipelineMetrics, renderMarkdown, reviewRounds, runMetrics,
+  buildReport, issueMetrics, jobMinutes, pipelineMetrics, renderMarkdown, reviewDocNames, reviewRounds, runMetrics,
 } from '../scripts/process-metrics.mjs';
 
 const T = (h) => new Date(Date.UTC(2026, 8, 15, 0, Math.round(h * 60))).toISOString();
@@ -139,4 +139,19 @@ test('#637 workflow: еженедельный запуск читает толь
   assert.match(wf, /node scripts\/process-metrics\.mjs[\s\S]*--output=artifacts\/process-metrics\/report\.md/);
   assert.match(wf, /GITHUB_STEP_SUMMARY/);
   assert.ok(!/issues: write/.test(wf), 'метрики ничего не пишут в issue');
+});
+
+test('#682 reviewDocNames: живой каталог и архив legacy/reviews/<тег>/ считаются вместе', () => {
+  const listing = [
+    'docs/reviews/CODE-REVIEW-600-r2.md',
+    'docs/reviews/INDEX.md',
+    'legacy/reviews/v1.77.0/CODE-REVIEW-600-r1.md',
+    'legacy/reviews/v1.77.0/SPEC-REVIEW-601-r1.md',
+    'legacy/docs/ROADMAP.md',
+    '',
+  ].join('\n');
+  const names = reviewDocNames(listing);
+  assert.deepEqual(names, ['CODE-REVIEW-600-r2.md', 'INDEX.md', 'CODE-REVIEW-600-r1.md', 'SPEC-REVIEW-601-r1.md']);
+  // Перенос r1 в архив не уменьшает число раундов задачи.
+  assert.equal(reviewRounds(names).get('CODE:600'), 2);
 });

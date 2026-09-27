@@ -265,7 +265,7 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
     const anchorTree = reviewDocs.length ? anchorTreeFrom(reviewDocs.at(-1).text) : null;
     let treeWithoutReviews = null;
     if (anchorTree) {
-      const same = spawnSync('git', ['diff', '--quiet', anchorTree, tip, '--', '.', ':!docs/reviews'], { cwd });
+      const same = spawnSync('git', ['diff', '--quiet', anchorTree, tip, '--', '.', ':!docs/reviews', ':!legacy/reviews'], { cwd });
       treeWithoutReviews = same.status === 0 ? anchorTree : `differs-from-${anchorTree}`;
     }
     branch = { name, tip, base, ahead, behind, treeWithoutReviews, infrastructure };

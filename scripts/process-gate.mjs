@@ -65,6 +65,9 @@ const CLASS_B = [
 const CLASS_C = [
   /^docs\//, /^README/, /^CHANGELOG/, /^AGENTS\.md$/, /^LICENSE$/,
   /^CONTRIBUTING\.md$/, /^PROCESS.*\.md$/, /^(CODE|SPEC)-REVIEW-.*\.md$/,
+  // #682: архив выпущенного — документы ревью и ТЗ прошлых линий. Только
+  // Markdown; исполняемого там нет (#678 вынес всё прочее из дерева).
+  /^legacy\//,
 ];
 
 const CHANGELOGS = ['docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'];

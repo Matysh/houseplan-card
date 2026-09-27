@@ -9946,6 +9946,29 @@ const MUTANT_DEFINITIONS = [
       replace: "  if (false && release) return { stage: 'release', issue: null, round: null, suffix: null, tag: release[1] }; // mutant: release review is unknown",
     }],
   },
+  // #682: архив документов ревью — два правила, без которых перенос ломает ссылки раундов.
+  {
+    id: 'reviews-archive-moves-open-line-issue',
+    guard: 'node --test --test-name-pattern="#682 архив: задача из открытой линии" test/reviews-archive.test.mjs',
+    because: 'an issue with a trailer after the archived tag is still in flight: its next round cites '
+      + 'the previous documents under docs/reviews/, and moving them breaks «Унаследовано из r<N−1>»',
+    patches: [{
+      file: 'scripts/reviews-archive.mjs',
+      find: "    if (openSet.has(doc.issue)) { kept.push({ name, issue: doc.issue, reason: 'задача есть в открытой линии' }); continue; }",
+      replace: "    if (false && openSet.has(doc.issue)) { kept.push({ name, issue: doc.issue, reason: 'задача есть в открытой линии' }); continue; } // mutant: open line ignored",
+    }],
+  },
+  {
+    id: 'reviews-archive-first-line-wins',
+    guard: 'node --test --test-name-pattern="#682 архив: задача уходит" test/reviews-archive.test.mjs',
+    because: 'an issue with trailers in two released lines keeps all rounds in the latest one; '
+      + 'the first line winning splits one issue across two archive folders',
+    patches: [{
+      file: 'scripts/reviews-archive.mjs',
+      find: '    for (const issue of line.issues) lineOf.set(Number(issue), line.tag); // последняя линия выигрывает',
+      replace: '    for (const issue of line.issues) if (!lineOf.has(Number(issue))) lineOf.set(Number(issue), line.tag); // mutant: first line wins',
+    }],
+  },
   {
     id: 'reviews-index-release-counts-ignored',
     guard: 'node --test --test-name-pattern="#635 счётчики|#635 индекс покрывает" test/reviews-index.test.mjs',
