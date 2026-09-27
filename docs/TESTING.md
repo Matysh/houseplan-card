@@ -358,12 +358,12 @@ manifest читают и `classify-changes.mjs` (job `changes`: job запуск
   не зависит, а
   `custom_components/houseplan/manifest.json` (версия) держит правило «кандидат
   релиза прогоняет всё» и для него;
-- **неизвестный исполняемый вход** — файл под `scripts/`, `demo/`, `test/`,
-  `tests_backend/`, `.github/`, `custom_components/`, `src/`, которого нет в
-  manifest ни одной проверки, — расширяет прогон до полного набора и называется
+- `assets/furniture/**` — вход `frontend` (#671); `assets/fonts/**` — явное исключение ручного `generate-pdf-font.mjs`;
+- **неизвестный охраняемый вход** — исполняемый файл под `scripts/`, `demo/`, `test/`, `tests_backend/`, `.github/`, `custom_components/`, `src/` либо tracked-файл под `assets/**`, которого нет в manifest ни
+  одной проверки, — расширяет прогон до полного набора и называется
   в summary. Лист покрытия (`node scripts/check-inputs.mjs --coverage`,
   `test/check-inputs.test.mjs`) требует, чтобы каждый такой файл был чьим-то
-  входом либо стоял в `NOT_AN_INPUT` с причиной: новый скрипт без записи —
+  входом либо стоял в `NOT_AN_INPUT` с причиной: новый скрипт или asset без записи —
   красный юнит, не вечное расширение прогонов;
 - **overlay принятых эталонов** (`demo/golden/baselines/**`, #573) — вход
   только `golden`, у которой он стоит явным корнем. Раскрытие каталога по

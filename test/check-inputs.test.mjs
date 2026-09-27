@@ -4,7 +4,8 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   BASELINE_OVERLAY, CHECKS, CHECK_NAMES, NOT_AN_INPUT, REUSE_JOBS, checksAffectedBy, closure, coverage,
-  globToRegExp, inputsOf, isBaselineOverlay, isDeclaredNotAnInput, isExecutableInput, manifest, referencesOf,
+  GUARDED_DATA_ROOTS, globToRegExp, inputsOf, isBaselineOverlay, isDeclaredNotAnInput, isExecutableInput,
+  isGuardedInput, manifest, referencesOf,
   stripComments,
 } from '../scripts/check-inputs.mjs';
 
@@ -256,6 +257,32 @@ test('#542: каждый динамический cross-runtime input выбир
   const unrelated = p('demo', 'fixtures', 'wall-draw-click.mjs');
   assert.ok(!MANIFEST.backend.has(unrelated), `${unrelated}: точные roots нельзя расширять до всего каталога`);
   assert.ok(!checksAffectedBy([unrelated], ROOT, { manifest: MANIFEST }).affected.has('backend'));
+});
+
+test('#671: весь пакет мебели — точный вход frontend, а шрифты исключены явно', () => {
+  const furniture = p('assets', 'furniture', 'houseplan-0.4.1', 'svg', 'menu', 'air_conditioner.svg');
+  const font = p('assets', 'fonts', 'Roboto-Regular.ttf');
+  assert.deepEqual(GUARDED_DATA_ROOTS, ['assets']);
+  assert.ok(isGuardedInput(furniture));
+  assert.ok(MANIFEST.frontend.has(furniture), `${furniture}: frontend потерял пакет`);
+  const { affected, unknown } = checksAffectedBy([furniture], ROOT, { manifest: MANIFEST });
+  assert.deepEqual([...affected], ['frontend']);
+  assert.deepEqual(unknown, []);
+  assert.ok(isDeclaredNotAnInput(font), `${font}: ручной генератор должен быть явным исключением`);
+  assert.equal(MANIFEST.frontend.has(font), false);
+});
+
+test('#671: новый assets/** без владельца не молчит, а расширяет прогон', () => {
+  const orphan = p('assets', 'future-pack', 'new.bin');
+  const { affected, unknown } = checksAffectedBy([orphan], ROOT, { manifest: MANIFEST });
+  assert.deepEqual(unknown, [orphan]);
+  assert.deepEqual([...affected].sort(), [...CHECK_NAMES].sort());
+
+  const synthetic = coverage('/virtual', {
+    tracked: [orphan],
+    manifest: Object.fromEntries(CHECK_NAMES.map((name) => [name, new Set()])),
+  });
+  assert.deepEqual(synthetic.unknown, [orphan]);
 });
 
 test('§8.1 обратная проба (AC6): UI — не вход backend, backend — не вход браузерных job без причины', () => {

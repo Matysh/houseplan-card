@@ -17,8 +17,9 @@
 // полного набора (§5.2): «не знаю» не равно «не влияет».
 //
 // Лист покрытия (§5.5, test/check-inputs.test.mjs): каждый отслеживаемый
-// исполняемый файл обязан входить в manifest хотя бы одной проверки либо в
-// NOT_AN_INPUT с причиной. Новый скрипт без записи — красный тест, не тихое
+// исполняемый файл и каждый файл под явно охраняемым корнем данных
+// обязан входить в manifest хотя бы одной проверки либо в NOT_AN_INPUT с
+// причиной. Новый скрипт или asset без записи — красный тест, не тихое
 // расширение прогонов навсегда.
 
 import { execFileSync } from 'node:child_process';
@@ -29,6 +30,14 @@ import { isMainModule } from './spawn-portable.mjs';
 /** Корни, внутри которых файл считается исполняемым входом (§5.2). */
 export const EXECUTABLE_ROOTS = ['scripts', 'demo', 'test', 'tests_backend', '.github', 'custom_components', 'src'];
 export const EXECUTABLE_EXT = /\.(mjs|cjs|js|ts|py|json|ya?ml|html|toml|txt|sh)$/;
+
+/**
+ * Корни данных, где каждый tracked-файл обязан иметь владельца или явное
+ * исключение. В отличие от EXECUTABLE_ROOTS здесь важны и бинарные файлы:
+ * тесты могут читать SVG/TTF по динамически собранному пути, который сканер не
+ * выведет из одного строкового литерала (#671).
+ */
+export const GUARDED_DATA_ROOTS = ['assets'];
 
 /** Копии бандла и результаты сборки: класс D, входом не являются. */
 export const BUILD_OUTPUT = [
@@ -77,6 +86,7 @@ export const NOT_AN_INPUT = [
   ['scripts/support-relay/deploy/**', 'деплой relay на стенд'],
   ['scripts/wsl-setup.sh', 'установка локального Linux/WSL-контура с пинами CI (#496), ручной запуск'],
   ['scripts/windows-toolchain.ps1', 'изолированная установка и запуск Windows toolchain с пинами CI (#557), ручной запуск'],
+  ['assets/fonts/**', 'исходный TTF читает только ручной generate-pdf-font.mjs; Validate использует закоммиченный результат'],
   ['.github/ISSUE_TEMPLATE/**', 'шаблоны issue GitHub, не исполняются'],
   ['.githooks/**', 'локальные хуки'],
 ];
@@ -323,7 +333,7 @@ export const CHECKS = {
     entries: ['test/*.test.mjs', 'scripts/no-new-any.mjs', 'scripts/no-new-private-writes.mjs', 'scripts/render-layout-read.mjs', 'scripts/bundle-budget.mjs',
       'scripts/fix-test-build.mjs', 'scripts/unused-locals-gate.mjs'],
     // demo/helpers/** — область no-new-private-writes (#629): гейт читает их текст.
-    roots: [...BUILD_INPUTS, 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', 'demo/helpers/**', ...WORKFLOW],
+    roots: [...BUILD_INPUTS, 'assets/furniture/**', 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', 'demo/helpers/**', ...WORKFLOW],
   },
   changed_mutants: {
     entries: ['scripts/mutation-*.mjs', 'scripts/*-guard.mjs', 'test/*.test.mjs', 'demo/smoke_*.mjs', 'tests_backend/**/*.py'],
@@ -401,6 +411,10 @@ export function manifest(root = process.cwd(), options = {}) {
 export const isExecutableInput = (file) => EXECUTABLE_ROOTS.some((r) => file === r || file.startsWith(`${r}/`))
   && EXECUTABLE_EXT.test(file) && !isBuildOutput(file);
 
+/** Вход, который не имеет права тихо выпасть из manifest. */
+export const isGuardedInput = (file) => isExecutableInput(file)
+  || GUARDED_DATA_ROOTS.some((r) => file === r || file.startsWith(`${r}/`));
+
 export const isDeclaredNotAnInput = (file) => NOT_AN_INPUT.some(([glob]) => globToRegExp(glob).test(file));
 
 /**
@@ -414,19 +428,19 @@ export function checksAffectedBy(files, root = process.cwd(), options = {}) {
   for (const file of files) {
     let known = false;
     for (const name of CHECK_NAMES) if (man[name].has(file)) { affected.add(name); known = true; }
-    if (!known && isExecutableInput(file) && !isDeclaredNotAnInput(file)) unknown.push(file);
+    if (!known && isGuardedInput(file) && !isDeclaredNotAnInput(file)) unknown.push(file);
   }
   if (unknown.length) for (const name of CHECK_NAMES) affected.add(name);
   return { affected, unknown };
 }
 
-/** Лист покрытия (§5.5): исполняемые файлы, которые никто не считает своими. */
+/** Лист покрытия (§5.5): исполняемые и охраняемые data-файлы без владельца. */
 export function coverage(root = process.cwd(), options = {}) {
   const tracked = options.tracked || trackedFiles(root);
   const man = options.manifest || manifest(root, { ...options, tracked });
   const covered = new Set();
   for (const name of CHECK_NAMES) for (const f of man[name]) covered.add(f);
-  const unknown = tracked.filter((f) => isExecutableInput(f) && !covered.has(f) && !isDeclaredNotAnInput(f));
+  const unknown = tracked.filter((f) => isGuardedInput(f) && !covered.has(f) && !isDeclaredNotAnInput(f));
   // запись NOT_AN_INPUT лишняя, если ВСЕ её файлы и так чьи-то входы
   const declaredButCovered = NOT_AN_INPUT.map(([glob]) => glob).filter((glob) => {
     const hits = tracked.filter((f) => globToRegExp(glob).test(f));

@@ -5197,6 +5197,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'furniture-assets-dropped-from-frontend-inputs',
+    guard: 'node --test --test-name-pattern="#671: весь пакет мебели" test/check-inputs.test.mjs',
+    because: 'тесты frontend читают assets/furniture по составным путям; без явного корня '
+      + 'правка пакета не выбирает frontend и не запускает сверку generated-модулей (#671)',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: "    roots: [...BUILD_INPUTS, 'assets/furniture/**', 'test/**',",
+      replace: "    roots: [...BUILD_INPUTS, 'test/**',  // mutant: furniture package is not a frontend input",
+    }],
+  },
+  {
+    id: 'assets-data-root-not-guarded',
+    guard: 'node --test --test-name-pattern="#671: новый assets" test/check-inputs.test.mjs',
+    because: 'лист покрытия, который смотрит только на исполняемые расширения, снова '
+      + 'пропустит любой новый бинарный или текстовый пакет данных под assets/** (#671)',
+    patches: [{
+      file: 'scripts/check-inputs.mjs',
+      find: "export const GUARDED_DATA_ROOTS = ['assets'];",
+      replace: 'export const GUARDED_DATA_ROOTS = [];  // mutant: asset data is not audited',
+    }],
+  },
+  {
     id: 'guard-inputs-ignore-wrapper-defaults',
     guard: 'node --test --test-name-pattern="#492 §8.2" test/mutation-gate.test.mjs',
     because: 'ten backend wrappers run tests_backend/test_ha_import_export.py by default without naming '
