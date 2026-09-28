@@ -261,17 +261,28 @@ export function collectMetrics(root, { diagnostics = null, distDir = 'dist' } = 
  */
 export const BUNDLE_BYTES_BAND = 2_000;
 
-/** Сравнение с базой: что выросло, что упало. Отсутствующее в базе — рост. */
-export function compareWithBaseline(current, baseline, { bundleBand = BUNDLE_BYTES_BAND } = {}) {
+/**
+ * #699 (решение владельца 2026-09-28): полоса над базой беты у всех шести чисел.
+ * Рост `hostRefs` на несколько ссылок больше не блокирует задачу `show`, а
+ * параллельные задачи не конфликтуют на базе и не пересчитывают её после
+ * ребейза. Снижение задачу не красит: базу до факта опускает бета
+ * (`node scripts/ratchets.mjs tighten`).
+ */
+export const METRIC_BANDS = Object.freeze({
+  delegates: 5, portMembers: 5, hostRefs: 25, portPrivates: 5, harnessPrivates: 5, bundleBytes: BUNDLE_BYTES_BAND,
+});
+
+/** Сравнение с базой: что выросло сверх полосы, что упало. Отсутствующее в базе — рост. */
+export function compareWithBaseline(current, baseline, { bands = METRIC_BANDS } = {}) {
   const grown = [];
   const shrunk = [];
   for (const name of METRIC_NAMES) {
     const now = current[name];
     const base = baseline?.[name];
     if (now == null) continue;
-    const band = name === 'bundleBytes' ? bundleBand : 0;
+    const band = bands[name] ?? 0;
     if (base == null || now > base + band) grown.push({ name, base: base ?? null, now });
-    else if (now < base - band) shrunk.push({ name, base, now });
+    else if (now < base) shrunk.push({ name, base, now });
   }
   return { grown, shrunk };
 }

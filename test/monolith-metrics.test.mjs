@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  BASELINE_FILE, BUNDLE_BYTES_BAND, CARD_FILE, METRIC_NAMES, RUNTIME_FILE, bundleBytes, classifyUnused, collectMetrics, compareWithBaseline, countDelegates,
+  BASELINE_FILE, BUNDLE_BYTES_BAND, CARD_FILE, METRIC_BANDS, METRIC_NAMES, RUNTIME_FILE, bundleBytes, classifyUnused, collectMetrics, compareWithBaseline, countDelegates,
   harnessMemberNames, hostReferences, portMemberNames, readBaseline,
 } from '../scripts/monolith-metrics.mjs';
 import { baselineFrom, decide } from '../scripts/unused-locals-gate.mjs';
@@ -109,15 +109,19 @@ test('#624 байты dist — сумма всех файлов, включая 
   }
 });
 
-test('#624 храповик: рост на 1 любого числа — красный, снижение без записи базы — тоже, равенство — зелёный', () => {
+test('#699 храповик: рост сверх полосы любого числа — красный, в полосе и снижение — зелёные', () => {
   const base = { delegates: 10, portMembers: 20, hostRefs: 30, portPrivates: 4, harnessPrivates: 5, bundleBytes: 1000 };
   assert.deepEqual(compareWithBaseline({ ...base }, base), { grown: [], shrunk: [] });
+  assert.deepEqual(METRIC_BANDS, { delegates: 5, portMembers: 5, hostRefs: 25, portPrivates: 5, harnessPrivates: 5, bundleBytes: BUNDLE_BYTES_BAND });
   for (const name of METRIC_NAMES.filter((n) => n !== 'bundleBytes')) {
-    const grown = compareWithBaseline({ ...base, [name]: base[name] + 1 }, base).grown;
-    assert.deepEqual(grown.map((g) => g.name), [name], `${name} +1 виден как рост`);
-    const decision = decide({ metrics: { ...base, [name]: base[name] + 1 }, violations: [], baseline: base });
-    assert.equal(decision.fail, true, `${name} +1 — красный гейт`);
+    const band = METRIC_BANDS[name];
+    assert.deepEqual(compareWithBaseline({ ...base, [name]: base[name] + band }, base).grown, [], `${name} +${band} — в полосе`);
+    const grown = compareWithBaseline({ ...base, [name]: base[name] + band + 1 }, base).grown;
+    assert.deepEqual(grown.map((g) => g.name), [name], `${name} сверх полосы виден как рост`);
+    const decision = decide({ metrics: { ...base, [name]: base[name] + band + 1 }, violations: [], baseline: base });
+    assert.equal(decision.fail, true, `${name} сверх полосы — красный гейт`);
     assert.match(decision.lines.join('\n'), new RegExp(`связность выросла: ${name} `));
+    assert.equal(decide({ metrics: { ...base, [name]: base[name] + band }, violations: [], baseline: base }).fail, false);
   }
   // bundleBytes — с полосой, как gzip-потолок #438: чужой коммит в dev меняет
   // dist на сотни байт, и точное число красило бы каждую ветку после ребейза.
@@ -125,9 +129,10 @@ test('#624 храповик: рост на 1 любого числа — кра�
   assert.deepEqual(compareWithBaseline({ ...base, bundleBytes: base.bundleBytes + BUNDLE_BYTES_BAND + 1 }, base).grown.map((g) => g.name), ['bundleBytes']);
   assert.deepEqual(compareWithBaseline({ ...base, bundleBytes: base.bundleBytes - BUNDLE_BYTES_BAND - 1 }, base).shrunk.map((g) => g.name), ['bundleBytes']);
   assert.equal(decide({ metrics: { ...base, bundleBytes: base.bundleBytes + BUNDLE_BYTES_BAND + 1 }, violations: [], baseline: base }).fail, true);
+  // #699: снижение задачу не красит — базу опускает бета.
   const shrunk = decide({ metrics: { ...base, delegates: 9 }, violations: [], baseline: base });
-  assert.equal(shrunk.fail, true);
-  assert.match(shrunk.lines.join('\n'), /база не опущена: delegates 10 → 9/);
+  assert.equal(shrunk.fail, false);
+  assert.match(shrunk.lines.join('\n'), /ниже базы: delegates 10 → 9 — базу опустит бета/);
   assert.equal(decide({ metrics: base, violations: [], baseline: base }).fail, false);
   // Отсутствие числа в базе — рост (нельзя обнулить метрику, удалив ключ).
   const { portPrivates, ...withoutOne } = base;
@@ -158,6 +163,6 @@ test('#624 живое дерево: база равна текущим числ�
   // фактический свежий dist отдельно проверяют bundle-budget и lint:unused.
   const source = (list) => list.filter((s) => s.name !== 'bundleBytes');
   assert.deepEqual(source(grown), [], 'связность выросла — вернуть или обосновать');
-  assert.deepEqual(source(shrunk), [], 'связность упала — опустить базу: node scripts/unused-locals-gate.mjs --update');
+  void shrunk; // #699: ниже базы — не ошибка ветки, базу опускает бета (ratchets.mjs tighten)
   assert.equal(typeof readFileSync(join(root, BASELINE_FILE), 'utf8'), 'string');
 });

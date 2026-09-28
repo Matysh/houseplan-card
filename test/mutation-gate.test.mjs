@@ -206,12 +206,15 @@ test('#332: каждый гвард реестра классифицирует�
   assert.ok(rest >= 150, `небраузерных гвардов подозрительно мало: ${rest}`);
 });
 
-test('#659: browser guard inventory is reviewed, capped and exact', () => {
+test('#659/#699: browser guard inventory is reviewed and exact; the limit is a guideline', () => {
   const markdown = readFileSync(join(repoRoot, 'docs/testing-notes/mutation-browser-guards.md'), 'utf8');
   const policy = browserGuardPolicy(MUTANTS, documentedBrowserGuards(markdown));
-  assert.equal(policy.count, BROWSER_GUARD_LIMIT);
+  assert.ok(policy.count > 0);
   assert.deepEqual(policy.missingReasons, []);
   assert.deepEqual(policy.staleReasons, []);
+  assert.equal(BROWSER_GUARD_LIMIT, 200, 'ориентир остаётся числом в выводе --check');
+  const over = browserGuardPolicy([...MUTANTS, ...Array.from({ length: BROWSER_GUARD_LIMIT + 1 }, (_, i) => ({ id: `x-${i}`, guard: 'node demo/smoke_x.mjs' }))], new Set());
+  assert.equal(over.overLimit, true, 'сверх ориентира policy это видит — --check предупреждает');
 });
 
 test('#659: browser-only mutations reuse one clean bundle unless their patch is bundled', () => {

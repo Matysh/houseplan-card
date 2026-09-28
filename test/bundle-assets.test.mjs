@@ -879,28 +879,25 @@ test('#438 поставляемый граф лежит внутри полос�
   assert.equal(violation, null, violation?.text);
 });
 
-test('#438 рост выше потолка — отказ с числом и с указанием, что делать', () => {
-  const grew = initialViewCeilingViolation(292_400, { ceiling: 292_000, band: 2_000 });
+test('#438/#699 рост выше полосы над потолком беты — отказ с числом и с указанием, что делать', () => {
+  const grew = initialViewCeilingViolation(294_400, { ceiling: 292_000, band: 2_000 });
   assert.equal(grew.kind, 'grew');
-  assert.equal(grew.over, 400);
-  assert.match(grew.text, /выше потолка 292000 B на 400 B/);
+  assert.equal(grew.over, 2_400);
+  assert.match(grew.text, /выше потолка беты 292000 B на 2400 B — больше полосы 2000 B/);
   assert.match(grew.text, /Поднимите потолок в этом же коммите/);
   assert.match(grew.text, /#367/, 'у отказа обязан быть выход, а не только запрет');
-  // Ровно на потолке — ещё не рост: граница включительная, иначе гейт краснеет
-  // на равенстве и разбираться идут не с графом, а с гейтом.
-  assert.equal(initialViewCeilingViolation(292_000, { ceiling: 292_000 }), null);
+  // Ровно потолок плюс полоса — ещё не рост: граница включительная.
+  assert.equal(initialViewCeilingViolation(294_000, { ceiling: 292_000, band: 2_000 }), null);
+  assert.equal(initialViewCeilingViolation(292_400, { ceiling: 292_000, band: 2_000 }), null, 'рост в полосе задачу не красит');
 });
 
-test('#438 падение ниже полосы требует опустить потолок', () => {
-  // Вторая половина храповика, без которой он не храповик: выигрыш, который не
-  // зафиксировали, отыгрывается обратно молча. Так запас бюджета ушёл с 26 КБ
-  // до 8.3 КБ за сутки — каждая отдельная строка выглядела нормально.
-  const shrank = initialViewCeilingViolation(289_500, { ceiling: 292_000, band: 2_000 });
-  assert.equal(shrank.kind, 'shrank');
-  assert.equal(shrank.under, 2_500);
-  assert.match(shrank.text, /Опустите потолок/);
-  assert.equal(initialViewCeilingViolation(290_000, { ceiling: 292_000, band: 2_000 }), null,
-    'нижняя граница полосы тоже включительная');
+test('#699 падение ниже потолка задачу не красит — потолок опускает бета', () => {
+  // Вторая половина храповика не исчезла, а переехала на бету:
+  // `node scripts/ratchets.mjs tighten` опускает потолок до факта кандидата.
+  assert.equal(initialViewCeilingViolation(289_500, { ceiling: 292_000, band: 2_000 }), null);
+  assert.equal(initialViewCeilingViolation(100_000, { ceiling: 292_000, band: 2_000 }), null);
+  assert.equal(lazyGraphCeilingViolation(10, { ceiling: 239_000, label: 'lazy editor graph' }), null);
+  assert.equal(lazyGraphCeilingViolation(241_001, { ceiling: 239_000, label: 'lazy editor graph' }).kind, 'grew');
   assert.equal(initialViewCeilingViolation(NaN).kind, 'missing');
   assert.equal(initialViewCeilingViolation(undefined).kind, 'missing');
 });
@@ -1030,15 +1027,13 @@ test('#438 CLI действительно применяет потолок, а 
   assert.equal(inside.status, 0, inside.output);
   // #627 AC1: the onboarding graph is printed with its ceiling and band.
   assert.match(inside.output, new RegExp(`lazy onboarding: ${LAZY_ONBOARDING_GZIP_CEILING - 1_000} B gzip`
-    + ` \\(потолок ${LAZY_ONBOARDING_GZIP_CEILING} B ±${LAZY_GRAPH_CEILING_BAND}\\)`));
+    + ` \\(потолок ${LAZY_ONBOARDING_GZIP_CEILING} B \\+${LAZY_GRAPH_CEILING_BAND}\\)`));
 
-  const grew = runBudgetCli(INITIAL_VIEW_GZIP_CEILING + 1);
-  assert.equal(grew.status, 1, grew.output);
-  assert.match(grew.output, /выше потолка/);
-
+  // #699: полоса — над потолком беты; ниже потолка задача не краснеет.
+  const withinBand = runBudgetCli(INITIAL_VIEW_GZIP_CEILING + 1);
+  assert.equal(withinBand.status, INITIAL_VIEW_GZIP_CEILING + 1 > INITIAL_VIEW_GZIP_BUDGET ? 1 : 0, withinBand.output);
   const shrank = runBudgetCli(INITIAL_VIEW_GZIP_CEILING - INITIAL_VIEW_CEILING_BAND - 1);
-  assert.equal(shrank.status, 1, shrank.output);
-  assert.match(shrank.output, /Опустите потолок/);
+  assert.equal(shrank.status, 0, shrank.output);
 
   // И общий бюджет остаётся внешней стеной: он выше потолка, значит красным
   // становится потолок, а не бюджет — но и бюджет обязан уметь падать.
@@ -1064,10 +1059,8 @@ test('#593 потолки ленивых графов — гейт, а не ст
   ] : []) {
     const violation = lazyGraphCeilingViolation(bytes, { ceiling, label });
     assert.equal(violation, null, violation?.text);
-    // Факт лежит не у края полосы — с тем же запасом, что у стартового графа.
-    assert.ok(ceiling - bytes > 500, `${label}: сверху меньше 500 Б — это шум`);
-    assert.ok(bytes - (ceiling - LAZY_GRAPH_CEILING_BAND) > 500,
-      `${label}: снизу меньше 500 Б — гейт потребует опустить потолок из-за шума`);
+    // #699: запас сверху — полоса над потолком беты; снизу границы у задачи нет.
+    assert.ok(ceiling + LAZY_GRAPH_CEILING_BAND - bytes > 500, `${label}: сверху меньше 500 Б — это шум`);
   }
   // Гейт обязан быть исполняемым и на синтетике, обе стороны — и это не
   // зависит от свежести бандла: мутант «потолок никогда не срабатывает»
@@ -1075,13 +1068,12 @@ test('#593 потолки ленивых графов — гейт, а не ст
   const grew = lazyGraphCeilingViolation(20_000, { ceiling: 17_900, label: 'lazy furniture art graph' });
   assert.equal(grew.kind, 'grew');
   assert.equal(grew.over, 2_100);
-  assert.match(grew.text, /lazy furniture art graph 20000 B gzip выше потолка 17900 B на 2100 B/);
-  const shrank = lazyGraphCeilingViolation(15_000, { ceiling: 17_900, label: 'lazy furniture art graph' });
-  assert.equal(shrank.kind, 'shrank');
-  assert.match(shrank.text, /Опустите потолок/);
-  // Границы полосы включительные — иначе гейт краснеет на равенстве.
-  assert.equal(lazyGraphCeilingViolation(17_900, { ceiling: 17_900, label: 'x' }), null);
-  assert.equal(lazyGraphCeilingViolation(15_900, { ceiling: 17_900, label: 'x' }), null);
+  assert.match(grew.text, /lazy furniture art graph 20000 B gzip выше потолка беты 17900 B на 2100 B/);
+  // #699: ниже потолка — не находка ветки, потолок опускает бета.
+  assert.equal(lazyGraphCeilingViolation(15_000, { ceiling: 17_900, label: 'lazy furniture art graph' }), null);
+  // Граница полосы включительная — иначе гейт краснеет на равенстве.
+  assert.equal(lazyGraphCeilingViolation(19_900, { ceiling: 17_900, label: 'x' }), null);
+  assert.equal(lazyGraphCeilingViolation(19_901, { ceiling: 17_900, label: 'x' }).kind, 'grew');
   assert.equal(lazyGraphCeilingViolation(NaN, { ceiling: 17_900, label: 'x' }).kind, 'missing');
   // Текст обязан называть граф: «graph выше потолка» не говорит, куда смотреть.
   assert.match(lazyGraphCeilingViolation(NaN, { ceiling: 1, label: 'lazy editor graph' }).text,
@@ -1096,14 +1088,15 @@ test('#627 AC1 граф онбординга гейтится тем же пот
   const bytes = manifest.lazyOnboardingGzipBytes;
   assert.ok(Number.isFinite(bytes) && bytes > 0, 'манифест обязан измерять граф онбординга');
   assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes)));
+  const over = bytes - LAZY_GRAPH_CEILING_BAND - 1;
   assert.throws(
-    () => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes - 1)),
-    new RegExp(`lazy onboarding graph ${bytes} B gzip выше потолка ${bytes - 1} B на 1 B`),
+    () => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(over)),
+    new RegExp(`lazy onboarding graph ${bytes} B gzip выше потолка беты ${over} B на ${bytes - over} B`),
   );
-  assert.throws(
-    () => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes + LAZY_GRAPH_CEILING_BAND + 1)),
-    /lazy onboarding graph \d+ B gzip ниже потолка .*Опустите потолок/,
-  );
+  assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes - LAZY_GRAPH_CEILING_BAND)),
+    '#699: рост в полосе над потолком беты задачу не красит');
+  assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000, undefined, ...ceilings(bytes + LAZY_GRAPH_CEILING_BAND + 1)),
+    '#699: ниже потолка — не находка ветки, потолок опускает бета');
   // Потолок по умолчанию — поставляемый, и поставляемый граф в его полосе —
   // пока бандл свежий (#657); синтетика выше от свежести не зависит.
   if (!shippedBundleIsFresh(manifest)) { t.diagnostic(STALE_SHIPPED_BUNDLE); return; }

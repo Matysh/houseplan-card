@@ -14,10 +14,19 @@ import { readFileSync } from 'node:fs';
 // Мера — `split('\n').length`, то есть строки плюс завершающий перевод.
 // Та же функция и для потолков, и для измерения: две разные меры разошлись бы
 // на единицу, и гейт краснел бы на пустом месте (проверено при написании).
-const SLACK = 250;
+//
+// #699 (решение владельца 2026-09-28): полоса вместо точки. Потолок —
+// факт на последней бете; задача может вырасти над ним не больше чем на
+// CORE_BAND строк, и уменьшение её не красит. Потолки опускает до факта
+// релиз-менеджер раз в бету (`node scripts/ratchets.mjs tighten`): пока их
+// правила каждая задача, два параллельных ядра конфликтовали на этих числах, а
+// задача упиралась в потолок, потому что перед ней влили чужую (#689 после #691).
+export const CORE_BAND = 50;
 
 // Потолки. Меняются только вручную и только вместе с объяснением в ревью:
 // потолок, который вычисляется от текущего размера, потолком не является.
+// С #699 число — факт последней беты: его ставит `ratchets.mjs tighten` на
+// кандидате, а строки ниже — история решений, а не расчёт текущего числа.
 const CAPS = {
   // #485 adds the View-side subscription/render integration seams; the live
   // model and rendering themselves remain in dedicated modules.
@@ -59,13 +68,14 @@ const CAPS = {
 };
 
 /**
- * Храповик: наверх не пускает, вниз — требует зафиксировать выигрыш.
+ * Храповик с полосой (#699): выше `cap + band` не пускает; выигрыш фиксирует
+ * бета, а не задача.
  *
- * Вторая половина важнее первой. Без неё вынос двух тысяч строк ничего не
- * изменит: потолок останется прежним, и через полгода ядро дорастёт до него
- * обратно — молча и «в рамках бюджета».
+ * Вторая половина храповика не исчезла, а переехала: без неё вынос двух тысяч
+ * строк ничего не изменит — потолок останется прежним, и ядро дорастёт до него
+ * обратно молча. Поэтому `tighten` на каждой бете опускает потолок до факта.
  */
-export function coreBudgetViolations(sizes, caps, slack = SLACK) {
+export function coreBudgetViolations(sizes, caps, band = CORE_BAND) {
   const problems = [];
   for (const [file, cap] of Object.entries(caps)) {
     const lines = sizes[file];
@@ -73,18 +83,12 @@ export function coreBudgetViolations(sizes, caps, slack = SLACK) {
       problems.push({ file, kind: 'missing', text: `${file}: файл не измерен` });
       continue;
     }
-    if (lines > cap) {
+    if (lines > cap + band) {
       problems.push({
         file, kind: 'grew', over: lines - cap,
-        text: `${file}: ${lines} строк при потолке ${cap} — выросло на ${lines - cap}.`
+        text: `${file}: ${lines} строк при потолке беты ${cap} — выросло на ${lines - cap}, больше полосы ${band}.`
           + ' Вынесите столько же в отдельный модуль либо поднимите потолок'
           + ' отдельным решением, объяснив его в ревью.',
-      });
-    } else if (lines < cap - slack) {
-      problems.push({
-        file, kind: 'shrank', under: cap - lines,
-        text: `${file}: ${lines} строк при потолке ${cap} — на ${cap - lines} меньше.`
-          + ' Опустите потолок: незафиксированный выигрыш ядро отыграет обратно.',
       });
     }
   }
@@ -93,37 +97,33 @@ export function coreBudgetViolations(sizes, caps, slack = SLACK) {
 
 const measure = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').split('\n').length;
 
-test('ядра не выросли выше потолка и не опустились ниже него молча', () => {
+test('ядра не выросли выше потолка беты больше чем на полосу (#699)', () => {
   const sizes = Object.fromEntries(Object.keys(CAPS).map((file) => [file, measure(file)]));
   const problems = coreBudgetViolations(sizes, CAPS);
   assert.deepEqual(problems.map((p) => p.text), [], problems.map((p) => p.text).join('\n'));
 });
 
-test('рост выше потолка становится нарушением с числом', () => {
+test('рост выше полосы становится нарушением с числом', () => {
   const [problem] = coreBudgetViolations({ 'a.ts': 1300 }, { 'a.ts': 1000 });
   assert.equal(problem.kind, 'grew');
   assert.equal(problem.over, 300);
-  assert.match(problem.text, /выросло на 300/);
+  assert.match(problem.text, /выросло на 300, больше полосы 50/);
 });
 
-test('заметное уменьшение требует опустить потолок', () => {
-  const [problem] = coreBudgetViolations({ 'a.ts': 700 }, { 'a.ts': 1000 });
-  assert.equal(problem.kind, 'shrank');
-  assert.equal(problem.under, 300);
-  assert.match(problem.text, /Опустите потолок/);
+test('#699 уменьшение задачу не красит — потолок опускает бета', () => {
+  assert.deepEqual(coreBudgetViolations({ 'a.ts': 700 }, { 'a.ts': 1000 }), []);
+  assert.deepEqual(coreBudgetViolations({ 'a.ts': 1 }, { 'a.ts': 1000 }), []);
 });
 
-test('изменение в пределах люфта не трогает никого', () => {
+test('#699 рост в пределах полосы задачу не красит', () => {
   assert.deepEqual(coreBudgetViolations({ 'a.ts': 1000 }, { 'a.ts': 1000 }), []);
-  assert.deepEqual(coreBudgetViolations({ 'a.ts': 800 }, { 'a.ts': 1000 }), []);
-  assert.deepEqual(coreBudgetViolations({ 'a.ts': 751 }, { 'a.ts': 1000 }), []);
+  assert.deepEqual(coreBudgetViolations({ 'a.ts': 1049 }, { 'a.ts': 1000 }), []);
 });
 
-test('границы включительно: ровно потолок и ровно люфт нарушением не считаются', () => {
-  assert.deepEqual(coreBudgetViolations({ 'a.ts': 1000 }, { 'a.ts': 1000 }), []);
-  assert.deepEqual(coreBudgetViolations({ 'a.ts': 750 }, { 'a.ts': 1000 }), []);
-  assert.equal(coreBudgetViolations({ 'a.ts': 1001 }, { 'a.ts': 1000 })[0].kind, 'grew');
-  assert.equal(coreBudgetViolations({ 'a.ts': 749 }, { 'a.ts': 1000 })[0].kind, 'shrank');
+test('#699 границы включительно: ровно потолок плюс полоса нарушением не считается', () => {
+  assert.equal(CORE_BAND, 50, 'полоса ядра — решение владельца 2026-09-28');
+  assert.deepEqual(coreBudgetViolations({ 'a.ts': 1050 }, { 'a.ts': 1000 }), []);
+  assert.equal(coreBudgetViolations({ 'a.ts': 1051 }, { 'a.ts': 1000 })[0].kind, 'grew');
 });
 
 test('потолки заданы для двух ядер и ни для чего больше', () => {

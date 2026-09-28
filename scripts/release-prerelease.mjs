@@ -513,6 +513,8 @@ if (invokedDirectly) {
       tag, candidate: sha, base: history.base, commits: history.commits, issueNumbers: issues,
     }).manifest;
     const existingRelease = releaseView();
+    // #699: храповики с полосой опускает до факта бета — напоминание, не гейт.
+    run(process.execPath, ['scripts/ratchets.mjs', 'report', '--warn'], { allowFailure: true, inherit: true });
 
     console.log(JSON.stringify({
       ready: true, tag, version: contract.version, sha, branch, bundleSha256,

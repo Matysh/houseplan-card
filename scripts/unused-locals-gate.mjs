@@ -16,12 +16,12 @@
  *    который компилятор доказал мёртвым.
  *
  * 2. Храповик: шесть чисел `scripts/monolith-metrics.mjs` не растут
- *    относительно `scripts/monolith-baseline.json` (`bundleBytes` — с полосой
- *    ±2 000 Б, как gzip-потолок #438; остальные — точно). Снижение — не ошибка, но
- *    база обязана быть опущена тем же коммитом (`--update`): незафиксированный
- *    выигрыш монолит отыграет обратно первой же правкой. Рост допускается
- *    только с явной записью в issue задачи и правкой базы в том же коммите —
- *    гейт печатает, какое число и на сколько.
+ *    относительно `scripts/monolith-baseline.json` больше своей полосы
+ *    (`METRIC_BANDS`, #699). Снижение задачу не красит: базу до факта опускает
+ *    бета (`node scripts/ratchets.mjs tighten`), иначе выигрыш монолит отыграет
+ *    обратно. Рост сверх полосы допускается только с явной записью в issue
+ *    задачи и правкой базы в том же коммите — гейт печатает, какое число и на
+ *    сколько.
  *
  * `bundleBytes` требует собранного `dist/`: гейт стоит после `npm run build`
  * (в `gate:small` и в job `frontend` Validate). Без сборки число не судится,
@@ -31,7 +31,7 @@ import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
 import {
-  BASELINE_FILE, METRIC_NAMES, collectMetrics, compareWithBaseline, formatMetrics, readBaseline,
+  BASELINE_FILE, METRIC_NAMES, collectMetrics, compareWithBaseline, formatMetrics, readBaseline, METRIC_BANDS,
 } from './monolith-metrics.mjs';
 
 /**
@@ -60,15 +60,16 @@ export function decide({ metrics, violations, baseline }) {
     fail = true;
     for (const g of grown) {
       lines.push(`FAIL связность выросла: ${g.name} ${g.base ?? 'нет в базе'} → ${g.now}`
-        + ' — вернуть или обосновать в issue и поднять базу тем же коммитом');
+        + ` — больше полосы ${METRIC_BANDS[g.name] ?? 0}; вернуть или обосновать в issue и поднять базу тем же коммитом`);
     }
   }
   if (shrunk.length) {
-    // Снижение без записи в базу — тоже отказ: храповик работает в обе стороны.
-    fail = true;
-    for (const s of shrunk) lines.push(`FAIL связность упала, база не опущена: ${s.name} ${s.base} → ${s.now} — node scripts/unused-locals-gate.mjs --update`);
+    // #699: снижение задачу не красит — базу до факта опускает бета
+    // (`node scripts/ratchets.mjs tighten`). Храповик по-прежнему двусторонний,
+    // но вторая сторона живёт на бете, а не в каждой ветке.
+    for (const s of shrunk) lines.push(`info связность ниже базы: ${s.name} ${s.base} → ${s.now} — базу опустит бета`);
   }
-  if (!grown.length && !shrunk.length) lines.push('ok   все числа равны базе');
+  if (!grown.length && !shrunk.length) lines.push('ok   все числа в полосе базы');
   if (metrics.bundleBytes == null) {
     fail = true;
     lines.push('FAIL dist/ не собран — bundleBytes не судится; сначала npm run build');

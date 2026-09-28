@@ -42,8 +42,11 @@ export function checkMutationRegistry(selected, { allMutants, root, log = consol
     const policy = browserGuardPolicy(allMutants, readDocumentedBrowserGuards(root));
     log(`browser guards: ${policy.count}/${BROWSER_GUARD_LIMIT}`);
     if (policy.overLimit) {
-      log(`FAIL browser guards: лимит ${BROWSER_GUARD_LIMIT} превышен`);
-      stale++;
+      // #699: ориентир, а не лимит — цена браузерных свидетелей растёт, но
+      // удалять чужой мутант ради числа не нужно.
+      log(`WARN browser guards: ${policy.count} при ориентире ${BROWSER_GUARD_LIMIT} — `
+        + 'каждый сверх ориентира держится своей строкой обоснования в реестре');
+      warned++;
     }
     for (const mutant of policy.missingReasons) {
       log(`WARN ${mutant.id}: browser guard не размечен — добавьте причину в `

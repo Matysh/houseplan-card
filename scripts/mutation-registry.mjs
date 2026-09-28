@@ -10383,13 +10383,69 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'monolith-metrics-baseline-strict',
-    guard: 'node --test --test-name-pattern="#624 храповик" test/monolith-metrics.test.mjs',
-    because: 'the ratchet reddens on a growth of one; a >= comparison lets bundle bytes and '
-      + 'coupling creep up one unit per commit (#624 AC1-b, AC2)',
+    guard: 'node --test --test-name-pattern="#699 храповик" test/monolith-metrics.test.mjs',
+    because: 'the ratchet reddens one unit over the band; a looser comparison lets bundle bytes and '
+      + 'coupling creep up one unit per commit (#624 AC1-b, AC2; band since #699)',
     patches: [{
       file: 'scripts/monolith-metrics.mjs',
       find: "    if (base == null || now > base + band) grown.push({ name, base: base ?? null, now });",
       replace: "    if (base == null || now > base + band + 1) grown.push({ name, base: base ?? null, now }); // mutant: one unit of slack",
+    }],
+  },
+  // #699: полоса над потолком беты вместо двустороннего храповика с нулевым запасом.
+  {
+    id: 'core-band-ignored',
+    guard: 'node --test --test-name-pattern="#699" test/core-file-budget.test.mjs',
+    because: '#699: the core may grow up to 50 lines over the beta ceiling; without the band every '
+      + 'task behind a neighbour hits a zero-slack ceiling again (#689 after #691)',
+    patches: [{
+      file: 'test/core-file-budget.test.mjs',
+      find: '    if (lines > cap + band) {',
+      replace: '    if (lines > cap) { // mutant: no band',
+    }],
+  },
+  {
+    id: 'initial-view-band-below-ceiling-again',
+    guard: 'node --test --test-name-pattern="#438/#699" test/bundle-assets.test.mjs',
+    because: '#699: the bundle band sits over the beta ceiling; a task no longer re-centres the '
+      + 'ceiling to grow inside it',
+    patches: [{
+      file: 'scripts/bundle-budget.mjs',
+      find: '  if (bytes > ceiling + band) {\n    return {\n      kind: \'grew\',\n      over: bytes - ceiling,\n      text: `initial View graph',
+      replace: '  if (bytes > ceiling) {\n    return {\n      kind: \'grew\',\n      over: bytes - ceiling,\n      text: `initial View graph',
+    }],
+  },
+  {
+    id: 'monolith-band-exact-again',
+    guard: 'node --test --test-name-pattern="#699 храповик" test/monolith-metrics.test.mjs',
+    because: '#699: a few more host. references no longer block a show task; the five source '
+      + 'numbers get a band over the beta baseline',
+    patches: [{
+      file: 'scripts/monolith-metrics.mjs',
+      find: '    const band = bands[name] ?? 0;',
+      replace: "    const band = name === 'bundleBytes' ? bands[name] : 0; // mutant: exact again",
+    }],
+  },
+  {
+    id: 'monolith-shrink-fails-branch-again',
+    guard: 'node --test --test-name-pattern="#699 храповик" test/monolith-metrics.test.mjs',
+    because: '#699: a lower number is fixed at the beta by ratchets tighten; failing the branch '
+      + 'makes parallel tasks conflict on the baseline again',
+    patches: [{
+      file: 'scripts/unused-locals-gate.mjs',
+      find: "    for (const s of shrunk) lines.push(`info связность ниже базы: ${s.name} ${s.base} → ${s.now} — базу опустит бета`);",
+      replace: "    fail = true; for (const s of shrunk) lines.push(`info связность ниже базы: ${s.name} ${s.base} → ${s.now} — базу опустит бета`); // mutant",
+    }],
+  },
+  {
+    id: 'ratchet-report-calls-band-tight',
+    guard: 'node --test --test-name-pattern="#699 состояние" test/ratchets.test.mjs',
+    because: '#699: a fact inside the band over the ceiling must be reported for the beta to raise '
+      + 'or revert, not silently counted as tight',
+    patches: [{
+      file: 'scripts/ratchets.mjs',
+      find: "  if (fact > ceiling) return 'over';\n",
+      replace: '',
     }],
   },
   {

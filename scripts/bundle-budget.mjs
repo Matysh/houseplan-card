@@ -389,6 +389,14 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * границы полосы; общий бюджет 301 066 Б не меняется.
  */
 export const INITIAL_VIEW_GZIP_CEILING = 301_000;
+/**
+ * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
+ * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
+ * красит; «перецентрирование» на задаче ушло — потолок ставит до факта бета
+ * (`node scripts/ratchets.mjs tighten`). Прежде правило было двусторонним,
+ * `[ceiling - band, ceiling]`, и задача у верхней границы поднимала потолок
+ * сама — как #691. Абсолютный бюджет `INITIAL_VIEW_GZIP_BUDGET` остаётся стеной.
+ */
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**
@@ -535,22 +543,14 @@ export function initialViewCeilingViolation(bytes, {
   if (!Number.isFinite(bytes)) {
     return { kind: 'missing', text: 'initial View graph не измерен — потолок проверить нечем' };
   }
-  if (bytes > ceiling) {
+  if (bytes > ceiling + band) {
     return {
       kind: 'grew',
       over: bytes - ceiling,
-      text: `initial View graph ${bytes} B gzip выше потолка ${ceiling} B на ${bytes - ceiling} B.`
+      text: `initial View graph ${bytes} B gzip выше потолка беты ${ceiling} B на ${bytes - ceiling} B`
+        + ` — больше полосы ${band} B.`
         + ' Поднимите потолок в этом же коммите, объяснив рост, либо вынесите код в ленивый'
         + ' граф (история: #367 → #474). Молча расти этому графу больше нечем.',
-    };
-  }
-  if (bytes < ceiling - band) {
-    return {
-      kind: 'shrank',
-      under: ceiling - bytes,
-      text: `initial View graph ${bytes} B gzip ниже потолка ${ceiling} B на ${ceiling - bytes} B`
-        + ` — больше полосы ${band} B. Опустите потолок: незафиксированный выигрыш граф`
-        + ' отыграет обратно, и это уже происходило (#367, закрыт).',
     };
   }
   return null;
@@ -676,22 +676,15 @@ export function lazyGraphCeilingViolation(bytes, { ceiling, label, band = LAZY_G
   if (!Number.isFinite(bytes)) {
     return { kind: 'missing', text: `${label} не измерен — потолок проверить нечем` };
   }
-  if (bytes > ceiling) {
+  // #699: та же полоса над потолком беты, что у стартового графа.
+  if (bytes > ceiling + band) {
     return {
       kind: 'grew',
       over: bytes - ceiling,
-      text: `${label} ${bytes} B gzip выше потолка ${ceiling} B на ${bytes - ceiling} B.`
+      text: `${label} ${bytes} B gzip выше потолка беты ${ceiling} B на ${bytes - ceiling} B`
+        + ` — больше полосы ${band} B.`
         + ' Ленивый граф грузится не в первом кадре, но он всё равно чей-то трафик:'
         + ' поднимите потолок в этом же коммите, объяснив рост, либо уменьшите содержимое.',
-    };
-  }
-  if (bytes < ceiling - band) {
-    return {
-      kind: 'shrank',
-      under: ceiling - bytes,
-      text: `${label} ${bytes} B gzip ниже потолка ${ceiling} B на ${ceiling - bytes} B`
-        + ` — больше полосы ${band} B. Опустите потолок: незафиксированный выигрыш`
-        + ' граф отыграет обратно.',
     };
   }
   return null;
@@ -827,19 +820,19 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     const headroom = INITIAL_VIEW_GZIP_BUDGET - result.initialViewGzipBytes;
     const lines = [
       `initial View: ${result.initialViewGzipBytes} B gzip`
-        + ` (потолок ${INITIAL_VIEW_GZIP_CEILING} B ±${INITIAL_VIEW_CEILING_BAND},`
+        + ` (потолок ${INITIAL_VIEW_GZIP_CEILING} B +${INITIAL_VIEW_CEILING_BAND},`
         + ` budget ${INITIAL_VIEW_GZIP_BUDGET} B, headroom ${headroom} B)`,
       `initial panel: ${result.initialPanelGzipBytes} B gzip`,
       `initial panel-only: ${result.initialPanelOnlyGzipBytes} B gzip`
         + ` (budget ${INITIAL_PANEL_ONLY_GZIP_BUDGET} B,`
         + ` headroom ${INITIAL_PANEL_ONLY_GZIP_BUDGET - result.initialPanelOnlyGzipBytes} B)`,
-      `lazy editor: ${result.lazyEditorGzipBytes} B gzip (потолок ${LAZY_EDITOR_GZIP_CEILING} B ±${LAZY_GRAPH_CEILING_BAND})`,
+      `lazy editor: ${result.lazyEditorGzipBytes} B gzip (потолок ${LAZY_EDITOR_GZIP_CEILING} B +${LAZY_GRAPH_CEILING_BAND})`,
       `lazy onboarding: ${result.lazyOnboardingGzipBytes} B gzip`
-        + ` (потолок ${LAZY_ONBOARDING_GZIP_CEILING} B ±${LAZY_GRAPH_CEILING_BAND})`,
+        + ` (потолок ${LAZY_ONBOARDING_GZIP_CEILING} B +${LAZY_GRAPH_CEILING_BAND})`,
       `lazy namespace locales: ${result.lazyNamespaceLocaleGzipBytes} B gzip`
         + ` (${NAMESPACE_LOCALE_CHUNKS.length} chunks, по одному грузится на пространство)`,
       `lazy furniture art: ${result.lazyFurnitureArtGzipBytes} B gzip`
-        + ` (потолок ${LAZY_FURNITURE_ART_GZIP_CEILING} B ±${LAZY_GRAPH_CEILING_BAND})`,
+        + ` (потолок ${LAZY_FURNITURE_ART_GZIP_CEILING} B +${LAZY_GRAPH_CEILING_BAND})`,
       `lazy locale: ${result.lazyLocaleGzipBytes} B gzip`,
       `lazy isometric: ${result.lazyIsometricGzipBytes} B gzip`,
       `lazy PDF: ${result.lazyPdfGzipBytes} B gzip`,
