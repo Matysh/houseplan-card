@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.78.0-beta.7 — 2026-09-28
+
 - Stairs now have two independent line and fill colours with opacity controls. A
   new stair snapshots the current main decor colour and starts with a fully
   transparent fill. Straight flights show an internal 100%/80% trapezoid:
