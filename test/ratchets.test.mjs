@@ -65,3 +65,11 @@ test('#699 публикация беты напоминает о храпови�
   assert.match(main, /'scripts\/ratchets\.mjs', 'report', '--warn'/);
   assert.match(main, /'scripts\/ratchets\.mjs', 'report', '--warn'\], \{ allowFailure: true, inherit: true \}\)/);
 });
+
+test('#699 r1 M1: runbook беты опускает храповики при подготовке кандидата, до публикации', () => {
+  const runbook = read('docs/DEVELOPMENT.md');
+  const prepare = runbook.slice(runbook.indexOf('Prepare the candidate as usual'), runbook.indexOf('npm run release:prerelease --'));
+  assert.ok(prepare.length > 0, 'раздел подготовки кандидата найден');
+  assert.match(prepare, /`npm run bundle:release`[\s\S]*`node scripts\/ratchets\.mjs tighten`/, 'tighten — после свежего dist/');
+  assert.match(prepare, /commit them with the candidate/);
+});

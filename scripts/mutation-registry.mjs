@@ -10449,6 +10449,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'release-runbook-forgets-tighten',
+    guard: 'node --test --test-name-pattern="#699 r1 M1" test/ratchets.test.mjs',
+    because: '#699 r1 M1: the second side of the ratchet lives in the candidate checklist; a warning '
+      + 'at publication time comes after the candidate commit and is ignored systematically',
+    patches: [{
+      file: 'docs/DEVELOPMENT.md',
+      find: 'facts with `node scripts/ratchets.mjs tighten` (#699',
+      replace: 'facts with `node scripts/ratchets.mjs report` (#699',
+    }],
+  },
+  {
     id: 'monolith-delegates-return-only',
     guard: 'node --test --test-name-pattern="#624 делегаты" test/monolith-metrics.test.mjs',
     because: 'a delegate without `return` or with `await` is still a delegate; counting only the '

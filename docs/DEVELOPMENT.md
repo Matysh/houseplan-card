@@ -528,7 +528,10 @@ above); the dev stand takes the head of `dev` from the `dev-build` branch
 Prepare the candidate as usual: synchronize every version field, add dated RU
 and EN changelog sections, update the production bundle snapshots with
 `npm run bundle:release` (since #657 the only commit that may change them; it
-carries the `Release:` trailer) and write the
+carries the `Release:` trailer), then lower the ratchets to the candidate's
+facts with `node scripts/ratchets.mjs tighten` (#699: it rewrites the core line
+caps, the gzip graph ceilings and `scripts/monolith-baseline.json` from the
+fresh `dist/`; commit them with the candidate) and write the
 short bilingual body in `docs/RELEASE-NOTES.md`. That file is the one current
 instance of the canonical `## Основное` / `## Highlights` template; its two
 changelog links must be pinned to the new tag.
