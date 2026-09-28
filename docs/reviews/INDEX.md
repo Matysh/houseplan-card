@@ -1,10 +1,11 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 180, issue: 85. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 181, issue: 86. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | #702 | [CODE-REVIEW-702-r1.md](CODE-REVIEW-702-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #701 | [CODE-REVIEW-701-r1.md](CODE-REVIEW-701-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #698 | [CODE-REVIEW-698-r1.md](CODE-REVIEW-698-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | PROCESS.md утверждает существование «теста полосы на Validate» для монолитного бейзлайн…; scripts/rebase-on-dev.mjs: предиктивный --dry-run-лог (splitConflicts/predicted.manual)… | `PROCESS.md` `scripts/monolith-baseline.json` `scripts/rebase-on-dev.mjs` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` |
 | #698 | [CODE-REVIEW-698-r2.md](CODE-REVIEW-698-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #697 | [CODE-REVIEW-697-r1.md](CODE-REVIEW-697-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
