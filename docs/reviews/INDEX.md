@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 184, issue: 87. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 186, issue: 88. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -9,6 +9,8 @@
 | #700 | [CODE-REVIEW-700-r1.md](CODE-REVIEW-700-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | gh issue list fail-open вместо fail-safe в новом шаге создания issue | `.github/workflows/validate.yml` `.github/workflows/_mutation-gate.yml` |
 | #700 | [CODE-REVIEW-700-r2.md](CODE-REVIEW-700-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #700 | [CODE-REVIEW-700-r4.md](CODE-REVIEW-700-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — | — |
+| #699 | [CODE-REVIEW-699-r1.md](CODE-REVIEW-699-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | Новый шаг «опустить потолки на бете» не попал в единственный канонический release-runbo…; Оркестрация tighten (ветка command === 'tighten' в scripts/ratchets.mjs) не покрыта авт… | `docs/DEVELOPMENT.md` `RELEASE-NOTES.md` `PROCESS.md` `scripts/ratchets.mjs` `release-prerelease.mjs` |
+| #699 | [CODE-REVIEW-699-r2.md](CODE-REVIEW-699-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #698 | [CODE-REVIEW-698-r1.md](CODE-REVIEW-698-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | PROCESS.md утверждает существование «теста полосы на Validate» для монолитного бейзлайн…; scripts/rebase-on-dev.mjs: предиктивный --dry-run-лог (splitConflicts/predicted.manual)… | `PROCESS.md` `scripts/monolith-baseline.json` `scripts/rebase-on-dev.mjs` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` |
 | #698 | [CODE-REVIEW-698-r2.md](CODE-REVIEW-698-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #697 | [CODE-REVIEW-697-r1.md](CODE-REVIEW-697-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
