@@ -15,17 +15,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Item | State |
 |---|---|
 | Generated | 2026-09-28 — rerun `node scripts/status-snapshot.mjs` for the current tree |
-| Version | **1.78.0-beta.8** in all 7 version sources (`scripts/release-contract.mjs`) |
+| Version | **1.78.0-beta.9** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.77.0` |
-| Latest prerelease tag | `v1.78.0-beta.7` |
-| Tests | Node unit 3158 · pure backend 393 · HA-harness backend 302 · browser smokes 280 (`npm run inventory`) |
+| Latest prerelease tag | `v1.78.0-beta.8` |
+| Tests | Node unit 3171 · pure backend 393 · HA-harness backend 302 · browser smokes 281 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
 
 | Item | State |
 |---|---|
-| Current local cycle | **Beta v1.78.0-beta.8 candidate** — prepared from the exact integrated `dev` tree after four S8 items landed. Settled zoom keeps walls, hatching and openings crisp (#685), the Plan editor shows inert device landmarks (#687), and floor-link stairs no longer show the browser focus frame (#686); #684 aligns the editor-mode documentation with the shipped wall-chain behaviour. `main` remains on stable v1.77.0. |
+| Current local cycle | **Beta v1.78.0-beta.9 candidate** — prepared from the exact integrated `dev` tree after three S8 items landed. Touch navigation now separates ordinary pan, edge-only kiosk swipes and double-tap fit-all (#691); the day/night background no longer blurs the plan after zoom or flashes white at high zoom (#689); and every stair line uses the same physical 3.6 cm weight (#688). `main` remains on stable v1.77.0. |
 | Branches | `main` carries stable releases only; pre-release tags point at `dev`. Work lands on `dev`, which is equal to or ahead of `main`, never behind. |
 | 2.5D View | Public since #649: the installation-wide General settings switch `settings.volumetric_view` (Display). Flat stays the default and byte-for-byte unchanged; editors and `houseplan-space-card` stay Flat. Canonical: `docs/ISOMETRIC.md`. |
 | Input support | Owner's rule since 2026-08-08: View and kiosk are fully supported and release-blocking on touch; the three editors are desktop-first, touch editing is best effort. Canonical: `docs/TOUCH-SUPPORT.md`. |

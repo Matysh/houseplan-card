@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.78.0-beta.9 — 2026-09-28
+
 - Touch navigation now keeps ordinary one-finger drags as pan and switches
   kiosk spaces only from a 48 px inner edge with an available neighbour. Two
   clean taps on background, a room fill or a passive room label fit the whole
