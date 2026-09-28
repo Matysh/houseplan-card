@@ -109,18 +109,42 @@ const projectionText = (projection: LiveLayerProjection): string =>
   `translate(${projection.translateXPercent}%,${projection.translateYPercent}%)`
   + ` scale(${projection.scaleX},${projection.scaleY})`;
 
+/**
+ * #689: how far an exposed scene may paint beyond its own viewport box while
+ * it is projected. The budgeted `viewBox` refresh fires at a 15 % shift or
+ * scale change (`LIVE_VIEWBOX_REFRESH_SHIFT`), so 25 % covers every incoming
+ * edge #544 needs. Unbounded `overflow: visible` let a promoted scene layer
+ * grow with zoom² — 15.9× the stage at ~460 %, hundreds of MB of GPU memory at
+ * 800 % × DPR 2 — and the page flashed white.
+ */
+export const LIVE_SCENE_EXPOSURE_CLIP = 'inset(-25%)';
+
+/** A scene marked so is clipped to its own box and never exposed (#689). */
+const SCENE_OVERFLOW_ATTRIBUTE = 'data-hp-live-overflow';
+
+const exposesOverflow = (
+  layer: ElementCSSInlineStyle,
+  options: { exposeSceneOverflow?: boolean },
+): boolean => options.exposeSceneOverflow === true
+  && (layer as unknown as Element).getAttribute?.(SCENE_OVERFLOW_ATTRIBUTE) !== 'clip';
+
 const setLayerProjection = (
   layer: ElementCSSInlineStyle,
   projection: LiveLayerProjection | null,
   options: { exposeSceneOverflow?: boolean } = {},
 ): void => {
   const style = layer.style;
+  const expose = exposesOverflow(layer, options);
   if (!projection) {
     // #544: the SVG viewport may be opened only while it is being projected.
-    // `.stage` remains the outer clip, while removing this inline value keeps
-    // the settled DOM and filter/compositing path byte-equivalent to #531.
-    if (options.exposeSceneOverflow && style.overflow === 'visible') {
+    // `.stage` remains the outer clip, while removing these inline values
+    // keeps the settled DOM and filter/compositing path byte-equivalent to
+    // #531. The bound (#689) leaves together with the exposure it bounds.
+    if (expose && style.overflow === 'visible') {
       style.removeProperty('overflow');
+    }
+    if (expose && style.clipPath === LIVE_SCENE_EXPOSURE_CLIP) {
+      style.removeProperty('clip-path');
     }
     // #531: снимать только то, что стоит. Лишняя запись в стиль — это
     // инвалидация, а тихий кадр обязан оставлять DOM нетронутым.
@@ -134,9 +158,13 @@ const setLayerProjection = (
   // A transformed SVG keeps its old viewport box. Without exposing the scene
   // beyond that internal box, the incoming edge shows `.stage` background
   // until the next budgeted viewBox refresh (#544). The stage still clips the
-  // complete card, so no scene pixels escape the visible plan surface.
-  if (options.exposeSceneOverflow && style.overflow !== 'visible') {
+  // complete card, so no scene pixels escape the visible plan surface; the
+  // clip keeps the promoted layer stage-sized at any zoom (#689).
+  if (expose && style.overflow !== 'visible') {
     style.overflow = 'visible';
+  }
+  if (expose && style.clipPath !== LIVE_SCENE_EXPOSURE_CLIP) {
+    style.clipPath = LIVE_SCENE_EXPOSURE_CLIP;
   }
   const text = projectionText(projection);
   // Promotion is gesture-scoped, not a per-frame hint (#579). Avoid even

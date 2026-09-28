@@ -166,7 +166,9 @@ out.dayCycleOutlineFiltered = /drop-shadow/.test(safeDayStyle?.filter || '');
 out.dayCycleOutlinePromoted = /filter/.test(safeDayStyle?.willChange || '');
 out.dayCyclePaperStaysUnfiltered = (safeDayStyle?.paperFilter || 'none') === 'none'
   && !/filter/.test(safeDayStyle?.paperWillChange || '');
-out.safePlanLayerIsExplicit = /transform/.test(safeDayStyle?.planWillChange || '');
+// #689: the explicit scene layer is an opacity hint; a transform hint would
+// freeze its raster scale after a zoom.
+out.safePlanLayerIsExplicit = (safeDayStyle?.planWillChange || '') === 'opacity';
 
 out.rasterTasksObserved = [...staticSamples, ...dayCycleSamples].every((sample) => sample.tasks > 0);
 const staticMedianMs = median(staticSamples.map((sample) => sample.ms));

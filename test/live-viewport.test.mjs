@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  LIVE_SCENE_EXPOSURE_CLIP,
   isIdentityLiveLayerProjection,
   liveLayerProjection,
   liveViewBoxText,
@@ -233,4 +234,43 @@ test('#531 изометрия: камера и пол проецируются �
   assert.equal(root.floor.attrs.viewBox, '120 40 800 400');
   assert.equal(root.camera.style.transform, undefined);
   assert.equal(root.floor.style.transform, undefined);
+});
+
+// #689. Unbounded `overflow: visible` let a projected scene layer grow with
+// zoom² (CDP LayerTree, ~460 %: plan-svg 15.9× and the day-cycle outline
+// 13.2× the stage); at 800 % × DPR 2 that is hundreds of MB of GPU memory
+// and the page flashed white. The exposure is bounded and leaves with it.
+test('#689 AC3: exposure is bounded by a clip that leaves together with it', () => {
+  const root = fakeRoot();
+  const painted = frame(0, 0);
+  let anchor = paintLiveViewport(root, painted, painted, null, { now: 0 });
+  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor, { now: 10 });
+  assert.equal(LIVE_SCENE_EXPOSURE_CLIP, 'inset(-25%)');
+  for (const scene of [root.camera, root.cameraPeer, root.floor]) {
+    assert.equal(scene.style.overflow, 'visible', 'the incoming edge is still exposed (#544)');
+    assert.equal(scene.style.clipPath, LIVE_SCENE_EXPOSURE_CLIP, 'but only within the bound');
+  }
+  assert.equal(root.layer.style.clipPath, undefined, 'HTML layers get no scene clip');
+  paintLiveViewport(root, painted, painted, anchor, { now: 20, force: true });
+  for (const scene of [root.camera, root.cameraPeer, root.floor]) {
+    assert.equal(scene.style.overflow, undefined, 'idle DOM keeps no exposure (#531)');
+    assert.equal(scene.style.clipPath, undefined, 'idle DOM keeps no clip (#531)');
+    assert.equal(scene.style.transform, undefined);
+    assert.ok(scene.styleRemovals.includes('clip-path'));
+  }
+});
+
+test('#689 AC3: a scene marked clip is projected but never exposed', () => {
+  const root = fakeRoot();
+  root.floor.attrs['data-hp-live-overflow'] = 'clip';
+  const painted = frame(0, 0);
+  let anchor = paintLiveViewport(root, painted, painted, null, { now: 0, keepSceneLayer: true });
+  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor, { now: 10, keepSceneLayer: true });
+  assert.match(root.floor.style.transform, /^translate\(-1%,0%\) scale\(1,1\)$/, 'it still follows the gesture');
+  assert.equal(root.floor.style.overflow, undefined, 'the filtered outline is never opened');
+  assert.equal(root.floor.style.clipPath, undefined);
+  assert.equal(root.camera.style.clipPath, LIVE_SCENE_EXPOSURE_CLIP, 'unmarked scenes are still exposed');
+  paintLiveViewport(root, painted, painted, anchor, { now: 20, force: true });
+  assert.equal(root.floor.style.transform, undefined);
+  assert.equal(root.floor.styleRemovals.includes('overflow'), false, 'nothing to remove, nothing written');
 });

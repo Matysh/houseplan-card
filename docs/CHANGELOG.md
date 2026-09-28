@@ -14,6 +14,13 @@
   screen pixels, remains uniform when a stair is resized or rotated, and uses
   the same physical value in View, the Plan editor and PDF
   ([#688](https://github.com/Matysh/houseplan-card/issues/688)).
+- With the day/night background, the plan no longer turns blurry after zooming
+  in: walls, hatching and openings stay as sharp as when the page is opened at
+  that zoom. Navigating a strongly zoomed plan no longer makes the page flash
+  white. The wall hatching of
+  [#685](https://github.com/Matysh/houseplan-card/issues/685) is reverted to
+  its earlier pattern, which it did not fix and which gained stepped stripe
+  edges ([#689](https://github.com/Matysh/houseplan-card/issues/689)).
 
 ## v1.78.0-beta.8 — 2026-09-28
 

@@ -113,8 +113,17 @@ export const planStyles = css`
     .stage.daycycle.hp-safe-daycycle-outline .hp-paper-outline-svg {
       transition: none;
     }
+    /* #689: the scene keeps its explicit stage-sized layer (#582: never an
+       implicit overlap layer over the promoted outline), but through an
+       opacity hint, not a transform hint. Chromium freezes the raster scale
+       of a will-change: transform layer, so after zooming from 100 % to 800 %
+       the plan showed the 100 % raster stretched eightfold, while a page
+       loaded at 800 % was sharp (owner-verified in Chrome 152). An opacity
+       hint re-rasters at the current scale; translateZ(0) computes to a 2D
+       identity there and is no stable layer reason. The live viewport's
+       inline transform hint still owns a gesture (#579). */
     .stage.daycycle.hp-safe-daycycle-outline .plan-svg {
-      will-change: transform;
+      will-change: opacity;
     }
     @media (prefers-reduced-motion: reduce) {
       .hp-day-cycle-bg,
@@ -235,6 +244,13 @@ export const planStyles = css`
       visibility: hidden;
     }
     .stage.hp-safe-daycycle-outline .hp-paper-outline-svg { visibility: visible; }
+    /* #689: the full card's filtered outline is clipped to its own box. With
+       overflow visible its filter layer covered the whole paper at the
+       current zoom — 12.8× the stage at ~460 %, hundreds of MB at 800 % ×
+       DPR 2 — and navigation flashed white. It is marked
+       data-hp-live-overflow="clip" so a gesture never exposes it either; the
+       static card keeps its fixed-view outline unchanged. */
+    .stage .hp-paper-outline-svg { overflow: hidden; }
     .hp-static-stage .hp-paper-outline-svg { visibility: visible; }
     .iso-underlay-svg { z-index: 0; overflow: visible; }
     .iso-shadows-svg { z-index: 3; overflow: visible; }

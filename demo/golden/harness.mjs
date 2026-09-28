@@ -1400,8 +1400,7 @@ export async function prepareGoldenScenario(page, scenario) {
       const exactViewBox = `${view.x} ${view.y} ${view.w} ${view.h}`;
       const scenes = [...root.querySelectorAll('[data-hp-live-viewbox]')];
       const layers = [...root.querySelectorAll('[data-hp-live-layer="camera"]')];
-      const gradient = root.querySelector('linearGradient#hp-wall-hatch');
-      const stops = [...(gradient?.querySelectorAll('stop') || [])];
+      const pattern = root.querySelector('defs > pattern#hp-wall-hatch');
       const visibleKinds = new Set([...root.querySelectorAll('.opening[data-kind]')]
         .map((node) => node.getAttribute('data-kind')));
       const modelKinds = new Set((card._openingsR || []).map((opening) => opening.type));
@@ -1410,15 +1409,11 @@ export async function prepareGoldenScenario(page, scenario) {
         && scenes.every((node) => !getComputedStyle(node).willChange
           || getComputedStyle(node).willChange === 'auto')
         && layers.every((node) => ['', 'none'].includes(getComputedStyle(node).transform));
-      const analytic = !!gradient
-        && gradient.getAttribute('gradientUnits') === 'userSpaceOnUse'
-        && gradient.getAttribute('spreadMethod') === 'repeat'
-        && stops.length === 4
-        && stops[1].getAttribute('stop-opacity') === '0'
-        && stops[2].getAttribute('stop-opacity') === '0';
+      // #689: the historical pattern at every scale (#685's gradient reverted).
+      const hatch = !!pattern && !root.querySelector('linearGradient#hp-wall-hatch');
       const openings = ['door', 'window', 'gate'].every((kind) => visibleKinds.has(kind))
         && modelKinds.has('passage');
-      if (!settled || !analytic || !openings
+      if (!settled || !hatch || !openings
           || Math.abs(card._zoom - scenario.zoom) > 1e-9) {
         throw new Error(`static hatch sharpness contract failed: ${scenario.id}`);
       }

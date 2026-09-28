@@ -93,6 +93,18 @@ The public setting remains a two-value selector. `static` uses `bg_color`.
   neither the filter nor the hint. The non-interactive static space card uses
   the same stage-sized day-cycle outline from its first frame because it has no
   camera gesture that could activate a fallback later (#582).
+- The sibling stays stage-sized at every zoom (#689). The full card clips it to
+  its own box (`.stage .hp-paper-outline-svg { overflow: hidden }`) and marks it
+  `data-hp-live-overflow="clip"`, so a gesture never exposes it either: a filter
+  layer precedes any `clip-path`, and an open outline spanned the whole paper
+  at the current zoom — 12.8× the stage at ~460 % and hundreds of MB at 800 % ×
+  DPR 2, which made navigation flash white. Its glow may be missing on an
+  incoming edge for at most one budgeted `viewBox` refresh. The visible scene
+  keeps the explicit layer #582 requires, but through `will-change: opacity`:
+  a `will-change: transform` hint froze its raster scale, so after zooming from
+  100 % to 800 % the plan showed the stretched 100 % raster while a page opened
+  at 800 % was sharp. Both were verified by the owner in Chrome 152;
+  `demo/smoke_daycycle_zoom_layers.mjs` measures the layers and the hint.
 - Only the environment and the zero-offset alpha-aware outline outside the
   grouped plan-paper footprint change. The plan, paper, floors, room fills,
   Glow/spill, devices, labels, decor/backdrop, vacuum, hover, and window rays

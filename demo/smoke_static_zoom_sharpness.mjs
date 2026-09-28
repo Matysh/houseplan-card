@@ -1,7 +1,7 @@
-// Issue #685: a settled zoom must be a fresh vector frame, and the hatch must
-// not be a bitmap pattern which a WebView can keep resampling after the live
-// compositor transform is gone. This production-bundle witness owns both the
-// analytic SVG paint server and its live-viewport wiring.
+// Issue #685: a settled zoom must be a fresh vector frame after every route
+// (button, wheel, pinch, every mode). #689 reverted #685's analytic gradient —
+// the blur came from a frozen compositor raster, not from the hatch — so the
+// wall hatch is again the one historical <pattern> at every scale.
 import { createHash } from 'node:crypto';
 import { launch, checkAll, finish } from './serve.mjs';
 import { prepareGoldenScenario } from './golden/harness.mjs';
@@ -43,8 +43,7 @@ const state = () => page.evaluate(() => {
   const exact = `${view.x} ${view.y} ${view.w} ${view.h}`;
   const scenes = [...root.querySelectorAll('[data-hp-live-viewbox]')];
   const layers = [...root.querySelectorAll('[data-hp-live-layer="camera"]')];
-  const gradient = root.querySelector('linearGradient#hp-wall-hatch');
-  const stops = [...(gradient?.querySelectorAll('stop') || [])];
+  const pattern = root.querySelector('defs > pattern#hp-wall-hatch');
   const kinds = new Set([...root.querySelectorAll('.opening[data-kind]')]
     .map((node) => node.getAttribute('data-kind')));
   const modelKinds = new Set((card._openingsR || []).map((opening) => opening.type));
@@ -55,12 +54,8 @@ const state = () => page.evaluate(() => {
     noSceneWillChange: scenes.every((node) => !getComputedStyle(node).willChange
       || getComputedStyle(node).willChange === 'auto'),
     noLayerTransform: layers.every((node) => ['', 'none'].includes(getComputedStyle(node).transform)),
-    analyticHatch: !!gradient
-      && gradient.getAttribute('gradientUnits') === 'userSpaceOnUse'
-      && gradient.getAttribute('spreadMethod') === 'repeat'
-      && stops.length === 4
-      && stops[1].getAttribute('stop-opacity') === '0'
-      && stops[2].getAttribute('stop-opacity') === '0',
+    patternHatch: !!pattern && pattern.getAttribute('patternUnits') === 'userSpaceOnUse'
+      && !root.querySelector('linearGradient#hp-wall-hatch'),
     openingKinds: ['door', 'window', 'gate'].every((kind) => kinds.has(kind))
       && modelKinds.has('passage'),
   };
@@ -138,7 +133,7 @@ for (const mode of ['view', 'plan', 'devices', 'decor']) {
 }
 
 const terminal = (sample) => sample.exactViewBox && sample.noSceneTransform
-  && sample.noSceneWillChange && sample.noLayerTransform && sample.analyticHatch
+  && sample.noSceneWillChange && sample.noLayerTransform && sample.patternHatch
   && sample.openingKinds;
 const out = {
   buttonSettlesAt140: Math.abs(button.zoom - 1.4) < 1e-9 && terminal(button),
@@ -147,7 +142,7 @@ const out = {
   sameScaleIsDeterministic: buttonHash === reverseHash,
   wheelSettlesAt115: Math.abs(wheel.zoom - 1.15) < 1e-9 && terminal(wheel),
   pinchSettlesAt132: Math.abs(pinch.zoom - 1.32) < 1e-9 && terminal(pinch),
-  allModesUseSettledAnalyticHatch: modes.length === 4 && modes.every(terminal),
+  allModesUseSettledPatternHatch: modes.length === 4 && modes.every(terminal),
 };
 
 checkAll(out);

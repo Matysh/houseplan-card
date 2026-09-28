@@ -289,7 +289,10 @@ checks.terminalFrameKeepsBudget = settled.layers.every(
 checks.settledPlanLayerIsExplicitAndBounded = !!settledPlanLayer
   && settledPlanLayer.width <= active.stage.width * 1.5 + 64
   && settledPlanLayer.height <= active.stage.height * 1.5 + 64
-  && settledPlanLayer.reasons.some((reason) => reason.includes('will-change: transform'))
+  // #689: explicit, but through the opacity hint — the transform hint
+  // freezes the raster scale and the plan stays blurry after a zoom.
+  && settledPlanLayer.reasons.some((reason) => reason.includes('will-change: opacity'))
+  && settledPlanLayer.reasons.every((reason) => !reason.includes('will-change: transform'))
   && settledPlanLayer.reasons.every((reason) => !reason.includes('Overlaps other composited content'));
 checks.capturedPresentedPinchFrames = frameMetrics.length >= 3;
 checks.presentedFramesHaveNoWhiteTile = frameMetrics.every(

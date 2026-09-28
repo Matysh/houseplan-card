@@ -4005,6 +4005,59 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'daycycle-scene-transform-hint-back',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/daycycle-layers.test.mjs',
+    because: '#689 K1: a will-change: transform hint freezes the scene raster scale; after '
+      + 'zooming from 100 % the plan shows the stretched 100 % raster (owner, Chrome 152). '
+      + 'Browser proof: demo/smoke_daycycle_zoom_layers.mjs',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '    .stage.daycycle.hp-safe-daycycle-outline .plan-svg {\n'
+        + '      will-change: opacity;\n',
+      replace: '    .stage.daycycle.hp-safe-daycycle-outline .plan-svg {\n'
+        + '      will-change: transform;\n',
+    }],
+  },
+  {
+    id: 'daycycle-outline-overflow-visible',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/daycycle-layers.test.mjs',
+    because: '#689 K3: an unclipped filtered outline covers the whole paper at the current '
+      + 'zoom (12.8x the stage at ~460 %, far more at 800 %) and navigation flashes white',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '    .stage .hp-paper-outline-svg { overflow: hidden; }\n',
+      replace: '    .stage .hp-paper-outline-svg { overflow: visible; }\n',
+    }],
+  },
+  {
+    id: 'live-exposure-unbounded',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/live-viewport.test.mjs',
+    because: '#689 K3: without the clip a projected scene exposes its whole content and the '
+      + 'promoted layer grows with zoom squared (plan-svg 15.9x the stage at ~460 %)',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      find: '  if (expose && style.clipPath !== LIVE_SCENE_EXPOSURE_CLIP) {\n'
+        + '    style.clipPath = LIVE_SCENE_EXPOSURE_CLIP;\n'
+        + '  }\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'live-exposure-opens-clipped-scene',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/live-viewport.test.mjs',
+    because: '#689 K3: the filtered day/night outline must never be opened by a gesture: its '
+      + 'filter layer precedes any clip-path and would again span the whole paper',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      find: "  && (layer as unknown as Element).getAttribute?.(SCENE_OVERFLOW_ATTRIBUTE) !== 'clip';",
+      replace: '  && true;',
+    }],
+  },
+  {
     id: 'opening-light-quantum-identity',
     guard: 'node --test --test-name-pattern="#366" test/logic.test.mjs',
     because: 'an identity quantum brings back ~100 barrier recomputes per moving-gate cycle — '
@@ -7824,24 +7877,24 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'hatch-stroke-not-scaled',
     guard: 'node demo/smoke_wall_hatch_density.mjs',
-    because: 'штриховка обязана следовать за шагом: иначе на мелкой клетке '
-      + 'полосы слипаются в сплошное пятно, а на крупной расходятся',
+    because: 'штрих обязан следовать за шагом: иначе на мелкой клетке полосы '
+      + 'слипаются в сплошное пятно, а на крупной становятся волосяными',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'x2=${hatchStep} gradientTransform=rotate(45)',
-      replace: 'x2=${hatchStep * 7 / 8} gradientTransform=rotate(45)',
+      find: '    const stripe = 2 * (hatchStep / HATCH_BASE_STEP_UNITS);',
+      replace: '    const stripe = 2;',
     }],
   },
   {
-    id: 'hatch-static-gradient-repeat-disabled',
-    guard: 'node demo/smoke_static_zoom_sharpness.mjs',
-    because: 'без repeat аналитический paint-server оставляет одну полосу и '
-      + 'возвращает масштабозависимую пустую/мягкую штриховку #685; терминальный '
-      + 'smoke обязан доказывать стабилизацию, а не только конечный viewBox',
+    id: 'hatch-zoom-compensation-back',
+    guard: 'node demo/smoke_wall_hatch_density.mjs',
+    because: 'компенсация 1/zoom возвращает ровно то, ради устранения чего '
+      + 'задача и делалась: стена меняет вид при зуме (решение владельца §4.2)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'gradientTransform=rotate(45) spreadMethod=repeat',
-      replace: 'gradientTransform=rotate(45) spreadMethod=pad',
+      find: '        width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)">',
+      replace: '        width="${hatchStep}" height="${hatchStep}"\n'
+        + '        patternTransform="rotate(45) scale(${Math.max(0.4, 1 / Math.max(this._zoom, 0.4)).toFixed(3)})">',
     }],
   },
   {
@@ -9728,7 +9781,7 @@ const MUTANT_DEFINITIONS = [
       + 'until pointerup or a budgeted viewBox refresh; terminal screenshots miss the defect',
     patches: [{
       file: 'src/live-viewport.ts',
-      find: "  if (options.exposeSceneOverflow && style.overflow !== 'visible') {\n"
+      find: "  if (expose && style.overflow !== 'visible') {\n"
         + "    style.overflow = 'visible';\n"
         + '  }',
       replace: '',
