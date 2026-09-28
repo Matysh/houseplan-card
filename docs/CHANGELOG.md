@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.78.0-beta.8 — 2026-09-28
+
 - Settled zoom levels now keep physical wall hatching crisp and consistent,
   including fractional zooms and high-DPI screens. The short live zoom/pinch
   animation is unchanged, while the final wall and door/window/gate/passage
