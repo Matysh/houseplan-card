@@ -220,6 +220,26 @@ jobs:
           - документы: $new_blocking"
             fi
             echo "ветка материала: ${branch:-нет, читался dev}"
+
+            # §5.1 (r1 #695): инфраструктурная задача (§1) без трековой метки
+            # идёт как `track:show` — лимит 2. Признак механический, как в §1:
+            # в диффе ветки против dev ни одного файла класса A. Guard историю
+            # не клонирует, поэтому пути — из compare API; 300 файлов — потолок
+            # ответа, и полный список тогда не доказан: остаётся лимит 4.
+            if [ -n "$branch" ] && ! has track:ship && ! has track:show && ! has track:ask \
+               && ! has small && ! has trivial; then
+              changed=$(mktemp)
+              if gh api "repos/$REPO/compare/dev...$branch" --jq '.files[].filename' > "$changed" 2>/dev/null \
+                 && node --input-type=module -e '
+                   import { readFileSync } from "node:fs";
+                   import { classify } from "./scripts/process-gate.mjs";
+                   const files = readFileSync(process.argv[1], "utf8").split("\n").filter(Boolean);
+                   process.exit(files.length > 0 && files.length < 300 && files.every((f) => classify(f) !== "A") ? 0 : 1);
+                 ' "$changed"; then
+                limit=2
+                echo "инфраструктурная задача без трековой метки — трек show (§5.1), лимит 2"
+              fi
+            fi
           fi
 
           # Отказ обязан быть виден в issue, а не только в логе прогона.

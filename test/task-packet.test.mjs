@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   branchIsInfrastructure, buildPacket, evidenceFor, productFlowEvidence, extractAcceptanceCriteria, lastVerdict, ownerDecisions, renderPacket, rightsFor,
-  trackFromLabels,
+  trackFromLabels, hasTrackLabel,
 } from '../scripts/task-packet.mjs';
 import { materialAnchorBlock } from '../scripts/review-doc-guard.mjs';
 
@@ -107,7 +107,7 @@ test('#562: statusless infra issue is the accelerated track ending at S7 review'
     branch: { name: 'issue/562-process', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: true },
   });
   assert.equal(packet.status, null);
-  assert.equal(packet.track, 'инфраструктурный');
+  assert.equal(packet.track, 'инфраструктурный · show', 'r1 #695: инфраструктура без трековой метки — show (§5.1)');
   const md = renderPacket(packet);
   assert.match(md, /инфраструктурный вход/);
   assert.match(md, /S7-code-review/);
@@ -177,7 +177,7 @@ test('#632: statusless or returned infra issue without spec keeps the class A ba
       reviewDocs: [{ name: 'CODE-REVIEW-632-r1.md', text: 'Вердикт: жёлтый' }],
     });
     assert.deepEqual(packet.productFlow, [], labels.join(','));
-    assert.equal(packet.track, 'инфраструктурный', labels.join(','));
+    assert.equal(packet.track, 'инфраструктурный · show', labels.join(','));
     assert.ok(packet.rights.some((l) => l.includes('файлы класса A трогать НЕЛЬЗЯ')), labels.join(','));
     assert.ok(packet.rights.every((l) => !l.includes('продуктовый код трогать МОЖНО')), labels.join(','));
   }
@@ -227,4 +227,17 @@ test('#695: трек по меткам — track:* главнее прежних
   assert.equal(trackFromLabels(['small']), 'show');
   assert.equal(trackFromLabels(['bug', 'P2']), 'ask');
   assert.equal(trackFromLabels([]), 'ask');
+});
+
+test('r1 #695: инфраструктурная задача с явной меткой трека несёт её, без метки — show', () => {
+  const at = (labels) => buildPacket({
+    issue: { number: 7, title: 'infra', state: 'OPEN', url: 'u', body: '' },
+    labels,
+    branch: { name: 'issue/7-x', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: true },
+  }).track;
+  assert.equal(at(['infra']), 'инфраструктурный · show');
+  assert.equal(at(['infra', 'track:ask']), 'инфраструктурный · ask', 'метка владельца главнее');
+  assert.equal(at(['infra', 'track:ship']), 'инфраструктурный · ship');
+  assert.equal(hasTrackLabel(['bug', 'infra']), false);
+  assert.equal(hasTrackLabel(['small']), true);
 });

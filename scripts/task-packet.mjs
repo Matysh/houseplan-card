@@ -141,6 +141,10 @@ export function trackFromLabels(labels = []) {
   return 'ask';
 }
 
+/** Есть ли у задачи трековая метка — новая или прежняя (§5.1). */
+export const hasTrackLabel = (labels = []) => ['track:ship', 'track:show', 'track:ask', 'trivial', 'small']
+  .some((label) => labels.includes(label));
+
 /**
  * Признаки продуктового S-flow (#632). Инфраструктурная задача входит в поток
  * сразу на S7 и никогда не несёт S1–S5, ТЗ и ревью ТЗ; поэтому любой из этих
@@ -177,9 +181,13 @@ export function buildPacket(inputs) {
   // продуктового потока.
   const infrastructure = branch?.infrastructure === true && productFlow.length === 0;
   const infrastructureHint = branch == null && status == null && labels.includes('infra') && productFlow.length === 0;
+  // §5.1 (r1 #695): инфраструктурная задача без трековой метки идёт как
+  // `show`; явная метка владельца главнее. Маршрут при этом остаётся
+  // инфраструктурным — вход сразу на S7, без S1–S5.
+  const infraTrack = hasTrackLabel(labels) ? trackFromLabels(labels) : 'show';
   const track = infrastructure
-    ? 'инфраструктурный'
-    : infrastructureHint ? 'инфраструктурный (предварительно; подтвердить путями/diff)'
+    ? `инфраструктурный · ${infraTrack}`
+    : infrastructureHint ? `инфраструктурный · ${infraTrack} (предварительно; подтвердить путями/diff)`
     : trackFromLabels(labels);
   const stage = status === 'S4-spec-review' || status === 'S3-spec' || status === 'S5-ready' ? 'spec' : 'code';
   const verdict = lastVerdict(comments, reviewDocs, stage);

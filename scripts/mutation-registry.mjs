@@ -13334,6 +13334,29 @@ const MUTANT_DEFINITIONS = [
       replace: '        if True:  # mutant: concurrent flushes are not serialised\n',
     }],
   },
+  // r1 #695: инфраструктура без трековой метки — трек show (§5.1).
+  {
+    id: 'guard-infra-keeps-ask-limit',
+    guard: 'node --test --test-name-pattern="r1 #695" test/review-doc-guard.test.mjs',
+    because: 'r1 #695: an infrastructure task without a track label reads as track:show (PROCESS §5.1); '
+      + 'the guard must give it the show cycle limit 2, not the ask limit 4',
+    patches: [{
+      file: '.github/workflows/_process.yml',
+      find: '                limit=2\n                echo "инфраструктурная задача без трековой метки',
+      replace: '                limit=4 # mutant: infra keeps the ask limit\n                echo "инфраструктурная задача без трековой метки',
+    }],
+  },
+  {
+    id: 'packet-infra-track-ignores-show-default',
+    guard: 'node --test --test-name-pattern="r1 #695" test/task-packet.test.mjs',
+    because: 'r1 #695: the packet names the track an infrastructure task actually runs on — show '
+      + 'without a label, the owner label otherwise',
+    patches: [{
+      file: 'scripts/task-packet.mjs',
+      find: "  const infraTrack = hasTrackLabel(labels) ? trackFromLabels(labels) : 'show';",
+      replace: '  const infraTrack = trackFromLabels(labels); // mutant: unlabelled infra reads as ask',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

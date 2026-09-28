@@ -968,3 +968,15 @@ test('guard перечисляет docs/reviews деревом, а не contents
   // потолка нет.
   assert.match(guard, /contents\/docs\/reviews\/\$name\?ref=\$target/);
 });
+
+test('r1 #695: guard даёт инфраструктуре без трековой метки лимит show (§5.1)', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
+  const guard = workflow.slice(workflow.indexOf('\n  guard:'), workflow.indexOf('\n  prepare:'));
+  assert.match(guard, /gh api "repos\/\$REPO\/compare\/dev\.\.\.\$branch" --jq '\.files\[\]\.filename'/,
+    'признак инфраструктуры — пути диффа ветки против dev');
+  assert.match(guard, /files\.every\(\(f\) => classify\(f\) !== "A"\)/, 'механический признак §1: ни одного файла класса A');
+  assert.match(guard, /files\.length < 300/, 'обрезанный ответ compare инфраструктуру не доказывает');
+  assert.match(guard, /; then\n\s+limit=2\n\s+echo "инфраструктурная задача без трековой метки/);
+  assert.match(guard, /! has track:ship && ! has track:show && ! has track:ask \\\n\s+&& ! has small && ! has trivial; then/,
+    'явная метка трека главнее признака инфраструктуры');
+});
