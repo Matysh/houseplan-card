@@ -9,7 +9,8 @@
 // at 800 %, in view mode and in every editor; how far you may walk is decided
 // by `_clampView` (PAN_SLACK: about a screen past the content) and not by the
 // zoom. The tools keep the pointer they already owned — a resize handle, a
-// device badge, an opening — and the kiosk keeps its floor swipe.
+// device badge, an opening — and the kiosk keeps its floor swipe from the
+// active 48 px edge while central horizontal drags remain pan.
 import { launch, check, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
 const out = {};
@@ -192,7 +193,7 @@ Object.assign(out, await page.evaluate(async () => {
   return o;
 }));
 
-// ---- the kiosk keeps its floor swipe ---------------------------------------
+// ---- the kiosk keeps its edge-owned floor swipe ----------------------------
 Object.assign(out, await page.evaluate(async () => {
   const c0 = window.__card;
   const o = {};
@@ -207,19 +208,24 @@ Object.assign(out, await page.evaluate(async () => {
   const sr = k.shadowRoot || k.renderRoot;
   const stage = sr.querySelector('.stage');
   const fire = (type, id, x, y) => stage.dispatchEvent(new PointerEvent(type, {
-    bubbles: true, composed: true, cancelable: true, pointerId: id, clientX: x, clientY: y,
+    bubbles: true, composed: true, cancelable: true, pointerId: id,
+    pointerType: 'touch', isPrimary: true, button: 0,
+    buttons: type === 'pointerup' ? 0 : 1, clientX: x, clientY: y,
   }));
   k._applyView(1); await k.updateComplete;
+  const rect = stage.getBoundingClientRect();
+  const rightEdgeX = rect.right - 20;
+  const centerY = rect.top + rect.height / 2;
   const s0 = k._space;
   const v0 = { ...k._viewOr(k._baseVb()) };
-  // a REAL swipe: down, several moves, up — the moves are what used to be
-  // impossible to add to smoke_kiosk without hijacking the gesture
-  fire('pointerdown', 41, 600, 300);
-  fire('pointermove', 41, 540, 302);
-  fire('pointermove', 41, 480, 305);
-  fire('pointermove', 41, 450, 305);
+  // A real floor swipe starts inside the active right-edge strip and moves
+  // inward. Several moves prove that the plan never pans under the gesture.
+  fire('pointerdown', 41, rightEdgeX, centerY);
+  fire('pointermove', 41, rightEdgeX - 60, centerY + 2);
+  fire('pointermove', 41, rightEdgeX - 120, centerY + 5);
+  fire('pointermove', 41, rightEdgeX - 150, centerY + 5);
   const midPan = Math.abs(k._viewOr(k._baseVb()).x - v0.x);
-  fire('pointerup', 41, 450, 305);
+  fire('pointerup', 41, rightEdgeX - 150, centerY + 5);
   await k.updateComplete;
   o.kioskSwipeStillSwitchesFloors = k._space !== s0;
   o.kioskHorizontalDragIsNotAPan = midPan < 1;
