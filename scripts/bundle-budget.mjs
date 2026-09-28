@@ -812,11 +812,15 @@ export function assertBundleBudget(
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   try {
     const manifest = JSON.parse(readFileSync(resolve('dist/houseplan-assets.json'), 'utf8'));
+    // #699: потолок беты с полосой судится до абсолютного бюджета. С полосой
+    // над потолком граница `ceiling + band` может лежать выше бюджета, и тогда
+    // рост краснел бы только бюджетом — а отказ обязан называть храповик,
+    // который его поймал, и проверка потолка — оставаться исполняемой.
+    const ceiling = initialViewCeilingViolation(manifest.initialViewGzipBytes);
+    if (ceiling) throw new Error(ceiling.text);
     const result = assertBundleBudget(manifest);
     assertSupportBundleOwnership(manifest);
     assertNamespaceLocaleOwnership(manifest);
-    const ceiling = initialViewCeilingViolation(result.initialViewGzipBytes);
-    if (ceiling) throw new Error(ceiling.text);
     const headroom = INITIAL_VIEW_GZIP_BUDGET - result.initialViewGzipBytes;
     const lines = [
       `initial View: ${result.initialViewGzipBytes} B gzip`

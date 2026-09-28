@@ -1029,9 +1029,11 @@ test('#438 CLI действительно применяет потолок, а 
   assert.match(inside.output, new RegExp(`lazy onboarding: ${LAZY_ONBOARDING_GZIP_CEILING - 1_000} B gzip`
     + ` \\(потолок ${LAZY_ONBOARDING_GZIP_CEILING} B \\+${LAZY_GRAPH_CEILING_BAND}\\)`));
 
-  // #699: полоса — над потолком беты; ниже потолка задача не краснеет.
-  const withinBand = runBudgetCli(INITIAL_VIEW_GZIP_CEILING + 1);
-  assert.equal(withinBand.status, INITIAL_VIEW_GZIP_CEILING + 1 > INITIAL_VIEW_GZIP_BUDGET ? 1 : 0, withinBand.output);
+  // #699: полоса — над потолком беты; выше неё CLI называет храповик, ниже
+  // потолка задача не краснеет.
+  const grew = runBudgetCli(INITIAL_VIEW_GZIP_CEILING + INITIAL_VIEW_CEILING_BAND + 1);
+  assert.equal(grew.status, 1, grew.output);
+  assert.match(grew.output, /выше потолка беты .* больше полосы/);
   const shrank = runBudgetCli(INITIAL_VIEW_GZIP_CEILING - INITIAL_VIEW_CEILING_BAND - 1);
   assert.equal(shrank.status, 0, shrank.output);
 

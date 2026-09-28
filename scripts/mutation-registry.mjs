@@ -9063,7 +9063,7 @@ const MUTANT_DEFINITIONS = [
       + 'release where it would have fired, and the growth of #438 went unnoticed for a beta)',
     patches: [{
       file: 'scripts/bundle-budget.mjs',
-      find: '    const ceiling = initialViewCeilingViolation(result.initialViewGzipBytes);\n'
+      find: '    const ceiling = initialViewCeilingViolation(manifest.initialViewGzipBytes);\n'
         + '    if (ceiling) throw new Error(ceiling.text);\n',
       replace: '',
     }],
