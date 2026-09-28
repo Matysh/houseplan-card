@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 67,
-  "acceptedAt": "2026-09-28T06:48:17.970Z",
-  "sourceFingerprint": "10c23ff78994b92443aca4c7b379024d69921c5a34917d2a58f7f6aec608e0c8",
+  "acceptedAt": "2026-09-28T07:02:36.198Z",
+  "sourceFingerprint": "e692f946902f92c6317fea34f80a58ba3812ca64c9a28be168cccc3ab5dbd3da",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,20 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "10c23ff78994b92443aca4c7b379024d69921c5a34917d2a58f7f6aec608e0c8",
+    "buildFingerprint": "e692f946902f92c6317fea34f80a58ba3812ca64c9a28be168cccc3ab5dbd3da",
     "ci": null
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v1",
-    "sha256": "414e55783bc8272d7b2ff209a94bd69e12de95f6759d5bc95975acb94e937f39",
-    "artifactSha256": "2ccb17a9b735d9d167e9981e1b311ff9a5c7e12f7a3db9af80b27f24e449c550",
-    "createdAt": "2026-09-28T06:47:47.165Z",
+    "sha256": "c02067a968b83ee2ec2f110ab06fb3707491a79a98e61448f4b1ee8cc34c1a9a",
+    "artifactSha256": "bea9115e18bd097d34543d7f2dfbc512c130ea96fa24a72a288ebc2e51ae8f9c",
+    "createdAt": "2026-09-28T07:02:25.899Z",
     "source": {
       "repository": "Matysh/houseplan-card",
       "branch": "issue/685-static-zoom-sharpness",
-      "commit": "b8106ee44e9e2ccb3082df78db2522816fa29a7a",
-      "tree": "f5aa38f9a930d840f866dce13146a474a412fcae",
-      "remoteSha": "b8106ee44e9e2ccb3082df78db2522816fa29a7a",
+      "commit": "33d242bbf833081ea7fe9508b28221ae23e78566",
+      "tree": "7571fa369bd727bbd1f840a1d19f255edcca97d3",
+      "remoteSha": "33d242bbf833081ea7fe9508b28221ae23e78566",
       "clean": true,
       "status": ""
     },
@@ -44,7 +44,7 @@
   },
   "foreignCapture": null,
   "witnesses": {
-    "count": 109,
+    "count": 137,
     "floor": 10
   },
   "scenarios": {
