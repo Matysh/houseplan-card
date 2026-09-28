@@ -5,9 +5,11 @@
  *   node scripts/process-track.mjs resolve --labels="a,b" --base=<ref> --head=<ref>
  *   node scripts/process-track.mjs ship-limits --base=<ref> --head=<ref>
  *
- * `resolve` печатает `track=ship|show|ask` и `mutants=true|false` — то, что
- * конвейер ревью читает, решая, сколько стоит заход: мутанты по диффу нужны
- * только `ask` и метке `ci:mutants`. Инфраструктурная задача без трековой
+ * `resolve` печатает `track=ship|show|ask`, `mutants=true|false` и
+ * `full=true|false` — то, что конвейер ревью читает, решая, сколько стоит
+ * заход: мутанты по диффу нужны только `ask` и метке `ci:mutants`; полный
+ * набор (смоки, golden, perf) на ветке задачи — только меткам `ci:full` и
+ * `ci:golden` (#697). Инфраструктурная задача без трековой
  * метки — `show` (§5.1); признак инфраструктуры механический, как в §1: в
  * диффе ни одного файла класса A.
  *
@@ -46,12 +48,14 @@ export const hasTrackLabel = (labels = []) => ['track:ship', 'track:show', 'trac
  * Трек, по которому конвейер оценивает заход. Явная метка решает всё; без неё
  * инфраструктурная задача (ни одного файла класса A в диффе) — `show`, прочие —
  * `ask`. Мутанты по диффу — только на `ask` или по метке `ci:mutants`.
+ * Полный набор — по меткам `ci:full` и `ci:golden` на любом треке (#697).
  */
 export function resolveTrack({ labels = [], files = [] } = {}) {
   const infrastructure = files.length > 0 && files.every((file) => classify(file) !== 'A');
   const track = hasTrackLabel(labels) ? trackFromLabels(labels) : (infrastructure ? 'show' : 'ask');
   const mutants = track === 'ask' || labels.includes('ci:mutants');
-  return { track, mutants, infrastructure };
+  const full = labels.includes('ci:full') || labels.includes('ci:golden');
+  return { track, mutants, full, infrastructure };
 }
 
 const I18N = [/^src\/i18n\//, /^custom_components\/[^/]+\/translations\//];
@@ -120,8 +124,8 @@ if (isMainModule(import.meta.url)) {
     if (command === 'resolve') {
       const labels = value('labels').split(',').map((s) => s.trim()).filter(Boolean);
       const files = range ? git(['diff', '--name-only', range]).split('\n').filter(Boolean) : [];
-      const { track, mutants } = resolveTrack({ labels, files });
-      emit([`track=${track}`, `mutants=${mutants}`]);
+      const { track, mutants, full } = resolveTrack({ labels, files });
+      emit([`track=${track}`, `mutants=${mutants}`, `full=${full}`]);
     } else if (command === 'ship-limits') {
       if (!range) throw new Error('--base is required');
       const violations = shipLimitViolations({

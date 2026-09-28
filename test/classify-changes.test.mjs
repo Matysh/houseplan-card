@@ -236,3 +236,20 @@ test('#510 AC1 / #601 AC1: мутанты по диффу запрашивают
   assert.equal(heavyGatesRequested({ eventName: 'push', headMessage: 'x\n\nRelease: v1.2.3' }), true);
   assert.equal(heavyGatesRequested({ eventName: 'workflow_dispatch', fullInput: 'true' }), true);
 });
+
+test('#697: на ветке задачи трейлер Release: тяжёлый набор не включает, на dev — как прежде', () => {
+  const acceptance = 'test: accept golden\n\nIssue: #687\nUser-Visible: no\nRelease: v1.78.0-beta.9\nBaseline-Reviewed: https://github.com/o/r/actions/runs/1';
+  assert.equal(heavyGatesRequested({ eventName: 'push', headMessage: acceptance, refName: 'issue/687-x' }), false);
+  assert.equal(heavyGatesRequested({ eventName: 'push', headMessage: acceptance, refName: 'refs/heads/issue/687-x' }), false);
+  assert.equal(heavyGatesRequested({ eventName: 'push', headMessage: acceptance, refName: 'dev' }), true, 'кандидат на dev');
+  assert.equal(heavyGatesRequested({ eventName: 'push', headMessage: acceptance }), true, 'без ветки — прежнее правило');
+  assert.equal(heavyGatesRequested({ eventName: 'workflow_dispatch', fullInput: 'true', refName: 'issue/687-x' }), true,
+    'ci:full/ci:golden — dispatch full=true на ветке задачи');
+  assert.equal(screenshotsGateMode({ eventName: 'push', headMessage: acceptance, refName: 'issue/687-x' }), 'warn');
+  const run = (env) => execFileSync(process.execPath, ['scripts/classify-changes.mjs', '--heavy'], {
+    encoding: 'utf8', env: { ...process.env, ...env },
+  }).trim();
+  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: acceptance, REF_NAME: 'issue/687-x' }), 'heavy=false\nmutants_requested=false');
+  const workflow = readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8');
+  assert.equal((workflow.match(/REF_NAME: \$\{\{ github\.ref_name \}\}/g) || []).length >= 2, true, 'оба вызова знают ветку');
+});

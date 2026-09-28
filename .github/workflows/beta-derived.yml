@@ -1,0 +1,214 @@
+name: "Бета: производные артефакты на dev"
+run-name: "Derived artifacts ${{ inputs.tag }}"
+
+# #697, PROCESS.md §8 и §11.4: ветки задач не коммитят ни отпечаток и кадры
+# скриншотов документации, ни эталоны golden. Их обновляет один коммит бота на
+# `dev` перед кандидатом беты; коммит проверяет релиз-менеджер.
+#
+# - Скриншоты: съёмка на `dev` тем же каноническим способом, что
+#   `docs-screenshots.yml`, и приёмка `docs:accept --reviewed`. Кадры, которые
+#   менять не собирались, обязаны совпасть байт-в-байт (свидетели среды);
+#   изменившийся кадр принимается, только если назван в `docs_expect_change`.
+#   Ничего не изменилось — обновляется один отпечаток исходников.
+# - Golden: артефакт `golden-images` полного Validate на `dev`
+#   (`golden_run`) и `golden:accept --reviewed` с объявленными сценами. Коммит
+#   несёт `Release:` и `Baseline-Reviewed:` — провенанс, который требует
+#   validate-commit-provenance.mjs.
+#
+# Необъявленная разница — отказ с перечнем кадров, артефакт съёмки остаётся
+# для просмотра: решение, какие кадры сдвинулись законно, принимает человек.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Beta tag these artifacts are for, for example v1.79.0-beta.1"
+        required: true
+        type: string
+      docs_expect_change:
+        description: "Doc scenario ids expected to change, comma-separated (empty = none)"
+        required: false
+        type: string
+        default: ""
+      golden_run:
+        description: "Validate run id on dev whose golden-images artifact holds the shifted frames (empty = skip golden)"
+        required: false
+        type: string
+        default: ""
+      golden_expect_change:
+        description: "Golden scenes expected to change, comma-separated"
+        required: false
+        type: string
+        default: ""
+      golden_expect_new:
+        description: "New golden scenes, comma-separated"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: beta-derived
+  cancel-in-progress: false
+
+jobs:
+  accept:
+    name: "Отпечаток, кадры и эталоны — одним коммитом в dev"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: dev
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install pinned Chromium
+        if: steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+      - name: Build the bundle the screenshots must come from
+        run: npm run build
+      # Тот же закреплённый упаковщик, что у docs-screenshots.yml: другой
+      # переписал бы все кадры без единого изменённого пикселя.
+      - name: Установить oxipng
+        env:
+          OXIPNG_VERSION: 10.2.0
+          OXIPNG_SHA256: b33f84c73d42cb592bea5d84c431030b1e97784817693380dfcec7d9575f871e
+        run: |
+          set -euo pipefail
+          asset="oxipng-${OXIPNG_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          curl -fsSL -o "$asset" \
+            "https://github.com/oxipng/oxipng/releases/download/v${OXIPNG_VERSION}/${asset}"
+          echo "${OXIPNG_SHA256}  ${asset}" | sha256sum -c -
+          mkdir -p "$HOME/.local/bin"
+          tar -xzf "$asset" --strip-components=1 -C "$HOME/.local/bin" \
+            "oxipng-${OXIPNG_VERSION}-x86_64-unknown-linux-gnu/oxipng"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/oxipng" --version
+      - name: "Съёмка воспроизводима между прогонами (#410, #422)"
+        run: node scripts/capture-determinism.mjs
+      - name: Кадры документации — съёмка и приёмка
+        id: docs
+        env:
+          EXPECT: ${{ inputs.docs_expect_change }}
+        run: |
+          set -euo pipefail
+          node demo/docs/capture.mjs --stability=3
+          cand="$RUNNER_TEMP/docs-candidate"
+          rm -rf "$cand" && mkdir -p "$cand"
+          cp docs/images/*.png docs/images/screenshots.json "$cand/"
+          # Приёмка сравнивает кандидата с ЗАКОММИЧЕННЫМИ кадрами: рабочая
+          # копия возвращается к dev, и заменить файлы может только она.
+          git checkout -- docs/images
+          git clean -fdq -- docs/images
+          args=(--reviewed "--from=$cand")
+          if [ -n "$EXPECT" ]; then args+=("--expect-change=$EXPECT"); fi
+          node scripts/docs-accept.mjs "${args[@]}"
+          if git diff --quiet -- docs/images; then changed=false; else changed=true; fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          git diff --stat -- docs/images
+      - name: Сохранить кандидата скриншотов для просмотра
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: docs-candidate-${{ github.run_id }}
+          path: ${{ runner.temp }}/docs-candidate
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Эталоны golden из прогона Validate
+        id: golden
+        if: inputs.golden_run != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ inputs.golden_run }}
+          EXPECT_CHANGE: ${{ inputs.golden_expect_change }}
+          EXPECT_NEW: ${{ inputs.golden_expect_new }}
+        run: |
+          set -euo pipefail
+          case "$RUN" in ''|*[!0-9]*) echo "::error::golden_run — числовой id прогона Validate"; exit 1 ;; esac
+          meta=$(gh api "repos/${{ github.repository }}/actions/runs/$RUN" \
+            --jq '[.path, .head_branch, .status, .html_url] | @tsv')
+          IFS=$'\t' read -r path branch status url <<< "$meta"
+          # Провенанс эталонов — завершённый Validate на dev: другой workflow
+          # или ветка задачи доказательством для кандидата беты не являются.
+          if [ "$path" != ".github/workflows/validate.yml" ] || [ "$branch" != "dev" ] || [ "$status" != "completed" ]; then
+            echo "::error::прогон $RUN — не завершённый Validate на dev ($path, $branch, $status)"
+            exit 1
+          fi
+          from="$RUNNER_TEMP/golden-candidate"
+          rm -rf "$from" && mkdir -p "$from"
+          gh run download "$RUN" --repo "${{ github.repository }}" -n golden-images -D "$from"
+          # Отчёт обязан быть снят с этого же дерева: accept.mjs сверяет его
+          # отпечаток с исходниками и откажет, если dev ушёл вперёд.
+          args=(--reviewed "--from=$from")
+          if [ -n "$EXPECT_CHANGE" ]; then args+=("--expect-change=$EXPECT_CHANGE"); fi
+          if [ -n "$EXPECT_NEW" ]; then args+=("--expect-new=$EXPECT_NEW"); fi
+          node scripts/golden-accept.mjs "${args[@]}"
+          if git diff --quiet -- demo/golden/baselines; then changed=false; else changed=true; fi
+          { echo "changed=$changed"; echo "url=$url"; } >> "$GITHUB_OUTPUT"
+          git diff --stat -- demo/golden/baselines
+      - name: Коммит в dev
+        env:
+          TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          DOCS_CHANGED: ${{ steps.docs.outputs.changed }}
+          DOCS_EXPECT: ${{ inputs.docs_expect_change }}
+          GOLDEN_CHANGED: ${{ steps.golden.outputs.changed }}
+          GOLDEN_URL: ${{ steps.golden.outputs.url }}
+          GOLDEN_EXPECT_CHANGE: ${{ inputs.golden_expect_change }}
+          GOLDEN_EXPECT_NEW: ${{ inputs.golden_expect_new }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # Хук pre-push гоняет process-gate; gate:small здесь не нужен —
+          # продуктового кода коммит не несёт.
+          HP_PREPUSH_GATE: "0"
+        run: |
+          set -euo pipefail
+          git add -- docs/images demo/golden/baselines
+          if git diff --cached --quiet; then
+            echo "::notice::отпечаток, кадры и эталоны на dev уже свежие — коммитить нечего"
+            exit 0
+          fi
+          msg="$RUNNER_TEMP/message.txt"
+          {
+            echo "docs: accept derived artifacts on dev for $TAG"
+            echo ""
+            echo "Производные артефакты беты — одним коммитом на dev (PROCESS.md §8, §11.4, #697)."
+            echo "Прогон: $RUN_URL"
+            if [ "$DOCS_CHANGED" = "true" ]; then
+              echo "Скриншоты документации: отпечаток исходников; изменённые кадры: ${DOCS_EXPECT:-нет}."
+            fi
+            if [ "$GOLDEN_CHANGED" = "true" ]; then
+              echo "Golden: изменённые сцены: ${GOLDEN_EXPECT_CHANGE:-нет}; новые: ${GOLDEN_EXPECT_NEW:-нет}."
+            fi
+            echo ""
+            if [ "$GOLDEN_CHANGED" = "true" ]; then
+              echo "Release: $TAG"
+              echo "Baseline-Reviewed: $GOLDEN_URL"
+            fi
+            echo "Issue: #697"
+            echo "User-Visible: no"
+          } > "$msg"
+          git -c user.name="claude[bot]" \
+              -c user.email="209825114+claude[bot]@users.noreply.github.com" \
+              commit -q -F "$msg"
+          git show --stat --format='%H %s' HEAD | head -40
+          if ! git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev; then
+            echo "::error::dev ушёл вперёд за время съёмки — запустить workflow заново: отпечаток судит дерево, а оно уже другое"
+            exit 1
+          fi
+          echo "### Производные артефакты $TAG" >> "$GITHUB_STEP_SUMMARY"
+          echo "Коммит \`$(git rev-parse --short HEAD)\` в dev — проверить перед кандидатом беты." >> "$GITHUB_STEP_SUMMARY"

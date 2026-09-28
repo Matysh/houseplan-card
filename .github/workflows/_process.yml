@@ -341,6 +341,7 @@ jobs:
       duration_seconds: ${{ steps.duration.outputs.seconds }}
       track: ${{ steps.track.outputs.track }}
       mutants: ${{ steps.track.outputs.mutants }}
+      full: ${{ steps.track.outputs.full }}
       ship: ${{ steps.track.outputs.ship }}
     steps:
       - name: Начать измерение стадии
@@ -439,6 +440,7 @@ jobs:
           printf '%s\n' "$out"
           track=$(printf '%s\n' "$out" | sed -n 's/^track=//p')
           mutants=$(printf '%s\n' "$out" | sed -n 's/^mutants=//p')
+          full=$(printf '%s\n' "$out" | sed -n 's/^full=//p')
           ship=false
           if [ "$track" = "ship" ] && [ "$STAGE" = "code" ] && [ -n "$BRANCH" ]; then
             limits=$(node "$tools/scripts/process-track.mjs" ship-limits --base=origin/dev --head=HEAD)
@@ -461,8 +463,8 @@ jobs:
               echo "track:ship -> track:show: $violations"
             fi
           fi
-          { echo "track=$track"; echo "mutants=$mutants"; echo "ship=$ship"; } >> "$GITHUB_OUTPUT"
-          echo "- трек **$track** · мутанты по диффу: $mutants · слияние без модели: $ship" >> "$GITHUB_STEP_SUMMARY"
+          { echo "track=$track"; echo "mutants=$mutants"; echo "full=${full:-false}"; echo "ship=$ship"; } >> "$GITHUB_OUTPUT"
+          echo "- трек **$track** · мутанты по диффу: $mutants · полный набор: ${full:-false} · слияние без модели: $ship" >> "$GITHUB_STEP_SUMMARY"
 
       # Ревьюер обязан смотреть тот же код, который уедет в dev (#257). Раньше
       # ревью шло по ветке как есть, а слияние делало ребейз — проверенный SHA и
@@ -719,6 +721,8 @@ jobs:
           BRANCH: ${{ steps.branch.outputs.name }}
           SHA: ${{ steps.material.outputs.sha }}
           MUTANTS: ${{ steps.track.outputs.mutants }}
+          # #697: `ci:full`/`ci:golden` — полный набор на материале.
+          FULL: ${{ steps.track.outputs.full }}
         run: |
           if [ "$STAGE" != "code" ] || [ "$REUSE" = "true" ] || [ -z "$BRANCH" ]; then
             echo "гейт не применяется: этап $STAGE, reuse=${REUSE:-false}, ветка ${BRANCH:-dev}"
@@ -733,7 +737,7 @@ jobs:
           # прогон гейт и без ожидания возвращает сразу.
           set +e
           node scripts/validate-gate.mjs --repo="${{ github.repository }}" --ref="$BRANCH" --sha="$SHA" --no-wait \
-            --mutants="${MUTANTS:-true}"
+            --mutants="${MUTANTS:-true}" --full="${FULL:-false}"
           code=$?
           set -e
           case "$code" in
@@ -1218,8 +1222,8 @@ jobs:
 
             Если зелёного прогона на этом SHA нет — прогоняешь сам, они дешёвые,
             и в повторном раунде тоже: `npx tsc --noEmit`, `npm test`,
-            `npm run build` со сверкой трёх копий бандла, плюс
-            `node scripts/check-docs.mjs`, если diff трогает `src/**`.
+            `npm run build` со сверкой трёх копий бандла. Свежесть скриншотов
+            документации — не гейт задачи (#697): её обновляет бот на dev.
             ${{ needs.guard.outputs.stage == 'spec' && 'Зависимости и Chromium на этапе spec не ставились (#696).' || (needs.prepare.outputs.track == 'show' && 'Зависимости установлены (`npm ci` не нужен); Chromium — только если тело issue называет смоук (#696).' || 'Зависимости уже установлены workflow, Chromium тоже — `npm ci` выполнять не нужно.') }}
             По диффу и AC: браузерные смоки — названные в AC
             плюс вывод `node scripts/smoke-select.mjs --base <base> --head <head>`,
@@ -1228,7 +1232,7 @@ jobs:
             совпадение», «зарегистрированная связь», «НЕОПРЕДЕЛЁННОСТЬ» — связь
             не доказана, и это не разрешение ничего не прогонять; слабые связи —
             повод посмотреть, а не обязанность прогонять;
-            `npm run golden:verify` при видимом изменении;
+            `npm run golden:verify` при метке `ci:golden`;
             `python -m pytest tests_backend -q` при правке
             `custom_components/**/*.py`; инварианты модели
             `npm run invariants -- --config <экспорт>` при правке геометрии или

@@ -21,8 +21,8 @@ test('пакет задачи и конвейер читают трек одно
 
 test('явная трековая метка главнее признака инфраструктуры (#696)', () => {
   const infra = ['scripts/x.mjs', '.github/workflows/y.yml'];
-  assert.deepEqual(resolveTrack({ labels: ['track:ask'], files: infra }), { track: 'ask', mutants: true, infrastructure: true });
-  assert.deepEqual(resolveTrack({ labels: ['track:ship'], files: ['src/a.ts'] }), { track: 'ship', mutants: false, infrastructure: false });
+  assert.deepEqual(resolveTrack({ labels: ['track:ask'], files: infra }), { track: 'ask', mutants: true, full: false, infrastructure: true });
+  assert.deepEqual(resolveTrack({ labels: ['track:ship'], files: ['src/a.ts'] }), { track: 'ship', mutants: false, full: false, infrastructure: false });
   assert.equal(resolveTrack({ labels: ['small'], files: ['src/a.ts'] }).track, 'show');
 });
 
@@ -167,4 +167,20 @@ test('конвейер: ship в рамках сливается без моде�
   assert.match(env, /if \[ "\$STAGE" = "spec" \]; then deps=false; browser=false; fi/, 'ревью ТЗ не ставит окружение');
   assert.match(env, /if: steps\.env_needs\.outputs\.deps == 'true'\n\s+run: npm ci/);
   assert.match(env, /if: steps\.env_needs\.outputs\.browser == 'true' && steps\.pw\.outputs\.cache-hit != 'true'/);
+});
+
+test('#697: полный набор на ветке задачи — только по меткам ci:full и ci:golden', () => {
+  assert.equal(resolveTrack({ labels: ['track:show'], files: ['src/a.ts'] }).full, false);
+  assert.equal(resolveTrack({ labels: ['track:show', 'ci:golden'], files: ['src/a.ts'] }).full, true);
+  assert.equal(resolveTrack({ labels: ['track:ask', 'ci:full'], files: ['src/a.ts'] }).full, true);
+  assert.equal(resolveTrack({ labels: ['ci:mutants'], files: ['src/a.ts'] }).full, false, 'мутанты полного набора не заказывают');
+});
+
+test('#697: конвейер передаёт полный набор гейту материала', async () => {
+  const { readFileSync } = await import('node:fs');
+  const workflow = readFileSync(WORKFLOW, 'utf8');
+  const gate = workflow.slice(workflow.indexOf('      - name: Validate на материале\n'), workflow.indexOf('      - name: Validate идёт — раунд продолжит событие\n'));
+  assert.match(gate, /FULL: \$\{\{ steps\.track\.outputs\.full \}\}/);
+  assert.match(gate, /--full="\$\{FULL:-false\}"/);
+  assert.match(workflow, /full=\$\(printf '%s\\n' "\$out" \| sed -n 's\/\^full=\/\/p'\)/);
 });

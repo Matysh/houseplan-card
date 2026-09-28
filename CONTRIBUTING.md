@@ -60,12 +60,15 @@ because the plan canvas and editors cannot be mirrored by translations alone.
 
 ## Documentation screenshots
 
-The images under `docs/images/` are produced only from synthetic data by the
-`Docs screenshots` workflow (`demo/docs/capture.mjs` on the pinned Chromium)
-and accepted locally with `npm run docs:accept -- --reviewed --from=<unpacked
-artifact>`; when a change cannot move a pixel, `npm run docs:accept --
---identical` re-captures locally, compares decoded pixels and refreshes only the
-source fingerprint. Scenario version, source fingerprint and every image hash
+The images under `docs/images/` are produced only from synthetic data on the
+pinned Chromium in CI. A task branch does not commit them, nor the golden
+baselines: once per beta the `beta-derived.yml` workflow refreshes the
+fingerprint, the frames and the golden baselines on `dev` in one bot commit,
+accepting only the frames it was told to expect (`PROCESS.md` §8, #697). A task
+that changes visuals on purpose sets the `ci:golden` label. The manual path —
+the `Docs screenshots` workflow and `npm run docs:accept -- --reviewed
+--from=<unpacked artifact>`, or `--identical` when no pixel can move — stays
+for the release manager. Scenario version, source fingerprint and every image hash
 are recorded in the [screenshot index](docs/images/screenshots.json), and
 `node scripts/check-docs.mjs` reports a stale fingerprint: a warning on an
 ordinary push, an error on a beta candidate (a commit with a `Release:`

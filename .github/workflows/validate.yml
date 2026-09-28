@@ -84,6 +84,8 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           HEAD_MESSAGE: ${{ github.event.head_commit.message }}
           FULL_INPUT: ${{ inputs.full }}
+          # #697: на ветке задачи `Release:` строгий режим не включает.
+          REF_NAME: ${{ github.ref_name }}
         run: |
           # #586: CLI отдаёт ОДИН ответ. Прежде здесь сравнивался со строкой
           # `heavy=true` весь вывод `--heavy`, а он двухстрочный: в `$(…)`
@@ -282,7 +284,8 @@ jobs:
       # предыдущего пуша штатно, и на #86 (r5) это дало зелёный статус ветки
       # без единого исполненного тяжёлого гейта.
       # Смоки, golden, performance_smoke — на кандидате беты (трейлер
-      # `Release:`), по `workflow_dispatch full=true`, на PR (#479). Логика и
+      # `Release:` вне веток задач, #697), по `workflow_dispatch full=true`, на
+      # PR (#479). Логика и
       # её тест — scripts/classify-changes.mjs.
       - id: heavy
         env:
@@ -290,6 +293,7 @@ jobs:
           HEAD_MESSAGE: ${{ github.event.head_commit.message }}
           FULL_INPUT: ${{ inputs.full }}
           MUTANTS_INPUT: ${{ inputs.mutants }}
+          REF_NAME: ${{ github.ref_name }}
         run: node scripts/classify-changes.mjs --heavy | tee -a "$GITHUB_OUTPUT"
       - id: base
         if: github.event_name != 'pull_request'

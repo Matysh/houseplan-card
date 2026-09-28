@@ -46,7 +46,7 @@ function fakeOps({ snapshots, onRef = [], jobsById = {} }) {
         });
         return { proof, jobs: [...BASE_JOBS, ...selected], reuseRuns: new Map() };
       },
-      dispatch: async (ref, { mutants = true } = {}) => { dispatched.push(mutants ? ref : `${ref}:light`); },
+      dispatch: async (ref, { mutants = true, full = false } = {}) => { dispatched.push(`${mutants ? ref : `${ref}:light`}${full ? ':full' : ''}`); },
       sleep: async (ms) => { clock += ms; },
       now: () => clock,
     },
@@ -241,4 +241,18 @@ test('#696: a completed run beats a newer running dispatch only without mutants'
   assert.equal((await validateGate({ ref: 'issue/1', sha: SHA, ops: light.ops, mutants: false, wait: false })).result, 'green');
   assert.equal(proofCandidate(run({ event: 'push', status: 'in_progress' }), { mutants: false }), false);
   assert.equal(proofCandidate(run({ event: 'push' }), { mutants: true }), false);
+});
+
+test('#697: ci:full/ci:golden — лёгкий push-прогон не доказательство, гейт диспатчит full=true', async () => {
+  const done = run({ event: 'push', databaseId: 7, url: 'https://run/push' });
+  const dispatchedRun = run({ databaseId: 8, status: 'in_progress', conclusion: null });
+  const fake = fakeOps({ snapshots: [[done], [done], [done, dispatchedRun]], jobsById: { 7: OTHER_JOBS } });
+  const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, mutants: false, full: true, wait: false, pollMs: 1000 });
+  assert.equal(outcome.result, 'pending');
+  assert.equal(outcome.runId, 8);
+  assert.deepEqual(fake.dispatched, ['issue/1:light:full']);
+  // без метки тот же push-прогон — доказательство, и dispatch не нужен
+  const light = fakeOps({ snapshots: [[done]], jobsById: { 7: OTHER_JOBS } });
+  assert.equal((await validateGate({ ref: 'issue/1', sha: SHA, ops: light.ops, mutants: false, wait: false })).result, 'green');
+  assert.deepEqual(light.dispatched, []);
 });

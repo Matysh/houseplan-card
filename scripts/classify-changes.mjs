@@ -88,11 +88,21 @@ export function classifyAll() {
  *  - `workflow_dispatch` с `full=true` — ночной прогон (nightly.yml) и ручной;
  *  - pull_request — там Validate единственный сигнал.
  */
-export function heavyGatesRequested({ eventName, headMessage, fullInput } = {}) {
+export function heavyGatesRequested({ eventName, headMessage, fullInput, refName } = {}) {
   if (eventName === 'pull_request') return true;
   if (eventName === 'workflow_dispatch') return String(fullInput) === 'true';
   if (eventName === 'schedule') return true;
+  // #697: на ветке задачи трейлер `Release:` тяжёлый набор больше не включает.
+  // Его там носит только приёмка эталонов, а golden на ветке задачи — по метке
+  // `ci:golden`: конвейер ревью диспатчит Validate с `full=true` сам. Кандидат
+  // беты и релиза собирается на `dev` — там трейлер работает как прежде.
+  if (isTaskBranch(refName)) return false;
   return hasReleaseTrailer(headMessage);
+}
+
+/** Ветка задачи — `issue/<NN>-…` (PROCESS §3). */
+export function isTaskBranch(refName) {
+  return /^issue\//.test(String(refName || '').replace(/^refs\/heads\//, ''));
 }
 
 /**
@@ -159,6 +169,7 @@ if (invokedDirectly) {
       eventName: process.env.EVENT_NAME,
       headMessage: process.env.HEAD_MESSAGE,
       fullInput: process.env.FULL_INPUT,
+      refName: process.env.REF_NAME,
     })}\n`);
   } else if (process.argv.includes('--heavy')) {
     // Отдельный вызов: у `heavy` другие входы (событие, сообщение head-коммита),
@@ -167,6 +178,7 @@ if (invokedDirectly) {
       eventName: process.env.EVENT_NAME,
       headMessage: process.env.HEAD_MESSAGE,
       fullInput: process.env.FULL_INPUT,
+      refName: process.env.REF_NAME,
     });
     process.stdout.write(`heavy=${heavy ? 'true' : 'false'}\n`);
     const mutants = mutantsRequested({

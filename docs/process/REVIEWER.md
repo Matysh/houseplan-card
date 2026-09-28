@@ -71,12 +71,13 @@
 
 ## Объём гейтов
 
-- Всегда: `typecheck`, `npm test`, `npm run build` + `bundle-policy --verify` (копии сверяются только на кандидате, #657); при
-  диффе по `src/**` — ещё `node scripts/check-docs.mjs`. Зелёный Validate на
-  SHA материала подтверждает дешёвые гейты ([§8](../../PROCESS.md#8-гейты)).
+- Всегда: `typecheck`, `npm test`, `npm run build` + `bundle-policy --verify` (копии сверяются только на кандидате, #657).
+  Свежесть скриншотов документации — не гейт задачи: отпечаток обновляет
+  коммит бота на `dev` перед бетой. Зелёный Validate на SHA материала
+  подтверждает дешёвые гейты ([§8](../../PROCESS.md#8-гейты)).
 - По диффу и AC: смоки — названные в AC плюс вывод
   `node scripts/smoke-select.mjs --base <base> --head <head>` с решением по
-  каждой строке; `golden:verify` при видимом изменении; `pytest tests_backend`
+  каждой строке; `golden:verify` при метке `ci:golden`; `pytest tests_backend`
   при правке Python; инварианты модели при правке геометрии; performance —
   если назван в AC. Полные наборы — предрелизный гейт, а не гейт ревью
   ([§8](../../PROCESS.md#8-гейты)).

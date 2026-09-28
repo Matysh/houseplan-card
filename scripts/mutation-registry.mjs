@@ -13455,6 +13455,51 @@ const MUTANT_DEFINITIONS = [
       replace: '  else if (false && block.high > 0) problems.push(',
     }],
   },
+  // #697: производные артефакты — на dev, тяжёлое на ветке задачи — по меткам.
+  {
+    id: 'task-branch-release-trailer-heavy-again',
+    guard: 'node --test --test-name-pattern="#697" test/classify-changes.test.mjs',
+    because: '#697: on a task branch the Release: trailer only marks a baseline acceptance; '
+      + 'it must not switch on smokes, golden and perf again — ci:full/ci:golden do that',
+    patches: [{
+      file: 'scripts/classify-changes.mjs',
+      find: '  if (isTaskBranch(refName)) return false;\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'ci-golden-label-does-not-order-full-set',
+    guard: 'node --test --test-name-pattern="#697" test/process-track.test.mjs',
+    because: '#697: a task that changes visuals on purpose sets ci:golden; without the full set '
+      + 'on its review material its shifted frames surface in the next task again',
+    patches: [{
+      file: 'scripts/process-track.mjs',
+      find: "  const full = labels.includes('ci:full') || labels.includes('ci:golden');",
+      replace: "  const full = labels.includes('ci:full'); // mutant: ci:golden ignored",
+    }],
+  },
+  {
+    id: 'review-gate-accepts-light-proof-for-full',
+    guard: 'node --test --test-name-pattern="#697" test/validate-gate.test.mjs',
+    because: '#697: with ci:full/ci:golden a light push run proves nothing about smokes and golden; '
+      + 'the gate must dispatch full=true instead of accepting it',
+    patches: [{
+      file: 'scripts/validate-gate.mjs',
+      find: "  const policy = full ? Object.freeze({ ...base, name: `${base.name}-full`, full: true }) : base;",
+      replace: '  const policy = base; // mutant: full never required',
+    }],
+  },
+  {
+    id: 'bot-golden-commit-without-provenance',
+    guard: 'node --test --test-name-pattern="провенанс" test/beta-derived.test.mjs',
+    because: '#697: the bot commit that moves baselines must carry Release: and Baseline-Reviewed:, '
+      + 'otherwise validate-commit-provenance turns dev red on the push',
+    patches: [{
+      file: '.github/workflows/beta-derived.yml',
+      find: '              echo "Release: $TAG"\n',
+      replace: '',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

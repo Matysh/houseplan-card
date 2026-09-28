@@ -85,10 +85,14 @@ export function provesMutants(jobs) {
  */
 export async function validateGate({
   ref, sha, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS, wait = true,
-  mutants = true,
+  mutants = true, full = false,
 }) {
-  const policy = mutants ? CI_PROOF_POLICIES.review : CI_PROOF_POLICIES.reviewLight;
-  const label = mutants ? 'Validate с мутантами' : 'Validate';
+  // #697: метки `ci:full`/`ci:golden` заказывают полный набор на материале —
+  // смоки, golden, perf. Лёгкий push-прогон его не несёт и доказательством не
+  // считается (policy.full), поэтому гейт диспатчит `full=true` сам.
+  const base = mutants ? CI_PROOF_POLICIES.review : CI_PROOF_POLICIES.reviewLight;
+  const policy = full ? Object.freeze({ ...base, name: `${base.name}-full`, full: true }) : base;
+  const label = `${mutants ? 'Validate с мутантами' : 'Validate'}${full ? ' (полный набор)' : ''}`;
   const started = ops.now();
   const candidateTree = await ops.candidateTree(sha);
   const ignored = new Set(); // завершённые dispatch без применимого proof
@@ -125,7 +129,7 @@ export async function validateGate({
         };
       }
     } else if (dispatchedAt === null) {
-      await ops.dispatch(ref, { mutants });
+      await ops.dispatch(ref, { mutants, full });
       dispatchedAt = ops.now();
       attempts = 1;
     } else if (ops.now() - dispatchedAt > appearMs) {
@@ -137,7 +141,7 @@ export async function validateGate({
       // чужой коммит переживёт и вторую попытку.
       const elsewhere = (await ops.listRunsOnRef(ref)).filter(isMutantRun).find((x) => x.headSha && x.headSha !== sha);
       if (elsewhere && attempts < DISPATCH_ATTEMPTS) {
-        await ops.dispatch(ref, { mutants });
+        await ops.dispatch(ref, { mutants, full });
         dispatchedAt = ops.now();
         attempts += 1;
         await ops.sleep(pollMs);
@@ -172,8 +176,8 @@ export function realOps({ repo, workflow = 'validate.yml', token = process.env.G
       catch { return { proof: null, jobs: [], reuseRuns: new Map() }; }
     },
     listRunsOnRef: async (ref) => parse(sh('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--branch', ref, '--event', 'workflow_dispatch', '--json', fields, '--limit', '5'])),
-    dispatch: async (ref, { mutants = true } = {}) => {
-      const r = sh('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', `mutants=${mutants ? 'true' : 'false'}`]);
+    dispatch: async (ref, { mutants = true, full = false } = {}) => {
+      const r = sh('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', `full=${full ? 'true' : 'false'}`, '-f', `mutants=${mutants ? 'true' : 'false'}`]);
       if (r.status !== 0) throw new Error(`gh workflow run: ${r.stderr || r.stdout}`);
     },
     sleep: (ms) => new Promise((done) => setTimeout(done, ms)),
@@ -188,13 +192,15 @@ if (invokedDirectly) {
   const ref = arg('ref');
   const sha = arg('sha');
   if (!repo || !ref || !sha) {
-    console.error('usage: validate-gate.mjs --repo=<owner/repo> --ref=<branch> --sha=<sha> [--workflow=validate.yml] [--mutants=false] [--no-wait]');
+    console.error('usage: validate-gate.mjs --repo=<owner/repo> --ref=<branch> --sha=<sha> [--workflow=validate.yml] [--mutants=false] [--full=true] [--no-wait]');
     process.exit(2);
   }
   const wait = !process.argv.includes('--no-wait');
   // #696: `--mutants=false` — лёгкое доказательство треков show/ship.
   const mutants = arg('mutants') !== 'false';
-  const outcome = await validateGate({ ref, sha, wait, mutants, ops: realOps({ repo, workflow: arg('workflow') || 'validate.yml' }) });
+  // #697: `--full=true` — метки ci:full/ci:golden.
+  const full = arg('full') === 'true';
+  const outcome = await validateGate({ ref, sha, wait, mutants, full, ops: realOps({ repo, workflow: arg('workflow') || 'validate.yml' }) });
   const lines = [`result=${outcome.result}`, `url=${outcome.url || ''}`, `run_id=${outcome.runId || ''}`, `note=${outcome.note}`];
   for (const line of lines) console.log(line);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`);
