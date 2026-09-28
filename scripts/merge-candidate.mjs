@@ -101,7 +101,9 @@ export function commentFor(action, ctx) {
     case 'fast-forward':
       return `материал \`${short(ctx.material)}\` · dev@\`${short(ctx.devNow)}\` → кандидат \`${short(ctx.candidate)}\``
         + (action === 'push' ? ` · Validate ${ctx.runUrl} зелёный` : ' · dev не двигался')
-        + ' · слито';
+        + ' · слито'
+        + (ctx.branchDeleted === true ? ` · ветка \`${ctx.branch}\` удалена` : '')
+        + (ctx.branchDeleted === false ? ` · ветка \`${ctx.branch}\` оставлена: её вершина сдвинулась после слияния` : '');
     default:
       return '';
   }
@@ -186,6 +188,14 @@ export function realOps({
       must(exec(process.execPath, [REVIEWS_INDEX_SCRIPT, '--dir=docs/reviews', '--commit-if-stale', `--issue=${issue}`]), 'reviews-index --commit-if-stale');
       return must(git('rev-parse', 'HEAD'), 'rev-parse HEAD');
     },
+    // #702: ветка задачи удаляется после слияния — только если её вершина всё
+    // ещё та, что влита (lease): коммит, прилетевший после, не теряется.
+    deleteBranch: (ref, expected) => {
+      const r = git('push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, pushUrl, `:refs/heads/${ref}`);
+      if (r.status === 0) return true;
+      if (/stale info|rejected|fetch first|lease/i.test(r.stderr)) return false;
+      throw new Error(`git push :${ref}: ${r.stderr}`);
+    },
     pushWithLease: (sha, ref, expected) => {
       const r = git('push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, pushUrl, `${sha}:refs/heads/${ref}`);
       if (r.status === 0) return true;
@@ -250,9 +260,18 @@ export async function mergeCandidate({ branch, material, issue, ops, maxAttempts
       && ops.diffNames(material, actual, ['.', ':!docs/reviews']).length === 0);
   const ctx = { branch, material, actual, issue };
   const finish = (decision, extra = {}) => {
-    const body = commentFor(decision.action, { ...ctx, ...extra, attempt: extra.attempt });
-    if (body) ops.comment(issue, body);
     const merged = decision.action === 'push' || decision.action === 'fast-forward';
+    // #702: влитая ветка больше не нужна — 368 таких висели на origin, и агент,
+    // искавший ветку по номеру, мог взять устаревшую. `branchTip` — вершина,
+    // которую слияние видело последней: кандидат, опубликованный в ветку, либо
+    // материал при fast-forward. Сбой удаления слияние не отменяет.
+    let branchDeleted = null;
+    if (merged && extra.branchTip) {
+      try { branchDeleted = ops.deleteBranch(branch, extra.branchTip); }
+      catch (error) { ops.log(`ветка ${branch} не удалена: ${error.message}`); }
+    }
+    const body = commentFor(decision.action, { ...ctx, ...extra, attempt: extra.attempt, branchDeleted });
+    if (body) ops.comment(issue, body);
     ops.log(`решение: ${decision.action} → ${decision.to || '(метка по вердикту)'}`);
     return { merged, to: decision.to, action: decision.action, candidate: extra.candidate || actual };
   };
@@ -272,7 +291,7 @@ export async function mergeCandidate({ branch, material, issue, ops, maxAttempts
       const pushed = ops.pushWithLease(target, 'dev', devNow);
       const decision = decideMerge({ fresh: true, devMoved: false, leaseRejected: !pushed });
       if (decision.action === 'retry') continue;
-      return finish(decision, { candidate: target, devNow });
+      return finish(decision, { candidate: target, devNow, branchTip: tip });
     }
 
     const candidate = ops.rebaseOnto(tip, 'origin/dev');
@@ -317,7 +336,7 @@ export async function mergeCandidate({ branch, material, issue, ops, maxAttempts
     const pushed = ops.pushWithLease(candidate, 'dev', devNow);
     decision = decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: result, leaseRejected: !pushed, attempt, maxAttempts });
     if (decision.action === 'retry') { ops.log('dev двинулся снова — ещё попытка'); continue; }
-    return finish(decision, { candidate, devNow, runUrl: url, attempt });
+    return finish(decision, { candidate, devNow, runUrl: url, attempt, branchTip: candidate });
   }
   return finish(decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: 'green', leaseRejected: true, attempt: maxAttempts, maxAttempts }), { candidate: tip, attempt: maxAttempts });
 }

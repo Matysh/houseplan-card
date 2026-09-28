@@ -5509,6 +5509,18 @@ const MUTANT_DEFINITIONS = [
       replace: "    const pushed = ops.pushWithLease(candidate, 'dev', devNow) || true;  // mutant: lease never rejected\n    decision = decideMerge(",
     }],
   },
+  // #702: влитая ветка задачи удаляется слиянием.
+  {
+    id: 'merged-task-branch-kept',
+    guard: 'node --test --test-name-pattern="#702" test/merge-candidate.test.mjs',
+    because: '#702: 368 merged issue/* branches piled up on origin; an agent looking a branch up by '
+      + 'number could take a stale one — the merge deletes the branch it merged',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: '    if (merged && extra.branchTip) {',
+      replace: '    if (false && merged && extra.branchTip) { // mutant: branch kept',
+    }],
+  },
   {
     id: 'nightly-does-not-wait',
     guard: 'node --test --test-name-pattern="nightly ждёт запущенный Validate" test/nightly-workflow.test.mjs',

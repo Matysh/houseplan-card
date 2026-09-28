@@ -82,7 +82,7 @@ test('каждый исход, меняющий метку, объясняетс
  * dev по порядку (следующая после каждого отклонённого lease), ответы
  * Validate — по порядку кандидатов.
  */
-function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseRejects = 0, patchIds = {}, branchTip, material, conflictOnce = false, indexStale = false }) {
+function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseRejects = 0, patchIds = {}, branchTip, material, conflictOnce = false, indexStale = false, deleteOk = true }) {
   const calls = [];
   let devIndex = 0;
   let validateIndex = 0;
@@ -123,6 +123,7 @@ function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseReject
       return { result, url: `https://run/${sha}` };
     },
     comment: (issue, body) => { calls.push(['comment', body.split('\n')[0]]); },
+    deleteBranch: (ref, expected) => { calls.push(['delete', ref, expected]); return deleteOk; },
     log: () => {},
   };
 }
@@ -641,4 +642,36 @@ test('#696: трек ask по-прежнему диспатчит Validate с м
   assert.deepEqual(ops.calls.filter((c) => c[0] === 'dispatch' || c[0] === 'validate'), [
     ['dispatch', 'issue/1-x'], ['validate', 'cand-mat-on-dev1', 'workflow_dispatch'],
   ]);
+});
+
+
+test('#702: после fast-forward ветка задачи удаляется с lease на влитую вершину', async () => {
+  const ops = fakeOps({ devTips: ['dev0'], branchTip: 'mat', material: 'mat', indexStale: true });
+  const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
+  assert.equal(r.merged, true);
+  assert.deepEqual(ops.calls.filter((c) => c[0] === 'delete'), [['delete', 'issue/1-x', 'mat']],
+    'вершина ветки — материал: индекс-коммит живёт только в dev');
+  assert.match(ops.calls.find((c) => c[0] === 'comment')[1], /ветка `issue\/1-x` удалена/);
+});
+
+test('#702: после слияния кандидата удаляется ветка с его вершиной; неудачное слияние ветку не трогает', async () => {
+  const ops = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat' });
+  const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
+  assert.equal(r.action, 'push');
+  assert.deepEqual(ops.calls.filter((c) => c[0] === 'delete'), [['delete', 'issue/1-x', 'cand-mat-on-dev1']]);
+  const red = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat', validate: ['failed'] });
+  await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops: red });
+  assert.deepEqual(red.calls.filter((c) => c[0] === 'delete'), [], 'красный Validate — ветка остаётся автору');
+  const stale = fakeOps({ devTips: ['dev0'], branchTip: 'other', material: 'mat' });
+  stale.revParse = (ref) => (ref === 'origin/dev' ? 'dev0' : ref.startsWith('origin/issue') ? 'other' : ref.endsWith('^') ? 'foreign' : ref);
+  const rejected = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops: stale });
+  assert.equal(rejected.action, 'reject-stale');
+  assert.deepEqual(stale.calls.filter((c) => c[0] === 'delete'), [], '#312 — ветку не трогаем');
+});
+
+test('#702: сдвинутая вершина — ветка остаётся, слияние в силе', async () => {
+  const ops = fakeOps({ devTips: ['dev0'], branchTip: 'mat', material: 'mat', deleteOk: false });
+  const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
+  assert.equal(r.merged, true);
+  assert.match(ops.calls.find((c) => c[0] === 'comment')[1], /оставлена: её вершина сдвинулась после слияния/);
 });
