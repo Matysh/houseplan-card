@@ -1,0 +1,334 @@
+name: "Бета: пакетное ревью ship"
+run-name: "Ship review ${{ inputs.tag }}"
+
+# #696, PROCESS.md §11.7: задачи `track:ship` сливаются без ревью модели —
+# правка в механических рамках и зелёный лёгкий Validate. Их код читает одна
+# сессия модели перед бетой: все ship-задачи диапазона «прошлый тег..кандидат».
+# Гейт публикации беты (`ship-review.mjs check`) требует этот документ, если в
+# диапазоне есть ship-задачи.
+#
+# Только `workflow_dispatch`: файл исполняется с ветки прогона (`--ref dev`),
+# зеркало в `main` не нужно. Три job, как у release-review.yml (#551, #556):
+# детерминированный вход, модель без права записи, детерминированная
+# публикация документа в `dev`.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Beta tag the review is for, for example v1.79.0-beta.1"
+        required: true
+        type: string
+      candidate:
+        description: "Exact candidate SHA; empty = the dev tip"
+        required: false
+        type: string
+        default: ""
+      force:
+        description: "Review again even when the document already exists in dev"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ship-review-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: "Ship-ревью: задачи диапазона"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: read
+    outputs:
+      proceed: ${{ steps.range.outputs.proceed }}
+      candidate: ${{ steps.range.outputs.candidate }}
+      base: ${{ steps.range.outputs.base }}
+      doc: ${{ steps.range.outputs.doc }}
+      issues: ${{ steps.range.outputs.issues }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          ref: dev
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+
+      - name: Кандидат, база и ship-задачи
+        id: range
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          CANDIDATE: ${{ inputs.candidate }}
+          FORCE: ${{ inputs.force }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          doc=$(node scripts/ship-review.mjs doc --tag="$TAG")
+          git fetch -q --tags origin
+          if [ -z "$CANDIDATE" ]; then CANDIDATE=$(git rev-parse origin/dev); fi
+          git cat-file -e "$CANDIDATE^{commit}"
+          CANDIDATE=$(git rev-parse "$CANDIDATE^{commit}")
+          if [ "$FORCE" != "true" ] && git cat-file -e "origin/dev:$doc" 2>/dev/null; then
+            echo "::notice::$doc уже есть в dev — повторное ревью не запускается (force=true, чтобы переснять)"
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          out="$RUNNER_TEMP/ship-review-input"
+          node scripts/ship-review.mjs prepare --tag="$TAG" --candidate="$CANDIDATE" \
+            --out="$out" --repo="${{ github.repository }}" --run-url="$RUN_URL" | tee "$RUNNER_TEMP/range.txt"
+          cat "$RUNNER_TEMP/range.txt" >> "$GITHUB_OUTPUT"
+          echo "candidate=$CANDIDATE" >> "$GITHUB_OUTPUT"
+          issues=$(sed -n 's/^issues=//p' "$RUNNER_TEMP/range.txt")
+          if [ -z "$issues" ]; then
+            echo "::notice::ship-задач в диапазоне нет — ревью не нужно"
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+          (cd "$out" && sha256sum brief.md ship-issues.json > manifest.sha256)
+          cat "$out/brief.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Передать вход модели
+        if: steps.range.outputs.proceed == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ship-review-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ship-review-input
+          if-no-files-found: error
+          retention-days: 3
+
+  model_review:
+    name: "Ship-ревью: работа модели"
+    needs: prepare
+    if: needs.prepare.outputs.proceed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # Недоверенная стадия без права записи (#556): документ публикует
+    # `publish`. `github_token` у шага Review обязателен — без него action
+    # меняет OIDC на собственный App-токен с правом записи.
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.prepare.outputs.candidate }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Получить вход
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ship-review-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ship-review-input
+
+      - name: Проверить вход и кандидата
+        env:
+          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
+        run: |
+          (cd "$RUNNER_TEMP/ship-review-input" && sha256sum -c manifest.sha256)
+          test "$(git rev-parse HEAD)" = "$CANDIDATE"
+
+      - name: Установить зависимости
+        run: npm ci
+
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Установить Chromium
+        if: steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+
+      # Тот же обход, что у конвейера (_process.yml, anthropics issue 1817).
+      - name: Установить Claude Code детерминированно
+        id: claude_bin
+        run: |
+          src=$(ls "$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-*/v1/src/entrypoints/run.ts 2>/dev/null | head -1)
+          ver=$(grep -oE 'claudeCodeVersion = "[0-9]+\.[0-9]+\.[0-9]+"' "$src" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
+          ver="${ver:-2.1.265}"
+          base=https://downloads.claude.ai/claude-code-releases
+          bin="$HOME/.local/bin/claude"
+          mkdir -p "$(dirname "$bin")"
+          curl -fsSL --retry 3 "$base/$ver/linux-x64/claude" -o "$bin"
+          sum=$(curl -fsSL --retry 3 "$base/$ver/manifest.json" | jq -r '.platforms["linux-x64"].checksum')
+          echo "$sum  $bin" | sha256sum -c -
+          chmod +x "$bin"
+          "$bin" --version
+          echo "path=$bin" >> "$GITHUB_OUTPUT"
+
+      - name: Review
+        id: review
+        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520 # v1
+        env:
+          REVIEW_DOC: ${{ runner.temp }}/ship-review.md
+          REVIEW_INPUT: ${{ runner.temp }}/ship-review-input
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
+          prompt: |
+            Ты ревьюер кода проекта House Plan. Язык ответа — русский.
+
+            Бета: ${{ inputs.tag }} · кандидат ${{ needs.prepare.outputs.candidate }}
+            (рабочая копия уже на нём) · база диапазона: ${{ needs.prepare.outputs.base || 'нет' }}.
+            Задачи: ${{ needs.prepare.outputs.issues }} — вход в $REVIEW_INPUT/brief.md
+            (строка ТЗ каждой задачи и её коммиты) и $REVIEW_INPUT/ship-issues.json.
+
+            Эти задачи шли по треку ship и слиты в dev без ревью модели: правка
+            в механических рамках и зелёный лёгкий Validate. Ты — первый, кто
+            читает их код. Правила — docs/process/REVIEWER.md, раздел
+            «Пакетное ревью ship», канон — PROCESS.md §5 и §11.7. Прочитай их
+            первыми.
+
+            По каждой задаче: `git show <sha>` каждого коммита; делает ли код
+            то, что сказано в строке ТЗ, и только это; не ломает ли соседнее
+            поведение; не вышла ли правка из трека ship по смыслу (новый
+            UX-контракт, геометрия, конфиг, перф) — это находка Medium с
+            предложением трека. Исполняй, где дёшево: `npm test`, смоук,
+            который называет строка ТЗ или выбирает
+            `node scripts/smoke-select.mjs --base <sha>^ --head <sha>`.
+
+            Серьёзность: High — дефект, который увидит пользователь беты, или
+            правка не делает заявленного; High блокирует публикацию беты.
+            Medium — поведение вне заявленного или вне рамок трека; Low —
+            остальное. Находка чинится отдельной задачей, ты ничего не правишь.
+
+            Ты ничего не правишь и не публикуешь: ни код, ни issue, ни
+            комментарии. Права на запись у тебя нет. Любые изменения рабочей
+            копии будут отброшены — после проверок восстанови её сам
+            (`git checkout -- . && git clean -fd`), если что-то менял.
+
+            Напиши документ в файл по пути из переменной REVIEW_DOC (абсолютный,
+            вне репозитория). Первой строкой после заголовка —
+            `Итог: High N · Medium N · Low N`. Затем по задаче на раздел
+            `## #NN — заголовок`: что проверил (команда → результат), находки с
+            воспроизведением, чего не проверял.
+
+            Затем верни JSON по схеме — последнее обязательное действие.
+          claude_args: |
+            --max-turns 150
+            --allowedTools Read,Write,Grep,Glob,Bash
+            --json-schema '{"type":"object","properties":{"high":{"type":"integer"},"medium":{"type":"integer"},"low":{"type":"integer"},"summary":{"type":"string"}},"required":["high","medium","low","summary"]}'
+
+      - name: Запечатать результат модели
+        env:
+          SOURCE: ${{ runner.temp }}/ship-review.md
+          OUT: ${{ steps.review.outputs.structured_output }}
+        run: |
+          test -s "$SOURCE" || { echo "::error::модель не оставила документ ревью"; exit 1; }
+          dir="$RUNNER_TEMP/ship-review-result"
+          mkdir -p "$dir"
+          printf '%s' "$OUT" > "$dir/result.json"
+          jq -e '(.high|type=="number") and (.medium|type=="number") and (.low|type=="number") and (.summary|type=="string")' \
+            "$dir/result.json" >/dev/null
+          cp "$SOURCE" "$dir/ship-review.md"
+          (cd "$dir" && sha256sum ship-review.md result.json > manifest.sha256)
+
+      - name: Передать результат публикации
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ship-review-result-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ship-review-result
+          if-no-files-found: error
+          retention-days: 3
+
+  publish:
+    name: "Ship-ревью: документ в dev"
+    needs: [prepare, model_review]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          ref: dev
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+
+      - name: Получить результат модели
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ship-review-result-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ship-review-result
+
+      # Модель пишет только текст. Путь, машинный блок (его читает гейт беты),
+      # индекс и коммит решает этот шаг.
+      - name: Опубликовать документ
+        env:
+          TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          DOC: ${{ needs.prepare.outputs.doc }}
+          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
+          BASE: ${{ needs.prepare.outputs.base }}
+          ISSUES: ${{ needs.prepare.outputs.issues }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          dir="$RUNNER_TEMP/ship-review-result"
+          (cd "$dir" && sha256sum -c manifest.sha256)
+          test "$DOC" = "$(node scripts/ship-review.mjs doc --tag="$TAG")"
+          high=$(jq -r '.high' "$dir/result.json")
+          medium=$(jq -r '.medium' "$dir/result.json")
+          low=$(jq -r '.low' "$dir/result.json")
+          for attempt in 1 2 3; do
+            git fetch -q origin dev
+            git reset -q --hard origin/dev
+            git clean -fdq
+            mkdir -p docs/reviews
+            {
+              cat "$dir/ship-review.md"
+              printf '\n\n'
+              node -e '
+                import("./scripts/ship-review.mjs").then((m) => process.stdout.write(m.anchorBlock({
+                  tag: process.env.TAG, candidate: process.env.CANDIDATE, base: process.env.BASE || null,
+                  issues: String(process.env.ISSUES || "").split(",").filter(Boolean).map(Number),
+                  high: Number(process.argv[1]), medium: Number(process.argv[2]), low: Number(process.argv[3]),
+                  runUrl: process.env.RUN_URL,
+                })));
+              ' "$high" "$medium" "$low"
+            } > "$DOC"
+            node scripts/reviews-index.mjs --dir=docs/reviews --strict
+            git add -- "$DOC" docs/reviews/INDEX.md
+            git diff --cached --name-only | node scripts/review-doc-guard.mjs
+            git -c user.name="claude[bot]" \
+                -c user.email="209825114+claude[bot]@users.noreply.github.com" \
+                commit -q -F - <<MSG
+          docs: ship review for $TAG
+
+          Пакетное ревью задач track:ship перед бетой (PROCESS.md §11.7).
+          Задачи: $ISSUES. Итог: High $high · Medium $medium · Low $low.
+
+          Issue: #696
+          User-Visible: no
+          MSG
+            git diff --name-only "origin/dev...HEAD" | node scripts/review-doc-guard.mjs
+            if git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev; then
+              echo "### Пакетное ревью ship $TAG" >> "$GITHUB_STEP_SUMMARY"
+              echo "Задачи $ISSUES · High $high · Medium $medium · Low $low — \`$DOC\` в dev." >> "$GITHUB_STEP_SUMMARY"
+              echo "::notice::$DOC опубликован: High $high · Medium $medium · Low $low"
+              exit 0
+            fi
+            echo "::warning::dev ушёл вперёд — попытка $attempt из 3, документ собирается заново"
+            sleep $((attempt * 10))
+          done
+          echo "::error::документ ревью не опубликован в dev за три попытки"
+          exit 1

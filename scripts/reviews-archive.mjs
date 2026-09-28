@@ -88,9 +88,11 @@ export function archivePlan({ names, lines, open, through, addedIn = new Map() }
     if (name === INDEX_FILE) continue;
     const doc = parseDocName(name);
     if (!doc) { kept.push({ name, reason: 'вне схемы имён' }); continue; }
-    if (doc.stage === 'release') {
-      if (tags.has(doc.tag)) moves.push({ name, from: `${LIVE_DIR}/${name}`, to: `${ARCHIVE_DIR}/${doc.tag}/${name}`, tag: doc.tag, issue: null });
-      else kept.push({ name, reason: `ревью линии ${doc.tag} не входит в архивируемые линии` });
+    if (doc.stage === 'release' || doc.stage === 'ship') {
+      // #696: пакетное ревью беты уходит в каталог своей стабильной линии.
+      const line = doc.tag.replace(/-beta\.\d+$/, '');
+      if (tags.has(line)) moves.push({ name, from: `${LIVE_DIR}/${name}`, to: `${ARCHIVE_DIR}/${line}/${name}`, tag: line, issue: null });
+      else kept.push({ name, reason: `ревью линии ${line} не входит в архивируемые линии` });
       continue;
     }
     if (openSet.has(doc.issue)) { kept.push({ name, issue: doc.issue, reason: 'задача есть в открытой линии' }); continue; }

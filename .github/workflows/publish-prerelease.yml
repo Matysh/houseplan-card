@@ -91,6 +91,14 @@ jobs:
           REPO: ${{ github.repository }}
           SHA: ${{ steps.candidate.outputs.sha }}
         run: node scripts/release-gate.mjs "$SHA"
+      # #696, PROCESS.md §11.7: задачи track:ship слиты без ревью модели — бета
+      # публикуется, только когда их код прочитало пакетное ревью диапазона.
+      - name: Ship tasks of the range are batch-reviewed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.candidate.outputs.tag }}
+          SHA: ${{ steps.candidate.outputs.sha }}
+        run: node scripts/ship-review.mjs check --tag="$TAG" --candidate="$SHA" --repo="$GITHUB_REPOSITORY"
       - name: Bind issue membership to the exact candidate
         env:
           GH_TOKEN: ${{ github.token }}

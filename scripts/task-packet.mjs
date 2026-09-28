@@ -20,6 +20,7 @@ import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
 import { anchorTreeFrom, anchorVerdictFrom, verdictDeclaration } from './review-doc-guard.mjs';
 import { classify } from './process-gate.mjs';
+import { hasTrackLabel, trackFromLabels } from './process-track.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
@@ -126,24 +127,8 @@ export function branchIsInfrastructure(changedFiles = []) {
 
 const PRE_CODE_STATUSES = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready'];
 
-/**
- * Трек продуктовой задачи по меткам (PROCESS §5, #695): `track:ship`,
- * `track:show` или `track:ask`; прежние `trivial` и `small` читаются как `show`
- * (§5.1), задача без трековой метки — как `ask`. Метки трека не доказывают
- * продуктовый поток: инфраструктурной задаче владелец тоже может поставить
- * `track:*`, чтобы задать ей цену конвейера.
- */
-export function trackFromLabels(labels = []) {
-  if (labels.includes('track:ship')) return 'ship';
-  if (labels.includes('track:show')) return 'show';
-  if (labels.includes('track:ask')) return 'ask';
-  if (labels.includes('trivial') || labels.includes('small')) return 'show';
-  return 'ask';
-}
-
-/** Есть ли у задачи трековая метка — новая или прежняя (§5.1). */
-export const hasTrackLabel = (labels = []) => ['track:ship', 'track:show', 'track:ask', 'trivial', 'small']
-  .some((label) => labels.includes(label));
+// Трек по меткам — одна функция на конвейер и пакет (#696): process-track.mjs.
+export { hasTrackLabel, trackFromLabels };
 
 /**
  * Признаки продуктового S-flow (#632). Инфраструктурная задача входит в поток

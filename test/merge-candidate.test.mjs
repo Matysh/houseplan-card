@@ -574,3 +574,71 @@ test('#657 r1 H1 на настоящем git: fast-forward несёт свежи
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// #696: треки show/ship сливаются по лёгкому Validate — dispatch без мутантов.
+test('#696: realOps with mutants=false dispatches a light Validate and accepts a light proof', async () => {
+  const sha = 'c'.repeat(40);
+  const tree = 'd'.repeat(40);
+  const dispatches = [];
+  const light = { databaseId: 5, attempt: 1, status: 'completed', conclusion: 'success', url: 'https://run/5', event: 'workflow_dispatch', headSha: sha };
+  const exec = (cmd, args) => {
+    if (cmd === 'gh' && args[0] === 'workflow' && args[1] === 'run') { dispatches.push(args.join(' ')); return { status: 0, stdout: '', stderr: '' }; }
+    if (cmd === 'gh' && args[0] === 'run' && args[1] === 'list') return { status: 0, stdout: JSON.stringify([light]), stderr: '' };
+    throw new Error(`unexpected ${cmd} ${args.join(' ')}`);
+  };
+  let clock = 0;
+  const lightProof = (row) => {
+    const context = mergeProofContext(row, sha, tree);
+    const proof = buildCiProof({
+      candidateSha: sha, candidateTree: tree, runId: row.databaseId, attempt: 1, event: row.event,
+      needs: {
+        preflight: { result: 'success' },
+        changes: { result: 'success', outputs: { heavy: 'false', mutants_requested: 'false', frontend: 'true', backend: 'false', integration: 'false' } },
+        reuse: { result: 'success', outputs: {} }, frontend: { result: 'success' }, changed_mutants: { result: 'skipped' },
+      },
+    });
+    return { ...context, proof, jobs: context.jobs.filter((job) => !job.name.startsWith('Мутанты')) };
+  };
+  const opsLight = realOps({
+    repo: 'x/y', token: 'none', exec, mutants: false,
+    sleep: async (ms) => { clock += ms; }, now: () => clock,
+    candidateTree: async () => tree, proofContext: async (row) => lightProof(row),
+  });
+  opsLight.dispatchValidate('issue/9-x');
+  assert.match(dispatches.at(-1), /mutants=false/);
+  assert.equal((await opsLight.waitValidate(sha, { event: 'workflow_dispatch' })).result, 'green');
+  const opsFull = realOps({
+    repo: 'x/y', token: 'none', exec,
+    sleep: async (ms) => { clock += ms; }, now: () => clock,
+    candidateTree: async () => tree, proofContext: async (row) => lightProof(row),
+  });
+  opsFull.dispatchValidate('issue/9-x');
+  assert.match(dispatches.at(-1), /mutants=true/);
+  assert.notEqual((await opsFull.waitValidate(sha, { event: 'workflow_dispatch' })).result, 'green',
+    'track ask still refuses a proof without mutants');
+});
+
+test('#696: трек show/ship — слияние ждёт push-прогон кандидата, без второго dispatch', async () => {
+  const ops = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat' });
+  const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops, mutants: false });
+  assert.equal(r.action, 'push');
+  assert.ok(!ops.calls.some((c) => c[0] === 'dispatch'), 'лёгкий Validate уже запущен push кандидата');
+  assert.deepEqual(ops.calls.filter((c) => c[0] === 'validate'), [['validate', 'cand-mat-on-dev1', 'push']]);
+});
+
+test('#696: push-прогона на кандидате нет — лёгкий dispatch и ожидание его', async () => {
+  const ops = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat', validate: ['missing', 'green'] });
+  const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops, mutants: false });
+  assert.equal(r.action, 'push');
+  assert.deepEqual(ops.calls.filter((c) => c[0] === 'dispatch' || c[0] === 'validate'), [
+    ['validate', 'cand-mat-on-dev1', 'push'], ['dispatch', 'issue/1-x'], ['validate', 'cand-mat-on-dev1', 'workflow_dispatch'],
+  ]);
+});
+
+test('#696: трек ask по-прежнему диспатчит Validate с мутантами и push-прогон не ждёт', async () => {
+  const ops = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat' });
+  await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
+  assert.deepEqual(ops.calls.filter((c) => c[0] === 'dispatch' || c[0] === 'validate'), [
+    ['dispatch', 'issue/1-x'], ['validate', 'cand-mat-on-dev1', 'workflow_dispatch'],
+  ]);
+});

@@ -612,7 +612,7 @@ test('#510 AC2: конвейер запускает Validate с мутантам
   const at = (marker) => { const i = workflow.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
   const material = at('      - name: Зафиксировать SHA материала ревью\n');
   const reuse = at('      - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"\n');
-  const gate = at('      - name: Validate с мутантами на материале\n');
+  const gate = at('      - name: Validate на материале\n');
   assert.ok(material < reuse && reuse < gate, 'gate читает steps.reuse.outputs — стоит после шага reuse (ревью ТЗ r1)');
   const back = at('      - name: Validate красный — вернуть автору без ревью\n');
   const modelJob = at('\n  model_review:\n');
@@ -857,7 +857,8 @@ test('#551: gates, модель и интеграция имеют незави�
   }
   assert.match(integrate, /PREPARE_RESULT: \$\{\{ needs\.prepare\.result \}\}/);
   assert.match(integrate, /MODEL_RESULT: \$\{\{ needs\.model_review\.result \}\}/);
-  assert.match(integrate, /if \[ "\$REUSE" != "true" \] && \[ "\$MODEL_RESULT" != "success" \]; then/,
+  // #696: `ship` в рамках модель не вызывает — её исход не ждётся только там.
+  assert.match(integrate, /if \[ "\$REUSE" != "true" \] && \[ "\$SHIP" != "true" \] && \[ "\$MODEL_RESULT" != "success" \]; then/,
     'интеграция не доверяет failed/cancelled/skipped модели');
   assert.match(integrate, /цикл ревью не израсходован/);
   assert.match(integrate, /Бюджеты стадий \(#551\)/, 'длительности публикуются раздельно');

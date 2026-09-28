@@ -58,6 +58,8 @@ jobs:
       cycle: ${{ steps.decide.outputs.cycle }}
       spent: ${{ steps.decide.outputs.spent }}
       limit: ${{ steps.decide.outputs.limit }}
+      # #696: текущие метки — prepare выводит из них трек захода.
+      labels: ${{ steps.decide.outputs.labels }}
     steps:
       # Мелкий checkout: guard остаётся лёгким, но ему нужен
       # scripts/review-doc-guard.mjs — счёт раундов вынесен туда, потому что
@@ -85,8 +87,8 @@ jobs:
           has blocked && BLOCKED=true
           has review-4 && EXHAUSTED=true
           # Треки #695 (PROCESS §5): `track:show` и `track:ship` — лимит 2, как у
-          # прежних `small`/`trivial`; `track:ask` — 4. Пока #696 не влит, `ship`
-          # проходит конвейер как `show`.
+          # прежних `small`/`trivial`; `track:ask` — 4. Цену захода по треку
+          # (мутанты, ребейз, модель) решает prepare (#696).
           has small && SMALL=true
           has trivial && TRIVIAL=true
           has track:show && SMALL=true
@@ -301,6 +303,7 @@ jobs:
           echo "cycle=$attempt" >> "$GITHUB_OUTPUT"
           echo "spent=$spent" >> "$GITHUB_OUTPUT"
           echo "limit=$limit" >> "$GITHUB_OUTPUT"
+          echo "labels=$(printf '%s\n' "$current" | paste -sd, -)" >> "$GITHUB_OUTPUT"
 
   prepare:
     name: "Ревью: материал и deterministic gates"
@@ -336,6 +339,9 @@ jobs:
       spec_body_doc: ${{ steps.spec_body.outputs.doc }}
       spec_body_recorded: ${{ steps.spec_body.outputs.recorded }}
       duration_seconds: ${{ steps.duration.outputs.seconds }}
+      track: ${{ steps.track.outputs.track }}
+      mutants: ${{ steps.track.outputs.mutants }}
+      ship: ${{ steps.track.outputs.ship }}
     steps:
       - name: Начать измерение стадии
         id: clock
@@ -406,6 +412,58 @@ jobs:
             echo "МАТЕРИАЛ НЕ ЗАПУШЕН" >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      # Трек решает цену захода (PROCESS.md §5, §10.4, #696): мутанты по диффу —
+      # только `track:ask` и метка `ci:mutants`; `ship` сливается без модели,
+      # если правка укладывается в механические рамки. Рамки судят дифф от
+      # merge-base с dev — работу задачи, а не то, что принёс dev, — поэтому шаг
+      # стоит до ребейза. Выход за рамки повышает трек до `show` здесь же:
+      # повысить трек вправе любой, понизить — только владелец (§5). Скрипт
+      # берётся из dev, как помощник ребейза: show/ship до ревью не ребейзятся,
+      # и ветка, отставшая от dev, его может ещё не нести.
+      - name: "Трек задачи и рамки ship (#696)"
+        id: track
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          LABELS: ${{ needs.guard.outputs.labels }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+        run: |
+          git fetch -q origin dev
+          tools="$RUNNER_TEMP/track-tools"
+          rm -rf "$tools" && mkdir -p "$tools"
+          git archive origin/dev scripts | tar -x -C "$tools"
+          head=HEAD
+          if [ -z "$BRANCH" ]; then head=origin/dev; fi
+          out=$(node "$tools/scripts/process-track.mjs" resolve --labels="$LABELS" --base=origin/dev --head="$head")
+          printf '%s\n' "$out"
+          track=$(printf '%s\n' "$out" | sed -n 's/^track=//p')
+          mutants=$(printf '%s\n' "$out" | sed -n 's/^mutants=//p')
+          ship=false
+          if [ "$track" = "ship" ] && [ "$STAGE" = "code" ] && [ -n "$BRANCH" ]; then
+            limits=$(node "$tools/scripts/process-track.mjs" ship-limits --base=origin/dev --head=HEAD)
+            printf '%s\n' "$limits"
+            if printf '%s\n' "$limits" | grep -qx 'ship=true'; then
+              ship=true
+            else
+              violations=$(printf '%s\n' "$limits" | sed -n 's/^violations=//p')
+              track=show
+              cat > /tmp/ship.md <<EOF
+          **Трек повышен: \`track:ship\` → \`track:show\`.** Правка выходит за механические рамки ship (PROCESS.md §5): $violations.
+
+          Слияние без ревью модели для неё закрыто. Этот заход идёт по треку show: лёгкий Validate и ревью модели «корректность и AC». Понизить трек обратно может только владелец.
+
+          [Прогон](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+          EOF
+              gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/ship.md
+              gh issue edit "$NUM" --repo "${{ github.repository }}" \
+                --add-label track:show --remove-label track:ship
+              echo "track:ship -> track:show: $violations"
+            fi
+          fi
+          { echo "track=$track"; echo "mutants=$mutants"; echo "ship=$ship"; } >> "$GITHUB_OUTPUT"
+          echo "- трек **$track** · мутанты по диффу: $mutants · слияние без модели: $ship" >> "$GITHUB_STEP_SUMMARY"
+
       # Ревьюер обязан смотреть тот же код, который уедет в dev (#257). Раньше
       # ревью шло по ветке как есть, а слияние делало ребейз — проверенный SHA и
       # слитый SHA были разными коммитами. Пока расхождение с dev текстовое,
@@ -427,6 +485,7 @@ jobs:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ steps.branch.outputs.name }}
           NUM: ${{ github.event.issue.number }}
+          TRACK: ${{ steps.track.outputs.track }}
           # rebase, в отличие от commit, не принимает -c user.*: он запускает
           # свои процессы и требует личность в окружении, иначе падает с
           # «unable to auto-detect email address».
@@ -441,6 +500,21 @@ jobs:
             exit 0
           fi
           behind=$(git rev-list --count "HEAD..origin/dev")
+          # #696: на show/ship ветка до ревью к dev не приводится, если
+          # сливается с ним без конфликта. Ребейз — один раз, при слиянии, и
+          # кандидат проходит Validate до push в dev (merge-candidate.mjs, #492):
+          # в dev по-прежнему уезжает только проверенный CI SHA. Каждый сдвиг dev
+          # больше не оплачивается force-push, новым SHA и новым прогоном до
+          # ревью. На ask ребейз остаётся (#257): ревьюер читает то дерево,
+          # которое уедет в dev.
+          if [ "$TRACK" = "show" ] || [ "$TRACK" = "ship" ]; then
+            if git merge-tree --write-tree origin/dev HEAD >/dev/null 2>&1; then
+              echo "note=Ветка не приводилась к dev (трек $TRACK, #696): dev впереди на $behind коммит(ов), слияние без конфликта. Материал — ветка как есть; ребейз будет один раз, при слиянии, и кандидат пройдёт Validate до push в dev." >> "$GITHUB_OUTPUT"
+              echo "трек $TRACK: dev впереди на $behind коммит(ов), слияние чистое — ребейз отложен до слияния"
+              exit 0
+            fi
+            echo "трек $TRACK: слияние с dev не чистое — ветка приводится к dev до ревью"
+          fi
           before=$(git rev-parse "origin/$BRANCH")
           echo "dev впереди на $behind коммит(ов) — привожу ветку"
           # #643: doc-коммит ветки конфликтует с документами других задач в dev
@@ -627,13 +701,15 @@ jobs:
           echo "S7-code-review -> S6-in-progress (ревью не запускалось)"
 
       # Мутанты по диффу бегут только по запросу (#510): до ревью конвейер
-      # запускает Validate с мутантами на материале и ждёт его. Красный или
+      # запускает Validate на материале и ждёт его — с мутантами на `ask` и по
+      # метке `ci:mutants`, лёгкий на `show`/`ship` (#696). Лёгкому годится и
+      # завершённый push-прогон на том же SHA: dispatch повторил бы его. Красный или
       # пропавший прогон возвращает задачу автору без ревью — цикл не
       # тратится на код, который CI уже отверг (08.09: #437 дважды ушёл в S6
       # после запущенного 15-минутного ревью). Этап spec кода не несёт и
       # гейт не проходит; повторное применение вердикта (#499) — тоже: там
       # слияние само дожидается Validate на кандидате.
-      - name: Validate с мутантами на материале
+      - name: Validate на материале
         id: gate
         if: steps.rebase.outputs.conflict != 'true'
         env:
@@ -642,6 +718,7 @@ jobs:
           REUSE: ${{ steps.reuse.outputs.reuse }}
           BRANCH: ${{ steps.branch.outputs.name }}
           SHA: ${{ steps.material.outputs.sha }}
+          MUTANTS: ${{ steps.track.outputs.mutants }}
         run: |
           if [ "$STAGE" != "code" ] || [ "$REUSE" = "true" ] || [ -z "$BRANCH" ]; then
             echo "гейт не применяется: этап $STAGE, reuse=${REUSE:-false}, ветка ${BRANCH:-dev}"
@@ -655,7 +732,8 @@ jobs:
           # S7), страховка — process-reconcile. Зелёный или красный завершённый
           # прогон гейт и без ожидания возвращает сразу.
           set +e
-          node scripts/validate-gate.mjs --repo="${{ github.repository }}" --ref="$BRANCH" --sha="$SHA" --no-wait
+          node scripts/validate-gate.mjs --repo="${{ github.repository }}" --ref="$BRANCH" --sha="$SHA" --no-wait \
+            --mutants="${MUTANTS:-true}"
           code=$?
           set -e
           case "$code" in
@@ -680,6 +758,7 @@ jobs:
           SHA: ${{ steps.material.outputs.sha }}
           VALIDATE_RUN_ID: ${{ steps.gate.outputs.run_id }}
           VALIDATE_URL: ${{ steps.gate.outputs.url }}
+          MUTANTS: ${{ steps.track.outputs.mutants }}
         run: |
           dir="$RUNNER_TEMP/review-pending"
           mkdir -p "$dir"
@@ -693,7 +772,9 @@ jobs:
           (cd "$dir" && sha256sum pending.json > manifest.sha256)
           echo "artifact=review-pending-${NUM}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
           short=$(git rev-parse --short "$SHA")
-          echo "Validate с мутантами на \`$short\` идёт — раннер освобождён, раунд продолжится по завершении прогона${VALIDATE_URL:+ ($VALIDATE_URL)}." >> "$GITHUB_STEP_SUMMARY"
+          kind="Validate с мутантами"
+          if [ "$MUTANTS" = "false" ]; then kind="Лёгкий Validate"; fi
+          echo "$kind на \`$short\` идёт — раннер освобождён, раунд продолжится по завершении прогона${VALIDATE_URL:+ ($VALIDATE_URL)}." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Сохранить маркер ожидания
         if: steps.gate.outputs.proceed == 'pending'
@@ -714,10 +795,13 @@ jobs:
           RESULT: ${{ steps.gate.outputs.result }}
           NOTE: ${{ steps.gate.outputs.note }}
           URL: ${{ steps.gate.outputs.url }}
+          MUTANTS: ${{ steps.track.outputs.mutants }}
         run: |
           short=$(git rev-parse --short "$SHA")
+          kind="Validate с мутантами"
+          if [ "$MUTANTS" = "false" ]; then kind="Validate"; fi
           cat > /tmp/gate.md <<EOF
-          **Ревью не запускалось:** Validate с мутантами на материале \`$short\` (ветка \`$BRANCH\`) — **$RESULT**: $NOTE.${URL:+ [Прогон]($URL).} Код никто не читал, вердикта нет, цикл ревью не израсходован.
+          **Ревью не запускалось:** $kind на материале \`$short\` (ветка \`$BRANCH\`) — **$RESULT**: $NOTE.${URL:+ [Прогон]($URL).} Код никто не читал, вердикта нет, цикл ревью не израсходован.
 
           Гейт стоит до ревью намеренно (#510): красный CI всё равно вернул бы задачу, но уже после потраченного ревью.
 
@@ -725,14 +809,14 @@ jobs:
 
           1. починить то, что назвал прогон, и запушить ветку **одним** коммитом-заходом;
           2. дождаться зелёного дешёвого Validate на пуше;
-          3. вернуть метку \`S7-code-review\` — конвейер сам запустит Validate с мутантами и ревью.
+          3. вернуть метку \`S7-code-review\` — конвейер сам запустит $kind и ревью.
 
           [Прогон конвейера](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
           EOF
           gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/gate.md
           gh issue edit "$NUM" --repo "${{ github.repository }}" \
             --add-label S6-in-progress --remove-label S7-code-review
-          echo "S7-code-review -> S6-in-progress (Validate с мутантами: $RESULT)"
+          echo "S7-code-review -> S6-in-progress ($kind: $RESULT)"
 
       # Ревьюер перегонял tsc, юниты и сборку заново в каждом раунде, хотя
       # Validate на том же SHA уже зелёный (#343). Это не тщательность: бюджет
@@ -800,7 +884,7 @@ jobs:
 
       - name: Собрать контракт материала между стадиями
         id: prepared
-        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true' && steps.track.outputs.ship != 'true'
         env:
           NUM: ${{ github.event.issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
@@ -836,7 +920,7 @@ jobs:
           echo "artifact=review-prepared-${NUM}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
 
       - name: Передать подтверждённый материал модели
-        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true'
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true' && steps.track.outputs.ship != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ steps.prepared.outputs.artifact }}
@@ -879,7 +963,9 @@ jobs:
       contents: read
       issues: write
     needs: [guard, prepare]
-    if: needs.prepare.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
+    # #696: `ship` в рамках сливается без модели — пакетное ревью диапазона
+    # перед бетой (PROCESS.md §11.7, ship-review.yml).
+    if: needs.prepare.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
     runs-on: ubuntu-24.04
     concurrency:
       group: process-issue-${{ github.event.issue.number }}
@@ -945,22 +1031,46 @@ jobs:
           test "$(git rev-parse HEAD)" = "$MATERIAL_SHA"
           test "$(git rev-parse 'HEAD^{tree}')" = "$MATERIAL_TREE"
 
+      # #696: окружение ставится по нужде. Ревью ТЗ кода не исполняет — ни
+      # `npm ci`, ни браузера. Ревью `show` ставит Chromium, только если тело
+      # issue называет смоук или браузер; `ask` — как прежде, всегда. Тело не
+      # прочитано — браузер ставится: лишняя минута дешевле непрогнанного смоука.
+      - name: Что ревьюеру нужно из окружения
+        id: env_needs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUM: ${{ github.event.issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          TRACK: ${{ needs.prepare.outputs.track }}
+        run: |
+          deps=true; browser=true
+          if [ "$STAGE" = "spec" ]; then deps=false; browser=false; fi
+          if [ "$STAGE" = "code" ] && [ "$TRACK" = "show" ]; then
+            if body=$(gh issue view "$NUM" --repo "${{ github.repository }}" --json body --jq .body 2>/dev/null); then
+              if ! printf '%s' "$body" | grep -qiE 'smoke|смоук|смок|playwright|браузер|demo/'; then browser=false; fi
+            fi
+          fi
+          { echo "deps=$deps"; echo "browser=$browser"; } >> "$GITHUB_OUTPUT"
+          echo "- окружение ревьюера: npm ci $deps · Chromium $browser" >> "$GITHUB_STEP_SUMMARY"
+
       # Зависимости ставятся ПОСЛЕ переключения на ветку задачи: lockfile мог
       # измениться именно в ней, и установка по копии из dev дала бы не то дерево.
       - name: Установить зависимости
+        if: steps.env_needs.outputs.deps == 'true'
         run: npm ci
 
       # Браузер нужен не всякому ревью (см. правило выбора гейтов в промпте),
       # но когда нужен — качать его заново дороже, чем держать в кэше.
       - name: Кэш браузеров Playwright
         id: pw
+        if: steps.env_needs.outputs.browser == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Установить Chromium
-        if: steps.pw.outputs.cache-hit != 'true'
+        if: steps.env_needs.outputs.browser == 'true' && steps.pw.outputs.cache-hit != 'true'
         # Без --with-deps: системные библиотеки Chromium предустановлены в
         # образе раннера, а apt при промахе кэша съедал минуты из бюджета
         # ревью и подолгу перебирал недоступное azure-зеркало (#175). Если
@@ -1020,6 +1130,9 @@ jobs:
               ничего не вернул на правки и цикла не образует (#227).
               Номер захода нужен для имени документа — два документа с
               одинаковым номером затёрли бы друг друга.
+            Трек: ${{ needs.prepare.outputs.track || 'ask' }} (PROCESS.md §5) · мутанты по диффу на материале: ${{ needs.prepare.outputs.mutants == 'false' && 'не запрашивались' || 'прогнаны Validate' }}
+
+            ${{ needs.prepare.outputs.track == 'show' && needs.guard.outputs.stage == 'code' && 'Трек show: объём и серьёзность находок — docs/process/REVIEWER.md, «Трек show» (#696). Отсутствие мутантов по диффу — не находка.' || '' }}
 
             ${{ needs.prepare.outputs.rebase_note }}
 
@@ -1107,8 +1220,8 @@ jobs:
             и в повторном раунде тоже: `npx tsc --noEmit`, `npm test`,
             `npm run build` со сверкой трёх копий бандла, плюс
             `node scripts/check-docs.mjs`, если diff трогает `src/**`.
-            Зависимости уже установлены workflow, Chromium тоже — `npm ci`
-            выполнять не нужно. По диффу и AC: браузерные смоки — названные в AC
+            ${{ needs.guard.outputs.stage == 'spec' && 'Зависимости и Chromium на этапе spec не ставились (#696).' || (needs.prepare.outputs.track == 'show' && 'Зависимости установлены (`npm ci` не нужен); Chromium — только если тело issue называет смоук (#696).' || 'Зависимости уже установлены workflow, Chromium тоже — `npm ci` выполнять не нужно.') }}
+            По диффу и AC: браузерные смоки — названные в AC
             плюс вывод `node scripts/smoke-select.mjs --base <base> --head <head>`,
             приложенный к комментарию с решением по каждой строке: прогнал либо
             не прогнал и почему. Три вида ответа инструмента разные: «прямое
@@ -1248,6 +1361,7 @@ jobs:
           MODEL_RESULT: ${{ needs.model_review.result }}
           PROCEED: ${{ needs.prepare.outputs.proceed }}
           REUSE: ${{ needs.prepare.outputs.reuse }}
+          SHIP: ${{ needs.prepare.outputs.ship }}
         run: |
           if [ "$PREPARE_RESULT" != "success" ]; then
             echo "::error::стадия deterministic prerequisites завершилась: $PREPARE_RESULT"
@@ -1263,7 +1377,8 @@ jobs:
             echo "proceed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if [ "$REUSE" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then
+          # #696: `ship` в рамках модель не вызывает — её результата не ждём.
+          if [ "$REUSE" != "true" ] && [ "$SHIP" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then
             echo "::error::стадия model review завершилась: $MODEL_RESULT"
             exit 1
           fi
@@ -1282,7 +1397,7 @@ jobs:
           node-version: 22
 
       - name: Получить результат модели
-        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: review-result-${{ github.event.issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -1290,7 +1405,7 @@ jobs:
 
       - name: Проверить полноту и происхождение результата
         id: result
-        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
         # #556: единственное, что недоверенная стадия модели может передать
         # дальше, — этот artifact, и принимается он как ввод противника: полный
         # набор файлов, сходящиеся суммы, совпадение КАЖДОГО поля паспорта с
@@ -1326,7 +1441,7 @@ jobs:
       # Ревьюер пишет только в docs/reviews/. Что именно попадёт в коммит,
       # решает этот шаг, а не модель: всё остальное откатывается.
       - name: Опубликовать документ ревью
-        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
         env:
           TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ needs.prepare.outputs.branch }}
@@ -1499,7 +1614,7 @@ jobs:
       # достижим там из необновлённой локальной ветки. Читателю отчёта от этого
       # пользы нет — он достанет только то, что есть на origin.
       - name: "Материал раунда воспроизводим (#413)"
-        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true'
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
         env:
           NUM: ${{ github.event.issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
@@ -1524,10 +1639,28 @@ jobs:
           REUSE_DOC: ${{ needs.prepare.outputs.reuse_doc }}
           REUSE_ROUND: ${{ needs.prepare.outputs.reuse_round }}
           REUSE_TREE: ${{ needs.prepare.outputs.reuse_tree }}
+          SHIP: ${{ needs.prepare.outputs.ship }}
+          MATERIAL: ${{ needs.prepare.outputs.material_sha }}
+          VALIDATE_URL: ${{ needs.prepare.outputs.validate_url }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           NUM: ${{ github.event.issue.number }}
         run: |
-          if [ "$REUSE" = "true" ]; then
+          # Повторно применимый зелёный вердикт (#499) главнее ship: код уже
+          # прочитан моделью, и пакетному ревью перечитывать его незачем.
+          if [ "$SHIP" = "true" ] && [ "$REUSE" != "true" ]; then
+            # #696: `ship` в рамках (PROCESS.md §5) сливается без ревью модели
+            # после зелёного лёгкого Validate. Комментарий — не вердикт ревью и
+            # так себя не называет: ревью не было. Машинный маркер находит
+            # пакетное ревью диапазона перед бетой (ship-review.mjs, §11.7).
+            verdict=green; high=0
+            short=$(printf '%s' "$MATERIAL" | cut -c1-8)
+            cat > /tmp/ship-merge.md <<EOF
+          **Слияние без ревью модели: трек ship (PROCESS.md §5, #696).** Правка укладывается в механические рамки ship, лёгкий Validate на \`$short\` зелёный${VALIDATE_URL:+ ([прогон]($VALIDATE_URL))}. Код до слияния не читал никто: его прочтёт пакетное ревью диапазона перед бетой (PROCESS.md §11.7), документ \`docs/reviews/SHIP-REVIEW-<тег>.md\`.
+
+          <!-- hp:ship-merge material=$MATERIAL -->
+          EOF
+            gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/ship-merge.md
+          elif [ "$REUSE" = "true" ]; then
             # Модель не вызывалась: вердикт — записанный конвейером зелёный
             # прошлого захода, дерево вне docs/reviews с тех пор не менялось (#499).
             verdict=green; high=0
@@ -1607,6 +1740,8 @@ jobs:
           BRANCH: ${{ needs.prepare.outputs.branch }}
           NUM: ${{ github.event.issue.number }}
           MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
+          # #696: show/ship сливаются по лёгкому Validate на кандидате.
+          MUTANTS: ${{ needs.prepare.outputs.mutants }}
         run: |
           if [ -z "$BRANCH" ]; then
             echo "::error::ветки задачи нет — сливать нечего"
@@ -1614,7 +1749,7 @@ jobs:
             exit 0
           fi
           node scripts/merge-candidate.mjs --branch="$BRANCH" --material="$MATERIAL_SHA" \
-            --issue="$NUM" --repo="${{ github.repository }}"
+            --issue="$NUM" --repo="${{ github.repository }}" --mutants="${MUTANTS:-true}"
 
       - name: Переставить метку
         if: steps.ready.outputs.proceed == 'true'
@@ -1661,13 +1796,14 @@ jobs:
           MODEL_RESULT: ${{ needs.model_review.result }}
           PROCEED: ${{ needs.prepare.outputs.proceed }}
           REUSE: ${{ needs.prepare.outputs.reuse }}
+          SHIP: ${{ needs.prepare.outputs.ship }}
         run: |
           stage="публикация/интеграция"
           detail="Модель уже завершила работу; её запечатанный результат сохранён artifact-ом этого run, но не был применён."
           if [ "$PREPARE_RESULT" != "success" ]; then
             stage="deterministic prerequisites"
             detail="Модель не запускалась, цикл ревью не израсходован."
-          elif [ "$PROCEED" = "true" ] && [ "$REUSE" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then
+          elif [ "$PROCEED" = "true" ] && [ "$REUSE" != "true" ] && [ "$SHIP" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then
             stage="model review"
             detail="Полного валидного результата модели нет; метка не менялась."
           fi

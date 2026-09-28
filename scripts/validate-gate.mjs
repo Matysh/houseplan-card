@@ -7,7 +7,7 @@
  * доказательство для ревью — dispatch-прогон на точном SHA материала. Push-
  * прогон на том же SHA зелёный не считается: в нём мутантов нет.
  *
- *   node scripts/validate-gate.mjs --repo=<owner/repo> --ref=<ветка> --sha=<sha> [--workflow=validate.yml] [--no-wait]
+ *   node scripts/validate-gate.mjs --repo=<owner/repo> --ref=<ветка> --sha=<sha> [--workflow=validate.yml] [--no-wait] [--mutants=false]
  *
  * Печатает `result=green|failed|missing|pending`, `url=…`, `run_id=…` (и в
  * $GITHUB_OUTPUT, если он задан); код выхода 0 только при green, 2 — pending.
@@ -45,6 +45,19 @@ export function isMutantRun(run) {
   return run?.event === 'workflow_dispatch';
 }
 
+/**
+ * #696: какие прогоны годятся в доказательство. С мутантами — только dispatch
+ * (push их не запрашивает). Без мутантов (`show`/`ship`) годится и
+ * завершённый push-прогон на материале: лёгкий Validate на этом SHA уже
+ * исполнен, и dispatch повторил бы его. Ждать же можно только dispatch:
+ * продолжение раунда будит его завершение (process-resume.yml слушает
+ * `workflow_dispatch`), и push, который ещё идёт, раунд не разбудил бы.
+ */
+export function proofCandidate(run, { mutants = true } = {}) {
+  if (mutants) return isMutantRun(run);
+  return run?.event === 'workflow_dispatch' || (run?.event === 'push' && run?.status === 'completed');
+}
+
 // #622: префикс — из контракта ci-proof (JOB_RULES.mutants), который сверяется
 // с validate.yml; своей строки здесь больше нет.
 export { MUTANT_JOB_PREFIX };
@@ -72,7 +85,10 @@ export function provesMutants(jobs) {
  */
 export async function validateGate({
   ref, sha, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS, wait = true,
+  mutants = true,
 }) {
+  const policy = mutants ? CI_PROOF_POLICIES.review : CI_PROOF_POLICIES.reviewLight;
+  const label = mutants ? 'Validate с мутантами' : 'Validate';
   const started = ops.now();
   const candidateTree = await ops.candidateTree(sha);
   const ignored = new Set(); // завершённые dispatch без применимого proof
@@ -80,14 +96,19 @@ export async function validateGate({
   let dispatchedAt = null;
   let attempts = 0;
   while (ops.now() - started < totalMs) {
-    const runs = (await ops.listRuns(sha)).filter((x) => isMutantRun(x) && !ignored.has(x.databaseId));
-    const run = runs.find((x) => tracked && x.databaseId === tracked) || runs[0];
+    const runs = (await ops.listRuns(sha)).filter((x) => proofCandidate(x, { mutants }) && !ignored.has(x.databaseId));
+    // Без мутантов завершённый прогон на материале предпочтительнее идущего
+    // dispatch: доказательство уже есть, ждать нечего (#696). С мутантами
+    // порядок прежний — свежий прогон решает.
+    const run = runs.find((x) => tracked && x.databaseId === tracked)
+      || (!mutants && runs.find((x) => x.status === 'completed'))
+      || runs[0];
     if (run) {
       tracked = run.databaseId;
       if (run.status === 'completed') {
         const context = await ops.proof(run);
         const verdict = evaluateCiProof({
-          run, ...context, candidate: { sha, tree: candidateTree }, policy: CI_PROOF_POLICIES.review,
+          run, ...context, candidate: { sha, tree: candidateTree }, policy,
         });
         if (verdict.status === 'green') return { result: 'green', url: verdict.url, note: verdict.note };
         if (verdict.status === 'failed') return { result: 'failed', url: verdict.url, note: verdict.note };
@@ -100,11 +121,11 @@ export async function validateGate({
         // #636: прогон найден и идёт — ждать его будет событие, не раннер.
         return {
           result: 'pending', url: run.url || null, runId: run.databaseId,
-          note: `Validate с мутантами идёт (${run.status}); продолжение — по завершении прогона`,
+          note: `${label} идёт (${run.status}); продолжение — по завершении прогона`,
         };
       }
     } else if (dispatchedAt === null) {
-      await ops.dispatch(ref);
+      await ops.dispatch(ref, { mutants });
       dispatchedAt = ops.now();
       attempts = 1;
     } else if (ops.now() - dispatchedAt > appearMs) {
@@ -116,7 +137,7 @@ export async function validateGate({
       // чужой коммит переживёт и вторую попытку.
       const elsewhere = (await ops.listRunsOnRef(ref)).filter(isMutantRun).find((x) => x.headSha && x.headSha !== sha);
       if (elsewhere && attempts < DISPATCH_ATTEMPTS) {
-        await ops.dispatch(ref);
+        await ops.dispatch(ref, { mutants });
         dispatchedAt = ops.now();
         attempts += 1;
         await ops.sleep(pollMs);
@@ -131,7 +152,7 @@ export async function validateGate({
     }
     await ops.sleep(pollMs);
   }
-  return { result: 'failed', url: null, note: 'Validate с мутантами не завершился за 45 минут' };
+  return { result: 'failed', url: null, note: `${label} не завершился за 45 минут` };
 }
 
 const sh = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8' });
@@ -151,8 +172,8 @@ export function realOps({ repo, workflow = 'validate.yml', token = process.env.G
       catch { return { proof: null, jobs: [], reuseRuns: new Map() }; }
     },
     listRunsOnRef: async (ref) => parse(sh('gh', ['run', 'list', '--repo', repo, '--workflow', workflow, '--branch', ref, '--event', 'workflow_dispatch', '--json', fields, '--limit', '5'])),
-    dispatch: async (ref) => {
-      const r = sh('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', 'mutants=true']);
+    dispatch: async (ref, { mutants = true } = {}) => {
+      const r = sh('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', `mutants=${mutants ? 'true' : 'false'}`]);
       if (r.status !== 0) throw new Error(`gh workflow run: ${r.stderr || r.stdout}`);
     },
     sleep: (ms) => new Promise((done) => setTimeout(done, ms)),
@@ -167,11 +188,13 @@ if (invokedDirectly) {
   const ref = arg('ref');
   const sha = arg('sha');
   if (!repo || !ref || !sha) {
-    console.error('usage: validate-gate.mjs --repo=<owner/repo> --ref=<branch> --sha=<sha> [--workflow=validate.yml]');
+    console.error('usage: validate-gate.mjs --repo=<owner/repo> --ref=<branch> --sha=<sha> [--workflow=validate.yml] [--mutants=false] [--no-wait]');
     process.exit(2);
   }
   const wait = !process.argv.includes('--no-wait');
-  const outcome = await validateGate({ ref, sha, wait, ops: realOps({ repo, workflow: arg('workflow') || 'validate.yml' }) });
+  // #696: `--mutants=false` — лёгкое доказательство треков show/ship.
+  const mutants = arg('mutants') !== 'false';
+  const outcome = await validateGate({ ref, sha, wait, mutants, ops: realOps({ repo, workflow: arg('workflow') || 'validate.yml' }) });
   const lines = [`result=${outcome.result}`, `url=${outcome.url || ''}`, `run_id=${outcome.runId || ''}`, `note=${outcome.note}`];
   for (const line of lines) console.log(line);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`);

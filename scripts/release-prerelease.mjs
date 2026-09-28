@@ -503,6 +503,11 @@ if (invokedDirectly) {
     const bundleSha256 = bundleSnapshot.entrySha256;
     const validateRuns = await assertGreenValidate(sha);
     validateIssues();
+    // #696, PROCESS.md §11.7: ship-задачи диапазона слиты без ревью модели —
+    // бета только после пакетного ревью их кода (`ship-review.yml`).
+    run(process.execPath, [
+      'scripts/ship-review.mjs', 'check', `--tag=${tag}`, `--candidate=${sha}`, `--repo=${repo}`,
+    ], { inherit: true });
     const history = readCandidateHistory(sha);
     const generatedMembership = buildReleaseMembership({
       tag, candidate: sha, base: history.base, commits: history.commits, issueNumbers: issues,

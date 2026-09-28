@@ -25,9 +25,16 @@ export const CI_PROOF_STATES = Object.freeze([
 // требует (#601): к кандидату беты каждая задача прогнана ими на ревью и на
 // слитом кандидате, а `Release:` мутантов больше не запрашивает — политика
 // с `mutants: true` объявляла бы каждый кандидат беты `stale`.
+//
+// #696: треки `show` и `ship` (PROCESS §5) мутантов по диффу до слияния не
+// запрашивают — их доказательство лёгкое, `reviewLight`/`mergeLight`. Мутанты
+// у них остаются в ночном полном реестре; `track:ask` и метка `ci:mutants`
+// идут по прежним `review`/`merge`.
 export const CI_PROOF_POLICIES = Object.freeze({
   review: Object.freeze({ name: 'review', full: false, mutants: true }),
   merge: Object.freeze({ name: 'merge', full: false, mutants: true }),
+  reviewLight: Object.freeze({ name: 'review-light', full: false, mutants: false }),
+  mergeLight: Object.freeze({ name: 'merge-light', full: false, mutants: false }),
   release: Object.freeze({ name: 'release', full: true, mutants: false }),
 });
 

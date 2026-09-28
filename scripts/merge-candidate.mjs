@@ -132,6 +132,7 @@ export function realOps({
   now = Date.now, exec = sh,
   candidateTree = (sha) => githubCandidateTree({ repo, sha, token }),
   proofContext = (run) => loadGithubProofContext({ repo, run, token }),
+  mutants = true,
 }) {
   const pushUrl = `https://x-access-token:${token}@github.com/${repo}`;
   const git = (...args) => exec('git', args);
@@ -187,8 +188,8 @@ export function realOps({
     // Мутанты по диффу бегут только по запросу (#510): кандидат после ребейза —
     // новое дерево, поэтому слияние запускает Validate с мутантами само и ждёт
     // именно этот dispatch-прогон; push-прогон на том же SHA их не содержит.
-    dispatchValidate: (ref) => {
-      const r = exec('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', 'mutants=true']);
+    dispatchValidate: (ref, { mutants: withMutants = mutants } = {}) => {
+      const r = exec('gh', ['workflow', 'run', workflow, '--repo', repo, '--ref', ref, '-f', 'full=false', '-f', `mutants=${withMutants ? 'true' : 'false'}`]);
       if (r.status !== 0) throw new Error(`gh workflow run ${workflow}: ${r.stderr || r.stdout}`);
     },
     waitValidate: async (sha, { event = 'workflow_dispatch' } = {}) => {
@@ -208,7 +209,7 @@ export function realOps({
             try { context = await proofContext(run); }
             catch { context = { proof: null, jobs: [], reuseRuns: new Map() }; }
             const verdict = evaluateCiProof({
-              run, ...context, candidate: { sha, tree }, policy: CI_PROOF_POLICIES.merge,
+              run, ...context, candidate: { sha, tree }, policy: mutants ? CI_PROOF_POLICIES.merge : CI_PROOF_POLICIES.mergeLight,
             });
             if (verdict.status === 'green' || verdict.status === 'failed')
               return { result: verdict.status, url: verdict.url, note: verdict.note };
@@ -234,7 +235,7 @@ export function realOps({
 /**
  * Слияние по алгоритму §4.2. Возвращает { merged, to, action, candidate }.
  */
-export async function mergeCandidate({ branch, material, issue, ops, maxAttempts = MAX_ATTEMPTS }) {
+export async function mergeCandidate({ branch, material, issue, ops, maxAttempts = MAX_ATTEMPTS, mutants = true }) {
   ops.fetch('dev', branch);
   const actual = ops.revParse(`origin/${branch}`);
   const reviewedFresh = actual === material
@@ -280,10 +281,29 @@ export async function mergeCandidate({ branch, material, issue, ops, maxAttempts
     tip = candidate;
     if (!patchIdEqual) return finish(decideMerge({ fresh: true, devMoved: true, patchIdEqual: false }), { candidate, devNow });
 
-    // мутанты по диффу — по запросу (#510): dispatch на ветке, где теперь стоит кандидат
-    ops.dispatchValidate(branch);
-    ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);
-    const { result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' });
+    // мутанты по диффу — по запросу (#510): dispatch на ветке, где теперь стоит
+    // кандидат.
+    //
+    // #696: на треках show/ship мутантов нет, и лёгкий Validate на кандидате
+    // уже запустил сам push выше — второй, dispatch-прогон, повторил бы его
+    // целиком. Ждётся push-прогон; dispatch — только если его нет: push, в
+    // котором сдвинулись одни docs/reviews/**, Validate не запускает
+    // (paths-ignore), а отменённый concurrency прогон заменить некому.
+    let result;
+    let url;
+    if (mutants) {
+      ops.dispatchValidate(branch);
+      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);
+      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' }));
+    } else {
+      ops.log(`лёгкий Validate на кандидате ${candidate.slice(0, 8)} — ждём push-прогон`);
+      ({ result, url } = await ops.waitValidate(candidate, { event: 'push' }));
+      if (result === 'missing') {
+        ops.log('push-прогона на кандидате нет — лёгкий dispatch');
+        ops.dispatchValidate(branch);
+        ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' }));
+      }
+    }
     let decision = decideMerge({ fresh: true, devMoved: true, patchIdEqual: true, validate: result, attempt, maxAttempts });
     if (decision.action !== 'push') return finish(decision, { candidate, devNow, runUrl: url });
 
@@ -306,11 +326,13 @@ if (isMainModule(import.meta.url)) { // #496: переносимо для Window
   const repo = arg('repo') || process.env.GITHUB_REPOSITORY;
   const token = process.env.HP_PROCESS_TOKEN || process.env.TOKEN;
   if (!branch || !material || !issue || !repo || !token) {
-    console.error('usage: merge-candidate.mjs --branch=<issue branch> --material=<sha> --issue=<n> [--repo=owner/name]; HP_PROCESS_TOKEN in env');
+    console.error('usage: merge-candidate.mjs --branch=<issue branch> --material=<sha> --issue=<n> [--repo=owner/name] [--mutants=false]; HP_PROCESS_TOKEN in env');
     process.exit(2);
   }
-  const ops = realOps({ repo, token, issue });
-  mergeCandidate({ branch, material, issue, ops }).then((r) => {
+  // #696: `--mutants=false` — треки show/ship сливаются по лёгкому Validate.
+  const mutants = arg('mutants') !== 'false';
+  const ops = realOps({ repo, token, issue, mutants });
+  mergeCandidate({ branch, material, issue, ops, mutants }).then((r) => {
     const out = `merged=${r.merged}\nto=${r.to || ''}\naction=${r.action}\ncandidate=${r.candidate}\n`;
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, out);
     process.stdout.write(out);

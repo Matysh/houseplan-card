@@ -5494,8 +5494,8 @@ const MUTANT_DEFINITIONS = [
       + 'it without a green Validate on that SHA is the false-green the audit reproduced (#492 §4)',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: "    const { result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' });",
-      replace: "    const { result, url } = { result: 'green', url: 'skipped' };  // mutant: no validation",
+      find: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' }));",
+      replace: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = { result: 'green', url: 'skipped' }); // mutant: no validation",
     }],
   },
   {
@@ -10613,7 +10613,7 @@ const MUTANT_DEFINITIONS = [
       + 'остановиться, сохранить метку и назвать упавшую стадию',
     patches: [{
       file: '.github/workflows/_process.yml',
-      find: '          if [ "$REUSE" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then',
+      find: '          if [ "$REUSE" != "true" ] && [ "$SHIP" != "true" ] && [ "$MODEL_RESULT" != "success" ]; then',
       replace: '          if false; then # mutant: every model result is accepted',
     }],
   },
@@ -12239,8 +12239,8 @@ const MUTANT_DEFINITIONS = [
       + 'wait for that run, not for the push run that carries no mutants (#510 AC3)',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: "    ops.dispatchValidate(branch);\n    ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n    const { result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' });",
-      replace: "    ops.log(`Validate на кандидате ${candidate.slice(0, 8)} — ждём`);\n    const { result, url } = await ops.waitValidate(candidate); // mutant: push run, no dispatch",
+      find: "      ops.dispatchValidate(branch);\n      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' }));",
+      replace: "      ops.log(`Validate на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate)); // mutant: push run, no dispatch",
     }],
   },
   {
@@ -13355,6 +13355,104 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/task-packet.mjs',
       find: "  const infraTrack = hasTrackLabel(labels) ? trackFromLabels(labels) : 'show';",
       replace: '  const infraTrack = trackFromLabels(labels); // mutant: unlabelled infra reads as ask',
+    }],
+  },
+  // #696: цена захода по треку — мутанты, рамки ship, пакетное ревью перед бетой.
+  {
+    id: 'track-show-pays-for-mutants',
+    guard: 'node --test --test-name-pattern="мутанты по диффу — только ask" test/process-track.test.mjs',
+    because: '#696: show/ship request no diff mutants before merge; only ask and the ci:mutants '
+      + 'label do — otherwise every small task pays the 28-minute mutant run again',
+    patches: [{
+      file: 'scripts/process-track.mjs',
+      find: "  const mutants = track === 'ask' || labels.includes('ci:mutants');",
+      replace: '  const mutants = true; // mutant: every track pays for mutants',
+    }],
+  },
+  {
+    id: 'ship-limits-miss-new-src-file',
+    guard: 'node --test --test-name-pattern="рамки ship: новые файлы" test/process-track.test.mjs',
+    because: '#696: a new file in src/** is outside ship limits — ship merges without a model '
+      + 'review, so the mechanical limits are the only thing standing between it and dev',
+    patches: [{
+      file: 'scripts/process-track.mjs',
+      find: '  if (added.length) out.push(',
+      replace: '  if (false && added.length) out.push(',
+    }],
+  },
+  {
+    id: 'ship-limit-off-by-one',
+    guard: 'node --test --test-name-pattern="граница включительна" test/process-track.test.mjs',
+    because: '#696: the ship limit is 30 src lines inclusive (owner decision); 30 lines still ship',
+    patches: [{
+      file: 'scripts/process-track.mjs',
+      find: '  if (lines > SHIP_SRC_LINE_LIMIT) out.push(',
+      replace: '  if (lines >= SHIP_SRC_LINE_LIMIT) out.push(',
+    }],
+  },
+  {
+    id: 'pipeline-ship-ignores-limits',
+    guard: 'node --test --test-name-pattern="трек снимается до ребейза" test/process-track.test.mjs',
+    because: '#696: ship skips the model only inside the limits; ignoring the limits merges '
+      + 'unread code of any size',
+    patches: [{
+      file: '.github/workflows/_process.yml',
+      find: "            if printf '%s\\n' \"$limits\" | grep -qx 'ship=true'; then",
+      replace: '            if true; then # mutant: ship limits ignored',
+    }],
+  },
+  {
+    id: 'light-review-waits-running-push',
+    guard: 'node --test --test-name-pattern="#696" test/validate-gate.test.mjs',
+    because: '#696: a running push run cannot wake the round (process-resume listens to '
+      + 'dispatch only); treating it as proof candidate parks the round forever',
+    patches: [{
+      file: 'scripts/validate-gate.mjs',
+      find: "  return run?.event === 'workflow_dispatch' || (run?.event === 'push' && run?.status === 'completed');",
+      replace: "  return run?.event === 'workflow_dispatch' || run?.event === 'push'; // mutant: running push counts",
+    }],
+  },
+  {
+    id: 'light-merge-dispatches-second-run',
+    guard: 'node --test --test-name-pattern="слияние ждёт push-прогон" test/merge-candidate.test.mjs',
+    because: '#696: the candidate push already starts the light Validate; a second dispatch '
+      + 'doubles runner minutes on every show/ship merge',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: "      ({ result, url } = await ops.waitValidate(candidate, { event: 'push' }));",
+      replace: "      ops.dispatchValidate(branch); ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch' })); // mutant: second run",
+    }],
+  },
+  {
+    id: 'ship-review-ignores-merge-marker',
+    guard: 'node --test --test-name-pattern="ship-задача — по маркеру" test/ship-review.test.mjs',
+    because: '#696: the pipeline marker proves a merge without model review even when the '
+      + 'label was changed afterwards; missing it lets unread code into a beta',
+    patches: [{
+      file: 'scripts/ship-review.mjs',
+      find: "  return names.includes('track:ship') || comments.some((c) => SHIP_MERGE_MARKER_RE.test(String(c?.body ?? '')));",
+      replace: "  return names.includes('track:ship'); // mutant: marker ignored",
+    }],
+  },
+  {
+    id: 'ship-review-accepts-partial-coverage',
+    guard: 'node --test --test-name-pattern="машинный блок покрывает" test/ship-review.test.mjs',
+    because: '#696: a ship task merged after the batch review ran was read by nobody; the beta '
+      + 'gate must refuse until the review is re-run',
+    patches: [{
+      file: 'scripts/ship-review.mjs',
+      find: '  if (missing.length) {',
+      replace: '  if (false && missing.length) {',
+    }],
+  },
+  {
+    id: 'ship-review-accepts-high',
+    guard: 'node --test --test-name-pattern="машинный блок покрывает" test/ship-review.test.mjs',
+    because: '#696: a High in the batch review is a defect a beta user would see; it blocks the beta',
+    patches: [{
+      file: 'scripts/ship-review.mjs',
+      find: '  else if (block.high > 0) problems.push(',
+      replace: '  else if (false && block.high > 0) problems.push(',
     }],
   },
 ];

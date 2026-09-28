@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { validateGate, isMutantRun, provesMutants } from '../scripts/validate-gate.mjs';
+import { validateGate, isMutantRun, proofCandidate, provesMutants } from '../scripts/validate-gate.mjs';
 import { buildCiProof } from '../scripts/ci-proof.mjs';
 import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
 
@@ -46,7 +46,7 @@ function fakeOps({ snapshots, onRef = [], jobsById = {} }) {
         });
         return { proof, jobs: [...BASE_JOBS, ...selected], reuseRuns: new Map() };
       },
-      dispatch: async (ref) => { dispatched.push(ref); },
+      dispatch: async (ref, { mutants = true } = {}) => { dispatched.push(mutants ? ref : `${ref}:light`); },
       sleep: async (ms) => { clock += ms; },
       now: () => clock,
     },
@@ -210,4 +210,35 @@ test('#636: с ожиданием (умолчание) поведение пре
   const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, pollMs: 1000 });
   assert.equal(outcome.result, 'green');
   assert.ok(fake.ops.now() > 0, 'один poll прошёл');
+});
+
+// #696: треки show/ship доказываются лёгким Validate — без мутантов по диффу.
+test('#696: without mutants a completed green push run on the material is proof, no dispatch', async () => {
+  const fake = fakeOps({ snapshots: [[run({ event: 'push', databaseId: 7, url: 'https://run/push' })]], jobsById: { 7: OTHER_JOBS } });
+  const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, mutants: false });
+  assert.equal(outcome.result, 'green');
+  assert.equal(outcome.url, 'https://run/push');
+  assert.deepEqual(fake.dispatched, []);
+});
+
+test('#696: without mutants a red push run returns the task, a push still running is not waited for', async () => {
+  const red = fakeOps({ snapshots: [[run({ event: 'push', databaseId: 7, conclusion: 'failure', url: 'https://run/red' })]], jobsById: { 7: OTHER_JOBS } });
+  assert.equal((await validateGate({ ref: 'issue/1', sha: SHA, ops: red.ops, mutants: false })).result, 'failed');
+  // Идущий push раунд не разбудит (resume слушает dispatch) — гейт диспатчит
+  // свой лёгкий прогон и ждёт уже его.
+  const running = [run({ event: 'push', databaseId: 7, status: 'in_progress', conclusion: null })];
+  const fake = fakeOps({ snapshots: [running, [...running, run({ databaseId: 8, status: 'in_progress', conclusion: null })]], jobsById: { 8: OTHER_JOBS } });
+  const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, mutants: false, wait: false, pollMs: 1000 });
+  assert.equal(outcome.result, 'pending');
+  assert.equal(outcome.runId, 8);
+  assert.deepEqual(fake.dispatched, ['issue/1:light'], 'the light dispatch asks for no mutants');
+});
+
+test('#696: a completed run beats a newer running dispatch only without mutants', async () => {
+  const done = run({ event: 'push', databaseId: 7, url: 'https://run/push' });
+  const running = run({ databaseId: 9, status: 'in_progress', conclusion: null });
+  const light = fakeOps({ snapshots: [[running, done]], jobsById: { 7: OTHER_JOBS } });
+  assert.equal((await validateGate({ ref: 'issue/1', sha: SHA, ops: light.ops, mutants: false, wait: false })).result, 'green');
+  assert.equal(proofCandidate(run({ event: 'push', status: 'in_progress' }), { mutants: false }), false);
+  assert.equal(proofCandidate(run({ event: 'push' }), { mutants: true }), false);
 });
