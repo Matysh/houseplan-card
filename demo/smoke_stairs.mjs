@@ -641,5 +641,56 @@ const out = await page.evaluate(async () => {
   return result;
 });
 
+// #686: a focused stair link paints no focus frame — neither the browser's
+// ring nor a replacement — and it still follows with Enter. The oracle is
+// pixels: the stair's area with a margin for the ring is captured unfocused
+// and with keyboard focus, and the two frames must be byte-identical.
+const focusProbe = await page.evaluate(async () => {
+  const card = window.__card;
+  const hp = window.__hpTest;
+  await hp.setVolumetricView(false);
+  await hp.switchSpace('f1');
+  await hp.setMode('view');
+  await hp.settled();
+  const node = card.renderRoot.querySelector('[data-hp="stair"][data-target-state="active"]');
+  const rect = node?.getBoundingClientRect();
+  return node ? { id: node.getAttribute('data-id'), x: rect.x, y: rect.y, w: rect.width, h: rect.height } : null;
+});
+out.focusProbeHasActiveStair = !!focusProbe && focusProbe.w > 0 && focusProbe.h > 0;
+if (focusProbe) {
+  const margin = 8;
+  const clip = {
+    x: Math.max(0, Math.floor(focusProbe.x - margin)), y: Math.max(0, Math.floor(focusProbe.y - margin)),
+    width: Math.ceil(focusProbe.w + 2 * margin), height: Math.ceil(focusProbe.h + 2 * margin),
+  };
+  await page.mouse.move(1, 1);
+  const shot = () => page.screenshot({ clip, animations: 'disabled', caret: 'hide' });
+  const unfocused = await shot();
+  // A real key press puts the page into keyboard modality, so the following
+  // programmatic focus matches :focus-visible exactly like Tab would.
+  await page.keyboard.press('Shift');
+  const focused = await page.evaluate(async (id) => {
+    const node = window.__card.renderRoot.querySelector(`[data-hp="stair"][data-id="${id}"]`);
+    node?.focus();
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return {
+      active: window.__card.renderRoot.activeElement === node,
+      visible: !!node?.matches(':focus-visible'),
+    };
+  }, focusProbe.id);
+  const withFocus = await shot();
+  out.keyboardFocusReachesStair = focused.active && focused.visible;
+  out.focusedStairPaintsNoFrame = focused.active && unfocused.equals(withFocus);
+  await page.keyboard.press('Enter');
+  out.focusedStairEnterNavigates = await page.evaluate(async () => {
+    const card = window.__card;
+    for (let guard = 0; card._cameraTransition?.active && guard < 90; guard++)
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    await window.__hpTest.settled();
+    return card.renderRoot.querySelector('[data-hp="space-tab"][aria-current="page"]')
+      ?.getAttribute('data-id') === 'garden';
+  });
+}
+
 checkAll(out);
 await finish(browser, out);

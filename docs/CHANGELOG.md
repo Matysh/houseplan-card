@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A floor-link stair in View no longer shows the browser's black-and-white
+  focus frame when it receives focus; it can still be reached with Tab and
+  followed with Enter or Space
+  ([#686](https://github.com/Matysh/houseplan-card/issues/686)).
+
 ## v1.78.0-beta.7 — 2026-09-28
 
 - Stairs now have two independent line and fill colours with opacity controls. A

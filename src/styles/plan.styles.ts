@@ -1590,6 +1590,11 @@ export const planStyles = css`
     .hp-stair-hit { fill: transparent; stroke: transparent; stroke-width: 14px; pointer-events: none; }
     .hp-stair.input-enabled .hp-stair-hit { pointer-events: all; }
     .hp-stair.navigable { cursor: pointer; }
+    /* #686 (owner, 2026-09-28): a stair link shows no focus indicator at all —
+       neither the browser's ring nor a replacement. It stays focusable, and
+       Enter/Space still follow it (#676). */
+    .hp-stair:focus,
+    .hp-stair:focus-visible { outline: none; }
     :host([data-pointer-hover]) .hp-stair.navigable:hover .hp-stair-outline {
       stroke: var(--hp-accent);
       stroke-opacity: 1;

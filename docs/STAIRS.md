@@ -57,7 +57,9 @@ state); a missing, self, deleted or fixed-floor target shows no tooltip.
 
 In an ordinary multi-space card, a clean click/tap or keyboard activation on a
 valid stair switches to the target tab and restores that floor's remembered
-camera. Pan, pinch, long press, swipe and pointer cancellation do not navigate.
+camera. A focused stair link draws no focus indicator — neither the browser's
+ring nor an outline of its own (owner's decision, #686); it stays in the Tab
+order, and Enter or Space still follow it. Pan, pinch, long press, swipe and pointer cancellation do not navigate.
 In a card configured with `floor`, stairs are visible but inert. The target
 floor receives no automatic stair, highlight or camera centring.
 
