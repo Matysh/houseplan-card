@@ -151,9 +151,12 @@ safety guarantee, not a promise of full touch parity for editor precision work.
 
 The Plan editor's Walls chain follows the same floor. One clean tap may append
 one segment; pan, pinch, a second pointer, `pointercancel` and a suppressed
-synthetic click never append, finish or convert the chain. Only an explicit
-tool/editor/floor change finishes an open chain as ordinary walls. Junction
-hover is best effort on coarse pointers; click resolution remains authoritative.
+synthetic click never append, finish or convert the chain. An open chain
+finishes as ordinary walls only through an explicit finish action: a
+tool/editor/floor change, `Esc`, the tray's Reset, route/hash departure or
+rejecting every closed face (docs/WALL-THICKNESS.md §11, Finishing a chain).
+Junction hover is best effort on coarse pointers; click resolution remains
+authoritative.
 With no active chain, a clean tap inside an exact bounded wall face may offer a
 room without drawing another segment; the tap is resolved again at commit time.
 Desktop `Shift` bypasses that offer and constrains drawing to an exact 45° ray;

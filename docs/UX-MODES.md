@@ -175,10 +175,12 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
 - Independent partitions and columns are masonry for hit testing as well as
   area/light: room hover stops at their physical bodies just as it stops at a
   thick room wall. This does not split the room or change its HA area.
-- Changing Plan tool, editor or floor finishes an open Walls chain as ordinary
-  partitions. Closing one or more planar faces opens the room queue; its
-  decisions are buffered and applied as one Undo/Redo transaction. Re-selecting
-  Walls, Reset, pan, pinch and pointer cancellation are not finish actions.
+- Changing Plan tool, editor or floor, `Esc`, the tray's Reset and route/hash
+  departure finish an open Walls chain as ordinary partitions
+  (docs/WALL-THICKNESS.md §11, Finishing a chain). Closing one or more planar
+  faces opens the room queue; its decisions are buffered and applied as one
+  Undo/Redo transaction. Re-selecting Walls, pan, pinch and pointer
+  cancellation are not finish actions.
 - Opening places every existing opening type on a room wall or a finished
   independent Walls segment. A hosted opening moves with that segment; deleting
   the segment requires an explicit cascade confirmation. Its physical gap does
@@ -265,9 +267,10 @@ layer you cannot see is a layer you cannot edit.
 ## Plan — independent physical objects
 
 - **Walls** draws one continuous crash-safe chain. Newly closed planar faces
-  may become rooms; changing tool/editor/floor finishes an open chain as
-  independent wall objects. A click on another saved draft endpoint may join
-  it, while branching from the middle of a saved draft is unsupported.
+  may become rooms; changing tool/editor/floor, `Esc` or the tray's Reset
+  finishes an open chain as independent wall objects. A click on another saved
+  draft endpoint may join it, while branching from the middle of a saved draft
+  is unsupported.
 - Finished independent walls remain selectable physical objects. **Column**
   places a square column whose side is the current Thickness value. Neither an
   independent wall nor a column creates a room or HA area by itself. A closed
