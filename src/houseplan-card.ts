@@ -10729,9 +10729,9 @@ export class HouseplanCard extends LitElement {
     const transitionBrightness = modeVisual?.sceneBrightness ?? 1;
     // View owns the eager hatch; 100% stays byte-compatible, scaled views avoid a cached tile.
     const hatchStep = wallHatchStepUnits(this._cellCm);
-    const wallHatch = this._zoom === 1
+    const wallHatch = svg`<defs>${this._zoom === 1
       ? svg`<pattern id=hp-wall-hatch patternUnits=userSpaceOnUse width=${hatchStep} height=${hatchStep} patternTransform=rotate(45)><path d="M0 0V${hatchStep}" stroke=${disp.color} stroke-width=${hatchStep / 4}/></pattern>`
-      : svg`<linearGradient id=hp-wall-hatch gradientUnits=userSpaceOnUse x2=${hatchStep} gradientTransform=rotate(45) spreadMethod=repeat><stop offset=.125 stop-color=${disp.color}/><stop offset=.125 stop-opacity=0 /><stop offset=.875 stop-opacity=0 /><stop offset=.875 stop-color=${disp.color}/></linearGradient>`;
+      : svg`<linearGradient id=hp-wall-hatch gradientUnits=userSpaceOnUse x2=${hatchStep} gradientTransform=rotate(45) spreadMethod=repeat><stop offset=.125 stop-color=${disp.color}/><stop offset=.125 stop-opacity=0 /><stop offset=.875 stop-opacity=0 /><stop offset=.875 stop-color=${disp.color}/></linearGradient>`}</defs>`;
     const editorClose = html`<span class="editor-close-slot" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>${this._mode !== 'view' ? html`<button
           class="closex" title=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')} data-hp="editor-close" data-editor-navigation="view"
           @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`

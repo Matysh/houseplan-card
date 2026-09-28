@@ -48,10 +48,11 @@ out.viewHoldInfo = await page.evaluate(() => { const r = !!window.__card._infoCa
 await page.evaluate(() => window.__card._setMode('plan'));
 await page.waitForFunction(() => window.__card._modeTransitionBusy === false);
 out.plan = await st();
-out.planIconsHidden = await page.evaluate(() => {
+// #687: Plan keeps device markers as translucent, inert landmarks.
+out.planIconsVisible = await page.evaluate(() => {
   const sr = window.__card.shadowRoot || window.__card.renderRoot;
   const dev = sr.querySelector('.dev');
-  return dev ? getComputedStyle(dev).display === 'none' : 'no-dev';
+  return dev ? getComputedStyle(dev).display !== 'none' : false;
 });
 // 4) режим Устройства: drag работает, клик открывает редактор
 await page.evaluate(() => window.__card._setMode('devices'));
