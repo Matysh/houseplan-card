@@ -52,12 +52,19 @@ const liveState = () => page.evaluate(() => {
     view: structuredClone(card._view),
     transformed: scenes.filter((node) => node.style.transform).length,
     sceneCount: scenes.length,
+    // #689: an exposed scene opens only within its bound; the filtered
+    // day-cycle outline (marked clip) is projected but never opened.
     allSceneOverflowOpen: scenes.length > 0
-      && scenes.every((node) => node.style.overflow === 'visible'),
+      && scenes.every((node) => (node.getAttribute('data-hp-live-overflow') === 'clip'
+        ? !node.style.overflow && !node.style.clipPath
+        : node.style.overflow === 'visible' && node.style.clipPath === 'inset(-25%)')),
     allScenePromoted: scenes.length > 0 && scenes.every((node) => node.style.transform
       && node.style.transformOrigin && node.style.willChange === 'transform'
-      && node.style.overflow === 'visible'),
+      && (node.getAttribute('data-hp-live-overflow') === 'clip'
+        ? !node.style.overflow && !node.style.clipPath
+        : node.style.overflow === 'visible' && node.style.clipPath === 'inset(-25%)')),
     allTemporaryStylesCleared: scenes.every((node) => !node.style.overflow
+      && !node.style.clipPath
       && !node.style.transform && !node.style.transformOrigin && !node.style.willChange),
     marker: centre(root.querySelector('[data-hp="device"]')),
     room: centre(root.querySelector('[data-hp="room"]')),

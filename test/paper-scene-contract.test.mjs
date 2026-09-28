@@ -33,7 +33,8 @@ test('#582 safe camera scene uses explicit bounded plan and outline layers', () 
   assert.match(card, /<svg class="plan-svg"/);
   assert.match(styles, /\.plan-svg \{ z-index: 1; \}/);
   assert.match(styles, /\.hp-paper-outline-svg \{[\s\S]*?z-index: 0;/);
-  assert.match(styles, /\.stage\.daycycle\.hp-safe-daycycle-outline \.plan-svg \{[\s\S]*?will-change:\s*transform;/);
+  // #689: explicit through the opacity hint; a transform hint froze the raster.
+  assert.match(styles, /\.stage\.daycycle\.hp-safe-daycycle-outline \.plan-svg \{[\s\S]*?will-change:\s*opacity;/);
   assert.match(staticCard, /\.hp-static-stage > \.hp-paper-outline-svg \{[\s\S]*?z-index:\s*0;/);
   assert.match(styles, /\.hp-static-stage\.daycycle \.hp-paper-outline-svg/);
   assert.match(styles, /\.hp-static-stage\.daycycle \.hp-paperg \{[\s\S]*?filter:\s*none;[\s\S]*?will-change:\s*auto;/);
