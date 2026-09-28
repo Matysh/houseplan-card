@@ -2,8 +2,9 @@
 // audit DEV-1DA1-02 (P2).
 //
 // `_stagePointerMove` locks the gesture on the first movement past 8 px
-// (`_panLock`: 'swipe' if it is horizontal enough inside the swipe zone, 'pan'
-// otherwise) and the plan then follows the finger. But `_stagePointerUp` used
+// (`_panLock`: 'swipe' only for a sufficiently horizontal inward move that
+// started inside the 48 px strip of an edge with a neighbour, 'pan' otherwise).
+// A pan then follows the finger. But `_stagePointerUp` used
 // to ignore that lock and ask `swipeTarget()` again, from the raw start→end
 // vector alone. A CURVED gesture — a small vertical lead-in that locks 'pan',
 // then a long horizontal sweep — therefore panned under the finger and still
@@ -12,7 +13,7 @@
 //
 // The lock is now final: with `_panLock === 'pan'` the floor never changes, no
 // matter what the overall vector looks like. The two straight gestures keep
-// their old behaviour, and so does the motionless double tap (no movement,
+// their intended behaviour, and so does the motionless double tap (no movement,
 // no lock — the swipe path is never even reached by it).
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
@@ -29,6 +30,10 @@ const out = await page.evaluate(async () => {
   await k.updateComplete;
   const sr = k.shadowRoot || k.renderRoot;
   const stage = sr.querySelector('.stage');
+  const rect = stage.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const rightEdgeX = rect.right - 20;
   const fire = (type, id, x, y) => stage.dispatchEvent(new PointerEvent(type, {
     bubbles: true, composed: true, cancelable: true, pointerId: id,
     pointerType: 'touch', isPrimary: true, button: 0, clientX: x, clientY: y,
@@ -36,8 +41,10 @@ const out = await page.evaluate(async () => {
   o.kioskHasSeveralSpaces = k._model.length > 1;
 
   const home = async () => {
+    k._commitSpace(k._model[0].id, true);
     const vb = k._baseVb();
     k._applyView(1, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2);
+    k.requestUpdate();
     await k.updateComplete;
   };
   /**
@@ -67,42 +74,76 @@ const out = await page.evaluate(async () => {
   // ---- 1. the auditor's curved pan: vertical lead-in, horizontal ending --
   // (500,300) → (502,312) locks 'pan' → curve left to (350,304) → release.
   // dx = -150, dy = +4: swipeTarget() would happily call that a swipe.
-  const curvedPan = await play(51, [500, 300], [[502, 312], [460, 310], [400, 306], [350, 304]]);
+  const curvedPan = await play(51, [centerX, centerY], [
+    [centerX + 2, centerY + 12], [centerX - 40, centerY + 10],
+    [centerX - 100, centerY + 6], [centerX - 150, centerY + 4],
+  ]);
   o.curvedPanLocksPan = curvedPan.lockAfterLeadIn === 'pan';
   o.curvedPanKeepsTheLock = curvedPan.lockBeforeRelease === 'pan';
   o.curvedPanActuallyPans = curvedPan.moved === true;
   o.curvedPanKeepsTheFloor = curvedPan.s1 === curvedPan.s0;
   // the same trajectory the other way round — a swipe to the right would have
   // been the previous floor, so the bug is symmetric and so is the fix
-  const curvedPanRight = await play(52, [400, 300], [[402, 312], [460, 308], [520, 305], [560, 304]]);
+  const curvedPanRight = await play(52, [centerX, centerY], [
+    [centerX + 2, centerY + 12], [centerX + 60, centerY + 8],
+    [centerX + 120, centerY + 5], [centerX + 160, centerY + 4],
+  ]);
   o.curvedPanRightLocksPan = curvedPanRight.lockAfterLeadIn === 'pan';
   o.curvedPanRightKeepsTheFloor = curvedPanRight.s1 === curvedPanRight.s0;
   // a long diagonal that ends up dominated by x, but started as a pan
-  const diagonalPan = await play(53, [500, 300], [[496, 316], [420, 340], [330, 350], [260, 352]]);
+  const diagonalPan = await play(53, [centerX, centerY], [
+    [centerX - 4, centerY + 16], [centerX - 80, centerY + 40],
+    [centerX - 170, centerY + 50], [centerX - 240, centerY + 52],
+  ]);
   o.diagonalPanLocksPan = diagonalPan.lockAfterLeadIn === 'pan';
   o.diagonalPanKeepsTheFloor = diagonalPan.s1 === diagonalPan.s0;
+  // Even when a drag starts in the active edge strip, a vertical first move
+  // owns it as pan forever; a later horizontal tail cannot reclassify release.
+  const edgeCurvedPan = await play(62, [rightEdgeX, centerY], [
+    [rightEdgeX - 2, centerY + 14], [rightEdgeX - 80, centerY + 10],
+    [rightEdgeX - 170, centerY + 5],
+  ]);
+  o.edgeCurvedPanLocksPan = edgeCurvedPan.lockAfterLeadIn === 'pan';
+  o.edgeCurvedPanActuallyPans = edgeCurvedPan.moved === true;
+  o.edgeCurvedPanKeepsTheFloor = edgeCurvedPan.s1 === edgeCurvedPan.s0;
 
   // ---- 2. a gesture locked as a SWIPE keeps its own semantics ------------
   // horizontal lead-in locks 'swipe'; the plan must not slide under it, even
   // when the trajectory then bends vertically and the final vector no longer
   // qualifies — the floor simply stays, and nothing pans
-  const curvedSwipe = await play(54, [600, 300], [[540, 302], [536, 380], [545, 500]]);
+  const curvedSwipe = await play(54, [rightEdgeX, centerY], [
+    [rightEdgeX - 60, centerY + 2], [rightEdgeX - 64, centerY + 80],
+    [rightEdgeX - 55, centerY + 200],
+  ]);
   o.curvedSwipeLocksSwipe = curvedSwipe.lockAfterLeadIn === 'swipe';
   o.curvedSwipeNeverPans = curvedSwipe.moved === false;
   o.curvedSwipeThatDiesChangesNothing = curvedSwipe.s1 === curvedSwipe.s0;
   // a swipe that bends but still ends as a swipe does switch the floor
-  const bentSwipe = await play(55, [600, 300], [[540, 302], [470, 330], [420, 340]]);
+  const bentSwipe = await play(55, [rightEdgeX, centerY], [
+    [rightEdgeX - 60, centerY + 2], [rightEdgeX - 130, centerY + 30],
+    [rightEdgeX - 180, centerY + 40],
+  ]);
   o.bentSwipeLocksSwipe = bentSwipe.lockAfterLeadIn === 'swipe';
   o.bentSwipeNeverPans = bentSwipe.moved === false;
   o.bentSwipeStillSwitches = bentSwipe.s1 !== bentSwipe.s0;
 
   // ---- 3. the straight gestures are exactly as they were -----------------
-  const straightSwipe = await play(56, [600, 300], [[540, 302], [480, 305], [450, 305]]);
+  const straightSwipe = await play(56, [rightEdgeX, centerY], [
+    [rightEdgeX - 60, centerY + 2], [rightEdgeX - 120, centerY + 5],
+    [rightEdgeX - 150, centerY + 5],
+  ]);
   o.straightSwipeSwitches = straightSwipe.s1 !== straightSwipe.s0;
   o.straightSwipeDoesNotPan = straightSwipe.moved === false;
-  const straightPan = await play(57, [450, 200], [[452, 260], [454, 330]]);
+  const straightPan = await play(57, [centerX, centerY - 100], [
+    [centerX + 2, centerY - 40], [centerX + 4, centerY + 30],
+  ]);
   o.straightPanPans = straightPan.moved === true;
   o.straightPanKeepsTheFloor = straightPan.s1 === straightPan.s0;
+  const centralHorizontalPan = await play(61, [centerX, centerY], [
+    [centerX - 60, centerY + 2], [centerX - 150, centerY + 5],
+  ]);
+  o.centralHorizontalDragPans = centralHorizontalPan.moved === true;
+  o.centralHorizontalDragKeepsTheFloor = centralHorizontalPan.s1 === centralHorizontalPan.s0;
 
   // ---- 4. a motionless double tap still resets the zoom ------------------
   // no movement means no lock at all, so nothing above can reach this path
@@ -110,8 +151,8 @@ const out = await page.evaluate(async () => {
   k._applyView(2);
   await k.updateComplete;
   for (const id of [58, 60]) {
-    fire('pointerdown', id, 500, 300);
-    fire('pointerup', id, 501, 300);
+    fire('pointerdown', id, centerX, centerY);
+    fire('pointerup', id, centerX + 1, centerY);
   }
   const resetStarted = performance.now();
   do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
@@ -125,11 +166,11 @@ const out = await page.evaluate(async () => {
   await k.updateComplete;
   const zoomed = await (async () => {
     const s0 = k._space;
-    fire('pointerdown', 59, 600, 300);
-    fire('pointermove', 59, 540, 302);
+    fire('pointerdown', 59, rightEdgeX, centerY);
+    fire('pointermove', 59, rightEdgeX - 60, centerY + 2);
     const lock = k._panLock;
-    fire('pointermove', 59, 480, 305);
-    fire('pointerup', 59, 480, 305);
+    fire('pointermove', 59, rightEdgeX - 120, centerY + 5);
+    fire('pointerup', 59, rightEdgeX - 120, centerY + 5);
     await k.updateComplete;
     return { lock, same: k._space === s0 };
   })();

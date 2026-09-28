@@ -1998,6 +1998,89 @@ export function migratePdfUrls<T extends { url: string }>(
 
 // ---------------- kiosk gestures ----------------
 
+export const SPACE_SWIPE_EDGE_PX = 48;
+export type SpaceSwipeEdge = 'previous' | 'next';
+export type SpaceDragOwner = 'pending' | 'pan' | 'swipe';
+export interface SpaceSwipePointerStart {
+  x: number;
+  y: number;
+  id: number;
+  edge: SpaceSwipeEdge;
+}
+
+/**
+ * The only places where a kiosk drag may become a space swipe. A missing
+ * neighbour deliberately leaves the edge to ordinary pan, so the first and
+ * last spaces never acquire a dead strip. Screen coordinates keep this
+ * independent from plan zoom, DPR and viewBox geometry.
+ */
+export function spaceSwipeEdgeAt(
+  clientX: number,
+  stageLeft: number,
+  stageWidth: number,
+  spaceIds: readonly string[],
+  current: string,
+  edgePx = SPACE_SWIPE_EDGE_PX,
+): SpaceSwipeEdge | null {
+  if (!Number.isFinite(clientX) || !Number.isFinite(stageLeft)
+      || !Number.isFinite(stageWidth) || stageWidth <= 0
+      || !Number.isFinite(edgePx) || edgePx <= 0) return null;
+  const offset = clientX - stageLeft;
+  if (offset < 0 || offset > stageWidth) return null;
+  const index = spaceIds.indexOf(current);
+  if (index < 0) return null;
+  const leftDistance = offset;
+  const rightDistance = stageWidth - offset;
+  const previous = index > 0 && leftDistance <= edgePx;
+  const next = index < spaceIds.length - 1 && rightDistance <= edgePx;
+  if (previous && next) return leftDistance <= rightDistance ? 'previous' : 'next';
+  if (previous) return 'previous';
+  if (next) return 'next';
+  return null;
+}
+
+export function beginSpaceSwipePointer(
+  enabled: boolean,
+  clientX: number,
+  clientY: number,
+  pointerId: number,
+  stageLeft: number,
+  stageWidth: number,
+  spaceIds: readonly string[],
+  current: string,
+): SpaceSwipePointerStart | null {
+  if (!enabled) return null;
+  const edge = spaceSwipeEdgeAt(clientX, stageLeft, stageWidth, spaceIds, current);
+  return edge ? { x: clientX, y: clientY, id: pointerId, edge } : null;
+}
+
+/** One irreversible classification after the existing eight-pixel boundary. */
+export function classifySpaceDrag(
+  edge: SpaceSwipeEdge | null,
+  dx: number,
+  dy: number,
+  minPx = 8,
+): SpaceDragOwner {
+  if (!Number.isFinite(dx) || !Number.isFinite(dy)
+      || !Number.isFinite(minPx) || minPx < 0) return 'pan';
+  if (Math.abs(dx) + Math.abs(dy) <= minPx) return 'pending';
+  const inward = edge === 'previous' ? dx > 0 : edge === 'next' && dx < 0;
+  return inward && Math.abs(dx) > Math.abs(dy) * 1.5 ? 'swipe' : 'pan';
+}
+
+/** Release may consult the vector only after the first-movement owner is final. */
+export function spaceSwipeTargetForOwner(
+  owner: 'pan' | 'swipe' | null,
+  dx: number,
+  dy: number,
+  zoom: number,
+  spaceIds: string[],
+  current: string,
+): string | null {
+  if (owner !== 'swipe') return null;
+  return swipeTarget(dx, dy, zoom, spaceIds, current);
+}
+
 /**
  * Kiosk swipe: which neighbouring space a horizontal gesture selects.
  * Only fires at 1:1 zoom (owner's decision — when zoomed the gesture pans),

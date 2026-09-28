@@ -433,9 +433,9 @@ precise drawing, Resize, keyboard modifiers and double-click properties.
 
 | Scenario | Mouse | Touch View | Touch editors | Keyboard |
 |---|---|---|---|---|
-| Zoom and pan | Wheel; drag empty space; `−`/`+`; double-click free background to Fit all | Pinch; drag; double-tap free background to Fit all | Available but precision is not guaranteed; no Fit-all double-tap | — |
-| Room | A clean click fits the room with 10% margins | One tap fits the room; repeated room taps never become Fit all | — | `Enter`/`Space` on a visible room label |
-| Change space | Click a tab | Tap; kiosk swipe at 1:1 | Tap a tab | — |
+| Zoom and pan | Wheel; drag empty space; `−`/`+`; double-click background/room to Fit all | Pinch; drag; double-tap background/room to Fit all | Available but precision is not guaranteed; no Fit-all double-tap | — |
+| Room | One clean click fits the room after the 350 ms double-click window | One clean tap fits the room after the 350 ms double-tap window | — | Immediate `Enter`/`Space` on a visible room label |
+| Change space | Click a tab | Tap; in kiosk at 1:1, swipe inward from the 48 px edge that has a neighbour | Tap a tab | — |
 | Device | Click/double-click per mode | Tap; safe actions equal desktop | Drag/properties are best effort | `Esc` closes the top surface |
 | Walls drawing or precise drag | Full contract | Not applicable | Best effort; use desktop for Resize and exact nodes | `Shift` changes magnet/angle; `Esc` finishes a Walls chain or cancels the current precise drag |
 | Editor history | Undo/Redo controls | Not applicable | Controls may work; no gesture guarantee | `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, `Ctrl+Y` |
@@ -443,7 +443,7 @@ precise drawing, Resize, keyboard modifiers and double-click properties.
 
 Important details:
 
-- wheel, `−`/`+`, **Fit all**, the return arrow and a free-background
+- wheel, `−`/`+`, **Fit all**, the return arrow and a plan-surface
   double-click/tap in View or kiosk use a short smooth camera transition;
   rapid wheel events update one destination instead of building a queue;
 - pinch and pan remain directly under the fingers; reduced motion makes every
@@ -454,8 +454,10 @@ Important details:
 - each space keeps its own local View viewport. Editor pan/zoom is a working
   view and does not replace it;
 - a hint appears when objects lie far away from the main plan;
-- above 1:1, a horizontal kiosk gesture pans instead of changing space. Any
-  manual kiosk operation pauses auto-cycle for 60 seconds;
+- a kiosk space swipe starts only in the inner 48 CSS px of an edge with a
+  neighbouring space, points inward and stays strongly horizontal. Elsewhere,
+  at an unavailable edge and above 1:1 the gesture pans. Any manual kiosk
+  operation pauses auto-cycle for 60 seconds;
 - `Shift` keeps positional grid snapping. For room walls it locks the current
   segment to the nearest 45° direction; in Background it creates a square or
   circle, allows independent axes for ordinary decor, unlocks furniture
@@ -1714,9 +1716,9 @@ cycle: 30
 | Card header | Hidden |
 | Editors | Unavailable |
 | Height | `100dvh` |
-| Swipe | Cycles spaces at 1:1 |
+| Swipe | At 1:1, switches to an existing neighbour from the inner 48 px edge |
 | Pinch/pan | Zooms and moves the plan |
-| Double-tap free background | Fits all content |
+| Double-tap background or room | Fits all content without an intermediate room jump |
 | Hold empty space for 3 seconds | Opens per-display icon/text sizing |
 | `cycle` | Automatically advances; any interaction pauses it for 60 seconds |
 

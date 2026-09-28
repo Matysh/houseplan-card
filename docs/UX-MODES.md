@@ -95,13 +95,14 @@ support. User documentation recommends desktop for creation and maintenance.
 
 ## View — display and device interaction only
 
-Allowed: pan/zoom (wheel, pinch, buttons, double-click/tap on free background
-to Fit all), switching spaces, device tap
+Allowed: pan/zoom (wheel, pinch, buttons, double-click/tap on background, room
+fill or passive room label to Fit all), switching spaces, device tap
 (info / more-info / toggle per settings), long-press → info card, lock-badge tap
 → door/lock info card (openings themselves are inert in View; the card carries an
 explicit Unlock/Lock button — the only way to operate a lock from the card;
 plan-icon taps never toggle locks),
-room-card link icon → HA area, clean room click/tap → room fit, room hover
+room-card link icon → HA area, clean single room click/tap → delayed room fit
+(350 ms decision window; keyboard activation is immediate), room hover
 highlight, hover tooltips (name, clean-floor area, temperature, signal).
 
 Room, device, opening and shared-control hover is a mouse-only transient layer:

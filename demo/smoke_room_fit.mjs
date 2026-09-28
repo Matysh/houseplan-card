@@ -45,6 +45,8 @@ const out = await page.evaluate(async () => {
     }
     await c.updateComplete;
   };
+  const waitMs = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+  const waitRoomDecision = () => waitMs(370);
   const pointer = (target, type, id, x = 500, y = 300, extra = {}) =>
     target.dispatchEvent(new PointerEvent(type, {
       bubbles: true, composed: true, cancelable: true, pointerId: id,
@@ -66,8 +68,17 @@ const out = await page.evaluate(async () => {
   };
 
   localStorage.setItem('houseplan_card_zoom_v1', JSON.stringify({ 'fit-floor': 1 }));
+  const beforeDelayedRoomFit = JSON.stringify({ zoom: c._zoom, view: c._view });
   pointer(roomNode(), 'pointerdown', 15201);
   pointer(roomNode(), 'pointerup', 15201);
+  result.singleRoomTapWaitsForSecondTap = !c._cameraTransition?.active
+    && c._roomFocus === null
+    && JSON.stringify({ zoom: c._zoom, view: c._view }) === beforeDelayedRoomFit;
+  await waitMs(120);
+  result.singleRoomTapStillWaitsInsideWindow = !c._cameraTransition?.active
+    && c._roomFocus === null
+    && JSON.stringify({ zoom: c._zoom, view: c._view }) === beforeDelayedRoomFit;
+  await waitMs(250);
   const tweenStarted = c._cameraTransition?.active === true;
   const syncFrames = [];
   if (tweenStarted) {
@@ -108,6 +119,7 @@ const out = await page.evaluate(async () => {
   const settled = JSON.stringify(c._view);
   pointer(roomNode(), 'pointerdown', 15202);
   pointer(roomNode(), 'pointerup', 15202);
+  await waitRoomDecision();
   await waitCamera();
   result.repeatedFitIsNoOp = !c._cameraTransition.active && JSON.stringify(c._view) === settled;
 
@@ -158,10 +170,27 @@ const out = await page.evaluate(async () => {
   result.areaLinkSuppressesRoomFit = JSON.stringify(c._view) === beforeLink
     && c._roomPointer === null && c._roomFocus === null;
 
+  c._clearRoomFocus(true);
+  pointer(roomNode(), 'pointerdown', 152041);
+  pointer(roomNode(), 'pointerup', 152041);
+  pointer(ownerProbe, 'pointerdown', 152042);
+  pointer(ownerProbe, 'pointerup', 152042);
+  await waitRoomDecision();
+  result.interactiveSecondTapCancelsPendingRoomFit = c._roomFocus === null
+    && !c._cameraTransition.active;
+
+  c._clearRoomFocus(true);
+  pointer(roomNode(), 'pointerdown', 152043);
+  pointer(roomNode(), 'pointerup', 152043);
+  c._clearRoomFocus(true);
+  await waitRoomDecision();
+  result.lifecycleCleanupCancelsPendingRoomFit = c._roomFocus === null
+    && !c._cameraTransition.active;
+
   const stage = root.querySelector('.stage');
   const base = c._baseVb();
   const moveAway = async () => {
-    c._doubleFit.clear();
+    c._clearRoomFocus(true);
     c._applyView(2, base[0] + base[2] * 0.65, base[1] + base[3] * 0.4);
     await c.updateComplete;
   };
@@ -211,14 +240,14 @@ const out = await page.evaluate(async () => {
   result.cancelDisarmsThePreviousTap = c._zoom === 2 && !c._cameraTransition.active;
 
   c._mode = 'decor';
-  c._doubleFit.clear();
+  c._clearRoomFocus(true);
   pointer(stage, 'pointerdown', 44909, 400, 500);
   pointer(stage, 'pointerup', 44909, 400, 500);
   pointer(stage, 'pointerdown', 44910, 400, 500);
   pointer(stage, 'pointerup', 44910, 400, 500);
   result.editorBackgroundDoesNotFit = c._zoom === 2 && !c._cameraTransition.active;
   c._mode = 'view';
-  c._doubleFit.clear();
+  c._clearRoomFocus(true);
 
   pointer(roomNode(), 'pointerdown', 15205, 500, 300);
   pointer(roomNode(), 'pointermove', 15205, 520, 300);
@@ -228,6 +257,7 @@ const out = await page.evaluate(async () => {
 
   pointer(roomNode(), 'pointerdown', 15206, 500, 300);
   pointer(roomNode(), 'pointerup', 15206, 500, 300);
+  await waitRoomDecision();
   await waitCamera();
   c.style.width = '760px';
   c._lastValidStageSize = [1000, c._stageEl.clientHeight];
@@ -246,6 +276,7 @@ const out = await page.evaluate(async () => {
   await c.updateComplete;
   pointer(roomNode(), 'pointerdown', 15207);
   pointer(roomNode(), 'pointerup', 15207);
+  await waitRoomDecision();
   await waitCamera();
   const isoMargins = margins();
   result.isoUsesProjectedBounds = c._effectiveProjection() === 'iso'
@@ -267,19 +298,31 @@ const out = await page.evaluate(async () => {
     pointerType: 'touch', isPrimary: true, button: 0,
     buttons: type === 'pointerdown' ? 1 : 0, clientX: 450, clientY: 300,
   }));
-  for (const id of [15208, 15209]) {
-    kioskPointer(kioskRoom, 'pointerdown', id);
-    kioskPointer(kioskRoom, 'pointerup', id);
-    const started = performance.now();
-    while (kiosk._cameraTransition.active && performance.now() - started < 1200) {
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    }
+  kioskPointer(kioskRoom, 'pointerdown', 15208);
+  kioskPointer(kioskRoom, 'pointerup', 15208);
+  const kioskSingleWaits = kiosk._roomFocus === null && !kiosk._cameraTransition.active;
+  await waitRoomDecision();
+  while (kiosk._cameraTransition.active) {
+    await new Promise((resolve) => requestAnimationFrame(resolve));
   }
-  const beforeKioskBackground = JSON.stringify({ zoom: kiosk._zoom, view: kiosk._view });
+  result.kioskSingleRoomTapFitsAfterDelay = kioskSingleWaits
+    && kiosk._roomFocus?.roomId === 'room-a';
+
+  kiosk._clearRoomFocus(true);
+  kiosk._applyView(2);
+  const beforeKioskPair = JSON.stringify({ zoom: kiosk._zoom, view: kiosk._view });
+  kioskPointer(kioskRoom, 'pointerdown', 15209);
+  kioskPointer(kioskRoom, 'pointerup', 15209);
+  const kioskRoomPairHasNoIntermediateMotion = !kiosk._cameraTransition.active
+    && JSON.stringify({ zoom: kiosk._zoom, view: kiosk._view }) === beforeKioskPair;
   kioskPointer(kiosk._stageEl, 'pointerdown', 15210);
   kioskPointer(kiosk._stageEl, 'pointerup', 15210);
-  result.kioskRoomTapDoesNotEnterDoubleTap = kiosk._roomFocus?.roomId === 'room-a'
-    && JSON.stringify({ zoom: kiosk._zoom, view: kiosk._view }) === beforeKioskBackground;
+  result.kioskRoomThenBackgroundUsesDoubleFit = kioskRoomPairHasNoIntermediateMotion
+    && kiosk._cameraTransition.state?.reason === 'double-tap'
+    && kiosk._roomFocus === null;
+  while (kiosk._cameraTransition.active) {
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  }
   kiosk._clearRoomFocus(true);
   kiosk._applyView(2);
   for (const id of [15211, 15212]) {

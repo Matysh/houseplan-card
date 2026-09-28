@@ -5,6 +5,7 @@ import {
   beginDoubleFitPointer,
   completeDoubleFitPointer,
   DoubleFitGestureRecognizer,
+  PlanTapGestureController,
   DOUBLE_FIT_WINDOW_MS,
   planGestureOwnerFromPath,
   roomFitCameraTarget,
@@ -157,6 +158,7 @@ test('#152 release accepts only the same pointer, space and painted room', () =>
 });
 
 const background = { kind: 'background' };
+const roomOwner = { kind: 'room', roomId: 'room-a' };
 const down = (overrides = {}) => beginDoubleFitPointer({
   pointerId: 1,
   pointerType: 'mouse',
@@ -186,9 +188,13 @@ const up = (sequence, candidate, overrides = {}) => completeDoubleFitPointer(
   },
 );
 
-test('#449 only a primary clean View press on free stage background becomes a candidate', () => {
+test('#691 only a primary clean View press on a plan surface becomes a candidate', () => {
   assert.deepEqual(down(), {
     pointerId: 1, spaceId: 'floor-a', modality: 'mouse', x: 100, y: 100,
+  });
+  assert.deepEqual(down({ owner: roomOwner }), {
+    pointerId: 1, spaceId: 'floor-a', modality: 'mouse', x: 100, y: 100,
+    roomId: 'room-a',
   });
   assert.equal(down({ pointerType: 'touch' }).modality, 'touch');
   assert.equal(down({ pointerType: 'pen' }).modality, 'pen');
@@ -197,7 +203,6 @@ test('#449 only a primary clean View press on free stage background becomes a ca
     { isPrimary: false },
     { button: 2 },
     { mode: 'plan' },
-    { owner: { kind: 'room', roomId: 'room-a' } },
     { owner: { kind: 'interactive' } },
     { owner: { kind: 'outside' } },
     { blocked: true },
@@ -214,6 +219,32 @@ test('#449 two clean taps within 350 ms trigger once and clear before the comman
   assert.deepEqual(up(second.sequence, down({ pointerId: 3 }), { pointerId: 3, now: 1_351 }), {
     sequence: { at: 1_351, spaceId: 'floor-a', modality: 'mouse' }, trigger: false,
   });
+});
+
+test('#691 a first room tap arms delayed room-fit and any second plan tap fits all', () => {
+  const roomCandidate = down({ owner: roomOwner });
+  const first = up(null, roomCandidate, { owner: roomOwner });
+  assert.deepEqual(first, {
+    sequence: { at: 1_000, spaceId: 'floor-a', modality: 'mouse' },
+    trigger: false,
+    roomId: 'room-a',
+  });
+  const roomToBackground = up(first.sequence, down({ pointerId: 2 }), {
+    pointerId: 2, now: 1_200,
+  });
+  assert.deepEqual(roomToBackground, { sequence: null, trigger: true });
+
+  const backgroundFirst = up(null, down(), { now: 2_000 });
+  const backgroundToRoom = up(
+    backgroundFirst.sequence,
+    down({ pointerId: 3, owner: roomOwner }),
+    { pointerId: 3, owner: roomOwner, now: 2_100 },
+  );
+  assert.deepEqual(backgroundToRoom, { sequence: null, trigger: true });
+
+  assert.deepEqual(up(null, roomCandidate, {
+    owner: { kind: 'room', roomId: 'room-b' },
+  }), { sequence: null, trigger: false });
 });
 
 test('#449 an expired tap becomes the new first tap and modalities never mix', () => {
@@ -260,12 +291,93 @@ test('#449 recognizer instances keep independent transient sequences', () => {
   const first = new DoubleFitGestureRecognizer();
   const second = new DoubleFitGestureRecognizer();
   first.pointerDown(event(1), 'floor-a', true);
-  assert.equal(first.pointerUp(event(1), 'floor-a', true, false, 1_000), false);
+  assert.equal(first.pointerUp(event(1), 'floor-a', true, false, 1_000).trigger, false);
   second.pointerDown(event(2), 'floor-a', true);
-  assert.equal(second.pointerUp(event(2), 'floor-a', true, false, 1_100), false);
+  assert.equal(second.pointerUp(event(2), 'floor-a', true, false, 1_100).trigger, false);
   first.pointerDown(event(3), 'floor-a', true);
-  assert.equal(first.pointerUp(event(3), 'floor-a', true, false, 1_200), true);
+  assert.equal(first.pointerUp(event(3), 'floor-a', true, false, 1_200).trigger, true);
   second.clear();
   second.pointerDown(event(4), 'floor-a', true);
-  assert.equal(second.pointerUp(event(4), 'floor-a', true, false, 1_250), false);
+  assert.equal(second.pointerUp(event(4), 'floor-a', true, false, 1_250).trigger, false);
+});
+
+test('#691 an interactive or outside pointerdown disarms the plan sequence', () => {
+  const stage = pathNode(['.stage']);
+  const interactive = pathNode(['.dev']);
+  const event = (pointerId, path = [stage]) => ({
+    pointerId, pointerType: 'touch', isPrimary: true, button: 0,
+    clientX: 10, clientY: 10, composedPath: () => path,
+  });
+  const recognizer = new DoubleFitGestureRecognizer();
+  recognizer.pointerDown(event(1), 'floor-a', true);
+  recognizer.pointerUp(event(1), 'floor-a', true, false, 1_000);
+  assert.equal(recognizer.clearNonPlan(event(2, [interactive, stage])), true);
+  recognizer.pointerDown(event(3), 'floor-a', true);
+  assert.equal(recognizer.pointerUp(event(3), 'floor-a', true, false, 1_100).trigger, false);
+  assert.equal(recognizer.clearNonPlan(event(4, [stage])), false);
+});
+
+test('#691 controller owns one fake-clock room timer and cancels it on second intent', () => {
+  const stage = pathNode(['.stage']);
+  const room = pathNode(['.roomlabel[data-id]'], 'room-a');
+  const interactive = pathNode(['.dev']);
+  const pointer = (pointerId, path, pointerType = 'touch') => ({
+    pointerId, pointerType, isPrimary: true, button: 0,
+    clientX: 20, clientY: 30, composedPath: () => path,
+  });
+  let nextTimer = 1;
+  const timers = new Map();
+  const delays = [];
+  const timerPort = {
+    set(callback, delayMs) {
+      const id = nextTimer++;
+      timers.set(id, callback);
+      delays.push(delayMs);
+      return id;
+    },
+    clear(handle) { timers.delete(handle); },
+  };
+  const calls = [];
+  let current = { spaceId: 'floor-a', enabled: true };
+  const controller = new PlanTapGestureController({
+    current: () => current,
+    fitAll: () => calls.push('all'),
+    fitRoom: (roomId) => calls.push(`room:${roomId}`),
+  }, timerPort);
+
+  controller.pointerDown(pointer(1, [room, stage]), 'floor-a', true);
+  assert.equal(controller.pointerUp(
+    pointer(1, [room, stage]),
+    { pointerId: 1, spaceId: 'floor-a', roomId: 'room-a' },
+    'floor-a', true, false, 1_000,
+  ), 'room-a');
+  assert.deepEqual(calls, []);
+  assert.deepEqual(delays, [DOUBLE_FIT_WINDOW_MS]);
+  assert.equal(timers.size, 1);
+
+  controller.pointerDown(pointer(2, [stage]), 'floor-a', true);
+  assert.equal(timers.size, 0, 'a second clean pointer cancels pending room motion');
+  controller.pointerUp(pointer(2, [stage]), null, 'floor-a', true, false, 1_100);
+  assert.deepEqual(calls, ['all']);
+  assert.equal(timers.size, 0);
+
+  calls.length = 0;
+  controller.pointerDown(pointer(3, [room, stage]), 'floor-a', true);
+  controller.pointerUp(
+    pointer(3, [room, stage]),
+    { pointerId: 3, spaceId: 'floor-a', roomId: 'room-a' },
+    'floor-a', true, false, 2_000,
+  );
+  assert.equal(controller.clearNonPlan(pointer(4, [interactive, stage])), true);
+  assert.equal(timers.size, 0, 'interactive intent cancels the pending room command');
+
+  controller.pointerDown(pointer(5, [room, stage]), 'floor-a', true);
+  controller.pointerUp(
+    pointer(5, [room, stage]),
+    { pointerId: 5, spaceId: 'floor-a', roomId: 'room-a' },
+    'floor-a', true, false, 3_000,
+  );
+  current = { spaceId: 'floor-b', enabled: true };
+  for (const callback of [...timers.values()]) callback();
+  assert.deepEqual(calls, [], 'a stale-space timer is inert');
 });

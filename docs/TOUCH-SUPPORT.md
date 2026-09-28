@@ -39,8 +39,12 @@ On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
 - support convenient pan, pinch zoom and space switching;
 - treat a linked stair as a floor-navigation target only after a clean tap;
   pan, pinch, long press, swipe and cancellation tails must stay inert;
-- fit the whole plan after two clean taps on free scene background, while one
-  tap on a room keeps the immediate room-fit action;
+- reserve floor switching for an inward horizontal gesture that starts in the
+  48 CSS px strip of an edge with a neighbouring space; a drag elsewhere and
+  an unavailable edge must pan the plan;
+- fit the whole plan after two clean taps on background, room fill or a passive
+  room label. A single room tap fits only after the 350 ms second-tap window,
+  with no intermediate camera motion; keyboard room activation stays immediate;
 - provide a touch path for essential information that desktop exposes through
   hover;
 - open and close View dialogs without clipping their essential content or

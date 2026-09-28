@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Touch navigation now keeps ordinary one-finger drags as pan and switches
+  kiosk spaces only from a 48 px inner edge with an available neighbour. Two
+  clean taps on background, a room fill or a passive room label fit the whole
+  plan without first jumping into the room; a single room tap still fits after
+  the 350 ms decision window, consistently for touch, mouse and pen
+  ([#691](https://github.com/Matysh/houseplan-card/issues/691)).
+
 - Stair outlines, treads, trapezoids and direction arrows now share one 3.6 cm
   physical line weight. It scales with the plan instead of staying fixed in
   screen pixels, remains uniform when a stair is resized or rotated, and uses

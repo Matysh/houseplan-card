@@ -36,6 +36,7 @@ export interface DoubleFitPointerCandidate {
   modality: DoubleFitPointerModality;
   x: number;
   y: number;
+  roomId?: string;
 }
 
 export interface DoubleFitTapSequence {
@@ -77,6 +78,7 @@ export interface DoubleFitPointerUpInput {
 export interface DoubleFitResult {
   sequence: DoubleFitTapSequence | null;
   trigger: boolean;
+  roomId?: string;
 }
 
 interface DoubleFitPointerEventLike {
@@ -114,9 +116,9 @@ const pathMatches = (node: RoomFitPathNode, selector: string): boolean => {
 };
 
 /**
- * One browser-path authority for room fit and the free-background shortcut.
- * The first independently interactive owner wins; only a path which reaches
- * this card's stage without one is free background.
+ * One browser-path authority for room fit and the plan-surface shortcut.
+ * The first independently interactive owner wins; otherwise a room surface or
+ * the stage background may contribute one clean tap.
  */
 export function planGestureOwnerFromPath(path: readonly unknown[]): PlanGestureOwner {
   for (const raw of path) {
@@ -152,7 +154,8 @@ export function beginDoubleFitPointer(
   input: DoubleFitPointerDownInput,
 ): DoubleFitPointerCandidate | null {
   const modality = pointerModality(input.pointerType);
-  if (!modality || input.mode !== 'view' || input.owner.kind !== 'background'
+  if (!modality || input.mode !== 'view'
+      || (input.owner.kind !== 'background' && input.owner.kind !== 'room')
       || input.blocked || !input.isPrimary || input.button !== 0
       || !Number.isFinite(input.x) || !Number.isFinite(input.y)) return null;
   return {
@@ -161,6 +164,7 @@ export function beginDoubleFitPointer(
     modality,
     x: input.x,
     y: input.y,
+    ...(input.owner.kind === 'room' ? { roomId: input.owner.roomId } : {}),
   };
 }
 
@@ -170,7 +174,10 @@ export function completeDoubleFitPointer(
   candidate: DoubleFitPointerCandidate | null,
   input: DoubleFitPointerUpInput,
 ): DoubleFitResult {
-  if (!candidate || input.mode !== 'view' || input.owner.kind !== 'background'
+  const sameOwner = !!candidate && (candidate.roomId
+    ? input.owner.kind === 'room' && input.owner.roomId === candidate.roomId
+    : input.owner.kind === 'background');
+  if (!candidate || input.mode !== 'view' || !sameOwner
       || input.blocked || candidate.pointerId !== input.pointerId
       || candidate.spaceId !== input.spaceId
       || !Number.isFinite(input.x) || !Number.isFinite(input.y)
@@ -189,6 +196,7 @@ export function completeDoubleFitPointer(
   return {
     sequence: { at: input.now, spaceId: input.spaceId, modality: candidate.modality },
     trigger: false,
+    ...(candidate.roomId ? { roomId: candidate.roomId } : {}),
   };
 }
 
@@ -202,10 +210,14 @@ export class DoubleFitGestureRecognizer {
     this.sequence = null;
   }
 
-  clearOutside(event: DoubleFitPointerEventLike): void {
+  clearNonPlan(event: DoubleFitPointerEventLike): boolean {
     let owner: PlanGestureOwner = { kind: 'outside' };
     try { owner = planGestureOwnerFromPath(event.composedPath()); } catch { /* fail closed */ }
-    if (owner.kind === 'outside') this.clear();
+    if (owner.kind !== 'background' && owner.kind !== 'room') {
+      this.clear();
+      return true;
+    }
+    return false;
   }
 
   pointerDown(event: DoubleFitPointerEventLike, spaceId: string, enabled: boolean): void {
@@ -226,7 +238,7 @@ export class DoubleFitGestureRecognizer {
     enabled: boolean,
     blocked: boolean,
     now = Date.now(),
-  ): boolean {
+  ): DoubleFitResult {
     let owner: PlanGestureOwner = { kind: 'outside' };
     try { owner = planGestureOwnerFromPath(event.composedPath()); } catch { /* fail closed */ }
     const result = completeDoubleFitPointer(this.sequence, this.pointer, {
@@ -235,7 +247,95 @@ export class DoubleFitGestureRecognizer {
     });
     this.pointer = null;
     this.sequence = result.sequence;
-    return result.trigger;
+    return result;
+  }
+}
+
+export interface PlanTapTimerPort {
+  set(callback: () => void, delayMs: number): unknown;
+  clear(handle: unknown): void;
+}
+
+export interface PlanTapGestureActions {
+  current(): { spaceId: string; enabled: boolean };
+  fitAll(): void;
+  fitRoom(roomId: string): void;
+}
+
+const browserPlanTapTimers: PlanTapTimerPort = {
+  set: (callback, delayMs) => globalThis.setTimeout(callback, delayMs),
+  clear: (handle) => globalThis.clearTimeout(handle as number),
+};
+
+/** One owner for the double-fit recognizer and its sole delayed room command. */
+export class PlanTapGestureController {
+  private readonly recognizer = new DoubleFitGestureRecognizer();
+  private pending: { spaceId: string; roomId: string } | null = null;
+  private timer: unknown;
+
+  constructor(
+    private readonly actions: PlanTapGestureActions,
+    private readonly timers: PlanTapTimerPort = browserPlanTapTimers,
+  ) {}
+
+  cancelPending(): void {
+    if (this.timer !== undefined) this.timers.clear(this.timer);
+    this.timer = undefined;
+    this.pending = null;
+  }
+
+  clear(): void {
+    this.cancelPending();
+    this.recognizer.clear();
+  }
+
+  clearNonPlan(event: DoubleFitPointerEventLike): boolean {
+    if (!this.recognizer.clearNonPlan(event)) return false;
+    this.cancelPending();
+    return true;
+  }
+
+  pointerDown(event: DoubleFitPointerEventLike, spaceId: string, enabled: boolean): void {
+    this.cancelPending();
+    this.recognizer.pointerDown(event, spaceId, enabled);
+  }
+
+  pointerUp(
+    event: DoubleFitPointerEventLike,
+    roomCandidate: RoomFitGestureCandidate | null,
+    spaceId: string,
+    enabled: boolean,
+    blocked: boolean,
+    now = Date.now(),
+  ): string | null {
+    const acceptedRoom = acceptedRoomFitGesture(
+      roomCandidate, event.pointerId, spaceId,
+      roomCandidate && enabled ? roomFitOwnerFromPath(event.composedPath()) : null,
+      blocked,
+    );
+    const result = this.recognizer.pointerUp(event, spaceId, enabled, blocked, now);
+    if (result.trigger) this.actions.fitAll();
+    else if (result.roomId && acceptedRoom === result.roomId) {
+      this.schedule(spaceId, result.roomId);
+    } else if (acceptedRoom) this.actions.fitRoom(acceptedRoom);
+    return acceptedRoom;
+  }
+
+  private schedule(spaceId: string, roomId: string): void {
+    this.cancelPending();
+    const pending = { spaceId, roomId };
+    this.pending = pending;
+    this.timer = this.timers.set(() => {
+      this.timer = undefined;
+      if (this.pending !== pending) return;
+      this.pending = null;
+      const current = this.actions.current();
+      if (current.spaceId !== pending.spaceId || !current.enabled) {
+        this.recognizer.clear();
+        return;
+      }
+      this.actions.fitRoom(pending.roomId);
+    }, DOUBLE_FIT_WINDOW_MS);
   }
 }
 

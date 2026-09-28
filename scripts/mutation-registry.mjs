@@ -3401,8 +3401,8 @@ const MUTANT_DEFINITIONS = [
       + 'is released over the original room (#152 AC7)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '        this._roomPointer = null;\n        this._doubleFit.clear();\n        this._suppressClick = true;',
-      replace: '        this._doubleFit.clear();\n        this._suppressClick = true;',
+      find: '        this._roomPointer = null;\n        this._clearPlanTapSequence();\n        this._suppressClick = true;',
+      replace: '        this._clearPlanTapSequence();\n        this._suppressClick = true;',
     }, {
       file: 'src/room-fit.ts',
       find: '  if (!candidate || blocked || candidate.pointerId !== pointerId',
@@ -9405,14 +9405,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'double-fit-free-background-owner-removed',
-    guard: 'node --test --test-name-pattern="#449 only" test/room-fit.test.mjs',
-    because: 'room, device and opening owners must never become a half of the free-background '
-      + 'double-fit sequence (#449 AC4–AC5)',
+    id: 'double-fit-plan-owner-guard-removed',
+    guard: 'node --test --test-name-pattern="primary clean View press" test/room-fit.test.mjs',
+    because: 'background and room surfaces are the only valid halves of the plan double-fit; '
+      + 'devices, openings and other interactive owners must remain excluded (#691 AC6)',
     patches: [{
       file: 'src/room-fit.ts',
-      find: "  if (!modality || input.mode !== 'view' || input.owner.kind !== 'background'",
-      replace: "  if (!modality || input.mode !== 'view' || false",
+      find: "      || (input.owner.kind !== 'background' && input.owner.kind !== 'room')",
+      replace: '      || false // mutant: interactive owners become plan taps',
     }],
   },
   {
@@ -9428,13 +9428,13 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'double-fit-editor-mode-enabled',
-    guard: 'node --test --test-name-pattern="#449 only" test/room-fit.test.mjs',
+    guard: 'node --test --test-name-pattern="primary clean View press" test/room-fit.test.mjs',
     because: 'the shortcut belongs only to View and kiosk; editor double-click contracts must '
       + 'remain untouched (#449 AC7)',
     patches: [{
       file: 'src/room-fit.ts',
-      find: "!modality || input.mode !== 'view' || input.owner.kind !== 'background'",
-      replace: "!modality || input.owner.kind !== 'background'",
+      find: "  if (!modality || input.mode !== 'view'\n      || (input.owner.kind !== 'background' && input.owner.kind !== 'room')",
+      replace: "  if (!modality\n      || (input.owner.kind !== 'background' && input.owner.kind !== 'room')",
     }],
   },
   {
@@ -9444,8 +9444,46 @@ const MUTANT_DEFINITIONS = [
       + 'room-focus cleanup, rather than resetting only camera zoom (#449 AC1, AC9)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    if (doubleFit) this._fitAll('double-tap');",
-      replace: "    if (doubleFit) this._resetZoom('double-tap');",
+      find: "    fitAll: () => this._fitAll('double-tap'),",
+      replace: "    fitAll: () => this._resetZoom('double-tap'), // mutant: bypass canonical fit-all",
+    }],
+  },
+  {
+    id: 'space-swipe-edge-origin-guard-removed',
+    guard: 'node --test --test-name-pattern="edge swipe is available" test/logic.test.mjs',
+    because: 'a central drag and an edge without a neighbour must pan; only the 48 px strip '
+      + 'beside an existing ordered neighbour may own a kiosk space swipe (#691 AC1–AC3)',
+    patches: [{
+      file: 'src/logic.ts',
+      find: '  const previous = index > 0 && leftDistance <= edgePx;\n'
+        + '  const next = index < spaceIds.length - 1 && rightDistance <= edgePx;',
+      replace: '  const previous = index > 0; // mutant: every x is the left edge\n'
+        + '  const next = index < spaceIds.length - 1;',
+    }],
+  },
+  {
+    id: 'space-swipe-release-ignores-final-owner',
+    guard: 'node --test --test-name-pattern="release obeys the final" test/logic.test.mjs',
+    because: 'an edge drag classified as pan by its first meaningful movement must not switch '
+      + 'spaces when its final vector later looks horizontal (#691 AC3)',
+    patches: [{
+      file: 'src/logic.ts',
+      find: "  if (owner !== 'swipe') return null;",
+      replace: "  if (owner === 'swipe') return null; // mutant: pan vectors are reclassified",
+    }],
+  },
+  {
+    id: 'double-fit-interactive-pending-cancel-removed',
+    guard: 'node --test --test-name-pattern="controller owns one fake-clock" test/room-fit.test.mjs',
+    because: 'an interactive pointerdown must report cancellation to the card so its pending '
+      + '350 ms room-fit timer cannot fire underneath the independent action (#691 AC6, AC8)',
+    patches: [{
+      file: 'src/room-fit.ts',
+      find: '    if (!this.recognizer.clearNonPlan(event)) return false;\n'
+        + '    this.cancelPending();\n'
+        + '    return true;',
+      replace: '    if (!this.recognizer.clearNonPlan(event)) return false;\n'
+        + '    return true; // mutant: interactive intent leaves the pending timer armed',
     }],
   },
   {

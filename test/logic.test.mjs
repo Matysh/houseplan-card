@@ -10,7 +10,7 @@ import {
   sharedBoundary, distToSegment,
   outlineWithout,
   alignGuides, segmentAngle, is45,
-  swipeTarget, clampScale,
+  swipeTarget, spaceSwipeEdgeAt, classifySpaceDrag, spaceSwipeTargetForOwner, clampScale,
   migratePdfUrls,
   roomFillModeOf, roomGlowOf, customFillOf, roomCustomFillOf, roomTempRangeOf,
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
@@ -1040,6 +1040,41 @@ test('swipeTarget: kiosk swipe rules', () => {
   assert.equal(swipeTarget(-80, 70, 1, ids, 'f1'), null);
   // одно пространство — некуда
   assert.equal(swipeTarget(-100, 0, 1, ['f1'], 'f1'), null);
+});
+
+test('#691 edge swipe is available only beside an existing ordered neighbour', () => {
+  const ids = ['f1', 'f2', 'garden'];
+  assert.equal(spaceSwipeEdgeAt(100, 100, 900, ids, 'f2'), 'previous');
+  assert.equal(spaceSwipeEdgeAt(148, 100, 900, ids, 'f2'), 'previous');
+  assert.equal(spaceSwipeEdgeAt(149, 100, 900, ids, 'f2'), null);
+  assert.equal(spaceSwipeEdgeAt(952, 100, 900, ids, 'f2'), 'next');
+  assert.equal(spaceSwipeEdgeAt(951, 100, 900, ids, 'f2'), null);
+  assert.equal(spaceSwipeEdgeAt(100, 100, 900, ids, 'f1'), null);
+  assert.equal(spaceSwipeEdgeAt(952, 100, 900, ids, 'f1'), 'next');
+  assert.equal(spaceSwipeEdgeAt(100, 100, 900, ids, 'garden'), 'previous');
+  assert.equal(spaceSwipeEdgeAt(952, 100, 900, ids, 'garden'), null);
+  assert.equal(spaceSwipeEdgeAt(130, 100, 80, ids, 'f2'), 'previous');
+  assert.equal(spaceSwipeEdgeAt(160, 100, 80, ids, 'f2'), 'next');
+  assert.equal(spaceSwipeEdgeAt(NaN, 100, 900, ids, 'f2'), null);
+  assert.equal(spaceSwipeEdgeAt(99, 100, 900, ids, 'f2'), null);
+});
+
+test('#691 edge swipe keeps the 8 px and strict 1.5 direction boundaries', () => {
+  assert.equal(classifySpaceDrag('previous', 8, 0), 'pending');
+  assert.equal(classifySpaceDrag('previous', 9, 6), 'pan');
+  assert.equal(classifySpaceDrag('previous', 10, 6), 'swipe');
+  assert.equal(classifySpaceDrag('next', -10, 6), 'swipe');
+  assert.equal(classifySpaceDrag('next', 10, 0), 'pan');
+  assert.equal(classifySpaceDrag(null, -100, 0), 'pan');
+  assert.equal(classifySpaceDrag('next', NaN, 0), 'pan');
+});
+
+test('#691 release obeys the final drag owner instead of reclassifying the vector', () => {
+  const ids = ['f1', 'f2', 'f3'];
+  assert.equal(spaceSwipeTargetForOwner('pan', -100, 0, 1, ids, 'f1'), null);
+  assert.equal(spaceSwipeTargetForOwner(null, -100, 0, 1, ids, 'f1'), null);
+  assert.equal(spaceSwipeTargetForOwner('swipe', -100, 0, 1, ids, 'f1'), 'f2');
+  assert.equal(spaceSwipeTargetForOwner('swipe', 100, 0, 1, ids, 'f2'), 'f1');
 });
 
 test('clampScale', () => {

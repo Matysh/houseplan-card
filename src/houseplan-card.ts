@@ -26,13 +26,16 @@ import { compileIconRules, iconFor, type IconRule, type CompiledIconRule } from 
 import {
   snapToGrid, samePoint, pointInPolygon, segmentCm, formatLength, roomEdges, roomPoly,
   paperRoomShapes, islandsOf, distToSegment, outlineWithout, segmentAngle, is45, isExact45Vector,
-  swipeTarget, clampScale, roomFillModeOf, roomGlowOf, openingAmount, openingEntityReferences,
+  beginSpaceSwipePointer, classifySpaceDrag, spaceSwipeTargetForOwner, clampScale,
+  roomFillModeOf, roomGlowOf,
+  openingAmount, openingEntityReferences,
   averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo, stateIcon, diffNewDevices,
   isControllable, spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, customFillOf,
   roomCustomFillOf, DEFAULT_CUSTOM_FILL, type FillColors, type FillColorEntry,
   type ResolvedRoomFill, runServiceFor, stageBgOf, showRoomTooltipOf, volumetricViewOf, type SpaceDisplay,
   referencedContentUrls, normalizeDeviceDisplay, isAlarmCapable, displayIsNeutral,
-  type DeviceDisplayMode, liveText, liveTextReference, hassValue, decorTextScale, decorTextLines,
+  type DeviceDisplayMode, type SpaceSwipePointerStart, liveText, liveTextReference, hassValue,
+  decorTextScale, decorTextLines,
   DECOR_TEXT_BASE,
 } from './logic';
 import { type SafeResizePlan, type SafeResizeResolution } from './resize';
@@ -224,8 +227,7 @@ import {
   type CameraState, type CameraTransitionReason, type CameraTransitionState,
 } from './viewport-transition'; import { measuredCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
 import {
-  acceptedRoomFitGesture, DoubleFitGestureRecognizer, roomFitCameraTarget,
-  roomFitClampFrame,
+  PlanTapGestureController, roomFitCameraTarget, roomFitClampFrame,
   roomFitGeometryBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
   type RoomFitGestureCandidate,
 } from './room-fit';
@@ -1899,15 +1901,21 @@ export class HouseplanCard extends LitElement {
   /** Session-only View intent. It is deliberately absent from warm/LS/config state. */
   private _roomFocus: { spaceId: string; roomId: string } | null = null;
   /** Pointer owner captured from the actually painted event path. */
-  private _roomPointer: RoomFitGestureCandidate | null = null; private readonly _doubleFit = new DoubleFitGestureRecognizer();
+  private _roomPointer: RoomFitGestureCandidate | null = null;
+  private readonly _planTaps = new PlanTapGestureController({
+    current: () => ({ spaceId: this._space, enabled: this._doubleFitEnabled }),
+    fitAll: () => this._fitAll('double-tap'),
+    fitRoom: (roomId) => this._fitRoom(roomId),
+  });
   private readonly _deviceHits = new DeviceHitController(); private _deviceHitScrollUnsub?: () => void;
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
   /**
    * What the current one-finger drag turned out to be, decided ONCE on the
    * first real movement and held until the finger lifts (see
-   * `_stagePointerMove`). Only the kiosk has two candidates — a horizontal
-   * drag there is the floor swipe; everywhere else a drag always pans.
+   * `_stagePointerMove`). Only the kiosk has two candidates — an inward,
+   * sufficiently horizontal drag that starts inside the active 48 px edge
+   * strip is a floor swipe; every other drag pans.
    */
   private _panLock: 'pan' | 'swipe' | null = null;
   private _pinchStart: { dist: number; zoom: number } | null = null;
@@ -2290,7 +2298,7 @@ export class HouseplanCard extends LitElement {
   private _kioskHoldTimer?: number;
   private _cycleTimer?: number;
   private _cyclePausedUntil = 0;
-  private _swipeStart: { x: number; y: number; id: number } | null = null;
+  private _swipeStart: SpaceSwipePointerStart | null = null;
 
   /** Live tab reorder: which tab is held, where it started, where it would land. */
   private _tabDrag: {
@@ -5528,7 +5536,7 @@ export class HouseplanCard extends LitElement {
     this._pinchStart = null;
     this._swipeStart = null;
     this._roomPointer = null;
-    this._doubleFit.clear();
+    this._clearPlanTapSequence();
     this._deviceHits.clearPointers();
   }
 
@@ -6114,8 +6122,12 @@ export class HouseplanCard extends LitElement {
     this._resetZoom();
   }
 
+  private _clearPlanTapSequence(): void {
+    this._planTaps.clear();
+  }
+
   private _clearRoomFocus(pointer = false): void {
-    this._doubleFit.clear();
+    this._clearPlanTapSequence();
     this._roomFocus = null;
     if (pointer) this._roomPointer = null;
   }
@@ -6160,7 +6172,7 @@ export class HouseplanCard extends LitElement {
   /** Apply or retarget one room command without introducing a second RAF owner. */
   private _fitRoom(roomId: string, animate = true): boolean {
     if (this._mode !== 'view') return false;
-    this._doubleFit.clear();
+    this._clearPlanTapSequence();
     const space = this._spaceModel();
     const room = space?.rooms.find((item) => item.id === roomId);
     if (!space || !room) {
@@ -6658,11 +6670,13 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
-    this._bootSoftCancel(); const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view' ? roomFitOwnerFromPath(ev.composedPath()) : null;
+    this._bootSoftCancel();
+    const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view'
+      ? roomFitOwnerFromPath(ev.composedPath()) : null;
     this._roomPointer = roomId
       ? { pointerId: ev.pointerId, spaceId: this._space, roomId }
       : null;
-    this._doubleFit.pointerDown(ev, this._space, this._doubleFitEnabled);
+    this._planTaps.pointerDown(ev, this._space, this._doubleFitEnabled);
     // The gesture that starts here freezes the animated frame and keeps it on
     // screen — so the shown zoom becomes the saved one (#396 AC1).
     this._cancelCameraTransition(false, true);
@@ -6674,13 +6688,17 @@ export class HouseplanCard extends LitElement {
     if (this._kiosk) {
       this._cyclePausedUntil = Date.now() + 60000;
       if (this._pointers.size === 0) {
-        this._swipeStart = { x: ev.clientX, y: ev.clientY, id: ev.pointerId };
+        const rect = this._stageEl?.getBoundingClientRect();
+        this._swipeStart = rect ? beginSpaceSwipePointer(
+          this._swipeZone, ev.clientX, ev.clientY, ev.pointerId, rect.left, rect.width,
+          this._model.map((space) => space.id), this._space,
+        ) : null;
         // long-press on EMPTY stage opens the per-screen size popover
         if (!(ev.target as HTMLElement).closest?.('.dev, .roomlabel, .oplock')) {
           clearTimeout(this._kioskHoldTimer);
           this._kioskHoldTimer = window.setTimeout(() => {
             this._roomPointer = null;
-            this._doubleFit.clear();
+            this._clearPlanTapSequence();
             this._kioskDialog = true;
             this._swipeStart = null;
           }, 3000);
@@ -6812,7 +6830,7 @@ export class HouseplanCard extends LitElement {
       const ddy = ev.clientY - this._panStart.sy;
       if (Math.abs(ddx) + Math.abs(ddy) > 4) {
         this._roomPointer = null;
-        this._doubleFit.clear();
+        this._clearPlanTapSequence();
         this._suppressClick = true;
         clearTimeout(this._holdTimer);
         if (this._tool === 'opening') {
@@ -6830,7 +6848,9 @@ export class HouseplanCard extends LitElement {
       // make a drag meaningless — `_clampView` alone decides how far you may
       // walk, at 400% and at 33% alike.
       if (this._panLock === null && Math.abs(ddx) + Math.abs(ddy) > STAGE_TAP_DISTANCE_PX) {
-        this._panLock = this._swipeZone && Math.abs(ddx) > Math.abs(ddy) * 1.5 ? 'swipe' : 'pan';
+        const edge = this._swipeStart?.id === ev.pointerId ? this._swipeStart.edge : null;
+        const owner = classifySpaceDrag(edge, ddx, ddy, STAGE_TAP_DISTANCE_PX);
+        this._panLock = owner === 'swipe' ? 'swipe' : 'pan';
         if (this._panLock === 'pan') { this._activateSafeDayCycleOutline(); this._clearRoomFocus(); }
       }
       const stage = this._stageEl;
@@ -6869,17 +6889,12 @@ export class HouseplanCard extends LitElement {
     this._deviceHits.release(ev.pointerId);
     this._flushHa();
     this._editorRuntime?._cancelPointerMove('markup-hover');
-    const acceptedRoom = acceptedRoomFitGesture(
-      this._roomPointer,
-      ev.pointerId,
-      this._space,
-      this._roomPointer && this._mode === 'view' ? roomFitOwnerFromPath(ev.composedPath()) : null,
-      this._suppressClick || !!this._pinchStart || this._panLock !== null
-        || this._holdFired || this._touchSequenceMultitouch,
+    const blockedRoomTap = this._suppressClick || !!this._pinchStart || this._panLock !== null
+      || this._holdFired || this._touchSequenceMultitouch;
+    const acceptedRoom = this._planTaps.pointerUp(
+      ev, this._roomPointer, this._space, this._doubleFitEnabled, blockedRoomTap,
     );
     if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null;
-    const doubleFit = this._doubleFit.pointerUp(ev, this._space, this._doubleFitEnabled, this._suppressClick || !!this._pinchStart || this._panLock !== null || this._holdFired);
-    if (doubleFit) this._fitAll('double-tap');
     if (this._kiosk) {
       clearTimeout(this._kioskHoldTimer);
       const ss = this._swipeStart;
@@ -6887,19 +6902,11 @@ export class HouseplanCard extends LitElement {
       if (!acceptedRoom && ss && ss.id === ev.pointerId) {
         const dx = ev.clientX - ss.x;
         const dy = ev.clientY - ss.y;
-        // The lock is FINAL (audit DEV-1DA1-02). `_stagePointerMove` decided
-        // once, on the first movement worth the name, whether this gesture is
-        // a swipe or a pan — and the release may not overturn it. Until this
-        // the release asked `swipeTarget()` again from the raw start→end
-        // vector, so a CURVED gesture (a small vertical lead-in that locks
-        // 'pan', then a long horizontal sweep) dragged the plan under the
-        // finger and still landed on another storey when it lifted. A pan is
-        // a pan to the end: no floor change, whatever the overall vector
-        // happens to look like. A motionless tap never locks anything, so it
-        // remains eligible for the shared free-background double-fit recognizer.
-        const target = this._panLock === 'pan'
-          ? null
-          : swipeTarget(dx, dy, this._zoom, this._model.map((m) => m.id), this._space);
+        // Release obeys the first-movement owner: a curved pan never becomes a
+        // floor change merely because its final vector looks horizontal.
+        const target = spaceSwipeTargetForOwner(
+          this._panLock, dx, dy, this._zoom, this._model.map((m) => m.id), this._space,
+        );
         if (target) {
           // the plan follows the finger: swiping left brings the next one in
           // from the right, so the current one leaves to the left
@@ -6948,7 +6955,6 @@ export class HouseplanCard extends LitElement {
       if (this._suppressClick) setTimeout(() => (this._suppressClick = false), 0);
     }
     if (this._pointers.size === 0 && !acceptedRoom) this._finishViewportGesture();
-    if (acceptedRoom) this._fitRoom(acceptedRoom);
   }
 
   private _clickRoom(r: RoomCfg): void {
@@ -7171,7 +7177,9 @@ export class HouseplanCard extends LitElement {
     if (this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
     const pointer = ev as PointerEvent;
     this._notePointer(pointer);
-    if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') this._doubleFit.clear(); else if (ev.type === 'pointerdown') this._doubleFit.clearOutside(pointer);
+    if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') {
+      this._clearPlanTapSequence();
+    } else if (ev.type === 'pointerdown') this._planTaps.clearNonPlan(pointer);
     if (ev.type === 'pointerdown') this._touchClickGuard.pointerDown(
       pointer.pointerId, pointer.pointerType,
     );
@@ -7721,7 +7729,8 @@ export class HouseplanCard extends LitElement {
     this._deviceHits.cancel(ev.pointerId);
     this._flushHa();
     this._editorRuntime?._cancelPointerMove('markup-hover');
-    if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null; this._doubleFit.clear();
+    if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null;
+    this._clearPlanTapSequence();
     this._stairsView.pointerCancel(ev);
     if (this._editorRuntime?.stairs.pointerCancel(ev)) return;
     if (this._editorRuntime) return this._editorRuntime._stagePointerCancel(ev);

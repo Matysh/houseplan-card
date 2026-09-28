@@ -263,7 +263,7 @@ produce a zero-sized SVG `viewBox`.
 * **Zoom out** — `MIN_ZOOM = 1/3`: you can see three times the content
   frame and no further. Empty space beyond that is not information.
 * **Discrete camera motion** (#82) — wheel, `−`/`+`, Fit all, the home arrow
-  and the free-background double-click/tap in View or kiosk interpolate the
+  and the plan-surface double-click/tap in View or kiosk interpolate the
   existing exact camera target for
   160–220 ms with `cubic-bezier(0.2, 0.7, 0.2, 1)`. Zoom is logarithmic and
   the world centre is linear; the final frame is the same clamped `viewBox`
@@ -291,10 +291,12 @@ produce a zero-sized SVG `viewBox`.
   bails out on them), and a drawing tool that consumes the press —
   decor line/rect/ellipse/text — bails out too. Two fingers are always
   a pinch, never a pan. On a **kiosk** screen at swipe zoom (`≤ 1`,
-  more than one space) a *horizontal* drag belongs to the floor swipe:
-  the gesture is classified once, on the first movement past 8 px, and
-  keeps that role until the finger lifts (`_panLock`), so the plan
-  never slides under a swipe and a vertical drag still pans.
+  more than one space), a floor swipe may start only inside the inner
+  **48 CSS px** strip of the left/right stage edge that has a previous/next
+  space. The first movement past the 8 px Manhattan boundary becomes a swipe
+  only when it points inward and `|dx| > 1.5 × |dy|`; equality, the wrong
+  direction, a start outside the strip and an edge without a neighbour all
+  become ordinary pan. The decision remains final until release (`_panLock`).
 * **Room fit (#152).** A clean primary click/tap on the browser-painted room
   target fits that room's final floor plus its visible boundary wall body into
   the middle 80% of the stage. Devices, openings/actions and the HA Area link
@@ -303,15 +305,19 @@ produce a zero-sized SVG `viewBox`.
   does not write the per-space zoom preference. Its session-only room intent
   is reapplied atomically on a stable stage resize, then cleared by manual
   camera input, Fit all/home, mode/space/projection changes, structural
-  adoption, hidden state or disconnect. In kiosk, room-owned taps never enter
-  the free-background double-tap sequence.
-* **Free-background fit (#449).** Two clean primary clicks/taps within 350 ms
-  on the stage background invoke the same Fit all command in View and kiosk.
-  Room, device, vacuum, opening, link and control paths disarm the sequence;
-  so do pan, pinch, swipe, long press, cancellation, editor/mode/space/projection
-  changes and lifecycle adoption. The new recognizer adds no timer or render on
-  the first tap. Mouse, touch and pen sequences are separate; editors do not
-  expose this shortcut.
+  adoption, hidden state or disconnect. A pointer tap waits up to 350 ms before
+  applying room fit: this lets a second clean plan tap select Fit all without
+  first animating into the room. Keyboard activation remains immediate.
+* **Plan-surface fit (#449, #691).** Two clean primary clicks/taps within 350 ms
+  on stage background, room fill or a non-interactive room label invoke the
+  same Fit all command in View and kiosk. The two taps may use different plan
+  surfaces or rooms, but must use the same pointer modality and space. A single
+  room tap still fits that room once its 350 ms decision window expires; a
+  single background tap stays passive. Device, vacuum, opening, stair, link and
+  control paths cancel both the sequence and any pending room fit; so do pan,
+  pinch, swipe, long press, cancellation, editor/mode/space/projection changes
+  and lifecycle adoption. Mouse, touch and pen share this contract but do not
+  pair with one another; editors do not expose the shortcut.
 * **The lock is final, at the release too** (audit DEV-1DA1-02). The
   release used to ask `swipeTarget()` again from the raw start→end
   vector, ignoring the lock — so a *curved* gesture (a short vertical
@@ -321,7 +327,7 @@ produce a zero-sized SVG `viewBox`.
   'pan'` now means no floor change, whatever the overall vector ends up
   looking like; only a gesture locked as `swipe` may reach
   `swipeTarget()`, and it never pans on the way. A motionless tap locks
-  nothing, so a clean free-background double-tap remains available.
+  nothing, so a clean plan-surface double-tap remains available.
 * **"Home is that way" arrow** — when the content frame is entirely
   outside the current view, a small pointer appears at the view edge
   in the frame's direction. Clicking it fits the content. Cheap
