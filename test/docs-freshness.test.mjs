@@ -30,8 +30,14 @@ test('check-docs: только две проверки свежести идут
   assert.ok(viaMode[0].includes('fingerprint is stale'));
   assert.ok(viaMode[1].includes('capture script changed'));
   // Хеш картинки, полнота набора сцен и ссылки не имеют права ослабляться.
-  for (const always of ['image hash does not match manifest', 'scenario set is incomplete', 'external link returned']) {
+  for (const always of ['image hash does not match manifest', 'scenario set is incomplete']) {
     const line = source.split('\n').find((l) => l.includes(always));
     assert.ok(line && line.includes('errors.push'), `${always} остаётся ошибкой в обоих режимах`);
   }
+  // #700: внешние ссылки не зависят от режима скриншотов; предупреждением их
+  // делает только явный `--external=warn` на ветке задачи.
+  const external = source.split('\n').find((l) => l.includes('external link returned'));
+  assert.ok(external && external.includes('externalErrors.push'), 'внешняя ссылка идёт в свой сток');
+  assert.match(source, /const externalErrors = EXTERNAL_WARN \? warnings : errors;/);
+  assert.doesNotMatch(source, /externalErrors = freshness/);
 });

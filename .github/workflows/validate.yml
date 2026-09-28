@@ -53,12 +53,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # `actions: read` — чтение списка прогонов Validate (#388), `issues: read` —
-    # проверка 8 процессного гейта. Права перечислены явно, потому что job
-    # обращается к API сверх содержимого репозитория.
+    # проверка 8 процессного гейта, `issues: write` — одно issue о расхождении
+    # зеркала workflow на push в dev (#700). Права перечислены явно, потому что
+    # job обращается к API сверх содержимого репозитория.
     permissions:
       contents: read
       actions: read
-      issues: read
+      issues: write
     steps:
       # `blob:none` при полной истории (#345): этой job нужны сообщения
       # коммитов, трейлеры и ИМЕНА изменённых файлов, а не содержимое старых
@@ -81,19 +82,24 @@ jobs:
         id: docs
         continue-on-error: true
         env:
+          REF: ${{ github.ref }}
           EVENT_NAME: ${{ github.event_name }}
           HEAD_MESSAGE: ${{ github.event.head_commit.message }}
           FULL_INPUT: ${{ inputs.full }}
           # #697: на ветке задачи `Release:` строгий режим не включает.
           REF_NAME: ${{ github.ref_name }}
         run: |
+          # #700: на ветке задачи упавший чужой сайт — предупреждение, а не
+          # красный preflight; push в dev, кандидат и релиз судят ссылки строго.
+          external=--external
+          case "$REF" in refs/heads/issue/*) external=--external=warn ;; esac
           # #586: CLI отдаёт ОДИН ответ. Прежде здесь сравнивался со строкой
           # `heavy=true` весь вывод `--heavy`, а он двухстрочный: в `$(…)`
           # строки схлопываются через пробел, сравнение не совпадало никогда,
           # и строгий режим не включился ни на одном кандидате.
           mode=$(node scripts/classify-changes.mjs --screenshots-mode)
           echo "скриншоты документации: режим $mode"
-          node scripts/check-docs.mjs --external --screenshots=$mode
+          node scripts/check-docs.mjs "$external" --screenshots=$mode
 
       # #635: `docs/reviews/INDEX.md` — снимок каталога ревью; расхождение с
       # каталогом — невидимые через индекс документы (r2 #635 H1). Гейт стоит
@@ -139,6 +145,34 @@ jobs:
             fi
           done
           exit $status
+
+      # #700: расхождение зеркала на dev — одно открытое issue владельцу, как у
+      # ночного мутационного гейта (#472): чинит его тот, кто зеркалит в main, а
+      # не автор задачи, чья ветка ни при чём. Сбой API — предупреждение: шаг
+      # сообщает, а не судит.
+      - name: "Расхождение зеркала на dev — issue владельцу"
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && steps.workflow_sync.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          marker="[workflow-sync]"
+          existing=$(gh issue list --repo "$REPO" --state open --search "\"$marker\" in:title" \
+            --json number,title --jq '[.[] | select(.title | startswith("[workflow-sync]"))][0].number // empty' || true)
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$REPO" --body "Расхождение повторилось: $RUN_URL" \
+              || echo "::warning::комментарий в #$existing не оставлен"
+            exit 0
+          fi
+          cat > /tmp/workflow-sync.md <<EOF
+          Тонкие вызывающие workflow в \`main\` и \`dev\` различаются. Прогон: $RUN_URL
+
+          Тонкий файл исполняется из ветки по умолчанию, поэтому правку триггеров, входов или прав нужно зеркалить в \`main\` (PROCESS.md §10.4, #623). На ветках задач это предупреждение (#700), на push в \`dev\` — красный preflight, пока зеркало не выровнено.
+          EOF
+          gh issue create --repo "$REPO" --title "$marker тонкие workflow в main и dev различаются" \
+            --label infra --label process --body-file /tmp/workflow-sync.md \
+            || echo "::warning::issue о расхождении зеркала не заведено"
 
       # Оба гейта ниже судят САМ диапазон коммитов, а не объём проверок, и до
       # #388 брали его от головы предыдущего пуша. Прогон предыдущего пуша
@@ -220,6 +254,7 @@ jobs:
           PROCESS_GATE: ${{ steps.process_gate.outcome }}
           ACTION_PINS: ${{ steps.action_pins.outcome }}
           REVIEWS_INDEX: ${{ steps.reviews_index.outcome }}
+          REF: ${{ github.ref }}
         run: |
           fail=0
           check() {
@@ -231,9 +266,25 @@ jobs:
               fail=1
             fi
           }
+          # #700: причина, к которой ветка задачи отношения не имеет, — в сводку
+          # предупреждением; на dev, кандидате и релизе она красит как прежде.
+          advise() {
+            if [ "$2" = "success" ]; then
+              echo "ok   $1"
+            else
+              echo "::warning::$1 ($2) — на ветке задачи предупреждение (#700)"
+              echo "- $1: $2 — предупреждение, чинит релиз-менеджер (#700)" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          }
+          task_branch=false
+          case "$REF" in refs/heads/issue/*) task_branch=true ;; esac
           echo "### Предполётные проверки" >> "$GITHUB_STEP_SUMMARY"
           check "документация" "$DOCS"
-          check "тонкие вызывающие workflow в main и dev" "$WORKFLOW_SYNC"
+          if [ "$task_branch" = "true" ]; then
+            advise "тонкие вызывающие workflow в main и dev" "$WORKFLOW_SYNC"
+          else
+            check "тонкие вызывающие workflow в main и dev" "$WORKFLOW_SYNC"
+          fi
           check "провенанс коммитов" "$PROVENANCE"
           check "процессный гейт" "$PROCESS_GATE"
           check "пины сторонних Actions" "$ACTION_PINS"

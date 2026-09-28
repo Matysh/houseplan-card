@@ -12706,6 +12706,29 @@ const MUTANT_DEFINITIONS = [
       replace: "    if (d.startsWith('M') || d.length >= 0) return d;",
     }],
   },
+  // #700: предполёт не красит ветку задачи чужими причинами.
+  {
+    id: 'task-branch-workflow-sync-red-again',
+    guard: 'node --test --test-name-pattern="#700" test/validate-workflow.test.mjs',
+    because: '#700: a thin workflow mirror mismatch has nothing to do with the task branch; 11 of 85 '
+      + 'returns in #600–#691 came from it — on issue/* it is a warning, on dev a red preflight',
+    patches: [{
+      file: '.github/workflows/validate.yml',
+      find: '            advise "тонкие вызывающие workflow в main и dev" "$WORKFLOW_SYNC"',
+      replace: '            check "тонкие вызывающие workflow в main и dev" "$WORKFLOW_SYNC"',
+    }],
+  },
+  {
+    id: 'external-link-warn-mode-ignored',
+    guard: 'node --test --test-name-pattern="#700: check-docs" test/validate-workflow.test.mjs',
+    because: '#700: a foreign site that is down must not turn a task branch red; --external=warn '
+      + 'routes external failures to warnings',
+    patches: [{
+      file: 'scripts/check-docs.mjs',
+      find: '  const externalErrors = EXTERNAL_WARN ? warnings : errors;',
+      replace: '  const externalErrors = errors; // mutant: warn mode ignored',
+    }],
+  },
   {
     id: 'screenshot-freshness-never-strict',
     guard: 'node --test --test-name-pattern="#586" test/classify-changes.test.mjs',

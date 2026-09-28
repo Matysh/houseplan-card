@@ -215,7 +215,7 @@ test('#586: preflight спрашивает режим одним значени�
   assert.match(workflow, /classify-changes\.mjs --screenshots-mode/);
   assert.ok(!/=\s*"heavy=true"/.test(workflow),
     'сравнение со строкой «heavy=true» вернулось — строгий режим снова не включится');
-  assert.match(workflow, /check-docs\.mjs --external --screenshots=\$mode/);
+  assert.match(workflow, /check-docs\.mjs "\$external" --screenshots=\$mode/);
 });
 
 test('#510 AC1 / #601 AC1: мутанты по диффу запрашиваются только кнопкой mutants=true и PR — не пушем, не кандидатом беты, не full', () => {

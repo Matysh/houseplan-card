@@ -9,7 +9,12 @@ import { freshnessSink, screenshotsMode } from './docs-freshness.mjs';
 import { guideParityErrors } from './user-guide-parity.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const EXTERNAL = process.argv.includes('--external');
+// `--external` — внешние ссылки судятся ошибкой; `--external=warn` — только
+// предупреждением (#700): упавший чужой сайт не красит ветку задачи, к чьему
+// изменению он отношения не имеет. Блокируют внешние ссылки push в dev,
+// кандидат беты и релиз — там их чинит релиз-менеджер.
+const EXTERNAL_WARN = process.argv.includes('--external=warn');
+const EXTERNAL = EXTERNAL_WARN || process.argv.includes('--external');
 const PUBLIC_DOCS = [
   'README.md', 'README.ru.md', 'docs/USER-GUIDE.md', 'docs/USER-GUIDE.ru.md',
   'docs/TOUCH-SUPPORT.md', 'docs/DECOR-EDITOR.md', 'docs/VACUUM.md',
@@ -233,6 +238,7 @@ if (!existsSync(manifestPath)) {
 }
 
 if (EXTERNAL) {
+  const externalErrors = EXTERNAL_WARN ? warnings : errors;
   const allowlist = JSON.parse(canonicalText(resolve(ROOT, 'docs/external-link-allowlist.json')));
   const transientHosts = new Set(allowlist.transientHosts || []);
   for (const href of [...externalUrls].sort()) {
@@ -249,10 +255,10 @@ if (EXTERNAL) {
           continue;
         }
       }
-      errors.push(`external link returned ${response.status}: ${href}`);
+      externalErrors.push(`external link returned ${response.status}: ${href}`);
     } catch (error) {
       if (transientHosts.has(url.hostname)) warnings.push(`transient external failure: ${href} (${error.message})`);
-      else errors.push(`external link failed: ${href} (${error.message})`);
+      else externalErrors.push(`external link failed: ${href} (${error.message})`);
     }
   }
 }

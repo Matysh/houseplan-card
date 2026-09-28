@@ -440,7 +440,7 @@ test('смоки, golden и performance_smoke условны по heavy (#479)',
   assert.match(text, /classify-changes\.mjs --heavy/);
   assert.match(text, /workflow_dispatch:\n\s+inputs:\n\s+full:/);
   // preflight: режим скриншотов считает тот же скрипт.
-  assert.match(text, /check-docs\.mjs --external --screenshots=\$mode/);
+  assert.match(text, /check-docs\.mjs "\$external" --screenshots=\$mode/);
 });
 
 test('ночной прогон — dispatch Validate на dev с full=true (#479)', () => {
@@ -612,4 +612,28 @@ test('#541: Validate всегда публикует proof точной попы
   assert.equal((reuse.match(/node scripts\/ci-proof\.mjs --marker=\.reuse-marker/g) || []).length, 5);
   assert.equal(reuse.includes('lookup-only: true'), false,
     'marker contents must be restored and verified, not reduced to a cache-hit bit');
+});
+
+test('#700: на ветке задачи зеркало workflow и внешние ссылки — предупреждение, на dev — красный и issue', () => {
+  const workflow = read('validate.yml');
+  const preflight = workflow.slice(workflow.indexOf('\n  preflight:\n'), workflow.indexOf('\n  changes:\n'));
+  const docs = preflight.slice(preflight.indexOf('id: docs'), preflight.indexOf('id: reviews_index'));
+  assert.match(docs, /case "\$REF" in refs\/heads\/issue\/\*\) external=--external=warn ;; esac/);
+  assert.match(docs, /REF: \$\{\{ github\.ref \}\}/);
+  const verdict = preflight.slice(preflight.indexOf('- name: Вердикт предполётных проверок'));
+  assert.match(verdict, /case "\$REF" in refs\/heads\/issue\/\*\) task_branch=true ;; esac/);
+  assert.match(verdict, /if \[ "\$task_branch" = "true" \]; then\n\s+advise "тонкие вызывающие workflow в main и dev" "\$WORKFLOW_SYNC"\n\s+else\n\s+check "тонкие вызывающие workflow в main и dev"/);
+  assert.doesNotMatch(verdict.slice(verdict.indexOf('advise() {'), verdict.indexOf('task_branch=false')), /fail=1/,
+    'предупреждение не красит вердикт');
+  const issue = preflight.slice(preflight.indexOf('- name: "Расхождение зеркала на dev — issue владельцу"'));
+  assert.match(issue, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev' && steps\.workflow_sync\.outcome == 'failure'/);
+  assert.match(issue, /gh issue list --repo "\$REPO" --state open --search/, 'одно issue, а не одно на каждый push');
+  assert.match(preflight, /permissions:\n\s+contents: read\n\s+actions: read\n\s+issues: write/);
+});
+
+test('#700: check-docs --external=warn сводит внешние отказы в предупреждения', () => {
+  const source = read('../../scripts/check-docs.mjs');
+  assert.match(source, /const EXTERNAL_WARN = process\.argv\.includes\('--external=warn'\);/);
+  assert.match(source, /const externalErrors = EXTERNAL_WARN \? warnings : errors;/);
+  assert.equal((source.match(/externalErrors\.push\(/g) || []).length, 2, 'оба вида внешнего отказа');
 });
