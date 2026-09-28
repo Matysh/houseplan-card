@@ -10,8 +10,8 @@
 // и не «их», а пересборка по дереву, в котором остановился ребейз.
 //
 // Правило одно: остановку разрешает только набор конфликтов, в котором ВСЕ
-// пути — индекс (или пути, которые вызывающий объявил своими: бандл в
-// `rebase-on-dev.mjs`). Хоть один другой путь — `git rebase --abort` и
+// пути — индекс, данные, где права сторона dev (`UPSTREAM_WINS`, #698), или
+// пути, которые вызывающий объявил своими (бандл в `rebase-on-dev.mjs`). Хоть один другой путь — `git rebase --abort` и
 // перечень ВСЕХ конфликтующих файлов, индекс в нём тоже: автор видит полную
 // картину, дерево и HEAD как были.
 //
@@ -32,6 +32,14 @@ import { fileURLToPath } from 'node:url';
 import { isMainModule } from './spawn-portable.mjs';
 
 export const REVIEWS_INDEX_PATH = 'docs/reviews/INDEX.md';
+/**
+ * #698: данные, в которых на конфликте права сторона `dev`. База метрик
+ * монолита — снимок чисел, а не решение задачи: правильное значение для
+ * объединённого дерева не «наше» и не «их», и судит его тест полосы на
+ * Validate кандидата (#699), а не автор руками. Ченджлоги сюда не входят —
+ * их объединяет `merge=union` в `.gitattributes`, и конфликта не бывает.
+ */
+export const UPSTREAM_WINS = Object.freeze(['scripts/monolith-baseline.json']);
 /** Скрипт индекса — по абсолютному пути: ребейз идёт и из чужого cwd (worktree кандидата). */
 export const REVIEWS_INDEX_SCRIPT = fileURLToPath(new URL('./reviews-index.mjs', import.meta.url));
 /** Предохранитель от зацикливания: коммитов в ветке задачи единицы, не тысячи. */
@@ -46,18 +54,19 @@ const uniquePaths = (paths) => [...new Set(paths.map((p) => String(p).trim()).fi
  *
  * @param {string[]} paths конфликтующие пути (`git diff --name-only --diff-filter=U`)
  * @param {{ extra?: (path: string) => boolean }} [opts] пути, которые вызывающий решает сам
- * @returns {{ action: 'resolve', index: boolean, extra: string[], conflicts: string[] }
+ * @returns {{ action: 'resolve', index: boolean, upstream: string[], extra: string[], conflicts: string[] }
  *         | { action: 'abort', reason: 'no-conflicts'|'manual', manual: string[], conflicts: string[] }}
  */
 export function planStop(paths, { extra = () => false } = {}) {
   const conflicts = uniquePaths(paths);
   if (!conflicts.length) return { action: 'abort', reason: 'no-conflicts', manual: [], conflicts };
-  const manual = conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && !extra(path));
+  const manual = conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && !UPSTREAM_WINS.includes(path) && !extra(path));
   if (manual.length) return { action: 'abort', reason: 'manual', manual, conflicts };
   return {
     action: 'resolve',
     index: conflicts.includes(REVIEWS_INDEX_PATH),
-    extra: conflicts.filter((path) => path !== REVIEWS_INDEX_PATH),
+    upstream: conflicts.filter((path) => UPSTREAM_WINS.includes(path)),
+    extra: conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && !UPSTREAM_WINS.includes(path)),
     conflicts,
   };
 }
@@ -127,6 +136,12 @@ export function rebaseRegenerating({
         return abort({ reason: plan.reason, conflicts: plan.conflicts, manual: plan.manual, output: step.stderr || step.stdout });
       }
       for (const path of plan.extra) resolved.push(`${path} ← ${extra.resolve(path)}`);
+      // На ребейзе `--ours` — сторона, НА которую ребейзят, то есть dev.
+      for (const path of plan.upstream) {
+        git(['checkout', '--ours', '--', path]);
+        git(['add', '--', path]);
+        resolved.push(`${path} ← dev`);
+      }
       if (plan.index) {
         // Не --ours и не --theirs: ни одна сторона не знает документов другой.
         rebuildIndex();

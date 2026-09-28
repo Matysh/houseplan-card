@@ -34,6 +34,10 @@ import { CONVEYOR_IDENTITY } from './reviews-index.mjs';
 const REVIEWS_INDEX_SCRIPT = fileURLToPath(new URL('./reviews-index.mjs', import.meta.url));
 
 export const MAX_ATTEMPTS = 3;
+/** Пути вне patch-id кандидата (#698): документы ревью и то, что ребейз сливает сам. */
+export const PATCH_ID_EXCLUDES = Object.freeze([
+  ':!docs/reviews', ':!docs/CHANGELOG.md', ':!docs/CHANGELOG.ru.md', ':!scripts/monolith-baseline.json',
+]);
 export const VALIDATE_APPEAR_MS = 3 * 60 * 1000;
 export const VALIDATE_TOTAL_MS = 45 * 60 * 1000;
 
@@ -145,8 +149,11 @@ export function realOps({
     // Документы ревью — не часть патча (#516): кандидат несёт свой
     // CODE-REVIEW-N-rK.md, материал — нет, и без pathspec их patch-id
     // расходились на каждом сдвиге dev; `reviewedFresh` судит так же.
+    // #698: вердикт судит работу задачи. Ченджлоги объединяет `merge=union`,
+    // базу метрик монолита ребейз берёт из dev: строки соседей рядом с записью
+    // задачи меняют контекст диффа, но не то, что читал ревьюер.
     patchId: (from, to) => {
-      const diff = must(git('diff', '--full-index', from, to, '--', '.', ':!docs/reviews'), 'diff');
+      const diff = must(git('diff', '--full-index', from, to, '--', '.', ...PATCH_ID_EXCLUDES), 'diff');
       const r = spawnSync('git', ['patch-id', '--stable'], { input: diff, encoding: 'utf8' });
       return (r.stdout || '').trim().split(' ')[0] || 'empty';
     },

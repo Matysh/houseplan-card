@@ -12,3 +12,9 @@
 *.zip binary
 *.woff binary
 *.woff2 binary
+
+# #698: записи двух задач в `## Unreleased` друг другу не противоречат — при
+# слиянии и ребейзе git объединяет обе стороны сам (встроенный драйвер union),
+# и параллельные задачи не возвращаются в S6 из-за соседней строки ченджлога.
+docs/CHANGELOG.md merge=union
+docs/CHANGELOG.ru.md merge=union

@@ -6,7 +6,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { REVIEWS_INDEX_PATH, planStop, rebaseRegenerating } from '../scripts/rebase-generated.mjs';
+import { REVIEWS_INDEX_PATH, UPSTREAM_WINS, planStop, rebaseRegenerating } from '../scripts/rebase-generated.mjs';
+import { PATCH_ID_EXCLUDES } from '../scripts/merge-candidate.mjs';
 import { buildIndex } from '../scripts/reviews-index.mjs';
 
 // #643: doc-коммит ветки задачи конфликтует с dev только в генерируемом
@@ -106,7 +107,7 @@ function scenario({ shared = false, tools = false } = {}) {
 
 test('#643 planStop: разрешается только набор, где ВСЕ конфликты — индекс или объявленные вызывающим', () => {
   assert.deepEqual(planStop([REVIEWS_INDEX_PATH, '', ` ${REVIEWS_INDEX_PATH}`]),
-    { action: 'resolve', index: true, extra: [], conflicts: [REVIEWS_INDEX_PATH] });
+    { action: 'resolve', index: true, upstream: [], extra: [], conflicts: [REVIEWS_INDEX_PATH] });
   const mixed = planStop([REVIEWS_INDEX_PATH, 'src/x.ts']);
   assert.equal(mixed.action, 'abort');
   assert.equal(mixed.reason, 'manual');
@@ -116,7 +117,7 @@ test('#643 planStop: разрешается только набор, где ВС
   assert.equal(planStop(['docs/reviews/sub/INDEX.md']).action, 'abort', 'другой INDEX.md — не индекс ревью');
   assert.deepEqual(planStop([]), { action: 'abort', reason: 'no-conflicts', manual: [], conflicts: [] });
   const bundle = planStop(['dist/a.js', REVIEWS_INDEX_PATH], { extra: (p) => p.startsWith('dist/') });
-  assert.deepEqual(bundle, { action: 'resolve', index: true, extra: ['dist/a.js'], conflicts: ['dist/a.js', REVIEWS_INDEX_PATH] });
+  assert.deepEqual(bundle, { action: 'resolve', index: true, upstream: [], extra: ['dist/a.js'], conflicts: ['dist/a.js', REVIEWS_INDEX_PATH] });
 });
 
 test('#643 AC1: конфликт только в INDEX.md — ребейз проходит, индекс равен пересборке каталога', () => {
@@ -292,4 +293,74 @@ test('#643 process.yml на настоящем bash: сбой помощника
     assert.equal(r.output, '', 'сбой не выдаётся за конфликт ветки');
     assert.match(r.stdout, /::error::помощник ребейза упал/);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+// ---------- #698: ченджлог объединяется, база метрик берётся из dev ----------
+
+function sharedFilesScenario({ baselineConflict = false, alsoCode = false } = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'hp-rebase-698-'));
+  const work = join(root, 'work');
+  mkdirSync(join(work, 'docs'), { recursive: true });
+  mkdirSync(join(work, 'scripts'), { recursive: true });
+  git(root, 'init', '-q', '-b', 'dev', work);
+  copyFileSync(fileURLToPath(new URL('../.gitattributes', import.meta.url)), join(work, '.gitattributes'));
+  const log = (lines) => writeFileSync(join(work, 'docs', 'CHANGELOG.md'), `# Changelog\n\n## Unreleased\n\n${lines.join('\n')}\n\n## 1.0.0\n\n- first\n`);
+  const baseline = (hostRefs) => writeFileSync(join(work, 'scripts', 'monolith-baseline.json'), `${JSON.stringify({ delegates: 1, hostRefs }, null, 2)}\n`);
+  log([]); baseline(100);
+  writeFileSync(join(work, 'a.mjs'), 'export const a = 1;\n');
+  commitAll(work, 'base');
+  git(work, 'checkout', '-q', '-b', 'issue/9-x');
+  log(['- task nine']);
+  if (baselineConflict) baseline(95);
+  if (alsoCode) writeFileSync(join(work, 'a.mjs'), 'export const a = 9;\n');
+  commitAll(work, 'task');
+  git(work, 'checkout', '-q', 'dev');
+  log(['- task eight']);
+  if (baselineConflict) baseline(103);
+  if (alsoCode) writeFileSync(join(work, 'a.mjs'), 'export const a = 8;\n');
+  commitAll(work, 'neighbour');
+  git(work, 'checkout', '-q', 'issue/9-x');
+  return { root, work };
+}
+
+test('#698: записи ченджлога двух задач объединяются при ребейзе, конфликта нет', (t) => {
+  const { root, work } = sharedFilesScenario();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const result = rebaseRegenerating({ onto: 'dev', cwd: work, env: ENV });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.stops, 0, 'union — это не остановка ребейза');
+  const text = readFileSync(join(work, 'docs', 'CHANGELOG.md'), 'utf8');
+  assert.match(text, /- task eight\n- task nine\n/, 'обе записи в Unreleased, сторона dev первой');
+  assert.doesNotMatch(text, /^(<<<<<<<|=======|>>>>>>>)/m);
+});
+
+test('#698: конфликт в базе метрик монолита решается в пользу dev', (t) => {
+  const { root, work } = sharedFilesScenario({ baselineConflict: true });
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const result = rebaseRegenerating({ onto: 'dev', cwd: work, env: ENV });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.deepEqual(result.resolved, ['scripts/monolith-baseline.json ← dev']);
+  assert.equal(JSON.parse(readFileSync(join(work, 'scripts', 'monolith-baseline.json'), 'utf8')).hostRefs, 103);
+  assert.match(readFileSync(join(work, 'docs', 'CHANGELOG.md'), 'utf8'), /- task nine/);
+  assert.deepEqual(UPSTREAM_WINS, ['scripts/monolith-baseline.json']);
+});
+
+test('#698: база метрик вместе с конфликтом в коде — прежний отказ с перечнем', (t) => {
+  const { root, work } = sharedFilesScenario({ baselineConflict: true, alsoCode: true });
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const before = git(work, 'rev-parse', 'HEAD');
+  const result = rebaseRegenerating({ onto: 'dev', cwd: work, env: ENV });
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.manual, ['a.mjs']);
+  assert.deepEqual(result.conflicts, ['a.mjs', 'scripts/monolith-baseline.json']);
+  assert.equal(git(work, 'rev-parse', 'HEAD'), before, 'ребейз отменён, HEAD как был');
+});
+
+test('#698: patch-id кандидата не видит того, что ребейз сливает сам', () => {
+  for (const path of ['docs/reviews', 'docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md', 'scripts/monolith-baseline.json']) {
+    assert.ok(PATCH_ID_EXCLUDES.includes(`:!${path}`), path);
+  }
+  const attrs = readFileSync(fileURLToPath(new URL('../.gitattributes', import.meta.url)), 'utf8');
+  assert.match(attrs, /^docs\/CHANGELOG\.md merge=union$/m);
+  assert.match(attrs, /^docs\/CHANGELOG\.ru\.md merge=union$/m);
 });

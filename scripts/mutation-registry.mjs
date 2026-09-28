@@ -12129,8 +12129,42 @@ const MUTANT_DEFINITIONS = [
       + 'that counts docs/reviews sends every green candidate back to review whenever dev moved (#516)',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: "      const diff = must(git('diff', '--full-index', from, to, '--', '.', ':!docs/reviews'), 'diff');",
+      find: "      const diff = must(git('diff', '--full-index', from, to, '--', '.', ...PATCH_ID_EXCLUDES), 'diff');",
       replace: "      const diff = must(git('diff', '--full-index', from, to), 'diff'); // mutant: review docs count",
+    }],
+  },
+  // #698: ребейз сам сливает то, в чём две задачи не противоречат друг другу.
+  {
+    id: 'changelog-union-driver-dropped',
+    guard: 'node --test --test-name-pattern="#698: записи ченджлога" test/rebase-generated.test.mjs',
+    because: '#698: two tasks adding lines to ## Unreleased must not send the second one back to S6; '
+      + 'the built-in union driver merges both sides',
+    patches: [{
+      file: '.gitattributes',
+      find: 'docs/CHANGELOG.md merge=union\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'monolith-baseline-conflict-is-manual-again',
+    guard: 'node --test --test-name-pattern="#698: конфликт в базе" test/rebase-generated.test.mjs',
+    because: '#698: the monolith metrics baseline is a snapshot, not a decision; on a rebase conflict '
+      + 'dev wins and the band test on the candidate judges the merged tree',
+    patches: [{
+      file: 'scripts/rebase-generated.mjs',
+      find: "export const UPSTREAM_WINS = Object.freeze(['scripts/monolith-baseline.json']);",
+      replace: 'export const UPSTREAM_WINS = Object.freeze([]); // mutant: every baseline conflict is manual',
+    }],
+  },
+  {
+    id: 'merge-patch-id-sees-changelog',
+    guard: 'node --test --test-name-pattern="#698: patch-id" test/rebase-generated.test.mjs',
+    because: '#698: a neighbour line next to the task entry changes the diff context, not what the '
+      + 'reviewer read; counting it re-sends a green task to review',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: "  ':!docs/reviews', ':!docs/CHANGELOG.md', ':!docs/CHANGELOG.ru.md', ':!scripts/monolith-baseline.json',",
+      replace: "  ':!docs/reviews', ':!scripts/monolith-baseline.json',",
     }],
   },
   {
