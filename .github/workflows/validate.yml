@@ -158,8 +158,13 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           marker="[workflow-sync]"
-          existing=$(gh issue list --repo "$REPO" --state open --search "\"$marker\" in:title" \
-            --json number,title --jq '[.[] | select(.title | startswith("[workflow-sync]"))][0].number // empty' || true)
+          # Список не прочитан — нового issue нет: иначе сбой сети или
+          # рейт-лимит плодил бы дубликат к уже открытому (r1 #700).
+          if ! existing=$(gh issue list --repo "$REPO" --state open --search "\"$marker\" in:title" \
+            --json number,title --jq '[.[] | select(.title | startswith("[workflow-sync]"))][0].number // empty'); then
+            echo "::warning::открытые issue не прочитаны — новое не заводится, чтобы не завести дубликат"
+            exit 0
+          fi
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --repo "$REPO" --body "Расхождение повторилось: $RUN_URL" \
               || echo "::warning::комментарий в #$existing не оставлен"

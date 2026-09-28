@@ -12719,6 +12719,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'workflow-sync-issue-duplicated-on-read-failure',
+    guard: 'node --test --test-name-pattern="#700: на ветке задачи" test/validate-workflow.test.mjs',
+    because: 'r1 #700: a failed read of the open issues must not fall through into gh issue create — '
+      + 'that duplicates the owner issue on every network or rate-limit failure',
+    patches: [{
+      file: '.github/workflows/validate.yml',
+      find: '            exit 0\n          fi\n          if [ -n "$existing" ]; then',
+      replace: '            :\n          fi\n          if [ -n "$existing" ]; then',
+    }],
+  },
+  {
     id: 'external-link-warn-mode-ignored',
     guard: 'node --test --test-name-pattern="#700: check-docs" test/validate-workflow.test.mjs',
     because: '#700: a foreign site that is down must not turn a task branch red; --external=warn '

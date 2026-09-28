@@ -628,6 +628,9 @@ test('#700: на ветке задачи зеркало workflow и внешни
   const issue = preflight.slice(preflight.indexOf('- name: "Расхождение зеркала на dev — issue владельцу"'));
   assert.match(issue, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev' && steps\.workflow_sync\.outcome == 'failure'/);
   assert.match(issue, /gh issue list --repo "\$REPO" --state open --search/, 'одно issue, а не одно на каждый push');
+  // r1 #700: несчитанный список — не повод заводить новое.
+  assert.match(issue, /if ! existing=\$\(gh issue list [\s\S]*?\); then\n\s+echo "::warning::[^"]*"\n\s+exit 0\n\s+fi/);
+  assert.doesNotMatch(issue.slice(0, issue.indexOf('gh issue create')), /\|\| true\)/, 'сбой чтения не глушится в пустой ответ');
   assert.match(preflight, /permissions:\n\s+contents: read\n\s+actions: read\n\s+issues: write/);
 });
 
