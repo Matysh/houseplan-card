@@ -13,6 +13,10 @@ import {
   stairFootprintsTouching,
   stairIntervalCount,
   stairRenderGeometry,
+  STAIR_STROKE_CM,
+  stairStrokePrintMm,
+  stairStrokeUnits,
+  stairStyleVars,
   stairVisualFields,
   stairVisualStyle,
 } from '../test-build/stairs.js';
@@ -36,6 +40,37 @@ const spiral = (extra = {}) => ({
   id: 'spiral', kind: 'spiral', x: 0.5, y: 0.5, angle: 0,
   direction: 'clockwise', radius: 0.1,
   target_space_id: 'upper', ...extra,
+});
+
+test('#688 all stair linework shares one physical 3.6 cm contract', () => {
+  assert.equal(STAIR_STROKE_CM, 3.6);
+  assert.equal(stairStrokeUnits(5), 3, '3.6 cm is 3 plan units on the reference grid');
+  assert.ok(Math.abs(stairStrokeUnits(1) - 15) < 1e-12,
+    'a finer grid needs more plan units for the same 3.6 cm');
+  assert.ok(Math.abs(stairStrokeUnits(5, 10) - 7.2) < 1e-12,
+    'custom grid pitch keeps the physical conversion');
+  assert.equal(stairStrokeUnits(NaN), 3, 'invalid transient layout uses the finite reference fallback');
+  assert.equal(stairStrokePrintMm(50), 0.72);
+  assert.equal(stairStrokePrintMm(100), 0.36);
+
+  const vars = stairStyleVars(
+    straight(), 5, 1000 / 240, { color: '#112233', opacity: 0.6 },
+  );
+  assert.match(vars, /--hp-stair-stroke:3(?:;|$)/);
+  assert.match(vars, /--hp-stair-line:#112233/);
+  assert.equal(Object.hasOwn(straight(), 'width_cm'), false,
+    'the fixed physical weight never becomes persisted stair data');
+});
+
+test('#688 base stair CSS uses the physical variable while UI accents remain screen-space', () => {
+  const styles = readFileSync(new URL('../src/styles/plan.styles.ts', import.meta.url), 'utf8');
+  const block = styles.slice(styles.indexOf('.hp-stair-outline'), styles.indexOf('.alignmsg'));
+  assert.match(block, /stroke-width: var\(--hp-stair-stroke, 3\)/);
+  assert.doesNotMatch(block, /calc\((?:2|2\.5)px \/ var\(--hp-plan-screen-scale/);
+  assert.doesNotMatch(block, /\.hp-stair-arrow\s*\{\s*stroke-width/,
+    'the arrow has no independent line weight');
+  assert.match(block, /\.hp-stair\.selected \.hp-stair-outline[\s\S]*vector-effect: non-scaling-stroke/,
+    'selection remains a separate screen-space affordance');
 });
 
 test('#663 validates the discriminated stair model and preserves future fields', () => {

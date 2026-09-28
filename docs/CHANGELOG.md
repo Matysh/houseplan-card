@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Stair outlines, treads, trapezoids and direction arrows now share one 3.6 cm
+  physical line weight. It scales with the plan instead of staying fixed in
+  screen pixels, remains uniform when a stair is resized or rotated, and uses
+  the same physical value in View, the Plan editor and PDF
+  ([#688](https://github.com/Matysh/houseplan-card/issues/688)).
+
 ## v1.78.0-beta.8 — 2026-09-28
 
 - Settled zoom levels now keep physical wall hatching crisp and consistent,

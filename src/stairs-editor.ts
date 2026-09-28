@@ -517,7 +517,9 @@ export class StairEditorRuntime {
     return svg`<g class="hp-stair ${selected ? 'selected' : ''} ${inputEnabled ? 'input-enabled' : ''} ${draft ? 'draft' : ''}"
       data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
       data-target-state=${targetState}
-      style=${stairStyleVars(stair, this.creationVisualStyle())}
+      style=${stairStyleVars(
+        stair, this.owner._cellCm, this.owner._gridPitch, this.creationVisualStyle(),
+      )}
       role="img"
       aria-label=${this.owner._t('markup.stairs')}
       @dblclick=${(event: MouseEvent) => {

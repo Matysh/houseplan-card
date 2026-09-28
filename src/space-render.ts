@@ -912,7 +912,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     const geometry = cachedStairRenderGeometry(stair, cellCm);
     return svg`<g class="hp-stair" data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
       data-target-state="fixed"
-      style=${stairStyleVars(stair, stairFallback)}
+      style=${stairStyleVars(stair, cellCm, GRID_PITCH, stairFallback)}
       aria-hidden="true" pointer-events="none">
       <polygon class="hp-stair-outline" points=${geometry.outline.map((point) => point.join(',')).join(' ')}></polygon>
       ${geometry.trapezoid.map((line) => svg`<line class="hp-stair-trapezoid"

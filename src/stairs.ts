@@ -4,7 +4,32 @@ import { CANVAS_LIMIT, GRID_N, NORM_W } from './canvas-constants';
 import { safeStoredColor } from './color';
 
 export const STAIR_TREAD_CM = 30;
+/** One physical line weight for every visible part of either stair symbol (#688). */
+export const STAIR_STROKE_CM = 3.6;
 export const MAX_STAIRS_PER_SPACE = 250;
+
+const STAIR_REFERENCE_CELL_CM = 5;
+const STAIR_REFERENCE_GRID_PITCH = NORM_W / GRID_N;
+
+/** Physical stair line weight expressed in the current plan coordinate system. */
+export function stairStrokeUnits(
+  cellCm: unknown,
+  gridPitch: unknown = STAIR_REFERENCE_GRID_PITCH,
+): number {
+  const rawCell = Number(cellCm);
+  const cell = Number.isFinite(rawCell) && rawCell > 0 ? rawCell : STAIR_REFERENCE_CELL_CM;
+  const rawPitch = Number(gridPitch);
+  const pitch = Number.isFinite(rawPitch) && rawPitch > 0
+    ? rawPitch : STAIR_REFERENCE_GRID_PITCH;
+  return (STAIR_STROKE_CM / cell) * pitch;
+}
+
+/** Physical stair line weight on paper, in millimetres, at a 1:N scale. */
+export function stairStrokePrintMm(printScale: unknown): number {
+  const rawScale = Number(printScale);
+  const scale = Number.isFinite(rawScale) && rawScale > 0 ? rawScale : 1;
+  return (STAIR_STROKE_CM * 10) / scale;
+}
 
 export type StraightStairDirection = 'forward' | 'backward';
 export type SpiralStairDirection = 'clockwise' | 'counterclockwise';
@@ -131,11 +156,14 @@ export function stairVisualFields(style: StairVisualStyle): StairVisualFields {
 
 export function stairStyleVars(
   stair: Stair,
+  cellCm: unknown,
+  gridPitch: unknown,
   fallback: Pick<StairVisualStyle, 'color' | 'opacity'> = DEFAULT_STAIR_VISUAL_STYLE,
 ): string {
   const style = stairVisualStyle(stair, fallback);
   return `--hp-stair-line:${style.color};--hp-stair-line-opacity:${style.opacity};`
-    + `--hp-stair-fill:${style.fillColor};--hp-stair-fill-opacity:${style.fillOpacity}`;
+    + `--hp-stair-fill:${style.fillColor};--hp-stair-fill-opacity:${style.fillOpacity};`
+    + `--hp-stair-stroke:${stairStrokeUnits(cellCm, gridPitch)}`;
 }
 
 /** Number of equal intervals whose physical size is closest to 30 cm. */

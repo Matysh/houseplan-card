@@ -90,6 +90,14 @@ thirds of the radius into equal sectors closest to 30 cm. Their direction is
 clockwise or counter-clockwise when viewed from above. The arrow always means
 physical ascent, not the direction of navigation between named tabs.
 
+Every visible stair line has one fixed physical weight of **3.6 cm**: the
+outer outline, straight-flight trapezoid, treads/sectors and complete direction
+arrow all share it. There is no per-stair thickness setting. The weight follows
+the plan camera like other physical drawing units, stays independent of stair
+size and rotation, and is converted through the selected print scale in PDF.
+Hover and selection may add their own temporary screen-space outline without
+changing that physical symbol or persisted data.
+
 The footprint overlap is removed from clean room floor area exactly once. It
 does not cut the visible floor, change room or wall geometry, create a light
 occluder, affect Glow/sun/vacuum, or participate in Optimize. In 2.5D the first

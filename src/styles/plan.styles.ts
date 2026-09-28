@@ -1583,8 +1583,7 @@ export const planStyles = css`
       fill-opacity: var(--hp-stair-fill-opacity, 0);
       stroke: var(--hp-stair-line, #607d8b);
       stroke-opacity: var(--hp-stair-line-opacity, 1);
-      stroke-width: calc(2px / var(--hp-plan-screen-scale, 1));
-      vector-effect: non-scaling-stroke;
+      stroke-width: var(--hp-stair-stroke, 3);
     }
     .hp-stair-trapezoid,
     .hp-stair-tread,
@@ -1592,13 +1591,11 @@ export const planStyles = css`
       fill: none;
       stroke: var(--hp-stair-line, #607d8b);
       stroke-opacity: var(--hp-stair-line-opacity, 1);
-      stroke-width: calc(2px / var(--hp-plan-screen-scale, 1));
+      stroke-width: var(--hp-stair-stroke, 3);
       stroke-linecap: round;
       stroke-linejoin: round;
-      vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
-    .hp-stair-arrow { stroke-width: calc(2.5px / var(--hp-plan-screen-scale, 1)); }
     .hp-stair-hit { fill: transparent; stroke: transparent; stroke-width: 14px; pointer-events: none; }
     .hp-stair.input-enabled .hp-stair-hit { pointer-events: all; }
     .hp-stair.navigable { cursor: pointer; }
@@ -1610,12 +1607,14 @@ export const planStyles = css`
     :host([data-pointer-hover]) .hp-stair.navigable:hover .hp-stair-outline {
       stroke: var(--hp-accent);
       stroke-opacity: 1;
-      stroke-width: calc(2.5px / var(--hp-plan-screen-scale, 1));
+      stroke-width: 2.5px;
+      vector-effect: non-scaling-stroke;
     }
     .hp-stair.selected .hp-stair-outline {
       stroke: var(--hp-accent);
       stroke-opacity: 1;
-      stroke-width: calc(3px / var(--hp-plan-screen-scale, 1));
+      stroke-width: 3px;
+      vector-effect: non-scaling-stroke;
     }
     /* #676: the frame and its handles are the decor frame's chrome (.dtframe,
        .dthandle, .dtknob, dt-* cursors) painted in the top overlay; the draft

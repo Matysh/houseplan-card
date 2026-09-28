@@ -13,6 +13,7 @@ export interface StairViewHostPort {
   _hasFixedFloor: boolean;
   _suppressClick: boolean;
   _cellCm: number;
+  _gridPitch: number;
   _decorStyle: { color: string; opacity: number };
   _tabClick(spaceId: string): void;
   _t(key: 'markup.stairs' | 'stairs.tooltip_navigate', vars?: Record<string, string | number>): string;
@@ -88,7 +89,9 @@ export class StairViewRuntime {
       return svg`<g class="hp-stair ${active ? 'navigable' : ''} ${interactive ? 'input-enabled' : ''}"
         data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
         data-target-state=${targetState}
-        style=${stairStyleVars(stair, this.owner._decorStyle)}
+        style=${stairStyleVars(
+          stair, this.owner._cellCm, this.owner._gridPitch, this.owner._decorStyle,
+        )}
         role=${active ? 'link' : 'img'} tabindex=${active ? '0' : nothing}
         aria-label=${this.owner._t('markup.stairs')}
         @click=${navigate}

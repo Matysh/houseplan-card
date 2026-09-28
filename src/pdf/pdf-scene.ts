@@ -14,7 +14,7 @@ import {
 } from '../plan-geometry-preflight';
 import { labelPos, GRID_PITCH, GRID_STEP_N, NORM_W } from '../space-geometry';
 import {
-  cachedStairRenderGeometry, geometryAreaMinusStairs, stairOutline, type Stair,
+  cachedStairRenderGeometry, geometryAreaMinusStairs, stairOutline, stairStrokePrintMm, type Stair,
 } from '../stairs';
 import type { ServerConfig, SpaceModel } from '../types';
 import {
@@ -469,20 +469,21 @@ function buildPdfCandidate(
     e: left - bounds.minX * pointPerUnit,
     f: top - bounds.minY * pointPerUnit,
   };
+  const stairStroke = stairStrokePrintMm(scale) * MM;
   for (const stair of input.space.stairs) {
     const geometry = cachedStairRenderGeometry(stair, built.cellCm);
     commands.push({
-      kind: 'path', rings: [geometry.outline.map(pt)], stroke: INK, width: 0.25 * MM,
+      kind: 'path', rings: [geometry.outline.map(pt)], stroke: INK, width: stairStroke,
     });
     for (const edge of geometry.trapezoid) commands.push({
-      kind: 'line', points: [pt(edge.a), pt(edge.b)], stroke: INK, width: 0.25 * MM,
+      kind: 'line', points: [pt(edge.a), pt(edge.b)], stroke: INK, width: stairStroke,
     });
     for (const tread of geometry.treads) commands.push({
-      kind: 'line', points: [pt(tread.a), pt(tread.b)], stroke: INK, width: 0.25 * MM,
+      kind: 'line', points: [pt(tread.a), pt(tread.b)], stroke: INK, width: stairStroke,
     });
     commands.push({
       kind: 'vector', ops: transformSvgPath(geometry.arrowPath, stairMatrix),
-      stroke: INK, width: 0.3 * MM,
+      stroke: INK, width: stairStroke,
     });
   }
 

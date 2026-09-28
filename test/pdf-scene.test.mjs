@@ -199,7 +199,7 @@ test('#663 PDF renders both stair symbols and uses stair-adjusted clean area', (
   assert.match(area.text, new RegExp(`^${expectedM2.toFixed(1).replace('.', '[.,]')}\\s*m²$`));
 });
 
-test('#683 PDF keeps stair visual styling monochrome and includes trapezoid linework', () => {
+test('#683/#688 PDF keeps stair styling monochrome and one physical line weight', () => {
   const plain = structuredClone(rawSpace);
   plain.stairs = [{
     id: 'straight', kind: 'straight', x: 0.4, y: 0.4, angle: 0,
@@ -214,10 +214,18 @@ test('#683 PDF keeps stair visual styling monochrome and includes trapezoid line
   const styledOutput = buildRawPage(styled, options);
   assert.deepEqual(styledOutput.commands, plainOutput.commands,
     'screen colours and fill never leak into the monochrome PDF contract');
+  const expectedWidth = 3.6 * 10 * MM / styledOutput.scale;
+  const stairOutline = styledOutput.commands.find((command) => command.kind === 'path'
+    && command.rings[0]?.length === 4);
+  const stairArrow = styledOutput.commands.find((command) => command.kind === 'vector');
+  assert.equal(stairOutline.width, expectedWidth,
+    'the outline converts 3.6 cm through the selected print scale');
+  assert.equal(stairArrow.width, expectedWidth,
+    'the arrow no longer has an independent print weight');
   const stairLines = styledOutput.commands.filter((command) => command.kind === 'line'
-    && command.width === 0.25 * MM);
+    && command.width === expectedWidth);
   assert.ok(stairLines.length >= 5,
-    'the straight symbol exports its three trapezoid edges and equal treads');
+    'trapezoid and tread commands use the same physical print weight');
 });
 
 test('shared wall architecture is emitted once and devices never enter the PDF scene', () => {
