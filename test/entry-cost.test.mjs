@@ -44,3 +44,13 @@ test('#634 entry-cost: AGENTS.md называет те же маршруты в 
   assert.deepEqual(route('reviewer'), ROUTES.reviewer.files);
   assert.deepEqual(route('changing the pipeline'), ROUTES.canon.files);
 });
+
+test('#701 D14: промпт ревьюера читает маршрут reviewer в том же порядке, что AGENTS.md', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { ROUTES } = await import('../scripts/entry-cost.mjs');
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
+  const start = workflow.indexOf('Прочитай в этом порядке, прежде чем судить:');
+  assert.ok(start > 0, 'нумерованный порядок чтения в промпте найден');
+  const items = [...workflow.slice(start, start + 3000).matchAll(/^\s+(\d)\. (\S+)/gm)].slice(0, 3).map((m) => m[2]);
+  assert.deepEqual(items, ROUTES.reviewer.files);
+});

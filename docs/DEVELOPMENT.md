@@ -330,7 +330,10 @@ the `dev` branch. Access to the owner's instances is not documented here.
 
 - The card module URL contains `?v=<VERSION from const.py>`. Browsers keep the ES module in
   memory cache: after deploying new JS **bump VERSION in const.py and restart HA**,
-  otherwise a plain F5 will keep the old version.
+  otherwise a plain F5 will keep the old version. This is a deployment step — a
+  release candidate or your own local stand. An ordinary task commit bumps neither
+  `VERSION` nor the committed bundle: both change only in a commit with a
+  `Release:` trailer (#657, `PROCESS.md` §1).
 - After a page reload the HA frontend (with kiosk-mode) sometimes leaves the view empty
   ("InvalidStateError: Transition was aborted", hui-view is not created for 1–2 min).
   Cured by repeating the SPA navigation: pushState + a location-changed event, or just waiting.

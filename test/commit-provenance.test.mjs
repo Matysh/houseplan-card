@@ -105,3 +105,19 @@ test('the audited beta.2 baseline exception is exact and golden-only', () => {
   assert.equal(validateHistoricalCommit(`${audited.slice(0, -1)}2`, message, changed).length, 2);
   assert.match(validateHistoricalCommit(audited, 'Update baseline', changed)[0], /Issue/);
 });
+
+// #701 (PROCESS.md §3 п.10): трейлеры — только на коммитах с продуктовыми и
+// инфраструктурными файлами; документационный коммит их не требует.
+test('#701: документационный коммит (только класс C) трейлеров не требует', () => {
+  assert.deepEqual(validateCommitMessage('docs: fix a typo in the guide', ['docs/USER-GUIDE.md', 'README.md']), []);
+  assert.deepEqual(validateCommitMessage('docs: changelog wording', ['docs/CHANGELOG.md']), []);
+  // Хоть один файл вне класса C — прежнее правило.
+  assert.equal(validateCommitMessage('fix: x', ['docs/USER-GUIDE.md', 'src/card.ts']).length, 2);
+  assert.equal(validateCommitMessage('test: x', ['test/a.test.mjs']).length, 2);
+  assert.equal(validateCommitMessage('build: x', ['dist/houseplan-card.js']).length >= 2, true);
+  // Судить нечем — не документационный коммит.
+  assert.equal(validateCommitMessage('docs: typo', []).length, 2);
+  // Трейлер, если он есть, судится всегда: кривой номер — ошибка и в docs-коммите.
+  assert.equal(validateCommitMessage('docs: typo\n\nIssue: #x', ['docs/a.md']).length, 2);
+  assert.deepEqual(validateCommitMessage('docs: typo\n\nIssue: #9\nUser-Visible: no', ['docs/a.md']), []);
+});

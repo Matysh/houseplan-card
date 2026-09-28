@@ -29,7 +29,9 @@ leak interactions into View. For work that changes visible behaviour, also read
 route and `test/entry-cost.test.mjs` keeps this list equal to its routes:
 
 - author (analysis, spec, implementation, infrastructure): `docs/SCOPE.md` →
-  `AGENTS.md` → `docs/process/AUTHOR.md` → `docs/STATUS.md`;
+  `AGENTS.md` → `docs/process/AUTHOR.md`, then the task packet
+  (`node scripts/task-packet.mjs --issue NN`); the status snapshot
+  (docs/STATUS.md) only when resuming a session or preparing a release;
 - reviewer (spec or code): `docs/SCOPE.md` → `AGENTS.md` →
   `docs/process/REVIEWER.md`, then the issue body and its comments;
 - changing the pipeline, the gates or the process itself: `docs/SCOPE.md` →
@@ -100,8 +102,9 @@ batched comment with a proposed default for each question and `blocked` on top o
 ## Commits and branches
 
 Hooks install themselves on `npm ci` (`prepare` → `scripts/install-hooks.mjs`);
-`git config core.hooksPath` must print `.githooks`. Every non-merge commit
-carries **terminal** trailers:
+`git config core.hooksPath` must print `.githooks`. Every non-merge commit that
+touches anything outside class C (docs) carries **terminal** trailers; a
+docs-only commit needs none (`PROCESS.md` §3 п.10, #701):
 
 ```text
 Issue: #123

@@ -4,6 +4,7 @@ import { basename } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { bundleCommitErrors } from './bundle-policy.mjs';
+import { classify } from './change-classes.mjs';
 
 const TRAILER = /^([A-Za-z][A-Za-z0-9-]*):\s*(.*?)\s*$/;
 export const ENFORCEMENT_BOUNDARY = '8e2973fa7a7cb1a80204ff95ecf3f2d7c36ed2ce';
@@ -52,15 +53,27 @@ export function terminalTrailers(message) {
   return out;
 }
 
+/**
+ * #701 (PROCESS.md §3 п.10): документационный коммит — только файлы класса C —
+ * трейлеров не требует, как `skip issue` у CPython. Правило №1 охраняет
+ * продуктовый код, а не опечатку в гайде. Пустой список файлов (сообщение без
+ * `--staged`) — не документационный коммит: судить нечем, правило прежнее.
+ * Трейлеры, если они есть, судятся всегда.
+ */
+export function isDocsOnlyCommit(changedFiles = []) {
+  return changedFiles.length > 0 && changedFiles.every((file) => classify(file.replaceAll('\\', '/')) === 'C');
+}
+
 export function validateCommitMessage(message, changedFiles = [], { baselineIndex = undefined, authorDate = null } = {}) {
   const trailers = terminalTrailers(message);
   const errors = [];
   const issues = trailers.get('Issue') || [];
-  if (!issues.length || issues.some((value) => !/^#[1-9][0-9]*$/.test(value))) {
+  const visible = trailers.get('User-Visible') || [];
+  const exempt = isDocsOnlyCommit(changedFiles) && !issues.length && !visible.length;
+  if (!exempt && (!issues.length || issues.some((value) => !/^#[1-9][0-9]*$/.test(value)))) {
     errors.push("missing or invalid terminal 'Issue: #<positive number>' trailer");
   }
-  const visible = trailers.get('User-Visible') || [];
-  if (visible.length !== 1 || !/^(yes|no)$/.test(visible[0])) {
+  if (!exempt && (visible.length !== 1 || !/^(yes|no)$/.test(visible[0]))) {
     errors.push("expected exactly one terminal 'User-Visible: yes|no' trailer");
   }
   const normalizedFiles = changedFiles.map((file) => file.replaceAll('\\', '/'));

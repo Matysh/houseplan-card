@@ -39,36 +39,11 @@ import { fileURLToPath } from 'node:url';
 
 import { resolveValidationRange } from './validate-commit-provenance.mjs';
 
-// --- классы изменений, PROCESS.md §1 ---
-// Порядок важен: D проверяется первым, иначе собранный бандл попадёт в A,
-// а demo/golden/baselines — в B.
-const CLASS_D = [
-  /^dist\//,
-  /^custom_components\/houseplan\/frontend\//,
-  /^demo\/srv\/assets\/houseplan-card\.js$/,
-  /^demo\/golden\/baselines\//,
-];
-const CLASS_A = [
-  /^src\//,
-  /^custom_components\/houseplan\/.*\.py$/,
-  /^hacs\.json$/,
-  /^custom_components\/.*\/manifest\.json$/,
-  /^custom_components\/.*\/translations\//,
-];
-const CLASS_B = [
-  /^test\//, /^tests_backend\//, /^demo\//, /^scripts\//,
-  /^\.github\//, /^\.githooks\//, /^rollup\.config\.mjs$/, /^tsconfig.*\.json$/,
-  /^package(-lock)?\.json$/, /^pytest\.ini$/, /^\.gitignore$/, /^\.gitattributes$/,
-  // Пины toolchain — производные от validate.yml (#496), конфиг сборки.
-  /^\.nvmrc$/, /^\.python-version$/,
-];
-const CLASS_C = [
-  /^docs\//, /^README/, /^CHANGELOG/, /^AGENTS\.md$/, /^LICENSE$/,
-  /^CONTRIBUTING\.md$/, /^PROCESS.*\.md$/, /^(CODE|SPEC)-REVIEW-.*\.md$/,
-  // #682: архив выпущенного — документы ревью и ТЗ прошлых линий. Только
-  // Markdown; исполняемого там нет (#678 вынес всё прочее из дерева).
-  /^legacy\//,
-];
+// Классы изменений (PROCESS.md §1) живут в change-classes.mjs (#701): их
+// читает и хук commit-msg, который судит, нужен ли коммиту трейлер.
+import { classify } from './change-classes.mjs';
+
+export { classify };
 
 const CHANGELOGS = ['docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'];
 
@@ -90,13 +65,6 @@ export const RULES = {
   10: 'DoR по моменту коммита',
 };
 
-export function classify(path) {
-  if (CLASS_D.some((r) => r.test(path))) return 'D';
-  if (CLASS_A.some((r) => r.test(path))) return 'A';
-  if (CLASS_B.some((r) => r.test(path))) return 'B';
-  if (CLASS_C.some((r) => r.test(path))) return 'C';
-  return '?';
-}
 
 // --- разбор коммитов ---
 // Тело коммита многострочное, поэтому поля режутся не по переводам строк:

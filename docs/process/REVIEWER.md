@@ -83,9 +83,10 @@
   ([§8](../../PROCESS.md#8-гейты)).
 - Условие честности сужения: ревьюер обязан перечислить, какие гейты прогнал,
   какие нет и почему ([§8](../../PROCESS.md#8-гейты)).
-- Зелёный `pytest tests_backend` без Home Assistant скипает `test_ha_*.py` и
-  ничего не доказывает — это «чего не проверял» (`docs/TESTING.md`;
-  [§8](../../PROCESS.md#8-гейты)).
+- Зелёный `pytest tests_backend` без Home Assistant `test_ha_*.py` не
+  собирает вовсе — их нет ни в `passed`, ни в `skipped` (строка `HA harness NOT
+  collected`), и такой прогон про HA ничего не доказывает — это «чего не
+  проверял» (`docs/TESTING.md`; [§8](../../PROCESS.md#8-гейты)).
 
 ## Повторный раунд
 

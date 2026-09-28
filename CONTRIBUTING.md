@@ -94,12 +94,11 @@ issue, but they do not replace it or maintain a separate checklist.
 
 ```bash
 git clone --filter=blob:none https://github.com/Matysh/houseplan-card && cd houseplan-card
-npm ci                    # frontend toolchain
+npm ci                    # frontend toolchain; `prepare` installs .githooks
 npm run typecheck         # tsc --noEmit (strict)
 npm test                  # node:test — pure logic, i18n parity, tap-action security
 npm run build             # tsc + rollup → dist/houseplan-card.js
-pip install pytest voluptuous && python -m pytest tests_backend -q   # pure backend tests
-npm install                # also installs .githooks through the prepare script
+pip install -r tests_backend/requirements.txt && python -m pytest tests_backend -q   # CI pins, HA harness included
 ```
 
 ### Why `--filter=blob:none` (#345)
@@ -127,7 +126,9 @@ Linux CI or WSL (`bash scripts/wsl-setup.sh --verify`). Without an importable
 ## Ground rules
 
 - **Docs in the same commit**: CHANGELOG entry for user-visible changes;
-  `docs/STATUS.md` for state changes; `docs/DEVELOPMENT.md` for new gotchas.
+  `docs/ARCHITECTURE.md` for changes to the data model, WS API or coordinate
+  system; `docs/STATUS.md` for state changes; `docs/DEVELOPMENT.md` for new
+  gotchas. A docs-only commit needs no trailers (`PROCESS.md` §3 п.10).
 - Every UI string goes through `src/i18n/<lang>.json`; follow the
   [Translations](#translations) flow for registry and backend parity.
 - The committed bundle changes only in a release candidate: `npm run

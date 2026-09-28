@@ -25,9 +25,12 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 /** Маршруты входа по роли. `budget: null` — только замер, без порога. */
 export const ROUTES = Object.freeze({
+  // #701: `docs/STATUS.md` ушёл из входа автора — снимок версий и цикла нужен,
+  // когда сессия возобновляет работу или готовит релиз, а задачу ведёт её пакет
+  // (`task-packet.mjs`). Минус 691 слово на каждом входе.
   author: {
     budget: 12000, // AC1 #634
-    files: ['docs/SCOPE.md', 'AGENTS.md', 'docs/process/AUTHOR.md', 'docs/STATUS.md'],
+    files: ['docs/SCOPE.md', 'AGENTS.md', 'docs/process/AUTHOR.md'],
   },
   reviewer: {
     budget: 9000,

@@ -134,6 +134,7 @@ const HOOK_FILES = [
   'scripts/pre-push-gate.mjs',
   'scripts/branch-state.mjs',
   'scripts/process-gate.mjs',
+  'scripts/change-classes.mjs', // #701: классы изменений — общие для гейта и трейлеров
   'scripts/validate-commit-provenance.mjs',
   'scripts/bundle-policy.mjs', // #657: правило бандла в проверке происхождения
   'scripts/bundle-tree.mjs',

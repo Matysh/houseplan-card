@@ -8158,6 +8158,29 @@ const MUTANT_DEFINITIONS = [
       replace: '      .hdr > .head { flex-wrap: wrap; padding: 5px 8px; gap: 6px; }',
     }],
   },
+  // #701: документационный коммит трейлеров не требует — и только он.
+  {
+    id: 'docs-only-commit-needs-trailers-again',
+    guard: 'node --test --test-name-pattern="#701" test/commit-provenance.test.mjs',
+    because: '#701 (PROCESS §3 п.10): rule #1 guards product code, not a typo in a guide; a docs-only '
+      + 'commit carries no Issue/User-Visible trailers',
+    patches: [{
+      file: 'scripts/validate-commit-provenance.mjs',
+      find: '  const exempt = isDocsOnlyCommit(changedFiles) && !issues.length && !visible.length;',
+      replace: '  const exempt = false; // mutant: every commit needs trailers',
+    }],
+  },
+  {
+    id: 'docs-only-exemption-leaks-to-code',
+    guard: 'node --test --test-name-pattern="#701" test/commit-provenance.test.mjs',
+    because: '#701: one file outside class C makes the commit subject to rule #1 again; the exemption '
+      + 'must not cover a commit that also touches src/**',
+    patches: [{
+      file: 'scripts/validate-commit-provenance.mjs',
+      find: "  return changedFiles.length > 0 && changedFiles.every((file) => classify(file.replaceAll('\\\\', '/')) === 'C');",
+      replace: "  return changedFiles.length > 0 && changedFiles.some((file) => classify(file.replaceAll('\\\\', '/')) === 'C'); // mutant",
+    }],
+  },
   {
     id: 'header-menu-drops-pdf',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '

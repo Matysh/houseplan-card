@@ -3,8 +3,10 @@
 > The current state for a resuming session: a generated snapshot, the current
 > cycle and the standing decisions that explain it. Rules are not here — the
 > process is `PROCESS.md`, release mechanics are `docs/DEVELOPMENT.md` › Release,
-> and task scope and status live in GitHub Issues and their labels. Update a row
-> in the same commit as the change it describes (`PROCESS.md` §2.6).
+> and task scope and status live in GitHub Issues and their labels. The snapshot
+> below is generated — never edit it by hand; the prose sections after it are
+> edited by hand, a row in the same commit as the change it describes
+> (`PROCESS.md` §2.6).
 
 ## Snapshot
 
