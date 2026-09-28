@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   branchIsInfrastructure, buildPacket, evidenceFor, productFlowEvidence, extractAcceptanceCriteria, lastVerdict, ownerDecisions, renderPacket, rightsFor,
+  trackFromLabels,
 } from '../scripts/task-packet.mjs';
 import { materialAnchorBlock } from '../scripts/review-doc-guard.mjs';
 
@@ -87,7 +88,7 @@ test('пакет собирается и рендерится: статус, м�
     validate: { status: 'зелёный', url: 'https://run' },
   });
   assert.equal(packet.status, 'S6-in-progress');
-  assert.equal(packet.track, 'small');
+  assert.equal(packet.track, 'show');
   assert.equal(packet.material.treeMatchesVerdict, true);
   assert.deepEqual(packet.unverified, ['AC2']);
   const md = renderPacket(packet);
@@ -118,7 +119,7 @@ test('#562: the infra label alone never grants the accelerated track', () => {
     labels: ['infra', 'S6-in-progress'],
     branch: { name: 'issue/999-product', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: false },
   });
-  assert.equal(packet.track, 'полный');
+  assert.equal(packet.track, 'ask');
   assert.ok(packet.rights.some((l) => l.includes('продуктовый код трогать МОЖНО')));
 });
 
@@ -152,7 +153,7 @@ test('#632: product S6 issue keeps class A rights while its diff has no class A 
     branch: { name: 'issue/607-ha-dialog-close', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: true },
     reviewDocs: [{ name: 'SPEC-REVIEW-607-r1.md', text: 'Вердикт: зелёный' }],
   });
-  assert.equal(packet.track, 'small');
+  assert.equal(packet.track, 'show');
   assert.ok(packet.rights.some((l) => l.includes('продуктовый код трогать МОЖНО')));
   assert.ok(packet.rights.every((l) => !l.includes('файлы класса A трогать НЕЛЬЗЯ')));
   assert.match(renderPacket(packet), /Продуктовый поток: .*ТЗ/);
@@ -192,7 +193,7 @@ test('#632 r1: trivial issue in S6/S7 keeps class A rights without any spec arte
       labels,
       branch: { name: 'issue/612-x', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: true },
     });
-    assert.equal(packet.track, 'trivial', labels.join(','));
+    assert.equal(packet.track, 'show', labels.join(','));
     assert.ok(packet.rights.some((l) => l.includes('продуктовый код трогать МОЖНО')), labels.join(','));
     assert.ok(packet.rights.every((l) => !l.includes('файлы класса A трогать НЕЛЬЗЯ')), labels.join(','));
   }
@@ -216,4 +217,14 @@ test('#517 AC5: AC берутся из тела issue, файл ТЗ — тол�
 
   const neither = buildPacket({ ...base, issue: { ...base.issue, body: 'ничего' }, specs: [] });
   assert.deepEqual(neither.acceptance, []);
+});
+
+test('#695: трек по меткам — track:* главнее прежних, по умолчанию ask', () => {
+  assert.equal(trackFromLabels(['track:ship']), 'ship');
+  assert.equal(trackFromLabels(['track:show', 'bug']), 'show');
+  assert.equal(trackFromLabels(['track:ask', 'small']), 'ask', 'явная метка владельца главнее прежней');
+  assert.equal(trackFromLabels(['trivial']), 'show');
+  assert.equal(trackFromLabels(['small']), 'show');
+  assert.equal(trackFromLabels(['bug', 'P2']), 'ask');
+  assert.equal(trackFromLabels([]), 'ask');
 });

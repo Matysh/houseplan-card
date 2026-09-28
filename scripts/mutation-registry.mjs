@@ -10262,8 +10262,8 @@ const MUTANT_DEFINITIONS = [
       + 'the digest must fail as soon as an anchor goes stale (#634 AC2)',
     patches: [{
       file: 'docs/process/AUTHOR.md',
-      find: '[§5.1](../../PROCESS.md#51-короткий-трек-метка-trivial)',
-      replace: '[§5.1](../../PROCESS.md#51-короткий-трек)',
+      find: '[§5.1](../../PROCESS.md#51-метки-тяжёлых-проверок-и-прежние-метки)',
+      replace: '[§5.1](../../PROCESS.md#51-метки-тяжёлых-проверок)',
     }],
   },
   {
@@ -10273,8 +10273,8 @@ const MUTANT_DEFINITIONS = [
       + 'digest invented or a paraphrase nobody can check (#634 AC2)',
     patches: [{
       file: 'docs/process/AUTHOR.md',
-      find: '  нечего ([§5.1](../../PROCESS.md#51-короткий-трек-метка-trivial)).',
-      replace: '  нечего.',
+      find: '  `track:show` ([§5.1](../../PROCESS.md#51-метки-тяжёлых-проверок-и-прежние-метки)).',
+      replace: '  `track:show`.',
     }],
   },
   {

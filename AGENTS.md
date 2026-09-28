@@ -73,13 +73,16 @@ overlap. The committed bundle changes only in a commit with a `Release:` trailer
 (#657); an ordinary task restores it with `npm run bundle:clean` before
 committing.
 
-**Tracks** (`PROCESS.md` §5, §5.1): `small` is the default — the spec lives in the
-issue body and its review is a comment; taking the full track means naming the
-`small` criterion the task fails. `trivial` skips the spec stage for a bug whose
-expected behaviour is already on record. An **infrastructure** task — not a single
+**Tracks** (`PROCESS.md` §5, §5.1): the label `track:ship`, `track:show` or
+`track:ask` sets the route, and the owner's label beats the criteria. `show` is the
+default: up to three AC in the issue body, no spec review, `S2` → `S5`. `ship` is a
+one-sentence change within fixed limits, `S1` → `S5`. `ask` is the full route with
+a spec review. Any agent may raise a track with a reason; only the owner lowers it.
+`small` and `trivial` read as `show`. An **infrastructure** task — not a single
 class A file — skips analysis and spec and enters at `S7-code-review`
-(`PROCESS.md` §1). Code review is never skipped on any track: it checks scope,
-risks and the evidence from executed tests, but does not replace executing them.
+(`PROCESS.md` §1). Every change is code-reviewed; on `ship` the review moves to a
+batch review of the beta range before the tag. Review checks scope, risks and the
+evidence from executed tests, but does not replace executing them.
 
 ## Specs
 

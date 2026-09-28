@@ -40,8 +40,8 @@ export function rightsFor(status, labels = [], { infrastructure = false, infrast
     lines.push('метка infra — только подсказка, не доказательство и не право: до ветки проверь предполагаемые пути; без class A начинай сразу, при любом class A нужен продуктовый S-flow (#562)');
   }
   switch (status) {
-    case 'S1-new': lines.push('следующий шаг: аналитика (S2) — оценки метками, критерий лёгкого трека, затем ТЗ'); break;
-    case 'S2-analysis': lines.push('следующий шаг: ТЗ (S3); трек по умолчанию small — отказ от него обосновать названным критерием §5'); break;
+    case 'S1-new': lines.push('следующий шаг: аналитика (S2) — оценки и трек метками (по умолчанию track:show); на track:ship — строка «что меняется и чем проверить» под «## ТЗ», затем S5'); break;
+    case 'S2-analysis': lines.push('следующий шаг: track:show — до трёх AC под «## ТЗ», затем S5; track:ask — ТЗ (S3) с названным критерием §5'); break;
     case 'S3-spec': lines.push('следующий шаг: ТЗ готово → push ветки → метка S4-spec-review (метку после push)'); break;
     case 'S4-spec-review': lines.push('идёт ревью ТЗ: ждать вердикт (scripts/wait-verdict.mjs), не править материал'); break;
     case 'S5-ready': lines.push('следующий шаг: ветка issue/NN-slug от dev, код по ТЗ, метка S6-in-progress'); break;
@@ -127,6 +127,21 @@ export function branchIsInfrastructure(changedFiles = []) {
 const PRE_CODE_STATUSES = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready'];
 
 /**
+ * Трек продуктовой задачи по меткам (PROCESS §5, #695): `track:ship`,
+ * `track:show` или `track:ask`; прежние `trivial` и `small` читаются как `show`
+ * (§5.1), задача без трековой метки — как `ask`. Метки трека не доказывают
+ * продуктовый поток: инфраструктурной задаче владелец тоже может поставить
+ * `track:*`, чтобы задать ей цену конвейера.
+ */
+export function trackFromLabels(labels = []) {
+  if (labels.includes('track:ship')) return 'ship';
+  if (labels.includes('track:show')) return 'show';
+  if (labels.includes('track:ask')) return 'ask';
+  if (labels.includes('trivial') || labels.includes('small')) return 'show';
+  return 'ask';
+}
+
+/**
  * Признаки продуктового S-flow (#632). Инфраструктурная задача входит в поток
  * сразу на S7 и никогда не несёт S1–S5, ТЗ и ревью ТЗ; поэтому любой из этих
  * признаков делает эвристику «дифф без класса A» неприменимой. S6/S7/S8 сами по
@@ -165,7 +180,7 @@ export function buildPacket(inputs) {
   const track = infrastructure
     ? 'инфраструктурный'
     : infrastructureHint ? 'инфраструктурный (предварительно; подтвердить путями/diff)'
-    : labels.includes('trivial') ? 'trivial' : labels.includes('small') ? 'small' : 'полный';
+    : trackFromLabels(labels);
   const stage = status === 'S4-spec-review' || status === 'S3-spec' || status === 'S5-ready' ? 'spec' : 'code';
   const verdict = lastVerdict(comments, reviewDocs, stage);
   // ТЗ живёт в теле issue (#517); архивный файл — источник только у задач до

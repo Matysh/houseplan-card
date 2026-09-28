@@ -84,8 +84,15 @@ jobs:
           BLOCKED=false; EXHAUSTED=false; SMALL=false; TRIVIAL=false
           has blocked && BLOCKED=true
           has review-4 && EXHAUSTED=true
+          # Треки #695 (PROCESS §5): `track:show` и `track:ship` — лимит 2, как у
+          # прежних `small`/`trivial`; `track:ask` — 4. Пока #696 не влит, `ship`
+          # проходит конвейер как `show`.
           has small && SMALL=true
           has trivial && TRIVIAL=true
+          has track:show && SMALL=true
+          has track:ship && SMALL=true
+          # Явный `track:ask` главнее прежних меток: метка владельца окончательна.
+          if has track:ask; then SMALL=false; TRIVIAL=false; fi
 
           # Этап определяется первым: от него зависит, какие вердикты считать.
           stage=""; marker=""
@@ -102,7 +109,7 @@ jobs:
             stage=""
           fi
 
-          # Лимит циклов: 4 обычный, 2 на лёгком и коротком треке (PROCESS.md §4).
+          # Лимит циклов: 4 на `track:ask`, 2 на `track:show`/`track:ship` (PROCESS.md §4, §5).
           limit=4
           if [ "$SMALL" = "true" ] || [ "$TRIVIAL" = "true" ]; then limit=2; fi
 
