@@ -3956,6 +3956,51 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'plan-device-landmarks-hidden',
+    guard: 'node demo/smoke_plan_device_landmarks.mjs',
+    because: '#687 AC1: the Plan editor shows the same markers as View as landmarks; hiding '
+      + 'them again removes the reference the owner asked for',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '    .stage.markup .devlayer .dev {\n'
+        + '      filter: opacity(0.35);\n'
+        + '    }\n',
+      replace: '    .stage.markup .devlayer .dev {\n'
+        + '      display: none;\n'
+        + '    }\n',
+    }],
+  },
+  {
+    id: 'plan-device-landmarks-override-own-opacity',
+    guard: 'node demo/smoke_plan_device_landmarks.mjs',
+    because: '#687 contract item 2: the fade multiplies the marker\'s own opacity as the '
+      + 'Background layer does; an opacity override shows an unavailable marker at 35% '
+      + 'instead of 35% x 35%',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '    .stage.markup .devlayer .dev {\n'
+        + '      filter: opacity(0.35);\n',
+      replace: '    .stage.markup .devlayer .dev {\n'
+        + '      opacity: 0.35;\n',
+    }],
+  },
+  {
+    id: 'plan-device-landmarks-hit-target',
+    guard: 'node demo/smoke_plan_device_landmarks.mjs',
+    because: '#687 AC2: a visible marker must never own a Plan-editor point; without the '
+      + 'pointer boundary its 44 px hit area and capsule swallow the Walls tool click and the '
+      + 'room settings button below',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '    .stage.markup .devlayer .dev,\n'
+        + '    .stage.markup .devlayer .dev *,\n'
+        + '    .stage.markup .devlayer .dev::before {\n'
+        + '      pointer-events: none;\n'
+        + '    }\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'opening-light-quantum-identity',
     guard: 'node --test --test-name-pattern="#366" test/logic.test.mjs',
     because: 'an identity quantum brings back ~100 barrier recomputes per moving-gate cycle — '

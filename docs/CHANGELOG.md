@@ -6,6 +6,11 @@
   focus frame when it receives focus; it can still be reached with Tab and
   followed with Enter or Space
   ([#686](https://github.com/Matysh/houseplan-card/issues/686)).
+- The Plan editor now shows device markers as translucent landmarks, exactly as
+  the Background editor does: the same markers as View at 35% opacity. They
+  never react to clicks, hover or the cursor, so every Plan tool, room label and
+  room settings button works through them
+  ([#687](https://github.com/Matysh/houseplan-card/issues/687)).
 
 ## v1.78.0-beta.7 — 2026-09-28
 

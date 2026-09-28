@@ -1176,8 +1176,20 @@ export const planStyles = css`
     .stage.markup .room {
       pointer-events: none;
     }
+    /* #687: devices are landmarks in the Plan editor too, exactly as in
+       Background (#362): the same markers as View, at the same 35% and fully
+       pointer-inert, so every Plan tool receives the point below them. The
+       fade sits on each marker, not on .devlayer: room labels share that
+       layer and stay opaque and interactive here. filter: opacity()
+       multiplies the marker's own opacity (.unavail), as the Background
+       layer opacity does. */
     .stage.markup .devlayer .dev {
-      display: none; /* in plan mode the icons do not get in the way; labels stay */
+      filter: opacity(0.35);
+    }
+    .stage.markup .devlayer .dev,
+    .stage.markup .devlayer .dev *,
+    .stage.markup .devlayer .dev::before {
+      pointer-events: none;
     }
     /* mode frames: the edit modes are visible at a glance */
     .stage.mode-plan {

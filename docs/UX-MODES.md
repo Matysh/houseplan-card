@@ -172,6 +172,11 @@ tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
   editor with the draw tool armed (an empty floor has nothing useful in View).
 - ⚙ General settings (fill palette) lives here — it is about the plan's appearance.
 
+- Devices are landmarks here exactly as in Background (#687, #362): the same
+  markers as View at 35% (each marker's own opacity multiplied, as the
+  Background layer does) and fully pointer-inert — every press, hover and
+  cursor belongs to the Plan tool, room label or room settings button below.
+  Room labels share the device layer and stay opaque and interactive.
 - Independent partitions and columns are masonry for hit testing as well as
   area/light: room hover stops at their physical bodies just as it stops at a
   thick room wall. This does not split the room or change its HA area.

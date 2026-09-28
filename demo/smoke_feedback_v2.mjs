@@ -14,7 +14,8 @@ const res = await page.evaluate(async () => {
   out.gearReadable = cs ? parseFloat(cs.fontSize) > 0 && cs.pointerEvents === 'auto' : null;
   out.gearHasLabel = btn ? btn.textContent.trim().length > 0 : null;
   const box = btn?.getBoundingClientRect();
-  // (в редакторе плана .dev скрыты display:none — сравнивать не с чем)
+  // (маркеры устройств в редакторе плана — неинтерактивные ориентиры #687,
+  // кнопку с ними не сравниваем)
   out.gearTapTarget = box ? box.height > 6 && box.height < 40 : null;
   btn.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
   await c.updateComplete;
