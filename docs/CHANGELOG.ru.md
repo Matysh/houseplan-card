@@ -8,6 +8,30 @@
 
 ## Не выпущено
 
+## v1.78.0 — 2026-09-28
+
+- Объёмный 2.5D-вид стал публичной опцией в общих настройках. Положение
+  устройств, подписей и показателей комнат теперь стабильно при переключении
+  вида, первой загрузке и зуме
+  ([#649](https://github.com/Matysh/houseplan-card/issues/649),
+  [#651](https://github.com/Matysh/houseplan-card/issues/651),
+  [#654](https://github.com/Matysh/houseplan-card/issues/654)).
+- В редакторе плана появились прямые и винтовые лестницы: их можно рисовать,
+  перемещать, менять размер и оформление, связывать с целевым этажом и
+  использовать для перехода между этажами
+  ([#663](https://github.com/Matysh/houseplan-card/issues/663),
+  [#676](https://github.com/Matysh/houseplan-card/issues/676),
+  [#683](https://github.com/Matysh/houseplan-card/issues/683),
+  [#688](https://github.com/Matysh/houseplan-card/issues/688)).
+- Интерфейс на телефонах и планшетах стал компактнее и предсказуемее:
+  действия перенесены в мобильное меню, редакторы закрываются одинаково, а
+  панорамирование, свайпы между пространствами и двойной тап больше не
+  конфликтуют
+  ([#616](https://github.com/Matysh/houseplan-card/issues/616),
+  [#660](https://github.com/Matysh/houseplan-card/issues/660),
+  [#691](https://github.com/Matysh/houseplan-card/issues/691)).
+- Мелкие исправления и улучшения.
+
 ## v1.78.0-beta.9 — 2026-09-28
 
 - Навигация на сенсорных экранах теперь сохраняет обычный drag одним пальцем

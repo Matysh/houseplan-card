@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v1.78.0 — 2026-09-28
+
+- Volumetric 2.5D View is now a public General settings option. Device markers,
+  room labels and metrics keep stable positions when switching view, loading
+  the card and zooming
+  ([#649](https://github.com/Matysh/houseplan-card/issues/649),
+  [#651](https://github.com/Matysh/houseplan-card/issues/651),
+  [#654](https://github.com/Matysh/houseplan-card/issues/654)).
+- The Plan editor now supports straight and spiral stairs that can be drawn,
+  moved, resized and styled, linked to a target floor and used for navigation
+  between floors
+  ([#663](https://github.com/Matysh/houseplan-card/issues/663),
+  [#676](https://github.com/Matysh/houseplan-card/issues/676),
+  [#683](https://github.com/Matysh/houseplan-card/issues/683),
+  [#688](https://github.com/Matysh/houseplan-card/issues/688)).
+- Phone and tablet UI is more compact and predictable: actions live in the
+  mobile menu, editors close consistently, and panning, space swipes and
+  double-tap no longer compete
+  ([#616](https://github.com/Matysh/houseplan-card/issues/616),
+  [#660](https://github.com/Matysh/houseplan-card/issues/660),
+  [#691](https://github.com/Matysh/houseplan-card/issues/691)).
+- Small fixes and improvements.
+
 ## v1.78.0-beta.9 — 2026-09-28
 
 - Touch navigation now keeps ordinary one-finger drags as pan and switches

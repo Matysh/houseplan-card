@@ -1,20 +1,20 @@
-<!-- release: v1.78.0-beta.9 -->
+<!-- release: v1.78.0 -->
 
 ## Основное
 
-- Сенсорная навигация стала предсказуемее: обычный drag панорамирует план, свайп между пространствами начинается только от края, а двойной тап вписывает весь план ([#691](https://github.com/Matysh/houseplan-card/issues/691)).
-- С фоном день/ночь план больше не размывается после зума и не мигает белым при сильном приближении ([#689](https://github.com/Matysh/houseplan-card/issues/689)).
-- Все линии лестниц теперь имеют единую физическую толщину 3,6 см и масштабируются вместе с планом ([#688](https://github.com/Matysh/houseplan-card/issues/688)).
+- Объёмный 2.5D-вид теперь можно включить в общих настройках; устройства и подписи сохраняют положение при загрузке, зуме и переключении вида ([#649](https://github.com/Matysh/houseplan-card/issues/649), [#651](https://github.com/Matysh/houseplan-card/issues/651), [#654](https://github.com/Matysh/houseplan-card/issues/654)).
+- В редакторе плана появились прямые и винтовые лестницы с настройкой размеров и оформления, переходом на целевой этаж и физически масштабируемыми линиями ([#663](https://github.com/Matysh/houseplan-card/issues/663), [#676](https://github.com/Matysh/houseplan-card/issues/676), [#683](https://github.com/Matysh/houseplan-card/issues/683), [#688](https://github.com/Matysh/houseplan-card/issues/688)).
+- Интерфейс на телефонах и планшетах стал компактнее, а панорамирование, свайпы между пространствами и двойной тап больше не конфликтуют ([#616](https://github.com/Matysh/houseplan-card/issues/616), [#660](https://github.com/Matysh/houseplan-card/issues/660), [#691](https://github.com/Matysh/houseplan-card/issues/691)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Touch navigation is now predictable: ordinary drags pan the plan, space swipes start only from an edge, and a double tap fits the whole plan ([#691](https://github.com/Matysh/houseplan-card/issues/691)).
-- With the day/night background, the plan no longer turns blurry after zooming or flashes white at high zoom levels ([#689](https://github.com/Matysh/houseplan-card/issues/689)).
-- Every stair line now uses one physical 3.6 cm weight and scales together with the plan ([#688](https://github.com/Matysh/houseplan-card/issues/688)).
+- Volumetric 2.5D View can now be enabled in General settings, with device markers and labels staying in place while loading, zooming and switching view ([#649](https://github.com/Matysh/houseplan-card/issues/649), [#651](https://github.com/Matysh/houseplan-card/issues/651), [#654](https://github.com/Matysh/houseplan-card/issues/654)).
+- The Plan editor now supports straight and spiral stairs with sizing, styling, target-floor navigation and physically scaled line weights ([#663](https://github.com/Matysh/houseplan-card/issues/663), [#676](https://github.com/Matysh/houseplan-card/issues/676), [#683](https://github.com/Matysh/houseplan-card/issues/683), [#688](https://github.com/Matysh/houseplan-card/issues/688)).
+- Phone and tablet UI is more compact, while panning, space swipes and double-tap no longer compete ([#616](https://github.com/Matysh/houseplan-card/issues/616), [#660](https://github.com/Matysh/houseplan-card/issues/660), [#691](https://github.com/Matysh/houseplan-card/issues/691)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.9/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.78.0-beta.9/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.78.0/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.78.0/docs/CHANGELOG.md)
