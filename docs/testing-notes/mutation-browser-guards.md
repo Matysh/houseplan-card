@@ -82,9 +82,9 @@ The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels p
 - `device-unavailable-hover-restored`
 - `golden-filled-tunnel-removed`
 - `golden-lamp-out-of-reach`
+- `hatch-static-gradient-repeat-disabled`
 - `hatch-static-renderer-untouched`
 - `hatch-stroke-not-scaled`
-- `hatch-zoom-compensation-back`
 - `iso-first-frame-reveals-flat-during-lazy-load`
 - `iso-room-label-44-box-centres-name`
 - `iso-sun-card-drops-occluders`

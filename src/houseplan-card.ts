@@ -56,7 +56,7 @@ import {
   innerContourForRoom, roomWallProfile, outsetContour, openingInnerFaceOffsetFromIndex,
   openingTunnelGeometriesFromIndex, openingWallIndex as buildOpeningWallIndex, drawWallPreviewD,
   DRAW_WALL_DEFAULT_CM, normalizeWallIntervals, intervalCmAt, wallBodyNeedsSolid,
-  wallHatchNeedsSolid, wallHatchStepUnits, HATCH_BASE_STEP_UNITS, type OpeningTunnelGeometry,
+  wallHatchNeedsSolid, wallHatchStepUnits, type OpeningTunnelGeometry,
   type OpeningWallIndex, type WallEntry, type WallInterval,
 } from './wall-thickness';
 import type { JunctionLimitViolation, JunctionSharedGeometry } from './junction-limits';
@@ -8856,20 +8856,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._wallThickApply(allRoom);
   }
 
-  private _wallHatchDefs(color: string): TemplateResult {
-    // Hatching is visible in View as well as in Plan, so its tiny SVG
-    // definition belongs to the eager projection rather than editor runtime.
-    const step = wallHatchStepUnits(this._cellCm);
-    const stripe = 2 * (step / HATCH_BASE_STEP_UNITS);
-    const stroke = color || '#607d8b';
-    return svg`<defs>
-      <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
-        width="${step}" height="${step}" patternTransform="rotate(45)">
-        <path d="M0 0 L0 ${step}" stroke="${stroke}" stroke-width="${stripe}"></path>
-      </pattern>
-    </defs>` as unknown as TemplateResult;
-  }
-
   /**
    * One authoritative room-fill projection per render frame. Room polygons and
    * thick-wall opening tunnels consume the same object, so a live HA tick can
@@ -10741,6 +10727,11 @@ export class HouseplanCard extends LitElement {
     );
     const transitionStageBg = modeVisual?.stageColor || stageBg;
     const transitionBrightness = modeVisual?.sceneBrightness ?? 1;
+    // View owns the eager hatch; 100% stays byte-compatible, scaled views avoid a cached tile.
+    const hatchStep = wallHatchStepUnits(this._cellCm);
+    const wallHatch = this._zoom === 1
+      ? svg`<pattern id=hp-wall-hatch patternUnits=userSpaceOnUse width=${hatchStep} height=${hatchStep} patternTransform=rotate(45)><path d="M0 0V${hatchStep}" stroke=${disp.color} stroke-width=${hatchStep / 4}/></pattern>`
+      : svg`<linearGradient id=hp-wall-hatch gradientUnits=userSpaceOnUse x2=${hatchStep} gradientTransform=rotate(45) spreadMethod=repeat><stop offset=.125 stop-color=${disp.color}/><stop offset=.125 stop-opacity=0 /><stop offset=.875 stop-opacity=0 /><stop offset=.875 stop-color=${disp.color}/></linearGradient>`;
     const editorClose = html`<span class="editor-close-slot" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>${this._mode !== 'view' ? html`<button
           class="closex" title=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')} data-hp="editor-close" data-editor-navigation="view"
           @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`
@@ -10911,7 +10902,7 @@ export class HouseplanCard extends LitElement {
                    `space` comes from _renderCfg, so a live resize preview
                    controller preview moves the paper together with the rooms.
                    One <g> keeps the visible sheet and filtered silhouette free of room seams. */}
-            ${this._wallHatchDefs(disp.color)}${renderPaperShapes(paperShapes)}
+            ${wallHatch}${renderPaperShapes(paperShapes)}
             ${this._editing ? this._renderMarkupDefs(vb) : nothing}
             ${''/* the grid is a property of the plane, not of a box: it follows
                    the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}

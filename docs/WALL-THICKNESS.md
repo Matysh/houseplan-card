@@ -294,6 +294,18 @@ thinner than `HATCH_MIN_STEP_PX = 2` (`wallHatchNeedsSolid`). The step is
 clamped to `[0.5, 80]` units so a pathological `cell_cm` cannot degenerate the
 pattern.
 
+At the byte-compatible 100% view the interactive flat card keeps that
+historical pattern. Once the settled camera actually scales the plan, it paints
+the unchanged geometry as an analytic repeating `linearGradient` (#685), not as
+a small stroked SVG tile. The gradient vector is normal to the stripes, has
+exactly one physical hatch step of length, and its two hard-stop edges preserve
+the historical stroke/gap ratio and phase. This distinction is raster-only: it
+prevents Chromium/HA WebView from keeping a soft resampled tile at a fractional
+settled zoom. Stored walls, centimetre depth, hatch angle and density do not
+change. The non-interactive space card may keep the historical pattern because
+it has no live camera; the density smoke normalises both paint servers to the
+same geometry.
+
 A variable-offset join where exactly one adjacent edge has zero depth is a
 local flat cap, not a mitre. Both `inset` and `outset` retain the physical
 edge's offset point followed by the untouched zero-edge vertex (or the reverse

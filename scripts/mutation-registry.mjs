@@ -7824,24 +7824,24 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'hatch-stroke-not-scaled',
     guard: 'node demo/smoke_wall_hatch_density.mjs',
-    because: 'штрих обязан следовать за шагом: иначе на мелкой клетке полосы '
-      + 'слипаются в сплошное пятно, а на крупной становятся волосяными',
+    because: 'штриховка обязана следовать за шагом: иначе на мелкой клетке '
+      + 'полосы слипаются в сплошное пятно, а на крупной расходятся',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    const stripe = 2 * (step / HATCH_BASE_STEP_UNITS);',
-      replace: '    const stripe = 2;',
+      find: 'x2=${hatchStep} gradientTransform=rotate(45)',
+      replace: 'x2=${hatchStep * 7 / 8} gradientTransform=rotate(45)',
     }],
   },
   {
-    id: 'hatch-zoom-compensation-back',
-    guard: 'node demo/smoke_wall_hatch_density.mjs',
-    because: 'компенсация 1/zoom возвращает ровно то, ради устранения чего '
-      + 'задача и делалась: стена меняет вид при зуме (решение владельца §4.2)',
+    id: 'hatch-static-gradient-repeat-disabled',
+    guard: 'node demo/smoke_static_zoom_sharpness.mjs',
+    because: 'без repeat аналитический paint-server оставляет одну полосу и '
+      + 'возвращает масштабозависимую пустую/мягкую штриховку #685; терминальный '
+      + 'smoke обязан доказывать стабилизацию, а не только конечный viewBox',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '        width="${step}" height="${step}" patternTransform="rotate(45)">',
-      replace: '        width="${step}" height="${step}"\n'
-        + '        patternTransform="rotate(45) scale(${Math.max(0.4, 1 / Math.max(this._zoom, 0.4)).toFixed(3)})">',
+      find: 'gradientTransform=rotate(45) spreadMethod=repeat',
+      replace: 'gradientTransform=rotate(45) spreadMethod=pad',
     }],
   },
   {

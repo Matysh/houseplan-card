@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Settled zoom levels now keep physical wall hatching crisp and consistent,
+  including fractional zooms and high-DPI screens. The short live zoom/pinch
+  animation is unchanged, while the final wall and door/window/gate/passage
+  frame is rendered directly at its target scale
+  ([#685](https://github.com/Matysh/houseplan-card/issues/685)).
+
 - A floor-link stair in View no longer shows the browser's black-and-white
   focus frame when it receives focus; it can still be reached with Tab and
   followed with Enter or Space

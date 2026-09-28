@@ -1393,6 +1393,36 @@ export async function prepareGoldenScenario(page, scenario) {
       card.requestUpdate();
       await card.updateComplete;
     }
+    if (scenario.staticHatchSharpness) {
+      const root = card.renderRoot;
+      const scene = root.querySelector('.plan-svg');
+      const view = card._viewOr(card._baseVb());
+      const exactViewBox = `${view.x} ${view.y} ${view.w} ${view.h}`;
+      const scenes = [...root.querySelectorAll('[data-hp-live-viewbox]')];
+      const layers = [...root.querySelectorAll('[data-hp-live-layer="camera"]')];
+      const gradient = root.querySelector('linearGradient#hp-wall-hatch');
+      const stops = [...(gradient?.querySelectorAll('stop') || [])];
+      const visibleKinds = new Set([...root.querySelectorAll('.opening[data-kind]')]
+        .map((node) => node.getAttribute('data-kind')));
+      const modelKinds = new Set((card._openingsR || []).map((opening) => opening.type));
+      const settled = scene?.getAttribute('viewBox') === exactViewBox
+        && scenes.every((node) => ['', 'none'].includes(getComputedStyle(node).transform))
+        && scenes.every((node) => !getComputedStyle(node).willChange
+          || getComputedStyle(node).willChange === 'auto')
+        && layers.every((node) => ['', 'none'].includes(getComputedStyle(node).transform));
+      const analytic = !!gradient
+        && gradient.getAttribute('gradientUnits') === 'userSpaceOnUse'
+        && gradient.getAttribute('spreadMethod') === 'repeat'
+        && stops.length === 4
+        && stops[1].getAttribute('stop-opacity') === '0'
+        && stops[2].getAttribute('stop-opacity') === '0';
+      const openings = ['door', 'window', 'gate'].every((kind) => visibleKinds.has(kind))
+        && modelKinds.has('passage');
+      if (!settled || !analytic || !openings
+          || Math.abs(card._zoom - scenario.zoom) > 1e-9) {
+        throw new Error(`static hatch sharpness contract failed: ${scenario.id}`);
+      }
+    }
     if (scenario.wallJunctionPreview) {
       const { path, pointer, cms, cm } = scenario.wallJunctionPreview;
       const validPoint = (point) => Array.isArray(point) && point.length === 2

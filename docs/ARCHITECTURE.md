@@ -602,6 +602,13 @@ The day-cycle paper outline joins these roots before the first camera move; the
 static card uses its stage-sized form from the first frame (#582, Key decision 7).
 Unchanged values are never rewritten, so idle frames stay byte-identical;
 `commitHouseplanViewport` removes the transforms and forces the final `viewBox`.
+After the camera leaves its byte-compatible 100% view, the flat wall hatch uses
+an analytic user-space repeating gradient rather than a repeated stroked bitmap
+tile (#685). Therefore the terminal transform-free SVG is rasterised directly
+for its final fractional scale; the live transformed frames may still be
+temporarily soft, but the idle frame must not retain a resampled hatch texture.
+Door, window and gate strokes share that terminal SVG, and passages remain real
+negative wall geometry.
 
 ## English and Russian ship whole (#400)
 

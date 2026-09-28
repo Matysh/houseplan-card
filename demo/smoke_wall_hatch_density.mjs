@@ -1,8 +1,11 @@
 // Issue #230: the hatch step is a physical distance, not a coordinate one.
 //
 // The units own the arithmetic; this smoke owns the wiring — that both renderers
-// actually put the computed step into the pattern, that neither of them scales
-// it back by zoom, and that the two agree with each other.
+// actually put the computed step into the paint server, that neither of them
+// scales it back by zoom, and that the two agree geometrically.  The full card
+// uses #685's analytic repeating gradient while the non-interactive card keeps
+// the historical stroked pattern, so the comparison deliberately normalises
+// both representations to the same physical contract.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 1000, height: 900 }, 1);
 const res = await page.evaluate(async () => {
@@ -13,14 +16,34 @@ const res = await page.evaluate(async () => {
     await c.updateComplete;
   };
   const space = () => c._serverCfg.spaces.find((s) => s.id === c._space);
-  const pattern = (root) => root.querySelector('#hp-wall-hatch');
-  const read = (p) => p && ({
-    width: Number(p.getAttribute('width')),
-    height: Number(p.getAttribute('height')),
-    transform: p.getAttribute('patternTransform') || '',
-    stroke: Number(p.querySelector('path')?.getAttribute('stroke-width')),
-    d: p.querySelector('path')?.getAttribute('d') || '',
-  });
+  const paint = (root) => root.querySelector('#hp-wall-hatch');
+  const read = (server) => {
+    if (!server) return null;
+    if (server.localName === 'linearGradient') {
+      const x1 = Number(server.getAttribute('x1'));
+      const y1 = Number(server.getAttribute('y1'));
+      const x2 = Number(server.getAttribute('x2'));
+      const y2 = Number(server.getAttribute('y2'));
+      const stops = [...server.querySelectorAll('stop')];
+      const edge = Number(stops[1]?.getAttribute('offset'));
+      const step = Math.hypot(x2 - x1, y2 - y1);
+      const rotation = Number((server.getAttribute('gradientTransform') || '')
+        .match(/rotate\(([-+0-9.eE]+)/)?.[1] || 0);
+      return {
+        step,
+        stripe: 2 * edge * step,
+        angle: Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI + rotation,
+        origin: `${x1},${y1}`,
+      };
+    }
+    const width = Number(server.getAttribute('width'));
+    return {
+      step: width,
+      stripe: Number(server.querySelector('path')?.getAttribute('stroke-width')),
+      angle: Number((server.getAttribute('patternTransform') || '').match(/rotate\(([-+0-9.eE]+)/)?.[1]),
+      origin: '0,0',
+    };
+  };
 
   c._mode = 'plan'; c.requestUpdate(); await settle();
   await new Promise((r) => setTimeout(r, 400));
@@ -41,16 +64,16 @@ const res = await page.evaluate(async () => {
   out.wallBodyIsRendered = !!c.shadowRoot.querySelector('.wallbody');
 
   // Reference scale: exactly the historical numbers, so old plans do not move.
-  const atFive = read(pattern(c.shadowRoot));
-  out.referenceStepIsEight = atFive?.width === 8 && atFive?.height === 8;
-  out.referenceStrokeIsTwo = atFive?.stroke === 2;
-  out.noZoomScaleAtReference = !!atFive && !/scale/.test(atFive.transform);
+  const atFive = read(paint(c.shadowRoot));
+  out.referenceStepIsEight = Math.abs((atFive?.step ?? 0) - 8) < 1e-9;
+  out.referenceStrokeIsTwo = Math.abs((atFive?.stripe ?? 0) - 2) < 1e-9;
+  out.referenceAngleIsFortyFive = Math.abs((atFive?.angle ?? 0) - 45) < 1e-9;
 
   // Zoom must not touch the pattern any more — that is the whole point.
-  c._applyView(3); await settle();
-  const zoomed = read(pattern(c.shadowRoot));
+  c._applyView(3); c.requestUpdate(); await settle();
+  const zoomed = read(paint(c.shadowRoot));
   out.zoomDoesNotChangeThePattern = JSON.stringify(zoomed) === JSON.stringify(atFive);
-  c._applyView(1); await settle();
+  c._applyView(1); c.requestUpdate(); await settle();
 
   // A coarse grid: the step follows the centimetres, so it shrinks in units.
   space().cell_cm = 25;
@@ -59,10 +82,10 @@ const res = await page.evaluate(async () => {
   c._saveConfig();
   await new Promise((r) => setTimeout(r, 500));
   c.requestUpdate(); await settle();
-  const atTwentyFive = read(pattern(c.shadowRoot));
-  out.coarseGridShrinksTheStep = Math.abs(atTwentyFive.width - 1.6) < 1e-9;
-  out.coarseGridScalesTheStroke = Math.abs(atTwentyFive.stroke - 0.4) < 1e-9;
-  out.coarseGridStripeSpansTheCell = atTwentyFive.d === `M0 0 L0 ${atTwentyFive.width}`;
+  const atTwentyFive = read(paint(c.shadowRoot));
+  out.coarseGridShrinksTheStep = Math.abs(atTwentyFive.step - 1.6) < 1e-9;
+  out.coarseGridScalesTheStroke = Math.abs(atTwentyFive.stripe - 0.4) < 1e-9;
+  out.coarseGridKeepsTheAngle = Math.abs(atTwentyFive.angle - 45) < 1e-9;
 
   // The static renderer is the second path that draws a wall body, and it used
   // to carry its own hard-coded 8 (spec §8.2, AC12).
@@ -78,10 +101,14 @@ const res = await page.evaluate(async () => {
     await new Promise((r) => setTimeout(r, 80));
   }
   await card.updateComplete;
-  const staticPattern = read(pattern(card.renderRoot));
+  const staticPattern = read(paint(card.renderRoot));
   out.staticRendererFollowsTheCell = !!staticPattern
-    && Math.abs(staticPattern.width - 1.6) < 1e-9;
-  out.bothRenderersAgree = JSON.stringify(staticPattern) === JSON.stringify(atTwentyFive);
+    && Math.abs(staticPattern.step - 1.6) < 1e-9;
+  out.bothRenderersAgree = !!staticPattern
+    && Math.abs(staticPattern.step - atTwentyFive.step) < 1e-9
+    && Math.abs(staticPattern.stripe - atTwentyFive.stripe) < 1e-9
+    && Math.abs(staticPattern.angle - atTwentyFive.angle) < 1e-9
+    && staticPattern.origin === atTwentyFive.origin;
 
   return out;
 });

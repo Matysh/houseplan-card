@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 66;
+export const GOLDEN_MATRIX_VERSION = 67;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -653,6 +653,21 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'opening-symbol-room-wall-light', fixture: 'visual', space: 'golden-opening-symbols',
     mode: 'view', openingSymbolContract: openingRoomContract,
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  ...[
+    ['static-hatch-openings-132-dpr1-light', 1.32, 1, 'light'],
+    ['static-hatch-openings-140-dpr1-dark', 1.40, 1, 'dark'],
+    ['static-hatch-openings-132-dpr2-dark', 1.32, 2, 'dark'],
+    ['static-hatch-openings-140-dpr2-light', 1.40, 2, 'light'],
+  ].map(([id, zoom, deviceScaleFactor, theme]) => ({
+    id, fixture: 'visual', space: 'golden-opening-symbols', mode: 'view',
+    openingSymbolContract: openingRoomContract,
+    extraOpenings: [{
+      id: 'sharpness-passage', type: 'passage', x: 0.62, y: 0.50,
+      angle: 0, length: 0.06,
+    }],
+    staticHatchSharpness: true, zoom, zoomCenter: [500, 500],
+    deviceScaleFactor, theme, viewport: { width: 1000, height: 900 }, ...stage,
+  })),
   { id: 'opening-symbol-diagonal-partition-dark', fixture: 'visual', space: 'golden-opening-symbols',
     mode: 'view', openingSymbolContract: openingPartitionContract,
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
