@@ -1,9 +1,10 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 176, issue: 82. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 177, issue: 83. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #697 | [CODE-REVIEW-697-r1.md](CODE-REVIEW-697-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #696 | [CODE-REVIEW-696-r1.md](CODE-REVIEW-696-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #695 | [CODE-REVIEW-695-r1.md](CODE-REVIEW-695-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | «инфраструктура без метки трека» не читается как track:show нигде в коде | `PROCESS.md` `.github/workflows/_process.yml` `scripts/task-packet.mjs` `_process.yml` `task-packet.mjs` `docs/process/AUTHOR.md` `test/task-packet.test.mjs` |
 | #695 | [CODE-REVIEW-695-r2.md](CODE-REVIEW-695-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
