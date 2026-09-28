@@ -3957,9 +3957,11 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'plan-device-landmarks-hidden',
-    guard: 'node demo/smoke_plan_device_landmarks.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/plan-device-landmarks.test.mjs',
     because: '#687 AC1: the Plan editor shows the same markers as View as landmarks; hiding '
-      + 'them again removes the reference the owner asked for',
+      + 'them again removes the reference the owner asked for (browser proof: '
+      + 'demo/smoke_plan_device_landmarks.mjs; Node witness keeps #659 cap)',
     patches: [{
       file: 'src/styles/plan.styles.ts',
       find: '    .stage.markup .devlayer .dev {\n'
@@ -3972,7 +3974,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'plan-device-landmarks-override-own-opacity',
-    guard: 'node demo/smoke_plan_device_landmarks.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/plan-device-landmarks.test.mjs',
     because: '#687 contract item 2: the fade multiplies the marker\'s own opacity as the '
       + 'Background layer does; an opacity override shows an unavailable marker at 35% '
       + 'instead of 35% x 35%',
@@ -3986,7 +3989,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'plan-device-landmarks-hit-target',
-    guard: 'node demo/smoke_plan_device_landmarks.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/plan-device-landmarks.test.mjs',
     because: '#687 AC2: a visible marker must never own a Plan-editor point; without the '
       + 'pointer boundary its 44 px hit area and capsule swallow the Walls tool click and the '
       + 'room settings button below',

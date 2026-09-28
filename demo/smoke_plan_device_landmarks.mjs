@@ -21,7 +21,7 @@ const probe = await page.evaluate(async () => {
     .map((node) => { const r = node.getBoundingClientRect(); return `${r.left.toFixed(1)},${r.top.toFixed(1)}`; })
     .join('|');
   const enter = async (mode) => {
-    c._setMode(mode, false);
+    if (c._mode !== mode) await window.__hpTest.setMode(mode);
     await settleMode();
     const started = performance.now();
     let key = layoutKey(), still = 0;
@@ -144,8 +144,8 @@ const probe = await page.evaluate(async () => {
     dev.style.display = '';
   }
 
-  c._tool = 'draw'; c._path = []; c._cursorPt = null;
-  await c.updateComplete;
+  await window.__hpTest.setTool('draw');
+  out.wallsChainEmptyBeforeClick = c._path.length === 0;
   return { out, core, id: dev?.dataset.id, gearPoint };
 });
 
@@ -160,8 +160,8 @@ const gear = await page.evaluate(async () => {
   const c = window.__card;
   await c.updateComplete;
   const opened = c._roomDialog === true && !!c._roomEditId;
-  if (opened) { c._roomDialogCancel(); await c.updateComplete; }
-  return { roomSettingsOpenThroughMarker: opened };
+  if (opened) await window.__hpTest.close(undefined, { via: 'cancel' });
+  return { roomSettingsOpenThroughMarker: opened, roomDialogClosed: !c._roomDialog };
 });
 
 const inert = await page.evaluate(async ({ core, id }) => {
@@ -170,8 +170,6 @@ const inert = await page.evaluate(async ({ core, id }) => {
   const sr = () => c.shadowRoot || c.renderRoot;
   await c.updateComplete;
   out.wallsToolReceivesClickThroughMarker = c._path.length === 1;
-  c._path = []; c._cursorPt = null;
-  await c.updateComplete;
   const dev = [...sr().querySelectorAll('.devlayer [data-hp="device"]')].find((node) => node.dataset.id === id);
   const r = dev?.getBoundingClientRect();
   // The click above must have landed on the probed marker.
@@ -200,9 +198,6 @@ const inert = await page.evaluate(async ({ core, id }) => {
   out.contextMenuNotClaimed = !ctx.defaultPrevented;
   c.hass.callService = oldCallService;
   c.hass.callWS = oldCallWS;
-  c._pointers?.clear?.(); c._panStart = null; c._panLock = null;
-  c._path = []; c._cursorPt = null;
-  await c.updateComplete;
   return out;
 }, { core: probe.core, id: probe.id });
 
