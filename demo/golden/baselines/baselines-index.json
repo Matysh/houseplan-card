@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 67,
-  "acceptedAt": "2026-09-28T07:02:36.198Z",
-  "sourceFingerprint": "e692f946902f92c6317fea34f80a58ba3812ca64c9a28be168cccc3ab5dbd3da",
+  "acceptedAt": "2026-09-28T08:34:22.291Z",
+  "sourceFingerprint": "cdf2180b22b4a958d7d5f678094df362c098ea8c66aa7ff6c0db96f3ae21cc90",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,41 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "e692f946902f92c6317fea34f80a58ba3812ca64c9a28be168cccc3ab5dbd3da",
-    "ci": null
-  },
-  "localAttestation": {
-    "schema": "houseplan-golden-wsl/v1",
-    "sha256": "c02067a968b83ee2ec2f110ab06fb3707491a79a98e61448f4b1ee8cc34c1a9a",
-    "artifactSha256": "bea9115e18bd097d34543d7f2dfbc512c130ea96fa24a72a288ebc2e51ae8f9c",
-    "createdAt": "2026-09-28T07:02:25.899Z",
-    "source": {
+    "buildFingerprint": "cdf2180b22b4a958d7d5f678094df362c098ea8c66aa7ff6c0db96f3ae21cc90",
+    "ci": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/685-static-zoom-sharpness",
-      "commit": "33d242bbf833081ea7fe9508b28221ae23e78566",
-      "tree": "7571fa369bd727bbd1f840a1d19f255edcca97d3",
-      "remoteSha": "33d242bbf833081ea7fe9508b28221ae23e78566",
-      "clean": true,
-      "status": ""
-    },
-    "environment": {
-      "platform": "linux",
-      "arch": "x64",
-      "kernel": "6.18.33.2-microsoft-standard-WSL2",
-      "wsl": true,
-      "distro": "Ubuntu",
-      "filesystem": "ext2/ext3"
-    },
-    "toolchain": {
-      "node": "22.23.2",
-      "npm": "10.9.8",
-      "playwright": "1.62.0",
-      "chromiumExecutableSha256": "0b20b130e7edd9dd51873be867761295fe0cfad490c2b9a64f95bd3cfc08fa71"
+      "run": 36397286486,
+      "attempt": 1,
+      "sha": "0a5b34a571caba8638a51ecbd6d496c064e7b040"
     }
   },
+  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 137,
+    "count": 138,
     "floor": 10
   },
   "scenarios": {
@@ -92,9 +69,9 @@
     "pdf-export-stepped-dimensions-light": "b9732b8b9c38153c564d0c93fbfbf44a8dd348c8667d2f8c2d14492e08e04f3e",
     "vacuum-trail-smoothing-dark": "f8eecc726a3e8bdaba414584ad6afd48908ee9d96ea969a1e37758f4e76843e2",
     "room-label-parity-view-dark": "4c00ee3119d3886a5906d5880769558083eb06547a2e2c56e91ae84498416bc9",
-    "room-label-parity-plan-dark": "c0f08f586116c4070723ec89697aa5d966ea57f1c027e7740eeb5147d44d9958",
+    "room-label-parity-plan-dark": "88374fbca15362da485ff32a0c5dce21bd07ee752087a863e10484537b18a930",
     "room-label-parity-view-light": "ec2a1294b0f08019f49a392cdc94970c1545673ebe0d7f22652f602adf00d4e8",
-    "room-label-parity-plan-light": "2603d0c73b39fc72f8b31919fcee15d8b17ea3c6ba1dea74fc791efdd3cfafc6",
+    "room-label-parity-plan-light": "1ee88b46a711e9116fefbeb8205618d68ddaa99fa3f290f0881e696afd1d1e57",
     "washer-active-cycle-dark": "0d683619c27747b3dd6a1e6c7cdc5e15dd886f4f2db4b85b7ca5a5c529e9ec52",
     "washer-idle-cycle-dark": "0138902daa8dabb0588904507ef5a44f5257f7859b4f1198191bfca3dd4130b7",
     "day-cycle-dawn-dark": "96bd5ef84345976bb83d35d418e7d247503629eceb732b6e926f2217f3b9faa4",
