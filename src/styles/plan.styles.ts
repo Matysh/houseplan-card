@@ -1636,6 +1636,9 @@ export const planStyles = css`
        .dthandle, .dtknob, dt-* cursors) painted in the top overlay; the draft
        being drawn is inert until it is placed */
     .hp-stair.draft .hp-stair-hit { pointer-events: none; }
-    .hp-stair.input-enabled .hp-stair-hit { cursor: move; }
+    /* #693: the move cursor belongs to the plan editor. The View layer sets
+       input-enabled only to receive clicks; its hit area keeps the group's
+       cursor: pointer on a link, the stage's otherwise. */
+    .hp-stair.input-enabled:not(.hp-stair-view) .hp-stair-hit { cursor: move; }
     .alignmsg { margin: 0 0 8px; font-size: 13px; line-height: 1.45; }
 `;

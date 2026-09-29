@@ -6997,6 +6997,19 @@ const MUTANT_DEFINITIONS = [
       replace: "  if (false && input.type === 'passage') {",
     }],
   },
+  // #693: курсор move над лестницей — только у редактора плана.
+  {
+    id: 'view-stair-cursor-move-again',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#693" test/stairs.test.mjs',
+    because: '#693: the View layer sets input-enabled only to receive clicks; an unscoped move cursor on '
+      + '.hp-stair-hit hid the link pointer and showed a drag the View cannot do',
+    patches: [{
+      file: 'src/styles/plan.styles.ts',
+      find: '    .hp-stair.input-enabled:not(.hp-stair-view) .hp-stair-hit { cursor: move; }',
+      replace: '    .hp-stair.input-enabled .hp-stair-hit { cursor: move; }',
+    }],
+  },
   {
     id: 'entity-marker-kept-in-parent-device',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '

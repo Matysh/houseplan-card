@@ -53,7 +53,10 @@ activation a no-op.
 
 In View, hovering a stair with a mouse shows the card tooltip "Go to floor
 <title>" when — and only when — the stair is a valid link (`active` target
-state); a missing, self, deleted or fixed-floor target shows no tooltip.
+state); a missing, self, deleted or fixed-floor target shows no tooltip. The
+mouse cursor follows the same condition: a pointer over a valid link, the
+plan's ordinary cursor over any other stair. The move cursor is the Plan
+editor's (#693).
 
 In an ordinary multi-space card, a clean click/tap or keyboard activation on a
 valid stair switches to the target tab and restores that floor's remembered

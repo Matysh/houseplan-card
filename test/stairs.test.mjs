@@ -357,3 +357,43 @@ test('#669 AC2 a maximum stair collection keeps the room area and passes a bound
   const actual = geometryAreaMinusStairs(room, stairs);
   assert.ok(Math.abs(actual - expected) <= Math.max(expected, 1) * 1e-9, `${actual} vs ${expected}`);
 });
+
+// #693: в View над лестницей был курсор `move` — редакторское правило для
+// `.hp-stair-hit` задевало и слой View, который ставит `input-enabled` только
+// ради попадания. Браузерное доказательство — demo/smoke_stairs.mjs; здесь
+// каскад закреплён без Chromium.
+test('#693 курсор move над телом лестницы — только в редакторе плана', async () => {
+  const { planStyles } = await import('../test-build/styles.js');
+  const css = planStyles.cssText.replace(/\/\*[\s\S]*?\*\//g, '');
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .map(([, selectors, body]) => [selectors.trim().split(/\s*,\s*/), body]);
+  const cursorOf = (body) => /(?:^|;)\s*cursor\s*:\s*([^;]+)/.exec(body)?.[1].trim() ?? null;
+  // Селектор вида «<составной селектор группы> .hp-stair-hit»; иная форма —
+  // повод расширить тест, а не молча её пропустить.
+  const matchesGroup = (compound, classes) => {
+    const parts = compound.match(/:not\(\.[\w-]+\)|\.[\w-]+|[^.:]+|:[\w-]+/g) ?? [];
+    return parts.every((part) => {
+      if (part.startsWith(':not(.')) return !classes.includes(part.slice(6, -1));
+      if (part.startsWith('.')) return classes.includes(part.slice(1));
+      throw new Error(`#693: неразобранная часть селектора «${part}» в «${compound}»`);
+    });
+  };
+  const hitCursor = (classes) => rules
+    .flatMap(([selectors, body]) => selectors
+      .filter((selector) => /\s\.hp-stair-hit$/.test(selector) && cursorOf(body))
+      .map((selector) => [selector.replace(/\s+\.hp-stair-hit$/, '').trim(), cursorOf(body)]))
+    .filter(([compound]) => {
+      assert.ok(!/\s/.test(compound), `#693: предок с потомком в «${compound}» — расширить тест`);
+      return matchesGroup(compound, classes);
+    })
+    .map(([, cursor]) => cursor);
+  assert.deepEqual(hitCursor(['hp-stair', 'input-enabled']), ['move'], 'редактор плана тащит лестницу за тело');
+  assert.deepEqual(hitCursor(['hp-stair', 'hp-stair-view', 'navigable', 'input-enabled']), [],
+    'в View у области попадания своего курсора нет — виден pointer ссылки');
+  assert.deepEqual(hitCursor(['hp-stair', 'hp-stair-view', 'input-enabled']), [],
+    'лестница без цели в View — курсор сцены, не move');
+  assert.ok(rules.some(([selectors, body]) => selectors.includes('.hp-stair.navigable') && cursorOf(body) === 'pointer'),
+    'ссылка несёт pointer на группе');
+  const view = readFileSync(new URL('../src/stairs-view.ts', import.meta.url), 'utf8');
+  assert.match(view, /<g class="hp-stair hp-stair-view /, 'слой View помечает свои лестницы');
+});

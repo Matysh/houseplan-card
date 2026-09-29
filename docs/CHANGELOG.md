@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- In View, the mouse cursor over a stair link is now a pointer instead of the
+  move cursor; stairs without a valid target keep the plan's ordinary cursor
+  ([#693](https://github.com/Matysh/houseplan-card/issues/693)).
+
 ## v1.78.0 — 2026-09-28
 
 - Volumetric 2.5D View is now a public General settings option. Device markers,

@@ -86,7 +86,7 @@ export class StairViewRuntime {
             || !stair.target_space_id) return;
         this.owner._tabClick(stair.target_space_id);
       };
-      return svg`<g class="hp-stair ${active ? 'navigable' : ''} ${interactive ? 'input-enabled' : ''}"
+      return svg`<g class="hp-stair hp-stair-view ${active ? 'navigable' : ''} ${interactive ? 'input-enabled' : ''}"
         data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
         data-target-state=${targetState}
         style=${stairStyleVars(

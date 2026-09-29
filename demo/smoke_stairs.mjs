@@ -340,6 +340,9 @@ const out = await page.evaluate(async () => {
   await hp.setTool('select');
   await selectStair(straight.id);
   result.frameReturnsUnderSelect = !!frame();
+  // #693: the plan editor keeps `move` over the stair body.
+  result.editorStairBodyCursorIsMove = getComputedStyle(
+    stairNode(straight.id)?.querySelector('.hp-stair-hit') ?? document.body).cursor === 'move';
   await hp.setTool('stairs');
 
   // Saving the properties dialog untouched changes nothing (#676 AC5):
@@ -426,6 +429,10 @@ const out = await page.evaluate(async () => {
   result.validLinkIsAccessible = linkedNode?.getAttribute('role') === 'link'
     && linkedNode?.getAttribute('data-target-state') === 'active'
     && getComputedStyle(linkedNode).cursor === 'pointer';
+  // #693: in View the hit area on top of the outline shows the link's
+  // pointer, not the editor's `move`.
+  const hitCursor = (node) => getComputedStyle(node?.querySelector('.hp-stair-hit') ?? document.body).cursor;
+  result.viewLinkHitCursorIsPointer = hitCursor(linkedNode) === 'pointer';
 
   // Hover on a link announces the target floor; every other target state
   // stays silent (#676 AC8). The mouse pointer type enables hover.
@@ -451,6 +458,7 @@ const out = await page.evaluate(async () => {
   };
   result.missingTargetHoverIsSilent = await hoverTip(await withTarget(null), null)
     && stairNode(linked.id)?.getAttribute('data-target-state') === 'missing';
+  result.viewStairWithoutTargetHasNoMoveOrPointer = !['move', 'pointer'].includes(hitCursor(stairNode(linked.id)));
   result.selfTargetHoverIsSilent = await hoverTip(await withTarget('f1'), null)
     && stairNode(linked.id)?.getAttribute('data-target-state') === 'self';
   result.deletedTargetHoverIsSilent = await hoverTip(await withTarget('no-such-space'), null)
