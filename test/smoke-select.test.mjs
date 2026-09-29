@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { selectSmokes, parseDiff, symbolTable } from '../scripts/smoke-select.mjs';
+import { selectSmokes, parseDiff, symbolTable, VISUAL_MINIMUM } from '../scripts/smoke-select.mjs';
+import { smokesToRun } from '../scripts/gate-small.mjs';
 import { SMOKE_LINKS, registeredSmokes } from '../scripts/smoke-links.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -73,6 +75,30 @@ test('связь не доказана — это неопределённост
   assert.equal(strongNames(selection).length, 0);
   assert.ok(selection.unseen.includes('openingInnerFaceOffsetFromIndex'),
     'символ без смока обязан быть назван');
+});
+
+test('#690 п.1′: неопределённость выдаёт визуальный минимум, доказанная связь и docs — нет', () => {
+  const unproven = selectSmokes(fixture('unproven.diff'), { root: repoRoot });
+  assert.deepEqual(unproven.visualMinimum, [...VISUAL_MINIMUM]);
+  for (const smoke of VISUAL_MINIMUM) {
+    assert.ok(smokesToRun(unproven).includes(smoke), `gate:small -- --smokes не гоняет ${smoke}`);
+  }
+  assert.deepEqual(selectSmokes(fixture('234-chain-thickness.diff'), { root: repoRoot }).visualMinimum, [],
+    'при доказанной связи минимум не нужен — выборка остаётся меньше матрицы');
+  const docs = selectSmokes(fixture('docs-only.diff'), { root: repoRoot });
+  assert.deepEqual(docs.visualMinimum, []);
+  assert.deepEqual(smokesToRun(docs), [], 'без исполняемого диффа смоков нет');
+});
+
+test('#690 п.1′: визуальный минимум — 5–8 существующих смоков, и CLI его печатает', () => {
+  assert.ok(VISUAL_MINIMUM.length >= 5 && VISUAL_MINIMUM.length <= 8, `в минимуме ${VISUAL_MINIMUM.length}`);
+  for (const smoke of VISUAL_MINIMUM) assert.ok(existsSync(join(repoRoot, 'demo', smoke)), `нет demo/${smoke}`);
+  assert.ok(VISUAL_MINIMUM.includes('smoke_modes.mjs'), 'смок, которого не хватило #687');
+  const cli = spawnSync(process.execPath, ['scripts/smoke-select.mjs', '--diff', 'test/fixtures/smoke-select/unproven.diff'],
+    { cwd: repoRoot, encoding: 'utf8' });
+  assert.equal(cli.status, 0, cli.stderr);
+  assert.match(cli.stdout, /Визуальный минимум \(\d\) — прогнать до S7/);
+  for (const smoke of VISUAL_MINIMUM) assert.ok(cli.stdout.includes(`demo/${smoke}`), smoke);
 });
 
 test('таблица символов не берёт одиночные английские слова (#241)', () => {

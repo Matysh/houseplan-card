@@ -3623,11 +3623,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'task-packet-trivial-is-product-flow',
     guard: 'node --test test/task-packet.test.mjs',
-    because: 'the trivial short track writes no spec and no spec review, so in S6/S7 its label is '
+    because: 'a legacy trivial task wrote no spec and no spec review, so in S6/S7 its label is '
       + 'the only product-flow evidence; dropping it prints the false class A ban of #632 again (r1)',
     patches: [{
       file: 'scripts/task-packet.mjs',
-      find: "  if (labels.includes('trivial')) reasons.push('короткий трек trivial (ТЗ не пишется, §5.1)');",
+      find: "  if (labels.includes('trivial')) reasons.push('прежняя метка trivial — продуктовый поток, читается как track:show (§5.1)');",
       replace: "",
     }],
   },
@@ -6165,6 +6165,40 @@ const MUTANT_DEFINITIONS = [
       file: 'src/wall-thickness.ts',
       find: "      status: degradedExtraCount || degradedCoreCount ? 'degraded-extra' : 'ok',",
       replace: "      status: degradedExtraCount || degradedCoreCount ? 'failed-core' : 'ok',",
+    }],
+  },
+  // #690 п.1′: недоказанная связь смоков выдаёт визуальный минимум, а не пустоту.
+  {
+    id: 'visual-minimum-silent-again',
+    guard: 'node --test --test-name-pattern="#690" test/smoke-select.test.mjs',
+    because: '#690: an executable diff with no proven smoke link printed only "the reviewer decides" '
+      + 'and ran nothing; #687 missed smoke_modes that way and left dev red for #685',
+    patches: [{
+      file: 'scripts/smoke-select.mjs',
+      find: '    visualMinimum: unproven ? [...VISUAL_MINIMUM] : [],',
+      replace: '    visualMinimum: [],',
+    }],
+  },
+  {
+    id: 'visual-minimum-on-proven-link',
+    guard: 'node --test --test-name-pattern="#690" test/smoke-select.test.mjs',
+    because: '#690: the minimum is for the unproven case only; with a proven link the selection must '
+      + 'stay smaller than the matrix',
+    patches: [{
+      file: 'scripts/smoke-select.mjs',
+      find: '    visualMinimum: unproven ? [...VISUAL_MINIMUM] : [],',
+      replace: '    visualMinimum: parsed.executable.length ? [...VISUAL_MINIMUM] : [],',
+    }],
+  },
+  {
+    id: 'gate-small-skips-visual-minimum',
+    guard: 'node --test --test-name-pattern="#690" test/smoke-select.test.mjs',
+    because: '#690: gate:small -- --smokes must run the visual minimum it was handed, not only the '
+      + 'direct and registered smokes',
+    patches: [{
+      file: 'scripts/gate-small.mjs',
+      find: '  const names = [...(selection.direct || []), ...(selection.registered || []), ...(selection.visualMinimum || [])]',
+      replace: '  const names = [...(selection.direct || []), ...(selection.registered || [])]',
     }],
   },
   {

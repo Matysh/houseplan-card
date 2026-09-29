@@ -135,15 +135,16 @@ export { hasTrackLabel, trackFromLabels };
  * сразу на S7 и никогда не несёт S1–S5, ТЗ и ревью ТЗ; поэтому любой из этих
  * признаков делает эвристику «дифф без класса A» неприменимой. S6/S7/S8 сами по
  * себе признаком не являются: их носит и инфраструктурная задача после ревью.
- * Метка `trivial` — признак сама по себе (r1 #632): короткий трек (PROCESS §5.1)
- * идёт S2 → S5 без ТЗ и без ревью ТЗ, и в S6/S7 никакого другого следа потока у
- * него нет. Ускоренный инфраструктурный вход понятия трека не имеет, поэтому
- * `trivial` на нём не бывает; `infra` рядом с ней — тематическая метка.
+ * Прежняя метка `trivial` — признак сама по себе (r1 #632): такие задачи шли
+ * S2 → S5 без ТЗ и без ревью ТЗ, и в S6/S7 никакого другого следа потока у них
+ * нет. С #695 `trivial` читается как `track:show` (PROCESS §5.1), новым задачам
+ * не ставится, но на старых остаётся. Инфраструктурный вход её не несёт; `infra`
+ * рядом с ней — тематическая метка.
  */
 export function productFlowEvidence({ status = null, labels = [], issue = {}, specs = [], reviewDocs = [], comments = [] } = {}) {
   const reasons = [];
   if (PRE_CODE_STATUSES.includes(status)) reasons.push(`статус ${status}`);
-  if (labels.includes('trivial')) reasons.push('короткий трек trivial (ТЗ не пишется, §5.1)');
+  if (labels.includes('trivial')) reasons.push('прежняя метка trivial — продуктовый поток, читается как track:show (§5.1)');
   if (/^#{1,3}\s*ТЗ(?![\p{L}\p{N}_])/mu.test(String(issue?.body ?? ''))) reasons.push('раздел «## ТЗ» в теле issue');
   if (specs.length) reasons.push('файл ТЗ в docs/specs');
   if (reviewDocs.some((d) => String(d.name).startsWith('SPEC-REVIEW-'))) reasons.push('документ ревью ТЗ');

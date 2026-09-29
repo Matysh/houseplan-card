@@ -41,6 +41,26 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
  */
 export const BROAD_SHARE = 0.2;
 
+/**
+ * «Визуальный минимум» (#690 п.1′): смоки режимов, слоёв и отрисовки, которые
+ * выдаются, когда дифф исполняемый, а связь ни с одним смоком не доказана.
+ * Раньше такой ответ был только текстом «решает ревьюер», и автор гонял одни
+ * названные в ТЗ смоки: CSS-правка #687 не выбрала `smoke_modes`, и `dev`
+ * остался красным для следующей задачи (#685). Набор фиксирован и короткий —
+ * локально меньше минуты, — чтобы «неопределённость» стоила прогона, а не
+ * полной матрицы: полная матрица остаётся гейтом `dev` и беты.
+ */
+export const VISUAL_MINIMUM = Object.freeze([
+  'smoke_modes.mjs', // режимы: иконки плана, панели, выход в вид (#687)
+  'smoke_mode_transition.mjs', // вид ↔ редактор: высота тулбара, сцена, камера
+  'smoke_hide_layers.mjs', // слои плана по флагам
+  'smoke_decor_layer_order.mjs', // порядок слоёв декора
+  'smoke_daycycle_zoom_layers.mjs', // слои дня/ночи при любом масштабе (#689)
+  'smoke_static_zoom_sharpness.mjs', // свежий векторный кадр после зума (#685, #689)
+  'smoke_wall_hatch_density.mjs', // штриховка стен в обоих рендерах
+  'smoke_visual_continuity.mjs', // последний кадр плана не пропадает
+]);
+
 /** Файлы, чей дифф способен что-то сломать в браузере. */
 const isExecutableFrontend = (file) => file.startsWith('src/')
   && file.endsWith('.ts') && !file.endsWith('.d.ts');
@@ -197,6 +217,8 @@ export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) 
   const registered = registeredSmokes(parsed.symbols)
     .filter((entry) => !directNames.has(entry.smoke));
 
+  const unproven = parsed.executable.length > 0
+    && !direct.some((entry) => entry.strong) && !registered.length;
   return {
     files: parsed.files,
     executable: parsed.executable,
@@ -211,8 +233,9 @@ export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) 
     // нельзя молчать. `noExecutableDiff` от него отличается: там и правда
     // нечего проверять (docs, i18n-строки без кода, чистая инфраструктура).
     noExecutableDiff: parsed.executable.length === 0,
-    unproven: parsed.executable.length > 0
-      && !direct.some((entry) => entry.strong) && !registered.length,
+    unproven,
+    // #690 п.1′: неопределённость не молчит и не отдаёт пустой набор.
+    visualMinimum: unproven ? [...VISUAL_MINIMUM] : [],
   };
 }
 
@@ -281,6 +304,9 @@ function report(selection) {
       + ' доказуемо.');
     lines.push('Это не значит «смоки не нужны»: значит, что связь не доказана'
       + ' и решает ревьюер.');
+    lines.push(`Визуальный минимум (${selection.visualMinimum.length}) — прогнать до S7;`
+      + ' `npm run gate:small -- --smokes` гоняет его сам (#690):');
+    for (const smoke of selection.visualMinimum) lines.push(`  demo/${smoke}`);
     if (selection.broad.length) {
       lines.push(`Широкие символы (есть почти везде, ничего не различают):`
         + ` ${selection.broad.slice(0, 10).join(', ')}`);

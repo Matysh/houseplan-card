@@ -198,7 +198,7 @@ test('#632 r1: trivial issue in S6/S7 keeps class A rights without any spec arte
     assert.ok(packet.rights.every((l) => !l.includes('файлы класса A трогать НЕЛЬЗЯ')), labels.join(','));
   }
   assert.deepEqual(productFlowEvidence({ status: 'S6-in-progress', labels: ['trivial'], issue: { body } }),
-    ['короткий трек trivial (ТЗ не пишется, §5.1)']);
+    ['прежняя метка trivial — продуктовый поток, читается как track:show (§5.1)']);
   assert.deepEqual(productFlowEvidence({ status: 'S6-in-progress', labels: ['small', 'infra'], issue: { body } }), [],
     'только trivial: small несёт ТЗ в теле и доказывается разделом «## ТЗ»');
 });

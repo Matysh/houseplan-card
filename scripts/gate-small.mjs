@@ -36,10 +36,13 @@ export function parseArgs(argv) {
   return { base, smokes, jobs: Number.isInteger(jobs) && jobs > 0 ? jobs : 2 };
 }
 
-/** Смоки для прогона из JSON smoke-select: прямые + зарегистрированные, без «широких». */
+/**
+ * Смоки для прогона из JSON smoke-select: прямые + зарегистрированные, без
+ * «широких»; при недоказанной связи — ещё визуальный минимум (#690 п.1′).
+ */
 export function smokesToRun(selection) {
   if (!selection || selection.noExecutableDiff) return [];
-  const names = [...(selection.direct || []), ...(selection.registered || [])]
+  const names = [...(selection.direct || []), ...(selection.registered || []), ...(selection.visualMinimum || [])]
     .map((entry) => (typeof entry === 'string' ? entry : entry.smoke))
     .filter(Boolean);
   return [...new Set(names)].sort();
@@ -144,7 +147,10 @@ export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = fals
     else if (selection.noExecutableDiff) log('smoke-select: исполняемого frontend-диффа нет — смоки этим диффом не выбираются');
     else {
       const names = smokesToRun(selection);
-      log(`smoke-select: прямые и зарегистрированные (${names.length})${smokes ? ' — прогнаны выше' : ' — гоняются автором (или `--smokes`), решение по каждой строке в ревью'}:`);
+      const what = (selection.visualMinimum || []).length
+        ? 'связь не доказана — прямые, зарегистрированные и визуальный минимум (#690)'
+        : 'прямые и зарегистрированные';
+      log(`smoke-select: ${what} (${names.length})${smokes ? ' — прогнаны выше' : ' — гоняются автором (или `--smokes`), решение по каждой строке в ревью'}:`);
       for (const name of names) log(`  demo/${name}`);
       if ((selection.broad || []).length) log(`  «широких» символов: ${selection.broad.length} — решает ревьюер, автоматически не гоняются`);
     }
