@@ -1,9 +1,11 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 189, issue: 90. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 191, issue: 91. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
+| #709 | [CODE-REVIEW-709-r1.md](CODE-REVIEW-709-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | canon TESTING.md противоречит себе | `docs/TESTING.md` `scripts/smoke-select.mjs` `scripts/pre-push-gate.mjs` `TESTING.md` `process-digests.test.mjs` |
+| #709 | [CODE-REVIEW-709-r2.md](CODE-REVIEW-709-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #706 | [CODE-REVIEW-706-r1.md](CODE-REVIEW-706-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #702 | [CODE-REVIEW-702-r1.md](CODE-REVIEW-702-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #701 | [CODE-REVIEW-701-r1.md](CODE-REVIEW-701-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
