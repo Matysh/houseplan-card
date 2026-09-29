@@ -4069,6 +4069,29 @@ const MUTANT_DEFINITIONS = [
       replace: '  return safe;',
     }],
   },
+  // #706: исход rereview возвращает задачу в ту же метку; один вызов gh её снимал.
+  {
+    id: 'rereview-relabel-in-one-call',
+    guard: 'node --test --test-name-pattern="#706 rereview" test/status-label.test.mjs',
+    because: '#706: --add-label X --remove-label X in one gh call leaves the issue without a status; '
+      + 'the same label must be removed and set again so the labeled event starts a new round',
+    patches: [{
+      file: 'scripts/status-label.mjs',
+      find: '  if (from === to) {',
+      replace: '  if (false) { // mutant: one combined call',
+    }],
+  },
+  {
+    id: 'process-label-step-combined-again',
+    guard: 'node --test --test-name-pattern="#706 шаг конвейера" test/status-label.test.mjs',
+    because: '#706: the pipeline step must move the label through status-label.mjs, not through the '
+      + 'combined gh call that stripped S7-code-review on rereview',
+    patches: [{
+      file: '.github/workflows/_process.yml',
+      find: '          node scripts/status-label.mjs --repo="${{ github.repository }}" \\\n            --issue="$NUM" --from="$FROM" --to="$TO"\n',
+      replace: '          gh issue edit "$NUM" --repo "${{ github.repository }}" \\\n            --add-label "$TO" --remove-label "$FROM"\n',
+    }],
+  },
   {
     id: 'vac-trail-drop-warn-removed',
     guard: 'node --test --test-name-pattern="#369" test/vacuum.test.mjs',

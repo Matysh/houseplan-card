@@ -1768,10 +1768,13 @@ jobs:
           # когда кандидат не слит (конфликт, красный Validate, изменившийся
           # patch-id, ушедший dev). Без исхода от скрипта — как раньше: S6.
           TO: ${{ (needs.guard.outputs.stage == 'code' && steps.decide.outputs.green == 'true' && steps.merge.outputs.to != '') && steps.merge.outputs.to || ((needs.guard.outputs.stage == 'code' && steps.decide.outputs.green == 'true' && steps.merge.outputs.merged != 'true') && 'S6-in-progress' || steps.decide.outputs.to) }}
+        # #706: исход `rereview` возвращает задачу в ту же метку. Одним вызовом
+        # `gh` она добавлялась и тут же снималась — задача оставалась без
+        # статуса. Скрипт снимает и ставит её заново, чтобы событие `labeled`
+        # запустило новый заход.
         run: |
-          gh issue edit "$NUM" --repo "${{ github.repository }}" \
-            --add-label "$TO" --remove-label "$FROM"
-          echo "$FROM -> $TO"
+          node scripts/status-label.mjs --repo="${{ github.repository }}" \
+            --issue="$NUM" --from="$FROM" --to="$TO"
 
       - name: Сводка длительности стадий
         if: always()
