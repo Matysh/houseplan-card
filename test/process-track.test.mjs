@@ -21,7 +21,7 @@ test('пакет задачи и конвейер читают трек одно
 
 test('явная трековая метка главнее признака инфраструктуры (#696)', () => {
   const infra = ['scripts/x.mjs', '.github/workflows/y.yml'];
-  assert.deepEqual(resolveTrack({ labels: ['track:ask'], files: infra }), { track: 'ask', mutants: true, full: false, infrastructure: true });
+  assert.deepEqual(resolveTrack({ labels: ['track:ask'], files: infra }), { track: 'ask', mutants: false, full: false, infrastructure: true });
   assert.deepEqual(resolveTrack({ labels: ['track:ship'], files: ['src/a.ts'] }), { track: 'ship', mutants: false, full: false, infrastructure: false });
   assert.equal(resolveTrack({ labels: ['small'], files: ['src/a.ts'] }).track, 'show');
 });
@@ -34,11 +34,10 @@ test('без трековой метки инфраструктура — show, 
   assert.equal(hasTrackLabel(['trivial']), true);
 });
 
-test('мутанты по диффу — только ask и метка ci:mutants (#696)', () => {
-  assert.equal(resolveTrack({ labels: ['track:show'], files: ['src/a.ts'] }).mutants, false);
-  assert.equal(resolveTrack({ labels: ['track:show', 'ci:mutants'], files: ['src/a.ts'] }).mutants, true);
-  assert.equal(resolveTrack({ labels: ['track:ship', 'ci:mutants'], files: ['src/a.ts'] }).mutants, true);
-  assert.equal(resolveTrack({ labels: [], files: ['src/a.ts'] }).mutants, true);
+test('#709: мутантов в разработке нет ни на одном треке и ни по какой метке', () => {
+  for (const labels of [['track:ship'], ['track:show'], ['track:ask'], ['track:show', 'ci:mutants'], ['ci:mutants'], []]) {
+    assert.equal(resolveTrack({ labels, files: ['src/a.ts'] }).mutants, false, labels.join(',') || 'без меток');
+  }
 });
 
 test('рамки ship: строки src/** считаются вместе, граница включительна (#696)', () => {
@@ -141,7 +140,7 @@ test('конвейер: трек снимается до ребейза, мут�
   assert.match(rebaseStep, /if \[ "\$TRACK" = "show" \] \|\| \[ "\$TRACK" = "ship" \]; then\n\s+if git merge-tree --write-tree origin\/dev HEAD/,
     'show/ship не ребейзятся при чистом слиянии');
   const gateStep = workflow.slice(gate, at('      - name: Validate идёт — раунд продолжит событие\n'));
-  assert.match(gateStep, /--mutants="\$\{MUTANTS:-true\}"/, 'по умолчанию — с мутантами');
+  assert.match(gateStep, /--mutants="\$\{MUTANTS:-false\}"/, 'по умолчанию — без мутантов (#709)');
   assert.match(gateStep, /MUTANTS: \$\{\{ steps\.track\.outputs\.mutants \}\}/);
 });
 
@@ -162,7 +161,7 @@ test('конвейер: ship в рамках сливается без моде�
   assert.doesNotMatch(decide.slice(decide.indexOf('SHIP" = "true'), decide.indexOf('elif [ "$REUSE"')), /Вердикт:/,
     'слияние без ревью не называет себя вердиктом ревью');
   const merge = integrate.slice(integrate.indexOf('- name: Слить ветку в dev'), integrate.indexOf('- name: Переставить метку'));
-  assert.match(merge, /--mutants="\$\{MUTANTS:-true\}"/);
+  assert.match(merge, /--mutants="\$\{MUTANTS:-false\}"/);
   const env = modelJob.slice(modelJob.indexOf('- name: Что ревьюеру нужно из окружения'), modelJob.indexOf('- name: Установить Claude Code'));
   assert.match(env, /if \[ "\$STAGE" = "spec" \]; then deps=false; browser=false; fi/, 'ревью ТЗ не ставит окружение');
   assert.match(env, /if: steps\.env_needs\.outputs\.deps == 'true'\n\s+run: npm ci/);

@@ -5,8 +5,8 @@
  *   node scripts/pre-push-gate.mjs --hook   # из .githooks/pre-push, строки git на stdin
  *   node scripts/pre-push-gate.mjs
  *   node scripts/pre-push-gate.mjs --base origin/dev --head HEAD
- *   node scripts/pre-push-gate.mjs --no-smokes --no-mutants
- *   node scripts/pre-push-gate.mjs --max-smokes=3 --max-mutants=1
+ *   node scripts/pre-push-gate.mjs --no-smokes
+ *   node scripts/pre-push-gate.mjs --max-smokes=3
  *
  * Зачем. Красный CI — дорогой способ узнать о проблеме: пять минут ожидания, а
  * при код-ревью ещё и лишний раунд. Прецедент назван в задаче: r2-H1 в #329
@@ -203,7 +203,6 @@ function manualGate(argv) {
   const base = value('base', 'origin/dev');
   const head = value('head', 'HEAD');
   const maxSmokes = Number(value('max-smokes', 6));
-  const maxMutants = Number(value('max-mutants', 2));
 
   const run = (label, command, args, options = {}) => {
     const started = Date.now();
@@ -307,24 +306,11 @@ function manualGate(argv) {
     }
   }
 
-  // ---- мутанты по диффу -----------------------------------------------------
-  if (flag('no-mutants')) {
-    skipped.push('мутанты — запрошено --no-mutants');
-  } else {
-    const list = capture('node', ['scripts/mutation-gate.mjs', '--changed=' + `${base}..${head}`, '--check']);
-    const touched = Number(/мутантов затронуто (\d+)/.exec(list.stdout || '')?.[1] ?? -1);
-    if (touched === 0) {
-      console.log('\n── Мутанты\n   дифф не задевает ни одного patch.file');
-    } else if (touched < 0) {
-      skipped.push('мутанты — не удалось определить выборку по диффу');
-    } else if (touched > maxMutants) {
-      skipped.push(`мутанты (${touched}) — больше лимита ${maxMutants};`
-        + ` каждый пересобирает бандл. Прогон: node scripts/mutation-gate.mjs --changed=${base}..${head}`);
-    } else {
-      steps.push(run('Мутанты по диффу', 'node',
-        ['scripts/mutation-gate.mjs', `--changed=${base}..${head}`]));
-    }
-  }
+  // ---- мутанты ---------------------------------------------------------------
+  // #709: мутанты проверяют тесты, а не продукт, и в разработке не гоняются —
+  // весь реестр проверяет ночной прогон (mutation-gate.yml). Флаги
+  // --no-mutants и --max-mutants приняты для совместимости и ничего не меняют.
+  skipped.push('мутанты — в разработке не гоняются (#709), весь реестр проверяет ночь');
 
   // ---- вердикт --------------------------------------------------------------
   const failed = steps.filter((step) => !step.ok);

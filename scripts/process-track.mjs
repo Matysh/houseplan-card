@@ -7,7 +7,8 @@
  *
  * `resolve` печатает `track=ship|show|ask`, `mutants=true|false` и
  * `full=true|false` — то, что конвейер ревью читает, решая, сколько стоит
- * заход: мутанты по диффу нужны только `ask` и метке `ci:mutants`; полный
+ * заход: мутантов в разработке нет ни на одном треке (#709) — `mutants`
+ * всегда `false`, весь реестр проверяет только ночной прогон; полный
  * набор (смоки, golden, perf) на ветке задачи — только меткам `ci:full` и
  * `ci:golden` (#697). Инфраструктурная задача без трековой
  * метки — `show` (§5.1); признак инфраструктуры механический, как в §1: в
@@ -47,13 +48,15 @@ export const hasTrackLabel = (labels = []) => ['track:ship', 'track:show', 'trac
 /**
  * Трек, по которому конвейер оценивает заход. Явная метка решает всё; без неё
  * инфраструктурная задача (ни одного файла класса A в диффе) — `show`, прочие —
- * `ask`. Мутанты по диффу — только на `ask` или по метке `ci:mutants`.
+ * `ask`. Мутанты проверяют тесты, а не продукт: в разработке их не гоняют ни
+ * локально, ни в CI (#709, решение владельца 2026-09-29) — только ночной полный
+ * реестр (`mutation-gate.yml`, #513). Поле остаётся для совместимости выхода.
  * Полный набор — по меткам `ci:full` и `ci:golden` на любом треке (#697).
  */
 export function resolveTrack({ labels = [], files = [] } = {}) {
   const infrastructure = files.length > 0 && files.every((file) => classify(file) !== 'A');
   const track = hasTrackLabel(labels) ? trackFromLabels(labels) : (infrastructure ? 'show' : 'ask');
-  const mutants = track === 'ask' || labels.includes('ci:mutants');
+  const mutants = false;
   const full = labels.includes('ci:full') || labels.includes('ci:golden');
   return { track, mutants, full, infrastructure };
 }

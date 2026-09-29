@@ -413,8 +413,8 @@ jobs:
             echo "МАТЕРИАЛ НЕ ЗАПУШЕН" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      # Трек решает цену захода (PROCESS.md §5, §10.4, #696): мутанты по диффу —
-      # только `track:ask` и метка `ci:mutants`; `ship` сливается без модели,
+      # Трек решает цену захода (PROCESS.md §5, §10.4, #696): мутантов в
+      # разработке нет ни на одном треке (#709); `ship` сливается без модели,
       # если правка укладывается в механические рамки. Рамки судят дифф от
       # merge-base с dev — работу задачи, а не то, что принёс dev, — поэтому шаг
       # стоит до ребейза. Выход за рамки повышает трек до `show` здесь же:
@@ -702,9 +702,8 @@ jobs:
             --add-label S6-in-progress --remove-label S7-code-review
           echo "S7-code-review -> S6-in-progress (ревью не запускалось)"
 
-      # Мутанты по диффу бегут только по запросу (#510): до ревью конвейер
-      # запускает Validate на материале и ждёт его — с мутантами на `ask` и по
-      # метке `ci:mutants`, лёгкий на `show`/`ship` (#696). Лёгкому годится и
+      # До ревью конвейер запускает Validate на материале и ждёт его — всегда
+      # лёгкий: мутантов в разработке нет (#709), весь реестр — ночью. Лёгкому годится и
       # завершённый push-прогон на том же SHA: dispatch повторил бы его. Красный или
       # пропавший прогон возвращает задачу автору без ревью — цикл не
       # тратится на код, который CI уже отверг (08.09: #437 дважды ушёл в S6
@@ -737,7 +736,7 @@ jobs:
           # прогон гейт и без ожидания возвращает сразу.
           set +e
           node scripts/validate-gate.mjs --repo="${{ github.repository }}" --ref="$BRANCH" --sha="$SHA" --no-wait \
-            --mutants="${MUTANTS:-true}" --full="${FULL:-false}"
+            --mutants="${MUTANTS:-false}" --full="${FULL:-false}"
           code=$?
           set -e
           case "$code" in
@@ -1753,7 +1752,7 @@ jobs:
             exit 0
           fi
           node scripts/merge-candidate.mjs --branch="$BRANCH" --material="$MATERIAL_SHA" \
-            --issue="$NUM" --repo="${{ github.repository }}" --mutants="${MUTANTS:-true}"
+            --issue="$NUM" --repo="${{ github.repository }}" --mutants="${MUTANTS:-false}"
 
       - name: Переставить метку
         if: steps.ready.outputs.proceed == 'true'

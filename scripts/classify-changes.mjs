@@ -121,9 +121,10 @@ export function isTaskBranch(refName) {
  * CLI по-прежнему передаёт headMessage и fullInput вместе с остальным —
  * функция их не читает, и тест закрепляет, что они НЕ влияют на ответ.
  */
-export function mutantsRequested({ eventName, mutantsInput } = {}) {
-  if (eventName === 'pull_request') return true;
-  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';
+export function mutantsRequested() {
+  // #709: мутанты проверяют тесты, а не продукт — в разработке Validate их не
+  // гоняет ни на dispatch (`mutants=true` больше ничего не включает), ни на PR.
+  // Весь реестр проверяет только ночной прогон (mutation-gate.yml).
   return false;
 }
 

@@ -84,8 +84,9 @@ a spec review. Any agent may raise a track with a reason; only the owner lowers 
 class A file — skips analysis and spec and enters at `S7-code-review`
 (`PROCESS.md` §1). Every change is code-reviewed; on `ship` the review moves to a
 batch review of the beta range before the tag (`ship-review.yml`, `PROCESS.md`
-§11.7). The review pipeline prices each round by track (§10.4): diff mutants
-only on `ask` or with `ci:mutants`; a rebase before review only on `ask` or when
+§11.7). The review pipeline prices each round by track (§10.4): no mutants run
+during development on any track — the whole registry runs nightly (#709); a
+rebase before review only on `ask` or when
 the branch does not merge cleanly into `dev`. Review checks scope, risks and the
 evidence from executed tests, but does not replace executing them.
 

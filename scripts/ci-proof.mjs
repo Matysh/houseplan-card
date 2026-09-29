@@ -28,8 +28,8 @@ export const CI_PROOF_STATES = Object.freeze([
 //
 // #696: треки `show` и `ship` (PROCESS §5) мутантов по диффу до слияния не
 // запрашивают — их доказательство лёгкое, `reviewLight`/`mergeLight`. Мутанты
-// у них остаются в ночном полном реестре; `track:ask` и метка `ci:mutants`
-// идут по прежним `review`/`merge`.
+// у них остаются в ночном полном реестре. С #709 мутантов в разработке нет
+// ни на одном треке: `review`/`merge` с мутантами конвейер больше не выбирает.
 export const CI_PROOF_POLICIES = Object.freeze({
   review: Object.freeze({ name: 'review', full: false, mutants: true }),
   merge: Object.freeze({ name: 'merge', full: false, mutants: true }),

@@ -10389,8 +10389,8 @@ const MUTANT_DEFINITIONS = [
       + 'that softens it must fail, not pass as a shorter paraphrase (#634)',
     patches: [{
       file: 'docs/process/REVIEWER.md',
-      find: '  результатом прогона. Пустой третий столбец — находка Medium, а не\n  примечание.',
-      replace: '  результатом прогона. Пустой третий столбец желательно заполнить.',
+      find: '  Пустой третий столбец — находка Medium, а не примечание. «Тест умеет',
+      replace: '  Пустой третий столбец желательно заполнить. «Тест умеет',
     }],
   },
   {
@@ -12102,39 +12102,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'mutants-run-on-every-push',
-    guard: 'node --test --test-name-pattern="#510" test/classify-changes.test.mjs',
-    because: 'mutants by diff belong to the review candidate, the merge candidate and the PR — an '
-      + 'ordinary push must not spend 3×8 runner minutes on them (#510 AC1, narrowed in #601)',
+    id: 'dev-mutants-requested-again',
+    guard: 'node --test --test-name-pattern="#709" test/classify-changes.test.mjs',
+    because: '#709 (owner, 2026-09-29): mutants check the tests, not the product; Validate runs no diff '
+      + 'mutants on any event — the whole registry is the nightly run (mutation-gate.yml)',
     patches: [{
       file: 'scripts/classify-changes.mjs',
-      find: "  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';\n  return false;\n}",
-      replace: "  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';\n  return true; // mutant: every push\n}",
-    }],
-  },
-  {
-    id: 'mutants-run-on-beta-candidate',
-    guard: 'node --test --test-name-pattern="#601" test/classify-changes.test.mjs',
-    because: 'the `Release:` trailer requests the heavy gates, not the diff mutants (#601 AC1): by the '
-      + 'beta candidate every issue has already been mutated on its review and merge candidates, and '
-      + 'the trailer also lands on class-D baseline commits inside task branches (f342ccce) — six '
-      + 'mutant jobs there prove nothing about tests that did not change',
-    patches: [{
-      file: 'scripts/classify-changes.mjs',
-      find: "export function mutantsRequested({ eventName, mutantsInput } = {}) {\n  if (eventName === 'pull_request') return true;\n  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';\n  return false;\n}",
-      replace: "export function mutantsRequested({ eventName, headMessage, mutantsInput } = {}) {\n  if (eventName === 'pull_request') return true;\n  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';\n  return hasReleaseTrailer(headMessage); // mutant: beta candidate\n}",
-    }],
-  },
-  {
-    id: 'mutants-run-on-full-dispatch',
-    guard: 'node --test --test-name-pattern="#601" test/classify-changes.test.mjs',
-    because: '`full=true` is the heavy set — smokes, golden, performance — and the nightly dispatch '
-      + '(#601 AC1). Tying the diff mutants to it made a manual full run for a golden artifact pay six '
-      + 'jobs the review conveyor then cancelled by concurrency, and duplicated the nightly registry',
-    patches: [{
-      file: 'scripts/classify-changes.mjs',
-      find: "export function mutantsRequested({ eventName, mutantsInput } = {}) {\n  if (eventName === 'pull_request') return true;\n  if (eventName === 'workflow_dispatch') return String(mutantsInput) === 'true';",
-      replace: "export function mutantsRequested({ eventName, fullInput, mutantsInput } = {}) {\n  if (eventName === 'pull_request') return true;\n  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true' || String(mutantsInput) === 'true'; // mutant: full requests",
+      find: '  // Весь реестр проверяет только ночной прогон (mutation-gate.yml).\n  return false;',
+      replace: '  // Весь реестр проверяет только ночной прогон (mutation-gate.yml).\n  return true; // mutant',
     }],
   },
   {
@@ -13599,14 +13574,14 @@ const MUTANT_DEFINITIONS = [
   },
   // #696: цена захода по треку — мутанты, рамки ship, пакетное ревью перед бетой.
   {
-    id: 'track-show-pays-for-mutants',
-    guard: 'node --test --test-name-pattern="мутанты по диффу — только ask" test/process-track.test.mjs',
-    because: '#696: show/ship request no diff mutants before merge; only ask and the ci:mutants '
-      + 'label do — otherwise every small task pays the 28-minute mutant run again',
+    id: 'track-pays-for-mutants-again',
+    guard: 'node --test --test-name-pattern="#709" test/process-track.test.mjs',
+    because: '#709: no track and no label buys a mutant run during development — the 28-minute '
+      + 'run on ask and ci:mutants was the cost the owner removed',
     patches: [{
       file: 'scripts/process-track.mjs',
-      find: "  const mutants = track === 'ask' || labels.includes('ci:mutants');",
-      replace: '  const mutants = true; // mutant: every track pays for mutants',
+      find: '  const mutants = false;',
+      replace: "  const mutants = track === 'ask' || labels.includes('ci:mutants'); // mutant",
     }],
   },
   {
