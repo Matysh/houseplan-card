@@ -64,8 +64,8 @@ rerun; лог шарда считается зелёным только с ит�
 прогон маркера не оставляет — следующая ночь гонит реестр заново и снова
 заводит issue. Решение — чистая функция `scripts/mutation-nightly-reuse.mjs`
 (`test/mutation-nightly-reuse.test.mjs`). Дешёвая половина
-идёт с юнитами: `test/mutation-gate.test.mjs`. Локально для дельты задачи —
-`node scripts/mutation-gate.mjs --changed origin/dev..HEAD`: гоняются только
+идёт с юнитами: `test/mutation-gate.test.mjs`. Для разбора ночного сбоя (не
+гейт задачи, #709) — `node scripts/mutation-gate.mjs --changed origin/dev..HEAD`: гоняются только
 мутанты, чьи patch-файлы или **входы гарда** задеты диффом (#332, #475, #492).
 Входы гарда — это не только файлы, названные в команде: обёртка
 (`scripts/*-guard.mjs`) объявляет запускаемые тесты в `export const
@@ -273,13 +273,14 @@ c._drag = { id, sx, sy }; // private-ok: #NNN состояние жеста, о�
 ```bash
 node scripts/pre-push-gate.mjs                       # origin/dev..HEAD
 node scripts/pre-push-gate.mjs --base origin/dev --head HEAD
-node scripts/pre-push-gate.mjs --no-smokes --no-mutants
-node scripts/pre-push-gate.mjs --max-smokes=3 --max-mutants=1
+node scripts/pre-push-gate.mjs --no-smokes
+node scripts/pre-push-gate.mjs --max-smokes=3
 ```
 
 Что прогоняется: проверка, что ветка приведена к `origin/dev`, `npx tsc
---noEmit`, `npm test`, смоки, выбранные `scripts/smoke-select.mjs` по диффу, и
-мутанты, выбранные `scripts/mutation-gate.mjs --changed` по тем же файлам.
+--noEmit`, `npm test` и смоки, выбранные `scripts/smoke-select.mjs` по диффу.
+Мутантов нет (#709); флаги `--no-mutants` и `--max-mutants` приняты для
+совместимости и ничего не меняют.
 
 Отставание от `dev` — предупреждение, а не провал набора: гейтом остаётся
 конвейер, который приводит ветку сам (#257) и забыть не может. Смысл локальной
