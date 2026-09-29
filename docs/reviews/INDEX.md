@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 188, issue: 89. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 189, issue: 90. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -23,6 +23,7 @@
 | #691 | [SPEC-REVIEW-691-r2.md](SPEC-REVIEW-691-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #691 | [CODE-REVIEW-691-r1.md](CODE-REVIEW-691-r1.md) | code · r1 | 🟡 жёлтый | 0 | 2 | docs/USER-GUIDE.ru.md не обновлён и описывает старое поведение; существующий регрессионный смок demo/smoke_pan_any_zoom.mjs красный на материале ревью | `docs/USER-GUIDE.ru.md` `AGENTS.md` `docs/process/REVIEWER.md` `docs/SCOPE.md` `docs/USER-GUIDE.md` `docs/TOUCH-SUPPORT.md` `demo/smoke_pan_any_zoom.mjs` `docs/CANVAS.md` |
 | #691 | [CODE-REVIEW-691-r2.md](CODE-REVIEW-691-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #690 | [CODE-REVIEW-690-r1.md](CODE-REVIEW-690-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #689 | [SPEC-REVIEW-689-r1.md](SPEC-REVIEW-689-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #689 | [CODE-REVIEW-689-r1.md](CODE-REVIEW-689-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #688 | [SPEC-REVIEW-688-r1.md](SPEC-REVIEW-688-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
