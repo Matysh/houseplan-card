@@ -53,11 +53,15 @@ const out = {
       && window.__card.getAttribute('lang') === 'de'),
 };
 
-const beforeSecond = requested.length;
+// #722: count only the locale chunk. Every new card mounts its own plan
+// <image>, and under page.route (HTTP cache off) that is a fresh request for
+// the backdrop; whether it lands before this read is a race, not a locale fact.
+const localeRequests = () => requested.filter((path) => path.endsWith(`/${localeName}`)).length;
+const beforeSecond = localeRequests();
 await cold.page.evaluate(replaceWithGermanCard, ' 2');
 await cold.page.waitForFunction(() => window.__card?._model?.length > 0
   && window.__card._t('btn.save') === 'Speichern');
-out.secondCardReusesPageLocale = requested.length === beforeSecond;
+out.secondCardReusesPageLocale = localeRequests() === beforeSecond;
 
 const failed = await launchColdView();
 let failedRequests = 0;
