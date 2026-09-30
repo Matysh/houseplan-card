@@ -242,6 +242,31 @@ await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('.hp-m
 await transitionsDone();
 const moonLayers = (await layerSnapshot()).layers;
 
+// #718 AC7: a static background at night — the moon stands in its own sky
+// layer (no z-index, filter or will-change) and adds no composited layer
+// either. Night without the moon against night with it, both settled.
+const setStaticMoon = (moon) => page.evaluate(async (moon) => {
+  const card = window.__card;
+  card._serverCfg = { ...card._serverCfg, settings: { ...card._serverCfg.settings, bg_mode: 'static', moon } }; // private-ok: the synthetic 1 cm/point space exists only in the card config, a server push would reload the demo plan
+  card.requestUpdate();
+  await card.updateComplete;
+}, moon);
+await setStaticMoon(false);
+await settle();
+await transitionsDone();
+const staticNightLayers = (await layerSnapshot()).layers;
+await setStaticMoon(true);
+await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('.hp-moon-sky > .hp-moon.on'), null, { timeout: 8000 });
+await transitionsDone();
+const staticMoonLayers = (await layerSnapshot()).layers;
+await page.evaluate(async () => {
+  const card = window.__card;
+  card._serverCfg = { ...card._serverCfg, settings: { ...card._serverCfg.settings, bg_mode: 'daynight', moon: true } }; // private-ok: back to the #661 night for the static card below
+  card.requestUpdate();
+  await card.updateComplete;
+});
+await settle();
+
 // Contract item 6: the non-interactive houseplan-space-card never needs a
 // gesture to become safe. Its day-cycle silhouette is stage-bounded from its
 // first frame, while the visible paper group owns no filter layer.
@@ -370,6 +395,8 @@ checks.staticCardOutlineLayerIsStageBounded = !!staticOutlineLayer
 checks.staticCardHasNo4096ContentLayer = staticOversized.length === 0;
 checks.moonAddsNoCompositedLayer = moonLayers.length === nightLayers.length
   && !moonLayers.some((layer) => layer.className.includes('hp-moon'));
+checks.staticMoonAddsNoCompositedLayer = staticMoonLayers.length === staticNightLayers.length
+  && !staticMoonLayers.some((layer) => layer.className.includes('hp-moon'));
 
 console.log(JSON.stringify({
   stage: active.stage,
@@ -389,6 +416,8 @@ console.log(JSON.stringify({
   staticOversized,
   nightLayers: nightLayers.length,
   moonLayers: moonLayers.length,
+  staticNightLayers: staticNightLayers.length,
+  staticMoonLayers: staticMoonLayers.length,
 }, null, 2));
 checkAll(checks);
 await cdp.send('LayerTree.disable');

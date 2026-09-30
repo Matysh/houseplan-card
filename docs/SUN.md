@@ -376,26 +376,26 @@ The wash lives where the Flat `.sunlayer` lives (floor group, above room fills
 and Glow) as `.sunlayer.iso-sunwash`, one `.iso-sunbeam[data-opening]` per lit
 window. Witness: `demo/smoke_iso_sun.mjs`.
 
-## Moon — `settings.moon` (#661)
+## Moon — `settings.moon` (#661, any background since #718)
 
-At dawn, dusk and night on the "Follow the Sun" background, the moon in its
-current phase stands in the top-left corner of the scene: a thin crescent, a
-half, a full disc. General settings › Sun and Moon › «Moon over the plan at
-dusk and night» switches it for the whole installation.
+At dawn, dusk and night, with any background, the moon in its current phase
+stands in the top-left corner of the scene: a thin crescent, a half, a full
+disc. General settings › Sun and Moon › «Moon over the plan at dusk and night»
+switches it for the whole installation; there is no per-space moon switch.
 
 **When it is shown** — all at once, otherwise there is no moon:
 
 - `settings.moon === true` (global; absent, `false` or anything else is off);
-- the effective `bg_mode` of the space is `daynight` — the moon lives in the
-  four-phase environment, so a space with its own `static` has no moon, and
-  there is no per-space moon switch;
-- the environment phase is `dawn`, `dusk` or `night` (the same
-  `resolveDayCycle`, browser-clock fallback included);
+- the day-cycle phase is `dawn`, `dusk` or `night`: `resolveDayCycle(hass,
+  now)`, whatever the background — with a valid `sun.sun` (`dayCycleSunOf`:
+  finite azimuth and elevation, boolean `rising`) day is elevation ≥ 6°
+  (exactly 6° is day), otherwise the browser-local clock, day 08:00–18:00. The
+  effective `bg_mode` of the space is not a condition (#718 K1);
 - the topocentric altitude is ≥ 3° (`MOON_ELEVATION_MIN = RAY_ELEVATION_MIN`);
 - the illuminated fraction is ≥ 3 % (`MOON_MIN_ILLUMINATION`, about ±1.5 days
   around new moon);
-- a View surface: View, kiosk or `houseplan-space-card` (editors have no
-  environment);
+- a View surface: View, kiosk, panel or `houseplan-space-card` (editors, the
+  PDF export and the space dialog preview have no moon);
 - `hass.config.latitude/longitude` are finite numbers.
 
 **Where the numbers come from.** Home Assistant publishes no moon altitude
@@ -423,12 +423,29 @@ quantised to 0.01 only so the element changes when the fingerprint does. The
 dark side is the same art at 8 % opacity.
 
 **Place, size, layer.** Fixed top-left corner, box `min(200px, 25cqmin)` of the
-scene (the environment is the size container), inset 5 % of the box; it does
-not move with pan or zoom and never takes the pointer. It is the last child of
-`.hp-day-cycle-env`: above the phase gradients and the sun glow, below the plan
-paper, rooms, devices, labels and UI. A plan that fills the scene covers the
-moon partly or entirely — that is the environment's norm, like the sun glow
-(owner decision 7).
+scene, inset 5 % of the box; it does not move with pan or zoom and never takes
+the pointer. Over "Follow the Sun" it is the last child of `.hp-day-cycle-env`:
+above the phase gradients and the sun glow, below the plan paper, rooms,
+devices, labels and UI. A plan that fills the scene covers the moon partly or
+entirely — that is the environment's norm, like the sun glow (owner
+decision 7).
+
+**Static background (#718 K3).** No environment is created — no
+`.hp-day-cycle-env`, no `daycycle`/`phase-*` classes, no
+`.hp-paper-outline-svg`; the scene keeps the chosen colour or the theme's. The
+same `.hp-moon` element stands in its own layer `<div class="hp-moon-sky"
+aria-hidden="true">`, the first child of `.stage` (full card) or
+`.hp-static-stage` (space card) — where the environment would be. The layer is
+the whole scene (`position:absolute; inset:0; overflow:hidden;
+pointer-events:none; container-type:size`), so the box and place are the same;
+it has no `z-index`, `filter` or `will-change` and lies under the plan by DOM
+order (`.zoomwrap` and the space card's plan are `z-index:1`). The layer's
+`opacity` is the View weight of the #101 transition, as the environment's;
+editors have neither. Switching between `daynight` and `static` (a space tab,
+the background segment previewed in the open dialog, a config push) moves the
+element to its new parent in the same render, in its final state, on the same
+box — no flicker. The chunk renders and styles the layer; until it is here
+there is no layer.
 
 **Movement.** Opacity only, 2 s on the background curve (`RAY_FADE_MS`),
 none under `prefers-reduced-motion`: rising through 3°, setting through it,
@@ -439,13 +456,47 @@ the ticker keeps the last rendered inputs, and an equal fingerprint
 (`visible | k`) costs no render. A card that renders without a moon, leaves the
 page or is hidden drops or pauses its ticker.
 
-**Weight.** Astronomy, art (≈ 9 KB gzip) and template are one lazy chunk,
-`moon-runtime-*`, loaded when the moon is switched on, the environment exists
-and it is not daytime; until it arrives there is no moon, a failed load is
-retried at most every 30 s through the exact-build loader of the isometric
-runtime. The initial View graph carries only the gate (`src/moon-gate.ts`).
-One element, no CSS filter and no `will-change`: the composited layer count
-does not change (`demo/smoke_daycycle_layer_budget.mjs`).
+With a static background the phase for the moon comes from the same
+`resolveDayCycle` (`moonSkyState` in `src/moon-gate.ts`), computed only while
+the moon is on and the surface is View. With `sun.sun` it follows the Home
+Assistant state updates the cards already re-render on. Without it the card
+keeps its 30 s clock ticker (`_syncDayCycleClock`, both cards) and re-renders
+only when the phase changes (`dayCycleClock`: the environment is compared by
+its whole fingerprint, the moon's sky by its phase), so the moon leaves at
+08:00 and comes at 18:00 without a state update. The moon switched off or an
+editor: no phase, no ticker.
+
+**Weight.** Astronomy, art (≈ 9 KB gzip), template, the static-background
+layer and the status function are one lazy chunk, `moon-runtime-*`, loaded
+when the moon is switched on on a View surface and it is not daytime — with any
+background — and when General settings open (for the status line, by day and
+with the moon off too). One load per page through the gate's loader
+(`withMoon`): a chunk of another build is never installed, a failed load is
+retried at most every 30 s, and every caller meanwhile waits for the same load.
+The initial View graph carries only the gate (`src/moon-gate.ts`); the editor
+graph only the status line and its strings (`src/editors/moon-status.ts`) —
+`src/moon.ts` is in neither (`scripts/bundle-budget.mjs` refuses an overlap of
+the moon graph with the initial or the editor graph). One element, no CSS
+filter and no `will-change`: the composited layer count does not change, with
+either background (`demo/smoke_daycycle_layer_budget.mjs`).
+
+**Status line (#718 K7).** Under the switch in General settings a second
+caption line, inside `aria-describedby`, no `aria-live`, anchored
+`data-moon-status="shown|no_home|day_sun|day_clock|low|new"`: «Now: shown (24°
+above the horizon, 79% lit).» or «Now: not shown (reason).», the first reason
+that holds — no home coordinates; day (by `sun.sun` with its elevation, or by
+the clock); the moon below 3°; under 3 % lit. It is judged once per opening on
+a snapshot taken when the dialog opens (`now`, `hass.config`, `sun.sun`), as
+if the switch were on — the moon no longer depends on the background, so one
+status serves the installation; the switch, «Reset» and the background segment
+do not change it. `moonStatus` in `src/moon.ts` decides «shown» with the same
+`moonShownAt` as the element (AC10 checks the equivalence every hour of a
+month), rounds to whole numbers and keeps a hidden reason's number below its
+threshold (2.6° reads «2°»). The status lives beside the draft, never in it:
+the line arriving leaves «Save» disabled. While the chunk loads, or when it
+failed, there is no line; a closed opening's result is dropped. The line
+belongs to the browser the dialog is open in — a wall tablet with another
+clock or time zone may differ.
 
 **Limits (documented, not bugs).**
 
@@ -455,6 +506,8 @@ does not change (`demo/smoke_daycycle_layer_budget.mjs`).
   not follow the hemisphere (owner decision): the crescent is "vertical".
 - Earthshine is not modelled; the dark side is an 8 % silhouette for legibility.
 - The moon does not follow its azimuth — fixed corner of the scene.
+- One art for every background (owner decision, #718): on a mid-grey custom
+  colour the disc has less contrast than on white or at night.
 - A dense layout (plan filling the screen) shows only the part of the disc in
   the margins.
 - Coordinates come from Home Assistant: an installation that kept the default
@@ -504,11 +557,14 @@ saving General settings removes it.
 - `src/day-cycle-render.ts` — the shared constant environment layers and
   plan-outline variables for full and static cards.
 - `src/moon.ts`, `src/moon-runtime.ts`, `src/moon-gate.ts`,
-  `src/moon-art.generated.ts` — the moon (#661): pure astronomy and mask, the
-  lazy chunk with the element and its ticker, the initial-graph gate, the
-  generated art (`node scripts/generate-moon-assets.mjs` from
-  `assets/moon/houseplan-1.0.0`); unit-tested in `test/moon.test.mjs`,
-  end-to-end in `demo/smoke_moon.mjs`.
+  `src/moon-art.generated.ts` — the moon (#661, #718): pure astronomy, mask and
+  status, the lazy chunk with the element, the static-background layer and the
+  ticker, the initial-graph gate with the page-wide loader, the generated art
+  (`node scripts/generate-moon-assets.mjs` from `assets/moon/houseplan-1.0.0`);
+  `src/editors/moon-status.ts` — the General settings line. Unit-tested in
+  `test/moon.test.mjs` and `test/moon-settings.test.mjs`, end-to-end in
+  `demo/smoke_moon.mjs`, `demo/smoke_moon_static.mjs` and
+  `demo/smoke_moon_status.mjs`.
 - `src/houseplan-card.ts` — the memoised wedge layer, four-phase background
   lifecycle, and both settings dialogs (compass dial included).
 - `src/space-render.ts` / `src/space-card.ts` — static-card environment and

@@ -446,7 +446,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 69);
+  assert.equal(GOLDEN_MATRIX_VERSION, 70);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -940,7 +940,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 69);
+  assert.equal(GOLDEN_MATRIX_VERSION, 70);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',
@@ -1243,4 +1243,32 @@ test('#661 AC7 moon scenes: fixed home and clock, moon on, the old day-cycle fra
     assert.equal(scenario.moon, undefined, id);
     assert.equal(prepareGoldenFixture(scenario).config.settings?.moon, undefined, id);
   }
+});
+
+test('#718 AC8 static-background moon scenes: the chosen colour, the sky layer, the dialog waits for the line', () => {
+  const byId = (id) => GOLDEN_SCENARIOS.find((scenario) => scenario.id === id);
+  const white = byId('static-bg-moon-gibbous-white-light');
+  const dark = byId('static-bg-moon-crescent-south-dark');
+  assert.deepEqual(white.moon, { clock: '2026-10-21T18:00:00Z', latitude: 55.75, longitude: 37.62, k: '0.79' });
+  assert.deepEqual(dark.moon, { clock: '2026-10-14T09:00:00Z', latitude: -33.87, longitude: 151.21, k: '0.14' });
+  for (const [scenario, theme, color] of [[white, 'light', '#ffffff'], [dark, 'dark', '#202126']]) {
+    assert.equal(scenario.capture, 'stage');
+    assert.equal(scenario.theme, theme);
+    assert.equal(scenario.bgMode, 'static');
+    const fixture = prepareGoldenFixture(scenario);
+    assert.equal(fixture.config.settings.moon, true);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.equal(space.settings.bg_mode, 'static');
+    assert.equal(space.settings.bg_color, color);
+  }
+  // The harness checks the parent by background and waits for the status line
+  // in both General settings frames before the screenshot.
+  const harness = readFileSync(new URL('../demo/golden/harness.mjs', import.meta.url), 'utf8');
+  assert.match(harness, /scenario\.bgMode === 'daynight'\s+\? card\.renderRoot\.querySelector\('\.hp-day-cycle-env'\)\s+: card\.renderRoot\.querySelector\('\.hp-moon-sky'\)/);
+  for (const dialog of ['general-color', 'general-help']) {
+    const branch = harness.slice(harness.indexOf(`scenario.dialog === '${dialog}'`));
+    assert.match(branch.slice(0, 200), /await moonStatusSettled\(card\);/, dialog);
+  }
+  assert.match(harness, /hp-dialog \[data-moon-status\]/);
+  assert.match(harness, /innerWidth <= 390/);
 });

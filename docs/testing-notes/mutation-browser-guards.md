@@ -16,8 +16,8 @@ to prove that the Node witness actually kills it.
 | Paint, cascade and layer composition | 26 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 45 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 36 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 85 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **200 / 200** | Growth above the cap fails `mutation-gate --check`. |
+| Custom-element and HA browser lifecycle | 86 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **201 / 200** | Growth above the cap fails `mutation-gate --check`. |
 
 ## Measured effect
 
@@ -242,6 +242,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `locale-failure-toast-dropped`
 - `marker-reject-keeps-optimistic-candidate`
 - `marker-rollback-keeps-enqueue-time-revision`
+- `moon-static-clock-tick-off`
 - `namespace-loader-returns-english`
 - `near-axis-authoring-snap-bypassed`
 - `onboarding-loader-skips-namespace-ensure`

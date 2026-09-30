@@ -1,7 +1,8 @@
 /**
- * The moon over the "Follow the Sun" background (#661): pure astronomy,
- * visibility rules and the phase mask. No DOM, no Lit — the lazy
- * `moon-runtime` chunk renders from these, unit tests call them directly.
+ * The moon behind the plan (#661; with any background since #718): pure
+ * astronomy, visibility rules, the status line and the phase mask. No DOM, no
+ * Lit — the lazy `moon-runtime` chunk renders from these, unit tests call them
+ * directly.
  *
  * Home Assistant publishes no moon altitude, so the card computes it from
  * `hass.config.latitude/longitude` and the browser clock: the short Meeus
@@ -9,7 +10,7 @@
  * Checked against JPL Horizons (airless) on the twelve points of the issue:
  * altitude within 1.5°, illumination within 2.5 percentage points.
  */
-import type { DayCyclePhase } from './sun';
+import type { DayCyclePhase, DayCycleSource } from './sun';
 
 /**
  * C1: the same 3° as the window rays (`RAY_ELEVATION_MIN`), so both lights
@@ -112,10 +113,9 @@ export interface MoonView {
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 
 /**
- * C1 for an existing environment. The environment itself is the gate for the
- * rest: it exists only on a View surface whose effective background follows
- * the sun (`bg_mode` per space, then global). `settings` are the global
- * settings, `config` is `hass.config`.
+ * C1 (#718 K1): the card is the gate for the rest — a View surface, any
+ * background; `phase` is `resolveDayCycle` whether or not an environment is
+ * drawn. `settings` are the global settings, `config` is `hass.config`.
  */
 export function moonView(settings: unknown, phase: DayCyclePhase, config: unknown, now: Date): MoonView {
   const { fraction } = moonIllumination(now);
@@ -124,6 +124,64 @@ export function moonView(settings: unknown, phase: DayCyclePhase, config: unknow
   if ((settings as { moon?: unknown } | null | undefined)?.moon !== true
       || !finite(latitude) || !finite(longitude)) return { visible: false, k };
   return { visible: moonShownAt(phase, moonPosition(now, latitude, longitude).altitude, fraction), k };
+}
+
+/** #718 K7: why the moon is or is not shown — the first reason that holds, in this order. */
+export type MoonStatusReason = 'shown' | 'no_home' | 'day_sun' | 'day_clock' | 'low' | 'new';
+
+/** The reason with its numbers already rounded: the dialog only puts them into the text. */
+export interface MoonStatus {
+  reason: MoonStatusReason;
+  /** Moon altitude, whole degrees (`shown`, `low`). */
+  alt?: number;
+  /** Illuminated share, whole per cent (`shown`, `new`). */
+  pct?: number;
+  /** The `sun.sun` elevation, whole degrees (`day_sun`). */
+  sun?: number;
+}
+
+/** The sky the status is judged on, as ready numbers (AC9). */
+export interface MoonSky {
+  /** Finite `hass.config.latitude/longitude`. */
+  home: boolean;
+  phase: DayCyclePhase;
+  source: DayCycleSource;
+  /** `sun.sun` elevation; null without it. */
+  sun: number | null;
+  altitude: number;
+  fraction: number;
+}
+
+/**
+ * #718 K7/K8: no home, day, below 3°, under 3 % — the first that holds; else
+ * shown, decided by the same `moonShownAt` as the element. A hidden reason
+ * never shows the threshold it missed: «at 3°, shows from 3°» reads as a bug,
+ * so its number stops at 2.
+ */
+export function moonStatusOf(sky: MoonSky): MoonStatus {
+  if (!sky.home) return { reason: 'no_home' };
+  if (sky.phase === 'day') return sky.source === 'sun' ? { reason: 'day_sun', sun: Math.round(sky.sun ?? 0) } : { reason: 'day_clock' };
+  const alt = Math.round(sky.altitude);
+  const pct = Math.round(sky.fraction * 100);
+  if (moonShownAt(sky.phase, sky.altitude, sky.fraction)) return { reason: 'shown', alt, pct };
+  return sky.altitude < MOON_ELEVATION_MIN ? { reason: 'low', alt: Math.min(alt, 2) } : { reason: 'new', pct: Math.min(pct, 2) };
+}
+
+/**
+ * #718 K7: the status for `hass.config` and a day-cycle sample taken at `now`,
+ * as if the switch were on — the moon no longer depends on the background, so
+ * one status serves the whole installation. `sun` is the `sun.sun` elevation.
+ */
+export function moonStatus(
+  config: unknown, state: { phase: DayCyclePhase; source: DayCycleSource }, sun: number | null, now: Date,
+): MoonStatus {
+  const { latitude, longitude } = (config ?? {}) as { latitude?: unknown; longitude?: unknown };
+  const home = finite(latitude) && finite(longitude);
+  return moonStatusOf({
+    home, phase: state.phase, source: state.source, sun,
+    altitude: home ? moonPosition(now, latitude, longitude).altitude : 0,
+    fraction: moonIllumination(now).fraction,
+  });
 }
 
 /** C3: equal fingerprint → no re-render. The lit side is fixed, so k is all the shape. */

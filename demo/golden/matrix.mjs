@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 69;
+export const GOLDEN_MATRIX_VERSION = 70;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -559,6 +559,20 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'day-cycle-dusk-moon-crescent-south-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     bgMode: 'daynight', dayCycle: { phase: 'dusk', top: '#48536c' },
+    moon: { clock: '2026-10-14T09:00:00Z', latitude: -33.87, longitude: 151.21, k: '0.14' },
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 265, elevation: -2, rising: false } } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  // #718 AC8: the moon with a static background — its own sky layer at the
+  // top-left of the scene, the plan over part of the disc, the chosen scene
+  // colour around the plan unchanged. White in the light theme, dark grey in
+  // the dark one; the same art and lit side as over "Follow the Sun".
+  { id: 'static-bg-moon-gibbous-white-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    bgMode: 'static', bgColor: '#ffffff',
+    moon: { clock: '2026-10-21T18:00:00Z', latitude: 55.75, longitude: 37.62, k: '0.79' },
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 0, elevation: -12, rising: false } } },
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'static-bg-moon-crescent-south-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    bgMode: 'static', bgColor: '#202126',
     moon: { clock: '2026-10-14T09:00:00Z', latitude: -33.87, longitude: 151.21, k: '0.14' },
     stateOverrides: { 'sun.sun': { attributes: { azimuth: 265, elevation: -2, rising: false } } },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },

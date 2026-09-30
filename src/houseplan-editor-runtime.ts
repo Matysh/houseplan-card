@@ -111,6 +111,7 @@ import {
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
 import { generalProblems, moonDraftOf, rememberGeneralBaseline, writeMoonSetting } from './editors/general-form-state';
+import { openMoonStatus } from './editors/moon-status';
 import { rememberRoomBaseline } from './editors/room-form-state';
 import { forgetMarkerBaseline, rememberMarkerBaseline } from './editors/marker-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
@@ -8464,6 +8465,7 @@ public _openSettingsDialog = (): void => {
     };
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
     rememberGeneralBaseline(this.host, this.host._settingsDialog);
+    openMoonStatus(this.host); // #718 K7: the status line, outside the draft
   };
 
 public _openSupportDialog = (): void => {

@@ -42,11 +42,16 @@ export const SMOKE_LINKS = [
     symbols: [
       'moonLayer', 'renderMoon', 'moonTick', 'moonView', 'moonShownAt', 'moonPhasePath',
       'moonPosition', 'moonIllumination', 'moonFingerprint', 'renderDayCycleEnvironment',
+      'withMoon', 'moonSkyState', 'dayCycleClock', 'renderMoonSky', '_moonSkyState', '_dayCycleClock',
+      'moonStatus', 'moonStatusOf', 'openMoonStatus', 'moonStatusText',
     ],
-    smokes: ['smoke_moon.mjs', 'smoke_daycycle_layer_budget.mjs'],
+    smokes: ['smoke_moon.mjs', 'smoke_moon_static.mjs', 'smoke_moon_status.mjs', 'smoke_daycycle_layer_budget.mjs'],
     because: '#661: the moon is observed only as `.hp-moon` in the production bundle — the lazy '
       + 'chunk arriving at night, the 30 s ticker and state updates carrying it through 3° with the '
       + '2 s fade, the plan painting over it pixel for pixel, and no extra composited layer (CDP); '
+      + '#718: the same over a static background as `.hp-moon-sky` (the clock ticker at 08:00 and '
+      + '18:00, tab and background switches, the #101 View weight, houseplan-space-card) and the '
+      + 'General settings line as `[data-moon-status]` (delayed, refused and preloaded chunk); '
       + 'no smoke names the functions',
   },
   {

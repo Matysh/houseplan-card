@@ -1657,19 +1657,27 @@ choice. Shadows from trees, awnings or other building wings are not modelled.
 
 ### Moon
 
-On the **Follow the sun** background, at dawn, dusk and night, the moon in its
-current phase stands in the top-left corner of the scene — a thin crescent, a
-half, a full disc. One switch in General settings turns it on: **Sun and Moon**
-→ **Moon over the plan at dusk and night**. It is on for new installations and
-off for upgraded ones until switched on: an update never changes how a plan
-looks.
+With any background — **Follow the sun**, the theme background or a colour of
+your own — at dawn, dusk and night the moon in its current phase stands in the
+top-left corner of the scene — a thin crescent, a half, a full disc. One switch
+in General settings turns it on: **Sun and Moon** → **Moon over the plan at dusk
+and night**. It is on for new installations and off for upgraded ones until
+switched on: an update never changes how a plan looks. If the switch was
+already on with a static background, the moon appears on that background after
+the update; the same switch removes it.
+
+Dusk and night are decided as for the Follow the sun background: with a valid
+`sun.sun` by the sun's elevation (below 6°), without it by the browser clock
+(day is 08:00–18:00). A static background stays as it is: the chosen colour
+around the plan, no gradients and no outline glow — only the moon is added.
 
 | Condition | Result |
 |---|---|
 | Daytime, moon below 3° above the horizon, or new moon (under 3 % lit) | No moon |
 | The moon rises above 3° or sets below it | Fades in/out over 2 seconds; immediately with reduced motion |
 | Phase | Changes continuously, every day; the lit side is always on the left, waning runs the same states backwards |
-| Space with its own static background | No moon — it belongs to the Follow the sun background |
+| Space with its own static background | The same moon: same place, size and phase; the background keeps its colour |
+| Changing the background, or a tab with another background | The moon does not flicker and stays in place |
 | The plan covers the corner of the scene | The moon is behind the plan: the part of the disc in the margins shows; the plan, devices and labels are always on top |
 | Editors | No moon |
 | Full card, kiosk, static space card | The same |
@@ -1680,7 +1688,28 @@ integration or external data. A Home Assistant that kept the default location
 shows someone else's moon — as with `sun.sun`; a wrong tablet clock gives a
 wrong phase and moment. Position accuracy is about 1°, so crossing 3° may
 differ from ephemerides by a few minutes. The terminator tilt and earthshine
-are not modelled; the dark side is a faint silhouette so a crescent reads.
+are not modelled; the dark side is a faint silhouette so a crescent reads. One
+image serves every background: on a mid-grey colour of your own the moon has
+less contrast.
+
+Under the switch a «Now: …» line says whether the moon is shown this minute
+and, if not, why — the first reason that holds:
+
+| Line | When |
+|---|---|
+| Now: shown (24° above the horizon, 79% lit). | The moon is shown; altitude and illumination in whole numbers |
+| Now: not shown (the home location is not set in Home Assistant). | No home latitude and longitude — even by day |
+| Now: not shown (the sun is 25° above the horizon; the moon shows once it is below 6°). | Daytime by `sun.sun` |
+| Now: not shown (daytime by the clock, 08:00–18:00: Home Assistant has no sun.sun data). | Daytime by the browser clock |
+| Now: not shown (the moon is at 2°; it shows from 3° above the horizon). | The moon is below 3° |
+| Now: not shown (new moon, 2% lit; it shows from 3%). | Under 3 % lit |
+
+The line is computed once when the dialog opens and tells what the switch would
+show when on: the switch itself, the background chosen in the dialog and the
+space settings do not change it. It belongs to the browser the dialog is open
+in: a wall tablet with another clock or time zone may show or hide its moon at
+another moment. While the moon's data loads, or if loading failed, there is no
+line — the general hint stays.
 
 ## 16. Robot vacuums
 

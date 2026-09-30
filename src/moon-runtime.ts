@@ -1,13 +1,17 @@
 /**
  * The lazy moon chunk (#661, C7): astronomy, the designer's art, the element
- * template and the moon's own 30 s ticker. `moon-gate.ts` imports it only
- * while the moon is switched on, the background follows the sun and it is not
- * daytime; until then the initial View graph carries none of this.
+ * template, the moon's own 30 s ticker and the status of General settings
+ * (#718). `moon-gate.ts` imports it while the moon is switched on on a View
+ * surface and it is not daytime, or when General settings open; until then
+ * the initial View graph carries none of this.
  *
- * One element inside `.hp-day-cycle-env`, after the four phase layers: above
- * the gradients and the sun glow, below the plan paper and everything else
- * (owner decision 7). Its styles travel with it, so the View card, kiosk and
- * `houseplan-space-card` get the same moon without growing their own CSS.
+ * One element behind the plan. Over "Follow the Sun" it is the last child of
+ * `.hp-day-cycle-env`, after the four phase layers: above the gradients and
+ * the sun glow, below the plan paper and everything else (owner decision 7).
+ * With a static background there is no environment (#718 K3): the same element
+ * stands in its own layer `.hp-moon-sky`, the first child of the scene, under
+ * the plan by DOM order. Its styles travel with it, so the View card, kiosk
+ * and `houseplan-space-card` get the same moon without growing their own CSS.
  */
 import { html, nothing, type TemplateResult } from 'lit';
 import { MOON_ART } from './moon-art.generated';
@@ -15,6 +19,9 @@ import {
   MOON_SHARP_FROM, moonFingerprint, moonPhasePath, moonView, type MoonView,
 } from './moon';
 import type { DayCyclePhase } from './sun';
+
+/** #718 K7: the status of General settings, judged where the moon is decided. */
+export { moonStatus } from './moon';
 
 export const MOON_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -30,12 +37,16 @@ export interface MoonHost {
 export const MOON_TICK_MS = 30_000;
 
 /**
- * C6: box `min(200px, 25cqmin)` measured on the scene (the environment is the
- * size container), 5 % inset, never moved by pan or zoom, never hit-tested.
+ * C6: box `min(200px, 25cqmin)` measured on the scene (the environment or the
+ * sky layer is the size container, both the whole scene), 5 % inset, never
+ * moved by pan or zoom, never hit-tested.
  * C4: opacity only, 2 s on the background curve; reduced motion — instant.
- * C8: no CSS filter and no will-change on the element.
+ * C8: no CSS filter and no will-change on the element. #718 K3: the sky layer
+ * has no z-index either — it lies under the plan by DOM order, as the
+ * environment does.
  */
-const MOON_CSS = '.hp-day-cycle-env{container-type:size}'
+const MOON_CSS = '.hp-day-cycle-env,.hp-moon-sky{container-type:size}'
+  + '.hp-moon-sky{position:absolute;inset:0;overflow:hidden;pointer-events:none}'
   + '.hp-moon{--hp-moon-box:min(200px,25cqmin);position:absolute;'
   + 'left:calc(var(--hp-moon-box)*.05);top:calc(var(--hp-moon-box)*.05);'
   + 'width:var(--hp-moon-box);height:var(--hp-moon-box);opacity:0;pointer-events:none;'
@@ -63,8 +74,8 @@ function forget(host: MoonHost, watch: MoonWatch): void {
 /**
  * C3: between renders only the clock moves the moon. Every 30 s the tick
  * recomputes it from the last rendered inputs; an equal fingerprint costs no
- * render. A host that re-rendered without a moon (switched off, editor mode,
- * static background) or left the page drops its ticker; a hidden page skips.
+ * render. A host that re-rendered without a moon (switched off, editor mode)
+ * or left the page drops its ticker; a hidden page skips.
  */
 export function moonTick(host: MoonHost, now: Date = new Date()): void {
   const watch = watches.get(host);
@@ -93,7 +104,7 @@ function remember(host: MoonHost, settings: unknown, phase: DayCyclePhase, view:
 }
 
 /**
- * The element stays in the environment while the moon is switched on, at
+ * The element stays in its parent while the moon is switched on, at
  * opacity 0 when hidden, so rising, setting, the new-moon threshold and the
  * day phase all fade (C4). A freshly created element takes its final state at
  * once: the first appearance after a page or chunk load is not animated.
@@ -119,4 +130,16 @@ export function renderMoon(
     <use href="#hp-moon-art" opacity="0.08"></use>
     <use href="#hp-moon-art" mask="url(#hp-moon-phase)"></use>
   </svg>`;
+}
+
+/**
+ * #718 K3/K4: the moon without an environment — a scene-sized layer, first
+ * child of the scene, fading with the View weight of the #101 transition as
+ * the environment does. Inside, the very element of the environment.
+ */
+export function renderMoonSky(
+  host: MoonHost, settings: unknown, phase: DayCyclePhase, viewWeight: number, now: Date = new Date(),
+): TemplateResult {
+  return html`<div class="hp-moon-sky" aria-hidden="true"
+      style="opacity:${Math.min(1, Math.max(0, viewWeight)).toFixed(4)}">${renderMoon(host, settings, phase, now)}</div>`;
 }

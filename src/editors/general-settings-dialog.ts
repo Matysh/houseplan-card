@@ -15,6 +15,7 @@ import {
   formCard, segmented, subsection, textLink, toggleRow, unitInput,
 } from './form-kit';
 import { forgetGeneralBaseline, generalDirty, generalProblems, type GeneralSettingsDraft } from './general-form-state';
+import { moonStatusOf, moonStatusText } from './moon-status';
 import { langOf, type I18nKey } from '../i18n';
 import { settingsT, type SettingsI18nKey } from '../i18n/settings';
 import { supportT } from '../i18n/support';
@@ -76,6 +77,8 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
   };
   const glowProblem = problemFor('gs-glow-radius');
   const northProblem = problemFor('gs-north');
+  // #718 K7: the second caption line, once the moon chunk judged this opening.
+  const moonStatus = moonStatusOf(host);
   const zigbeeHelp = hasTopologyTranslation(lang, 'help') && hasTopologyTranslation(lang, 'help_aria')
     ? html`<hp-help data-help-key="topology.help" .text=${topologyT(lang, 'help')} .ariaLabel=${topologyT(lang, 'help_aria')}></hp-help>`
     : nothing;
@@ -227,7 +230,10 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           ${renderSunRayOriginSegment(d.sunRayOrigin, (key) => t(key), (sunRayOrigin) => set({ sunRayOrigin }))}
           ${toggleRow({
             id: 'gs-moon', icon: 'mdi:moon-waning-crescent',
-            title: st('gs.moon'), caption: st('gs.moon_hint'),
+            title: st('gs.moon'),
+            caption: moonStatus
+              ? html`${st('gs.moon_hint')}<span style="display:block" data-moon-status=${moonStatus.reason}>${moonStatusText(moonStatus, st)}</span>`
+              : st('gs.moon_hint'),
             checked: d.moon, onChange: (v) => set({ moon: v }),
           })}`,
       })}

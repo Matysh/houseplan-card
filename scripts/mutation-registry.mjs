@@ -6302,8 +6302,8 @@ const MUTANT_DEFINITIONS = [
     because: '#661 C7: the moon chunk is not loaded by day — the initial View graph pays only the gate',
     patches: [{
       file: 'src/moon-gate.ts',
-      find: "  if (!runtime && state.phase !== 'day' && Date.now() >= nextAttempt) {",
-      replace: '  if (!runtime && Date.now() >= nextAttempt) {',
+      find: "  if (!runtime && state.phase !== 'day') withMoon(() => host.requestUpdate());",
+      replace: '  if (!runtime) withMoon(() => host.requestUpdate());',
     }],
   },
   {
@@ -6320,6 +6320,58 @@ const MUTANT_DEFINITIONS = [
       file: 'src/moon-runtime.ts',
       find: "  + '.hp-moon{--hp-moon-box:min(200px,25cqmin);position:absolute;'",
       replace: "  + '.hp-moon{--hp-moon-box:min(200px,25cqmin);position:absolute;z-index:2;'",
+    }],
+  },
+  {
+    id: 'moon-static-sky-off',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#718" test/moon.test.mjs',
+    because: '#718 AC15/AC1: a static background — global or the space\'s own — shows the moon in its '
+      + 'own sky layer; back to «no environment, no moon» it would give nothing again',
+    patches: [{
+      file: 'src/moon-gate.ts',
+      find: '  return !daynight && viewWeight > 0 && moonOn(settings) ? resolveDayCycle(hass, now) : null;',
+      replace: '  return daynight && viewWeight > 0 && moonOn(settings) ? resolveDayCycle(hass, now) : null;',
+    }],
+  },
+  {
+    id: 'moon-static-clock-tick-off',
+    guard: 'node demo/smoke_moon_static.mjs',
+    because: '#718 AC3/K5: without sun.sun a static background has only the card\'s 30 s clock ticker '
+      + 'to reach 18:00 and 08:00; not armed, the moon never rises by the clock in the real card '
+      + '(page clock, UTC context, no state update), which only the browser run observes',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const [state, key] = dayCycleClock(this._dayCycleState(), this._moonSkyState());\n'
+        + '    this._dayCycleClockKey = key;\n    const needsTimer',
+      replace: '    const [state, key] = dayCycleClock(this._dayCycleState(), null);\n'
+        + '    this._dayCycleClockKey = key;\n    const needsTimer',
+    }],
+  },
+  {
+    id: 'moon-status-order',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#718" test/moon.test.mjs',
+    because: '#718 AC9/K7: without home coordinates the status says so even by day — the day reason '
+      + 'checked first would name the sun of a home the card cannot place',
+    patches: [{
+      file: 'src/moon.ts',
+      find: "  if (!sky.home) return { reason: 'no_home' };\n"
+        + "  if (sky.phase === 'day') return sky.source === 'sun' ? { reason: 'day_sun', sun: Math.round(sky.sun ?? 0) } : { reason: 'day_clock' };\n",
+      replace: "  if (sky.phase === 'day') return sky.source === 'sun' ? { reason: 'day_sun', sun: Math.round(sky.sun ?? 0) } : { reason: 'day_clock' };\n"
+        + "  if (!sky.home) return { reason: 'no_home' };\n",
+    }],
+  },
+  {
+    id: 'moon-status-clamp-off',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#718" test/moon.test.mjs',
+    because: '#718 AC9/K7: a hidden reason never rounds up to its threshold — 2.6° or 2.6 % read «2», '
+      + 'not «at 3°, shows from 3°»',
+    patches: [{
+      file: 'src/moon.ts',
+      find: "  return sky.altitude < MOON_ELEVATION_MIN ? { reason: 'low', alt: Math.min(alt, 2) } : { reason: 'new', pct: Math.min(pct, 2) };",
+      replace: "  return sky.altitude < MOON_ELEVATION_MIN ? { reason: 'low', alt } : { reason: 'new', pct };",
     }],
   },
   {

@@ -25,7 +25,7 @@ import {
 import { DEFAULT_ICON_RULES, compileIconRules } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, resolveDayCycle } from './sun';
-import { moonLayer, type MoonHost } from './moon-gate';
+import { moonLayer, moonSkyState, type MoonHost } from './moon-gate';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import type { DevItem, OpeningCfg, ServerConfig } from './types';
 import { floorMinusBodies, physicalBodyParts, polyclipPathD } from './physical-geometry';
@@ -670,9 +670,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   });
   // The static card paints the same four-phase environment as full View.
   // Wedges stay full-card-only; the decorative background is independent.
+  // #718: a static background gets the moon in its own sky layer instead.
   const spaceSettings = (o.cfg.spaces.find((sp: any) => sp.id === o.spaceId) as any)?.settings || {};
-  const dayCycle = bgModeOf(o.cfg?.settings, spaceSettings) === 'daynight'
-    ? resolveDayCycle(planHass, o.dayCycleNow ?? new Date()) : null;
+  const daynight = bgModeOf(o.cfg?.settings, spaceSettings) === 'daynight';
+  const dayCycleNow = o.dayCycleNow ?? new Date();
+  const dayCycle = daynight ? resolveDayCycle(planHass, dayCycleNow) : null;
+  const moonSky = moonSkyState(o.cfg?.settings, daynight, 1, planHass, dayCycleNow);
   const stageBg = stageBgOf(o.cfg?.settings, disp);
 
   // Opaque plan paper, same contract as the full card (docs/DECOR-EDITOR.md §3.3):
@@ -931,6 +934,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       ?inert=${!!o.inert}
       style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--hp-cell-visual-scale:${gridVisualScale(cellCm)};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}">
       ${renderDayCycleEnvironment(dayCycle, 1, moonLayer(o.moonHost, o.cfg?.settings, dayCycle))}
+      ${moonLayer(o.moonHost, o.cfg?.settings, moonSky, 1)}
       ${dayCycle && paperShapes.length ? svg`<svg class="hp-paper-outline-svg"
           viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}"
           preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">

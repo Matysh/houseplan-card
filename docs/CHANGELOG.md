@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- The moon now appears with any background, not only "Follow the Sun": with a
+  static background — the theme's or a colour of your own, for the whole
+  installation or a single space — it stands in the same top-left corner behind
+  the plan at dawn, dusk and night, in View, kiosk, the panel and the space
+  card, while the background keeps its colour. If "Moon over the plan at dusk
+  and night" was already on, the moon appears on static backgrounds after this
+  update; switch it off in General settings › Sun and Moon to hide it. Under
+  that switch a new line tells whether the moon is shown right now and, if not,
+  why — daytime, the moon below 3°, new moon or no home location in Home
+  Assistant ([#718](https://github.com/Matysh/houseplan-card/issues/718)).
+
 ## v1.79.0-beta.1 — 2026-09-30
 
 - In 2.5D View the plan no longer moves: rooms, furniture, other decor and room

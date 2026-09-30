@@ -686,7 +686,7 @@ export function prepareGoldenFixture(scenario) {
       throw new Error(`golden deviceName references missing device: ${scenario.deviceId || '<empty>'}`);
     fixture.devices[scenario.deviceId].name = scenario.deviceName;
   }
-  if (scenario.fillMode || scenario.bgMode || typeof scenario.glowEnabled === 'boolean'
+  if (scenario.fillMode || scenario.bgMode || scenario.bgColor || typeof scenario.glowEnabled === 'boolean'
       || typeof scenario.sunRays === 'boolean' || typeof scenario.showBorders === 'boolean'
       || typeof scenario.showNames === 'boolean'
       || typeof scenario.northDeg === 'number') {
@@ -695,6 +695,8 @@ export function prepareGoldenFixture(scenario) {
       ...(space.settings || {}),
       ...(scenario.fillMode ? { fill_mode: scenario.fillMode } : {}),
       ...(scenario.bgMode ? { bg_mode: scenario.bgMode } : {}),
+      // #718: the scene colour of a static background, deterministic in both themes.
+      ...(scenario.bgColor ? { bg_color: scenario.bgColor } : {}),
       ...(typeof scenario.glowEnabled === 'boolean' ? { glow_enabled: scenario.glowEnabled } : {}),
       ...(typeof scenario.sunRays === 'boolean' ? { sun_rays: scenario.sunRays } : {}),
       ...(typeof scenario.showBorders === 'boolean' ? { show_borders: scenario.showBorders } : {}),
@@ -932,6 +934,23 @@ export async function prepareGoldenScenario(page, scenario) {
       await until(() => !card._modeTransitionBusy);
       await card.updateComplete;
       await frame();
+    };
+    /**
+     * #718 AC8: General settings grow a status line under the moon switch once
+     * the lazy moon chunk judged the opening. Wait for it, so the frame does
+     * not depend on the chunk's timing; at phone width it wraps, it never
+     * scrolls the dialog sideways.
+     */
+    const moonStatusSettled = async (card) => {
+      await until(() => !!card.renderRoot.querySelector('hp-dialog [data-moon-status]'));
+      await card.updateComplete;
+      await frame();
+      const dialog = card.renderRoot.querySelector('hp-dialog');
+      const body = dialog?.querySelector('.body');
+      if (innerWidth <= 390 && (!dialog || dialog.scrollWidth > dialog.clientWidth + 1
+          || (body && body.scrollWidth > body.clientWidth + 1))) {
+        throw new Error(`golden general-settings dialog overflows horizontally: ${scenario.id}`);
+      }
     };
     const settleCamera = async (card) => {
       await until(() => !card._cameraTransition?.active, 1500);
@@ -2022,6 +2041,7 @@ export async function prepareGoldenScenario(page, scenario) {
     } else if (scenario.dialog === 'general-color') {
       card._openSettingsDialog();
       await card.updateComplete;
+      await moonStatusSettled(card);
       const dialog = card.renderRoot.querySelector('hp-dialog');
       const picker = [...(dialog?.querySelectorAll('hp-color-opacity') || [])]
         .find((item) => item.label === card._t('gs.light_on'));
@@ -2035,6 +2055,7 @@ export async function prepareGoldenScenario(page, scenario) {
     } else if (scenario.dialog === 'general-help') {
       card._openSettingsDialog();
       await card.updateComplete;
+      await moonStatusSettled(card);
       const dialog = card.renderRoot.querySelector('hp-dialog');
       const help = dialog?.querySelector(`hp-help[data-help-key="${scenario.openHelp}"]`);
       await help?.updateComplete;
@@ -2216,7 +2237,15 @@ export async function prepareGoldenScenario(page, scenario) {
       // The moon chunk is lazy: wait for it, then for the expected phase.
       await until(() => card.renderRoot.querySelector('.hp-moon')?.dataset.moonVisible === 'true');
       const moon = card.renderRoot.querySelector('.hp-moon');
-      if (moon.dataset.moonK !== scenario.moon.k || moon.parentElement !== card.renderRoot.querySelector('.hp-day-cycle-env')) {
+      // #718: over "Follow the Sun" the moon is in the environment; over a
+      // static background in its own sky layer, the first child of the scene.
+      const stage = card.renderRoot.querySelector('.stage');
+      const parent = scenario.bgMode === 'daynight'
+        ? card.renderRoot.querySelector('.hp-day-cycle-env')
+        : card.renderRoot.querySelector('.hp-moon-sky');
+      const staticSky = scenario.bgMode === 'daynight' || (stage?.firstElementChild === parent
+        && !card.renderRoot.querySelector('.hp-day-cycle-env'));
+      if (moon.dataset.moonK !== scenario.moon.k || !parent || moon.parentElement !== parent || !staticSky) {
         throw new Error(`golden moon contract did not render: ${scenario.id} (k ${moon.dataset.moonK})`);
       }
       await frame();

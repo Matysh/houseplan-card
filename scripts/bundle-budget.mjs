@@ -741,6 +741,11 @@ export function assertBundleBudget(
   if (manifest.initialViewFiles.some((path) => manifest.lazyMoonFiles.includes(path))) {
     throw new Error('initial View graph overlaps lazy moon graph');
   }
+  // #718 K9: General settings reach the moon's status through the gate's
+  // loader only; a static import would pull its astronomy into the editor.
+  if (manifest.lazyEditorFiles.some((path) => manifest.lazyMoonFiles.includes(path))) {
+    throw new Error('lazy editor graph overlaps lazy moon graph');
+  }
   // #474: designer furniture artwork is lazy; a static import anywhere in the
   // View graph would pull ~10 KB gzip back into the initial graph silently.
   if (!manifest.lazyFurnitureArtFiles?.length) {

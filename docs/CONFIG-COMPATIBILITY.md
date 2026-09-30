@@ -134,21 +134,26 @@ An older frontend ignores the field and shows Flat. An older backend preserves
 it through the unknown-settings policy. Full backup/import carries `settings`
 whole, so the value survives.
 
-## Moon (#661)
+## Moon (#661, #718)
 
-`settings.moon` is an optional global boolean: the moon on the "Follow the Sun"
-background for every space, user, device and kiosk. Only exact `true` switches
-it on; absence, `false` or anything else read as off. Saving `false` removes
-the key. There is no per-space moon: a space shows it only when its effective
-`bg_mode` is `daynight`. The backend accepts only a boolean
+`settings.moon` is an optional global boolean: the moon behind the plan at
+dawn, dusk and night for every space, user, device and kiosk, with any
+background (#718 — before it, only on "Follow the Sun"). Only exact `true`
+switches it on; absence, `false` or anything else read as off. Saving `false`
+removes the key. There is no per-space moon switch, and the effective
+`bg_mode` of a space is no longer a condition: a space with a static
+background, its own or the global one, shows the moon too. The backend accepts only a boolean
 (`vol.Optional("moon"): bool`), and the privacy-safe support projection copies
 only a validated boolean. New installations get `moon: true` in
 `DEFAULT_CONFIG`; an existing config has no key and keeps its look after the
 update (docs/SUN.md). "Reset to defaults" in General settings sets `true`. The
 store and model versions do not change; there is no migration.
 
-An older frontend ignores the field and shows no moon. An older backend
-preserves it through the unknown-settings policy. Full backup/import carries
+An older frontend ignores the field and shows no moon; a #661 frontend with a
+#718 config shows it only on `daynight`, as before. #718 adds no field and no
+migration: an installation that already has `moon: true` with a static
+background sees the moon there after the update, and the same switch turns it
+off. An older backend preserves it through the unknown-settings policy. Full backup/import carries
 `settings` whole, so the value survives; a one-space export does not carry
 global settings.
 

@@ -44,11 +44,11 @@ import { type ResizeAreaPlacement } from './resize-labels';
 import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf,
   sunStateOf, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
-  rayStops, resolveDayCycle, dayCycleFingerprint, type DayCycleState,
+  rayStops, resolveDayCycle, type DayCycleState,
   rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
 } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
-import { moonLayer } from './moon-gate';
+import { dayCycleClock, moonLayer, moonSkyState } from './moon-gate';
 import { renderPaperShapes, type PaperShape } from './render/paper-scene';
 import {
   furnitureGraphic, furnitureArtIsLazy,
@@ -9796,15 +9796,20 @@ export class HouseplanCard extends LitElement {
     return resolveDayCycle(this._renderPlanHass, now);
   }
 
+  /** #718 K1/K5: the moon's phase without an environment (static background, moon on, View). */
+  private _moonSkyState(): DayCycleState | null {
+    return moonSkyState(this._sunGlobal(), this._effBgMode() === 'daynight',
+      this._modeTransitionVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0), this._renderPlanHass);
+  }
+
   private _dayCycleTick = (): void => {
     if (!this.isConnected || this.ownerDocument.visibilityState === 'hidden') return;
-    const state = this._dayCycleState();
+    const [state, key] = dayCycleClock(this._dayCycleState(), this._moonSkyState());
     if (!state) {
       if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
       this._dayCycleClockKey = '';
       return;
     }
-    const key = dayCycleFingerprint(state);
     if (key === this._dayCycleClockKey) return;
     this._dayCycleClockKey = key;
     this.requestUpdate();
@@ -9812,8 +9817,8 @@ export class HouseplanCard extends LitElement {
 
   /** Arm a 30 s timer only for the browser-clock fallback while visible. */
   private _syncDayCycleClock(): void {
-    const state = this._dayCycleState();
-    this._dayCycleClockKey = state ? dayCycleFingerprint(state) : '';
+    const [state, key] = dayCycleClock(this._dayCycleState(), this._moonSkyState());
+    this._dayCycleClockKey = key;
     const needsTimer = state?.source === 'clock'
       && this.ownerDocument.visibilityState !== 'hidden' && this.isConnected;
     if (needsTimer && !this._dayCycleTimer) {
@@ -10868,6 +10873,7 @@ export class HouseplanCard extends LitElement {
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${renderDayCycleEnvironment(dayCycle, dayCycleWeight, moonLayer(this, this._sunGlobal(), dayCycle))}
+          ${moonLayer(this, this._sunGlobal(), this._moonSkyState(), dayCycleWeight)}
           ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction || this._modeTransitionBusy}

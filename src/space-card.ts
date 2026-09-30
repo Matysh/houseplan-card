@@ -37,8 +37,9 @@ import {
   type PageVisibilitySignal,
 } from './visual-continuity';
 import {
-  bgModeOf, resolveDayCycle, dayCycleFingerprint, type DayCycleState,
+  bgModeOf, resolveDayCycle, type DayCycleState,
 } from './sun';
+import { dayCycleClock, moonSkyState } from './moon-gate';
 import { PointerModalityController } from './pointer-modality';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
 import {
@@ -167,31 +168,35 @@ class HouseplanSpaceCard extends LitElement {
     });
   }
 
-  private _dayCycleState(now: Date | number = new Date()): DayCycleState | null {
+  /**
+   * The clock ticker's sample: the environment over "Follow the Sun", else the
+   * moon's sky over a static background — compared by its phase only (#718 K5).
+   */
+  private _dayCycleClock(now: Date | number = new Date()): [DayCycleState | null, string] {
     const cfg = this._snap?.config;
-    if (!cfg || !this._config) return null;
+    if (!cfg || !this._config) return [null, ''];
     const spaceSettings = cfg.spaces?.find((space: any) => space.id === this._config?.space)?.settings || {};
-    if (bgModeOf(cfg.settings, spaceSettings) !== 'daynight') return null;
-    return resolveDayCycle(this._renderDeviceSnapshot?.hass || this.hass, now);
+    const daynight = bgModeOf(cfg.settings, spaceSettings) === 'daynight';
+    const hass = this._renderDeviceSnapshot?.hass || this.hass;
+    return dayCycleClock(daynight ? resolveDayCycle(hass, now) : null, moonSkyState(cfg.settings, daynight, 1, hass, now));
   }
 
   private _dayCycleTick = (): void => {
     if (!this.isConnected || this.ownerDocument.visibilityState === 'hidden') return;
-    const state = this._dayCycleState();
+    const [state, key] = this._dayCycleClock();
     if (!state) {
       if (this._dayCycleTimer) { window.clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
       this._dayCycleClockKey = '';
       return;
     }
-    const key = dayCycleFingerprint(state);
     if (key === this._dayCycleClockKey) return;
     this._dayCycleClockKey = key;
     this.requestUpdate();
   };
 
   private _syncDayCycleClock(): void {
-    const state = this._dayCycleState();
-    this._dayCycleClockKey = state ? dayCycleFingerprint(state) : '';
+    const [state, key] = this._dayCycleClock();
+    this._dayCycleClockKey = key;
     const needsTimer = state?.source === 'clock'
       && this.ownerDocument.visibilityState !== 'hidden' && this.isConnected;
     if (needsTimer && !this._dayCycleTimer) {

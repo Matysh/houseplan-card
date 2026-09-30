@@ -304,6 +304,12 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
   // lazy moon graph — the builder subtracts initial) is refused by name.
   assert.throws(() => assertBundleBudget({ ...manifest, lazyMoonFiles: [] }, 1_000_000, undefined, ...lazyCeilings),
     /bundle has no lazy moon graph/);
+  // #718 AC13: the status line reaches the chunk through the gate; the editor
+  // graph never holds the moon's own files.
+  assert.equal(manifest.lazyEditorFiles.some((path) => manifest.lazyMoonFiles.includes(path)), false);
+  assert.throws(() => assertBundleBudget({
+    ...manifest, lazyEditorFiles: [...manifest.lazyEditorFiles, ...manifest.lazyMoonFiles],
+  }, 1_000_000, undefined, ...lazyCeilings), /lazy editor graph overlaps lazy moon graph/);
 });
 
 test('#486 Rollup names both stable entries explicitly', async () => {
