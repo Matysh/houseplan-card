@@ -251,6 +251,24 @@ for (const [smokeName, fullName] of [
   });
 }
 
+test('#692 первый стабильный кадр interaction: потолок над уровнем 1.78 с запасом на шум раннера', () => {
+  const smoke = readBudget('budgets-interaction-smoke.json');
+  const full = readBudget('budgets-large-house-interaction.json');
+  const ceiling = full.timings.firstStableRenderMs.hardMaxMs;
+  assert.equal(ceiling, 3400);
+  assert.equal(smoke.timings.firstStableRenderMs.hardMaxMs, ceiling, 'смок = полный профиль (#473 AC4)');
+  // Медианы полного профиля (7 образцов) из performance.yml: линия 1.77 и v1.78.0.
+  const level177 = [2769.0, 2838.2, 2777.3, 2801.7];
+  const level178 = [2925.0, 2925.2];
+  const worst = 3144.8; // тот же SHA v1.78.0, соседний прогон — шум раннера до 7,5 %
+  for (const median of [...level177, ...level178, worst]) assert.ok(median < ceiling, `${median} краснеет на ${ceiling}`);
+  assert.ok(ceiling >= Math.max(...level178) * 1.15, 'запас над уровнем 1.78 не меньше 15 %');
+  assert.ok(ceiling <= Math.max(...level178) * 1.2, 'и не больше 20 %: потолок остаётся гардом');
+  // Относительное сравнение полного профиля не ослаблено.
+  assert.equal(full.timings.firstStableRenderMs.maxRegressionRatio, 0.3);
+  assert.equal(full.timings.firstStableRenderMs.noiseAllowanceMs, 250);
+});
+
 test('interaction aggregate keeps hosted-runner headroom without weakening component gates (#483)', () => {
   const smoke = readBudget('budgets-interaction-smoke.json');
   const full = readBudget('budgets-large-house-interaction.json');

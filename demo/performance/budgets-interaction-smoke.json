@@ -9,7 +9,7 @@
     },
     "firstStableRenderMs": {
       "stat": "median",
-      "hardMaxMs": 3000
+      "hardMaxMs": 3400
     },
     "interactionSeriesMs": {
       "stat": "median",

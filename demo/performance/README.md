@@ -99,6 +99,17 @@ still below the known failed pre-optimization result (3501.5 ms). This aggregate
 is a catastrophic guard; the full workflow's base-relative comparison remains
 the detector for smaller regressions.
 
+Its `firstStableRenderMs` ceiling is 3400 ms (#692). The full workflow's
+7-sample median on the hosted runner was about 2790 ms across the 1.77 line
+(2769.0 on 09-21, 2838.2 on 09-23, 2777.3 and 2801.7 on `c392ad3a`) and about
+2920 ms at v1.78.0 (`7d4d75bd`: 2925.0, 2925.2 as the base). Two runs of that
+one SHA differed by 7.5 % (3144.8 vs 2925.0), so the former 3000 ms ceiling
+sat 2.7 % above the level and failed on noise — the 3-sample smoke of #689
+read 3002.4 ms. 3400 ms is +16 % over the 1.78 level and +8 % over the worst
+run in the series; the base-relative comparison of the full workflow is
+unchanged and remains the detector for smaller regressions. The +4.5 % step
+between 1.77 and 1.78.0 is not attributed here.
+
 The isometric `spaceSwitchMs` ceiling is 2200 ms, shared by the smoke, the full
 isometric profile and its Stage 3 dense twin (#675). The metric is one cold
 floor switch that builds the second floor's 2.5D geometry, so it grows with

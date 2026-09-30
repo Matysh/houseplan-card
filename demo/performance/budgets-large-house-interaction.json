@@ -13,7 +13,7 @@
       "stat": "median",
       "maxRegressionRatio": 0.3,
       "noiseAllowanceMs": 250,
-      "hardMaxMs": 3000
+      "hardMaxMs": 3400
     },
     "interactionSeriesMs": {
       "stat": "median",
