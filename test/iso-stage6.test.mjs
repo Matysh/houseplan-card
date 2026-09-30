@@ -186,6 +186,12 @@ test('#649 п.2 beams: same exterior windows as Flat, parallelogram along the su
   assert.equal(Math.round(faced.a[1]), 390);
 });
 
+/**
+ * #732: an overlay fixture names only fields of the production input type;
+ * test/iso-overlay-fixture-types.test.mjs typechecks this file.
+ * @typedef {{ [K in keyof import('../src/iso-scene-render.js').IsoOverlaySceneInput]?: unknown }} OverlaySceneFixture
+ */
+
 test('#649 AC3 layout and collisions see the 2.5D tile size (× ISO_ICON_SCALE)', async () => {
   const { buildIsoOverlayRenderScene, isoRaisedOverlayHalfSize } = await import('../test-build/iso-scene-render.js');
   const { iconUnit } = await import('../test-build/space-geometry.js');
@@ -195,15 +201,17 @@ test('#649 AC3 layout and collisions see the 2.5D tile size (× ISO_ICON_SCALE)'
     rooms: [{ id: 'r', poly: [[0, 0], [1000, 0], [1000, 1000], [0, 1000]] }],
     wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
   };
-  const scene = buildIsoOverlayRenderScene({
-    space, devices: [{ id: 'd1' }], openings: [], view: { x: 0, y: 0, w: 1000, h: 1000 },
-    display: { showNames: false, cardFontScale: 1 }, layers: { shadows: true },
+  /** @type {OverlaySceneFixture} */
+  const input = {
+    space, devices: [{ id: 'd1' }], openings: [],
+    display: { showNames: false, cardFontScale: 1 },
     structure: { topPath: '', topFaces: [], sides: [], contactPath: '', edgeCount: 0 },
     iconPct: 3, deviceBasePct: 3, showLqi: false, cellCm: 5, kioskIconScale: 1, kioskFontScale: 1,
-    stageSize: { width: 1000, height: 1000 }, positionOf: () => ({ x: 500, y: 500 }),
+    positionOf: () => ({ x: 500, y: 500 }),
     presentationOf: () => presentation, labelPositionOf: () => ({ x: 0, y: 0 }), labelScaleOf: () => 1,
     openingEntityAvailable: () => true, openingWallIndex: () => ({ adjacencyEps: 0.1, edges: [] }),
-  });
+  };
+  const scene = buildIsoOverlayRenderScene(input);
   const footprint = scene.devices.get('d1').footprint;
   const half = (Math.max(...footprint.map((p) => p[0])) - Math.min(...footprint.map((p) => p[0]))) / 2;
   const base = 3 * iconUnit(space) / 100;

@@ -124,16 +124,15 @@ test('Stage 4 composes ordered inert SVG surfaces below screen-facing HTML', () 
   assert.match(styles, /\.iso-walls-svg\s*\{[\s\S]*?z-index:\s*4/);
   assert.match(styles, /\.iso-overlays-svg\s*\{\s*z-index:\s*5/);
   assert.match(styles, /\.devlayer\s*\{[\s\S]*?z-index:\s*6/);
-  const shadowSurface = section(card, '<svg class="iso-shadows-svg"', '<svg class="iso-walls-svg"');
-  const overlaySurface = section(card, '<svg class="iso-overlays-svg"', '</svg>` : nothing}');
-  assert.doesNotMatch(shadowSurface, /renderIsoOverlayGrounds/);
-  assert.ok(overlaySurface.indexOf('isoFrame?.grounds') < overlaySurface.indexOf('isoFrame?.raised'));
+  // #732: the overlay surface stays as the inert camera-viewBox layer the
+  // screen-facing HTML is measured against; nothing renders into it, and the
+  // two renderers that returned an empty SVG are gone with the ground radius.
+  const overlaySurface = section(card, '<svg class="iso-overlays-svg"', '</svg>');
+  assert.match(overlaySurface, /pointer-events="none">$/);
+  assert.doesNotMatch(overlaySurface, /\$\{isoFrame/);
   const frameResolver = section(sceneRender, 'export function resolveIsoFramePresentation', 'const emptySvg');
-  assert.ok(frameResolver.indexOf('grounds: renderIsoOverlayGrounds')
-    < frameResolver.indexOf('raised: renderIsoRaisedOverlays'));
-  const grounds = section(sceneRender, 'export function renderIsoOverlayGrounds',
-    'export function renderIsoRaisedOverlays');
-  assert.match(grounds, /return emptySvg\(\)/);
+  assert.doesNotMatch(frameResolver, /grounds|raised/);
+  assert.doesNotMatch(sceneRender, /renderIsoOverlayGrounds|renderIsoRaisedOverlays|groundRadius/);
   assert.doesNotMatch(styles, /perspective\s*:|preserve-3d|rotateX\(|rotateZ\(/);
   // #649: the 2.5D window light is its own module re-exported through this lazy
   // graph; the structural renderer itself still paints no light.
@@ -261,7 +260,7 @@ test('one frame resolves one structural source and latches late topology/project
   assert.match(renderBody, /this\._view = null;[\s\S]*?_baseVb\('flat', null\)/);
   const resolver = section(sceneRender, 'export function resolveIsoFramePresentation', 'const emptySvg');
   for (const step of ['resolveIsoDecorationLayers', 'resolveIsoOpeningPanels', 'renderIsoUnderlay',
-    'renderIsoShadows', 'renderIsoWalls', 'renderIsoOverlayGrounds', 'renderIsoRaisedOverlays'])
+    'renderIsoShadows', 'renderIsoWalls'])
     assert.ok(resolver.includes(step), `late Stage 4 step escaped the frame boundary: ${step}`);
 });
 

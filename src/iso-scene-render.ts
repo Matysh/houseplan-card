@@ -131,7 +131,6 @@ export type IsoOverlayRenderEntry = {
   id: string;
   kind: IsoRaisedOverlayKind;
   placement: IsoOverlayPlacement;
-  groundRadius: number;
   /** Screen-facing HTML footprint around visualScene, in scene units. */
   screenHalfSize: PlanPoint;
   /**
@@ -727,7 +726,7 @@ function sameOverlayEntries(
   return previous.length === next.length && next.every((entry, index) => {
     const before = previous[index];
     return before.id === entry.id && before.kind === entry.kind
-      && before.placement === entry.placement && before.groundRadius === entry.groundRadius
+      && before.placement === entry.placement
       && before.screenHalfSize[0] === entry.screenHalfSize[0]
       && before.screenHalfSize[1] === entry.screenHalfSize[1];
   });
@@ -843,7 +842,6 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       id: device.id,
       kind: 'device',
       placement,
-      groundRadius: Math.max(core * 0.32, 2),
       screenHalfSize: halfSize,
       layoutHalfSize,
     });
@@ -866,7 +864,6 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       id: overlayRoom.id,
       kind: 'room-label',
       placement,
-      groundRadius: Math.max(font * 0.75, 2),
       screenHalfSize: halfSize,
     });
   }
@@ -891,7 +888,6 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
         id: String(opening.id),
         kind: 'opening-lock',
         placement,
-        groundRadius: Math.max(size * 0.28, 2),
         screenHalfSize: halfSize,
       });
     }
@@ -1038,8 +1034,6 @@ export interface IsoFramePresentation {
   underlay: TemplateResult;
   shadows: TemplateResult;
   walls: TemplateResult;
-  grounds: TemplateResult;
-  raised: TemplateResult;
 }
 
 /** Resolve every lazy Stage 4 artifact inside the card's single failure boundary. */
@@ -1062,8 +1056,6 @@ export function resolveIsoFramePresentation(input: {
     underlay: renderIsoUnderlay(renderLayers, input.scene?.floor, input.cellCm),
     shadows: renderIsoShadows(renderLayers, panels, input.scene?.geometry, input.cellCm),
     walls: renderIsoWalls(input.projection, renderLayers, input.scene, panels, input.cellCm),
-    grounds: renderIsoOverlayGrounds(overlays, renderLayers, input.cellCm),
-    raised: renderIsoRaisedOverlays(overlays),
   });
   try { return render(layers); } catch (error) {
     // A material/shadow presentation failure loses only decorative nuance.
@@ -1113,20 +1105,6 @@ function renderIsoDefs(
         <feGaussianBlur stdDeviation="${7 * visualScale}"></feGaussianBlur>
       </filter>` : nothing}
   </defs>` as unknown as TemplateResult;
-}
-
-export function renderIsoOverlayGrounds(
-  _overlays: IsoOverlayRenderScene | null,
-  _layers: IsoDecorationLayers,
-  _cellCm: number,
-): TemplateResult {
-  return emptySvg();
-}
-
-export function renderIsoRaisedOverlays(
-  _overlays: IsoOverlayRenderScene | null,
-): TemplateResult {
-  return emptySvg();
 }
 
 export function renderIsoUnderlay(

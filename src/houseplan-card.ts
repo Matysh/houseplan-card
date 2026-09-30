@@ -11136,10 +11136,7 @@ export class HouseplanCard extends LitElement {
               ${isoFrame?.walls ?? nothing}
             </svg>
             <svg class="iso-overlays-svg" data-hp-live-viewbox="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
-              preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
-              ${isoFrame?.grounds ?? nothing}
-              ${isoFrame?.raised ?? nothing}
-            </svg>` : nothing)}
+              preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none"></svg>` : nothing)}
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always
                  had, restored by the owner. `iconCqw` is `iconPct * iconUnit
