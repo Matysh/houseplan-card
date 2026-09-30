@@ -17,6 +17,18 @@ const out = await page.evaluate(async () => {
       await new Promise((resolve) => requestAnimationFrame(resolve));
     await settled();
   };
+  // A gesture's save is debounced, and the write adopts the canonical record
+  // it sends (`x: 0.21699999999999997` becomes `0.217`). The card's own
+  // «writes idle» — no debounced save pending, nothing in flight — marks the
+  // moment the stored stair is final (#708).
+  const writesIdle = async () => {
+    const busy = () => card._saveConfigDebounced.pending() || card._writesPending > 0;
+    const deadline = performance.now() + 5000;
+    while (busy() && performance.now() < deadline)
+      await new Promise((resolve) => setTimeout(resolve, 16));
+    await settled();
+    return !busy();
+  };
   const spaceCfg = (id) => card._serverCfg.spaces.find((space) => space.id === id);
   const stairs = (id = 'f1') => spaceCfg(id)?.stairs || [];
   const stairNode = (id) => root().querySelector(`[data-hp="stair"][data-id="${id}"]`);
@@ -346,13 +358,17 @@ const out = await page.evaluate(async () => {
   await hp.setTool('stairs');
 
   // Saving the properties dialog untouched changes nothing (#676 AC5):
-  // sizes above one metre survive and no history entry is written.
+  // sizes above one metre survive and no history entry is written. The
+  // reference is the record after the previous gesture's write is adopted:
+  // both sides of the comparison are then the same canonical stair (#708).
+  const idleBeforeUntouched = await writesIdle();
   const untouched = JSON.stringify(stairs().find((stair) => stair.id === straight.id));
   const historyBefore = card._geometryHistory.size;
   dialog = await openStairDialog(straight.id);
   const fieldsShown = [...dialog.querySelectorAll('input[type="number"]')].map((input) => input.value);
   await saveDialog(dialog);
-  result.untouchedDialogSaveKeepsSizes = JSON.stringify(stairs().find((stair) => stair.id === straight.id)) === untouched
+  result.untouchedDialogSaveKeepsSizes = idleBeforeUntouched
+    && JSON.stringify(stairs().find((stair) => stair.id === straight.id)) === untouched
     && Number(fieldsShown[0]) > 100;
   result.untouchedDialogSaveWritesNoHistory = card._geometryHistory.size === historyBefore;
 
