@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 200, issue: 95. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 201, issue: 96. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -12,6 +12,7 @@
 | #709 | [CODE-REVIEW-709-r1.md](CODE-REVIEW-709-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | canon TESTING.md противоречит себе | `docs/TESTING.md` `scripts/smoke-select.mjs` `scripts/pre-push-gate.mjs` `TESTING.md` `process-digests.test.mjs` |
 | #709 | [CODE-REVIEW-709-r2.md](CODE-REVIEW-709-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #706 | [CODE-REVIEW-706-r1.md](CODE-REVIEW-706-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #705 | [CODE-REVIEW-705-r1.md](CODE-REVIEW-705-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #703 | [CODE-REVIEW-703-r1.md](CODE-REVIEW-703-r1.md) | code · r1 | 🔴 красный | 1 | 0 | release-tag граница (AC1, вторая часть) не работает в реальном Validate: checkout никог…; тест AC2 не различает «hotfix на main» и «пуш в dev» на практике | `scripts/classify-base.mjs` `test/promotion-range.test.mjs` `.github/workflows/validate.yml` `dist/index.js` `test/validate-workflow.test.mjs` `validate.yml` |
 | #703 | [CODE-REVIEW-703-r2.md](CODE-REVIEW-703-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #702 | [CODE-REVIEW-702-r1.md](CODE-REVIEW-702-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
