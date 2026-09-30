@@ -93,8 +93,9 @@ test('#696 индекс и архив знают SHIP-REVIEW: бета в инд
   assert.ok(plan.kept.some((k) => k.name === 'SHIP-REVIEW-v1.80.0-beta.1.md'));
 });
 
-test('#696 ship-review.yml: модель без права записи, документ с машинным блоком в dev', () => {
-  const workflow = readFileSync(fileURLToPath(new URL('../.github/workflows/ship-review.yml', import.meta.url)), 'utf8');
+test('#696 _ship-review.yml: модель без права записи, документ с машинным блоком в dev', () => {
+  // #716: тело из dev; тонкий `ship-review.yml` в main — кнопка и потолок прав.
+  const workflow = readFileSync(fileURLToPath(new URL('../.github/workflows/_ship-review.yml', import.meta.url)), 'utf8');
   const model = workflow.slice(workflow.indexOf('\n  model_review:'), workflow.indexOf('\n  publish:'));
   assert.match(model, /permissions:\n\s+contents: read\n\s+steps:/, 'модель только читает');
   assert.match(model, /github_token: \$\{\{ secrets\.GITHUB_TOKEN \}\}/, 'без обмена OIDC на App-токен (#556)');

@@ -10,6 +10,11 @@
 // держит проводку: каждый такой файл тонкий, вызывает своё тело из dev, передаёт
 // секреты и входы, не расширяет права, а preflight сверяет ровно их.
 //
+// #716: `workflow_dispatch` GitHub исполняет с выбранной ветки, но запуск (кнопку,
+// `gh workflow run`, API dispatches) даёт только workflow, чей файл лежит в
+// `main`. Такие файлы обычно приезжают туда с промоушеном; шагам беты запуск
+// нужен раньше, поэтому они устроены так же и сверяются тем же preflight.
+//
 // Полноценного YAML-парсера в зависимостях нет (см. scripts/workflow-jobs.mjs):
 // разбирается ровно та блочная структура, которую пишут эти файлы; всё
 // неожиданное — громкая ошибка разбора, а не догадка.
@@ -36,6 +41,12 @@ const DEFAULT_BRANCH_EVENTS = new Set([
 // performance.yml по расписанию судит `main` собственным телом из `main`:
 // исполняемая копия и есть та, что лежит рядом с проверяемым кодом.
 const SELF_CONSISTENT = new Set(['performance.yml']);
+
+// #716: только по кнопке, но нужны до промоушена, который принёс бы их в `main`:
+// пакетное ревью ship (PROCESS.md §11.7) и производные артефакты (§8) идут перед
+// каждой бетой. Триггер их не выдаёт — `workflow_dispatch` исполняется с
+// выбранной ветки, — поэтому список явный, а причина проверяется ниже.
+const DISPATCH_BEFORE_PROMOTION = new Set(['beta-derived.yml', 'ship-review.yml']);
 
 const isComment = (line) => !line.trim() || line.trimStart().startsWith('#');
 const indentOf = (line) => line.length - line.trimStart().length;
@@ -113,7 +124,7 @@ const workflows = readdirSync(DIR).filter((name) => /\.ya?ml$/.test(name)).sort(
 const bodies = workflows.filter((name) => name.startsWith('_'));
 const fromDefaultBranch = workflows
   .filter((name) => !name.startsWith('_') && triggers(name).some((event) => DEFAULT_BRANCH_EVENTS.has(event)));
-const THIN = fromDefaultBranch.filter((name) => !SELF_CONSISTENT.has(name));
+const THIN = [...fromDefaultBranch.filter((name) => !SELF_CONSISTENT.has(name)), ...DISPATCH_BEFORE_PROMOTION].sort();
 
 function syncList() {
   const validate = read('validate.yml');
@@ -124,11 +135,23 @@ function syncList() {
 }
 
 test('#623: исполняемые из main файлы найдены по триггерам, а не по памяти', () => {
-  assert.deepEqual(THIN, [
+  assert.deepEqual(fromDefaultBranch.filter((name) => !SELF_CONSISTENT.has(name)), [
     'mutation-gate.yml', 'nightly.yml', 'process-metrics.yml', 'process-reconcile.yml',
     'process-resume.yml', 'process.yml',
   ]);
   for (const name of SELF_CONSISTENT) assert.ok(fromDefaultBranch.includes(name), `${name}: исключение без причины`);
+});
+
+test('#716: шаги беты по кнопке — тонкие файлы наравне с исполняемыми из main', () => {
+  assert.deepEqual(THIN, [
+    'beta-derived.yml', 'mutation-gate.yml', 'nightly.yml', 'process-metrics.yml', 'process-reconcile.yml',
+    'process-resume.yml', 'process.yml', 'ship-review.yml',
+  ]);
+  for (const name of DISPATCH_BEFORE_PROMOTION) {
+    assert.ok(workflows.includes(name), `${name}: файла нет — запись в списке без причины`);
+    assert.deepEqual(triggers(name), ['workflow_dispatch'],
+      `${name}: только кнопка — иначе файл находится по триггеру, и явная запись не нужна`);
+  }
 });
 
 test('#623: preflight сверяет в main и dev ровно тонкие вызывающие файлы', () => {

@@ -10838,8 +10838,8 @@ const MUTANT_DEFINITIONS = [
       + 'доезжала до dev и молча не действовала',
     patches: [{
       file: '.github/workflows/validate.yml',
-      find: '          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml process-metrics.yml; do',
-      replace: '          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml; do',
+      find: '          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml process-metrics.yml ship-review.yml beta-derived.yml; do',
+      replace: '          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml ship-review.yml beta-derived.yml; do',
     }],
   },
   {
@@ -13798,7 +13798,7 @@ const MUTANT_DEFINITIONS = [
     because: '#697: the bot commit that moves baselines must carry Release: and Baseline-Reviewed:, '
       + 'otherwise validate-commit-provenance turns dev red on the push',
     patches: [{
-      file: '.github/workflows/beta-derived.yml',
+      file: '.github/workflows/_beta-derived.yml',
       find: '              echo "Release: $TAG"\n',
       replace: '',
     }],

@@ -7,7 +7,10 @@ import { fileURLToPath } from 'node:url';
 import { validateCommitMessage } from '../scripts/validate-commit-provenance.mjs';
 import { isCandidateSubject } from '../scripts/bundle-policy.mjs';
 
-const WORKFLOW = readFileSync(fileURLToPath(new URL('../.github/workflows/beta-derived.yml', import.meta.url)), 'utf8');
+const readWorkflow = (name) => readFileSync(fileURLToPath(new URL(`../.github/workflows/${name}`, import.meta.url)), 'utf8');
+// #716: кнопка — у тонкого вызывающего, который лежит и в `main`; шаги — в теле из `dev`.
+const CALLER = readWorkflow('beta-derived.yml');
+const WORKFLOW = readWorkflow('_beta-derived.yml');
 const step = (name) => {
   const start = WORKFLOW.indexOf(`      - name: ${name}\n`);
   assert.ok(start > 0, `нет шага ${name}`);
@@ -16,10 +19,14 @@ const step = (name) => {
 };
 
 test('#697 бот: только по кнопке, прав на запись у job нет — пишет PAT одним push', () => {
-  assert.match(WORKFLOW, /^on:\n  workflow_dispatch:\n/m);
-  assert.doesNotMatch(WORKFLOW, /^\s+(push|schedule|workflow_run):/m);
-  assert.match(WORKFLOW, /permissions:\n\s+contents: read\n\s+actions: read\n/);
-  assert.doesNotMatch(WORKFLOW, /contents: write/);
+  assert.match(CALLER, /^on:\n  workflow_dispatch:\n/m);
+  assert.match(CALLER, /uses: Matysh\/houseplan-card\/\.github\/workflows\/_beta-derived\.yml@dev\b/);
+  assert.match(WORKFLOW, /^on:\n(?: {2}#[^\n]*\n)* {2}workflow_call:\n/m);
+  for (const text of [CALLER, WORKFLOW]) {
+    assert.doesNotMatch(text, /^\s+(push|schedule|workflow_run):/m);
+    assert.match(text, /permissions:\n\s+contents: read\n\s+actions: read\n/);
+    assert.doesNotMatch(text, /contents: write/);
+  }
   const commit = step('Коммит в dev');
   assert.match(commit, /git push -q "https:\/\/x-access-token:\$TOKEN@github\.com\/\$\{\{ github\.repository \}\}" HEAD:dev/);
   assert.doesNotMatch(commit, /--force/, 'ушедший dev — перезапуск, а не перезапись');

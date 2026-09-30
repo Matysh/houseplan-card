@@ -124,9 +124,16 @@ jobs:
       # ни одним событием. Тонкий файл сверяется: правка триггера или потолка
       # прав, не доехавшая до `main`, действовала бы только в dev-копии.
       #
+      # #716: `ship-review.yml` и `beta-derived.yml` — только `workflow_dispatch`,
+      # он исполняет файл с выбранной ветки, но запуск GitHub даёт лишь workflow,
+      # чей файл есть в `main`. Шагам беты он нужен до промоушена, поэтому они
+      # устроены так же и сверяются здесь же: правка входа или потолка прав,
+      # не доехавшая до `main`, не действовала бы в запуске с `main`, а именно
+      # его кнопка выбирает по умолчанию.
+      #
       # `performance.yml` не входит: по расписанию он судит `main` собственным
       # телом из `main`, расхождение с `dev` до промоушена законно. Список ниже
-      # держит равным множеству файлов с такими триггерами
+      # держит равным множеству тонких файлов
       # test/default-branch-workflows.test.mjs.
       - name: "Процесс: тонкие вызывающие workflow идентичны в main и dev"
         id: workflow_sync
@@ -134,7 +141,7 @@ jobs:
         run: |
           git fetch --quiet origin main dev
           status=0
-          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml process-metrics.yml; do
+          for file in process.yml mutation-gate.yml process-resume.yml nightly.yml process-reconcile.yml process-metrics.yml ship-review.yml beta-derived.yml; do
             if diff <(git show "origin/main:.github/workflows/$file") \
                     <(git show "origin/dev:.github/workflows/$file"); then
               echo "$file: main и dev идентичны"

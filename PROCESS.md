@@ -852,7 +852,11 @@ npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs \
   (`golden:accept --reviewed`, `Release:` и `Baseline-Reviewed:` в коммите).
   Изменившийся кадр или сцена принимается, только если назван во входах
   workflow; необъявленная разница — отказ с перечнем. Коммит проверяет
-  релиз-менеджер;
+  релиз-менеджер. Запуск — `gh workflow run beta-derived.yml --ref dev -f
+  tag=vX.Y.Z-beta.N` (сдвиги — `-f docs_expect_change=…`, эталоны — `-f
+  golden_run=<id Validate на dev>` с `golden_expect_change`/`golden_expect_new`)
+  или кнопка в Actions: тонкий вызывающий лежит и в `main`, тело
+  `_beta-derived.yml` читается из `dev` (§10.4, #716);
 - **задача, которая меняет визуал намеренно**, ставит `ci:golden`: конвейер
   прогоняет полный набор на материале ревью, и сдвинутые кадры задача
   принимает сама — по §3 п.13;
@@ -1170,12 +1174,16 @@ Medium-находки вне скоупа задачи (#202), кладёт до
 4. многострочный текст внутри `run:` — только через heredoc: строка с нулевым
    отступом обрывает блок YAML, и скрипт обрезается без ошибки парсера.
 
-**Workflow из ветки по умолчанию: тонкий файл и тело из `dev`** (#623). Для
-событий `issues`, `schedule` и `workflow_run` GitHub исполняет workflow из
-`main`. Таких файлов шесть: `process.yml`, `process-resume.yml`,
+**Workflow из ветки по умолчанию: тонкий файл и тело из `dev`** (#623, #716).
+Для событий `issues`, `schedule` и `workflow_run` GitHub исполняет workflow из
+`main`. `workflow_dispatch` исполняет файл с выбранной ветки, но кнопку и сам
+запуск (`gh workflow run`, API) даёт только workflow, чей файл лежит в `main`:
+файл, добавленный в `dev`, до промоушена не запускается вовсе (#716). Таких
+файлов восемь: по событиям — `process.yml`, `process-resume.yml`,
 `process-reconcile.yml`, `mutation-gate.yml`, `nightly.yml`,
-`process-metrics.yml`. Каждый — тонкий вызывающий: триггеры, run-name,
-права, concurrency и одна job `uses:
+`process-metrics.yml`; по кнопке, но до промоушена — шаги беты
+`ship-review.yml` (§11.7) и `beta-derived.yml` (§8). Каждый — тонкий
+вызывающий: триггеры, run-name, права, concurrency и одна job `uses:
 Matysh/houseplan-card/.github/workflows/_<имя>.yml@dev` с `secrets: inherit`.
 Тело `_<имя>.yml` читается из `dev` в момент запуска, поэтому **правка
 конвейера — один коммит в `dev`**, зеркало в `main` и возврат `main` в `dev`
@@ -1184,14 +1192,18 @@ Matysh/houseplan-card/.github/workflows/_<имя>.yml@dev` с `secrets: inherit`
 получает прежний минимум (#556). Тонкий файл меняется, только когда меняются
 триггеры, входы ручного запуска или потолок прав; тогда он зеркалится в
 `main`, и preflight `workflow_sync` в `validate.yml` держит копии равными —
-сверяются ровно эти шесть файлов, список держит
-`test/default-branch-workflows.test.mjs`. Расхождение красит push в `dev` и
+сверяются ровно эти восемь файлов, список держит
+`test/default-branch-workflows.test.mjs`. Новый тонкий файл сначала
+зеркалится в `main`, затем сливается в `dev`: в обратном порядке push в `dev`
+найдёт файл, которого нет в `main`. Расхождение красит push в `dev` и
 заводит одно issue владельцу (`[workflow-sync]`), а на ветке задачи —
 предупреждение в сводке (#700): к её изменению оно отношения не имеет, и чинит
 его тот, кто зеркалит в `main`. Так же судятся внешние ссылки документации
 (`check-docs --external=warn` на ветках `issue/*`): упавший чужой сайт не
 возвращает задачу. `performance.yml` в список не входит:
-по расписанию он судит `main` собственным телом из `main`.
+по расписанию он судит `main` собственным телом из `main`. Прочие workflow по
+кнопке приезжают в `main` целиком с промоушеном; новый такой файл, который
+нужен до него, заводится тонким и входит в список.
 
 **Цена захода зависит от трека** (#696, решение владельца 2026-09-28). Трек
 снимает `scripts/process-track.mjs` в стадии подготовки — по текущим меткам и
@@ -1547,7 +1559,10 @@ action ревью пускает ровно этого бота (`allowed_bots`,
 диапазона дешевле ревью на каждую, а рамки ship держат объём малым.
 
 **Шаг.** Перед публикацией беты — `ship-review.yml`
-(`gh workflow run ship-review.yml --ref dev -f tag=vX.Y.Z-beta.N`):
+(`gh workflow run ship-review.yml --ref dev -f tag=vX.Y.Z-beta.N` или кнопка
+«Run workflow» в Actions). Это тонкий вызывающий файл, он лежит и в `main`:
+без этого GitHub запуск не даёт. Тело `_ship-review.yml` читается из `dev` при
+любой выбранной ветке (§10.4, #716):
 
 - **вход** — issue из трейлеров `Issue: #NN` в диапазоне «прошлый тег..кандидат»
   (тот же построитель, что `RELEASE-MEMBERSHIP.json`, #547), из них — ship: с
