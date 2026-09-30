@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { makeLargeHouseFixture } from '../demo/fixtures/large-house.mjs';
 import { spaceModels } from '../test-build/space-geometry.js';
+import { prepareSpacePhysicalGeometryInputs } from '../test-build/plan-geometry-preflight.js';
 import { readFileSync } from 'node:fs';
 
 import {
@@ -476,19 +477,44 @@ test('#509 AC3: площадь считает геометрию стен оди
 test('#509 AC3: один этаж большого дома считается без пересборки кладки на каждой комнате', () => {
   // Синтетический счётчик выше доказывает «один вызов на пространство», но не
   // то, что результат этого вызова ДОШЁЛ до innerContourForRoom: без
-  // shared-аргументов та объединяет кладку заново для каждой комнаты, и
-  // единственный наблюдаемый признак — время (S2: 176 мс на комнату).
-  // Разрыв семикратный, поэтому порог грубый и не флейкует.
+  // shared-аргументов та объединяет кладку заново для каждой комнаты.
   // Этот AC измеряет повторное построение кладки. Максимальные 250 лестниц
   // отдельно входят в общий large-house benchmark и не должны превращать
   // узкий wall-cache witness в тест другой подсистемы (#663).
+  //
+  // Меряется работа, а не миллисекунды: абсолютный порог по времени краснел
+  // на занятой машине (#721). Любая сборка кладки обходит контуры всех комнат
+  // пространства, поэтому счётчик чтений `room.poly` детерминированно
+  // отражает число таких сборок. Эталон — один явный проход кладки того же
+  // этажа в том же прогоне: с общей геометрией площадь этажа стоит ~1,3
+  // прохода (сам проход + подготовка + лёгкая работа по комнатам), с
+  // пересборкой на каждой комнате — ~21.
   const fixture = makeLargeHouseFixture({ includeStairs: false });
   const config = { ...fixture.config, spaces: fixture.config.spaces.slice(0, 1) };
   const model = spaceModels(config);
   assert.equal(model[0].rooms.length, 20, 'фикстура даёт этаж из 20 комнат');
-  const started = Date.now();
+  let contourReads = 0;
+  for (const room of model[0].rooms) {
+    let poly = room.poly;
+    assert.ok(poly?.length >= 3, `комната ${room.id} задана контуром`);
+    Object.defineProperty(room, 'poly', {
+      configurable: true, enumerable: true,
+      get() { contourReads += 1; return poly; },
+      set(next) { poly = next; },
+    });
+  }
+  const prepared = prepareSpacePhysicalGeometryInputs(config.spaces[0], model[0]);
+  const beforePass = contourReads;
+  spaceWallGeometry(model[0], prepared);
+  const onePass = contourReads - beforePass;
+  assert.ok(onePass >= model[0].rooms.length, `эталонный проход кладки прочитал ${onePass} контуров — счётчик ослеп`);
+
+  const beforeArea = contourReads;
   const area = totalCleanFloorAreaM2(config, model);
-  const elapsed = Date.now() - started;
+  const areaWork = contourReads - beforeArea;
   assert.ok(area > 0, String(area));
-  assert.ok(elapsed < 2500, `этаж из 20 комнат посчитан за ${elapsed} мс — кладка собирается заново на каждой комнате (#509)`);
+  const passes = areaWork / onePass;
+  assert.ok(passes < 2, `площадь этажа из 20 комнат стоила ${areaWork} чтений контуров = `
+    + `${passes.toFixed(1)} прохода кладки (эталон ${onePass}); ожидается один общий проход — `
+    + 'кладка собирается заново на каждой комнате (#509)');
 });
