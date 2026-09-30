@@ -264,8 +264,9 @@ test('raised footprints participate in global and room fit without entering the 
   assert.match(sceneRender, /screenHalfSize: PlanPoint/);
   assert.match(sceneRender, /export function isoOverlaySceneBounds/);
   assert.match(sceneRender, /export function resolveIsoOverlayFitEnvelope/);
-  assert.match(sceneRender, /const center = final \? placement\.visualScene : placement\.raisedScene/);
-  assert.match(sceneRender, /const footprint = final \? placement\.footprint/);
+  // #714: without a runtime nudge the fit and the final bounds read one point set.
+  assert.match(sceneRender, /const center = placement\.visualScene;/);
+  assert.match(sceneRender, /placement\.floorScene,\s*\.\.\.placement\.footprint,/);
   assert.match(sceneRender, /const \[halfX, halfY\] = entry\.screenHalfSize/);
   const scene = section(card, 'private _isoScene(', 'private _latchIsoFallback');
   assert.match(scene, /resolveIsoScene\([\s\S]*?buildIsoOverlayRenderScene|resolveIsoScene\([\s\S]*?_isoOverlayScene/);

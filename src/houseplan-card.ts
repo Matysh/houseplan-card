@@ -6009,10 +6009,9 @@ export class HouseplanCard extends LitElement {
     const cfgSize = this._config?.icon_size ?? 2.5, iconPct = cfgSize > 8 ? 2.5 : cfgSize;
     const stageSize = this._stageEl?.getBoundingClientRect?.() ?? null;
     const aspect = stageSize?.height ? stageSize.width / stageSize.height : scene.frame.w / scene.frame.h;
-    const baseView = fitView([scene.frame.x, scene.frame.y, scene.frame.w, scene.frame.h], aspect);
     const overlays = this._isoOverlayScene(
       space, this._renderDevices.filter((device) => device.space === space.id && !device.hidden),
-      baseView, disp, runtime.resolveIsoDecorationLayers(disp), scene, iconPct, effectiveDeviceBaseSize(iconPct),
+      disp, runtime.resolveIsoDecorationLayers(disp), scene, iconPct, effectiveDeviceBaseSize(iconPct),
       disp.showLqi ?? this._config?.show_signal ?? true, false);
     const envelope = overlays && runtime.resolveIsoOverlayFitEnvelope({
       baseBounds: scene.frame, entries: overlays.entries, stageSize, targetView: (bounds) =>
@@ -6062,7 +6061,6 @@ export class HouseplanCard extends LitElement {
   private _isoOverlayScene(
     space: SpaceModel,
     devs: readonly DevItem[],
-    view: { x: number; y: number; w: number; h: number },
     disp: SpaceDisplay,
     layers: IsoDecorationLayers | null,
     structural: IsoRenderScene | null,
@@ -6073,15 +6071,13 @@ export class HouseplanCard extends LitElement {
   ): IsoOverlayRenderScene | null {
     const runtime = this._isoSceneRuntime;
     if (!runtime || !layers?.structural || !structural) return null;
-    const [x, y, w, h] = this._baseVb('iso', structural);
     return runtime.buildIsoOverlayRenderScene({
-      space, devices: devs, openings: this._openingsR, view, referenceView: { x, y, w, h }, display: disp,
+      space, devices: devs, openings: this._openingsR, display: disp,
       wallSilhouettes: structural.wallSilhouettes,
       resolveCollisions,
       iconPct, deviceBasePct, showLqi, cellCm: this._cellCm,
       kioskIconScale: this._mode === 'view' ? this._kioskScale.icon : 1,
       kioskFontScale: this._mode === 'view' ? this._kioskScale.font : 1,
-      stageSize: this._stageEl?.getBoundingClientRect?.(),
       positionOf: (device) => this._pos(device),
       presentationOf: (device, withLqi) => this._devicePresentation(device, withLqi),
       labelPositionOf: (room, spaceId) => this._labelPos(room, spaceId),
@@ -10711,7 +10707,7 @@ export class HouseplanCard extends LitElement {
         projection, display: disp, scene: isoScene, openings: this._openingsR,
         amountOf: (opening) => this._openingAmt(opening), cellCm: this._cellCm,
         overlays: (layers) => this._isoOverlayScene(
-          space, devs, view, disp, layers, isoScene, iconPct, deviceBasePct, showLqi),
+          space, devs, disp, layers, isoScene, iconPct, deviceBasePct, showLqi),
       }) ?? null;
     } catch (error) {
       this._latchIsoFallback(disp.showBorders
@@ -11810,7 +11806,7 @@ export class HouseplanCard extends LitElement {
       data-lqi-band=${presentation.lqiText != null ? presentation.lqiBand || nothing : nothing}
       data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'device' : nothing}
       data-hp-iso-raised=${isoPlacement?.plane === 'raised' ? 'true' : nothing}
-      data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? String(isoPlacement.nudged) : nothing}
+      data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
       data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
       data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
       role=${interactive ? 'button' : nothing}
@@ -12066,7 +12062,7 @@ export class HouseplanCard extends LitElement {
       data-hp="room-label" data-id=${r.id || nothing} data-area=${r.area || nothing}
       data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'room-label' : nothing}
       data-hp-iso-raised=${isoPlacement?.plane === 'raised' ? 'true' : nothing}
-      data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? String(isoPlacement.nudged) : nothing}
+      data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
       data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
       data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
       role=${this._mode === 'view' ? 'button' : nothing}
@@ -12425,7 +12421,7 @@ export class HouseplanCard extends LitElement {
       return html`<div class="oplock ${deviceThemeClass(this._renderPlanHass)} ${lockState}"
         data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'opening-lock' : nothing}
         data-hp-iso-raised=${isoPlacement?.plane === 'raised' ? 'true' : nothing}
-        data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? String(isoPlacement.nudged) : nothing}
+        data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
         data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
         data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
         style="left:${left}%;top:${top}%"

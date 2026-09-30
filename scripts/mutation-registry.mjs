@@ -11284,83 +11284,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'iso-aabb-rejects-touching-wall',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#473 W4" test/iso-scene-render.test.mjs',
-    because: 'the AABB pre-check must keep every silhouette within the safety gap; a strict '
-      + 'overlap test drops walls the exact test would have caught and lets plates sit flush (#473)',
-    patches: [{
-      file: 'src/iso-overlays.ts',
-      find: '  return a[0] <= b[2] + gap && a[2] >= b[0] - gap\n'
-        + '    && a[1] <= b[3] + gap && a[3] >= b[1] - gap;',
-      replace: '  return a[0] <= b[2] && a[2] >= b[0]\n'
-        + '    && a[1] <= b[3] && a[3] >= b[1];',
-    }],
-  },
-  {
-    id: 'iso-rigid-groups-use-live-zoom-scale',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#713 AC3" test/iso-scene-render.test.mjs',
-    because: '#651/#713 make the fit-scale viewport the only layout scale. Falling back to the live '
-      + 'view makes every pinch or wheel zoom a fresh placement event again',
-    patches: [{
-      file: 'src/iso-scene-render.ts',
-      find: '  const layoutView = input.referenceView || input.view;',
-      replace: '  const layoutView = input.view;  // mutant: live zoom drives layout again',
-    }],
-  },
-  {
-    id: 'iso-rigid-groups-split-close-row',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="rigid overlay groups preserve" test/iso-overlays.test.mjs',
-    because: '#651 treats intersecting same-room markers as one rigid perceptual group. Disabling '
-      + 'the join silently returns independent offsets and destroys the row alignment',
-    patches: [{
-      file: 'src/iso-overlays.ts',
-      find: '      if (boundsIntersect(groupBounds[left], groupBounds[right])) join(left, right);',
-      replace: '      if (false && boundsIntersect(groupBounds[left], groupBounds[right])) join(left, right);',
-    }],
-  },
-  {
-    id: 'iso-rigid-groups-cross-room-boundary',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="never join close markers" test/iso-overlays.test.mjs',
-    because: '#651 groups markers only within one owning room. Removing the owner check lets a '
-      + 'close pair across a shared wall move as one group and cross the room boundary',
-    patches: [{
-      file: 'src/iso-overlays.ts',
-      find: '      if (stable[right].placement.owner?.id !== owner) continue;',
-      replace: '      if (false) continue;  // mutant: room ownership no longer separates groups',
-    }],
-  },
-  {
-    id: 'iso-rigid-fallback-drops-room-wall-overlap-priority',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="rigid fallback prioritizes" test/iso-overlays.test.mjs',
-    because: '#651 degraded placement must preserve room ownership first, clear walls second and '
-      + 'accept inter-group overlap only last. Distance-only fallback can pin a marker in masonry',
-    patches: [{
-      file: 'src/iso-overlays.ts',
-      find: '  return left.roomViolations - right.roomViolations\n'
-        + '    || left.wallViolations - right.wallViolations\n'
-        + '    || left.overlapPenalty - right.overlapPenalty\n'
-        + '    || rigidOffsetOrder(left.offset, right.offset);',
-      replace: '  return rigidOffsetOrder(left.offset, right.offset);',
-    }],
-  },
-  {
-    id: 'iso-scene-live-placement-search-returns',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#713 AC3" test/iso-scene-render.test.mjs',
-    because: '#713: every tile gets one straight-up wall-top rise. Feeding the wall silhouettes '
-      + 'back into the live placement brings back the per-marker nudge next to walls',
-    patches: [{
-      file: 'src/iso-scene-render.ts',
-      find: '      wallSilhouettes: [],\n      wallGeometryValidated: true,',
-      replace: '      wallSilhouettes: input.wallSilhouettes,\n      wallGeometryValidated: true,',
-    }],
-  },
-  {
     id: 'iso-floor-foreshortening-returns',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#713 AC1" test/iso-projection.test.mjs',
@@ -11550,17 +11473,6 @@ const MUTANT_DEFINITIONS = [
       file: 'demo/benchmark_large_house.mjs',
       find: "        if (snapshot.effectiveProjection !== 'iso') failures.push('effective projection is not iso');",
       replace: "        if (false && snapshot.effectiveProjection !== 'iso') failures.push('effective projection is not iso');",
-    }],
-  },
-  {
-    id: 'stage4-w11-nudged-overlay-restores-tether',
-    guard: 'node --test --test-name-pattern="wall-aware nudge" test/iso-overlays.test.mjs',
-    because: 'W11: Stage 4 keeps collision nudge internal but removes the debug tether; restoring '
-      + 'it would recreate the tall visual clutter rejected by the designer handoff (#570)',
-    patches: [{
-      file: 'src/iso-overlays.ts',
-      find: '  const tetherVisible = false;',
-      replace: '  const tetherVisible = nudged;',
     }],
   },
   {

@@ -26,7 +26,6 @@ import {
   type IsoOpeningGeometryPolicy, type IsoOpeningSurface,
 } from './iso-openings';
 import {
-  ISO_OVERLAY_MAX_NUDGE_CSS_PX, isoRoomSafePoint,
   resolveIsoOverlayOwner, resolveIsoOverlayPlacement,
   type IsoOverlayPlacement, type IsoOverlayRoom, type IsoRaisedOverlayKind,
   type IsoWallSilhouette,
@@ -160,10 +159,8 @@ export type IsoOverlayRenderScene = {
   rooms: ReadonlyMap<RoomCfg, IsoOverlayPlacement>;
   locks: ReadonlyMap<string, IsoOverlayPlacement>;
   entries: readonly IsoOverlayRenderEntry[];
-  /** Internal memo key for the complete raised-overlay group placement. */
-  collisionSignature: string;
-  /** Stable keys of pairs that could not be fully separated inside the cap. */
-  residualPairs: readonly (readonly [string, string])[];
+  /** Internal memo key for the complete raised-overlay layout. */
+  layoutSignature: string;
 };
 
 /**
@@ -573,7 +570,10 @@ export function createIsoStructuralSource(
 
 const unknownArray = (value: unknown): readonly unknown[] => Array.isArray(value) ? value : [];
 
-/** Project a cached physical wall union once for overlay collision tests. */
+/**
+ * Project a cached physical wall union once. Since #714 no overlay is tested
+ * against it; the frozen array is the structural identity the overlay caches key on.
+ */
 export function isoWallSilhouettesOf(geometry: unknown, height: number): IsoWallSilhouette[] {
   const projectRing = (raw: unknown): ScenePoint[] => unknownArray(raw).flatMap((point) => {
     if (!Array.isArray(point) || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return [];
@@ -648,18 +648,13 @@ const rectFromPoints = (points: readonly ScenePoint[]): Rect | null => {
   return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
 };
 
-const overlayEntryPoints = (
-  entry: IsoOverlayRenderEntry, final: boolean,
-): ScenePoint[] => {
+const overlayEntryPoints = (entry: IsoOverlayRenderEntry): ScenePoint[] => {
   const placement = entry.placement;
-  const center = final ? placement.visualScene : placement.raisedScene;
+  const center = placement.visualScene;
   const [halfX, halfY] = entry.screenHalfSize;
-  const footprint = final ? placement.footprint : placement.footprint.map((point) => [
-    point[0] - placement.nudgeScene[0], point[1] - placement.nudgeScene[1],
-  ] as ScenePoint);
   return [
     placement.floorScene,
-    ...footprint,
+    ...placement.footprint,
     [center[0] - halfX, center[1] - halfY],
     [center[0] + halfX, center[1] - halfY],
     [center[0] + halfX, center[1] + halfY],
@@ -677,7 +672,7 @@ export function isoOverlaySceneBounds(
   scene: IsoOverlayRenderScene | null, ownerId?: string,
 ): Rect | null {
   return scene ? rectFromPoints(selectedOverlayEntries(scene.entries, ownerId)
-    .flatMap((entry) => overlayEntryPoints(entry, true))) : null;
+    .flatMap(overlayEntryPoints)) : null;
 }
 
 export interface IsoOverlayFitEnvelopeInput {
@@ -697,7 +692,7 @@ export function resolveIsoOverlayFitEnvelope(
   input: IsoOverlayFitEnvelopeInput,
 ): { bounds: Rect; view: Rect } | null {
   const entries = selectedOverlayEntries(input.entries, input.ownerId);
-  const overlay = rectFromPoints(entries.flatMap((entry) => overlayEntryPoints(entry, false)));
+  const overlay = rectFromPoints(entries.flatMap(overlayEntryPoints));
   const base = overlay ? unionRect(input.baseBounds, overlay) : input.baseBounds;
   // #713: markers no longer move at runtime, so fit reserves no nudge budget:
   // the frame is the structure plus the markers' own visual extent.
@@ -710,12 +705,13 @@ export interface IsoOverlaySceneInput {
   space: SpaceModel;
   devices: readonly DevItem[];
   openings: readonly RenderOpening[];
-  view: Rect;
-  /** Fit-scale viewport used only for deterministic overlay layout. */
-  referenceView?: Rect;
   display: SpaceDisplay;
+  /** Identity of the structural scene; the placement caches are keyed by it. */
   wallSilhouettes: readonly IsoWallSilhouette[];
-  /** Fit-envelope probes need unnudged bounds only, not wall collision search. */
+  /**
+   * `false` for fit-envelope probes, which keep their own cache slot. Since
+   * #713 there is no collision search, so both slots hold equal placements.
+   */
   resolveCollisions?: boolean;
   iconPct: number;
   deviceBasePct: number;
@@ -723,7 +719,6 @@ export interface IsoOverlaySceneInput {
   cellCm: number;
   kioskIconScale: number;
   kioskFontScale: number;
-  stageSize?: { width: number; height: number } | null;
   positionOf(device: DevItem): { x: number; y: number };
   presentationOf(device: DevItem, showLqi: boolean): ResolvedDevicePresentation;
   labelPositionOf(room: RoomCfg, spaceId: string): { x: number; y: number };
@@ -734,12 +729,7 @@ export interface IsoOverlaySceneInput {
 
 type IsoOverlayRoomRow = { room: RoomCfg; overlayRoom: IsoOverlayRoom };
 const isoOverlayRoomCache = new WeakMap<readonly RoomCfg[], readonly IsoOverlayRoomRow[]>();
-type IsoOverlayPlacementCacheEntry = {
-  signature: string;
-  shapeSignature: string;
-  unitsPerPixel: number;
-  placement: IsoOverlayPlacement;
-};
+type IsoOverlayPlacementCacheEntry = { signature: string; placement: IsoOverlayPlacement };
 type IsoOverlayOwnerCacheEntry = { signature: string; owner: IsoOverlayPlacement['owner'] };
 export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;
 const isoOverlayPlacementCache = new WeakMap<
@@ -787,7 +777,7 @@ export function isoOverlayRooms(space: SpaceModel): readonly IsoOverlayRoomRow[]
       outer: poly.map((point) => [point[0], point[1]] as PlanPoint),
       holes: holes.map((ring) => ring.map((point) => [point[0], point[1]] as PlanPoint)),
     };
-    return { room, overlayRoom: { ...base, safePoint: isoRoomSafePoint(base) || undefined } };
+    return { room, overlayRoom: base };
   }));
   isoOverlayRoomCache.set(space.rooms, result);
   return result;
@@ -795,10 +785,6 @@ export function isoOverlayRooms(space: SpaceModel): readonly IsoOverlayRoomRow[]
 
 /** Build the one-frame mapping from immutable floor anchors to raised visuals. */
 export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOverlayRenderScene {
-  const layoutView = input.referenceView || input.view;
-  const unitsPerPixel = input.stageSize && input.stageSize.width > 0 && input.stageSize.height > 0
-    ? Math.max(layoutView.w / input.stageSize.width, layoutView.h / input.stageSize.height)
-    : Math.max(layoutView.w, layoutView.h) / 1000;
   const roomRows = isoOverlayRooms(input.space);
   const rooms = roomRows.map((row) => row.overlayRoom);
   // #713: device tiles and lock badges stand on the wall-top plane, one common
@@ -831,27 +817,14 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     const visualOffset = kind === 'room-label' ? 0 : wallHeight;
     const collisionMode = input.resolveCollisions === false ? 'fit' : 'live';
     const cacheKey = `${collisionMode}\u0000${kind}\u0000${id}`;
-    const shapeSignature = [floorAnchor[0], floorAnchor[1],
+    // Nothing here depends on zoom or stage size, so a pinch, wheel or resize
+    // reuses the immutable placement and Lit keeps the raised SVG subtree.
+    const signature = [floorAnchor[0], floorAnchor[1],
       footprintHalfSize[0], footprintHalfSize[1],
       preferredRoomId || '', wallHeight, visualOffset,
     ].join('|');
-    const signature = `${shapeSignature}|${unitsPerPixel}`;
     const cached = lruRead(placements!, cacheKey);
     if (cached.hit && cached.value.signature === signature) return cached.value.placement;
-    if (cached.hit && cached.value.shapeSignature === shapeSignature
-        && unitsPerPixel <= cached.value.unitsPerPixel) {
-      const previous = cached.value.placement;
-      const distanceAtNewScale = previous.nudgeDistanceCss
-        * cached.value.unitsPerPixel / unitsPerPixel;
-      // Zooming in only shrinks the required scene-unit safety gap. An
-      // unchanged footprint that was clear therefore stays clear; an unchanged
-      // non-near footprint stays non-near. Reuse the immutable scene placement so
-      // Lit also keeps the raised SVG subtree. Once its CSS displacement would
-      // exceed the public cap, fall through to the exact resolver.
-      if (!previous.nearWallBefore
-          || previous.cleared && distanceAtNewScale <= ISO_OVERLAY_MAX_NUDGE_CSS_PX)
-        return previous;
-    }
     const ownerKey = `${kind}\u0000${id}`;
     const ownerSignature = [floorAnchor[0], floorAnchor[1], preferredRoomId || ''].join('|');
     const cachedOwner = lruRead(owners!, ownerKey);
@@ -871,26 +844,18 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       preferredRoomId,
       ownerAlreadyResolved: true,
       resolvedOwner: owner,
-      nudgeHintCss: cached.hit && cached.value.shapeSignature === shapeSignature
-        ? cached.value.placement.nudgeDistanceCss * cached.value.unitsPerPixel / unitsPerPixel
-        : undefined,
       showBorders: true,
-      wallSilhouettes: [],
-      wallGeometryValidated: true,
       footprintHalfSize,
-      wallHeight,
       visualOffset,
-      sceneUnitsPerCssPixel: unitsPerPixel,
     });
-    lruWrite(placements!, cacheKey, { signature, shapeSignature, unitsPerPixel, placement },
-      ISO_OVERLAY_PLACEMENT_CACHE_LIMIT);
+    lruWrite(placements!, cacheKey, { signature, placement }, ISO_OVERLAY_PLACEMENT_CACHE_LIMIT);
     return placement;
   };
 
   for (const device of input.devices) {
     const pos = input.positionOf(device);
     const presentation = input.presentationOf(device, input.showLqi);
-    // #649: the 2.5D tile is ICON_SCALE larger; layout and collision see that size.
+    // #649: the 2.5D tile is ICON_SCALE larger; layout and fit see that size.
     const core = baseDeviceUnits * presentation.scale * ISO_ICON_SCALE;
     const halfSize = isoRaisedOverlayHalfSize({ kind: 'device', core, presentation });
     const layoutHalfSize = isoRaisedOverlayHalfSize({
@@ -969,17 +934,16 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     isoOverlayRenderSceneCache.set(input.wallSilhouettes, renderScenes);
   }
   const previous = renderScenes.get(mode);
-  const collisionSignature = entries.map((entry) => {
+  const layoutSignature = entries.map((entry) => {
     const placement = entry.placement;
     return [entry.kind, entry.id, placement.floorAnchor[0], placement.floorAnchor[1],
-      placement.raisedScene[0], placement.raisedScene[1], placement.nudgeScene[0],
-      placement.nudgeScene[1], placement.owner?.id || '', placement.status, placement.reason || '',
-      layoutHalfSizeOf(entry)[0], layoutHalfSizeOf(entry)[1], unitsPerPixel].join('|');
+      placement.raisedScene[0], placement.raisedScene[1], placement.owner?.id || '',
+      layoutHalfSizeOf(entry)[0], layoutHalfSizeOf(entry)[1]].join('|');
   }).sort().join('\u0001');
-  if (previous?.collisionSignature === collisionSignature
+  if (previous?.layoutSignature === layoutSignature
       && samePlacementMap(previous.rooms, roomPlacements)) {
     // #711: an HA-only change keeps the layout; only the visual extent that
-    // scene bounds read is refreshed, without a collision search.
+    // scene bounds read is refreshed.
     const visual = new Map(entries.map((entry) => [
       `${entry.kind}\u0000${entry.id}`, entry.screenHalfSize,
     ]));
@@ -1013,8 +977,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     rooms: roomPlacements,
     locks: resolvedLocks,
     entries: resolvedEntries,
-    collisionSignature,
-    residualPairs: Object.freeze([]),
+    layoutSignature,
   };
   if (previous && sameOverlayEntries(previous.entries, scene.entries)
       && samePlacementMap(previous.devices, scene.devices)

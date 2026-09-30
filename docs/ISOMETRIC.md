@@ -231,7 +231,7 @@ differences instead of strokes; window frame/glass borders remain.
 The projection is the fixed vertical oblique one above: rotation 0, the
 `[500,500]` pivot, a scale-aware 84-unit wall height rising `0.342·H` straight
 up. Floor SVG, wall/opening projection, inverse hit mapping (the identity on the
-floor), invisible collision footprints and fit bounds share that one affine
+floor), invisible overlay footprints and fit bounds share that one affine
 authority. `isoPlaneMatrix()` (`src/iso-projection.ts`) is that authority; the
 floor plane matrix is the identity.
 
@@ -243,10 +243,14 @@ may meet wall bodies and each other, and the overlapping pairs are the Flat ones
 (scaled by the 1.12 tile). Room names with their metrics row stay on the floor
 exactly where Flat puts them, without a position correction. A device never
 moves because its Home Assistant state changed (#711 holds trivially: nothing
-is laid out). The #651 resolvers (`resolveIsoOverlayRigidGroups`,
-`resolveIsoOverlayCollisions` and the nudge search in `resolveIsoOverlayPlacement`)
-are no longer called by the scene; their removal is
-[#714](https://github.com/Matysh/houseplan-card/issues/714).
+is laid out). Neither zoom nor a stage resize is a layout event: a placement
+depends only on the anchor, its owner room, the footprint and the rise.
+
+History: #651 used to search a place for every marker (rigid same-room
+clusters, a group collision resolver and a nudge of up to 48 CSS px towards the
+owning room's safe point, clear of walls by a 4 px gap). #713 stopped calling
+that search, and [#714](https://github.com/Matysh/houseplan-card/issues/714)
+removed it together with its constants and nudge fields.
 
 Vertical openings are ordered along the oblique projector: a face's
 `cameraDepth` is the mean of `s·y + z` over its corners (`s = sin 20°`).
@@ -303,7 +307,7 @@ byte-for-byte unchanged. Side-by-side acceptance frames:
   floor); bodies with luma < 70 → `#5b5e5a`, white and dark bodies in the dark
   theme → `#4a4a4a`. The colours are evaluated once in TypeScript
   (`isoEdgeColor`) and emitted as a generated state table.
-- Marker and lock are 1.12 × Flat; layout and collisions
+- Marker and lock are 1.12 × Flat; layout and fit
   (`iso-scene-render`) use the same factor. The whole marker is lifted 0.075 D.
 - **One floor-shadow layer** `.iso-tile-shadows` inside `.devlayer`, rendered
   after the markers in DOM order but with `z-index: -1` (`.devlayer` is a

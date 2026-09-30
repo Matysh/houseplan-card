@@ -30,15 +30,10 @@ import { wallKey } from '../test-build/wall-thickness.js';
 import {
   buildIsoFootprintPolygon,
   resolveIsoOverlayOwner,
-  resolveIsoOverlayPlacement,
 } from '../test-build/iso-overlays.js';
 import {
-  ISO_CAMERA,
-  ISO_OVERLAY_VISUAL_OFFSET,
-  ISO_RAISED_OVERLAY_HEIGHT,
   ISO_WALL_HEIGHT,
   projectPlanPoint,
-  unprojectFloorPoint,
 } from '../test-build/iso-projection.js';
 
 const room = (id, x0, y0, x1, y1) => ({
@@ -126,8 +121,7 @@ test('room footprint treats wide ASCII glyphs conservatively', () => {
 test('overlay bounds use final screen footprint and canonical owner filtering', () => {
   const placement = (owner, center) => ({
     owner: { id: owner }, floorScene: [center[0] - 5, center[1]],
-    raisedScene: [center[0] - 4, center[1]], visualScene: center,
-    nudgeScene: [4, 0],
+    raisedScene: center, visualScene: center,
     footprint: [[center[0] - 2, center[1] - 1], [center[0] + 2, center[1] - 1],
       [center[0] + 2, center[1] + 1], [center[0] - 2, center[1] + 1]],
   });
@@ -146,7 +140,7 @@ test('#713 K8: overlay fit is the structure plus visible tiles, no #651 nudge re
     id: 'edge', kind: 'device', groundRadius: 1, screenHalfSize: [10, 8],
     placement: {
       owner: { id: 'room' }, floorScene: [95, 50], raisedScene: [95, 50],
-      visualScene: [95, 50], nudgeScene: [0, 0],
+      visualScene: [95, 50],
       footprint: [[90, 46], [100, 46], [100, 54], [90, 54]],
     },
   };
@@ -259,17 +253,13 @@ test('shared painter queue keeps rotating door prism faces in physical camera or
     wallSlots, 'door-local ordering cannot move unrelated wall slots');
 });
 
-test('production overlay rooms preserve direct island holes and cache safe points', () => {
+test('production overlay rooms preserve direct island holes once per room snapshot', () => {
   const outer = room('outer', 0, 0, 100, 100);
   const island = room('island', 40, 40, 60, 60);
   const space = { id: 'floor', rooms: [outer, island] };
   const rows = isoOverlayRooms(space);
   assert.strictEqual(isoOverlayRooms(space), rows, 'one immutable room snapshot is prepared once');
   assert.deepEqual(rows[0].overlayRoom.holes, [island.poly]);
-  const safe = rows[0].overlayRoom.safePoint;
-  assert.ok(safe, 'outer ring has a proven safe point');
-  assert.equal(safe[0] > 40 && safe[0] < 60 && safe[1] > 40 && safe[1] < 60, false,
-    'the parent safe point cannot land in the island hole');
   const owner = resolveIsoOverlayOwner({
     kind: 'device', floorAnchor: [50, 50], rooms: rows.map((row) => row.overlayRoom),
   });
@@ -392,16 +382,14 @@ test('opening lock without a canonical host owner never guesses from point conta
   });
   const placement = scene.locks.get('partition-door');
   assert.equal(placement?.owner, null);
-  assert.equal(placement?.nudged, false);
-  // #713: no placement search runs, so a missing owner is no longer a search
-  // failure; the badge simply stands on the wall-top plane above its anchor.
-  assert.equal(placement?.reason, null);
+  // #713: no placement search runs, so a missing owner is no search failure;
+  // the badge simply stands on the wall-top plane above its anchor.
   assert.equal(placement?.plane, 'raised');
   assert.deepEqual(placement?.visualScene, projectPlanPoint(placement.floorAnchor, ISO_WALL_HEIGHT));
   assert.equal(placement?.tether.visible, false);
 });
 
-test('Stage 4 reuses pure overlay placements and fit probes skip collision search', () => {
+test('Stage 4 reuses pure overlay placements and fit probes agree with the live scene', () => {
   const owner = room('owner', 0, 0, 100, 100);
   const space = {
     id: 'floor', title: 'Floor', cellCm: 5, vb: [0, 0, 100, 100], bg: null,
@@ -445,19 +433,16 @@ test('Stage 4 reuses pure overlay placements and fit probes skip collision searc
     'unchanged HA/render passes reuse the exact pure placement result');
   // #713: the tile stands on the wall-top plane right above its anchor even
   // next to a wall; no wall test and no nudge in the live scene.
-  assert.equal(live.devices.get('device')?.nearWallBefore, false);
-  assert.equal(live.devices.get('device')?.nudged, false);
   assert.deepEqual(live.devices.get('device')?.visualScene, projectPlanPoint([5, 50], ISO_WALL_HEIGHT));
 
   const zoomedIn = buildIsoOverlayRenderScene({
     ...input, view: { x: 0, y: 0, w: 80, h: 80 },
   });
-  assert.strictEqual(zoomedIn, live,
-    'zooming in reuses a previously proved-safe immutable scene placement');
+  assert.strictEqual(zoomedIn, live, 'zooming in reuses the immutable scene placement');
+  const resized = buildIsoOverlayRenderScene({ ...input, stageSize: { width: 40, height: 40 } });
+  assert.strictEqual(resized, live, '#714: a stage resize is not a layout event either');
 
   const fit = buildIsoOverlayRenderScene({ ...input, resolveCollisions: false });
-  assert.equal(fit.devices.get('device')?.nearWallBefore, false,
-    'fit envelope uses unnudged bounds without running wall collision search');
   assert.deepEqual(fit.devices.get('device')?.visualScene, live.devices.get('device')?.visualScene,
     '#713: fit and live placements agree — there is no search to differ by');
 
@@ -468,7 +453,7 @@ test('Stage 4 reuses pure overlay placements and fit probes skip collision searc
     'live view is absent from the placement signature');
 });
 
-test('render scene keeps a close device cluster rigid without moving labels and caches permutations', () => {
+test('render scene keeps coincident devices coincident, leaves labels alone and caches permutations', () => {
   const owner = {
     ...room('owner', 0, 0, 400, 400),
     name: 'Owner label', area: 'living', settings: {},
@@ -502,29 +487,27 @@ test('render scene keeps a close device cluster rigid without moving labels and 
     openingWallIndex: () => ({ adjacencyEps: 0.1, edges: [] }),
   };
   const scene = buildIsoOverlayRenderScene(input);
-  assert.deepEqual(scene.residualPairs, [], 'intra-group overlap is not reported as inter-group debt');
   const deviceEntries = scene.entries.filter((entry) => entry.kind === 'device');
   for (let index = 0; index < deviceEntries.length; index++) {
-    assert.ok(deviceEntries[index].placement.nudgeDistanceCss <= 48);
+    assert.deepEqual(deviceEntries[index].placement.visualScene,
+      projectPlanPoint([200, 200], ISO_WALL_HEIGHT), 'every device only rises to the wall top');
     for (let other = 0; other < index; other++) {
       const a = deviceEntries[index], b = deviceEntries[other];
       assert.deepEqual(a.placement.visualScene, b.placement.visualScene,
         `device roots ${a.id}/${b.id} keep their canonical coincident relationship`);
-      assert.deepEqual(a.placement.nudgeCss, b.placement.nudgeCss,
-        `device roots ${a.id}/${b.id} receive one rigid displacement`);
     }
   }
   const label = scene.entries.find((entry) => entry.kind === 'room-label');
-  assert.ok(label, 'fixture includes a room label at the same projected anchor');
-  assert.equal(label.placement.nudgeDistanceCss, 0,
-    'device collisions do not push the room label');
+  assert.ok(label, 'fixture includes a room label at the same floor anchor');
+  assert.deepEqual(label.placement.visualScene, [200, 200],
+    'coincident devices do not push the room label');
 
   const permuted = buildIsoOverlayRenderScene({ ...input, devices: [...devices].reverse() });
   assert.strictEqual(permuted, scene,
     'HA registry permutations reuse the same immutable group layout snapshot');
   const fit = buildIsoOverlayRenderScene({ ...input, resolveCollisions: false });
-  assert.deepEqual(fit.devices.get('a').visualScene, fit.devices.get('b').visualScene,
-    'fit probing deliberately skips live group displacement');
+  assert.deepEqual(fit.devices.get('a').visualScene, scene.devices.get('a').visualScene,
+    'fit probing and the live scene place the cluster identically');
 });
 
 test('#711 состояние устройства не двигает значки: раскладка не пересчитывается, границы видят бейдж', () => {
@@ -579,11 +562,11 @@ test('#711 состояние устройства не двигает знач�
   }
 });
 
-test('visible wall side quads participate in overlay collision', () => {
+test('structural wall silhouettes reuse every visible side quad', () => {
   const walls = [[[[45, 20], [55, 20], [55, 80], [45, 80]]]];
   const scene = resolveIsoScene({
     source: {
-      key: 'visible-side-collision',
+      key: 'visible-side-silhouettes',
       build: () => ({ walls, floor: walls, openings: [], openingSurfaces: [] }),
     },
     cache: new Map(),
@@ -592,49 +575,11 @@ test('visible wall side quads participate in overlay collision', () => {
   });
   assert.ok(scene.geometry.sides.length > 0, 'fixture exposes visible vertical wall faces');
   assert.equal(scene.wallSilhouettes.length, 1 + scene.geometry.sides.length,
-    'collision set contains the top footprint and every visible side');
+    'the silhouette set contains the top footprint and every visible side');
   scene.geometry.sides.forEach((face, index) => {
     assert.strictEqual(scene.wallSilhouettes[index + 1].outer, face.points,
       `visible side ${index} reuses its exact render quad`);
   });
-
-  const face = scene.geometry.sides.reduce((lowest, candidate) =>
-    candidate.depth > lowest.depth ? candidate : lowest);
-  const sideCenter = [
-    face.points.reduce((sum, point) => sum + point[0], 0) / face.points.length,
-    face.points.reduce((sum, point) => sum + point[1], 0) / face.points.length,
-  ];
-  const raisedFloorScene = [
-    sideCenter[0],
-    sideCenter[1] + ISO_RAISED_OVERLAY_HEIGHT * ISO_CAMERA.zScale
-      * Math.sin(ISO_CAMERA.tiltDeg * Math.PI / 180),
-  ];
-  const floorAnchor = unprojectFloorPoint(raisedFloorScene);
-  const owner = room('owner', -1_000, -1_000, 1_000, 1_000);
-  owner.safePoint = [0, 0];
-  const collisionInput = {
-    kind: 'device',
-    floorAnchor,
-    rooms: [{ id: owner.id, outer: owner.poly, safePoint: owner.safePoint }],
-    preferredRoomId: owner.id,
-    showBorders: true,
-    footprintHalfSize: [0.05, 0.05],
-    wallHeight: ISO_WALL_HEIGHT,
-    visualOffset: ISO_OVERLAY_VISUAL_OFFSET,
-    sceneUnitsPerCssPixel: 1,
-    safetyGapCssPx: 0,
-    maxNudgeCssPx: 0,
-  };
-  const topOnly = resolveIsoOverlayPlacement({
-    ...collisionInput, wallSilhouettes: scene.wallSilhouettes.slice(0, 1),
-  });
-  const complete = resolveIsoOverlayPlacement({
-    ...collisionInput, wallSilhouettes: scene.wallSilhouettes,
-  });
-  assert.equal(topOnly.nearWallBefore, false,
-    'raised footprint does not touch the wall-top footprint');
-  assert.equal(complete.nearWallBefore, true,
-    'the same raised footprint intersects a rendered vertical side');
 });
 
 test('orphan hosted openings never become phantom Stage 4 volumes', () => {
@@ -947,8 +892,6 @@ test('#473 W2 after #713: walls no longer move a tile, the cache still follows t
   assert.notStrictEqual(noWalls, withWall, 'a new geometry array is a new cache slot');
   assert.deepEqual(noWalls.visualScene, withWall.visualScene,
     'the tile position does not depend on nearby walls');
-  assert.equal(withWall.nearWallBefore, false);
-  assert.equal(withWall.nudged, false);
 });
 
 test('#713 AC3: live zoom never recomputes placement and every tile gets one straight-up shift', () => {
@@ -980,30 +923,6 @@ test('#713 K5: room names stay on the Flat floor point while devices share the w
   const label = scene.rooms.get(owner);
   assert.ok(label, 'the room label is placed');
   assert.deepEqual(label.visualScene, [30, 40], 'the name keeps its Flat position');
-  assert.equal(label.nudged, false);
   const device = scene.devices.get('device');
   assert.deepEqual(device.visualScene, projectPlanPoint([5, 50], ISO_WALL_HEIGHT));
-});
-
-test('#473 W4: AABB-отсечение учитывает зазор безопасности', () => {
-  // Плита, чьи границы не пересекают границы стены, но лежат внутри gap,
-  // обязана считаться «у стены». Отсечение без зазора отбросило бы силуэт
-  // до точного теста, и плита легла бы вплотную к стене.
-  // Стена — компактный силуэт: у длинной стены AABB в изометрии накрывает плиту
-  // при любом сдвиге вдоль оси, и отсечение не участвует в решении.
-  const wall = { outer: buildIsoFootprintPolygon([0, 50], [2, 2], 0) };
-  const owner = { id: 'owner', outer: [[0, 0], [100, 0], [100, 100], [0, 100]], holes: [], safePoint: [50, 50] };
-  const placeAt = (x, safetyGapCssPx) => resolveIsoOverlayPlacement({
-    kind: 'device', floorAnchor: [x, 50], footprintHalfSize: [2, 2],
-    rooms: [owner], roomsValidated: true, preferredRoomId: 'owner',
-    ownerAlreadyResolved: true, resolvedOwner: { room: owner, safePoint: [50, 50] },
-    showBorders: true, wallSilhouettes: [wall], wallGeometryValidated: true,
-    unitsPerPixel: 1, safetyGapCssPx, wallHeight: ISO_WALL_HEIGHT, visualOffset: 0,
-  });
-  // без зазора плита на расстоянии 2 единиц от стены — не у стены
-  const noGap = placeAt(2 + 2 + 2, 0);
-  assert.equal(noGap.nearWallBefore, false, 'контроль: без зазора не у стены');
-  // с зазором 4 — у стены, хотя AABB не пересекаются
-  const withGap = placeAt(2 + 2 + 2, 4);
-  assert.equal(withGap.nearWallBefore, true, 'в пределах зазора — у стены');
 });
