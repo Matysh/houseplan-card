@@ -327,13 +327,17 @@ device tooltips.
 
 An administrator turns the volumetric plan on once: **General settings →
 Display → Show the plan in 2.5D**. After saving, View and kiosk in every space
-and on every device show walls, doors, windows and device markers with depth:
-markers are raised tiles with a soft shadow on the floor, and windows cast a
-soft wash of sunlight (when sun rays are on and north is set). Walls keep the
-wall colour from General settings in light and dark themes alike; furniture and
-other decor look exactly as on the flat plan. Editors are always flat. The
-option is off by default; turning it off or **Reset** returns the flat plan.
-There is no separate button on the card.
+and on every device show walls, doors, windows and device markers with depth.
+The plan itself does not move: rooms, furniture, other decor and room names
+stay exactly where they are on the flat plan, and walls grow straight up from
+it. Every device marker and door lock is lifted by the same distance — the wall
+height — as a raised tile with a soft shadow; near a wall a tile may overlap it.
+Windows cast a soft wash of sunlight (when sun rays are on and north is set).
+Walls keep the wall colour from General settings in light and dark themes
+alike. Switching the option, or opening an editor from the 2.5D View, keeps the
+zoom and position on screen. Editors are always flat. The option is off by
+default; turning it off or **Reset** returns the flat plan. There is no
+separate button on the card.
 
 For an occasional Zigbee placement check, an administrator can enable
 **General settings → Show Zigbee links when hovering over a device**. The option

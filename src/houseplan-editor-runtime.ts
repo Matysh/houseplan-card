@@ -47,7 +47,7 @@ import {
   spaceDisplayOf, DEFAULT_FILL_COLORS, customFillOf, DEFAULT_CUSTOM_FILL, type FillColors,
   type FillColorEntry, RUN_TARGET_DOMAINS, DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
   showRoomTooltipOf, volumetricViewOf, DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, normalizeDeviceDisplay,
-  type DeviceDisplayMode, liveTextReference, liveTextToken, DECOR_TEXT_BASE,
+  type DeviceDisplayMode, liveTextReference, liveTextToken, DECOR_TEXT_BASE, fitView,
 } from './logic';
 import {
   resolveSafeResize,
@@ -458,7 +458,7 @@ export interface HouseplanEditorHostPort {
   _backdropDialog: { widthCm: number; heightCm: number; angle: string; } | null;
   _backupExportDialog: { kind: "full" | "space"; planOnly: boolean; busy: boolean; error: string; } | null;
   _backupImportDialog: { filename: string; size: number; token: string; preview: any; expectedConfigRev: number; expectedLayoutRev: number; duplicatePolicy: "skip" | "virtual"; confirmMissing: boolean; busy: boolean; error: string; } | null;
-  _baseVb: () => number[];
+  _baseVb: (projection?: 'flat' | 'iso') => number[];
   _bdActive: boolean;
   _bdBase: Rect | null;
   _bdDrag: { kind: "move" | "scale" | "rotate"; pid: number; sx: number; sy: number; base: Rect; p0: { dx: number; dy: number; sx: number; sy: number; angle: number; }; fx: number; fy: number; sgx: number; sgy: number; rect0: DecorBox; before: SpaceGeometryState | null; moved: boolean; } | null;
@@ -601,7 +601,7 @@ export interface HouseplanEditorHostPort {
   _lastValidStageSize: [number, number] | null;
   _layout: DeviceLayout;
   readonly _layoutRev: number;
-  _logicalViewCenter: (projection: "flat" | "iso") => { x: number; y: number; } | null;
+  _logicalViewCenter: () => { x: number; y: number; } | null;
   _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
@@ -989,16 +989,21 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       this.host._viewModeSnap = {
         space: this.host._space,
         zoom: this.host._zoom,
-        cx: v ? this.host._logicalViewCenter(previousProjection)?.x : undefined,
-        cy: v ? this.host._logicalViewCenter(previousProjection)?.y : undefined, w: previousProjection === 'flat' ? v?.w : undefined,
+        cx: v ? this.host._logicalViewCenter()?.x : undefined,
+        cy: v ? this.host._logicalViewCenter()?.y : undefined, w: previousProjection === 'flat' ? v?.w : undefined,
       };
       if (previousProjection === 'iso') {
-        const logical = this.host._logicalViewCenter('iso');
-        targetCenterX = logical?.x;
-        targetCenterY = logical?.y;
+        // #713: the 2.5D floor is the Flat plane. Enter the Flat editor with
+        // the same screen scale and centre, exactly as from a Flat View
+        // showing this picture: only the scalar zoom is re-read.
+        if (v) {
+          targetZoom = fitView(this.host._baseVb('flat'), v.w / v.h).w / v.w;
+          targetCenterX = v.x + v.w / 2;
+          targetCenterY = v.y + v.h / 2;
+        }
         this.host._view = null;
         this.host._mode = mode;
-        this.host._applyView(this.host._zoom, logical?.x, logical?.y);
+        this.host._applyView(targetZoom, targetCenterX, targetCenterY);
       }
       if (baseChanges) {
         targetZoom = 1;

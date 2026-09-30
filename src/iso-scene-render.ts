@@ -11,7 +11,7 @@ export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
 import { clampScale, islandsOf, roomPoly, type SpaceDisplay } from './logic';
 import {
-  ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT, ISO_OVERLAY_VISUAL_OFFSET,
+  ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT,
   ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT,
   projectPlanPoint, projectedFrame, type PlanPoint, type ScenePoint,
 } from './iso-projection';
@@ -26,8 +26,8 @@ import {
   type IsoOpeningGeometryPolicy, type IsoOpeningSurface,
 } from './iso-openings';
 import {
-  ISO_OVERLAY_MAX_NUDGE_CSS_PX, isoOverlayCollisionKey, isoRoomSafePoint,
-  resolveIsoOverlayOwner, resolveIsoOverlayPlacement, resolveIsoOverlayRigidGroups,
+  ISO_OVERLAY_MAX_NUDGE_CSS_PX, isoRoomSafePoint,
+  resolveIsoOverlayOwner, resolveIsoOverlayPlacement,
   type IsoOverlayPlacement, type IsoOverlayRoom, type IsoRaisedOverlayKind,
   type IsoWallSilhouette,
 } from './iso-overlays';
@@ -510,7 +510,7 @@ export function createIsoStructuralSource(
     wallHeight,
     raisedHeight,
     floorEdgeHeight,
-    algorithm: 5,
+    algorithm: 6, // #713: vertical oblique projection
   })}`;
   return {
     key,
@@ -689,9 +689,9 @@ export interface IsoOverlayFitEnvelopeInput {
 }
 
 /**
- * Stable fit envelope for screen-facing content. It starts from unnudged
- * geometry, then reserves the complete bounded CSS nudge at the fitted scale;
- * current zoom can therefore never feed back into the canonical home frame.
+ * Stable fit envelope for screen-facing content: the structure plus the tiles'
+ * own visual extent. Since #713 nothing moves at runtime, so no nudge budget is
+ * reserved and current zoom can never feed back into the canonical home frame.
  */
 export function resolveIsoOverlayFitEnvelope(
   input: IsoOverlayFitEnvelopeInput,
@@ -699,36 +699,11 @@ export function resolveIsoOverlayFitEnvelope(
   const entries = selectedOverlayEntries(input.entries, input.ownerId);
   const overlay = rectFromPoints(entries.flatMap((entry) => overlayEntryPoints(entry, false)));
   const base = overlay ? unionRect(input.baseBounds, overlay) : input.baseBounds;
-  const initial = input.targetView(base);
-  if (!initial || !(initial.w > 0) || !(initial.h > 0)
-      || ![initial.x, initial.y, initial.w, initial.h].every(Number.isFinite)) return null;
-  const stage = input.stageSize;
-  if (!overlay || !stage || !(stage.width > 0) || !(stage.height > 0))
-    return { bounds: base, view: initial };
-  const scaleOf = (view: Rect) => Math.max(view.w / stage.width, view.h / stage.height);
-  const candidate = (scale: number): { bounds: Rect; view: Rect } | null => {
-    const pad = ISO_OVERLAY_MAX_NUDGE_CSS_PX * scale;
-    const padded = { x: overlay.x - pad, y: overlay.y - pad,
-      w: overlay.w + pad * 2, h: overlay.h + pad * 2 };
-    const bounds = unionRect(input.baseBounds, padded);
-    const view = input.targetView(bounds);
-    return view && [view.x, view.y, view.w, view.h].every(Number.isFinite)
-      && view.w > 0 && view.h > 0 ? { bounds, view } : null;
-  };
-  let low = 0, high = Math.max(scaleOf(initial), Number.EPSILON), resolved = candidate(high);
-  for (let iteration = 0; resolved && scaleOf(resolved.view) > high * (1 + 1e-10)
-      && iteration < 24; iteration++) {
-    low = high; high *= 2; resolved = candidate(high);
-  }
-  if (!resolved) return null;
-  for (let iteration = 0; iteration < 40; iteration++) {
-    const middle = (low + high) / 2;
-    const next = candidate(middle);
-    if (!next) return null;
-    if (scaleOf(next.view) <= middle) { high = middle; resolved = next; }
-    else low = middle;
-  }
-  return resolved;
+  // #713: markers no longer move at runtime, so fit reserves no nudge budget:
+  // the frame is the structure plus the markers' own visual extent.
+  const view = input.targetView(base);
+  return view && view.w > 0 && view.h > 0
+    && [view.x, view.y, view.w, view.h].every(Number.isFinite) ? { bounds: base, view } : null;
 }
 
 export interface IsoOverlaySceneInput {
@@ -826,8 +801,10 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     : Math.max(layoutView.w, layoutView.h) / 1000;
   const roomRows = isoOverlayRooms(input.space);
   const rooms = roomRows.map((row) => row.overlayRoom);
+  // #713: device tiles and lock badges stand on the wall-top plane, one common
+  // straight-up shift for every marker; room names stay on the floor where
+  // Flat puts them. No placement search: markers may meet walls and each other.
   const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);
-  const visualOffset = gridVisualUnits(ISO_OVERLAY_VISUAL_OFFSET, input.cellCm);
   const devices = new Map<string, IsoOverlayPlacement>();
   const roomPlacements = new Map<RoomCfg, IsoOverlayPlacement>();
   const locks = new Map<string, IsoOverlayPlacement>();
@@ -851,6 +828,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     footprintHalfSize: PlanPoint,
     preferredRoomId?: string | null,
   ): IsoOverlayPlacement => {
+    const visualOffset = kind === 'room-label' ? 0 : wallHeight;
     const collisionMode = input.resolveCollisions === false ? 'fit' : 'live';
     const cacheKey = `${collisionMode}\u0000${kind}\u0000${id}`;
     const shapeSignature = [floorAnchor[0], floorAnchor[1],
@@ -897,7 +875,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
         ? cached.value.placement.nudgeDistanceCss * cached.value.unitsPerPixel / unitsPerPixel
         : undefined,
       showBorders: true,
-      wallSilhouettes: input.resolveCollisions === false ? [] : input.wallSilhouettes,
+      wallSilhouettes: [],
       wallGeometryValidated: true,
       footprintHalfSize,
       wallHeight,
@@ -1022,42 +1000,8 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     return refreshed;
   }
 
-  const previousEntries = new Map(previous?.entries.map((entry) => [
-    `${entry.kind}\u0000${entry.id}`, entry,
-  ]) || []);
-
-  const collision = mode === 'live' ? resolveIsoOverlayRigidGroups({
-    items: entries.flatMap((entry) => {
-      if (entry.kind === 'room-label') return [];
-      const before = previousEntries.get(`${entry.kind}\u0000${entry.id}`);
-      const sameShape = !!before
-        && layoutHalfSizeOf(before)[0] === layoutHalfSizeOf(entry)[0]
-        && layoutHalfSizeOf(before)[1] === layoutHalfSizeOf(entry)[1]
-        && before.placement.floorAnchor[0] === entry.placement.floorAnchor[0]
-        && before.placement.floorAnchor[1] === entry.placement.floorAnchor[1]
-        && (before.placement.owner?.id || '') === (entry.placement.owner?.id || '');
-      return [{
-        id: entry.id,
-        kind: entry.kind,
-        placement: entry.placement,
-        screenHalfSize: layoutHalfSizeOf(entry),
-        ...(sameShape ? { nudgeHintCss: [
-          before!.placement.nudgeScene[0] / unitsPerPixel,
-          before!.placement.nudgeScene[1] / unitsPerPixel,
-        ] as ScenePoint } : {}),
-      }];
-    }),
-    rooms,
-    wallSilhouettes: input.wallSilhouettes,
-    sceneUnitsPerCssPixel: unitsPerPixel,
-    visualOffset,
-  }) : { placements: new Map<string, IsoOverlayPlacement>(), residualPairs: [] };
-  const resolvedEntries = Object.freeze(entries.map((entry) => {
-    if (entry.kind === 'room-label') return entry;
-    const placement = collision.placements.get(isoOverlayCollisionKey(entry.kind, entry.id))
-      || entry.placement;
-    return placement === entry.placement ? entry : { ...entry, placement };
-  }));
+  // #713: no placement search, so the placed entries are final.
+  const resolvedEntries = Object.freeze(entries);
   const resolvedDevices = new Map<string, IsoOverlayPlacement>();
   const resolvedLocks = new Map<string, IsoOverlayPlacement>();
   for (const entry of resolvedEntries) {
@@ -1070,7 +1014,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     locks: resolvedLocks,
     entries: resolvedEntries,
     collisionSignature,
-    residualPairs: Object.freeze([...collision.residualPairs]),
+    residualPairs: Object.freeze([]),
   };
   if (previous && sameOverlayEntries(previous.entries, scene.entries)
       && samePlacementMap(previous.devices, scene.devices)

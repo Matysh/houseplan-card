@@ -714,7 +714,7 @@ try {
         const currentView = card._viewOr(card._baseVb());
         const currentDevice = card._devices.find((item) => item.id === device.dataset.id);
         const position = currentDevice ? card._pos(currentDevice) : null;
-        const scene = position ? card._scenePoint([position.x, position.y]) : null;
+        const scene = position ? [position.x, position.y] : null;
         const deviceRect = device.getBoundingClientRect();
         const expectedX = scene ? rect.left + ((scene[0] - currentView.x) / currentView.w) * rect.width : 0;
         const expectedY = scene ? rect.top + ((scene[1] - currentView.y) / currentView.h) * rect.height : 0;

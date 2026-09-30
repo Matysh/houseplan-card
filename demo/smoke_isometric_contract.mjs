@@ -173,11 +173,26 @@ const out = await page.evaluate(async () => {
     ['iso-centred-gate', 'leaf-front', 'matte-leaf'],
   ].every(([id, surface, material]) => hasOpeningSurface(id, surface, material))
     && !root().querySelector('[data-hp="iso-openings"] .iso-material-dark-glass');
+  // #713: device tiles and lock badges rise straight up by the wall-top height;
+  // room names keep their Flat floor point.
+  const isoLift = 84 * (5 / card._cellCm) * Math.sin(20 * Math.PI / 180);
+  const liftOf = (node) => {
+    const floorPoint = (node?.getAttribute('data-hp-iso-floor') || '').split(',').map(Number);
+    const visual = (node?.getAttribute('data-hp-iso-visual') || '').split(',').map(Number);
+    return floorPoint.length === 2 && visual.length === 2
+      ? [visual[0] - floorPoint[0], floorPoint[1] - visual[1]] : [NaN, NaN];
+  };
+  const liftMatches = (node) => {
+    const [dx, dy] = liftOf(node);
+    return node?.getAttribute('data-hp-iso-overlay-kind') === 'room-label'
+      ? Math.abs(dx) < 1e-6 && Math.abs(dy) < 1e-6
+      : Math.abs(dx) < 1e-6 && Math.abs(dy - isoLift) < 1e-6;
+  };
   const raisedRoot = (node, kind) => node?.getAttribute('data-hp-iso-overlay-kind') === kind
     && node.getAttribute('data-hp-iso-raised') === 'true'
     && node.getAttribute('data-hp-iso-floor')
     && node.getAttribute('data-hp-iso-visual')
-    && node.getAttribute('data-hp-iso-floor') !== node.getAttribute('data-hp-iso-visual');
+    && liftMatches(node);
   result.stage4UsesExactLowInteractiveRoots = raisedRoot(device, 'device')
     && raisedRoot(roomLabel, 'room-label')
     && raisedRoot(openingLock, 'opening-lock')
@@ -198,7 +213,7 @@ const out = await page.evaluate(async () => {
     if (visual.length !== 2 || floorPoint.length !== 2) return false;
     const expected = sceneToClient(visual), actual = center(node);
     return Math.hypot(actual[0] - expected[0], actual[1] - expected[1]) <= 1
-      && Math.hypot(floorPoint[0] - visual[0], floorPoint[1] - visual[1]) > 0;
+      && liftMatches(node);
   };
   result.globalFitContainsRaisedFootprints = raisedNodes.length >= 3
     && raisedNodes.every((node) => inside(root().querySelector('.stage'), node));

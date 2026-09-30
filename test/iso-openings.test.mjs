@@ -347,3 +347,18 @@ test('decoration degradation never removes structure or creates floating panels'
     structural: true, panels: false, shadows: true, materialNuance: true, floorSymbols: false,
   });
 });
+
+test('#713 AC7: opening depth runs along the oblique projector (s·y + z)', () => {
+  const s = Math.sin(20 * Math.PI / 180);
+  const basis = buildIsoOpeningBasis(opening());
+  const leaf = basis.leaves[0];
+  const top = projectIsoOpening(basis, 0)[0].surfaces.find((surface) => surface.kind === 'leaf-top');
+  assert.ok(top, 'the closed door leaf has a top face');
+  // The four top corners straddle the leaf axis symmetrically, so their mean
+  // plan point is the middle of the closed leaf.
+  const meanY = leaf.hinge[1] + leaf.closedVector[1] / 2;
+  assert.ok(Math.abs(top.cameraDepth - (s * meanY + leaf.top)) < 1e-9,
+    `${top.cameraDepth} != s·y + z = ${s * meanY + leaf.top}`);
+  assert.ok(Math.abs(top.cameraDepth - (s * meanY + leaf.top * Math.cos(20 * Math.PI / 180))) > 1e-3,
+    'the former orthographic key y·sin 20° + z·cos 20° is gone');
+});

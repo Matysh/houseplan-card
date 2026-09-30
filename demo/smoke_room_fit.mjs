@@ -91,8 +91,8 @@ const out = await page.evaluate(async () => {
     const activeView = c._view;
     const activeLabel = root.querySelector('.roomlabel[data-id="room-a"]');
     const activeSvg = root.querySelector('.plan-svg') || root.querySelector('.zoomwrap > svg');
-    const position = c._scenePoint([c._labelPos(room(), 'fit-floor').x,
-      c._labelPos(room(), 'fit-floor').y]);
+    // #713: the 2.5D floor is the Flat plane — a label anchor is its scene point.
+    const position = [c._labelPos(room(), 'fit-floor').x, c._labelPos(room(), 'fit-floor').y];
     const expectedLeft = ((position[0] - activeView.x) / activeView.w) * 100;
     const expectedTop = ((position[1] - activeView.y) / activeView.h) * 100;
     const actualView = activeSvg?.getAttribute('viewBox')?.trim().split(/\s+/).map(Number) || [];

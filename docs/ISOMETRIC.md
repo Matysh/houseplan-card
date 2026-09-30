@@ -19,8 +19,10 @@ means Flat, which is also the rollback. The rule is one for the card, the
 sidebar page and the kiosk: the View is 2.5D when the setting is on and Flat
 otherwise. Editors and `houseplan-space-card` are always Flat.
 
-Saving the setting switches the View at once, without a reload, and the view
-centre is carried over through the logical plan (#583 §6.3). The lazy
+Saving the setting switches the View at once, without a reload, and keeps the
+camera: the floor is the same plane in both projections (#713), so the plan,
+the decor and the room names stay on the same pixels; only the scalar zoom is
+re-read against the new frame (see [Camera and overlay placement](#camera-and-overlay-placement)). The lazy
 `iso-scene-render` graph is loaded only while the setting is on. The fingerprint
 fallback (#89) is unchanged: a failed scene falls back to Flat for that key.
 
@@ -51,15 +53,19 @@ There is no toggle on the card and no alpha entry: `iso` is gone from
 - `clientToScenePoint()` maps a client point to the current scene; floor hit
   testing then uses `unprojectFloorPoint()`.
 
-The presentation uses a fixed orthographic affine camera:
+The presentation uses a fixed vertical oblique projection (#713, owner's «third
+way»): the floor is not transformed at all, and a height moves a point straight
+up the screen.
 
 ```text
 rotDeg=0, tiltDeg=20, xyScale=1, zScale=1, origin=[500,500]
-wallHeight=84 scale-aware visual units
+screen(x, y, z) = (x, y − z·sin 20°)        floor (z = 0): the Flat plane
+wallHeight=84 scale-aware visual units → the wall top rises 0.342·H on screen
 ```
 
-There is no perspective, free rotation or user tilt. Switching projections
-preserves scalar zoom and converts the view centre through logical floor space.
+`tiltDeg` now only sets the on-screen wall height (`sin 20°`, the same 28.73
+units as the former 20° orthographic camera); there is no `cos 20°` floor
+foreshortening anywhere. There is no perspective, free rotation or user tilt.
 `projectedFrame()` includes both floor corners and wall-top corners so fit/home
 cannot clip the volume.
 
@@ -109,7 +115,8 @@ the rollback path and does not depend on the iso cache.
 
 Internal fail-closed evidence, not public API (`STYLING-HOOKS.md` §7.7):
 `.stage[data-hp-iso-stage="4"]` with `data-hp-iso-structural-builds`,
-`data-hp-iso-overlay-kind|raised|nudged` on low-plane roots, and
+`data-hp-iso-overlay-kind|raised|nudged` on screen-facing roots (`nudged` is always
+`false` since #713), and
 `data-hp-iso-material-def` on shared material definitions. The structural LRU is
 `_isoGeometryCache`.
 
@@ -118,8 +125,8 @@ Internal fail-closed evidence, not public API (`STYLING-HOOKS.md` §7.7):
 - No volumetric editor and no volumetric `houseplan-space-card`: editors and
   the static card are always Flat (see Activation).
 - No perspective, free rotation or user tilt; no marker occlusion by walls —
-  screen-facing overlays sit on a low plane above the floor and are shifted,
-  never hidden.
+  device tiles and lock badges stand on the wall-top plane and may overlap wall
+  bodies and each other (owner's decision, #713), never hidden.
 - No per-opening schema field for heights or leaves: every vertical element is
   a fixed presentation ratio of `ISO_WALL_HEIGHT`.
 - No YAML/config option beyond `settings.volumetric_view`.
@@ -141,7 +148,7 @@ The per-card LRU is capped at eight entries. A scene contains:
 
 The key fingerprints rooms, masonry/opening geometry, flips, scale/camera, wall
 and edge heights, the `0°/20°/84` profile, opening policy revision 3 and
-structural algorithm 5. It excludes HA state, live opening amount, theme,
+structural algorithm 6 (the #713 oblique projection). It excludes HA state, live opening amount, theme,
 hover/selection, day/night, SUN and filter capability. `openingAmount()` is
 applied only after an LRU hit by `projectIsoOpening()`, so a contact update
 projects O(O) leaves without repeating a wall or floor boolean operation.
@@ -157,7 +164,8 @@ not enlarge it.
 ## Layer order and materials
 
 All geometry roots use one scene `viewBox`. The existing floor/live nodes are
-grouped under the affine matrix; HTML anchors still use `projectPlanPoint()`.
+grouped in `.iso-floor-scene` without a transform (the floor is the Flat plane);
+HTML anchors still use `projectPlanPoint()`.
 
 ```text
 stage background
@@ -213,72 +221,63 @@ differences instead of strokes; window frame/glass borders remain.
 - `hide_openings: true`: panels disappear, while masonry cuts, Glow/sun and
   contact/lock meaning remain;
 - `show_borders: false` is the exact no-volume branch: the volumetric roots are
-  absent, the floor keeps the real 0°/20° affine matrix, the floor symbols
-  and the projected frame return (subject to `hide_openings`) and interactive
-  overlays return to their floor anchors;
+  absent, the floor is the Flat plane, the floor symbols and the projected
+  frame return (subject to `hide_openings`) and interactive overlays return to
+  their floor anchors — geometrically the scene is the Flat View;
 - Flat, editors and `houseplan-space-card` retain their old symbols and DOM.
 
 ## Camera and overlay placement
 
-The camera is orthographic `rotDeg=0`, `tiltDeg=20`, with the `[500,500]`
-pivot and scale-aware 84-unit wall height. Floor SVG, wall/opening projection,
-inverse hit mapping, invisible collision footprints and fit bounds share that
-one affine authority.
-`isoPlaneMatrix()` (`src/iso-projection.ts`) is that authority. The projected
-frame also includes the low overlay plane; blur and shadow extents never enter
-fit.
+The projection is the fixed vertical oblique one above: rotation 0, the
+`[500,500]` pivot, a scale-aware 84-unit wall height rising `0.342·H` straight
+up. Floor SVG, wall/opening projection, inverse hit mapping (the identity on the
+floor), invisible collision footprints and fit bounds share that one affine
+authority. `isoPlaneMatrix()` (`src/iso-projection.ts`) is that authority; the
+floor plane matrix is the identity.
 
-Device markers, room labels/cards and opening-lock badges keep their canonical
-floor anchors but render on a low plane four visual units above the floor.
-Devices and lock badges in the same room whose canonical reference-fit bounds
-(expanded by 12 CSS px) connect form one rigid cluster. Every member receives
-the same scene-space displacement, so pairwise vectors, rows and intervals are
-the affine projection of the Flat layout rather than a per-marker fan toward a
-room safe point. Room labels never enter a cluster and stay below interactive
-roots.
+**Placement (#713, owner's variant B).** Device tiles and opening-lock badges
+keep their canonical floor anchors and stand on the wall-top plane: every one of
+them is drawn at its Flat position shifted straight up by the same `H·sin 20°`.
+There is no placement search, no rigid clusters and no per-marker vector; tiles
+may meet wall bodies and each other, and the overlapping pairs are the Flat ones
+(scaled by the 1.12 tile). Room names with their metrics row stay on the floor
+exactly where Flat puts them, without a position correction. A device never
+moves because its Home Assistant state changed (#711 holds trivially: nothing
+is laid out). The #651 resolvers (`resolveIsoOverlayRigidGroups`,
+`resolveIsoOverlayCollisions` and the nudge search in `resolveIsoOverlayPlacement`)
+are no longer called by the scene; their removal is
+[#714](https://github.com/Matysh/houseplan-card/issues/714).
 
-A device never moves because its Home Assistant state changed (owner's
-decision, #711). The layout sees the state-free tile of a device — its icon at
-its configured size, without value text, value badges or supplemental metrics,
-which change with state. Those still count in the fit bounds, and an HA-only
-change refreshes that visual extent without a new collision search.
+Vertical openings are ordered along the oblique projector: a face's
+`cameraDepth` is the mean of `s·y + z` over its corners (`s = sin 20°`).
 
-`src/iso-overlays.ts` is the pure placement boundary. A device accepts its
-explicit room only when that room strictly contains its floor anchor, otherwise
-the smallest strictly containing room (stable id tie-break); room labels use
-their own room; lock badges inherit the physical room side selected by
-opening-host geometry. Wall clearance uses a 4 CSS px safety gap
-(`ISO_OVERLAY_SAFETY_GAP_CSS_PX`), and every candidate path must stay strictly
-inside the owner and outside its island holes. Boundary candidates are evaluated
-on the integer CSS-pixel lattice through a bounded spatial grid (#585), so
-sub-4 px legal slits are found without an all-pairs or disk scan.
+**Fit.** Home and room fit (#152) project floor vertices at floor and floor-edge
+depth and boundary-wall vertices at floor and wall-top height; the overlay fit
+envelope adds the visible tiles themselves and reserves no nudge budget.
 
-The reference-fit view, not the current live view, converts CSS safety values
-into scene units. Wheel/button zoom, pinch and pan therefore transform an
-already resolved scene and cannot invalidate placement. Structural changes —
-stage/camera, walls, rooms, marker membership or canonical anchors — rebuild it
-deterministically; viewport movement and HA-only state do not. One common
-vector clears the exact wall silhouettes and already placed clusters within an
-absolute 48 CSS-pixel reference-fit budget, using stable size/required-shift/
-kind-id order and boundary candidates instead of scanning the displacement
-disk. The correction is runtime-only and is never written to configuration.
+**Switching projection keeps the camera.** When the projection changes while the
+previous one was on screen — saving the setting (also when the 2.5D runtime
+arrives afterwards), entering an editor from the 2.5D View, or adopting a warm
+memo saved in the other projection (the window size is part of its key) — the
+viewBox itself is kept and the scalar zoom is re-read as `fit'.w / view.w`
+against the new frame, clamped to `[1/3, 8]`. Entering an editor from 2.5D
+therefore produces the camera a Flat View with the same floor picture would.
+Leaving the editor restores the View camera as before. A cold 2.5D start
+without a memo opens the 2.5D home (zoom 1, frame with wall tops); a setting
+changed while an editor is open restores the View snapshot by centre and scalar
+zoom. Witness: `demo/smoke_iso_flat_parity.mjs`.
 
-If no completely legal common vector exists, the nearest deterministic result
-keeps the cluster rigid and prioritises room ownership, then wall clearance,
-then overlap with an earlier cluster. It never splits or shrinks a cluster;
-residual overlap is an explicit degraded diagnostic. The two full isometric
-profiles keep the ordinary 150/60/75 ms resize/pan/state noise allowances
-(#585, #651). Fit probes reserve the maximum correction but do not execute
-live collision search. There is no painted plate, long tether, ground dot or
-per-marker shadow. The original screen-facing HTML root remains the only hit,
-focus, tooltip and action target, and selection/hover cannot invalidate the
-placement cache. Vacuum, Glow/spill, SUN, room fills/hover, arbitrary decor,
-furniture/backdrop, stairs and every persisted coordinate remain on `z=0`.
+The placement is runtime-only and never written to configuration. There is no
+painted plate, long tether, ground dot or per-marker shadow beyond the #649
+tile shadow. The original screen-facing HTML root remains the only hit, focus,
+tooltip and action target, and selection/hover cannot invalidate the placement
+cache. Vacuum, Glow/spill, SUN, room fills/hover, arbitrary decor,
+furniture/backdrop, stairs and every persisted coordinate remain on `z=0`, which
+is the Flat plane.
 
 Room names remain screen-facing and lose stroke, text shadow, drop shadow and
 halo. Iso uses `#303936` on a light presentation and `#f2f0e8` on a dark one;
-contrast comes from colour and the bounded position correction, never an
-outline.
+contrast comes from colour, never an outline.
 
 ## Stage 6: public mode, tiles, sun and materials (#649)
 

@@ -64,7 +64,6 @@ interface LiveEditorHost {
   /** #521: guides for the gesture in flight; `nothing` while the runtime loads. */
   _renderAlignGuides: () => unknown;
   _livePos: (device: { id: string }) => { x: number; y: number };
-  _scenePoint: (point: number[]) => number[];
   _renderProjection: string;
   _spaceModel: () => SpaceModel | null;
   _spaceWalls: WallEntry[];
@@ -309,11 +308,11 @@ const paintDevice = (host: LiveEditorHost, root: ParentNode): void => {
   const element = [...root.querySelectorAll<HTMLElement>('[data-hp="device"]')]
     .find((candidate) => candidate.dataset.id === drag.id);
   if (!device || !element) return;
+  // #713: the 2.5D floor is the Flat plane, and editors are Flat anyway.
   const position = host._livePos(device);
-  const point = host._scenePoint([position.x, position.y]);
   const view = host._viewOr(host._baseVb());
-  element.style.left = `${((point[0] - view.x) / view.w) * 100}%`;
-  element.style.top = `${((point[1] - view.y) / view.h) * 100}%`;
+  element.style.left = `${((position.x - view.x) / view.w) * 100}%`;
+  element.style.top = `${((position.y - view.y) / view.h) * 100}%`;
 };
 
 const makeDecorShapeTransparent = (

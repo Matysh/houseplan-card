@@ -53,8 +53,8 @@ const out = await page.evaluate(async () => {
       calibration: { m1: [0.5, 0, 0, 0, 0.5, 0] },
     },
   });
-  // Put one real interactive device almost on the shared wall so this smoke
-  // always owns a deterministic non-zero nudge witness.
+  // Put one real interactive device almost on the shared wall: since #713 it
+  // must rise straight up like every other tile, without a nudge.
   original._layout.d_light1 = { ...original._layout.d_light1, s: 'f1', x: 0.548, y: 0.22 };
   original._layout['iso-vacuum'] = { s: 'f1', x: 0.18, y: 0.78 };
   original._hoverRoom = { space: 'f1', room: original._spaceModel('f1').rooms[0] };
@@ -189,8 +189,10 @@ const out = await page.evaluate(async () => {
   const overlaySvg = root(original).querySelector('.iso-overlays-svg');
   const wallSvg = root(original).querySelector('.iso-walls-svg');
   const doorResolved = original._openingsR.find((opening) => opening.id === 'iso-door');
-  const isoFloorMatrix = (root(original).querySelector('.iso-floor-scene')
-    ?.getAttribute('transform')?.match(/-?[\d.e+]+/gi) || []).map(Number);
+  // #713: the 2.5D floor is the Flat plane — the floor group carries no transform.
+  const isoFloorGroupPlain = !!root(original).querySelector('.iso-floor-scene')
+    && !root(original).querySelector('.iso-floor-scene')?.hasAttribute('transform');
+  const isoFloorMatrix = [1, 0, 0, 1, 0, 0];
   const wallHeight = 84 * (5 / original._cellCm);
   const openingTopPoint = doorResolved && isoFloorMatrix.length === 6
     ? new DOMPoint(
@@ -246,6 +248,7 @@ const out = await page.evaluate(async () => {
     oldFloorSymbolsNotDuplicated: before.openings === 0,
     visibleOpeningHasMasonryCut: Boolean(openingCutIsEmpty)
       && wallTopPathsBeforeHide.length > 0,
+    isoFloorGroupPlain,
   };
 
   configSpace.settings.hide_openings = true;
@@ -288,18 +291,13 @@ const out = await page.evaluate(async () => {
   original.requestUpdate();
   await original.updateComplete;
   const noBordersFloor = root(original).querySelector('.plan-svg .iso-floor-scene');
-  const floorMatrix = (noBordersFloor?.getAttribute('transform')?.match(/-?[\d.e+]+/gi) || [])
-    .map(Number);
   const noBordersDevice = root(original).querySelector('[data-hp="device"]');
   const noBordersRoom = root(original).querySelector('[data-hp="room-label"]');
   const noBordersLock = root(original).querySelector('.oplock');
-  result.noBordersUsesTrueAffineFloor = original._effectiveProjection() === 'iso'
+  result.noBordersUsesFlatFloor = original._effectiveProjection() === 'iso'
     && root(original).querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '4'
     && root(original).querySelector('.plan-svg')?.getAttribute('data-hp-live-viewbox') === 'camera'
-    && floorMatrix.length === 6 && floorMatrix.every(Number.isFinite)
-    && Math.abs(floorMatrix[0] - 1) < 1e-6
-    && Math.abs(floorMatrix[1]) < 1e-6 && Math.abs(floorMatrix[2]) < 1e-6
-    && Math.abs(floorMatrix[3] - Math.cos(20 * Math.PI / 180)) < 1e-6
+    && !!noBordersFloor && !noBordersFloor.hasAttribute('transform')
     && root(original).querySelectorAll('[data-hp="opening"]').length === 3
     && [noBordersDevice, noBordersRoom, noBordersLock].every((node) => node
       && !node.hasAttribute('data-hp-iso-raised'));
@@ -348,9 +346,10 @@ const out = await page.evaluate(async () => {
     && root(original).querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint === wallFingerprint
     && original._isoGeometryCache.get(wallFingerprint)?.geometry === cachedGeometry
     && original._isoGeometryCache.size === 1;
-  result.runtimeNudgeNeverPersists = JSON.stringify(original._layout) === floorLayoutBeforeLive
+  result.runtimeLiftNeverPersists = JSON.stringify(original._layout) === floorLayoutBeforeLive
     && forbiddenWrites.length === 0 && storageWrites.length === 0
-    && !!root(original).querySelector('[data-hp-iso-nudged="true"]')
+    && !!root(original).querySelector('[data-hp-iso-raised="true"][data-hp-iso-nudged="false"]')
+    && !root(original).querySelector('[data-hp-iso-nudged="true"]')
     && !root(original).querySelector('.iso-overlay-tether, .iso-overlay-ground');
   Storage.prototype.setItem = nativeStorageSet;
 
@@ -364,8 +363,8 @@ const out = await page.evaluate(async () => {
   CSS.supports = () => false;
   original.requestUpdate();
   await original.updateComplete;
-  const fallbackNudged = root(original).querySelector('[data-hp-iso-nudged="true"][data-id]');
-  const fallbackId = fallbackNudged?.getAttribute('data-id');
+  const fallbackRaised = root(original).querySelector('[data-hp-iso-raised="true"][data-id]');
+  const fallbackId = fallbackRaised?.getAttribute('data-id');
   root(original).querySelector('[data-entity="light.ceiling"]')?.click();
   await frame();
   result.unsupportedDecorationKeepsIsoStructure = !!root(original).querySelector('[data-hp="iso-walls"]')

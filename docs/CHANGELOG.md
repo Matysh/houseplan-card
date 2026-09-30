@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- In 2.5D View the plan no longer moves: rooms, furniture, other decor and room
+  names stay exactly where they are on the flat plan, and walls grow straight up
+  from it. Every device icon and door lock is lifted by the same distance, the
+  wall height, instead of being shifted differently near walls. Turning 2.5D on
+  or off, or opening an editor from it, keeps the zoom and position on screen
+  ([#713](https://github.com/Matysh/houseplan-card/issues/713)).
 - On the "Follow the Sun" background, the moon in its current phase now appears
   in the top-left corner of the scene at dawn, dusk and night, behind the plan.
   It follows the real moon over your home (Home Assistant home location), fades

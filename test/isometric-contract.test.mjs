@@ -147,11 +147,15 @@ test('Stage 4 keeps device, room and lock roots on one corrected low visual plan
     '_renderSunRays(space)', '_renderOpenings(disp)',
     '_renderVacuums(this._renderVacuumDevices, view, space.id)',
   ]) assert.ok(card.includes(renderer), `missing ${renderer}`);
-  assert.match(card, /const point = isoPlacement\?\.visualScene \?\? this\._scenePoint\(\[pos\.x, pos\.y\]\)/);
-  assert.match(card, /const point = isoPlacement\?\.visualScene \?\? this\._scenePoint\(\[p\.x, p\.y\]\)/);
-  assert.match(card, /const point = isoPlacement\?\.visualScene \?\? this\._scenePoint\(floorAnchor\)/);
+  // #713: the 2.5D floor is the Flat plane, so a floor anchor is its own scene point.
+  assert.match(card, /const point = isoPlacement\?\.visualScene \?\? \[pos\.x, pos\.y\]/);
+  assert.match(card, /const point = isoPlacement\?\.visualScene \?\? \[p\.x, p\.y\]/);
+  assert.match(card, /const point = isoPlacement\?\.visualScene \?\? floorAnchor/);
+  assert.doesNotMatch(card, /_scenePoint/);
+  assert.doesNotMatch(readFileSync(new URL('../src/live-editor.ts', import.meta.url), 'utf8'), /_scenePoint/,
+    'the live editor paints a dragged marker at its Flat point too');
   const vacuum = section(card, 'private _renderVacuums(', 'private _renderDevice(');
-  assert.match(vacuum, /const point = this\._scenePoint\(\[cx, cy\]\)/);
+  assert.match(vacuum, /const point = \[cx, cy\]/);
   assert.doesNotMatch(vacuum, /visualScene|raisedScene|resolveIsoOverlayPlacement/);
   for (const kind of ['device', 'room-label', 'opening-lock'])
     assert.match(card, new RegExp(`data-hp-iso-overlay-kind=\\$\\{isoPlacement\\?\\.plane === 'raised' \\? '${kind}'`));
@@ -162,7 +166,7 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   assert.match(sceneRender, /flipV: !!opening\.flip_v/);
   assert.match(sceneRender, /const floorEdgeHeight = gridVisualUnits\(ISO_FLOOR_EDGE_HEIGHT, input\.cellCm\)/);
   assert.match(sceneRender, /const raisedHeight = gridVisualUnits\(ISO_RAISED_OVERLAY_HEIGHT, input\.cellCm\)/);
-  assert.match(sceneRender, /camera: ISO_CAMERA,[\s\S]*?wallHeight,[\s\S]*?raisedHeight,[\s\S]*?floorEdgeHeight,[\s\S]*?algorithm: 5/);
+  assert.match(sceneRender, /camera: ISO_CAMERA,[\s\S]*?wallHeight,[\s\S]*?raisedHeight,[\s\S]*?floorEdgeHeight,[\s\S]*?algorithm: 6/);
   const source = section(sceneRender, 'export function createIsoStructuralSource', 'const unknownArray');
   const roomProjection = section(sceneRender,
     'export function isoStructuralRoomGeometry', 'export type IsoStructuralOpeningHost');
@@ -204,16 +208,18 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   assert.match(sceneRender, /wallSilhouettes:\s*Object\.freeze\(\[[\s\S]*?\.\.\.wallTops,[\s\S]*?\.\.\.geometry\.sides\.map\(\(face\) => \(\{ outer: face\.points \}\)\),[\s\S]*?\]\)/);
 });
 
-test('show_borders:false keeps the exact zero-yaw floor matrix and removes every volume cue', () => {
+test('show_borders:false keeps the Flat floor plane and removes every volume cue', () => {
   assert.match(card, /isoLayers && !isoLayers\.floorSymbols/);
   assert.match(card, /<svg class="plan-svg"[\s\S]*?data-hp-live-viewbox=\$\{iso \? 'camera' : 'floor'\}/);
-  assert.match(card, /transform=\$\{iso \? isoFloorMatrixCss\(\) : nothing\}/);
+  // #713: the floor group carries no transform in either branch.
+  assert.match(card, /<g class=\$\{iso \? 'iso-floor-scene' : nothing\}>/);
+  assert.doesNotMatch(card, /isoFloorMatrixCss|unprojectFloorPoint/);
   assert.match(card,
     /\$\{litCache\(iso && isoLayers\?\.structural \? svg`<svg class="iso-shadows-svg"/);
   assert.match(card, /if \(!runtime \|\| !layers\?\.structural \|\| !structural\) return null/);
   const baseView = section(card, 'private _baseVb(', '/** How many objects');
   assert.match(baseView, /if \(!this\._spaceDisplayForRender\(\)\.showBorders\)[\s\S]*?projectedFrame\(\{[\s\S]*?wallHeight:\s*0/);
-  const effective = section(card, 'private _effectiveProjection()', 'private _scenePoint');
+  const effective = section(card, 'private _effectiveProjection()', 'private _floorView');
   assert.ok(effective.indexOf("if (!this._spaceDisplayForRender().showBorders)")
     < effective.indexOf('const source = this._isoSource()'));
   assert.doesNotMatch(baseView, /ISO_WALL_HEIGHT|raisedHeight|floorDepth/);
@@ -221,7 +227,7 @@ test('show_borders:false keeps the exact zero-yaw floor matrix and removes every
 });
 
 test('one frame resolves one structural source and latches late topology/projection failures', () => {
-  const effective = section(card, 'private _effectiveProjection()', 'private _scenePoint');
+  const effective = section(card, 'private _effectiveProjection()', 'private _floorView');
   assert.equal([...effective.matchAll(/this\._isoSource\(\)/g)].length, 1);
   assert.match(effective, /this\._isoScene\(source\)/);
   assert.match(effective, /this\._isoFallback\.has\(key\)[\s\S]*?try \{/,

@@ -29,6 +29,17 @@
 export const SMOKE_LINKS = [
   {
     symbols: [
+      'isoPlaneMatrix', 'unprojectFloorPoint', '_convertProjectionView', '_rezoom',
+      '_warmAdoptViewport', '_logicalViewCenter', '_floorView', 'resolveIsoOverlayFitEnvelope',
+      'buildIsoOverlayRenderScene',
+    ],
+    smokes: ['smoke_iso_flat_parity.mjs', 'smoke_isometric_contract.mjs'],
+    because: '#713: the Flat-plane floor, the one straight-up tile rise and the kept camera are '
+      + 'observed only as CSS pixels of rooms, decor, labels and tile anchors across a setting '
+      + 'switch, an editor entry and a warm remount; no smoke names these helpers',
+  },
+  {
+    symbols: [
       'moonLayer', 'renderMoon', 'moonTick', 'moonView', 'moonShownAt', 'moonPhasePath',
       'moonPosition', 'moonIllumination', 'moonFingerprint', 'renderDayCycleEnvironment',
     ],

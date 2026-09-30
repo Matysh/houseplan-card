@@ -11286,9 +11286,9 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'iso-rigid-groups-use-live-zoom-scale',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#651 supersedes" test/iso-scene-render.test.mjs',
-    because: '#651 makes the fit-scale viewport the only layout scale. Falling back to the live '
-      + 'view makes every pinch or wheel zoom a fresh placement event and the device row drifts again',
+      + '&& node --test --test-name-pattern="#713 AC3" test/iso-scene-render.test.mjs',
+    because: '#651/#713 make the fit-scale viewport the only layout scale. Falling back to the live '
+      + 'view makes every pinch or wheel zoom a fresh placement event again',
     patches: [{
       file: 'src/iso-scene-render.ts',
       find: '  const layoutView = input.referenceView || input.view;',
@@ -11335,19 +11335,64 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'iso-scene-restores-per-marker-collision-resolver',
+    id: 'iso-scene-live-placement-search-returns',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="keeps a close device cluster rigid" test/iso-scene-render.test.mjs',
-    because: '#651 is ineffective unless the production scene uses the rigid-group resolver. The '
-      + 'legacy per-marker resolver may still pass its own geometry tests while moving neighbours apart',
+      + '&& node --test --test-name-pattern="#713 AC3" test/iso-scene-render.test.mjs',
+    because: '#713: every tile gets one straight-up wall-top rise. Feeding the wall silhouettes '
+      + 'back into the live placement brings back the per-marker nudge next to walls',
     patches: [{
       file: 'src/iso-scene-render.ts',
-      find: '  resolveIsoOverlayOwner, resolveIsoOverlayPlacement, resolveIsoOverlayRigidGroups,',
-      replace: '  resolveIsoOverlayCollisions, resolveIsoOverlayOwner, resolveIsoOverlayPlacement, resolveIsoOverlayRigidGroups,',
-    }, {
+      find: '      wallSilhouettes: [],\n      wallGeometryValidated: true,',
+      replace: '      wallSilhouettes: input.wallSilhouettes,\n      wallGeometryValidated: true,',
+    }],
+  },
+  {
+    id: 'iso-floor-foreshortening-returns',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#713 AC1" test/iso-projection.test.mjs',
+    because: '#713: the 2.5D floor is the Flat plane. Restoring the cos 20° floor factor squashes '
+      + 'the plan, the decor and every anchor towards the centre again',
+    patches: [{
+      file: 'src/iso-projection.ts',
+      find: '  const d = camera.xyScale * Math.cos(rot);',
+      replace: '  const d = camera.xyScale * Math.cos(rot) * Math.cos(tilt);',
+    }],
+  },
+  {
+    id: 'iso-room-labels-lift-with-devices',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#713 K5" test/iso-scene-render.test.mjs',
+    because: '#713 (owner): room names stay on the floor where Flat puts them; only device tiles '
+      + 'and lock badges rise to the wall top',
+    patches: [{
       file: 'src/iso-scene-render.ts',
-      find: "  const collision = mode === 'live' ? resolveIsoOverlayRigidGroups({",
-      replace: "  const collision = mode === 'live' ? resolveIsoOverlayCollisions({",
+      find: "    const visualOffset = kind === 'room-label' ? 0 : wallHeight;",
+      replace: '    const visualOffset = wallHeight;',
+    }],
+  },
+  {
+    id: 'iso-fit-reserves-nudge-again',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#713 K8" test/iso-scene-render.test.mjs',
+    because: '#713: tiles no longer move at runtime, so the home frame must not reserve the former '
+      + '48 CSS px #651 budget around them',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: '  const base = overlay ? unionRect(input.baseBounds, overlay) : input.baseBounds;',
+      replace: '  const base = overlay ? unionRect(input.baseBounds, { x: overlay.x - 48, y: overlay.y - 48, '
+        + 'w: overlay.w + 96, h: overlay.h + 96 }) : input.baseBounds;',
+    }],
+  },
+  {
+    id: 'iso-opening-depth-orthographic-again',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#713 AC7" test/iso-openings.test.mjs',
+    because: '#713: opening faces are ordered along the oblique projector s·y + z; the former '
+      + 'orthographic key weighs height by cos 20° and can reorder glass, sill and leaf faces',
+    patches: [{
+      file: 'src/iso-openings.ts',
+      find: '    + value.z, 0) / points.length;',
+      replace: '    + value.z * Math.cos(tilt), 0) / points.length;',
     }],
   },
   {
@@ -11391,10 +11436,10 @@ const MUTANT_DEFINITIONS = [
       + 'roots are raised (#160)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      const point = this._scenePoint([cx, cy]);',
+      find: '      const point = [cx, cy];',
       replace: "      const point = this._renderProjection === 'iso'\n"
-        + '        ? projectPlanPoint([cx, cy], gridVisualUnits(68, this._cellCm))\n'
-        + '        : [cx, cy] as ScenePoint;',
+        + '        ? [cx, cy - gridVisualUnits(28, this._cellCm)]\n'
+        + '        : [cx, cy];',
     }],
   },
   {
@@ -11448,8 +11493,8 @@ const MUTANT_DEFINITIONS = [
       replace: '  onBuild(): void;\n  liveFingerprint?: string;\n}',
     }, {
       file: 'src/iso-scene-render.ts',
-      find: '    algorithm: 5,\n  })}`;',
-      replace: '    algorithm: 5,\n  })}|${input.liveFingerprint ?? \'\'}`;',
+      find: '    algorithm: 6, // #713: vertical oblique projection\n  })}`;',
+      replace: '    algorithm: 6, // #713: vertical oblique projection\n  })}|${input.liveFingerprint ?? \'\'}`;',
     }, {
       file: 'src/houseplan-card.ts',
       find: '      onBuild: () => { this._isoStructuralBuildCount += 1; },',

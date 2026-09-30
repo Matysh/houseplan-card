@@ -10,18 +10,33 @@ import {
 const close = (actual, expected, epsilon = 1e-9) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
 
-test('Stage 4 camera is the exact fixed 0°/20° orthographic camera', () => {
+test('Stage 4 camera is the exact fixed zero-yaw camera with the 20° wall rise', () => {
   assert.equal(ISO_CAMERA.rotDeg, 0);
   assert.equal(ISO_CAMERA.tiltDeg, 20);
   const origin = projectPlanPoint([500, 500], 0);
   assert.deepEqual(origin, [500, 500]);
-  const x = projectPlanPoint([600, 500], 0);
-  const y = projectPlanPoint([500, 600], 0);
-  assert.ok(x[0] > 500 && x[1] === 500, 'positive plan X stays horizontal at zero yaw');
-  assert.ok(y[0] === 500 && y[1] > 500, 'positive plan Y follows the tilted vertical axis');
   assert.equal(ISO_WALL_HEIGHT, 84);
   assert.equal(ISO_OVERLAY_VISUAL_OFFSET, 4);
   assert.equal(ISO_RAISED_OVERLAY_HEIGHT, 4);
+});
+
+test('#713 AC1: the 2.5D floor is the Flat plane and height rises straight up', () => {
+  const s = Math.sin(20 * Math.PI / 180);
+  assert.deepEqual(isoPlaneMatrix(0).map((value) => value + 0), [1, 0, 0, 1, 0, 0],
+    'the floor matrix is the identity: no cos 20° foreshortening');
+  for (const point of [[0, 0], [250, 750], [-3000, 4000], [1000, 1000]]) {
+    assert.deepEqual(projectPlanPoint(point, 0), point, 'floor points keep their Flat position');
+    assert.deepEqual(unprojectFloorPoint(point), point, 'floor hit testing is the identity too');
+    for (const z of [ISO_WALL_HEIGHT, 7, 168]) {
+      const lifted = projectPlanPoint(point, z);
+      close(lifted[0], point[0]);
+      close(lifted[1], point[1] - z * s);
+    }
+  }
+  const wall = [300, 400];
+  close(projectPlanPoint(wall, 0)[1] - projectPlanPoint(wall, ISO_WALL_HEIGHT)[1],
+    ISO_WALL_HEIGHT * 0.3420201433256687, 1e-12);
+  close(ISO_WALL_HEIGHT * s, 28.729692039353627, 1e-9);
 });
 
 test('floor projection round-trips across the infinite canvas contract', () => {
@@ -102,7 +117,8 @@ test('client coordinates map through the current scene view', () => {
 
 test('degenerate cameras and frames throw instead of mixing projections', () => {
   assert.throws(() => projectPlanPoint([0, 0], 0, { ...ISO_CAMERA, xyScale: 0 }));
-  assert.throws(() => unprojectFloorPoint([0, 0], { ...ISO_CAMERA, tiltDeg: 90 }));
+  assert.throws(() => unprojectFloorPoint([0, 0], { ...ISO_CAMERA, xyScale: 0 }));
+  assert.throws(() => unprojectFloorPoint([Number.NaN, 0]));
   assert.throws(() => clientToScenePoint([0, 0], { left: 0, top: 0, width: 0, height: 1 },
     { x: 0, y: 0, w: 1, h: 1 }));
   assert.throws(() => isoOverlayVisualHeight(-1));

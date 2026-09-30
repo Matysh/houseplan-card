@@ -163,7 +163,7 @@ export interface IsoOpeningSurface {
   kind: IsoOpeningSurfaceKind;
   material: IsoOpeningMaterial;
   d: string;
-  /** Orthographic camera depth of the face centre, used for local occlusion. */
+  /** Camera depth of the face centre along the projector, used for local occlusion. */
   cameraDepth: number;
   depth: number;
   jamb?: 0 | 1;
@@ -373,10 +373,11 @@ function projectedSurface(
   const projected = points.map((value) => projectPlanPoint(value.point, value.z, camera));
   const rotation = camera.rotDeg * Math.PI / 180;
   const tilt = camera.tiltDeg * Math.PI / 180;
+  // #713: depth along the oblique projector (s, 1) of `y' = y − z·s`.
   const cameraDepth = points.reduce((sum, value) => sum
     + (value.point[0] * Math.sin(rotation) + value.point[1] * Math.cos(rotation))
       * Math.sin(tilt)
-    + value.z * Math.cos(tilt), 0) / points.length;
+    + value.z, 0) / points.length;
   return Object.freeze({
     kind,
     material,

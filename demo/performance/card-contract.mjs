@@ -34,7 +34,6 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_rszMove',
     '_rszRooms',
     '_setMode',
-    '_scenePoint',
     '_viewOr',
   ]),
   fields: Object.freeze([

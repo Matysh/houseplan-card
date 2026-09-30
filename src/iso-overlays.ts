@@ -501,10 +501,10 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
     };
   }
 
-  // Stage 4 keeps the canonical floor anchor and collision footprint, but the
-  // screen-facing content sits just above the floor instead of on a tall
-  // wall-height mast. The wall height is still validated because the same
-  // placement consumes wall silhouettes built from that physical height.
+  // The canonical floor anchor and collision footprint stay; the screen-facing
+  // content stands `visualOffset` above the floor (#713: the wall top for tiles
+  // and lock badges, 0 for room names). The wall height is still validated
+  // because this resolver can consume wall silhouettes built from it.
   const raisedHeight = visualOffset;
   const raisedScene = projectPlanPoint(floorAnchor, raisedHeight, camera);
   const owner = input.ownerAlreadyResolved
@@ -1135,9 +1135,9 @@ export function resolveIsoOverlayCollisions(
     a.placement.nudgeDistanceCss - b.placement.nudgeDistanceCss
     || isoOverlayCollisionKey(a.kind, a.id).localeCompare(isoOverlayCollisionKey(b.kind, b.id)));
   const rot = camera.rotDeg * Math.PI / 180;
-  const tilt = camera.tiltDeg * Math.PI / 180;
+  // #713: the floor is not foreshortened, both axes share one inverse scale.
   const inverseX = 1 / camera.xyScale;
-  const inverseY = 1 / (camera.xyScale * Math.cos(tilt));
+  const inverseY = inverseX;
   const cosRot = Math.cos(rot), sinRot = Math.sin(rot);
 
   const cellRange = (bounds: Bounds): readonly [number, number, number, number] => [

@@ -37,7 +37,7 @@ export const ISO_RAISED_OVERLAY_HEIGHT = ISO_OVERLAY_VISUAL_OFFSET;
 function finiteCamera(camera: IsoCamera): boolean {
   return [camera.rotDeg, camera.tiltDeg, camera.xyScale, camera.zScale,
     camera.origin[0], camera.origin[1]].every(Number.isFinite)
-    && Math.abs(camera.xyScale) > 1e-12 && Math.abs(Math.cos(camera.tiltDeg * Math.PI / 180)) > 1e-12;
+    && Math.abs(camera.xyScale) > 1e-12;
 }
 
 export function projectPlanPoint(
@@ -54,9 +54,8 @@ export function unprojectFloorPoint(
   if (!finiteCamera(camera) || !Number.isFinite(point[0]) || !Number.isFinite(point[1]))
     throw new Error('invalid isometric projection input');
   const rot = camera.rotDeg * Math.PI / 180;
-  const tilt = camera.tiltDeg * Math.PI / 180;
   const rx = (point[0] - camera.origin[0]) / camera.xyScale;
-  const ry = (point[1] - camera.origin[1]) / (camera.xyScale * Math.cos(tilt));
+  const ry = (point[1] - camera.origin[1]) / camera.xyScale;
   return [
     camera.origin[0] + rx * Math.cos(rot) + ry * Math.sin(rot),
     camera.origin[1] - rx * Math.sin(rot) + ry * Math.cos(rot),
@@ -66,6 +65,10 @@ export function unprojectFloorPoint(
 /**
  * Canonical plan-plane affine matrix at one logical height. Floor SVG, raised
  * plates and individual point projection all use this exact transform.
+ *
+ * #713: a vertical oblique projection. The floor keeps the Flat plan (no
+ * foreshortening), a height moves a point straight up the screen by
+ * `z × sin(tilt)`: the on-screen wall height of the former 20° camera.
  */
 export function isoPlaneMatrix(
   zUnits = 0, camera: IsoCamera = ISO_CAMERA,
@@ -76,8 +79,8 @@ export function isoPlaneMatrix(
   const tilt = camera.tiltDeg * Math.PI / 180;
   const a = camera.xyScale * Math.cos(rot);
   const c = -camera.xyScale * Math.sin(rot);
-  const b = camera.xyScale * Math.sin(rot) * Math.cos(tilt);
-  const d = camera.xyScale * Math.cos(rot) * Math.cos(tilt);
+  const b = camera.xyScale * Math.sin(rot);
+  const d = camera.xyScale * Math.cos(rot);
   const e = camera.origin[0] - a * camera.origin[0] - c * camera.origin[1];
   const f = camera.origin[1] - b * camera.origin[0] - d * camera.origin[1]
     - zUnits * camera.zScale * Math.sin(tilt);

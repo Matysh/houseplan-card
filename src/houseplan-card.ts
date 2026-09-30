@@ -251,8 +251,7 @@ import {
   currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
 } from './labs';
 import {
-  ISO_FLOOR_EDGE_HEIGHT, ISO_WALL_HEIGHT, isoFloorMatrixCss, projectPlanPoint, projectedFrame,
-  unprojectFloorPoint, type ScenePoint,
+  ISO_FLOOR_EDGE_HEIGHT, ISO_WALL_HEIGHT, projectedFrame,
 } from './iso-projection';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
@@ -2182,7 +2181,7 @@ export class HouseplanCard extends LitElement {
   private _navApplied = false; // the saved space was restored (or the user navigated)
   private _labs: LabsSnapshot = { alpha: false, active: Object.freeze([]), space: '' };
   private _labsUnsub?: () => void;
-  private _isoEnabledSeen = false; private _isoLightFloors: ReadonlySet<string> | null = null; private readonly _isoFirstFrame = new IsoFirstFrameState(); // #649/#654
+  private _isoEnabledSeen = false; private _projectionShown: 'flat' | 'iso' | null = null; private _isoLightFloors: ReadonlySet<string> | null = null; private readonly _isoFirstFrame = new IsoFirstFrameState(); // #649/#654
   private _renderProjection: 'flat' | 'iso' = 'flat';
   // ---- kiosk (wall device) mode ----
   private _kioskScale: { icon: number; font: number } = { icon: 1, font: 1 }; private _kioskDialog = false;
@@ -2320,23 +2319,33 @@ export class HouseplanCard extends LitElement {
     return this._mode === 'view' && this._isoEnabled ? 'iso' : 'flat';
   }
 
-  private _logicalViewCenter(projection: 'flat' | 'iso'): { x: number; y: number } | null {
+  /** #713: the 2.5D floor is the Flat plane, so the view centre is already logical. */
+  private _logicalViewCenter(): { x: number; y: number } | null {
     const view = this._view;
-    if (!view) return null;
-    const center: ScenePoint = [view.x + view.w / 2, view.y + view.h / 2];
-    const point = projection === 'iso' ? unprojectFloorPoint(center) : center;
-    return { x: point[0], y: point[1] };
+    return view && { x: view.x + view.w / 2, y: view.y + view.h / 2 };
+  }
+
+  /** #713: the floor is one plane in both projections. Keep the camera (screen
+   *  scale and centre) and re-read the scalar zoom against the effective frame. */
+  private _rezoom(): void {
+    const v = this._view;
+    const z = v ? fitView(this._baseVb(), v.w / v.h).w / v.w : 0;
+    if (z >= MIN_ZOOM && z <= 8) this._zoom = z;
+    else if (v) this._applyView(z, v.x + v.w / 2, v.y + v.h / 2);
   }
 
   private _convertProjectionView(from: 'flat' | 'iso', to: 'flat' | 'iso'): void {
     if (from === to) return;
     this._clearRoomFocus(true);
-    const logical = this._logicalViewCenter(from);
-    this._view = null;
-    const target = logical
-      ? to === 'iso' ? projectPlanPoint([logical.x, logical.y], 0) : [logical.x, logical.y] as ScenePoint
-      : null;
-    this._applyView(this._zoom, target?.[0], target?.[1]);
+    // A structural change: a running camera tween stops on its presented frame.
+    this._cancelCameraTransition(false);
+    // Only a camera that was on screen is kept; a cold 2.5D start opens home.
+    if (this._projectionShown === from) this._rezoom();
+    else {
+      const center = this._logicalViewCenter();
+      this._view = null;
+      this._applyView(this._zoom, center?.x, center?.y);
+    }
     this._warmPatch({ vp: this._warmViewportState() });
     this.requestUpdate();
   }
@@ -3320,14 +3329,15 @@ export class HouseplanCard extends LitElement {
     this._zoom = vp.zoom;
     const projection = this._effectiveProjection();
     const sameProjection = projection === vp.projection && this._isoEnabled === vp.activeLabsIso;
-    this._view = sameProjection && vp.view ? { ...vp.view } : null;
+    // #713: one floor plane, and the window size is in the memo key, so the
+    // saved camera is valid in either projection; only zoom is re-read.
+    this._view = vp.view ? { ...vp.view } : null;
     this._viewModeSnap = sameProjection && vp.snap ? { ...vp.snap } : null;
-    if (!sameProjection && vp.logicalCenter) {
-      const center = projection === 'iso'
-        ? projectPlanPoint([vp.logicalCenter.x, vp.logicalCenter.y], 0)
-        : [vp.logicalCenter.x, vp.logicalCenter.y] as ScenePoint;
-      this._applyView(vp.zoom, center[0], center[1]);
+    if (!sameProjection) {
+      if (this._view) this._rezoom();
+      else if (vp.logicalCenter) this._applyView(vp.zoom, vp.logicalCenter.x, vp.logicalCenter.y);
     }
+    this._projectionShown = projection;
     this._tool = normalizeMarkupTool(vp.tool);
     this._decorTool = vp.decorTool;
     this._showHidden = vp.showHidden;
@@ -3380,7 +3390,7 @@ export class HouseplanCard extends LitElement {
       mode: this._mode,
       projection,
       activeLabsIso: this._isoEnabled,
-      logicalCenter: this._logicalViewCenter(projection),
+      logicalCenter: this._logicalViewCenter(),
       zoom: this._zoom,
       view: this._view ? { ...this._view } : null,
       snap: this._viewModeSnap ? { ...this._viewModeSnap } : null,
@@ -4047,6 +4057,7 @@ export class HouseplanCard extends LitElement {
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
     this._syncRadarLive();
+    if (!this._booting && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)) this._projectionShown = this._renderProjection;
     this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
     // Decor selection cannot exist before the lazy editor runtime is ready.
     if (this._editorRuntime) this._dtMeasure();
@@ -6042,13 +6053,9 @@ export class HouseplanCard extends LitElement {
     }
   }
 
-  private _scenePoint(point: readonly [number, number]): ScenePoint {
-    return this._renderProjection === 'iso' ? projectPlanPoint(point, 0) : point;
-  }
+  /** #713: the 2.5D floor is the Flat plane; the live viewport still asks. */
   private _floorView(view: { x: number; y: number; w: number; h: number }): { x: number; y: number; w: number; h: number } {
-    if (this._renderProjection !== 'iso') return view;
-    const start = unprojectFloorPoint([view.x, view.y]), end = unprojectFloorPoint([view.x + view.w, view.y + view.h]);
-    return { x: start[0], y: start[1], w: end[0] - start[0], h: end[1] - start[1] };
+    return view;
   }
   /** Stage 4 keeps one immutable floor point and one runtime visual point per
    * raised item. This snapshot is presentation-only and never enters config. */
@@ -10888,16 +10895,13 @@ export class HouseplanCard extends LitElement {
               data-hp-live-viewbox=${iso ? 'camera' : 'floor'} data-hp-live-overflow="clip"
               viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
-              <g transform=${iso ? isoFloorMatrixCss() : nothing}>
-                ${renderPaperShapes(paperShapes, 'hp-paper-outline-shapes')}
-              </g>
+              ${renderPaperShapes(paperShapes, 'hp-paper-outline-shapes')}
             </svg>` : nothing}
           <svg class="plan-svg" data-hp-layer="plan"
             data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
             viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
             preserveAspectRatio="xMidYMid meet">
-            <g class=${iso ? 'iso-floor-scene' : nothing}
-              transform=${iso ? isoFloorMatrixCss() : nothing}>
+            <g class=${iso ? 'iso-floor-scene' : nothing}>
             ${''/* THE PAPER IS THE ROOMS (docs/DECOR-EDITOR.md §3.3, owner
                    2026-08-04). Opaque shapes stop the scene background —
                    bg_color or the day-cycle environment — from bleeding through the
@@ -11160,7 +11164,7 @@ export class HouseplanCard extends LitElement {
                 return !!marker && radarMarkerLiveInSpace(marker, this._space);
               }),
               view,
-              (point) => this._scenePoint(point),
+              (point) => point,
             )}
             ${keyed(space.id, repeat(devs, (d) => d.id, (d) => this._renderDevice(
               d, view, showLqi, isoOverlays?.devices.get(d.id),
@@ -11643,7 +11647,7 @@ export class HouseplanCard extends LitElement {
     const calibrated = path.map((segment) => segment.map(([x, y]) => applyAffine(matrix, x, y)));
     const commands = smoothVacPath(calibrated, this._cmToUnits(VAC_TRAIL_SMOOTH_RADIUS_CM));
     const pointText = (point: readonly [number, number]): string => {
-      const scene = this._scenePoint(point);
+      const scene = point;
       return `${scene[0].toFixed(1)} ${scene[1].toFixed(1)}`;
     };
     return commands.map((segment) => segment.map((command) => {
@@ -11728,7 +11732,7 @@ export class HouseplanCard extends LitElement {
           if (moving && last?.length >= 2) {
             const anchor = last[last.length - 1];
             const [ax, ay] = applyAffine(matrix, anchor[0], anchor[1]);
-            const point = this._scenePoint([ax, ay]);
+            const point = [ax, ay];
             const a1 = point[0].toFixed(1), a2 = point[1].toFixed(1);
             trails.push(svg`<line class="case tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line><line class="core tip" data-mid="${d.id}" x1="${a1}" y1="${a2}" x2="${a1}" y2="${a2}"></line>`);
           }
@@ -11736,7 +11740,7 @@ export class HouseplanCard extends LitElement {
       }
       if (!moving || !tele.pos || !matrix) continue;
       const [cx, cy] = applyAffine(matrix, tele.pos.x, tele.pos.y);
-      const point = this._scenePoint([cx, cy]);
+      const point = [cx, cy];
       const left = ((point[0] - view.x) / view.w) * 100;
       const top = ((point[1] - view.y) / view.h) * 100;
       const stale = rt && rt.lastTs > 0 && Date.now() - rt.lastTs > VAC_STALE_MS;
@@ -11766,7 +11770,7 @@ export class HouseplanCard extends LitElement {
     ghost = false,
   ): TemplateResult {
     const pos = this._pos(d);
-    const point = isoPlacement?.visualScene ?? this._scenePoint([pos.x, pos.y]);
+    const point = isoPlacement?.visualScene ?? [pos.x, pos.y];
     const left = ((point[0] - view.x) / view.w) * 100;
     const top = ((point[1] - view.y) / view.h) * 100;
     const presentation = this._devicePresentation(d, showLqi);
@@ -12019,7 +12023,7 @@ export class HouseplanCard extends LitElement {
     // editor — that is where you name them (field report, 2026-07-27)
     if (!r.name && !this._markup) return nothing;
     const p = this._labelPos(r, space.id);
-    const point = isoPlacement?.visualScene ?? this._scenePoint([p.x, p.y]);
+    const point = isoPlacement?.visualScene ?? [p.x, p.y];
     const left = ((point[0] - view.x) / view.w) * 100;
     const top = ((point[1] - view.y) / view.h) * 100;
     const op = Math.min(1, disp.opacity + 0.25);
@@ -12413,7 +12417,7 @@ export class HouseplanCard extends LitElement {
         gateFace,
       }, this._cellCm)[0];
       const isoPlacement = isoPlacements?.get(String(o.id));
-      const point = isoPlacement?.visualScene ?? this._scenePoint(floorAnchor);
+      const point = isoPlacement?.visualScene ?? floorAnchor;
       const left = ((point[0] - view.x) / view.w) * 100;
       const top = ((point[1] - view.y) / view.h) * 100;
       const lockState = `${locked ? 'locked' : known ? 'unlocked' : 'unknown'} ${this._isoLightFloors?.has(isoPlacement?.owner?.id ?? '') ? 'iso-floor-light' : ''}`;
