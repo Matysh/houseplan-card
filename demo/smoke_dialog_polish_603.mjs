@@ -20,20 +20,41 @@ for (const dpr of [1, 2]) {
         const key = `${language}_${theme}_dpr${dpr}_w${width}`;
         const result = await page.evaluate(async ({ language }) => {
           const c = window.__card;
+          const hp = window.__hpTest;
           const root = () => c.shadowRoot || c.renderRoot;
           const settle = async () => {
             c.requestUpdate(); await c.updateComplete;
             await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           };
+          const waitFor = async (what, predicate) => {
+            const deadline = performance.now() + 5000;
+            for (;;) {
+              const value = predicate();
+              if (value) return value;
+              if (performance.now() > deadline) throw new Error(`smoke_dialog_polish_603 (${language}): ${what}`);
+              await new Promise((resolve) => setTimeout(resolve, 16));
+            }
+          };
+          const laidOut = (node) => {
+            const box = node?.getBoundingClientRect();
+            return !!box && box.width > 0 && box.height > 0;
+          };
           c._config = { ...(c._config || {}), language };
-          c._setMode('plan');
+          // A lazy locale keeps the previous frame, inert and aria-busy, until
+          // its dictionaries arrive: nothing opened meanwhile reaches the DOM
+          // (#712). Wait for the new language to be painted, then open the
+          // dialog through its gear and wait for its content to be laid out.
           await settle();
+          await waitFor('язык не отрисован',
+            () => !c.hasAttribute('aria-busy') && c.getAttribute('lang') === language);
+          await hp.setMode('plan');
           c._roomDialogCancel();
           await settle();
-          c._openRoomEdit(c._curSpaceCfg.rooms[0]);
-          await settle();
-          const dialog = root().querySelector('hp-dialog[data-kind="room"]');
-          const basics = dialog.querySelector('[data-card="basics"]');
+          const dialog = await hp.openRoomEdit(c._curSpaceCfg.rooms[0].id);
+          const basics = await waitFor('диалог комнаты не отрисован', () => {
+            const card = dialog.isConnected && dialog.querySelector('[data-card="basics"]');
+            return laidOut(card) ? card : null;
+          });
           const roomFields = !!basics && !basics.querySelector('.hpf-head')
             && !!basics.querySelector('#room-name') && !!basics.querySelector('#room-area')
             && !!basics.querySelector('#room-area')?.closest('.hpf-field')?.querySelector('hp-help')
