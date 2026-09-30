@@ -84,13 +84,24 @@ for (const dpr of [1, 2]) {
               target: toggle.getBoundingClientRect(),
             };
           };
+          // #712: the knob slides with `transition: left .15s`. A fixed 220 ms
+          // wait left 70 ms of slack and missed it under load; wait until the
+          // toggle and its pseudo-elements have no running animation instead.
+          const idle = async () => {
+            for (let round = 0; round < 20; round++) {
+              const running = toggle.getAnimations({ subtree: true })
+                .filter((animation) => animation.playState !== 'finished' && animation.playState !== 'idle');
+              if (!running.length) return;
+              await Promise.all(running.map((animation) => animation.finished.catch(() => {})));
+            }
+          };
           toggle.checked = false; toggle.dispatchEvent(new Event('change', { bubbles: true }));
           await settle();
-          await new Promise((resolve) => setTimeout(resolve, 220));
+          await idle();
           const off = measure();
           toggle.checked = true; toggle.dispatchEvent(new Event('change', { bubbles: true }));
           await settle();
-          await new Promise((resolve) => setTimeout(resolve, 220));
+          await idle();
           const on = measure();
           const switchAligned = Math.abs(off.topGap - off.bottomGap) <= 1
             && Math.abs(on.topGap - on.bottomGap) <= 1
