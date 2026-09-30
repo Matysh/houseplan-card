@@ -11,10 +11,6 @@
       "stat": "median",
       "hardMaxMs": 3500
     },
-    "viewToggleMs": {
-      "stat": "median",
-      "hardMaxMs": 1500
-    },
     "spaceSwitchMs": {
       "stat": "median",
       "hardMaxMs": 2200

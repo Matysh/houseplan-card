@@ -351,3 +351,24 @@ test('isometric long-task count allowance covers the lazy iso-chunk split, nothi
   const limit = Math.max(16 * (1 + isometric.longTasks.maxCountRegressionRatio), 16 + isometric.longTasks.countNoiseAllowance);
   assert.equal(limit, 21);
 });
+
+test('#720: the 2.5D view toggle is reported, not budgeted (owner decision in #694)', () => {
+  // A one-off settings operation, and since #649 the runner measures a full
+  // config reload for the candidate but a per-device projection flip for
+  // v1.77.0 — not the same operation. Load, floor switch and the single
+  // long-task ceiling keep gating the 2.5D scene build and UI freezes.
+  for (const name of [
+    'budgets-isometric-smoke.json',
+    'budgets-large-house-isometric.json',
+    'budgets-isometric-stage3-dense.json',
+  ]) {
+    const budget = readBudget(name);
+    assert.equal('viewToggleMs' in budget.timings, false, `${name} budgets viewToggleMs`);
+    for (const metric of ['modelReadyMs', 'firstStableRenderMs', 'spaceSwitchMs'])
+      assert.ok(budget.timings[metric], `${name} keeps ${metric}`);
+    assert.ok(budget.longTasks.maxSingleMs > 0, `${name} keeps the single long-task ceiling`);
+  }
+  const runner = readFileSync(new URL('../demo/benchmark_large_house.mjs', import.meta.url), 'utf8');
+  assert.match(runner, /if \(isometric\) metricNames\.splice\(2, 0, 'viewToggleMs'\);/,
+    'the runner still reports the toggle');
+});

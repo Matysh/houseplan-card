@@ -5,7 +5,6 @@
   "timings": {
     "modelReadyMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 200, "hardMaxMs": 3000 },
     "firstStableRenderMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 250, "hardMaxMs": 3500 },
-    "viewToggleMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 1500 },
     "openingUpdateMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 75, "hardMaxMs": 1000 },
     "overlayInteractionMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 75, "hardMaxMs": 1000 },
     "spaceSwitchMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 2200 },

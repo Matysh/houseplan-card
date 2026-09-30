@@ -126,6 +126,16 @@ wide margin. Occasional hosted runners are about a quarter faster, which a
 ceiling does not mind. Smaller growth stays the job of the full workflow's
 base-relative comparison.
 
+The 2.5D View toggle (`viewToggleMs`) is reported by the isometric profiles but
+budgeted by none of them (#720, owner decision in #694 on 2026-09-30). Switching
+Flat ↔ 2.5D is a one-off General settings change, not something View or kiosk
+does in use. Since #649 the runner also measures different operations across
+the comparison: a full config reload with `volumetric_view` for the candidate,
+a per-device projection flip for bundles before #649 (v1.77.0: 73.8 ms against
+195.7 ms for v1.79.0-beta.1, run 36742783749). The 2.5D scene build stays gated
+by `modelReadyMs`, `firstStableRenderMs` and `spaceSwitchMs`, a UI freeze by
+`longTask.maxSingleMs`.
+
 The dedicated `performance.yml` workflow is the full comparison. It runs on
 every `main` promotion, weekly and on manual dispatch for an important beta or
 performance-sensitive change. It checks out the candidate and its base SHA,
