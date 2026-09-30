@@ -68,8 +68,10 @@ jobs:
       # Коммиты и деревья скачиваются целиком, поэтому диапазоны и `merge-base`
       # работают как раньше. Единственная догрузка по требованию здесь —
       # `git show origin/main:.github/workflows/<тонкий файл>`: по блобу на файл.
+      # `fetch-tags: true` (#703): теги релиза — граница проверенного материала
+      # для базы диапазона, а checkout по умолчанию качает с `--no-tags`.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with: { fetch-depth: 0, filter: 'blob:none' }
+        with: { fetch-depth: 0, filter: 'blob:none', fetch-tags: true }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22 }
 
@@ -338,9 +340,11 @@ jobs:
       range_base: ${{ steps.base.outputs.range_base }}
     steps:
       # `git diff --name-only` содержимого файлов не читает вовсе, поэтому
-      # блобы истории этой job не нужны ни на одном шаге (#345).
+      # блобы истории этой job не нужны ни на одном шаге (#345). Теги — нужны:
+      # они граница проверенного материала для `range_base` (#703), а checkout
+      # по умолчанию передаёт `git fetch --no-tags`.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with: { fetch-depth: 0, filter: 'blob:none' }
+        with: { fetch-depth: 0, filter: 'blob:none', fetch-tags: true }
       # База диапазона — самый новый предок с УСПЕШНО завершённым Validate
       # (#387). Прежде бралась голова предыдущего пуша (`github.event.before`),
       # то есть допущение «до этого всё проверено». Concurrency отменяет прогон

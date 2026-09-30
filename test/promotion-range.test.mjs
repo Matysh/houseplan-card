@@ -128,7 +128,9 @@ test('#703 AC2: новое нарушение после границы крас
     const found = privateWrites(fx, onMain.base, hotfix);
     assert.equal(found.length, 1);
     assert.equal(found[0].field, '_tool');
-    const onDev = rangeBase(fx, hotfix, { dev, main }, fx.candidate);
+    // Пуш в dev: другой вход — только прогоны dev и `before` раньше кандидата.
+    const onDev = rangeBase(fx, hotfix, { dev }, fx.beta3);
+    assert.equal(onDev.base, fx.candidate);
     assert.equal(privateWrites(fx, onDev.base, hotfix).length, 1);
   });
 });

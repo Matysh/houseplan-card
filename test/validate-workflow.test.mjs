@@ -372,8 +372,12 @@ test('#703 AC3: на пуше в main база диапазона видит п�
   assert.match(range, /other=dev; \[ "\$BRANCH" = "dev" \] && other=main/);
   assert.match(range, /-f branch="\$other" -f status=completed/);
   assert.match(range, /--runs=\/tmp\/validate-runs\.json --runs=\/tmp\/validate-runs-other\.json/);
-  // Теги релиза читаются из истории: обе job клонируют её целиком.
-  for (const job of [preflight, changes]) assert.match(job, /fetch-depth: 0/);
+  // Теги релиза — граница материала. `actions/checkout` по умолчанию качает с
+  // `--no-tags` даже при `fetch-depth: 0` (r1 ревью #703): без `fetch-tags`
+  // `releaseTaggedShas()` в CI всегда пуст.
+  for (const job of [preflight, changes]) {
+    assert.match(job, /with: \{ fetch-depth: 0, filter: 'blob:none', fetch-tags: true \}/);
+  }
 });
 
 /** Ставит ли workflow python-зависимости — по собственному содержимому.
