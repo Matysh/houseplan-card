@@ -1,8 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import * as packet from '../scripts/task-packet.mjs';
 import {
   branchIsInfrastructure, buildPacket, evidenceFor, productFlowEvidence, extractAcceptanceCriteria, lastVerdict, ownerDecisions, renderPacket, rightsFor,
-  trackFromLabels, hasTrackLabel,
+  trackFromLabels, hasTrackLabel, readMergeState,
 } from '../scripts/task-packet.mjs';
 import { materialAnchorBlock } from '../scripts/review-doc-guard.mjs';
 
@@ -240,4 +245,160 @@ test('r1 #695: инфраструктурная задача с явной ме�
   assert.equal(at(['infra', 'track:ship']), 'инфраструктурный · ship');
   assert.equal(hasTrackLabel(['bug', 'infra']), false);
   assert.equal(hasTrackLabel(['small']), true);
+});
+
+// ---------- #707: трек, следующий шаг, риск, проверки, changelog ----------
+
+const DIFF = (path, text, line = 3) => `diff --git a/${path} b/${path}\n--- a/${path}\n+++ b/${path}\n@@ -${line - 1},0 +${line} @@\n+${text}\n`;
+const branchWith = (over = {}) => ({
+  name: 'issue/707-x', tip: 'e'.repeat(40), base: 'f'.repeat(40), ahead: 1, behind: 0, treeWithoutReviews: null, infrastructure: false,
+  changedFiles: [], diff: '', commits: [], smokes: null, mergeClean: true, conflicts: [], ...over,
+});
+const packetOf = ({ labels = ['S6-in-progress'], comments = [], branch = branchWith(), body = '## ТЗ\n- AC1: x\n' } = {}) => buildPacket({
+  issue: { number: 707, title: 'risk', state: 'OPEN', url: 'u', body }, labels, comments, owner: 'Matysh', branch,
+});
+
+test('#707 AC6: пакет берёт трек, основание, лимит, риск и ребейз из тех же функций, что конвейер', async () => {
+  const track = await import('../scripts/process-track.mjs');
+  for (const name of ['trackOrigin', 'cycleLimit', 'rebaseBeforeReview', 'classifyRisk', 'trackFromLabels', 'hasTrackLabel']) {
+    assert.equal(packet[name], track[name], name);
+  }
+});
+
+test('#707 AC7: пакет — раздел «Трек»: четыре основания, лимит и ребейз в markdown и --json', () => {
+  const owner = [{ author: 'Matysh', body: 'Трек: show — решение владельца', createdAt: '2026-09-30T08:00:00Z' }];
+  const variants = [
+    [{ labels: ['S6-in-progress', 'track:show'], comments: owner }, 'show', 'метка, подтверждённая владельцем (2026-09-30)', 2, false],
+    [{ labels: ['S6-in-progress', 'track:ship'] }, 'ship', 'метка без подтверждения — предложение', 2, false],
+    [{ labels: ['S6-in-progress', 'small'] }, 'show', 'прежняя метка small → show (§5.1)', 2, false],
+    [{ labels: ['S6-in-progress'] }, 'ask', 'метки нет: продукт → ask', 4, true],
+  ];
+  for (const [input, track, basis, limit, rebase] of variants) {
+    const p = packetOf(input);
+    assert.deepEqual(
+      { track: p.trackDetail.track, basis: p.trackDetail.basis, limit: p.trackDetail.limit, rebase: p.trackDetail.rebaseBeforeReview },
+      { track, basis, limit, rebase }, basis,
+    );
+    const md = renderPacket(p);
+    assert.match(md, new RegExp(`## Трек\\n- ${track} · основание: ${basis.replace(/[()]/g, '\\$&')}\\n- лимит циклов код-ревью: ${limit} · ребейз до ревью: ${rebase ? 'да' : 'нет'}\\n`));
+    assert.equal(JSON.parse(JSON.stringify(p)).trackDetail.basis, basis, '--json несёт те же поля');
+  }
+  const infra = packetOf({ labels: ['infra'], branch: branchWith({ infrastructure: true }), body: '' });
+  assert.equal(infra.trackDetail.basis, 'метки нет: инфраструктура → show');
+  const two = renderPacket(packetOf({ labels: ['S6-in-progress', 'track:ship', 'track:ask'] }));
+  assert.match(two, /- внимание: несколько трековых меток \(track:ask, track:ship\) — дефект разметки, действует строжайшая track:ask/);
+  // Без ветки политика show/ship зависит от чистоты слияния — пакет её не выдумывает.
+  assert.equal(packetOf({ labels: ['track:show'], branch: null }).trackDetail.rebaseBeforeReview, null);
+  assert.match(renderPacket(packetOf({ labels: ['track:show'], branch: null })), /ребейз до ревью: только при конфликте с dev/);
+});
+
+test('#707 AC8: следующий шаг — ребейз только там, где он нужен', () => {
+  const at = (labels, over) => renderPacket(packetOf({ labels: ['S6-in-progress', ...labels], branch: branchWith(over) }));
+  assert.doesNotMatch(at(['track:show'], { behind: 0 }), /## Следующий шаг/, 'позади 0 — про ребейз ничего');
+  const askClean = at(['track:ask'], { behind: 3, mergeClean: true });
+  assert.match(askClean, /## Следующий шаг\n- позади dev на 3, слияние чистое — конвейер сам приведёт ветку к dev до ревью/);
+  const showClean = at(['track:show'], { behind: 3, mergeClean: true });
+  assert.match(showClean, /- позади dev на 3, слияние чистое — ребейз не нужен: один раз при слиянии/);
+  for (const md of [askClean, showClean]) assert.doesNotMatch(md, /перед S7 ребейз/);
+  assert.match(at(['track:show'], { behind: 2, mergeClean: false, conflicts: ['src/a.ts', 'docs/b.md'] }),
+    /- слияние с dev конфликтует: src\/a\.ts, docs\/b\.md — ребейз до S7 \(`node scripts\/rebase-on-dev\.mjs`\)/);
+  assert.match(at(['track:show'], { behind: 2, mergeClean: null }), /- позади dev на 2: чистота слияния не проверена/);
+});
+
+test('#707 AC8: чистота слияния — настоящий merge-tree во временном репозитории и отказ merge-tree', (t) => {
+  if (spawnSync('git', ['--version']).status !== 0) { t.skip('git недоступен'); return; }
+  const dir = mkdtempSync(join(tmpdir(), 'hp-packet-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^GIT_/i.test(k))), GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' };
+  const git = (...args) => {
+    const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { cwd: dir, encoding: 'utf8', env });
+    assert.equal(r.status, 0, r.stderr);
+    return r.stdout.trim();
+  };
+  git('init', '-q', '-b', 'dev');
+  writeFileSync(join(dir, 'a.txt'), 'base\n'); writeFileSync(join(dir, 'b.txt'), 'base\n');
+  git('add', '.'); git('commit', '-q', '-m', 'base');
+  git('checkout', '-q', '-b', 'task');
+  writeFileSync(join(dir, 'a.txt'), 'task\n');
+  git('commit', '-q', '-am', 'task');
+  git('checkout', '-q', 'dev');
+  writeFileSync(join(dir, 'b.txt'), 'dev\n');
+  git('commit', '-q', '-am', 'dev moves');
+  assert.deepEqual(readMergeState({ cwd: dir, onto: 'dev', ref: 'task' }), { clean: true, conflicts: [] });
+  writeFileSync(join(dir, 'a.txt'), 'dev\n');
+  git('commit', '-q', '-am', 'dev conflicts');
+  const conflict = readMergeState({ cwd: dir, onto: 'dev', ref: 'task' });
+  assert.deepEqual(conflict, { clean: false, conflicts: ['a.txt'] });
+  assert.match(renderPacket(packetOf({ labels: ['S6-in-progress', 'track:show'], branch: branchWith({ behind: 2, mergeClean: conflict.clean, conflicts: conflict.conflicts }) })),
+    /слияние с dev конфликтует: a\.txt — ребейз до S7/);
+  // git < 2.38: `--write-tree` неизвестен — usage и код 129; это не «конфликта нет».
+  const old = () => ({ status: 129, stdout: '', stderr: 'usage: git merge-tree <base-tree> <branch1> <branch2>' });
+  assert.deepEqual(readMergeState({ cwd: dir, onto: 'dev', ref: 'task', run: old }), { clean: null, conflicts: [] });
+  assert.deepEqual(readMergeState({ cwd: dir, run: () => ({ error: new Error('ENOENT') }) }), { clean: null, conflicts: [] });
+});
+
+const TOUCH = DIFF('src/pointer-modality.ts', "  if (e.pointerType === 'touch') return;", 7);
+const RENDER = DIFF('src/render/paper-scene.ts', '  const scale = 2;');
+const GEOMETRY = DIFF('src/wall-merge.ts', '  const merged = a + b;');
+const STYLE = DIFF('src/styles/plan.styles.ts', '    gap: 4px;');
+
+test('#707 AC9: риск по участкам и следствие по треку', () => {
+  const risk = (labels, comments = []) => packetOf({ labels: ['S6-in-progress', ...labels], comments, branch: branchWith({ diff: TOUCH }) });
+  const confirmed = [{ author: 'Matysh', body: 'Трек: ship — решение владельца', createdAt: '2026-09-30T08:00:00Z' }];
+  assert.equal(risk(['track:ship']).risk.consequence, 'конвейер повысит до show при S7');
+  assert.equal(risk(['track:ship'], confirmed).risk.consequence, 'не повысит; риск прочтёт пакетное ревью');
+  assert.equal(risk(['track:show']).risk.consequence, 'ревьюер спросит, где поведение зафиксировано; нет ссылки — повысить до ask до S7 (§5)');
+  assert.equal(risk(['track:ask']).risk.consequence, 'справочно');
+  const md = renderPacket(risk(['track:ship']));
+  assert.match(md, /## Риск по участкам\n- touch: src\/pointer-modality\.ts:7 · участок pointer-modality, токен pointerType\n- следствие: конвейер повысит до show при S7\n/);
+  assert.match(renderPacket(packetOf({ branch: null })), /## Риск по участкам\n- не посчитан: ветки нет\n/);
+  assert.doesNotMatch(renderPacket(packetOf({ branch: branchWith({ diff: DIFF('scripts/x.mjs', 'pointerdown') }) })), /## Риск по участкам/,
+    'пустой раздел не печатается');
+  assert.equal(JSON.parse(JSON.stringify(risk(['track:ship']))).risk.classes[0], 'touch', '--json несёт риск');
+});
+
+test('#707 AC10: обязательные проверки с основаниями', () => {
+  const checksOf = (over, labels = []) => packetOf({ labels: ['S6-in-progress', ...labels], branch: branchWith(over) }).checks;
+  const commands = (list) => list.map((c) => c.command);
+  const base = checksOf({});
+  assert.deepEqual(base, [{ command: '`npm run gate:small`', reason: 'всегда (§8)' }], 'gate:small — всегда');
+  assert.deepEqual(packetOf({ branch: null }).checks.map((c) => c.command), ['`npm run gate:small`']);
+  const smokes = checksOf({ smokes: { direct: [{ smoke: 'smoke_a.mjs', symbols: ['_wallA'] }], registered: [{ smoke: 'smoke_b.mjs', symbols: ['_b'] }], visualMinimum: ['smoke_modes.mjs'] } });
+  assert.deepEqual(smokes.slice(1).map((c) => `${c.command} · ${c.reason}`), [
+    '`node demo/smoke_a.mjs` · smoke-select: прямое совпадение (_wallA)',
+    '`node demo/smoke_b.mjs` · smoke-select: зарегистрированная связь (_b)',
+    '`npm run gate:small -- --smokes` · smoke-select: визуальный минимум — связь диффа со смоками не доказана (#690): smoke_modes',
+  ]);
+  assert.ok(commands(checksOf({ diff: GEOMETRY })).includes('`npm run invariants -- --config <экспорт>`'), 'invariants при geometry');
+  assert.ok(!commands(checksOf({ diff: TOUCH })).some((c) => c.includes('invariants')), 'без geometry — нет');
+  assert.ok(commands(checksOf({ changedFiles: ['custom_components/houseplan/store.py'] })).includes('`python -m pytest tests_backend -q`'));
+  assert.ok(!commands(checksOf({ changedFiles: ['src/a.ts', 'tests_backend/test_x.py'] })).some((c) => c.includes('pytest')), 'pytest — только при custom_components/**/*.py');
+  for (const mirror of ['src/junction-limits.ts', 'custom_components/houseplan/junction_limits.py', 'test/fixtures/junction-limits-parity.json']) {
+    assert.ok(commands(checksOf({ changedFiles: [mirror] })).some((c) => c.includes('junction_parity.py')), mirror);
+  }
+  assert.ok(!commands(checksOf({ changedFiles: ['src/wall-merge.ts'] })).some((c) => c.includes('junction_parity')));
+  const golden = (over, labels) => checksOf(over, labels).find((c) => c.command.includes('ci:golden'));
+  assert.match(golden({ diff: RENDER }).reason, /^рекомендовано, если сдвиг кадров намерен/, 'ci:golden — при visual/render');
+  assert.match(golden({ diff: RENDER }, ['ci:golden']).reason, /^стоит/);
+  assert.equal(golden({ diff: STYLE }), undefined, 'visual/ui — без ci:golden');
+  assert.equal(golden({ diff: DIFF('src/render/paper-scene.ts', '  // stroke-width: 2') }), undefined, 'только комментарии — без ci:golden');
+  assert.equal(golden({ diff: DIFF('test/render.test.mjs', "  stroke-width='2'"), changedFiles: ['test/render.test.mjs'] }), undefined, 'только тесты — без ci:golden');
+  assert.match(renderPacket(packetOf({ branch: branchWith({ diff: GEOMETRY }) })), /## Обязательные проверки\n- `npm run gate:small` · всегда \(§8\)\n- `npm run invariants -- --config <экспорт>` · риск geometry/);
+});
+
+test('#707 AC11: changelog и визуальное свидетельство', () => {
+  const commits = [
+    { message: 'fix: a (#707)\n\nIssue: #707\nUser-Visible: yes\n' },
+    { message: 'test: b (#707)\n\nIssue: #707\nUser-Visible: no\n' },
+    { message: 'docs: c' },
+  ];
+  const p = packetOf({ branch: branchWith({ commits, changedFiles: ['src/a.ts', 'docs/CHANGELOG.md'] }) });
+  assert.deepEqual(p.changelog, { yes: 1, no: 1, missing: ['docs/CHANGELOG.ru.md'], visualEvidence: false });
+  const md = renderPacket(p);
+  assert.match(md, /## Changelog и визуальное свидетельство\n- коммитов ветки: `User-Visible: yes` — 1, `User-Visible: no` — 1\n- не хватает docs\/CHANGELOG\.ru\.md/);
+  assert.deepEqual(packetOf({ branch: branchWith({ commits, changedFiles: ['docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'] }) }).changelog.missing, []);
+  assert.deepEqual(packetOf({ branch: branchWith({ commits: [commits[1]] }) }).changelog.missing, [], 'User-Visible: no changelog не требует');
+  const visual = renderPacket(packetOf({ branch: branchWith({ diff: RENDER }) }));
+  assert.match(visual, /дефект растра или резкости требует свидетеля, красного на старом коде, и подтверждения владельца в GPU-браузере \(§7\.1\)/);
+  assert.doesNotMatch(renderPacket(packetOf({ branch: branchWith({ diff: STYLE }) })), /## Changelog/, 'нет коммитов и нет визуала — раздел не печатается');
 });

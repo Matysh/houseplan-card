@@ -7,9 +7,11 @@
 // свои ошибки («метка встала раньше push'а», «ревьюер читал не тот SHA»).
 // Скрипт делает эту сборку детерминированно и печатает один markdown-пакет:
 //
-//   issue · статус и трек · что можно делать в этом статусе · решения владельца ·
-//   материал (ветка, SHA, база, Validate) · предыдущий вердикт · AC → свидетель ·
-//   непроверенное / следующий шаг
+//   issue · статус и трек · трек: основание, лимит, ребейз (#707) · что можно
+//   делать в этом статусе · решения владельца · материал (ветка, SHA, база,
+//   Validate) · следующий шаг по ветке · риск по участкам · обязательные
+//   проверки · changelog и визуальное свидетельство · предыдущий вердикт ·
+//   AC → свидетель · непроверенное
 //
 // Источник правды остаётся GitHub и git: пакет ничего не пишет и ничего не
 // решает. Все чтения инъектируемы — `buildPacket(inputs)` чист и покрыт тестами.
@@ -20,7 +22,10 @@ import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
 import { anchorTreeFrom, anchorVerdictFrom, verdictDeclaration } from './review-doc-guard.mjs';
 import { classify } from './process-gate.mjs';
-import { hasTrackLabel, trackFromLabels } from './process-track.mjs';
+import {
+  classifyRisk, cycleLimit, hasTrackLabel, rebaseBeforeReview, riskClassLine, trackFromLabels, trackOrigin,
+} from './process-track.mjs';
+import { selectSmokes } from './smoke-select.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
@@ -128,7 +133,101 @@ export function branchIsInfrastructure(changedFiles = []) {
 const PRE_CODE_STATUSES = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready'];
 
 // Трек по меткам — одна функция на конвейер и пакет (#696): process-track.mjs.
-export { hasTrackLabel, trackFromLabels };
+// С #707 оттуда же основание трека, лимит циклов, политика ребейза и риск по
+// изменённым участкам: пакет не держит своей копии правила.
+export { classifyRisk, cycleLimit, hasTrackLabel, rebaseBeforeReview, trackFromLabels, trackOrigin };
+
+/** Зеркала junction limits: правка любого требует parity (§8, #548). */
+export const JUNCTION_MIRRORS = Object.freeze([
+  'src/junction-limits.ts', 'custom_components/houseplan/junction_limits.py', 'test/fixtures/junction-limits-parity.json',
+]);
+const CHANGELOGS = ['docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'];
+const JUNCTION_PARITY = 'npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/junction_parity.py --build-dir=test-build/junction-parity';
+
+/**
+ * Чистота слияния ветки с `dev` без касания рабочей копии:
+ * `git merge-tree --write-tree` (git 2.38+). `clean: null` — проверить нельзя
+ * (старый git или сбой), и это не «конфликта нет».
+ */
+export function readMergeState({ cwd, onto = 'origin/dev', ref, run = spawnSync } = {}) {
+  const r = run('git', ['merge-tree', '--write-tree', '--name-only', '--no-messages', onto, ref], { cwd, encoding: 'utf8' });
+  if (r?.error || (r?.status !== 0 && r?.status !== 1)) return { clean: null, conflicts: [] };
+  if (r.status === 0) return { clean: true, conflicts: [] };
+  const conflicts = [];
+  for (const line of String(r.stdout || '').split('\n').slice(1)) {
+    if (!line.trim()) break;
+    if (!conflicts.includes(line.trim())) conflicts.push(line.trim());
+  }
+  return { clean: false, conflicts };
+}
+
+/** Следующий шаг по положению ветки относительно `dev` (#707): без лишнего ребейза. */
+export function nextStepLines({ branch = null, track = 'ask' } = {}) {
+  if (!branch || !(branch.behind > 0)) return [];
+  const behind = `позади dev на ${branch.behind}`;
+  if (branch.mergeClean === true) {
+    return [track === 'ask'
+      ? `${behind}, слияние чистое — конвейер сам приведёт ветку к dev до ревью`
+      : `${behind}, слияние чистое — ребейз не нужен: один раз при слиянии`];
+  }
+  if (branch.mergeClean === false) {
+    const files = branch.conflicts?.length ? branch.conflicts.join(', ') : 'git не назвал файлы';
+    return [`слияние с dev конфликтует: ${files} — ребейз до S7 (\`node scripts/rebase-on-dev.mjs\`)`];
+  }
+  return [`${behind}: чистота слияния не проверена (\`git merge-tree --write-tree\` недоступен, нужен git 2.38+)`];
+}
+
+/** Следствие риска по треку (#707): что сделает конвейер или ревьюер. */
+export function riskConsequence({ track, confirmed = false, risk } = {}) {
+  if (!risk?.raising?.length) return 'справочно: visual трек не повышает (§5)';
+  if (track === 'ship') return confirmed ? 'не повысит; риск прочтёт пакетное ревью' : 'конвейер повысит до show при S7';
+  if (track === 'show') return 'ревьюер спросит, где поведение зафиксировано; нет ссылки — повысить до ask до S7 (§5)';
+  return 'справочно';
+}
+
+/**
+ * Обязательные проверки «команда · основание» (#707, §8). `ci:golden` — только
+ * при визуальном риске в пути отрисовки: CSS интерфейса, комментарии и тесты
+ * кадров плана не двигают.
+ */
+export function requiredChecks({ risk = null, changedFiles = [], smokes = null, labels = [] } = {}) {
+  const out = [{ command: '`npm run gate:small`', reason: 'всегда (§8)' }];
+  for (const entry of smokes?.direct || []) {
+    out.push({ command: `\`node demo/${entry.smoke}\``, reason: `smoke-select: прямое совпадение (${entry.symbols.slice(0, 4).join(', ')})` });
+  }
+  for (const entry of smokes?.registered || []) {
+    out.push({ command: `\`node demo/${entry.smoke}\``, reason: `smoke-select: зарегистрированная связь (${entry.symbols.slice(0, 4).join(', ')})` });
+  }
+  if (smokes?.visualMinimum?.length) {
+    out.push({ command: '`npm run gate:small -- --smokes`', reason: `smoke-select: визуальный минимум — связь диффа со смоками не доказана (#690): ${smokes.visualMinimum.map((s) => s.replace(/\.mjs$/, '')).join(', ')}` });
+  }
+  if (risk?.classes?.includes('geometry')) {
+    out.push({ command: '`npm run invariants -- --config <экспорт>`', reason: 'риск geometry (§8, #254)' });
+  }
+  const python = changedFiles.filter((file) => /^custom_components\/.+\.py$/.test(file));
+  if (python.length) {
+    out.push({ command: '`python -m pytest tests_backend -q`', reason: `изменён Python: ${python.slice(0, 3).join(', ')}${python.length > 3 ? ` и ещё ${python.length - 3}` : ''}` });
+  }
+  const mirrors = changedFiles.filter((file) => JUNCTION_MIRRORS.includes(file));
+  if (mirrors.length) out.push({ command: `\`${JUNCTION_PARITY}\``, reason: `junction parity: изменено зеркало ${mirrors.join(', ')} (§8)` });
+  if (risk?.visual?.render) {
+    out.push({ command: 'метка `ci:golden`', reason: labels.includes('ci:golden')
+      ? 'стоит: golden на ветке и приёмка сдвинутых кадров в задаче (§5.1)'
+      : 'рекомендовано, если сдвиг кадров намерен: визуальный риск в пути отрисовки (§5.1, §8)' });
+  }
+  return out;
+}
+
+/** Трейлеры `User-Visible` коммитов ветки и changelog в её диффе (§3 п.10, §7.1). */
+export function changelogState({ commits = [], changedFiles = [], risk = null } = {}) {
+  const yes = commits.filter((c) => /^User-Visible:\s*yes\s*$/im.test(String(c.message ?? ''))).length;
+  const no = commits.filter((c) => /^User-Visible:\s*no\s*$/im.test(String(c.message ?? ''))).length;
+  return {
+    yes, no,
+    missing: yes ? CHANGELOGS.filter((file) => !changedFiles.includes(file)) : [],
+    visualEvidence: Boolean(risk?.visual?.render),
+  };
+}
 
 /**
  * Признаки продуктового S-flow (#632). Инфраструктурная задача входит в поток
@@ -168,13 +267,26 @@ export function buildPacket(inputs) {
   const infrastructure = branch?.infrastructure === true && productFlow.length === 0;
   const infrastructureHint = branch == null && status == null && labels.includes('infra') && productFlow.length === 0;
   // §5.1 (r1 #695): инфраструктурная задача без трековой метки идёт как
-  // `show`; явная метка владельца главнее. Маршрут при этом остаётся
-  // инфраструктурным — вход сразу на S7, без S1–S5.
-  const infraTrack = hasTrackLabel(labels) ? trackFromLabels(labels) : 'show';
+  // `show`; явная метка главнее. Маршрут при этом остаётся инфраструктурным —
+  // вход сразу на S7, без S1–S5. Трек, основание и лимит — те же функции, что
+  // у конвейера (#707).
+  const origin = trackOrigin({ labels, comments, owner, infrastructure: infrastructure || infrastructureHint });
   const track = infrastructure
-    ? `инфраструктурный · ${infraTrack}`
-    : infrastructureHint ? `инфраструктурный · ${infraTrack} (предварительно; подтвердить путями/diff)`
-    : trackFromLabels(labels);
+    ? `инфраструктурный · ${origin.track}`
+    : infrastructureHint ? `инфраструктурный · ${origin.track} (предварительно; подтвердить путями/diff)`
+    : origin.track;
+  const mergeClean = branch ? (branch.behind > 0 ? (branch.mergeClean ?? null) : true) : null;
+  const trackDetail = {
+    track: origin.track, basis: origin.basis, warning: origin.warning, confirmed: origin.confirmed,
+    limit: cycleLimit(origin.track),
+    // null — политика зависит от чистоты слияния, а её здесь не проверить.
+    rebaseBeforeReview: origin.track !== 'ask' && mergeClean === null ? null : rebaseBeforeReview(origin.track, mergeClean),
+  };
+  const risk = !branch ? { computed: false, reason: 'не посчитан: ветки нет' }
+    : typeof branch.diff !== 'string' ? { computed: false, reason: 'не посчитан: дифф ветки не прочитан' }
+    : { computed: true, ...classifyRisk(branch.diff) };
+  if (risk.computed && risk.classes.length) risk.consequence = riskConsequence({ track: origin.track, confirmed: origin.confirmed, risk });
+  const changedFiles = branch?.changedFiles || [];
   const stage = status === 'S4-spec-review' || status === 'S3-spec' || status === 'S5-ready' ? 'spec' : 'code';
   const verdict = lastVerdict(comments, reviewDocs, stage);
   // ТЗ живёт в теле issue (#517); архивный файл — источник только у задач до
@@ -188,13 +300,17 @@ export function buildPacket(inputs) {
   const unverified = acs.filter((a) => a.evidence.startsWith('без записи'));
   const packet = {
     issue: { number: issue.number, title: issue.title, state: issue.state, url: issue.url },
-    status, track, labels, productFlow, rights: rightsFor(status, labels, { infrastructure, infrastructureHint }),
+    status, track, trackDetail, labels, productFlow, rights: rightsFor(status, labels, { infrastructure, infrastructureHint }),
     decisions: ownerDecisions(comments, owner),
     material: branch ? {
       branch: branch.name, tip: branch.tip, base: branch.base, ahead: branch.ahead, behind: branch.behind,
       treeMatchesVerdict: verdict.doc?.tree ? branch.treeWithoutReviews === verdict.doc.tree : null,
       validate: validate || { status: 'неизвестно' },
     } : null,
+    nextStep: nextStepLines({ branch: branch ? { ...branch, mergeClean } : null, track: origin.track }),
+    risk,
+    checks: requiredChecks({ risk: risk.computed ? risk : null, changedFiles, smokes: branch?.smokes ?? null, labels }),
+    changelog: branch ? changelogState({ commits: branch.commits || [], changedFiles, risk: risk.computed ? risk : null }) : null,
     verdict,
     acceptance: acs,
     unverified: unverified.map((a) => a.id),
@@ -209,6 +325,15 @@ export function renderPacket(p) {
   L.push(`Статус: **${p.status || 'без S-метки'}** · трек: ${p.track} · метки: ${p.labels.join(', ') || '—'} · issue ${p.issue.state}`);
   if (p.productFlow?.length) L.push(`Продуктовый поток: ${p.productFlow.join(', ')} — дифф без класса A трек не меняет (#632)`);
   L.push('');
+  if (p.trackDetail) {
+    const t = p.trackDetail;
+    const rebase = t.rebaseBeforeReview === true ? 'да' : t.rebaseBeforeReview === false ? 'нет' : 'только при конфликте с dev (чистота слияния не проверена)';
+    L.push('## Трек');
+    L.push(`- ${t.track} · основание: ${t.basis}`);
+    if (t.warning) L.push(`- внимание: ${t.warning}`);
+    L.push(`- лимит циклов код-ревью: ${t.limit} · ребейз до ревью: ${rebase}`);
+    L.push('');
+  }
   L.push('## Права и следующий шаг');
   for (const r of p.rights) L.push(`- ${r}`);
   L.push('');
@@ -220,12 +345,39 @@ export function renderPacket(p) {
   if (!p.material) L.push('- ветки issue/NN-* на origin нет — материал не запушен');
   else {
     const m = p.material;
-    L.push(`- ветка \`${m.branch}\`, вершина \`${m.tip.slice(0, 12)}\`, база dev \`${m.base.slice(0, 12)}\`: впереди ${m.ahead}, позади ${m.behind}${m.behind ? ' — перед S7 ребейз (rebase-on-dev.mjs при конфликте в бандле)' : ''}`);
+    L.push(`- ветка \`${m.branch}\`, вершина \`${m.tip.slice(0, 12)}\`, база dev \`${m.base.slice(0, 12)}\`: впереди ${m.ahead}, позади ${m.behind}`);
     L.push(`- Validate на вершине: ${m.validate.status}${m.validate.url ? ` (${m.validate.url})` : ''}`);
     if (m.treeMatchesVerdict === true) L.push('- дерево вне docs/reviews совпадает с материалом последнего вердикта — повторный S7 применит его без модели (#499)');
     if (m.treeMatchesVerdict === false) L.push('- дерево изменилось с последнего вердикта — будет полный разбор');
   }
   L.push('');
+  if (p.nextStep?.length) {
+    L.push('## Следующий шаг');
+    for (const line of p.nextStep) L.push(`- ${line}`);
+    L.push('');
+  }
+  if (p.risk && (!p.risk.computed ? p.risk.reason === 'не посчитан: ветки нет' : p.risk.classes.length)) {
+    L.push('## Риск по участкам');
+    if (!p.risk.computed) L.push(`- ${p.risk.reason}`);
+    else {
+      for (const cls of p.risk.classes) L.push(`- ${riskClassLine(p.risk, cls)}`);
+      L.push(`- следствие: ${p.risk.consequence}`);
+    }
+    L.push('');
+  }
+  if (p.checks?.length) {
+    L.push('## Обязательные проверки');
+    for (const check of p.checks) L.push(`- ${check.command} · ${check.reason}`);
+    L.push('');
+  }
+  const c = p.changelog;
+  if (c && (c.yes || c.no || c.visualEvidence)) {
+    L.push('## Changelog и визуальное свидетельство');
+    if (c.yes || c.no) L.push(`- коммитов ветки: \`User-Visible: yes\` — ${c.yes}, \`User-Visible: no\` — ${c.no}`);
+    for (const file of c.missing) L.push(`- не хватает ${file}: \`User-Visible: yes\` требует правок в обоих changelog (§3 п.10)`);
+    if (c.visualEvidence) L.push('- визуальный риск в пути отрисовки: дефект растра или резкости требует свидетеля, красного на старом коде, и подтверждения владельца в GPU-браузере (§7.1)');
+    L.push('');
+  }
   L.push('## Предыдущий вердикт');
   if (p.verdict.comment) L.push(`- комментарий: ${p.verdict.comment.line}${p.verdict.comment.url ? ` (${p.verdict.comment.url})` : ''}`);
   if (p.verdict.doc) L.push(`- документ: \`${p.verdict.doc.name}\`, дерево \`${p.verdict.doc.tree?.slice(0, 12) || '—'}\`, запись конвейера: ${p.verdict.doc.recorded ? `${p.verdict.doc.recorded.verdict} · High ${p.verdict.doc.recorded.high}` : 'нет (документ до #499)'}`);
@@ -265,6 +417,21 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
     const behind = Number(sh('git', ['rev-list', '--count', `${ref}..origin/dev`], { cwd }));
     const changedFiles = sh('git', ['diff', '--name-only', `${base}..${ref}`], { cwd }).split('\n').filter(Boolean);
     const infrastructure = branchIsInfrastructure(changedFiles);
+    // #707: риск по изменённым участкам, смоки и трейлеры — по тому же диффу от
+    // merge-base, что судит конвейер на S7.
+    const diff = sh('git', ['-c', 'core.quotePath=false', 'diff', '--unified=0', '-M', '--no-color', '--no-ext-diff', '--no-textconv', `${base}..${ref}`], { cwd });
+    const commits = sh('git', ['log', '--format=%B%x1e', `${base}..${ref}`], { cwd })
+      .split('\x1e').map((message) => message.trim()).filter(Boolean).map((message) => ({ message }));
+    const merge = behind > 0 ? readMergeState({ cwd, onto: 'origin/dev', ref }) : { clean: true, conflicts: [] };
+    let smokes = null;
+    try {
+      const selection = selectSmokes(diff);
+      smokes = {
+        direct: selection.direct.filter((entry) => entry.strong).map(({ smoke, symbols }) => ({ smoke, symbols })),
+        registered: selection.registered.map(({ smoke, symbols }) => ({ smoke, symbols })),
+        visualMinimum: selection.visualMinimum,
+      };
+    } catch { smokes = null; }
     // Дерево без docs/reviews — для сравнения с якорем вердикта: git сам его не даёт,
     // поэтому сравнение делается diff'ом при известном якоре (см. ниже).
     const names = sh('git', ['ls-tree', '--name-only', `${ref}:docs/reviews`], { cwd }).split('\n').filter((n) => new RegExp(`-${number}-r\\d+\\.md$`).test(n));
@@ -277,7 +444,10 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
       const same = spawnSync('git', ['diff', '--quiet', anchorTree, tip, '--', '.', ':!docs/reviews', ':!legacy/reviews'], { cwd });
       treeWithoutReviews = same.status === 0 ? anchorTree : `differs-from-${anchorTree}`;
     }
-    branch = { name, tip, base, ahead, behind, treeWithoutReviews, infrastructure };
+    branch = {
+      name, tip, base, ahead, behind, treeWithoutReviews, infrastructure,
+      changedFiles, diff, commits, smokes, mergeClean: merge.clean, conflicts: merge.conflicts,
+    };
   }
   let validate = null;
   if (branch) {

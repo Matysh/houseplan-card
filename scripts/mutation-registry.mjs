@@ -13639,27 +13639,29 @@ const MUTANT_DEFINITIONS = [
       replace: '        if True:  # mutant: concurrent flushes are not serialised\n',
     }],
   },
-  // r1 #695: инфраструктура без трековой метки — трек show (§5.1).
+  // r1 #695: инфраструктура без трековой метки — трек show (§5.1). С #707 трек и
+  // лимит guard берёт из process-track.mjs: якорь переехал туда, свидетель
+  // исполняет шаг guard настоящим bash.
   {
     id: 'guard-infra-keeps-ask-limit',
     guard: 'node --test --test-name-pattern="r1 #695" test/review-doc-guard.test.mjs',
     because: 'r1 #695: an infrastructure task without a track label reads as track:show (PROCESS §5.1); '
-      + 'the guard must give it the show cycle limit 2, not the ask limit 4',
+      + 'the guard must give it the show cycle limit 2, not the ask limit 4 (#707: one rule in process-track.mjs)',
     patches: [{
-      file: '.github/workflows/_process.yml',
-      find: '                limit=2\n                echo "инфраструктурная задача без трековой метки',
-      replace: '                limit=4 # mutant: infra keeps the ask limit\n                echo "инфраструктурная задача без трековой метки',
+      file: 'scripts/process-track.mjs',
+      find: "(hasTrackLabel(labels) ? trackFromLabels(labels) : (infrastructure ? 'show' : 'ask'));",
+      replace: "(hasTrackLabel(labels) ? trackFromLabels(labels) : (infrastructure ? 'ask' : 'ask')); // mutant: infra keeps the ask limit",
     }],
   },
   {
     id: 'packet-infra-track-ignores-show-default',
     guard: 'node --test --test-name-pattern="r1 #695" test/task-packet.test.mjs',
     because: 'r1 #695: the packet names the track an infrastructure task actually runs on — show '
-      + 'without a label, the owner label otherwise',
+      + 'without a label, the owner label otherwise (#707: via trackOrigin, shared with the pipeline)',
     patches: [{
       file: 'scripts/task-packet.mjs',
-      find: "  const infraTrack = hasTrackLabel(labels) ? trackFromLabels(labels) : 'show';",
-      replace: '  const infraTrack = trackFromLabels(labels); // mutant: unlabelled infra reads as ask',
+      find: '  const origin = trackOrigin({ labels, comments, owner, infrastructure: infrastructure || infrastructureHint });',
+      replace: '  const origin = trackOrigin({ labels, comments, owner, infrastructure: false }); // mutant: unlabelled infra reads as ask',
     }],
   },
   // #696: цена захода по треку — мутанты, рамки ship, пакетное ревью перед бетой.
@@ -13696,14 +13698,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    // #707: решение по ship на S7 переехало из bash шага трека в decideTrack.
     id: 'pipeline-ship-ignores-limits',
-    guard: 'node --test --test-name-pattern="трек снимается до ребейза" test/process-track.test.mjs',
+    guard: 'node --test --test-name-pattern="#707 AC3" test/process-track.test.mjs',
     because: '#696: ship skips the model only inside the limits; ignoring the limits merges '
-      + 'unread code of any size',
+      + 'unread code of any size — even when the owner confirmed the ship track (#707)',
     patches: [{
-      file: '.github/workflows/_process.yml',
-      find: "            if printf '%s\\n' \"$limits\" | grep -qx 'ship=true'; then",
-      replace: '            if true; then # mutant: ship limits ignored',
+      file: 'scripts/process-track.mjs',
+      find: '    if (violations.length || riskRaises) {',
+      replace: '    if (riskRaises) { // mutant: ship limits ignored',
     }],
   },
   {

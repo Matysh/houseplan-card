@@ -82,19 +82,14 @@ jobs:
           # очереди concurrency, пока владелец снял метку или поставил blocked —
           # снимок события об этом не знает, а исполнять отозванный запрос нельзя.
           current=$(gh issue view "$NUM" --repo "$REPO" --json labels --jq '.labels[].name')
+          labels=$(printf '%s\n' "$current" | paste -sd, -)
           has() { printf '%s\n' "$current" | grep -qx -- "$1"; }
-          BLOCKED=false; EXHAUSTED=false; SMALL=false; TRIVIAL=false
+          BLOCKED=false; EXHAUSTED=false
           has blocked && BLOCKED=true
           has review-4 && EXHAUSTED=true
-          # Треки #695 (PROCESS §5): `track:show` и `track:ship` — лимит 2, как у
-          # прежних `small`/`trivial`; `track:ask` — 4. Цену захода по треку
-          # (мутанты, ребейз, модель) решает prepare (#696).
-          has small && SMALL=true
-          has trivial && TRIVIAL=true
-          has track:show && SMALL=true
-          has track:ship && SMALL=true
-          # Явный `track:ask` главнее прежних меток: метка владельца окончательна.
-          if has track:ask; then SMALL=false; TRIVIAL=false; fi
+          # Пути диффа ветки против dev — для признака инфраструктуры (§1, §5.1);
+          # без ветки или при отказе compare API список пуст.
+          changed=$(mktemp)
 
           # Этап определяется первым: от него зависит, какие вердикты считать.
           stage=""; marker=""
@@ -110,10 +105,6 @@ jobs:
             echo "запрос отозван: \`$LABEL\` снята до старта" >> "$GITHUB_STEP_SUMMARY"
             stage=""
           fi
-
-          # Лимит циклов: 4 на `track:ask`, 2 на `track:show`/`track:ship` (PROCESS.md §4, §5).
-          limit=4
-          if [ "$SMALL" = "true" ] || [ "$TRIVIAL" = "true" ]; then limit=2; fi
 
           # Считаются ДВЕ РАЗНЫЕ величины, и это не педантизм (#227).
           #
@@ -223,26 +214,27 @@ jobs:
             fi
             echo "ветка материала: ${branch:-нет, читался dev}"
 
-            # §5.1 (r1 #695): инфраструктурная задача (§1) без трековой метки
-            # идёт как `track:show` — лимит 2. Признак механический, как в §1:
-            # в диффе ветки против dev ни одного файла класса A. Guard историю
-            # не клонирует, поэтому пути — из compare API; 300 файлов — потолок
-            # ответа, и полный список тогда не доказан: остаётся лимит 4.
-            if [ -n "$branch" ] && ! has track:ship && ! has track:show && ! has track:ask \
-               && ! has small && ! has trivial; then
-              changed=$(mktemp)
-              if gh api "repos/$REPO/compare/dev...$branch" --jq '.files[].filename' > "$changed" 2>/dev/null \
-                 && node --input-type=module -e '
-                   import { readFileSync } from "node:fs";
-                   import { classify } from "./scripts/process-gate.mjs";
-                   const files = readFileSync(process.argv[1], "utf8").split("\n").filter(Boolean);
-                   process.exit(files.length > 0 && files.length < 300 && files.every((f) => classify(f) !== "A") ? 0 : 1);
-                 ' "$changed"; then
-                limit=2
-                echo "инфраструктурная задача без трековой метки — трек show (§5.1), лимит 2"
-              fi
+            # Guard историю не клонирует, поэтому пути — из compare API. Отказ
+            # API — пустой список: инфраструктура не доказана (fail-closed).
+            if [ -n "$branch" ]; then
+              gh api "repos/$REPO/compare/dev...$branch" --jq '.files[].filename' > "$changed" 2>/dev/null \
+                || : > "$changed"
             fi
           fi
+
+          # Трек и лимит циклов (PROCESS.md §4, §5, §5.1; #707) решает
+          # process-track.mjs — та же функция, что у шага трека в prepare и у
+          # пакета задачи. Своей логики трека здесь нет: две копии правила уже
+          # расходились (#707 п.2). Ответ compare на 300 файлов и больше полного
+          # списка не доказывает — скрипт оставляет `ask`/4. Скрипт не
+          # отработал — лимит 4, как без доказанного трека: guard обязан
+          # продолжить работу, а не встать.
+          limit=4
+          track_out=$(node scripts/process-track.mjs limit --labels="$labels" --files="$changed") \
+            || echo "::warning::process-track.mjs limit не отработал — лимит по умолчанию 4"
+          printf '%s\n' "$track_out"
+          new_limit=$(printf '%s\n' "$track_out" | sed -n 's/^limit=//p')
+          case "$new_limit" in ''|*[!0-9]*) : ;; *) limit="$new_limit" ;; esac
 
           # Отказ обязан быть виден в issue, а не только в логе прогона.
           # Ревьюшная метка обещает работу; если конвейер её не начал и промолчал,
@@ -303,7 +295,7 @@ jobs:
           echo "cycle=$attempt" >> "$GITHUB_OUTPUT"
           echo "spent=$spent" >> "$GITHUB_OUTPUT"
           echo "limit=$limit" >> "$GITHUB_OUTPUT"
-          echo "labels=$(printf '%s\n' "$current" | paste -sd, -)" >> "$GITHUB_OUTPUT"
+          echo "labels=$labels" >> "$GITHUB_OUTPUT"
 
   prepare:
     name: "Ревью: материал и deterministic gates"
@@ -343,6 +335,10 @@ jobs:
       mutants: ${{ steps.track.outputs.mutants }}
       full: ${{ steps.track.outputs.full }}
       ship: ${{ steps.track.outputs.ship }}
+      # #707: риск по изменённым участкам — заметка ревьюеру и строка риска
+      # для комментария слияния ship (пакетное ревью, §11.7).
+      risk_note: ${{ steps.track.outputs.risk_note }}
+      ship_risk: ${{ steps.track.outputs.ship_risk }}
     steps:
       - name: Начать измерение стадии
         id: clock
@@ -415,12 +411,17 @@ jobs:
 
       # Трек решает цену захода (PROCESS.md §5, §10.4, #696): мутантов в
       # разработке нет ни на одном треке (#709); `ship` сливается без модели,
-      # если правка укладывается в механические рамки. Рамки судят дифф от
-      # merge-base с dev — работу задачи, а не то, что принёс dev, — поэтому шаг
-      # стоит до ребейза. Выход за рамки повышает трек до `show` здесь же:
-      # повысить трек вправе любой, понизить — только владелец (§5). Скрипт
-      # берётся из dev, как помощник ребейза: show/ship до ревью не ребейзятся,
-      # и ветка, отставшая от dev, его может ещё не нести.
+      # если правка укладывается в механические рамки и не несёт риска по
+      # изменённым участкам (#707) без подтверждения владельца. Рамки и риск
+      # судят дифф от merge-base с dev — работу задачи, а не то, что принёс
+      # dev, — поэтому шаг стоит до ребейза. Повышение ship → show — здесь же:
+      # повысить трек вправе любой, понизить — только владелец (§5). Всё решает
+      # ОДИН вызов process-track.mjs по меткам, диффу и комментариям; bash только
+      # исполняет: пишет комментарий из файла скрипта и меняет метки по его
+      # флагу. Выходы (`track`, `mutants`, `full`, `ship`, `risk_note`,
+      # `ship_risk`) скрипт пишет в GITHUB_OUTPUT сам. Скрипт берётся из dev, как
+      # помощник ребейза: show/ship до ревью не ребейзятся, и ветка, отставшая от
+      # dev, его может ещё не нести.
       - name: "Трек задачи и рамки ship (#696)"
         id: track
         env:
@@ -429,42 +430,28 @@ jobs:
           STAGE: ${{ needs.guard.outputs.stage }}
           LABELS: ${{ needs.guard.outputs.labels }}
           BRANCH: ${{ steps.branch.outputs.name }}
+          OWNER: ${{ github.repository_owner }}
         run: |
           git fetch -q origin dev
           tools="$RUNNER_TEMP/track-tools"
           rm -rf "$tools" && mkdir -p "$tools"
           git archive origin/dev scripts | tar -x -C "$tools"
-          head=HEAD
-          if [ -z "$BRANCH" ]; then head=origin/dev; fi
-          out=$(node "$tools/scripts/process-track.mjs" resolve --labels="$LABELS" --base=origin/dev --head="$head")
+          # Комментарии — для строки владельца «Трек: <x> — решение владельца»
+          # (#707). Не прочитаны — пустой файл: происхождение не установлено.
+          comments="$RUNNER_TEMP/track-comments.json"
+          gh issue view "$NUM" --repo "${{ github.repository }}" --json comments > "$comments" 2>/dev/null \
+            || : > "$comments"
+          out=$(node "$tools/scripts/process-track.mjs" stage --stage="$STAGE" --labels="$LABELS" \
+            --branch="$BRANCH" --base=origin/dev --head=HEAD --comments="$comments" --owner="$OWNER" \
+            --out="$RUNNER_TEMP/track" \
+            --run-url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}")
           printf '%s\n' "$out"
-          track=$(printf '%s\n' "$out" | sed -n 's/^track=//p')
-          mutants=$(printf '%s\n' "$out" | sed -n 's/^mutants=//p')
-          full=$(printf '%s\n' "$out" | sed -n 's/^full=//p')
-          ship=false
-          if [ "$track" = "ship" ] && [ "$STAGE" = "code" ] && [ -n "$BRANCH" ]; then
-            limits=$(node "$tools/scripts/process-track.mjs" ship-limits --base=origin/dev --head=HEAD)
-            printf '%s\n' "$limits"
-            if printf '%s\n' "$limits" | grep -qx 'ship=true'; then
-              ship=true
-            else
-              violations=$(printf '%s\n' "$limits" | sed -n 's/^violations=//p')
-              track=show
-              cat > /tmp/ship.md <<EOF
-          **Трек повышен: \`track:ship\` → \`track:show\`.** Правка выходит за механические рамки ship (PROCESS.md §5): $violations.
-
-          Слияние без ревью модели для неё закрыто. Этот заход идёт по треку show: лёгкий Validate и ревью модели «корректность и AC». Понизить трек обратно может только владелец.
-
-          [Прогон](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
-          EOF
-              gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/ship.md
-              gh issue edit "$NUM" --repo "${{ github.repository }}" \
-                --add-label track:show --remove-label track:ship
-              echo "track:ship -> track:show: $violations"
-            fi
+          if printf '%s\n' "$out" | grep -qx 'raise=true'; then
+            gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file "$RUNNER_TEMP/track/raise.md"
+            gh issue edit "$NUM" --repo "${{ github.repository }}" \
+              --add-label track:show --remove-label track:ship
+            echo "track:ship -> track:show"
           fi
-          { echo "track=$track"; echo "mutants=$mutants"; echo "full=${full:-false}"; echo "ship=$ship"; } >> "$GITHUB_OUTPUT"
-          echo "- трек **$track** · мутанты по диффу: $mutants · полный набор: ${full:-false} · слияние без модели: $ship" >> "$GITHUB_STEP_SUMMARY"
 
       # Ревьюер обязан смотреть тот же код, который уедет в dev (#257). Раньше
       # ревью шло по ветке как есть, а слияние делало ребейз — проверенный SHA и
@@ -1182,6 +1169,8 @@ jobs:
 
             ${{ needs.prepare.outputs.rebase_note }}
 
+            ${{ needs.prepare.outputs.risk_note }}
+
             ${{ needs.prepare.outputs.spec_body_changed == 'true' && format('ТЗ в теле issue менялось после зелёного ревью ТЗ ({0}, записанный хеш {1}). GitHub хранит правки тела без diff — дельту показать нельзя, поэтому AC сверяются с ТЕКУЩИМ текстом целиком, а не по дельте, и находка называется в вердикте (#517).', needs.prepare.outputs.spec_body_doc, needs.prepare.outputs.spec_body_recorded) || '' }}
 
             Правила ревью в этом промпте не повторяются (#634): их канон —
@@ -1712,6 +1701,8 @@ jobs:
           REUSE_ROUND: ${{ needs.prepare.outputs.reuse_round }}
           REUSE_TREE: ${{ needs.prepare.outputs.reuse_tree }}
           SHIP: ${{ needs.prepare.outputs.ship }}
+          # #707: строка риска подтверждённого владельцем ship — для пакетного ревью.
+          SHIP_RISK: ${{ needs.prepare.outputs.ship_risk }}
           MATERIAL: ${{ needs.prepare.outputs.material_sha }}
           VALIDATE_URL: ${{ needs.prepare.outputs.validate_url }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
@@ -1728,6 +1719,8 @@ jobs:
             short=$(printf '%s' "$MATERIAL" | cut -c1-8)
             cat > /tmp/ship-merge.md <<EOF
           **Слияние без ревью модели: трек ship (PROCESS.md §5, #696).** Правка укладывается в механические рамки ship, лёгкий Validate на \`$short\` зелёный${VALIDATE_URL:+ ([прогон]($VALIDATE_URL))}. Код до слияния не читал никто: его прочтёт пакетное ревью диапазона перед бетой (PROCESS.md §11.7), документ \`docs/reviews/SHIP-REVIEW-<тег>.md\`.
+
+          ${SHIP_RISK}
 
           <!-- hp:ship-merge material=$MATERIAL -->
           EOF

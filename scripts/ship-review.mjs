@@ -29,6 +29,8 @@ import { issueTrailers, readCandidateHistory } from './release-membership.mjs';
 
 export const SHIP_REVIEW_DIR = 'docs/reviews';
 export const SHIP_MERGE_MARKER_RE = /<!-- hp:ship-merge material=([0-9a-f]{40}) -->/;
+/** #707: риск по участкам, с которым ship слит (трек подтверждён владельцем или риск только visual). */
+export const SHIP_RISK_MARKER_RE = /<!-- hp:ship-risk classes=([a-z,]+) -->/;
 export const SHIP_REVIEW_ANCHOR = '<!-- hp-ship-review-anchors -->';
 export const RELEASE_TAG_RE = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-beta\.(0|[1-9]\d*))?$/;
 const SHA_RE = /^[0-9a-f]{40,64}$/;
@@ -44,6 +46,21 @@ export function shipReviewDocPath(tag) {
 export function isShipIssue({ labels = [], comments = [] } = {}) {
   const names = labels.map((label) => (typeof label === 'string' ? label : label?.name));
   return names.includes('track:ship') || comments.some((c) => SHIP_MERGE_MARKER_RE.test(String(c?.body ?? '')));
+}
+
+/**
+ * Строка риска из последнего комментария слияния ship (#707): `{ classes, line }`
+ * или null. Комментарии задач до #707 строки не несут — риск не записан.
+ */
+export function shipRiskFrom(comments = []) {
+  const merges = (comments || []).map((c) => String(c?.body ?? '')).filter((body) => SHIP_MERGE_MARKER_RE.test(body));
+  const body = merges.at(-1);
+  const marker = body && SHIP_RISK_MARKER_RE.exec(body);
+  if (!marker) return null;
+  const classes = marker[1].split(',').filter(Boolean);
+  const line = body.split('\n').map((l) => l.trim()).find((l) => l.startsWith('Риск по участкам'))
+    || `Риск по участкам: ${classes.join(', ')}`;
+  return { classes, line };
 }
 
 /** Раздел `## ТЗ` тела issue — для ship это строка «что меняется и чем проверить». */
@@ -77,7 +94,8 @@ export function shipIssuesInRange({ commits = [], issueData }) {
   for (const [number, list] of [...byIssue].sort((a, b) => a[0] - b[0])) {
     const data = issueData(number);
     if (!data || !isShipIssue(data)) continue;
-    out.push({ number, title: data.title || '', spec: specSection(data.body), commits: list.reverse() });
+    const risk = shipRiskFrom(data.comments);
+    out.push({ number, title: data.title || '', spec: specSection(data.body), ...(risk ? { risk } : {}), commits: list.reverse() });
   }
   return out;
 }
@@ -97,6 +115,7 @@ export function renderShipBrief({ tag, candidate, base, ship, runUrl = '' }) {
   for (const issue of ship) {
     lines.push(`### #${issue.number} · ${issue.title}`, '');
     lines.push(issue.spec ? issue.spec : '(раздела «## ТЗ» в теле нет — ТЗ задачи не записано, это находка)', '');
+    if (issue.risk?.line) lines.push(issue.risk.line, '');
     lines.push('Коммиты (`git show <sha>`):', '');
     for (const commit of issue.commits) lines.push(`- \`${commit.sha}\` ${commit.subject}`);
     lines.push('');

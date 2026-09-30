@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   ANCHOR_MARKER, REVIEW_DOC_ALLOWLIST, anchorLiveness, REVIEW_HEADER_LINES, citedMaterialShas, danglingMaterialRefusal, materialAnchorBlock, materialAnchorsFrom, parseSpecList, pathsOutsideAllowlist, reviewDocPushRefusal, withMaterialAnchors,
@@ -970,14 +974,80 @@ test('guard перечисляет docs/reviews деревом, а не contents
   assert.match(guard, /contents\/docs\/reviews\/\$name\?ref=\$target/);
 });
 
-test('r1 #695: guard даёт инфраструктуре без трековой метки лимит show (§5.1)', () => {
+/**
+ * Шаг `decide` job guard как есть — настоящим bash (#707). Подменён только
+ * `gh`: метки, ветка задачи, compare API; счётчик раундов и трек считают
+ * настоящие `review-doc-guard.mjs` и `process-track.mjs` из рабочей копии.
+ */
+function runGuard(t, { labels, compare = null, branch = true }) {
+  const root = mkdtempSync(join(tmpdir(), 'hp-guard-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const bin = join(root, 'bin');
+  mkdirSync(bin);
+  writeFileSync(join(root, 'labels'), `${labels.join('\n')}\n`);
+  if (compare) writeFileSync(join(root, 'compare'), `${compare.join('\n')}\n`);
+  writeFileSync(join(bin, 'gh'), [
+    '#!/usr/bin/env bash',
+    'printf \'%s\\n\' "$*" >> "$FAKE_DIR/calls"',
+    'case "$*" in',
+    '  "issue view 7 --repo o/r --json labels --jq .labels[].name") cat "$FAKE_DIR/labels" ;;',
+    '  "issue view 7 --repo o/r --json comments") echo \'{"comments":[]}\' ;;',
+    `  "api repos/o/r/git/matching-refs/heads/issue/7- --jq .[].ref") ${branch ? "echo refs/heads/issue/7-x" : ':'} ;;`,
+    '  "api repos/o/r/commits/issue/7-x --jq .commit.committer.date") echo 2026-10-01T00:00:00Z ;;',
+    '  "api repos/o/r/compare/dev...issue/7-x --jq .files[].filename") [ -f "$FAKE_DIR/compare" ] || exit 1; cat "$FAKE_DIR/compare" ;;',
+    '  "issue comment"*|"issue edit"*) ;;',
+    '  *) exit 1 ;;',
+    'esac',
+    '',
+  ].join('\n'), { mode: 0o755 });
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
+  const lines = workflow.slice(workflow.indexOf('      - id: decide\n')).split('\n');
+  const from = lines.indexOf('        run: |');
+  const body = [];
+  for (const line of lines.slice(from + 1)) {
+    if (line.trim() && !/^ {10}/.test(line)) break;
+    body.push(line.replace(/^ {10}/, ''));
+  }
+  const context = { repository: 'o/r', server_url: 'https://github.com', run_id: '42' };
+  const script = body.join('\n').replace(/\$\{\{ github\.(\w+) \}\}/g, (_, key) => context[key]);
+  const output = join(root, 'output');
+  writeFileSync(output, '');
+  const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
+    cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8',
+    env: {
+      ...process.env, PATH: `${bin}:${process.env.PATH}`, FAKE_DIR: root, GITHUB_OUTPUT: output,
+      GITHUB_STEP_SUMMARY: join(root, 'summary'), GH_TOKEN: 'x', REPO: 'o/r', LABEL: 'S7-code-review', NUM: '7',
+    },
+  });
+  const out = Object.fromEntries(readFileSync(output, 'utf8').split('\n').filter((l) => /^\w+=/.test(l)).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
+  return { status: r.status, stdout: r.stdout, stderr: r.stderr, out };
+}
+
+test('r1 #695: guard даёт инфраструктуре без трековой метки лимит show (§5.1)', (t) => {
+  if (process.platform === 'win32' || spawnSync('bash', ['--version']).status !== 0) { t.skip('bash недоступен'); return; }
   const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const guard = workflow.slice(workflow.indexOf('\n  guard:'), workflow.indexOf('\n  prepare:'));
-  assert.match(guard, /gh api "repos\/\$REPO\/compare\/dev\.\.\.\$branch" --jq '\.files\[\]\.filename'/,
-    'признак инфраструктуры — пути диффа ветки против dev');
-  assert.match(guard, /files\.every\(\(f\) => classify\(f\) !== "A"\)/, 'механический признак §1: ни одного файла класса A');
-  assert.match(guard, /files\.length < 300/, 'обрезанный ответ compare инфраструктуру не доказывает');
-  assert.match(guard, /; then\n\s+limit=2\n\s+echo "инфраструктурная задача без трековой метки/);
-  assert.match(guard, /! has track:ship && ! has track:show && ! has track:ask \\\n\s+&& ! has small && ! has trivial; then/,
-    'явная метка трека главнее признака инфраструктуры');
+  // #707: трек и лимит — из process-track.mjs; своей логики трека в guard нет.
+  assert.match(guard, /gh api "repos\/\$REPO\/compare\/dev\.\.\.\$branch" --jq '\.files\[\]\.filename' > "\$changed" 2>\/dev\/null \\\n\s+\|\| : > "\$changed"/,
+    'признак инфраструктуры — пути диффа ветки против dev; отказ API — пустой список');
+  assert.match(guard, /node scripts\/process-track\.mjs limit --labels="\$labels" --files="\$changed"/);
+  assert.doesNotMatch(guard, /limit=2|SMALL|TRIVIAL/, 'лимит 2 guard сам не ставит');
+  const infra = ['scripts/x.mjs', '.github/workflows/y.yml'];
+  const cases = [
+    [{ labels: ['S7-code-review'], compare: infra }, 2, 'инфраструктура без трековой метки — show'],
+    [{ labels: ['S7-code-review', 'track:ask'], compare: infra }, 4, 'явная метка главнее признака инфраструктуры'],
+    [{ labels: ['S7-code-review'], compare: ['src/a.ts', ...infra] }, 4, 'продукт — ask'],
+    [{ labels: ['S7-code-review'], compare: null }, 4, 'compare отказал — инфраструктура не доказана'],
+    [{ labels: ['S7-code-review'], compare: Array.from({ length: 300 }, (_, i) => `scripts/f${i}.mjs`) }, 4, 'обрезанный ответ compare инфраструктуру не доказывает'],
+    [{ labels: ['S7-code-review'], branch: false }, 4, 'ветки нет'],
+    [{ labels: ['S7-code-review', 'small'], compare: ['src/a.ts'] }, 2, 'прежняя метка small — show'],
+    [{ labels: ['S7-code-review', 'track:ship', 'track:ask'], compare: ['src/a.ts'] }, 4, 'несколько трековых меток — строжайшая'],
+  ];
+  for (const [input, limit, why] of cases) {
+    const r = runGuard(t, input);
+    assert.equal(r.status, 0, `${why}: ${r.stderr}`);
+    assert.equal(r.out.stage, 'code', why);
+    assert.equal(r.out.limit, String(limit), why);
+    assert.equal(r.out.labels, input.labels.join(','), `${why}: метки для prepare`);
+  }
 });

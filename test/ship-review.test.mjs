@@ -5,8 +5,8 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
-  anchorBlock, isShipIssue, parseAnchorBlock, renderShipBrief, shipIssuesInRange, shipReviewDocPath,
-  shipReviewProblems, specSection,
+  SHIP_MERGE_MARKER_RE, anchorBlock, isShipIssue, parseAnchorBlock, renderShipBrief, shipIssuesInRange, shipReviewDocPath,
+  shipReviewProblems, shipRiskFrom, specSection,
 } from '../scripts/ship-review.mjs';
 import { parseDocName, renderIndex } from '../scripts/reviews-index.mjs';
 import { archivePlan } from '../scripts/reviews-archive.mjs';
@@ -115,4 +115,26 @@ test('#696 оба пути публикации беты проверяют па
   const check = main.indexOf("'scripts/ship-review.mjs', 'check'");
   assert.ok(check > 0, 'локальная публикация зовёт тот же гейт');
   assert.ok(check < main.indexOf('if (checkOnly) return;'), 'и в режиме --check тоже');
+});
+
+test('#707 AC12: бриф ship печатает строку риска из комментария hp:ship-merge, если она есть', async () => {
+  const { classifyRisk, shipRiskText } = await import('../scripts/process-track.mjs');
+  const risk = classifyRisk("diff --git a/src/pointer-modality.ts b/src/pointer-modality.ts\n--- a/src/pointer-modality.ts\n+++ b/src/pointer-modality.ts\n@@ -2,0 +3 @@\n+  if (e.pointerType === 'touch') return;\n");
+  const line = shipRiskText({ risk, confirmed: true });
+  const merge = `**Слияние без ревью модели: трек ship.** …\n\n${line}\n\n${MARKER}\n`;
+  assert.equal(SHIP_MERGE_MARKER_RE.exec(merge)?.[1], sha('a'), 'маркер слияния находится и с новой строкой');
+  assert.deepEqual(shipRiskFrom([{ body: 'обсуждение' }, { body: merge }]), { classes: ['touch'], line: line.split('\n')[0] });
+  assert.equal(shipRiskFrom([{ body: `Слияние без ревью модели\n\n${MARKER}` }]), null, 'комментарий до #707 — риск не записан');
+  assert.equal(shipRiskFrom([{ body: '<!-- hp:ship-risk classes=touch -->' }]), null, 'строка риска вне комментария слияния не считается');
+  const commits = [{ sha: sha('c'), message: 'fix: x\n\nIssue: #701\nUser-Visible: no' }, { sha: sha('d'), message: 'fix: y\n\nIssue: #702\nUser-Visible: no' }];
+  const data = {
+    701: { title: 'С риском', body: '## ТЗ\n\nстрока', labels: [], comments: [{ body: merge }] },
+    702: { title: 'Без риска', body: '## ТЗ\n\nстрока', labels: [], comments: [{ body: MARKER }] },
+  };
+  const ship = shipIssuesInRange({ commits, issueData: (n) => data[n] });
+  const brief = renderShipBrief({ tag: 'v1.80.0-beta.1', candidate: sha('e'), base: null, ship });
+  const section = (n) => brief.split('\n### ').find((part) => part.startsWith(`#${n} `)) ?? '';
+  assert.match(section(701), /Риск по участкам \(трек подтверждён владельцем, не повышен\): touch: src\/pointer-modality\.ts:3 · участок pointer-modality, токен pointerType/);
+  assert.doesNotMatch(section(702), /Риск по участкам/);
+  assert.equal(ship.find((i) => i.number === 702).risk, undefined);
 });

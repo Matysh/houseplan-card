@@ -1,13 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  SHIP_SRC_LINE_LIMIT, hasTrackLabel, parseNameStatus, parseNumstat, resolveTrack, shipLimitViolations, trackFromLabels,
+  COMPARE_FILES_CAP, RISK_CLASSES, RISK_NOTE_LINE_LIMIT, SHIP_SRC_LINE_LIMIT, classifyRisk, cycleLimit, decideTrack, explicitTracks,
+  guardLimit, hasTrackLabel, parseNameStatus, parseNumstat, rebaseBeforeReview, resolveTrack, riskClassLine, riskNote,
+  shipLimitViolations, trackFromLabels, trackOrigin,
 } from '../scripts/process-track.mjs';
+import { classify as classifyPath } from '../scripts/change-classes.mjs';
+// Пути монолитов — данные для классификатора, а не чтение их текста (#624).
+import { CARD_FILE, RUNTIME_FILE } from '../scripts/monolith-metrics.mjs';
 import { trackFromLabels as packetTrack } from '../scripts/task-packet.mjs';
 
 // #696: конвейер ревью решает цену захода по треку; трек и рамки ship —
@@ -131,10 +136,13 @@ test('конвейер: трек снимается до ребейза, мут�
   const trackStep = workflow.slice(track, rebase);
   assert.match(trackStep, /LABELS: \$\{\{ needs\.guard\.outputs\.labels \}\}/, 'метки — текущие, из guard');
   assert.match(trackStep, /git archive origin\/dev scripts \| tar -x -C "\$tools"/, 'скрипт — из dev: ветка show/ship не ребейзится');
-  assert.match(trackStep, /node "\$tools\/scripts\/process-track\.mjs" resolve --labels="\$LABELS" --base=origin\/dev/);
-  assert.match(trackStep, /node "\$tools\/scripts\/process-track\.mjs" ship-limits --base=origin\/dev --head=HEAD/);
-  assert.match(trackStep, /grep -qx 'ship=true'; then\n\s+ship=true/, 'ship — только в рамках');
+  // #707: один вызов скрипта решает трек, рамки ship и риск; bash только исполняет.
+  assert.equal((trackStep.match(/process-track\.mjs/g) || []).length, 1, 'скрипт трека вызывается один раз');
+  assert.match(trackStep, /node "\$tools\/scripts\/process-track\.mjs" stage --stage="\$STAGE" --labels="\$LABELS" \\\n\s+--branch="\$BRANCH" --base=origin\/dev --head=HEAD --comments="\$comments" --owner="\$OWNER"/);
+  assert.match(trackStep, /if printf '%s\\n' "\$out" \| grep -qx 'raise=true'; then\n\s+gh issue comment "\$NUM" --repo "\$\{\{ github\.repository \}\}" --body-file "\$RUNNER_TEMP\/track\/raise\.md"/,
+    'комментарий повышения — из файла скрипта, только по его флагу');
   assert.match(trackStep, /--add-label track:show --remove-label track:ship/, 'выход за рамки повышает трек');
+  assert.doesNotMatch(trackStep, /ship=true|track=show|>> "\$GITHUB_OUTPUT"/, 'выходы шага пишет скрипт, а не bash');
   assert.match(workflow, /labels=\$\(printf '%s\\n' "\$current" \| paste -sd, -\)/, 'guard отдаёт текущие метки');
   const rebaseStep = workflow.slice(rebase, at('      - name: Зафиксировать SHA материала ревью\n'));
   assert.match(rebaseStep, /if \[ "\$TRACK" = "show" \] \|\| \[ "\$TRACK" = "ship" \]; then\n\s+if git merge-tree --write-tree origin\/dev HEAD/,
@@ -181,5 +189,561 @@ test('#697: конвейер передаёт полный набор гейту
   const gate = workflow.slice(workflow.indexOf('      - name: Validate на материале\n'), workflow.indexOf('      - name: Validate идёт — раунд продолжит событие\n'));
   assert.match(gate, /FULL: \$\{\{ steps\.track\.outputs\.full \}\}/);
   assert.match(gate, /--full="\$\{FULL:-false\}"/);
-  assert.match(workflow, /full=\$\(printf '%s\\n' "\$out" \| sed -n 's\/\^full=\/\/p'\)/);
+  // #707: `full` пишет в GITHUB_OUTPUT скрипт трека — из меток и только из них.
+  assert.match(readFileSync(SCRIPT, 'utf8'), /`full=\$\{decision\.full\}`/);
+});
+
+// ---------- #707: риск по изменённым участкам, основание трека, одно правило ----------
+
+/** Дифф `git diff --unified=0` из строк: `add`/`del` — пары [номер, текст]. */
+function diffOf(files) {
+  return `${files.map(({ path, oldPath = path, add = [], del = [] }) => {
+    const out = [`diff --git a/${oldPath} b/${path}`, `--- a/${oldPath}`, `+++ b/${path}`];
+    for (const [line, text] of del) out.push(`@@ -${line} +${line - 1},0 @@`, `-${text}`);
+    for (const [line, text] of add) out.push(`@@ -${line - 1},0 +${line} @@`, `+${text}`);
+    return out.join('\n');
+  }).join('\n')}\n`;
+}
+const only = (risk) => ({ classes: risk.classes, evidence: risk.evidence });
+
+test('#707 AC1: классификатор риска — точные классы и доказательства путь:строка', () => {
+  const card = CARD_FILE;
+  // (а) токен в монолите — touch; удаление такой строки — тоже touch.
+  assert.deepEqual(only(classifyRisk(diffOf([{ path: card, add: [[12, "    this.addEventListener('pointerdown', onDown);"]] }]))),
+    { classes: ['touch'], evidence: { touch: [`${card}:12 · токен pointerdown`] } });
+  assert.deepEqual(only(classifyRisk(diffOf([{ path: card, del: [[40, "    el.removeEventListener('pointerdown', onDown);"]] }]))),
+    { classes: ['touch'], evidence: { touch: [`${card}:40 (удалена) · токен pointerdown`] } });
+  // (б) строка-комментарий в участке geometry — ничего; код там же — geometry по участку.
+  const wall = 'src/wall-merge.ts';
+  for (const comment of ['// pointerdown snapToGrid thickness', '/* merge */', ' * @param wall', ' */', '<!-- x -->', '   ']) {
+    assert.deepEqual(classifyRisk(diffOf([{ path: wall, add: [[5, comment]] }])).classes, [], JSON.stringify(comment));
+  }
+  assert.deepEqual(only(classifyRisk(diffOf([{ path: wall, add: [[5, '  const merged = a + b;']] }]))),
+    { classes: ['geometry'], evidence: { geometry: [`${wall}:5 · участок wall-*`] } });
+  // (в) snapshot — не geometry; snapToGrid — geometry по токену даже в монолите.
+  assert.deepEqual(classifyRisk(diffOf([{ path: card, add: [[3, '    const snapshot = this._snapshot();']] }])).classes, []);
+  assert.deepEqual(only(classifyRisk(diffOf([{ path: card, add: [[3, '    const p = snapToGrid(pt, 5);']] }]))),
+    { classes: ['geometry'], evidence: { geometry: [`${card}:3 · токен snapToGrid`] } });
+  // (г) новый ключ i18n — ux; смена только значения — ничего.
+  assert.deepEqual(only(classifyRisk(diffOf([{ path: 'src/i18n/en.json', add: [[9, '  "save_plan": "Save plan",']] }]))),
+    { classes: ['ux'], evidence: { ux: ['src/i18n/en.json:9 · новый ключ "save_plan"'] } });
+  assert.deepEqual(classifyRisk(diffOf([{ path: 'src/i18n/en.json', del: [[9, '  "save_plan": "Save",']], add: [[9, '  "save_plan": "Save plan",']] }])).classes, []);
+  // (д) callService в участке devices — devices по участку и токену.
+  assert.deepEqual(only(classifyRisk(diffOf([{ path: 'src/device-toggle.ts', add: [[3, "  hass.callService('light', 'toggle', data);"]] }]))),
+    { classes: ['devices'], evidence: { devices: ['src/device-toggle.ts:3 · участок device-toggle, токен callService'] } });
+  // (е) те же токены вне класса A — ничего.
+  for (const path of ['test/touch.test.mjs', 'scripts/tool.mjs', 'docs/TOUCH-SUPPORT.md', 'demo/smoke_x.mjs']) {
+    assert.deepEqual(classifyRisk(diffOf([{ path, add: [[1, "on('pointerdown', () => hass.callService(snapToGrid(requestAnimationFrame)))"]] }])).classes, [], path);
+  }
+  // (ж) декларация стиля интерфейса — visual/ui, ship не повышает.
+  const ui = classifyRisk(diffOf([{ path: 'src/styles/plan.styles.ts', add: [[7, '    gap: 4px;']] }]));
+  assert.deepEqual(ui.classes, ['visual']);
+  assert.deepEqual(ui.raising, []);
+  assert.deepEqual(ui.visual, { render: false, ui: true });
+  assert.deepEqual(ui.evidence.visual, ['src/styles/plan.styles.ts:7 · участок src/styles/** (ui)']);
+  // (з) путь отрисовки плана — visual/render и perf.
+  const render = classifyRisk(diffOf([{ path: 'src/render/paper-scene.ts', add: [[3, '  const scale = 2;']] }]));
+  assert.deepEqual(only(render), {
+    classes: ['perf', 'visual'],
+    evidence: { perf: ['src/render/paper-scene.ts:3 · участок src/render/**'], visual: ['src/render/paper-scene.ts:3 · участок src/render/** (render)'] },
+  });
+  assert.deepEqual(render.visual, { render: true, ui: false });
+  assert.deepEqual(render.raising, ['perf']);
+  // (и) чистое переименование — ханков нет, риска нет.
+  const rename = 'diff --git a/src/wall-merge.ts b/src/wall-merge-core.ts\nsimilarity index 100%\nrename from src/wall-merge.ts\nrename to src/wall-merge-core.ts\n';
+  assert.deepEqual(classifyRisk(rename).classes, []);
+  // Двоичный файл ханков не даёт — его ловят рамки ship.
+  assert.deepEqual(classifyRisk('diff --git a/src/render/icon.png b/src/render/icon.png\nindex 1..2 100644\nBinary files a/src/render/icon.png and b/src/render/icon.png differ\n').classes, []);
+  // (к) переводы интеграции — ux; strings.json класса «?» не судится.
+  const key = '  "zone_name": "Zone",';
+  assert.deepEqual(only(classifyRisk(diffOf([{ path: 'custom_components/houseplan/translations/en.json', add: [[4, key]] }]))),
+    { classes: ['ux'], evidence: { ux: ['custom_components/houseplan/translations/en.json:4 · новый ключ "zone_name"'] } });
+  assert.deepEqual(classifyRisk(diffOf([{ path: 'custom_components/houseplan/strings.json', add: [[4, key]] }])).classes, []);
+});
+
+test('#707 AC1: каждая строка таблицы риска — положительный и отрицательный случай', () => {
+  const cls = (path, add, del = []) => classifyRisk(diffOf([{ path, add, del }])).classes;
+  const card = CARD_FILE;
+  const cases = [
+    // [класс, положительный участок, положительный токен, отрицательный]
+    ['geometry', ['src/opening-placement.ts', 'x = 1;'], [card, 'const t = wallThickness;'], [card, 'const s = snapshotOf(x);']],
+    ['geometry', ['custom_components/houseplan/junction_limits.py', 'x = 1'], ['src/logic.ts', 'canonicalizePoint(p);'], ['custom_components/houseplan/junction_limits.py', '# junction comment']],
+    ['touch', ['src/pointer-modality.ts', 'x = 1;'], [card, "style: 'touch-action: none'"], ['src/logic.ts', 'const pointerUpdate = 1;']],
+    ['migration', ['src/config-store.ts', 'x = 1;'], [card, 'migrateLegacy(cfg);'], ['scripts/migrate.mjs', 'migrateLegacy(cfg);']],
+    ['migration', ['custom_components/houseplan/store.py', 'x = 1'], ['custom_components/houseplan/plans.py', 'STORAGE_VERSION = 3'], ['custom_components/houseplan/store.py', '   ']],
+    ['devices', ['src/vacuum-routes.ts', 'x = 1;'], [card, "hass.callService('a', 'b');"], ['docs/x.md', "hass.callService('a', 'b');"]],
+    ['devices', ['custom_components/houseplan/auth.py', 'x = 1'], ['custom_components/houseplan/plans.py', 'require_admin(user)'], ['custom_components/houseplan/plans.py', 'user = 1']],
+    ['perf', ['src/glow-scene.ts', 'x = 1;'], [card, 'const r = el.getBoundingClientRect();'], [card, '// getBoundingClientRect']],
+    ['perf', ['src/boot-soft-layout.ts', 'x = 1;'], ['src/logic.ts', '  filter: blur(2px);'], ['src/logic.ts', 'list.filter((x) => x);']],
+    ['ux', null, [card, "customElements.define('hp-x', X);"], [card, "customElements.get('hp-x');"]],
+    ['visual', ['src/iso-walls.ts', 'x = 1;'], [card, '<path stroke-width="2" d="M0 0">'], [card, 'const strokeWidthPx = 2;']],
+    ['visual', ['src/summary-panel-style.ts', 'x = 1;'], ['src/furniture-plan-art.generated.ts', 'x = 1;'], [card, 'const styles = 1;']],
+  ];
+  for (const [name, area, token, negative] of cases) {
+    if (area) assert.ok(cls(area[0], [[1, area[1]]]).includes(name), `${name}: участок ${area[0]}`);
+    assert.ok(cls(token[0], [[1, token[1]]]).includes(name), `${name}: ${token[0]} «${token[1]}»`);
+    assert.ok(!cls(negative[0], [[1, negative[1]]]).includes(name), `${name}: не должно — ${negative[0]} «${negative[1]}»`);
+  }
+  // ux: удалённый customElements.define и удалённый ключ риска не дают.
+  assert.deepEqual(cls(card, [], [[3, "customElements.define('hp-x', X);"]]), []);
+  assert.deepEqual(cls('src/i18n/settings/ru.json', [], [[3, '  "a": "b",']]), []);
+  assert.deepEqual(cls('src/i18n/settings/ru.json', [[3, '  "a": "b",']]), ['ux'], 'src/i18n/**/*.json');
+  // монолит участком не судится: нейтральная строка — без классов.
+  assert.deepEqual(cls(RUNTIME_FILE, [[3, 'const a = 1;']]), []);
+  // текст перевода со словом токена — не геометрия.
+  assert.deepEqual(cls('src/i18n/en.json', [[3, '  "wall_thickness": "Wall thickness",']], [[3, '  "wall_thickness": "Thickness",']]), []);
+});
+
+test('#707 AC1: большой дифф — классифицируются все ханки, печатается не больше пяти', () => {
+  const add = Array.from({ length: 12 }, (_, i) => [i + 1, `  el.addEventListener('pointermove', f${i});`]);
+  const risk = classifyRisk(diffOf([{ path: CARD_FILE, add }]));
+  assert.equal(risk.counts.touch, 12);
+  assert.equal(risk.evidence.touch.length, 5);
+  assert.match(riskClassLine(risk, 'touch'), /; и ещё 7$/);
+});
+
+test('#707 AC2: происхождение трека — строка владельца, предложение, прежние метки', () => {
+  const c = (author, body, createdAt) => ({ author, body, createdAt });
+  const owner = 'Matysh';
+  const ship = ['track:ship', 'S7-code-review'];
+  const confirmed = trackOrigin({ labels: ship, owner, comments: [c(owner, 'Решение.\nТрек: ship — решение владельца', '2026-09-30T08:00:00Z')] });
+  assert.equal(confirmed.confirmed, true);
+  assert.equal(confirmed.basis, 'метка, подтверждённая владельцем (2026-09-30)');
+  for (const line of ['трек: SHIP – Решение Владельца', 'Трек: ship - решение владельца', '  Трек:ship—решение владельца']) {
+    assert.equal(trackOrigin({ labels: ship, owner, comments: [c('matysh', line, '1')] }).confirmed, true, line);
+  }
+  const proposal = 'метка без подтверждения — предложение';
+  assert.equal(trackOrigin({ labels: ship, owner, comments: [c('claude[bot]', 'Трек: ship — решение владельца', '1')] }).basis, proposal, 'чужой автор');
+  assert.equal(trackOrigin({ labels: ship, owner, comments: [c(owner, 'Трек: show — решение владельца', '1')] }).basis, proposal, 'другой трек');
+  assert.equal(trackOrigin({ labels: ship, owner, comments: [c(owner, 'как сказано: Трек: ship — решение владельца', '1')] }).basis, proposal, 'не в начале строки');
+  assert.equal(trackOrigin({ labels: ship, owner, comments: [c(owner, '> Трек: ship — решение владельца', '1')] }).basis, proposal, 'цитата не подтверждение');
+  // Более поздняя строка владельца отменяет раннюю — по времени, а не по порядку массива.
+  const later = [c(owner, 'Трек: show — решение владельца', '2026-09-30T09:00:00Z'), c(owner, 'Трек: ship — решение владельца', '2026-09-29T09:00:00Z')];
+  assert.equal(trackOrigin({ labels: ship, owner, comments: later }).confirmed, false);
+  assert.equal(trackOrigin({ labels: ['track:show'], owner, comments: later }).confirmed, true);
+  // Комментарии недоступны — происхождение не установлено.
+  const unknown = trackOrigin({ labels: ship, owner, comments: null });
+  assert.equal(unknown.confirmed, false);
+  assert.equal(unknown.basis, 'метка, происхождение не установлено (комментарии недоступны)');
+  // Несколько трековых меток — строжайшая и предупреждение.
+  const two = trackOrigin({ labels: ['track:ship', 'track:ask'], owner, comments: [] });
+  assert.equal(two.track, 'ask');
+  assert.match(two.warning, /несколько трековых меток \(track:ask, track:ship\) — дефект разметки, действует строжайшая track:ask/);
+  assert.equal(trackFromLabels(['track:ship', 'track:show']), 'show');
+  assert.equal(trackOrigin({ labels: ['small'], owner, comments: [] }).basis, 'прежняя метка small → show (§5.1)');
+  assert.equal(trackOrigin({ labels: ['small'], owner, comments: [] }).track, 'show');
+  assert.equal(trackOrigin({ labels: [], infrastructure: true }).basis, 'метки нет: инфраструктура → show');
+  assert.equal(trackOrigin({ labels: ['bug'] }).basis, 'метки нет: продукт → ask');
+});
+
+const RISKY = diffOf([{ path: 'src/pointer-modality.ts', add: [[7, "  if (e.pointerType === 'touch') return;"]] }]);
+const VISUAL = diffOf([{ path: 'src/styles/plan.styles.ts', add: [[7, '    gap: 4px;']] }]);
+const small = { numstat: [{ added: 1, deleted: 0, path: 'src/pointer-modality.ts' }], nameStatus: [{ status: 'M', path: 'src/pointer-modality.ts' }] };
+const ownerSays = (track) => [{ author: 'Matysh', body: `Трек: ${track} — решение владельца`, createdAt: '2026-09-30T08:00:00Z' }];
+const s7 = (over = {}) => decideTrack({
+  stage: 'code', branch: 'issue/7-x', labels: ['track:ship', 'S7-code-review'], files: ['src/pointer-modality.ts'],
+  ...small, diff: RISKY, comments: [], owner: 'Matysh', runUrl: 'https://run/1', ...over,
+});
+
+test('#707 AC3: решение по ship на S7 — рамки, риск и подтверждение владельца', () => {
+  // Рамки соблюдены, риск есть, подтверждения нет — show комментарием с классами и способом подтвердить ship.
+  const raised = s7();
+  assert.equal(raised.raise, true);
+  assert.equal(raised.track, 'show');
+  assert.equal(raised.ship, false);
+  assert.match(raised.comment, /^\*\*Трек повышен: `track:ship` → `track:show`\.\*\*/);
+  assert.match(raised.comment, /- touch: src\/pointer-modality\.ts:7 · участок pointer-modality, токен pointerType/);
+  assert.match(raised.comment, /Понизить трек может только владелец; подтвердить ship — строкой `Трек: ship — решение владельца` в комментарии и снова `S7-code-review`/);
+  assert.match(raised.comment, /\[Прогон\]\(https:\/\/run\/1\)/);
+  assert.doesNotMatch(raised.comment, /механические рамки/, 'рамки не нарушены — их не называет');
+  // Сам комментарий конвейера (он идёт от учётной записи владельца) подтверждением не служит.
+  assert.equal(trackOrigin({ labels: ['track:ship'], owner: 'Matysh', comments: [{ author: 'Matysh', body: raised.comment, createdAt: '2' }] }).confirmed, false);
+  // Подтверждено владельцем — ship, строка риска для hp:ship-merge.
+  const kept = s7({ comments: ownerSays('ship') });
+  assert.equal(kept.raise, false);
+  assert.equal(kept.ship, true);
+  assert.equal(kept.track, 'ship');
+  assert.equal(kept.note, '', 'модель на ship не зовётся — заметка не нужна');
+  assert.match(kept.shipRisk, /^Риск по участкам \(трек подтверждён владельцем, не повышен\): touch: src\/pointer-modality\.ts:7/);
+  assert.match(kept.shipRisk, /\n<!-- hp:ship-risk classes=touch -->$/);
+  // Риск только visual — ship без повышения.
+  const visual = s7({ diff: VISUAL, files: ['src/styles/plan.styles.ts'] });
+  assert.equal(visual.raise, false);
+  assert.equal(visual.ship, true);
+  assert.equal(visual.full, false, 'визуальный риск полного набора не заказывает');
+  // Нарушение рамок — show при любом подтверждении; оба перечня одним комментарием.
+  const over = { numstat: [{ added: 40, deleted: 0, path: 'src/pointer-modality.ts' }], nameStatus: small.nameStatus };
+  for (const comments of [[], ownerSays('ship')]) {
+    const both = s7({ ...over, comments });
+    assert.equal(both.raise, true);
+    assert.equal(both.track, 'show');
+    assert.match(both.comment, /механические рамки ship \(PROCESS\.md §5\): дифф src\/\*\* — 40 строк при рамке 30\./);
+    assert.match(both.comment, /- touch: src\/pointer-modality\.ts:7/);
+    assert.match(both.comment, /Понизить трек обратно может только владелец\./);
+    assert.equal((both.comment.match(/Трек повышен/g) || []).length, 1, 'один комментарий');
+  }
+  // Повторный S7 после повышения: метка уже show — второго комментария нет.
+  assert.equal(s7({ labels: ['track:show', 'S7-code-review'] }).raise, false);
+  // Этап spec, нет ветки, инфраструктурный дифф — риск пуст, поведение прежнее.
+  for (const quiet of [s7({ stage: 'spec' }), s7({ branch: '' }), s7({ labels: ['S7-code-review'], files: ['scripts/x.mjs'], diff: diffOf([{ path: 'scripts/x.mjs', add: [[1, 'pointerdown']] }]) })]) {
+    assert.deepEqual(quiet.risk.classes, []);
+    assert.equal(quiet.raise, false);
+    assert.equal(quiet.note, '');
+  }
+  assert.equal(s7({ stage: 'spec' }).ship, false, 'ship сливается только на код-ревью');
+  // Полный набор — только по меткам.
+  assert.equal(s7({ labels: ['track:show', 'ci:golden'] }).full, true);
+});
+
+test('#707 AC5: заметка риска ревьюеру show/ask', () => {
+  const risk = classifyRisk(RISKY);
+  const showNote = riskNote({ track: 'show', risk });
+  assert.match(showNote, /Трек show держится на «решать нечего» \(PROCESS\.md §5\)/);
+  assert.match(showNote, /не нашёл — Medium «решать есть что — нужен track:ask» с названным критерием §5/);
+  assert.match(showNote, /- touch: src\/pointer-modality\.ts:7 · участок pointer-modality, токен pointerType/);
+  const confirmedNote = riskNote({ track: 'show', confirmed: true, risk });
+  assert.match(confirmedNote, /трек не повышать: не нашёл — вопрос владельцу в комментарии, вариант по умолчанию «повысить до ask»/);
+  assert.doesNotMatch(confirmedNote, /Medium/);
+  assert.match(riskNote({ track: 'ask', risk }), /Трек ask: сверь, что каждый класс ниже покрыт AC ТЗ/);
+  const render = classifyRisk(diffOf([{ path: 'src/render/paper-scene.ts', add: [[3, '  const scale = 2;']] }]));
+  assert.match(riskNote({ track: 'show', risk: render }), /Визуальный риск в пути отрисовки плана без ci:golden — если задача меняет вид, нужен ci:golden/);
+  assert.doesNotMatch(riskNote({ track: 'show', risk: render, labels: ['ci:golden'] }), /ci:golden —/);
+  assert.equal(riskNote({ track: 'show', risk: classifyRisk(VISUAL) }), '', 'visual/ui — ни вопроса трека, ни golden');
+  assert.equal(riskNote({ track: 'show', risk: classifyRisk('') }), '');
+  const everything = classifyRisk(diffOf(RISK_CLASSES.map((_, i) => ({
+    path: CARD_FILE,
+    add: Array.from({ length: 9 }, (__, j) => [i * 100 + j + 1, "on('pointerdown', () => snapToGrid(requestAnimationFrame(callService(migrate(x))))); <path stroke='1'/> customElements.define('x', X)"]),
+  }))));
+  const lines = riskNote({ track: 'show', risk: everything }).split('\n');
+  assert.ok(lines.length <= RISK_NOTE_LINE_LIMIT, `${lines.length} строк`);
+  assert.equal(RISK_NOTE_LINE_LIMIT, 25);
+});
+
+/** Прежний bash guard — эталон, против которого сверяется единое правило (AC6). */
+function oldGuardLimit(labels, { branch = true, compareOk = true, files = [] } = {}) {
+  const has = (label) => labels.includes(label);
+  let small = has('small') || has('track:show') || has('track:ship');
+  let trivial = has('trivial');
+  if (has('track:ask')) { small = false; trivial = false; }
+  let limit = small || trivial ? 2 : 4;
+  if (branch && !['track:ship', 'track:show', 'track:ask', 'small', 'trivial'].some(has)
+      && compareOk && files.length > 0 && files.length < 300 && files.every((f) => classifyPath(f) !== 'A')) limit = 2;
+  return limit;
+}
+
+test('#707 AC6: трек и лимит — одно правило; прежний guard воспроизведён везде, кроме нескольких трековых меток', () => {
+  const infra = ['scripts/a.mjs', '.github/workflows/b.yml'];
+  const product = ['src/a.ts', 'scripts/a.mjs'];
+  const many = Array.from({ length: 300 }, (_, i) => `scripts/f${i}.mjs`);
+  const labelSets = [[], ['infra'], ['bug', 'P2'], ['ci:golden'], ['small'], ['trivial'], ['track:ship'], ['track:show'], ['track:ask'],
+    ['track:ask', 'small'], ['track:ask', 'trivial'], ['track:show', 'small'], ['track:ship', 'trivial']];
+  const multi = [['track:ship', 'track:ask'], ['track:ship', 'track:show'], ['track:show', 'track:ask'], ['track:ship', 'track:show', 'track:ask']];
+  const worlds = [
+    { name: 'инфраструктура', files: infra }, { name: 'продукт', files: product }, { name: 'пусто', files: [] },
+    { name: '300 файлов', files: many }, { name: 'compare отказал', files: infra, compareOk: false }, { name: 'нет ветки', files: [], branch: false },
+  ];
+  for (const labels of [...labelSets, ...multi]) {
+    for (const world of worlds) {
+      const files = world.compareOk === false || world.branch === false ? [] : world.files;
+      const got = guardLimit({ labels, files });
+      assert.equal(got.limit, cycleLimit(resolveTrack({ labels, files, filesCapped: files.length >= COMPARE_FILES_CAP }).track));
+      assert.equal(got.limit, oldGuardLimit(labels, world), `${labels.join(',') || 'без меток'} · ${world.name}`);
+    }
+  }
+  for (const labels of multi) assert.equal(guardLimit({ labels, files: infra }).track, explicitTracks(labels)[0], `строжайшая: ${labels}`);
+  assert.deepEqual(guardLimit({ labels: [], files: many }), { track: 'ask', limit: 4, infrastructure: false }, '300 файлов и больше — ask/4');
+  assert.deepEqual(guardLimit({ labels: [], files: infra }), { track: 'show', limit: 2, infrastructure: true }, 'инфраструктура без метки — лимит 2');
+  assert.equal(cycleLimit('ask'), 4);
+  assert.equal(cycleLimit('show'), 2);
+  assert.equal(cycleLimit('ship'), 2);
+});
+
+test('#707 AC6: guard берёт трек и лимит из process-track.mjs и не держит своей логики трека', async () => {
+  const { readFileSync } = await import('node:fs');
+  const workflow = readFileSync(WORKFLOW, 'utf8');
+  const guard = workflow.slice(workflow.indexOf('\n  guard:'), workflow.indexOf('\n  prepare:'));
+  assert.match(guard, /track_out=\$\(node scripts\/process-track\.mjs limit --labels="\$labels" --files="\$changed"\)/);
+  assert.match(guard, /new_limit=\$\(printf '%s\\n' "\$track_out" \| sed -n 's\/\^limit=\/\/p'\)/);
+  for (const own of [/SMALL/, /TRIVIAL/, /has track:show/, /has track:ship/, /has track:ask/, /limit=2/, /classify\(/, /files\.length < 300/]) {
+    assert.doesNotMatch(guard, own, `в guard осталась своя логика трека: ${own}`);
+  }
+});
+
+test('#707: ребейз до ревью — функция и условие шага «Привести ветку к dev» совпадают', async () => {
+  const { readFileSync } = await import('node:fs');
+  const workflow = readFileSync(WORKFLOW, 'utf8');
+  const step = workflow.slice(workflow.indexOf('      - name: Привести ветку к dev\n'), workflow.indexOf('      - name: Зафиксировать SHA материала ревью\n'));
+  const condition = /\n\s+if ((?:\[ "\$TRACK" = "\w+" \](?: \|\| )?)+); then\n\s+if git merge-tree --write-tree origin\/dev HEAD >\/dev\/null 2>&1; then/.exec(step);
+  assert.ok(condition, 'условие show/ship перед merge-tree найдено');
+  const skipOnClean = new Set([...condition[1].matchAll(/"\$TRACK" = "(\w+)"/g)].map((m) => m[1]));
+  for (const track of ['ship', 'show', 'ask']) {
+    assert.equal(!skipOnClean.has(track), rebaseBeforeReview(track, true), `${track}: чистое слияние`);
+    assert.equal(rebaseBeforeReview(track, false), true, `${track}: конфликт — ребейз`);
+    assert.equal(rebaseBeforeReview(track, null), true, `${track}: чистота не проверена — как в шаге, ребейз`);
+  }
+});
+
+// ---------- #707 AC4: шаг трека, guard и комментарий слияния на настоящем bash ----------
+
+const SCRIPTS_DIR = dirname(SCRIPT);
+const CONTEXT = { repository: 'o/r', server_url: 'https://github.com', run_id: '42', repository_owner: 'o' };
+
+/**
+ * Тело `run: |` шага так, как его прочтёт YAML: блок кончается на первой
+ * непустой строке с отступом меньше отступа тела (PROCESS.md §10.4 п.4), и
+ * обрезанный скрипт тест увидит, а не пропустит. Выражения `github.*` —
+ * подставлены, как это делает раннер.
+ */
+function stepRun(workflow, marker) {
+  const start = workflow.indexOf(marker);
+  assert.ok(start >= 0, `шаг «${marker.trim()}»`);
+  const lines = workflow.slice(start).split('\n');
+  const from = lines.findIndex((line) => /^\s+run: \|$/.test(line));
+  assert.ok(from > 0, 'у шага есть run: |');
+  const indent = lines[from].indexOf('run:') + 2;
+  const body = [];
+  for (const line of lines.slice(from + 1)) {
+    if (line.trim() && line.length - line.trimStart().length < indent) break;
+    body.push(line.slice(indent));
+  }
+  const text = body.join('\n')
+    .replace(/\$\{\{ github\.(\w+) \}\}/g, (_, key) => CONTEXT[key])
+    .replace(/\$\{\{ needs\.guard\.outputs\.cycle \}\}/g, '1');
+  assert.doesNotMatch(text, /\$\{\{/, 'все выражения подставлены');
+  return text;
+}
+const TRACK_STEP = '      - name: "Трек задачи и рамки ship (#696)"\n';
+const GUARD_STEP = '      - id: decide\n';
+const DECIDE_STEP = '      - name: Решение по вердикту\n';
+
+test('#707 AC4: изменённые run шага трека, guard и решения по вердикту проходят bash -n', async (t) => {
+  if (process.platform === 'win32' || spawnSync('bash', ['--version']).status !== 0) { t.skip('bash недоступен'); return; }
+  const { readFileSync } = await import('node:fs');
+  const workflow = readFileSync(WORKFLOW, 'utf8');
+  for (const marker of [TRACK_STEP, GUARD_STEP, DECIDE_STEP]) {
+    const r = spawnSync('bash', ['-n', '-c', stepRun(workflow, marker)], { encoding: 'utf8' });
+    assert.equal(r.status, 0, `${marker.trim()}: ${r.stderr}`);
+    assert.equal(r.stderr, '', `${marker.trim()}: bash предупреждает (незакрытый heredoc?): ${r.stderr}`);
+  }
+  // Свидетель умеет падать: heredoc без закрывающей строки — предупреждение bash.
+  const broken = spawnSync('bash', ['-n', '-c', 'cat > /dev/null <<EOF\nтекст\n'], { encoding: 'utf8' });
+  assert.notEqual(broken.stderr, '');
+});
+
+test('#707 AC4: шаг трека в _process.yml — один вызов, комментарии, флаг повышения, риск до промпта и до hp:ship-merge', async () => {
+  const { readFileSync } = await import('node:fs');
+  const workflow = readFileSync(WORKFLOW, 'utf8');
+  const run = stepRun(workflow, TRACK_STEP);
+  assert.equal((run.match(/process-track\.mjs/g) || []).length, 1, 'один вызов скрипта');
+  assert.match(run, /gh issue view "\$NUM" --repo "o\/r" --json comments > "\$comments"/, 'JSON комментариев — скрипту');
+  assert.match(run, /--comments="\$comments" --owner="\$OWNER"/);
+  const step = workflow.slice(workflow.indexOf(TRACK_STEP), workflow.indexOf('      - name: Привести ветку к dev\n'));
+  assert.match(step, /OWNER: \$\{\{ github\.repository_owner \}\}/, 'владелец — владелец репозитория');
+  assert.equal((run.match(/gh issue edit/g) || []).length, 1, 'метки меняются в одном месте');
+  assert.ok(run.indexOf('gh issue edit') > run.indexOf("grep -qx 'raise=true'"), 'метки — только по флагу повышения');
+  // Выходы prepare: заметка — в промпт Review, строка риска — в комментарий слияния.
+  const prepare = workflow.slice(workflow.indexOf('\n  prepare:'), workflow.indexOf('    steps:', workflow.indexOf('\n  prepare:')));
+  assert.match(prepare, /risk_note: \$\{\{ steps\.track\.outputs\.risk_note \}\}/);
+  assert.match(prepare, /ship_risk: \$\{\{ steps\.track\.outputs\.ship_risk \}\}/);
+  const prompt = workflow.slice(workflow.indexOf('          prompt: |\n'), workflow.indexOf('          claude_args: |'));
+  assert.match(prompt, /\n\s+\$\{\{ needs\.prepare\.outputs\.risk_note \}\}\n/, 'risk_note доходит до промпта Review');
+  const decide = workflow.slice(workflow.indexOf(DECIDE_STEP), workflow.indexOf('      - name: dev ушёл вперёд'));
+  assert.match(decide, /SHIP_RISK: \$\{\{ needs\.prepare\.outputs\.ship_risk \}\}/);
+  assert.match(decide, /\n\s+\$\{SHIP_RISK\}\n\n\s+<!-- hp:ship-merge material=\$MATERIAL -->\n/, 'строка риска — в комментарии слияния, маркер прежний');
+  // `full` — только из меток: гейт берёт его у шага трека, скрипт — у resolveTrack.
+  const gate = workflow.slice(workflow.indexOf('      - name: Validate на материале\n'), workflow.indexOf('      - name: Validate идёт — раунд продолжит событие\n'));
+  assert.match(gate, /FULL: \$\{\{ steps\.track\.outputs\.full \}\}/);
+  assert.equal(decideTrack({ stage: 'code', branch: 'b', labels: ['track:show'], diff: RISKY }).full, false, 'риск полного набора не заказывает');
+});
+
+/** Замыкание относительных импортов модуля — то, что шаг получит архивом scripts/ из dev. */
+function importClosure(entry, seen = new Set()) {
+  if (seen.has(entry)) return seen;
+  seen.add(entry);
+  const text = readFileSync(entry, 'utf8');
+  for (const m of text.matchAll(/^(?:import|export)[^'"]*from ['"](\.{1,2}\/[^'"]+)['"]/gm)) importClosure(join(dirname(entry), m[1]), seen);
+  return seen;
+}
+
+// Окружение git без GIT_* родителя и без глобального конфига.
+const GIT_ENV = {
+  ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^GIT_/i.test(key))),
+  GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t',
+  GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null',
+};
+const hasTools = () => process.platform !== 'win32'
+  && ['bash', 'tar', 'git'].every((tool) => spawnSync(tool, ['--version']).status === 0);
+
+function parseOutput(text) {
+  const out = {};
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i += 1) {
+    const heredoc = /^([\w-]+)<<(.+)$/.exec(lines[i]);
+    if (heredoc) {
+      const end = lines.indexOf(heredoc[2], i + 1);
+      assert.ok(end > i, `закрывающий разделитель ${heredoc[2]}`);
+      out[heredoc[1]] = lines.slice(i + 1, end).join('\n');
+      i = end;
+      continue;
+    }
+    const kv = /^([\w-]+)=(.*)$/.exec(lines[i]);
+    if (kv) out[kv[1]] = kv[2];
+  }
+  return out;
+}
+
+/** Песочница: bare origin с dev (scripts/ и src/), ветка задачи, подменённый gh. */
+function trackSandbox(t, { change }) {
+  const root = mkdtempSync(join(tmpdir(), 'hp-707-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const git = (cwd, ...args) => {
+    const r = spawnSync('git', args, { cwd, encoding: 'utf8', env: GIT_ENV });
+    assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
+    return r.stdout.trim();
+  };
+  const origin = join(root, 'origin.git');
+  const work = join(root, 'work');
+  const fake = join(root, 'fake');
+  const bin = join(root, 'bin');
+  const temp = join(root, 'runner');
+  for (const dir of [fake, bin, temp]) mkdirSync(dir);
+  git(root, 'init', '--bare', '-q', origin);
+  git(root, 'clone', '-q', origin, work);
+  git(work, 'checkout', '-q', '-b', 'dev');
+  mkdirSync(join(work, 'scripts'));
+  for (const file of importClosure(SCRIPT)) {
+    assert.ok(file.startsWith(SCRIPTS_DIR), `${file} вне scripts/`);
+    writeFileSync(join(work, 'scripts', file.slice(SCRIPTS_DIR.length + 1)), readFileSync(file));
+  }
+  mkdirSync(join(work, 'src', 'styles'), { recursive: true });
+  writeFileSync(join(work, 'src', 'pointer-modality.ts'), 'export const a = 1;\nexport const b = 2;\n');
+  writeFileSync(join(work, 'src', 'styles', 'plan.styles.ts'), 'export const css = `\n  .x { color: red; }\n`;\n');
+  git(work, 'add', '-A'); git(work, 'commit', '-q', '-m', 'base');
+  git(work, 'push', '-q', 'origin', 'dev');
+  git(work, 'checkout', '-q', '-b', 'issue/7-x');
+  change(work);
+  git(work, 'add', '-A'); git(work, 'commit', '-q', '-m', 'task');
+  git(work, 'push', '-q', 'origin', 'issue/7-x');
+  git(work, 'checkout', '-q', '--detach', 'issue/7-x');
+  writeFileSync(join(bin, 'gh'), [
+    '#!/usr/bin/env bash',
+    'printf \'%s\\n\' "$*" >> "$FAKE_DIR/gh-calls"',
+    'case "$1 $2" in',
+    '  "issue view") if [ -f "$FAKE_DIR/comments.json" ]; then cat "$FAKE_DIR/comments.json"; exit 0; fi; echo "gh: API недоступен" >&2; exit 1 ;;',
+    '  "issue comment") while [ $# -gt 0 ]; do if [ "$1" = "--body-file" ]; then cp "$2" "$FAKE_DIR/comment.md"; fi; shift; done ;;',
+    '  "issue edit") ;;',
+    '  *) echo "unexpected gh $*" >&2; exit 97 ;;',
+    'esac',
+    '',
+  ].join('\n'), { mode: 0o755 });
+  const read = (path) => (existsSync(path) ? readFileSync(path, 'utf8') : '');
+  return {
+    work, fake,
+    run(script, env) {
+      for (const name of ['gh-calls', 'comment.md']) rmSync(join(fake, name), { force: true });
+      writeFileSync(join(temp, 'output'), '');
+      const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
+        cwd: work, encoding: 'utf8',
+        env: {
+          ...GIT_ENV, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, FAKE_DIR: fake, GH_TOKEN: 'x', NUM: '7',
+          GITHUB_OUTPUT: join(temp, 'output'), GITHUB_STEP_SUMMARY: join(temp, 'summary'), ...env,
+        },
+      });
+      return {
+        status: r.status, stdout: r.stdout, stderr: r.stderr,
+        output: parseOutput(read(join(temp, 'output'))), summary: read(join(temp, 'summary')),
+        calls: read(join(fake, 'gh-calls')).split('\n').filter(Boolean), comment: read(join(fake, 'comment.md')),
+      };
+    },
+    comments(list) {
+      if (list === null) rmSync(join(fake, 'comments.json'), { force: true });
+      else writeFileSync(join(fake, 'comments.json'), JSON.stringify({ comments: list }));
+    },
+  };
+}
+
+const touchChange = (work) => writeFileSync(join(work, 'src', 'pointer-modality.ts'),
+  "export const a = 1;\nexport const b = 2;\nexport const touch = (e) => e.pointerType === 'touch';\n");
+const trackEnv = (labels, stage = 'code') => ({ STAGE: stage, LABELS: labels, BRANCH: 'issue/7-x', OWNER: 'Matysh' });
+
+test('#707 AC4: шаг трека на настоящем bash — ship с риском без подтверждения повышается до show', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
+  const { readFileSync: read } = await import('node:fs');
+  const box = trackSandbox(t, { change: touchChange });
+  const run = stepRun(read(WORKFLOW, 'utf8'), TRACK_STEP);
+  box.comments([{ author: { login: 'claude[bot]' }, body: 'Трек: ship — решение владельца', createdAt: '2026-09-30T08:00:00Z' }]);
+  const r = box.run(run, trackEnv('track:ship,S7-code-review'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^raise=true$/m);
+  assert.deepEqual(r.calls, [
+    'issue view 7 --repo o/r --json comments',
+    `issue comment 7 --repo o/r --body-file ${join(dirname(box.work), 'runner', 'track', 'raise.md')}`,
+    'issue edit 7 --repo o/r --add-label track:show --remove-label track:ship',
+  ]);
+  assert.match(r.comment, /Трек повышен: `track:ship` → `track:show`/);
+  assert.match(r.comment, /- touch: src\/pointer-modality\.ts:3 · участок pointer-modality, токен pointerType/);
+  assert.match(r.comment, /\[Прогон\]\(https:\/\/github\.com\/o\/r\/actions\/runs\/42\)/);
+  assert.equal(r.output.track, 'show');
+  assert.equal(r.output.ship, 'false');
+  assert.equal(r.output.mutants, 'false');
+  assert.equal(r.output.full, 'false');
+  assert.equal(r.output.risk, 'touch');
+  assert.match(r.output.risk_note, /Трек show держится на «решать нечего»/);
+  assert.equal(r.output.ship_risk, undefined);
+  assert.match(r.summary, /трек \*\*show\*\* · основание: повышен конвейером с ship \(риск touch\); было: метка без подтверждения — предложение · риск по участкам: touch/);
+});
+
+test('#707 AC4: шаг трека на настоящем bash — ship, подтверждённый владельцем, остаётся; строка риска доходит до hp:ship-merge', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
+  const { readFileSync: read } = await import('node:fs');
+  const workflow = read(WORKFLOW, 'utf8');
+  const box = trackSandbox(t, { change: touchChange });
+  box.comments([{ author: { login: 'Matysh' }, body: 'Трек: ship — решение владельца', createdAt: '2026-09-30T08:00:00Z' }]);
+  const r = box.run(stepRun(workflow, TRACK_STEP), trackEnv('track:ship,S7-code-review'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^raise=false$/m);
+  assert.deepEqual(r.calls, ['issue view 7 --repo o/r --json comments'], 'ни комментария, ни смены меток');
+  assert.equal(r.output.track, 'ship');
+  assert.equal(r.output.ship, 'true');
+  assert.equal(r.output.risk_note, undefined, 'модель на ship не зовётся');
+  assert.match(r.output.ship_risk, /^Риск по участкам \(трек подтверждён владельцем, не повышен\): touch: src\/pointer-modality\.ts:3/);
+  assert.match(r.output.basis, /^метка, подтверждённая владельцем \(2026-09-30\)$/);
+
+  // Комментарий слияния ship: шаг «Решение по вердикту» как есть, с этой строкой риска.
+  const { SHIP_MERGE_MARKER_RE, shipRiskFrom } = await import('../scripts/ship-review.mjs');
+  const material = 'a'.repeat(40);
+  const decide = stepRun(workflow, DECIDE_STEP).replaceAll('/tmp/ship-merge.md', join(box.fake, 'ship-merge.md'));
+  const merged = box.run(decide, { OUT: '', STAGE: 'code', REUSE: 'false', SHIP: 'true', SHIP_RISK: r.output.ship_risk, MATERIAL: material, VALIDATE_URL: 'https://v' });
+  assert.equal(merged.status, 0, merged.stderr);
+  assert.equal(merged.output.green, 'true');
+  assert.equal(SHIP_MERGE_MARKER_RE.exec(merged.comment)?.[1], material, 'маркер слияния по-прежнему находится');
+  assert.deepEqual(shipRiskFrom([{ body: merged.comment }]), {
+    classes: ['touch'], line: r.output.ship_risk.split('\n')[0],
+  });
+  // Без риска комментарий прежний: маркер есть, строки риска нет.
+  const plain = box.run(decide, { OUT: '', STAGE: 'code', REUSE: 'false', SHIP: 'true', SHIP_RISK: '', MATERIAL: material, VALIDATE_URL: '' });
+  assert.equal(SHIP_MERGE_MARKER_RE.exec(plain.comment)?.[1], material);
+  assert.equal(shipRiskFrom([{ body: plain.comment }]), null);
+});
+
+test('#707 AC4: шаг трека на настоящем bash — комментарии недоступны, этап spec, show', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
+  const { readFileSync: read } = await import('node:fs');
+  const run = stepRun(read(WORKFLOW, 'utf8'), TRACK_STEP);
+  const box = trackSandbox(t, { change: touchChange });
+  box.comments(null);
+  const unknown = box.run(run, trackEnv('track:ship,S7-code-review'));
+  assert.equal(unknown.status, 0, unknown.stderr);
+  assert.match(unknown.stdout, /^raise=true$/m, 'без комментариев подтверждения нет');
+  assert.match(unknown.output.basis, /происхождение не установлено \(комментарии недоступны\)/);
+  box.comments([]);
+  const spec = box.run(run, trackEnv('track:ship,S4-spec-review', 'spec'));
+  assert.equal(spec.status, 0, spec.stderr);
+  assert.deepEqual({ track: spec.output.track, ship: spec.output.ship, raise: /^raise=true$/m.test(spec.stdout), risk: spec.output.risk },
+    { track: 'ship', ship: 'false', raise: false, risk: '' }, 'этап spec — прежнее поведение, риск пуст');
+  const show = box.run(run, trackEnv('track:show,S7-code-review'));
+  assert.equal(show.status, 0, show.stderr);
+  assert.equal(show.output.track, 'show');
+  assert.equal(show.calls.length, 1, 'show не трогает меток');
+  assert.match(show.output.risk_note, /- touch: src\/pointer-modality\.ts:3/);
 });

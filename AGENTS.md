@@ -80,6 +80,11 @@ committing.
 default: up to three AC in the issue body, no spec review, `S2` → `S5`. `ship` is a
 one-sentence change within fixed limits, `S1` → `S5`. `ask` is the full route with
 a spec review. Any agent may raise a track with a reason; only the owner lowers it.
+A label is a proposal until the owner confirms it with a comment line
+`Трек: <ship|show|ask> — решение владельца`; an agent never writes that line.
+Several track labels at once read as the strictest. A risky changed hunk
+(geometry, touch, migration, devices, perf, a new UX key) raises an unconfirmed
+`ship` to `show` at `S7`; on `show` it is a question to the reviewer (#707).
 `small` and `trivial` read as `show`. An **infrastructure** task — not a single
 class A file — skips analysis and spec and enters at `S7-code-review`
 (`PROCESS.md` §1). Every change is code-reviewed; on `ship` the review moves to a
@@ -147,9 +152,12 @@ fresh checkout. A worktree works only on the machine that created it — its
 
 ## Handoff and the verdict
 
-Start a task from its packet: `node scripts/task-packet.mjs --issue NN` (status,
-track, what the status permits, the branch against `dev`, the previous verdict
-and the unwitnessed AC; it writes nothing). The local gate is
+Start a task from its packet: `node scripts/task-packet.mjs --issue NN` (status;
+track with its basis, cycle limit and rebase policy; what the status permits;
+the branch against `dev` and the next step — no rebase a clean `show`/`ship`
+merge does not need; risk by changed hunks and what it means on this track; the
+required checks, each with its reason; changelog and visual evidence; the
+previous verdict and the unwitnessed AC; it writes nothing). The local gate is
 `npm run gate:small` (`docs/TESTING.md` › Локальный набор перед пушем); run the
 smokes named in the AC before `S7-code-review`. **"Verified" without a named
 command and its result is not evidence.** Comment formats — claim, handoff,
