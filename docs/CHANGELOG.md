@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.79.0-beta.1 — 2026-09-30
+
 - In 2.5D View the plan no longer moves: rooms, furniture, other decor and room
   names stay exactly where they are on the flat plan, and walls grow straight up
   from it. Every device icon and door lock is lifted by the same distance, the
@@ -20,7 +22,7 @@
   update in a dense plan also no longer re-lays out every icon
   ([#711](https://github.com/Matysh/houseplan-card/issues/711)).
 - In View, the mouse cursor over a stair link is now a pointer instead of the
-  move cursor; stairs without a valid target keep the plan's ordinary cursor
+  move cursor; stairs without a valid target now show the plan's ordinary cursor
   ([#693](https://github.com/Matysh/houseplan-card/issues/693)).
 
 ## v1.78.0 — 2026-09-28

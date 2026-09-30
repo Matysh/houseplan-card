@@ -17,17 +17,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Item | State |
 |---|---|
 | Generated | 2026-09-28 — rerun `node scripts/status-snapshot.mjs` for the current tree |
-| Version | **1.78.0** in all 7 version sources (`scripts/release-contract.mjs`) |
-| Latest stable tag | `v1.77.0` |
+| Version | **1.79.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
+| Latest stable tag | `v1.78.0` |
 | Latest prerelease tag | `v1.78.0-beta.9` |
-| Tests | Node unit 3171 · pure backend 393 · HA-harness backend 302 · browser smokes 281 (`npm run inventory`) |
+| Tests | Node unit 3254 · pure backend 397 · HA-harness backend 303 · browser smokes 283 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
 
 | Item | State |
 |---|---|
-| Current local cycle | **Stable v1.78.0 candidate** — promotion of the fully published and tested v1.78 beta line, with no new product behaviour. The exact candidate SHA must pass complete Validate, Full Performance and real-HA E2E before publication. `main` remains on stable v1.77.0 until those gates are green. |
+| Current local cycle | **Beta v1.79.0-beta.1 candidate** — prepared from the exact integrated `dev` tree after the v1.78.0 stable release. In 2.5D View the plan no longer moves and walls grow straight up from it, with one shared rise for device icons (#713); the "Follow the Sun" background shows the moon in its current phase (#661); 2.5D icons no longer shift on state changes (#711); stairs show the link pointer in View (#693); plus an internal performance-gate fix (#692). `main` remains on stable v1.78.0. |
 | Branches | `main` carries stable releases only; pre-release tags point at `dev`. Work lands on `dev`, which is equal to or ahead of `main`, never behind. |
 | 2.5D View | Public since #649: the installation-wide General settings switch `settings.volumetric_view` (Display). Flat stays the default and byte-for-byte unchanged; editors and `houseplan-space-card` stay Flat. Canonical: `docs/ISOMETRIC.md`. |
 | Input support | Owner's rule since 2026-08-08: View and kiosk are fully supported and release-blocking on touch; the three editors are desktop-first, touch editing is best effort. Canonical: `docs/TOUCH-SUPPORT.md`. |

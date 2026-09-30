@@ -1,20 +1,20 @@
-<!-- release: v1.78.0 -->
+<!-- release: v1.79.0-beta.1 -->
 
 ## Основное
 
-- Объёмный 2.5D-вид теперь можно включить в общих настройках; устройства и подписи сохраняют положение при загрузке, зуме и переключении вида ([#649](https://github.com/Matysh/houseplan-card/issues/649), [#651](https://github.com/Matysh/houseplan-card/issues/651), [#654](https://github.com/Matysh/houseplan-card/issues/654)).
-- В редакторе плана появились прямые и винтовые лестницы с настройкой размеров и оформления, переходом на целевой этаж и физически масштабируемыми линиями ([#663](https://github.com/Matysh/houseplan-card/issues/663), [#676](https://github.com/Matysh/houseplan-card/issues/676), [#683](https://github.com/Matysh/houseplan-card/issues/683), [#688](https://github.com/Matysh/houseplan-card/issues/688)).
-- Интерфейс на телефонах и планшетах стал компактнее, а панорамирование, свайпы между пространствами и двойной тап больше не конфликтуют ([#616](https://github.com/Matysh/houseplan-card/issues/616), [#660](https://github.com/Matysh/houseplan-card/issues/660), [#691](https://github.com/Matysh/houseplan-card/issues/691)).
+- В объёмном 2.5D-виде план больше не сдвигается: комнаты, мебель и подписи остаются там же, где на обычном плане, стены растут из него строго вверх, а все значки устройств поднимаются на одну высоту и не сдвигаются при смене состояния; включение объёма сохраняет масштаб и положение плана ([#713](https://github.com/Matysh/houseplan-card/issues/713), [#711](https://github.com/Matysh/houseplan-card/issues/711)).
+- На фоне «Следует за Солнцем» в сумерках и ночью видна луна в текущей фазе, следующая настоящей луне над вашим домом; переключатель — в общих настройках, раздел «Солнце и Луна» ([#661](https://github.com/Matysh/houseplan-card/issues/661)).
+- В режиме View над лестницей-ссылкой теперь курсор-указатель вместо курсора перемещения ([#693](https://github.com/Matysh/houseplan-card/issues/693)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Volumetric 2.5D View can now be enabled in General settings, with device markers and labels staying in place while loading, zooming and switching view ([#649](https://github.com/Matysh/houseplan-card/issues/649), [#651](https://github.com/Matysh/houseplan-card/issues/651), [#654](https://github.com/Matysh/houseplan-card/issues/654)).
-- The Plan editor now supports straight and spiral stairs with sizing, styling, target-floor navigation and physically scaled line weights ([#663](https://github.com/Matysh/houseplan-card/issues/663), [#676](https://github.com/Matysh/houseplan-card/issues/676), [#683](https://github.com/Matysh/houseplan-card/issues/683), [#688](https://github.com/Matysh/houseplan-card/issues/688)).
-- Phone and tablet UI is more compact, while panning, space swipes and double-tap no longer compete ([#616](https://github.com/Matysh/houseplan-card/issues/616), [#660](https://github.com/Matysh/houseplan-card/issues/660), [#691](https://github.com/Matysh/houseplan-card/issues/691)).
+- In 2.5D View the plan no longer moves: rooms, furniture and labels stay where they are on the flat plan, walls grow straight up from it, and every device icon is lifted by the same height and no longer shifts on state changes; turning 2.5D on or off keeps the zoom and position ([#713](https://github.com/Matysh/houseplan-card/issues/713), [#711](https://github.com/Matysh/houseplan-card/issues/711)).
+- The "Follow the Sun" background now shows the moon in its current phase at dawn, dusk and night, following the real moon over your home; the switch is in General settings under "Sun and Moon" ([#661](https://github.com/Matysh/houseplan-card/issues/661)).
+- In View, the cursor over a stair link is now a pointer instead of the move cursor ([#693](https://github.com/Matysh/houseplan-card/issues/693)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.78.0/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.78.0/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.79.0-beta.1/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.79.0-beta.1/docs/CHANGELOG.md)
