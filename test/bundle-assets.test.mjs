@@ -930,13 +930,16 @@ test('#438 полоса шире наблюдаемого шума метрик�
     'полоса меньше килобайта превращает потолок в лотерею');
   // И потолок обязан оставаться под общим бюджетом: иначе он ничего не значит.
   assert.ok(INITIAL_VIEW_GZIP_CEILING < INITIAL_VIEW_GZIP_BUDGET);
-  // Факт лежит не у края полосы: до отказа есть место в обе стороны.
+  // Факт лежит не у края отказа. С #699 отказ — выше потолка на полосу, а
+  // снижение гейт не красит: кандидат беты опускает потолок ровно до факта
+  // (`ratchets.mjs tighten`), и запас до отказа тогда равен полосе.
   const manifest = shippedManifest();
   if (!shippedBundleIsFresh(manifest)) { t.diagnostic(STALE_SHIPPED_BUNDLE); return; }
   const shipped = manifest.initialViewGzipBytes;
-  assert.ok(INITIAL_VIEW_GZIP_CEILING - shipped > 500, 'сверху меньше 500 Б — это шум');
-  assert.ok(shipped - (INITIAL_VIEW_GZIP_CEILING - INITIAL_VIEW_CEILING_BAND) > 500,
-    'снизу меньше 500 Б — гейт потребует опустить потолок из-за шума');
+  assert.ok(INITIAL_VIEW_GZIP_CEILING + INITIAL_VIEW_CEILING_BAND - shipped > 500,
+    'до отказа меньше 500 Б — это шум');
+  assert.equal(initialViewCeilingViolation(shipped - 5_000), null,
+    'снижение не красит гейт (#699)');
 });
 
 test('#438 предупреждение о запасе можно погасить, и повышение потолка его возвращает', () => {
