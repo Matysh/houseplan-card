@@ -1343,9 +1343,18 @@ export async function prepareGoldenScenario(page, scenario) {
             || raisedRoots.some((root) => root.getAttribute('data-hp-iso-raised') !== 'true')) {
           throw new Error(`Stage 4 golden lost the corrected low visual plane: ${scenario.id}`);
         }
-        if (contract.requireNudged
-            && !raisedRoots.some((root) => root.getAttribute('data-hp-iso-nudged') === 'true')) {
-          throw new Error(`Stage 4 golden fixture produced no bounded nudge: ${scenario.id}`);
+        // #713: device tiles and lock badges rise straight up by the wall-top
+        // height, room names keep their Flat floor point; nothing is nudged.
+        if (contract.requireOneRise) {
+          const lift = 84 * (5 / card._cellCm) * Math.sin(20 * Math.PI / 180);
+          const off = raisedRoots.filter((root) => {
+            const [fx, fy] = root.getAttribute('data-hp-iso-floor').split(',').map(Number);
+            const [vx, vy] = root.getAttribute('data-hp-iso-visual').split(',').map(Number);
+            const rise = root.getAttribute('data-hp-iso-overlay-kind') === 'room-label' ? 0 : lift;
+            return !(Math.abs(vx - fx) <= 1e-6 && Math.abs(fy - vy - rise) <= 1e-6)
+              || root.getAttribute('data-hp-iso-nudged') !== 'false';
+          });
+          if (off.length) throw new Error(`Stage 4 golden lost the one wall-top rise (#713): ${scenario.id}`);
         }
       }
       const materialDefs = card.renderRoot.querySelectorAll('[data-hp-iso-material-def]').length;

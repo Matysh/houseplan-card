@@ -866,7 +866,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
     && item.mode === 'view' && item.capture === 'stage'), true);
   const overlays = scenarios.filter((item) => item.id.includes('-overlays-'));
   assert.deepEqual(new Set(overlays.map((item) => item.theme)), new Set(['light', 'dark']));
-  assert.equal(overlays.every((item) => item.stage3Golden.requireNudged
+  assert.equal(overlays.every((item) => item.stage3Golden.requireOneRise
     && item.stage3Golden.requireDenseFacets
     && item.stage3Golden.requireNoTetherCues
     && item.stage3Golden.requireNoGrounding

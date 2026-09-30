@@ -370,7 +370,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       newDevice: 'golden-presence',
     },
     stage3Golden: {
-      requiredKinds: stage3RequiredOverlays, requireNudged: true,
+      requiredKinds: stage3RequiredOverlays, requireOneRise: true,
       requireMaterialDefs: true, maxMaterialDefs: 12,
       requireVacuumFloor: theme === 'dark',
       requireDenseFacets: true,
@@ -427,7 +427,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     forcedColors: true,
     stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
     stage3Golden: {
-      requiredKinds: stage3RequiredOverlays, requireNudged: true,
+      requiredKinds: stage3RequiredOverlays, requireOneRise: true,
       requireNoMaterialDefs: true, requireNoTetherCues: true, requireNoGrounding: true,
     },
     layoutOverrides: stage3DenseLayout,
@@ -437,7 +437,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     disableIsoFilters: true,
     stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
     stage3Golden: {
-      requiredKinds: stage3RequiredOverlays, requireNudged: true,
+      requiredKinds: stage3RequiredOverlays, requireOneRise: true,
       requireNoMaterialDefs: true, requireNoTetherCues: true, requireNoGrounding: true,
     },
     layoutOverrides: stage3DenseLayout,
