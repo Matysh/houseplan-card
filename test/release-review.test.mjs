@@ -86,7 +86,9 @@ test('#638: только ручной/вызванный запуск на dev, 
   assert.match(publish, /secrets\.HP_PROCESS_TOKEN/);
   assert.match(publish, /review-doc-guard\.mjs/, 'в dev уходит только docs\/reviews');
   assert.match(publish, /reviews-index\.mjs --dir=docs\/reviews --strict/, 'индекс тем же коммитом и неизвестное имя сразу блокирует публикацию');
-  assert.match(publish, /Issue: #638\n\s+User-Visible: no/, 'трейлеры провенанса');
+  // #723: сообщение — построчно в файл, без heredoc в run; точный текст
+  // коммита судит исполнение шага (test/publish-push-refusal.test.mjs).
+  assert.match(publish, /echo "Issue: #638"\n\s+echo "User-Visible: no"/, 'трейлеры провенанса');
 });
 
 test('#638: повтор на тот же тег не тратит модель, если документ уже в dev', () => {

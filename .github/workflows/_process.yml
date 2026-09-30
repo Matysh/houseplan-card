@@ -1597,14 +1597,17 @@ jobs:
           fi
           # Первый рубеж: что вообще проиндексировано.
           git diff --cached --name-only | node scripts/review-doc-guard.mjs
+          # Сообщение коммита — построчно в файл, без heredoc в `run:` (#723).
+          msg="$RUNNER_TEMP/review-doc-commit.txt"
+          {
+            echo "docs: review document for #$NUM"
+            echo ""
+            echo "Issue: #$NUM"
+            echo "User-Visible: no"
+          } > "$msg"
           git -c user.name="claude[bot]" \
               -c user.email="209825114+claude[bot]@users.noreply.github.com" \
-              commit -q -F - <<EOF
-          docs: review document for #$NUM
-
-          Issue: #$NUM
-          User-Visible: no
-          EOF
+              commit -q -F "$msg"
           # Второй рубеж, и он главный: что пуш ДОБАВИТ в целевую ветку. Первый
           # судит намерение шага, этот — результат, а расходились они именно
           # тогда, когда база оказывалась не той.
@@ -1612,8 +1615,26 @@ jobs:
           # Публикация в dev идёт из детачнутого состояния поверх ветки задачи
           # либо dev, поэтому push нужен с явным перебазированием при гонке:
           # dev мог уйти вперёд, пока шло ревью — оно длится до 45 минут.
+          #
+          # #723: гонкой считается только устаревший lease. Отказ разбирает код
+          # слияния (merge-candidate.mjs --push-refusal, #705) — из dev, как у
+          # стража ребейза: ветка, отставшая от dev, его может не нести. Отказ
+          # GitHub (право на workflow, правило ветки, хук) ребейз не лечит:
+          # шаг падает сразу, причина и ответ git без токена — в журнале и в
+          # сводке шага; метка не меняется.
+          tools="$RUNNER_TEMP/publish-tools"
+          rm -rf "$tools" && mkdir -p "$tools"
+          git fetch -q origin dev
+          git archive origin/dev scripts | tar -x -C "$tools"
+          push_err="$RUNNER_TEMP/review-doc-push.stderr"
           if ! git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
-               "HEAD:$target"; then
+               "HEAD:$target" 2> "$push_err"; then
+            kind=$(node "$tools/scripts/merge-candidate.mjs" --push-refusal="$push_err" --ref="$target" \
+              --stage=review-doc --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
+            if [ "$kind" != "stale" ]; then
+              echo "::error::push документа ревью в $target отклонён ($kind) — это не сдвиг $target, ребейз не поможет; причина и ответ git — выше и в сводке шага"
+              exit 1
+            fi
             git fetch -q origin "$target"
             if ! git -c user.name="claude[bot]" \
                      -c user.email="209825114+claude[bot]@users.noreply.github.com" \
@@ -1626,8 +1647,13 @@ jobs:
             # После ребейза набор путей другой — проверяется заново. Форс здесь
             # запрещён и не появляется: ветка двигается только вперёд.
             git diff --name-only "origin/$target...HEAD" | node scripts/review-doc-guard.mjs
-            git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
-              "HEAD:$target"
+            if ! git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
+                 "HEAD:$target" 2> "$push_err"; then
+              kind=$(node "$tools/scripts/merge-candidate.mjs" --push-refusal="$push_err" --ref="$target" \
+                --stage=review-doc --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
+              echo "::error::документ ревью не опубликован в $target и после ребейза ($kind); причина и ответ git — выше"
+              exit 1
+            fi
           fi
           # Постусловие: до ветки дошёл именно ожидаемый файл. Коммит с
           # документом, названным не по формату, — тот же вердикт без

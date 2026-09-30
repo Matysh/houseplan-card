@@ -303,6 +303,9 @@ jobs:
           (cd "$dir" && sha256sum -c manifest.sha256)
           test "$DOC" = "$(node scripts/release-review.mjs doc --tag="$TAG")"
           counts=$(jq -r '"High \(.high) · Medium \(.medium) · Low \(.low)"' "$dir/result.json")
+          # Сообщение коммита — построчно в файл, без heredoc в `run:` (#723).
+          msg="$RUNNER_TEMP/release-review-commit.txt"
+          push_err="$RUNNER_TEMP/release-review-push.stderr"
           for attempt in 1 2 3; do
             git fetch -q origin dev
             git reset -q --hard origin/dev
@@ -318,23 +321,35 @@ jobs:
             node scripts/reviews-index.mjs --dir=docs/reviews --strict
             git add -- "$DOC" docs/reviews/INDEX.md
             git diff --cached --name-only | node scripts/review-doc-guard.mjs
+            {
+              echo "docs: release review for $TAG"
+              echo ""
+              echo "Независимое ревью линии перед стабильным релизом (PROCESS.md §11.5)."
+              echo "Итог: $counts. Выпуск не блокирует; решение по находкам — за владельцем."
+              echo ""
+              echo "Issue: #638"
+              echo "User-Visible: no"
+            } > "$msg"
             git -c user.name="claude[bot]" \
                 -c user.email="209825114+claude[bot]@users.noreply.github.com" \
-                commit -q -F - <<MSG
-          docs: release review for $TAG
-
-          Независимое ревью линии перед стабильным релизом (PROCESS.md §11.5).
-          Итог: $counts. Выпуск не блокирует; решение по находкам — за владельцем.
-
-          Issue: #638
-          User-Visible: no
-          MSG
+                commit -q -F "$msg"
             git diff --name-only "origin/dev...HEAD" | node scripts/review-doc-guard.mjs
-            if git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev; then
+            if git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev 2> "$push_err"; then
               echo "### Независимое ревью $TAG" >> "$GITHUB_STEP_SUMMARY"
               echo "Итог: $counts — \`$DOC\` в dev. Выпуск не блокируется." >> "$GITHUB_STEP_SUMMARY"
               echo "::notice::$DOC опубликован: $counts"
               exit 0
+            fi
+            # #723: сдвигом dev считается только устаревший lease — отказ
+            # разбирает код слияния (merge-candidate.mjs --push-refusal, #705).
+            # Отказ GitHub (право на workflow, правило ветки, хук) повтор не
+            # лечит: шаг останавливается, причина и ответ git без токена — в
+            # журнале и в сводке шага.
+            kind=$(node scripts/merge-candidate.mjs --push-refusal="$push_err" --ref=dev \
+              --stage=release-review --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
+            if [ "$kind" != "stale" ]; then
+              echo "::error::push $DOC в dev отклонён ($kind) — это не сдвиг dev, повтор не поможет; причина и ответ git — выше и в сводке шага"
+              exit 1
             fi
             echo "::warning::dev ушёл вперёд — попытка $attempt из 3, документ собирается заново"
             sleep $((attempt * 10))

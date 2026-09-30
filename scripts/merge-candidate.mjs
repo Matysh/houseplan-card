@@ -515,18 +515,56 @@ export function describePushRefusal(stderr, { ref, branch, candidate, stage = 'r
 }
 
 /**
+ * #723: шаги публикации — документ ревью в ветку задачи (`_process.yml`) и
+ * документ ревью релиза в `dev` (`release-review.yml`) — любой отказ push
+ * считали сдвигом ветки и повторяли. Повтор лечит только устаревший lease;
+ * отказ GitHub шаг останавливает, а причина и ответ git (уже без секретов)
+ * ложатся в сводку шага. Текст — здесь, а не многострочной строкой в `run:`.
+ */
+const PUBLISHED = Object.freeze({
+  'review-doc': 'Документ ревью',
+  'release-review': 'Документ независимого ревью релиза',
+});
+
+export function refusalSummary(refusal, { ref = '', stage = '' } = {}) {
+  const what = PUBLISHED[stage] || 'Коммит';
+  const why = refusal.kind === PUSH_REFUSAL.workflow
+    ? 'GitHub отклонил push по праву на workflow: у токена конвейера нет права создавать и менять `.github/workflows/`'
+    : refusal.kind === PUSH_REFUSAL.remote
+      ? 'GitHub отклонил push сам (правило ветки, хук, сбой сервера)'
+      : 'git push не удался, и это не отказ по lease (сеть, аутентификация)';
+  // Ответ GitHub не должен открыть или закрыть блок кода сводки.
+  const unfence = (text) => String(text || '').replace(/```/g, "'''");
+  const files = (refusal.files || []).map((file) => `\`${file}\``).join(', ');
+  const stderr = unfence(refusal.stderr);
+  return [
+    `### git push в \`${ref}\` отклонён: ${refusal.kind} (#723)`,
+    '',
+    `${what} не опубликован в \`${ref}\`. ${why}. Это не сдвиг \`${ref}\`: повтор и ребейз не помогут, шаг остановлен без повторов.`,
+    ...(refusal.reason ? ['', `Причина, которую назвал GitHub: «${unfence(refusal.reason)}».${files ? ` Файлы: ${files}.` : ''}`] : []),
+    '',
+    stderr ? `Ответ git:\n\n\`\`\`\n${stderr}\n\`\`\`` : 'git не прислал текста отказа.',
+    '',
+  ].join('\n');
+}
+
+/**
  * `--push-refusal=<файл со stderr git push>`: в stdout — одно слово исхода
  * (`stale`, `workflow`, `remote-rejected`, `unknown`), в stderr — ответ git
- * без секретов (журнал), с `--comment=<файл>` — комментарий для issue.
+ * без секретов (журнал), с `--comment=<файл>` — комментарий для issue, с
+ * `--summary=<файл>` (#723) — сводка шага об отказе, который повтор не лечит
+ * (для `stale` не пишется: шаг повторяет).
  */
 function pushRefusalMain() {
   const secrets = [process.env.TOKEN, process.env.HP_PROCESS_TOKEN, process.env.GH_TOKEN].filter(Boolean);
+  const ref = arg('ref') || arg('branch');
+  const stage = arg('stage') || 'rebase';
   const { refusal, comment } = describePushRefusal(readFileSync(arg('push-refusal'), 'utf8'), {
-    ref: arg('ref') || arg('branch'), branch: arg('branch'), candidate: arg('candidate'),
-    stage: arg('stage') || 'rebase', pipelineUrl: arg('run-url'), secrets,
+    ref, branch: arg('branch'), candidate: arg('candidate'), stage, pipelineUrl: arg('run-url'), secrets,
   });
   console.error(`git push отклонён — ${refusal.kind}${refusal.reason ? ` (${refusal.reason})` : ''}:\n${refusal.stderr || '(stderr пуст)'}`);
   if (arg('comment') && comment) writeFileSync(arg('comment'), `${comment}\n`);
+  if (arg('summary') && refusal.kind !== PUSH_REFUSAL.stale) appendFileSync(arg('summary'), refusalSummary(refusal, { ref, stage }));
   process.stdout.write(`${refusal.kind}\n`);
 }
 
