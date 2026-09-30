@@ -10,13 +10,26 @@
 //    экранирования: `node -e "…"` с кавычками и пробелами разваливается. Оболочка
 //    нужна ТОЛЬКО для `.cmd`/`.bat` (Node ≥ 18.20 иначе бросает EINVAL), то есть
 //    для `npm` на Windows; `node` и `git` запускаются напрямую.
+//
+// #733: `process.argv[1]` — путь, КАК его набрали (симлинк остаётся симлинком),
+// а `import.meta.url` главного модуля Node строит по реальному пути. Запуск
+// через симлинк (или из каталога-симлинка) давал `false`, и CLI молча выходил
+// с кодом 0. Поэтому сравниваются реальные пути обеих сторон.
 
-import { pathToFileURL } from 'node:url';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+/** Реальный путь; для несуществующего — сам путь, как было до #733. */
+function realOrSame(path) {
+  try { return realpathSync(path); } catch { return path; }
+}
 
 /** Скрипт запущен как CLI, а не импортирован (переносимая форма). */
 export function isMainModule(metaUrl, argv1 = process.argv[1]) {
   if (!argv1) return false;
-  try { return pathToFileURL(argv1).href === metaUrl; } catch { return false; }
+  try {
+    return pathToFileURL(realOrSame(argv1)).href === pathToFileURL(realOrSame(fileURLToPath(metaUrl))).href;
+  } catch { return false; }
 }
 
 /** Что и как запускать: `{ cmd, shell }` для `spawn`/`spawnSync`. */

@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { isMainModule, portableCommand } from '../scripts/spawn-portable.mjs';
 
@@ -45,6 +48,53 @@ test('isMainModule сравнивает через pathToFileURL и терпит
   assert.equal(isMainModule(import.meta.url, `${here}.other`), false);
   assert.equal(isMainModule(import.meta.url, null), false);
   assert.equal(isMainModule(import.meta.url, ''), false);
+});
+
+test('isMainModule: запуск через симлинк исполняет main, импортированный модуль — нет (#733)', () => {
+  // argv[1] остаётся путём симлинка, import.meta.url главного модуля — реальный
+  // путь. До #733 такой запуск молча выходил с кодом 0, ничего не сделав.
+  const root = mkdtempSync(join(tmpdir(), 'hp-733-main-'));
+  try {
+    const real = join(root, 'real');
+    mkdirSync(real);
+    const portable = pathToFileURL(fileURLToPath(new URL('../scripts/spawn-portable.mjs', import.meta.url))).href;
+    const probe = (label) => `import { isMainModule } from ${JSON.stringify(portable)};\n`
+      + `if (isMainModule(import.meta.url)) console.log(${JSON.stringify(label)});\n`;
+    writeFileSync(join(real, 'lib.mjs'), probe('lib-main'));
+    writeFileSync(join(real, 'cli.mjs'), `import './lib.mjs';\n${probe('cli-main')}`);
+
+    // Каталог-симлинк: на Windows это junction, прав администратора он не требует.
+    const dirLink = join(root, 'dir-link');
+    symlinkSync(real, dirLink, 'junction');
+    const launches = [join(real, 'cli.mjs'), join(dirLink, 'cli.mjs')];
+    // Симлинк на сам файл: на Windows без режима разработчика — EPERM, тогда
+    // проверяется только каталог-симлинк.
+    const fileLink = join(root, 'cli-link.mjs');
+    try {
+      symlinkSync(join(real, 'cli.mjs'), fileLink, 'file');
+      launches.push(fileLink);
+    } catch (error) {
+      if (error.code !== 'EPERM') throw error;
+    }
+
+    for (const script of launches) {
+      const run = spawnSync(process.execPath, [script], { encoding: 'utf8' });
+      assert.equal(run.status, 0, `${script}: ${run.stderr}`);
+      assert.deepEqual(run.stdout.trim().split(/\r?\n/), ['cli-main'],
+        `${script}: main исполняется ровно у запущенного скрипта, не у импортированного`);
+    }
+
+    // Та же развилка без дочернего процесса.
+    const cliUrl = pathToFileURL(join(real, 'cli.mjs')).href;
+    const libUrl = pathToFileURL(join(real, 'lib.mjs')).href;
+    assert.equal(isMainModule(cliUrl, join(dirLink, 'cli.mjs')), true);
+    assert.equal(isMainModule(libUrl, join(dirLink, 'cli.mjs')), false);
+    // Несуществующий путь — прежнее сравнение как есть, без исключения.
+    assert.equal(isMainModule(cliUrl, join(root, 'missing.mjs')), false);
+    assert.equal(isMainModule(pathToFileURL(join(root, 'missing.mjs')).href, join(root, 'missing.mjs')), true);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('тесты с временным git-репозиторием изолируют переводы строк от глобального конфига (#496)', () => {
