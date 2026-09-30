@@ -150,6 +150,7 @@ test('#570 current Stage 4 runner fails closed on the agreed observable DOM cont
     'opening surfaces',
     'entered Flat fallback',
     'structural build counter is absent',
+    'raised overlay nudged although #713 lifts every tile by one rise',
     'isoStructuralBuilds',
     'haUpdateDelta',
     'performed a structural rebuild for an HA-only state update',

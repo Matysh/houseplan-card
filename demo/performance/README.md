@@ -22,8 +22,10 @@ value, LQI and new-device badges plus contact/lock-bound door, window and gate
 examples. The base invocation explicitly allows a Stage 2 renderer so an older
 `dev` SHA remains measurable; the candidate invocation fails closed unless it
 reports effective Iso, the Stage 3 revision, all required raised overlay kinds,
-at least one real nudge, a bounded shared material-definition set and zero
-structural rebuilds during HA, opening and hover/focus updates. The two extra
+no nudged overlay root (since #713 every raised tile is lifted by the one shared
+wall-top rise, so a nudge means the #651 placement search came back), a bounded
+shared material-definition set and zero structural rebuilds during HA, opening
+and hover/focus updates. The two extra
 timing windows use limits no softer than the historical HA-update budget. This
 does not change the fixture, measured windows or budget of
 `large-house-isometric-v1`, which remains the #124 regression witness.

@@ -255,7 +255,8 @@ try {
         if (snapshot.renderedOverlayCount < 1) failures.push('no raised overlay roots rendered');
         if (snapshot.raisedOverlayCount !== snapshot.renderedOverlayCount)
           failures.push('one or more Stage 4 overlay roots remained outside the low visual plane');
-        if (snapshot.nudgedOverlayCount < 1) failures.push('dense fixture produced no bounded nudge');
+        if (snapshot.nudgedOverlayCount !== 0)
+          failures.push('raised overlay nudged although #713 lifts every tile by one rise');
         if (snapshot.raisedVacuumCount !== 0) failures.push('floor-bound vacuum was marked as raised');
         if (missingKinds.length) failures.push(`missing overlay kinds: ${missingKinds.join(', ')}`);
         for (const kind of expectedKinds) {
