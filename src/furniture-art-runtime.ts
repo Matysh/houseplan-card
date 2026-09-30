@@ -28,6 +28,7 @@
  * get one `requestUpdate()` when the runtime settles.
  */
 import type { FurnitureGraphic } from './furniture';
+import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 
 export type FurnitureArtState = 'ready' | 'pending' | 'fallback';
 
@@ -211,7 +212,6 @@ export function ensureFurnitureArtFor(
 
 /* Page-scoped runtime wired to the real chunk. The retry token is replaced
  * at build time with the exact content-hashed asset (bundle-manifest.mjs). */
-const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const FURNITURE_ART_RETRY_ASSET = '__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__';
 let retrySeq = 0;
 

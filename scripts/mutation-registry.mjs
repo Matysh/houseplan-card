@@ -5432,8 +5432,8 @@ const MUTANT_DEFINITIONS = [
       + 'правка пакета не выбирает frontend и не запускает сверку generated-модулей (#671)',
     patches: [{
       file: 'scripts/check-inputs.mjs',
-      find: "    roots: [...BUILD_INPUTS, 'assets/furniture/**', 'test/**',",
-      replace: "    roots: [...BUILD_INPUTS, 'test/**',  // mutant: furniture package is not a frontend input",
+      find: "    roots: [...BUILD_INPUTS, 'assets/furniture/**', 'assets/moon/**', 'test/**',",
+      replace: "    roots: [...BUILD_INPUTS, 'assets/moon/**', 'test/**',  // mutant: furniture package is not a frontend input",
     }],
   },
   {
@@ -6212,6 +6212,110 @@ const MUTANT_DEFINITIONS = [
       file: 'src/iso-scene-render.ts',
       find: '      kind: \'device\', core, presentation: stateFreePresentation(presentation),',
       replace: '      kind: \'device\', core, presentation,',
+    }],
+  },
+  {
+    id: 'moon-threshold-off',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#661" test/moon.test.mjs',
+    because: '#661 AC2: the moon keeps the window rays\' 3° horizon; at 2.9° it is not shown',
+    patches: [{
+      file: 'src/moon.ts',
+      find: "  return phase !== 'day' && altitude >= MOON_ELEVATION_MIN && fraction >= MOON_MIN_ILLUMINATION;",
+      replace: "  return phase !== 'day' && altitude >= 0 && fraction >= MOON_MIN_ILLUMINATION;",
+    }],
+  },
+  {
+    id: 'moon-new-moon-shown',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#661" test/moon.test.mjs',
+    because: '#661 AC2: below 3 % illumination (around new moon) there is no moon',
+    patches: [{
+      file: 'src/moon.ts',
+      find: "  return phase !== 'day' && altitude >= MOON_ELEVATION_MIN && fraction >= MOON_MIN_ILLUMINATION;",
+      replace: "  return phase !== 'day' && altitude >= MOON_ELEVATION_MIN;",
+    }],
+  },
+  {
+    id: 'moon-day-visible',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#661" test/moon.test.mjs',
+    because: '#661 AC2: the day phase shows no moon, however high it stands',
+    patches: [{
+      file: 'src/moon.ts',
+      find: "  return phase !== 'day' && altitude >= MOON_ELEVATION_MIN && fraction >= MOON_MIN_ILLUMINATION;",
+      replace: "  return altitude >= MOON_ELEVATION_MIN && fraction >= MOON_MIN_ILLUMINATION;",
+    }],
+  },
+  {
+    id: 'moon-parallax-off',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#661" test/moon.test.mjs',
+    because: '#661 AC1: without the topocentric parallax the altitude by the horizon is off by '
+      + 'up to 2° — the 2026-10-31 Moscow point leaves the 1.5° tolerance',
+    patches: [{
+      file: 'src/moon.ts',
+      find: '  const altitude = geocentric - parallax * Math.cos(geocentric);',
+      replace: '  const altitude = geocentric;',
+    }],
+  },
+  {
+    id: 'moon-lit-side-flips',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#661" test/moon.test.mjs',
+    because: '#661 AC3 (owner 2026-09-29): the lit side is always the left one, in both hemispheres',
+    patches: [{
+      file: 'src/moon.ts',
+      find: '  return `M${c} 0A${c} ${c} 0 0 0 ${c} ${MOON_BOX}L${c} ${bottom}${terminator}L${c} 0Z`;',
+      replace: '  return `M${c} 0A${c} ${c} 0 0 1 ${c} ${MOON_BOX}L${c} ${bottom}${terminator}L${c} 0Z`;',
+    }],
+  },
+  {
+    id: 'moon-tick-renders-every-time',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#661" test/moon.test.mjs',
+    because: '#661 AC4: a 30 s tick over an unchanged moon must not cost a render',
+    patches: [{
+      file: 'src/moon-runtime.ts',
+      find: '  if (key === watch.key) return;\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'moon-lazy-gate-off',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#661" test/moon.test.mjs',
+    because: '#661 C7: the moon chunk is not loaded by day — the initial View graph pays only the gate',
+    patches: [{
+      file: 'src/moon-gate.ts',
+      find: "  if (!runtime && state.phase !== 'day' && Date.now() >= nextAttempt) {",
+      replace: '  if (!runtime && Date.now() >= nextAttempt) {',
+    }],
+  },
+  {
+    id: 'moon-over-paper',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#661" test/moon.test.mjs',
+    because: '#661 C6 / owner decision 7: the moon covers only the background — it is the last child '
+      + 'of the environment and never stacks by itself; taken out and raised, it would paint over the plan',
+    patches: [{
+      file: 'src/day-cycle-render.ts',
+      find: '    })}${moon}\n  </div>`;',
+      replace: '    })}\n  </div>${moon}`;',
+    }, {
+      file: 'src/moon-runtime.ts',
+      find: "  + '.hp-moon{--hp-moon-box:min(200px,25cqmin);position:absolute;'",
+      replace: "  + '.hp-moon{--hp-moon-box:min(200px,25cqmin);position:absolute;z-index:2;'",
+    }],
+  },
+  {
+    id: 'moon-validation-accepts-anything',
+    guard: 'python3 -m pytest tests_backend/test_settings_moon.py -q -p no:cacheprovider',
+    because: '#661 AC9: the backend accepts only a boolean moon',
+    patches: [{
+      file: 'custom_components/houseplan/validation.py',
+      find: '                    vol.Optional("moon"): bool,\n',
+      replace: '                    vol.Optional("moon"): object,\n',
     }],
   },
   {

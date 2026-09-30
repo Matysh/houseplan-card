@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 67;
+export const GOLDEN_MATRIX_VERSION = 68;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -548,6 +548,19 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'day-cycle-night-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     bgMode: 'daynight', dayCycle: { phase: 'night', top: '#111a27' },
     stateOverrides: { 'sun.sun': { attributes: { azimuth: 0, elevation: -12, rising: false } } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  // #661 AC7: the moon in its phase at the top-left of the scene, behind the
+  // plan — the plan deliberately covers part of the disc (owner decision 7).
+  // The lit side is the left one in both hemispheres (owner 2026-09-29).
+  { id: 'day-cycle-night-moon-gibbous-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    bgMode: 'daynight', dayCycle: { phase: 'night', top: '#111a27' },
+    moon: { clock: '2026-10-21T18:00:00Z', latitude: 55.75, longitude: 37.62, k: '0.79' },
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 0, elevation: -12, rising: false } } },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'day-cycle-dusk-moon-crescent-south-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    bgMode: 'daynight', dayCycle: { phase: 'dusk', top: '#48536c' },
+    moon: { clock: '2026-10-14T09:00:00Z', latitude: -33.87, longitude: 151.21, k: '0.14' },
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 265, elevation: -2, rising: false } } },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-plan-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },

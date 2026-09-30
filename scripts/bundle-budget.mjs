@@ -734,6 +734,13 @@ export function assertBundleBudget(
   if (!manifest.lazyPdfFiles?.length) {
     throw new Error('bundle has no lazy PDF graph');
   }
+  // #661 C7/AC8: the moon's math, art and template load only at night.
+  if (!manifest.lazyMoonFiles?.length) {
+    throw new Error('bundle has no lazy moon graph');
+  }
+  if (manifest.initialViewFiles.some((path) => manifest.lazyMoonFiles.includes(path))) {
+    throw new Error('initial View graph overlaps lazy moon graph');
+  }
   // #474: designer furniture artwork is lazy; a static import anywhere in the
   // View graph would pull ~10 KB gzip back into the initial graph silently.
   if (!manifest.lazyFurnitureArtFiles?.length) {
@@ -806,6 +813,7 @@ export function assertBundleBudget(
     lazyIsometricGzipBytes: manifest.lazyIsometricGzipBytes,
     lazyFurnitureArtGzipBytes: manifest.lazyFurnitureArtGzipBytes,
     lazyPdfGzipBytes: manifest.lazyPdfGzipBytes,
+    lazyMoonGzipBytes: manifest.lazyMoonGzipBytes,
   };
 }
 
@@ -840,6 +848,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
       `lazy locale: ${result.lazyLocaleGzipBytes} B gzip`,
       `lazy isometric: ${result.lazyIsometricGzipBytes} B gzip`,
       `lazy PDF: ${result.lazyPdfGzipBytes} B gzip`,
+      `lazy moon: ${result.lazyMoonGzipBytes} B gzip`,
     ];
     for (const line of lines) console.log(line);
     const warning = lowHeadroomWarning(headroom);

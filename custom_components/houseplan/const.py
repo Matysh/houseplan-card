@@ -91,7 +91,9 @@ MAX_IMPORT_PREVIEWS_TOTAL = 3
 DEFAULT_CONFIG: dict[str, object] = {
     "spaces": [],
     "markers": [],
-    "settings": {"bg_mode": "daynight", "sun_ray_origin": "inner"},
+    # #661: new installations get the moon; an existing config without the key
+    # keeps its look (docs/SUN.md: an update never changes a stored plan).
+    "settings": {"bg_mode": "daynight", "sun_ray_origin": "inner", "moon": True},
 }
 
 # #42: THE stable public error-code contract. Every code a user-facing

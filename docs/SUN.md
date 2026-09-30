@@ -376,6 +376,92 @@ The wash lives where the Flat `.sunlayer` lives (floor group, above room fills
 and Glow) as `.sunlayer.iso-sunwash`, one `.iso-sunbeam[data-opening]` per lit
 window. Witness: `demo/smoke_iso_sun.mjs`.
 
+## Moon — `settings.moon` (#661)
+
+At dawn, dusk and night on the "Follow the Sun" background, the moon in its
+current phase stands in the top-left corner of the scene: a thin crescent, a
+half, a full disc. General settings › Sun and Moon › «Moon over the plan at
+dusk and night» switches it for the whole installation.
+
+**When it is shown** — all at once, otherwise there is no moon:
+
+- `settings.moon === true` (global; absent, `false` or anything else is off);
+- the effective `bg_mode` of the space is `daynight` — the moon lives in the
+  four-phase environment, so a space with its own `static` has no moon, and
+  there is no per-space moon switch;
+- the environment phase is `dawn`, `dusk` or `night` (the same
+  `resolveDayCycle`, browser-clock fallback included);
+- the topocentric altitude is ≥ 3° (`MOON_ELEVATION_MIN = RAY_ELEVATION_MIN`);
+- the illuminated fraction is ≥ 3 % (`MOON_MIN_ILLUMINATION`, about ±1.5 days
+  around new moon);
+- a View surface: View, kiosk or `houseplan-space-card` (editors have no
+  environment);
+- `hass.config.latitude/longitude` are finite numbers.
+
+**Where the numbers come from.** Home Assistant publishes no moon altitude
+(`sun.sun` is the sun; the optional Moon integration gives eight phase names
+without altitude, illumination or hemisphere). The card computes both from the
+home coordinates and the browser clock (`src/moon.ts`): the short Meeus series
+as in SunCalc, the topocentric parallax `h − π·cos h` with
+`π = asin(6378.14 / distance)`, no refraction; the illuminated fraction
+`k = (1 + cos i) / 2` from the Sun–Moon elongation. Against JPL Horizons
+(airless) on twelve points in Moscow and Sydney, October 2026: altitude within
+1.39°, illumination within 1.77 percentage points (`test/moon.test.mjs`, the
+table and the query parameters are in the test).
+
+**Phase.** One designer image of the full moon (`assets/moon/houseplan-1.0.0`,
+art by JB) under an SVG mask. The lit side is **always the left one**, in both
+hemispheres; waning runs the waxing states backwards (owner 2026-09-29). The
+lit region is the left half of the box plus or minus the terminator
+half-ellipse `R × R·|2k − 1|` (bulging into the dark side when `k > 0.5`); the
+half's outer arc runs along the box, never along the limb, so the disc keeps
+the art's own anti-aliased edge. The mask is a `<mask>`, not a `clipPath`
+(Chrome with GPU rasterisation draws clip edges jagged). The terminator is
+feathered by a Gaussian blur inside the mask (5 units of 512, about 2 px at
+200 px), except for a full disc (`k ≥ 0.995`). The phase is continuous in `k`,
+quantised to 0.01 only so the element changes when the fingerprint does. The
+dark side is the same art at 8 % opacity.
+
+**Place, size, layer.** Fixed top-left corner, box `min(200px, 25cqmin)` of the
+scene (the environment is the size container), inset 5 % of the box; it does
+not move with pan or zoom and never takes the pointer. It is the last child of
+`.hp-day-cycle-env`: above the phase gradients and the sun glow, below the plan
+paper, rooms, devices, labels and UI. A plan that fills the scene covers the
+moon partly or entirely — that is the environment's norm, like the sun glow
+(owner decision 7).
+
+**Movement.** Opacity only, 2 s on the background curve (`RAY_FADE_MS`),
+none under `prefers-reduced-motion`: rising through 3°, setting through it,
+the new-moon threshold and the day phase all fade; the first appearance after
+a page or chunk load does not. The element is recomputed on every render of the
+environment and by its own 30 s ticker (the moon rises at most 0.25°/min);
+the ticker keeps the last rendered inputs, and an equal fingerprint
+(`visible | k`) costs no render. A card that renders without a moon, leaves the
+page or is hidden drops or pauses its ticker.
+
+**Weight.** Astronomy, art (≈ 9 KB gzip) and template are one lazy chunk,
+`moon-runtime-*`, loaded when the moon is switched on, the environment exists
+and it is not daytime; until it arrives there is no moon, a failed load is
+retried at most every 30 s through the exact-build loader of the isometric
+runtime. The initial View graph carries only the gate (`src/moon-gate.ts`).
+One element, no CSS filter and no `will-change`: the composited layer count
+does not change (`demo/smoke_daycycle_layer_budget.mjs`).
+
+**Limits (documented, not bugs).**
+
+- Position accuracy ≈ 1°: the moment of crossing 3° may differ from ephemerides
+  by a few minutes.
+- The terminator is not tilted by the parallactic angle, and the lit side does
+  not follow the hemisphere (owner decision): the crescent is "vertical".
+- Earthshine is not modelled; the dark side is an 8 % silhouette for legibility.
+- The moon does not follow its azimuth — fixed corner of the scene.
+- A dense layout (plan filling the screen) shows only the part of the disc in
+  the margins.
+- Coordinates come from Home Assistant: an installation that kept the default
+  home location gets someone else's moon, as it gets someone else's `sun.sun`.
+- A wrong tablet clock gives a wrong phase and moment — the same class as the
+  background's clock fallback.
+
 ## Weather independence and legacy `weather_entity`
 
 Weather never changes the window rays. Once the feature, compass,
@@ -417,6 +503,12 @@ saving General settings removes it.
   inheritance); unit-tested in `test/sun.test.mjs`.
 - `src/day-cycle-render.ts` — the shared constant environment layers and
   plan-outline variables for full and static cards.
+- `src/moon.ts`, `src/moon-runtime.ts`, `src/moon-gate.ts`,
+  `src/moon-art.generated.ts` — the moon (#661): pure astronomy and mask, the
+  lazy chunk with the element and its ticker, the initial-graph gate, the
+  generated art (`node scripts/generate-moon-assets.mjs` from
+  `assets/moon/houseplan-1.0.0`); unit-tested in `test/moon.test.mjs`,
+  end-to-end in `demo/smoke_moon.mjs`.
 - `src/houseplan-card.ts` — the memoised wedge layer, four-phase background
   lifecycle, and both settings dialogs (compass dial included).
 - `src/space-render.ts` / `src/space-card.ts` — static-card environment and

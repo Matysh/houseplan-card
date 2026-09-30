@@ -25,6 +25,7 @@ import {
 import { DEFAULT_ICON_RULES, compileIconRules } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, resolveDayCycle } from './sun';
+import { moonLayer, type MoonHost } from './moon-gate';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import type { DevItem, OpeningCfg, ServerConfig } from './types';
 import { floorMinusBodies, physicalBodyParts, polyclipPathD } from './physical-geometry';
@@ -219,6 +220,8 @@ export interface StaticRenderOpts {
   glowRuntime?: StaticGlowRuntime;
   /** Deterministic clock injection for unit/smoke fixtures; production omits it. */
   dayCycleNow?: Date | number;
+  /** #661: the card that shows the moon (re-rendered when its runtime arrives or it moves). */
+  moonHost?: MoonHost;
   virtualLights?: VirtualLightSnapshot | null;
   /**
    * Resolve a stored content url to what the DOM may actually request — the
@@ -927,7 +930,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     <div class="hp-static-stage${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}"
       ?inert=${!!o.inert}
       style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--hp-cell-visual-scale:${gridVisualScale(cellCm)};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}">
-      ${renderDayCycleEnvironment(dayCycle)}
+      ${renderDayCycleEnvironment(dayCycle, 1, moonLayer(o.moonHost, o.cfg?.settings, dayCycle))}
       ${dayCycle && paperShapes.length ? svg`<svg class="hp-paper-outline-svg"
           viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}"
           preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">

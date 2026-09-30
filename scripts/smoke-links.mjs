@@ -28,6 +28,17 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: [
+      'moonLayer', 'renderMoon', 'moonTick', 'moonView', 'moonShownAt', 'moonPhasePath',
+      'moonPosition', 'moonIllumination', 'moonFingerprint', 'renderDayCycleEnvironment',
+    ],
+    smokes: ['smoke_moon.mjs', 'smoke_daycycle_layer_budget.mjs'],
+    because: '#661: the moon is observed only as `.hp-moon` in the production bundle — the lazy '
+      + 'chunk arriving at night, the 30 s ticker and state updates carrying it through 3° with the '
+      + '2 s fade, the plan painting over it pixel for pixel, and no extra composited layer (CDP); '
+      + 'no smoke names the functions',
+  },
+  {
     symbols: ['memoIsoLightFloorRooms', 'IsoFirstFrameState', 'isoPaperContext'],
     smokes: ['smoke_iso_first_frame.mjs'],
     because: '#654: the production-bundle witness delays and rejects the lazy 2.5D chunk, then '

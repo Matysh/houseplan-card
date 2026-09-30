@@ -6,8 +6,8 @@ import {
   type LazyLanguageModule,
   type LocaleDictionary,
 } from './language-runtime';
+import { ENTRY_BUILD_FINGERPRINT as BUILD_FINGERPRINT } from '../editor-runtime-loader';
 
-const BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const GERMAN_RETRY_ASSET = '__HOUSEPLAN_DE_RETRY_ASSET__';
 const FRENCH_RETRY_ASSET = '__HOUSEPLAN_FR_RETRY_ASSET__';
 

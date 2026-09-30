@@ -199,6 +199,40 @@ const frameMetrics = await page.evaluate(async ({ encoded, stage }) => {
   }),
 });
 
+// #661 AC6: at night, switching the moon on adds no composited layer — one
+// element inside the environment, no CSS filter, no will-change (C8). The
+// comparison is night without the moon against night with it, both settled.
+await page.clock.setFixedTime(new Date('2026-10-21T18:00:00Z'));
+await page.evaluate(async () => {
+  const card = window.__card;
+  card.hass = {
+    ...card.hass,
+    config: { ...(card.hass.config || {}), latitude: 55.75, longitude: 37.62 },
+    states: { ...card.hass.states, 'sun.sun': {
+      entity_id: 'sun.sun', state: 'below_horizon',
+      attributes: { azimuth: 0, elevation: -12, rising: false },
+    } },
+  };
+  await card.updateComplete;
+});
+await settle();
+// Transitions promote layers while they run: compare only settled frames.
+const transitionsDone = () => page.waitForFunction(
+  () => !window.__card.renderRoot.getAnimations().some((animation) => animation instanceof CSSTransition),
+  null, { timeout: 10000 },
+);
+await transitionsDone();
+const nightLayers = (await layerSnapshot()).layers;
+await page.evaluate(async () => {
+  const card = window.__card;
+  card._serverCfg = { ...card._serverCfg, settings: { ...card._serverCfg.settings, moon: true } }; // private-ok: the synthetic 1 cm/point space exists only in the card config, a server push would reload the demo plan
+  card.requestUpdate();
+  await card.updateComplete;
+});
+await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('.hp-moon.on'), null, { timeout: 8000 });
+await transitionsDone();
+const moonLayers = (await layerSnapshot()).layers;
+
 // Contract item 6: the non-interactive houseplan-space-card never needs a
 // gesture to become safe. Its day-cycle silhouette is stage-bounded from its
 // first frame, while the visible paper group owns no filter layer.
@@ -311,6 +345,8 @@ checks.staticCardOutlineLayerIsStageBounded = !!staticOutlineLayer
   && staticOutlineLayer.width <= staticStage.width * 1.5 + 64
   && staticOutlineLayer.height <= staticStage.height * 1.5 + 64;
 checks.staticCardHasNo4096ContentLayer = staticOversized.length === 0;
+checks.moonAddsNoCompositedLayer = moonLayers.length === nightLayers.length
+  && !moonLayers.some((layer) => layer.className.includes('hp-moon'));
 
 console.log(JSON.stringify({
   stage: active.stage,
@@ -324,6 +360,8 @@ console.log(JSON.stringify({
   staticStage,
   staticLayers,
   staticOversized,
+  nightLayers: nightLayers.length,
+  moonLayers: moonLayers.length,
 }, null, 2));
 checkAll(checks);
 await cdp.send('LayerTree.disable');

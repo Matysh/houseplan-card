@@ -191,7 +191,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
         'houseplan-assets/editor.js', 'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
         'houseplan-assets/de-HASH.js', 'houseplan-assets/iso-scene-render-HASH.js',
         'houseplan-assets/furniture-plan-art.generated-HASH.js',
-        'houseplan-assets/pdf-export-HASH.js',
+        'houseplan-assets/pdf-export-HASH.js', 'houseplan-assets/moon-runtime-HASH.js',
       ],
     },
     'shared.js': {
@@ -232,6 +232,11 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       code: 'PDF export runtime', isEntry: false, imports: ['shared.js'], dynamicImports: [],
       modules: { '/repo/src/pdf/pdf-export.ts': {} },
     },
+    'houseplan-assets/moon-runtime-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/moon-runtime-HASH.js',
+      code: 'moon runtime', isEntry: false, imports: ['shared.js'], dynamicImports: [],
+      modules: { '/repo/src/moon-runtime.ts': {}, '/repo/src/moon-art.generated.ts': {} },
+    },
   }, 'fingerprint');
   assert.equal(manifest.entry, 'houseplan-card.js');
   assert.equal(manifest.panelEntry, 'houseplan-panel.js');
@@ -252,6 +257,9 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
   assert.deepEqual(manifest.lazyIsometricFiles, ['houseplan-assets/iso-scene-render-HASH.js']);
   assert.deepEqual(manifest.lazyFurnitureArtFiles, ['houseplan-assets/furniture-plan-art.generated-HASH.js']);
   assert.deepEqual(manifest.lazyPdfFiles, ['houseplan-assets/pdf-export-HASH.js']);
+  // #661 AC8: the moon (math, art, template) is its own lazy graph, never initial.
+  assert.deepEqual(manifest.lazyMoonFiles, ['houseplan-assets/moon-runtime-HASH.js']);
+  assert.equal(manifest.initialViewFiles.includes('houseplan-assets/moon-runtime-HASH.js'), false);
   assert.deepEqual(manifest.lazyEditorFiles, ['houseplan-assets/editor.js', 'houseplan-assets/furniture-plan-art.generated-HASH.js']);
   // #627: found by module, not as a root of the initial graph; own graph.
   assert.deepEqual(manifest.lazyNamespaceLocaleFiles, NAMESPACE_LOCALE_CHUNKS.map(namespaceLocaleChunkPath).sort());
@@ -263,6 +271,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
     'houseplan-assets/furniture-plan-art.generated-HASH.js',
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
     'houseplan-assets/iso-scene-render-HASH.js',
+    'houseplan-assets/moon-runtime-HASH.js',
     'houseplan-assets/pdf-export-HASH.js',
   ]);
   // Этот тест про РАЗДЕЛЕНИЕ графов, а не про их размеры: потолки ленивых
@@ -291,6 +300,10 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
   assert.throws(() => assertBundleBudget({
     ...manifest, lazyNamespaceLocaleFiles: manifest.lazyNamespaceLocaleFiles.slice(1),
   }, 1_000_000, undefined, ...lazyCeilings), /lazy namespace locale graph has 8 files, expected 9/);
+  // #661 AC8: a moon pulled into the first frame (a static import leaves no
+  // lazy moon graph — the builder subtracts initial) is refused by name.
+  assert.throws(() => assertBundleBudget({ ...manifest, lazyMoonFiles: [] }, 1_000_000, undefined, ...lazyCeilings),
+    /bundle has no lazy moon graph/);
 });
 
 test('#486 Rollup names both stable entries explicitly', async () => {
@@ -518,7 +531,8 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
         + 'new URL("__HOUSEPLAN_DE_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_FR_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__", import.meta.url);'
-        + 'new URL("__HOUSEPLAN_PDF_RETRY_ASSET__", import.meta.url)', modules: {},
+        + 'new URL("__HOUSEPLAN_PDF_RETRY_ASSET__", import.meta.url);'
+        + 'new URL("__HOUSEPLAN_MOON_RETRY_ASSET__", import.meta.url)', modules: {},
     },
     // #627: the lazy namespace chunk that owns the nine second-attempt tokens.
     'houseplan-assets/backdrop-pick-HASH.js': {
@@ -554,6 +568,10 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       type: 'chunk', fileName: 'houseplan-assets/pdf-export-HASH.js', code: '',
       modules: { '/repo/src/pdf/pdf-export.ts': {} },
     },
+    'houseplan-assets/moon-runtime-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/moon-runtime-HASH.js', code: '',
+      modules: { '/repo/src/moon-runtime.ts': {} },
+    },
   };
   plugin.generateBundle({}, bundle);
   assert.equal(
@@ -564,7 +582,8 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       + 'new URL("./de-HASH.js", import.meta.url);'
       + 'new URL("./fr-HASH.js", import.meta.url);'
       + 'new URL("./furniture-plan-art.generated-HASH.js", import.meta.url);'
-      + 'new URL("./pdf-export-HASH.js", import.meta.url)',
+      + 'new URL("./pdf-export-HASH.js", import.meta.url);'
+      + 'new URL("./moon-runtime-HASH.js", import.meta.url)',
   );
   assert.equal(
     bundle['houseplan-assets/backdrop-pick-HASH.js'].code,
@@ -577,7 +596,7 @@ test('#627 namespace retry tokens stay strict: exactly one each, every chunk emi
     const bundle = {
       'houseplan-assets/houseplan-card.js': {
         type: 'chunk', fileName: 'houseplan-assets/houseplan-card.js', modules: {},
-        code: ['EDITOR', 'ONBOARDING', 'ISO', 'DE', 'FR', 'FURNITURE_ART', 'PDF']
+        code: ['EDITOR', 'ONBOARDING', 'ISO', 'DE', 'FR', 'FURNITURE_ART', 'PDF', 'MOON']
           .map((name) => `"__HOUSEPLAN_${name}_RETRY_ASSET__"`).join(';'),
       },
       ...Object.fromEntries([
@@ -585,7 +604,7 @@ test('#627 namespace retry tokens stay strict: exactly one each, every chunk emi
         ['houseplan-onboarding-runtime', '/src/houseplan-onboarding-runtime.ts'],
         ['iso-scene-render', '/src/iso-scene-render.ts'], ['de', '/src/i18n/de.ts'],
         ['fr', '/src/i18n/fr.ts'], ['furniture-plan-art.generated', '/src/furniture-plan-art.generated.ts'],
-        ['pdf-export', '/src/pdf/pdf-export.ts'],
+        ['pdf-export', '/src/pdf/pdf-export.ts'], ['moon-runtime', '/src/moon-runtime.ts'],
       ].map(([name, module]) => [`houseplan-assets/${name}-HASH.js`, {
         type: 'chunk', fileName: `houseplan-assets/${name}-HASH.js`, code: '', modules: { [`/repo${module}`]: {} },
       }])),
@@ -979,6 +998,7 @@ const runBudgetCli = (initialViewGzipBytes) => {
     writeFileSync(join(dir, 'dist/isometric.js'), 'lazy isometric runtime');
     writeFileSync(join(dir, 'dist/furniture-art.js'), 'lazy furniture artwork');
     writeFileSync(join(dir, 'dist/pdf.js'), 'lazy pdf writer');
+    writeFileSync(join(dir, 'dist/moon.js'), 'lazy moon runtime');
     writeFileSync(join(dir, 'dist/houseplan-assets.json'), JSON.stringify({
       schema: 1,
       fingerprint: 'f'.repeat(64),
@@ -1008,6 +1028,8 @@ const runBudgetCli = (initialViewGzipBytes) => {
       lazyFurnitureArtGzipBytes: LAZY_FURNITURE_ART_GZIP_CEILING - 1_000,
       lazyPdfFiles: ['pdf.js'],
       lazyPdfGzipBytes: 100,
+      lazyMoonFiles: ['moon.js'],
+      lazyMoonGzipBytes: 100,
       lazyOnboardingFiles: ['onboarding.js'],
       lazyOnboardingGzipBytes: LAZY_ONBOARDING_GZIP_CEILING - 1_000,
       lazyNamespaceLocaleFiles: NAMESPACE_LOCALE_CHUNKS

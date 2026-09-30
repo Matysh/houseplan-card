@@ -37,7 +37,7 @@ relay, and exact plan geometry is attached only after you opt in and preview it.
 12. [Device visual states](#12-device-visual-states)
 13. [Room fills and light](#13-room-fills-and-light)
 14. [Background editor](#14-background-editor)
-15. [Sun background and window rays](#15-sun-background-and-window-rays)
+15. [Sun and Moon: background, window rays and the moon](#15-sun-and-moon-background-window-rays-and-the-moon)
 16. [Robot vacuums](#16-robot-vacuums)
 17. [Kiosk](#17-kiosk)
 18. [Static space card](#18-static-space-card)
@@ -1603,7 +1603,7 @@ keeps the same repairable placeholder instead of rejecting the whole plan.
 
 ![Selected line in the Background editor](images/07-background-editor.png)
 
-## 15. Sun background and window rays
+## 15. Sun and Moon: background, window rays and the moon
 
 These are independent features. **Follow the sun** needs no compass: it uses
 valid `sun.sun` data and otherwise falls back to the browser clock. North and
@@ -1650,6 +1650,33 @@ backdrop, vacuum, hover and window rays are not recoloured. Full card, kiosk and
 static card share the phase; editors keep their normal background. New installs
 and spaces default to Follow the sun; upgrades/imports preserve their existing
 choice. Shadows from trees, awnings or other building wings are not modelled.
+
+### Moon
+
+On the **Follow the sun** background, at dawn, dusk and night, the moon in its
+current phase stands in the top-left corner of the scene — a thin crescent, a
+half, a full disc. One switch in General settings turns it on: **Sun and Moon**
+→ **Moon over the plan at dusk and night**. It is on for new installations and
+off for upgraded ones until switched on: an update never changes how a plan
+looks.
+
+| Condition | Result |
+|---|---|
+| Daytime, moon below 3° above the horizon, or new moon (under 3 % lit) | No moon |
+| The moon rises above 3° or sets below it | Fades in/out over 2 seconds; immediately with reduced motion |
+| Phase | Changes continuously, every day; the lit side is always on the left, waning runs the same states backwards |
+| Space with its own static background | No moon — it belongs to the Follow the sun background |
+| The plan covers the corner of the scene | The moon is behind the plan: the part of the disc in the margins shows; the plan, devices and labels are always on top |
+| Editors | No moon |
+| Full card, kiosk, static space card | The same |
+
+Position and phase are computed in the card from the Home Assistant home
+location (Settings → System → General) and the device clock, with no
+integration or external data. A Home Assistant that kept the default location
+shows someone else's moon — as with `sun.sun`; a wrong tablet clock gives a
+wrong phase and moment. Position accuracy is about 1°, so crossing 3° may
+differ from ephemerides by a few minutes. The terminator tilt and earthshine
+are not modelled; the dark side is a faint silhouette so a crescent reads.
 
 ## 16. Robot vacuums
 

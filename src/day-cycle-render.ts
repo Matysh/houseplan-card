@@ -17,10 +17,15 @@ export function dayCycleStageVars(state: DayCycleState | null): string {
   ].join(';');
 }
 
-/** Four constant layers make gradient changes genuinely cross-fade in CSS. */
+/**
+ * Four constant layers make gradient changes genuinely cross-fade in CSS. The
+ * moon (#661) comes last: above the gradients and the sun glow, still inside
+ * the environment and therefore below the plan paper and everything else.
+ */
 export function renderDayCycleEnvironment(
   state: DayCycleState | null,
   viewWeight = 1,
+  moon: TemplateResult | typeof nothing = nothing,
 ): TemplateResult | typeof nothing {
   if (!state) return nothing;
   const position = [
@@ -39,6 +44,6 @@ export function renderDayCycleEnvironment(
           data-day-cycle-layer=${phase} style=${background}>
         <div class="hp-day-cycle-sun" style="background:radial-gradient(circle, ${palette.sun} 0%, transparent 67%)"></div>
       </div>`;
-    })}
+    })}${moon}
   </div>`;
 }

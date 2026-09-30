@@ -11,6 +11,7 @@ const DE_RETRY_ASSET_TOKEN = '__HOUSEPLAN_DE_RETRY_ASSET__';
 const FR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FR_RETRY_ASSET__';
 const FURNITURE_ART_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__';
 const PDF_RETRY_ASSET_TOKEN = '__HOUSEPLAN_PDF_RETRY_ASSET__';
+const MOON_RETRY_ASSET_TOKEN = '__HOUSEPLAN_MOON_RETRY_ASSET__';
 
 /**
  * #627: ru/de/fr of the three lazy dictionary namespaces are one chunk per
@@ -110,6 +111,9 @@ export function buildBundleManifest(bundle, fingerprint) {
               ? 'isometric'
               : modules.some((id) => id.endsWith('/src/pdf/pdf-export.ts'))
                 ? 'pdf'
+              // #661: the moon's math, art and template — loaded only at night.
+              : modules.some((id) => id.endsWith('/src/moon-runtime.ts'))
+                ? 'moon'
               // #474: designer furniture artwork — its own lazy chunk, shared by
               // the editor (static import) and the View runtime (dynamic).
               : modules.some((id) => id.endsWith('/src/furniture-plan-art.generated.ts'))
@@ -153,6 +157,8 @@ export function buildBundleManifest(bundle, fingerprint) {
   const furnitureArtRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'furniture-art');
   const pdfRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'pdf'
     || path.includes('pdf-export-'));
+  const moonRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'moon'
+    || path.includes('moon-runtime-'));
   // #627: namespace dictionaries are dynamic imports of LAZY chunks, never of
   // the initial graph, so they are found by their module, not as a root.
   const namespaceLocaleRoots = files.filter((file) => file._role === 'namespace-locale')
@@ -170,6 +176,7 @@ export function buildBundleManifest(bundle, fingerprint) {
   const lazyIsometric = graphFrom(isometricRoots);
   const lazyFurnitureArt = graphFrom(furnitureArtRoots);
   const lazyPdf = graphFrom(pdfRoots);
+  const lazyMoon = graphFrom(moonRoots);
   const lazyNamespaceLocale = graphFrom(namespaceLocaleRoots);
   const sum = (paths) => [...paths]
     .reduce((total, path) => total + (byPath.get(path)?.gzipBytes || 0), 0);
@@ -198,6 +205,8 @@ export function buildBundleManifest(bundle, fingerprint) {
     lazyFurnitureArtGzipBytes: sum(lazyFurnitureArt),
     lazyPdfFiles: [...lazyPdf].sort(),
     lazyPdfGzipBytes: sum(lazyPdf),
+    lazyMoonFiles: [...lazyMoon].sort(),
+    lazyMoonGzipBytes: sum(lazyMoon),
     lazyNamespaceLocaleFiles: [...lazyNamespaceLocale].sort(),
     lazyNamespaceLocaleGzipBytes: sum(lazyNamespaceLocale),
     files: files.map(({ _role, ...file }) => file),
@@ -257,6 +266,8 @@ export function editorRuntimeRetryUrlPlugin() {
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/furniture-plan-art.generated.ts')));
       const pdf = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/pdf/pdf-export.ts')));
+      const moon = chunks.find((chunk) => Object.keys(chunk.modules)
+        .some((id) => id.replaceAll('\\', '/').endsWith('/src/moon-runtime.ts')));
       if (!editor) throw new Error('editor runtime chunk was not emitted');
       if (!onboarding) throw new Error('onboarding runtime chunk was not emitted');
       if (!isometric) throw new Error('isometric runtime chunk was not emitted');
@@ -264,6 +275,7 @@ export function editorRuntimeRetryUrlPlugin() {
       if (!french) throw new Error('French locale chunk was not emitted');
       if (!furnitureArt) throw new Error('furniture artwork chunk was not emitted');
       if (!pdf) throw new Error('PDF export runtime chunk was not emitted');
+      if (!moon) throw new Error('moon runtime chunk was not emitted');
       const namespaceLocales = NAMESPACE_LOCALE_CHUNKS.map((entry) => {
         const chunk = chunks.find((candidate) => Object.keys(candidate.modules)
           .some((id) => id.replaceAll('\\', '/').endsWith(entry.module)));
@@ -279,6 +291,7 @@ export function editorRuntimeRetryUrlPlugin() {
       let germanReplacements = 0;
       let frenchReplacements = 0;
       let pdfReplacements = 0;
+      let moonReplacements = 0;
       for (const chunk of chunks) {
         if (chunk.code.includes(EDITOR_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), editor.fileName);
@@ -322,6 +335,12 @@ export function editorRuntimeRetryUrlPlugin() {
           pdfReplacements += chunk.code.split(PDF_RETRY_ASSET_TOKEN).length - 1;
           chunk.code = chunk.code.replaceAll(PDF_RETRY_ASSET_TOKEN, asset);
         }
+        if (chunk.code.includes(MOON_RETRY_ASSET_TOKEN)) {
+          let asset = posix.relative(posix.dirname(chunk.fileName), moon.fileName);
+          if (!asset.startsWith('.')) asset = `./${asset}`;
+          moonReplacements += chunk.code.split(MOON_RETRY_ASSET_TOKEN).length - 1;
+          chunk.code = chunk.code.replaceAll(MOON_RETRY_ASSET_TOKEN, asset);
+        }
         for (const entry of namespaceLocales) {
           if (!chunk.code.includes(entry.token)) continue;
           let asset = posix.relative(posix.dirname(chunk.fileName), entry.chunk.fileName);
@@ -332,9 +351,9 @@ export function editorRuntimeRetryUrlPlugin() {
       }
       if (editorReplacements !== 1 || onboardingReplacements !== 1 || isometricReplacements !== 1
           || germanReplacements !== 1 || frenchReplacements !== 1 || furnitureArtReplacements !== 1
-          || pdfReplacements !== 1) {
+          || pdfReplacements !== 1 || moonReplacements !== 1) {
         throw new Error('lazy retry URL placeholder counts are '
-          + `${editorReplacements}/${onboardingReplacements}/${isometricReplacements}/${germanReplacements}/${frenchReplacements}/${furnitureArtReplacements}/${pdfReplacements}, expected 1/1/1/1/1/1/1`);
+          + `${editorReplacements}/${onboardingReplacements}/${isometricReplacements}/${germanReplacements}/${frenchReplacements}/${furnitureArtReplacements}/${pdfReplacements}/${moonReplacements}, expected 1/1/1/1/1/1/1/1`);
       }
       // #627: the same strict rule for every namespace × language token —
       // exactly one second-attempt URL each, never zero and never two.

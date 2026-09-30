@@ -48,6 +48,7 @@ import {
   rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
 } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
+import { moonLayer } from './moon-gate';
 import { renderPaperShapes, type PaperShape } from './render/paper-scene';
 import {
   furnitureGraphic, furnitureArtIsLazy,
@@ -231,7 +232,7 @@ import {
   roomFitGeometryBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
   type RoomFitGestureCandidate,
 } from './room-fit';
-import { EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
+import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
 import {
@@ -302,7 +303,6 @@ import { isoWallMaterialVars, parseCssColor } from './iso-materials'; import { I
 import { renderIsoTileShadow } from './iso-tiles';
 import { displayVersion } from './card-version';
 const CARD_VERSION = '1.78.0';
-const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
 const PDF_RETRY_ASSET = '__HOUSEPLAN_PDF_RETRY_ASSET__';
@@ -2050,7 +2050,7 @@ export class HouseplanCard extends LitElement {
     colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
     northDeg: number | null; northDegInput: string; bgMode: 'static' | 'daynight'; sunRays: boolean; sunRayOrigin: SunRayOrigin;
-    showRoomTooltip: boolean; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; busy: boolean;
+    showRoomTooltip: boolean; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean;
   } | null = null;
   private _pdfDialog = false;
   private _supportDialog: SupportDialogState | null = null;
@@ -9772,6 +9772,7 @@ export class HouseplanCard extends LitElement {
       bg_mode: gd.bgMode,
       sun_rays: gd.sunRays,
       sun_ray_origin: gd.sunRayOrigin,
+      moon: gd.moon,
     };
   }
 
@@ -10873,7 +10874,7 @@ export class HouseplanCard extends LitElement {
           @pointerleave=${(e: PointerEvent) => this._stagePointerLeave(e)}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
-          ${renderDayCycleEnvironment(dayCycle, dayCycleWeight)}
+          ${renderDayCycleEnvironment(dayCycle, dayCycleWeight, moonLayer(this, this._sunGlobal(), dayCycle))}
           ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction || this._modeTransitionBusy}

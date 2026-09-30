@@ -342,7 +342,7 @@ export const CHECKS = {
     entries: ['test/*.test.mjs', 'scripts/no-new-any.mjs', 'scripts/no-new-private-writes.mjs', 'scripts/render-layout-read.mjs', 'scripts/bundle-budget.mjs',
       'scripts/fix-test-build.mjs', 'scripts/unused-locals-gate.mjs'],
     // demo/helpers/** — область no-new-private-writes (#629): гейт читает их текст.
-    roots: [...BUILD_INPUTS, 'assets/furniture/**', 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', 'demo/helpers/**', ...WORKFLOW],
+    roots: [...BUILD_INPUTS, 'assets/furniture/**', 'assets/moon/**', 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', 'demo/helpers/**', ...WORKFLOW],
   },
   changed_mutants: {
     entries: ['scripts/mutation-*.mjs', 'scripts/*-guard.mjs', 'test/*.test.mjs', 'demo/smoke_*.mjs', 'tests_backend/**/*.py'],

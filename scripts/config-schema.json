@@ -413,6 +413,10 @@
       "required": true,
       "type": "str"
     },
+    "config.settings.moon": {
+      "required": false,
+      "type": "bool"
+    },
     "config.settings.new_device_ids": {
       "required": false
     },

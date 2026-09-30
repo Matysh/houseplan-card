@@ -446,7 +446,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 67);
+  assert.equal(GOLDEN_MATRIX_VERSION, 68);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -940,7 +940,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 67);
+  assert.equal(GOLDEN_MATRIX_VERSION, 68);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',
@@ -1225,4 +1225,22 @@ test('issue 43 support dialog has the six reviewed responsive states', () => {
   assert.equal(support.some((scenario) => scenario.viewport.width === 768), true);
   assert.equal(support.filter((scenario) => scenario.viewport.width >= 900).length, 3);
   for (const scenario of support) assert.equal(scenario.capture, 'page', scenario.id);
+});
+
+test('#661 AC7 moon scenes: fixed home and clock, moon on, the old day-cycle frames untouched', () => {
+  const byId = (id) => GOLDEN_SCENARIOS.find((scenario) => scenario.id === id);
+  const gibbous = byId('day-cycle-night-moon-gibbous-dark');
+  const crescent = byId('day-cycle-dusk-moon-crescent-south-dark');
+  assert.deepEqual(gibbous.moon, { clock: '2026-10-21T18:00:00Z', latitude: 55.75, longitude: 37.62, k: '0.79' });
+  assert.deepEqual(crescent.moon, { clock: '2026-10-14T09:00:00Z', latitude: -33.87, longitude: 151.21, k: '0.14' });
+  for (const scenario of [gibbous, crescent]) {
+    assert.equal(scenario.capture, 'stage');
+    assert.equal(scenario.bgMode, 'daynight');
+    assert.equal(prepareGoldenFixture(scenario).config.settings.moon, true);
+  }
+  for (const id of ['day-cycle-dawn-dark', 'day-cycle-day-dark', 'day-cycle-dusk-dark', 'day-cycle-night-dark']) {
+    const scenario = byId(id);
+    assert.equal(scenario.moon, undefined, id);
+    assert.equal(prepareGoldenFixture(scenario).config.settings?.moon, undefined, id);
+  }
 });

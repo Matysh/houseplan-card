@@ -83,7 +83,22 @@ async function stableEnvironment(page, scenario) {
   });
   await page.evaluate(({
     variables, panelVariableNames, theme, panelHost, attemptedTarget, attemptKey, disableIsoFilters,
+    moonClock,
   }) => {
+    // #661: a moon scene reads the browser clock. The scenario shifts it to
+    // its instant (time keeps flowing, so the card's timers behave); every
+    // other scenario gets the native clock back, like CSS.supports below.
+    window.__hpGoldenNativeDate ||= Date;
+    const NativeDate = window.__hpGoldenNativeDate;
+    if (moonClock) {
+      const offset = Date.parse(moonClock) - NativeDate.now();
+      window.Date = class GoldenDate extends NativeDate {
+        constructor(...args) { super(...(args.length ? args : [NativeDate.now() + offset])); }
+        static now() { return NativeDate.now() + offset; }
+      };
+    } else {
+      window.Date = NativeDate;
+    }
     window.__hpGoldenNativeCssSupports ||= CSS.supports.bind(CSS);
     CSS.supports = disableIsoFilters
       ? ((property, value) => property === 'filter'
@@ -138,6 +153,7 @@ async function stableEnvironment(page, scenario) {
       ? String(scenario.integrationVersion || '').trim() : null,
     attemptKey: VERSION_RELOAD_ATTEMPT_KEY,
     disableIsoFilters: scenario.disableIsoFilters === true,
+    moonClock: scenario.moon?.clock || null,
   });
 }
 
@@ -687,6 +703,9 @@ export function prepareGoldenFixture(scenario) {
       ...(scenario.customFill ? { custom_fill: scenario.customFill } : {}),
     };
   }
+  // #661: the moon is an installation-wide switch; the scene's home and clock
+  // arrive through hass.config and the page clock (stableEnvironment).
+  if (scenario.moon) fixture.config.settings = { ...(fixture.config.settings || {}), moon: true };
   // #577 is deliberately global-only. Keeping this outside the per-space
   // scenario overrides makes the golden exercise the same read path as a real
   // General settings save instead of silently falling back to legacy inner.
@@ -988,7 +1007,10 @@ export async function prepareGoldenScenario(page, scenario) {
       connection: { subscribeEvents: async () => () => undefined, subscribeMessage: async () => () => undefined },
       localize: () => null,
       formatEntityState: (state) => state.state,
-      config: { unit_system: { length: 'km' } },
+      config: {
+        unit_system: { length: 'km' },
+        ...(scenario.moon ? { latitude: scenario.moon.latitude, longitude: scenario.moon.longitude } : {}),
+      },
     });
     const mount = async () => {
       let card;
@@ -2180,6 +2202,15 @@ export async function prepareGoldenScenario(page, scenario) {
       );
       if (!marker) throw new Error(`golden focus device missing: ${scenario.focusDevice}`);
       marker.focus({ focusVisible: true });
+    }
+    if (scenario.moon) {
+      // The moon chunk is lazy: wait for it, then for the expected phase.
+      await until(() => card.renderRoot.querySelector('.hp-moon')?.dataset.moonVisible === 'true');
+      const moon = card.renderRoot.querySelector('.hp-moon');
+      if (moon.dataset.moonK !== scenario.moon.k || moon.parentElement !== card.renderRoot.querySelector('.hp-day-cycle-env')) {
+        throw new Error(`golden moon contract did not render: ${scenario.id} (k ${moon.dataset.moonK})`);
+      }
+      await frame();
     }
     if (scenario.dayCycle) {
       const environment = card.renderRoot.querySelector('.hp-day-cycle-env');

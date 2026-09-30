@@ -43,3 +43,14 @@ export function generalProblems(d: GeneralSettingsDraft): GeneralProblem[] {
   }
   return problems;
 }
+
+/** #661: the moon switch reads only an explicit `true` (absent, `false` or garbage — off). */
+export function moonDraftOf(settings: { moon?: unknown } | null | undefined): boolean {
+  return settings?.moon === true;
+}
+
+/** #661: saving writes `true` or removes the key — `false` is never stored (as volumetric_view). */
+export function writeMoonSetting(settings: { moon?: unknown }, on: boolean): void {
+  if (on) settings.moon = true;
+  else delete settings.moon;
+}

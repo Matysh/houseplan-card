@@ -134,6 +134,24 @@ An older frontend ignores the field and shows Flat. An older backend preserves
 it through the unknown-settings policy. Full backup/import carries `settings`
 whole, so the value survives.
 
+## Moon (#661)
+
+`settings.moon` is an optional global boolean: the moon on the "Follow the Sun"
+background for every space, user, device and kiosk. Only exact `true` switches
+it on; absence, `false` or anything else read as off. Saving `false` removes
+the key. There is no per-space moon: a space shows it only when its effective
+`bg_mode` is `daynight`. The backend accepts only a boolean
+(`vol.Optional("moon"): bool`), and the privacy-safe support projection copies
+only a validated boolean. New installations get `moon: true` in
+`DEFAULT_CONFIG`; an existing config has no key and keeps its look after the
+update (docs/SUN.md). "Reset to defaults" in General settings sets `true`. The
+store and model versions do not change; there is no migration.
+
+An older frontend ignores the field and shows no moon. An older backend
+preserves it through the unknown-settings policy. Full backup/import carries
+`settings` whole, so the value survives; a one-space export does not carry
+global settings.
+
 ## Stairs (#663)
 
 `spaces[].stairs[]` is an optional bounded (250 records per space)

@@ -603,6 +603,21 @@ def test_issue_577_full_export_preserves_sun_ray_origin(tmp_path: Path) -> None:
     assert parsed["payload"]["config"]["settings"]["sun_ray_origin"] == "outer"
 
 
+def test_issue_661_full_export_and_import_preserve_the_moon(tmp_path: Path) -> None:
+    """#661 AC9: `settings.moon` travels with a full backup both ways."""
+    runtime = SimpleNamespace(instance_id="instance-a")
+    for value in (True, False):
+        config = _config()
+        config["settings"]["moon"] = value
+        document, _ = create_export(
+            runtime, {"config": config}, {"layout": {}},
+            kind="full", space_id=None, card_version="1.79.0", config_root=tmp_path,
+        )
+        assert document["payload"]["config"]["settings"]["moon"] is value
+        parsed = parse_document(json.dumps(document).encode())
+        assert parsed["payload"]["config"]["settings"]["moon"] is value
+
+
 @pytest.mark.parametrize(
     ("kind", "plan_only"),
     [("full", False), ("space", False), ("space", True)],

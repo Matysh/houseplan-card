@@ -2313,6 +2313,8 @@ CONFIG_SCHEMA = vol.All(
                     vol.Optional("show_room_tooltip"): bool,
                     # #649: installation-wide 2.5D View; absent/false keeps Flat.
                     vol.Optional("volumetric_view"): bool,
+                    # #661: the moon on the "Follow the Sun" background; absent/false = off.
+                    vol.Optional("moon"): bool,
                     vol.Optional("summary_panel"): SUMMARY_PANEL_WIRE_SCHEMA,
                     vol.Optional("radar"): vol.Schema({}, extra=vol.ALLOW_EXTRA),
                     # Removed from the UI/runtime in 2026-08-08. Keep accepting the

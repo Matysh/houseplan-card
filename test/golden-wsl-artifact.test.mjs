@@ -42,15 +42,25 @@ const toolchain = () => {
   };
 };
 
+/** Matrix scenarios whose first capture still awaits acceptance (declared as new). */
+const PENDING_NEW = Object.freeze(GOLDEN_SCENARIOS.map((scenario) => scenario.id)
+  .filter((id) => !existsSync(resolve(BASELINES, `${id}.png`))));
+const ACCEPTED = GOLDEN_SCENARIOS.map((scenario) => scenario.id).filter((id) => !PENDING_NEW.includes(id));
+
 function artifact() {
   const dir = mkdtempSync(resolve(tmpdir(), 'hp-golden-wsl-'));
   const actualRoot = resolve(dir, 'actual');
   mkdirSync(actualRoot, { recursive: true });
   const index = JSON.parse(readFileSync(resolve(BASELINES, 'baselines-index.json'), 'utf8'));
   const results = GOLDEN_SCENARIOS.map((scenario) => {
-    const baseline = resolve(BASELINES, `${scenario.id}.png`);
-    assert.equal(existsSync(baseline), true, `test fixture needs reviewed baseline ${scenario.id}`);
     const actual = resolve(actualRoot, `${scenario.id}.png`);
+    // #661: a scenario added to the matrix has no reviewed baseline until its
+    // first Linux capture is accepted — exactly what a real run reports then.
+    if (PENDING_NEW.includes(scenario.id)) {
+      copyFileSync(resolve(BASELINES, `${ACCEPTED[0]}.png`), actual);
+      return { id: scenario.id, status: 'missing-baseline', actualSha256: digest(readFileSync(actual)) };
+    }
+    const baseline = resolve(BASELINES, `${scenario.id}.png`);
     copyFileSync(baseline, actual);
     const sha = digest(readFileSync(actual));
     return { id: scenario.id, status: 'passed', actualSha256: sha, baselineSha256: sha };
@@ -72,7 +82,7 @@ function artifact() {
   return dir;
 }
 
-const intent = Object.freeze({ expectChange: [], expectNew: [], noWitnesses: false, reason: '' });
+const intent = Object.freeze({ expectChange: [], expectNew: PENDING_NEW, noWitnesses: false, reason: '' });
 
 test('#641: repository and WSL/ext4 preconditions fail closed', () => {
   assert.equal(repositoryRefusal(source), null);

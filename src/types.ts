@@ -305,6 +305,8 @@ export interface ServerConfig {
     show_room_tooltip?: boolean;
     /** #649: the whole installation views plans in 2.5D; absent or false keeps Flat. */
     volumetric_view?: boolean;
+    /** #661: the moon on the "Follow the Sun" background; only `true` switches it on. */
+    moon?: boolean;
     north_deg?: number;
     bg_mode?: 'static' | 'daynight';
     sun_rays?: boolean;

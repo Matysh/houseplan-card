@@ -158,6 +158,9 @@ def _global_settings(value: object) -> dict[str, Any]:
     volumetric_view = value.get("volumetric_view")
     if isinstance(volumetric_view, bool):
         out["volumetric_view"] = volumetric_view
+    moon = value.get("moon")
+    if isinstance(moon, bool):
+        out["moon"] = moon
     fill_colors = value.get("fill_colors")
     if isinstance(fill_colors, dict):
         palette = {

@@ -1,5 +1,8 @@
 export type EditorRuntimeLoaderState = 'idle' | 'loading' | 'ready' | 'failed';
 
+/** This build's id, embedded at build time; every lazy runtime must carry the same. */
+export const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
+
 export interface EditorRuntimeModule<Runtime> {
   readonly fingerprint: string;
   create(): Runtime;

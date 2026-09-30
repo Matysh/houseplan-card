@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "pack_id": "houseplan",
+  "pack_version": "1.0.0",
+  "title_ru": "Луна: полный диск для маски фазы",
+  "title_en": "Moon: full disc for the phase mask",
+  "author": "JB (justbusiness)",
+  "license": "MIT",
+  "source_url": "https://www.figma.com/design/cpGN8MhJGydwVOUzZv8dia/House-plan",
+  "issue": 661,
+  "file": "moon.svg",
+  "view_box": [
+    0,
+    0,
+    512,
+    512
+  ],
+  "disc": {
+    "cx": 256,
+    "cy": 256,
+    "r": 240
+  },
+  "lit": "front",
+  "north_up": true,
+  "east_right": true,
+  "notes_en": "Full moon, front-lit, no terminator, no shadow, no glow outside the disc; thin dark outline for light backgrounds. Art by JB (Figma export normalised: viewBox 512, blend modes removed, rings thinned). Phase mask and the 8 % dark side are applied by the card (C5). The art is never mirrored; the lit side is always the left one, waning runs the same states backwards (owner 2026-09-29).",
+  "notes_ru": "Полная луна, освещение в лоб, без терминатора, тени и ореола; тонкая тёмная обводка для светлого фона. Арт JB (экспорт из Figma нормализован: viewBox 512, без blend-режимов, кольца морей прорежены). Маску фазы и тёмную сторону 8 % накладывает карточка (C5). Арт не зеркалится; освещённая сторона всегда слева, убывание идёт теми же состояниями в обратном порядке (владелец 29.09).",
+  "mirror": false,
+  "outline": {
+    "color": "#2b3138",
+    "opacity": 0.5,
+    "from_r": 0.905,
+    "to_r": 0.92,
+    "fade_to_r": 0.935,
+    "note": "part of the edge gradient, no separate stroke"
+  },
+  "lit_side": "left"
+}

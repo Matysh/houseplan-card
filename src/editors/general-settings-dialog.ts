@@ -81,7 +81,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
     : nothing;
 
   return html`<hp-dialog .hass=${host.hass} data-kind="settings" form-shell wide
-      .title=${t('gs.title')} icon="mdi:cog-outline" @hp-close=${requestClose}>
+      .title=${st('gs.title')} icon="mdi:cog-outline" @hp-close=${requestClose}>
     <div class="body hpf-form">
       ${formCard({
         id: 'display',
@@ -94,7 +94,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           })}
           ${toggleRow({
             id: 'gs-radar-live', icon: 'mdi:radar',
-            title: t('gs.radar_show_live'), caption: st('gs.radar_show_live_hint'),
+            title: st('gs.radar_show_live'), caption: st('gs.radar_show_live_hint'),
             checked: d.radarShowLive, onChange: (v) => set({ radarShowLive: v }),
           })}
           ${toggleRow({
@@ -116,11 +116,11 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         title: t('gs.card_fills'),
         help: this._help('gs.card_fills.help'),
         body: html`
-          ${subsection({ title: t('gs.light_group') })}
+          ${subsection({ title: st('gs.light_group') })}
           ${colorTiles([tile('light_on', 'gs.light_on'), tile('light_off', 'gs.light_off'), tile('light_none', 'gs.light_none')])}
-          ${subsection({ title: t('gs.temp_group') })}
+          ${subsection({ title: st('gs.temp_group') })}
           ${colorTiles([tile('temp_cold', 'gs.temp_cold'), tile('temp_ok', 'gs.temp_ok'), tile('temp_hot', 'gs.temp_hot')])}
-          ${subsection({ title: t('gs.lqi_group') })}
+          ${subsection({ title: st('gs.lqi_group') })}
           ${colorTiles([tile('lqi_low', 'gs.lqi_low'), tile('lqi_high', 'gs.lqi_high')])}`,
       })}
       ${formCard({
@@ -129,7 +129,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         body: html`
           ${colorTiles([tile('glow_base', 'gs.glow_base'), tile('glow_light', 'gs.glow_light')])}
           ${field({
-            label: t('gs.glow_radius'), htmlFor: 'gs-glow-radius', help: this._help('gs.glow_radius.help'),
+            label: st('gs.glow_radius'), htmlFor: 'gs-glow-radius', help: this._help('gs.glow_radius.help'),
             error: glowProblem ? st(glowProblem.message) : undefined,
             control: unitInput({
               id: 'gs-glow-radius', value: d.glowRadiusInput, min: 0.5, step: 0.5, invalid: !!glowProblem,
@@ -146,13 +146,13 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         title: t('gs.card_plan'),
         body: html`
           ${colorRow({
-            label: t('gs.wall_fill'),
+            label: st('gs.wall_fill'),
             picker: colorField({
               hex: d.colors.wall_fill.c, opacity: d.colors.wall_fill.a, opacityLabel: t('space.opacity'),
               onOpacity: (a) => this._setFillColor('wall_fill', { c: d.colors.wall_fill.c, a }),
               resetLabel: t('btn.reset'),
               onReset: () => this._setFillColor('wall_fill', { ...DEFAULT_FILL_COLORS.wall_fill }),
-              picker: html`<hp-color-opacity .label=${t('gs.wall_fill')} hide-label flat-swatch
+              picker: html`<hp-color-opacity .label=${st('gs.wall_fill')} hide-label flat-swatch
                 .opacityLabel=${t('space.opacity')} .pickerLabels=${host._colorPickerLabels}
                 .color=${d.colors.wall_fill.c} .opacity=${d.colors.wall_fill.a} .showOpacity=${true}
                 @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
@@ -161,11 +161,11 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             }),
           })}
           ${field({
-            label: t('gs.bg_mode'), help: this._help('gs.bg_mode.help'),
+            label: st('gs.bg_mode'), help: this._help('gs.bg_mode.help'),
             control: segmented({
               name: 'gs-bg-mode',
               value: d.bgMode === 'daynight' ? 'daynight' : 'static',
-              ariaLabel: t('gs.bg_mode'),
+              ariaLabel: st('gs.bg_mode'),
               options: [
                 { value: 'static', label: t('gs.bg_static') },
                 { value: 'daynight', label: t('gs.bg_daynight') },
@@ -201,7 +201,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             <div class="hpf-inline hpf-wrap">
               ${unitInput({
                 id: 'gs-north', value: d.northDegInput, unit: '°',
-                min: 0, max: 359, step: 1, placeholder: t('gs.north_ph'), invalid: !!northProblem,
+                min: 0, max: 359, step: 1, placeholder: st('gs.north_ph'), invalid: !!northProblem,
                 onInput: (raw) => {
                   const trimmed = raw.trim();
                   const n = trimmed === '' ? null : strictNumber(trimmed);
@@ -221,10 +221,15 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           ${northProblem ? html`<p class="hpf-error" role="alert">${st(northProblem.message)}</p>` : nothing}
           ${toggleRow({
             id: 'gs-sun-rays', icon: 'mdi:weather-sunny',
-            title: t('gs.sun_rays'), caption: st('gs.sun_rays_hint'),
+            title: st('gs.sun_rays'), caption: st('gs.sun_rays_hint'),
             checked: d.sunRays, onChange: (v) => set({ sunRays: v }),
           })}
-          ${renderSunRayOriginSegment(d.sunRayOrigin, (key) => t(key), (sunRayOrigin) => set({ sunRayOrigin }))}`,
+          ${renderSunRayOriginSegment(d.sunRayOrigin, (key) => t(key), (sunRayOrigin) => set({ sunRayOrigin }))}
+          ${toggleRow({
+            id: 'gs-moon', icon: 'mdi:moon-waning-crescent',
+            title: st('gs.moon'), caption: st('gs.moon_hint'),
+            checked: d.moon, onChange: (v) => set({ moon: v }),
+          })}`,
       })}
       ${formCard({
         id: 'data',
@@ -234,28 +239,28 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             ${subsection({ title: t('gs.backup_group'), help: this._help('gs.backup_group.help') })}
             <div class="hpf-actions">
               <button class="btn" @click=${() => this._openBackupExport()}>
-                <ha-icon icon="mdi:download"></ha-icon>${t('backup.export_open')}
+                <ha-icon icon="mdi:download"></ha-icon>${st('backup.export_open')}
               </button>
               <span class="backupupload">
                 <button class="btn" type="button" @click=${(e: Event) =>
                   ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
-                  <ha-icon icon="mdi:upload"></ha-icon>${t('backup.import_open')}
+                  <ha-icon icon="mdi:upload"></ha-icon>${st('backup.import_open')}
                 </button>
                 <input type="file" accept="application/json,.json" @change=${(event: Event) => this._pickBackupImport(event)} />
               </span>
               ${host._canOptimizeUndo && host._undoKind === 'import' ? html`
                 <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
-                  <ha-icon icon="mdi:undo-variant"></ha-icon>${t('backup.undo_import')}
+                  <ha-icon icon="mdi:undo-variant"></ha-icon>${st('backup.undo_import')}
                 </button>` : nothing}
             </div>` : nothing}
-          ${subsection({ title: t('gs.grid_group'), help: this._help('gs.grid_group.help') })}
+          ${subsection({ title: st('gs.grid_group'), help: this._help('gs.grid_group.help') })}
           <div class="hpf-actions">
             <button class="btn" @click=${() => this.optimizePlans.open()}>
               <ha-icon icon="mdi:broom"></ha-icon>${t('gs.align_all')}
             </button>
             ${host._canOptimizeUndo && host._undoKind !== 'import' ? html`
               <button class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${host._optimizeUndoBusy}>
-                <ha-icon icon="mdi:undo-variant"></ha-icon>${t('gs.optimize_undo')}
+                <ha-icon icon="mdi:undo-variant"></ha-icon>${st('gs.optimize_undo')}
               </button>` : nothing}
           </div>`,
       })}
@@ -266,7 +271,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: host._imperial ? 9.8 : 3,
           glowRadiusInput: String(host._imperial ? 9.8 : 3),
           bgColor: null, northDeg: null, northDegInput: '', bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner',
-          showRoomTooltip: true, radarShowLive: true, volumetricView: false, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
+          showRoomTooltip: true, radarShowLive: true, volumetricView: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
         })}>${t('gs.reset')}</button>
       </div>
       ${footerStatus(problems.length

@@ -83,7 +83,7 @@ const res = await page.evaluate(async () => {
 checkAll(res, {
   "rows": 15, // 10 плиток + плашка стены + радиус свечения + фон + грань окна #577
                // + «Оптимизировать планы» по действию, а не удалённому #605 классу alignall
-  "cards": ["Display", "Zigbee links", "Room fill colors", "Light-source glow", "Plan", "Sun", "Data"],
+  "cards": ["Display", "Zigbee links", "Room fill colors", "Light-source glow", "Plan", "Sun and Moon", "Data"],
   "groups": ["Lights", "Temperature", "Zigbee signal", "Backup and transfer", "Plan maintenance"],
   "everyCardHasContent": true,
   "sunMissingStaysVisible": true,

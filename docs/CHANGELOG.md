@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- On the "Follow the Sun" background, the moon in its current phase now appears
+  in the top-left corner of the scene at dawn, dusk and night, behind the plan.
+  It follows the real moon over your home (Home Assistant home location), fades
+  in and out as it crosses 3° above the horizon, and is hidden by day and around
+  new moon. General settings: the "Sun" section is now "Sun and Moon", with a
+  new switch that is on for new installations
+  ([#661](https://github.com/Matysh/houseplan-card/issues/661)).
 - In 2.5D View, device icons no longer shift when a device changes state (for
   example when a light turns on and shows its brightness); a Home Assistant
   update in a dense plan also no longer re-lays out every icon

@@ -892,6 +892,7 @@ class HouseplanSpaceCard extends LitElement {
       showTemperature: this._config.show_temperature !== false,
       showSignal: this._config.show_signal !== false,
       inert: this._continuity.overlayBlocksInteraction,
+      moonHost: this,
     });
     if (!stage) {
       return this._errorCard(t(this._lang, 'space_card.not_found', { id: spaceId }));
