@@ -61,7 +61,10 @@ export class StairViewRuntime {
   }
 
   public renderLayer(): TemplateResult {
-    const spaceIds = new Set(this.owner._model.map((item) => item.id));
+    // #694: the card's `_model` getter fingerprints the whole config on every
+    // read; read it once per layer, not once more per navigable stair.
+    const model = this.owner._model;
+    const spaceIds = new Set(model.map((item) => item.id));
     const interactive = this.owner._mode === 'view';
     const items = this.stairs.map((stair) => {
       const geometry = cachedStairRenderGeometry(stair, this.owner._cellCm);
@@ -73,7 +76,7 @@ export class StairViewRuntime {
       // #676 К8: the tooltip has exactly the link's condition — `active` — so a
       // missing, self, deleted or fixed-floor target never announces a floor.
       const targetTitle = active
-        ? this.owner._model.find((item) => item.id === stair.target_space_id)?.title ?? ''
+        ? model.find((item) => item.id === stair.target_space_id)?.title ?? ''
         : '';
       const tip = (event: PointerEvent): void => {
         if (!active) return;

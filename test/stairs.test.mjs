@@ -29,6 +29,7 @@ import {
   stairPhysicalSizeCm,
   stairTargetState,
 } from '../test-build/stairs-editor-model.js';
+import { StairViewRuntime } from '../test-build/stairs-view.js';
 
 const straight = (extra = {}) => ({
   id: 'straight', kind: 'straight', x: 0.5, y: 0.5, angle: 0,
@@ -396,4 +397,64 @@ test('#693 курсор move над телом лестницы — только
     'ссылка несёт pointer на группе');
   const view = readFileSync(new URL('../src/stairs-view.ts', import.meta.url), 'utf8');
   assert.match(view, /<g class="hp-stair hp-stair-view /, 'слой View помечает свои лестницы');
+});
+
+// #694: a View-layer host whose `_model` getter counts its reads, as the card's
+// getter fingerprints the whole config on each one.
+const FLOORS = [
+  { id: 'ground', title: 'Ground floor' },
+  { id: 'upper', title: 'Upper floor' },
+  { id: 'attic', title: 'Attic' },
+];
+const stairViewHost = (stairs, { mode = 'view', fixedFloor = false } = {}) => ({
+  reads: 0,
+  tips: [],
+  get _model() { this.reads += 1; return FLOORS; },
+  _mode: mode,
+  _curSpaceCfg: { stairs },
+  _space: 'ground',
+  _hasFixedFloor: fixedFloor,
+  _suppressClick: false,
+  _cellCm: 5,
+  _gridPitch: 1,
+  _decorStyle: { color: '#607d8b', opacity: 1 },
+  _tabClick() {},
+  _t: (key, vars) => (vars ? `${key}:${vars.title}` : key),
+  _showTip(event, title, meta) { this.tips.push([title, meta]); },
+  _clearPointerHover() {},
+});
+/** The value bound right after `attribute=` in a lit template. */
+const boundValue = (template, attribute) => {
+  const index = template.strings.findIndex((part) => part.trimEnd().endsWith(`${attribute}=`));
+  assert.ok(index >= 0, `the stair template binds ${attribute}`);
+  return template.values[index];
+};
+
+test('#694 AC2 the View stair layer reads the card model once per render at any stair count', () => {
+  const targets = ['upper', 'attic', 'ground', null, 'gone'];
+  const titles = { upper: 'Upper floor', attic: 'Attic' };
+  for (const count of [0, 1, 2, 7, 40]) {
+    const stairs = Array.from({ length: count }, (_, index) => straight({
+      id: `stair-${index}`, x: 0.1 + index * 0.02, target_space_id: targets[index % targets.length],
+    }));
+    const host = stairViewHost(stairs);
+    const layer = new StairViewRuntime(host).renderLayer();
+    assert.equal(host.reads, 1, `${count} stairs: one read of _model per render`);
+    const items = layer.values[0];
+    assert.equal(items.length, count);
+    for (const item of items) boundValue(item, '@pointerenter')({});
+    assert.deepEqual(host.tips, stairs.flatMap((stair) => (
+      titles[stair.target_space_id] ? [[`stairs.tooltip_navigate:${titles[stair.target_space_id]}`, '']] : []
+    )), `${count} stairs: each link still names its target floor, the rest name none`);
+    assert.deepEqual(items.map((item) => boundValue(item, 'data-target-state')),
+      stairs.map((stair) => ({ upper: 'active', attic: 'active', ground: 'self', gone: 'deleted' })[
+        stair.target_space_id] ?? 'missing'));
+  }
+  for (const options of [{ fixedFloor: true }, { mode: 'plan' }]) {
+    const host = stairViewHost([straight({ id: 'a' }), straight({ id: 'b', target_space_id: 'attic' })], options);
+    const layer = new StairViewRuntime(host).renderLayer();
+    for (const item of layer.values[0]) boundValue(item, '@pointerenter')({});
+    assert.equal(host.reads, 1, `${JSON.stringify(options)}: one read`);
+    assert.deepEqual(host.tips, [], `${JSON.stringify(options)}: no stair is a link, none announces a floor`);
+  }
 });

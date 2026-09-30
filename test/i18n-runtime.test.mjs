@@ -130,6 +130,44 @@ test('locale render gate exposes the fallback language to assistive technology',
   assert.equal(host.attrs.get('lang'), 'en');
 });
 
+// #694: a real element answers getAttribute; count only the `lang` writes.
+class AttributeHost extends FakeHost {
+  langWrites = [];
+  getAttribute(name) { return this.attrs.has(name) ? this.attrs.get(name) : null; }
+  setAttribute(name, value) {
+    if (name === 'lang') this.langWrites.push(value);
+    super.setAttribute(name, value);
+  }
+}
+
+test('#694 AC3 the locale render gate writes lang only when the value changes', async () => {
+  const runtime = new LanguageRuntime([
+    { code: 'en', dictionary: {} },
+    { code: 'de', dictionary: {} },
+    { code: 'fr', loadDictionary: async () => { throw new Error('offline'); } },
+  ], 'build', () => {});
+  const host = new AttributeHost();
+  const renders = (code, times = 3) => {
+    for (let index = 0; index < times; index += 1) languageRenderGate(host, runtime, code);
+  };
+  renders('en');
+  assert.deepEqual(host.langWrites, ['en'], 'repeated renders keep the attribute that is already right');
+  renders('de');
+  assert.deepEqual(host.langWrites, ['en', 'de'], 'a language switch writes the new language once');
+  assert.equal(languageRenderGate(host, runtime, 'fr'), 'warm');
+  await runtime.ensure('fr');
+  renders('fr');
+  assert.deepEqual(host.langWrites, ['en', 'de', 'en'], 'the English fallback is written once');
+  assert.equal(host.attrs.get('lang'), 'en');
+  renders('de');
+  renders(null);
+  assert.deepEqual(host.langWrites, ['en', 'de', 'en', 'de'], 'no language code writes nothing');
+  host.attrs.set('lang', 'ru');
+  renders('de');
+  assert.deepEqual(host.langWrites, ['en', 'de', 'en', 'de', 'de'], 'a foreign value is corrected');
+  assert.equal(host.attrs.get('lang'), 'de');
+});
+
 test('the production runtime is the tested class, not a handwritten twin (#354)', async () => {
   const registry = await import('../test-build/i18n/registry.js');
   assert.ok(

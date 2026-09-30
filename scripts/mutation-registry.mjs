@@ -13808,6 +13808,41 @@ const MUTANT_DEFINITIONS = [
       replace: '',
     }],
   },
+  // #694: цена переключения этажа — три правки без изменения поведения.
+  {
+    id: 'pointer-hover-batch-requeries-shared-subtree',
+    guard: 'node --test --test-name-pattern="#694 AC1" test/device-hit-owner.test.mjs',
+    because: '#694 AC1: a floor switch delivers hundreds of MutationObserver records into the '
+      + 'same subtrees; each node is queried once per batch, not once per record',
+    patches: [{
+      file: 'src/device-hit-owner.ts',
+      find: '    if (node.nodeType !== 1 || checked.has(node)) return false;\n',
+      replace: '    if (node.nodeType !== 1) return false; // mutant: no per-batch memo\n',
+    }],
+  },
+  {
+    id: 'stairs-view-reads-model-per-stair',
+    guard: 'node --test --test-name-pattern="#694 AC2" test/stairs.test.mjs',
+    because: '#694 AC2: the card _model getter fingerprints the whole config on every read; '
+      + 'the View stair layer reads it once per render, not once more per navigable stair',
+    patches: [{
+      file: 'src/stairs-view.ts',
+      find: "        ? model.find((item) => item.id === stair.target_space_id)?.title ?? ''\n",
+      replace: "        ? this.owner._model.find((item) => item.id === stair.target_space_id)?.title ?? ''"
+        + ' // mutant\n',
+    }],
+  },
+  {
+    id: 'language-gate-rewrites-unchanged-lang',
+    guard: 'node --test --test-name-pattern="#694 AC3" test/i18n-runtime.test.mjs',
+    because: '#694 AC3: every card render passes the locale gate; an unchanged inherited lang '
+      + 'must not be written again',
+    patches: [{
+      file: 'src/i18n/language-runtime.ts',
+      find: "      if (host.getAttribute?.('lang') !== lang) host.setAttribute('lang', lang);\n",
+      replace: "      host.setAttribute('lang', lang); // mutant: written on every render\n",
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

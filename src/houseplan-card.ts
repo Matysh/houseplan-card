@@ -71,7 +71,7 @@ import {
   type FixedFloorSelection, type InitialSpaceSelection,
 } from './initial-load';
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
-import { DeviceHitController, observeDeviceHitGeometryScroll } from './device-hit-owner';
+import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import { roomTempRangeFromDraft, type SpaceDialogState } from './space-dialog';
 import { mdiHomeCityOutline } from '@mdi/js';
@@ -2542,21 +2542,9 @@ export class HouseplanCard extends LitElement {
     const PointerHoverObserver = this.ownerDocument.defaultView?.MutationObserver;
     if (PointerHoverObserver) {
       this._pointerHoverObserver = new PointerHoverObserver((records) => {
-        let deviceGeometryChanged = false;
-        for (const record of records) {
-          for (const node of record.addedNodes) this._syncPointerHoverSubtree(node);
-          const inDeviceLayer = (node: Node): boolean => {
-            if (node.nodeType !== Node.ELEMENT_NODE) return false;
-            const element = node as Element;
-            return element.matches('.devlayer, .devlayer *')
-              || !!element.querySelector?.('.devlayer');
-          };
-          if (inDeviceLayer(record.target)
-              || [...record.addedNodes, ...record.removedNodes].some(inDeviceLayer)) {
-            deviceGeometryChanged = true;
-          }
+        if (deviceLayerMutated(records, (node) => this._syncPointerHoverSubtree(node))) {
+          this._invalidateDeviceHitGeometry();
         }
-        if (deviceGeometryChanged) this._invalidateDeviceHitGeometry();
       });
       this._pointerHoverObserver.observe(this.renderRoot, {
         childList: true,

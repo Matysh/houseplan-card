@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  DeviceHitIndex, DevicePointerOwnerLatch, deviceHitScrollSources,
+  DeviceHitIndex, DevicePointerOwnerLatch, deviceHitScrollSources, deviceLayerMutated,
   observeDeviceHitGeometryScroll, pointInDeviceCapsule, resolveDeviceHitOwner,
 } from '../test-build/device-hit-owner.js';
 
@@ -129,4 +129,73 @@ test('#613 scroll observation crosses shadow hosts and tears down exactly once',
   dashboardScroller.dispatchEvent(new Event('scroll'));
   assert.equal(invalidations, 4);
   reconnect();
+});
+
+// #694: an instrumented element counts every selector query run against it.
+// `device` answers `.devlayer, .devlayer *`; `holdsDevice` answers the subtree
+// query for `.devlayer` below it.
+const probeNode = (name, { device = false, holdsDevice = false } = {}) => ({
+  name,
+  nodeType: 1,
+  queries: 0,
+  matches(selector) {
+    assert.equal(selector, '.devlayer, .devlayer *');
+    this.queries += 1;
+    return device;
+  },
+  querySelector(selector) {
+    assert.equal(selector, '.devlayer');
+    this.queries += 1;
+    return holdsDevice ? {} : null;
+  },
+});
+const record = (target, addedNodes = [], removedNodes = []) => ({ target, addedNodes, removedNodes });
+
+test('#694 AC1 a batch into one subtree queries each node at most once', () => {
+  const stage = probeNode('stage');
+  const children = Array.from({ length: 40 }, (_, index) => probeNode(`child-${index}`));
+  const text = { nodeType: 3, name: 'text' };
+  const records = [
+    ...children.map((child) => record(stage, [child])),
+    ...children.map((child) => record(child)),
+    record(stage, [text], [children[0]]),
+  ];
+  const synced = [];
+  assert.equal(deviceLayerMutated(records, (node) => synced.push(node.name)), false);
+  // matches + querySelector: one check is two queries, never more.
+  assert.equal(stage.queries, 2, 'the shared record target is checked once per batch');
+  for (const child of children) assert.equal(child.queries, 2, `${child.name} is checked once`);
+  assert.deepEqual(synced, [...children.map((child) => child.name), 'text'],
+    'every added node still reaches the pointer-hover sync, in record order');
+});
+
+test('#694 AC1 the first device-layer hit ends the queries, not the hover sync', () => {
+  const stage = probeNode('stage');
+  const devlayer = probeNode('devlayer', { device: true });
+  const later = Array.from({ length: 12 }, (_, index) => probeNode(`later-${index}`));
+  const added = later.map((_, index) => probeNode(`added-${index}`));
+  const records = [
+    record(stage),
+    record(devlayer),
+    ...later.map((target, index) => record(target, [added[index]], [probeNode('gone')])),
+  ];
+  const synced = [];
+  assert.equal(deviceLayerMutated(records, (node) => synced.push(node.name)), true);
+  assert.equal(stage.queries, 2);
+  assert.equal(devlayer.queries, 1, 'a match needs no subtree query');
+  for (const node of [...later, ...added]) {
+    assert.equal(node.queries, 0, `${node.name} is not queried after the first hit`);
+  }
+  assert.deepEqual(synced, added.map((node) => node.name),
+    'added nodes after the hit still reach the pointer-hover sync');
+});
+
+test('#694 AC1 a device layer is still found in targets, added and removed nodes', () => {
+  const plain = () => probeNode('plain');
+  const none = () => {};
+  assert.equal(deviceLayerMutated([record(plain(), [plain()], [plain()])], none), false);
+  assert.equal(deviceLayerMutated([record(plain()), record(probeNode('dev', { device: true }))], none), true);
+  assert.equal(deviceLayerMutated([record(plain(), [probeNode('floor', { holdsDevice: true })])], none), true);
+  assert.equal(deviceLayerMutated([record(plain(), [], [probeNode('old', { holdsDevice: true })])], none), true);
+  assert.equal(deviceLayerMutated([record({ nodeType: 3 }, [{ nodeType: 3 }])], none), false);
 });

@@ -91,6 +91,34 @@ export function observeDeviceHitGeometryScroll(
   };
 }
 
+type DeviceLayerMutation = Pick<MutationRecord, 'target' | 'addedNodes' | 'removedNodes'>;
+
+/**
+ * One batch of the card's pointer-hover MutationObserver: every added node goes
+ * through `syncAdded`, and the result says whether the device layer changed.
+ * A floor switch delivers hundreds of records into the same subtrees (#694),
+ * so a node is queried at most once per batch and the first hit ends the queries.
+ */
+export function deviceLayerMutated(
+  records: Iterable<DeviceLayerMutation>,
+  syncAdded: (node: Node) => void,
+): boolean {
+  const checked = new Set<Node>();
+  const inDeviceLayer = (node: Node): boolean => {
+    if (node.nodeType !== 1 || checked.has(node)) return false;
+    checked.add(node);
+    const element = node as Element;
+    return element.matches('.devlayer, .devlayer *') || !!element.querySelector?.('.devlayer');
+  };
+  let changed = false;
+  for (const record of records) {
+    for (const node of record.addedNodes) syncAdded(node);
+    if (!changed && (inDeviceLayer(record.target)
+        || [...record.addedNodes, ...record.removedNodes].some(inDeviceLayer))) changed = true;
+  }
+  return changed;
+}
+
 const EPSILON = 1e-7;
 
 const distanceSquared = (a: DeviceHitPoint, b: DeviceHitPoint): number => {

@@ -95,6 +95,7 @@ interface LanguageHostElement {
   isConnected: boolean;
   requestUpdate(): void;
   setAttribute(name: string, value: string): void;
+  getAttribute?(name: string): string | null;
   removeAttribute(name: string): void;
 }
 
@@ -114,7 +115,10 @@ export function languageRenderGate(
       host.removeAttribute('aria-busy');
     }
     if (code) {
-      host.setAttribute('lang', state === 'fallback' ? 'en' : code);
+      // #694: `lang` is inherited; a write, even of the same value, can
+      // invalidate style for the whole shadow tree. Write it only on change.
+      const lang = state === 'fallback' ? 'en' : code;
+      if (host.getAttribute?.('lang') !== lang) host.setAttribute('lang', lang);
       committedHosts.add(host);
     }
     return 'ready';
