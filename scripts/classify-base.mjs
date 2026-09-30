@@ -78,6 +78,41 @@ export function greenShas(payload) {
 }
 
 /**
+ * #703: коммиты, на которых стоит опубликованный тег релиза. Тег ставится
+ * только на SHA с зелёным Validate на точном SHA (PROCESS.md §8), поэтому он —
+ * такое же доказательство «этот материал судили», как прогон в списке API, и
+ * при этом не зависит от окна в сто прогонов. Вход — строки
+ * `git for-each-ref --format='%(refname:short) %(objectname) %(*objectname)' refs/tags`:
+ * у аннотированного тега коммит — третье поле, у лёгкого — второе.
+ */
+export const RELEASE_TAG = /^v\d+\.\d+\.\d+(?:-(?:beta|rc)\.[1-9]\d*)?$/;
+
+export function releaseTaggedShas(forEachRefOutput) {
+  const shas = new Set();
+  for (const line of String(forEachRefOutput || '').split('\n')) {
+    const [name, object, peeled] = line.trim().split(/\s+/);
+    if (!name || !RELEASE_TAG.test(name)) continue;
+    const commit = peeled || object;
+    if (/^[0-9a-f]{40}$/.test(commit || '')) shas.add(commit);
+  }
+  return shas;
+}
+
+/**
+ * #703: прогоны обеих интеграционных веток — одно множество. `main` получает
+ * только SHA, уже прошедшие `dev` (PROCESS.md §2.8, §11), поэтому пуш в `main`
+ * обязан видеть, что судилось на `dev`: иначе ближайший судимый предок —
+ * прошлый stable, и вся бета-линия судится заново по сегодняшним правилам.
+ */
+export function mergeRunPayloads(payloads) {
+  const runs = [];
+  for (const payload of Array.isArray(payloads) ? payloads : []) {
+    if (payload && Array.isArray(payload.workflow_runs)) runs.push(...payload.workflow_runs);
+  }
+  return { workflow_runs: runs };
+}
+
+/**
  * Выбор базы.
  *
  * @param candidates SHA предков HEAD от новых к старым, БЕЗ самого HEAD:
@@ -131,9 +166,22 @@ function firstGreen(candidates, green) {
  * успешного прогона». Первое случается ежедневно, второе — при сломанном CI,
  * где красный Validate и так уместен.
  */
-export function pickRangeBase({ candidates, green, fallback }) {
-  const found = firstGreen(candidates, green);
-  if (found) return { ...found, reason: 'green-ancestor', proven: true };
+export function pickRangeBase({
+  candidates, green, fallback, head = '', headGreen = new Set(), tagged = new Set(),
+}) {
+  // #703: сам HEAD — граница, только если его уже оправдали: успешный Validate
+  // на другом прогоне (промоушен в `main` SHA, проверенного на `dev`) или
+  // опубликованный тег. Упавший прогон HEAD не в счёт: повтор обязан судить
+  // тот же диапазон заново, иначе перезапуск красного SHA давал бы зелёный.
+  if (head && (headGreen.has(head) || tagged.has(head))) {
+    return { base: head, reason: 'head-proven', proven: true, skipped: 0 };
+  }
+  const judged = green instanceof Set ? green : new Set();
+  const found = firstGreen(candidates, new Set([...judged, ...tagged]));
+  if (found) {
+    const reason = judged.has(found.base) ? 'green-ancestor' : 'release-tag';
+    return { ...found, reason, proven: true };
+  }
   return {
     base: fallback || '',
     reason: 'fallback',
@@ -163,6 +211,24 @@ export function baseSummary(choice, { head, mergeBase, mode = 'classify' }) {
         + ` для которого Validate завершился успешно.${skipped}`,
     ];
   }
+  if (choice.reason === 'head-proven') {
+    return [
+      heading,
+      `Этот SHA \`${short(head)}\` уже оправдан успешным Validate или опубликованным`
+        + ' тегом (#703): диапазон пуст, судить заново нечего. Так промоушен `dev → main`'
+        + ' получает тот же вердикт, что и дерево на `dev`.',
+    ];
+  }
+  if (choice.reason === 'release-tag') {
+    const skipped = choice.skipped
+      ? ` Пропущено коммитов без завершённого прогона: ${choice.skipped}.`
+      : '';
+    return [
+      heading,
+      `Диапазон \`${short(choice.base)}..${short(head)}\`: на \`${short(choice.base)}\``
+        + ` стоит опубликованный тег релиза (#703), его материал уже судили.${skipped}`,
+    ];
+  }
   if (choice.reason === 'fallback') {
     return [
       heading,
@@ -188,26 +254,28 @@ function main(argv) {
   const head = arg(argv, 'head');
   const mode = arg(argv, 'mode', 'classify');
   const mergeBase = arg(argv, 'merge-base', mode === 'range' ? head : '');
-  const runsFile = arg(argv, 'runs');
+  // `--runs=` можно повторить (#703): на интеграционных ветках — dev и main.
+  const runsFiles = argv.filter((a) => a.startsWith('--runs=')).map((a) => a.slice(7)).filter(Boolean);
   if (!head || !mergeBase) {
     process.stderr.write('usage: classify-base.mjs --head=<sha>'
       + ' [--mode=classify|range] [--merge-base=<sha>] [--fallback=<sha>]'
       + ' [--name=<output>] [--runs=<file>]\n');
     process.exit(2);
   }
-  let payload = null;
-  if (runsFile) {
+  const payload = mergeRunPayloads(runsFiles.map((file) => {
     try {
-      payload = JSON.parse(readFileSync(runsFile, 'utf8'));
+      return JSON.parse(readFileSync(file, 'utf8'));
     } catch {
       // Пустой или битый ответ — сознательно не ошибка: см. greenShas.
-      payload = null;
+      return null;
     }
-  }
-  // `--skip=1` убирает сам HEAD: его прогон — это текущий, зелёным он быть не
-  // может по определению.
+  }));
+  // `--skip=1` убирает сам HEAD из предков: текущий прогон ещё идёт. В режиме
+  // `range` у HEAD есть свой, более строгий вход — `headGreen` (#703): его
+  // засчитывает только УСПЕШНЫЙ прогон того же SHA, например на `dev` перед
+  // промоушеном в `main`.
   //
-  // В режиме `range` (пуш прямо в dev) пола нет: обход идёт по истории до
+  // В режиме `range` (пуш прямо в dev или main) пола нет: обход идёт по истории до
   // предела MAX_CANDIDATES, потому что merge-base с dev здесь совпал бы с HEAD.
   const span = mode === 'range' ? head : `${mergeBase}..${head}`;
   const candidates = execFileSync('git', [
@@ -215,7 +283,16 @@ function main(argv) {
   ], { encoding: 'utf8' }).split('\n').map((line) => line.trim()).filter(Boolean);
 
   const choice = mode === 'range'
-    ? pickRangeBase({ candidates, green: judgedShas(payload), fallback: arg(argv, 'fallback') })
+    ? pickRangeBase({
+      candidates,
+      green: judgedShas(payload),
+      fallback: arg(argv, 'fallback'),
+      head,
+      headGreen: greenShas(payload),
+      tagged: releaseTaggedShas(execFileSync('git', [
+        'for-each-ref', '--format=%(refname:short) %(objectname) %(*objectname)', 'refs/tags',
+      ], { encoding: 'utf8' })),
+    })
     : pickBase({ candidates, green: greenShas(payload), mergeBase });
   const summary = baseSummary(choice, { head, mergeBase, mode });
   process.stdout.write(`${summary.join('\n')}\n`);

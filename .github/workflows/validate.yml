@@ -187,9 +187,14 @@ jobs:
       # прежним `before`: расширять диапазон здесь нельзя, иначе гейт, который
       # сам красит прогон, лишает следующий пуш зелёного предка и запирает dev
       # в красноте навсегда.
+      #
+      # #703: то же на `main`. Stable-промоушен — пуш в `main` SHA, уже
+      # судимого на `dev`; с `event.before` (прошлый stable) провенанс и
+      # процессный гейт судили бы всю бета-линию заново. Прогоны читаются с
+      # обеих интеграционных веток, сам HEAD засчитывает только успешный.
       - name: "База диапазона: последний доказанно зелёный предок"
         id: range
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.sha }}
@@ -199,11 +204,14 @@ jobs:
           # `status=completed`, а не `success`: гейтам диапазона нужен факт
           # «коммит судили», а не «вердикт был оправдательный». Упавший прогон
           # коммит судил; отменённый — нет, его отсеивает judgedShas (#388).
-          gh api -X GET "repos/$REPO/actions/workflows/validate.yml/runs" \
-            -f branch=dev -f status=completed -F per_page=100 \
-            > /tmp/validate-runs.json || echo '{}' > /tmp/validate-runs.json
+          for branch in dev main; do
+            gh api -X GET "repos/$REPO/actions/workflows/validate.yml/runs" \
+              -f branch="$branch" -f status=completed -F per_page=100 \
+              > "/tmp/validate-runs-$branch.json" || echo '{}' > "/tmp/validate-runs-$branch.json"
+          done
           node scripts/classify-base.mjs --head="$HEAD_SHA" --mode=range \
-            --fallback="$FALLBACK" --runs=/tmp/validate-runs.json
+            --fallback="$FALLBACK" \
+            --runs=/tmp/validate-runs-dev.json --runs=/tmp/validate-runs-main.json
       - name: "Провенанс коммитов: трейлеры и эталоны"
         id: provenance
         continue-on-error: true
@@ -371,9 +379,15 @@ jobs:
           if [ "$REF" = "refs/heads/dev" ] || [ "$REF" = "refs/heads/main" ]; then
             # На интеграционных ветках классифицировать нечего (всё true), но
             # база диапазона нужна гейту «новый код не добавляет any» в job
-            # frontend (#388, #619).
+            # frontend (#388, #619). #703: прогоны обеих интеграционных веток —
+            # на `main` приходит SHA, уже судимый на `dev`.
+            other=dev; [ "$BRANCH" = "dev" ] && other=main
+            gh api -X GET "repos/$REPO/actions/workflows/validate.yml/runs" \
+              -f branch="$other" -f status=completed -F per_page=100 \
+              > /tmp/validate-runs-other.json || echo '{}' > /tmp/validate-runs-other.json
             node scripts/classify-base.mjs --head="$HEAD_SHA" --mode=range \
-              --name=range_base --fallback="$FALLBACK" --runs=/tmp/validate-runs.json
+              --name=range_base --fallback="$FALLBACK" \
+              --runs=/tmp/validate-runs.json --runs=/tmp/validate-runs-other.json
             exit 0
           fi
           merge_base=$(git merge-base origin/dev "$HEAD_SHA" || git rev-parse "$HEAD_SHA~1")

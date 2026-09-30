@@ -336,9 +336,11 @@ test('гейты диапазона судят от доказанного пр�
   assert.equal(/-f status=success/.test(preflight), false);
   assert.match(preflight, /actions: read/, 'чтение прогонов требует прав');
   assert.match(preflight, /issues: read/, 'проверка 8 читает issue');
-  // Считать базу имеет смысл только на пуше в dev: на ветках диапазон и так
-  // шире, а у PR он задан событием.
-  assert.match(preflight, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev'/);
+  // Считать базу имеет смысл только на пуше в интеграционную ветку: на ветках
+  // диапазон и так шире, а у PR он задан событием. #703: `main` — тоже, иначе
+  // stable-промоушен судит бета-линию от прошлого stable (`event.before`).
+  assert.match(preflight,
+    /if: github\.event_name == 'push' && \(github\.ref == 'refs\/heads\/dev' \|\| github\.ref == 'refs\/heads\/main'\)/);
 
   // Гейт «новый any» берёт ту же базу, но через выход job changes: свой запрос
   // к API из frontend потребовал бы отдельных прав.
@@ -351,6 +353,27 @@ test('гейты диапазона судят от доказанного пр�
   // его зелёным предком ослабила бы гейт.
   assert.match(frontend, /\[ "\$REF" = "refs\/heads\/dev" \]/);
   assert.match(frontend, /git merge-base origin\/dev "\$HEAD_SHA"/);
+});
+
+test('#703 AC3: на пуше в main база диапазона видит прогоны dev, а не только прошлый stable', () => {
+  const workflow = read('validate.yml');
+  const preflight = workflow.slice(
+    workflow.indexOf('\n  preflight:\n'), workflow.indexOf('\n  changes:\n'),
+  );
+  const changes = workflow.slice(
+    workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'),
+  );
+  // Preflight: прогоны обеих интеграционных веток в один вызов CLI.
+  assert.match(preflight, /for branch in dev main; do/);
+  assert.match(preflight, /-f branch="\$branch"/);
+  assert.match(preflight, /--runs=\/tmp\/validate-runs-dev\.json --runs=\/tmp\/validate-runs-main\.json/);
+  // changes: к прогонам своей ветки добавляются прогоны другой интеграционной.
+  const range = changes.slice(changes.indexOf('if [ "$REF" = "refs/heads/dev" ] || [ "$REF" = "refs/heads/main" ]'));
+  assert.match(range, /other=dev; \[ "\$BRANCH" = "dev" \] && other=main/);
+  assert.match(range, /-f branch="\$other" -f status=completed/);
+  assert.match(range, /--runs=\/tmp\/validate-runs\.json --runs=\/tmp\/validate-runs-other\.json/);
+  // Теги релиза читаются из истории: обе job клонируют её целиком.
+  for (const job of [preflight, changes]) assert.match(job, /fetch-depth: 0/);
 });
 
 /** Ставит ли workflow python-зависимости — по собственному содержимому.
