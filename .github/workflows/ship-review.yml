@@ -1,0 +1,53 @@
+name: "Бета: пакетное ревью ship"
+run-name: "Ship review ${{ inputs.tag }}"
+
+# Тонкий вызывающий файл (#716, устройство #623). `workflow_dispatch` GitHub
+# исполняет с выбранной ветки, но кнопку и сам запуск (`gh workflow run`)
+# даёт только workflow, чей файл лежит в ветке по умолчанию (`main`). Поэтому
+# здесь только то, что обязано жить там: триггер, входы ручного запуска,
+# run-name, права и concurrency. Тело — `_ship-review.yml` по ссылке `@dev`:
+# правка ревью — один коммит в `dev`, а запуск с любой ветки (в кнопке по
+# умолчанию выбрана `main`) исполняет тело из `dev`.
+# Этот файл меняется, только когда меняются входы или потолок прав; тогда он
+# зеркалится в `main`, и preflight `workflow_sync` (validate.yml) держит копии
+# равными.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Beta tag the review is for, for example v1.79.0-beta.1"
+        required: true
+        type: string
+      candidate:
+        description: "Exact candidate SHA; empty = the dev tip"
+        required: false
+        type: string
+        default: ""
+      force:
+        description: "Review again even when the document already exists in dev"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ship-review-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  # Потолок прав тела: объединение job-level прав `_ship-review.yml`. Вызываемый
+  # workflow может права только сузить, поэтому каждая его job по-прежнему
+  # получает свой прежний минимум (#556), а шире этого набора не получит никто.
+  dev:
+    permissions:
+      contents: read
+      issues: read
+    uses: Matysh/houseplan-card/.github/workflows/_ship-review.yml@dev # #716: тело ревью из dev
+    with:
+      tag: ${{ inputs.tag }}
+      candidate: ${{ inputs.candidate }}
+      force: ${{ inputs.force }}
+    secrets: inherit

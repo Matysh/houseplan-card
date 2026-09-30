@@ -1,0 +1,65 @@
+name: "Бета: производные артефакты на dev"
+run-name: "Derived artifacts ${{ inputs.tag }}"
+
+# Тонкий вызывающий файл (#716, устройство #623). `workflow_dispatch` GitHub
+# исполняет с выбранной ветки, но кнопку и сам запуск (`gh workflow run`)
+# даёт только workflow, чей файл лежит в ветке по умолчанию (`main`). Поэтому
+# здесь только то, что обязано жить там: триггер, входы ручного запуска,
+# run-name, права и concurrency. Тело — `_beta-derived.yml` по ссылке `@dev`:
+# правка съёмки и приёмки — один коммит в `dev`, а запуск с любой ветки (в
+# кнопке по умолчанию выбрана `main`) исполняет тело из `dev`.
+# Этот файл меняется, только когда меняются входы или потолок прав; тогда он
+# зеркалится в `main`, и preflight `workflow_sync` (validate.yml) держит копии
+# равными.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Beta tag these artifacts are for, for example v1.79.0-beta.1"
+        required: true
+        type: string
+      docs_expect_change:
+        description: "Doc scenario ids expected to change, comma-separated (empty = none)"
+        required: false
+        type: string
+        default: ""
+      golden_run:
+        description: "Validate run id on dev whose golden-images artifact holds the shifted frames (empty = skip golden)"
+        required: false
+        type: string
+        default: ""
+      golden_expect_change:
+        description: "Golden scenes expected to change, comma-separated"
+        required: false
+        type: string
+        default: ""
+      golden_expect_new:
+        description: "New golden scenes, comma-separated"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: beta-derived
+  cancel-in-progress: false
+
+jobs:
+  # Потолок прав тела: объединение job-level прав `_beta-derived.yml`. Вызываемый
+  # workflow может права только сузить, поэтому каждая его job по-прежнему
+  # получает свой прежний минимум (#556), а шире этого набора не получит никто.
+  dev:
+    permissions:
+      contents: read
+      actions: read
+    uses: Matysh/houseplan-card/.github/workflows/_beta-derived.yml@dev # #716: тело съёмки и приёмки из dev
+    with:
+      tag: ${{ inputs.tag }}
+      docs_expect_change: ${{ inputs.docs_expect_change }}
+      golden_run: ${{ inputs.golden_run }}
+      golden_expect_change: ${{ inputs.golden_expect_change }}
+      golden_expect_new: ${{ inputs.golden_expect_new }}
+    secrets: inherit
