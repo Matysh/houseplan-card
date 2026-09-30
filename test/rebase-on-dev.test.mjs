@@ -17,22 +17,37 @@ import { buildIndex } from '../scripts/reviews-index.mjs';
 // конфиг владельца ради теста нельзя — конфиг передаётся окружением.
 // #643: GIT_* родителя снимаются целиком (урок #633) — запущенный из pre-push
 // хука тест иначе унаследует GIT_DIR и ребейзит репозиторий хука.
+// #717: commit, fetch, rebase и приём push зовут `git maintenance run --auto`
+// / `git gc --auto`. В свежих git (2.47+) это обслуживание по умолчанию уходит
+// в фон и создаёт `objects/maintenance.lock`, когда команда уже вернулась, —
+// `rmSync` в finally ловил ENOTEMPTY на `.git/objects`. Во временных
+// репозиториях автообслуживание выключено, а очистка повторяет удаление,
+// если файл всё же появился под ней.
 for (const key of Object.keys(process.env)) if (/^GIT_/i.test(key)) delete process.env[key];
 Object.assign(process.env, {
   GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t',
-  GIT_CONFIG_COUNT: '2',
+  GIT_CONFIG_COUNT: '4',
   GIT_CONFIG_KEY_0: 'core.autocrlf', GIT_CONFIG_VALUE_0: 'false',
   GIT_CONFIG_KEY_1: 'core.eol', GIT_CONFIG_VALUE_1: 'lf',
+  GIT_CONFIG_KEY_2: 'maintenance.auto', GIT_CONFIG_VALUE_2: 'false',
+  GIT_CONFIG_KEY_3: 'gc.auto', GIT_CONFIG_VALUE_3: '0',
 });
 const git = (cwd, ...args) => execFileSync('git', args, {
   cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
 }).trim();
+/** Опции очистки временного репозитория: повтор на ENOTEMPTY/EBUSY (#717). */
+const RM_TREE = { recursive: true, force: true, maxRetries: 10, retryDelay: 50 };
 
 
 function repo({ conflictInSrc, reviews = false }) {
   const root = mkdtempSync(join(tmpdir(), 'hp-rebase-'));
   const origin = join(root, 'origin.git'); const work = join(root, 'work');
   git(root, 'init', '--bare', '-q', '-b', 'dev', origin);
+  // #717: приём push — процесс origin, а GIT_CONFIG_* git локальному транспорту
+  // не передаёт; его автообслуживание выключается в конфиге самого origin.
+  for (const [key, value] of [['receive.autogc', 'false'], ['maintenance.auto', 'false'], ['gc.auto', '0']]) {
+    git(origin, 'config', key, value);
+  }
   git(root, 'clone', '-q', origin, work);
   git(work, 'checkout', '-q', '-b', 'dev');
   mkdirSync(join(work, 'dist')); mkdirSync(join(work, 'src'));
@@ -91,7 +106,7 @@ test('#643 AC3/#657: бандл и INDEX.md конфликтуют в одном
     assert.match(index, /CODE-REVIEW-8-r1\.md/);
     assert.match(index, /CODE-REVIEW-9-r1\.md/);
     assert.equal(readFileSync(join(work, 'dist/a.js'), 'utf8'), 'built:dev\n', '#657: бандл ветки не пересобирается');
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, RM_TREE); }
 });
 
 test('конфликт только в бандле: ребейз доведён, бандл = версия dev, без пересборки и амендинга (#479 AC5, #657)', () => {
@@ -107,7 +122,7 @@ test('конфликт только в бандле: ребейз доведён
     assert.equal(readFileSync(join(work, 'dist/a.js'), 'utf8'), 'built:dev\n', 'бандл — версия dev, ветка его не несёт (#657)');
     assert.equal(git(work, 'diff', '--name-only', 'origin/dev', 'HEAD', '--', 'dist'), '', 'бандл ветки совпал с dev');
     assert.equal(readFileSync(join(work, 'src/z.ts'), 'utf8'), 'dev\n', 'правка dev на месте');
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, RM_TREE); }
 });
 
 test('конфликт в src/**: ребейз отменён, дерево и HEAD как были (#479 AC5)', () => {
@@ -118,7 +133,7 @@ test('конфликт в src/**: ребейз отменён, дерево и H
     assert.equal(git(work, 'rev-parse', 'HEAD'), before);
     assert.equal(git(work, 'status', '--porcelain'), '');
     assert.equal(readFileSync(join(work, 'src/y.ts'), 'utf8'), 'branch\n');
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, RM_TREE); }
 });
 
 test('--dry-run предсказывает конфликт по бандлу и не трогает дерево (#479)', () => {
@@ -131,7 +146,7 @@ test('--dry-run предсказывает конфликт по бандлу и
     assert.deepEqual(result.predicted.generated, ['dist/a.js']);
     assert.equal(git(work, 'rev-parse', 'HEAD'), before);
     assert.ok(lines.some((l) => l.includes('dry-run')));
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, RM_TREE); }
 });
 
 test('грязное дерево и ветка dev отвергаются до любого действия (#479)', () => {
@@ -142,5 +157,5 @@ test('грязное дерево и ветка dev отвергаются до 
     git(work, 'checkout', '-q', '--', 'src/x.ts');
     git(work, 'checkout', '-q', 'dev');
     assert.throws(() => rebaseOnDev({ cwd: work, log: () => {} }), /ветка dev/);
-  } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally { rmSync(root, RM_TREE); }
 });
