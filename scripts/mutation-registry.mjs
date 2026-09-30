@@ -11085,21 +11085,22 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'iso-placement-cache-survives-silhouette-change',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#473 W2" test/iso-scene-render.test.mjs',
-    because: 'placements are cached per wall-silhouette array identity; keying the cache by a '
-      + 'constant serves «near the wall» for a plan whose wall is gone (#473)',
+      + '&& node --test --test-name-pattern="#473 W2|#724 AC2" test/iso-scene-render.test.mjs',
+    because: 'placements are cached per structural wall geometry (#724; the wall-silhouette '
+      + 'array the id names was built only to be this key); keying the cache by a constant '
+      + 'serves a placement, and with it the owner room, of a plan whose walls are gone (#473)',
     patches: [{
       file: 'src/iso-scene-render.ts',
-      find: '  let placements = isoOverlayPlacementCache.get(input.wallSilhouettes);',
+      find: '  let placements = isoOverlayPlacementCache.get(input.structure);',
       replace: '  let placements = isoOverlayPlacementCache.get(ISO_PLACEMENT_CACHE_ANY);',
     }, {
       file: 'src/iso-scene-render.ts',
-      find: '    isoOverlayPlacementCache.set(input.wallSilhouettes, placements);',
+      find: '    isoOverlayPlacementCache.set(input.structure, placements);',
       replace: '    isoOverlayPlacementCache.set(ISO_PLACEMENT_CACHE_ANY, placements);',
     }, {
       file: 'src/iso-scene-render.ts',
       find: 'export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;',
-      replace: 'export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;\nconst ISO_PLACEMENT_CACHE_ANY: readonly IsoWallSilhouette[] = [];',
+      replace: 'export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;\nconst ISO_PLACEMENT_CACHE_ANY = {} as IsoWallGeometry;',
     }],
   },
   // #474: designer furniture artwork is a lazy chunk. Each protective contract
@@ -11395,12 +11396,13 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'stage3-w5-runtime-nudge-writes-storage',
     guard: 'node demo/smoke_isometric_live_touch.mjs',
-    because: 'W5: runtime nudge is presentation-only and must never write config, layout or '
+    because: 'W5: the 2.5D overlay scene (the wall-top rise of tiles and lock badges; nothing '
+      + 'is nudged since #713) is presentation-only and must never write config, layout or '
       + 'browser storage (#160)',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: '    return runtime.buildIsoOverlayRenderScene({',
-      replace: "    localStorage.setItem('houseplan_stage3_nudge_mutant', space.id);\n"
+      replace: "    localStorage.setItem('houseplan_stage3_overlay_mutant', space.id);\n"
         + '    return runtime.buildIsoOverlayRenderScene({',
     }],
   },
@@ -11415,8 +11417,8 @@ const MUTANT_DEFINITIONS = [
       replace: '    if (!runtime || !layers || (!structural && disp.showBorders)) return null;',
     }, {
       file: 'src/houseplan-card.ts',
-      find: '      wallSilhouettes: structural.wallSilhouettes,',
-      replace: '      wallSilhouettes: structural?.wallSilhouettes ?? [],',
+      find: '      structure: structural.geometry,',
+      replace: "      structure: structural?.geometry ?? { topPath: '', topFaces: [], sides: [], contactPath: '', edgeCount: 0 },",
     }],
   },
   {

@@ -13,7 +13,7 @@ import { clampScale, islandsOf, roomPoly, type SpaceDisplay } from './logic';
 import {
   ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT,
   ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT,
-  projectPlanPoint, projectedFrame, type PlanPoint, type ScenePoint,
+  projectedFrame, type PlanPoint, type ScenePoint,
 } from './iso-projection';
 import {
   buildIsoFloorGeometry, buildIsoWallGeometry, isoGeometryFingerprint,
@@ -28,7 +28,6 @@ import {
 import {
   resolveIsoOverlayOwner, resolveIsoOverlayPlacement,
   type IsoOverlayPlacement, type IsoOverlayRoom, type IsoRaisedOverlayKind,
-  type IsoWallSilhouette,
 } from './iso-overlays';
 import {
   floorFootprintGeometry, openingInnerFaceOffsetFromIndex,
@@ -376,7 +375,6 @@ export function isoRaisedOverlayHalfSize(input: IsoRaisedFootprintInput): PlanPo
 export type IsoSceneCacheEntry = {
   geometry: IsoWallGeometry;
   floor: IsoFloorGeometry;
-  wallSilhouettes: readonly IsoWallSilhouette[];
   openings: readonly IsoOpeningBasis[];
   openingSurfaces: readonly IsoOpeningRenderSurface[];
 };
@@ -568,27 +566,6 @@ export function createIsoStructuralSource(
   };
 }
 
-const unknownArray = (value: unknown): readonly unknown[] => Array.isArray(value) ? value : [];
-
-/**
- * Project a cached physical wall union once. Since #714 no overlay is tested
- * against it; the frozen array is the structural identity the overlay caches key on.
- */
-export function isoWallSilhouettesOf(geometry: unknown, height: number): IsoWallSilhouette[] {
-  const projectRing = (raw: unknown): ScenePoint[] => unknownArray(raw).flatMap((point) => {
-    if (!Array.isArray(point) || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return [];
-    return [projectPlanPoint([Number(point[0]), Number(point[1])], height)];
-  });
-  return unknownArray(geometry).flatMap((rawPolygon) => {
-    const polygon = unknownArray(rawPolygon);
-    if (!polygon.length) return [];
-    const outer = projectRing(polygon[0]);
-    if (outer.length < 3) return [];
-    const holes = polygon.slice(1).map(projectRing).filter((ring) => ring.length >= 3);
-    return [{ outer, holes } satisfies IsoWallSilhouette];
-  });
-}
-
 export interface ResolveIsoSceneInput {
   source: IsoStructuralSource;
   cache: Map<string, IsoSceneCacheEntry>;
@@ -604,15 +581,9 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
   let value = cached.hit ? cached.value : undefined;
   if (!value) {
     const structural = input.source.build();
-    const geometry = buildIsoWallGeometry(structural.walls, ISO_CAMERA, wallHeight);
-    const wallTops = isoWallSilhouettesOf(structural.walls, wallHeight);
     value = {
-      geometry,
+      geometry: buildIsoWallGeometry(structural.walls, ISO_CAMERA, wallHeight),
       floor: buildIsoFloorGeometry(structural.floor, floorEdgeHeight),
-      wallSilhouettes: Object.freeze([
-        ...wallTops,
-        ...geometry.sides.map((face) => ({ outer: face.points })),
-      ]),
       openings: structural.openings,
       openingSurfaces: structural.openingSurfaces,
     };
@@ -706,13 +677,14 @@ export interface IsoOverlaySceneInput {
   devices: readonly DevItem[];
   openings: readonly RenderOpening[];
   display: SpaceDisplay;
-  /** Identity of the structural scene; the placement caches are keyed by it. */
-  wallSilhouettes: readonly IsoWallSilhouette[];
   /**
-   * `false` for fit-envelope probes, which keep their own cache slot. Since
-   * #713 there is no collision search, so both slots hold equal placements.
+   * The wall geometry of the structural scene the overlays stand in (#724). The
+   * overlay caches are keyed by its identity: the structural LRU hands out the
+   * same object while only zoom, stage size or HA state change, and a new one
+   * after any wall, room or opening edit — so an edit never serves a placement,
+   * and with it an owner room, of a plan that is gone.
    */
-  resolveCollisions?: boolean;
+  structure: IsoWallGeometry;
   iconPct: number;
   deviceBasePct: number;
   showLqi: boolean;
@@ -733,14 +705,13 @@ type IsoOverlayPlacementCacheEntry = { signature: string; placement: IsoOverlayP
 type IsoOverlayOwnerCacheEntry = { signature: string; owner: IsoOverlayPlacement['owner'] };
 export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;
 const isoOverlayPlacementCache = new WeakMap<
-  readonly IsoWallSilhouette[], Map<string, IsoOverlayPlacementCacheEntry>
+  IsoWallGeometry, Map<string, IsoOverlayPlacementCacheEntry>
 >();
 const isoOverlayOwnerCache = new WeakMap<
   readonly IsoOverlayRoomRow[], Map<string, IsoOverlayOwnerCacheEntry>
 >();
-const isoOverlayRenderSceneCache = new WeakMap<
-  readonly IsoWallSilhouette[], Map<'fit' | 'live', IsoOverlayRenderScene>
->();
+/** One snapshot per structure: fit and the live frame share it (#724). */
+const isoOverlayRenderSceneCache = new WeakMap<IsoWallGeometry, IsoOverlayRenderScene>();
 
 function samePlacementMap<K>(
   previous: ReadonlyMap<K, IsoOverlayPlacement>, next: ReadonlyMap<K, IsoOverlayPlacement>,
@@ -795,10 +766,10 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
   const roomPlacements = new Map<RoomCfg, IsoOverlayPlacement>();
   const locks = new Map<string, IsoOverlayPlacement>();
   const entries: IsoOverlayRenderEntry[] = [];
-  let placements = isoOverlayPlacementCache.get(input.wallSilhouettes);
+  let placements = isoOverlayPlacementCache.get(input.structure);
   if (!placements) {
     placements = new Map();
-    isoOverlayPlacementCache.set(input.wallSilhouettes, placements);
+    isoOverlayPlacementCache.set(input.structure, placements);
   }
   let owners = isoOverlayOwnerCache.get(roomRows);
   if (!owners) {
@@ -815,8 +786,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     preferredRoomId?: string | null,
   ): IsoOverlayPlacement => {
     const visualOffset = kind === 'room-label' ? 0 : wallHeight;
-    const collisionMode = input.resolveCollisions === false ? 'fit' : 'live';
-    const cacheKey = `${collisionMode}\u0000${kind}\u0000${id}`;
+    const cacheKey = `${kind}\u0000${id}`;
     // Nothing here depends on zoom or stage size, so a pinch, wheel or resize
     // reuses the immutable placement and Lit keeps the raised SVG subtree.
     const signature = [floorAnchor[0], floorAnchor[1],
@@ -825,16 +795,15 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     ].join('|');
     const cached = lruRead(placements!, cacheKey);
     if (cached.hit && cached.value.signature === signature) return cached.value.placement;
-    const ownerKey = `${kind}\u0000${id}`;
     const ownerSignature = [floorAnchor[0], floorAnchor[1], preferredRoomId || ''].join('|');
-    const cachedOwner = lruRead(owners!, ownerKey);
+    const cachedOwner = lruRead(owners!, cacheKey);
     const owner = cachedOwner.hit && cachedOwner.value.signature === ownerSignature
       ? cachedOwner.value.owner
       : resolveIsoOverlayOwner({
         kind, floorAnchor, rooms, roomsValidated: true, preferredRoomId,
       });
     if (!cachedOwner.hit || cachedOwner.value.signature !== ownerSignature) {
-      lruWrite(owners!, ownerKey, { signature: ownerSignature, owner },
+      lruWrite(owners!, cacheKey, { signature: ownerSignature, owner },
         ISO_OVERLAY_PLACEMENT_CACHE_LIMIT);
     }
     const placement = resolveIsoOverlayPlacement({
@@ -927,17 +896,11 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       });
     }
   }
-  const mode = input.resolveCollisions === false ? 'fit' : 'live';
-  let renderScenes = isoOverlayRenderSceneCache.get(input.wallSilhouettes);
-  if (!renderScenes) {
-    renderScenes = new Map();
-    isoOverlayRenderSceneCache.set(input.wallSilhouettes, renderScenes);
-  }
-  const previous = renderScenes.get(mode);
+  const previous = isoOverlayRenderSceneCache.get(input.structure);
   const layoutSignature = entries.map((entry) => {
     const placement = entry.placement;
     return [entry.kind, entry.id, placement.floorAnchor[0], placement.floorAnchor[1],
-      placement.raisedScene[0], placement.raisedScene[1], placement.owner?.id || '',
+      placement.visualScene[0], placement.visualScene[1], placement.owner?.id || '',
       layoutHalfSizeOf(entry)[0], layoutHalfSizeOf(entry)[1]].join('|');
   }).sort().join('\u0001');
   if (previous?.layoutSignature === layoutSignature
@@ -960,7 +923,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
           ? { ...entry, screenHalfSize: next } : entry;
       })),
     };
-    renderScenes.set(mode, refreshed);
+    isoOverlayRenderSceneCache.set(input.structure, refreshed);
     return refreshed;
   }
 
@@ -983,7 +946,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       && samePlacementMap(previous.devices, scene.devices)
       && samePlacementMap(previous.rooms, scene.rooms)
       && samePlacementMap(previous.locks, scene.locks)) return previous;
-  renderScenes.set(mode, scene);
+  isoOverlayRenderSceneCache.set(input.structure, scene);
   return scene;
 }
 

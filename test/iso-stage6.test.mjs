@@ -197,7 +197,8 @@ test('#649 AC3 layout and collisions see the 2.5D tile size (× ISO_ICON_SCALE)'
   };
   const scene = buildIsoOverlayRenderScene({
     space, devices: [{ id: 'd1' }], openings: [], view: { x: 0, y: 0, w: 1000, h: 1000 },
-    display: { showNames: false, cardFontScale: 1 }, layers: { shadows: true }, wallSilhouettes: [],
+    display: { showNames: false, cardFontScale: 1 }, layers: { shadows: true },
+    structure: { topPath: '', topFaces: [], sides: [], contactPath: '', edgeCount: 0 },
     iconPct: 3, deviceBasePct: 3, showLqi: false, cellCm: 5, kioskIconScale: 1, kioskFontScale: 1,
     stageSize: { width: 1000, height: 1000 }, positionOf: () => ({ x: 500, y: 500 }),
     presentationOf: () => presentation, labelPositionOf: () => ({ x: 0, y: 0 }), labelScaleOf: () => 1,

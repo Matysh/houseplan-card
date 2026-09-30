@@ -88,8 +88,8 @@ test('a degenerate or missing owner room still raises the overlay straight up', 
     const result = placement(overrides);
     assert.equal(result.owner, null, name);
     assert.equal(result.plane, 'raised', name);
-    assert.deepEqual(result.visualScene, result.raisedScene, `${name}: no move without an owner`);
-    assert.equal(result.tether.visible, false, name);
+    assert.deepEqual(result.visualScene,
+      projectPlanPoint(result.floorAnchor, ISO_RAISED_OVERLAY_HEIGHT), `${name}: no move without an owner`);
   }
 });
 
@@ -106,31 +106,29 @@ test('footprint corners use the same affine camera on the raised plane', () => {
     'zero yaw keeps the screen-facing footprint aligned with the plan axes');
 });
 
+// #724: what a placement carries is what someone reads — no invisible tether or
+// grounding, no second raised point equal to the visual one, no owner area.
+const PLACEMENT_FIELDS = ['floorAnchor', 'floorScene', 'footprint', 'owner', 'plane', 'visualScene'];
+
 test('free low overlay separates the immutable floor anchor from its invisible footprint', () => {
   const normal = placement();
+  assert.deepEqual(Object.keys(normal).sort(), PLACEMENT_FIELDS);
   assert.equal(normal.plane, 'raised');
+  assert.deepEqual(normal.owner, { id: 'room' });
   assert.deepEqual(normal.floorAnchor, [50, 50]);
   assert.deepEqual(normal.floorScene, projectPlanPoint([50, 50], 0));
-  assert.deepEqual(normal.raisedScene, projectPlanPoint([50, 50], ISO_RAISED_OVERLAY_HEIGHT));
-  assert.deepEqual(normal.visualScene, normal.raisedScene);
+  assert.deepEqual(normal.visualScene, projectPlanPoint([50, 50], ISO_RAISED_OVERLAY_HEIGHT));
   assert.deepEqual(normal.footprint,
     buildIsoFootprintPolygon([50, 50], [4, 4], ISO_RAISED_OVERLAY_HEIGHT));
-  assert.equal(normal.grounding.visible, false);
-  assert.equal(normal.tether.visible, false);
-
-  for (const state of ['hovered', 'focused', 'selected'])
-    assert.equal(placement({ [state]: true }).tether.visible, false, state);
-  assert.equal(placement({ filtersSupported: false }).grounding.visible, false,
-    'unsupported filters remove the soft grounding shadow only');
   assert.deepEqual(placement({ visualOffset: 0 }).visualScene, normal.floorScene,
     'a zero offset keeps the root on its floor point (#713 room names)');
 });
 
 test('show_borders:false is exact no-volume: floor anchor, no footprint/cues', () => {
-  const result = placement({ showBorders: false, hovered: true });
+  const result = placement({ showBorders: false });
+  assert.deepEqual(Object.keys(result).sort(), PLACEMENT_FIELDS);
   assert.equal(result.plane, 'floor');
+  assert.equal(result.owner, null);
   assert.deepEqual(result.visualScene, result.floorScene);
   assert.deepEqual(result.footprint, []);
-  assert.equal(result.grounding.visible, false);
-  assert.equal(result.tether.visible, false);
 });

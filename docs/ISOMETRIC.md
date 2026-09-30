@@ -244,7 +244,10 @@ may meet wall bodies and each other, and the overlapping pairs are the Flat ones
 exactly where Flat puts them, without a position correction. A device never
 moves because its Home Assistant state changed (#711 holds trivially: nothing
 is laid out). Neither zoom nor a stage resize is a layout event: a placement
-depends only on the anchor, its owner room, the footprint and the rise.
+depends only on the anchor, its owner room, the footprint and the rise. The
+placement and render-scene caches are keyed by the wall geometry of the
+structural scene (#724): a wall, room or opening edit starts them afresh, and
+the fit envelope and the live frame read one snapshot.
 
 History: #651 used to search a place for every marker (rigid same-room
 clusters, a group collision resolver and a nudge of up to 48 CSS px towards the

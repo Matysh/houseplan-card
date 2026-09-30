@@ -36,6 +36,13 @@ import {
   projectPlanPoint,
 } from '../test-build/iso-projection.js';
 
+/**
+ * #724: the overlay caches are keyed by the structural wall geometry. Every
+ * fixture gets its own object, as a structural scene of its own would.
+ */
+const structureOf = (walls = []) => buildIsoWallGeometry(walls);
+const wallRect = (x0, y0, x1, y1) => [[[[x0, y0], [x1, y0], [x1, y1], [x0, y1]]]];
+
 const room = (id, x0, y0, x1, y1) => ({
   id,
   poly: [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
@@ -121,7 +128,7 @@ test('room footprint treats wide ASCII glyphs conservatively', () => {
 test('overlay bounds use final screen footprint and canonical owner filtering', () => {
   const placement = (owner, center) => ({
     owner: { id: owner }, floorScene: [center[0] - 5, center[1]],
-    raisedScene: center, visualScene: center,
+    visualScene: center,
     footprint: [[center[0] - 2, center[1] - 1], [center[0] + 2, center[1] - 1],
       [center[0] + 2, center[1] + 1], [center[0] - 2, center[1] + 1]],
   });
@@ -139,7 +146,7 @@ test('#713 K8: overlay fit is the structure plus visible tiles, no #651 nudge re
   const entry = {
     id: 'edge', kind: 'device', groundRadius: 1, screenHalfSize: [10, 8],
     placement: {
-      owner: { id: 'room' }, floorScene: [95, 50], raisedScene: [95, 50],
+      owner: { id: 'room' }, floorScene: [95, 50],
       visualScene: [95, 50],
       footprint: [[90, 46], [100, 46], [100, 54], [90, 54]],
     },
@@ -324,7 +331,7 @@ test('opening-lock scene keeps physical host ownership when spatial fallback poi
     view: { x: 0, y: 0, w: 100, h: 100 },
     display: { showNames: false, cardFontScale: 1 },
     layers: { shadows: true },
-    wallSilhouettes: [],
+    structure: structureOf(),
     iconPct: 100,
     deviceBasePct: 100,
     showLqi: false,
@@ -365,7 +372,7 @@ test('opening lock without a canonical host owner never guesses from point conta
     view: { x: 0, y: 0, w: 100, h: 100 },
     display: { showNames: false, cardFontScale: 1 },
     layers: { shadows: true },
-    wallSilhouettes: [{ outer: [[0, 45], [100, 45], [100, 55], [0, 55]] }],
+    structure: structureOf(wallRect(0, 45, 100, 55)),
     iconPct: 100,
     deviceBasePct: 100,
     showLqi: false,
@@ -386,18 +393,15 @@ test('opening lock without a canonical host owner never guesses from point conta
   // the badge simply stands on the wall-top plane above its anchor.
   assert.equal(placement?.plane, 'raised');
   assert.deepEqual(placement?.visualScene, projectPlanPoint(placement.floorAnchor, ISO_WALL_HEIGHT));
-  assert.equal(placement?.tether.visible, false);
 });
 
-test('Stage 4 reuses pure overlay placements and fit probes agree with the live scene', () => {
+test('Stage 4 reuses pure overlay placements, and fit and the live frame share one snapshot', () => {
   const owner = room('owner', 0, 0, 100, 100);
   const space = {
     id: 'floor', title: 'Floor', cellCm: 5, vb: [0, 0, 100, 100], bg: null,
     rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
   };
-  const wallSilhouettes = [{
-    outer: buildIsoFootprintPolygon([0, 50], [4, 60], ISO_WALL_HEIGHT),
-  }];
+  const structure = structureOf(wallRect(-4, -10, 4, 110));
   const input = {
     space,
     devices: [{ id: 'device', space: 'floor', marker: { room_id: 'owner' } }],
@@ -406,7 +410,7 @@ test('Stage 4 reuses pure overlay placements and fit probes agree with the live 
     referenceView: { x: 0, y: 0, w: 100, h: 100 },
     display: { showNames: false, cardFontScale: 1 },
     layers: { structural: true, shadows: true },
-    wallSilhouettes,
+    structure,
     iconPct: 3.4,
     deviceBasePct: 3.4,
     showLqi: false,
@@ -442,9 +446,10 @@ test('Stage 4 reuses pure overlay placements and fit probes agree with the live 
   const resized = buildIsoOverlayRenderScene({ ...input, stageSize: { width: 40, height: 40 } });
   assert.strictEqual(resized, live, '#714: a stage resize is not a layout event either');
 
-  const fit = buildIsoOverlayRenderScene({ ...input, resolveCollisions: false });
-  assert.deepEqual(fit.devices.get('device')?.visualScene, live.devices.get('device')?.visualScene,
-    '#713: fit and live placements agree — there is no search to differ by');
+  // #724: the fit envelope and the live frame ask with the same inputs and read
+  // one snapshot — there is no search for them to differ by (#713).
+  const fit = buildIsoOverlayRenderScene({ ...input });
+  assert.strictEqual(fit, live, 'fit and live share one render-scene snapshot');
 
   const zoomed = buildIsoOverlayRenderScene({ ...input, view: { x: -10, y: -10, w: 120, h: 120 } });
   assert.strictEqual(zoomed, live,
@@ -462,7 +467,6 @@ test('render scene keeps coincident devices coincident, leaves labels alone and 
     id: 'floor', title: 'Floor', cellCm: 5, vb: [0, 0, 400, 400], bg: null,
     rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
   };
-  const walls = [];
   const devices = ['b', 'a', 'c'].map((id) => ({
     id, space: 'floor', marker: { room_id: 'owner', x: 200, y: 200 },
   }));
@@ -471,7 +475,7 @@ test('render scene keeps coincident devices coincident, leaves labels alone and 
     view: { x: 0, y: 0, w: 400, h: 400 },
     display: { showNames: true, cardFontScale: 1 },
     layers: { structural: true, shadows: true },
-    wallSilhouettes: walls,
+    structure: structureOf(),
     iconPct: 3.4, deviceBasePct: 3.4, showLqi: false, cellCm: 5,
     kioskIconScale: 1, kioskFontScale: 1,
     stageSize: { width: 200, height: 200 },
@@ -505,9 +509,9 @@ test('render scene keeps coincident devices coincident, leaves labels alone and 
   const permuted = buildIsoOverlayRenderScene({ ...input, devices: [...devices].reverse() });
   assert.strictEqual(permuted, scene,
     'HA registry permutations reuse the same immutable group layout snapshot');
-  const fit = buildIsoOverlayRenderScene({ ...input, resolveCollisions: false });
-  assert.deepEqual(fit.devices.get('a').visualScene, scene.devices.get('a').visualScene,
-    'fit probing and the live scene place the cluster identically');
+  const fit = buildIsoOverlayRenderScene({ ...input });
+  assert.strictEqual(fit.devices.get('a'), scene.devices.get('a'),
+    'fit probing and the live scene read the same placement');
 });
 
 test('#711 состояние устройства не двигает значки: раскладка не пересчитывается, границы видят бейдж', () => {
@@ -516,7 +520,7 @@ test('#711 состояние устройства не двигает знач�
     id: 'floor-710', title: 'Floor', cellCm: 5, vb: [0, 0, 400, 400], bg: null,
     rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
   };
-  const wallSilhouettes = [{ outer: buildIsoFootprintPolygon([150, 200], [154, 260], ISO_WALL_HEIGHT) }];
+  const structure = structureOf(wallRect(146, 140, 154, 260));
   const devices = ['lamp', 'plug', 'sensor'].map((id, index) => ({
     id, space: 'floor-710', marker: { room_id: 'owner', x: 160 + index * 4, y: 200 },
   }));
@@ -533,7 +537,7 @@ test('#711 состояние устройства не двигает знач�
     view: { x: 0, y: 0, w: 400, h: 400 },
     display: { showNames: false, cardFontScale: 1 },
     layers: { structural: true, shadows: true },
-    wallSilhouettes,
+    structure,
     iconPct: 3.4, deviceBasePct: 3.4, showLqi: false, cellCm: 5,
     kioskIconScale: 1, kioskFontScale: 1,
     stageSize: { width: 200, height: 200 },
@@ -560,26 +564,6 @@ test('#711 состояние устройства не двигает знач�
   for (const id of ['lamp', 'plug', 'sensor']) {
     assert.deepEqual(offAgain.devices.get(id).visualScene, off.devices.get(id).visualScene, `${id}: выключение возвращает то же место`);
   }
-});
-
-test('structural wall silhouettes reuse every visible side quad', () => {
-  const walls = [[[[45, 20], [55, 20], [55, 80], [45, 80]]]];
-  const scene = resolveIsoScene({
-    source: {
-      key: 'visible-side-silhouettes',
-      build: () => ({ walls, floor: walls, openings: [], openingSurfaces: [] }),
-    },
-    cache: new Map(),
-    cellCm: 5,
-    liveFrame: { x: 0, y: 0, w: 100, h: 100 },
-  });
-  assert.ok(scene.geometry.sides.length > 0, 'fixture exposes visible vertical wall faces');
-  assert.equal(scene.wallSilhouettes.length, 1 + scene.geometry.sides.length,
-    'the silhouette set contains the top footprint and every visible side');
-  scene.geometry.sides.forEach((face, index) => {
-    assert.strictEqual(scene.wallSilhouettes[index + 1].outer, face.points,
-      `visible side ${index} reuses its exact render quad`);
-  });
 });
 
 test('orphan hosted openings never become phantom Stage 4 volumes', () => {
@@ -719,7 +703,7 @@ test('removed contact shadows are never read while ambient shadow capability rem
       display: { showBorders: true, hideOpenings: false },
       scene: {
         key: 'solid-retry', geometry,
-        floor: { footprintPath: '', sides: [] }, wallSilhouettes: [],
+        floor: { footprintPath: '', sides: [] },
         openings: [], openingSurfaces: [], frame: { x: 0, y: 0, w: 100, h: 100 },
       },
       openings: [], amountOf: () => 0, overlays: () => null, cellCm: 5,
@@ -846,7 +830,7 @@ const perfFixture = () => {
     id: 'floor', title: 'Floor', cellCm: 5, vb: [0, 0, 100, 100], bg: null,
     rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
   };
-  const wallSilhouettes = [{ outer: buildIsoFootprintPolygon([0, 50], [4, 60], ISO_WALL_HEIGHT) }];
+  const structure = structureOf(wallRect(-4, -10, 4, 110));
   const input = {
     space,
     devices: [{ id: 'device', space: 'floor', marker: { room_id: 'owner' } }],
@@ -855,7 +839,7 @@ const perfFixture = () => {
     referenceView: { x: 0, y: 0, w: 100, h: 100 },
     display: { showNames: false, cardFontScale: 1 },
     layers: { structural: true, shadows: true },
-    wallSilhouettes,
+    structure,
     iconPct: 3.4, deviceBasePct: 3.4, showLqi: false, cellCm: 5,
     kioskIconScale: 1, kioskFontScale: 1,
     stageSize: { width: 100, height: 100 },
@@ -870,7 +854,7 @@ const perfFixture = () => {
     openingEntityAvailable: () => false,
     openingWallIndex: () => ({ adjacencyEps: 0.1, edges: [] }),
   };
-  return { input, wallSilhouettes };
+  return { input, structure };
 };
 
 test('#570 supersedes #473 W1: selection reuses the cue-free low placement', () => {
@@ -885,13 +869,108 @@ test('#570 supersedes #473 W1: selection reuses the cue-free low placement', () 
   assert.strictEqual(again, selected, 'clearing selection keeps the same immutable placement');
 });
 
-test('#473 W2 after #713: walls no longer move a tile, the cache still follows the silhouette array', () => {
+test('#473 W2 after #724: walls never move a tile, the cache follows the structural wall geometry', () => {
   const { input } = perfFixture();
   const withWall = buildIsoOverlayRenderScene(input).devices.get('device');
-  const noWalls = buildIsoOverlayRenderScene({ ...input, wallSilhouettes: [] }).devices.get('device');
-  assert.notStrictEqual(noWalls, withWall, 'a new geometry array is a new cache slot');
+  const noWalls = buildIsoOverlayRenderScene({ ...input, structure: structureOf() }).devices.get('device');
+  assert.notStrictEqual(noWalls, withWall, 'a new wall geometry is a new cache slot');
   assert.deepEqual(noWalls.visualScene, withWall.visualScene,
     'the tile position does not depend on nearby walls');
+});
+
+// #724 AC2: the overlay caches follow the wall geometry of the structural scene
+// on the production path — createIsoStructuralSource → resolveIsoScene (the
+// LRU) → buildIsoOverlayRenderScene({ structure: scene.geometry }).
+const unhostedWalls = (poly, cm) => poly.map((a, index) => ({
+  key: wallKey(a, poly[(index + 1) % poly.length], 1), cm,
+}));
+const overlayInput = (space, structure, overrides = {}) => ({
+  space, structure, openings: [],
+  devices: [{ id: 'device', space: space.id }],
+  view: { x: 0, y: 0, w: 100, h: 100 },
+  display: { showNames: false, cardFontScale: 1 },
+  iconPct: 3.4, deviceBasePct: 3.4, showLqi: false, cellCm: 5,
+  kioskIconScale: 1, kioskFontScale: 1,
+  stageSize: { width: 100, height: 100 },
+  positionOf: () => ({ x: 50, y: 50 }),
+  presentationOf: () => ({
+    scale: 1, valueText: null, valueFullText: '', valueBadge: null,
+    tempText: null, humText: null, lqiText: null,
+    pulse: { animated: false, diameterScale: 1 },
+  }),
+  labelPositionOf: () => ({ x: 0, y: 0 }),
+  labelScaleOf: () => 1,
+  openingEntityAvailable: () => false,
+  openingWallIndex: () => ({ adjacencyEps: 0.1, edges: [] }),
+  ...overrides,
+});
+
+test('#724 AC2: the overlay scene survives zoom, resize and HA state, and is rebuilt when a wall changes', () => {
+  const square = cacheRoom({ wall_ids: [] });
+  const cache = new Map();
+  const structural = (cm) => {
+    const input = structuralInput({ room: square, walls: unhostedWalls(square.poly, cm), coordinateScale: 1 });
+    return { space: input.space, scene: resolveIsoScene({
+      source: createIsoStructuralSource(input), cache, cellCm: 5, liveFrame: { x: 0, y: 0, w: 100, h: 100 },
+    }) };
+  };
+  const thin = structural(20);
+  assert.ok(thin.scene.geometry.sides.length > 0, 'fixture has real wall bodies');
+  const live = buildIsoOverlayRenderScene(overlayInput(thin.space, thin.scene.geometry));
+
+  // Same walls: the structural LRU hands out the same geometry, and neither
+  // zoom, a stage resize nor an HA state change is a layout event.
+  const again = structural(20);
+  assert.strictEqual(again.scene.geometry, thin.scene.geometry);
+  const zoomed = buildIsoOverlayRenderScene(overlayInput(again.space, again.scene.geometry, {
+    view: { x: 20, y: 20, w: 40, h: 40 }, stageSize: { width: 320, height: 180 },
+  }));
+  assert.strictEqual(zoomed, live, 'zoom and resize reuse the render scene');
+  const lit = buildIsoOverlayRenderScene(overlayInput(again.space, again.scene.geometry, {
+    presentationOf: () => ({
+      scale: 1, valueText: null, valueFullText: '', tempText: null, humText: null, lqiText: null,
+      valueBadge: { configured: true, enabled: true, text: '100 %', fullText: '100 %', position: 'right', tone: 'default' },
+      pulse: { animated: false, diameterScale: 1 },
+    }),
+  }));
+  assert.strictEqual(lit.devices.get('device'), live.devices.get('device'), 'HA state keeps the placement');
+
+  // A thicker wall with the same room: a new structure, so a new scene. A cache
+  // keyed without the walls would serve the placement of the old plan.
+  const thick = structural(30);
+  assert.notEqual(thick.scene.key, thin.scene.key);
+  assert.notStrictEqual(thick.scene.geometry, thin.scene.geometry);
+  const rebuilt = buildIsoOverlayRenderScene(overlayInput(thick.space, thick.scene.geometry));
+  assert.notStrictEqual(rebuilt, live, 'a wall edit rebuilds the overlay scene');
+  assert.notStrictEqual(rebuilt.devices.get('device'), live.devices.get('device'),
+    'and its placements');
+  assert.deepEqual(rebuilt.devices.get('device').visualScene, live.devices.get('device').visualScene,
+    'the tile itself stays where it was: walls never move it');
+});
+
+test('#724 AC2: a room edit that changes the owner is a new structure — no owner of a plan that is gone', () => {
+  const cache = new Map();
+  const structural = (split) => {
+    const base = structuralInput();
+    const rooms = [
+      cacheRoom({ id: 'west', poly: [[0, 0], [split, 0], [split, 100], [0, 100]], wall_ids: [] }),
+      cacheRoom({ id: 'east', poly: [[split, 0], [200, 0], [200, 100], [split, 100]], wall_ids: [] }),
+    ];
+    const space = { ...base.space, vb: [0, 0, 200, 100], rooms };
+    return { space, scene: resolveIsoScene({
+      source: createIsoStructuralSource({ ...base, space }), cache, cellCm: 5,
+      liveFrame: { x: 0, y: 0, w: 200, h: 100 },
+    }) };
+  };
+  const at = { positionOf: () => ({ x: 90, y: 50 }) };
+  const before = structural(100);
+  const west = buildIsoOverlayRenderScene(overlayInput(before.space, before.scene.geometry, at));
+  assert.equal(west.devices.get('device').owner?.id, 'west');
+  const after = structural(80);
+  assert.notEqual(after.scene.key, before.scene.key, 'room geometry is structural');
+  const east = buildIsoOverlayRenderScene(overlayInput(after.space, after.scene.geometry, at));
+  assert.equal(east.devices.get('device').owner?.id, 'east',
+    'the tile at the same point now belongs to the room that grew over it');
 });
 
 test('#713 AC3: live zoom never recomputes placement and every tile gets one straight-up shift', () => {

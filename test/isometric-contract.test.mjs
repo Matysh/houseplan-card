@@ -167,7 +167,7 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   assert.match(sceneRender, /const floorEdgeHeight = gridVisualUnits\(ISO_FLOOR_EDGE_HEIGHT, input\.cellCm\)/);
   assert.match(sceneRender, /const raisedHeight = gridVisualUnits\(ISO_RAISED_OVERLAY_HEIGHT, input\.cellCm\)/);
   assert.match(sceneRender, /camera: ISO_CAMERA,[\s\S]*?wallHeight,[\s\S]*?raisedHeight,[\s\S]*?floorEdgeHeight,[\s\S]*?algorithm: 6/);
-  const source = section(sceneRender, 'export function createIsoStructuralSource', 'const unknownArray');
+  const source = section(sceneRender, 'export function createIsoStructuralSource', 'export interface ResolveIsoSceneInput');
   const roomProjection = section(sceneRender,
     'export function isoStructuralRoomGeometry', 'export type IsoStructuralOpeningHost');
   for (const field of ['id', 'x', 'y', 'w', 'h', 'poly', 'wall_ids'])
@@ -204,8 +204,13 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   assert.match(sceneRender, /projectIsoOpening\(basis, amountOf\(opening\)\)/);
   assert.match(sceneRender, /lruWrite\(input\.cache, input\.source\.key, value, 8\)/);
   assert.match(card, /data-hp-iso-structural-builds=\$\{iso \? this\._isoStructuralBuildCount : nothing\}/);
-  assert.match(sceneRender, /const wallTops = isoWallSilhouettesOf\(structural\.walls, wallHeight\)/);
-  assert.match(sceneRender, /wallSilhouettes:\s*Object\.freeze\(\[[\s\S]*?\.\.\.wallTops,[\s\S]*?\.\.\.geometry\.sides\.map\(\(face\) => \(\{ outer: face\.points \}\)\),[\s\S]*?\]\)/);
+  // #724: the overlay caches are keyed by the structural wall geometry itself —
+  // no silhouette array is built only to be that key.
+  assert.match(sceneRender, /geometry: buildIsoWallGeometry\(structural\.walls, ISO_CAMERA, wallHeight\)/);
+  assert.match(sceneRender, /structure: IsoWallGeometry;/);
+  assert.match(sceneRender, /let placements = isoOverlayPlacementCache\.get\(input\.structure\)/);
+  assert.match(sceneRender, /const previous = isoOverlayRenderSceneCache\.get\(input\.structure\)/);
+  assert.doesNotMatch(sceneRender, /wallSilhouettes|isoWallSilhouettesOf|resolveCollisions/);
 });
 
 test('show_borders:false keeps the Flat floor plane and removes every volume cue', () => {

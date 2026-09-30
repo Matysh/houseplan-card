@@ -19,15 +19,8 @@ export interface IsoOverlayRoom {
   holes?: readonly (readonly PlanPoint[])[];
 }
 
-/** A projected, canonical physical-wall surface. No union is done per marker. */
-export interface IsoWallSilhouette {
-  outer: readonly ScenePoint[];
-  holes?: readonly (readonly ScenePoint[])[];
-}
-
 export interface IsoOverlayOwner {
   id: string;
-  area: number;
 }
 
 export interface IsoOverlayOwnerInput {
@@ -45,22 +38,10 @@ export interface IsoOverlayPlacementInput extends IsoOverlayOwnerInput {
   /** Half-size of the invisible floor-parallel footprint in plan units. */
   footprintHalfSize: PlanPoint;
   visualOffset?: number;
-  filtersSupported?: boolean;
-  hovered?: boolean;
-  focused?: boolean;
-  selected?: boolean;
   camera?: IsoCamera;
   /** Internal scene-builder fast path; arbitrary callers still resolve safely. */
   ownerAlreadyResolved?: boolean;
   resolvedOwner?: IsoOverlayOwner | null;
-}
-
-export interface IsoOverlayTetherGeometry {
-  from: ScenePoint;
-  to: ScenePoint;
-  visible: boolean;
-  length: number;
-  angleDeg: number;
 }
 
 export interface IsoOverlayPlacement {
@@ -69,12 +50,10 @@ export interface IsoOverlayPlacement {
   /** This is always the input logical point; the raised visual never mutates it. */
   floorAnchor: PlanPoint;
   floorScene: ScenePoint;
-  raisedScene: ScenePoint;
+  /** The screen-facing root: the floor anchor lifted by `visualOffset` (#713). */
   visualScene: ScenePoint;
   /** Invisible fit footprint; never render it as a surface. */
   footprint: readonly ScenePoint[];
-  grounding: { center: ScenePoint; visible: boolean };
-  tether: IsoOverlayTetherGeometry;
 }
 
 const EPS = 1e-9;
@@ -167,7 +146,7 @@ export function resolveIsoOverlayOwner(input: IsoOverlayOwnerInput): IsoOverlayO
     // a saved label may legitimately lie outside that room.
     room = preferred;
   }
-  return room ? { id: room.id, area: roomArea(room) } : null;
+  return room ? { id: room.id } : null;
 }
 
 export function isoOverlayPlane(kind: IsoOverlayKind, showBorders: boolean): IsoOverlayPlane {
@@ -196,13 +175,6 @@ export function buildIsoFootprintPolygon(
   });
 }
 
-function tetherGeometry(
-  from: ScenePoint, to: ScenePoint, visible: boolean,
-): IsoOverlayTetherGeometry {
-  const dx = to[0] - from[0], dy = to[1] - from[1];
-  return { from, to, visible, length: Math.hypot(dx, dy), angleDeg: Math.atan2(dy, dx) * 180 / Math.PI };
-}
-
 /**
  * Resolve one overlay without mutating its saved coordinate. Since #713 a
  * raised root is its floor anchor shifted straight up by `visualOffset`; #714
@@ -220,30 +192,20 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
   const floorScene = projectPlanPoint(floorAnchor, 0, camera);
   const plane = isoOverlayPlane(input.kind, input.showBorders);
   if (plane === 'floor') {
-    return {
-      plane, owner: null, floorAnchor, floorScene, raisedScene: floorScene,
-      visualScene: floorScene, footprint: [],
-      grounding: { center: floorScene, visible: false },
-      tether: tetherGeometry(floorScene, floorScene, false),
-    };
+    return { plane, owner: null, floorAnchor, floorScene, visualScene: floorScene, footprint: [] };
   }
 
   // The canonical floor anchor and footprint stay; the screen-facing content
   // stands `visualOffset` above the floor (#713: the wall top for tiles and
   // lock badges, 0 for room names).
-  const raisedScene = projectPlanPoint(floorAnchor, visualOffset, camera);
+  const visualScene = projectPlanPoint(floorAnchor, visualOffset, camera);
   const owner = input.ownerAlreadyResolved
     ? input.resolvedOwner ?? null
     : resolveIsoOverlayOwner(input);
   const footprint = buildIsoFootprintPolygon(floorAnchor, input.footprintHalfSize,
     visualOffset, camera);
   // Ownership remains encoded by the immutable anchor and invisible bounded
-  // footprint. Stage 4 deliberately removes the visible ground dot and long
-  // tether which made the architectural view look like a debug overlay.
-  const tetherVisible = false;
-  return {
-    plane, owner, floorAnchor, floorScene, raisedScene, visualScene: raisedScene, footprint,
-    grounding: { center: floorScene, visible: false },
-    tether: tetherGeometry(floorScene, raisedScene, tetherVisible),
-  };
+  // footprint. Stage 4 removed the visible ground dot and long tether which made
+  // the architectural view look like a debug overlay; #724 removed their data.
+  return { plane, owner, floorAnchor, floorScene, visualScene, footprint };
 }
