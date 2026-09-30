@@ -6201,6 +6201,19 @@ const MUTANT_DEFINITIONS = [
       replace: '  const names = [...(selection.direct || []), ...(selection.registered || [])]',
     }],
   },
+  // #711: значок не двигается от состояния устройства.
+  {
+    id: 'iso-device-layout-follows-state-again',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#711" test/iso-scene-render.test.mjs',
+    because: '#711 (owner, 2026-09-30): a device never moves because its HA state changed; a layout '
+      + 'footprint that includes state text re-lays out the whole cluster on every toggle',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: '      kind: \'device\', core, presentation: stateFreePresentation(presentation),',
+      replace: '      kind: \'device\', core, presentation,',
+    }],
+  },
   {
     id: 'wall-isolated-extra-discarded',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '

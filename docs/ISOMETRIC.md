@@ -237,6 +237,12 @@ the affine projection of the Flat layout rather than a per-marker fan toward a
 room safe point. Room labels never enter a cluster and stay below interactive
 roots.
 
+A device never moves because its Home Assistant state changed (owner's
+decision, #711). The layout sees the state-free tile of a device — its icon at
+its configured size, without value text, value badges or supplemental metrics,
+which change with state. Those still count in the fit bounds, and an HA-only
+change refreshes that visual extent without a new collision search.
+
 `src/iso-overlays.ts` is the pure placement boundary. A device accepts its
 explicit room only when that room strictly contains its floor anchor, otherwise
 the smallest strictly containing room (stable id tie-break); room labels use

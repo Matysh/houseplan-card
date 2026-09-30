@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- In 2.5D View, device icons no longer shift when a device changes state (for
+  example when a light turns on and shows its brightness); a Home Assistant
+  update in a dense plan also no longer re-lays out every icon
+  ([#711](https://github.com/Matysh/houseplan-card/issues/711)).
 - In View, the mouse cursor over a stair link is now a pointer instead of the
   move cursor; stairs without a valid target keep the plan's ordinary cursor
   ([#693](https://github.com/Matysh/houseplan-card/issues/693)).

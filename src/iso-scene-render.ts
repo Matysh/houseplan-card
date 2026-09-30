@@ -136,7 +136,24 @@ export type IsoOverlayRenderEntry = {
   groundRadius: number;
   /** Screen-facing HTML footprint around visualScene, in scene units. */
   screenHalfSize: PlanPoint;
+  /**
+   * #711: the footprint the layout sees. For a device it is the state-free tile —
+   * value text and badges change with HA state, and the owner's rule is that a
+   * device never moves because its state changed. Absent means screenHalfSize.
+   */
+  layoutHalfSize?: PlanPoint;
 };
+
+const layoutHalfSizeOf = (entry: IsoOverlayRenderEntry): PlanPoint =>
+  entry.layoutHalfSize ?? entry.screenHalfSize;
+
+/** #711: the tile of a device without anything its HA state writes on it. */
+const stateFreePresentation = (
+  presentation: ResolvedDevicePresentation,
+): ResolvedDevicePresentation => ({
+  ...presentation,
+  valueText: null, valueFullText: null, valueBadge: null, tempText: null, humText: null,
+});
 
 export type IsoOverlayRenderScene = {
   devices: ReadonlyMap<string, IsoOverlayPlacement>;
@@ -898,12 +915,15 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     // #649: the 2.5D tile is ICON_SCALE larger; layout and collision see that size.
     const core = baseDeviceUnits * presentation.scale * ISO_ICON_SCALE;
     const halfSize = isoRaisedOverlayHalfSize({ kind: 'device', core, presentation });
+    const layoutHalfSize = isoRaisedOverlayHalfSize({
+      kind: 'device', core, presentation: stateFreePresentation(presentation),
+    });
     const preferredRoomId = device.marker?.room_id
       || roomRows.find((row) => !!device.area && row.room.area === device.area)?.overlayRoom.id
       || null;
     const placement = place(
       'device', device.id, [pos.x, pos.y],
-      halfSize,
+      layoutHalfSize,
       preferredRoomId,
     );
     devices.set(device.id, placement);
@@ -913,6 +933,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       placement,
       groundRadius: Math.max(core * 0.32, 2),
       screenHalfSize: halfSize,
+      layoutHalfSize,
     });
   }
 
@@ -975,10 +996,31 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     return [entry.kind, entry.id, placement.floorAnchor[0], placement.floorAnchor[1],
       placement.raisedScene[0], placement.raisedScene[1], placement.nudgeScene[0],
       placement.nudgeScene[1], placement.owner?.id || '', placement.status, placement.reason || '',
-      entry.screenHalfSize[0], entry.screenHalfSize[1], unitsPerPixel].join('|');
+      layoutHalfSizeOf(entry)[0], layoutHalfSizeOf(entry)[1], unitsPerPixel].join('|');
   }).sort().join('\u0001');
   if (previous?.collisionSignature === collisionSignature
-      && samePlacementMap(previous.rooms, roomPlacements)) return previous;
+      && samePlacementMap(previous.rooms, roomPlacements)) {
+    // #711: an HA-only change keeps the layout; only the visual extent that
+    // scene bounds read is refreshed, without a collision search.
+    const visual = new Map(entries.map((entry) => [
+      `${entry.kind}\u0000${entry.id}`, entry.screenHalfSize,
+    ]));
+    const changed = previous.entries.some((entry) => {
+      const next = visual.get(`${entry.kind}\u0000${entry.id}`);
+      return !!next && (next[0] !== entry.screenHalfSize[0] || next[1] !== entry.screenHalfSize[1]);
+    });
+    if (!changed) return previous;
+    const refreshed: IsoOverlayRenderScene = {
+      ...previous,
+      entries: Object.freeze(previous.entries.map((entry) => {
+        const next = visual.get(`${entry.kind}\u0000${entry.id}`);
+        return next && (next[0] !== entry.screenHalfSize[0] || next[1] !== entry.screenHalfSize[1])
+          ? { ...entry, screenHalfSize: next } : entry;
+      })),
+    };
+    renderScenes.set(mode, refreshed);
+    return refreshed;
+  }
 
   const previousEntries = new Map(previous?.entries.map((entry) => [
     `${entry.kind}\u0000${entry.id}`, entry,
@@ -989,8 +1031,8 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       if (entry.kind === 'room-label') return [];
       const before = previousEntries.get(`${entry.kind}\u0000${entry.id}`);
       const sameShape = !!before
-        && before.screenHalfSize[0] === entry.screenHalfSize[0]
-        && before.screenHalfSize[1] === entry.screenHalfSize[1]
+        && layoutHalfSizeOf(before)[0] === layoutHalfSizeOf(entry)[0]
+        && layoutHalfSizeOf(before)[1] === layoutHalfSizeOf(entry)[1]
         && before.placement.floorAnchor[0] === entry.placement.floorAnchor[0]
         && before.placement.floorAnchor[1] === entry.placement.floorAnchor[1]
         && (before.placement.owner?.id || '') === (entry.placement.owner?.id || '');
@@ -998,7 +1040,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
         id: entry.id,
         kind: entry.kind,
         placement: entry.placement,
-        screenHalfSize: entry.screenHalfSize,
+        screenHalfSize: layoutHalfSizeOf(entry),
         ...(sameShape ? { nudgeHintCss: [
           before!.placement.nudgeScene[0] / unitsPerPixel,
           before!.placement.nudgeScene[1] / unitsPerPixel,

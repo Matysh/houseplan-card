@@ -1874,7 +1874,15 @@ export function resolveIsoOverlayRigidGroups(
     for (const candidate of sortedBoundaryCandidates(candidates)) addOffset(candidate.offset);
     offsets.sort(rigidOffsetOrder);
 
-    const evaluate = (offset: ScenePoint): RigidCandidate => {
+    // #711: offsets run in rigidOffsetOrder, and the fallback is the
+    // lexicographic minimum by (room, wall, overlap, order). A candidate that
+    // already has more room violations than the current fallback — or as many
+    // and more wall violations — can neither be chosen nor replace it, so its
+    // wall and overlap checks are skipped. The result is unchanged; in a dense
+    // scene most of the ~14 000 degraded-group offsets stop after the room pass.
+    const evaluate = (
+      offset: ScenePoint, bound: RigidCandidate | null = null,
+    ): RigidCandidate | null => {
       const distance = Math.hypot(offset[0], offset[1]);
       const offsetScene: ScenePoint = [
         offset[0] * unitsPerPixel, offset[1] * unitsPerPixel,
@@ -1882,25 +1890,29 @@ export function resolveIsoOverlayRigidGroups(
       let roomViolations = 0, wallViolations = wallsValid ? 0 : group.items.length;
       let totalOverlap = 0;
       const details: RigidCandidateDetail[] = [];
+      const roomInvalidByItem: boolean[] = [];
       for (const item of group.items) {
         const base = item.placement;
-        const visualScene: ScenePoint = [
-          base.raisedScene[0] + offsetScene[0],
-          base.raisedScene[1] + offsetScene[1],
-        ];
         const ownerRoom = base.owner ? rooms.get(base.owner.id) || null : null;
         let roomInvalid = false;
         if (distance > EPS) {
           if (!ownerRoom) roomInvalid = true;
           else {
-            const plan = raisedSceneToPlan(visualScene, visualOffset, camera);
+            const plan = raisedSceneToPlan([
+              base.raisedScene[0] + offsetScene[0], base.raisedScene[1] + offsetScene[1],
+            ], visualOffset, camera);
             roomInvalid = !pointStrictlyInValidatedRoom(plan, ownerRoom)
               || pointStrictlyInValidatedRoom(base.floorAnchor, ownerRoom)
                 && !segmentBetweenStrictRoomPoints(base.floorAnchor, plan, ownerRoom);
           }
         }
+        roomInvalidByItem.push(roomInvalid);
         if (roomInvalid) roomViolations += 1;
-
+      }
+      if (bound && roomViolations > bound.roomViolations) return null;
+      const wallNearByItem: boolean[] = [];
+      for (const item of group.items) {
+        const base = item.placement;
         const baseFootprint = base.footprint.map((point) => [
           point[0] - base.nudgeScene[0], point[1] - base.nudgeScene[1],
         ] as ScenePoint);
@@ -1911,8 +1923,19 @@ export function resolveIsoOverlayRigidGroups(
         const wallNear = wallsValid && !!footprintBounds && wallRows.some(({ wall, bounds }) =>
           !!bounds && boundsNear(footprintBounds, bounds, gapUnits)
             && footprintNearSilhouette(footprint, footprintBounds, wall, gapUnits, true));
+        wallNearByItem.push(wallNear);
         if (wallNear) wallViolations += 1;
-
+      }
+      if (bound && roomViolations === bound.roomViolations
+          && wallViolations > bound.wallViolations) return null;
+      group.items.forEach((item, itemIndex) => {
+        const base = item.placement;
+        const visualScene: ScenePoint = [
+          base.raisedScene[0] + offsetScene[0],
+          base.raisedScene[1] + offsetScene[1],
+        ];
+        const roomInvalid = roomInvalidByItem[itemIndex];
+        const wallNear = wallNearByItem[itemIndex];
         const bounds = overlayRootBounds(item, visualScene);
         const conflicts: number[] = [];
         for (let index = 0; index < accepted.length; index++) {
@@ -1923,7 +1946,7 @@ export function resolveIsoOverlayRigidGroups(
           }
         }
         details.push({ item, bounds, roomInvalid, wallNear, conflicts });
-      }
+      });
       return {
         offset, distance, roomViolations, wallViolations,
         overlapPenalty: totalOverlap, details,
@@ -1933,7 +1956,8 @@ export function resolveIsoOverlayRigidGroups(
     let chosen: RigidCandidate | null = null;
     let fallback: RigidCandidate | null = null;
     for (const offset of offsets) {
-      const candidate = evaluate(offset);
+      const candidate = evaluate(offset, fallback);
+      if (!candidate) continue;
       if (!fallback || rigidFallbackOrder(candidate, fallback) < 0) fallback = candidate;
       if (!candidate.roomViolations && !candidate.wallViolations
           && candidate.overlapPenalty <= EPS) {
@@ -1941,7 +1965,7 @@ export function resolveIsoOverlayRigidGroups(
         break;
       }
     }
-    chosen ||= fallback || evaluate([0, 0]);
+    chosen ||= fallback || evaluate([0, 0])!;
     const degraded = !!chosen.roomViolations || !!chosen.wallViolations
       || chosen.overlapPenalty > EPS;
 

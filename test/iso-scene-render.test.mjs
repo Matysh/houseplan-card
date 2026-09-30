@@ -527,6 +527,58 @@ test('render scene keeps a close device cluster rigid without moving labels and 
     'fit probing deliberately skips live group displacement');
 });
 
+test('#711 состояние устройства не двигает значки: раскладка не пересчитывается, границы видят бейдж', () => {
+  const owner = { ...room('owner', 0, 0, 400, 400), name: '', settings: {} };
+  const space = {
+    id: 'floor-710', title: 'Floor', cellCm: 5, vb: [0, 0, 400, 400], bg: null,
+    rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
+  };
+  const wallSilhouettes = [{ outer: buildIsoFootprintPolygon([150, 200], [154, 260], ISO_WALL_HEIGHT) }];
+  const devices = ['lamp', 'plug', 'sensor'].map((id, index) => ({
+    id, space: 'floor-710', marker: { room_id: 'owner', x: 160 + index * 4, y: 200 },
+  }));
+  let lampOn = false;
+  const presentationOf = (device) => ({
+    scale: 1, valueText: null, valueFullText: '', tempText: null, humText: null, lqiText: null,
+    valueBadge: device.id === 'lamp' && lampOn
+      ? { configured: true, enabled: true, text: '100 %', fullText: '100 %', position: 'right', tone: 'default' }
+      : null,
+    pulse: { animated: false, diameterScale: 1 },
+  });
+  const input = {
+    space, devices, openings: [],
+    view: { x: 0, y: 0, w: 400, h: 400 },
+    display: { showNames: false, cardFontScale: 1 },
+    layers: { structural: true, shadows: true },
+    wallSilhouettes,
+    iconPct: 3.4, deviceBasePct: 3.4, showLqi: false, cellCm: 5,
+    kioskIconScale: 1, kioskFontScale: 1,
+    stageSize: { width: 200, height: 200 },
+    positionOf: (device) => ({ x: device.marker.x, y: device.marker.y }),
+    presentationOf,
+    labelPositionOf: () => ({ x: 0, y: 0 }),
+    labelScaleOf: () => 1,
+    openingEntityAvailable: () => false,
+    openingWallIndex: () => ({ adjacencyEps: 0.1, edges: [] }),
+  };
+  const off = buildIsoOverlayRenderScene(input);
+  lampOn = true;
+  const on = buildIsoOverlayRenderScene(input);
+  for (const id of ['lamp', 'plug', 'sensor']) {
+    assert.strictEqual(on.devices.get(id), off.devices.get(id), `${id}: включение лампы не пересчитывает раскладку`);
+  }
+  const lampOff = off.entries.find((entry) => entry.id === 'lamp');
+  const lampOnEntry = on.entries.find((entry) => entry.id === 'lamp');
+  assert.ok(lampOnEntry.screenHalfSize[0] > lampOff.screenHalfSize[0], 'видимая ширина с бейджем больше');
+  assert.deepEqual(lampOnEntry.layoutHalfSize, lampOff.layoutHalfSize, 'раскладка видит плитку без состояния');
+  assert.ok(isoOverlaySceneBounds(on).w >= isoOverlaySceneBounds(off).w, 'границы сцены учитывают бейдж');
+  lampOn = false;
+  const offAgain = buildIsoOverlayRenderScene(input);
+  for (const id of ['lamp', 'plug', 'sensor']) {
+    assert.deepEqual(offAgain.devices.get(id).visualScene, off.devices.get(id).visualScene, `${id}: выключение возвращает то же место`);
+  }
+});
+
 test('visible wall side quads participate in overlay collision', () => {
   const walls = [[[[45, 20], [55, 20], [55, 80], [45, 80]]]];
   const scene = resolveIsoScene({
