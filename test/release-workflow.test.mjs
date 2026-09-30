@@ -3,7 +3,10 @@
 // only after the gates saw the very same bytes.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readdirSync, readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const WORKFLOWS = fileURLToPath(new URL('../.github/workflows/', import.meta.url));
@@ -133,4 +136,116 @@ test('#638 AC2: ревью линии ставится в очередь пар�
     assert.ok(!jobNeeds(name).includes('independent-review'), `${name} не зависит от ревью линии`);
     assert.ok(!/needs\.independent-review/.test(job(name)), `${name} не читает результат ревью линии`);
   }
+});
+
+// #704: dispatch не возвращает прогона — v1.78.0 выпустился, а ревью линии
+// упало в прогоне, о котором выпуск не знал (release run 36468444979, ревью
+// 36468505112). Job находит поставленный прогон и пишет ссылку и статус в
+// сводку; не нашёл за несколько минут — предупреждение, выпуск не блокируется.
+// Шаг исполняется настоящим bash по тексту из release.yml; gh и sleep подменены.
+const reviewStepScript = () => {
+  const block = job('independent-review');
+  const lines = block.split('\n');
+  const runAt = lines.findIndex((line) => /^ {8}run: \|\s*$/.test(line));
+  assert.ok(runAt > 0, 'у шага есть run: |');
+  const body = [];
+  for (const line of lines.slice(runAt + 1)) {
+    if (line.trim() && !line.startsWith('          ')) break;
+    body.push(line.slice(10));
+  }
+  return body.join('\n').replace(/\$\{\{ github\.repository \}\}/g, 'o/r');
+};
+
+const hasTools = () => process.platform !== 'win32'
+  && ['bash', 'jq'].every((tool) => spawnSync(tool, ['--version']).status === 0);
+
+/**
+ * `snapshots` — ответы `gh run list` по порядку опросов (последний повторяется),
+ * `dispatch` — код `gh workflow run`.
+ */
+function runReviewStep({ snapshots = [[]], dispatch = 0, appear = 45, poll = 15 } = {}) {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-704-'));
+  try {
+    const bin = join(dir, 'bin');
+    mkdirSync(bin);
+    snapshots.forEach((rows, i) => writeFileSync(join(dir, `runs-${i + 1}.json`), JSON.stringify(rows)));
+    writeFileSync(join(bin, 'gh'), [
+      '#!/bin/bash',
+      `dir=${JSON.stringify(dir)}`,
+      'echo "$*" >> "$dir/gh.log"',
+      `if [ "$1 $2" = "workflow run" ]; then exit ${dispatch}; fi`,
+      'if [ "$1 $2" = "run list" ]; then',
+      '  n=$(( $(cat "$dir/n" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$dir/n"',
+      `  f="$dir/runs-$n.json"; [ -f "$f" ] || f="$dir/runs-${snapshots.length}.json"`,
+      '  cat "$f"; exit 0',
+      'fi',
+      'echo "unexpected gh $*" >&2; exit 97',
+      '',
+    ].join('\n'), { mode: 0o755 });
+    writeFileSync(join(bin, 'sleep'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    const summary = join(dir, 'summary.md');
+    writeFileSync(summary, '');
+    const r = spawnSync('bash', ['--noprofile', '--norc', '-e', '-c', reviewStepScript()], {
+      encoding: 'utf8',
+      env: {
+        ...process.env, PATH: `${bin}:${process.env.PATH}`, GH_TOKEN: 'x', TAG: 'v1.79.0', SHA: 'c'.repeat(40),
+        APPEAR_SECONDS: String(appear), POLL_SECONDS: String(poll), GITHUB_STEP_SUMMARY: summary,
+      },
+    });
+    const log = (() => { try { return readFileSync(join(dir, 'gh.log'), 'utf8'); } catch { return ''; } })();
+    return { status: r.status, stdout: r.stdout, stderr: r.stderr, summary: readFileSync(summary, 'utf8'), gh: log.split('\n').filter(Boolean) };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+const iso = (offsetSeconds) => new Date(Date.now() + offsetSeconds * 1000).toISOString().replace(/\.\d+Z$/, 'Z');
+const reviewRun = (id, status, extra = {}) => ({
+  databaseId: id, url: `https://github.com/o/r/actions/runs/${id}`, status, conclusion: '',
+  displayTitle: 'Release review v1.79.0', createdAt: iso(0), ...extra,
+});
+
+test('#704 AC2: прогон ревью найден и стартовал — ссылка и статус в сводке, без предупреждения', { skip: !hasTools() && 'нужны bash и jq' }, () => {
+  const older = reviewRun(1, 'completed', { conclusion: 'failure', createdAt: iso(-3600) });
+  const otherTag = reviewRun(2, 'in_progress', { displayTitle: 'Release review v1.78.0' });
+  const r = runReviewStep({ snapshots: [[older, otherTag], [older, otherTag, reviewRun(3, 'queued')], [older, otherTag, reviewRun(3, 'in_progress')]] });
+  assert.equal(r.status, 0, r.stderr);
+  assert.doesNotMatch(r.stdout, /::warning::/);
+  assert.match(r.summary, /Независимое ревью v1\.79\.0 \*\*запущено\*\*: \[прогон\]\(https:\/\/github\.com\/o\/r\/actions\/runs\/3\), статус in_progress\. Выпуск его не ждёт\./);
+  const lists = r.gh.filter((line) => line.startsWith('run list'));
+  assert.equal(lists.length, 3, 'опрос остановился, как только прогон стартовал');
+  assert.match(lists[0], /--workflow release-review\.yml --branch dev --event workflow_dispatch/);
+  assert.match(r.gh[0], /^workflow run release-review\.yml --repo o\/r --ref dev -f tag=v1\.79\.0 -f candidate=c{40}$/, 'dispatch — до поиска');
+});
+
+test('#704 AC2: прогон не появился — предупреждение «не стартовало за N мин», шаг не красный', { skip: !hasTools() && 'нужны bash и jq' }, () => {
+  const stale = reviewRun(1, 'completed', { conclusion: 'failure', createdAt: iso(-3600) });
+  const r = runReviewStep({ snapshots: [[stale]], appear: 180, poll: 15 });
+  assert.equal(r.status, 0, 'выпуск не блокируется');
+  assert.match(r.stdout, /^::warning::прогон ревью линии v1\.79\.0 не появился за 3 мин/m);
+  assert.match(r.summary, /Независимое ревью v1\.79\.0: \*\*не стартовало за 3 мин\*\*/);
+  assert.equal(r.gh.filter((line) => line.startsWith('run list')).length, 12, 'опрос ограничен окном: 180 с / 15 с');
+  assert.doesNotMatch(r.summary, /runs\/1/, 'прогон прошлого запуска — не этот');
+});
+
+test('#704 AC2: прогон в очереди всё окно — предупреждение со ссылкой; отказ dispatch — прежний', { skip: !hasTools() && 'нужны bash и jq' }, () => {
+  const queued = runReviewStep({ snapshots: [[reviewRun(5, 'queued')]], appear: 30, poll: 15 });
+  assert.equal(queued.status, 0);
+  assert.match(queued.stdout, /^::warning::ревью линии v1\.79\.0 в очереди и не стартовало за 1 мин: https:\/\/github\.com\/o\/r\/actions\/runs\/5$/m);
+  assert.match(queued.summary, /\*\*не стартовало за 1 мин\*\* \(в очереди\) — \[прогон\]\(https:\/\/github\.com\/o\/r\/actions\/runs\/5\), статус queued\./);
+  const refused = runReviewStep({ dispatch: 1 });
+  assert.equal(refused.status, 1, 'job с continue-on-error: отказ dispatch виден, выпуск идёт');
+  assert.match(refused.stdout, /^::warning::ревью линии v1\.79\.0 не запущено — выпуск продолжается/m);
+  assert.match(refused.summary, /\*\*не запущено\*\*/);
+  assert.ok(!refused.gh.some((line) => line.startsWith('run list')), 'без dispatch искать нечего');
+});
+
+test('#704 AC2: ожидание прогона укладывается в бюджет job', () => {
+  const block = job('independent-review');
+  const appear = Number(/^ {10}APPEAR_SECONDS: (\d+)$/m.exec(block)?.[1]);
+  const poll = Number(/^ {10}POLL_SECONDS: (\d+)$/m.exec(block)?.[1]);
+  const timeout = Number(/^ {4}timeout-minutes: (\d+)$/m.exec(block)?.[1]);
+  assert.ok(appear > 0 && poll > 0 && timeout > 0, JSON.stringify({ appear, poll, timeout }));
+  assert.ok(appear <= 5 * 60, 'ждать не дольше нескольких минут');
+  assert.ok(appear + 60 < timeout * 60, `окно ${appear} с + запас на dispatch и опросы < timeout ${timeout} мин`);
 });

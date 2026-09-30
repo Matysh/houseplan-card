@@ -3,7 +3,8 @@
 // модель без права записи; документ в dev публикует детерминированный шаг.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   buildLineMembership, previousStableTag, productFiles, releaseReviewDocPath, renderBrief,
@@ -93,4 +94,56 @@ test('#638: повтор на тот же тег не тратит модель,
   assert.match(prepare, /if \[ "\$FORCE" != "true" \] && git cat-file -e "origin\/dev:\$doc"/);
   assert.match(prepare, /echo "proceed=false"/);
   assert.match(jobBlock('model_review'), /if: needs\.prepare\.outputs\.proceed == 'true'/);
+});
+
+// #704: `release.yml` ставит ревью в очередь токеном GITHUB_TOKEN — прогон
+// начинает `github-actions[bot]`, и claude-code-action без списка ботов
+// отказывал ему (v1.78.0: release run 36468444979, ревью 36468505112). Список —
+// ровно этот бот, не '*': любой другой бот отклоняется, как и прежде.
+const EXPECTED_BOT = 'github-actions[bot]';
+
+/** Ключи `with:` шага action ревью — строки с отступом на уровень глубже `with:`. */
+function reviewStepInputs() {
+  const model = jobBlock('model_review');
+  const start = model.indexOf('      - name: Review\n');
+  assert.ok(start > 0, 'шаг Review найден');
+  const rest = model.slice(start + 1);
+  const next = rest.search(/\n {6}- name: /);
+  const step = next < 0 ? rest : rest.slice(0, next + 1);
+  assert.match(step, /^ {8}uses: anthropics\/claude-code-action@[0-9a-f]{40} /m, 'action пиннут полным SHA');
+  const withAt = step.indexOf('\n        with:\n');
+  assert.ok(withAt > 0, 'у шага есть with:');
+  const inputs = new Map();
+  for (const line of step.slice(withAt + '\n        with:\n'.length).split('\n')) {
+    if (line.trim() && !/^ {10}/.test(line)) break;
+    const m = /^ {10}([a-z_]+):\s*(.*)$/.exec(line);
+    if (m) inputs.set(m[1], m[2].trim());
+  }
+  return inputs;
+}
+
+test('#704 AC1/AC3: action ревью разрешает ровно бота, который ставит его в очередь, и не всех ботов', () => {
+  const inputs = reviewStepInputs();
+  assert.ok(inputs.has('allowed_bots'), 'allowed_bots на месте: без него прогон от github-actions[bot] отклоняется');
+  const raw = inputs.get('allowed_bots');
+  const value = raw.replace(/^(['"])(.*)\1$/, '$2');
+  assert.notEqual(value.trim(), '*', "'*' пустил бы любого бота");
+  const bots = value.split(',').map((bot) => bot.trim()).filter(Boolean);
+  assert.deepEqual(bots, [EXPECTED_BOT], 'ровно один бот — тот, от имени которого dispatch');
+  // Ожидаемое имя держится за то, как release.yml ставит ревью в очередь: dispatch
+  // токеном GITHUB_TOKEN — это и есть github-actions[bot].
+  const release = readFileSync(fileURLToPath(new URL('../.github/workflows/release.yml', import.meta.url)), 'utf8');
+  const review = release.slice(release.indexOf('\n  independent-review:\n'), release.indexOf('\n  gate:\n'));
+  assert.match(review, /GH_TOKEN: \$\{\{ github\.token \}\}\n/, 'dispatch идёт токеном GITHUB_TOKEN');
+  assert.match(review, /gh workflow run release-review\.yml/);
+});
+
+test("#704: ни один workflow не пускает к action всех ботов ('*')", () => {
+  const dir = fileURLToPath(new URL('../.github/workflows/', import.meta.url));
+  for (const name of readdirSync(dir).filter((file) => /\.ya?ml$/.test(file))) {
+    const text = readFileSync(join(dir, name), 'utf8');
+    for (const m of text.matchAll(/^\s+allowed_bots:\s*(.*)$/gm)) {
+      assert.doesNotMatch(m[1], /^['"]?\s*\*\s*['"]?$|(^|,)\s*\*\s*(,|$)/, `${name}: allowed_bots '*'`);
+    }
+  }
 });

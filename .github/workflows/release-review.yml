@@ -183,6 +183,14 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # #704: `release.yml` ставит ревью в очередь токеном GITHUB_TOKEN, и
+          # прогон начинает `github-actions[bot]` (тип Bot). Action отказывает
+          # ботам, которых нет в списке («Workflow initiated by non-human actor:
+          # github-actions (type: Bot)», v1.78.0). Разрешён ровно этот бот —
+          # не '*': любой другой бот по-прежнему отклоняется. Action сравнивает
+          # имена без регистра и без суффикса `[bot]`. Человек, запустивший
+          # ревью руками, списка не касается.
+          allowed_bots: "github-actions[bot]"
           path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
           prompt: |
             Ты независимый ревьюер релиза House Plan. Язык ответа — русский.

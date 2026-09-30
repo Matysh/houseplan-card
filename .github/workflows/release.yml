@@ -153,14 +153,60 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.candidate.outputs.tag }}
           SHA: ${{ needs.candidate.outputs.sha }}
+          # #704: сколько ждать, что dispatch стал прогоном, — выпуск не ждёт
+          # дольше нескольких минут; укладывается в timeout-minutes job.
+          APPEAR_SECONDS: 180
+          POLL_SECONDS: 15
         run: |
-          if gh workflow run release-review.yml --repo "${{ github.repository }}" --ref dev \
+          repo="${{ github.repository }}"
+          # Отсчёт окна — до dispatch, с запасом минута на расхождение часов.
+          since=$(( $(date -u +%s) - 60 ))
+          if ! gh workflow run release-review.yml --repo "${{ github.repository }}" --ref dev \
                -f tag="$TAG" -f candidate="$SHA"; then
-            echo "Независимое ревью $TAG поставлено в очередь: release-review.yml на dev" >> "$GITHUB_STEP_SUMMARY"
-          else
             echo "::warning::ревью линии $TAG не запущено — выпуск продолжается; запустить руками: gh workflow run release-review.yml --ref dev -f tag=$TAG -f candidate=$SHA"
+            echo "Независимое ревью $TAG: **не запущено** — dispatch release-review.yml отклонён." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
+          # #704: dispatch не возвращает прогона, и v1.78.0 показал цену: ревью
+          # упало в прогоне, о котором выпуск не знал. Прогон ищется по workflow,
+          # ветке dev, событию, времени и run-name «Release review <тег>».
+          # Найден и стартовал — ссылка и статус в сводке; нет — предупреждение,
+          # выпуск не блокируется.
+          title="Release review $TAG"
+          run=""
+          started=false
+          tries=$(( APPEAR_SECONDS / POLL_SECONDS ))
+          for try in $(seq 1 "$tries"); do
+            found=$(gh run list --repo "$repo" --workflow release-review.yml --branch dev \
+                      --event workflow_dispatch --limit 20 \
+                      --json databaseId,url,status,conclusion,displayTitle,createdAt \
+                    | jq -c --arg title "$title" --argjson since "$since" \
+                      '[.[] | select(.displayTitle == $title and (.createdAt | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) >= $since)] | sort_by(.createdAt) | last // empty') || found=""
+            if [ -n "$found" ]; then
+              run="$found"
+              case "$(jq -r .status <<< "$run")" in
+                in_progress|completed) started=true; break ;;
+              esac
+            fi
+            if [ "$try" -lt "$tries" ]; then sleep "$POLL_SECONDS"; fi
+          done
+          minutes=$(( (APPEAR_SECONDS + 59) / 60 ))
+          if [ -z "$run" ]; then
+            echo "::warning::прогон ревью линии $TAG не появился за $minutes мин — выпуск продолжается; проверить Actions → release-review.yml"
+            echo "Независимое ревью $TAG: **не стартовало за $minutes мин** — прогон release-review.yml на dev не найден." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          url=$(jq -r .url <<< "$run")
+          status=$(jq -r '.status + (if (.conclusion // "") != "" then " · " + .conclusion else "" end)' <<< "$run")
+          if [ "$started" != "true" ]; then
+            echo "::warning::ревью линии $TAG в очереди и не стартовало за $minutes мин: $url"
+            echo "Независимое ревью $TAG: **не стартовало за $minutes мин** (в очереди) — [прогон]($url), статус $status." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$(jq -r '.conclusion // ""' <<< "$run")" = "failure" ]; then
+            echo "::warning::ревью линии $TAG уже упало: $url"
+          fi
+          echo "Независимое ревью $TAG **запущено**: [прогон]($url), статус $status. Выпуск его не ждёт." >> "$GITHUB_STEP_SUMMARY"
 
   gate:
     name: "Гейт: контракт, Validate, Full Performance и E2E на точном SHA"
