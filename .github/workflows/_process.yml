@@ -557,7 +557,8 @@ jobs:
           # токена, исход — одним словом. Отказ GitHub по праву на workflow —
           # не сдвинутая ветка: задача возвращается автору без ревью с
           # комментарием, как при конфликте. Прочий отказ GitHub — ошибка
-          # прогона со своей причиной.
+          # прогона со своей причиной. #730: причина и ответ git без токена —
+          # ещё и в сводке шага (--summary; устаревший lease её не пишет).
           push_err="$RUNNER_TEMP/rebase-push.stderr"
           if ! git push -q --force-with-lease="refs/heads/$BRANCH:$before" \
                "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
@@ -566,7 +567,7 @@ jobs:
             kind=$(node "$tools/scripts/merge-candidate.mjs" --push-refusal="$push_err" \
               --branch="$BRANCH" --candidate="$(git rev-parse HEAD)" --stage=rebase \
               --run-url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --comment="$refusal") || kind=unknown
+              --comment="$refusal" --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
             case "$kind" in
               stale)
                 echo "::error::ветка $BRANCH изменилась во время ребейза — прогон прерван, чтобы не потерять коммит автора"

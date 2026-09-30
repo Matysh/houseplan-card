@@ -520,10 +520,15 @@ export function describePushRefusal(stderr, { ref, branch, candidate, stage = 'r
  * считали сдвигом ветки и повторяли. Повтор лечит только устаревший lease;
  * отказ GitHub шаг останавливает, а причина и ответ git (уже без секретов)
  * ложатся в сводку шага. Текст — здесь, а не многострочной строкой в `run:`.
+ * #730: так же — пакетное ревью ship (`_ship-review.yml`), коммит производных
+ * артефактов беты (`_beta-derived.yml`) и страж ребейза (`_process.yml`).
  */
 const PUBLISHED = Object.freeze({
   'review-doc': 'Документ ревью',
   'release-review': 'Документ независимого ревью релиза',
+  'ship-review': 'Документ пакетного ревью ship',
+  'beta-derived': 'Коммит производных артефактов беты',
+  rebase: 'Ребейз ветки на dev',
 });
 
 export function refusalSummary(refusal, { ref = '', stage = '' } = {}) {

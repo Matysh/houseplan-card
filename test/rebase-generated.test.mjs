@@ -401,11 +401,14 @@ function runStepPush(pushStderr) {
     writeFileSync(join(temp, 'push.stderr'), pushStderr);
     const output = join(temp, 'output');
     writeFileSync(output, '');
+    // #730: сводка шага, куда код слияния пишет причину отказа.
+    const summary = join(temp, 'summary.md');
+    writeFileSync(summary, '');
     const script = `tools=${JSON.stringify(resolve(SCRIPTS, '..'))}\nbefore=${'b'.repeat(40)}\n${block}\necho PUSHED\n`;
     const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
       encoding: 'utf8',
       env: {
-        ...ENV, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, GITHUB_OUTPUT: output,
+        ...ENV, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary,
         BRANCH: 'issue/9-fix', NUM: '9', TOKEN: FAKE_TOKEN_705, FAKE_PUSH_STDERR: join(temp, 'push.stderr'),
       },
     });
@@ -413,6 +416,7 @@ function runStepPush(pushStderr) {
     return {
       status: r.status, stdout: r.stdout, stderr: r.stderr,
       output: readFileSync(output, 'utf8').replaceAll(temp, '$RUNNER_TEMP'),
+      summary: readFileSync(summary, 'utf8'),
       comment: existsSync(commentPath) ? readFileSync(commentPath, 'utf8') : null,
     };
   } finally {
@@ -432,7 +436,11 @@ test('#705 process.yml: push ребейза отклонён по праву н�
   assert.match(r.comment, /`\.github\/workflows\/validate\.yml`/);
   assert.match(r.comment, /\[Прогон конвейера\]\(https:\/\/github\.com\/o\/r\/actions\/runs\/42\)/);
   assert.match(r.stderr, /refusing to allow a Personal Access Token/, 'ответ git — в журнале');
-  for (const text of [r.stdout, r.stderr, r.comment]) assert.ok(!text.includes(FAKE_TOKEN_705), 'токен вырезан');
+  // #730 AC2: причина и ответ git — ещё и в сводке шага.
+  assert.match(r.summary, /^### git push в `issue\/9-fix` отклонён: workflow \(#723\)\n\nРебейз ветки на dev не опубликован в `issue\/9-fix`\. GitHub отклонил push по праву на workflow/);
+  assert.match(r.summary, /Файлы: `\.github\/workflows\/validate\.yml`\./);
+  assert.match(r.summary, /Ответ git:\n\n```\n[\s\S]*refusing to allow a Personal Access Token[\s\S]*\n```\n$/);
+  for (const text of [r.stdout, r.stderr, r.comment, r.summary]) assert.ok(!text.includes(FAKE_TOKEN_705), 'токен вырезан');
 });
 
 test('#705 process.yml: устаревший lease — прежняя ошибка «ветка изменилась», прочий отказ GitHub — своя', (t) => {
@@ -442,6 +450,7 @@ test('#705 process.yml: устаревший lease — прежняя ошибк
   assert.match(stale.stdout, /::error::ветка issue\/9-fix изменилась во время ребейза — прогон прерван/);
   assert.equal(stale.output, '');
   assert.equal(stale.comment, null);
+  assert.equal(stale.summary, '', '#730: устаревший lease сводку об отказе GitHub не пишет');
   assert.match(stale.stderr, /\(stale info\)/, 'ответ git — в журнале');
 
   const hook = runStepPush(refusalStderr('protected branch hook declined'));
@@ -450,7 +459,10 @@ test('#705 process.yml: устаревший lease — прежняя ошибк
   assert.doesNotMatch(hook.stdout, /изменилась во время ребейза/);
   assert.equal(hook.output, '');
   assert.match(hook.stderr, /protected branch hook declined/);
-  assert.ok(!hook.stderr.includes(FAKE_TOKEN_705) && !hook.stdout.includes(FAKE_TOKEN_705));
+  // #730 AC2: прочий отказ GitHub — тоже в сводке, с причиной и без токена.
+  assert.match(hook.summary, /^### git push в `issue\/9-fix` отклонён: remote-rejected \(#723\)$/m);
+  assert.ok(hook.summary.includes('Причина, которую назвал GitHub: «protected branch hook declined»'), hook.summary);
+  assert.ok(!hook.stderr.includes(FAKE_TOKEN_705) && !hook.stdout.includes(FAKE_TOKEN_705) && !hook.summary.includes(FAKE_TOKEN_705));
 });
 
 test('#705 process.yml: отказ по праву на workflow возвращает задачу в S6 без ревью и без Validate на неопубликованном ребейзе', () => {

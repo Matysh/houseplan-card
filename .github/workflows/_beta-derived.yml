@@ -207,8 +207,21 @@ jobs:
               -c user.email="209825114+claude[bot]@users.noreply.github.com" \
               commit -q -F "$msg"
           git show --stat --format='%H %s' HEAD | head -40
-          if ! git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev; then
-            echo "::error::dev ушёл вперёд за время съёмки — запустить workflow заново: отпечаток судит дерево, а оно уже другое"
+          # #730: сдвигом dev считается только устаревший lease — отказ
+          # разбирает код слияния (merge-candidate.mjs --push-refusal, #705).
+          # Скрипт — из dev: рабочая копия и есть dev. Сдвиг — прежний совет
+          # перезапустить; отказ GitHub (право на workflow, правило ветки, хук)
+          # перезапуск не лечит: причина и ответ git без токена — в журнале и в
+          # сводке шага.
+          push_err="$RUNNER_TEMP/beta-derived-push.stderr"
+          if ! git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev 2> "$push_err"; then
+            kind=$(node scripts/merge-candidate.mjs --push-refusal="$push_err" --ref=dev \
+              --stage=beta-derived --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
+            if [ "$kind" = "stale" ]; then
+              echo "::error::dev ушёл вперёд за время съёмки — запустить workflow заново: отпечаток судит дерево, а оно уже другое"
+            else
+              echo "::error::push производных артефактов в dev отклонён ($kind) — это не сдвиг dev, перезапуск не поможет; причина и ответ git — выше и в сводке шага"
+            fi
             exit 1
           fi
           echo "### Производные артефакты $TAG" >> "$GITHUB_STEP_SUMMARY"

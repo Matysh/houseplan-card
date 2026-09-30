@@ -22,6 +22,12 @@ import { buildIndex } from '../scripts/reviews-index.mjs';
 // локальный origin, а заданный отказ GitHub отвечает записанным stderr. Сдвиг
 // ветки — настоящий: сосед пушит в origin до push шага, и git сам отвечает
 // `! [rejected] … (fetch first)`.
+//
+// #730: так же исполняются ещё два тела, которые считали любой отказ сдвигом
+// `dev`: публикация SHIP-REVIEW (`_ship-review.yml`, три попытки) и бот-коммит
+// производных артефактов (`_beta-derived.yml`, совет перезапустить). Страж
+// ребейза пишет причину отказа ещё и в сводку — это исполняет
+// test/rebase-generated.test.mjs.
 
 const SCRIPTS = fileURLToPath(new URL('../scripts', import.meta.url));
 const WORKFLOWS = fileURLToPath(new URL('../.github/workflows/', import.meta.url));
@@ -53,8 +59,8 @@ function importClosure(entry, seen = new Set()) {
   for (const spec of specs) importClosure(resolve(dirname(entry), spec), seen);
   return seen;
 }
-/** Скрипты, которые зовут оба шага, — с замыканием импортов. */
-const STEP_SCRIPTS = ['release-review.mjs', 'reviews-index.mjs', 'review-doc-guard.mjs', 'merge-candidate.mjs']
+/** Скрипты, которые зовут шаги, — с замыканием импортов. */
+const STEP_SCRIPTS = ['release-review.mjs', 'ship-review.mjs', 'reviews-index.mjs', 'review-doc-guard.mjs', 'merge-candidate.mjs']
   .reduce((seen, name) => importClosure(join(SCRIPTS, name), seen), new Set());
 
 const hasTools = () => process.platform !== 'win32'
@@ -359,6 +365,175 @@ test('#726 AC5 _process.yml на настоящем bash: публикация �
   assert.equal(anchor(git(plain.origin, 'show', `${BRANCH}:${REVIEW_DOC}`)), '- Вердикт конвейера: `green` · High 0');
 });
 
+// ---------- #730 _ship-review.yml: SHIP-REVIEW в dev ----------
+
+const SHIP_STEP = () => stepRun('_ship-review.yml', 'Опубликовать документ');
+const BETA = 'v1.79.0-beta.1';
+const SHIP_DOC = `docs/reviews/SHIP-REVIEW-${BETA}.md`;
+
+function runShip(box) {
+  const dir = join(box.temp, 'ship-review-result');
+  mkdirSync(dir);
+  const files = {
+    'ship-review.md': `# Пакетное ревью ship ${BETA}\n\nИтог: High 0 · Medium 1 · Low 0\n`,
+    'result.json': JSON.stringify({ high: 0, medium: 1, low: 0, summary: 'ok' }),
+  };
+  for (const [name, text] of Object.entries(files)) writeFileSync(join(dir, name), text);
+  writeFileSync(join(dir, 'manifest.sha256'), Object.entries(files)
+    .map(([name, text]) => `${createHash('sha256').update(text).digest('hex')}  ${name}\n`).join(''));
+  return box.run(SHIP_STEP(), {
+    TAG: BETA, DOC: SHIP_DOC, CANDIDATE: 'c'.repeat(40), BASE: 'v1.78.0', ISSUES: '731,733',
+    RUN_URL: 'https://github.com/o/r/actions/runs/43',
+  });
+}
+
+test('#730 _ship-review.yml на настоящем bash: dev ушёл вперёд — прежний повтор, документ собран заново поверх соседа', (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const box = sandbox(tempRoot(t, 'hp-730-ship-'));
+  box.neighbour('dev', 1, 'docs/reviews/CODE-REVIEW-8-r1.md', '# CODE-REVIEW-8-r1\nВердикт: **зелёный** · High: 0 · Medium: 0\n');
+  const r = runShip(box);
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  assert.equal(r.pushes, 2, 'повтор после устаревшего lease');
+  assert.deepEqual(r.sleeps, ['10']);
+  assert.match(r.stdout, /::warning::dev ушёл вперёд — попытка 1 из 3/);
+  assert.match(r.stderr, /git push отклонён — stale \(fetch first\)/, 'разбор отказа — кодом слияния');
+  assert.match(r.summary, /^### Пакетное ревью ship v1\.79\.0-beta\.1\nЗадачи 731,733 · High 0 · Medium 1 · Low 0 — `docs\/reviews\/SHIP-REVIEW-v1\.79\.0-beta\.1\.md` в dev\./m);
+  assert.doesNotMatch(r.summary, /отклонён/);
+  assert.equal(git(box.origin, 'log', '-1', '--format=%B', 'dev'),
+    `docs: ship review for ${BETA}\n\nПакетное ревью задач track:ship перед бетой (PROCESS.md §11.7).\n`
+    + 'Задачи: 731,733. Итог: High 0 · Medium 1 · Low 0.\n\nIssue: #696\nUser-Visible: no');
+  assert.deepEqual(git(box.origin, 'show', '--name-only', '--format=', 'dev').split('\n').sort(),
+    ['docs/reviews/INDEX.md', SHIP_DOC], 'коммит несёт документ и индекс');
+  const index = git(box.origin, 'show', 'dev:docs/reviews/INDEX.md');
+  assert.match(index, /CODE-REVIEW-8-r1/, 'индекс собран поверх сдвинутого dev');
+  assert.match(index, /SHIP-REVIEW-v1\.79\.0-beta\.1/);
+  assert.match(git(box.origin, 'show', `dev:${SHIP_DOC}`), /<!-- hp-ship-review-anchors -->\n### Материал пакетного ревью\n\n```\ntag v1\.79\.0-beta\.1\ncandidate c{40}\nbase v1\.78\.0\nissues 731,733\nhigh 0\nmedium 1\nlow 0\n/);
+});
+
+for (const [label, stderr, kind, reason] of [
+  ['право на workflow', remoteRejected('dev', WORKFLOW_REASON), PUSH_REFUSAL.workflow, WORKFLOW_REASON],
+  ['прочий [remote rejected] (с заголовком Authorization и чужим токеном)', noisyRejected('dev'), PUSH_REFUSAL.remote, 'protected branch hook declined'],
+  ['не отказ (сеть, аутентификация)', NETWORK, PUSH_REFUSAL.unknown, ''],
+]) {
+  test(`#730 _ship-review.yml на настоящем bash: ${label} — без повторов, причина и ответ git без токена в журнале и сводке`, (t) => {
+    if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+    const box = sandbox(tempRoot(t, 'hp-730-ship-'));
+    const before = git(box.origin, 'rev-parse', 'dev');
+    box.refuse(1, stderr);
+    const r = runShip(box);
+    assert.equal(r.status, 1, r.stderr + r.stdout);
+    assert.equal(r.pushes, 1, 'повторов нет');
+    assert.deepEqual(r.sleeps, []);
+    assert.doesNotMatch(r.stdout, /dev ушёл вперёд/, 'отказ GitHub — не сдвиг dev');
+    assert.match(r.stdout, new RegExp(`::error::push docs/reviews/SHIP-REVIEW-v1\\.79\\.0-beta\\.1\\.md в dev отклонён \\(${kind}\\) — это не сдвиг dev`));
+    assert.match(r.stderr, new RegExp(`git push отклонён — ${kind}`), 'ответ git — в журнале');
+    assert.match(r.summary, new RegExp(`^### git push в \`dev\` отклонён: ${kind} \\(#723\\)$`, 'm'));
+    assert.match(r.summary, /Документ пакетного ревью ship не опубликован в `dev`/);
+    if (reason) {
+      assert.ok(r.summary.includes(`Причина, которую назвал GitHub: «${reason}»`), r.summary);
+      assert.ok(r.stderr.includes(reason));
+    }
+    assert.match(r.summary, /Ответ git:\n\n```\n[\s\S]+\n```\n$/);
+    assert.doesNotMatch(r.summary, /Пакетное ревью ship v1/, 'успеха в сводке нет');
+    noisySecretsGone(r);
+    assert.equal(git(box.origin, 'rev-parse', 'dev'), before, 'dev не тронут');
+  });
+}
+
+test('#730 _ship-review.yml на настоящем bash: сдвиг, затем отказ GitHub на второй попытке — стоп без третьей', (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const box = sandbox(tempRoot(t, 'hp-730-ship-'));
+  box.neighbour('dev', 1, 'b.mjs', 'export const b = 1;\n');
+  box.refuse(2, noisyRejected('dev'));
+  const r = runShip(box);
+  assert.equal(r.status, 1, r.stderr + r.stdout);
+  assert.equal(r.pushes, 2);
+  assert.deepEqual(r.sleeps, ['10'], 'сдвиг — повтор, отказ — нет');
+  assert.match(r.stdout, /::error::push docs\/reviews\/SHIP-REVIEW-v1\.79\.0-beta\.1\.md в dev отклонён \(remote-rejected\)/);
+  assert.doesNotMatch(r.stdout, /попытка 2 из 3/);
+  assert.match(r.summary, /^### git push в `dev` отклонён: remote-rejected \(#723\)$/m);
+  noisySecretsGone(r);
+});
+
+// ---------- #730 _beta-derived.yml: бот-коммит производных артефактов в dev ----------
+
+const DERIVED_STEP = () => stepRun('_beta-derived.yml', 'Коммит в dev');
+
+/** Кадры и эталоны на dev, как после checkout. */
+function derivedSandbox(t) {
+  const box = sandbox(tempRoot(t, 'hp-730-derived-'));
+  mkdirSync(join(box.work, 'docs', 'images'), { recursive: true });
+  mkdirSync(join(box.work, 'demo', 'golden', 'baselines'), { recursive: true });
+  writeFileSync(join(box.work, 'docs', 'images', 'screenshots.json'), '{"fingerprint":"old"}\n');
+  writeFileSync(join(box.work, 'demo', 'golden', 'baselines', 'a.png'), 'png');
+  commitAll(box.work, 'artifacts');
+  git(box.work, 'push', '-q', 'origin', 'dev');
+  return box;
+}
+
+/** Шаг съёмки изменил отпечаток; коммит и push — шагом как есть. */
+function runDerived(box) {
+  writeFileSync(join(box.work, 'docs', 'images', 'screenshots.json'), '{"fingerprint":"new"}\n');
+  return box.run(DERIVED_STEP(), {
+    TAG: BETA, DOCS_CHANGED: 'true', DOCS_EXPECT: '', GOLDEN_CHANGED: '', GOLDEN_URL: '',
+    GOLDEN_EXPECT_CHANGE: '', GOLDEN_EXPECT_NEW: '', RUN_URL: 'https://github.com/o/r/actions/runs/44', HP_PREPUSH_GATE: '0',
+  });
+}
+
+test('#730 _beta-derived.yml на настоящем bash: push прошёл — коммит в dev, сводка об успехе, разбора нет', (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const box = derivedSandbox(t);
+  const r = runDerived(box);
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  assert.equal(r.pushes, 1);
+  assert.match(r.summary, /^### Производные артефакты v1\.79\.0-beta\.1\nКоммит `[0-9a-f]+` в dev — проверить перед кандидатом беты\.\n$/);
+  assert.doesNotMatch(r.stderr, /git push отклонён/);
+  assert.equal(git(box.origin, 'log', '-1', '--format=%s', 'dev'), `docs: accept derived artifacts on dev for ${BETA}`);
+  assert.deepEqual(git(box.origin, 'show', '--name-only', '--format=', 'dev').split('\n'), ['docs/images/screenshots.json']);
+});
+
+test('#730 _beta-derived.yml на настоящем bash: dev ушёл вперёд — прежний совет перезапустить, сводки об отказе нет', (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const box = derivedSandbox(t);
+  box.neighbour('dev', 1, 'b.mjs', 'export const b = 1;\n');
+  const r = runDerived(box);
+  assert.equal(r.status, 1, r.stderr + r.stdout);
+  assert.equal(r.pushes, 1, 'шаг не повторяет сам: отпечаток судит дерево');
+  assert.match(r.stdout, /::error::dev ушёл вперёд за время съёмки — запустить workflow заново/);
+  assert.match(r.stderr, /git push отклонён — stale \(fetch first\)/, 'разбор отказа — кодом слияния');
+  assert.equal(r.summary, '', 'устаревший lease сводку не пишет');
+  assert.equal(git(box.origin, 'log', '-1', '--format=%s', 'dev'), 'neighbour b.mjs', 'dev — соседа, коммит бота не ушёл');
+});
+
+for (const [label, stderr, kind, reason] of [
+  ['право на workflow', remoteRejected('dev', WORKFLOW_REASON), PUSH_REFUSAL.workflow, WORKFLOW_REASON],
+  ['прочий [remote rejected] (с заголовком Authorization и чужим токеном)', noisyRejected('dev'), PUSH_REFUSAL.remote, 'protected branch hook declined'],
+  ['не отказ (сеть, аутентификация)', NETWORK, PUSH_REFUSAL.unknown, ''],
+]) {
+  test(`#730 _beta-derived.yml на настоящем bash: ${label} — не «dev ушёл вперёд», причина и ответ git без токена в журнале и сводке`, (t) => {
+    if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+    const box = derivedSandbox(t);
+    const before = git(box.origin, 'rev-parse', 'dev');
+    box.refuse(1, stderr);
+    const r = runDerived(box);
+    assert.equal(r.status, 1, r.stderr + r.stdout);
+    assert.equal(r.pushes, 1);
+    assert.doesNotMatch(r.stdout, /dev ушёл вперёд/, 'отказ GitHub — не сдвиг dev');
+    assert.match(r.stdout, new RegExp(`::error::push производных артефактов в dev отклонён \\(${kind}\\) — это не сдвиг dev, перезапуск не поможет`));
+    assert.match(r.stderr, new RegExp(`git push отклонён — ${kind}`), 'ответ git — в журнале');
+    assert.match(r.summary, new RegExp(`^### git push в \`dev\` отклонён: ${kind} \\(#723\\)$`, 'm'));
+    assert.match(r.summary, /Коммит производных артефактов беты не опубликован в `dev`/);
+    if (reason) {
+      assert.ok(r.summary.includes(`Причина, которую назвал GitHub: «${reason}»`), r.summary);
+      assert.ok(r.stderr.includes(reason));
+    }
+    assert.match(r.summary, /Ответ git:\n\n```\n[\s\S]+\n```\n$/);
+    assert.doesNotMatch(r.summary, /Производные артефакты v1/, 'успеха в сводке нет');
+    noisySecretsGone(r);
+    assert.equal(git(box.origin, 'rev-parse', 'dev'), before, 'dev не тронут');
+  });
+}
+
 // ---------- AC3 и разбор: тексты — из кода, не из run ----------
 
 test('#723 AC3: в run обоих шагов нет многострочного текста и heredoc; отказ разбирает код слияния', () => {
@@ -373,6 +548,35 @@ test('#723 AC3: в run обоих шагов нет многострочного
   // Блок run не обрезан: последняя строка каждого шага на месте.
   assert.match(RELEASE_STEP(), /echo "::error::документ ревью не опубликован в dev за три попытки"\nexit 1\n*$/);
   assert.match(REVIEW_DOC_STEP(), /echo "документ опубликован в \$target: \$doc"\n*$/);
+});
+
+test('#730 AC3: тела _ship-review.yml и _beta-derived.yml — без heredoc, разбор кодом слияния из dev, сводку пишет код', () => {
+  const read = (name) => readFileSync(join(WORKFLOWS, name), 'utf8');
+  for (const [label, body] of [['_ship-review.yml', SHIP_STEP()], ['_beta-derived.yml', DERIVED_STEP()]]) {
+    assert.doesNotMatch(body, /<<-?\s*['"]?[A-Za-z_]/, `${label}: heredoc в run`);
+    assert.ok(body.includes('kind=$(node scripts/merge-candidate.mjs'), `${label}: разбор — merge-candidate.mjs --push-refusal`);
+    assert.match(body, /--push-refusal="\$push_err"[^\n]*\\\n[^\n]*--summary="\$GITHUB_STEP_SUMMARY"\) \|\| kind=unknown/, `${label}: сводку пишет код`);
+    assert.match(body, /HEAD:dev 2> "\$push_err"; then/, `${label}: stderr push идёт в разбор`);
+  }
+  // Разбор — из dev: job берёт dev, публикация ship ещё и сбрасывается на
+  // origin/dev перед каждой попыткой, до разбора её отказа.
+  const job = (text, name) => text.slice(text.indexOf(`\n  ${name}:`));
+  assert.match(job(read('_ship-review.yml'), 'publish'), /actions\/checkout@[^\n]+\n\s+with:\n\s+fetch-depth: 0\n\s+ref: dev\n/);
+  assert.match(job(read('_beta-derived.yml'), 'accept'), /actions\/checkout@[^\n]+\n\s+with:\n\s+ref: dev\n/);
+  const ship = SHIP_STEP();
+  const loop = ship.slice(ship.indexOf('for attempt in 1 2 3; do'));
+  assert.ok(loop.indexOf('git reset -q --hard origin/dev') >= 0
+    && loop.indexOf('git reset -q --hard origin/dev') < loop.indexOf('kind=$(node scripts/merge-candidate.mjs'));
+  // Блок run не обрезан: последняя строка каждого шага на месте.
+  assert.match(ship, /echo "::error::документ ревью не опубликован в dev за три попытки"\nexit 1\n*$/);
+  assert.match(DERIVED_STEP(), /в dev — проверить перед кандидатом беты\." >> "\$GITHUB_STEP_SUMMARY"\n*$/);
+});
+
+test('#730: подписи сводки для публикации ship, производных артефактов и стража ребейза', () => {
+  const refusal = classifyPushRefusal(remoteRejected('dev', 'protected branch hook declined'));
+  assert.match(refusalSummary(refusal, { ref: 'dev', stage: 'ship-review' }), /\n\nДокумент пакетного ревью ship не опубликован в `dev`\./);
+  assert.match(refusalSummary(refusal, { ref: 'dev', stage: 'beta-derived' }), /\n\nКоммит производных артефактов беты не опубликован в `dev`\./);
+  assert.match(refusalSummary(refusal, { ref: 'issue/9-fix', stage: 'rebase' }), /\n\nРебейз ветки на dev не опубликован в `issue\/9-fix`\./);
 });
 
 test('#723 AC2: сводка об отказе — без токена, URL с учётными данными и Authorization; причина и файлы названы', () => {

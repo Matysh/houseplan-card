@@ -308,6 +308,9 @@ jobs:
           high=$(jq -r '.high' "$dir/result.json")
           medium=$(jq -r '.medium' "$dir/result.json")
           low=$(jq -r '.low' "$dir/result.json")
+          # Сообщение коммита — построчно в файл, без heredoc в `run:` (#730, как #723).
+          msg="$RUNNER_TEMP/ship-review-commit.txt"
+          push_err="$RUNNER_TEMP/ship-review-push.stderr"
           for attempt in 1 2 3; do
             git fetch -q origin dev
             git reset -q --hard origin/dev
@@ -328,23 +331,36 @@ jobs:
             node scripts/reviews-index.mjs --dir=docs/reviews --strict
             git add -- "$DOC" docs/reviews/INDEX.md
             git diff --cached --name-only | node scripts/review-doc-guard.mjs
+            {
+              echo "docs: ship review for $TAG"
+              echo ""
+              echo "Пакетное ревью задач track:ship перед бетой (PROCESS.md §11.7)."
+              echo "Задачи: $ISSUES. Итог: High $high · Medium $medium · Low $low."
+              echo ""
+              echo "Issue: #696"
+              echo "User-Visible: no"
+            } > "$msg"
             git -c user.name="claude[bot]" \
                 -c user.email="209825114+claude[bot]@users.noreply.github.com" \
-                commit -q -F - <<MSG
-          docs: ship review for $TAG
-
-          Пакетное ревью задач track:ship перед бетой (PROCESS.md §11.7).
-          Задачи: $ISSUES. Итог: High $high · Medium $medium · Low $low.
-
-          Issue: #696
-          User-Visible: no
-          MSG
+                commit -q -F "$msg"
             git diff --name-only "origin/dev...HEAD" | node scripts/review-doc-guard.mjs
-            if git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev; then
+            if git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev 2> "$push_err"; then
               echo "### Пакетное ревью ship $TAG" >> "$GITHUB_STEP_SUMMARY"
               echo "Задачи $ISSUES · High $high · Medium $medium · Low $low — \`$DOC\` в dev." >> "$GITHUB_STEP_SUMMARY"
               echo "::notice::$DOC опубликован: High $high · Medium $medium · Low $low"
               exit 0
+            fi
+            # #730: сдвигом dev считается только устаревший lease — отказ
+            # разбирает код слияния (merge-candidate.mjs --push-refusal, #705),
+            # как у ревью релиза (#723). Скрипт — из dev: рабочая копия только что
+            # сброшена на origin/dev. Отказ GitHub (право на workflow, правило
+            # ветки, хук) повтор не лечит: шаг останавливается, причина и ответ
+            # git без токена — в журнале и в сводке шага.
+            kind=$(node scripts/merge-candidate.mjs --push-refusal="$push_err" --ref=dev \
+              --stage=ship-review --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
+            if [ "$kind" != "stale" ]; then
+              echo "::error::push $DOC в dev отклонён ($kind) — это не сдвиг dev, повтор не поможет; причина и ответ git — выше и в сводке шага"
+              exit 1
             fi
             echo "::warning::dev ушёл вперёд — попытка $attempt из 3, документ собирается заново"
             sleep $((attempt * 10))
