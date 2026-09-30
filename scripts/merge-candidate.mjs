@@ -20,7 +20,7 @@
 // случаев §8.4 была юнит-тестом, а не верой в shell.
 
 import { spawnSync } from 'node:child_process';
-import { appendFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { isMainModule } from './spawn-portable.mjs';
 import { fileURLToPath } from 'node:url';
 import {
@@ -41,6 +41,103 @@ export const PATCH_ID_EXCLUDES = Object.freeze([
 export const VALIDATE_APPEAR_MS = 3 * 60 * 1000;
 export const VALIDATE_TOTAL_MS = 45 * 60 * 1000;
 
+// ---------------------------------------------------------------------------
+// Разбор отказа push (#705).
+//
+// До #705 любой отказ, где встречалось слово `rejected`, считался устаревшим
+// lease: `! [remote rejected]` — отказ самого GitHub, например коммиту,
+// меняющему `.github/workflows/`, от токена без права на workflow, —
+// превращался в «ветка изменилась после проверенного материала (#312)», а
+// stderr не печатался (#700: runs 36484993494, 36487044060). Исходов три:
+// lease устарел (прежнее поведение), отказ по праву на workflow, прочий отказ
+// GitHub. Всё, что не отказ (сеть, аутентификация), — по-прежнему сбой шага.
+
+export const PUSH_REFUSAL = Object.freeze({
+  stale: 'stale', workflow: 'workflow', remote: 'remote-rejected', unknown: 'unknown',
+});
+
+/**
+ * Тексты GitHub, которые он кладёт в причину `! [remote rejected] … (…)`:
+ * - classic и fine-grained PAT: `refusing to allow a Personal Access Token to create or update workflow `.github/workflows/x.yml` without `workflow` scope`;
+ * - OAuth App (GCM, gh): `refusing to allow an OAuth App to create or update workflow `…` without `workflow` scope`;
+ * - GitHub App и GITHUB_TOKEN: `refusing to allow a GitHub App to create or update workflow `…` without `workflows` permission`;
+ * - прежние формы: `refusing to allow a bot to create or update workflow `…``,
+ *   `refusing to allow an integration to create or update .github/workflows/x.yml`.
+ */
+const WORKFLOW_REFUSAL = /refusing to allow an? [^\n()]*? to create or update (?:workflow\b|[`'"]?\.github\/workflows\/)/i;
+const WORKFLOW_FILE = /\.github\/workflows\/[^\s`'"()]+/g;
+const REMOTE_REJECTED = /^\s*!\s*\[remote rejected\][^\n]*$/im;
+const LOCAL_REJECTED = /^\s*!\s*\[rejected\][^\n]*$/im;
+/**
+ * Гонка lease на стороне сервера: ссылка сдвинулась между объявлением и
+ * записью. По смыслу — тот же устаревший lease, что `(stale info)`.
+ */
+const SERVER_LEASE_RACE = /cannot lock ref [^\n]*but expected|incorrect old value provided/i;
+/** Сколько ответа git везти в комментарий и журнал. */
+export const PUSH_STDERR_LIMIT = 1500;
+
+/**
+ * Вырезает учётные данные из текста, который уходит в журнал или в issue:
+ * userinfo в URL (`https://x-access-token:…@`), токены GitHub (`ghp_`, `gho_`,
+ * `ghu_`, `ghs_`, `ghr_`, `github_pat_`), заголовок Authorization и, если
+ * известны, сами значения секретов.
+ */
+export function redactSecrets(text, secrets = []) {
+  let out = String(text ?? '');
+  for (const secret of secrets) {
+    if (secret && String(secret).length >= 4) out = out.split(String(secret)).join('***');
+  }
+  return out
+    .replace(/\b([a-z][a-z0-9+.-]*:\/\/)[^\s/@]+@/gi, '$1***@')
+    .replace(/(?<![A-Za-z0-9])(?:gh[pousr]_[A-Za-z0-9]{8,}|github_pat_[A-Za-z0-9_]{8,})/g, '***')
+    .replace(/(authorization:\s*(?:basic|bearer|token)\s+)\S+/gi, '$1***');
+}
+
+/**
+ * Исход отказа push по stderr git. `stderr` результата — уже без секретов и
+ * не длиннее PUSH_STDERR_LIMIT: его печатают в журнал и в комментарий.
+ *
+ * @returns {{ kind: 'stale'|'workflow'|'remote-rejected'|'unknown', reason: string, files: string[], stderr: string }}
+ */
+export function classifyPushRefusal(stderr, { secrets = [] } = {}) {
+  const text = redactSecrets(stderr, secrets).trim();
+  const clipped = text.length > PUSH_STDERR_LIMIT ? `${text.slice(0, PUSH_STDERR_LIMIT)}\n…` : text;
+  const reasonOf = (line) => (line.match(/\(([^\n]*)\)\s*$/) || [])[1] || '';
+  const out = (kind, reason = '', files = []) => ({ kind, reason, files, stderr: clipped });
+  if (WORKFLOW_REFUSAL.test(text)) {
+    const line = text.split('\n').find((l) => WORKFLOW_REFUSAL.test(l)) || '';
+    return out(PUSH_REFUSAL.workflow, reasonOf(line) || line.trim(), [...new Set(text.match(WORKFLOW_FILE) || [])]);
+  }
+  const remote = text.match(REMOTE_REJECTED);
+  if (remote) {
+    const reason = reasonOf(remote[0]);
+    return out(SERVER_LEASE_RACE.test(reason) ? PUSH_REFUSAL.stale : PUSH_REFUSAL.remote, reason);
+  }
+  // Отказ самого git по lease: `(stale info)`, `(fetch first)`, `(non-fast-forward)`.
+  const local = text.match(LOCAL_REJECTED);
+  if (local) return out(PUSH_REFUSAL.stale, reasonOf(local[0]));
+  if (/\((?:stale info|fetch first)\)/i.test(text)) return out(PUSH_REFUSAL.stale, 'stale info');
+  return out(PUSH_REFUSAL.unknown);
+}
+
+/** Отказ GitHub, который шаг слияния превращает в свой исход, а не в сбой. */
+export class PushRefusal extends Error {
+  constructor(ref, refusal, sha = '') {
+    super(`git push ${ref}: ${refusal.kind}${refusal.reason ? ` (${refusal.reason})` : ''}`);
+    this.name = 'PushRefusal';
+    this.ref = ref;
+    this.sha = sha;
+    this.refusal = refusal;
+  }
+}
+
+/** Ответ GitHub в комментарии: уже без секретов, в блоке кода. */
+function refusalExcerpt(ctx) {
+  const stderr = String(ctx.refusal?.stderr || '').replace(/```/g, "'''");
+  return (stderr ? `Ответ GitHub:\n\n\`\`\`\n${stderr}\n\`\`\`` : 'GitHub не прислал текста отказа.')
+    + (ctx.pipelineUrl ? `\n\n[Прогон конвейера](${ctx.pipelineUrl}).` : '');
+}
+
 /**
  * Чистое решение по состоянию одной попытки. Возвращает действие и, где
  * применимо, статусную метку, к которой ведёт это действие.
@@ -52,10 +149,15 @@ export const VALIDATE_TOTAL_MS = 45 * 60 * 1000;
  * @param {boolean} s.patchIdEqual   дифф после ребейза совпадает с проверенным
  * @param {'green'|'failed'|'missing'|'pending'|'cancelled'|'stale'|null} s.validate результат общего CI proof
  * @param {boolean} s.leaseRejected  push в dev отклонён: dev двинулся снова
+ * @param {'workflow'|'remote-rejected'|null} s.refused  push отклонил сам GitHub (#705)
  * @param {number}  s.attempt        номер попытки, с 1
  */
 export function decideMerge(s) {
   if (!s.fresh) return { action: 'reject-stale', to: 'S6-in-progress' };
+  // #705: отказ GitHub — не устаревший lease. Ветку никто не двигал, и
+  // «ветка изменилась после материала» (#312) была бы неправдой.
+  if (s.refused === PUSH_REFUSAL.workflow) return { action: 'push-refused-workflow', to: 'S6-in-progress' };
+  if (s.refused) return { action: 'push-refused', to: 'S6-in-progress' };
   if (s.conflict) return { action: 'conflict', to: 'S6-in-progress' };
   if (!s.devMoved) {
     if (s.leaseRejected) return { action: 'retry' };
@@ -97,6 +199,26 @@ export function commentFor(action, ctx) {
     case 'give-up':
       return `**\`dev\` движется быстрее слияния: ${ctx.attempt} попытки собрать и проверить кандидата, каждый раз \`dev\` уходил до push (#492).**\n\n`
         + `Последний проверенный кандидат \`${short(ctx.candidate)}\` опубликован в ветку. Задача в \`S6-in-progress\`; вернуть \`S7-code-review\`, когда \`dev\` успокоится.`;
+    case 'push-refused-workflow': {
+      const rebase = ctx.stage === 'rebase';
+      const files = (ctx.refusal?.files || []).map((f) => `\`${f}\``).join(', ');
+      return `**${rebase ? 'Ревью не запускалось' : 'Слияние не выполнено'}: кандидат меняет workflow-файл, токен конвейера не может его опубликовать: ребейз и push делает автор, либо владелец выдаёт право (#705).**\n\n`
+        + `GitHub отклонил push \`${short(ctx.candidate)}\` в \`${ctx.ref || ctx.branch}\`${files ? ` (${files})` : ''}: без права на workflow он не принимает коммит, который создаёт или меняет файл в \`.github/workflows/\`, если точно такого файла нет в другой ветке. `
+        + `Это отказ GitHub по праву токена, а не расхождение ветки с проверенным материалом (#312).\n\n`
+        + (rebase
+          ? 'Код никто не читал, вердикта нет, цикл ревью не израсходован. '
+          : 'Код-ревью зелёное — вердикт в силе, переделывать работу не нужно. ')
+        + `Задача переведена в \`S6-in-progress\`. Дальше — одно из двух:\n\n`
+        + `1. ребейз и push делает автор: \`git fetch origin\`, \`git rebase origin/dev\` в ветке \`${ctx.branch}\`, push своими учётными данными с правом на workflow; затем вернуть \`S7-code-review\`;\n`
+        + `2. либо владелец выдаёт токену конвейера \`HP_PROCESS_TOKEN\` право на workflow (classic PAT — scope \`workflow\`, fine-grained — Workflows: read and write) и возвращает \`S7-code-review\`.\n\n`
+        + refusalExcerpt(ctx);
+    }
+    case 'push-refused':
+      return `**${ctx.stage === 'rebase' ? 'Ревью не запускалось' : 'Слияние не выполнено'}: GitHub отклонил push в \`${ctx.ref || ctx.branch}\` (#705).**\n\n`
+        + `Причина, которую назвал GitHub: ${ctx.refusal?.reason ? `\`${ctx.refusal.reason}\`` : 'не указана'}. Это отказ самого GitHub (правило ветки, хук, сбой сервера), а не ветка, изменившаяся после проверенного материала (#312). `
+        + (ctx.stage === 'rebase' ? 'Код никто не читал, цикл ревью не израсходован. ' : 'Вердикт ревью в силе. ')
+        + `Задача в \`S6-in-progress\`; устранить причину и вернуть \`S7-code-review\`.\n\n`
+        + refusalExcerpt(ctx);
     case 'push':
     case 'fast-forward':
       return `материал \`${short(ctx.material)}\` · dev@\`${short(ctx.devNow)}\` → кандидат \`${short(ctx.candidate)}\``
@@ -139,10 +261,17 @@ export function realOps({
   candidateTree = (sha) => githubCandidateTree({ repo, sha, token }),
   proofContext = (run) => loadGithubProofContext({ repo, run, token }),
   mutants = true,
+  log = (line) => console.log(line),
 }) {
   const pushUrl = `https://x-access-token:${token}@github.com/${repo}`;
   const git = (...args) => exec('git', args);
   const must = (r, what) => { if (r.status !== 0) throw new Error(`${what}: ${r.stderr || r.stdout}`); return r.stdout; };
+  // #705: ответ git на отказ — в журнал, без токена и URL с учётными данными.
+  const refusedPush = (ref, stderr) => {
+    const refusal = classifyPushRefusal(stderr, { secrets: [token] });
+    log(`git push ${ref} отклонён — ${refusal.kind}${refusal.reason ? ` (${refusal.reason})` : ''}:\n${refusal.stderr || '(stderr пуст)'}`);
+    return refusal;
+  };
   return {
     fetch: (...refs) => must(git('fetch', '-q', 'origin', ...refs), 'git fetch'),
     revParse: (ref) => must(git('rev-parse', ref), `rev-parse ${ref}`),
@@ -190,17 +319,24 @@ export function realOps({
     },
     // #702: ветка задачи удаляется после слияния — только если её вершина всё
     // ещё та, что влита (lease): коммит, прилетевший после, не теряется.
+    // #705: отказ GitHub вершину ветки не доказывает — только устаревший lease
+    // оставляет ветку «сдвинутой»; прочее уходит в журнал ошибкой удаления.
     deleteBranch: (ref, expected) => {
       const r = git('push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, pushUrl, `:refs/heads/${ref}`);
       if (r.status === 0) return true;
-      if (/stale info|rejected|fetch first|lease/i.test(r.stderr)) return false;
-      throw new Error(`git push :${ref}: ${r.stderr}`);
+      const refusal = refusedPush(`:${ref}`, r.stderr);
+      if (refusal.kind === PUSH_REFUSAL.stale) return false;
+      throw new Error(`git push :${ref}: ${refusal.kind}\n${refusal.stderr}`);
     },
+    // true — ушло; false — lease устарел (прежний исход); отказ GitHub —
+    // PushRefusal со своим исходом (#705); прочий сбой — ошибка шага.
     pushWithLease: (sha, ref, expected) => {
       const r = git('push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, pushUrl, `${sha}:refs/heads/${ref}`);
       if (r.status === 0) return true;
-      if (/stale info|rejected|fetch first|lease/i.test(r.stderr)) return false;
-      throw new Error(`git push ${ref}: ${r.stderr}`);
+      const refusal = refusedPush(ref, r.stderr);
+      if (refusal.kind === PUSH_REFUSAL.stale) return false;
+      if (refusal.kind === PUSH_REFUSAL.unknown) throw new Error(`git push ${ref}: ${refusal.stderr}`);
+      throw new PushRefusal(ref, refusal, sha);
     },
     // Мутанты по диффу бегут только по запросу (#510): кандидат после ребейза —
     // новое дерево, поэтому слияние запускает Validate с мутантами само и ждёт
@@ -245,14 +381,34 @@ export function realOps({
       const r = spawnSync('gh', ['issue', 'comment', String(issue), '--repo', repo, '--body-file', '-'], { input: body, encoding: 'utf8' });
       if (r.status !== 0) throw new Error(`gh issue comment: ${r.stderr}`);
     },
-    log: (line) => console.log(line),
+    log,
   };
 }
 
 /**
  * Слияние по алгоритму §4.2. Возвращает { merged, to, action, candidate }.
+ *
+ * #705: push, отклонённый самим GitHub (право на workflow, правило ветки), —
+ * свой исход с комментарием и `S6-in-progress`, а не «ветка изменилась» (#312)
+ * и не сбой шага. Устаревший lease по-прежнему решает `decideMerge` внутри попыток.
  */
-export async function mergeCandidate({ branch, material, issue, ops, maxAttempts = MAX_ATTEMPTS, mutants = true }) {
+export async function mergeCandidate(args) {
+  try {
+    return await mergeAttempts(args);
+  } catch (error) {
+    const refusal = error && error.refusal;
+    if (!refusal || refusal.kind === PUSH_REFUSAL.stale || refusal.kind === PUSH_REFUSAL.unknown) throw error;
+    const { branch, material, issue, ops, pipelineUrl } = args;
+    const decision = decideMerge({ fresh: true, refused: refusal.kind });
+    ops.comment(issue, commentFor(decision.action, {
+      branch, material, issue, ref: error.ref, candidate: error.sha, refusal, stage: 'merge', pipelineUrl,
+    }));
+    ops.log(`решение: ${decision.action} → ${decision.to}`);
+    return { merged: false, to: decision.to, action: decision.action, candidate: error.sha || material };
+  }
+}
+
+async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_ATTEMPTS, mutants = true }) {
   ops.fetch('dev', branch);
   const actual = ops.revParse(`origin/${branch}`);
   const reviewedFresh = actual === material
@@ -345,7 +501,37 @@ const safe = (fn) => { try { return fn(); } catch { return null; } };
 
 const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
 
-if (isMainModule(import.meta.url)) { // #496: переносимо для Windows
+/**
+ * #705: отказ push для шага workflow — стража ребейза в `_process.yml`. Тот же
+ * разбор, что у слияния: исход, ответ git без секретов и, для отказа GitHub,
+ * текст комментария в issue.
+ */
+export function describePushRefusal(stderr, { ref, branch, candidate, stage = 'rebase', pipelineUrl, secrets = [] } = {}) {
+  const refusal = classifyPushRefusal(stderr, { secrets });
+  const action = refusal.kind === PUSH_REFUSAL.workflow ? 'push-refused-workflow'
+    : refusal.kind === PUSH_REFUSAL.remote ? 'push-refused' : '';
+  const comment = action ? commentFor(action, { ref, branch, candidate, refusal, stage, pipelineUrl }) : '';
+  return { refusal, comment };
+}
+
+/**
+ * `--push-refusal=<файл со stderr git push>`: в stdout — одно слово исхода
+ * (`stale`, `workflow`, `remote-rejected`, `unknown`), в stderr — ответ git
+ * без секретов (журнал), с `--comment=<файл>` — комментарий для issue.
+ */
+function pushRefusalMain() {
+  const secrets = [process.env.TOKEN, process.env.HP_PROCESS_TOKEN, process.env.GH_TOKEN].filter(Boolean);
+  const { refusal, comment } = describePushRefusal(readFileSync(arg('push-refusal'), 'utf8'), {
+    ref: arg('ref') || arg('branch'), branch: arg('branch'), candidate: arg('candidate'),
+    stage: arg('stage') || 'rebase', pipelineUrl: arg('run-url'), secrets,
+  });
+  console.error(`git push отклонён — ${refusal.kind}${refusal.reason ? ` (${refusal.reason})` : ''}:\n${refusal.stderr || '(stderr пуст)'}`);
+  if (arg('comment') && comment) writeFileSync(arg('comment'), `${comment}\n`);
+  process.stdout.write(`${refusal.kind}\n`);
+}
+
+if (isMainModule(import.meta.url) && arg('push-refusal')) pushRefusalMain();
+else if (isMainModule(import.meta.url)) { // #496: переносимо для Windows
   const branch = arg('branch');
   const material = arg('material');
   const issue = arg('issue');
@@ -358,16 +544,19 @@ if (isMainModule(import.meta.url)) { // #496: переносимо для Window
   // #696: `--mutants=false` — треки show/ship сливаются по лёгкому Validate.
   const mutants = arg('mutants') !== 'false';
   const ops = realOps({ repo, token, issue, mutants });
-  mergeCandidate({ branch, material, issue, ops, mutants }).then((r) => {
+  const pipelineUrl = process.env.GITHUB_RUN_ID
+    ? `${process.env.GITHUB_SERVER_URL || 'https://github.com'}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}` : '';
+  mergeCandidate({ branch, material, issue, ops, mutants, pipelineUrl }).then((r) => {
     const out = `merged=${r.merged}\nto=${r.to || ''}\naction=${r.action}\ncandidate=${r.candidate}\n`;
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, out);
     process.stdout.write(out);
   }, (err) => {
     // Инвариант конвейера: после прогона метка меняется всегда. Сбой самого
     // слияния — не повод оставить задачу висеть в S7: S6 и внятный комментарий.
-    console.error(err);
+    // #705: текст сбоя уходит в issue — без токена и URL с учётными данными.
+    console.error(redactSecrets(err && err.stack || err, [token]));
     try {
-      ops.comment(issue, `**Слияние не выполнено: сбой шага слияния (#492).**\n\n\`\`\`\n${String(err && err.message || err).slice(0, 1500)}\n\`\`\`\n\nВердикт ревью в силе. Задача в \`S6-in-progress\`; после разбора сбоя вернуть \`S7-code-review\`.`);
+      ops.comment(issue, `**Слияние не выполнено: сбой шага слияния (#492).**\n\n\`\`\`\n${redactSecrets(String(err && err.message || err), [token]).slice(0, 1500)}\n\`\`\`\n\nВердикт ревью в силе. Задача в \`S6-in-progress\`; после разбора сбоя вернуть \`S7-code-review\`.`);
     } catch (e) { console.error(e); }
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, 'merged=false\nto=S6-in-progress\naction=error\n');
     process.exit(0);

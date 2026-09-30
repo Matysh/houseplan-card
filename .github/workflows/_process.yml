@@ -560,11 +560,37 @@ jobs:
           # fetch и push автор мог запушить коммит, и слепой --force потерял бы
           # его молча. Расхождение lease — падение прогона, а не предупреждение:
           # ревью пошло бы по коду, которого на ветке уже нет.
+          #
+          # #705: отказ разбирает тот же код, что у слияния кандидата
+          # (merge-candidate.mjs --push-refusal): ответ git — в журнал без
+          # токена, исход — одним словом. Отказ GitHub по праву на workflow —
+          # не сдвинутая ветка: задача возвращается автору без ревью с
+          # комментарием, как при конфликте. Прочий отказ GitHub — ошибка
+          # прогона со своей причиной.
+          push_err="$RUNNER_TEMP/rebase-push.stderr"
           if ! git push -q --force-with-lease="refs/heads/$BRANCH:$before" \
                "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
-               "HEAD:refs/heads/$BRANCH"; then
-            echo "::error::ветка $BRANCH изменилась во время ребейза — прогон прерван, чтобы не потерять коммит автора"
-            exit 1
+               "HEAD:refs/heads/$BRANCH" 2> "$push_err"; then
+            refusal="$RUNNER_TEMP/push-refusal.md"
+            kind=$(node "$tools/scripts/merge-candidate.mjs" --push-refusal="$push_err" \
+              --branch="$BRANCH" --candidate="$(git rev-parse HEAD)" --stage=rebase \
+              --run-url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              --comment="$refusal") || kind=unknown
+            case "$kind" in
+              stale)
+                echo "::error::ветка $BRANCH изменилась во время ребейза — прогон прерван, чтобы не потерять коммит автора"
+                exit 1
+                ;;
+              workflow)
+                { echo 'refused=workflow'; echo "refusal_comment=$refusal"; } >> "$GITHUB_OUTPUT"
+                echo "::warning::GitHub не принял push ребейза $BRANCH: кандидат меняет workflow-файл, у токена конвейера нет права на workflow — ревью не запускается"
+                exit 0
+                ;;
+              *)
+                echo "::error::GitHub отклонил push ребейза $BRANCH ($kind) — это не изменение ветки автором; ответ git выше"
+                exit 1
+                ;;
+            esac
           fi
           # #539: ссылка на стороне GitHub доезжает не мгновенно, а гейт ниже
           # просит `workflow_dispatch` ПО ИМЕНИ ВЕТКИ — SHA туда передать
@@ -598,7 +624,7 @@ jobs:
       # это заметить и отказаться, а не молча увезти в dev непроверенный код.
       - name: Зафиксировать SHA материала ревью
         id: material
-        if: steps.rebase.outputs.conflict != 'true'
+        if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == ''
         env:
           NUM: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
@@ -651,7 +677,7 @@ jobs:
       # теле issue, которого в дереве нет.
       - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"
         id: reuse
-        if: steps.rebase.outputs.conflict != 'true' && needs.guard.outputs.stage == 'code'
+        if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == '' && needs.guard.outputs.stage == 'code'
         env:
           NUM: ${{ github.event.issue.number }}
           # Правка ТЗ между раундами обязана отменять повторное применение
@@ -702,6 +728,23 @@ jobs:
             --add-label S6-in-progress --remove-label S7-code-review
           echo "S7-code-review -> S6-in-progress (ревью не запускалось)"
 
+      # #705: GitHub не принял push приведённой ветки — кандидат меняет
+      # workflow-файл, а у токена конвейера нет права на workflow. Ветку никто
+      # не двигал, и ревью по неопубликованному ребейзу шло бы по коду, которого
+      # на ветке нет. Возврат автору без ревью, как при конфликте: цикл не
+      # израсходован, метка меняется. Текст комментария собрал разбор отказа.
+      - name: "Push ребейза отклонён по праву на workflow — вернуть автору без ревью (#705)"
+        if: steps.rebase.outputs.refused == 'workflow'
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          COMMENT: ${{ steps.rebase.outputs.refusal_comment }}
+        run: |
+          gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file "$COMMENT"
+          gh issue edit "$NUM" --repo "${{ github.repository }}" \
+            --add-label S6-in-progress --remove-label S7-code-review
+          echo "S7-code-review -> S6-in-progress (ревью не запускалось: push отклонён по праву на workflow)"
+
       # До ревью конвейер запускает Validate на материале и ждёт его — всегда
       # лёгкий: мутантов в разработке нет (#709), весь реестр — ночью. Лёгкому годится и
       # завершённый push-прогон на том же SHA: dispatch повторил бы его. Красный или
@@ -712,7 +755,7 @@ jobs:
       # слияние само дожидается Validate на кандидате.
       - name: Validate на материале
         id: gate
-        if: steps.rebase.outputs.conflict != 'true'
+        if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == ''
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           STAGE: ${{ needs.guard.outputs.stage }}

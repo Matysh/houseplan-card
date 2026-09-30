@@ -364,3 +364,113 @@ test('#698: patch-id кандидата не видит того, что реб�
   assert.match(attrs, /^docs\/CHANGELOG\.md merge=union$/m);
   assert.match(attrs, /^docs\/CHANGELOG\.ru\.md merge=union$/m);
 });
+
+// ---------- #705: отказ push стража ребейза разбирает код слияния ----------
+//
+// Прежде любой ненулевой push приведённой ветки печатал «ветка изменилась во
+// время ребейза», хотя GitHub мог отказать сам — например, коммиту, меняющему
+// `.github/workflows/`, от токена без права на workflow (#700). Шаг исполняется
+// как есть, на настоящем bash; git подменён: push отвечает заданным stderr.
+
+const FAKE_TOKEN_705 = 'ghs_' + 'Z9y8X7w6V5u4T3s2R1q0P9o8N7m6L5k4J3i2';
+const refusalStderr = (reason) => `To https://github.com/o/r\n ! [remote rejected] HEAD -> issue/9-fix (${reason})\n`
+  + `error: failed to push some refs to 'https://x-access-token:${FAKE_TOKEN_705}@github.com/o/r'\n`;
+
+function runStepPush(pushStderr) {
+  const step = rebaseStep();
+  const body = step.slice(step.indexOf('        run: |\n') + '        run: |\n'.length)
+    .split('\n').map((line) => line.replace(/^ {10}/, '')).join('\n');
+  const from = body.indexOf('push_err="$RUNNER_TEMP/rebase-push.stderr"');
+  const to = body.indexOf('# #539: ссылка на стороне GitHub');
+  assert.ok(from >= 0 && to > from, 'push-часть шага найдена');
+  const context = { repository: 'o/r', server_url: 'https://github.com', run_id: '42' };
+  const block = body.slice(from, to).replace(/\$\{\{ github\.(\w+) \}\}/g, (_, key) => context[key]);
+  const temp = mkdtempSync(join(tmpdir(), 'hp-runner-705-'));
+  try {
+    const bin = join(temp, 'bin');
+    mkdirSync(bin);
+    writeFileSync(join(bin, 'git'), [
+      '#!/bin/sh',
+      'case "$1" in',
+      '  push) cat "$FAKE_PUSH_STDERR" >&2; exit 1 ;;',
+      `  rev-parse) echo ${'c'.repeat(40)}; exit 0 ;;`,
+      'esac',
+      'echo "unexpected git $*" >&2; exit 97',
+      '',
+    ].join('\n'), { mode: 0o755 });
+    writeFileSync(join(temp, 'push.stderr'), pushStderr);
+    const output = join(temp, 'output');
+    writeFileSync(output, '');
+    const script = `tools=${JSON.stringify(resolve(SCRIPTS, '..'))}\nbefore=${'b'.repeat(40)}\n${block}\necho PUSHED\n`;
+    const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
+      encoding: 'utf8',
+      env: {
+        ...ENV, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, GITHUB_OUTPUT: output,
+        BRANCH: 'issue/9-fix', NUM: '9', TOKEN: FAKE_TOKEN_705, FAKE_PUSH_STDERR: join(temp, 'push.stderr'),
+      },
+    });
+    const commentPath = join(temp, 'push-refusal.md');
+    return {
+      status: r.status, stdout: r.stdout, stderr: r.stderr,
+      output: readFileSync(output, 'utf8').replaceAll(temp, '$RUNNER_TEMP'),
+      comment: existsSync(commentPath) ? readFileSync(commentPath, 'utf8') : null,
+    };
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+}
+
+test('#705 process.yml: push ребейза отклонён по праву на workflow — refused=workflow, комментарий готов, ревью не идёт', (t) => {
+  if (!hasBash()) { t.skip('bash/tar недоступны'); return; }
+  const r = runStepPush(refusalStderr('refusing to allow a Personal Access Token to create or update workflow `.github/workflows/validate.yml` without `workflow` scope'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.doesNotMatch(r.stdout, /PUSHED/, 'шаг закончился на отказе');
+  assert.equal(r.output, 'refused=workflow\nrefusal_comment=$RUNNER_TEMP/push-refusal.md\n');
+  assert.match(r.stdout, /::warning::GitHub не принял push ребейза issue\/9-fix/);
+  assert.doesNotMatch(r.stdout, /изменилась во время ребейза/, 'не #312');
+  assert.match(r.comment, /^\*\*Ревью не запускалось: кандидат меняет workflow-файл, токен конвейера не может его опубликовать: ребейз и push делает автор, либо владелец выдаёт право/);
+  assert.match(r.comment, /`\.github\/workflows\/validate\.yml`/);
+  assert.match(r.comment, /\[Прогон конвейера\]\(https:\/\/github\.com\/o\/r\/actions\/runs\/42\)/);
+  assert.match(r.stderr, /refusing to allow a Personal Access Token/, 'ответ git — в журнале');
+  for (const text of [r.stdout, r.stderr, r.comment]) assert.ok(!text.includes(FAKE_TOKEN_705), 'токен вырезан');
+});
+
+test('#705 process.yml: устаревший lease — прежняя ошибка «ветка изменилась», прочий отказ GitHub — своя', (t) => {
+  if (!hasBash()) { t.skip('bash/tar недоступны'); return; }
+  const stale = runStepPush(` ! [rejected]        HEAD -> issue/9-fix (stale info)\nerror: failed to push some refs to 'https://github.com/o/r'\n`);
+  assert.equal(stale.status, 1);
+  assert.match(stale.stdout, /::error::ветка issue\/9-fix изменилась во время ребейза — прогон прерван/);
+  assert.equal(stale.output, '');
+  assert.equal(stale.comment, null);
+  assert.match(stale.stderr, /\(stale info\)/, 'ответ git — в журнале');
+
+  const hook = runStepPush(refusalStderr('protected branch hook declined'));
+  assert.equal(hook.status, 1);
+  assert.match(hook.stdout, /::error::GitHub отклонил push ребейза issue\/9-fix \(remote-rejected\) — это не изменение ветки автором/);
+  assert.doesNotMatch(hook.stdout, /изменилась во время ребейза/);
+  assert.equal(hook.output, '');
+  assert.match(hook.stderr, /protected branch hook declined/);
+  assert.ok(!hook.stderr.includes(FAKE_TOKEN_705) && !hook.stdout.includes(FAKE_TOKEN_705));
+});
+
+test('#705 process.yml: отказ по праву на workflow возвращает задачу в S6 без ревью и без Validate на неопубликованном ребейзе', () => {
+  const at = (marker) => { const i = WORKFLOW.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
+  const step = rebaseStep();
+  assert.match(step, /"HEAD:refs\/heads\/\$BRANCH" 2> "\$push_err"; then/, 'stderr push идёт в разбор, а не мимо');
+  assert.match(step, /kind=\$\(node "\$tools\/scripts\/merge-candidate\.mjs" --push-refusal="\$push_err"/, 'разбор — кодом слияния из dev');
+  const back = WORKFLOW.slice(at('      - name: "Push ребейза отклонён по праву на workflow — вернуть автору без ревью (#705)"\n'),
+    at('      - name: Validate на материале\n'));
+  assert.match(back, /if: steps\.rebase\.outputs\.refused == 'workflow'\n/);
+  assert.match(back, /--body-file "\$COMMENT"/);
+  assert.match(back, /COMMENT: \$\{\{ steps\.rebase\.outputs\.refusal_comment \}\}/);
+  assert.match(back, /--add-label S6-in-progress --remove-label S7-code-review/);
+  // материал, reuse и гейт не берут локальный ребейз, которого нет на ветке
+  for (const [name, id] of [['Зафиксировать SHA материала ревью', 'material'], ['"Зелёный вердикт прошлого захода применим без ревью (#499)"', 'reuse'], ['Validate на материале', 'gate']]) {
+    const block = WORKFLOW.slice(at(`      - name: ${name}\n`));
+    assert.match(block.slice(0, block.indexOf('\n        run:')), new RegExp(`id: ${id}\\n        if: steps\\.rebase\\.outputs\\.conflict != 'true' && steps\\.rebase\\.outputs\\.refused == ''`), id);
+  }
+});
+
+test('#705: замыкание импортов кода слияния не выходит из scripts/ — страж ребейза берёт его архивом из dev', () => {
+  for (const file of importClosure(join(SCRIPTS, 'merge-candidate.mjs'))) assert.ok(file.startsWith(SCRIPTS), `${file} вне scripts/`);
+});

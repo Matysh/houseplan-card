@@ -5544,6 +5544,20 @@ const MUTANT_DEFINITIONS = [
       replace: '    if (false && merged && extra.branchTip) { // mutant: branch kept',
     }],
   },
+  // #705: отказ push — три исхода, а не один «lease устарел».
+  {
+    id: 'push-refusal-kinds-glued',
+    guard: 'node --test --test-name-pattern="#705 AC1" test/merge-candidate.test.mjs',
+    because: '#705: a GitHub refusal (`! [remote rejected]`, e.g. a workflow file pushed by a token '
+      + 'without the workflow permission) read as a stale lease tells the author the branch moved after '
+      + 'review (#312) and hides the reason; the old /stale info|rejected|fetch first|lease/ glued them (#700)',
+    patches: [{
+      file: 'scripts/merge-candidate.mjs',
+      find: '  if (WORKFLOW_REFUSAL.test(text)) {\n',
+      replace: '  if (/stale info|rejected|fetch first|lease/i.test(text)) return out(PUSH_REFUSAL.stale); // mutant: #700 again\n'
+        + '  if (WORKFLOW_REFUSAL.test(text)) {\n',
+    }],
+  },
   {
     id: 'nightly-does-not-wait',
     guard: 'node --test --test-name-pattern="nightly ждёт запущенный Validate" test/nightly-workflow.test.mjs',

@@ -7,7 +7,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  MAX_ATTEMPTS, MAX_COMMAND_OUTPUT_BYTES, commentFor, decideMerge, mergeCandidate, realOps, sh,
+  MAX_ATTEMPTS, MAX_COMMAND_OUTPUT_BYTES, PUSH_REFUSAL, PushRefusal, classifyPushRefusal, commentFor, decideMerge,
+  describePushRefusal, mergeCandidate, realOps, redactSecrets, sh,
 } from '../scripts/merge-candidate.mjs';
 import { buildCiProof } from '../scripts/ci-proof.mjs';
 import { buildIndex } from '../scripts/reviews-index.mjs';
@@ -67,7 +68,7 @@ test('§8.4 таблица решений decideMerge', () => {
 
 test('каждый исход, меняющий метку, объясняется комментарием; успех — одной строкой', () => {
   const ctx = { material: 'a'.repeat(40), actual: 'b'.repeat(40), candidate: 'c'.repeat(40), devNow: 'd'.repeat(40), branch: 'issue/1-x', runUrl: 'https://run', attempt: 3 };
-  for (const action of ['reject-stale', 'conflict', 'rereview', 'validation-red', 'validation-missing', 'give-up']) {
+  for (const action of ['reject-stale', 'conflict', 'rereview', 'validation-red', 'validation-missing', 'give-up', 'push-refused-workflow', 'push-refused']) {
     const body = commentFor(action, ctx);
     assert.ok(body.length > 80, action);
     assert.match(body, /S6-in-progress|S7-code-review/, action);
@@ -82,7 +83,7 @@ test('каждый исход, меняющий метку, объясняетс
  * dev по порядку (следующая после каждого отклонённого lease), ответы
  * Validate — по порядку кандидатов.
  */
-function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseRejects = 0, patchIds = {}, branchTip, material, conflictOnce = false, indexStale = false, deleteOk = true }) {
+function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseRejects = 0, patchIds = {}, branchTip, material, conflictOnce = false, indexStale = false, deleteOk = true, refuse = null }) {
   const calls = [];
   let devIndex = 0;
   let validateIndex = 0;
@@ -112,6 +113,8 @@ function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseReject
     },
     pushWithLease: (sha, ref, expected) => {
       calls.push(['push', sha, ref, expected]);
+      // #705: отказ самого GitHub — так, как его бросает realOps.pushWithLease.
+      if (refuse && refuse.ref === ref) throw new PushRefusal(ref, classifyPushRefusal(refuse.stderr), sha);
       if (ref === 'dev' && rejects > 0) { rejects -= 1; devIndex += 1; return false; }
       return true;
     },
@@ -122,7 +125,7 @@ function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseReject
       validateIndex += 1;
       return { result, url: `https://run/${sha}` };
     },
-    comment: (issue, body) => { calls.push(['comment', body.split('\n')[0]]); },
+    comment: (issue, body) => { calls.push(['comment', body.split('\n')[0], body]); },
     deleteBranch: (ref, expected) => { calls.push(['delete', ref, expected]); return deleteOk; },
     log: () => {},
   };
@@ -674,4 +677,203 @@ test('#702: сдвинутая вершина — ветка остаётся, �
   const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
   assert.equal(r.merged, true);
   assert.match(ops.calls.find((c) => c[0] === 'comment')[1], /оставлена: её вершина сдвинулась после слияния/);
+});
+
+// ---------- #705: отказ push — три исхода, а не один «lease устарел» ----------
+//
+// #700 (runs 36484993494, 36487044060): GitHub не принял кандидата, менявшего
+// `.github/workflows/`, от токена без права на workflow, а слияние по слову
+// `rejected` выдало это за «ветка изменилась после материала (#312)» и не
+// напечатало stderr. Тексты отказа — дословно те, что присылает GitHub.
+
+const FAKE_TOKEN = 'ghs_' + 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8';
+const PUSH_URL = `https://x-access-token:${FAKE_TOKEN}@github.com/o/r`;
+const failedTo = `error: failed to push some refs to '${PUSH_URL}'`;
+const remoteRejected = (reason, ref = 'issue/700-x') => `To https://github.com/o/r\n ! [remote rejected] 0123abcd -> ${ref} (${reason})\n${failedTo}`;
+const WORKFLOW_REFUSALS = {
+  'classic и fine-grained PAT': 'refusing to allow a Personal Access Token to create or update workflow `.github/workflows/validate.yml` without `workflow` scope',
+  'OAuth App': 'refusing to allow an OAuth App to create or update workflow `.github/workflows/validate.yml` without `workflow` scope',
+  'GitHub App / GITHUB_TOKEN': 'refusing to allow a GitHub App to create or update workflow `.github/workflows/validate.yml` without `workflows` permission',
+  'bot (прежняя форма)': 'refusing to allow a bot to create or update workflow `.github/workflows/validate.yml`',
+  'integration (прежняя форма)': 'refusing to allow an integration to create or update .github/workflows/validate.yml',
+};
+
+test('#705 AC1: разбор отказа push различает устаревший lease, право на workflow и прочий отказ GitHub', () => {
+  // устаревший lease — прежнее поведение (#312 / новая попытка)
+  for (const reason of ['stale info', 'fetch first', 'non-fast-forward']) {
+    const r = classifyPushRefusal(`To https://github.com/o/r\n ! [rejected]        0123abcd -> dev (${reason})\n${failedTo}`);
+    assert.equal(r.kind, PUSH_REFUSAL.stale, reason);
+    assert.equal(r.reason, reason);
+  }
+  // гонка lease на стороне сервера — тоже устаревший lease, а не отказ GitHub
+  assert.equal(classifyPushRefusal(remoteRejected("cannot lock ref 'refs/heads/dev': is at 1111 but expected 2222", 'dev')).kind, PUSH_REFUSAL.stale);
+  // отказ по праву на workflow — каждый вид токена
+  for (const [who, reason] of Object.entries(WORKFLOW_REFUSALS)) {
+    const r = classifyPushRefusal(remoteRejected(reason));
+    assert.equal(r.kind, PUSH_REFUSAL.workflow, who);
+    assert.deepEqual(r.files, ['.github/workflows/validate.yml'], who);
+    assert.equal(r.reason, reason, who);
+  }
+  // прочий отказ GitHub — свой исход с причиной
+  const hook = classifyPushRefusal(`remote: error: GH006: Protected branch update failed for refs/heads/dev.\n${remoteRejected('protected branch hook declined', 'dev')}`);
+  assert.equal(hook.kind, PUSH_REFUSAL.remote);
+  assert.equal(hook.reason, 'protected branch hook declined');
+  assert.equal(classifyPushRefusal(remoteRejected('pre-receive hook declined')).kind, PUSH_REFUSAL.remote);
+  // не отказ вовсе — сбой шага, как раньше
+  assert.equal(classifyPushRefusal(`fatal: unable to access '${PUSH_URL}/': The requested URL returned error: 403`).kind, PUSH_REFUSAL.unknown);
+  assert.equal(classifyPushRefusal('').kind, PUSH_REFUSAL.unknown);
+  // решение: отказ GitHub ведёт в S6 своим исходом, а не в «ветка изменилась»
+  assert.deepEqual(decideMerge({ fresh: true, refused: PUSH_REFUSAL.workflow }), { action: 'push-refused-workflow', to: 'S6-in-progress' });
+  assert.deepEqual(decideMerge({ fresh: true, refused: PUSH_REFUSAL.remote }), { action: 'push-refused', to: 'S6-in-progress' });
+});
+
+test('#705 AC1: ответ git уходит в журнал без токенов и URL с учётными данными', () => {
+  const pat = 'ghp_' + '0123456789abcdefghijABCDEFGHIJ012345';
+  const fine = 'github_pat_' + '11ABCDEFG0123456789_abcdefghijklmnopqrstuvwxyz';
+  const oauth = 'gho_' + 'abcdefghij0123456789ABCDEFGHIJ012345';
+  const text = [
+    `fatal: unable to access 'https://x-access-token:${FAKE_TOKEN}@github.com/o/r/'`,
+    `https://oauth2:${fine}@github.com/o/r and https://user:${pat}@example.com/x`,
+    `token ${pat}, ${oauth}, ${fine}, ${FAKE_TOKEN}`,
+    'Authorization: Bearer abc.def.ghi',
+    'plain-secret-value in text',
+  ].join('\n');
+  const clean = redactSecrets(text, ['plain-secret-value']);
+  for (const secret of [FAKE_TOKEN, pat, fine, oauth, 'abc.def.ghi', 'plain-secret-value', 'x-access-token:']) {
+    assert.ok(!clean.includes(secret), `${secret.slice(0, 12)}… вырезан`);
+  }
+  assert.match(clean, /https:\/\/\*\*\*@github\.com\/o\/r\//, 'хост и путь остаются — по ним видно, куда шёл push');
+  const refusal = classifyPushRefusal(remoteRejected(WORKFLOW_REFUSALS['classic и fine-grained PAT']), { secrets: [FAKE_TOKEN] });
+  assert.ok(!refusal.stderr.includes(FAKE_TOKEN));
+  assert.match(refusal.stderr, /! \[remote rejected\] 0123abcd -> issue\/700-x \(refusing to allow/, 'сам отказ в журнале целиком');
+});
+
+/** realOps с git, отвечающим на push заданным stderr. */
+function refusingOps(stderr) {
+  const logs = [];
+  const pushes = [];
+  const exec = (cmd, args) => {
+    if (cmd === 'git' && args[0] === 'push') { pushes.push(args); return { status: 1, stdout: '', stderr }; }
+    throw new Error(`unexpected ${cmd} ${args.join(' ')}`);
+  };
+  return { ops: realOps({ repo: 'o/r', token: FAKE_TOKEN, exec, log: (line) => logs.push(line) }), logs, pushes };
+}
+
+test('#705 AC1: realOps.pushWithLease — lease устарел → false, отказ GitHub → PushRefusal, stderr в журнале без токена', () => {
+  const stale = refusingOps(`To https://github.com/o/r\n ! [rejected]        0123abcd -> dev (stale info)\n${failedTo}`);
+  assert.equal(stale.ops.pushWithLease('0123abcd', 'dev', 'dev0'), false, 'прежнее поведение: новая попытка или #312');
+  assert.match(stale.logs.join('\n'), /git push dev отклонён — stale \(stale info\):[\s\S]*\(stale info\)/);
+  assert.ok(stale.pushes[0].includes(PUSH_URL), 'push идёт с токеном');
+
+  const workflow = refusingOps(remoteRejected(WORKFLOW_REFUSALS['GitHub App / GITHUB_TOKEN']));
+  assert.throws(() => workflow.ops.pushWithLease('0123abcd', 'issue/700-x', 'mat'), (error) => {
+    assert.ok(error instanceof PushRefusal);
+    assert.equal(error.refusal.kind, PUSH_REFUSAL.workflow);
+    assert.equal(error.ref, 'issue/700-x');
+    assert.equal(error.sha, '0123abcd');
+    return true;
+  });
+  const journal = workflow.logs.join('\n');
+  assert.match(journal, /refusing to allow a GitHub App to create or update workflow/, 'stderr напечатан');
+  assert.ok(!journal.includes(FAKE_TOKEN), 'без токена');
+
+  const other = refusingOps(remoteRejected('pre-receive hook declined', 'dev'));
+  assert.throws(() => other.ops.pushWithLease('0123abcd', 'dev', 'dev0'), (error) => error.refusal?.kind === PUSH_REFUSAL.remote);
+
+  const broken = refusingOps(`fatal: unable to access '${PUSH_URL}/': Could not resolve host: github.com`);
+  assert.throws(() => broken.ops.pushWithLease('0123abcd', 'dev', 'dev0'), (error) => {
+    assert.ok(!(error instanceof PushRefusal), 'сбой сети — сбой шага, а не исход');
+    assert.ok(!error.message.includes(FAKE_TOKEN), 'текст ошибки уйдёт в issue — без токена');
+    return true;
+  });
+
+  // удаление влитой ветки: только устаревший lease значит «вершина сдвинулась»
+  assert.equal(refusingOps(' ! [rejected]        (delete) -> issue/1-x (stale info)').ops.deleteBranch('issue/1-x', 'mat'), false);
+  assert.throws(() => refusingOps(remoteRejected('protected branch hook declined', 'issue/1-x')).ops.deleteBranch('issue/1-x', 'mat'),
+    /remote-rejected/, 'правило ветки — не «вершина сдвинулась после слияния»');
+});
+
+test('#705 AC2: кандидат меняет workflow-файл — S6 с комментарием о праве, не #312; в dev ничего', async () => {
+  const ops = fakeOps({ devTips: ['dev1'], branchTip: 'mat', material: 'mat',
+    refuse: { ref: 'issue/1-x', stderr: remoteRejected(WORKFLOW_REFUSALS['classic и fine-grained PAT'], 'issue/1-x') } });
+  const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops, pipelineUrl: 'https://run/705' });
+  assert.equal(r.action, 'push-refused-workflow');
+  assert.equal(r.to, 'S6-in-progress');
+  assert.equal(r.merged, false);
+  assert.ok(!ops.calls.some((c) => c[0] === 'push' && c[2] === 'dev'), 'в dev не уходит');
+  assert.ok(!ops.calls.some((c) => c[0] === 'validate' || c[0] === 'delete'));
+  const comments = ops.calls.filter((c) => c[0] === 'comment');
+  assert.equal(comments.length, 1);
+  const body = comments[0][2];
+  assert.match(body, /кандидат меняет workflow-файл, токен конвейера не может его опубликовать: ребейз и push делает автор, либо владелец выдаёт право/);
+  assert.doesNotMatch(body, /ветка изменилась после проверенного материала/);
+  assert.match(body, /`\.github\/workflows\/validate\.yml`/, 'файл назван');
+  assert.match(body, /вердикт в силе/);
+  assert.match(body, /```\n[\s\S]*refusing to allow a Personal Access Token[\s\S]*```/, 'ответ GitHub в комментарии');
+  assert.ok(!body.includes(FAKE_TOKEN), 'без токена');
+  assert.match(body, /\[Прогон конвейера\]\(https:\/\/run\/705\)/);
+});
+
+test('#705 AC2: прочий отказ GitHub на push в dev — свой исход в S6, без повторных попыток', async () => {
+  const ops = fakeOps({ devTips: ['dev0'], branchTip: 'mat', material: 'mat',
+    refuse: { ref: 'dev', stderr: remoteRejected('protected branch hook declined', 'dev') } });
+  const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
+  assert.equal(r.action, 'push-refused');
+  assert.equal(r.to, 'S6-in-progress');
+  assert.equal(ops.calls.filter((c) => c[0] === 'push').length, 1, 'отказ GitHub — не гонка lease: повтор его не лечит');
+  const body = ops.calls.find((c) => c[0] === 'comment')[2];
+  assert.match(body, /GitHub отклонил push в `dev`/);
+  assert.match(body, /`protected branch hook declined`/);
+  assert.doesNotMatch(body, /workflow-файл/);
+});
+
+test('#705: разбор для шага workflow — тот же исход и комментарий стража ребейза', () => {
+  const { refusal, comment } = describePushRefusal(remoteRejected(WORKFLOW_REFUSALS['OAuth App']), {
+    ref: 'issue/1-x', branch: 'issue/1-x', candidate: 'c'.repeat(40), stage: 'rebase', pipelineUrl: 'https://run/1', secrets: [FAKE_TOKEN],
+  });
+  assert.equal(refusal.kind, PUSH_REFUSAL.workflow);
+  assert.match(comment, /^\*\*Ревью не запускалось: кандидат меняет workflow-файл, токен конвейера не может его опубликовать: ребейз и push делает автор, либо владелец выдаёт право/);
+  assert.match(comment, /цикл ревью не израсходован/);
+  assert.doesNotMatch(comment, /вердикт в силе/, 'вердикта ещё нет');
+  assert.ok(!comment.includes(FAKE_TOKEN));
+  assert.equal(describePushRefusal(' ! [rejected] a -> b (stale info)').comment, '', 'на устаревший lease комментария нет: шаг падает, как раньше');
+});
+
+test('#705 на настоящем git: отказ сервера `[remote rejected]` — не устаревший lease, отказ по lease — прежний false', (t) => {
+  if (process.platform === 'win32') { t.skip('хук pre-receive — shell-скрипт'); return; }
+  const dir = mkdtempSync(join(tmpdir(), 'hp-merge-705-'));
+  try {
+    const bare = join(dir, 'origin.git');
+    execFileSync('git', ['init', '-q', '--bare', bare]);
+    // #717: без фонового автообслуживания — иначе rmSync ловит его lock-файлы.
+    for (const [key, value] of [['receive.autogc', 'false'], ['maintenance.auto', 'false'], ['gc.auto', '0']]) git(bare, 'config', key, value);
+    const work = join(dir, 'work');
+    execFileSync('git', ['clone', '-q', bare, work]);
+    const cfg = ['-c', 'user.name=t', '-c', 'user.email=t@x', '-c', 'maintenance.auto=false', '-c', 'gc.auto=0'];
+    writeFileSync(join(work, 'a.txt'), '1\n');
+    git(work, 'add', '.');
+    execFileSync('git', ['-C', work, ...cfg, 'commit', '-q', '-m', 'base']);
+    git(work, 'push', '-q', 'origin', 'HEAD:refs/heads/dev');
+    const base = git(work, 'rev-parse', 'HEAD');
+    writeFileSync(join(work, 'a.txt'), '2\n');
+    execFileSync('git', ['-C', work, ...cfg, 'commit', '-q', '-am', 'next']);
+    const next = git(work, 'rev-parse', 'HEAD');
+    // URL с токеном переписывается на локальный bare — push настоящий
+    const exec = (cmd, args, opts) => sh(cmd, cmd === 'git'
+      ? ['-C', work, '-c', `url.${bare}.insteadOf=https://x-access-token:${FAKE_TOKEN}@github.com/o/r`, ...args] : args, opts);
+    const logs = [];
+    const ops = realOps({ repo: 'o/r', token: FAKE_TOKEN, exec, log: (line) => logs.push(line) });
+    assert.equal(ops.pushWithLease(next, 'dev', 'f'.repeat(40)), false, 'lease на чужую вершину — stale info');
+    mkdirSync(join(bare, 'hooks'), { recursive: true });
+    writeFileSync(join(bare, 'hooks', 'pre-receive'), '#!/bin/sh\necho "GH013: Repository rule violations found for refs/heads/dev." >&2\nexit 1\n', { mode: 0o755 });
+    assert.throws(() => ops.pushWithLease(next, 'dev', base), (error) => {
+      assert.equal(error.refusal?.kind, PUSH_REFUSAL.remote, JSON.stringify(error.refusal));
+      assert.equal(error.refusal.reason, 'pre-receive hook declined');
+      return true;
+    });
+    assert.match(logs.join('\n'), /GH013: Repository rule violations/, 'ответ сервера в журнале');
+    assert.equal(git(work, 'ls-remote', bare, 'refs/heads/dev').split('\t')[0], base, 'dev не тронут');
+  } finally {
+    rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+  }
 });
