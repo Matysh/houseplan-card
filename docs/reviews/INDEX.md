@@ -1,11 +1,12 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 216, issue: 108. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 217, issue: 109. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | бета v1.79.0-beta.1 | [SHIP-REVIEW-v1.79.0-beta.1.md](SHIP-REVIEW-v1.79.0-beta.1.md) | пакетное ревью ship · — | ⚪ — | 0 | 0 | — | — |
 | #732 | [CODE-REVIEW-732-r1.md](CODE-REVIEW-732-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #728 | [SPEC-REVIEW-728-r1.md](SPEC-REVIEW-728-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 0 | 1. АС3/К3: заявленное различение причин validate-red и conflict «на текстах из констант…; 2. АС8: заявленное доказательство правки process-metrics.yml (fetch-depth: 0, timeout-m… | `wait-verdict.mjs` `review-doc-guard.mjs` `scripts/wait-verdict.mjs` `.github/workflows/_process.yml` `_process.yml` `_process-metrics.yml` `test/process-metrics.test.mjs` |
 | #727 | [SPEC-REVIEW-727-r1.md](SPEC-REVIEW-727-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | К7/AC7: архивирование ночного документа с базой-стабильным-тегом не имеет ни одного про… | `scripts/reviews-archive.mjs` |
 | #726 | [SPEC-REVIEW-726-r1.md](SPEC-REVIEW-726-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #725 | [SPEC-REVIEW-725-r1.md](SPEC-REVIEW-725-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | устаревший номер строки в «Проблема» п.3 / «Не-скоуп» | `src/iso-scene-render.ts` `src/houseplan-card.ts` `houseplan-card.ts` `header-menu.ts` `iso-scene-render.ts` |
