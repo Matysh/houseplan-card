@@ -6,6 +6,7 @@
 |---|---|---|---|---:|---:|---|---|
 | бета v1.79.0-beta.1 | [SHIP-REVIEW-v1.79.0-beta.1.md](SHIP-REVIEW-v1.79.0-beta.1.md) | пакетное ревью ship · — | ⚪ — | 0 | 0 | — | — |
 | #718 | [SPEC-REVIEW-718-r1.md](SPEC-REVIEW-718-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #714 | [CODE-REVIEW-714-r1.md](CODE-REVIEW-714-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #713 | [SPEC-REVIEW-713-r1.md](SPEC-REVIEW-713-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | К6 перечисляет три места переноса камеры между проекциями, но доказательство/AC покрыва… | `src/houseplan-card.ts` |
 | #713 | [SPEC-REVIEW-713-r2.md](SPEC-REVIEW-713-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #713 | [CODE-REVIEW-713-r1.md](CODE-REVIEW-713-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | устаревший комментарий, не влияет на поведение | `src/houseplan-card.ts` |
