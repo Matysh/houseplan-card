@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 208, issue: 101. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 209, issue: 102. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -15,6 +15,7 @@
 | #711 | [CODE-REVIEW-711-r1.md](CODE-REVIEW-711-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #709 | [CODE-REVIEW-709-r1.md](CODE-REVIEW-709-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | canon TESTING.md противоречит себе | `docs/TESTING.md` `scripts/smoke-select.mjs` `scripts/pre-push-gate.mjs` `TESTING.md` `process-digests.test.mjs` |
 | #709 | [CODE-REVIEW-709-r2.md](CODE-REVIEW-709-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #707 | [SPEC-REVIEW-707-r1.md](SPEC-REVIEW-707-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | К1/AC1: strings.json заявлен источником риска ux, но класс A его не видит | `strings.json` `change-classes.mjs` `custom_components/houseplan/strings.json` `scripts/change-classes.mjs` `manifest.json` |
 | #706 | [CODE-REVIEW-706-r1.md](CODE-REVIEW-706-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #705 | [CODE-REVIEW-705-r1.md](CODE-REVIEW-705-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #704 | [CODE-REVIEW-704-r1.md](CODE-REVIEW-704-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
