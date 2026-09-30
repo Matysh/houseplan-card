@@ -283,13 +283,31 @@ check('picture_is_below_the_walls', layers.iImage < layers.iRoom, true);
 // ---------- 6b) editors keep a WHITE sheet under the grid with a backdrop --
 const editorWhite = await page.evaluate(async () => {
   const c = window.__card;
+  const hp = window.__hpTest;
   const sr = () => c.shadowRoot || c.renderRoot;
-  const upd = async () => { c.requestUpdate(); await c.updateComplete; };
-  const navSettled = () => new Promise((resolve) => setTimeout(resolve, 220));
+  // A mode switch paints the stage and the paper with interpolated colours
+  // for 220 ms plus a measurement frame, driven by animation frames: under
+  // load that outlasts any fixed pause (#715). A probe belongs to the settled
+  // mode: the stage carries `mode-<mode>` and no longer `mode-transition`,
+  // and neither the stage nor the paper runs an animation of its own.
+  const enter = async (mode) => {
+    await hp.setMode(mode);
+    const deadline = performance.now() + 5000;
+    for (;;) {
+      const stage = sr().querySelector('.stage');
+      const paper = sr().querySelector('.stage svg .hp-paper');
+      const running = [stage, paper].flatMap((node) => node?.getAnimations() ?? [])
+        .filter((animation) => animation.playState === 'running');
+      if (stage?.classList.contains(`mode-${mode}`) && !stage.classList.contains('mode-transition')
+        && !running.length) return;
+      if (performance.now() > deadline) {
+        throw new Error(`smoke_backdrop: переход в ${mode} не завершился (.stage: ${stage?.className})`);
+      }
+      await hp.settled();
+    }
+  };
   const probe = async (mode) => {
-    c._setMode(mode);
-    await upd();
-    await navSettled();
+    await enter(mode);
     const stage = sr().querySelector('.stage');
     const paper = sr().querySelector('.stage svg .hp-paper');
     return {
@@ -303,9 +321,7 @@ const editorWhite = await page.evaluate(async () => {
   const plan = await probe('plan');
   const devices = await probe('devices');
   const decor = await probe('decor');
-  c._setMode('view');
-  await upd();
-  await navSettled();
+  await enter('view');
   const viewStage = sr().querySelector('.stage');
   // View with a backdrop must NOT force white — theme/card colour stays
   const viewForcedWhite = getComputedStyle(viewStage).backgroundColor === 'rgb(255, 255, 255)'
