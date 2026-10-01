@@ -144,6 +144,12 @@ export function mutantsRequested() {
  * Где нужен один ответ — CLI отдаёт один ответ.
  */
 export function screenshotsGateMode(inputs) {
+  // #760: на ветке задачи — только предупреждение, даже при `full=true`.
+  // Конвейер диспатчит полный Validate для `ci:golden`, а отпечаток на `dev`
+  // между бетами законно устаревает (#479): строгий режим заставлял каждую
+  // визуальную задачу переснимать кадры после любого сдвига `dev`. Кандидат
+  // собирается на `dev` — там режим прежний.
+  if (isTaskBranch(inputs?.refName)) return 'warn';
   return heavyGatesRequested(inputs) ? 'strict' : 'warn';
 }
 

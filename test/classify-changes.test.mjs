@@ -197,6 +197,12 @@ test('#586: режим гейта скриншотов приходит одни
   assert.equal(screenshotsGateMode({ eventName: 'workflow_dispatch', fullInput: 'false' }), 'warn');
   assert.equal(screenshotsGateMode({ eventName: 'pull_request' }), 'strict');
   assert.equal(screenshotsGateMode({ eventName: 'schedule' }), 'strict');
+  // #760: полный Validate ветки задачи (`ci:golden`) судит отпечаток мягко,
+  // кандидат на `dev` — строго, как прежде.
+  assert.equal(screenshotsGateMode({ eventName: 'workflow_dispatch', fullInput: 'true', refName: 'issue/740-stairs' }), 'warn');
+  assert.equal(screenshotsGateMode({ eventName: 'workflow_dispatch', fullInput: 'true', refName: 'refs/heads/issue/718-moon' }), 'warn');
+  assert.equal(screenshotsGateMode({ eventName: 'workflow_dispatch', fullInput: 'true', refName: 'dev' }), 'strict');
+  assert.equal(screenshotsGateMode({ eventName: 'push', headMessage: 'x\n\nRelease: v1.2.3', refName: 'dev' }), 'strict', 'кандидат на dev');
 
   // Регрессия, ради которой заведён #586: у `--heavy` вывод ДВУХСТРОЧНЫЙ, и
   // сравнение всего вывода со строкой `heavy=true` не совпадает никогда.
