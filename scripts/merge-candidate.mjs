@@ -226,10 +226,39 @@ export function commentFor(action, ctx) {
         + ' · слито'
         + (ctx.branchDeleted === true ? ` · ветка \`${ctx.branch}\` удалена` : '')
         + (ctx.branchDeleted === false ? ` · ветка \`${ctx.branch}\` оставлена: её вершина сдвинулась после слияния` : '');
+    // Сбой самого шага (`action=error`): `ctx.error` — уже без секретов и не длиннее 1500 знаков.
+    case 'error':
+      return `**Слияние не выполнено: сбой шага слияния (#492).**\n\n\`\`\`\n${ctx.error ?? ''}\n\`\`\`\n\n`
+        + 'Вердикт ревью в силе. Задача в `S6-in-progress`; после разбора сбоя вернуть `S7-code-review`.';
     default:
       return '';
   }
 }
+
+/**
+ * #752: признаки исходов — заголовок каждого комментария `commentFor`, кроме
+ * успешного слияния. `stage` — где исход случается: `merge` — слияние после
+ * зелёного вердикта, `rebase` — страж ребейза до ревью (`describePushRefusal`,
+ * `_process.yml`). Отчёт процесса (`process-metrics.mjs`) узнаёт по ним
+ * причину возврата; переименование заголовка без признака краснит тест на
+ * самих шаблонах, а не даёт молча `unknown`.
+ */
+export const OUTCOME_SIGNS = Object.freeze([
+  { action: 'reject-stale', stage: 'merge', re: /^\*\*Слияние отменено: ветка изменилась после проверенного материала/m },
+  { action: 'conflict', stage: 'merge', re: /^\*\*Код-ревью зелёное — вердикт выше в силе, переделывать работу не нужно\.\*\* Не удалось только слияние/m },
+  { action: 'rereview', stage: 'merge', re: /^\*\*Дифф изменился при ребейзе на `dev@[^`]*` — вердикт к нему не применим/m },
+  { action: 'validation-red', stage: 'merge', re: /^\*\*Кандидат после ребейза на `dev@[^`]*` красный/m },
+  { action: 'validation-missing', stage: 'merge', re: /^\*\*Validate на кандидате `[^`]*` не появился за \d+ мин/m },
+  { action: 'give-up', stage: 'merge', re: /^\*\*`dev` движется быстрее слияния:/m },
+  { action: 'push-refused-workflow', stage: 'merge', re: /^\*\*Слияние не выполнено: кандидат меняет workflow-файл/m },
+  { action: 'push-refused-workflow', stage: 'rebase', re: /^\*\*Ревью не запускалось: кандидат меняет workflow-файл/m },
+  { action: 'push-refused', stage: 'merge', re: /^\*\*Слияние не выполнено: GitHub отклонил push /m },
+  { action: 'push-refused', stage: 'rebase', re: /^\*\*Ревью не запускалось: GitHub отклонил push /m },
+  { action: 'error', stage: 'merge', re: /^\*\*Слияние не выполнено: сбой шага слияния/m },
+].map((sign) => Object.freeze(sign)));
+
+/** Исход по тексту комментария: признак `OUTCOME_SIGNS` или `null`. */
+export const outcomeOf = (body) => OUTCOME_SIGNS.find((sign) => sign.re.test(String(body ?? ''))) || null;
 
 // ---------------------------------------------------------------------------
 // Исполнение: git + gh через `ops`, чтобы тест подменял их целиком.
@@ -604,7 +633,7 @@ else if (isMainModule(import.meta.url)) { // #496: переносимо для W
     // #705: текст сбоя уходит в issue — без токена и URL с учётными данными.
     console.error(redactSecrets(err && err.stack || err, [token]));
     try {
-      ops.comment(issue, `**Слияние не выполнено: сбой шага слияния (#492).**\n\n\`\`\`\n${redactSecrets(String(err && err.message || err), [token]).slice(0, 1500)}\n\`\`\`\n\nВердикт ревью в силе. Задача в \`S6-in-progress\`; после разбора сбоя вернуть \`S7-code-review\`.`);
+      ops.comment(issue, commentFor('error', { error: redactSecrets(String(err && err.message || err), [token]).slice(0, 1500) }));
     } catch (e) { console.error(e); }
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, 'merged=false\nto=S6-in-progress\naction=error\n');
     process.exit(0);

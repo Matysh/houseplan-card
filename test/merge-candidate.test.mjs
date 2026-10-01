@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
   MAX_ATTEMPTS, MAX_COMMAND_OUTPUT_BYTES, PUSH_REFUSAL, PushRefusal, classifyPushRefusal, commentFor, decideMerge,
-  describePushRefusal, mergeCandidate, realOps, redactSecrets, sh,
+  describePushRefusal, mergeCandidate, realOps, redactSecrets, sh, OUTCOME_SIGNS, outcomeOf,
 } from '../scripts/merge-candidate.mjs';
 import { buildCiProof } from '../scripts/ci-proof.mjs';
 import { buildIndex } from '../scripts/reviews-index.mjs';
@@ -876,4 +876,40 @@ test('#705 на настоящем git: отказ сервера `[remote rejec
   } finally {
     rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
   }
+});
+
+// #752: признаки исходов — заголовки самих шаблонов. Отчёт процесса узнаёт по
+// ним причину возврата; заголовок, переименованный без признака, краснит здесь.
+test('#752 AC2: каждый шаблон исхода commentFor и describePushRefusal узнаётся своим признаком и только им', () => {
+  const ctx = {
+    material: 'a'.repeat(40), actual: 'b'.repeat(40), candidate: 'c'.repeat(40), devNow: 'd'.repeat(40),
+    branch: 'issue/752-x', ref: 'dev', runUrl: 'https://github.com/o/r/actions/runs/1', attempt: 3, error: 'git push dev: boom',
+    refusal: { kind: PUSH_REFUSAL.workflow, reason: 'r', files: ['.github/workflows/x.yml'], stderr: 'e' }, pipelineUrl: 'https://run/1',
+  };
+  const outcomes = [
+    ['reject-stale', 'merge'], ['conflict', 'merge'], ['rereview', 'merge'], ['validation-red', 'merge'],
+    ['validation-missing', 'merge'], ['give-up', 'merge'], ['push-refused-workflow', 'merge'], ['push-refused-workflow', 'rebase'],
+    ['push-refused', 'merge'], ['push-refused', 'rebase'], ['error', 'merge'],
+  ];
+  const key = (sign) => `${sign.action}/${sign.stage}`;
+  for (const [action, stage] of outcomes) {
+    const text = commentFor(action, { ...ctx, stage });
+    assert.ok(text, `${action}: шаблон не пуст`);
+    assert.deepEqual(OUTCOME_SIGNS.filter((sign) => sign.re.test(text)).map(key), [`${action}/${stage}`], `${action} (${stage}) — ровно свой признак`);
+    assert.equal(key(outcomeOf(text)), `${action}/${stage}`);
+  }
+  assert.deepEqual(OUTCOME_SIGNS.map(key).sort(), outcomes.map(([action, stage]) => `${action}/${stage}`).sort(), 'признак на каждый исход, лишних нет');
+  for (const action of ['push', 'fast-forward']) assert.equal(outcomeOf(commentFor(action, ctx)), null, `${action} — слито, не исход возврата`);
+  // Каждый case шаблонов — либо слияние, либо исход с признаком: новый case без признака краснит здесь.
+  const source = readFileSync(fileURLToPath(new URL('../scripts/merge-candidate.mjs', import.meta.url)), 'utf8');
+  const body = source.slice(source.indexOf('export function commentFor('), source.indexOf('\n}\n', source.indexOf('export function commentFor(')));
+  const cases = [...body.matchAll(/^\s+case '([a-z-]+)':/gm)].map((m) => m[1]);
+  assert.deepEqual([...new Set(cases)].sort(), [...new Set([...outcomes.map(([action]) => action), 'push', 'fast-forward'])].sort());
+  // Страж ребейза (`_process.yml`) получает текст из describePushRefusal.
+  const rebase = (reason) => describePushRefusal(remoteRejected(reason), { ref: 'issue/752-x', branch: 'issue/752-x', candidate: 'c'.repeat(40), stage: 'rebase' }).comment;
+  assert.equal(key(outcomeOf(rebase(WORKFLOW_REFUSALS['GitHub App / GITHUB_TOKEN']))), 'push-refused-workflow/rebase');
+  assert.equal(key(outcomeOf(rebase('protected branch hook declined'))), 'push-refused/rebase');
+  // Сбой шага: тот же текст, что писал прежний inline-шаблон.
+  assert.equal(commentFor('error', { error: 'boom' }),
+    '**Слияние не выполнено: сбой шага слияния (#492).**\n\n```\nboom\n```\n\nВердикт ревью в силе. Задача в `S6-in-progress`; после разбора сбоя вернуть `S7-code-review`.');
 });

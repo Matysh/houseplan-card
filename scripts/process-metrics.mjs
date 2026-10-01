@@ -21,6 +21,15 @@
 //
 // #761: токены — только за окно отчёта: документ ревью входит в неделю, если
 // коммит, добавивший его в `dev`, попал в окно (перенос в архив — не добавление).
+// #752: объём задачи — `+/−` строк классов A и B (продукт, тесты, инструменты)
+// в её коммитах с трейлером `Issue: #NN`. Не входят коммиты беты, а не задачи:
+// кандидат беты или релиза (трейлер `Release:` и подпись кандидата или бандл,
+// `bundle-policy.mjs`) и коммит бота `beta-derived` (#697). Коммиты задачи с
+// `Release:` — приёмка эталонов, перепривязка тестов к бете — входят.
+// Документация, документы ревью и бандл в объём не входят: перенос архива
+// (#682) — не работа над кодом. Возвраты слияния и стража ребейза узнаются по
+// признакам `merge-candidate.mjs`; раздел «Черновик ТЗ» — эпохи `S4` с
+// черновиком (#729, §11.8) и S5 → S7 с черновиком и без.
 //
 //   node scripts/process-metrics.mjs --repo=<owner/repo> --days=7 [--until=ISO] [--output=path.md] [--json=path.json]
 //        [--compare=2026-09-28] [--compare-days=28]
@@ -35,6 +44,8 @@ import { USAGE_KEYS, lastUsageIn } from './model-usage.mjs';
 import { ANCHOR_MARKER, verdictDeclaration } from './review-doc-guard.mjs';
 import { SHIP_REVIEW_ANCHOR, parseAnchorBlock } from './ship-review.mjs';
 import { PIPELINE_EVENTS } from './wait-verdict.mjs';
+import { OUTCOME_SIGNS, outcomeOf } from './merge-candidate.mjs';
+import { committedBundleMustMatch, isReleaseMessage } from './bundle-policy.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 const PROCESS_RUN = /^process #(\d+) · (S4-spec-review|S7-code-review)(?: ·|$)/;
@@ -195,7 +206,7 @@ export const JOBS_RUN_CAP = 600;
 export const TIMELINE_PAGE_CAP = 10;
 export const TRACKS = ['ship', 'show', 'ask'];
 export const SEGMENTS = ['queue', 'spec', 'work', 'review', 'rework', 'blocked'];
-export const RETURN_REASONS = ['verdict-yellow', 'verdict-red', 'validate-red', 'conflict', 'merge', 'reclassify', 'owner-question', 'unknown'];
+export const RETURN_REASONS = ['verdict-yellow', 'verdict-red', 'validate-red', 'conflict', 'push-refused', 'merge', 'reclassify', 'owner-question', 'unknown'];
 export const PIPELINE_STAGES = ['guard', 'prepare', 'model', 'integrate'];
 export const VOLUME_BUCKETS = ['≤30', '31–200', '201–1000', '>1000'];
 export const VALIDATE_WORKFLOW = 'Проверка (CI)';
@@ -224,6 +235,19 @@ function pipelineEvent(kind) {
 const NOT_RUN_RE = pipelineEvent('conflict');
 /** Неудачное слияние после ревью: «Слияние отменено», «Код-ревью зелёное — вердикт выше в силе». */
 const MERGE_RES = [pipelineEvent('stale'), pipelineEvent('merge-conflict')];
+
+/**
+ * #752: причина по исходу `merge-candidate.mjs` (`OUTCOME_SIGNS`). Отказ push
+ * стража ребейза до ревью (#705) — `push-refused`: код не читали, действует
+ * автор или владелец правом на workflow. Исход слияния после зелёного вердикта
+ * (кандидат красный или пропал, `dev` ушёл, отказ push, сбой шага) — `merge`:
+ * вердикт был, слить не удалось. `rereview` возвращает задачу в `S7`, а не
+ * автору, — причины не называет.
+ */
+if (!OUTCOME_SIGNS.some((sign) => sign.action === 'rereview')) {
+  throw new Error("process-metrics: в OUTCOME_SIGNS (merge-candidate.mjs) нет исхода 'rereview'");
+}
+const outcomeReason = (sign) => (sign.stage === 'rebase' ? 'push-refused' : sign.action === 'rereview' ? null : 'merge');
 
 const toMs = (value) => (typeof value === 'number' ? value : at(value));
 
@@ -362,12 +386,15 @@ export function stageVerdict(body, { stage = 'code', number } = {}) {
 /**
  * К3. Признак причины возврата в одном комментарии; `null` — комментарий
  * причины не называет. «Ревью не запускалось» с другим продолжением —
- * `unknown`: семейство узнано, причина не угадывается.
+ * `unknown`: семейство узнано, причина не угадывается. Исходы слияния и
+ * стража ребейза — по признакам `merge-candidate.mjs` (#752).
  */
 export function returnSignal(body, { stage = 'code', number } = {}) {
   const text = String(body ?? '');
   const route = ROUTE_RE.exec(text);
   if (route) return route[1];
+  const outcome = outcomeOf(text);
+  if (outcome) return outcomeReason(outcome);
   if (NOT_RUN_RE.test(text)) {
     if (NOT_RUN_VALIDATE_RE.test(text)) return 'validate-red';
     if (NOT_RUN_CONFLICT_RE.test(text)) return 'conflict';
@@ -530,24 +557,45 @@ export function readCommits(git, { ref = 'origin/dev', since } = {}) {
   return parseGitLog(git(args));
 }
 
-/** Строка объёма К7: не класс D (`classify`) и не `docs/reviews/**`. */
-const countsToVolume = (path) => classify(path) !== 'D' && !String(path).startsWith('docs/reviews/');
+/** Строка объёма К7 (#752): классы A и B — продукт, тесты, инструменты. */
+const countsToVolume = (path) => ['A', 'B'].includes(classify(path));
+/** Файл задачи для признака инфраструктуры (#752): A, B, C, кроме документов ревью — их пишет конвейер. */
+const isTaskFile = (path) => ['A', 'B', 'C'].includes(classify(path)) && !String(path).startsWith('docs/reviews/');
 
 /**
- * Изменения задачи по коммитам с трейлером `Issue: #NN`, кроме коммитов
- * `Release:` (они несут трейлеры всех задач беты, бандлы и версию манифеста):
- * объём К7 (`+/−` без класса D и `docs/reviews/**`) и файлы для признака
- * инфраструктуры К1.
+ * Подпись коммита бота `beta-derived` (#697). Константы у конвейера нет —
+ * сообщение собирает `_beta-derived.yml`; копию держит контрактный тест.
+ */
+export const BETA_DERIVED_SUBJECT = /^docs: accept derived artifacts on dev for v\d/;
+
+/**
+ * Коммит беты, а не задачи (#752): он несёт трейлеры всех задач линии.
+ * Кандидат беты или релиза — трейлер `Release:` и подпись кандидата либо
+ * изменённый бандл (`committedBundleMustMatch`: с #657 бандл меняет только
+ * кандидат); коммит бота `beta-derived` — по подписи. Прочий коммит с
+ * `Release:` (приёмка эталонов, перепривязка тестов к бете) — коммит задачи.
+ */
+export function isBetaCommit(commit) {
+  const body = String(commit?.body ?? '');
+  const subject = body.split('\n', 1)[0];
+  if (BETA_DERIVED_SUBJECT.test(subject)) return true;
+  return isReleaseMessage(body) && committedBundleMustMatch({ subject, files: (commit?.files || []).map((file) => file.path) });
+}
+
+/**
+ * Изменения задачи по коммитам с трейлером `Issue: #NN`, кроме коммитов беты
+ * (`isBetaCommit`): объём К7 (`+/−` классов A и B) и файлы задачи для признака
+ * инфраструктуры К1 (A, B, C без `docs/reviews/**`).
  */
 export function issueChanges(commits = []) {
   const byIssue = new Map();
   for (const commit of commits || []) {
-    if (/^Release:/m.test(String(commit.body || ''))) continue;
+    if (isBetaCommit(commit)) continue;
     for (const number of commit.issues || issueTrailers(commit.body)) {
       const entry = byIssue.get(number) || { lines: 0, files: new Set(), commits: 0 };
       entry.commits += 1;
       for (const file of commit.files || []) {
-        entry.files.add(file.path);
+        if (isTaskFile(file.path)) entry.files.add(file.path);
         if (countsToVolume(file.path)) entry.lines += (file.added ?? 0) + (file.deleted ?? 0);
       }
       byIssue.set(number, entry);
@@ -556,8 +604,14 @@ export function issueChanges(commits = []) {
   return byIssue;
 }
 
-/** Инфраструктура (§1): в коммитах задачи есть файлы и ни одного класса A. */
+/**
+ * Инфраструктура (§1): у задачи есть файлы задачи и ни одного класса A.
+ * Задача только с документами ревью — признак не доказан.
+ */
 export const isInfra = (change) => Boolean(change && change.files.size && [...change.files].every((path) => classify(path) !== 'A'));
+
+/** Объём задачи К7: строки A+B; без файлов задачи (только документы ревью, бандл) — `null`, объёма нет. */
+export const changeVolume = (change) => (change && change.files.size ? change.lines : null);
 
 /** Корзина объёма К7: ≤ 30, 31–200, 201–1000, > 1000 строк. */
 export function volumeBucket(lines) {
@@ -578,9 +632,10 @@ export function issueTrackMetrics(issue, events = [], { change = null, ship = nu
   const s8 = labelEvents(events).find((event) => event.type === 'labeled' && event.label === 'S8-merged');
   if (!s8) return null;
   const infra = isInfra(change);
+  const volume = changeVolume(change);
   const base = {
     number, title: String(issue.title || ''), stateReason: issue.state_reason || null, s8At: s8.at,
-    infra, volume: change ? change.lines : null, bucket: change ? volumeBucket(change.lines) : null,
+    infra, volume, bucket: volumeBucket(volume),
   };
   if (truncated) return { ...base, truncated: true, track: null, path: [], leadMs: null, segments: null, returns: [], rounds: [], ship: null };
   const seg = issueSegments(events);
@@ -651,6 +706,100 @@ export function trackSection(rows = [], { shipDocs = [] } = {}) {
     truncated: rows.filter((row) => row.truncated).map((row) => row.number),
     changed: counted.filter((row) => row.path.length > 1).map((row) => ({ number: row.number, path: row.path })),
     rows: [...rows].sort((a, b) => a.number - b.number),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// #752 П.4: черновик ТЗ (#729, PROCESS.md §11.8).
+
+/**
+ * Комментарий «Черновик:» по шаблону §7.2 — пишет автор, не конвейер; копию
+ * держит контрактный тест на PROCESS.md.
+ */
+export const DRAFT_COMMENT_RE = /^\s*Черновик:/;
+/** Трейлер чернового коммита (§11.8) — как читает его `process-gate.mjs`. */
+const SPEC_DRAFT_TRAILER = /^Spec-Draft:\s*\S/mi;
+
+/** Трек на момент `t`, включая метки, поставленные в сам момент `t` (как начало пути трека). */
+const trackDuring = (events, t, infra) => labelTrack({ labels: labelsAt(events, t, { inclusive: true }), infrastructure: infra });
+
+/**
+ * Эпохи `S4-spec-review`: от постановки `S4` до следующей статусной метки с
+ * другим именем — статус как в `issueSegments`, повторная постановка `S4`
+ * эпоху не начинает. `close` — метка, закрывшая эпоху; открытая — `null`.
+ */
+export function specEpochs(events = []) {
+  const epochs = [];
+  let status = null;
+  let open = null;
+  for (const event of labelEvents(events)) {
+    if (event.type !== 'labeled' || !STATUS_LABELS.includes(event.label) || event.label === status) continue;
+    if (open) epochs.push({ ...open, end: event.at, close: event.label });
+    status = event.label;
+    open = status === 'S4-spec-review' ? { start: event.at } : null;
+  }
+  if (open) epochs.push({ ...open, end: null, close: null });
+  return epochs;
+}
+
+/**
+ * Раздел «Черновик ТЗ» по задачам с первым `S5-ready` в окне:
+ * - эпохи `S4` на треке ask (трек — на момент начала эпохи), из них с
+ *   комментарием «Черновик:» внутри эпохи и их исход: `S5-ready` — черновик
+ *   пошёл в дело, `S3-spec` — выброшен, прочее — открыта или закрыта иначе;
+ * - S5 → S7 — от первого `S5-ready` до первого `S7-code-review` после него
+ *   (не позже `until`), по треку на момент S5; «с черновиком» — эпоху `S4`,
+ *   закрытую этим `S5-ready`, вёл черновик. n < `MIN_COHORT` — мало данных;
+ * - коммиты `dev` с трейлером `Spec-Draft:` и датой коммиттера в окне.
+ */
+export function draftSection({ issues = [], timelines = new Map(), changes = new Map(), commits = [], since, until } = {}) {
+  const from = toMs(since);
+  const to = toMs(until);
+  const inWindow = (moment) => moment >= from && moment <= to;
+  const epochs = { total: 0, withDraft: 0, used: 0, thrown: 0, other: 0 };
+  const spans = [];
+  const noS7 = [];
+  const tasks = [];
+  const seen = new Set();
+  for (const issue of issues || []) {
+    const number = Number(issue.number);
+    if (seen.has(number)) continue;
+    seen.add(number);
+    const events = timelines.get(number) || [];
+    const labels = labelEvents(events).filter((event) => event.type === 'labeled');
+    const s5 = labels.find((event) => event.label === 'S5-ready');
+    if (!s5 || !inWindow(s5.at)) continue;
+    tasks.push(number);
+    const infra = isInfra(changes.get(number));
+    const drafts = commentEvents(events).filter((comment) => DRAFT_COMMENT_RE.test(comment.body));
+    let draftedS5 = false;
+    for (const epoch of specEpochs(events)) {
+      const drafted = drafts.some((comment) => comment.at >= epoch.start && (epoch.end === null || comment.at <= epoch.end));
+      if (epoch.close === 'S5-ready' && epoch.end === s5.at) draftedS5 = drafted;
+      if (trackDuring(events, epoch.start, infra) !== 'ask') continue;
+      epochs.total += 1;
+      if (!drafted) continue;
+      epochs.withDraft += 1;
+      if (epoch.close === 'S5-ready') epochs.used += 1;
+      else if (epoch.close === 'S3-spec') epochs.thrown += 1;
+      else epochs.other += 1;
+    }
+    const s7 = labels.find((event) => event.label === 'S7-code-review' && event.at >= s5.at);
+    if (!s7 || s7.at > to) { noS7.push(number); continue; }
+    spans.push({ number, track: trackDuring(events, s5.at, infra), drafted: draftedS5, ms: s7.at - s5.at });
+  }
+  const tracks = [...new Set([...TRACKS, ...spans.map((span) => span.track)])].sort((a, b) => trackOrder(a) - trackOrder(b));
+  const group = (list) => ({ n: list.length, hours: medianHours(list.map((span) => span.ms)), enough: list.length >= MIN_COHORT });
+  const drafted = (commits || []).filter((commit) => SPEC_DRAFT_TRAILER.test(String(commit.body || '')) && inWindow(at(commit.date)));
+  return {
+    tasks: tasks.length,
+    epochs,
+    s5ToS7: tracks.map((track) => {
+      const own = spans.filter((span) => span.track === track);
+      return { track, draft: group(own.filter((span) => span.drafted)), plain: group(own.filter((span) => !span.drafted)) };
+    }),
+    noS7: noS7.sort((a, b) => a - b),
+    specDraftCommits: { count: drafted.length, issues: [...new Set(drafted.flatMap((commit) => commit.issues || []))].sort((a, b) => a - b) },
   };
 }
 
@@ -745,8 +894,8 @@ export function stageMinutes({ runs = [], jobsByRun = new Map(), trackOf = () =>
  * К7. Сравнение сопоставимых задач до и после `cutover`: первый `S8-merged`
  * в `[cutover − days, cutover)` и `[cutover, min(cutover + days, until))`,
  * когорта — трек на момент S8 и корзина объёма. n < `MIN_COHORT` на любой
- * стороне — «мало данных», разницы нет. Задачи без коммитов с трейлером
- * объёма не имеют и в когорты не входят.
+ * стороне — «мало данных», разницы нет. Задачи без коммитов с трейлером или
+ * только с документами ревью объёма не имеют и в когорты не входят.
  */
 export function compareCohorts(rows = [], { cutover = TRACKS_CUTOVER, days = COMPARE_DAYS, until = null } = {}) {
   const border = toMs(cutover);
@@ -860,6 +1009,7 @@ function trackReport({ since, until, issues, timelines, timelineTruncated, revie
   };
   return {
     tracks: trackSection(rows.filter((row) => row.s8At >= from && row.s8At <= to), { shipDocs: ship.docs }),
+    drafts: draftSection({ issues, timelines, changes, commits, since, until }),
     stages: jobsByRun ? stageMinutes({ runs, jobsByRun, trackOf }) : null,
     // #761: токены и `missing` — по документам, добавленным в dev за окно; `window` — окно применено.
     tokens: reviewDocAdded
@@ -914,6 +1064,7 @@ export function renderMarkdown(report) {
   lines.push('</details>');
   // #728: новые разделы — после прежних; прежние строки не меняются.
   if (report.tracks) renderTracks(lines, report.tracks);
+  if (report.drafts) renderDrafts(lines, report.drafts);
   if ('stages' in report) renderStages(lines, report.stages);
   if ('tokens' in report) renderTokens(lines, report.tokens);
   if (report.compare) renderCompare(lines, report.compare);
@@ -975,6 +1126,38 @@ function renderTracks(lines, t) {
   }
 }
 
+function renderDrafts(lines, d) {
+  lines.push('');
+  lines.push('### Черновик ТЗ (#729)');
+  lines.push('');
+  lines.push(`Задачи с первым \`S5-ready\` в окне: **${d.tasks}**. Эпоха \`S4-spec-review\` — от постановки \`S4\` до следующей статусной метки; в счёт идут эпохи на треке ask (трек — на момент начала эпохи). Черновик — комментарий «Черновик:» (§7.2) внутри эпохи; исход — \`S5-ready\` (черновик пошёл в дело) или \`S3-spec\` (выброшен).`);
+  lines.push('');
+  const e = d.epochs;
+  if (!e.withDraft) {
+    lines.push(`Черновиков нет: эпох \`S4-spec-review\` на ask — ${e.total}, комментария «Черновик:» нет ни в одной.`);
+  } else {
+    lines.push('| Эпох S4 (ask) | С черновиком | Пошёл в дело (S5) | Выброшен (S3) | Открыта или иначе |');
+    lines.push('|---:|---:|---:|---:|---:|');
+    lines.push(`| ${e.total} | ${e.withDraft} | ${e.used} | ${e.thrown} | ${e.other} |`);
+  }
+  lines.push('');
+  const commits = d.specDraftCommits;
+  lines.push(commits.count
+    ? `Коммиты с трейлером \`Spec-Draft:\` в \`dev\` за окно: ${commits.count}${commits.issues.length ? ` (${commits.issues.map((n) => `#${n}`).join(', ')})` : ''}.`
+    : 'Коммитов с трейлером `Spec-Draft:` в `dev` за окно нет.');
+  lines.push('');
+  lines.push(`S5 → S7 — от первого \`S5-ready\` до первого \`S7-code-review\` после него, медиана в часах; трек — на момент S5; «с черновиком» — эпоху \`S4\`, закрытую этим \`S5-ready\`, вёл черновик. n < ${MIN_COHORT} — мало данных.`);
+  lines.push('');
+  lines.push('| Трек | С черновиком: n | S5 → S7, ч | Без черновика: n | S5 → S7, ч |');
+  lines.push('|---|---:|---|---:|---|');
+  const cell = (group) => (group.enough ? h(group.hours) : 'мало данных');
+  for (const row of d.s5ToS7) lines.push(`| ${row.track} | ${row.draft.n} | ${cell(row.draft)} | ${row.plain.n} | ${cell(row.plain)} |`);
+  if (d.noS7.length) {
+    lines.push('');
+    lines.push(`Без \`S7-code-review\` к концу окна (в S5 → S7 не входят): ${d.noS7.map((n) => `#${n}`).join(', ')}.`);
+  }
+}
+
 function renderStages(lines, s) {
   lines.push('');
   lines.push('### Job-минуты по стадиям');
@@ -1031,7 +1214,7 @@ function renderCompare(lines, c) {
   lines.push('');
   lines.push(`### До и после ${c.cutover}`);
   lines.push('');
-  lines.push(`Первый \`S8-merged\` в [${isoDay(c.before.from)}, ${isoDay(c.before.to)}) и [${isoDay(c.after.from)}, ${c.after.to ? isoDay(c.after.to) : '…'}), окно ${c.days} дн. Когорта — трек на момент S8 и объём задачи: \`+/−\` строк коммитов \`Issue: #NN\` без \`Release:\`, класса D и \`docs/reviews/**\` (корзины ${VOLUME_BUCKETS.join(', ')}). Медианы в часах «до → после (разница)»; n < ${MIN_COHORT} на любой стороне — мало данных. Job-минуты в сравнение не входят.`);
+  lines.push(`Первый \`S8-merged\` в [${isoDay(c.before.from)}, ${isoDay(c.before.to)}) и [${isoDay(c.after.from)}, ${c.after.to ? isoDay(c.after.to) : '…'}), окно ${c.days} дн. Когорта — трек на момент S8 и объём задачи: \`+/−\` строк классов A и B (продукт, тесты, инструменты) в коммитах \`Issue: #NN\`, кроме коммитов кандидата беты или релиза и бота \`beta-derived\`; документация, документы ревью и бандл не входят (корзины ${VOLUME_BUCKETS.join(', ')}). Медианы в часах «до → после (разница)»; n < ${MIN_COHORT} на любой стороне — мало данных. Job-минуты в сравнение не входят.`);
   lines.push('');
   if (!c.cohorts.length) {
     lines.push('Мало данных: в окне сравнения нет задач с коммитами.');
@@ -1049,7 +1232,7 @@ function renderCompare(lines, c) {
   }
   if (c.noCommits.length) {
     lines.push('');
-    lines.push(`Без коммитов с трейлером (объёма нет, в когорты не входят): ${c.noCommits.map((n) => `#${n}`).join(', ')}.`);
+    lines.push(`Без коммитов с трейлером или только с документами ревью (объёма нет, в когорты не входят): ${c.noCommits.map((n) => `#${n}`).join(', ')}.`);
   }
 }
 
@@ -1066,7 +1249,7 @@ function ghJson(args) {
  * - issue `state=all` с `since` самого раннего окна (неделя отчёта или окно
  *   сравнения К7): задачи в `S8-merged` закрываются только с бетой (§2.8).
  *   Прежняя выборка (`issues`) — закрытые в окне, как раньше;
- * - таймлайн — у прежней выборки, у задач с `S8-merged` или закрытых и у
+ * - таймлайн — у прежней выборки, у задач с `S5-ready`…`S8-merged` или закрытых и у
  *   задач прогонов конвейера окна; не дальше `TIMELINE_PAGE_CAP` страниц,
  *   иначе задача помечается «таймлайн усечён»;
  * - jobs (К5) — для `jobRuns`, недоступные jobs — `null`;
@@ -1101,8 +1284,9 @@ export function fetchSnapshot({ repo, since, until, gh = ghJson, git = null, com
   }
   const { selected } = jobRuns(runs);
   const runIssues = new Set(selected.map((run) => Number(PROCESS_TITLE.exec(String(run.display_title || ''))?.[1])).filter(Number.isFinite));
+  // #752: задачи в S5–S7 — раздел «Черновик ТЗ» считает их по первому S5-ready.
   const allIssues = all.filter((issue) => closedInWindow(issue)
-    || (issue.labels || []).some((label) => (label?.name ?? label) === 'S8-merged')
+    || (issue.labels || []).some((label) => ['S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'].includes(label?.name ?? label))
     || (issue.state === 'closed' && at(issue.closed_at) >= at(earliestIso))
     || runIssues.has(Number(issue.number)));
   const timelines = new Map();

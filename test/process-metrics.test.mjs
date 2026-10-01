@@ -7,12 +7,12 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import {
   buildReport, issueMetrics, jobMinutes, pipelineMetrics, renderMarkdown, reviewDocNames, reviewRounds, runMetrics,
-  NOT_RUN_CONFLICT_RE, NOT_RUN_VALIDATE_RE, TIMELINE_PAGE_CAP, TOKENS_NO_DATA, TRACKS_CUTOVER,
-  compareCohorts, fetchSnapshot, isInfra, issueChanges, issueSegments, issueTrackMetrics, jobRuns, jobStage,
-  readCommits, returnSignal, reviewDocAddedAt, shipFindings, stageMinutes, tokenDocs, tokenUsage, trackAt, trackPath, trackSection, volumeBucket,
+  BETA_DERIVED_SUBJECT, DRAFT_COMMENT_RE, NOT_RUN_CONFLICT_RE, NOT_RUN_VALIDATE_RE, RETURN_REASONS, TIMELINE_PAGE_CAP, TOKENS_NO_DATA, TRACKS_CUTOVER,
+  changeVolume, compareCohorts, draftSection, fetchSnapshot, isBetaCommit, isInfra, issueChanges, issueSegments, issueTrackMetrics, jobRuns, jobStage,
+  readCommits, returnSignal, reviewDocAddedAt, shipFindings, specEpochs, stageMinutes, tokenDocs, tokenUsage, trackAt, trackPath, trackSection, volumeBucket,
 } from '../scripts/process-metrics.mjs';
 import { labelTrack } from '../scripts/process-track.mjs';
-import { commentFor } from '../scripts/merge-candidate.mjs';
+import { commentFor, describePushRefusal } from '../scripts/merge-candidate.mjs';
 import { anchorBlock } from '../scripts/ship-review.mjs';
 import { withMaterialAnchors } from '../scripts/review-doc-guard.mjs';
 import { formatUsage } from '../scripts/model-usage.mjs';
@@ -201,11 +201,11 @@ test('#728 trackAt: трек на момент события и путь тре
   assert.equal(trackAt(both, T(1)), labelTrack({ labels: ['track:ship', 'track:ask'] }));
   assert.equal(trackAt(both, T(1)), 'ask');
 
-  // infra — ни одного файла класса A в коммитах задачи; Release:-коммит не в счёт.
+  // infra — ни одного файла класса A в коммитах задачи; коммит кандидата беты не в счёт (#752).
   const commits = [
     { sha: 'a'.repeat(40), body: 'x\n\nIssue: #801\n', issues: [801], files: [{ added: 5, deleted: 0, path: 'scripts/x.mjs' }] },
     { sha: 'b'.repeat(40), body: 'x\n\nIssue: #802\n', issues: [802], files: [{ added: 5, deleted: 0, path: 'src/x.ts' }] },
-    { sha: 'c'.repeat(40), body: 'rel\n\nIssue: #801\nRelease: v1.0.0-beta.1\n', issues: [801], files: [{ added: 1, deleted: 1, path: 'custom_components/houseplan/manifest.json' }] },
+    { sha: 'c'.repeat(40), body: 'Release v1.0.0-beta.1 candidate\n\nIssue: #801\nRelease: v1.0.0-beta.1\n', issues: [801], files: [{ added: 1, deleted: 1, path: 'custom_components/houseplan/manifest.json' }] },
   ];
   const timelines = new Map([[801, [labeled('S6-in-progress', 0), labeled('S8-merged', 2)]], [802, [labeled('S6-in-progress', 0), labeled('S8-merged', 2)]]]);
   const report = buildReport({ since: T(0), until: T(48), issues: [{ number: 801 }, { number: 802 }], timelines, commits });
@@ -281,7 +281,7 @@ test('#728 returnSignal: причины возврата на текстах к�
     stage: 'rebase', candidate: 'c'.repeat(40), branch: 'issue/701-x', refusal: { files: ['.github/workflows/x.yml'] },
   });
   assert.match(refused, /^\*\*Ревью не запускалось: кандидат меняет workflow-файл/);
-  assert.equal(sig(refused), null, 'отказ push по праву на workflow (#705) — без признака, возврат уйдёт в unknown');
+  assert.equal(sig(refused), 'push-refused', '#752: отказ push по праву на workflow на ребейзе (#705) — признак merge-candidate.mjs');
   assert.equal(sig('Текст.\n\n<!-- hp:route reclassify criterion=undocumented -->'), 'reclassify');
   assert.equal(sig('Текст.\n\n<!-- hp:route owner-question criterion=undocumented -->'), 'owner-question');
   assert.equal(sig('Пока шло ревью, `dev` продвинулся на 2 коммит(ов).'), null);
@@ -332,7 +332,7 @@ test('#728 returnReason: последний комментарий с призн
   const row = issueTrackMetrics(issue, events);
   assert.deepEqual(row.returns.map((r) => r.reason), [
     'verdict-yellow', 'verdict-red', 'validate-red', 'validate-red', 'conflict', 'merge', 'verdict-yellow',
-    'unknown', 'unknown', 'unknown', 'unknown', 'owner-question', 'reclassify', 'verdict-red',
+    'unknown', 'unknown', 'unknown', 'push-refused', 'owner-question', 'reclassify', 'verdict-red',
   ]);
   assert.deepEqual(row.returns.map((r) => r.track), [
     'ship', 'ship', 'ship', 'ship', 'show', 'show', 'show', 'show', 'show', 'show', 'show', 'show', 'show', 'ask',
@@ -342,7 +342,7 @@ test('#728 returnReason: последний комментарий с призн
   const section = trackSection([row]);
   const ship = section.events.find((e) => e.track === 'ship');
   assert.deepEqual([ship.returns, ship.reasons['verdict-yellow'], ship.reasons['validate-red']], [4, 1, 2]);
-  assert.equal(section.events.find((e) => e.track === 'show').reasons.unknown, 4);
+  assert.deepEqual(['unknown', 'push-refused'].map((reason) => section.events.find((e) => e.track === 'show').reasons[reason]), [3, 1]);
   // Раунды — объявления вердикта этапа, по треку и блокирующие/зелёные.
   assert.deepEqual([ship.rounds.code.blocking, ship.rounds.code.green], [2, 0]);
   assert.deepEqual(section.events.find((e) => e.track === 'ask').rounds.spec, { blocking: 1, green: 0 });
@@ -680,4 +680,214 @@ test('#761 токены за окно: документ вне окна, пер�
   // Без карты дат (юнит над готовыми документами) окна нет — как до #761.
   assert.equal(tokenDocs(snap.reviewDocs).length, 5);
   assert.equal(tokenDocs(snap.reviewDocs, { added: new Map(), since, until }).length, 0, 'добавление не найдено — вне окна');
+});
+
+// #752: объём задачи, причины возвратов слияния, черновик ТЗ.
+
+/** Временный git-репозиторий: коммиты и `readCommits` по нему. */
+function tempRepo(t, prefix) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const git = (...args) => {
+    const r = spawnSync('git', args, { cwd: dir, encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    return r.stdout;
+  };
+  git('init', '-q', '-b', 'dev');
+  git('config', 'user.email', 't@t'); git('config', 'user.name', 't');
+  git('config', 'core.hooksPath', '/dev/null');
+  const write = (path, lines, tag = 'l') => {
+    mkdirSync(join(dir, dirname(path)), { recursive: true });
+    writeFileSync(join(dir, path), `${Array.from({ length: lines }, (_, k) => `${tag}${k}`).join('\n')}\n`);
+  };
+  const commit = (message) => { git('add', '-A'); git('commit', '-q', '-m', message); };
+  const commits = () => readCommits((args) => git(...args), { ref: 'HEAD', since: '2000-01-01' });
+  return { dir, git, write, commit, commits };
+}
+
+test('#752 AC1 объём: классы A и B; документация, перенос в архив и документы ревью — нет', (t) => {
+  const repo = tempRepo(t, 'hp-752-volume-');
+  repo.write('docs/reviews/R.md', 3);
+  repo.commit('docs: base');
+  repo.write('src/a.ts', 10); repo.write('docs/x.md', 5000);
+  repo.commit('feat: a (#751)\n\nIssue: #751\nUser-Visible: no');
+  mkdirSync(join(repo.dir, 'legacy/reviews/v1'), { recursive: true });
+  repo.git('mv', 'docs/reviews/R.md', 'legacy/reviews/v1/R.md');
+  repo.commit('docs: archive (#751)\n\nIssue: #751\nUser-Visible: no');
+  repo.write('docs/reviews/SPEC-REVIEW-7-r1.md', 40);
+  repo.commit('docs: review document for #7\n\nIssue: #7\nUser-Visible: no');
+  let changes = issueChanges(repo.commits());
+  assert.equal(changeVolume(changes.get(751)), 10, 'src +10; docs/x.md +5000 и перенос R.md в legacy/reviews — не объём');
+  assert.equal(volumeBucket(changeVolume(changes.get(751))), '≤30');
+  assert.equal(isInfra(changes.get(751)), false);
+  assert.equal(isInfra(changes.get(7)), false, 'только документ ревью — признак инфраструктуры не доказан');
+  assert.equal(changeVolume(changes.get(7)), null, 'только документ ревью — объёма нет');
+  repo.write('test/a.test.mjs', 40);
+  repo.commit('test: a (#751)\n\nIssue: #751\nUser-Visible: no');
+  changes = issueChanges(repo.commits());
+  assert.equal(changeVolume(changes.get(751)), 50, 'тесты — класс B, входят');
+  // Строка задачи без объёма — «без коммитов» сравнения, а не корзина «≤30».
+  const row = issueTrackMetrics({ number: 7 }, [labeled('S4-spec-review', 0), labeled('S8-merged', 1)], { change: changes.get(7) });
+  assert.deepEqual([row.infra, row.volume, row.bucket], [false, null, null]);
+});
+
+test('#752 AC1 объём: Release:-коммиты задачи входят, кандидат беты, промоушен и бот beta-derived — нет', (t) => {
+  const repo = tempRepo(t, 'hp-752-release-');
+  repo.write('src/a.ts', 10);
+  repo.commit('feat: a (#751)\n\nIssue: #751\nUser-Visible: no');
+  // Приёмка эталонов задачи: аттестация (класс B) и кадры (класс D).
+  repo.write('demo/golden/attestation.json', 6); repo.write('demo/golden/baselines/scene.png', 50);
+  repo.commit('test(golden): accept the reviewed frames (#751)\n\nIssue: #751\nUser-Visible: no\nRelease: v1.0.0-beta.2\nBaseline-Reviewed: https://github.com/o/r/actions/runs/1');
+  // Перепривязка тестов к бете.
+  repo.write('test/b.test.mjs', 4);
+  repo.commit('test(daycycle): witnesses follow the beta (#751)\n\nRelease: v1.0.0-beta.2\nIssue: #751\nUser-Visible: no');
+  // Кандидат беты: трейлеры всех задач линии, версия и бандл.
+  repo.write('src/version.ts', 300, 'v'); repo.write('dist/houseplan-card.js', 500);
+  repo.commit('Release v1.0.0-beta.2 candidate\n\nIssue: #751\nIssue: #752\nUser-Visible: yes\nRelease: v1.0.0-beta.2');
+  // Кандидат без пересобранного бандла — по подписи.
+  repo.write('package.json', 7, 'p');
+  repo.commit('Release v1.0.0-beta.2 candidate refresh\n\nIssue: #751\nRelease: v1.0.0-beta.2');
+  // Промоушен стабильного — по бандлу.
+  repo.write('src/version.ts', 300, 'w'); repo.write('dist/houseplan-card.js', 500, 'd');
+  repo.commit('release: promote v1.0.0 from beta line\n\nIssue: #751\nIssue: #752\nUser-Visible: yes\nRelease: v1.0.0');
+  // Бот beta-derived (#697): отпечаток скриншотов и эталоны на dev.
+  repo.write('docs/images/screenshots.json', 12); repo.write('demo/golden/baselines/other.png', 30);
+  repo.commit('docs: accept derived artifacts on dev for v1.0.0-beta.3\n\nПроизводные артефакты беты.\n\nRelease: v1.0.0-beta.3\nBaseline-Reviewed: https://github.com/o/r/actions/runs/2\nIssue: #697\nUser-Visible: no');
+  const commits = repo.commits();
+  assert.deepEqual(commits.filter(isBetaCommit).map((c) => c.body.split('\n')[0]), [
+    'docs: accept derived artifacts on dev for v1.0.0-beta.3', 'release: promote v1.0.0 from beta line',
+    'Release v1.0.0-beta.2 candidate refresh', 'Release v1.0.0-beta.2 candidate',
+  ]);
+  const changes = issueChanges(commits);
+  assert.equal(changeVolume(changes.get(751)), 20, 'src 10 + аттестация 6 + тест 4; кадры (D) и коммиты беты — нет');
+  assert.equal(changes.has(752), false, 'задача, названная только кандидатом, объёма не получает');
+  assert.equal(changes.has(697), false, 'коммит бота — не работа #697');
+  // Текст в теле, начатый словом «Release:», — не трейлер: коммит задачи остаётся коммитом задачи.
+  assert.equal(isBetaCommit({ body: 'Release v1.0.0 candidate notes\n\n- dist/x\nRelease: notes wrap here\n\nIssue: #1\n', files: [{ path: 'dist/x.js' }] }), false);
+});
+
+test('#752 контракт: подпись коммита бота beta-derived — из _beta-derived.yml', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/_beta-derived.yml', import.meta.url), 'utf8');
+  const echo = /echo "(docs: accept derived artifacts on dev for )\$TAG"/.exec(workflow);
+  assert.ok(echo, 'тема коммита бота в _beta-derived.yml');
+  assert.match(`${echo[1]}v1.79.0-beta.1`, BETA_DERIVED_SUBJECT);
+  assert.doesNotMatch('docs: accept the #689 source fingerprint', BETA_DERIVED_SUBJECT);
+});
+
+test('#752 AC2 причины: исходы слияния после зелёного вердикта — merge, отказ push на ребейзе — push-refused', () => {
+  const ctx = { material: 'a'.repeat(40), candidate: 'c'.repeat(40), devNow: 'd'.repeat(40), branch: 'issue/701-x', ref: 'dev', runUrl: 'https://run/1', attempt: 3 };
+  const remote = (reason) => `To https://github.com/o/r\n ! [remote rejected] 0123abcd -> dev (${reason})\nerror: failed to push some refs`;
+  const mergeRefused = commentFor('push-refused', { ...ctx, stage: 'merge', refusal: { kind: 'remote-rejected', reason: 'protected branch hook declined', stderr: 'x' } });
+  const mergeWorkflow = commentFor('push-refused-workflow', { ...ctx, stage: 'merge', refusal: { kind: 'workflow', files: ['.github/workflows/x.yml'] } });
+  const merge = [
+    commentFor('validation-red', ctx), commentFor('validation-missing', ctx), commentFor('give-up', ctx),
+    mergeRefused, mergeWorkflow, commentFor('error', { error: 'git push dev: boom' }),
+  ];
+  assert.match(mergeRefused, /^\*\*Слияние не выполнено: GitHub отклонил push/);
+  assert.match(merge.at(-1), /^\*\*Слияние не выполнено: сбой шага слияния/);
+  const rebaseWorkflow = describePushRefusal(remote('refusing to allow a GitHub App to create or update workflow `.github/workflows/x.yml` without `workflows` permission'),
+    { ref: 'issue/701-x', branch: 'issue/701-x', candidate: 'c'.repeat(40), stage: 'rebase' }).comment;
+  assert.match(rebaseWorkflow, /^\*\*Ревью не запускалось: кандидат меняет workflow-файл/);
+  const rebaseRemote = describePushRefusal(remote('protected branch hook declined'), { ref: 'issue/701-x', branch: 'issue/701-x', stage: 'rebase' }).comment;
+  const sig = (body) => returnSignal(body, { stage: 'code', number: NUM });
+  for (const text of merge) assert.equal(sig(text), 'merge', text.split('\n')[0]);
+  assert.equal(sig(rebaseWorkflow), 'push-refused');
+  assert.equal(sig(rebaseRemote), 'push-refused');
+  assert.equal(sig(commentFor('rereview', ctx)), null, 'дифф изменился — задача идёт в S7, а не автору: причины нет');
+  assert.ok(RETURN_REASONS.includes('push-refused'));
+
+  // В окне: зелёный вердикт, затем исход слияния; возврат без комментария — unknown.
+  const GREEN = `Вердикт: зелёный · заход r1 · High: 0 · Документ: docs/reviews/CODE-REVIEW-${NUM}-r1.md`;
+  const cycle = (h, comments) => [
+    labeled('S7-code-review', h), ...comments.map((body, k) => commented(body, h + 0.1 + k * 0.1)), labeled('S6-in-progress', h + 0.5),
+  ];
+  const events = [
+    labeled('S1-new', 0), labeled('track:show', 0), labeled('S6-in-progress', 1),
+    ...merge.flatMap((text, k) => cycle(2 + k, [GREEN, text])),
+    ...cycle(10, [rebaseWorkflow]),
+    ...cycle(11, []),
+    labeled('S7-code-review', 12), commented(GREEN, 12.1), labeled('S8-merged', 12.5),
+  ];
+  const row = issueTrackMetrics({ number: NUM }, events);
+  assert.deepEqual(row.returns.map((r) => r.reason), [...merge.map(() => 'merge'), 'push-refused', 'unknown']);
+  const show = trackSection([row]).events.find((e) => e.track === 'show');
+  assert.deepEqual([show.reasons.merge, show.reasons['push-refused'], show.reasons.unknown], [6, 1, 1]);
+  const md = renderMarkdown(buildReport({ since: T(0), until: T(48), issues: [{ number: NUM }], timelines: new Map([[NUM, events]]) }));
+  assert.match(md, /\| Трек \| Возвратов \| verdict-yellow \| verdict-red \| validate-red \| conflict \| push-refused \| merge \|/);
+  assert.match(md, /\| show \| 8 \| 0 \| 0 \| 0 \| 0 \| 1 \| 6 \| 0 \| 0 \| 1 \|/);
+});
+
+const DRAFT = 'Черновик: автор · сессия s1 · локальная ветка issue/760-x · Spec-Draft sha256:0123456789ab';
+
+test('#752 AC3 черновик ТЗ: эпохи S4 на ask, черновик выброшен или пошёл в дело, show не в счёт', () => {
+  const ask = (n, draftEpoch) => [
+    labeled('S1-new', 0), labeled('track:ask', 0), labeled('S3-spec', 0.5),
+    labeled('S4-spec-review', 1), ...(draftEpoch === 1 ? [commented(DRAFT, 2)] : []), labeled('S3-spec', 3),
+    labeled('S4-spec-review', 4), labeled('S4-spec-review', 4.2), ...(draftEpoch === 2 ? [commented(DRAFT, 4.5)] : []), labeled('S5-ready', 5),
+    labeled('S6-in-progress', 5.5), labeled('S7-code-review', 5 + n),
+  ];
+  assert.deepEqual(specEpochs(ask(1, 1)).map((e) => [e.close, (e.end - e.start) / HOUR]), [['S3-spec', 2], ['S5-ready', 1]], 'повторная S4 эпоху не начинает');
+  const thrown = draftSection({ issues: [{ number: 760 }], timelines: new Map([[760, ask(1, 1)]]), since: T(0), until: T(48) });
+  assert.deepEqual(thrown.epochs, { total: 2, withDraft: 1, used: 0, thrown: 1, other: 0 });
+  const used = draftSection({ issues: [{ number: 760 }], timelines: new Map([[760, ask(1, 2)]]), since: T(0), until: T(48) });
+  assert.deepEqual(used.epochs, { total: 2, withDraft: 1, used: 1, thrown: 0, other: 0 });
+  // show: эпоха S4 не на ask — в счёт не входит.
+  const show = [labeled('S1-new', 0), labeled('track:show', 0), labeled('S4-spec-review', 1), commented(DRAFT, 1.5), labeled('S5-ready', 2)];
+  const onlyShow = draftSection({ issues: [{ number: 761 }], timelines: new Map([[761, show]]), since: T(0), until: T(48) });
+  assert.deepEqual([onlyShow.tasks, onlyShow.epochs.total, onlyShow.epochs.withDraft], [1, 0, 0]);
+  // Первый S5 вне окна — задачи нет.
+  assert.equal(draftSection({ issues: [{ number: 760 }], timelines: new Map([[760, ask(1, 2)]]), since: T(6), until: T(48) }).tasks, 0);
+
+  // Нет черновиков — строка «черновиков нет», а не ноль в таблице.
+  const none = renderMarkdown(buildReport({ since: T(0), until: T(48), issues: [{ number: 762 }], timelines: new Map([[762, ask(1, 0)]]) }));
+  const section = none.slice(none.indexOf('### Черновик ТЗ (#729)'), none.indexOf('### Токены'));
+  assert.match(section, /Черновиков нет: эпох `S4-spec-review` на ask — 2, комментария «Черновик:» нет ни в одной\./);
+  assert.doesNotMatch(section, /\| Эпох S4/);
+  assert.ok(none.indexOf('### По трекам') < none.indexOf('### Черновик ТЗ (#729)'), 'раздел — после «По трекам»');
+  const drafted = renderMarkdown(buildReport({ since: T(0), until: T(48), issues: [{ number: 760 }], timelines: new Map([[760, ask(1, 1)]]) }));
+  assert.match(drafted, /\| Эпох S4 \(ask\) \| С черновиком \| Пошёл в дело \(S5\) \| Выброшен \(S3\) \| Открыта или иначе \|\n\|---:\|---:\|---:\|---:\|---:\|\n\| 2 \| 1 \| 0 \| 1 \| 0 \|/);
+});
+
+test('#752 AC3 черновик ТЗ: S5 → S7 с черновиком и без по трекам, n < 3 — мало данных; коммиты Spec-Draft за окно', () => {
+  const ask = (hoursToS7, draft) => [
+    labeled('S1-new', 0), labeled('track:ask', 0), labeled('S4-spec-review', 1), ...(draft ? [commented(DRAFT, 1.5)] : []),
+    labeled('S5-ready', 2), labeled('S6-in-progress', 2.1), labeled('S7-code-review', 2 + hoursToS7),
+  ];
+  const ship = (hoursToS7) => [labeled('S1-new', 0), labeled('track:ship', 0), labeled('S5-ready', 2), labeled('S7-code-review', 2 + hoursToS7)];
+  // Черновик выброшен в первой эпохе, эпоху, закрытую S5, вёл не черновик — «без черновика».
+  const thrownThenPlain = [
+    labeled('S1-new', 0), labeled('track:ask', 0), labeled('S4-spec-review', 0.2), commented(DRAFT, 0.3), labeled('S3-spec', 0.5),
+    labeled('S4-spec-review', 1), labeled('S5-ready', 2), labeled('S7-code-review', 32),
+  ];
+  const timelines = new Map([
+    [1, ask(1, true)], [2, ask(2, true)], [3, ask(3, true)], [4, ask(10, false)], [5, thrownThenPlain],
+    [6, ship(4)], [7, ship(5)], [8, ship(6)], [9, ask(100, true)],
+  ]);
+  const commits = [
+    { sha: 'a'.repeat(40), date: T(3), body: 'feat: x (#1)\n\nIssue: #1\nSpec-Draft: sha256:' + 'f'.repeat(64) + '\n', issues: [1], files: [] },
+    { sha: 'b'.repeat(40), date: T(60), body: 'feat: y (#2)\n\nIssue: #2\nSpec-Draft: sha256:' + 'e'.repeat(64) + '\n', issues: [2], files: [] },
+    { sha: 'c'.repeat(40), date: T(3), body: 'feat: z (#3)\n\nIssue: #3\n', issues: [3], files: [] },
+  ];
+  const d = draftSection({ issues: [...timelines.keys()].map((number) => ({ number })), timelines, commits, since: T(0), until: T(48) });
+  const byTrack = Object.fromEntries(d.s5ToS7.map((row) => [row.track, row]));
+  assert.deepEqual(byTrack.ask.draft, { n: 3, hours: 2, enough: true });
+  assert.deepEqual(byTrack.ask.plain, { n: 2, hours: 20, enough: false });
+  assert.deepEqual(byTrack.ship.plain, { n: 3, hours: 5, enough: true });
+  assert.deepEqual(byTrack.show, { track: 'show', draft: { n: 0, hours: null, enough: false }, plain: { n: 0, hours: null, enough: false } });
+  assert.deepEqual(d.noS7, [9], 'S7 после конца окна — в S5 → S7 не входит');
+  assert.deepEqual(d.specDraftCommits, { count: 1, issues: [1] }, 'коммит вне окна и без трейлера — нет');
+  const md = renderMarkdown(buildReport({ since: T(0), until: T(48), issues: [...timelines.keys()].map((number) => ({ number })), timelines, commits }));
+  assert.match(md, /\| ask \| 3 \| 2 \| 2 \| мало данных \|/);
+  assert.match(md, /\| ship \| 0 \| мало данных \| 3 \| 5 \|/);
+  assert.match(md, /Коммиты с трейлером `Spec-Draft:` в `dev` за окно: 1 \(#1\)\./);
+  assert.match(md, /Без `S7-code-review` к концу окна \(в S5 → S7 не входят\): #9\./);
+});
+
+test('#752 контракт: комментарий «Черновик:» — шаблон PROCESS.md §7.2', () => {
+  const canon = readFileSync(new URL('../PROCESS.md', import.meta.url), 'utf8');
+  const template = /- \*\*Черновик\*\* \(§11\.8\): `(Черновик: [^`]+)`/.exec(canon.replace(/\n {2}/g, ' '));
+  assert.ok(template, 'шаблон «Черновик» в §7.2');
+  assert.match(template[1], DRAFT_COMMENT_RE);
+  assert.match(DRAFT, DRAFT_COMMENT_RE);
+  assert.doesNotMatch('Взял: автор · сессия s1 · ветка issue/760-x', DRAFT_COMMENT_RE);
 });
