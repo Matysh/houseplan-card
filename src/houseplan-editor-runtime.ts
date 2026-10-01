@@ -486,6 +486,7 @@ export interface HouseplanEditorHostPort {
   _capturedSnapshotConfigEpoch: number;
   _cellCm: number;
   _cfgEpoch: number;
+  _floorKey: (spaceId: string) => string;
   readonly _cfgRev: number;
   _clearTransientHover: (suspend?: boolean) => void;
   _closeInfoCard: () => void;
@@ -3181,11 +3182,11 @@ public _rszAcceptPreview(
   ): void {
     this.host._cfgEpoch++;
     if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key =
-      `${this.host._space}|${this.host._cfgEpoch}|${this.host._cellCm}|${this.host._gridPitch}`;
+      `${this.host._floorKey(this.host._space)}|${this.host._cellCm}|${this.host._gridPitch}`;
     if (!preview || !wallGeometry) return;
     const projected = wallBodiesGeometryPath(wallGeometry);
     if (!projected) return;
-    const key = `${this.host._space}|${this.host._cfgEpoch}|${preview.sp.rooms.length}`;
+    const key = `${this.host._floorKey(this.host._space)}|${preview.sp.rooms.length}`;
     Object.defineProperty(projected, 'sourceFingerprint', {
       value: contentFingerprint([preview.sp, this.host._cellCm, this.host._gridPitch]),
       enumerable: false,
@@ -3253,7 +3254,7 @@ public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
         this.host._serverCfg, this.host._space, null, new Set(plan.roomIds));
     } catch { this._resizeBaselineLimits = []; }
     const start = this._svgPoint(ev);
-    const wallUnionKey = `${this.host._space}|${this.host._cfgEpoch}|${rooms.length}`;
+    const wallUnionKey = `${this.host._floorKey(this.host._space)}|${rooms.length}`;
     const wallUnionBefore = this.host._wallUnionCache?.key === wallUnionKey
       ? this.host._wallUnionCache.value : null;
     const snapshotIdentity = this._rszSnapshot();
@@ -3373,12 +3374,12 @@ public _rszCancelDrag(pointerId?: number): void {
     if (result.restoreEpoch !== null) this.host._cfgEpoch = result.restoreEpoch;
     else this.host._cfgEpoch++;
     if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key =
-      `${this.host._space}|${this.host._cfgEpoch}|${this.host._cellCm}|${this.host._gridPitch}`;
+      `${this.host._floorKey(this.host._space)}|${this.host._cellCm}|${this.host._gridPitch}`;
     if (result.restoreWallUnion) {
-      // Alias the already-proved pre-drag union under the restored epoch.
+      // Alias the already-proved pre-drag union under the restored floor key (#744).
       const space = this.host._spaceModel();
       if (space) {
-        const key = `${this.host._space}|${this.host._cfgEpoch}|${space.rooms.length}`;
+        const key = `${this.host._floorKey(space.id)}|${space.rooms.length}`;
         const entry = { key, value: result.restoreWallUnion };
         lruWrite(this.host._wallUnionPool, key, entry, 8);
         this.host._wallUnionCache = entry;

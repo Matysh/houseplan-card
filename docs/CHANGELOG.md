@@ -42,6 +42,9 @@
   now keeps its transparency there in every state, and a room without a fill
   or border has them at 0
   ([#746](https://github.com/Matysh/houseplan-card/issues/746)).
+- After a plan edit, switching to other floors no longer stalls: only the
+  edited floor is rebuilt
+  ([#744](https://github.com/Matysh/houseplan-card/issues/744)).
 
 ## v1.79.0-beta.1 — 2026-09-30
 

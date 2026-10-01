@@ -70,7 +70,6 @@ export interface StairEditorHostPort {
   _tool: MarkupTool;
   _curSpaceCfg: unknown;
   _cfgEpoch: number;
-  _cleanFloorCache: Map<unknown, unknown>;
   _modelCache: unknown;
   _gridPitch: number;
   _cellCm: number;
@@ -152,8 +151,9 @@ export class StairEditorRuntime {
     if (!space) return;
     if (stairs.length) space.stairs = stairs;
     else delete space.stairs;
+    // #744: the stairs are part of this floor's record, so the new epoch gives
+    // this floor a new geometry key; other floors keep their clean floors.
     this.owner._cfgEpoch++;
-    this.owner._cleanFloorCache.clear();
     this.owner._modelCache = null;
     this.owner.requestUpdate();
   }

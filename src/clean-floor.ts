@@ -18,7 +18,8 @@ export function cleanFloorForRoom(input: {
   room: RoomCfg;
   floor: number[][];
   space?: SpaceModel;
-  configEpoch: number;
+  /** The floor's content key (#744, floor-geometry-key.ts); it starts with the floor id. */
+  floorKey(spaceId: string): string;
   resizePreview: boolean;
   cache: Map<string, CleanFloorResult>;
   physicalBodies(space: SpaceModel): number[][][];
@@ -30,7 +31,7 @@ export function cleanFloorForRoom(input: {
     floor, geom: null, path: '', area: geometryArea([[[...floor, floor[0]]]]),
   };
   const roomKey = room.id || `#${space.rooms.indexOf(room)}`;
-  const key = `${space.id}|${input.configEpoch}|${roomKey}`;
+  const key = `${input.floorKey(space.id)}|${roomKey}`;
   if (!input.resizePreview) {
     const cached = lruRead(input.cache, key);
     if (cached.hit) return cached.value;

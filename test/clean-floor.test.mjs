@@ -25,7 +25,7 @@ const counting = () => {
 };
 
 const build = (overrides = {}) => cleanFloorForRoom({
-  room, floor, space, configEpoch: 3, resizePreview: false, cache: new Map(),
+  room, floor, space, floorKey: (spaceId) => `${spaceId}|3`, resizePreview: false, cache: new Map(),
   physicalBodies: () => [column], ...overrides,
 });
 

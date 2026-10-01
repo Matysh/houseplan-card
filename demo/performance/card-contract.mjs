@@ -68,6 +68,9 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_liveEditorPaintCount', '_onLabsSnapshot',
     '_planSnapGeometryCache', '_roomDialog', '_syncVolumetricSetting', '_wallFaceBatch',
     '_wallFaceGraphCache',
+    // #744: the #735 switch-cycle guard counts the union pool and the inner
+    // contours; a comparison bundle without them reads 0.
+    '_wallUnionPool', '_innerContourCache',
   ]),
   // #649: members that only comparison bundles own. The benchmark feature-probes
   // them (`typeof card._setProjection === 'function'`); the current card no
@@ -111,6 +114,7 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     _path: 'array',
     _isoGeometryCache: 'map',
     _isoStructuralBuildCount: 'number',
+    _innerContourCache: 'map',
     _planSnapGeometryCache: 'object',
     _roomDialog: 'boolean',
     _resize: 'object',
@@ -119,6 +123,7 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     _space: 'string',
     _tool: 'string',
     _wallFaceGraphCache: 'array',
+    _wallUnionPool: 'map',
   }),
 });
 

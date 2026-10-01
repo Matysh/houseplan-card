@@ -269,6 +269,7 @@ import {
 import type { DecorShape, DecorStyle } from './editors/decor/types';
 import { StairViewRuntime, type StairViewHostPort } from './stairs-view';
 import { cleanFloorForRoom, type CleanFloorResult } from './clean-floor';
+import { floorGeometryKeyReader, type FloorKeySource } from './floor-geometry-key';
 import {
   DECOR_ASSETS_API_VERSION, decorAssetIds, projectDecorImage,
   resolveDecorAssets, type DecorAsset,
@@ -1799,6 +1800,7 @@ export class HouseplanCard extends LitElement {
   private _lightPhysicalBodiesCache: { key: string; all: number[][][] } | null = null;
   private _cleanFloorCache = new Map<string, CleanFloorResult>();
   private _innerContourCache = new Map<string, number[][] | null>();
+  private readonly _floorKey = floorGeometryKeyReader(this as unknown as FloorKeySource); // #744: key of the four caches above
   private readonly _glowRuntimeState: GlowRuntimeState = createGlowRuntimeState();
   private readonly _glowRuntimeHost: GlowRuntimeHost = {
     window: () => this.ownerDocument.defaultView || window,
@@ -8754,14 +8756,14 @@ export class HouseplanCard extends LitElement {
     return united?.paperD ? [{ path: united.paperD }] : paperRoomShapes(rooms);
   }
 
-  /** Canonical paper + masonry geometry, cached by structural config epoch. */
+  /** Canonical paper + masonry geometry, cached by the floor's content key (#744). */
   private _wallUnionGeometry(): ReturnType<typeof wallBodiesUnionPath> {
     const space = this._spaceModel();
     if (!space) return null;
     const walls = this._spaceWalls;
     const extras = this._physicalBodiesR();
     if (!walls.length && !extras.length) return null;
-    const unionKey = `${this._space}|${this._cfgEpoch}|${space.rooms.length}`;
+    const unionKey = `${this._floorKey(space.id)}|${space.rooms.length}`;
     if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
       const cached = lruRead(this._wallUnionPool, unionKey);
       if (cached.hit) this._wallUnionCache = cached.value;
@@ -8779,10 +8781,7 @@ export class HouseplanCard extends LitElement {
           value: contentFingerprint([this._curSpaceCfg, this._cellCm, this._gridPitch]),
           enumerable: false,
         });
-        const entry = {
-          key: unionKey,
-          value,
-        };
+        const entry = { key: unionKey, value };
         lruWrite(this._wallUnionPool, unionKey, entry, 8);
         this._wallUnionCache = entry;
       }
@@ -8812,9 +8811,8 @@ export class HouseplanCard extends LitElement {
     multiWallNodes = this._wallUnionGeometry()?.multiWallNodes,
   ): number[][] | null {
     const cutsKey = openCuts.map((cut) => cut.join(',')).join(';');
-    const key = `${space.id}|${this._cfgEpoch}|${roomId}|${cutsKey}`;
-    // Resize advances the structural epoch before publishing every preview,
-    // so editor and View consumers can safely share one per-epoch answer.
+    const key = `${this._floorKey(space.id)}|${roomId}|${cutsKey}`;
+    // #744: one answer per floor content (a resize preview is its own record).
     const cached = lruRead(this._innerContourCache, key);
     if (cached.hit) return cached.value;
     const value = innerContourForRoom(
@@ -9468,7 +9466,7 @@ export class HouseplanCard extends LitElement {
    * does not depend on show_borders. */
   private _physicalBodiesR(space: SpaceModel | undefined = this._spaceModel()): number[][][] {
     if (!space) return [];
-    const key = `${space.id}|${this._cfgEpoch}|${this._cellCm}|${this._gridPitch}`;
+    const key = `${this._floorKey(space.id)}|${this._cellCm}|${this._gridPitch}`;
     if (this._physicalBodiesCache?.key === key) return this._physicalBodiesCache.all;
     const frame = physicalBodyParts(
       space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
@@ -9492,7 +9490,7 @@ export class HouseplanCard extends LitElement {
     room: RoomCfg, floor: number[][], space: SpaceModel | undefined = this._spaceModel(),
   ): CleanFloorResult {
     return cleanFloorForRoom({
-      room, floor, space, configEpoch: this._cfgEpoch,
+      room, floor, space, floorKey: this._floorKey,
       resizePreview: !!this._resize?.preview,
       cache: this._cleanFloorCache,
       physicalBodies: (model) => this._physicalBodiesR(model),

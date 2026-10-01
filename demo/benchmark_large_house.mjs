@@ -178,6 +178,11 @@ try {
         cleanFloor: card._cleanFloorCache?.size ?? 0,
         glowClip: card._glowClipCache?.size ?? 0,
         wallUnion: card._wallUnionCache ? 1 : 0,
+        // #744: the union is pooled per floor, and the inner contours are the
+        // second structural cache of a floor visit; 0/1 above cannot see a
+        // cold floor whose union is rebuilt while its clean floor stays warm.
+        wallUnionPool: card._wallUnionPool?.size ?? 0,
+        innerContour: card._innerContourCache?.size ?? 0,
         openingTunnel: card._openingTunnelCache ? 1 : 0,
         openingWallIndex: card._openingWallIndexCache ? 1 : 0,
         isoGeometry: card._isoGeometryCache?.size ?? 0,

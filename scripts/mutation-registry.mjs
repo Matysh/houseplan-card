@@ -14178,6 +14178,29 @@ const MUTANT_DEFINITIONS = [
         + '      controlTop: this.host._kiosk ? this.stage.controlTop : 0 });\n',
     }],
   },
+  // #744: четыре кэша геометрии этажа — по отпечатку записи этажа, а не по эпохе.
+  {
+    id: 'floor-geometry-key-global-epoch',
+    guard: 'node demo/smoke_floor_geometry_cache.mjs',
+    because: '#744 AC1: an edit of one floor bumps the global epoch; a floor key made of the epoch '
+      + 'turns every other floor cold, and its first visit rebuilds the union, contours and clean floors',
+    patches: [{
+      file: 'src/floor-geometry-key.ts',
+      find: '    const key = `${spaceId}|${contentFingerprint(model === current ? model : [model, current])}`;\n',
+      replace: '    const key = `${spaceId}|${source._cfgEpoch}`; // mutant: the global epoch\n',
+    }],
+  },
+  {
+    id: 'floor-geometry-key-ignores-content',
+    guard: 'node demo/smoke_floor_geometry_cache.mjs',
+    because: '#744 AC2a: a server push that changes a floor\'s walls must give the floor a new key; a key '
+      + 'without the content fingerprint draws the walls and areas of the previous record',
+    patches: [{
+      file: 'src/floor-geometry-key.ts',
+      find: '    const key = `${spaceId}|${contentFingerprint(model === current ? model : [model, current])}`;\n',
+      replace: '    const key = `${spaceId}|`; // mutant: no content fingerprint\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

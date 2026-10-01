@@ -17,8 +17,8 @@ to prove that the Node witness actually kills it.
 | Paint, cascade and layer composition | 26 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 45 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 38 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 97 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **214 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 99 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **216 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -237,6 +237,8 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `editor-neutral-escape-does-not-exit`
 - `empty-space-cleanup-disabled`
 - `fixed-floor-transition-guard-bypassed`
+- `floor-geometry-key-global-epoch`
+- `floor-geometry-key-ignores-content`
 - `french-locale-wrong-dictionary`
 - `hp-dialog-escape-does-not-close`
 - `junction-limit-baseline-cache-stale`
