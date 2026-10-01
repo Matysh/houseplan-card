@@ -368,7 +368,11 @@ jobs:
           FULL_INPUT: ${{ inputs.full }}
           MUTANTS_INPUT: ${{ inputs.mutants }}
           REF_NAME: ${{ github.ref_name }}
-        run: node scripts/classify-changes.mjs --heavy | tee -a "$GITHUB_OUTPUT"
+        # #751: без pipefail упавший classify-changes оставлял heavy пустым —
+        # тяжёлые job молча пропускались, а job changes зеленела.
+        run: |
+          set -o pipefail
+          node scripts/classify-changes.mjs --heavy | tee -a "$GITHUB_OUTPUT"
       - id: base
         if: github.event_name != 'pull_request'
         env:

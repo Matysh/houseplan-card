@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { buildCiProof } from '../scripts/ci-proof.mjs';
 import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
 import {
-  LIST_LIMIT, NIGHT_RED_MARKER_RE, commentBody, commentVerdict, countsForNightRed, findLastGreen, gitClient,
+  LIST_LIMIT, NIGHT_RED_MARKER_RE, actionsClient, commentBody, commentVerdict, countsForNightRed, findLastGreen, gitClient,
   nightRed, parseNightRedMarkers, rangeSuspects,
 } from '../scripts/night-red.mjs';
 
@@ -412,6 +412,34 @@ async function runNightStep(t, { cwd, items, issues = {}, fail = false, scripts 
   const comment = (number) => text(join(gh.data, `comment-${number}.md`));
   return { status, stdout, stderr, requests: api.requests, log: text(files.log).split('\n').filter(Boolean), summary: text(files.summary), comment };
 }
+
+// #751: база API идёт в loadGithubProofContext параметром; обёртки над fetch,
+// переписывавшей префикс api.github.com, больше нет. Ссылку на архив
+// доказательства API отдаёт абсолютной — она не трогается.
+test('#751 AC2: actionsClient — прогоны, job и доказательство из apiBase, архив — по ссылке API', async () => {
+  const base = 'https://ghe.example/api/v3';
+  const archive = 'https://objects.example/artifacts/5/zip';
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(String(url));
+    if (url === archive) return { ok: true, arrayBuffer: async () => zipWith({}) };
+    if (/\/artifacts\?name=/.test(url)) return { ok: true, json: async () => ({ artifacts: [{ name: 'ci-proof-5-1', expired: false, archive_download_url: archive }] }) };
+    return { ok: true, json: async () => ({ id: 5, workflow_runs: [], jobs: [] }) };
+  };
+  const api = actionsClient({ repo: REPO, token: 'actions-token', apiBase: `${base}/`, fetchImpl });
+  await api.run(5);
+  await api.runs();
+  await api.failedJobs(5);
+  await api.proofContext({ id: 5, run_attempt: 1 });
+  assert.deepEqual(urls, [
+    `${base}/repos/${REPO}/actions/runs/5`,
+    `${base}/repos/${REPO}/actions/workflows/validate.yml/runs?branch=dev&event=workflow_dispatch&per_page=50`,
+    `${base}/repos/${REPO}/actions/runs/5/jobs?per_page=100`,
+    `${base}/repos/${REPO}/actions/runs/5/artifacts?name=ci-proof-5-1`,
+    archive,
+    `${base}/repos/${REPO}/actions/runs/5/jobs?per_page=100`,
+  ]);
+});
 
 test('#736 AC2/AC3 на настоящем bash: шаг ночи читает Actions токеном ночи, пишет issue токеном процесса', async (t) => {
   if (!hasBash()) { t.skip('bash недоступен'); return; }

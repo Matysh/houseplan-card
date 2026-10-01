@@ -75,6 +75,9 @@ jobs:
           FORCE: ${{ inputs.force }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          # Отказ prepare за `| tee` не должен идти дальше с неполным
+          # GITHUB_OUTPUT и proceed=true (#751).
+          set -o pipefail
           doc=$(node scripts/release-review.mjs doc --tag="$TAG")
           git fetch -q --tags origin
           if [ -z "$CANDIDATE" ]; then

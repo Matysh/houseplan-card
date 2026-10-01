@@ -54,7 +54,11 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
           EVENT: ${{ github.event.workflow_run.event }}
           STATUS: ${{ github.event.workflow_run.status }}
+        # #751: без pipefail код конвейера — код tee, и исключение скрипта (gh,
+        # API) проходило зелёным шагом: событие возобновления терялось до
+        # прохода process-reconcile.
         run: |
+          set -o pipefail
           node scripts/process-resume.mjs \
             --repo="$REPO" --branch="$BRANCH" --sha="$SHA" \
             --event="$EVENT" --status="$STATUS" --apply=true | tee -a "$GITHUB_STEP_SUMMARY"

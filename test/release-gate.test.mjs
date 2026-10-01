@@ -136,6 +136,21 @@ test('release gate can target the dedicated exact-SHA performance workflow', () 
   );
 });
 
+test('#751 AC2: workflowRunsUrl — база из apiBase или GITHUB_API_URL раннера', () => {
+  const args = { repo: 'Matysh/houseplan-card', workflow: 'validate.yml', sha: 'abc' };
+  const tail = '/repos/Matysh/houseplan-card/actions/workflows/validate.yml/runs?head_sha=abc&per_page=100';
+  assert.equal(workflowRunsUrl({ ...args, apiBase: 'https://ghe.example/api/v3' }), `https://ghe.example/api/v3${tail}`);
+  const before = process.env.GITHUB_API_URL;
+  try {
+    process.env.GITHUB_API_URL = 'https://ghe.example/api/v3/';
+    assert.equal(workflowRunsUrl(args), `https://ghe.example/api/v3${tail}`, 'без параметра — окружение раннера');
+    delete process.env.GITHUB_API_URL;
+    assert.equal(workflowRunsUrl(args), `https://api.github.com${tail}`, 'без GITHUB_API_URL — прежний адрес');
+  } finally {
+    if (before === undefined) delete process.env.GITHUB_API_URL; else process.env.GITHUB_API_URL = before;
+  }
+});
+
 test('#541: the release documents describe proof semantics', () => {
   const development = readFileSync(new URL('../docs/DEVELOPMENT.md', import.meta.url), 'utf8');
   assert.match(development, /requires a complete Validate proof for its SHA and\nGit tree/);

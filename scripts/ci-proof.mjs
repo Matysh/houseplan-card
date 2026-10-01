@@ -495,23 +495,32 @@ const apiHeaders = (token) => ({
   'User-Agent': 'houseplan-ci-proof', 'X-GitHub-Api-Version': '2022-11-28',
 });
 
+/**
+ * База REST API (#751): `GITHUB_API_URL`, как у раннера, без хвостового `/`.
+ * На github.com это тот же `https://api.github.com`; на GHES — `…/api/v3`.
+ * `archive_download_url` приходит из API абсолютным и базу не берёт.
+ */
+export const githubApiBase = (env = process.env) => String(env.GITHUB_API_URL || 'https://api.github.com').replace(/\/+$/, '');
+
 async function githubJson(url, token, fetchImpl) {
   const response = await fetchImpl(url, { headers: apiHeaders(token) });
   if (!response.ok) throw new Error(`GitHub API ${response.status}: ${await response.text()}`);
   return response.json();
 }
 
-export async function githubCandidateTree({ repo, sha, token, fetchImpl = fetch }) {
-  const row = await githubJson(`https://api.github.com/repos/${repo}/git/commits/${sha}`, token, fetchImpl);
+export async function githubCandidateTree({ repo, sha, token, fetchImpl = fetch, apiBase = githubApiBase() }) {
+  const row = await githubJson(`${apiBase}/repos/${repo}/git/commits/${sha}`, token, fetchImpl);
   return row?.tree?.sha || null;
 }
 
-export async function loadGithubProofContext({ repo, run, token, fetchImpl = fetch, withReviewedRun = false }) {
+export async function loadGithubProofContext({
+  repo, run, token, fetchImpl = fetch, withReviewedRun = false, apiBase = githubApiBase(),
+}) {
   const runId = runIdOf(run);
   const attempt = runAttemptOf(run);
   const name = ciProofArtifactName(runId, attempt);
   const list = await githubJson(
-    `https://api.github.com/repos/${repo}/actions/runs/${runId}/artifacts?name=${encodeURIComponent(name)}`,
+    `${apiBase}/repos/${repo}/actions/runs/${runId}/artifacts?name=${encodeURIComponent(name)}`,
     token, fetchImpl,
   );
   const artifact = (list?.artifacts || []).find((item) => item.name === name && !item.expired);
@@ -522,7 +531,7 @@ export async function loadGithubProofContext({ repo, run, token, fetchImpl = fet
     proof = readCiProofArtifact(Buffer.from(await response.arrayBuffer()));
   }
   const jobsBody = await githubJson(
-    `https://api.github.com/repos/${repo}/actions/runs/${runId}/jobs?per_page=100`, token, fetchImpl,
+    `${apiBase}/repos/${repo}/actions/runs/${runId}/jobs?per_page=100`, token, fetchImpl,
   );
   const jobs = jobsBody?.jobs || [];
   const reuseRuns = new Map();
@@ -532,10 +541,10 @@ export async function loadGithubProofContext({ repo, run, token, fetchImpl = fet
     const sourceKey = reuseSourceKey(sourceId, sourceAttempt);
     if (!sourceId || !sourceAttempt || reuseRuns.has(sourceKey)) continue;
     const sourceRun = await githubJson(
-      `https://api.github.com/repos/${repo}/actions/runs/${sourceId}/attempts/${sourceAttempt}`, token, fetchImpl,
+      `${apiBase}/repos/${repo}/actions/runs/${sourceId}/attempts/${sourceAttempt}`, token, fetchImpl,
     );
     const sourceJobs = await githubJson(
-      `https://api.github.com/repos/${repo}/actions/runs/${sourceId}/attempts/${sourceAttempt}/jobs?per_page=100`,
+      `${apiBase}/repos/${repo}/actions/runs/${sourceId}/attempts/${sourceAttempt}/jobs?per_page=100`,
       token, fetchImpl,
     );
     reuseRuns.set(sourceKey, { run: sourceRun, jobs: sourceJobs?.jobs || [] });
@@ -547,7 +556,7 @@ export async function loadGithubProofContext({ repo, run, token, fetchImpl = fet
   const declared = proof?.evidence?.baselines?.reviewedRun;
   if (withReviewedRun && declared) {
     try {
-      reviewedRun = { run: await githubJson(`https://api.github.com/repos/${repo}/actions/runs/${declared}`, token, fetchImpl) };
+      reviewedRun = { run: await githubJson(`${apiBase}/repos/${repo}/actions/runs/${declared}`, token, fetchImpl) };
     } catch {
       reviewedRun = null;
     }

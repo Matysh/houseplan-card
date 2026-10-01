@@ -36,7 +36,7 @@ import { isMainModule } from './spawn-portable.mjs';
 import { classify } from './change-classes.mjs';
 import { issueTrailers } from './release-membership.mjs';
 import { hasReleaseTrailer } from './ship-review.mjs';
-import { CI_PROOF_POLICIES, evaluateCiProof, loadGithubProofContext } from './ci-proof.mjs';
+import { CI_PROOF_POLICIES, evaluateCiProof, githubApiBase, loadGithubProofContext } from './ci-proof.mjs';
 
 /** Сколько последних dispatch-прогонов Validate на `dev` смотрит поиск `G`. */
 export const RUN_WINDOW = 50;
@@ -44,7 +44,6 @@ export const RUN_WINDOW = 50;
 export const LIST_LIMIT = 10;
 export const NIGHT_RED_MARKER_RE = /<!-- hp:night-red green=([0-9a-f]{40,64}) red=([0-9a-f]{40,64}) commits=([0-9a-f+]*) -->/g;
 
-const GITHUB_API = 'https://api.github.com';
 const short = (sha, n) => String(sha || '').slice(0, n);
 const stamp = (run) => Date.parse(run?.created_at || '') || 0;
 const runUrl = (repo, run) => run?.html_url || `https://github.com/${repo}/actions/runs/${run?.id}`;
@@ -236,12 +235,15 @@ export function gitClient({ cwd } = {}) {
   };
 }
 
-/** Actions API: `token` — `github.token`; база — `GITHUB_API_URL`, как у раннера. */
-export function actionsClient({ repo, token, apiBase = GITHUB_API, fetchImpl = fetch }) {
-  const base = String(apiBase || GITHUB_API).replace(/\/+$/, '');
-  const fetchApi = (url, init) => fetchImpl(String(url).startsWith(GITHUB_API) ? base + String(url).slice(GITHUB_API.length) : url, init);
+/**
+ * Actions API: `token` — `github.token`; база — `GITHUB_API_URL`, как у раннера.
+ * #751: база идёт в `loadGithubProofContext` параметром — переписывать URL
+ * обёрткой над `fetch` больше незачем.
+ */
+export function actionsClient({ repo, token, apiBase = githubApiBase(), fetchImpl = fetch }) {
+  const base = String(apiBase || githubApiBase()).replace(/\/+$/, '');
   const json = async (path) => {
-    const response = await fetchApi(`${GITHUB_API}/repos/${repo}${path}`, {
+    const response = await fetchImpl(`${base}/repos/${repo}${path}`, {
       headers: {
         Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`,
         'User-Agent': 'houseplan-night-red', 'X-GitHub-Api-Version': '2022-11-28',
@@ -256,7 +258,7 @@ export function actionsClient({ repo, token, apiBase = GITHUB_API, fetchImpl = f
       ?.workflow_runs || [],
     failedJobs: async (id) => ((await json(`/actions/runs/${id}/jobs?per_page=100`))?.jobs || [])
       .filter((job) => job?.conclusion === 'failure').map((job) => job.name),
-    proofContext: (run) => loadGithubProofContext({ repo, run, token, fetchImpl: fetchApi }),
+    proofContext: (run) => loadGithubProofContext({ repo, run, token, fetchImpl, apiBase: base }),
   };
 }
 
@@ -284,7 +286,7 @@ if (isMainModule(import.meta.url)) {
     if (!/^[1-9]\d*$/.test(redRunId)) throw new Error(`--red-run=<id прогона> обязателен, получено «${redRunId}»`);
     const result = await nightRed({
       repo, redRunId,
-      api: actionsClient({ repo, token: process.env.ACTIONS_TOKEN || '', apiBase: process.env.GITHUB_API_URL || GITHUB_API }),
+      api: actionsClient({ repo, token: process.env.ACTIONS_TOKEN || '', apiBase: githubApiBase() }),
       issues: ghIssues({ repo }),
       git: gitClient(),
     });

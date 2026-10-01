@@ -5,7 +5,8 @@ import { deflateRawSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 import {
-  CI_PROOF_POLICIES, MUTANT_JOB_PREFIX, baselineReviewedRun, buildCiProof, evaluateCiProof, loadGithubProofContext, localEvidence,
+  CI_PROOF_POLICIES, MUTANT_JOB_PREFIX, baselineReviewedRun, buildCiProof, evaluateCiProof, githubApiBase, githubCandidateTree,
+  loadGithubProofContext, localEvidence,
   parseReuseMarker, productTreeId, readCiProofArtifact, requiredCheckIds, selectCiProofVerdict,
 } from '../scripts/ci-proof.mjs';
 import { REUSE_JOBS } from '../scripts/check-inputs.mjs';
@@ -440,6 +441,63 @@ test('#573 r1 M1: reviewed run спрашивается у GitHub только �
   const release = await withProof(true);
   assert.equal(release.reviewedRun.run.id, 34853080375);
   assert.ok(urls.some((url) => url.endsWith('/actions/runs/34853080375')), 'release спрашивает объявленный run');
+});
+
+// #751: база REST API — `GITHUB_API_URL` раннера, а не зашитый api.github.com.
+// На github.com раннер даёт тот же адрес; на GHES — `…/api/v3`.
+const GHE = 'https://ghe.example/api/v3';
+
+/** `GITHUB_API_URL` процесса на время `body`; прежнее значение возвращается. */
+async function withApiUrl(value, body) {
+  const before = process.env.GITHUB_API_URL;
+  if (value === undefined) delete process.env.GITHUB_API_URL; else process.env.GITHUB_API_URL = value;
+  try { return await body(); } finally {
+    if (before === undefined) delete process.env.GITHUB_API_URL; else process.env.GITHUB_API_URL = before;
+  }
+}
+
+test('#751 AC2: githubApiBase — GITHUB_API_URL без хвостового /, без него — api.github.com', () => {
+  assert.equal(githubApiBase({}), 'https://api.github.com');
+  assert.equal(githubApiBase({ GITHUB_API_URL: '' }), 'https://api.github.com');
+  assert.equal(githubApiBase({ GITHUB_API_URL: `${GHE}/` }), GHE);
+  assert.equal(githubApiBase({ GITHUB_API_URL: 'https://api.github.com' }), 'https://api.github.com');
+});
+
+test('#751 AC2: loadGithubProofContext и githubCandidateTree ходят в apiBase; ссылка на архив — как отдал API', async () => {
+  const proof = {
+    reusedChecks: ['unit'], checks: { unit: { reuse: { sourceRun: 11, sourceAttempt: 2 } } },
+    evidence: { baselines: { reviewedRun: 99 } },
+  };
+  const archive = 'https://objects.example/artifacts/7/zip';
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(String(url));
+    if (url === archive) return { ok: true, arrayBuffer: async () => zipWith(proof) };
+    if (/\/artifacts\?name=/.test(url)) return { ok: true, json: async () => ({ artifacts: [{ name: 'ci-proof-20-1', expired: false, archive_download_url: archive }] }) };
+    if (/\/jobs\?/.test(url)) return { ok: true, json: async () => ({ jobs: [] }) };
+    if (/\/git\/commits\//.test(url)) return { ok: true, json: async () => ({ tree: { sha: TREE } }) };
+    return { ok: true, json: async () => ({ id: 1 }) };
+  };
+  const run = { id: 20, run_attempt: 1 };
+  await loadGithubProofContext({ repo: 'x/y', run, token: 't', fetchImpl, withReviewedRun: true, apiBase: GHE });
+  assert.equal(await githubCandidateTree({ repo: 'x/y', sha: SHA, token: 't', fetchImpl, apiBase: GHE }), TREE);
+  assert.deepEqual(urls, [
+    `${GHE}/repos/x/y/actions/runs/20/artifacts?name=ci-proof-20-1`,
+    archive,
+    `${GHE}/repos/x/y/actions/runs/20/jobs?per_page=100`,
+    `${GHE}/repos/x/y/actions/runs/11/attempts/2`,
+    `${GHE}/repos/x/y/actions/runs/11/attempts/2/jobs?per_page=100`,
+    `${GHE}/repos/x/y/actions/runs/99`,
+    `${GHE}/repos/x/y/git/commits/${SHA}`,
+  ]);
+  // Без параметра база — из окружения в момент вызова.
+  urls.length = 0;
+  await withApiUrl(`${GHE}/`, () => githubCandidateTree({ repo: 'x/y', sha: SHA, token: 't', fetchImpl }));
+  await withApiUrl(undefined, () => githubCandidateTree({ repo: 'x/y', sha: SHA, token: 't', fetchImpl }));
+  await withApiUrl(`${GHE}/`, () => loadGithubProofContext({ repo: 'x/y', run, token: 't', fetchImpl }));
+  assert.equal(urls[0], `${GHE}/repos/x/y/git/commits/${SHA}`);
+  assert.equal(urls[1], `https://api.github.com/repos/x/y/git/commits/${SHA}`);
+  assert.equal(urls[2], `${GHE}/repos/x/y/actions/runs/20/artifacts?name=ci-proof-20-1`);
 });
 
 test('#573: identity продуктового дерева не видит overlay эталонов, но видит всё остальное', () => {

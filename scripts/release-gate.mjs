@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  CI_PROOF_POLICIES, evaluateCiProof, githubCandidateTree, localEvidence,
+  CI_PROOF_POLICIES, evaluateCiProof, githubApiBase, githubCandidateTree, localEvidence,
   loadGithubProofContext, selectCiProofVerdict,
 } from './ci-proof.mjs';
 
@@ -85,8 +85,9 @@ export async function classifyValidateProofs({
   return selectCiProofVerdict(evaluations);
 }
 
-export const workflowRunsUrl = ({ repo, workflow, sha }) => (
-  `https://api.github.com/repos/${repo}/actions/workflows/${encodeURIComponent(workflow)}`
+// #751: база — `GITHUB_API_URL` раннера (githubApiBase), не зашитый api.github.com.
+export const workflowRunsUrl = ({ repo, workflow, sha, apiBase = githubApiBase() }) => (
+  `${apiBase}/repos/${repo}/actions/workflows/${encodeURIComponent(workflow)}`
   + `/runs?head_sha=${encodeURIComponent(sha)}&per_page=100`
 );
 
