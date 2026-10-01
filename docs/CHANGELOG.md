@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Recreating the card in Home Assistant now keeps the editor camera steady and the
+  previous View zoom even when edit permission arrives late. A newer mode or
+  floor choice is no longer overridden by that delayed restoration, whether
+  the editor has already loaded or is still loading. Moving the plan during
+  loading no longer blocks its subsequent resize
+  ([#762](https://github.com/Matysh/houseplan-card/issues/762)).
+
 - The moon now appears with any background, not only "Follow the Sun": with a
   static background — the theme's or a colour of your own, for the whole
   installation or a single space — it stands in the same top-left corner behind

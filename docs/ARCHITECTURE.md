@@ -482,6 +482,13 @@ still recognised in stored config but no longer served
   by full and static cards; exact `entity:` placement beats its parent
   `device:` (no double vote); never call the `areaClimate()` wrapper in render.
 - Load, continuity and fixed-floor rules: `WARM-REMOUNT.md` § 5.
+- `warm-mode-adoption.ts` completes immediate and delayed editor adoption with
+  the original View return snapshot and a request-owned refit hold. Explicit
+  mode/space navigation invalidates pending work before lazy-runtime awaits;
+  warm header/stage dimensions are published only after the corresponding
+  render, including the card-local header offset for pending chrome (#762).
+  Adoption completion lives in the lazy editor graph: it only executes after
+  that runtime is ready; View retains just cancellation and camera comparison.
 
 ## Second card: houseplan-space-card (read-only)
 

@@ -237,12 +237,11 @@ import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureAr
 import type { BackdropGuardState } from './backdrop-pick';
 import {
   expiredWarmViewport, lruRead, lruWrite, normalizeMarkupTool, strictNumber,
-  warmBootKey, warmMatch,
+  warmBootKey, warmMatch, warmCameraUnchanged,
   type DecorTool, type MarkupTool, type WarmDialog, type WarmDialogKind,
   type WarmEntry, type WarmViewport,
 } from './card-runtime';
 import { restoreWarmDialogBaseline, warmDialogBaseline } from './editors/dialog-baseline';
-import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
 
 // Chromium records a FAILED module in the page module map permanently — a
 // retry of the same URL resolves from that map without touching the network.
@@ -739,18 +738,31 @@ export class HouseplanCard extends LitElement {
     animate = true,
     adopt: boolean | 'resume' = false,
   ): Promise<void> {
+    if (!adopt) this._cancelPendingWarmMode();
     const request = ++this._editorModeRequest;
-    if (adopt === true) this._holdWarmRefit(request);
+    if (adopt && warmCameraUnchanged(this._view, this._warmVp)) this._holdWarmRefit(request);
     const ready = mode === 'view' || await this._ensureEditorRuntime();
-    const current = ready && request === this._editorModeRequest && this.isConnected;
+    const current = ready && request === this._editorModeRequest && this.isConnected
+      && (mode === 'view' || this._canEdit && !this._kiosk);
+    if (!current) {
+      this._releaseWarmRefit(request);
+      if (adopt && request === this._editorModeRequest && this.isConnected) this._warmReviveDialog(true, true);
+      return;
+    }
     if (adopt === 'resume') {
-      resumeWarmMode(this as unknown as WarmModeHost, mode, () => { if (current) this._setMode(mode, animate); });
-    } else if (!current) {
-      if (this._warmModeRequest === request) this._warmModeRequest = 0;
+      this._editorRuntime!.resumeWarmMode(mode, animate);
     } else if (adopt) {
       this._adoptMode(mode);
-      finishWarmModeAdoption(this as unknown as WarmModeHost, request);
+      this._editorRuntime!.finishWarmModeAdoption(request);
     } else this._setMode(mode, animate);
+  }
+  /** Explicit navigation supersedes permission/runtime-delayed restoration. */
+  private _cancelPendingWarmMode(): void {
+    this._pendingNavMode = null;
+    this._releaseWarmRefit(this._warmModeRequest);
+    ++this._editorModeRequest;
+    if (this._warmRevivePending) this._warmReviveDialog(true, true);
+    this.requestUpdate(); // Remove pending editor chrome even without a loaded runtime.
   }
   /** A warm request owns the stage refit until its restored mode has settled (#756). */
   public _holdWarmRefit(request: number): void {
@@ -759,10 +771,11 @@ export class HouseplanCard extends LitElement {
   }
   /** Then the settled stage becomes the refit baseline; the camera stays. */
   public _releaseWarmRefit(request: number): void {
-    if (this._warmModeRequest !== request || request !== this._editorModeRequest) return;
+    if (!request || this._warmModeRequest !== request || request !== this._editorModeRequest) return;
     const stage = this._stageEl; this._pendingRefitSize = null; this._warmModeRequest = 0;
     this._lastValidStageSize = stage && stage.clientWidth > 0 && stage.clientHeight > 0
       ? [stage.clientWidth, stage.clientHeight] : null;
+    this.requestUpdate();
   }
   public hass?: any;
   public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
@@ -1414,6 +1427,7 @@ export class HouseplanCard extends LitElement {
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
+      this._cancelPendingWarmMode();
       this._clearRoomFocus(true);
       this._resetDeviceHitState();
       this._cancelDangerConfirm();
@@ -2633,7 +2647,7 @@ export class HouseplanCard extends LitElement {
     this._deviceHitScrollUnsub?.(); this._deviceHitScrollUnsub = undefined; this._pinchZoomDirty = false;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
-    this._warmModeRequest = 0;
+    this._warmModeRequest = 0; ++this._editorModeRequest;
     if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._summarySlot.disconnect();
     this._dayCycleClockKey = '';
     if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
@@ -3410,13 +3424,14 @@ export class HouseplanCard extends LitElement {
         || this._backupExportDialog || this._backupImportDialog) return null;
     if (this._openingInfo) return at('openingInfo', (this._openingInfo as any).id);
     if (this._infoCard) return at('info', this._infoCard.id);
-    if (this._rulesDialog) return this._rulesDialog.busy ? null : at('rules', this._rulesDialog);
-    if (this._settingsDialog) return this._settingsDialog.busy ? null : at('settings', this._settingsDialog);
-    if (this._markerDialog) return this._markerDialog.busy ? null : at('marker', this._markerDialog);
-    if (this._openingDialog) return at('opening', this._openingDialog);
-    if (this._backdropDialog) return at('backdrop', this._backdropDialog);
-    if (this._decorShapeDialog) return at('decorShape', this._decorShapeDialog);
-    if (this._decorTextDialog) return at('decorText', this._decorTextDialog);
+    for (const kind of ['rules', 'settings', 'marker'] as const) {
+      const data = this[`_${kind}Dialog`];
+      if (data) return data.busy ? null : at(kind, data);
+    }
+    for (const kind of ['opening', 'backdrop', 'decorShape', 'decorText'] as const) {
+      const data = this[`_${kind}Dialog`];
+      if (data) return at(kind, data);
+    }
     if (this._roomDialog) {
       return at('room', {
         editId: this._roomEditId, fill: this._roomFill, customFill: this._roomCustomFill,
@@ -3445,7 +3460,7 @@ export class HouseplanCard extends LitElement {
     const patch: Partial<WarmEntry> = {
       vp: this._warmViewportState(),
       frameFingerprint: this._continuity.frameFingerprint,
-      devices: this._devices, hdrH: this._hdrH,
+      devices: this._devices,
     };
     // do not overwrite the snapshot we are about to revive FROM
     if (!this._warmRevivePending) patch.dlg = this._warmDialogState();
@@ -3465,7 +3480,7 @@ export class HouseplanCard extends LitElement {
    * dialog must not be stolen. One task later the previous instance has
    * detached (`freed`) and the snapshot is ours to consume — exactly once.
    */
-  private _warmReviveDialog(settle = false): void { // settle (#756): the editor is not coming — no more waiting
+  private _warmReviveDialog(settle = false, discard = false): void { // settle (#756): the editor is not coming — no more waiting
     const e = this._warmSlot; // AUD-159B1-01: OUR slot, never a neighbour's
     clearTimeout(this._warmReviveTimer); this._warmReviveTimer = undefined;
     if (!e || !e.dlg) {
@@ -3486,7 +3501,7 @@ export class HouseplanCard extends LitElement {
     this._warmRevivePending = false;
     e.dlg = null; e.freed = 0; // consume-once: no zombie on the third mount
     clearTimeout(e.evict); e.evict = 0;
-    if (!freed || Date.now() - freed > WARM_REVIVE_MS) return; // owner alive, or gone long ago
+    if (discard || !freed || Date.now() - freed > WARM_REVIVE_MS) return; // owner alive, gone long ago, or newer user intent
     if (d.space !== this._space || d.mode !== this._mode) return;  // never in another space/editor
     switch (d.kind) {
       case 'space': this._spaceDialog = { ...d.data, busy: false, savedBusy: false }; break;
@@ -4076,15 +4091,23 @@ export class HouseplanCard extends LitElement {
         // DEV-B703-01: chrome that lands after the settle (or a window
         // resize with a live card) must not poison the next warm mount —
         // the memo follows the live settled geometry.
-        if (t >= 0 && !this._booting && !this._config?.kiosk && stage.clientHeight > 0) {
-          this._warmPatch({ hdrH: t, stageH: stage.clientHeight });
-        }
+        void this.updateComplete.then(() => requestAnimationFrame(() => {
+          if (!this.isConnected || stage !== this._stageEl || this._booting || this._config?.kiosk
+              || this._modeTransitionBusy || this._modeTransitionPreparing
+              || t !== this._hdrH || stage.clientWidth <= 0 || stage.clientHeight <= 0) return;
+          const measured = measuredCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight);
+          if (measured === t) this._warmPatch({ hdrH: t, stageH: stage.clientHeight,
+            ownHdrH: hdr.getBoundingClientRect().height });
+        }));
       };
       // a frame later: setting state straight from the observer callback makes
       // the browser report "ResizeObserver loop completed with undelivered
       // notifications" — the render it triggers resizes the stage again
-      this._roHdr = new ResizeObserver(() => requestAnimationFrame(measure));
+      this._roHdr = new ResizeObserver((entries) => {
+        if (this._containerOwnedHeight || entries.some((e) => e.target === hdr)) requestAnimationFrame(measure);
+      });
       this._roHdr.observe(hdr);
+      this._roHdr.observe(stage); // HA-owned slots can resize without changing their header.
       this._onWinResize = () => requestAnimationFrame(measure);
       window.addEventListener('resize', this._onWinResize);
       measure();
@@ -4161,11 +4184,14 @@ export class HouseplanCard extends LitElement {
    * cleanup and navigation persistence. Direct assignment leaves those
    * surfaces in mutually inconsistent modes. The waiting draft follows (#756). */
   private _resumePendingNavMode(): boolean {
+    if (this._pendingNavMode && (this._serverCanWrite === false || this._kiosk)) {
+      this._cancelPendingWarmMode(); return false;
+    }
     if (!this._pendingNavMode || !this._canEdit || this._config?.kiosk) return false;
     const pendingMode = this._pendingNavMode;
     this._pendingNavMode = null;
-    if (!this._editorRuntime) void this._requestMode(pendingMode, false, 'resume');
-    else resumeWarmMode(this as unknown as WarmModeHost, pendingMode, () => this._setMode(pendingMode, false));
+    // Loaded and delayed runtimes share the same request/permission checks.
+    void this._requestMode(pendingMode, false, 'resume');
     return true;
   }
 
@@ -6397,7 +6423,8 @@ export class HouseplanCard extends LitElement {
     // same config at the same viewport opens warm (no veil, no wait).
     const settledH = this._stageEl?.clientHeight ?? 0;
     if (!this._config?.kiosk && settledH > 0) {
-      this._warmPatch({ hdrH: this._hdrH, stageH: settledH, vp: this._warmViewportState() }, true);
+      this._warmPatch({ hdrH: this._hdrH, stageH: settledH, vp: this._warmViewportState(),
+        ownHdrH: this.renderRoot.querySelector('.hdr')?.getBoundingClientRect().height }, true);
     }
     this._bootFading = true; // one soft opacity-out, then out of the DOM
     this._bootTimer = window.setTimeout(() => { this._bootFading = false; }, 220);
@@ -7358,6 +7385,7 @@ export class HouseplanCard extends LitElement {
   private _leaveCardRoute(): void {
     if (this._routeDepartureHandled) return;
     this._routeDepartureHandled = true;
+    this._cancelPendingWarmMode();
     this._configReloadAuthority.invalidateLifecycle();
     this._summary?.leaveRoute();
     this._clearRoomFocus(true); this._cancelDangerConfirm();
@@ -7419,24 +7447,19 @@ export class HouseplanCard extends LitElement {
     this._saveNav();
   }
 
-  private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
+  private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true, warm = false): void {
+    if (!warm) this._cancelPendingWarmMode();
     if (mode !== this._mode) {
       this._clearRoomFocus(true);
       this._cancelDangerConfirm();
       this._resetDeviceHitState();
       this._clearTransientHover(true);
     }
-    this._warmModeRequest = 0;
     if (!this._editorRuntime) {
-      if (mode === 'view') {
-        // Cancel a pending editor intent without disturbing the unchanged View.
-        this._editorModeRequest++;
-        return;
-      }
-      void this._requestMode(mode, animate);
+      // Cancellation above is enough for an unchanged View without a runtime.
+      if (mode !== 'view') void this._requestMode(mode, animate);
       return;
     }
-    if (this._pendingNavMode && this._warmRevivePending) this._warmReviveDialog(true); // #95: the draft goes with the editor
     this._editorRuntime.stairs.beforeModeChange(mode); this._editorRuntime._setMode(mode, animate);
     this._editorRuntime.stairs.afterModeChange(); this._stairsView.clearGesture();
   }
@@ -10729,6 +10752,8 @@ export class HouseplanCard extends LitElement {
     const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
       ? this._continuity.recoveryReason : null;
     const modeVisual = this._modeTransitionVisual;
+    const warmHeaderHeight = (this._pendingNavMode || this._warmModeRequest)
+      && warmCameraUnchanged(this._view, this._warmVp) && this._warmSlot?.ownHdrH;
     const dayCycle = this._dayCycleState();
     const dayCycleWeight = modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
     const paperShapes = this._paperShapes(space.rooms); const isoFirstFramePending = this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime);
@@ -10768,7 +10793,7 @@ export class HouseplanCard extends LitElement {
         @keydown=${this._touchGestureGuard}
         @contextmenu=${this._touchGestureGuard}
         @click=${this._touchGestureGuard}>
-        <div class="hdr ${this._kiosk ? 'kioskhide' : ''}">
+        <div class="hdr ${this._kiosk ? 'kioskhide' : ''}" style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
         <div class="head">
           ${this.panelHost ? nothing : html`<div class="title">
             <ha-icon icon="mdi:home-city"></ha-icon>

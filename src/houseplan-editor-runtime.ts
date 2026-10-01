@@ -8,6 +8,7 @@
  */
 import { html, svg, nothing, TemplateResult } from 'lit';
 import { displayVersion } from './card-version';
+import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
 import { renderMarkerDialog } from './editors/marker-dialog';
@@ -436,6 +437,7 @@ interface DeviceInboxDialogState {
 }
 
 export interface HouseplanEditorHostPort {
+  _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate?: boolean, warm?: boolean): void;
   _ackNewDevice: (id: string) => void;
   _activeWallChainId: string | null;
   _activeWallChainPartitionIds: string[];
@@ -912,6 +914,14 @@ public _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof n
     return html`<hp-help data-help-key=${key}
       .text=${t(lang, key)} .ariaLabel=${t(lang, ariaKey)}></hp-help>`;
   }
+
+/** These tails run only after editor installation; keep them out of View. */
+public finishWarmModeAdoption(request: number): void {
+  finishWarmModeAdoption(this.host as unknown as WarmModeHost, request);
+}
+public resumeWarmMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate: boolean): void {
+  resumeWarmMode(this.host as unknown as WarmModeHost, mode, () => this.host._setMode(mode, animate, true));
+}
 
 public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
     if (mode !== this.host._mode) this.host._cancelDangerConfirm();

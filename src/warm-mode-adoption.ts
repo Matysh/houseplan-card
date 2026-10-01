@@ -10,6 +10,7 @@
  * mode (#756).
  */
 import type { HouseplanMode } from './mode-transition';
+import { warmCameraUnchanged } from './card-runtime';
 
 type ViewRect = { x: number; y: number; w: number; h: number };
 
@@ -19,6 +20,7 @@ export interface WarmModeHost {
   readonly _warmVp: { view: ViewRect | null } | null;
   readonly _warmRevivePending: boolean;
   _view: ViewRect | null;
+  _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; w?: number } | null;
   _editorModeRequest: number;
   _holdWarmRefit(request: number): void;
   _releaseWarmRefit(request: number): void;
@@ -37,9 +39,6 @@ export function finishWarmModeAdoption(host: WarmModeHost, request: number): voi
   )));
 }
 
-const sameView = (a: ViewRect | null, b: ViewRect | null | undefined): boolean => !!a && !!b
-  && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
-
 /**
  * Commit a pending warm mode through `commit` (`_setMode`, the transition
  * authority — smoke_nav_persist), then settle the waiting draft revival.
@@ -53,10 +52,17 @@ const sameView = (a: ViewRect | null, b: ViewRect | null | undefined): boolean =
  */
 export function resumeWarmMode(host: WarmModeHost, mode: HouseplanMode, commit: () => void): void {
   const view = host._view;
-  const kept = sameView(view, host._warmVp?.view);
+  const viewModeSnap = host._viewModeSnap;
+  const kept = warmCameraUnchanged(host._view, host._warmVp);
   commit();
-  if (!host._warmRevivePending) return;
-  if (host._mode !== mode || !kept) { host._warmReviveDialog(true); return; }
+  // Temporary View displays the old editor camera, not a new View session.
+  // _setMode must not replace the original return address with that camera.
+  if (host._warmVp && host._mode === mode) host._viewModeSnap = viewModeSnap;
+  if (host._mode !== mode || !kept) {
+    host._warmReviveDialog(true);
+    host._releaseWarmRefit(host._editorModeRequest);
+    return;
+  }
   const request = ++host._editorModeRequest;
   host._holdWarmRefit(request);
   host._view = view; host._liveVp();

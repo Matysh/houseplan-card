@@ -622,8 +622,8 @@ export const SMOKE_LINKS = [
   {
     // #756: хвост тёплой адопции редактора. Смоки видят его только как
     // воскрешённый черновик и покадрово неизменный `_view` после ре-маунта.
-    symbols: ['finishWarmModeAdoption', 'resumeWarmMode', '_holdWarmRefit', '_releaseWarmRefit'],
-    smokes: ['smoke_warm_dialogs.mjs', 'smoke_warm_remount.mjs', 'smoke_nav_persist.mjs'],
+    symbols: ['finishWarmModeAdoption', 'resumeWarmMode', '_holdWarmRefit', '_releaseWarmRefit', '_cancelPendingWarmMode', 'warmCameraUnchanged'],
+    smokes: ['smoke_warm_dialogs.mjs', 'smoke_warm_remount.mjs', 'smoke_nav_persist.mjs', 'smoke_warm_mode_adoption.mjs'],
     because: '#756: the warm editor tail — draft revival once the mode is committed and the '
       + 'refit hold on the adopted camera — is observed only as the revived draft, the '
       + 'frame-by-frame viewport after a remount (immediate or after can_write) and the '

@@ -91,6 +91,8 @@ export type WarmDialog = {
   baseline?: string;
 };
 export type WarmEntry = {
+  /** Card header box height; hdrH also includes bounded HA chrome. */
+  ownHdrH?: number;
   owner: number;
   path: string;
   place: WeakRef<Node> | null;
@@ -105,6 +107,11 @@ export type WarmEntry = {
   freed: number;
   evict: number;
 };
+
+export function warmCameraUnchanged(a: WarmViewport['view'], warm: Pick<WarmViewport, 'view'> | null): boolean {
+  const b = warm?.view;
+  return !!(a && b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h);
+}
 
 export const warmBootKey = (config: unknown): string =>
   `${window.innerWidth}x${window.innerHeight}|${location.pathname}|${JSON.stringify(config ?? {})}`;

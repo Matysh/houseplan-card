@@ -16,9 +16,9 @@ to prove that the Node witness actually kills it.
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 26 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 45 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 36 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 90 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **205 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Responsive DOM layout | 38 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Custom-element and HA browser lifecycle | 96 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **213 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -191,6 +191,8 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `toolbar-device-count-returns`
 - `toolbar-mode-zoom-gap-regresses`
 - `warm-dialog-drops-transferred-baseline`
+- `warm-resume-collapses-pending-header`
+- `warm-memo-publishes-torn-header-stage-pair`
 
 ### Custom-element and HA browser lifecycle
 
@@ -279,6 +281,11 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `wall-face-apply-skips-overlap-guard`
 - `wallthick-hit-narrowed`
 - `warm-pending-mode-leaves-revive-waiting`
+- `warm-resume-overwrites-view-return-camera`
+- `warm-resume-camera-depends-on-dialog`
+- `warm-pan-during-runtime-keeps-refit-blocked`
+- `warm-late-resume-beats-user-mode`
+- `warm-late-resume-crosses-space`
 - `writer-history-skips-finished-chain-normalization`
 - `zigbee-topology-endpoint-cleanup-skipped`
 - `zigbee-topology-endpoint-elevation-removed`

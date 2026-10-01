@@ -22,6 +22,12 @@ the degradation is accepted.
 
 ## Local contour in 5 minutes (локальный контур за 5 минут, #633)
 
+For warm-remount changes, `node demo/smoke_warm_mode_adoption.mjs` records
+intermediate camera frames and screen-space points, observes every memo size
+publication, and exercises delayed permission/runtime races and a touch floor
+tap (#762). Keep its five original-code regression witnesses independent;
+the existing warm-dialog/owner/nav smokes cover neighbouring lifecycle paths.
+
 Three commands take a fresh Linux sandbox (agent session, WSL, a clean VM) from
 nothing to a green smoke, a full unit run in parts and a pre-push gate. Each
 step fits the ≈3-minute limit of one sandbox command; everything is idempotent,

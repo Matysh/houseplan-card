@@ -325,9 +325,9 @@ const res = await page.evaluate(async () => {
   const otherSpace = c._model.find((sp) => sp.id !== draftSpace)?.id;
   out.hOtherSpaceFixture = !!otherSpace && c._pendingNavMode === 'devices';
   root(c).querySelector(`[data-hp="space-tab"][data-id="${otherSpace}"]`)?.click();
-  await waitFor(() => c._mode === 'devices' && c._space === otherSpace && !c._warmRevivePending, 3000);
+  await waitFor(() => c._loadOk && c._space === otherSpace && !c._warmRevivePending, 3000);
   await sleep(300); await c.updateComplete;
-  out.hSpaceSwitchNotRevived = c._space === otherSpace && !c._markerDialog;
+  out.hSpaceSwitchNotRevived = c._space === otherSpace && c._mode === 'view' && !c._markerDialog;
   out.hSpaceSwitchReviveSettled = c._warmRevivePending === false && c._warmSlot?.dlg === null;
 
   c.remove(); wrap.remove();
