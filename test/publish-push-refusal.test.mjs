@@ -579,6 +579,15 @@ test('#730: подписи сводки для публикации ship, про
   assert.match(refusalSummary(refusal, { ref: 'issue/9-fix', stage: 'rebase' }), /\n\nРебейз ветки на dev не опубликован в `issue\/9-fix`\./);
 });
 
+test('#730 r1: при отказе по праву на workflow сводка зовёт автора сделать ребейз, а не отговаривает', () => {
+  const workflow = refusalSummary(classifyPushRefusal(remoteRejected('issue/9-fix', WORKFLOW_REASON)), { ref: 'issue/9-fix', stage: 'rebase' });
+  assert.match(workflow, /ребейз и push делает автор, либо владелец выдаёт право/);
+  assert.doesNotMatch(workflow, /ребейз не помогут/);
+  const remote = refusalSummary(classifyPushRefusal(remoteRejected('dev', 'protected branch hook declined')), { ref: 'dev', stage: 'ship-review' });
+  assert.match(remote, /повтор и ребейз не помогут/);
+  assert.doesNotMatch(remote, /ребейз и push делает автор/);
+});
+
 test('#723 AC2: сводка об отказе — без токена, URL с учётными данными и Authorization; причина и файлы названы', () => {
   const refusal = classifyPushRefusal(`> Authorization: Bearer ${OTHER_TOKEN}\n${remoteRejected('dev', WORKFLOW_REASON)}`, { secrets: [FAKE_TOKEN] });
   const text = refusalSummary(refusal, { ref: 'dev', stage: 'release-review' });

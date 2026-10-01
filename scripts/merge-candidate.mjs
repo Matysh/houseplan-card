@@ -538,6 +538,11 @@ export function refusalSummary(refusal, { ref = '', stage = '' } = {}) {
     : refusal.kind === PUSH_REFUSAL.remote
       ? 'GitHub отклонил push сам (правило ветки, хук, сбой сервера)'
       : 'git push не удался, и это не отказ по lease (сеть, аутентификация)';
+  // #730 r1: при отказе по праву на workflow ребейз — штатный выход, только
+  // делает его автор (PROCESS.md §10.4). «Ребейз не поможет» говорило обратное.
+  const nextStep = refusal.kind === PUSH_REFUSAL.workflow
+    ? `Это не сдвиг \`${ref}\`: повтор этого шага не поможет, шаг остановлен без повторов. Кандидат меняет workflow-файл, токен конвейера не может его опубликовать: ребейз и push делает автор, либо владелец выдаёт право.`
+    : `Это не сдвиг \`${ref}\`: повтор и ребейз не помогут, шаг остановлен без повторов.`;
   // Ответ GitHub не должен открыть или закрыть блок кода сводки.
   const unfence = (text) => String(text || '').replace(/```/g, "'''");
   const files = (refusal.files || []).map((file) => `\`${file}\``).join(', ');
@@ -545,7 +550,7 @@ export function refusalSummary(refusal, { ref = '', stage = '' } = {}) {
   return [
     `### git push в \`${ref}\` отклонён: ${refusal.kind} (#723)`,
     '',
-    `${what} не опубликован в \`${ref}\`. ${why}. Это не сдвиг \`${ref}\`: повтор и ребейз не помогут, шаг остановлен без повторов.`,
+    `${what} не опубликован в \`${ref}\`. ${why}. ${nextStep}`,
     ...(refusal.reason ? ['', `Причина, которую назвал GitHub: «${unfence(refusal.reason)}».${files ? ` Файлы: ${files}.` : ''}`] : []),
     '',
     stderr ? `Ответ git:\n\n\`\`\`\n${stderr}\n\`\`\`` : 'git не прислал текста отказа.',
