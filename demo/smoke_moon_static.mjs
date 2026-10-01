@@ -245,6 +245,10 @@ const sameBox = (a, b) => !!a && !!b && a.every((value, index) => Math.abs(value
   const stopSampling = () => page.evaluate(() => { window.__hpSkyStop = true; return window.__hpSkySamples; });
   await sample();
   await page.evaluate(() => window.__hpTest.setMode('plan'));
+  // The View → editor transition (#101) runs for frames after `setMode`: judge
+  // the editor once it has ended, not two frames in (#718 r1: red under load).
+  const editorSettled = await until(page, () => !window.__card._modeTransitionBusy
+    && !window.__card.renderRoot.querySelector('.stage')?.classList.contains('mode-transition'));
   await settle(page);
   const toEditor = await stopSampling();
   const inEditor = await moonState(page);
@@ -258,7 +262,7 @@ const sameBox = (a, b) => !!a && !!b && a.every((value, index) => Math.abs(value
   report.ac5 = { between: between.length, toEditor: toEditor.length, inEditor, firstBack, backInView };
   checks.ac5_skyFollowsTheViewWeight = between.length > 0
     && toEditor.every((frame) => frame.sky === null || Math.abs(frame.sky - frame.weight) <= 0.02);
-  checks.ac5_noMoonInTheEditor = inEditor.count === 0 && inEditor.sky === 0;
+  checks.ac5_noMoonInTheEditor = editorSettled && inEditor.count === 0 && inEditor.sky === 0;
   checks.ac5_backInViewAtOnce = !!firstBack && firstBack.moon.on && firstBack.moon.opacity === 1
     && backInView.on && backInView.opacity === 1 && backInView.parent === 'hp-moon-sky';
   await browser.close();
