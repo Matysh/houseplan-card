@@ -20,6 +20,9 @@
   slide. A real colour change on the same floor — a light turning on, a new
   temperature, hover — still fades smoothly
   ([#742](https://github.com/Matysh/houseplan-card/issues/742)).
+- When the editor fails to load (e.g. offline), the card no longer retries on
+  its own and repeats the notice every few seconds; the next press retries
+  ([#757](https://github.com/Matysh/houseplan-card/issues/757)).
 
 ## v1.79.0-beta.1 — 2026-09-30
 

@@ -68,10 +68,19 @@ class FingerprintMismatchError extends Error {}
  * keeps returning `false` without importing again. Any other failure (network,
  * parse) reports via `failed` and returns the loader to `idle`, so the NEXT
  * explicit user intent starts a fresh cycle. There are no background retries.
+ *
+ * A render that finds a surface waiting for the runtime is not an intent
+ * (#757): `ensure('reconcile')` starts the first cycle such a surface needs,
+ * but after a non-terminal failure it returns `false` without loading until
+ * an explicit `ensure()` has started a new cycle. Otherwise every repaint —
+ * the loader's own state change, the failure toast and its expiry, each
+ * `hass` tick — would start another cycle and another toast.
  */
 export class EditorRuntimeLoader<Runtime> {
   private _state: EditorRuntimeLoaderState = 'idle';
   private _inFlight: Promise<boolean> | null = null;
+  /** A non-terminal failure waits for the next explicit intent (#757). */
+  private _awaitingIntent = false;
 
   public constructor(private readonly options: EditorRuntimeLoaderOptions<Runtime>) {}
 
@@ -79,10 +88,14 @@ export class EditorRuntimeLoader<Runtime> {
     return this._state;
   }
 
-  public ensure(): Promise<boolean> {
+  /** `intent`: `explicit` — a user action or an opening; `reconcile` — a render
+   *  that finds a surface waiting for the runtime. */
+  public ensure(intent: 'explicit' | 'reconcile' = 'explicit'): Promise<boolean> {
     if (this._state === 'ready') return Promise.resolve(true);
     if (this._state === 'failed') return Promise.resolve(false);
     if (this._inFlight) return this._inFlight;
+    if (intent === 'reconcile' && this._awaitingIntent) return Promise.resolve(false);
+    this._awaitingIntent = false;
     this._setState('loading');
     this._inFlight = this._loadWithRetry().finally(() => {
       this._inFlight = null;
@@ -110,6 +123,7 @@ export class EditorRuntimeLoader<Runtime> {
         if (error instanceof FingerprintMismatchError) sawMismatch = true;
       }
     }
+    this._awaitingIntent = !sawMismatch;
     this._setState(sawMismatch ? 'failed' : 'idle');
     this.options.failed?.(lastError, { terminal: sawMismatch });
     return false;

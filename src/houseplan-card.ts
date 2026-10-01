@@ -10613,10 +10613,10 @@ export class HouseplanCard extends LitElement {
         || this._markerDialog || this._rulesDialog || this._settingsDialog || this._supportDialog
         || this._alignDialog || this._backupExportDialog || this._backupImportDialog
         || this._kioskDialog || this._vacFit || this._vacCalConfirm);
-    if (onboardingRuntimeRequested && !this._onboardingRuntime) {
-      void this._ensureOnboardingRuntime();
+    if (onboardingRuntimeRequested && !this._onboardingRuntime) { // a render reconciles; it is not an intent (#757)
+      void this._onboardingRuntimeLoader.ensure('reconcile');
     }
-    if (editorRuntimeRequested && !this._editorRuntime) void this._ensureEditorRuntime();
+    if (editorRuntimeRequested && !this._editorRuntime) void this._editorRuntimeLoader.ensure('reconcile');
     const model = this._model;
     const diagnostics = this._renderLife.diagnostics(
       this.hass, this._markers, (binding) => this._bindingStatus(binding),

@@ -154,6 +154,145 @@ out.fingerprintMismatchKeepsView = await mismatch.page.evaluate(() =>
   window.__card._mode === 'view' && !window.__card._editorRuntime
   && window.__card._toast.includes(window.__card._t('editor.refresh_advice')));
 
+// #757: a render is not an intent. Surfaces the core opens without the
+// runtime — the kiosk scale dialog after a 3 s hold, the floor import wizard
+// on an empty plan, a dialog a warm remount revives — keep asking for it on
+// every repaint. One non-terminal failure is one cycle and one notice; the
+// loader then waits for the next explicit intent, which still heals.
+const QUIET_MS = 8000;
+const chunkRequests = async (session, name, plain = 'abort') => {
+  const seen = [];
+  session.page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.endsWith(`/${name}`)) seen.push(url.search || 'plain');
+  });
+  const net = { plain, retry: 'abort' };
+  await session.page.route(`**/${name}*`, (route) => {
+    const verdict = new URL(route.request().url()).search ? net.retry : net.plain;
+    return verdict === 'abort' ? route.abort('failed') : route.fallback();
+  });
+  return { seen, net };
+};
+/** Toast nodes as the user sees them: each appearance is one notice. */
+const installNoticeCounter = (page) => page.evaluate(() => {
+  window.__hpWatchNotices = (card) => {
+    window.__hpNotices = 0;
+    new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node.nodeType === 1 && node.matches('[data-hp="toast"]')) window.__hpNotices += 1;
+        }
+      }
+    }).observe(card.shadowRoot || card.renderRoot, { childList: true, subtree: true });
+  };
+});
+const watchToasts = async (page, selector) => {
+  await installNoticeCounter(page);
+  await page.evaluate((cardSelector) => window.__hpWatchNotices(document.querySelector(cardSelector)), selector);
+};
+const notices = (page) => page.evaluate(() => window.__hpNotices);
+/** `true`, or what actually happened — the count is the evidence. */
+const exactly = (expected, actual, what) => actual === expected || `${actual} ${what} instead of ${expected}`;
+
+// (a) Kiosk: a 3 s hold on the empty scene opens the per-screen size dialog.
+const kiosk = await launchColdView();
+const kioskChunk = await chunkRequests(kiosk, runtimeName);
+await kiosk.page.evaluate(async () => {
+  const card = document.createElement('houseplan-card');
+  card.id = 'hp-kiosk';
+  card.setConfig({ type: 'custom:houseplan-card', kiosk: true, cycle: 0 });
+  card.style.cssText = 'position:fixed;left:0;top:0;width:900px;height:700px;z-index:99';
+  card.hass = window.__card.hass;
+  document.body.appendChild(card);
+});
+await kiosk.page.waitForFunction(() => {
+  const card = document.querySelector('#hp-kiosk');
+  return !card._booting && (card.shadowRoot || card.renderRoot).querySelector('.stage');
+});
+await watchToasts(kiosk.page, '#hp-kiosk');
+await kiosk.page.evaluate(() => {
+  const card = document.querySelector('#hp-kiosk');
+  const stage = (card.shadowRoot || card.renderRoot).querySelector('.stage');
+  const box = stage.getBoundingClientRect();
+  stage.dispatchEvent(new PointerEvent('pointerdown', {
+    bubbles: true, composed: true, cancelable: true, pointerId: 31, pointerType: 'touch',
+    isPrimary: true, button: 0, buttons: 1,
+    clientX: box.left + box.width / 2, clientY: box.top + box.height / 2,
+  }));
+});
+await kiosk.page.waitForFunction(() => document.querySelector('#hp-kiosk')._kioskDialog === true, null, { timeout: 6000 });
+await kiosk.page.waitForTimeout(QUIET_MS);
+out.kioskDialogFailureIsOneCycle = exactly(2, kioskChunk.seen.length, 'chunk requests');
+out.kioskDialogFailureIsOneNotice = exactly(1, await notices(kiosk.page), 'notices');
+out.kioskDialogLoaderWaitsForIntent = await kiosk.page.evaluate(() => {
+  const card = document.querySelector('#hp-kiosk');
+  return card._editorRuntimeLoader.state === 'idle' && card._kioskDialog === true
+    && !!(card.shadowRoot || card.renderRoot).querySelector('hp-dialog input[type="range"]');
+});
+
+// (b) Import wizard: an empty plan with HA floors opens it for an admin.
+const wizard = await launchColdView();
+const wizardChunk = await chunkRequests(wizard, onboardingName);
+await watchToasts(wizard.page, 'houseplan-card');
+await wizard.page.evaluate(() => window.__hpTest.setServerConfig((cfg) => ({ ...cfg, spaces: [] })));
+await wizard.page.waitForFunction(() => !!window.__card._importDialog);
+await wizard.page.waitForTimeout(QUIET_MS);
+out.importWizardFailureIsOneCycle = exactly(2, wizardChunk.seen.length, 'chunk requests');
+out.importWizardFailureIsOneNotice = exactly(1, await notices(wizard.page), 'notices');
+out.importWizardLoaderWaitsForIntent = await wizard.page.evaluate(() =>
+  window.__card._onboardingRuntimeLoader.state === 'idle' && !!window.__card._importDialog);
+wizardChunk.net.retry = 'serve';
+await wizard.page.evaluate(() => {
+  const card = window.__card;
+  (card.shadowRoot || card.renderRoot).querySelector('[data-hp="create-space"]')?.click();
+});
+await wizard.page.waitForFunction(() => window.__card._onboardingRuntimeLoader.state === 'ready');
+out.createSpacePressAfterFailureHeals = true;
+
+// (c) Warm remount: General settings revive on the new instance, offline. The
+// plain chunk URL failed earlier in this page, so a cycle is one request —
+// the cache-busting retry.
+const warm = await launchColdView();
+const warmChunk = await chunkRequests(warm, runtimeName);
+warmChunk.net.retry = 'serve';
+await warm.page.evaluate(() => {
+  const card = window.__card;
+  (card.shadowRoot || card.renderRoot).querySelector('[data-hp="settings"]')?.click();
+});
+await warm.page.waitForFunction(() => !!window.__card._settingsDialog && !!window.__card._editorRuntime);
+await warm.page.waitForTimeout(300);
+warmChunk.net.retry = 'abort';
+const warmBefore = warmChunk.seen.length;
+await installNoticeCounter(warm.page);
+await warm.page.evaluate(() => {
+  const old = window.__card;
+  const host = old.parentNode;
+  const card = document.createElement('houseplan-card');
+  card.setConfig({ type: 'custom:houseplan-card', title: 'House Plan', icon_size: 3.4 });
+  card.hass = old.hass;
+  old.remove();
+  host.appendChild(card);
+  window.__hpWatchNotices(card);
+  window.__card = card;
+});
+await warm.page.waitForFunction(() => !!window.__card._settingsDialog);
+await warm.page.waitForTimeout(QUIET_MS);
+out.warmReviveFailureIsOneCycle = exactly(1, warmChunk.seen.length - warmBefore, 'chunk requests');
+out.warmReviveFailureIsOneNotice = exactly(1, await notices(warm.page), 'notices');
+out.warmReviveLoaderWaitsForIntent = await warm.page.evaluate(() =>
+  window.__card._editorRuntimeLoader.state === 'idle' && !!window.__card._settingsDialog);
+warmChunk.net.retry = 'serve';
+await warm.page.evaluate(() => {
+  const card = window.__card;
+  (card.shadowRoot || card.renderRoot).querySelector('[data-hp="mode-tab"][data-mode="plan"]')?.click();
+});
+await warm.page.waitForFunction(() =>
+  window.__card._editorRuntimeLoader.state === 'ready' && window.__card._mode === 'plan');
+out.planTabAfterFailureHeals = true;
+
+await kiosk.browser.close();
+await wizard.browser.close();
+await warm.browser.close();
 await failed.browser.close();
 await mismatch.browser.close();
 await onboarding.browser.close();

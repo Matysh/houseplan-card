@@ -13523,6 +13523,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'render-reconcile-restarts-editor-runtime-cycle',
+    guard: 'node demo/smoke_lazy_editor_chunk.mjs',
+    because: '#757 AC1: _renderBody asks for the editor runtime on every repaint while a '
+      + 'surface the core opened (kiosk size dialog, warm-revived dialog) waits for it; '
+      + 'calling it as an intent turns one network failure into a new cycle and a new '
+      + 'notice every few seconds — only the production card render shows this',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (editorRuntimeRequested && !this._editorRuntime) void this._editorRuntimeLoader.ensure('reconcile');",
+      replace: '    if (editorRuntimeRequested && !this._editorRuntime) void this._editorRuntimeLoader.ensure(); // mutant: a render is an intent',
+    }],
+  },
+  {
     id: 'marker-discard-without-asking',
     guard: 'node demo/smoke_device_settings_form.mjs',
     because: '#600 К10 (Q1): закрытие диалога устройства с изменениями обязано спросить. '

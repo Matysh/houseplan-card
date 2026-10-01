@@ -187,6 +187,58 @@ test('network failure re-arms the loader for the next explicit intent (#353 AC1)
   assert.equal(failures.length, 2);
 });
 
+test('a render reconcile never starts another cycle after a network failure (#757 AC3)', async () => {
+  let cycles = 0;
+  let online = false;
+  const failures = [];
+  const loader = new EditorRuntimeLoader({
+    expectedFingerprint: 'same',
+    load: async (attempt) => {
+      if (attempt === 0) cycles++;
+      if (!online) throw new Error('net::ERR_FAILED');
+      return { fingerprint: 'same', create: () => 'runtime' };
+    },
+    install: () => {},
+    failed: (error, info) => failures.push(info.terminal),
+  });
+
+  assert.equal(await loader.ensure('reconcile'), false, 'a surface waiting for the runtime starts the first cycle');
+  assert.equal(cycles, 1);
+  assert.equal(loader.state, 'idle', 'the failure stays non-terminal');
+  for (let render = 0; render < 5; render++) assert.equal(await loader.ensure('reconcile'), false);
+  online = true;
+  assert.equal(await loader.ensure('reconcile'), false, 'a render after the network is back is still not an intent');
+  assert.equal(cycles, 1, 'no render started a cycle of its own');
+  assert.deepEqual(failures, [false], 'one failure, one notice');
+
+  online = false;
+  assert.equal(await loader.ensure(), false, 'an explicit intent starts a fresh cycle');
+  assert.equal(cycles, 2);
+  assert.equal(await loader.ensure('reconcile'), false, 'and its failure waits for the next intent again');
+  assert.equal(cycles, 2);
+
+  online = true;
+  const explicit = loader.ensure();
+  assert.equal(loader.ensure('reconcile'), explicit, 'a render joins the explicit cycle in flight');
+  assert.equal(await explicit, true);
+  assert.equal(cycles, 3);
+  assert.equal(await loader.ensure('reconcile'), true, 'ready answers a render too');
+});
+
+test('a render reconcile after a terminal failure stays terminal (#757 AC3)', async () => {
+  let loads = 0;
+  const loader = new EditorRuntimeLoader({
+    expectedFingerprint: 'entry',
+    load: async () => { loads++; return { fingerprint: 'other', create: () => 'foreign' }; },
+    install: () => {},
+  });
+  assert.equal(await loader.ensure('reconcile'), false);
+  assert.equal(loader.state, 'failed');
+  assert.equal(await loader.ensure('reconcile'), false);
+  assert.equal(await loader.ensure(), false);
+  assert.equal(loads, 2, 'one cycle of two attempts, never another import');
+});
+
 test('fingerprint mismatch on either attempt is terminal (#353 AC2)', async () => {
   const attempts = [];
   const failures = [];
