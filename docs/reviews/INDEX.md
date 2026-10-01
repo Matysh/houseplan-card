@@ -24,6 +24,8 @@
 | #745 | [CODE-REVIEW-745-r1.md](CODE-REVIEW-745-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #745 | [CODE-REVIEW-745-r2.md](CODE-REVIEW-745-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #744 | [SPEC-REVIEW-744-r1.md](SPEC-REVIEW-744-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #743 | [CODE-REVIEW-743-r1.md](CODE-REVIEW-743-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC3 доказан не на финальном материале | `demo/performance/budgets-large-house-isometric-backdrop.json` `performance.yml` |
+| #743 | [CODE-REVIEW-743-r2.md](CODE-REVIEW-743-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #742 | [SPEC-REVIEW-742-r1.md](SPEC-REVIEW-742-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | устаревшее число в AC6 (не блокирует) | `src/houseplan-card.ts` `test/core-file-budget.test.mjs` |
 | #742 | [CODE-REVIEW-742-r1.md](CODE-REVIEW-742-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | AC5: таблица в хендовере не покрывает весь Oracle (снято ревьюером) | — |
 | #741 | [CODE-REVIEW-741-r1.md](CODE-REVIEW-741-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
