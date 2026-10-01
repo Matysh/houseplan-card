@@ -163,6 +163,12 @@ the attributes are visible on its service ghost in the Device editor.
 On a room shape: `.filled` (a fill mode is painting it), `.styled`,
 `.overlay` / `.yard` (drawn over a picture / on bare canvas).
 
+A room shape keeps its transparency in `fill-opacity` / `stroke-opacity`,
+never in the colour: every state is an opaque colour plus an opacity, and paint
+that is off has the opacity `0` (#746). A rule that recolours a room therefore
+sets the opacity together with `fill` / `stroke`. The values themselves are
+generated (§3.3).
+
 ### 3.3 Explicitly NOT the contract
 
 These exist in the DOM and **will** change without notice. Do not build on

@@ -29,6 +29,12 @@
 - An editor dialog with unsaved input now survives a card re-creation when
   write access is confirmed late
   ([#756](https://github.com/Matysh/houseplan-card/issues/756)).
+- Rooms no longer flash grey or briefly darken when the space settings open or
+  the plan editor is entered or left. If you recolour room shapes with card-mod,
+  set `fill-opacity` / `stroke-opacity` together with `fill` / `stroke`: a room
+  now keeps its transparency there in every state, and a room without a fill
+  or border has them at 0
+  ([#746](https://github.com/Matysh/houseplan-card/issues/746)).
 
 ## v1.79.0-beta.1 — 2026-09-30
 

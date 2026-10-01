@@ -403,9 +403,22 @@ export const planStyles = css`
       stroke-linecap: round;
     }
     .stage.mode-view .room { cursor: pointer; }
+    /* #746: every state of a room writes its transparency the way .styled
+       does — an opaque colour plus fill-opacity / stroke-opacity, and
+       transparent only together with a zero *-opacity. The transition above
+       interpolates the colour and the opacity independently, and what you
+       see is their product: when one state kept its alpha in the colour
+       (rgba(…, 0.06), opacity 1) and the other in the opacity (an opaque
+       colour, 0.18), one half rose while the other fell, and mid-way the
+       room was darker than at either end — opening the space settings on a
+       floor with no fill flashed every room grey, entering or leaving the
+       plan editor darkened a filled floor. The resting paint is the same.
+       Witness: demo/smoke_room_fill_transitions.mjs. */
     .room.overlay {
       fill: transparent;
+      fill-opacity: 0;
       stroke: transparent;
+      stroke-opacity: 0;
       stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
     }
     :host([data-pointer-hover]) .stage.mode-view .room.overlay:not(.styled):hover {
@@ -413,8 +426,10 @@ export const planStyles = css`
       stroke-opacity: 1;
     }
     .room.yard {
-      fill: rgba(75, 140, 90, 0.14);
+      fill: rgb(75, 140, 90);
+      fill-opacity: 0.14;
       stroke: #4b8c5a;
+      stroke-opacity: 1;
       stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
     }
     :host([data-pointer-hover]) .stage.mode-view .room.yard:not(.styled):hover {
@@ -1236,15 +1251,20 @@ export const planStyles = css`
       outline: 2px solid var(--hp-accent);
       outline-offset: -2px;
     }
+    /* #746: opaque colour plus *-opacity, like every .room state (see .room.overlay) */
     .room.outlined {
-      stroke: rgba(62, 166, 255, 0.55);
-      fill: rgba(62, 166, 255, 0.06);
+      stroke: rgb(62, 166, 255);
+      stroke-opacity: 0.55;
+      fill: rgb(62, 166, 255);
+      fill-opacity: 0.06;
     }
     /* AFTER .outlined: same specificity — source order decides (gotcha x4) */
     .room.picked {
       stroke: #ffc14d;
+      stroke-opacity: 1;
       stroke-width: calc(3px * var(--hp-cell-visual-scale, 1));
-      fill: rgba(255, 193, 77, 0.25);
+      fill: rgb(255, 193, 77);
+      fill-opacity: 0.25;
     }
     /* Owner 2026-08-04: the grid is a HINT, not content — at full strength the
        dots argued with the plan on white paper. Both levels are muted, the
