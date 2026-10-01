@@ -46,7 +46,6 @@ import {
   createGlowRuntimeState, disposeGlowRuntime,
   type GlowRuntimeHost, type GlowRuntimeState,
 } from './glow-scene';
-import './space-editor';
 import {
   DECOR_ASSETS_API_VERSION, decorAssetIds, resolveDecorAssets, type DecorAsset,
 } from './decor-assets';
@@ -276,7 +275,10 @@ class HouseplanSpaceCard extends LitElement {
     this._connHooked = connection;
   }
 
-  public static getConfigElement() {
+  /** The Lovelace GUI editor is a lazy chunk, as for `houseplan-card` (#744):
+   *  only the dashboard editor asks for it, never the first View frame. */
+  public static async getConfigElement() {
+    await import('./space-editor');
     return document.createElement('houseplan-space-card-editor');
   }
 
