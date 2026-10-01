@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 221, issue: 109. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 222, issue: 109. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -8,6 +8,7 @@
 | #732 | [CODE-REVIEW-732-r1.md](CODE-REVIEW-732-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #728 | [SPEC-REVIEW-728-r1.md](SPEC-REVIEW-728-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 0 | 1. АС3/К3: заявленное различение причин validate-red и conflict «на текстах из констант…; 2. АС8: заявленное доказательство правки process-metrics.yml (fetch-depth: 0, timeout-m… | `wait-verdict.mjs` `review-doc-guard.mjs` `scripts/wait-verdict.mjs` `.github/workflows/_process.yml` `_process.yml` `_process-metrics.yml` `test/process-metrics.test.mjs` |
 | #728 | [SPEC-REVIEW-728-r2.md](SPEC-REVIEW-728-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #728 | [CODE-REVIEW-728-r1.md](CODE-REVIEW-728-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #727 | [SPEC-REVIEW-727-r1.md](SPEC-REVIEW-727-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | К7/AC7: архивирование ночного документа с базой-стабильным-тегом не имеет ни одного про… | `scripts/reviews-archive.mjs` |
 | #727 | [SPEC-REVIEW-727-r2.md](SPEC-REVIEW-727-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #726 | [SPEC-REVIEW-726-r1.md](SPEC-REVIEW-726-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
