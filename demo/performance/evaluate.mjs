@@ -38,8 +38,9 @@ export const summarizeLongTasks = (rows) => {
 
 const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const exactGitSha = (value) => typeof value === 'string' && /^[0-9a-f]{40}$/i.test(value);
+const ISOMETRIC_BACKDROP_PROFILE = 'large-house-isometric-backdrop-v1';
 const isIsometricProfile = (profile) => profile === 'large-house-isometric-v1'
-  || profile === 'isometric-stage3-dense-v1';
+  || profile === 'isometric-stage3-dense-v1' || profile === ISOMETRIC_BACKDROP_PROFILE;
 
 const requireReport = (report, budgets, label, expectedSha = null) => {
   if (!report || report.schema !== 2) throw new Error(`${label}: unsupported report schema`);
@@ -60,6 +61,19 @@ const requireReport = (report, budgets, label, expectedSha = null) => {
     row.isoStructuralBuilds?.supported !== true
       || row.isoStructuralBuilds?.haUpdateDelta !== 0)) {
     throw new Error(`${label}: Iso structural build count is missing or changed on HA-only update`);
+  }
+  if (label === 'candidate' && report.profile === ISOMETRIC_BACKDROP_PROFILE) {
+    // #743: a warm floor switch with a backdrop renders once (#739 AC2,
+    // docs/ISOMETRIC.md). The base is not judged: bases before #739,
+    // v1.78.0 among them, take two passes.
+    for (const row of report.rows) {
+      const passes = row.floorSwitchPasses;
+      if (passes?.supported !== true || !Array.isArray(passes.perSwitch) || !passes.perSwitch.length)
+        throw new Error(`${label}: floor switch update passes are missing`);
+      const extra = passes.perSwitch.find((count) => count !== 1);
+      if (extra !== undefined)
+        throw new Error(`${label}: a warm 2.5D floor switch with a backdrop took ${extra} update passes`);
+    }
   }
   if (label === 'candidate' && report.profile === 'isometric-stage3-dense-v1') {
     // The profile/schema name is intentionally stable for baseline continuity;

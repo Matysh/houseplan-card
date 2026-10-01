@@ -142,6 +142,55 @@ test('isometric reports fail closed on exact SHA, effective projection and curre
   }), /sourceSha does not match/);
 });
 
+test('#743 backdrop candidate renders a warm 2.5D floor switch in one update pass', () => {
+  const backdropBudgets = { ...budgets, profile: 'large-house-isometric-backdrop-v1' };
+  const withPasses = (sourceSha, perSwitch) => {
+    const value = report();
+    Object.assign(value, { profile: backdropBudgets.profile, sourceSha, effectiveProjection: ['iso'] });
+    value.rows.forEach((row) => Object.assign(row, {
+      effectiveProjection: 'iso',
+      isoStructuralBuilds: {
+        supported: true, initial: 1, beforeHaUpdate: 2, afterHaUpdate: 2, haUpdateDelta: 0,
+      },
+      ...(perSwitch ? { floorSwitchPasses: { supported: true, perSwitch: [...perSwitch] } } : {}),
+    }));
+    return value;
+  };
+  const evaluate = (candidate, baseline) => evaluatePerformanceBudget({
+    baseline, candidate, budgets: backdropBudgets,
+    baselineSha: baseline.sourceSha, candidateSha: candidate.sourceSha,
+  });
+  // The base is reported, not judged: before #739 (v1.78.0 too) it takes two passes.
+  const base = withPasses('2'.repeat(40), [2, 2]);
+  assert.equal(evaluate(withPasses('1'.repeat(40), [1, 1, 1, 1, 1, 1]), base).pass, true);
+
+  const twice = withPasses('1'.repeat(40), [1, 2]);
+  assert.throws(() => evaluate(twice, base),
+    /^Error: candidate: a warm 2\.5D floor switch with a backdrop took 2 update passes$/);
+  const oneRowTwice = withPasses('1'.repeat(40), [1, 1]);
+  oneRowTwice.rows[1].floorSwitchPasses.perSwitch = [1, 2];
+  assert.throws(() => evaluate(oneRowTwice, base), /took 2 update passes/, 'every sample is judged');
+
+  for (const mutate of [
+    (candidate) => { delete candidate.rows[0].floorSwitchPasses; },
+    (candidate) => { candidate.rows[0].floorSwitchPasses.supported = false; },
+    (candidate) => { candidate.rows[0].floorSwitchPasses.perSwitch = []; },
+  ]) {
+    const candidate = withPasses('1'.repeat(40), [1, 1]);
+    mutate(candidate);
+    assert.throws(() => evaluate(candidate, base), /candidate: floor switch update passes are missing/);
+  }
+  assert.throws(() => evaluate(withPasses('1'.repeat(40), null), base),
+    /candidate: floor switch update passes are missing/, 'a candidate report without the probe fails closed');
+  // The twin is an isometric profile: exact SHA and effective Iso are required as well.
+  const flat = withPasses('1'.repeat(40), [1, 1]);
+  flat.effectiveProjection = ['flat'];
+  assert.throws(() => evaluate(flat, base), /effectiveProjection is not exclusively iso/);
+  const unpinned = withPasses(null, [1, 1]);
+  assert.throws(() => evaluatePerformanceBudget({ baseline: base, candidate: unpinned, budgets: backdropBudgets }),
+    /candidate: missing exact sourceSha/);
+});
+
 test('absolute performance smoke needs no baseline and enforces hard ceilings', () => {
   const accepted = evaluatePerformanceBudget({
     candidate: report({ timing: 450, heap: 900, long: 190 }), budgets, absoluteOnly: true,
@@ -424,6 +473,7 @@ test('#720: the 2.5D view toggle is reported, not budgeted (owner decision in #6
     'budgets-isometric-smoke.json',
     'budgets-large-house-isometric.json',
     'budgets-isometric-stage3-dense.json',
+    'budgets-large-house-isometric-backdrop.json',
   ]) {
     const budget = readBudget(name);
     assert.equal('viewToggleMs' in budget.timings, false, `${name} budgets viewToggleMs`);

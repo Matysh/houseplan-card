@@ -22,7 +22,7 @@ const targetRoot = resolve(valueArg('target-root') ?? '.');
 const profile = valueArg('profile') ?? 'large-house-v1';
 if (![
   'large-house-v1', 'large-house-isometric-v1', ISOMETRIC_STAGE3_DENSE_PROFILE,
-  'large-house-plan-snap-v1', 'large-house-interaction-v1',
+  'large-house-plan-snap-v1', 'large-house-interaction-v1', 'large-house-isometric-backdrop-v1',
 ].includes(profile))
   throw new Error(`unknown large-house profile: ${profile}`);
 const stage3Dense = profile === ISOMETRIC_STAGE3_DENSE_PROFILE;
@@ -30,7 +30,8 @@ const allowStage2Base = process.argv.includes('--allow-stage2-base');
 if (allowStage2Base && !stage3Dense)
   throw new Error('--allow-stage2-base is valid only for the Stage 3 dense profile');
 const requireStage3 = stage3Dense && !allowStage2Base;
-const isometric = profile === 'large-house-isometric-v1' || stage3Dense;
+const backdrop = profile === 'large-house-isometric-backdrop-v1';
+const isometric = profile === 'large-house-isometric-v1' || stage3Dense || backdrop;
 const planSnap = profile === 'large-house-plan-snap-v1';
 const interaction = profile === 'large-house-interaction-v1';
 const requiresIsometric = isometric && existsSync(resolve(targetRoot, 'src/iso-projection.ts'));
@@ -42,7 +43,20 @@ const requiresWallFace = planSnap && existsSync(resolve(targetRoot, 'src/wall-fa
 const requiresInteraction = interaction && existsSync(resolve(targetRoot, 'src/live-viewport.ts'));
 const requiresStairs = existsSync(resolve(targetRoot, 'src/stairs.ts'));
 const fixture = stage3Dense ? makeIsometricStage3DenseFixture() : makeLargeHouseFixture();
-const fixtureCounts = stage3Dense ? fixture.counts : LARGE_HOUSE_COUNTS;
+if (backdrop) {
+  // #743: the 2.5D twin with a backdrop image on every floor, so the imagePlan
+  // path (#739 K1) is measured at all. One shipped picture (demo/srv/assets
+  // since v1.14.0, present in every base) under a URL of its own per floor, so
+  // each floor decodes its own image; plan_aspect 1 lays it over the whole
+  // plan square and leaves the room geometry alone. The variant lives here, as
+  // plan-snap's does: demo/fixtures/** and the bundle fingerprint stay as they are.
+  for (const space of fixture.config.spaces) {
+    space.plan_url = `/assets/f1.svg?${space.id}`;
+    space.plan_aspect = 1;
+  }
+  fixture.counts = { ...fixture.counts, backdrops: fixture.config.spaces.length };
+}
+const fixtureCounts = stage3Dense || backdrop ? fixture.counts : LARGE_HOUSE_COUNTS;
 const sourceSha = (() => {
   try {
     return execFileSync('git', ['-C', targetRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
@@ -101,7 +115,7 @@ try {
     const row = await page.evaluate(async ({
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
       requiresWallFace, interaction, requiresInteraction, stage3Dense, requireStage3,
-      requiresIsoStructuralBuildCounter, requiresStairs, profile,
+      requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -406,6 +420,10 @@ try {
           && card.renderRoot.querySelectorAll('[data-hp="stair"]').length !== fixture.counts.stairs) {
         throw new Error(`${profile} did not render the bounded maximum stair collection`);
       }
+      // #743 precondition (docs/TESTING.md rule 3): the fixture carries the
+      // layer the profile guards, so a stable frame without the backdrop fails.
+      if (backdrop && !card.renderRoot.querySelector('.stage svg image.hp-backdrop'))
+        throw new Error(`${profile} rendered no backdrop image`);
       const firstStableRenderMs = Number((performance.now() - loadStarted).toFixed(2));
       const bootDiag = {
         updates: card.__diag.updates,
@@ -1163,6 +1181,24 @@ try {
       if (switchCycleBuilt.length)
         throw new Error(`${profile} switchCycle built a floor inside the window: ${switchCycleBuilt.join(', ')}`);
 
+      // #743 structural probe, untimed and outside every Long Task window: six
+      // warm switches round the floors (the cycle ended on the last floor, so
+      // each one is a real switch). Each counts the update passes from the
+      // pick until updateComplete reports quiescence (resolves true). Counting
+      // right after the first await would miss the #739 K1 second pass: it
+      // starts after that promise resolves, in the same task. The wait is
+      // bounded so an endless update loop yields a large count instead of a
+      // hung job. evaluate.mjs judges the candidate; a base is only reported.
+      const floorSwitchPasses = [];
+      if (backdrop) {
+        for (let index = 0; index < 6; index++) {
+          const passesBefore = card.__diag.updates;
+          card._pickSpace(`perf-floor-${(index % fixture.counts.floors) + 1}`);
+          for (let wait = 0; wait < 20 && !(await card.updateComplete); wait++);
+          floorSwitchPasses.push(card.__diag.updates - passesBefore);
+        }
+      }
+
       await forceGc();
       const cacheBefore = cacheSnapshot(card);
       const heapBefore = performance.memory?.usedJSHeapSize ?? null;
@@ -1239,6 +1275,7 @@ try {
               ? null : afterStateIsoStructuralBuilds - steadyIsoStructuralBuilds,
           },
         } : {}),
+        ...(backdrop ? { floorSwitchPasses: { supported: true, perSwitch: floorSwitchPasses } } : {}),
         ...(finalStage3 ? {
           isoStageRevision: finalStage3.isoStageRevision,
           stage3Diagnostics: {
@@ -1256,7 +1293,7 @@ try {
       fixture, sample: measuredSample, cardContract: LARGE_HOUSE_CARD_CONTRACT,
       isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
       interaction, requiresInteraction, stage3Dense, requireStage3,
-      requiresIsoStructuralBuildCounter, requiresStairs, profile,
+      requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
     });
     // #520: диагностика печатается в лог прогона и в запись не попадает.
     const { bootDiag, ...measured } = row;

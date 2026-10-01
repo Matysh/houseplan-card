@@ -90,6 +90,37 @@ on both sides of the change are recorded in #735. Budgets and `hardMaxMs` did
 not change in #735; #747 then brought the `switchCycleMs` ceilings down to the
 warmed level (see "CI contracts" below).
 
+Issue #743 adds `large-house-isometric-backdrop-v1`, the 2.5D twin of
+`large-house-isometric-v1` with a loaded plan picture on every floor. Before it
+no Full Performance profile walked the backdrop (`imagePlan`) path, so the
+double render of #739 K1 — every warm floor switch cleared the ready paper,
+inserted the first-frame veil, probed the card background and asked for a
+second full update — was invisible to CI both by time and structurally; a
+temporary probe found it. The runner derives the fixture as it does for
+plan-snap: `large-house-v1` plus `plan_url: '/assets/f1.svg?<space id>'` and
+`plan_aspect: 1` on each floor. One shipped picture (in `demo/srv/assets` since
+v1.14.0, so every base has it) under a URL of its own per floor decodes once per
+floor; it covers the whole plan square and the room geometry is unchanged.
+`demo/fixtures/**` and the bundle fingerprint stay as they are, and the report's
+fixture counts gain `backdrops: 3`. A sample fails unless its first stable frame
+has the backdrop `<image>` in the stage SVG (`docs/TESTING.md` rule 3). The
+profile runs every window of the historical isometric profile; after the
+`switchCycle` window and its #735 guard, before forced GC and outside every
+timed and Long Task window, a structural probe makes six warm switches round the
+floors and counts the `performUpdate` passes of each, from the pick until
+`updateComplete` resolves `true`. Counting has to run to that quiescence: the K1
+second pass starts after the first `updateComplete` has resolved, in the same
+task, so a count taken right after the first `await` reads one pass on both
+sides. Late updates after the frame are not counted. Each row reports
+`floorSwitchPasses: { supported, perSwitch }`, and `evaluate.mjs` rejects a
+candidate unless every element is 1 (`candidate: a warm 2.5D floor switch with a
+backdrop took <n> update passes`, #739 AC2 and `docs/ISOMETRIC.md`). The base is
+reported, not judged: bases before #739, v1.78.0 among them, take two passes.
+`budgets-large-house-isometric-backdrop.json` is a copy of the historical
+isometric budget that differs only in `profile`, so the twin shares every
+ceiling (as #160 does); the historical profile keeps its meaning as the #124
+witness. The profile runs in Full Performance only, not in the Validate smoke.
+
 Every report is tied to the source fingerprint embedded by Rollup. A stale
 bundle is a hard failure.
 
@@ -296,6 +327,7 @@ Build and copy a fresh demo bundle first, then run:
 ```bash
 npm run benchmark:large-house -- --samples=7 --warmups=1 --output=artifacts/performance/local.json
 npm run benchmark:large-house-isometric -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-local.json
+npm run benchmark:large-house-isometric-backdrop -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-backdrop-local.json
 npm run benchmark:isometric-stage3-dense -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-stage3-local.json
 npm run benchmark:large-house-plan-snap -- --samples=7 --warmups=1 --output=artifacts/performance/plan-snap-local.json
 npm run benchmark:large-house-interaction -- --samples=7 --warmups=1 --output=artifacts/performance/interaction-local.json

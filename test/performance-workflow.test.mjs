@@ -41,6 +41,7 @@ test('full performance is isolated to stable, scheduled and manual entry points'
     'profile:',
     '- large-house',
     '- isometric',
+    '- isometric-backdrop',
     '- isometric-stage3',
     '- plan-snap',
     '- interaction',
@@ -54,12 +55,13 @@ test('full performance is isolated to stable, scheduled and manual entry points'
   ]) assert.ok(workflow.includes(contract), `missing full-gate contract: ${contract}`);
 
   assert.ok(workflow.includes('if [ -f baseline/scripts/bundle-sync.mjs ]; then'));
-  assert.equal((workflow.match(/--samples=7 --warmups=1/g) || []).length, 18);
+  assert.equal((workflow.match(/--samples=7 --warmups=1/g) || []).length, 20);
   assert.equal((workflow.match(/--allow-stage2-base/g) || []).length, 1,
     'only the Stage 3 comparison base may bypass the candidate-only DOM contract');
   assert.ok(workflow.includes('budgets-isometric-stage3-dense.json'));
-  assert.equal((workflow.match(/--baseline-sha=/g) || []).length, 2);
-  assert.equal((workflow.match(/--candidate-sha=/g) || []).length, 2);
+  assert.ok(workflow.includes('budgets-large-house-isometric-backdrop.json'));
+  assert.equal((workflow.match(/--baseline-sha=/g) || []).length, 3);
+  assert.equal((workflow.match(/--candidate-sha=/g) || []).length, 3);
 
   const release = readWorkflow('release.yml');
   // #540: признак стабильного — тег кандидата, не поле события: тот же гейт
@@ -127,6 +129,56 @@ test('#160 Stage 3 budget preserves every historical common ceiling', () => {
       <= historical.timings.stateUpdateMs.noiseAllowanceMs);
     assert.ok(dense.timings[metric].hardMaxMs <= historical.timings.stateUpdateMs.hardMaxMs);
   }
+});
+
+test('#743 backdrop budget is the historical isometric budget under its own profile id', () => {
+  // A new fixture meaning gets a new id (README, "Changing budgets"); the twin
+  // shares every ceiling with large-house-isometric-v1, as #160 does.
+  const historical = readJson('../demo/performance/budgets-large-house-isometric.json');
+  const backdrop = readJson('../demo/performance/budgets-large-house-isometric-backdrop.json');
+  assert.equal(backdrop.profile, 'large-house-isometric-backdrop-v1');
+  assert.deepEqual({ ...backdrop, profile: historical.profile }, historical,
+    'the twin differs from the historical isometric budget only in profile');
+  assert.equal('viewToggleMs' in backdrop.timings, false, '#720: the toggle is reported, not budgeted');
+  const workflow = readWorkflow('performance.yml');
+  const capture = workflow.slice(workflow.indexOf('            isometric-backdrop)'));
+  assert.match(capture,
+    /^ {12}isometric-backdrop\)\n {14}npm run benchmark:large-house-isometric-backdrop -- --target-root=\.\.\/baseline --samples=7 --warmups=1 [^\n]+\n {14}npm run benchmark:large-house-isometric-backdrop -- --target-root=\. --samples=7 --warmups=1 /,
+    'base and candidate are captured by the same runner, base first');
+  assert.match(workflow,
+    /--budgets=demo\/performance\/budgets-large-house-isometric-backdrop\.json [^\n]*--baseline-sha="[^\n]*--candidate-sha="/,
+    'the comparison pins both exact SHAs, as the isometric profile does');
+  const pkg = readJson('../package.json');
+  assert.equal(pkg.scripts['benchmark:large-house-isometric-backdrop'],
+    'node demo/benchmark_large_house.mjs --profile=large-house-isometric-backdrop-v1');
+});
+
+test('#743 backdrop profile walks the imagePlan path and probes update passes after the #735 guard', () => {
+  const runner = readFileSync(new URL('../demo/benchmark_large_house.mjs', import.meta.url), 'utf8');
+  assert.match(runner, /const isometric = [^;\n]*\|\| backdrop;/,
+    'the backdrop twin runs every 2.5D window of large-house-isometric-v1');
+  assert.match(runner,
+    /space\.plan_url = `\/assets\/f1\.svg\?\$\{space\.id\}`;\s*space\.plan_aspect = 1;/,
+    'every floor gets the shipped picture under a URL of its own over the whole plan square');
+  assert.match(runner, /backdrops: fixture\.config\.spaces\.length/);
+  assert.match(runner,
+    /if \(backdrop && !card\.renderRoot\.querySelector\('\.stage svg image\.hp-backdrop'\)\)\s*throw new Error\(`\$\{profile\} rendered no backdrop image`\);\s*const firstStableRenderMs/,
+    'a stable frame without the backdrop layer fails the sample (docs/TESTING.md rule 3)');
+  const cycleStart = runner.indexOf('const switchCycle = await duration(');
+  const guard = runner.indexOf('switchCycle built a floor inside the window', cycleStart);
+  const probe = runner.indexOf('const floorSwitchPasses = [];', cycleStart);
+  const gc = runner.indexOf('await forceGc();', cycleStart);
+  assert.ok(cycleStart > 0 && guard > cycleStart && probe > guard && gc > probe,
+    'the probe follows the switchCycle window and its #735 guard and precedes forced GC');
+  const probeBody = runner.slice(probe, gc);
+  assert.ok(!probeBody.includes('duration(') && !probeBody.includes('startLongTaskWindow('),
+    'the probe stays outside every timed and Long Task window');
+  assert.match(probeBody,
+    /for \(let index = 0; index < 6; index\+\+\) \{\s*const passesBefore = card\.__diag\.updates;\s*card\._pickSpace\(`perf-floor-\$\{\(index % fixture\.counts\.floors\) \+ 1\}`\);\s*for \(let wait = 0; wait < 20 && !\(await card\.updateComplete\); wait\+\+\);\s*floorSwitchPasses\.push\(card\.__diag\.updates - passesBefore\);/,
+    'six warm switches, each counted until updateComplete reports quiescence');
+  assert.match(runner,
+    /\.\.\.\(backdrop \? \{ floorSwitchPasses: \{ supported: true, perSwitch: floorSwitchPasses \} \} : \{\}\)/,
+    'only the backdrop profile reports the passes');
 });
 
 test('#570 current Stage 4 runner fails closed on the agreed observable DOM contract', () => {
