@@ -4,6 +4,8 @@ import {
 
 export interface IsoPaperContext {
   readonly key: string;
+  /** Identity of the theme card background that an image-backed floor shows. */
+  readonly theme: string;
   readonly imagePlan: boolean;
 }
 
@@ -14,17 +16,20 @@ interface ThemeIdentity {
   readonly theme?: unknown;
 }
 
-/** All non-DOM inputs that can change the computed plan-paper colour. */
+/**
+ * All non-DOM inputs that can change the computed plan-paper colour. The floor
+ * the caller passes is deliberately not one of them (#739): no space sets the
+ * card background variables, so a floor switch keeps the paper of the theme
+ * and mode instead of resolving it again with a second update pass.
+ */
 export function isoPaperContext(
   space: string, mode: string, imagePlan: boolean, themes?: ThemeIdentity,
 ): IsoPaperContext {
-  return {
-    imagePlan,
-    key: JSON.stringify([
-      space, mode, imagePlan, themes?.darkMode ?? null, themes?.default_theme ?? null,
-      themes?.default_dark_theme ?? null, themes?.theme ?? null,
-    ]),
-  };
+  const theme = JSON.stringify([
+    mode, themes?.darkMode ?? null, themes?.default_theme ?? null,
+    themes?.default_dark_theme ?? null, themes?.theme ?? null,
+  ]);
+  return { imagePlan, theme, key: JSON.stringify([imagePlan, theme]) };
 }
 
 /**
@@ -37,15 +42,24 @@ export class IsoFirstFrameState {
   private paperContext = '';
   private paperReady = false;
   private floorMemo: IsoLightFloorMemo | null = null;
+  /** #739: the last resolved theme paper, kept across drawn and image floors. */
+  private themePaper: { readonly theme: string; readonly rgb: Rgb } | null = null;
 
   public runtimeLoading(): void { this.runtimeFailed = false; }
   public runtimeReady(): void { this.runtimeFailed = false; }
   public runtimeFailure(): void { this.runtimeFailed = true; }
 
   public prepare(desired: 'flat' | 'iso', context: IsoPaperContext): void {
+    // Only the current theme and mode are kept: any change of either — also one
+    // made in Flat or in an editor — resolves the paper again on the #654 path.
+    if (this.themePaper && this.themePaper.theme !== context.theme) this.themePaper = null;
     if (context.key === this.paperContext) return;
     this.paperReady = false;
-    if (desired === 'iso' && !context.imagePlan) this.commitPaper(context.key, [255, 255, 255]);
+    if (desired !== 'iso') return;
+    if (!context.imagePlan) this.commitPaper(context.key, [255, 255, 255]);
+    // #739: a known theme paper is ready before the first render of the floor:
+    // no veil, no resolver, no second update pass.
+    else if (this.themePaper?.theme === context.theme) this.commitPaper(context.key, this.themePaper.rgb);
   }
 
   /** Returns true when a committed render must consume a newly resolved paper. */
@@ -53,7 +67,12 @@ export class IsoFirstFrameState {
     desired: 'flat' | 'iso', context: IsoPaperContext, resolveThemePaper: () => Rgb,
   ): boolean {
     if (desired !== 'iso' || this.paperReady && context.key === this.paperContext) return false;
-    this.commitPaper(context.key, context.imagePlan ? resolveThemePaper() : [255, 255, 255]);
+    let rgb: Rgb = [255, 255, 255];
+    if (context.imagePlan) {
+      rgb = resolveThemePaper();
+      this.themePaper = { theme: context.theme, rgb };
+    }
+    this.commitPaper(context.key, rgb);
     return true;
   }
 

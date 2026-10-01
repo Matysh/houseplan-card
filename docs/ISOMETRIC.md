@@ -35,7 +35,13 @@ change the saved setting. Flat View and every editor do not wait for the 2.5D
 runtime. Paper colour is resolved after the DOM commit (white for a drawn plan,
 the theme card background under an image plan) and the resulting light-floor
 set is reused until the paper, resolved room fills or room membership changes
-([#654](https://github.com/Matysh/houseplan-card/issues/654)).
+([#654](https://github.com/Matysh/houseplan-card/issues/654)). The theme
+card background is resolved once per theme identity (dark mode, default and
+dark default theme, theme) and card mode, not per floor: switching between
+floors — with an image plan or a drawn one — reuses it, so a floor switch
+renders the card once and shows no loading surface; a theme or mode change
+resolves it again on the path above
+([#739](https://github.com/Matysh/houseplan-card/issues/739)).
 
 There is no toggle on the card and no alpha entry: `iso` is gone from
 `LABS_FLAGS`, the header `projection-toggle` and the phone-menu item

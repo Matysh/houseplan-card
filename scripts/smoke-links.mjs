@@ -56,12 +56,19 @@ export const SMOKE_LINKS = [
       + 'no smoke names the functions',
   },
   {
-    symbols: ['memoIsoLightFloorRooms', 'IsoFirstFrameState', 'isoPaperContext'],
+    symbols: ['memoIsoLightFloorRooms', 'IsoFirstFrameState', 'isoPaperContext', 'commitPaper', 'themePaper'],
     smokes: ['smoke_iso_first_frame.mjs'],
     because: '#654: the production-bundle witness delays and rejects the lazy 2.5D chunk, then '
       + 'samples every animation frame in normal, kiosk and Flat views; no pure import can prove '
       + 'that the loading veil hides the transient Flat render or that the first visible marker '
       + 'already uses the settled paper-dependent floor class',
+  },
+  {
+    symbols: ['IsoFirstFrameState', 'isoPaperContext', 'commitPaper', 'themePaper'],
+    smokes: ['smoke_iso_floor_switch.mjs'],
+    because: '#739: a warm floor switch between backdrop floors in 2.5D is observed only in the '
+      + 'production bundle — one card update, no computed-colour probe and no veil insertion in '
+      + 'the click task, the light floors of the first show; no smoke names the paper state',
   },
   {
     symbols: ['baseStyles', '_containerOwnedHeight', 'measuredCardHeaderHeight',

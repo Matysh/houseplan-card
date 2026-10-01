@@ -110,6 +110,78 @@ test('#654 a drawn plan has deterministic white paper before its first render', 
   }), false);
 });
 
+test('#739 AC1 a known theme paper survives floor switches; theme and mode resolve it again', () => {
+  const state = new IsoFirstFrameState();
+  const light = { darkMode: false, theme: 'light' };
+  const calls = [];
+  const resolver = (label, rgb) => () => { calls.push(label); return rgb; };
+  // An unfilled room is light on white paper and not light on a dark card
+  // background, so the classification shows which paper the state holds.
+  const fills = new Map([['unfilled', null]]);
+  const themePaper = [30, 30, 30];
+
+  // (а) floor A with a backdrop: the #654 cold path — veil until the paper is resolved.
+  const a = isoPaperContext('A', 'view', true, light);
+  state.prepare('iso', a);
+  assert.equal(state.pending('iso', true), true, 'the first image floor waits for its paper');
+  assert.equal(state.sync('iso', a, resolver('A', themePaper)), true);
+  assert.deepEqual(calls, ['A']);
+  assert.equal(state.pending('iso', true), false);
+  assert.deepEqual([...state.lightFloors(fills)], []);
+
+  // (б) floor B with a backdrop, same theme and mode: ready before its first render.
+  const b = isoPaperContext('B', 'view', true, light);
+  state.prepare('iso', b);
+  assert.equal(state.pending('iso', true), false, 'a floor switch shows no veil');
+  assert.equal(state.readiness('iso', 'iso', true), 'ready');
+  assert.equal(state.sync('iso', b, resolver('B', [255, 255, 255])), false,
+    'no second update pass for a floor switch');
+  assert.deepEqual(calls, ['A'], 'a floor switch does not ask the DOM again');
+
+  // (в) floor C with a drawn plan: white paper without the DOM.
+  const c = isoPaperContext('C', 'view', false, light);
+  state.prepare('iso', c);
+  assert.equal(state.pending('iso', true), false);
+  assert.equal(state.sync('iso', c, resolver('C', themePaper)), false);
+  assert.deepEqual(calls, ['A']);
+  assert.deepEqual([...state.lightFloors(fills)], ['unfilled'], 'drawn plans stay on white paper');
+
+  // (г) back to B: the theme paper is still known and the floor classifies on it.
+  state.prepare('iso', b);
+  assert.equal(state.pending('iso', true), false, 'drawn → backdrop keeps the known theme paper');
+  assert.equal(state.sync('iso', b, resolver('B again', [255, 255, 255])), false);
+  assert.deepEqual(calls, ['A']);
+  assert.deepEqual([...state.lightFloors(fills)], [], 'the theme paper, not white, classifies B');
+
+  // (д) a theme change is the #654 path again: veil, one resolve.
+  const dark = isoPaperContext('B', 'view', true, { darkMode: true, theme: 'dark' });
+  state.prepare('iso', dark);
+  assert.equal(state.pending('iso', true), true, 'a theme change hides the stale classification');
+  assert.equal(state.sync('iso', dark, resolver('dark', [250, 250, 250])), true);
+  assert.deepEqual(calls, ['A', 'dark']);
+  assert.deepEqual([...state.lightFloors(fills)], ['unfilled']);
+
+  // (е) another card mode resolves once more.
+  const plan = isoPaperContext('B', 'plan', true, { darkMode: true, theme: 'dark' });
+  state.prepare('iso', plan);
+  assert.equal(state.pending('iso', true), true);
+  assert.equal(state.sync('iso', plan, resolver('mode', [250, 250, 250])), true);
+  assert.deepEqual(calls, ['A', 'dark', 'mode']);
+
+  // A trip to an editor and back is a mode change too, whatever floors it passes.
+  const drawnView = isoPaperContext('C', 'view', false, light);
+  const imageView = isoPaperContext('B', 'view', true, light);
+  state.prepare('iso', imageView);
+  state.sync('iso', imageView, resolver('view', themePaper));
+  state.prepare('iso', drawnView);
+  assert.equal(state.pending('iso', true), false);
+  state.prepare('flat', isoPaperContext('B', 'plan', true, light));
+  state.prepare('iso', imageView);
+  assert.equal(state.pending('iso', true), true, 'back from the editor the paper is resolved again');
+  assert.equal(state.sync('iso', imageView, resolver('back', themePaper)), true);
+  assert.deepEqual(calls, ['A', 'dark', 'mode', 'view', 'back']);
+});
+
 test('#649 п.1 tile numbers are the lab units / 80 and the scale 1.12', () => {
   assert.equal(ISO_ICON_SCALE, 1.12);
   assert.deepEqual({ ...ISO_TILE }, {

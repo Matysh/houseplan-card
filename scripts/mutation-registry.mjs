@@ -13653,6 +13653,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'iso-paper-resolved-per-floor',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#654|#739" test/iso-stage6.test.mjs',
+    because: '#739 AC1: the 2.5D paper under a backdrop is the theme card background, a function of '
+      + 'the theme and the card mode; keyed by the floor again, every floor switch resolves the '
+      + 'computed colour after commit and renders the card twice',
+    patches: [{
+      file: 'src/iso-first-frame.ts',
+      find: '    mode, themes?.darkMode ?? null, themes?.default_theme ?? null,\n',
+      replace: '    space, mode, themes?.darkMode ?? null, themes?.default_theme ?? null,\n',
+    }],
+  },
+  {
     id: 'shutdown-skips-deferred-store-flush',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'home_assistant_stop_flushes_pending_virtual_light_and_trail '
