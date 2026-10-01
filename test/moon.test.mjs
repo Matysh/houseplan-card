@@ -14,7 +14,7 @@ import {
   moonView,
 } from '../test-build/moon.js';
 import { MOON_TICK_MS, moonTick, renderMoon, renderMoonSky } from '../test-build/moon-runtime.js';
-import { dayCycleClock, moonLayer, moonSkyState } from '../test-build/moon-gate.js';
+import { dayCycleClock, moonLayer, moonSkyState, withMoon } from '../test-build/moon-gate.js';
 import { moonStatusText } from '../test-build/editors/moon-status.js';
 import { subst } from '../test-build/logic.js';
 import {
@@ -378,7 +378,10 @@ test('#661 C7: the chunk is asked for at night only; until it arrives there is n
   forgetHost(host);
 });
 
-test('#718 AC15: a static background — global or the space’s own — shows the moon in its sky layer', () => {
+test('#718 AC15: a static background — global or the space’s own — shows the moon in its sky layer', async () => {
+  // Until the chunk is here the layer is `nothing` (#661 C7). In a whole-file
+  // run C7 has loaded it already; the mutation gate runs `#718` alone (#758).
+  await new Promise((done) => withMoon(() => done()));
   const at = new Date('2026-10-21T18:00:00Z');
   const host = fakeHost(MOSCOW);
   for (const [global, space] of [[STATIC_ON, {}], [{ moon: true, bg_mode: 'daynight' }, { bg_mode: 'static' }]]) {
