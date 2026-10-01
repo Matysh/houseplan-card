@@ -10,6 +10,7 @@
 | #739 | [SPEC-REVIEW-739-r1.md](SPEC-REVIEW-739-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #738 | [CODE-REVIEW-738-r1.md](CODE-REVIEW-738-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #737 | [SPEC-REVIEW-737-r1.md](SPEC-REVIEW-737-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #736 | [CODE-REVIEW-736-r1.md](CODE-REVIEW-736-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #732 | [CODE-REVIEW-732-r1.md](CODE-REVIEW-732-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #730 | [CODE-REVIEW-730-r1.md](CODE-REVIEW-730-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | текст сводки «повтор и ребейз не помогут» вводит в заблуждение именно в сценарии, котор… | `scripts/merge-candidate.mjs` |
 | #730 | [CODE-REVIEW-730-r2.md](CODE-REVIEW-730-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
