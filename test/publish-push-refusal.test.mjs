@@ -99,6 +99,9 @@ function stepRun(file, name) {
 
 const RELEASE_STEP = () => stepRun('release-review.yml', 'Опубликовать документ');
 const REVIEW_DOC_STEP = () => stepRun('_process.yml', 'Опубликовать документ ревью');
+// #749: скрипты job integrate — одним снимком dev; шаги получают каталог выходом `dir`.
+const TOOLS_STEP = () => stepRun('_process.yml', 'Скрипты конвейера — из dev (#749)');
+const REPRO_STEP = () => stepRun('_process.yml', '"Материал раунда воспроизводим (#413)"');
 
 /**
  * Песочница: bare origin, рабочая копия, соседний клон и bin с подменами.
@@ -126,6 +129,9 @@ function sandbox(root) {
   // Скрипты шага — из репозитория как есть: их несёт dev временного origin.
   mkdirSync(join(work, 'scripts'));
   for (const file of STEP_SCRIPTS) copyFileSync(file, join(work, 'scripts', relative(SCRIPTS, file)));
+  // #749: снимок скриптов integrate берёт из dev и validate.yml (его читает workflow-jobs.mjs).
+  mkdirSync(join(work, '.github', 'workflows'), { recursive: true });
+  copyFileSync(join(WORKFLOWS, 'validate.yml'), join(work, '.github', 'workflows', 'validate.yml'));
   mkdirSync(join(work, 'docs', 'reviews'), { recursive: true });
   writeFileSync(join(work, 'docs', 'reviews', 'CODE-REVIEW-1-r1.md'), '# CODE-REVIEW-1-r1\nВердикт: **зелёный** · High: 0 · Medium: 0\n');
   writeFileSync(join(work, 'docs', 'reviews', 'INDEX.md'), buildIndex(join(work, 'docs', 'reviews')));
@@ -303,12 +309,24 @@ function taskBranch(box) {
   git(box.work, 'checkout', '-q', 'dev');
 }
 
+/**
+ * #749: шаг снимка как есть — на рабочей копии dev, как после checkout в
+ * integrate. Возвращает каталог из его выхода `dir`: его шаги получают env TOOLS.
+ */
+function devTools(box) {
+  const r = box.run(TOOLS_STEP(), {});
+  assert.equal(r.status, 0, `снимок скриптов dev: ${r.stderr}${r.stdout}`);
+  const dir = readFileSync(join(box.temp, 'output'), 'utf8').match(/^dir=(.+)$/m)?.[1];
+  assert.ok(dir && existsSync(join(dir, 'scripts')), 'снимок назвал каталог со scripts/');
+  return dir;
+}
+
 function runReviewDoc(box, out = '{"verdict":"green","high":0}', extra = {}) {
   const source = join(box.temp, 'review-result', 'review-document.md');
   mkdirSync(join(box.temp, 'review-result'));
   writeFileSync(source, '# Код-ревью #9, раунд 1\n\nВердикт: **зелёный** · High: 0 · Medium: 0\n');
   return box.run(REVIEW_DOC_STEP(), {
-    BRANCH, NUM: '9', STAGE: 'code', CYCLE: '1', SOURCE: source,
+    BRANCH, NUM: '9', STAGE: 'code', CYCLE: '1', SOURCE: source, TOOLS: extra.TOOLS ?? devTools(box),
     MATERIAL_SHA: git(box.origin, 'rev-parse', BRANCH), MATERIAL_TREE: git(box.origin, 'rev-parse', `${BRANCH}^{tree}`),
     MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: '', OUT: out, ...extra,
   });
@@ -427,6 +445,50 @@ test('#737 AC3 _process.yml на настоящем bash: ребейз и вто
   const doc = git(box.origin, 'show', `${BRANCH}:${REVIEW_DOC}`);
   assert.equal(lastLine(doc), USAGE);
   assert.equal(doc.split(USAGE).length - 1, 1, 'строка одна');
+});
+
+// ---------- #749: скрипты job integrate — из снимка dev ----------
+
+// Ветка show/ship с чистым слиянием до ревью не ребейзится и может нести
+// отставший review-doc-guard.mjs: такой молча терял флаги якоря (маршрут #726,
+// расход #737). Здесь её версия громкая — пишет маркер в документ и выходит 7.
+const BRANCH_GUARD = [
+  "import { appendFileSync } from 'node:fs';",
+  "const anchor = process.argv.find((arg) => arg.startsWith('--anchor='));",
+  "if (anchor) appendFileSync(anchor.slice('--anchor='.length), '\\nBRANCH-VERSION\\n');",
+  "appendFileSync(`${process.env.RUNNER_TEMP}/branch-version.log`, `BRANCH-VERSION ${process.argv.slice(2).join(' ')}\\n`);",
+  'process.exit(7);',
+  '',
+].join('\n');
+
+test('#749 AC1 _process.yml на настоящем bash: якорь и проверка #413 — версия dev, скрипт ветки задачи не исполняется', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const { ANCHOR_MARKER, materialAnchorsFrom } = await import('../scripts/review-doc-guard.mjs');
+  const box = sandbox(tempRoot(t, 'hp-749-doc-'));
+  git(box.work, 'checkout', '-q', '-b', BRANCH);
+  writeFileSync(join(box.work, 'a.mjs'), 'export const a = 9;\n');
+  writeFileSync(join(box.work, 'scripts', 'review-doc-guard.mjs'), BRANCH_GUARD);
+  commitAll(box.work, 'fix: a (#9)');
+  git(box.work, 'push', '-q', 'origin', BRANCH);
+  git(box.work, 'checkout', '-q', 'dev');
+  const tree = git(box.origin, 'rev-parse', `${BRANCH}^{tree}`);
+  const branchLog = join(box.temp, 'branch-version.log');
+  // Один снимок на job: его каталог получают и публикация, и шаг #413.
+  const tools = devTools(box);
+  const out = JSON.stringify({ verdict: 'yellow', high: 0, medium: 1, summary: 's', route: 'reclassify', criterion: 'undocumented' });
+  const r = runReviewDoc(box, out, { USAGE, TOOLS: tools });
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  assert.ok(!existsSync(branchLog), `скрипт ветки задачи исполнялся: ${existsSync(branchLog) ? readFileSync(branchLog, 'utf8') : ''}`);
+  const doc = git(box.origin, 'show', `${BRANCH}:${REVIEW_DOC}`);
+  assert.doesNotMatch(doc, /BRANCH-VERSION/);
+  assert.ok(doc.includes(ANCHOR_MARKER), 'машинный блок якорей');
+  assert.match(doc, /^- Вердикт конвейера: `yellow` · High 0 · маршрут `reclassify` \(критерий `undocumented`\)$/m, 'маршрут — из OUT');
+  assert.deepEqual(materialAnchorsFrom(doc), [tree]);
+  assert.equal(lastLine(doc), USAGE, 'флаг --usage понят: версия dev');
+  // Шаг #413 на том же origin: опубликованный документ судит та же версия dev.
+  const repro = box.run(REPRO_STEP(), { NUM: '9', STAGE: 'code', CYCLE: '1', BRANCH, TOOLS: tools });
+  assert.equal(repro.status, 0, repro.stderr + repro.stdout);
+  assert.ok(!existsSync(branchLog), 'шаг #413 не исполнял скрипт ветки задачи');
 });
 
 // ---------- #730 _ship-review.yml: SHIP-REVIEW в dev ----------
@@ -601,14 +663,15 @@ for (const [label, stderr, kind, reason] of [
 // ---------- AC3 и разбор: тексты — из кода, не из run ----------
 
 test('#723 AC3: в run обоих шагов нет многострочного текста и heredoc; отказ разбирает код слияния', () => {
-  for (const [label, body, tools] of [['release-review.yml', RELEASE_STEP(), 'scripts'], ['_process.yml', REVIEW_DOC_STEP(), '"$tools/scripts']]) {
+  for (const [label, body, tools] of [['release-review.yml', RELEASE_STEP(), 'scripts'], ['_process.yml', REVIEW_DOC_STEP(), '"$TOOLS/scripts']]) {
     assert.doesNotMatch(body, /<<-?\s*['"]?[A-Za-z_]/, `${label}: heredoc в run`);
     assert.ok(body.includes(`kind=$(node ${tools}/merge-candidate.mjs`), `${label}: разбор — merge-candidate.mjs --push-refusal`);
     assert.match(body, /--push-refusal="\$push_err"[^\n]*\\\n[^\n]*--summary="\$GITHUB_STEP_SUMMARY"\) \|\| kind=unknown/, `${label}: сводку пишет код`);
     assert.match(body, /2> "\$push_err"; then/, `${label}: stderr push идёт в разбор`);
   }
-  // Шаг _process.yml берёт разбор из dev: ветка задачи, отставшая от dev, его может не нести.
-  assert.match(REVIEW_DOC_STEP(), /git archive origin\/dev scripts \| tar -x -C "\$tools"/);
+  // Шаг _process.yml берёт разбор из снимка dev (#749): ветка задачи, отставшая от dev, его может не нести.
+  assert.doesNotMatch(REVIEW_DOC_STEP(), /git archive/, 'своего извлечения у шага нет — снимок job');
+  assert.match(TOOLS_STEP(), /git archive origin\/dev scripts \.github\/workflows\/validate\.yml \| tar -x -C "\$tools"/);
   // Блок run не обрезан: последняя строка каждого шага на месте.
   assert.match(RELEASE_STEP(), /echo "::error::документ ревью не опубликован в dev за три попытки"\nexit 1\n*$/);
   assert.match(REVIEW_DOC_STEP(), /echo "документ опубликован в \$target: \$doc"\n*$/);

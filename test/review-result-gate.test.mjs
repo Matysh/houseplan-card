@@ -136,7 +136,7 @@ test('#556: integrate пропускает artifact только через ге
     integrate.indexOf('      # Ревьюер пишет только в docs/reviews/.'),
   );
   assert.ok(step.length > 0, 'шаг проверки найден');
-  assert.match(step, /^\s+node scripts\/review-result-gate\.mjs --dir="\$dir"$/m);
+  assert.match(step, /^\s+node "\$TOOLS\/scripts\/review-result-gate\.mjs" --dir="\$dir"$/m);
   for (const field of PASSPORT_FIELDS) {
     if (field === 'run_id' || field === 'run_attempt') continue; // приходят из GITHUB_*
     assert.match(step, new RegExp(`^\\s+${field.toUpperCase()}: `, 'm'), `${field} передаётся гейту`);

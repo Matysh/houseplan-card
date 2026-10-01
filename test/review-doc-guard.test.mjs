@@ -77,7 +77,7 @@ test('шаг публикации в конвейере проверяет и и
   // Два рубежа: что проиндексировано и что пуш добавит в ветку. Расходились они
   // именно тогда, когда база оказывалась не той.
   assert.equal(
-    (step.match(/git diff --cached --name-only \| node scripts\/review-doc-guard\.mjs/g) || []).length,
+    (step.match(/git diff --cached --name-only \| node "\$TOOLS\/scripts\/review-doc-guard\.mjs"/g) || []).length,
     1, 'индекс проверяется один раз, перед коммитом',
   );
   // Дважды: push делается из двух мест — сразу и после ребейза при гонке. Одна
@@ -85,7 +85,7 @@ test('шаг публикации в конвейере проверяет и и
   // именно он срабатывает, когда dev ушёл вперёд — то есть в тех самых
   // условиях, при которых случился bb2919f.
   assert.equal(
-    (step.match(/git diff --name-only "origin\/\$target\.\.\.HEAD" \| node scripts\/review-doc-guard\.mjs/g) || []).length,
+    (step.match(/git diff --name-only "origin\/\$target\.\.\.HEAD" \| node "\$TOOLS\/scripts\/review-doc-guard\.mjs"/g) || []).length,
     2, 'диапазон проверяется перед каждым push',
   );
   // Свежая база вместо той, что лежала здесь сорок минут назад.
@@ -903,7 +903,7 @@ test('#551: gates, модель и интеграция имеют незави�
   // YAML поставить было некуда (`test/review-result-gate.test.mjs`). Здесь
   // проверяется, что привилегированная стадия ходит через него и передаёт ему
   // весь паспорт, а не его часть.
-  assert.match(integrate, /node scripts\/review-result-gate\.mjs --dir="\$dir"/);
+  assert.match(integrate, /node "\$TOOLS\/scripts\/review-result-gate\.mjs" --dir="\$dir"/);
   for (const field of ['MATERIAL_SHA', 'MATERIAL_TREE', 'STAGE', 'CYCLE', 'BRANCH', 'ISSUE']) {
     assert.match(integrate, new RegExp(`^\\s+${field}: `, 'm'), `${field} передаётся гейту`);
   }

@@ -145,8 +145,8 @@ test('#635/#657 (1б): индекс пересобирается только к
   const wf = new URL('../.github/workflows/_process.yml', import.meta.url);
   const text = readFileSync(wf, 'utf8');
   // Публикация документа: индекс — тем же коммитом, только если цель — dev
-  // (ревью ТЗ). В ветку задачи — один документ.
-  assert.match(text, /if \[ -f "\$doc" \] && \[ "\$target" = "dev" \]; then\n\s+node scripts\/reviews-index\.mjs --dir=docs\/reviews\n\s+git add -- docs\/reviews\/INDEX\.md/);
+  // (ревью ТЗ). В ветку задачи — один документ. Скрипт — из снимка dev (#749).
+  assert.match(text, /if \[ -f "\$doc" \] && \[ "\$target" = "dev" \]; then\n\s+node "\$TOOLS\/scripts\/reviews-index\.mjs" --dir=docs\/reviews\n\s+git add -- docs\/reviews\/INDEX\.md/);
   // Приведение ветки к dev индекс больше не коммитит: ветка задачи его не несёт.
   const rebase = text.slice(text.indexOf('- name: Привести ветку к dev'), text.indexOf('- name: Зафиксировать SHA материала ревью'));
   assert.doesNotMatch(rebase, /reviews-index\.mjs/, 'в ветке задачи индекс не пересобирается (#657)');

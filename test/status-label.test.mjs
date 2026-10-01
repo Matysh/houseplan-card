@@ -51,6 +51,7 @@ test('#706 шаг конвейера переставляет метку чер�
   const workflow = readFileSync(fileURLToPath(new URL('../.github/workflows/_process.yml', import.meta.url)), 'utf8');
   const step = workflow.slice(workflow.indexOf('- name: Переставить метку'), workflow.indexOf('- name: Сводка длительности стадий'));
   assert.ok(step.length > 0, 'шаг найден');
-  assert.match(step, /node scripts\/status-label\.mjs --repo="\$\{\{ github\.repository \}\}" \\\n\s+--issue="\$NUM" --from="\$FROM" --to="\$TO"/);
+  // #749: скрипт — из снимка dev job integrate, не из рабочей копии ветки задачи.
+  assert.match(step, /node "\$TOOLS\/scripts\/status-label\.mjs" --repo="\$\{\{ github\.repository \}\}" \\\n\s+--issue="\$NUM" --from="\$FROM" --to="\$TO"/);
   assert.doesNotMatch(step, /gh issue edit/, 'совмещённый вызов снимал ту же метку, которую ставил');
 });

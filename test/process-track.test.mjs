@@ -611,6 +611,7 @@ function stepRun(workflow, marker) {
 const TRACK_STEP = '      - name: "Трек задачи и рамки ship (#696)"\n';
 const GUARD_STEP = '      - id: decide\n';
 const DECIDE_STEP = '      - name: Решение по вердикту\n';
+const TOOLS_STEP = '      - name: Скрипты конвейера — из dev (#749)\n';
 const PUBLISH_STEP = '      - name: Опубликовать документ ревью\n';
 
 test('#707 AC4: изменённые run шага трека, guard и решения по вердикту проходят bash -n', async (t) => {
@@ -713,6 +714,9 @@ function trackSandbox(t, { change, base = () => {} }) {
     assert.ok(file.startsWith(SCRIPTS_DIR), `${file} вне scripts/`);
     writeFileSync(join(work, 'scripts', file.slice(SCRIPTS_DIR.length + 1)), readFileSync(file));
   }
+  // #749: снимок скриптов integrate берёт из dev и validate.yml.
+  mkdirSync(join(work, '.github', 'workflows'), { recursive: true });
+  writeFileSync(join(work, '.github', 'workflows', 'validate.yml'), readFileSync(join(dirname(WORKFLOW), 'validate.yml')));
   mkdirSync(join(work, 'src', 'styles'), { recursive: true });
   writeFileSync(join(work, 'src', 'pointer-modality.ts'), 'export const a = 1;\nexport const b = 2;\n');
   writeFileSync(join(work, 'src', 'styles', 'plan.styles.ts'), 'export const css = `\n  .x { color: red; }\n`;\n');
@@ -740,6 +744,7 @@ function trackSandbox(t, { change, base = () => {} }) {
     '',
   ].join('\n'), { mode: 0o755 });
   const read = (path) => (existsSync(path) ? readFileSync(path, 'utf8') : '');
+  let tools = '';
   return {
     work, fake,
     run(script, env) {
@@ -749,7 +754,7 @@ function trackSandbox(t, { change, base = () => {} }) {
         cwd: work, encoding: 'utf8',
         env: {
           ...GIT_ENV, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, FAKE_DIR: fake, GH_TOKEN: 'x', NUM: '7',
-          GITHUB_OUTPUT: join(temp, 'output'), GITHUB_STEP_SUMMARY: join(temp, 'summary'), ...env,
+          GITHUB_OUTPUT: join(temp, 'output'), GITHUB_STEP_SUMMARY: join(temp, 'summary'), ...(tools ? { TOOLS: tools } : {}), ...env,
         },
       });
       return {
@@ -765,6 +770,14 @@ function trackSandbox(t, { change, base = () => {} }) {
     labels(list) {
       if (list === null) rmSync(join(fake, 'labels'), { force: true });
       else writeFileSync(join(fake, 'labels'), `${list.join(',')}\n`);
+    },
+    /** #749: шаг снимка job integrate как есть; его каталог дальше идёт шагам как TOOLS. */
+    snapshot() {
+      const r = this.run(stepRun(readFileSync(WORKFLOW, 'utf8'), TOOLS_STEP), {});
+      assert.equal(r.status, 0, `снимок скриптов dev: ${r.stderr}`);
+      assert.ok(r.output.dir && existsSync(join(r.output.dir, 'scripts', 'process-track.mjs')), 'снимок несёт скрипт трека');
+      tools = r.output.dir;
+      return tools;
     },
   };
 }
@@ -1107,8 +1120,9 @@ test('#726 AC5: шаг решения — один вызов process-track.mjs 
   const workflow = readFileSync(WORKFLOW, 'utf8');
   const run = stepRun(workflow, DECIDE_STEP);
   assert.equal((run.match(/process-track\.mjs/g) || []).length, 1, 'один вызов скрипта');
-  assert.match(run, /route=\$\(node "\$tools\/scripts\/process-track\.mjs" route --stage="\$STAGE" --track="\$TRACK" \\\n\s+--confirmed="\$CONFIRMED" --labels="\$labels" --verdict="\$RUNNER_TEMP\/route-verdict\.json"/);
-  assert.match(run, /git archive origin\/dev scripts \| tar -x -C "\$tools"/, 'скрипт — из dev');
+  assert.match(run, /route=\$\(node "\$TOOLS\/scripts\/process-track\.mjs" route --stage="\$STAGE" --track="\$TRACK" \\\n\s+--confirmed="\$CONFIRMED" --labels="\$labels" --verdict="\$RUNNER_TEMP\/route-verdict\.json"/);
+  // #749: скрипт — из снимка dev на всю job, своего извлечения у шага нет.
+  assert.doesNotMatch(run, /git archive/, 'скрипт — из снимка dev');
   assert.equal((run.match(/gh issue edit/g) || []).length, 1, 'метки меняются в одном месте');
   assert.match(run, /if \[ -n "\$add" \]; then edit\+=\(--add-label "\$add"\); fi\n\s+if \[ -n "\$remove" \]; then edit\+=\(--remove-label "\$remove"\); fi/);
   assert.match(run, /add=\$\(field add_labels\); remove=\$\(field remove_labels\); comment=\$\(field comment\)/);
@@ -1121,7 +1135,7 @@ test('#726 AC5: шаг решения — один вызов process-track.mjs 
   const step = workflow.slice(workflow.indexOf(DECIDE_STEP), workflow.indexOf('      - name: dev ушёл вперёд'));
   for (const env of ['TRACK: ${{ needs.prepare.outputs.track }}', 'CONFIRMED: ${{ needs.prepare.outputs.confirmed }}',
     'SPENT: ${{ needs.guard.outputs.spent }}', 'LIMIT: ${{ needs.guard.outputs.limit }}', 'CYCLE: ${{ needs.guard.outputs.cycle }}',
-    'BRANCH: ${{ needs.prepare.outputs.branch }}', 'LABELS: ${{ needs.guard.outputs.labels }}']) {
+    'BRANCH: ${{ needs.prepare.outputs.branch }}', 'LABELS: ${{ needs.guard.outputs.labels }}', 'TOOLS: ${{ steps.tools.outputs.dir }}']) {
     assert.ok(step.includes(`          ${env}\n`), env);
   }
   // Многострочного текста в новой ветке нет: heredoc — только прежний комментарий слияния ship.
@@ -1147,6 +1161,7 @@ const LABELS_VIEW = 'issue view 7 --repo o/r --json labels --jq [.labels[].name]
 test('#726 AC5: шаг решения на настоящем bash — reclassify: ask, S3-spec, комментарий с hp:route и перечнем CODE-REVIEW', async (t) => {
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const box = trackSandbox(t, { change: docsChange([[1, 'жёлтый'], [2, 'жёлтый']]) });
+  box.snapshot();
   const run = stepRun(readFileSync(WORKFLOW, 'utf8'), DECIDE_STEP);
   box.labels(['track:show', 'S7-code-review', 'P2']);
   const r = box.run(run, decideEnv({ OUT: verdictOut({ route: 'reclassify', criterion: 'undocumented' }) }));
@@ -1177,6 +1192,7 @@ test('#726 AC5: шаг решения на настоящем bash — reclassif
 test('#726 AC5: шаг решения на настоящем bash — исчерпание, вопрос владельцу, fix, зелёный и сбой скрипта', async (t) => {
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const box = trackSandbox(t, { change: docsChange([[1, 'жёлтый'], [2, 'жёлтый']]) });
+  box.snapshot();
   const run = stepRun(readFileSync(WORKFLOW, 'utf8'), DECIDE_STEP);
   box.labels(['track:show', 'S7-code-review']);
   const commentPath = join(dirname(box.work), 'runner', 'route', 'comment.md');

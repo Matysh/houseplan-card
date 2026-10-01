@@ -1430,6 +1430,28 @@ jobs:
         with:
           node-version: 22
 
+      # #749: тело читается из dev (@dev, #623) — значит, и скрипты, которые
+      # оно зовёт со своими флагами и форматами, тоже из dev. Рабочая копия
+      # после публикации документа — ветка задачи, а ветка show/ship с чистым
+      # слиянием до ревью не ребейзится (§10.4) и несёт scripts/, отставшие на
+      # дни: неизвестный флаг review-doc-guard.mjs молча теряется, старый
+      # merge-candidate.mjs сливает по-старому. Рабочая копия — материал, а не
+      # инструмент: git, документ и пути судятся в ней, скрипты зовутся отсюда.
+      # Снимок один на job — одна версия на весь заход, а не смесь по шагам.
+      # validate.yml в снимке обязателен: workflow-jobs.mjs читает его по пути
+      # от себя, и без него ci-proof.mjs отвечает `failed (#622)` на каждом
+      # слиянии кода.
+      - name: Скрипты конвейера — из dev (#749)
+        id: tools
+        if: steps.ready.outputs.proceed == 'true'
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/dev-tools"
+          rm -rf "$tools" && mkdir -p "$tools"
+          git fetch -q origin dev
+          git archive origin/dev scripts .github/workflows/validate.yml | tar -x -C "$tools"
+          echo "dir=$tools" >> "$GITHUB_OUTPUT"
+
       - name: Получить результат модели
         if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -1462,10 +1484,11 @@ jobs:
           SPEC_BODY_CHANGED: ${{ needs.prepare.outputs.spec_body_changed }}
           SPEC_BODY_DOC: ${{ needs.prepare.outputs.spec_body_doc }}
           SPEC_BODY_RECORDED: ${{ needs.prepare.outputs.spec_body_recorded }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           set -euo pipefail
           dir="$RUNNER_TEMP/review-result"
-          node scripts/review-result-gate.mjs --dir="$dir"
+          node "$TOOLS/scripts/review-result-gate.mjs" --dir="$dir"
           printf 'structured_output<<EOF_RESULT\n' >> "$GITHUB_OUTPUT"
           cat "$dir/verdict.json" >> "$GITHUB_OUTPUT"
           # structured_output не обязан оканчиваться LF: delimiter команды
@@ -1494,6 +1517,8 @@ jobs:
           # #737: расход модели — последней строкой блока якорей; строка
           # недоверенная, скрипт разбирает её строго.
           USAGE: ${{ needs.model_review.outputs.usage }}
+          # #749: скрипты — из снимка dev, рабочая копия — ветка задачи.
+          TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           verdict=$(printf '%s' "$OUT" | jq -r '.verdict // empty' 2>/dev/null || true)
           high=$(printf '%s' "$OUT" | jq -r '.high // empty' 2>/dev/null || true)
@@ -1552,7 +1577,7 @@ jobs:
             # выводом — через раунд команда из §2.10 не работала. Машина же
             # снимает якоря в момент чтения материала и ошибиться в них не
             # может; блок помечен как машинный, чтобы никто не правил его руками.
-            node scripts/review-doc-guard.mjs --anchor="$doc" \
+            node "$TOOLS/scripts/review-doc-guard.mjs" --anchor="$doc" \
               --sha="$MATERIAL_SHA" --tree="$MATERIAL_TREE" \
               --branch="${BRANCH:-dev}" --specs="$MATERIAL_SPECS" \
               --issue-body="$MATERIAL_ISSUE_BODY" \
@@ -1571,7 +1596,7 @@ jobs:
           # задачи — один документ: индекс там конфликтовал бы с документами
           # соседей в dev по построению; его пересоберёт слияние кандидата.
           if [ -f "$doc" ] && [ "$target" = "dev" ]; then
-            node scripts/reviews-index.mjs --dir=docs/reviews
+            node "$TOOLS/scripts/reviews-index.mjs" --dir=docs/reviews
             git add -- docs/reviews/INDEX.md
           fi
           if git diff --cached --quiet; then
@@ -1592,7 +1617,7 @@ jobs:
             exit 1
           fi
           # Первый рубеж: что вообще проиндексировано.
-          git diff --cached --name-only | node scripts/review-doc-guard.mjs
+          git diff --cached --name-only | node "$TOOLS/scripts/review-doc-guard.mjs"
           # Сообщение коммита — построчно в файл, без heredoc в `run:` (#723).
           msg="$RUNNER_TEMP/review-doc-commit.txt"
           {
@@ -1607,25 +1632,21 @@ jobs:
           # Второй рубеж, и он главный: что пуш ДОБАВИТ в целевую ветку. Первый
           # судит намерение шага, этот — результат, а расходились они именно
           # тогда, когда база оказывалась не той.
-          git diff --name-only "origin/$target...HEAD" | node scripts/review-doc-guard.mjs
+          git diff --name-only "origin/$target...HEAD" | node "$TOOLS/scripts/review-doc-guard.mjs"
           # Публикация в dev идёт из детачнутого состояния поверх ветки задачи
           # либо dev, поэтому push нужен с явным перебазированием при гонке:
           # dev мог уйти вперёд, пока шло ревью — оно длится до 45 минут.
           #
           # #723: гонкой считается только устаревший lease. Отказ разбирает код
-          # слияния (merge-candidate.mjs --push-refusal, #705) — из dev, как у
-          # стража ребейза: ветка, отставшая от dev, его может не нести. Отказ
-          # GitHub (право на workflow, правило ветки, хук) ребейз не лечит:
-          # шаг падает сразу, причина и ответ git без токена — в журнале и в
-          # сводке шага; метка не меняется.
-          tools="$RUNNER_TEMP/publish-tools"
-          rm -rf "$tools" && mkdir -p "$tools"
-          git fetch -q origin dev
-          git archive origin/dev scripts | tar -x -C "$tools"
+          # слияния (merge-candidate.mjs --push-refusal, #705) — из снимка dev
+          # (#749): ветка, отставшая от dev, его может не нести. Отказ GitHub
+          # (право на workflow, правило ветки, хук) ребейз не лечит: шаг падает
+          # сразу, причина и ответ git без токена — в журнале и в сводке шага;
+          # метка не меняется.
           push_err="$RUNNER_TEMP/review-doc-push.stderr"
           if ! git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
                "HEAD:$target" 2> "$push_err"; then
-            kind=$(node "$tools/scripts/merge-candidate.mjs" --push-refusal="$push_err" --ref="$target" \
+            kind=$(node "$TOOLS/scripts/merge-candidate.mjs" --push-refusal="$push_err" --ref="$target" \
               --stage=review-doc --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
             if [ "$kind" != "stale" ]; then
               echo "::error::push документа ревью в $target отклонён ($kind) — это не сдвиг $target, ребейз не поможет; причина и ответ git — выше и в сводке шага"
@@ -1642,10 +1663,10 @@ jobs:
             fi
             # После ребейза набор путей другой — проверяется заново. Форс здесь
             # запрещён и не появляется: ветка двигается только вперёд.
-            git diff --name-only "origin/$target...HEAD" | node scripts/review-doc-guard.mjs
+            git diff --name-only "origin/$target...HEAD" | node "$TOOLS/scripts/review-doc-guard.mjs"
             if ! git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
                  "HEAD:$target" 2> "$push_err"; then
-              kind=$(node "$tools/scripts/merge-candidate.mjs" --push-refusal="$push_err" --ref="$target" \
+              kind=$(node "$TOOLS/scripts/merge-candidate.mjs" --push-refusal="$push_err" --ref="$target" \
                 --stage=review-doc --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
               echo "::error::документ ревью не опубликован в $target и после ребейза ($kind); причина и ответ git — выше"
               exit 1
@@ -1688,6 +1709,7 @@ jobs:
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           BRANCH: ${{ needs.prepare.outputs.branch }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           marker=CODE-REVIEW
           if [ "$STAGE" = "spec" ]; then marker=SPEC-REVIEW; fi
@@ -1696,7 +1718,7 @@ jobs:
           git fetch -q origin "$target"
           # Судится опубликованная версия, а не рабочая копия: именно её прочтёт
           # следующий раунд.
-          git show "origin/$target:$doc" | node scripts/review-doc-guard.mjs --doc=-
+          git show "origin/$target:$doc" | node "$TOOLS/scripts/review-doc-guard.mjs" --doc=-
       - name: Решение по вердикту
         id: decide
         if: steps.ready.outputs.proceed == 'true'
@@ -1723,6 +1745,7 @@ jobs:
           LIMIT: ${{ needs.guard.outputs.limit }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           BRANCH: ${{ needs.prepare.outputs.branch }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           # ship и повторно применённый зелёный (#499) модель не вызывали:
           # маршрута у них нет, решение прежнее — зелёный двигает вперёд.
@@ -1769,18 +1792,14 @@ jobs:
             # жёлтый и красный — цикл и возврат автору, на код-ревью show с
             # `route: reclassify` — повышение до ask или вопрос владельцу.
             # Bash только исполняет: комментарий — из файла скрипта, метки —
-            # по его выходу. Скрипт — из dev, как у шага трека: рабочая копия
-            # здесь — ветка задачи после публикации, и ветка show/ship,
-            # отставшая от dev, его может ещё не нести. Метки — текущие: шаг
-            # трека мог в этом же прогоне сменить ship на show.
-            git fetch -q origin dev
-            tools="$RUNNER_TEMP/route-tools"
-            rm -rf "$tools" && mkdir -p "$tools"
-            git archive origin/dev scripts | tar -x -C "$tools"
+            # по его выходу. Скрипт — из снимка dev (#749): рабочая копия здесь —
+            # ветка задачи после публикации, и ветка show/ship, отставшая от dev,
+            # его может ещё не нести. Метки — текущие: шаг трека мог в этом же
+            # прогоне сменить ship на show.
             printf '%s' "$OUT" > "$RUNNER_TEMP/route-verdict.json"
             labels=$(gh issue view "$NUM" --repo "${{ github.repository }}" --json labels \
               --jq '[.labels[].name] | join(",")') || labels="$LABELS"
-            route=$(node "$tools/scripts/process-track.mjs" route --stage="$STAGE" --track="$TRACK" \
+            route=$(node "$TOOLS/scripts/process-track.mjs" route --stage="$STAGE" --track="$TRACK" \
               --confirmed="$CONFIRMED" --labels="$labels" --verdict="$RUNNER_TEMP/route-verdict.json" \
               --spent="$SPENT" --limit="$LIMIT" --num="$NUM" --cycle="$CYCLE" --branch="$BRANCH" \
               --out="$RUNNER_TEMP/route" \
@@ -1857,13 +1876,17 @@ jobs:
           MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
           # #696: show/ship сливаются по лёгкому Validate на кандидате.
           MUTANTS: ${{ needs.prepare.outputs.mutants }}
+          # #749: из снимка dev — и суждение о Validate кандидата (ci-proof.mjs
+          # с validate.yml снимка), и reviews-index.mjs, который скрипт зовёт
+          # по пути от себя.
+          TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           if [ -z "$BRANCH" ]; then
             echo "::error::ветки задачи нет — сливать нечего"
             echo "merged=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          node scripts/merge-candidate.mjs --branch="$BRANCH" --material="$MATERIAL_SHA" \
+          node "$TOOLS/scripts/merge-candidate.mjs" --branch="$BRANCH" --material="$MATERIAL_SHA" \
             --issue="$NUM" --repo="${{ github.repository }}" --mutants="${MUTANTS:-false}"
 
       - name: Переставить метку
@@ -1873,6 +1896,7 @@ jobs:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           NUM: ${{ github.event.issue.number }}
           FROM: ${{ steps.decide.outputs.from }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
           # Зелёное код-ревью без слияния ведёт не в S8-merged, а обратно к
           # автору: метка утверждала бы, что код в dev, а его там нет.
           # Точный кандидат (#492) сам называет исход: S8 после push, S6/S7 —
@@ -1884,7 +1908,7 @@ jobs:
         # статуса. Скрипт снимает и ставит её заново, чтобы событие `labeled`
         # запустило новый заход.
         run: |
-          node scripts/status-label.mjs --repo="${{ github.repository }}" \
+          node "$TOOLS/scripts/status-label.mjs" --repo="${{ github.repository }}" \
             --issue="$NUM" --from="$FROM" --to="$TO"
 
       - name: Сводка длительности стадий

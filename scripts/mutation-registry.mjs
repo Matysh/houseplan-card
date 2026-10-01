@@ -4100,7 +4100,7 @@ const MUTANT_DEFINITIONS = [
       + 'combined gh call that stripped S7-code-review on rereview',
     patches: [{
       file: '.github/workflows/_process.yml',
-      find: '          node scripts/status-label.mjs --repo="${{ github.repository }}" \\\n            --issue="$NUM" --from="$FROM" --to="$TO"\n',
+      find: '          node "$TOOLS/scripts/status-label.mjs" --repo="${{ github.repository }}" \\\n            --issue="$NUM" --from="$FROM" --to="$TO"\n',
       replace: '          gh issue edit "$NUM" --repo "${{ github.repository }}" \\\n            --add-label "$TO" --remove-label "$FROM"\n',
     }],
   },
