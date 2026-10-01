@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 229, issue: 110. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 230, issue: 110. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -9,6 +9,7 @@
 | #730 | [CODE-REVIEW-730-r1.md](CODE-REVIEW-730-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | текст сводки «повтор и ребейз не помогут» вводит в заблуждение именно в сценарии, котор… | `scripts/merge-candidate.mjs` |
 | #730 | [CODE-REVIEW-730-r2.md](CODE-REVIEW-730-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #730 | [CODE-REVIEW-730-r3.md](CODE-REVIEW-730-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #730 | [CODE-REVIEW-730-r4.md](CODE-REVIEW-730-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — | — |
 | #728 | [SPEC-REVIEW-728-r1.md](SPEC-REVIEW-728-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 0 | 1. АС3/К3: заявленное различение причин validate-red и conflict «на текстах из констант…; 2. АС8: заявленное доказательство правки process-metrics.yml (fetch-depth: 0, timeout-m… | `wait-verdict.mjs` `review-doc-guard.mjs` `scripts/wait-verdict.mjs` `.github/workflows/_process.yml` `_process.yml` `_process-metrics.yml` `test/process-metrics.test.mjs` |
 | #728 | [SPEC-REVIEW-728-r2.md](SPEC-REVIEW-728-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #728 | [CODE-REVIEW-728-r1.md](CODE-REVIEW-728-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
