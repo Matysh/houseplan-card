@@ -307,6 +307,69 @@ test('isometric space switch ceiling covers the 2.5D runner level and still catc
   }
 });
 
+// #747: обоснование потолков `switchCycleMs` и ряд — demo/performance/README.md,
+// «CI contracts». Ряд — медианы Full Performance после #735 (7 образцов, обе
+// стороны: база меряется раннером кандидата, окно тёплое) в порядке
+// [база, кандидат] прогонов 36821241343 (#735, база 76558bf2), 36838891001
+// (#740), 36838952536 (#742), 36839009721 (#739); у трёх последних база —
+// `dev` 7ff2b5ae. Смоковых медиан (3 образца) в ряду пока нет.
+const SWITCH_CYCLE_FAMILIES = {
+  flat: {
+    ceiling: 950,
+    smoke: 'budgets-interaction-smoke.json',
+    files: ['budgets.json', 'budgets-large-house-plan-snap.json', 'budgets-large-house-interaction.json',
+      'budgets-interaction-smoke.json'],
+    full: { maxRegressionRatio: 0.35, noiseAllowanceMs: 250 },
+    medians: {
+      'large-house-v1': [733.4, 683.3, 812.7, 749.9, 750.3, 800, 716.7, 717.9],
+      'large-house-plan-snap-v1': [716.7, 700.1, 762.6, 701, 733.3, 783.2, 749.9, 750.8],
+      'large-house-interaction-v1': [716.1, 754.1, 766.5, 666.9, 720.3, 750.1, 700.4, 703.4],
+    },
+  },
+  isometric: {
+    ceiling: 1550,
+    smoke: 'budgets-isometric-smoke.json',
+    files: ['budgets-large-house-isometric.json', 'budgets-isometric-stage3-dense.json', 'budgets-isometric-smoke.json'],
+    full: { maxRegressionRatio: 0.2, noiseAllowanceMs: 250 },
+    medians: {
+      'large-house-isometric-v1': [1069.5, 1051, 866.5, 766.5, 1134.9, 1100.4, 1135.7, 1089],
+      'isometric-stage3-dense-v1': [966.7, 983.2, 982.4, 916.5, 1249.7, 1333.9, 849.9, 803.6],
+    },
+  },
+};
+
+for (const [family, spec] of Object.entries(SWITCH_CYCLE_FAMILIES)) {
+  test(`#747 switchCycleMs (${family}): потолок над тёплым уровнем после #735 с запасом на шум раннера`, () => {
+    // Одно число на семью: смок = полный (#473 AC4), plan-snap и interaction
+    // сохраняют потолки large-house-v1, плотный двойник — исторические (#160).
+    for (const file of spec.files) {
+      const budget = readBudget(file).timings.switchCycleMs;
+      assert.equal(budget.hardMaxMs, spec.ceiling, `${file}: общий потолок switchCycleMs семьи ${family}`);
+      assert.equal(budget.stat, 'median', `${file}: метрика — медиана, как у соседей`);
+    }
+    const smoke = readBudget(spec.smoke);
+    const red = (ms) => evaluatePerformanceBudget({
+      candidate: absoluteSmokeReport(smoke, { switchCycleMs: ms }), budgets: smoke, absoluteOnly: true,
+    }).failures.some((check) => check.id === 'timing.switchCycleMs.median');
+    const series = Object.values(spec.medians).flat();
+    for (const median of series) assert.equal(red(median), false, `${median} из ряда краснеет на ${spec.ceiling}`);
+    const level = Math.max(...series);
+    // Правило #747: первое кратное 50 мс не ниже 1.15 × M и не выше 1.2 × M —
+    // полоса #692, в которую попадает и #675.
+    assert.equal(spec.ceiling, Math.ceil((level * 1.15) / 50) * 50, `потолок — первое кратное 50 над 1.15 × ${level}`);
+    assert.ok(spec.ceiling >= level * 1.15, 'запас над максимумом ряда не меньше 15 %');
+    assert.ok(spec.ceiling <= level * 1.2, 'и не больше 20 %: потолок остаётся гардом');
+    assert.equal(red(2 * level), true, 'удвоение уровня краснеет');
+    // Меньшее ловит относительное сравнение полного прогона: его коэффициент и
+    // допуск не рычаг.
+    for (const file of spec.files.filter((name) => name !== spec.smoke)) {
+      const budget = readBudget(file).timings.switchCycleMs;
+      assert.equal(budget.maxRegressionRatio, spec.full.maxRegressionRatio, `${file}: коэффициент не рычаг`);
+      assert.equal(budget.noiseAllowanceMs, spec.full.noiseAllowanceMs, `${file}: допуск не рычаг`);
+    }
+  });
+}
+
 test('boundary collision search restores the ordinary isometric allowances (#585)', () => {
   const isometric = readBudget('budgets-large-house-isometric.json');
   const dense = readBudget('budgets-isometric-stage3-dense.json');

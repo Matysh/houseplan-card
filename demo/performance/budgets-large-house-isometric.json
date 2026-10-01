@@ -10,7 +10,7 @@
     "resizePreviewMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 150, "hardMaxMs": 2200 },
     "panZoomMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 60, "hardMaxMs": 600 },
     "settingsDialogMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 100, "hardMaxMs": 1200 },
-    "switchCycleMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 250, "hardMaxMs": 8000 }
+    "switchCycleMs": { "stat": "median", "maxRegressionRatio": 0.2, "noiseAllowanceMs": 250, "hardMaxMs": 1550 }
   },
   "longTasks": {
     "maxSingleMs": 3000,

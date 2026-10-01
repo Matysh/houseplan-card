@@ -33,7 +33,7 @@
     },
     "switchCycleMs": {
       "stat": "median",
-      "hardMaxMs": 8000
+      "hardMaxMs": 1550
     }
   },
   "longTasks": {

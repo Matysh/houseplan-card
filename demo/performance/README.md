@@ -87,7 +87,8 @@ profile's Long Task sums before and after #735 are not comparable. Local
 diagnostics showed the median falling by roughly 1.6–2.8 times (for example
 `large-house-v1` about 2.0 s to 0.9 s); the exact-SHA Full Performance medians
 on both sides of the change are recorded in #735. Budgets and `hardMaxMs` did
-not change.
+not change in #735; #747 then brought the `switchCycleMs` ceilings down to the
+warmed level (see "CI contracts" below).
 
 Every report is tied to the source fingerprint embedded by Rollup. A stale
 bundle is a hard failure.
@@ -145,6 +146,32 @@ and stays below the only real isometric regression of the window, 2719.6 ms
 wide margin. Occasional hosted runners are about a quarter faster, which a
 ceiling does not mind. Smaller growth stays the job of the full workflow's
 base-relative comparison.
+
+The `switchCycleMs` ceilings are 950 ms for the flat family (`budgets.json`,
+plan-snap, interaction and the interaction smoke) and 1550 ms for the 2.5D
+family (both isometric profiles and the isometric smoke), one number per family
+(#747). Since #735 the metric is the warmed twelve-switch cycle, and the former
+7000 and 8000 ms sat 7.6–10.2 times above the #735 medians. The series is every
+Full Performance run after #735, both sides with 7 samples — the base is
+measured by the candidate runner, so it is warm too: 36821241343 (#735, base
+`76558bf2`), 36838891001 (#740), 36838952536 (#742) and 36839009721 (#739), the
+last three against `dev` `7ff2b5ae`. Flat medians span 666.9–812.7 ms (maximum:
+`large-house-v1`, the base of 36838891001). 2.5D medians span 766.5–1333.9 ms;
+the maximum is `isometric-stage3-dense-v1` in 36838952536, whose base on the
+same runner read 1249.7 ms against 849.9–982.4 ms in the other runs — runner
+noise of 27–47 %, which the series is meant to contain. Each ceiling is the
+first multiple of 50 ms at or above 1.15 × that maximum and no higher than 1.2 ×
+(the #692 band, which #675 also falls into): +16.9 % and +16.2 %. Doubling the
+level fails by a wide margin. The price of one number per family is wider
+headroom for the faster profiles (`large-house-isometric-v1`, maximum 1135.7 ms,
+gets +36 %); it keeps the plan-snap and interaction contracts of "every original
+ceiling" and the dense twin equal to the historical profile. Smaller growth
+stays the job of the full workflow's base-relative comparison (unchanged: 0.35
+flat, 0.2 2.5D, 250 ms noise allowance), and a floor built inside the window
+already fails the sample through the #735 structural guard, not through time. No
+3-sample `performance_smoke` median is in the series yet: those profiles join
+Validate only on a `src/**` diff, so the first beta candidate after #747 is
+their check.
 
 The 2.5D View toggle (`viewToggleMs`) is reported by the isometric profiles but
 budgeted by none of them (#720, owner decision in #694 on 2026-09-30). Switching

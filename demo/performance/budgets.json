@@ -49,7 +49,7 @@
       "stat": "median",
       "maxRegressionRatio": 0.35,
       "noiseAllowanceMs": 250,
-      "hardMaxMs": 7000
+      "hardMaxMs": 950
     }
   },
   "longTasks": {
