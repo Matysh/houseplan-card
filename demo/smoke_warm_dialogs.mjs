@@ -7,8 +7,11 @@
 //   2) открытый диалог пережил пересоздание вместе с черновиком;
 //   3) осознанно закрытый (Esc) — НЕ воскресает;
 //   4) подтверждение «Выровнять всё» — НЕ воскресает никогда;
-//   5) воскрешение одноразовое: третий экземпляр диалога уже не видит.
-// ПАДАЕТ на сборке до DEV-B703-03 (вид рецентрировался, диалоги терялись).
+//   5) воскрешение одноразовое: третий экземпляр диалога уже не видит;
+//   6) (#756, раздел H) то же — когда право записи приходит позже вставки:
+//      hass после вставки или через такт, не-админ с `can_write` сервера.
+// ПАДАЕТ на сборке до DEV-B703-03 (вид рецентрировался, диалоги терялись);
+// раздел H — на сборке до #756 (черновик терялся, флаг ожидания висел).
 import { launch, check, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 820, height: 760 });
@@ -23,11 +26,15 @@ const res = await page.evaluate(async () => {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'position:fixed;left:0;top:0;width:800px;z-index:99;background:#000';
   document.body.appendChild(wrap);
-  const mk = () => {
+  /** `order` (#756): `before` — hass до вставки; `after` — сразу после
+   * (порядок самого демо); `task` — через такт. */
+  const mk = (order = 'before', mkHass = window.__mkHass) => {
     const c = document.createElement('houseplan-card');
     c.setConfig({ type: 'custom:houseplan-card' }); // Lovelace: setConfig ДО вставки
-    c.hass = window.__mkHass();
+    if (order === 'before') c.hass = mkHass();
     wrap.appendChild(c);
+    if (order === 'after') c.hass = mkHass();
+    if (order === 'task') setTimeout(() => { c.hass = mkHass(); }, 0);
     return c;
   };
   const settle = async (c) => {
@@ -248,6 +255,80 @@ const res = await page.evaluate(async () => {
   c = mk(); await sleep(120); await c.updateComplete; await sleep(60);
   out.gWarmReturnKeepsOnlySpace = c._space === returnSpace
     && c._mode === 'view' && !c._markerDialog;
+
+  // ================= H. право записи приходит позже вставки (#756) =========
+  // Новый экземпляр не может сразу вернуть редактор: hass ещё нет, или
+  // не-админ ждёт `can_write` сервера. Режим ждёт в `_pendingNavMode`, и
+  // черновик обязан вернуться вместе с ним — бит-в-бит, одноразово. Источник
+  // каждый раз холодный, а вход в редактор, диалог и ввод — через UI.
+  const nonAdmin = (configDelay = 0) => () => {
+    const hass = window.__mkHass();
+    const callWS = hass.callWS;
+    return {
+      ...hass, user: { id: 'u', name: 'User', is_admin: false },
+      callWS: async (m) => {
+        if (configDelay && m.type === 'houseplan/config/get') await sleep(configDelay);
+        return callWS(m);
+      },
+    };
+  };
+  const root = (card) => card.shadowRoot || card.renderRoot;
+  const markerName = (card) => root(card).querySelector('hp-dialog[data-kind="marker"] #marker-name');
+  const devicesDraft = async (name) => {
+    c.remove(); await sleep(20);
+    customElements.get('houseplan-card')?._warmBootReset?.();
+    c = mk(); await settle(c);
+    root(c).querySelector('[data-hp="mode-tab"][data-mode="devices"]')?.click();
+    // источник сам выходит из мягкой фазы бута: до неё высота сцены ещё не своя
+    await waitFor(() => c._mode === 'devices' && !c._modeTransitionBusy && !c._bootSoft, 4000);
+    c._applyView(3.4, 430, 380); c.requestUpdate(); await c.updateComplete;
+    await waitForStableView(c);
+    const ref = { zoom: c._zoom, view: rect(c) };
+    root(c).querySelector('[data-hp="device"][data-id]')?.click();
+    await waitFor(() => !!markerName(c));
+    if (markerName(c)) await window.__hpTest.input(markerName(c), name);
+    await waitForStableView(c);
+    return ref;
+  };
+  for (const [key, order, mkHass] of [
+    ['hAfterInsert', 'after'], ['hNextTask', 'task'], ['hNonAdminCanWrite', 'before', nonAdmin()],
+  ]) {
+    const ref = await devicesDraft(`ЧЕРНОВИК-${key}`);
+    out[`${key}Source`] = c._markerDialog?.name === `ЧЕРНОВИК-${key}` && ref.view[0] > 1 && ref.view[1] > 1;
+    c.remove(); await sleep(20);
+    c = mk(order, mkHass);
+    out[`${key}ViewBitExact`] = await watchView(c, ref.zoom, ref.view, 1500);
+    await waitFor(() => !!c._markerDialog);
+    await c.updateComplete;
+    out[`${key}ModeRestored`] = c._mode === 'devices';
+    out[`${key}DraftSurvived`] = c._markerDialog?.name === `ЧЕРНОВИК-${key}`;
+    out[`${key}DirtyBaselineSurvived`] = dialogSave(c, 'marker')?.disabled === false;
+    out[`${key}ReviveSettled`] = c._warmRevivePending === false;
+    if (key !== 'hAfterInsert') continue;
+    // цепочка: черновик, набранный уже в этом экземпляре, — следующий ре-маунт
+    // вернёт его, а не черновик предшественника
+    if (markerName(c)) await window.__hpTest.input(markerName(c), 'ЧЕРНОВИК-ЦЕПОЧКА');
+    await sleep(80);
+    c.remove(); await sleep(20);
+    c = mk();
+    await waitFor(() => c._mode === 'devices' && !!c._markerDialog);
+    out.hChainCarriesOwnDraft = c._markerDialog?.name === 'ЧЕРНОВИК-ЦЕПОЧКА';
+  }
+  // явная навигация в окне ожидания: другое пространство — черновик съеден,
+  // не открыт, и флаг ожидания не висит. Сервер отвечает через 400 мс, чтобы
+  // окно ожидания было, а не гонка.
+  await devicesDraft('ЧЕРНОВИК-ДРУГОЕ-ПРОСТРАНСТВО');
+  const draftSpace = c._space;
+  c.remove(); await sleep(20);
+  c = mk('before', nonAdmin(400));
+  await c.updateComplete; await sleep(50);
+  const otherSpace = c._model.find((sp) => sp.id !== draftSpace)?.id;
+  out.hOtherSpaceFixture = !!otherSpace && c._pendingNavMode === 'devices';
+  root(c).querySelector(`[data-hp="space-tab"][data-id="${otherSpace}"]`)?.click();
+  await waitFor(() => c._mode === 'devices' && c._space === otherSpace && !c._warmRevivePending, 3000);
+  await sleep(300); await c.updateComplete;
+  out.hSpaceSwitchNotRevived = c._space === otherSpace && !c._markerDialog;
+  out.hSpaceSwitchReviveSettled = c._warmRevivePending === false && c._warmSlot?.dlg === null;
 
   c.remove(); wrap.remove();
   return out;

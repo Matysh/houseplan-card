@@ -13549,6 +13549,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'warm-pending-mode-leaves-revive-waiting',
+    guard: 'node demo/smoke_warm_dialogs.mjs',
+    because: '#756 AC1: an editor that waited for hass or the server can_write is entered by '
+      + '_resumePendingNavMode; if that branch only commits the mode, the revival keeps waiting '
+      + 'forever, the draft never opens and the stuck flag later hands the predecessor draft on',
+    patches: [{
+      file: 'src/warm-mode-adoption.ts',
+      find: '  commit();\n  if (!host._warmRevivePending) return;\n',
+      replace: '  commit();\n  return; // mutant: the pending branch leaves the revival waiting\n',
+    }],
+  },
+  {
     id: 'marker-discard-without-asking',
     guard: 'node demo/smoke_device_settings_form.mjs',
     because: '#600 К10 (Q1): закрытие диалога устройства с изменениями обязано спросить. '

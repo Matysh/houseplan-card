@@ -276,6 +276,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `view-current-space-aria-removed`
 - `wall-face-apply-skips-overlap-guard`
 - `wallthick-hit-narrowed`
+- `warm-pending-mode-leaves-revive-waiting`
 - `writer-history-skips-finished-chain-normalization`
 - `zigbee-topology-endpoint-cleanup-skipped`
 - `zigbee-topology-endpoint-elevation-removed`

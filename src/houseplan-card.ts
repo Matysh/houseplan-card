@@ -242,6 +242,7 @@ import {
   type WarmEntry, type WarmViewport,
 } from './card-runtime';
 import { restoreWarmDialogBaseline, warmDialogBaseline } from './editors/dialog-baseline';
+import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
 
 // Chromium records a FAILED module in the page module map permanently — a
 // retry of the same URL resolves from that map without touching the network.
@@ -731,44 +732,37 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
+  /** `adopt`: `true` — a warm remount that may edit at once; `'resume'` — a
+   * pending warm editor once write access is known (#756, src/warm-mode-adoption.ts). */
   public async _requestMode(
     mode: 'view' | 'plan' | 'devices' | 'decor',
     animate = true,
-    adopt = false,
+    adopt: boolean | 'resume' = false,
   ): Promise<void> {
     const request = ++this._editorModeRequest;
-    if (adopt) {
-      this._warmModeRequest = request;
-      if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
-      this._pendingRefitSize = null;
-    }
-    if (mode !== 'view' && !(await this._ensureEditorRuntime())) {
+    if (adopt === true) this._holdWarmRefit(request);
+    const ready = mode === 'view' || await this._ensureEditorRuntime();
+    const current = ready && request === this._editorModeRequest && this.isConnected;
+    if (adopt === 'resume') {
+      resumeWarmMode(this as unknown as WarmModeHost, mode, () => { if (current) this._setMode(mode, animate); });
+    } else if (!current) {
       if (this._warmModeRequest === request) this._warmModeRequest = 0;
-      return;
-    }
-    if (request !== this._editorModeRequest || !this.isConnected) {
-      if (this._warmModeRequest === request) this._warmModeRequest = 0;
-      return;
-    }
-    if (adopt) {
+    } else if (adopt) {
       this._adoptMode(mode);
-      if (this._warmRevivePending) {
-        clearTimeout(this._warmReviveTimer);
-        this._warmReviveTimer = undefined;
-        this._warmReviveDialog();
-      }
-      this.requestUpdate();
-      void this.updateComplete.then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (this._warmModeRequest !== request || request !== this._editorModeRequest) return;
-        const stage = this._stageEl;
-        this._lastValidStageSize = stage && stage.clientWidth > 0 && stage.clientHeight > 0
-          ? [stage.clientWidth, stage.clientHeight] : null;
-        this._pendingRefitSize = null;
-        this._warmModeRequest = 0;
-      })));
-      return;
-    }
-    this._setMode(mode, animate);
+      finishWarmModeAdoption(this as unknown as WarmModeHost, request);
+    } else this._setMode(mode, animate);
+  }
+  /** A warm request owns the stage refit until its restored mode has settled (#756). */
+  public _holdWarmRefit(request: number): void {
+    this._warmModeRequest = request; this._pendingRefitSize = null;
+    if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
+  }
+  /** Then the settled stage becomes the refit baseline; the camera stays. */
+  public _releaseWarmRefit(request: number): void {
+    if (this._warmModeRequest !== request || request !== this._editorModeRequest) return;
+    const stage = this._stageEl; this._pendingRefitSize = null; this._warmModeRequest = 0;
+    this._lastValidStageSize = stage && stage.clientWidth > 0 && stage.clientHeight > 0
+      ? [stage.clientWidth, stage.clientHeight] : null;
   }
   public hass?: any;
   public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
@@ -3471,21 +3465,21 @@ export class HouseplanCard extends LitElement {
    * dialog must not be stolen. One task later the previous instance has
    * detached (`freed`) and the snapshot is ours to consume — exactly once.
    */
-  private _warmReviveDialog(): void {
+  private _warmReviveDialog(settle = false): void { // settle (#756): the editor is not coming — no more waiting
     const e = this._warmSlot; // AUD-159B1-01: OUR slot, never a neighbour's
-    this._warmReviveTimer = undefined;
+    clearTimeout(this._warmReviveTimer); this._warmReviveTimer = undefined;
     if (!e || !e.dlg) {
       this._warmRevivePending = false;
       return;
     }
     const d = e.dlg;
     const freed = e.freed;
-    if (d.mode !== this._mode && d.mode !== 'view' && this._warmVp?.mode === d.mode
+    if (!settle && d.mode !== this._mode && d.mode !== 'view' && this._warmVp?.mode === d.mode
         && !this._editorRuntime) {
-      // The dialog belongs to the editor viewport that is currently waiting
-      // for its lazy runtime. Do not consume it against the temporary View;
-      // `_requestMode(..., adopt=true)` revives it immediately after the mode
-      // can be committed safely.
+      // The dialog belongs to the editor viewport that is waiting for its lazy
+      // runtime or for write access. Do not consume it against the temporary
+      // View; the warm tail (src/warm-mode-adoption.ts) revives it right after
+      // the mode is committed — at once or from `_resumePendingNavMode`.
       this._warmRevivePending = true;
       return;
     }
@@ -4165,12 +4159,13 @@ export class HouseplanCard extends LitElement {
   /** Resume only a same-route warm editor intent after permissions arrive.
    * Always enter through _setMode: it owns transition state, contextual tray
    * cleanup and navigation persistence. Direct assignment leaves those
-   * surfaces in mutually inconsistent modes. */
+   * surfaces in mutually inconsistent modes. The waiting draft follows (#756). */
   private _resumePendingNavMode(): boolean {
     if (!this._pendingNavMode || !this._canEdit || this._config?.kiosk) return false;
     const pendingMode = this._pendingNavMode;
     this._pendingNavMode = null;
-    this._setMode(pendingMode, false);
+    if (!this._editorRuntime) void this._requestMode(pendingMode, false, 'resume');
+    else resumeWarmMode(this as unknown as WarmModeHost, pendingMode, () => this._setMode(pendingMode, false));
     return true;
   }
 
@@ -7370,7 +7365,7 @@ export class HouseplanCard extends LitElement {
     // disconnect us before its first measured frame. Commit View atomically so
     // the warm tombstone never records an editor camera under `mode: view`.
     if (this._mode !== 'view') this._setMode('view', false);
-    this._pendingNavMode = null;
+    this._pendingNavMode = null; this._warmRevivePending = false; // the slot is sealed below
     this._geometryHistory.clear();
     this._activeWallChainId = null;
     this._wallChainSegmentCms = [];
@@ -7441,6 +7436,7 @@ export class HouseplanCard extends LitElement {
       void this._requestMode(mode, animate);
       return;
     }
+    if (this._pendingNavMode && this._warmRevivePending) this._warmReviveDialog(true); // #95: the draft goes with the editor
     this._editorRuntime.stairs.beforeModeChange(mode); this._editorRuntime._setMode(mode, animate);
     this._editorRuntime.stairs.afterModeChange(); this._stairsView.clearGesture();
   }

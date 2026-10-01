@@ -602,6 +602,16 @@ export const SMOKE_LINKS = [
       + 'отрезка решает, где кладка меняет глубину, а смок проверяет кладку, '
       + 'а не толщину, и ни одного имени из резолвера не называет',
   },
+  {
+    // #756: хвост тёплой адопции редактора. Смоки видят его только как
+    // воскрешённый черновик и покадрово неизменный `_view` после ре-маунта.
+    symbols: ['finishWarmModeAdoption', 'resumeWarmMode', '_holdWarmRefit', '_releaseWarmRefit'],
+    smokes: ['smoke_warm_dialogs.mjs', 'smoke_warm_remount.mjs', 'smoke_nav_persist.mjs'],
+    because: '#756: the warm editor tail — draft revival once the mode is committed and the '
+      + 'refit hold on the adopted camera — is observed only as the revived draft, the '
+      + 'frame-by-frame viewport after a remount (immediate or after can_write) and the '
+      + 'pending mode entering through _setMode; no smoke names these helpers',
+  },
 ];
 
 /** Смоки, связанные с изменёнными символами через реестр. */

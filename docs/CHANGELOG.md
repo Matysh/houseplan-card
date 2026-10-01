@@ -26,6 +26,9 @@
 - The space card no longer flashes its rooms when the plan is edited elsewhere
   or its space is changed
   ([#745](https://github.com/Matysh/houseplan-card/issues/745)).
+- An editor dialog with unsaved input now survives a card re-creation when
+  write access is confirmed late
+  ([#756](https://github.com/Matysh/houseplan-card/issues/756)).
 
 ## v1.79.0-beta.1 — 2026-09-30
 
