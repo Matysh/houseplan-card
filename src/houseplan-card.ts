@@ -6004,7 +6004,7 @@ export class HouseplanCard extends LitElement {
       disp, runtime.resolveIsoDecorationLayers(disp), scene, iconPct, effectiveDeviceBaseSize(iconPct),
       disp.showLqi ?? this._config?.show_signal ?? true);
     const envelope = overlays && runtime.resolveIsoOverlayFitEnvelope({
-      baseBounds: scene.frame, entries: overlays.entries, stageSize: null, targetView: (bounds) =>
+      baseBounds: scene.frame, entries: overlays.entries, targetView: (bounds) =>
         fitView([bounds.x, bounds.y, bounds.w, bounds.h], aspect) });
     return envelope ? { ...scene, frame: envelope.bounds, overlayFitEntries: overlays.entries } : scene;
   }
@@ -6192,8 +6192,7 @@ export class HouseplanCard extends LitElement {
     const runtime = this._isoSceneRuntime, entries = this._renderIsoScene?.overlayFitEntries;
     if (target && this._effectiveProjection() === 'iso' && runtime && entries?.length) {
       const envelope = runtime.resolveIsoOverlayFitEnvelope({
-        baseBounds: bounds, entries, ownerId: room.id, stageSize: {
-          width: stage.clientWidth, height: stage.clientHeight },
+        baseBounds: bounds, entries, ownerId: room.id,
         targetView: (fitBounds) => targetOf(fitBounds)?.viewBox ?? null });
       if (envelope) { bounds = envelope.bounds; target = targetOf(bounds); }
     }

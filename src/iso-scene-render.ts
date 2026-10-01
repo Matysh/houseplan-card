@@ -648,7 +648,6 @@ export function isoOverlaySceneBounds(
 export interface IsoOverlayFitEnvelopeInput {
   baseBounds: Rect;
   entries: readonly IsoOverlayRenderEntry[];
-  stageSize?: { width: number; height: number } | null;
   targetView(bounds: Rect): Rect | null;
   ownerId?: string;
 }
