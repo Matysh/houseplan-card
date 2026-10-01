@@ -922,6 +922,19 @@ public finishWarmModeAdoption(request: number): void {
 public resumeWarmMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate: boolean): void {
   resumeWarmMode(this.host as unknown as WarmModeHost, mode, () => this.host._setMode(mode, animate, true));
 }
+/** An open room editor implies an installed runtime; View never constructs this payload. */
+public warmRoomDraft() {
+  const host = this.host;
+  return {
+    editId: host._roomEditId, fill: host._roomFill, customFill: host._roomCustomFill,
+    tempMin: host._roomTempMin, tempMax: host._roomTempMax, tempSrc: host._roomTempSrc,
+    humSrc: host._roomHumSrc, srcOpen: host._roomSrcOpen, srcFilter: host._roomSrcFilter,
+    nameScale: host._roomNameScale, labelScale: host._roomLabelScale,
+    areaSel: host._areaSel, nameSel: host._nameSel,
+    pendingSplit: host._pendingSplit, wallFaceBatch: host._wallFaceBatch,
+    path: host._path,
+  };
+}
 
 public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
     if (mode !== this.host._mode) this.host._cancelDangerConfirm();

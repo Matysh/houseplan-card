@@ -3432,17 +3432,7 @@ export class HouseplanCard extends LitElement {
       const data = this[`_${kind}Dialog`];
       if (data) return at(kind, data);
     }
-    if (this._roomDialog) {
-      return at('room', {
-        editId: this._roomEditId, fill: this._roomFill, customFill: this._roomCustomFill,
-        tempMin: this._roomTempMin, tempMax: this._roomTempMax, tempSrc: this._roomTempSrc,
-        humSrc: this._roomHumSrc, srcOpen: this._roomSrcOpen, srcFilter: this._roomSrcFilter,
-        nameScale: this._roomNameScale, labelScale: this._roomLabelScale,
-        areaSel: this._areaSel, nameSel: this._nameSel,
-        pendingSplit: this._pendingSplit, wallFaceBatch: this._wallFaceBatch,
-        path: this._path,
-      });
-    }
+    if (this._roomDialog) return at('room', this._editorRuntimeOrThrow().warmRoomDraft());
     if (this._spaceDialog) return this._spaceDialog.busy ? null : at('space', this._spaceDialog);
     return null;
   }

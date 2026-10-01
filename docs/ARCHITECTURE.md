@@ -489,6 +489,10 @@ still recognised in stored config but no longer served
   render, including the card-local header offset for pending chrome (#762).
   Adoption completion lives in the lazy editor graph: it only executes after
   that runtime is ready; View retains just cancellation and camera comparison.
+  The room draft payload is also built by the installed editor runtime.
+  This moves existing room-state reads across the already-defined editor port;
+  it adds no room state. #762 records the resulting host-reference/ported-private
+  counts in the monolith baseline, without widening its tolerance bands.
 
 ## Second card: houseplan-space-card (read-only)
 
