@@ -4,7 +4,7 @@
 //
 //   node scripts/process-gate.mjs --range <base>..<head>
 //   node scripts/process-gate.mjs --github-range        # диапазон из события CI
-//   node scripts/process-gate.mjs --issues              # + проверка 8 через gh
+//   node scripts/process-gate.mjs --issues              # + проверки 8 и 10 через gh
 //   node scripts/process-gate.mjs --json                # машинный вывод
 //   node scripts/process-gate.mjs --report              # печатать, но не краснеть
 //
@@ -494,11 +494,41 @@ export function checkIssueStatuses(
   return out;
 }
 
-// 10. DoR по моменту коммита (#311). Правило 8 читает ТЕКУЩУЮ метку issue:
-// нарушение «код написан до Готово к разработке» становится невидимым, как
-// только статус штатно продвигается. Здесь метка сверяется с моментом
-// НАПИСАНИЯ кода: authorDate коммита класса A не может предшествовать первому
-// достижению issue разрешённого статуса (labeled-событие из timeline).
+// Метки статуса до готовности (#738): каждая закрывает эпоху «можно трогать
+// код», которую открывает метка из множества проверки 8. Прочие метки
+// (`blocked`, `track:*`, `review-4`, при `--no-merged` и `S8-merged`) эпоху не
+// меняют. Неизвестные метки вида `S\d-…` — тоже.
+export const PRE_READY_STATUS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review'];
+
+// #738: шкала статуса задачи — только статусные события, по времени. Сортировка
+// устойчивая: при равном времени остаётся порядок timeline.
+function statusEvents(events, allowed) {
+  return events
+    .filter((e) => e && e.at && (allowed.includes(e.label) || PRE_READY_STATUS.includes(e.label)))
+    .map((e) => ({ label: e.label, at: Date.parse(e.at), ready: allowed.includes(e.label) }))
+    .filter((e) => Number.isFinite(e.at))
+    .sort((a, b) => a.at - b.at);
+}
+
+// Индекс статуса на момент `w` — последнее событие с `at ≤ w`; -1, если
+// статусных событий до `w` нет.
+function statusIndexAt(events, w) {
+  let idx = -1;
+  for (let i = 0; i < events.length && events[i].at <= w; i += 1) idx = i;
+  return idx;
+}
+
+const iso = (ms) => new Date(ms).toISOString();
+
+// 10. DoR по моменту коммита (#311, #738). Правило 8 читает ТЕКУЩУЮ метку
+// issue: нарушение «код написан вне статуса разработки» становится невидимым,
+// как только статус штатно продвигается. Здесь статус задачи сверяется с
+// моментом НАПИСАНИЯ кода: на authorDate коммита класса A задача должна быть в
+// эпохе из `allowed`. Эпохи строятся по labeled-событиям timeline: `allowed`
+// открывает, PRE_READY_STATUS закрывает. Так ловится и код до первого
+// «Готово к разработке», и код, написанный после возврата `S5+ → S3/S4`
+// (`reclassify` #726, ручной возврат) и запушенный после нового `S5`; коммиты,
+// написанные до возврата, остаются законными.
 // authorDate переживает ребейзы конвейера — окно нарушения не закрывается.
 // Проверка вторичная к правилу 8, поэтому недоступный timeline — warn, а не
 // fail: основная fail-closed проверка статуса остаётся за правилом 8.
@@ -526,12 +556,9 @@ export function checkCommitEraStatuses(
       });
       continue;
     }
-    const readyAt = r.events
-      .filter((e) => allowed.includes(e.label) && e.at)
-      .map((e) => Date.parse(e.at))
-      .filter(Number.isFinite)
-      .sort((a, b) => a - b)[0];
-    if (readyAt === undefined) {
+    const events = statusEvents(r.events, allowed);
+    const firstReady = events.find((e) => e.ready);
+    if (firstReady === undefined) {
       // Правило 8 уже требует текущий разрешённый статус; отсутствие событий
       // при живом статусе — неполный timeline, честный warn.
       out.push({
@@ -542,14 +569,30 @@ export function checkCommitEraStatuses(
     }
     for (const c of list) {
       const wrote = Date.parse(c.authorDate);
-      if (Number.isFinite(wrote) && wrote < readyAt) {
+      if (!Number.isFinite(wrote)) continue;
+      const at = statusIndexAt(events, wrote);
+      if (at >= 0 && events[at].ready) continue;
+      let lastReady = -1;
+      for (let i = 0; i < at; i += 1) if (events[i].ready) lastReady = i;
+      if (lastReady < 0) {
         out.push({
           level: 'fail', rule: 10, sha: c.short,
           msg: `issue #${nn}: коммит класса A написан ${c.authorDate}, `
             + `до первого достижения задачей статуса из ${allowed.join('/')} `
-            + `(${new Date(readyAt).toISOString()}) — код раньше «Готово к разработке» (§12)`,
+            + `(${iso(firstReady.at)}) — код раньше «Готово к разработке» (§12)`,
         });
+        continue;
       }
+      // Возврат — первое закрывающее событие после последней готовности;
+      // повторная готовность — первое событие `allowed` после написания.
+      const returned = events[lastReady + 1];
+      const nextReady = events.slice(at + 1).find((e) => e.ready);
+      out.push({
+        level: 'fail', rule: 10, sha: c.short,
+        msg: `issue #${nn}: коммит класса A написан ${c.authorDate} в ${events[at].label} — `
+          + `после возврата ${iso(returned.at)} и до повторного «Готово к разработке» `
+          + `(${nextReady ? iso(nextReady.at) : 'ещё не достигнут'}) — код вне статуса разработки (§12)`,
+      });
     }
   }
   return out;

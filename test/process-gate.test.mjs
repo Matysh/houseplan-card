@@ -902,3 +902,159 @@ test('rule 10 pins DoR to the commit author date, not to the current label (#311
   });
   assert.deepEqual(checkCommitEraStatuses([doc], timeline(ready)), []);
 });
+
+// #738: правило 10 судит статус задачи на authorDate коммита по эпохам статуса.
+// Возврат `S5+ → S3/S4` (reclassify #726, ручной) закрывает эпоху разработки:
+// код, написанный в S3/S4 и запушенный после нового S5, — отказ.
+const eraCode = (iso, { sha = 'a'.repeat(40), files = ['src/houseplan-card.ts'] } = {}) => makeCommit({
+  sha, subject: 'feat: work (#738)', body: 'Issue: #738\nUser-Visible: no', files, authorDate: iso,
+});
+const eraTimeline = (events) => () => ({ ok: true, events });
+const H = 3600 * 1000;
+const at = (base, hours) => new Date(Date.parse(base) + hours * H).toISOString();
+const T1 = '2026-09-01T10:00:00.000Z'; // S5-ready
+const T2 = '2026-09-02T10:00:00.000Z'; // S6-in-progress
+const T3 = '2026-09-03T10:00:00.000Z'; // S7-code-review
+const T4 = '2026-09-04T10:00:00.000Z'; // S3-spec — возврат
+const T5 = '2026-09-05T10:00:00.000Z'; // S4-spec-review
+const T6 = '2026-09-06T10:00:00.000Z'; // S5-ready — повторная готовность
+const RETURN_ROUTE = [
+  { label: 'S5-ready', at: T1 },
+  { label: 'S6-in-progress', at: T2 },
+  { label: 'S7-code-review', at: T3 },
+  { label: 'S3-spec', at: T4 },
+  { label: 'S4-spec-review', at: T5 },
+  { label: 'S5-ready', at: T6 },
+];
+const era = (iso, events = RETURN_ROUTE, options) =>
+  checkCommitEraStatuses([eraCode(iso)], eraTimeline(events), options);
+
+test('#738 AC1: rule 10 judges the status at authorDate — code written after a return is out of the dev era', () => {
+  // Written in S6, before the return — still legitimate after it.
+  assert.deepEqual(era(at(T2, 1)), []);
+
+  // Written in S3 after the return, pushed after the new S5 — fail naming S3-spec and t4.
+  const inS3 = era(at(T4, 1));
+  assert.equal(inS3.length, 1);
+  assert.equal(inS3[0].level, 'fail');
+  assert.equal(inS3[0].rule, 10);
+  assert.match(inS3[0].msg, /в S3-spec/);
+  assert.ok(inS3[0].msg.includes(`после возврата ${T4}`), inS3[0].msg);
+  assert.ok(inS3[0].msg.includes(`(${T6})`), inS3[0].msg);
+
+  // S4 is the same pre-ready era as S3: the return time stays t4.
+  const inS4 = era(at(T5, 1));
+  assert.equal(inS4.length, 1);
+  assert.equal(inS4[0].level, 'fail');
+  assert.equal(inS4[0].rule, 10);
+  assert.match(inS4[0].msg, /в S4-spec-review/);
+  assert.ok(inS4[0].msg.includes(`после возврата ${T4}`), inS4[0].msg);
+  assert.ok(inS4[0].msg.includes(`(${T6})`), inS4[0].msg);
+
+  // Written after the repeated readiness — clean.
+  assert.deepEqual(era(at(T6, 1)), []);
+
+  // Written before the first readiness — the old text.
+  const early = era(at(T1, -1));
+  assert.equal(early.length, 1);
+  assert.equal(early[0].level, 'fail');
+  assert.equal(early[0].rule, 10);
+  assert.match(early[0].msg, /до первого достижения задачей статуса из/);
+  assert.ok(early[0].msg.includes(`(${T1})`), early[0].msg);
+  assert.doesNotMatch(early[0].msg, /после возврата/);
+});
+
+test('#738 AC1: two returns are judged each by its own readiness; a return without a new S5 is "not reached yet"', () => {
+  const T7 = '2026-09-07T10:00:00.000Z'; // S6
+  const T8 = '2026-09-08T10:00:00.000Z'; // S3-spec — второй возврат
+  const T9 = '2026-09-09T10:00:00.000Z'; // S4-spec-review
+  const T10 = '2026-09-10T10:00:00.000Z'; // S6-in-progress — готовность без S5
+  const twice = [
+    ...RETURN_ROUTE,
+    { label: 'S6-in-progress', at: T7 },
+    { label: 'S3-spec', at: T8 },
+    { label: 'S4-spec-review', at: T9 },
+    { label: 'S6-in-progress', at: T10 },
+  ];
+  const first = era(at(T5, 1), twice);
+  assert.equal(first.length, 1);
+  assert.ok(first[0].msg.includes(`после возврата ${T4}`), first[0].msg);
+  assert.ok(first[0].msg.includes(`(${T6})`), first[0].msg);
+  assert.deepEqual(era(at(T7, 1), twice), []);
+  const second = era(at(T9, 1), twice);
+  assert.equal(second.length, 1);
+  assert.match(second[0].msg, /в S4-spec-review/);
+  assert.ok(second[0].msg.includes(`после возврата ${T8}`), second[0].msg);
+  assert.ok(second[0].msg.includes(`(${T10})`), second[0].msg);
+  assert.deepEqual(era(at(T10, 1), twice), []);
+
+  // Returned and never ready again.
+  const stuck = era(at(T4, 1), RETURN_ROUTE.slice(0, 4));
+  assert.equal(stuck.length, 1);
+  assert.equal(stuck[0].level, 'fail');
+  assert.ok(stuck[0].msg.includes(`после возврата ${T4}`), stuck[0].msg);
+  assert.match(stuck[0].msg, /ещё не достигнут/);
+});
+
+test('#738 AC2: rule 10 keeps the old verdicts on ready-only timelines and ignores non-status labels', () => {
+  // A timeline of `allowed` labels only gives exactly the old findings.
+  const readyOnly = RETURN_ROUTE.filter((e) => ALLOWED_STATUS.includes(e.label));
+  for (const iso of [at(T1, -1), at(T1, 1), at(T4, 1), at(T6, 1)]) {
+    const got = era(iso, readyOnly);
+    if (Date.parse(iso) < Date.parse(T1)) {
+      assert.deepEqual(got, [{
+        level: 'fail', rule: 10, sha: 'aaaaaaaa',
+        msg: `issue #738: коммит класса A написан ${iso}, до первого достижения задачей статуса из `
+          + `${ALLOWED_STATUS.join('/')} (${T1}) — код раньше «Готово к разработке» (§12)`,
+      }], iso);
+    } else {
+      assert.deepEqual(got, [], iso);
+    }
+  }
+
+  // Class B and C commits in the S3 era are not rule 10's business.
+  for (const files of [['scripts/process-gate.mjs'], ['docs/SCOPE.md']]) {
+    assert.deepEqual(checkCommitEraStatuses(
+      [eraCode(at(T4, 1), { files })], eraTimeline(RETURN_ROUTE)), [], files[0]);
+  }
+
+  // `blocked` and `track:ask` between S6 and S7 change nothing.
+  const noisy = [
+    ...RETURN_ROUTE.slice(0, 2),
+    { label: 'blocked', at: at(T2, 2) },
+    { label: 'track:ask', at: at(T2, 3) },
+    ...RETURN_ROUTE.slice(2),
+  ];
+  assert.deepEqual(era(at(T2, 4), noisy), []);
+  assert.equal(era(at(T4, 1), noisy).length, 1);
+
+  // With the strict set S8-merged neither opens nor closes the era.
+  const s8opens = [
+    { label: 'S3-spec', at: T1 },
+    { label: 'S8-merged', at: T2 },
+    { label: 'S5-ready', at: T3 },
+  ];
+  const strictEarly = era(at(T2, 1), s8opens, { allowed: STRICT_STATUS });
+  assert.equal(strictEarly.length, 1);
+  assert.match(strictEarly[0].msg, /до первого достижения задачей статуса из/);
+  assert.ok(strictEarly[0].msg.includes(`(${T3})`), strictEarly[0].msg);
+  assert.deepEqual(era(at(T2, 1), s8opens), [], 'ALLOWED_STATUS: S8-merged opens');
+  const s8closes = [
+    { label: 'S5-ready', at: T1 },
+    { label: 'S8-merged', at: T2 },
+  ];
+  assert.deepEqual(era(at(T2, 1), s8closes, { allowed: STRICT_STATUS }), []);
+
+  // Unsorted events give the same result.
+  const shuffled = [RETURN_ROUTE[3], RETURN_ROUTE[5], RETURN_ROUTE[0], RETURN_ROUTE[4], RETURN_ROUTE[2], RETURN_ROUTE[1]];
+  for (const iso of [at(T1, -1), at(T2, 1), at(T4, 1), at(T5, 1), at(T6, 1)]) {
+    assert.deepEqual(era(iso, shuffled), era(iso), iso);
+  }
+
+  // authorDate equal to the S3-spec event is already in S3 (`at ≤ w`).
+  const onEdge = era(T4);
+  assert.equal(onEdge.length, 1);
+  assert.match(onEdge[0].msg, /в S3-spec/);
+  // …and equal to the repeated S5 is already ready.
+  assert.deepEqual(era(T6), []);
+});
