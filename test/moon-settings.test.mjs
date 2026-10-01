@@ -1,12 +1,16 @@
 // #661 AC10: the moon switch in General settings — «Sun and Moon» section,
 // reset to on, save writes `true` or removes the key; its strings exist in all
-// four dictionaries. #718: the status line under it (AC14, K7). The dialog is
-// a lazy Lit module (its layout is read as a source contract); reading and
-// writing the key and the status of an opening are executed.
+// four dictionaries. #718: the status line under it (AC14, K7); #731: a warm
+// revive of the dialog is an opening of its own. The dialog is a lazy Lit
+// module (its layout is read as a source contract); reading and writing the
+// key and the status of an opening are executed.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { generalDraftKey, moonDraftOf, writeMoonSetting } from '../test-build/editors/general-form-state.js';
+import {
+  generalDirty, generalDraftKey, moonDraftOf, rememberGeneralBaseline, writeMoonSetting,
+} from '../test-build/editors/general-form-state.js';
+import { restoreWarmDialogBaseline, warmDialogBaseline } from '../test-build/editors/dialog-baseline.js';
 import { moonStatusOf, openMoonStatus } from '../test-build/editors/moon-status.js';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -154,4 +158,36 @@ test('#718 K7: one snapshot per opening, outside the draft; a closed opening’s
   host.hass = hassWith(null);
   openMoonStatus(host, new Date(2026, 9, 21, 12, 0));
   assert.deepEqual(moonStatusOf(host), { reason: 'day_clock' });
+});
+
+test('#731 AC2: a warm revive is a new opening — its own snapshot, nothing carried over, the draft untouched', async () => {
+  const at = new Date('2026-10-21T18:00:00Z');
+  // The instance Lovelace replaced: opened at night, judged, its draft clean.
+  const dead = dialogHost(hassWith(NIGHT));
+  rememberGeneralBaseline(dead, dead._settingsDialog);
+  openMoonStatus(dead, at);
+  await settle();
+  assert.deepEqual(moonStatusOf(dead), { reason: 'shown', alt: 24, pct: 79 });
+  // Its successor, as `_warmReviveDialog` hands the dialog over — the draft
+  // copied, the baseline restored — after the sun has risen.
+  const live = dialogHost(hassWith({ azimuth: 180, elevation: 40, rising: false }));
+  live._settingsDialog = { ...dead._settingsDialog, busy: false };
+  restoreWarmDialogBaseline(live, 'settings', warmDialogBaseline(dead, 'settings'));
+  assert.equal(moonStatusOf(live), undefined, 'the dead opening’s result is not carried over');
+  const key = generalDraftKey(live._settingsDialog);
+  assert.equal(generalDirty(live, live._settingsDialog), false);
+  // The revive's own opening (the runtime's `_openMoonStatus`): the snapshot of now.
+  openMoonStatus(live, at);
+  assert.deepEqual(moonStatusOf(live), { reason: 'day_sun', sun: 40 });
+  assert.equal(live.updates, 1);
+  assert.equal(generalDraftKey(live._settingsDialog), key, 'the line stays outside the draft');
+  assert.equal(generalDirty(live, live._settingsDialog), false, 'the line does not make it dirty');
+  // A dirty draft travels the same way: the line does not clean it either.
+  live._settingsDialog = { ...live._settingsDialog, moon: false };
+  openMoonStatus(live, at);
+  assert.equal(generalDirty(live, live._settingsDialog), true);
+  // The same element re-attached: its earlier opening is replaced, not reused.
+  live.hass = hassWith(NIGHT);
+  openMoonStatus(live, at);
+  assert.deepEqual(moonStatusOf(live), { reason: 'shown', alt: 24, pct: 79 });
 });

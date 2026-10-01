@@ -8468,6 +8468,9 @@ public _openSettingsDialog = (): void => {
     openMoonStatus(this.host); // #718 K7: the status line, outside the draft
   };
 
+/** #731: the card revived General settings — a new opening, so a new snapshot. */
+public _openMoonStatus(): void { openMoonStatus(this.host); }
+
 public _openSupportDialog = (): void => {
     if (!this.host._norm || !this.host._canEdit) return;
     clearTimeout(this._supportExpiryTimer);

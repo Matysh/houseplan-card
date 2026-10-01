@@ -12,6 +12,9 @@
   that switch a new line tells whether the moon is shown right now and, if not,
   why — daytime, the moon below 3°, new moon or no home location in Home
   Assistant ([#718](https://github.com/Matysh/houseplan-card/issues/718)).
+- General settings restored after the card reloads — for example on returning
+  to the tab — now show the moon's "Now: …" line too, worked out afresh at that
+  moment ([#731](https://github.com/Matysh/houseplan-card/issues/731)).
 
 ## v1.79.0-beta.1 — 2026-09-30
 

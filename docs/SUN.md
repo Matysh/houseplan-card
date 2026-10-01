@@ -494,7 +494,10 @@ do not change it. `moonStatus` in `src/moon.ts` decides «shown» with the same
 month), rounds to whole numbers and keeps a hidden reason's number below its
 threshold (2.6° reads «2°»). The status lives beside the draft, never in it:
 the line arriving leaves «Save» disabled. While the chunk loads, or when it
-failed, there is no line; a closed opening's result is dropped. The line
+failed, there is no line; a closed opening's result is dropped. A warm revive
+of the dialog (the card replaced, `docs/WARM-REMOUNT.md`) is an opening too:
+its own snapshot, asked through the lazy editor runtime once it is there;
+nothing is carried over from the replaced card (#731). The line
 belongs to the browser the dialog is open in — a wall tablet with another
 clock or time zone may differ.
 

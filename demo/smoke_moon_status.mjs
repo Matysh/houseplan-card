@@ -80,6 +80,29 @@ const closeDialog = (page) => page.evaluate(async () => {
   const result = await window.__hpTest.close(dialog);
   return { closed: result.closed, confirm: !!result.confirm };
 });
+/**
+ * #731: Lovelace replaces the card — remove, then a new element with the same
+ * config in the same slot (as in smoke_warm_dialogs); `window.__card` follows
+ * the successor. True once the successor has revived the dialog of `kind`.
+ */
+const remount = (page, kind) => page.evaluate(async (kind) => {
+  const old = window.__card;
+  const host = old.parentNode;
+  const hass = old.hass;
+  old.remove();
+  await new Promise((done) => setTimeout(done, 20));
+  const card = document.createElement('houseplan-card');
+  card.setConfig({ type: 'custom:houseplan-card', title: 'House Plan', icon_size: 3.4 });
+  card.hass = hass;
+  host.appendChild(card);
+  window.__card = card;
+  const revived = () => !!card.renderRoot?.querySelector(`hp-dialog[data-kind="${kind}"]`);
+  // The page clock is fixed: count steps, not milliseconds.
+  for (let step = 0; step < 250 && !revived(); step++) await new Promise((done) => setTimeout(done, 20));
+  await card.updateComplete;
+  return revived();
+}, kind);
+const draftOf = (page) => page.evaluate(() => JSON.stringify(window.__card._settingsDialog));
 
 // ─── AC11 and AC12 (chunk already loaded by the View at night) ───
 {
@@ -157,6 +180,74 @@ const closeDialog = (page) => page.evaluate(async () => {
   report.ac12.reopened = { closed, again };
   checks.ac12_reopenShowsOnlyTheSecondSnapshot = closed.closed && arrived && again.count === 1
     && again.reason === 'day_sun';
+  await closeDialog(page);
+  await browser.close();
+}
+
+// ─── #731 AC1/AC2: a warm revive is an opening of its own ───
+{
+  const { page, browser } = await open({ moon: true });
+  await openDialog(page);
+  const opened = await line(page);
+  const draft = await draftOf(page);
+  // The sun rises while the dialog is open: this opening keeps its snapshot…
+  await pushHass(page, { sun: { azimuth: 200, elevation: 25.4, rising: false } });
+  const stale = await line(page);
+  // …and the card is replaced. The revived dialog is a new opening: its own
+  // snapshot now, nothing carried over from the dead instance.
+  const revived = await remount(page, 'settings');
+  const arrived = await waitLine(page, 4000);
+  const after = await line(page);
+  const draftAfter = await draftOf(page);
+  await closeDialog(page);
+  // A regular opening at the same moment (the page clock is fixed).
+  await openDialog(page);
+  const regular = await line(page);
+  report.r731 = { opened, stale, revived, after, regular };
+  checks.r731_ac1_revivedDialogHasTheLine = revived && arrived && after.count === 1;
+  checks.r731_ac1_sameAsARegularOpening = after.text === regular.text && after.reason === regular.reason
+    && after.text === DAY_SUN;
+  checks.r731_ac2_reviveTakesItsOwnSnapshot = opened.reason === 'shown' && stale.reason === 'shown'
+    && after.reason === 'day_sun';
+  checks.r731_ac2_lineLeavesTheRevivedDraftClean = after.saveDisabled && draftAfter === draft;
+  await closeDialog(page);
+  // In an editor the successor first waits for its own lazy runtime, then
+  // adopts the mode and only then revives the dialog.
+  await page.evaluate(() => window.__hpTest.setMode('plan'));
+  await openDialog(page);
+  const revivedInPlan = await remount(page, 'settings');
+  const arrivedInPlan = await waitLine(page, 4000);
+  const inPlan = await line(page);
+  const planMode = await page.evaluate(() => window.__card._mode);
+  report.r731.plan = { revivedInPlan, planMode, inPlan };
+  checks.r731_ac1_revivedInAnEditorHasTheLine = revivedInPlan && arrivedInPlan && planMode === 'plan'
+    && inPlan.count === 1 && inPlan.text === regular.text && inPlan.saveDisabled;
+  await closeDialog(page);
+  await browser.close();
+}
+
+// ─── #731 AC3: other revives never ask for the chunk; a revive while it loads ───
+{
+  const delay = async (route) => { await new Promise((done) => setTimeout(done, 1000)); await route.fallback(); };
+  const { page, browser, moonRequests } = await open({ route: delay });
+  const space = await page.evaluate(() => window.__card._space);
+  await page.evaluate((id) => window.__hpTest.openSpaceDialog('edit', id), space);
+  const revivedSpace = await remount(page, 'space');
+  await page.waitForTimeout(600);
+  const afterSpace = moonRequests.length;
+  await page.evaluate(async () => {
+    const dialog = window.__card.renderRoot.querySelector('hp-dialog[data-kind="space"]');
+    if (dialog) await window.__hpTest.close(dialog);
+  });
+  // The opening asks for the chunk; the card is replaced before it lands.
+  await openDialog(page);
+  const revived = await remount(page, 'settings');
+  const arrived = await waitLine(page, 3000);
+  const late = await line(page);
+  report.r731.ac3 = { revivedSpace, afterSpace, revived, late, requests: moonRequests.length };
+  checks.r731_ac3_otherRevivesLeaveTheChunkAlone = revivedSpace && afterSpace === 0;
+  checks.r731_ac3_reviveWhileTheChunkLoads = revived && arrived && late.count === 1
+    && late.reason === 'shown' && late.text === SHOWN && late.saveDisabled && moonRequests.length === 1;
   await closeDialog(page);
   await browser.close();
 }

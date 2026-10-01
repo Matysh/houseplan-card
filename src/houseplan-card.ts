@@ -3497,7 +3497,7 @@ export class HouseplanCard extends LitElement {
     switch (d.kind) {
       case 'space': this._spaceDialog = { ...d.data, busy: false, savedBusy: false }; break;
       case 'marker': this._markerDialog = { ...d.data, busy: false }; break;
-      case 'settings': this._settingsDialog = { ...d.data, busy: false }; break;
+      case 'settings': this._settingsDialog = { ...d.data, busy: false }; this._reviveMoonStatus(); break;
       case 'rules': this._rulesDialog = { ...d.data, busy: false }; break;
       case 'opening': this._openingDialog = { ...d.data }; break;
       case 'backdrop': this._backdropDialog = { ...d.data }; break;
@@ -10123,6 +10123,15 @@ export class HouseplanCard extends LitElement {
       return;
     }
     return this._editorRuntime._openSettingsDialog();
+  }
+
+  /** #731: a warm revive is an opening too (#718 K7) — its own status, asked once the lazy runtime is here. */
+  private _reviveMoonStatus(dialog = this._settingsDialog): void {
+    if (!this._editorRuntime) {
+      void this._ensureEditorRuntime().then((ready) => { if (ready) this._reviveMoonStatus(dialog); });
+      return;
+    }
+    if (dialog && this._settingsDialog === dialog) this._editorRuntime._openMoonStatus();
   }
 
   private _openSupportDialog = (): void => {
