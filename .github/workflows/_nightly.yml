@@ -12,7 +12,9 @@
 #
 # Красный ночной прогон — сигнал автору последних коммитов на dev, не гейт:
 # гейт беты по-прежнему требует зелёный Validate на точном SHA кандидата, и
-# там полный набор идёт заново.
+# там полный набор идёт заново. Адресат сигнала (#736) — задачи, чьи коммиты
+# классов A/B вошли в dev после последней зелёной ночи: job `night_red` пишет
+# каждой один комментарий (`scripts/night-red.mjs`, PROCESS.md §10.4).
 #
 # Сигнал обязан быть настоящим (#492 §7): до этой задачи job завершалась
 # успехом в момент постановки Validate в очередь, и красный полный прогон не
@@ -42,6 +44,8 @@ jobs:
     outputs:
       # #727: SHA прогона Validate — отдельным шагом до ожидания, красный Validate его не теряет.
       head_sha: ${{ steps.validate.outputs.head_sha }}
+      # #736: прогон Validate для разбора красной ночи — тем же шагом, до ожидания.
+      run_id: ${{ steps.validate.outputs.run_id }}
     steps:
       # #658: при плане 02:30 UTC ночь фактически стартовала в 07:42–08:05 и
       # кончалась в рабочее время владельца. Сдвиг старта больше часа — видимое
@@ -149,3 +153,48 @@ jobs:
             exit 0
           fi
           echo "- Ship-ревью ночью (\`$CANDIDATE\`): ${{ github.server_url }}/$REPO/actions/runs/$run_id" >> "$GITHUB_STEP_SUMMARY"
+
+  # #736: красная ночь — один комментарий в каждую задачу, чьи коммиты классов
+  # A/B вошли в dev после последней зелёной ночи (`scripts/night-red.mjs`,
+  # PROCESS.md §10.4). Только при красном dispatch с известным прогоном;
+  # исход прогона (failure, а не cancelled/timed_out) скрипт читает сам.
+  # Actions — `github.token`, issue — `HP_PROCESS_TOKEN`: `issues: write` у
+  # ночи нет, и потолок тонкого `nightly.yml` в main не меняется. Сбой —
+  # предупреждение, не красная ночь сверх Validate.
+  night_red:
+    name: "Красная ночь: комментарий в задачи, слитые после последней зелёной"
+    needs: dispatch
+    if: always() && needs.dispatch.result == 'failure' && needs.dispatch.outputs.run_id != ''
+    continue-on-error: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      # Нужны коммиты и деревья, не блобы; скрипт и его импорты — без зависимостей, npm ci не нужен.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: dev
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+
+      - name: "Комментарий в задачи диапазона от последней зелёной ночи до красной"
+        env:
+          ACTIONS_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+          RED_RUN: ${{ needs.dispatch.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          # Сбои API, токена и git скрипт сам сводит к предупреждению; упавший
+          # скрипт — тоже предупреждение: цвет ночи — цвет Validate.
+          if ! node scripts/night-red.mjs --repo="$REPO" --red-run="$RED_RUN"; then
+            echo "::warning::красная ночь (#736): скрипт упал — комментарии не написаны; цвет ночи — цвет Validate"
+            echo "- Красная ночь (#736): скрипт упал — комментарии не написаны" >> "$GITHUB_STEP_SUMMARY"
+          fi

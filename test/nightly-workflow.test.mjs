@@ -162,3 +162,41 @@ test('#727 AC6 на настоящем bash: ship-ревью ночью — disp
   assert.deepEqual(empty.log, []);
   assert.match(empty.stdout, /::warning::нет SHA прогона Validate — ночное ship-ревью не запущено/);
 });
+
+// ---------- #736: красная ночь — комментарий в задачи диапазона ----------
+
+test('#736 AC3: night_red после dispatch только при красном Validate с прогоном; права — чтение, issue — HP_PROCESS_TOKEN', () => {
+  const nightly = read('_nightly.yml');
+  const dispatch = job(nightly, 'dispatch');
+  const red = job(nightly, 'night_red');
+  // Прогон Validate — выход dispatch тем же шагом, что SHA, до ожидания.
+  assert.match(dispatch, /\n      run_id: \$\{\{ steps\.validate\.outputs\.run_id \}\}\n/);
+  assert.match(red, /\n    needs: dispatch\n/);
+  assert.match(red, /\n    if: always\(\) && needs\.dispatch\.result == 'failure' && needs\.dispatch\.outputs\.run_id != ''\n/,
+    'только красный dispatch с найденным прогоном');
+  assert.match(red, /\n    continue-on-error: true\n/, 'цвет ночи — цвет Validate');
+  assert.match(red, /\n    permissions:\n      actions: read\n      contents: read\n    steps:\n/, 'права job — только чтение');
+  assert.equal((red.match(/permissions:/g) || []).length, 1);
+  // Checkout dev со всей историей без блобов; скрипту npm ci не нужен.
+  assert.match(red, /uses: actions\/checkout@[0-9a-f]{40} # v\d+\n        with:\n          ref: dev\n          fetch-depth: 0\n          filter: blob:none\n          persist-credentials: false\n/);
+  assert.match(red, /uses: actions\/setup-node@[0-9a-f]{40} # v\d+\n        with:\n          node-version: 22\n/);
+  assert.doesNotMatch(red.replace(/^\s*#.*$/gm, ''), /npm (ci|install)/);
+  // Actions — токеном ночи, issue — токеном процесса.
+  assert.match(red, /\n          ACTIONS_TOKEN: \$\{\{ github\.token \}\}\n/);
+  assert.match(red, /\n          GH_TOKEN: \$\{\{ secrets\.HP_PROCESS_TOKEN \}\}\n/);
+  assert.match(red, /\n          RED_RUN: \$\{\{ needs\.dispatch\.outputs\.run_id \}\}\n/);
+  const body = stepRun(nightly, 'Комментарий в задачи диапазона от последней зелёной ночи до красной');
+  assert.match(body, /node scripts\/night-red\.mjs --repo="\$REPO" --red-run="\$RED_RUN"/);
+  assert.equal(spawnSync('bash', ['-n', '-c', body]).status, 0, 'bash -n');
+  assert.doesNotMatch(body, /<<-?\s*['"]?[A-Za-z_]/, 'heredoc в run');
+  // Канон: адресат сигнала в шапке и абзац в PROCESS.md §10.4.
+  assert.match(nightly.slice(0, nightly.indexOf('\nname:')), /Адресат сигнала \(#736\)[\s\S]*night_red/);
+  const canon = readFileSync(new URL('../PROCESS.md', import.meta.url), 'utf8');
+  const section = canon.slice(canon.indexOf('### 10.4 '), canon.indexOf('\n## 11. '));
+  const paragraph = section.slice(section.indexOf('**Красная ночь** (#736)'));
+  assert.ok(section.includes('**Красная ночь** (#736)'), 'абзац в §10.4');
+  for (const key of ['`night_red`', '`scripts/night-red.mjs`', 'conclusion: failure', '`ci-proof`', '`release`', '--no-merges',
+    '`Release:`', '`hp:night-red', '`HP_PROCESS_TOKEN`', 'серия']) {
+    assert.ok(paragraph.slice(0, paragraph.indexOf('\n\n')).includes(key), `абзац называет ${key}`);
+  }
+});
