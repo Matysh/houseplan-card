@@ -12,7 +12,11 @@ const res = await page.evaluate(async () => {
   c._setMode = (...args) => { resumedThroughSetMode += 1; return realSetMode(...args); };
   c._pendingNavMode = 'devices';
   c._serverCanWrite = true;
-  out.pendingModeUsesTransitionAuthority = c._resumePendingNavMode() === true
+  const pendingAccepted = c._resumePendingNavMode();
+  // Both loaded and delayed runtimes now cross the same async request boundary.
+  // Observe the next rendered frame, still requiring exactly one real authority call.
+  await new Promise((resolve) => requestAnimationFrame(resolve)); await c.updateComplete;
+  out.pendingModeUsesTransitionAuthority = pendingAccepted === true
     && resumedThroughSetMode === 1 && c._mode === 'devices' && c._pendingNavMode == null;
   delete c._setMode;
   c._setMode('view', false); await c.updateComplete;
