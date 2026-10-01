@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 280, issue: 139. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 281, issue: 139. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -34,6 +34,7 @@
 | #744 | [CODE-REVIEW-744-r1.md](CODE-REVIEW-744-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | единственное свидетельство AC4 устарело относительно текущих бюджетов switchCycleMs | `performance.yml` `budgets.json` `budgets-interaction-smoke.json` `budgets-isometric-smoke.json` `budgets-isometric-stage3-dense.json` `budgets-large-house-interaction.json` `budgets-large-house-isometric.json` |
 | #744 | [CODE-REVIEW-744-r2.md](CODE-REVIEW-744-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #744 | [CODE-REVIEW-744-r3.md](CODE-REVIEW-744-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #744 | [CODE-REVIEW-744-r4.md](CODE-REVIEW-744-r4.md) | code · r4 | 🟢 зелёный | 0 | 0 | — | — |
 | #743 | [CODE-REVIEW-743-r1.md](CODE-REVIEW-743-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC3 доказан не на финальном материале | `demo/performance/budgets-large-house-isometric-backdrop.json` `performance.yml` |
 | #743 | [CODE-REVIEW-743-r2.md](CODE-REVIEW-743-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #742 | [SPEC-REVIEW-742-r1.md](SPEC-REVIEW-742-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | устаревшее число в AC6 (не блокирует) | `src/houseplan-card.ts` `test/core-file-budget.test.mjs` |
