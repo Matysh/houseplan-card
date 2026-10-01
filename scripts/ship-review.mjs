@@ -33,6 +33,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
+import { lastUsageIn, publishedUsageLine } from './model-usage.mjs';
 import { issueTrailers, readCandidateHistory } from './release-membership.mjs';
 import { parseDocName } from './reviews-index.mjs';
 
@@ -341,9 +342,16 @@ export function renderShipBrief({ tag, candidate, base, ship, runUrl = '', doc =
 /**
  * Машинный блок документа: его пишет публикация, читает `check`. #727: строки
  * `mode` и `patches` дописываются в конец, прежние строки не меняются.
+ *
+ * #737: `usage` — строка расхода модели (`model-usage.mjs`) сразу после
+ * закрывающего ``` блока, а не строкой внутри: формат один на все документы
+ * ревью, а содержимое блока, которое читают гейт беты и покрытие, не меняется.
+ * Значение — выход недоверенной стадии: пусто — `reason=missing`, не по
+ * формату — `reason=invalid`. Не передано (вызов до #737) — строки нет.
  */
 export function anchorBlock({
   tag, candidate, base = null, issues = [], high = 0, medium = 0, low = 0, runUrl = '', mode = null, patches = null,
+  usage = null,
 }) {
   return [
     SHIP_REVIEW_ANCHOR,
@@ -361,6 +369,7 @@ export function anchorBlock({
     ...(mode ? [`mode ${mode}`] : []),
     ...(patches ? [`patches ${formatPatches(patches)}`] : []),
     '```',
+    ...(usage != null ? [publishedUsageLine(usage)] : []),
     '',
   ].join('\n');
 }
@@ -368,6 +377,8 @@ export function anchorBlock({
 /**
  * Поля машинного блока. `base`, `mode` и `patches` появляются, только если
  * блок их несёт: документ до #727 без `patches` покрывает задачи по номеру.
+ * #737: `usage` — разобранная строка расхода после последнего маркера блока,
+ * если она есть (`{ input_tokens, …, num_turns }` либо `{ reason }`).
  */
 export function parseAnchorBlock(text = '') {
   const at = String(text).lastIndexOf(SHIP_REVIEW_ANCHOR);
@@ -380,6 +391,7 @@ export function parseAnchorBlock(text = '') {
   }));
   const number = (value) => (/^\d+$/.test(String(value)) ? Number(value) : null);
   const given = (value) => value != null && value !== '' && value !== '—';
+  const usage = lastUsageIn(String(text).slice(at));
   return {
     tag: fields.tag || null,
     candidate: fields.candidate || null,
@@ -390,6 +402,7 @@ export function parseAnchorBlock(text = '') {
     ...(given(fields.base) ? { base: fields.base } : {}),
     ...(given(fields.mode) ? { mode: fields.mode } : {}),
     ...('patches' in fields ? { patches: parsePatches(fields.patches) } : {}),
+    ...(usage ? { usage } : {}),
   };
 }
 

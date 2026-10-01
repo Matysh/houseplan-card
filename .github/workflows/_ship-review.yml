@@ -125,6 +125,9 @@ jobs:
     if: needs.prepare.outputs.proceed == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    # #737: строка расхода сессии модели (scripts/model-usage.mjs).
+    outputs:
+      usage: ${{ steps.usage.outputs.line }}
     # Недоверенная стадия без права записи (#556): документ публикует
     # `publish`. `github_token` у шага Review обязателен — без него action
     # меняет OIDC на собственный App-токен с правом записи.
@@ -241,6 +244,19 @@ jobs:
             --allowedTools Read,Write,Grep,Glob,Bash
             --json-schema '{"type":"object","properties":{"high":{"type":"integer"},"medium":{"type":"integer"},"low":{"type":"integer"},"summary":{"type":"string"}},"required":["high","medium","low","summary"]}'
 
+      # #737: как у конвейера (_process.yml) — расход выходом job, не через
+      # artifact; execution_file не выгружается и не печатается.
+      - name: Снять расход модели
+        id: usage
+        if: always()
+        continue-on-error: true
+        env:
+          EXEC: ${{ steps.review.outputs.execution_file }}
+        run: |
+          line=$(node scripts/model-usage.mjs --execution-file="$EXEC")
+          echo "line=$line" >> "$GITHUB_OUTPUT"
+          echo "- расход модели: \`$line\`" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Запечатать результат модели
         env:
           SOURCE: ${{ runner.temp }}/ship-review.md
@@ -301,6 +317,8 @@ jobs:
           MODE: ${{ needs.prepare.outputs.mode }}
           PATCHES: ${{ needs.prepare.outputs.patches }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # #737: расход модели — строкой сразу после блока; недоверенный ввод.
+          USAGE: ${{ needs.model_review.outputs.usage }}
         run: |
           dir="$RUNNER_TEMP/ship-review-result"
           (cd "$dir" && sha256sum -c manifest.sha256)
@@ -325,6 +343,7 @@ jobs:
                   issues: String(process.env.ISSUES || "").split(",").filter(Boolean).map(Number),
                   high: Number(process.argv[1]), medium: Number(process.argv[2]), low: Number(process.argv[3]),
                   runUrl: process.env.RUN_URL, mode: process.env.MODE, patches: m.parsePatches(process.env.PATCHES),
+                  usage: process.env.USAGE ?? "",
                 })));
               ' "$high" "$medium" "$low"
             } > "$DOC"

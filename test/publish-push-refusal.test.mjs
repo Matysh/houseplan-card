@@ -232,6 +232,28 @@ test('#723 release-review.yml на настоящем bash: dev ушёл впе�
   assert.match(git(box.origin, 'show', `dev:${RELEASE_DOC}`), /<!-- hp-release-review-anchors -->\n### Материал ревью\n\n```\ntag v1\.78\.0\n/);
 });
 
+test('#737 AC4 _ship-review.yml на настоящем bash: строка расхода сразу после блока, повтор после сдвига dev — одна; без выхода — missing', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const { parseAnchorBlock } = await import('../scripts/ship-review.mjs');
+  const { parseUsageLine } = await import('../scripts/model-usage.mjs');
+  const box = sandbox(tempRoot(t, 'hp-737-ship-'));
+  box.neighbour('dev', 1, 'b.mjs', 'export const b = 1;\n');
+  const r = runShip(box, { USAGE });
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  assert.equal(r.pushes, 2, 'документ собран заново после устаревшего lease');
+  const doc = git(box.origin, 'show', `dev:${SHIP_DOC}`);
+  assert.match(doc, new RegExp(`\npatches —\n\`\`\`\n${USAGE}$`), 'строка — сразу после закрывающего ```');
+  assert.equal(doc.split('hp:usage').length - 1, 1, 'строка одна');
+  const block = parseAnchorBlock(doc);
+  assert.deepEqual(block.usage, parseUsageLine(USAGE));
+  assert.deepEqual([block.high, block.medium, block.low, block.issues], [0, 1, 0, [731, 733]], 'поля блока — прежние');
+  const bare = sandbox(tempRoot(t, 'hp-737-ship-'));
+  assert.equal(runShip(bare).status, 0);
+  const missing = git(bare.origin, 'show', `dev:${SHIP_DOC}`);
+  assert.equal(lastLine(missing), '<!-- hp:usage-none reason=missing -->');
+  assert.deepEqual(parseAnchorBlock(missing).usage, { reason: 'missing' });
+});
+
 for (const [label, stderr, kind, reason] of [
   ['право на workflow', remoteRejected('dev', WORKFLOW_REASON), PUSH_REFUSAL.workflow, WORKFLOW_REASON],
   ['прочий [remote rejected] (с заголовком Authorization и чужим токеном)', noisyRejected('dev'), PUSH_REFUSAL.remote, 'protected branch hook declined'],
@@ -281,14 +303,14 @@ function taskBranch(box) {
   git(box.work, 'checkout', '-q', 'dev');
 }
 
-function runReviewDoc(box, out = '{"verdict":"green","high":0}') {
+function runReviewDoc(box, out = '{"verdict":"green","high":0}', extra = {}) {
   const source = join(box.temp, 'review-result', 'review-document.md');
   mkdirSync(join(box.temp, 'review-result'));
   writeFileSync(source, '# Код-ревью #9, раунд 1\n\nВердикт: **зелёный** · High: 0 · Medium: 0\n');
   return box.run(REVIEW_DOC_STEP(), {
     BRANCH, NUM: '9', STAGE: 'code', CYCLE: '1', SOURCE: source,
     MATERIAL_SHA: git(box.origin, 'rev-parse', BRANCH), MATERIAL_TREE: git(box.origin, 'rev-parse', `${BRANCH}^{tree}`),
-    MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: '', OUT: out,
+    MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: '', OUT: out, ...extra,
   });
 }
 
@@ -365,13 +387,55 @@ test('#726 AC5 _process.yml на настоящем bash: публикация �
   assert.equal(anchor(git(plain.origin, 'show', `${BRANCH}:${REVIEW_DOC}`)), '- Вердикт конвейера: `green` · High 0');
 });
 
+// #737 AC3: расход модели — последней строкой блока якорей. Выход job
+// `model_review.usage` недоверенный: пусто — `reason=missing`, мусор — `invalid`.
+const USAGE = '<!-- hp:usage input_tokens=97209 output_tokens=55524 cache_creation_input_tokens=149047 cache_read_input_tokens=1135731 num_turns=42 -->';
+const lastLine = (text) => text.trimEnd().split('\n').at(-1);
+
+test('#737 AC3 _process.yml на настоящем bash: строка расхода — последней в блоке; без выхода модели — missing; мусор — invalid', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const { ANCHOR_MARKER, anchorVerdictFrom, materialAnchorsFrom } = await import('../scripts/review-doc-guard.mjs');
+  for (const [label, extra, line] of [
+    ['с выходом usage', { USAGE }, USAGE],
+    ['выход пуст', { USAGE: '' }, '<!-- hp:usage-none reason=missing -->'],
+    ['выхода нет вовсе', {}, '<!-- hp:usage-none reason=missing -->'],
+    ['мусор с 40 hex', { USAGE: `<!-- hp:usage input_tokens=${'f'.repeat(40)} -->` }, '<!-- hp:usage-none reason=invalid -->'],
+  ]) {
+    const box = sandbox(tempRoot(t, 'hp-737-doc-'));
+    taskBranch(box);
+    const tree = git(box.origin, 'rev-parse', `${BRANCH}^{tree}`);
+    const r = runReviewDoc(box, undefined, extra);
+    assert.equal(r.status, 0, `${label}: ${r.stderr}${r.stdout}`);
+    const doc = git(box.origin, 'show', `${BRANCH}:${REVIEW_DOC}`);
+    assert.equal(lastLine(doc), line, label);
+    assert.equal(doc.split('hp:usage').length - 1, 1, `${label}: строка одна`);
+    assert.ok(doc.indexOf(ANCHOR_MARKER) < doc.indexOf('hp:usage'), `${label}: строка в блоке якорей`);
+    assert.deepEqual(anchorVerdictFrom(doc), { verdict: 'green', high: 0 }, label);
+    assert.deepEqual(materialAnchorsFrom(doc), [tree], `${label}: новых якорей нет`);
+  }
+});
+
+test('#737 AC3 _process.yml на настоящем bash: ребейз и второй push — строка расхода одна', (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const box = sandbox(tempRoot(t, 'hp-737-doc-'));
+  taskBranch(box);
+  box.neighbour(BRANCH, 1, 'b.mjs', 'export const b = 1;\n');
+  const r = runReviewDoc(box, undefined, { USAGE });
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  assert.equal(r.pushes, 2);
+  assert.ok(r.calls.some((call) => /(^| )rebase origin\/issue\/9-fix$/.test(call)), 'ребейз на сдвинутую ветку');
+  const doc = git(box.origin, 'show', `${BRANCH}:${REVIEW_DOC}`);
+  assert.equal(lastLine(doc), USAGE);
+  assert.equal(doc.split(USAGE).length - 1, 1, 'строка одна');
+});
+
 // ---------- #730 _ship-review.yml: SHIP-REVIEW в dev ----------
 
 const SHIP_STEP = () => stepRun('_ship-review.yml', 'Опубликовать документ');
 const BETA = 'v1.79.0-beta.1';
 const SHIP_DOC = `docs/reviews/SHIP-REVIEW-${BETA}.md`;
 
-function runShip(box) {
+function runShip(box, extra = {}) {
   const dir = join(box.temp, 'ship-review-result');
   mkdirSync(dir);
   const files = {
@@ -383,7 +447,7 @@ function runShip(box) {
     .map(([name, text]) => `${createHash('sha256').update(text).digest('hex')}  ${name}\n`).join(''));
   return box.run(SHIP_STEP(), {
     TAG: BETA, DOC: SHIP_DOC, CANDIDATE: 'c'.repeat(40), BASE: 'v1.78.0', ISSUES: '731,733',
-    RUN_URL: 'https://github.com/o/r/actions/runs/43',
+    RUN_URL: 'https://github.com/o/r/actions/runs/43', ...extra,
   });
 }
 

@@ -1013,6 +1013,8 @@ jobs:
     timeout-minutes: 45
     outputs:
       duration_seconds: ${{ steps.duration.outputs.seconds }}
+      # #737: строка расхода сессии модели (scripts/model-usage.mjs).
+      usage: ${{ steps.usage.outputs.line }}
     steps:
       - name: Начать измерение стадии
         id: clock
@@ -1331,6 +1333,23 @@ jobs:
             --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment,mcp__github__issue_write,mcp__github__issue_read
             --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"},"route":{"type":"string","enum":["fix","reclassify"]},"criterion":{"type":"string"}},"required":["verdict","high","medium","summary","route"]}'
 
+      # #737: расход сессии — отчётная величина, как длительность стадии: по
+      # нему ничего не решается, поэтому он идёт выходом job, а не через
+      # запечатанный artifact (#556). Публикация разбирает строку строго. Сам
+      # execution_file — все сообщения сессии, с результатами инструментов —
+      # не выгружается и не печатается: скрипт берёт из него только `result`.
+      # `always()` — расход упавшей сессии хотя бы виден в сводке.
+      - name: Снять расход модели
+        id: usage
+        if: always()
+        continue-on-error: true
+        env:
+          EXEC: ${{ steps.review.outputs.execution_file }}
+        run: |
+          line=$(node scripts/model-usage.mjs --execution-file="$EXEC")
+          echo "line=$line" >> "$GITHUB_OUTPUT"
+          echo "- расход модели: \`$line\`" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Запечатать результат модели
         id: result
         env:
@@ -1499,6 +1518,9 @@ jobs:
           # Вердикт из structured_output попадает в блок якорей (#499): по нему
           # следующий заход решает, можно ли применить зелёный вердикт повторно.
           OUT: ${{ steps.result.outputs.structured_output }}
+          # #737: расход модели — последней строкой блока якорей; строка
+          # недоверенная, скрипт разбирает её строго.
+          USAGE: ${{ needs.model_review.outputs.usage }}
         run: |
           verdict=$(printf '%s' "$OUT" | jq -r '.verdict // empty' 2>/dev/null || true)
           high=$(printf '%s' "$OUT" | jq -r '.high // empty' 2>/dev/null || true)
@@ -1561,6 +1583,7 @@ jobs:
               --sha="$MATERIAL_SHA" --tree="$MATERIAL_TREE" \
               --branch="${BRANCH:-dev}" --specs="$MATERIAL_SPECS" \
               --issue-body="$MATERIAL_ISSUE_BODY" \
+              --usage="$USAGE" \
               --verdict="$verdict" --high="$high" \
               --route="$route" --criterion="$criterion"
           else

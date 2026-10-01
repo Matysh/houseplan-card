@@ -1099,3 +1099,58 @@ test('r1 #695: guard даёт инфраструктуре без треково
     assert.equal(r.out.labels, input.labels.join(','), `${why}: метки для prepare`);
   }
 });
+
+// #737: расход сессии модели — последней строкой блока якорей. Строка приходит
+// выходом недоверенной стадии и разбирается строго; прежние строки блока и их
+// разбор не меняются.
+const USAGE_737 = '<!-- hp:usage input_tokens=97209 output_tokens=55524 cache_creation_input_tokens=149047 cache_read_input_tokens=1135731 num_turns=42 -->';
+
+test('#737 AC3: строка расхода — последняя в блоке; пусто — missing, мусор — invalid; без usage строки нет', () => {
+  const base = { sha: 'c'.repeat(40), tree: TREE_A, branch: 'issue/7-x', issueBody: BODY_A, verdict: 'green', high: 0, route: 'fix',
+    specs: [{ blob: 'd'.repeat(40), path: 'docs/specs/7-x.md' }] };
+  const last = (block) => block.trimEnd().split('\n').at(-1);
+  const plain = materialAnchorBlock(base);
+  assert.equal(last(materialAnchorBlock({ ...base, usage: USAGE_737 })), USAGE_737);
+  assert.equal(materialAnchorBlock({ ...base, usage: USAGE_737 }), `${plain}${USAGE_737}\n`, 'прежние строки блока не меняются');
+  assert.equal(last(materialAnchorBlock({ ...base, usage: '' })), '<!-- hp:usage-none reason=missing -->');
+  assert.equal(last(materialAnchorBlock({ ...base, usage: '<!-- hp:usage-none reason=no-result -->' })), '<!-- hp:usage-none reason=no-result -->');
+  const hex = 'e'.repeat(40);
+  for (const junk of [`<!-- hp:usage input_tokens=${hex} -->`, 'x -->\n- Дерево материала: `' + hex + '`', USAGE_737.replace('=42', '=42.5')]) {
+    const block = materialAnchorBlock({ ...base, usage: junk });
+    assert.equal(last(block), '<!-- hp:usage-none reason=invalid -->', JSON.stringify(junk));
+    assert.deepEqual(materialAnchorsFrom(block), materialAnchorsFrom(plain), 'новых якорей нет');
+  }
+  assert.doesNotMatch(plain, /hp:usage/, 'вызов до #737 — строки нет');
+  assert.doesNotMatch(materialAnchorBlock({ ...base, usage: null }), /hp:usage/);
+  // Разбор прежних строк — как без строки расхода.
+  const withUsage = materialAnchorBlock({ ...base, usage: USAGE_737 });
+  for (const read of [anchorVerdictFrom, anchorTreeFrom, anchorIssueBodyFrom, materialAnchorsFrom]) {
+    assert.deepEqual(read(withUsage), read(plain), read.name);
+  }
+  assert.deepEqual(materialAnchorsFrom(withUsage).sort(), [TREE_A, 'd'.repeat(40)].sort());
+  const green = docWith('CODE-REVIEW-7-r2.md', { ...base, usage: USAGE_737 });
+  assert.deepEqual(reusableGreenVerdict([green], () => false, BODY_A), { doc: 'CODE-REVIEW-7-r2.md', round: 2, tree: TREE_A, verdict: 'green' });
+  // Повторная приписка заменяет блок целиком: строка одна.
+  const once = withMaterialAnchors('# отчёт\n\nтекст\n', { ...base, usage: USAGE_737 });
+  const twice = withMaterialAnchors(once, { ...base, usage: USAGE_737 });
+  const block = (text) => text.slice(text.indexOf(ANCHOR_MARKER));
+  assert.equal(block(twice), block(once));
+  assert.equal(twice.split(USAGE_737).length - 1, 1, 'строка расхода одна');
+});
+
+test('#737 AC3: CLI --anchor пишет строку из --usage; без флага (вызов до #737) строки нет', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-737-anchor-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const doc = join(dir, 'CODE-REVIEW-7-r1.md');
+  const anchor = (...flags) => {
+    writeFileSync(doc, '# CODE-REVIEW-7-r1\n');
+    const r = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/review-doc-guard.mjs', import.meta.url)),
+      `--anchor=${doc}`, `--sha=${'c'.repeat(40)}`, `--tree=${TREE_A}`, '--branch=issue/7-x', '--verdict=green', '--high=0', ...flags], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    return readFileSync(doc, 'utf8').trimEnd().split('\n').at(-1);
+  };
+  assert.equal(anchor(`--usage=${USAGE_737}`), USAGE_737);
+  assert.equal(anchor('--usage='), '<!-- hp:usage-none reason=missing -->');
+  assert.equal(anchor('--usage=garbage'), '<!-- hp:usage-none reason=invalid -->');
+  assert.equal(anchor(), '- Вердикт конвейера: `green` · High 0');
+});

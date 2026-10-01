@@ -28,8 +28,9 @@ import { isMainModule } from './spawn-portable.mjs';
 import { classify } from './change-classes.mjs';
 import { labelTrack, parseNumstat } from './process-track.mjs';
 import { issueTrailers } from './release-membership.mjs';
-import { verdictDeclaration } from './review-doc-guard.mjs';
-import { parseAnchorBlock } from './ship-review.mjs';
+import { USAGE_KEYS, lastUsageIn } from './model-usage.mjs';
+import { ANCHOR_MARKER, verdictDeclaration } from './review-doc-guard.mjs';
+import { SHIP_REVIEW_ANCHOR, parseAnchorBlock } from './ship-review.mjs';
 import { PIPELINE_EVENTS } from './wait-verdict.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
@@ -195,7 +196,7 @@ export const RETURN_REASONS = ['verdict-yellow', 'verdict-red', 'validate-red', 
 export const PIPELINE_STAGES = ['guard', 'prepare', 'model', 'integrate'];
 export const VOLUME_BUCKETS = ['≤30', '31–200', '201–1000', '>1000'];
 export const VALIDATE_WORKFLOW = 'Проверка (CI)';
-export const TOKENS_NO_DATA = 'Токены: нет данных (конвейер не записывает расход модели)';
+export const TOKENS_NO_DATA = 'Токены: нет данных (ни один документ ревью не несёт расход модели)';
 
 /**
  * Причины `validate-red` и `conflict` (К3). У конвейера нет для них отдельной
@@ -209,12 +210,6 @@ export const NOT_RUN_VALIDATE_RE = /^\*\*Ревью не запускалось:
 export const NOT_RUN_CONFLICT_RE = /^\*\*Ревью не запускалось:\*\* ветка \S+ не ребейзится на /m;
 /** Маршрут вердикта show (#726): машинная строка комментария конвейера. */
 export const ROUTE_RE = /<!--\s*hp:route\s+(reclassify|owner-question)\b[^>]*-->/;
-/**
- * Машинная строка расхода модели в документе ревью — её запишет конвейер
- * (issue F, К6 #728): `<!-- hp:usage input_tokens=N output_tokens=N … -->`.
- * Формат предварительный: пока строки нет нигде, отчёт печатает «нет данных».
- */
-export const USAGE_LINE_RE = /<!--\s*hp:usage\s+([^>]*?)\s*-->/g;
 
 /** Признак конвейера по `kind`: переименование в `wait-verdict.mjs` ломает загрузку, а не молча даёт `unknown`. */
 function pipelineEvent(kind) {
@@ -444,19 +439,37 @@ export function shipFindings(reviewDocs = []) {
   return { byIssue, docs };
 }
 
-/** К6. Расход модели по машинным строкам документов ревью; ни одной — `null` («нет данных»). */
+/**
+ * #737: строка расхода модели документа ревью — только из машинного блока,
+ * который пишет конвейер: после `ANCHOR_MARKER` (ревью ТЗ и кода) или после
+ * последнего `SHIP_REVIEW_ANCHOR` (`SHIP-REVIEW-*`). Проза выше маркера не
+ * источник: ревьюер r2 цитирует документ r1, и расход r1 считался бы дважды.
+ * Формат и разбор — `model-usage.mjs`; строки нет — `null`.
+ */
+export function reviewDocUsage(doc) {
+  const text = String(doc?.text ?? '');
+  const at = SHIP_DOC.test(String(doc?.path || '')) ? text.lastIndexOf(SHIP_REVIEW_ANCHOR) : text.indexOf(ANCHOR_MARKER);
+  return at < 0 ? null : lastUsageIn(text.slice(at));
+}
+
+/**
+ * К6 (#728, #737). Расход модели по документам ревью: `docs` — документы с
+ * данными, `totals` — суммы по ключам строки (`null`, пока данных нет),
+ * `missing` — документы с `hp:usage-none`. «Нет данных» — не ноль: в суммы
+ * не входит. Документы без строки (до #737) не считаются ни тем, ни другим.
+ */
 export function tokenUsage(reviewDocs = []) {
-  const totals = {};
+  const totals = Object.fromEntries(USAGE_KEYS.map((key) => [key, 0]));
   let docs = 0;
+  let missing = 0;
   for (const doc of reviewDocs || []) {
-    let found = false;
-    for (const match of String(doc?.text ?? '').matchAll(USAGE_LINE_RE)) {
-      found = true;
-      for (const [, key, value] of match[1].matchAll(/([a-z_]+)=(\d+)/g)) totals[key] = (totals[key] || 0) + Number(value);
-    }
-    if (found) docs += 1;
+    const usage = reviewDocUsage(doc);
+    if (!usage) continue;
+    if ('reason' in usage) { missing += 1; continue; }
+    docs += 1;
+    for (const key of USAGE_KEYS) totals[key] += usage[key];
   }
-  return docs ? { docs, totals } : null;
+  return { docs, totals: docs ? totals : null, missing };
 }
 
 /** `git log --format=%x1e%H%x1f%cI%x1f%B%x1f --numstat` → коммиты с трейлерами и строками. */
@@ -953,9 +966,13 @@ function renderTokens(lines, tokens) {
   lines.push('');
   lines.push('### Токены');
   lines.push('');
-  lines.push(tokens
-    ? `Токены по ${tokens.docs} документам ревью: ${Object.entries(tokens.totals).map(([key, value]) => `${key} ${value}`).join(' · ')}.`
+  lines.push(tokens?.docs
+    ? `Токены по ${tokens.docs} документам ревью: ${USAGE_KEYS.map((key) => `${key} ${tokens.totals[key]}`).join(' · ')}.`
     : `${TOKENS_NO_DATA}.`);
+  if (tokens?.missing) {
+    lines.push('');
+    lines.push(`Без данных о расходе: ${tokens.missing}.`);
+  }
 }
 
 function renderCompare(lines, c) {

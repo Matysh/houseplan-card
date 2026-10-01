@@ -14,6 +14,8 @@ import {
 import { labelTrack } from '../scripts/process-track.mjs';
 import { commentFor } from '../scripts/merge-candidate.mjs';
 import { anchorBlock } from '../scripts/ship-review.mjs';
+import { withMaterialAnchors } from '../scripts/review-doc-guard.mjs';
+import { formatUsage } from '../scripts/model-usage.mjs';
 import { PIPELINE_EVENTS } from '../scripts/wait-verdict.mjs';
 
 const T = (h) => new Date(Date.UTC(2026, 8, 15, 0, Math.round(h * 60))).toISOString();
@@ -428,14 +430,61 @@ test('#728 контракт: имена job _process.yml дают четыре �
 
 test('#728 tokenUsage: без строки расхода — «нет данных», чисел токенов нет (AC6)', () => {
   const report = buildReport({ since: T(0), until: T(48), reviewDocs: [{ path: 'docs/reviews/CODE-REVIEW-701-r1.md', text: '# Ревью\n\nВердикт: зелёный' }] });
-  assert.equal(report.tokens, null);
+  assert.deepEqual(report.tokens, { docs: 0, totals: null, missing: 0 });
   const md = renderMarkdown(report);
   assert.ok(md.includes(TOKENS_NO_DATA));
-  assert.equal(TOKENS_NO_DATA, 'Токены: нет данных (конвейер не записывает расход модели)');
+  assert.equal(TOKENS_NO_DATA, 'Токены: нет данных (ни один документ ревью не несёт расход модели)', '#737: конвейер строку пишет');
   const section = md.slice(md.indexOf('### Токены'), md.indexOf('###', md.indexOf('### Токены') + 3));
   assert.doesNotMatch(section, /\d/, 'ни оценок, ни пересчётов из минут');
+  // #737: строка вне машинного блока больше не читается — это намеренно.
   const recorded = tokenUsage([{ path: 'docs/reviews/CODE-REVIEW-701-r1.md', text: '<!-- hp:usage input_tokens=1200 output_tokens=300 -->' }]);
-  assert.deepEqual(recorded, { docs: 1, totals: { input_tokens: 1200, output_tokens: 300 } }, 'когда строка появится (issue F), она читается');
+  assert.deepEqual(recorded, { docs: 0, totals: null, missing: 0 }, 'строка без машинного блока — не данные');
+});
+
+// #737 К6: расход — только из машинного блока документа (после маркера блока
+// якорей или последнего маркера SHIP-REVIEW). «Нет данных» — не ноль.
+test('#737 AC6 tokenUsage: только строка машинного блока; суммы по пяти ключам; «нет данных» — не ноль', () => {
+  const usage = (input, output, creation, read, turns) => formatUsage({
+    input_tokens: input, output_tokens: output, cache_creation_input_tokens: creation, cache_read_input_tokens: read, num_turns: turns,
+  });
+  const r1 = usage(1000, 200, 30, 4000, 5);
+  const r2 = usage(2000, 300, 40, 5000, 6);
+  const night = usage(100, 10, 1, 1000, 2);
+  // r2 цитирует документ r1 в прозе — расход r1 не засчитывается второй раз.
+  const code = { path: 'docs/reviews/CODE-REVIEW-701-r2.md',
+    text: withMaterialAnchors(`# CODE-REVIEW-701-r2\n\nУнаследовано из r1:\n\n${r1}\n`, { tree: 'a'.repeat(40), verdict: 'green', high: 0, usage: r2 }) };
+  const ship = { path: 'docs/reviews/SHIP-REVIEW-v1.0.0-dev-0123456789ab.md',
+    text: `# Ночное ревью\nИтог: High 0 · Medium 0 · Low 0\n${r1}\n\n${anchorBlock({ tag: 'nightly', candidate: 'c'.repeat(40), issues: [701], usage: night })}` };
+  assert.deepEqual(tokenUsage([code]), { docs: 1, totals: { input_tokens: 2000, output_tokens: 300, cache_creation_input_tokens: 40, cache_read_input_tokens: 5000, num_turns: 6 }, missing: 0 },
+    'считается только строка блока, проза до маркера — нет');
+  const both = tokenUsage([code, ship]);
+  assert.deepEqual(both, { docs: 2, totals: { input_tokens: 2100, output_tokens: 310, cache_creation_input_tokens: 41, cache_read_input_tokens: 6000, num_turns: 8 }, missing: 0 });
+  const tokensSection = (report) => {
+    const md = renderMarkdown(report);
+    const at = md.indexOf('### Токены');
+    return md.slice(at, md.indexOf('###', at + 3));
+  };
+  const withData = tokensSection(buildReport({ since: T(0), until: T(48), reviewDocs: [code, ship] }));
+  assert.match(withData, /^Токены по 2 документам ревью: input_tokens 2100 · output_tokens 310 · cache_creation_input_tokens 41 · cache_read_input_tokens 6000 · num_turns 8\.$/m);
+  assert.doesNotMatch(withData, /Без данных о расходе/);
+
+  // hp:usage-none — документ без данных: в суммы не входит, ноль не печатается.
+  const none = { path: 'legacy/reviews/v1.0/SPEC-REVIEW-702-r1.md',
+    text: withMaterialAnchors('# SPEC-REVIEW-702-r1\n', { tree: 'b'.repeat(40), verdict: 'green', high: 0, usage: '' }) };
+  assert.deepEqual(tokenUsage([code, ship, none]), { ...both, missing: 1 });
+  const mixed = tokensSection(buildReport({ since: T(0), until: T(48), reviewDocs: [code, ship, none] }));
+  assert.match(mixed, /^Токены по 2 документам ревью: input_tokens 2100 [^\n]*\n\nБез данных о расходе: 1\.$/m);
+  assert.deepEqual(tokenUsage([none]), { docs: 0, totals: null, missing: 1 });
+  const onlyNone = tokensSection(buildReport({ since: T(0), until: T(48), reviewDocs: [none] }));
+  assert.ok(onlyNone.includes(`${TOKENS_NO_DATA}.`));
+  assert.match(onlyNone, /Без данных о расходе: 1\./);
+  assert.doesNotMatch(onlyNone, /input_tokens|\b0\b/, '«нет данных» не печатается нулём');
+
+  // Строк нет вовсе (документы до #737, строка только в прозе) — «нет данных», цифр нет.
+  const old = { path: 'docs/reviews/CODE-REVIEW-700-r1.md', text: `# r1\n${r1}\n` };
+  const empty = tokensSection(buildReport({ since: T(0), until: T(48), reviewDocs: [old] }));
+  assert.ok(empty.includes(`${TOKENS_NO_DATA}.`));
+  assert.doesNotMatch(empty, /\d/);
 });
 
 test('#728 сравнение: объём из git без Release:, dist/** и docs/reviews/**, корзины и «мало данных» (AC7)', (t) => {

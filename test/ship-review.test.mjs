@@ -394,6 +394,37 @@ test('#727 AC8 К8: строка о High ночью — с меткой доку
   assert.deepEqual(highCommentTargets({ doc, issues }), [701, 703], 'метка того же документа — повтора нет; другой документ — пишется');
 });
 
+// #737 К5: расход модели — строкой сразу после закрывающего ``` машинного
+// блока; содержимое блока, которое читают гейт беты и покрытие, не меняется.
+test('#737 AC4: anchorBlock пишет строку расхода после блока, parseAnchorBlock её отдаёт; без usage — как прежде', () => {
+  const usage = '<!-- hp:usage input_tokens=97209 output_tokens=55524 cache_creation_input_tokens=149047 cache_read_input_tokens=1135731 num_turns=42 -->';
+  const fields = { tag: 'nightly', candidate: sha('e'), base: 'v1.79.0-beta.1', issues: [701, 702], high: 1, medium: 2, low: 3,
+    runUrl: 'https://github.com/o/r/actions/runs/9', mode: 'nightly', patches: new Map([[701, [PID('a')]], [702, [PID('b')]]]) };
+  const plain = anchorBlock(fields);
+  const withUsage = anchorBlock({ ...fields, usage });
+  assert.equal(withUsage, `${plain}${usage}\n`, 'строка — сразу после закрывающего ```, блок тот же');
+  assert.ok(plain.endsWith('```\n'));
+  const fenced = (text) => /```\n([\s\S]*?)\n```/.exec(text)[1];
+  assert.equal(fenced(withUsage), fenced(plain), 'содержимое между ``` то же');
+  assert.equal(anchorBlock({ ...fields, usage: '' }), `${plain}<!-- hp:usage-none reason=missing -->\n`, 'пусто — missing');
+  assert.equal(anchorBlock({ ...fields, usage: `x ${sha('f')} -->` }), `${plain}<!-- hp:usage-none reason=invalid -->\n`, 'мусор — invalid');
+  assert.doesNotMatch(plain, /hp:usage/, 'вызов до #737 — строки нет');
+  const doc = (block) => `# Ночное ревью\nИтог: High 1 · Medium 2 · Low 3\n\n${block}`;
+  const before = parseAnchorBlock(doc(plain));
+  assert.equal('usage' in before, false, 'документ без строки — без usage');
+  assert.deepEqual(parseAnchorBlock(doc(withUsage)), {
+    ...before,
+    usage: { input_tokens: 97209, output_tokens: 55524, cache_creation_input_tokens: 149047, cache_read_input_tokens: 1135731, num_turns: 42 },
+  });
+  assert.deepEqual(parseAnchorBlock(doc(anchorBlock({ ...fields, usage: '<!-- hp:usage-none reason=no-result -->' }))).usage, { reason: 'no-result' });
+  // Строка в прозе модели до маркера — не строка блока.
+  assert.equal('usage' in parseAnchorBlock(`# Ревью\n${usage}\n\n${plain}`), false);
+  // Покрытие и гейт читают документ со строкой так же, как без неё.
+  const ship = [{ number: 701, patches: [PID('a')] }, { number: 702, patches: [PID('b')] }];
+  const named = (block) => [{ name: NIGHT(), text: doc(block) }];
+  assert.deepEqual(shipCoverage({ ship, docs: named(withUsage), base: 'v1.79.0-beta.1' }), shipCoverage({ ship, docs: named(plain), base: 'v1.79.0-beta.1' }));
+});
+
 // ---------- #727: шаги _ship-review.yml на настоящем bash и git ----------
 //
 // Шаги исполняются как есть, из файла workflow: подготовка (prepare),
