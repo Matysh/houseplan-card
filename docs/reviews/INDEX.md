@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 222, issue: 109. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 223, issue: 109. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -12,6 +12,7 @@
 | #727 | [SPEC-REVIEW-727-r1.md](SPEC-REVIEW-727-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | К7/AC7: архивирование ночного документа с базой-стабильным-тегом не имеет ни одного про… | `scripts/reviews-archive.mjs` |
 | #727 | [SPEC-REVIEW-727-r2.md](SPEC-REVIEW-727-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #726 | [SPEC-REVIEW-726-r1.md](SPEC-REVIEW-726-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #726 | [CODE-REVIEW-726-r1.md](CODE-REVIEW-726-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | дисмиссед с записью | `test/process-track.test.mjs` |
 | #725 | [SPEC-REVIEW-725-r1.md](SPEC-REVIEW-725-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | устаревший номер строки в «Проблема» п.3 / «Не-скоуп» | `src/iso-scene-render.ts` `src/houseplan-card.ts` `houseplan-card.ts` `header-menu.ts` `iso-scene-render.ts` |
 | #724 | [CODE-REVIEW-724-r1.md](CODE-REVIEW-724-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #723 | [CODE-REVIEW-723-r1.md](CODE-REVIEW-723-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
