@@ -536,6 +536,31 @@ test('#730 _ship-review.yml на настоящем bash: dev ушёл впер�
   assert.match(git(box.origin, 'show', `dev:${SHIP_DOC}`), /<!-- hp-ship-review-anchors -->\n### Материал пакетного ревью\n\n```\ntag v1\.79\.0-beta\.1\ncandidate c{40}\nbase v1\.78\.0\nissues 731,733\nhigh 0\nmedium 1\nlow 0\n/);
 });
 
+// #748 AC2: ночью (#727) тот же шаг писал в dev «docs: ship review for nightly …
+// перед бетой» с трейлером задачи бета-шага. Ночное сообщение — своё: заголовок
+// по имени документа, задача ночного режима; бета-сообщение (тест выше) прежнее.
+test('#748 AC2 _ship-review.yml на настоящем bash: ночная публикация — свой заголовок, тело и Issue: #727', (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const box = sandbox(tempRoot(t, 'hp-748-ship-'));
+  // Ночной документ называется по прошлому тегу кандидата: тег — на родителе.
+  git(box.work, 'tag', 'v1.78.0');
+  writeFileSync(join(box.work, 'b.mjs'), 'export const b = 1;\n');
+  commitAll(box.work, 'fix: b');
+  git(box.work, 'push', '-q', 'origin', 'dev');
+  const candidate = git(box.work, 'rev-parse', 'HEAD');
+  const night = `v1.78.0-dev-${candidate.slice(0, 12)}`;
+  const doc = `docs/reviews/SHIP-REVIEW-${night}.md`;
+  const r = runShip(box, { TAG: 'nightly', MODE: 'nightly', DOC: doc, CANDIDATE: candidate, BASE: 'v1.78.0' });
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  assert.equal(r.pushes, 1);
+  assert.equal(git(box.origin, 'log', '-1', '--format=%B', 'dev'),
+    `docs: nightly ship review ${night}\n\nНочное пакетное ревью задач track:ship (PROCESS.md §11.7).\n`
+    + 'Задачи: 731,733. Итог: High 0 · Medium 1 · Low 0.\n\nIssue: #727\nUser-Visible: no');
+  assert.deepEqual(git(box.origin, 'show', '--name-only', '--format=', 'dev').split('\n').sort(),
+    ['docs/reviews/INDEX.md', doc], 'коммит несёт ночной документ и индекс');
+  assert.match(git(box.origin, 'show', `dev:${doc}`), /\nmode nightly\n/);
+});
+
 for (const [label, stderr, kind, reason] of [
   ['право на workflow', remoteRejected('dev', WORKFLOW_REASON), PUSH_REFUSAL.workflow, WORKFLOW_REASON],
   ['прочий [remote rejected] (с заголовком Authorization и чужим токеном)', noisyRejected('dev'), PUSH_REFUSAL.remote, 'protected branch hook declined'],

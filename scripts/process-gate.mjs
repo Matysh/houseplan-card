@@ -56,6 +56,8 @@ const CHANGELOGS = ['docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'];
 export const ALLOWED_STATUS = ['S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 export const STRICT_STATUS = ['S5-ready', 'S6-in-progress', 'S7-code-review'];
 
+// Номер — пункт PROCESS.md §10.2 (0 — служебный). Пункт из «Не реализовано»
+// ключа не имеет (§10.2 п.9); соответствие держит test/process-gate.test.mjs (#748).
 export const RULES = {
   0: 'классификация путей',
   1: 'трейлер Issue',
@@ -66,7 +68,6 @@ export const RULES = {
   6: 'релизный коммит',
   7: 'лимит документов ревью',
   8: 'статус issue',
-  9: 'Gates: light',
   10: 'DoR по моменту коммита',
 };
 
@@ -118,7 +119,6 @@ export function makeCommit({
     baselineReviewedLocal: one('Baseline-Reviewed-Local'),
     // #729: все значения, а не первое — «ровно один» судит правило 10.
     specDrafts: all('Spec-Draft'),
-    gates: one('Gates'),
     // null = вызывающий не доказал содержимое diff. Для stable release это
     // намеренно fail-closed: одного имени разрешённого version source мало.
     releaseSourceViolations,
@@ -203,9 +203,6 @@ export function evaluateCommit(c) {
     if (violations.length) {
       fail(6, `релизный коммит содержит не-версионное изменение продукта: ${violations.slice(0, 3).join(', ')}`);
     }
-    if ((c.gates ?? '').toLowerCase() === 'light') {
-      fail(9, '«Gates: light» на релизном коммите запрещён');
-    }
     return out;
   }
 
@@ -226,10 +223,6 @@ export function evaluateCommit(c) {
 
   if (onlyD && !c.release && !c.baselineReviewed && !c.baselineReviewedLocal) {
     fail(5, 'изменена только генерируемая часть (класс D) без «Release: vX.Y.Z», «Baseline-Reviewed: <ссылка>» либо «Baseline-Reviewed-Local: sha256:<хеш>»');
-  }
-
-  if ((c.gates ?? '').toLowerCase() === 'light' && onlyD) {
-    fail(9, '«Gates: light» на коммите класса D запрещён');
   }
 
   const unknown = c.files.filter((f) => classify(f) === '?');

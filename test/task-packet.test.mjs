@@ -34,6 +34,17 @@ test('права выводятся из статусной метки по пр
   assert.ok(hint.some((l) => l.includes('предварительный инфраструктурный вход')));
 });
 
+// #748 AC1: ТЗ живёт в теле issue (§2.3, #517), SPEC-REVIEW без ветки ложится в
+// dev, а до S5 ветка не пушится (§11.8). Подсказка S3 звала пушить ветку.
+test('#748 AC1: подсказка S3 — ТЗ в теле issue и S4-spec-review, без push ветки', () => {
+  const hint = rightsFor('S3-spec').find((l) => l.startsWith('следующий шаг:'));
+  assert.ok(hint, 'у S3 есть следующий шаг');
+  assert.doesNotMatch(hint, /push ветки/);
+  assert.match(hint, /S4-spec-review/);
+  assert.match(hint, /§11\.8/);
+  assert.match(hint, /тел[еоа] issue/);
+});
+
 test('AC распознаются из таблицы ТЗ и из строк тела issue (#496)', () => {
   const table = '| # | AC | Чем краснеет |\n|---|---|---|\n| AC1 | initial View ≤ 290 000 Б | budget |\n| **AC2** | план с мебелью | смок |\n';
   assert.deepEqual(extractAcceptanceCriteria(table).map((a) => a.id), ['AC1', 'AC2']);

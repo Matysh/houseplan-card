@@ -884,6 +884,10 @@ test('#707 AC4: шаг трека на настоящем bash — ship, под�
   const plain = box.run(decide, { OUT: '', STAGE: 'code', REUSE: 'false', SHIP: 'true', SHIP_RISK: '', MATERIAL: material, VALIDATE_URL: '' });
   assert.equal(SHIP_MERGE_MARKER_RE.exec(plain.comment)?.[1], material);
   assert.equal(shipRiskFrom([{ body: plain.comment }]), null);
+  // #748: код ship первой читает ночь (#727), бета — то, что ночь не прочла;
+  // комментарий называет оба документа §11.7, а не один бета-документ.
+  assert.ok(plain.comment.includes('ночью (`docs/reviews/SHIP-REVIEW-<база>-dev-<sha12>.md`)'), plain.comment);
+  assert.ok(plain.comment.includes('перед бетой то, что ночь не прочла (`docs/reviews/SHIP-REVIEW-<тег>.md`)'), plain.comment);
 });
 
 // #755 AC3: дифф вида #741 — удалённый член интерфейса в участке perf — ship не

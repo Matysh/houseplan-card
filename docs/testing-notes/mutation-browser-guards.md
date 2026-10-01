@@ -1,9 +1,10 @@
 # Browser guards mutation registry (#659)
 
 This is the reviewed classification of every mutation witness that still needs a browser.
-The executable limit is `200`; `mutation-gate --check`, `npm run inventory` and the unit
-contract all read this same inventory. A new browser guard must be added deliberately under
-one reason below, and its mutant `because` must explain the concrete browser-only invariant.
+The guideline is `200` (#699: a guideline, not a wall); `mutation-gate --check`,
+`npm run inventory` and the unit contract all read this same inventory. A new browser guard
+must be added deliberately under one reason below, and its mutant `because` must explain
+the concrete browser-only invariant.
 
 Converted witnesses are not listed here: their registry guard names an explicit `node --test`
 suite plus `test/mutation-browser-offload.test.mjs`, and every converted mutant is run once
@@ -16,8 +17,8 @@ to prove that the Node witness actually kills it.
 | Paint, cascade and layer composition | 26 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 45 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 36 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 89 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **204 / 200** | Growth above the cap fails `mutation-gate --check`. |
+| Custom-element and HA browser lifecycle | 90 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **205 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 

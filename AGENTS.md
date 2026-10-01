@@ -92,8 +92,10 @@ Several track labels at once read as the strictest. A risky changed hunk
 `small` and `trivial` read as `show`. An **infrastructure** task — not a single
 class A file — skips analysis and spec and enters at `S7-code-review`
 (`PROCESS.md` §1). Every change is code-reviewed; on `ship` the review moves to a
-batch review of the beta range before the tag (`ship-review.yml`, `PROCESS.md`
-§11.7). The review pipeline prices each round by track (§10.4): no mutants run
+batch review (`ship-review.yml`, `PROCESS.md` §11.7): nightly
+(`SHIP-REVIEW-<base>-dev-<sha12>.md`), and before the beta tag whatever the night
+did not read (`SHIP-REVIEW-<tag>.md`). The review pipeline prices each round by
+track (§10.4): no mutants run
 during development on any track — the whole registry runs nightly (#709); a
 rebase before review only on `ask` or when
 the branch does not merge cleanly into `dev`. Review checks scope, risks and the

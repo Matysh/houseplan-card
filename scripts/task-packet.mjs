@@ -60,7 +60,7 @@ export function rightsFor(status, labels = [], { infrastructure = false, infrast
   switch (status) {
     case 'S1-new': lines.push('следующий шаг: аналитика (S2) — оценки и трек метками (по умолчанию track:show); на track:ship — строка «что меняется и чем проверить» под «## ТЗ», затем S5'); break;
     case 'S2-analysis': lines.push('следующий шаг: track:show — до трёх AC под «## ТЗ», затем S5; track:ask — ТЗ (S3) с названным критерием §5'); break;
-    case 'S3-spec': lines.push('следующий шаг: ТЗ готово → push ветки → метка S4-spec-review (метку после push)'); break;
+    case 'S3-spec': lines.push('следующий шаг: ТЗ в теле issue (раздел «## ТЗ», §7.1) → метка S4-spec-review; ветку до S5 не пушить (§11.8)'); break;
     case 'S4-spec-review': lines.push('идёт ревью ТЗ: ждать вердикт (scripts/wait-verdict.mjs), не править материал'); break;
     case 'S5-ready': lines.push('следующий шаг: ветка issue/NN-slug от dev, код по ТЗ, метка S6-in-progress'); break;
     case 'S6-in-progress': lines.push('следующий шаг: gate:small + смоки по AC → push ветки → метка S7-code-review (метку после push)'); break;

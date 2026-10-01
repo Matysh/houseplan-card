@@ -327,6 +327,17 @@ jobs:
           medium=$(jq -r '.medium' "$dir/result.json")
           low=$(jq -r '.low' "$dir/result.json")
           # Сообщение коммита — построчно в файл, без heredoc в `run:` (#730, как #723).
+          # #748: ночью — своё: имя документа без префикса, задача ночного режима.
+          if [ "$MODE" = "nightly" ]; then
+            night=${DOC##*/SHIP-REVIEW-}
+            subject="docs: nightly ship review ${night%.md}"
+            lead="Ночное пакетное ревью задач track:ship (PROCESS.md §11.7)."
+            issue="#727"
+          else
+            subject="docs: ship review for $TAG"
+            lead="Пакетное ревью задач track:ship перед бетой (PROCESS.md §11.7)."
+            issue="#696"
+          fi
           msg="$RUNNER_TEMP/ship-review-commit.txt"
           push_err="$RUNNER_TEMP/ship-review-push.stderr"
           for attempt in 1 2 3; do
@@ -351,12 +362,12 @@ jobs:
             git add -- "$DOC" docs/reviews/INDEX.md
             git diff --cached --name-only | node scripts/review-doc-guard.mjs
             {
-              echo "docs: ship review for $TAG"
+              echo "$subject"
               echo ""
-              echo "Пакетное ревью задач track:ship перед бетой (PROCESS.md §11.7)."
+              echo "$lead"
               echo "Задачи: $ISSUES. Итог: High $high · Medium $medium · Low $low."
               echo ""
-              echo "Issue: #696"
+              echo "Issue: $issue"
               echo "User-Visible: no"
             } > "$msg"
             git -c user.name="claude[bot]" \

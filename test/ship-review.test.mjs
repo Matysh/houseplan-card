@@ -526,8 +526,10 @@ function shipSandbox(t) {
     'echo "unexpected gh $*" >&2; exit 1',
     '',
   ].join('\n'), { mode: 0o755 });
-  // Коммит публикации документа несёт `Issue: #696` — задача не ship.
+  // Коммит публикации документа несёт `Issue: #696` (бета) или `Issue: #727`
+  // (ночь, #748) — задачи не ship.
   writeFileSync(join(fake, 'issue-696.json'), JSON.stringify({ number: 696, title: 'Пакетное ревью ship', body: '', labels: [], comments: [] }));
+  writeFileSync(join(fake, 'issue-727.json'), JSON.stringify({ number: 727, title: 'Ночное пакетное ревью ship', body: '', labels: [], comments: [] }));
   const box = {
     root, origin, work, temp, fake, git, commit,
     push() { git(work, 'push', '-q', '--tags', 'origin', 'HEAD:dev'); git(work, 'fetch', '-q', 'origin'); },

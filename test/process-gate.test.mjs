@@ -16,6 +16,7 @@ import {
   checkIssueStatuses,
   checkReviewDocLimit,
   REVIEW_DOC_LIMIT,
+  RULES,
   checkFrozenSpecs,
   checkSpecs,
   clampIssueBranchRange,
@@ -153,14 +154,40 @@ test('a release commit allows only proven canonical version declarations', () =>
   assert.deepEqual(rules(evaluateCommit(mixed)), [6]);
 });
 
-test('Gates: light is refused on release and generated commits', () => {
+// #748 AC1: номер правила гейта — номер пункта PROCESS.md §10.2. Проверка
+// «Gates: light» жила под п.9 с первого коммита гейта, а канон под п.9 держит
+// нереализованное (вердикт код-ревью в release:prerelease): вывод печатал
+// «FAIL п.9 Gates: light» правила, которого в каноне нет.
+test('#748 AC1: номера RULES — пункты §10.2 вне «Не реализовано», и только они', () => {
+  const canon = readFileSync(fileURLToPath(new URL('../PROCESS.md', import.meta.url)), 'utf8').replace(/\r\n?/g, '\n');
+  const start = canon.indexOf('\n### 10.2 ');
+  const end = canon.indexOf('\n### 10.3 ', start);
+  assert.ok(start > 0 && end > start, 'PROCESS.md: раздел §10.2 найден');
+  const section = canon.slice(start, end);
+  const cut = section.indexOf('\nНе реализовано');
+  assert.ok(cut > 0, '§10.2: блок «Не реализовано» найден');
+  const items = (text) => [...text.matchAll(/^(\d+)\. /gm)].map((m) => Number(m[1])).sort((a, b) => a - b);
+  const implemented = items(section.slice(0, cut));
+  const pending = items(section.slice(cut));
+  assert.ok(implemented.length >= 8 && pending.length >= 1, `§10.2: пункты разобраны (${implemented} / ${pending})`);
+  const keys = Object.keys(RULES).map(Number).filter((n) => n !== 0).sort((a, b) => a - b);
+  assert.deepEqual(keys, implemented, 'каждый ключ RULES, кроме 0, — реализованный пункт §10.2, и наоборот');
+  for (const n of pending) assert.ok(!(n in RULES), `п.${n} §10.2 не реализован — ключа RULES[${n}] быть не должно`);
+  // Номер находки в коде — тоже ключ RULES: иначе вывод печатает «п.N undefined».
+  const source = readFileSync(fileURLToPath(new URL('../scripts/process-gate.mjs', import.meta.url)), 'utf8');
+  const used = new Set([...source.matchAll(/\b(?:fail|warn)\((\d+),|\brule: (\d+)/g)].map((m) => Number(m[1] ?? m[2])));
+  assert.ok(used.size >= 8, `номера находок разобраны: ${[...used]}`);
+  for (const n of used) assert.ok(n in RULES, `находка п.${n} без RULES[${n}]`);
+});
+
+test('#748 AC1: мёртвого трейлера «Gates: light» гейт не судит', () => {
   assert.deepEqual(
     rules(evaluateCommit(commit('Release v1.62.0', 'Release: v1.62.0\nGates: light', ['dist/a.js']))),
-    [9],
+    [],
   );
   assert.deepEqual(
     rules(evaluateCommit(commit('Rebuild', 'Issue: #1\nBaseline-Reviewed: x\nGates: light', ['dist/a.js']))),
-    [9],
+    [],
   );
 });
 

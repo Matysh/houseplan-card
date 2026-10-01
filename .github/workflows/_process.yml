@@ -1763,11 +1763,11 @@ jobs:
             # #696: `ship` в рамках (PROCESS.md §5) сливается без ревью модели
             # после зелёного лёгкого Validate. Комментарий — не вердикт ревью и
             # так себя не называет: ревью не было. Машинный маркер находит
-            # пакетное ревью диапазона перед бетой (ship-review.mjs, §11.7).
+            # пакетное ревью ship — ночное и перед бетой (ship-review.mjs, §11.7).
             verdict=green; high=0
             short=$(printf '%s' "$MATERIAL" | cut -c1-8)
             cat > /tmp/ship-merge.md <<EOF
-          **Слияние без ревью модели: трек ship (PROCESS.md §5, #696).** Правка укладывается в механические рамки ship, лёгкий Validate на \`$short\` зелёный${VALIDATE_URL:+ ([прогон]($VALIDATE_URL))}. Код до слияния не читал никто: его прочтёт пакетное ревью диапазона перед бетой (PROCESS.md §11.7), документ \`docs/reviews/SHIP-REVIEW-<тег>.md\`.
+          **Слияние без ревью модели: трек ship (PROCESS.md §5, #696).** Правка укладывается в механические рамки ship, лёгкий Validate на \`$short\` зелёный${VALIDATE_URL:+ ([прогон]($VALIDATE_URL))}. Код до слияния не читал никто: его прочтёт пакетное ревью ship — ночью (\`docs/reviews/SHIP-REVIEW-<база>-dev-<sha12>.md\`) и перед бетой то, что ночь не прочла (\`docs/reviews/SHIP-REVIEW-<тег>.md\`), PROCESS.md §11.7.
 
           ${SHIP_RISK}
 
