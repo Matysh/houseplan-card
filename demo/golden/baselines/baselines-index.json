@@ -1,8 +1,8 @@
 {
   "schema": 3,
-  "matrixVersion": 69,
-  "acceptedAt": "2026-09-30T13:51:08.299Z",
-  "sourceFingerprint": "f347f87c368130ae0a1c2983ca57116cd437335d6aeea2b92afe0b8beda6f0a0",
+  "matrixVersion": 70,
+  "acceptedAt": "2026-10-01T00:05:17.573Z",
+  "sourceFingerprint": "182c3c9d02d59822dca143cc7626b316b9be5ba20ec8403c282b973832501e45",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "f347f87c368130ae0a1c2983ca57116cd437335d6aeea2b92afe0b8beda6f0a0",
+    "buildFingerprint": "182c3c9d02d59822dca143cc7626b316b9be5ba20ec8403c282b973832501e45",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 36721827715,
+      "run": 36790529482,
       "attempt": 1,
-      "sha": "c2c806fae3be53b2a0c0efa793490cdf54898dda"
+      "sha": "16616f09b897a465dcfa7e40ad543fd28394fa9b"
     }
   },
   "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 130,
+    "count": 145,
     "floor": 10
   },
   "scenarios": {
@@ -80,6 +80,8 @@
     "day-cycle-night-dark": "39a6a959676295eb4ead02703533641f57901ad0ce1359933e1d47f48867196a",
     "day-cycle-night-moon-gibbous-dark": "89ba8cdc95316a670486900b2b1aaf7b4c8889b388b54d16e3a645f1e5d41020",
     "day-cycle-dusk-moon-crescent-south-dark": "03022fc1a57e05b9ec6ace88224d5bded6ee2335bb6b5715089edaf224ce0a4e",
+    "static-bg-moon-gibbous-white-light": "f23cd2ca25a0e18a2d3e6df762e2b0b04f1e89b77bee20fdded895bf9a155112",
+    "static-bg-moon-crescent-south-dark": "bb7d6a2f80741ce77c39a2258c6a28bbd1cc158ff316bb063a2d85ee63d01059",
     "geometry-plan-editor-dark": "5e7365ef5820a9c2ea51abd3be0c56900de7932e3da4f78fc8103f307a5fcf65",
     "safe-resize-handles-clamp-light": "80b3cf9c755dbb77deceaf6deb4569bd1570093509b37e96beb32dd2a07d40da",
     "safe-resize-handles-clamp-dark": "dd32a1034f349b27717a89516b91a85b916e70080cfeffb127b0b51a24683bff",
