@@ -19,6 +19,9 @@
 // у конвейера есть константа; где её нет (`validate-red`/`conflict`), копию
 // текста держит контрактный тест на шаблонах `_process.yml`.
 //
+// #761: токены — только за окно отчёта: документ ревью входит в неделю, если
+// коммит, добавивший его в `dev`, попал в окно (перенос в архив — не добавление).
+//
 //   node scripts/process-metrics.mjs --repo=<owner/repo> --days=7 [--until=ISO] [--output=path.md] [--json=path.json]
 //        [--compare=2026-09-28] [--compare-days=28]
 import { execFileSync } from 'node:child_process';
@@ -457,6 +460,7 @@ export function reviewDocUsage(doc) {
  * данными, `totals` — суммы по ключам строки (`null`, пока данных нет),
  * `missing` — документы с `hp:usage-none`. «Нет данных» — не ноль: в суммы
  * не входит. Документы без строки (до #737) не считаются ни тем, ни другим.
+ * Окно недели (#761) применяет вызывающий: `tokenDocs`.
  */
 export function tokenUsage(reviewDocs = []) {
   const totals = Object.fromEntries(USAGE_KEYS.map((key) => [key, 0]));
@@ -470,6 +474,45 @@ export function tokenUsage(reviewDocs = []) {
     for (const key of USAGE_KEYS) totals[key] += usage[key];
   }
   return { docs, totals: docs ? totals : null, missing };
+}
+
+/**
+ * #761: дата добавления документа ревью в `dev` по выводу
+ * `git log -M --diff-filter=AR --reverse --name-status --format=%x1e%cI`.
+ * Добавление (`A`) ставит дату коммиттера; переименование (`R`, перенос в
+ * архив `legacy/reviews/` #682) переносит дату на новый путь, а не добавляет
+ * документ заново. → Map путь в `HEAD` → дата (ISO).
+ */
+export function reviewDocAddedAt(text = '') {
+  const added = new Map();
+  for (const record of String(text).split('\x1e')) {
+    const [date = '', ...rows] = record.split('\n');
+    for (const row of rows) {
+      const [status = '', from, to] = row.split('\t');
+      if (status === 'A' && from) added.set(from, date.trim());
+      else if (/^R\d*$/.test(status) && to && added.has(from)) {
+        added.set(to, added.get(from));
+        added.delete(from);
+      }
+    }
+  }
+  return added;
+}
+
+/**
+ * #761: документы для токенов недели — добавленные в `dev` в `[since, until]`
+ * (`reviewDocAddedAt`). Документ, чьё добавление не найдено, в окно не входит.
+ * Без карты дат (`null`: снимок без git, юнит над готовыми документами) окна
+ * нет, как до #761.
+ */
+export function tokenDocs(reviewDocs = [], { added = null, since, until } = {}) {
+  if (!added) return reviewDocs || [];
+  const from = toMs(since);
+  const to = toMs(until);
+  return (reviewDocs || []).filter((doc) => {
+    const moment = at(added.get(String(doc?.path ?? '')));
+    return moment >= from && moment <= to;
+  });
 }
 
 /** `git log --format=%x1e%H%x1f%cI%x1f%B%x1f --numstat` → коммиты с трейлерами и строками. */
@@ -759,6 +802,8 @@ export function buildReport({
   // #728: задачи для разделов по трекам (по умолчанию — те же `issues`), усечённые
   // таймлайны, тексты документов ревью, коммиты dev и окно сравнения.
   allIssues = null, timelineTruncated = new Set(), reviewDocs = [], commits = [], compare = {},
+  // #761: дата добавления документов ревью в dev — окно токенов; `null` — окна нет.
+  reviewDocAdded = null,
 }) {
   const perIssue = issues.map((issue) => issueMetrics(issue, timelines.get(Number(issue.number)) || []));
   const rounds = reviewRounds(reviewFiles);
@@ -788,12 +833,12 @@ export function buildReport({
     runs: runMetrics(runs),
     pipeline: pipelineMetrics(runs),
     jobs: jobsByRun ? jobMinutes(jobsByRun) : null,
-    ...trackReport({ since, until, issues: allIssues || issues, timelines, timelineTruncated, reviewDocs, runs, jobsByRun, commits, compare }),
+    ...trackReport({ since, until, issues: allIssues || issues, timelines, timelineTruncated, reviewDocs, reviewDocAdded, runs, jobsByRun, commits, compare }),
   };
 }
 
 /** #728: разделы по трекам, job-минуты по стадиям, токены и сравнение до/после. */
-function trackReport({ since, until, issues, timelines, timelineTruncated, reviewDocs, runs, jobsByRun, commits, compare }) {
+function trackReport({ since, until, issues, timelines, timelineTruncated, reviewDocs, reviewDocAdded, runs, jobsByRun, commits, compare }) {
   const changes = issueChanges(commits);
   const ship = shipFindings(reviewDocs);
   const seen = new Set();
@@ -816,7 +861,10 @@ function trackReport({ since, until, issues, timelines, timelineTruncated, revie
   return {
     tracks: trackSection(rows.filter((row) => row.s8At >= from && row.s8At <= to), { shipDocs: ship.docs }),
     stages: jobsByRun ? stageMinutes({ runs, jobsByRun, trackOf }) : null,
-    tokens: tokenUsage(reviewDocs),
+    // #761: токены и `missing` — по документам, добавленным в dev за окно; `window` — окно применено.
+    tokens: reviewDocAdded
+      ? { ...tokenUsage(tokenDocs(reviewDocs, { added: reviewDocAdded, since, until })), window: { since, until } }
+      : tokenUsage(reviewDocs),
     compare: compareCohorts(rows, { cutover: compare.cutover ?? TRACKS_CUTOVER, days: compare.days ?? COMPARE_DAYS, until }),
   };
 }
@@ -966,6 +1014,10 @@ function renderTokens(lines, tokens) {
   lines.push('');
   lines.push('### Токены');
   lines.push('');
+  if (tokens?.window) {
+    lines.push('Документы ревью, добавленные в `dev` за окно отчёта: дата коммиттера добавившего коммита, перенос в архив `legacy/reviews/` — не добавление.');
+    lines.push('');
+  }
   lines.push(tokens?.docs
     ? `Токены по ${tokens.docs} документам ревью: ${USAGE_KEYS.map((key) => `${key} ${tokens.totals[key]}`).join(' · ')}.`
     : `${TOKENS_NO_DATA}.`);
@@ -1019,7 +1071,8 @@ function ghJson(args) {
  *   иначе задача помечается «таймлайн усечён»;
  * - jobs (К5) — для `jobRuns`, недоступные jobs — `null`;
  * - имена документов ревью, тексты `SHIP-REVIEW-*.md` и документов со строкой
- *   расхода, коммиты `origin/dev` с `--numstat` за окно сравнения.
+ *   расхода, дата добавления каждого документа в dev (#761), коммиты
+ *   `origin/dev` с `--numstat` за окно сравнения.
  */
 export function fetchSnapshot({ repo, since, until, gh = ghJson, git = null, compare = {} }) {
   const sinceIso = new Date(since).toISOString();
@@ -1082,6 +1135,7 @@ export function fetchSnapshot({ repo, since, until, gh = ghJson, git = null, com
   }
   let reviewFiles = [];
   const reviewDocs = [];
+  let reviewDocAdded = null;
   let commits = [];
   if (git) {
     const listing = git(['ls-tree', '-r', '--name-only', 'HEAD', '--', 'docs/reviews', 'legacy/reviews']);
@@ -1095,12 +1149,16 @@ export function fetchSnapshot({ repo, since, until, gh = ghJson, git = null, com
     for (const path of new Set([...paths.filter((p) => SHIP_DOC.test(p)), ...usage])) {
       reviewDocs.push({ path, text: git(['show', `HEAD:${path}`]) });
     }
+    // #761: окно токенов — по коммиту, добавившему документ в dev; с -M перенос
+    // в архив (#682) — переименование, а не добавление.
+    reviewDocAdded = reviewDocAddedAt(git(['log', '-M', '--diff-filter=AR', '--reverse', '--name-status',
+      '--format=%x1e%cI', 'HEAD', '--', 'docs/reviews', 'legacy/reviews']));
     let ref = 'origin/dev';
     try { git(['rev-parse', '--verify', '-q', ref]); } catch { ref = 'HEAD'; }
     // Коммиты задачи бывают раньше её S8: запас в одно окно до начала сравнения.
     commits = readCommits(git, { ref, since: at(earliestIso) - days * DAY_MS });
   }
-  return { issues, allIssues, timelines, timelineTruncated, runs, jobsByRun, reviewFiles, reviewDocs, commits };
+  return { issues, allIssues, timelines, timelineTruncated, runs, jobsByRun, reviewFiles, reviewDocs, reviewDocAdded, commits };
 }
 
 if (isMainModule(import.meta.url)) {

@@ -9,7 +9,7 @@ import {
   buildReport, issueMetrics, jobMinutes, pipelineMetrics, renderMarkdown, reviewDocNames, reviewRounds, runMetrics,
   NOT_RUN_CONFLICT_RE, NOT_RUN_VALIDATE_RE, TIMELINE_PAGE_CAP, TOKENS_NO_DATA, TRACKS_CUTOVER,
   compareCohorts, fetchSnapshot, isInfra, issueChanges, issueSegments, issueTrackMetrics, jobRuns, jobStage,
-  readCommits, returnSignal, shipFindings, stageMinutes, tokenUsage, trackAt, trackPath, trackSection, volumeBucket,
+  readCommits, returnSignal, reviewDocAddedAt, shipFindings, stageMinutes, tokenDocs, tokenUsage, trackAt, trackPath, trackSection, volumeBucket,
 } from '../scripts/process-metrics.mjs';
 import { labelTrack } from '../scripts/process-track.mjs';
 import { commentFor } from '../scripts/merge-candidate.mjs';
@@ -611,4 +611,73 @@ test('#728 fetchSnapshot: state=all, таймлайн до 10 страниц, jo
   assert.equal(snap.jobsByRun.get(2), null);
   assert.deepEqual(snap.reviewDocs, [{ path: 'docs/reviews/SHIP-REVIEW-v1.79.0-beta.2.md', text: 'ship doc' }]);
   assert.equal(issueChanges(snap.commits).get(701).lines, 4);
+});
+
+// ---------------------------------------------------------------------------
+// #761: токены — только за окно отчёта, по коммиту, добавившему документ в dev.
+
+test('#761 токены за окно: документ вне окна, перенос в архив в окне и hp:usage-none вне окна не считаются (AC1–AC3)', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-761-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const git = (args, env = {}) => {
+    const r = spawnSync('git', args, { cwd: dir, encoding: 'utf8', env: { ...process.env, ...env } });
+    assert.equal(r.status, 0, r.stderr);
+    return r.stdout;
+  };
+  git(['init', '-q', '-b', 'dev']);
+  git(['config', 'user.email', 't@t']); git(['config', 'user.name', 't']);
+  git(['config', 'core.hooksPath', '/dev/null']);
+  const usage = (input, output) => formatUsage({ input_tokens: input, output_tokens: output, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, num_turns: 1 });
+  const doc = (title, line) => withMaterialAnchors(`# ${title}\n\nВердикт: зелёный.\n`, { tree: 'a'.repeat(40), verdict: 'green', high: 0, usage: line });
+  const commitAt = (iso, message, files) => {
+    for (const [path, text] of Object.entries(files)) {
+      mkdirSync(join(dir, dirname(path)), { recursive: true });
+      writeFileSync(join(dir, path), text);
+    }
+    git(['add', '-A']);
+    git(['commit', '-q', '-m', message], { GIT_AUTHOR_DATE: iso, GIT_COMMITTER_DATE: iso });
+  };
+  const since = '2026-09-24T00:00:00Z';
+  const until = '2026-10-01T00:00:00Z';
+  // Вне окна: документ с расходом и документ без данных (hp:usage-none).
+  commitAt('2026-09-10T10:00:00Z', 'docs: review document for #700', {
+    'docs/reviews/CODE-REVIEW-700-r1.md': doc('CODE-REVIEW-700-r1', usage(1000, 100)),
+    'docs/reviews/SPEC-REVIEW-701-r1.md': doc('SPEC-REVIEW-701-r1', ''),
+  });
+  // Внутри окна: документ с расходом и документ без данных.
+  commitAt('2026-09-26T10:00:00Z', 'docs: review document for #702', {
+    'docs/reviews/CODE-REVIEW-702-r1.md': doc('CODE-REVIEW-702-r1', usage(20, 2)),
+    'docs/reviews/SPEC-REVIEW-703-r1.md': doc('SPEC-REVIEW-703-r1', ''),
+  });
+  // Внутри окна: перенос документов вне окна в архив (#682) — переименование, не добавление.
+  mkdirSync(join(dir, 'legacy/reviews/v1.0.0'), { recursive: true });
+  git(['mv', 'docs/reviews/CODE-REVIEW-700-r1.md', 'legacy/reviews/v1.0.0/CODE-REVIEW-700-r1.md']);
+  git(['mv', 'docs/reviews/SPEC-REVIEW-701-r1.md', 'legacy/reviews/v1.0.0/SPEC-REVIEW-701-r1.md']);
+  commitAt('2026-09-28T10:00:00Z', 'chore(legacy): archive the v1.0.0 review documents', {});
+  // После окна: документ с расходом (отчёт за прошлую неделю его не видит).
+  commitAt('2026-10-02T10:00:00Z', 'docs: review document for #704', { 'docs/reviews/CODE-REVIEW-704-r1.md': doc('CODE-REVIEW-704-r1', usage(5, 5)) });
+
+  const added = reviewDocAddedAt(git(['log', '-M', '--diff-filter=AR', '--reverse', '--name-status', '--format=%x1e%cI', 'HEAD', '--', 'docs/reviews', 'legacy/reviews']));
+  assert.equal(Date.parse(added.get('legacy/reviews/v1.0.0/CODE-REVIEW-700-r1.md')), Date.parse('2026-09-10T10:00:00Z'), 'перенос в архив сохраняет дату добавления');
+  assert.equal(added.has('docs/reviews/CODE-REVIEW-700-r1.md'), false, 'прежнего пути в HEAD нет');
+
+  const gh = (args) => (String(args[1]).includes('/actions/runs?') ? { workflow_runs: [] } : []);
+  const snap = fetchSnapshot({ repo: 'o/r', since, until, gh, git: (args) => git(args) });
+  assert.equal(snap.reviewDocs.length, 5, 'тексты читаются из HEAD, как раньше');
+  const report = buildReport({ since, until, ...snap });
+  assert.equal(report.tokens.docs, 1, 'AC1: только документ, добавленный в окне');
+  assert.deepEqual([report.tokens.totals.input_tokens, report.tokens.totals.output_tokens], [20, 2]);
+  assert.equal(report.tokens.missing, 1, 'AC3: hp:usage-none — по тому же окну');
+  const md = renderMarkdown(report);
+  const section = md.slice(md.indexOf('### Токены'), md.indexOf('###', md.indexOf('### Токены') + 3));
+  assert.match(section, /^Документы ревью, добавленные в `dev` за окно отчёта/m);
+  assert.match(section, /^Токены по 1 документам ревью: input_tokens 20 · output_tokens 2 /m);
+  assert.match(section, /^Без данных о расходе: 1\.$/m);
+
+  // Неделя, в которую документ #700 был добавлен, его видит — в архиве он или нет.
+  const early = buildReport({ since: '2026-09-07T00:00:00Z', until: '2026-09-14T00:00:00Z', ...snap });
+  assert.deepEqual([early.tokens.docs, early.tokens.totals.input_tokens, early.tokens.missing], [1, 1000, 1]);
+  // Без карты дат (юнит над готовыми документами) окна нет — как до #761.
+  assert.equal(tokenDocs(snap.reviewDocs).length, 5);
+  assert.equal(tokenDocs(snap.reviewDocs, { added: new Map(), since, until }).length, 0, 'добавление не найдено — вне окна');
 });
