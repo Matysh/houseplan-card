@@ -144,6 +144,7 @@ const HOOK_FILES = [
   'scripts/process-track.mjs',
   'scripts/change-risk.mjs',
   'scripts/review-result-gate.mjs',
+  'scripts/model-usage.mjs', // #737: review-doc-guard собирает строку расхода модели
 ];
 // Заглушка набора: код выхода и журнал вызовов задаёт тест.
 const GATE_STUB = `import { appendFileSync } from 'node:fs';
