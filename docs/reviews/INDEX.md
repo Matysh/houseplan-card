@@ -5,6 +5,7 @@
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | бета v1.79.0-beta.1 | [SHIP-REVIEW-v1.79.0-beta.1.md](SHIP-REVIEW-v1.79.0-beta.1.md) | пакетное ревью ship · — | ⚪ — | 0 | 0 | — | — |
+| #761 | [CODE-REVIEW-761-r1.md](CODE-REVIEW-761-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | заявленная «красная» мутация не воспроизводится в этой среде | `scripts/process-metrics.mjs` |
 | #757 | [CODE-REVIEW-757-r1.md](CODE-REVIEW-757-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #756 | [CODE-REVIEW-756-r1.md](CODE-REVIEW-756-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #756 | [CODE-REVIEW-756-r2.md](CODE-REVIEW-756-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
