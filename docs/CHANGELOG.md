@@ -15,6 +15,11 @@
 - General settings restored after the card reloads — for example on returning
   to the tab — now show the moon's "Now: …" line too, worked out afresh at that
   moment ([#731](https://github.com/Matysh/houseplan-card/issues/731)).
+- Switching floors no longer flashes rooms white and then darker than their
+  fill: the new floor appears in its own colours at once, with the usual short
+  slide. A real colour change on the same floor — a light turning on, a new
+  temperature, hover — still fades smoothly
+  ([#742](https://github.com/Matysh/houseplan-card/issues/742)).
 
 ## v1.79.0-beta.1 — 2026-09-30
 

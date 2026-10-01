@@ -5,7 +5,8 @@
 // переход в 0.6 с, позиционное переиспользование превращает смену
 // пространства в анимацию: створка нового этажа доезжает из положения двери,
 // которая занимала этот слот раньше. То же у оболочки маркера
-// (`.device-shell-frame`, `box-shadow`).
+// (`.device-shell-frame`, `box-shadow`) и у фигуры комнаты (`.room`, заливка
+// и обводка за 0,12 с, #742).
 //
 // Две ловушки, обе стоили бы свидетелю правдивости:
 //   1. `document.getAnimations()` здесь пуст ДАЖЕ НА СЛОМАННОМ КОДЕ — карточка
@@ -15,6 +16,8 @@
 //      пространств), поэтому дверь в двух пространствах готовит сам смок.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
+/** DEFAULT_CUSTOM_FILL (`src/logic.ts`) в вычисленном стиле: цвет / `fill-opacity`. */
+const FINAL_FILL = 'rgb(96, 125, 139) / 0.18';
 
 const res = await page.evaluate(async () => {
   const out = {};
@@ -49,10 +52,121 @@ const res = await page.evaluate(async () => {
   // доигрывает чужие данные.
   const EXPECTED = (entry) => /(^|\s)tab(\s|$)|zoomwrap/.test(entry.cls)
     || /^summary-/.test(entry.property);
-
-  // ---- фикстура: дверь на одном месте в двух пространствах ---------------
   const ids = c._serverCfg.spaces.map((space) => space.id).slice(0, 2);
   out.twoSpacesExist = ids.length === 2;
+
+  // ---- 0) фигуры комнат: смена пространства их не перекрашивает (#742) ---
+  // `.room` переводит все свойства за 0,12 с. Пока список фигур был голым
+  // `map()`, узел комнаты прежнего этажа доставался комнате нового, и заливка
+  // ехала от чужого значения: кадр белой бумаги, потом темнее итога.
+  // Раздел стоит ДО physicalize: после толстых стен первая комната рисуется
+  // другой веткой шаблона, Lit создаёт её узел заново, и свидетель молчит
+  // даже на сломанном коде. Здесь первые комнаты обоих этажей — `polygon`
+  // по `r.poly`: на f1 подложка и `room overlay` без заливки, второму этажу
+  // смок включает `fill_mode: 'custom'`. Конфиг меняется пушем с сервера
+  // (`__hpTest.setServerConfig`) — тем же путём, что правка с другого клиента.
+  const T = window.__hpTest;
+  const initialSpace = c._space;
+  const initialCfg = structuredClone(c._serverCfg);
+  const spaceOf = (cfg, id) => cfg.spaces.find((space) => space.id === id);
+  const roomNodes = () => [...root().querySelectorAll('[data-hp="room"]')];
+  const roomTransitions = () => roomNodes().flatMap((node) => node.getAnimations()
+    .filter((animation) => animation instanceof CSSTransition)
+    .map((animation) => `${node.dataset.id}:${animation.transitionProperty}`));
+  /**
+   * Узлы комнат по `data-id` и переходы, стартовавшие на них до `stop()`.
+   * Событие не зависит от того, успел ли кадр дойти до проверки.
+   */
+  const watchRooms = () => {
+    const nodes = new Map(roomNodes().map((node) => [node.dataset.id, node]));
+    const ran = [];
+    const listening = new AbortController();
+    for (const [id, node] of nodes) {
+      node.addEventListener('transitionrun', (event) => ran.push(`${id}:${event.propertyName}`),
+        { signal: listening.signal });
+    }
+    return { nodes, stop: () => { listening.abort(); return [...ran]; } };
+  };
+  const pickSpace = async (id) => {
+    c._pickSpace(id);
+    await c.updateComplete;
+    await settle();
+  };
+  /** Сменить пространство и снять первый кадр после смены. */
+  const switchRooms = async (to) => {
+    const before = roomNodes().map((node) => ({ node, id: node.dataset.id, cls: node.getAttribute('class') }));
+    const tagBefore = before[0]?.node.tagName.toLowerCase();
+    c._pickSpace(to);
+    await c.updateComplete;
+    await frame();
+    const head = roomNodes()[0];
+    const style = head ? getComputedStyle(head) : null;
+    return {
+      fixture: !!head && tagBefore === 'polygon' && head.tagName.toLowerCase() === 'polygon'
+        && !/\bstyled\b/.test(before[0].cls) && /\bfilled\b/.test(head.getAttribute('class')),
+      headId: head?.dataset.id,
+      transitions: roomTransitions(),
+      // Любой подключённый узел прежнего пространства сейчас рисует комнату
+      // нового — под чужим `data-id` или под тем же, если `id` совпали.
+      survivors: before.filter((entry) => entry.node.isConnected)
+        .map((entry) => `${entry.id} → ${entry.node.dataset.id}`),
+      fill: style ? `${style.fill} / ${style.fillOpacity}` : null,
+    };
+  };
+  await T.setServerConfig((cfg) => {
+    const second = spaceOf(cfg, ids[1]);
+    second.settings = { ...(second.settings || {}), fill_mode: 'custom', show_borders: true };
+  });
+  await pickSpace(ids[0]);
+  // AC1: подложка без заливки → этаж с заливкой
+  const paperToFill = await switchRooms(ids[1]);
+  out.roomWitnessFixtureHolds = paperToFill.fixture;
+  out.noRoomTransitionOnSwitch = paperToFill.transitions;
+  out.noRoomNodeOutlivesTheSwitch = paperToFill.survivors;
+  out.newFloorRoomsBornInTheirFill = paperToFill.fill;
+  // AC2: состав списка меняется внутри пространства — новая комната первой
+  await pickSpace(ids[0]);
+  const kept = watchRooms();
+  const probeId = 'hp-742-probe';
+  await T.setServerConfig((cfg) => {
+    const space = spaceOf(cfg, ids[0]);
+    space.rooms = [
+      { id: probeId, name: 'probe', poly: [[0.04, 0.88], [0.2, 0.88], [0.2, 0.97], [0.04, 0.97]] },
+      ...space.rooms,
+    ];
+  });
+  const afterInsert = new Map(roomNodes().map((node) => [node.dataset.id, node]));
+  out.roomListGrewInsideTheSpace = afterInsert.size > kept.nodes.size && roomNodes()[0]?.dataset.id === probeId;
+  out.noRoomNodeSwappedInsideTheSpace = [...kept.nodes]
+    .filter(([id, node]) => afterInsert.get(id) !== node).map(([id]) => id);
+  out.quietRoomsAfterTheInsert = kept.stop();
+  // AC1, второй случай: `id` уникален только внутри пространства
+  const sharedId = spaceOf(c._serverCfg, ids[0]).rooms.find((room) => room.id !== probeId)?.id;
+  await T.setServerConfig((cfg) => {
+    spaceOf(cfg, ids[0]).rooms = spaceOf(cfg, ids[0]).rooms.filter((room) => room.id !== probeId);
+    spaceOf(cfg, ids[1]).rooms[0].id = sharedId;
+  });
+  const sameId = await switchRooms(ids[1]);
+  out.sameRoomIdOnBothFloors = sameId.fixture && !!sharedId && sameId.headId === sharedId;
+  out.noRoomTransitionOnSwitchWithSameId = sameId.transitions;
+  out.noRoomNodeOutlivesTheSwitchWithSameId = sameId.survivors;
+  out.sameIdRoomBornInItsFill = sameId.fill;
+  // AC3: настоящая смена заливки той же комнаты по-прежнему анимируется —
+  // ловит ложный фикс `transition: none`
+  await settle();
+  const filled = watchRooms();
+  await T.setServerConfig((cfg) => {
+    const second = spaceOf(cfg, ids[1]);
+    second.settings = { ...second.settings, custom_fill: { c: '#c62828', a: 0.5 } };
+  });
+  out.realFillChangeKeepsTheRoomNode = !!filled.nodes.get(sharedId)
+    && roomNodes().find((node) => node.dataset.id === sharedId) === filled.nodes.get(sharedId);
+  out.aRealFillChangeStillAnimates = filled.stop().includes(`${sharedId}:fill`);
+  // фикстуру разделов ниже не трогаем
+  await T.setServerConfig(initialCfg);
+  await pickSpace(initialSpace);
+
+  // ---- фикстура: дверь на одном месте в двух пространствах ---------------
   const physicalize = (space) => {
     for (const room of [...(space.rooms || [])]) {
       const rendered = c._spaceModelById(space.id)?.rooms?.find((item) => item.id === room.id);
@@ -205,5 +319,10 @@ const res = await page.evaluate(async () => {
   return out;
 });
 checkAll(res, { unexpectedAnimations: [], reusedMarkerNodes: [],
-  swappedMarkerNodes: [], swappedOpeningNodes: [] });
+  swappedMarkerNodes: [], swappedOpeningNodes: [],
+  noRoomTransitionOnSwitch: [], noRoomNodeOutlivesTheSwitch: [],
+  newFloorRoomsBornInTheirFill: FINAL_FILL,
+  noRoomNodeSwappedInsideTheSpace: [], quietRoomsAfterTheInsert: [],
+  noRoomTransitionOnSwitchWithSameId: [], noRoomNodeOutlivesTheSwitchWithSameId: [],
+  sameIdRoomBornInItsFill: FINAL_FILL });
 await finish(browser, res);

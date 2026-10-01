@@ -9903,6 +9903,35 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'rooms-rendered-without-keys',
+    guard: 'node demo/smoke_space_switch_transitions.mjs',
+    because: 'inside one space the room list still shifts (a room pushed first, merge, split, '
+      + 'the editor filter): a positional map() hands each room node to its neighbour, so the '
+      + 'node no longer belongs to its data-id and any fill difference replays the 0.12s .room '
+      + 'transition from the neighbour\'s value (#742 AC2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '              return keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {',
+      replace: '              return keyed(space.id, shownRooms.map((r) => {',
+    }],
+  },
+  {
+    id: 'rooms-rendered-without-space-key',
+    guard: 'node demo/smoke_space_switch_transitions.mjs',
+    because: 'room ids are unique only inside a space: without the outer space key repeat matches '
+      + 'r1 of the previous floor to r1 of the next one, keeps the node, and its fill draws in '
+      + 'from the previous floor\'s computed value — the white frame of #742 (AC1, same-id case)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '              return keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {',
+      replace: '              return repeat(shownRooms, (r, index) => r.id || index, (r) => {',
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: '              return svg`${shape}${outline}`;\n              }));\n            })()}',
+      replace: '              return svg`${shape}${outline}`;\n              });\n            })()}',
+    }],
+  },
+  {
     id: 'live-editor-devices-drops-align-guides',
     guard: 'node demo/smoke_align_guides.mjs',
     because: 'the device editor paints nothing else from a template, so dropping the guides '

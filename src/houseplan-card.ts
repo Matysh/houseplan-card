@@ -10946,7 +10946,10 @@ export class HouseplanCard extends LitElement {
               };
               const otherPolys = (rr: any) =>
                 space.rooms.filter((o) => o !== rr).map(polyOf).filter(Boolean) as number[][][];
-              return space.rooms.filter((r) => r.area || this._mode === 'view' || this._markup || disp.showBorders).map((r) => {
+              const shownRooms = space.rooms.filter((r) => r.area || this._mode === 'view' || this._markup || disp.showBorders);
+              // #742: keyed like openings and markers (plan.styles.ts, #525/#534/#742): a bare map() handed the
+              // previous floor's room node to the new floor, and `.room`'s transition drew its fill in from white.
+              return keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {
               let cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
               if (this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId))
                 cls += ' picked';
@@ -11060,7 +11063,7 @@ export class HouseplanCard extends LitElement {
                     style=${this._markup ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
                 : nothing;
               return svg`${shape}${outline}`;
-              });
+              }));
             })()}
             ${this._renderRoomHoverFill(roomHover)}
             ${this._renderOpeningTunnelFills(space, roomFills)}

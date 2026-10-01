@@ -490,7 +490,20 @@ export const planStyles = css`
        with an unresolved host is listed ONLY in plan mode (_openingsR), so
        entering and leaving the editor shifts the positions of the rest.
        Removing either half brings the phantom animation back through a
-       different door. Witnesses: demo/smoke_space_switch_transitions.mjs. */
+       different door.
+
+       #742: the room shapes share the rule. .room above transitions every
+       property for 0.12 s, and the flat room list was a bare map(): on a floor
+       switch the previous floor's room node became the new floor's room, and
+       its fill drew in from the stranger's value — one paper-white frame, then
+       darker than the fill. The list is now keyed(space.id, repeat(rooms,
+       (r, i) => r.id || i, ...)) for the same two reasons: room ids are unique
+       only inside a space, and inside a space insert, merge, split and the
+       editor's filter shift positions. An id-less room (the backend accepts
+       an empty id) keys by its index: a number never equals a string id in
+       repeat's key map. The transition itself stays — it is hover and a real
+       fill change on the same floor.
+       Witnesses: demo/smoke_space_switch_transitions.mjs. */
     .op-leaf {
       transition: transform 0.6s ease;
     }
