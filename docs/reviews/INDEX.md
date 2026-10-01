@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 236, issue: 115. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 237, issue: 116. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -8,6 +8,7 @@
 | #742 | [SPEC-REVIEW-742-r1.md](SPEC-REVIEW-742-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | устаревшее число в AC6 (не блокирует) | `src/houseplan-card.ts` `test/core-file-budget.test.mjs` |
 | #740 | [SPEC-REVIEW-740-r1.md](SPEC-REVIEW-740-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | устаревший номер строки в «Проблема», п.2 | `src/stairs-view.ts` `src/stairs-editor.ts` `stairs-view.ts` `stairs-editor.ts` `stairs.ts` `large-house.mjs` `matrix.mjs` |
 | #739 | [SPEC-REVIEW-739-r1.md](SPEC-REVIEW-739-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #738 | [CODE-REVIEW-738-r1.md](CODE-REVIEW-738-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #737 | [SPEC-REVIEW-737-r1.md](SPEC-REVIEW-737-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #732 | [CODE-REVIEW-732-r1.md](CODE-REVIEW-732-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #730 | [CODE-REVIEW-730-r1.md](CODE-REVIEW-730-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | текст сводки «повтор и ребейз не помогут» вводит в заблуждение именно в сценарии, котор… | `scripts/merge-candidate.mjs` |
