@@ -88,8 +88,17 @@ export function archivePlan({ names, lines, open, through, addedIn = new Map() }
     if (name === INDEX_FILE) continue;
     const doc = parseDocName(name);
     if (!doc) { kept.push({ name, reason: 'вне схемы имён' }); continue; }
+    if (doc.nightly && STABLE_TAG_RE.test(doc.tag)) {
+      // #727: ночной документ со стабильной базой читал код следующей линии —
+      // ближайшей архивируемой строго новее базы, а не самой базы (она выпущена).
+      const next = ordered.find((line) => compareStable(line.tag, doc.tag) > 0);
+      if (next) moves.push({ name, from: `${LIVE_DIR}/${name}`, to: `${ARCHIVE_DIR}/${next.tag}/${name}`, tag: next.tag, issue: null });
+      else kept.push({ name, reason: `ночное ревью после ${doc.tag}: архивируемой линии новее базы нет` });
+      continue;
+    }
     if (doc.stage === 'release' || doc.stage === 'ship') {
-      // #696: пакетное ревью беты уходит в каталог своей стабильной линии.
+      // #696: пакетное ревью беты уходит в каталог своей стабильной линии;
+      // #727: ночной документ с базой-бетой — туда же, куда документ этой беты.
       const line = doc.tag.replace(/-beta\.\d+$/, '');
       if (tags.has(line)) moves.push({ name, from: `${LIVE_DIR}/${name}`, to: `${ARCHIVE_DIR}/${line}/${name}`, tag: line, issue: null });
       else kept.push({ name, reason: `ревью линии ${line} не входит в архивируемые линии` });

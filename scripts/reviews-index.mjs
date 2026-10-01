@@ -29,7 +29,8 @@ export const INDEX_FILE = 'INDEX.md';
 const DOC_NAME = /^(CODE|SPEC)-REVIEW-(?:issue-)?(\d+)(?:-r(\d+))?(?:-([a-z0-9-]+))?\.md$/i;
 const RELEASE_DOC_NAME = /^RELEASE-REVIEW-(v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))\.md$/i;
 // #696: пакетное ревью ship-задач перед бетой (PROCESS.md §11.7) — по тегу беты.
-const SHIP_DOC_NAME = /^SHIP-REVIEW-(v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-beta\.(?:0|[1-9]\d*))?)\.md$/i;
+// #727: ночной документ `SHIP-REVIEW-<база>-dev-<sha12>.md` — тег здесь база диапазона.
+const SHIP_DOC_NAME = /^SHIP-REVIEW-(v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-beta\.(?:0|[1-9]\d*))?)(-dev-[0-9a-f]{12})?\.md$/i;
 const COLOUR = {
   'зелёный': 'зелёный', 'зеленый': 'зелёный', green: 'зелёный',
   'жёлтый': 'жёлтый', 'желтый': 'жёлтый', yellow: 'жёлтый',
@@ -46,7 +47,7 @@ export function parseDocName(name) {
   const release = RELEASE_DOC_NAME.exec(String(name));
   if (release) return { stage: 'release', issue: null, round: null, suffix: null, tag: release[1] };
   const ship = SHIP_DOC_NAME.exec(String(name));
-  if (ship) return { stage: 'ship', issue: null, round: null, suffix: null, tag: ship[1] };
+  if (ship) return { stage: 'ship', issue: null, round: null, suffix: null, tag: ship[1], ...(ship[2] ? { nightly: true } : {}) };
   const match = DOC_NAME.exec(String(name));
   if (!match) return null;
   return {
@@ -315,7 +316,9 @@ export function renderIndex({ entries, skipped = [] }) {
     const av = tagKey(a.tag);
     const bv = tagKey(b.tag);
     for (let i = 0; i < 4; i += 1) if (av[i] !== bv[i]) return bv[i] - av[i];
-    return a.stage.localeCompare(b.stage);
+    // #727: ночной документ читал код после своей базы — он новее документов этого тега.
+    if (Boolean(a.nightly) !== Boolean(b.nightly)) return a.nightly ? -1 : 1;
+    return a.stage.localeCompare(b.stage) || a.name.localeCompare(b.name);
   });
   const byIssue = new Map();
   for (const entry of entries.filter((item) => item.issue != null)) {
@@ -332,7 +335,8 @@ export function renderIndex({ entries, skipped = [] }) {
   lines.push('| Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |');
   lines.push('|---|---|---|---|---:|---:|---|---|');
   for (const doc of releaseDocs) {
-    const [who, what] = doc.stage === 'ship' ? ['бета', 'пакетное ревью ship'] : ['линия', 'ревью линии'];
+    const [who, what] = doc.nightly ? ['ночь после', 'ночное пакетное ревью ship']
+      : doc.stage === 'ship' ? ['бета', 'пакетное ревью ship'] : ['линия', 'ревью линии'];
     lines.push(`| ${who} ${doc.tag} | [${doc.name}](${doc.name}) | ${what} · — | ${badge(doc.verdict)} ${doc.verdict} | ${doc.high} | ${doc.medium} | ${doc.findings.join('; ').replace(/\|/g, '\\|') || '—'} | ${(doc.files || []).map((f) => `\`${f}\``).join(' ') || '—'} |`);
   }
   for (const issue of issues) {

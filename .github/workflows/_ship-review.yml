@@ -8,6 +8,11 @@ name: "Бета: пакетное ревью ship · тело (#716)"
 #
 # Три job, как у release-review.yml (#551, #556): детерминированный вход,
 # модель без права записи, детерминированная публикация документа в `dev`.
+#
+# #727: `tag=nightly` — ночной режим. Его запускает `_nightly.yml` после
+# полного Validate с `candidate` = голова `dev` того прогона. Читаются только
+# ship-задачи без покрытия или изменившиеся после ревью (`shipCoverage`), документ —
+# `SHIP-REVIEW-<база>-dev-<sha12>.md`. Бета так же читает только дельту.
 
 on:
   # #716: тело вызывается тонким файлом `ship-review.yml` по ссылке `@dev`;
@@ -15,6 +20,7 @@ on:
   # файла в ветке по умолчанию GitHub не даёт запустить workflow_dispatch вовсе.
   workflow_call:
     inputs:
+      # #727: `nightly` — зарезервированное значение (ночной режим, candidate обязателен).
       tag:
         description: "Beta tag the review is for, for example v1.79.0-beta.1"
         required: true
@@ -49,6 +55,9 @@ jobs:
       base: ${{ steps.range.outputs.base }}
       doc: ${{ steps.range.outputs.doc }}
       issues: ${{ steps.range.outputs.issues }}
+      mode: ${{ steps.range.outputs.mode }}
+      patches: ${{ steps.range.outputs.patches }}
+      subject: ${{ steps.range.outputs.subject }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -69,24 +78,31 @@ jobs:
           FORCE: ${{ inputs.force }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          doc=$(node scripts/ship-review.mjs doc --tag="$TAG")
+          # Отказ prepare за `| tee` не должен читаться как «ship-задач нет» (#727).
+          set -o pipefail
           git fetch -q --tags origin
+          # #727: tag=nightly без candidate — отказ до подстановки вершины dev.
+          node scripts/ship-review.mjs mode --tag="$TAG" --candidate="$CANDIDATE"
           if [ -z "$CANDIDATE" ]; then CANDIDATE=$(git rev-parse origin/dev); fi
           git cat-file -e "$CANDIDATE^{commit}"
           CANDIDATE=$(git rev-parse "$CANDIDATE^{commit}")
+          doc=$(node scripts/ship-review.mjs doc --tag="$TAG" --candidate="$CANDIDATE")
           if [ "$FORCE" != "true" ] && git cat-file -e "origin/dev:$doc" 2>/dev/null; then
             echo "::notice::$doc уже есть в dev — повторное ревью не запускается (force=true, чтобы переснять)"
             echo "proceed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           out="$RUNNER_TEMP/ship-review-input"
-          node scripts/ship-review.mjs prepare --tag="$TAG" --candidate="$CANDIDATE" \
+          node scripts/ship-review.mjs prepare --tag="$TAG" --candidate="$CANDIDATE" --force="$FORCE" \
             --out="$out" --repo="${{ github.repository }}" --run-url="$RUN_URL" | tee "$RUNNER_TEMP/range.txt"
           cat "$RUNNER_TEMP/range.txt" >> "$GITHUB_OUTPUT"
           echo "candidate=$CANDIDATE" >> "$GITHUB_OUTPUT"
           issues=$(sed -n 's/^issues=//p' "$RUNNER_TEMP/range.txt")
           if [ -z "$issues" ]; then
-            echo "::notice::ship-задач в диапазоне нет — ревью не нужно"
+            # #727 К5: пустая дельта — все ship-задачи покрыты документами базы.
+            note=$(sed -n 's/^note=//p' "$RUNNER_TEMP/range.txt")
+            echo "::notice::${note:-ship-задач в диапазоне нет — ревью не нужно}"
+            if [ -n "$note" ]; then echo "- $note" >> "$GITHUB_STEP_SUMMARY"; fi
             echo "proceed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -183,8 +199,9 @@ jobs:
           prompt: |
             Ты ревьюер кода проекта House Plan. Язык ответа — русский.
 
-            Бета: ${{ inputs.tag }} · кандидат ${{ needs.prepare.outputs.candidate }}
-            (рабочая копия уже на нём) · база диапазона: ${{ needs.prepare.outputs.base || 'нет' }}.
+            ${{ needs.prepare.outputs.subject }}
+            Кандидат ${{ needs.prepare.outputs.candidate }} (рабочая копия уже на нём) · база
+            диапазона: ${{ needs.prepare.outputs.base || 'нет' }}.
             Задачи: ${{ needs.prepare.outputs.issues }} — вход в $REVIEW_INPUT/brief.md
             (строка ТЗ каждой задачи и её коммиты) и $REVIEW_INPUT/ship-issues.json.
 
@@ -271,7 +288,8 @@ jobs:
           path: ${{ runner.temp }}/ship-review-result
 
       # Модель пишет только текст. Путь, машинный блок (его читает гейт беты),
-      # индекс и коммит решает этот шаг.
+      # индекс и коммит решает этот шаг. #727: `mode` и `patches` блока — из
+      # prepare (детерминированный патч-набор), не из результата модели.
       - name: Опубликовать документ
         env:
           TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
@@ -280,11 +298,13 @@ jobs:
           CANDIDATE: ${{ needs.prepare.outputs.candidate }}
           BASE: ${{ needs.prepare.outputs.base }}
           ISSUES: ${{ needs.prepare.outputs.issues }}
+          MODE: ${{ needs.prepare.outputs.mode }}
+          PATCHES: ${{ needs.prepare.outputs.patches }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           dir="$RUNNER_TEMP/ship-review-result"
           (cd "$dir" && sha256sum -c manifest.sha256)
-          test "$DOC" = "$(node scripts/ship-review.mjs doc --tag="$TAG")"
+          test "$DOC" = "$(node scripts/ship-review.mjs doc --tag="$TAG" --candidate="$CANDIDATE")"
           high=$(jq -r '.high' "$dir/result.json")
           medium=$(jq -r '.medium' "$dir/result.json")
           low=$(jq -r '.low' "$dir/result.json")
@@ -301,7 +321,7 @@ jobs:
                   tag: process.env.TAG, candidate: process.env.CANDIDATE, base: process.env.BASE || null,
                   issues: String(process.env.ISSUES || "").split(",").filter(Boolean).map(Number),
                   high: Number(process.argv[1]), medium: Number(process.argv[2]), low: Number(process.argv[3]),
-                  runUrl: process.env.RUN_URL,
+                  runUrl: process.env.RUN_URL, mode: process.env.MODE, patches: m.parsePatches(process.env.PATCHES),
                 })));
               ' "$high" "$medium" "$low"
             } > "$DOC"
@@ -331,3 +351,19 @@ jobs:
           done
           echo "::error::документ ревью не опубликован в dev за три попытки"
           exit 1
+
+      # #727 К8: High ночного документа — одна строка в каждую его задачу.
+      # Повтор на тот же документ не пишется (метка hp:ship-review-high doc=…),
+      # Medium и Low в issue не идут — их решает владелец (§11.7). Режим и
+      # High проверяет и скрипт: шаг вне ночи или без High ничего не пишет.
+      - name: High ночью — строка в задачи документа
+        if: needs.prepare.outputs.mode == 'nightly'
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          MODE: ${{ needs.prepare.outputs.mode }}
+          DOC: ${{ needs.prepare.outputs.doc }}
+          ISSUES: ${{ needs.prepare.outputs.issues }}
+        run: |
+          high=$(jq -r '.high' "$RUNNER_TEMP/ship-review-result/result.json")
+          node scripts/ship-review.mjs comment-high --mode="$MODE" --high="$high" --doc="$DOC" \
+            --issues="$ISSUES" --repo="${{ github.repository }}"

@@ -18,6 +18,11 @@
 # успехом в момент постановки Validate в очередь, и красный полный прогон не
 # делал ночной workflow красным. Теперь job находит запущенный прогон и ждёт
 # его: успешный dispatch — не успешная проверка.
+#
+# #727: после Validate при любом его исходе ночь запускает пакетное ревью ship
+# (`ship-review.yml -f tag=nightly`) на SHA прогона Validate: оно читает код, а
+# не прогон. Ship-задача узнаёт о дефектах в ночь после слияния, а бета читает
+# только то, что ночь не прочла (PROCESS.md §11.7). Цвет ночи — цвет Validate.
 name: "Ночной полный прогон dev · тело (#623)"
 
 on:
@@ -34,6 +39,9 @@ jobs:
     name: "Запустить Validate на dev с полным набором и дождаться результата"
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    outputs:
+      # #727: SHA прогона Validate — отдельным шагом до ожидания, красный Validate его не теряет.
+      head_sha: ${{ steps.validate.outputs.head_sha }}
     steps:
       # #658: при плане 02:30 UTC ночь фактически стартовала в 07:42–08:05 и
       # кончалась в рабочее время владельца. Сдвиг старта больше часа — видимое
@@ -55,7 +63,9 @@ jobs:
           if [ "$lag" -gt 60 ]; then
             echo "::warning::ночной прогон стартовал на $lag мин позже расписания ($SCHEDULE UTC) — очередь расписаний GitHub (#658)"
           fi
-      - env:
+      - name: "Запустить Validate и найти его прогон"
+        id: validate
+        env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
@@ -80,5 +90,62 @@ jobs:
           url="${{ github.server_url }}/$REPO/actions/runs/$run_id"
           echo "дочерний прогон: $url"
           echo "- Validate(dev, full=true): $url" >> "$GITHUB_STEP_SUMMARY"
+          head_sha=$(gh run view "$run_id" --repo "$REPO" --json headSha --jq .headSha)
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+      - name: "Дождаться Validate"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ steps.validate.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          run_id="$RUN_ID"
           # Ждём завершения; красный дочерний прогон — красный ночной.
           gh run watch "$run_id" --repo "$REPO" --exit-status --interval 30
+
+  # #727 К6: ночное пакетное ревью ship на SHA прогона Validate — при любом его
+  # исходе. Dispatch тонкого `ship-review.yml` (`github.token` порождает прогон,
+  # как у Validate; входы и права тонких файлов уже в main). Job ждёт только
+  # появления прогона, не его конца; не появился — предупреждение, не красная
+  # ночь: цвет ночи — цвет Validate.
+  ship_review:
+    name: "Запустить ночное пакетное ревью ship на SHA прогона Validate"
+    needs: dispatch
+    if: always()
+    continue-on-error: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: "Запустить ship-ревью и дождаться появления прогона"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CANDIDATE: ${{ needs.dispatch.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CANDIDATE" ]; then
+            echo "::warning::нет SHA прогона Validate — ночное ship-ревью не запущено"
+            echo "- Ship-ревью ночью: не запущено — нет SHA прогона Validate" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          since=$(date -u +%FT%TZ)
+          if ! gh workflow run ship-review.yml --ref dev -f tag=nightly -f candidate="$CANDIDATE" --repo "$REPO"; then
+            echo "::warning::ship-ревью ночью не запущено: dispatch отклонён — ночь не красится"
+            echo "- Ship-ревью ночью: dispatch отклонён" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          run_id=""
+          for _ in $(seq 1 18); do
+            sleep 10
+            run_id=$(gh run list --repo "$REPO" --workflow ship-review.yml --branch dev \
+              --event workflow_dispatch --json databaseId,createdAt --limit 5 \
+              --jq "[.[] | select(.createdAt >= \"$since\")] | sort_by(.createdAt) | last | .databaseId // empty")
+            [ -n "$run_id" ] && break
+          done
+          if [ -z "$run_id" ]; then
+            echo "::warning::прогон ship-ревью не появился за 3 минуты — ночь не красится, её цвет — цвет Validate"
+            echo "- Ship-ревью ночью (\`$CANDIDATE\`): прогон не появился за 3 минуты" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "- Ship-ревью ночью (\`$CANDIDATE\`): ${{ github.server_url }}/$REPO/actions/runs/$run_id" >> "$GITHUB_STEP_SUMMARY"
