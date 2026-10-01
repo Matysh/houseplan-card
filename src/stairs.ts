@@ -328,6 +328,43 @@ export function cachedStairRenderGeometry(
   return geometry;
 }
 
+/** Attribute strings of one stair symbol, shared by the View and plan-editor layers. */
+export interface StairMarkup {
+  /** `points` of the outline polygon and of its hit twin. */
+  outline: string;
+  /** `d` of the single tread path; empty when the stair has no treads. */
+  treads: string;
+}
+
+/**
+ * #740: all treads of one stair are a single `<path>`, one `M a L b` subpath
+ * per tread in geometry order with the numbers the separate `<line>`s carried.
+ * Treads of one stair never overlap (parallel ≥ 20 cm apart; spiral inner ends
+ * ≥ 6.7 cm apart at the 3.6 cm stroke), so the path paints the same pixels.
+ */
+export function stairTreadPath(treads: readonly StairLine[]): string {
+  return treads.map((line) => `M ${line.a[0]} ${line.a[1]} L ${line.b[0]} ${line.b[1]}`).join(' ');
+}
+
+const MARKUP_CACHE = new WeakMap<StairRenderGeometry, StairMarkup>();
+
+/**
+ * The strings are built once per geometry object, not on every render: the
+ * render-geometry cache hands out a new object only when the geometry changes,
+ * and weak keys release the strings together with it.
+ */
+export function cachedStairMarkup(geometry: StairRenderGeometry): StairMarkup {
+  let markup = MARKUP_CACHE.get(geometry);
+  if (!markup) {
+    markup = {
+      outline: geometry.outline.map((point) => point.join(',')).join(' '),
+      treads: stairTreadPath(geometry.treads),
+    };
+    MARKUP_CACHE.set(geometry, markup);
+  }
+  return markup;
+}
+
 export function stairFootprintGeometry(stair: Stair, scale = NORM_W): Geom {
   const ring = stairOutline(stair, scale);
   return (ring.length ? [[[...ring, ring[0]]]] : []) as unknown as Geom;

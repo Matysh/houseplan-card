@@ -145,7 +145,10 @@ links are cleared; a one-space transfer cannot invent an external target.
 ## Implementation boundary
 
 - `src/stairs.ts` owns validation, drawing geometry and area-subtraction
-  primitives.
+  primitives. The View and plan-editor symbols draw all treads of a stair as
+  one `<path class="hp-stair-tread">` (one `M a L b` subpath per tread, #740);
+  its `d` and the outline points are built once per cached geometry object
+  (`cachedStairMarkup`), not on every render.
 - `src/stairs-view.ts` is the eager read-only boundary for symbols, guarded
   navigation and touch/pointer gesture suppression.
 - `src/stairs-editor-model.ts` keeps the eager-safe helpers the View runtime

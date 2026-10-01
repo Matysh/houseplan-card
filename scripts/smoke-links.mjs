@@ -600,6 +600,14 @@ export const SMOKE_LINKS = [
       + 'browser bundle exposes the helper name in its test steps',
   },
   {
+    symbols: ['cachedStairMarkup', 'stairTreadPath', 'StairMarkup'],
+    smokes: ['smoke_stairs.mjs'],
+    because: '#740: the strings of the stair symbol are observed only as the production markup of '
+      + 'the View and plan-editor layers — one `path.hp-stair-tread` whose `M` subpaths count the '
+      + 'physical treads, the outline and hit polygons, navigation and the editor gestures on them; '
+      + 'no smoke names the helpers',
+  },
+  {
     // #234: единый резолвер толщины отрезка цепочки. Смок перехода между
     // толщинами не называет ни `chainSegmentCms`, ни `_wallChainSegmentCms` — он
     // рисует стены инструментом и проверяет, что кладка на стыке толщин

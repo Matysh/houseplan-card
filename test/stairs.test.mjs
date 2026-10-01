@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import { optimizePlans } from '../test-build/plan-optimizer.js';
 import {
+  cachedStairMarkup,
   cachedStairRenderGeometry,
   floorAreaMinusStairs,
   geometryAreaMinusStairs,
@@ -17,6 +18,7 @@ import {
   stairStrokePrintMm,
   stairStrokeUnits,
   stairStyleVars,
+  stairTreadPath,
   stairVisualFields,
   stairVisualStyle,
 } from '../test-build/stairs.js';
@@ -210,6 +212,49 @@ test('#663 cached render geometry survives live repaints and invalidates only on
   item.angle = 45;
   const changed = cachedStairRenderGeometry(item, 5);
   assert.notEqual(changed, first, 'in-place edits cannot leave a stale cache entry');
+});
+
+test('#740 AC1 all treads of a stair are one path with the separate lines\' numbers', () => {
+  const joined = (treads) => treads
+    .map((line) => `M ${line.a[0]} ${line.a[1]} L ${line.b[0]} ${line.b[1]}`).join(' ');
+  const cases = [
+    ['straight forward', straight({ angle: 17 })],
+    ['straight backward', straight({ direction: 'backward', angle: -33 })],
+    ['spiral clockwise', spiral({ angle: 30 })],
+    ['spiral counterclockwise', spiral({ direction: 'counterclockwise' })],
+  ];
+  for (const [label, stair] of cases) {
+    const geometry = stairRenderGeometry(stair, 5);
+    assert.ok(geometry.treads.length > 1, `${label}: the fixture has treads`);
+    assert.equal(stairTreadPath(geometry.treads), joined(geometry.treads), label);
+    const markup = cachedStairMarkup(geometry);
+    assert.equal(markup.treads, joined(geometry.treads), `${label}: treads in geometry order`);
+    assert.equal(markup.treads.match(/M /g).length, geometry.treads.length,
+      `${label}: one subpath per tread`);
+    assert.equal(markup.treads.match(/L /g).length, geometry.treads.length, label);
+    assert.equal(markup.outline, geometry.outline.map((point) => point.join(',')).join(' '),
+      `${label}: the outline points are the polygon's former string`);
+  }
+  const short = stairRenderGeometry(straight({ length: 35 / 1200 }), 5);
+  assert.equal(short.treads.length, 0, 'a straight stair shorter than 40 cm has one interval');
+  assert.equal(stairTreadPath(short.treads), '');
+  assert.equal(cachedStairMarkup(short).treads, '', 'no treads, no path data');
+});
+
+test('#740 AC1 tread and outline strings are built once per geometry object', () => {
+  const item = straight();
+  const geometry = cachedStairRenderGeometry(item, 5);
+  const first = cachedStairMarkup(geometry);
+  assert.equal(cachedStairMarkup(geometry), first, 'the same geometry reuses the built strings');
+  assert.equal(cachedStairMarkup(cachedStairRenderGeometry(item, 5)), first,
+    'a repaint of an unchanged stair reuses them through the geometry cache');
+  item.angle = 45;
+  const moved = cachedStairMarkup(cachedStairRenderGeometry(item, 5));
+  assert.notEqual(moved, first, 'a geometry change builds new strings');
+  assert.notEqual(moved.treads, first.treads);
+  const copy = stairRenderGeometry(item, 5);
+  assert.notEqual(cachedStairMarkup(copy), moved, 'the cache key is the geometry object');
+  assert.deepEqual(cachedStairMarkup(copy), moved, 'equal geometry yields equal strings');
 });
 
 test('#663 stair magnet covers rectangle/rectangle, rectangle/circle and circle/circle footprints', () => {

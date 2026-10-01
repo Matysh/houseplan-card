@@ -269,6 +269,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `space-card-rooms-rendered-without-keys`
 - `space-create-hidden-display-override`
 - `stairs-view-pan-opens-target-floor`
+- `stairs-view-tread-lines`
 - `support-invalid-response-leaks-issued-token`
 - `support-stale-preview-response-revives-consent`
 - `support-timeout-claims-success`

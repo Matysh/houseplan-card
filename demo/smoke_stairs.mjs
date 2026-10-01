@@ -96,6 +96,30 @@ const out = await page.evaluate(async () => {
   };
   const activeSpace = () => root().querySelector('[data-hp="space-tab"][aria-current="page"]')
     ?.getAttribute('data-id');
+  // #740 AC2: all treads of one stair are a single path whose `M` subpaths
+  // count the physical treads — equal intervals closest to 30 cm, ties upward
+  // (#683); a straight run draws the inner divisions, a spiral every radius.
+  const intervals = (cm) => {
+    const lower = Math.max(1, Math.floor(cm / 30));
+    const upper = Math.max(1, Math.ceil(cm / 30));
+    return Math.abs(cm / upper - 30) <= Math.abs(cm / lower - 30) ? upper : lower;
+  };
+  const physicalTreads = (stair, cellCm) => (stair.kind === 'straight'
+    ? intervals(stair.length * cellCm * 240) - 1
+    : intervals(Math.PI * 2 * (stair.radius * 2 / 3) * cellCm * 240));
+  const treadsAreOnePath = (id, trapezoids, layer) => {
+    const node = stairNode(id);
+    const stair = stairs().find((item) => item.id === id);
+    const count = (selector) => node?.querySelectorAll(selector).length ?? -1;
+    const subpaths = node?.querySelector('path.hp-stair-tread')?.getAttribute('d')?.match(/M/g)?.length ?? 0;
+    // The View layer marks its symbols; the plan editor's are unmarked.
+    return !!node && !!stair && node.classList.contains('hp-stair-view') === (layer === 'view')
+      && count('path.hp-stair-tread') === 1 && count('line.hp-stair-tread') === 0
+      && count('.hp-stair-tread') === 1 && count('.hp-stair-trapezoid') === trapezoids
+      && count('.hp-stair-arrow') === 1 && count('.hp-stair-outline') === 1
+      && count('.hp-stair-hit') === 1
+      && subpaths > 0 && subpaths === physicalTreads(stair, spaceCfg('f1').cell_cm);
+  };
   const closeTo = (a, b, tolerance = 1e-5) => Math.abs(a - b) <= tolerance;
   const pathClose = (a, b, tolerance = 1e-5) => {
     const numbers = (value) => String(value || '').match(/-?\d+(?:\.\d+)?/g)?.map(Number) || [];
@@ -162,6 +186,8 @@ const out = await page.evaluate(async () => {
   result.straightHasTrapezoidAndSpiralDoesNot =
     stairNode(straight.id)?.querySelectorAll('.hp-stair-trapezoid').length === 3
     && stairNode(spiral.id)?.querySelectorAll('.hp-stair-trapezoid').length === 0;
+  result.editorTreadsAreOnePath = treadsAreOnePath(straight.id, 3, 'editor')
+    && treadsAreOnePath(spiral.id, 0, 'editor');
 
   // A legacy record remains untouched on read; its first explicit Save writes
   // the complete visual quartet using the current decor fallback.
@@ -442,6 +468,8 @@ const out = await page.evaluate(async () => {
 
   await hp.setMode('view');
   let linkedNode = stairNode(straight.id);
+  result.viewTreadsAreOnePath = treadsAreOnePath(straight.id, 3, 'view')
+    && treadsAreOnePath(spiral.id, 0, 'view');
   result.validLinkIsAccessible = linkedNode?.getAttribute('role') === 'link'
     && linkedNode?.getAttribute('data-target-state') === 'active'
     && getComputedStyle(linkedNode).cursor === 'pointer';

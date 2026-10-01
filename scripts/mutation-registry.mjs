@@ -120,6 +120,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'stairs-view-tread-lines',
+    guard: 'node demo/smoke_stairs.mjs',
+    because: '#740 AC2: all treads of one stair are a single path; separate tread lines bring '
+      + 'back 3–7 DOM elements per stair that every floor switch rebuilds.',
+    patches: [{
+      file: 'src/stairs-view.ts',
+      find: '        ${markup.treads ? svg`<path class="hp-stair-tread" d=${markup.treads}></path>` : nothing}\n',
+      replace: '        ${geometry.treads.map((line) => svg`<line class="hp-stair-tread"\n'
+        + '          x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}\n',
+    }],
+  },
+  {
     id: 'stairs-fixed-floor-still-navigates',
     guard: 'node demo/smoke_stairs.mjs',
     because: '#663 AC8: fixed-floor cards show stairs but never promise or perform navigation.',
