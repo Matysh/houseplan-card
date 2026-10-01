@@ -194,7 +194,42 @@ test('#634 промпт ревьюера: конспект вместо пере
     'Затем верни JSON по схеме',
   ]) assert.ok(flat.includes(required), `промпт потерял: ${required}`);
   // Правила живут в каноне; промпт, снова набравший пересказ, — возврат к 60–90 k
-  // контекста до первого git diff (аудит 22.09). До #634 — 1 642 слова.
+  // контекста до первого git diff (аудит 22.09). До #634 — 1 642 слова, к #750 —
+  // ровно 1 400, после #750 — 1 130: порог прежний, разница — запас.
   const words = prompt.split(/\s+/).filter(Boolean).length;
   assert.ok(words <= 1400, `промпт ревьюера ${words} слов > 1400`);
+  // #750 AC1: мёртвая строка мутантов (с #709 `mutants` всегда false) и правило
+  // всех треков, которое REVIEWER.md уже несёт, в промпт не возвращаются.
+  assert.doesNotMatch(prompt, /needs\.prepare\.outputs\.mutants/, 'промпт читает мёртвый выход mutants');
+  assert.doesNotMatch(flat, /Отсутствие мутантов/, 'правило «отсутствие мутантов — не находка» — в REVIEWER.md, не в промпте');
+});
+
+// #750 AC2: промпт вместо пересказа ссылается на разделы конспекта — ссылка
+// без раздела оставила бы ревьюера без правила, которое промпт больше не несёт.
+test('#750 AC2: ссылки промпта на REVIEWER.md ведут в существующие разделы; перенесённое на месте', () => {
+  const workflow = read('.github/workflows/_process.yml');
+  const prompt = workflow.slice(workflow.indexOf('          prompt: |\n'), workflow.indexOf('          claude_args: |'));
+  const flat = prompt.replace(/\s+/g, ' ');
+  const reviewer = read('docs/process/REVIEWER.md');
+  const sections = new Set(headings(reviewer).filter((h) => h.level === 2).map((h) => h.text));
+  const cited = [...flat.matchAll(/docs\/process\/REVIEWER\.md, «([^»]+)»/g)].map((m) => m[1]);
+  for (const name of ['Трек show', 'Повторный раунд', 'Объём гейтов', 'Находки и вердикт']) {
+    assert.ok(cited.includes(name), `промпт не ссылается на «${name}»`);
+  }
+  for (const name of cited) assert.ok(sections.has(name), `REVIEWER.md: нет раздела «## ${name}», на который ссылается промпт`);
+  // Запрет на отдельный issue для Medium в скоупе остаётся в промпте: модель
+  // заводит issue сама, и ошибка дорогая.
+  assert.ok(flat.includes('отдельный issue НЕ заводится (#202)'), 'промпт потерял запрет на issue для Medium в скоупе');
+
+  const bullets = (anchor) => topLevelBullets(sectionText(reviewer, anchor) ?? '');
+  const gates = bullets('объём-гейтов');
+  const uncertain = gates.find((bullet) => bullet.includes('НЕОПРЕДЕЛЁННОСТЬ'));
+  assert.ok(uncertain, '«Объём гейтов»: нет трёх ответов smoke-select с «НЕОПРЕДЕЛЁННОСТЬ»');
+  assert.match(uncertain, /связь не доказана/);
+  assert.ok(markdownLinks(uncertain).some((link) => link.file.endsWith('TESTING.md')), 'ответы smoke-select ссылаются на docs/TESTING.md');
+  assert.ok(gates.some((bullet) => /инвариант/i.test(bullet) && bullet.includes('непрогнанный гейт')),
+    '«Объём гейтов»: нет строки «геометрия без инвариантов в отчёте — непрогнанный гейт»');
+  const delta = norm(bullets('повторный-раунд').join('\n'));
+  assert.ok(delta.includes(norm('дифф тела issue')), '«Повторный раунд»: дельта ТЗ — дифф тела issue');
+  assert.ok(delta.includes(norm('Сомнение в локальности — полный разбор')), '«Повторный раунд»: сомнение — полный разбор');
 });
