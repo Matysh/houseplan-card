@@ -13843,6 +13843,35 @@ const MUTANT_DEFINITIONS = [
       replace: "      host.setAttribute('lang', lang); // mutant: written on every render\n",
     }],
   },
+  // #725 AC5: принудительные layout в пути рендера — возврат ловит AST-гейт.
+  {
+    id: 'iso-scene-reads-stage-box-during-render',
+    guard: 'node scripts/render-layout-read.mjs',
+    because: '#725 AC5: _isoScene runs inside _renderBody through _effectiveProjection; reading '
+      + 'the stage box there forces a synchronous layout on every 2.5D floor render, and the fit '
+      + 'frame does not depend on the aspect since #713',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const aspect = scene.frame.w / scene.frame.h; // #713/#725: the fit frame ignores aspect; no layout read in render\n',
+      replace: '    const stageSize = this._stageEl?.getBoundingClientRect?.() ?? null;\n'
+        + '    const aspect = stageSize?.height ? stageSize.width / stageSize.height : scene.frame.w / scene.frame.h;\n',
+    }],
+  },
+  {
+    id: 'summary-layout-reads-safe-insets-during-render',
+    guard: 'node scripts/render-layout-read.mjs',
+    because: '#725 AC5: the summary panel computes layout() up to five times per card render; '
+      + 'reading the safe-area probe style there forces a style recalculation each time instead of '
+      + 'using the insets measureLayout stored',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: '    return resolveSummaryLayout({ ...this.stage, controlTop: this.host._kiosk ? this.stage.controlTop : 0 });\n',
+      replace: "    const probe = this.host.renderRoot.querySelector('.summary-safe-probe') as HTMLElement | null;\n"
+        + '    const style = probe ? this.host.ownerDocument.defaultView?.getComputedStyle(probe) : undefined;\n'
+        + '    return resolveSummaryLayout({ ...this.stage, safeTop: Number.parseFloat(style?.paddingTop ?? \'\') || 0,\n'
+        + '      controlTop: this.host._kiosk ? this.stage.controlTop : 0 });\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

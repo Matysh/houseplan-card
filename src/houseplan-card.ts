@@ -301,6 +301,7 @@ import { HeaderMenu, headerMenuItems, renderHeaderActions } from './header-menu'
 import { isoWallMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
 import { renderIsoTileShadow } from './iso-tiles';
 import { displayVersion } from './card-version';
+import { ConfigFingerprintPass } from './config-fingerprint-pass';
 const CARD_VERSION = '1.79.0-beta.1';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
@@ -3770,6 +3771,7 @@ export class HouseplanCard extends LitElement {
   private _cfgEpochPreservedConfig: ServerConfig | null = null;
   private _terminalFrame: 0 | 1 | 2 = 0; // 1=restored cancel, 2=deferred HA
   private _modelCache: { key: string; model: SpaceModel[] } | null = null;
+  private readonly _cfgPass = new ConfigFingerprintPass(); // #725: one fingerprint per willUpdate→render pass
   private _emptySpaceStateActive = false;
   private _decorSnapCache: {
     epoch: number; space: string; height: number; exclude: string; geometry: SnapGeometry;
@@ -3810,8 +3812,9 @@ export class HouseplanCard extends LitElement {
   private get _model(): SpaceModel[] {
     if (!this._serverCfg) return [];
     // In-place mutations mean the epoch can lag, so the key also carries the
-    // config's structural fingerprint.
-    const key = this._cfgEpoch + '|' + this._cfgFingerprint();
+    // config's structural fingerprint. #725: a pass remembers the whole key; a kept
+    // fingerprint glued anew on every read measured slower in 2.5D than no memo.
+    const key = this._cfgPass.read(this._cfgEpoch, this._serverCfg, () => this._cfgEpoch + '|' + this._cfgFingerprint());
     if (this._modelCache && this._modelCache.key === key) return this._modelCache.model;
     const built = this._buildModel();
     this._modelCache = { key, model: built };
@@ -3998,7 +4001,7 @@ export class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    this._isoProjectionSnapshot = null; this._isoFirstFrame.prepare(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes)); this._syncVolumetricSetting(); this._summary?.willUpdate();
+    this._cfgPass.begin(); this._isoProjectionSnapshot = null; this._isoFirstFrame.prepare(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes)); this._syncVolumetricSetting(); this._summary?.willUpdate();
     if (changed.has('hass')) {
       // Observe every user/connection transition, including A→B→A while an
       // old promise is waiting. Equality at completion must not revive it.
@@ -5995,14 +5998,13 @@ export class HouseplanCard extends LitElement {
     });
     if (!space || !disp.showBorders) return scene;
     const cfgSize = this._config?.icon_size ?? 2.5, iconPct = cfgSize > 8 ? 2.5 : cfgSize;
-    const stageSize = this._stageEl?.getBoundingClientRect?.() ?? null;
-    const aspect = stageSize?.height ? stageSize.width / stageSize.height : scene.frame.w / scene.frame.h;
+    const aspect = scene.frame.w / scene.frame.h; // #713/#725: the fit frame ignores aspect; no layout read in render
     const overlays = this._isoOverlayScene(
       space, this._renderDevices.filter((device) => device.space === space.id && !device.hidden),
       disp, runtime.resolveIsoDecorationLayers(disp), scene, iconPct, effectiveDeviceBaseSize(iconPct),
       disp.showLqi ?? this._config?.show_signal ?? true);
     const envelope = overlays && runtime.resolveIsoOverlayFitEnvelope({
-      baseBounds: scene.frame, entries: overlays.entries, stageSize, targetView: (bounds) =>
+      baseBounds: scene.frame, entries: overlays.entries, stageSize: null, targetView: (bounds) =>
         fitView([bounds.x, bounds.y, bounds.w, bounds.h], aspect) });
     return envelope ? { ...scene, frame: envelope.bounds, overlayFitEntries: overlays.entries } : scene;
   }
@@ -10568,12 +10570,14 @@ export class HouseplanCard extends LitElement {
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {
-    const body = this._renderBody();
-    // `nothing` is the only root that has no decision surface. `noChange` is
-    // deliberately nested: it preserves the committed body while allowing the
-    // sibling hp-confirm to settle/cancel on a ready -> warm transition.
-    if (body === nothing) return body;
-    return this._renderRoot(body);
+    try {
+      const body = this._renderBody();
+      // `nothing` is the only root that has no decision surface. `noChange` is
+      // deliberately nested: it preserves the committed body while allowing the
+      // sibling hp-confirm to settle/cancel on a ready -> warm transition.
+      if (body === nothing) return body;
+      return this._renderRoot(body);
+    } finally { this._cfgPass.end(); } // #725: the pass ends with render, before DOM commit and updated()
   }
 
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {

@@ -3,6 +3,27 @@ const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
+  const root = c.shadowRoot || c.renderRoot;
+  const frames = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  // #725 AC2: an update pass (willUpdate → render) builds the config
+  // fingerprint at most once, however often it reads `_model`. A floor switch
+  // through the real tab is the hot path the fingerprint used to dominate.
+  let fingerprintBuilds = 0;
+  const passBuilds = [];
+  const origFingerprint = c._cfgFingerprint.bind(c);
+  c._cfgFingerprint = (...a) => { fingerprintBuilds++; return origFingerprint(...a); }; // private-ok: счётчик сборок отпечатка за проход (#725)
+  const origWillUpdate = c.willUpdate.bind(c);
+  c.willUpdate = (...a) => { fingerprintBuilds = 0; return origWillUpdate(...a); }; // private-ok: счётчик сборок отпечатка за проход (#725)
+  const origRender = c.render.bind(c);
+  c.render = (...a) => { try { return origRender(...a); } finally { passBuilds.push(fingerprintBuilds); } }; // private-ok: счётчик сборок отпечатка за проход (#725)
+  const startSpace = c._space;
+  const otherTab = [...root.querySelectorAll('[data-hp="space-tab"]')].find((tab) => tab.dataset.id !== startSpace);
+  for (const id of [otherTab?.dataset.id, startSpace]) {
+    root.querySelector(`[data-hp="space-tab"][data-id="${id}"]`)?.click();
+    await c.updateComplete; await frames(); await c.updateComplete;
+  }
+  out.floorSwitchRoundTrip = !!otherTab && c._space === startSpace && passBuilds.length >= 2;
+  out.fingerprintBuildsPerPass = Math.max(0, ...passBuilds);
   // #306: a hass tick that changes no geometry must not rebuild spaces. The
   // shared zero-wall resolver may run during paint, but must not storm.
   let zeroCalls = 0, buildCalls = 0;
@@ -67,5 +88,6 @@ const res = await page.evaluate(async () => {
 checkAll(res, {
   modelBuildsPer10Renders: 0,
   clockTickModelBuilds: 0,
+  fingerprintBuildsPerPass: 1,
 });
 await finish(browser, res);

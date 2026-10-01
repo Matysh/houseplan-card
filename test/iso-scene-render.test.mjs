@@ -26,6 +26,7 @@ import {
   projectIsoOpeningStructure,
 } from '../test-build/iso-openings.js';
 import { buildIsoWallGeometry } from '../test-build/iso-walls.js';
+import { fitView } from '../test-build/logic.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 import {
   buildIsoFootprintPolygon,
@@ -192,6 +193,45 @@ test('#713 K8: overlay fit is the structure plus visible tiles, no #651 nudge re
     targetView, ownerId: 'other-room',
   });
   assert.deepEqual(otherRoom.bounds, { x: 0, y: 0, w: 100, h: 100 });
+});
+
+test('#725 AC3: the overlay fit frame does not depend on the stage aspect or size', () => {
+  /** @type {OverlayEntryFixture[]} */
+  const entries = [
+    {
+      id: 'edge', kind: 'device', screenHalfSize: [10, 8],
+      placement: {
+        owner: { id: 'room' }, floorScene: [95, 50], visualScene: [95, 50],
+        footprint: [[90, 46], [100, 46], [100, 54], [90, 54]],
+      },
+    },
+    {
+      id: 'low', kind: 'device', screenHalfSize: [6, 6],
+      placement: {
+        owner: { id: 'room' }, floorScene: [40, 104], visualScene: [40, 104],
+        footprint: [[36, 100], [44, 100], [44, 108], [36, 108]],
+      },
+    },
+  ];
+  const baseBounds = { x: 0, y: 0, w: 100, h: 100 };
+  // The card's targetView: a contain-fit of the frame at the stage aspect.
+  const fitAt = (aspect) => (bounds) => fitView([bounds.x, bounds.y, bounds.w, bounds.h], aspect);
+  const results = [];
+  for (const aspect of [0.5, 2]) {
+    for (const stageSize of [null, { width: 1000, height: 500 }]) {
+      const fitted = resolveIsoOverlayFitEnvelope({ baseBounds, entries, stageSize, targetView: fitAt(aspect) });
+      assert.ok(fitted, `aspect ${aspect}, stage ${JSON.stringify(stageSize)}: an envelope`);
+      results.push(fitted);
+    }
+  }
+  assert.deepEqual(results[0].bounds, { x: 0, y: 0, w: 105, h: 110 }, 'the structure plus both tiles');
+  for (const fitted of results) assert.deepEqual(fitted.bounds, results[0].bounds);
+  assert.notDeepEqual(results[0].view, results[2].view, 'only the view follows the aspect');
+  // `_isoScene` passes the frame's own aspect: any positive finite value gives the same bounds.
+  const ownAspect = resolveIsoOverlayFitEnvelope({
+    baseBounds, entries, stageSize: null, targetView: fitAt(baseBounds.w / baseBounds.h),
+  });
+  assert.deepEqual(ownAspect.bounds, results[0].bounds);
 });
 
 test('one painter queue paints a nearer wall after an unrelated rear opening', () => {

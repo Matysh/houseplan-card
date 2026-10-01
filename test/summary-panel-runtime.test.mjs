@@ -3,7 +3,7 @@ import test from 'node:test';
 import { nothing } from 'lit';
 
 import { SUMMARY_PANEL_API_VERSION } from '../test-build/summary-panel-api.js';
-import { SUMMARY_PANEL_LEGACY_SCALE_KEY, summaryLocalKey } from '../test-build/summary-panel.js';
+import { SUMMARY_PANEL_LEGACY_SCALE_KEY, resolveSummaryLayout, summaryLocalKey } from '../test-build/summary-panel.js';
 import { LoadedSummaryPanelRuntime } from '../test-build/summary-panel-runtime-loaded.js';
 
 const installBrowserGlobals = () => {
@@ -383,6 +383,173 @@ test('#509 AC1/AC2/AC9: значение показывает скелет до 
     runtime.computeMetrics();
     assert.equal(runtime.metricsFresh(), true);
   } finally {
+    browser.restore();
+  }
+});
+
+/**
+ * #725 AC1: a host whose stage, probes, kiosk buttons and computed style count
+ * every forced-layout call. The measurement is the only reader: render paths
+ * and an `updated()` without a changed input read nothing.
+ */
+const measuredHostFixture = () => {
+  const host = hostFixture();
+  const counts = { style: 0, box: 0, stageBox: 0 };
+  let releaseFonts;
+  const box = (rect) => () => { counts.box++; return { left: 0, right: 0, top: 0, bottom: 0, width: 0, height: 0, ...rect }; };
+  const stage = {
+    clientWidth: 1000, clientHeight: 600,
+    getBoundingClientRect: () => { counts.stageBox++; return box({ top: 0, bottom: 600, width: 1000, height: 600 })(); },
+  };
+  const probe = { getBoundingClientRect: box({ height: 200 }) };
+  const safeProbe = { padding: { paddingTop: '0px', paddingRight: '0px', paddingBottom: '0px', paddingLeft: '0px' } };
+  const controls = { getBoundingClientRect: box({ top: 12, bottom: 58 }) };
+  const view = {
+    getComputedStyle: (element) => { counts.style++; return element === safeProbe ? { ...safeProbe.padding } : {}; },
+  };
+  host.ownerDocument = {
+    ...host.ownerDocument, defaultView: view,
+    fonts: { ready: new Promise((resolve) => { releaseFonts = resolve; }) },
+  };
+  const overlay = { ownerDocument: host.ownerDocument };
+  host._stageEl = stage;
+  host.renderRoot.querySelector = (selector) => ({
+    '.summary-measure': probe,
+    '.summary-safe-probe': safeProbe,
+    '.summary-control.kiosk': host._kiosk ? controls : null,
+    '.summary-overlay': overlay,
+  })[selector] ?? null;
+  return { host, counts, safeProbe, releaseFonts: () => releaseFonts() };
+};
+
+const installWindowTimers = () => {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  // The clock and the metrics scheduler need timers; nothing has to fire here.
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true, value: { setTimeout: () => 1, requestAnimationFrame: () => 1 },
+  });
+  return () => {
+    if (previous) Object.defineProperty(globalThis, 'window', previous);
+    else delete globalThis.window;
+  };
+};
+
+/** The rendered `--summary-*` values and the side class of one panel template. */
+const panelGeometry = (template) => {
+  assert.notEqual(template, nothing, 'the panel is mounted');
+  const markup = template.strings.reduce((text, part, index) => text + part
+    + (index < template.values.length ? String(template.values[index]) : ''), '');
+  const value = (name) => Number(new RegExp(`--summary-${name}:(-?[\\d.]+)px`).exec(markup)?.[1]);
+  return {
+    side: /class="summary-overlay (\w+)"/.exec(markup)?.[1],
+    heightCap: value('height-cap'), widthCap: value('width-cap'), top: value('top'), bottom: value('bottom'),
+  };
+};
+
+test('#725 AC1: the summary panel measures only when an input of the measurement changes', async () => {
+  const browser = installBrowserGlobals();
+  const restoreWindow = installWindowTimers();
+  const { host, counts, releaseFonts } = measuredHostFixture();
+  const runtime = new LoadedSummaryPanelRuntime(host);
+  try {
+    runtime.connect();
+    runtime.saveLocal({ show: true });
+    runtime.updated();
+    assert.equal(counts.stageBox, 1, 'the first updated() after connect() measures');
+    assert.equal(counts.style, 1, 'one computed style per measurement: the safe-area probe');
+
+    const steady = (label) => {
+      counts.style = 0; counts.box = 0; counts.stageBox = 0;
+      for (let cycle = 0; cycle < 20; cycle++) {
+        runtime.renderControls(false);
+        runtime.menuItems();
+        runtime.renderPanel();
+        runtime.updated();
+      }
+      assert.deepEqual({ style: counts.style, box: counts.box }, { style: 0, box: 0 },
+        `${label}: renders and updated() without a changed input read no style or layout`);
+    };
+    steady('after the first measurement');
+    assert.notEqual(runtime.renderPanel(), nothing, 'the oracle runs against a mounted panel');
+
+    const inputs = [
+      ['resized()', () => runtime.resized()],
+      ['title', () => {
+        host._settings = { summary_panel: { ...runtime.config().config, title: 'Upstairs at a glance' } };
+      }],
+      ['language', () => { host._config = { ...host._config, language: 'de' }; }],
+      ['_kiosk', () => { host._kiosk = true; }],
+      ['_kioskScale', () => { host._kioskScale = { icon: 1.5, font: 1.25 }; }],
+      ['narrow', () => { host.narrow = true; }],
+      ['HA theme', () => { host.hass = { ...host.hass, themes: { theme: 'midnight', darkMode: true } }; }],
+      ["visibility('visible')", () => runtime.visibility('visible')],
+      ['fonts.ready', async () => { releaseFonts(); await host.ownerDocument.fonts.ready; await null; }],
+    ];
+    for (const [label, change] of inputs) {
+      counts.style = 0; counts.box = 0; counts.stageBox = 0;
+      await change();
+      runtime.updated();
+      assert.equal(counts.stageBox, 1, `${label}: exactly one measurement`);
+      assert.equal(counts.style, 1, `${label}: one getComputedStyle`);
+      assert.ok(counts.box <= 3, `${label}: at most three boxes (stage, kiosk buttons, probe), got ${counts.box}`);
+      steady(`after ${label}`);
+    }
+  } finally {
+    runtime.disconnect();
+    restoreWindow();
+    browser.restore();
+  }
+});
+
+test('#725 AC1: fonts.ready after disconnect() does not measure', async () => {
+  const browser = installBrowserGlobals();
+  const restoreWindow = installWindowTimers();
+  const { host, counts, releaseFonts } = measuredHostFixture();
+  const runtime = new LoadedSummaryPanelRuntime(host);
+  try {
+    runtime.connect();
+    runtime.updated();
+    runtime.disconnect();
+    counts.style = 0; counts.box = 0;
+    releaseFonts();
+    await host.ownerDocument.fonts.ready;
+    await null;
+    assert.deepEqual({ style: counts.style, box: counts.box }, { style: 0, box: 0 });
+  } finally {
+    restoreWindow();
+    browser.restore();
+  }
+});
+
+test('#725 AC1: stored safe-area insets lay the panel out as resolveSummaryLayout does', () => {
+  const browser = installBrowserGlobals();
+  const restoreWindow = installWindowTimers();
+  const { host, safeProbe } = measuredHostFixture();
+  const runtime = new LoadedSummaryPanelRuntime(host);
+  try {
+    runtime.connect();
+    runtime.saveLocal({ show: true });
+    safeProbe.padding = { paddingTop: '10px', paddingRight: '20px', paddingBottom: '30px', paddingLeft: '40px' };
+    runtime.updated();
+    const insets = { safeTop: 10, safeRight: 20, safeBottom: 30, safeLeft: 40 };
+    for (const kiosk of [false, true]) {
+      host._kiosk = kiosk;
+      runtime.updated();
+      const expected = resolveSummaryLayout({
+        width: 1000, height: 600, minimumHeight: 200, controlTop: kiosk ? 70 : 0, ...insets,
+      });
+      assert.deepEqual(panelGeometry(runtime.renderPanel()), {
+        side: expected.side, heightCap: Math.floor(expected.heightCap),
+        widthCap: Math.floor(expected.availableWidth), top: expected.top, bottom: expected.bottom,
+      }, kiosk ? 'kiosk: the panel clears the measured kiosk buttons' : 'ordinary View');
+    }
+    assert.deepEqual(panelGeometry(runtime.renderPanel()).top, 70, 'kiosk buttons push the panel below them');
+    host._kiosk = false;
+    runtime.updated();
+    assert.deepEqual(panelGeometry(runtime.renderPanel()).top, 22, 'the top inset plus the 12 px gap');
+  } finally {
+    runtime.disconnect();
+    restoreWindow();
     browser.restore();
   }
 });

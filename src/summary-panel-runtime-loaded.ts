@@ -52,6 +52,10 @@ type SummaryLayoutState = {
   height: number;
   minimumHeight: number;
   controlTop: number;
+  safeLeft: number;
+  safeRight: number;
+  safeTop: number;
+  safeBottom: number;
 };
 
 /**
@@ -75,7 +79,10 @@ export class LoadedSummaryPanelRuntime {
   private storageKey: string | null = null;
   private stage: SummaryLayoutState = {
     width: 0, height: 0, minimumHeight: 162, controlTop: 0,
+    safeLeft: 0, safeRight: 0, safeTop: 0, safeBottom: 0,
   };
+  /** #725: what the last measurement saw; `null` measures on the next `updated()`. */
+  private measured: { key: string; elements: readonly (Element | null)[] } | null = null;
   private clock = new Date();
   private clockTimer = 0;
   private deviceMemo: {
@@ -115,6 +122,8 @@ export class LoadedSummaryPanelRuntime {
     this.connected = true;
     this.syncLifecycle();
     this.loadLocal();
+    this.measured = null;
+    this.measureAfterFonts();
   }
 
   public disconnect(): void {
@@ -143,6 +152,7 @@ export class LoadedSummaryPanelRuntime {
       this.host.requestUpdate();
       return;
     }
+    this.measured = null;
     this.clock = new Date();
     this.syncClock();
     this.host.requestUpdate();
@@ -152,7 +162,7 @@ export class LoadedSummaryPanelRuntime {
     this.syncLifecycle();
     this.syncNativeNarrow();
     this.loadLocal();
-    this.measureLayout();
+    this.measureIfInputsChanged();
     this.syncClock();
     this.ensureDialogStyle();
     this.presentation.updated(this.host.renderRoot.querySelector<HTMLElement>('.summary-overlay'));
@@ -392,6 +402,8 @@ export class LoadedSummaryPanelRuntime {
     if (this.clockTimer) clearTimeout(this.clockTimer);
     this.clockTimer = 0;
     this.lifecycleIdentity = this.connected ? this.identity() : '';
+    this.measured = null;
+    if (this.connected) this.measureAfterFonts();
     this.host.requestUpdate();
   }
 
@@ -845,13 +857,9 @@ export class LoadedSummaryPanelRuntime {
     }).catch(() => undefined).finally(() => { this.metricsLoad = null; });
   }
 
+  /** Render-time layout from the last measurement: no style or layout read (#725). */
   private layout() {
-    return resolveSummaryLayout({
-      width: this.stage.width, height: this.stage.height,
-      ...this.safeInsets(),
-      controlTop: this.host._kiosk ? this.stage.controlTop : 0,
-      minimumHeight: this.stage.minimumHeight,
-    });
+    return resolveSummaryLayout({ ...this.stage, controlTop: this.host._kiosk ? this.stage.controlTop : 0 });
   }
 
   private syncPresentation(immediate = false): void {
@@ -866,35 +874,63 @@ export class LoadedSummaryPanelRuntime {
       immediate || !eligible || this.host.ownerDocument.visibilityState === 'hidden');
   }
 
+  /**
+   * #725: the card calls `updated()` after every render — a floor switch, an HA
+   * tick — and measuring there forced a synchronous layout each time. Measure
+   * only when an input of the measurement changed: the probe and kiosk-button
+   * elements, the stage element, the title, language, mode, kiosk, its scale,
+   * `narrow` and the HA theme. The stage size arrives through `resized()`.
+   * Whatever is not listed and might matter resets `measured` instead.
+   */
+  private measureIfInputsChanged(): void {
+    const { hass, renderRoot, _stageEl, _config, _mode, _kiosk, _kioskScale, narrow } = this.host;
+    const elements = [_stageEl, ...['.summary-measure', '.summary-safe-probe', '.summary-control.kiosk']
+      .map((selector) => renderRoot.querySelector(selector))];
+    const themes = hass?.themes as Record<string, unknown> | undefined;
+    const key = JSON.stringify([
+      this.config().config?.title ?? null, langOf(hass, _config?.language), _mode, _kiosk, _kioskScale, narrow,
+      hass?.selectedTheme ?? null,
+      ...['theme', 'darkMode', 'default_theme', 'default_dark_theme'].map((name) => themes?.[name] ?? null),
+    ]);
+    const last = this.measured;
+    if (last && last.key === key && last.elements.every((element, index) => element === elements[index])) return;
+    this.measured = { key, elements };
+    this.measureLayout();
+  }
+
+  /** #725: a late web font changes the probe height without resizing the stage. */
+  private measureAfterFonts(): void {
+    const generation = this.lifecycleGeneration;
+    void this.host.ownerDocument.fonts?.ready.then(() => { if (this.current(generation)) this.measureLayout(); });
+  }
+
+  /**
+   * The one method that reads style and layout (#725; `scripts/render-layout-read.mjs`
+   * names it): the stage, probe and kiosk-button boxes and the safe-area insets.
+   * Render paths use what it stored.
+   */
   private measureLayout(): void {
     const stage = this.host._stageEl;
     if (!stage) return;
-    const probe = this.host.renderRoot.querySelector('.summary-measure') as HTMLElement | null;
-    const controls = this.host.renderRoot.querySelector('.summary-control.kiosk') as HTMLElement | null;
+    const root = this.host.renderRoot;
+    const probe = root.querySelector('.summary-measure') as HTMLElement | null;
+    const controls = root.querySelector('.summary-control.kiosk') as HTMLElement | null;
+    const safeProbe = root.querySelector('.summary-safe-probe') as HTMLElement | null;
     const stageBox = stage.getBoundingClientRect();
     const controlBox = controls?.getBoundingClientRect();
-    const next = {
+    const style = safeProbe ? this.host.ownerDocument.defaultView?.getComputedStyle(safeProbe) : undefined;
+    const px = (value: string | undefined): number => Number.parseFloat(value ?? '') || 0;
+    const next: SummaryLayoutState = {
       width: Math.round(stage.clientWidth), height: Math.round(stage.clientHeight),
       minimumHeight: Math.max(162, Math.ceil(probe?.getBoundingClientRect().height || 0)),
       controlTop: controlBox ? Math.max(0, Math.ceil(controlBox.bottom - stageBox.top + 12)) : 0,
+      safeLeft: px(style?.paddingLeft), safeRight: px(style?.paddingRight),
+      safeTop: px(style?.paddingTop), safeBottom: px(style?.paddingBottom),
     };
-    if (next.width !== this.stage.width || next.height !== this.stage.height
-        || next.minimumHeight !== this.stage.minimumHeight || next.controlTop !== this.stage.controlTop) {
+    if ((Object.keys(next) as (keyof SummaryLayoutState)[]).some((name) => next[name] !== this.stage[name])) {
       this.stage = next;
       this.host.requestUpdate();
     }
-  }
-
-  private safeInsets(): { safeLeft: number; safeRight: number; safeTop: number; safeBottom: number } {
-    const probe = this.host.renderRoot.querySelector('.summary-safe-probe') as HTMLElement | null;
-    if (!probe) return { safeLeft: 0, safeRight: 0, safeTop: 0, safeBottom: 0 };
-    const style = this.host.ownerDocument.defaultView?.getComputedStyle(probe);
-    if (!style) return { safeLeft: 0, safeRight: 0, safeTop: 0, safeBottom: 0 };
-    const px = (value: string): number => Number.parseFloat(value) || 0;
-    return {
-      safeLeft: px(style.paddingLeft), safeRight: px(style.paddingRight),
-      safeTop: px(style.paddingTop), safeBottom: px(style.paddingBottom),
-    };
   }
 
   private hasVisibleClock(): boolean {

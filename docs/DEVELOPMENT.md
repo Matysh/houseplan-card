@@ -508,6 +508,10 @@ edits — not a commit, not a merge (that is decided in `integrate` from the sea
   normal where wall bodies meet at a junction — leave that corner unsampled and
   the fan closes it with a chord, so a sliver of floor next to a corner the
   lamp plainly sees goes dark. `splitAtIntersections` removes the whole class.
+- **Layout reads in the render path are judged by `scripts/render-layout-read.mjs`**
+  (`gate:small`, #654, #725): `getComputedStyle`, `getBoundingClientRect` and reads such as
+  `clientWidth`/`offsetTop`. The guarded methods (and the one summary-panel measurement method
+  that may read) are listed in the script; measure in `updated()` or an observer instead.
 
 ## Release
 
