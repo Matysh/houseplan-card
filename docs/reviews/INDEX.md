@@ -14,6 +14,7 @@
 | #736 | [CODE-REVIEW-736-r1.md](CODE-REVIEW-736-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #735 | [CODE-REVIEW-735-r1.md](CODE-REVIEW-735-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #732 | [CODE-REVIEW-732-r1.md](CODE-REVIEW-732-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #731 | [CODE-REVIEW-731-r1.md](CODE-REVIEW-731-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #730 | [CODE-REVIEW-730-r1.md](CODE-REVIEW-730-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | текст сводки «повтор и ребейз не помогут» вводит в заблуждение именно в сценарии, котор… | `scripts/merge-candidate.mjs` |
 | #730 | [CODE-REVIEW-730-r2.md](CODE-REVIEW-730-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #730 | [CODE-REVIEW-730-r3.md](CODE-REVIEW-730-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
