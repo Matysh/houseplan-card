@@ -14,12 +14,29 @@ const desktop = await page.evaluate(async () => {
     await card.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   };
-  const settleLanguage = async (language) => {
-    for (let attempt = 0; language === 'de' && card._t('btn.save') !== 'Speichern'
-      && attempt < 50; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      await settle();
+  // #759: a lazy locale keeps the previous frame, inert and aria-busy, until
+  // every dictionary this card paints has arrived — the main catalog and the
+  // editor's settings/support/topology namespaces (#627). The first dialog
+  // opened after a language switch is not in the tree until then. Wait for the
+  // gate's own markers, then for this dialog's footer to be laid out.
+  const waitFor = async (what, predicate) => {
+    const deadline = performance.now() + 5000;
+    for (;;) {
+      if (predicate()) return;
+      if (performance.now() > deadline) throw new Error(`smoke_dialog_footer_width: ${what}`);
+      await new Promise((resolve) => setTimeout(resolve, 16));
     }
+  };
+  const settleLanguage = async (language, kind) => {
+    await waitFor(`язык ${language} не отрисован`,
+      () => !card.hasAttribute('aria-busy') && card.getAttribute('lang') === language);
+    await waitFor(`диалог ${kind} (${language}) не отрисован`, () => {
+      const root = card.shadowRoot || card.renderRoot;
+      const box = root.querySelector(`hp-dialog[data-kind="${kind}"]`)
+        ?.querySelector('.dialog-action-footer')?.getBoundingClientRect();
+      return !!box && box.width > 0 && box.height > 0;
+    });
+    await settle();
   };
   card._serverStorage = true;
   card._serverCfg = {
@@ -37,7 +54,7 @@ const desktop = await page.evaluate(async () => {
 
   const layout = (kind, language) => {
     const root = card.shadowRoot || card.renderRoot;
-    const dialog = root.querySelector('hp-dialog');
+    const dialog = root.querySelector(`hp-dialog[data-kind="${kind}"]`);
     const surface = dialog?.shadowRoot?.querySelector('.surface');
     const footer = dialog?.querySelector('.dialog-action-footer');
     const danger = footer?.querySelector('.dialog-action-danger');
@@ -87,7 +104,7 @@ const desktop = await page.evaluate(async () => {
       card._openSpaceDialog('edit', 'dialog-layout');
     }
     await settle();
-    await settleLanguage(language);
+    await settleLanguage(language, kind);
     const result = layout(kind, language);
     card._openingDialog = null;
     card._physicalDialog = null;
@@ -113,12 +130,29 @@ const narrow = await page.evaluate(async () => {
     await card.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   };
-  const settleLanguage = async (language) => {
-    for (let attempt = 0; language === 'de' && card._t('btn.save') !== 'Speichern'
-      && attempt < 50; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      await settle();
+  // #759: a lazy locale keeps the previous frame, inert and aria-busy, until
+  // every dictionary this card paints has arrived — the main catalog and the
+  // editor's settings/support/topology namespaces (#627). The first dialog
+  // opened after a language switch is not in the tree until then. Wait for the
+  // gate's own markers, then for this dialog's footer to be laid out.
+  const waitFor = async (what, predicate) => {
+    const deadline = performance.now() + 5000;
+    for (;;) {
+      if (predicate()) return;
+      if (performance.now() > deadline) throw new Error(`smoke_dialog_footer_width: ${what}`);
+      await new Promise((resolve) => setTimeout(resolve, 16));
     }
+  };
+  const settleLanguage = async (language, kind) => {
+    await waitFor(`язык ${language} не отрисован`,
+      () => !card.hasAttribute('aria-busy') && card.getAttribute('lang') === language);
+    await waitFor(`диалог ${kind} (${language}) не отрисован`, () => {
+      const root = card.shadowRoot || card.renderRoot;
+      const box = root.querySelector(`hp-dialog[data-kind="${kind}"]`)
+        ?.querySelector('.dialog-action-footer')?.getBoundingClientRect();
+      return !!box && box.width > 0 && box.height > 0;
+    });
+    await settle();
   };
   const measure = async (kind, language = 'ru') => {
     card._config = { ...(card._config || {}), language };
@@ -139,9 +173,9 @@ const narrow = await page.evaluate(async () => {
       card._openSpaceDialog('edit', 'dialog-layout');
     }
     await settle();
-    await settleLanguage(language);
+    await settleLanguage(language, kind);
     const root = card.shadowRoot || card.renderRoot;
-    const dialog = root.querySelector('hp-dialog');
+    const dialog = root.querySelector(`hp-dialog[data-kind="${kind}"]`);
     const surface = dialog?.shadowRoot?.querySelector('.surface');
     const footer = dialog?.querySelector('.dialog-action-footer');
     const danger = footer?.querySelector('.dialog-action-danger');
