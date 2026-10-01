@@ -50,14 +50,19 @@ const wallRect = (x0, y0, x1, y1) => [[[[x0, y0], [x1, y0], [x1, y1], [x0, y1]]]
  * typechecks this file: a field nothing reads — a zoom view, a stage size,
  * decoration layers, a selection, a ground radius — fails there instead of
  * pretending to be an input. Every scene fixture reaches the builder through
- * `overlayScene` or a declaration of this type.
+ * `overlayScene` or a declaration of this type. #754: the overlay fit input
+ * goes the same way — every `resolveIsoOverlayFitEnvelope` fixture through
+ * `overlayFit` (`OverlayFitFixture`); #741 removed its `stageSize`.
  *
  * @typedef {{ [K in keyof import('../src/iso-scene-render.js').IsoOverlaySceneInput]?: unknown }} OverlaySceneFixture
  * @typedef {{ [K in keyof import('../src/iso-scene-render.js').IsoOverlayRenderEntry]?: unknown }} OverlayEntryFixture
+ * @typedef {{ [K in keyof import('../src/iso-scene-render.js').IsoOverlayFitEnvelopeInput]?: unknown }} OverlayFitFixture
  */
 
 /** @param {OverlaySceneFixture} input */
 const overlayScene = (input) => buildIsoOverlayRenderScene(input);
+/** @param {OverlayFitFixture} input */
+const overlayFit = (input) => resolveIsoOverlayFitEnvelope(input);
 
 const room = (id, x0, y0, x1, y1) => ({
   id,
@@ -177,18 +182,18 @@ test('#713 K8: overlay fit is the structure plus visible tiles, no #651 nudge re
     const w = bounds.h * aspect;
     return { x: bounds.x - (w - bounds.w) / 2, y: bounds.y, w, h: bounds.h };
   };
-  const fitted = resolveIsoOverlayFitEnvelope({
+  const fitted = overlayFit({
     baseBounds: { x: 0, y: 0, w: 100, h: 100 }, entries: [entry], targetView,
   });
   assert.ok(fitted);
   assert.deepEqual(fitted.bounds, { x: 0, y: 0, w: 105, h: 100 },
     'the tile edge at x=105 is the only growth: no 48 CSS px reserve around it');
   assert.deepEqual(fitted.view, targetView(fitted.bounds));
-  const repeated = resolveIsoOverlayFitEnvelope({
+  const repeated = overlayFit({
     baseBounds: { x: 0, y: 0, w: 100, h: 100 }, entries: [entry], targetView,
   });
   assert.deepEqual(repeated, fitted, 'the canonical envelope is deterministic');
-  const otherRoom = resolveIsoOverlayFitEnvelope({
+  const otherRoom = overlayFit({
     baseBounds: { x: 0, y: 0, w: 100, h: 100 }, entries: [entry],
     targetView, ownerId: 'other-room',
   });
@@ -216,7 +221,7 @@ test('#725 AC3/#741: the overlay fit bounds depend only on scene.frame and the t
   const frame = { x: 0, y: 0, w: 100, h: 100 };
   // The card's targetView: a contain-fit of the frame at the stage aspect.
   const fitAt = (aspect) => (bounds) => fitView([bounds.x, bounds.y, bounds.w, bounds.h], aspect);
-  const fit = (baseBounds, aspect) => resolveIsoOverlayFitEnvelope({ baseBounds, entries, targetView: fitAt(aspect) });
+  const fit = (baseBounds, aspect) => overlayFit({ baseBounds, entries, targetView: fitAt(aspect) });
   // Portrait, square, a 1000×500 and a 320×180 stage, the frame's own aspect (`_isoScene`).
   const aspects = [0.5, 1, 1000 / 500, 320 / 180, frame.w / frame.h];
   const results = aspects.map((aspect) => {

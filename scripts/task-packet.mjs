@@ -27,7 +27,7 @@ import { classify } from './process-gate.mjs';
 import {
   classifyRisk, cycleLimit, hasTrackLabel, rebaseBeforeReview, riskClassLine, trackFromLabels, trackOrigin,
 } from './process-track.mjs';
-import { selectSmokes } from './smoke-select.mjs';
+import { CALL_CONTEXT_LINES, selectSmokes } from './smoke-select.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
@@ -516,7 +516,9 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
     const merge = behind > 0 ? readMergeState({ cwd, onto: 'origin/dev', ref }) : { clean: true, conflicts: [] };
     let smokes = null;
     try {
-      const selection = selectSmokes(diff);
+      // #754: выборке нужен контекст, чтобы приписать правку аргументов вызову;
+      // риск по участкам (`diff`) остаётся на `--unified=0`.
+      const selection = selectSmokes(sh('git', ['-c', 'core.quotePath=false', 'diff', `--unified=${CALL_CONTEXT_LINES}`, '-M', '--no-color', '--no-ext-diff', '--no-textconv', `${base}..${ref}`], { cwd }));
       smokes = {
         direct: selection.direct.filter((entry) => entry.strong).map(({ smoke, symbols }) => ({ smoke, symbols })),
         registered: selection.registered.map(({ smoke, symbols }) => ({ smoke, symbols })),

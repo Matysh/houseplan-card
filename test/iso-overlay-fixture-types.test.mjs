@@ -16,6 +16,11 @@ import ts from 'typescript';
 // тесту, но поле, которого у типа нет, — ошибка «лишнее свойство». Прочие
 // диагностики этих файлов не судятся: сами тесты исполняют `test-build`, и
 // частичность значений — их право.
+//
+// #754: так же судится вход окна оверлеев `resolveIsoOverlayFitEnvelope` —
+// тип `OverlayFitFixture`, хелпер `overlayFit`. До этого литерал шёл прямо в
+// функцию из `test-build`, и возвращённый `stageSize: null` (поле удалила #741)
+// оставлял проверку зелёной.
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const TEST_DIR = join(ROOT, 'test');
@@ -26,7 +31,15 @@ const EXCESS_PROPERTY = new Set([2353, 2561]);
 /** Входы сцены и поле записи, которых у боевых типов нет (#714, #724, #732). */
 const DEAD_SCENE_FIELDS = ['view', 'referenceView', 'stageSize', 'layers', 'selectedDeviceId'];
 const DEAD_ENTRY_FIELDS = ['groundRadius'];
-const SCENE_BUILDERS = new Set(['buildIsoOverlayRenderScene', 'overlayScene']);
+/** Поле входа окна оверлеев, которого у боевого типа нет (#741). */
+const DEAD_FIT_FIELDS = ['stageSize'];
+/** Вызов → тип, которым обязан проверяться его аргумент-фикстура. */
+const CHECKED_CALLS = new Map([
+  ['buildIsoOverlayRenderScene', 'OverlaySceneFixture'],
+  ['overlayScene', 'OverlaySceneFixture'],
+  ['resolveIsoOverlayFitEnvelope', 'OverlayFitFixture'],
+  ['overlayFit', 'OverlayFitFixture'],
+]);
 const tagOf = (file) => basename(file).replace(/\W/g, '_');
 
 /** Зонд: каждое мёртвое поле — отдельный литерал (TypeScript называет одно лишнее поле на литерал). */
@@ -42,6 +55,9 @@ function probeSource() {
   const entry = "import('./iso-scene-render.test.mjs').OverlayEntryFixture";
   typed(entry, 'entry_known', 'id: null, placement: null, screenHalfSize: null');
   DEAD_ENTRY_FIELDS.forEach((field, index) => typed(entry, `entry${index}`, `${field}: null`));
+  const fit = "import('./iso-scene-render.test.mjs').OverlayFitFixture";
+  typed(fit, 'fit_known', 'baseBounds: null, entries: null, targetView: null, ownerId: null');
+  DEAD_FIT_FIELDS.forEach((field, index) => typed(fit, `fit${index}`, `${field}: null`));
   return `${lines.join('\n')}\n`;
 }
 
@@ -107,24 +123,32 @@ test('#732 AC2: тип фикстуры — ключи боевого входа
   DEAD_ENTRY_FIELDS.forEach((field, index) => {
     assert.match(rejected.get(`entry${index}`) || '', new RegExp(`'${field}' does not exist in type`));
   });
+  // #754: вход окна оверлеев — тот же приём; размер сцены у него не вход с #741.
+  assert.ok(!rejected.has('fit_known'), 'поля входа окна оверлеев принимаются');
+  DEAD_FIT_FIELDS.forEach((field, index) => {
+    assert.match(rejected.get(`fit${index}`) || '', new RegExp(`'${field}' does not exist in type 'OverlayFitFixture'`),
+      `OverlayFitFixture отвергает ${field} — тип разрешился в боевой вход, а не в any`);
+  });
 });
 
-test('#732 AC2: каждая фикстура сцены доходит до построителя через проверяемый тип', () => {
+test('#732 AC2: каждая фикстура сцены и окна оверлеев доходит до своей функции через проверяемый тип', () => {
   const aliasOf = (type) => type?.aliasSymbol?.name ?? null;
   const unchecked = [];
-  let calls = 0;
+  const calls = new Map();
   for (const file of FIXTURE_FILES) {
     const source = program.getSourceFile(file);
     const visit = (node) => {
-      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && SCENE_BUILDERS.has(node.expression.text)) {
-        calls += 1;
+      const expected = ts.isCallExpression(node) && ts.isIdentifier(node.expression)
+        && CHECKED_CALLS.get(node.expression.text);
+      if (expected) {
+        calls.set(expected, (calls.get(expected) || 0) + 1);
         const [arg] = node.arguments;
-        // Литерал проверяется типом параметра (`overlayScene`), прочее — своим
-        // объявленным типом; литерал прямо в построитель из test-build не
-        // проверяется ничем.
+        // Литерал проверяется типом параметра (`overlayScene`, `overlayFit`),
+        // прочее — своим объявленным типом; литерал прямо в функцию из
+        // test-build не проверяется ничем.
         const type = arg && ts.isObjectLiteralExpression(arg)
           ? checker.getContextualType(arg) : arg && checker.getTypeAtLocation(arg);
-        if (aliasOf(type) !== 'OverlaySceneFixture') {
+        if (aliasOf(type) !== expected) {
           const { line } = source.getLineAndCharacterOfPosition(node.getStart());
           unchecked.push(`${file.slice(ROOT.length)}:${line + 1} ${node.getText().slice(0, 80)}`);
         }
@@ -133,6 +157,8 @@ test('#732 AC2: каждая фикстура сцены доходит до п�
     };
     visit(source);
   }
-  assert.ok(calls >= 20, `нашлись вызовы построителя сцены (${calls})`);
-  assert.deepEqual(unchecked, [], 'фикстура сцены — литерал в overlayScene или объявление типа OverlaySceneFixture');
+  assert.ok(calls.get('OverlaySceneFixture') >= 20, `нашлись вызовы построителя сцены (${calls.get('OverlaySceneFixture')})`);
+  assert.ok(calls.get('OverlayFitFixture') >= 4, `нашлись вызовы окна оверлеев (${calls.get('OverlayFitFixture')})`);
+  assert.deepEqual(unchecked, [], 'фикстура сцены — литерал в overlayScene или объявление OverlaySceneFixture, '
+    + 'фикстура окна оверлеев — литерал в overlayFit или объявление OverlayFitFixture');
 });

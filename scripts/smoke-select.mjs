@@ -105,6 +105,59 @@ const GENERIC_SYMBOLS = new Set(['_cellCm', '_gridPitch', '_wallKeyPitch']);
 
 const IDENTIFIER = /[A-Za-z_$][\w$]{2,}/g;
 
+/**
+ * Строк контекста в диффе выборки (#754). Правка аргумента многострочного
+ * вызова — `runtime.resolveIsoOverlayFitEnvelope({` строкой выше, изменён
+ * только аргумент (#741) — не называет функцию, контракт которой меняет: с
+ * `--unified=0` символа в выборке нет, и ответ — «неопределённость». Контекст
+ * нужен лишь для поиска вызова; прямые символы по-прежнему берутся только с
+ * изменённых строк. Имя дальше трёх строк остаётся неопределённостью.
+ */
+export const CALL_CONTEXT_LINES = 3;
+
+/** Строки и комментарии без содержимого: скобки внутри них не считаются. */
+const scrubLine = (text) => text
+  .replace(/'(?:\\.|[^'\\])*'/g, "''")
+  .replace(/"(?:\\.|[^"\\])*"/g, '""')
+  .replace(/`(?:\\.|[^`\\])*`/g, '``')
+  .replace(/\/\*.*?\*\//g, '')
+  .replace(/\/\/.*$/, '');
+
+const CALLEE_NAME = /([A-Za-z_$][\w$]*)\s*(?:\?\.)?$/;
+
+/**
+ * Имя функции, внутри аргументов которой начинается строка `index` (#754):
+ * ближайшая незакрытая `(` выше в пределах ханка. Литерал-аргумент — `{` или
+ * `[` после `(`, `,` или `[` — проходится насквозь; `;` на нулевой глубине и
+ * любая другая незакрытая `{`/`[` (тело блока, функции, класса, присваивание
+ * литерала) останавливают поиск. `lines` уже вычищены `scrubLine`.
+ */
+function enclosingCallee(lines, index) {
+  const depth = { ')': 0, ']': 0, '}': 0 };
+  const opener = { '(': ')', '[': ']', '{': '}' };
+  /** Последний значимый символ перед позицией `column` строки `row` — в ней или выше. */
+  const previous = (row, column) => {
+    for (let k = row; k >= 0; k--) {
+      const trimmed = (k === row ? lines[k].slice(0, column) : lines[k]).trimEnd();
+      if (trimmed) return trimmed.at(-1);
+    }
+    return '';
+  };
+  for (let row = index - 1; row >= 0; row--) {
+    const text = lines[row];
+    for (let column = text.length - 1; column >= 0; column--) {
+      const char = text[column];
+      if (char === ';' && !depth[')'] && !depth[']'] && !depth['}']) return null;
+      if (char in depth) { depth[char]++; continue; }
+      if (!(char in opener)) continue;
+      if (depth[opener[char]] > 0) { depth[opener[char]]--; continue; }
+      if (char === '(') return CALLEE_NAME.exec(text.slice(0, column).trimEnd())?.[1] ?? null;
+      if (!['(', ',', '['].includes(previous(row, column))) return null;
+    }
+  }
+  return null;
+}
+
 export function symbolTable(root = repoRoot) {
   const table = new Set();
   const walk = (dir) => {
@@ -128,16 +181,35 @@ export function symbolTable(root = repoRoot) {
   return table;
 }
 
-/** Изменённые файлы и символы на изменённых строках. */
+/**
+ * Изменённые файлы и символы на изменённых строках. С #754 к символам
+ * добавляется вызываемая функция, внутри аргументов которой стоит изменённая
+ * строка (`callees` — те, что найдены только так). Строки контекста ханка ищут
+ * лишь вызов: прямых символов они не дают.
+ */
 export function parseDiff(diffText, table) {
   const files = new Set();
   const executable = new Set();
   const symbols = new Set();
+  const called = new Set();
   let current = null;
   let currentExecutable = false;
+  // Обе стороны текущего ханка: контекст — в обеих, `-` — в старой, `+` — в новой.
+  let hunk = null;
+  const closeHunk = () => {
+    for (const side of hunk ? [hunk.old, hunk.new] : []) {
+      const lines = side.map((entry) => scrubLine(entry.text));
+      side.forEach((entry, index) => {
+        const callee = entry.changed && enclosingCallee(lines, index);
+        if (callee && table.has(callee)) called.add(callee);
+      });
+    }
+    hunk = null;
+  };
   for (const line of diffText.split('\n')) {
     const header = /^\+\+\+ b\/(.+)$/.exec(line) || /^diff --git a\/\S+ b\/(.+)$/.exec(line);
     if (header) {
+      closeHunk();
       current = header[1] === '/dev/null' ? null : header[1];
       currentExecutable = !!current && isExecutableFrontend(current);
       if (current) {
@@ -147,17 +219,30 @@ export function parseDiff(diffText, table) {
       continue;
     }
     if (!currentExecutable) continue;
+    if (line.startsWith('@@')) { closeHunk(); hunk = { old: [], new: [] }; continue; }
+    // Ханк кончается на первой строке, которая не строка ханка: `commit …` в
+    // выводе `git log -p`, `index …`, сообщение коммита после него.
+    if (hunk && line !== '' && !/^[ +\-\\]/.test(line)) closeHunk();
+    if (hunk && (line === '' || line.startsWith(' '))) {
+      hunk.old.push({ text: line.slice(1) });
+      hunk.new.push({ text: line.slice(1) });
+      continue;
+    }
     if (!/^[+-]/.test(line) || /^(\+\+\+|---)/.test(line)) continue;
+    hunk?.[line[0] === '+' ? 'new' : 'old'].push({ text: line.slice(1), changed: true });
     IDENTIFIER.lastIndex = 0;
     let match;
     while ((match = IDENTIFIER.exec(line))) {
       if (table.has(match[0])) symbols.add(match[0]);
     }
   }
+  closeHunk();
+  const callees = [...called].filter((symbol) => !symbols.has(symbol)).sort();
   return {
     files: [...files].sort(),
     executable: [...executable].sort(),
-    symbols: [...symbols].sort(),
+    symbols: [...new Set([...symbols, ...callees])].sort(),
+    callees,
   };
 }
 
@@ -223,6 +308,9 @@ export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) 
     files: parsed.files,
     executable: parsed.executable,
     symbols: parsed.symbols,
+    // #754: символы, приписанные правке по вызову, внутри аргументов которого
+    // она стоит; на самих изменённых строках их нет.
+    callees: parsed.callees,
     broad,
     unseen,
     direct,
@@ -240,12 +328,13 @@ export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) 
 }
 
 function gitDiff(base, head) {
-  const result = spawnSync('git', ['-C', repoRoot, 'diff', '--unified=0', `${base}...${head}`],
+  const unified = `--unified=${CALL_CONTEXT_LINES}`;
+  const result = spawnSync('git', ['-C', repoRoot, 'diff', unified, `${base}...${head}`],
     { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
   if (result.status !== 0) {
     // `A...B` не работает без общего предка — тогда честнее прямой диапазон,
     // чем молча вернуть пустоту и «смоки не нужны».
-    const plain = spawnSync('git', ['-C', repoRoot, 'diff', '--unified=0', base, head],
+    const plain = spawnSync('git', ['-C', repoRoot, 'diff', unified, base, head],
       { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
     if (plain.status !== 0) throw new Error(`git diff: ${plain.stderr || result.stderr}`);
     return plain.stdout;
@@ -255,6 +344,10 @@ function gitDiff(base, head) {
 
 function report(selection) {
   const lines = [];
+  // #754: символ, приписанный по вызову, назван как вызов — на изменённых
+  // строках его нет, и ревьюер должен видеть, откуда он взялся.
+  const callees = new Set(selection.callees || []);
+  const named = (symbols) => symbols.map((symbol) => (callees.has(symbol) ? `${symbol} (вызов)` : symbol)).join(', ');
   if (selection.noExecutableDiff) {
     lines.push('Исполняемого frontend-диффа нет (src/**/*.ts не тронут).');
     lines.push('Browser-smoke этим диффом не выбираются — это не «пропустить проверки»,');
@@ -263,7 +356,8 @@ function report(selection) {
     return lines.join('\n');
   }
   lines.push(`Изменено файлов src/**: ${selection.executable.length}`
-    + ` · символов проекта на изменённых строках: ${selection.symbols.length}`);
+    + ` · символов проекта на изменённых строках: ${selection.symbols.length}`
+    + (callees.size ? ` (из них по вызову: ${callees.size})` : ''));
   lines.push(`Матрица: ${selection.smokeCount} смоков · порог «широкого» символа:`
     + ` больше ${selection.broadLimit} смоков`);
   lines.push('');
@@ -273,7 +367,7 @@ function report(selection) {
   const listing = (entries) => {
     for (const entry of entries) {
       lines.push(`  demo/${entry.smoke}`);
-      lines.push(`    ← ${entry.symbols.slice(0, 6).join(', ')}`
+      lines.push(`    ← ${named(entry.symbols.slice(0, 6))}`
         + (entry.symbols.length > 6 ? ` и ещё ${entry.symbols.length - 6}` : ''));
     }
   };
@@ -293,7 +387,7 @@ function report(selection) {
     lines.push(`Зарегистрированная связь (${selection.registered.length}):`);
     for (const entry of selection.registered) {
       lines.push(`  demo/${entry.smoke}`);
-      lines.push(`    ← ${entry.symbols.join(', ')}`);
+      lines.push(`    ← ${named(entry.symbols)}`);
       for (const because of entry.because) lines.push(`    ${because}`);
     }
     lines.push('');
@@ -309,18 +403,18 @@ function report(selection) {
     for (const smoke of selection.visualMinimum) lines.push(`  demo/${smoke}`);
     if (selection.broad.length) {
       lines.push(`Широкие символы (есть почти везде, ничего не различают):`
-        + ` ${selection.broad.slice(0, 10).join(', ')}`);
+        + ` ${named(selection.broad.slice(0, 10))}`);
     }
     if (selection.unseen.length) {
       lines.push('Символы, которых нет ни в одном смоке:'
-        + ` ${selection.unseen.slice(0, 10).join(', ')}`
+        + ` ${named(selection.unseen.slice(0, 10))}`
         + (selection.unseen.length > 10 ? ` и ещё ${selection.unseen.length - 10}` : ''));
       lines.push('Если один из них — новый контракт, ему нужен новый смок либо'
         + ' запись в scripts/smoke-links.mjs.');
     }
     lines.push('');
   } else if (selection.broad.length) {
-    lines.push(`Не учитывались как широкие: ${selection.broad.slice(0, 10).join(', ')}`);
+    lines.push(`Не учитывались как широкие: ${named(selection.broad.slice(0, 10))}`);
     lines.push('');
   }
 

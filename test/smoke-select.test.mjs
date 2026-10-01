@@ -101,6 +101,91 @@ test('#690 п.1′: визуальный минимум — 5–8 существ
   for (const smoke of VISUAL_MINIMUM) assert.ok(cli.stdout.includes(`demo/${smoke}`), smoke);
 });
 
+test('#754 AC1: правка аргументов многострочного вызова выбирает смоки вызываемой функции', () => {
+  // Дифф #741 с контекстом 3: обе изменённые строки карточки —
+  // аргументы `runtime.resolveIsoOverlayFitEnvelope({` строкой выше. Имя
+  // вызываемой есть только в контексте, а за ним в реестре стоят ровно те два
+  // смока, которые автор #741 гонял вручную.
+  const selection = selectSmokes(fixture('741-call-arguments.diff'), { root: repoRoot });
+  assert.deepEqual(selection.callees, ['resolveIsoOverlayFitEnvelope']);
+  assert.ok(selection.symbols.includes('resolveIsoOverlayFitEnvelope'));
+  const recommended = new Set([...strongNames(selection), ...selection.registered.map((entry) => entry.smoke)]);
+  for (const smoke of ['smoke_iso_flat_parity.mjs', 'smoke_isometric_contract.mjs']) {
+    assert.ok(recommended.has(smoke), `${smoke} не выбран по вызову resolveIsoOverlayFitEnvelope`);
+  }
+  assert.equal(selection.unproven, false);
+  assert.deepEqual(selection.visualMinimum, []);
+  const cli = spawnSync(process.execPath, ['scripts/smoke-select.mjs', '--diff', 'test/fixtures/smoke-select/741-call-arguments.diff'],
+    { cwd: repoRoot, encoding: 'utf8' });
+  assert.equal(cli.status, 0, cli.stderr);
+  assert.match(cli.stdout, /← resolveIsoOverlayFitEnvelope \(вызов\)/, 'символ по вызову назван как вызов');
+});
+
+test('#754 AC1: без строк контекста та же правка — неопределённость, как до #754', () => {
+  // Защита снята: тот же дифф без контекста (`--unified=0`, как выборка брала
+  // его раньше) не видит вызова, и ответ возвращается к визуальному минимуму.
+  const bare = fixture('741-call-arguments.diff').split('\n').filter((line) => !line.startsWith(' ')).join('\n');
+  const selection = selectSmokes(bare, { root: repoRoot });
+  assert.deepEqual(selection.callees, []);
+  assert.equal(selection.unproven, true);
+  assert.deepEqual(selection.visualMinimum, [...VISUAL_MINIMUM]);
+});
+
+test('#754 AC1: вызов ищется сквозь литерал-аргумент, но не за `;` и не из тела блока', () => {
+  const table = new Set(['resolveThing', 'otherThing']);
+  const hunk = (...lines) => parseDiff(['diff --git a/src/a.ts b/src/a.ts', '--- a/src/a.ts', '+++ b/src/a.ts',
+    '@@ -1,5 +1,5 @@', ...lines].join('\n'), table);
+  const argument = hunk(
+    "   const v = host.resolveThing(first, 'a (b', {",
+    '     keep: 1,',
+    '-    drop: 2,',
+    '+    drop: 3,',
+    '   });',
+  );
+  assert.deepEqual(argument.callees, ['resolveThing'], 'аргумент-литерал приписан вызову');
+  assert.deepEqual(argument.symbols, ['resolveThing']);
+  const nested = hunk(
+    '   resolveThing([',
+    '     [1,',
+    '-      2],',
+    '+      3],',
+    '   ]);',
+  );
+  assert.deepEqual(nested.callees, ['resolveThing'], 'массив в массиве-аргументе — тоже аргумент');
+  const closed = hunk(
+    '   resolveThing({',
+    '     a: 1,',
+    '   });',
+    '-  next = 1;',
+    '+  next = 2;',
+  );
+  assert.deepEqual(closed.callees, [], 'строка после закрытого `;` вызова — не его аргумент');
+  assert.deepEqual(closed.symbols, []);
+  const block = hunk(
+    '   resolveThing(items, () => {',
+    '-    count = 1;',
+    '+    count = 2;',
+    '   });',
+  );
+  assert.deepEqual(block.callees, [], 'тело функции-аргумента — блок, а не аргумент');
+  const assigned = hunk(
+    '   otherThing(a);',
+    '   const options = {',
+    '-    a: 1,',
+    '+    a: 2,',
+    '   };',
+  );
+  assert.deepEqual(assigned.callees, [], 'литерал в присваивании — не аргумент вызова');
+  const named = hunk(
+    '   resolveThing({',
+    '-    a: 1,',
+    '+    a: resolveThing.default,',
+    '   });',
+  );
+  assert.deepEqual(named.callees, [], 'символ на изменённой строке — прямой, не вызов');
+  assert.deepEqual(named.symbols, ['resolveThing']);
+});
+
 test('таблица символов не берёт одиночные английские слова (#241)', () => {
   const table = symbolTable(repoRoot);
   for (const noise of ['floor', 'value', 'index', 'return', 'length', 'edit']) {

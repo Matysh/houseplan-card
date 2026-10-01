@@ -25,14 +25,33 @@ const restore = () => page.evaluate((s) => {
   return c.updateComplete && true;
 }, snap);
 
-const mode = async (m) => {
-  await page.evaluate((m) => {
-  const c = window.__card;
-  c._setMode(m); c.requestUpdate();
-  return c.updateComplete && true;
-  }, m);
-  await page.waitForTimeout(220); // editor chrome transition owns stage geometry
-};
+// A mode switch paints the stage and the paper with interpolated colours for
+// 220 ms plus a measurement frame, driven by animation frames: under load that
+// outlasts any fixed pause (#715). A mode is entered through the facade, and a
+// probe belongs to the settled mode: the stage carries `mode-<mode>` and no
+// longer `mode-transition`, and neither the stage nor the paper runs an
+// animation of its own. One page helper for `mode()` and section 6b (#754).
+await page.evaluate(() => {
+  window.__backdropEnterMode = async (mode) => {
+    const hp = window.__hpTest;
+    const sr = () => window.__card.shadowRoot || window.__card.renderRoot;
+    await hp.setMode(mode);
+    const deadline = performance.now() + 5000;
+    for (;;) {
+      const stage = sr().querySelector('.stage');
+      const paper = sr().querySelector('.stage svg .hp-paper');
+      const running = [stage, paper].flatMap((node) => node?.getAnimations() ?? [])
+        .filter((animation) => animation.playState === 'running');
+      if (stage?.classList.contains(`mode-${mode}`) && !stage.classList.contains('mode-transition')
+        && !running.length) return true;
+      if (performance.now() > deadline) {
+        throw new Error(`smoke_backdrop: переход в ${mode} не завершился (.stage: ${stage?.className})`);
+      }
+      await hp.settled();
+    }
+  };
+});
+const mode = (m) => page.evaluate((m) => window.__backdropEnterMode(m), m);
 const settle = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 const q = (sel) => page.evaluate((s) => window.__card.renderRoot.querySelectorAll(s).length, sel);
 const spaceCfg = () => page.evaluate(() => {
@@ -283,29 +302,9 @@ check('picture_is_below_the_walls', layers.iImage < layers.iRoom, true);
 // ---------- 6b) editors keep a WHITE sheet under the grid with a backdrop --
 const editorWhite = await page.evaluate(async () => {
   const c = window.__card;
-  const hp = window.__hpTest;
   const sr = () => c.shadowRoot || c.renderRoot;
-  // A mode switch paints the stage and the paper with interpolated colours
-  // for 220 ms plus a measurement frame, driven by animation frames: under
-  // load that outlasts any fixed pause (#715). A probe belongs to the settled
-  // mode: the stage carries `mode-<mode>` and no longer `mode-transition`,
-  // and neither the stage nor the paper runs an animation of its own.
-  const enter = async (mode) => {
-    await hp.setMode(mode);
-    const deadline = performance.now() + 5000;
-    for (;;) {
-      const stage = sr().querySelector('.stage');
-      const paper = sr().querySelector('.stage svg .hp-paper');
-      const running = [stage, paper].flatMap((node) => node?.getAnimations() ?? [])
-        .filter((animation) => animation.playState === 'running');
-      if (stage?.classList.contains(`mode-${mode}`) && !stage.classList.contains('mode-transition')
-        && !running.length) return;
-      if (performance.now() > deadline) {
-        throw new Error(`smoke_backdrop: переход в ${mode} не завершился (.stage: ${stage?.className})`);
-      }
-      await hp.settled();
-    }
-  };
+  // The settled-mode wait shared with `mode()` (#715, #754).
+  const enter = window.__backdropEnterMode;
   const probe = async (mode) => {
     await enter(mode);
     const stage = sr().querySelector('.stage');
