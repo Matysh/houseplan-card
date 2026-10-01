@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +20,7 @@ import {
   checkSpecs,
   clampIssueBranchRange,
   classify,
+  gitSpecReviewReader,
   commitsNeedingIssueStatus,
   commitsNeedingTargetValidation,
   commitsUnderRuleOne,
@@ -31,6 +32,7 @@ import {
   FS,
   RS,
 } from '../scripts/process-gate.mjs';
+import { issueBodyDigest, materialAnchorBlock } from '../scripts/review-doc-guard.mjs';
 
 const commit = (subject, body, files) => makeCommit({ sha: 'deadbeefcafe', subject, body, files });
 const rules = (findings) => findings.filter((f) => f.level === 'fail').map((f) => f.rule);
@@ -1057,4 +1059,356 @@ test('#738 AC2: rule 10 keeps the old verdicts on ready-only timelines and ignor
   assert.match(onEdge[0].msg, /в S3-spec/);
   // …and equal to the repeated S5 is already ready.
   assert.deepEqual(era(T6), []);
+});
+
+// #729: черновик `track:ask` во время ревью ТЗ (PROCESS.md §11.8) — одно
+// исключение поверх эпох #738. Общая шкала AC1: `track:ask` и `S3-spec` 09:00,
+// `S4-spec-review` 10:00, зелёный SPEC-REVIEW-729-r1 (тело H) добавлен 10:30,
+// `S5-ready` 10:40, `S6-in-progress` 10:45. Коммит — класс A (`src/a.ts`).
+const DAY = '2026-09-20';
+const hm = (time) => `${DAY}T${time}:00.000Z`;
+const BODY_H = '## ТЗ\n\n- AC1: черновик принимается';
+const BH = issueBodyDigest(BODY_H);
+const BH_OTHER = issueBodyDigest('## ТЗ\n\n- AC1: черновик по другому тексту');
+const BH1 = issueBodyDigest('## ТЗ\n\n- AC1: раунд 1');
+const BH2 = issueBodyDigest('## ТЗ\n\n- AC1: раунд 2');
+const BH3 = issueBodyDigest('## ТЗ\n\n- AC1: раунд 3');
+const sha256 = (hex) => `sha256:${hex}`;
+const draftCode = (time, { trailers = [sha256(BH)], files = ['src/a.ts'], sha = 'd'.repeat(40) } = {}) => makeCommit({
+  sha, subject: 'feat: draft (#729)', files, authorDate: hm(time),
+  body: ['Issue: #729', 'User-Visible: no', ...trailers.map((v) => `Spec-Draft: ${v}`)].join('\n'),
+});
+const specDoc = (round, added, { verdict = 'green', high = 0, body = BH } = {}) => ({
+  name: `SPEC-REVIEW-729-r${round}.md`,
+  addedAt: hm(added),
+  text: `# SPEC-REVIEW-729-r${round}\n\n${materialAnchorBlock({ verdict, high, issueBody: body ?? undefined })}`,
+});
+const docsReader = (docs) => {
+  const reader = { head: 'HEAD', reads: 0, read: () => { reader.reads += 1; return docs; } };
+  return reader;
+};
+const ev = (label, time) => ({ label, at: hm(time) });
+const DRAFT_ROUTE = [
+  ev('track:ask', '09:00'), ev('S3-spec', '09:00'), ev('S4-spec-review', '10:00'),
+  ev('S5-ready', '10:40'), ev('S6-in-progress', '10:45'),
+];
+const DRAFT_DOCS = [specDoc(1, '10:30')];
+const drafted = (commit, { events = DRAFT_ROUTE, docs = DRAFT_DOCS, allowed } = {}) =>
+  checkCommitEraStatuses([commit], eraTimeline(events), {
+    specReviews: docsReader(docs), ...(allowed ? { allowed } : {}),
+  });
+const failOf = (findings) => {
+  assert.equal(findings.length, 1, JSON.stringify(findings));
+  assert.equal(findings[0].level, 'fail');
+  assert.equal(findings[0].rule, 10);
+  return findings[0].msg;
+};
+
+test('#729 AC1: a draft written in S4 with the accepted body hash is accepted, others are refused', () => {
+  // Чем краснеет: на коде #738 этот коммит — fail «код раньше «Готово к разработке»».
+  assert.deepEqual(drafted(draftCode('10:10')), []);
+
+  const bare = failOf(drafted(draftCode('10:10', { trailers: [] })));
+  assert.match(bare, /S4-spec-review/);
+  assert.match(bare, /Spec-Draft/);
+
+  const stale = failOf(drafted(draftCode('10:10', { trailers: [sha256(BH_OTHER)] })));
+  assert.ok(stale.includes(BH_OTHER.slice(0, 12)), stale);
+  assert.ok(stale.includes(BH.slice(0, 12)), stale);
+  assert.ok(stale.includes('SPEC-REVIEW-729-r1'), stale);
+  assert.match(stale, /ТЗ правилось/);
+
+  // Written in the S3 era: the plain #738 text, the trailer buys nothing.
+  const inS3 = draftCode('09:30');
+  const s3 = failOf(drafted(inS3));
+  assert.deepEqual(drafted(inS3), checkCommitEraStatuses([inS3], eraTimeline(DRAFT_ROUTE)));
+  assert.match(s3, /до первого достижения задачей статуса из/);
+  assert.doesNotMatch(s3, /§11\.8/);
+});
+
+test('#729 AC2: the S4 epoch and its round decide — an epoch closed by S3 or S6, or still open, is refused', () => {
+  const rounds = [
+    ev('track:ask', '09:00'), ev('S3-spec', '09:00'),
+    ev('S4-spec-review', '10:00'), ev('S3-spec', '10:40'),
+    ev('S4-spec-review', '11:00'), ev('S5-ready', '11:40'),
+  ];
+  const docs = [specDoc(1, '10:30', { verdict: 'yellow', body: BH1 }), specDoc(2, '11:30', { body: BH2 })];
+  for (const hash of [BH1, BH2]) {
+    const closedByS3 = failOf(drafted(draftCode('10:10', { trailers: [sha256(hash)] }), { events: rounds, docs }));
+    assert.match(closedByS3, /S3-spec/);
+    assert.ok(closedByS3.includes(hm('10:40')), closedByS3);
+  }
+  assert.deepEqual(drafted(draftCode('11:10', { trailers: [sha256(BH2)] }), { events: rounds, docs }), []);
+  const oldRound = failOf(drafted(draftCode('11:10', { trailers: [sha256(BH1)] }), { events: rounds, docs }));
+  assert.ok(oldRound.includes('SPEC-REVIEW-729-r2'), oldRound);
+
+  // A repeated S4 (reconcile #555) neither closes the epoch nor restarts it.
+  const repeated = [...rounds.slice(0, 5), ev('S4-spec-review', '11:20'), rounds[5]];
+  assert.deepEqual(drafted(draftCode('11:05', { trailers: [sha256(BH2)] }), { events: repeated, docs }), []);
+  const earlyDoc = [specDoc(2, '11:10', { body: BH2 })];
+  assert.deepEqual(drafted(draftCode('11:25', { trailers: [sha256(BH2)] }), { events: repeated, docs: earlyDoc }), []);
+
+  // The epoch is not closed yet.
+  const open = [ev('S5-ready', '08:00'), ev('S3-spec', '09:00'), ev('S4-spec-review', '10:00')];
+  assert.match(failOf(drafted(draftCode('10:10'), { events: open })), /ещё не закрыта/);
+
+  // No `allowed` event at all — the #738 warn, the exception is never reached.
+  const neverReady = DRAFT_ROUTE.slice(0, 3);
+  const blind = drafted(draftCode('10:10'), { events: neverReady });
+  assert.equal(blind.length, 1);
+  assert.equal(blind[0].level, 'warn');
+  assert.deepEqual(blind, checkCommitEraStatuses([draftCode('10:10')], eraTimeline(neverReady)));
+
+  // S4 → S6 without S5.
+  const skipped = [...DRAFT_ROUTE.slice(0, 3), ev('S6-in-progress', '10:45')];
+  const noS5 = failOf(drafted(draftCode('10:10'), { events: skipped }));
+  assert.match(noS5, /закрыта S6-in-progress/);
+  assert.ok(noS5.includes(hm('10:45')), noS5);
+});
+
+test('#729 AC3: the track at the author date must be ask, and the trailer format is exact', () => {
+  const withTrack = (label, extra = []) => [ev(label, '09:00'), ...DRAFT_ROUTE.slice(1), ...extra];
+  const onShow = failOf(drafted(draftCode('10:10'), { events: withTrack('track:show') }));
+  assert.match(onShow, /на треке show/);
+  assert.match(onShow, /только на `track:ask`/);
+
+  const raisedLater = withTrack('track:ask', [ev('track:show', '10:05')]);
+  assert.deepEqual(drafted(draftCode('10:02'), { events: raisedLater }), []);
+  assert.match(failOf(drafted(draftCode('10:10'), { events: raisedLater })), /на треке show/);
+
+  assert.deepEqual(drafted(draftCode('10:10'), { events: DRAFT_ROUTE.slice(1) }), [], 'no track events read as ask');
+  assert.match(failOf(drafted(draftCode('10:10'), { events: withTrack('small') })), /на треке show/);
+
+  for (const trailers of [
+    [sha256(BH.slice(0, 63))],
+    [sha256(BH.toUpperCase())],
+    [BH],
+    [sha256(BH), sha256(BH)],
+  ]) {
+    const format = failOf(drafted(draftCode('10:10', { trailers })));
+    assert.match(format, /ровно один, вида `sha256:<64 hex>`/, trailers.join(' + '));
+  }
+});
+
+test('#729 AC4: the draft is matched with the green spec review of its own epoch', () => {
+  const twoEpochs = [
+    ev('track:ask', '09:00'), ev('S3-spec', '09:00'), ev('S4-spec-review', '10:00'),
+    ev('S5-ready', '10:40'), ev('S6-in-progress', '10:50'), ev('S7-code-review', '11:00'),
+    ev('S3-spec', '12:00'), ev('S4-spec-review', '13:00'), ev('S5-ready', '13:40'),
+  ];
+  const docs = [specDoc(1, '10:30', { body: BH1 }), specDoc(3, '13:30', { body: BH3 })];
+  const at = (time, hash) => drafted(draftCode(time, { trailers: [sha256(hash)] }), { events: twoEpochs, docs });
+  assert.deepEqual(at('10:10', BH1), []);
+  assert.ok(failOf(at('10:10', BH3)).includes('SPEC-REVIEW-729-r1'));
+  assert.deepEqual(at('13:10', BH3), []);
+  assert.ok(failOf(at('13:10', BH1)).includes('SPEC-REVIEW-729-r3'));
+
+  for (const [why, doc] of [
+    ['yellow', specDoc(1, '10:30', { verdict: 'yellow' })],
+    ['High 1', specDoc(1, '10:30', { high: 1 })],
+    ['no body anchor', specDoc(1, '10:30', { body: null })],
+    ['added after S5', specDoc(1, '10:45')],
+  ]) {
+    const missing = failOf(drafted(draftCode('10:10'), { docs: [doc] }));
+    assert.match(missing, /зелёный `SPEC-REVIEW-729-r\*` этой эпохи не найден ни в HEAD, ни в origin\/dev/, why);
+    assert.match(missing, /git fetch origin dev/, why);
+    assert.ok(missing.includes(`${hm('10:00')}…${hm('10:40')}`), why);
+  }
+
+  // Two green documents in one epoch: the higher round wins.
+  const twoGreen = [specDoc(1, '10:20', { body: BH }), specDoc(2, '10:35', { body: BH2 })];
+  assert.deepEqual(drafted(draftCode('10:10', { trailers: [sha256(BH2)] }), { docs: twoGreen }), []);
+  assert.ok(failOf(drafted(draftCode('10:10'), { docs: twoGreen })).includes('SPEC-REVIEW-729-r2'));
+});
+
+test('#729 AC5: without a reader rule 10 is exactly #738; class B is ignored; a trailer outside S4 only warns', () => {
+  const strip = (c) => ({ ...c, specDrafts: [] });
+  const cases = [
+    [draftCode('10:10'), DRAFT_ROUTE],
+    [draftCode('10:10', { trailers: [] }), DRAFT_ROUTE],
+    [draftCode('10:10', { trailers: [sha256(BH_OTHER)] }), DRAFT_ROUTE],
+    [draftCode('09:30'), DRAFT_ROUTE],
+    [draftCode('10:10', { trailers: [BH] }), DRAFT_ROUTE],
+    [draftCode('10:10'), [ev('S5-ready', '08:00'), ev('S3-spec', '09:00'), ev('S4-spec-review', '10:00')]],
+    [draftCode('10:10'), [...DRAFT_ROUTE.slice(0, 3), ev('S6-in-progress', '10:45')]],
+    [draftCode('10:50'), DRAFT_ROUTE],
+  ];
+  for (const [c, events] of cases) {
+    const plain = checkCommitEraStatuses([c], eraTimeline(events));
+    assert.deepEqual(plain, checkCommitEraStatuses([strip(c)], eraTimeline(events)), c.authorDate);
+    for (const f of plain) assert.doesNotMatch(f.msg, /Spec-Draft|§11\.8/);
+  }
+  assert.deepEqual(checkCommitEraStatuses([draftCode('10:10')], eraTimeline(DRAFT_ROUTE)), [{
+    level: 'fail', rule: 10, sha: 'dddddddd',
+    msg: `issue #729: коммит класса A написан ${hm('10:10')}, до первого достижения задачей статуса из `
+      + `${ALLOWED_STATUS.join('/')} (${hm('10:40')}) — код раньше «Готово к разработке» (§12)`,
+  }]);
+
+  // Class B with the trailer in the S4 epoch is not rule 10's business.
+  assert.deepEqual(drafted(draftCode('10:10', { files: ['scripts/a.mjs'], trailers: [sha256(BH_OTHER)] })), []);
+
+  // A class A commit written in S6 with the trailer: legal by #738, one warn.
+  const late = drafted(draftCode('10:50'));
+  assert.equal(late.length, 1);
+  assert.equal(late[0].level, 'warn');
+  assert.equal(late[0].rule, 10);
+  assert.match(late[0].msg, /написанном в S6-in-progress/);
+
+  // The strict set gives the same findings (the #738 text names the set itself).
+  const named = (findings, set) => findings.map((f) => ({ ...f, msg: f.msg.replace(set.join('/'), '<allowed>') }));
+  for (const c of [draftCode('10:10'), draftCode('10:10', { trailers: [sha256(BH_OTHER)] }), draftCode('09:30'), draftCode('10:50')]) {
+    assert.deepEqual(named(drafted(c, { allowed: STRICT_STATUS }), STRICT_STATUS), named(drafted(c), ALLOWED_STATUS), c.authorDate);
+  }
+
+  // Documents are read lazily, once per issue, only for a draft commit.
+  const reader = docsReader(DRAFT_DOCS);
+  checkCommitEraStatuses([draftCode('10:10', { trailers: [] }), draftCode('10:50')], eraTimeline(DRAFT_ROUTE), { specReviews: reader });
+  assert.equal(reader.reads, 0);
+  checkCommitEraStatuses([draftCode('10:10'), draftCode('10:20', { sha: 'e'.repeat(40) })], eraTimeline(DRAFT_ROUTE), { specReviews: reader });
+  assert.equal(reader.reads, 1);
+});
+
+test('#729 AC7: one hash function — the pipeline anchor and the trailer share the normalisation', () => {
+  const doc = { name: 'SPEC-REVIEW-729-r1.md', addedAt: hm('10:30'), text: materialAnchorBlock({ issueBody: issueBodyDigest(BODY_H), verdict: 'green', high: 0 }) };
+  const crlf = sha256(issueBodyDigest(`${BODY_H.replace(/\n/g, '\r\n')}  \n`));
+  assert.deepEqual(drafted(draftCode('10:10', { trailers: [crlf] }), { docs: [doc] }), []);
+  // The material step still hashes the body with the same function.
+  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /m\.issueBodyDigest\(/);
+});
+
+// AC6: читатель SPEC-REVIEW из git и проводка CLI — временный репозиторий и
+// подставной gh, как тест #562.
+const gitMissing = (t) => {
+  if (spawnSync('git', ['--version'], { encoding: 'utf8' }).status === 0) return false;
+  t.skip('git недоступен');
+  return true;
+};
+const gitRepo = (prefix) => {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  const git = (args, env = {}) => {
+    const r = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8', env: { ...process.env, ...env } });
+    assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
+    return r.stdout.trim();
+  };
+  const write = (rel, text) => {
+    const full = join(dir, rel);
+    mkdirSync(join(full, '..'), { recursive: true });
+    writeFileSync(full, text);
+  };
+  // Дата коммиттера намеренно другая: судится дата автора (`%aI`).
+  const commitAt = (time, message) => {
+    git(['add', '-A']);
+    git(['-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'core.hooksPath=/dev/null',
+      'commit', '-q', '-m', message], { GIT_AUTHOR_DATE: hm(time), GIT_COMMITTER_DATE: hm('23:59') });
+    return git(['rev-parse', 'HEAD']);
+  };
+  return { dir, git, write, commitAt };
+};
+const reviewDoc = (round, body = BH) => `# SPEC-REVIEW-729-r${round}\n\n${materialAnchorBlock({ verdict: 'green', high: 0, issueBody: body })}`;
+
+test('#729 AC6: the git reader takes SPEC-REVIEW from the range head and origin/dev, one record per name', (t) => {
+  if (gitMissing(t)) return;
+  const { dir, git, write, commitAt } = gitRepo('hp-gate-729-reader-');
+  try {
+    git(['init', '-q', '-b', 'dev']);
+    write('README.md', 'base\n');
+    commitAt('08:00', 'Base');
+    write('docs/reviews/SPEC-REVIEW-729-r1.md', reviewDoc(1));
+    write('docs/reviews/SPEC-REVIEW-7290-r1.md', reviewDoc(1));
+    write('docs/reviews/CODE-REVIEW-729-r1.md', reviewDoc(1));
+    const shared = commitAt('10:30', 'docs: review document for #729');
+    write('docs/reviews/SPEC-REVIEW-729-r2.md', reviewDoc(2));
+    git(['update-ref', 'refs/remotes/origin/dev', commitAt('10:35', 'docs: review document for #729')]);
+    git(['checkout', '-q', '-b', 'issue/729-draft', shared]);
+    write('docs/reviews/SPEC-REVIEW-729-r3.md', reviewDoc(3));
+    commitAt('10:50', 'docs: review document for #729');
+
+    let calls = 0;
+    const counted = (...args) => { calls += 1; return spawnSync(...args); };
+    const reader = gitSpecReviewReader({ repo: dir, head: 'HEAD', run: counted });
+    assert.equal(calls, 0, 'nothing is read before rule 10 asks');
+    const docs = reader.read('729');
+    assert.deepEqual(docs.map((d) => d.name).sort(), ['SPEC-REVIEW-729-r1.md', 'SPEC-REVIEW-729-r2.md', 'SPEC-REVIEW-729-r3.md']);
+    const byName = Object.fromEntries(docs.map((d) => [d.name, d]));
+    assert.equal(byName['SPEC-REVIEW-729-r1.md'].ref, 'HEAD', 'a name on both refs is one record');
+    assert.equal(byName['SPEC-REVIEW-729-r2.md'].ref, 'refs/remotes/origin/dev');
+    assert.equal(byName['SPEC-REVIEW-729-r3.md'].ref, 'HEAD');
+    assert.equal(Date.parse(byName['SPEC-REVIEW-729-r1.md'].addedAt), Date.parse(hm('10:30')));
+    assert.equal(Date.parse(byName['SPEC-REVIEW-729-r2.md'].addedAt), Date.parse(hm('10:35')));
+    assert.equal(Date.parse(byName['SPEC-REVIEW-729-r3.md'].addedAt), Date.parse(hm('10:50')));
+    assert.equal(byName['SPEC-REVIEW-729-r3.md'].text, reviewDoc(3));
+    const after = calls;
+    reader.read('729');
+    assert.equal(calls, after, 'read once per issue');
+
+    // Without origin/dev only the head is read.
+    git(['update-ref', '-d', 'refs/remotes/origin/dev']);
+    assert.deepEqual(gitSpecReviewReader({ repo: dir, head: 'HEAD' }).read('729').map((d) => d.name).sort(),
+      ['SPEC-REVIEW-729-r1.md', 'SPEC-REVIEW-729-r3.md']);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('#729 AC6: the CLI with --issues accepts a matching draft and refuses a stale or unproven one', (t) => {
+  if (process.platform === 'win32') {
+    t.skip('нужен исполняемый stub gh — прогон в Linux CI');
+    return;
+  }
+  if (gitMissing(t)) return;
+  const { dir, git, write, commitAt } = gitRepo('hp-gate-729-cli-');
+  const gate = fileURLToPath(new URL('../scripts/process-gate.mjs', import.meta.url));
+  const ghStub = join(dir, 'gh-stub.mjs');
+  const runGate = (range) => spawnSync(process.execPath, [gate, '--repo', dir, '--range', range, '--issues'],
+    { encoding: 'utf8', env: { ...process.env, GH_BIN: ghStub } });
+  const draftMessage = (hash) => `feat: draft (#729)\n\nIssue: #729\nUser-Visible: no\nSpec-Draft: sha256:${hash}`;
+
+  try {
+    const timeline = DRAFT_ROUTE.map((e) => ({ label: e.label, at: e.at }));
+    writeFileSync(ghStub, '#!/usr/bin/env node\n'
+      + 'const argv = process.argv.slice(2);\n'
+      + `if (argv[0] === 'api' && /\\/issues\\/729\\/timeline$/.test(argv[1])) process.stdout.write(${JSON.stringify(JSON.stringify(timeline))} + '\\n');\n`
+      + `else if (argv[0] === 'issue' && argv[1] === 'view') process.stdout.write(${JSON.stringify(JSON.stringify({
+        number: 729, state: 'OPEN', labels: [{ name: 'S6-in-progress' }, { name: 'track:ask' }], body: BODY_H,
+      }))});\n`
+      + 'else { process.stderr.write(`unexpected gh ${argv.join(" ")}`); process.exit(1); }\n', { mode: 0o755 });
+    git(['init', '-q', '-b', 'dev']);
+    write('README.md', 'base\n');
+    const base = commitAt('08:00', 'Base');
+    write('docs/reviews/SPEC-REVIEW-729-r1.md', reviewDoc(1));
+    const withDoc = commitAt('10:30', 'docs: review document for #729');
+
+    // The rebased draft: the document below it in the range head.
+    write('src/a.ts', 'export const a = 1;\n');
+    commitAt('10:10', draftMessage(BH));
+    const accepted = runGate(`${base}..HEAD`);
+    assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+    assert.doesNotMatch(accepted.stdout, /п\.10/);
+
+    git(['reset', '-q', '--hard', withDoc]);
+    write('src/a.ts', 'export const a = 2;\n');
+    commitAt('10:10', draftMessage(BH_OTHER));
+    const stale = runGate(`${base}..HEAD`);
+    assert.equal(stale.status, 1, stale.stdout + stale.stderr);
+    assert.match(stale.stdout, /FAIL п\.10/);
+    assert.ok(stale.stdout.includes(BH_OTHER.slice(0, 12)), stale.stdout);
+
+    // The document only on origin/dev, the draft straight on the base.
+    git(['update-ref', 'refs/remotes/origin/dev', withDoc]);
+    git(['reset', '-q', '--hard', base]);
+    write('src/a.ts', 'export const a = 3;\n');
+    commitAt('10:10', draftMessage(BH));
+    const fromDev = runGate(`${base}..HEAD`);
+    assert.equal(fromDev.status, 0, fromDev.stdout + fromDev.stderr);
+
+    // On neither ref.
+    git(['update-ref', '-d', 'refs/remotes/origin/dev']);
+    const unproven = runGate(`${base}..HEAD`);
+    assert.equal(unproven.status, 1, unproven.stdout + unproven.stderr);
+    assert.match(unproven.stdout, /FAIL п\.10/);
+    assert.match(unproven.stdout, /git fetch origin dev/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

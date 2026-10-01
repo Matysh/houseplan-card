@@ -63,7 +63,11 @@ gh issue view <NN> --repo Matysh/houseplan-card --json number,state,labels
 
 The label must be one of `S5-ready`, `S6-in-progress`, `S7-code-review`. Anything
 else — refuse and say why. "Issue #83 is in `S2-analysis`, code is off limits.
-Start with the spec?" is the correct answer, not a smaller patch.
+Start with the spec?" is the correct answer, not a smaller patch. The one
+exception is a local, unpushed draft on `track:ask` while the spec is in
+`S4-spec-review`, each commit carrying the `Spec-Draft` trailer from the task
+packet; it reaches the branch only after a green spec review (`PROCESS.md`
+§11.8).
 
 GitHub Issues are the canonical task records and the **labels** are the status
 (`PROCESS.md` §9); when repository documentation disagrees with an issue, the
@@ -178,7 +182,7 @@ set.
 
 | Now reads | What happened | What you do |
 |---|---|---|
-| `S5-ready` | the spec is accepted | write the code |
+| `S5-ready` | the spec is accepted | write the code (a draft from `S4`: rebase onto `dev`, check, push — §11.8) |
 | `S3-spec` | the spec came back | read the verdict, revise, re-apply `S4-spec-review` |
 | `S6-in-progress` | the code came back | revise, re-apply `S7-code-review` — **or**, if the verdict was green and only the merge conflicted, just rebase and re-apply. The comment says which |
 | `S8-merged` | accepted and already in `dev` | nothing |

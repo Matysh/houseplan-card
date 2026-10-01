@@ -139,6 +139,11 @@ const HOOK_FILES = [
   'scripts/bundle-policy.mjs', // #657: правило бандла в проверке происхождения
   'scripts/bundle-tree.mjs',
   'scripts/spawn-portable.mjs',
+  // #729: правило 10 судит черновик якорями review-doc-guard и треком process-track.
+  'scripts/review-doc-guard.mjs',
+  'scripts/process-track.mjs',
+  'scripts/change-risk.mjs',
+  'scripts/review-result-gate.mjs',
 ];
 // Заглушка набора: код выхода и журнал вызовов задаёт тест.
 const GATE_STUB = `import { appendFileSync } from 'node:fs';

@@ -8,10 +8,10 @@
 // Скрипт делает эту сборку детерминированно и печатает один markdown-пакет:
 //
 //   issue · статус и трек · трек: основание, лимит, ребейз (#707) · что можно
-//   делать в этом статусе · решения владельца · материал (ветка, SHA, база,
-//   Validate) · следующий шаг по ветке · риск по участкам · обязательные
-//   проверки · changelog и визуальное свидетельство · предыдущий вердикт ·
-//   AC → свидетель · непроверенное
+//   делать в этом статусе · черновик во время ревью ТЗ (#729) · решения
+//   владельца · материал (ветка, SHA, база, Validate) · следующий шаг по
+//   ветке · риск по участкам · обязательные проверки · changelog и визуальное
+//   свидетельство · предыдущий вердикт · AC → свидетель · непроверенное
 //
 // Источник правды остаётся GitHub и git: пакет ничего не пишет и ничего не
 // решает. Все чтения инъектируемы — `buildPacket(inputs)` чист и покрыт тестами.
@@ -20,7 +20,9 @@
 
 import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
-import { anchorTreeFrom, anchorVerdictFrom, verdictDeclaration } from './review-doc-guard.mjs';
+import {
+  anchorIssueBodyFrom, anchorTreeFrom, anchorVerdictFrom, issueBodyDigest, verdictDeclaration,
+} from './review-doc-guard.mjs';
 import { classify } from './process-gate.mjs';
 import {
   classifyRisk, cycleLimit, hasTrackLabel, rebaseBeforeReview, riskClassLine, trackFromLabels, trackOrigin,
@@ -30,18 +32,28 @@ import { selectSmokes } from './smoke-select.mjs';
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
 /** Что разрешено в статусе — по PROCESS.md, без домыслов. */
-export function rightsFor(status, labels = [], { infrastructure = false, infrastructureHint = false } = {}) {
+export function rightsFor(status, labels = [], { infrastructure = false, infrastructureHint = false, track = null } = {}) {
   const blocked = labels.includes('blocked');
   const exhausted = labels.includes('review-4');
   const code = !infrastructure && ['S5-ready', 'S6-in-progress', 'S7-code-review'].includes(status);
+  // #729: на `track:ask` в `S4-spec-review` локальный черновик разрешён (§11.8),
+  // в ветку код по-прежнему только после `S5`; под blocked/review-4 — нет.
+  const specReview = !infrastructure && status === 'S4-spec-review' && track === 'ask';
+  const draft = specReview && !blocked && !exhausted;
   const lines = [];
   if (exhausted) lines.push('review-4: лимит циклов исчерпан — решение владельца (разделить, отклонить, арбитраж); дальше не двигать');
   if (blocked) lines.push('blocked: работа стоит, ждём внешнего решения — коммиты по задаче гейт не пропустит');
-  lines.push(code
-    ? 'продуктовый код трогать МОЖНО (правило №1)'
-    : infrastructure
-      ? 'файлы класса A трогать НЕЛЬЗЯ; инфраструктурную реализацию МОЖНО вести сразу по issue (#562)'
-      : 'продуктовый код трогать НЕЛЬЗЯ: статус не S5/S6/S7 (правило №1)');
+  if (draft) {
+    lines.push('продуктовый код в ветку — НЕЛЬЗЯ до `S5` (правило №1)');
+    lines.push('черновик локально — МОЖНО (§11.8): ветка `issue/NN-slug` не пушится, трейлер — в разделе «Черновик»');
+  } else {
+    lines.push(code
+      ? 'продуктовый код трогать МОЖНО (правило №1)'
+      : infrastructure
+        ? 'файлы класса A трогать НЕЛЬЗЯ; инфраструктурную реализацию МОЖНО вести сразу по issue (#562)'
+        : 'продуктовый код трогать НЕЛЬЗЯ: статус не S5/S6/S7 (правило №1)');
+  }
+  if (specReview && !draft) lines.push(`черновик не ведётся (§11.8): ${exhausted ? 'review-4' : 'blocked'}`);
   if (infrastructureHint) {
     lines.push('метка infra — только подсказка, не доказательство и не право: до ветки проверь предполагаемые пути; без class A начинай сразу, при любом class A нужен продуктовый S-flow (#562)');
   }
@@ -130,12 +142,64 @@ export function branchIsInfrastructure(changedFiles = []) {
   return material.length > 0 && !material.some((name) => classify(name) === 'A');
 }
 
+/**
+ * Последний зелёный SPEC-REVIEW задачи (#729): запись конвейера `green` с
+ * High 0 и строкой «Тело issue:» — те же якоря, что читает гейт. Из
+ * подходящих — наибольший заход; нет — `null`.
+ */
+export function latestGreenSpecReview(specDocs = [], number = null) {
+  const name = new RegExp(`^SPEC-REVIEW-${number ?? '\\d+'}-r(\\d+)\\.md$`);
+  let best = null;
+  for (const doc of specDocs) {
+    const m = name.exec(String(doc?.name ?? ''));
+    if (!m) continue;
+    const recorded = anchorVerdictFrom(doc.text);
+    if (!recorded || recorded.verdict !== 'green' || recorded.high !== 0) continue;
+    const body = anchorIssueBodyFrom(doc.text);
+    if (!body) continue;
+    const round = Number(m[1]);
+    if (!best || round > best.round) best = { doc: doc.name, round, body };
+  }
+  return best;
+}
+
+/**
+ * Черновик кода во время ревью ТЗ (#729, PROCESS.md §11.8): можно ли вести его
+ * сейчас, строка трейлера и зелёное ревью ТЗ, с которым гейт сверит черновые
+ * коммиты. Хеш — `issueBodyDigest`, та же функция, что пишет «Тело issue:» в
+ * якорь документа ревью.
+ */
+export function specDraftState({ status = null, labels = [], track = null, body = '', specDocs = [], number = null } = {}) {
+  const bodyNow = issueBodyDigest(body ?? '');
+  const stop = labels.includes('review-4') ? 'review-4' : labels.includes('blocked') ? 'blocked' : null;
+  let allowed = false;
+  let reason;
+  if (status !== 'S4-spec-review') reason = `статус ${status || 'без S-метки'}: черновик ведётся только в S4-spec-review (§11.8)`;
+  else if (track !== 'ask') reason = `трек ${track}: черновик только на track:ask (§11.8)`;
+  else if (stop) reason = `${stop}: черновик не ведётся (§11.8)`;
+  else {
+    allowed = true;
+    reason = 'track:ask в S4-spec-review: черновик можно вести локально (§11.8)';
+  }
+  const green = latestGreenSpecReview(specDocs, number);
+  return {
+    allowed,
+    reason,
+    trailer: allowed ? `Spec-Draft: sha256:${bodyNow}` : null,
+    green,
+    bodyNow,
+    bodyChanged: green ? green.body !== bodyNow : null,
+  };
+}
+
 const PRE_CODE_STATUSES = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready'];
 
 // Трек по меткам — одна функция на конвейер и пакет (#696): process-track.mjs.
 // С #707 оттуда же основание трека, лимит циклов, политика ребейза и риск по
 // изменённым участкам: пакет не держит своей копии правила.
 export { classifyRisk, cycleLimit, hasTrackLabel, rebaseBeforeReview, trackFromLabels, trackOrigin };
+// Хеш тела issue — одна функция с конвейером и гейтом (#729): review-doc-guard.mjs.
+export { issueBodyDigest };
 
 /** Зеркала junction limits: правка любого требует parity (§8, #548). */
 export const JUNCTION_MIRRORS = Object.freeze([
@@ -254,6 +318,7 @@ export function productFlowEvidence({ status = null, labels = [], issue = {}, sp
 export function buildPacket(inputs) {
   const {
     issue, labels = [], comments = [], owner = 'Matysh', branch = null, specs = [], reviewDocs = [], validate = null,
+    specDocs = [],
   } = inputs;
   const status = STATUS_LABELS.find((l) => labels.includes(l)) || null;
   // Трек сначала определяется статусом и историей issue (#632): прошедшая
@@ -300,7 +365,13 @@ export function buildPacket(inputs) {
   const unverified = acs.filter((a) => a.evidence.startsWith('без записи'));
   const packet = {
     issue: { number: issue.number, title: issue.title, state: issue.state, url: issue.url },
-    status, track, trackDetail, labels, productFlow, rights: rightsFor(status, labels, { infrastructure, infrastructureHint }),
+    status, track, trackDetail, labels, productFlow,
+    rights: rightsFor(status, labels, { infrastructure, infrastructureHint, track: infrastructure ? null : origin.track }),
+    // #729: свой вход `specDocs` — lastVerdict, AC → свидетель и признаки
+    // продуктового потока по-прежнему читают только reviewDocs.
+    specDraft: specDraftState({
+      status, labels, track: infrastructure ? null : origin.track, body: issue.body, specDocs, number: issue.number,
+    }),
     decisions: ownerDecisions(comments, owner),
     material: branch ? {
       branch: branch.name, tip: branch.tip, base: branch.base, ahead: branch.ahead, behind: branch.behind,
@@ -337,6 +408,26 @@ export function renderPacket(p) {
   L.push('## Права и следующий шаг');
   for (const r of p.rights) L.push(`- ${r}`);
   L.push('');
+  const draft = p.specDraft;
+  const askTrack = p.trackDetail?.track === 'ask';
+  if (draft && askTrack && p.status === 'S4-spec-review') {
+    L.push('## Черновик (#729)');
+    if (draft.allowed) {
+      L.push(`- трейлер каждого чернового коммита: \`${draft.trailer}\``);
+      L.push('- ветку не пушить до `S5`; `S6` — после зелёного ревью ТЗ; комментарий «Черновик:» (§7.2); черновик занимает слот WIP');
+      L.push('- жёлтый или красный вердикт — черновик остановить: коммиты по прежнему тексту гейт не примет');
+    } else L.push(`- ${draft.reason}`);
+    L.push('');
+  }
+  if (draft?.green && askTrack && (p.status === 'S5-ready' || p.status === 'S6-in-progress')) {
+    L.push('## Черновик (#729)');
+    L.push(`- зелёное ревью ТЗ: \`${draft.green.doc}\` · тело \`sha256:${draft.green.body.slice(0, 12)}\` — черновые коммиты принимаются с этим хешем`);
+    L.push(draft.bodyChanged
+      ? '- тело issue сейчас: изменилось после зелёного ревью ТЗ (ревьюер кода получит находку, #517)'
+      : '- тело issue сейчас: совпадает');
+    L.push('- проверка до push: `node scripts/process-gate.mjs --range origin/dev..HEAD --issues --report`');
+    L.push('');
+  }
   L.push('## Решения владельца (свежие)');
   if (!p.decisions.length) L.push('- не найдены (комментарии владельца со словами решения отсутствуют)');
   for (const d of p.decisions) L.push(`- ${d.at?.slice(0, 16) || ''} — ${d.head}${d.url ? ` (${d.url})` : ''}`);
@@ -449,6 +540,21 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
       changedFiles, diff, commits, smokes, mergeClean: merge.clean, conflicts: merge.conflicts,
     };
   }
+  // #729: SPEC-REVIEW — отдельный вход `specDocs` из ветки на origin и из
+  // `origin/dev`: на ask документ ревью ТЗ обычно ложится прямо в dev. Источник
+  // reviewDocs (lastVerdict, AC → свидетель) не меняется.
+  const specByName = new Map();
+  for (const ref of [...(refs[0] ? [`origin/${refs[0]}`] : []), 'origin/dev']) {
+    let names = [];
+    try {
+      names = sh('git', ['ls-tree', '--name-only', `${ref}:docs/reviews`], { cwd }).split('\n')
+        .filter((n) => new RegExp(`^SPEC-REVIEW-${number}-r\\d+\\.md$`).test(n));
+    } catch { continue; }
+    for (const n of names) {
+      if (!specByName.has(n)) specByName.set(n, { name: n, text: sh('git', ['show', `${ref}:docs/reviews/${n}`], { cwd }) });
+    }
+  }
+  const specDocs = [...specByName.values()].sort((a, b) => a.name.localeCompare(b.name));
   let validate = null;
   if (branch) {
     try {
@@ -459,7 +565,7 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
         : runs[0] ? { status: `красный (${runs[0].conclusion})`, url: runs[0].url } : { status: 'прогона нет' };
     } catch { validate = { status: 'неизвестно (gh run list недоступен)' }; }
   }
-  return { issue: view, labels, comments, owner, branch, specs, reviewDocs, validate };
+  return { issue: view, labels, comments, owner, branch, specs, reviewDocs, specDocs, validate };
 }
 
 if (isMainModule(import.meta.url)) {

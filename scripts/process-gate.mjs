@@ -42,6 +42,11 @@ import { resolveValidationRange } from './validate-commit-provenance.mjs';
 // Классы изменений (PROCESS.md §1) живут в change-classes.mjs (#701): их
 // читает и хук commit-msg, который судит, нужен ли коммиту трейлер.
 import { classify } from './change-classes.mjs';
+// #729: черновик `track:ask` судится теми же функциями, что конвейер: зелёный
+// документ и «Тело issue» — по якорям review-doc-guard, трек — по меткам
+// process-track. Ни один из модулей process-gate.mjs не импортирует.
+import { anchorIssueBodyFrom, anchorVerdictFrom } from './review-doc-guard.mjs';
+import { hasTrackLabel, trackFromLabels } from './process-track.mjs';
 
 export { classify };
 
@@ -111,6 +116,8 @@ export function makeCommit({
     release: one('Release'),
     baselineReviewed: one('Baseline-Reviewed'),
     baselineReviewedLocal: one('Baseline-Reviewed-Local'),
+    // #729: все значения, а не первое — «ровно один» судит правило 10.
+    specDrafts: all('Spec-Draft'),
     gates: one('Gates'),
     // null = вызывающий не доказал содержимое diff. Для stable release это
     // намеренно fail-closed: одного имени разрешённого version source мало.
@@ -520,6 +527,96 @@ function statusIndexAt(events, w) {
 
 const iso = (ms) => new Date(ms).toISOString();
 
+// #729: черновик кода во время ревью ТЗ (PROCESS.md §11.8). Статус, в котором
+// он пишется, трейлер и его значение — `issueBodyDigest` тела issue, тот же
+// хеш, что конвейер пишет в «Тело issue:» документа ревью.
+export const DRAFT_STATUS = 'S4-spec-review';
+export const SPEC_DRAFT_VALUE = /^sha256:[0-9a-f]{64}$/;
+
+// Трек на момент `w`: последнее событие трековой метки (`track:*`, прежние
+// `small`/`trivial`) с `at ≤ w`, трек — по одной этой метке. Событий нет —
+// `ask`: продуктовая задача без метки (§5.1).
+function trackAt(rawEvents, w) {
+  const marks = rawEvents
+    .filter((e) => e && e.at && hasTrackLabel([e.label]))
+    .map((e) => ({ label: e.label, at: Date.parse(e.at) }))
+    .filter((e) => Number.isFinite(e.at) && e.at <= w)
+    .sort((a, b) => a.at - b.at);
+  const last = marks.at(-1);
+  return last
+    ? { track: trackFromLabels([last.label]), label: last.label, at: last.at }
+    : { track: 'ask', label: null, at: null };
+}
+
+// Эпоха `S4` вокруг события `at`: начало — первое `S4` непрерывной серии
+// (повторная постановка, reconcile #555, эпоху заново не начинает), конец —
+// первое следующее статусное событие с другой меткой, либо `null`.
+function draftEpoch(events, at) {
+  let first = at;
+  while (first > 0 && events[first - 1].label === DRAFT_STATUS) first -= 1;
+  const close = events.slice(at + 1).find((e) => e.label !== DRAFT_STATUS) ?? null;
+  return { start: events[first].at, close };
+}
+
+/**
+ * Зелёный SPEC-REVIEW эпохи `[start, end]` (#729): запись конвейера `green` с
+ * High 0, есть «Тело issue:», документ добавлен (`addedAt`, дата автора
+ * добавившего коммита) внутри окна. Из подходящих — наибольший заход.
+ */
+export function greenSpecReviewOf(docs, nn, start, end) {
+  const name = new RegExp(`^SPEC-REVIEW-${nn}-r(\\d+)\\.md$`);
+  let best = null;
+  for (const doc of docs || []) {
+    const m = name.exec(String(doc?.name ?? ''));
+    if (!m) continue;
+    const recorded = anchorVerdictFrom(doc.text);
+    if (!recorded || recorded.verdict !== 'green' || recorded.high !== 0) continue;
+    const body = anchorIssueBodyFrom(doc.text);
+    if (!body) continue;
+    const added = Date.parse(doc.addedAt);
+    if (!Number.isFinite(added) || added < start || added > end) continue;
+    const round = Number(m[1]);
+    if (!best || round > best.round) best = { name: doc.name, round, body, addedAt: added };
+  }
+  return best;
+}
+
+// Проверки чернового коммита по порядку (К3 п.2 #729); находка одна — по первой
+// невыполненной. `null` — коммит принят как написанный в разрешённой эпохе.
+function judgeDraft({ c, nn, events, at, rawEvents, rangeHead, docsOf }) {
+  const wrote = Date.parse(c.authorDate);
+  const fail = (msg) => ({ level: 'fail', rule: 10, sha: c.short, msg });
+  const lead = `issue #${nn}: коммит класса A написан ${c.authorDate} в ${DRAFT_STATUS}`;
+  const drafts = c.specDrafts ?? [];
+  if (drafts.length !== 1 || !SPEC_DRAFT_VALUE.test(drafts[0])) {
+    return fail(`${lead}: трейлер \`Spec-Draft\` должен быть ровно один, вида \`sha256:<64 hex>\` `
+      + `(трейлеров ${drafts.length}) (§11.8)`);
+  }
+  const track = trackAt(rawEvents, wrote);
+  if (track.track !== 'ask') {
+    return fail(`${lead} на треке ${track.track} (${track.label} с ${iso(track.at)}): `
+      + 'черновик разрешён только на `track:ask` (§11.8)');
+  }
+  const epoch = draftEpoch(events, at);
+  if (!epoch.close || epoch.close.label !== 'S5-ready') {
+    const closed = epoch.close ? `закрыта ${epoch.close.label} ${iso(epoch.close.at)}` : 'ещё не закрыта';
+    return fail(`${lead}: эпоха ${DRAFT_STATUS} с ${iso(epoch.start)} ${closed} — `
+      + 'черновик принимается только из эпохи, которую закрыл `S5-ready` (§11.8)');
+  }
+  const green = greenSpecReviewOf(docsOf(), nn, epoch.start, epoch.close.at);
+  if (!green) {
+    return fail(`${lead}: эпоха ${iso(epoch.start)}…${iso(epoch.close.at)} — зелёный \`SPEC-REVIEW-${nn}-r*\` `
+      + `этой эпохи не найден ни в ${rangeHead}, ни в origin/dev — \`git fetch origin dev\` и повторить (§11.8)`);
+  }
+  const draft = drafts[0].slice('sha256:'.length);
+  if (draft !== green.body) {
+    return fail(`${lead}: трейлер \`Spec-Draft\` sha256:${draft.slice(0, 12)} не равен «Тело issue» `
+      + `sha256:${green.body.slice(0, 12)} из ${green.name} — ТЗ правилось — работа переделывается после S5, `
+      + 'дата автора не переписывается (§12)');
+  }
+  return null;
+}
+
 // 10. DoR по моменту коммита (#311, #738). Правило 8 читает ТЕКУЩУЮ метку
 // issue: нарушение «код написан вне статуса разработки» становится невидимым,
 // как только статус штатно продвигается. Здесь статус задачи сверяется с
@@ -532,8 +629,15 @@ const iso = (ms) => new Date(ms).toISOString();
 // authorDate переживает ребейзы конвейера — окно нарушения не закрывается.
 // Проверка вторичная к правилу 8, поэтому недоступный timeline — warn, а не
 // fail: основная fail-closed проверка статуса остаётся за правилом 8.
+//
+// #729: одно исключение поверх эпох — черновик `track:ask` (§11.8). Коммит,
+// написанный в `S4-spec-review` с трейлером `Spec-Draft`, принимается, если
+// эпоху `S4` закрыл `S5-ready`, трек на момент написания — `ask`, а трейлер
+// равен «Тело issue» зелёного SPEC-REVIEW этой эпохи. Документы читает
+// `specReviews` (`{ head, read(nn) }`, см. gitSpecReviewReader); не передан —
+// исключение выключено, и находки с текстами равны #738.
 export function checkCommitEraStatuses(
-  commits, timelineRunner, { allowed = ALLOWED_STATUS } = {},
+  commits, timelineRunner, { allowed = ALLOWED_STATUS, specReviews = null } = {},
 ) {
   const out = [];
   const byIssue = new Map();
@@ -567,11 +671,40 @@ export function checkCommitEraStatuses(
       });
       continue;
     }
+    // #729: документы issue читаются один раз и только для чернового коммита.
+    let issueDocs = null;
+    const docsOf = () => {
+      if (issueDocs === null) issueDocs = specReviews.read(nn) ?? [];
+      return issueDocs;
+    };
     for (const c of list) {
       const wrote = Date.parse(c.authorDate);
       if (!Number.isFinite(wrote)) continue;
       const at = statusIndexAt(events, wrote);
-      if (at >= 0 && events[at].ready) continue;
+      const drafts = c.specDrafts ?? [];
+      if (at >= 0 && events[at].ready) {
+        // #729: коммит законен по #738, трейлер — шум; вероятно, он переехал
+        // вместе с кодом при переносе черновика.
+        if (specReviews && drafts.length) {
+          out.push({
+            level: 'warn', rule: 10, sha: c.short,
+            msg: `issue #${nn}: трейлер \`Spec-Draft\` на коммите, написанном в ${events[at].label}: `
+              + `черновиком считается только коммит из \`${DRAFT_STATUS}\` (§11.8)`,
+          });
+        }
+        continue;
+      }
+      const inDraftStatus = Boolean(specReviews) && at >= 0 && events[at].label === DRAFT_STATUS;
+      if (inDraftStatus && drafts.length) {
+        const finding = judgeDraft({
+          c, nn, events, at, rawEvents: r.events, rangeHead: specReviews.head ?? '<head>', docsOf,
+        });
+        if (finding) out.push(finding);
+        continue;
+      }
+      const tail = inDraftStatus
+        ? `; написан в \`${DRAFT_STATUS}\` — черновик \`track:ask\` принимается только с трейлером \`Spec-Draft\` (§11.8)`
+        : '';
       let lastReady = -1;
       for (let i = 0; i < at; i += 1) if (events[i].ready) lastReady = i;
       if (lastReady < 0) {
@@ -579,7 +712,7 @@ export function checkCommitEraStatuses(
           level: 'fail', rule: 10, sha: c.short,
           msg: `issue #${nn}: коммит класса A написан ${c.authorDate}, `
             + `до первого достижения задачей статуса из ${allowed.join('/')} `
-            + `(${iso(firstReady.at)}) — код раньше «Готово к разработке» (§12)`,
+            + `(${iso(firstReady.at)}) — код раньше «Готово к разработке» (§12)${tail}`,
         });
         continue;
       }
@@ -591,7 +724,7 @@ export function checkCommitEraStatuses(
         level: 'fail', rule: 10, sha: c.short,
         msg: `issue #${nn}: коммит класса A написан ${c.authorDate} в ${events[at].label} — `
           + `после возврата ${iso(returned.at)} и до повторного «Готово к разработке» `
-          + `(${nextReady ? iso(nextReady.at) : 'ещё не достигнут'}) — код вне статуса разработки (§12)`,
+          + `(${nextReady ? iso(nextReady.at) : 'ещё не достигнут'}) — код вне статуса разработки (§12)${tail}`,
       });
     }
   }
@@ -637,6 +770,54 @@ function ghTimelineRunner(nwo, bin) {
     } catch (e) {
       return { ok: false, error: e.message };
     }
+  };
+}
+
+/**
+ * Документы SPEC-REVIEW из git для исключения #729 (§11.8): вершина
+ * проверяемого диапазона и `refs/remotes/origin/dev`, если она есть. На issue
+ * SPEC-REVIEW лежит либо в ветке задачи, либо прямо в `dev` (ветки до `S5` у
+ * `ask` обычно нет), поэтому нужны обе ссылки. `addedAt` — дата автора
+ * коммита, добавившего путь на той ссылке, где документ найден: она переживает
+ * ребейзы конвейера. Одно имя на обеих ссылках — одна запись. Чтение ленивое:
+ * ни одной команды git, пока правило 10 не спросило документы issue, и один
+ * раз на issue.
+ */
+export function gitSpecReviewReader({ repo = process.cwd(), head = 'HEAD', run = spawnSync } = {}) {
+  const git = (args) => {
+    const r = run('git', ['-C', repo, ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    return r && r.status === 0 ? r.stdout : null;
+  };
+  let refs = null;
+  const cache = new Map();
+  return {
+    head,
+    read(nn) {
+      if (cache.has(nn)) return cache.get(nn);
+      if (!refs) {
+        refs = [head];
+        if (git(['rev-parse', '--verify', '-q', 'refs/remotes/origin/dev']) !== null) refs.push('refs/remotes/origin/dev');
+      }
+      const name = new RegExp(`^docs/reviews/(SPEC-REVIEW-${nn}-r\\d+\\.md)$`);
+      const byName = new Map();
+      for (const ref of refs) {
+        const listing = git(['ls-tree', '--name-only', ref, 'docs/reviews/']);
+        if (listing === null) continue;
+        for (const path of listing.split('\n').map((s) => s.trim())) {
+          const m = name.exec(path);
+          if (!m || byName.has(m[1])) continue;
+          byName.set(m[1], {
+            name: m[1],
+            ref,
+            text: git(['show', `${ref}:${path}`]) ?? '',
+            addedAt: (git(['log', '-1', '--diff-filter=A', '--format=%aI', ref, '--', path]) ?? '').trim(),
+          });
+        }
+      }
+      const docs = [...byName.values()];
+      cache.set(nn, docs);
+      return docs;
+    },
   };
 }
 
@@ -833,10 +1014,13 @@ function main(argv) {
         process.env.HP_REPO ?? 'Matysh/houseplan-card', process.env.GH_BIN ?? 'gh',
       );
       const timelineCache = new Map();
+      // #729: читатель SPEC-REVIEW передаётся всегда; git он трогает, только
+      // когда в диапазоне есть черновой коммит. Вершина — правая часть --range.
+      const rangeHead = /^(.*?)\.\.\.?(.+)$/.exec(range)?.[2] ?? range;
       findings.push(...checkCommitEraStatuses(statusCommits, (nn) => {
         if (!timelineCache.has(nn)) timelineCache.set(nn, timelineRunner(nn));
         return timelineCache.get(nn);
-      }, { allowed }));
+      }, { allowed, specReviews: gitSpecReviewReader({ repo, head: rangeHead }) }));
     }
     labelsOf = (nn) => {
       const r = cached(nn);

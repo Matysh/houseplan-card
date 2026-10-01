@@ -9,7 +9,7 @@ import {
   branchIsInfrastructure, buildPacket, evidenceFor, productFlowEvidence, extractAcceptanceCriteria, lastVerdict, ownerDecisions, renderPacket, rightsFor,
   trackFromLabels, hasTrackLabel, readMergeState,
 } from '../scripts/task-packet.mjs';
-import { materialAnchorBlock } from '../scripts/review-doc-guard.mjs';
+import { issueBodyDigest, materialAnchorBlock } from '../scripts/review-doc-guard.mjs';
 
 // #496: пакет задачи — производное представление; проверяется, что он выводится
 // из меток/комментариев/документов детерминированно и ничего не додумывает.
@@ -401,4 +401,79 @@ test('#707 AC11: changelog и визуальное свидетельство', 
   const visual = renderPacket(packetOf({ branch: branchWith({ diff: RENDER }) }));
   assert.match(visual, /дефект растра или резкости требует свидетеля, красного на старом коде, и подтверждения владельца в GPU-браузере \(§7\.1\)/);
   assert.doesNotMatch(renderPacket(packetOf({ branch: branchWith({ diff: STYLE }) })), /## Changelog/, 'нет коммитов и нет визуала — раздел не печатается');
+});
+
+// ---------- #729: черновик во время ревью ТЗ (PROCESS.md §11.8) ----------
+
+const DRAFT_BODY = '## ТЗ\n\n- AC1: черновик\n- AC2: пакет\n';
+const draftPacket = ({ labels = ['S4-spec-review', 'track:ask'], body = DRAFT_BODY, specDocs, reviewDocs = [] } = {}) => buildPacket({
+  issue: { number: 729, title: 'draft', state: 'OPEN', url: 'u', body }, labels, owner: 'Matysh', branch: null,
+  reviewDocs, ...(specDocs ? { specDocs } : {}),
+});
+const greenSpec = (round, body = DRAFT_BODY, verdict = 'green', high = 0) => ({
+  name: `SPEC-REVIEW-729-r${round}.md`,
+  text: `# SPEC-REVIEW-729-r${round}\nAC1 — разобран\n\n${materialAnchorBlock({ verdict, high, issueBody: issueBodyDigest(body) })}`,
+});
+
+test('#729 AC7: пакет хеширует тело той же функцией, что якорь конвейера и гейт', () => {
+  assert.equal(packet.issueBodyDigest, issueBodyDigest);
+});
+
+test('#729 AC8: S4 на ask — черновик локально можно, в ветку нельзя; трейлер в разделе «Черновик»', () => {
+  const p = draftPacket();
+  assert.ok(p.rights.includes('продуктовый код в ветку — НЕЛЬЗЯ до `S5` (правило №1)'), p.rights.join('\n'));
+  assert.ok(p.rights.some((l) => l.startsWith('черновик локально — МОЖНО (§11.8)')), p.rights.join('\n'));
+  assert.ok(p.rights.some((l) => l.startsWith('идёт ревью ТЗ: ждать вердикт')), 'строка ревью ТЗ остаётся');
+  assert.ok(p.rights.every((l) => !l.includes('продуктовый код трогать НЕЛЬЗЯ')));
+  const md = renderPacket(p);
+  assert.match(md, /## Черновик \(#729\)/);
+  assert.ok(md.includes(`Spec-Draft: sha256:${issueBodyDigest(DRAFT_BODY)}`), md);
+  assert.match(md, /ветку не пушить до `S5`; `S6` — после зелёного ревью ТЗ; комментарий «Черновик:»/);
+  assert.match(md, /жёлтый или красный вердикт — черновик остановить/);
+  const json = JSON.parse(JSON.stringify(p));
+  assert.deepEqual(Object.keys(json.specDraft).sort(), ['allowed', 'bodyChanged', 'bodyNow', 'green', 'reason', 'trailer']);
+  assert.equal(json.specDraft.allowed, true);
+  assert.equal(json.specDraft.trailer, `Spec-Draft: sha256:${issueBodyDigest(DRAFT_BODY)}`);
+  assert.equal(json.specDraft.bodyNow, issueBodyDigest(DRAFT_BODY));
+
+  // show and blocked: no «МОЖНО»; blocked says the draft is not kept.
+  for (const labels of [['S4-spec-review', 'track:show'], ['S4-spec-review', 'track:ask', 'blocked'], ['S4-spec-review', 'review-4']]) {
+    const other = draftPacket({ labels });
+    assert.ok(other.rights.every((l) => !l.includes('МОЖНО')), labels.join(','));
+    assert.ok(other.rights.includes('продуктовый код трогать НЕЛЬЗЯ: статус не S5/S6/S7 (правило №1)'), labels.join(','));
+    assert.equal(other.specDraft.allowed, false, labels.join(','));
+    assert.equal(other.specDraft.trailer, null, labels.join(','));
+    assert.doesNotMatch(renderPacket(other), /Spec-Draft: sha256:/, labels.join(','));
+  }
+  assert.ok(draftPacket({ labels: ['S4-spec-review', 'track:ask', 'blocked'] }).rights.includes('черновик не ведётся (§11.8): blocked'));
+  assert.ok(draftPacket({ labels: ['S4-spec-review', 'review-4'] }).rights.includes('черновик не ведётся (§11.8): review-4'));
+  assert.ok(draftPacket({ labels: ['S4-spec-review', 'track:show'] }).rights.every((l) => !l.includes('черновик')),
+    'other tracks print S4 as before');
+});
+
+test('#729 AC8: S5/S6 на ask — зелёное ревью ТЗ, хеш, совпадение тела и команда проверки', () => {
+  const specDocs = [greenSpec(1, 'старый текст', 'yellow'), greenSpec(2), greenSpec(3, DRAFT_BODY, 'green', 1)];
+  for (const status of ['S5-ready', 'S6-in-progress']) {
+    const p = draftPacket({ labels: [status, 'track:ask'], specDocs });
+    assert.deepEqual(p.specDraft.green, { doc: 'SPEC-REVIEW-729-r2.md', round: 2, body: issueBodyDigest(DRAFT_BODY) });
+    assert.equal(p.specDraft.bodyChanged, false);
+    const md = renderPacket(p);
+    assert.ok(md.includes(`зелёное ревью ТЗ: \`SPEC-REVIEW-729-r2.md\` · тело \`sha256:${issueBodyDigest(DRAFT_BODY).slice(0, 12)}\``), md);
+    assert.match(md, /тело issue сейчас: совпадает/);
+    assert.match(md, /`node scripts\/process-gate\.mjs --range origin\/dev\.\.HEAD --issues --report`/);
+  }
+  const edited = draftPacket({ labels: ['S6-in-progress', 'track:ask'], specDocs, body: `${DRAFT_BODY}- AC3: дописано\n` });
+  assert.equal(edited.specDraft.bodyChanged, true);
+  assert.match(renderPacket(edited), /изменилось после зелёного ревью ТЗ \(ревьюер кода получит находку, #517\)/);
+  // No green spec review — no section.
+  assert.doesNotMatch(renderPacket(draftPacket({ labels: ['S5-ready', 'track:ask'], specDocs: [greenSpec(1, DRAFT_BODY, 'yellow')] })), /Черновик \(#729\)/);
+
+  // specDocs do not move the previous verdict nor the AC witness.
+  const reviewDocs = [{ name: 'CODE-REVIEW-729-r1.md', text: `AC1 — доказан тестом\n\n${materialAnchorBlock({ tree: TREE, verdict: 'yellow', high: 0 })}` }];
+  const without = draftPacket({ labels: ['S6-in-progress', 'track:ask'], reviewDocs });
+  const withDocs = draftPacket({ labels: ['S6-in-progress', 'track:ask'], reviewDocs, specDocs });
+  assert.deepEqual(withDocs.verdict, without.verdict);
+  assert.deepEqual(withDocs.acceptance, without.acceptance);
+  assert.deepEqual(withDocs.unverified, without.unverified);
+  assert.deepEqual(withDocs.productFlow, without.productFlow);
 });
