@@ -1,10 +1,11 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 242, issue: 120. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 243, issue: 121. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | бета v1.79.0-beta.1 | [SHIP-REVIEW-v1.79.0-beta.1.md](SHIP-REVIEW-v1.79.0-beta.1.md) | пакетное ревью ship · — | ⚪ — | 0 | 0 | — | — |
+| #744 | [SPEC-REVIEW-744-r1.md](SPEC-REVIEW-744-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #742 | [SPEC-REVIEW-742-r1.md](SPEC-REVIEW-742-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | устаревшее число в AC6 (не блокирует) | `src/houseplan-card.ts` `test/core-file-budget.test.mjs` |
 | #741 | [CODE-REVIEW-741-r1.md](CODE-REVIEW-741-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #740 | [SPEC-REVIEW-740-r1.md](SPEC-REVIEW-740-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | устаревший номер строки в «Проблема», п.2 | `src/stairs-view.ts` `src/stairs-editor.ts` `stairs-view.ts` `stairs-editor.ts` `stairs.ts` `large-house.mjs` `matrix.mjs` |
