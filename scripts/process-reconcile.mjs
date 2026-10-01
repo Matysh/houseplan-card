@@ -72,6 +72,32 @@ export function latestReviewRequest(events = [], label = null) {
   return requests.at(-1) || null;
 }
 
+/** Runs belonging to this request only. Never revive a previous label round. */
+export function reviewRunsForRequest(runs, issue, request) {
+  if (!request || !Number.isFinite(at(request.at))) return [];
+  const matching = runs.map((run) => run.issue ? run : parseProcessRun(run)).filter(Boolean)
+    .filter((run) => run.issue === Number(issue) && run.label === request.label
+      && at(run.createdAt) >= at(request.at))
+    .sort((a, b) => at(b.createdAt) - at(a.createdAt) || Number(b.id) - Number(a.id));
+  // Fully skipped workflows ran no review. All other conclusions remain barriers:
+  // searching past a failed or successful non-pending run risks a second model call.
+  const attempted = matching.filter((run) => run.conclusion !== 'skipped');
+  return attempted.length ? attempted : matching;
+}
+
+export function pendingEvidenceError(pending, { issue, run }) {
+  if (pending.schema !== 1 || String(pending.issue) !== String(issue)
+    || String(pending.run_id) !== String(run.id) || String(pending.run_attempt) !== String(run.attempt)
+    || pending.stage !== run.stage || !String(pending.branch || '').startsWith(`issue/${issue}-`)) {
+    return 'pending marker belongs to another issue/stage/run attempt/branch';
+  }
+  if (!/^[0-9a-f]{40}$/i.test(String(pending.material_sha || ''))
+    || !/^[1-9][0-9]*$/.test(String(pending.validate_run_id || ''))) {
+    return 'pending marker has incomplete material SHA or Validate run ID';
+  }
+  return null;
+}
+
 export function preparedEvidenceError(prepared, { issue, stage, run }) {
   if (!prepared) return null;
   const badIdentity = prepared.schema !== 1
@@ -112,13 +138,8 @@ export function decideReconciliation({
   }
 
   const requestAt = at(request.at);
-  const matching = runs
-    .map((run) => run.issue ? run : parseProcessRun(run))
-    .filter(Boolean)
-    .filter((run) => run.issue === Number(issue.number) && run.label === label
-      && Number.isFinite(at(run.createdAt)) && at(run.createdAt) >= requestAt - 120_000)
-    .sort((a, b) => at(b.createdAt) - at(a.createdAt) || Number(b.id) - Number(a.id));
-  const run = matching[0] || null;
+  const matching = reviewRunsForRequest(runs, issue.number, request);
+  const run = matching.find((candidate) => ACTIVE_RUN_STATES.has(candidate.status)) || matching[0] || null;
 
   if (!run) {
     if (now - requestAt < graceMs) return result('wait', 'label event is still within delivery grace', { label, stage });
@@ -147,6 +168,9 @@ export function decideReconciliation({
   if (Number.isFinite(settledAt) && now - settledAt < graceMs) {
     return result('wait', 'completed run is still within label-application grace', { label, stage, run });
   }
+  if (run.resultArtifact) {
+    return result('escalate', 'sealed model result exists but was not integrated; automatic rerun would spend the model twice', { label, stage, run });
+  }
   if (run.conclusion === 'success' && run.pending) {
     // #636: успешный прогон без вердикта — это не потеря, а осознанный выход
     // подготовки: Validate с мутантами на материале ещё шёл. Пока он идёт —
@@ -159,9 +183,6 @@ export function decideReconciliation({
   }
   if (run.conclusion === 'success') {
     return result('escalate', 'successful run did not move the review label', { label, stage, run });
-  }
-  if (run.resultArtifact) {
-    return result('escalate', 'sealed model result exists but was not integrated; automatic rerun would spend the model twice', { label, stage, run });
   }
   if (RETRYABLE_CONCLUSIONS.has(run.conclusion)) {
     return result('retry', `transient process run conclusion: ${run.conclusion}`, { label, stage, run });
@@ -201,7 +222,7 @@ function issueView(repo, number) {
   return ghJson(['issue', 'view', String(number), '--repo', repo, '--json', 'number,title,labels,comments,updatedAt']);
 }
 
-function issueEvents(repo, number) {
+export function issueEvents(repo, number) {
   const pages = ghJson(['api', '--paginate', '--slurp', `repos/${repo}/issues/${number}/events?per_page=100`]);
   return Array.isArray(pages?.[0]) ? pages.flat() : (Array.isArray(pages) ? pages : []);
 }
@@ -216,12 +237,34 @@ function openReviewIssues(repo) {
     .sort((a, b) => a.number - b.number);
 }
 
-export function processRuns(repo, issues = []) {
-  const pages = [1, 2].flatMap((page) => {
-    const response = ghJson(['api', `repos/${repo}/actions/workflows/process.yml/runs?event=issues&per_page=100&page=${page}`]);
-    return response.workflow_runs || [];
-  });
-  return pages.map((raw) => {
+export function processRuns(repo, issues = [], { since = null, getJson = ghJson } = {}) {
+  // #775: the former latest-200 window could silently hide the pending round.
+  // Bound history by the current label request, not unrelated workflow volume.
+  const starts = since ? [at(since)] : issues.map((issue) => {
+    const label = REVIEW_LABELS.find((candidate) => labelsOf(issue).includes(candidate));
+    return at(latestReviewRequest(issueEvents(repo, issue.number), label)?.at);
+  }).filter(Number.isFinite);
+  if (!starts.length) return [];
+  const oldest = Math.min(...starts);
+  if (!Number.isFinite(oldest)) throw new Error('invalid process history start');
+  const rows = new Map();
+  for (let page = 1; ; page++) {
+    // Do not use event/created search filters: filtered Actions queries cap at
+    // 1000 results. Filter issue events locally after complete pagination.
+    const response = getJson(['api', `repos/${repo}/actions/workflows/process.yml/runs?per_page=100&page=${page}`]);
+    const batch = response.workflow_runs;
+    if (!Array.isArray(batch)) throw new Error('invalid process history response');
+    if (!batch.length) break;
+    let added = 0;
+    for (const raw of batch) {
+      if (!raw.id || !Number.isFinite(at(raw.created_at))) throw new Error('invalid process history run');
+      const key = `${raw.id}/${raw.run_attempt || 1}`;
+      if (!rows.has(key)) { rows.set(key, raw); added++; }
+    }
+    if (!added) throw new Error('process history pagination made no progress');
+    if (batch.length < 100 || batch.every((raw) => at(raw.created_at) < oldest)) break;
+  }
+  return [...rows.values()].filter((raw) => raw.event === 'issues' && at(raw.created_at) >= oldest).map((raw) => {
     const stable = parseProcessRun(raw);
     if (stable) return stable;
     // Runs created before #555 used the issue title as display_title. Accept
@@ -303,9 +346,8 @@ function hydrateRunEvidence(repo, issue, run) {
       return { ...run, evidenceError: 'duplicate prepared/result/pending artifacts' };
     }
     const pending = pendingArtifacts.length === 1 ? loadSealedArtifact(repo, run, pendingArtifacts[0], 'pending.json') : null;
-    if (pending && (String(pending.issue) !== String(issue.number) || String(pending.run_id) !== String(run.id))) {
-      return { ...run, evidenceError: 'pending marker belongs to another issue/run' };
-    }
+    const pendingError = pending && pendingEvidenceError(pending, { issue: issue.number, run });
+    if (pendingError) return { ...run, evidenceError: pendingError };
     return {
       ...run,
       preparedArtifact: preparedArtifacts.length === 1,
@@ -370,8 +412,7 @@ async function snapshot(repo, baseRuns, issue) {
   const labels = labelsOf(fresh);
   const label = REVIEW_LABELS.find((candidate) => labels.includes(candidate)) || null;
   const request = latestReviewRequest(events, label);
-  const candidates = baseRuns.filter((run) => run.issue === issue.number && run.label === label)
-    .sort((a, b) => at(b.createdAt) - at(a.createdAt));
+  const candidates = reviewRunsForRequest(baseRuns, issue.number, request);
   const hydrated = candidates.length ? [hydrateRunEvidence(repo, fresh, candidates[0]), ...candidates.slice(1)] : candidates;
   return { issue: fresh, request, runs: hydrated };
 }

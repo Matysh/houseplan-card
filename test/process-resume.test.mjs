@@ -5,16 +5,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { decideResume, issueNumberFromBranch, resume, REVIEW_LABEL } from '../scripts/process-resume.mjs';
+import { decideResume as decide, issueNumberFromBranch, resume, REVIEW_LABEL } from '../scripts/process-resume.mjs';
 
 const SHA = 'a'.repeat(40);
 const OTHER = 'b'.repeat(40);
-const validateRun = (over = {}) => ({ event: 'workflow_dispatch', status: 'completed', headSha: SHA, ...over });
+const validateRun = (over = {}) => ({ id: 80, event: 'workflow_dispatch', status: 'completed', headSha: SHA, ...over });
+const request = { id: 'event-1', at: '2026-09-23T09:00:00Z', label: REVIEW_LABEL };
+const decideResume = (args) => decide({ issue: 636, branch: 'issue/636-x', request, headSha: SHA, ...args });
 const processRun = (over = {}) => ({
   id: 70, attempt: 1, issue: 636, label: REVIEW_LABEL, stage: 'code', status: 'completed', conclusion: 'success',
   createdAt: '2026-09-23T10:00:00Z', ...over,
 });
-const pending = { schema: 1, issue: 636, run_id: 70, material_sha: SHA };
+const pending = { schema: 1, issue: 636, run_id: 70, run_attempt: 1, stage: 'code', branch: 'issue/636-x',
+  material_sha: SHA, validate_run_id: 80 };
 const pendingOf = (run) => (run.id === 70 ? pending : null);
 
 test('#636 branch → issue number', () => {
@@ -75,7 +78,7 @@ test('#636 the newest process run decides, not an older pending one', () => {
 test('#636 resume() relabels only on a resume decision and only with apply', async () => {
   const relabels = [];
   const ops = {
-    labels: () => [REVIEW_LABEL],
+    state: () => ({ labels: [REVIEW_LABEL], request, headSha: SHA }),
     runs: () => [processRun()],
     pendingOf,
     relabel: () => relabels.push(REVIEW_LABEL),
@@ -107,6 +110,8 @@ test('#636 workflows: prepare exits pending with a sealed marker, resume relabel
   assert.match(resumeWf, /github\.event\.workflow_run\.event == 'workflow_dispatch' && startsWith\(github\.event\.workflow_run\.head_branch, 'issue\/'\)/);
   assert.match(resumeWf, /GH_TOKEN: \$\{\{ secrets\.HP_PROCESS_TOKEN \}\}/);
   assert.match(resumeWf, /node scripts\/process-resume\.mjs/);
+  assert.match(resumeWf, /VALIDATE_RUN_ID: \$\{\{ github\.event\.workflow_run\.id \}\}/);
+  assert.match(resumeWf, /--run-id="\$VALIDATE_RUN_ID"/);
   assert.ok(!/issues: write/.test(resumeWf), 'resume relabels with HP_PROCESS_TOKEN only');
   assert.ok(!/issues: write/.test(resumeCaller), 'the caller ceiling does not grant issues: write either');
   assert.match(validate, /for file in process\.yml mutation-gate\.yml process-resume\.yml [^\n]*; do/);

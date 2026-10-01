@@ -10328,8 +10328,8 @@ const MUTANT_DEFINITIONS = [
       + 'it would spend the model a second time (#636)',
     patches: [{
       file: 'scripts/process-resume.mjs',
-      find: "  if (!pending) return { action: 'noop', reason: 'latest process run left no pending marker — it did not wait for Validate' };",
-      replace: "  if (false && !pending) return { action: 'noop', reason: 'latest process run left no pending marker — it did not wait for Validate' };",
+      find: "  if (!pending) return { action: 'noop', recheck: true, reason: 'latest process run left no pending marker — it did not wait for Validate' };",
+      replace: "  if (false && !pending) return { action: 'noop', recheck: true, reason: 'latest process run left no pending marker — it did not wait for Validate' };",
     }],
   },
   {
@@ -10338,8 +10338,48 @@ const MUTANT_DEFINITIONS = [
     because: 'relabelling while a process run is active queues a second round for the same request (#636)',
     patches: [{
       file: 'scripts/process-resume.mjs',
-      find: "  if (mine.some((run) => ACTIVE_RUN_STATES.has(run.status))) return { action: 'noop', reason: 'a process run for this issue is already active' };",
-      replace: "  if (false && mine.some((run) => ACTIVE_RUN_STATES.has(run.status))) return { action: 'noop', reason: 'a process run for this issue is already active' };",
+      find: "  if (mine.some((run) => ACTIVE_RUN_STATES.has(run.status))) return { action: 'noop', recheck: true, reason: 'a process run for this issue is already active' };",
+      replace: "  if (false && mine.some((run) => ACTIVE_RUN_STATES.has(run.status))) return { action: 'noop', recheck: true, reason: 'a process run for this issue is already active' };",
+    }],
+  },
+  {
+    id: 'pending-history-latest-200-only',
+    guard: 'node --test test/process-pending-round.test.mjs',
+    because: '#775: unrelated label traffic must not hide the pending review beyond two pages',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: '  for (let page = 1; ; page++) {',
+      replace: '  for (let page = 1; page <= 2; page++) {',
+    }],
+  },
+  {
+    id: 'pending-revives-previous-request',
+    guard: 'node --test test/process-pending-round.test.mjs',
+    because: '#775: a re-applied label starts a new request even one second after the preceding run',
+    patches: [{
+      file: 'scripts/process-reconcile.mjs',
+      find: '      && at(run.createdAt) >= at(request.at))',
+      replace: '      && at(run.createdAt) >= at(request.at) - 120_000)',
+    }],
+  },
+  {
+    id: 'pending-resumes-another-validate',
+    guard: 'node --test test/process-pending-round.test.mjs',
+    because: '#775: the same SHA is not proof that the pending round awaited this dispatch',
+    patches: [{
+      file: 'scripts/process-resume.mjs',
+      find: '  if (pending.branch !== branch || String(pending.validate_run_id) !== String(validateRun.id)) {',
+      replace: '  if (pending.branch !== branch) {',
+    }],
+  },
+  {
+    id: 'pending-no-fresh-snapshot-before-write',
+    guard: 'node --test test/process-pending-round.test.mjs',
+    because: '#775: a stopped or already restarted round must not be woken from an old snapshot',
+    patches: [{
+      file: 'scripts/process-resume.mjs',
+      find: '    const second = inspect();',
+      replace: '    const second = first;',
     }],
   },
   {
