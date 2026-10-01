@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 272, issue: 139. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 274, issue: 139. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -36,6 +36,8 @@
 | #742 | [CODE-REVIEW-742-r1.md](CODE-REVIEW-742-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | AC5: таблица в хендовере не покрывает весь Oracle (снято ревьюером) | — |
 | #741 | [CODE-REVIEW-741-r1.md](CODE-REVIEW-741-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #740 | [SPEC-REVIEW-740-r1.md](SPEC-REVIEW-740-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | устаревший номер строки в «Проблема», п.2 | `src/stairs-view.ts` `src/stairs-editor.ts` `stairs-view.ts` `stairs-editor.ts` `stairs.ts` `large-house.mjs` `matrix.mjs` |
+| #740 | [CODE-REVIEW-740-r1.md](CODE-REVIEW-740-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | AC4 не доказан на материале ревью: единственный Full Performance прогон стоит на устаре… | `performance.yml` `mutation-browser-guards.md` `guard_tail_rejection.mjs` `docs/testing-notes/mutation-browser-guards.md` `docs/images/screenshots.json` |
+| #740 | [CODE-REVIEW-740-r2.md](CODE-REVIEW-740-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #739 | [SPEC-REVIEW-739-r1.md](SPEC-REVIEW-739-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #739 | [CODE-REVIEW-739-r1.md](CODE-REVIEW-739-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #738 | [CODE-REVIEW-738-r1.md](CODE-REVIEW-738-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
