@@ -3599,6 +3599,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'process-gate-infra-entry-covers-spec-route',
+    guard: 'node --test test/process-gate.test.mjs',
+    because: 'the #562 infrastructure entry is for a task before its first S status; letting it '
+      + 'cover S3-spec/S4-spec-review passes a pushed tests-only branch that §11.8 forbids and '
+      + 'hands the spec review a branch as material (#753)',
+    patches: [{
+      file: 'scripts/process-gate.mjs',
+      find: '    const optional = statusOptional && specRoute.length === 0;',
+      replace: '    const optional = statusOptional;',
+    }],
+  },
+  {
     id: 'task-packet-review-docs-not-material',
     guard: 'node --test test/task-packet.test.mjs',
     because: 'docs/reviews/** is written by the pipeline, not by the task: counting it as '

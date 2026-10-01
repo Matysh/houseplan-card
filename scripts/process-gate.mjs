@@ -411,6 +411,12 @@ export function commitsUnderRuleOne(commits) {
 // поставить продуктовой задаче и увести продуктовый коммит от проверки статуса,
 // а перестать трогать класс A, не перестав быть инфраструктурной задачей,
 // нельзя. Существование issue, его открытость и `blocked` проверяются всё равно.
+//
+// Признак диапазона не знает, где задача. Задача в маршруте ТЗ (`S3-spec`,
+// `S4-spec-review`: `track:ask`, повышенный show после `reclassify` #726, ручной
+// возврат) уже не «до первого S-статуса»: её ветка до `S5` не пушится вовсе
+// (§11.8), иначе ревью ТЗ получает её материалом. Поэтому исключение снимается
+// по каждому issue в `checkIssueStatuses`, а не по диапазону (#753).
 export function isInfrastructureRange(commits) {
   if (!commits.length) return false;
   return !commits.some((c) => c.classes.has('A'));
@@ -450,6 +456,12 @@ export function commitsNeedingIssueStatus(
   return underRuleOne.filter((commit) => !isPublishedPrereleaseCommit(commit.sha));
 }
 
+// Статусы маршрута ТЗ, для которых инфраструктурный вход #562 не действует
+// (#753). `S1-new` и `S2-analysis` в него не входят: инфраструктурные issue,
+// заведённые ревьюером, приходят с `S1-new`, а ветка до `S4` материалом ревью
+// ТЗ не становится.
+export const SPEC_ROUTE_STATUS = ['S3-spec', 'S4-spec-review'];
+
 // 8. статус issue. Fail closed: недоступный или закрытый issue — отказ, а не
 // пропуск. Гейт, который молчит при недоступном источнике правды, бесполезен.
 export function checkIssueStatuses(
@@ -484,11 +496,15 @@ export function checkIssueStatuses(
       continue;
     }
     const names = (issue.labels ?? []).map((l) => (typeof l === 'string' ? l : l.name));
-    if (!statusOptional && !names.some((n) => allowed.includes(n))) {
+    const specRoute = names.filter((n) => SPEC_ROUTE_STATUS.includes(n));
+    const optional = statusOptional && specRoute.length === 0;
+    if (!optional && !names.some((n) => allowed.includes(n))) {
       const status = names.filter((n) => /^S\d-/.test(n));
       out.push({
         level: 'fail', rule: 8, sha: '-',
-        msg: `issue #${nn}: статус ${status.length ? status.join(',') : 'не проставлен'}, а нужен один из ${allowed.join(' / ')}`,
+        msg: statusOptional
+          ? `issue #${nn} в ${specRoute.join(',')}: ветка задачи до «Готово к разработке» не пушится (§11.8); инфраструктурный вход (#562) — не для задачи в маршруте ТЗ`
+          : `issue #${nn}: статус ${status.length ? status.join(',') : 'не проставлен'}, а нужен один из ${allowed.join(' / ')}`,
       });
     }
     if (names.includes('blocked')) {

@@ -772,6 +772,54 @@ test('statusOptional permits the pre-S7 infra push but keeps every other rule-8 
   assert.deepEqual(rules(checkIssueStatuses(['206'], garbage, { statusOptional: true })), [8]);
 });
 
+// AC1 #753: вход #562 — для задачи «до первого S-статуса», а не для задачи в
+// маршруте ТЗ. В `S3-spec`/`S4-spec-review` ветка до `S5` не пушится (§11.8),
+// диапазон без класса A судится, как любой другой. Решение — по каждому issue.
+test('statusOptional does not cover an issue in the spec route S3/S4 (#753)', () => {
+  const issueWith = (...labels) => () => ({
+    ok: true, json: JSON.stringify({ state: 'OPEN', labels: labels.map((name) => ({ name })) }),
+  });
+  const optional = (runner) => checkIssueStatuses(['753'], runner, { statusOptional: true });
+
+  const s3 = optional(issueWith('S3-spec', 'P2'));
+  assert.deepEqual(rules(s3), [8]);
+  assert.match(s3[0].msg, /#753/);
+  assert.match(s3[0].msg, /S3-spec/);
+  assert.match(s3[0].msg, /§11\.8/);
+  assert.match(s3[0].msg, /#562/);
+
+  const s4 = optional(issueWith('S4-spec-review', 'track:ask'));
+  assert.deepEqual(rules(s4), [8]);
+  assert.match(s4[0].msg, /S4-spec-review/);
+  assert.match(s4[0].msg, /§11\.8/);
+
+  // Открыты по-прежнему: без статуса, `S1-new`/`S2-analysis` (инфраструктурные
+  // issue от ревьюера), рабочее множество.
+  assert.deepEqual(optional(issueWith('bug', 'P2', 'infra')), []);
+  assert.deepEqual(optional(issueWith('S1-new', 'infra')), []);
+  assert.deepEqual(optional(issueWith('S2-analysis')), []);
+  assert.deepEqual(optional(issueWith('S6-in-progress', 'track:show')), []);
+  // Трек без статуса маршрута ТЗ исключение не снимает.
+  assert.deepEqual(optional(issueWith('track:ask', 'infra')), []);
+
+  // `blocked` по-прежнему отдельной находкой.
+  assert.deepEqual(rules(optional(issueWith('S4-spec-review', 'blocked'))), [8, 8]);
+
+  // Без исключения текст прежний: статус и рабочее множество.
+  const strict = checkIssueStatuses(['753'], issueWith('S3-spec'));
+  assert.deepEqual(rules(strict), [8]);
+  assert.match(strict[0].msg, /нужен один из/);
+
+  // Два issue одного диапазона: отказ только у задачи в маршруте ТЗ.
+  const byNumber = {
+    753: issueWith('S4-spec-review', 'track:ask'),
+    206: issueWith('bug', 'P2', 'infra'),
+  };
+  const pair = checkIssueStatuses(['753', '206'], (nn) => byNumber[nn](), { statusOptional: true });
+  assert.deepEqual(rules(pair), [8]);
+  assert.match(pair[0].msg, /^issue #753 /);
+});
+
 // AC #562: сквозной прогон CLI по настоящему репозиторию с подставным gh.
 // Диапазон без класса A и с issue без статусной метки обязан быть зелёным;
 // тот же диапазон плюс один файл `src/**` — красным по проверке 8.
@@ -832,6 +880,66 @@ test('the CLI permits a pre-S7 class-B-only range but not one with class A (#562
     const withProduct = runGate(`${base}..HEAD`);
     assert.equal(withProduct.status, 1, withProduct.stdout + withProduct.stderr);
     assert.match(withProduct.stdout, /FAIL п\.8/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// AC2 #753: сквозной CLI. Диапазон из одного коммита `test/**` у задачи в
+// `S4-spec-review` — отказ п.8; тот же диапазон у задачи в `S1-new` — вход #562.
+test('the CLI refuses a class-B-only range of an issue in S3/S4 but not in S1 (#753)', (t) => {
+  if (process.platform === 'win32') {
+    t.skip('нужен исполняемый stub gh — прогон в Linux CI');
+    return;
+  }
+  const probe = spawnSync('git', ['--version'], { encoding: 'utf8' });
+  if (probe.status !== 0) {
+    t.skip('git недоступен');
+    return;
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'hp-gate-753-'));
+  const gate = fileURLToPath(new URL('../scripts/process-gate.mjs', import.meta.url));
+  const git = (...args) => {
+    const r = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8' });
+    assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
+    return r.stdout;
+  };
+  // Подставной gh: статус задачи — из окружения прогона.
+  const ghStub = join(dir, 'gh-stub.mjs');
+  writeFileSync(ghStub, '#!/usr/bin/env node\n'
+    + 'process.stdout.write(JSON.stringify({ number: 753, state: "OPEN", labels: '
+    + '[{ name: process.env.HP_STUB_STATUS }, { name: "track:ask" }, { name: "P2" }] }));\n',
+  { mode: 0o755 });
+  const runGate = (range, status) => spawnSync(process.execPath,
+    [gate, '--repo', dir, '--range', range, '--issues'],
+    { encoding: 'utf8', env: { ...process.env, GH_BIN: ghStub, HP_STUB_STATUS: status } });
+
+  try {
+    git('init', '-q', '-b', 'dev');
+    writeFileSync(join(dir, 'README.md'), 'base\n');
+    git('add', '-A');
+    git('-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'core.hooksPath=/dev/null',
+      'commit', '-q', '-m', 'Base');
+    const base = git('rev-parse', 'HEAD').trim();
+    mkdirSync(join(dir, 'test'), { recursive: true });
+    writeFileSync(join(dir, 'test', 'a.test.mjs'), 'export {};\n');
+    git('add', '-A');
+    git('-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'core.hooksPath=/dev/null',
+      'commit', '-q', '-m', 'Add a test\n\nIssue: #753\nUser-Visible: no');
+
+    for (const status of ['S4-spec-review', 'S3-spec']) {
+      const refused = runGate(`${base}..HEAD`, status);
+      assert.equal(refused.status, 1, refused.stdout + refused.stderr);
+      assert.match(refused.stdout, /FAIL п\.8/);
+      assert.match(refused.stdout, new RegExp(`#753 в ${status}`));
+      // Пропуск диапазона по-прежнему виден, отказ — отдельной находкой.
+      assert.match(refused.stdout, /инфраструктурный диапазон \(#562\)/);
+    }
+
+    const entry = runGate(`${base}..HEAD`, 'S1-new');
+    assert.equal(entry.status, 0, entry.stdout + entry.stderr);
+    assert.match(entry.stdout, /инфраструктурный диапазон \(#562\)/);
+    assert.doesNotMatch(entry.stdout, /FAIL/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
