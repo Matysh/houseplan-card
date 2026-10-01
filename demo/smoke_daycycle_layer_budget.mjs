@@ -13,7 +13,11 @@ cdp.on('LayerTree.layerTreeDidChange', ({ layers }) => { latestLayers = layers; 
 await cdp.send('LayerTree.enable');
 const presentedFrames = [];
 cdp.on('Page.screencastFrame', (event) => {
-  if (presentedFrames.length < 90) presentedFrames.push(event.data);
+  // #734: the swap time (seconds since epoch) tells a frame presented before
+  // the pinch from a pinch frame; without it the frame is judged.
+  if (presentedFrames.length < 90) {
+    presentedFrames.push({ data: event.data, swappedAt: Number(event.metadata?.timestamp) * 1000 });
+  }
   void cdp.send('Page.screencastFrameAck', { sessionId: event.sessionId });
 });
 
@@ -132,7 +136,11 @@ await page.evaluate(() => {
   window.__hp582Touch('pointerdown', 5822, cx + 70);
 });
 
+// #734: taken before the first move is dispatched, on the same wall clock as
+// the frame swap time — a frame swapped earlier cannot show the pinch.
+let pinchStartedAt = null;
 for (const distance of [78, 92, 66, 104, 72, 98]) {
+  pinchStartedAt ??= Date.now();
   await page.evaluate((distance) => {
     const { cx } = window.__hp582Pinch;
     window.__hp582Touch('pointermove', 5821, cx - distance);
@@ -150,6 +158,7 @@ await page.evaluate(() => {
   delete window.__hp582Touch;
   delete window.__hp582Pinch;
 });
+const pinchEndedAt = Date.now();
 await settle();
 await page.waitForTimeout(100);
 await cdp.send('Page.stopScreencast');
@@ -163,7 +172,7 @@ const frameMetrics = await page.evaluate(async ({ encoded, stage }) => {
     image.src = `data:image/png;base64,${data}`;
   });
   const out = [];
-  for (const data of encoded) {
+  for (const { data, swappedAt } of encoded) {
     const image = await decode(data);
     const scaleX = image.width / innerWidth;
     const scaleY = image.height / innerHeight;
@@ -188,7 +197,7 @@ const frameMetrics = await page.evaluate(async ({ encoded, stage }) => {
         }
       }
     }
-    out.push({ nearWhiteRatio: nearWhite / Math.max(1, sampled) });
+    out.push({ nearWhiteRatio: nearWhite / Math.max(1, sampled), swappedAt });
   }
   return out;
 }, {
@@ -328,10 +337,24 @@ checks.settledPlanLayerIsExplicitAndBounded = !!settledPlanLayer
   && settledPlanLayer.reasons.some((reason) => reason.includes('will-change: opacity'))
   && settledPlanLayer.reasons.every((reason) => !reason.includes('will-change: transform'))
   && settledPlanLayer.reasons.every((reason) => !reason.includes('Overlaps other composited content'));
-checks.capturedPresentedPinchFrames = frameMetrics.length >= 3;
-checks.presentedFramesHaveNoWhiteTile = frameMetrics.every(
-  (frame) => frame.nearWhiteRatio < 0.01,
+// #734: the check judges pinch frames. The first one or two frames of the
+// recording sometimes show the room before its fill (white paper, 0.997
+// near-white) — before any pinch move, then light grey. Not judged: a frame
+// swapped before the first move, and a frame before the first one that shows
+// the room filled. A tile lost during the pinch stays red: it comes after a
+// filled frame. A room white from the recording start through the whole
+// pinch leaves no judged frame inside the gesture, and that is red too.
+const hasFill = (frame) => frame.nearWhiteRatio < 0.01;
+const firstFilledFrame = frameMetrics.findIndex(hasFill);
+const swappedBefore = (frame, at) => Number.isFinite(frame.swappedAt) && frame.swappedAt < at;
+const pinchFrameMetrics = frameMetrics.filter((frame, index) => firstFilledFrame >= 0
+  && index >= firstFilledFrame && !swappedBefore(frame, pinchStartedAt));
+const framesInsideGesture = pinchFrameMetrics.filter(
+  (frame) => !Number.isFinite(frame.swappedAt) || frame.swappedAt <= pinchEndedAt,
 );
+checks.capturedPresentedPinchFrames = framesInsideGesture.length >= 3;
+checks.presentedFramesHaveNoWhiteTile = framesInsideGesture.length > 0
+  && pinchFrameMetrics.every(hasFill);
 checks.staticCardUsesSeparateFilteredOutline = staticStage.outlinePresent
   && staticStage.outlineVisibility === 'visible'
   && /drop-shadow/.test(staticStage.outlineFilter)
@@ -357,6 +380,10 @@ console.log(JSON.stringify({
   activeLayers: active.layers,
   settledLayers: settled.layers,
   presentedFrameMetrics: frameMetrics,
+  pinchStartedAt,
+  pinchEndedAt,
+  judgedPinchFrames: pinchFrameMetrics.length,
+  judgedFramesInsideGesture: framesInsideGesture.length,
   staticStage,
   staticLayers,
   staticOversized,
