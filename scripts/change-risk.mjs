@@ -10,7 +10,8 @@
 // токенами: ни один шаблон участка их не задевает, и тест держит это
 // («монолит участком не судится»). Пустые строки, комментарии, строки импорта и
 // строки только типов TypeScript риска не дают (#755) — кроме файлов участка
-// `migration`, где типы конфига и есть контракт.
+// `migration` и явно перечисленных сохраняемых типов в смешанных модулях
+// (#772), где типы конфига и есть контракт.
 //
 // Таблица — эвристика (ТЗ #707 §10 п.2): пути и токены меняются свободно,
 // каждая строка покрыта положительным и отрицательным случаем в
@@ -108,6 +109,15 @@ export function isCommentOrBlank(text, file = '') {
  */
 const MODULE_LINE = /^(?:import\s|export\s+(?:type\s+)?(?:\*(?:\s+as\s+[\w$]+)?|\{[^}]*\})\s*from\s*['"]|\}\s*from\s*['"])/;
 const TYPE_LINE = /^(?:export\s+(?:declare\s+)?type\s|(?:export\s+)?(?:declare\s+)?(?:interface\s+[\w$]|type\s+[\w$]+\s*(?:<.*>)?\s*=))/;
+const TYPE_NAME = /^(?:export\s+)?(?:declare\s+)?(?:interface|type)\s+([\w$]+)/;
+// #772: types.ts ссылается на Stair; сохраняется вся цепочка его деклараций,
+// но не StairVisualStyle, StairRenderGeometry или кеши из того же модуля.
+// При выносе сохраняемого типа из types.ts сюда добавляют путь и декларации,
+// с положительным примером и соседним несохраняемым типом в process-track.test.
+const PERSISTED_TYPES = {
+  'src/stairs.ts': new Set(['Stair', 'StairCommon', 'StraightStair', 'SpiralStair',
+    'StraightStairDirection', 'SpiralStairDirection']),
+};
 /** Строка-оператор, после которой блок декларации ещё открыт: `import {`, `interface X {`, `type X =`. */
 const OPENS_BLOCK = /[{=(<,|&]\s*$/;
 export const isModuleOrTypeStatement = (text) => MODULE_LINE.test(text) || TYPE_LINE.test(text);
@@ -122,28 +132,33 @@ const opensBlock = (text) => isModuleOrTypeStatement(text) && OPENS_BLOCK.test(t
  * строка без отступа внутри блока. Так член интерфейса под заголовком
  * `@@ … @@ export interface X {` и целиком добавленный интерфейс судятся одинаково.
  */
-export function moduleOrTypeRows(rows = []) {
-  const out = new Set();
+function moduleOrTypeDeclarations(rows = []) {
+  const out = new Map();
   const open = new Map();
+  // null — вне декларации; пустая строка — импорт/реэкспорт, не именованный тип.
+  const state = (text) => (opensBlock(text) ? (TYPE_NAME.exec(text)?.[1] || '') : null);
   rows.forEach((row, i) => {
     const key = `${row.block ?? 0}${row.side}`;
-    if (!open.has(key)) open.set(key, opensBlock(row.ctx ?? ''));
+    if (!open.has(key)) open.set(key, state(row.ctx ?? ''));
     const text = String(row.text);
     if (!text || /^\s/.test(text)) {
-      if (open.get(key)) out.add(i);
+      if (open.get(key) !== null) out.set(i, open.get(key));
       return;
     }
     if (/^(?:\/\/|\/\*|\*)/.test(text)) return;
-    if (open.get(key) && /^[}\])>]/.test(text)) {
-      out.add(i);
-      open.set(key, false);
+    if (open.get(key) !== null && /^[}\])>]/.test(text)) {
+      out.set(i, open.get(key));
+      open.set(key, null);
       return;
     }
-    if (isModuleOrTypeStatement(text)) out.add(i);
-    open.set(key, opensBlock(text));
+    if (isModuleOrTypeStatement(text)) out.set(i, TYPE_NAME.exec(text)?.[1] || '');
+    open.set(key, state(text));
   });
   return out;
 }
+
+/** Номера строк модулей/типов; имена деклараций остаются внутренней деталью. */
+export const moduleOrTypeRows = (rows = []) => new Set(moduleOrTypeDeclarations(rows).keys());
 
 /**
  * Разбор `git diff --unified=0` (подходит и с контекстом): файлы и их изменённые
@@ -231,17 +246,19 @@ export function classifyRisk(diffText = '') {
       const key = JSON_KEY.exec(row.text);
       if (key) removedKeys.add(key[1]);
     }
-    const typeOnly = moduleOrTypeRows(file.lines);
+    const typeOnly = moduleOrTypeDeclarations(file.lines);
     // Добавленная строка блока по `at`: пара для удалённой — одна заменённая строка.
     const addedAt = new Map(file.lines.filter((r) => r.side === '+').map((r) => [`${r.block}:${r.at}`, r]));
     for (const [i, row] of file.lines.entries()) {
       const p = row.side === '-' ? file.oldPath : file.newPath;
       if (!p || classify(p) !== 'A' || isCommentOrBlank(row.text, p)) continue;
       // #755: типы конфига — контракт, в участке migration строки типов судятся.
-      if (typeOnly.has(i) && p.endsWith('.ts') && !AREAS.migration.some((r) => r.re.test(p))) continue;
+      const persistedType = PERSISTED_TYPES[p]?.has(typeOnly.get(i)) ? typeOnly.get(i) : null;
+      if (typeOnly.has(i) && p.endsWith('.ts') && !persistedType && !AREAS.migration.some((r) => r.re.test(p))) continue;
       const where = { path: p, line: row.line, side: row.side };
       const pair = row.side === '-' && file.newPath ? addedAt.get(`${row.block}:${row.at}`) : null;
       if (pair) where.pair = `+${file.newPath}:${pair.line}`;
+      if (persistedType) add('migration', where, `сохраняемый тип ${persistedType}`);
       for (const [cls, rules] of Object.entries(AREAS)) {
         const rule = rules.find((r) => r.re.test(p));
         if (rule) add(cls, where, `участок ${rule.label}`);

@@ -186,6 +186,55 @@ test('#754 AC1: вызов ищется сквозь литерал-аргуме
   assert.deepEqual(named.symbols, ['resolveThing']);
 });
 
+test('#772: вложенные свойства аргумента сохраняют вызов, но не пересекают тело функции', () => {
+  const hunk = (...lines) => parseDiff([
+    'diff --git a/src/a.ts b/src/a.ts', '--- a/src/a.ts', '+++ b/src/a.ts',
+    '@@ -1,5 +1,5 @@', ...lines,
+  ].join('\n'), new Set(['resolveThing']));
+  for (const property of ['key: {', 'key: [', "'key': {", '[key]: {']) {
+    const result = hunk('   resolveThing({', `     ${property}`, '-      enabled: false,', '+      enabled: true,');
+    assert.deepEqual(result.callees, ['resolveThing'], property);
+  }
+  for (const boundary of [
+    '   resolveThing(items, () => {',
+    '   resolveThing(items, function callback() {',
+    '   resolveThing({ method() {',
+    '   resolveThing(items); const options = {',
+  ]) {
+    const result = hunk(boundary, '     key: {', '-      enabled: false,', '+      enabled: true,');
+    assert.deepEqual(result.symbols, [], boundary);
+  }
+  const selection = selectSmokes([
+    'diff --git a/src/a.ts b/src/a.ts', '--- a/src/a.ts', '+++ b/src/a.ts',
+    '@@ -1,5 +1,5 @@', '   resolveIsoOverlayFitEnvelope({', '     stageSize: {',
+    '-      width: 100,', '+      width: 200,', '     },', '   });',
+  ].join('\n'), { root: repoRoot });
+  assert.deepEqual(selection.callees, ['resolveIsoOverlayFitEnvelope']);
+  assert.ok(smokesToRun(selection).includes('smoke_iso_flat_parity.mjs'));
+});
+
+test('#772: CSS комнаты выбирает room-fill smoke без символов и сохраняет визуальный минимум', () => {
+  const diff = [
+    'diff --git a/src/styles/plan.styles.ts b/src/styles/plan.styles.ts',
+    '--- a/src/styles/plan.styles.ts', '+++ b/src/styles/plan.styles.ts',
+    '@@ -1,3 +1,3 @@', '     .room {', '-      transition: none;',
+    '+      transition: fill 180ms;', '     }',
+  ].join('\n');
+  const selection = selectSmokes(diff, { root: repoRoot });
+  assert.deepEqual(selection.symbols, []);
+  const link = selection.registered.find((entry) => entry.smoke === 'smoke_room_fill_transitions.mjs');
+  assert.deepEqual(link?.files, ['src/styles/plan.styles.ts']);
+  assert.ok(smokesToRun(selection).includes('smoke_room_fill_transitions.mjs'));
+  // Привязка всего файла — широкая: она не отменяет прежние безопасные проверки.
+  assert.deepEqual(selection.visualMinimum, [...VISUAL_MINIMUM]);
+  assert.ok(!smokesToRun(selectSmokes(diff.replaceAll('plan.styles.ts', 'dialogs.styles.ts'), { root: repoRoot }))
+    .includes('smoke_room_fill_transitions.mjs'), 'чужая таблица стилей не выбирает room-fill');
+  const cli = spawnSync(process.execPath, [join(repoRoot, 'scripts/smoke-select.mjs'), '--diff', '-'],
+    { input: diff, encoding: 'utf8' });
+  assert.equal(cli.status, 0, cli.stderr);
+  assert.match(cli.stdout, /smoke_room_fill_transitions\.mjs[\s\S]*src\/styles\/plan\.styles\.ts \(файл\)/);
+});
+
 test('таблица символов не берёт одиночные английские слова (#241)', () => {
   const table = symbolTable(repoRoot);
   for (const noise of ['floor', 'value', 'index', 'return', 'length', 'edit']) {
@@ -210,7 +259,11 @@ test('parseDiff читает только исполняемый frontend (#241)
 
 test('каждая запись реестра объясняет себя и указывает на существующий смок (#241)', () => {
   for (const link of SMOKE_LINKS) {
-    assert.ok(link.symbols.length, 'связь без символов не сработает никогда');
+    assert.ok(link.symbols?.length || link.files?.length, 'связь без символов или файлов не сработает никогда');
+    for (const file of link.files || []) {
+      assert.match(file, /^src\/.*\.ts$/);
+      assert.ok(readFileSync(join(repoRoot, file), 'utf8').length, `${file} в реестре, но файла нет`);
+    }
     assert.ok(link.because && link.because.length > 40, 'связь без объяснения — суеверие');
     for (const smoke of link.smokes) {
       assert.match(smoke, /^smoke_.*\.mjs$/);

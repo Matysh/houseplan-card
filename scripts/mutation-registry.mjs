@@ -5895,6 +5895,50 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'risk-counts-module-and-local-type-rows',
+    guard: 'node --test --test-name-pattern="#755 AC1|#772" test/process-track.test.mjs',
+    because: '#772 / #755 К1: imports and non-persisted TypeScript declarations must not '
+      + 'raise ship to show; the stored-type exception must not disable that guard',
+    patches: [{
+      file: 'scripts/change-risk.mjs',
+      find: "      if (typeOnly.has(i) && p.endsWith('.ts') && !persistedType && !AREAS.migration.some((r) => r.re.test(p))) continue;",
+      replace: '      // mutant: module/type-only rows are judged as executable code',
+    }],
+  },
+  {
+    id: 'risk-ignores-persisted-stair-types',
+    guard: 'node --test --test-name-pattern="#772" test/process-track.test.mjs',
+    because: '#772: a small stored-field change outside types.ts must raise an unconfirmed '
+      + 'ship to show; ignoring StairCommon silently merges an unread schema contract',
+    patches: [{
+      file: 'scripts/change-risk.mjs',
+      find: '      const persistedType = PERSISTED_TYPES[p]?.has(typeOnly.get(i)) ? typeOnly.get(i) : null;',
+      replace: '      const persistedType = null; // mutant: stored contract ignored',
+    }],
+  },
+  {
+    id: 'smoke-select-ignores-style-file-links',
+    guard: 'node --test --test-name-pattern="#772: CSS" test/smoke-select.test.mjs',
+    because: '#772: changing a room CSS rule without a TypeScript symbol must still select '
+      + 'smoke_room_fill_transitions; the generic visual minimum does not assert this contract',
+    patches: [{
+      file: 'scripts/smoke-select.mjs',
+      find: '  const registered = registeredSmokes(parsed.symbols, parsed.executable)',
+      replace: '  const registered = registeredSmokes(parsed.symbols)',
+    }],
+  },
+  {
+    id: 'smoke-select-stops-at-nested-property',
+    guard: 'node --test --test-name-pattern="#772: вложенные" test/smoke-select.test.mjs',
+    because: '#772: a nested object or array property is still part of the argument; '
+      + 'stopping at its colon loses the enclosing function and its linked smoke',
+    patches: [{
+      file: 'scripts/smoke-select.mjs',
+      find: "      if (!['(', ',', '[', ':'].includes(previous(row, column))) return null;",
+      replace: "      if (!['(', ',', '['].includes(previous(row, column))) return null;",
+    }],
+  },
+  {
     id: 'smoke-select-drops-registered-link',
     guard: 'node --test --test-name-pattern="держится на зарегистрированной связи" '
       + 'test/smoke-select.test.mjs',

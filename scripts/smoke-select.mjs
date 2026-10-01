@@ -128,7 +128,8 @@ const CALLEE_NAME = /([A-Za-z_$][\w$]*)\s*(?:\?\.)?$/;
 /**
  * Имя функции, внутри аргументов которой начинается строка `index` (#754):
  * ближайшая незакрытая `(` выше в пределах ханка. Литерал-аргумент — `{` или
- * `[` после `(`, `,` или `[` — проходится насквозь; `;` на нулевой глубине и
+ * `[` после `(`, `,`, `[` или `:` (#772: вложенное свойство) — проходится
+ * насквозь; `;` на нулевой глубине и
  * любая другая незакрытая `{`/`[` (тело блока, функции, класса, присваивание
  * литерала) останавливают поиск. `lines` уже вычищены `scrubLine`.
  */
@@ -152,7 +153,7 @@ function enclosingCallee(lines, index) {
       if (!(char in opener)) continue;
       if (depth[opener[char]] > 0) { depth[opener[char]]--; continue; }
       if (char === '(') return CALLEE_NAME.exec(text.slice(0, column).trimEnd())?.[1] ?? null;
-      if (!['(', ',', '['].includes(previous(row, column))) return null;
+      if (!['(', ',', '[', ':'].includes(previous(row, column))) return null;
     }
   }
   return null;
@@ -299,11 +300,13 @@ export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) 
     || b.count - a.count || a.smoke.localeCompare(b.smoke));
 
   const directNames = new Set(direct.map((entry) => entry.smoke));
-  const registered = registeredSmokes(parsed.symbols)
+  const registered = registeredSmokes(parsed.symbols, parsed.executable)
     .filter((entry) => !directNames.has(entry.smoke));
 
+  // #772: связь по целому файлу дополняет проверки, но не доказывает, что она
+  // покрывает именно изменённый контракт; прежний визуальный минимум остаётся.
   const unproven = parsed.executable.length > 0
-    && !direct.some((entry) => entry.strong) && !registered.length;
+    && !direct.some((entry) => entry.strong) && !registered.some((entry) => entry.symbols.length);
   return {
     files: parsed.files,
     executable: parsed.executable,
@@ -387,15 +390,15 @@ function report(selection) {
     lines.push(`Зарегистрированная связь (${selection.registered.length}):`);
     for (const entry of selection.registered) {
       lines.push(`  demo/${entry.smoke}`);
-      lines.push(`    ← ${named(entry.symbols)}`);
+      lines.push(`    ← ${[named(entry.symbols), ...(entry.files || []).map((file) => `${file} (файл)`)].filter(Boolean).join(', ')}`);
       for (const because of entry.because) lines.push(`    ${because}`);
     }
     lines.push('');
   }
 
   if (selection.unproven) {
-    lines.push('НЕОПРЕДЕЛЁННОСТЬ: дифф исполняемый, но ни один смок не связан'
-      + ' доказуемо.');
+    lines.push('НЕОПРЕДЕЛЁННОСТЬ: дифф исполняемый, но точная связь со смоком'
+      + ' не доказана (привязка целого файла лишь дополняет проверки).');
     lines.push('Это не значит «смоки не нужны»: значит, что связь не доказана'
       + ' и решает ревьюер.');
     lines.push(`Визуальный минимум (${selection.visualMinimum.length}) — прогнать до S7;`

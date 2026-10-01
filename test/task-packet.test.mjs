@@ -369,6 +369,8 @@ test('#707 AC10: обязательные проверки с основания
     '`node demo/smoke_b.mjs` · smoke-select: зарегистрированная связь (_b)',
     '`npm run gate:small -- --smokes` · smoke-select: визуальный минимум — связь диффа со смоками не доказана (#690): smoke_modes',
   ]);
+  const styles = checksOf({ smokes: { registered: [{ smoke: 'smoke_room_fill_transitions.mjs', symbols: [], files: ['src/styles/plan.styles.ts'] }] } });
+  assert.equal(styles[1].reason, 'smoke-select: зарегистрированная связь (src/styles/plan.styles.ts (файл))', '#772: пакет объясняет связь без символов');
   assert.ok(commands(checksOf({ diff: GEOMETRY })).includes('`npm run invariants -- --config <экспорт>`'), 'invariants при geometry');
   assert.ok(!commands(checksOf({ diff: TOUCH })).some((c) => c.includes('invariants')), 'без geometry — нет');
   assert.ok(commands(checksOf({ changedFiles: ['custom_components/houseplan/store.py'] })).includes('`python -m pytest tests_backend -q`'));

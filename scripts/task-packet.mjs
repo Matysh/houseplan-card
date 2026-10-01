@@ -260,7 +260,8 @@ export function requiredChecks({ risk = null, changedFiles = [], smokes = null, 
     out.push({ command: `\`node demo/${entry.smoke}\``, reason: `smoke-select: прямое совпадение (${entry.symbols.slice(0, 4).join(', ')})` });
   }
   for (const entry of smokes?.registered || []) {
-    out.push({ command: `\`node demo/${entry.smoke}\``, reason: `smoke-select: зарегистрированная связь (${entry.symbols.slice(0, 4).join(', ')})` });
+    const evidence = [...entry.symbols.slice(0, 4), ...(entry.files || []).map((file) => `${file} (файл)`)];
+    out.push({ command: `\`node demo/${entry.smoke}\``, reason: `smoke-select: зарегистрированная связь (${evidence.join(', ')})` });
   }
   if (smokes?.visualMinimum?.length) {
     out.push({ command: '`npm run gate:small -- --smokes`', reason: `smoke-select: визуальный минимум — связь диффа со смоками не доказана (#690): ${smokes.visualMinimum.map((s) => s.replace(/\.mjs$/, '')).join(', ')}` });
@@ -521,7 +522,7 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
       const selection = selectSmokes(sh('git', ['-c', 'core.quotePath=false', 'diff', `--unified=${CALL_CONTEXT_LINES}`, '-M', '--no-color', '--no-ext-diff', '--no-textconv', `${base}..${ref}`], { cwd }));
       smokes = {
         direct: selection.direct.filter((entry) => entry.strong).map(({ smoke, symbols }) => ({ smoke, symbols })),
-        registered: selection.registered.map(({ smoke, symbols }) => ({ smoke, symbols })),
+        registered: selection.registered.map(({ smoke, symbols, files }) => ({ smoke, symbols, ...(files ? { files } : {}) })),
         visualMinimum: selection.visualMinimum,
       };
     } catch { smokes = null; }

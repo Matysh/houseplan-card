@@ -363,6 +363,46 @@ test('#755 AC1: строки импорта и только типов TypeScrip
   assert.deepEqual(classifyRisk(diffOf([{ path: 'custom_components/houseplan/auth.py', add: [[2, 'import hass']] }])).classes, ['devices']);
 });
 
+test('#772: сохраняемые типы лестниц вне types.ts дают migration и повышают ship', () => {
+  const path = 'src/stairs.ts';
+  const variants = [
+    ['@@ -45 +45 @@ interface StairCommon {', '-  fill_color?: string;', '+  fill_color: string;'],
+    ['@@ -67 +67 @@ export interface StraightStair extends StairCommon {', '-  width: number;', '+  width?: number;'],
+    ['@@ -74 +74 @@ export interface SpiralStair extends StairCommon {', '-  radius: number;', '+  radius?: number;'],
+    ['@@ -33 +33 @@', "-export type StraightStairDirection = 'forward' | 'backward';", "+export type StraightStairDirection = 'up' | 'down';"],
+    ['@@ -34 +34 @@', "-export type SpiralStairDirection = 'clockwise' | 'counterclockwise';", "+export type SpiralStairDirection = 'cw' | 'ccw';"],
+    ['@@ -77 +77 @@', '-export type Stair = StraightStair | SpiralStair;', '+export type Stair = StraightStair;'],
+    ['@@ -37,0 +38,3 @@', '+interface StairCommon {', '+  color: string;', '+}'],
+    ['@@ -37,3 +37,0 @@', '-interface StairCommon {', '-  color: string;', '-}'],
+  ];
+  for (const hunk of variants) {
+    const diff = hunksOf(path, [hunk]);
+    const result = decideTrack({ stage: 'code', branch: 'issue/772-probe', labels: ['track:ship'],
+      files: [path], numstat: [{ path, added: 3, deleted: 3 }], nameStatus: [{ path, status: 'M' }], diff });
+    assert.deepEqual(result.violations, [], 'правка укладывается в механические рамки');
+    assert.ok(result.risk.classes.includes('migration'), hunk.join('\n'));
+    assert.match(result.risk.evidence.migration[0], /src\/stairs\.ts:\d+.*сохраняемый тип/);
+    assert.equal(result.track, 'show');
+    assert.equal(result.ship, false);
+    assert.equal(result.raise, true);
+  }
+  // Имя сохраняемого типа в импорте или в другом модуле не делает его декларацией.
+  const safe = [
+    [path, ['@@ -1 +1 @@', "-import { StairCommon } from './x';", "+import type { StairCommon } from './x';"]],
+    [path, ['@@ -1 +1 @@ import {', '-  StairCommon,', '+  StairCommon, Stair,']],
+    [path, ['@@ -1 +1 @@ export interface StairVisualStyle {', '-  color: string;', '+  color?: string;']],
+    [path, ['@@ -1 +1 @@ type CachedRenderGeometry = {', '-  fingerprint: string;', '+  fingerprint?: string;']],
+    ['src/iso-scene-render.ts', ['@@ -1 +1 @@ interface StairCommon {', '-  color: string;', '+  color?: string;']],
+  ];
+  for (const [file, hunk] of safe) {
+    const result = decideTrack({ stage: 'code', branch: 'issue/772-probe', labels: ['track:ship'],
+      files: [file], numstat: [{ path: file, added: 1, deleted: 1 }], nameStatus: [{ path: file, status: 'M' }],
+      diff: hunksOf(file, [hunk]) });
+    assert.deepEqual(result.risk.classes, [], hunk.join('\n'));
+    assert.equal(result.ship, true);
+  }
+});
+
 test('#755 AC2: участки stairs и config — модель лестницы и запись конфига, а не всё по префиксу', () => {
   const cls = (path, text = '  const a = b + c;') => classifyRisk(diffOf([{ path, add: [[5, text]] }])).classes;
   assert.deepEqual(cls('src/stairs-view.ts'), ['visual'], 'отрисовка лестницы — visual:render, не geometry');

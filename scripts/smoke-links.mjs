@@ -1,5 +1,5 @@
 /**
- * Явные связи «символ продуктового кода → browser-smoke» (#241).
+ * Явные связи «символ или файл продуктового кода → browser-smoke» (#241, #772).
  *
  * Зачем реестр вообще нужен. Смоки не импортируют исходники: они грузят
  * собранный бандл и работают через DOM и приватные поля в `page.evaluate`.
@@ -20,13 +20,22 @@
 
 /**
  * @typedef {object} SmokeLink
- * @property {string[]} symbols Изменённые символы, включающие связь.
+ * @property {string[]} [symbols] Изменённые символы, включающие связь.
+ * @property {string[]} [files] Точные пути файлов без символов (CSS). Дополняют
+ * выборку, но сами по себе не отменяют визуальный минимум: файл шире контракта.
  * @property {string[]} smokes  Файлы в `demo/`, без пути.
  * @property {string}   because Что смок проверяет и почему поиском не найдётся.
  */
 
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
+  {
+    files: ['src/styles/plan.styles.ts'],
+    smokes: ['smoke_room_fill_transitions.mjs'],
+    because: '#772 / #746: переход заливки комнаты зависит от CSS .room, а не только '
+      + 'от TS-резолвера; имён функций в правке CSS нет. Связь со всей таблицей '
+      + 'стилей намеренно шире селектора и сохраняет страховочный визуальный минимум',
+  },
   {
     symbols: [
       'isoPlaneMatrix', 'unprojectFloorPoint', '_convertProjectionView', '_rezoom',
@@ -614,16 +623,19 @@ export const SMOKE_LINKS = [
   },
 ];
 
-/** Смоки, связанные с изменёнными символами через реестр. */
-export function registeredSmokes(changedSymbols) {
+/** Смоки, связанные с изменёнными символами или точными путями через реестр. */
+export function registeredSmokes(changedSymbols, changedFiles = []) {
   const changed = new Set(changedSymbols);
+  const files = new Set(changedFiles);
   const out = new Map();
   for (const link of SMOKE_LINKS) {
-    const hit = link.symbols.filter((symbol) => changed.has(symbol)).sort();
-    if (!hit.length) continue;
+    const hit = (link.symbols || []).filter((symbol) => changed.has(symbol)).sort();
+    const fileHit = (link.files || []).filter((file) => files.has(file)).sort();
+    if (!hit.length && !fileHit.length) continue;
     for (const smoke of link.smokes) {
       const entry = out.get(smoke) || { smoke, symbols: [], because: [] };
       entry.symbols = [...new Set([...entry.symbols, ...hit])].sort();
+      if (fileHit.length) entry.files = [...new Set([...(entry.files || []), ...fileHit])].sort();
       if (!entry.because.includes(link.because)) entry.because.push(link.because);
       out.set(smoke, entry);
     }
