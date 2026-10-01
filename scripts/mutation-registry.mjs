@@ -9932,6 +9932,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'space-card-rooms-rendered-without-keys',
+    guard: 'node demo/smoke_space_card.mjs',
+    because: 'a config event that inserts, removes or re-zones a room shifts the space card\'s '
+      + 'room list inside one space: a positional map() hands each room node to its neighbour, '
+      + 'so the node no longer belongs to its data-id and the 0.12s .room transition draws the '
+      + 'fill in from the neighbour\'s value (#745 AC2)',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: '  const roomShapes = keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {',
+      replace: '  const roomShapes = keyed(space.id, shownRooms.map((r) => {',
+    }],
+  },
+  {
     id: 'live-editor-devices-drops-align-guides',
     guard: 'node demo/smoke_align_guides.mjs',
     because: 'the device editor paints nothing else from a template, so dropping the guides '

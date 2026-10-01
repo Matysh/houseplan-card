@@ -7,6 +7,8 @@
  * Geometry/model math lives in space-geometry.ts (pure, unit-tested).
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
+import { keyed } from 'lit/directives/keyed.js';
+import { repeat } from 'lit/directives/repeat.js';
 import {
   buildDevices, areaLqi, effectiveExcludedIntegrations, roomClimateKey, roomClimateMap, sourceValue,
   resolvedLightSources, resolvedLightState,
@@ -531,9 +533,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   for (const room of space.rooms) if (room.id) {
     roomFillsById.set(room.id, resolvedRoomFills.get(room) || null);
   }
-  const roomShapes = space.rooms
-    .filter((r) => r.area || disp.showBorders || roomFillModeOf(disp.fill, r) !== 'none')
-    .map((r) => {
+  const shownRooms = space.rooms
+    .filter((r) => r.area || disp.showBorders || roomFillModeOf(disp.fill, r) !== 'none');
+  // #745: keyed like the full card's rooms (plan.styles.ts, #525/#534/#742/#745): a bare map() handed a
+  // room node to a stranger on a new `space` or a config event, and `.room`'s transition drew its fill in.
+  const roomShapes = keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {
       let cls = 'room ' + (space.bg ? 'overlay' : 'yard');
       let style = '';
       // tier 3 wins over the space, exactly as on the full card (HP-1454-07)
@@ -563,7 +567,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         : svg`<rect class="${cls}" style="${style}" data-hp="room" data-id=${hpId} data-area=${hpArea}
             x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"></rect>`;
       return shape;
-    });
+    }));
 
   // Base projection is independent of radial pools: opt-in pools are painted
   // above it through the same room-level Glow gates as the full plan.

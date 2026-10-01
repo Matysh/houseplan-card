@@ -1,5 +1,7 @@
 // Smoke: houseplan-space-card renders a live, non-interactive schematic + deep-link button.
 import { launch, reportPageErrors } from './serve.mjs';
+/** DEFAULT_CUSTOM_FILL (`src/logic.ts`) в вычисленном стиле: цвет / `fill-opacity`. */
+const FINAL_FILL = 'rgb(96, 125, 139) / 0.18';
 const { page, browser } = await launch({ width: 900, height: 900 }, 1);
 const res = await page.evaluate(async () => {
   await customElements.whenDefined('houseplan-space-card');
@@ -251,6 +253,151 @@ const res = await page.evaluate(async () => {
     errorText: errCard?.textContent?.trim() || null,
   };
 });
+// ---- #745: фигуры комнат с ключами (пространство, id комнаты) -------------
+// `.room` переводит все свойства за 0,12 с (planStyles входит в стили этой
+// карточки). Пока список фигур был голым `map()`, Lit отдавал узел комнаты
+// соседке по позиции, и заливка ехала от чужого значения. Путь A — новый
+// `space` в `setConfig` того же элемента (превью редактора карточки). Путь B —
+// событие конфигурации: комнату вставили, удалили, переставили с другого
+// устройства; конфиг доставляется пушем с сервера (`__hpTest.setServerConfig`),
+// тем же событием, на которое подписана карточка.
+const keyedRooms = await page.evaluate(async () => {
+  const out = {};
+  const T = window.__hpTest;
+  const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  const settle = async (frames = 10, ms = 400) => {
+    for (let i = 0; i < frames; i++) await frame();
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  };
+  const spaceOf = (cfg, id) => cfg.spaces.find((space) => space.id === id);
+  const host = document.createElement('div');
+  host.style.width = '600px';
+  document.body.appendChild(host);
+  const el = document.createElement('houseplan-space-card');
+  const config = { type: 'custom:houseplan-space-card', show_button: false };
+  const roomNodes = () => [...(el.renderRoot?.querySelectorAll('[data-hp="room"]') || [])];
+  const roomNode = (id) => roomNodes().find((node) => node.dataset.id === id) || null;
+  const roomTransitions = () => roomNodes().flatMap((node) => node.getAnimations()
+    .filter((animation) => animation instanceof CSSTransition)
+    .map((animation) => `${node.dataset.id}:${animation.transitionProperty}`));
+  const fillOf = (node) => {
+    const style = node ? getComputedStyle(node) : null;
+    return style ? `${style.fill} / ${style.fillOpacity}` : null;
+  };
+  const waitUntil = async (predicate, ms = 6000) => {
+    const deadline = performance.now() + ms;
+    while (!predicate() && performance.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 16));
+    return !!predicate();
+  };
+  /**
+   * Узлы комнат по `data-id` и переходы, стартовавшие на них до `stop()`.
+   * Событие не зависит от того, успел ли кадр дойти до проверки.
+   */
+  const watchRooms = () => {
+    const nodes = new Map(roomNodes().map((node) => [node.dataset.id, node]));
+    const ran = [];
+    const listening = new AbortController();
+    for (const [id, node] of nodes) {
+      node.addEventListener('transitionrun', (event) => ran.push(`${id}:${event.propertyName}`),
+        { signal: listening.signal });
+    }
+    return { nodes, stop: () => { listening.abort(); return [...ran]; } };
+  };
+  // Фикстура: f1 — подложка, комнаты без заливки, но с границами (`styled`);
+  // у garden своя заливка.
+  await T.setServerConfig((cfg) => {
+    const f1 = spaceOf(cfg, 'f1');
+    f1.settings = { ...(f1.settings || {}), show_borders: true, fill_mode: 'none' };
+    const garden = spaceOf(cfg, 'garden');
+    garden.settings = { ...(garden.settings || {}), show_borders: true, fill_mode: 'custom' };
+  });
+  el.setConfig({ ...config, space: 'f1' });
+  el.hass = window.__card.hass;
+  host.appendChild(el);
+  await waitUntil(() => roomNodes().length >= 2
+    && roomNodes().every((node) => /\bstyled\b/.test(node.getAttribute('class'))));
+  await el.updateComplete;
+  await settle();
+
+  // AC1, путь A: тот же элемент получает другое пространство
+  const before = roomNodes().map((node) => ({
+    node, id: node.dataset.id, tag: node.tagName.toLowerCase(), cls: node.getAttribute('class'),
+  }));
+  const watchA = watchRooms();
+  el.setConfig({ ...config, space: 'garden' });
+  await el.updateComplete;
+  await frame();
+  const g1 = roomNode('g1');
+  out.pathAFixtureHolds = before[0]?.id === 'r1' && before[0].tag === 'polygon'
+    && !/\bfilled\b/.test(before[0].cls)
+    && g1?.tagName.toLowerCase() === 'polygon' && /\bfilled\b/.test(g1.getAttribute('class'));
+  out.pathANoRoomTransition = [...new Set([...roomTransitions(), ...watchA.stop()])];
+  out.pathANoRoomNodeOutlivesTheSwitch = before.filter((entry) => entry.node.isConnected)
+    .map((entry) => `${entry.id} → ${entry.node.dataset.id}`);
+  out.pathANewRoomBornInItsFill = fillOf(g1);
+
+  // AC2, путь B: событие конфигурации меняет состав комнат того же пространства
+  el.setConfig({ ...config, space: 'f1' });
+  await T.setServerConfig((cfg) => {
+    const f1 = spaceOf(cfg, 'f1');
+    f1.settings = { ...f1.settings, fill_mode: 'custom' };
+  });
+  await waitUntil(() => roomNodes().length >= 2
+    && roomNodes().every((node) => /\bfilled\b/.test(node.getAttribute('class'))));
+  await el.updateComplete;
+  await settle();
+  const probeId = 'hp-745-probe';
+  const kept = watchRooms();
+  await T.setServerConfig((cfg) => {
+    const f1 = spaceOf(cfg, 'f1');
+    f1.rooms = [{
+      id: probeId, name: 'Porch', poly: [[0.04, 0.88], [0.2, 0.88], [0.2, 0.97], [0.04, 0.97]],
+      settings: { fill_mode: 'none' },
+    }, ...f1.rooms];
+  });
+  out.pathBRoomListGrew = await waitUntil(() => roomNodes()[0]?.dataset.id === probeId)
+    && roomNodes().length === kept.nodes.size + 1
+    && !/\bfilled\b/.test(roomNodes()[0].getAttribute('class'));
+  await el.updateComplete;
+  await frame();
+  const afterInsert = new Map(roomNodes().map((node) => [node.dataset.id, node]));
+  out.pathBNoRoomNodeSwapped = [...kept.nodes]
+    .filter(([id, node]) => afterInsert.get(id) !== node).map(([id]) => id);
+  out.pathBQuietRooms = [...new Set([...roomTransitions(), ...kept.stop()])];
+
+  // AC2: настоящая смена цвета той же комнаты по-прежнему анимируется —
+  // ловит ложный фикс `transition: none`
+  await settle();
+  const filled = watchRooms();
+  const witnessId = 'r1';
+  await T.setServerConfig((cfg) => {
+    const f1 = spaceOf(cfg, 'f1');
+    f1.settings = { ...f1.settings, custom_fill: { c: '#c62828', a: 0.5 } };
+  });
+  await waitUntil(() => /#c62828/i.test(roomNode(witnessId)?.getAttribute('style') || ''));
+  await el.updateComplete;
+  await frame();
+  out.pathBRealFillChangeKeepsTheRoomNode = !!filled.nodes.get(witnessId)
+    && roomNode(witnessId) === filled.nodes.get(witnessId);
+  out.pathBRealFillChangeAnimates = [...roomTransitions(), ...filled.stop()]
+    .includes(`${witnessId}:fill`);
+  host.remove();
+  return out;
+});
+const keyedRoomsExpected = {
+  pathAFixtureHolds: true,
+  pathANoRoomTransition: [],
+  pathANoRoomNodeOutlivesTheSwitch: [],
+  pathANewRoomBornInItsFill: FINAL_FILL,
+  pathBRoomListGrew: true,
+  pathBNoRoomNodeSwapped: [],
+  pathBQuietRooms: [],
+  pathBRealFillChangeKeepsTheRoomNode: true,
+  pathBRealFillChangeAnimates: true,
+};
+const keyedRoomsFailures = Object.entries(keyedRoomsExpected)
+  .filter(([key, value]) => JSON.stringify(keyedRooms[key]) !== JSON.stringify(value))
+  .map(([key, value]) => `${key}: expected ${JSON.stringify(value)}, got ${JSON.stringify(keyedRooms[key])}`);
 await browser.close();
 const ok =
   res.stagePointerEvents === 'none' &&
@@ -296,8 +443,10 @@ const ok =
   typeof res.deepLink === 'string' && res.deepLink.includes('#space=') &&
   res.errorShown;
 console.log(JSON.stringify(res));
+console.log(JSON.stringify({ keyedRooms }));
+for (const failure of keyedRoomsFailures) console.error(`FAIL #745 ${failure}`);
 // #407: своя развязка про исключения в карточке не спрашивает. Вердикт обязан
 // именно остановить: иначе строка успеха печатается после «FAILED».
 if (await reportPageErrors()) process.exit(1);
-if (!ok) { console.error('FAIL space-card smoke'); process.exit(1); }
-console.log('OK space-card: live shared marker face, pointer-events:none, nothing hit-testable in the schematic (#664), deep-link button, error card');
+if (!ok || keyedRoomsFailures.length) { console.error('FAIL space-card smoke'); process.exit(1); }
+console.log('OK space-card: live shared marker face, pointer-events:none, nothing hit-testable in the schematic (#664), deep-link button, error card, room shapes keyed by space and id (#745)');

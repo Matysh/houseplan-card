@@ -265,6 +265,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `rooms-rendered-without-keys`
 - `rooms-rendered-without-space-key`
 - `same-space-room-change-recenters`
+- `space-card-rooms-rendered-without-keys`
 - `space-create-hidden-display-override`
 - `stairs-view-pan-opens-target-floor`
 - `support-invalid-response-leaks-issued-token`

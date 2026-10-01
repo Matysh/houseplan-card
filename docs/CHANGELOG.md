@@ -23,6 +23,9 @@
 - When the editor fails to load (e.g. offline), the card no longer retries on
   its own and repeats the notice every few seconds; the next press retries
   ([#757](https://github.com/Matysh/houseplan-card/issues/757)).
+- The space card no longer flashes its rooms when the plan is edited elsewhere
+  or its space is changed
+  ([#745](https://github.com/Matysh/houseplan-card/issues/745)).
 
 ## v1.79.0-beta.1 — 2026-09-30
 

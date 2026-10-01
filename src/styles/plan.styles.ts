@@ -503,7 +503,14 @@ export const planStyles = css`
        an empty id) keys by its index: a number never equals a string id in
        repeat's key map. The transition itself stays — it is hover and a real
        fill change on the same floor.
-       Witnesses: demo/smoke_space_switch_transitions.mjs. */
+
+       #745: so does the space card (space-render.ts). It takes these styles
+       too and draws its rooms the same way: there the room set changes in
+       the same DOM on a new "space" in setConfig of the same element (the
+       outer key) and on a config event that inserts, removes or re-zones a
+       room (the inner key).
+       Witnesses: demo/smoke_space_switch_transitions.mjs,
+       demo/smoke_space_card.mjs. */
     .op-leaf {
       transition: transform 0.6s ease;
     }
