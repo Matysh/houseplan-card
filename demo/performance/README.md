@@ -66,10 +66,28 @@ high-tail guard rather than a population estimate:
 - model readiness and first stable render;
 - space switch, HA state update, pan/zoom and opening the settings dialog;
 - a shared-wall room-resize preview which is cancelled before persistence;
-- a twelve-switch navigation cycle;
+- a twelve-switch navigation cycle; since #735 every fixture floor is visited
+  once before its window, and a floor build inside the window (any grown hot
+  cache or a 2.5D structural build) fails the sample;
 - Long Tasks for every measured window;
 - heap growth after four additional navigation rounds with forced GC;
 - hot-cache size and growth after the same warmed cycles.
+
+Issue #735 moved the first visit to each floor out of the navigation cycle.
+Every sample mounts a new card that had seen only floors 1 and 2, so the cycle
+used to pay one cold floor-3 build inside its window (in
+`large-house-interaction-v1` also a floor-1 rebuild, because the editor series
+moves the config epoch that keys the clean-floor cache). That single step was
+about half of `switchCycleMs` and hid the warmed switches the metric is
+meant to describe; a cold floor visit stays measured by `spaceSwitchMs`. The
+change is a level step, not a regression or a speed-up of the card: base and
+candidate are still measured by the candidate runner in the same run, so the
+comparison is unaffected, but absolute `switchCycleMs` history and the
+profile's Long Task sums before and after #735 are not comparable. Local
+diagnostics showed the median falling by roughly 1.6–2.8 times (for example
+`large-house-v1` about 2.0 s to 0.9 s); the exact-SHA Full Performance medians
+on both sides of the change are recorded in #735. Budgets and `hardMaxMs` did
+not change.
 
 Every report is tied to the source fingerprint embedded by Rollup. A stale
 bundle is a hard failure.

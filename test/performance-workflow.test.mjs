@@ -175,6 +175,36 @@ test('#570 current Stage 4 runner fails closed on the agreed observable DOM cont
     'both isometric profiles must reject a structural rebuild on the HA-only window');
 });
 
+test('#735 switchCycle times warmed navigation and fails on a floor build inside its window', () => {
+  // Every sample mounts a new card that has seen only floors 1 and 2 before
+  // the cycle, so the first visit to floor 3 (and, in the interaction
+  // profile, a rebuilt floor 1) used to dominate switchCycleMs. The runner
+  // visits every fixture floor once after the settings dialog closes and
+  // before the timed window, then guards the window against any build.
+  const runner = readFileSync(new URL('../demo/benchmark_large_house.mjs', import.meta.url), 'utf8');
+  const settingsClosed = runner.indexOf('card._settingsDialog = null;');
+  const cycleStart = runner.indexOf('const switchCycle = await duration(');
+  assert.ok(settingsClosed > 0 && cycleStart > settingsClosed,
+    'the switch cycle must follow the closed settings dialog');
+  const warmup = runner.slice(settingsClosed, cycleStart);
+  assert.match(warmup,
+    /for \(let floor = 1; floor <= fixture\.counts\.floors; floor\+\+\) \{\s*card\._pickSpace\(`perf-floor-\$\{floor\}`\);\s*await card\.updateComplete;\s*await frame\(\);\s*\}/,
+    'every fixture floor must be visited once before the switchCycle window');
+  assert.match(warmup,
+    /card\._pickSpace\('perf-floor-2'\);\s*await card\.updateComplete;\s*await frame\(\);\s*const switchCycleCachesBefore = cacheSnapshot\(card\);\s*const switchCycleBuildsBefore = isoStructuralBuildCount\(card\);\s*$/,
+    'the cycle must still start from floor 2 with the guard snapshot taken last');
+  assert.ok(!warmup.includes('duration(') && !warmup.includes('startLongTaskWindow('),
+    'the warm-up must stay outside every timed and Long Task window');
+  const afterCycle = runner.slice(cycleStart, runner.indexOf('await forceGc();', cycleStart));
+  for (const contract of [
+    'const switchCycleCachesAfter = cacheSnapshot(card);',
+    'const switchCycleBuildsAfter = isoStructuralBuildCount(card);',
+    'switchCycleCachesAfter[key] > switchCycleCachesBefore[key]',
+    'switchCycleBuildsBefore != null && switchCycleBuildsAfter !== switchCycleBuildsBefore',
+    '${profile} switchCycle built a floor inside the window: ',
+  ]) assert.ok(afterCycle.includes(contract), `missing #735 switchCycle guard: ${contract}`);
+});
+
 test('#347: a rewritten before forces the full run instead of guessing the range', () => {
   // Force-push kills github.event.before; the merge-base fallback then
   // guessed a range that hid a real custom_components/** diff behind two doc

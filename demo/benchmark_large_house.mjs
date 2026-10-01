@@ -1121,6 +1121,24 @@ try {
       card._settingsDialog = null;
       await card.updateComplete;
 
+      // #735: every sample mounts a new card, and until here it has visited
+      // only floors 1 and 2. The cycle would otherwise pay a first visit to
+      // floor 3 (and, after the interaction editor series moves the config
+      // epoch, to floor 1 again) inside its window, so one cold floor build
+      // dominated a metric documented as warmed navigation. Visit every
+      // fixture floor once in cycle order outside every timed and Long Task
+      // window, then return to floor 2 so the cycle still starts with 2 -> 1.
+      for (let floor = 1; floor <= fixture.counts.floors; floor++) {
+        card._pickSpace(`perf-floor-${floor}`);
+        await card.updateComplete;
+        await frame();
+      }
+      card._pickSpace('perf-floor-2');
+      await card.updateComplete;
+      await frame();
+
+      const switchCycleCachesBefore = cacheSnapshot(card);
+      const switchCycleBuildsBefore = isoStructuralBuildCount(card);
       const switchCycle = await duration(async () => {
         for (let index = 0; index < 12; index++) {
           card._pickSpace(`perf-floor-${(index % fixture.counts.floors) + 1}`);
@@ -1131,6 +1149,19 @@ try {
           await new Promise((done) => setTimeout(done, 0));
         }
       });
+      // #735 guard: a warmed cycle builds nothing. Any grown hot cache or a
+      // structural 2.5D build inside the window means a cold floor visit
+      // leaked back into switchCycleMs. Caches an older base lacks read as 0
+      // and cannot grow; its build counter is null and is not judged.
+      const switchCycleCachesAfter = cacheSnapshot(card);
+      const switchCycleBuildsAfter = isoStructuralBuildCount(card);
+      const switchCycleBuilt = Object.keys(switchCycleCachesAfter)
+        .filter((key) => switchCycleCachesAfter[key] > switchCycleCachesBefore[key])
+        .map((key) => `${key} +${switchCycleCachesAfter[key] - switchCycleCachesBefore[key]}`);
+      if (switchCycleBuildsBefore != null && switchCycleBuildsAfter !== switchCycleBuildsBefore)
+        switchCycleBuilt.push(`isoStructuralBuilds +${switchCycleBuildsAfter - switchCycleBuildsBefore}`);
+      if (switchCycleBuilt.length)
+        throw new Error(`${profile} switchCycle built a floor inside the window: ${switchCycleBuilt.join(', ')}`);
 
       await forceGc();
       const cacheBefore = cacheSnapshot(card);
