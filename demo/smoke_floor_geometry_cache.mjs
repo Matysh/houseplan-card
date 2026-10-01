@@ -14,12 +14,17 @@
 //      floors (the stairs editor used to clear the cache of every floor).
 // AC2c a live Resize preview on `f1`: the frame follows the preview record,
 //      as the independent card on that record says; cancelling restores the
-//      walls and areas of the stored record.
+//      walls and areas of the stored record. Both frames of a held drag are
+//      judged: the live layer that paints the moving wall, and the settled
+//      scene that replaces it whenever the host renders mid-drag (an entity
+//      state change from Home Assistant, a toast expiring) and draws the
+//      preview record through the floor-geometry caches.
 //
 // The independent card is the oracle: a new `houseplan-card` given the same
 // config through its own `config/get`, with nothing in its caches to reuse.
 // Card internals are read-only here; writes go through the harness facade,
-// the room dialog, the stairs tool and real pointer input.
+// the room dialog, the stairs tool, real pointer input and the demo's Home
+// Assistant stub (a service call delivers the new entity state).
 import { launch, checkAll, finish } from './serve.mjs';
 import { fixtureWallKey } from './fixtures/wall-key.mjs';
 
@@ -251,6 +256,17 @@ const res = await page.evaluate(async (fixture) => {
   // ======== AC2c setup: the Resize tool and the r1/r2 shared wall handle =====
   // Outer walls of this fixture are partial (their records span two rooms) and
   // stay disabled; the shared wall moves the faces of both rooms.
+  // The drag starts on a quiet card. A host render ends the live layer of a
+  // held drag (`updated()` commits it) and nothing repaints it until the next
+  // accepted move. The rename's toast expires 3.5 s after the save; on a fast
+  // runner that landed after the last move (Validate run 36875756451), and the
+  // live frame below found no live layer. The settled frame is taken on
+  // purpose, by a state change, after the live one.
+  const toastDeadline = performance.now() + 5000;
+  while (root().querySelector('[data-hp="toast"]') && performance.now() < toastDeadline)
+    await new Promise((done) => setTimeout(done, 30));
+  out.ac2cStartsWithoutAToast = !root().querySelector('[data-hp="toast"]');
+  await settled();
   await hp.setTool('resize');
   diag.ac2cStored = shown();
   const handle = [...root().querySelectorAll('.rszhandle:not(.rszcorner)')].find((node) =>
@@ -283,6 +299,20 @@ if (gesture) {
       .map((label) => [label.roomId, label.text]);
     return { ac2cPreviewIsLive: !!preview && preview.space === 'f1' && card._resize.dragging };
   }));
+  // The settled frame of the held drag: a light switched in the house renders
+  // the host; the settled scene now draws the walls and areas of the preview.
+  Object.assign(checks, await page.evaluate(async () => {
+    const card = window.__card;
+    const { diag, shown, settled } = window.__hp744;
+    const record = JSON.stringify(card._resize.preview?.sp ?? null);
+    await card.hass.callService('light', 'toggle', { entity_id: 'light.ceiling' });
+    await settled();
+    diag.ac2cSettled = shown();
+    return {
+      ac2cStateChangeKeepsThePreview: card._resize.dragging
+        && JSON.stringify(card._resize.preview?.sp ?? null) === record,
+    };
+  }));
   await page.keyboard.press('Escape');
   await page.mouse.up();
   Object.assign(checks, await page.evaluate(async () => {
@@ -303,14 +333,30 @@ if (gesture) {
       out.ac2cPreviewMovesBothRooms = diag.ac2cPreview.areas.r1 !== diag.ac2cStored.areas.r1
         && diag.ac2cPreview.areas.r2 !== diag.ac2cStored.areas.r2;
       // The live layer draws the moving wall; its faces are where the fresh
-      // card on the preview record draws them, and not where they were.
+      // card on the preview record draws them, and not where they were. Should
+      // a host render still land after the last move, the settled scene draws
+      // the drag instead, and its walls are judged the same way: a stale
+      // (stored) union has none of the moved faces.
       const numbers = (text) => new Set((text.match(/-?\d+(?:\.\d+)?/g) || []).map(Number));
+      const parts = (walls, kind) => walls.split(' | ').filter((part) => part.startsWith(`${kind}:`));
       const stored = numbers(diag.ac2cStored.walls);
       const moved = [...numbers(fresh.walls)].filter((value) => !stored.has(value));
-      const previewPath = numbers(diag.ac2cPreview.walls.split(' | ')
-        .filter((part) => part.startsWith('preview:')).join(' '));
-      out.ac2cPreviewWallStandsWhereAFreshCardDrawsIt = moved.length > 0
-        && moved.every((value) => previewPath.has(value));
+      const live = parts(diag.ac2cPreview.walls, 'preview');
+      const drawn = numbers((live.length ? live : parts(diag.ac2cPreview.walls, 'union')).join(' '));
+      const missing = moved.filter((value) => !drawn.has(value));
+      out.ac2cPreviewWallStandsWhereAFreshCardDrawsIt = moved.length > 0 && !missing.length;
+      // The settled scene mid-drag is the fresh card's frame on the preview
+      // record: the same union path, the same areas. A key that ignores the
+      // preview hands it the stored union and contours.
+      const union = (frame) => parts(frame?.walls || '', 'union').join(' | ');
+      const settledUnion = union(diag.ac2cSettled);
+      out.ac2cSettledFrameEqualsAFreshCard = !!settledUnion && settledUnion === union(fresh)
+        && JSON.stringify(diag.ac2cSettled.areas) === JSON.stringify(fresh.areas);
+      diag.ac2cJudged = {
+        layer: live.length ? 'preview' : 'union', moved: moved.length, missing,
+        settledUnion: !settledUnion ? 'none' : settledUnion === union(fresh) ? 'fresh'
+          : settledUnion === union(diag.ac2cStored) ? 'stored' : 'other',
+      };
       // Room areas through the cached contour, and the live labels beside the
       // moving wall, are the fresh card's numbers for the preview record.
       out.ac2cPreviewAreasEqualAFreshCard = JSON.stringify(diag.ac2cPreview.areas) === JSON.stringify(fresh.areas);
@@ -320,6 +366,11 @@ if (gesture) {
     diag.ac2cCancelled = cancelled;
     return out;
   }));
+  if (!checks.ac2cPreviewWallStandsWhereAFreshCardDrawsIt || !checks.ac2cSettledFrameEqualsAFreshCard) {
+    // Validate prints only `diagnostic` lines and the tail of a failed smoke.
+    const judged = await page.evaluate(() => window.__hp744.diag.ac2cJudged);
+    console.log(`diagnostic ac2c: ${JSON.stringify(judged)}`);
+  }
 }
 
 checkAll(checks, {
