@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 268, issue: 137. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 270, issue: 138. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -21,6 +21,8 @@
 | #750 | [CODE-REVIEW-750-r1.md](CODE-REVIEW-750-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #749 | [CODE-REVIEW-749-r1.md](CODE-REVIEW-749-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #749 | [CODE-REVIEW-749-r2.md](CODE-REVIEW-749-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #748 | [CODE-REVIEW-748-r1.md](CODE-REVIEW-748-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | стала строка-комментарий в process-gate.mjs:183 | `process-gate.mjs` `scripts/process-gate.mjs` |
+| #748 | [CODE-REVIEW-748-r2.md](CODE-REVIEW-748-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | таблица docs/testing-notes/mutation-browser-guards.md разошлась с реестром на 1 (не по … | `docs/testing-notes/mutation-browser-guards.md` `test/mutation-gate.test.mjs` `scripts/mutation-registry.mjs` |
 | #747 | [CODE-REVIEW-747-r1.md](CODE-REVIEW-747-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #746 | [CODE-REVIEW-746-r1.md](CODE-REVIEW-746-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #745 | [CODE-REVIEW-745-r1.md](CODE-REVIEW-745-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
