@@ -578,6 +578,54 @@ test('изменённое дерево, жёлтый вердикт, High>0 и�
   assert.equal(reusableGreenVerdict([], () => false), null);
 });
 
+// #726: маршрут вердикта — хвостом строки якоря; прежний разбор её читает.
+test('#726 AC6: якорь с маршрутом — хвост строки; anchorVerdictFrom и reusableGreenVerdict как на старом', () => {
+  const line = (block) => block.split('\n').find((l) => l.startsWith('- Вердикт конвейера:'));
+  const base = { sha: 'c'.repeat(40), tree: TREE_A, branch: 'issue/7-x', verdict: 'yellow', high: 0 };
+  assert.equal(line(materialAnchorBlock(base)), '- Вердикт конвейера: `yellow` · High 0', 'без route — прежняя строка');
+  assert.equal(line(materialAnchorBlock({ ...base, route: 'reclassify', criterion: 'undocumented' })),
+    '- Вердикт конвейера: `yellow` · High 0 · маршрут `reclassify` (критерий `undocumented`)');
+  assert.equal(line(materialAnchorBlock({ ...base, route: 'fix' })), '- Вердикт конвейера: `yellow` · High 0 · маршрут `fix`');
+  // Недоверенные значения в машинный блок не попадают: route вне словаря, criterion не по формату.
+  assert.equal(line(materialAnchorBlock({ ...base, route: 'merge', criterion: 'undocumented' })), '- Вердикт конвейера: `yellow` · High 0');
+  for (const criterion of ['q`', 'x -->', 'Undocumented', '', '-a']) {
+    assert.equal(line(materialAnchorBlock({ ...base, route: 'reclassify', criterion })),
+      '- Вердикт конвейера: `yellow` · High 0 · маршрут `reclassify`', JSON.stringify(criterion));
+  }
+  // anchorVerdictFrom читает старую и новую строку одинаково.
+  for (const verdict of ['green', 'yellow', 'red']) {
+    for (const high of [0, 2]) {
+      const old = materialAnchorBlock({ ...base, verdict, high });
+      const routed = materialAnchorBlock({ ...base, verdict, high, route: 'reclassify', criterion: 'surfaces' });
+      assert.deepEqual(anchorVerdictFrom(routed), anchorVerdictFrom(old));
+      assert.deepEqual(anchorVerdictFrom(routed), { verdict, high });
+    }
+  }
+  // reusableGreenVerdict на новом якоре — как на старом.
+  const green = (anchors) => docWith('CODE-REVIEW-7-r2.md', { tree: TREE_A, verdict: 'green', high: 0, ...anchors });
+  const expected = { doc: 'CODE-REVIEW-7-r2.md', round: 2, tree: TREE_A, verdict: 'green' };
+  assert.deepEqual(reusableGreenVerdict([green({})], () => false), expected);
+  assert.deepEqual(reusableGreenVerdict([green({ route: 'fix' })], () => false), expected);
+  assert.equal(reusableGreenVerdict([green({ route: 'fix' })], () => true), null, 'дерево отличается — как раньше');
+  assert.equal(reusableGreenVerdict([docWith('CODE-REVIEW-7-r2.md', { tree: TREE_A, verdict: 'yellow', high: 0, route: 'reclassify', criterion: 'undocumented' })], () => false), null);
+});
+
+test('#726 AC6: CLI --anchor дописывает маршрут из --route и --criterion', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-726-anchor-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const doc = join(dir, 'CODE-REVIEW-7-r1.md');
+  const anchor = (...flags) => {
+    writeFileSync(doc, '# CODE-REVIEW-7-r1\n');
+    const r = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/review-doc-guard.mjs', import.meta.url)),
+      `--anchor=${doc}`, `--sha=${'c'.repeat(40)}`, `--tree=${TREE_A}`, '--branch=issue/7-x', '--verdict=yellow', '--high=0', ...flags], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    return readFileSync(doc, 'utf8').split('\n').find((l) => l.startsWith('- Вердикт конвейера:'));
+  };
+  assert.equal(anchor('--route=reclassify', '--criterion=undocumented'), '- Вердикт конвейера: `yellow` · High 0 · маршрут `reclassify` (критерий `undocumented`)');
+  assert.equal(anchor('--route=', '--criterion='), '- Вердикт конвейера: `yellow` · High 0', 'пустые флаги — вердикт до #726');
+  assert.equal(anchor(), '- Вердикт конвейера: `yellow` · High 0');
+});
+
 test('конвейер: посторонняя метка не входит в concurrency, guard читает текущие метки (#499)', () => {
   const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   // Concurrency — на job, не на workflow: иначе любой `labeled` вытеснял ожидающий S7.

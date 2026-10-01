@@ -275,14 +275,14 @@ function taskBranch(box) {
   git(box.work, 'checkout', '-q', 'dev');
 }
 
-function runReviewDoc(box) {
+function runReviewDoc(box, out = '{"verdict":"green","high":0}') {
   const source = join(box.temp, 'review-result', 'review-document.md');
   mkdirSync(join(box.temp, 'review-result'));
   writeFileSync(source, '# Код-ревью #9, раунд 1\n\nВердикт: **зелёный** · High: 0 · Medium: 0\n');
   return box.run(REVIEW_DOC_STEP(), {
     BRANCH, NUM: '9', STAGE: 'code', CYCLE: '1', SOURCE: source,
     MATERIAL_SHA: git(box.origin, 'rev-parse', BRANCH), MATERIAL_TREE: git(box.origin, 'rev-parse', `${BRANCH}^{tree}`),
-    MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: '', OUT: '{"verdict":"green","high":0}',
+    MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: '', OUT: out,
   });
 }
 
@@ -339,6 +339,24 @@ test('#723 _process.yml на настоящем bash: сдвиг, затем о�
   assert.match(r.stdout, /::error::документ ревью не опубликован в issue\/9-fix и после ребейза \(remote-rejected\)/);
   assert.match(r.summary, /^### git push в `issue\/9-fix` отклонён: remote-rejected \(#723\)$/m);
   noisySecretsGone(r);
+});
+
+test('#726 AC5 _process.yml на настоящем bash: публикация пишет маршрут вердикта хвостом строки якоря', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const { anchorVerdictFrom } = await import('../scripts/review-doc-guard.mjs');
+  const anchor = (doc) => doc.split('\n').find((line) => line.startsWith('- Вердикт конвейера:'));
+  const routed = sandbox(tempRoot(t, 'hp-726-doc-'));
+  taskBranch(routed);
+  const r = runReviewDoc(routed, JSON.stringify({ verdict: 'yellow', high: 0, medium: 1, summary: 's', route: 'reclassify', criterion: 'undocumented' }));
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  const doc = git(routed.origin, 'show', `${BRANCH}:${REVIEW_DOC}`);
+  assert.equal(anchor(doc), '- Вердикт конвейера: `yellow` · High 0 · маршрут `reclassify` (критерий `undocumented`)');
+  assert.deepEqual(anchorVerdictFrom(doc), { verdict: 'yellow', high: 0 });
+  // Вердикт без route (до #726) — прежняя строка.
+  const plain = sandbox(tempRoot(t, 'hp-726-doc-'));
+  taskBranch(plain);
+  assert.equal(runReviewDoc(plain).status, 0);
+  assert.equal(anchor(git(plain.origin, 'show', `${BRANCH}:${REVIEW_DOC}`)), '- Вердикт конвейера: `green` · High 0');
 });
 
 // ---------- AC3 и разбор: тексты — из кода, не из run ----------

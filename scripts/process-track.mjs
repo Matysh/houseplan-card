@@ -5,6 +5,8 @@
  *
  *   node scripts/process-track.mjs stage --stage=code|spec --labels="a,b" --branch=<имя> \
  *        --base=origin/dev --head=HEAD --comments=<json> --owner=<login> --out=<dir> [--run-url=<url>]
+ *   node scripts/process-track.mjs route --stage=code|spec --track=<t> --confirmed=true|false --labels="a,b" \
+ *        --verdict=<verdict.json> --spent=N --limit=N --num=NN --cycle=N --branch=<имя> --out=<dir> [--ref=HEAD --run-url=<url>]
  *   node scripts/process-track.mjs limit --labels="a,b" [--files=<список путей>]
  *   node scripts/process-track.mjs resolve --labels="a,b" --base=<ref> --head=<ref>
  *   node scripts/process-track.mjs ship-limits --base=<ref> --head=<ref>
@@ -15,7 +17,15 @@
  * слияния ship. Печатает `track=`, `mutants=`, `full=`, `ship=`, `raise=`,
  * `basis=`, `risk=`; те же поля и многострочные `risk_note`/`ship_risk` пишет в
  * `$GITHUB_OUTPUT`; при `raise=true` кладёт тело комментария в `<out>/raise.md`.
- * Bash шага только исполняет: логики трека в нём нет.
+ * Bash шага только исполняет: логики трека в нём нет. С #726 там же
+ * `confirmed=` и многострочная `route_note` — заметка маршрута для промпта.
+ *
+ * `route` — шаг «Решение по вердикту» (#726): ОДИН вызов на заход модели решает
+ * статус, метки трека, `blocked` и `review-4` по вердикту, треку, подтверждению
+ * владельца и бюджету guard. Печатает `kind=`, `green=`, `from=`, `to=`,
+ * `add_labels=`, `remove_labels=`, `exhausted=`, `spent_after=`, `limit_after=`;
+ * тело комментария кладёт в `<out>/comment.md`, строку сводки — в
+ * `$GITHUB_STEP_SUMMARY`. Bash шага меняет метки только по этому выходу.
  *
  * `limit` — job `guard`: трек и лимит циклов по меткам и списку файлов из
  * compare API; ответ на 300 файлов и больше инфраструктуру не доказывает.
@@ -28,11 +38,13 @@
  */
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
 import { classify } from './change-classes.mjs';
 import { classifyRisk, emptyRisk, riskClassLine, RISK_CLASSES, RAISING_CLASSES } from './change-risk.mjs';
+import { verdictProblems, verdictRoute } from './review-result-gate.mjs';
+import { blockingFromDocs } from './review-doc-guard.mjs';
 
 // Классификатор риска живёт рядом (ТЗ #707 §10 п.5); пакет и конвейер берут его отсюда.
 export { classifyRisk, emptyRisk, riskClassLine, RISK_CLASSES, RAISING_CLASSES };
@@ -231,9 +243,48 @@ export function parseNameStatus(text = '') {
 }
 
 /**
+ * Критерии §5 («Подсказка аналитику») для `show` — идентификатор поля
+ * `criterion` вердикта → пункт канона дословно (К1 #726). Порядок — как в §5.
+ */
+export const SHOW_CRITERIA = Object.freeze({
+  complexity: 'сложность и риск ≤ 3',
+  surfaces: 'одна поверхность (один диалог, один модуль, один эндпоинт)',
+  migration: 'нет миграции конфига и новых compatibility-полей',
+  'ux-contract': 'нет нового UX-контракта — меняется поведение в рамках уже описанного',
+  'perf-touch': 'нет влияния на производительность и на touch-контракт',
+  undocumented: 'ожидаемое поведение уже зафиксировано — в `docs/USER-GUIDE.ru.md`, в каноническом документе подсистемы либо однозначно в самом отчёте',
+});
+
+/** Критерий из таблицы §5 — только строкой и только своим ключом. */
+export const isShowCriterion = (criterion) => typeof criterion === 'string' && Object.hasOwn(SHOW_CRITERIA, criterion);
+
+/**
+ * Значение модели в тексте конвейера: только `[A-Za-z0-9_-]`, не длиннее 40 — без
+ * разметки, обратных кавычек и `-->`. Поле недоверенное, его смысл судит таблица.
+ */
+export const safeToken = (value) => String(value ?? '').replace(/[^A-Za-z0-9_-]/g, '?').slice(0, 40);
+
+/**
+ * Заметка маршрута для промпта ревью (К4 #726). Код-ревью `show` — поля
+ * `route`/`criterion` и список критериев §5; любой другой этап и трек —
+ * `route: fix`. Одна строка в промпте (`route_note`), текст — здесь, под тестом.
+ */
+export function routeNote({ stage = 'code', track = 'ask', confirmed = false } = {}) {
+  if (stage !== 'code' || track !== 'show') return '**Маршрут вердикта (#726):** `route: fix`.';
+  const after = confirmed
+    ? 'трек show подтверждён владельцем — конвейер его не повысит, а поставит `blocked` и задаст владельцу вопрос'
+    : 'конвейер сам переведёт задачу в `track:ask` и `S3-spec`, код останется в ветке';
+  return [
+    `**Маршрут вердикта (#726).** \`route: reclassify\` и \`criterion\` — если задача не проходит критерий §5 из списка ниже; иначе \`route: fix\`. \`reclassify\` — не зелёный вердикт: ${after}.`,
+    ...Object.entries(SHOW_CRITERIA).map(([id, text]) => `- \`${id}\` — ${text}`),
+  ].join('\n');
+}
+
+/**
  * Заметка риска для промпта ревью `show`/`ask` (К3 #707), не длиннее
  * `RISK_NOTE_LINE_LIMIT` строк; пустой риск — пустая строка. Риск — вопрос
- * ревьюеру, маршрут не меняется: автоматического show → ask нет.
+ * ревьюеру: трек по риску не меняется, а по вердикту ревьюера — да
+ * (`route: reclassify`, #726).
  */
 export function riskNote({ track, confirmed = false, risk, labels = [] } = {}) {
   if (!risk?.classes?.length) return '';
@@ -241,9 +292,9 @@ export function riskNote({ track, confirmed = false, risk, labels = [] } = {}) {
   const raising = risk.raising || [];
   if (raising.length && (track === 'show' || track === 'ask')) {
     if (track === 'show' && !confirmed) {
-      lines.push('**Риск по изменённым участкам (#707).** Трек show держится на «решать нечего» (PROCESS.md §5). По каждому классу ниже назови документ или AC, где поведение уже зафиксировано; не нашёл — Medium «решать есть что — нужен track:ask» с названным критерием §5.');
+      lines.push('**Риск по изменённым участкам (#707).** Трек show держится на «решать нечего» (PROCESS.md §5). По каждому классу ниже назови документ или AC, где поведение уже зафиксировано; не нашёл — `route: reclassify` с названным критерием §5 (#726).');
     } else if (track === 'show') {
-      lines.push('**Риск по изменённым участкам (#707).** Трек show подтверждён владельцем. По каждому классу ниже назови документ или AC, где поведение уже зафиксировано; трек не повышать: не нашёл — вопрос владельцу в комментарии, вариант по умолчанию «повысить до ask».');
+      lines.push('**Риск по изменённым участкам (#707).** Трек show подтверждён владельцем. По каждому классу ниже назови документ или AC, где поведение уже зафиксировано; трек не повышать: не нашёл — `route: reclassify` с критерием, и конвейер задаст вопрос владельцу, вариант по умолчанию «повысить до ask» (#726).');
     } else {
       lines.push('**Риск по изменённым участкам (#707).** Трек ask: сверь, что каждый класс ниже покрыт AC ТЗ.');
     }
@@ -319,8 +370,175 @@ export function decideTrack({
     track, mutants: base.mutants, full: base.full, infrastructure: base.infrastructure, ship, raise, comment, violations,
     risk, confirmed, basis, warning: origin.warning,
     note: code && !ship ? riskNote({ track, confirmed, risk, labels }) : '',
+    // #726: на ship модель не зовётся — заметка маршрута не нужна.
+    routeNote: ship ? '' : routeNote({ stage, track, confirmed }),
     shipRisk: ship ? shipRiskText({ risk, confirmed: origin.confirmed }) : '',
   };
+}
+
+const STATUS_FROM = { spec: 'S4-spec-review', code: 'S7-code-review' };
+const STATUS_GREEN = { spec: 'S5-ready', code: 'S8-merged' };
+const STATUS_BACK = { spec: 'S3-spec', code: 'S6-in-progress' };
+const nonNegative = (value, fallback) => {
+  const n = Number(value);
+  return value !== '' && value !== null && value !== undefined && Number.isInteger(n) && n >= 0 ? n : fallback;
+};
+
+/**
+ * Решение по вердикту модели (К2 #726) — чистая функция; метки меняет только
+ * bash шага «Решение по вердикту», по этому выходу.
+ *
+ * Вперёд двигает только зелёный вердикт с High 0 (§7.2). Не зелёный — цикл
+ * (§4): возврат автору, `fix`. Маршрут `reclassify` применяется только на
+ * код-ревью `show` с критерием из `SHOW_CRITERIA`: без подтверждения
+ * владельца — `track:ask` и `S3-spec`, с подтверждением — `blocked` и вопрос
+ * владельцу (трек не меняется). Иначе — `fix` с `note`.
+ *
+ * Исчерпание (К3): `spentAfter = spent + 1`, лимит — трека после маршрута
+ * (`cycleLimit('ask')` у `reclassify`, иначе `limit` guard). Вердикт,
+ * исчерпавший бюджет, сам ставит `review-4`; статус двигается по таблице.
+ * Бюджет этапа один на все треки: счёт не обнуляется, меняется только лимит.
+ *
+ * `labels` — текущие метки issue, если известны: тогда уже стоящие метки не
+ * добавляются, а снимается только то, что стоит.
+ */
+export function reviewRoute({
+  stage = 'code', track = 'ask', confirmed = false, verdict = '', high = 0, route = 'fix', criterion = '',
+  spent = 0, limit, labels = null,
+} = {}) {
+  const st = stage === 'spec' ? 'spec' : 'code';
+  const spentBefore = nonNegative(spent, 0);
+  const limitBefore = nonNegative(limit, cycleLimit(track));
+  const known = Array.isArray(labels);
+  const base = {
+    from: STATUS_FROM[st], route: route === 'reclassify' ? 'reclassify' : 'fix',
+    criterion: isShowCriterion(criterion) ? criterion : '',
+  };
+  if (verdict === 'green' && Number(high) === 0) {
+    return {
+      ...base, green: true, to: STATUS_GREEN[st], addLabels: [], removeLabels: [], exhausted: false, kind: 'green',
+      note: '', track, spentAfter: spentBefore, limitAfter: limitBefore,
+    };
+  }
+  let kind = 'fix'; let to = STATUS_BACK[st]; let note = ''; let trackAfter = track;
+  const add = []; const remove = [];
+  if (route === 'reclassify') {
+    let why = '';
+    if (st !== 'code') why = 'этап `spec` — трек по вердикту меняется только на код-ревью';
+    else if (track !== 'show') why = `трек \`${safeToken(track)}\` — повышение по вердикту только с \`show\``;
+    else if (!isShowCriterion(criterion)) {
+      why = criterion === '' || criterion == null
+        ? 'критерий §5 не назван'
+        : `критерий \`${safeToken(typeof criterion === 'string' ? criterion : JSON.stringify(criterion))}\` не из списка §5 (${Object.keys(SHOW_CRITERIA).join(', ')})`;
+    }
+    if (why) {
+      note = `маршрут reclassify не применён: ${why}`;
+    } else if (confirmed) {
+      kind = 'owner-question';
+      add.push('blocked');
+    } else {
+      kind = 'reclassify'; to = 'S3-spec'; trackAfter = 'ask';
+      add.push('track:ask');
+      if (!known || labels.includes('track:show')) remove.push('track:show');
+    }
+  }
+  const spentAfter = spentBefore + 1;
+  const limitAfter = kind === 'reclassify' ? cycleLimit('ask') : limitBefore;
+  const exhausted = spentAfter >= limitAfter;
+  if (exhausted) add.push('review-4');
+  return {
+    ...base, green: false, to, addLabels: known ? add.filter((label) => !labels.includes(label)) : add, removeLabels: remove,
+    exhausted, kind, note, track: trackAfter, spentAfter, limitAfter,
+  };
+}
+
+const reviewDocPath = (name) => `docs/reviews/${name}`;
+const roundOf = (name) => Number((String(name).match(/-r(\d+)\.md$/) || [])[1]);
+
+/**
+ * Комментарий шага решения по вердикту (К3 #726); пустая строка — писать
+ * нечего (зелёный, обычный `fix`). Один комментарий на заход: исчерпание
+ * первым (по префиксу его узнаёт `wait-verdict.mjs`), затем маршрут, затем
+ * `note`. Машинная строка `hp:route` — последней.
+ *
+ * `docs` — документы этапа ЭТОЙ задачи из ветки материала `[{ name, text }]`
+ * (документ этого захода уже опубликован); `blocking` — имена прежних
+ * документов с блокирующим вердиктом.
+ */
+export function routeComment({
+  decision, stage = 'code', num = '', cycle = '', branch = '', spent = 0, docs = [], blocking = [], runUrl = '',
+} = {}) {
+  if (!decision || decision.kind === 'green') return '';
+  const st = stage === 'spec' ? 'spec' : 'code';
+  const marker = st === 'spec' ? 'SPEC-REVIEW' : 'CODE-REVIEW';
+  const current = `${marker}-${num}-r${cycle}.md`;
+  const own = docs.map((doc) => doc.name).filter((name) => Number.isFinite(roundOf(name)))
+    .sort((a, b) => roundOf(a) - roundOf(b));
+  if (!own.includes(current)) own.push(current);
+  const where = branch ? `ветки \`${branch}\`` : '`dev`';
+  const id = decision.criterion;
+  const text = id ? SHOW_CRITERIA[id] : '';
+  const parts = [];
+  if (decision.exhausted) {
+    const previous = blocking.filter((name) => name !== current).sort((a, b) => roundOf(a) - roundOf(b));
+    const rest = nonNegative(spent, 0) - previous.length;
+    const options = [
+      '1. **разделить** — issue закрывается как «заменён», вместо него 2–3 меньших с ясным скоупом;',
+      '2. **отклонить** — цена решения оказалась выше ценности;',
+      '3. **арбитраж владельца** — решение фиксируется в issue и принимается как есть.',
+    ];
+    if (decision.track === 'show' && decision.kind !== 'reclassify') {
+      options[2] = options[2].replace(/\.$/, ';');
+      options.push('4. **повысить до `ask`**: лимит станет 4, `review-4` снимает владелец.');
+    }
+    parts.push(
+      `Лимит циклов ревью исчерпан: блокирующих циклов ${decision.spentAfter} из ${decision.limitAfter} на этапе \`${st}\` — последний израсходовал этот вердикт (заход r${cycle}). Задача возвращена в \`${decision.to}\` и получила \`review-4\`: следующего захода нет, решение владельца (PROCESS.md §4).`,
+      [
+        'Учтены вердикты с блокирующими находками — зелёные бюджет не тратят:',
+        ...previous.map((name) => `- \`${reviewDocPath(name)}\``),
+        ...(rest > 0 ? [`- ещё ${rest} — по комментариям с вердиктом (страховка счёта, #454)`] : []),
+        `- \`${reviewDocPath(current)}\` — этот заход`,
+      ].join('\n'),
+      ['Варианты решения (§4):', ...options].join('\n'),
+    );
+  }
+  if (decision.kind === 'reclassify') {
+    parts.push(
+      '**Ревью show: решать есть что — трек повышен до `track:ask`.**',
+      `Задача не проходит критерий §5: **${text}** (\`${id}\`). Трек \`show\` держится на «решать нечего», а ревью нашло, что решать есть что (PROCESS.md §5).`,
+      [`Документы код-ревью ${where}:`, ...own.map((name) => `- \`${reviewDocPath(name)}\``)].join('\n'),
+      'Задача переведена в `S3-spec`: код остаётся в ветке; полное ТЗ по §7.1 — в теле issue под `## ТЗ`; коммиты класса A — после `S5`. Дальше — ревью ТЗ (`S4-spec-review`) со своим бюджетом этапа `spec`.',
+      `Бюджет код-ревью: ${decision.spentAfter}/${decision.limitAfter} — блокирующие вердикты прежних заходов остаются в счёте, у \`ask\` лимит ${cycleLimit('ask')} (PROCESS.md §4).`,
+    );
+  } else if (decision.kind === 'owner-question') {
+    parts.push(
+      '**Ревью show: решать есть что — вопрос владельцу.**',
+      `Трек \`show\` подтверждён владельцем, и конвейер его не повышает (PROCESS.md §5): задача в \`${decision.to}\` с \`blocked\`.`,
+      [
+        `- **Что неясно:** выполнен ли критерий §5 «${text}» (\`${id}\`). Ревью считает, что нет: вердикт — \`${reviewDocPath(current)}\` ${where} и комментарий ревьюера.`,
+        `- **Что изменится от ответа:** \`ask\` — полное ТЗ по §7.1 и ревью ТЗ до новой правки кода, лимит код-ревью ${cycleLimit('ask')}; \`show\` — автор чинит по вердикту, лимит ${decision.limitAfter}.`,
+        '- **Вариант по умолчанию:** повысить до `track:ask`.',
+      ].join('\n'),
+      'Как ответить: повысить — метка `track:ask` (и строка `Трек: ask — решение владельца`) и снять `blocked`, задача уходит в `S3-spec` на полное ТЗ; оставить `show` — снять `blocked`, автор чинит по вердикту.',
+      `Бюджет код-ревью: ${decision.spentAfter}/${decision.limitAfter}.`,
+    );
+  }
+  if (decision.note) {
+    const [first, ...tail] = decision.note;
+    parts.push(`${first.toUpperCase()}${tail.join('')}. Вердикт возвращает задачу автору как \`fix\`: \`${decision.to}\`.`);
+  }
+  if (!parts.length) return '';
+  if (runUrl) parts.push(`[Прогон](${runUrl}).`);
+  if (decision.kind === 'reclassify' || decision.kind === 'owner-question') {
+    parts.push(`<!-- hp:route ${decision.kind} criterion=${id} -->`);
+  }
+  return `${parts.join('\n\n')}\n`;
+}
+
+/** Строка сводки прогона: маршрут и бюджет после вердикта (К4 #726). */
+export function routeSummary({ decision, stage = 'code' } = {}) {
+  const criterion = decision.criterion ? ` (критерий \`${decision.criterion}\`)` : '';
+  return `- маршрут вердикта **${decision.kind}**${criterion} → \`${decision.to}\` · блокирующих циклов этапа ${stage === 'spec' ? 'spec' : 'code'}: ${decision.spentAfter}/${decision.limitAfter}${decision.exhausted ? ' · `review-4`' : ''}${decision.note ? ` · ${decision.note}` : ''}\n`;
 }
 
 function git(args) {
@@ -369,24 +587,73 @@ if (isMainModule(import.meta.url)) {
       mkdirSync(out, { recursive: true });
       if (decision.raise) writeFileSync(join(out, 'raise.md'), decision.comment);
       const basis = `${decision.basis}${decision.warning ? ` · внимание: ${decision.warning}` : ''}`;
+      // #726: `confirmed` — для шага решения по вердикту (owner-question).
       const lines = [
         `track=${decision.track}`, `mutants=${decision.mutants}`, `full=${decision.full}`, `ship=${decision.ship}`,
-        `raise=${decision.raise}`, `basis=${basis}`, `risk=${decision.risk.classes.join(',')}`,
+        `raise=${decision.raise}`, `confirmed=${decision.confirmed}`, `basis=${basis}`, `risk=${decision.risk.classes.join(',')}`,
       ];
       for (const line of lines) console.log(line);
       if (decision.violations.length) console.log(`violations=${decision.violations.join('; ')}`);
       if (decision.note) console.log(`risk_note:\n${decision.note}`);
+      if (decision.routeNote) console.log(`route_note:\n${decision.routeNote}`);
       if (process.env.GITHUB_OUTPUT) {
         const block = (name, text) => {
           if (!text) return '';
           const delimiter = `HP_TRACK_${randomUUID()}`;
           return `${name}<<${delimiter}\n${text}\n${delimiter}\n`;
         };
-        appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n${block('risk_note', decision.note)}${block('ship_risk', decision.shipRisk)}`);
+        appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n${block('risk_note', decision.note)}${block('route_note', decision.routeNote)}${block('ship_risk', decision.shipRisk)}`);
       }
       if (process.env.GITHUB_STEP_SUMMARY) {
         appendFileSync(process.env.GITHUB_STEP_SUMMARY, `- трек **${decision.track}** · основание: ${basis} · риск по участкам: ${decision.risk.classes.join(', ') || 'нет'} · полный набор: ${decision.full} · слияние без модели: ${decision.ship}${decision.raise ? ' · повышен ship → show' : ''}\n`);
       }
+    } else if (command === 'route') {
+      // #726: шаг «Решение по вердикту» — один вызов на заход модели.
+      const out = value('out');
+      if (!out) throw new Error('--out is required');
+      const stage = value('stage') === 'spec' ? 'spec' : 'code';
+      const verdictPath = value('verdict');
+      if (!verdictPath || !existsSync(verdictPath)) throw new Error(`verdict.json не найден: ${verdictPath || '(путь не задан)'}`);
+      const verdict = JSON.parse(readFileSync(verdictPath, 'utf8'));
+      // Граница доверия уже судила этот файл (#556); повтор — защита от сбоя шага.
+      const problems = verdictProblems(verdict);
+      if (problems.length) throw new Error(`вердикт отвергнут: ${problems.join('; ')}`);
+      for (const [name, fallback] of [['spent', '0'], ['limit', '4']]) {
+        if (nonNegative(value(name), null) === null) console.log(`::warning::--${name}=«${value(name)}» не число — берётся ${fallback}, как в guard`);
+      }
+      const num = value('num');
+      const cycle = value('cycle');
+      const decision = reviewRoute({
+        stage, track: value('track') || 'ask', confirmed: value('confirmed') === 'true',
+        verdict: verdict.verdict, high: verdict.high, route: verdictRoute(verdict), criterion: verdict.criterion ?? '',
+        spent: value('spent'), limit: nonNegative(value('limit'), 4), labels: rest.some((a) => a.startsWith('--labels=')) ? labels : null,
+      });
+      // Документы этапа этой задачи — из ветки материала (рабочая копия после публикации).
+      const marker = stage === 'spec' ? 'SPEC-REVIEW' : 'CODE-REVIEW';
+      const ref = value('ref') || 'HEAD';
+      const listed = spawnSync('git', ['ls-tree', '--name-only', `${ref}:docs/reviews`], { encoding: 'utf8' });
+      const own = new RegExp(`^${marker}-${/^\d+$/.test(num) ? num : 'x'}-r\\d+\\.md$`);
+      const docs = (listed.status === 0 ? listed.stdout : '').split('\n').filter((name) => own.test(name)).map((name) => {
+        const shown = spawnSync('git', ['show', `${ref}:docs/reviews/${name}`], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+        return { name, text: shown.status === 0 ? shown.stdout : '' };
+      });
+      const comment = routeComment({
+        decision, stage, num, cycle, branch: value('branch'), spent: nonNegative(value('spent'), 0), docs,
+        blocking: blockingFromDocs(docs).blocking, runUrl: value('run-url'),
+      });
+      mkdirSync(out, { recursive: true });
+      const commentPath = join(out, 'comment.md');
+      rmSync(commentPath, { force: true });
+      if (comment) writeFileSync(commentPath, comment);
+      for (const line of [
+        `kind=${decision.kind}`, `green=${decision.green}`, `verdict=${verdict.verdict}`, `high=${verdict.high}`,
+        `from=${decision.from}`, `to=${decision.to}`,
+        `add_labels=${decision.addLabels.join(',')}`, `remove_labels=${decision.removeLabels.join(',')}`,
+        `exhausted=${decision.exhausted}`, `spent_after=${decision.spentAfter}`, `limit_after=${decision.limitAfter}`,
+        `track=${decision.track}`, `criterion=${decision.criterion}`, `note=${decision.note}`,
+        `comment=${comment ? commentPath : ''}`,
+      ]) console.log(line);
+      if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, routeSummary({ decision, stage }));
     } else if (command === 'limit') {
       const path = value('files');
       const files = path && existsSync(path) ? readFileSync(path, 'utf8').split('\n').map((s) => s.trim()).filter(Boolean) : [];
@@ -404,7 +671,7 @@ if (isMainModule(import.meta.url)) {
       });
       emit([`ship=${violations.length === 0}`, `violations=${violations.join('; ')}`]);
     } else {
-      throw new Error('usage: process-track.mjs stage --stage=code|spec --labels=a,b --branch=<b> --base=<ref> --out=<dir> [--head --comments --owner --run-url] | limit --labels=a,b [--files=<file>] | resolve --labels=a,b [--base=<ref> --head=<ref>] | ship-limits --base=<ref> [--head=<ref>]');
+      throw new Error('usage: process-track.mjs stage --stage=code|spec --labels=a,b --branch=<b> --base=<ref> --out=<dir> [--head --comments --owner --run-url] | route --stage=code|spec --track=<t> --confirmed=true|false --verdict=<verdict.json> --spent=N --limit=N --num=NN --cycle=N --out=<dir> [--labels --branch --ref --run-url] | limit --labels=a,b [--files=<file>] | resolve --labels=a,b [--base=<ref> --head=<ref>] | ship-limits --base=<ref> [--head=<ref>]');
     }
   } catch (error) {
     console.error(`::error::${error.message}`);

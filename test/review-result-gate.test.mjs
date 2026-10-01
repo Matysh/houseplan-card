@@ -8,7 +8,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 
 import {
-  reviewResultProblems, parseManifest, sha256, REQUIRED_FILES, PASSPORT_FIELDS,
+  reviewResultProblems, parseManifest, sha256, REQUIRED_FILES, PASSPORT_FIELDS, ROUTES, verdictRoute,
 } from '../scripts/review-result-gate.mjs';
 
 const EXPECTED = Object.fromEntries(PASSPORT_FIELDS.map((f) => [f, `значение-${f}`]));
@@ -143,4 +143,32 @@ test('#556: integrate пропускает artifact только через ге
   }
   // Публикация читает вердикт только после гейта.
   assert.ok(step.indexOf('review-result-gate.mjs') < step.indexOf('structured_output'));
+});
+
+// #726: маршрут вердикта на границе доверия. Смысл criterion судит reviewRoute,
+// граница — только словарь route и противоречие с зелёным вердиктом.
+test('#726 AC1: route — нет → fix, словарь, green + reclassify — отказ, criterion любой строкой', () => {
+  assert.deepEqual(ROUTES, ['fix', 'reclassify']);
+  // route нет (вердикты до #726, модель не заполнила) — принято и читается как fix.
+  assert.deepEqual(reviewResultProblems(fixture()), []);
+  assert.deepEqual(reviewResultProblems(fixture({ verdict: { verdict: 'yellow', route: null } })), [], 'null — не заполнено');
+  assert.equal(verdictRoute({ verdict: 'yellow' }), 'fix');
+  assert.equal(verdictRoute({ verdict: 'yellow', route: null }), 'fix');
+  for (const [verdict, route] of [['yellow', 'fix'], ['red', 'fix'], ['green', 'fix'], ['yellow', 'reclassify'], ['red', 'reclassify']]) {
+    assert.deepEqual(reviewResultProblems(fixture({ verdict: { verdict, route } })), [], `${verdict} + ${route}`);
+    assert.equal(verdictRoute({ verdict, route }), route);
+  }
+  // Вне словаря — отказ.
+  for (const route of ['merge', 'Fix', '', 42, true, {}, ['fix']]) {
+    const problems = reviewResultProblems(fixture({ verdict: { verdict: 'yellow', route } }));
+    assert.ok(problems.some((p) => p.startsWith('route вне словаря')), JSON.stringify(route));
+    assert.equal(verdictRoute({ route }), null);
+  }
+  // Зелёный вместе с reclassify — противоречивый результат, fail-closed.
+  const green = reviewResultProblems(fixture({ verdict: { verdict: 'green', route: 'reclassify', criterion: 'undocumented' } }));
+  assert.ok(green.some((p) => p.startsWith('reclassify при зелёном вердикте')), green.join('; '));
+  // criterion любой строкой проходит границу — его смысл судит маршрут (К2).
+  for (const criterion of ['undocumented', 'vibes', '', 'q` --> <b>']) {
+    assert.deepEqual(reviewResultProblems(fixture({ verdict: { verdict: 'yellow', route: 'reclassify', criterion } })), [], criterion);
+  }
 });

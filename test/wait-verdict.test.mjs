@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { decide, reviewRequestFromEvents, stateOf, waitForVerdict } from '../scripts/wait-verdict.mjs';
+import { reviewRoute, routeComment } from '../scripts/process-track.mjs';
 
 // #496: ожидание детерминировано — одинаковое состояние молчит, смена метки и
 // события конвейера доставляются один раз, ничего не пишется.
@@ -123,4 +124,48 @@ test('новые outcome и owner blocker текущего раунда не с�
   );
   assert.equal(verdict.code, 0);
   assert.ok(verdict.lines.some((line) => line.includes('S7-code-review → S8-merged')));
+});
+
+// #726: тексты — те, что пишет шаг решения по вердикту, а не их копии.
+const SHOW = { stage: 'code', track: 'show', limit: 2, verdict: 'yellow', high: 0 };
+const routeBody = (over, cycle = '1') => routeComment({ decision: reviewRoute({ ...SHOW, ...over }), num: '7', cycle, branch: 'issue/7-x', spent: over.spent ?? 0 });
+
+test('#726 AC7: reclassify доставляется автору видом reclassify — про ТЗ и S5', () => {
+  const body = routeBody({ spent: 0, route: 'reclassify', criterion: 'undocumented' });
+  const comment = { id: 'r', createdAt: '2026-10-01T10:05:00Z', body };
+  const state = stateOf(snap(['S3-spec', 'track:ask'], [comment]));
+  assert.equal(state.lastEvent.kind, 'reclassify');
+  assert.match(state.lastEvent.text, /трек повышен до ask: полное ТЗ в теле issue, код класса A не пушить до S5/);
+  // Метка сменилась тем же прогоном — вердикт (0) и текст маршрута в строках.
+  const moved = decide(stateOf(snap(['S7-code-review', 'track:show'])), state);
+  assert.equal(moved.code, 0);
+  assert.ok(moved.lines.some((line) => line.includes('полное ТЗ в теле issue')));
+  // Комментарий раньше метки — событие доставлено само (3).
+  const early = decide(stateOf(snap(['S7-code-review'])), stateOf(snap(['S7-code-review'], [comment])));
+  assert.equal(early.code, 3);
+});
+
+test('#726 AC7: вопрос владельцу с blocked доставлен, опрос остановлен; исчерпание — прежний код 3', async () => {
+  const question = { id: 'q', createdAt: '2', body: routeBody({ spent: 0, route: 'reclassify', criterion: 'surfaces', confirmed: true }) };
+  assert.equal(stateOf(snap(['S6-in-progress'], [question])).lastEvent.kind, 'owner-question');
+  const states = [snap(['S7-code-review']), snap(['S6-in-progress', 'blocked'], [question]), snap(['S6-in-progress', 'blocked'], [question])];
+  let i = 0; const lines = []; let slept = 0;
+  const code = await waitForVerdict({
+    readSnapshot: async () => states[Math.min(i++, states.length - 1)], intervalMs: 1, maxTicks: 10,
+    sleep: async () => { slept++; }, log: (line) => lines.push(line),
+  });
+  assert.equal(code, 3);
+  assert.equal(slept, 1, 'опрос остановлен на первом же изменении');
+  assert.ok(lines.some((line) => line.includes('ждёт владельца')));
+  assert.ok(lines.some((line) => line.includes('blocked: задача ждёт владельца')));
+  // Вердикт, исчерпавший бюджет: review-4 и прежний префикс — код 3, вид exhausted.
+  const exhausted = { id: 'e', createdAt: '3', body: routeBody({ spent: 1 }, '2') };
+  const next = stateOf(snap(['S6-in-progress', 'review-4'], [exhausted]));
+  assert.equal(next.lastEvent.kind, 'exhausted');
+  const d = decide(stateOf(snap(['S7-code-review'])), next);
+  assert.equal(d.code, 3);
+  assert.ok(d.lines.some((line) => line.includes('лимит циклов исчерпан')));
+  // Исчерпание вместе с вопросом владельцу — одним комментарием; решает владелец, вид exhausted.
+  const both = { id: 'b', createdAt: '4', body: routeBody({ spent: 1, route: 'reclassify', criterion: 'surfaces', confirmed: true }, '2') };
+  assert.equal(stateOf(snap(['S6-in-progress', 'review-4', 'blocked'], [both])).lastEvent.kind, 'exhausted');
 });

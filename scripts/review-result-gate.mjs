@@ -31,8 +31,41 @@ export const PASSPORT_FIELDS = [
   'spec_body_changed', 'spec_body_doc', 'spec_body_recorded',
 ];
 export const VERDICTS = ['green', 'yellow', 'red'];
+/**
+ * Маршрут вердикта (#726): `fix` — вернуть автору по находкам; `reclassify` —
+ * трек `show` выбран неверно, задача не проходит критерий §5. Смысл
+ * `criterion` судит `reviewRoute` (`process-track.mjs`), а не граница.
+ */
+export const ROUTES = ['fix', 'reclassify'];
 
 export const sha256 = (text) => createHash('sha256').update(text).digest('hex');
+
+/**
+ * Маршрут структурного вердикта: поля нет (вердикты до #726, модель его не
+ * заполнила) — `fix`, прежний путь; значение вне словаря — `null`.
+ */
+export function verdictRoute(verdict) {
+  if (verdict?.route == null) return 'fix';
+  return ROUTES.includes(verdict.route) ? verdict.route : null;
+}
+
+/** Причины отказа самого `verdict.json`; пустой массив — вердикт цел. */
+export function verdictProblems(verdict) {
+  const problems = [];
+  if (!VERDICTS.includes(verdict?.verdict)) problems.push(`verdict вне словаря: ${JSON.stringify(verdict?.verdict)}`);
+  if (typeof verdict?.high !== 'number') problems.push('verdict.high не число');
+  if (typeof verdict?.medium !== 'number') problems.push('verdict.medium не число');
+  if (typeof verdict?.summary !== 'string') problems.push('verdict.summary не строка');
+  const route = verdictRoute(verdict);
+  if (route === null) {
+    problems.push(`route вне словаря: ${JSON.stringify(verdict?.route)}`);
+  } else if (route === 'reclassify' && verdict?.verdict === 'green') {
+    // Противоречивый результат: «вперёд» и «трек неверен» сразу. Fail-closed,
+    // молчаливый green здесь хуже остановки (#726, порядок владельца #707).
+    problems.push('reclassify при зелёном вердикте — результат противоречив');
+  }
+  return problems;
+}
 
 /** Разбор строки `sha256sum`: «<hex>  <имя>». */
 export function parseManifest(text) {
@@ -97,11 +130,7 @@ export function reviewResultProblems({ files, read, expected }) {
   } catch (error) {
     return [...problems, `verdict.json не разобран: ${error.message}`];
   }
-  if (!VERDICTS.includes(verdict?.verdict)) problems.push(`verdict вне словаря: ${JSON.stringify(verdict?.verdict)}`);
-  if (typeof verdict?.high !== 'number') problems.push('verdict.high не число');
-  if (typeof verdict?.medium !== 'number') problems.push('verdict.medium не число');
-  if (typeof verdict?.summary !== 'string') problems.push('verdict.summary не строка');
-  return problems;
+  return [...problems, ...verdictProblems(verdict)];
 }
 
 const invokedDirectly = process.argv[1]

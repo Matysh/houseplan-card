@@ -339,6 +339,10 @@ jobs:
       # для комментария слияния ship (пакетное ревью, §11.7).
       risk_note: ${{ steps.track.outputs.risk_note }}
       ship_risk: ${{ steps.track.outputs.ship_risk }}
+      # #726: подтверждение трека владельцем — решению по вердикту; заметка
+      # маршрута (`route`/`criterion`) — в промпт Review.
+      confirmed: ${{ steps.track.outputs.confirmed }}
+      route_note: ${{ steps.track.outputs.route_note }}
     steps:
       - name: Начать измерение стадии
         id: clock
@@ -1171,6 +1175,8 @@ jobs:
 
             ${{ needs.prepare.outputs.risk_note }}
 
+            ${{ needs.prepare.outputs.route_note }}
+
             ${{ needs.prepare.outputs.spec_body_changed == 'true' && format('ТЗ в теле issue менялось после зелёного ревью ТЗ ({0}, записанный хеш {1}). GitHub хранит правки тела без diff — дельту показать нельзя, поэтому AC сверяются с ТЕКУЩИМ текстом целиком, а не по дельте, и находка называется в вердикте (#517).', needs.prepare.outputs.spec_body_doc, needs.prepare.outputs.spec_body_recorded) || '' }}
 
             Правила ревью в этом промпте не повторяются (#634): их канон —
@@ -1322,7 +1328,7 @@ jobs:
           claude_args: |
             --max-turns 150
             --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment,mcp__github__issue_write,mcp__github__issue_read
-            --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"}},"required":["verdict","high","medium","summary"]}'
+            --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"},"route":{"type":"string","enum":["fix","reclassify"]},"criterion":{"type":"string"}},"required":["verdict","high","medium","summary","route"]}'
 
       - name: Запечатать результат модели
         id: result
@@ -1495,6 +1501,9 @@ jobs:
         run: |
           verdict=$(printf '%s' "$OUT" | jq -r '.verdict // empty' 2>/dev/null || true)
           high=$(printf '%s' "$OUT" | jq -r '.high // empty' 2>/dev/null || true)
+          # #726: маршрут вердикта — хвостом строки якоря; вне словаря скрипт его не пишет.
+          route=$(printf '%s' "$OUT" | jq -r '.route // empty' 2>/dev/null || true)
+          criterion=$(printf '%s' "$OUT" | jq -r '.criterion // empty' 2>/dev/null || true)
           # Ветки задачи может не быть: у задач, размеченных до появления
           # конвейера, ТЗ лежит прямо в dev. Раньше шаг в этом случае молча
           # выходил с нулём, и разбор ревью терялся — оставался только вердикт
@@ -1551,7 +1560,8 @@ jobs:
               --sha="$MATERIAL_SHA" --tree="$MATERIAL_TREE" \
               --branch="${BRANCH:-dev}" --specs="$MATERIAL_SPECS" \
               --issue-body="$MATERIAL_ISSUE_BODY" \
-              --verdict="$verdict" --high="$high"
+              --verdict="$verdict" --high="$high" \
+              --route="$route" --criterion="$criterion"
           else
             echo "::warning::$SOURCE не найден — документа для публикации нет"
           fi
@@ -1707,7 +1717,26 @@ jobs:
           VALIDATE_URL: ${{ needs.prepare.outputs.validate_url }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           NUM: ${{ github.event.issue.number }}
+          # #726: маршрут вердикта — трек и его подтверждение владельцем (шаг
+          # трека), бюджет этапа (guard), ветка материала с документами ревью.
+          TRACK: ${{ needs.prepare.outputs.track }}
+          CONFIRMED: ${{ needs.prepare.outputs.confirmed }}
+          LABELS: ${{ needs.guard.outputs.labels }}
+          SPENT: ${{ needs.guard.outputs.spent }}
+          LIMIT: ${{ needs.guard.outputs.limit }}
+          CYCLE: ${{ needs.guard.outputs.cycle }}
+          BRANCH: ${{ needs.prepare.outputs.branch }}
         run: |
+          # ship и повторно применённый зелёный (#499) модель не вызывали:
+          # маршрута у них нет, решение прежнее — зелёный двигает вперёд.
+          green_forward() {
+            green=true
+            case "$STAGE" in
+              spec) from=S4-spec-review; to=S5-ready ;;
+              code) from=S7-code-review; to=S8-merged ;;
+            esac
+          }
+          green=""; from=""; to=""
           # Повторно применимый зелёный вердикт (#499) главнее ship: код уже
           # прочитан моделью, и пакетному ревью перечитывать его незачем.
           if [ "$SHIP" = "true" ] && [ "$REUSE" != "true" ]; then
@@ -1725,6 +1754,7 @@ jobs:
           <!-- hp:ship-merge material=$MATERIAL -->
           EOF
             gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/ship-merge.md
+            green_forward
           elif [ "$REUSE" = "true" ]; then
             # Модель не вызывалась: вердикт — записанный конвейером зелёный
             # прошлого захода, дерево вне docs/reviews с тех пор не менялось (#499).
@@ -1734,28 +1764,51 @@ jobs:
               "Вердикт: зелёный · заход r${{ needs.guard.outputs.cycle }} · применён повторно из r${REUSE_ROUND} без вызова модели (#499) · High: 0 · Medium: 0 · Документ: docs/reviews/${REUSE_DOC}
 
           Дерево материала \`${short_tree}\` с захода r${REUSE_ROUND} не изменилось ни в одном файле вне \`docs/reviews/\` (проверено \`git diff\` по содержимому). Новый документ не публикуется: разбирать нечего. Любое отличие дерева — ребейз, тест, фикстура, ТЗ — запустило бы полный разбор."
+            green_forward
           else
-            verdict=$(echo "$OUT" | jq -r '.verdict')
-            high=$(echo "$OUT" | jq -r '.high')
+            # #726: вердикт модели решает скрипт трека командой route — ОДИН вызов:
+            # статус, метки трека, `blocked` и `review-4`, тело комментария
+            # файлом и строка сводки. Вперёд двигает только зелёный (§7.2);
+            # жёлтый и красный — цикл и возврат автору, на код-ревью show с
+            # `route: reclassify` — повышение до ask или вопрос владельцу.
+            # Bash только исполняет: комментарий — из файла скрипта, метки —
+            # по его выходу. Скрипт — из dev, как у шага трека: рабочая копия
+            # здесь — ветка задачи после публикации, и ветка show/ship,
+            # отставшая от dev, его может ещё не нести. Метки — текущие: шаг
+            # трека мог в этом же прогоне сменить ship на show.
+            git fetch -q origin dev
+            tools="$RUNNER_TEMP/route-tools"
+            rm -rf "$tools" && mkdir -p "$tools"
+            git archive origin/dev scripts | tar -x -C "$tools"
+            printf '%s' "$OUT" > "$RUNNER_TEMP/route-verdict.json"
+            labels=$(gh issue view "$NUM" --repo "${{ github.repository }}" --json labels \
+              --jq '[.labels[].name] | join(",")') || labels="$LABELS"
+            route=$(node "$tools/scripts/process-track.mjs" route --stage="$STAGE" --track="$TRACK" \
+              --confirmed="$CONFIRMED" --labels="$labels" --verdict="$RUNNER_TEMP/route-verdict.json" \
+              --spent="$SPENT" --limit="$LIMIT" --num="$NUM" --cycle="$CYCLE" --branch="$BRANCH" \
+              --out="$RUNNER_TEMP/route" \
+              --run-url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}")
+            printf '%s\n' "$route"
+            field() { printf '%s\n' "$route" | sed -n "s/^$1=//p"; }
+            verdict=$(field verdict); high=$(field high)
+            green=$(field green); from=$(field from); to=$(field to)
+            add=$(field add_labels); remove=$(field remove_labels); comment=$(field comment)
+            if [ -n "$comment" ]; then
+              gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file "$comment"
+            fi
+            edit=()
+            if [ -n "$add" ]; then edit+=(--add-label "$add"); fi
+            if [ -n "$remove" ]; then edit+=(--remove-label "$remove"); fi
+            if [ "${#edit[@]}" -gt 0 ]; then
+              gh issue edit "$NUM" --repo "${{ github.repository }}" "${edit[@]}"
+            fi
           fi
           echo "вердикт: $verdict, High: $high"
-
-          # Вперёд двигает ТОЛЬКО зелёный. Жёлтый и красный возвращают
-          # автору: на прогоне #111 жёлтый означал, что AC описывает неверное
-          # изменение контракта — реализовать такое ТЗ значит сделать ошибку
-          # по инструкции. Оба считаются циклом.
-          if [ "$verdict" = "green" ] && [ "$high" -eq 0 ]; then
-            green=true
-            case "$STAGE" in
-              spec) from=S4-spec-review; to=S5-ready ;;
-              code) from=S7-code-review; to=S8-merged ;;
-            esac
-          else
-            green=false
-            case "$STAGE" in
-              spec) from=S4-spec-review; to=S3-spec ;;
-              code) from=S7-code-review; to=S6-in-progress ;;
-            esac
+          # Перехода нет — сбой шага, а не зелёный: метка остаётся, зовётся владелец.
+          case "$green" in true|false) ;; *) echo "::error::решение по вердикту не дало исхода (green=$green)"; exit 1 ;; esac
+          if [ -z "$from" ] || [ -z "$to" ]; then
+            echo "::error::решение по вердикту не дало перехода ($from -> $to)"
+            exit 1
           fi
           echo "green=$green" >> "$GITHUB_OUTPUT"
           echo "from=$from"   >> "$GITHUB_OUTPUT"

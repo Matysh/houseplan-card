@@ -307,7 +307,12 @@ export function issueBodyChanged(docs, digest) {
   return recorded === digest ? null : { doc: green.name, recorded, current: digest };
 }
 
-export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, high, issueBody } = {}) {
+/** Маршруты вердикта в якоре (#726) — тот же словарь, что у границы доверия. */
+const ANCHOR_ROUTES = ['fix', 'reclassify'];
+/** Идентификатор критерия в якоре: только формат, смысл судит `reviewRoute`. */
+const ANCHOR_CRITERION = /^[a-z][a-z0-9-]{0,39}$/;
+
+export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, high, issueBody, route, criterion } = {}) {
   const short = (value) => (typeof value === 'string' ? value.slice(0, 12) : '');
   const lines = [
     ANCHOR_MARKER,
@@ -343,8 +348,17 @@ export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, hi
   // следующий заход решает, можно ли применить зелёный вердикт повторно без
   // вызова модели. Прозу документа для этого читать нельзя — она цитирует
   // прошлые раунды и пишется в свободной форме.
+  //
+  // #726: хвост «· маршрут `reclassify` (критерий `undocumented`)» — после
+  // прежнего текста строки: `anchorVerdictFrom` читает старую и новую одинаково.
+  // Маршрута нет (вердикт до #726) — строка прежняя.
   if (verdict) {
-    lines.push(`- Вердикт конвейера: \`${verdict}\` · High ${Number.isFinite(Number(high)) ? Number(high) : '?'}`);
+    let line = `- Вердикт конвейера: \`${verdict}\` · High ${Number.isFinite(Number(high)) ? Number(high) : '?'}`;
+    if (ANCHOR_ROUTES.includes(route)) {
+      line += ` · маршрут \`${route}\``;
+      if (ANCHOR_CRITERION.test(String(criterion ?? ''))) line += ` (критерий \`${criterion}\`)`;
+    }
+    lines.push(line);
   }
   return `${lines.join('\n')}\n`;
 }
@@ -789,6 +803,9 @@ if (invokedDirectly) {
       specs: parseSpecList(value('specs')),
       verdict: ['green', 'yellow', 'red'].includes(value('verdict')) ? value('verdict') : '',
       high: value('high'),
+      // #726: маршрут и критерий вердикта; вне словаря и формата — не пишутся.
+      route: value('route'),
+      criterion: value('criterion'),
     };
     const text = readFileSync(path, 'utf8');
     writeFileSync(path, withMaterialAnchors(text, anchors), 'utf8');

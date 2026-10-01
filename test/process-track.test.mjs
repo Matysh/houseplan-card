@@ -6,10 +6,12 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  COMPARE_FILES_CAP, RISK_CLASSES, RISK_NOTE_LINE_LIMIT, SHIP_SRC_LINE_LIMIT, classifyRisk, cycleLimit, decideTrack, explicitTracks,
-  guardLimit, hasTrackLabel, parseNameStatus, parseNumstat, rebaseBeforeReview, resolveTrack, riskClassLine, riskNote,
-  shipLimitViolations, trackFromLabels, trackOrigin,
+  COMPARE_FILES_CAP, RISK_CLASSES, RISK_NOTE_LINE_LIMIT, SHIP_SRC_LINE_LIMIT, SHOW_CRITERIA, classifyRisk, cycleLimit, decideTrack,
+  explicitTracks, guardLimit, hasTrackLabel, parseNameStatus, parseNumstat, rebaseBeforeReview, resolveTrack, reviewRoute, riskClassLine,
+  riskNote, routeComment, routeNote, routeSummary, shipLimitViolations, trackFromLabels, trackOrigin,
 } from '../scripts/process-track.mjs';
+import { reviewCounters, reviewRoundsFromFiles, withMaterialAnchors } from '../scripts/review-doc-guard.mjs';
+import { sectionText } from '../scripts/md-anchors.mjs';
 import { classify as classifyPath } from '../scripts/change-classes.mjs';
 // Пути монолитов — данные для классификатора, а не чтение их текста (#624).
 import { CARD_FILE, RUNTIME_FILE } from '../scripts/monolith-metrics.mjs';
@@ -399,10 +401,12 @@ test('#707 AC5: заметка риска ревьюеру show/ask', () => {
   const risk = classifyRisk(RISKY);
   const showNote = riskNote({ track: 'show', risk });
   assert.match(showNote, /Трек show держится на «решать нечего» \(PROCESS\.md §5\)/);
-  assert.match(showNote, /не нашёл — Medium «решать есть что — нужен track:ask» с названным критерием §5/);
+  // #726: вместо Medium «решать есть что — нужен track:ask» — маршрут вердикта.
+  assert.match(showNote, /не нашёл — `route: reclassify` с названным критерием §5 \(#726\)/);
+  assert.doesNotMatch(showNote, /Medium/);
   assert.match(showNote, /- touch: src\/pointer-modality\.ts:7 · участок pointer-modality, токен pointerType/);
   const confirmedNote = riskNote({ track: 'show', confirmed: true, risk });
-  assert.match(confirmedNote, /трек не повышать: не нашёл — вопрос владельцу в комментарии, вариант по умолчанию «повысить до ask»/);
+  assert.match(confirmedNote, /трек не повышать: не нашёл — `route: reclassify` с критерием, и конвейер задаст вопрос владельцу, вариант по умолчанию «повысить до ask»/);
   assert.doesNotMatch(confirmedNote, /Medium/);
   assert.match(riskNote({ track: 'ask', risk }), /Трек ask: сверь, что каждый класс ниже покрыт AC ТЗ/);
   const render = classifyRisk(diffOf([{ path: 'src/render/paper-scene.ts', add: [[3, '  const scale = 2;']] }]));
@@ -515,12 +519,14 @@ function stepRun(workflow, marker) {
 const TRACK_STEP = '      - name: "Трек задачи и рамки ship (#696)"\n';
 const GUARD_STEP = '      - id: decide\n';
 const DECIDE_STEP = '      - name: Решение по вердикту\n';
+const PUBLISH_STEP = '      - name: Опубликовать документ ревью\n';
 
 test('#707 AC4: изменённые run шага трека, guard и решения по вердикту проходят bash -n', async (t) => {
   if (process.platform === 'win32' || spawnSync('bash', ['--version']).status !== 0) { t.skip('bash недоступен'); return; }
   const { readFileSync } = await import('node:fs');
   const workflow = readFileSync(WORKFLOW, 'utf8');
-  for (const marker of [TRACK_STEP, GUARD_STEP, DECIDE_STEP]) {
+  // #726: шаг решения и публикация документа тоже изменены.
+  for (const marker of [TRACK_STEP, GUARD_STEP, DECIDE_STEP, PUBLISH_STEP]) {
     const r = spawnSync('bash', ['-n', '-c', stepRun(workflow, marker)], { encoding: 'utf8' });
     assert.equal(r.status, 0, `${marker.trim()}: ${r.stderr}`);
     assert.equal(r.stderr, '', `${marker.trim()}: bash предупреждает (незакрытый heredoc?): ${r.stderr}`);
@@ -628,6 +634,10 @@ function trackSandbox(t, { change }) {
   writeFileSync(join(bin, 'gh'), [
     '#!/usr/bin/env bash',
     'printf \'%s\\n\' "$*" >> "$FAKE_DIR/gh-calls"',
+    // #726: `--json labels` — текущие метки для шага решения по вердикту (как их отдал бы --jq).
+    'if [ "$1 $2" = "issue view" ] && [[ " $* " == *" labels "* ]]; then',
+    '  if [ -f "$FAKE_DIR/labels" ]; then cat "$FAKE_DIR/labels"; exit 0; fi; echo "gh: API недоступен" >&2; exit 1',
+    'fi',
     'case "$1 $2" in',
     '  "issue view") if [ -f "$FAKE_DIR/comments.json" ]; then cat "$FAKE_DIR/comments.json"; exit 0; fi; echo "gh: API недоступен" >&2; exit 1 ;;',
     '  "issue comment") while [ $# -gt 0 ]; do if [ "$1" = "--body-file" ]; then cp "$2" "$FAKE_DIR/comment.md"; fi; shift; done ;;',
@@ -658,6 +668,10 @@ function trackSandbox(t, { change }) {
     comments(list) {
       if (list === null) rmSync(join(fake, 'comments.json'), { force: true });
       else writeFileSync(join(fake, 'comments.json'), JSON.stringify({ comments: list }));
+    },
+    labels(list) {
+      if (list === null) rmSync(join(fake, 'labels'), { force: true });
+      else writeFileSync(join(fake, 'labels'), `${list.join(',')}\n`);
     },
   };
 }
@@ -746,4 +760,351 @@ test('#707 AC4: шаг трека на настоящем bash — коммен�
   assert.equal(show.output.track, 'show');
   assert.equal(show.calls.length, 1, 'show не трогает меток');
   assert.match(show.output.risk_note, /- touch: src\/pointer-modality\.ts:3/);
+});
+
+// ---------- #726: маршрут вердикта — reclassify, вопрос владельцу, немедленный review-4 ----------
+
+const SHOW = { stage: 'code', track: 'show', limit: 2 };
+const pick = (d) => ({ to: d.to, addLabels: d.addLabels, removeLabels: d.removeLabels, kind: d.kind });
+
+test('#726 AC2: таблица маршрутов — каждая строка даёт точные to, метки и kind', () => {
+  const at = (over) => reviewRoute({ ...SHOW, verdict: 'yellow', high: 0, spent: 0, ...over });
+  // green, High 0 — как сейчас: вперёд, меток нет.
+  assert.deepEqual(pick(at({ verdict: 'green' })), { to: 'S8-merged', addLabels: [], removeLabels: [], kind: 'green' });
+  assert.deepEqual(pick(reviewRoute({ stage: 'spec', track: 'ask', verdict: 'green', high: 0, spent: 0, limit: 4 })),
+    { to: 'S5-ready', addLabels: [], removeLabels: [], kind: 'green' });
+  assert.equal(at({ verdict: 'green', high: 1 }).kind, 'fix', 'зелёный с High — не зелёный');
+  // code, show, не зелёный, reclassify, критерий из таблицы, не confirmed — ask и S3.
+  for (const verdict of ['yellow', 'red']) {
+    assert.deepEqual(pick(at({ verdict, route: 'reclassify', criterion: 'undocumented' })),
+      { to: 'S3-spec', addLabels: ['track:ask'], removeLabels: ['track:show'], kind: 'reclassify' }, verdict);
+  }
+  for (const id of Object.keys(SHOW_CRITERIA)) assert.equal(at({ route: 'reclassify', criterion: id }).kind, 'reclassify', id);
+  assert.deepEqual(Object.keys(SHOW_CRITERIA), ['complexity', 'surfaces', 'migration', 'ux-contract', 'perf-touch', 'undocumented']);
+  assert.equal(at({ route: 'reclassify', criterion: 'migration', verdict: 'red', high: 2 }).kind, 'reclassify', 'High > 0 — маршрут тот же');
+  // то же, confirmed — трек не меняется, blocked и вопрос владельцу.
+  const owner = at({ route: 'reclassify', criterion: 'undocumented', confirmed: true });
+  assert.deepEqual(pick(owner), { to: 'S6-in-progress', addLabels: ['blocked'], removeLabels: [], kind: 'owner-question' });
+  assert.equal(owner.track, 'show', 'подтверждённый show не повышается');
+  // не зелёный, fix — как сейчас.
+  assert.deepEqual(pick(at({ route: 'fix' })), { to: 'S6-in-progress', addLabels: [], removeLabels: [], kind: 'fix' });
+  assert.deepEqual(pick(reviewRoute({ stage: 'spec', track: 'ask', verdict: 'red', spent: 0, limit: 4 })),
+    { to: 'S3-spec', addLabels: [], removeLabels: [], kind: 'fix' });
+  // reclassify на ask, на spec, без критерия из таблицы — как fix с note.
+  const ask = reviewRoute({ stage: 'code', track: 'ask', verdict: 'yellow', route: 'reclassify', criterion: 'undocumented', spent: 0, limit: 4 });
+  assert.deepEqual(pick(ask), { to: 'S6-in-progress', addLabels: [], removeLabels: [], kind: 'fix' });
+  assert.equal(ask.track, 'ask');
+  assert.match(ask.note, /^маршрут reclassify не применён: трек `ask`/);
+  const spec = reviewRoute({ stage: 'spec', track: 'show', verdict: 'yellow', route: 'reclassify', criterion: 'undocumented', spent: 0, limit: 2 });
+  assert.deepEqual(pick(spec), { to: 'S3-spec', addLabels: [], removeLabels: [], kind: 'fix' });
+  assert.match(spec.note, /^маршрут reclassify не применён: этап `spec`/);
+  for (const criterion of ['', undefined, null]) {
+    const none = at({ route: 'reclassify', criterion });
+    assert.deepEqual(pick(none), { to: 'S6-in-progress', addLabels: [], removeLabels: [], kind: 'fix' }, String(criterion));
+    assert.equal(none.note, 'маршрут reclassify не применён: критерий §5 не назван');
+  }
+  for (const criterion of ['vibes', 'UNDOCUMENTED', 'constructor', '__proto__', 42, { id: 'undocumented' }]) {
+    const odd = at({ route: 'reclassify', criterion });
+    assert.equal(odd.kind, 'fix', JSON.stringify(criterion));
+    assert.equal(odd.track, 'show', 'трек не меняется');
+    assert.match(odd.note, /^маршрут reclassify не применён: критерий `[^`]*` не из списка §5 \(complexity, surfaces, migration, ux-contract, perf-touch, undocumented\)$/);
+  }
+  assert.equal(at({ route: 'reclassify', criterion: 'vibes' }).note.includes('`vibes`'), true);
+  // Текущие метки известны: снимается только стоящее, стоящее не ставится второй раз.
+  const infra = at({ route: 'reclassify', criterion: 'surfaces', labels: ['S7-code-review', 'infra'] });
+  assert.deepEqual([infra.addLabels, infra.removeLabels], [['track:ask'], []], 'инфраструктура без трековой метки — снимать нечего');
+  assert.deepEqual(at({ route: 'reclassify', criterion: 'surfaces', confirmed: true, labels: ['track:show', 'blocked'] }).addLabels, [],
+    'blocked уже стоит — метка одна');
+});
+
+test('#726 AC3: вердикт, исчерпавший бюджет, сразу ставит review-4; статус двигается по таблице', () => {
+  const at = (over) => reviewRoute({ verdict: 'yellow', high: 0, route: 'fix', ...over });
+  const row = (d) => ({ to: d.to, exhausted: d.exhausted, review4: d.addLabels.includes('review-4'), budget: `${d.spentAfter}/${d.limitAfter}` });
+  assert.deepEqual(row(at({ ...SHOW, spent: 1 })), { to: 'S6-in-progress', exhausted: true, review4: true, budget: '2/2' }, 'show, spent 1, fix');
+  assert.deepEqual(row(at({ ...SHOW, spent: 1, route: 'reclassify', criterion: 'undocumented' })),
+    { to: 'S3-spec', exhausted: false, review4: false, budget: '2/4' }, 'show, spent 1, reclassify — лимит ask');
+  assert.deepEqual(row(at({ stage: 'code', track: 'ask', spent: 3, limit: 4 })), { to: 'S6-in-progress', exhausted: true, review4: true, budget: '4/4' });
+  assert.deepEqual(row(at({ stage: 'spec', track: 'ask', spent: 3, limit: 4 })), { to: 'S3-spec', exhausted: true, review4: true, budget: '4/4' });
+  assert.deepEqual(row(at({ stage: 'code', track: 'ask', spent: 2, limit: 4 })), { to: 'S6-in-progress', exhausted: false, review4: false, budget: '3/4' });
+  assert.deepEqual(row(at({ stage: 'code', track: 'ask', spent: 3, limit: 4, verdict: 'green' })),
+    { to: 'S8-merged', exhausted: false, review4: false, budget: '3/4' }, 'зелёный цикла не образует');
+  assert.deepEqual(row(at({ stage: 'code', track: 'ask', spent: 3, limit: 4, verdict: 'red' })).review4, true, 'красный — тоже цикл');
+  // Вопрос владельцу на show при spent 1 — и вопрос, и review-4: лимит show не меняется.
+  assert.deepEqual(at({ ...SHOW, spent: 1, route: 'reclassify', criterion: 'undocumented', confirmed: true }).addLabels, ['blocked', 'review-4']);
+  // Входы guard не прочитаны — значения guard по умолчанию: 0 циклов, лимит трека.
+  assert.equal(at({ stage: 'code', track: 'show', spent: '', limit: '' }).spentAfter, 1);
+  assert.equal(at({ stage: 'code', track: 'show', spent: 'x', limit: undefined }).limitAfter, 2);
+});
+
+test('#726 AC4: бюджет код-ревью один на все треки — SPEC в счёт не входит, у ask лимит 4, r4 ставит review-4', () => {
+  const doc = (round, route, criterion, colour = 'жёлтый') => withMaterialAnchors(`# REVIEW-7-r${round}\n\nВердикт: ${colour} · заход r${round} · High: 0 · Medium: 1\n`,
+    { sha: 'a'.repeat(40), tree: 'b'.repeat(40), branch: 'issue/7-x', verdict: colour === 'зелёный' ? 'green' : 'yellow', high: 0, route, criterion });
+  const tree = {
+    'CODE-REVIEW-7-r1.md': doc(1, 'fix'), // show
+    'CODE-REVIEW-7-r2.md': doc(2, 'reclassify', 'undocumented'),
+    // Ревью ТЗ после reclassify — три захода, два блокирующих: свой этап и свой бюджет.
+    'SPEC-REVIEW-7-r1.md': doc(1, 'fix'),
+    'SPEC-REVIEW-7-r2.md': doc(2, 'fix'),
+    'SPEC-REVIEW-7-r3.md': doc(3, 'fix', '', 'зелёный'),
+  };
+  // Счёт guard: те же функции, что у `review-doc-guard.mjs --counters`.
+  const counters = (marker, files) => {
+    const { rounds } = reviewRoundsFromFiles(Object.keys(files), marker, '7');
+    return reviewCounters({ rounds, docs: rounds.map((r) => ({ name: `${marker}-7-r${r}.md`, text: files[`${marker}-7-r${r}.md`] })) });
+  };
+  // r2 на show: reclassify при одном прошлом цикле — ask, лимит 4, без review-4.
+  const r2 = reviewRoute({ ...SHOW, verdict: 'yellow', spent: 1, route: 'reclassify', criterion: 'undocumented' });
+  assert.deepEqual([r2.kind, r2.exhausted, r2.spentAfter, r2.limitAfter], ['reclassify', false, 2, 4]);
+  // Заход r3 после ревью ТЗ: трек ask, лимит 4, счёт кода — прежние 2.
+  const code = counters('CODE-REVIEW', tree);
+  assert.deepEqual([code.spent, code.attempt], [2, 3]);
+  const { track, limit } = guardLimit({ labels: ['track:ask', 'S7-code-review'], files: ['src/a.ts'] });
+  assert.deepEqual([track, limit], ['ask', cycleLimit('ask')]);
+  assert.ok(code.spent < limit, 'guard пускает r3 (`spent -ge limit` ложно)');
+  assert.deepEqual([counters('SPEC-REVIEW', tree).spent, counters('SPEC-REVIEW', tree).attempt], [2, 4], 'у ревью ТЗ свой бюджет');
+  assert.deepEqual([counters('CODE-REVIEW', { ...tree, 'SPEC-REVIEW-7-r4.md': doc(4, 'fix') }).spent, counters('CODE-REVIEW', { ...tree, 'SPEC-REVIEW-7-r4.md': doc(4, 'fix') }).attempt], [2, 3],
+    'SPEC-документы ни бюджет кода не тратят, ни номер захода не сдвигают');
+  // Жёлтый r3 — без review-4; жёлтый r4 — review-4 сразу.
+  const r3 = reviewRoute({ stage: 'code', track, verdict: 'yellow', spent: code.spent, limit });
+  assert.deepEqual([r3.exhausted, r3.spentAfter], [false, 3]);
+  const after3 = counters('CODE-REVIEW', { ...tree, 'CODE-REVIEW-7-r3.md': doc(3, 'fix') });
+  assert.deepEqual([after3.spent, after3.attempt], [3, 4]);
+  const r4 = reviewRoute({ stage: 'code', track, verdict: 'yellow', spent: after3.spent, limit });
+  assert.deepEqual([r4.exhausted, r4.addLabels, r4.to, r4.spentAfter], [true, ['review-4'], 'S6-in-progress', 4]);
+});
+
+test('#726 К3: комментарии маршрута — первая строка, критерий словами, документы путями, бюджет, hp:route', () => {
+  const docs = [{ name: 'CODE-REVIEW-7-r2.md', text: '' }, { name: 'CODE-REVIEW-7-r1.md', text: '' }];
+  const raised = routeComment({
+    decision: reviewRoute({ ...SHOW, verdict: 'yellow', spent: 1, route: 'reclassify', criterion: 'undocumented' }),
+    num: '7', cycle: '2', branch: 'issue/7-x', spent: 1, docs, blocking: ['CODE-REVIEW-7-r1.md'], runUrl: 'https://run/1',
+  });
+  assert.equal(raised.split('\n')[0], '**Ревью show: решать есть что — трек повышен до `track:ask`.**');
+  assert.ok(raised.includes(`**${SHOW_CRITERIA.undocumented}** (\`undocumented\`)`), 'критерий словами');
+  assert.match(raised, /Документы код-ревью ветки `issue\/7-x`:\n- `docs\/reviews\/CODE-REVIEW-7-r1\.md`\n- `docs\/reviews\/CODE-REVIEW-7-r2\.md`\n/);
+  assert.ok(raised.includes('код остаётся в ветке; полное ТЗ по §7.1 — в теле issue под `## ТЗ`; коммиты класса A — после `S5`'));
+  assert.match(raised, /Бюджет код-ревью: 2\/4/);
+  assert.match(raised, /\[Прогон\]\(https:\/\/run\/1\)\.\n\n<!-- hp:route reclassify criterion=undocumented -->\n$/);
+  assert.doesNotMatch(raised, /Лимит циклов/);
+
+  const question = routeComment({
+    decision: reviewRoute({ ...SHOW, verdict: 'yellow', spent: 0, route: 'reclassify', criterion: 'perf-touch', confirmed: true }),
+    num: '7', cycle: '1', branch: 'issue/7-x', spent: 0, docs: [{ name: 'CODE-REVIEW-7-r1.md', text: '' }],
+  });
+  assert.equal(question.split('\n')[0], '**Ревью show: решать есть что — вопрос владельцу.**');
+  assert.match(question, /- \*\*Что неясно:\*\* выполнен ли критерий §5 «нет влияния на производительность и на touch-контракт» \(`perf-touch`\)\. Ревью считает, что нет: вердикт — `docs\/reviews\/CODE-REVIEW-7-r1\.md`/);
+  assert.match(question, /\n- \*\*Что изменится от ответа:\*\* [^\n]+\n- \*\*Вариант по умолчанию:\*\* повысить до `track:ask`\.\n/, 'одним блоком по §7.1');
+  assert.match(question, /Как ответить: повысить — метка `track:ask` \(и строка `Трек: ask — решение владельца`\) и снять `blocked`[^;]*; оставить `show` — снять `blocked`, автор чинит по вердикту\./);
+  assert.match(question, /<!-- hp:route owner-question criterion=perf-touch -->\n$/);
+  assert.doesNotMatch(question, /review-4|Лимит циклов/);
+  // Конвейер пишет от учётной записи владельца: его комментарии трек не подтверждают.
+  for (const body of [raised, question]) {
+    assert.equal(trackOrigin({ labels: ['track:ask'], owner: 'Matysh', comments: [{ author: 'Matysh', body, createdAt: '2' }] }).confirmed, false);
+  }
+
+  // Исчерпание: прежний префикс первой строкой, счёт, перечень, варианты §4 и четвёртый на show.
+  const r = (n) => ({ name: `CODE-REVIEW-7-r${n}.md`, text: '' });
+  const exhausted = routeComment({
+    decision: reviewRoute({ ...SHOW, verdict: 'yellow', spent: 1 }), num: '7', cycle: '3', branch: 'issue/7-x', spent: 1,
+    docs: [r(1), r(2), r(3)], blocking: ['CODE-REVIEW-7-r2.md', 'CODE-REVIEW-7-r3.md'],
+  });
+  assert.match(exhausted, /^Лимит циклов ревью исчерпан: блокирующих циклов 2 из 2 на этапе `code` — последний израсходовал этот вердикт \(заход r3\)\. Задача возвращена в `S6-in-progress` и получила `review-4`/);
+  assert.match(exhausted, /зелёные бюджет не тратят:\n- `docs\/reviews\/CODE-REVIEW-7-r2\.md`\n- `docs\/reviews\/CODE-REVIEW-7-r3\.md` — этот заход\n/, 'зелёный r1 не учтён');
+  assert.match(exhausted, /1\. \*\*разделить\*\*[^\n]+\n2\. \*\*отклонить\*\*[^\n]+\n3\. \*\*арбитраж владельца\*\*[^\n]+;\n4\. \*\*повысить до `ask`\*\*: лимит станет 4, `review-4` снимает владелец\.\n/);
+  assert.doesNotMatch(exhausted, /hp:route/);
+  const onAsk = routeComment({ decision: reviewRoute({ stage: 'code', track: 'ask', verdict: 'red', spent: 3, limit: 4 }), num: '7', cycle: '5', spent: 3, blocking: ['CODE-REVIEW-7-r2.md'] });
+  assert.match(onAsk, /^Лимит циклов ревью исчерпан: блокирующих циклов 4 из 4/);
+  assert.match(onAsk, /- `docs\/reviews\/CODE-REVIEW-7-r2\.md`\n- ещё 2 — по комментариям с вердиктом \(страховка счёта, #454\)\n- `docs\/reviews\/CODE-REVIEW-7-r5\.md` — этот заход/,
+    'счёт по комментариям виден в перечне');
+  assert.doesNotMatch(onAsk, /повысить до/, 'на ask четвёртого варианта нет');
+  // Исчерпание с вопросом владельцу — один комментарий, исчерпание первым.
+  const both = routeComment({ decision: reviewRoute({ ...SHOW, verdict: 'yellow', spent: 1, route: 'reclassify', criterion: 'surfaces', confirmed: true }), num: '7', cycle: '2', spent: 1 });
+  assert.match(both, /^Лимит циклов ревью исчерпан[\s\S]+\n\n\*\*Ревью show: решать есть что — вопрос владельцу\.\*\*\n[\s\S]+<!-- hp:route owner-question criterion=surfaces -->\n$/);
+
+  // fix с note — строка «маршрут reclassify не применён: <причина>»; без note и зелёный — комментария нет.
+  const note = routeComment({ decision: reviewRoute({ ...SHOW, verdict: 'yellow', spent: 0, route: 'reclassify', criterion: 'vibes' }), num: '7', cycle: '1', spent: 0 });
+  assert.match(note, /^Маршрут reclassify не применён: критерий `vibes` не из списка §5 [^\n]+\. Вердикт возвращает задачу автору как `fix`: `S6-in-progress`\.\n$/);
+  const noteExhausted = routeComment({ decision: reviewRoute({ ...SHOW, verdict: 'yellow', spent: 1, route: 'reclassify' }), num: '7', cycle: '2', spent: 1 });
+  assert.match(noteExhausted, /^Лимит циклов ревью исчерпан[\s\S]+\n\nМаршрут reclassify не применён: критерий §5 не назван\./, 'note — в том же комментарии');
+  assert.equal(routeComment({ decision: reviewRoute({ ...SHOW, verdict: 'yellow', spent: 0 }), num: '7', cycle: '1' }), '');
+  assert.equal(routeComment({ decision: reviewRoute({ ...SHOW, verdict: 'green', spent: 1 }), num: '7', cycle: '2' }), '');
+  // Недоверенный criterion в текст конвейера не протекает.
+  const evil = routeComment({ decision: reviewRoute({ ...SHOW, verdict: 'yellow', spent: 0, route: 'reclassify', criterion: 'q` --> <b>' }), num: '7', cycle: '1' });
+  assert.match(evil, /критерий `q\?\?--\?\?\?b\?` не из списка/);
+  assert.doesNotMatch(evil, /q`|-->|<b>/);
+  // Сводка прогона: маршрут и бюджет после вердикта.
+  assert.equal(routeSummary({ decision: reviewRoute({ ...SHOW, verdict: 'yellow', spent: 1, route: 'reclassify', criterion: 'undocumented' }) }),
+    '- маршрут вердикта **reclassify** (критерий `undocumented`) → `S3-spec` · блокирующих циклов этапа code: 2/4\n');
+  assert.match(routeSummary({ decision: reviewRoute({ ...SHOW, verdict: 'yellow', spent: 1 }) }), /\*\*fix\*\* → `S6-in-progress` · блокирующих циклов этапа code: 2\/2 · `review-4`/);
+});
+
+test('#726 К1: критерии маршрута — пункты «Подсказки аналитику» §5 дословно', () => {
+  const canon = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'PROCESS.md'), 'utf8');
+  const norm = (text) => text.replace(/\*\*/g, '').replace(/\s+/g, ' ').toLowerCase();
+  const section = norm(sectionText(canon, '5-треки-ship-show-ask--метка-владельца'));
+  for (const [id, text] of Object.entries(SHOW_CRITERIA)) {
+    assert.ok(section.includes(norm(text)), `${id}: «${text}» нет в PROCESS.md §5`);
+    assert.ok(section.includes(`\`${id}\``), `${id}: идентификатор не назван в §5`);
+  }
+});
+
+test('#726 AC5: схема вердикта, заметка маршрута в промпте, публикация передаёт маршрут', () => {
+  const workflow = readFileSync(WORKFLOW, 'utf8');
+  const schema = JSON.parse(/--json-schema '([^']+)'/.exec(workflow)[1]);
+  assert.deepEqual(schema.properties.route, { type: 'string', enum: ['fix', 'reclassify'] });
+  assert.deepEqual(schema.properties.criterion, { type: 'string' });
+  assert.ok(schema.required.includes('route'), 'route обязателен');
+  assert.ok(!schema.required.includes('criterion'), 'criterion необязателен');
+  const prompt = workflow.slice(workflow.indexOf('          prompt: |\n'), workflow.indexOf('          claude_args: |'));
+  assert.match(prompt, /\n\s+\$\{\{ needs\.prepare\.outputs\.route_note \}\}\n/, 'заметка маршрута доходит до промпта');
+  const prepare = workflow.slice(workflow.indexOf('\n  prepare:'), workflow.indexOf('    steps:', workflow.indexOf('\n  prepare:')));
+  assert.match(prepare, /route_note: \$\{\{ steps\.track\.outputs\.route_note \}\}/);
+  assert.match(prepare, /confirmed: \$\{\{ steps\.track\.outputs\.confirmed \}\}/);
+  // Текст заметки: на show/code — поля и список критериев, на прочих — route: fix.
+  const show = routeNote({ stage: 'code', track: 'show' });
+  assert.match(show, /`route: reclassify` и `criterion` — если задача не проходит критерий §5 из списка ниже; иначе `route: fix`\. `reclassify` — не зелёный вердикт/);
+  for (const [id, text] of Object.entries(SHOW_CRITERIA)) assert.ok(show.includes(`\n- \`${id}\` — ${text}`), id);
+  assert.match(routeNote({ stage: 'code', track: 'show', confirmed: true }), /подтверждён владельцем — конвейер его не повысит, а поставит `blocked`/);
+  for (const other of [{ stage: 'code', track: 'ask' }, { stage: 'spec', track: 'show' }, { stage: 'spec', track: 'ask' }, { stage: 'code', track: 'ship' }]) {
+    assert.equal(routeNote(other), '**Маршрут вердикта (#726):** `route: fix`.', JSON.stringify(other));
+  }
+  assert.equal(s7({ comments: ownerSays('ship') }).routeNote, '', 'ship в рамках модель не зовёт');
+  // Публикация: маршрут и критерий — в якорь документа.
+  const publish = stepRun(workflow, PUBLISH_STEP);
+  assert.match(publish, /route=\$\(printf '%s' "\$OUT" \| jq -r '\.route \/\/ empty' 2>\/dev\/null \|\| true\)/);
+  assert.match(publish, /criterion=\$\(printf '%s' "\$OUT" \| jq -r '\.criterion \/\/ empty' 2>\/dev\/null \|\| true\)/);
+  assert.match(publish, /--verdict="\$verdict" --high="\$high" \\\n\s+--route="\$route" --criterion="\$criterion"\n/);
+});
+
+test('#726 AC5: шаг решения — один вызов process-track.mjs route, метки только по его выходу, ship и reuse его не зовут', () => {
+  const workflow = readFileSync(WORKFLOW, 'utf8');
+  const run = stepRun(workflow, DECIDE_STEP);
+  assert.equal((run.match(/process-track\.mjs/g) || []).length, 1, 'один вызов скрипта');
+  assert.match(run, /route=\$\(node "\$tools\/scripts\/process-track\.mjs" route --stage="\$STAGE" --track="\$TRACK" \\\n\s+--confirmed="\$CONFIRMED" --labels="\$labels" --verdict="\$RUNNER_TEMP\/route-verdict\.json"/);
+  assert.match(run, /git archive origin\/dev scripts \| tar -x -C "\$tools"/, 'скрипт — из dev');
+  assert.equal((run.match(/gh issue edit/g) || []).length, 1, 'метки меняются в одном месте');
+  assert.match(run, /if \[ -n "\$add" \]; then edit\+=\(--add-label "\$add"\); fi\n\s+if \[ -n "\$remove" \]; then edit\+=\(--remove-label "\$remove"\); fi/);
+  assert.match(run, /add=\$\(field add_labels\); remove=\$\(field remove_labels\); comment=\$\(field comment\)/);
+  assert.match(run, /--body-file "\$comment"/, 'тело комментария — файл скрипта');
+  assert.doesNotMatch(run, /--add-label (?:review-4|blocked|track:)/, 'ни одной метки, вписанной в bash');
+  // Ветки ship и reuse — до вызова скрипта, без него.
+  const call = run.indexOf('process-track.mjs');
+  assert.ok(run.indexOf('elif [ "$REUSE" = "true" ]; then') < call && run.indexOf('if [ "$SHIP" = "true" ] && [ "$REUSE" != "true" ]; then') < call);
+  assert.equal((run.match(/green_forward$/gm) || []).length, 2, 'ship и reuse — прежнее зелёное решение');
+  const step = workflow.slice(workflow.indexOf(DECIDE_STEP), workflow.indexOf('      - name: dev ушёл вперёд'));
+  for (const env of ['TRACK: ${{ needs.prepare.outputs.track }}', 'CONFIRMED: ${{ needs.prepare.outputs.confirmed }}',
+    'SPENT: ${{ needs.guard.outputs.spent }}', 'LIMIT: ${{ needs.guard.outputs.limit }}', 'CYCLE: ${{ needs.guard.outputs.cycle }}',
+    'BRANCH: ${{ needs.prepare.outputs.branch }}', 'LABELS: ${{ needs.guard.outputs.labels }}']) {
+    assert.ok(step.includes(`          ${env}\n`), env);
+  }
+  // Многострочного текста в новой ветке нет: heredoc — только прежний комментарий слияния ship.
+  assert.equal((run.match(/<<EOF/g) || []).length, 1);
+});
+
+const reviewDocText = (round, colour) => `# CODE-REVIEW-7-r${round}\n\nВердикт: ${colour} · заход r${round} · High: 0 · Medium: 1\n`;
+/** Ветка материала после публикации: документы ревью этой задачи и чужой SPEC. */
+const docsChange = (rounds) => (work) => {
+  mkdirSync(join(work, 'docs', 'reviews'), { recursive: true });
+  for (const [round, colour] of rounds) writeFileSync(join(work, 'docs', 'reviews', `CODE-REVIEW-7-r${round}.md`), reviewDocText(round, colour));
+  writeFileSync(join(work, 'docs', 'reviews', 'SPEC-REVIEW-7-r1.md'), '# SPEC-REVIEW-7-r1\n\nВердикт: жёлтый · High: 0\n');
+  writeFileSync(join(work, 'docs', 'reviews', 'CODE-REVIEW-70-r1.md'), reviewDocText(1, 'жёлтый'));
+};
+const verdictOut = (over = {}) => JSON.stringify({ verdict: 'yellow', high: 0, medium: 1, summary: 's', ...over });
+const decideEnv = (over = {}) => ({
+  OUT: verdictOut(), STAGE: 'code', REUSE: 'false', SHIP: 'false', SHIP_RISK: '', MATERIAL: 'a'.repeat(40), VALIDATE_URL: '',
+  TRACK: 'show', CONFIRMED: 'false', LABELS: 'track:show,S7-code-review', SPENT: '1', LIMIT: '2', CYCLE: '2', BRANCH: 'issue/7-x', ...over,
+});
+const routeLines = (stdout) => Object.fromEntries(stdout.split('\n').map((line) => /^([a-z_]+)=(.*)$/.exec(line)).filter(Boolean).map((m) => [m[1], m[2]]));
+const LABELS_VIEW = 'issue view 7 --repo o/r --json labels --jq [.labels[].name] | join(",")';
+
+test('#726 AC5: шаг решения на настоящем bash — reclassify: ask, S3-spec, комментарий с hp:route и перечнем CODE-REVIEW', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
+  const box = trackSandbox(t, { change: docsChange([[1, 'жёлтый'], [2, 'жёлтый']]) });
+  const run = stepRun(readFileSync(WORKFLOW, 'utf8'), DECIDE_STEP);
+  box.labels(['track:show', 'S7-code-review', 'P2']);
+  const r = box.run(run, decideEnv({ OUT: verdictOut({ route: 'reclassify', criterion: 'undocumented' }) }));
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  const route = routeLines(r.stdout);
+  const commentPath = join(dirname(box.work), 'runner', 'route', 'comment.md');
+  assert.deepEqual(r.calls, [
+    LABELS_VIEW,
+    `issue comment 7 --repo o/r --body-file ${commentPath}`,
+    `issue edit 7 --repo o/r --add-label ${route.add_labels} --remove-label ${route.remove_labels}`,
+  ]);
+  assert.deepEqual([route.add_labels, route.remove_labels, route.kind], ['track:ask', 'track:show', 'reclassify'], 'метки — по выходу скрипта');
+  assert.deepEqual({ green: r.output.green, from: r.output.from, to: r.output.to }, { green: 'false', from: 'S7-code-review', to: 'S3-spec' });
+  assert.equal(r.comment.split('\n')[0], '**Ревью show: решать есть что — трек повышен до `track:ask`.**');
+  assert.match(r.comment, /- `docs\/reviews\/CODE-REVIEW-7-r1\.md`\n- `docs\/reviews\/CODE-REVIEW-7-r2\.md`\n/);
+  assert.doesNotMatch(r.comment, /CODE-REVIEW-70|SPEC-REVIEW/, 'только документы код-ревью этой задачи');
+  assert.match(r.comment, /Бюджет код-ревью: 2\/4/);
+  assert.match(r.comment, /\[Прогон\]\(https:\/\/github\.com\/o\/r\/actions\/runs\/42\)/);
+  assert.match(r.comment, /<!-- hp:route reclassify criterion=undocumented -->\n$/);
+  assert.match(r.summary, /^- маршрут вердикта \*\*reclassify\*\* \(критерий `undocumented`\) → `S3-spec` · блокирующих циклов этапа code: 2\/4$/m);
+  // Метки не прочитаны — берутся метки guard.
+  box.labels(null);
+  const fallback = box.run(run, decideEnv({ OUT: verdictOut({ route: 'reclassify', criterion: 'undocumented' }) }));
+  assert.equal(fallback.status, 0, fallback.stderr);
+  assert.equal(fallback.calls.at(-1), 'issue edit 7 --repo o/r --add-label track:ask --remove-label track:show');
+});
+
+test('#726 AC5: шаг решения на настоящем bash — исчерпание, вопрос владельцу, fix, зелёный и сбой скрипта', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
+  const box = trackSandbox(t, { change: docsChange([[1, 'жёлтый'], [2, 'жёлтый']]) });
+  const run = stepRun(readFileSync(WORKFLOW, 'utf8'), DECIDE_STEP);
+  box.labels(['track:show', 'S7-code-review']);
+  const commentPath = join(dirname(box.work), 'runner', 'route', 'comment.md');
+  // show, spent 1, fix — review-4 этим же вердиктом, возврат в S6.
+  const exhausted = box.run(run, decideEnv());
+  assert.equal(exhausted.status, 0, exhausted.stderr + exhausted.stdout);
+  assert.deepEqual(exhausted.calls, [LABELS_VIEW, `issue comment 7 --repo o/r --body-file ${commentPath}`, 'issue edit 7 --repo o/r --add-label review-4']);
+  assert.match(exhausted.comment, /^Лимит циклов ревью исчерпан: блокирующих циклов 2 из 2 на этапе `code`/);
+  assert.match(exhausted.comment, /- `docs\/reviews\/CODE-REVIEW-7-r1\.md`\n- `docs\/reviews\/CODE-REVIEW-7-r2\.md` — этот заход\n/);
+  assert.equal(exhausted.output.to, 'S6-in-progress');
+  assert.match(exhausted.summary, /· `review-4`$/m);
+  // Подтверждённый show: blocked и вопрос владельцу; blocked уже стоит — метка не ставится второй раз.
+  box.comments([]);
+  const question = box.run(run, decideEnv({ CONFIRMED: 'true', SPENT: '0', CYCLE: '1', OUT: verdictOut({ route: 'reclassify', criterion: 'surfaces' }) }));
+  assert.equal(question.status, 0, question.stderr);
+  assert.deepEqual(question.calls.slice(1), [`issue comment 7 --repo o/r --body-file ${commentPath}`, 'issue edit 7 --repo o/r --add-label blocked']);
+  assert.equal(question.comment.split('\n')[0], '**Ревью show: решать есть что — вопрос владельцу.**');
+  assert.equal(question.output.to, 'S6-in-progress');
+  box.labels(['track:show', 'S7-code-review', 'blocked']);
+  const again = box.run(run, decideEnv({ CONFIRMED: 'true', SPENT: '0', CYCLE: '1', OUT: verdictOut({ route: 'reclassify', criterion: 'surfaces' }) }));
+  assert.deepEqual(again.calls.slice(1), [`issue comment 7 --repo o/r --body-file ${commentPath}`], 'комментарий один, меток не трогает');
+  // Обычный fix без исчерпания — ни комментария, ни меток; статус — S6.
+  box.labels(['track:show', 'S7-code-review']);
+  const fix = box.run(run, decideEnv({ SPENT: '0', CYCLE: '1' }));
+  assert.equal(fix.status, 0, fix.stderr);
+  assert.deepEqual(fix.calls, [LABELS_VIEW]);
+  assert.deepEqual({ green: fix.output.green, to: fix.output.to }, { green: 'false', to: 'S6-in-progress' });
+  // Зелёный — вперёд, как раньше.
+  const green = box.run(run, decideEnv({ SPENT: '1', OUT: verdictOut({ verdict: 'green', medium: 0, route: 'fix' }) }));
+  assert.equal(green.status, 0, green.stderr);
+  assert.deepEqual(green.calls, [LABELS_VIEW]);
+  assert.deepEqual({ green: green.output.green, from: green.output.from, to: green.output.to }, { green: 'true', from: 'S7-code-review', to: 'S8-merged' });
+  // Противоречивый вердикт — шаг падает до комментария и меток: метка не меняется, зовётся владелец.
+  const broken = box.run(run, decideEnv({ OUT: verdictOut({ verdict: 'green', route: 'reclassify', criterion: 'undocumented' }) }));
+  assert.notEqual(broken.status, 0);
+  assert.deepEqual(broken.calls, [LABELS_VIEW]);
+  assert.equal(broken.output.green, undefined, 'исхода нет');
+  assert.match(broken.stderr, /reclassify при зелёном вердикте/);
+});
+
+test('#726 AC5: шаг трека на настоящем bash — confirmed и заметка маршрута для промпта', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
+  const box = trackSandbox(t, { change: touchChange });
+  const run = stepRun(readFileSync(WORKFLOW, 'utf8'), TRACK_STEP);
+  box.comments([]);
+  const show = box.run(run, trackEnv('track:show,S7-code-review'));
+  assert.equal(show.status, 0, show.stderr);
+  assert.equal(show.output.confirmed, 'false');
+  assert.equal(show.output.route_note, routeNote({ stage: 'code', track: 'show' }));
+  box.comments([{ author: { login: 'Matysh' }, body: 'Трек: show — решение владельца', createdAt: '2026-09-30T08:00:00Z' }]);
+  const confirmed = box.run(run, trackEnv('track:show,S7-code-review'));
+  assert.equal(confirmed.output.confirmed, 'true');
+  assert.match(confirmed.output.route_note, /поставит `blocked`/);
+  const ask = box.run(run, trackEnv('track:ask,S7-code-review'));
+  assert.equal(ask.output.route_note, '**Маршрут вердикта (#726):** `route: fix`.');
+  const spec = box.run(run, trackEnv('track:show,S4-spec-review', 'spec'));
+  assert.equal(spec.output.route_note, '**Маршрут вердикта (#726):** `route: fix`.');
 });
