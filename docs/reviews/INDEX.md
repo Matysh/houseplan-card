@@ -48,6 +48,7 @@
 | #695 | [CODE-REVIEW-695-r2.md](CODE-REVIEW-695-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #694 | [SPEC-REVIEW-694-r1.md](SPEC-REVIEW-694-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | 1. Отсутствуют разделы «Сценарий» и «Что человек увидит до и после», обязательные по §7…; 1. UX, модель данных/миграция, i18n и touch-влияние не названы явно «нет» отдельными ст… | `docs/SCOPE.md` |
 | #694 | [SPEC-REVIEW-694-r2.md](SPEC-REVIEW-694-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #694 | [CODE-REVIEW-694-r1.md](CODE-REVIEW-694-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #692 | [CODE-REVIEW-692-r1.md](CODE-REVIEW-692-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #691 | [SPEC-REVIEW-691-r1.md](SPEC-REVIEW-691-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | направление edge-swipe не квантифицировано и не отмечено как допущение | `src/houseplan-card.ts` |
 | #691 | [SPEC-REVIEW-691-r2.md](SPEC-REVIEW-691-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
