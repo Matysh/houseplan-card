@@ -304,6 +304,98 @@ test('#707 AC1: большой дифф — классифицируются в�
   assert.match(riskClassLine(risk, 'touch'), /; и ещё 7$/);
 });
 
+// ---------- #755: строки модулей и типов, участки уже, заменённая строка ----------
+
+/** Дифф одного файла из ханков: заголовок `@@ … @@ <контекст>` и строки `-`/`+` как есть. */
+function hunksOf(path, hunks) {
+  return `diff --git a/${path} b/${path}\n--- a/${path}\n+++ b/${path}\n${hunks.map(([head, ...rows]) => [head, ...rows].join('\n')).join('\n')}\n`;
+}
+const ISO = 'src/iso-scene-render.ts';
+
+test('#755 AC1: строки импорта и только типов TypeScript риска не дают, кроме участка migration', () => {
+  // Ханк #741: удалённый член интерфейса под заголовком интерфейса — классов нет.
+  const member = '-  stageSize?: { width: number; height: number } | null;';
+  assert.deepEqual(classifyRisk(hunksOf(ISO, [['@@ -651 +650,0 @@ export interface IsoOverlayFitEnvelopeInput {', member]])).classes, []);
+  assert.deepEqual(classifyRisk(hunksOf(ISO, [['@@ -134 +133,0 @@ export type IsoOverlayRenderEntry = {', '-  groundRadius: number;']])).classes, []);
+  // То же тело под заголовком класса — код, участок iso-scene-render: perf.
+  const inClass = classifyRisk(hunksOf(ISO, [['@@ -651 +650,0 @@ export class X {', member]]));
+  assert.deepEqual(inClass.raising, ['perf']);
+  assert.deepEqual(inClass.evidence.perf, [`${ISO}:651 (удалена) · участок iso-scene-render`]);
+  // Под закрытой однострочной декларацией строка с отступом — снова код.
+  assert.deepEqual(classifyRisk(hunksOf(ISO, [["@@ -9,0 +10 @@ export type Mode = 'a' | 'b';", '+  run(x);']])).raising, ['perf']);
+
+  // Оператор импорта, член многострочного `import {`, его закрывающая строка, реэкспорт.
+  const modules = [
+    ["@@ -9 +8,0 @@ import { nothing, svg, type TemplateResult } from 'lit';", "-import { guard } from 'lit/directives/guard.js';"],
+    ['@@ -16 +16 @@ import {', '-  cachedStairRenderGeometry, stairList,', '+  cachedStairMarkup, cachedStairRenderGeometry, stairList,'],
+    ['@@ -20 +20 @@ import {', "-} from './stairs';", "+} from './stairs-model';"],
+    ['@@ -30,0 +31,2 @@ import { x } from "./x";', "+export { computeIsoSunBeams } from './iso-sun';", "+export * from './iso-tiles';"],
+    ['@@ -40,0 +42,2 @@ import { x } from "./x";', "+import type { Rect } from './geometry';", "+export type { Rect } from './geometry';"],
+  ];
+  for (const hunk of modules) assert.deepEqual(classifyRisk(hunksOf(ISO, [hunk])).classes, [], hunk.join(' ⏎ '));
+  // Импорт с токеном в монолите — тоже нет; тот же токен в коде монолита — migration (таблица #707).
+  assert.deepEqual(classifyRisk(diffOf([{ path: CARD_FILE, add: [[3, "import { migrateX } from './m';"]] }])).classes, []);
+  assert.deepEqual(classifyRisk(diffOf([{ path: CARD_FILE, add: [[3, 'migrateX(cfg);']] }])).classes, ['migration']);
+  // Динамический импорт и `import.meta` — код.
+  assert.deepEqual(classifyRisk(diffOf([{ path: ISO, add: [[3, "import('./iso-sun').then(run);"]] }])).raising, ['perf']);
+  assert.deepEqual(classifyRisk(diffOf([{ path: ISO, add: [[3, 'import.meta.hot?.accept();']] }])).raising, ['perf']);
+
+  // Целиком добавленный интерфейс: заголовок ханка — прошлая декларация, голова внутри ханка.
+  const wholeType = ['@@ -330,0 +331,5 @@ export function cachedStairRenderGeometry(',
+    '+/** Attribute strings. */', '+export interface StairMarkup {', '+  outline: string;', '+  treads: string;', '+}'];
+  assert.deepEqual(classifyRisk(hunksOf(ISO, [wholeType])).classes, []);
+  // Блок типа закрыт — следующая строка кода того же ханка судится.
+  const typeThenCode = ['@@ -1,0 +2,4 @@ export const a = 1;', '+type Box = {', '+  w: number;', '+};', '+export const box = measure();'];
+  assert.deepEqual(classifyRisk(hunksOf(ISO, [typeThenCode])).evidence.perf, [`${ISO}:5 · участок iso-scene-render`]);
+
+  // Дифф с контекстом: следующий блок ханка берёт контекст из строки контекста, как git.
+  const withContext = ['@@ -10,5 +10,5 @@ export interface A {', '-  a: number;', '+  a: string;', ' }',
+    ' export function f() {', '-  run(1);', '+  run(2);'];
+  assert.deepEqual(classifyRisk(hunksOf(ISO, [withContext])).evidence.perf, [`${ISO}:13 · участок iso-scene-render`]);
+
+  // К3: участок migration — типы конфига и импорты судятся, как раньше (#588, #649).
+  const marker = classifyRisk(hunksOf('src/types.ts', [['@@ -199 +199 @@ export interface Marker {',
+    "-  display?: 'badge' | 'ripple';", "+  display?: 'badge' | 'ripple' | 'value';"]]));
+  assert.deepEqual(only(marker), { classes: ['migration'], evidence: { migration: ['src/types.ts:199 · участок types'] } });
+  assert.deepEqual(classifyRisk(hunksOf('src/types.ts', [['@@ -304,0 +305 @@ export interface ServerConfig {', '+  volumetric_view?: boolean;']])).classes, ['migration']);
+  assert.deepEqual(classifyRisk(diffOf([{ path: 'src/config-store.ts', add: [[2, "import { normalize } from './n';"]] }])).classes, ['migration']);
+  // Только `.ts`: строка Python с `import` и `type` судится, как раньше.
+  assert.deepEqual(classifyRisk(diffOf([{ path: 'custom_components/houseplan/auth.py', add: [[2, 'import hass']] }])).classes, ['devices']);
+});
+
+test('#755 AC2: участки stairs и config — модель лестницы и запись конфига, а не всё по префиксу', () => {
+  const cls = (path, text = '  const a = b + c;') => classifyRisk(diffOf([{ path, add: [[5, text]] }])).classes;
+  assert.deepEqual(cls('src/stairs-view.ts'), ['visual'], 'отрисовка лестницы — visual:render, не geometry');
+  assert.deepEqual(cls('src/stairs-editor.ts'), [], 'нейтральная строка редактора лестницы');
+  assert.deepEqual(cls('src/stairs-editor.ts', "  el.addEventListener('pointerdown', onDown);"), ['touch'], 'указатель редактора — токен touch');
+  for (const path of ['src/stairs.ts', 'src/stairs-box.ts', 'src/stairs-editor-model.ts']) assert.deepEqual(cls(path), ['geometry'], path);
+  assert.deepEqual(cls('src/config-fingerprint-pass.ts'), [], 'мемо отпечатка о схеме не знает');
+  for (const path of ['src/config-store.ts', 'src/config-adoption.ts', 'src/config-reload-authority.ts', 'src/config-write-conflict.ts']) {
+    assert.deepEqual(cls(path), ['migration'], path);
+  }
+});
+
+test('#755: заменённая строка — одно доказательство, удалённая без пары остаётся «(удалена)»', () => {
+  const view = 'src/stairs-view.ts';
+  const replaced = classifyRisk(hunksOf(view, [['@@ -89,2 +89 @@ export function renderStairs(',
+    '-  const cls = "a";', '-  const old = 1;', '+  const cls = "b";']]));
+  assert.deepEqual(replaced.evidence.visual, [
+    `${view}:90 (удалена) · участок stairs-view (render)`,
+    `${view}:89 · участок stairs-view (render)`,
+  ]);
+  assert.equal(replaced.counts.visual, 2);
+  // Пара сводит и правила: удалённый токен дописывается к новой строке.
+  const tokens = classifyRisk(hunksOf(CARD_FILE, [['@@ -12 +12 @@ export class HouseplanCard extends LitElement {',
+    "-    el.addEventListener('pointerdown', f);", "+    el.addEventListener('pointerup', f);"]]));
+  assert.deepEqual(tokens.evidence.touch, [`${CARD_FILE}:12 · токен pointerup, токен pointerdown`]);
+  // Новая строка класса не даёт — удалённая остаётся своим доказательством.
+  const gone = classifyRisk(hunksOf(CARD_FILE, [['@@ -12 +12 @@ export class HouseplanCard extends LitElement {',
+    "-    el.addEventListener('pointerdown', f);", '+    el.focus();']]));
+  assert.deepEqual(gone.evidence.touch, [`${CARD_FILE}:12 (удалена) · токен pointerdown`]);
+  // Разные ханки не пара, даже с одним номером строки (таблица #707 строит именно такие).
+  assert.equal(classifyRisk(diffOf([{ path: view, del: [[9, 'x = 1;']], add: [[9, 'x = 2;']] }])).counts.visual, 2);
+});
+
 test('#707 AC2: происхождение трека — строка владельца, предложение, прежние метки', () => {
   const c = (author, body, createdAt) => ({ author, body, createdAt });
   const owner = 'Matysh';
@@ -599,7 +691,7 @@ function parseOutput(text) {
 }
 
 /** Песочница: bare origin с dev (scripts/ и src/), ветка задачи, подменённый gh. */
-function trackSandbox(t, { change }) {
+function trackSandbox(t, { change, base = () => {} }) {
   const root = mkdtempSync(join(tmpdir(), 'hp-707-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const git = (cwd, ...args) => {
@@ -624,6 +716,7 @@ function trackSandbox(t, { change }) {
   mkdirSync(join(work, 'src', 'styles'), { recursive: true });
   writeFileSync(join(work, 'src', 'pointer-modality.ts'), 'export const a = 1;\nexport const b = 2;\n');
   writeFileSync(join(work, 'src', 'styles', 'plan.styles.ts'), 'export const css = `\n  .x { color: red; }\n`;\n');
+  base(work);
   git(work, 'add', '-A'); git(work, 'commit', '-q', '-m', 'base');
   git(work, 'push', '-q', 'origin', 'dev');
   git(work, 'checkout', '-q', '-b', 'issue/7-x');
@@ -738,6 +831,40 @@ test('#707 AC4: шаг трека на настоящем bash — ship, под�
   const plain = box.run(decide, { OUT: '', STAGE: 'code', REUSE: 'false', SHIP: 'true', SHIP_RISK: '', MATERIAL: material, VALIDATE_URL: '' });
   assert.equal(SHIP_MERGE_MARKER_RE.exec(plain.comment)?.[1], material);
   assert.equal(shipRiskFrom([{ body: plain.comment }]), null);
+});
+
+// #755 AC3: дифф вида #741 — удалённый член интерфейса в участке perf — ship не
+// повышает; то же тело в классе повышает (свидетель, что риск судится).
+const ISO_BASE = (head) => (work) => writeFileSync(join(work, 'src', 'iso-scene-render.ts'),
+  `export const before = 1;\n\n${head}\n  rooms: readonly string[];\n  stageSize?: { width: number; height: number } | null;\n}\n`);
+const dropStageSize = (work) => {
+  const file = join(work, 'src', 'iso-scene-render.ts');
+  writeFileSync(file, readFileSync(file, 'utf8').replace('  stageSize?: { width: number; height: number } | null;\n', ''));
+};
+
+test('#755 AC3: шаг трека на настоящем bash — ship с удалённым членом интерфейса не повышается', async (t) => {
+  if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
+  const { readFileSync: read } = await import('node:fs');
+  const run = stepRun(read(WORKFLOW, 'utf8'), TRACK_STEP);
+  const bot = [{ author: { login: 'claude[bot]' }, body: 'Трек: ship — решение владельца', createdAt: '2026-10-01T05:00:00Z' }];
+
+  const box = trackSandbox(t, { base: ISO_BASE('export interface IsoOverlayFitEnvelopeInput {'), change: dropStageSize });
+  box.comments(bot);
+  const r = box.run(run, trackEnv('track:ship,S7-code-review'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^raise=false$/m);
+  assert.deepEqual(r.calls, ['issue view 7 --repo o/r --json comments'], 'ни комментария повышения, ни смены меток');
+  assert.equal(r.output.track, 'ship');
+  assert.equal(r.output.ship, 'true');
+  assert.equal(r.output.risk, '');
+
+  const inClass = trackSandbox(t, { base: ISO_BASE('export class IsoOverlayFitEnvelope {'), change: dropStageSize });
+  inClass.comments(bot);
+  const raised = inClass.run(run, trackEnv('track:ship,S7-code-review'));
+  assert.equal(raised.status, 0, raised.stderr);
+  assert.match(raised.stdout, /^raise=true$/m);
+  assert.equal(raised.output.track, 'show');
+  assert.match(raised.comment, /- perf: src\/iso-scene-render\.ts:5 \(удалена\) · участок iso-scene-render/);
 });
 
 test('#707 AC4: шаг трека на настоящем bash — комментарии недоступны, этап spec, show', async (t) => {

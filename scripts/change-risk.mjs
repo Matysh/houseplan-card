@@ -8,7 +8,9 @@
 // правило «токен» — токен в изменённой строке любого файла класса A (§1).
 // Монолиты (`houseplan-card.ts`, `houseplan-editor-runtime.ts`) судятся только
 // токенами: ни один шаблон участка их не задевает, и тест держит это
-// («монолит участком не судится»).
+// («монолит участком не судится»). Пустые строки, комментарии, строки импорта и
+// строки только типов TypeScript риска не дают (#755) — кроме файлов участка
+// `migration`, где типы конфига и есть контракт.
 //
 // Таблица — эвристика (ТЗ #707 §10 п.2): пути и токены меняются свободно,
 // каждая строка покрыта положительным и отрицательным случаем в
@@ -35,7 +37,10 @@ const AREAS = {
   geometry: [
     ...['physical-geometry', 'space-geometry', 'wall-*', 'junction-limits', 'coincident-partitions',
       'coordinate-canonicalization', 'opening-*', 'partition-openings', 'open-spans', 'near-axis', 'align-grid',
-      'grid-scale', 'room-fit', 'resize*', 'stairs*', 'radar-geometry', 'zigbee-topology-geometry',
+      // #755: лестница — модель и преобразования; `stairs-view` (отрисовка) — в
+      // `visual:render`, указатель `stairs-editor` ловят токены touch.
+      'grid-scale', 'room-fit', 'resize*', 'stairs', 'stairs-box', 'stairs-editor-model',
+      'radar-geometry', 'zigbee-topology-geometry',
       'device-marker-geometry', 'plan-geometry-preflight', 'plan-optimizer', 'zero-walls', 'iso-projection'].map(src),
     ...['geometry_migration', 'coordinate_canonicalization', 'junction_limits', 'wall_segment_model',
       'radar_geometry', 'projection'].map(py),
@@ -43,7 +48,10 @@ const AREAS = {
   touch: ['pointer-modality', 'pointer-move-queue', 'touch-gesture-click-guard', 'live-interaction-runtime',
     'live-viewport', 'viewport-transition', 'room-gear-drag'].map(src),
   migration: [
-    ...['types', 'config-*', 'wall-tool-compat', 'config-adoption', 'config-store'].map(src),
+    // #755: запись и приём конфига, а не всё `config-*`: мемо отпечатка
+    // (`config-fingerprint-pass`) о схеме не знает.
+    ...['types', 'wall-tool-compat', 'config-adoption', 'config-store', 'config-reload-authority',
+      'config-write-conflict'].map(src),
     ...['store', 'geometry_migration', 'import_export', 'validation'].map(py),
   ],
   devices: [
@@ -92,25 +100,87 @@ export function isCommentOrBlank(text, file = '') {
 }
 
 /**
+ * Строки модулей и типов TypeScript (#755) риска не дают, как комментарий:
+ * поведение меняет код, который читает импорт или тип, а его строки судятся как
+ * прежде. Это оператор `import …`, `export … from …`, `export type …`, голова
+ * `interface X`/`type X =` и строки внутри такого блока: с отступом и
+ * закрывающая строка без отступа.
+ */
+const MODULE_LINE = /^(?:import\s|export\s+(?:type\s+)?(?:\*(?:\s+as\s+[\w$]+)?|\{[^}]*\})\s*from\s*['"]|\}\s*from\s*['"])/;
+const TYPE_LINE = /^(?:export\s+(?:declare\s+)?type\s|(?:export\s+)?(?:declare\s+)?(?:interface\s+[\w$]|type\s+[\w$]+\s*(?:<.*>)?\s*=))/;
+/** Строка-оператор, после которой блок декларации ещё открыт: `import {`, `interface X {`, `type X =`. */
+const OPENS_BLOCK = /[{=(<,|&]\s*$/;
+export const isModuleOrTypeStatement = (text) => MODULE_LINE.test(text) || TYPE_LINE.test(text);
+const opensBlock = (text) => isModuleOrTypeStatement(text) && OPENS_BLOCK.test(text);
+
+/**
+ * Номера строк `rows` (из `parseUnifiedDiff`), которые по #755 — модули или
+ * только типы. Состояние «внутри блока декларации» ведётся по каждой стороне
+ * каждого блока изменений: начальное — по контексту ханка (git пишет в
+ * `@@ … @@ <контекст>` последнюю строку без отступа перед ханком, в старой
+ * версии; атрибутов diff для `.ts` в репозитории нет), дальше его меняет каждая
+ * строка без отступа внутри блока. Так член интерфейса под заголовком
+ * `@@ … @@ export interface X {` и целиком добавленный интерфейс судятся одинаково.
+ */
+export function moduleOrTypeRows(rows = []) {
+  const out = new Set();
+  const open = new Map();
+  rows.forEach((row, i) => {
+    const key = `${row.block ?? 0}${row.side}`;
+    if (!open.has(key)) open.set(key, opensBlock(row.ctx ?? ''));
+    const text = String(row.text);
+    if (!text || /^\s/.test(text)) {
+      if (open.get(key)) out.add(i);
+      return;
+    }
+    if (/^(?:\/\/|\/\*|\*)/.test(text)) return;
+    if (open.get(key) && /^[}\])>]/.test(text)) {
+      out.add(i);
+      open.set(key, false);
+      return;
+    }
+    if (isModuleOrTypeStatement(text)) out.add(i);
+    open.set(key, opensBlock(text));
+  });
+  return out;
+}
+
+/**
  * Разбор `git diff --unified=0` (подходит и с контекстом): файлы и их изменённые
  * строки с номерами. Удалённая строка несёт номер и путь старой стороны,
  * добавленная — новой. Переименование без правки ханков не даёт, двоичный файл —
  * тоже (его ловят рамки ship).
+ *
+ * Каждая строка несёт ещё `ctx` — контекст своего блока изменений (#755: для
+ * первого блока ханка — текст заголовка `@@ … @@ <контекст>`, для следующих —
+ * последняя строка контекста без отступа), `block` — номер блока в файле и
+ * `at` — номер строки своей стороны в блоке: удалённая и добавленная с одним
+ * `at` — одна заменённая строка.
  */
 export function parseUnifiedDiff(text = '') {
   const files = [];
   let file = null;
   let oldLine = 0; let newLine = 0; let oldLeft = 0; let newLeft = 0;
+  let ctx = ''; let block = -1; let inBlock = false; let atOld = 0; let atNew = 0;
   const unquote = (p) => (p.startsWith('"') && p.endsWith('"') ? p.slice(1, -1) : p);
+  const row = (side, line, body) => {
+    if (!inBlock) { block += 1; inBlock = true; atOld = 0; atNew = 0; }
+    const at = side === '-' ? atOld++ : atNew++;
+    file.lines.push({ side, line, text: body, ctx, block, at });
+  };
   for (const raw of String(text).split('\n')) {
     if (file && (oldLeft > 0 || newLeft > 0)) {
       if (raw.startsWith('-') && oldLeft > 0) {
-        file.lines.push({ side: '-', line: oldLine, text: raw.slice(1) }); oldLine += 1; oldLeft -= 1; continue;
+        row('-', oldLine, raw.slice(1)); oldLine += 1; oldLeft -= 1; continue;
       }
       if (raw.startsWith('+') && newLeft > 0) {
-        file.lines.push({ side: '+', line: newLine, text: raw.slice(1) }); newLine += 1; newLeft -= 1; continue;
+        row('+', newLine, raw.slice(1)); newLine += 1; newLeft -= 1; continue;
       }
-      if (raw.startsWith(' ')) { oldLine += 1; newLine += 1; oldLeft -= 1; newLeft -= 1; continue; }
+      if (raw.startsWith(' ')) {
+        // Контекст как у git: строка, начинающаяся с буквы, `_` или `$`.
+        if (/^[A-Za-z_$]/.test(raw.slice(1))) ctx = raw.slice(1);
+        inBlock = false; oldLine += 1; newLine += 1; oldLeft -= 1; newLeft -= 1; continue;
+      }
       if (raw.startsWith('\\')) continue;
       oldLeft = 0; newLeft = 0;
     }
@@ -118,14 +188,16 @@ export function parseUnifiedDiff(text = '') {
     if ((m = /^diff --git (?:"?a\/)(.+?)"? (?:"?b\/)(.+?)"?$/.exec(raw))) {
       file = { oldPath: m[1], newPath: m[2], lines: [] };
       files.push(file);
+      block = -1; inBlock = false;
       continue;
     }
     if (!file) continue;
     if ((m = /^--- (.+)$/.exec(raw))) { file.oldPath = m[1] === '/dev/null' ? null : unquote(m[1]).replace(/^a\//, ''); continue; }
     if ((m = /^\+\+\+ (.+)$/.exec(raw))) { file.newPath = m[1] === '/dev/null' ? null : unquote(m[1]).replace(/^b\//, ''); continue; }
-    if ((m = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/.exec(raw))) {
+    if ((m = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@ ?(.*)$/.exec(raw))) {
       oldLine = Number(m[1]); oldLeft = m[2] === undefined ? 1 : Number(m[2]);
       newLine = Number(m[3]); newLeft = m[4] === undefined ? 1 : Number(m[4]);
+      ctx = m[5]; inBlock = false;
     }
   }
   return files;
@@ -159,10 +231,17 @@ export function classifyRisk(diffText = '') {
       const key = JSON_KEY.exec(row.text);
       if (key) removedKeys.add(key[1]);
     }
-    for (const row of file.lines) {
+    const typeOnly = moduleOrTypeRows(file.lines);
+    // Добавленная строка блока по `at`: пара для удалённой — одна заменённая строка.
+    const addedAt = new Map(file.lines.filter((r) => r.side === '+').map((r) => [`${r.block}:${r.at}`, r]));
+    for (const [i, row] of file.lines.entries()) {
       const p = row.side === '-' ? file.oldPath : file.newPath;
       if (!p || classify(p) !== 'A' || isCommentOrBlank(row.text, p)) continue;
+      // #755: типы конфига — контракт, в участке migration строки типов судятся.
+      if (typeOnly.has(i) && p.endsWith('.ts') && !AREAS.migration.some((r) => r.re.test(p))) continue;
       const where = { path: p, line: row.line, side: row.side };
+      const pair = row.side === '-' && file.newPath ? addedAt.get(`${row.block}:${row.at}`) : null;
+      if (pair) where.pair = `+${file.newPath}:${pair.line}`;
       for (const [cls, rules] of Object.entries(AREAS)) {
         const rule = rules.find((r) => r.re.test(p));
         if (rule) add(cls, where, `участок ${rule.label}`);
@@ -195,6 +274,16 @@ export function classifyRisk(diffText = '') {
       const area = cls.startsWith('visual:') ? ` (${cls.slice('visual:'.length)})` : '';
       for (const rule of entry.rules) if (!into.rules.includes(`${rule}${area}`)) into.rules.push(`${rule}${area}`);
       merged.get(name).set(key, into);
+    }
+  }
+  // #755: заменённая строка — одно доказательство, а не «удалена» и новая рядом:
+  // удалённая уходит в свою пару, если та дала тот же класс.
+  for (const entries of merged.values()) {
+    for (const [key, entry] of entries) {
+      const into = entry.pair && entries.get(entry.pair);
+      if (!into) continue;
+      for (const rule of entry.rules) if (!into.rules.includes(rule)) into.rules.push(rule);
+      entries.delete(key);
     }
   }
   for (const cls of RISK_CLASSES) {
