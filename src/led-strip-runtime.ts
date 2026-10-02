@@ -22,6 +22,8 @@ import {
 } from './glow-scene';
 import { NORM_W, iconUnit } from './space-geometry';
 import { roomGlowOf, roomPoly } from './logic';
+import { ISO_ICON_SCALE, ISO_TILE, isoEdgeColor, isoTileShadow } from './iso-tiles';
+import { deviceThemeClass } from './device-face';
 import type { VirtualLightSnapshot } from './virtual-light-state';
 import { geometryAllRings, pointInOpaquePlanBody } from './physical-geometry';
 import {
@@ -131,8 +133,19 @@ export interface LedHandlers {
   label: (d: DevItem) => string;
 }
 
+/** 2.5D View (ТЗ §7): the stripe raised like a tile, its edge and floor shadow. */
+export interface LedIsoStyle {
+  /** Raise of the stripe, plan units: ISO_TILE.lift × D (0.075 D). */
+  lift: number;
+  /** Visible edge below the raised stripe: ISO_TILE.depth × D (0.1 D). */
+  depth: number;
+  edge: string;
+  shadow: { dx: number; dy: number; sigma: number; opacity: number };
+}
+
 export interface LedStripeInput {
   views: readonly LedStripView[];
+  iso?: LedIsoStyle | null;
   /** Base device diameter D in plan units (icon_size of this card × iconUnit). */
   d: number;
   faces: FaceContext | null;
@@ -183,7 +196,12 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
   const h = input.handlers;
   // Smaller ids last: an exact overlap of hit paths resolves to the stable id.
   const ordered = [...input.views].sort((a, b) => (a.strip.id < b.strip.id ? 1 : a.strip.id > b.strip.id ? -1 : 0));
-  return svg`<g class="led-strips" data-hp-led-strips="${ordered.length}">
+  const iso = input.iso;
+  return svg`<g class="led-strips" data-hp-led-strips="${ordered.length}"
+      data-hp-iso=${iso ? 'raised' : nothing}>
+    ${iso ? svg`<defs><filter id="hp-led-iso-shadow" filterUnits="userSpaceOnUse"
+      x="-100000" y="-100000" width="200000" height="200000">
+      <feGaussianBlur stdDeviation="${iso.shadow.sigma}"></feGaussianBlur></filter></defs>` : nothing}
     <style>
       .led-strip .led-focus { fill: none; stroke: transparent; }
       .led-strip:focus-within .led-focus { stroke: var(--primary-color, #03a9f4); }
@@ -198,8 +216,19 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
       const hitWidth = (2 * stripHitRadiusPx(t * input.perUnit)) / (input.perUnit || 1);
       const dev = view.device;
       const own = (e: MouseEvent) => nearestOwner(e, view, input).device;
+      // 2.5D: an inert floor shadow, the edge swept below the raised body,
+      // then the body itself; the field below stays on the floor plane.
+      const lifted = iso ? `translate(0 ${-iso.lift})` : nothing;
       return svg`<g class="led-strip state-${view.state}" data-led-strip="${view.strip.id}"
           data-marker="${dev.id}" data-state="${view.state}" data-closed="${path.closed ? 'true' : 'false'}">
+        ${iso ? svg`<path class="led-iso-shadow" d="${d}" fill="none" stroke="black"
+          stroke-opacity="${iso.shadow.opacity}" stroke-width="${t}" stroke-linecap="round"
+          stroke-linejoin="round" filter="url(#hp-led-iso-shadow)" pointer-events="none"
+          transform="translate(${iso.shadow.dx} ${iso.shadow.dy - iso.lift})"></path>
+          ${[1, 0.5].map((k) => svg`<path class="led-iso-edge" d="${d}" fill="none" stroke="${iso.edge}"
+          stroke-width="${t}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"
+          transform="translate(0 ${-iso.lift + iso.depth * k})"></path>`)}` : nothing}
+        <g transform=${lifted}>
         <path class="led-outline" d="${d}" fill="none" stroke="${OUTLINE}" stroke-width="${t}"
           stroke-linecap="round" stroke-linejoin="round"
           stroke-dasharray=${unavailable ? `${t * 2} ${t * 1.5}` : nothing}></path>
@@ -224,6 +253,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
           @pointerleave=${() => h.pointerleave()}
           @focus=${(e: FocusEvent) => h.focus(e, dev)}
           @blur=${() => h.blur(dev)}></path>` : nothing}
+        </g>
       </g>`;
     })}
   </g>` as unknown as TemplateResult;
@@ -551,6 +581,8 @@ export interface LedCardHost {
   _clearPointerHover: () => void;
   _showDeviceFocusTip: (e: FocusEvent, d: DevItem) => void;
   _hideDeviceFocusTip: (id: string) => void;
+  _renderProjection: string;
+  _isoLightFloors: ReadonlySet<string> | null;
 }
 
 const frames = new WeakMap<object, { key: unknown[]; frame: LedFrame }>();
@@ -594,9 +626,21 @@ export function renderLedLayerFor(
 ): TemplateResult {
   const frame = ledFrameFor(host, space, spaceGlow);
   const width = host._stageEl?.clientWidth;
+  // ТЗ §7: 2.5D only in View; editors keep Flat. D takes the shared tile scale.
+  const iso = host._renderProjection === 'iso' && host._mode === 'view';
+  const d = iso ? frame.d * ISO_ICON_SCALE : frame.d;
+  const theme = deviceThemeClass(host._renderPlanHass) === 'theme-dark' ? 'dark' : 'light';
+  const lightFloor = !!host._isoLightFloors?.size;
+  const shadow = isoTileShadow(theme, lightFloor);
   return renderLedStripes({
     views: frame.views,
-    d: frame.d,
+    d,
+    iso: iso ? {
+      lift: ISO_TILE.lift * d,
+      depth: ISO_TILE.depth * d,
+      edge: isoEdgeColor(OUTLINE, theme, lightFloor),
+      shadow: { dx: shadow.dx * d, dy: shadow.dy * d, sigma: shadow.sigma * d, opacity: shadow.opacityWhite },
+    } : null,
     faces: frame.faces,
     perUnit: width && view.w ? width / view.w : 1,
     handlers: host._mode === 'view' ? {
