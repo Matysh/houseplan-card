@@ -2,7 +2,9 @@
 // witnesses, not a claim about GitHub's unsaved historical API responses.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decideReconciliation, pendingEvidenceError, processRuns } from '../scripts/process-reconcile.mjs';
+import {
+  decideReconciliation, pendingEvidenceError, processRuns, reviewRunsForRequest,
+} from '../scripts/process-reconcile.mjs';
 import { decideResume, resume } from '../scripts/process-resume.mjs';
 
 const LABEL = 'S7-code-review';
@@ -159,6 +161,8 @@ test('#775 reconciler uses the same request boundary, skipped-run handling and s
   assert.equal(decideReconciliation({ ...base, runs: [skipped, ready] }).action, 'retry');
   assert.equal(decideReconciliation({ ...base, runs: [{ ...ready, resultArtifact: true }] }).action, 'escalate');
   const justReapplied = { ...f.request, at: '2026-10-01T14:32:06Z' };
+  assert.deepEqual(reviewRunsForRequest([ready], f.issue, justReapplied), [],
+    'a run one second before the new label belongs only to the previous request');
   assert.equal(decideReconciliation({ ...base, request: justReapplied, now: Date.parse(justReapplied.at), runs: [ready] }).action, 'wait',
     'previous run one second before the new label cannot be recovered as the new request');
   assert.equal(pendingEvidenceError(f.pending, { issue: f.issue, run: f.run }), null);
