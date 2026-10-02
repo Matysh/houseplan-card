@@ -86,6 +86,20 @@ export interface SpaceModel {
   wall_columns: WallColumnCfg[];
   /** Independent continuous plan objects linking this floor to another one. */
   stairs: import('./stairs').Stair[];
+  /**
+   * #780: LED strip shapes in render units. Geometry, light and hit-testing
+   * live in the lazy `led-strip-*` modules; the model only carries the data.
+   */
+  led_strips?: LedStripModel[];
+}
+
+/** #780: one stored LED strip shape (render units), see led_strips.py. */
+export interface LedStripModel {
+  id: string;
+  points: number[][];
+  marker: string | null;
+  /** false — a hidden shape: the marker is shown as an ordinary icon. */
+  active: boolean;
 }
 
 export interface PdfRef {
