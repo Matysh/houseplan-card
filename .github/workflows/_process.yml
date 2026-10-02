@@ -331,6 +331,9 @@ jobs:
       spec_body_doc: ${{ steps.spec_body.outputs.doc }}
       spec_body_recorded: ${{ steps.spec_body.outputs.recorded }}
       duration_seconds: ${{ steps.duration.outputs.seconds }}
+      # #765: SHA снимка скриптов конвейера — одна версия на заход: model_review
+      # снимает расход скриптом из того же коммита dev.
+      tools_sha: ${{ steps.tools.outputs.sha }}
       track: ${{ steps.track.outputs.track }}
       mutants: ${{ steps.track.outputs.mutants }}
       full: ${{ steps.track.outputs.full }}
@@ -383,6 +386,29 @@ jobs:
           node-version: 22
           cache: npm
 
+      # #765 (продолжение #749): тело читается из dev (@dev, #623), значит, и
+      # управляющие скрипты подготовки — из dev. Рабочая копия после «Перейти на
+      # ветку задачи» — материал: ветка show/ship с чистым слиянием до ревью не
+      # ребейзится (§10.4) и может нести scripts/, отставшие на дни или
+      # подменённые. Раньше якорь тела issue, reuse (#499), Validate-gate (#510)
+      # и проверку ТЗ (#517) исполняли скрипты ветки — материал сам участвовал в
+      # решении о своём допуске к ревью. Снимок один на заход: SHA закрепляется
+      # здесь, до любого git fetch трека и ребейза, и выходом `tools_sha` уходит
+      # в model_review. validate.yml в снимке — по той же причине, что в #749:
+      # ci-proof.mjs (validate-gate) читает его по пути от себя. Git, дифф и
+      # документы по-прежнему судятся в рабочей копии — снимок только исполняет.
+      - name: Скрипты конвейера — из dev (#765)
+        id: tools
+        run: |
+          set -euo pipefail
+          git fetch -q origin dev
+          sha=$(git rev-parse origin/dev)
+          tools="$RUNNER_TEMP/dev-tools"
+          rm -rf "$tools" && mkdir -p "$tools"
+          git archive "$sha" scripts .github/workflows/validate.yml | tar -x -C "$tools"
+          { echo "dir=$tools"; echo "sha=$sha"; } >> "$GITHUB_OUTPUT"
+          echo "скрипты конвейера: dev ${sha:0:12}"
+
       # Материал ревью живёт в ветке задачи: ТЗ в docs/specs/ и код коммитятся
       # в issue/<NN>-slug. Если ветка запушена — переключаемся на неё, иначе
       # ревьюер прочтёт dev и не найдёт того, что должен оценивать.
@@ -423,9 +449,9 @@ jobs:
       # ОДИН вызов process-track.mjs по меткам, диффу и комментариям; bash только
       # исполняет: пишет комментарий из файла скрипта и меняет метки по его
       # флагу. Выходы (`track`, `mutants`, `full`, `ship`, `risk_note`,
-      # `ship_risk`) скрипт пишет в GITHUB_OUTPUT сам. Скрипт берётся из dev, как
-      # помощник ребейза: show/ship до ревью не ребейзятся, и ветка, отставшая от
-      # dev, его может ещё не нести.
+      # `ship_risk`) скрипт пишет в GITHUB_OUTPUT сам. Скрипт — из снимка dev
+      # (#765): show/ship до ревью не ребейзятся, и ветка, отставшая от dev, его
+      # может ещё не нести.
       - name: "Трек задачи и рамки ship (#696)"
         id: track
         env:
@@ -435,17 +461,15 @@ jobs:
           LABELS: ${{ needs.guard.outputs.labels }}
           BRANCH: ${{ steps.branch.outputs.name }}
           OWNER: ${{ github.repository_owner }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           git fetch -q origin dev
-          tools="$RUNNER_TEMP/track-tools"
-          rm -rf "$tools" && mkdir -p "$tools"
-          git archive origin/dev scripts | tar -x -C "$tools"
           # Комментарии — для строки владельца «Трек: <x> — решение владельца»
           # (#707). Не прочитаны — пустой файл: происхождение не установлено.
           comments="$RUNNER_TEMP/track-comments.json"
           gh issue view "$NUM" --repo "${{ github.repository }}" --json comments > "$comments" 2>/dev/null \
             || : > "$comments"
-          out=$(node "$tools/scripts/process-track.mjs" stage --stage="$STAGE" --labels="$LABELS" \
+          out=$(node "$TOOLS/scripts/process-track.mjs" stage --stage="$STAGE" --labels="$LABELS" \
             --branch="$BRANCH" --base=origin/dev --head=HEAD --comments="$comments" --owner="$OWNER" \
             --out="$RUNNER_TEMP/track" \
             --run-url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}")
@@ -479,6 +503,7 @@ jobs:
           BRANCH: ${{ steps.branch.outputs.name }}
           NUM: ${{ github.event.issue.number }}
           TRACK: ${{ steps.track.outputs.track }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
           # rebase, в отличие от commit, не принимает -c user.*: он запускает
           # свои процессы и требует личность в окружении, иначе падает с
           # «unable to auto-detect email address».
@@ -515,13 +540,10 @@ jobs:
           # сдвиге dev. Помощник ребейза пересобирает индекс по каталогу, если
           # ВСЕ конфликты остановки — индекс, и отказывает (с abort) на любом
           # другом. Список конфликтов он снимает ДО abort (#364) и печатает в
-          # stdout по строке. Помощник берётся из dev, а не из ветки: ветка,
-          # отставшая от dev, его ещё не несёт.
-          tools="$RUNNER_TEMP/rebase-tools"
-          rm -rf "$tools" && mkdir -p "$tools"
-          git archive origin/dev scripts | tar -x -C "$tools"
+          # stdout по строке. Помощник — из снимка dev (#765), а не из ветки:
+          # ветка, отставшая от dev, его ещё не несёт.
           code=0
-          files=$(node "$tools/scripts/rebase-generated.mjs" --onto=origin/dev) || code=$?
+          files=$(node "$TOOLS/scripts/rebase-generated.mjs" --onto=origin/dev) || code=$?
           # Код 3 — отказ с перечнем (ребейз отменён); любой другой ненулевой —
           # сбой самого помощника, конфликтом ветки он не выдаётся.
           if [ "$code" -ne 0 ] && [ "$code" -ne 3 ]; then
@@ -564,7 +586,7 @@ jobs:
                "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
                "HEAD:refs/heads/$BRANCH" 2> "$push_err"; then
             refusal="$RUNNER_TEMP/push-refusal.md"
-            kind=$(node "$tools/scripts/merge-candidate.mjs" --push-refusal="$push_err" \
+            kind=$(node "$TOOLS/scripts/merge-candidate.mjs" --push-refusal="$push_err" \
               --branch="$BRANCH" --candidate="$(git rev-parse HEAD)" --stage=rebase \
               --run-url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
               --comment="$refusal" --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
@@ -621,6 +643,7 @@ jobs:
           NUM: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           # Якоря материала, устойчивые к ребейзу (#413, #414). SHA коммита
@@ -646,7 +669,8 @@ jobs:
           body=$(mktemp)
           if gh issue view "$NUM" --repo "$REPO" --json body --jq .body > "$body"; then
             digest=$(node -e '
-              import("./scripts/review-doc-guard.mjs").then(async (m) => {
+              const { pathToFileURL } = require("node:url");
+              import(pathToFileURL(`${process.env.TOOLS}/scripts/review-doc-guard.mjs`).href).then(async (m) => {
                 const { readFileSync } = await import("node:fs");
                 process.stdout.write(m.issueBodyDigest(readFileSync(process.argv[1], "utf8")));
               });
@@ -676,8 +700,9 @@ jobs:
           # зелёного вердикта: иначе вызов модели пропускается и находку
           # «ТЗ менялось» некому напечатать (#517 AC6).
           ISSUE_BODY: ${{ steps.material.outputs.issue_body }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
-          out=$(node scripts/review-doc-guard.mjs --reuse --marker=CODE-REVIEW --num="$NUM" --head=HEAD \
+          out=$(node "$TOOLS/scripts/review-doc-guard.mjs" --reuse --marker=CODE-REVIEW --num="$NUM" --head=HEAD \
             --issue-body="${ISSUE_BODY}")
           printf '%s\n' "$out"
           printf '%s\n' "$out" >> "$GITHUB_OUTPUT"
@@ -757,6 +782,7 @@ jobs:
           MUTANTS: ${{ steps.track.outputs.mutants }}
           # #697: `ci:full`/`ci:golden` — полный набор на материале.
           FULL: ${{ steps.track.outputs.full }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           if [ "$STAGE" != "code" ] || [ "$REUSE" = "true" ] || [ -z "$BRANCH" ]; then
             echo "гейт не применяется: этап $STAGE, reuse=${REUSE:-false}, ветка ${BRANCH:-dev}"
@@ -770,7 +796,7 @@ jobs:
           # S7), страховка — process-reconcile. Зелёный или красный завершённый
           # прогон гейт и без ожидания возвращает сразу.
           set +e
-          node scripts/validate-gate.mjs --repo="${{ github.repository }}" --ref="$BRANCH" --sha="$SHA" --no-wait \
+          node "$TOOLS/scripts/validate-gate.mjs" --repo="${{ github.repository }}" --ref="$BRANCH" --sha="$SHA" --no-wait \
             --mutants="${MUTANTS:-false}" --full="${FULL:-false}"
           code=$?
           set -e
@@ -899,13 +925,15 @@ jobs:
         env:
           NUM: ${{ github.event.issue.number }}
           DIGEST: ${{ steps.material.outputs.issue_body }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           if [ -z "$DIGEST" ]; then
             echo "хеша тела нет — сравнивать не с чем"
             exit 0
           fi
           out=$(node -e '
-            import("./scripts/review-doc-guard.mjs").then(async (m) => {
+            const { pathToFileURL } = require("node:url");
+            import(pathToFileURL(`${process.env.TOOLS}/scripts/review-doc-guard.mjs`).href).then(async (m) => {
               const { execFileSync } = await import("node:child_process");
               const [num, digest] = process.argv.slice(1);
               const git = (args) => { try { return execFileSync("git", args, { encoding: "utf8" }); } catch { return ""; } };
@@ -1312,14 +1340,33 @@ jobs:
       # execution_file — все сообщения сессии, с результатами инструментов —
       # не выгружается и не печатается: скрипт берёт из него только `result`.
       # `always()` — расход упавшей сессии хотя бы виден в сводке.
+      #
+      # #765: рабочая копия здесь — материал ревью. На отставшей ветке show/ship
+      # model-usage.mjs нет, и публикация молча писала `reason=missing`; ветка
+      # могла и подменить скрипт. Скрипт берётся из того же коммита dev, что и
+      # снимок подготовки (`tools_sha`). Снимок извлекается здесь, а не отдельным
+      # шагом до Review: его сбой — сбой отчётного шага (continue-on-error), а не
+      # всей стадии. От сессии модели, исполнявшейся на этом раннере, снимок не
+      # защищает — поэтому строка остаётся недоверенным вводом и разбирается
+      # строго при публикации (#556, #737).
       - name: Снять расход модели
         id: usage
         if: always()
         continue-on-error: true
         env:
           EXEC: ${{ steps.review.outputs.execution_file }}
+          TOOLS_SHA: ${{ needs.prepare.outputs.tools_sha }}
         run: |
-          line=$(node scripts/model-usage.mjs --execution-file="$EXEC")
+          set -euo pipefail
+          if [ -z "$TOOLS_SHA" ]; then
+            echo "::error::нет SHA снимка скриптов из prepare — расход не снят"
+            exit 1
+          fi
+          tools="$RUNNER_TEMP/dev-tools"
+          rm -rf "$tools" && mkdir -p "$tools"
+          git cat-file -e "${TOOLS_SHA}^{commit}" 2>/dev/null || git fetch -q origin "$TOOLS_SHA"
+          git archive "$TOOLS_SHA" scripts | tar -x -C "$tools"
+          line=$(node "$tools/scripts/model-usage.mjs" --execution-file="$EXEC")
           echo "line=$line" >> "$GITHUB_OUTPUT"
           echo "- расход модели: \`$line\`" >> "$GITHUB_STEP_SUMMARY"
 

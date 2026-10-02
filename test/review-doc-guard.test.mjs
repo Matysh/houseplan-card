@@ -179,6 +179,18 @@ test('повторная приписка заменяет блок, а не к�
   assert.match(twice, /# отчёт/);
 });
 
+test('#765: повторная приписка идемпотентна — разделитель перед блоком не копится', () => {
+  const anchors = { sha: 'a'.repeat(40), tree: 'b'.repeat(40), branch: 'dev', specs: [] };
+  const once = withMaterialAnchors('# отчёт\n\nтекст\n', anchors);
+  const thrice = withMaterialAnchors(withMaterialAnchors(once, anchors), anchors);
+  assert.equal(thrice, once);
+  assert.equal(thrice.match(/^---$/gm).length, 1, 'один разделитель');
+  // Разделитель самого документа — не наш: он остаётся.
+  const own = withMaterialAnchors('# отчёт\n\n---\n\nвывод\n', anchors);
+  assert.equal(withMaterialAnchors(own, anchors), own);
+  assert.match(own, /---\n\nвывод\n\n---\n\n<!-- material-anchors/);
+});
+
 test('список ТЗ разбирается и отсекает мусор (#414)', () => {
   const parsed = parseSpecList(
     `${'a'.repeat(40)} docs/specs/403-x.md;короткий docs/specs/y.md;${'b'.repeat(40)} ;`,
@@ -647,7 +659,8 @@ test('конвейер: посторонняя метка не входит в c
 
 test('конвейер: зелёный вердикт применяется повторно без модели, вердикт пишется в якоря (#499)', () => {
   const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
-  assert.match(workflow, /review-doc-guard\.mjs --reuse --marker=CODE-REVIEW --num="\$NUM" --head=HEAD/);
+  assert.match(workflow, /node "\$TOOLS\/scripts\/review-doc-guard\.mjs" --reuse --marker=CODE-REVIEW --num="\$NUM" --head=HEAD/,
+    'reuse решает скрипт снимка dev, не ветки (#765)');
   const modelJob = workflow.slice(workflow.indexOf('\n  model_review:'), workflow.indexOf('\n  integrate:'));
   assert.match(modelJob, /if: needs\.prepare\.outputs\.proceed == 'true' && needs\.prepare\.outputs\.reuse != 'true'/,
     'при повторном применении вся стадия модели пропускается');
@@ -673,7 +686,7 @@ test('#510 AC2: конвейер запускает Validate с мутантам
   assert.ok(material < gate && gate < back && back < modelJob && modelJob < deps && deps < review,
     'гейт закончен в отдельной стадии до установки зависимостей/ревью');
   const gateStep = workflow.slice(gate, back);
-  assert.match(gateStep, /node scripts\/validate-gate\.mjs --repo="\$\{\{ github\.repository \}\}" --ref="\$BRANCH" --sha="\$SHA"/);
+  assert.match(gateStep, /node "\$TOOLS\/scripts\/validate-gate\.mjs" --repo="\$\{\{ github\.repository \}\}" --ref="\$BRANCH" --sha="\$SHA"/);
   assert.match(gateStep, /if \[ "\$STAGE" != "code" \] \|\| \[ "\$REUSE" = "true" \]/, 'этап spec и reuse гейт не проходят');
   assert.match(gateStep, /SHA: \$\{\{ steps\.material\.outputs\.sha \}\}/, 'проверяется именно материал');
   // skip-ветка (spec/reuse) даёт proceed=true: ревью идёт, возврата S7→S6 нет (ревью ТЗ r2)
@@ -865,7 +878,7 @@ test('#551: gates, модель и интеграция имеют незави�
   assert.match(prepare, /timeout-minutes: 55/);
   assert.match(model, /timeout-minutes: 45/);
   assert.match(integrate, /timeout-minutes: 55/);
-  assert.match(prepare, /node scripts\/validate-gate\.mjs/);
+  assert.match(prepare, /node "\$TOOLS\/scripts\/validate-gate\.mjs"/);
   assert.doesNotMatch(model, /validate-gate\.mjs/, 'ожидания Validate нет в бюджете модели');
   assert.match(model, /needs: \[guard, prepare\]/);
   assert.match(integrate, /needs: \[guard, prepare, model_review\]/);

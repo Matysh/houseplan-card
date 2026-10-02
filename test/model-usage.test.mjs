@@ -199,9 +199,19 @@ test('#737 lastUsageIn: последняя строка формата в тек
 // ---------- К3: проводка в обоих workflow ----------
 
 const WORKFLOWS = fileURLToPath(new URL('../.github/workflows/', import.meta.url));
+// #765: в _process.yml рабочая копия model_review — материал ревью (ветка задачи
+// может отставать от dev или подменять скрипт), поэтому скрипт берётся снимком
+// того коммита dev, что закрепила подготовка (`tools_sha`). В _ship-review.yml
+// рабочая копия — кандидат линии dev, и скрипт зовётся из неё.
 const PIPELINES = [
-  { file: '_process.yml', publishJob: 'integrate', publishStep: 'Опубликовать документ ревью', consumes: /^ +--usage="\$USAGE" \\$/m },
-  { file: '_ship-review.yml', publishJob: 'publish', publishStep: 'Опубликовать документ', consumes: /^ +usage: process\.env\.USAGE \?\? "",$/m },
+  {
+    file: '_process.yml', publishJob: 'integrate', publishStep: 'Опубликовать документ ревью', consumes: /^ +--usage="\$USAGE" \\$/m,
+    call: /^line=\$\(node "\$tools\/scripts\/model-usage\.mjs" --execution-file="\$EXEC"\)$/m, snapshot: true,
+  },
+  {
+    file: '_ship-review.yml', publishJob: 'publish', publishStep: 'Опубликовать документ', consumes: /^ +usage: process\.env\.USAGE \?\? "",$/m,
+    call: /^line=\$\(node scripts\/model-usage\.mjs --execution-file="\$EXEC"\)$/m, snapshot: false,
+  },
 ];
 
 /** Блок job верхнего уровня `jobs:` — до следующего id на двух пробелах. */
@@ -234,7 +244,7 @@ const named = (steps, name) => {
 const hasBash = () => process.platform !== 'win32' && spawnSync('bash', ['--version']).status === 0;
 
 test('#737 AC5: шаг снятия расхода сразу после Review — always, continue-on-error, выход job usage; публикация его берёт', () => {
-  for (const { file, publishJob, publishStep, consumes } of PIPELINES) {
+  for (const { file, publishJob, publishStep, consumes, call } of PIPELINES) {
     const text = readFileSync(join(WORKFLOWS, file), 'utf8');
     const model = jobBlock(text, 'model_review');
     const steps = stepsOf(model);
@@ -247,7 +257,7 @@ test('#737 AC5: шаг снятия расхода сразу после Review 
     assert.match(usage, /^ {8}continue-on-error: true$/m, `${file}: сбой снятия не роняет стадию`);
     assert.match(usage, /^ {10}EXEC: \$\{\{ steps\.review\.outputs\.execution_file \}\}$/m, file);
     const run = runOf(usage);
-    assert.match(run, /^line=\$\(node scripts\/model-usage\.mjs --execution-file="\$EXEC"\)$/m, file);
+    assert.match(run, call, file);
     assert.match(run, /^echo "line=\$line" >> "\$GITHUB_OUTPUT"$/m, file);
     assert.match(run, /"\$GITHUB_STEP_SUMMARY"$/m, `${file}: строка — в сводку шага`);
     const head = model.slice(0, model.indexOf('\n    steps:\n'));
@@ -281,7 +291,9 @@ test('#737 AC5: execution_file никуда не выгружается, гра�
 
 test('#737 AC5: шаг снятия расхода на настоящем bash — выход line и строка в сводке, секрета нет', (t) => {
   if (!hasBash()) { t.skip('bash недоступен'); return; }
-  for (const { file } of PIPELINES) {
+  // #765: снимок — коммит HEAD этого дерева (скрипт расхода в нём тот же).
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).stdout.trim();
+  for (const { file, snapshot } of PIPELINES) {
     const text = readFileSync(join(WORKFLOWS, file), 'utf8');
     const body = runOf(named(stepsOf(jobBlock(text, 'model_review')), 'Снять расход модели'));
     const dir = tempDir(t);
@@ -293,7 +305,8 @@ test('#737 AC5: шаг снятия расхода на настоящем bash 
       rmSync(output, { force: true });
       rmSync(summary, { force: true });
       const r = spawnSync('bash', ['--noprofile', '--norc', '-e', '-c', body], {
-        cwd: ROOT, encoding: 'utf8', env: { ...process.env, EXEC, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary },
+        cwd: ROOT, encoding: 'utf8',
+        env: { ...process.env, EXEC, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary, ...(snapshot ? { TOOLS_SHA: head, RUNNER_TEMP: dir } : {}) },
       });
       assert.equal(r.status, 0, `${file}: ${r.stderr}`);
       assert.equal(readFileSync(output, 'utf8'), `line=${line}\n`, file);

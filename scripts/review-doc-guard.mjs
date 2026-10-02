@@ -388,11 +388,17 @@ export function parseSpecList(raw) {
     .filter((item) => /^[0-9a-f]{40}$/.test(item.blob) && item.path);
 }
 
-/** Дописать или заменить блок якорей в тексте документа. */
+/**
+ * Дописать или заменить блок якорей в тексте документа. Идемпотентно (#765):
+ * при замене снимается и разделитель `---`, который поставила прошлая
+ * приписка, — иначе каждый повтор копил бы ещё один перед блоком.
+ */
 export function withMaterialAnchors(text, anchors) {
   const body = String(text ?? '');
   const at = body.indexOf(ANCHOR_MARKER);
-  const head = at >= 0 ? body.slice(0, at).replace(/\s+$/, '') : body.replace(/\s+$/, '');
+  const head = at >= 0
+    ? body.slice(0, at).replace(/(?:\s*\n---)*\s*$/, '')
+    : body.replace(/\s+$/, '');
   return `${head}\n\n---\n\n${materialAnchorBlock(anchors)}`;
 }
 

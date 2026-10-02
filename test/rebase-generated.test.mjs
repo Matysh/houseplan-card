@@ -211,8 +211,10 @@ test('#643 process.yml: шаг «Привести ветку к dev» ребей
   const step = rebaseStep();
   assert.ok(step.length > 0, 'шаг найден');
   assert.doesNotMatch(step, /^\s+if ! git rebase origin\/dev/m, 'голого git rebase больше нет');
-  assert.match(step, /git archive origin\/dev scripts \| tar -x -C "\$tools"/, 'помощник — из dev, не из отставшей ветки');
-  assert.match(step, /files=\$\(node "\$tools\/scripts\/rebase-generated\.mjs" --onto=origin\/dev\) \|\| code=\$\?/);
+  // #765: помощник — из снимка dev подготовки, не из отставшей ветки.
+  assert.match(step, /TOOLS: \$\{\{ steps\.tools\.outputs\.dir \}\}/, 'помощник — из снимка dev, не из отставшей ветки');
+  assert.doesNotMatch(step, /git archive/, 'своего извлечения нет — один снимок на заход');
+  assert.match(step, /files=\$\(node "\$TOOLS\/scripts\/rebase-generated\.mjs" --onto=origin\/dev\) \|\| code=\$\?/);
   assert.match(step, /if \[ "\$code" -ne 0 \] && \[ "\$code" -ne 3 \]; then/, 'сбой помощника — не конфликт');
   assert.match(step, /echo 'conflict=true'\n\s+echo 'conflicts<<EOF_FILES'/, 'выход conflict/conflicts на месте');
   // Порядок: ребейз → push с lease → ожидание ссылки. Индекс в ветке задачи
@@ -237,16 +239,20 @@ function runStepRebase(work) {
   const step = rebaseStep();
   const body = step.slice(step.indexOf('        run: |\n') + '        run: |\n'.length)
     .split('\n').map((line) => line.replace(/^ {10}/, '')).join('\n');
-  const from = body.indexOf('tools="$RUNNER_TEMP/rebase-tools"');
+  const from = body.indexOf('code=0\nfiles=$(node "$TOOLS/scripts/rebase-generated.mjs"');
   const to = body.indexOf('# #657 (1б): индекс ревью в ветке');
   assert.ok(from >= 0 && to > from, 'ребейзная часть шага найдена');
   const temp = mkdtempSync(join(tmpdir(), 'hp-runner-'));
   try {
     const output = join(temp, 'output');
     writeFileSync(output, '');
+    // #765: снимок dev подготовки (его шаг исполняет process-prepare-tools.test.mjs).
+    const tools = join(temp, 'dev-tools');
+    mkdirSync(tools);
+    execFileSync('bash', ['-eo', 'pipefail', '-c', `git archive origin/dev scripts | tar -x -C "${tools}"`], { cwd: work, env: ENV });
     const script = `${body.slice(from, to)}\necho REBASED\n`;
     const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
-      cwd: work, encoding: 'utf8', env: { ...ENV, RUNNER_TEMP: temp, GITHUB_OUTPUT: output, BRANCH: 'issue/9-fix' },
+      cwd: work, encoding: 'utf8', env: { ...ENV, RUNNER_TEMP: temp, GITHUB_OUTPUT: output, BRANCH: 'issue/9-fix', TOOLS: tools },
     });
     return { status: r.status, stdout: r.stdout, stderr: r.stderr, output: readFileSync(output, 'utf8') };
   } finally {
@@ -404,7 +410,7 @@ function runStepPush(pushStderr) {
     // #730: сводка шага, куда код слияния пишет причину отказа.
     const summary = join(temp, 'summary.md');
     writeFileSync(summary, '');
-    const script = `tools=${JSON.stringify(resolve(SCRIPTS, '..'))}\nbefore=${'b'.repeat(40)}\n${block}\necho PUSHED\n`;
+    const script = `TOOLS=${JSON.stringify(resolve(SCRIPTS, '..'))}\nbefore=${'b'.repeat(40)}\n${block}\necho PUSHED\n`;
     const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
       encoding: 'utf8',
       env: {
@@ -469,7 +475,7 @@ test('#705 process.yml: отказ по праву на workflow возвращ�
   const at = (marker) => { const i = WORKFLOW.indexOf(marker); assert.ok(i > 0, `нет «${marker}»`); return i; };
   const step = rebaseStep();
   assert.match(step, /"HEAD:refs\/heads\/\$BRANCH" 2> "\$push_err"; then/, 'stderr push идёт в разбор, а не мимо');
-  assert.match(step, /kind=\$\(node "\$tools\/scripts\/merge-candidate\.mjs" --push-refusal="\$push_err"/, 'разбор — кодом слияния из dev');
+  assert.match(step, /kind=\$\(node "\$TOOLS\/scripts\/merge-candidate\.mjs" --push-refusal="\$push_err"/, 'разбор — кодом слияния из снимка dev (#765)');
   const back = WORKFLOW.slice(at('      - name: "Push ребейза отклонён по праву на workflow — вернуть автору без ревью (#705)"\n'),
     at('      - name: Validate на материале\n'));
   assert.match(back, /if: steps\.rebase\.outputs\.refused == 'workflow'\n/);

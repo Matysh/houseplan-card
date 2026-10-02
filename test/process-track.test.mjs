@@ -137,10 +137,12 @@ test('конвейер: трек снимается до ребейза, мут�
   assert.ok(branch < track && track < rebase && rebase < gate, 'трек — после выбора ветки и до ребейза');
   const trackStep = workflow.slice(track, rebase);
   assert.match(trackStep, /LABELS: \$\{\{ needs\.guard\.outputs\.labels \}\}/, 'метки — текущие, из guard');
-  assert.match(trackStep, /git archive origin\/dev scripts \| tar -x -C "\$tools"/, 'скрипт — из dev: ветка show/ship не ребейзится');
+  // #765: скрипт — из снимка dev подготовки: ветка show/ship не ребейзится.
+  assert.match(trackStep, /TOOLS: \$\{\{ steps\.tools\.outputs\.dir \}\}/, 'скрипт — из снимка dev: ветка show/ship не ребейзится');
+  assert.doesNotMatch(trackStep, /git archive/, 'своего извлечения у шага нет — один снимок на заход');
   // #707: один вызов скрипта решает трек, рамки ship и риск; bash только исполняет.
   assert.equal((trackStep.match(/process-track\.mjs/g) || []).length, 1, 'скрипт трека вызывается один раз');
-  assert.match(trackStep, /node "\$tools\/scripts\/process-track\.mjs" stage --stage="\$STAGE" --labels="\$LABELS" \\\n\s+--branch="\$BRANCH" --base=origin\/dev --head=HEAD --comments="\$comments" --owner="\$OWNER"/);
+  assert.match(trackStep, /node "\$TOOLS\/scripts\/process-track\.mjs" stage --stage="\$STAGE" --labels="\$LABELS" \\\n\s+--branch="\$BRANCH" --base=origin\/dev --head=HEAD --comments="\$comments" --owner="\$OWNER"/);
   assert.match(trackStep, /if printf '%s\\n' "\$out" \| grep -qx 'raise=true'; then\n\s+gh issue comment "\$NUM" --repo "\$\{\{ github\.repository \}\}" --body-file "\$RUNNER_TEMP\/track\/raise\.md"/,
     'комментарий повышения — из файла скрипта, только по его флагу');
   assert.match(trackStep, /--add-label track:show --remove-label track:ship/, 'выход за рамки повышает трек');
@@ -652,6 +654,8 @@ const TRACK_STEP = '      - name: "Трек задачи и рамки ship (#69
 const GUARD_STEP = '      - id: decide\n';
 const DECIDE_STEP = '      - name: Решение по вердикту\n';
 const TOOLS_STEP = '      - name: Скрипты конвейера — из dev (#749)\n';
+// #765: снимок подготовки — шаги prepare (трек, ребейз) зовут скрипты из него.
+const PREPARE_TOOLS_STEP = '      - name: Скрипты конвейера — из dev (#765)\n';
 const PUBLISH_STEP = '      - name: Опубликовать документ ревью\n';
 
 test('#707 AC4: изменённые run шага трека, guard и решения по вердикту проходят bash -n', async (t) => {
@@ -785,7 +789,7 @@ function trackSandbox(t, { change, base = () => {} }) {
   ].join('\n'), { mode: 0o755 });
   const read = (path) => (existsSync(path) ? readFileSync(path, 'utf8') : '');
   let tools = '';
-  return {
+  const box = {
     work, fake,
     run(script, env) {
       for (const name of ['gh-calls', 'comment.md']) rmSync(join(fake, name), { force: true });
@@ -811,15 +815,18 @@ function trackSandbox(t, { change, base = () => {} }) {
       if (list === null) rmSync(join(fake, 'labels'), { force: true });
       else writeFileSync(join(fake, 'labels'), `${list.join(',')}\n`);
     },
-    /** #749: шаг снимка job integrate как есть; его каталог дальше идёт шагам как TOOLS. */
-    snapshot() {
-      const r = this.run(stepRun(readFileSync(WORKFLOW, 'utf8'), TOOLS_STEP), {});
+    /** #749/#765: шаг снимка job как есть; его каталог дальше идёт шагам как TOOLS. */
+    snapshot(step = TOOLS_STEP) {
+      const r = this.run(stepRun(readFileSync(WORKFLOW, 'utf8'), step), {});
       assert.equal(r.status, 0, `снимок скриптов dev: ${r.stderr}`);
       assert.ok(r.output.dir && existsSync(join(r.output.dir, 'scripts', 'process-track.mjs')), 'снимок несёт скрипт трека');
       tools = r.output.dir;
       return tools;
     },
   };
+  // #765: в prepare снимок dev идёт до перехода на материал и до трека.
+  box.snapshot(PREPARE_TOOLS_STEP);
+  return box;
 }
 
 const touchChange = (work) => writeFileSync(join(work, 'src', 'pointer-modality.ts'),

@@ -101,7 +101,7 @@ test('#636 workflows: prepare exits pending with a sealed marker, resume relabel
   // #623: триггер — у тонкого вызывающего файла, тело — в `_process-resume.yml`.
   const resumeCaller = readFileSync(new URL('../.github/workflows/process-resume.yml', import.meta.url), 'utf8');
   const validate = readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8');
-  assert.match(process, /validate-gate\.mjs --repo="\$\{\{ github\.repository \}\}" --ref="\$BRANCH" --sha="\$SHA" --no-wait/);
+  assert.match(process, /node "\$TOOLS\/scripts\/validate-gate\.mjs" --repo="\$\{\{ github\.repository \}\}" --ref="\$BRANCH" --sha="\$SHA" --no-wait/);
   assert.match(process, /2\) echo 'proceed=pending' >> "\$GITHUB_OUTPUT"/);
   assert.match(process, /review-pending-\$\{NUM\}-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}/);
   assert.match(process, /sha256sum pending\.json > manifest\.sha256/);

@@ -14201,6 +14201,39 @@ const MUTANT_DEFINITIONS = [
       replace: '    const key = `${spaceId}|`; // mutant: no content fingerprint\n',
     }],
   },
+  {
+    id: 'prepare-reuse-runs-material-script',
+    guard: 'node --test --test-name-pattern="#765 AC2" test/process-prepare-tools.test.mjs',
+    because: '#765: reuse зелёного вердикта (#499) решает скрипт снимка dev; скрипт рабочей копии — '
+      + 'материал задачи, и подменённый review-doc-guard.mjs выдаёт себе reuse=true — слияние без модели',
+    patches: [{
+      file: '.github/workflows/_process.yml',
+      find: '          out=$(node "$TOOLS/scripts/review-doc-guard.mjs" --reuse --marker=CODE-REVIEW',
+      replace: '          out=$(node scripts/review-doc-guard.mjs --reuse --marker=CODE-REVIEW',
+    }],
+  },
+  {
+    id: 'usage-script-from-moving-dev',
+    guard: 'node --test --test-name-pattern="#765 AC3" test/process-prepare-tools.test.mjs',
+    because: '#765: расход снимается скриптом того коммита dev, что закрепила подготовка; архив '
+      + 'подвижной origin/dev после сдвига dev исполняет другую версию — смесь версий в одном заходе',
+    patches: [{
+      file: '.github/workflows/_process.yml',
+      find: '          git archive "$TOOLS_SHA" scripts | tar -x -C "$tools"',
+      replace: '          git fetch -q origin dev; git archive origin/dev scripts | tar -x -C "$tools"',
+    }],
+  },
+  {
+    id: 'material-anchors-pile-separators',
+    guard: 'node --test --test-name-pattern="#765" test/review-doc-guard.test.mjs',
+    because: '#765: повторная приписка блока якорей снимает и свой разделитель; без этого каждый '
+      + 'повтор копит ещё один `---` перед блоком',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: "    ? body.slice(0, at).replace(/(?:\\s*\\n---)*\\s*$/, '')",
+      replace: "    ? body.slice(0, at).replace(/\\s+$/, '')",
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
