@@ -630,3 +630,64 @@ export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlo
     owner: host,
   });
 }
+
+// ---------------------------------------------------------------------------
+// The static card (ТЗ §8): passive geometry through the same projection, no
+// hover, no focus, no actions. The field only with `light_pools: true` and
+// Glow; without it no barriers, visibility or timers are created — the faces
+// come from the wall geometry the card already drew.
+
+export interface StaticLedInput {
+  space: SpaceModel;
+  devices: readonly DevItem[];
+  hass: LedFrameInput['hass'];
+  virtualLights?: VirtualLightSnapshot | null;
+  defaultColor: string;
+  paletteAlpha: number;
+  cellCm: number;
+  gridPitch: number;
+  iconPct: number;
+  /** Effective Glow of a room; the card passes false for all when `light_pools` is off. */
+  glowFor: (room: RoomCfg) => boolean;
+  inRoom: (point: number[], room: RoomCfg) => boolean;
+  /** `live_states: false` — a neutral stripe, no state is read for it. */
+  live: boolean;
+  /** The light scene with `light_pools: true`; null otherwise. */
+  scene: LightBarrierScene | null;
+  /** The drawn masonry and independent bodies, for the face offset only. */
+  bodies: { masonryGeometry: unknown; opaqueBodies: number[][][] };
+  perUnit: number;
+  owner: object;
+}
+
+export function renderStaticLed(input: StaticLedInput): TemplateResult {
+  const polygons = input.space.rooms.flatMap((room) => {
+    const poly = roomPoly(room);
+    return poly ? [{ room, poly }] : [];
+  });
+  const frame = ledFrame({
+    space: input.space,
+    devices: input.devices,
+    hass: input.hass,
+    virtualLights: input.virtualLights,
+    defaultColor: input.defaultColor,
+    paletteAlpha: input.paletteAlpha,
+    cellCm: input.cellCm,
+    gridPitch: input.gridPitch,
+    iconPct: input.iconPct,
+    scene: input.scene,
+    polygons,
+    glowFor: input.glowFor,
+    inRoom: input.inRoom,
+    showHidden: false,
+  });
+  const views = input.live ? frame.views
+    : frame.views.map((view) => ({ ...view, state: 'off' as const, appearance: null, glow: false }));
+  const faces = faceContext({
+    occluders: [], floor: [], fingerprint: '',
+    masonryGeometry: input.bodies.masonryGeometry, opaqueBodies: input.bodies.opaqueBodies,
+  }, (LED_EPSILON_CM / input.cellCm) * input.gridPitch);
+  return svg`${input.scene && input.live ? renderLedField({
+    views, scene: input.scene, polygons, faces, spaceId: input.space.id, owner: input.owner,
+  }) : nothing}${renderLedStripes({ views, d: frame.d, faces, perUnit: input.perUnit, handlers: null })}` as unknown as TemplateResult;
+}

@@ -16,7 +16,7 @@ import {
 import {
   spaceDisplayOf, fillColorsOf, roomFillModeOf, roomGlowOf,
   roomCustomFillOf, roomTempRangeOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
-  openingAmount, roomPoly, outlineWithout, islandsOf,
+  openingAmount, roomPoly, outlineWithout, islandsOf, pointInPolygon,
   type ResolvedRoomFill,
 } from './logic';
 import {
@@ -59,6 +59,7 @@ import {
   type Layout, type ContentItem, type SpaceCardFit,
 } from './space-geometry';
 import { resolveZeroWalls } from './zero-walls';
+import { ledRuntime, ledStripsByMarker } from './led-strip-gate';
 import { geometryOpenings } from './plan-geometry-preflight';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { projectDecorImage } from './decor-assets';
@@ -309,12 +310,15 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // the same room show different Zigbee health on the two cards.
   const spaceDevs = all.filter((d) => d.space === o.spaceId);
   const devs = spaceDevs.filter((d) => !d.hidden);
+  // #780: a marker shown as an LED strip draws no icon here and takes no slot.
+  const leds = ledStripsByMarker(space);
+  const iconDevs = leds.size ? devs.filter((d) => !leds.has(d.id)) : devs;
   // The auto grid is computed over the FULL roster, hidden included — the
   // full card reserves grid cells for hidden devices (their ghosts keep a
   // place in the device editor), so the static card must too, or the same
   // visible marker with no saved position lands in different spots on the
   // two cards (HP-1511-01). Rendering still draws `devs` only.
-  const defPos = defaultPositions(spaceDevs, space, iconPct);
+  const defPos = defaultPositions(spaceDevs.filter((d) => !leds.has(d.id)), space, iconPct);
 
   // Hosted Static uses the same room-aware automatic aggregate as the full
   // card. Build it once for the whole render: room labels/fills must never
@@ -340,7 +344,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // here, so it must not stretch the frame either (DEV-2C947-01). It keeps
   // its grid cell above; the frame is presentation, the roster is not.
   const placed: ContentItem[] = [];
-  for (const d of devs) {
+  for (const strip of leds.values()) for (const p of strip.points) {
+    placed.push({ minX: p[0] * NORM_W, minY: p[1] * NORM_W, maxX: p[0] * NORM_W, maxY: p[1] * NORM_W });
+  }
+  for (const d of iconDevs) {
     const sv = o.layout[d.id];
     if (sv && sv.s === o.spaceId) {
       const x = sv.x * NORM_W, y = sv.y * NORM_W;
@@ -595,7 +602,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       : null);
   }
   const planLightSources = resolvedLightSources(planHass, devs, null, o.virtualLights);
-  const markers = devs.map((d) => {
+  const markers = iconDevs.map((d) => {
     const p = markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds);
     const left = ((p.x - vb[0]) / vb[2]) * 100;
     const top = ((p.y - vb[1]) / vb[3]) * 100;
@@ -730,6 +737,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     || wallHatchNeedsSolid(hatchStep, pxPerUnit));
   const wallStroke = disp.color || '#607d8b';
   let glowPools: TemplateResult | typeof nothing = nothing;
+  let lightScene: LightBarrierScene | null = null;
   const glowRuntime = o.glowRuntime;
   if (!o.lightPools || !glowRuntime || !glowEnabledRooms.length) {
     if (glowRuntime) forgetGlowSpace(glowRuntime.state, glowRuntime.host, space.id);
@@ -789,8 +797,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     });
     const seen = new Set<string>();
     const spots: GlowSpot[] = [];
+    lightScene = scene;
     for (const candidate of candidates) {
       seen.add(candidate.key);
+      if (leds.has(candidate.key.slice(space.id.length + 1))) continue;
       if (glowSourceInOpaqueBody(candidate.pos, scene)) {
         forgetGlowSource(glowRuntime.state, glowRuntime.host, candidate.key);
         continue;
@@ -983,6 +993,14 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         <g class="decorlayer" pointer-events="none">${decorImages}</g>
         <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>
         ${glowPools}
+        ${leds.size ? ledRuntime(space.id, () => o.moonHost?.requestUpdate())?.renderStaticLed({
+          space, devices: spaceDevs, hass: planHass, virtualLights: o.virtualLights,
+          defaultColor: colors.glow_light.c, paletteAlpha: colors.glow_light.a, cellCm,
+          gridPitch: GRID_PITCH, iconPct, glowFor: (room) => !!o.lightPools && roomGlowOf(disp.glow, room),
+          inRoom: (point, room) => pointInPolygon(point, roomPoly(room) || []), live: o.liveStates !== false,
+          scene: lightScene, perUnit: pxPerUnit, owner: o.glowRuntime?.state || space,
+          bodies: { masonryGeometry: canonicalWallGeometry?.components.flatMap((c) => c.geom) || [], opaqueBodies: extras },
+        }) ?? nothing : nothing}
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">
               ${wallUnion.paths.map((component) => svg`
