@@ -6,6 +6,7 @@
  * the tool finishes, never loses the chain. A new segment stops at the first
  * face of a thick wall, a fast vertex drag cannot jump it. The selection lives
  * in the session only, its tray closes on Esc and on a clean background click.
+ * A space switch finishes an unfinished chain in its own space (r1 M3).
  * Plan/Background have no LED tool, handles or targets.
  */
 import { launch, check, finish } from './serve.mjs';
@@ -134,6 +135,37 @@ await page.waitForTimeout(100);
 await clickAt(700, 550);
 check('a clean background click drops the selection', await evaluate(() => window.__card._ledEditor.sel), null);
 check('dropping the selection writes nothing', await evaluate(() => window.__ledSaves.length), savesBefore);
+
+// r1 M3 (ТЗ §4): a space switch with an unfinished chain finishes it in the
+// space it was drawn in — never in the space shown now — and opens no picker there.
+await evaluate(() => window.__hpTest.setServerConfig((cfg) => {
+  if (!cfg.spaces.some((space) => space.id === 'led2')) {
+    cfg.spaces.push({ id: 'led2', title: 'LED 2', cell_cm: 5, view_box: [0, 0, 1, 0.7], rooms: [], wall_segments: [], partitions: [] });
+  }
+}));
+await page.waitForTimeout(300);
+const beforeSwitch = (await strips()).length;
+await page.click('[data-tool="led-strip"]');
+await page.waitForTimeout(200);
+await clickAt(200, 500);
+await clickAt(350, 500);
+check('an unfinished chain before the switch', await chain(), 2);
+await evaluate(() => window.__hpTest.switchSpace('led2'));
+await page.waitForTimeout(600);
+const switched = await evaluate(() => {
+  const c = window.__card;
+  const of = (id) => c._serverCfg.spaces.find((space) => space.id === id)?.led_strips || [];
+  return { led: of('led').length, led2: of('led2').length, last: of('led').at(-1)?.points,
+    sel: c._ledEditor.sel, tool: c._ledEditor.tool,
+    picker: !!c.shadowRoot.querySelector('hp-dialog[data-kind="led-picker"]') };
+});
+check('the chain is stored in the space it was drawn in', switched.led, beforeSwitch + 1);
+check('nothing is written into the space shown now', switched.led2, 0);
+check('the stored chain keeps its points', JSON.stringify(switched.last), JSON.stringify([[0.2, 0.5], [0.35, 0.5]]));
+check('no tool, selection or picker carried into the other space',
+  JSON.stringify([switched.tool, switched.sel, switched.picker]), JSON.stringify([false, null, false]));
+await evaluate(() => window.__hpTest.switchSpace('led'));
+await page.waitForTimeout(400);
 
 // «Optimize plans» reports a strip that passes through the partition and changes nothing in it.
 const optimizeNote = await evaluate(async () => {

@@ -44,7 +44,7 @@ import {
   type PresentationActivityRuntime, type ResolvedDevicePresentation,
 } from './device-presentation';
 import { presentationSnapshotKey } from './render-device-snapshot';
-import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
+import { deviceFaceStyle, deviceThemeClass, renderDeviceFace, renderDeviceShadowFace } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
 import { valueBadgeTitle } from './device-value-badge';
 import { contentFingerprint } from './visual-continuity';
@@ -59,7 +59,7 @@ import {
   type Layout, type ContentItem, type SpaceCardFit,
 } from './space-geometry';
 import { resolveZeroWalls } from './zero-walls';
-import { ledRuntime, ledStripsByMarker } from './led-strip-gate';
+import { ledAnchor, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
 import { geometryOpenings } from './plan-geometry-preflight';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { projectDecorImage } from './decor-assets';
@@ -602,12 +602,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       : null);
   }
   const planLightSources = resolvedLightSources(planHass, devs, null, o.virtualLights);
-  const markers = iconDevs.map((d) => {
-    const p = markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds);
-    const left = ((p.x - vb[0]) / vb[2]) * 100;
-    const top = ((p.y - vb[1]) / vb[3]) * 100;
-    const showLqi = disp.showLqi ?? (o.showSignal !== false);
-    const presentation = o.presentations?.get(presentationSnapshotKey(d.id, showLqi))
+  const showLqi = disp.showLqi ?? (o.showSignal !== false);
+  const presentationOf = (d: DevItem) => o.presentations?.get(presentationSnapshotKey(d.id, showLqi))
       || resolveDevicePresentation(planHass, d, {
       liveStates: o.liveStates !== false,
       showTemperature: o.showTemperature !== false,
@@ -619,6 +615,18 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       registryHass,
       reducedMotion: o.reducedMotion,
     });
+  // #780 r1 M1: a strip keeps its value badge at the half-length anchor, passive.
+  const ledBadges = leds.size ? devs.filter((d) => leds.has(d.id)).map((d) => {
+    const face = renderDeviceShadowFace(presentationOf(d));
+    const a = ledAnchor(leds.get(d.id)!.points, NORM_W);
+    return face === nothing ? nothing : html`<div class="dev led-badge ${deviceThemeClass(planHass)}" data-led-badge=${d.id} aria-hidden="true"
+      style="left:${((a.x - vb[0]) / vb[2]) * 100}%;top:${((a.y - vb[1]) / vb[3]) * 100}%">${face}</div>`;
+  }) : nothing;
+  const markers = iconDevs.map((d) => {
+    const p = markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds);
+    const left = ((p.x - vb[0]) / vb[2]) * 100;
+    const top = ((p.y - vb[1]) / vb[3]) * 100;
+    const presentation = presentationOf(d);
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
     const a11yState = deviceA11yState(presentation);
     const deviceAriaLabel = deviceAccessibleLabel([
@@ -993,7 +1001,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         <g class="decorlayer" pointer-events="none">${decorImages}</g>
         <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>
         ${glowPools}
-        ${leds.size ? ledRuntime(space.id, () => o.moonHost?.requestUpdate())?.renderStaticLed({
+        ${ledVisible(space, devs, false, o.cfg.markers) ? ledRuntime(space.id, () => o.moonHost?.requestUpdate())?.renderStaticLed({
           space, devices: spaceDevs, hass: planHass, virtualLights: o.virtualLights,
           defaultColor: colors.glow_light.c, paletteAlpha: colors.glow_light.a, cellCm,
           gridPitch: GRID_PITCH, iconPct, glowFor: (room) => !!o.lightPools && roomGlowOf(disp.glow, room),
@@ -1033,7 +1041,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
              tighter the frame got. `iconCqw` keeps the resolved device base
              proportional to the plan's base unit, as it was when the frame
              was the stored view_box. */}
-      <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, vb[2]).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, vb[2]).toFixed(3)}cqw">${markers}${labels}</div>
+      <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, vb[2]).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, vb[2]).toFixed(3)}cqw">${markers}${ledBadges}${labels}</div>
     </div>
   `;
 }

@@ -6,7 +6,8 @@
   draws a strip on the plan point by point — it snaps to the grid and to wall
   faces and stops at walls, windows and columns, passing doors and passages.
   Bind it to a light (or any device) and the strip replaces the device's icon:
-  a two-stroke stripe that, when the light is on with Glow, casts a soft
+  a two-stroke stripe with the device's value badge at its middle that, when
+  the light is on with Glow, casts a soft
   continuous band of its colour (50 cm by default) that does not pass through
   walls or closed doors; without Glow the stripe itself takes the light's
   colour. In the View the whole strip is one tap target, also in 2.5D and on

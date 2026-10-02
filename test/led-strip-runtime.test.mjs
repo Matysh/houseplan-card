@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ledAnchor, ledStripsByMarker } from '../test-build/led-strip-gate.js';
-import { faceContext, ledFrame, ledStripView } from '../test-build/led-strip-runtime.js';
+import { faceContext, ledFrame, ledStripView, stripRoom } from '../test-build/led-strip-runtime.js';
 import { LedFieldCache, buildFieldGeometry, falloffAt } from '../test-build/led-strip-field.js';
 import { GLOW_FALLOFF } from '../test-build/glow-scene.js';
 import { stripAnchor } from '../test-build/led-strip-geometry.js';
@@ -135,4 +135,26 @@ test('AC9: the frame gives every strip the 50 cm default, not the shared radius;
   });
   assert.equal(frame.views.length, 1, 'the unbound strip is not a View strip');
   assert.ok(Math.abs(frame.views[0].radius - (50 / 5) * (1000 / 240)) < 1e-9, `radius ${frame.views[0].radius}`);
+});
+
+test('AC2/r1 M2: an explicit valid room_id wins over the anchor room; a stale one falls back', () => {
+  const rooms = [{ id: 'A' }, { id: 'B' }];
+  const inA = (point, room) => room.id === 'A' && point[0] < 500;
+  const frameWith = (roomId) => ledFrame({
+    space: { id: 's', vb: [0, 0, 1000, 1000], rooms, led_strips: [
+      // Anchor (half length) at x = 250: geometrically inside A.
+      { id: 'a', points: [[0.1, 0.1], [0.4, 0.1]], marker: 'm1' },
+    ] },
+    devices: [{ id: 'm1', name: 'Lamp', primary: 'light.led', entities: ['light.led'], space: 's',
+      marker: { id: 'm1', binding: 'device:m1', ...(roomId === undefined ? {} : { room_id: roomId }) } }],
+    hass: { states: { 'light.led': { state: 'on', attributes: {} } } },
+    defaultColor: '#ffd27b', paletteAlpha: 0.7, cellCm: 5, gridPitch: 1000 / 240, iconPct: 3.4,
+    scene: null, polygons: [], glowFor: (room) => room.id === 'B', inRoom: inA, showHidden: false,
+  });
+  assert.equal(frameWith(undefined).views[0].glow, false, 'no room_id: the anchor room A decides (Glow off)');
+  assert.equal(frameWith('B').views[0].glow, true, 'explicit room_id B wins over the geometric A');
+  assert.equal(frameWith('Z').views[0].glow, false, 'a stale room_id falls back to the geometry');
+  assert.equal(stripRoom(rooms, 'B', [250, 100], inA)?.id, 'B');
+  assert.equal(stripRoom(rooms, null, [250, 100], inA)?.id, 'A');
+  assert.equal(stripRoom(rooms, null, null, inA), undefined);
 });

@@ -443,7 +443,11 @@ only the geometry differs:
   Devices editor shows active strips (unbound ones as grey dashes);
   Plan/Background show a passive translucent stripe. `houseplan-space-card`
   draws the passive stripe always and the field only with `light_pools: true`
-  — with the option off no barrier, visibility or timer is created.
+  — with the option off no barrier, visibility or timer is created; with
+  `live_states: false` the stripe is neutral and has no field (all four
+  combinations are one browser matrix in `smoke_led_strip_glow`).
+- **Room.** The Glow room of a strip is the explicit valid `room_id` of its
+  marker, otherwise the room of the half-length anchor (`stripRoom`).
 - **Laziness.** The stripe/hit/2.5D code (`led-strip-runtime`) and the field
   (`led-strip-field`) are separate lazy chunks; the initial graph holds only
   the presence check and the loader (`led-strip-gate`). Caches are bounded per

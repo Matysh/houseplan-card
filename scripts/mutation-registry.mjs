@@ -7387,7 +7387,7 @@ const MUTANT_DEFINITIONS = [
       find: '        ${passageGlowTunnels}\n'
         + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
         + '        <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>\n'
-        + '        ${glowPools}\n        ${leds.size',
+        + '        ${glowPools}\n        ${ledVisible(',
       replace: '        ${passageGlowTunnels}\n'
         + '        ${!space.bg && !disp.showNames ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
         + '          const center = roomCenter(room);\n'
@@ -7397,7 +7397,7 @@ const MUTANT_DEFINITIONS = [
         + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
         + '        <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>\n'
         + '        ${glowPools}\n'
-        + '        ${leds.size',
+        + '        ${ledVisible(',
     }],
   },
   {
@@ -14372,6 +14372,58 @@ const MUTANT_DEFINITIONS = [
       file: 'custom_components/houseplan/import_export.py',
       find: '    unbound_led_strips = unbind_strips(space, remap={\n        old_id: new_id for old_id, new_id in marker_map.items()',
       replace: '    unbound_led_strips = unbind_strips(space, remap={\n        old_id: old_id for old_id, new_id in marker_map.items()',
+    }],
+  },
+  {
+    id: 'led-badge-dropped',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: "#780 r1 M1: a strip keeps the device value badge, passive, at the half-length anchor — measured against the rendered stripe in Chromium",
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "            ${ledDevs.map((d) => this._ledBadge(d, view, isoOverlays?.devices.get(d.id)))}\n",
+      replace: "",
+    }],
+  },
+  {
+    id: 'led-room-id-ignored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/led-strip-runtime.test.mjs',
+    because: '#780 r1 M2: an explicit valid room_id wins over the anchor room for the strip Glow',
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: "  return (roomId ? rooms.find((r) => r.id === roomId) : undefined)\n    ?? (anchor",
+      replace: "  return (anchor",
+    }],
+  },
+  {
+    id: 'led-chain-written-to-shown-space',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/led-strip-editor.test.mjs',
+    because: '#780 r1 M3: a space switch finishes an unfinished chain in the space it was drawn in, never the one shown now',
+    patches: [{
+      file: 'src/led-strip-editor.ts',
+      find: "      chain.space, id, () => strip);",
+      replace: "      this.host._spaceModel()?.id ?? chain.space, id, () => strip);",
+    }],
+  },
+  {
+    id: 'led-hidden-marker-loads-chunk',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: '#780 r1 M4: a hidden marker or an HA-disabled device decides before import() — no LED chunk request in the browser network log',
+    patches: [{
+      file: 'src/led-strip-gate.ts',
+      find: "    && (!d.hidden || showHidden) && !hidden(d.id));",
+      replace: ");",
+    }],
+  },
+  {
+    id: 'led-static-live-ignored',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: '#780 r1 M6: the static card with live_states:false draws a neutral stripe without a field in both light_pools modes — the rendered SVG state of four real cards',
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: "  const views = input.live ? frame.views",
+      replace: "  const views = true ? frame.views",
     }],
   },
   {

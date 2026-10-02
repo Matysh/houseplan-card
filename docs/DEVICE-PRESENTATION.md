@@ -120,7 +120,9 @@ the value badge keep working; the individual `display`, `size`, `angle`,
 icon». While shown as a strip the icon is not drawn, its saved position and
 auto-grid slot are not used; the anchor — the point at half the polyline
 length — replaces the position for the room, tooltip, label and badge (an
-explicit valid `room_id` wins). A hidden shape (`active: false`) changes
+explicit valid `room_id` wins — also for the strip's Glow room). The value
+badge is drawn at the anchor as a passive satellite (`data-led-badge`) — no
+icon core, pulse or auto-slot (r1 M1). A hidden shape (`active: false`) changes
 nothing: the icon works normally. No pulses and no alarm red on the stripe.
 `hidden` / HA-disabled suppress the stripe, its target and its light like an
 icon; temporarily unavailable keeps it as a dashed grey stripe. In the device

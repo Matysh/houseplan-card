@@ -347,6 +347,19 @@ export interface LedFrame {
   polygons: readonly LightRoomPolygon[];
 }
 
+/**
+ * The room of a strip (ТЗ §5, r1 M2): an explicit valid `room_id` of its
+ * marker wins; otherwise the room containing the half-length anchor. A stale
+ * `room_id` (no such room in the space) falls back to the geometry.
+ */
+export function stripRoom(
+  rooms: readonly RoomCfg[], roomId: string | null | undefined, anchor: number[] | null,
+  inRoom: (point: number[], room: RoomCfg) => boolean,
+): RoomCfg | undefined {
+  return (roomId ? rooms.find((r) => r.id === roomId) : undefined)
+    ?? (anchor ? rooms.find((r) => inRoom(anchor, r)) : undefined);
+}
+
 export function ledFrame(input: LedFrameInput): LedFrame {
   const byId = new Map(input.devices.map((device) => [device.id, device]));
   const radius = (LED_DEFAULT_RADIUS_CM / input.cellCm) * input.gridPitch;
@@ -373,8 +386,7 @@ export function ledFrame(input: LedFrameInput): LedFrame {
     const device = byId.get(strip.marker as string);
     if (!device || device.space !== input.space.id) continue;
     if (device.hidden && !input.showHidden) continue;
-    const anchor = stripAnchor(pts(strip.points));
-    const room = anchor ? input.space.rooms.find((r) => input.inRoom(anchor, r)) : undefined;
+    const room = stripRoom(input.space.rooms, device.marker?.room_id, stripAnchor(pts(strip.points)), input.inRoom);
     views.push(ledStripView({
       strip,
       device,

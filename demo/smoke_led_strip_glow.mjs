@@ -5,8 +5,10 @@
  * strip replaces the icon, paints the two-stroke stripe and — with Glow — the
  * linear field; off/unavailable have no field, unavailable is dashed; without
  * Glow the core takes the source colour. The whole length is one target: a
- * click toggles once, a touch pan calls nothing. The static card is passive
- * and computes no field with `light_pools: false`.
+ * click toggles once, a touch pan calls nothing. A hidden marker or an
+ * HA-disabled device loads no chunk (r1 M4); the value badge stays at the
+ * anchor, passive (r1 M1). The static card is passive in all four
+ * light_pools × live_states combinations (r1 M6).
  */
 import { launch, check, finish } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
@@ -16,17 +18,23 @@ const ledRequests = [];
 page.on('request', (request) => { if (/led-strip-(runtime|field|editor)-/.test(request.url())) ledRequests.push(request.url().replace(/.*\//, '')); });
 const evaluate = (fn, arg) => page.evaluate(fn, arg);
 const settle = () => page.waitForTimeout(500);
-const setStrips = (strips, settings) => evaluate(async ([strips, settings]) => {
+const setStrips = (strips, settings, extra = {}) => evaluate(async ([strips, settings, extra]) => {
   await window.__hpTest.setServerConfig((cfg) => {
     cfg.spaces[0].led_strips = strips;
     cfg.spaces[0].settings = { ...(cfg.spaces[0].settings || {}), ...settings };
     cfg.markers = [
       ...(cfg.markers || []).filter((m) => !['d_light1', 'd_lamp'].includes(m.id)),
-      { id: 'd_light1', binding: 'device:d_light1', space: 'f1' },
-      { id: 'd_lamp', binding: 'device:d_lamp', space: 'f1' },
+      { id: 'd_light1', binding: 'device:d_light1', space: 'f1', ...(extra.d_light1 || {}) },
+      { id: 'd_lamp', binding: 'device:d_lamp', space: 'f1', ...(extra.d_lamp || {}) },
     ];
   });
-}, [strips, settings]);
+}, [strips, settings, extra]);
+const registryDisabled = (by) => evaluate(async (by) => {
+  window.__setRegistryDisabled('device', 'd_light1', by);
+  window.__card.hass = window.__mkHass();
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  await window.__card.updateComplete;
+}, by);
 const setState = (entity, state, attributes = {}) => evaluate(async ([entity, state, attributes]) => {
   const c = window.__card; const st = c.hass.states[entity];
   c.hass = { ...c.hass, states: { ...c.hass.states, [entity]: { ...st, state, attributes: { ...st.attributes, ...attributes } } } };
@@ -46,6 +54,21 @@ await setStrips([{ id: 'hidden', points: [[0.12, 0.40], [0.40, 0.40]], marker: '
 await settle();
 check('hidden shape and unbound strip: still no LED chunk', ledRequests.length, 0);
 check('a hidden shape leaves the ordinary icon', await evaluate(() => !!window.__card.shadowRoot.querySelector('.dev[data-id="d_lamp"]')));
+// r1 M4 (ТЗ §13.1): visibility is decided before import() — an active strip of
+// a hidden marker or of an HA-disabled device loads no LED chunk at all.
+const ceilingStrip = [{ id: 'ceiling', points: [[0.12, 0.30], [0.40, 0.30], [0.40, 0.45]], marker: 'd_light1' }];
+await setStrips(ceilingStrip, { glow_enabled: true }, { d_light1: { hidden: true } });
+await settle();
+check('a hidden marker: its active strip loads no LED chunk', ledRequests.length, 0);
+check('a hidden marker: no stripe, no badge, no icon', await evaluate(() => {
+  const root = window.__card.shadowRoot;
+  return !root.querySelector('[data-led-strip], [data-led-badge], .dev[data-id="d_light1"]');
+}));
+await registryDisabled('user');
+await setStrips(ceilingStrip, { glow_enabled: true });
+await settle();
+check('an HA-disabled device: its active strip loads no LED chunk', ledRequests.length, 0);
+await registryDisabled(null);
 
 await setStrips([{ id: 'ceiling', points: [[0.12, 0.30], [0.40, 0.30], [0.40, 0.45]], marker: 'd_light1' },
   { id: 'loose', points: [[0.12, 0.45], [0.30, 0.45]], marker: null }], { glow_enabled: true });
@@ -59,6 +82,40 @@ check('no round pool at the anchor: the strip is the source', await evaluate(() 
 check('no auto-slot reserved for the strip’s marker', await evaluate(() => !('d_light1' in (window.__card._defPos || {}))));
 check('on with Glow: white core and a field', JSON.stringify([await stripe('d_light1'), await field() > 0]),
   JSON.stringify([{ state: 'on', core: '#FFFFFF', dash: null }, true]));
+
+// r1 M1 (ТЗ §5): the strip keeps the device's value badge, passive, at the
+// half-length anchor — the icon core, pulse and slot stay suppressed.
+const badgeAt = (root) => evaluate((root) => {
+  const host = root === 'card' ? window.__card : document.querySelector('houseplan-space-card');
+  const sr = host.shadowRoot;
+  const badge = sr.querySelector('[data-led-badge="d_light1"]');
+  if (!badge) return null;
+  const core = badge.querySelector('.device-core').getBoundingClientRect();
+  const value = badge.querySelector('.value-badge');
+  const style = getComputedStyle(badge);
+  return { text: value?.textContent?.trim() || '', x: core.x + core.width / 2, y: core.y + core.height / 2,
+    passive: style.pointerEvents === 'none' && badge.getAttribute('aria-hidden') === 'true',
+    coreHidden: getComputedStyle(badge.querySelector('.device-core')).visibility === 'hidden',
+    icon: !!badge.querySelector('ha-icon, .device-pulse, .activity-dot') };
+}, root);
+const midpoint = () => evaluate(() => {
+  const el = window.__card.shadowRoot.querySelector('.led-hit');
+  const p = el.getPointAtLength(el.getTotalLength() / 2), m = el.getScreenCTM();
+  return [p.x * m.a + m.e, p.y * m.d + m.f];
+});
+check('no configured badge: no badge element', await badgeAt('card'), null);
+await setStrips(ceilingStrip, { glow_enabled: true }, { d_light1: { display: 'badge', value_badge: {
+  enabled: true, source: { kind: 'entity_state', entity_id: 'sensor.living_temp' }, position: 'right' } } });
+await settle();
+{
+  const badge = await badgeAt('card');
+  const [mx, my] = await midpoint();
+  check('the value badge stays with the strip', !!badge?.text);
+  check('the badge sits at the half-length anchor', !!badge && Math.hypot(badge.x - mx, badge.y - my) < 3,
+    true);
+  check('the badge is passive, without the icon core or pulse',
+    JSON.stringify(badge && [badge.passive, badge.coreHidden, badge.icon]), JSON.stringify([true, true, false]));
+}
 
 // One target over the whole length: a click toggles exactly once.
 const calls = await evaluate(async () => {
@@ -114,24 +171,59 @@ const colored = await stripe('d_light1');
 check('on without Glow: coloured core, no field', JSON.stringify([colored?.state, colored?.core !== '#FFFFFF', await field()]),
   JSON.stringify(['on', true, 0]));
 
-// The static card: passive; the field only with light_pools.
-await setStrips(await evaluate(() => window.__card._serverCfg.spaces[0].led_strips), { glow_enabled: true });
-const staticCards = await evaluate(async () => {
+// The static card (ТЗ §8, AC14, r1 M6): the full light_pools × live_states
+// matrix. Passive in all four: no hit path, no focus, a click calls nothing.
+// live_states:false — a neutral stripe, no field; light_pools:false — no
+// field, the core carries the source colour when the state is live.
+await setStrips(await evaluate(() => window.__card._serverCfg.spaces[0].led_strips), { glow_enabled: true },
+  { d_light1: { display: 'badge', value_badge: {
+    enabled: true, source: { kind: 'entity_state', entity_id: 'sensor.living_temp' }, position: 'right' } } });
+const matrix = await evaluate(async () => {
   await customElements.whenDefined('houseplan-space-card');
   const host = document.createElement('div'); host.style.width = '700px'; document.body.appendChild(host);
-  const make = (pools) => { const el = document.createElement('houseplan-space-card'); el.setConfig({ type: 'custom:houseplan-space-card', space: 'f1', light_pools: pools }); el.hass = window.__card.hass; host.appendChild(el); return el; };
-  const plain = make(false), pools = make(true);
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  for (let i = 0; i < 40; i++) {
-    await wait(50);
-    if (plain.shadowRoot?.querySelector('[data-led-strip]') && pools.shadowRoot?.querySelector('[data-led-field]')) break;
+  const cards = {};
+  for (const pools of [false, true]) for (const live of [false, true]) {
+    const el = document.createElement('houseplan-space-card');
+    el.setConfig({ type: 'custom:houseplan-space-card', space: 'f1', light_pools: pools, live_states: live });
+    el.hass = window.__card.hass; host.appendChild(el);
+    cards[`pools=${pools},live=${live}`] = el;
   }
-  const read = (el) => ({ stripe: !!el.shadowRoot?.querySelector('[data-led-strip]'),
-    field: !!el.shadowRoot?.querySelector('[data-led-field]'), hit: !!el.shadowRoot?.querySelector('.led-hit') });
-  return { plain: read(plain), pools: read(pools) };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  for (let i = 0; i < 60; i++) {
+    await wait(50);
+    if (Object.values(cards).every((el) => el.shadowRoot?.querySelector('[data-led-strip]'))
+      && cards['pools=true,live=true'].shadowRoot.querySelector('[data-led-field]')) break;
+  }
+  await wait(300);
+  const out = {};
+  for (const [key, el] of Object.entries(cards)) {
+    const sr = el.shadowRoot;
+    const g = sr.querySelector('[data-led-strip]');
+    const core = g?.querySelector('.led-core');
+    const box = core?.getBoundingClientRect();
+    if (box) {
+      const target = sr.elementFromPoint?.(box.x + box.width / 2, box.y + box.height / 2);
+      target?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+    }
+    out[key] = {
+      state: g?.dataset.state, white: core?.getAttribute('stroke') === '#FFFFFF',
+      field: !!sr.querySelector('[data-led-field]'),
+      passive: !sr.querySelector('.led-hit, [data-led-strip] [role], [data-led-strip] [tabindex]'),
+      badge: !!sr.querySelector('[data-led-badge="d_light1"] .value-badge'),
+    };
+  }
+  host.remove();
+  return out;
 });
-check('static card without light_pools: passive stripe, no field', JSON.stringify(staticCards.plain), JSON.stringify({ stripe: true, field: false, hit: false }));
-check('static card with light_pools: the field', JSON.stringify(staticCards.pools), JSON.stringify({ stripe: true, field: true, hit: false }));
+check('static live_states:false + light_pools:false — neutral, no field, passive', JSON.stringify(matrix['pools=false,live=false']),
+  JSON.stringify({ state: 'off', white: true, field: false, passive: true, badge: true }));
+check('static live_states:true + light_pools:false — source colour in the core, no field, passive', JSON.stringify(matrix['pools=false,live=true']),
+  JSON.stringify({ state: 'on', white: false, field: false, passive: true, badge: true }));
+check('static live_states:false + light_pools:true — neutral, no field, passive', JSON.stringify(matrix['pools=true,live=false']),
+  JSON.stringify({ state: 'off', white: true, field: false, passive: true, badge: true }));
+check('static live_states:true + light_pools:true — white core and the field, passive', JSON.stringify(matrix['pools=true,live=true']),
+  JSON.stringify({ state: 'on', white: true, field: true, passive: true, badge: true }));
+check('a click on any static stripe toggles nothing', await evaluate(() => window.__card.hass.states['light.ceiling'].state), 'on');
 
 // The device dialog offers «Show as LED strip» before the tool is loaded:
 // a static section (no dialog shift), the press loads the tool and starts

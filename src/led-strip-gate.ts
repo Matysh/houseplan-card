@@ -4,9 +4,10 @@
  * position, and one page-wide load of the lazy `led-strip-runtime` chunk.
  * Geometry, light and hit-testing live in the chunk.
  *
- * A strip is represented when it is active and bound; the card additionally
- * checks the marker is a live device of that space. `active: false` shapes,
- * unbound strips and an empty array never ask for the chunk. A failed load is
+ * A strip is represented when it is active and bound; the chunk loads only
+ * when such a strip is drawn — a live, visible device of that space
+ * (`ledVisible`). `active: false` shapes, unbound strips, hidden or
+ * HA-disabled markers and an empty array never ask for the chunk. A failed load is
  * fail-dark for the strips only and is retried on the next explicit entry
  * (another space or the LED tool) — never in a loop; a chunk of another build
  * is never installed.
@@ -46,6 +47,25 @@ export function ledStripsByMarker(space: SpaceModel | null | undefined): Map<str
     if (strip?.active !== false && strip.marker && strip.points?.length > 1) out.set(strip.marker, strip);
   }
   return out;
+}
+
+/**
+ * Does the space draw a strip (r1 M4, ТЗ §13.1)? An active bound strip of a
+ * live device of this space that is not hidden or HA-disabled (`hidden`),
+ * unless hidden devices are shown as ghosts. Decided BEFORE the chunk loads.
+ */
+export function ledVisible(
+  space: SpaceModel | null | undefined,
+  devices: readonly { id: string; space: string; hidden?: boolean; marker?: { hidden?: boolean } | null }[],
+  showHidden: boolean,
+  markers?: readonly { id: string; hidden?: boolean }[],
+): boolean {
+  const leds = ledStripsByMarker(space);
+  // The stored marker is checked too: the device list may still be the one
+  // built before this config (a just-hidden marker must not load the chunk).
+  const hidden = (id: string) => !showHidden && !!markers?.some((m) => m.id === id && m.hidden === true);
+  return leds.size > 0 && devices.some((d) => d.space === space?.id && leds.has(d.id)
+    && (!d.hidden || showHidden) && !hidden(d.id));
 }
 
 /** The point at half the polyline length (ТЗ §5), in render units (`scale` = NORM_W). */

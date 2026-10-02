@@ -253,6 +253,8 @@ export const devicesStyles = css`
       transform: translateX(-50%);
       flex-direction: column-reverse;
     }
+    .dev.led-badge { pointer-events: none; }
+    .dev.led-badge .device-core { visibility: hidden; }
     .device-core {
       position: relative;
       z-index: 1;

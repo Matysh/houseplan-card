@@ -1051,14 +1051,14 @@ editor** — there is no need to switch to the Plan editor.
 |---|---|
 | **LED strip** (next to «Add») | Starts drawing. A clean click adds a point; the grid and wall faces attract it, a zero-thickness wall its axis; `Shift` gives 45° steps. A new segment stops at the first face of a thick wall, partition, column or window («The strip stopped at a wall»); doors, gates and passages let it through |
 | `Ctrl/Cmd+Z` while drawing | Removes the chain's last point, not another history step |
-| `Esc`, a double click on the last point, pressing **LED strip** again, leaving the editor | Finish the strip; a chain of fewer than two distinct points is not saved |
+| `Esc`, a double click on the last point, pressing **LED strip** again, leaving the editor, switching to another space | Finish the strip in the space it was drawn in; a chain of fewer than two distinct points is not saved |
 | A click on the first point (at least three vertices) | Closes the strip |
 | After finishing | The device picker opens: lights first, devices bound to another strip are disabled with an explanation, **New device…** creates one and binds it in the same write, **Later** keeps an unbound strip (grey dashes, visible in the Devices editor only) |
 | A click on a strip | Selects it and shows its vertices; they can be dragged, and walls stop them even on a fast drag. The tray offers **Device settings**, **Bind / Change device**, **Unbind**, **Show as icon**, **Delete strip**. `Esc` or a clean click on free space drops the selection |
 | In the device dialog | **Show as LED strip** draws a shape for the same marker (or brings a saved one back at once); **Show as icon** returns the ordinary icon, the shape is kept hidden and comes back without redrawing. The usual unsaved-changes question comes first |
 
 Binding creates no new Home Assistant device: the same marker, light
-settings, tap actions and badge. The strip glows when the device does: with
+settings, tap actions and badge — drawn at the middle of the strip's length. The strip glows when the device does: with
 Glow on, a white core and a soft band of colour 50 cm wide by default (or the
 device's own radius); without Glow the core takes the light's colour. Light
 does not pass through walls or closed doors. In View the whole strip is one

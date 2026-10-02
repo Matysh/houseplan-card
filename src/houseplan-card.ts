@@ -6,7 +6,7 @@
  *  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
-import { ledAnchor, ledRuntime, ledStripsByMarker } from './led-strip-gate';
+import { ledAnchor, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
 import { ledButton, ledEditorFor, ledHistory, ledImportNote, ledSection, ledWallsNote } from './led-strip-card';
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { cache as litCache } from 'lit/directives/cache.js';
@@ -10509,7 +10509,8 @@ export class HouseplanCard extends LitElement {
 
   /** #780: the lazy LED chunk when the space shows a strip (ТЗ §13.1). */
   private _ledRt(space: SpaceModel) {
-    return ledStripsByMarker(space).size ? ledRuntime(space.id, () => this.requestUpdate()) : null;
+    return ledVisible(space, this._renderDevices, this._mode === 'devices' && this._showAll, this._serverCfg?.markers)
+      ? ledRuntime(space.id, () => this.requestUpdate()) : null;
   }
 
   /** #780: the Devices-editor LED tool, its own lazy chunk (src/led-strip-card.ts). */
@@ -10725,6 +10726,8 @@ export class HouseplanCard extends LitElement {
     const showGhosts = this._mode === 'devices' && this._showAll;
     const leds = ledStripsByMarker(space);
     const devs = this._renderDevices.filter((d) => d.space === space.id && (!d.hidden || showGhosts) && !leds.has(d.id));
+    // #780 r1 M1: a strip keeps its value badge at the anchor; no icon, pulse or slot.
+    const ledDevs = leds.size ? this._renderDevices.filter((d) => d.space === space.id && !d.hidden && leds.has(d.id)) : [];
     const deviceSnapshot = this._renderDeviceSnapshot;
     const disp = this._spaceDisplayForRender();
     const roomFills = this._resolvedRoomFills(space, disp);
@@ -11208,6 +11211,7 @@ export class HouseplanCard extends LitElement {
             ${keyed(space.id, repeat(devs, (d) => d.id, (d) => this._renderDevice(
               d, view, showLqi, isoOverlays?.devices.get(d.id),
             )))}
+            ${ledDevs.map((d) => this._ledBadge(d, view, isoOverlays?.devices.get(d.id)))}
             ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}
             ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view, isoOverlays?.locks)}
@@ -11799,6 +11803,16 @@ export class HouseplanCard extends LitElement {
     return html`
       ${trails.length ? svg`<svg class="vactrail" data-hp-live-viewbox="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}
       ${pucks}`;
+  }
+
+  /** #780 r1 M1: the value badge of a strip, passive, at its anchor (`_pos`). */
+  private _ledBadge(d: DevItem, view: { x: number; y: number; w: number; h: number }, iso?: IsoOverlayPlacement) {
+    const presentation = this._devicePresentation(d, false);
+    const face = presentation.haDisabled ? nothing : renderDeviceShadowFace(presentation);
+    if (face === nothing) return nothing;
+    const pos = this._pos(d), point = iso?.visualScene ?? [pos.x, pos.y];
+    return html`<div class="dev led-badge ${deviceThemeClass(this._renderPlanHass)}" data-led-badge=${d.id} aria-hidden="true"
+      style="left:${((point[0] - view.x) / view.w) * 100}%;top:${((point[1] - view.y) / view.h) * 100}%">${face}</div>`;
   }
 
   private _renderDevice(

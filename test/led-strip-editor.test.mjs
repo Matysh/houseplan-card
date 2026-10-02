@@ -270,3 +270,26 @@ test('ТЗ §4 п.9: the card’s LED history branch — stale clears, failure r
   assert.deepEqual(calls.splice(0), ['history.redone']);
   assert.equal(card._devicePositionBusy, false);
 });
+
+test('r1 M3: a space switch finishes the unfinished chain in its own space, never in the one shown now', async () => {
+  const { led, host, saves } = setup();
+  const shown = host._spaceModel();
+  led.layer(shown);
+  led.open();
+  click(led, 100, 100);
+  click(led, 300, 100);
+  click(led, 300, 300);
+  const other = { ...shown, id: 'other' };
+  host._spaceModel = () => other;
+  host._space = 'other';
+  led.layer(other); // the card renders the new space: the session resets
+  await settle();
+  await settle();
+  assert.equal(saves.length, 1, 'one write');
+  assert.equal(stripsOf(host, 's').length, 1, 'the chain is stored in the space it was drawn in');
+  assert.deepEqual(stripsOf(host, 'other'), [], 'nothing is written into the space shown now');
+  assert.equal(stripsOf(host, 's')[0].points.length, 3);
+  assert.equal(led.tool, false);
+  assert.equal(led.sel, null, 'no selection carried into the other space');
+  assert.equal(led.picker, null, 'no device picker over the other space');
+});

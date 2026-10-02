@@ -161,7 +161,8 @@ function nearestOnSegment(p: Pt, a: Pt, b: Pt): Pt {
 export class LedStripEditor {
   /** The tool is armed: clean clicks add points. */
   tool = false;
-  chain: { points: Pt[]; convert: string | null } | null = null;
+  /** The unfinished chain and the space it is drawn in (r1 M3: it is written there, never elsewhere). */
+  chain: { points: Pt[]; convert: string | null; space: string } | null = null;
   hover: Pt | null = null;
   stopped = false;
   sel: string | null = null;
@@ -258,7 +259,7 @@ export class LedStripEditor {
     this.tool = true;
     this.sel = null;
     this.picker = null;
-    this.chain = { points: [], convert };
+    this.chain = { points: [], convert, space: space.id };
     this.hover = null;
     this.stopped = false;
     this.host.requestUpdate();
@@ -364,7 +365,7 @@ export class LedStripEditor {
   private addPoint(e: PointerEvent): void {
     if (this.busy) return;
     const { bodies } = this.placement();
-    const chain = this.chain || (this.chain = { points: [], convert: null });
+    const chain = this.chain || (this.chain = { points: [], convert: null, space: this.host._spaceModel()?.id ?? '' });
     const last = chain.points[chain.points.length - 1] || null;
     let p = this.snapPoint(this.rawPoint(e), e.shiftKey, last);
     if (!last) {
@@ -404,15 +405,17 @@ export class LedStripEditor {
   /** Esc, a double click, a click on the first point, a tool or editor change. */
   async finish(): Promise<void> {
     const chain = this.chain;
-    const space = this.host._spaceModel();
     this.chain = null;
     this.hover = null;
     if (this.tool && chain?.convert) this.tool = false;
-    if (!chain || !space) { this.host.requestUpdate(); return; }
+    // r1 M3: the chain belongs to the space it was drawn in — a space switch
+    // finishes it THERE (by id), never into the space shown now.
+    if (!chain?.space) { this.host.requestUpdate(); return; }
     const stored = compactPoints(chain.points).map(scaleOut);
     if (!validStripPoints(stored)) {
       // Fewer than two distinct points: nothing is written, nothing converted.
-      if (this.tool) this.chain = { points: [], convert: null };
+      const here = this.host._spaceModel()?.id;
+      if (this.tool && here) this.chain = { points: [], convert: null, space: here };
       this.host.requestUpdate();
       return;
     }
@@ -421,11 +424,15 @@ export class LedStripEditor {
       ? { id, points: stored, marker: chain.convert, active: true }
       : { id, points: stored, marker: null };
     const ok = await this.write(this.t(chain.convert ? 'led.history_view' : 'led.history_draw'),
-      space.id, id, () => strip);
+      chain.space, id, () => strip);
     if (ok) {
       this.tool = false;
-      this.sel = id;
-      if (!chain.convert) this.picker = id; // bind now, or "Later"
+      // Selection and the device picker are session state of the space shown;
+      // after a switch the strip waits unbound in its own space (ТЗ §4 п.5, п.8).
+      if (this.host._spaceModel()?.id === chain.space) {
+        this.sel = id;
+        if (!chain.convert) this.picker = id; // bind now, or "Later"
+      }
     }
     this.host.requestUpdate();
   }

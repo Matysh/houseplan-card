@@ -704,7 +704,10 @@ and the device model stays the only owner of state and services. Four modules:
 | `led-strip-editor.ts` (+ `i18n/led`) | lazy `led-editor` | the Devices tool, tray, picker, representation switch, LED history commands |
 
 A View without a displayed active strip, and the Devices editor without the
-tool or an editable strip, load none of them. Each chunk checks the entry
+tool or an editable strip, load none of them. «Displayed» is decided before
+`import()` (`ledVisible`): an active strip bound to a live device of the
+space that is neither hidden nor HA-disabled — the stored marker is checked as
+well as the built device list (r1 M4). Each chunk checks the entry
 build fingerprint; a failed load is fail-dark for the strips only and retried
 on the next explicit entry. Budgets: `LAZY_LED_GZIP_CEILING` and
 `LAZY_LED_EDITOR_GZIP_CEILING` in `scripts/bundle-budget.mjs`.
