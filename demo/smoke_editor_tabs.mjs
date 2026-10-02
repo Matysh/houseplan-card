@@ -171,7 +171,9 @@ const res = await page.evaluate(async () => {
   out.devBar = !!sr().querySelector('.editbar.devbar');
   const deviceToolbarButtons = [...sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)')];
   const addDeviceButton = deviceToolbarButtons[0];
-  out.devBarBtns = deviceToolbarButtons.length === 5;
+  // #780: «LED strip» sits right after «Add».
+  out.devBarBtns = deviceToolbarButtons.length === 6
+    && deviceToolbarButtons[1]?.dataset.tool === 'led-strip';
   out.deviceHistoryControlsArePersistent = !!sr().querySelector('[data-device-position-history="undo"]')
     && !!sr().querySelector('[data-device-position-history="redo"]')
     && sr().querySelector('[data-device-position-history="undo"]').disabled
@@ -181,7 +183,7 @@ const res = await page.evaluate(async () => {
   out.addDeviceShortcut = addDeviceButton?.textContent.trim() === c._t('devbar.add')
     && addDeviceButton.title === c._t('title.add_device')
     && addDeviceButton.querySelector('ha-icon')?.getAttribute('icon') === 'mdi:plus-box-outline'
-    && deviceToolbarButtons[1]?.textContent.trim() === c._t('device_inbox.button');
+    && deviceToolbarButtons[2]?.textContent.trim() === c._t('device_inbox.button');
   const swapChrome = sr().querySelector('.editorchrome');
   const swapInner = swapChrome.querySelector('.editorchrome-inner');
   out.editorSwapAnimatesHeight = c._modeTransitionBusy
