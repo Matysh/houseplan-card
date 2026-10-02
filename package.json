@@ -30,6 +30,7 @@
     "benchmark:isometric-stage3-dense": "node demo/benchmark_large_house.mjs --profile=isometric-stage3-dense-v1",
     "benchmark:large-house-plan-snap": "node demo/benchmark_large_house.mjs --profile=large-house-plan-snap-v1",
     "benchmark:large-house-interaction": "node demo/benchmark_large_house.mjs --profile=large-house-interaction-v1",
+    "benchmark:led-strips": "node demo/benchmark_led_strips.mjs",
     "benchmark:glow": "node demo/benchmark_glow.mjs",
     "benchmark:compare": "node demo/performance/compare.mjs",
     "benchmark:optimize-geometry-preflight": "node demo/benchmark_optimize_geometry_preflight.mjs",

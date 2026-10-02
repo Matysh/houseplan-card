@@ -65,6 +65,8 @@ export interface OptimizePlansDialogPort {
   commit(config: ServerConfig, layout: DeviceLayout): Promise<void>;
   /** a write conflict reloads both stores before the error toast */
   reloadAfterConflict(): Promise<unknown>;
+  /** #780: strips passing through walls of the optimised result (lazy LED tool). */
+  ledNote(): TemplateResult | typeof nothing;
 }
 
 export function preflightDiagnostics(
@@ -462,6 +464,7 @@ export class OptimizePlansDialog {
                 n: String(r.nestedRefsUnresolved),
               })}</div>`
             : nothing}
+          ${this.port.ledNote()}
           ${referenceDetails.length
             ? html`<details class="optimize-details">
                 <summary>${this.port.t('gs.optimize_details')}</summary>

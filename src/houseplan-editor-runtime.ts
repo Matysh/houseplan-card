@@ -440,7 +440,9 @@ export interface HouseplanEditorHostPort {
   /** #780: the LED tool lives in its own lazy chunk; the card owns its loader. */
   _ledEditor: import('./led-strip-editor').LedStripEditor | null;
   _ledButton(): TemplateResult;
-  _ledSection(devId: string, leave: () => Promise<boolean>): TemplateResult | typeof nothing;
+  _ledSection(devId?: string): TemplateResult | typeof nothing;
+  /** No argument: strips through walls for «Optimize plans»; an import preview: its unbound-strip line. */
+  _ledNote(importPreview?: { unbound_led_strips?: number }): TemplateResult | typeof nothing;
   _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate?: boolean, warm?: boolean): void;
   _ackNewDevice: (id: string) => void;
   _activeWallChainId: string | null;
@@ -881,6 +883,7 @@ export class HouseplanEditorRuntime {
       clearGeometryGesture: () => this._clearGeometryGesture(),
       commit: (config, layout) => commitPlanOptimization(host, config, layout),
       reloadAfterConflict: () => Promise.all([host._reloadConfigOnly(true), host._reloadLayoutOnly()]),
+      ledNote: () => host._ledNote(),
     });
     host._editorSecondary = new EditorSecondaryController({
       root: () => host.renderRoot as ShadowRoot,
@@ -2247,7 +2250,7 @@ public _canAppendWallPoint(): boolean {
 
 public _markupClick(ev: MouseEvent): void {
     if (this.host._vacFit) return; // the fit overlay owns all pointer input
-    if (this.host._mode === 'devices') this.host._ledEditor?.backgroundClick(ev);
+    this.host._ledEditor?.backgroundClick(ev);
     if (!this.host._markup) return;
     const space = this.host._spaceModel();
     if (!space) {
@@ -9423,6 +9426,7 @@ public _renderBackupImportDialog(): TemplateResult {
           ${p.dropped_marker_links ? html`<div class="backupwarn">${this.host._t('backup.dropped_marker_links', {
             n: String(p.dropped_marker_links),
           })}</div>` : nothing}
+          ${this.host._ledNote(p)}
           ${draftMigration.room_drafts || draftMigration.room_draft_segments ? html`
             <div class="rhint">${this.host._t('backup.room_drafts_migrated', {
               drafts: String(draftMigration.room_drafts || 0),

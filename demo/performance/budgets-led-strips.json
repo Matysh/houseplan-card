@@ -1,0 +1,25 @@
+{
+  "profile": "led-strips-v1",
+  "issue": 780,
+  "note": "ТЗ #780 §13.2: absolute limits applied to median and p95; 10x5 rests on the interaction profile's absolute ceilings, 50x50 are the acceptance bounds set in the ТЗ. The no-strip control is judged by the existing interaction profile against base.",
+  "cacheEntries": 50,
+  "sizes": {
+    "10x5": {
+      "firstStableRenderMs": 3400,
+      "warmSpaceReadyMs": 1500,
+      "stateUpdateMs": 1000,
+      "panZoomMs": 500,
+      "panZoomLongTaskMaxMs": 150,
+      "retainedHeapBytes": 67108864
+    },
+    "50x50": {
+      "firstStableRenderMs": 5000,
+      "warmSpaceReadyMs": 1500,
+      "stateUpdateMs": 1500,
+      "panZoomMs": 500,
+      "panZoomLongTaskMaxMs": 150,
+      "retainedHeapBytes": 67108864
+    },
+    "none": {}
+  }
+}

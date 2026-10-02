@@ -1117,3 +1117,35 @@ authentication. Plans and marker files are served only by the authenticated
 Stored configs may still hold older `/houseplan_files/plans|files/…` URLs:
 `contentUrl()` rewrites them on every read and portable import accepts both
 prefixes, so there is no storage migration.
+
+## LED strips: `space.led_strips` (#780)
+
+```ts
+led_strips?: Array<{ id: string; points: [number, number][]; marker: string | null; active?: boolean }>;
+```
+
+- Optional; absent = no strips; no `model_version` bump. Coordinates are the
+  space's normalised coordinates (scalar JSON-noise cleanup only, no lattice
+  snap — a strip lies on real wall faces).
+- 2–50 points (a closed strip repeats its first point and needs three distinct
+  vertices), non-zero length, finite coordinates; at most 50 records per space
+  **including** hidden shapes; unique `id` per space; at most one record per
+  marker in the whole config. `active` is a strict boolean; `false` needs a
+  marker.
+- **Write-path normalisation** (`led_strips.py`, after structure/duplicate
+  checks, before referential validation, one transaction): a link to a marker
+  that is missing (deleted, tombstoned) becomes `marker: null, active: true`
+  with id and points kept; an existing live marker with an empty `space`
+  adopts the strip's space. A non-empty foreign `space` or a second link
+  still rejects the whole write. `config/set` reports the counts
+  `{led_strips: {unbound, space_adopted}}`; older clients may ignore them.
+- **Older clients** keep the unknown array on an ordinary save; deleting a
+  bound marker succeeds and leaves an unbound strip.
+- **Transfer.** Full export/import keeps geometry, links and `active`. A
+  space import remaps links through the same marker-id map as the devices;
+  a strip whose marker did not travel (skipped duplicate, absent) arrives
+  unbound — the count is in the import summary. «Plan only» export drops every
+  link (`marker: null, active: true`).
+- **Diagnostics** count strips, unbound and hidden ones only — no ids,
+  coordinates, room names or HA identifiers.
+- **Optimize plans** reports strips passing through walls and never edits them.

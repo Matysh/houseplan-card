@@ -13741,9 +13741,8 @@ const MUTANT_DEFINITIONS = [
       + 'Перевёрнутое условие закрывает «грязный» диалог молча и спрашивает у чистого',
     patches: [{
       file: 'src/editors/marker-dialog.ts',
-      // #780: the guard is the dialog's shared `leave` (close and the LED representation switch).
-      find: "      if (edit && dirty && !await this.host._confirmDanger({",
-      replace: "      if ((!edit || !dirty) && !await this.host._confirmDanger({",
+      find: "      if (!edit || !dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }",
+      replace: "      if (!edit || dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }",
     }],
   },
   {
@@ -14233,6 +14232,146 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/review-doc-guard.mjs',
       find: "    ? body.slice(0, at).replace(/(?:\\s*\\n---)*\\s*$/, '')",
       replace: "    ? body.slice(0, at).replace(/\\s+$/, '')",
+    }],
+  },
+  {
+    id: 'led-icon-not-suppressed',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: "#780 ТЗ §5: a marker shown as an LED strip draws no ordinary icon; the old icon must not stay under the stripe",
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "(d) => d.space === space.id && (!d.hidden || showGhosts) && !leds.has(d.id));",
+      replace: "(d) => d.space === space.id && (!d.hidden || showGhosts));",
+    }],
+  },
+  {
+    id: 'led-source-stays-round-at-anchor',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: "#780 ТЗ §3: the strip is a linear source — no second round pool from its anchor",
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "      if (leds.has(key.slice(space.id.length + 1))) continue;\n",
+      replace: "\n",
+    }],
+  },
+  {
+    id: 'led-auto-slot-reserved',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: "#780 ТЗ §5: a marker represented by a strip reserves no auto-grid slot",
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "d.space === s.id && !leds.has(d.id));",
+      replace: "d.space === s.id);",
+    }],
+  },
+  {
+    id: 'led-default-radius-shared',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/led-strip-runtime.test.mjs',
+    because: "#780 ТЗ §3: the field radius is 50 cm by default, independent of the shared radius of ordinary sources",
+    patches: [{
+      file: 'src/led-strip-geometry.ts',
+      find: "export const LED_DEFAULT_RADIUS_CM = 50;",
+      replace: "export const LED_DEFAULT_RADIUS_CM = 360;",
+    }],
+  },
+  {
+    id: 'led-core-coloured-under-glow',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: "#780 ТЗ §3: with Glow the core stays white and the colour is the field; only without Glow the core takes the source colour",
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: ": view.state === 'on' && !view.glow && view.appearance ? view.appearance.c : CORE_IDLE;",
+      replace: ": view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;",
+    }],
+  },
+  {
+    id: 'led-wall-offset-removed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/led-strip-geometry.test.mjs',
+    because: "#780 AC8: on a thick face the visible stripe moves t/2 into the free floor",
+    patches: [{
+      file: 'src/led-strip-geometry.ts',
+      find: "    const shift = piece.free ? [piece.free[0] * offset, piece.free[1] * offset] : [0, 0];",
+      replace: "    const shift = [0, 0];",
+    }],
+  },
+  {
+    id: 'led-emits-from-body',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/led-strip-geometry.test.mjs',
+    because: "#780 ТЗ §6: a part of the strip inside a body emits nothing",
+    patches: [{
+      file: 'src/led-strip-geometry.ts',
+      find: "      if (ctx && ctx.inside(s)) continue;\n",
+      replace: "\n",
+    }],
+  },
+  {
+    id: 'led-long-polyline-loses-vertices',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/led-strip-geometry.test.mjs',
+    because: "#780 AC10: every segment of a long polyline emits — no vertex beyond the first eight is dropped",
+    patches: [{
+      file: 'src/led-strip-geometry.ts',
+      find: "  for (const piece of stripPieces(points, ctx)) {\n    const len = dist(piece.a, piece.b);",
+      replace: "  for (const piece of stripPieces(points, ctx).slice(0, 8)) {\n    const len = dist(piece.a, piece.b);",
+    }],
+  },
+  {
+    id: 'led-pan-adds-point',
+    guard: 'node demo/smoke_led_strip_draw.mjs',
+    because: "#780 AC4: a pan or pinch is no clean click and adds no chain point",
+    patches: [{
+      file: 'src/led-strip-editor.ts',
+      find: "    const clean = !!start && !this.gesture && e.button === 0",
+      replace: "    const clean = !!start && e.button === 0",
+    }],
+  },
+  {
+    id: 'led-pinch-calls-action',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: "#780 AC4: the stripe shares the card gesture owner, so a pan over it calls no service",
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: "          @pointerdown=${(e: PointerEvent) => h.pointerdown(e, own(e))}\n"
+        + "          @pointermove=${(e: PointerEvent) => h.pointermove(e, own(e))}\n"
+        + "          @pointerup=${(e: PointerEvent) => h.pointerup(e, own(e))}",
+      replace: "          @pointerdown=${(e: PointerEvent) => { e.stopPropagation(); h.pointerdown(e, own(e)); }}\n"
+        + "          @pointermove=${(e: PointerEvent) => e.stopPropagation()}\n"
+        + "          @pointerup=${(e: PointerEvent) => { e.stopPropagation(); h.pointerup(e, own(e)); }}",
+    }],
+  },
+  {
+    id: 'led-binding-not-unique',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/led-strip-editor.test.mjs',
+    because: "#780 ТЗ §5: a marker bound to another strip cannot be taken silently",
+    patches: [{
+      file: 'src/led-strip-editor.ts',
+      find: "    if (owner && owner.strip.id !== stripId) { this.host._showToast(this.t('led.taken')); return; }",
+      replace: "    void owner;",
+    }],
+  },
+  {
+    id: 'led-unbound-in-view',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: "#780 ТЗ §5: an unbound strip has no View representation, light or target",
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: "    if (!device || device.space !== input.space.id) continue;",
+      replace: "    if (device && device.space !== input.space.id) continue;",
+    }],
+  },
+  {
+    id: 'led-transfer-remap-ignored',
+    guard: 'node scripts/backend-test-guard.mjs issue_780_space_import_remaps '
+      + 'tests_backend/test_ha_import_export.py',
+    because: '#780 ТЗ §9: a transferred strip follows the marker-id remap; a coinciding old id never binds it',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '    unbound_led_strips = unbind_strips(space, remap={\n        old_id: new_id for old_id, new_id in marker_map.items()',
+      replace: '    unbound_led_strips = unbind_strips(space, remap={\n        old_id: old_id for old_id, new_id in marker_map.items()',
     }],
   },
 ];

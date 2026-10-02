@@ -249,6 +249,22 @@ layer you cannot see is a layer you cannot edit.
   👁 "Show hidden" (local editor tool; replaced the shared show-all toggle),
   ⬡ icon rules.
 
+- **LED strip** (#780) — the only place a strip is drawn or edited. The tool
+  sits next to «Add»; it is a temporary drawing mode inside Devices, not a
+  separate editor. Clean clicks add points (pan, pinch, a second finger,
+  cancel and the synthetic click after navigation never do), snapping to the
+  grid and to physical wall faces / zero-wall axes; a new segment stops at
+  the first face of masonry, a partition, a column or a window. `Ctrl/Cmd+Z`
+  removes the chain's own point first, `Esc` finishes. A finished strip opens
+  the device picker. A clicked strip is selected (session state only) and
+  shows vertex handles and the LED branch of the secondary tray. An ordinary
+  icon clicked while a strip is selected still opens its own dialog. The
+  device dialog switches the representation («Show as LED strip» / «Show as
+  icon»). Geometry and representation changes are LED commands of the same
+  device history; the stack still never absorbs marker settings or
+  Plan/Background edits. Plan and Background show strips as a passive
+  translucent mark only — no tool, handles or targets.
+
 ## Background — the decor underlay
 
 - Toolbar tools: Select / optional Plan backdrop / Line / Rectangle / Oval /

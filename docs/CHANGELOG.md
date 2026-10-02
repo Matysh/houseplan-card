@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- LED strips: in the Devices editor, the new «LED strip» tool next to «Add»
+  draws a strip on the plan point by point — it snaps to the grid and to wall
+  faces and stops at walls, windows and columns, passing doors and passages.
+  Bind it to a light (or any device) and the strip replaces the device's icon:
+  a two-stroke stripe that, when the light is on with Glow, casts a soft
+  continuous band of its colour (50 cm by default) that does not pass through
+  walls or closed doors; without Glow the stripe itself takes the light's
+  colour. In the View the whole strip is one tap target, also in 2.5D and on
+  the space card (light only with `light_pools`). Any device can switch between
+  «Show as LED strip» and «Show as icon» in its settings; the shape is kept
+  and comes back without redrawing. Drawing, editing vertices and switching are
+  part of Undo/Redo; full and space exports keep the strips, a deleted device
+  leaves an unbound strip, and «Optimize plans» reports strips passing through
+  walls ([#780](https://github.com/Matysh/houseplan-card/issues/780)).
+
 ## v1.79.0-beta.2 — 2026-10-02
 
 - Recreating the card in Home Assistant now keeps the editor camera steady and the

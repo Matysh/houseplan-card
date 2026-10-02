@@ -545,6 +545,20 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     migration: 'v9 migration resolves opening-vs-zero-wall conflicts (#316)',
     compatibility: 'v8 configs without partition hosts stay valid',
   },
+  {
+    id: 'spaces[].led_strips',
+    selector: { path: ['spaces', '*', 'led_strips'] },
+    storage: 'House Plan server config',
+    type: "Array<{ id, points: [x, y][], marker: string | null, active?: boolean }>",
+    default: 'absent = no strips',
+    level: 'space',
+    ui: 'Devices editor: LED strip tool, LED tray, device dialog «Show as LED strip / icon» (#780)',
+    runtime: 'LED stripe and linear Glow field (lazy chunks), anchor of the bound marker, static card',
+    introduced: 'v1.79.0',
+    status: 'current',
+    migration: 'none: optional array, no model_version bump; orphan links normalise to unbound geometry on write',
+    compatibility: 'older clients keep the unknown array; deleting a bound marker unbinds the strip instead of failing',
+  },
 ]);
 
 export const CONFIG_FIELD_STATUSES = Object.freeze([

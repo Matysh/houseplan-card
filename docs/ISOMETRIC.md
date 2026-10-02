@@ -292,6 +292,16 @@ Room names remain screen-facing and lose stroke, text shadow, drop shadow and
 halo. Iso uses `#303936` on a light presentation and `#f2f0e8` on a dark one;
 contrast comes from colour, never an outline.
 
+## LED strips in 2.5D (#780)
+
+An LED stripe is projected with the plan like a device tile: the body is
+raised by `ISO_TILE.lift` (0.075 D), its edge is swept `ISO_TILE.depth`
+(0.1 D) below in `isoEdgeColor`, and an inert blurred floor shadow from
+`isoTileShadow` follows theme and floor; D takes the shared `ISO_ICON_SCALE`.
+The linear field stays on the floor plane; the hit path moves with the raised
+body. Everything is in plan units, so zoom never detaches vertices or the
+target. Editors and `houseplan-space-card` keep Flat.
+
 ## Stage 6: public mode, tiles, sun and materials (#649)
 
 The visual language and the numbers come from the designer lab (sketch 07,

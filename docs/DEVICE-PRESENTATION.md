@@ -110,6 +110,22 @@ cover → light sources → device role, шторы и медиаплееры) �
 только тогда, когда меняет победившее решение или наблюдаемый результат; полное
 декартово произведение binding × source × display × activity запрещено.
 
+## LED strip representation (#780)
+
+A marker may be shown as an LED strip instead of an icon (`space.led_strips`,
+`active` ≠ `false`). It is the same device: name, `hidden`, light source and
+state, `tap_*`, confirmation, `controls`, light colour/brightness/radius and
+the value badge keep working; the individual `display`, `size`, `angle`,
+`ripple_*` neither shape the strip nor get erased, and apply again on «Show as
+icon». While shown as a strip the icon is not drawn, its saved position and
+auto-grid slot are not used; the anchor — the point at half the polyline
+length — replaces the position for the room, tooltip, label and badge (an
+explicit valid `room_id` wins). A hidden shape (`active: false`) changes
+nothing: the icon works normally. No pulses and no alarm red on the stripe.
+`hidden` / HA-disabled suppress the stripe, its target and its light like an
+icon; temporarily unavailable keeps it as a dashed grey stripe. In the device
+catalogue the marker stays «On the plan».
+
 ## Implementation notes
 
 - `device-value-badge.ts` owns candidate discovery, source keys, HA formatting,

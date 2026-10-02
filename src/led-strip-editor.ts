@@ -55,6 +55,8 @@ export interface LedEditorHost {
   _devices: DevItem[];
   _suppressClick: boolean;
   _markerDialog: { devId?: string } | null;
+  _dangerConfirm: unknown;
+  renderRoot: ParentNode;
   _editorRuntime: LedEditorRuntime | null;
   _cellCm: number;
   _gridPitch: number;
@@ -74,6 +76,8 @@ export interface LedEditorHost {
   _openCuts(): number[][];
   _roomWallOpeningInputs(openings: Opening[], space: SpaceModel): Array<{ x: number; y: number; angle: number; length: number }>;
   _partitionOpeningCuts(space: SpaceModel, accept: (opening: OpeningCfg) => boolean): unknown[];
+  _checkSpacePhysicalGeometry(config: ServerConfig, spaceId: string,
+    capture: (geometry: { geom: unknown; components: ReadonlyArray<{ geom: unknown }> }) => void): unknown;
   _rollbackOptimistic(attempt: OptimisticAttempt<ServerConfig>): boolean;
   _maybeRebuildDevices(): void;
   _showToast(message: string): void;
@@ -117,6 +121,26 @@ function ownerOf(cfg: ServerConfig | null | undefined, markerId: string) {
     if (strip) return { spaceId: space.id, strip };
   }
   return null;
+}
+
+/** Opaque bodies from polygon geometries; a point on a face is outside (touching and sliding work). */
+function bodiesOf(geoms: unknown[], eps: number): PlacementBodies {
+  const rings = geoms.flatMap((geom) => geometryAllRings(geom)).map((ring) => ring.map((p) => [p[0], p[1]] as Pt));
+  const nearFace = (p: Pt) => rings.some((ring) => ring.some((a, i) => {
+    const q = nearestOnSegment(p, a, ring[(i + 1) % ring.length]);
+    return Math.hypot(p[0] - q[0], p[1] - q[1]) <= eps;
+  }));
+  return {
+    rings,
+    inside: (p) => geoms.some((geom) => pointInPhysicalGeometry([p[0], p[1]], geom)) && !nearFace(p),
+  };
+}
+
+/** A stored strip passes through a body: a point inside, or a segment that enters one. */
+export function stripCrossesBodies(points: readonly number[][], bodies: PlacementBodies): boolean {
+  const pts = points.map(scaleIn);
+  return pts.some((p) => bodies.inside(p))
+    || pts.slice(1).some((p, i) => !!clampToBodies(pts[i], p, bodies)?.stopped);
 }
 
 function snap45(from: Pt, to: Pt): Pt {
@@ -198,19 +222,11 @@ export class LedStripEditor {
     } catch {
       geoms = []; // fail-open for placement only: light keeps its own barriers
     }
-    const rings = geoms.flatMap((geom) => geometryAllRings(geom)).map((ring) => ring.map((p) => [p[0], p[1]] as Pt));
-    const eps = host._gridPitch * 1e-4;
-    const nearFace = (p: Pt) => rings.some((ring) => ring.some((a, i) => {
-      const q = nearestOnSegment(p, a, ring[(i + 1) % ring.length]);
-      return Math.hypot(p[0] - q[0], p[1] - q[1]) <= eps;
-    }));
-    // Strict interior: a point on a face is outside, so touching and sliding along work.
-    const inside = (p: Pt) => geoms.some((geom) => pointInPhysicalGeometry([p[0], p[1]], geom)) && !nearFace(p);
     const guides = space.rooms.flatMap((room) => {
       const poly = roomPoly(room);
       return poly ? [poly.map((p) => [p[0], p[1]] as Pt)] : [];
     });
-    this.bodyCache = { key, bodies: { rings, inside }, guides };
+    this.bodyCache = { key, bodies: bodiesOf(geoms, host._gridPitch * 1e-4), guides };
     return this.bodyCache;
   }
 
@@ -295,7 +311,7 @@ export class LedStripEditor {
 
   /** A clean click on the free background drops the selection (ТЗ §4 п.8). */
   backgroundClick(ev: MouseEvent): void {
-    if (!this.sel || this.tool || this.host._suppressClick) return;
+    if (!this.sel || this.tool || this.host._suppressClick || this.host._mode !== 'devices') return;
     const path = (ev.composedPath?.() || []) as Element[];
     // Only the plan itself is background: not the tray, a dialog, a strip or a handle.
     if (!path.some((node) => node?.classList?.contains?.('zoomwrap'))
@@ -454,6 +470,8 @@ export class LedStripEditor {
       if (marker && !marker.space) marker.space = spaceId;
     }
     candidate = this.rt._prepareConfigCandidate(candidate);
+    // The command keeps the record as stored (after canonicalisation), so Undo can recognise it.
+    const stored = clone(stripsOf(candidate, spaceId).find((item) => item.id === stripId) || null);
     const attempt = this.host._adoption.beginOptimistic(cfg, candidate);
     this.host._adoption.stageLocalConfig(candidate);
     if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.cancel();
@@ -467,7 +485,7 @@ export class LedStripEditor {
         this.host._devicePositionHistory.push({
           name,
           before: { kind: 'led', spaceId, stripId, strip: before } satisfies LedHistoryState,
-          after: { kind: 'led', spaceId, stripId, strip: after } satisfies LedHistoryState,
+          after: { kind: 'led', spaceId, stripId, strip: stored } satisfies LedHistoryState,
         });
       }
       return true;
@@ -779,16 +797,58 @@ export class LedStripEditor {
     </hp-dialog>`;
   }
 
+  /** Close the device dialog through its own `hp-close` path (save/discard guard). */
+  private async leaveDialog(): Promise<boolean> {
+    const dialog = this.host.renderRoot.querySelector('#marker-dialog');
+    dialog?.dispatchEvent(new CustomEvent('hp-close'));
+    const tick = () => new Promise((resolve) => setTimeout(resolve, 30));
+    await tick();
+    while (this.host._dangerConfirm) await tick();
+    await tick();
+    return !this.host._markerDialog;
+  }
+
+  private crossings = new WeakMap<object, { n: number; spaces: string[] }>();
+
+  /**
+   * «Optimize plans» reports strips passing through walls (ТЗ §6, AC16) and
+   * changes none of them: each space of the optimised result is measured
+   * against its own wall bodies (doors cut; windows, partitions, columns solid).
+   */
+  wallsNote(config: ServerConfig): TemplateResult | typeof nothing {
+    let found = this.crossings.get(config);
+    if (!found) {
+      found = { n: 0, spaces: [] };
+      for (const space of config.spaces as Array<Strips & { title?: string }>) {
+        const strips = (space.led_strips || []).filter((strip) => validStripPoints(strip.points));
+        if (!strips.length) continue;
+        let geoms: unknown[] = [];
+        try {
+          this.host._checkSpacePhysicalGeometry(config, space.id, (geometry) => {
+            geoms = [geometry.geom, ...geometry.components.map((c) => c.geom)];
+          });
+        } catch { continue; }
+        const bodies = bodiesOf(geoms, this.host._gridPitch * 1e-4);
+        const n = strips.filter((strip) => stripCrossesBodies(strip.points, bodies)).length;
+        if (n) { found.n += n; found.spaces.push(String(space.title || space.id)); }
+      }
+      this.crossings.set(config, found);
+    }
+    return found.n ? html`<div class="rhint" data-led-walls=${found.n}>${this.t('led.optimize_walls',
+      { n: found.n, spaces: found.spaces.join(', ') })}</div>` : nothing;
+  }
+
   /**
    * The representation section of the device dialog (ТЗ §5): "Show as LED
    * strip" (restoring a hidden shape at once, or drawing one) or "Show as
-   * icon"; for a hidden shape also unbind/delete. `leave` runs the dialog's
-   * own save/discard guard and closes it; false keeps the dialog.
+   * icon"; for a hidden shape also unbind/delete. The dialog is left through
+   * its own close path first — the shared save/discard guard decides, and a
+   * kept dialog cancels the action.
    */
-  markerSection(devId: string, leave: () => Promise<boolean>): TemplateResult {
+  markerSection(devId: string): TemplateResult {
     const owner = ownerOf(this.host._serverCfg, devId);
     const active = !!owner && owner.strip.active !== false;
-    const then = (action: () => unknown) => async () => { if (await leave()) await action(); };
+    const then = (action: () => unknown) => async () => { if (await this.leaveDialog()) await action(); };
     const button = (name: string, icon: string, text: string, run: () => unknown, cls = 'ghost') =>
       html`<button class="btn ${cls}" type="button" data-led-action=${name} ?disabled=${this.busy}
         @click=${then(run)}><ha-icon icon=${icon}></ha-icon>${text}</button>`;

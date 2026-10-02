@@ -1245,6 +1245,7 @@
   "backup.binding_status": "Zielstatus — aktiv: {active}, deaktiviert: {disabled}, fehlt: {missing}",
   "backup.missing_areas": "Auf dem Ziel fehlende Bereiche: {areas}",
   "backup.dropped_marker_links": "Planlicht-Verknüpfungen außerhalb dieses übertragenen Bereichs wurden ausgelassen: {n}.",
+  "backup.unbound_led_strips": "LED-Streifen ohne Gerät nach dem Import: {n}",
   "backup.room_drafts_migrated": "Alte unvollständige Konturen wurden in normale Wände umgewandelt: {drafts}; Wandsegmente: {segments}.",
   "backup.repaired_target_refs": "Durch den Import dieses Bereichs wiederhergestellte vorhandene Referenzen: {n}.",
   "backup.preserved_unresolved_refs": "Referenzen, die nicht eindeutig wiederhergestellt werden konnten, wurden beibehalten: {n}.",

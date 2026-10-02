@@ -30,6 +30,5 @@
   "led.history_draw": "Ruban LED",
   "led.history_shape": "Forme du ruban LED",
   "led.history_view": "Représentation de l’appareil",
-  "led.import_unbound": "Rubans sans appareil après l’import : {n}",
   "led.optimize_walls": "Rubans traversant des murs : {n} ({spaces})"
 }

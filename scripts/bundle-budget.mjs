@@ -669,6 +669,16 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 export const LAZY_ONBOARDING_GZIP_CEILING = 28_396;
 
 /**
+ * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
+ * an existing ceiling. Measured on the production build at the hand-off
+ * (runtime + linear field + shared geometry 8 698 B; Devices-editor tool +
+ * its English dictionary + shared geometry 9 913 B), plus 10 %, rounded up to
+ * a KiB. Absolute walls: a View without strips loads neither graph.
+ */
+export const LAZY_LED_GZIP_CEILING = 10 * 1024;
+export const LAZY_LED_EDITOR_GZIP_CEILING = 11 * 1024;
+
+/**
  * Потолок ленивого графа: `null`, пока значение внутри полосы.
  *
  * Отдельная функция, а не параметр `initialViewCeilingViolation`: текст отказа
@@ -749,6 +759,21 @@ export function assertBundleBudget(
   if (manifest.lazyEditorFiles.some((path) => manifest.lazyMoonFiles.includes(path))) {
     throw new Error('lazy editor graph overlaps lazy moon graph');
   }
+  // #780 ТЗ §13.1: the LED runtime/field and the LED tool are lazy, own-budget
+  // graphs; neither enters the first frame or the static editor graph.
+  for (const [files, bytes, ceiling, label] of [
+    [manifest.lazyLedFiles, manifest.lazyLedGzipBytes, LAZY_LED_GZIP_CEILING, 'lazy LED graph'],
+    [manifest.lazyLedEditorFiles, manifest.lazyLedEditorGzipBytes, LAZY_LED_EDITOR_GZIP_CEILING, 'lazy LED editor graph'],
+  ]) {
+    if (!files?.length) throw new Error(`bundle has no ${label}`);
+    if (manifest.initialViewFiles.some((path) => files.includes(path))) {
+      throw new Error(`initial View graph overlaps ${label}`);
+    }
+    if (manifest.lazyEditorFiles.some((path) => /\/led-strip-/.test(path) && files.includes(path))) {
+      throw new Error(`lazy editor graph overlaps ${label}`);
+    }
+    if (bytes > ceiling) throw new Error(`${label} ${bytes} B gzip exceeds its ${ceiling} B ceiling`);
+  }
   // #474: designer furniture artwork is lazy; a static import anywhere in the
   // View graph would pull ~10 KB gzip back into the initial graph silently.
   if (!manifest.lazyFurnitureArtFiles?.length) {
@@ -822,6 +847,8 @@ export function assertBundleBudget(
     lazyFurnitureArtGzipBytes: manifest.lazyFurnitureArtGzipBytes,
     lazyPdfGzipBytes: manifest.lazyPdfGzipBytes,
     lazyMoonGzipBytes: manifest.lazyMoonGzipBytes,
+    lazyLedGzipBytes: manifest.lazyLedGzipBytes,
+    lazyLedEditorGzipBytes: manifest.lazyLedEditorGzipBytes,
   };
 }
 
@@ -857,6 +884,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
       `lazy isometric: ${result.lazyIsometricGzipBytes} B gzip`,
       `lazy PDF: ${result.lazyPdfGzipBytes} B gzip`,
       `lazy moon: ${result.lazyMoonGzipBytes} B gzip`,
+      `lazy LED: ${result.lazyLedGzipBytes} B gzip (потолок ${LAZY_LED_GZIP_CEILING} B)`,
+      `lazy LED editor: ${result.lazyLedEditorGzipBytes} B gzip (потолок ${LAZY_LED_EDITOR_GZIP_CEILING} B)`,
     ];
     for (const line of lines) console.log(line);
     const warning = lowHeadroomWarning(headroom);

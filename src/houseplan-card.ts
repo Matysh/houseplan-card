@@ -7,7 +7,7 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { ledAnchor, ledRuntime, ledStripsByMarker } from './led-strip-gate';
-import { ledButton, ledEditorFor, ledHistory, ledSection } from './led-strip-card';
+import { ledButton, ledEditorFor, ledHistory, ledImportNote, ledSection, ledWallsNote } from './led-strip-card';
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { cache as litCache } from 'lit/directives/cache.js';
 import { keyed } from 'lit/directives/keyed.js';
@@ -5232,7 +5232,8 @@ export class HouseplanCard extends LitElement {
         // HA-disabled saved markers stay in the roster: they render nowhere
         // outside the service ghost, but reserve their old auto-grid slot so
         // temporary deactivation cannot shuffle visible neighbours.
-        const leds = ledStripsByMarker(s);
+        // #780: read the stored strips (the model may lag one adoption behind).
+        const leds = ledStripsByMarker(this._serverCfg?.spaces.find((x) => x.id === s.id) ?? s);
         const ds = this._devices.filter((d) => d.area === r.area && d.space === s.id && !leds.has(d.id));
         if (!ds.length) continue;
         const b = this._roomBounds(r);
@@ -10515,7 +10516,8 @@ export class HouseplanCard extends LitElement {
   public _ledEditor: import('./led-strip-editor').LedStripEditor | null = null;
   private _ledEd(entry: string) { return ledEditorFor(this as never, entry); }
   public _ledButton() { return ledButton(this as never); }
-  public _ledSection(devId: string, leave: () => Promise<boolean>) { return ledSection(this as never, devId, leave); }
+  public _ledSection(devId?: string) { return devId ? ledSection(this as never, devId) : nothing; }
+  public _ledNote(preview?: { unbound_led_strips?: number }) { return preview ? ledImportNote(this as never, preview.unbound_led_strips) : ledWallsNote(this as never); }
 
   private _renderSettingsDialog(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderSettingsDialog();

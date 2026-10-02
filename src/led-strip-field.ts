@@ -13,15 +13,34 @@
  * lights through another part's visibility, a closed strip has no seam and a
  * corner no double brightness.
  */
-import { svg, type TemplateResult } from 'lit';
+import { noChange, nothing, svg, type TemplateResult } from 'lit';
+import { Directive, directive, type PartInfo } from 'lit/directive.js';
 import { repeat } from 'lit/directives/repeat.js';
 import {
-  GLOW_FALLOFF, buildGlowClipGeometry, type LightBarrierScene, type LightRoomPolygon,
+  GLOW_FALLOFF, type LightBarrierScene, type LightRoomPolygon,
 } from './glow-scene';
+import { visibilityPolygon } from './light-visibility';
 import {
   compactPoints, emitterSamples, isClosedStrip, type FaceContext, type Pt,
 } from './led-strip-geometry';
 import type { LedStripView } from './led-strip-runtime';
+
+/**
+ * `guard` without its own shared chunk: an unchanged field (same cached
+ * geometry, state and colour) is not diffed again on a camera move or an
+ * unrelated HA tick.
+ */
+class Memo extends Directive {
+  private deps: readonly unknown[] | null = null;
+  constructor(part: PartInfo) { super(part); }
+  render(_deps: readonly unknown[], build: () => unknown): unknown { return build(); }
+  update(_part: unknown, [deps, build]: [readonly unknown[], () => unknown]): unknown {
+    if (this.deps && this.deps.length === deps.length && deps.every((dep, i) => dep === this.deps![i])) return noChange;
+    this.deps = deps;
+    return build();
+  }
+}
+const memo = directive(Memo);
 
 export const LED_FIELD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -32,7 +51,8 @@ const pts = (points: readonly number[][]): Pt[] => points.map((p) => [p[0], p[1]
 
 interface FieldPiece {
   d: string;
-  clip: string[];
+  /** Visibility fans of the piece's emitters; `null` = nothing blocks within the radius. */
+  clip: string[] | null;
 }
 
 interface FieldGeometry {
@@ -48,8 +68,15 @@ export class LedFieldCache {
   get size(): number { return this.entries.size; }
   /** Recompute counter for the performance witness: geometry, not paint. */
   recomputes = 0;
+  /** Stable DOM ids per strip of the shown space: a re-render rebuilds no masks. */
+  private ids = new Map<string, number>();
+  id(stripId: string): number {
+    let id = this.ids.get(stripId);
+    if (id == null) { id = this.ids.size + 1; this.ids.set(stripId, id); }
+    return id;
+  }
   forSpace(spaceId: string): void {
-    if (spaceId !== this.space) { this.entries.clear(); this.space = spaceId; }
+    if (spaceId !== this.space) { this.entries.clear(); this.ids.clear(); this.space = spaceId; }
   }
   read(key: string, build: () => FieldGeometry | null): FieldGeometry | null {
     if (this.entries.has(key)) {
@@ -68,17 +95,62 @@ export class LedFieldCache {
     }
     return value;
   }
-  clear(): void { this.entries.clear(); this.space = ''; }
+  clear(): void { this.entries.clear(); this.ids.clear(); this.space = ''; }
 }
 
 const pointsKey = (points: readonly number[][]): string =>
   points.map((p) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join(';');
 
+/** Fans of the field: a coarser arc than pools — the far rim sits where the falloff is 0. */
+const LED_ARC_STEPS = 32;
+
+const segmentDistance = (p: Pt, s: readonly number[]): number => {
+  const dx = s[2] - s[0], dy = s[3] - s[1];
+  const len2 = dx * dx + dy * dy;
+  const t = len2 ? Math.max(0, Math.min(1, ((p[0] - s[0]) * dx + (p[1] - s[1]) * dy) / len2)) : 0;
+  return Math.hypot(p[0] - s[0] - t * dx, p[1] - s[1] - t * dy);
+};
+
+const ringPath = (ring: readonly number[][]): string =>
+  `${ring.map((p, k) => `${k ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' ')} Z`;
+
 /**
- * Pieces of a strip for the field: stored segments cut to at most the radius,
- * each with the union of what its own emitters see (ТЗ §6). A piece whose
- * emitters are all inside a body emits nothing; a failed clip makes that piece
- * dark (fail-dark), never an unclipped field.
+ * What a piece's emitters can see (ТЗ §6): the visibility fans of the shared
+ * `visibilityPolygon` with the scene's occluders, kept as separate paths of
+ * one clipPath (SVG unions the children) — no boolean pass per piece. `null`
+ * means no occluder is within the radius of any emitter: every fan is a full
+ * disc and the 2r-wide bands already bound the light. The floor itself is one
+ * clip of the whole field layer (`fieldFloor`).
+ */
+function fans(emitters: readonly Pt[], radius: number, scene: LightBarrierScene): string[] | null {
+  const reach = radius * 1.01;
+  if (!scene.occluders.some((seg) => seg?.length >= 4
+      && emitters.some((p) => segmentDistance(p, seg) < reach))) return null;
+  return emitters
+    .map((p) => visibilityPolygon([p[0], p[1]], radius, scene.occluders, LED_ARC_STEPS))
+    .filter((fan) => fan.length >= 3)
+    .map(ringPath);
+}
+
+/** The floor clip of the whole field layer, built once per scene. */
+const floorPaths = new WeakMap<LightBarrierScene, string[]>();
+function fieldFloor(scene: LightBarrierScene): string[] {
+  let paths = floorPaths.get(scene);
+  if (!paths) {
+    paths = scene.floor.filter((ring) => ring.length >= 3).map(ringPath);
+    floorPaths.set(scene, paths);
+  }
+  return paths;
+}
+
+/**
+ * Pieces of a strip for the field (ТЗ §6, §13.2): the stored polyline is cut
+ * into consecutive pieces no longer than the radius — short segments of a
+ * dense strip share one piece, a long one is split — and every piece is
+ * clipped to the union of what its own emitters see. Emitters keep every
+ * vertex and the radius/4 spacing of `emitterSamples`, thinned to radius/4 on
+ * dense strips; a piece whose emitters are all inside a body emits nothing; a
+ * failed clip makes that piece dark, never an unclipped field.
  */
 export function buildFieldGeometry(input: {
   points: readonly number[][];
@@ -91,38 +163,44 @@ export function buildFieldGeometry(input: {
   const path = compactPoints(pts(input.points));
   if (path.length < 2 || !(input.radius > 0)) return null;
   const r = input.radius;
+  // Consecutive pieces of at most r along the polyline.
+  const runs: Pt[][] = [];
+  let run: Pt[] = [path[0]];
+  let left = r;
+  for (let i = 1; i < path.length; i++) {
+    let a = path[i - 1];
+    const b = path[i];
+    let len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    while (len > left + 1e-12) {
+      const t = left / len;
+      const cut: Pt = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      run.push(cut);
+      runs.push(run);
+      run = [cut];
+      a = cut;
+      len -= left;
+      left = r;
+    }
+    run.push(b);
+    left -= len;
+  }
+  if (run.length > 1) runs.push(run);
   const pieces: FieldPiece[] = [];
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (let i = 1; i < path.length; i++) {
-    const a = path[i - 1], b = path[i];
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    const count = Math.max(1, Math.ceil(len / r));
-    for (let k = 0; k < count; k++) {
-      const p0: Pt = [a[0] + ((b[0] - a[0]) * k) / count, a[1] + ((b[1] - a[1]) * k) / count];
-      const p1: Pt = [a[0] + ((b[0] - a[0]) * (k + 1)) / count, a[1] + ((b[1] - a[1]) * (k + 1)) / count];
-      const samples = emitterSamples([p0, p1], input.faces, r / 4);
-      if (!samples.length) continue;
-      const clip: string[] = [];
-      let failed = false;
-      for (const source of samples) {
-        try {
-          const lit = buildGlowClipGeometry({
-            spaceId: input.spaceId,
-            source: { x: source[0], y: source[1] },
-            radius: r,
-            scene: input.scene,
-            polygons: input.polygons,
-            onBoundsFailure: () => { failed = true; },
-          }).lit;
-          clip.push(...lit);
-        } catch {
-          failed = true;
-        }
-      }
-      if (failed || !clip.length) continue;
-      pieces.push({ d: `M${p0[0]} ${p0[1]} L${p1[0]} ${p1[1]}`, clip });
-      minX = Math.min(minX, p0[0], p1[0]); minY = Math.min(minY, p0[1], p1[1]);
-      maxX = Math.max(maxX, p0[0], p1[0]); maxY = Math.max(maxY, p0[1], p1[1]);
+  for (const piece of runs) {
+    const emitters: Pt[] = [];
+    for (const p of emitterSamples(piece, input.faces, r / 4)) {
+      const last = emitters[emitters.length - 1];
+      if (!last || Math.hypot(p[0] - last[0], p[1] - last[1]) >= r / 4) emitters.push(p);
+    }
+    if (!emitters.length) continue;
+    let clip: string[] | null;
+    try { clip = fans(emitters, r, input.scene); } catch { continue; } // fail-dark for this piece
+    if (clip && !clip.length) continue;
+    pieces.push({ d: piece.map((p, k) => `${k ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' '), clip });
+    for (const p of piece) {
+      minX = Math.min(minX, p[0]); minY = Math.min(minY, p[1]);
+      maxX = Math.max(maxX, p[0]); maxY = Math.max(maxY, p[1]);
     }
   }
   if (!pieces.length) return null;
@@ -143,18 +221,6 @@ export function falloffAt(fraction: number): number {
 const grey = (value: number): string => {
   const level = Math.round(Math.max(0, Math.min(1, value)) * 255);
   return `rgb(${level},${level},${level})`;
-};
-
-/** Stable DOM ids per strip: a re-render must not rebuild masks and clips. */
-const fieldIds = new Map<string, number>();
-const fieldId = (spaceId: string, stripId: string): number => {
-  const key = `${spaceId}|${stripId}`;
-  let id = fieldIds.get(key);
-  if (id == null) {
-    id = fieldIds.size + 1;
-    fieldIds.set(key, id);
-  }
-  return id;
 };
 
 export interface LedFieldInput {
@@ -207,26 +273,30 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
     const inner = 1 - (k + 1) / LED_FIELD_BANDS;
     return { half: outer, value: falloffAt((outer + inner) / 2) };
   });
-  return svg`<g class="led-fields" pointer-events="none" aria-hidden="true">
+  // The performance witness (led-strips-v1) reads the bounded cache from the DOM.
+  return svg`<g class="led-fields" pointer-events="none" aria-hidden="true"
+      data-led-cache="${cache.size}" data-led-recomputes="${cache.recomputes}">
+    <defs><clipPath id="hp-led-floor">${fieldFloor(scene).map((d) => svg`<path d="${d}"></path>`)}</clipPath></defs>
+    <g clip-path="url(#hp-led-floor)">
     ${repeat(fields, ({ view }) => view.strip.id, ({ view, geometry }) => {
-      const id = `${fieldId(input.spaceId, view.strip.id)}`;
+      const id = `${cache.id(view.strip.id)}`;
       const r = view.radius;
       const on = view.state === 'on' && !!view.appearance;
       const box = geometry.box;
       const closed = isClosedStrip(pts(view.strip.points));
-      return svg`<g class="glow-spot led-field ${on ? '' : 'is-leaving'}" data-led-field="${view.strip.id}"
+      return memo([geometry, on, view.appearance?.c, view.appearance?.alpha, r, id], () => svg`<g class="glow-spot led-field ${on ? '' : 'is-leaving'}" data-led-field="${view.strip.id}"
           data-pieces="${geometry.pieces.length}" data-closed="${closed ? 'true' : 'false'}">
         <defs>
-          ${geometry.pieces.map((piece, k) => svg`<clipPath id="hp-led-clip-${id}-${k}">
-            ${piece.clip.map((d) => svg`<path d="${d}" clip-rule="evenodd"></path>`)}
-          </clipPath>`)}
+          ${geometry.pieces.map((piece, k) => piece.clip ? svg`<clipPath id="hp-led-clip-${id}-${k}">
+            ${piece.clip.map((d) => svg`<path d="${d}"></path>`)}
+          </clipPath>` : nothing)}
           <mask id="hp-led-mask-${id}" maskUnits="userSpaceOnUse"
             x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}"
             color-interpolation="sRGB" style="mask-type:luminance">
             <rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" fill="black"></rect>
             <g style="isolation:isolate">
-              ${geometry.pieces.map((piece, k) => svg`<g clip-path="url(#hp-led-clip-${id}-${k})"
-                  style="mix-blend-mode:lighten">
+              ${geometry.pieces.map((piece, k) => svg`<g style="mix-blend-mode:lighten"
+                  clip-path=${piece.clip ? `url(#hp-led-clip-${id}-${k})` : nothing}>
                 ${bands.map((band) => svg`<path d="${piece.d}" fill="none" stroke="${grey(band.value)}"
                   stroke-width="${2 * band.half * r}" stroke-linecap="round" stroke-linejoin="round"></path>`)}
               </g>`)}
@@ -236,8 +306,9 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
         <rect class="glow-pool led-pool" x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}"
           fill="${view.appearance?.c ?? 'transparent'}" fill-opacity="${(view.appearance?.alpha ?? 0).toFixed(4)}"
           mask="url(#hp-led-mask-${id})"></rect>
-      </g>`;
+      </g>`);
     })}
+    </g>
   </g>` as unknown as TemplateResult;
 }
 

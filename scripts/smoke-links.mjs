@@ -601,6 +601,19 @@ export const SMOKE_LINKS = [
       + 'browser bundle exposes the helper name in its test steps',
   },
   {
+    // #780: the LED chunks are lazy modules reached only through the bundle;
+    // the smokes drive the Devices editor, the View and the static card by
+    // DOM (`data-led-*`) and never name a helper of these files.
+    files: [
+      'src/led-strip-gate.ts', 'src/led-strip-card.ts', 'src/led-strip-geometry.ts',
+      'src/led-strip-runtime.ts', 'src/led-strip-field.ts', 'src/led-strip-editor.ts',
+    ],
+    smokes: ['smoke_led_strip_draw.mjs', 'smoke_led_strip_bind.mjs', 'smoke_led_strip_glow.mjs'],
+    because: '#780: drawing, placement against walls, binding, the icon ↔ strip switch, the LED '
+      + 'history, the View target, the field states and the static card are observed only as '
+      + 'rendered strips and saved configs; no smoke names the lazy modules’ functions',
+  },
+  {
     symbols: ['cachedStairMarkup', 'stairTreadPath', 'StairMarkup'],
     smokes: ['smoke_stairs.mjs'],
     because: '#740: the strings of the stair symbol are observed only as the production markup of '

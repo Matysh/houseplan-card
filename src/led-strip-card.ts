@@ -14,6 +14,7 @@ interface LedCardPort {
   _ledEditor: LedStripEditor | null;
   _mode: string;
   _serverCfg: ServerConfig | null;
+  _alignDialog: { config: ServerConfig } | null;
   _devicePositionBusy: boolean;
   _devicePositionHistory: { undo(): unknown; redo(): unknown; clear(): void };
   _t(key: string, vars?: Record<string, string | number>): string;
@@ -43,14 +44,26 @@ export function ledButton(card: LedCardPort): TemplateResult {
  * only (ТЗ §5). A strip's dialog elsewhere still loads the tool: its save
  * renames the link on a rebinding.
  */
-export function ledSection(
-  card: LedCardPort, devId: string, leave: () => Promise<boolean>,
-): TemplateResult | typeof nothing {
+export function ledSection(card: LedCardPort, devId: string): TemplateResult | typeof nothing {
   const devices = card._mode === 'devices';
   if (!devices && !card._serverCfg?.spaces.some((space: { led_strips?: Array<{ marker: string | null }> }) =>
     space.led_strips?.some((strip) => strip.marker === devId))) return nothing;
   const led = ledEditorFor(card, 'dialog');
-  return devices ? led?.markerSection(devId, leave) ?? nothing : nothing;
+  return devices ? led?.markerSection(devId) ?? nothing : nothing;
+}
+
+const hasStrips = (config: ServerConfig | null | undefined) => !!config?.spaces.some(
+  (space: { led_strips?: unknown[] }) => space.led_strips?.length);
+
+/** «Optimize plans»: strips through walls of the optimised result, counted by the tool (AC16). */
+export function ledWallsNote(card: LedCardPort): TemplateResult | typeof nothing {
+  const config = card._alignDialog?.config;
+  return config && hasStrips(config) ? ledEditorFor(card, 'optimize')?.wallsNote(config) ?? nothing : nothing;
+}
+
+/** The import summary: strips whose device did not travel are left unbound (§9). */
+export function ledImportNote(card: LedCardPort, n: unknown): TemplateResult | typeof nothing {
+  return n ? html`<div class="backupwarn" data-led-unbound-import=${String(n)}>${card._t('backup.unbound_led_strips', { n: String(n) })}</div>` : nothing;
 }
 
 /** Undo/Redo of an LED command (ТЗ §4 п.9): its own strip record, never a newer foreign change. */

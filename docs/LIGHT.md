@@ -409,3 +409,42 @@ slower and remains a performance watch item. During pinch/pan and the bounded
 500 ms source fade, the whole-layer blur is bypassed and its parameters stay
 frozen; the final screen-space feather is restored once after the transition
 instead of rebuilding and evaluating the filter for every animation frame.
+
+## LED strips: a linear source (#780)
+
+A marker shown as an LED strip is one source whose emitter is the whole
+polyline (`space.led_strips`, ТЗ #780). It never also paints a round pool from
+its anchor. Colour, brightness, role and availability come from the same
+`resolveGlowCandidates` / `resolveGlowAppearance` path as every other source;
+only the geometry differs:
+
+- **Radius.** 50 cm by default, independent of `settings.glow_radius_cm`; the
+  marker's personal `glow_radius_cm` wins.
+- **Field.** A continuous band along every segment with round free ends: grey
+  luminance bands of the shared `GLOW_FALLOFF`, one piece per stretch, blended
+  with `lighten` inside one isolated group, so corners and the closing of a
+  loop neither seam nor double the brightness. Intensity and the 500 ms fade
+  are the shared `glowAlpha` / `GLOW_FADE_MS`.
+- **Visibility.** The strip is cut into consecutive pieces no longer than the
+  radius; each piece is clipped to the visibility fans of its own emitters
+  (the shared `visibilityPolygon` over the same barrier scene as pools; the
+  fans are separate paths of one clipPath, no boolean pass per piece), and the
+  whole field layer is clipped once to the floor. A piece with no occluder
+  within the radius needs no fan at all. Windows, columns,
+  thick walls and Solid zero walls block; doors/gates pass by their actual
+  opening; Dashed zero walls are transparent. Emitters on a thick face sit
+  `epsilonGeom` (0.001 cm) outward into free floor; a part buried in a body
+  emits nothing; a strip entirely inside a wall has no field.
+- **Core.** With effective Glow (space `glow_enabled` + room `glow`) the core
+  stays white and the colour is the field; without Glow the core takes the
+  source colour and there is no field. Off: white core, no field.
+  Unavailable/unknown: dashed grey stripe, no field — the link is kept.
+- **Surfaces.** The full card renders field and stripe in the View; the
+  Devices editor shows active strips (unbound ones as grey dashes);
+  Plan/Background show a passive translucent stripe. `houseplan-space-card`
+  draws the passive stripe always and the field only with `light_pools: true`
+  — with the option off no barrier, visibility or timer is created.
+- **Laziness.** The stripe/hit/2.5D code (`led-strip-runtime`) and the field
+  (`led-strip-field`) are separate lazy chunks; the initial graph holds only
+  the presence check and the loader (`led-strip-gate`). Caches are bounded per
+  space (50 shapes, 50 visibilities) and released on space change.

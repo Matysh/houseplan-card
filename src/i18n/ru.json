@@ -1245,6 +1245,7 @@
   "backup.binding_status": "Статус на целевом экземпляре — активных: {active}, деактивированных: {disabled}, отсутствующих: {missing}",
   "backup.missing_areas": "На целевом экземпляре отсутствуют зоны: {areas}",
   "backup.dropped_marker_links": "Связи с источниками света вне переносимого пространства пропущены: {n}.",
+  "backup.unbound_led_strips": "Лент без устройства после импорта: {n}",
   "backup.room_drafts_migrated": "Старые незавершённые контуры преобразованы в обычные стены: {drafts}; отрезков: {segments}.",
   "backup.repaired_target_refs": "Существующих ссылок восстановлено этим импортом: {n}.",
   "backup.preserved_unresolved_refs": "Неоднозначные ссылки сохранены без изменений: {n}.",

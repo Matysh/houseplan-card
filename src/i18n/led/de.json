@@ -30,6 +30,5 @@
   "led.history_draw": "LED-Streifen",
   "led.history_shape": "Form des LED-Streifens",
   "led.history_view": "Darstellung des Geräts",
-  "led.import_unbound": "Streifen ohne Gerät nach dem Import: {n}",
   "led.optimize_walls": "Streifen durch Wände: {n} ({spaces})"
 }

@@ -90,6 +90,8 @@ function fakePort(overrides = {}) {
     clearGeometryGesture: () => { calls.gesture += 1; },
     commit: async (config, layout) => { calls.commit.push([config, layout]); },
     reloadAfterConflict: async () => { calls.reload += 1; },
+    // #780: strips through walls come from the lazy LED tool; none in this fixture.
+    ledNote: () => "",
     ...overrides,
   };
   return { port, calls, state, dialog: new OptimizePlansDialog(port) };

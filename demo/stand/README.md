@@ -87,6 +87,16 @@ Everything is in English; the demo user's language is Auto, so the interface
 follows the browser. **Smart Plug 2** is deactivated in the HA registry on
 purpose — it is the ready-made example for the disabled-devices behaviour.
 
+**LED strips (#780).** The synthetic light `light.demo_led_strip` (device
+`demo-led-strip`) and its three siblings `light.demo_led_strip_wall`,
+`light.demo_led_strip_corner` and `light.demo_led_strip_loop` carry the
+designer's four reference strips — free, on a wall face, along a corner,
+closed loop — in the `golden-led` space of the visual fixture
+(`demo/fixtures/visual-matrix.mjs`, `makeVisualMatrixFixture({ ledStrips: true })`),
+which the LED golden scenes and the design acceptance use. On the stand seed
+the same entity id is the place for a strip drawn with the Devices editor's
+«LED strip» tool; the hourly reset removes whatever a visitor draws.
+
 The public demo user is an administrator, so the full registry scenario can be
 checked on the stand; a limited/read-only user needs the local harness or a
 separate unprivileged user.

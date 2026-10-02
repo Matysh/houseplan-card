@@ -424,3 +424,26 @@ they must be reviewed against the first paired Ubuntu artifacts before the
 feature is promoted from beta. Same-runner relative checks in the full workflow
 remain the primary regression signal; the candidate-only smoke only guards
 against catastrophic failures.
+
+## `led-strips-v1` (#780)
+
+`demo/benchmark_led_strips.mjs` (`npm run benchmark:led-strips -- --size=…`)
+measures the LED strips on the `large-house-v1` fixture: on every floor 10 or 50
+existing devices become lights shown as strips that are on — `10x5` (10 strips
+× 5 points) or `50x50` — without adding a device or an icon
+(`performance/led-strips-fixture.mjs`); `none` is the same build and plan
+without strips. Glow on, strip radius 50 cm, viewport 1440×1000, DPR 1,
+reduced motion; every sample is cold (a new browser and card), seven samples
+after one warm-up. The runner fails on its own against
+`budgets-led-strips.json` — the ТЗ table, median and p95: `firstStableRenderMs`
+3400/5000, `warmSpaceReadyMs` 1500, `stateUpdateMs` 1000/1500, `panZoomMs` 500,
+the longest pan/zoom Long Task 150 ms, retained heap after 20 A→B→C→A cycles
+64 MiB — and on exact counters: zero field geometry recomputes over 100
+unrelated HA ticks, 100 camera steps and a colour-only change, at most 50 cache
+entries, no cache growth over the cycles, the LED chunks loaded with strips
+and none without them, never the editor chunk in the View. Base predates the
+strips, so there is no relative comparison; the zero-LED View remains judged
+by the relative `large-house-interaction-v1` profile. Exact-SHA Linux output
+of the full performance workflow (`led-strips` matrix entry) is the gate
+evidence; a local report is diagnostic.
+

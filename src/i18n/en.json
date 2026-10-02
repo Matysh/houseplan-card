@@ -1245,6 +1245,7 @@
   "backup.binding_status": "Target status — active: {active}, disabled: {disabled}, missing: {missing}",
   "backup.missing_areas": "Areas missing on the target: {areas}",
   "backup.dropped_marker_links": "Plan-light links outside this transferred space were omitted: {n}.",
+  "backup.unbound_led_strips": "Strips left unbound after import: {n}",
   "backup.room_drafts_migrated": "Legacy unfinished contours converted to ordinary walls: {drafts}; wall segments: {segments}.",
   "backup.repaired_target_refs": "Existing references restored by this space import: {n}.",
   "backup.preserved_unresolved_refs": "References that could not be restored unambiguously were preserved: {n}.",

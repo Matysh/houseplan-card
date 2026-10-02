@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 70;
+export const GOLDEN_MATRIX_VERSION = 71;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -265,6 +265,8 @@ export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage,
   },
 ]);
+
+const LED_STRIPS_OFF = Object.fromEntries(['light.demo_led_strip', 'light.demo_led_strip_wall', 'light.demo_led_strip_corner', 'light.demo_led_strip_loop'].map((id) => [id, { state: 'off' }]));
 
 export const GOLDEN_SCENARIOS = Object.freeze([
   ...STAGE6_ACCEPTANCE_SCENARIOS,
@@ -1314,4 +1316,21 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'card-editor-invalid-default-floor-dark-ru', fixture: 'visual',
     cardEditorInvalidDefaultFloor: 'removed-floor', language: 'ru', theme: 'dark',
     viewport: { width: 900, height: 760 }, ...page },
+  // #780: LED strips. The two design references keep all four strips of the
+  // designer's composition at once (free, wall face, corner polyline, closed
+  // loop) on the reference floor #868D94; the others pin the dark Glow field,
+  // the off stripe in the light theme and the raised 2.5D stripe.
+  { id: 'led-strip-design-reference-off-light', fixture: 'visual', ledStrips: true, space: 'golden-led',
+    mode: 'view', stateOverrides: LED_STRIPS_OFF, language: 'en', theme: 'light',
+    viewport: { width: 1000, height: 760 }, ...stage },
+  { id: 'led-strip-design-reference-on-light', fixture: 'visual', ledStrips: true, space: 'golden-led',
+    mode: 'view', language: 'en', theme: 'light', viewport: { width: 1000, height: 760 }, ...stage },
+  { id: 'lighting-led-strip-glow-dark', fixture: 'visual', ledStrips: true, space: 'golden-led',
+    mode: 'view', fillMode: 'none', language: 'en', theme: 'dark', viewport: { width: 1000, height: 760 }, ...stage },
+  { id: 'led-strip-off-light', fixture: 'visual', ledStrips: true, space: 'golden-led',
+    mode: 'view', fillMode: 'none', stateOverrides: LED_STRIPS_OFF, language: 'en', theme: 'light',
+    viewport: { width: 1000, height: 760 }, ...stage },
+  { id: 'iso-led-strip-dark', fixture: 'visual', ledStrips: true, space: 'golden-led',
+    mode: 'view', projection: 'iso', fillMode: 'none', language: 'en', theme: 'dark',
+    viewport: { width: 1000, height: 760 }, ...stage },
 ]);

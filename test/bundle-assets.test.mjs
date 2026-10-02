@@ -192,6 +192,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
         'houseplan-assets/de-HASH.js', 'houseplan-assets/iso-scene-render-HASH.js',
         'houseplan-assets/furniture-plan-art.generated-HASH.js',
         'houseplan-assets/pdf-export-HASH.js', 'houseplan-assets/moon-runtime-HASH.js',
+        'houseplan-assets/led-strip-runtime-HASH.js', 'houseplan-assets/led-strip-editor-HASH.js',
       ],
     },
     'shared.js': {
@@ -237,8 +238,27 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       code: 'moon runtime', isEntry: false, imports: ['shared.js'], dynamicImports: [],
       modules: { '/repo/src/moon-runtime.ts': {}, '/repo/src/moon-art.generated.ts': {} },
     },
+    // #780: the LED runtime loads its field chunk; the LED tool is a third lazy root.
+    'houseplan-assets/led-strip-runtime-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/led-strip-runtime-HASH.js',
+      code: 'LED runtime', isEntry: false, imports: ['shared.js'],
+      dynamicImports: ['houseplan-assets/led-strip-field-HASH.js'],
+      modules: { '/repo/src/led-strip-runtime.ts': {} },
+    },
+    'houseplan-assets/led-strip-field-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/led-strip-field-HASH.js',
+      code: 'LED field', isEntry: false, imports: ['shared.js'], dynamicImports: [],
+      modules: { '/repo/src/led-strip-field.ts': {} },
+    },
+    'houseplan-assets/led-strip-editor-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/led-strip-editor-HASH.js',
+      code: 'LED editor', isEntry: false, imports: ['shared.js'], dynamicImports: [],
+      modules: { '/repo/src/led-strip-editor.ts': {} },
+    },
   }, 'fingerprint');
   assert.equal(manifest.entry, 'houseplan-card.js');
+  assert.deepEqual(manifest.lazyLedFiles, ['houseplan-assets/led-strip-field-HASH.js', 'houseplan-assets/led-strip-runtime-HASH.js']);
+  assert.deepEqual(manifest.lazyLedEditorFiles, ['houseplan-assets/led-strip-editor-HASH.js']);
   assert.equal(manifest.panelEntry, 'houseplan-panel.js');
   assert.deepEqual(manifest.initialViewFiles, ['houseplan-card.js', 'shared.js']);
   assert.deepEqual(
@@ -271,6 +291,8 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
     'houseplan-assets/furniture-plan-art.generated-HASH.js',
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
     'houseplan-assets/iso-scene-render-HASH.js',
+    'houseplan-assets/led-strip-editor-HASH.js',
+    'houseplan-assets/led-strip-runtime-HASH.js',
     'houseplan-assets/moon-runtime-HASH.js',
     'houseplan-assets/pdf-export-HASH.js',
   ]);
@@ -1018,6 +1040,7 @@ const runBudgetCli = (initialViewGzipBytes) => {
     ].join('\n'));
     writeFileSync(join(dir, 'dist/onboarding.js'), english('settings'));
     writeFileSync(join(dir, 'dist/led-editor.js'), english('led'));
+    writeFileSync(join(dir, 'dist/led.js'), 'lazy LED runtime');
     for (const entry of NAMESPACE_LOCALE_CHUNKS) {
       const marker = namespaceMarkers.find((candidate) => candidate.namespace === entry.namespace
         && candidate.language === entry.language).text;
@@ -1050,6 +1073,9 @@ const runBudgetCli = (initialViewGzipBytes) => {
       initialPanelOnlyGzipBytes: 1,
       lazyEditorFiles: ['editor.js'],
       lazyLedEditorFiles: ['led-editor.js'],
+      lazyLedEditorGzipBytes: 100,
+      lazyLedFiles: ['led.js'],
+      lazyLedGzipBytes: 100,
       // #593: у ленивых графов теперь свои потолки, и фикстура обязана лежать
       // внутри полосы — иначе CLI краснеет не на том, что проверяет тест.
       lazyEditorGzipBytes: LAZY_EDITOR_GZIP_CEILING - 1_000,

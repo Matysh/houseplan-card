@@ -30,6 +30,5 @@
   "led.history_draw": "LED strip",
   "led.history_shape": "LED strip shape",
   "led.history_view": "Device representation",
-  "led.import_unbound": "Strips left unbound after import: {n}",
   "led.optimize_walls": "Strips passing through walls: {n} ({spaces})"
 }

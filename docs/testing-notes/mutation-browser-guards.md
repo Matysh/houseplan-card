@@ -14,11 +14,11 @@ to prove that the Node witness actually kills it.
 | --- | ---: | --- |
 | Performance threshold | 4 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 26 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 45 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Paint, cascade and layer composition | 30 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 47 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 38 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 99 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **216 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 100 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **223 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -91,6 +91,10 @@ The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels p
 - `iso-sun-card-drops-occluders`
 - `iso-sun-flat-wedges-remain`
 - `iso-theme-dark-wall-rule-returns`
+- `led-core-coloured-under-glow`
+- `led-icon-not-suppressed`
+- `led-source-stays-round-at-anchor`
+- `led-unbound-in-view`
 - `stage3-w4-device-target-loses-44px-floor`
 - `stage3-w5-runtime-nudge-writes-storage`
 - `stage3-w6-no-borders-keeps-raised-plates`
@@ -119,6 +123,8 @@ The invariant depends on hit testing, pointer capture, touch/keyboard dispatch o
 - `furniture-shift-listeners-not-attached`
 - `furniture-wall-runtime-drops-drag-side`
 - `furniture-wall-runtime-drops-raw-intent`
+- `led-pan-adds-point`
+- `led-pinch-calls-action`
 - `live-pinch-compositor-demoted-on-active-lit-commit`
 - `opening-dimension-overlay-hidden`
 - `opening-search-hides-none`
@@ -228,8 +234,6 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `device-focus-tooltip-handler-removed`
 - `device-focus-tooltip-room-hover-overwrites`
 - `device-inbox-batch-rollback`
-- `household-enter-stops-acting`
-- `household-marker-drops-keyboard-reach`
 - `device-markers-rendered-without-keys`
 - `device-pointer-leave-clears-focus-fallback`
 - `device-position-cancel-routed-to-commit`
@@ -240,10 +244,13 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `floor-geometry-key-global-epoch`
 - `floor-geometry-key-ignores-content`
 - `french-locale-wrong-dictionary`
+- `household-enter-stops-acting`
+- `household-marker-drops-keyboard-reach`
 - `hp-dialog-escape-does-not-close`
 - `junction-limit-baseline-cache-stale`
 - `junction-limit-candidate-fail-open`
 - `junction-limit-write-gate-removed`
+- `led-auto-slot-reserved`
 - `locale-failure-toast-dropped`
 - `marker-reject-keeps-optimistic-candidate`
 - `marker-rollback-keeps-enqueue-time-revision`
@@ -278,16 +285,16 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `support-stale-preview-response-revives-consent`
 - `support-timeout-claims-success`
 - `vacuum-overlay-back-to-the-dock-space-filter`
-- `volumetric-kiosk-ignores-setting`
 - `view-current-space-aria-removed`
+- `volumetric-kiosk-ignores-setting`
 - `wall-face-apply-skips-overlap-guard`
 - `wallthick-hit-narrowed`
-- `warm-pending-mode-leaves-revive-waiting`
-- `warm-resume-overwrites-view-return-camera`
-- `warm-resume-camera-depends-on-dialog`
-- `warm-pan-during-runtime-keeps-refit-blocked`
 - `warm-late-resume-beats-user-mode`
 - `warm-late-resume-crosses-space`
+- `warm-pan-during-runtime-keeps-refit-blocked`
+- `warm-pending-mode-leaves-revive-waiting`
+- `warm-resume-camera-depends-on-dialog`
+- `warm-resume-overwrites-view-return-camera`
 - `writer-history-skips-finished-chain-normalization`
 - `zigbee-topology-endpoint-cleanup-skipped`
 - `zigbee-topology-endpoint-elevation-removed`

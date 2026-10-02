@@ -49,13 +49,18 @@ test('full performance is isolated to stable, scheduled and manual entry points'
     '- overlay',
     '- space-default',
     '- space-glow',
+    '- led-strips',
     'PROFILE: ${{ matrix.profile }}',
     'name: full-performance-${{ matrix.profile }}',
     '--samples=7 --warmups=1',
   ]) assert.ok(workflow.includes(contract), `missing full-gate contract: ${contract}`);
 
   assert.ok(workflow.includes('if [ -f baseline/scripts/bundle-sync.mjs ]; then'));
-  assert.equal((workflow.match(/--samples=7 --warmups=1/g) || []).length, 20);
+  // #780: led-strips-v1 runs three candidate-only sizes judged by absolute limits.
+  assert.equal((workflow.match(/--samples=7 --warmups=1/g) || []).length, 23);
+  for (const size of ['10x5', '50x50', 'none']) {
+    assert.ok(workflow.includes(`npm run benchmark:led-strips -- --size=${size} --samples=7 --warmups=1`), size);
+  }
   assert.equal((workflow.match(/--allow-stage2-base/g) || []).length, 1,
     'only the Stage 3 comparison base may bypass the candidate-only DOM contract');
   assert.ok(workflow.includes('budgets-isometric-stage3-dense.json'));
@@ -280,4 +285,28 @@ test('#347: a rewritten before forces the full run instead of guessing the range
   const fallback = classify.slice(classify.indexOf('Новая ветка'));
   assert.ok(!fallback.includes('cat-file'),
     'merge-base-фолбэк остаётся только для нулевого before — без повторной проверки существования');
+});
+
+test('#780 led-strips-v1: the derived fixture converts devices without adding icons, the budget is the ТЗ table', async () => {
+  const { makeLedStripsFixture } = await import('../demo/performance/led-strips-fixture.mjs');
+  const { makeLargeHouseFixture } = await import('../demo/fixtures/large-house.mjs');
+  const base = makeLargeHouseFixture();
+  const led = makeLedStripsFixture(50, 50);
+  assert.equal(Object.keys(led.devices).length, Object.keys(base.devices).length, 'no device added');
+  assert.equal(Object.keys(led.layout).length, Object.keys(base.layout).length, 'no icon position added');
+  for (const space of led.config.spaces) {
+    assert.equal(space.led_strips.length, 50);
+    for (const strip of space.led_strips) {
+      assert.equal(strip.points.length, 50);
+      assert.equal(led.states[`light.perf_led_${space.id.slice(-1) - 1}_${strip.id.split('-').pop()}`]?.state, 'on');
+      assert.equal(led.config.markers.filter((marker) => marker.id === strip.marker).length, 1);
+      assert.equal(led.config.markers.find((marker) => marker.id === strip.marker).space, space.id);
+    }
+  }
+  const budgets = JSON.parse(readFileSync(new URL('../demo/performance/budgets-led-strips.json', import.meta.url), 'utf8'));
+  assert.deepEqual(budgets.sizes['10x5'], { firstStableRenderMs: 3400, warmSpaceReadyMs: 1500, stateUpdateMs: 1000,
+    panZoomMs: 500, panZoomLongTaskMaxMs: 150, retainedHeapBytes: 64 * 1024 * 1024 });
+  assert.deepEqual(budgets.sizes['50x50'], { firstStableRenderMs: 5000, warmSpaceReadyMs: 1500, stateUpdateMs: 1500,
+    panZoomMs: 500, panZoomLongTaskMaxMs: 150, retainedHeapBytes: 64 * 1024 * 1024 });
+  assert.equal(budgets.cacheEntries, 50);
 });

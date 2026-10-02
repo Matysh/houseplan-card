@@ -118,6 +118,8 @@ export interface FaceContext {
   inside: (point: Pt) => boolean;
   /** `LED_EPSILON_CM` in plan units. */
   epsilon: number;
+  /** Optional spatial index: the faces whose box meets `[minX, minY, maxX, maxY]`. */
+  near?: (box: readonly number[]) => readonly BodyFace[];
 }
 
 /** One piece of a stored segment: on a face (side = unit normal into free floor) or free. */
@@ -179,11 +181,16 @@ function freeNormal(a: Pt, b: Pt, at: Pt, ctx: FaceContext): [number, number] | 
 export function stripPieces(points: readonly Pt[], ctx: FaceContext | null): StripPiece[] {
   const path = compactPoints(points);
   const pieces: StripPiece[] = [];
+  let faces = ctx?.faces ?? [];
+  if (ctx?.near && path.length) {
+    const xs = path.map((p) => p[0]), ys = path.map((p) => p[1]), e = ctx.epsilon * 2;
+    faces = ctx.near([Math.min(...xs) - e, Math.min(...ys) - e, Math.max(...xs) + e, Math.max(...ys) + e]);
+  }
   for (let i = 1; i < path.length; i++) {
     const a = path[i - 1], b = path[i];
     const intervals: Array<[number, number]> = [];
     if (ctx) {
-      for (const face of ctx.faces) {
+      for (const face of faces) {
         const hit = overlapOnFace(a, b, face, ctx.epsilon);
         if (hit) intervals.push(hit);
       }

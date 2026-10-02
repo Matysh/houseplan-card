@@ -168,21 +168,17 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       && (edit ? dirty : true);
     const saveTitle = problems[0] ? st(problems[0].message)
       : bindingUnverified && !!d.binding && d.binding !== 'virtual' ? t('marker.ha_registry_limited') : '';
-    // #780: the same save/discard guard also runs before a representation change.
-    const leave = async () => {
-      if (edit && dirty && !await this.host._confirmDanger({
+    const requestClose = async (event: Event) => {
+      if (!edit || !dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }
+      const dialog = event.currentTarget as { rejectClose?: () => void } | null;
+      const discard = await this.host._confirmDanger({
         key: 'discard-marker-dialog', kind: 'warning',
         title: st('dialog.discard_title'), message: st('dialog.discard_message'),
         objectName: d.name.trim() || previewDevice?.name || undefined,
         confirmLabel: st('dialog.discard_confirm'), cancelLabel: st('dialog.discard_keep'),
         icon: 'mdi:content-save-off-outline', confirmIcon: 'mdi:content-save-off-outline',
-      })) return false;
-      forgetMarkerBaseline(this.host); this._closeMarkerDialog();
-      return true;
-    };
-    const requestClose = async (event: Event) => {
-      const dialog = event.currentTarget as { rejectClose?: () => void } | null;
-      if (!await leave()) dialog?.rejectClose?.();
+      });
+      if (discard) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); } else dialog?.rejectClose?.();
     };
     const reviewFirst = () => {
       const first = problems[0];
@@ -864,7 +860,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       .badge=${previewDevice ? this.host._spaceModelById(previewDevice.space)?.title ?? '' : this.host._spaceModel()?.title ?? ''}
       icon="mdi:shape-plus" wide @hp-close=${requestClose}>
         <div class="body hpf-form">
-          ${basics}${d.devId ? this.host._ledSection(d.devId, leave) : nothing}${tap}${light}${appearance}${details}
+          ${basics}${this.host._ledSection(d.devId)}${tap}${light}${appearance}${details}
         </div>
         <div class="row dialog-action-footer hpf-footer" slot="footer">
           <div class="dialog-action-group markeractions">

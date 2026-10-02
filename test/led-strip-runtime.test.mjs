@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ledAnchor, ledStripsByMarker } from '../test-build/led-strip-gate.js';
-import { faceContext, ledStripView } from '../test-build/led-strip-runtime.js';
+import { faceContext, ledFrame, ledStripView } from '../test-build/led-strip-runtime.js';
 import { LedFieldCache, buildFieldGeometry, falloffAt } from '../test-build/led-strip-field.js';
 import { GLOW_FALLOFF } from '../test-build/glow-scene.js';
 import { stripAnchor } from '../test-build/led-strip-geometry.js';
@@ -91,7 +91,20 @@ test('ТЗ §6: every piece is clipped to what its own emitters see; a buried st
   const geometry = buildFieldGeometry({ points: [[1, 1], [9, 1]], radius: 2, scene, polygons, faces, spaceId: 's' });
   assert.ok(geometry, 'a free strip has a field');
   assert.equal(geometry.pieces.length, 4, 'an 8-unit segment with r = 2 makes four pieces');
-  for (const piece of geometry.pieces) assert.ok(piece.clip.length > 0);
+  for (const piece of geometry.pieces) assert.equal(piece.clip, null, 'nothing within r: the bands are the bound');
+  // Passing 0.5 below the body: the pieces near it are clipped to their own fans.
+  const near = buildFieldGeometry({ points: [[0.5, 3.5], [9.5, 3.5]], radius: 1, scene, polygons, faces, spaceId: 's' });
+  const clipped = near.pieces.filter((piece) => piece.clip);
+  assert.ok(clipped.length >= 2 && clipped.length < near.pieces.length, `${clipped.length} of ${near.pieces.length}`);
+  for (const piece of clipped) {
+    assert.ok(piece.clip.length > 0);
+    // No fan vertex lies inside the body: light never passes into or through it.
+    for (const d of piece.clip) {
+      for (const [, x, y] of d.matchAll(/[ML]([-\d.e]+) ([-\d.e]+)/g)) {
+        assert.ok(!(+x > 4 + 1e-6 && +x < 6 - 1e-6 && +y > 4 + 1e-6 && +y < 6 - 1e-6), `${x},${y}`);
+      }
+    }
+  }
   const buried = buildFieldGeometry({ points: [[4.5, 5], [5.5, 5]], radius: 2, scene, polygons, faces, spaceId: 's' });
   assert.equal(buried, null, 'entirely inside the body: no field');
 });
@@ -106,4 +119,20 @@ test('AC17: the field cache is bounded, per space, and counts geometry rebuilds'
   assert.equal(cache.recomputes, 5);
   cache.forSpace('b');
   assert.equal(cache.size, 0, 'another space frees the previous one');
+});
+
+test('AC9: the frame gives every strip the 50 cm default, not the shared radius; unbound strips have no view', () => {
+  const lamp = { id: 'm1', name: 'Lamp', primary: 'light.led', entities: ['light.led'], space: 's', marker: { id: 'm1', binding: 'device:m1' } };
+  const frame = ledFrame({
+    space: { id: 's', vb: [0, 0, 1000, 1000], rooms: [], led_strips: [
+      { id: 'a', points: [[0.1, 0.1], [0.4, 0.1]], marker: 'm1' },
+      { id: 'b', points: [[0.1, 0.3], [0.4, 0.3]], marker: null },
+    ] },
+    devices: [lamp],
+    hass: { states: { 'light.led': { state: 'on', attributes: {} } } },
+    defaultColor: '#ffd27b', paletteAlpha: 0.7, cellCm: 5, gridPitch: 1000 / 240, iconPct: 3.4,
+    scene: null, polygons: [], glowFor: () => true, inRoom: () => false, showHidden: false,
+  });
+  assert.equal(frame.views.length, 1, 'the unbound strip is not a View strip');
+  assert.ok(Math.abs(frame.views[0].radius - (50 / 5) * (1000 / 240)) < 1e-9, `radius ${frame.views[0].radius}`);
 });

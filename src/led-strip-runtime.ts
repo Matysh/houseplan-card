@@ -26,7 +26,7 @@ import { roomGlowOf, roomPoly } from './logic';
 import { ISO_ICON_SCALE, ISO_TILE, isoEdgeColor, isoTileShadow } from './iso-tiles';
 import { deviceThemeClass } from './device-face';
 import type { VirtualLightSnapshot } from './virtual-light-state';
-import { geometryAllRings, pointInOpaquePlanBody } from './physical-geometry';
+import { geometryAllRings, pointInPhysicalBody, pointInPhysicalGeometry } from './physical-geometry';
 import {
   LED_DEFAULT_RADIUS_CM, LED_EPSILON_CM, LED_THICKNESS_OFF_D, LED_THICKNESS_ON_D,
   pathD, stripAnchor, stripHitOwner,
@@ -88,10 +88,8 @@ export interface LedStripView {
 /** Faces and the inside test of the opaque bodies, from the shared light scene. */
 export function faceContext(scene: LightBarrierScene | null, epsilon: number): FaceContext | null {
   if (!scene) return null;
-  const rings = [
-    ...geometryAllRings(scene.masonryGeometry),
-    ...scene.opaqueBodies,
-  ];
+  const masonry: number[][][][] = Array.isArray(scene.masonryGeometry) ? scene.masonryGeometry as number[][][][] : [];
+  const rings = [...geometryAllRings(scene.masonryGeometry), ...scene.opaqueBodies];
   const faces: BodyFace[] = [];
   for (const ring of rings) {
     for (let i = 0; i < ring.length; i++) {
@@ -99,10 +97,43 @@ export function faceContext(scene: LightBarrierScene | null, epsilon: number): F
       if (a && b) faces.push({ a: [a[0], a[1]], b: [b[0], b[1]] });
     }
   }
+  // A uniform grid over the faces and boxes of the bodies (ТЗ §13.2): a strip
+  // or an emitter only ever looks at what is near it, never at the whole space.
+  const CELL = 25;
+  const grid = new Map<string, number[]>();
+  faces.forEach((face, index) => {
+    const x0 = Math.floor(Math.min(face.a[0], face.b[0]) / CELL), x1 = Math.floor(Math.max(face.a[0], face.b[0]) / CELL);
+    const y0 = Math.floor(Math.min(face.a[1], face.b[1]) / CELL), y1 = Math.floor(Math.max(face.a[1], face.b[1]) / CELL);
+    for (let x = x0; x <= x1; x++) {
+      for (let y = y0; y <= y1; y++) {
+        const key = `${x},${y}`;
+        const list = grid.get(key);
+        if (list) list.push(index); else grid.set(key, [index]);
+      }
+    }
+  });
+  const boxOf = (ring: readonly number[][]) => {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of ring) { minX = Math.min(minX, p[0]); minY = Math.min(minY, p[1]); maxX = Math.max(maxX, p[0]); maxY = Math.max(maxY, p[1]); }
+    return [minX, minY, maxX, maxY];
+  };
+  const inBox = (p: Pt, box: number[]) => p[0] >= box[0] && p[0] <= box[2] && p[1] >= box[1] && p[1] <= box[3];
+  const polygons = masonry.filter((poly) => poly?.[0]?.length).map((poly) => ({ box: boxOf(poly[0]), poly }));
+  const bodies = scene.opaqueBodies.map((body) => ({ box: boxOf(body), body }));
   return {
     faces,
-    inside: (point) => pointInOpaquePlanBody([point[0], point[1]], scene.masonryGeometry, scene.opaqueBodies),
+    inside: (point) => polygons.some(({ box, poly }) => inBox(point, box) && pointInPhysicalGeometry([point[0], point[1]], [poly]))
+      || bodies.some(({ box, body }) => inBox(point, box) && pointInPhysicalBody([point[0], point[1]], body)),
     epsilon,
+    near: (box) => {
+      const seen = new Set<number>();
+      for (let x = Math.floor(box[0] / CELL); x <= Math.floor(box[2] / CELL); x++) {
+        for (let y = Math.floor(box[1] / CELL); y <= Math.floor(box[3] / CELL); y++) {
+          for (const index of grid.get(`${x},${y}`) || []) seen.add(index);
+        }
+      }
+      return [...seen].map((index) => faces[index]);
+    },
   };
 }
 

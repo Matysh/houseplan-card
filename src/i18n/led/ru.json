@@ -30,6 +30,5 @@
   "led.history_draw": "LED-лента",
   "led.history_shape": "Форма LED-ленты",
   "led.history_view": "Вид устройства",
-  "led.import_unbound": "Лент без устройства после импорта: {n}",
   "led.optimize_walls": "Лент, проходящих сквозь стены: {n} ({spaces})"
 }

@@ -178,6 +178,16 @@ cannot operate stale geometry; leaving the editor is always a single safe
 action. The decorative smoothness of the editor chrome remains best effort on
 coarse-pointer devices, while the correct final View frame is release-blocking.
 
+### LED strip tool (#780)
+
+The LED tool applies the same safety floor as the wall chain: only a clean
+tap adds a point; pan, pinch, a second finger, `pointercancel`, a lost
+capture and the synthetic click after navigation add nothing, finish nothing
+and open no picker. The touch hint does not require keyboard modifiers:
+switching the tool off finishes the chain. In the View the whole stripe is
+one target with `max(22 CSS px, t/2)` hit radius; a pan or pinch over it calls
+no action, long press or more-info, and the next clean tap works at once.
+
 ## Deliberate degradation rule
 
 When an editor change would be expensive to implement correctly for touch, the

@@ -43,7 +43,9 @@ const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
 const fixtureFor = (scenario) => scenario.fixture === 'large'
   ? makeLargeHouseFixture({ includeStairs: false })
-  : makeVisualMatrixFixture({ applianceLifecycle: !!scenario.applianceLifecycle });
+  : makeVisualMatrixFixture({
+    applianceLifecycle: !!scenario.applianceLifecycle, ledStrips: !!scenario.ledStrips,
+  });
 
 const themeVars = {
   dark: {

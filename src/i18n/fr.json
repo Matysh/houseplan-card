@@ -1245,6 +1245,7 @@
   "backup.binding_status": "État des cibles — actives : {active}, désactivées : {disabled}, manquantes : {missing}",
   "backup.missing_areas": "Zones absentes sur la cible : {areas}",
   "backup.dropped_marker_links": "Liens de lumières du plan hors de cet espace transféré omis : {n}.",
+  "backup.unbound_led_strips": "Rubans LED sans appareil après l’import : {n}",
   "backup.room_drafts_migrated": "Anciens contours inachevés convertis en murs ordinaires : {drafts} ; segments : {segments}.",
   "backup.repaired_target_refs": "Références existantes restaurées par cet import d’espace : {n}.",
   "backup.preserved_unresolved_refs": "Références qui n’ont pas pu être restaurées sans ambiguïté conservées : {n}.",

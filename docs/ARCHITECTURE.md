@@ -689,3 +689,22 @@ compatibility export surface over `mutation-registry.mjs` (declarations),
 runs); dependencies never point back to the CLI. Guard-input caching is
 invocation-scoped (one resolver, one tracked-file snapshot); persisted success
 exists only in the explicit caught-witness ledger. Usage: [TESTING](TESTING.md).
+
+## LED strips: lazy boundaries (#780)
+
+`space.led_strips` belongs to the space; the link is one-way strip → marker
+and the device model stays the only owner of state and services. Four modules:
+
+| Module | Graph | Holds |
+|---|---|---|
+| `led-strip-gate.ts` | initial | which markers a space shows as a strip, the anchor, the page-wide loaders of both chunks |
+| `led-strip-card.ts` | initial | delegation only: the Devices toolbar button, the device-dialog section, notes, the LED branch of the device history |
+| `led-strip-runtime.ts` (+ `led-strip-geometry.ts`) | lazy `led` | frame, stripe, hit/focus, 2.5D, static card |
+| `led-strip-field.ts` | lazy `led-field` | the linear field, loaded by the runtime only for an on strip in a Glow room |
+| `led-strip-editor.ts` (+ `i18n/led`) | lazy `led-editor` | the Devices tool, tray, picker, representation switch, LED history commands |
+
+A View without a displayed active strip, and the Devices editor without the
+tool or an editable strip, load none of them. Each chunk checks the entry
+build fingerprint; a failed load is fail-dark for the strips only and retried
+on the next explicit entry. Budgets: `LAZY_LED_GZIP_CEILING` and
+`LAZY_LED_EDITOR_GZIP_CEILING` in `scripts/bundle-budget.mjs`.

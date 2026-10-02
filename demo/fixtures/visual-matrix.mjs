@@ -136,7 +136,53 @@ const applianceSpace = {
   decor: [],
 };
 
-const runtime = (includeAppliance = false) => {
+// #780: the LED strip reference scene — the designer's four strips on a
+// synthetic plan with the reference floor colour #868D94: a free straight
+// strip, a strip on the inner face of the bottom wall, a polyline along the
+// wall faces around a corner and a closed rectangle. The colours are scene
+// values of the four light sources, not a product palette.
+const ledRooms = [
+  { id: 'led-living', name: 'LED living', area: 'golden_led_living',
+    poly: [[0.06, 0.08], [0.56, 0.08], [0.56, 0.62], [0.06, 0.62]] },
+  { id: 'led-studio', name: 'LED studio', area: 'golden_led_studio',
+    poly: [[0.56, 0.08], [0.94, 0.08], [0.94, 0.62], [0.56, 0.62]] },
+];
+// Inner faces of the 20 cm walls (half thickness = 10 cm = 2 cells of 1/240).
+const LED_FACE = 2 / 240;
+export const LED_REFERENCE_STRIPS = Object.freeze([
+  { id: 'led-free', marker: 'demo-led-strip', color: [128, 213, 255],
+    points: [[0.14, 0.26], [0.44, 0.26]] },
+  { id: 'led-wall', marker: 'demo-led-strip-wall', color: [230, 128, 255],
+    points: [[0.12, round(0.62 - LED_FACE)], [0.50, round(0.62 - LED_FACE)]] },
+  { id: 'led-corner', marker: 'demo-led-strip-corner', color: [255, 234, 128],
+    points: [[0.64, round(0.08 + LED_FACE)], [round(0.94 - LED_FACE), round(0.08 + LED_FACE)],
+      [round(0.94 - LED_FACE), 0.42]] },
+  { id: 'led-loop', marker: 'demo-led-strip-loop', color: [88, 255, 88],
+    points: [[0.66, 0.30], [0.84, 0.30], [0.84, 0.52], [0.66, 0.52], [0.66, 0.30]] },
+]);
+
+const ledSpace = {
+  id: 'golden-led',
+  title: 'LED strips',
+  plan_url: null,
+  view_box: [0, 0, 1, 0.7],
+  cell_cm: 5,
+  settings: {
+    fill_mode: 'custom', custom_fill: { c: '#868D94', a: 1 }, glow_enabled: true,
+    show_borders: true, show_names: false, sun_rays: false, bg_mode: 'static',
+  },
+  rooms: ledRooms,
+  walls: wallsFor('led', ledRooms, 20),
+  openings: [
+    { id: 'led-door', type: 'door', x: 0.56, y: 0.53, angle: 90, length: 0.10 },
+  ],
+  partitions: [],
+  wall_columns: [],
+  decor: [],
+  led_strips: LED_REFERENCE_STRIPS.map(({ id, marker, points }) => ({ id, marker, points })),
+};
+
+const runtime = (includeAppliance = false, includeLed = false) => {
   const devices = {};
   const entities = {};
   const states = {
@@ -199,6 +245,15 @@ const runtime = (includeAppliance = false) => {
     unit_of_measurement: 'lqi',
   });
 
+  if (includeLed) {
+    for (const room of ledRooms) areas[room.area] = { area_id: room.area, name: room.name };
+    for (const strip of LED_REFERENCE_STRIPS) {
+      add(strip.marker, 'light', ledRooms[strip.id === 'led-free' || strip.id === 'led-wall' ? 0 : 1].area,
+        0.5, 0.5, 'on', { rgb_color: strip.color, brightness: 255 });
+      layout[strip.marker] = { s: 'golden-led', x: 0.5, y: 0.35 };
+    }
+  }
+
   if (includeAppliance) {
     const washerId = 'golden-washer';
     devices[washerId] = {
@@ -247,16 +302,23 @@ export const VISUAL_MATRIX_COUNTS = Object.freeze({
   columns: geometrySpace.wall_columns.length + lightingSpace.wall_columns.length,
 });
 
-export const makeVisualMatrixFixture = ({ applianceLifecycle = false } = {}) => ({
+export const makeVisualMatrixFixture = ({ applianceLifecycle = false, ledStrips = false } = {}) => ({
   config: {
     spaces: [
       structuredClone(geometrySpace), structuredClone(lightingSpace),
       ...(applianceLifecycle ? [structuredClone(applianceSpace)] : []),
+      ...(ledStrips ? [structuredClone(ledSpace)] : []),
     ],
     // A persisted marker is part of the fixture contract for scenarios that
     // override per-source Glow controls. The device/layout alone are not a
     // saved marker configuration and must not be silently treated as one.
-    markers: [{ id: 'golden-light-two', binding: 'device:golden-light-two' }],
+    markers: [
+      { id: 'golden-light-two', binding: 'device:golden-light-two' },
+      // #780: a strip link writes the marker's explicit space (ТЗ §5).
+      ...(ledStrips ? LED_REFERENCE_STRIPS.map(({ marker }) => ({
+        id: marker, binding: `device:${marker}`, space: 'golden-led',
+      })) : []),
+    ],
     settings: {
       glow_radius_cm: 360,
       north_deg: 0,
@@ -269,7 +331,7 @@ export const makeVisualMatrixFixture = ({ applianceLifecycle = false } = {}) => 
       },
     },
   },
-  ...runtime(applianceLifecycle),
+  ...runtime(applianceLifecycle, ledStrips),
   counts: applianceLifecycle ? {
     ...VISUAL_MATRIX_COUNTS,
     spaces: VISUAL_MATRIX_COUNTS.spaces + 1,

@@ -48,6 +48,7 @@ jobs:
           - overlay
           - space-default
           - space-glow
+          - led-strips
     steps:
       - name: Check out candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -175,6 +176,14 @@ jobs:
                 cp ../artifacts/performance/space-glow-candidate.json ../artifacts/performance/space-glow-baseline.json
               fi
               ;;
+            led-strips)
+              # #780 led-strips-v1: base predates LED strips, so the profile is
+              # judged by its absolute limits inside the runner; the zero-LED
+              # View stays covered by the relative interaction profile above.
+              npm run benchmark:led-strips -- --size=10x5 --samples=7 --warmups=1 --output=../artifacts/performance/led-strips-10x5.json
+              npm run benchmark:led-strips -- --size=50x50 --samples=7 --warmups=1 --output=../artifacts/performance/led-strips-50x50.json
+              npm run benchmark:led-strips -- --size=none --samples=7 --warmups=1 --output=../artifacts/performance/led-strips-none.json
+              ;;
             *)
               echo "::error::Unknown performance profile: $PROFILE"
               exit 1
@@ -216,6 +225,9 @@ jobs:
               ;;
             space-glow)
               npm run benchmark:compare -- --budgets=demo/performance/budgets-large-space-card-glow.json --baseline=../artifacts/performance/space-glow-baseline.json --candidate=../artifacts/performance/space-glow-candidate.json --output=../artifacts/performance/space-glow-comparison.json
+              ;;
+            led-strips)
+              echo "led-strips-v1: absolute limits and counters already enforced by the runner (budgets-led-strips.json)"
               ;;
           esac
 
