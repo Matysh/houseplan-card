@@ -9,6 +9,7 @@
  * and computes no field with `light_pools: false`.
  */
 import { launch, check, finish } from './serve.mjs';
+import { installHpTestOnPage } from './helpers/hp-test.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 820 }, 1);
 const ledRequests = [];
@@ -131,5 +132,27 @@ const staticCards = await evaluate(async () => {
 });
 check('static card without light_pools: passive stripe, no field', JSON.stringify(staticCards.plain), JSON.stringify({ stripe: true, field: false, hit: false }));
 check('static card with light_pools: the field', JSON.stringify(staticCards.pools), JSON.stringify({ stripe: true, field: true, hit: false }));
+
+// The device dialog offers «Show as LED strip» before the tool is loaded:
+// a static section (no dialog shift), the press loads the tool and starts
+// drawing for this same marker after the dialog's own close path.
+// A fresh page without strips: entering the Devices editor alone loads nothing.
+await page.reload();
+await page.waitForFunction(() => window.__card?._loadOk);
+await installHpTestOnPage(page);
+ledRequests.length = 0;
+const before = 0;
+await evaluate(async () => { await window.__hpTest.setMode('devices'); await window.__hpTest.openMarkerDialog('d_tv'); });
+await page.waitForTimeout(200);
+check('static «Show as LED strip» without the tool chunk', await evaluate(() =>
+  !!window.__card.shadowRoot.querySelector('[data-led-representation="icon"] [data-led-action="show-strip"]')),
+  true);
+check('the dialog alone loads no LED tool', ledRequests.filter((name) => name.startsWith('led-strip-editor-')).length, before);
+await page.click('[data-led-representation] [data-led-action="show-strip"]');
+await page.waitForTimeout(600);
+check('the press loads the tool and draws for the same marker', await evaluate(() => {
+  const led = window.__card._ledEditor;
+  return !!led?.tool && led.chain?.convert === 'd_tv' && !window.__card._markerDialog;
+}));
 
 await finish(browser);

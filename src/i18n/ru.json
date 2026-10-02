@@ -609,6 +609,7 @@
   "title.add_device": "Добавить устройство на план",
   "devbar.add": "Добавить",
   "devbar.led": "LED-лента",
+  "devbar.led_show": "Показывать LED-лентой",
   "devbar.rules": "Правила иконок",
   "device_inbox.button": "Устройства",
   "device_inbox.title": "Устройства на плане",

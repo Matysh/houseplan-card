@@ -808,6 +808,11 @@ export class LedStripEditor {
     return !this.host._markerDialog;
   }
 
+  /** «Show as LED strip» pressed before the tool was loaded: same guard, then draw. */
+  async convertFromDialog(devId: string): Promise<void> {
+    if (await this.leaveDialog()) this.open(devId);
+  }
+
   private crossings = new WeakMap<object, { n: number; spaces: string[] }>();
 
   /**

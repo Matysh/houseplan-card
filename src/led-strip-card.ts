@@ -41,15 +41,28 @@ export function ledButton(card: LedCardPort): TemplateResult {
 
 /**
  * The device dialog's "icon ↔ LED strip" section — in the Devices editor
- * only (ТЗ §5). A strip's dialog elsewhere still loads the tool: its save
- * renames the link on a rebinding.
+ * only (ТЗ §5). A device without a strip gets the static «Show as LED strip»
+ * at once (the tool loads on the press, the dialog does not shift); a strip's
+ * device loads the tool, also outside Devices: its save renames the link on a
+ * rebinding.
  */
 export function ledSection(card: LedCardPort, devId: string): TemplateResult | typeof nothing {
   const devices = card._mode === 'devices';
-  if (!devices && !card._serverCfg?.spaces.some((space: { led_strips?: Array<{ marker: string | null }> }) =>
-    space.led_strips?.some((strip) => strip.marker === devId))) return nothing;
-  const led = ledEditorFor(card, 'dialog');
-  return devices ? led?.markerSection(devId) ?? nothing : nothing;
+  const owned = !!card._serverCfg?.spaces.some((space: { led_strips?: Array<{ marker: string | null }> }) =>
+    space.led_strips?.some((strip) => strip.marker === devId));
+  if (!devices) {
+    if (owned) ledEditorFor(card, 'dialog');
+    return nothing;
+  }
+  if (card._ledEditor) return card._ledEditor.markerSection(devId);
+  if (owned) { ledEditorFor(card, 'dialog'); return nothing; }
+  return html`<div class="hpf-group led-representation" data-led-representation="icon">
+    <div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn ghost" type="button" data-led-action="show-strip"
+      @click=${() => {
+        const entry = `tool${Date.now()}`, go = () => ledEditorFor(card, entry)?.convertFromDialog(devId);
+        if (ledEditorModule(entry, go)) go();
+      }}><ha-icon icon="mdi:led-strip-variant"></ha-icon>${card._t('devbar.led_show')}</button></div>
+  </div>`;
 }
 
 const hasStrips = (config: ServerConfig | null | undefined) => !!config?.spaces.some(

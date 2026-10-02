@@ -609,6 +609,7 @@
   "title.add_device": "Add a device to the plan",
   "devbar.add": "Add",
   "devbar.led": "LED strip",
+  "devbar.led_show": "Show as LED strip",
   "devbar.rules": "Icon rules",
   "device_inbox.button": "Devices",
   "device_inbox.title": "Devices on the plan",

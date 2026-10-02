@@ -609,6 +609,7 @@
   "title.add_device": "Gerät zum Plan hinzufügen",
   "devbar.add": "Hinzufügen",
   "devbar.led": "LED-Streifen",
+  "devbar.led_show": "Als LED-Streifen zeigen",
   "devbar.rules": "Symbolregeln",
   "device_inbox.button": "Geräte",
   "device_inbox.title": "Geräte auf dem Plan",

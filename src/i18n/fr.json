@@ -609,6 +609,7 @@
   "title.add_device": "Ajouter un appareil au plan",
   "devbar.add": "Ajouter",
   "devbar.led": "Ruban LED",
+  "devbar.led_show": "Afficher en ruban LED",
   "devbar.rules": "Règles d’icônes",
   "device_inbox.button": "Appareils",
   "device_inbox.title": "Appareils sur le plan",

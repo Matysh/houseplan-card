@@ -9,10 +9,13 @@
 // отказ — английский в строках пространства, один тост, без вечной загрузки.
 import { readFileSync } from 'node:fs';
 import { launchColdView, checkAll, finish } from './serve.mjs';
+import { NAMESPACE_LOCALE_CHUNKS } from '../scripts/bundle-manifest.mjs';
 
 const manifest = JSON.parse(readFileSync('dist/houseplan-assets.json', 'utf8'));
 const NAMESPACE_CHUNKS = (manifest.lazyNamespaceLocaleFiles || []).map((path) => path.split('/').at(-1));
-if (NAMESPACE_CHUNKS.length !== 9) throw new Error('bundle manifest has no nine namespace locale chunks');
+// Every namespace × ru/de/fr is its own chunk (#627; `tools` #780 stage 3, `led` #780).
+if (NAMESPACE_CHUNKS.length !== NAMESPACE_LOCALE_CHUNKS.length)
+  throw new Error(`bundle manifest has ${NAMESPACE_CHUNKS.length} namespace locale chunks, expected ${NAMESPACE_LOCALE_CHUNKS.length}`);
 const chunkName = (namespace, language) => {
   const name = NAMESPACE_CHUNKS.find((candidate) => candidate.startsWith(`${namespace}-${language}-`));
   if (!name) throw new Error(`namespace chunk ${namespace}-${language} is absent from the manifest`);
@@ -178,7 +181,7 @@ const out = {};
   out.settingsRequestsEachGermanNamespaceOnce = namespaces
     .every((namespace) => count(requested, chunkName(namespace, 'de')) === 1);
   out.settingsRequestsNoOtherLanguage = namespaceRequests(requested)
-    .every((name) => /^(settings|support|topology)-de-/.test(name));
+    .every((name) => /^(settings|support|topology|tools)-de-/.test(name));
   await browser.close();
 }
 
