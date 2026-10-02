@@ -44,8 +44,12 @@ const memo = directive(Memo);
 
 export const LED_FIELD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
-/** Bands of the luminance field: 16 steps keep a band under 7 % of the range. */
-export const LED_FIELD_BANDS = 16;
+/**
+ * Bands of the luminance field. Twelve keep the midpoint error at the r/2
+ * visual acceptance point below 10%, without multiplying every visibility
+ * piece into sixteen SVG paint nodes.
+ */
+export const LED_FIELD_BANDS = 12;
 
 const pts = (points: readonly number[][]): Pt[] => points.map((p) => [p[0], p[1]] as Pt);
 
@@ -107,8 +111,13 @@ export class LedFieldCache {
 const pointsKey = (points: readonly number[][]): string =>
   points.map((p) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join(';');
 
-/** Fans of the field: a coarser arc than pools — the far rim sits where the falloff is 0. */
-const LED_ARC_STEPS = 32;
+/**
+ * Fans of the field only bound the zero-alpha outer rim. A 16-gon keeps its
+ * maximum radial error below 2%; every visible acceptance point at r/2 stays
+ * well inside it, while the heavy 50×50 scene carries half as many clip
+ * segments through every camera rasterization.
+ */
+const LED_ARC_STEPS = 16;
 
 const segmentDistance = (p: Pt, s: readonly number[]): number => {
   const dx = s[2] - s[0], dy = s[3] - s[1];
@@ -117,8 +126,14 @@ const segmentDistance = (p: Pt, s: readonly number[]): number => {
   return Math.hypot(p[0] - s[0] - t * dx, p[1] - s[1] - t * dy);
 };
 
+/** SVG does not gain visible precision from JS's full decimal expansion. */
+const coord = (value: number): string => {
+  const rounded = Math.round(value * 10_000) / 10_000;
+  return Object.is(rounded, -0) ? '0' : String(rounded);
+};
+
 const ringPath = (ring: readonly number[][]): string =>
-  `${ring.map((p, k) => `${k ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' ')} Z`;
+  `${ring.map((p, k) => `${k ? 'L' : 'M'}${coord(p[0])} ${coord(p[1])}`).join(' ')} Z`;
 
 /**
  * What a piece's emitters can see (ТЗ §6): the visibility fans of the shared
@@ -300,19 +315,25 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
       const on = view.state === 'on' && !!view.appearance;
       const box = geometry.box;
       const closed = isClosedStrip(pts(view.strip.points));
+      const clipped = geometry.pieces.flatMap((piece, k): Array<FieldPiece & { clip: string[]; clipId: number }> => piece.clip
+        ? [{ ...piece, clip: piece.clip, clipId: k }] : []);
+      const free = geometry.pieces.filter((piece) => !piece.clip).map((piece) => piece.d).join(' ');
+      const paint = [...clipped, ...(free ? [{ d: free, clip: null, clipId: -1 }] : [])];
       return memo([geometry, on, view.appearance?.c, view.appearance?.alpha, r, id], () => svg`<g class="glow-spot led-field ${on ? '' : 'is-leaving'}" data-led-field="${view.strip.id}"
           data-pieces="${geometry.pieces.length}" data-closed="${closed ? 'true' : 'false'}">
         <defs>
-          ${geometry.pieces.map((piece, k) => piece.clip ? svg`<clipPath id="hp-led-clip-${id}-${k}">
-            ${piece.clip.map((d) => svg`<path d="${d}"></path>`)}
-          </clipPath>` : nothing)}
+          ${clipped.map((piece) => svg`<clipPath id="hp-led-clip-${id}-${piece.clipId}">
+            ${''/* Subpaths of one path have the same union semantics in a clipPath,
+                    without one DOM node per emitter. */}
+            <path d="${piece.clip.join(' ')}"></path>
+          </clipPath>`)}
           <mask id="hp-led-mask-${id}" maskUnits="userSpaceOnUse"
             x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}"
             color-interpolation="sRGB" style="mask-type:luminance">
             <rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" fill="black"></rect>
             <g style="isolation:isolate">
-              ${geometry.pieces.map((piece, k) => svg`<g style="mix-blend-mode:lighten"
-                  clip-path=${piece.clip ? `url(#hp-led-clip-${id}-${k})` : nothing}>
+              ${paint.map((piece) => svg`<g style="mix-blend-mode:lighten"
+                  clip-path=${piece.clip ? `url(#hp-led-clip-${id}-${piece.clipId})` : nothing}>
                 ${bands.map((band) => svg`<path d="${piece.d}" fill="none" stroke="${grey(band.value)}"
                   stroke-width="${2 * band.half * r}" stroke-linecap="round" stroke-linejoin="round"></path>`)}
               </g>`)}
@@ -327,4 +348,3 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
     </g>
   </g>` as unknown as TemplateResult;
 }
-

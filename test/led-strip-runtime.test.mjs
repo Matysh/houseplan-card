@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ledAnchor, ledStripsByMarker } from '../test-build/led-strip-gate.js';
 import { faceContext, ledFrame, ledStripView, stripRoom } from '../test-build/led-strip-runtime.js';
-import { LedFieldCache, buildFieldGeometry, falloffAt } from '../test-build/led-strip-field.js';
+import { LED_FIELD_BANDS, LedFieldCache, buildFieldGeometry, falloffAt } from '../test-build/led-strip-field.js';
 import { GLOW_FALLOFF } from '../test-build/glow-scene.js';
 import { stripAnchor } from '../test-build/led-strip-geometry.js';
 
@@ -51,6 +51,15 @@ test('ТЗ §3: the linear falloff is the shared GLOW_FALLOFF', () => {
     assert.ok(value <= previous + 1e-12);
     previous = value;
   }
+});
+
+test('AC10/AC17: the compact field bands stay within the r/2 visual tolerance', () => {
+  const fraction = 0.5;
+  const band = Math.floor((1 - fraction) * LED_FIELD_BANDS);
+  const midpoint = 1 - (band + 0.5) / LED_FIELD_BANDS;
+  const exact = falloffAt(fraction);
+  assert.ok(Math.abs(falloffAt(midpoint) - exact) / exact <= 0.1,
+    `${LED_FIELD_BANDS} bands must approximate r/2 within 10%`);
 });
 
 const device = (extra = {}) => ({ id: 'm1', name: 'Kitchen LED', primary: 'light.led', space: 's', ...extra });
