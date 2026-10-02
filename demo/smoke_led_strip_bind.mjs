@@ -21,23 +21,25 @@ await evaluate(async () => {
     if (m.type === 'houseplan/config/set') {
       if (window.__ledFail) throw new Error('offline');
       window.__ledSaves++;
-      return { ok: true, rev: (c._cfgRev || 0) + 1 };
     }
     return orig.call(c.hass, m);
   };
   const service = c.hass.callService;
   c.hass.callService = async (...args) => { window.__ledServices.push(args.slice(0, 2).join('.')); return service(...args); };
   // One unbound strip in the Living room of the demo floor.
-  c._serverCfg.spaces[0].led_strips = [{ id: 'led-a', points: [[0.12, 0.22], [0.40, 0.22], [0.40, 0.40]], marker: null }];
-  c._modelCache = null; c._frame = null; c._cfgEpoch++;
-  c._setMode('devices'); await c.updateComplete;
+  await window.__hpTest.setServerConfig((cfg) => {
+    cfg.spaces[0].led_strips = [{ id: 'led-a', points: [[0.12, 0.22], [0.40, 0.22], [0.40, 0.40]], marker: null }];
+  });
+  await window.__hpTest.setMode('devices');
 });
 await page.waitForTimeout(800);
 check('an editable strip loads the tool for the Devices editor', await evaluate(() => !!window.__card._ledEditor));
 const icon = (id) => evaluate((id) => !!window.__card.shadowRoot.querySelector(`.dev[data-id="${id}"], [data-hp="device"][data-id="${id}"]:not(.led-hit)`), id);
 check('the light starts as an ordinary icon', await icon('d_bedlight'));
 
-await evaluate(() => { window.__card._ledEditor.select('led-a'); window.__card._ledEditor.picker = 'led-a'; window.__card.requestUpdate(); });
+await evaluate(() => window.__card._ledEditor.select('led-a'));
+await page.waitForTimeout(200);
+await page.click('[data-led-action="bind"]');
 await page.waitForTimeout(200);
 check('lights first in the picker', await evaluate(() => {
   const picks = [...window.__card.shadowRoot.querySelectorAll('[data-led-pick]')].map((b) => b.dataset.ledPick);
@@ -58,10 +60,10 @@ check('the device keeps its catalogue place', await evaluate(() => window.__card
 // An ordinary icon while the strip is selected: its own dialog, no LED tray.
 await evaluate(() => window.__card._ledEditor.select('led-a'));
 await page.waitForTimeout(100);
-await evaluate(() => window.__card._editorRuntime._openMarkerDialog(window.__card._devices.find((d) => d.id === 'd_lamp')));
+await evaluate(() => window.__hpTest.openMarkerDialog('d_lamp'));
 await page.waitForTimeout(200);
 check('an icon dialog drops the strip selection', await evaluate(() => window.__card._ledEditor.sel), null);
-await evaluate(() => window.__card._editorRuntime._closeMarkerDialog());
+await evaluate(() => window.__hpTest.close());
 await page.waitForTimeout(150);
 check('closing that dialog shows no LED tray', await evaluate(() => !/Delete strip/.test(window.__card.shadowRoot.querySelector('.editor-secondary')?.textContent || '')));
 
@@ -83,7 +85,7 @@ await page.keyboard.press('Control+Shift+z'); await page.waitForTimeout(500);
 check('Redo hides it again', await evaluate(() => window.__card._serverCfg.spaces[0].led_strips[0].active), false);
 
 // Device dialog: «Show as LED strip» restores the hidden shape at once.
-await evaluate(() => window.__card._editorRuntime._openMarkerDialog(window.__card._devices.find((d) => d.id === 'd_bedlight')));
+await evaluate(() => window.__hpTest.openMarkerDialog('d_bedlight'));
 await page.waitForTimeout(300);
 check('the dialog offers unbind/delete for a hidden shape', await evaluate(() => [...window.__card.shadowRoot
   .querySelectorAll('[data-led-representation] [data-led-action]')].map((b) => b.dataset.ledAction).join()), 'show-strip,unbind,delete');
@@ -105,7 +107,7 @@ check('failed write: no new command', await evaluate(() => window.__card._device
 await evaluate(() => { window.__ledFail = false; });
 
 // Converting a plain icon by drawing: one write, the same marker.
-await evaluate(() => window.__card._editorRuntime._openMarkerDialog(window.__card._devices.find((d) => d.id === 'd_lamp')));
+await evaluate(() => window.__hpTest.openMarkerDialog('d_lamp'));
 await page.waitForTimeout(300);
 await page.click('[data-led-representation] [data-led-action="show-strip"]');
 await page.waitForTimeout(400);
@@ -121,14 +123,15 @@ check('drawing converted the lamp in one write, no picker', await evaluate(() =>
   return !!strip && strip.active === true && !c._ledEditor.picker && c._serverCfg.markers.filter((m) => m.id === 'd_lamp').length === 1;
 }));
 
-// Deleting the bound marker leaves an unbound strip with its geometry.
-await evaluate(async () => {
-  const c = window.__card;
-  c._confirmDanger = async () => true;
-  c._editorRuntime._openMarkerDialog(c._devices.find((d) => d.id === 'd_bedlight'));
-  await c.updateComplete;
-  await c._editorRuntime._deleteMarker();
-});
+// Deleting the bound marker leaves an unbound strip with its geometry —
+// through the strip's own «Device settings» and the dialog's Delete + confirm.
+await evaluate(() => window.__card._ledEditor.select('led-a'));
+await page.waitForTimeout(150);
+await page.click('[data-led-action="settings"]');
+await page.waitForTimeout(300);
+await page.click('hp-dialog[data-kind="marker"] .markeractions .btn.danger');
+await page.waitForTimeout(200);
+await page.click('hp-confirm [data-hp="dialog-confirm"]');
 await page.waitForTimeout(500);
 check('deleting the marker unbinds the strip in the same write', await evaluate(() => {
   const s = window.__card._serverCfg.spaces[0].led_strips.find((x) => x.id === 'led-a');

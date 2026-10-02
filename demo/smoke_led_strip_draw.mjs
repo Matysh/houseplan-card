@@ -18,22 +18,19 @@ await evaluate(async () => {
   window.__ledSaves = [];
   const orig = c.hass.callWS;
   c.hass.callWS = async (m) => {
-    if (m.type === 'houseplan/config/set') {
-      window.__ledSaves.push(JSON.parse(JSON.stringify(m.config)));
-      return { ok: true, rev: (c._cfgRev || 0) + 1 };
-    }
+    if (m.type === 'houseplan/config/set') window.__ledSaves.push(JSON.parse(JSON.stringify(m.config)));
     return orig.call(c.hass, m);
   };
   // A thick partition across a plain room: the placement body of AC5.
-  c._serverCfg = { model_version: 10, spaces: [{ id: 'led', title: 'LED', cell_cm: 5, view_box: [0, 0, 1, 0.7],
+  await window.__hpTest.setServerConfig((cfg) => ({ ...cfg, spaces: [{ id: 'led', title: 'LED', cell_cm: 5, view_box: [0, 0, 1, 0.7],
     rooms: [{ id: 'room', name: 'Room', area: null, poly: [[0.1, 0.1], [0.9, 0.1], [0.9, 0.6], [0.1, 0.6]] }],
-    wall_segments: [], partitions: [{ id: 'p1', a: [0.5, 0.15], b: [0.5, 0.55], cm: 40 }] }], markers: [], settings: {} };
-  c._layout = {}; c._space = 'led'; c._modelCache = null; c._frame = null; c._cfgEpoch++;
-  c._setMode('plan'); await c.updateComplete;
+    wall_segments: [], partitions: [{ id: 'p1', a: [0.5, 0.15], b: [0.5, 0.55], cm: 40 }] }], markers: [] }));
+  await window.__hpTest.setLayout({});
+  await window.__hpTest.setMode('plan');
 });
 await page.waitForTimeout(300);
 check('plan editor has no LED tool', await evaluate(() => !window.__card.shadowRoot.querySelector('[data-tool="led-strip"]')));
-await evaluate(async () => { window.__card._setMode('devices'); await window.__card.updateComplete; });
+await evaluate(() => window.__hpTest.setMode('devices'));
 await page.waitForTimeout(300);
 check('devices editor has the LED tool next to Add', await evaluate(() => {
   const tools = [...window.__card.shadowRoot.querySelectorAll('.devbar [data-hp="tool"]')].map((b) => b.dataset.tool);
@@ -141,10 +138,9 @@ check('dropping the selection writes nothing', await evaluate(() => window.__led
 // «Optimize plans» reports a strip that passes through the partition and changes nothing in it.
 const optimizeNote = await evaluate(async () => {
   const c = window.__card;
-  const space = c._serverCfg.spaces[0];
-  space.led_strips = [...space.led_strips, { id: 'through', points: [[0.3, 0.3], [0.7, 0.3]], marker: null }];
-  c._modelCache = null; c._frame = null; c._cfgEpoch++;
-  await c.updateComplete;
+  await window.__hpTest.setServerConfig((cfg) => {
+    cfg.spaces[0].led_strips = [...cfg.spaces[0].led_strips, { id: 'through', points: [[0.3, 0.3], [0.7, 0.3]], marker: null }];
+  });
   c._editorRuntime.optimizePlans.open();
   await c.updateComplete;
   for (let i = 0; i < 40 && !c.shadowRoot.querySelector('[data-led-walls]'); i++) {
@@ -153,7 +149,7 @@ const optimizeNote = await evaluate(async () => {
   }
   const note = c.shadowRoot.querySelector('[data-led-walls]');
   const kept = JSON.stringify(c._alignDialog?.config?.spaces?.[0]?.led_strips?.find((s) => s.id === 'through')?.points);
-  c._alignDialog = null; await c.updateComplete;
+  await window.__hpTest.close(note?.closest('hp-dialog') || undefined);
   return { n: note?.dataset.ledWalls, text: note?.textContent || '', kept };
 });
 check('optimize reports strips through walls', optimizeNote.n, '1');
@@ -161,7 +157,7 @@ check('the report names the space', /Strips passing through walls: 1 \(LED\)/.te
 check('optimize keeps the strip as drawn', optimizeNote.kept, JSON.stringify([[0.3, 0.3], [0.7, 0.3]]));
 
 // Plan/Background: passive translucent marks only, no handles, no targets.
-await evaluate(async () => { window.__card._setMode('decor'); await window.__card.updateComplete; });
+await evaluate(() => window.__hpTest.setMode('decor'));
 await page.waitForTimeout(300);
 check('Background editor: no LED editor layer or tool', await evaluate(() => {
   const r = window.__card.shadowRoot;
