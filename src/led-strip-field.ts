@@ -112,12 +112,12 @@ const pointsKey = (points: readonly number[][]): string =>
   points.map((p) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join(';');
 
 /**
- * Fans of the field only bound the zero-alpha outer rim. A 16-gon keeps its
- * maximum radial error below 2%; every visible acceptance point at r/2 stays
- * well inside it, while the heavy 50×50 scene carries half as many clip
- * segments through every camera rasterization.
+ * Fans of the field only bound the zero-alpha outer rim. A 12-gon keeps its
+ * maximum radial error below 3.5%; every visible acceptance point at r/2 stays
+ * well inside it, while the heavy 50×50 scene carries fewer clip segments
+ * through every camera rasterization.
  */
-const LED_ARC_STEPS = 16;
+const LED_ARC_STEPS = 12;
 
 const segmentDistance = (p: Pt, s: readonly number[]): number => {
   const dx = s[2] - s[0], dy = s[3] - s[1];
