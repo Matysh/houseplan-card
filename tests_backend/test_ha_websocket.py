@@ -4428,3 +4428,60 @@ async def test_333_optimize_refreshes_the_junction_baseline_cache(
         "config/set после optimize обязан взять baseline из кэша, "
         f"а вышло: {baseline_sides}"
     )
+
+
+async def test_issue_780_old_client_deleting_a_bound_marker_still_saves(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """A client that does not know LED strips deletes the bound marker: the
+    write stands, the strip keeps its geometry unbound, and the answer tells a
+    new client to re-read. A duplicate or foreign link still rejects."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    space = _space("f1", "r1")
+    space["led_strips"] = [{
+        "id": "led-1", "points": [[0.1, 0.1], [0.6, 0.1], [0.6, 0.5]],
+        "marker": "lamp", "active": False,
+    }]
+    config = {
+        "spaces": [space, _space("f2", "r2")],
+        "markers": [{"id": "lamp", "binding": "entity:light.kitchen"}],
+        "settings": {},
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": config, "expected_rev": 0,
+    })
+    first = await client.receive_json()
+    assert first["success"], first
+    # The empty marker.space was adopted from the strip's space.
+    assert first["result"]["led_strips"] == {"unbound": 0, "space_adopted": 1}
+
+    old_client = copy.deepcopy(config)
+    old_client["markers"] = []
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": old_client,
+        "expected_rev": first["result"]["rev"],
+    })
+    second = await client.receive_json()
+    assert second["success"], second
+    assert second["result"]["led_strips"] == {"unbound": 1, "space_adopted": 0}
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]
+    strip = stored["config"]["spaces"][0]["led_strips"][0]
+    assert strip == {
+        "id": "led-1", "points": [[0.1, 0.1], [0.6, 0.1], [0.6, 0.5]],
+        "marker": None, "active": True,
+    }
+
+    foreign = copy.deepcopy(config)
+    foreign["markers"] = [{"id": "lamp", "binding": "entity:light.kitchen", "space": "f2"}]
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": foreign,
+        "expected_rev": second["result"]["rev"],
+    })
+    rejected = await client.receive_json()
+    assert not rejected["success"]
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    unchanged = (await client.receive_json())["result"]
+    assert unchanged["rev"] == second["result"]["rev"], "a rejected write leaves the revision"

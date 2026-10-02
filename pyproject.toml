@@ -42,5 +42,6 @@ module = [
     "custom_components.houseplan.frontend_asset_manifest",
     "custom_components.houseplan.junction_limits",
     "custom_components.houseplan.plans",
+    "custom_components.houseplan.led_strips",
 ]
 strict = true

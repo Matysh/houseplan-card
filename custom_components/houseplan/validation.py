@@ -17,6 +17,10 @@ from custom_components.houseplan.coordinate_canonicalization import (
     canonicalize_layout_geometry,
     canonicalize_position,
 )
+from custom_components.houseplan.led_strips import (
+    LED_STRIPS_SCHEMA,
+    config_led_strip_links,
+)
 from custom_components.houseplan.vacuum_routes import validate_marker_routes
 
 # ---------- limits and extension sets ----------
@@ -1877,6 +1881,8 @@ SPACE_SCHEMA = vol.All(vol.Schema(
         # (HP-1454-05): relying on a modern client to strip an unbounded legacy
         # list is not a limit, it is a hope. `Remove` returns the key stripped.
         vol.Remove("segments"): object,
+        # #780: optional LED strip shapes of the space (led_strips.py).
+        vol.Optional("led_strips"): LED_STRIPS_SCHEMA,
     },
     extra=vol.ALLOW_EXTRA,
 ), _space_geometry_invariants)
@@ -2353,4 +2359,7 @@ CONFIG_SCHEMA = vol.All(
     ),
     canonicalize_config_geometry,
     _config_wall_segment_invariants,
+    # #780: after canonicalisation — shape invariants judge stored numbers;
+    # orphan links become unbound strips, foreign/duplicate links reject.
+    config_led_strip_links,
 )

@@ -22,6 +22,7 @@ from .const import (
     MAX_SUPPORT_ATTACHMENT_BYTES,
     PLAN_MODEL_VERSION,
 )
+from .led_strips import led_strip_counts
 
 PACKAGE_FORMAT = "houseplan-support-package"
 PACKAGE_VERSION = 1
@@ -457,7 +458,18 @@ def _summary(config: object, layout: object) -> dict[str, Any]:
             "lifecycle": dict(sorted(lifecycles.items())),
             "binding": dict(sorted(bindings.items())),
         },
+        # #780: counters only — no coordinates, room names or HA identifiers.
+        "led_strips": _led_strip_summary(spaces),
         "layout_entries": len(layout) if isinstance(layout, dict) else 0,
+    }
+
+
+def _led_strip_summary(spaces: list[Any]) -> dict[str, int]:
+    counts = led_strip_counts({"spaces": [space for space in spaces if isinstance(space, dict)]})
+    return {
+        "total": counts["led_strips"],
+        "unbound": counts["led_strips_unbound"],
+        "hidden": counts["led_strips_hidden"],
     }
 
 

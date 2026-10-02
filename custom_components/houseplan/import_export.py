@@ -35,6 +35,7 @@ from .const import (
     PLANS_URL,
     VERSION,
 )
+from .led_strips import led_strip_link_report, plan_only_strips, unbind_strips
 from .radar_validation import validate_marker_radars
 from .store import HouseplanData
 from .validation import (
@@ -294,6 +295,10 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
         projected["decor"] = [
             _project_plan_only_decor(shape) for shape in space.get("decor") or []
         ]
+    led_strips = plan_only_strips(space)
+    if led_strips is not None:
+        # #780: plan-only keeps the strip geometry and never a device link.
+        projected["led_strips"] = led_strips
     if "stairs" in space:
         projected["stairs"] = [
             _pick_fields(stair, (
@@ -694,6 +699,12 @@ def parse_document(raw: bytes) -> dict[str, Any]:
         # before an import token can be issued.
         if model > 0:
             config_candidate["model_version"] = model
+        # #780: the schema step unbinds strips whose marker is not in the
+        # document; count them before it does, for the import summary.
+        unbound_led_strips = (
+            led_strip_link_report(config_candidate)["unbound"]
+            if isinstance(config_candidate, dict) else 0
+        )
         config = CONFIG_SCHEMA(config_candidate)
         config.pop("model_version", None)
     except (vol.Invalid, TypeError, ValueError) as err:
@@ -730,6 +741,10 @@ def parse_document(raw: bytes) -> dict[str, Any]:
         **(document.get("transfer") or {}),
         "dropped_marker_links": dropped_marker_links,
     }
+    # Computed here, never trusted from the file.
+    document["transfer"].pop("unbound_led_strips", None)
+    if unbound_led_strips:
+        document["transfer"]["unbound_led_strips"] = unbound_led_strips
     if plan_only:
         _validate_plan_only_document(document, config, layout, placement)
     if len(json.dumps(
@@ -1608,6 +1623,14 @@ def build_space_merge(
                 marker.pop("value_source", None)
                 dropped_marker_links += 1
 
+    # #780: an LED strip follows its marker through the same id remap; a
+    # marker that was skipped or virtualised by the duplicate policy is not
+    # transferred, so the strip arrives unbound (geometry kept, no device).
+    unbound_led_strips = unbind_strips(space, remap={
+        old_id: new_id for old_id, new_id in marker_map.items()
+        if old_id not in virtualized_targets
+    })
+
     output_markers_by_id = {
         str(marker.get("id")): marker for marker in output_markers
         if marker.get("id") is not None
@@ -1709,6 +1732,7 @@ def build_space_merge(
         "virtualized": virtualized,
         "orphan_markers": len(output_markers) - len(marker_map),
         "dropped_marker_links": dropped_marker_links,
+        "unbound_led_strips": unbound_led_strips,
         "repaired_target_refs": repaired_target_refs,
         "preserved_unresolved_refs": sum(
             int(value) for value in reference_report["preservedUnresolved"].values()
@@ -1914,6 +1938,14 @@ def _materialize_import_candidate(
         details = {
             "dropped_marker_links": _transfer_dropped_marker_links(prepared),
         }
+    # #780: strips unbound by the document itself (counted while parsing)
+    # plus those the transfer unbound (space merge) or the schema step will.
+    transfer = prepared.get("transfer") if isinstance(prepared.get("transfer"), dict) else {}
+    details["unbound_led_strips"] = (
+        int(details.get("unbound_led_strips", 0))
+        + int(transfer.get("unbound_led_strips", 0) or 0)
+        + led_strip_link_report(config)["unbound"]
+    )
     try:
         config = CONFIG_SCHEMA(config)
     except vol.Invalid as err:

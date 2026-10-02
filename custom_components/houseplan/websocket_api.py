@@ -70,6 +70,7 @@ from .import_export import (
     revalidate_candidate,
 )
 from .junction_limits import JunctionLimitError, validate_junction_limits
+from .led_strips import led_strip_link_report
 from .plans import (
     QuotaError,
     collect_attachments,
@@ -1681,6 +1682,11 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 
         radar_registry = radar_registry_evidence(hass)
 
+        # #780: what the write path will normalise in LED strip links (an
+        # orphan becomes unbound, an empty marker.space adopts the strip's
+        # space). Reported back so a new client re-reads; old ones ignore it.
+        led_report = led_strip_link_report(msg["config"])
+
         def _validate_config_cpu():
             def _normalize(candidate):
                 validate_wall_model_transition(candidate, data.get("config"))
@@ -1789,7 +1795,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         from .repairs import async_check_plan_files
 
         hass.async_create_task(async_check_plan_files(hass, entry))
-    connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
+    result: dict[str, Any] = {"ok": True, "rev": new_rev}
+    if any(led_report.values()):
+        result["led_strips"] = led_report
+    connection.send_result(msg["id"], result)
 
 
 # ---------------- whole-plan maintenance ----------------

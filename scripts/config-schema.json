@@ -888,6 +888,33 @@
       "required": true,
       "type": "str"
     },
+    "config.spaces[].led_strips": {
+      "required": false
+    },
+    "config.spaces[].led_strips[]": {
+      "allowExtra": true
+    },
+    "config.spaces[].led_strips[].active": {
+      "opaque": "<function _strict_bool>",
+      "required": false
+    },
+    "config.spaces[].led_strips[].id": {
+      "opaque": "<function _strip_id>",
+      "required": true
+    },
+    "config.spaces[].led_strips[].marker": {
+      "default": {
+        "factory": "NoneType"
+      },
+      "opaque": "<function _marker_ref>",
+      "required": false
+    },
+    "config.spaces[].led_strips[].points": {
+      "required": true
+    },
+    "config.spaces[].led_strips[].points[][]": {
+      "opaque": "<function _coordinate>"
+    },
     "config.spaces[].open_spans": {
       "required": false
     },

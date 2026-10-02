@@ -3032,3 +3032,120 @@ def test_issue_162_space_export_keeps_legacy_calibration_untouched(tmp_path: Pat
     vacuum = document["payload"]["config"]["markers"][0]["vacuum"]
     assert vacuum == {"source": "camera.robot", "calibration": {"m1": [1, 0, 0, 0, 1, 0]}}
     assert document["transfer"]["dropped_marker_links"] == 0
+
+
+# ---------- #780: LED strips through export/import ----------
+
+def _led_config() -> dict:
+    config = _config()
+    config["spaces"][0]["led_strips"] = [
+        {"id": "led-a", "points": [[0.1, 0.1], [0.5, 0.1], [0.5, 0.4]], "marker": "lamp"},
+        {"id": "led-b", "points": [[0.2, 0.6], [0.8, 0.6]], "marker": None},
+    ]
+    return config
+
+
+def _led_document(tmp_path: Path, kind: str, *, plan_only: bool = False, config=None) -> dict:
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"),
+        {"config": config or _led_config(), "rev": 2},
+        {"layout": {"lamp": {"x": 0.4, "y": 0.5, "s": "ground"}}, "rev": 3},
+        kind=kind, space_id="ground" if kind == "space" else None,
+        plan_only=plan_only, card_version="review", config_root=tmp_path,
+    )
+    return parse_document(json.dumps(document).encode())
+
+
+def test_issue_780_full_round_trip_keeps_geometry_links_and_hidden_shapes(tmp_path: Path) -> None:
+    config = _led_config()
+    config["spaces"][0]["led_strips"][0]["active"] = False
+    document = _led_document(tmp_path, "full", config=config)
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
+        current_layout_data={"layout": {}, "rev": 0}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    imported, _layout, details = prepare_apply(
+        candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False,
+    )
+    strips = imported["spaces"][0]["led_strips"]
+    assert strips[0] == {
+        "id": "led-a", "points": [[0.1, 0.1], [0.5, 0.1], [0.5, 0.4]],
+        "marker": "lamp", "active": False,
+    }
+    assert strips[1]["marker"] is None
+    assert candidate["details"]["unbound_led_strips"] == 0
+
+
+def test_issue_780_full_import_unbinds_a_link_whose_marker_is_absent(tmp_path: Path) -> None:
+    config = _led_config()
+    document = _led_document(tmp_path, "full", config=config)
+    document["payload"]["config"]["markers"] = []
+    document["payload"]["layout"] = {}
+    document["placement_manifest"] = []
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
+        current_layout_data={"layout": {}, "rev": 0}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    strip = candidate["target_config"]["spaces"][0]["led_strips"][0]
+    assert strip["marker"] is None and strip["active"] is True
+    assert strip["points"] == [[0.1, 0.1], [0.5, 0.1], [0.5, 0.4]]
+    assert candidate["details"]["unbound_led_strips"] == 1
+
+
+def test_issue_780_space_import_remaps_the_link_through_the_marker_id_map(tmp_path: Path) -> None:
+    document = _led_document(tmp_path, "space")
+    # The target already owns a marker with the source id: a coinciding old id
+    # must never bind the strip to the target's own device.
+    target = _config()
+    target["markers"][0]["binding"] = "entity:light.other"
+    merged, _layout, details = build_space_merge(document, target, {}, "skip")
+    space = merged["spaces"][-1]
+    imported_marker = next(
+        m for m in merged["markers"]
+        if m.get("space") == details["space_id"] and m.get("binding") == "entity:light.living"
+    )
+    strip = space["led_strips"][0]
+    assert strip["marker"] == imported_marker["id"] != "lamp"
+    assert imported_marker["space"] == space["id"]
+    assert space["led_strips"][1]["marker"] is None
+    assert details["unbound_led_strips"] == 0
+
+
+def test_issue_780_skipped_duplicate_marker_leaves_an_unbound_strip(tmp_path: Path) -> None:
+    document = _led_document(tmp_path, "space")
+    merged, _layout, details = build_space_merge(document, _config(), {}, "skip")
+    assert details["skipped"] == 1
+    strip = merged["spaces"][-1]["led_strips"][0]
+    assert strip["marker"] is None and strip["active"] is True
+    assert strip["points"] == [[0.1, 0.1], [0.5, 0.1], [0.5, 0.4]]
+    assert details["unbound_led_strips"] == 1
+
+
+def test_issue_780_virtualised_duplicate_does_not_keep_the_link(tmp_path: Path) -> None:
+    document = _led_document(tmp_path, "space")
+    merged, _layout, details = build_space_merge(document, _config(), {}, "virtual")
+    assert details["virtualized"] >= 1
+    assert merged["spaces"][-1]["led_strips"][0]["marker"] is None
+    assert details["unbound_led_strips"] == 1
+
+
+def test_issue_780_plan_only_export_keeps_geometry_without_device_links(tmp_path: Path) -> None:
+    document = _led_document(tmp_path, "space", plan_only=True)
+    strips = document["payload"]["config"]["spaces"][0]["led_strips"]
+    assert strips == [
+        {"id": "led-a", "points": [[0.1, 0.1], [0.5, 0.1], [0.5, 0.4]], "marker": None, "active": True},
+        {"id": "led-b", "points": [[0.2, 0.6], [0.8, 0.6]], "marker": None, "active": True},
+    ]
+    assert "lamp" not in json.dumps(document["payload"])
+    # A forged link in a plan-only document has no live marker to point at
+    # (plan-only carries none): the shared write path unbinds it, nothing leaks.
+    forged = copy.deepcopy(document)
+    forged["payload"]["config"]["spaces"][0]["led_strips"][0]["marker"] = "lamp"
+    parsed = parse_document(json.dumps(forged).encode())
+    assert parsed["payload"]["config"]["spaces"][0]["led_strips"][0]["marker"] is None

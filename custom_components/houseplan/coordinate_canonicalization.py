@@ -86,6 +86,16 @@ def _lattice_points(value: Any) -> None:
         _lattice_point(point)
 
 
+def _scalar_points(value: Any) -> None:
+    if not isinstance(value, list):
+        return
+    for point in value:
+        if not isinstance(point, list):
+            continue
+        for index in range(min(2, len(point))):
+            point[index] = canonicalize_number(point[index])
+
+
 def canonicalize_position(position: Any) -> Any:
     """Canonicalise lattice x/y in one layout record, preserving metadata."""
     result = copy.deepcopy(position)
@@ -181,6 +191,12 @@ def canonicalize_config_geometry(config: Any) -> Any:
         for span in _records(space.get("open_spans")):
             _lattice_point(span.get("a"))
             _lattice_point(span.get("b"))
+
+        for strip in _records(space.get("led_strips")):
+            # #780: LED strips snap to physical wall faces, like stairs and
+            # furniture: remove JSON noise only, never pull a face contact
+            # onto a lattice node.
+            _scalar_points(strip.get("points"))
 
     for marker in _records(root.get("markers")):
         _scalar_fields(marker, ("angle",))
