@@ -3,9 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ledAnchor, ledStripsByMarker } from '../test-build/led-strip-gate.js';
-import {
-  LedFieldCache, buildFieldGeometry, falloffAt, faceContext, ledStripView,
-} from '../test-build/led-strip-runtime.js';
+import { faceContext, ledStripView } from '../test-build/led-strip-runtime.js';
+import { LedFieldCache, buildFieldGeometry, falloffAt } from '../test-build/led-strip-field.js';
 import { GLOW_FALLOFF } from '../test-build/glow-scene.js';
 import { stripAnchor } from '../test-build/led-strip-geometry.js';
 

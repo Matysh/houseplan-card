@@ -539,7 +539,8 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
         + 'new URL("__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_PDF_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_MOON_RETRY_ASSET__", import.meta.url);'
-        + 'new URL("__HOUSEPLAN_LED_RETRY_ASSET__", import.meta.url)', modules: {},
+        + 'new URL("__HOUSEPLAN_LED_RETRY_ASSET__", import.meta.url);'
+        + 'new URL("__HOUSEPLAN_LED_FIELD_RETRY_ASSET__", import.meta.url)', modules: {},
     },
     // #627: the lazy namespace chunk that owns the nine second-attempt tokens.
     'houseplan-assets/backdrop-pick-HASH.js': {
@@ -584,6 +585,10 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       type: 'chunk', fileName: 'houseplan-assets/led-strip-runtime-HASH.js', code: '',
       modules: { '/repo/src/led-strip-runtime.ts': {} },
     },
+    'houseplan-assets/led-strip-field-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/led-strip-field-HASH.js', code: '',
+      modules: { '/repo/src/led-strip-field.ts': {} },
+    },
   };
   plugin.generateBundle({}, bundle);
   assert.equal(
@@ -596,7 +601,8 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       + 'new URL("./furniture-plan-art.generated-HASH.js", import.meta.url);'
       + 'new URL("./pdf-export-HASH.js", import.meta.url);'
       + 'new URL("./moon-runtime-HASH.js", import.meta.url);'
-      + 'new URL("./led-strip-runtime-HASH.js", import.meta.url)',
+      + 'new URL("./led-strip-runtime-HASH.js", import.meta.url);'
+      + 'new URL("./led-strip-field-HASH.js", import.meta.url)',
   );
   assert.equal(
     bundle['houseplan-assets/backdrop-pick-HASH.js'].code,
@@ -609,7 +615,7 @@ test('#627 namespace retry tokens stay strict: exactly one each, every chunk emi
     const bundle = {
       'houseplan-assets/houseplan-card.js': {
         type: 'chunk', fileName: 'houseplan-assets/houseplan-card.js', modules: {},
-        code: ['EDITOR', 'ONBOARDING', 'ISO', 'DE', 'FR', 'FURNITURE_ART', 'PDF', 'MOON', 'LED']
+        code: ['EDITOR', 'ONBOARDING', 'ISO', 'DE', 'FR', 'FURNITURE_ART', 'PDF', 'MOON', 'LED', 'LED_FIELD']
           .map((name) => `"__HOUSEPLAN_${name}_RETRY_ASSET__"`).join(';'),
       },
       ...Object.fromEntries([
@@ -618,7 +624,7 @@ test('#627 namespace retry tokens stay strict: exactly one each, every chunk emi
         ['iso-scene-render', '/src/iso-scene-render.ts'], ['de', '/src/i18n/de.ts'],
         ['fr', '/src/i18n/fr.ts'], ['furniture-plan-art.generated', '/src/furniture-plan-art.generated.ts'],
         ['pdf-export', '/src/pdf/pdf-export.ts'], ['moon-runtime', '/src/moon-runtime.ts'],
-        ['led-strip-runtime', '/src/led-strip-runtime.ts'],
+        ['led-strip-runtime', '/src/led-strip-runtime.ts'], ['led-strip-field', '/src/led-strip-field.ts'],
       ].map(([name, module]) => [`houseplan-assets/${name}-HASH.js`, {
         type: 'chunk', fileName: `houseplan-assets/${name}-HASH.js`, code: '', modules: { [`/repo${module}`]: {} },
       }])),

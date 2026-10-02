@@ -999,6 +999,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           gridPitch: GRID_PITCH, iconPct, glowFor: (room) => !!o.lightPools && roomGlowOf(disp.glow, room),
           inRoom: (point, room) => pointInPolygon(point, roomPoly(room) || []), live: o.liveStates !== false,
           scene: lightScene, perUnit: pxPerUnit, owner: o.glowRuntime?.state || space,
+          ready: () => o.moonHost?.requestUpdate(),
           bodies: { masonryGeometry: canonicalWallGeometry?.components.flatMap((c) => c.geom) || [], opaqueBodies: extras },
         }) ?? nothing : nothing}
         ${wallUnion

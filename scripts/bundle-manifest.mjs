@@ -13,6 +13,7 @@ const FURNITURE_ART_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__
 const PDF_RETRY_ASSET_TOKEN = '__HOUSEPLAN_PDF_RETRY_ASSET__';
 const MOON_RETRY_ASSET_TOKEN = '__HOUSEPLAN_MOON_RETRY_ASSET__';
 const LED_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_RETRY_ASSET__';
+const LED_FIELD_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_FIELD_RETRY_ASSET__';
 
 /**
  * #627: ru/de/fr of the three lazy dictionary namespaces are one chunk per
@@ -119,6 +120,10 @@ export function buildBundleManifest(bundle, fingerprint) {
               // only when a shown space has an active strip.
               : modules.some((id) => id.endsWith('/src/led-strip-runtime.ts'))
                 ? 'led'
+              // #780: the linear field, loaded by the LED runtime only when a
+              // strip is on in a Glow room with a light scene.
+              : modules.some((id) => id.endsWith('/src/led-strip-field.ts'))
+                ? 'led-field'
               // #474: designer furniture artwork — its own lazy chunk, shared by
               // the editor (static import) and the View runtime (dynamic).
               : modules.some((id) => id.endsWith('/src/furniture-plan-art.generated.ts'))
@@ -164,8 +169,13 @@ export function buildBundleManifest(bundle, fingerprint) {
     || path.includes('pdf-export-'));
   const moonRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'moon'
     || path.includes('moon-runtime-'));
-  const ledRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'led'
-    || path.includes('led-strip-runtime-'));
+  // #780: the field chunk is a dynamic import of the LED chunk, not of the
+  // initial graph, so it is found by its module, like namespace dictionaries.
+  const ledRoots = [
+    ...dynamicRoots.filter((path) => byPath.get(path)?._role === 'led'
+      || path.includes('led-strip-runtime-')),
+    ...files.filter((file) => file._role === 'led-field').map((file) => file.path),
+  ];
   // #627: namespace dictionaries are dynamic imports of LAZY chunks, never of
   // the initial graph, so they are found by their module, not as a root.
   const namespaceLocaleRoots = files.filter((file) => file._role === 'namespace-locale')
@@ -289,6 +299,9 @@ export function editorRuntimeRetryUrlPlugin() {
       const led = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/led-strip-runtime.ts')));
       if (!led) throw new Error('LED strip runtime chunk was not emitted');
+      const ledField = chunks.find((chunk) => Object.keys(chunk.modules)
+        .some((id) => id.replaceAll('\\', '/').endsWith('/src/led-strip-field.ts')));
+      if (!ledField) throw new Error('LED strip field chunk was not emitted');
       const namespaceLocales = NAMESPACE_LOCALE_CHUNKS.map((entry) => {
         const chunk = chunks.find((candidate) => Object.keys(candidate.modules)
           .some((id) => id.replaceAll('\\', '/').endsWith(entry.module)));
@@ -306,6 +319,7 @@ export function editorRuntimeRetryUrlPlugin() {
       let pdfReplacements = 0;
       let moonReplacements = 0;
       let ledReplacements = 0;
+      let ledFieldReplacements = 0;
       for (const chunk of chunks) {
         if (chunk.code.includes(EDITOR_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), editor.fileName);
@@ -361,6 +375,12 @@ export function editorRuntimeRetryUrlPlugin() {
           ledReplacements += chunk.code.split(LED_RETRY_ASSET_TOKEN).length - 1;
           chunk.code = chunk.code.replaceAll(LED_RETRY_ASSET_TOKEN, asset);
         }
+        if (chunk.code.includes(LED_FIELD_RETRY_ASSET_TOKEN)) {
+          let asset = posix.relative(posix.dirname(chunk.fileName), ledField.fileName);
+          if (!asset.startsWith('.')) asset = `./${asset}`;
+          ledFieldReplacements += chunk.code.split(LED_FIELD_RETRY_ASSET_TOKEN).length - 1;
+          chunk.code = chunk.code.replaceAll(LED_FIELD_RETRY_ASSET_TOKEN, asset);
+        }
         for (const entry of namespaceLocales) {
           if (!chunk.code.includes(entry.token)) continue;
           let asset = posix.relative(posix.dirname(chunk.fileName), entry.chunk.fileName);
@@ -371,9 +391,10 @@ export function editorRuntimeRetryUrlPlugin() {
       }
       if (editorReplacements !== 1 || onboardingReplacements !== 1 || isometricReplacements !== 1
           || germanReplacements !== 1 || frenchReplacements !== 1 || furnitureArtReplacements !== 1
-          || pdfReplacements !== 1 || moonReplacements !== 1 || ledReplacements !== 1) {
+          || pdfReplacements !== 1 || moonReplacements !== 1 || ledReplacements !== 1
+          || ledFieldReplacements !== 1) {
         throw new Error('lazy retry URL placeholder counts are '
-          + `${editorReplacements}/${onboardingReplacements}/${isometricReplacements}/${germanReplacements}/${frenchReplacements}/${furnitureArtReplacements}/${pdfReplacements}/${moonReplacements}/${ledReplacements}, expected 1/1/1/1/1/1/1/1/1`);
+          + `${editorReplacements}/${onboardingReplacements}/${isometricReplacements}/${germanReplacements}/${frenchReplacements}/${furnitureArtReplacements}/${pdfReplacements}/${moonReplacements}/${ledReplacements}/${ledFieldReplacements}, expected 1/1/1/1/1/1/1/1/1/1`);
       }
       // #627: the same strict rule for every namespace × language token —
       // exactly one second-attempt URL each, never zero and never two.
