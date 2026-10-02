@@ -14,13 +14,14 @@ const PDF_RETRY_ASSET_TOKEN = '__HOUSEPLAN_PDF_RETRY_ASSET__';
 const MOON_RETRY_ASSET_TOKEN = '__HOUSEPLAN_MOON_RETRY_ASSET__';
 const LED_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_RETRY_ASSET__';
 const LED_FIELD_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_FIELD_RETRY_ASSET__';
+const LED_EDITOR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_EDITOR_RETRY_ASSET__';
 
 /**
  * #627: ru/de/fr of the three lazy dictionary namespaces are one chunk per
  * namespace × language. Their loader modules are the recognition marker for
  * the manifest graph and the target of each second-attempt retry token.
  */
-export const NAMESPACE_LOCALE_CHUNKS = ['settings', 'support', 'topology', 'tools']
+export const NAMESPACE_LOCALE_CHUNKS = ['settings', 'support', 'topology', 'tools', 'led']
   .flatMap((namespace) => ['ru', 'de', 'fr'].map((language) => ({
     namespace,
     language,
@@ -124,6 +125,9 @@ export function buildBundleManifest(bundle, fingerprint) {
               // strip is on in a Glow room with a light scene.
               : modules.some((id) => id.endsWith('/src/led-strip-field.ts'))
                 ? 'led-field'
+              // #780: the Devices-editor LED tool, loaded by the editor runtime.
+              : modules.some((id) => id.endsWith('/src/led-strip-editor.ts'))
+                ? 'led-editor'
               // #474: designer furniture artwork — its own lazy chunk, shared by
               // the editor (static import) and the View runtime (dynamic).
               : modules.some((id) => id.endsWith('/src/furniture-plan-art.generated.ts'))
@@ -176,6 +180,7 @@ export function buildBundleManifest(bundle, fingerprint) {
       || path.includes('led-strip-runtime-')),
     ...files.filter((file) => file._role === 'led-field').map((file) => file.path),
   ];
+  const ledEditorRoots = files.filter((file) => file._role === 'led-editor').map((file) => file.path);
   // #627: namespace dictionaries are dynamic imports of LAZY chunks, never of
   // the initial graph, so they are found by their module, not as a root.
   const namespaceLocaleRoots = files.filter((file) => file._role === 'namespace-locale')
@@ -195,6 +200,7 @@ export function buildBundleManifest(bundle, fingerprint) {
   const lazyPdf = graphFrom(pdfRoots);
   const lazyMoon = graphFrom(moonRoots);
   const lazyLed = graphFrom(ledRoots);
+  const lazyLedEditor = graphFrom(ledEditorRoots);
   const lazyNamespaceLocale = graphFrom(namespaceLocaleRoots);
   const sum = (paths) => [...paths]
     .reduce((total, path) => total + (byPath.get(path)?.gzipBytes || 0), 0);
@@ -227,6 +233,8 @@ export function buildBundleManifest(bundle, fingerprint) {
     lazyMoonGzipBytes: sum(lazyMoon),
     lazyLedFiles: [...lazyLed].sort(),
     lazyLedGzipBytes: sum(lazyLed),
+    lazyLedEditorFiles: [...lazyLedEditor].sort(),
+    lazyLedEditorGzipBytes: sum(lazyLedEditor),
     lazyNamespaceLocaleFiles: [...lazyNamespaceLocale].sort(),
     lazyNamespaceLocaleGzipBytes: sum(lazyNamespaceLocale),
     files: files.map(({ _role, ...file }) => file),
@@ -302,6 +310,9 @@ export function editorRuntimeRetryUrlPlugin() {
       const ledField = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/led-strip-field.ts')));
       if (!ledField) throw new Error('LED strip field chunk was not emitted');
+      const ledEditor = chunks.find((chunk) => Object.keys(chunk.modules)
+        .some((id) => id.replaceAll('\\', '/').endsWith('/src/led-strip-editor.ts')));
+      if (!ledEditor) throw new Error('LED strip editor chunk was not emitted');
       const namespaceLocales = NAMESPACE_LOCALE_CHUNKS.map((entry) => {
         const chunk = chunks.find((candidate) => Object.keys(candidate.modules)
           .some((id) => id.replaceAll('\\', '/').endsWith(entry.module)));
@@ -320,6 +331,7 @@ export function editorRuntimeRetryUrlPlugin() {
       let moonReplacements = 0;
       let ledReplacements = 0;
       let ledFieldReplacements = 0;
+      let ledEditorReplacements = 0;
       for (const chunk of chunks) {
         if (chunk.code.includes(EDITOR_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), editor.fileName);
@@ -375,6 +387,12 @@ export function editorRuntimeRetryUrlPlugin() {
           ledReplacements += chunk.code.split(LED_RETRY_ASSET_TOKEN).length - 1;
           chunk.code = chunk.code.replaceAll(LED_RETRY_ASSET_TOKEN, asset);
         }
+        if (chunk.code.includes(LED_EDITOR_RETRY_ASSET_TOKEN)) {
+          let asset = posix.relative(posix.dirname(chunk.fileName), ledEditor.fileName);
+          if (!asset.startsWith('.')) asset = `./${asset}`;
+          ledEditorReplacements += chunk.code.split(LED_EDITOR_RETRY_ASSET_TOKEN).length - 1;
+          chunk.code = chunk.code.replaceAll(LED_EDITOR_RETRY_ASSET_TOKEN, asset);
+        }
         if (chunk.code.includes(LED_FIELD_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), ledField.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
@@ -392,9 +410,9 @@ export function editorRuntimeRetryUrlPlugin() {
       if (editorReplacements !== 1 || onboardingReplacements !== 1 || isometricReplacements !== 1
           || germanReplacements !== 1 || frenchReplacements !== 1 || furnitureArtReplacements !== 1
           || pdfReplacements !== 1 || moonReplacements !== 1 || ledReplacements !== 1
-          || ledFieldReplacements !== 1) {
+          || ledFieldReplacements !== 1 || ledEditorReplacements !== 1) {
         throw new Error('lazy retry URL placeholder counts are '
-          + `${editorReplacements}/${onboardingReplacements}/${isometricReplacements}/${germanReplacements}/${frenchReplacements}/${furnitureArtReplacements}/${pdfReplacements}/${moonReplacements}/${ledReplacements}/${ledFieldReplacements}, expected 1/1/1/1/1/1/1/1/1/1`);
+          + `${editorReplacements}/${onboardingReplacements}/${isometricReplacements}/${germanReplacements}/${frenchReplacements}/${furnitureArtReplacements}/${pdfReplacements}/${moonReplacements}/${ledReplacements}/${ledFieldReplacements}/${ledEditorReplacements}, expected 1/1/1/1/1/1/1/1/1/1/1`);
       }
       // #627: the same strict rule for every namespace × language token —
       // exactly one second-attempt URL each, never zero and never two.

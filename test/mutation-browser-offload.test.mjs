@@ -139,7 +139,7 @@ test('#659 marker handlers preserve callouts, baselines and explicit user choice
     "? callout({ kind: 'warning', role: 'status', text: t('marker.run_target_gone', { id: d.tapTarget }) })",
     '&& (edit ? dirty : true);',
     '@click=${() => { void this._saveMarker(); }}',
-    'if (!edit || !dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }',
+    'if (edit && dirty && !await this.host._confirmDanger({',
     "${effectiveTapAction === 'run' || effectiveTapAction === 'toggle'",
     "markerglowblock ${glowSourceDisabled ? 'hpf-disabled' : ''}",
     'valueBadgePosition: position,\n                  valueBadgeTouched: true,',

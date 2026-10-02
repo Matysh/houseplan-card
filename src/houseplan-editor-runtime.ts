@@ -437,6 +437,10 @@ interface DeviceInboxDialogState {
 }
 
 export interface HouseplanEditorHostPort {
+  /** #780: the LED tool lives in its own lazy chunk; the card owns its loader. */
+  _ledEditor: import('./led-strip-editor').LedStripEditor | null;
+  _ledButton(): TemplateResult;
+  _ledSection(devId: string, leave: () => Promise<boolean>): TemplateResult | typeof nothing;
   _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate?: boolean, warm?: boolean): void;
   _ackNewDevice: (id: string) => void;
   _activeWallChainId: string | null;
@@ -938,7 +942,7 @@ public warmRoomDraft() {
 }
 
 public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
-    if (mode !== this.host._mode) this.host._cancelDangerConfirm();
+    if (mode !== this.host._mode) { this.host._cancelDangerConfirm(); this.host._ledEditor?.reset(); }
     this.host._endTabDrag();
     this._clearFurniturePreview();
     // A mode command is newer than the editor remembered by a same-route warm
@@ -2243,6 +2247,7 @@ public _canAppendWallPoint(): boolean {
 
 public _markupClick(ev: MouseEvent): void {
     if (this.host._vacFit) return; // the fit overlay owns all pointer input
+    if (this.host._mode === 'devices') this.host._ledEditor?.backgroundClick(ev);
     if (!this.host._markup) return;
     const space = this.host._spaceModel();
     if (!space) {
@@ -5089,7 +5094,7 @@ public _renderEditorSecondary(): TemplateResult | typeof nothing {
     const model = group ? this._renderEditorGroupModel(group)
       : this.host._mode === 'plan' ? this._renderPlanSecondary()
       : this.host._mode === 'decor' ? this._withBackdropReset(this._renderDecorSecondary())
-      : null;
+      : this.host._ledEditor?.secondary() ?? null;
     return this.host._editorSecondary.render(model, this.host._editorSecondaryDialogBlocked);
   }
 
@@ -7577,6 +7582,7 @@ public async _saveMarker(): Promise<void> {
     if (!targetSpaceModel) return;
     const targetSpaceId = targetSpaceModel.id;
     if (dlg.binding === 'virtual' && !space) space = targetSpaceId;
+    if (this.host._ledEditor?.markerMoveBlocked(oldId, space || targetSpaceId)) return; // #780 §5
     let radarField: Pick<Marker, 'radar'> | Record<string, never> = {};
     if (dlg.radarTouched) {
       if (dlg.radarRemove) {
@@ -7694,6 +7700,7 @@ public async _saveMarker(): Promise<void> {
           && (marker.binding === 'virtual' || m.binding !== marker.binding),
       );
       candidate.markers.push(marker);
+      this.host._ledEditor?.linkMarker(candidate, oldId, id);
       const obsoleteAreaSnapshotIds = new Set(replacedRemovedIds);
       if (oldId && oldId !== id) obsoleteAreaSnapshotIds.add(oldId);
       obsoleteAreaSnapshotIds.delete(id);
@@ -7838,6 +7845,7 @@ public async _deleteMarker(): Promise<void> {
     );
       cfg.markers = removeMarkerControlReferences(deletion.markers, deletion.cleanupIds);
       const cleanupIds = deletion.cleanupIds;
+      this.host._ledEditor?.unlinkMarkers(cfg, cleanupIds);
       if (cleanupIds.size && cfg.settings?.marker_area_snapshot) {
         cfg.settings = {
           ...cfg.settings,
@@ -11234,6 +11242,7 @@ public _renderDevicesBar(): TemplateResult {
           title=${this.host._t('title.add_device')}>
           <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this.host._t('devbar.add')}
         </button>
+        ${this.host._ledButton()}
         <button class="btn ${this.host._showAll ? 'on' : ''}" data-hp="tool" data-tool="device-inbox" @click=${() => this._openDeviceInbox()}
           title=${this.host._t('device_inbox.title')}>
           <ha-icon icon="mdi:devices"></ha-icon>${this.host._t('device_inbox.button')}

@@ -427,6 +427,7 @@ const GRAPH_LABELS = {
   lazyEditorFiles: 'lazy editor graph',
   lazyOnboardingFiles: 'lazy onboarding graph',
   lazyNamespaceLocaleFiles: 'lazy namespace locale graph',
+  lazyLedEditorFiles: 'lazy LED editor graph',
 };
 
 /**
@@ -470,6 +471,7 @@ export const NAMESPACE_ENGLISH_CONSUMERS = {
   support: ['lazyEditorFiles'],
   topology: ['lazyEditorFiles'],
   tools: ['lazyEditorFiles'],
+  led: ['lazyLedEditorFiles'],
 };
 
 /**
@@ -776,7 +778,7 @@ export function assertBundleBudget(
   const namespaceLocales = manifest.lazyNamespaceLocaleFiles;
   if (!Array.isArray(namespaceLocales) || namespaceLocales.length !== NAMESPACE_LOCALE_CHUNKS.length) {
     throw new Error(`lazy namespace locale graph has ${namespaceLocales?.length ?? 0} files,`
-      + ` expected ${NAMESPACE_LOCALE_CHUNKS.length} (settings/support/topology/tools × ru/de/fr)`);
+      + ` expected ${NAMESPACE_LOCALE_CHUNKS.length} (settings/support/topology/tools/led × ru/de/fr)`);
   }
   for (const [graph, label] of [
     ['initialViewFiles', 'initial View graph'],

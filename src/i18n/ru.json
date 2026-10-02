@@ -608,6 +608,7 @@
   "title.close_editor": "Закрыть редактор (вернуться к просмотру)",
   "title.add_device": "Добавить устройство на план",
   "devbar.add": "Добавить",
+  "devbar.led": "LED-лента",
   "devbar.rules": "Правила иконок",
   "device_inbox.button": "Устройства",
   "device_inbox.title": "Устройства на плане",

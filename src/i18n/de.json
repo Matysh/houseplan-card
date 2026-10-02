@@ -608,6 +608,7 @@
   "title.close_editor": "Editor schließen (zur Ansicht zurück)",
   "title.add_device": "Gerät zum Plan hinzufügen",
   "devbar.add": "Hinzufügen",
+  "devbar.led": "LED-Streifen",
   "devbar.rules": "Symbolregeln",
   "device_inbox.button": "Geräte",
   "device_inbox.title": "Geräte auf dem Plan",

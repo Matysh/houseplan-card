@@ -15,11 +15,29 @@ import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 import type { LedStripModel, SpaceModel } from './types';
 
 type LedRuntime = typeof import('./led-strip-runtime');
+type LedEditorModule = typeof import('./led-strip-editor');
 
-let runtime: LedRuntime | null = null;
-let loading: Promise<unknown> | null = null;
-/** The entry that failed last (a different one may try again); '' = foreign build. */
-let failed: string | undefined;
+/** One page-wide lazy chunk; `failed` is the entry that failed last, '' = a foreign build. */
+interface Slot<M> { module: M | null; loading: Promise<unknown> | null; failed?: string }
+
+const runtimeSlot: Slot<LedRuntime> = { module: null, loading: null };
+const editorSlot: Slot<LedEditorModule> = { module: null, loading: null };
+
+function lazy<M>(
+  slot: Slot<M>, entry: string, ready: () => void,
+  first: () => Promise<M>, retry: string, fingerprint: (module: M) => string,
+): M | null {
+  if (!slot.module && !slot.loading && slot.failed !== entry && slot.failed !== '') {
+    slot.loading = (slot.failed === undefined ? first()
+      : import(/* @vite-ignore */ new URL(`${retry}?${Date.now()}`, import.meta.url).href) as Promise<M>
+    ).then((module) => {
+      if (fingerprint(module) === ENTRY_BUILD_FINGERPRINT) slot.module = module;
+      else slot.failed = '';
+    }, () => { slot.failed = entry; }).finally(() => { slot.loading = null; });
+  }
+  if (!slot.module) void slot.loading?.then(() => slot.module && ready());
+  return slot.module;
+}
 
 /** Active, bound strips of a space by marker id. No geometry. */
 export function ledStripsByMarker(space: SpaceModel | null | undefined): Map<string, LedStripModel> {
@@ -47,15 +65,12 @@ export function ledAnchor(points: readonly number[][], scale: number): { x: numb
  * it lands. `entry` names the explicit entry (space id or the LED tool).
  */
 export function ledRuntime(entry: string, ready: () => void): LedRuntime | null {
-  if (!runtime && !loading && failed !== entry && failed !== '') {
-    loading = (failed === undefined
-      ? import('./led-strip-runtime')
-      : import(/* @vite-ignore */ new URL(`__HOUSEPLAN_LED_RETRY_ASSET__?${Date.now()}`, import.meta.url).href) as Promise<LedRuntime>
-    ).then((module) => {
-      if (module.LED_RUNTIME_FINGERPRINT === ENTRY_BUILD_FINGERPRINT) runtime = module;
-      else failed = '';
-    }, () => { failed = entry; }).finally(() => { loading = null; });
-  }
-  if (!runtime) void loading?.then(() => runtime && ready());
-  return runtime;
+  return lazy(runtimeSlot, entry, ready, () => import('./led-strip-runtime'),
+    '__HOUSEPLAN_LED_RETRY_ASSET__', (module) => module.LED_RUNTIME_FINGERPRINT);
+}
+
+/** The Devices-editor LED tool chunk (ТЗ §13.1): only on an explicit entry. */
+export function ledEditorModule(entry: string, ready: () => void): LedEditorModule | null {
+  return lazy(editorSlot, entry, ready, () => import('./led-strip-editor'),
+    '__HOUSEPLAN_LED_EDITOR_RETRY_ASSET__', (module) => module.LED_EDITOR_FINGERPRINT);
 }

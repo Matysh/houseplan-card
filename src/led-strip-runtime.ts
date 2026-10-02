@@ -445,7 +445,7 @@ export function renderLedLayerFor(
   const theme = deviceThemeClass(host._renderPlanHass) === 'theme-dark' ? 'dark' : 'light';
   const lightFloor = !!host._isoLightFloors?.size;
   const shadow = isoTileShadow(theme, lightFloor);
-  return renderLedStripes({
+  const stripes = renderLedStripes({
     views: frame.views,
     d,
     iso: iso ? {
@@ -474,6 +474,10 @@ export function renderLedLayerFor(
       label: (d) => d.name,
     } : null,
   });
+  // ТЗ §4 п.10: Plan/Background show a passive translucent mark, never a target.
+  return host._mode === 'plan' || host._mode === 'decor'
+    ? svg`<g class="led-passive" opacity="0.45" pointer-events="none">${stripes}</g>` as unknown as TemplateResult
+    : stripes;
 }
 
 export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean): TemplateResult {

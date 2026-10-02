@@ -608,6 +608,7 @@
   "title.close_editor": "Fermer l’éditeur (retour à la vue)",
   "title.add_device": "Ajouter un appareil au plan",
   "devbar.add": "Ajouter",
+  "devbar.led": "Ruban LED",
   "devbar.rules": "Règles d’icônes",
   "device_inbox.button": "Appareils",
   "device_inbox.title": "Appareils sur le plan",

@@ -7,7 +7,7 @@ import { existsSync, readFileSync } from 'node:fs';
 
 import { NAMESPACE_LOCALE_CHUNKS } from '../scripts/bundle-manifest.mjs';
 
-const NAMESPACES = ['settings', 'support', 'topology', 'tools'];
+const NAMESPACES = ['settings', 'support', 'topology', 'tools', 'led'];
 const LAZY_LANGUAGES = ['ru', 'de', 'fr'];
 const source = (path) => readFileSync(new URL(`../src/i18n/${path}`, import.meta.url), 'utf8');
 const json = (path) => JSON.parse(source(path));
@@ -60,18 +60,21 @@ test('#627 рантайм пространства: en готов сразу, ru
     support: await import('../test-build/i18n/support.js'),
     topology: await import('../test-build/i18n/topology.js'),
     tools: await import('../test-build/i18n/tools.js'),
+    led: await import('../test-build/i18n/led.js'),
   };
   const runtimes = {
     settings: modules.settings.SETTINGS_LANGUAGE_RUNTIME,
     support: modules.support.SUPPORT_LANGUAGE_RUNTIME,
     topology: modules.topology.TOPOLOGY_LANGUAGE_RUNTIME,
     tools: modules.tools.TOOLS_LANGUAGE_RUNTIME,
+    led: modules.led.LED_LANGUAGE_RUNTIME,
   };
   const translate = {
     settings: modules.settings.settingsT,
     support: modules.support.supportT,
     topology: modules.topology.topologyT,
     tools: modules.tools.toolsT,
+    led: modules.led.ledT,
   };
   for (const namespace of NAMESPACES) {
     const runtime = runtimes[namespace];

@@ -7,6 +7,7 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { ledAnchor, ledRuntime, ledStripsByMarker } from './led-strip-gate';
+import { ledButton, ledEditorFor, ledHistory, ledSection } from './led-strip-card';
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { cache as litCache } from 'lit/directives/cache.js';
 import { keyed } from 'lit/directives/keyed.js';
@@ -2891,6 +2892,7 @@ export class HouseplanCard extends LitElement {
     }
     if (this._mode === 'devices') {
       if ((undo || redo) && inField) return;
+      if (this._ledEditor?.key(e, undo)) { e.preventDefault(); return; }
       if (redo) {
         e.preventDefault();
         this._redoDevicePosition();
@@ -5374,6 +5376,7 @@ export class HouseplanCard extends LitElement {
       : this._devicePositionHistory.redo();
     if (!command) return;
     const target = direction === 'undo' ? command.before : command.after;
+    if ('kind' in target) return ledHistory(this as never, direction, command); // #780
     if (!this._devicePositionStateValid(target)) {
       this._devicePositionHistory.clear();
       this._showToast(this._t('history.device_stale'));
@@ -10461,8 +10464,7 @@ export class HouseplanCard extends LitElement {
     pruneGlowSources(
       this._glowRuntimeState, this._glowRuntimeHost, space.id, seenSourceKeys,
     );
-    const ledField = this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) ?? nothing;
-    if (!spots.length) return svg`${ledField}` as unknown as TemplateResult;
+    if (!spots.length) return svg`` as unknown as TemplateResult;
     // Per-room Glow overrides are visual clips only. The transport calculation
     // above still crosses a disabled room, but no base/pool pixels are painted
     // there. For the common all-enabled case this extra clip is omitted.
@@ -10495,19 +10497,25 @@ export class HouseplanCard extends LitElement {
     const feather = resolveGlowFeather(
       this._glowRuntimeState, perUnit, cameraStill,
     );
-    return svg`${renderGlowPools({
+    return renderGlowPools({
       spots,
       enabledClip,
       feather: feather.feather,
       featherEnabled: feather.enabled,
       screenBlend: this._glowScreenBlend,
-    })}${ledField}` as unknown as TemplateResult;
+    });
   }
 
   /** #780: the lazy LED chunk when the space shows a strip (ТЗ §13.1). */
   private _ledRt(space: SpaceModel) {
     return ledStripsByMarker(space).size ? ledRuntime(space.id, () => this.requestUpdate()) : null;
   }
+
+  /** #780: the Devices-editor LED tool, its own lazy chunk (src/led-strip-card.ts). */
+  public _ledEditor: import('./led-strip-editor').LedStripEditor | null = null;
+  private _ledEd(entry: string) { return ledEditorFor(this as never, entry); }
+  public _ledButton() { return ledButton(this as never); }
+  public _ledSection(devId: string, leave: () => Promise<boolean>) { return ledSection(this as never, devId, leave); }
 
   private _renderSettingsDialog(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderSettingsDialog();
@@ -10907,6 +10915,7 @@ export class HouseplanCard extends LitElement {
           ${renderDayCycleEnvironment(dayCycle, dayCycleWeight, moonLayer(this, this._sunGlobal(), dayCycle))}
           ${moonLayer(this, this._sunGlobal(), this._moonSkyState(), dayCycleWeight)}
           ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
+          ${this._ledEditor?.chrome() ?? nothing}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction || this._modeTransitionBusy}
             style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}">
@@ -11102,6 +11111,7 @@ export class HouseplanCard extends LitElement {
             ${this._mode === 'plan' && this._editorRuntime
               ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer()}
             ${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}
+            ${glowLayerVisible ? this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) : nothing}
             ${this._renderSunRays(space)}
             ${this._editing ? svg`<g class="hp-editor-only-layer"
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderAlignGuides()}</g>` : nothing}
@@ -11148,6 +11158,8 @@ export class HouseplanCard extends LitElement {
                 ? nothing
                 : this._renderOpenings(disp)}
             ${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view) ?? nothing}
+            ${this._mode === 'devices' && (this._ledEditor || space.led_strips?.some((s) => s.active !== false))
+              ? this._ledEd(space.id)?.layer(space) : nothing}
             ${this._renderWallThickUi()}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
             ${''/* editor chrome, not plan content: the backdrop frame sits on

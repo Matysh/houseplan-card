@@ -299,7 +299,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
   }
   assert.throws(() => assertBundleBudget({
     ...manifest, lazyNamespaceLocaleFiles: manifest.lazyNamespaceLocaleFiles.slice(1),
-  }, 1_000_000, undefined, ...lazyCeilings), /lazy namespace locale graph has 11 files, expected 12/);
+  }, 1_000_000, undefined, ...lazyCeilings), /lazy namespace locale graph has 14 files, expected 15/);
   // #661 AC8: a moon pulled into the first frame (a static import leaves no
   // lazy moon graph — the builder subtracts initial) is refused by name.
   assert.throws(() => assertBundleBudget({ ...manifest, lazyMoonFiles: [] }, 1_000_000, undefined, ...lazyCeilings),
@@ -540,7 +540,8 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
         + 'new URL("__HOUSEPLAN_PDF_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_MOON_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_LED_RETRY_ASSET__", import.meta.url);'
-        + 'new URL("__HOUSEPLAN_LED_FIELD_RETRY_ASSET__", import.meta.url)', modules: {},
+        + 'new URL("__HOUSEPLAN_LED_FIELD_RETRY_ASSET__", import.meta.url);'
+        + 'new URL("__HOUSEPLAN_LED_EDITOR_RETRY_ASSET__", import.meta.url)', modules: {},
     },
     // #627: the lazy namespace chunk that owns the nine second-attempt tokens.
     'houseplan-assets/backdrop-pick-HASH.js': {
@@ -589,6 +590,11 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       type: 'chunk', fileName: 'houseplan-assets/led-strip-field-HASH.js', code: '',
       modules: { '/repo/src/led-strip-field.ts': {} },
     },
+    // #780: the Devices-editor LED tool, loaded only on an explicit entry.
+    'houseplan-assets/led-strip-editor-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/led-strip-editor-HASH.js', code: '',
+      modules: { '/repo/src/led-strip-editor.ts': {} },
+    },
   };
   plugin.generateBundle({}, bundle);
   assert.equal(
@@ -602,7 +608,8 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       + 'new URL("./pdf-export-HASH.js", import.meta.url);'
       + 'new URL("./moon-runtime-HASH.js", import.meta.url);'
       + 'new URL("./led-strip-runtime-HASH.js", import.meta.url);'
-      + 'new URL("./led-strip-field-HASH.js", import.meta.url)',
+      + 'new URL("./led-strip-field-HASH.js", import.meta.url);'
+      + 'new URL("./led-strip-editor-HASH.js", import.meta.url)',
   );
   assert.equal(
     bundle['houseplan-assets/backdrop-pick-HASH.js'].code,
@@ -615,7 +622,7 @@ test('#627 namespace retry tokens stay strict: exactly one each, every chunk emi
     const bundle = {
       'houseplan-assets/houseplan-card.js': {
         type: 'chunk', fileName: 'houseplan-assets/houseplan-card.js', modules: {},
-        code: ['EDITOR', 'ONBOARDING', 'ISO', 'DE', 'FR', 'FURNITURE_ART', 'PDF', 'MOON', 'LED', 'LED_FIELD']
+        code: ['EDITOR', 'ONBOARDING', 'ISO', 'DE', 'FR', 'FURNITURE_ART', 'PDF', 'MOON', 'LED', 'LED_FIELD', 'LED_EDITOR']
           .map((name) => `"__HOUSEPLAN_${name}_RETRY_ASSET__"`).join(';'),
       },
       ...Object.fromEntries([
@@ -625,6 +632,7 @@ test('#627 namespace retry tokens stay strict: exactly one each, every chunk emi
         ['fr', '/src/i18n/fr.ts'], ['furniture-plan-art.generated', '/src/furniture-plan-art.generated.ts'],
         ['pdf-export', '/src/pdf/pdf-export.ts'], ['moon-runtime', '/src/moon-runtime.ts'],
         ['led-strip-runtime', '/src/led-strip-runtime.ts'], ['led-strip-field', '/src/led-strip-field.ts'],
+        ['led-strip-editor', '/src/led-strip-editor.ts'],
       ].map(([name, module]) => [`houseplan-assets/${name}-HASH.js`, {
         type: 'chunk', fileName: `houseplan-assets/${name}-HASH.js`, code: '', modules: { [`/repo${module}`]: {} },
       }])),
@@ -1009,6 +1017,7 @@ const runBudgetCli = (initialViewGzipBytes) => {
       english('settings'), english('support'), english('topology'), english('tools'),
     ].join('\n'));
     writeFileSync(join(dir, 'dist/onboarding.js'), english('settings'));
+    writeFileSync(join(dir, 'dist/led-editor.js'), english('led'));
     for (const entry of NAMESPACE_LOCALE_CHUNKS) {
       const marker = namespaceMarkers.find((candidate) => candidate.namespace === entry.namespace
         && candidate.language === entry.language).text;
@@ -1040,6 +1049,7 @@ const runBudgetCli = (initialViewGzipBytes) => {
       initialPanelOnlyFiles: ['houseplan-panel.js'],
       initialPanelOnlyGzipBytes: 1,
       lazyEditorFiles: ['editor.js'],
+      lazyLedEditorFiles: ['led-editor.js'],
       // #593: у ленивых графов теперь свои потолки, и фикстура обязана лежать
       // внутри полосы — иначе CLI краснеет не на том, что проверяет тест.
       lazyEditorGzipBytes: LAZY_EDITOR_GZIP_CEILING - 1_000,
@@ -1205,6 +1215,6 @@ test('#627 AC3 проверка владения краснеет на кажд�
   }
   // Маркеры реальных словарей не совпадают ни с одной строкой основного каталога.
   const real = namespaceLocaleMarkers();
-  assert.equal(real.length, 16);
-  assert.equal(new Set(real.map((entry) => entry.text)).size, 16);
+  assert.equal(real.length, 20);
+  assert.equal(new Set(real.map((entry) => entry.text)).size, 20);
 });

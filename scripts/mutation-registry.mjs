@@ -6084,9 +6084,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'custom_components/houseplan/validation.py',
       find: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
-        + '    ),\n    canonicalize_config_geometry,\n    _config_wall_segment_invariants,\n)',
+        + '    ),\n    canonicalize_config_geometry,\n    _config_wall_segment_invariants,\n',
       replace: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
-        + '    ),\n    lambda value: value,\n    _config_wall_segment_invariants,\n)',
+        + '    ),\n    lambda value: value,\n    _config_wall_segment_invariants,\n',
     }],
   },
   {
@@ -7387,7 +7387,7 @@ const MUTANT_DEFINITIONS = [
       find: '        ${passageGlowTunnels}\n'
         + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
         + '        <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>\n'
-        + '        ${glowPools}\n        ${wallUnion',
+        + '        ${glowPools}\n        ${leds.size',
       replace: '        ${passageGlowTunnels}\n'
         + '        ${!space.bg && !disp.showNames ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
         + '          const center = roomCenter(room);\n'
@@ -7397,7 +7397,7 @@ const MUTANT_DEFINITIONS = [
         + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
         + '        <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>\n'
         + '        ${glowPools}\n'
-        + '        ${wallUnion',
+        + '        ${leds.size',
     }],
   },
   {
@@ -13741,8 +13741,9 @@ const MUTANT_DEFINITIONS = [
       + 'Перевёрнутое условие закрывает «грязный» диалог молча и спрашивает у чистого',
     patches: [{
       file: 'src/editors/marker-dialog.ts',
-      find: "      if (!edit || !dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }",
-      replace: "      if (!edit || dirty) { forgetMarkerBaseline(this.host); this._closeMarkerDialog(); return; }",
+      // #780: the guard is the dialog's shared `leave` (close and the LED representation switch).
+      find: "      if (edit && dirty && !await this.host._confirmDanger({",
+      replace: "      if ((!edit || !dirty) && !await this.host._confirmDanger({",
     }],
   },
   {
