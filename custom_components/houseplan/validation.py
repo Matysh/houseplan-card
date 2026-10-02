@@ -20,6 +20,7 @@ from custom_components.houseplan.coordinate_canonicalization import (
 from custom_components.houseplan.led_strips import (
     LED_STRIPS_SCHEMA,
     config_led_strip_links,
+    preserve_led_strips,
 )
 from custom_components.houseplan.vacuum_routes import validate_marker_routes
 
@@ -2274,13 +2275,16 @@ def prepare_ordinary_summary_candidate(
     readable_entity_ids: set[str],
     normalize,
 ) -> dict:
-    """Apply the one summary-panel contract shared by ordinary config writers.
+    """Apply the one preservation contract shared by ordinary config writers.
 
     `normalize` owns the writer-specific schema/migration sequence. Preservation
     must happen before it; change-aware reference validation must happen after
     it. Authoritative full import/restore intentionally does not use this helper.
+    Preserved: the summary panel namespace (#437) and the LED strip shapes of a
+    space an older writer sent without the field (#780).
     """
     preserve_summary_panel_namespace(candidate, previous)
+    preserve_led_strips(candidate, previous)
     checked = normalize(candidate)
     validate_summary_panel_references(checked, previous, readable_entity_ids)
     return checked

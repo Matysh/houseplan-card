@@ -70,7 +70,7 @@ from .import_export import (
     revalidate_candidate,
 )
 from .junction_limits import JunctionLimitError, validate_junction_limits
-from .led_strips import led_strip_link_report
+from .led_strips import led_strip_link_report, preserve_led_strips
 from .plans import (
     QuotaError,
     collect_attachments,
@@ -1685,6 +1685,9 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # #780: what the write path will normalise in LED strip links (an
         # orphan becomes unbound, an empty marker.space adopts the strip's
         # space). Reported back so a new client re-reads; old ones ignore it.
+        # An older writer omits the field: its stored shapes are kept first
+        # (r1 H1), so the report also counts their links.
+        preserve_led_strips(msg["config"], data.get("config"))
         led_report = led_strip_link_report(msg["config"])
 
         def _validate_config_cpu():

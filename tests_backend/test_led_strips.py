@@ -185,6 +185,48 @@ def test_deleted_marker_leaves_an_unbound_strip_with_its_geometry(active) -> Non
     assert report == {"unbound": 1, "space_adopted": 0}
 
 
+def _old_writer(config: dict) -> dict:
+    """The payload of a frontend that does not know the field (r1 H1)."""
+    payload = copy.deepcopy(config)
+    for space in payload["spaces"]:
+        space.pop("led_strips", None)
+    return payload
+
+
+def _ordinary(candidate: dict, previous: dict) -> dict:
+    return v.prepare_ordinary_summary_candidate(copy.deepcopy(candidate), previous, set(), v.CONFIG_SCHEMA)
+
+
+@pytest.mark.parametrize("active", [True, False])
+def test_old_writer_omitting_the_field_keeps_the_stored_shapes(active) -> None:
+    """r1 H1: an omitted ``led_strips`` is not a deletion on the ordinary write path."""
+    previous = _check(_config([_strip(active=active)]))
+    checked = _ordinary(_old_writer(previous), previous)
+    assert _strips_of(checked) == _strips_of(previous)
+
+
+def test_old_writer_deleting_the_marker_unbinds_the_kept_shape() -> None:
+    previous = _check(_config([_strip(active=False)]))
+    payload = _old_writer(previous)
+    payload["markers"] = []
+    strip = _strips_of(_ordinary(payload, previous))[0]
+    assert strip == {**_strip(), "marker": None, "active": True}
+
+
+def test_explicit_empty_list_deletes_and_a_removed_space_takes_its_shapes() -> None:
+    previous = _check(_config([_strip()], extra_spaces=("upper",)))
+    explicit = copy.deepcopy(previous)
+    explicit["spaces"][0]["led_strips"] = []
+    assert _strips_of(_ordinary(explicit, previous)) == []
+    removed = _old_writer(previous)
+    removed["spaces"] = [space for space in removed["spaces"] if space["id"] != "ground"]
+    removed["markers"] = []
+    checked = _ordinary(removed, previous)
+    assert all("led_strips" not in space for space in checked["spaces"])
+    # The preservation never invents a key for a space that had none.
+    assert "led_strips" not in _ordinary(_old_writer(_check(_config())), _check(_config()))["spaces"][0]
+
+
 def test_tombstoned_marker_is_not_live() -> None:
     markers = [{"id": "lamp", "binding": "entity:light.kitchen", "space": "ground", "removed": True}]
     strip = _strips_of(_check(_config([_strip()], markers)))[0]

@@ -1139,8 +1139,14 @@ led_strips?: Array<{ id: string; points: [number, number][]; marker: string | nu
   adopts the strip's space. A non-empty foreign `space` or a second link
   still rejects the whole write. `config/set` reports the counts
   `{led_strips: {unbound, space_adopted}}`; older clients may ignore them.
-- **Older clients** keep the unknown array on an ordinary save; deleting a
-  bound marker succeeds and leaves an unbound strip.
+- **Older clients.** An ordinary writer (`config/set`, Optimize) that omits
+  the field keeps the stored shapes of every space it still sends: the backend
+  copies them from the stored revision before normalisation
+  (`preserve_led_strips`, r1 H1). Omission is never a deletion; a new client
+  deletes shapes only with an explicit list (`[]` removes all). Deleting a
+  bound marker in the same write succeeds and leaves an unbound strip; a
+  removed space takes its strips with it. Full import/restore is authoritative
+  and does not preserve.
 - **Transfer.** Full export/import keeps geometry, links and `active`. A
   space import remaps links through the same marker-id map as the devices;
   a strip whose marker did not travel (skipped duplicate, absent) arrives

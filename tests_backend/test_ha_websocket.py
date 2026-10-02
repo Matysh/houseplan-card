@@ -4485,3 +4485,69 @@ async def test_issue_780_old_client_deleting_a_bound_marker_still_saves(
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     unchanged = (await client.receive_json())["result"]
     assert unchanged["rev"] == second["result"]["rev"], "a rejected write leaves the revision"
+
+
+async def test_issue_780_old_writer_omitting_led_strips_keeps_the_shapes(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """r1 H1: a previous frontend does not know the field and sends every space
+    without it. The omission is not a deletion: the stored shapes survive, a
+    link to a marker the same write deleted becomes unbound, and only an
+    explicit list from a new client removes them. Judged by a fresh connection."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    space = _space("f1", "r1")
+    shapes = [
+        {"id": "led-1", "points": [[0.1, 0.1], [0.6, 0.1], [0.6, 0.5]], "marker": "lamp", "active": False},
+        {"id": "led-2", "points": [[0.2, 0.2], [0.5, 0.2]], "marker": None, "active": True},
+    ]
+    config = {
+        "spaces": [{**space, "led_strips": copy.deepcopy(shapes)}, _space("f2", "r2")],
+        "markers": [{"id": "lamp", "binding": "entity:light.kitchen", "space": "f1"}],
+        "settings": {},
+    }
+    await client.send_json_auto_id({"type": "houseplan/config/set", "config": config, "expected_rev": 0})
+    first = await client.receive_json()
+    assert first["success"], first
+
+    # The old writer: the same plan, no `led_strips` key anywhere.
+    old_writer = copy.deepcopy(config)
+    for item in old_writer["spaces"]:
+        item.pop("led_strips", None)
+    old_writer["markers"][0]["name"] = "Kitchen strip"
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": old_writer, "expected_rev": first["result"]["rev"],
+    })
+    kept = await client.receive_json()
+    assert kept["success"], kept
+    assert "led_strips" not in kept["result"], "nothing to normalise: the shapes came back as stored"
+
+    # The old writer deletes the bound marker: the save stands, the kept shape unbinds.
+    deleting = copy.deepcopy(old_writer)
+    deleting["markers"] = []
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": deleting, "expected_rev": kept["result"]["rev"],
+    })
+    unbound = await client.receive_json()
+    assert unbound["success"], unbound
+    assert unbound["result"]["led_strips"] == {"unbound": 1, "space_adopted": 0}
+
+    fresh = await hass_ws_client(hass)
+    await fresh.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await fresh.receive_json())["result"]
+    assert stored["config"]["spaces"][0]["led_strips"] == [
+        {**shapes[0], "marker": None, "active": True}, shapes[1],
+    ]
+    assert "led_strips" not in stored["config"]["spaces"][1]
+
+    # A new client deletes every shape with an explicit empty list.
+    explicit = copy.deepcopy(stored["config"])
+    explicit["spaces"][0]["led_strips"] = []
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": explicit, "expected_rev": stored["rev"],
+    })
+    assert (await client.receive_json())["success"]
+    reader = await hass_ws_client(hass)
+    await reader.send_json_auto_id({"type": "houseplan/config/get"})
+    emptied = (await reader.receive_json())["result"]
+    assert emptied["config"]["spaces"][0].get("led_strips") == []

@@ -14374,6 +14374,16 @@ const MUTANT_DEFINITIONS = [
       replace: '    unbound_led_strips = unbind_strips(space, remap={\n        old_id: old_id for old_id, new_id in marker_map.items()',
     }],
   },
+  {
+    id: 'led-old-writer-drops-strips',
+    guard: 'node scripts/backend-test-guard.mjs old_writer tests_backend/test_led_strips.py',
+    because: '#780 r1 H1: an ordinary save without the unknown field keeps the stored shapes; only an explicit list deletes',
+    patches: [{
+      file: 'custom_components/houseplan/validation.py',
+      find: '    preserve_summary_panel_namespace(candidate, previous)\n    preserve_led_strips(candidate, previous)',
+      replace: '    preserve_summary_panel_namespace(candidate, previous)',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

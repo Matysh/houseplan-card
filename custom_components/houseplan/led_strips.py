@@ -28,6 +28,7 @@ Write-path order (ТЗ #780 §9):
 """
 from __future__ import annotations
 
+import copy
 import math
 from collections.abc import Iterator
 from typing import Any
@@ -159,6 +160,33 @@ def _strips(config: dict[str, Any]) -> Iterator[tuple[dict[str, Any], dict[str, 
         for strip in space.get(LED_KEY) or []:
             if isinstance(strip, dict):
                 yield space, strip
+
+
+def preserve_led_strips(config: dict[str, Any], previous: dict[str, Any] | None) -> int:
+    """An ordinary writer that omits ``led_strips`` keeps the stored shapes (#780 r1 H1).
+
+    A previous frontend does not know the field and sends every space without
+    it; the omission is not a deletion. A new client deletes shapes by sending
+    an explicit list (``[]`` removes all of them). Applies to spaces that keep
+    their id; a space the writer removed takes its strips with it. Runs on the
+    ordinary write path before normalisation, so a preserved link to a marker
+    the same write deleted becomes an unbound strip by the usual rule.
+    Returns how many spaces received their stored shapes back.
+    """
+    stored = {
+        space.get("id"): space[LED_KEY]
+        for space in (previous or {}).get("spaces") or []
+        if isinstance(space, dict) and isinstance(space.get(LED_KEY), list) and space[LED_KEY]
+    }
+    restored = 0
+    for space in config.get("spaces") or []:
+        if not isinstance(space, dict) or LED_KEY in space:
+            continue
+        shapes = stored.get(space.get("id"))
+        if shapes:
+            space[LED_KEY] = copy.deepcopy(shapes)
+            restored += 1
+    return restored
 
 
 def led_strip_link_report(config: dict[str, Any]) -> dict[str, int]:
