@@ -158,3 +158,16 @@ test('AC2/r1 M2: an explicit valid room_id wins over the anchor room; a stale on
   assert.equal(stripRoom(rooms, null, [250, 100], inA)?.id, 'A');
   assert.equal(stripRoom(rooms, null, null, inA), undefined);
 });
+
+test('AC17/r1 M5: a released owner retains nothing; the stats count visibility entries and fans', async () => {
+  const { ledFieldCache, ledFieldStats, releaseLedField } = await import('../test-build/led-strip-field.js');
+  const owner = {};
+  const cache = ledFieldCache(owner);
+  cache.forSpace('a');
+  cache.read('k1', () => ({ pieces: [{ d: 'M0 0', clip: ['M0 0 Z', 'M1 1 Z'] }, { d: 'M1 1', clip: null }], box: { x: 0, y: 0, w: 1, h: 1 } }));
+  cache.read('k2', () => null);
+  assert.deepEqual(ledFieldStats(owner), { visibility: 2, sources: 2, recomputes: 2 });
+  releaseLedField(owner);
+  assert.deepEqual(ledFieldStats(owner), { visibility: 0, sources: 0, recomputes: 0 });
+  assert.notEqual(ledFieldCache(owner), cache, 'a new mount starts a new cache');
+});

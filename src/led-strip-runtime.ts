@@ -413,6 +413,8 @@ export function ledFrame(input: LedFrameInput): LedFrame {
 // (ТЗ §13.1). The host is the card itself, read structurally.
 
 export interface LedCardHost {
+  /** A late chunk never re-renders (and re-fills caches of) a disconnected card. */
+  isConnected?: boolean;
   _renderDevices: readonly DevItem[];
   _renderPlanHass: any; // any-ok: the card's HA snapshot type is internal to the card
   _virtualLights: VirtualLightSnapshot;
@@ -443,6 +445,18 @@ export interface LedCardHost {
 
 const frames = new WeakMap<object, { key: unknown[]; frame: LedFrame }>();
 
+/** Disconnect (ТЗ §13.2, r1 M5): the frame and the field caches of this card are released. */
+export function releaseLed(owner: object): void {
+  frames.delete(owner);
+  field?.releaseLedField(owner);
+}
+
+/** The performance witness: shapes (frame), visibility entries and retained fans of this card. */
+export function ledStats(owner: object): { shapes: number; visibility: number; sources: number; recomputes: number } {
+  return { shapes: frames.get(owner)?.frame.views.length ?? 0,
+    ...(field?.ledFieldStats(owner) ?? { visibility: 0, sources: 0, recomputes: 0 }) };
+}
+
 /** The LED frame of a space for this card, rebuilt only when an input changed. */
 export function ledFrameFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean): LedFrame {
   const polygons = space.rooms.flatMap((room) => {
@@ -472,7 +486,8 @@ export function ledFrameFor(host: LedCardHost, space: SpaceModel, spaceGlow: boo
     inRoom: (point, room) => host._pointInRoom(point, room),
     showHidden: host._mode === 'devices' && host._showAll,
   });
-  frames.set(host, { key, frame });
+  // A disconnected card keeps nothing (a pending update after disconnect, r1 M5).
+  if (host.isConnected !== false) frames.set(host, { key, frame });
   return frame;
 }
 
@@ -524,8 +539,9 @@ export function renderLedLayerFor(
 }
 
 export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean): TemplateResult {
+  if (host.isConnected === false) return svg`` as unknown as TemplateResult;
   const frame = ledFrameFor(host, space, spaceGlow);
-  const module = frame.scene && fieldWanted(frame.views) ? ledField(space.id, () => host.requestUpdate()) : null;
+  const module = frame.scene && fieldWanted(frame.views) ? ledField(space.id, () => host.isConnected !== false && host.requestUpdate()) : null;
   if (!module) return svg`` as unknown as TemplateResult;
   return module.renderLedField({
     views: frame.views,

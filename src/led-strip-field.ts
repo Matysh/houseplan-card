@@ -96,6 +96,12 @@ export class LedFieldCache {
     return value;
   }
   clear(): void { this.entries.clear(); this.ids.clear(); this.space = ''; }
+  /** Retained visibility fans (the per-emitter source cache, ТЗ §13.2: ≤ 2500). */
+  get sources(): number {
+    let n = 0;
+    for (const value of this.entries.values()) for (const piece of value?.pieces || []) n += piece.clip?.length ?? 0;
+    return n;
+  }
 }
 
 const pointsKey = (points: readonly number[][]): string =>
@@ -234,6 +240,16 @@ export interface LedFieldInput {
 }
 
 const fieldCaches = new WeakMap<object, LedFieldCache>();
+/** Disconnect (ТЗ §13.2): no retained entry of this owner. */
+export function releaseLedField(owner: object): void {
+  fieldCaches.get(owner)?.clear();
+  fieldCaches.delete(owner);
+}
+/** The performance witness: what this owner retains right now. */
+export function ledFieldStats(owner: object): { visibility: number; sources: number; recomputes: number } {
+  const cache = fieldCaches.get(owner);
+  return { visibility: cache?.size ?? 0, sources: cache?.sources ?? 0, recomputes: cache?.recomputes ?? 0 };
+}
 export function ledFieldCache(owner: object): LedFieldCache {
   let cache = fieldCaches.get(owner);
   if (!cache) {

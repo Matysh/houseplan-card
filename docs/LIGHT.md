@@ -451,4 +451,5 @@ only the geometry differs:
 - **Laziness.** The stripe/hit/2.5D code (`led-strip-runtime`) and the field
   (`led-strip-field`) are separate lazy chunks; the initial graph holds only
   the presence check and the loader (`led-strip-gate`). Caches are bounded per
-  space (50 shapes, 50 visibilities) and released on space change.
+  space (50 shapes, 50 visibilities, 2500 retained fans) and released on space
+  change and on disconnect; a chunk that lands after disconnect applies nothing.

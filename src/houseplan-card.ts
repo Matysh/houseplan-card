@@ -6,7 +6,7 @@
  *  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
-import { ledAnchor, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
+import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
 import { ledButton, ledEditorFor, ledHistory, ledImportNote, ledSection, ledWallsNote } from './led-strip-card';
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { cache as litCache } from 'lit/directives/cache.js';
@@ -2772,6 +2772,7 @@ export class HouseplanCard extends LitElement {
     this._continuityHistory = [...this._continuityHistory, ...this._continuity.trace].slice(-80);
     this._continuity.dispose();
     this._continuityDisposed = true;
+    ledRelease(this); // #780 r1 M5: no retained LED cache after disconnect
     super.disconnectedCallback();
   }
 
@@ -10509,8 +10510,9 @@ export class HouseplanCard extends LitElement {
 
   /** #780: the lazy LED chunk when the space shows a strip (ТЗ §13.1). */
   private _ledRt(space: SpaceModel) {
-    return ledVisible(space, this._renderDevices, this._mode === 'devices' && this._showAll, this._serverCfg?.markers)
-      ? ledRuntime(space.id, () => this.requestUpdate()) : null;
+    // A disconnected card never applies the chunk (a late import, r1 M5).
+    return this.isConnected && ledVisible(space, this._renderDevices, this._mode === 'devices' && this._showAll, this._serverCfg?.markers)
+      ? ledRuntime(space.id, () => this.isConnected && this.requestUpdate()) : null;
   }
 
   /** #780: the Devices-editor LED tool, its own lazy chunk (src/led-strip-card.ts). */

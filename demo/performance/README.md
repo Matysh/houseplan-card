@@ -437,11 +437,21 @@ reduced motion; every sample is cold (a new browser and card), seven samples
 after one warm-up. The runner fails on its own against
 `budgets-led-strips.json` — the ТЗ table, median and p95: `firstStableRenderMs`
 3400/5000, `warmSpaceReadyMs` 1500, `stateUpdateMs` 1000/1500, `panZoomMs` 500,
-the longest pan/zoom Long Task 150 ms, retained heap after 20 A→B→C→A cycles
-64 MiB — and on exact counters: zero field geometry recomputes over 100
-unrelated HA ticks, 100 camera steps and a colour-only change, at most 50 cache
-entries, no cache growth over the cycles, the LED chunks loaded with strips
-and none without them, never the editor chunk in the View. Base predates the
+the longest pan/zoom Long Task 150 ms — of the interaction profile's camera
+scenario and of a 100-step series, one wheel step per frame — retained heap
+after 20 A→B→C→A cycles 64 MiB — and on exact counters: zero field geometry
+recomputes over 100 unrelated HA ticks, 100 camera steps and a colour-only
+change; the three caches of the shown space (`ledStats` of the runtime chunk)
+— shapes ≤ 50, visibility ≤ 50, retained per-emitter fans ≤ 2500 — identical
+after every cycle; after disconnect 0 retained entries and 0 live LED
+timers/frames/observers (tracked by creation stack in the page); one extra
+cold run holds the runtime response, removes the card meanwhile and requires
+that the landed chunk renders, caches and schedules nothing for it; the LED
+chunks loaded with strips and none without them, never the editor chunk in
+the View. A runner with a short step limit may collect the samples in parts
+(`--warmup-only`, `--samples=N --no-late-import`) and judge them with
+`--merge=…` — the same cold samples, the same gates, the minimum of seven
+samples after one warm-up enforced on the merged set. Base predates the
 strips, so there is no relative comparison; the zero-LED View remains judged
 by the relative `large-house-interaction-v1` profile. Exact-SHA Linux output
 of the full performance workflow (`led-strips` matrix entry) is the gate

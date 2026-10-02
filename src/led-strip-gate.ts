@@ -89,6 +89,9 @@ export function ledRuntime(entry: string, ready: () => void): LedRuntime | null 
     '__HOUSEPLAN_LED_RETRY_ASSET__', (module) => module.LED_RUNTIME_FINGERPRINT);
 }
 
+/** Disconnect: release this card's LED caches if the chunk is here (ТЗ §13.2). */
+export function ledRelease(owner: object): void { runtimeSlot.module?.releaseLed(owner); }
+
 /** The Devices-editor LED tool chunk (ТЗ §13.1): only on an explicit entry. */
 export function ledEditorModule(entry: string, ready: () => void): LedEditorModule | null {
   return lazy(editorSlot, entry, ready, () => import('./led-strip-editor'),
