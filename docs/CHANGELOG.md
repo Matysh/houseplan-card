@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.79.0-beta.2 — 2026-10-02
+
 - Recreating the card in Home Assistant now keeps the editor camera steady and the
   previous View zoom even when edit permission arrives late. A newer mode or
   floor choice is no longer overridden by that delayed restoration, whether

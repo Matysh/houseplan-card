@@ -1,20 +1,20 @@
-<!-- release: v1.79.0-beta.1 -->
+<!-- release: v1.79.0-beta.2 -->
 
 ## Основное
 
-- В объёмном 2.5D-виде план больше не сдвигается: комнаты, мебель и подписи остаются там же, где на обычном плане, стены растут из него строго вверх, а все значки устройств поднимаются на одну высоту и не сдвигаются при смене состояния; включение объёма сохраняет масштаб и положение плана ([#713](https://github.com/Matysh/houseplan-card/issues/713), [#711](https://github.com/Matysh/houseplan-card/issues/711)).
-- На фоне «Следует за Солнцем» в сумерках и ночью видна луна в текущей фазе, следующая настоящей луне над вашим домом; переключатель — в общих настройках, раздел «Солнце и Луна» ([#661](https://github.com/Matysh/houseplan-card/issues/661)).
-- В режиме View над лестницей-ссылкой теперь курсор-указатель вместо курсора перемещения ([#693](https://github.com/Matysh/houseplan-card/issues/693)).
+- Луна теперь видна на любом фоне; в общих настройках показано, видна ли она сейчас и почему может быть скрыта ([#718](https://github.com/Matysh/houseplan-card/issues/718)).
+- Комнаты больше не мигают белым или тёмным при переключении этажей и входе в редактор; после правки плана перестраивается только изменённый этаж ([#742](https://github.com/Matysh/houseplan-card/issues/742), [#746](https://github.com/Matysh/houseplan-card/issues/746), [#744](https://github.com/Matysh/houseplan-card/issues/744)).
+- При пересоздании карточки редактор сохраняет камеру и несохранённый диалог; запоздалое восстановление больше не перебивает новый выбор режима или этажа ([#756](https://github.com/Matysh/houseplan-card/issues/756), [#762](https://github.com/Matysh/houseplan-card/issues/762)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- In 2.5D View the plan no longer moves: rooms, furniture and labels stay where they are on the flat plan, walls grow straight up from it, and every device icon is lifted by the same height and no longer shifts on state changes; turning 2.5D on or off keeps the zoom and position ([#713](https://github.com/Matysh/houseplan-card/issues/713), [#711](https://github.com/Matysh/houseplan-card/issues/711)).
-- The "Follow the Sun" background now shows the moon in its current phase at dawn, dusk and night, following the real moon over your home; the switch is in General settings under "Sun and Moon" ([#661](https://github.com/Matysh/houseplan-card/issues/661)).
-- In View, the cursor over a stair link is now a pointer instead of the move cursor ([#693](https://github.com/Matysh/houseplan-card/issues/693)).
+- The moon now appears on any background; General settings explain whether it is visible now and why it may be hidden ([#718](https://github.com/Matysh/houseplan-card/issues/718)).
+- Rooms no longer flash white or dark when switching floors or entering an editor; editing a plan now rebuilds only the affected floor ([#742](https://github.com/Matysh/houseplan-card/issues/742), [#746](https://github.com/Matysh/houseplan-card/issues/746), [#744](https://github.com/Matysh/houseplan-card/issues/744)).
+- Recreating the card preserves the editor camera and unsaved dialog; delayed restoration no longer overrides a newer mode or floor choice ([#756](https://github.com/Matysh/houseplan-card/issues/756), [#762](https://github.com/Matysh/houseplan-card/issues/762)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.79.0-beta.1/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.79.0-beta.1/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.79.0-beta.2/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.79.0-beta.2/docs/CHANGELOG.md)
