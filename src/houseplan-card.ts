@@ -11807,16 +11807,6 @@ export class HouseplanCard extends LitElement {
       ${pucks}`;
   }
 
-  /** #780 r1 M1: the value badge of a strip, passive, at its anchor (`_pos`). */
-  private _ledBadge(d: DevItem, view: { x: number; y: number; w: number; h: number }, iso?: IsoOverlayPlacement) {
-    const presentation = this._devicePresentation(d, false);
-    const face = presentation.haDisabled ? nothing : renderDeviceShadowFace(presentation);
-    if (face === nothing) return nothing;
-    const pos = this._pos(d), point = iso?.visualScene ?? [pos.x, pos.y];
-    return html`<div class="dev led-badge ${deviceThemeClass(this._renderPlanHass)}" data-led-badge=${d.id} aria-hidden="true"
-      style="left:${((point[0] - view.x) / view.w) * 100}%;top:${((point[1] - view.y) / view.h) * 100}%">${face}</div>`;
-  }
-
   private _renderDevice(
     d: DevItem,
     view: { x: number; y: number; w: number; h: number },
@@ -11901,6 +11891,16 @@ export class HouseplanCard extends LitElement {
       })}
       ${this._vacRouteBadge(d)}
     </div>`;
+  }
+
+  /** #780 r1 M1: the value badge of a strip, passive, at its anchor (`_pos`). */
+  private _ledBadge(d: DevItem, view: { x: number; y: number; w: number; h: number }, iso?: IsoOverlayPlacement) {
+    const presentation = this._devicePresentation(d, false);
+    const face = presentation.haDisabled ? nothing : renderDeviceShadowFace(presentation);
+    if (face === nothing) return nothing;
+    const pos = this._pos(d), point = iso?.visualScene ?? [pos.x, pos.y];
+    return html`<div class="dev led-badge ${deviceThemeClass(this._renderPlanHass)}" data-led-badge=${d.id} aria-hidden="true"
+      style="left:${((point[0] - view.x) / view.w) * 100}%;top:${((point[1] - view.y) / view.h) * 100}%">${face}</div>`;
   }
 
   /**
