@@ -96,16 +96,6 @@ function isDecorBoxKind(value: unknown): value is DecorBoxKind {
     && (DECOR_BOX_KINDS as readonly string[]).includes(value);
 }
 
-function scalarPoints(value: unknown): void {
-  if (!Array.isArray(value)) return;
-  for (const point of value) {
-    if (!Array.isArray(point)) continue;
-    for (let index = 0; index < Math.min(2, point.length); index++) {
-      point[index] = canonicalizeNumber(point[index]);
-    }
-  }
-}
-
 function scalarFields(item: JsonRecord, names: readonly string[]): void {
   for (const name of names) {
     if (Object.prototype.hasOwnProperty.call(item, name)) {
@@ -395,7 +385,11 @@ export function canonicalizeConfigGeometryInPlace<T>(config: T): T {
 
     // #780: LED strips snap to physical wall faces like stairs: JSON noise
     // only, a face contact never moves onto a lattice node.
-    for (const strip of records(space.led_strips)) scalarPoints(strip.points);
+    for (const strip of records(space.led_strips)) {
+      for (const point of Array.isArray(strip.points) ? strip.points : []) {
+        if (Array.isArray(point)) scalarFields(point as unknown as JsonRecord, ['0', '1']);
+      }
+    }
   }
 
   for (const marker of records(root.markers)) scalarFields(marker, ['angle']);

@@ -1,0 +1,110 @@
+// #780: the lazy LED chunk and its gate, judged by results (ТЗ §3, §5, §6,
+// §13.1, §13.2; AC2, AC7, AC9, AC11, AC17 unit parts).
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { ledAnchor, ledStripsByMarker } from '../test-build/led-strip-gate.js';
+import {
+  LedFieldCache, buildFieldGeometry, falloffAt, faceContext, ledStripView,
+} from '../test-build/led-strip-runtime.js';
+import { GLOW_FALLOFF } from '../test-build/glow-scene.js';
+import { stripAnchor } from '../test-build/led-strip-geometry.js';
+
+const space = (strips) => ({ id: 's', rooms: [], led_strips: strips });
+
+test('ТЗ §13.1: only an active, bound strip with geometry is represented', () => {
+  const map = ledStripsByMarker(space([
+    { id: 'a', points: [[0, 0], [1, 0]], marker: 'm1' },
+    { id: 'b', points: [[0, 0], [1, 0]], marker: 'm2', active: true },
+    { id: 'c', points: [[0, 0], [1, 0]], marker: 'm3', active: false },
+    { id: 'd', points: [[0, 0], [1, 0]], marker: null },
+    { id: 'e', points: [[0, 0]], marker: 'm5' },
+  ]));
+  assert.deepEqual([...map.keys()].sort(), ['m1', 'm2']);
+  assert.equal(ledStripsByMarker(space([])).size, 0);
+  assert.equal(ledStripsByMarker(null).size, 0);
+});
+
+test('AC2: the gate anchor equals the geometry anchor (half length) in render units', () => {
+  const cases = [
+    [[0, 0], [10, 0], [10, 10]], [[0, 0], [4, 0]], [[0, 0], [9, 0], [9, 1]],
+    [[0, 0], [4, 0], [4, 4], [0, 4], [0, 0]], [[0, 0], [0, 0], [4, 0], [4, 0]],
+    [[1, 1], [1, 1]],
+  ];
+  for (const points of cases) {
+    const reference = stripAnchor(points);
+    const gate = ledAnchor(points, 100);
+    assert.ok(Math.abs(gate.x - reference[0] * 100) < 1e-9 && Math.abs(gate.y - reference[1] * 100) < 1e-9,
+      `${JSON.stringify(points)}: ${JSON.stringify(gate)} vs ${reference}`);
+  }
+});
+
+test('ТЗ §3: the linear falloff is the shared GLOW_FALLOFF', () => {
+  for (const [offset, value] of GLOW_FALLOFF) {
+    assert.ok(Math.abs(falloffAt(offset / 100) - value) < 1e-12, `${offset}%`);
+  }
+  assert.equal(falloffAt(0), 1);
+  assert.equal(falloffAt(1), 0);
+  assert.equal(falloffAt(2), 0);
+  // Monotonic: the field never brightens away from the strip.
+  let previous = 1;
+  for (let i = 0; i <= 100; i++) {
+    const value = falloffAt(i / 100);
+    assert.ok(value <= previous + 1e-12);
+    previous = value;
+  }
+});
+
+const device = (extra = {}) => ({ id: 'm1', name: 'Kitchen LED', primary: 'light.led', space: 's', ...extra });
+const strip = { id: 'a', points: [[0, 0], [1, 0]], marker: 'm1' };
+
+test('AC7: states — off white, on, unavailable without a field; radius 50 cm or the own one', () => {
+  const base = { strip, defaultRadius: 10, cellCm: 5, gridPitch: 1, glow: true };
+  const on = ledStripView({ ...base, device: device(), hass: { states: { 'light.led': { state: 'on' } } },
+    candidate: { key: 's|m1', sourceEid: 'light.led', pos: { x: 0, y: 0 }, radius: 3, appearance: { c: '#ff0000', alpha: 0.5 } } });
+  assert.equal(on.state, 'on');
+  assert.deepEqual(on.appearance, { c: '#ff0000', alpha: 0.5 });
+  assert.equal(on.radius, 10, 'the shared radius of ordinary sources does not apply: 50 cm default');
+  const off = ledStripView({ ...base, device: device(), hass: { states: { 'light.led': { state: 'off' } } },
+    candidate: { key: 's|m1', sourceEid: 'light.led', pos: { x: 0, y: 0 }, radius: 3, appearance: null } });
+  assert.equal(off.state, 'off');
+  for (const raw of ['unavailable', 'unknown']) {
+    const view = ledStripView({ ...base, device: device(), hass: { states: { 'light.led': { state: raw } } },
+      candidate: { key: 's|m1', sourceEid: 'light.led', pos: { x: 0, y: 0 }, radius: 3, appearance: { c: '#fff', alpha: 1 } } });
+    assert.equal(view.state, 'unavailable', raw);
+    assert.equal(view.appearance, null, `${raw}: no field`);
+  }
+  const own = ledStripView({ ...base, device: device({ marker: { glow_radius_cm: 100 } }),
+    hass: { states: { 'light.led': { state: 'on' } } }, candidate: null });
+  assert.equal(own.radius, 20, 'the personal radius wins (100 cm / 5 cm per cell)');
+});
+
+// A scene with one opaque square body [4,6]×[4,6] and a 10×10 room floor.
+const body = [[4, 4], [6, 4], [6, 6], [4, 6]];
+const floor = [[0, 0], [10, 0], [10, 10], [0, 10]];
+const scene = {
+  occluders: body.map((p, i) => [p[0], p[1], body[(i + 1) % 4][0], body[(i + 1) % 4][1]]),
+  floor: [floor], fingerprint: 'f1', masonryGeometry: [], opaqueBodies: [body],
+};
+const polygons = [{ room: { id: 'r' }, poly: floor }];
+
+test('ТЗ §6: every piece is clipped to what its own emitters see; a buried strip emits nothing', () => {
+  const faces = faceContext(scene, 1e-6);
+  const geometry = buildFieldGeometry({ points: [[1, 1], [9, 1]], radius: 2, scene, polygons, faces, spaceId: 's' });
+  assert.ok(geometry, 'a free strip has a field');
+  assert.equal(geometry.pieces.length, 4, 'an 8-unit segment with r = 2 makes four pieces');
+  for (const piece of geometry.pieces) assert.ok(piece.clip.length > 0);
+  const buried = buildFieldGeometry({ points: [[4.5, 5], [5.5, 5]], radius: 2, scene, polygons, faces, spaceId: 's' });
+  assert.equal(buried, null, 'entirely inside the body: no field');
+});
+
+test('AC17: the field cache is bounded, per space, and counts geometry rebuilds', () => {
+  const cache = new LedFieldCache(3);
+  cache.forSpace('a');
+  for (let i = 0; i < 5; i++) cache.read(`k${i}`, () => ({ pieces: [], box: { x: 0, y: 0, w: 1, h: 1 } }));
+  assert.equal(cache.size, 3);
+  assert.equal(cache.recomputes, 5);
+  cache.read('k4', () => { throw new Error('a hit must not rebuild'); });
+  assert.equal(cache.recomputes, 5);
+  cache.forSpace('b');
+  assert.equal(cache.size, 0, 'another space frees the previous one');
+});

@@ -6,6 +6,7 @@
  *  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
+import { ledAnchor, ledRuntime, ledStripsByMarker } from './led-strip-gate';
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { cache as litCache } from 'lit/directives/cache.js';
 import { keyed } from 'lit/directives/keyed.js';
@@ -5229,7 +5230,8 @@ export class HouseplanCard extends LitElement {
         // HA-disabled saved markers stay in the roster: they render nowhere
         // outside the service ghost, but reserve their old auto-grid slot so
         // temporary deactivation cannot shuffle visible neighbours.
-        const ds = this._devices.filter((d) => d.area === r.area && d.space === s.id);
+        const leds = ledStripsByMarker(s);
+        const ds = this._devices.filter((d) => d.area === r.area && d.space === s.id && !leds.has(d.id));
         if (!ds.length) continue;
         const b = this._roomBounds(r);
         const pad = Math.min(b.w, b.h) * 0.1;
@@ -5260,6 +5262,9 @@ export class HouseplanCard extends LitElement {
 
   private _livePos(d: DevItem): { x: number; y: number } {
     const s = this._spaceModelById(d.space);
+    // #780: a marker shown as an LED strip is placed at the strip's anchor.
+    const led = ledStripsByMarker(s).get(d.id);
+    if (led) return ledAnchor(led.points, NORM_W);
     const saved = this._areaRelocationIds.has(d.id) ? undefined : this._layout[d.id];
     if (saved) {
       if (this._norm) {
@@ -10389,8 +10394,11 @@ export class HouseplanCard extends LitElement {
     });
     const spots: GlowSpot[] = [];
     const seenSourceKeys = new Set<string>();
+    // #780: a marker shown as an LED strip has a linear field, not a pool.
+    const leds = ledStripsByMarker(space);
     for (const candidate of candidates) {
       const { key, pos } = candidate;
+      if (leds.has(key.slice(space.id.length + 1))) continue;
       seenSourceKeys.add(key);
       // Invalid placement inside any opaque body must remain dark. The
       // masonry geometry already contains the exact passage cuts, so a valid
@@ -10453,7 +10461,8 @@ export class HouseplanCard extends LitElement {
     pruneGlowSources(
       this._glowRuntimeState, this._glowRuntimeHost, space.id, seenSourceKeys,
     );
-    if (!spots.length) return svg`` as unknown as TemplateResult;
+    const ledField = this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) ?? nothing;
+    if (!spots.length) return svg`${ledField}` as unknown as TemplateResult;
     // Per-room Glow overrides are visual clips only. The transport calculation
     // above still crosses a disabled room, but no base/pool pixels are painted
     // there. For the common all-enabled case this extra clip is omitted.
@@ -10486,13 +10495,18 @@ export class HouseplanCard extends LitElement {
     const feather = resolveGlowFeather(
       this._glowRuntimeState, perUnit, cameraStill,
     );
-    return renderGlowPools({
+    return svg`${renderGlowPools({
       spots,
       enabledClip,
       feather: feather.feather,
       featherEnabled: feather.enabled,
       screenBlend: this._glowScreenBlend,
-    });
+    })}${ledField}` as unknown as TemplateResult;
+  }
+
+  /** #780: the lazy LED chunk when the space shows a strip (ТЗ §13.1). */
+  private _ledRt(space: SpaceModel) {
+    return ledStripsByMarker(space).size ? ledRuntime(space.id, () => this.requestUpdate()) : null;
   }
 
   private _renderSettingsDialog(): TemplateResult {
@@ -10699,7 +10713,8 @@ export class HouseplanCard extends LitElement {
     // (ghosted); everywhere else the flag removes them from sight — but not
     // from the build, so room LQI still counts them (docs/FILTERING.md)
     const showGhosts = this._mode === 'devices' && this._showAll;
-    const devs = this._renderDevices.filter((d) => d.space === space.id && (!d.hidden || showGhosts));
+    const leds = ledStripsByMarker(space);
+    const devs = this._renderDevices.filter((d) => d.space === space.id && (!d.hidden || showGhosts) && !leds.has(d.id));
     const deviceSnapshot = this._renderDeviceSnapshot;
     const disp = this._spaceDisplayForRender();
     const roomFills = this._resolvedRoomFills(space, disp);
@@ -11132,6 +11147,7 @@ export class HouseplanCard extends LitElement {
               : isoLayers && !isoLayers.floorSymbols
                 ? nothing
                 : this._renderOpenings(disp)}
+            ${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view) ?? nothing}
             ${this._renderWallThickUi()}
             ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
             ${''/* editor chrome, not plan content: the backdrop frame sits on

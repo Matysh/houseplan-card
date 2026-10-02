@@ -11,7 +11,8 @@ import {
 import { GENERATED_FURNITURE_MENU } from './furniture-menu-art.generated';
 import { canonicalFurnitureId } from './furniture-id';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
-import type { I18nKey } from './i18n';
+import { langOf, type I18nKey } from './i18n';
+import { toolsT, type ToolsI18nKey } from './i18n/tools';
 import { CANVAS_LIMIT, NORM_W, clampCanvasN } from './space-geometry';
 import type { DecorShape } from './editors/decor/types';
 import { decorCmToUnits } from './editors/decor/geometry';
@@ -40,6 +41,11 @@ export class DecorImageEditor<Snapshot> {
     private readonly host: HouseplanEditorHostPort,
     private readonly hooks: DecorImageEditorHooks<Snapshot>,
   ) {}
+
+  /** #780: furniture names live in the lazy `tools` dictionary. */
+  private _tool(key: ToolsI18nKey): string {
+    return toolsT(langOf(this.host.hass, this.host._config?.language), key);
+  }
 
   public place(raw: number[], pointerType = 'mouse'): void {
     const asset = this.host._decorImagePalette;
@@ -299,7 +305,7 @@ export class DecorImageEditor<Snapshot> {
         stroke-linejoin="round"></path></svg>` as unknown as TemplateResult;
     return html`<div class="furnpalette" @pointerdown=${(event: Event) => event.stopPropagation()}>
       <div class="furnhd">
-        <ha-icon icon="mdi:sofa-outline"></ha-icon>${this.host._t('furn.title')}
+        <ha-icon icon="mdi:sofa-outline"></ha-icon>${this._tool('furn.title')}
         <span class="spacer"></span>
         <button class="btn furnclose" title=${this.host._t('btn.close')}
           @click=${() => {
@@ -320,54 +326,52 @@ export class DecorImageEditor<Snapshot> {
             this.hooks.furnShiftDetach();
             this.host._furnCategory = null;
           }}>
-            <ha-icon icon="mdi:arrow-left"></ha-icon>${this.host._t('furn.back_to_categories')}
+            <ha-icon icon="mdi:arrow-left"></ha-icon>${this._tool('furn.back_to_categories')}
           </button>
           <div class="furngroup" data-category=${category.id}>
-            ${this.host._t(`furn.cat_${category.id}` as I18nKey)}
+            ${this._tool(`furn.cat_${category.id}` as ToolsI18nKey)}
           </div>
           <div class="furnrow furnvariants">
             ${variants.map((symbol) => html`<button
               class="furnitem ${pal?.symbol === symbol.id ? 'on' : ''}" data-symbol=${symbol.id}
-              title=${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}
+              title=${this._tool(`furn.sym_${symbol.id}` as ToolsI18nKey)}
               @click=${() => this.hooks.furnPick(symbol.id)}>
-              ${preview(symbol.id)}<span>${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}</span>
+              ${preview(symbol.id)}<span>${this._tool(`furn.sym_${symbol.id}` as ToolsI18nKey)}</span>
             </button>`)}
           </div>
         ` : FURNITURE_GROUPS.map((group) => html`
-          <div class="furngroup" data-group=${group}>${this.host._t(`furn.group_${group}` as I18nKey)}</div>
+          <div class="furngroup" data-group=${group}>${this._tool(`furn.group_${group}` as ToolsI18nKey)}</div>
           <div class="furnrow furncategories">
             ${categories.filter((item) => item.group === group).map((item) => html`<button
               class="furnitem furncategory" data-category=${item.id}
-              title=${this.host._t(`furn.cat_${item.id}` as I18nKey)}
+              title=${this._tool(`furn.cat_${item.id}` as ToolsI18nKey)}
               @click=${() => {
                 this.hooks.clearFurniturePreview();
                 this.host._furnPalette = null;
                 this.hooks.furnShiftDetach();
                 this.host._furnCategory = item.id;
               }}>
-              ${categoryPreview(item)}<span>${this.host._t(`furn.cat_${item.id}` as I18nKey)}</span>
+              ${categoryPreview(item)}<span>${this._tool(`furn.cat_${item.id}` as ToolsI18nKey)}</span>
             </button>`)}
           </div>`)}
       </div>
       ${pal ? html`<div class="furnsize">
-        <label>${this.host._t('furn.width')}<span class="furnunit">${unit}</span></label>
+        <label>${this._tool('furn.width')}<span class="furnunit">${unit}</span></label>
         <input class="namein furnw" type="number" min="0.01" step="0.05"
           .value=${String(this.hooks.furnFieldValue(pal.w))}
           @input=${(event: Event) => (this.host._furnPalette = {
             ...pal,
             w: this.hooks.furnFieldToCm(Number((event.target as HTMLInputElement).value)),
           })} />
-        <label>${this.host._t('furn.depth')}<span class="furnunit">${unit}</span></label>
+        <label>${this._tool('furn.depth')}<span class="furnunit">${unit}</span></label>
         <input class="namein furnh" type="number" min="0.01" step="0.05"
           .value=${String(this.hooks.furnFieldValue(pal.h))}
           @input=${(event: Event) => (this.host._furnPalette = {
             ...pal,
             h: this.hooks.furnFieldToCm(Number((event.target as HTMLInputElement).value)),
           })} />
-        <span class="furnhint">${this.host._t('furn.place_hint')}</span>
-      </div>` : html`<div class="furnsize"><span class="furnhint">${this.host._t(
-        'furn.pick_hint',
-      )}</span></div>`}
+        <span class="furnhint">${this._tool('furn.place_hint')}</span>
+      </div>` : html`<div class="furnsize"><span class="furnhint">${this._tool('furn.pick_hint')}</span></div>`}
     </div>`;
   }
 
@@ -429,7 +433,7 @@ export class DecorImageEditor<Snapshot> {
       dismiss-on-scrim @hp-close=${() => (this.host._decorShapeDialog = null)}>
         <div class="body">
           ${dialog.kind === 'furniture' ? html`
-            <label>${this.host._t('furn.symbol')}</label>
+            <label>${this._tool('furn.symbol')}</label>
             <select class="namein"
               @change=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog, symbol: (event.target as HTMLSelectElement).value,
@@ -439,10 +443,10 @@ export class DecorImageEditor<Snapshot> {
                 symbols: furnitureOfGroup(category.group as FurnitureGroup)
                   .filter((symbol) => symbol.category === category.id),
               })).filter((entry) => entry.symbols.length).map(({ category, symbols }) => html`
-                <optgroup label=${`${this.host._t(`furn.group_${category.group}` as I18nKey)} · ${this.host._t(`furn.cat_${category.id}` as I18nKey)}`}>
+                <optgroup label=${`${this._tool(`furn.group_${category.group}` as ToolsI18nKey)} · ${this._tool(`furn.cat_${category.id}` as ToolsI18nKey)}`}>
                 ${symbols.map((symbol) => html`<option value=${symbol.id}
                   ?selected=${symbol.id === canonicalFurnitureId(dialog.symbol || '')}>
-                  ${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}
+                  ${this._tool(`furn.sym_${symbol.id}` as ToolsI18nKey)}
                 </option>`)}
               </optgroup>`)}
             </select>` : dialog.kind === 'image' ? html`

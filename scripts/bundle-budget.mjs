@@ -469,6 +469,7 @@ export const NAMESPACE_ENGLISH_CONSUMERS = {
   settings: ['lazyEditorFiles', 'lazyOnboardingFiles'],
   support: ['lazyEditorFiles'],
   topology: ['lazyEditorFiles'],
+  tools: ['lazyEditorFiles'],
 };
 
 /**
@@ -775,7 +776,7 @@ export function assertBundleBudget(
   const namespaceLocales = manifest.lazyNamespaceLocaleFiles;
   if (!Array.isArray(namespaceLocales) || namespaceLocales.length !== NAMESPACE_LOCALE_CHUNKS.length) {
     throw new Error(`lazy namespace locale graph has ${namespaceLocales?.length ?? 0} files,`
-      + ` expected ${NAMESPACE_LOCALE_CHUNKS.length} (settings/support/topology × ru/de/fr)`);
+      + ` expected ${NAMESPACE_LOCALE_CHUNKS.length} (settings/support/topology/tools × ru/de/fr)`);
   }
   for (const [graph, label] of [
     ['initialViewFiles', 'initial View graph'],

@@ -361,7 +361,8 @@ export const SMOKE_LINKS = [
     symbols: [
       'namespaceLanguageRuntime', 'composeLanguageRuntimes', 'surfaceLanguageRuntime',
       'SETTINGS_LANGUAGE_RUNTIME', 'SUPPORT_LANGUAGE_RUNTIME', 'TOPOLOGY_LANGUAGE_RUNTIME',
-      'EDITOR_LANGUAGE_RUNTIME', 'ONBOARDING_LANGUAGE_RUNTIME', 'settingsT', 'supportT', 'topologyT',
+      'TOOLS_LANGUAGE_RUNTIME', 'EDITOR_LANGUAGE_RUNTIME', 'ONBOARDING_LANGUAGE_RUNTIME',
+      'settingsT', 'supportT', 'topologyT', 'toolsT',
     ],
     smokes: ['smoke_lazy_admin_locale.mjs', 'smoke_dialog_segments_i18n.mjs'],
     because: 'the ru/de/fr namespace dictionaries are separate lazy chunks: only the production '

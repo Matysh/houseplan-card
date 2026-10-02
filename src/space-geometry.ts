@@ -187,17 +187,9 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
         ...(c.shape === 'circle' ? {} : { angle: canonicalColumnAngle(c.angle) }),
       })),
       stairs: stairList(s.stairs),
-      // #780: data only — no LED geometry module in the initial graph.
-      led_strips: (Array.isArray(s.led_strips) ? s.led_strips : [])
-        .filter((strip: any) => strip && typeof strip.id === 'string' && Array.isArray(strip.points))
-        .map((strip: any) => ({
-          id: strip.id,
-          points: strip.points
-            .filter((p: any) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
-            .map((p: number[]) => [p[0] * NORM_W, p[1] * H]),
-          marker: typeof strip.marker === 'string' && strip.marker ? strip.marker : null,
-          active: strip.active !== false,
-        })),
+      // #780: the stored strips as they are (normalised units) — scaling,
+      // validation and geometry live in the lazy LED chunk.
+      led_strips: s.led_strips,
     } as SpaceModel;
   });
 }

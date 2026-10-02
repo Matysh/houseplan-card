@@ -12,8 +12,10 @@
 import { SETTINGS_LANGUAGE_RUNTIME } from './settings';
 import { SUPPORT_LANGUAGE_RUNTIME } from './support';
 import { TOPOLOGY_LANGUAGE_RUNTIME } from './topology';
+import { TOOLS_LANGUAGE_RUNTIME } from './tools';
 import { surfaceLanguageRuntime } from './namespace-language';
 
 export const EDITOR_LANGUAGE_RUNTIME = surfaceLanguageRuntime([
   SETTINGS_LANGUAGE_RUNTIME, SUPPORT_LANGUAGE_RUNTIME, TOPOLOGY_LANGUAGE_RUNTIME,
+  TOOLS_LANGUAGE_RUNTIME,
 ]);

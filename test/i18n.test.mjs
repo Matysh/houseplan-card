@@ -478,15 +478,9 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
     'gs.north_letter',
     'gs.optimize_live_names',
     'gs.optimize_details',
-    'furn.symbol',
     // #598: 'Plan' и 'Details' — одни и те же слова в EN и DE
     'gs.card_plan',
     'marker.card_details',
-    // #593: 'Computer' одинаков в EN и DE — это немецкое слово, не пропуск перевода
-    'furn.cat_computer',
-    'furn.sym_computer',
-    'furn.cat_sofa',
-    'furn.cat_bidet',
     'vac.diag_platform',
     'vac.diag_status',
     'vac.diag_position',
@@ -523,7 +517,6 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
     'decor.rect',
     'decor.image',
     'err.code',
-    'furn.cat_bidet',
     'gs.about_version',
     'gs.north_letter',
     'gs.unit_m',
