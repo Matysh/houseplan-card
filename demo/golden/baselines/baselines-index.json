@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 71,
-  "acceptedAt": "2026-10-03T11:12:25.641Z",
-  "sourceFingerprint": "bd2d69a226767a942448f6dd0c0ddfe1557e8da1f6441569f6784c0f9aefd960",
+  "acceptedAt": "2026-10-03T13:46:15.484Z",
+  "sourceFingerprint": "862ebd8b95e7cb7603be06fe8af2c8dc52e5cfc3006a3ca79f03c0fb8441f8fb",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,20 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "bd2d69a226767a942448f6dd0c0ddfe1557e8da1f6441569f6784c0f9aefd960",
+    "buildFingerprint": "862ebd8b95e7cb7603be06fe8af2c8dc52e5cfc3006a3ca79f03c0fb8441f8fb",
     "ci": null
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v1",
-    "sha256": "c30cae622673c0e45a45de8a63d12e8c0f7cc5cc1ff5bf147450849a7158e35e",
-    "artifactSha256": "bae4cdf11dd282aca4f645a3d54815379c66260c8c810cf1897fa60e00a6dcba",
-    "createdAt": "2026-10-03T11:12:05.784Z",
+    "sha256": "1c7933e47079b24064413013a999ed10376a0aad05f8c8f57f1c683bb64c6ae7",
+    "artifactSha256": "6c7ec7ee5f516ab06e596a88594fd396c83ebe13f018cc36ed7b8d305afe94ff",
+    "createdAt": "2026-10-03T13:46:03.862Z",
     "source": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/785-led-glow-continuity",
-      "commit": "4c7e9815f356d2a1cefc9b9e73e5aab96880360e",
-      "tree": "1465472f8f27ef4b77db90a8c7a351bac9f373e0",
-      "remoteSha": "4c7e9815f356d2a1cefc9b9e73e5aab96880360e",
+      "branch": "issue/786-led-glow-smooth-ends",
+      "commit": "959876816764d5af8eb00a84c983dad1d16ad86e",
+      "tree": "d16c08f4238d3b01d64b036ce49a63d7caae7049",
+      "remoteSha": "959876816764d5af8eb00a84c983dad1d16ad86e",
       "clean": true,
       "status": ""
     },
@@ -44,7 +44,7 @@
   },
   "foreignCapture": null,
   "witnesses": {
-    "count": 98,
+    "count": 101,
     "floor": 10
   },
   "scenarios": {
@@ -244,6 +244,7 @@
     "led-strip-design-reference-on-light": "16bfb46f2a90c57e95f1307e375e04e5809d41ae677e3b1e1eb56d7e0bc1d8ec",
     "lighting-led-strip-glow-dark": "254fe1e39c5bb7bbb7e67527f69c767c8bdb6ed959986a8085b18adb152001d6",
     "led-strip-long-zigzag-glow-light": "cd0847c03b6b397c93fa923dcd06b30d7d4a8f6c6db2f006b9f3e20de0e66e91",
+    "led-strip-endcaps-zoom-light": "a6e1c038a944dfbab4e44dd01cea3ab7b387aa633cc71a74f597c53d33149a26",
     "led-strip-off-light": "cbb4f4794c871d592917653e8b5713d87a6be6dfe470b2161da760c2bb3cebdc",
     "iso-led-strip-dark": "572728e34f77f911f0ece247c5b7de6653e9c0dfafe04a0ab198b88644081a58"
   }
