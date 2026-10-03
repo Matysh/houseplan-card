@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fixed rectangular LED strips on wall faces: corners remain exact miters and
+  doors, gates and passages no longer pull the stripe or its Glow emitters
+  back to the wall axis, causing steps and bends
+  ([#787](https://github.com/Matysh/houseplan-card/issues/787)).
+
 - Fixed LED-strip Glow end caps so free ends stay smoothly round at high zoom
   instead of exposing polygon facets depending on nearby walls
   ([#786](https://github.com/Matysh/houseplan-card/issues/786)).

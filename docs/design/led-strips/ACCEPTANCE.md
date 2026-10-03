@@ -42,7 +42,7 @@ behaviours, not of positions.
 | Off: white core, no field, both themes | stripe state `off` | smoke `smoke_led_strip_glow.mjs`, `led-strip-off-light` |
 | On with Glow: white core + coloured field; without Glow: core in the source colour, no field | `ledStripView` + `resolveGlowAppearance` | smoke `smoke_led_strip_glow.mjs` |
 | Glow is the space/room switch, independent of `fill_mode` | `glowFor(room)` | `lighting-led-strip-glow-dark` uses `fill_mode: none` |
-| Per-piece offset: t/2 on a thick face into free floor, 0 on free floor and zero walls; continuous transition | `visibleStripPath` | unit `test/led-strip-geometry.test.mjs` (AC8) |
+| Per-piece offset: t/2 on a thick face into free floor, 0 on free floor and zero walls; continuous transition; a collinear door gap keeps the flanking face normal and shifted sides meet at one bounded miter | `stripPieces` + `visibleStripPath` | unit `test/led-strip-geometry.test.mjs` (AC8, #787); golden `led-strip-rectangle-door-zoom-light` |
 | Field 30 cm by default, own `glow_radius_cm` wins; round free ends; no seams, bands, missing free runs or doubled brightness at corners/closure | `ledFrame`, one continuous path through exact circular free fans and obstacle-clipped visibility fans in `led-strip-field` | unit `test/led-strip-runtime.test.mjs`; golden `led-strip-long-zigzag-glow-light`, `led-strip-endcaps-zoom-light`; reference pair |
 | Shared `glowAlpha` / `GLOW_FALLOFF` / `GLOW_FADE_MS` | field bands from `falloffAt` | unit `test/led-strip-runtime.test.mjs` |
 | Field under icons, badges and labels; icons not tinted | glow layer below the device layer | reference pair (designer tinting deliberately not reproduced) |

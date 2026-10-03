@@ -93,6 +93,40 @@ test('AC8: a closed strip closes through the same rule without a seam point', ()
   assert.deepEqual(path.points, [[2, 3], [6, 3], [6, 6], [2, 6]]);
 });
 
+test('#787: a four-corner strip stays rectangular across a door opening', () => {
+  // Opaque body faces around a door gap y=3..5 on the rectangle's right side.
+  const faces = [
+    { a: [0, 0], b: [10, 0] }, { a: [10, 0], b: [10, 3] },
+    { a: [10, 5], b: [10, 10] }, { a: [10, 10], b: [0, 10] },
+    { a: [0, 10], b: [0, 0] },
+  ];
+  const openingCtx = {
+    faces,
+    inside: ([x, y]) => (y > -1 && y < 0 && x > 0 && x < 10)
+      || (x > 10 && x < 11 && ((y > 0 && y < 3) || (y > 5 && y < 10)))
+      || (y > 10 && y < 11 && x > 0 && x < 10)
+      || (x > -1 && x < 0 && y > 0 && y < 10),
+    epsilon: 1e-5,
+  };
+  const stored = [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]];
+  const before = JSON.stringify(stored);
+  const right = stripPieces([[10, 0], [10, 10]], openingCtx);
+  assert.equal(right.length, 3, 'the opening remains a separate derived piece');
+  assert.ok(right.every((piece) => JSON.stringify(piece.free) === JSON.stringify([-1, 0])),
+    'the internal opening inherits the same free side from both wall faces');
+
+  assert.deepEqual(visibleStripPath(stored, openingCtx, 0.25), {
+    points: [[0.25, 0.25], [9.75, 0.25], [9.75, 9.75], [0.25, 9.75]],
+    closed: true,
+  }, 'shifted wall sides meet at exact miters without steps or diagonal inserts');
+  assert.equal(JSON.stringify(stored), before, 'the stored four-corner contour is untouched');
+
+  const emitters = emitterSamples([[10, 0], [10, 10]], openingCtx, 0.5);
+  assert.ok(emitters.length > 0);
+  for (const point of emitters) close(point[0], 10 - openingCtx.epsilon, 1e-12,
+    'Glow stays on one side through the optically open doorway');
+});
+
 test('ТЗ §6: emitters sit epsilon outward on a face, cover the length, skip buried parts', () => {
   const onFace = emitterSamples([[2, 1], [8, 1]], ctx, 1);
   assert.equal(onFace.length, 7, 'every vertex plus spacing ≤ 1');

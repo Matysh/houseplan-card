@@ -176,7 +176,11 @@ function freeNormal(a: Pt, b: Pt, at: Pt, ctx: FaceContext): [number, number] | 
   return plusInside ? [-nx + 0, -ny + 0] : [nx + 0, ny + 0];
 }
 
-/** Split every stored segment into face pieces and free pieces (ТЗ §3). */
+/**
+ * Split every stored segment into face pieces and free pieces (ТЗ §3).
+ * An internal opening between collinear pieces of the same body face inherits
+ * their free side: a door is optically open, but it does not bend the strip.
+ */
 export function stripPieces(points: readonly Pt[], ctx: FaceContext | null): StripPiece[] {
   const path = compactPoints(points);
   const pieces: StripPiece[] = [];
@@ -187,6 +191,7 @@ export function stripPieces(points: readonly Pt[], ctx: FaceContext | null): Str
   }
   for (let i = 1; i < path.length; i++) {
     const a = path[i - 1], b = path[i];
+    const local: Array<StripPiece & { matched: boolean }> = [];
     const intervals: Array<[number, number]> = [];
     if (ctx) {
       for (const face of faces) {
@@ -203,21 +208,82 @@ export function stripPieces(points: readonly Pt[], ctx: FaceContext | null): Str
     }
     let cursor = 0;
     for (const [t0, t1] of merged) {
-      if (t0 > cursor) pieces.push({ a: lerp(a, b, cursor), b: lerp(a, b, t0), free: null });
+      if (t0 > cursor) local.push({ a: lerp(a, b, cursor), b: lerp(a, b, t0), free: null, matched: false });
       const pa = lerp(a, b, t0), pb = lerp(a, b, t1);
       const mid = lerp(a, b, (t0 + t1) / 2);
-      pieces.push({ a: pa, b: pb, free: ctx ? freeNormal(a, b, mid, ctx) : null });
+      local.push({ a: pa, b: pb, free: ctx ? freeNormal(a, b, mid, ctx) : null, matched: true });
       cursor = t1;
     }
-    if (cursor < 1) pieces.push({ a: lerp(a, b, cursor), b: [b[0], b[1]], free: null });
+    if (cursor < 1) local.push({ a: lerp(a, b, cursor), b: [b[0], b[1]], free: null, matched: false });
+
+    // A door/gate/passage cuts a gap out of a physical face. The stored strip
+    // still follows one straight wall side through that gap, so keep the free
+    // side selected by the two flanking face pieces. Leading/trailing free
+    // pieces are deliberately not inherited: a strip that actually leaves a
+    // wall must still return to its stored path.
+    for (let j = 1; j + 1 < local.length; j++) {
+      const prev = local[j - 1], gap = local[j], next = local[j + 1];
+      if (gap.matched || !prev.matched || !next.matched || !prev.free || !next.free) continue;
+      if (Math.hypot(prev.free[0] - next.free[0], prev.free[1] - next.free[1]) <= 1e-9) {
+        gap.free = [prev.free[0], prev.free[1]];
+      }
+    }
+    pieces.push(...local.map(({ a: pa, b: pb, free }) => ({ a: pa, b: pb, free })));
   }
   return pieces.filter((piece) => dist(piece.a, piece.b) > 0);
 }
 
+function shiftedLineIntersection(
+  prev: StripPiece, next: StripPiece, offset: number,
+): [number, number] | null {
+  if (!prev.free || !next.free || !same(prev.b, next.a)) return null;
+  const pa: [number, number] = [prev.a[0] + prev.free[0] * offset, prev.a[1] + prev.free[1] * offset];
+  const pb: [number, number] = [prev.b[0] + prev.free[0] * offset, prev.b[1] + prev.free[1] * offset];
+  const qa: [number, number] = [next.a[0] + next.free[0] * offset, next.a[1] + next.free[1] * offset];
+  const qb: [number, number] = [next.b[0] + next.free[0] * offset, next.b[1] + next.free[1] * offset];
+  const r = sub(pb, pa), s = sub(qb, qa);
+  const den = r[0] * s[1] - r[1] * s[0];
+  if (Math.abs(den) <= 1e-12) return null;
+  const qmp = sub(qa, pa);
+  const t = (qmp[0] * s[1] - qmp[1] * s[0]) / den;
+  const hit: [number, number] = [pa[0] + r[0] * t, pa[1] + r[1] * t];
+  // Acute angles can put an infinite-line intersection far away. Keep the
+  // existing short connector there instead of producing a long miter spike.
+  const maxMiter = Math.max(Math.abs(offset) * 4, 1e-9);
+  return dist(hit, pb) <= maxMiter && dist(hit, qa) <= maxMiter ? hit : null;
+}
+
+function redundantCollinear(a: Pt, b: Pt, c: Pt): boolean {
+  const ab = sub(b, a), bc = sub(c, b);
+  const scale = Math.max(1, Math.hypot(...ab) * Math.hypot(...bc));
+  const cross = ab[0] * bc[1] - ab[1] * bc[0];
+  const forward = ab[0] * bc[0] + ab[1] * bc[1];
+  return Math.abs(cross) <= 1e-12 * scale && forward >= -1e-12;
+}
+
+function simplifyVisiblePoints(points: Array<[number, number]>, closed: boolean): Array<[number, number]> {
+  const out = [...points];
+  let changed = true;
+  while (changed && out.length > (closed ? 3 : 2)) {
+    changed = false;
+    const first = closed ? 0 : 1, last = closed ? out.length : out.length - 1;
+    for (let i = first; i < last; i++) {
+      const prev = out[(i - 1 + out.length) % out.length];
+      const next = out[(i + 1) % out.length];
+      if (!redundantCollinear(prev, out[i], next)) continue;
+      out.splice(i, 1);
+      changed = true;
+      break;
+    }
+  }
+  return out;
+}
+
 /**
  * The derived visible path (ТЗ §3): a face piece shifted `offset` along its
- * free normal, a free piece unshifted, consecutive pieces joined by a short
- * connector (drawn with round joins) — no gap, no square patch, no long miter.
+ * free normal, a free piece unshifted. Shifted sides meeting at a real corner
+ * meet at their bounded line intersection; wall/free transitions and unsafe
+ * acute angles retain the short connector — no gap and no long miter spike.
  * Closed strips close through the same rule. Shared by both strokes, the hit
  * path, focus and 2.5D: one derivation, never a stored position.
  */
@@ -226,21 +292,35 @@ export function visibleStripPath(
 ): { points: Array<[number, number]>; closed: boolean } {
   const closed = isClosedStrip(compactPoints(points));
   const pieces = stripPieces(points, ctx);
+  const shifted = pieces.map((piece) => {
+    const shift = piece.free ? [piece.free[0] * offset, piece.free[1] * offset] : [0, 0];
+    return {
+      a: [piece.a[0] + shift[0], piece.a[1] + shift[1]] as [number, number],
+      b: [piece.b[0] + shift[0], piece.b[1] + shift[1]] as [number, number],
+    };
+  });
+  const joins: Array<[number, number] | null> = pieces.map(() => null);
+  for (let i = 0; i + 1 < pieces.length; i++) {
+    joins[i] = shiftedLineIntersection(pieces[i], pieces[i + 1], offset);
+  }
+  if (closed && pieces.length > 1) {
+    joins[pieces.length - 1] = shiftedLineIntersection(pieces[pieces.length - 1], pieces[0], offset);
+  }
   const out: Array<[number, number]> = [];
   const push = (p: [number, number]) => {
     const last = out[out.length - 1];
     if (!last || Math.hypot(last[0] - p[0], last[1] - p[1]) > 1e-12) out.push(p);
   };
-  for (const piece of pieces) {
-    const shift = piece.free ? [piece.free[0] * offset, piece.free[1] * offset] : [0, 0];
-    push([piece.a[0] + shift[0], piece.a[1] + shift[1]]);
-    push([piece.b[0] + shift[0], piece.b[1] + shift[1]]);
+  for (let i = 0; i < pieces.length; i++) {
+    const previousJoin = i > 0 ? joins[i - 1] : closed ? joins[pieces.length - 1] : null;
+    push(previousJoin ?? shifted[i].a);
+    push(joins[i] ?? shifted[i].b);
   }
   if (closed && out.length > 2) {
     const first = out[0], last = out[out.length - 1];
     if (Math.hypot(first[0] - last[0], first[1] - last[1]) <= 1e-12) out.pop();
   }
-  return { points: out, closed };
+  return { points: simplifyVisiblePoints(out, closed), closed };
 }
 
 export function pathD(path: { points: ReadonlyArray<Pt>; closed: boolean }): string {

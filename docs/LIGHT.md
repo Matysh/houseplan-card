@@ -437,6 +437,14 @@ only the geometry differs:
   opening; Dashed zero walls are transparent. Emitters on a thick face sit
   `epsilonGeom` (0.001 cm) outward into free floor; a part buried in a body
   emits nothing; a strip entirely inside a wall has no field.
+- **Wall openings and corners.** A door, gate or passage remains optically
+  open, but an internal gap between two collinear pieces of the same wall face
+  inherits their free-side normal. The visible stripe and its emitters
+  therefore stay on one straight line through the opening. At a genuine turn,
+  safely intersecting shifted sides use that bounded intersection as their
+  single miter; unsafe acute angles retain the short connector. A stored
+  four-corner loop consequently stays a four-corner rectangle without steps
+  at openings or diagonal corner inserts (#787).
 - **Core.** With effective Glow (space `glow_enabled` + room `glow`) the core
   stays white and the colour is the field; without Glow the core takes the
   source colour and there is no field. Off: white core, no field.

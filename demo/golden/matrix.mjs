@@ -1339,6 +1339,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     // must keep the same smooth circular rim; the wall still clips its side.
     zoom: 4, zoomCenter: [500, 380],
     ledStripOverride: { points: [[0.43, 0.35], [0.535, 0.35]] }, ...stage },
+  { id: 'led-strip-rectangle-door-zoom-light', fixture: 'visual', ledStrips: true, space: 'golden-led',
+    mode: 'view', fillMode: 'none', language: 'en', theme: 'light', viewport: { width: 1000, height: 760 },
+    // #787: four stored corners must remain four straight visible sides. The
+    // right side crosses led-door: the opening is optically open, but neither
+    // the stripe nor its emitter line may step back to the wall axis there.
+    zoom: 1.15, zoomCenter: [310, 350],
+    ledStripOverride: { points: [[0.068333, 0.088333], [0.551667, 0.088333],
+      [0.551667, 0.611667], [0.068333, 0.611667], [0.068333, 0.088333]] }, ...stage },
   { id: 'led-strip-off-light', fixture: 'visual', ledStrips: true, space: 'golden-led',
     mode: 'view', fillMode: 'none', stateOverrides: LED_STRIPS_OFF, language: 'en', theme: 'light',
     viewport: { width: 1000, height: 760 }, ...stage },
