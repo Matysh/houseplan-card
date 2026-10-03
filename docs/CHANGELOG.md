@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.79.0-beta.4 — 2026-10-03
+
 - LED strips now cast a smooth, continuous Glow field without gradient bands
   or cuts at corners and fade in and out instead of switching abruptly. Their
   default Glow radius is now 30 cm. The device picker scrolls without zooming

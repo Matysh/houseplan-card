@@ -17,17 +17,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Item | State |
 |---|---|
 | Generated | 2026-10-03 — rerun `node scripts/status-snapshot.mjs` for the current tree |
-| Version | **1.79.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
+| Version | **1.79.0-beta.4** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.78.0` |
-| Latest prerelease tag | `v1.79.0-beta.2` |
-| Tests | Node unit 3509 · pure backend 423 · HA-harness backend 311 · browser smokes 292 (`npm run inventory`) |
+| Latest prerelease tag | `v1.79.0-beta.3` |
+| Tests | Node unit 3512 · pure backend 423 · HA-harness backend 311 · browser smokes 292 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
 
 | Item | State |
 |---|---|
-| Current local cycle | **Beta v1.79.0-beta.3 candidate** — three integrated S8 issues since beta.2. LED strips can be drawn in the Devices editor, bound to devices and rendered as continuous light in View, 2.5D and the space card (#780); two infrastructure changes harden the review pipeline and mutation gate (#765, #781). `main` remains on stable v1.78.0. |
+| Current local cycle | **Beta v1.79.0-beta.4 candidate** — two integrated S8 issues since beta.3. LED-strip Glow is continuous and fades smoothly, its default radius is 30 cm, and picker, focus and click interactions are corrected (#784); beta-derived input parsing is hardened (#783). `main` remains on stable v1.78.0. |
 | Branches | `main` carries stable releases only; pre-release tags point at `dev`. Work lands on `dev`, which is equal to or ahead of `main`, never behind. |
 | Warm remount | Delayed editor restoration preserves the original View camera, reserves pending chrome space, and yields synchronously to mode/space navigation (#762). Header/stage dimensions are published as one settled pair. Canonical: `docs/WARM-REMOUNT.md`. |
 | 2.5D View | Public since #649: the installation-wide General settings switch `settings.volumetric_view` (Display). Flat stays the default and byte-for-byte unchanged; editors and `houseplan-space-card` stay Flat. Canonical: `docs/ISOMETRIC.md`. |
