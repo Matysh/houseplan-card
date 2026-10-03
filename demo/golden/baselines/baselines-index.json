@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 71,
-  "acceptedAt": "2026-10-02T11:28:48.301Z",
-  "sourceFingerprint": "0a945983b694c280f4aca78b2fa021127c0dd2ae958a827e9ef410ae74b65bf3",
+  "acceptedAt": "2026-10-03T07:54:16.450Z",
+  "sourceFingerprint": "cd698d703d8d3b58af43c32e9d23153a4532650909eadfd43b25ed1969ec4f4a",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,41 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "0a945983b694c280f4aca78b2fa021127c0dd2ae958a827e9ef410ae74b65bf3",
-    "ci": {
+    "buildFingerprint": "cd698d703d8d3b58af43c32e9d23153a4532650909eadfd43b25ed1969ec4f4a",
+    "ci": null
+  },
+  "localAttestation": {
+    "schema": "houseplan-golden-wsl/v1",
+    "sha256": "cf474aa1ff676d2262f1c9e442114e7df0e91867c69c78bdc82c923a48355650",
+    "artifactSha256": "7a410b63ae24027ebe7c77d3e5fe63b2e36cad6d83543bf478c8af183784e2dc",
+    "createdAt": "2026-10-03T07:53:46.175Z",
+    "source": {
       "repository": "Matysh/houseplan-card",
-      "run": 36999711281,
-      "attempt": 1,
-      "sha": "63e751ad19cf2031bba0e8b12db04aa0ffeb0c40"
+      "branch": "issue/784-led-strip-polish",
+      "commit": "706eb02d70b6fecaafda0da67e4564e8909606ff",
+      "tree": "f9331d65ecb02f922720f95f9a6feb6781420f29",
+      "remoteSha": "706eb02d70b6fecaafda0da67e4564e8909606ff",
+      "clean": true,
+      "status": ""
+    },
+    "environment": {
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.33.2-microsoft-standard-WSL2",
+      "wsl": true,
+      "distro": "Ubuntu",
+      "filesystem": "ext2/ext3"
+    },
+    "toolchain": {
+      "node": "22.23.2",
+      "npm": "10.9.8",
+      "playwright": "1.62.0",
+      "chromiumExecutableSha256": "0b20b130e7edd9dd51873be867761295fe0cfad490c2b9a64f95bd3cfc08fa71"
     }
   },
-  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 88,
+    "count": 101,
     "floor": 10
   },
   "scenarios": {
@@ -218,9 +241,9 @@
     "card-editor-invalid-default-floor-light-en": "dbf251ece014cfee252e0dcb2d7c00eda66aa4b5bd125e4c83e248d4319d24b3",
     "card-editor-invalid-default-floor-dark-ru": "422b74bb391b87e383350247ef1bc1f10ca48c8f6fe418f75bde94e62e3b8bc0",
     "led-strip-design-reference-off-light": "907098bee00d95fdc4b2e93d8fb552ceda8ca34f904dccd66f7cbaecd36fd98a",
-    "led-strip-design-reference-on-light": "fd21c4c96ddb3f5c38a9ba6c2141844863a4da117ba4775f433a31fa12f2b129",
-    "lighting-led-strip-glow-dark": "8b31ee1453be33f5a08476acbe7505480439601b91c08dd2d7cb620a8168dea8",
+    "led-strip-design-reference-on-light": "16bfb46f2a90c57e95f1307e375e04e5809d41ae677e3b1e1eb56d7e0bc1d8ec",
+    "lighting-led-strip-glow-dark": "254fe1e39c5bb7bbb7e67527f69c767c8bdb6ed959986a8085b18adb152001d6",
     "led-strip-off-light": "588294347c22eecbb9274f97bebdc4826ae97b237f64f291877165b9cbfd464a",
-    "iso-led-strip-dark": "b3375f279d9dcb2caf4fc4d882014e03825e3b5d042f9c9ba2a5c05821983443"
+    "iso-led-strip-dark": "572728e34f77f911f0ece247c5b7de6653e9c0dfafe04a0ab198b88644081a58"
   }
 }
