@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fixed Glow for LED strips with mixed geometry: long free segments no longer
+  lose their light when another part of the same strip follows a wall, and
+  turns no longer leave isolated polygonal patches. Switching the entity now
+  changes only its light and state colour, not the physical strip thickness
+  ([#785](https://github.com/Matysh/houseplan-card/issues/785)).
+
 ## v1.79.0-beta.4 — 2026-10-03
 
 - LED strips now cast a smooth, continuous Glow field without gradient bands

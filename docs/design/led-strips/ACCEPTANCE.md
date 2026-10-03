@@ -38,12 +38,12 @@ behaviours, not of positions.
 | Requirement | Product | Evidence |
 |---|---|---|
 | `D = icon_size/100 × iconUnit(space)`, not `marker.size`; 2.5D uses the shared scale | `ledFrame` takes `iconPct` from the full card's or the space card's own `icon_size`; `ISO_ICON_SCALE` in 2.5D | golden `iso-led-strip-dark`, reference pair |
-| Thickness 0.08 D off / 0.12 D on; outline `#383838` t, core t/2, round joins and caps | `renderLedStripes` | `led-strip-off-light`, reference pair |
+| State-invariant thickness 0.12 D; outline `#383838` t, core t/2, round joins and caps | `renderLedStripes` | smoke `smoke_led_strip_glow.mjs`, reference pair |
 | Off: white core, no field, both themes | stripe state `off` | smoke `smoke_led_strip_glow.mjs`, `led-strip-off-light` |
 | On with Glow: white core + coloured field; without Glow: core in the source colour, no field | `ledStripView` + `resolveGlowAppearance` | smoke `smoke_led_strip_glow.mjs` |
 | Glow is the space/room switch, independent of `fill_mode` | `glowFor(room)` | `lighting-led-strip-glow-dark` uses `fill_mode: none` |
 | Per-piece offset: t/2 on a thick face into free floor, 0 on free floor and zero walls; continuous transition | `visibleStripPath` | unit `test/led-strip-geometry.test.mjs` (AC8) |
-| Field 30 cm by default, own `glow_radius_cm` wins; round free ends; no seams, bands or doubled brightness at corners/closure | `ledFrame`, one continuous path through the unioned visibility clip in `led-strip-field` | unit `test/led-strip-runtime.test.mjs`; reference pair |
+| Field 30 cm by default, own `glow_radius_cm` wins; round free ends; no seams, bands, missing free runs or doubled brightness at corners/closure | `ledFrame`, one continuous path through the filled visibility fans in `led-strip-field` | unit `test/led-strip-runtime.test.mjs`; golden `led-strip-long-zigzag-glow-light`; reference pair |
 | Shared `glowAlpha` / `GLOW_FALLOFF` / `GLOW_FADE_MS` | field bands from `falloffAt` | unit `test/led-strip-runtime.test.mjs` |
 | Field under icons, badges and labels; icons not tinted | glow layer below the device layer | reference pair (designer tinting deliberately not reproduced) |
 
@@ -51,7 +51,7 @@ behaviours, not of positions.
 
 | # | Criterion | Result |
 |---|---|---|
-| 1 | Same geometry on/off; only colour/thickness/field change | Stored points never change; only `t` and the derived offset follow the state — pairs on/off |
+| 1 | Same geometry on/off; only colour/field change | Stored points, thickness and the derived offset do not follow the state — smoke and pairs on/off |
 | 2 | White core and dark outline keep contrast on grey floor, near hatched walls, over the field | Visible in both pairs; `#383838` outline, opaque core |
 | 3 | Straight parts are not a chain of circles | One stroked path per strip; the field is bands of stroked paths, not discs |
 | 4 | No hard rectangular cut of light at the ends | Round caps of the field bands (blue strip in the pair) |
@@ -65,7 +65,7 @@ behaviours, not of positions.
 ## Accepted differences
 
 - Pixel sizes and the mockup blur (22.2–30 px) are not product filters: the
-  product uses 0.08/0.12 D and the shared falloff, so its stripe is thinner at
+  product uses a state-invariant 0.12 D and the shared falloff, so its stripe is thinner at
   the default `icon_size` and the band edge is the shared Glow edge.
 - Icons and labels are not tinted by the field.
 - The mockup's "half the shared radius" and "always coloured core" are replaced

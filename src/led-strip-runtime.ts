@@ -24,7 +24,7 @@ import { deviceThemeClass } from './device-face';
 import type { VirtualLightSnapshot } from './virtual-light-state';
 import { geometryAllRings, pointInPhysicalBody, pointInPhysicalGeometry } from './physical-geometry';
 import {
-  LED_DEFAULT_RADIUS_CM, LED_EPSILON_CM, LED_THICKNESS_OFF_D, LED_THICKNESS_ON_D,
+  LED_DEFAULT_RADIUS_CM, LED_EPSILON_CM, LED_THICKNESS_D,
   pathD, stripAnchor, stripHitOwner,
   stripHitRadiusPx, validStripPoints, visibleStripPath,
   type BodyFace, type FaceContext, type Pt,
@@ -207,12 +207,12 @@ export interface LedStripeInput {
   handlers?: LedHandlers | null;
 }
 
-function stripeThickness(view: LedStripView, d: number): number {
-  return (view.state === 'on' ? LED_THICKNESS_ON_D : LED_THICKNESS_OFF_D) * d;
+function stripeThickness(d: number): number {
+  return LED_THICKNESS_D * d;
 }
 
 function stripePath(view: LedStripView, input: LedStripeInput) {
-  const t = stripeThickness(view, input.d);
+  const t = stripeThickness(input.d);
   return { t, path: visibleStripPath(pts(view.strip.points), input.faces, t / 2) };
 }
 

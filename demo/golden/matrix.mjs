@@ -1327,6 +1327,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     mode: 'view', language: 'en', theme: 'light', viewport: { width: 1000, height: 760 }, ...stage },
   { id: 'lighting-led-strip-glow-dark', fixture: 'visual', ledStrips: true, space: 'golden-led',
     mode: 'view', fillMode: 'none', language: 'en', theme: 'dark', viewport: { width: 1000, height: 760 }, ...stage },
+  { id: 'led-strip-long-zigzag-glow-light', fixture: 'visual', ledStrips: true, space: 'golden-led',
+    mode: 'view', fillMode: 'none', language: 'en', theme: 'light', viewport: { width: 1000, height: 760 },
+    // A free diagonal joins a wall-face run and returns to free floor. Before
+    // #785 the active visibility clip kept only the wall fans and dropped both
+    // free diagonals because SVG clip paths ignore open-path strokes.
+    ledStripOverride: { points: [[0.12, 0.15], [0.551667, 0.35], [0.551667, 0.55], [0.16, 0.45]] }, ...stage },
   { id: 'led-strip-off-light', fixture: 'visual', ledStrips: true, space: 'golden-led',
     mode: 'view', fillMode: 'none', stateOverrides: LED_STRIPS_OFF, language: 'en', theme: 'light',
     viewport: { width: 1000, height: 760 }, ...stage },

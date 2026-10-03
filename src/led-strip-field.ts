@@ -11,7 +11,7 @@
  * That separation keeps walls opaque without exposing piece boundaries in the
  * gradient at straight cuts or corners.
  */
-import { noChange, nothing, svg, type TemplateResult } from 'lit';
+import { noChange, svg, type TemplateResult } from 'lit';
 import { Directive, directive, type PartInfo } from 'lit/directive.js';
 import { repeat } from 'lit/directives/repeat.js';
 import {
@@ -55,8 +55,8 @@ const pts = (points: readonly number[][]): Pt[] => points.map((p) => [p[0], p[1]
 
 interface FieldPiece {
   d: string;
-  /** Visibility fans of the piece's emitters; `null` = nothing blocks within the radius. */
-  clip: string[] | null;
+  /** Visibility fans of the piece's emitters, including full discs when nothing blocks them. */
+  clip: string[];
 }
 
 interface FieldGeometry {
@@ -139,16 +139,22 @@ const ringPath = (ring: readonly number[][]): string =>
 
 /**
  * What a piece's emitters can see (ТЗ §6): the visibility fans of the shared
- * `visibilityPolygon` with the scene's occluders, kept as separate paths of
- * one clipPath (SVG unions the children) — no boolean pass per piece. `null`
- * means no occluder is within the radius of any emitter: every fan is a full
- * disc and the 2r-wide bands already bound the light. The floor itself is one
- * clip of the whole field layer (`fieldFloor`).
+ * `visibilityPolygon` with the scene's occluders. When no occluder is close,
+ * explicit full-disc fans still enter the shared clip. SVG clip paths ignore
+ * strokes, so an open stroked path cannot stand in for that free-space region:
+ * doing so dropped every free part as soon as one wall-following part made the
+ * clip active (#785). The floor itself is one clip of the whole field layer
+ * (`fieldFloor`).
  */
-function fans(emitters: readonly Pt[], radius: number, scene: LightBarrierScene): string[] | null {
+function fans(emitters: readonly Pt[], radius: number, scene: LightBarrierScene): string[] {
   const reach = radius * 1.01;
   if (!scene.occluders.some((seg) => seg?.length >= 4
-      && emitters.some((p) => segmentDistance(p, seg) < reach))) return null;
+      && emitters.some((p) => segmentDistance(p, seg) < reach))) {
+    return emitters.map((p) => ringPath(Array.from({ length: LED_ARC_STEPS }, (_, k) => {
+      const angle = (k / LED_ARC_STEPS) * Math.PI * 2;
+      return [p[0] + Math.cos(angle) * radius, p[1] + Math.sin(angle) * radius];
+    })));
+  }
   return emitters
     .map((p) => visibilityPolygon([p[0], p[1]], radius, scene.occluders, LED_ARC_STEPS))
     .filter((fan) => fan.length >= 3)
@@ -220,9 +226,9 @@ export function buildFieldGeometry(input: {
       if (!last || Math.hypot(p[0] - last[0], p[1] - last[1]) >= r / 4) emitters.push(p);
     }
     if (!emitters.length) continue;
-    let clip: string[] | null;
+    let clip: string[];
     try { clip = fans(emitters, r, input.scene); } catch { continue; } // fail-dark for this piece
-    if (clip && !clip.length) continue;
+    if (!clip.length) continue;
     pieces.push({ d: piece.map((p, k) => `${k ? 'L' : 'M'}${coord(p[0])} ${coord(p[1])}`).join(' '), clip });
     for (const p of piece) {
       minX = Math.min(minX, p[0]); minY = Math.min(minY, p[1]);
@@ -377,9 +383,6 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
       const r = view.radius;
       const box = geometry.box;
       const closed = isClosedStrip(pts(view.strip.points));
-      const clipped = geometry.pieces.filter((piece): piece is FieldPiece & { clip: string[] } => !!piece.clip);
-      const free = geometry.pieces.filter((piece) => !piece.clip);
-      const visibilityClip = clipped.length > 0;
       return memo([geometry, transition.entering, transition.leaving, view.appearance.c,
         view.appearance.alpha, r, id], () => svg`<g
           class="glow-spot led-field ${transition.entering ? 'is-entering' : ''} ${transition.leaving ? 'is-leaving' : ''}"
@@ -387,16 +390,14 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
           data-pieces="${geometry.pieces.length}" data-bands="${LED_FIELD_BANDS}"
           data-closed="${closed ? 'true' : 'false'}">
         <defs>
-          ${visibilityClip ? svg`<clipPath id="hp-led-visible-${id}">
-            ${free.map((piece) => svg`<path d="${piece.d}" fill="none" stroke="white"
-              stroke-width="${2 * r}" stroke-linecap="round" stroke-linejoin="round"></path>`)}
-            ${clipped.map((piece) => svg`<path d="${piece.clip.join(' ')}"></path>`)}
-          </clipPath>` : nothing}
+          <clipPath id="hp-led-visible-${id}">
+            ${geometry.pieces.map((piece) => svg`<path d="${piece.clip.join(' ')}"></path>`)}
+          </clipPath>
           <mask id="hp-led-mask-${id}" maskUnits="userSpaceOnUse"
             x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}"
             color-interpolation="sRGB" style="mask-type:luminance">
             <rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" fill="black"></rect>
-            <g clip-path=${visibilityClip ? `url(#hp-led-visible-${id})` : nothing}>
+            <g clip-path="url(#hp-led-visible-${id})">
               ${bands.map((band) => svg`<path d="${geometry.d}" fill="none" stroke="${grey(band.value)}"
                 stroke-width="${2 * band.half * r}" stroke-linecap="round" stroke-linejoin="round"></path>`)}
             </g>

@@ -27,9 +27,8 @@ export const LED_MAX_POINTS = 50;
 export const LED_EPSILON_CM = 0.001;
 /** Default linear field radius (#784): 30 cm, independent of the shared one. */
 export const LED_DEFAULT_RADIUS_CM = 30;
-/** Total stripe thickness in base device diameters (ТЗ §3). */
-export const LED_THICKNESS_OFF_D = 0.08;
-export const LED_THICKNESS_ON_D = 0.12;
+/** Total stripe thickness in base device diameters (#785): physical geometry is state-invariant. */
+export const LED_THICKNESS_D = 0.12;
 /** Minimum touch radius across the visible stripe (ТЗ §7). */
 export const LED_HIT_MIN_CSS_PX = 22;
 

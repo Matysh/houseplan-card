@@ -43,7 +43,9 @@ const setState = (entity, state, attributes = {}) => evaluate(async ([entity, st
 const stripe = (marker) => evaluate((marker) => {
   const g = window.__card.shadowRoot.querySelector(`[data-led-strip][data-marker="${marker}"]`);
   return g ? { state: g.dataset.state, core: g.querySelector('.led-core')?.getAttribute('stroke'),
-    dash: g.querySelector('.led-core')?.getAttribute('stroke-dasharray') || null } : null;
+    dash: g.querySelector('.led-core')?.getAttribute('stroke-dasharray') || null,
+    outlineWidth: Number(g.querySelector('.led-outline')?.getAttribute('stroke-width')),
+    coreWidth: Number(g.querySelector('.led-core')?.getAttribute('stroke-width')) } : null;
 }, marker);
 const field = () => evaluate(() => window.__card.shadowRoot.querySelectorAll('[data-led-field]').length);
 
@@ -80,8 +82,9 @@ check('unbound strip is absent from the View', await evaluate(() => window.__car
 check('no round pool at the anchor: the strip is the source', await evaluate(() =>
   !window.__card.shadowRoot.querySelector('[data-glow-source="light.ceiling"]')));
 check('no auto-slot reserved for the strip’s marker', await evaluate(() => !('d_light1' in (window.__card._defPos || {}))));
-check('on with Glow: white core and a field', JSON.stringify([await stripe('d_light1'), await field() > 0]),
-  JSON.stringify([{ state: 'on', core: '#FFFFFF', dash: null }, true]));
+const onStripe = await stripe('d_light1');
+check('on with Glow: white core and a field', JSON.stringify([onStripe?.state, onStripe?.core, onStripe?.dash, await field() > 0]),
+  JSON.stringify(['on', '#FFFFFF', null, true]));
 
 // r1 M1 (ТЗ §5): the strip keeps the device's value badge, passive, at the
 // half-length anchor — the icon core, pulse and slot stay suppressed.
@@ -141,8 +144,12 @@ check('a pointer click leaves no selection outline', await evaluate(() => {
 }), true);
 await page.waitForTimeout(600);
 void hit;
-check('off: no field, white core', JSON.stringify([await stripe('d_light1'), await field()]),
-  JSON.stringify([{ state: 'off', core: '#FFFFFF', dash: null }, 0]));
+const offStripe = await stripe('d_light1');
+check('off: no field, white core', JSON.stringify([offStripe?.state, offStripe?.core, offStripe?.dash, await field()]),
+  JSON.stringify(['off', '#FFFFFF', null, 0]));
+check('#785: switching does not change the physical stripe thickness',
+  JSON.stringify([offStripe?.outlineWidth, offStripe?.coreWidth]),
+  JSON.stringify([onStripe?.outlineWidth, onStripe?.coreWidth]));
 // A pan along the stripe calls nothing; the next clean click works at once.
 const along = (k) => evaluate((k) => {
   const el = window.__card.shadowRoot.querySelector('.led-hit');

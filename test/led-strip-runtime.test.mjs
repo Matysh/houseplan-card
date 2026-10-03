@@ -103,10 +103,12 @@ test('ТЗ §6: every piece is clipped to what its own emitters see; a buried st
   assert.equal(geometry.pieces.length, 4, 'an 8-unit segment with r = 2 makes four pieces');
   assert.equal((geometry.d.match(/M/g) || []).length, 1,
     'visibility/cache pieces do not split the painted path');
-  for (const piece of geometry.pieces) assert.equal(piece.clip, null, 'nothing within r: the bands are the bound');
+  for (const piece of geometry.pieces) {
+    assert.ok(piece.clip.length >= 2, 'free pieces retain filled visibility fans for the shared clip');
+  }
   // Passing 0.5 below the body: the pieces near it are clipped to their own fans.
   const near = buildFieldGeometry({ points: [[0.5, 3.5], [9.5, 3.5]], radius: 1, scene, polygons, faces, spaceId: 's' });
-  const clipped = near.pieces.filter((piece) => piece.clip);
+  const clipped = near.pieces.filter((piece) => piece.clip.some((d) => (d.match(/[ML]/g) || []).length > 12));
   assert.ok(clipped.length >= 2 && clipped.length < near.pieces.length, `${clipped.length} of ${near.pieces.length}`);
   for (const piece of clipped) {
     assert.ok(piece.clip.length > 0);
@@ -133,6 +135,17 @@ test('#784: a corner and a closed strip remain one painted path', () => {
   assert.ok(closed);
   assert.equal((closed.d.match(/M/g) || []).length, 1);
   assert.match(closed.d, / Z$/);
+});
+
+test('#785: a mixed free/wall polyline keeps visibility for every piece', () => {
+  const faces = faceContext(scene, 1e-6);
+  const mixed = buildFieldGeometry({ points: [[1, 1], [8, 1], [10, 1], [10, 7]], radius: 2,
+    scene, polygons, faces, spaceId: 's' });
+  assert.ok(mixed && mixed.pieces.length > 3);
+  assert.equal(mixed.pieces.every((piece) => piece.clip.length > 0), true,
+    'free pieces use filled discs and blocked pieces use visibility polygons');
+  assert.equal(mixed.pieces.some((piece) => piece.clip.length >= 4), true,
+    'the long free run retains several overlapping visibility discs');
 });
 
 test('AC17: the field cache is bounded, per space, and counts geometry rebuilds', () => {
@@ -190,7 +203,7 @@ test('AC17/r1 M5: a released owner retains nothing; the stats count visibility e
   const owner = {};
   const cache = ledFieldCache(owner);
   cache.forSpace('a');
-  cache.read('k1', () => ({ pieces: [{ d: 'M0 0', clip: ['M0 0 Z', 'M1 1 Z'] }, { d: 'M1 1', clip: null }], box: { x: 0, y: 0, w: 1, h: 1 } }));
+  cache.read('k1', () => ({ pieces: [{ d: 'M0 0', clip: ['M0 0 Z', 'M1 1 Z'] }, { d: 'M1 1', clip: [] }], box: { x: 0, y: 0, w: 1, h: 1 } }));
   cache.read('k2', () => null);
   assert.deepEqual(ledFieldStats(owner), { visibility: 2, sources: 2, recomputes: 2 });
   releaseLedField(owner);

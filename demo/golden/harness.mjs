@@ -628,6 +628,17 @@ export function prepareGoldenFixture(scenario) {
     if (!space) throw new Error(`golden override references missing space: ${scenario.space}`);
     return space;
   };
+  if (scenario.ledStripOverride) {
+    const space = requireSpace();
+    if (space.id !== 'golden-led' || !Array.isArray(scenario.ledStripOverride.points)
+        || scenario.ledStripOverride.points.length < 2) {
+      throw new Error(`invalid golden ledStripOverride: ${scenario.id}`);
+    }
+    space.led_strips = [{
+      id: 'led-owner-repro', marker: 'demo-led-strip-loop',
+      points: structuredClone(scenario.ledStripOverride.points),
+    }];
+  }
   if (scenario.stage3Fixture) {
     const contract = scenario.stage3Fixture;
     const space = requireSpace();
