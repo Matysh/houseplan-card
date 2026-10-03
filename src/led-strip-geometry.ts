@@ -130,7 +130,13 @@ export interface StripPiece {
 }
 
 const sub = (a: Pt, b: Pt): [number, number] => [a[0] - b[0], a[1] - b[1]];
-const lerp = (a: Pt, b: Pt, t: number): [number, number] => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+/** Arithmetic uncertainty in these coordinates, never a physical snap tolerance. */
+const roundoff = (a: Pt, b: Pt): number => Math.max(1,
+  Math.abs(a[0]), Math.abs(a[1]), Math.abs(b[0]), Math.abs(b[1])) * Number.EPSILON * 16;
+// Preserve shared vertices exactly: a + (b - a) need not equal b in floating
+// point, which used to break the two left-hand miters of decimal rectangles.
+const lerp = (a: Pt, b: Pt, t: number): [number, number] => t === 0 ? [a[0], a[1]]
+  : t === 1 ? [b[0], b[1]] : [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 
 function pointSegmentDistance(p: Pt, a: Pt, b: Pt): number {
   const [dx, dy] = sub(b, a);
@@ -160,7 +166,16 @@ function overlapOnFace(a: Pt, b: Pt, face: BodyFace, eps: number): [number, numb
   const lo = Math.max(Math.min(pa, pb), 0), hi = Math.min(Math.max(pa, pb), fLen);
   if (hi - lo <= eps) return null;
   const toT = (s: number) => (pb === pa ? 0 : (s - pa) / (pb - pa));
-  const t0 = Math.max(0, Math.min(1, toT(lo))), t1 = Math.max(0, Math.min(1, toT(hi)));
+  // Projection and length use different floating-point operations. A face
+  // ending exactly at b can otherwise stop at t=.9999999999999998, inventing
+  // a microscopic free tail and a full t/2 connector. Canonicalise only the
+  // coordinate-scale arithmetic uncertainty; real face gaps stay untouched.
+  const tolerance = Math.max(roundoff(a, b), roundoff(face.a, face.b)) / len;
+  const endpoint = (value: number): number => {
+    const t = Math.max(0, Math.min(1, value));
+    return t <= tolerance ? 0 : 1 - t <= tolerance ? 1 : t;
+  };
+  const t0 = endpoint(toT(lo)), t1 = endpoint(toT(hi));
   return t0 < t1 ? [t0, t1] : [t1, t0];
 }
 
@@ -236,11 +251,19 @@ export function stripPieces(points: readonly Pt[], ctx: FaceContext | null): Str
 function shiftedLineIntersection(
   prev: StripPiece, next: StripPiece, offset: number,
 ): [number, number] | null {
-  if (!prev.free || !next.free || !same(prev.b, next.a)) return null;
-  const pa: [number, number] = [prev.a[0] + prev.free[0] * offset, prev.a[1] + prev.free[1] * offset];
-  const pb: [number, number] = [prev.b[0] + prev.free[0] * offset, prev.b[1] + prev.free[1] * offset];
-  const qa: [number, number] = [next.a[0] + next.free[0] * offset, next.a[1] + next.free[1] * offset];
-  const qb: [number, number] = [next.b[0] + next.free[0] * offset, next.b[1] + next.free[1] * offset];
+  if (!prev.free && !next.free) return null;
+  // Adjacent derived endpoints may have arithmetic tails; this is numerical
+  // equality only, never the editor's magnet or the wall-face tolerance.
+  const tolerance = roundoff(prev.b, next.a);
+  if (dist(prev.b, next.a) > tolerance) return null;
+  // A free stretch keeps its stored line. Intersect that line with a shifted
+  // wall stretch too: an explicit connector would double back at the corner
+  // and leave a round protruding stub, even on an almost rectangular loop.
+  const pn = prev.free ?? [0, 0], qn = next.free ?? [0, 0];
+  const pa: [number, number] = [prev.a[0] + pn[0] * offset, prev.a[1] + pn[1] * offset];
+  const pb: [number, number] = [prev.b[0] + pn[0] * offset, prev.b[1] + pn[1] * offset];
+  const qa: [number, number] = [next.a[0] + qn[0] * offset, next.a[1] + qn[1] * offset];
+  const qb: [number, number] = [next.b[0] + qn[0] * offset, next.b[1] + qn[1] * offset];
   const r = sub(pb, pa), s = sub(qb, qa);
   const den = r[0] * s[1] - r[1] * s[0];
   if (Math.abs(den) <= 1e-12) return null;
@@ -282,16 +305,35 @@ function simplifyVisiblePoints(points: Array<[number, number]>, closed: boolean)
 /**
  * The derived visible path (ТЗ §3): a face piece shifted `offset` along its
  * free normal, a free piece unshifted. Shifted sides meeting at a real corner
- * meet at their bounded line intersection; wall/free transitions and unsafe
- * acute angles retain the short connector — no gap and no long miter spike.
+ * meet at their bounded line intersection, including a wall/free transition
+ * with one unshifted line. Parallel transitions and unsafe acute angles keep
+ * the short connector — no gap and no long miter spike.
  * Closed strips close through the same rule. Shared by both strokes, the hit
  * path, focus and 2.5D: one derivation, never a stored position.
  */
 export function visibleStripPath(
   points: readonly Pt[], ctx: FaceContext | null, offset: number,
 ): { points: Array<[number, number]>; closed: boolean } {
-  const closed = isClosedStrip(compactPoints(points));
-  const pieces = stripPieces(points, ctx);
+  const source = compactPoints(points);
+  const closed = isClosedStrip(source);
+  // Offset complete straight stretches, not arbitrary stored subdivisions.
+  // A miter can lie beyond a very short collinear step: retaining that step
+  // afterwards would make the stripe double back before continuing forward.
+  // The original vertices still belong to the saved shape and its emitters.
+  const vertices = simplifyVisiblePoints((closed ? source.slice(0, -1) : source)
+    .map((p) => [p[0], p[1]] as [number, number]), closed);
+  const pieces: StripPiece[] = [];
+  for (const piece of stripPieces(closed && vertices.length ? [...vertices, vertices[0]] : vertices, ctx)) {
+    const previous = pieces[pieces.length - 1];
+    const sameSide = previous && (previous.free && piece.free
+      ? dist(previous.free, piece.free) <= 1e-9 : previous.free === piece.free);
+    // An opening may also subdivide a straight stretch closer to its corner
+    // than t/2. Its inherited normal makes it one visible line, even though
+    // the physical face/gap pieces stay separate in the emitter derivation.
+    if (previous && sameSide && same(previous.b, piece.a)
+      && redundantCollinear(previous.a, previous.b, piece.b)) previous.b = piece.b;
+    else pieces.push(piece);
+  }
   const shifted = pieces.map((piece) => {
     const shift = piece.free ? [piece.free[0] * offset, piece.free[1] * offset] : [0, 0];
     return {

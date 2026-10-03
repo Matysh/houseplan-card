@@ -6,8 +6,8 @@
  * loads it (ТЗ §13.1).
  *
  * The field is the distance field of one continuous strip path with the shared
- * falloff. Visibility remains sampled in bounded pieces, but their visible
- * regions are unioned into one clip before the continuous path is painted.
+ * falloff. Visibility is sampled along the complete path and retained in
+ * bounded batches whose regions form one clip before the path is painted.
  * That separation keeps walls opaque without exposing piece boundaries in the
  * gradient at straight cuts or corners.
  */
@@ -54,9 +54,10 @@ export const LED_FIELD_BANDS = 48;
 const pts = (points: readonly number[][]): Pt[] => points.map((p) => [p[0], p[1]] as Pt);
 
 interface FieldPiece {
-  d: string;
-  /** Visibility fans of the piece's emitters, including full discs when nothing blocks them. */
-  clip: string[];
+  /** Positive-winding union retained as one compact path, not per-emitter objects. */
+  clip: string;
+  /** Actual constituent fans; compaction never disguises or drops sources. */
+  sourceCount: number;
 }
 
 interface FieldGeometry {
@@ -102,10 +103,25 @@ export class LedFieldCache {
     return value;
   }
   clear(): void { this.entries.clear(); this.ids.clear(); this.space = ''; }
-  /** Retained visibility fans (the per-emitter source cache, ТЗ §13.2: ≤ 2500). */
+  /** Actual constituent fan count; compact path/character metrics measure retained representation. */
   get sources(): number {
     let n = 0;
-    for (const value of this.entries.values()) for (const piece of value?.pieces || []) n += piece.clip?.length ?? 0;
+    for (const value of this.entries.values()) for (const piece of value?.pieces || []) n += piece.sourceCount;
+    return n;
+  }
+  /** Retained compact visibility path batches, composed into one SVG clip child. */
+  get visibilityPaths(): number {
+    let n = 0;
+    for (const value of this.entries.values()) n += value?.pieces.length ?? 0;
+    return n;
+  }
+  /** SVG path characters retained by the cache (at most two bytes per UTF-16 code unit). */
+  get pathChars(): number {
+    let n = 0;
+    for (const value of this.entries.values()) {
+      n += value?.d.length ?? 0;
+      for (const piece of value?.pieces || []) n += piece.clip.length;
+    }
     return n;
   }
 }
@@ -120,11 +136,29 @@ const pointsKey = (points: readonly number[][]): string =>
  */
 const LED_ARC_STEPS = 12;
 
-const segmentDistance = (p: Pt, s: readonly number[]): number => {
-  const dx = s[2] - s[0], dy = s[3] - s[1];
-  const len2 = dx * dx + dy * dy;
-  const t = len2 ? Math.max(0, Math.min(1, ((p[0] - s[0]) * dx + (p[1] - s[1]) * dy) / len2)) : 0;
-  return Math.hypot(p[0] - s[0] - t * dx, p[1] - s[1] - t * dy);
+/**
+ * A long wall can cross the radius without having either endpoint in it.
+ * Make its exact circle intersections sweep events. Without them the last
+ * wall hit and first free-radius hit are connected by a chord that removes
+ * a bright, genuinely visible crescent (#788).
+ */
+const circleSegments = (p: Pt, radius: number, segments: LightBarrierScene['occluders']): number[][] => {
+  const out: number[][] = [];
+  for (const s of segments) {
+    if (!s || s.length < 4) continue;
+    const dx = s[2] - s[0], dy = s[3] - s[1], len2 = dx * dx + dy * dy;
+    if (!(len2 > 0)) continue;
+    const ox = s[0] - p[0], oy = s[1] - p[1];
+    const cross = ox * dy - oy * dx;
+    const distance2 = cross * cross / len2;
+    if (distance2 >= radius * radius) continue;
+    const center = -(ox * dx + oy * dy) / len2;
+    const span = Math.sqrt((radius * radius - distance2) / len2);
+    const lo = Math.max(0, center - span), hi = Math.min(1, center + span);
+    if (hi <= lo) continue;
+    out.push([s[0] + lo * dx, s[1] + lo * dy, s[0] + hi * dx, s[1] + hi * dy]);
+  }
+  return out;
 };
 
 /** SVG does not gain visible precision from JS's full decimal expansion. */
@@ -136,11 +170,14 @@ const coord = (value: number): string => {
 const ringPath = (ring: readonly number[][]): string =>
   `${ring.map((p, k) => `${k ? 'L' : 'M'}${coord(p[0])} ${coord(p[1])}`).join(' ')} Z`;
 
-/** Exact disc in one path: two half-circle arcs avoid a polygonal free end. */
+/**
+ * Exact disc in one path. Sweep=1 is also the winding of the angle-sorted
+ * visibility fans; overlapping subpaths must add, never cancel (#788).
+ */
 const discPath = (center: Pt, radius: number): string => {
   const left = coord(center[0] - radius), right = coord(center[0] + radius);
   const cy = coord(center[1]), r = coord(radius);
-  return `M${left} ${cy} A${r} ${r} 0 1 0 ${right} ${cy} A${r} ${r} 0 1 0 ${left} ${cy} Z`;
+  return `M${left} ${cy} A${r} ${r} 0 1 1 ${right} ${cy} A${r} ${r} 0 1 1 ${left} ${cy} Z`;
 };
 
 /**
@@ -173,12 +210,10 @@ const visibilityPath = (center: Pt, radius: number, ring: readonly number[][]): 
  * (`fieldFloor`).
  */
 function fans(emitters: readonly Pt[], radius: number, scene: LightBarrierScene): string[] {
-  const reach = radius * 1.01;
   return emitters.flatMap((p) => {
-    const blocked = scene.occluders.some((seg) => seg?.length >= 4
-      && segmentDistance(p, seg) < reach);
-    if (!blocked) return [discPath(p, radius)];
-    const fan = visibilityPolygon([p[0], p[1]], radius, scene.occluders, LED_ARC_STEPS);
+    const near = circleSegments(p, radius, scene.occluders);
+    if (!near.length) return [discPath(p, radius)];
+    const fan = visibilityPolygon([p[0], p[1]], radius, near, LED_ARC_STEPS);
     const path = visibilityPath(p, radius, fan);
     return path ? [path] : [];
   });
@@ -196,13 +231,13 @@ function fieldFloor(scene: LightBarrierScene): string[] {
 }
 
 /**
- * Pieces of a strip for the field (ТЗ §6, §13.2): the stored polyline is cut
- * into consecutive pieces no longer than the radius — short segments of a
- * dense strip share one piece, a long one is split — and every piece is
- * clipped to the union of what its own emitters see. Emitters keep every
- * vertex and the radius/4 spacing of `emitterSamples`, thinned to radius/4 on
- * dense strips; a piece whose emitters are all inside a body emits nothing; a
- * failed clip makes that piece dark, never an unclipped field.
+ * Classify and sample the complete strip before grouping visibility work.
+ * Reclassifying radius-sized runs loses the two flanking wall faces of an
+ * opening. Sampling those artificial cuts also depends on path direction,
+ * and post-thinning drops real endpoints and acute corners (#788).
+ * Every true vertex/end and the radius/4 samples therefore survive. Groups
+ * are only bounded cache/DOM batches; all their fans form one actual union.
+ * A buried emitter or a failed fan stays dark, never an unclipped field.
  */
 export function buildFieldGeometry(input: {
   points: readonly number[][];
@@ -218,41 +253,17 @@ export function buildFieldGeometry(input: {
   const closed = isClosedStrip(path);
   const visiblePath = closed ? path.slice(0, -1) : path;
   const d = `${visiblePath.map((p, k) => `${k ? 'L' : 'M'}${coord(p[0])} ${coord(p[1])}`).join(' ')}${closed ? ' Z' : ''}`;
-  // Consecutive pieces of at most r along the polyline.
-  const runs: Pt[][] = [];
-  let run: Pt[] = [path[0]];
-  let left = r;
-  for (let i = 1; i < path.length; i++) {
-    let a = path[i - 1];
-    const b = path[i];
-    let len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    while (len > left + 1e-12) {
-      const t = left / len;
-      const cut: Pt = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-      run.push(cut);
-      runs.push(run);
-      run = [cut];
-      a = cut;
-      len -= left;
-      left = r;
-    }
-    run.push(b);
-    left -= len;
-  }
-  if (run.length > 1) runs.push(run);
+  const emitters = emitterSamples(path, input.faces, r / 4);
   const pieces: FieldPiece[] = [];
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const piece of runs) {
-    const emitters: Pt[] = [];
-    for (const p of emitterSamples(piece, input.faces, r / 4)) {
-      const last = emitters[emitters.length - 1];
-      if (!last || Math.hypot(p[0] - last[0], p[1] - last[1]) >= r / 4) emitters.push(p);
-    }
-    if (!emitters.length) continue;
+  // Keep at most five actual emitters in each retained visibility path. The
+  // batches manufacture no source positions and have no optical significance.
+  for (let i = 0; i < emitters.length; i += 5) {
+    const piece = emitters.slice(i, i + 5);
     let clip: string[];
-    try { clip = fans(emitters, r, input.scene); } catch { continue; } // fail-dark for this piece
+    try { clip = fans(piece, r, input.scene); } catch { continue; } // fail-dark for this batch
     if (!clip.length) continue;
-    pieces.push({ d: piece.map((p, k) => `${k ? 'L' : 'M'}${coord(p[0])} ${coord(p[1])}`).join(' '), clip });
+    pieces.push({ clip: clip.join(' '), sourceCount: clip.length });
     for (const p of piece) {
       minX = Math.min(minX, p[0]); minY = Math.min(minY, p[1]);
       maxX = Math.max(maxX, p[0]); maxY = Math.max(maxY, p[1]);
@@ -343,9 +354,13 @@ export function hasLedField(owner: object): boolean {
   return !!fieldLifecycles.get(owner)?.state.renderedSources.size;
 }
 /** The performance witness: what this owner retains right now. */
-export function ledFieldStats(owner: object): { visibility: number; sources: number; recomputes: number } {
+export function ledFieldStats(owner: object): {
+  visibility: number; sources: number; visibilityPaths: number; pathChars: number; recomputes: number;
+} {
   const cache = fieldCaches.get(owner);
-  return { visibility: cache?.size ?? 0, sources: cache?.sources ?? 0, recomputes: cache?.recomputes ?? 0 };
+  return { visibility: cache?.size ?? 0, sources: cache?.sources ?? 0,
+    visibilityPaths: cache?.visibilityPaths ?? 0, pathChars: cache?.pathChars ?? 0,
+    recomputes: cache?.recomputes ?? 0 };
 }
 export function ledFieldCache(owner: object): LedFieldCache {
   let cache = fieldCaches.get(owner);
@@ -360,7 +375,9 @@ export function ledFieldCache(owner: object): LedFieldCache {
  * The linear fields of the strips that are on in a Glow room. Fade uses the
  * shared spot transition (`.glow-spot`, GLOW_FADE_MS) — no animation system of
  * its own; an off strip keeps its node at opacity 0, so a fade-out completes
- * and leaves no residual light.
+ * and leaves no residual light. All positive-winding batches enter ONE clip
+ * child: Chromium's union of several compound clip children can cut a bright
+ * crescent even when each individual fan's mathematical membership is correct.
  */
 export function renderLedField(input: LedFieldInput): TemplateResult {
   if (!input.scene) return svg`` as unknown as TemplateResult;
@@ -414,7 +431,7 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
           data-closed="${closed ? 'true' : 'false'}">
         <defs>
           <clipPath id="hp-led-visible-${id}">
-            ${geometry.pieces.map((piece) => svg`<path d="${piece.clip.join(' ')}"></path>`)}
+            <path d="${geometry.pieces.map((piece) => piece.clip).join(' ')}" clip-rule="nonzero"></path>
           </clipPath>
           <mask id="hp-led-mask-${id}" maskUnits="userSpaceOnUse"
             x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}"

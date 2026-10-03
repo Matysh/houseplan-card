@@ -420,18 +420,24 @@ only the geometry differs:
 
 - **Radius.** 30 cm by default, independent of `settings.glow_radius_cm`; the
   marker's personal `glow_radius_cm` wins.
-- **Field.** A continuous band along every segment with round free ends: grey
-  luminance bands of the shared `GLOW_FALLOFF`, one piece per stretch, blended
-  with `lighten` inside one isolated group, so corners and the closing of a
-  loop neither seam nor double the brightness. Intensity and the 500 ms fade
+- **Field.** One continuous stroked path with round free ends: 48 grey
+  luminance bands of the shared `GLOW_FALLOFF` in one mask, so corners and the
+  closing of a loop neither seam nor double the brightness. Intensity and the 500 ms fade
   are the shared `glowAlpha` / `GLOW_FADE_MS`.
-- **Visibility.** The strip is cut into consecutive pieces no longer than the
-  radius; each piece is clipped to the visibility fans of its own emitters
-  (the shared `visibilityPolygon` over the same barrier scene as pools; the
-  fans are separate paths of one clipPath, no boolean pass per piece), and the
-  whole field layer is clipped once to the floor. An unobstructed emitter uses
+- **Visibility.** Classify and sample the full polyline at radius/4 or finer,
+  retaining every actual vertex and both ends; never thin a short final run
+  or an acute corner. The continuous field is clipped to the union of the
+  emitters' visibility fans (the shared `visibilityPolygon` over the same
+  barrier scene as pools), then once to the floor. Groups of five fans are
+  retained as compact positive-winding paths and rendered as one SVG clip
+  child with explicit `clip-rule=nonzero` (several compound clip children
+  caused Chromium raster holes despite correct geometric membership);
+  discs and blocked fans have the same winding, so overlap adds visibility
+  instead of cutting holes. An unobstructed emitter uses
   an exact SVG disc; a blocked fan keeps hard obstacle edges and exact circular
-  arcs between them, so free ends cannot expose angular-sweep facets. Windows,
+  arcs between them. Before the sweep, barriers are clipped to the emitter's
+  radius: exact wall–circle intersections become angular events, not a chord
+  cutting away visible floor between two coarse rays. Windows,
   columns,
   thick walls and Solid zero walls block; doors/gates pass by their actual
   opening; Dashed zero walls are transparent. Emitters on a thick face sit
@@ -442,9 +448,12 @@ only the geometry differs:
   inherits their free-side normal. The visible stripe and its emitters
   therefore stay on one straight line through the opening. At a genuine turn,
   safely intersecting shifted sides use that bounded intersection as their
-  single miter; unsafe acute angles retain the short connector. A stored
-  four-corner loop consequently stays a four-corner rectangle without steps
-  at openings or diagonal corner inserts (#787).
+  single miter; a free side contributes its unshifted axis to the same join.
+  Numeric endpoint tails are not gaps; redundant collinear subdivisions are
+  removed only from the derived visible path before offsetting, never from
+  the saved points. Unsafe acute angles retain the short connector. A stored
+  four-corner loop stays four-cornered without steps or protruding hooks;
+  a genuinely tilted side stays tilted (#787, #788).
 - **Core.** With effective Glow (space `glow_enabled` + room `glow`) the core
   stays white and the colour is the field; without Glow the core takes the
   source colour and there is no field. Off: white core, no field.
@@ -461,5 +470,20 @@ only the geometry differs:
 - **Laziness.** The stripe/hit/2.5D code (`led-strip-runtime`) and the field
   (`led-strip-field`) are separate lazy chunks; the initial graph holds only
   the presence check and the loader (`led-strip-gate`). Caches are bounded per
-  space (50 shapes, 50 visibilities, 2500 retained fans) and released on space
-  change and on disconnect; a chunk that lands after disconnect applies nothing.
+  space (50 shapes and 50 visibility entries) and released on space change
+  and on disconnect; a chunk that lands after disconnect applies nothing.
+  The `led-strips-v1` maximum-load witness bounds the compact representation
+  to 2500 cached path batches and 4 Mi cached characters (at most 8 MiB UTF-16,
+  excluding the joined Lit/DOM clip string), with unchanged timing and 64 MiB
+  warm-cycle heap-growth budgets (not a total browser-memory bound).
+  The actual fan count remains a separate honest
+  diagnostic. The former 2500-fan acceptance bound depended on dropping
+  required vertices/endpoints and was incompatible with the 50×50-point
+  contract; compaction now reduces object/DOM overhead, not geometric detail.
+
+`smoke_led_strip_field` compares rasterised production-field pixels with an
+independent distance/falloff oracle across three radii, both path directions
+and three raster densities: free ends, acute/reflected turns, decimal loops,
+self-crossings and an opaque wall. Unit tests pin joins, circle events and
+doorway emitter normals. The original household export is checked locally,
+not stored as a public fixture.

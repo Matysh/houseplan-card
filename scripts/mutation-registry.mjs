@@ -14297,6 +14297,46 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'led-field-endpoint-dropped',
+    guard: 'node demo/smoke_led_strip_field.mjs',
+    because: '#788: both true ends must fade to zero, including a short residual segment in either direction',
+    patches: [{
+      file: 'src/led-strip-field.ts',
+      find: '  const emitters = emitterSamples(path, input.faces, r / 4);',
+      replace: '  const emitters = emitterSamples(path, input.faces, r / 4).slice(0, -1);',
+    }],
+  },
+  {
+    id: 'led-field-disc-cancels-fan',
+    guard: 'node demo/smoke_led_strip_field.mjs',
+    because: '#788: positive-winding discs and blocked fans form an OR union, never subtract visible floor',
+    patches: [{
+      file: 'src/led-strip-field.ts',
+      find: '0 1 1 ${right} ${cy} A${r} ${r} 0 1 1 ${left}',
+      replace: '0 1 0 ${right} ${cy} A${r} ${r} 0 1 0 ${left}',
+    }],
+  },
+  {
+    id: 'led-field-compound-clip-children',
+    guard: 'node demo/smoke_led_strip_field.mjs',
+    because: '#788: Chromium rasterizes several compound clip children with direction-dependent bright holes',
+    patches: [{
+      file: 'src/led-strip-field.ts',
+      find: '<path d="${geometry.pieces.map((piece) => piece.clip).join(\' \')}" clip-rule="nonzero"></path>',
+      replace: '${geometry.pieces.map((piece) => svg`<path d="${piece.clip}" clip-rule="nonzero"></path>`)}',
+    }],
+  },
+  {
+    id: 'led-field-circle-events-missing',
+    guard: 'node demo/smoke_led_strip_field.mjs',
+    because: '#788: a long wall meeting the emitter radius must not replace visible floor with a coarse sweep chord',
+    patches: [{
+      file: 'src/led-strip-field.ts',
+      find: '    const near = circleSegments(p, radius, scene.occluders);',
+      replace: '    const near = scene.occluders;',
+    }],
+  },
+  {
     id: 'led-emits-from-body',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/led-strip-geometry.test.mjs',

@@ -608,7 +608,8 @@ export const SMOKE_LINKS = [
       'src/led-strip-gate.ts', 'src/led-strip-card.ts', 'src/led-strip-geometry.ts',
       'src/led-strip-runtime.ts', 'src/led-strip-field.ts', 'src/led-strip-editor.ts',
     ],
-    smokes: ['smoke_led_strip_draw.mjs', 'smoke_led_strip_bind.mjs', 'smoke_led_strip_glow.mjs'],
+    smokes: ['smoke_led_strip_draw.mjs', 'smoke_led_strip_bind.mjs', 'smoke_led_strip_glow.mjs',
+      'smoke_led_strip_field.mjs', 'smoke_led_strip_tube.mjs'],
     because: '#780: drawing, placement against walls, binding, the icon ↔ strip switch, the LED '
       + 'history, the View target, the field states and the static card are observed only as '
       + 'rendered strips and saved configs; no smoke names the lazy modules’ functions',

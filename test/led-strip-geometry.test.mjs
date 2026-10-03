@@ -72,8 +72,9 @@ test('AC8: a mixed strip leaves the face continuously — no gap, the stored poi
   const stored = [[2, 1], [6, 1], [6, 4]];
   const before = JSON.stringify(stored);
   const path = visibleStripPath(stored, ctx, t2);
-  // Face piece shifted, then a connector, then the free piece unshifted.
-  assert.deepEqual(path.points, [[2, 1.25], [6, 1.25], [6, 1], [6, 4]]);
+  // The shifted face meets the unshifted free segment on its original line:
+  // no out-and-back connector that would leave a round stub at the corner.
+  assert.deepEqual(path.points, [[2, 1.25], [6, 1.25], [6, 4]]);
   for (let i = 1; i < path.points.length; i++) {
     const [a, b] = [path.points[i - 1], path.points[i]];
     assert.ok(Math.hypot(b[0] - a[0], b[1] - a[1]) > 0, 'no zero step');
@@ -125,6 +126,204 @@ test('#787: a four-corner strip stays rectangular across a door opening', () => 
   assert.ok(emitters.length > 0);
   for (const point of emitters) close(point[0], 10 - openingCtx.epsilon, 1e-12,
     'Glow stays on one side through the optically open doorway');
+});
+
+const rectangleFaces = (left, top, right, bottom) => {
+  const ring = [[left, top], [right, top], [right, bottom], [left, bottom]];
+  return {
+    faces: ringFaces(ring),
+    inside: ([x, y]) => x < left || x > right || y < top || y > bottom,
+    epsilon: 1e-5,
+  };
+};
+
+const loopOrders = (corners) => [corners, [...corners].reverse()].flatMap((order) =>
+  order.map((_, start) => {
+    const rotated = [...order.slice(start), ...order.slice(0, start)];
+    return [...rotated, rotated[0]];
+  }));
+
+const sameLoopOutline = (actual, expected) => {
+  assert.equal(actual.length, expected.length, 'no extra connector vertices');
+  const cornerIndices = [];
+  for (const point of actual) {
+    const index = expected.findIndex((p) => Math.hypot(p[0] - point[0], p[1] - point[1]) < 1e-9);
+    assert.notEqual(index, -1, `unexpected corner ${point}`);
+    cornerIndices.push(index);
+  }
+  for (const point of expected) {
+    assert.ok(actual.some((p) => Math.hypot(p[0] - point[0], p[1] - point[1]) < 1e-9),
+      `missing expected corner ${point}: ${JSON.stringify(actual)}`);
+  }
+  const direction = (cornerIndices[1] - cornerIndices[0] + expected.length) % expected.length;
+  assert.ok(direction === 1 || direction === expected.length - 1, 'no diagonal edge');
+  for (let i = 1; i < cornerIndices.length; i++) {
+    assert.equal((cornerIndices[i] - cornerIndices[i - 1] + expected.length) % expected.length, direction,
+      'the whole outline keeps its cyclic order without crossing or retracing sides');
+  }
+};
+
+test('#788: decimal loop joins are invariant to its start and traversal direction', () => {
+  // Subtraction followed by addition does not reproduce .1/.2 exactly. In
+  // beta.6 this lost both left miters even though all sides were on a face.
+  const corners = [[0.1, 0.2], [10.3, 0.2], [10.3, 10.4], [0.1, 10.4]];
+  const context = rectangleFaces(0.1, 0.2, 10.3, 10.4);
+  const expected = [[0.35, 0.45], [10.05, 0.45], [10.05, 10.15], [0.35, 10.15]];
+  for (const stored of loopOrders(corners)) {
+    const before = JSON.stringify(stored);
+    const path = visibleStripPath(stored, context, 0.25);
+    assert.equal(path.closed, true);
+    sameLoopOutline(path.points, expected);
+    assert.equal(JSON.stringify(stored), before, 'saved coordinates are untouched');
+  }
+});
+
+test('#788: a slightly tilted free side meets shifted faces without stubs or silent straightening', () => {
+  // Synthetic minimal neighbour of the field report: only the left side is
+  // not parallel to the wall, while top/bottom/right lie exactly on faces.
+  const corners = [[0.14, 0.2], [0.1, 10.4], [10.3, 10.4], [10.3, 0.2]];
+  const context = rectangleFaces(0.1, 0.2, 10.3, 10.4);
+  const topX = 0.14 - (0.04 * 0.25) / 10.2;
+  const bottomX = 0.1 + (0.04 * 0.25) / 10.2;
+  const expected = [[topX, 0.45], [bottomX, 10.15], [10.05, 10.15], [10.05, 0.45]];
+  for (const stored of loopOrders(corners)) {
+    const before = JSON.stringify(stored);
+    const path = visibleStripPath(stored, context, 0.25);
+    sameLoopOutline(path.points, expected);
+    assert.notEqual(topX, bottomX, 'the original nonzero tilt is retained');
+    assert.equal(JSON.stringify(stored), before, 'rendering never snaps the saved shape');
+  }
+});
+
+test('#788: an unsafe almost-parallel wall/free turn keeps a bounded connector', () => {
+  const stored = [[2, 1], [8, 1], [2, 1.01]];
+  const path = visibleStripPath(stored, ctx, 0.25);
+  assert.equal(path.closed, false);
+  assert.ok(path.points.every(([x, y]) => x >= 2 && x <= 8 && y >= 1 && y <= 1.25),
+    'a far-away line intersection must not create a long miter spike');
+  assert.deepEqual(path.points, [[2, 1.25], [8, 1.25], [8, 1], [2, 1.01]]);
+});
+
+test('#788: sub-epsilon collinear subdivisions cannot create a wall/free stub', () => {
+  const expected = [[2, 1.25], [6, 1.25], [6, 4]];
+  for (const step of [0.1, 1e-3, 1e-6, 1e-10]) {
+    for (const stored of [
+      [[2, 1], [2 + step, 1], [6, 1], [6, 4]],
+      [[2, 1], [6, 1], [6, 1 + step], [6, 4]],
+    ]) {
+      const before = JSON.stringify(stored);
+      for (const reversed of [false, true]) {
+        const path = visibleStripPath(reversed ? [...stored].reverse() : stored, ctx, 0.25);
+        const want = reversed ? [...expected].reverse() : expected;
+        assert.equal(path.closed, false);
+        assert.equal(path.points.length, want.length, 'a short intermediate step cannot turn into a connector');
+        path.points.forEach((p, i) => closePt(p, want[i]));
+      }
+      assert.equal(JSON.stringify(stored), before, 'only the visible derivation is simplified');
+    }
+  }
+});
+
+test('#788: duplicate vertices and coincident faces preserve a closed offset loop', () => {
+  const corners = [[0.1, 0.2], [10.3, 0.2], [10.3, 10.4], [0.1, 10.4]];
+  const context = rectangleFaces(0.1, 0.2, 10.3, 10.4);
+  // A catalog split or overlapping body may provide the same face more than
+  // once and in either direction. It must not alter the free side or closure.
+  context.faces.push(...context.faces.map(({ a, b }) => ({ a: b, b: a })));
+  const expected = [[0.35, 0.45], [10.05, 0.45], [10.05, 10.15], [0.35, 10.15]];
+  for (const order of loopOrders(corners)) {
+    const stored = order.flatMap((p) => [p, [...p]]);
+    const before = JSON.stringify(stored);
+    const path = visibleStripPath(stored, context, 0.25);
+    assert.equal(path.closed, true);
+    sameLoopOutline(path.points, expected);
+    assert.ok(path.points.every((p) => !context.inside(p)), 'the whole visible loop stays in free floor');
+    assert.equal(JSON.stringify(stored), before);
+  }
+});
+
+test('#788: a doorway split closer than the offset to a corner cannot reverse the stripe', () => {
+  const context = {
+    faces: [
+      { a: [0, 0], b: [10, 0] }, { a: [10, 0], b: [10, 0.1] },
+      { a: [10, 5], b: [10, 10] }, { a: [10, 10], b: [0, 10] },
+      { a: [0, 10], b: [0, 0] },
+    ],
+    inside: ([x, y]) => (y < 0 && x > 0 && x < 10)
+      || (x > 10 && (y < 0.1 || y > 5))
+      || (y > 10 && x > 0 && x < 10) || (x < 0 && y > 0 && y < 10),
+    epsilon: 1e-5,
+  };
+  const corners = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  const expected = [[0.25, 0.25], [9.75, 0.25], [9.75, 9.75], [0.25, 9.75]];
+  for (const stored of loopOrders(corners)) {
+    const before = JSON.stringify(stored);
+    const path = visibleStripPath(stored, context, 0.25);
+    sameLoopOutline(path.points, expected);
+    assert.equal(JSON.stringify(stored), before);
+  }
+  assert.equal(stripPieces([[10, 0], [10, 10]], context).length, 3,
+    'physical face/gap classification still exists for emitters; only the visible line is coalesced');
+});
+
+test('#788: rotated rectangle matrix has no numerical free tails at face endpoints', () => {
+  let checked = 0, failed = 0;
+  const examples = [];
+  for (let n = 0; n < 1000; n++) {
+    const angle = (n * 0.137) % 6.28;
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    const width = 10.13 + n % 7, height = 7.89 + n % 11;
+    const rotate = ([x, y]) => [0.13 + x * cos - y * sin, 0.27 + x * sin + y * cos];
+    const corners = [[0, 0], [width, 0], [width, height], [0, height]].map(rotate);
+    const expected = [[0.25, 0.25], [width - 0.25, 0.25],
+      [width - 0.25, height - 0.25], [0.25, height - 0.25]].map(rotate);
+    const context = {
+      faces: ringFaces(corners), epsilon: 1e-5,
+      inside: ([x, y]) => {
+        const px = (x - 0.13) * cos + (y - 0.27) * sin;
+        const py = -(x - 0.13) * sin + (y - 0.27) * cos;
+        return px < 0 || px > width || py < 0 || py > height;
+      },
+    };
+    for (const stored of loopOrders(corners)) {
+      const before = JSON.stringify(stored);
+      const pieces = stripPieces(stored, context);
+      const path = visibleStripPath(stored, context, 0.25);
+      const correct = pieces.length === 4 && pieces.every((piece) => piece.free)
+        && path.points.length === 4 && expected.every((p) =>
+          path.points.some((q) => Math.hypot(p[0] - q[0], p[1] - q[1]) < 1e-8));
+      checked++;
+      if (!correct) {
+        failed++;
+        if (examples.length < 3) examples.push({ n, pieces: pieces.length, visible: path.points.length });
+      } else sameLoopOutline(path.points, expected);
+      assert.equal(JSON.stringify(stored), before, 'rotation never changes stored coordinates');
+    }
+  }
+  assert.equal(checked, 8000, '1000 rotations, four starts, two directions');
+  assert.equal(failed, 0, `${failed}/${checked} rotated loops failed; examples ${JSON.stringify(examples)}`);
+});
+
+test('#788: numerical endpoint tolerance does not absorb real leading or trailing gaps', () => {
+  const from = [0.1, 0.2], to = [10.1, 1.2];
+  const length = Math.hypot(to[0] - from[0], to[1] - from[1]);
+  const along = (distance) => [from[0] + (to[0] - from[0]) * distance / length,
+    from[1] + (to[1] - from[1]) * distance / length];
+  for (const gap of [1e-8, 1e-5, 0.1]) {
+    const context = {
+      faces: [{ a: along(gap), b: along(length - gap) }], epsilon: 1e-5,
+      inside: ([x, y]) => (to[0] - from[0]) * (y - from[1]) - (to[1] - from[1]) * (x - from[0]) < 0,
+    };
+    for (const stored of [[from, to], [to, from]]) {
+      const pieces = stripPieces(stored, context);
+      assert.equal(pieces.length, 3, `both ${gap}-unit real gaps remain separate`);
+      assert.equal(pieces[0].free, null);
+      assert.ok(pieces[1].free);
+      assert.equal(pieces[2].free, null);
+      close(Math.hypot(pieces[0].b[0] - pieces[0].a[0], pieces[0].b[1] - pieces[0].a[1]), gap, 1e-12);
+      close(Math.hypot(pieces[2].b[0] - pieces[2].a[0], pieces[2].b[1] - pieces[2].a[1]), gap, 1e-12);
+    }
+  }
 });
 
 test('ТЗ §6: emitters sit epsilon outward on a face, cover the length, skip buried parts', () => {

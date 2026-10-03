@@ -675,7 +675,10 @@ export const LAZY_ONBOARDING_GZIP_CEILING = 28_395;
  * its English dictionary + shared geometry 9 913 B), plus 10 %, rounded up to
  * a KiB. Absolute walls: a View without strips loads neither graph.
  */
-export const LAZY_LED_GZIP_CEILING = 10 * 1024;
+// #788: retaining real end/corner emitters, stable numerical miters and exact
+// wall/radius events raises the lazy View graph to 10 353 B gzip. Give this
+// corrected representation 11 KiB; no-LED initial View is still untouched.
+export const LAZY_LED_GZIP_CEILING = 11 * 1024;
 export const LAZY_LED_EDITOR_GZIP_CEILING = 11 * 1024;
 
 /**

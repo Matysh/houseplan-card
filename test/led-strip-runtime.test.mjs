@@ -95,6 +95,8 @@ const scene = {
   floor: [floor], fingerprint: 'f1', masonryGeometry: [], opaqueBodies: [body],
 };
 const polygons = [{ room: { id: 'r' }, poly: floor }];
+const pieceFans = (piece) => typeof piece.clip === 'string'
+  ? piece.clip.match(/M[^M]+/g)?.map((d) => d.trim()) ?? [] : piece.clip;
 
 test('ТЗ §6: every piece is clipped to what its own emitters see; a buried strip emits nothing', () => {
   const faces = faceContext(scene, 1e-6);
@@ -104,20 +106,20 @@ test('ТЗ §6: every piece is clipped to what its own emitters see; a buried st
   assert.equal((geometry.d.match(/M/g) || []).length, 1,
     'visibility/cache pieces do not split the painted path');
   for (const piece of geometry.pieces) {
-    assert.ok(piece.clip.length >= 2, 'free pieces retain filled visibility fans for the shared clip');
-    assert.ok(piece.clip.every((d) => /\bA2 2\b/.test(d) && !/\bL/.test(d)),
+    assert.ok(piece.sourceCount >= 2, 'free pieces retain filled visibility fans for the shared clip');
+    assert.ok(pieceFans(piece).every((d) => /\bA2 2\b/.test(d) && !/\bL/.test(d)),
       'an unobstructed fan is an exact SVG disc, not a visible polygon');
   }
   // Passing 0.5 below the body: the pieces near it are clipped to their own fans.
   const near = buildFieldGeometry({ points: [[0.5, 3.5], [9.5, 3.5]], radius: 1, scene, polygons, faces, spaceId: 's' });
-  const clipped = near.pieces.filter((piece) => piece.clip.some((d) => /\bL/.test(d)));
+  const clipped = near.pieces.filter((piece) => /\bL/.test(piece.clip));
   assert.ok(clipped.length >= 2 && clipped.length < near.pieces.length, `${clipped.length} of ${near.pieces.length}`);
   for (const piece of clipped) {
     assert.ok(piece.clip.length > 0);
-    assert.ok(piece.clip.some((d) => /\bA1 1\b/.test(d)),
+    assert.ok(/\bA1 1\b/.test(piece.clip),
       'unblocked parts of a clipped fan retain exact circular arcs');
     // No fan vertex lies inside the body: light never passes into or through it.
-    for (const d of piece.clip) {
+    for (const d of pieceFans(piece)) {
       for (const [, x, y] of d.matchAll(/[ML]([-\d.e]+) ([-\d.e]+)/g)) {
         assert.ok(!(+x > 4 + 1e-6 && +x < 6 - 1e-6 && +y > 4 + 1e-6 && +y < 6 - 1e-6), `${x},${y}`);
       }
@@ -148,7 +150,7 @@ test('#785: a mixed free/wall polyline keeps visibility for every piece', () => 
   assert.ok(mixed && mixed.pieces.length > 3);
   assert.equal(mixed.pieces.every((piece) => piece.clip.length > 0), true,
     'free pieces use filled discs and blocked pieces use visibility polygons');
-  assert.equal(mixed.pieces.some((piece) => piece.clip.length >= 4), true,
+  assert.equal(mixed.pieces.some((piece) => piece.sourceCount >= 4), true,
     'the long free run retains several overlapping visibility discs');
 });
 
@@ -160,10 +162,148 @@ test('#786: reversing a free strip keeps two equally smooth circular end fans', 
     scene: freeScene, polygons, faces: null, spaceId: 's' });
   for (const geometry of [forward, reverse]) {
     assert.ok(geometry);
-    const fans = geometry.pieces.flatMap((piece) => piece.clip);
+    const fans = geometry.pieces.flatMap(pieceFans);
     assert.ok(fans.length >= 2);
     assert.ok(fans.every((d) => (d.match(/\bA2 2\b/g) || []).length === 2));
     assert.ok(fans.every((d) => !/\bL/.test(d)), 'no order-dependent polygon chord at either end');
+  }
+});
+
+// A free fan's centre follows from its exact two-arc disc. This checks the
+// generated coverage, not the sampler's implementation or a source regex.
+const discCenters = (geometry, radius) => geometry.pieces.flatMap(pieceFans).map((d) => {
+  const start = /^M([-\d.e]+) ([-\d.e]+) A/.exec(d);
+  assert.ok(start, `expected a free-space disc: ${d}`);
+  return [Number(start[1]) + radius, Number(start[2])];
+});
+const hasCenter = (centers, point, epsilon = 1e-4) =>
+  centers.some((center) => Math.hypot(center[0] - point[0], center[1] - point[1]) < epsilon);
+
+// Sample the emitted circular SVG arcs and measure the resulting ring. The
+// sign is an observable geometry property: nonzero clipping unions rings of
+// the same winding, but subtracts a negative disc from a positive blocked fan.
+const fanSignedArea = (d) => {
+  const tokens = d.match(/[MLAZ]|-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g);
+  const points = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const command = tokens[i++];
+    if (command === 'M' || command === 'L') {
+      points.push([Number(tokens[i++]), Number(tokens[i++])]);
+    } else if (command === 'A') {
+      const radius = Number(tokens[i++]);
+      assert.equal(Number(tokens[i++]), radius, 'the field uses circular arcs');
+      i++; // axis rotation does not affect a circle
+      const large = Number(tokens[i++]), sweep = Number(tokens[i++]);
+      const end = [Number(tokens[i++]), Number(tokens[i++])];
+      const start = points.at(-1), dx = (start[0] - end[0]) / 2, dy = (start[1] - end[1]) / 2;
+      const distance2 = dx * dx + dy * dy;
+      if (distance2 < 1e-20) continue;
+      const k = (large === sweep ? -1 : 1) * Math.sqrt(Math.max(0, (radius * radius - distance2) / distance2));
+      const center = [(start[0] + end[0]) / 2 + k * dy, (start[1] + end[1]) / 2 - k * dx];
+      const a = Math.atan2(start[1] - center[1], start[0] - center[0]);
+      const b = Math.atan2(end[1] - center[1], end[0] - center[0]);
+      let delta = ((b - a) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      if (!sweep) delta -= 2 * Math.PI;
+      const steps = Math.max(1, Math.ceil(Math.abs(delta) / (Math.PI / 24)));
+      for (let step = 1; step < steps; step++) {
+        const angle = a + delta * step / steps;
+        points.push([center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle)]);
+      }
+      points.push(end);
+    } else assert.equal(command, 'Z');
+  }
+  return points.reduce((area, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return area + point[0] * next[1] - point[1] * next[0];
+  }, 0) / 2;
+};
+
+test('#788: free discs and wall-limited fans have additive winding in a shared clip', () => {
+  const geometry = buildFieldGeometry({ points: [[0.5, 3.5], [9.5, 3.5]], radius: 1,
+    scene, polygons, faces: faceContext(scene, 1e-6), spaceId: 's' });
+  const fans = geometry.pieces.flatMap(pieceFans);
+  assert.ok(fans.some((d) => d.includes(' L')), 'fixture includes blocked fans');
+  assert.ok(fans.some((d) => !d.includes(' L')), 'fixture includes free discs');
+  for (const fan of fans) assert.ok(fanSignedArea(fan) > 0, 'all subpaths add coverage instead of cancelling it');
+});
+
+test('#788: a wall crossing the radius contributes exact circle-intersection events', () => {
+  const wallScene = { ...scene, occluders: [[595, 100, 595, 700]], fingerprint: 'long-wall' };
+  const geometry = buildFieldGeometry({ points: [[350, 350], [585, 450]], radius: 50,
+    scene: wallScene, polygons: [], faces: null, spaceId: 's' });
+  const endpointFan = geometry.pieces.flatMap(pieceFans).at(-1);
+  // The true endpoint is (585,450), 10 units from the wall. Its disc meets
+  // that wall at y=450±sqrt(50²−10²), not at an arbitrary 30-degree ray.
+  const intersections = [...endpointFan.matchAll(/(?:[ML]|A[-\d.e]+ [-\d.e]+ \d \d \d )595 ([-\d.e]+)/g)]
+    .map((match) => Number(match[1]));
+  for (const y of [450 - Math.sqrt(2400), 450 + Math.sqrt(2400)]) {
+    assert.ok(intersections.some((at) => Math.abs(at - y) < 1e-4), `missing wall/radius event at y=${y}`);
+  }
+});
+
+test('#788: a residual run retains the true free endpoint in both directions', () => {
+  const freeScene = { ...scene, occluders: [], fingerprint: 'free-endpoints' };
+  for (const radius of [0.2, 2, 20]) {
+    for (const angle of [0, 0.37, 1.2]) {
+      const points = [[0, 0], [1.245 * radius * Math.cos(angle), 1.245 * radius * Math.sin(angle)]];
+      for (const path of [points, [...points].reverse()]) {
+        const geometry = buildFieldGeometry({ points: path, radius, scene: freeScene,
+          polygons: [], faces: null, spaceId: 's' });
+        const centers = discCenters(geometry, radius);
+        for (const endpoint of points) {
+          assert.ok(hasCenter(centers, endpoint), `r=${radius}, angle=${angle}: missing endpoint ${endpoint}`);
+        }
+      }
+    }
+  }
+});
+
+test('#788: acute outer turns retain their vertex fan independently of sampling cuts', () => {
+  const freeScene = { ...scene, occluders: [], fingerprint: 'acute-vertices' };
+  for (const sign of [-1, 1]) {
+    const points = [[0, 0], [2.1, 0], [0.2, sign * 0.55], [2.4, sign * 0.8]];
+    for (const path of [points, [...points].reverse()]) {
+      const geometry = buildFieldGeometry({ points: path, radius: 2, scene: freeScene,
+        polygons: [], faces: null, spaceId: 's' });
+      const centers = discCenters(geometry, 2);
+      for (const vertex of points) assert.ok(hasCenter(centers, vertex), `missing turn ${vertex}`);
+    }
+  }
+});
+
+test('#788: reversing and rotating a closed path preserves the complete visibility fan set', () => {
+  const freeScene = { ...scene, occluders: [], fingerprint: 'stable-samples' };
+  const vertices = [[0.13, 0.29], [8.37, 1.26], [8.9, 6.31], [0.32, 7.19]];
+  const fanSet = (points) => {
+    const geometry = buildFieldGeometry({ points, radius: 2, scene: freeScene,
+      polygons: [], faces: null, spaceId: 's' });
+    return [...new Set(geometry.pieces.flatMap(pieceFans))].sort();
+  };
+  const reference = fanSet([...vertices, vertices[0]]);
+  for (let offset = 0; offset < vertices.length; offset++) {
+    const rotated = [...vertices.slice(offset), ...vertices.slice(0, offset)];
+    for (const path of [rotated, [...rotated].reverse()]) {
+      assert.deepEqual(fanSet([...path, path[0]]), reference);
+    }
+  }
+});
+
+test('#788: radius-sized visibility runs keep the full wall-opening normal context', () => {
+  const freeScene = { ...scene, occluders: [], fingerprint: 'opening-context' };
+  const faces = {
+    faces: [{ a: [0, 0], b: [3, 0] }, { a: [5, 0], b: [8, 0] }],
+    inside: ([x, y]) => y < 0 && (x <= 3 || x >= 5),
+    epsilon: 0.001,
+  };
+  for (const points of [[[0, 0], [8, 0]], [[8, 0], [0, 0]]]) {
+    const geometry = buildFieldGeometry({ points, radius: 1, scene: freeScene,
+      polygons: [], faces, spaceId: 's' });
+    const centers = discCenters(geometry, 1);
+    const inOpening = centers.filter(([x]) => x > 3 && x < 5);
+    assert.ok(inOpening.length > 0);
+    assert.ok(inOpening.every(([, y]) => Math.abs(y - faces.epsilon) < 1e-6),
+      'a cache/run boundary cannot put emitters back on the unshifted wall axis');
   }
 });
 
@@ -222,10 +362,10 @@ test('AC17/r1 M5: a released owner retains nothing; the stats count visibility e
   const owner = {};
   const cache = ledFieldCache(owner);
   cache.forSpace('a');
-  cache.read('k1', () => ({ pieces: [{ d: 'M0 0', clip: ['M0 0 Z', 'M1 1 Z'] }, { d: 'M1 1', clip: [] }], box: { x: 0, y: 0, w: 1, h: 1 } }));
+  cache.read('k1', () => ({ d: 'M0 0 L1 1', pieces: [{ clip: 'M0 0 Z M1 1 Z', sourceCount: 2 }], box: { x: 0, y: 0, w: 1, h: 1 } }));
   cache.read('k2', () => null);
-  assert.deepEqual(ledFieldStats(owner), { visibility: 2, sources: 2, recomputes: 2 });
+  assert.deepEqual(ledFieldStats(owner), { visibility: 2, sources: 2, visibilityPaths: 1, pathChars: 22, recomputes: 2 });
   releaseLedField(owner);
-  assert.deepEqual(ledFieldStats(owner), { visibility: 0, sources: 0, recomputes: 0 });
+  assert.deepEqual(ledFieldStats(owner), { visibility: 0, sources: 0, visibilityPaths: 0, pathChars: 0, recomputes: 0 });
   assert.notEqual(ledFieldCache(owner), cache, 'a new mount starts a new cache');
 });

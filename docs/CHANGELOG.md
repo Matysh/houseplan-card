@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fixed remaining LED-strip rendering defects: clean joins on fractional and
+  slightly tilted contours, continuous light without cut-out wedges, and an
+  equally soft falloff at both ends and the outside of sharp turns
+  ([#788](https://github.com/Matysh/houseplan-card/issues/788)).
+
 ## v1.79.0-beta.6 — 2026-10-03
 
 - Fixed rectangular LED strips on wall faces: corners remain exact miters and

@@ -442,7 +442,8 @@ scenario and of a 100-step series, one wheel step per frame — retained heap
 after 20 A→B→C→A cycles 64 MiB — and on exact counters: zero field geometry
 recomputes over 100 unrelated HA ticks, 100 camera steps and a colour-only
 change; the three caches of the shown space (`ledStats` of the runtime chunk)
-— shapes ≤ 50, visibility ≤ 50, retained per-emitter fans ≤ 2500 — identical
+— shapes ≤ 50, visibility ≤ 50, compact visibility batches ≤ 2500 and
+retained SVG path text ≤ 4 Mi characters — identical
 after every cycle; after disconnect 0 retained entries and 0 live LED
 timers/frames/observers (tracked by creation stack in the page); one extra
 cold run holds the runtime response, removes the card meanwhile and requires
@@ -455,4 +456,11 @@ samples after one warm-up enforced on the merged set. Base predates the
 strips, so there is no relative comparison; the zero-LED View remains judged
 by the relative `large-house-interaction-v1` profile. Exact-SHA Linux output
 of the full performance workflow (`led-strips` matrix entry) is the gate
-evidence; a local report is diagnostic.
+evidence; a local report is diagnostic. Since #788 the actual emitter-fan
+count remains reported but is not capped by dropping required endpoints or
+corners: that old limit hid visible holes. Five fans are retained per compact
+batch; all batches render as one positive-winding clip path per strip. The
+4 Mi-character bound (at most 8 MiB UTF-16 text) explicitly measures cached
+paths, excluding the joined Lit/DOM clip string. Timing and the 64 MiB
+warm-cycle heap-growth limit are unchanged; that is not an absolute browser
+or GPU memory bound.

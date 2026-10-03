@@ -25,7 +25,9 @@
  * Counters (exact, every sample): geometry/visibility recomputes over 100
  * unrelated HA ticks, 100 pan/zoom steps and a colour-only change (0); the
  * three LED caches of the shown space — shapes ≤ 50, visibility ≤ 50,
- * retained per-emitter fans ≤ 2500 — identical after every cycle (growth 0);
+ * compact visibility paths ≤ 2500 and retained path text ≤ 4 Mi characters
+ * (≤ 8 MiB UTF-16) — identical after every cycle (growth 0). The true fan
+ * count remains diagnostic: #788 removed lossy endpoint/vertex thinning;
  * after disconnect 0 retained entries and 0 live LED timers/observers; a
  * late import after disconnect restores nothing (one extra cold run with the
  * runtime response delayed); LED chunk requests (none without strips, never
@@ -145,7 +147,7 @@ function pageHost() {
     window.__ledStats = async (card) => {
       const url = performance.getEntriesByType('resource').map((entry) => entry.name)
         .find((name) => /led-strip-runtime-[^/]+\\.js/.test(name));
-      if (!url) return { shapes: 0, visibility: 0, sources: 0, recomputes: 0, loaded: false };
+      if (!url) return { shapes: 0, visibility: 0, sources: 0, visibilityPaths: 0, pathChars: 0, recomputes: 0, loaded: false };
       const runtime = await import(url);
       return { ...runtime.ledStats(card), loaded: true };
     };
@@ -279,8 +281,8 @@ async function sample() {
           if (strips) await until(() => ledStable());
         }
         await frame();
-        const { shapes, visibility, sources } = await stats();
-        return { shapes, visibility, sources };
+        const { shapes, visibility, sources, visibilityPaths, pathChars } = await stats();
+        return { shapes, visibility, sources, visibilityPaths, pathChars };
       };
       await cycle();
       await gc();
@@ -295,7 +297,7 @@ async function sample() {
       await sleep(600);
       const afterDisconnect = await stats();
       const liveAfterDisconnect = window.__ledLiveCounts();
-      const key = (entry) => `${entry.shapes}/${entry.visibility}/${entry.sources}`;
+      const key = (entry) => `${entry.shapes}/${entry.visibility}/${entry.sources}/${entry.visibilityPaths}/${entry.pathChars}`;
       return {
         firstStableRenderMs, warmSpaceReadyMs, stateUpdateMs, panZoomMs, panZoomLongTaskMaxMs, cameraSeriesLongTaskMaxMs,
         retainedHeapBytes: heapBefore == null || heapAfter == null ? null : Math.max(0, heapAfter - heapBefore),
@@ -306,10 +308,13 @@ async function sample() {
           shapes: Math.max(...cycleStats.map((entry) => entry.shapes)),
           visibility: Math.max(...cycleStats.map((entry) => entry.visibility)),
           sources: Math.max(...cycleStats.map((entry) => entry.sources)),
+          visibilityPaths: Math.max(...cycleStats.map((entry) => entry.visibilityPaths)),
+          pathChars: Math.max(...cycleStats.map((entry) => entry.pathChars)),
           cacheGrowthOverCycles: new Set(cycleStats.map(key)).size - 1,
         } : null,
         disconnect: {
-          retained: afterDisconnect.shapes + afterDisconnect.visibility + afterDisconnect.sources,
+          retained: afterDisconnect.shapes + afterDisconnect.visibility + afterDisconnect.sources
+            + afterDisconnect.visibilityPaths + afterDisconnect.pathChars,
           liveBefore: liveBeforeDisconnect,
           live: liveAfterDisconnect.timers + liveAfterDisconnect.frames + liveAfterDisconnect.observers,
         },
@@ -359,7 +364,7 @@ async function lateImport() {
     // The chunk the card asked for, by its URL: the same module instance.
     const late = await page.evaluate(async (url) => {
       const runtime = url ? await import(url) : null;
-      return { stats: runtime ? { ...runtime.ledStats(window.__lateCard), loaded: true } : { shapes: 0, visibility: 0, sources: 0, loaded: false },
+      return { stats: runtime ? { ...runtime.ledStats(window.__lateCard), loaded: true } : { shapes: 0, visibility: 0, sources: 0, visibilityPaths: 0, pathChars: 0, loaded: false },
         live: window.__ledLiveCounts() };
     }, runtimeUrl);
     return { ...result, ...late, held };
@@ -440,14 +445,16 @@ if (STRIPS) {
     for (const key of ['recomputesOnHaTicks', 'recomputesOnCamera', 'recomputesOnColour', 'cacheGrowthOverCycles']) {
       if (counters[key] !== 0) failures.push(`${key} = ${counters[key]}, expected 0`);
     }
-    for (const key of ['shapes', 'visibility', 'sources']) {
-      if (counters[key] > caches[key]) failures.push(`${key} cache ${counters[key]} > ${caches[key]}`);
+    for (const key of ['shapes', 'visibility', 'visibilityPaths', 'pathChars']) {
+      if (!Number.isFinite(counters[key])) failures.push(`${key} cache metric missing`);
+      else if (counters[key] > caches[key]) failures.push(`${key} cache ${counters[key]} > ${caches[key]}`);
     }
   }
   if (late) {
     if (!late.held || !late.stats.loaded) failures.push('late import: the runtime response was never held or never landed');
     if (late.stripesAfterLoad !== late.stripesBeforeLoad) failures.push('late import rendered the gone card');
-    const retained = late.stats.shapes + late.stats.visibility + late.stats.sources;
+    const retained = late.stats.shapes + late.stats.visibility + late.stats.sources
+      + late.stats.visibilityPaths + late.stats.pathChars;
     if (retained) failures.push(`late import restored ${retained} cache entries`);
     if (late.live.timers + late.live.frames + late.live.observers) failures.push('late import left LED timers/observers');
   } else if (!skipLateImport) failures.push('late import not measured');

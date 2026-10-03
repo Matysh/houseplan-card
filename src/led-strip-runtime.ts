@@ -448,9 +448,11 @@ export function releaseLed(owner: object): void {
 }
 
 /** The performance witness: shapes (frame), visibility entries and retained fans of this card. */
-export function ledStats(owner: object): { shapes: number; visibility: number; sources: number; recomputes: number } {
+export function ledStats(owner: object): {
+  shapes: number; visibility: number; sources: number; visibilityPaths: number; pathChars: number; recomputes: number;
+} {
   return { shapes: frames.get(owner)?.frame.views.length ?? 0,
-    ...(field?.ledFieldStats(owner) ?? { visibility: 0, sources: 0, recomputes: 0 }) };
+    ...(field?.ledFieldStats(owner) ?? { visibility: 0, sources: 0, visibilityPaths: 0, pathChars: 0, recomputes: 0 }) };
 }
 
 /** The LED frame of a space for this card, rebuilt only when an input changed. */

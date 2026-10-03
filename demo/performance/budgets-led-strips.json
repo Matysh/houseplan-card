@@ -1,11 +1,12 @@
 {
   "profile": "led-strips-v1",
   "issue": 780,
-  "note": "ТЗ #780 §13.2: absolute limits applied to median and p95; 10x5 rests on the interaction profile's absolute ceilings, 50x50 are the acceptance bounds set in the ТЗ. The no-strip control is judged by the existing interaction profile against base. Caches of the shown space (ТЗ §13.2): 50 shapes, 50 visibility entries, 2500 retained per-emitter fans; 0 after disconnect.",
+  "note": "#780 timing/heap limits unchanged. #788: preserve every end/vertex; compact positive-winding fans into paths without discarding geometry. Bound actual retained representation: 50 shapes/entries, 2500 compact clip paths, 4 Mi SVG characters (at most 8 MiB UTF-16, one eighth of the unchanged 64 MiB heap budget). Actual fan count is still reported, never relabelled as path count. No growth/recomputes, zero after disconnect.",
   "caches": {
     "shapes": 50,
     "visibility": 50,
-    "sources": 2500
+    "visibilityPaths": 2500,
+    "pathChars": 4194304
   },
   "sizes": {
     "10x5": {

@@ -308,6 +308,7 @@ test('#780 led-strips-v1: the derived fixture converts devices without adding ic
     panZoomMs: 500, panZoomLongTaskMaxMs: 150, retainedHeapBytes: 64 * 1024 * 1024, cameraSeriesLongTaskMaxMs: 150 });
   assert.deepEqual(budgets.sizes['50x50'], { firstStableRenderMs: 5000, warmSpaceReadyMs: 1500, stateUpdateMs: 1500,
     panZoomMs: 500, panZoomLongTaskMaxMs: 150, retainedHeapBytes: 64 * 1024 * 1024, cameraSeriesLongTaskMaxMs: 150 });
-  // ТЗ §13.2: the three caches of the shown space, judged separately (r1 M5).
-  assert.deepEqual(budgets.caches, { shapes: 50, visibility: 50, sources: 2500 });
+  // #788: bounded retained representation, never a lossy fan cap. The timing
+  // and warm-cycle heap-growth limits above remain the original ТЗ table.
+  assert.deepEqual(budgets.caches, { shapes: 50, visibility: 50, visibilityPaths: 2500, pathChars: 4 * 1024 * 1024 });
 });
