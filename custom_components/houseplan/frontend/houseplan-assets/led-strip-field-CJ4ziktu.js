@@ -1,0 +1,30 @@
+globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="169bb796e6918c65604cad46c38192debd54defe56738b7113735d6119689efa";import{eT as e,az as t,eO as s,A as i,eU as n,e as a,i as r,E as l}from"./houseplan-card-DE8tFhlR.js";import{i as o,m as c,k as p}from"./led-strip-geometry-b-NVYCNs.js";const h=a(class extends r{constructor(e){super(e),this.deps=null}render(e,t){return t()}update(e,[t,s]){return this.deps&&this.deps.length===t.length&&t.every((e,t)=>e===this.deps[t])?l:(this.deps=t,s())}}),d="169bb796e6918c65604cad46c38192debd54defe56738b7113735d6119689efa",u=12,f=e=>e.map(e=>[e[0],e[1]]);class ${constructor(e=50){this.limit=e,this.entries=new Map,this.space="",this.recomputes=0,this.ids=new Map}get size(){return this.entries.size}id(e){let t=this.ids.get(e);return null==t&&(t=this.ids.size+1,this.ids.set(e,t)),t}forSpace(e){e!==this.space&&(this.entries.clear(),this.ids.clear(),this.space=e)}read(e,t){if(this.entries.has(e)){const t=this.entries.get(e)??null;return this.entries.delete(e),this.entries.set(e,t),t}this.recomputes+=1;const s=t();for(this.entries.set(e,s);this.entries.size>this.limit;){const e=this.entries.keys().next().value;if(void 0===e)break;this.entries.delete(e)}return s}clear(){this.entries.clear(),this.ids.clear(),this.space=""}get sources(){let e=0;for(const t of this.entries.values())for(const s of t?.pieces||[])e+=s.clip?.length??0;return e}}const g=e=>{const t=Math.round(1e4*e)/1e4;return Object.is(t,-0)?"0":String(t)},m=e=>`${e.map((e,t)=>`${t?"L":"M"}${g(e[0])} ${g(e[1])}`).join(" ")} Z`;function y(e,t,s){const i=1.01*t;return s.occluders.some(t=>t?.length>=4&&e.some(e=>((e,t)=>{const s=t[2]-t[0],i=t[3]-t[1],n=s*s+i*i,a=n?Math.max(0,Math.min(1,((e[0]-t[0])*s+(e[1]-t[1])*i)/n)):0;return Math.hypot(e[0]-t[0]-a*s,e[1]-t[1]-a*i)})(e,t)<i))?e.map(e=>n([e[0],e[1]],t,s.occluders,12)).filter(e=>e.length>=3).map(m):null}const M=new WeakMap;function x(e){const t=o(f(e.points));if(t.length<2||!(e.radius>0))return null;const s=e.radius,i=[];let n=[t[0]],a=s;for(let e=1;e<t.length;e++){let r=t[e-1];const l=t[e];let o=Math.hypot(l[0]-r[0],l[1]-r[1]);for(;o>a+1e-12;){const e=a/o,t=[r[0]+(l[0]-r[0])*e,r[1]+(l[1]-r[1])*e];n.push(t),i.push(n),n=[t],r=t,o-=a,a=s}n.push(l),a-=o}n.length>1&&i.push(n);const r=[];let l=1/0,p=1/0,h=-1/0,d=-1/0;for(const t of i){const i=[];for(const n of c(t,e.faces,s/4)){const e=i[i.length-1];(!e||Math.hypot(n[0]-e[0],n[1]-e[1])>=s/4)&&i.push(n)}if(!i.length)continue;let n;try{n=y(i,s,e.scene)}catch{continue}if(!n||n.length){r.push({d:t.map((e,t)=>`${t?"L":"M"}${e[0]} ${e[1]}`).join(" "),clip:n});for(const e of t)l=Math.min(l,e[0]),p=Math.min(p,e[1]),h=Math.max(h,e[0]),d=Math.max(d,e[1])}}return r.length?{pieces:r,box:{x:l-s,y:p-s,w:h-l+2*s,h:d-p+2*s}}:null}function w(t){const s=100*Math.max(0,Math.min(1,t));for(let t=1;t<e.length;t++){const[i,n]=e[t-1],[a,r]=e[t];if(s<=a)return n+(r-n)*(s-i)/Math.max(1e-9,a-i)}return 0}const b=new WeakMap;function k(e){b.get(e)?.clear(),b.delete(e)}function v(e){const t=b.get(e);return{visibility:t?.size??0,sources:t?.sources??0,recomputes:t?.recomputes??0}}function I(e){let t=b.get(e);return t||(t=new $,b.set(e,t)),t}function j(e){if(!e.scene)return t``;const n=I(e.owner);n.forSpace(e.spaceId);const a=e.scene,r=e.views.flatMap(t=>{if(!t.glow||"unavailable"===t.state)return[];const s=`${t.strip.id}|${i=t.strip.points,i.map(e=>`${e[0].toFixed(5)},${e[1].toFixed(5)}`).join(";")}|${t.radius.toFixed(5)}|${a.fingerprint}`;var i;const r=n.read(s,()=>x({points:t.strip.points,radius:t.radius,scene:a,polygons:e.polygons,faces:e.faces,spaceId:e.spaceId}));return r?[{view:t,geometry:r}]:[]});if(!r.length)return t``;const l=Array.from({length:12},(e,t)=>{const s=1-t/12;return{half:s,value:w((s+(1-(t+1)/12))/2)}});return t`<g class="led-fields" pointer-events="none" aria-hidden="true"
+      data-led-cache="${n.size}" data-led-recomputes="${n.recomputes}">
+    <defs><clipPath id="hp-led-floor">${function(e){let t=M.get(e);return t||(t=e.floor.filter(e=>e.length>=3).map(m),M.set(e,t)),t}(a).map(e=>t`<path d="${e}"></path>`)}</clipPath></defs>
+    <g clip-path="url(#hp-led-floor)">
+    ${s(r,({view:e})=>e.strip.id,({view:e,geometry:s})=>{const a=`${n.id(e.strip.id)}`,r=e.radius,o="on"===e.state&&!!e.appearance,c=s.box,d=p(f(e.strip.points)),u=s.pieces.flatMap((e,t)=>e.clip?[{...e,clip:e.clip,clipId:t}]:[]),$=s.pieces.filter(e=>!e.clip).map(e=>e.d).join(" "),g=[...u,...$?[{d:$,clip:null,clipId:-1}]:[]];return h([s,o,e.appearance?.c,e.appearance?.alpha,r,a],()=>t`<g class="glow-spot led-field ${o?"":"is-leaving"}" data-led-field="${e.strip.id}"
+          data-pieces="${s.pieces.length}" data-closed="${d?"true":"false"}">
+        <defs>
+          ${u.map(e=>t`<clipPath id="hp-led-clip-${a}-${e.clipId}">
+            ${""}
+            <path d="${e.clip.join(" ")}"></path>
+          </clipPath>`)}
+          <mask id="hp-led-mask-${a}" maskUnits="userSpaceOnUse"
+            x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}"
+            color-interpolation="sRGB" style="mask-type:luminance">
+            <rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" fill="black"></rect>
+            <g style="isolation:isolate">
+              ${g.map(e=>t`<g style="mix-blend-mode:lighten"
+                  clip-path=${e.clip?`url(#hp-led-clip-${a}-${e.clipId})`:i}>
+                ${l.map(s=>t`<path d="${e.d}" fill="none" stroke="${(e=>{const t=Math.round(255*Math.max(0,Math.min(1,e)));return`rgb(${t},${t},${t})`})(s.value)}"
+                  stroke-width="${2*s.half*r}" stroke-linecap="round" stroke-linejoin="round"></path>`)}
+              </g>`)}
+            </g>
+          </mask>
+        </defs>
+        <rect class="glow-pool led-pool" x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}"
+          fill="${e.appearance?.c??"transparent"}" fill-opacity="${(e.appearance?.alpha??0).toFixed(4)}"
+          mask="url(#hp-led-mask-${a})"></rect>
+      </g>`)})}
+    </g>
+  </g>`}export{u as LED_FIELD_BANDS,d as LED_FIELD_FINGERPRINT,$ as LedFieldCache,x as buildFieldGeometry,w as falloffAt,I as ledFieldCache,v as ledFieldStats,k as releaseLedField,j as renderLedField};

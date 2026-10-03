@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.79.0-beta.3 — 2026-10-03
+
 - LED strips: in the Devices editor, the new «LED strip» tool next to «Add»
   draws a strip on the plan point by point — it snaps to the grid and to wall
   faces and stops at walls, windows and columns, passing doors and passages.
