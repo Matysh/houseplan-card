@@ -41,15 +41,23 @@ test('#375 AC1: the glow scene passes input.devices without a spread', () => {
 });
 
 // #375 AC2: the static path attaches the same sourceFingerprint tag the full
-// card attaches, from the same triple buildLightBarrierRevision fingerprints —
+// card attaches, through the same lightGeometryFingerprint helper —
 // proven the same way the full card's recut wiring is proven
 // (performance-contract.test.mjs): by pinning the source.
 
 test('#375 AC2: static wall geometry carries the recut fingerprint tag', () => {
   const render = readFileSync(new URL('../src/space-render.ts', import.meta.url), 'utf8');
   assert.match(render,
-    /Object\.defineProperty\(built, 'sourceFingerprint', \{\s*\n\s*value: contentFingerprint\(\[spCfg, cellCm, GRID_PITCH\]\),/,
-    'the tag must be the exact revision triple (rawSpaceConfig=spCfg, cellCm, gridPitch=GRID_PITCH)');
+    /Object\.defineProperty\(built, 'sourceFingerprint', \{\s*\n\s*value: lightGeometryFingerprint\(spCfg, cellCm, GRID_PITCH\),/,
+    'the tag must use the same geometry projection and scale as the light revision');
+  const fullCard = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  assert.match(fullCard,
+    /Object\.defineProperty\(value, 'sourceFingerprint', \{\s*\n\s*value: lightGeometryFingerprint\(this\._curSpaceCfg, this\._cellCm, this\._gridPitch\),/,
+    'the full-card tag must share that projection and scale as well');
+  const editor = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
+  assert.match(editor,
+    /Object\.defineProperty\(projected, 'sourceFingerprint', \{\s*\n\s*value: lightGeometryFingerprint\(preview\.sp, this\.host\._cellCm, this\.host\._gridPitch\),/,
+    'accepted resize artifacts must retain the same fast-path tag');
   assert.ok(
     render.indexOf("Object.defineProperty(built, 'sourceFingerprint'")
       < render.indexOf('const contentFrame ='),

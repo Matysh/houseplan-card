@@ -2,14 +2,106 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
-  createGlowRuntimeState, disposeGlowRuntime, readGlowClip,
+  buildLightBarrierScene, createGlowRuntimeState, disposeGlowRuntime,
+  lightGeometryFingerprint, readGlowClip,
   resolveGlowCandidates, resolveLightBarrierRevision,
   transitionGlowSource, writeGlowClip,
 } from '../test-build/glow-scene.js';
+import { contentFingerprint } from '../test-build/visual-continuity.js';
+import { wallBodiesGeometry, wallKey } from '../test-build/wall-thickness.js';
 
 const square = (id, x0, x1) => ({
   id,
   poly: [[x0, 0], [x1, 0], [x1, 100], [x0, 100]],
+});
+
+test('light geometry excludes only LED sources and never visits or mutates their data', () => {
+  const geometry = Object.freeze({
+    id: 's', rooms: Object.freeze([square('room', 0, 100)]),
+    walls: [], wall_segments: [], openings: [], open_spans: [],
+    partitions: [], wall_columns: [], wall_style: 'zero',
+    future_geometry_key: { x: 1 },
+  });
+  const expected = contentFingerprint([geometry, 5, 20]);
+  assert.equal(lightGeometryFingerprint(geometry, 5, 20), expected);
+  const raw = Object.freeze(Object.defineProperty({ ...geometry }, 'led_strips', {
+    enumerable: true,
+    get() { throw new Error('LED source data must not enter a masonry hash'); },
+  }));
+  assert.equal(lightGeometryFingerprint(raw, 5, 20), expected);
+  assert.equal(raw.rooms, geometry.rooms, 'the caller-owned geometry is not cloned or mutated');
+  for (const led_strips of [[], [{ id: 'a', points: [[0, 0], [100, 1]] }],
+    [{ id: 'b', active: false, entity: 'light.changed', points: [[0, 1]] }]]) {
+    assert.equal(lightGeometryFingerprint({ ...geometry, led_strips }, 5, 20), expected);
+  }
+  for (const key of Object.keys(geometry)) {
+    assert.notEqual(lightGeometryFingerprint({ ...geometry, [key]: ['changed'] }, 5, 20), expected,
+      `all non-LED raw keys still invalidate, including ${key}`);
+  }
+  assert.notEqual(lightGeometryFingerprint(geometry, 10, 20), expected);
+  assert.notEqual(lightGeometryFingerprint(geometry, 5, 40), expected);
+  for (const invalid of [null, undefined, false, 0, 's', [], [{ led_strips: [1] }]]) {
+    assert.equal(lightGeometryFingerprint(invalid, 5, 20), contentFingerprint([invalid, 5, 20]),
+      'non-object and array inputs keep their prior fingerprint semantics');
+  }
+  const mutable = { rooms: [square('room', 0, 100)], led_strips: [] };
+  const before = lightGeometryFingerprint(mutable, 5, 20);
+  mutable.rooms[0].poly[0][0] = 1;
+  assert.notEqual(lightGeometryFingerprint(mutable, 5, 20), before,
+    'in-place architectural edits must not reuse stale masonry');
+});
+
+test('LED-only edits retain the aligned shared-masonry recut fast path', () => {
+  const space = {
+    id: 's', rooms: [square('left', 0, 100), square('right', 100, 200)],
+    partitions: [], room_drafts: [], wall_columns: [],
+  };
+  const unique = new Map();
+  for (const room of space.rooms) for (let index = 0; index < room.poly.length; index++) {
+    const a = room.poly[index], b = room.poly[(index + 1) % room.poly.length];
+    const key = wallKey(a, b, 1);
+    if (!unique.has(key)) unique.set(key, { key, a, b, cm: 20 });
+  }
+  const walls = [...unique.values()];
+  const raw = { ...space, walls, led_strips: [{ id: 'led', points: [[0, 0], [100, 0]] }] };
+  const sharedWallGeometry = wallBodiesGeometry(space.rooms, walls, [], [], 1, 5, 5, 1, []);
+  assert.equal(sharedWallGeometry.status, 'ok');
+  Object.defineProperty(sharedWallGeometry, 'sourceFingerprint', {
+    value: lightGeometryFingerprint(raw, 5, 5), enumerable: false,
+  });
+  const revisionFor = (rawSpaceConfig) => resolveLightBarrierRevision({
+    rawSpaceConfig, space, openings: [], cellCm: 5, gridPitch: 5, openingAmount: () => 0,
+  });
+  const revision = revisionFor(raw);
+  raw.led_strips[0].points[1][1] = 90;
+  const edited = revisionFor(raw);
+  assert.equal(edited.geometryFingerprint, sharedWallGeometry.sourceFingerprint);
+  assert.equal(edited.fingerprint, revision.fingerprint);
+
+  let wallIterations = 0;
+  Object.defineProperty(walls, Symbol.iterator, { value() {
+    wallIterations++;
+    return Array.prototype[Symbol.iterator].call(this);
+  } });
+  const input = {
+    space, revision: edited, walls,
+    zeroWalls: { contour: [], barriers: [], transmissive: [] },
+    wallKeyPitch: 1, cellCm: 5, gridPitch: 5, coordScale: 1,
+    physicalBodies: () => [],
+  };
+  const reused = buildLightBarrierScene({ ...input, sharedWallGeometry });
+  assert.equal(wallIterations, 1, 'matching source tag avoids the second wall rebuild traversal');
+  assert.ok(reused.masonryGeometry.length);
+  wallIterations = 0;
+  const rebuilt = buildLightBarrierScene(input);
+  assert.equal(wallIterations, 2, 'a scene without shared geometry must rebuild masonry');
+  assert.deepEqual(reused, rebuilt, 'recut and uncached rebuild retain identical light geometry');
+  const changedRevision = revisionFor({ ...raw, wall_style: 'changed' });
+  wallIterations = 0;
+  buildLightBarrierScene({
+    ...input, revision: changedRevision, sharedWallGeometry,
+  });
+  assert.equal(wallIterations, 2, 'architectural changes reject the old shared-masonry tag');
 });
 
 test('shared light revision admits only floor-to-floor architectural passages', () => {

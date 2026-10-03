@@ -211,9 +211,38 @@ function stripeThickness(d: number): number {
   return LED_THICKNESS_D * d;
 }
 
-function stripePath(view: LedStripView, input: LedStripeInput) {
-  const t = stripeThickness(input.d);
-  return { t, path: visibleStripPath(pts(view.strip.points), input.faces, t / 2) };
+interface StripePath {
+  t: number;
+  path: ReturnType<typeof visibleStripPath>;
+  d: string;
+}
+
+// The derived strip objects belong to the current frame, never a global id.
+// Weak keys cannot retain old cards/spaces; the frame lifecycle also evicts
+// its entries explicitly. Face contexts are immutable scene derivations.
+const stripePaths = new WeakMap<LedStripModel, {
+  faces: FaceContext | null;
+  epsilon: number | undefined;
+  points: Pt[];
+  value: StripePath;
+}>();
+
+/** Camera changes affect hit width, not the physical stripe or its SVG path. */
+export function ledStripePath(strip: LedStripModel, faces: FaceContext | null, diameter: number): StripePath {
+  const t = stripeThickness(diameter);
+  const hit = stripePaths.get(strip);
+  if (hit && hit.faces === faces && hit.epsilon === faces?.epsilon && hit.value.t === t
+    && hit.points.length === strip.points.length
+    && hit.points.every((point, i) => point[0] === strip.points[i][0] && point[1] === strip.points[i][1])) {
+    return hit.value;
+  }
+  // An exact snapshot also catches an in-place point edit; identity alone
+  // would leave the tube and hit path stale until the next frame replacement.
+  const points = pts(strip.points);
+  const path = visibleStripPath(points, faces, t / 2);
+  const value = { t, path, d: pathD(path) };
+  stripePaths.set(strip, { faces, epsilon: faces?.epsilon, points, value });
+  return value;
 }
 
 /**
@@ -232,7 +261,7 @@ function nearestOwner(e: Event & { clientX: number; clientY: number }, fallback:
     inverse.b * e.clientX + inverse.d * e.clientY + inverse.f,
   ];
   const strips = input.views.map((view) => {
-    const { t, path } = stripePath(view, input);
+    const { t, path } = ledStripePath(view.strip, input.faces, input.d);
     return {
       id: view.strip.id,
       points: path.points.map((p) => [p[0] * input.perUnit, p[1] * input.perUnit] as Pt),
@@ -261,8 +290,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
       .led-strip .led-hit { fill: none; stroke: transparent; cursor: pointer; outline: none; }
     </style>
     ${repeat(ordered, (view) => view.strip.id, (view) => {
-      const { t, path } = stripePath(view, input);
-      const d = pathD(path);
+      const { t, path, d } = ledStripePath(view.strip, input.faces, input.d);
       const unavailable = view.state === 'unavailable';
       const core = unavailable ? UNAVAILABLE
         : view.state === 'on' && !view.glow && view.appearance ? view.appearance.c : CORE_IDLE;
@@ -443,6 +471,7 @@ const frames = new WeakMap<object, { key: unknown[]; frame: LedFrame }>();
 
 /** Disconnect (ТЗ §13.2, r1 M5): the frame and the field caches of this card are released. */
 export function releaseLed(owner: object): void {
+  for (const view of frames.get(owner)?.frame.views ?? []) stripePaths.delete(view.strip);
   frames.delete(owner);
   field?.releaseLedField(owner);
 }
@@ -467,6 +496,7 @@ export function ledFrameFor(host: LedCardHost, space: SpaceModel, spaceGlow: boo
   const key = [space, host._renderDevices, host._renderPlanHass, spaceGlow, scene, host._mode, host._showAll];
   const hit = frames.get(host);
   if (hit && hit.key.every((value, i) => value === key[i])) return hit.frame;
+  for (const view of hit?.frame.views ?? []) stripePaths.delete(view.strip);
   const size = host._config?.icon_size ?? 2.5;
   const frame = ledFrame({
     space,

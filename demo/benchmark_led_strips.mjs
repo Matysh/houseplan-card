@@ -43,6 +43,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { launch } from './serve.mjs';
 import { makeLedStripsFixture } from './performance/led-strips-fixture.mjs';
+import { ledChunkRequestName } from './performance/led-chunk-request.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const warmupOnly = process.argv.includes('--warmup-only');
@@ -165,8 +166,8 @@ async function sample() {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const requests = [];
   page.on('request', (request) => {
-    const name = request.url().replace(/.*\//, '').replace(/\?.*$/, '');
-    if (/^led-strip-(runtime|field|editor)-/.test(name)) requests.push(name.replace(/-[^-]+\.js$/, ''));
+    const name = ledChunkRequestName(request.url());
+    if (name) requests.push(name);
   });
   try {
     await page.evaluate(installLedLifecycleTracker);

@@ -137,6 +137,27 @@ const pointsKey = (points: readonly number[][]): string =>
 const LED_ARC_STEPS = 12;
 
 /**
+ * Conservative broad phase, once per strip rather than once per emitter.
+ * Every emitter disc is inside this expanded box, so a segment wholly beyond
+ * any one side cannot reach any fan. Keep crossing/touching segments in their
+ * original order and coordinates; the exact circle clip below is unchanged.
+ * Bounds use the actual emitters, including their wall-normal displacement.
+ */
+const fieldOccluders = (
+  emitters: readonly Pt[], radius: number, segments: LightBarrierScene['occluders'],
+): LightBarrierScene['occluders'] => {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of emitters) {
+    minX = Math.min(minX, p[0]); minY = Math.min(minY, p[1]);
+    maxX = Math.max(maxX, p[0]); maxY = Math.max(maxY, p[1]);
+  }
+  minX -= radius; minY -= radius; maxX += radius; maxY += radius;
+  return segments.filter((s) => s && s.length >= 4
+    && !((s[0] < minX && s[2] < minX) || (s[0] > maxX && s[2] > maxX)
+      || (s[1] < minY && s[3] < minY) || (s[1] > maxY && s[3] > maxY)));
+};
+
+/**
  * A long wall can cross the radius without having either endpoint in it.
  * Make its exact circle intersections sweep events. Without them the last
  * wall hit and first free-radius hit are connected by a chord that removes
@@ -209,9 +230,9 @@ const visibilityPath = (center: Pt, radius: number, ring: readonly number[][]): 
  * clip active (#785). The floor itself is one clip of the whole field layer
  * (`fieldFloor`).
  */
-function fans(emitters: readonly Pt[], radius: number, scene: LightBarrierScene): string[] {
+function fans(emitters: readonly Pt[], radius: number, occluders: LightBarrierScene['occluders']): string[] {
   return emitters.flatMap((p) => {
-    const near = circleSegments(p, radius, scene.occluders);
+    const near = circleSegments(p, radius, occluders);
     if (!near.length) return [discPath(p, radius)];
     const fan = visibilityPolygon([p[0], p[1]], radius, near, LED_ARC_STEPS);
     const path = visibilityPath(p, radius, fan);
@@ -254,6 +275,7 @@ export function buildFieldGeometry(input: {
   const visiblePath = closed ? path.slice(0, -1) : path;
   const d = `${visiblePath.map((p, k) => `${k ? 'L' : 'M'}${coord(p[0])} ${coord(p[1])}`).join(' ')}${closed ? ' Z' : ''}`;
   const emitters = emitterSamples(path, input.faces, r / 4);
+  const occluders = fieldOccluders(emitters, r, input.scene.occluders);
   const pieces: FieldPiece[] = [];
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   // Keep at most five actual emitters in each retained visibility path. The
@@ -261,7 +283,7 @@ export function buildFieldGeometry(input: {
   for (let i = 0; i < emitters.length; i += 5) {
     const piece = emitters.slice(i, i + 5);
     let clip: string[];
-    try { clip = fans(piece, r, input.scene); } catch { continue; } // fail-dark for this batch
+    try { clip = fans(piece, r, occluders); } catch { continue; } // fail-dark for this batch
     if (!clip.length) continue;
     pieces.push({ clip: clip.join(' '), sourceCount: clip.length });
     for (const p of piece) {

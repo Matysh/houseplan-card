@@ -214,6 +214,19 @@ export function resolveGlowCandidates(input: {
   return result;
 }
 
+/** LED emitters do not change masonry; keep both shared-geometry tags aligned. */
+export function lightGeometryFingerprint(
+  rawSpaceConfig: unknown, cellCm: number, gridPitch: number,
+): string {
+  let geometry = rawSpaceConfig;
+  if (geometry && typeof geometry === 'object' && !Array.isArray(geometry)) {
+    const raw = geometry as Record<string, unknown>;
+    geometry = Object.fromEntries(Object.keys(raw)
+      .filter((key) => key !== 'led_strips').map((key) => [key, raw[key]]));
+  }
+  return contentFingerprint([geometry, cellCm, gridPitch]);
+}
+
 /**
  * Resolve the part of a barrier revision that changes with an architectural
  * opening. The fingerprint is intentionally available before structural work.
@@ -226,9 +239,9 @@ export function resolveLightBarrierRevision(input: {
   gridPitch: number;
   openingAmount: (opening: GeometryOpeningProjection) => number;
 }): LightBarrierRevision {
-  const geometryFingerprint = contentFingerprint([
+  const geometryFingerprint = lightGeometryFingerprint(
     input.rawSpaceConfig, input.cellCm, input.gridPitch,
-  ]);
+  );
   const polygons = input.space.rooms.flatMap((room) => {
     const poly = roomPoly(room);
     return poly ? [{ room, poly }] : [];

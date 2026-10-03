@@ -6,7 +6,8 @@ import { ledAnchor, ledStripsByMarker } from '../test-build/led-strip-gate.js';
 import { faceContext, ledFrame, ledStripView, stripRoom } from '../test-build/led-strip-runtime.js';
 import { LED_FIELD_BANDS, LedFieldCache, buildFieldGeometry, falloffAt } from '../test-build/led-strip-field.js';
 import { GLOW_FALLOFF } from '../test-build/glow-scene.js';
-import { stripAnchor } from '../test-build/led-strip-geometry.js';
+import { compactPoints, emitterSamples, stripAnchor } from '../test-build/led-strip-geometry.js';
+import { visibilityPolygon } from '../test-build/light-visibility.js';
 
 const space = (strips) => ({ id: 's', rooms: [], led_strips: strips });
 
@@ -240,6 +241,114 @@ test('#788: a wall crossing the radius contributes exact circle-intersection eve
   for (const y of [450 - Math.sqrt(2400), 450 + Math.sqrt(2400)]) {
     assert.ok(intersections.some((at) => Math.abs(at - y) < 1e-4), `missing wall/radius event at y=${y}`);
   }
+});
+
+// Frozen pre-broad-phase reference: visit EVERY scene segment for EVERY
+// emitter, then use the same public visibility sweep. Exact emitted strings
+// (not only fan counts/bounds) must survive the candidate-culling speedup.
+const unfilteredFans = (emitters, radius, segments) => {
+  const coord = (value) => String(Math.round(value * 10_000) / 10_000 || 0);
+  return emitters.flatMap((p) => {
+    const clipped = [];
+    for (const s of segments) {
+      if (!s || s.length < 4) continue;
+      const dx = s[2] - s[0], dy = s[3] - s[1], len2 = dx * dx + dy * dy;
+      if (!(len2 > 0)) continue;
+      const ox = s[0] - p[0], oy = s[1] - p[1];
+      const cross = ox * dy - oy * dx, distance2 = cross * cross / len2;
+      if (distance2 >= radius * radius) continue;
+      const center = -(ox * dx + oy * dy) / len2;
+      const span = Math.sqrt((radius * radius - distance2) / len2);
+      const lo = Math.max(0, center - span), hi = Math.min(1, center + span);
+      if (hi <= lo) continue;
+      clipped.push([s[0] + lo * dx, s[1] + lo * dy, s[0] + hi * dx, s[1] + hi * dy]);
+    }
+    const r = coord(radius);
+    if (!clipped.length) {
+      const left = coord(p[0] - radius), right = coord(p[0] + radius), y = coord(p[1]);
+      return [`M${left} ${y} A${r} ${r} 0 1 1 ${right} ${y} A${r} ${r} 0 1 1 ${left} ${y} Z`];
+    }
+    const ring = visibilityPolygon(p, radius, clipped, 12);
+    if (ring.length < 3) return [];
+    const onRadius = (point) => Math.abs(Math.hypot(point[0] - p[0], point[1] - p[1]) - radius)
+      <= Math.max(1e-9, radius * 1e-7);
+    let path = `M${coord(ring[0][0])} ${coord(ring[0][1])}`;
+    for (let i = 1; i <= ring.length; i++) {
+      const previous = ring[i - 1], point = ring[i % ring.length];
+      path += onRadius(previous) && onRadius(point)
+        ? ` A${r} ${r} 0 0 1 ${coord(point[0])} ${coord(point[1])}`
+        : ` L${coord(point[0])} ${coord(point[1])}`;
+    }
+    return [`${path} Z`];
+  });
+};
+
+test('#788: strip-wide broad phase preserves every unfiltered fan byte for byte', () => {
+  const faces = {
+    faces: [{ a: [0, 0], b: [8, 0] }], inside: ([, y]) => y < 0, epsilon: 0.5,
+  };
+  const cases = [
+    { points: [[350, 350], [585, 450]], radius: 25,
+      // Both endpoints are outside the field box, but this wall crosses it.
+      segments: [[595, 100, 595, 700], [-1000, -1000, -900, -900], [590, 470, 610, 450]] },
+    { points: [[350, 350], [585, 450]], radius: 50,
+      segments: [[595, 700, 595, 100], [600, 100, 600, 700], [0, 900, 1000, 900]] },
+    { points: [[0, 0], [8, 0]], radius: 1, faces,
+      // This edge is outside the STORED path box, but inside the displaced
+      // emitters' expanded box; an input-point bound would lose its shadow.
+      segments: [[-20, 1.49, 20, 1.49], [-20, -100, 20, -100]] },
+    { points: [[0, 0], [2.49, 0]], radius: 2,
+      // Boundary tangencies, near-tangencies and degenerate segments.
+      segments: [[4.49, -20, 4.49, 20], [-20, 2, 20, 2], [-2, -20, -2, 20],
+        [-20, 2 - 1e-10, 20, 2 - 1e-10], [1, 1, 1, 1], [-20, -2 - 1e-10, 20, -2 - 1e-10]] },
+    { points: [[0.13, 0.29], [8.37, 1.26], [8.9, 6.31], [0.32, 7.19], [0.13, 0.29]], radius: 2,
+      segments: [[-100, 3, 100, 3], [-100, 4, 100, 4], [4, -100, 4, 100], [400, 400, 401, 401]] },
+    { points: [[0, 0], [2.1, 0], [0.2, 0.55], [2.4, 0.8]], radius: 2,
+      segments: [[-10, 2.5, 10, 2.5], [3, -10, 3, 10], [-20, -20, -10, -10]] },
+  ];
+  // Deterministic coverage of varied origins, radii, segment directions and
+  // local/far obstacles. No timing assertions or nondeterministic randomness.
+  let seed = 788;
+  const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32);
+  for (let i = 0; i < 18; i++) {
+    const x = (random() - 0.5) * 10_000, y = (random() - 0.5) * 10_000;
+    const radius = [0.05, 2, 25][i % 3];
+    const points = Array.from({ length: 4 }, () => [x + random() * radius * 4, y + random() * radius * 4]);
+    const segments = Array.from({ length: 12 }, (_, j) => {
+      const scale = j % 3 ? radius * 8 : radius * 1000;
+      return [x + (random() - 0.5) * scale, y + (random() - 0.5) * scale,
+        x + (random() - 0.5) * scale, y + (random() - 0.5) * scale];
+    });
+    cases.push({ points, radius, segments });
+  }
+  for (const [index, fixture] of cases.entries()) {
+    for (const points of [fixture.points, [...fixture.points].reverse()]) {
+      const emitters = emitterSamples(compactPoints(points), fixture.faces ?? null, fixture.radius / 4);
+      const expected = unfilteredFans(emitters, fixture.radius, fixture.segments);
+      const actual = buildFieldGeometry({ points, radius: fixture.radius,
+        scene: { ...scene, occluders: fixture.segments }, polygons: [], faces: fixture.faces ?? null, spaceId: 's' });
+      assert.deepEqual(actual?.pieces.flatMap(pieceFans) ?? [], expected, `fixture ${index}: ${JSON.stringify(points)}`);
+    }
+  }
+});
+
+test('#788: distant occluders are examined once per strip, not once per emitter', () => {
+  const points = [[0, 0], [80, 0]], radius = 2;
+  let farCoordinateReads = 0;
+  const far = Array.from({ length: 64 }, (_, i) => new Proxy([1000 + i, -100, 1000 + i, 100], {
+    get(target, property, receiver) {
+      if (/^[0-3]$/.test(String(property))) farCoordinateReads++;
+      return Reflect.get(target, property, receiver);
+    },
+  }));
+  const local = [[40, 1, 50, 1]];
+  const geometry = buildFieldGeometry({ points, radius,
+    scene: { ...scene, occluders: [...far, ...local] }, polygons: [], faces: null, spaceId: 's' });
+  assert.deepEqual(geometry.pieces.flatMap(pieceFans), unfilteredFans(emitterSamples(points, null, radius / 4), radius, local));
+  assert.ok(farCoordinateReads <= far.length * 8,
+    `${farCoordinateReads} coordinate reads: a distant segment must not enter per-emitter clipping`);
+  assert.ok(geometry.pieces.reduce((n, piece) => n + piece.sourceCount, 0) > 150,
+    'candidate culling must not thin or drop emitter fans');
 });
 
 test('#788: a residual run retains the true free endpoint in both directions', () => {

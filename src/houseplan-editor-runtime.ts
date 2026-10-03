@@ -228,6 +228,7 @@ import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlan
 import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePositionState } from './device-position-history';
 import { contentFingerprint } from './visual-continuity';
+import { lightGeometryFingerprint } from './glow-scene';
 import { PointerModalityController } from './pointer-modality';
 import { type ResolvedDevicePresentation } from './device-presentation';
 import { type FiniteActivityRuntime } from './activity-runtime';
@@ -3196,7 +3197,7 @@ public _rszAcceptPreview(
     if (!projected) return;
     const key = `${this.host._floorKey(this.host._space)}|${preview.sp.rooms.length}`;
     Object.defineProperty(projected, 'sourceFingerprint', {
-      value: contentFingerprint([preview.sp, this.host._cellCm, this.host._gridPitch]),
+      value: lightGeometryFingerprint(preview.sp, this.host._cellCm, this.host._gridPitch),
       enumerable: false,
     });
     const entry = { key, value: projected };

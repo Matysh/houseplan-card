@@ -68,8 +68,8 @@ import { cachedStairRenderGeometry, stairOutline, stairStyleVars } from './stair
 import {
   buildGlowClipGeometry, buildLightBarrierScene, forgetGlowSource, forgetGlowSpace,
   glowSourceInOpaqueBody, pruneGlowSources, readGlowClip, renderGlowPools,
-  resolveGlowCandidates, resolveGlowFeather, resolveLightBarrierRevision,
-  transitionGlowSource, warnGlowGeometryFallback, writeGlowClip,
+  resolveGlowCandidates, resolveGlowFeather, lightGeometryFingerprint,
+  resolveLightBarrierRevision, transitionGlowSource, warnGlowGeometryFallback, writeGlowClip,
   type GlowRuntimeHost, type GlowRuntimeState, type GlowSpot, type LightBarrierScene,
 } from './glow-scene';
 
@@ -453,7 +453,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       // #375: keep the full-card fingerprint on the geometry even though #373
       // needs to build it before choosing the static card frame.
       if (built) Object.defineProperty(built, 'sourceFingerprint', {
-        value: contentFingerprint([spCfg, cellCm, GRID_PITCH]),
+        value: lightGeometryFingerprint(spCfg, cellCm, GRID_PITCH),
         enumerable: false,
       });
       return built;

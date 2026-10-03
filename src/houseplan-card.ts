@@ -180,8 +180,8 @@ import {
   buildGlowClipGeometry, buildLightBarrierScene, createGlowRuntimeState,
   disposeGlowRuntime, forgetGlowSource, forgetGlowSpace, glowSourceInOpaqueBody,
   pruneGlowSources, readGlowClip, renderGlowPools, resolveGlowCandidates, resolveGlowFeather,
-  resolveLightBarrierRevision, transitionGlowSource, warnGlowGeometryFallback,
-  writeGlowClip,
+  lightGeometryFingerprint, resolveLightBarrierRevision, transitionGlowSource,
+  warnGlowGeometryFallback, writeGlowClip,
   type GlowRuntimeHost, type GlowRuntimeState, type GlowSpot,
 } from './glow-scene';
 import {
@@ -8788,7 +8788,7 @@ export class HouseplanCard extends LitElement {
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
         );
         if (value) Object.defineProperty(value, 'sourceFingerprint', {
-          value: contentFingerprint([this._curSpaceCfg, this._cellCm, this._gridPitch]),
+          value: lightGeometryFingerprint(this._curSpaceCfg, this._cellCm, this._gridPitch),
           enumerable: false,
         });
         const entry = { key: unionKey, value };

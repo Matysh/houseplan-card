@@ -1044,7 +1044,7 @@ test('a light source paints exactly one region: the floor it can see', () => {
   // edited in place, and a stale barrier set lights straight through a wall.
   assert.doesNotMatch(glow, /_cfgEpoch/);
   assert.match(glow,
-    /const geometryFingerprint = contentFingerprint\(\[\s*input\.rawSpaceConfig, input\.cellCm, input\.gridPitch/);
+    /const geometryFingerprint = lightGeometryFingerprint\(\s*input\.rawSpaceConfig, input\.cellCm, input\.gridPitch/);
   assert.match(glow,
     /fingerprint: contentFingerprint\(\[geometryFingerprint, openingStateSignature\]\)/);
   assert.match(glow,

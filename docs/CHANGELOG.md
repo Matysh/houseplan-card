@@ -6,6 +6,9 @@
   slightly tilted contours, continuous light without cut-out wedges, and an
   equally soft falloff at both ends and the outside of sharp turns
   ([#788](https://github.com/Matysh/houseplan-card/issues/788)).
+- Reduced redundant LED geometry work when moving the camera and computing
+  strip lighting, without thinning the light sources or changing their falloff
+  ([#788](https://github.com/Matysh/houseplan-card/issues/788)).
 
 ## v1.79.0-beta.6 — 2026-10-03
 

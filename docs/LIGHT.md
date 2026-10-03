@@ -159,6 +159,11 @@ invisible — the plan simply keeps lighting through a wall or closed door that
 now exists. Unrelated HA updates preserve the signature and hit the bounded
 barrier cache. The combined fingerprint, plus source position and radius, keys
 the per-source region cache (`_glowClipCache`).
+Top-level LED-strip source data is excluded from this architectural fingerprint:
+editing an emitter does not change masonry. The full card, static card and
+accepted resize artifacts use the same tag; every other raw field, scale and
+bound opening state retains its invalidation semantics. LED shape/radius keys
+still invalidate the strip's own field.
 
 The masonry boolean receives room walls after passage cuts plus the cached
 joined independent body set. Its outer/hole rings are the authoritative
@@ -480,6 +485,11 @@ only the geometry differs:
   diagnostic. The former 2500-fan acceptance bound depended on dropping
   required vertices/endpoints and was incompatible with the 50×50-point
   contract; compaction now reduces object/DOM overhead, not geometric detail.
+  The physical tube/hit path is reused across camera updates with exact point,
+  face-context and thickness invalidation; old frame/disconnect entries are
+  evicted. Before exact emitter-circle clipping, a conservative strip-wide
+  bounding box excludes only barriers that cannot reach any emitter disc.
+  This broad phase preserves the exact visibility path strings and all sources.
 
 `smoke_led_strip_field` compares rasterised production-field pixels with an
 independent distance/falloff oracle across three radii, both path directions
