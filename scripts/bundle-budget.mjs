@@ -570,7 +570,7 @@ export function initialViewCeilingViolation(bytes, {
  * сторон, чтобы ни семибайтный шум не красил гейт, ни молчаливый выигрыш не
  * оставался незафиксированным.
  */
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_943;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -650,7 +650,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
  *   подсказку «Переход на этаж» (`stairs-view.ts`) и три строки словарей.
  *   Центр оставляет 1 015 Б сверху и 985 Б до нижней границы полосы.
  */
-export const LAZY_EDITOR_GZIP_CEILING = 240_853;
+export const LAZY_EDITOR_GZIP_CEILING = 240_846;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -666,7 +666,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
  * (форма #600), не словари; их вынос заметен пользователю (задержка на первом
  * «?») и в скоуп #627 не входит.
  */
-export const LAZY_ONBOARDING_GZIP_CEILING = 28_403;
+export const LAZY_ONBOARDING_GZIP_CEILING = 28_395;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.79.0-beta.6 — 2026-10-03
+
 - Fixed rectangular LED strips on wall faces: corners remain exact miters and
   doors, gates and passages no longer pull the stripe or its Glow emitters
   back to the wall axis, causing steps and bends
