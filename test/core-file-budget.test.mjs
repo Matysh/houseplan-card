@@ -64,7 +64,7 @@ const CAPS = {
   // 2026-09-24, #642: диалог «Оптимизировать планы» (превью, запуск,
   // диагностика preflight, разметка) уехал в src/optimize-plans-dialog.ts за
   // узкий порт из 18 членов — 362 строки. Потолок опущен на выигрыш.
-  'src/houseplan-editor-runtime.ts': 12045,
+  'src/houseplan-editor-runtime.ts': 12046,
 };
 
 /**

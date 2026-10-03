@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.79.0-beta.7 — 2026-10-03
+
 - Fixed remaining LED-strip rendering defects: clean joins on fractional and
   slightly tilted contours, continuous light without cut-out wedges, and an
   equally soft falloff at both ends and the outside of sharp turns

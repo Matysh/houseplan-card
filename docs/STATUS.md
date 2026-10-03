@@ -17,17 +17,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Item | State |
 |---|---|
 | Generated | 2026-10-03 — rerun `node scripts/status-snapshot.mjs` for the current tree |
-| Version | **1.79.0-beta.6** in all 7 version sources (`scripts/release-contract.mjs`) |
+| Version | **1.79.0-beta.7** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.78.0` |
-| Latest prerelease tag | `v1.79.0-beta.5` |
-| Tests | Node unit 3515 · pure backend 423 · HA-harness backend 311 · browser smokes 292 (`npm run inventory`) |
+| Latest prerelease tag | `v1.79.0-beta.6` |
+| Tests | Node unit 3538 · pure backend 423 · HA-harness backend 311 · browser smokes 294 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
 
 | Item | State |
 |---|---|
-| Current local cycle | **Beta v1.79.0-beta.6 candidate** — two integrated S8 issues since beta.5. LED-strip Glow has smooth free end caps, while rectangular strips keep clean corners and remain straight across doors, gates and passages (#786, #787). `main` remains on stable v1.78.0. |
+| Current local cycle | **Beta v1.79.0-beta.7 candidate** — one integrated S8 issue since beta.6. LED strips keep clean fractional/tilted joins and continuous light with equally soft ends and outer sharp corners; redundant geometry work is reduced (#788). `main` remains on stable v1.78.0. |
 | Branches | `main` carries stable releases only; pre-release tags point at `dev`. Work lands on `dev`, which is equal to or ahead of `main`, never behind. |
 | LED regression acceptance | #788 covers mixed face/free and fractional-coordinate joins, winding-safe field unions, retained endpoints/acute vertices and circle–wall transition events. The actual owner export is exercised locally; public fixtures are synthetic. Pixel oracles, not just SVG counts, protect the visible falloff. |
 | Warm remount | Delayed editor restoration preserves the original View camera, reserves pending chrome space, and yields synchronously to mode/space navigation (#762). Header/stage dimensions are published as one settled pair. Canonical: `docs/WARM-REMOUNT.md`. |
