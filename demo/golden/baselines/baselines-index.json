@@ -1,50 +1,29 @@
 {
   "schema": 3,
   "matrixVersion": 71,
-  "acceptedAt": "2026-10-03T14:26:38.513Z",
-  "sourceFingerprint": "b369aff1adbc90828f3f9c05060dc06a0ab01b403de0af8bfce62a09c541249e",
+  "acceptedAt": "2026-10-03T15:57:17.589Z",
+  "sourceFingerprint": "6cd33bbad3c9a6a101afc1d501a8959df6ad58b693802489873660c043677fa7",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
-  "acceptedOn": "linux",
+  "acceptedOn": "win32",
   "capture": {
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "b369aff1adbc90828f3f9c05060dc06a0ab01b403de0af8bfce62a09c541249e",
-    "ci": null
-  },
-  "localAttestation": {
-    "schema": "houseplan-golden-wsl/v1",
-    "sha256": "44eb42f580fc9f973509af68f47565b4cad2a9a6200e445e728f6198e785ef98",
-    "artifactSha256": "891df8f55d26de38d8380f0a74960a23eac18df7866f1fe0ef9586003df5aa7f",
-    "createdAt": "2026-10-03T14:26:28.659Z",
-    "source": {
+    "buildFingerprint": "6cd33bbad3c9a6a101afc1d501a8959df6ad58b693802489873660c043677fa7",
+    "ci": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/787-led-rectangle-openings",
-      "commit": "35ef23119138de6401237c41c8d439a6f67ecde5",
-      "tree": "2915b795c9dae2f218aebf53374f3e81e6de3730",
-      "remoteSha": "35ef23119138de6401237c41c8d439a6f67ecde5",
-      "clean": true,
-      "status": ""
-    },
-    "environment": {
-      "platform": "linux",
-      "arch": "x64",
-      "kernel": "6.18.33.2-microsoft-standard-WSL2",
-      "wsl": true,
-      "distro": "Ubuntu",
-      "filesystem": "ext2/ext3"
-    },
-    "toolchain": {
-      "node": "22.23.2",
-      "npm": "10.9.8",
-      "playwright": "1.62.0",
-      "chromiumExecutableSha256": "0b20b130e7edd9dd51873be867761295fe0cfad490c2b9a64f95bd3cfc08fa71"
+      "run": 37134548622,
+      "attempt": 1,
+      "sha": "c142e4f7b5b3ffb46d3a2b88222a9d697e8144b1"
     }
   },
-  "foreignCapture": null,
+  "localAttestation": null,
+  "foreignCapture": {
+    "reason": "Owner-authorized #788 acceptance on Windows of Linux CI artifact Validate 37134548622; capture is not Windows (#455)"
+  },
   "witnesses": {
-    "count": 102,
+    "count": 101,
     "floor": 10
   },
   "scenarios": {
@@ -244,7 +223,7 @@
     "led-strip-design-reference-on-light": "16bfb46f2a90c57e95f1307e375e04e5809d41ae677e3b1e1eb56d7e0bc1d8ec",
     "lighting-led-strip-glow-dark": "254fe1e39c5bb7bbb7e67527f69c767c8bdb6ed959986a8085b18adb152001d6",
     "led-strip-long-zigzag-glow-light": "cd0847c03b6b397c93fa923dcd06b30d7d4a8f6c6db2f006b9f3e20de0e66e91",
-    "led-strip-endcaps-zoom-light": "a6e1c038a944dfbab4e44dd01cea3ab7b387aa633cc71a74f597c53d33149a26",
+    "led-strip-endcaps-zoom-light": "57703b53bd9d2eaae1b3142903a8b574e5d12b761b9b7240543ee2463c44c74d",
     "led-strip-rectangle-door-zoom-light": "549e9e9110cc3b01537d07bcf6ab89896069a49183a27c22904b89c99e35347c",
     "led-strip-off-light": "cbb4f4794c871d592917653e8b5713d87a6be6dfe470b2161da760c2bb3cebdc",
     "iso-led-strip-dark": "572728e34f77f911f0ece247c5b7de6653e9c0dfafe04a0ab198b88644081a58"
