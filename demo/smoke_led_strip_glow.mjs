@@ -184,6 +184,11 @@ check('unavailable: dashed, no field', JSON.stringify([unavailable?.state, !!una
 await setState('light.ceiling', 'on', { rgb_color: [128, 213, 255] });
 await setStrips(await evaluate(() => window.__card._serverCfg.spaces[0].led_strips), { glow_enabled: false });
 await settle();
+// The state update and the room setting update are deliberately separate. On
+// a fast runner the first render can start the entering transition before the
+// second one turns Glow off, so let that legitimate 500 ms leaving phase
+// finish before asserting the stable no-Glow contract.
+await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('[data-led-field]'));
 const colored = await stripe('d_light1');
 check('on without Glow: coloured core, no field', JSON.stringify([colored?.state, colored?.core !== '#FFFFFF', await field()]),
   JSON.stringify(['on', true, 0]));
