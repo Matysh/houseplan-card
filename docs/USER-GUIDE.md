@@ -1058,9 +1058,10 @@ editor** — there is no need to switch to the Plan editor.
 | In the device dialog | **Show as LED strip** draws a shape for the same marker (or brings a saved one back at once); **Show as icon** returns the ordinary icon, the shape is kept hidden and comes back without redrawing. The usual unsaved-changes question comes first |
 
 Binding creates no new Home Assistant device: the same marker, light
-settings, tap actions and badge — drawn at the middle of the strip's length. The strip glows when the device does: with
-Glow on, a white core and a soft band of colour 30 cm wide by default (or the
-device's own radius); without Glow the core takes the light's colour. Light
+settings, tap actions and badge — drawn at the middle of the strip's length.
+When the device is on, the core inside its outline uses the selected light colour, with or without
+Glow. Glow adds a soft band of colour with a 30 cm radius by default (or the
+device's own radius). An off strip stays white. Light
 does not pass through walls or closed doors. In View the whole strip is one
 tap target, like an icon. Every finished shape change and every switch of the
 representation is one **Undo/Redo** step.

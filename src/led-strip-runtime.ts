@@ -136,8 +136,8 @@ export function faceContext(scene: LightBarrierScene | null, epsilon: number): F
 /**
  * The state of one strip from the card's own light resolution (ТЗ §3, §5):
  * an unavailable source is a grey dashed stripe without a field — never an
- * unbinding; on with Glow is a white core and a field; on without Glow is a
- * core in the source colour; off is a white core.
+ * unbinding; on uses the source colour for the core, with a field when Glow
+ * is enabled; off is a white core.
  */
 export function ledStripView(input: {
   strip: LedStripModel;
@@ -293,7 +293,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
       const { t, path, d } = ledStripePath(view.strip, input.faces, input.d);
       const unavailable = view.state === 'unavailable';
       const core = unavailable ? UNAVAILABLE
-        : view.state === 'on' && !view.glow && view.appearance ? view.appearance.c : CORE_IDLE;
+        : view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;
       const hitWidth = (2 * stripHitRadiusPx(t * input.perUnit)) / (input.perUnit || 1);
       const dev = view.device;
       const own = (e: MouseEvent) => nearestOwner(e, view, input).device;

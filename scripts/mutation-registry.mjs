@@ -14276,13 +14276,13 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'led-core-coloured-under-glow',
+    id: 'led-core-white-under-glow',
     guard: 'node demo/smoke_led_strip_glow.mjs',
-    because: "#780 ТЗ §3: with Glow the core stays white and the colour is the field; only without Glow the core takes the source colour",
+    because: '#790: the actual SVG core must match the resolved field colour across live HA/config updates, with or without Glow; this needs the rendered DOM and its update lifecycle',
     patches: [{
       file: 'src/led-strip-runtime.ts',
-      find: ": view.state === 'on' && !view.glow && view.appearance ? view.appearance.c : CORE_IDLE;",
-      replace: ": view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;",
+      find: ": view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;",
+      replace: ": view.state === 'on' && !view.glow && view.appearance ? view.appearance.c : CORE_IDLE;",
     }],
   },
   {

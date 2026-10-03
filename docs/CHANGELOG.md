@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- An on LED strip now shows its light colour inside the outline even when
+  Glow is enabled; off strips stay white
+  ([#790](https://github.com/Matysh/houseplan-card/issues/790)).
+
 ## v1.79.0 — 2026-10-03
 
 - LED strips can now replace device icons: draw and edit their shape in the

@@ -89,8 +89,11 @@ for (const scenario of scenarios) {
         // Public HA state input, not a write to the card's private resolver.
         await page.evaluate(async state => {
           const card = window.__card, previous = card.hass.states['light.ceiling'];
+          // This geometry-only oracle deliberately uses a white source in
+          // both states; source-colour behaviour is held by the Glow smoke.
           card.hass = { ...card.hass, states: { ...card.hass.states,
-            'light.ceiling': { ...previous, state } } };
+            'light.ceiling': { ...previous, state,
+              attributes: { ...previous.attributes, rgb_color: [255, 255, 255] } } } };
           await window.__hpTest.settled();
         }, state);
         await page.waitForFunction(state => window.__card.shadowRoot

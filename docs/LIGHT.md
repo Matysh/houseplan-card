@@ -459,9 +459,11 @@ only the geometry differs:
   the saved points. Unsafe acute angles retain the short connector. A stored
   four-corner loop stays four-cornered without steps or protruding hooks;
   a genuinely tilted side stays tilted (#787, #788).
-- **Core.** With effective Glow (space `glow_enabled` + room `glow`) the core
-  stays white and the colour is the field; without Glow the core takes the
-  source colour and there is no field. Off: white core, no field.
+- **Core.** An on strip uses the same resolved source colour as its field,
+  whether effective Glow (space `glow_enabled` + room `glow`) is on or off.
+  RGB, colour temperature and manual colour changes update both through the
+  shared light resolver; field brightness does not change core opacity.
+  Without Glow there is no field. Off: white core, no field.
   Unavailable/unknown: dashed grey stripe, no field — the link is kept.
 - **Surfaces.** The full card renders field and stripe in the View; the
   Devices editor shows active strips (unbound ones as grey dashes);

@@ -92,7 +92,7 @@ The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels p
 - `iso-sun-flat-wedges-remain`
 - `iso-theme-dark-wall-rule-returns`
 - `led-badge-dropped`
-- `led-core-coloured-under-glow`
+- `led-core-white-under-glow`
 - `led-field-endpoint-dropped`
 - `led-field-disc-cancels-fan`
 - `led-field-compound-clip-children`

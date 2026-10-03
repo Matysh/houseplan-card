@@ -3,8 +3,8 @@
  * the View and on the static card. No LED chunk without a displayed active
  * strip (a hidden shape or an unbound strip loads nothing); an active bound
  * strip replaces the icon, paints the two-stroke stripe and — with Glow — the
- * linear field; off/unavailable have no field, unavailable is dashed; without
- * Glow the core takes the source colour. The whole length is one target: a
+ * linear field; off/unavailable have no field, unavailable is dashed. The on
+ * core takes the source colour with or without Glow. The whole length is one target: a
  * click toggles once, a touch pan calls nothing. A hidden marker or an
  * HA-disabled device loads no chunk (r1 M4); the value badge stays at the
  * anchor, passive (r1 M1). The static card is passive in all four
@@ -12,6 +12,8 @@
  */
 import { launch, check, finish } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
+import { mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
 
 const { page, browser } = await launch({ width: 1000, height: 820 }, 1);
 const ledRequests = [];
@@ -48,6 +50,18 @@ const stripe = (marker) => evaluate((marker) => {
     coreWidth: Number(g.querySelector('.led-core')?.getAttribute('stroke-width')) } : null;
 }, marker);
 const field = () => evaluate(() => window.__card.shadowRoot.querySelectorAll('[data-led-field]').length);
+const painted = () => evaluate(() => {
+  const root = window.__card.shadowRoot;
+  const core = root.querySelector('[data-marker="d_light1"] .led-core');
+  const pool = root.querySelector('[data-led-field="ceiling"] .led-pool');
+  return { core: core?.getAttribute('stroke'), field: pool?.getAttribute('fill'),
+    coreOpacity: core ? getComputedStyle(core).strokeOpacity : null,
+    fieldOpacity: Number(pool?.getAttribute('fill-opacity')),
+    geometry: ['.led-outline', '.led-core', '.led-hit'].map(selector => {
+      const path = root.querySelector(`[data-marker="d_light1"] ${selector}`);
+      return [path?.getAttribute('d'), path?.getAttribute('stroke-width')];
+    }) };
+});
 
 await settle();
 check('no strips: no LED chunk requested', ledRequests.length, 0);
@@ -82,9 +96,68 @@ check('unbound strip is absent from the View', await evaluate(() => window.__car
 check('no round pool at the anchor: the strip is the source', await evaluate(() =>
   !window.__card.shadowRoot.querySelector('[data-glow-source="light.ceiling"]')));
 check('no auto-slot reserved for the strip’s marker', await evaluate(() => !('d_light1' in (window.__card._defPos || {}))));
+await setState('light.ceiling', 'on', { rgb_color: [128, 213, 255], brightness: 64 });
+await settle();
 const onStripe = await stripe('d_light1');
-check('on with Glow: white core and a field', JSON.stringify([onStripe?.state, onStripe?.core, onStripe?.dash, await field() > 0]),
-  JSON.stringify(['on', '#FFFFFF', null, true]));
+check('on with Glow: source-coloured core and a field', [onStripe?.state, onStripe?.core, onStripe?.dash, await field() > 0],
+  ['on', '#80d5ff', null, true]);
+const firstPaint = await painted();
+check('#790: rendered core and field share the resolved RGB colour', [firstPaint.core, firstPaint.field], ['#80d5ff', '#80d5ff']);
+await setState('light.ceiling', 'on', { rgb_color: [225, 70, 35] });
+await settle();
+const rgbPaint = await painted();
+check('#790: HA RGB update changes the existing core and field', [rgbPaint.core, rgbPaint.field], ['#e14623', '#e14623']);
+check('#790: a colour update changes no outline, core or hit geometry', rgbPaint.geometry, firstPaint.geometry);
+await setState('light.ceiling', 'on', { rgb_color: null, color_temp_kelvin: 3000 });
+await settle();
+const warmPaint = await painted();
+check('#790: colour temperature uses the same resolved field colour', warmPaint.core === warmPaint.field
+  && warmPaint.core !== '#FFFFFF' && warmPaint.core !== rgbPaint.core);
+await setStrips(ceilingStrip, { glow_enabled: true }, { d_light1: { glow_color: { c: '#d837a6', bri: 0.2 } } });
+await settle();
+const manualPaint = await painted();
+check('#790: saved manual colour updates core and field', [manualPaint.core, manualPaint.field], ['#d837a6', '#d837a6']);
+check('#790: field brightness never becomes core opacity', manualPaint.coreOpacity === '1' && manualPaint.fieldOpacity < 1);
+check('#790: manual colour changes no physical geometry', manualPaint.geometry, firstPaint.geometry);
+
+// AC3: the same public HA/config path in both themes, Flat/2.5D and on/off.
+// Optional local review captures are not golden baselines or release files.
+const captureDir = process.env.HP_LED_COLOR_SCREENSHOTS;
+if (captureDir) await mkdir(captureDir, { recursive: true });
+await setStrips(ceilingStrip, { glow_enabled: true });
+for (const dark of [false, true]) for (const iso of [false, true]) {
+  await evaluate(async dark => {
+    const card = window.__card;
+    card.hass = { ...card.hass, themes: { ...(card.hass.themes || {}), darkMode: dark } };
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    await window.__hpTest.settled();
+  }, dark);
+  await evaluate(iso => window.__hpTest.setVolumetricView(iso), iso);
+  let onGeometry;
+  for (const state of ['on', 'off']) {
+    await setState('light.ceiling', state, { rgb_color: [128, 213, 255] });
+    await page.waitForTimeout(600);
+    const actual = await painted();
+    const label = `#790: ${dark ? 'dark' : 'light'}, ${iso ? '2.5D' : 'Flat'}, ${state}`;
+    check(`${label}: core colour`, actual.core, state === 'on' ? '#80d5ff' : '#FFFFFF');
+    if (state === 'on') onGeometry = actual.geometry;
+    else check(`${label}: geometry stays unchanged`, actual.geometry, onGeometry);
+    if (captureDir) {
+      const box = await page.locator('[data-led-strip="ceiling"] .led-outline').boundingBox();
+      const x = Math.max(0, box.x - 30), y = Math.max(0, box.y - 30);
+      await page.screenshot({ path: join(captureDir, `${dark ? 'dark' : 'light'}-${iso ? 'iso' : 'flat'}-${state}.png`),
+        clip: { x, y, width: Math.min(1000 - x, box.width + 60), height: Math.min(820 - y, box.height + 60) } });
+    }
+  }
+}
+await evaluate(async () => {
+  const card = window.__card;
+  card.hass = { ...card.hass, themes: { ...(card.hass.themes || {}), darkMode: false } };
+  document.documentElement.style.colorScheme = 'light';
+  await window.__hpTest.setVolumetricView(false);
+});
+await setState('light.ceiling', 'on', { rgb_color: [128, 213, 255] });
+await settle();
 
 // r1 M1 (ТЗ §5): the strip keeps the device's value badge, passive, at the
 // half-length anchor — the icon core, pulse and slot stay suppressed.
@@ -186,8 +259,13 @@ await settle();
 await setState('light.ceiling', 'unavailable');
 await settle();
 const unavailable = await stripe('d_light1');
-check('unavailable: dashed, no field', JSON.stringify([unavailable?.state, !!unavailable?.dash, await field()]),
-  JSON.stringify(['unavailable', true, 0]));
+check('unavailable: dashed grey, no field', [unavailable?.state, unavailable?.core, !!unavailable?.dash, await field()],
+  ['unavailable', '#9e9e9e', true, 0]);
+await setState('light.ceiling', 'unknown');
+await settle();
+const unknown = await stripe('d_light1');
+check('#790: unknown keeps the grey dashed unavailable presentation',
+  [unknown?.state, unknown?.core, !!unknown?.dash, await field()], ['unavailable', '#9e9e9e', true, 0]);
 await setState('light.ceiling', 'on', { rgb_color: [128, 213, 255] });
 await setStrips(await evaluate(() => window.__card._serverCfg.spaces[0].led_strips), { glow_enabled: false });
 await settle();
@@ -197,8 +275,23 @@ await settle();
 // finish before asserting the stable no-Glow contract.
 await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('[data-led-field]'));
 const colored = await stripe('d_light1');
-check('on without Glow: coloured core, no field', JSON.stringify([colored?.state, colored?.core !== '#FFFFFF', await field()]),
-  JSON.stringify(['on', true, 0]));
+check('on without Glow: source-coloured core, no field', [colored?.state, colored?.core, await field()],
+  ['on', '#80d5ff', 0]);
+await evaluate(async () => {
+  await window.__hpTest.setServerConfig(cfg => {
+    cfg.spaces[0].settings.glow_enabled = true;
+    const room = cfg.spaces[0].rooms.find(room => room.id === 'r1');
+    room.settings = { ...(room.settings || {}), glow: false };
+  });
+});
+await settle();
+check('#790: room Glow override changes no live core colour',
+  [(await stripe('d_light1'))?.core, await field()], ['#80d5ff', 0]);
+await evaluate(async () => {
+  await window.__hpTest.setServerConfig(cfg => {
+    cfg.spaces[0].rooms.find(room => room.id === 'r1').settings.glow = null;
+  });
+});
 
 // The static card (ТЗ §8, AC14, r1 M6): the full light_pools × live_states
 // matrix. Passive in all four: no hit path, no focus, a click calls nothing.
@@ -235,7 +328,7 @@ const matrix = await evaluate(async () => {
       target?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
     }
     out[key] = {
-      state: g?.dataset.state, white: core?.getAttribute('stroke') === '#FFFFFF',
+      state: g?.dataset.state, core: core?.getAttribute('stroke'),
       field: !!sr.querySelector('[data-led-field]'),
       passive: !sr.querySelector('.led-hit, [data-led-strip] [role], [data-led-strip] [tabindex]'),
       badge: !!sr.querySelector('[data-led-badge="d_light1"] .value-badge'),
@@ -245,16 +338,31 @@ const matrix = await evaluate(async () => {
   return out;
 });
 check('static live_states:false + light_pools:false — neutral, no field, passive', JSON.stringify(matrix['pools=false,live=false']),
-  JSON.stringify({ state: 'off', white: true, field: false, passive: true, badge: true }));
+  JSON.stringify({ state: 'off', core: '#FFFFFF', field: false, passive: true, badge: true }));
 check('static live_states:true + light_pools:false — source colour in the core, no field, passive', JSON.stringify(matrix['pools=false,live=true']),
-  JSON.stringify({ state: 'on', white: false, field: false, passive: true, badge: true }));
+  JSON.stringify({ state: 'on', core: '#80d5ff', field: false, passive: true, badge: true }));
 check('static live_states:false + light_pools:true — neutral, no field, passive', JSON.stringify(matrix['pools=true,live=false']),
-  JSON.stringify({ state: 'off', white: true, field: false, passive: true, badge: true }));
-check('static live_states:true + light_pools:true — white core and the field, passive', JSON.stringify(matrix['pools=true,live=true']),
-  JSON.stringify({ state: 'on', white: true, field: true, passive: true, badge: true }));
+  JSON.stringify({ state: 'off', core: '#FFFFFF', field: false, passive: true, badge: true }));
+check('static live_states:true + light_pools:true — source colour and the field, passive', JSON.stringify(matrix['pools=true,live=true']),
+  JSON.stringify({ state: 'on', core: '#80d5ff', field: true, passive: true, badge: true }));
 check('a click on any static stripe toggles nothing', await evaluate(() => window.__card.hass.states['light.ceiling'].state), 'on');
 
+for (const mode of ['plan', 'decor']) {
+  await evaluate(mode => window.__hpTest.setMode(mode), mode);
+  check(`#790: ${mode} keeps the coloured core passive and translucent`, await evaluate(() => {
+    const root = window.__card.shadowRoot;
+    return [root.querySelector('[data-marker="d_light1"] .led-core')?.getAttribute('stroke'),
+      root.querySelector('.led-passive')?.getAttribute('opacity'), !!root.querySelector('.led-hit')];
+  }), ['#80d5ff', '0.45', false]);
+}
 await evaluate(() => window.__hpTest.setMode('devices'));
+check('#790: Devices retains the live core colour', (await stripe('d_light1'))?.core, '#80d5ff');
+await setStrips([...ceilingStrip, { id: 'loose', points: [[0.12, 0.45], [0.30, 0.45]], marker: null }],
+  { glow_enabled: true });
+check('#790: unbound Devices strip keeps its grey dashed presentation', await evaluate(() => {
+  const path = window.__card.shadowRoot.querySelector('[data-led-unbound="loose"]');
+  return [path?.getAttribute('stroke'), !!path?.getAttribute('stroke-dasharray')];
+}), ['#8a8a8a', true]);
 await page.locator('.led-select-hit[data-led-select="ceiling"]').dispatchEvent('click');
 await page.waitForTimeout(100);
 await page.click('[data-led-action="settings"]');
