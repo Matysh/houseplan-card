@@ -118,10 +118,11 @@ export function acceptedDocsManifest({
   };
 }
 
-const list = (argv, name) => argv
+export const cliList = (argv, name) => [...new Set(argv
   .filter((arg) => arg.startsWith(`--${name}=`))
-  .map((arg) => arg.slice(name.length + 3))
-  .filter(Boolean);
+  .flatMap((arg) => arg.slice(name.length + 3).split(','))
+  .map((value) => value.trim())
+  .filter(Boolean))];
 
 /**
  * Манифест после приёмки «кадры те же попиксельно» (#512): от кандидата —
@@ -275,9 +276,10 @@ async function main(argv) {
     if (existsSync(onDisk)) committed[scenario.id] = sha256(readFileSync(onDisk));
   }
 
-  const declared = list(argv, 'expect-change');
+  const declared = cliList(argv, 'expect-change');
   const skipWitnesses = argv.includes('--no-witnesses');
-  const skipReason = (list(argv, 'reason')[0] || '').trim();
+  const skipReason = (argv.find((arg) => arg.startsWith('--reason='))
+    ?.slice('--reason='.length) || '').trim();
   const decision = docsAcceptancePlan({
     ids, committed, candidate, declared, skipWitnesses, skipReason,
   });

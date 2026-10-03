@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { acceptIdentical, acceptedDocsManifest, identicalDecision, identicalDocsManifest, verifyDocsCandidate } from '../scripts/docs-accept.mjs';
+import { acceptIdentical, acceptedDocsManifest, cliList, identicalDecision, identicalDocsManifest, verifyDocsCandidate } from '../scripts/docs-accept.mjs';
 import { DOC_SCREENSHOT_VERSION, DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
 
 // Приёмка — единственное место, где картинки попадают в репозиторий, поэтому
@@ -18,6 +18,15 @@ const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const FINGERPRINT = 'f'.repeat(64);
 const SCRIPT_SHA = 'a'.repeat(64);
 const bytesOf = (id) => Buffer.from(`картинка ${id}`);
+
+test('beta-derived: docs expect-change accepts CSV and repeated flags', () => {
+  assert.deepEqual(cliList([
+    '--expect-change=view-desktop, view-touch',
+    '--expect-change=view-desktop',
+    '--expect-change=',
+    '--other=ignored',
+  ], 'expect-change'), ['view-desktop', 'view-touch']);
+});
 
 const candidate = (overrides = {}) => {
   const scenarios = {};
