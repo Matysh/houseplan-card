@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 71,
-  "acceptedAt": "2026-10-03T07:54:16.450Z",
-  "sourceFingerprint": "cd698d703d8d3b58af43c32e9d23153a4532650909eadfd43b25ed1969ec4f4a",
+  "acceptedAt": "2026-10-03T11:12:25.641Z",
+  "sourceFingerprint": "bd2d69a226767a942448f6dd0c0ddfe1557e8da1f6441569f6784c0f9aefd960",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,20 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "cd698d703d8d3b58af43c32e9d23153a4532650909eadfd43b25ed1969ec4f4a",
+    "buildFingerprint": "bd2d69a226767a942448f6dd0c0ddfe1557e8da1f6441569f6784c0f9aefd960",
     "ci": null
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v1",
-    "sha256": "cf474aa1ff676d2262f1c9e442114e7df0e91867c69c78bdc82c923a48355650",
-    "artifactSha256": "7a410b63ae24027ebe7c77d3e5fe63b2e36cad6d83543bf478c8af183784e2dc",
-    "createdAt": "2026-10-03T07:53:46.175Z",
+    "sha256": "c30cae622673c0e45a45de8a63d12e8c0f7cc5cc1ff5bf147450849a7158e35e",
+    "artifactSha256": "bae4cdf11dd282aca4f645a3d54815379c66260c8c810cf1897fa60e00a6dcba",
+    "createdAt": "2026-10-03T11:12:05.784Z",
     "source": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/784-led-strip-polish",
-      "commit": "706eb02d70b6fecaafda0da67e4564e8909606ff",
-      "tree": "f9331d65ecb02f922720f95f9a6feb6781420f29",
-      "remoteSha": "706eb02d70b6fecaafda0da67e4564e8909606ff",
+      "branch": "issue/785-led-glow-continuity",
+      "commit": "4c7e9815f356d2a1cefc9b9e73e5aab96880360e",
+      "tree": "1465472f8f27ef4b77db90a8c7a351bac9f373e0",
+      "remoteSha": "4c7e9815f356d2a1cefc9b9e73e5aab96880360e",
       "clean": true,
       "status": ""
     },
@@ -44,7 +44,7 @@
   },
   "foreignCapture": null,
   "witnesses": {
-    "count": 101,
+    "count": 98,
     "floor": 10
   },
   "scenarios": {
@@ -240,10 +240,11 @@
     "optimize-orphan-references-light-ru": "332e56edb151a5a820fc307d69ffd4060348978572e48704b0a2c14ba9802720",
     "card-editor-invalid-default-floor-light-en": "dbf251ece014cfee252e0dcb2d7c00eda66aa4b5bd125e4c83e248d4319d24b3",
     "card-editor-invalid-default-floor-dark-ru": "422b74bb391b87e383350247ef1bc1f10ca48c8f6fe418f75bde94e62e3b8bc0",
-    "led-strip-design-reference-off-light": "907098bee00d95fdc4b2e93d8fb552ceda8ca34f904dccd66f7cbaecd36fd98a",
+    "led-strip-design-reference-off-light": "1a558111dbeb1962b10f47baad20b4689248a347510261152f0d6196906044fd",
     "led-strip-design-reference-on-light": "16bfb46f2a90c57e95f1307e375e04e5809d41ae677e3b1e1eb56d7e0bc1d8ec",
     "lighting-led-strip-glow-dark": "254fe1e39c5bb7bbb7e67527f69c767c8bdb6ed959986a8085b18adb152001d6",
-    "led-strip-off-light": "588294347c22eecbb9274f97bebdc4826ae97b237f64f291877165b9cbfd464a",
+    "led-strip-long-zigzag-glow-light": "cd0847c03b6b397c93fa923dcd06b30d7d4a8f6c6db2f006b9f3e20de0e66e91",
+    "led-strip-off-light": "cbb4f4794c871d592917653e8b5713d87a6be6dfe470b2161da760c2bb3cebdc",
     "iso-led-strip-dark": "572728e34f77f911f0ece247c5b7de6653e9c0dfafe04a0ab198b88644081a58"
   }
 }
