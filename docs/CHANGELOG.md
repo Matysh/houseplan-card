@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+## v1.79.0 — 2026-10-03
+
+- LED strips can now replace device icons: draw and edit their shape in the
+  Devices editor, bind them to a device and switch back to an icon without
+  losing the shape. Lights cast a continuous, softly fading Glow field
+  (30 cm radius by default), clipped by walls and closed doors. Strips work in
+  Flat and 2.5D View and on the space card, and survive export/import
+  ([#780](https://github.com/Matysh/houseplan-card/issues/780)).
+- The optional moon shows its real phase behind the plan at dusk and night
+  with any background. General settings › Sun and Moon controls it and
+  explains when it is hidden
+  ([#661](https://github.com/Matysh/houseplan-card/issues/661),
+  [#718](https://github.com/Matysh/houseplan-card/issues/718)).
+- 2.5D View keeps the flat plan's layout and camera position: walls grow
+  straight up, and device icons and door locks share a consistent height.
+  Device state updates no longer shift icons
+  ([#713](https://github.com/Matysh/houseplan-card/issues/713),
+  [#711](https://github.com/Matysh/houseplan-card/issues/711)).
+- Floor switching and entering editors no longer flash room fills; editing
+  one floor does not rebuild every other floor
+  ([#742](https://github.com/Matysh/houseplan-card/issues/742),
+  [#745](https://github.com/Matysh/houseplan-card/issues/745),
+  [#746](https://github.com/Matysh/houseplan-card/issues/746),
+  [#744](https://github.com/Matysh/houseplan-card/issues/744)).
+- Card re-creation preserves the camera and unsaved editor dialogs while
+  permissions load; newer mode and floor choices take precedence. An editor
+  that fails to load retries only on the next press
+  ([#762](https://github.com/Matysh/houseplan-card/issues/762),
+  [#756](https://github.com/Matysh/houseplan-card/issues/756),
+  [#757](https://github.com/Matysh/houseplan-card/issues/757)).
+- Stair links use the pointer cursor in View
+  ([#693](https://github.com/Matysh/houseplan-card/issues/693)).
+
 ## v1.79.0-beta.7 — 2026-10-03
 
 - Fixed remaining LED-strip rendering defects: clean joins on fractional and
