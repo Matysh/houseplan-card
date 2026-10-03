@@ -105,13 +105,17 @@ test('ТЗ §6: every piece is clipped to what its own emitters see; a buried st
     'visibility/cache pieces do not split the painted path');
   for (const piece of geometry.pieces) {
     assert.ok(piece.clip.length >= 2, 'free pieces retain filled visibility fans for the shared clip');
+    assert.ok(piece.clip.every((d) => /\bA2 2\b/.test(d) && !/\bL/.test(d)),
+      'an unobstructed fan is an exact SVG disc, not a visible polygon');
   }
   // Passing 0.5 below the body: the pieces near it are clipped to their own fans.
   const near = buildFieldGeometry({ points: [[0.5, 3.5], [9.5, 3.5]], radius: 1, scene, polygons, faces, spaceId: 's' });
-  const clipped = near.pieces.filter((piece) => piece.clip.some((d) => (d.match(/[ML]/g) || []).length > 12));
+  const clipped = near.pieces.filter((piece) => piece.clip.some((d) => /\bL/.test(d)));
   assert.ok(clipped.length >= 2 && clipped.length < near.pieces.length, `${clipped.length} of ${near.pieces.length}`);
   for (const piece of clipped) {
     assert.ok(piece.clip.length > 0);
+    assert.ok(piece.clip.some((d) => /\bA1 1\b/.test(d)),
+      'unblocked parts of a clipped fan retain exact circular arcs');
     // No fan vertex lies inside the body: light never passes into or through it.
     for (const d of piece.clip) {
       for (const [, x, y] of d.matchAll(/[ML]([-\d.e]+) ([-\d.e]+)/g)) {
@@ -146,6 +150,21 @@ test('#785: a mixed free/wall polyline keeps visibility for every piece', () => 
     'free pieces use filled discs and blocked pieces use visibility polygons');
   assert.equal(mixed.pieces.some((piece) => piece.clip.length >= 4), true,
     'the long free run retains several overlapping visibility discs');
+});
+
+test('#786: reversing a free strip keeps two equally smooth circular end fans', () => {
+  const freeScene = { ...scene, occluders: [], fingerprint: 'free' };
+  const forward = buildFieldGeometry({ points: [[1, 2], [9, 3]], radius: 2,
+    scene: freeScene, polygons, faces: null, spaceId: 's' });
+  const reverse = buildFieldGeometry({ points: [[9, 3], [1, 2]], radius: 2,
+    scene: freeScene, polygons, faces: null, spaceId: 's' });
+  for (const geometry of [forward, reverse]) {
+    assert.ok(geometry);
+    const fans = geometry.pieces.flatMap((piece) => piece.clip);
+    assert.ok(fans.length >= 2);
+    assert.ok(fans.every((d) => (d.match(/\bA2 2\b/g) || []).length === 2));
+    assert.ok(fans.every((d) => !/\bL/.test(d)), 'no order-dependent polygon chord at either end');
+  }
 });
 
 test('AC17: the field cache is bounded, per space, and counts geometry rebuilds', () => {

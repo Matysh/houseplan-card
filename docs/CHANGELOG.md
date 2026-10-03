@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed LED-strip Glow end caps so free ends stay smoothly round at high zoom
+  instead of exposing polygon facets depending on nearby walls
+  ([#786](https://github.com/Matysh/houseplan-card/issues/786)).
+
 ## v1.79.0-beta.5 — 2026-10-03
 
 - Fixed Glow for LED strips with mixed geometry: long free segments no longer

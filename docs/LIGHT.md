@@ -429,8 +429,10 @@ only the geometry differs:
   radius; each piece is clipped to the visibility fans of its own emitters
   (the shared `visibilityPolygon` over the same barrier scene as pools; the
   fans are separate paths of one clipPath, no boolean pass per piece), and the
-  whole field layer is clipped once to the floor. A piece with no occluder
-  within the radius needs no fan at all. Windows, columns,
+  whole field layer is clipped once to the floor. An unobstructed emitter uses
+  an exact SVG disc; a blocked fan keeps hard obstacle edges and exact circular
+  arcs between them, so free ends cannot expose angular-sweep facets. Windows,
+  columns,
   thick walls and Solid zero walls block; doors/gates pass by their actual
   opening; Dashed zero walls are transparent. Emitters on a thick face sit
   `epsilonGeom` (0.001 cm) outward into free floor; a part buried in a body

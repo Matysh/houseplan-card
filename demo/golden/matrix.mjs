@@ -1333,6 +1333,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     // #785 the active visibility clip kept only the wall fans and dropped both
     // free diagonals because SVG clip paths ignore open-path strokes.
     ledStripOverride: { points: [[0.12, 0.15], [0.551667, 0.35], [0.551667, 0.55], [0.16, 0.45]] }, ...stage },
+  { id: 'led-strip-endcaps-zoom-light', fixture: 'visual', ledStrips: true, space: 'golden-led',
+    mode: 'view', fillMode: 'none', language: 'en', theme: 'light', viewport: { width: 1000, height: 760 },
+    // #786: at 4× the free end and the end inside one Glow radius of masonry
+    // must keep the same smooth circular rim; the wall still clips its side.
+    zoom: 4, zoomCenter: [500, 380],
+    ledStripOverride: { points: [[0.43, 0.35], [0.535, 0.35]] }, ...stage },
   { id: 'led-strip-off-light', fixture: 'visual', ledStrips: true, space: 'golden-led',
     mode: 'view', fillMode: 'none', stateOverrides: LED_STRIPS_OFF, language: 'en', theme: 'light',
     viewport: { width: 1000, height: 760 }, ...stage },

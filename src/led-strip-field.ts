@@ -114,10 +114,9 @@ const pointsKey = (points: readonly number[][]): string =>
   points.map((p) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join(';');
 
 /**
- * Fans of the field only bound the zero-alpha outer rim. A 12-gon keeps its
- * maximum radial error below 3.5%; every visible acceptance point at r/2 stays
- * well inside it, while the heavy 50×50 scene carries fewer clip segments
- * through every camera rasterization.
+ * Barrier visibility still needs angular samples, but an unobstructed emitter
+ * is represented by SVG arcs rather than by that polygon. This keeps a free
+ * end truly round at every zoom without increasing the retained fan count.
  */
 const LED_ARC_STEPS = 12;
 
@@ -137,6 +136,33 @@ const coord = (value: number): string => {
 const ringPath = (ring: readonly number[][]): string =>
   `${ring.map((p, k) => `${k ? 'L' : 'M'}${coord(p[0])} ${coord(p[1])}`).join(' ')} Z`;
 
+/** Exact disc in one path: two half-circle arcs avoid a polygonal free end. */
+const discPath = (center: Pt, radius: number): string => {
+  const left = coord(center[0] - radius), right = coord(center[0] + radius);
+  const cy = coord(center[1]), r = coord(radius);
+  return `M${left} ${cy} A${r} ${r} 0 1 0 ${right} ${cy} A${r} ${r} 0 1 0 ${left} ${cy} Z`;
+};
+
+/**
+ * Preserve hard obstacle edges, but join consecutive points on the radius by
+ * exact circular arcs. The visibility sweep is angle-sorted, so sweep=1 also
+ * covers the final 2π → 0 seam without a chord.
+ */
+const visibilityPath = (center: Pt, radius: number, ring: readonly number[][]): string => {
+  if (ring.length < 3) return '';
+  const tolerance = Math.max(1e-9, radius * 1e-7);
+  const onRadius = (p: readonly number[]): boolean =>
+    Math.abs(Math.hypot(p[0] - center[0], p[1] - center[1]) - radius) <= tolerance;
+  let d = `M${coord(ring[0][0])} ${coord(ring[0][1])}`;
+  for (let i = 1; i <= ring.length; i++) {
+    const previous = ring[i - 1], point = ring[i % ring.length];
+    d += onRadius(previous) && onRadius(point)
+      ? ` A${coord(radius)} ${coord(radius)} 0 0 1 ${coord(point[0])} ${coord(point[1])}`
+      : ` L${coord(point[0])} ${coord(point[1])}`;
+  }
+  return `${d} Z`;
+};
+
 /**
  * What a piece's emitters can see (ТЗ §6): the visibility fans of the shared
  * `visibilityPolygon` with the scene's occluders. When no occluder is close,
@@ -148,17 +174,14 @@ const ringPath = (ring: readonly number[][]): string =>
  */
 function fans(emitters: readonly Pt[], radius: number, scene: LightBarrierScene): string[] {
   const reach = radius * 1.01;
-  if (!scene.occluders.some((seg) => seg?.length >= 4
-      && emitters.some((p) => segmentDistance(p, seg) < reach))) {
-    return emitters.map((p) => ringPath(Array.from({ length: LED_ARC_STEPS }, (_, k) => {
-      const angle = (k / LED_ARC_STEPS) * Math.PI * 2;
-      return [p[0] + Math.cos(angle) * radius, p[1] + Math.sin(angle) * radius];
-    })));
-  }
-  return emitters
-    .map((p) => visibilityPolygon([p[0], p[1]], radius, scene.occluders, LED_ARC_STEPS))
-    .filter((fan) => fan.length >= 3)
-    .map(ringPath);
+  return emitters.flatMap((p) => {
+    const blocked = scene.occluders.some((seg) => seg?.length >= 4
+      && segmentDistance(p, seg) < reach);
+    if (!blocked) return [discPath(p, radius)];
+    const fan = visibilityPolygon([p[0], p[1]], radius, scene.occluders, LED_ARC_STEPS);
+    const path = visibilityPath(p, radius, fan);
+    return path ? [path] : [];
+  });
 }
 
 /** The floor clip of the whole field layer, built once per scene. */
