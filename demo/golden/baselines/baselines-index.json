@@ -1,27 +1,48 @@
 {
   "schema": 3,
   "matrixVersion": 71,
-  "acceptedAt": "2026-10-03T15:57:17.589Z",
-  "sourceFingerprint": "6cd33bbad3c9a6a101afc1d501a8959df6ad58b693802489873660c043677fa7",
+  "acceptedAt": "2026-10-03T21:10:10.375Z",
+  "sourceFingerprint": "660dd7fd37337d645e3b1d038e725b1f2cae1c2ac628726925ff15d1744aa88f",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
-  "acceptedOn": "win32",
+  "acceptedOn": "linux",
   "capture": {
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "6cd33bbad3c9a6a101afc1d501a8959df6ad58b693802489873660c043677fa7",
-    "ci": {
+    "buildFingerprint": "660dd7fd37337d645e3b1d038e725b1f2cae1c2ac628726925ff15d1744aa88f",
+    "ci": null
+  },
+  "localAttestation": {
+    "schema": "houseplan-golden-wsl/v1",
+    "sha256": "aaf9ebcb3613071dc8048506f68a889dab6bdea8e62ba5ce677b12d611e9eae7",
+    "artifactSha256": "6f22f397e53e147b8c7cf41ec1b0063eb966fbb57ef3d0a10289728cb7af1f9f",
+    "createdAt": "2026-10-03T21:03:28.942Z",
+    "source": {
       "repository": "Matysh/houseplan-card",
-      "run": 37134548622,
-      "attempt": 1,
-      "sha": "c142e4f7b5b3ffb46d3a2b88222a9d697e8144b1"
+      "branch": "issue/790-led-core-source-color",
+      "commit": "181b61ae8e6adc967dde8c2a87799152ec777956",
+      "tree": "ec94fddbfd9acbda68ceef4c158b283f7506062a",
+      "remoteSha": "181b61ae8e6adc967dde8c2a87799152ec777956",
+      "clean": true,
+      "status": ""
+    },
+    "environment": {
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.33.2-microsoft-standard-WSL2",
+      "wsl": true,
+      "distro": "Ubuntu",
+      "filesystem": "ext2/ext3"
+    },
+    "toolchain": {
+      "node": "22.23.2",
+      "npm": "10.9.8",
+      "playwright": "1.62.0",
+      "chromiumExecutableSha256": "0b20b130e7edd9dd51873be867761295fe0cfad490c2b9a64f95bd3cfc08fa71"
     }
   },
-  "localAttestation": null,
-  "foreignCapture": {
-    "reason": "Owner-authorized #788 acceptance on Windows of Linux CI artifact Validate 37134548622; capture is not Windows (#455)"
-  },
+  "foreignCapture": null,
   "witnesses": {
     "count": 101,
     "floor": 10
@@ -220,12 +241,12 @@
     "card-editor-invalid-default-floor-light-en": "dbf251ece014cfee252e0dcb2d7c00eda66aa4b5bd125e4c83e248d4319d24b3",
     "card-editor-invalid-default-floor-dark-ru": "422b74bb391b87e383350247ef1bc1f10ca48c8f6fe418f75bde94e62e3b8bc0",
     "led-strip-design-reference-off-light": "1a558111dbeb1962b10f47baad20b4689248a347510261152f0d6196906044fd",
-    "led-strip-design-reference-on-light": "16bfb46f2a90c57e95f1307e375e04e5809d41ae677e3b1e1eb56d7e0bc1d8ec",
-    "lighting-led-strip-glow-dark": "254fe1e39c5bb7bbb7e67527f69c767c8bdb6ed959986a8085b18adb152001d6",
-    "led-strip-long-zigzag-glow-light": "cd0847c03b6b397c93fa923dcd06b30d7d4a8f6c6db2f006b9f3e20de0e66e91",
-    "led-strip-endcaps-zoom-light": "57703b53bd9d2eaae1b3142903a8b574e5d12b761b9b7240543ee2463c44c74d",
-    "led-strip-rectangle-door-zoom-light": "549e9e9110cc3b01537d07bcf6ab89896069a49183a27c22904b89c99e35347c",
+    "led-strip-design-reference-on-light": "1d6b4c2cfac2e1aeb9ce17ae2b3ddb62707e3f46c2ad3967b3669712a8e577fd",
+    "lighting-led-strip-glow-dark": "e6cdec5a16fde53bd1eca255eff554a5923f710d2b6e24904e46e39d8e5ab4ab",
+    "led-strip-long-zigzag-glow-light": "342749c29bac93a9a53f58921a40a10731fbcfdfff4345e71af81ce4de4dfa61",
+    "led-strip-endcaps-zoom-light": "468293d57b96b4b17f61027467c7c43b25d5a0f91972ba0451998cdc61ea3980",
+    "led-strip-rectangle-door-zoom-light": "00e8d937924bff957ef413f5d8b7c6964e44c96e90b9209ea24158217328b2ac",
     "led-strip-off-light": "cbb4f4794c871d592917653e8b5713d87a6be6dfe470b2161da760c2bb3cebdc",
-    "iso-led-strip-dark": "572728e34f77f911f0ece247c5b7de6653e9c0dfafe04a0ab198b88644081a58"
+    "iso-led-strip-dark": "6605a62b15a47da09920743793b5c7f8cb2768610b6d57b739fa91eeef883676"
   }
 }
