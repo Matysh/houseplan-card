@@ -432,7 +432,7 @@ measures the LED strips on the `large-house-v1` fixture: on every floor 10 or 50
 existing devices become lights shown as strips that are on — `10x5` (10 strips
 × 5 points) or `50x50` — without adding a device or an icon
 (`performance/led-strips-fixture.mjs`); `none` is the same build and plan
-without strips. Glow on, strip radius 50 cm, viewport 1440×1000, DPR 1,
+without strips. Glow on, strip radius 30 cm, viewport 1440×1000, DPR 1,
 reduced motion; every sample is cold (a new browser and card), seven samples
 after one warm-up. The runner fails on its own against
 `budgets-led-strips.json` — the ТЗ table, median and p95: `firstStableRenderMs`
@@ -456,4 +456,3 @@ strips, so there is no relative comparison; the zero-LED View remains judged
 by the relative `large-house-interaction-v1` profile. Exact-SHA Linux output
 of the full performance workflow (`led-strips` matrix entry) is the gate
 evidence; a local report is diagnostic.
-

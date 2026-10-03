@@ -146,6 +146,14 @@ test('#594 имена параметризованы, а не зашиты', () 
     'с включённым флагом ряд-переключатель обязан появляться');
 });
 
+test('#784 unit input leaves one focus ring on its wrapper', () => {
+  const css = formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false });
+  assert.match(css, /hp-dialog \.hpf-form \.hpf-unit > input:focus \{ outline: 0; \}/,
+    'the inner input must override the more specific generic focus-visible rule');
+  assert.match(css, /\.hpf-unit:focus-within \{ outline: 2px solid var\(--hpf-accent\);/,
+    'the wrapper keeps the single visible focus ring');
+});
+
 test('#594 сегментированный переключатель остаётся радиогруппой', () => {
   const kit = readFileSync(new URL('../src/editors/form-kit.ts', import.meta.url), 'utf8');
   // Только тело `segmented`: дальше в файле есть другие радиогруппы (radioRow,

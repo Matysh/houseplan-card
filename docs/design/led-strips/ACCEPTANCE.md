@@ -43,7 +43,7 @@ behaviours, not of positions.
 | On with Glow: white core + coloured field; without Glow: core in the source colour, no field | `ledStripView` + `resolveGlowAppearance` | smoke `smoke_led_strip_glow.mjs` |
 | Glow is the space/room switch, independent of `fill_mode` | `glowFor(room)` | `lighting-led-strip-glow-dark` uses `fill_mode: none` |
 | Per-piece offset: t/2 on a thick face into free floor, 0 on free floor and zero walls; continuous transition | `visibleStripPath` | unit `test/led-strip-geometry.test.mjs` (AC8) |
-| Field 50 cm by default, own `glow_radius_cm` wins; round free ends; no seams or doubled brightness at corners/closure | `ledFrame`, `led-strip-field` (`lighten` in one group) | unit `test/led-strip-runtime.test.mjs`; reference pair |
+| Field 30 cm by default, own `glow_radius_cm` wins; round free ends; no seams, bands or doubled brightness at corners/closure | `ledFrame`, one continuous path through the unioned visibility clip in `led-strip-field` | unit `test/led-strip-runtime.test.mjs`; reference pair |
 | Shared `glowAlpha` / `GLOW_FALLOFF` / `GLOW_FADE_MS` | field bands from `falloffAt` | unit `test/led-strip-runtime.test.mjs` |
 | Field under icons, badges and labels; icons not tinted | glow layer below the device layer | reference pair (designer tinting deliberately not reproduced) |
 
@@ -69,4 +69,4 @@ behaviours, not of positions.
   the default `icon_size` and the band edge is the shared Glow edge.
 - Icons and labels are not tinted by the field.
 - The mockup's "half the shared radius" and "always coloured core" are replaced
-  by 50 cm and the white core under Glow (owner's decision in #780).
+  by 30 cm (#784) and the white core under Glow (owner's decision in #780).

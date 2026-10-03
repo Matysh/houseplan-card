@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- LED strips now cast a smooth, continuous Glow field without gradient bands
+  or cuts at corners and fade in and out instead of switching abruptly. Their
+  default Glow radius is now 30 cm. The device picker scrolls without zooming
+  the plan, the radius field has one focus outline, and clicking a strip no
+  longer leaves a selection outline while keyboard focus remains visible
+  ([#784](https://github.com/Matysh/houseplan-card/issues/784)).
+
 ## v1.79.0-beta.3 — 2026-10-03
 
 - LED strips: in the Devices editor, the new «LED strip» tool next to «Add»

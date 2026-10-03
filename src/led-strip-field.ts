@@ -5,19 +5,19 @@
  * card has a light scene — the static card with `light_pools: false` never
  * loads it (ТЗ §13.1).
  *
- * The field is the exact distance field of the strip with the shared falloff:
- * every piece of the strip paints opaque grey bands of a luminance mask (round
- * caps and joins, so one piece never doubles itself), pieces meet through
- * `mix-blend-mode: lighten` — the maximum, i.e. the nearest piece — and each
- * piece is clipped to the floor its own emitters can see. A hidden part never
- * lights through another part's visibility, a closed strip has no seam and a
- * corner no double brightness.
+ * The field is the distance field of one continuous strip path with the shared
+ * falloff. Visibility remains sampled in bounded pieces, but their visible
+ * regions are unioned into one clip before the continuous path is painted.
+ * That separation keeps walls opaque without exposing piece boundaries in the
+ * gradient at straight cuts or corners.
  */
 import { noChange, nothing, svg, type TemplateResult } from 'lit';
 import { Directive, directive, type PartInfo } from 'lit/directive.js';
 import { repeat } from 'lit/directives/repeat.js';
 import {
-  GLOW_FALLOFF, type LightBarrierScene, type LightRoomPolygon,
+  createGlowRuntimeState, disposeGlowRuntime, forgetGlowSpace, GLOW_FALLOFF,
+  pruneGlowSources, transitionGlowSource, type GlowRuntimeHost,
+  type GlowRuntimeState, type LightBarrierScene, type LightRoomPolygon,
 } from './glow-scene';
 import { visibilityPolygon } from './light-visibility';
 import {
@@ -45,11 +45,11 @@ const memo = directive(Memo);
 export const LED_FIELD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
 /**
- * Bands of the luminance field. Twelve keep the midpoint error at the r/2
- * visual acceptance point below 10%, without multiplying every visibility
- * piece into sixteen SVG paint nodes.
+ * Bands of the luminance field. The field is painted once per strip rather
+ * than once per visibility piece, so 48 steps remain bounded while keeping
+ * neighbouring alpha levels below the threshold that showed as rings.
  */
-export const LED_FIELD_BANDS = 12;
+export const LED_FIELD_BANDS = 48;
 
 const pts = (points: readonly number[][]): Pt[] => points.map((p) => [p[0], p[1]] as Pt);
 
@@ -60,6 +60,8 @@ interface FieldPiece {
 }
 
 interface FieldGeometry {
+  /** One continuous path; never split at visibility/cache boundaries. */
+  d: string;
   pieces: FieldPiece[];
   box: { x: number; y: number; w: number; h: number };
 }
@@ -184,6 +186,9 @@ export function buildFieldGeometry(input: {
   const path = compactPoints(pts(input.points));
   if (path.length < 2 || !(input.radius > 0)) return null;
   const r = input.radius;
+  const closed = isClosedStrip(path);
+  const visiblePath = closed ? path.slice(0, -1) : path;
+  const d = `${visiblePath.map((p, k) => `${k ? 'L' : 'M'}${coord(p[0])} ${coord(p[1])}`).join(' ')}${closed ? ' Z' : ''}`;
   // Consecutive pieces of at most r along the polyline.
   const runs: Pt[][] = [];
   let run: Pt[] = [path[0]];
@@ -218,14 +223,14 @@ export function buildFieldGeometry(input: {
     let clip: string[] | null;
     try { clip = fans(emitters, r, input.scene); } catch { continue; } // fail-dark for this piece
     if (clip && !clip.length) continue;
-    pieces.push({ d: piece.map((p, k) => `${k ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' '), clip });
+    pieces.push({ d: piece.map((p, k) => `${k ? 'L' : 'M'}${coord(p[0])} ${coord(p[1])}`).join(' '), clip });
     for (const p of piece) {
       minX = Math.min(minX, p[0]); minY = Math.min(minY, p[1]);
       maxX = Math.max(maxX, p[0]); maxY = Math.max(maxY, p[1]);
     }
   }
   if (!pieces.length) return null;
-  return { pieces, box: { x: minX - r, y: minY - r, w: maxX - minX + 2 * r, h: maxY - minY + 2 * r } };
+  return { d, pieces, box: { x: minX - r, y: minY - r, w: maxX - minX + 2 * r, h: maxY - minY + 2 * r } };
 }
 
 /** The shared falloff at a relative distance 0…1 (GLOW_FALLOFF, linear between stops). */
@@ -252,13 +257,61 @@ export interface LedFieldInput {
   spaceId: string;
   /** The card that owns the bounded cache (one per card, gone with it). */
   owner: object;
+  requestUpdate: () => void;
+  isConnected: () => boolean;
+  reducedMotion?: () => boolean;
 }
 
 const fieldCaches = new WeakMap<object, LedFieldCache>();
+interface FieldLifecycle {
+  state: GlowRuntimeState;
+  host: GlowRuntimeHost;
+  callbacks: Pick<LedFieldInput, 'requestUpdate' | 'isConnected' | 'reducedMotion'>;
+  spaceId: string;
+}
+const fieldLifecycles = new WeakMap<object, FieldLifecycle>();
+
+function fieldLifecycle(input: LedFieldInput): FieldLifecycle {
+  let lifecycle = fieldLifecycles.get(input.owner);
+  if (!lifecycle) {
+    const callbacks = {
+      requestUpdate: input.requestUpdate,
+      isConnected: input.isConnected,
+      reducedMotion: input.reducedMotion,
+    };
+    const host: GlowRuntimeHost = {
+      window: () => window,
+      isConnected: () => callbacks.isConnected(),
+      requestUpdate: () => callbacks.requestUpdate(),
+      reducedMotion: () => callbacks.reducedMotion?.()
+        ?? window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        ?? false,
+    };
+    lifecycle = { state: createGlowRuntimeState(), host, callbacks, spaceId: '' };
+    fieldLifecycles.set(input.owner, lifecycle);
+  } else {
+    lifecycle.callbacks.requestUpdate = input.requestUpdate;
+    lifecycle.callbacks.isConnected = input.isConnected;
+    lifecycle.callbacks.reducedMotion = input.reducedMotion;
+  }
+  if (lifecycle.spaceId && lifecycle.spaceId !== input.spaceId) {
+    forgetGlowSpace(lifecycle.state, lifecycle.host, lifecycle.spaceId);
+  }
+  lifecycle.spaceId = input.spaceId;
+  return lifecycle;
+}
+
 /** Disconnect (ТЗ §13.2): no retained entry of this owner. */
 export function releaseLedField(owner: object): void {
   fieldCaches.get(owner)?.clear();
   fieldCaches.delete(owner);
+  const lifecycle = fieldLifecycles.get(owner);
+  if (lifecycle) disposeGlowRuntime(lifecycle.state, lifecycle.host);
+  fieldLifecycles.delete(owner);
+}
+/** Keep rendering while an off transition still owns a DOM node. */
+export function hasLedField(owner: object): boolean {
+  return !!fieldLifecycles.get(owner)?.state.renderedSources.size;
 }
 /** The performance witness: what this owner retains right now. */
 export function ledFieldStats(owner: object): { visibility: number; sources: number; recomputes: number } {
@@ -284,9 +337,18 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
   if (!input.scene) return svg`` as unknown as TemplateResult;
   const cache = ledFieldCache(input.owner);
   cache.forSpace(input.spaceId);
+  const lifecycle = fieldLifecycle(input);
   const scene = input.scene;
+  const seen = new Set<string>();
   const fields = input.views.flatMap((view) => {
-    if (!view.glow || view.state === 'unavailable') return [];
+    const lifecycleKey = `${input.spaceId}|${view.strip.id}`;
+    seen.add(lifecycleKey);
+    const active = view.glow && view.state === 'on' && !!view.appearance;
+    const transition = transitionGlowSource(lifecycle.state, lifecycle.host, lifecycleKey, active);
+    if (!transition) return [];
+    if (active && view.appearance) lifecycle.state.lastAppearance.set(lifecycleKey, view.appearance);
+    const appearance = active ? view.appearance : lifecycle.state.lastAppearance.get(lifecycleKey) ?? null;
+    if (!appearance) return [];
     const key = `${view.strip.id}|${pointsKey(view.strip.points)}|${view.radius.toFixed(5)}|${scene.fingerprint}`;
     const geometry = cache.read(key, () => buildFieldGeometry({
       points: view.strip.points,
@@ -296,8 +358,9 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
       faces: input.faces,
       spaceId: input.spaceId,
     }));
-    return geometry ? [{ view, geometry }] : [];
+    return geometry ? [{ view: { ...view, appearance }, geometry, transition }] : [];
   });
+  pruneGlowSources(lifecycle.state, lifecycle.host, input.spaceId, seen);
   if (!fields.length) return svg`` as unknown as TemplateResult;
   const bands = Array.from({ length: LED_FIELD_BANDS }, (_, k) => {
     const outer = 1 - k / LED_FIELD_BANDS;
@@ -309,34 +372,33 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
       data-led-cache="${cache.size}" data-led-recomputes="${cache.recomputes}">
     <defs><clipPath id="hp-led-floor">${fieldFloor(scene).map((d) => svg`<path d="${d}"></path>`)}</clipPath></defs>
     <g clip-path="url(#hp-led-floor)">
-    ${repeat(fields, ({ view }) => view.strip.id, ({ view, geometry }) => {
+    ${repeat(fields, ({ view }) => view.strip.id, ({ view, geometry, transition }) => {
       const id = `${cache.id(view.strip.id)}`;
       const r = view.radius;
-      const on = view.state === 'on' && !!view.appearance;
       const box = geometry.box;
       const closed = isClosedStrip(pts(view.strip.points));
-      const clipped = geometry.pieces.flatMap((piece, k): Array<FieldPiece & { clip: string[]; clipId: number }> => piece.clip
-        ? [{ ...piece, clip: piece.clip, clipId: k }] : []);
-      const free = geometry.pieces.filter((piece) => !piece.clip).map((piece) => piece.d).join(' ');
-      const paint = [...clipped, ...(free ? [{ d: free, clip: null, clipId: -1 }] : [])];
-      return memo([geometry, on, view.appearance?.c, view.appearance?.alpha, r, id], () => svg`<g class="glow-spot led-field ${on ? '' : 'is-leaving'}" data-led-field="${view.strip.id}"
-          data-pieces="${geometry.pieces.length}" data-closed="${closed ? 'true' : 'false'}">
+      const clipped = geometry.pieces.filter((piece): piece is FieldPiece & { clip: string[] } => !!piece.clip);
+      const free = geometry.pieces.filter((piece) => !piece.clip);
+      const visibilityClip = clipped.length > 0;
+      return memo([geometry, transition.entering, transition.leaving, view.appearance.c,
+        view.appearance.alpha, r, id], () => svg`<g
+          class="glow-spot led-field ${transition.entering ? 'is-entering' : ''} ${transition.leaving ? 'is-leaving' : ''}"
+          data-led-field="${view.strip.id}" data-led-phase="${transition.entering ? 'entering' : transition.leaving ? 'leaving' : 'visible'}"
+          data-pieces="${geometry.pieces.length}" data-bands="${LED_FIELD_BANDS}"
+          data-closed="${closed ? 'true' : 'false'}">
         <defs>
-          ${clipped.map((piece) => svg`<clipPath id="hp-led-clip-${id}-${piece.clipId}">
-            ${''/* Subpaths of one path have the same union semantics in a clipPath,
-                    without one DOM node per emitter. */}
-            <path d="${piece.clip.join(' ')}"></path>
-          </clipPath>`)}
+          ${visibilityClip ? svg`<clipPath id="hp-led-visible-${id}">
+            ${free.map((piece) => svg`<path d="${piece.d}" fill="none" stroke="white"
+              stroke-width="${2 * r}" stroke-linecap="round" stroke-linejoin="round"></path>`)}
+            ${clipped.map((piece) => svg`<path d="${piece.clip.join(' ')}"></path>`)}
+          </clipPath>` : nothing}
           <mask id="hp-led-mask-${id}" maskUnits="userSpaceOnUse"
             x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}"
             color-interpolation="sRGB" style="mask-type:luminance">
             <rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" fill="black"></rect>
-            <g style="isolation:isolate">
-              ${paint.map((piece) => svg`<g style="mix-blend-mode:lighten"
-                  clip-path=${piece.clip ? `url(#hp-led-clip-${id}-${piece.clipId})` : nothing}>
-                ${bands.map((band) => svg`<path d="${piece.d}" fill="none" stroke="${grey(band.value)}"
-                  stroke-width="${2 * band.half * r}" stroke-linecap="round" stroke-linejoin="round"></path>`)}
-              </g>`)}
+            <g clip-path=${visibilityClip ? `url(#hp-led-visible-${id})` : nothing}>
+              ${bands.map((band) => svg`<path d="${geometry.d}" fill="none" stroke="${grey(band.value)}"
+                stroke-width="${2 * band.half * r}" stroke-linecap="round" stroke-linejoin="round"></path>`)}
             </g>
           </mask>
         </defs>

@@ -53,7 +53,8 @@ test('ТЗ §3: the linear falloff is the shared GLOW_FALLOFF', () => {
   }
 });
 
-test('AC10/AC17: the compact field bands stay within the r/2 visual tolerance', () => {
+test('#784: the continuous field has enough bands to avoid visible gradient steps', () => {
+  assert.ok(LED_FIELD_BANDS >= 32, `${LED_FIELD_BANDS} bands are visibly discrete on wide fields`);
   const fraction = 0.5;
   const band = Math.floor((1 - fraction) * LED_FIELD_BANDS);
   const midpoint = 1 - (band + 0.5) / LED_FIELD_BANDS;
@@ -65,13 +66,13 @@ test('AC10/AC17: the compact field bands stay within the r/2 visual tolerance', 
 const device = (extra = {}) => ({ id: 'm1', name: 'Kitchen LED', primary: 'light.led', space: 's', ...extra });
 const strip = { id: 'a', points: [[0, 0], [1, 0]], marker: 'm1' };
 
-test('AC7: states — off white, on, unavailable without a field; radius 50 cm or the own one', () => {
-  const base = { strip, defaultRadius: 10, cellCm: 5, gridPitch: 1, glow: true };
+test('#784/AC7: states — off white, on, unavailable without a field; radius 30 cm or the own one', () => {
+  const base = { strip, defaultRadius: 6, cellCm: 5, gridPitch: 1, glow: true };
   const on = ledStripView({ ...base, device: device(), hass: { states: { 'light.led': { state: 'on' } } },
     candidate: { key: 's|m1', sourceEid: 'light.led', pos: { x: 0, y: 0 }, radius: 3, appearance: { c: '#ff0000', alpha: 0.5 } } });
   assert.equal(on.state, 'on');
   assert.deepEqual(on.appearance, { c: '#ff0000', alpha: 0.5 });
-  assert.equal(on.radius, 10, 'the shared radius of ordinary sources does not apply: 50 cm default');
+  assert.equal(on.radius, 6, 'the shared radius of ordinary sources does not apply: 30 cm default');
   const off = ledStripView({ ...base, device: device(), hass: { states: { 'light.led': { state: 'off' } } },
     candidate: { key: 's|m1', sourceEid: 'light.led', pos: { x: 0, y: 0 }, radius: 3, appearance: null } });
   assert.equal(off.state, 'off');
@@ -100,6 +101,8 @@ test('ТЗ §6: every piece is clipped to what its own emitters see; a buried st
   const geometry = buildFieldGeometry({ points: [[1, 1], [9, 1]], radius: 2, scene, polygons, faces, spaceId: 's' });
   assert.ok(geometry, 'a free strip has a field');
   assert.equal(geometry.pieces.length, 4, 'an 8-unit segment with r = 2 makes four pieces');
+  assert.equal((geometry.d.match(/M/g) || []).length, 1,
+    'visibility/cache pieces do not split the painted path');
   for (const piece of geometry.pieces) assert.equal(piece.clip, null, 'nothing within r: the bands are the bound');
   // Passing 0.5 below the body: the pieces near it are clipped to their own fans.
   const near = buildFieldGeometry({ points: [[0.5, 3.5], [9.5, 3.5]], radius: 1, scene, polygons, faces, spaceId: 's' });
@@ -118,6 +121,20 @@ test('ТЗ §6: every piece is clipped to what its own emitters see; a buried st
   assert.equal(buried, null, 'entirely inside the body: no field');
 });
 
+test('#784: a corner and a closed strip remain one painted path', () => {
+  const faces = faceContext(scene, 1e-6);
+  const corner = buildFieldGeometry({ points: [[1, 1], [9, 1], [9, 9]], radius: 2,
+    scene, polygons, faces, spaceId: 's' });
+  assert.ok(corner && corner.pieces.length > 1);
+  assert.equal((corner.d.match(/M/g) || []).length, 1);
+  assert.match(corner.d, /L9 1 L9 9$/);
+  const closed = buildFieldGeometry({ points: [[1, 1], [3, 1], [3, 3], [1, 3], [1, 1]], radius: 1,
+    scene, polygons, faces, spaceId: 's' });
+  assert.ok(closed);
+  assert.equal((closed.d.match(/M/g) || []).length, 1);
+  assert.match(closed.d, / Z$/);
+});
+
 test('AC17: the field cache is bounded, per space, and counts geometry rebuilds', () => {
   const cache = new LedFieldCache(3);
   cache.forSpace('a');
@@ -130,7 +147,7 @@ test('AC17: the field cache is bounded, per space, and counts geometry rebuilds'
   assert.equal(cache.size, 0, 'another space frees the previous one');
 });
 
-test('AC9: the frame gives every strip the 50 cm default, not the shared radius; unbound strips have no view', () => {
+test('#784/AC9: the frame gives every strip the 30 cm default, not the shared radius; unbound strips have no view', () => {
   const lamp = { id: 'm1', name: 'Lamp', primary: 'light.led', entities: ['light.led'], space: 's', marker: { id: 'm1', binding: 'device:m1' } };
   const frame = ledFrame({
     space: { id: 's', vb: [0, 0, 1000, 1000], rooms: [], led_strips: [
@@ -143,7 +160,7 @@ test('AC9: the frame gives every strip the 50 cm default, not the shared radius;
     scene: null, polygons: [], glowFor: () => true, inRoom: () => false, showHidden: false,
   });
   assert.equal(frame.views.length, 1, 'the unbound strip is not a View strip');
-  assert.ok(Math.abs(frame.views[0].radius - (50 / 5) * (1000 / 240)) < 1e-9, `radius ${frame.views[0].radius}`);
+  assert.ok(Math.abs(frame.views[0].radius - (30 / 5) * (1000 / 240)) < 1e-9, `radius ${frame.views[0].radius}`);
 });
 
 test('AC2/r1 M2: an explicit valid room_id wins over the anchor room; a stale one falls back', () => {

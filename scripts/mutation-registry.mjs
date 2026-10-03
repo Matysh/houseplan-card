@@ -14268,10 +14268,10 @@ const MUTANT_DEFINITIONS = [
     id: 'led-default-radius-shared',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/led-strip-runtime.test.mjs',
-    because: "#780 ТЗ §3: the field radius is 50 cm by default, independent of the shared radius of ordinary sources",
+    because: "#784: the field radius is 30 cm by default, independent of the shared radius of ordinary sources",
     patches: [{
       file: 'src/led-strip-geometry.ts',
-      find: "export const LED_DEFAULT_RADIUS_CM = 50;",
+      find: "export const LED_DEFAULT_RADIUS_CM = 30;",
       replace: "export const LED_DEFAULT_RADIUS_CM = 360;",
     }],
   },

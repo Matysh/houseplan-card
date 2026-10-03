@@ -25,8 +25,8 @@ export const LED_MAX_STRIPS = 50;
 export const LED_MAX_POINTS = 50;
 /** Geometric tolerance for "lies on a face": 0.001 cm, never a screen magnet. */
 export const LED_EPSILON_CM = 0.001;
-/** Default linear field radius (ТЗ §3): 50 cm, independent of the shared one. */
-export const LED_DEFAULT_RADIUS_CM = 50;
+/** Default linear field radius (#784): 30 cm, independent of the shared one. */
+export const LED_DEFAULT_RADIUS_CM = 30;
 /** Total stripe thickness in base device diameters (ТЗ §3). */
 export const LED_THICKNESS_OFF_D = 0.08;
 export const LED_THICKNESS_ON_D = 0.12;

@@ -209,7 +209,7 @@ function extrasCss(options: FormKitCssOptions): string {
   ${form} [aria-invalid="true"] { border-color: var(${tokens.danger}) !important; }
   .${p}-unit { display: inline-flex; align-items: center; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.surface}); }
   .${p}-unit > input { box-sizing: border-box; width: 5.5em; min-width: 5.5em; height: 100%; padding: 8px 9px; border: 0; border-radius: 7px; background: none; color: var(--primary-text-color); font: inherit; font-size: .875rem; font-variant-numeric: tabular-nums; }
-  .${p}-unit > input:focus { outline: 0; }
+  ${form} .${p}-unit > input:focus { outline: 0; }
   .${p}-unit > span { padding: 0 11px 0 3px; white-space: nowrap; color: var(${tokens.muted}); font-size: .875rem; }
   .${p}-unit:focus-within { outline: 2px solid var(${tokens.accent}); outline-offset: 2px; }
   .${p}-unit.${p}-unit-wide, .${p}-unit.${p}-unit-wide > input { width: 100%; min-width: 0; }

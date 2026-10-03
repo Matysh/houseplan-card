@@ -11,7 +11,7 @@ with the frames Led On (626:35) and Led Off (626:53).
 **The contract is the ТЗ in the body of
 [#780](https://github.com/Matysh/houseplan-card/issues/780)**, not the archived
 `source/TZ-issue-662-LED-strips.md`. Where they differ the issue wins — notably
-the 50 cm default radius, the white core under Glow, editing in the Devices
+the 30 cm default radius (#784), the white core under Glow, editing in the Devices
 editor and the product thicknesses 0.08/0.12 D instead of the mockup's pixel
 sizes and blur. These files are documentation only; nothing here reaches the
 runtime bundle.

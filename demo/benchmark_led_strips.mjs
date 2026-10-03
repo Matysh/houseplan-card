@@ -7,7 +7,7 @@
  * strips that are on: `--size=10x5` (10 strips × 5 points) or `--size=50x50`
  * (50 strips × 50 points); `--size=none` is the same build and plan without
  * strips. No icon is added: the converted devices keep their ids, only their
- * entity becomes a light. Light radius 50 cm (the strip default), Glow on,
+ * entity becomes a light. Light radius 30 cm (the strip default), Glow on,
  * viewport 1440×1000, DPR 1, reduced motion. `--warmups` (≥1) samples are
  * discarded, then `--samples` (≥7) are judged. Every sample is cold: a new
  * browser with an empty cache mounts a new card; the warm metrics run in the

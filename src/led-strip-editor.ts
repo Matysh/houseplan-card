@@ -783,8 +783,10 @@ export class LedStripEditor {
       .sort((a, b) => Number(isLight(b)) - Number(isLight(a)) || a.name.localeCompare(b.name));
     const close = () => { this.picker = null; this.host.requestUpdate(); };
     return html`<hp-dialog .hass=${this.host.hass} data-kind="led-picker" .title=${this.t('led.pick_title')}
-      icon="mdi:led-strip-variant" @hp-close=${close}>
-      <div class="body led-picker" style="display:flex;flex-direction:column;gap:4px">
+      icon="mdi:led-strip-variant" flex-content @wheel=${(e: WheelEvent) => e.stopPropagation()}
+      @hp-close=${close}>
+      <div class="body led-picker"
+        style="display:flex;flex-direction:column;gap:4px;min-height:0;max-height:min(60dvh,520px);overflow-y:auto;overscroll-behavior:contain">
         ${devices.length ? devices.map((d) => {
           const owner = ownerOf(this.host._serverCfg, d.id);
           const taken = !!owner && owner.strip.id !== stripId;

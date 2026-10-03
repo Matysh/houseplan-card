@@ -6,13 +6,9 @@
  * and the hit path; the card keeps the device model, the actions and the
  * light state, and passes them in. Nothing here writes configuration.
  *
- * The linear field is the exact distance field of the strip with the shared
- * falloff: every piece of the strip paints opaque grey bands of a luminance
- * mask (round caps and joins, so one piece never doubles itself), pieces meet
- * through `mix-blend-mode: lighten` — the maximum, i.e. the nearest piece —
- * and each piece is clipped to the floor its own emitters can see. A hidden
- * part therefore never lights through another part's visibility (ТЗ §6), a
- * closed strip has no seam and a corner no double brightness (ТЗ §3).
+ * The linear field paints one continuous path through a union of bounded
+ * visibility regions. Cache boundaries therefore never become visible seams,
+ * while the same wall/door scene still clips the light.
  */
 import { nothing, svg, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
@@ -81,7 +77,7 @@ export interface LedStripView {
   glow: boolean;
   /** Resolved light colour and per-stop alpha when on; null otherwise. */
   appearance: { c: string; alpha: number } | null;
-  /** Field radius, plan units: the marker's own radius or 50 cm. */
+  /** Field radius, plan units: the marker's own radius or 30 cm. */
   radius: number;
 }
 
@@ -261,7 +257,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
       <feGaussianBlur stdDeviation="${iso.shadow.sigma}"></feGaussianBlur></filter></defs>` : nothing}
     <style>
       .led-strip .led-focus { fill: none; stroke: transparent; }
-      .led-strip:focus-within .led-focus { stroke: var(--primary-color, #03a9f4); }
+      .led-strip:has(.led-hit:focus-visible) .led-focus { stroke: var(--primary-color, #03a9f4); }
       .led-strip .led-hit { fill: none; stroke: transparent; cursor: pointer; outline: none; }
     </style>
     ${repeat(ordered, (view) => view.strip.id, (view) => {
@@ -541,7 +537,8 @@ export function renderLedLayerFor(
 export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean): TemplateResult {
   if (host.isConnected === false) return svg`` as unknown as TemplateResult;
   const frame = ledFrameFor(host, space, spaceGlow);
-  const module = frame.scene && fieldWanted(frame.views) ? ledField(space.id, () => host.isConnected !== false && host.requestUpdate()) : null;
+  const module = frame.scene && (fieldWanted(frame.views) || field?.hasLedField(host))
+    ? field || ledField(space.id, () => host.isConnected !== false && host.requestUpdate()) : null;
   if (!module) return svg`` as unknown as TemplateResult;
   return module.renderLedField({
     views: frame.views,
@@ -550,6 +547,8 @@ export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlo
     faces: frame.faces,
     spaceId: space.id,
     owner: host,
+    requestUpdate: () => host.requestUpdate(),
+    isConnected: () => host.isConnected !== false,
   });
 }
 
@@ -611,9 +610,10 @@ export function renderStaticLed(input: StaticLedInput): TemplateResult {
     occluders: [], floor: [], fingerprint: '',
     masonryGeometry: input.bodies.masonryGeometry, opaqueBodies: input.bodies.opaqueBodies,
   }, (LED_EPSILON_CM / input.cellCm) * input.gridPitch);
-  const module = input.scene && input.live && fieldWanted(views)
+  const module = input.scene && input.live && (fieldWanted(views) || field?.hasLedField(input.owner))
     ? ledField(input.space.id, input.ready) : null;
   return svg`${module ? module.renderLedField({
     views, scene: input.scene as LightBarrierScene, polygons, faces, spaceId: input.space.id, owner: input.owner,
+    requestUpdate: input.ready, isConnected: () => true,
   }) : nothing}${renderLedStripes({ views, d: frame.d, faces, perUnit: input.perUnit, handlers: null })}` as unknown as TemplateResult;
 }

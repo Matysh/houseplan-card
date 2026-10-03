@@ -1059,7 +1059,7 @@ editor** — there is no need to switch to the Plan editor.
 
 Binding creates no new Home Assistant device: the same marker, light
 settings, tap actions and badge — drawn at the middle of the strip's length. The strip glows when the device does: with
-Glow on, a white core and a soft band of colour 50 cm wide by default (or the
+Glow on, a white core and a soft band of colour 30 cm wide by default (or the
 device's own radius); without Glow the core takes the light's colour. Light
 does not pass through walls or closed doors. In View the whole strip is one
 tap target, like an icon. Every finished shape change and every switch of the

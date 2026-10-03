@@ -129,8 +129,17 @@ const calls = await evaluate(async () => {
 const hit = await evaluate(() => { const r = window.__card.shadowRoot.querySelector('.led-hit').getBoundingClientRect(); return [r.x + r.width * 0.25, r.y + 2]; });
 const box = await evaluate(() => { const p = window.__card.shadowRoot.querySelector('.led-hit'); const len = p.getTotalLength(); const pt = p.getPointAtLength(len * 0.3); const m = p.getScreenCTM(); return [pt.x * m.a + m.e, pt.y * m.d + m.f]; });
 await page.mouse.click(box[0], box[1]);
-await settle();
+await page.waitForFunction(() => window.__card.hass.states['light.ceiling'].state === 'off');
 check('a click on the stripe toggles once', await evaluate(() => window.__ledToggle.length), calls + 1);
+check('turning off keeps the field for the fade', await evaluate(() =>
+  window.__card.shadowRoot.querySelector('[data-led-field]')?.getAttribute('data-led-phase')), 'leaving');
+check('a pointer click leaves no selection outline', await evaluate(() => {
+  const root = window.__card.shadowRoot;
+  const target = root.querySelector('.led-hit');
+  return !target.matches(':focus-visible')
+    && getComputedStyle(root.querySelector('.led-focus')).stroke === 'rgba(0, 0, 0, 0)';
+}), true);
+await page.waitForTimeout(600);
 void hit;
 check('off: no field, white core', JSON.stringify([await stripe('d_light1'), await field()]),
   JSON.stringify([{ state: 'off', core: '#FFFFFF', dash: null }, 0]));
@@ -152,7 +161,15 @@ check('a pan along the stripe calls no service', await ceiling(), 'off');
   const [x, y] = await along(0.6);
   await page.mouse.click(x, y);
 }
-await settle();
+await page.waitForFunction(() => window.__card.hass.states['light.ceiling'].state === 'on');
+const fadeInOpacity = await evaluate(() => Number(getComputedStyle(
+  window.__card.shadowRoot.querySelector('[data-led-field]'),
+).opacity));
+check('turning on starts below full opacity', fadeInOpacity < 0.95, true);
+await page.waitForTimeout(600);
+check('turning on reaches full opacity smoothly', await evaluate(() => Number(getComputedStyle(
+  window.__card.shadowRoot.querySelector('[data-led-field]'),
+).opacity) > 0.99), true);
 check('the next clean click works at once', await ceiling(), 'on');
 {
   const [x, y] = await along(0.6);
@@ -224,6 +241,23 @@ check('static live_states:false + light_pools:true — neutral, no field, passiv
 check('static live_states:true + light_pools:true — white core and the field, passive', JSON.stringify(matrix['pools=true,live=true']),
   JSON.stringify({ state: 'on', white: true, field: true, passive: true, badge: true }));
 check('a click on any static stripe toggles nothing', await evaluate(() => window.__card.hass.states['light.ceiling'].state), 'on');
+
+await evaluate(() => window.__hpTest.setMode('devices'));
+await page.locator('.led-select-hit[data-led-select="ceiling"]').dispatchEvent('click');
+await page.waitForTimeout(100);
+await page.click('[data-led-action="settings"]');
+await page.waitForTimeout(100);
+const radiusFocus = await evaluate(() => {
+  const input = window.__card.shadowRoot.querySelector('#marker-glow-radius');
+  const unit = input?.closest('.hpf-unit');
+  input?.focus();
+  return input && unit ? {
+    input: getComputedStyle(input).outlineStyle,
+    wrapper: getComputedStyle(unit).outlineStyle,
+  } : null;
+});
+check('the Glow radius has one wrapper focus outline', JSON.stringify(radiusFocus),
+  JSON.stringify({ input: 'none', wrapper: 'solid' }));
 
 // The device dialog offers «Show as LED strip» before the tool is loaded:
 // a static section (no dialog shift), the press loads the tool and starts

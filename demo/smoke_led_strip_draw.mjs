@@ -84,7 +84,42 @@ const first = await strips();
 check('Esc finished one unbound strip', first.length === 1 && first[0].marker === null
   && JSON.stringify(first[0].points) === JSON.stringify([[0.2, 0.2], [0.4, 0.2]]));
 check('the device picker opened', await evaluate(() => !!window.__card.shadowRoot.querySelector('hp-dialog[data-kind="led-picker"]')));
+await page.setViewportSize({ width: 1000, height: 240 });
+await page.waitForTimeout(100);
+// Keep the demo registry deterministic for every smoke.  A long picker is a
+// presentation condition, so clone the product-rendered row in this isolated
+// page instead of mutating the authoritative HA registry snapshot.
+await evaluate(() => {
+  const list = window.__card.shadowRoot.querySelector('.led-picker');
+  const template = list.querySelector('.led-pick');
+  for (let i = 0; i < 18; i += 1) {
+    const row = template?.cloneNode(true) || document.createElement('button');
+    row.className = 'btn ghost led-pick';
+    row.removeAttribute('data-led-pick');
+    row.disabled = true;
+    row.textContent = `Picker light ${i + 1}`;
+    list.append(row);
+  }
+});
+const pickerBefore = await evaluate(() => {
+  const list = window.__card.shadowRoot.querySelector('.led-picker');
+  const rect = list.getBoundingClientRect();
+  return { x: rect.x, y: rect.y, w: rect.width, h: rect.height,
+    scrollTop: list.scrollTop, scrollHeight: list.scrollHeight, clientHeight: list.clientHeight,
+    zoom: window.__card._zoom };
+});
+check('the device picker owns a bounded scrolling list', pickerBefore.scrollHeight > pickerBefore.clientHeight, true);
+await page.mouse.move(pickerBefore.x + pickerBefore.w / 2, pickerBefore.y + pickerBefore.h / 2);
+await page.mouse.wheel(0, 260);
+await page.waitForTimeout(250);
+const pickerAfter = await evaluate(() => ({
+  scrollTop: window.__card.shadowRoot.querySelector('.led-picker').scrollTop,
+  zoom: window.__card._zoom,
+}));
+check('wheel scrolls the device picker', pickerAfter.scrollTop > pickerBefore.scrollTop, true);
+check('wheel over the picker does not zoom the plan', pickerAfter.zoom, pickerBefore.zoom);
 await page.click('[data-led-action="later"]');
+await page.setViewportSize({ width: 1000, height: 820 });
 await page.waitForTimeout(200);
 check('Later keeps the unbound strip, selected with its tray', await evaluate(() => {
   const c = window.__card;

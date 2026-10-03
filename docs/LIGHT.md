@@ -418,7 +418,7 @@ its anchor. Colour, brightness, role and availability come from the same
 `resolveGlowCandidates` / `resolveGlowAppearance` path as every other source;
 only the geometry differs:
 
-- **Radius.** 50 cm by default, independent of `settings.glow_radius_cm`; the
+- **Radius.** 30 cm by default, independent of `settings.glow_radius_cm`; the
   marker's personal `glow_radius_cm` wins.
 - **Field.** A continuous band along every segment with round free ends: grey
   luminance bands of the shared `GLOW_FALLOFF`, one piece per stretch, blended
