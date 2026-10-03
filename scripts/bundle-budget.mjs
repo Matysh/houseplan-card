@@ -388,7 +388,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * не получили нового кода. Центр оставляет 630 Б сверху и 1 370 Б до нижней
  * границы полосы; общий бюджет 301 066 Б не меняется.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 300_069;
+export const INITIAL_VIEW_GZIP_CEILING = 300_064;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -570,7 +570,7 @@ export function initialViewCeilingViolation(bytes, {
  * сторон, чтобы ни семибайтный шум не красил гейт, ни молчаливый выигрыш не
  * оставался незафиксированным.
  */
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -650,7 +650,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
  *   подсказку «Переход на этаж» (`stairs-view.ts`) и три строки словарей.
  *   Центр оставляет 1 015 Б сверху и 985 Б до нижней границы полосы.
  */
-export const LAZY_EDITOR_GZIP_CEILING = 240_863;
+export const LAZY_EDITOR_GZIP_CEILING = 240_853;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
