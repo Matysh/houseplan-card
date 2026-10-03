@@ -676,8 +676,10 @@ export const LAZY_ONBOARDING_GZIP_CEILING = 28_395;
  * a KiB. Absolute walls: a View without strips loads neither graph.
  */
 // #788: retaining real end/corner emitters, stable numerical miters and exact
-// wall/radius events raises the lazy View graph to 10 353 B gzip. Give this
-// corrected representation 11 KiB; no-LED initial View is still untouched.
+// wall/radius events plus geometry caches raises the lazy View graph to
+// 10 607 B gzip. Give this corrected representation 11 KiB. The LED graph
+// remains lazy; the shared eager geometry fingerprint adds 75 B to initial
+// View (300 139 B), within the unchanged initial ceiling.
 export const LAZY_LED_GZIP_CEILING = 11 * 1024;
 export const LAZY_LED_EDITOR_GZIP_CEILING = 11 * 1024;
 
