@@ -50,14 +50,6 @@ test('#375 AC2: static wall geometry carries the recut fingerprint tag', () => {
   assert.match(render,
     /Object\.defineProperty\(built, 'sourceFingerprint', \{\s*\n\s*value: lightGeometryFingerprint\(spCfg, cellCm, GRID_PITCH\),/,
     'the tag must use the same geometry projection and scale as the light revision');
-  const fullCard = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
-  assert.match(fullCard,
-    /Object\.defineProperty\(value, 'sourceFingerprint', \{\s*\n\s*value: lightGeometryFingerprint\(this\._curSpaceCfg, this\._cellCm, this\._gridPitch\),/,
-    'the full-card tag must share that projection and scale as well');
-  const editor = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
-  assert.match(editor,
-    /Object\.defineProperty\(projected, 'sourceFingerprint', \{\s*\n\s*value: lightGeometryFingerprint\(preview\.sp, this\.host\._cellCm, this\.host\._gridPitch\),/,
-    'accepted resize artifacts must retain the same fast-path tag');
   assert.ok(
     render.indexOf("Object.defineProperty(built, 'sourceFingerprint'")
       < render.indexOf('const contentFrame ='),

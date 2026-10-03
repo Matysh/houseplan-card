@@ -14332,8 +14332,8 @@ const MUTANT_DEFINITIONS = [
     because: '#788: a long wall meeting the emitter radius must not replace visible floor with a coarse sweep chord',
     patches: [{
       file: 'src/led-strip-field.ts',
-      find: '    const near = circleSegments(p, radius, scene.occluders);',
-      replace: '    const near = scene.occluders;',
+      find: '    const near = circleSegments(p, radius, occluders);',
+      replace: '    const near = occluders;',
     }],
   },
   {
