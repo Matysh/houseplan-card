@@ -59,14 +59,14 @@ import {
   type Layout, type ContentItem, type SpaceCardFit,
 } from './space-geometry';
 import { resolveZeroWalls } from './zero-walls';
-import { ledAnchor, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
+import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
 import { geometryOpenings } from './plan-geometry-preflight';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { projectDecorImage } from './decor-assets';
 import type { DecorShape } from './editors/decor/types';
 import { cachedStairRenderGeometry, stairOutline, stairStyleVars } from './stairs';
 import {
-  buildGlowClipGeometry, buildLightBarrierScene, forgetGlowSource, forgetGlowSpace,
+  buildGlowClipGeometry, buildLightBarrierScene, disposeGlowRuntime, forgetGlowSource, forgetGlowSpace,
   glowSourceInOpaqueBody, pruneGlowSources, readGlowClip, renderGlowPools,
   resolveGlowCandidates, resolveGlowFeather, lightGeometryFingerprint,
   resolveLightBarrierRevision, transitionGlowSource, warnGlowGeometryFallback, writeGlowClip,
@@ -282,7 +282,13 @@ export function buildSpaceDevices(o: StaticDeviceBuildOpts): DevItem[] {
 export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const models = spaceModels(o.cfg);
   const space = models.find((s) => s.id === o.spaceId);
-  if (!space) return null;
+  if (!space) {
+    if (o.glowRuntime) {
+      disposeGlowRuntime(o.glowRuntime.state, o.glowRuntime.host);
+      ledRelease(o.glowRuntime.state);
+    }
+    return null;
+  }
   const disp = spaceDisplayOf(o.cfg.spaces.find((s: any) => s.id === o.spaceId));
   const colors = fillColorsOf(o.cfg.settings);
   const storedDecor = (o.cfg.settings as { decor_default_style?: Record<string, unknown> })
@@ -310,6 +316,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // the same room show different Zigbee health on the two cards.
   const spaceDevs = all.filter((d) => d.space === o.spaceId);
   const devs = spaceDevs.filter((d) => !d.hidden);
+  const showLed = ledVisible(space, devs, false, o.cfg.markers);
+  const ledConnected = o.glowRuntime?.host.isConnected ?? (() => false);
+  const ledReady = () => { if (ledConnected()) o.moonHost?.requestUpdate(); };
+  if (!showLed && o.glowRuntime) ledRelease(o.glowRuntime.state);
   // #780: a marker shown as an LED strip draws no icon here and takes no slot.
   const leds = ledStripsByMarker(space);
   const iconDevs = leds.size ? devs.filter((d) => !leds.has(d.id)) : devs;
@@ -1001,13 +1011,14 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         <g class="decorlayer" pointer-events="none">${decorImages}</g>
         <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>
         ${glowPools}
-        ${ledVisible(space, devs, false, o.cfg.markers) ? ledRuntime(space.id, () => o.moonHost?.requestUpdate())?.renderStaticLed({
+        ${showLed ? ledRuntime(space.id, ledReady)?.renderStaticLed({
           space, devices: spaceDevs, hass: planHass, virtualLights: o.virtualLights,
           defaultColor: colors.glow_light.c, paletteAlpha: colors.glow_light.a, cellCm,
           gridPitch: GRID_PITCH, iconPct, glowFor: (room) => !!o.lightPools && roomGlowOf(disp.glow, room),
           inRoom: (point, room) => pointInPolygon(point, roomPoly(room) || []), live: o.liveStates !== false,
           scene: lightScene, perUnit: pxPerUnit, owner: o.glowRuntime?.state || space,
-          ready: () => o.moonHost?.requestUpdate(),
+          ready: ledReady,
+          isConnected: ledConnected,
           bodies: { masonryGeometry: canonicalWallGeometry?.components.flatMap((c) => c.geom) || [], opaqueBodies: extras },
         }) ?? nothing : nothing}
         ${wallUnion

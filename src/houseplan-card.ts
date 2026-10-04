@@ -180,7 +180,7 @@ import {
   buildGlowClipGeometry, buildLightBarrierScene, createGlowRuntimeState,
   disposeGlowRuntime, forgetGlowSource, forgetGlowSpace, glowSourceInOpaqueBody,
   pruneGlowSources, readGlowClip, renderGlowPools, resolveGlowCandidates, resolveGlowFeather,
-  lightGeometryFingerprint, resolveLightBarrierRevision, transitionGlowSource,
+  LightBarrierPass, lightGeometryFingerprint, resolveLightBarrierRevision, transitionGlowSource,
   warnGlowGeometryFallback, writeGlowClip,
   type GlowRuntimeHost, type GlowRuntimeState, type GlowSpot,
 } from './glow-scene';
@@ -1804,6 +1804,7 @@ export class HouseplanCard extends LitElement {
   private _innerContourCache = new Map<string, number[][] | null>();
   private readonly _floorKey = floorGeometryKeyReader(this as unknown as FloorKeySource); // #744: key of the four caches above
   private readonly _glowRuntimeState: GlowRuntimeState = createGlowRuntimeState();
+  private readonly _lightBarrierPass = new LightBarrierPass();
   private readonly _glowRuntimeHost: GlowRuntimeHost = {
     window: () => this.ownerDocument.defaultView || window,
     isConnected: () => this.isConnected,
@@ -10325,6 +10326,10 @@ export class HouseplanCard extends LitElement {
     occluders: LightSegment[]; floor: number[][][]; fingerprint: string;
     masonryGeometry: any; opaqueBodies: number[][][];
   } {
+    return this._lightBarrierPass.read(space, () => this._resolveLightBarriers(space));
+  }
+
+  private _resolveLightBarriers(space: SpaceModel) {
     const raw = this._curSpaceCfg;
     const revision = resolveLightBarrierRevision({
       rawSpaceConfig: raw,
@@ -10511,8 +10516,13 @@ export class HouseplanCard extends LitElement {
   /** #780: the lazy LED chunk when the space shows a strip (ТЗ §13.1). */
   private _ledRt(space: SpaceModel) {
     // A disconnected card never applies the chunk (a late import, r1 M5).
-    return this.isConnected && ledVisible(space, this._renderDevices, this._mode === 'devices' && this._showAll, this._serverCfg?.markers)
-      ? ledRuntime(space.id, () => this.isConnected && this.requestUpdate()) : null;
+    if (!this.isConnected || !ledVisible(space, this._renderDevices, this._mode === 'devices' && this._showAll, this._serverCfg?.markers)) {
+      // The next space may have no strips, so no field render can prune the
+      // previous owner's entry frames, fade timers or cached geometry.
+      ledRelease(this);
+      return null;
+    }
+    return ledRuntime(space.id, () => this.isConnected && this.requestUpdate());
   }
 
   /** #780: the Devices-editor LED tool, its own lazy chunk (src/led-strip-card.ts). */
@@ -10617,6 +10627,10 @@ export class HouseplanCard extends LitElement {
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {
+    return this._lightBarrierPass.run(() => this._renderLightPass());
+  }
+
+  private _renderLightPass(): TemplateResult | typeof nothing | typeof noChange {
     try {
       const body = this._renderBody();
       // `nothing` is the only root that has no decision surface. `noChange` is

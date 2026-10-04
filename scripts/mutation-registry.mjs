@@ -7387,7 +7387,7 @@ const MUTANT_DEFINITIONS = [
       find: '        ${passageGlowTunnels}\n'
         + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
         + '        <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>\n'
-        + '        ${glowPools}\n        ${ledVisible(',
+        + '        ${glowPools}\n        ${showLed ?',
       replace: '        ${passageGlowTunnels}\n'
         + '        ${!space.bg && !disp.showNames ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
         + '          const center = roomCenter(room);\n'
@@ -7397,7 +7397,7 @@ const MUTANT_DEFINITIONS = [
         + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
         + '        <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>\n'
         + '        ${glowPools}\n'
-        + '        ${ledVisible(',
+        + '        ${showLed ?',
     }],
   },
   {
@@ -14232,6 +14232,61 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/review-doc-guard.mjs',
       find: "    ? body.slice(0, at).replace(/(?:\\s*\\n---)*\\s*$/, '')",
       replace: "    ? body.slice(0, at).replace(/\\s+$/, '')",
+    }],
+  },
+  {
+    id: 'glow-barrier-render-pass-wiring-skipped',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: '#789 AC4: precise coverage of the real main-card Glow plus LED render must resolve barriers '
+      + 'once per pass; only this bundled custom-element path proves the pass cache is actually wired to its consumers',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    return this._lightBarrierPass.read(space, () => this._resolveLightBarriers(space));',
+      replace: '    return this._resolveLightBarriers(space);',
+    }],
+  },
+  {
+    id: 'glow-barrier-render-pass-reuse-skipped',
+    guard: 'node --test test/light-barrier-pass.test.mjs',
+    because: '#789 AC4: a synchronous render pass must fingerprint/build each space once while still '
+      + 'invalidating across passes; disabling its local read cache repeats expensive work without changing pixels',
+    patches: [{
+      file: 'src/glow-scene.ts',
+      find: '    const retained = this.scenes?.get(space);',
+      replace: '    const retained = undefined;',
+    }],
+  },
+  {
+    id: 'glow-entry-initial-opacity-skipped',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: '#789 AC2: only browser CSS paint and real opacity transitionrun/transitionend events '
+      + 'prove that LED and ordinary pools on both surfaces paint their initial entering frame without a forced style flush',
+    patches: [{
+      file: 'src/glow-scene.ts',
+      find: '      state.enteringSources.add(key);',
+      replace: '      // mutant: render the new source fully visible before its entry frame',
+    }],
+  },
+  {
+    id: 'glow-static-led-release-skipped',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: '#789 AC4: disconnecting and reconnecting the actual static custom element must start a fresh '
+      + 'LED entering transition; a host connection guard alone cannot release the retained field lifecycle',
+    patches: [{
+      file: 'src/space-card.ts',
+      find: '    ledRelease(this._glowRuntimeState);\n    this._continuityHistory =',
+      replace: '    // mutant: retain the static LED field lifecycle across disconnect\n    this._continuityHistory =',
+    }],
+  },
+  {
+    id: 'glow-entry-per-source-frame',
+    guard: 'node --test test/glow-entry-batch.test.mjs',
+    because: '#789 AC1: the controlled scheduler must see one frame and one update for 50 simultaneous '
+      + 'sources; disabling batch reuse restores the former linear callback fan-out without needing a browser',
+    patches: [{
+      file: 'src/glow-scene.ts',
+      find: '  let batch = state.collectingEntryBatch;',
+      replace: '  let batch: GlowEntryBatch | null = null;',
     }],
   },
   {

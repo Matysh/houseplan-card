@@ -183,6 +183,15 @@ new `size-pack` with 467.63 MiB; the accepted upper bound is 487.63 MiB.
 
 - Frontend: `npm test` — compiles src/logic.ts+rules.ts (tsconfig.test.json) and runs node:test
   (test/*.test.mjs). Strict typing: `npm run typecheck` (tsc --noEmit, part of `npm run build`).
+- Shared Glow scheduling and render-local barrier reuse (#789) have separate
+  scheduler/memo unit witnesses. `smoke_led_strip_glow` observes real opacity
+  transition events on main/static LED and ordinary pools, without a forced
+  style read between insertion and the entering frame. A declared 500 ms CSS
+  duration alone is not evidence that a fade actually runs. Main-card ordinary
+  Glow retains its previous no-replay behavior on return to a visited space;
+  that navigation witness checks its steady state, not a newly invented fade.
+  The complete
+  `led-strips-v1` performance gate remains separate from these correctness checks.
 - Pure backend on native Windows (with no HA plugin autoload): use the explicit
   `python -Arguments @(...)` invocation above after setting
   `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'`.

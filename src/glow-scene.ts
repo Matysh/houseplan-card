@@ -88,6 +88,31 @@ export interface LightBarrierScene {
   opaqueBodies: number[][][];
 }
 
+/**
+ * One synchronous render reads the same scene for ordinary Glow and LED.
+ * Share that read, including its content fingerprint, only inside the render.
+ * Handlers, subsequent renders and exception paths never retain the memo:
+ * in-place edits and changed opening states must still rebuild the revision.
+ */
+export class LightBarrierPass {
+  private scenes: Map<SpaceModel, LightBarrierScene> | null = null;
+
+  run<T>(render: () => T): T {
+    const previous = this.scenes;
+    this.scenes = new Map();
+    try { return render(); }
+    finally { this.scenes.clear(); this.scenes = previous; }
+  }
+
+  read(space: SpaceModel, build: () => LightBarrierScene): LightBarrierScene {
+    const retained = this.scenes?.get(space);
+    if (retained) return retained;
+    const scene = build();
+    this.scenes?.set(space, scene);
+    return scene;
+  }
+}
+
 export interface LightZeroWalls {
   contour: number[][];
   barriers: number[][];
@@ -101,6 +126,8 @@ export interface GlowRuntimeHost {
   reducedMotion: () => boolean;
 }
 
+type GlowEntryBatch = { keys: Set<string>; raf: number };
+
 export interface GlowRuntimeState {
   clipCache: Map<string, GlowClipGeometry | null>;
   geometryWarnings: Set<string>;
@@ -108,7 +135,8 @@ export interface GlowRuntimeState {
   renderedSources: Map<string, number>;
   lastAppearance: Map<string, { c: string; alpha: number }>;
   enteringSources: Set<string>;
-  enterRafs: Map<string, number>;
+  enterBatches: Set<GlowEntryBatch>;
+  collectingEntryBatch: GlowEntryBatch | null;
   fadeTimers: Map<string, number>;
   featherSuspendUntil: number;
   featherResumeTimer: number;
@@ -129,7 +157,8 @@ export function createGlowRuntimeState(): GlowRuntimeState {
     renderedSources: new Map(),
     lastAppearance: new Map(),
     enteringSources: new Set(),
-    enterRafs: new Map(),
+    enterBatches: new Set(),
+    collectingEntryBatch: null,
     fadeTimers: new Map(),
     featherSuspendUntil: 0,
     featherResumeTimer: 0,
@@ -435,6 +464,40 @@ function suspendGlowFeather(
   state.featherResumeTimer = win.setTimeout(resume, delay);
 }
 
+/** All sources discovered by one render enter in one frame, not N renders. */
+function scheduleGlowEntry(state: GlowRuntimeState, host: GlowRuntimeHost, key: string): void {
+  let batch = state.collectingEntryBatch;
+  if (!batch) {
+    const next: GlowEntryBatch = { keys: new Set(), raf: 0 };
+    state.collectingEntryBatch = next;
+    state.enterBatches.add(next);
+    next.raf = host.window().requestAnimationFrame(() => {
+      if (!state.enterBatches.delete(next)) return;
+      if (state.collectingEntryBatch === next) state.collectingEntryBatch = null;
+      for (const source of next.keys) state.enteringSources.delete(source);
+      if (next.keys.size && host.isConnected()) host.requestUpdate();
+    });
+    // Seal this synchronous render before other rAF callbacks can discover
+    // new sources: those need their own next frame, not this earlier batch.
+    queueMicrotask(() => {
+      if (state.collectingEntryBatch === next) state.collectingEntryBatch = null;
+    });
+    batch = next;
+  }
+  batch.keys.add(key);
+}
+
+function forgetGlowEntry(state: GlowRuntimeState, host: GlowRuntimeHost, key: string): void {
+  state.enteringSources.delete(key);
+  for (const batch of state.enterBatches) {
+    batch.keys.delete(key);
+    if (batch.keys.size) continue;
+    host.window().cancelAnimationFrame(batch.raf);
+    state.enterBatches.delete(batch);
+    if (state.collectingEntryBatch === batch) state.collectingEntryBatch = null;
+  }
+}
+
 export function transitionGlowSource(
   state: GlowRuntimeState,
   host: GlowRuntimeHost,
@@ -454,21 +517,12 @@ export function transitionGlowSource(
       domId = ++state.sourceSeq;
       state.renderedSources.set(key, domId);
       state.enteringSources.add(key);
-      const raf = win.requestAnimationFrame(() => {
-        if (state.enterRafs.get(key) !== raf) return;
-        state.enterRafs.delete(key);
-        state.enteringSources.delete(key);
-        if (host.isConnected()) host.requestUpdate();
-      });
-      state.enterRafs.set(key, raf);
+      scheduleGlowEntry(state, host, key);
     }
     return { domId, entering: state.enteringSources.has(key), leaving: false };
   }
   if (domId == null) return null;
-  const enterRaf = state.enterRafs.get(key);
-  if (enterRaf != null) win.cancelAnimationFrame(enterRaf);
-  state.enterRafs.delete(key);
-  state.enteringSources.delete(key);
+  forgetGlowEntry(state, host, key);
   if (!state.fadeTimers.has(key)) {
     suspendGlowFeather(state, host);
     const timer = win.setTimeout(() => {
@@ -488,12 +542,9 @@ export function forgetGlowSource(
 ): void {
   const win = host.window();
   const timer = state.fadeTimers.get(key);
-  const raf = state.enterRafs.get(key);
   if (timer != null) win.clearTimeout(timer);
-  if (raf != null) win.cancelAnimationFrame(raf);
   state.fadeTimers.delete(key);
-  state.enterRafs.delete(key);
-  state.enteringSources.delete(key);
+  forgetGlowEntry(state, host, key);
   state.renderedSources.delete(key);
   state.lastAppearance.delete(key);
 }
@@ -524,12 +575,13 @@ export function disposeGlowRuntime(
 ): void {
   const win = host.window();
   for (const timer of state.fadeTimers.values()) win.clearTimeout(timer);
-  for (const raf of state.enterRafs.values()) win.cancelAnimationFrame(raf);
+  for (const batch of state.enterBatches) win.cancelAnimationFrame(batch.raf);
   win.clearTimeout(state.featherResumeTimer);
   state.clipCache.clear();
   state.geometryWarnings.clear();
   state.fadeTimers.clear();
-  state.enterRafs.clear();
+  state.enterBatches.clear();
+  state.collectingEntryBatch = null;
   state.enteringSources.clear();
   state.renderedSources.clear();
   state.lastAppearance.clear();

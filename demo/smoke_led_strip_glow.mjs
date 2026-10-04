@@ -347,6 +347,322 @@ check('static live_states:true + light_pools:true — source colour and the fiel
   JSON.stringify({ state: 'on', core: '#80d5ff', field: true, passive: true, badge: true }));
 check('a click on any static stripe toggles nothing', await evaluate(() => window.__card.hass.states['light.ceiling'].state), 'on');
 
+// #789 AC2: real transition events, not merely the declared CSS duration.
+// Do not read computed style/layout between insertion and its entering rAF:
+// that flush can manufacture the initial opacity and hide a lost fade.
+await page.emulateMedia({ reducedMotion: 'no-preference' });
+await evaluate(async () => {
+  const main = window.__card;
+  const host = document.createElement('div');
+  host.style.width = '700px'; document.body.appendChild(host);
+  const stat = document.createElement('houseplan-space-card');
+  stat.setConfig({ type: 'custom:houseplan-space-card', space: 'f1', light_pools: true, live_states: true });
+  stat.hass = main.hass; host.appendChild(stat);
+  await stat.updateComplete;
+  const proof = window.__ledFadeProof = {
+    cards: [main, stat], host, savedHass: main.hass, log: [], listeners: [],
+    selectors: ['[data-led-field="ceiling"]', '[data-glow-source="light.floor_lamp"]'],
+    parent: main.parentNode, next: main.nextSibling, updates: [0, 0], late: [], descriptors: [],
+  };
+  proof.nodes = () => proof.cards.map(card => proof.selectors.map(selector => card.shadowRoot.querySelector(selector)));
+  proof.set = async state => {
+    const states = { ...main.hass.states };
+    for (const eid of ['light.ceiling', 'light.floor_lamp']) states[eid] = { ...states[eid], state };
+    const hass = { ...main.hass, states };
+    for (const card of proof.cards) card.hass = hass;
+    await Promise.all(proof.cards.map(card => card.updateComplete));
+  };
+  for (const [cardIndex, card] of proof.cards.entries()) {
+    const listener = event => {
+      if (event.propertyName !== 'opacity') return;
+      const kind = proof.selectors.findIndex(selector => event.target.matches(selector));
+      if (kind >= 0) proof.log.push({ card: cardIndex, kind, event: event.type, elapsed: event.elapsedTime });
+    };
+    for (const name of ['transitionrun', 'transitionend']) card.shadowRoot.addEventListener(name, listener);
+    proof.listeners.push(listener);
+  }
+  await proof.set('off');
+});
+try {
+  await page.waitForFunction(() => window.__ledFadeProof.cards.every(card =>
+    card.shadowRoot.querySelector('[data-led-strip]')));
+  await page.waitForTimeout(650);
+  check('#789: both kinds start absent on both surfaces', await evaluate(() =>
+    window.__ledFadeProof.nodes().every(nodes => nodes.every(node => !node))), true);
+  const fadeSet = state => evaluate(async state => {
+    const proof = window.__ledFadeProof; proof.log = []; await proof.set(state);
+  }, state);
+  const fadeSnapshot = () => evaluate(() => {
+    const proof = window.__ledFadeProof;
+    return { log: proof.log, nodes: proof.nodes().map(nodes => nodes.map(node => node ? {
+      opacity: Number(getComputedStyle(node).opacity), leaving: node.classList.contains('is-leaving'),
+      entering: node.classList.contains('is-entering'),
+    } : null)) };
+  });
+  const checkFadeEvents = (phase, result, cards = [0, 1], kinds = [0, 1]) => {
+    for (const card of cards) for (const kind of kinds) {
+      const events = result.log.filter(event => event.card === card && event.kind === kind);
+      const label = `#789: ${card ? 'static' : 'main'} ${kind ? 'ordinary' : 'LED'} ${phase}`;
+      check(`${label} actually starts an opacity transition`, events.some(event => event.event === 'transitionrun'), true);
+      check(`${label} completes the unchanged 500 ms transition`, events.some(event =>
+        event.event === 'transitionend' && Math.abs(event.elapsed - 0.5) < 0.01), true);
+    }
+  };
+  await fadeSet('on');
+  await page.waitForTimeout(750);
+  const fadeOn = await fadeSnapshot();
+  checkFadeEvents('on', fadeOn);
+  check('#789: all four fields finish on at full opacity', fadeOn.nodes.every(nodes =>
+    nodes.every(node => node?.opacity === 1 && !node.leaving)), true);
+  // Observe the real bundled call graph, without wrapping private methods or
+  // inferring render-pass wiring from source text. Coverage is not timing data.
+  const coverageSession = await page.context().newCDPSession(page);
+  try {
+    await coverageSession.send('Profiler.enable');
+    await coverageSession.send('Profiler.startPreciseCoverage', { callCount: true, detailed: true });
+    for (const pass of [1, 2]) {
+      await coverageSession.send('Profiler.takePreciseCoverage');
+      await evaluate(async () => {
+        const card = window.__card;
+        card.requestUpdate();
+        for (let attempt = 0; attempt < 10; attempt++) {
+          const complete = await card.updateComplete;
+          if (complete !== false && !card.isUpdatePending) return;
+        }
+        throw new Error('#789: observed main render did not settle');
+      });
+      const result = await coverageSession.send('Profiler.takePreciseCoverage');
+      const functions = result.result.flatMap(script => script.functions);
+      const calls = name => functions.filter(fn => fn.functionName === name)
+        .reduce((sum, fn) => sum + (fn.ranges[0]?.count || 0), 0);
+      const counts = { render: calls('_renderLightPass'), reads: calls('_lightBarriers'), builds: calls('_resolveLightBarriers') };
+      check(`#789: observed main render pass ${pass} executes`, counts.render > 0, true);
+      check(`#789: Glow and LED share barrier reads in pass ${pass}`, counts.reads >= 2 * counts.render, true);
+      check(`#789: pass ${pass} resolves barriers exactly once per render, never across renders`, counts.builds, counts.render);
+      console.log('#789 render-pass coverage', JSON.stringify({ pass, ...counts }));
+    }
+  } finally {
+    await coverageSession.send('Profiler.stopPreciseCoverage');
+    await coverageSession.send('Profiler.disable');
+    await coverageSession.detach();
+  }
+  await fadeSet('off');
+  check('#789: normal off retains all four nodes for their fade', await evaluate(() =>
+    window.__ledFadeProof.nodes().every(nodes => nodes.every(node => node?.classList.contains('is-leaving')))), true);
+  await page.waitForTimeout(750);
+  const fadeOff = await fadeSnapshot();
+  checkFadeEvents('off', fadeOff);
+  check('#789: normal off removes all four fields after fading', fadeOff.nodes.every(nodes => nodes.every(node => !node)), true);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await fadeSet('on');
+  await page.waitForTimeout(200);
+  const reducedOn = await fadeSnapshot();
+  check('#789: reduced motion shows LED and ordinary immediately on both surfaces', reducedOn.nodes.every(nodes =>
+    nodes.every(node => node?.opacity === 1)), true);
+  check('#789: reduced on starts no CSS opacity animation', reducedOn.log.length, 0);
+  await fadeSet('off');
+  await page.waitForTimeout(200);
+  const reducedOff = await fadeSnapshot();
+  check('#789: reduced off is immediately dark on both surfaces', reducedOff.nodes.every(nodes =>
+    nodes.every(node => node?.opacity === 0)), true);
+  check('#789: reduced off starts no CSS opacity animation', reducedOff.log.length, 0);
+  await page.waitForTimeout(450);
+  check('#789: reduced off still removes every field', await evaluate(() =>
+    window.__ledFadeProof.nodes().every(nodes => nodes.every(node => !node))), true);
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await fadeSet('on');
+  await page.waitForTimeout(750);
+  await evaluate(() => { window.__ledFadeProof.savedNodes = window.__ledFadeProof.nodes(); });
+  await fadeSet('off');
+  await page.waitForTimeout(100);
+  await fadeSet('on');
+  await page.waitForTimeout(750); // beyond the cancelled off timer as well as the returning fade
+  check('#789: rapid off/on retains every DOM node beyond the stale fade deadline', await evaluate(() => {
+    const proof = window.__ledFadeProof;
+    return proof.nodes().every((nodes, card) => nodes.every((node, kind) => node
+      && node === proof.savedNodes[card][kind] && !node.classList.contains('is-leaving')
+      && Number(getComputedStyle(node).opacity) === 1));
+  }), true);
+
+  await fadeSet('off');
+  await page.waitForTimeout(650);
+  await evaluate(async () => {
+    // Both Lit commits finish in microtasks, before a browser entering-frame.
+    await window.__ledFadeProof.set('on'); await window.__ledFadeProof.set('off');
+  });
+  await page.waitForTimeout(650);
+  check('#789: off before the entry frame cannot resurrect a field', await evaluate(() =>
+    window.__ledFadeProof.nodes().every(nodes => nodes.every(node => !node))), true);
+
+  await evaluate(async () => {
+    const proof = window.__ledFadeProof;
+    await proof.set('on');
+    // Lit's updated() can enqueue a header/summary follow-up. Drain only its
+    // microtasks before observing disconnect: entry rAFs must still be pending.
+    const drainUpdates = async phase => {
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const complete = await Promise.all(proof.cards.map(card => card.updateComplete));
+        if (complete.every(result => result !== false) && proof.cards.every(card => !card.isUpdatePending)) return;
+      }
+      throw new Error(`#789: pending Lit microtasks did not settle ${phase} disconnect`);
+    };
+    await drainUpdates('before');
+    if (!proof.nodes().every(nodes => nodes.every(node => node?.classList.contains('is-entering')))) {
+      throw new Error('#789: disconnect witness must precede every entering frame');
+    }
+    for (const [index, card] of proof.cards.entries()) {
+      proof.descriptors[index] = Object.getOwnPropertyDescriptor(card, 'requestUpdate');
+      const original = card.requestUpdate;
+      card.requestUpdate = function (...args) {
+        proof.updates[index]++;
+        if (!this.isConnected) proof.late.push({ card: index, stack: new Error().stack });
+        return original.apply(this, args);
+      };
+    }
+    // Disconnect in this microtask, with entry rAFs/feather timers still pending.
+    for (const card of proof.cards) card.remove();
+    // Teardown itself mutates reactive header/summary state. Finish that same
+    // microtask chain before measuring late callbacks; no rAF/timer can run yet.
+    await drainUpdates('after');
+    proof.updates = [0, 0];
+    proof.late = [];
+  });
+  await page.waitForTimeout(750);
+  check('#789: disconnected main/static owners receive no late transition updates', await evaluate(() =>
+    window.__ledFadeProof.updates), [0, 0]);
+  const late = await evaluate(() => window.__ledFadeProof.late);
+  if (late.length) console.log('#789 late update diagnostic', JSON.stringify(late, null, 2));
+  await evaluate(async () => {
+    const proof = window.__ledFadeProof; proof.log = [];
+    proof.parent.insertBefore(proof.cards[0], proof.next?.parentNode === proof.parent ? proof.next : null);
+    proof.host.appendChild(proof.cards[1]);
+    await Promise.all(proof.cards.map(card => card.updateComplete));
+  });
+  await page.waitForTimeout(750);
+  const reconnected = await fadeSnapshot();
+  checkFadeEvents('reconnected', reconnected);
+  check('#789: reconnect starts clean lifecycles and returns all four fields', reconnected.nodes.every(nodes =>
+    nodes.every(node => node?.opacity === 1 && !node.leaving)), true);
+  for (const exit of [
+    { label: 'disabled pools', config: { space: 'f1', light_pools: false } },
+    { label: 'another space', config: { space: 'garden', light_pools: true } },
+  ]) {
+    await fadeSet('off');
+    await page.waitForTimeout(650);
+    await evaluate(async config => {
+      const proof = window.__ledFadeProof;
+      await proof.set('on');
+      if (!proof.nodes()[1].every(node => node?.classList.contains('is-entering'))) {
+        throw new Error('#789: config exit must precede the static entering frame');
+      }
+      proof.cards[1].setConfig({ type: 'custom:houseplan-space-card', live_states: true, ...config });
+      await proof.cards[1].updateComplete;
+    }, exit.config);
+    await page.waitForTimeout(750);
+    check(`#789: ${exit.label} removes previous static fields beyond their old callbacks`, await evaluate(() =>
+      window.__ledFadeProof.nodes()[1].every(node => !node)), true);
+    await evaluate(async () => {
+      const proof = window.__ledFadeProof; proof.log = [];
+      proof.cards[1].setConfig({ type: 'custom:houseplan-space-card', space: 'f1', light_pools: true, live_states: true });
+      await proof.cards[1].updateComplete;
+    });
+    await page.waitForTimeout(750);
+    const returned = await fadeSnapshot();
+    checkFadeEvents(`return from ${exit.label}`, returned, [1]);
+    check(`#789: return from ${exit.label} starts fresh static fields`, returned.nodes[1].every(node =>
+      node?.opacity === 1 && !node.leaving), true);
+  }
+  await fadeSet('off');
+  await page.waitForTimeout(650);
+  await evaluate(async () => {
+    const proof = window.__ledFadeProof;
+    await proof.set('on');
+    if (!proof.nodes()[0].every(node => node?.classList.contains('is-entering'))) {
+      throw new Error('#789: main navigation must start before the entering frame');
+    }
+    await window.__hpTest.switchSpace('garden');
+  });
+  await page.waitForTimeout(750);
+  check('#789: main LED-to-empty navigation removes both former sources beyond stale callbacks', await evaluate(() =>
+    window.__ledFadeProof.nodes()[0].every(node => !node)), true);
+  await evaluate(async () => {
+    window.__ledFadeProof.log = [];
+    await window.__hpTest.switchSpace('f1');
+  });
+  await page.waitForTimeout(750);
+  const mainReturned = await fadeSnapshot();
+  checkFadeEvents('return from LED-free space', mainReturned, [0], [0]);
+  // Main ordinary Glow has retained its per-space appearance without replay on
+  // navigation since before #789. Preserve that UX; only LED starts a fresh
+  // lifecycle here. The real on/off fade assertions above still cover both.
+  check('#789: main navigation back restores the LED field at full opacity',
+    mainReturned.nodes[0][0]?.opacity === 1 && !mainReturned.nodes[0][0].leaving, true);
+  const retainedOrdinary = mainReturned.nodes[0][1];
+  check('#789: main navigation preserves steady ordinary Glow without replay',
+    retainedOrdinary?.opacity === 1 && !retainedOrdinary.entering && !retainedOrdinary.leaving, true);
+
+  // Keep the same mounted static card while its server-side space vanishes.
+  // This exercises renderSpaceStatic's !space exit, not setConfig/disconnect.
+  await fadeSet('off');
+  await page.waitForTimeout(650);
+  await evaluate(async () => {
+    const proof = window.__ledFadeProof;
+    await proof.set('on');
+    if (!proof.nodes()[1].every(node => node?.classList.contains('is-entering'))) {
+      throw new Error('#789: server removal must start before the static entering frame');
+    }
+    await window.__hpTest.setServerConfig(cfg => {
+      proof.savedConfig = structuredClone(cfg);
+      cfg.spaces = cfg.spaces.filter(space => space.id !== 'f1');
+      cfg.markers = (cfg.markers || []).filter(marker => marker.space !== 'f1');
+    });
+  });
+  await page.waitForFunction(() => !window.__ledFadeProof.cards[1].shadowRoot.querySelector('[data-led-strip]'));
+  await page.waitForTimeout(750);
+  check('#789: a missing server space clears both fields without disconnecting the static card', await evaluate(() => {
+    const proof = window.__ledFadeProof;
+    return proof.cards[1].isConnected && proof.nodes()[1].every(node => !node);
+  }), true);
+  await evaluate(async () => {
+    const proof = window.__ledFadeProof; proof.log = [];
+    await window.__hpTest.setServerConfig(proof.savedConfig);
+    delete proof.savedConfig;
+  });
+  await page.waitForTimeout(750);
+  const restoredSpace = await fadeSnapshot();
+  checkFadeEvents('restored server space', restoredSpace, [1]);
+  check('#789: restoring a server space starts fresh static LED and ordinary fields', restoredSpace.nodes[1].every(node =>
+    node?.opacity === 1 && !node.leaving), true);
+  await evaluate(() => window.__hpTest.switchSpace('f1'));
+  await page.waitForTimeout(750);
+} finally {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await evaluate(async () => {
+    const proof = window.__ledFadeProof;
+    if (proof.savedConfig) {
+      await window.__hpTest.setServerConfig(proof.savedConfig);
+      delete proof.savedConfig;
+    }
+    for (const [index, card] of proof.cards.entries()) {
+      for (const name of ['transitionrun', 'transitionend']) card.shadowRoot.removeEventListener(name, proof.listeners[index]);
+      if (index < proof.descriptors.length) {
+        if (proof.descriptors[index]) Object.defineProperty(card, 'requestUpdate', proof.descriptors[index]);
+        else delete card.requestUpdate;
+      }
+    }
+    const main = proof.cards[0];
+    if (!main.isConnected) proof.parent.insertBefore(main, proof.next?.parentNode === proof.parent ? proof.next : null);
+    main.hass = proof.savedHass;
+    proof.cards[1].remove(); proof.host.remove();
+    delete window.__ledFadeProof;
+    await main.updateComplete;
+  });
+  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('[data-led-strip]'));
+  await settle();
+}
+
 for (const mode of ['plan', 'decor']) {
   await evaluate(mode => window.__hpTest.setMode(mode), mode);
   check(`#790: ${mode} keeps the coloured core passive and translucent`, await evaluate(() => {
@@ -400,5 +716,66 @@ check('the press loads the tool and draws for the same marker', await evaluate((
   const led = window.__card._ledEditor;
   return !!led?.tool && led.chain?.convert === 'd_tv' && !window.__card._markerDialog;
 }));
+
+// A fresh document makes both lazy imports genuinely cold. Hold each network
+// response, disconnect its requesting static card, then let the actual module
+// finish loading: no private runtime hooks or synthetic callback.
+await evaluate(() => localStorage.clear()); // isolated demo browser storage only
+ledRequests.length = 0;
+await page.reload();
+await page.waitForFunction(() => window.__card?._loadOk);
+await installHpTestOnPage(page);
+await evaluate(async () => {
+  window.__card.setConfig({ type: 'custom:houseplan-card', floor: 'garden' });
+  await window.__card.updateComplete;
+});
+await setStrips(ceilingStrip, { glow_enabled: true });
+check('#789: fixed non-LED main card leaves both LED imports cold', ledRequests.filter(url =>
+  /^led-strip-(runtime|field)-/.test(url)).length, 0);
+for (const kind of ['runtime', 'field']) {
+  let releaseImport;
+  const barrier = new Promise(resolve => { releaseImport = resolve; });
+  const pattern = new RegExp(`/led-strip-${kind}-[^/]+\\.js(?:\\?.*)?$`);
+  const holdImport = async route => { await barrier; await route.fallback(); };
+  await page.route(pattern, holdImport);
+  try {
+    const requested = page.waitForRequest(pattern);
+    await evaluate(async () => {
+      const card = document.createElement('houseplan-space-card');
+      card.setConfig({ type: 'custom:houseplan-space-card', space: 'f1', light_pools: true, live_states: true });
+      card.hass = window.__card.hass;
+      document.body.appendChild(card);
+      window.__ledColdProof = { card, updates: 0, original: card.requestUpdate };
+      await card.updateComplete;
+    });
+    await requested;
+    check(`#789: cold static ${kind} import has not painted its content yet`, await evaluate(kind =>
+      !window.__ledColdProof.card.shadowRoot.querySelector(kind === 'runtime' ? '[data-led-strip]' : '[data-led-field]'), kind), true);
+    await evaluate(async () => {
+      const proof = window.__ledColdProof, card = proof.card;
+      card.remove();
+      let settled = false;
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const complete = await card.updateComplete;
+        if (complete !== false && !card.isUpdatePending) { settled = true; break; }
+      }
+      if (!settled) throw new Error('#789: cold static teardown did not settle');
+      card.requestUpdate = function (...args) { proof.updates++; return proof.original.apply(this, args); };
+    });
+    const arrived = page.waitForResponse(pattern);
+    releaseImport();
+    await (await arrived).finished();
+    await page.waitForTimeout(750);
+    check(`#789: a cold ${kind} arriving after static disconnect requests no update`, await evaluate(() =>
+      window.__ledColdProof.updates), 0);
+  } finally {
+    releaseImport();
+    await page.unroute(pattern, holdImport);
+    await evaluate(() => {
+      const proof = window.__ledColdProof;
+      if (proof) { delete proof.card.requestUpdate; proof.card.remove(); delete window.__ledColdProof; }
+    });
+  }
+}
 
 await finish(browser);

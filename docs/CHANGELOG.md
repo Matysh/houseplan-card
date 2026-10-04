@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Removed redundant card updates when many lights appear together and repeated
+  light-barrier calculations within a frame; the light geometry and fades are
+  unchanged. Pending LED updates are also cleared when leaving their space or
+  disconnecting a card ([#789](https://github.com/Matysh/houseplan-card/issues/789)).
+
 - An on LED strip now shows its light colour inside the outline even when
   Glow is enabled; off strips stay white
   ([#790](https://github.com/Matysh/houseplan-card/issues/790)).

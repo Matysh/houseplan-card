@@ -613,6 +613,7 @@ export interface StaticLedInput {
   owner: object;
   /** Re-render when the field chunk lands. */
   ready: () => void;
+  isConnected: () => boolean;
 }
 
 export function renderStaticLed(input: StaticLedInput): TemplateResult {
@@ -642,10 +643,11 @@ export function renderStaticLed(input: StaticLedInput): TemplateResult {
     occluders: [], floor: [], fingerprint: '',
     masonryGeometry: input.bodies.masonryGeometry, opaqueBodies: input.bodies.opaqueBodies,
   }, (LED_EPSILON_CM / input.cellCm) * input.gridPitch);
-  const module = input.scene && input.live && (fieldWanted(views) || field?.hasLedField(input.owner))
-    ? ledField(input.space.id, input.ready) : null;
+  const module = input.isConnected() && input.scene && input.live && (fieldWanted(views) || field?.hasLedField(input.owner))
+    ? ledField(input.space.id, () => input.isConnected() && input.ready()) : null;
+  if (!module) field?.releaseLedField(input.owner);
   return svg`${module ? module.renderLedField({
     views, scene: input.scene as LightBarrierScene, polygons, faces, spaceId: input.space.id, owner: input.owner,
-    requestUpdate: input.ready, isConnected: () => true,
+    requestUpdate: input.ready, isConnected: input.isConnected,
   }) : nothing}${renderLedStripes({ views, d: frame.d, faces, perUnit: input.perUnit, handlers: null })}` as unknown as TemplateResult;
 }

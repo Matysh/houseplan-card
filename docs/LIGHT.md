@@ -429,6 +429,23 @@ only the geometry differs:
   luminance bands of the shared `GLOW_FALLOFF` in one mask, so corners and the
   closing of a loop neither seam nor double the brightness. Intensity and the 500 ms fade
   are the shared `glowAlpha` / `GLOW_FADE_MS`.
+- **Scheduling.** Sources first seen by one synchronous render share one
+  entering-frame callback per owner/runtime, not one complete update per
+  source (#789). A microtask seals the batch so a later rAF cannot bring a
+  newly inserted source into an earlier entry frame. Forget/disconnect cancels
+  empty batches; identity checks reject late callbacks. Normal 500 ms fade and
+  reduced-motion behavior remain shared with ordinary Glow.
+- **Render-local scene reuse.** The main card shares a resolved barrier scene
+  between its Glow/LED consumers within one synchronous `render()` only
+  (`LightBarrierPass`). `finally` clears the memo even on early return or error.
+  The next render, callbacks and handlers still resolve the content-based
+  revision; this is not a cross-frame cache keyed only by object identity.
+- **Owner teardown.** Main and static cards release LED state when their next
+  space has no visible strips, not only when another field renders. The static
+  card also releases it on disconnect, space change or disabling light pools;
+  switching off live states releases the field while retaining the neutral tube.
+  Both lazy runtime and field readiness callbacks check the actual owner's
+  connection before requesting an update. Reconnect creates a fresh lifecycle.
 - **Visibility.** Classify and sample the full polyline at radius/4 or finer,
   retaining every actual vertex and both ends; never thin a short final run
   or an acute corner. The continuous field is clipped to the union of the

@@ -520,7 +520,10 @@ ignores `#space=`.
   visual layer with one selection/transform/history pipeline; image bytes live
   only in the asset store: [DECOR-EDITOR](DECOR-EDITOR.md), [FURNITURE](FURNITURE.md).
 - **Light and Glow** — one visibility region per source (#71); Glow is an overlay
-  independent of the data fill (#55): [LIGHT](LIGHT.md). **Room fill** —
+  independent of the data fill (#55): [LIGHT](LIGHT.md). Shared source entry
+  scheduling is owner-local; `LightBarrierPass` shares revisions only inside
+  the main card's synchronous render, never across subsequent edits (#789).
+  **Room fill** —
   `resolveEffectiveRoomFill()` is the single projection for room floors,
   clean-floor holes and opening tunnels; `room_color` styles only borders and
   names; custom colour and legacy tokens (#56, #581):

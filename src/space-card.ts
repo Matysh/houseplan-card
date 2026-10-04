@@ -18,6 +18,7 @@ import { ContentSigner } from './signing';
 import { normalizeDeviceDisplay, openingEntityReferences, referencedContentUrls } from './logic';
 import { acquireHaRegistries, activeRegistryHass, haRegistrySnapshot } from './ha-binding-status';
 import { resolvedLightSources } from './devices';
+import { ledRelease } from './led-strip-gate';
 import {
   activitySourceSignature, resolveDevicePresentation, resolvePresentationSources,
 } from './device-presentation';
@@ -297,6 +298,10 @@ class HouseplanSpaceCard extends LitElement {
     if (!config || !config.space) {
       throw new Error('houseplan-space-card: "space" is required');
     }
+    if (this._config?.space !== config.space) {
+      disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
+      ledRelease(this._glowRuntimeState);
+    }
     this._config = {
       show_button: true, button_target: '/plan-doma',
       live_states: true, show_temperature: true, show_signal: true,
@@ -309,6 +314,7 @@ class HouseplanSpaceCard extends LitElement {
     // and a blend probe alive.
     if (this._config.light_pools !== true) {
       disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
+      ledRelease(this._glowRuntimeState);
     } else if (this.isConnected) {
       this._resolveGlowBlend();
     }
@@ -369,6 +375,7 @@ class HouseplanSpaceCard extends LitElement {
     for (const runtime of this._activityRuntime.values()) window.clearTimeout(runtime.timer);
     this._activityRuntime.clear();
     disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
+    ledRelease(this._glowRuntimeState);
     this._continuityHistory = [...this._continuityHistory, ...this._continuity.trace].slice(-80);
     this._continuity.dispose();
     this._continuityDisposed = true;

@@ -14,11 +14,11 @@ to prove that the Node witness actually kills it.
 | --- | ---: | --- |
 | Performance threshold | 4 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 36 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Paint, cascade and layer composition | 37 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 47 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 38 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 101 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **230 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 103 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **233 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -81,6 +81,7 @@ The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels p
 - `device-keyboard-bypasses-click-path`
 - `device-long-value-ellipsis-restored`
 - `device-unavailable-hover-restored`
+- `glow-entry-initial-opacity-skipped`
 - `golden-filled-tunnel-removed`
 - `golden-lamp-out-of-reach`
 - `hatch-static-renderer-untouched`
@@ -250,6 +251,8 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `floor-geometry-key-global-epoch`
 - `floor-geometry-key-ignores-content`
 - `french-locale-wrong-dictionary`
+- `glow-barrier-render-pass-wiring-skipped`
+- `glow-static-led-release-skipped`
 - `household-enter-stops-acting`
 - `household-marker-drops-keyboard-reach`
 - `hp-dialog-escape-does-not-close`
