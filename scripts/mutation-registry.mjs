@@ -14512,8 +14512,12 @@ const MUTANT_DEFINITIONS = [
       + 'without losing a valid neighbouring strip; the executable frame boundary needs no browser',
     patches: [{
       file: 'src/led-strip-runtime.ts',
-      find: "    if (!device || device.space !== input.space.id) continue;",
-      replace: "    if (device && device.space !== input.space.id) continue;",
+      find: '    const device = byId.get(strip.marker as string);\n'
+        + '    if (!device || device.space !== input.space.id) continue;',
+      // Keep the mutant type-correct: the non-null assertion erases at runtime,
+      // so the Node oracle must catch the missing-owner crash, not a tsc error.
+      replace: '    const device = byId.get(strip.marker as string)!;\n'
+        + '    if (device && device.space !== input.space.id) continue;',
     }],
   },
   {
