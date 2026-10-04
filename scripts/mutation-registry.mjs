@@ -14268,6 +14268,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'glow-static-ready-after-disconnect',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: '#789 AC4: a real lazy runtime or field import completing after the static custom element '
+      + 'disconnects must not request a late update; the browser smoke holds its network response across removal',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: '  const ledConnected = o.glowRuntime?.host.isConnected ?? (() => false);',
+      replace: '  const ledConnected = () => true;',
+    }],
+  },
+  {
     id: 'glow-static-led-release-skipped',
     guard: 'node demo/smoke_led_strip_glow.mjs',
     because: '#789 AC4: disconnecting and reconnecting the actual static custom element must start a fresh '

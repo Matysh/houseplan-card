@@ -76,7 +76,11 @@ test('empty render keeps create/import affordances without spatial layers', () =
 
   // Обёртка: настоящий `nothing` пробрасывается как есть. `noChange` вложен в
   // стабильный shell: так тело остаётся, а соседний confirm можно убрать.
-  const wrapper = methodBody('render');
+  // #789: внешний render ограничивает кэш барьеров одним проходом; контракт
+  // пустого тела и подтверждения остаётся во внутренней обёртке.
+  assert.match(methodBody('render'),
+    /return this\._lightBarrierPass\.run\(\(\) => this\._renderLightPass\(\)\);/);
+  const wrapper = methodBody('_renderLightPass');
   assert.match(wrapper, /const body = this\._renderBody\(\);/);
   assert.match(wrapper, /if \(body === nothing\) return body;/);
   assert.match(wrapper, /return this\._renderRoot\(body\);/);
