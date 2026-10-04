@@ -14235,6 +14235,51 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'led-zoom-quality-never-coarse',
+    guard: 'node demo/smoke_led_zoom_quality.mjs',
+    because: '#789 AC5: trusted wheel and touch input must activate the owner CSS before camera paint; '
+      + 'a helper unit cannot prove real custom-element wiring or painted band count',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (active) this.setAttribute('data-led-zoom-quality', 'coarse');",
+      replace: "    if (active) this.setAttribute('data-led-zoom-quality', 'full');",
+    }],
+  },
+  {
+    id: 'led-zoom-coarse-midpoint-wrong',
+    guard: 'node demo/smoke_led_zoom_quality.mjs',
+    because: '#789 AC2: the actual connected SVG/CSS must paint even24 at each coarse interval midpoint; '
+      + 'retaining 48 nodes is not proof of the displayed gradient',
+    patches: [{
+      file: 'src/led-strip-field.ts',
+      find: '    const coarse = k % 2 === 0 ? grey(falloffAt(inner)) : null;',
+      replace: '    const coarse = k % 2 === 0 ? grey(falloffAt(outer)) : null;',
+    }],
+  },
+  {
+    id: 'led-zoom-quiet-deadline-shortened',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/zoom-scale-activity.test.mjs',
+    because: '#789 AC5: deterministic clock tests require full48 only after 160 ms since the final real scale change',
+    patches: [{
+      file: 'src/zoom-scale-activity.ts',
+      find: 'export const ZOOM_SCALE_QUIET_MS = 160;',
+      replace: 'export const ZOOM_SCALE_QUIET_MS = 80;',
+    }],
+  },
+  {
+    id: 'led-zoom-noop-clears-lease',
+    guard: 'node demo/smoke_led_zoom_quality.mjs',
+    because: '#789 AC5: a second trusted wheel at the scale clamp must not clear the active deadline; '
+      + 'the pure timer unit cannot prove how the camera no-op branch calls structural cancellation',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      // A clamped/no-op command neither starts nor shortens the zoom lease.\n'
+        + '      this._cameraTransition.cancel(false);\n      this._cameraTransitionFit = null;',
+      replace: '      this._cancelCameraTransition(false);',
+    }],
+  },
+  {
     id: 'glow-barrier-render-pass-wiring-skipped',
     guard: 'node demo/smoke_led_strip_glow.mjs',
     because: '#789 AC4: precise coverage of the real main-card Glow plus LED render must resolve barriers '

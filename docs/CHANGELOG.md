@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- LED Glow temporarily uses a lighter gradient while zooming, without hiding
+  the light; full quality returns automatically when zooming pauses. Panning
+  and stationary plans keep their original quality
+  ([#789](https://github.com/Matysh/houseplan-card/issues/789)).
+
 - Removed redundant card updates when many lights appear together and repeated
   light-barrier calculations within a frame; the light geometry and fades are
   unchanged. Pending LED updates are also cleared when leaving their space or

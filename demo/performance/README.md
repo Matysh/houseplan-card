@@ -464,3 +464,18 @@ batch; all batches render as one positive-winding clip path per strip. The
 paths, excluding the joined Lit/DOM clip string. Timing and the 64 MiB
 warm-cycle heap-growth limit are unchanged; that is not an absolute browser
 or GPU memory bound.
+
+Issue #789 retains every historical window and budget, and adds
+`cameraFullCycleLongTaskMaxMs`: one continuous observer starting before the
+first camera wheel, spanning the original scenario and 100-step series, full
+quality restoration, two animation frames, an immediate wheel restart, a second
+restoration and two frames, then at least 500 ms of tail. Raw Long Task entries
+and phase timestamps are saved in each sample's `cameraFullCycle`. The new
+metric inherits the existing 150 ms camera ceiling for median and p95; missing
+observations or quality that fails to restore within 1000 ms fail closed. Two
+frames are a paint opportunity, not proof of compositor presentation. The
+original `cameraSeriesLongTaskMaxMs` still ends at its original boundary. This
+addition prevents deferred restoration work from escaping all judged windows;
+it does not turn local timing into canonical evidence. Issue #789's acceptance
+additionally requires a 10% task margin (warm p95 ≤1350 ms and both camera-series
+and full-cycle p95 ≤135 ms), without changing the shared budget JSON.

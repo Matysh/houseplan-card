@@ -601,6 +601,14 @@ export const SMOKE_LINKS = [
       + 'browser bundle exposes the helper name in its test steps',
   },
   {
+    files: ['src/zoom-scale-activity.ts', 'src/led-strip-field.ts'],
+    symbols: ['_applyCameraTransitionFrame', '_startCameraTransition', '_cancelCameraTransition', '_zoomAt'],
+    smokes: ['smoke_led_zoom_quality.mjs'],
+    because: '#789: actual wheel/pinch and camera lifecycle must select retained48/coarse24 '
+      + 'before viewport paint and restore full48 without changing LED geometry or ordinary Glow; '
+      + 'the helper unit cannot observe custom-element CSS, HA updates or real input wiring',
+  },
+  {
     // #780: the LED chunks are lazy modules reached only through the bundle;
     // the smokes drive the Devices editor, the View and the static card by
     // DOM (`data-led-*`) and never name a helper of these files.

@@ -472,6 +472,13 @@ export const planStyles = css`
     .glow-spot.is-leaving {
       opacity: 0;
     }
+    /* Zoom only changes band paint, never the field/clip DOM or source fade. */
+    :host([data-led-zoom-quality="coarse"]) .led-field-bands > path:nth-child(even) {
+      display: none;
+    }
+    :host([data-led-zoom-quality="coarse"]) .led-field-bands > path:nth-child(odd) {
+      stroke: var(--hp-led-coarse-stroke);
+    }
     @media (prefers-reduced-motion: reduce) {
       .glow-spot {
         transition: none;

@@ -60,6 +60,12 @@ stay on one promoted compositor path from the first movement until the terminal
 frame; a budgeted redraw or an unrelated Home Assistant state update must never
 flash white, become transparent or momentarily expose the stage background.
 This contract applies equally to browsers and HA Companion WebViews.
+LED light remains continuously visible during zoom, but its gradient may use
+24 instead of 48 bands while the scale actually changes (#789, owner-approved
+2026-10-04). The original quality returns after 160 ms without a scale change,
+including a pause with fingers still down. This is the same bounded policy on
+mouse and touch, not permission to hide lighting or simplify geometry, walls,
+openings or idle frames. Pure pan and static cards keep full LED quality.
 `smoke_daycycle_layer_budget` additionally proves that the first camera move on
 a 1 cm/grid-point day-cycle plan switches its filtered paper silhouette to the
 screen-bounded fallback, leaves no implicit overlap-promoted plan layer, and

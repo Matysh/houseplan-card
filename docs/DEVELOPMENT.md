@@ -192,6 +192,15 @@ new `size-pack` with 467.63 MiB; the accepted upper bound is 487.63 MiB.
   that navigation witness checks its steady state, not a newly invented fade.
   The complete
   `led-strips-v1` performance gate remains separate from these correctness checks.
+- LED zoom quality (#789) keeps 48 mask paths and temporarily paints 24 while
+  the camera scale changes. `zoom-scale-activity.test.mjs` uses a fake clock for
+  the 160 ms deadline, no-op/pan and stale callbacks; `smoke_led_zoom_quality`
+  covers real input and restoration. Full-quality pixels are compared with the
+  pre-change 48-band construction, not with the coarse frame. The performance
+  runner retains its old windows and adds a continuous observer through restore,
+  immediate restart and a 500 ms tail; `led-camera-cycle.test.mjs` verifies that
+  protocol and its fail-closed checks. Local timing is diagnostic, not a substitute
+  for the exact-SHA Linux performance gate.
 - Pure backend on native Windows (with no HA plugin autoload): use the explicit
   `python -Arguments @(...)` invocation above after setting
   `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'`.

@@ -11,7 +11,7 @@
  * That separation keeps walls opaque without exposing piece boundaries in the
  * gradient at straight cuts or corners.
  */
-import { noChange, svg, type TemplateResult } from 'lit';
+import { noChange, nothing, svg, type TemplateResult } from 'lit';
 import { Directive, directive, type PartInfo } from 'lit/directive.js';
 import { repeat } from 'lit/directives/repeat.js';
 import {
@@ -433,7 +433,10 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
   const bands = Array.from({ length: LED_FIELD_BANDS }, (_, k) => {
     const outer = 1 - k / LED_FIELD_BANDS;
     const inner = 1 - (k + 1) / LED_FIELD_BANDS;
-    return { half: outer, value: falloffAt((outer + inner) / 2) };
+    // Even bands already have the outer widths of the 24-band intervals.
+    // CSS switches only their midpoint ink; idle attributes remain exact48.
+    const coarse = k % 2 === 0 ? grey(falloffAt(inner)) : null;
+    return { half: outer, value: falloffAt((outer + inner) / 2), coarse };
   });
   // The performance witness (led-strips-v1) reads the bounded cache from the DOM.
   return svg`<g class="led-fields" pointer-events="none" aria-hidden="true"
@@ -459,8 +462,9 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
             x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}"
             color-interpolation="sRGB" style="mask-type:luminance">
             <rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" fill="black"></rect>
-            <g clip-path="url(#hp-led-visible-${id})">
+            <g class="led-field-bands" clip-path="url(#hp-led-visible-${id})">
               ${bands.map((band) => svg`<path d="${geometry.d}" fill="none" stroke="${grey(band.value)}"
+                style=${band.coarse === null ? nothing : `--hp-led-coarse-stroke:${band.coarse}`}
                 stroke-width="${2 * band.half * r}" stroke-linecap="round" stroke-linejoin="round"></path>`)}
             </g>
           </mask>

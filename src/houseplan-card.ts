@@ -7,6 +7,7 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
+import { ZoomScaleActivity } from './zoom-scale-activity';
 import { ledButton, ledEditorFor, ledHistory, ledImportNote, ledSection, ledWallsNote } from './led-strip-card';
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { cache as litCache } from 'lit/directives/cache.js';
@@ -1058,6 +1059,10 @@ export class HouseplanCard extends LitElement {
   /** #82: one camera-only transition inside a settled mode. It never owns
    * chrome/background coordinates — those remain exclusive to #101. */
   private _cameraTransitionFit: ModeViewBox | null = null;
+  private readonly _zoomScaleActivity = new ZoomScaleActivity((active) => {
+    if (active) this.setAttribute('data-led-zoom-quality', 'coarse');
+    else this.removeAttribute('data-led-zoom-quality');
+  });
   private readonly _cameraTransition = new CameraTransitionController({
     frame: (state) => this._applyCameraTransitionFrame(state),
     settled: (state) => this._settleCameraTransition(state),
@@ -1091,6 +1096,7 @@ export class HouseplanCard extends LitElement {
 
   private _applyCameraTransitionFrame(state: CameraTransitionState): void {
     const presented = this._normalizeCameraState(state.presented);
+    this._zoomScaleActivity.change(this._cameraState().viewBox, presented.viewBox);
     // Retargeting must start from the camera that was actually painted, not
     // from an unclamped interpolation hidden inside the controller.
     state.presented = presented;
@@ -1123,6 +1129,7 @@ export class HouseplanCard extends LitElement {
       ? this._cameraTransition.presented?.zoom
       : undefined;
     this._cameraTransition.cancel(commitTarget);
+    if (!keepPresented) this._zoomScaleActivity.reset();
     this._cameraTransitionFit = null;
     if (presentedZoom !== undefined && reason !== 'room') this._saveZoom();
   }
@@ -1148,7 +1155,9 @@ export class HouseplanCard extends LitElement {
     const runningTarget = this._cameraTransition.target;
     if (runningTarget && sameCameraState(runningTarget, target)) return false;
     if (sameCameraState(current, target)) {
-      this._cancelCameraTransition(false);
+      // A clamped/no-op command neither starts nor shortens the zoom lease.
+      this._cameraTransition.cancel(false);
+      this._cameraTransitionFit = null;
       return false;
     }
     this._activateSafeDayCycleOutline();
@@ -2690,6 +2699,7 @@ export class HouseplanCard extends LitElement {
     this._editorRuntimeLoadingVisible = false;
     this._modeTransition.dispose();
     this._cameraTransition.dispose();
+    this._zoomScaleActivity.dispose();
     this._cameraTransitionFit = null;
     this._modeTransitionVisual = null;
     this._modeTransitionPreparing = false;
@@ -6564,9 +6574,10 @@ export class HouseplanCard extends LitElement {
   /** Immediate path for direct pinch: keep the point under the fingers. */
   private _zoomAt(sx: number, sy: number, newZoom: number): void {
     this._clearRoomFocus();
-    this._cancelCameraTransition(false);
+    if (this._cameraTransition.active) this._cancelCameraTransition(false);
     const result = this._cameraTargetAt(sx, sy, newZoom);
     if (!result) return;
+    this._zoomScaleActivity.change(this._cameraState().viewBox, result.target.viewBox);
     if (this._tool === 'opening') {
       this._cursorPt = null;
       this._clearOpeningPlacement(false);

@@ -275,6 +275,13 @@ produce a zero-sized SVG `viewBox`.
   and disconnect cancel or settle it before taking ownership. Reduced motion
   always commits the exact target immediately. View persists only the settled
   target once; editor camera remains session-only.
+* **LED gradient during zoom (#789).** Actual scale changes temporarily paint
+  24 of the retained 48 mask bands; light, geometry and the coloured strip stay
+  visible. Full quality returns after 160 ms of scale inactivity, including
+  a paused pinch. This also covers reduced-motion wheel/fit/button zoom, but
+  not pure pan, clamped no-ops, structural resize or mode transitions. Camera
+  ownership changes and teardown reset the transient state; static cards are
+  unaffected. The detailed light contract is in [LIGHT](LIGHT.md).
 * **Pan** — available at **every zoom**, in view mode and in every
   editor, and bounded by the content frame inflated by
   `PAN_SLACK = 1.0` of `max(view, frame)` on each side. You can walk

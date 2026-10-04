@@ -21,6 +21,10 @@
  * profile's camera scenario, benchmark_large_house.mjs) and the longest Long
  * Task of the camera — the scenario and the 100-step series, retained heap
  * after 20 A→B→C→A cycles over a warm cycle (same GC protocol).
+ * #789 additionally observes cameraFullCycleLongTaskMaxMs continuously through
+ * full-quality restoration, immediate restart and a 500 ms tail, with the same
+ * camera ceiling. Historical camera windows remain unchanged; each row retains
+ * raw full-cycle Long Tasks and phase boundaries for audit.
  *
  * Counters (exact, every sample): geometry/visibility recomputes over 100
  * unrelated HA ticks, 100 pan/zoom steps and a colour-only change (0); the
@@ -44,6 +48,7 @@ import { dirname, resolve } from 'node:path';
 import { launch } from './serve.mjs';
 import { makeLedStripsFixture } from './performance/led-strips-fixture.mjs';
 import { ledChunkRequestName } from './performance/led-chunk-request.mjs';
+import { cameraCycleFailures, cameraCycleSampleFailures, finishLedCameraCycle } from './performance/led-camera-cycle.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const warmupOnly = process.argv.includes('--warmup-only');
@@ -118,6 +123,7 @@ function installLedLifecycleTracker() {
 /** The page side of one mount: the same fixture host as before, shared by the sample and the late-import run. */
 function pageHost() {
   return `
+    window.__finishLedCameraCycle = ${finishLedCameraCycle.toString()};
     window.__ledHost = (fixture) => {
       const card = document.createElement('houseplan-card');
       card.setConfig({ type: 'custom:houseplan-card', title: 'LED strips', icon_size: 3.4 });
@@ -182,7 +188,7 @@ async function sample() {
           await sleep(5);
         }
       };
-      const longTasks = () => {
+      const longTasks = (onEntries) => {
         const entries = [];
         const observer = new PerformanceObserver((list) => entries.push(...list.getEntries()));
         observer.observe({ type: 'longtask', buffered: false });
@@ -190,6 +196,7 @@ async function sample() {
           await sleep(0);
           entries.push(...observer.takeRecords());
           observer.disconnect();
+          onEntries?.(entries.map(({ startTime, duration }) => ({ startTime, duration })));
           return Number(Math.max(0, ...entries.map((entry) => entry.duration)).toFixed(2));
         };
       };
@@ -250,6 +257,10 @@ async function sample() {
       const wheel = (deltaY) => stage.dispatchEvent(new WheelEvent('wheel', {
         deltaY, clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2, bubbles: true, cancelable: true,
       }));
+      // Keep the old pan/series windows intact. This separate observer also
+      // covers the first quality switch, both restores and the quick restart.
+      const cameraFullCycle = { startTime: performance.now(), entries: [], phases: {} };
+      const stopFullCycle = longTasks(entries => { cameraFullCycle.entries = entries; });
       const stopPan = longTasks();
       const panStarted = performance.now();
       wheel(-120);
@@ -266,6 +277,14 @@ async function sample() {
       }
       await frame();
       const cameraSeriesLongTaskMaxMs = await stopSeries();
+      cameraFullCycle.phases.seriesEnd = performance.now();
+      Object.assign(cameraFullCycle.phases, await window.__finishLedCameraCycle({
+        fullQuality: () => !card.hasAttribute('data-led-zoom-quality'),
+        input: async () => { wheel(-60); await card.updateComplete; },
+        frame, now: () => performance.now(), sleep,
+      }));
+      const cameraFullCycleLongTaskMaxMs = await stopFullCycle();
+      cameraFullCycle.endTime = performance.now();
       const afterCamera = await stats();
       // A colour-only change rebuilds no geometry or visibility.
       host.setStates({ ...host.states, ...Object.fromEntries(floorLights.map((id) => [id,
@@ -301,6 +320,7 @@ async function sample() {
       const key = (entry) => `${entry.shapes}/${entry.visibility}/${entry.sources}/${entry.visibilityPaths}/${entry.pathChars}`;
       return {
         firstStableRenderMs, warmSpaceReadyMs, stateUpdateMs, panZoomMs, panZoomLongTaskMaxMs, cameraSeriesLongTaskMaxMs,
+        cameraFullCycleLongTaskMaxMs, cameraFullCycle,
         retainedHeapBytes: heapBefore == null || heapAfter == null ? null : Math.max(0, heapAfter - heapBefore),
         counters: strips ? {
           recomputesOnHaTicks: afterTicks.recomputes - before.recomputes,
@@ -410,7 +430,7 @@ const metric = (name) => {
   return { median: values.length ? at(0.5) : null, p95: values.length ? at(0.95) : null, samples: values };
 };
 const METRICS = ['firstStableRenderMs', 'warmSpaceReadyMs', 'stateUpdateMs', 'panZoomMs', 'panZoomLongTaskMaxMs',
-  'cameraSeriesLongTaskMaxMs', 'retainedHeapBytes'];
+  'cameraSeriesLongTaskMaxMs', 'cameraFullCycleLongTaskMaxMs', 'retainedHeapBytes'];
 const report = {
   profile: PROFILE, size, strips: STRIPS, points: POINTS, sourceSha, chromium,
   samples: rows.length, warmups: discarded, cycles: CYCLES, viewport: { width: 1440, height: 1000 }, dpr: 1,
@@ -429,6 +449,8 @@ if (!partial && (report.samples < MIN_SAMPLES || report.warmups < 1)) {
   failures.push(`${report.samples} samples after ${report.warmups} warmups: the profile needs ≥ ${MIN_SAMPLES} after ≥ 1`);
 }
 const limits = budgets.sizes[size] || {};
+failures.push(...cameraCycleSampleFailures(rows));
+failures.push(...cameraCycleFailures(report.metrics.cameraFullCycleLongTaskMaxMs, limits.cameraSeriesLongTaskMaxMs));
 for (const [name, limit] of Object.entries(limits)) {
   for (const stat of ['median', 'p95']) {
     const value = report.metrics[name]?.[stat];

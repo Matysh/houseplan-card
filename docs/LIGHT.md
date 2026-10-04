@@ -429,6 +429,16 @@ only the geometry differs:
   luminance bands of the shared `GLOW_FALLOFF` in one mask, so corners and the
   closing of a loop neither seam nor double the brightness. Intensity and the 500 ms fade
   are the shared `glowAlpha` / `GLOW_FADE_MS`.
+- **Zoom quality (#789).** Only while the main card's actual scale changes,
+  the same mask paints 24 bands at the midpoints of the same falloff. All
+  48 DOM paths, their widths, visibility/floor clips, source colour and alpha
+  remain intact; light is never hidden. After 160 ms without a scale change,
+  the original 48-band paint returns without a new fade. A stationary pinch
+  restores quality even while contacts are held. Pure pan, a clamped no-op,
+  structural resize and View/editor transitions do not activate it; the
+  static card always uses full quality. Space/mode/projection/adoption,
+  document hiding and disconnect reset the owner-local state. HA changes
+  during zoom remain authoritative when full quality returns.
 - **Scheduling.** Sources first seen by one synchronous render share one
   entering-frame callback per owner/runtime, not one complete update per
   source (#789). A microtask seals the batch so a later rAF cannot bring a

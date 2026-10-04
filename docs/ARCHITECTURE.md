@@ -551,6 +551,14 @@ background, layer opacity or CSS transform) and lives in the core View bundle.
 The component stays the sole camera writer; ownership boundaries and timings:
 [CANVAS](CANVAS.md) › View/editor camera handoff and §5.
 
+LED zoom quality (#789) is a separate owner-local scale-activity deadline,
+not another camera writer or a source transition. Actual changes to viewport
+width/height set a host attribute before live paint; 160 ms of inactivity clears
+it. CSS changes only the existing LED mask bands (48 retained, 24 painted),
+without a geometry rebuild or a second SVG. Camera/lifecycle cancellation
+clears the deadline; static cards do not participate. Ordinary Glow's pan/fade
+blur policy remains independent.
+
 ## Settings tiers (owner's principle, 2026-07-26)
 
 Four levels: **global (`config.settings`) → space (`space.settings`) → room
