@@ -444,6 +444,35 @@ test('#784/AC9: the frame gives every strip the 30 cm default, not the shared ra
   assert.ok(Math.abs(frame.views[0].radius - (30 / 5) * (1000 / 240)) < 1e-9, `radius ${frame.views[0].radius}`);
 });
 
+test('#791: the frame skips missing runtime owners without dropping a valid neighbouring strip', () => {
+  const lamp = device({ entities: ['light.led'], marker: { id: 'm1', binding: 'device:m1' } });
+  const points = [[0.1, 0.1], [0.4, 0.1]];
+  const strips = [
+    // A non-null reference reaches the runtime-owner guard; marker:null alone
+    // is rejected earlier and never exercised the escaped nightly mutant.
+    { id: 'missing-owner', points, marker: 'absent-from-runtime' },
+    { id: 'unbound', points, marker: null },
+    { id: 'other-space', points, marker: 'm2' },
+    { id: 'inactive', points, marker: 'm1', active: false },
+    { id: 'valid', points, marker: 'm1' },
+  ];
+  const before = structuredClone(strips);
+  const frame = ledFrame({
+    space: { id: 's', vb: [0, 0, 1000, 1000], rooms: [{ id: 'room' }], led_strips: strips },
+    devices: [lamp, device({ id: 'm2', space: 'other', primary: 'light.other', entities: ['light.other'],
+      marker: { id: 'm2', binding: 'device:m2' } })],
+    hass: { states: { 'light.led': { state: 'on', attributes: { rgb_color: [128, 213, 255] } } } },
+    defaultColor: '#ffd27b', paletteAlpha: 0.7, cellCm: 5, gridPitch: 1000 / 240, iconPct: 3.4,
+    scene: null, polygons: [], glowFor: () => true, inRoom: () => true, showHidden: false,
+  });
+  assert.deepEqual(frame.views.map(view => [view.strip.id, view.device.id]), [['valid', 'm1']],
+    'only the same-space bound strip may reach stripe, light and hit rendering');
+  assert.equal(frame.views[0].state, 'on');
+  assert.equal(frame.views[0].glow, true);
+  assert.equal(frame.views[0].appearance?.c, '#80d5ff', 'the valid neighbour retains its live light');
+  assert.deepEqual(strips, before, 'runtime filtering must not rewrite stored strips');
+});
+
 test('AC2/r1 M2: an explicit valid room_id wins over the anchor room; a stale one falls back', () => {
   const rooms = [{ id: 'A' }, { id: 'B' }];
   const inA = (point, room) => room.id === 'A' && point[0] < 500;

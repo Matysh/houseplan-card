@@ -14506,8 +14506,10 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'led-unbound-in-view',
-    guard: 'node demo/smoke_led_strip_glow.mjs',
-    because: "#780 ТЗ §5: an unbound strip has no View representation, light or target",
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/led-strip-runtime.test.mjs',
+    because: '#780 ТЗ §5 / #791: ledFrame skips a non-null marker absent from runtime devices '
+      + 'without losing a valid neighbouring strip; the executable frame boundary needs no browser',
     patches: [{
       file: 'src/led-strip-runtime.ts',
       find: "    if (!device || device.space !== input.space.id) continue;",

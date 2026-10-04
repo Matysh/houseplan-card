@@ -7,18 +7,25 @@ must be added deliberately under one reason below, and its mutant `because` must
 the concrete browser-only invariant.
 
 Converted witnesses are not listed here: their registry guard names an explicit `node --test`
-suite plus `test/mutation-browser-offload.test.mjs`, and every converted mutant is run once
-to prove that the Node witness actually kills it.
+suite. The original #659 conversions also use `test/mutation-browser-offload.test.mjs`;
+new behavioral witnesses execute the consumer directly where possible. Catching the mutant
+is verified by the nightly run under PROCESS §2.7, not by a development-time mutation run.
+
+`led-unbound-in-view` moved to `test/led-strip-runtime.test.mjs` in #791: its guard
+requires a non-null marker absent from runtime devices, whereas the browser's
+`marker: null` fixture exits before the mutated guard. The Node witness checks the
+exact surviving strip/owner and its live light; the browser smoke still covers
+unbound-strip visibility and cold loading.
 
 | Category | Count | Why a browser is still required |
 | --- | ---: | --- |
 | Performance threshold | 4 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 38 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Paint, cascade and layer composition | 37 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 49 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 38 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 104 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **237 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **236 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -102,7 +109,6 @@ The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels p
 - `led-icon-not-suppressed`
 - `led-source-stays-round-at-anchor`
 - `led-static-live-ignored`
-- `led-unbound-in-view`
 - `stage3-w4-device-target-loses-44px-floor`
 - `stage3-w5-runtime-nudge-writes-storage`
 - `stage3-w6-no-borders-keeps-raised-plates`
