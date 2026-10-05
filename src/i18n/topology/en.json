@@ -1,8 +1,8 @@
 {
   "title": "Zigbee links",
   "toggle": "Show Zigbee links when hovering over a device",
-  "hint": "Shows observed direct neighbours only. Nothing is fetched while you hover.",
-  "help": "Shows which Zigbee devices each device talks to directly. Line colour is link quality (LQI) on the same scale as the device's LQI reading: red at 40 and below, green at 180 and above. A dashed line means quality was not reported. An arrow points to the next device on the way to the coordinator: one arrow leads out, incoming arrows are the devices that route through this one. A line without an arrow is a spare neighbour. This is the route tree House Plan builds, not the path a packet takes right now: a label at the end of an arrow means its target is not on this plan, and no arrow at all means the route is unknown. Data comes from the last load and goes stale; links are shown with a mouse only.",
+  "hint": "Shows parents and next hops reported by the integration. Nothing is fetched while you hover.",
+  "help": "Shows an end device's parent or a router's active next hop to the coordinator, as reported by the integration. There is at most one outgoing arrow; incoming arrows identify devices routing through this node. Ordinary neighbours are hidden. All lines are solid. Line and arrow colour use LQI 0–255: red at 0, yellow at 128, green at 255. Without LQI they are grey with a black outline. A label at the end names a target on another space or not on the plan. No route data means that no outgoing route was reported unambiguously, not that the device is offline. These are last-received integration records, not a live packet trace or a guarantee of the whole path. Cached ZHA tables may already be old when read; stale and incomplete snapshots are marked. Links are shown with a mouse only.",
   "help_aria": "Help: Zigbee links",
   "admin_only": "Topology data is available to Home Assistant administrators only.",
   "save_first": "Save this setting before loading topology data.",
@@ -17,8 +17,8 @@
   "status_loading": "Loading…",
   "status_ready": "Received {time}",
   "status_stale": "Received {time} · stale",
-  "status_partial": "Received {time} · some nodes were omitted",
-  "status_no_links": "Received {time} · no observed links found",
+  "status_partial": "Received {time} · incomplete data",
+  "status_no_links": "Received {time} · no confirmed routes",
   "error_permission": "Administrator permission is required.",
   "error_unsupported": "This provider or Home Assistant API is unavailable.",
   "error_timeout": "The provider did not respond in time.",
@@ -26,7 +26,12 @@
   "error_invalid_payload": "The provider returned unsupported topology data.",
   "error_provider": "Topology data could not be loaded.",
   "remote_count": "+{n} in other spaces",
-  "route_device_not_on_plan": "device is not on the plan",
+  "route_device_not_on_plan": "Device is not on the plan",
   "route_coordinator_not_on_plan": "coordinator is not on the plan",
-  "route_other_space": "another space"
+  "route_other_space": "another space",
+  "route_device_not_on_plan_named": "Device is not on the plan ({name})",
+  "route_unknown": "No route data",
+  "route_stale": "Stale data",
+  "route_partial": "Incomplete data",
+  "status_cache": "Integration cache; radio-scan time unknown"
 }

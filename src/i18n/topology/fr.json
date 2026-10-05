@@ -1,8 +1,8 @@
 {
   "title": "Liens Zigbee",
   "toggle": "Afficher les liens Zigbee au survol d’un appareil",
-  "hint": "Seuls les voisins directs observés sont affichés. Le survol ne lance aucune requête.",
-  "help": "Montre avec quels appareils Zigbee chaque appareil communique directement. La couleur de la ligne est la qualité du lien (LQI) sur la même échelle que l'indicateur LQI de l'appareil : rouge à 40 et en dessous, vert à 180 et au-dessus. Une ligne pointillée signifie que la qualité n'a pas été communiquée. Une flèche pointe vers l'appareil suivant sur le chemin du coordinateur : une flèche part, les flèches entrantes sont les appareils qui passent par celui-ci. Une ligne sans flèche est un voisin de secours. C'est l'arbre de routes que construit House Plan, pas le trajet d'un paquet à cet instant : une étiquette au bout d'une flèche signifie que sa cible n'est pas sur ce plan, et l'absence de flèche que la route est inconnue. Les données proviennent du dernier chargement et vieillissent ; les liens ne sont visibles qu'à la souris.",
+  "hint": "Affiche les parents et prochains sauts signalés par l’intégration. Le survol ne lance aucune requête.",
+  "help": "Affiche le parent d’un appareil terminal ou le prochain saut actif d’un routeur vers le coordinateur selon l’intégration. Il y a au plus une flèche sortante ; les flèches entrantes indiquent les appareils passant par ce nœud. Les simples voisins sont masqués. Toutes les lignes sont continues. Ligne et flèche utilisent le LQI 0–255 : rouge à 0, jaune à 128, vert à 255. Sans LQI, elles sont grises avec un contour noir. Une étiquette au bout de la flèche nomme une cible dans un autre espace ou absente du plan. Aucune donnée de route indique l’absence d’information univoque, pas un appareil hors ligne. Il s’agit des derniers relevés de l’intégration, pas du trajet des paquets en direct ni d’une garantie du chemin entier. Le cache ZHA peut déjà être ancien à la lecture ; les données anciennes et incomplètes sont signalées. Les liens ne sont visibles qu’à la souris.",
   "help_aria": "Aide : liens Zigbee",
   "admin_only": "Les données de topologie sont réservées aux administrateurs Home Assistant.",
   "save_first": "Enregistrez ce réglage avant de charger les données de topologie.",
@@ -17,8 +17,8 @@
   "status_loading": "Chargement…",
   "status_ready": "Reçu : {time}",
   "status_stale": "Reçu : {time} · obsolète",
-  "status_partial": "Reçu : {time} · certains nœuds sont omis",
-  "status_no_links": "Reçu : {time} · aucun lien observé trouvé",
+  "status_partial": "Reçu : {time} · données incomplètes",
+  "status_no_links": "Reçu : {time} · aucune route confirmée",
   "error_permission": "Les droits administrateur sont requis.",
   "error_unsupported": "Ce fournisseur ou l’API Home Assistant n’est pas disponible.",
   "error_timeout": "Le fournisseur n’a pas répondu à temps.",
@@ -28,5 +28,10 @@
   "remote_count": "+{n} dans d’autres espaces",
   "route_device_not_on_plan": "appareil absent du plan",
   "route_coordinator_not_on_plan": "coordinateur absent du plan",
-  "route_other_space": "autre espace"
+  "route_other_space": "autre espace",
+  "route_device_not_on_plan_named": "Appareil absent du plan ({name})",
+  "route_unknown": "Aucune donnée de route",
+  "route_stale": "Données anciennes",
+  "route_partial": "Données incomplètes",
+  "status_cache": "Cache de l’intégration ; date de l’analyse radio inconnue"
 }

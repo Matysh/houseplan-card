@@ -22,6 +22,14 @@ the degradation is accepted.
 
 ## Local contour in 5 minutes (локальный контур за 5 минут, #633)
 
+For Zigbee route changes (#798), focused Node tests cover provider formats,
+conflicts, exact mapping and async lifecycle. After `bundle:sync`, run
+`node demo/smoke_zigbee_topology_hover.mjs` in WSL/Linux: it checks solid arrows,
+unknown-quality outlines, target names, gates and camera anchoring. The
+topology benchmark must use confirmed route evidence, not an empty graph.
+Neighbour-only raw fixtures remain negative controls; do not add guessed
+routes to make them draw. Ordinary LQI badges keep their separate palette.
+
 For warm-remount changes, `node demo/smoke_warm_mode_adoption.mjs` records
 intermediate camera frames and screen-space points, observes every memo size
 publication, and exercises delayed permission/runtime races and a touch floor

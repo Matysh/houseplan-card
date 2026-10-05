@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Zigbee hover arrows now use parents and active next hops reported by ZHA or
+  Zigbee2MQTT instead of an inferred neighbour tree. Unknown, stale or incomplete
+  routes are identified explicitly; all arrows are solid, with a full-range LQI
+  colour scale or a grey/black outline when quality is unknown. Unplaced parent
+  labels include the device name ([#798](https://github.com/Matysh/houseplan-card/issues/798)).
+
 - LED Glow temporarily uses a lighter gradient while zooming, without hiding
   the light; full quality returns automatically when zooming pauses. Panning
   and stationary plans keep their original quality

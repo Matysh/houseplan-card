@@ -1,4 +1,6 @@
-import { normalizeZ2mTopology, normalizeZhaTopology, type ZigbeeTopology } from './zigbee-topology';
+import {
+  normalizeZ2mTopology, normalizeZhaTopology, TOPOLOGY_MAX_PAYLOAD_BYTES, type ZigbeeTopology,
+} from './zigbee-topology';
 import { normalizeZ2mBaseTopic } from './zigbee-topology-settings';
 
 export type ZigbeeTopologyErrorCode =
@@ -13,6 +15,8 @@ export type ZigbeeProviderState = {
   phase: 'idle' | 'loading' | 'ready' | 'error';
   obtainedAt?: number;
   partial?: boolean;
+  /** A failed refresh retained the last good snapshot; age is checked separately. */
+  stale?: boolean;
   error?: ZigbeeTopologyErrorCode;
 };
 
@@ -98,14 +102,21 @@ function fail(code: ZigbeeTopologyErrorCode): Error & { code: ZigbeeTopologyErro
 function run(cache: Cache, key: string, task: () => Promise<ZigbeeTopology>): Promise<void> {
   const existing = cache.inflight.get(key);
   if (existing) return existing;
-  state(cache, key, { phase: 'loading' });
+  const previous = cache.states[key];
+  const retained = previous?.obtainedAt === undefined ? {} : {
+    obtainedAt: previous.obtainedAt, partial: previous.partial, stale: previous.stale,
+  };
+  state(cache, key, { ...retained, phase: 'loading' });
   const promise = task().then((topology) => {
     if (!topology.nodes.length && topology.warnings.some((item) => item.code === 'invalid_payload')) {
       throw fail('invalid_payload');
     }
     store(cache, topology);
   }).catch((error) => {
-    state(cache, key, { phase: 'error', error: errorCode(error) });
+    state(cache, key, {
+      ...retained, ...(retained.obtainedAt === undefined ? {} : { stale: true }),
+      phase: 'error', error: errorCode(error),
+    });
   }).finally(() => cache.inflight.delete(key));
   cache.inflight.set(key, promise);
   return promise;
@@ -152,6 +163,7 @@ function parseMessage(message: unknown): unknown {
   const record = recordOf(message);
   const raw = record?.payload ?? message;
   if (typeof raw !== 'string') return raw;
+  if (raw.length > TOPOLOGY_MAX_PAYLOAD_BYTES) return null;
   try { return JSON.parse(raw); } catch { return null; }
 }
 
@@ -169,6 +181,10 @@ function randomTransaction(): string {
 }
 
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  if (ms <= 0) {
+    void promise.catch(() => undefined);
+    throw fail('timeout');
+  }
   let id: ReturnType<typeof globalThis.setTimeout> | undefined;
   try {
     return await Promise.race([
@@ -198,6 +214,7 @@ export function refreshZ2mTopology(
     if (typeof subscribe !== 'function' || typeof hass?.callService !== 'function') throw fail('unsupported');
     const transaction = randomTransaction();
     const deadline = Date.now() + Math.max(1, timeoutMs);
+    let finished = false;
     let responseActive = false;
     let infoResolve: (() => void) | null = null;
     let responseResolve: ((value: unknown) => void) | null = null;
@@ -207,38 +224,56 @@ export function refreshZ2mTopology(
       responseResolve = resolve;
       responseReject = reject;
     });
+    // The response can reject synchronously inside publish, before its promise is awaited.
+    void response.catch(() => undefined);
     const unsubscribers: Array<() => void> = [];
+    const cleanup = (unsubscribe: () => void): void => {
+      try { unsubscribe(); } catch { /* cleanup is best effort */ }
+    };
+    const active = (): boolean => !finished && Date.now() < deadline;
+    const subscribeTo = async (suffix: string, callback: (message: unknown) => void): Promise<void> => {
+      if (!active()) throw fail('timeout');
+      const pending = subscribe.call(connection, callback, {
+        type: 'mqtt/subscribe', topic: `${topic}/${suffix}`,
+      }).then((unsubscribe) => {
+        if (typeof unsubscribe !== 'function') return;
+        // A timed-out subscribe can still complete; do not leak its subscription.
+        if (finished) cleanup(unsubscribe);
+        else unsubscribers.push(unsubscribe);
+      });
+      await withTimeout(pending, deadline - Date.now());
+    };
     try {
-      const unsubInfo = await subscribe.call(connection, (message: unknown) => {
-        if (recordOf(message)?.retain === true && parseMessage(message)) infoResolve?.();
-      }, { type: 'mqtt/subscribe', topic: `${topic}/bridge/info` });
-      if (typeof unsubInfo === 'function') unsubscribers.push(unsubInfo);
-      const unsubResponse = await subscribe.call(connection, (message: unknown) => {
-        if (recordOf(message)?.retain === true) return;
+      await subscribeTo('bridge/info', (message: unknown) => {
+        if (active() && recordOf(message)?.retain === true && parseMessage(message)) infoResolve?.();
+      });
+      await subscribeTo('bridge/response/networkmap', (message: unknown) => {
+        if (!active() || !responseActive || recordOf(message)?.retain === true) return;
         const value = parseMessage(message);
         if (value === null) {
-          if (responseActive) responseReject?.(fail('invalid_payload'));
+          responseReject?.(fail('invalid_payload'));
           return;
         }
         if (value && transactionOf(value) === transaction) responseResolve?.(value);
-      }, { type: 'mqtt/subscribe', topic: `${topic}/bridge/response/networkmap` });
-      if (typeof unsubResponse === 'function') unsubscribers.push(unsubResponse);
-      await withTimeout(info, Math.min(4000, Math.max(1, deadline - Date.now())));
+      });
+      await withTimeout(info, Math.min(4000, deadline - Date.now()));
+      if (!active()) throw fail('timeout');
       responseActive = true;
-      await hass.callService('mqtt', 'publish', {
+      const published = hass.callService('mqtt', 'publish', {
         topic: `${topic}/bridge/request/networkmap`,
-        payload: JSON.stringify({ type: 'raw', routes: false, transaction }),
+        payload: JSON.stringify({ type: 'raw', routes: true, transaction }),
         qos: 0,
         retain: false,
       });
-      const value = await withTimeout(response, deadline - Date.now());
+      const [, value] = await withTimeout(Promise.all([published, response]), deadline - Date.now());
+      if (!active()) throw fail('timeout');
       const status = recordOf(value)?.status;
       if (status && status !== 'ok') throw fail('provider');
       return normalizeZ2mTopology(value, topic);
     } finally {
-      for (const unsubscribe of unsubscribers) {
-        try { unsubscribe(); } catch { /* cleanup is best effort */ }
-      }
+      finished = true;
+      responseActive = false;
+      for (const unsubscribe of unsubscribers) cleanup(unsubscribe);
     }
   });
 }

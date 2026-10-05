@@ -1,5 +1,9 @@
+import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { launch, checkAll, finish } from './serve.mjs';
 
+const visualArtifacts = new URL('../artifacts/zigbee-topology-798/', import.meta.url);
+mkdirSync(visualArtifacts, { recursive: true });
 const { page, browser } = await launch();
 const result = await page.evaluate(async () => {
   const card = window.__card;
@@ -24,32 +28,40 @@ const result = await page.evaluate(async () => {
     .some((entry) => /zigbee-topology-runtime|hp-zigbee-topology-overlay/.test(entry.name));
 
   let zhaCalls = 0;
+  window.__zigbeeSmokeFetchCount = () => zhaCalls;
   const originalHass = card.hass;
   card.hass = { ...originalHass, callWS: async (message) => {
     if (message.type !== 'zha/devices') return originalHass.callWS(message);
     zhaCalls++;
     return [
-      { ieee: '00124b0000000001', device_reg_id: 'd_light1', device_type: 'Router', neighbors: [
+      { ieee: '00124b0000000001', nwk: 1, device_reg_id: 'd_light1', device_type: 'Router',
+        routes: [{ dest_nwk: 0, next_hop: 0, route_status: 'Active' }], neighbors: [
         { ieee: '00124b0000000002', relationship: 'Parent' },
         { ieee: '00124b0000000003', lqi: 80, relationship: 'Child' },
-        { ieee: '00124b0000000005', lqi: 125, relationship: 'Sibling' },
+        { ieee: '00124b0000000005', lqi: 128, relationship: 'Child' },
+        { ieee: '00124b0000000007', lqi: 255, relationship: 'Sibling' },
       ] },
-      { ieee: '00124b0000000002', device_reg_id: 'd_lamp', device_type: 'Coordinator', neighbors: [
-        { ieee: '00124b0000000001', lqi: 170, relationship: 'Child' },
+      { ieee: '00124b0000000002', nwk: 0, device_reg_id: 'd_lamp', device_type: 'Coordinator', neighbors: [
+        { ieee: '00124b0000000001', relationship: 'Child' },
         { ieee: '00124b0000000006', lqi: 140, relationship: 'Child' },
       ] },
-      { ieee: '00124b0000000003', device_reg_id: 'd_mower', device_type: 'EndDevice', neighbors: [
+      { ieee: '00124b0000000003', nwk: 3, device_reg_id: 'd_mower', device_type: 'EndDevice', neighbors: [
         { ieee: '00124b0000000001', lqi: 75, relationship: 'Parent' },
       ] },
-      { ieee: '00124b0000000004', device_reg_id: 'd_temp', device_type: 'EndDevice', neighbors: [
+      { ieee: '00124b0000000004', nwk: 4, device_reg_id: 'd_temp', device_type: 'EndDevice', neighbors: [
         { ieee: '00124b0000000006', lqi: 20, relationship: 'Parent' },
       ] },
-      { ieee: '00124b0000000005', device_reg_id: 'd_tv', device_type: 'EndDevice', neighbors: [
-        { ieee: '00124b0000000001', lqi: 120, relationship: 'Sibling' },
+      { ieee: '00124b0000000005', nwk: 5, device_reg_id: 'd_tv', device_type: 'EndDevice', neighbors: [
+        { ieee: '00124b0000000001', lqi: 128, relationship: 'Parent' },
       ] },
-      { ieee: '00124b0000000006', device_reg_id: 'not_on_plan', device_type: 'Router', neighbors: [
+      { ieee: '00124b0000000006', nwk: 6, device_reg_id: 'not_on_plan', device_type: 'Router',
+        name: 'Hallway <router> & "target"',
+        routes: [{ dest_nwk: '0x0000', next_hop: '0x0000', route_status: 'Active' }], neighbors: [
         { ieee: '00124b0000000002', lqi: 130, relationship: 'Parent' },
         { ieee: '00124b0000000004', lqi: 25, relationship: 'Child' },
+      ] },
+      { ieee: '00124b0000000007', nwk: 7, device_reg_id: 'd_kettle', device_type: 'EndDevice', neighbors: [
+        { ieee: '00124b0000000001', lqi: 255, relationship: 'Sibling' },
       ] },
     ];
   } };
@@ -73,9 +85,22 @@ const result = await page.evaluate(async () => {
   await settings._readZha();
   await wait(() => settings._snapshot?.states?.zha?.phase === 'ready', 'ZHA ready');
   out.explicitZhaRead = zhaCalls === 1;
+  const settingsSnapshot = settings._snapshot;
+  const renderedProviderStatus = () => [...settings.shadowRoot.querySelectorAll('.status,.hpf-actions .hpf-hint')]
+    .map((node) => node.textContent).find((value) => /Received /.test(value)) || '';
+  settings._acceptSnapshot({ ...settingsSnapshot, states: { ...settingsSnapshot.states,
+    zha: { phase: 'ready', obtainedAt: Date.now() - 5 * 60 * 1000 + 300 },
+  } });
+  await settings.updateComplete;
+  const initiallyFreshSettings = !/stale/i.test(renderedProviderStatus());
+  await wait(() => /stale/i.test(renderedProviderStatus()), 'mounted settings snapshot ages');
+  out.settingsAgeTimerWithoutRefetch = initiallyFreshSettings && zhaCalls === 1;
+  settings._acceptSnapshot(settingsSnapshot);
+  await settings.updateComplete;
   card._settingsDialog = null;
   card.requestUpdate();
   await card.updateComplete;
+  out.settingsDisconnectClearsTimer = !settings.isConnected && settings._staleTimer === undefined;
 
   const frame = () => new Promise((resolve) => requestAnimationFrame(() =>
     requestAnimationFrame(resolve)));
@@ -196,10 +221,13 @@ const result = await page.evaluate(async () => {
   const arrowBox = routeArrow?.getBoundingClientRect();
   out.localRouteArrow = !!routeLine && routeArrow?.getAttribute('data-direction') === 'toward-neighbor'
     && !!lineBox && !!arrowBox && arrowBox.width > 3 && arrowBox.height > 3;
+  out.onlyConfirmedArrows = overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-arrow"]').length === 2
+    && !overlay.shadowRoot.querySelector('line[data-direction="none"]')
+    && !root().querySelector('.dev[data-id="d_kettle"]').hasAttribute('data-hp-zigbee-topology-endpoint');
   out.crossSpaceCount = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-remote"]')
     ?.textContent.trim() === '+1 in other spaces';
   out.pointerTransparent = getComputedStyle(overlay).pointerEvents === 'none'
-    && [...overlay.shadowRoot.querySelectorAll('svg,line,polygon,.halo,.remote,.parent-bubble')]
+    && [...overlay.shadowRoot.querySelectorAll('svg,line,polygon,.halo,.remote,.parent-bubble,.route-status')]
       .every((node) => getComputedStyle(node).pointerEvents === 'none');
   const unrelatedRect = unrelated.getBoundingClientRect();
   const hitTarget = root().elementFromPoint(
@@ -216,23 +244,34 @@ const result = await page.evaluate(async () => {
   out.pointerHitTarget = !!hitTarget && unrelated.contains(hitTarget) && clickReachedMarker;
   const casing = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-line-casing"]');
   const unknownCore = overlay.shadowRoot.querySelector(
-    '[data-hp="zigbee-topology-line"][stroke-dasharray="5 5"]',
+    '[data-hp="zigbee-topology-line"][data-direction="toward-neighbor"]',
   );
-  const knownCore = [...overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-line"]')]
-    .find((line) => !line.hasAttribute('stroke-dasharray'));
+  const knownCore = overlay.shadowRoot.querySelector(
+    '[data-hp="zigbee-topology-line"][data-direction="toward-origin"]',
+  );
   out.unknownCasingContract = !!casing && !!unknownCore && !!knownCore
     && overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-line-casing"]').length === 1
-    && casing.getAttribute('stroke') === '#2e2e2e'
-    && casing.getAttribute('stroke-width') === '4'
-    && unknownCore.getAttribute('stroke-width') === '2'
-    && casing.getAttribute('stroke-dasharray') === unknownCore.getAttribute('stroke-dasharray')
-    && casing.getAttribute('stroke-dashoffset') === unknownCore.getAttribute('stroke-dashoffset')
+    && getComputedStyle(casing).stroke === 'rgb(0, 0, 0)'
+    && Math.abs(Number.parseFloat(getComputedStyle(casing).strokeWidth) - (2 + 2 * card._zoom)) < 0.001
+    && Number.parseFloat(getComputedStyle(unknownCore).strokeWidth) === 2
+    && getComputedStyle(unknownCore).stroke === 'rgb(145, 155, 165)'
     && casing.getAttribute('x1') === unknownCore.getAttribute('x1')
     && casing.getAttribute('y1') === unknownCore.getAttribute('y1')
     && casing.getAttribute('x2') === unknownCore.getAttribute('x2')
     && casing.getAttribute('y2') === unknownCore.getAttribute('y2')
     && getComputedStyle(casing).strokeLinecap === getComputedStyle(unknownCore).strokeLinecap
     && getComputedStyle(casing).vectorEffect === 'non-scaling-stroke';
+  out.unknownArrowOutline = !!routeArrow
+    && getComputedStyle(routeArrow).fill === 'rgb(145, 155, 165)'
+    && getComputedStyle(routeArrow).stroke === 'rgb(0, 0, 0)'
+    && Math.abs(Number.parseFloat(getComputedStyle(routeArrow).strokeWidth) - 2 * card._zoom) < 0.001
+    && getComputedStyle(routeArrow).vectorEffect === 'non-scaling-stroke';
+  out.allLinksSolid = [...overlay.shadowRoot.querySelectorAll('line,polygon')]
+    .every((node) => getComputedStyle(node).strokeDasharray === 'none');
+  out.knownLineArrowMatch = getComputedStyle(knownCore).stroke === 'rgb(255, 255, 0)'
+    && getComputedStyle(overlay.shadowRoot.querySelector(
+      '[data-hp="zigbee-topology-arrow"][data-direction="toward-origin"]',
+    )).fill === getComputedStyle(knownCore).stroke;
 
   const oldNeighbor = unknownNeighbor;
   const replacementNeighbor = oldNeighbor.cloneNode(true);
@@ -246,6 +285,7 @@ const result = await page.evaluate(async () => {
     'endpoint ownership returned to original marker');
 
   const runtimeBeforeInvalidation = overlay._runtime;
+  window.__zigbeeSmokeBaseline = runtimeBeforeInvalidation;
   overlay._acceptRuntime({
     revision: runtimeBeforeInvalidation.revision + 1,
     topologies: [],
@@ -259,6 +299,20 @@ const result = await page.evaluate(async () => {
   overlay._acceptRuntime(runtimeBeforeInvalidation);
   await overlay.updateComplete;
   await wait(() => overlay.shadowRoot.querySelector('line'), 'route restored after runtime invalidation');
+
+  const noRoute = root().querySelector('.dev[data-id="d_kettle"]');
+  noRoute.dispatchEvent(mouse('pointerover'));
+  await wait(() => overlay.shadowRoot.querySelector('.route-status'), 'unknown route label');
+  out.unknownRouteHasNoInventedLine = !overlay.shadowRoot.querySelector('line,polygon')
+    && /no route data/i.test(overlay.shadowRoot.querySelector('.route-status').textContent)
+    && !noRoute.hasAttribute('data-hp-zigbee-topology-endpoint');
+  unknownNeighbor.dispatchEvent(mouse('pointerover'));
+  await wait(() => overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]'), 'coordinator incoming route');
+  out.coordinatorHasOnlyIncoming = !/no route data/i.test(
+    overlay.shadowRoot.querySelector('.route-status')?.textContent || '',
+  )
+    && !overlay.shadowRoot.querySelector('[data-direction="toward-neighbor"]')
+    && !!overlay.shadowRoot.querySelector('[data-direction="toward-origin"]');
 
   card._commitSpace('garden', true);
   card.requestUpdate();
@@ -287,8 +341,11 @@ const result = await page.evaluate(async () => {
   await wait(() => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
     ?.querySelector('[data-kind="unplaced-device"]'), 'unplaced device bubble');
   activeOverlay = root().querySelector('hp-zigbee-topology-overlay');
-  out.unplacedDeviceBubble = activeOverlay.shadowRoot.querySelector('[data-kind="unplaced-device"]')
-    ?.textContent.trim() === 'device is not on the plan';
+  const missingParentBubble = activeOverlay.shadowRoot.querySelector('[data-kind="unplaced-device"]');
+  out.unplacedDeviceBubble = missingParentBubble?.textContent.trim()
+    === 'Device is not on the plan (Hallway <router> & "target")';
+  out.unplacedNameIsSafeText = !missingParentBubble?.querySelector('router,img,script')
+    && !missingParentBubble?.textContent.includes('Temperature sensor');
 
   activeOverlay.devices = activeOverlay.devices.map((device) => (
     device.id === 'd_lamp' ? { ...device, hidden: true } : device
@@ -301,8 +358,19 @@ const result = await page.evaluate(async () => {
   out.unplacedCoordinatorBubble = activeOverlay.shadowRoot
     .querySelector('[data-kind="unplaced-coordinator"]')?.textContent.trim()
       === 'coordinator is not on the plan';
-  out.parentRouteHasNoCasing = !!activeOverlay.shadowRoot.querySelector('line.parent-route')
-    && !activeOverlay.shadowRoot.querySelector('[data-hp="zigbee-topology-line-casing"]');
+  const parentCore = activeOverlay.shadowRoot.querySelector('line.parent-route');
+  const parentArrow = activeOverlay.shadowRoot.querySelector('[data-hp="zigbee-topology-parent-arrow"]');
+  out.parentRouteHasUnknownOutline = !!parentCore && !!parentArrow
+    && getComputedStyle(parentCore).stroke === 'rgb(145, 155, 165)'
+    && getComputedStyle(parentArrow).fill === 'rgb(145, 155, 165)'
+    && getComputedStyle(parentArrow).stroke === 'rgb(0, 0, 0)'
+    && Math.abs(Number.parseFloat(getComputedStyle(parentArrow).strokeWidth) - 2 * card._zoom) < 0.001
+    && [...activeOverlay.shadowRoot.querySelectorAll('line')].some((line) => (
+      getComputedStyle(line).stroke === 'rgb(0, 0, 0)'
+      && Math.abs(Number.parseFloat(getComputedStyle(line).strokeWidth) - (2 + 2 * card._zoom)) < 0.001
+    ))
+    && [...activeOverlay.shadowRoot.querySelectorAll('line,polygon')]
+      .every((node) => getComputedStyle(node).strokeDasharray === 'none');
 
   router.dispatchEvent(mouse('pointerout', root().querySelector('.stage')));
   await activeOverlay.updateComplete;
@@ -356,6 +424,172 @@ const result = await page.evaluate(async () => {
     && !root().querySelector('[data-hp-zigbee-topology-endpoint]') && zhaCalls === 1;
   return out;
 });
+
+// Exercise the actual rendered line/arrow pair, not the palette helper in isolation.
+// Remote and unplaced targets used to be permanently grey even with known LQI.
+for (const theme of ['light', 'dark']) {
+  await page.emulateMedia({ colorScheme: theme });
+  const visual = await page.evaluate(async ({ theme }) => {
+    const card = window.__card;
+    const root = () => card.shadowRoot || card.renderRoot;
+    const frame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const wait = async (predicate, label = 'render') => {
+      const started = performance.now();
+      while (!predicate()) {
+        if (performance.now() - started > 5000) throw new Error(`topology visual contract timeout: ${theme} ${label}; `
+          + root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot?.textContent?.slice(-600));
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+    };
+    const hover = (marker) => marker.dispatchEvent(new PointerEvent('pointerover', {
+      pointerType: 'mouse', bubbles: true, composed: true, clientX: 200, clientY: 200,
+    }));
+    document.documentElement.style.colorScheme = theme;
+    card.hass = { ...card.hass, user: { ...card.hass.user, is_admin: true },
+      themes: { ...(card.hass.themes || {}), darkMode: theme === 'dark' } };
+    card.setAttribute('data-pointer-hover', '');
+    await window.__hpTest.setMode('view');
+    card.requestUpdate();
+    await card.updateComplete;
+    await wait(() => root().querySelector('hp-zigbee-topology-overlay'));
+    // The preceding editor/View probe starts a real camera transition. Let its
+    // saved View camera settle before measuring the explicit zoom matrix.
+    await wait(() => !card._modeTransitionBusy, 'View camera settled');
+    await frame();
+    const expectedColors = [
+      [0, 'rgb(255, 0, 0)'], [64, 'rgb(255, 128, 0)'], [128, 'rgb(255, 255, 0)'],
+      [192, 'rgb(126, 255, 0)'], [255, 'rgb(0, 255, 0)'], [null, 'rgb(145, 155, 165)'],
+    ];
+    const out = {};
+    const diagnostics = [];
+    let revision = window.__zigbeeSmokeBaseline.revision + 100;
+    const snapshot = (lqi) => ({
+      ...window.__zigbeeSmokeBaseline, revision: revision++,
+      topologies: window.__zigbeeSmokeBaseline.topologies.map((topology) => ({
+        ...topology, obtainedAt: Date.now(),
+        uplinkEvidence: topology.uplinkEvidence.map((evidence) => ({ ...evidence, lqi: lqi ?? undefined })),
+        links: topology.links.map((link) => ({ ...link,
+          aToB: link.aToB ? { ...link.aToB, lqi: lqi ?? undefined } : undefined,
+          bToA: link.bToA ? { ...link.bToA, lqi: lqi ?? undefined } : undefined,
+        })),
+      })),
+    });
+    for (const [kind, space, markerId] of [
+      ['local', 'f1', 'd_light1'], ['remote', 'garden', 'd_mower'], ['unplaced', 'f1', 'd_temp'],
+    ]) {
+      card._commitSpace(space, true);
+      card.requestUpdate();
+      await card.updateComplete;
+      for (const [zoomName, zoom] of [['min', 1 / 3], ['default', 1], ['max', 8]]) {
+        card._applyView(zoom, 0.32, 0.36);
+        card.requestUpdate();
+        await card.updateComplete;
+        await frame();
+        const overlay = root().querySelector('hp-zigbee-topology-overlay');
+        await overlay.updateComplete;
+        const marker = root().querySelector(`.dev[data-id="${markerId}"]`);
+        hover(marker);
+        for (const [lqi, expected] of expectedColors) {
+          overlay._acceptRuntime(snapshot(lqi));
+          await overlay.updateComplete;
+          const cores = [...overlay.shadowRoot.querySelectorAll('.link-core,.parent-route')];
+          const arrows = [...overlay.shadowRoot.querySelectorAll('.route-arrow')];
+          const casings = [...overlay.shadowRoot.querySelectorAll('.link-casing')];
+          const key = `${kind}_${zoomName}_${lqi ?? 'unknown'}`;
+          out[`${key}_requestedZoom`] = Math.abs(card._zoom - zoom) < 0.000001
+            && Math.abs(overlay.zoom - zoom) < 0.000001;
+          out[`${key}_lineAndArrowColor`] = cores.length > 0 && arrows.length === cores.length
+            && cores.every((line) => getComputedStyle(line).stroke === expected)
+            && arrows.every((arrow) => getComputedStyle(arrow).fill === expected);
+          out[`${key}_solid`] = [...cores, ...arrows, ...casings]
+            .every((node) => getComputedStyle(node).strokeDasharray === 'none');
+          out[`${key}_outline`] = lqi === null
+            ? casings.length === cores.length
+              && casings.every((line) => getComputedStyle(line).stroke === 'rgb(0, 0, 0)'
+                && Math.abs(Number.parseFloat(getComputedStyle(line).strokeWidth) - (2 + 2 * zoom)) < 0.001
+                && getComputedStyle(line).vectorEffect === 'non-scaling-stroke')
+              && cores.every((line) => Number.parseFloat(getComputedStyle(line).strokeWidth) === 2
+                && getComputedStyle(line).vectorEffect === 'non-scaling-stroke')
+              && arrows.every((arrow) => getComputedStyle(arrow).stroke === 'rgb(0, 0, 0)'
+                && Math.abs(Number.parseFloat(getComputedStyle(arrow).strokeWidth) - 2 * zoom) < 0.001
+                && getComputedStyle(arrow).vectorEffect === 'non-scaling-stroke'
+                && getComputedStyle(arrow).paintOrder.startsWith('stroke'))
+            : casings.length === 0 && arrows.every((arrow) => getComputedStyle(arrow).stroke === 'none');
+          if (!out[`${key}_outline`]) diagnostics.push({ key, zoom, cardZoom: card._zoom, overlayZoom: overlay.zoom,
+            cores: cores.map((line) => ({ width: getComputedStyle(line).strokeWidth, effect: getComputedStyle(line).vectorEffect })),
+            casings: casings.map((line) => ({ width: getComputedStyle(line).strokeWidth, color: getComputedStyle(line).stroke,
+              effect: getComputedStyle(line).vectorEffect })),
+            arrows: arrows.map((arrow) => ({ width: getComputedStyle(arrow).strokeWidth, color: getComputedStyle(arrow).stroke,
+              effect: getComputedStyle(arrow).vectorEffect, order: getComputedStyle(arrow).paintOrder })),
+          });
+        }
+      }
+    }
+
+    card._commitSpace('f1', true);
+    card.requestUpdate();
+    await card.updateComplete;
+    await frame();
+    const overlay = root().querySelector('hp-zigbee-topology-overlay');
+    await overlay.updateComplete;
+    const knownSource = root().querySelector('.dev[data-id="d_light1"]');
+    hover(knownSource);
+    const stale = snapshot(null);
+    stale.topologies = stale.topologies.map((topology) => ({ ...topology,
+      obtainedAt: Date.now() - 6 * 60 * 1000,
+      warnings: [...topology.warnings, { code: 'provider_scan_failure' }],
+    }));
+    overlay._acceptRuntime(stale);
+    await overlay.updateComplete;
+    const staleStatus = overlay.shadowRoot.querySelector('.route-status');
+    out.stalePartialRetainsKnownRoute = staleStatus?.getAttribute('data-outgoing') === 'known'
+      && /stale data/i.test(staleStatus.textContent) && /incomplete data/i.test(staleStatus.textContent)
+      && !!overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]')
+      && [...overlay.shadowRoot.querySelectorAll('line,polygon')]
+        .every((node) => getComputedStyle(node).strokeDasharray === 'none');
+    const failedRefresh = snapshot(null);
+    failedRefresh.states = { ...failedRefresh.states, zha: {
+      phase: 'error', error: 'provider', obtainedAt: failedRefresh.topologies[0].obtainedAt, stale: true,
+    } };
+    overlay._acceptRuntime(failedRefresh);
+    await overlay.updateComplete;
+    out.failedRefreshMarksRetainedRouteStale = /stale data/i.test(
+      overlay.shadowRoot.querySelector('.route-status')?.textContent || '',
+    ) && !!overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]');
+    const expiring = snapshot(null);
+    expiring.topologies = expiring.topologies.map((topology) => ({
+      ...topology, obtainedAt: Date.now() - 5 * 60 * 1000 + 300,
+    }));
+    const fetchCount = window.__zigbeeSmokeFetchCount();
+    overlay._acceptRuntime(expiring);
+    await overlay.updateComplete;
+    const initiallyFresh = !/stale data/i.test(overlay.shadowRoot.querySelector('.route-status')?.textContent || '');
+    await wait(() => /stale data/i.test(overlay.shadowRoot.querySelector('.route-status')?.textContent || ''));
+    out.ageTimerUpdatesWithoutRefetch = initiallyFresh && window.__zigbeeSmokeFetchCount() === fetchCount
+      && !!overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]');
+    overlay._acceptRuntime(window.__zigbeeSmokeBaseline);
+    await overlay.updateComplete;
+    if (theme === 'dark') {
+      const originalHass = overlay.hass;
+      overlay.hass = { ...overlay.hass, language: 'ru', locale: { ...overlay.hass.locale, language: 'ru' } };
+      await overlay.updateComplete;
+      hover(root().querySelector('.dev[data-id="d_temp"]'));
+      await wait(() => overlay.shadowRoot.querySelector('[data-kind="unplaced-device"]')?.textContent
+        .includes('Устройства нет на плане'), 'localized missing target');
+      const named = overlay.shadowRoot.querySelector('[data-kind="unplaced-device"]');
+      out.localizedTargetName = named.textContent.trim() === 'Устройства нет на плане (Hallway <router> & "target")'
+        && !named.querySelector('router,img,script');
+      hover(root().querySelector('.dev[data-id="d_kettle"]'));
+      await wait(() => overlay.shadowRoot.querySelector('.route-status')?.textContent.includes('Нет данных о маршруте'));
+      out.localizedUnknownRoute = !overlay.shadowRoot.querySelector('line,polygon');
+      overlay.hass = originalHass;
+      await overlay.updateComplete;
+    }
+    return { checks: out, diagnostics };
+  }, { theme });
+  if (visual.diagnostics.length) console.log('Topology visual diagnostics:', JSON.stringify(visual.diagnostics));
+  for (const [name, value] of Object.entries(visual.checks)) result[`visual_${theme}_${name}`] = value;
+}
 
 for (const [aspect, viewport] of Object.entries({
   wide: { width: 1100, height: 500 },
@@ -476,8 +710,10 @@ for (const [aspect, viewport] of Object.entries({
   }
 }
 
+for (const theme of ['light', 'dark']) {
+await page.emulateMedia({ colorScheme: theme });
 await page.setViewportSize({ width: 1100, height: 620 });
-const rasterProbe = await page.evaluate(async () => {
+const rasterProbe = await page.evaluate(async ({ theme }) => {
   const card = window.__card;
   const root = card.shadowRoot || card.renderRoot;
   const wait = (predicate, timeout = 5000) => new Promise((resolve, reject) => {
@@ -490,7 +726,9 @@ const rasterProbe = await page.evaluate(async () => {
     tick();
   });
   document.querySelector('#host').style.width = '1060px';
-  card.hass = { ...card.hass, user: { ...card.hass.user, is_admin: true } };
+  card.hass = { ...card.hass, user: { ...card.hass.user, is_admin: true },
+    themes: { ...(card.hass.themes || {}), darkMode: theme === 'dark' } };
+  document.documentElement.style.colorScheme = theme;
   card._setMode('view');
   card._commitSpace('f1', true);
   card._zoom = 1;
@@ -516,6 +754,7 @@ const rasterProbe = await page.evaluate(async () => {
   await card.updateComplete;
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const renderedLabel = root.querySelector('.roomlabel');
+  root.querySelectorAll('[data-hp="zigbee-topology-room-label-raster-control"]').forEach((node) => node.remove());
   label = renderedLabel?.cloneNode(true) || document.createElement('div');
   label.className = 'roomlabel';
   label.dataset.hp = 'zigbee-topology-room-label-raster-control';
@@ -534,7 +773,10 @@ const rasterProbe = await page.evaluate(async () => {
   await overlay.updateComplete;
   const svg = overlay.shadowRoot.querySelector('svg');
   const line = overlay.shadowRoot.querySelector(
-    '[data-hp="zigbee-topology-line"][stroke-dasharray="5 5"]',
+    '[data-hp="zigbee-topology-line"][data-direction="toward-neighbor"]',
+  );
+  const arrow = overlay.shadowRoot.querySelector(
+    '[data-hp="zigbee-topology-arrow"][data-direction="toward-neighbor"]',
   );
   const matrix = svg.getScreenCTM();
   const start = new DOMPoint(Number(line.getAttribute('x1')), Number(line.getAttribute('y1')))
@@ -546,6 +788,11 @@ const rasterProbe = await page.evaluate(async () => {
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   };
   const labelCentre = label ? centre(label) : null;
+  const arrowPoints = arrow.getAttribute('points').trim().split(/\s+/).map((pair) => {
+    const [x, y] = pair.split(',').map(Number);
+    const point = new DOMPoint(x, y).matrixTransform(matrix);
+    return { x: point.x, y: point.y };
+  });
   return {
     dpr: devicePixelRatio,
     line: { start: { x: start.x, y: start.y }, end: { x: end.x, y: end.y } },
@@ -554,9 +801,11 @@ const rasterProbe = await page.evaluate(async () => {
     unrelated: centre(unrelated),
     label: labelCentre ? { x: labelCentre.x, y: start.y } : null,
     labelContainsLine: !labelCentre || Math.abs(labelCentre.y - start.y) <= 14,
+    arrowPoints,
   };
-});
-const activeRaster = await page.screenshot({ animations: 'disabled' });
+}, { theme });
+const activeRaster = await page.screenshot({ animations: 'disabled',
+  path: fileURLToPath(new URL(`known-route-missing-lqi-${theme}.png`, visualArtifacts)) });
 await page.evaluate(() => {
   const card = window.__card;
   (card.shadowRoot || card.renderRoot).querySelector('hp-zigbee-topology-overlay').style.visibility = 'hidden';
@@ -580,7 +829,7 @@ const rasterEvidence = await page.evaluate(async ({ active, baseline, probe }) =
   const b = await decode(baseline);
   if (a.width !== b.width || a.height !== b.height) return {
     unrelatedAbove: false, labelAbove: false, endpointsAbove: false,
-    casingInk: false, transparentGaps: false,
+    casingInk: false, continuousCore: false, arrowBlackOutline: false,
   };
   const changed = (x, y, threshold = 24) => {
     const px = Math.max(0, Math.min(a.width - 1, Math.round(x * probe.dpr)));
@@ -605,35 +854,164 @@ const rasterEvidence = await page.evaluate(async ({ active, baseline, probe }) =
   const length = Math.hypot(dx, dy);
   const ux = dx / length; const uy = dy / length;
   const nx = -uy; const ny = ux;
-  let coreAndCasing = 0; let transparentGap = 0;
-  for (let distance = 35; distance < Math.min(length - 35, length * 0.42); distance += 1) {
+  let coreAndCasing = 0; let paintedCore = 0; let samples = 0;
+  for (let distance = Math.max(35, length * 0.18); distance < Math.min(length - 35, length * 0.38); distance += 1) {
     const x = probe.line.start.x + ux * distance;
     const y = probe.line.start.y + uy * distance;
     const core = changed(x, y);
     const edge = changed(x + nx * 1.75, y + ny * 1.75)
       || changed(x - nx * 1.75, y - ny * 1.75);
-    const quietCore = !changed(x, y, 60);
-    const quietEdge = !changed(x + nx * 1.75, y + ny * 1.75, 60)
-      && !changed(x - nx * 1.75, y - ny * 1.75, 60);
+    samples++;
+    if (core) paintedCore++;
     if (core && edge) coreAndCasing++;
-    if (quietCore && quietEdge) transparentGap++;
+  }
+  // Sample just outside both sloping polygon sides. A fill-only triangle cannot
+  // supply dark pixels beyond its geometry; the black 1px outer outline can.
+  const darkPixel = (x, y) => {
+    const px = Math.max(0, Math.min(a.width - 1, Math.floor(x * probe.dpr)));
+    const py = Math.max(0, Math.min(a.height - 1, Math.floor(y * probe.dpr)));
+    const i = (py * a.width + px) * 4;
+    return Math.max(a.data[i], a.data[i + 1], a.data[i + 2]) < 85;
+  };
+  const arrowCentre = probe.arrowPoints.reduce((sum, point) => ({
+    x: sum.x + point.x / 3, y: sum.y + point.y / 3,
+  }), { x: 0, y: 0 });
+  let blackSides = 0;
+  for (const side of [1, 2]) {
+    const tip = probe.arrowPoints[0]; const corner = probe.arrowPoints[side];
+    const dx = corner.x - tip.x; const dy = corner.y - tip.y;
+    const sideLength = Math.hypot(dx, dy);
+    const mid = { x: (tip.x + corner.x) / 2, y: (tip.y + corner.y) / 2 };
+    let nx = -dy / sideLength; let ny = dx / sideLength;
+    if ((arrowCentre.x - mid.x) * nx + (arrowCentre.y - mid.y) * ny > 0) { nx = -nx; ny = -ny; }
+    let ink = 0;
+    for (const t of [0.25, 0.4, 0.55, 0.7]) {
+      const x = tip.x + dx * t + nx * 0.5;
+      const y = tip.y + dy * t + ny * 0.5;
+      if (darkPixel(x, y) && changed(x, y)) ink++;
+    }
+    if (ink >= 2) blackSides++;
   }
   return {
     unrelatedAbove: unrelatedInk >= 3,
     labelAbove: labelInk >= 2,
     endpointsAbove: endpointInk <= 2,
     casingInk: coreAndCasing >= 6,
-    transparentGaps: transparentGap >= 1,
+    continuousCore: samples >= 12 && paintedCore / samples >= 0.98,
+    arrowBlackOutline: blackSides === 2,
   };
 }, {
   active: activeRaster.toString('base64'),
   baseline: baselineRaster.toString('base64'),
   probe: rasterProbe,
 });
-result.rasterLabelContainsLine = rasterProbe.labelContainsLine;
+result[`raster_${theme}_labelContainsLine`] = rasterProbe.labelContainsLine;
 for (const [name, value] of Object.entries(rasterEvidence)) {
-  result[`raster_${name}`] = value;
+  result[`raster_${theme}_${name}`] = value;
 }
+}
+
+// Owner contract: the outline grows with the plan, including the transient
+// camera transform on the common device layer. Use actual screen pixels here:
+// computed SVG stroke widths alone cannot distinguish ancestor CSS scaling.
+await page.evaluate(async () => {
+  const card = window.__card;
+  const root = card.shadowRoot || card.renderRoot;
+  const layer = root.querySelector('.devlayer');
+  const source = root.querySelector('.dev[data-id="d_light1"]');
+  const target = root.querySelector('.dev[data-id="d_lamp"]');
+  window.__zigbeeOutlineProbeStyles = [layer, source, target].map((node) => [node, node.getAttribute('style')]);
+  // The camera owns the layer's inline transform and can clear it on a queued
+  // commit. Keep this synthetic live-transform fixture stable across captures.
+  layer.setAttribute('data-hp-zigbee-outline-probe', '');
+  const style = document.createElement('style');
+  root.append(style);
+  window.__zigbeeOutlineProbeStyle = style;
+  source.style.left = '10%'; source.style.top = '30%';
+  target.style.left = '42%'; target.style.top = '30%';
+  const overlay = root.querySelector('hp-zigbee-topology-overlay');
+  overlay.viewKey = { outlineGrowth: true };
+  source.dispatchEvent(new PointerEvent('pointerover', {
+    pointerType: 'mouse', bubbles: true, composed: true, clientX: 200, clientY: 200,
+  }));
+  await overlay.updateComplete;
+});
+const outlinePixelMass = [];
+for (const scale of [0.5, 1, 2]) {
+  const probe = await page.evaluate(async ({ scale }) => {
+    const card = window.__card;
+    const root = card.shadowRoot || card.renderRoot;
+    window.__zigbeeOutlineProbeStyle.textContent = `[data-hp-zigbee-outline-probe] {
+      transform: scale(${scale}) !important; transform-origin: 0 0 !important; background: #fff !important;
+    }`;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const overlay = root.querySelector('hp-zigbee-topology-overlay');
+    const svg = overlay.shadowRoot.querySelector('svg');
+    const line = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-line"][data-direction="toward-neighbor"]');
+    const arrow = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"][data-direction="toward-neighbor"]');
+    const point = new DOMPoint(
+      Number(line.getAttribute('x1')) * 0.55 + Number(line.getAttribute('x2')) * 0.45,
+      Number(line.getAttribute('y1')),
+    ).matrixTransform(svg.getScreenCTM());
+    const rect = arrow.getBoundingClientRect();
+    return { point: { x: point.x, y: point.y }, scale, dpr: devicePixelRatio,
+      arrow: { x: rect.x, y: rect.y, width: rect.width, height: rect.height } };
+  }, { scale });
+  const pixels = await page.screenshot({ animations: 'disabled',
+    path: fileURLToPath(new URL(`outline-live-scale-${scale}.png`, visualArtifacts)) });
+  outlinePixelMass.push(await page.evaluate(async ({ image, probe }) => {
+    const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${image}`)).blob());
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0);
+    const pixels = ctx.getImageData(0, 0, bitmap.width, bitmap.height).data;
+    // White fixture backdrop and grey core contribute zero. Black casing
+    // contributes one per pixel; antialiased coverage contributes a fraction.
+    const black = (x, y) => {
+      const i = (y * bitmap.width + x) * 4;
+      return Math.max(0, (165 - Math.max(pixels[i], pixels[i + 1], pixels[i + 2])) / 165);
+    };
+    const x = Math.round(probe.point.x * probe.dpr); const y = Math.round(probe.point.y * probe.dpr);
+    let line = 0;
+    const radius = Math.ceil(4 * probe.scale * probe.dpr);
+    for (let dx = -3; dx <= 3; dx++) for (let dy = -radius; dy <= radius; dy++) {
+      line += black(x + dx, y + dy) / (7 * probe.dpr);
+    }
+    const pad = 2 * probe.scale;
+    const bounds = {
+      left: Math.floor((probe.arrow.x - pad) * probe.dpr),
+      top: Math.floor((probe.arrow.y - pad) * probe.dpr),
+      right: Math.ceil((probe.arrow.x + probe.arrow.width + pad) * probe.dpr),
+      bottom: Math.ceil((probe.arrow.y + probe.arrow.height + pad) * probe.dpr),
+    };
+    let arrow = 0;
+    const inFrame = bounds.left >= 0 && bounds.top >= 0
+      && bounds.right < bitmap.width && bounds.bottom < bitmap.height;
+    if (inFrame) for (let py = bounds.top; py <= bounds.bottom; py++) for (let px = bounds.left; px <= bounds.right; px++) {
+      arrow += black(px, py) / (probe.dpr * probe.dpr);
+    }
+    return { scale: probe.scale, line, arrow, inFrame };
+  }, { image: pixels.toString('base64'), probe }));
+}
+result.livePlanScaleGrowsLineOutline = outlinePixelMass.every((sample) => sample.inFrame && sample.line > 0)
+  && outlinePixelMass[1].line > outlinePixelMass[0].line * 1.4
+  && outlinePixelMass[2].line > outlinePixelMass[1].line * 1.4;
+result.livePlanScaleGrowsArrowOutline = outlinePixelMass.every((sample) => sample.arrow > 0)
+  && outlinePixelMass[1].arrow > outlinePixelMass[0].arrow * 2.5
+  && outlinePixelMass[2].arrow > outlinePixelMass[1].arrow * 2.5;
+console.log('Topology live outline pixel mass:', JSON.stringify(outlinePixelMass));
+await page.evaluate(async () => {
+  window.__zigbeeOutlineProbeStyle.remove();
+  for (const [node, style] of window.__zigbeeOutlineProbeStyles) {
+    node.removeAttribute('data-hp-zigbee-outline-probe');
+    if (style === null) node.removeAttribute('style');
+    else node.setAttribute('style', style);
+  }
+  const card = window.__card;
+  const overlay = (card.shadowRoot || card.renderRoot).querySelector('hp-zigbee-topology-overlay');
+  overlay.viewKey = { outlineGrowth: false };
+  await overlay.updateComplete;
+});
 
 const realHoverPoint = await page.evaluate(() => {
   const card = window.__card;
@@ -668,10 +1046,10 @@ result.forcedColorsPreserved = await page.evaluate(() => {
   const overlay = root.querySelector('hp-zigbee-topology-overlay');
   const casing = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-line-casing"]');
   const core = overlay.shadowRoot.querySelector(
-    '[data-hp="zigbee-topology-line"][stroke-dasharray="5 5"]',
+    '[data-hp="zigbee-topology-line"][data-direction="toward-neighbor"]',
   );
   return !!casing && !!core && getComputedStyle(casing).stroke === getComputedStyle(core).stroke
-    && getComputedStyle(casing).stroke !== 'rgb(46, 46, 46)';
+    && getComputedStyle(casing).stroke !== 'rgb(0, 0, 0)';
 });
 await page.emulateMedia({ forcedColors: 'none' });
 

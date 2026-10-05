@@ -6,7 +6,7 @@ import { ensureFormKitStyles } from './editors/form-kit';
 import {
   normalizeZ2mBaseTopic, type ZigbeeTopologySettings,
 } from './zigbee-topology-settings';
-import { mapTopologyNodes, TOPOLOGY_STALE_MS } from './zigbee-topology';
+import { mapTopologyNodes, resolveProviderUplinks, TOPOLOGY_STALE_MS } from './zigbee-topology';
 import type { DevItem } from './types';
 import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { ZigbeeTopologyHass, ZigbeeTopologyRuntimeSnapshot } from './zigbee-topology-runtime';
@@ -33,6 +33,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   registry?: HaRegistrySnapshot;
   private _runtime: typeof import('./zigbee-topology-runtime') | null = null;
   private _snapshot = EMPTY_RUNTIME;
+  private _staleTimer?: ReturnType<typeof setTimeout>;
   private _release?: () => void;
   private _topicText = 'zigbee2mqtt';
   private _invalidTopic = false;
@@ -79,6 +80,8 @@ export class HpZigbeeTopologySettings extends LitElement {
   `;
 
   disconnectedCallback(): void {
+    clearTimeout(this._staleTimer);
+    this._staleTimer = undefined;
     this._release?.();
     this._release = undefined;
     super.disconnectedCallback();
@@ -86,12 +89,21 @@ export class HpZigbeeTopologySettings extends LitElement {
 
   protected updated(changed: PropertyValues<this>): void {
     if (changed.has('hass')) {
+      clearTimeout(this._staleTimer);
+      this._staleTimer = undefined;
       this._release?.();
       this._release = undefined;
       this._runtime = null;
       this._snapshot = EMPTY_RUNTIME;
     }
-    if (this.savedEnabled && this._admin) void this._ensureRuntime();
+    if (this.savedEnabled && this._admin) {
+      this._scheduleStaleUpdate();
+      void this._ensureRuntime();
+    }
+    else {
+      clearTimeout(this._staleTimer);
+      this._staleTimer = undefined;
+    }
   }
 
   protected willUpdate(changed: PropertyValues<this>): void {
@@ -131,14 +143,36 @@ export class HpZigbeeTopologySettings extends LitElement {
   private async _ensureRuntime(): Promise<typeof import('./zigbee-topology-runtime')> {
     if (!this._runtime) {
       this._runtime = await import('./zigbee-topology-runtime');
-      this._snapshot = this._runtime.zigbeeTopologyRuntimeSnapshot(this.hass);
+      this._acceptSnapshot(this._runtime.zigbeeTopologyRuntimeSnapshot(this.hass));
       this._release = this._runtime.subscribeZigbeeTopology(this.hass, () => {
-        this._snapshot = this._runtime!.zigbeeTopologyRuntimeSnapshot(this.hass);
-        this.requestUpdate();
+        this._acceptSnapshot(this._runtime!.zigbeeTopologyRuntimeSnapshot(this.hass));
       });
-      this.requestUpdate();
     }
     return this._runtime;
+  }
+
+  private _acceptSnapshot(snapshot: ZigbeeTopologyRuntimeSnapshot): void {
+    this._snapshot = snapshot;
+    this._scheduleStaleUpdate();
+    this.requestUpdate();
+  }
+
+  // Status ages even when HA sends no events. This one-shot redraw never fetches.
+  private _scheduleStaleUpdate(): void {
+    clearTimeout(this._staleTimer);
+    this._staleTimer = undefined;
+    if (!this.isConnected || !this.savedEnabled || !this._admin) return;
+    const now = Date.now();
+    const expiry = Object.values(this._snapshot.states)
+      .filter((current) => current.obtainedAt !== undefined && !current.stale)
+      .map((current) => current.obtainedAt! + TOPOLOGY_STALE_MS + 1)
+      .filter((value) => value > now);
+    if (expiry.length) this._staleTimer = setTimeout(() => {
+      this._staleTimer = undefined;
+      if (!this.isConnected) return;
+      this.requestUpdate();
+      this._scheduleStaleUpdate();
+    }, Math.min(...expiry) - now);
   }
 
   private _emit(value: ZigbeeTopologySettings): void {
@@ -164,9 +198,9 @@ export class HpZigbeeTopologySettings extends LitElement {
   private _status(key: string): string {
     const current = this._snapshot.states[key];
     if (!current) return this._t('status_idle');
-    if (current.phase === 'loading') return this._t('status_loading');
-    if (current.phase === 'error') return this._t((`error_${current.error || 'provider'}`) as TopologyI18nKey);
-    if (current.phase !== 'ready' || !current.obtainedAt) return this._t('status_idle');
+    const phase = current.phase === 'loading' ? this._t('status_loading')
+      : current.phase === 'error' ? this._t((`error_${current.error || 'provider'}`) as TopologyI18nKey) : '';
+    if (current.obtainedAt === undefined) return phase || this._t('status_idle');
     const time = new Date(current.obtainedAt).toLocaleTimeString(langOf(this.hass), {
       hour: '2-digit', minute: '2-digit',
     });
@@ -174,9 +208,14 @@ export class HpZigbeeTopologySettings extends LitElement {
       (key === 'zha' ? item.provider === 'zha' : `z2m:${item.instanceId}` === key));
     const mappingPartial = !!topology && !!this.registry
       && mapTopologyNodes(topology, this.devices, this.registry).warnings.length > 0;
-    if (current.partial || mappingPartial) return this._t('status_partial', { time });
-    if (topology && !topology.links.length) return this._t('status_no_links', { time });
-    return this._t(Date.now() - current.obtainedAt > TOPOLOGY_STALE_MS ? 'status_stale' : 'status_ready', { time });
+    const uplinks = topology ? [...resolveProviderUplinks(topology).values()] : [];
+    const stale = current.stale || Date.now() - current.obtainedAt > TOPOLOGY_STALE_MS;
+    const partial = current.partial || mappingPartial || uplinks.some((route) => route.kind === 'unknown');
+    return [phase, this._t(stale ? 'status_stale' : 'status_ready', { time }),
+      partial ? this._t('route_partial') : '',
+      topology && !uplinks.some((route) => route.kind === 'known') ? this._t('route_unknown') : '',
+      topology?.freshness === 'provider-cache' ? this._t('status_cache') : '',
+    ].filter(Boolean).join(' · ');
   }
 
   private _busy(key: string): boolean {

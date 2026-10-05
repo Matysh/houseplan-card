@@ -347,26 +347,29 @@ network-map scan for each entered base topic (default `zigbee2mqtt`). The latter
 may take 10 seconds to 2 minutes and can temporarily slow the Zigbee network.
 
 After data is loaded, moving a real mouse over a mapped Zigbee marker shows
-only its observed direct neighbours. Links to markers on the current space are
-lines; drawable neighbours on other spaces are summarized as a temporary
-count. An arrow on a line shows the next step towards the coordinator: an
-ordinary device points to its parent, while arrows pointing into a router show
-devices whose path goes through it. Neighbour links outside the derived path
-tree remain plain lines.
+its parent (end device) or active next hop towards the coordinator (router),
+as reported by the integration. There is at most one outgoing arrow; confirmed
+incoming arrows show devices routing through this node. The coordinator has
+incoming arrows only. Ordinary neighbour links are hidden; LQI is not used to
+guess a route. Confirmed incoming devices on other spaces are counted.
 
 The active diagnostic layer is deliberately drawn above room names and devices
 that are not part of the shown link, so a busy plan cannot hide the route. The
 complete source and locally connected device markers remain above the lines.
-An unknown-quality gray dashed link has a thin dark outline for contrast; this
-does not change its meaning. The whole layer is pointer-transparent, so device
+All lines and arrows are solid and share a separate LQI scale: red at 0,
+yellow at 128, green at 255. Unknown quality is grey with a black outline
+that scales with the plan. Device LQI badges and room colours are unchanged.
+The whole layer is pointer-transparent, so device
 and room actions continue to work normally.
 
 If the next step is in another space, a short bubble names that space. If the
-needed router or coordinator is not placed on the plan, the bubble says so. If
-the snapshot has no coordinator or the graph is disconnected, House Plan does
-not invent a direction and leaves the link without an arrow. This is a stable
-path approximation derived from the neighbour snapshot, not the route used by
-every current packet. The layer does not appear on touch/pen, in kiosk, in
+needed router or coordinator is not placed on the plan, the bubble says so;
+an unplaced device's available name is included in parentheses. “No route data”
+means the outgoing route is unknown or conflicting, not that the device is
+offline. No substitute line is drawn. Stale and incomplete data are marked;
+refresh failure keeps the last snapshot marked stale. A recent read of ZHA's
+cache does not prove a recent radio scan. These are integration records, not
+live packet tracing or proof of the entire chain. The layer does not appear on touch/pen, in kiosk, in
 editors or in the static card, and hovering never starts a scan.
 
 The editor grid continues across the whole working canvas; View does not show

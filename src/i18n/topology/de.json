@@ -1,8 +1,8 @@
 {
   "title": "Zigbee-Verbindungen",
   "toggle": "Zigbee-Verbindungen beim Darüberfahren über ein Gerät anzeigen",
-  "hint": "Es werden nur beobachtete direkte Nachbarn angezeigt. Beim Darüberfahren werden keine Daten abgerufen.",
-  "help": "Zeigt, mit welchen Zigbee-Geräten jedes Gerät direkt verbunden ist. Die Linienfarbe ist die Verbindungsqualität (LQI) auf derselben Skala wie der LQI-Wert des Geräts: rot bei 40 und darunter, grün bei 180 und darüber. Eine gestrichelte Linie bedeutet, dass die Qualität nicht gemeldet wurde. Ein Pfeil zeigt auf das nächste Gerät auf dem Weg zum Koordinator: ein Pfeil führt hinaus, eingehende Pfeile sind die Geräte, die über dieses Gerät routen. Eine Linie ohne Pfeil ist ein Ersatznachbar. Das ist der Routenbaum, den House Plan bildet, nicht der Weg eines Pakets in diesem Moment: eine Beschriftung am Pfeilende bedeutet, dass das Ziel nicht auf diesem Plan liegt, und ein fehlender Pfeil, dass die Route unbekannt ist. Die Daten stammen aus dem letzten Laden und veralten; Verbindungen sind nur mit der Maus sichtbar.",
+  "hint": "Zeigt Eltern und nächste Hops laut Integration. Beim Darüberfahren werden keine Daten abgerufen.",
+  "help": "Zeigt den Elternknoten eines Endgeräts oder den aktiven nächsten Hop eines Routers zum Koordinator laut Integration. Es gibt höchstens einen ausgehenden Pfeil; eingehende Pfeile zeigen Geräte, die über diesen Knoten routen. Gewöhnliche Nachbarn werden ausgeblendet. Alle Linien sind durchgezogen. Linie und Pfeil verwenden LQI 0–255: rot bei 0, gelb bei 128, grün bei 255. Ohne LQI sind sie grau mit schwarzer Kontur. Eine Beschriftung am Pfeilende nennt ein Ziel in einem anderen Bereich oder außerhalb des Plans. Keine Routendaten bedeutet fehlende eindeutige Angaben, nicht dass das Gerät offline ist. Dies sind zuletzt empfangene Integrationsdaten, keine Live-Paketverfolgung oder Garantie des gesamten Pfads. Der ZHA-Cache kann beim Lesen bereits alt sein; veraltete und unvollständige Daten werden markiert. Verbindungen sind nur mit der Maus sichtbar.",
   "help_aria": "Hilfe: Zigbee-Verbindungen",
   "admin_only": "Topologiedaten sind nur für Home-Assistant-Administratoren verfügbar.",
   "save_first": "Speichere diese Einstellung, bevor Topologiedaten geladen werden.",
@@ -17,8 +17,8 @@
   "status_loading": "Wird geladen…",
   "status_ready": "Empfangen: {time}",
   "status_stale": "Empfangen: {time} · veraltet",
-  "status_partial": "Empfangen: {time} · einige Knoten fehlen",
-  "status_no_links": "Empfangen: {time} · keine beobachteten Verbindungen gefunden",
+  "status_partial": "Empfangen: {time} · unvollständige Daten",
+  "status_no_links": "Empfangen: {time} · keine bestätigten Routen",
   "error_permission": "Administratorrechte sind erforderlich.",
   "error_unsupported": "Dieser Anbieter oder die Home-Assistant-API ist nicht verfügbar.",
   "error_timeout": "Der Anbieter hat nicht rechtzeitig geantwortet.",
@@ -28,5 +28,10 @@
   "remote_count": "+{n} in anderen Bereichen",
   "route_device_not_on_plan": "Gerät ist nicht im Plan",
   "route_coordinator_not_on_plan": "Koordinator ist nicht im Plan",
-  "route_other_space": "anderer Bereich"
+  "route_other_space": "anderer Bereich",
+  "route_device_not_on_plan_named": "Gerät ist nicht im Plan ({name})",
+  "route_unknown": "Keine Routendaten",
+  "route_stale": "Veraltete Daten",
+  "route_partial": "Unvollständige Daten",
+  "status_cache": "Integrationscache; Zeitpunkt des Funkscans unbekannt"
 }

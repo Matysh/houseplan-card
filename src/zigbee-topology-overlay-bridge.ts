@@ -12,6 +12,7 @@ export function renderZigbeeTopologyOverlay(input: {
   currentSpace: string;
   spaces?: readonly { id?: unknown; title?: unknown }[];
   viewKey: unknown;
+  zoom: number;
   view: boolean;
   kiosk: boolean;
 }): TemplateResult | typeof nothing {
@@ -20,5 +21,5 @@ export function renderZigbeeTopologyOverlay(input: {
   void import('./hp-zigbee-topology-overlay');
   return html`<hp-zigbee-topology-overlay aria-hidden="true" .hass=${input.hass} .devices=${input.devices}
     .registry=${input.registry} .currentSpace=${input.currentSpace} .spaces=${input.spaces}
-    .viewKey=${input.viewKey}></hp-zigbee-topology-overlay>`;
+    .viewKey=${input.viewKey} .zoom=${input.zoom}></hp-zigbee-topology-overlay>`;
 }

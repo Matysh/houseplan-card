@@ -258,6 +258,11 @@ diagnostics, and disappear with the HA connection/page. Older frontends ignore
 the settings object; the backend's unknown-settings policy preserves it. No
 model or store version migration is required.
 
+#798 replaces inferred routes with provider evidence in that runtime only.
+Next-hop addresses, target names and warnings are never persisted. Failed
+refresh preserves the last successful snapshot and explicitly marks it stale;
+reading cached ZHA tables does not establish their radio-scan time.
+
 ## Vacuum map routes (#162)
 
 `marker.vacuum.map_routes` is an optional array of

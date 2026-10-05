@@ -591,18 +591,31 @@ overlay bridge; the overlay chunk loads only for a saved
 `settings.zigbee_topology.enabled === true`, a real HA admin, full-card View and
 a non-kiosk surface. General Settings loads provider transport only when an
 enabled setting needs status or the admin presses a provider action.
-`zigbee-topology.ts` normalises ZHA and Zigbee2MQTT into unordered edge pairs
-with directional observations, maps IEEE nodes through exact registry ownership
-and resolves only edges incident to the hovered marker, never inventing
-neighbours. `zigbee-topology-runtime.ts` keeps a per-connection memory cache with
+`zigbee-topology.ts` normalises ZHA and Zigbee2MQTT into directional observations
+and provider evidence (#798): Parent/reverse Child for end devices, active
+destination-zero routes for routers. NWK addresses are provider-scoped; exact
+registry ownership maps nodes to markers. Only unique evidence becomes an
+arrow. Conflicts, cycles and unknown roles fail closed, including merged
+providers; no BFS or strongest-LQI fallback remains. A known next hop need not
+prove the complete chain. Mapping/resolution are memoized outside hover.
+`zigbee-topology-runtime.ts` keeps a per-connection memory cache with
 in-flight dedupe: ZHA reads `zha/devices` without a scan; Z2M checks the retained
-bridge-info topic, sends one correlated raw `routes:false` request through
+bridge-info topic, sends one correlated raw `routes:true` request through
 `mqtt.publish`, rejects retained/foreign/late replies and always unsubscribes.
+A shared deadline bounds subscriptions, publish and response, including late
+subscription cleanup. Refresh failure retains the last-good snapshot with a
+stale flag; ZHA cache retrieval is never described as a fresh radio scan.
 The pointer-transparent overlay is a child of the `.devlayer` camera, projected
 once with the markers by `live-viewport.ts`; only the source and drawable
 neighbour markers are promoted above it, through transient attributes the
-overlay owns and clears. Unknown-LQI links are a 4 px `#2e2e2e` casing under the
-2 px grey core. Persistence, privacy: [CONFIG-COMPATIBILITY](CONFIG-COMPATIBILITY.md).
+overlay owns and clears. All routes are solid; `zigbee-topology-style.ts` owns
+the independent RGB 0/red–128/yellow–255/green palette. Unknown-LQI links have
+a black casing under a 2 px grey core and an outer arrow outline. The outline
+is 1 px at zoom=1 and scales with the plan, including temporary camera CSS
+projection, per the owner's #798 clarification. Local and remote/unplaced routes share one renderer.
+Unknown/partial/stale captions never trigger network work; one expiry timer
+updates age without requiring another HA event. Persistence and privacy:
+[CONFIG-COMPATIBILITY](CONFIG-COMPATIBILITY.md).
 
 ## Live viewport: a transform per frame, a `viewBox` on a budget (#531, #579)
 

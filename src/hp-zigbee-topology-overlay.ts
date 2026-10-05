@@ -1,10 +1,10 @@
 import { LitElement, css, html, svg, nothing, type PropertyValues } from 'lit';
 import { langOf } from './i18n';
-import { lqiColor } from './logic';
+import { zigbeeLinkColor } from './zigbee-topology-style';
 import { TOPOLOGY_LANGUAGE_RUNTIME, topologyT } from './i18n/topology';
 import {
   mapTopologies, resolveMappedTopologyHover, type ZigbeeMappedTopology,
-  type ZigbeeParentTarget,
+  TOPOLOGY_STALE_MS, type ZigbeeParentTarget,
 } from './zigbee-topology';
 import { zigbeeArrowGeometry, type ZigbeePixelPoint } from './zigbee-topology-geometry';
 import {
@@ -26,6 +26,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     currentSpace: { type: String, attribute: 'current-space' },
     spaces: { attribute: false },
     viewKey: { attribute: false },
+    zoom: { type: Number },
   };
 
   hass!: ZigbeeTopologyHass;
@@ -34,8 +35,10 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   currentSpace = '';
   spaces?: readonly { id?: unknown; title?: unknown }[];
   viewKey: unknown;
+  zoom = 1;
   private _runtime = EMPTY_RUNTIME;
   private _hovered = '';
+  private _staleTimer?: ReturnType<typeof setTimeout>;
   private _release?: () => void;
   private _parent?: HTMLElement;
   private _hoverGateObserver?: MutationObserver;
@@ -51,14 +54,14 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
     line { vector-effect: non-scaling-stroke; stroke-linecap: round; }
     .route-arrow { vector-effect: non-scaling-stroke; }
-    svg, line, polygon, .halo, .remote, .parent-bubble { pointer-events: none; }
+    svg, line, polygon, .halo, .remote, .parent-bubble, .route-status { pointer-events: none; }
     .halo {
       position: absolute; width: calc(var(--device-base-size, 4cqw) * 1.22);
       height: calc(var(--device-base-size, 4cqw) * 1.22); transform: translate(-50%, -50%);
       box-sizing: border-box; border: 2px solid rgba(120, 190, 220, .82); border-radius: 50%;
       box-shadow: 0 0 0 4px rgba(120, 190, 220, .16);
     }
-    .remote, .parent-bubble {
+    .remote, .parent-bubble, .route-status {
       position: absolute; transform: translate(12px, calc(-100% - 12px));
       border: 1px solid rgba(255,255,255,.7); border-radius: 999px;
       padding: 3px 7px; color: #fff; background: rgba(28,31,36,.88);
@@ -67,11 +70,12 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     }
     .parent-bubble.right { transform: translate(0, -50%); }
     .parent-bubble.left { transform: translate(-100%, -50%); }
+    .route-status { transform: translate(-50%, 12px); max-width: 240px; white-space: normal; text-align: center; }
     @media (forced-colors: active) {
       line { stroke: Highlight !important; }
-      .route-arrow { fill: Highlight !important; }
+      .route-arrow { fill: Highlight !important; stroke: CanvasText !important; }
       .halo { border-color: Highlight; box-shadow: none; }
-      .remote, .parent-bubble { color: CanvasText; background: Canvas; border-color: CanvasText; }
+      .remote, .parent-bubble, .route-status { color: CanvasText; background: Canvas; border-color: CanvasText; }
     }
   `;
 
@@ -88,6 +92,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   }
 
   disconnectedCallback(): void {
+    clearTimeout(this._staleTimer);
     this._release?.();
     this._release = undefined;
     this._disconnectParent();
@@ -126,7 +131,21 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     this._endpointSetDirty = false;
     this._runtime = next;
     this._mappedMemo = undefined;
+    this._scheduleStaleUpdate();
     this.requestUpdate();
+  }
+
+  // Age changes without a new HA event; redraw once at expiry, never fetch.
+  private _scheduleStaleUpdate(): void {
+    clearTimeout(this._staleTimer);
+    const now = Date.now();
+    const expiry = this._runtime.topologies.map((item) => item.obtainedAt + TOPOLOGY_STALE_MS + 1)
+      .filter((value) => value > now);
+    if (expiry.length) this._staleTimer = setTimeout(() => {
+      if (!this.isConnected) return;
+      this.requestUpdate();
+      this._scheduleStaleUpdate();
+    }, Math.min(...expiry) - now);
   }
 
   private _connectParent(): void {
@@ -253,8 +272,10 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       return (typeof title === 'string' && title.trim())
         || topologyT(langOf(this.hass), 'route_other_space');
     }
-    return topologyT(langOf(this.hass), target.kind === 'unplaced-coordinator'
-      ? 'route_coordinator_not_on_plan' : 'route_device_not_on_plan');
+    if (target.kind === 'unplaced-coordinator') return topologyT(langOf(this.hass), 'route_coordinator_not_on_plan');
+    return target.deviceName
+      ? topologyT(langOf(this.hass), 'route_device_not_on_plan_named', { name: target.deviceName })
+      : topologyT(langOf(this.hass), 'route_device_not_on_plan');
   }
 
   private _markerClearance(position: MarkerPosition): number {
@@ -263,6 +284,25 @@ export class HpZigbeeTopologyOverlay extends LitElement {
 
   private _points(points: readonly ZigbeePixelPoint[]): string {
     return points.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(' ');
+  }
+
+  private _route(origin: ZigbeePixelPoint, point: ZigbeePixelPoint, lqi: number | undefined,
+    direction: 'toward-neighbor' | 'toward-origin',
+    arrow: ReturnType<typeof zigbeeArrowGeometry>, parent = false) {
+    const color = zigbeeLinkColor(lqi);
+    const outline = Number.isFinite(this.zoom) && this.zoom > 0 ? this.zoom : 1;
+    return svg`${lqi === undefined ? svg`<line class="link-casing" data-hp="zigbee-topology-line-casing"
+      x1=${origin.x} y1=${origin.y} x2=${point.x} y2=${point.y}
+      stroke="#000000" stroke-width=${2 + 2 * outline} data-direction=${direction}></line>` : nothing}
+      <line class=${parent ? 'parent-route' : 'link-core'}
+        data-hp=${parent ? 'zigbee-topology-parent-line' : 'zigbee-topology-line'}
+        x1=${origin.x} y1=${origin.y} x2=${point.x} y2=${point.y}
+        stroke=${color} stroke-width=${lqi === undefined ? 2 : 2.2} data-direction=${direction}></line>
+      ${arrow ? svg`<polygon class="route-arrow"
+        data-hp=${parent ? 'zigbee-topology-parent-arrow' : 'zigbee-topology-arrow'}
+        data-direction=${direction} points=${this._points(arrow.points)} fill=${color}
+        stroke=${lqi === undefined ? '#000000' : nothing} stroke-width=${lqi === undefined ? 2 * outline : nothing}
+        stroke-linejoin="round" paint-order="stroke fill"></polygon>` : nothing}`;
   }
 
   protected render() {
@@ -277,7 +317,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       this._setDesiredEndpointIds([]);
       return nothing;
     }
-    if (!this._hovered || !this.registry || !this._runtime.topologies.length) {
+    if (this.hass?.user?.is_admin !== true || !this._hovered || !this.registry || !this._runtime.topologies.length) {
       this._setDesiredEndpointIds([]);
       return nothing;
     }
@@ -297,12 +337,11 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       ...line,
       point: this._position(line.neighborMarkerId, width, height),
     })).filter((line) => !!line.point).map((line) => {
-      const color = line.lqi === undefined ? 'rgba(145,155,165,.85)' : lqiColor(line.lqi);
       const arrow = line.routeDirection ? zigbeeArrowGeometry(
         origin, line.point!, this._markerClearance(origin), this._markerClearance(line.point!),
         line.routeDirection,
       ) : null;
-      return { ...line, color, arrow };
+      return { ...line, arrow };
     });
     const placeLeft = origin.x > width / 2;
     const bubbleGap = this._markerClearance(origin) + 18;
@@ -316,6 +355,21 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         origin, point, this._markerClearance(origin), 0, 'toward-neighbor',
       ) };
     });
+    const involved = mapped.filter((item) => [...item.placements.values()]
+      .some((placement) => placement.markerId === this._hovered && placement.space === this.currentSpace));
+    const providerStates = involved.map(({ topology }) => {
+      const key = topology.provider === 'zha' ? 'zha' : `z2m:${topology.instanceId}`;
+      return this._runtime.states[key];
+    });
+    const stale = providerStates.some((state) => state?.stale)
+      || involved.some(({ topology }) => Date.now() - topology.obtainedAt > TOPOLOGY_STALE_MS);
+    const status = [
+      hover.outgoing === 'unknown' ? topologyT(lang, 'route_unknown') : '',
+      providerStates.some((state) => state?.phase === 'error') ? topologyT(lang, 'error_provider') : '',
+      providerStates.some((state) => state?.phase === 'loading') ? topologyT(lang, 'status_loading') : '',
+      hover.outgoing !== 'not-zigbee' && stale ? topologyT(lang, 'route_stale') : '',
+      hover.outgoing !== 'not-zigbee' && hover.partial ? topologyT(lang, 'route_partial') : '',
+    ].filter(Boolean).join(' · ');
     this._setDesiredEndpointIds(lines.length || bubbles.length || hover.remoteCount
       ? [
         this._hovered,
@@ -324,27 +378,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     return html`
       ${lines.length || bubbles.length ? svg`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
         aria-hidden="true" data-hp="zigbee-topology-lines">
-        ${lines.map((line) => svg`${line.lqi === undefined ? svg`<line
-          class="link-casing" data-hp="zigbee-topology-line-casing"
-          x1=${origin.x} y1=${origin.y} x2=${line.point!.x} y2=${line.point!.y}
-          stroke="#2e2e2e" data-direction=${line.routeDirection || 'none'}
-          stroke-width="4" stroke-dasharray="5 5" stroke-dashoffset="0" opacity=".9"></line>` : nothing}
-        <line class="link-core" data-hp="zigbee-topology-line"
-          x1=${origin.x} y1=${origin.y}
-          x2=${line.point!.x} y2=${line.point!.y}
-          stroke=${line.color} data-direction=${line.routeDirection || 'none'}
-          stroke-width=${line.lqi === undefined ? 2 : 2.2}
-          stroke-dasharray=${line.lqi === undefined ? '5 5' : nothing}
-          stroke-dashoffset=${line.lqi === undefined ? '0' : nothing} opacity=".9"></line>
-          ${line.arrow ? svg`<polygon class="route-arrow" data-hp="zigbee-topology-arrow"
-            data-direction=${line.routeDirection} points=${this._points(line.arrow.points)}
-            fill=${line.color}></polygon>` : nothing}`)}
-        ${bubbles.map((bubble) => svg`<line class="parent-route" x1=${origin.x} y1=${origin.y}
-          x2=${bubble.point.x} y2=${bubble.point.y} stroke="rgba(145,155,165,.92)"
-          stroke-width="2" opacity=".9"></line>
-          ${bubble.arrow ? svg`<polygon class="route-arrow" data-hp="zigbee-topology-parent-arrow"
-            data-direction="toward-neighbor" points=${this._points(bubble.arrow.points)}
-            fill="rgba(145,155,165,.92)"></polygon>` : nothing}`)}
+        ${lines.map((line) => this._route(origin, line.point!, line.lqi, line.routeDirection, line.arrow))}
+        ${bubbles.map((bubble) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor', bubble.arrow, true))}
       </svg>` : nothing}
       ${lines.map((line) => html`<div class="halo" data-hp="zigbee-topology-neighbor"
         data-id=${line.neighborMarkerId} style="left:${line.point!.x}px;top:${line.point!.y}px;width:${line.point!.width * 1.22}px;height:${line.point!.height * 1.22}px"></div>`)}
@@ -355,6 +390,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         style="left:${origin.x}px;top:${origin.y}px">${topologyT(
           langOf(this.hass), 'remote_count', { n: hover.remoteCount },
         )}</div>` : nothing}
+      ${status ? html`<div class="route-status" data-hp="zigbee-topology-status" data-outgoing=${hover.outgoing}
+        style="left:${origin.x}px;top:${origin.y + this._markerClearance(origin)}px">${status}</div>` : nothing}
     `;
   }
 }

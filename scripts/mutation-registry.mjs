@@ -9609,28 +9609,61 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'zigbee-topology-unknown-casing-removed',
     guard: 'node demo/smoke_zigbee_topology_hover.mjs',
-    because: 'an unknown-LQI dash needs one CSS pixel of dark casing on each side instead of '
-      + 'the old low-contrast gray-only stroke (#464 AC3)',
+    because: 'an unknown-LQI route needs black casing on each side, scaling with the plan '
+      + 'instead of a gray-only stroke, including remote/unplaced parents (#464 AC3, #798)',
     patches: [{
       file: 'src/hp-zigbee-topology-overlay.ts',
-      find: '          stroke-width="4" stroke-dasharray="5 5" stroke-dashoffset="0" opacity=".9"></line>` : nothing}',
-      replace: '          stroke-width="2" stroke-dasharray="5 5" stroke-dashoffset="0" opacity=".9"></line>` : nothing}',
+      find: '      stroke="#000000" stroke-width=${2 + 2 * outline} data-direction=${direction}></line>` : nothing}',
+      replace: '      stroke="#000000" stroke-width="2" data-direction=${direction}></line>` : nothing}',
     }],
   },
   {
-    id: 'zigbee-topology-unknown-casing-gaps-filled',
+    id: 'zigbee-topology-solid-route-dashed',
     guard: 'node demo/smoke_zigbee_topology_hover.mjs',
-    because: 'the wider casing must share the core dash rhythm; a solid casing would silently '
-      + 'turn the unknown-quality link into a continuous route (#464 AC3)',
+    because: 'every confirmed Zigbee route is solid; missing quality and stale data must not '
+      + 'restore the superseded dashed-link encoding (#798)',
     patches: [{
       file: 'src/hp-zigbee-topology-overlay.ts',
-      find: '          stroke-width="4" stroke-dasharray="5 5" stroke-dashoffset="0" opacity=".9"></line>` : nothing}',
-      replace: '          stroke-width="4" stroke-dasharray="none" stroke-dashoffset="0" opacity=".9"></line>` : nothing}',
+      find: '    line { vector-effect: non-scaling-stroke; stroke-linecap: round; }',
+      replace: '    line { vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-dasharray: 5 5; }',
+    }],
+  },
+  {
+    id: 'zigbee-topology-unknown-arrow-outline-removed',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'the missing-LQI black outline includes the arrowhead, not only the shaft, '
+      + 'and grows with the plan from one pixel outside the polygon at 100% (#798)',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: "        stroke=${lqi === undefined ? '#000000' : nothing} stroke-width=${lqi === undefined ? 2 * outline : nothing}",
+      replace: "        stroke=${lqi === undefined ? '#000000' : nothing} stroke-width=${lqi === undefined ? 0 : nothing}",
+    }],
+  },
+  {
+    id: 'zigbee-topology-unknown-outline-ignores-plan-zoom',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'the owner requested the missing-LQI outline to grow and shrink with the plan '
+      + 'rather than remaining a constant CSS pixel at settled zoom (#798)',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '      stroke="#000000" stroke-width=${2 + 2 * outline} data-direction=${direction}></line>` : nothing}',
+      replace: '      stroke="#000000" stroke-width="4" data-direction=${direction}></line>` : nothing}',
+    }],
+  },
+  {
+    id: 'zigbee-topology-parent-lqi-discarded',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'remote-space and unplaced target routes use the same full-range LQI color '
+      + 'as local routes instead of becoming permanently grey (#798)',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: "        ${bubbles.map((bubble) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor', bubble.arrow, true))}",
+      replace: "        ${bubbles.map((bubble) => this._route(origin, bubble.point, undefined, 'toward-neighbor', bubble.arrow, true))}",
     }],
   },
   {
     id: 'zigbee-topology-zha-read-starts-scan',
-    guard: 'node --test test/zigbee-topology.test.mjs',
+    guard: 'node --test --test-name-pattern="ZHA runtime is explicit" test/zigbee-topology.test.mjs',
     because: 'hover diagnostics may read the existing ZHA snapshot but must never turn a read '
       + 'into an implicit radio scan (#54 AC4)',
     patches: [{
@@ -9641,7 +9674,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'zigbee-topology-ambiguous-marker-selected',
-    guard: 'node --test test/zigbee-topology.test.mjs',
+    guard: 'node --test --test-name-pattern="exact device/entity ownership" test/zigbee-provider-routes.test.mjs',
     because: 'a Zigbee node with multiple drawable placements must fail closed instead of '
       + 'drawing a plausible but false neighbour line (#54 AC8)',
     patches: [{
@@ -9665,31 +9698,30 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'topology-help-drops-arrow-legend',
-    guard: 'node --test --test-name-pattern="все шесть пунктов легенды|не путь пакета" '
+    guard: 'node --test --test-name-pattern="подсказка описывает provider evidence" '
       + 'test/zigbee-topology.test.mjs',
-    because: 'a hint that names only colour and dashes passes «the help exists» while answering '
-      + 'none of the questions the arrows raise — the very content this task waited for #457 to '
-      + 'write (#459 AC3, AC3b)',
+    because: 'the hint must explain provider-reported end parents and coordinator next hops, '
+      + 'not merely colours; the retired inferred-tree explanation cannot describe #798 routes',
     patches: [{
       file: 'src/i18n/topology/ru.json',
-      find: ' Стрелка ведёт к следующему устройству по пути к координатору: исходящая одна, входящие — те, кто ходит через это устройство. Линия без стрелки — запасной сосед. Это дерево маршрутов, которое строит House Plan, а не путь пакета в эту секунду: подпись на конце стрелки значит, что цель не на этом плане, а отсутствие стрелки — что путь неизвестен.',
+      find: 'Показывает родителя конечного устройства или активный следующий узел роутера к координатору по данным интеграции. Исходящая стрелка не более одной, входящие — устройства, идущие через этот узел. Обычные соседи скрыты. ',
       replace: '',
     }],
   },
   {
     id: 'zigbee-topology-z2m-camelcase-node-rejected',
-    guard: 'node --test --test-name-pattern="real anonymized camelCase" test/zigbee-topology.test.mjs',
+    guard: 'node --test --test-name-pattern="real anonymized routes:false" test/zigbee-provider-routes.test.mjs',
     because: 'the Zigbee2MQTT raw network-map contract uses ieeeAddr; accepting only the '
       + 'bridge/devices snake_case spelling makes every real scan fail as invalid (#450 AC1)',
     patches: [{
-      file: 'src/zigbee-topology.ts',
-      find: '    const ieee = normalizeIeee(record?.ieeeAddr ?? record?.ieee_address ?? record?.ieee);',
-      replace: '    const ieee = normalizeIeee(record?.ieee_address ?? record?.ieee);',
+      file: 'src/zigbee-provider-routes.ts',
+      find: '    const value = recordOf(row); const ieee = normalizeIeee(value?.ieeeAddr ?? value?.ieee_address ?? value?.ieee);',
+      replace: '    const value = recordOf(row); const ieee = normalizeIeee(value?.ieee_address ?? value?.ieee);',
     }],
   },
   {
     id: 'zigbee-topology-z2m-foreign-response-accepted',
-    guard: 'node --test test/zigbee-topology.test.mjs',
+    guard: 'node --test --test-name-pattern="Z2M requests routes and ignores" test/zigbee-topology-runtime-routes.test.mjs',
     because: 'parallel Zigbee2MQTT requests share one response topic; only the matching '
       + 'transaction may complete this snapshot (#54 AC6)',
     patches: [{
@@ -9700,68 +9732,113 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'zigbee-topology-z2m-malformed-response-waits-for-timeout',
-    guard: 'node --test --test-name-pattern="malformed response immediately" test/zigbee-topology.test.mjs',
+    guard: 'node --test --test-name-pattern="malformed response immediately|a malformed response rejects" '
+      + 'test/zigbee-topology.test.mjs test/zigbee-topology-runtime-routes.test.mjs',
     because: 'a malformed response on the subscribed network-map topic must report invalid payload '
       + 'immediately instead of leaving the settings dialog loading for the full timeout (#54 AC16)',
     patches: [{
       file: 'src/zigbee-topology-runtime.ts',
-      find: "        if (value === null) {\n          if (responseActive) responseReject?.(fail('invalid_payload'));\n          return;\n        }",
+      find: "        if (value === null) {\n          responseReject?.(fail('invalid_payload'));\n          return;\n        }",
       replace: '        if (value === null) return;',
     }],
   },
   {
     id: 'zigbee-topology-z2m-subscriptions-leak',
-    guard: 'node --test test/zigbee-topology.test.mjs',
+    guard: 'node --test test/zigbee-topology-runtime-routes.test.mjs',
     because: 'both MQTT subscriptions must be released after success or failure so one manual '
       + 'refresh cannot leave listeners processing later payloads (#54 AC6)',
     patches: [{
       file: 'src/zigbee-topology-runtime.ts',
-      find: '        try { unsubscribe(); } catch { /* cleanup is best effort */ }',
-      replace: '        try { void unsubscribe; } catch { /* cleanup is best effort */ }',
+      find: '      try { unsubscribe(); } catch { /* cleanup is best effort */ }',
+      replace: '      try { void unsubscribe; } catch { /* cleanup is best effort */ }',
     }],
   },
   {
     id: 'zigbee-route-relationship-separators-normalized',
-    guard: 'node --test --test-name-pattern="Z2M relationship strings" test/zigbee-topology.test.mjs',
-    because: 'provider relationship strings must ignore separators before the parent tie-break '
-      + 'uses them (#457 section 6.3 and code-review r1)',
+    guard: 'node --test --test-name-pattern="relationship strings normalize separators" test/zigbee-provider-routes.test.mjs',
+    because: 'provider relationship spelling is normalized before accepting explicit Parent/Child '
+      + 'evidence; PreviousChild remains non-evidence rather than a parent tie-break (#798)',
     patches: [{
-      file: 'src/zigbee-topology.ts',
-      find: "  const compact = value.trim().toLowerCase().replace(/[\\s_-]+/g, '');",
-      replace: "  const compact = value.trim().toLowerCase();",
+      file: 'src/zigbee-provider-routes.ts',
+      find: "  const compact = typeof value === 'string' ? value.trim().toLowerCase().replace(/[\\s_-]+/g, '') : '';",
+      replace: "  const compact = typeof value === 'string' ? value.trim().toLowerCase() : '';",
     }],
   },
   {
-    id: 'zigbee-route-parent-keeps-bfs-level',
-    guard: 'node --test --test-name-pattern="uplink tree is deterministic" test/zigbee-topology.test.mjs',
-    because: 'every parent must be one BFS level nearer the coordinator; accepting a same-level '
-      + 'neighbour can create a cycle and break the defining #457 AC1 invariant',
+    id: 'zigbee-provider-route-cycles-not-suppressed',
+    guard: 'node --test --test-name-pattern="provider cycles are suppressed" test/zigbee-provider-routes.test.mjs',
+    because: 'provider next-hop cycles must be suppressed rather than repaired with inferred '
+      + 'BFS edges; a valid earlier hop remains usable without claiming a complete chain (#798)',
     patches: [{
-      file: 'src/zigbee-topology.ts',
-      find: '      .filter(({ neighborKey }) => distances.get(neighborKey) === distance - 1)',
-      replace: '      .filter(({ neighborKey }) => distances.get(neighborKey) === distance)',
+      file: 'src/zigbee-provider-routes.ts',
+      find: '  suppressUplinkCycles(routes);',
+      replace: '  void routes; // mutant: keep provider cycles',
     }],
   },
   {
     id: 'zigbee-route-local-arrow-not-inverted',
-    guard: 'node --test --test-name-pattern="hover projects local route directions" test/zigbee-topology.test.mjs',
+    guard: 'node --test --test-name-pattern="Z2M reverses raw link" test/zigbee-provider-routes.test.mjs',
     because: 'the arrow on the hovered device uplink must point to its parent rather than away '
       + 'from the coordinator (#457 AC4)',
     patches: [{
       file: 'src/zigbee-topology.ts',
-      find: "      const direction = isParent ? 'toward-neighbor'",
-      replace: "      const direction = isParent ? 'toward-origin'",
+      find: "          lqi: route.lqi, routeDirection: isOutgoing ? 'toward-neighbor' : 'toward-origin' });",
+      replace: "          lqi: route.lqi, routeDirection: isOutgoing ? 'toward-origin' : 'toward-origin' });",
     }],
   },
   {
     id: 'zigbee-route-parent-not-counted-twice',
-    guard: 'node --test --test-name-pattern="hover projects local route directions" test/zigbee-topology.test.mjs',
+    guard: 'node --test --test-name-pattern="remote/unplaced parent carries" test/zigbee-provider-routes.test.mjs',
     because: 'a remote parent already has a named route bubble and must not also inflate the '
       + 'legacy cross-space neighbour count (#457 AC6)',
     patches: [{
       file: 'src/zigbee-topology.ts',
-      find: '        if (!isParent) remote.add(other.markerId);',
-      replace: '        remote.add(other.markerId);',
+      find: '      } else if (isOutgoing) {',
+      replace: '      } else if (isOutgoing) {\n        if (other) remote.add(identity);',
+    }],
+  },
+  {
+    id: 'zigbee-provider-inactive-route-accepted',
+    guard: 'node --test --test-name-pattern="only ACTIVE status" test/zigbee-provider-routes.test.mjs',
+    because: 'Z2M network-map links include non-active routing-table entries; only ACTIVE '
+      + 'destination-zero evidence may become a router uplink (#798)',
+    patches: [{
+      file: 'src/zigbee-provider-routes.ts',
+      find: "      if (route?.status !== 'ACTIVE' || !target) continue;",
+      replace: '      if (!route || !target) continue;',
+    }],
+  },
+  {
+    id: 'zigbee-provider-cross-source-conflict-accepted',
+    guard: 'node --test --test-name-pattern="cross-provider outgoing conflict" test/zigbee-provider-routes.test.mjs',
+    because: 'different provider claims for the same HA source must not draw two outgoing '
+      + 'edges or reappear as incoming edges on either target (#798)',
+    patches: [{
+      file: 'src/zigbee-topology.ts',
+      find: '    if (hardUnknown || targets.size > 1 || (root && known.length)) {',
+      replace: '    if (hardUnknown || (root && known.length)) {',
+    }],
+  },
+  {
+    id: 'zigbee-provider-zero-lqi-discarded',
+    guard: 'node --test --test-name-pattern="missing or invalid LQI" test/zigbee-provider-routes.test.mjs',
+    because: 'numeric LQI zero is a measured value, not missing data; the route must keep '
+      + 'that value so presentation can use the red endpoint of the scale (#798)',
+    patches: [{
+      file: 'src/zigbee-provider-routes.ts',
+      find: '  return Number.isFinite(number) && number >= 0 && number <= 255 ? Math.round(number) : undefined;',
+      replace: '  return Number.isFinite(number) && number > 0 && number <= 255 ? Math.round(number) : undefined;',
+    }],
+  },
+  {
+    id: 'zigbee-runtime-routes-not-requested',
+    guard: 'node --test --test-name-pattern="Z2M requests routes and ignores" test/zigbee-topology-runtime-routes.test.mjs',
+    because: 'an explicit Z2M refresh must request routing-table evidence instead of silently '
+      + 'returning a neighbors-only map that cannot support router uplinks (#798)',
+    patches: [{
+      file: 'src/zigbee-topology-runtime.ts',
+      find: "        payload: JSON.stringify({ type: 'raw', routes: true, transaction }),",
+      replace: "        payload: JSON.stringify({ type: 'raw', routes: false, transaction }),",
     }],
   },
   {
