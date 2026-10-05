@@ -17,7 +17,7 @@
     "src/radar-model.ts", "src/radar-editor.ts", "src/radar-geometry.ts", "src/radar-setup.ts", "src/radar-render.ts",
     "src/integration-provider.ts", "src/vacuum.ts", "src/vacuum-routes.ts", "src/vacuum-route-edit.ts",
     "src/sun.ts", "src/moon.ts", "src/moon-gate.ts", "src/moon-runtime.ts", "src/moon-art.generated.ts",
-    "src/light-visibility.ts", "src/led-strip-geometry.ts", "src/led-strip-gate.ts", "src/led-strip-runtime.ts", "src/led-strip-field.ts", "src/led-strip-editor.ts", "src/led-strip-card.ts", "src/glow-scene.ts", "src/space-render.ts",
+    "src/light-visibility.ts", "src/led-strip-geometry.ts", "src/led-strip-gate.ts", "src/led-strip-runtime.ts", "src/led-strip-field.ts", "src/led-strip-editor.ts", "src/led-strip-card.ts", "src/glow-scene.ts", "src/space-render.ts", "src/space-card.ts",
     "src/resize.ts", "src/resize-labels.ts", "src/resize-controller.ts", "src/wall-record-preservation.ts",
     "src/rules.ts",
     "src/devices.ts", "src/device-inbox.ts",

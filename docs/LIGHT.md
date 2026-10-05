@@ -456,6 +456,11 @@ only the geometry differs:
   switching off live states releases the field while retaining the neutral tube.
   Both lazy runtime and field readiness callbacks check the actual owner's
   connection before requesting an update. Reconnect creates a fresh lifecycle.
+  `test/space-card-led-disconnect.test.mjs` executes the real static-card
+  disconnect callback with populated lazy slots and checks disposal synchronously,
+  before any detached render. Its connection-only negative case retains the old
+  lifecycle despite suppressing late updates; `smoke_led_strip_glow` separately
+  keeps the browser's visible fade/transition-event coverage (#794).
 - **Visibility.** Classify and sample the full polyline at radius/4 or finer,
   retaining every actual vertex and both ends; never thin a short final run
   or an acute corner. The continuous field is clipped to the union of the

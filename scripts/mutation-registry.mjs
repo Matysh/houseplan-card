@@ -14325,9 +14325,10 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'glow-static-led-release-skipped',
-    guard: 'node demo/smoke_led_strip_glow.mjs',
-    because: '#789 AC4: disconnecting and reconnecting the actual static custom element must start a fresh '
-      + 'LED entering transition; a host connection guard alone cannot release the retained field lifecycle',
+    guard: 'node --test test/space-card-led-disconnect.test.mjs',
+    because: '#794: execute the real static-card disconnectedCallback with populated LED lazy slots; '
+      + 'it must synchronously release owner state and cancel callbacks before any detached render, '
+      + 'then create a fresh lifecycle on reconnect. A connection-only negative case retains the old lifecycle',
     patches: [{
       file: 'src/space-card.ts',
       find: '    ledRelease(this._glowRuntimeState);\n    this._continuityHistory =',
