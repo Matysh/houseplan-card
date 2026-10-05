@@ -129,7 +129,9 @@ const result = await page.evaluate(async () => {
 
   root().querySelector('.dev').dispatchEvent(mouse('pointermove', 200, 200));
   await card.updateComplete;
-  out.deviceTipSurvives = card._tip?.room === false && !!root().querySelector('.tip');
+  const deviceTip = root().querySelector('.tip');
+  out.deviceTipSurvives = card._tip?.room === false && !!deviceTip && !deviceTip.hidden
+    && deviceTip.textContent.includes(card._tip.title);
 
   card._openSettingsDialog();
   out.reopenShowsOff = card._settingsDialog?.showRoomTooltip === false;

@@ -71,7 +71,7 @@ export function showDevicePointerTip(value: object, event: PointerEvent, device:
   }
   const tip = deviceTipContent(host, device);
   host._deviceHits.hover(host.renderRoot, device.id);
-  host._tip = { x: event.clientX, y: event.clientY, ...tip, source: 'pointer', deviceId: device.id };
+  host._tip = { x: event.clientX, y: event.clientY, ...tip, room: false, source: 'pointer', deviceId: device.id };
   syncHouseplanHover(host);
 }
 

@@ -42,6 +42,28 @@ for (const provider of ['z2m', 'zha']) {
   const marker = (id) => root.locator(`[data-hp="device"][data-id="${id}"]`);
   const bubble = root.locator('[data-hp="zigbee-topology-parent-bubble"]');
   const settle = () => page.evaluate(() => window.__hpTest.settled());
+  // Like smoke_preloader, keep the RAF-backed facade operation rooted in the
+  // page and wait from Playwright: CDP can otherwise collect the returned
+  // pending evaluate promise. Start once; never retry a config mutation.
+  const setVolumetricView = async (on) => {
+    await page.evaluate((on) => {
+      const probe = { done: false, error: null, promise: null };
+      window.__zigbeeProjectionSwitch = probe;
+      probe.promise = window.__hpTest.setVolumetricView(on);
+      void probe.promise.then(() => { probe.done = true; }, (error) => {
+        probe.error = error instanceof Error ? error.stack || error.message : String(error);
+        probe.done = true;
+      });
+    }, on);
+    try {
+      await page.waitForFunction(() => window.__zigbeeProjectionSwitch?.done,
+        null, { polling: 25, timeout: 15000 });
+      const error = await page.evaluate(() => window.__zigbeeProjectionSwitch.error);
+      if (error) throw new Error(`projection fixture failed: ${error}`);
+    } finally {
+      await page.evaluate(() => { delete window.__zigbeeProjectionSwitch; });
+    }
+  };
   let pointer;
   const hover = async (id, vertical = 0.5) => {
     await page.mouse.move(2, 2);
@@ -231,8 +253,8 @@ for (const provider of ['z2m', 'zha']) {
       }));
 
       for (const iso of [false, true]) for (const theme of ['light', 'dark']) {
-        await page.evaluate(async ({ iso, theme }) => {
-          await window.__hpTest.setVolumetricView(iso);
+        await setVolumetricView(iso);
+        await page.evaluate(({ theme }) => {
           const card = window.__card;
           card.hass = { ...card.hass, themes: { ...card.hass.themes, darkMode: theme === 'dark' } };
           for (const [key, value] of Object.entries(theme === 'light' ? {
@@ -240,7 +262,7 @@ for (const provider of ['z2m', 'zha']) {
             '--primary-text-color': '#202020', '--secondary-text-color': '#606060',
           } : { '--card-background-color': '#1c2530', '--ha-card-background': '#1c2530',
             '--primary-text-color': '#e1e1e1', '--secondary-text-color': '#9aa4ad' })) card.style.setProperty(key, value);
-        }, { iso, theme });
+        }, { theme });
         await page.evaluate(() => window.__hpTest.switchSpace('f1'));
         for (const [id, name] of [['d_temp', 'unplaced'], ['d_light1', 'remote-count'], ['d_kettle', 'status-only']]) {
           await hover(id, 0.25);
@@ -284,7 +306,7 @@ for (const provider of ['z2m', 'zha']) {
       out.runtimeIncludesPartialStaleError = changed.badges.some((badge) => /Incomplete data/.test(badge.text)
         && /Stale data/i.test(badge.text) && /could not be loaded/i.test(badge.text));
       await deliver();
-      await page.evaluate(() => window.__hpTest.setVolumetricView(false));
+      await setVolumetricView(false);
       await page.evaluate(() => window.__hpTest.switchSpace('garden'));
       const longName = ('Long landing router <safe> & ' + 'north corridor diagnostic lighting '.repeat(5)).trim();
       await deliver({ name: longName });
