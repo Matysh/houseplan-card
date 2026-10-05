@@ -17,17 +17,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Item | State |
 |---|---|
 | Generated | 2026-10-05 — rerun `node scripts/status-snapshot.mjs` for the current tree |
-| Version | **1.80.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
+| Version | **1.80.0-beta.4** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.79.0` |
-| Latest prerelease tag | `v1.80.0-beta.2` |
-| Tests | Node unit 3611 · pure backend 423 · HA-harness backend 330 · browser smokes 296 (`npm run inventory`) |
+| Latest prerelease tag | `v1.80.0-beta.3` |
+| Tests | Node unit 3624 · pure backend 423 · HA-harness backend 330 · browser smokes 297 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
 
 | Item | State |
 |---|---|
-| Current local cycle | **v1.80.0-beta.3 candidate** — #800 background Zigbee2MQTT scans passed owner-authorized independent local review and are merged into `dev`. Full exact-SHA Validate and artifact verification precede publication. `main` remains on stable v1.79.0. |
+| Current local cycle | **v1.80.0-beta.4 candidate** — #802 remote Zigbee destination names and collision-aware tooltips passed owner-authorized local review and are merged into `dev`. WSL unit/build, targeted browser checks and full golden are green; full exact-SHA Validate and artifact verification precede publication. `main` remains on stable v1.79.0. |
 | Branches | `main` carries stable releases only; pre-release tags point at `dev`. Work lands on `dev`, which is equal to or ahead of `main`, never behind. |
 | Zigbee routes | #798 replaces inferred neighbour trees with integration-reported end-parent and active coordinator next-hop evidence. Unknown/conflicting routes are not guessed; stale/partial snapshots remain labelled. Solid arrows have a separate 0–255 palette; ordinary device LQI colours are unchanged. |
 | Zigbee caption layout | #802 adds remote destination names and keeps the matching pointer tooltip clear of diagnostic text; only an unplaceable tooltip yields in a small card. Focus/touch/actions and provider transport remain unchanged. |
