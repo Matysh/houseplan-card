@@ -400,6 +400,40 @@ for (const provider of ['z2m', 'zha']) {
       out.pointerLeaveRestoresKeyboardTipAfterDiagnostics = focusRestored.tipVisible
         && focusRestored.tipText === keyboardOnly.tipText && focusRestored.badges.length === 0;
       await marker('d_mower').evaluate((element) => element.blur());
+      // A transformed HA/dashboard ancestor establishes the containing block
+      // for a position:fixed tooltip. Measure the actual screen result, not
+      // the CSS left/top values, before and after document scrolling.
+      await hover('d_mower');
+      const beforeAncestorTransform = await sample('d_mower');
+      await page.evaluate(() => {
+        document.body.style.minHeight = '1800px';
+        const host = document.getElementById('host');
+        host.style.transformOrigin = '0 0';
+        host.style.transform = 'translate(35px, 125px) scale(0.82)';
+      });
+      await hover('d_mower');
+      const transformed = await witness('transformedContainingAncestor', 'd_mower');
+      out.ancestorScaleReallyAppliesToFixedTooltip = Math.abs(
+        transformed.source.width / beforeAncestorTransform.source.width - 0.82,
+      ) < 0.02 && await root.locator('[data-hp-live-tip]').evaluate((tip) =>
+        getComputedStyle(tip).position === 'fixed');
+      out.transformedBadgesInsideVisibleStage = transformed.badgeInside;
+      await page.screenshot({ path: fileURLToPath(new URL('ancestor-transform.png', artifacts)) });
+      // Six CSS pixels keep the pointer inside the marker, so this check also
+      // witnesses the scroll observer without a new pointer event/hover.
+      await page.evaluate(() => window.scrollTo(0, 6));
+      await settle();
+      const smallScroll = await witness('ancestorScrollWithoutNewHover', 'd_mower');
+      out.scrollActuallyMovesScreenGeometry = Math.abs(transformed.source.top - smallScroll.source.top - 6) < 1;
+      // A larger document scroll moves the source away from the old pointer;
+      // re-enter the still-visible marker with a real mouse.
+      await page.evaluate(() => window.scrollTo(0, 180));
+      await hover('d_mower');
+      const scrolled = await witness('transformedAncestorAfterPageScroll', 'd_mower');
+      out.largePageScrollKeepsBadgesInsideVisibleStage = scrolled.badgeInside
+        && Math.abs(transformed.source.top - scrolled.source.top - 180) < 1
+        && await page.evaluate(() => window.scrollY === 180);
+      await page.screenshot({ path: fileURLToPath(new URL('ancestor-transform-scrolled.png', artifacts)) });
     }
   } catch (error) {
     out[`${provider}_completed`] = false;
