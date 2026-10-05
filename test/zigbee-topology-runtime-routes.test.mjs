@@ -281,3 +281,76 @@ test('#800 stale action response cannot roll back later streamed terminal state'
     provider: { ...provider, phase: 'loading', elapsed_ms: 0 } });
   await pending; assert.equal(b.snapshot().states[KEY].phase, 'ready'); assert.equal(b.snapshot().states[KEY].elapsedMs, 900000); off();
 });
+
+test('#800 integration closed invalidates mounted jobs; explicit same-WS start reattaches without duplicate scan', async () => {
+  const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 80 });
+  await refreshZ2mTopology(b.hass, TOPIC);
+  const oldCallback = b.callbacks[0], oldState = b.envelope(b.jobs.get(TOPIC));
+  const oldPublications = b.publications;
+  b.emit({ kind: 'closed', session_id: b.session, revision: ++b.revision });
+  assert.deepEqual(b.snapshot().states, {}, 'unloaded coordinator cannot leave disabled Update map/loading UI');
+  assert.deepEqual(b.snapshot().topologies, [], 'unloaded coordinator last-good cache is gone');
+  assert.equal(b.snapshot().backendConnected, false);
+  assert.equal(b.cleanups, 1); assert.equal(b.live.size, 0);
+  await turn(); assert.equal(b.publications, oldPublications, 'close never scans or automatically retries');
+  const closedRevision = b.snapshot().revision;
+  oldCallback({ ...oldState, revision: 999 });
+  oldCallback({ kind: 'reset', session_id: 'obsolete', revision: 1000, topics: [TOPIC] });
+  assert.equal(b.snapshot().revision, closedRevision, 'late old feed cannot revive its session');
+  b.session = 'reloaded'; b.revision = 0; b.jobs.clear();
+  const start = refreshZ2mTopology(b.hass, TOPIC);
+  assert.equal(refreshZ2mTopology({ ...b.hass }, TOPIC), start);
+  await start;
+  assert.equal(b.callbacks.length, 2); assert.equal(b.live.size, 1);
+  assert.equal(b.publications, oldPublications + 1);
+  assert.equal(b.snapshot().states[KEY].phase, 'loading');
+  assert.equal(b.snapshot().backendConnected, true);
+  b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 90 });
+  assert.equal(b.snapshot().states[KEY].obtainedAt, 90, 'new session streams without remount');
+  off(); assert.equal(b.cleanups, 2);
+});
+
+test('#800 closed while subscribe ACK is pending cleans late ACK without releasing new feed', async () => {
+  const b = backend(); b.subscribeGate = deferred();
+  const oldAck = b.subscribeGate, off = b.observe(); await turn();
+  b.emit({ kind: 'closed', session_id: b.session, revision: ++b.revision });
+  b.session = 'reloaded'; b.revision = 0; b.jobs.clear(); b.subscribeGate = null;
+  await refreshZ2mTopology(b.hass, TOPIC);
+  assert.equal(b.callbacks.length, 2);
+  oldAck.resolve(); await turn();
+  assert.equal(b.live.size, 1); assert.equal(b.cleanups, 1);
+  b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 99 });
+  assert.equal(b.snapshot().states[KEY].obtainedAt, 99);
+  off(); assert.equal(b.cleanups, 2);
+});
+
+test('#800 only current-session non-stale closed event can invalidate runtime', async () => {
+  const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  const before = b.snapshot();
+  b.emit({ kind: 'closed', session_id: 'foreign', revision: 999 });
+  b.emit({ kind: 'closed', session_id: b.session, revision: b.revision - 1 });
+  assert.equal(b.snapshot().revision, before.revision); assert.equal(b.live.size, 1); off();
+});
+
+test('#800 late command completion from closed session cannot erase new command deduplication', async () => {
+  const b = backend(), off = b.observe(); await turn();
+  const oldReply = deferred(); b.commandGate = oldReply;
+  const oldStart = refreshZ2mTopology(b.hass, TOPIC); await turn();
+  const oldEvent = { kind: 'state', session_id: b.session, revision: 10, provider: {
+    topic: TOPIC, job_id: 'old', phase: 'loading', elapsed_ms: 100,
+  } };
+  b.emit({ kind: 'closed', session_id: b.session, revision: ++b.revision });
+  b.session = 'reloaded'; b.revision = 0;
+  const newReply = deferred(); b.commandGate = newReply;
+  const newStart = refreshZ2mTopology(b.hass, TOPIC); await turn();
+  oldReply.resolve(oldEvent); await oldStart;
+  assert.deepEqual(b.snapshot().states, {}, 'late action result from unloaded session stays rejected');
+  assert.equal(refreshZ2mTopology(b.hass, TOPIC), newStart, 'old finally must not delete new in-flight action');
+  newReply.resolve({ ...oldEvent, session_id: b.session, revision: 1,
+    provider: { ...oldEvent.provider, job_id: 'fresh', elapsed_ms: 0 } });
+  await newStart;
+  assert.equal(b.snapshot().states[KEY].jobId, 'fresh');
+  assert.equal(b.calls.filter(c => c.type.endsWith('/start')).length, 2);
+  assert.equal(b.callbacks.length, 2); off();
+});

@@ -90,6 +90,18 @@ function accept(cache: Cache, message: unknown, fromSubscription: boolean): void
   if (!envelope || typeof envelope.session_id !== 'string' || !Number.isSafeInteger(envelope.revision)) return;
   const revision = envelope.revision as number;
   if (revision < 0) return;
+  if (envelope.kind === 'closed') {
+    if (!fromSubscription || envelope.session_id !== cache.session || revision < cache.serverRevision) return;
+    // Integration reload does not close the HA socket. Retire this observer and
+    // all pending old-session work, but retain mounted UI listeners for recovery.
+    cache.generation++;
+    cleanup(cache.unsubscribe); cache.unsubscribe = undefined;
+    cache.feedPending = cache.capability = undefined;
+    cache.session = undefined; cache.serverRevision = -1; cache.topicRevisions.clear();
+    for (const key of cache.inflight.keys()) if (key.startsWith('z2m:')) cache.inflight.delete(key);
+    removeTopics(cache, new Set());
+    cache.backendConnected = false; cache.backendError = 'backend_required'; notify(cache); return;
+  }
   if (envelope.kind === 'reset') {
     if (!fromSubscription || !Array.isArray(envelope.topics) || envelope.topics.length > 8) return;
     if (cache.session === envelope.session_id && revision < cache.serverRevision) return;
@@ -216,6 +228,14 @@ function command(hass: ZigbeeTopologyHass, baseTopic: string, jobId?: string): P
   const promise = (async () => {
     requireAdmin(hass); if (!topic) throw fail('invalid_topic');
     await capability(cache, hass); if (!active()) return;
+    if (jobId === undefined) {
+      // Explicit start also recovers an observer invalidated by integration reload.
+      // Joining it never publishes; only the command below starts a server job.
+      startFeed(cache, hass);
+      await cache.feedPending;
+      if (!active()) return;
+      if (cache.listeners.size && !cache.unsubscribe) throw fail(cache.backendError || 'backend_required');
+    }
     const result = await hass.callWS!({ type: `houseplan/zigbee/${jobId === undefined ? 'start' : 'cancel'}`,
       base_topic: topic, ...(jobId === undefined ? {} : { job_id: jobId }) });
     if (active()) accept(cache, result, false);
@@ -228,7 +248,7 @@ function command(hass: ZigbeeTopologyHass, baseTopic: string, jobId?: string): P
     if (jobId === undefined && cache.states[key]?.phase !== 'loading') {
       state(cache, key, { ...cache.states[key], phase: 'error', error: code, stale: cache.states[key]?.obtainedAt !== undefined });
     } else { cache.backendError = code; notify(cache); }
-  }).finally(() => cache.inflight.delete(actionKey));
+  }).finally(() => { if (cache.inflight.get(actionKey) === promise) cache.inflight.delete(actionKey); });
   cache.inflight.set(actionKey, promise); return promise;
 }
 /** Quick server-owned job start: no browser MQTT, scan timer, or fallback. */

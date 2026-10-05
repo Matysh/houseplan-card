@@ -173,7 +173,7 @@ async def _start(client, transport, *, topic="zigbee2mqtt"):
 
 
 async def test_issue_800_background_15_minutes_two_clients_and_reopen(
-    hass, hass_ws_client, transport, clock,
+    hass, hass_ws_client, transport, clock, monkeypatch,
 ):
     entry, coordinator = await _setup(hass)
     first, second = await hass_ws_client(hass), await hass_ws_client(hass)
@@ -190,14 +190,24 @@ async def test_issue_800_background_15_minutes_two_clients_and_reopen(
     await second.close()
     await hass.async_block_till_done()
     assert len(transport.published) == 1 and not coordinator._listeners
+    await _until(lambda: coordinator.snapshot("zigbee2mqtt")["provider"]["stage"] == "waiting")
 
-    clock.now += 600
-    await hass.async_block_till_done()
-    assert coordinator.snapshot("zigbee2mqtt")["provider"]["phase"] == "loading"
-    clock.now += 300
-    waiting = coordinator.snapshot("zigbee2mqtt")["provider"]
-    assert waiting["elapsed_ms"] == 900_000 and waiting["phase"] == "loading"
-    answer = transport.respond("zigbee2mqtt", waiting["job_id"])
+    # Advance actual event-loop deadlines too, not only the displayed elapsed
+    # counter. A reintroduced asyncio.timeout(600) must run and fail this witness.
+    original_loop_time, clock_start = hass.loop.time, clock.now
+    with monkeypatch.context() as timers:
+        timers.setattr(hass.loop, "time", lambda: original_loop_time() + clock.now - clock_start)
+        clock.now += 600
+        for _ in range(4):
+            await asyncio.sleep(0)
+        await hass.async_block_till_done()
+        assert coordinator.snapshot("zigbee2mqtt")["provider"]["phase"] == "loading"
+        clock.now += 300
+        for _ in range(4):
+            await asyncio.sleep(0)
+        waiting = coordinator.snapshot("zigbee2mqtt")["provider"]
+        assert waiting["elapsed_ms"] == 900_000 and waiting["phase"] == "loading"
+        answer = transport.respond("zigbee2mqtt", waiting["job_id"])
     await _until(lambda: not coordinator._operations)
     assert transport.listener_count == 0 and not transport.status_callbacks
 
@@ -462,11 +472,26 @@ async def test_issue_800_entry_unload_clears_jobs_and_new_entry_session_is_idle(
 ):
     entry, coordinator = await _setup(hass)
     client = await hass_ws_client(hass)
+    subscription = await _command(client, "subscribe")
+    assert subscription["success"]
+    assert (await client.receive_json())["event"]["kind"] == "reset"
     await _start(client, transport)
+    previous_revision = coordinator.revision
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
     assert coordinator.closed and not coordinator._jobs
     assert transport.listener_count == 0 and not transport.status_callbacks
+    async with asyncio.timeout(1):
+        while True:
+            event = (await client.receive_json())["event"]
+            if event["kind"] == "closed":
+                break
+    assert event == {"kind": "closed", "session_id": coordinator.session_id,
+                     "revision": previous_revision + 1}
+    # The same live socket can retire its old feed, then attach to the next
+    # loaded entry. Receiving closed never publishes an automatic replacement.
+    await client.send_json_auto_id({"type": "unsubscribe_events", "subscription": subscription["id"]})
+    assert (await client.receive_json())["success"]
     refused = await _command(client, "subscribe")
     assert refused["success"] is False and refused["error"]["code"] == "not_ready"
     assert await hass.config_entries.async_setup(entry.entry_id)
@@ -475,6 +500,13 @@ async def test_issue_800_entry_unload_clears_jobs_and_new_entry_session_is_idle(
     assert replacement.session_id != coordinator.session_id
     assert replacement.initial_events()[0]["topics"] == []
     assert len(transport.published) == 1
+    assert (await _command(client, "subscribe"))["success"]
+    reset = (await client.receive_json())["event"]
+    assert reset == {"kind": "reset", "session_id": replacement.session_id,
+                     "revision": 0, "topics": []}
+    restarted = await _start(client, transport)
+    assert restarted["session_id"] == replacement.session_id
+    assert len(transport.published) == 2
 
 
 async def test_issue_800_missing_mqtt_is_optional_and_reports_unavailable(

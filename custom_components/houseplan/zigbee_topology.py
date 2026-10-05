@@ -424,6 +424,11 @@ class ZigbeeScanCoordinator:
         if self.closed:
             return
         self.closed = True
+        # Reload does not disconnect HA WebSockets. Tell their observers that
+        # this session and its volatile cache are gone before dropping them.
+        self.revision += 1
+        self._emit({"kind": "closed", "session_id": self.session_id,
+                    "revision": self.revision})
         tasks = [job.task for job in self._jobs.values() if job.task is not None]
         for job in self._jobs.values():
             self._release(job)

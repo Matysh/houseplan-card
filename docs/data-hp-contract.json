@@ -234,6 +234,36 @@
       "since": "1.60.2-beta.1",
       "audience": ["styling", "test"]
     },
+    "zigbee-scan-background": {
+      "elements": ["span"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zigbee-scan-cancel": {
+      "elements": ["button"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zigbee-scan-cancel-hint": {
+      "elements": ["span"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zigbee-scan-elapsed": {
+      "elements": ["span"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zigbee-scan-long-wait": {
+      "elements": ["span"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
+    "zigbee-scan-stage": {
+      "elements": ["span"],
+      "since": "1.80.0-beta.3",
+      "audience": ["test"]
+    },
     "zoom-fit": {
       "elements": ["button"],
       "since": "1.73.0-beta.7",

@@ -10,10 +10,10 @@ const output = {};
 const record = (name, actual) => { output[name] = actual; check(name, actual); };
 const artifacts = new URL('../artifacts/zigbee-topology-800/', import.meta.url);
 mkdirSync(artifacts, { recursive: true });
-const server = { revision: 0, sequence: 0, publishes: 0, cancels: 0, provider: null };
-const state = () => ({ kind: 'state', session_id: 'server-800', revision: server.revision,
+const server = { session: 'server-800', revision: 0, sequence: 0, publishes: 0, cancels: 0, provider: null };
+const state = () => ({ kind: 'state', session_id: server.session, revision: server.revision,
   provider: structuredClone(server.provider) });
-const initial = () => [{ kind: 'reset', session_id: 'server-800', revision: server.revision,
+const initial = () => [{ kind: 'reset', session_id: server.session, revision: server.revision,
   topics: server.provider ? [server.provider.topic] : [] }, ...(server.provider ? [state()] : [])];
 await page.exposeFunction('__scanRpc', async (message) => {
   if (message.type === 'houseplan/zigbee/subscribe') return initial();
@@ -185,6 +185,21 @@ try {
     document.getElementById('scan-settings')._snapshot.topologies.length === 1));
   await page.setViewportSize({ width: 1000, height: 850 });
   await page.screenshot({ path: fileURLToPath(new URL('desktop-ready.png', artifacts)) });
+  const obsolete = state();
+  await page.evaluate((event) => {
+    for (const callback of window.__scanCallbacks) callback(event);
+  }, { kind: 'closed', session_id: server.session, revision: ++server.revision });
+  server.session = 'server-800-reloaded'; server.revision = 0; server.provider = null;
+  await page.waitForFunction(() => !document.getElementById('scan-settings')._snapshot.states['z2m:zigbee2mqtt']);
+  record('integrationUnloadClearsUiWithoutClosingHaSocket', await refresh().isEnabled()
+    && await page.evaluate(() => window.__scanStats.active === 0));
+  await refresh().click(); await waitState('loading');
+  await page.evaluate((event) => {
+    for (const callback of window.__scanCallbacks) callback(event);
+  }, obsolete);
+  record('explicitScanAfterIntegrationReloadReobservesNewSession', server.publishes === 3
+    && await page.evaluate(() => window.__scanStats.active === 1
+      && document.getElementById('scan-settings')._snapshot.states['z2m:zigbee2mqtt'].jobId === 'job-3'));
   await page.evaluate(async () => {
     const element = document.getElementById('scan-settings');
     element.hass = { ...element.hass, user: { id: 'viewer-800', is_admin: false } };

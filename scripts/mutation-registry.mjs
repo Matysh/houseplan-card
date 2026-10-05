@@ -9867,6 +9867,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-background-scan-restores-ten-minute-deadline',
+    guard: 'node scripts/backend-test-guard.mjs issue_800_background_15_minutes_two_clients_and_reopen '
+      + 'tests_backend/test_ha_zigbee_topology.py',
+    because: '#800 AC1: advancing the actual asyncio loop clock through 600 and 900 seconds '
+      + 'must keep the server job waiting; the cancel threshold is not a scan deadline',
+    patches: [{
+      file: 'custom_components/houseplan/zigbee_topology.py',
+      find: '                await self.hass.loop.create_future()',
+      replace: '                async with asyncio.timeout(600):\n                    await self.hass.loop.create_future()',
+    }],
+  },
+  {
+    id: 'zigbee-background-unload-leaves-ui-waiting',
+    guard: 'node scripts/backend-test-guard.mjs issue_800_entry_unload_clears_jobs_and_new_entry_session_is_idle '
+      + 'tests_backend/test_ha_zigbee_topology.py',
+    because: '#800 AC4/AC6: integration reload does not close HA WebSocket; existing observers '
+      + 'must receive invalidation before their coordinator is discarded',
+    patches: [{
+      file: 'custom_components/houseplan/zigbee_topology.py',
+      find: '        self._emit({"kind": "closed", "session_id": self.session_id,\n                    "revision": self.revision})',
+      replace: '        pass  # mutant: silently discard subscribers',
+    }],
+  },
+  {
     id: 'touch-pinch-click-block-cleared-on-terminal',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#563" test/touch-gesture-click-guard.test.mjs',

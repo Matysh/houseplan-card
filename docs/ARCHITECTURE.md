@@ -616,6 +616,8 @@ cancel becomes available; it cancels HP's wait, not Z2M radio work. Matching
 provider errors, invalid maps and MQTT disconnect terminate the job, release
 listeners and retain last-good data as stale. Neither reconnect nor reopening
 settings republishes. Integration unload/restart clears all runtime jobs/cache.
+Before unload, a `closed` session event invalidates observers even when their HA
+WebSocket stays connected; the next explicit scan reattaches to the new coordinator.
 The frontend derives elapsed time from server elapsed plus local monotonic time,
 without per-second map events or invented progress percentages. Mounted visible
 settings alone tick their timer; ordinary hass updates do not resubscribe.

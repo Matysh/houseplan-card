@@ -84,6 +84,11 @@ const result = await page.evaluate(async () => {
   await wait(() => !!settings?.shadowRoot?.querySelector('button'), 'settings button');
   await settings._readZha();
   await wait(() => settings._snapshot?.states?.zha?.phase === 'ready', 'ZHA ready');
+  // #800: this fixture intentionally has the old integration's config/get.
+  // Let its independent capability reply settle before injecting the age probe;
+  // otherwise that real runtime notification replaces the synthetic timestamp.
+  await wait(() => settings._snapshot?.backendError === 'backend_required', 'old backend detected');
+  out.oldBackendStillAllowsZha = settings._snapshot.states.zha.phase === 'ready';
   out.explicitZhaRead = zhaCalls === 1;
   const settingsSnapshot = settings._snapshot;
   const renderedProviderStatus = () => [...settings.shadowRoot.querySelectorAll('.status,.hpf-actions .hpf-hint')]

@@ -30,8 +30,7 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
-    files: ['src/zigbee-topology-runtime.ts', 'src/hp-zigbee-topology-settings.ts',
-      'custom_components/houseplan/zigbee_topology.py', 'custom_components/houseplan/zigbee_websocket.py'],
+    files: ['src/zigbee-topology-runtime.ts', 'src/hp-zigbee-topology-settings.ts'],
     smokes: ['smoke_zigbee_topology_job.mjs'],
     because: '#800: background-job restore across a real page reload, elapsed/cancel boundary, '
       + 'mounted UI lifecycle and mobile keyboard target are observed through the production '
