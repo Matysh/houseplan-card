@@ -36,12 +36,15 @@
   Нативный Windows не использован как доказательство полного unit-набора:
   платформенные shell-тесты проверены в WSL.
 - `node demo/smoke_zigbee_tooltip_layout.mjs` — 77/77 PASS на Windows с pinned
-  Node; базовые 70 проверок также PASS в WSL. Дополнительные семь проверяют
+  Node и повторно 77/77 PASS в WSL на итоговом материале. Дополнительные семь проверяют
   реальный `position:fixed` при `translate + scale` предка, scroll без нового
   hover и повторное наведение после большой прокрутки.
 - WSL: `smoke_zigbee_topology_hover`, `smoke_household_journeys`,
   `smoke_render_invalidation`, `smoke_touch_tips` — PASS.
 - WSL: полный `npm run golden:verify` — PASS; ни один эталон не изменён.
+- [Validate 37357451243](https://github.com/Matysh/houseplan-card/actions/runs/37357451243)
+  на `077e9c1b1be693757009f748bfccb1c77bb39aee` — success. После него
+  добавлен только этот отчёт/индекс; повторный WSL `gate:small` также PASS.
 - Отрицательный контроль старого cursor-position даёт 1596 CSS px² перекрытия;
   новый layout устраняет его. Это не DOM-count и не поиск строки в исходнике.
 - Изолированный raster-oracle обводки временно скрывает обычную подсказку
