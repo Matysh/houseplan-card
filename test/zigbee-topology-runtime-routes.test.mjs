@@ -299,3 +299,155 @@ test('#798 only an admin can request a map, and retained bridge confirmation is 
   assert.equal(unconfirmed.publishes.length, 0);
   assert.deepEqual(unconfirmed.cleanups, [INFO, RESPONSE]);
 });
+
+test('#799 the production timeout accepts a correlated routes response after 180 seconds', async (t) => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
+  const control = bridge({ publish({ control: current, request }) {
+    assert.equal(request.routes, true);
+    setTimeout(() => current.emit(networkmap(request.transaction)), 180_000);
+  } });
+  const refresh = refreshZ2mTopology(control.hass, TOPIC);
+  await turn();
+  t.mock.timers.tick(150_000);
+  await turn();
+  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].phase, 'loading');
+  assert.equal(refreshZ2mTopology(control.hass, TOPIC), refresh, 'the long scan is still deduplicated');
+  assert.equal(control.publishes.length, 1);
+  t.mock.timers.tick(30_000);
+  await refresh;
+  const successful = zigbeeTopologyRuntimeSnapshot(control.hass);
+  assert.equal(successful.states[KEY].phase, 'ready');
+  assert.equal(successful.states[KEY].obtainedAt, 1_180_000);
+  assert.deepEqual(successful.topologies[0].nodes.map((node) => node.ieee), [COORDINATOR, DEVICE]);
+  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
+  assert.equal(control.listeners.size, 0);
+});
+
+test('#799 the ten-minute budget includes subscription setup, retains cache, and rejects late results', async (t) => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
+  let failing = false;
+  const control = bridge({
+    subscribe({ unsubscribe }) {
+      if (failing) return new Promise((resolve) => setTimeout(() => resolve(unsubscribe), 9_000));
+    },
+    publish({ control: current, request }) {
+      if (!failing) current.emit(networkmap(request.transaction));
+    },
+  });
+  await refreshZ2mTopology(control.hass, TOPIC);
+  const successful = zigbeeTopologyRuntimeSnapshot(control.hass);
+  failing = true;
+  const refresh = refreshZ2mTopology(control.hass, TOPIC);
+  assert.equal(refreshZ2mTopology(control.hass, TOPIC), refresh);
+  t.mock.timers.tick(9_000);
+  await turn();
+  t.mock.timers.tick(9_000);
+  await turn();
+  assert.equal(control.publishes.length, 2);
+  const oldCallback = control.listeners.get(RESPONSE);
+  const oldTransaction = control.publishes[1].transaction;
+  t.mock.timers.tick(581_999);
+  await turn();
+  const loading = zigbeeTopologyRuntimeSnapshot(control.hass);
+  assert.equal(loading.states[KEY].phase, 'loading');
+  assert.equal(loading.topologies[0], successful.topologies[0]);
+  assert.equal(loading.states[KEY].obtainedAt, successful.states[KEY].obtainedAt);
+  t.mock.timers.tick(1);
+  await refresh;
+  const timedOut = zigbeeTopologyRuntimeSnapshot(control.hass);
+  assert.equal(Date.now(), 1_600_000);
+  assert.equal(timedOut.states[KEY].error, 'timeout');
+  assert.equal(timedOut.states[KEY].stale, true);
+  assert.equal(timedOut.states[KEY].obtainedAt, successful.states[KEY].obtainedAt);
+  assert.equal(timedOut.topologies[0], successful.topologies[0]);
+  assert.deepEqual(control.cleanups, [INFO, RESPONSE, INFO, RESPONSE]);
+  assert.equal(control.listeners.size, 0);
+  oldCallback({ retain: false, payload: JSON.stringify(networkmap(oldTransaction, OTHER)) });
+  await turn();
+  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, timedOut.revision);
+  failing = false;
+  await refreshZ2mTopology(control.hass, TOPIC);
+  const recovered = zigbeeTopologyRuntimeSnapshot(control.hass);
+  assert.equal(recovered.states[KEY].phase, 'ready');
+  assert.equal(recovered.states[KEY].obtainedAt, 1_600_000);
+  assert.notEqual(recovered.states[KEY].stale, true);
+  assert.equal(control.publishes.length, 3);
+});
+
+for (const blockedTopic of [INFO, RESPONSE]) {
+  test(`#799 production ${blockedTopic} subscription stops after ten seconds and cleans late completion`, async (t) => {
+    t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
+    const pending = deferred();
+    let lateUnsubscribe;
+    const control = bridge({ subscribe({ topic, unsubscribe }) {
+      if (topic !== blockedTopic) return;
+      lateUnsubscribe = unsubscribe;
+      return pending.promise;
+    } });
+    const refresh = refreshZ2mTopology(control.hass, TOPIC);
+    await turn();
+    t.mock.timers.tick(9_999);
+    await turn();
+    assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].phase, 'loading');
+    t.mock.timers.tick(1);
+    await refresh;
+    const timedOut = zigbeeTopologyRuntimeSnapshot(control.hass);
+    assert.equal(timedOut.states[KEY].error, 'timeout');
+    assert.equal(control.publishes.length, 0);
+    pending.resolve(lateUnsubscribe);
+    await turn();
+    assert.equal(control.listeners.size, 0);
+    assert.equal(control.cleanups.length, blockedTopic === INFO ? 1 : 2);
+    assert.equal(new Set(control.cleanups).size, control.cleanups.length);
+    assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, timedOut.revision);
+  });
+}
+
+test('#799 production publish stops after ten seconds even with an early map response', async (t) => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
+  const published = deferred();
+  let responseCallback;
+  const control = bridge({ publish({ control: current, request }) {
+    responseCallback = current.listeners.get(RESPONSE);
+    current.emit(networkmap(request.transaction));
+    return published.promise;
+  } });
+  const refresh = refreshZ2mTopology(control.hass, TOPIC);
+  await turn();
+  t.mock.timers.tick(9_999);
+  await turn();
+  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].phase, 'loading');
+  t.mock.timers.tick(1);
+  await refresh;
+  const timedOut = zigbeeTopologyRuntimeSnapshot(control.hass);
+  assert.equal(timedOut.states[KEY].error, 'timeout');
+  assert.equal(timedOut.topologies.length, 0);
+  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
+  published.resolve();
+  responseCallback({ retain: false, payload: JSON.stringify(networkmap(control.publishes[0].transaction)) });
+  await turn();
+  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, timedOut.revision);
+  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).topologies.length, 0);
+});
+
+test('#799 production retained bridge confirmation still stops after four seconds', async (t) => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
+  const control = bridge({ confirm: false, subscribe({ topic, callback }) {
+    if (topic === INFO) callback({ retain: false, payload: '{}' });
+  } });
+  const refresh = refreshZ2mTopology(control.hass, TOPIC);
+  await turn();
+  const lateInfo = control.listeners.get(INFO);
+  t.mock.timers.tick(3_999);
+  await turn();
+  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].phase, 'loading');
+  t.mock.timers.tick(1);
+  await refresh;
+  const timedOut = zigbeeTopologyRuntimeSnapshot(control.hass);
+  assert.equal(timedOut.states[KEY].error, 'timeout');
+  assert.equal(control.publishes.length, 0);
+  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
+  lateInfo({ retain: true, payload: '{}' });
+  await turn();
+  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, timedOut.revision);
+});

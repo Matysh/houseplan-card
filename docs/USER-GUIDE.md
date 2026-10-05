@@ -344,7 +344,8 @@ For an occasional Zigbee placement check, an administrator can enable
 is off by default. Load the provider snapshot there: **Read ZHA data** reads
 ZHA's existing cache, while **Update map** starts an explicit Zigbee2MQTT raw
 network-map scan for each entered base topic (default `zigbee2mqtt`). The latter
-may take 10 seconds to 2 minutes and can temporarily slow the Zigbee network.
+may take several minutes when collecting routes. House Plan waits up to 10 minutes;
+do not start another scan while it is loading. Scanning can temporarily slow the Zigbee network.
 
 After data is loaded, moving a real mouse over a mapped Zigbee marker shows
 its parent (end device) or active next hop towards the coordinator (router),

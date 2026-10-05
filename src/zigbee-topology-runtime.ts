@@ -48,6 +48,10 @@ type Cache = ZigbeeTopologyRuntimeSnapshot & {
 
 const caches = new WeakMap<object, Cache>();
 
+// Route-table scans are sequential in Z2M and can outlast the old 150 s budget.
+const Z2M_SCAN_TIMEOUT_MS = 600_000;
+const Z2M_TRANSPORT_TIMEOUT_MS = 10_000;
+
 function keyOf(hass: ZigbeeTopologyHass | null | undefined): object | null {
   const key = hass?.connection || hass;
   return key && (typeof key === 'object' || typeof key === 'function') ? key : null;
@@ -200,7 +204,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 /** Explicit, completion-aware Z2M raw network-map request through HA MQTT. */
 export function refreshZ2mTopology(
-  hass: ZigbeeTopologyHass, baseTopic: string, timeoutMs = 150_000,
+  hass: ZigbeeTopologyHass, baseTopic: string, timeoutMs = Z2M_SCAN_TIMEOUT_MS,
 ): Promise<void> {
   const cache = cacheOf(hass);
   if (!cache) return Promise.resolve();
@@ -241,7 +245,7 @@ export function refreshZ2mTopology(
         if (finished) cleanup(unsubscribe);
         else unsubscribers.push(unsubscribe);
       });
-      await withTimeout(pending, deadline - Date.now());
+      await withTimeout(pending, Math.min(Z2M_TRANSPORT_TIMEOUT_MS, deadline - Date.now()));
     };
     try {
       await subscribeTo('bridge/info', (message: unknown) => {
@@ -265,7 +269,10 @@ export function refreshZ2mTopology(
         qos: 0,
         retain: false,
       });
-      const [, value] = await withTimeout(Promise.all([published, response]), deadline - Date.now());
+      const [, value] = await withTimeout(Promise.all([
+        withTimeout(published, Math.min(Z2M_TRANSPORT_TIMEOUT_MS, deadline - Date.now())),
+        response,
+      ]), deadline - Date.now());
       if (!active()) throw fail('timeout');
       const status = recordOf(value)?.status;
       if (status && status !== 'ok') throw fail('provider');

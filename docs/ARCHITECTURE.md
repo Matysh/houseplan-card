@@ -602,8 +602,10 @@ prove the complete chain. Mapping/resolution are memoized outside hover.
 in-flight dedupe: ZHA reads `zha/devices` without a scan; Z2M checks the retained
 bridge-info topic, sends one correlated raw `routes:true` request through
 `mqtt.publish`, rejects retained/foreign/late replies and always unsubscribes.
-A shared deadline bounds subscriptions, publish and response, including late
-subscription cleanup. Refresh failure retains the last-good snapshot with a
+A shared 10-minute deadline bounds the route-table scan; each subscription and
+publish additionally has a 10-second transport cap, and retained bridge-info
+confirmation keeps its 4-second limit (#799). Stages never restart the shared
+deadline, including late subscription cleanup. Refresh failure retains the last-good snapshot with a
 stale flag; ZHA cache retrieval is never described as a fresh radio scan.
 The pointer-transparent overlay is a child of the `.devlayer` camera, projected
 once with the markers by `live-viewport.ts`; only the source and drawable

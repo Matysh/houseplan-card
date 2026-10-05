@@ -12,7 +12,7 @@
   "z2m": "Zigbee2MQTT",
   "z2m_topics": "Topics de base (un par ligne)",
   "z2m_update": "Actualiser la carte",
-  "z2m_warning": "L’analyse de la carte réseau peut durer de 10 secondes à 2 minutes et réduire temporairement la réactivité de Zigbee.",
+  "z2m_warning": "L’analyse de la carte réseau avec les routes peut prendre plusieurs minutes. House Plan attend jusqu’à 10 minutes. L’analyse peut réduire temporairement la réactivité de Zigbee.",
   "status_idle": "Données non chargées",
   "status_loading": "Chargement…",
   "status_ready": "Reçu : {time}",

@@ -12,7 +12,7 @@
   "z2m": "Zigbee2MQTT",
   "z2m_topics": "Base topics (one per line)",
   "z2m_update": "Update map",
-  "z2m_warning": "A network-map scan can take 10 seconds to 2 minutes and may temporarily reduce Zigbee responsiveness.",
+  "z2m_warning": "A network-map scan with routes can take several minutes. House Plan waits up to 10 minutes. Scanning may temporarily reduce Zigbee responsiveness.",
   "status_idle": "Data not loaded",
   "status_loading": "Loading…",
   "status_ready": "Received {time}",
