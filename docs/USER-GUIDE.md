@@ -344,8 +344,16 @@ For an occasional Zigbee placement check, an administrator can enable
 is off by default. Load the provider snapshot there: **Read ZHA data** reads
 ZHA's existing cache, while **Update map** starts an explicit Zigbee2MQTT raw
 network-map scan for each entered base topic (default `zigbee2mqtt`). The latter
-may take several minutes when collecting routes. House Plan waits up to 10 minutes;
-do not start another scan while it is loading. Scanning can temporarily slow the Zigbee network.
+may take many minutes when collecting routes. The scan continues in Home Assistant
+after you close settings or the browser. Reopening settings restores its stage and
+elapsed timer, including on another administrator's device. Progress is not a
+percentage: Zigbee2MQTT does not provide one. After 10 minutes, waiting continues
+and **Cancel request** becomes available. It only stops House Plan waiting for this
+result, not the radio scan in Zigbee2MQTT. Do not start another scan until that scan
+has finished; scanning can temporarily slow the Zigbee network. The last successful
+map stays available, marked stale after an error or cancellation. Restarting Home
+Assistant or reloading the integration clears these temporary jobs and cached maps.
+Update and restart the House Plan integration as well as updating the card.
 
 After data is loaded, moving a real mouse over a mapped Zigbee marker shows
 its parent (end device) or active next hop towards the coordinator (router),

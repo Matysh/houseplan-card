@@ -19,18 +19,18 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Generated | 2026-10-05 — rerun `node scripts/status-snapshot.mjs` for the current tree |
 | Version | **1.80.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.79.0` |
-| Latest prerelease tag | `v1.80.0-beta.1` |
-| Tests | Node unit 3607 · pure backend 423 · HA-harness backend 311 · browser smokes 295 (`npm run inventory`) |
+| Latest prerelease tag | `v1.80.0-beta.2` |
+| Tests | Node unit 3610 · pure backend 423 · HA-harness backend 330 · browser smokes 296 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
 
 | Item | State |
 |---|---|
-| Current local cycle | **Beta v1.80.0-beta.2 candidate** — #799 fixes premature timeout of long Zigbee2MQTT route scans. Owner-authorized express local checks; full exact-SHA Validate and artifact verification precede publication. `main` remains on stable v1.79.0. |
+| Current local cycle | **#800 implementation and independent local review** — owner approved background Zigbee2MQTT scans and the next beta after completion. Full exact-SHA Validate and artifact verification precede publication. `main` remains on stable v1.79.0. |
 | Branches | `main` carries stable releases only; pre-release tags point at `dev`. Work lands on `dev`, which is equal to or ahead of `main`, never behind. |
 | Zigbee routes | #798 replaces inferred neighbour trees with integration-reported end-parent and active coordinator next-hop evidence. Unknown/conflicting routes are not guessed; stale/partial snapshots remain labelled. Solid arrows have a separate 0–255 palette; ordinary device LQI colours are unchanged. |
-| Zigbee scan deadline | #799 gives route-table scans one 10-minute total budget, with separate 10-second MQTT setup/publish caps and the existing 4-second retained-info check. Fake-clock regressions cover late success, hard expiry, stale-cache retention and cleanup. |
+| Zigbee scan lifecycle | #800 replaces #799's 10-minute total budget with integration-owned background jobs: closing the browser does not stop waiting; after 10 minutes an exact-job cancel becomes available. MQTT setup/publish caps and the retained-info check remain bounded. Tests cover 15-minute success, cross-client restore, cancel races, stale-cache retention and reload on a live HA connection. |
 | LED regression acceptance | #788 covers mixed face/free and fractional-coordinate joins, winding-safe field unions, retained endpoints/acute vertices and circle–wall transition events. The actual owner export is exercised locally; public fixtures are synthetic. Pixel oracles, not just SVG counts, protect the visible falloff. |
 | LED core colour | #790 makes the on core follow the resolved light colour with or without Glow. Off, unavailable and non-live static strips keep their neutral presentation; geometry and field brightness are unchanged. |
 | LED performance work | #789 batches source entry, reuses render-local barriers and temporarily paints 24 of 48 retained gradient bands during actual zoom; full quality returns after 160 ms of scale inactivity. Emitters, clips and idle pixels are unchanged. Exact-SHA 50×50 acceptance includes restoration and quick restart; implementation alone does not certify the camera budget. |

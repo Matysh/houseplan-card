@@ -30,6 +30,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/zigbee-topology-runtime.ts', 'src/hp-zigbee-topology-settings.ts'],
+    smokes: ['smoke_zigbee_topology_job.mjs'],
+    because: '#800: background-job restore across a real page reload, elapsed/cancel boundary, '
+      + 'mounted UI lifecycle and mobile keyboard target are observed through the production '
+      + 'settings DOM and fake WS server outside the page, not by importing runtime helpers',
+  },
+  {
     files: ['src/styles/plan.styles.ts'],
     smokes: ['smoke_room_fill_transitions.mjs'],
     because: '#772 / #746: переход заливки комнаты зависит от CSS .room, а не только '

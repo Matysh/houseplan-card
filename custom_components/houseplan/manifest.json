@@ -2,7 +2,8 @@
   "domain": "houseplan",
   "name": "House Plan",
   "after_dependencies": [
-    "lovelace"
+    "lovelace",
+    "mqtt"
   ],
   "codeowners": [
     "@Matysh"

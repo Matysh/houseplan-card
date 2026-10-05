@@ -258,6 +258,7 @@ async def _resolved_write_pair(
 def async_register(hass: HomeAssistant) -> None:
     """Register the WS commands."""
     from .radar_websocket import async_register as async_register_radar
+    from .zigbee_websocket import async_register as async_register_zigbee
 
     websocket_api.async_register_command(hass, ws_layout_get)
     websocket_api.async_register_command(hass, ws_trail_get)
@@ -288,6 +289,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_support_preview_discard)
     websocket_api.async_register_command(hass, ws_support_submit)
     async_register_radar(hass)
+    async_register_zigbee(hass)
 
 
 def _runtime(hass: HomeAssistant, connection, msg_id: int) -> HouseplanData | None:
@@ -1481,6 +1483,8 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
             **({"radar_stage1_api": 1} if rt.radar_coordinator is not None else {}),
+            **({"zigbee_scan_api": 1} if rt.zigbee_coordinator is not None
+               and not rt.zigbee_coordinator.closed else {}),
         },
     )
 

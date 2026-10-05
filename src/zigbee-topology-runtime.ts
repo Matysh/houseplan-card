@@ -1,286 +1,264 @@
-import {
-  normalizeZ2mTopology, normalizeZhaTopology, TOPOLOGY_MAX_PAYLOAD_BYTES, type ZigbeeTopology,
-} from './zigbee-topology';
+import { normalizeZ2mTopology, normalizeZhaTopology, type ZigbeeTopology } from './zigbee-topology';
 import { normalizeZ2mBaseTopic } from './zigbee-topology-settings';
 
-export type ZigbeeTopologyErrorCode =
-  | 'permission'
-  | 'unsupported'
-  | 'timeout'
-  | 'invalid_topic'
-  | 'invalid_payload'
-  | 'provider';
-
+export type ZigbeeTopologyErrorCode = 'permission' | 'unsupported' | 'timeout' | 'invalid_topic'
+  | 'invalid_payload' | 'provider' | 'backend_required' | 'connection';
 export type ZigbeeProviderState = {
-  phase: 'idle' | 'loading' | 'ready' | 'error';
-  obtainedAt?: number;
-  partial?: boolean;
-  /** A failed refresh retained the last good snapshot; age is checked separately. */
-  stale?: boolean;
-  error?: ZigbeeTopologyErrorCode;
+  phase: 'idle' | 'loading' | 'ready' | 'error' | 'cancelled';
+  obtainedAt?: number; partial?: boolean; stale?: boolean; error?: ZigbeeTopologyErrorCode;
+  jobId?: string; stage?: 'connecting' | 'waiting'; startedAt?: number;
+  elapsedMs?: number; elapsedObservedAt?: number; cancelAfterMs?: number;
 };
-
 export interface ZigbeeTopologyRuntimeSnapshot {
-  revision: number;
-  topologies: ZigbeeTopology[];
-  states: Record<string, ZigbeeProviderState>;
+  revision: number; topologies: ZigbeeTopology[]; states: Record<string, ZigbeeProviderState>;
+  backendError?: ZigbeeTopologyErrorCode; backendConnected?: boolean;
 }
-
 export interface ZigbeeTopologyHass {
-  user?: { is_admin?: boolean };
-  language?: string;
+  user?: { id?: string; is_admin?: boolean }; language?: string;
   connection?: {
-    subscribeMessage?: (
-      callback: (message: unknown) => void,
-      message: { type: 'mqtt/subscribe'; topic: string },
-    ) => Promise<() => void>;
+    subscribeMessage?: (callback: (message: unknown) => void, message: { type: string }) => Promise<() => void>;
+    addEventListener?: (event: string, callback: () => void) => void;
+    removeEventListener?: (event: string, callback: () => void) => void;
   };
-  callWS?: (message: { type: string }) => Promise<unknown>;
-  callService?: (
-    domain: string, service: string, data: Record<string, unknown>,
-  ) => Promise<unknown>;
+  callWS?: (message: { type: string; base_topic?: string; job_id?: string }) => Promise<unknown>;
 }
-
 type Cache = ZigbeeTopologyRuntimeSnapshot & {
-  listeners: Set<() => void>;
-  inflight: Map<string, Promise<void>>;
+  listeners: Set<() => void>; inflight: Map<string, Promise<void>>; generation: number; identity: string;
+  session?: string; serverRevision: number; topicRevisions: Map<string, number>;
+  capability?: Promise<void>; feedPending?: Promise<void>; unsubscribe?: () => void; releaseEvents?: () => void;
 };
-
 const caches = new WeakMap<object, Cache>();
-
-// Route-table scans are sequential in Z2M and can outlast the old 150 s budget.
-const Z2M_SCAN_TIMEOUT_MS = 600_000;
-const Z2M_TRANSPORT_TIMEOUT_MS = 10_000;
-
-function keyOf(hass: ZigbeeTopologyHass | null | undefined): object | null {
-  const key = hass?.connection || hass;
-  return key && (typeof key === 'object' || typeof key === 'function') ? key : null;
+const empty = (): ZigbeeTopologyRuntimeSnapshot => ({ revision: 0, topologies: [], states: {} });
+const monotonicNow = (): number => globalThis.performance.now();
+export const zigbeeTopologyUserIdentity = (hass: ZigbeeTopologyHass): string => `${hass.user?.id || ''}:${hass.user?.is_admin === true}`;
+export function zigbeeScanElapsedMs(current: ZigbeeProviderState, now = monotonicNow()): number {
+  return Math.max(0, current.elapsedMs || 0) + (current.phase === 'loading'
+    ? Math.max(0, now - (current.elapsedObservedAt ?? now)) : 0);
 }
-
+export function zigbeeScanCanCancel(current: ZigbeeProviderState, now = monotonicNow()): boolean {
+  return current.phase === 'loading' && !!current.jobId
+    && zigbeeScanElapsedMs(current, now) >= (current.cancelAfterMs ?? 600_000);
+}
+export function formatZigbeeScanElapsed(ms: number): string {
+  const seconds = Math.floor(Math.max(0, ms) / 1000), minutes = Math.floor(seconds / 60);
+  return minutes >= 60 ? `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
+    : `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
+}
 function cacheOf(hass: ZigbeeTopologyHass | null | undefined): Cache | null {
-  const key = keyOf(hass);
-  if (!key) return null;
+  const key = hass?.connection || hass;
+  if (!key || typeof key !== 'object') return null;
   let cache = caches.get(key);
+  const identity = zigbeeTopologyUserIdentity(hass!);
+  if (cache && cache.identity !== identity) {
+    cache.generation++; cleanup(cache.unsubscribe); cleanup(cache.releaseEvents); cache.listeners.clear();
+    cache = undefined;
+  }
   if (!cache) {
-    cache = { revision: 0, topologies: [], states: {}, listeners: new Set(), inflight: new Map() };
+    cache = { ...empty(), listeners: new Set(), inflight: new Map(), generation: 0,
+      serverRevision: -1, topicRevisions: new Map(), identity };
     caches.set(key, cache);
   }
   return cache;
 }
-
-function notify(cache: Cache): void {
-  cache.revision++;
-  for (const listener of cache.listeners) listener();
-}
-
+function notify(cache: Cache): void { cache.revision++; for (const listener of cache.listeners) listener(); }
 function state(cache: Cache, key: string, value: ZigbeeProviderState): void {
-  cache.states = { ...cache.states, [key]: value };
-  notify(cache);
+  cache.states = { ...cache.states, [key]: value }; notify(cache);
 }
-
-function store(cache: Cache, topology: ZigbeeTopology): void {
-  cache.topologies = [
-    ...cache.topologies.filter((item) => !(item.provider === topology.provider
-      && item.instanceId === topology.instanceId)),
-    topology,
-  ];
-  state(cache, topology.provider === 'zha' ? 'zha' : `z2m:${topology.instanceId}`, {
-    phase: 'ready', obtainedAt: topology.obtainedAt, partial: topology.warnings.length > 0,
-  });
+function recordOf(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
-
 function errorCode(error: unknown): ZigbeeTopologyErrorCode {
-  const code = (error as { code?: unknown } | null)?.code;
-  if (code === 'permission' || code === 'unsupported' || code === 'timeout'
-      || code === 'invalid_topic' || code === 'invalid_payload') return code;
-  const message = String((error as { message?: unknown } | null)?.message || '').toLowerCase();
-  if (message.includes('unauthor') || message.includes('permission')) return 'permission';
-  if (message.includes('unknown_command') || message.includes('not found')) return 'unsupported';
+  const code = recordOf(error)?.code;
+  if (code === 'permission' || code === 'unauthorized') return 'permission';
+  if (code === 'unknown_command' || code === 'not_ready' || code === 'backend_required') return 'backend_required';
+  if (code === 'unsupported' || code === 'timeout' || code === 'invalid_topic'
+      || code === 'invalid_payload' || code === 'connection') return code;
   return 'provider';
 }
-
 function fail(code: ZigbeeTopologyErrorCode): Error & { code: ZigbeeTopologyErrorCode } {
   return Object.assign(new Error(code), { code });
 }
-
-function run(cache: Cache, key: string, task: () => Promise<ZigbeeTopology>): Promise<void> {
-  const existing = cache.inflight.get(key);
-  if (existing) return existing;
-  const previous = cache.states[key];
-  const retained = previous?.obtainedAt === undefined ? {} : {
-    obtainedAt: previous.obtainedAt, partial: previous.partial, stale: previous.stale,
-  };
-  state(cache, key, { ...retained, phase: 'loading' });
-  const promise = task().then((topology) => {
-    if (!topology.nodes.length && topology.warnings.some((item) => item.code === 'invalid_payload')) {
-      throw fail('invalid_payload');
+function requireAdmin(hass: ZigbeeTopologyHass): void { if (hass?.user?.is_admin !== true) throw fail('permission'); }
+function cleanup(unsubscribe?: () => void): void { try { unsubscribe?.(); } catch { /* Already disconnected. */ } }
+function removeTopics(cache: Cache, keep: Set<string>): void {
+  cache.topologies = cache.topologies.filter(item => item.provider !== 'z2m' || keep.has(item.instanceId));
+  cache.states = Object.fromEntries(Object.entries(cache.states).filter(([key]) => !key.startsWith('z2m:') || keep.has(key.slice(4))));
+}
+/** Only a reset from the current subscription can replace the server session. */
+function accept(cache: Cache, message: unknown, fromSubscription: boolean): void {
+  const envelope = recordOf(message);
+  if (!envelope || typeof envelope.session_id !== 'string' || !Number.isSafeInteger(envelope.revision)) return;
+  const revision = envelope.revision as number;
+  if (revision < 0) return;
+  if (envelope.kind === 'closed') {
+    if (!fromSubscription || envelope.session_id !== cache.session || revision < cache.serverRevision) return;
+    // Integration reload does not close the HA socket. Retire this observer and
+    // all pending old-session work, but retain mounted UI listeners for recovery.
+    cache.generation++;
+    cleanup(cache.unsubscribe); cache.unsubscribe = undefined;
+    cache.feedPending = cache.capability = undefined;
+    cache.session = undefined; cache.serverRevision = -1; cache.topicRevisions.clear();
+    for (const key of cache.inflight.keys()) if (key.startsWith('z2m:')) cache.inflight.delete(key);
+    removeTopics(cache, new Set());
+    cache.backendConnected = false; cache.backendError = 'backend_required'; notify(cache); return;
+  }
+  if (envelope.kind === 'reset') {
+    if (!fromSubscription || !Array.isArray(envelope.topics) || envelope.topics.length > 8) return;
+    if (cache.session === envelope.session_id && revision < cache.serverRevision) return;
+    if (cache.session !== envelope.session_id) removeTopics(cache, new Set());
+    cache.session = envelope.session_id; cache.serverRevision = revision;
+    cache.topicRevisions.clear(); // Initial slot events legitimately share the reset revision.
+    removeTopics(cache, new Set(envelope.topics.map(normalizeZ2mBaseTopic).filter((v): v is string => !!v)));
+    cache.backendConnected = true; cache.backendError = undefined; notify(cache); return;
+  }
+  if (cache.session && envelope.session_id !== cache.session) return;
+  if (revision < cache.serverRevision) return;
+  const provider = recordOf(envelope.provider);
+  const topic = normalizeZ2mBaseTopic(envelope.kind === 'removed' ? envelope.topic : provider?.topic);
+  if (!topic || revision <= (cache.topicRevisions.get(topic) ?? -1)) return;
+  if (envelope.kind === 'removed') {
+    removeTopics(cache, new Set(Object.keys(cache.states).filter(k => k.startsWith('z2m:') && k !== `z2m:${topic}`).map(k => k.slice(4))));
+  } else {
+    if (envelope.kind !== 'state' || !provider || typeof provider.job_id !== 'string'
+        || !['loading', 'ready', 'error', 'cancelled'].includes(String(provider.phase))
+        || typeof provider.elapsed_ms !== 'number' || !Number.isFinite(provider.elapsed_ms) || provider.elapsed_ms < 0) return;
+    let topology: ZigbeeTopology | undefined;
+    if (provider.result !== undefined && typeof provider.obtained_at === 'number') {
+      topology = normalizeZ2mTopology(provider.result, topic, provider.obtained_at);
+      if (!topology.nodes.length && topology.warnings.some(w => w.code === 'invalid_payload')) return;
+      cache.topologies = [...cache.topologies.filter(t => t.provider !== 'z2m' || t.instanceId !== topic), topology];
     }
-    store(cache, topology);
-  }).catch((error) => {
-    state(cache, key, {
-      ...retained, ...(retained.obtainedAt === undefined ? {} : { stale: true }),
-      phase: 'error', error: errorCode(error),
-    });
-  }).finally(() => cache.inflight.delete(key));
-  cache.inflight.set(key, promise);
-  return promise;
+    cache.states = { ...cache.states, [`z2m:${topic}`]: {
+      phase: provider.phase as ZigbeeProviderState['phase'], jobId: provider.job_id,
+      stage: provider.stage === 'connecting' ? 'connecting' : 'waiting',
+      startedAt: typeof provider.started_at === 'number' ? provider.started_at : undefined,
+      elapsedMs: provider.elapsed_ms, elapsedObservedAt: monotonicNow(),
+      cancelAfterMs: typeof provider.cancel_after_ms === 'number' ? Math.max(600_000, provider.cancel_after_ms) : 600_000,
+      obtainedAt: topology?.obtainedAt, partial: topology ? topology.warnings.length > 0 : undefined,
+      stale: provider.stale === true, error: provider.error ? errorCode({ code: provider.error }) : undefined,
+    } };
+  }
+  cache.session = envelope.session_id; cache.serverRevision = revision; cache.topicRevisions.set(topic, revision);
+  cache.backendConnected = true; cache.backendError = undefined; notify(cache);
 }
-
-export function zigbeeTopologyRuntimeSnapshot(
-  hass: ZigbeeTopologyHass | null | undefined,
-): ZigbeeTopologyRuntimeSnapshot {
+async function capability(cache: Cache, hass: ZigbeeTopologyHass): Promise<void> {
+  requireAdmin(hass);
+  if (!cache.capability) cache.capability = (async () => {
+    if (!hass.callWS || !hass.connection?.subscribeMessage) throw fail('backend_required');
+    const result = recordOf(await hass.callWS({ type: 'houseplan/config/get' }));
+    if (result?.zigbee_scan_api !== 1) throw fail('backend_required');
+  })();
+  const pending = cache.capability;
+  try {
+    await pending;
+  } catch (error) {
+    // A transient reload failure must not poison later explicit actions. Do not
+    // retry here, or let an old rejection clear a newer owner's capability check.
+    if (cache.capability === pending) cache.capability = undefined;
+    throw error;
+  }
+}
+function startFeed(cache: Cache, hass: ZigbeeTopologyHass): void {
+  if (!cache.listeners.size || cache.feedPending || cache.unsubscribe) return;
+  const generation = cache.generation;
+  const active = () => generation === cache.generation && cache.listeners.size > 0
+    && hass.user?.is_admin === true && cache.identity === zigbeeTopologyUserIdentity(hass);
+  cache.feedPending = (async () => {
+    await capability(cache, hass);
+    if (!active()) return;
+    const unsubscribe = await hass.connection!.subscribeMessage!((message) => {
+      if (active()) accept(cache, message, true);
+    }, { type: 'houseplan/zigbee/subscribe' });
+    if (!active()) cleanup(unsubscribe); else cache.unsubscribe = unsubscribe;
+  })().catch(error => {
+    if (!active()) return;
+    cache.backendError = errorCode(error); cache.backendConnected = false; notify(cache);
+  }).finally(() => { if (generation === cache.generation) cache.feedPending = undefined; });
+}
+export function zigbeeTopologyRuntimeSnapshot(hass: ZigbeeTopologyHass | null | undefined): ZigbeeTopologyRuntimeSnapshot {
+  if (hass?.user?.is_admin !== true) return empty();
   const cache = cacheOf(hass);
-  return cache
-    ? { revision: cache.revision, topologies: cache.topologies, states: cache.states }
-    : { revision: 0, topologies: [], states: {} };
+  return cache ? { revision: cache.revision, topologies: cache.topologies, states: cache.states,
+    backendError: cache.backendError, backendConnected: cache.backendConnected } : empty();
 }
-
-export function subscribeZigbeeTopology(
-  hass: ZigbeeTopologyHass | null | undefined, listener: () => void,
-): () => void {
+export function subscribeZigbeeTopology(hass: ZigbeeTopologyHass | null | undefined, listener: () => void): () => void {
+  if (!hass || hass.user?.is_admin !== true) return () => undefined;
   const cache = cacheOf(hass);
   if (!cache) return () => undefined;
   cache.listeners.add(listener);
-  return () => cache.listeners.delete(listener);
+  if (!cache.releaseEvents) {
+    const disconnected = () => { cache.backendConnected = false; notify(cache); };
+    // HA resubscribes existing observers itself; failed setup retries on ready only.
+    const ready = () => { cache.capability = undefined; startFeed(cache, hass); };
+    hass.connection?.addEventListener?.('disconnected', disconnected);
+    hass.connection?.addEventListener?.('ready', ready);
+    cache.releaseEvents = () => {
+      hass.connection?.removeEventListener?.('disconnected', disconnected);
+      hass.connection?.removeEventListener?.('ready', ready);
+    };
+  }
+  startFeed(cache, hass);
+  let released = false;
+  return () => {
+    if (released) return; released = true;
+    cache.listeners.delete(listener);
+    if (cache.listeners.size) return;
+    cache.generation++; cleanup(cache.unsubscribe); cleanup(cache.releaseEvents);
+    cache.unsubscribe = cache.releaseEvents = undefined; cache.feedPending = cache.capability = undefined;
+    cache.backendConnected = false;
+  };
 }
-
-function requireAdmin(hass: ZigbeeTopologyHass | null | undefined): void {
-  if (hass?.user?.is_admin !== true) throw fail('permission');
-}
-
-/** Read the cached ZHA graph. This must never call zha/topology/update. */
+/** ZHA remains an explicit cached read, never zha/topology/update. */
 export function readZhaTopology(hass: ZigbeeTopologyHass): Promise<void> {
   const cache = cacheOf(hass);
   if (!cache) return Promise.resolve();
-  return run(cache, 'zha', async () => {
-    requireAdmin(hass);
-    if (typeof hass?.callWS !== 'function') throw fail('unsupported');
-    return normalizeZhaTopology(await hass.callWS({ type: 'zha/devices' }));
-  });
+  const pending = cache.inflight.get('zha'); if (pending) return pending;
+  const previous = cache.states.zha;
+  state(cache, 'zha', { ...previous, phase: 'loading', error: undefined });
+  const promise = (async () => {
+    requireAdmin(hass); if (!hass.callWS) throw fail('unsupported');
+    const topology = normalizeZhaTopology(await hass.callWS({ type: 'zha/devices' }));
+    if (!topology.nodes.length && topology.warnings.some(w => w.code === 'invalid_payload')) throw fail('invalid_payload');
+    cache.topologies = [...cache.topologies.filter(t => t.provider !== 'zha'), topology];
+    state(cache, 'zha', { phase: 'ready', obtainedAt: topology.obtainedAt, partial: topology.warnings.length > 0 });
+  })().catch(error => state(cache, 'zha', { ...previous, phase: 'error', error: errorCode(error),
+    stale: previous?.obtainedAt !== undefined })).finally(() => cache.inflight.delete('zha'));
+  cache.inflight.set('zha', promise); return promise;
 }
-
-function recordOf(value: unknown): Record<string, unknown> | null {
-  return value !== null && typeof value === 'object' ? value as Record<string, unknown> : null;
-}
-
-function parseMessage(message: unknown): unknown {
-  const record = recordOf(message);
-  const raw = record?.payload ?? message;
-  if (typeof raw !== 'string') return raw;
-  if (raw.length > TOPOLOGY_MAX_PAYLOAD_BYTES) return null;
-  try { return JSON.parse(raw); } catch { return null; }
-}
-
-function transactionOf(value: unknown): string | null {
-  const record = recordOf(value);
-  const transaction = record?.transaction ?? recordOf(record?.data)?.transaction;
-  return typeof transaction === 'string' || typeof transaction === 'number'
-    ? String(transaction) : null;
-}
-
-function randomTransaction(): string {
-  const cryptoObj = globalThis.crypto;
-  if (typeof cryptoObj?.randomUUID === 'function') return `houseplan-${cryptoObj.randomUUID()}`;
-  return `houseplan-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-}
-
-async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  if (ms <= 0) {
-    void promise.catch(() => undefined);
-    throw fail('timeout');
-  }
-  let id: ReturnType<typeof globalThis.setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<never>((_, reject) => {
-        id = globalThis.setTimeout(() => reject(fail('timeout')), Math.max(1, ms));
-      }),
-    ]);
-  } finally {
-    if (id !== undefined) globalThis.clearTimeout(id);
-  }
-}
-
-/** Explicit, completion-aware Z2M raw network-map request through HA MQTT. */
-export function refreshZ2mTopology(
-  hass: ZigbeeTopologyHass, baseTopic: string, timeoutMs = Z2M_SCAN_TIMEOUT_MS,
-): Promise<void> {
-  const cache = cacheOf(hass);
-  if (!cache) return Promise.resolve();
-  const topic = normalizeZ2mBaseTopic(baseTopic);
-  const cacheKey = `z2m:${topic || String(baseTopic)}`;
-  return run(cache, cacheKey, async () => {
-    requireAdmin(hass);
-    if (!topic) throw fail('invalid_topic');
-    const connection = hass.connection;
-    const subscribe = connection?.subscribeMessage;
-    if (typeof subscribe !== 'function' || typeof hass?.callService !== 'function') throw fail('unsupported');
-    const transaction = randomTransaction();
-    const deadline = Date.now() + Math.max(1, timeoutMs);
-    let finished = false;
-    let responseActive = false;
-    let infoResolve: (() => void) | null = null;
-    let responseResolve: ((value: unknown) => void) | null = null;
-    let responseReject: ((reason?: unknown) => void) | null = null;
-    const info = new Promise<void>((resolve) => { infoResolve = resolve; });
-    const response = new Promise<unknown>((resolve, reject) => {
-      responseResolve = resolve;
-      responseReject = reject;
-    });
-    // The response can reject synchronously inside publish, before its promise is awaited.
-    void response.catch(() => undefined);
-    const unsubscribers: Array<() => void> = [];
-    const cleanup = (unsubscribe: () => void): void => {
-      try { unsubscribe(); } catch { /* cleanup is best effort */ }
-    };
-    const active = (): boolean => !finished && Date.now() < deadline;
-    const subscribeTo = async (suffix: string, callback: (message: unknown) => void): Promise<void> => {
-      if (!active()) throw fail('timeout');
-      const pending = subscribe.call(connection, callback, {
-        type: 'mqtt/subscribe', topic: `${topic}/${suffix}`,
-      }).then((unsubscribe) => {
-        if (typeof unsubscribe !== 'function') return;
-        // A timed-out subscribe can still complete; do not leak its subscription.
-        if (finished) cleanup(unsubscribe);
-        else unsubscribers.push(unsubscribe);
-      });
-      await withTimeout(pending, Math.min(Z2M_TRANSPORT_TIMEOUT_MS, deadline - Date.now()));
-    };
-    try {
-      await subscribeTo('bridge/info', (message: unknown) => {
-        if (active() && recordOf(message)?.retain === true && parseMessage(message)) infoResolve?.();
-      });
-      await subscribeTo('bridge/response/networkmap', (message: unknown) => {
-        if (!active() || !responseActive || recordOf(message)?.retain === true) return;
-        const value = parseMessage(message);
-        if (value === null) {
-          responseReject?.(fail('invalid_payload'));
-          return;
-        }
-        if (value && transactionOf(value) === transaction) responseResolve?.(value);
-      });
-      await withTimeout(info, Math.min(4000, deadline - Date.now()));
-      if (!active()) throw fail('timeout');
-      responseActive = true;
-      const published = hass.callService('mqtt', 'publish', {
-        topic: `${topic}/bridge/request/networkmap`,
-        payload: JSON.stringify({ type: 'raw', routes: true, transaction }),
-        qos: 0,
-        retain: false,
-      });
-      const [, value] = await withTimeout(Promise.all([
-        withTimeout(published, Math.min(Z2M_TRANSPORT_TIMEOUT_MS, deadline - Date.now())),
-        response,
-      ]), deadline - Date.now());
-      if (!active()) throw fail('timeout');
-      const status = recordOf(value)?.status;
-      if (status && status !== 'ok') throw fail('provider');
-      return normalizeZ2mTopology(value, topic);
-    } finally {
-      finished = true;
-      responseActive = false;
-      for (const unsubscribe of unsubscribers) cleanup(unsubscribe);
+function command(hass: ZigbeeTopologyHass, baseTopic: string, jobId?: string): Promise<void> {
+  const cache = cacheOf(hass); if (!cache) return Promise.resolve();
+  const topic = normalizeZ2mBaseTopic(baseTopic), key = `z2m:${topic || baseTopic}`;
+  const actionKey = `${key}:${jobId === undefined ? 'start' : `cancel:${jobId}`}`;
+  const pending = cache.inflight.get(actionKey); if (pending) return pending;
+  const generation = cache.generation;
+  const active = () => generation === cache.generation && hass.user?.is_admin === true
+    && cache.identity === zigbeeTopologyUserIdentity(hass);
+  const promise = (async () => {
+    requireAdmin(hass); if (!topic) throw fail('invalid_topic');
+    await capability(cache, hass); if (!active()) return;
+    if (jobId === undefined) {
+      // Explicit start also recovers an observer invalidated by integration reload.
+      // Joining it never publishes; only the command below starts a server job.
+      startFeed(cache, hass);
+      await cache.feedPending;
+      if (!active()) return;
+      if (cache.listeners.size && !cache.unsubscribe) throw fail(cache.backendError || 'backend_required');
     }
-  });
+    const result = await hass.callWS!({ type: `houseplan/zigbee/${jobId === undefined ? 'start' : 'cancel'}`,
+      base_topic: topic, ...(jobId === undefined ? {} : { job_id: jobId }) });
+    if (active()) accept(cache, result, false);
+  })().catch(error => {
+    if (generation !== cache.generation) return;
+    // Rejected stale/early cancellation must not turn the live job into an error.
+    if (jobId !== undefined && recordOf(error)?.code === 'conflict') return;
+    const code = errorCode(error);
+    if (code === 'backend_required') cache.backendError = code;
+    if (jobId === undefined && cache.states[key]?.phase !== 'loading') {
+      state(cache, key, { ...cache.states[key], phase: 'error', error: code, stale: cache.states[key]?.obtainedAt !== undefined });
+    } else { cache.backendError = code; notify(cache); }
+  }).finally(() => { if (cache.inflight.get(actionKey) === promise) cache.inflight.delete(actionKey); });
+  cache.inflight.set(actionKey, promise); return promise;
 }
+/** Quick server-owned job start: no browser MQTT, scan timer, or fallback. */
+export function refreshZ2mTopology(hass: ZigbeeTopologyHass, baseTopic: string): Promise<void> { return command(hass, baseTopic); }
+export function cancelZ2mTopology(hass: ZigbeeTopologyHass, baseTopic: string, jobId: string): Promise<void> { return command(hass, baseTopic, jobId); }

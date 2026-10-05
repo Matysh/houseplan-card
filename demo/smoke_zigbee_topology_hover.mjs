@@ -28,10 +28,16 @@ const result = await page.evaluate(async () => {
     .some((entry) => /zigbee-topology-runtime|hp-zigbee-topology-overlay/.test(entry.name));
 
   let zhaCalls = 0;
+  let pendingConfigReads = 0;
   window.__zigbeeSmokeFetchCount = () => zhaCalls;
   const originalHass = card.hass;
   card.hass = { ...originalHass, callWS: async (message) => {
-    if (message.type !== 'zha/devices') return originalHass.callWS(message);
+    if (message.type !== 'zha/devices') {
+      const configRead = message.type === 'houseplan/config/get';
+      if (configRead) pendingConfigReads++;
+      try { return await originalHass.callWS(message); }
+      finally { if (configRead) pendingConfigReads--; }
+    }
     zhaCalls++;
     return [
       { ieee: '00124b0000000001', nwk: 1, device_reg_id: 'd_light1', device_type: 'Router',
@@ -84,17 +90,29 @@ const result = await page.evaluate(async () => {
   await wait(() => !!settings?.shadowRoot?.querySelector('button'), 'settings button');
   await settings._readZha();
   await wait(() => settings._snapshot?.states?.zha?.phase === 'ready', 'ZHA ready');
+  // #800: this fixture intentionally has the old integration's config/get.
+  // backend_required may be cached from the overlay's earlier failed check.
+  // Reopening settings legitimately checks again. Drain the actual in-flight
+  // transport and its queued runtime/Lit notifications before the isolated age
+  // fixture; checking the old error string alone is not a completion barrier.
+  await wait(() => settings._snapshot?.backendError === 'backend_required'
+    && pendingConfigReads === 0, 'old backend capability reads settled');
+  await new Promise(resolve => setTimeout(resolve, 0));
+  await settings.updateComplete;
+  out.oldBackendStillAllowsZha = settings._snapshot.states.zha.phase === 'ready';
   out.explicitZhaRead = zhaCalls === 1;
   const settingsSnapshot = settings._snapshot;
   const renderedProviderStatus = () => [...settings.shadowRoot.querySelectorAll('.status,.hpf-actions .hpf-hint')]
     .map((node) => node.textContent).find((value) => /Received /.test(value)) || '';
+  const ageFixtureTime = Date.now() - 5 * 60 * 1000 + 300;
   settings._acceptSnapshot({ ...settingsSnapshot, states: { ...settingsSnapshot.states,
-    zha: { phase: 'ready', obtainedAt: Date.now() - 5 * 60 * 1000 + 300 },
+    zha: { phase: 'ready', obtainedAt: ageFixtureTime },
   } });
   await settings.updateComplete;
   const initiallyFreshSettings = !/stale/i.test(renderedProviderStatus());
   await wait(() => /stale/i.test(renderedProviderStatus()), 'mounted settings snapshot ages');
-  out.settingsAgeTimerWithoutRefetch = initiallyFreshSettings && zhaCalls === 1;
+  out.settingsAgeTimerWithoutRefetch = initiallyFreshSettings && zhaCalls === 1
+    && settings._snapshot.states.zha.obtainedAt === ageFixtureTime;
   settings._acceptSnapshot(settingsSnapshot);
   await settings.updateComplete;
   card._settingsDialog = null;
