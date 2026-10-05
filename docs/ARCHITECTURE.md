@@ -598,15 +598,28 @@ registry ownership maps nodes to markers. Only unique evidence becomes an
 arrow. Conflicts, cycles and unknown roles fail closed, including merged
 providers; no BFS or strongest-LQI fallback remains. A known next hop need not
 prove the complete chain. Mapping/resolution are memoized outside hover.
-`zigbee-topology-runtime.ts` keeps a per-connection memory cache with
-in-flight dedupe: ZHA reads `zha/devices` without a scan; Z2M checks the retained
-bridge-info topic, sends one correlated raw `routes:true` request through
-`mqtt.publish`, rejects retained/foreign/late replies and always unsubscribes.
-A shared 10-minute deadline bounds the route-table scan; each subscription and
-publish additionally has a 10-second transport cap, and retained bridge-info
-confirmation keeps its 4-second limit (#799). Stages never restart the shared
-deadline, including late subscription cleanup. Refresh failure retains the last-good snapshot with a
-stale flag; ZHA cache retrieval is never described as a fresh radio scan.
+`zigbee-topology-runtime.ts` keeps a per-connection, admin-identity-scoped cache:
+ZHA still reads `zha/devices` without a scan. Z2M uses the integration-owned
+`zigbee_topology.py` coordinator through admin-only
+`houseplan/zigbee/{subscribe,start,cancel}` WebSocket commands (#800). The
+coordinator reserves one job per normalized topic before starting background
+work, checks retained bridge-info and sends one correlated raw `routes:true`
+MQTT request. Closing all frontend clients releases their observers, not the job.
+An initial reset and per-topic state events restore running jobs and last-good
+maps; session/revision and job identifiers isolate stale replies and cancels.
+Map payloads are limited to 2 MiB; at most eight topic slots are held, with only
+terminal slots eligible for eviction. MQTT is an optional dependency.
+
+There is no overall scan deadline. Transport setup/publishing have 10-second
+limits and retained bridge-info a 4-second limit. At 600 seconds an exact-job
+cancel becomes available; it cancels HP's wait, not Z2M radio work. Matching
+provider errors, invalid maps and MQTT disconnect terminate the job, release
+listeners and retain last-good data as stale. Neither reconnect nor reopening
+settings republishes. Integration unload/restart clears all runtime jobs/cache.
+The frontend derives elapsed time from server elapsed plus local monotonic time,
+without per-second map events or invented progress percentages. Mounted visible
+settings alone tick their timer; ordinary hass updates do not resubscribe.
+ZHA cache retrieval is never described as a fresh radio scan.
 The pointer-transparent overlay is a child of the `.devlayer` camera, projected
 once with the markers by `live-viewport.ts`; only the source and drawable
 neighbour markers are promoted above it, through transient attributes the

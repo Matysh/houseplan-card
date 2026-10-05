@@ -35,6 +35,10 @@ export class HpZigbeeTopologySettings extends LitElement {
   private _snapshot = EMPTY_RUNTIME;
   private _staleTimer?: ReturnType<typeof setTimeout>;
   private _release?: () => void;
+  private _owner?: object;
+  private _userIdentity = '';
+  private _generation = 0;
+  private _runtimePending?: Promise<typeof import('./zigbee-topology-runtime')>;
   private _topicText = 'zigbee2mqtt';
   private _invalidTopic = false;
 
@@ -51,7 +55,9 @@ export class HpZigbeeTopologySettings extends LitElement {
     .hint, .status { color: var(--secondary-text-color, #9aa0aa); font-size: 12px; line-height: 1.45; }
     .hint { margin-top: 6px; }
     .providers { display: grid; gap: 14px; margin-top: 12px; padding-left: 34px; }
-    .provider { display: grid; gap: 7px; }
+    .provider, .scan-row { display: grid; gap: 7px; min-width: 0; }
+    .scan-row { overflow-wrap: anywhere; }
+    [data-hp="zigbee-scan-cancel"] { min-width: 44px; min-height: 44px; }
     .provider-title { font-weight: 650; }
     .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
     textarea {
@@ -79,26 +85,47 @@ export class HpZigbeeTopologySettings extends LitElement {
     :host([embedded]) .hpf-hint { margin: 0; }
   `;
 
-  disconnectedCallback(): void {
+  connectedCallback(): void {
+    super.connectedCallback();
+    document.addEventListener('visibilitychange', this._visibilityChanged);
+    this.requestUpdate();
+  }
+
+  private _releaseRuntime(): void {
+    this._generation++;
     clearTimeout(this._staleTimer);
     this._staleTimer = undefined;
     this._release?.();
     this._release = undefined;
+    this._owner = undefined;
+    this._snapshot = EMPTY_RUNTIME;
+    this.requestUpdate();
+  }
+
+  disconnectedCallback(): void {
+    document.removeEventListener('visibilitychange', this._visibilityChanged);
+    this._releaseRuntime();
     super.disconnectedCallback();
   }
 
-  protected updated(changed: PropertyValues<this>): void {
-    if (changed.has('hass')) {
-      clearTimeout(this._staleTimer);
-      this._staleTimer = undefined;
-      this._release?.();
-      this._release = undefined;
-      this._runtime = null;
-      this._snapshot = EMPTY_RUNTIME;
-    }
-    if (this.savedEnabled && this._admin) {
+  protected updated(): void {
+    const owner = this.hass?.connection || this.hass;
+    const identity = `${this.hass?.user?.id || ''}:${this._admin}`;
+    if (this._owner && (this._owner !== owner || identity !== this._userIdentity || !this._observing)) this._releaseRuntime();
+    if (this._observing) {
       this._scheduleStaleUpdate();
-      void this._ensureRuntime();
+      if (!this._owner) {
+        this._owner = owner;
+        this._userIdentity = identity;
+        const generation = this._generation;
+        void this._ensureRuntime().then(runtime => {
+          if (generation !== this._generation || !this._observing || this._owner !== owner) return;
+          this._acceptSnapshot(runtime.zigbeeTopologyRuntimeSnapshot(this.hass));
+          this._release = runtime.subscribeZigbeeTopology(this.hass, () => {
+            this._acceptSnapshot(runtime.zigbeeTopologyRuntimeSnapshot(this.hass));
+          });
+        });
+      }
     }
     else {
       clearTimeout(this._staleTimer);
@@ -114,6 +141,7 @@ export class HpZigbeeTopologySettings extends LitElement {
   }
 
   private get _admin(): boolean { return this.hass?.user?.is_admin === true; }
+  private get _observing(): boolean { return this.isConnected && this.value.enabled && this.savedEnabled && this._admin; }
   public embedded = false;
 
   private _t(key: TopologyI18nKey, vars?: Record<string, string | number>): string {
@@ -142,11 +170,8 @@ export class HpZigbeeTopologySettings extends LitElement {
 
   private async _ensureRuntime(): Promise<typeof import('./zigbee-topology-runtime')> {
     if (!this._runtime) {
-      this._runtime = await import('./zigbee-topology-runtime');
-      this._acceptSnapshot(this._runtime.zigbeeTopologyRuntimeSnapshot(this.hass));
-      this._release = this._runtime.subscribeZigbeeTopology(this.hass, () => {
-        this._acceptSnapshot(this._runtime!.zigbeeTopologyRuntimeSnapshot(this.hass));
-      });
+      this._runtimePending ??= import('./zigbee-topology-runtime');
+      this._runtime = await this._runtimePending;
     }
     return this._runtime;
   }
@@ -157,22 +182,29 @@ export class HpZigbeeTopologySettings extends LitElement {
     this.requestUpdate();
   }
 
+  private _visibilityChanged = (): void => {
+    this._scheduleStaleUpdate();
+    if (this._observing && document.visibilityState !== 'hidden') this.requestUpdate();
+  };
+
   // Status ages even when HA sends no events. This one-shot redraw never fetches.
   private _scheduleStaleUpdate(): void {
     clearTimeout(this._staleTimer);
     this._staleTimer = undefined;
-    if (!this.isConnected || !this.savedEnabled || !this._admin) return;
+    if (!this._observing || document.visibilityState === 'hidden') return;
     const now = Date.now();
     const expiry = Object.values(this._snapshot.states)
       .filter((current) => current.obtainedAt !== undefined && !current.stale)
       .map((current) => current.obtainedAt! + TOPOLOGY_STALE_MS + 1)
       .filter((value) => value > now);
-    if (expiry.length) this._staleTimer = setTimeout(() => {
+    const ticking = Object.values(this._snapshot.states).some(current => current.phase === 'loading' && current.jobId);
+    const delay = Math.min(ticking ? 1000 : Infinity, expiry.length ? Math.min(...expiry) - now : Infinity);
+    if (Number.isFinite(delay)) this._staleTimer = setTimeout(() => {
       this._staleTimer = undefined;
       if (!this.isConnected) return;
       this.requestUpdate();
       this._scheduleStaleUpdate();
-    }, Math.min(...expiry) - now);
+    }, delay);
   }
 
   private _emit(value: ZigbeeTopologySettings): void {
@@ -183,7 +215,10 @@ export class HpZigbeeTopologySettings extends LitElement {
   }
 
   private _topics(): string[] {
-    return this.value.z2mBaseTopics.length ? this.value.z2mBaseTopics : ['zigbee2mqtt'];
+    const configured = this.value.z2mBaseTopics.length ? this.value.z2mBaseTopics : ['zigbee2mqtt'];
+    const active = Object.entries(this._snapshot.states)
+      .filter(([key, current]) => key.startsWith('z2m:') && current.phase === 'loading').map(([key]) => key.slice(4));
+    return [...new Set([...configured, ...active])];
   }
 
   private _editTopics(raw: string): void {
@@ -196,11 +231,13 @@ export class HpZigbeeTopologySettings extends LitElement {
   }
 
   private _status(key: string): string {
+    if (!this._admin) return this._t('status_idle');
     const current = this._snapshot.states[key];
     if (!current) return this._t('status_idle');
-    const phase = current.phase === 'loading' ? this._t('status_loading')
-      : current.phase === 'error' ? this._t((`error_${current.error || 'provider'}`) as TopologyI18nKey) : '';
-    if (current.obtainedAt === undefined) return phase || this._t('status_idle');
+    const phase = current.phase === 'loading' ? (key === 'zha' ? this._t('status_loading') : '')
+      : current.phase === 'cancelled' ? this._t('scan_cancelled')
+      : current.phase === 'error' ? this._errorText(current.error) : '';
+    if (current.obtainedAt === undefined) return phase || (current.phase === 'loading' ? '' : this._t('status_idle'));
     const time = new Date(current.obtainedAt).toLocaleTimeString(langOf(this.hass), {
       hour: '2-digit', minute: '2-digit',
     });
@@ -223,13 +260,48 @@ export class HpZigbeeTopologySettings extends LitElement {
   }
 
   private async _readZha(): Promise<void> {
-    if (!this.savedEnabled || !this._admin) return;
-    (await this._ensureRuntime()).readZhaTopology(this.hass);
+    const generation = this._generation;
+    const runtime = await this._ensureRuntime();
+    if (generation === this._generation && this._observing) void runtime.readZhaTopology(this.hass);
   }
 
   private async _refreshZ2m(topic: string): Promise<void> {
-    if (!this.savedEnabled || !this._admin) return;
-    (await this._ensureRuntime()).refreshZ2mTopology(this.hass, topic);
+    const generation = this._generation;
+    const runtime = await this._ensureRuntime();
+    if (generation === this._generation && this._observing) void runtime.refreshZ2mTopology(this.hass, topic);
+  }
+
+  private _errorText(error?: import('./zigbee-topology-runtime').ZigbeeTopologyErrorCode): string {
+    return this._t(error === 'backend_required' ? 'scan_backend_required'
+      : error === 'connection' ? 'scan_connection_lost' : error === 'unsupported' ? 'scan_unavailable'
+      : (`error_${error || 'provider'}`) as TopologyI18nKey);
+  }
+
+  private _z2mRow(topic: string, mayLoad: boolean, embedded: boolean): TemplateResult {
+    const key = `z2m:${topic}`, current = this._admin ? this._snapshot.states[key] : undefined;
+    const active = current?.phase === 'loading' && !!current.jobId;
+    const canCancel = active && this._runtime?.zigbeeScanCanCancel(current);
+    const disconnected = this._snapshot.backendConnected === false && !this._snapshot.backendError;
+    return html`<div class="scan-row" data-topic=${topic}>
+      <div class=${embedded ? 'hpf-actions' : 'actions'}>
+        <button class=${embedded ? 'btn ghost' : ''} ?disabled=${!mayLoad || this._invalidTopic || this._busy(key)}
+          @click=${() => this._refreshZ2m(topic)}><ha-icon icon="mdi:refresh"></ha-icon>${this._t('z2m_update')} · ${topic}</button>
+        <span class="status" role="status">${this._status(key)}</span>
+      </div>
+      ${active ? html`
+        <span class="status" role="status" data-hp="zigbee-scan-stage">${this._t(current.stage === 'connecting' ? 'scan_connecting' : 'scan_waiting')}</span>
+        <span class="status" aria-live="off" data-hp="zigbee-scan-elapsed">${this._t('scan_elapsed', {
+          time: this._runtime!.formatZigbeeScanElapsed(this._runtime!.zigbeeScanElapsedMs(current)),
+        })}</span>
+        <span class="hint" data-hp="zigbee-scan-background">${this._t('scan_background_hint')}</span>
+        ${disconnected ? html`<span class="warning" role="status">${this._t('scan_frontend_disconnected')}</span>` : nothing}
+        ${canCancel ? html`
+          <span class="hint" data-hp="zigbee-scan-long-wait">${this._t('scan_long_wait')}</span>
+          <div><button class=${embedded ? 'btn ghost' : ''} data-hp="zigbee-scan-cancel" ?disabled=${disconnected || !mayLoad}
+            @click=${() => { if (this._observing && current.jobId) void this._runtime?.cancelZ2mTopology(this.hass, topic, current.jobId); }}>${this._t('scan_cancel')}</button></div>
+          <span class="hint" data-hp="zigbee-scan-cancel-hint">${this._t('scan_cancel_hint')}</span>` : nothing}` : nothing}
+      ${this._admin && this._snapshot.backendError ? html`<span class="warning" role="status">${this._errorText(this._snapshot.backendError)}</span>` : nothing}
+    </div>`;
   }
 
   protected render() {
@@ -272,13 +344,7 @@ export class HpZigbeeTopologySettings extends LitElement {
               this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
           ${this._invalidTopic ? html`<div class="warning">${this._t('error_invalid_topic')}</div>` : nothing}
           <div class="warning">${this._t('z2m_warning')}</div>
-          ${topics.map((topic) => html`<div class="actions">
-            <button ?disabled=${!mayLoad || this._invalidTopic || this._busy(`z2m:${topic}`)}
-              @click=${() => this._refreshZ2m(topic)}>
-              <ha-icon icon="mdi:refresh"></ha-icon>${this._t('z2m_update')} · ${topic}
-            </button>
-            <span class="status">${this._status(`z2m:${topic}`)}</span>
-          </div>`)}
+          ${topics.map(topic => this._z2mRow(topic, mayLoad, false))}
         </div>
       </div>` : nothing}
     `;
@@ -327,13 +393,7 @@ export class HpZigbeeTopologySettings extends LitElement {
           ${this._invalidTopic ? html`<p class="hpf-error" role="alert">${this._t('error_invalid_topic')}</p>` : nothing}
         </div>
         <div class="hpf-callout hpf-warning"><ha-icon icon="mdi:alert-outline"></ha-icon><p>${this._t('z2m_warning')}</p></div>
-        ${topics.map((topic) => html`<div class="hpf-actions">
-          <button class="btn ghost" ?disabled=${!mayLoad || this._invalidTopic || this._busy(`z2m:${topic}`)}
-            @click=${() => this._refreshZ2m(topic)}>
-            <ha-icon icon="mdi:refresh"></ha-icon>${this._t('z2m_update')} · ${topic}
-          </button>
-          <span class="hpf-hint">${this._status(`z2m:${topic}`)}</span>
-        </div>`)}` : nothing}
+        ${topics.map(topic => this._z2mRow(topic, mayLoad, true))}` : nothing}
     `;
   }
 }

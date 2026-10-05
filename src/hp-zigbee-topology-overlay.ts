@@ -9,6 +9,7 @@ import {
 import { zigbeeArrowGeometry, type ZigbeePixelPoint } from './zigbee-topology-geometry';
 import {
   subscribeZigbeeTopology, zigbeeTopologyRuntimeSnapshot,
+  zigbeeTopologyUserIdentity,
   type ZigbeeTopologyHass, type ZigbeeTopologyRuntimeSnapshot,
 } from './zigbee-topology-runtime';
 import type { HaRegistrySnapshot } from './ha-binding-status';
@@ -40,6 +41,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   private _hovered = '';
   private _staleTimer?: ReturnType<typeof setTimeout>;
   private _release?: () => void;
+  private _owner?: object;
+  private _userIdentity = '';
   private _parent?: HTMLElement;
   private _hoverGateObserver?: MutationObserver;
   private _markerObserver?: MutationObserver;
@@ -89,12 +92,15 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       this._hoverGateObserver.observe(root.host, { attributes: true, attributeFilter: ['data-pointer-hover'] });
     }
     queueMicrotask(() => this._connectParent());
+    this.requestUpdate();
   }
 
   disconnectedCallback(): void {
     clearTimeout(this._staleTimer);
     this._release?.();
     this._release = undefined;
+    this._owner = undefined;
+    this._runtime = EMPTY_RUNTIME;
     this._disconnectParent();
     this._hoverGateObserver?.disconnect();
     this._hoverGateObserver = undefined;
@@ -104,8 +110,18 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   }
 
   protected updated(changed: PropertyValues<this>): void {
-    if (changed.has('hass')) {
+    const owner = this.hass?.connection || this.hass;
+    const identity = zigbeeTopologyUserIdentity(this.hass || {});
+    const observing = this.isConnected && this.hass?.user?.is_admin === true;
+    if (this._owner && (owner !== this._owner || identity !== this._userIdentity || !observing)) {
       this._release?.();
+      this._release = undefined;
+      this._owner = undefined;
+      this._acceptRuntime(EMPTY_RUNTIME);
+    }
+    if (observing && !this._owner) {
+      this._owner = owner;
+      this._userIdentity = identity;
       this._acceptRuntime(zigbeeTopologyRuntimeSnapshot(this.hass));
       this._release = subscribeZigbeeTopology(this.hass, () => {
         this._acceptRuntime(zigbeeTopologyRuntimeSnapshot(this.hass));
@@ -138,6 +154,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   // Age changes without a new HA event; redraw once at expiry, never fetch.
   private _scheduleStaleUpdate(): void {
     clearTimeout(this._staleTimer);
+    if (!this.isConnected || this.hass?.user?.is_admin !== true) return;
     const now = Date.now();
     const expiry = this._runtime.topologies.map((item) => item.obtainedAt + TOPOLOGY_STALE_MS + 1)
       .filter((value) => value > now);

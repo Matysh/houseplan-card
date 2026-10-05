@@ -93,88 +93,28 @@ test('ZHA runtime is explicit, admin-only and deduplicates concurrent reads', as
 
   const denied = { user: { is_admin: false }, connection: {}, callWS: async () => assert.fail('must not call') };
   await readZhaTopology(denied);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(denied).states.zha.error, 'permission');
+  assert.deepEqual(zigbeeTopologyRuntimeSnapshot(denied).states, {}, 'non-admin cannot read runtime data');
 });
 
-test('Z2M runtime verifies retained bridge info, correlates transaction and cleans subscriptions', async () => {
-  const listeners = new Map();
-  let cleanups = 0;
-  const hass = {
-    user: { is_admin: true },
-    connection: {
-      async subscribeMessage(callback, message) {
-        listeners.set(message.topic, callback);
-        if (message.topic.endsWith('/bridge/info')) queueMicrotask(() => callback({ retain: true, payload: '{}' }));
-        if (message.topic.endsWith('/bridge/response/networkmap')) {
-          queueMicrotask(() => callback({ retain: false, payload: 'stale-not-json' }));
-        }
-        return () => { cleanups++; listeners.delete(message.topic); };
-      },
-    },
-    async callService(domain, service, data) {
-      assert.equal(`${domain}.${service}`, 'mqtt.publish');
-      const request = JSON.parse(data.payload);
-      assert.equal(request.type, 'raw');
-      assert.equal(request.routes, true);
-      listeners.get('zigbee2mqtt/bridge/response/networkmap')?.({ retain: true,
-        payload: JSON.stringify({ status: 'ok', transaction: request.transaction }) });
-      listeners.get('zigbee2mqtt/bridge/response/networkmap')?.({ retain: false,
-        payload: JSON.stringify({ status: 'ok', transaction: 'foreign' }) });
-      queueMicrotask(() => listeners.get('zigbee2mqtt/bridge/response/networkmap')?.({
-        retain: false,
-        payload: JSON.stringify({
-          ...z2mNetworkmapFixture,
-          transaction: request.transaction,
-        }),
-      }));
-    },
+// #800 moves MQTT correlation/limits/cleanup to the HA coordinator tests.
+// The frontend consumes its authoritative result and preserves route normalization.
+test('Z2M server job response retains the real fixture normalization without browser MQTT', async () => {
+  const hass = { user: { is_admin: true }, connection: { async subscribeMessage() { return () => {}; } },
+    async callWS(message) {
+      if (message.type === 'houseplan/config/get') return { zigbee_scan_api: 1 };
+      assert.deepEqual(message, { type: 'houseplan/zigbee/start', base_topic: 'zigbee2mqtt' });
+      return { kind: 'state', session_id: 'server', revision: 1, provider: {
+        topic: 'zigbee2mqtt', job_id: 'job', phase: 'ready', elapsed_ms: 900000,
+        obtained_at: 1000, result: z2mNetworkmapFixture,
+      } };
+    }, callService() { assert.fail('no frontend MQTT'); },
   };
-  await refreshZ2mTopology(hass, 'zigbee2mqtt', 100);
-  assert.equal(cleanups, 2);
+  await refreshZ2mTopology(hass, 'zigbee2mqtt');
   const snapshot = zigbeeTopologyRuntimeSnapshot(hass);
   assert.equal(snapshot.states['z2m:zigbee2mqtt'].phase, 'ready');
   assert.equal(snapshot.topologies[0].nodes.length, 3);
   assert.equal(snapshot.topologies[0].links.length, 2);
   assert.equal(snapshot.topologies[0].uplinkEvidence.length, 0, 'neighbors-only fixture is not route evidence');
-});
-
-test('Z2M runtime rejects a malformed response immediately instead of timing out', async () => {
-  const listeners = new Map();
-  let cleanups = 0;
-  const hass = {
-    user: { is_admin: true },
-    connection: {
-      async subscribeMessage(callback, message) {
-        listeners.set(message.topic, callback);
-        if (message.topic.endsWith('/bridge/info')) queueMicrotask(() => callback({ retain: true, payload: '{}' }));
-        return () => { cleanups++; listeners.delete(message.topic); };
-      },
-    },
-    async callService() {
-      queueMicrotask(() => listeners.get('zigbee2mqtt/bridge/response/networkmap')?.({
-        retain: false, payload: 'not-json-garbage',
-      }));
-    },
-  };
-  const startedAt = performance.now();
-  await refreshZ2mTopology(hass, 'zigbee2mqtt', 500);
-  assert.ok(performance.now() - startedAt < 250, 'malformed response must not wait for the timeout');
-  assert.equal(cleanups, 2);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(hass).states['z2m:zigbee2mqtt'].error, 'invalid_payload');
-});
-
-test('Z2M runtime refuses an unconfirmed base topic without publishing and still cleans up', async () => {
-  let publishes = 0;
-  let cleanups = 0;
-  const hass = {
-    user: { is_admin: true },
-    connection: { async subscribeMessage() { return () => { cleanups++; }; } },
-    async callService() { publishes++; },
-  };
-  await refreshZ2mTopology(hass, 'zigbee2mqtt', 10);
-  assert.equal(publishes, 0);
-  assert.equal(cleanups, 2);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(hass).states['z2m:zigbee2mqtt'].error, 'timeout');
 });
 
 // #459. Подсказка «Связи Zigbee»: легенда живёт в словаре, и её содержание —

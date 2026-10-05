@@ -49,6 +49,10 @@ async def _async_flush_runtime(
     writers are independently guarded so one failed store cannot prevent the
     other from reaching disk during shutdown.
     """
+    zigbee = getattr(entry.runtime_data, "zigbee_coordinator", None)
+    if zigbee is not None:
+        await zigbee.async_close()
+
     recorder = hass.data.get(DOMAIN, {}).get("trail_recorder")
     if recorder is not None:
         try:
@@ -110,6 +114,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     except Exception:  # noqa: BLE001 — operational state fails safe to default on
         _LOGGER.exception("House Plan: virtual-light storage is not readable; using default on")
     entry.runtime_data = data
+
+    from .zigbee_topology import ZigbeeScanCoordinator
+    data.zigbee_coordinator = ZigbeeScanCoordinator(hass, entry)
 
     from .radar import RadarCoordinator
     data.radar_coordinator = RadarCoordinator(hass, data)

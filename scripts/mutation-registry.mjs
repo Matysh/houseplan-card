@@ -9668,8 +9668,8 @@ const MUTANT_DEFINITIONS = [
       + 'into an implicit radio scan (#54 AC4)',
     patches: [{
       file: 'src/zigbee-topology-runtime.ts',
-      find: "    return normalizeZhaTopology(await hass.callWS({ type: 'zha/devices' }));",
-      replace: "    return normalizeZhaTopology(await hass.callWS({ type: 'zha/topology/update' }));",
+      find: "    const topology = normalizeZhaTopology(await hass.callWS({ type: 'zha/devices' }));",
+      replace: "    const topology = normalizeZhaTopology(await hass.callWS({ type: 'zha/topology/update' }));",
     }],
   },
   {
@@ -9721,36 +9721,38 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'zigbee-topology-z2m-foreign-response-accepted',
-    guard: 'node --test --test-name-pattern="Z2M requests routes and ignores" test/zigbee-topology-runtime-routes.test.mjs',
+    guard: 'node scripts/backend-test-guard.mjs issue_800_foreign_retained_oversized_and_garbage '
+      + 'tests_backend/test_ha_zigbee_topology.py',
     because: 'parallel Zigbee2MQTT requests share one response topic; only the matching '
       + 'transaction may complete this snapshot (#54 AC6)',
     patches: [{
-      file: 'src/zigbee-topology-runtime.ts',
-      find: '        if (value && transactionOf(value) === transaction) responseResolve?.(value);',
-      replace: '        if (value) responseResolve?.(value);',
+      file: 'custom_components/houseplan/zigbee_topology.py',
+      find: '                if transaction != job.job_id:',
+      replace: '                if False:  # mutant: accept foreign transactions',
     }],
   },
   {
     id: 'zigbee-topology-z2m-malformed-response-waits-for-timeout',
-    guard: 'node --test --test-name-pattern="malformed response immediately|a malformed response rejects" '
-      + 'test/zigbee-topology.test.mjs test/zigbee-topology-runtime-routes.test.mjs',
-    because: 'a malformed response on the subscribed network-map topic must report invalid payload '
-      + 'immediately instead of leaving the settings dialog loading for the full timeout (#54 AC16)',
+    guard: 'node scripts/backend-test-guard.mjs issue_800_correlated_invalid_shapes_are_terminal '
+      + 'tests_backend/test_ha_zigbee_topology.py',
+    because: '#800: a malformed own response must report invalid payload immediately; '
+      + 'uncorrelatable garbage must not terminate a different long-lived job',
     patches: [{
-      file: 'src/zigbee-topology-runtime.ts',
-      find: "        if (value === null) {\n          responseReject?.(fail('invalid_payload'));\n          return;\n        }",
-      replace: '        if (value === null) return;',
+      file: 'custom_components/houseplan/zigbee_topology.py',
+      find: '                    self._finish(job, "error", "invalid_payload")',
+      replace: '                    return  # mutant: wait forever on own malformed map',
     }],
   },
   {
     id: 'zigbee-topology-z2m-subscriptions-leak',
-    guard: 'node --test test/zigbee-topology-runtime-routes.test.mjs',
+    guard: 'node scripts/backend-test-guard.mjs issue_800_background_15_minutes_two_clients_and_reopen '
+      + 'tests_backend/test_ha_zigbee_topology.py',
     because: 'both MQTT subscriptions must be released after success or failure so one manual '
       + 'refresh cannot leave listeners processing later payloads (#54 AC6)',
     patches: [{
-      file: 'src/zigbee-topology-runtime.ts',
-      find: '      try { unsubscribe(); } catch { /* cleanup is best effort */ }',
-      replace: '      try { void unsubscribe; } catch { /* cleanup is best effort */ }',
+      file: 'custom_components/houseplan/zigbee_topology.py',
+      find: '            cleanup()\n',
+      replace: '            pass  # mutant: leak MQTT observers\n',
     }],
   },
   {
@@ -9832,13 +9834,36 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'zigbee-runtime-routes-not-requested',
-    guard: 'node --test --test-name-pattern="Z2M requests routes and ignores" test/zigbee-topology-runtime-routes.test.mjs',
+    guard: 'node scripts/backend-test-guard.mjs issue_800_background_15_minutes_two_clients_and_reopen '
+      + 'tests_backend/test_ha_zigbee_topology.py',
     because: 'an explicit Z2M refresh must request routing-table evidence instead of silently '
       + 'returning a neighbors-only map that cannot support router uplinks (#798)',
     patches: [{
-      file: 'src/zigbee-topology-runtime.ts',
-      find: "        payload: JSON.stringify({ type: 'raw', routes: true, transaction }),",
-      replace: "        payload: JSON.stringify({ type: 'raw', routes: false, transaction }),",
+      file: 'custom_components/houseplan/zigbee_topology.py',
+      find: '                json.dumps({"type": "raw", "routes": True, "transaction": job.job_id}),',
+      replace: '                json.dumps({"type": "raw", "routes": False, "transaction": job.job_id}),',
+    }],
+  },
+  {
+    id: 'zigbee-background-stale-cancel-affects-new-job',
+    guard: 'node scripts/backend-test-guard.mjs issue_800_cancel_boundary_old_id_late_reply_and_last_good '
+      + 'tests_backend/test_ha_zigbee_topology.py',
+    because: '#800: a cancel command from an older UI must not cancel a newer job on the same topic',
+    patches: [{
+      file: 'custom_components/houseplan/zigbee_topology.py',
+      find: '        if job is None or job.job_id != job_id:',
+      replace: '        if job is None:',
+    }],
+  },
+  {
+    id: 'zigbee-background-cancel-too-early',
+    guard: 'node scripts/backend-test-guard.mjs issue_800_cancel_boundary_old_id_late_reply_and_last_good '
+      + 'tests_backend/test_ha_zigbee_topology.py',
+    because: '#800: the backend, not just button visibility, enforces the 600-second cancel threshold',
+    patches: [{
+      file: 'custom_components/houseplan/zigbee_topology.py',
+      find: '        if (monotonic() - job.started) * 1000 < CANCEL_AFTER_MS:',
+      replace: '        if (monotonic() - job.started) * 1000 < 0:',
     }],
   },
   {

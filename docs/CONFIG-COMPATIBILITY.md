@@ -254,9 +254,15 @@ General settings removes the object.
 
 Provider snapshots, IEEE addresses, links, errors and timestamps are runtime
 memory only. They are not config fields, do not enter backup/export or support
-diagnostics, and disappear with the HA connection/page. Older frontends ignore
-the settings object; the backend's unknown-settings policy preserves it. No
-model or store version migration is required.
+diagnostics. ZHA snapshots disappear with the HA connection/page. Since #800,
+Z2M jobs and last-good raw maps live only in the loaded HA integration's bounded
+memory: they survive frontend disconnect/reload, not integration/HA restart.
+No runtime map, transaction, job identifier or elapsed timer is written to disk
+or browser storage. Older frontends ignore the settings object; the backend's
+unknown-settings policy preserves it. No model or store version migration is
+required. New frontend + old backend fail closed with an update/restart hint;
+there is no browser-owned MQTT scan fallback. The three scan WS commands always
+require a real HA administrator, independently of editor `admin_only` settings.
 
 #798 replaces inferred routes with provider evidence in that runtime only.
 Next-hop addresses, target names and warnings are never persisted. Failed

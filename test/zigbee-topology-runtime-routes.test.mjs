@@ -1,72 +1,59 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  readZhaTopology, refreshZ2mTopology, zigbeeTopologyRuntimeSnapshot,
+import { readZhaTopology, refreshZ2mTopology, cancelZ2mTopology, subscribeZigbeeTopology,
+  zigbeeTopologyRuntimeSnapshot, zigbeeScanElapsedMs, zigbeeScanCanCancel, formatZigbeeScanElapsed,
 } from '../test-build/zigbee-topology-runtime.js';
-import { TOPOLOGY_MAX_PAYLOAD_BYTES } from '../test-build/zigbee-topology.js';
-
-const TOPIC = 'zigbee2mqtt';
-const KEY = `z2m:${TOPIC}`;
-const INFO = `${TOPIC}/bridge/info`;
-const RESPONSE = `${TOPIC}/bridge/response/networkmap`;
-const COORDINATOR = '00124b0000000001';
-const DEVICE = '00124b0000000002';
-const OTHER = '00124b0000000003';
-const turn = () => new Promise((resolve) => setImmediate(resolve));
-const deferred = () => {
-  let resolve;
-  let reject;
-  const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
-  return { promise, resolve, reject };
-};
-
-function networkmap(transaction, ieee = DEVICE) {
-  return {
-    status: 'ok', transaction, data: { value: {
-      nodes: [
-        { ieeeAddr: COORDINATOR, type: 'Coordinator', networkAddress: 0 },
-        { ieeeAddr: ieee, type: 'EndDevice', networkAddress: 1 },
-      ],
-      links: [{ sourceIeeeAddr: ieee, targetIeeeAddr: COORDINATOR, relationship: 1, lqi: 0 }],
-    } },
+const TOPIC = 'zigbee2mqtt', KEY = 'z2m:' + TOPIC;
+const COORDINATOR = '00124b0000000001', DEVICE = '00124b0000000002';
+const turn = () => new Promise(resolve => setImmediate(resolve));
+const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
+const map = { status: 'ok', data: { value: {
+  nodes: [{ ieeeAddr: COORDINATOR, type: 'Coordinator', networkAddress: 0 },
+    { ieeeAddr: DEVICE, type: 'EndDevice', networkAddress: 1 }],
+  links: [{ sourceIeeeAddr: DEVICE, targetIeeeAddr: COORDINATOR, relationship: 1, lqi: 0 }],
+} } };
+function backend() {
+  const b = { session: 'server1', revision: 0, jobs: new Map(), callbacks: [], live: new Set(),
+    events: new Map(), calls: [], cleanups: 0, publications: 0, capability: 1 };
+  b.envelope = provider => ({ kind: 'state', session_id: b.session, revision: b.revision, provider: { ...provider } });
+  b.emit = message => { for (const callback of b.live) callback(message); };
+  b.reset = () => {
+    b.emit({ kind: 'reset', session_id: b.session, revision: b.revision, topics: [...b.jobs.keys()] });
+    for (const job of b.jobs.values()) b.emit(b.envelope(job));
   };
-}
-
-function bridge(options = {}) {
-  const control = {
-    listeners: new Map(), subscriptions: [], cleanups: [], publishes: [],
-    emit(value, retain = false) {
-      this.listeners.get(RESPONSE)?.({ retain, payload: JSON.stringify(value) });
-    },
+  b.update = (topic, patch) => {
+    const job = { ...b.jobs.get(topic), ...patch }; b.jobs.set(topic, job); b.revision++; b.emit(b.envelope(job)); return job;
   };
-  control.hass = {
-    user: { is_admin: true },
-    connection: {
-      async subscribeMessage(callback, message) {
-        const { topic } = message;
-        control.listeners.set(topic, callback);
-        control.subscriptions.push({ topic, callback });
-        const unsubscribe = () => {
-          control.cleanups.push(topic);
-          if (control.listeners.get(topic) === callback) control.listeners.delete(topic);
-        };
-        if (topic === INFO && options.confirm !== false) {
-          queueMicrotask(() => callback({ retain: true, payload: '{}' }));
-        }
-        return options.subscribe?.({ control, topic, callback, unsubscribe }) ?? unsubscribe;
-      },
+  b.hass = { user: { id: 'admin1', is_admin: true }, connection: {
+    addEventListener(event, cb) { b.events.set(event, cb); },
+    removeEventListener(event, cb) { if (b.events.get(event) === cb) b.events.delete(event); },
+    async subscribeMessage(callback, message) {
+      assert.deepEqual(message, { type: 'houseplan/zigbee/subscribe' });
+      b.callbacks.push(callback); b.live.add(callback); b.reset();
+      const unsubscribe = () => { b.cleanups++; b.live.delete(callback); };
+      return b.subscribeGate ? b.subscribeGate.promise.then(() => unsubscribe) : unsubscribe;
     },
-    async callService(domain, service, data) {
-      assert.equal(`${domain}.${service}`, 'mqtt.publish');
-      assert.equal(data.topic, `${TOPIC}/bridge/request/networkmap`);
-      assert.equal(data.retain, false);
-      const request = JSON.parse(data.payload);
-      control.publishes.push(request);
-      if (options.publish) return options.publish({ control, request });
-      control.emit(networkmap(request.transaction));
-    },
-  };
-  return control;
+  }, async callWS(message) {
+    b.calls.push(message);
+    if (message.type === 'houseplan/config/get') return b.capabilityGate?.promise ?? { zigbee_scan_api: b.capability };
+    if (b.commandGate) return b.commandGate.promise;
+    const topic = message.base_topic, prior = b.jobs.get(topic);
+    if (message.type === 'houseplan/zigbee/start') {
+      if (prior?.phase === 'loading') return b.envelope(prior);
+      b.publications++;
+      const next = b.update(topic, { topic, job_id: 'job' + b.publications, phase: 'loading', stage: 'connecting',
+        started_at: 10, elapsed_ms: 0, cancel_after_ms: 600000 });
+      return b.envelope(next);
+    }
+    assert.equal(message.type, 'houseplan/zigbee/cancel');
+    if (!prior || prior.job_id !== message.job_id || prior.phase === 'loading' && prior.elapsed_ms < 600000) {
+      throw { code: 'conflict' };
+    }
+    return b.envelope(prior.phase === 'loading' ? b.update(topic, { phase: 'cancelled', stale: !!prior.result }) : prior);
+  }, callService() { assert.fail('No browser MQTT fallback'); } };
+  b.snapshot = () => zigbeeTopologyRuntimeSnapshot(b.hass);
+  b.observe = () => subscribeZigbeeTopology(b.hass, () => {});
+  return b;
 }
 
 test('#798 ZHA retains the last successful cache timestamp and partial status through refresh and failure', async () => {
@@ -110,344 +97,187 @@ test('#798 ZHA retains the last successful cache timestamp and partial status th
   assert.equal(calls, 3);
 });
 
-test('#798 Z2M requests routes and ignores matching premature, retained, and foreign responses', async (t) => {
-  t.mock.method(globalThis.crypto, 'randomUUID', () => 'premature');
-  const control = bridge({
-    subscribe({ topic, callback }) {
-      if (topic === RESPONSE) callback({ retain: false,
-        payload: JSON.stringify(networkmap('houseplan-premature', OTHER)) });
-    },
-    publish({ control: current, request }) {
-      assert.equal(request.type, 'raw');
-      assert.equal(request.routes, true);
-      current.emit(networkmap(request.transaction, OTHER), true);
-      current.emit(networkmap('foreign', OTHER));
-      current.emit(networkmap(request.transaction));
-    },
-  });
-  await refreshZ2mTopology(control.hass, TOPIC, 100);
-  const snapshot = zigbeeTopologyRuntimeSnapshot(control.hass);
-  assert.equal(snapshot.states[KEY].phase, 'ready');
-  assert.deepEqual(snapshot.topologies[0].nodes.map((node) => node.ieee), [COORDINATOR, DEVICE]);
-  assert.equal(control.publishes.length, 1);
-  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
-  assert.equal(control.listeners.size, 0);
+test('#800 one shared feed across hass ticks/consumers, idempotent detach never cancels job', async () => {
+  const b = backend(), off1 = b.observe();
+  const off2 = subscribeZigbeeTopology({ ...b.hass }, () => {});
+  await turn();
+  assert.equal(b.callbacks.length, 1); assert.equal(b.calls.length, 1);
+  const first = refreshZ2mTopology(b.hass, '/zigbee2mqtt/');
+  assert.equal(first, refreshZ2mTopology({ ...b.hass }, TOPIC));
+  await first;
+  assert.equal(b.publications, 1); assert.equal(b.snapshot().states[KEY].phase, 'loading');
+  off1(); off1(); assert.equal(b.cleanups, 0);
+  off2(); assert.equal(b.cleanups, 1); assert.equal(b.events.size, 0);
+  assert.equal(b.jobs.get(TOPIC).phase, 'loading');
+  assert.equal(b.calls.filter(c => c.type.endsWith('/cancel')).length, 0);
 });
 
-for (const error of ['provider', 'invalid_payload', 'timeout']) {
-  test(`#798 Z2M ${error} retains the good snapshot, marks it stale, and a retry recovers`, async () => {
-    let failing = false;
-    const control = bridge({ publish({ control: current, request }) {
-      if (!failing) return current.emit(networkmap(request.transaction));
-      if (error === 'provider') return current.emit({ status: 'error', transaction: request.transaction });
-      if (error === 'invalid_payload') {
-        current.listeners.get(RESPONSE)?.({ retain: false, payload: 'not-json' });
-      }
-    } });
-    await refreshZ2mTopology(control.hass, TOPIC, 100);
-    const successful = zigbeeTopologyRuntimeSnapshot(control.hass);
-    failing = true;
-    const refresh = refreshZ2mTopology(control.hass, TOPIC, 20);
-    assert.equal(refreshZ2mTopology(control.hass, TOPIC, 20), refresh);
-    const loading = zigbeeTopologyRuntimeSnapshot(control.hass);
-    assert.equal(loading.states[KEY].phase, 'loading');
-    assert.equal(loading.states[KEY].obtainedAt, successful.states[KEY].obtainedAt);
-    await refresh;
-    const failed = zigbeeTopologyRuntimeSnapshot(control.hass);
-    assert.equal(failed.topologies[0], successful.topologies[0]);
-    assert.equal(failed.states[KEY].error, error);
-    assert.equal(failed.states[KEY].stale, true);
-    assert.equal(failed.states[KEY].obtainedAt, successful.states[KEY].obtainedAt);
-    assert.equal(control.publishes.length, 2);
-    assert.equal(control.cleanups.length, 4);
-    failing = false;
-    const retry = refreshZ2mTopology(control.hass, TOPIC, 100);
-    assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].stale, true);
-    await retry;
-    const recovered = zigbeeTopologyRuntimeSnapshot(control.hass);
-    assert.equal(recovered.states[KEY].phase, 'ready');
-    assert.notEqual(recovered.states[KEY].stale, true);
-    assert.equal(recovered.states[KEY].error, undefined);
-    assert.equal(control.cleanups.length, 6);
-  });
-}
-
-for (const blockedTopic of [INFO, RESPONSE]) {
-  test(`#798 late ${blockedTopic} subscription is cleaned after the shared deadline`, async () => {
-    const pending = deferred();
-    let lateUnsubscribe;
-    const control = bridge({ subscribe({ topic, unsubscribe }) {
-      if (topic !== blockedTopic) return;
-      lateUnsubscribe = unsubscribe;
-      return pending.promise;
-    } });
-    await refreshZ2mTopology(control.hass, TOPIC, 20);
-    const timedOut = zigbeeTopologyRuntimeSnapshot(control.hass);
-    assert.equal(timedOut.states[KEY].error, 'timeout');
-    assert.equal(timedOut.states[KEY].obtainedAt, undefined);
-    assert.notEqual(timedOut.states[KEY].stale, true, 'first failure does not invent a stale snapshot');
-    assert.equal(control.publishes.length, 0);
-    pending.resolve(lateUnsubscribe);
-    await turn();
-    assert.equal(control.listeners.size, 0);
-    assert.equal(control.cleanups.length, blockedTopic === INFO ? 1 : 2);
-    assert.equal(new Set(control.cleanups).size, control.cleanups.length, 'unsubscribe exactly once');
-    assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, timedOut.revision);
-  });
-}
-
-test('#798 publish timeout is bounded and late publish/response cannot install data', async () => {
-  const published = deferred();
-  let responseCallback;
-  const control = bridge({ publish({ control: current, request }) {
-    responseCallback = current.listeners.get(RESPONSE);
-    current.emit(networkmap(request.transaction));
-    return published.promise;
-  } });
-  await refreshZ2mTopology(control.hass, TOPIC, 20);
-  const timedOut = zigbeeTopologyRuntimeSnapshot(control.hass);
-  assert.equal(timedOut.states[KEY].error, 'timeout');
-  assert.equal(timedOut.topologies.length, 0, 'response alone cannot finish a hanging publish');
-  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
-  published.resolve();
-  responseCallback({ retain: false, payload: JSON.stringify(networkmap(control.publishes[0].transaction)) });
-  await turn();
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, timedOut.revision);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).topologies.length, 0);
+test('#800 late 15m result while no UI restores after remount and on a fresh connection without start', async () => {
+  const b = backend(); const off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  const jobId = b.snapshot().states[KEY].jobId; off();
+  b.update(TOPIC, { phase: 'ready', elapsed_ms: 900000, obtained_at: 12345, result: map });
+  const off2 = b.observe(); await turn();
+  assert.equal(b.snapshot().states[KEY].jobId, jobId); assert.equal(b.snapshot().states[KEY].obtainedAt, 12345);
+  assert.equal(b.snapshot().topologies[0].obtainedAt, 12345); assert.equal(b.snapshot().topologies[0].nodes.length, 2);
+  off2();
+  b.hass = { ...b.hass, connection: { ...b.hass.connection } };
+  const off3 = b.observe(); await turn();
+  assert.equal(b.snapshot().states[KEY].jobId, jobId); assert.equal(b.publications, 1); off3();
 });
 
-test('#798 subscription setup consumes the same deadline and cannot grant publish a fresh timeout', async (t) => {
-  let now = 1000;
-  t.mock.method(Date, 'now', () => now);
-  const control = bridge({ subscribe() { now += 60; } });
-  await refreshZ2mTopology(control.hass, TOPIC, 100);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].error, 'timeout');
-  assert.equal(control.publishes.length, 0);
-  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
+test('#800 clock uses server elapsed plus local monotonic delta; 599/600 and hours exact', () => {
+  const current = { phase: 'loading', jobId: 'j', startedAt: -9e12, elapsedMs: 599000, elapsedObservedAt: 40, cancelAfterMs: 600000 };
+  assert.equal(zigbeeScanElapsedMs(current, 40), 599000);
+  assert.equal(zigbeeScanCanCancel(current, 1039), false);
+  assert.equal(zigbeeScanCanCancel(current, 1040), true);
+  assert.equal(zigbeeScanElapsedMs({ ...current, phase: 'cancelled' }, 9e12), 599000);
+  assert.equal(formatZigbeeScanElapsed(599999), '9:59');
+  assert.equal(formatZigbeeScanElapsed(600000), '10:00');
+  assert.equal(formatZigbeeScanElapsed(3661000), '1:01:01');
 });
 
-test('#798 a malformed response rejects even while publish is pending and late rejection is handled', async () => {
-  const published = deferred();
-  const control = bridge({ publish({ control: current }) {
-    current.listeners.get(RESPONSE)?.({ retain: false, payload: '{invalid' });
-    return published.promise;
-  } });
-  await refreshZ2mTopology(control.hass, TOPIC, 100);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].error, 'invalid_payload');
-  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
-  published.reject(new Error('late publish failure'));
-  await turn();
+test('#800 exact job cancellation preserves last-good and stale rejection cannot cancel next job', async () => {
+  const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 333 });
+  await refreshZ2mTopology(b.hass, TOPIC);
+  const next = b.snapshot().states[KEY].jobId;
+  b.update(TOPIC, { elapsed_ms: 599000 });
+  await cancelZ2mTopology(b.hass, TOPIC, next);
+  assert.equal(b.snapshot().states[KEY].phase, 'loading');
+  b.update(TOPIC, { elapsed_ms: 600000 });
+  await cancelZ2mTopology(b.hass, TOPIC, next);
+  assert.equal(b.snapshot().states[KEY].phase, 'cancelled');
+  assert.equal(b.snapshot().states[KEY].stale, true);
+  assert.equal(b.snapshot().topologies[0].obtainedAt, 333);
+  await refreshZ2mTopology(b.hass, TOPIC);
+  await cancelZ2mTopology(b.hass, TOPIC, next);
+  assert.equal(b.snapshot().states[KEY].phase, 'loading');
+  assert.notEqual(b.snapshot().states[KEY].jobId, next); off();
 });
 
-test('#798 oversized MQTT data is rejected and one throwing unsubscribe does not leak the other', async () => {
-  const control = bridge({
-    subscribe({ topic, unsubscribe }) {
-      return () => {
-        unsubscribe();
-        if (topic === INFO) throw new Error('connection already closed');
-      };
-    },
-    publish({ control: current, request }) {
-      const value = networkmap(request.transaction);
-      value.padding = ' '.repeat(TOPOLOGY_MAX_PAYLOAD_BYTES);
-      current.emit(value);
-    },
-  });
-  await refreshZ2mTopology(control.hass, TOPIC, 100);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].error, 'invalid_payload');
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).topologies.length, 0);
-  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
-  assert.equal(control.listeners.size, 0);
+test('#800 terminal MQTT error keeps last good stale; success/cancel race cannot undo ready', async () => {
+  const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 44 });
+  await cancelZ2mTopology(b.hass, TOPIC, b.snapshot().states[KEY].jobId);
+  assert.equal(b.snapshot().states[KEY].phase, 'ready');
+  await refreshZ2mTopology(b.hass, TOPIC);
+  b.update(TOPIC, { phase: 'error', error: 'connection', stale: true });
+  assert.equal(b.snapshot().states[KEY].error, 'connection');
+  assert.equal(b.snapshot().topologies[0].obtainedAt, 44);
+  const starts = b.publications; b.events.get('ready')(); await turn(); assert.equal(b.publications, starts); off();
 });
 
-test('#798 an expired request cannot overwrite a later refresh through an old or new callback', async () => {
-  const started = deferred();
-  const control = bridge({ publish({ control: current }) {
-    if (current.publishes.length === 2) started.resolve();
-  } });
-  await refreshZ2mTopology(control.hass, TOPIC, 20);
-  const oldCallback = control.subscriptions.find((item) => item.topic === RESPONSE).callback;
-  const oldTransaction = control.publishes[0].transaction;
-  const refresh = refreshZ2mTopology(control.hass, TOPIC, 100);
-  await started.promise;
-  oldCallback({ retain: false, payload: JSON.stringify(networkmap(oldTransaction, OTHER)) });
-  control.emit(networkmap(oldTransaction, OTHER));
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].phase, 'loading');
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).topologies.length, 0);
-  control.emit(networkmap(control.publishes[1].transaction));
-  await refresh;
-  const successful = zigbeeTopologyRuntimeSnapshot(control.hass);
-  oldCallback({ retain: false, payload: JSON.stringify(networkmap(oldTransaction, OTHER)) });
-  await turn();
-  assert.deepEqual(successful.topologies[0].nodes.map((node) => node.ieee), [COORDINATOR, DEVICE]);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, successful.revision);
-  assert.equal(control.cleanups.length, 4);
+test('#800 reconnect reads reset and same revision slots without extra subscriptions or timer restart', async () => {
+  const b = backend(), off = b.observe();
+  await refreshZ2mTopology(b.hass, TOPIC); await refreshZ2mTopology(b.hass, 'other');
+  b.events.get('disconnected')(); assert.equal(b.snapshot().backendConnected, false);
+  b.jobs.get(TOPIC).elapsed_ms = 900000; b.jobs.get('other').elapsed_ms = 700000;
+  b.events.get('ready')(); b.reset();
+  assert.equal(b.callbacks.length, 1); assert.equal(b.snapshot().backendConnected, true);
+  assert.equal(b.snapshot().states[KEY].elapsedMs, 900000);
+  assert.equal(b.snapshot().states['z2m:other'].elapsedMs, 700000);
+  assert.equal(b.publications, 2); off();
 });
 
-test('#798 only an admin can request a map, and retained bridge confirmation is required', async () => {
-  const denied = bridge();
-  denied.hass.user.is_admin = false;
-  await refreshZ2mTopology(denied.hass, TOPIC, 100);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(denied.hass).states[KEY].error, 'permission');
-  assert.equal(denied.subscriptions.length, 0);
-  assert.equal(denied.publishes.length, 0);
-  const unconfirmed = bridge({ confirm: false, subscribe({ topic, callback }) {
-    if (topic === INFO) callback({ retain: false, payload: '{}' });
-  } });
-  await refreshZ2mTopology(unconfirmed.hass, TOPIC, 20);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(unconfirmed.hass).states[KEY].error, 'timeout');
-  assert.equal(unconfirmed.publishes.length, 0);
-  assert.deepEqual(unconfirmed.cleanups, [INFO, RESPONSE]);
+test('#800 previous-owner callback and delayed subscribe acknowledgement are inert and cleaned once', async () => {
+  const b = backend(); b.subscribeGate = deferred();
+  const off = b.observe(); await turn(); const old = b.callbacks[0]; off();
+  b.subscribeGate.resolve(); await turn(); assert.equal(b.cleanups, 1);
+  old({ kind: 'reset', session_id: 'obsolete', revision: 999, topics: [] });
+  assert.equal(b.snapshot().backendConnected, false);
+  b.subscribeGate = null; const off2 = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  const revision = b.snapshot().revision;
+  old({ kind: 'removed', session_id: b.session, revision: 999, topic: TOPIC });
+  assert.equal(b.snapshot().revision, revision); assert.equal(b.snapshot().states[KEY].phase, 'loading'); off2();
 });
 
-test('#799 the production timeout accepts a correlated routes response after 180 seconds', async (t) => {
-  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
-  const control = bridge({ publish({ control: current, request }) {
-    assert.equal(request.routes, true);
-    setTimeout(() => current.emit(networkmap(request.transaction)), 180_000);
-  } });
-  const refresh = refreshZ2mTopology(control.hass, TOPIC);
-  await turn();
-  t.mock.timers.tick(150_000);
-  await turn();
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].phase, 'loading');
-  assert.equal(refreshZ2mTopology(control.hass, TOPIC), refresh, 'the long scan is still deduplicated');
-  assert.equal(control.publishes.length, 1);
-  t.mock.timers.tick(30_000);
-  await refresh;
-  const successful = zigbeeTopologyRuntimeSnapshot(control.hass);
-  assert.equal(successful.states[KEY].phase, 'ready');
-  assert.equal(successful.states[KEY].obtainedAt, 1_180_000);
-  assert.deepEqual(successful.topologies[0].nodes.map((node) => node.ieee), [COORDINATOR, DEVICE]);
-  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
-  assert.equal(control.listeners.size, 0);
+test('#800 detach during capability prevents late subscribe/start; identity changes invalidate pending results', async () => {
+  const b = backend(); b.capabilityGate = deferred();
+  const off = b.observe(), started = refreshZ2mTopology(b.hass, TOPIC); off();
+  b.capabilityGate.resolve({ zigbee_scan_api: 1 }); await started; await turn();
+  assert.equal(b.callbacks.length, 0); assert.equal(b.publications, 0);
+  b.capabilityGate = null; const off2 = b.observe(); await turn();
+  b.commandGate = deferred(); const pending = refreshZ2mTopology(b.hass, TOPIC);
+  await turn(); const other = { ...b.hass, user: { id: 'admin2', is_admin: true } };
+  assert.deepEqual(zigbeeTopologyRuntimeSnapshot(other).states, {});
+  b.commandGate.resolve({ kind: 'state', session_id: b.session, revision: 20, provider: {
+    topic: TOPIC, job_id: 'old-user-job', phase: 'ready', elapsed_ms: 2, result: map, obtained_at: 8 } });
+  await pending; assert.deepEqual(zigbeeTopologyRuntimeSnapshot(other).states, {}); off2();
 });
 
-test('#799 the ten-minute budget includes subscription setup, retains cache, and rejects late results', async (t) => {
-  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
-  let failing = false;
-  const control = bridge({
-    subscribe({ unsubscribe }) {
-      if (failing) return new Promise((resolve) => setTimeout(() => resolve(unsubscribe), 9_000));
-    },
-    publish({ control: current, request }) {
-      if (!failing) current.emit(networkmap(request.transaction));
-    },
-  });
-  await refreshZ2mTopology(control.hass, TOPIC);
-  const successful = zigbeeTopologyRuntimeSnapshot(control.hass);
-  failing = true;
-  const refresh = refreshZ2mTopology(control.hass, TOPIC);
-  assert.equal(refreshZ2mTopology(control.hass, TOPIC), refresh);
-  t.mock.timers.tick(9_000);
-  await turn();
-  t.mock.timers.tick(9_000);
-  await turn();
-  assert.equal(control.publishes.length, 2);
-  const oldCallback = control.listeners.get(RESPONSE);
-  const oldTransaction = control.publishes[1].transaction;
-  t.mock.timers.tick(581_999);
-  await turn();
-  const loading = zigbeeTopologyRuntimeSnapshot(control.hass);
-  assert.equal(loading.states[KEY].phase, 'loading');
-  assert.equal(loading.topologies[0], successful.topologies[0]);
-  assert.equal(loading.states[KEY].obtainedAt, successful.states[KEY].obtainedAt);
-  t.mock.timers.tick(1);
-  await refresh;
-  const timedOut = zigbeeTopologyRuntimeSnapshot(control.hass);
-  assert.equal(Date.now(), 1_600_000);
-  assert.equal(timedOut.states[KEY].error, 'timeout');
-  assert.equal(timedOut.states[KEY].stale, true);
-  assert.equal(timedOut.states[KEY].obtainedAt, successful.states[KEY].obtainedAt);
-  assert.equal(timedOut.topologies[0], successful.topologies[0]);
-  assert.deepEqual(control.cleanups, [INFO, RESPONSE, INFO, RESPONSE]);
-  assert.equal(control.listeners.size, 0);
-  oldCallback({ retain: false, payload: JSON.stringify(networkmap(oldTransaction, OTHER)) });
-  await turn();
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, timedOut.revision);
-  failing = false;
-  await refreshZ2mTopology(control.hass, TOPIC);
-  const recovered = zigbeeTopologyRuntimeSnapshot(control.hass);
-  assert.equal(recovered.states[KEY].phase, 'ready');
-  assert.equal(recovered.states[KEY].obtainedAt, 1_600_000);
-  assert.notEqual(recovered.states[KEY].stale, true);
-  assert.equal(control.publishes.length, 3);
+test('#800 non-admin and old backend fail closed without subscribing, starting, cancelling or MQTT', async () => {
+  const b = backend(); b.hass.user.is_admin = false;
+  const off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC); await cancelZ2mTopology(b.hass, TOPIC, 'job');
+  assert.equal(b.calls.length, 0); assert.equal(b.callbacks.length, 0);
+  assert.deepEqual(b.snapshot().topologies, []); off();
+  const old = backend(); old.capability = undefined; const release = old.observe();
+  await refreshZ2mTopology(old.hass, TOPIC); await turn();
+  assert.equal(old.snapshot().backendError, 'backend_required'); assert.equal(old.callbacks.length, 0);
+  assert.equal(old.calls.length, 1); assert.equal(old.publications, 0); release();
 });
 
-for (const blockedTopic of [INFO, RESPONSE]) {
-  test(`#799 production ${blockedTopic} subscription stops after ten seconds and cleans late completion`, async (t) => {
-    t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
-    const pending = deferred();
-    let lateUnsubscribe;
-    const control = bridge({ subscribe({ topic, unsubscribe }) {
-      if (topic !== blockedTopic) return;
-      lateUnsubscribe = unsubscribe;
-      return pending.promise;
-    } });
-    const refresh = refreshZ2mTopology(control.hass, TOPIC);
-    await turn();
-    t.mock.timers.tick(9_999);
-    await turn();
-    assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].phase, 'loading');
-    t.mock.timers.tick(1);
-    await refresh;
-    const timedOut = zigbeeTopologyRuntimeSnapshot(control.hass);
-    assert.equal(timedOut.states[KEY].error, 'timeout');
-    assert.equal(control.publishes.length, 0);
-    pending.resolve(lateUnsubscribe);
-    await turn();
-    assert.equal(control.listeners.size, 0);
-    assert.equal(control.cleanups.length, blockedTopic === INFO ? 1 : 2);
-    assert.equal(new Set(control.cleanups).size, control.cleanups.length);
-    assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, timedOut.revision);
-  });
-}
-
-test('#799 production publish stops after ten seconds even with an early map response', async (t) => {
-  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
-  const published = deferred();
-  let responseCallback;
-  const control = bridge({ publish({ control: current, request }) {
-    responseCallback = current.listeners.get(RESPONSE);
-    current.emit(networkmap(request.transaction));
-    return published.promise;
-  } });
-  const refresh = refreshZ2mTopology(control.hass, TOPIC);
-  await turn();
-  t.mock.timers.tick(9_999);
-  await turn();
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].phase, 'loading');
-  t.mock.timers.tick(1);
-  await refresh;
-  const timedOut = zigbeeTopologyRuntimeSnapshot(control.hass);
-  assert.equal(timedOut.states[KEY].error, 'timeout');
-  assert.equal(timedOut.topologies.length, 0);
-  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
-  published.resolve();
-  responseCallback({ retain: false, payload: JSON.stringify(networkmap(control.publishes[0].transaction)) });
-  await turn();
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, timedOut.revision);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).topologies.length, 0);
+test('#800 new server reset removes only Z2M cache; foreign/older/duplicate messages cannot roll back', async () => {
+  const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 25 });
+  const good = b.snapshot(), event = b.envelope(b.jobs.get(TOPIC));
+  b.emit({ ...event, revision: event.revision - 1, provider: { ...event.provider, phase: 'loading' } });
+  b.emit({ ...event, session_id: 'foreign', revision: 999 });
+  b.emit({ ...event, provider: { ...event.provider, elapsed_ms: 900000 } });
+  assert.equal(b.snapshot().revision, good.revision);
+  b.session = 'new-server'; b.revision = 0; b.jobs.clear(); b.reset();
+  assert.equal(b.snapshot().topologies.length, 0); assert.deepEqual(b.snapshot().states, {});
+  b.emit(event); assert.deepEqual(b.snapshot().states, {}); off();
 });
 
-test('#799 production retained bridge confirmation still stops after four seconds', async (t) => {
-  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 });
-  const control = bridge({ confirm: false, subscribe({ topic, callback }) {
-    if (topic === INFO) callback({ retain: false, payload: '{}' });
-  } });
-  const refresh = refreshZ2mTopology(control.hass, TOPIC);
-  await turn();
-  const lateInfo = control.listeners.get(INFO);
-  t.mock.timers.tick(3_999);
-  await turn();
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).states[KEY].phase, 'loading');
-  t.mock.timers.tick(1);
-  await refresh;
-  const timedOut = zigbeeTopologyRuntimeSnapshot(control.hass);
-  assert.equal(timedOut.states[KEY].error, 'timeout');
-  assert.equal(control.publishes.length, 0);
-  assert.deepEqual(control.cleanups, [INFO, RESPONSE]);
-  lateInfo({ retain: true, payload: '{}' });
-  await turn();
-  assert.equal(zigbeeTopologyRuntimeSnapshot(control.hass).revision, timedOut.revision);
+test('#800 evicted topic removed from states/maps; malformed backend map cannot replace last-good', async () => {
+  const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 27 });
+  b.update(TOPIC, { result: { garbage: true }, obtained_at: 28 });
+  assert.equal(b.snapshot().topologies[0].obtainedAt, 27);
+  b.emit({ kind: 'removed', session_id: b.session, revision: ++b.revision, topic: TOPIC });
+  assert.equal(b.snapshot().topologies.length, 0); assert.equal(b.snapshot().states[KEY], undefined); off();
+});
+
+test('#800 admin identity replacement on one connection clears maps and old callbacks, not server jobs', async () => {
+  const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 27 });
+  const old = b.callbacks[0];
+  const other = { ...b.hass, user: { id: 'admin2', is_admin: true } };
+  assert.deepEqual(zigbeeTopologyRuntimeSnapshot(other).topologies, []);
+  assert.equal(b.cleanups, 1);
+  const release = subscribeZigbeeTopology(other, () => {}); await turn();
+  const fresh = zigbeeTopologyRuntimeSnapshot(other);
+  assert.equal(fresh.topologies[0].obtainedAt, 27, 'new identity explicitly reads shared server last-good');
+  old({ kind: 'reset', session_id: 'old-owner', revision: 500, topics: [] });
+  assert.equal(zigbeeTopologyRuntimeSnapshot(other).revision, fresh.revision);
+  assert.equal(b.publications, 1); off(); release();
+});
+
+test('#800 mutable admin revocation during lazy capability prevents any late read/start', async () => {
+  const b = backend(); b.capabilityGate = deferred();
+  const off = b.observe(), started = refreshZ2mTopology(b.hass, TOPIC);
+  b.hass.user.is_admin = false;
+  b.capabilityGate.resolve({ zigbee_scan_api: 1 }); await started; await turn();
+  assert.equal(b.callbacks.length, 0); assert.equal(b.publications, 0);
+  assert.deepEqual(b.snapshot().states, {}); off();
+});
+
+test('#800 missing API subscription is localized and ready retries observation without starting scan', async () => {
+  const b = backend(); const original = b.hass.connection.subscribeMessage;
+  b.hass.connection.subscribeMessage = async () => { throw { code: 'unknown_command' }; };
+  const off = b.observe(); await turn();
+  assert.equal(b.snapshot().backendError, 'backend_required');
+  b.hass.connection.subscribeMessage = original; b.events.get('ready')(); await turn();
+  assert.equal(b.snapshot().backendError, undefined); assert.equal(b.snapshot().backendConnected, true);
+  assert.equal(b.publications, 0); off();
+});
+
+test('#800 stale action response cannot roll back later streamed terminal state', async () => {
+  const b = backend(), off = b.observe(); await turn();
+  b.commandGate = deferred(); const pending = refreshZ2mTopology(b.hass, TOPIC); await turn();
+  const provider = { topic: TOPIC, job_id: 'accepted', phase: 'ready', elapsed_ms: 900000, result: map, obtained_at: 56 };
+  b.revision = 10; b.emit(b.envelope(provider));
+  b.commandGate.resolve({ kind: 'state', session_id: b.session, revision: 9,
+    provider: { ...provider, phase: 'loading', elapsed_ms: 0 } });
+  await pending; assert.equal(b.snapshot().states[KEY].phase, 'ready'); assert.equal(b.snapshot().states[KEY].elapsedMs, 900000); off();
 });
