@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.80.0-beta.3 — 2026-10-05
+
 - Zigbee2MQTT map scans now continue in Home Assistant when settings or the
   browser are closed. Reopening restores the elapsed timer and scan stage;
   after 10 minutes you can cancel House Plan's wait without stopping Zigbee2MQTT

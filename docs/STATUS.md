@@ -17,17 +17,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Item | State |
 |---|---|
 | Generated | 2026-10-05 — rerun `node scripts/status-snapshot.mjs` for the current tree |
-| Version | **1.80.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
+| Version | **1.80.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.79.0` |
 | Latest prerelease tag | `v1.80.0-beta.2` |
-| Tests | Node unit 3610 · pure backend 423 · HA-harness backend 330 · browser smokes 296 (`npm run inventory`) |
+| Tests | Node unit 3611 · pure backend 423 · HA-harness backend 330 · browser smokes 296 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
 
 | Item | State |
 |---|---|
-| Current local cycle | **#800 implementation and independent local review** — owner approved background Zigbee2MQTT scans and the next beta after completion. Full exact-SHA Validate and artifact verification precede publication. `main` remains on stable v1.79.0. |
+| Current local cycle | **v1.80.0-beta.3 candidate** — #800 background Zigbee2MQTT scans passed owner-authorized independent local review and are merged into `dev`. Full exact-SHA Validate and artifact verification precede publication. `main` remains on stable v1.79.0. |
 | Branches | `main` carries stable releases only; pre-release tags point at `dev`. Work lands on `dev`, which is equal to or ahead of `main`, never behind. |
 | Zigbee routes | #798 replaces inferred neighbour trees with integration-reported end-parent and active coordinator next-hop evidence. Unknown/conflicting routes are not guessed; stale/partial snapshots remain labelled. Solid arrows have a separate 0–255 palette; ordinary device LQI colours are unchanged. |
 | Zigbee scan lifecycle | #800 replaces #799's 10-minute total budget with integration-owned background jobs: closing the browser does not stop waiting; after 10 minutes an exact-job cancel becomes available. MQTT setup/publish caps and the retained-info check remain bounded. Tests cover 15-minute success, cross-client restore, cancel races, stale-cache retention and reload on a live HA connection. |
