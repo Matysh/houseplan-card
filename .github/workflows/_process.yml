@@ -83,7 +83,9 @@ jobs:
           # снимок события об этом не знает, а исполнять отозванный запрос нельзя.
           current=$(gh issue view "$NUM" --repo "$REPO" --json labels --jq '.labels[].name')
           labels=$(printf '%s\n' "$current" | paste -sd, -)
-          has() { printf '%s\n' "$current" | grep -qx -- "$1"; }
+          # Не grep -q: раннее закрытие pipe даёт printf SIGPIPE, а pipefail
+          # превращает найденную метку в ложный отказ (#793). Читаем до конца.
+          has() { printf '%s\n' "$current" | grep -Fx -- "$1" > /dev/null; }
           BLOCKED=false; EXHAUSTED=false
           has blocked && BLOCKED=true
           has review-4 && EXHAUSTED=true

@@ -1106,10 +1106,43 @@ test('r1 #695: guard даёт инфраструктуре без треково
   ];
   for (const [input, limit, why] of cases) {
     const r = runGuard(t, input);
-    assert.equal(r.status, 0, `${why}: ${r.stderr}`);
-    assert.equal(r.out.stage, 'code', why);
+    const diagnostic = `${why}\n${r.stdout}\n${r.stderr}`;
+    assert.equal(r.status, 0, diagnostic);
+    assert.equal(r.out.stage, 'code', diagnostic);
     assert.equal(r.out.limit, String(limit), why);
     assert.equal(r.out.labels, input.labels.join(','), `${why}: метки для prepare`);
+  }
+});
+
+test('#793: guard не принимает ранний выход поиска за снятие метки', (t) => {
+  if (process.platform === 'win32' || spawnSync('bash', ['--version']).status !== 0) { t.skip('bash недоступен'); return; }
+  // Больше ёмкости обычного pipe: совпадение в начале вынуждает grep -q
+  // закрыть чтение, пока printf ещё пишет. Без этого свидетель зависит от
+  // планировщика и может месяцами оставаться зелёным на прежнем коде.
+  const labels = ['S7-code-review', 'track:ask', ...Array.from({ length: 12_000 }, (_, i) => `n${i}`)];
+  const r = runGuard(t, { labels, compare: ['scripts/x.mjs'] });
+  const diagnostic = `${r.stdout}\n${r.stderr}`;
+  assert.equal(r.status, 0, diagnostic);
+  assert.equal(r.out.stage, 'code', diagnostic);
+  assert.equal(r.out.limit, '4', 'явная track:ask остаётся приоритетной');
+  assert.equal(r.out.labels, labels.join(','), 'весь снимок меток передаётся prepare');
+  assert.doesNotMatch(r.stdout, /запрос отозван|метка .* уже снята/);
+});
+
+test('#793: guard по-прежнему отказывает при снятой метке и блокировках', (t) => {
+  if (process.platform === 'win32' || spawnSync('bash', ['--version']).status !== 0) { t.skip('bash недоступен'); return; }
+  const cases = [
+    [['track:ask'], /запрос отозван/],
+    [['S7-code-review-extra', 'track:ask'], /запрос отозван/],
+    [['S7-code-review', 'blocked'], /стоит blocked/],
+    [['S7-code-review', 'review-4'], /стоит review-4/],
+  ];
+  for (const [labels, reason] of cases) {
+    const r = runGuard(t, { labels, compare: ['scripts/x.mjs'] });
+    const diagnostic = `${labels.join(',')}\n${r.stdout}\n${r.stderr}`;
+    assert.equal(r.status, 0, diagnostic);
+    assert.equal(r.out.stage, '', diagnostic);
+    assert.match(r.stdout, reason);
   }
 });
 
