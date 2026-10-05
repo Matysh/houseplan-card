@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.80.0-beta.1 — 2026-10-05
+
 - Zigbee hover arrows now use parents and active next hops reported by ZHA or
   Zigbee2MQTT instead of an inferred neighbour tree. Unknown, stale or incomplete
   routes are identified explicitly; all arrows are solid, with a full-range LQI
