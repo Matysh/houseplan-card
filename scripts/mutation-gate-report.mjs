@@ -225,7 +225,9 @@ export function parseShardLogs(logs, knownIds) {
     else if (INTERRUPTED_OUTCOMES.has(outcome) || !summary) status = 'interrupted';
     else if (summary.caught !== summary.total || (outcome !== undefined && outcome !== 'success')) status = 'failed';
     else status = 'ok';
-    shards.push({ shard, status });
+    // #795: отмена может прийти ПОСЛЕ итоговой строки. Сохраняем оба факта:
+    // итог не превращает cancelled в успех, отмена не стирает итог из отчёта.
+    shards.push({ shard, status, outcome, summary });
   }
   return {
     escaped: [...escaped].sort(),
@@ -263,7 +265,7 @@ export function mutationGateReport(input) {
   for (const s of parsed.shards) {
     const label = s.status === 'ok' ? 'ok'
       : s.status === 'failed' ? '**красный**'
-        : s.status === 'interrupted' ? '**прерван — лог без итоговой строки (таймаут или отмена)**'
+        : s.status === 'interrupted' ? interruptedLabel(s)
           : '**артефакт не пришёл**';
     lines.push(`| ${s.shard} | ${label} |`);
   }
@@ -320,9 +322,8 @@ export function mutationGateReport(input) {
   const interrupted = parsed.shards.filter((s) => s.status === 'interrupted');
   if (interrupted.length) {
     lines.push('');
-    lines.push(`Шарды ${interrupted.map((s) => s.shard).join(', ')} прерваны до итоговой строки \`поймано N из M\` — `
-      + 'timeout-minutes job или отмена прогона (#604). Сбежавших там не разобрано: до них могли не дойти. '
-      + 'Если это таймаут — реестр вырос, шардов не хватает.');
+    lines.push('Прерванные шарды не дают полного доказательства: итоговая строка не заменяет успешный исход шага. '
+      + 'Причину cancelled (таймаут или ручная отмена) уточняют аннотации job; один лог её не доказывает.');
   }
   return {
     title: `${REPORT_TITLE_MARKER}: ${input.date}`,
@@ -330,6 +331,15 @@ export function mutationGateReport(input) {
     failed,
     ...parsed,
   };
+}
+
+function interruptedLabel(shard) {
+  const outcome = shard.outcome === 'cancelled' ? 'шаг cancelled (таймаут или отмена); '
+    : shard.outcome === 'skipped' ? 'шаг skipped; ' : '';
+  const detail = shard.summary
+    ? `итог в логе ${shard.summary.caught}/${shard.summary.total} не подтверждает успешное завершение`
+    : 'лог без итоговой строки; успешное завершение не доказано';
+  return `**прерван — ${outcome}${detail}**`;
 }
 
 /** Короткий текст для Telegram: заголовок, сбежавшие, ссылка. */
@@ -352,7 +362,7 @@ if (invokedDirectly) {
     return found ? found.slice(name.length + 3) : fallback;
   };
   const writeEvidence = value('write-evidence');
-  const shardCount = Number(value('shards', '6'));
+  const shardCount = Number(value('shards', '10'));
   if (writeEvidence) {
     const evidence = mutationShardEvidence({
       materialSha: value('sha'), materialTree: value('tree'), workflowSha: value('workflow-sha'),

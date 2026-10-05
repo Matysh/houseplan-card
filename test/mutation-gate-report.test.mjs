@@ -158,8 +158,8 @@ test('#604: лог без итоговой строки — прерван, а �
   assert.deepEqual(report.shards.map((s) => s.status), ['ok', 'interrupted']);
   assert.equal(report.failed, true, 'обрыв — отказ: до сбежавших могли не дойти');
   assert.deepEqual(report.escaped, [], 'сбежавших из обрывка не выдумывается');
-  assert.match(report.body, /\| 2 \| \*\*прерван — лог без итоговой строки \(таймаут или отмена\)\*\* \|/);
-  assert.match(report.body, /Шарды 2 прерваны до итоговой строки/);
+  assert.match(report.body, /\| 2 \| \*\*прерван — лог без итоговой строки; успешное завершение не доказано\*\* \|/);
+  assert.match(report.body, /Прерванные шарды не дают полного доказательства/);
   assert.match(telegramSummary(report, 'https://x/issues/9'), /2:interrupted/);
 });
 
@@ -174,6 +174,43 @@ test('#604: исход шага cancelled прерывает шард даже �
     { shard: 6, text: finished },
   ], KNOWN);
   assert.deepEqual(parsed.shards.map((s) => s.status), ['interrupted', 'interrupted', 'failed', 'failed', 'ok', 'ok']);
+});
+
+test('#795: cancelled с итогами 194/194 остаётся отказом с точной причиной', () => {
+  const report = mutationGateReport({ ...meta, guards, logs: [
+    { shard: 4, text: 'поймано 194 из 194\n', outcome: 'cancelled' },
+  ] });
+  assert.equal(report.failed, true);
+  assert.equal(report.shards[0].status, 'interrupted');
+  assert.match(report.body, /шаг cancelled \(таймаут или отмена\)/);
+  assert.match(report.body, /итог в логе 194\/194 не подтверждает успешное завершение/);
+  assert.doesNotMatch(report.body, /без итоговой строки|до итоговой строки|Сбежавших там не разобрано/);
+  assert.match(telegramSummary(report, 'https://x/issues/795'), /4:interrupted/);
+});
+
+test('#795: причины прерывания не смешивают отмену, пропуск и отсутствие итогов', () => {
+  for (const [outcome, text, expected] of [
+    ['cancelled', 'ok   alpha-mutant: заявленный тест покраснел на мутанте\n', /шаг cancelled \(таймаут или отмена\); лог без итоговой строки/],
+    ['skipped', 'поймано 3 из 3\n', /шаг skipped; итог в логе 3\/3 не подтверждает успешное завершение/],
+    ['success', '', /лог без итоговой строки; успешное завершение не доказано/],
+  ]) {
+    const report = mutationGateReport({ ...meta, guards, logs: [{ shard: 1, text, outcome }] });
+    assert.equal(report.failed, true);
+    assert.match(report.body, expected);
+    if (outcome !== 'cancelled') assert.doesNotMatch(report.body, /таймаут или отмена/);
+  }
+});
+
+test('#795: десять evidence обязательны — девять или чужой десятый не доказывают весь реестр', () => {
+  const expected = { ...expectedEvidence, shardCount: 10 };
+  const rows = Array.from({ length: 10 }, (_, i) => evidenceRow(i + 1, { shardCount: 10, outcome: 'success' }));
+  assert.equal(validateMutationShardEvidence(rows, expected).ok, true);
+  const missing = validateMutationShardEvidence(rows.slice(0, 9), expected);
+  assert.equal(missing.ok, false);
+  assert.ok(missing.errors.includes('shard 10: evidence is missing'));
+  const foreign = validateMutationShardEvidence([...rows.slice(0, 9), evidenceRow(10, { shardCount: 10, materialSha: 'd'.repeat(40) })], expected);
+  assert.equal(foreign.ok, false);
+  assert.ok(foreign.errors.includes('shard 10: foreign material SHA'));
 });
 
 test('#604: evidence несёт исход шага, агрегатор отвергает прерванный шард как неполный', () => {
