@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.80.0-beta.2 — 2026-10-05
+
 - Fixed Zigbee2MQTT route-map updates timing out after 150 seconds on larger
   networks. House Plan now waits up to 10 minutes for the scan, while stalled
   MQTT setup or publishing still fails promptly ([#799](https://github.com/Matysh/houseplan-card/issues/799)).

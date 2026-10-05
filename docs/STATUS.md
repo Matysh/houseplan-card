@@ -17,17 +17,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Item | State |
 |---|---|
 | Generated | 2026-10-05 — rerun `node scripts/status-snapshot.mjs` for the current tree |
-| Version | **1.80.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
+| Version | **1.80.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.79.0` |
-| Latest prerelease tag | `v1.79.0-beta.7` |
-| Tests | Node unit 3602 · pure backend 423 · HA-harness backend 311 · browser smokes 295 (`npm run inventory`) |
+| Latest prerelease tag | `v1.80.0-beta.1` |
+| Tests | Node unit 3607 · pure backend 423 · HA-harness backend 311 · browser smokes 295 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
 
 | Item | State |
 |---|---|
-| Current local cycle | **Beta v1.80.0-beta.1 candidate** — integration-reported Zigbee routes, LED zoom-lighting optimization and source-coloured strip cores, plus test/process fixes. Exact-SHA full gates precede publication; `main` remains on stable v1.79.0. |
+| Current local cycle | **Beta v1.80.0-beta.2 candidate** — #799 fixes premature timeout of long Zigbee2MQTT route scans. Owner-authorized express local checks; full exact-SHA Validate and artifact verification precede publication. `main` remains on stable v1.79.0. |
 | Branches | `main` carries stable releases only; pre-release tags point at `dev`. Work lands on `dev`, which is equal to or ahead of `main`, never behind. |
 | Zigbee routes | #798 replaces inferred neighbour trees with integration-reported end-parent and active coordinator next-hop evidence. Unknown/conflicting routes are not guessed; stale/partial snapshots remain labelled. Solid arrows have a separate 0–255 palette; ordinary device LQI colours are unchanged. |
 | Zigbee scan deadline | #799 gives route-table scans one 10-minute total budget, with separate 10-second MQTT setup/publish caps and the existing 4-second retained-info check. Fake-clock regressions cover late success, hard expiry, stale-cache retention and cleanup. |
