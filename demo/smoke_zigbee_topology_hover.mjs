@@ -962,7 +962,11 @@ for (const scale of [0.5, 1, 2]) {
     const root = card.shadowRoot || card.renderRoot;
     window.__zigbeeOutlineProbeStyle.textContent = `[data-hp-zigbee-outline-probe] {
       transform: scale(${scale}) !important; transform-origin: 0 0 !important; background: #fff !important;
-    }`;
+    }
+    /* #802: isolate route ink. At scale=.5 the ordinary pointer tooltip can
+       cover the target arrow; its dark background is not outline coverage.
+       Real tooltip/badge coexistence is witnessed in smoke_zigbee_tooltip_layout. */
+    [data-hp-live-tip] { display: none !important; }`;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const overlay = root.querySelector('hp-zigbee-topology-overlay');
     const svg = overlay.shadowRoot.querySelector('svg');
