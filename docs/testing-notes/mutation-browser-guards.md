@@ -6,6 +6,11 @@ The guideline is `200` (#699: a guideline, not a wall); `mutation-gate --check`,
 must be added deliberately under one reason below, and its mutant `because` must explain
 the concrete browser-only invariant.
 
+`test/mutation-gate.test.mjs` checks each category count against its listed IDs,
+the total against the browser guards in `MUTANTS`, and both guideline numbers
+against `BROWSER_GUARD_LIMIT` (#767). Category names must agree between the table
+and inventory; each current browser guard ID must occur exactly once.
+
 Converted witnesses are not listed here: their registry guard names an explicit `node --test`
 suite. The original #659 conversions also use `test/mutation-browser-offload.test.mjs`;
 new behavioral witnesses execute the consumer directly where possible. Catching the mutant

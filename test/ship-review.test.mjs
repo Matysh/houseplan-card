@@ -1,5 +1,5 @@
 // #696, PROCESS.md §11.7: задачи track:ship сливаются без ревью модели; их код
-// читает пакетное ревью диапазона перед бетой, и гейт беты требует документ.
+// читает пакетное ревью ночью и по дельте перед бетой; гейт беты требует покрытие.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
@@ -619,6 +619,8 @@ test('#727 AC2/AC5 _ship-review.yml на настоящем bash: ночь чи�
   const bogus = { high: 0, medium: 1, low: 0, summary: 'ok', patches: '701:' + 'd'.repeat(40) };
   const published = box.publish(first, bogus, { TAG: 'nightly' });
   assert.equal(published.status, 0, published.stderr + published.stdout);
+  assert.match(published.summary, /^### Ночное пакетное ревью ship$/m);
+  assert.doesNotMatch(published.summary, /Предрелизное|Пакетное ревью ship nightly/);
   const text = box.git(box.work, 'show', `origin/dev:${nightDoc}`);
   const block = parseAnchorBlock(text);
   assert.equal(block.mode, 'nightly');
@@ -692,6 +694,20 @@ test('#727 AC2/AC5 _ship-review.yml на настоящем bash: ночь чи�
   const foreign = box.prepare({ TAG: 'nightly', CANDIDATE: side });
   assert.notEqual(foreign.status, 0);
   assert.match(foreign.stderr, /не предок origin\/dev/);
+});
+
+test('#767: публикация предрелизного ship-ревью называет режим и тег в сводке', (t) => {
+  if (!hasTools()) { t.skip('bash/jq/sha256sum недоступны'); return; }
+  const box = shipSandbox(t);
+  box.issue(701);
+  box.commit({ 'a.mjs': 'export const a = 1;\n' }, 'fix: a (#701)\n\nIssue: #701\nUser-Visible: no');
+  box.push();
+  const prepared = box.prepare({ TAG: 'v1.1.0-beta.1' });
+  assert.equal(prepared.status, 0, prepared.stderr);
+  const published = box.publish(prepared, { high: 0, medium: 0, low: 0, summary: 'ok' }, { TAG: 'v1.1.0-beta.1' });
+  assert.equal(published.status, 0, published.stderr + published.stdout);
+  assert.match(published.summary, /^### Предрелизное пакетное ревью ship v1\.1\.0-beta\.1$/m);
+  assert.doesNotMatch(published.summary, /Ночное|nightly/);
 });
 
 test('#727 AC8 _ship-review.yml на настоящем bash: строка о High — только ночью и только при High > 0, без повтора', (t) => {

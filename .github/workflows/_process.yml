@@ -1029,8 +1029,8 @@ jobs:
       contents: read
       issues: write
     needs: [guard, prepare]
-    # #696: `ship` в рамках сливается без модели — пакетное ревью диапазона
-    # перед бетой (PROCESS.md §11.7, ship-review.yml).
+    # #696/#727: `ship` в рамках сливается без модели — пакетное ревью ночью;
+    # перед бетой проверка покрытия и непрочитанная дельта (PROCESS.md §11.7).
     if: needs.prepare.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
     runs-on: ubuntu-24.04
     concurrency:

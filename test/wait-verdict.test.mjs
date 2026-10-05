@@ -135,7 +135,7 @@ test('#726 AC7: reclassify доставляется автору видом recl
   const comment = { id: 'r', createdAt: '2026-10-01T10:05:00Z', body };
   const state = stateOf(snap(['S3-spec', 'track:ask'], [comment]));
   assert.equal(state.lastEvent.kind, 'reclassify');
-  assert.match(state.lastEvent.text, /трек повышен до ask: полное ТЗ в теле issue, код класса A не пушить до S5/);
+  assert.equal(state.lastEvent.text, 'конвейер: трек повышен до ask: полное ТЗ в теле issue, всю ветку (включая тесты и документы) не пушить до S5');
   // Метка сменилась тем же прогоном — вердикт (0) и текст маршрута в строках.
   const moved = decide(stateOf(snap(['S7-code-review', 'track:show'])), state);
   assert.equal(moved.code, 0);

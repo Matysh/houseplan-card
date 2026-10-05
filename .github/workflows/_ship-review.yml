@@ -375,7 +375,11 @@ jobs:
                 commit -q -F "$msg"
             git diff --name-only "origin/dev...HEAD" | node scripts/review-doc-guard.mjs
             if git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev 2> "$push_err"; then
-              echo "### Пакетное ревью ship $TAG" >> "$GITHUB_STEP_SUMMARY"
+              if [ "$MODE" = "nightly" ]; then
+                echo "### Ночное пакетное ревью ship" >> "$GITHUB_STEP_SUMMARY"
+              else
+                echo "### Предрелизное пакетное ревью ship $TAG" >> "$GITHUB_STEP_SUMMARY"
+              fi
               echo "Задачи $ISSUES · High $high · Medium $medium · Low $low — \`$DOC\` в dev." >> "$GITHUB_STEP_SUMMARY"
               echo "::notice::$DOC опубликован: High $high · Medium $medium · Low $low"
               exit 0

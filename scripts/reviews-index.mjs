@@ -28,8 +28,9 @@ import { isMainModule } from './spawn-portable.mjs';
 export const INDEX_FILE = 'INDEX.md';
 const DOC_NAME = /^(CODE|SPEC)-REVIEW-(?:issue-)?(\d+)(?:-r(\d+))?(?:-([a-z0-9-]+))?\.md$/i;
 const RELEASE_DOC_NAME = /^RELEASE-REVIEW-(v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))\.md$/i;
-// #696: пакетное ревью ship-задач перед бетой (PROCESS.md §11.7) — по тегу беты.
-// #727: ночной документ `SHIP-REVIEW-<база>-dev-<sha12>.md` — тег здесь база диапазона.
+// #696/#727: пакетное ревью ship — ночью заранее; перед бетой проверка покрытия
+// и ревью непрочитанной дельты (PROCESS.md §11.7). Документ дельты — по тегу беты;
+// ночной `SHIP-REVIEW-<база>-dev-<sha12>.md` — по базе диапазона и SHA головы dev.
 const SHIP_DOC_NAME = /^SHIP-REVIEW-(v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-beta\.(?:0|[1-9]\d*))?)(-dev-[0-9a-f]{12})?\.md$/i;
 const COLOUR = {
   'зелёный': 'зелёный', 'зеленый': 'зелёный', green: 'зелёный',
