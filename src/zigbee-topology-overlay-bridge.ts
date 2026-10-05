@@ -15,11 +15,12 @@ export function renderZigbeeTopologyOverlay(input: {
   zoom: number;
   view: boolean;
   kiosk: boolean;
+  onLayout?: () => void;
 }): TemplateResult | typeof nothing {
   if (!input.view || input.kiosk || input.hass?.user?.is_admin !== true
       || !zigbeeTopologySettingsOf(input.settings).enabled) return nothing;
   void import('./hp-zigbee-topology-overlay');
   return html`<hp-zigbee-topology-overlay aria-hidden="true" .hass=${input.hass} .devices=${input.devices}
     .registry=${input.registry} .currentSpace=${input.currentSpace} .spaces=${input.spaces}
-    .viewKey=${input.viewKey} .zoom=${input.zoom}></hp-zigbee-topology-overlay>`;
+    .viewKey=${input.viewKey} .zoom=${input.zoom} .onLayout=${input.onLayout}></hp-zigbee-topology-overlay>`;
 }

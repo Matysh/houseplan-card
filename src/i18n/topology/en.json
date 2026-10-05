@@ -41,6 +41,7 @@
   "route_device_not_on_plan": "Device is not on the plan",
   "route_coordinator_not_on_plan": "coordinator is not on the plan",
   "route_other_space": "another space",
+  "route_other_space_named": "{space} ({name})",
   "route_device_not_on_plan_named": "Device is not on the plan ({name})",
   "route_unknown": "No route data",
   "route_stale": "Stale data",

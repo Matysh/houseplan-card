@@ -147,6 +147,13 @@ and bubbles are above room names and unrelated device markers; the complete
 source and locally connected marker shells stay above the topology. The layer
 remains pointer-transparent and therefore does not change any existing action.
 
+The outgoing remote-space caption includes the destination device name in
+parentheses when known (#802). While actual diagnostic text badges are visible,
+the matching device's pointer tooltip moves to a free part of the visible stage;
+it hides only if no full non-overlapping placement fits and returns when space
+becomes available. Marker positions and local routes do not move. Focus-only
+tooltips, rooms and devices without diagnostic text retain their usual behaviour.
+
 Removed from this mode (they move, not die):
 - icon dragging ("drag anywhere", v1.9 — consciously reversed),
 - room-label dragging,

@@ -30,6 +30,12 @@ topology benchmark must use confirmed route evidence, not an empty graph.
 Neighbour-only raw fixtures remain negative controls; do not add guessed
 routes to make them draw. Ordinary LQI badges keep their separate palette.
 
+For tooltip layout (#802), also run `node demo/smoke_zigbee_tooltip_layout.mjs`:
+it uses real mouse movement and screen-space overlap oracles, including a
+negative control at the previous cursor-relative position. DOM presence alone
+does not prove either caption is readable. A small-card fallback must restore
+without requiring a new pointerover; use the actual lazy-overlay update path.
+
 For warm-remount changes, `node demo/smoke_warm_mode_adoption.mjs` records
 intermediate camera frames and screen-space points, observes every memo size
 publication, and exercises delayed permission/runtime races and a touch floor

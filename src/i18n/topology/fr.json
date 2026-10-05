@@ -41,6 +41,7 @@
   "route_device_not_on_plan": "appareil absent du plan",
   "route_coordinator_not_on_plan": "coordinateur absent du plan",
   "route_other_space": "autre espace",
+  "route_other_space_named": "{space} ({name})",
   "route_device_not_on_plan_named": "Appareil absent du plan ({name})",
   "route_unknown": "Aucune donnée de route",
   "route_stale": "Données anciennes",

@@ -634,6 +634,16 @@ Unknown/partial/stale captions never trigger network work; one expiry timer
 updates age without requiring another HA event. Persistence and privacy:
 [CONFIG-COMPATIBILITY](CONFIG-COMPATIBILITY.md).
 
+Zigbee caption layout (#802) notifies the lazy live-hover runtime after the
+overlay's DOM update and coalesced active-hover resize/scroll/camera changes.
+Only the matching pointer device tooltip avoids actual text-caption rectangles
+and its source marker, in screen coordinates inside stage∩viewport. A pure
+candidate search finds the closest feasible full rectangle or hides the tooltip
+until space returns. It does not move markers, start scans or render the card.
+Keyboard tooltips retain their own path. Pointer departure/disconnect disposes
+the active layout observer/frame; remote caption wrapping updates its short
+arrow endpoint in the same post-render pass.
+
 ## Live viewport: a transform per frame, a `viewBox` on a budget (#531, #579)
 
 Rewriting the SVG `viewBox` re-rasterises the whole scene, so per-frame writes

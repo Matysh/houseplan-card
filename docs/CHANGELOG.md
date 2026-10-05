@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Zigbee links to another space now name the destination device too. Device
+  tooltips move around network badges and give them priority only when the card
+  is too small to show both ([#802](https://github.com/Matysh/houseplan-card/issues/802)).
+
 ## v1.80.0-beta.3 — 2026-10-05
 
 - Zigbee2MQTT map scans now continue in Home Assistant when settings or the
