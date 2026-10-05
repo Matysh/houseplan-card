@@ -650,7 +650,11 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
  *   подсказку «Переход на этаж» (`stairs-view.ts`) и три строки словарей.
  *   Центр оставляет 1 015 Б сверху и 985 Б до нижней границы полосы.
  */
-export const LAZY_EDITOR_GZIP_CEILING = 240_857;
+// #798: provider-confirmed route resolution and honest snapshot status grow the
+// lazy editor to 242 382 B gzip. The old ceiling + band left only 475 B, below
+// the existing 500-B noise guard. This centre leaves 1 018 B; neither the band
+// nor the absolute initial-View budget changes (issue records the measurement).
+export const LAZY_EDITOR_GZIP_CEILING = 241_400;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
