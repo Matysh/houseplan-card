@@ -523,7 +523,7 @@ test('#730 _ship-review.yml на настоящем bash: dev ушёл впер�
   assert.deepEqual(r.sleeps, ['10']);
   assert.match(r.stdout, /::warning::dev ушёл вперёд — попытка 1 из 3/);
   assert.match(r.stderr, /git push отклонён — stale \(fetch first\)/, 'разбор отказа — кодом слияния');
-  assert.match(r.summary, /^### Пакетное ревью ship v1\.79\.0-beta\.1\nЗадачи 731,733 · High 0 · Medium 1 · Low 0 — `docs\/reviews\/SHIP-REVIEW-v1\.79\.0-beta\.1\.md` в dev\./m);
+  assert.match(r.summary, /^### Предрелизное пакетное ревью ship v1\.79\.0-beta\.1\nЗадачи 731,733 · High 0 · Medium 1 · Low 0 — `docs\/reviews\/SHIP-REVIEW-v1\.79\.0-beta\.1\.md` в dev\./m);
   assert.doesNotMatch(r.summary, /отклонён/);
   assert.equal(git(box.origin, 'log', '-1', '--format=%B', 'dev'),
     `docs: ship review for ${BETA}\n\nПакетное ревью задач track:ship перед бетой (PROCESS.md §11.7).\n`
@@ -585,7 +585,7 @@ for (const [label, stderr, kind, reason] of [
       assert.ok(r.stderr.includes(reason));
     }
     assert.match(r.summary, /Ответ git:\n\n```\n[\s\S]+\n```\n$/);
-    assert.doesNotMatch(r.summary, /Пакетное ревью ship v1/, 'успеха в сводке нет');
+    assert.doesNotMatch(r.summary, /Предрелизное пакетное ревью ship v1/, 'успеха в сводке нет');
     noisySecretsGone(r);
     assert.equal(git(box.origin, 'rev-parse', 'dev'), before, 'dev не тронут');
   });
