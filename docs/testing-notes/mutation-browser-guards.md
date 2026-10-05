@@ -22,6 +22,13 @@ requires a non-null marker absent from runtime devices, whereas the browser's
 exact surviving strip/owner and its live light; the browser smoke still covers
 unbound-strip visibility and cold loading.
 
+`glow-static-led-release-skipped` moved to `test/space-card-led-disconnect.test.mjs`
+in #794: the real static-card callback must release populated LED state
+synchronously, before a detached render can hide missing teardown. A
+connection-only negative case suppresses late updates but retains its old
+lifecycle; the browser smoke retains visible fade coverage without claiming
+that transition events alone prove disposal.
+
 | Category | Count | Why a browser is still required |
 | --- | ---: | --- |
 | Performance threshold | 4 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
@@ -29,8 +36,8 @@ unbound-strip visibility and cold loading.
 | Paint, cascade and layer composition | 37 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 49 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 38 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 104 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **236 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 103 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **235 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -266,7 +273,6 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `floor-geometry-key-ignores-content`
 - `french-locale-wrong-dictionary`
 - `glow-barrier-render-pass-wiring-skipped`
-- `glow-static-led-release-skipped`
 - `glow-static-ready-after-disconnect`
 - `household-enter-stops-acting`
 - `household-marker-drops-keyboard-reach`

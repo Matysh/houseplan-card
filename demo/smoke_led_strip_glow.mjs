@@ -543,7 +543,10 @@ try {
   await page.waitForTimeout(750);
   const reconnected = await fadeSnapshot();
   checkFadeEvents('reconnected', reconnected);
-  check('#789: reconnect starts clean lifecycles and returns all four fields', reconnected.nodes.every(nodes =>
+  // #794: visible fade is a browser oracle, but events after reconnect can also
+  // finish an old entry. space-card-led-disconnect.test.mjs proves synchronous
+  // owner disposal independently, before a detached render can clean up.
+  check('#789: reconnect visibly fades and returns all four fields', reconnected.nodes.every(nodes =>
     nodes.every(node => node?.opacity === 1 && !node.leaving)), true);
   for (const exit of [
     { label: 'disabled pools', config: { space: 'f1', light_pools: false } },
