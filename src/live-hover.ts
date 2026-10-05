@@ -2,6 +2,8 @@ import { lqiColor } from './logic';
 import type { I18nKey } from './i18n';
 import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DevItem } from './types';
+import { placeDeviceTooltip } from './live-tip-placement';
+import { floatingViewport } from './floating-surface';
 
 export interface LiveTip {
   x: number;
@@ -40,7 +42,6 @@ interface DeviceTipHost extends LiveHoverHost {
   _spaceDisplayForRender: () => { showLqi?: boolean };
   _devicePresentation: (device: DevItem, showLqi: boolean) => ResolvedDevicePresentation;
   _notePointer: (event: PointerEvent) => void;
-  _showTip: (event: PointerEvent, title: string, meta: string) => void;
   _t: LiveHoverHost['_t'] & ((key: I18nKey) => string);
 }
 
@@ -70,7 +71,8 @@ export function showDevicePointerTip(value: object, event: PointerEvent, device:
   }
   const tip = deviceTipContent(host, device);
   host._deviceHits.hover(host.renderRoot, device.id);
-  host._showTip(event, tip.title, tip.meta);
+  host._tip = { x: event.clientX, y: event.clientY, ...tip, source: 'pointer', deviceId: device.id };
+  syncHouseplanHover(host);
 }
 
 export function showDeviceFocusTip(value: object, target: HTMLElement | null, device: DevItem): void {
@@ -160,6 +162,44 @@ const syncTip = (host: LiveHoverHost, root: ParentNode): void => {
   const maxTop = Math.max(margin, window.innerHeight - box.height - margin);
   element.style.left = `${Math.min(maxLeft, Math.max(margin, tip.x + gap))}px`;
   element.style.top = `${Math.min(maxTop, Math.max(margin, tip.y + gap))}px`;
+  avoidTopologyCaptions(root, element, tip);
+};
+
+/** Both layers are measured after paint in screen coordinates, including 2.5D. */
+const avoidTopologyCaptions = (root: ParentNode, element: HTMLElement, tip: LiveTip): void => {
+  if (tip.source !== 'pointer' || tip.room || !tip.deviceId) return;
+  const overlay = root.querySelector<HTMLElement>('hp-zigbee-topology-overlay');
+  if (overlay?.getAttribute('data-tooltip-owner') !== tip.deviceId) return;
+  const stage = root.querySelector<HTMLElement>('.stage');
+  if (!stage || !overlay.shadowRoot) return;
+  const viewport = floatingViewport(window);
+  const area = stage.getBoundingClientRect();
+  const left = Math.max(viewport.left, area.left);
+  const top = Math.max(viewport.top, area.top);
+  const right = Math.min(viewport.left + viewport.width, area.right);
+  const bottom = Math.min(viewport.top + viewport.height, area.bottom);
+  const captions = [...overlay.shadowRoot.querySelectorAll<HTMLElement>(
+    '.parent-bubble,.remote,.route-status',
+  )].map((node) => node.getBoundingClientRect()).filter((rect) => rect.width > 0 && rect.height > 0
+    && rect.right > left && rect.left < right && rect.bottom > top && rect.top < bottom);
+  if (!captions.length) return;
+  const marker = [...root.querySelectorAll<HTMLElement>('[data-hp="device"]')]
+    .find((node) => node.dataset.id === tip.deviceId);
+  const blockers = marker ? [...captions, marker.getBoundingClientRect()] : captions;
+  const box = element.getBoundingClientRect();
+  const position = placeDeviceTooltip({
+    preferred: { x: tip.x + 12, y: tip.y + 12 },
+    size: { width: box.width, height: box.height },
+    bounds: { left, top, right, bottom, width: right - left, height: bottom - top },
+    blockers,
+  });
+  if (!position) { element.hidden = true; return; }
+  // A fixed tooltip may still have a transformed containing block in a HA card.
+  // Correct from its measured position rather than treating CSS left as clientX.
+  const scaleX = element.offsetWidth ? box.width / element.offsetWidth : 1;
+  const scaleY = element.offsetHeight ? box.height / element.offsetHeight : 1;
+  element.style.left = `${parseFloat(element.style.left) + (position.left - box.left) / scaleX}px`;
+  element.style.top = `${parseFloat(element.style.top) + (position.top - box.top) / scaleY}px`;
 };
 
 const setRoomPath = (root: ParentNode, selector: string, d: string): void => {

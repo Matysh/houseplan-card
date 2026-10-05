@@ -343,8 +343,9 @@ const result = await page.evaluate(async () => {
     ?.querySelector('[data-hp="zigbee-topology-parent-bubble"]'), 'remote parent bubble');
   let activeOverlay = root().querySelector('hp-zigbee-topology-overlay');
   const firstTitle = card._serverCfg.spaces.find((space) => space.id === 'f1')?.title;
+  const remoteParentName = card.hass.devices.d_light1.name_by_user || card.hass.devices.d_light1.name;
   out.remoteParentBubble = activeOverlay.shadowRoot
-    .querySelector('[data-hp="zigbee-topology-parent-bubble"]')?.textContent.trim() === firstTitle
+    .querySelector('[data-hp="zigbee-topology-parent-bubble"]')?.textContent.trim() === `${firstTitle} (${remoteParentName})`
     && activeOverlay.shadowRoot.querySelector('[data-hp="zigbee-topology-parent-bubble"]')
       ?.getAttribute('data-kind') === 'remote-space'
     && !!activeOverlay.shadowRoot.querySelector('[data-hp="zigbee-topology-parent-arrow"]')

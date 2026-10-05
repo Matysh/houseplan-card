@@ -9657,8 +9657,8 @@ const MUTANT_DEFINITIONS = [
       + 'as local routes instead of becoming permanently grey (#798)',
     patches: [{
       file: 'src/hp-zigbee-topology-overlay.ts',
-      find: "        ${bubbles.map((bubble) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor', bubble.arrow, true))}",
-      replace: "        ${bubbles.map((bubble) => this._route(origin, bubble.point, undefined, 'toward-neighbor', bubble.arrow, true))}",
+      find: "        ${bubbles.map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor', bubble.arrow, true, index))}",
+      replace: "        ${bubbles.map((bubble, index) => this._route(origin, bubble.point, undefined, 'toward-neighbor', bubble.arrow, true, index))}",
     }],
   },
   {
@@ -9797,6 +9797,28 @@ const MUTANT_DEFINITIONS = [
       file: 'src/zigbee-topology.ts',
       find: '      } else if (isOutgoing) {',
       replace: '      } else if (isOutgoing) {\n        if (other) remote.add(identity);',
+    }],
+  },
+  {
+    id: 'zigbee-tooltip-collision-bypass',
+    guard: 'node demo/smoke_zigbee_tooltip_layout.mjs',
+    because: 'screen-space overlap of independently rendered shadow-DOM surfaces and '
+      + 'late lazy paint needs a real mouse/browser witness; DOM presence or pure layout '
+      + 'cannot prove runtime avoidance (#802 AC2/AC4)',
+    patches: [{
+      file: 'src/live-hover.ts',
+      find: '  avoidTopologyCaptions(root, element, tip);',
+      replace: '  void tip; // mutant: keep the old overlapping cursor-relative tooltip',
+    }],
+  },
+  {
+    id: 'zigbee-tooltip-forgets-obstacles',
+    guard: 'node --test test/live-tip-placement.test.mjs',
+    because: 'free placement must avoid diagnostic captions and the source marker (#802 AC3)',
+    patches: [{
+      file: 'src/live-tip-placement.ts',
+      find: '  const forbidden = blockers',
+      replace: '  const forbidden = blockers.slice(0, 0)',
     }],
   },
   {

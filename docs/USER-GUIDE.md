@@ -371,7 +371,11 @@ that scales with the plan. Device LQI badges and room colours are unchanged.
 The whole layer is pointer-transparent, so device
 and room actions continue to work normally.
 
-If the next step is in another space, a short bubble names that space. If the
+If the next step is in another space, its bubble names the space and destination
+device, for example **Upstairs (Hallway socket)**; an unknown device name is
+omitted. The ordinary device tooltip moves into free space around network
+badges. Only when the card cannot fit both is it temporarily hidden, returning
+when space becomes available. No extra setting is needed. If the
 needed router or coordinator is not placed on the plan, the bubble says so;
 an unplaced device's available name is included in parentheses. “No route data”
 means the outgoing route is unknown or conflicting, not that the device is

@@ -41,6 +41,7 @@
   "route_device_not_on_plan": "Устройства нет на плане",
   "route_coordinator_not_on_plan": "координатора нет на плане",
   "route_other_space": "другое пространство",
+  "route_other_space_named": "{space} ({name})",
   "route_device_not_on_plan_named": "Устройства нет на плане ({name})",
   "route_unknown": "Нет данных о маршруте",
   "route_stale": "Данные устарели",
