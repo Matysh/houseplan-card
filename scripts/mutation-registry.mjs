@@ -9879,6 +9879,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-background-reload-error-poisons-explicit-retry',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="explicit retry recovers" test/zigbee-topology-runtime-routes.test.mjs',
+    because: '#800: a temporary config/get not_ready during integration reload must not cache a rejected promise forever',
+    patches: [{
+      file: 'src/zigbee-topology-runtime.ts',
+      find: '    if (cache.capability === pending) cache.capability = undefined;',
+      replace: '    void pending; // mutant: retain the rejected capability forever',
+    }],
+  },
+  {
     id: 'zigbee-background-unload-leaves-ui-waiting',
     guard: 'node scripts/backend-test-guard.mjs issue_800_entry_unload_clears_jobs_and_new_entry_session_is_idle '
       + 'tests_backend/test_ha_zigbee_topology.py',

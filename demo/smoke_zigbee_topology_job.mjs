@@ -10,12 +10,13 @@ const output = {};
 const record = (name, actual) => { output[name] = actual; check(name, actual); };
 const artifacts = new URL('../artifacts/zigbee-topology-800/', import.meta.url);
 mkdirSync(artifacts, { recursive: true });
-const server = { session: 'server-800', revision: 0, sequence: 0, publishes: 0, cancels: 0, provider: null };
+const server = { available: true, session: 'server-800', revision: 0, sequence: 0, publishes: 0, cancels: 0, provider: null };
 const state = () => ({ kind: 'state', session_id: server.session, revision: server.revision,
   provider: structuredClone(server.provider) });
 const initial = () => [{ kind: 'reset', session_id: server.session, revision: server.revision,
   topics: server.provider ? [server.provider.topic] : [] }, ...(server.provider ? [state()] : [])];
 await page.exposeFunction('__scanRpc', async (message) => {
+  if (message.type === 'houseplan/config/get') return { available: server.available };
   if (message.type === 'houseplan/zigbee/subscribe') return initial();
   if (message.type === 'houseplan/zigbee/start') {
     if (server.provider?.phase !== 'loading') {
@@ -73,6 +74,9 @@ const install = async (embedded = false) => page.evaluate(async (isEmbedded) => 
   const hass = { ...original, language: 'en', user: { ...original.user, id: 'admin-800', is_admin: true }, connection,
     callWS: async (message) => {
       if (message.type.startsWith('houseplan/zigbee/')) return window.__scanRpc(message);
+      if (message.type === 'houseplan/config/get' && !(await window.__scanRpc(message)).available) {
+        throw { code: 'not_ready' };
+      }
       const result = await original.callWS(message);
       if (message.type === 'houseplan/config/get') return {
         ...result, zigbee_scan_api: 1,
@@ -193,6 +197,11 @@ try {
   await page.waitForFunction(() => !document.getElementById('scan-settings')._snapshot.states['z2m:zigbee2mqtt']);
   record('integrationUnloadClearsUiWithoutClosingHaSocket', await refresh().isEnabled()
     && await page.evaluate(() => window.__scanStats.active === 0));
+  server.available = false;
+  await refresh().click(); await waitState('error');
+  record('retryDuringReloadDoesNotStartRadioOrDisableRetry', server.publishes === 2
+    && await refresh().isEnabled());
+  server.available = true;
   await refresh().click(); await waitState('loading');
   await page.evaluate((event) => {
     for (const callback of window.__scanCallbacks) callback(event);

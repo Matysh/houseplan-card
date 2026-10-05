@@ -8,7 +8,8 @@
   or losing the last successful map. Update and restart the integration too
   ([#800](https://github.com/Matysh/houseplan-card/issues/800)).
 - Reloading the integration also clears an old scan from an already-open page,
-  so its next explicit scan can attach to the new session ([#800](https://github.com/Matysh/houseplan-card/issues/800)).
+  so its next explicit scan can attach to the new session, including a retry
+  after a temporary reload error ([#800](https://github.com/Matysh/houseplan-card/issues/800)).
 
 ## v1.80.0-beta.2 — 2026-10-05
 

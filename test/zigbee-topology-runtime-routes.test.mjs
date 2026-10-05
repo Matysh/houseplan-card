@@ -354,3 +354,32 @@ test('#800 late command completion from closed session cannot erase new command 
   assert.equal(b.calls.filter(c => c.type.endsWith('/start')).length, 2);
   assert.equal(b.callbacks.length, 2); off();
 });
+
+test('#800 explicit retry recovers after config not_ready during same-WS integration reload', async () => {
+  const b = backend(), off = b.observe(); await refreshZ2mTopology(b.hass, TOPIC);
+  const oldJob = b.snapshot().states[KEY].jobId;
+  b.emit({ kind: 'closed', session_id: b.session, revision: ++b.revision });
+  b.capabilityGate = deferred();
+  const duringUnload = refreshZ2mTopology(b.hass, TOPIC);
+  await turn(); b.capabilityGate.reject({ code: 'not_ready' }); await duringUnload;
+  assert.equal(b.snapshot().states[KEY].phase, 'error');
+  assert.equal(b.snapshot().backendError, 'backend_required');
+  assert.equal(b.publications, 1, 'failed capability must never publish');
+  const reads = b.calls.filter(c => c.type === 'houseplan/config/get').length;
+  assert.equal(reads, 2);
+  b.session = 'replacement'; b.revision = 0; b.jobs.clear(); b.capabilityGate = null;
+  await turn();
+  assert.equal(b.calls.filter(c => c.type === 'houseplan/config/get').length, reads, 'setup alone does not auto-retry');
+  assert.equal(b.publications, 1);
+  const retry = refreshZ2mTopology(b.hass, TOPIC);
+  assert.equal(refreshZ2mTopology({ ...b.hass }, TOPIC), retry, 'simultaneous explicit retry remains deduplicated');
+  await retry;
+  assert.equal(b.calls.filter(c => c.type === 'houseplan/config/get').length, 3, 'new explicit action must retry failed capability');
+  assert.equal(b.publications, 2);
+  assert.equal(b.callbacks.length, 2); assert.equal(b.live.size, 1);
+  assert.equal(b.snapshot().states[KEY].phase, 'loading');
+  assert.notEqual(b.snapshot().states[KEY].jobId, oldJob);
+  assert.equal(b.snapshot().backendError, undefined);
+  b.update(TOPIC, { phase: 'ready', result: map, obtained_at: 101 });
+  assert.equal(b.snapshot().states[KEY].obtainedAt, 101); off();
+});

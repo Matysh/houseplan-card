@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 303, issue: 152. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 304, issue: 152. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -9,6 +9,7 @@
 | бета v1.79.0-beta.1 | [SHIP-REVIEW-v1.79.0-beta.1.md](SHIP-REVIEW-v1.79.0-beta.1.md) | пакетное ревью ship · — | ⚪ — | 0 | 0 | — | — |
 | #800 | [SPEC-REVIEW-800-r1.md](SPEC-REVIEW-800-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #800 | [CODE-REVIEW-800-r1.md](CODE-REVIEW-800-r1.md) | code · r1 | 🟡 жёлтый | 0 | 3 | живой браузер остаётся на умершем job после reload интеграции; AC1 не имеет свидетеля, чувствительного к прежнему 600-секундному deadline; материал не проходит обязательный gate:small; English guide всё ещё обещает прекращение ожидания через 10 минут | `custom_components/houseplan/zigbee_topology.py` `scripts/mutation-registry.mjs` `test/data-hp-contract.test.mjs` `test/reviews-index.test.mjs` `PREFLIGHT-SPEC-800.md` `test/smoke-select.test.mjs` `docs/USER-GUIDE.md` |
+| #800 | [CODE-REVIEW-800-r2.md](CODE-REVIEW-800-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | временный not_ready во время reload навсегда блокирует явный retry | `src/zigbee-topology-runtime.ts` |
 | #799 | [CODE-REVIEW-799-r1.md](CODE-REVIEW-799-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #798 | [SPEC-REVIEW-798-r1.md](SPEC-REVIEW-798-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #798 | [CODE-REVIEW-798-r1.md](CODE-REVIEW-798-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |

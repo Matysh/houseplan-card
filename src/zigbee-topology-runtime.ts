@@ -148,7 +148,15 @@ async function capability(cache: Cache, hass: ZigbeeTopologyHass): Promise<void>
     const result = recordOf(await hass.callWS({ type: 'houseplan/config/get' }));
     if (result?.zigbee_scan_api !== 1) throw fail('backend_required');
   })();
-  await cache.capability;
+  const pending = cache.capability;
+  try {
+    await pending;
+  } catch (error) {
+    // A transient reload failure must not poison later explicit actions. Do not
+    // retry here, or let an old rejection clear a newer owner's capability check.
+    if (cache.capability === pending) cache.capability = undefined;
+    throw error;
+  }
 }
 function startFeed(cache: Cache, hass: ZigbeeTopologyHass): void {
   if (!cache.listeners.size || cache.feedPending || cache.unsubscribe) return;
