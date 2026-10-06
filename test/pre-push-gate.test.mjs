@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -128,24 +128,89 @@ test('gateEnv снимает все GIT_*: набор не должен писа
 // ---- настоящая связка хука ------------------------------------------------
 
 const REPO = fileURLToPath(new URL('..', import.meta.url));
-// Всё, что исполняет хук: сам хук, pre-push-gate и его импорты, процессный гейт.
-const HOOK_FILES = [
-  '.githooks/pre-push',
-  'scripts/pre-push-gate.mjs',
-  'scripts/branch-state.mjs',
-  'scripts/process-gate.mjs',
-  'scripts/change-classes.mjs', // #701: классы изменений — общие для гейта и трейлеров
-  'scripts/validate-commit-provenance.mjs',
-  'scripts/bundle-policy.mjs', // #657: правило бандла в проверке происхождения
-  'scripts/bundle-tree.mjs',
-  'scripts/spawn-portable.mjs',
-  // #729: правило 10 судит черновик якорями review-doc-guard и треком process-track.
-  'scripts/review-doc-guard.mjs',
-  'scripts/process-track.mjs',
-  'scripts/change-risk.mjs',
-  'scripts/review-result-gate.mjs',
-  'scripts/model-usage.mjs', // #737: review-doc-guard собирает строку расхода модели
+const HOOK = '.githooks/pre-push';
+
+/**
+ * Локальные модули, которые подтягивает `source`: статические `import`/`export
+ * … from`, `import './x'`, `import('./x')` литералом и чтения
+ * `new URL('./x', import.meta.url)`.
+ */
+const LOCAL_REFS = [
+  /^\s*(?:import|export)\s+(?:[\w\s{},*$]|\/\/[^\n]*)*?\bfrom\s*['"](\.{1,2}\/[^'"]+)['"]/gm,
+  /^\s*import\s*['"](\.{1,2}\/[^'"]+)['"]/gm,
+  /\bimport\(\s*['"](\.{1,2}\/[^'"]+)['"]\s*\)/g,
+  /\bnew URL\(\s*['"](\.{1,2}\/[^'"]+)['"],\s*import\.meta\.url\s*\)/g,
 ];
+
+/**
+ * Всё, что исполняет хук в `root` (#766): сам хук, скрипты, которые он зовёт
+ * по пути `$repo_root/scripts/…`, и транзитивное замыкание их локальных
+ * импортов. Прежде список вёлся руками и отставал от импортов: #737 уронил
+ * Validate новым `model-usage.mjs`, которого в нём не было. `gate-small.mjs`,
+ * который pre-push-gate запускает процессом, сюда не входит — его заглушку
+ * пишет тест.
+ */
+function hookFiles(root) {
+  const entries = [...new Set([...readFileSync(join(root, HOOK), 'utf8').matchAll(/\$repo_root\/(scripts\/[\w.-]+\.mjs)/g)]
+    .map((m) => m[1]))];
+  const seen = new Set();
+  const visit = (file) => {
+    const rel = relative(root, file).split(sep).join('/');
+    assert.ok(!rel.startsWith('..'), `${rel}: модуль хука вне репозитория`);
+    if (seen.has(rel)) return;
+    assert.ok(existsSync(file), `${rel}: модуль хука не найден`);
+    seen.add(rel);
+    if (!/\.m?js$/.test(file)) return;
+    const source = readFileSync(file, 'utf8');
+    for (const pattern of LOCAL_REFS) {
+      for (const m of source.matchAll(pattern)) visit(resolve(dirname(file), m[1]));
+    }
+  };
+  for (const entry of entries) visit(join(root, entry));
+  return { entries, files: [HOOK, ...[...seen].sort()] };
+}
+const HOOK_FILES = hookFiles(REPO).files;
+
+test('#766: файлы fixture хука — из дерева импортов; новый транзитивный импорт попадает сам', () => {
+  const { entries, files } = hookFiles(REPO);
+  assert.deepEqual(entries, ['process-gate', 'pre-push-gate'].map((name) => `scripts/${name}.mjs`), 'скрипты, которые хук зовёт по пути');
+  // Свидетели прежних провалов: #729 (process-gate тянет review-doc-guard) и #737.
+  // Имена без литерала `scripts/…`: такой литерал check-inputs читает как
+  // данные-лист и дальше импорты модуля для job frontend не обходит.
+  for (const name of ['review-doc-guard', 'process-track', 'change-risk', 'model-usage', 'bundle-tree']) {
+    assert.ok(files.includes(`scripts/${name}.mjs`), `${name}.mjs в fixture хука`);
+  }
+  assert.ok(!files.includes('scripts/gate-small.mjs'), 'набор gate:small тест подменяет заглушкой');
+
+  // Копия дерева хука; в глубину цепочки (pre-push-gate → process-gate →
+  // review-doc-guard → model-usage) добавлен новый модуль с собственным импортом.
+  const root = mkdtempSync(join(tmpdir(), 'hp-766-hook-'));
+  try {
+    for (const file of files) {
+      mkdirSync(join(root, file, '..'), { recursive: true });
+      copyFileSync(join(REPO, file), join(root, file));
+    }
+    const usage = join(root, 'scripts', 'model-usage.mjs');
+    writeFileSync(usage, `import { deeper } from './zz-766-new.mjs';
+${readFileSync(usage, 'utf8')}`);
+    writeFileSync(join(root, 'scripts/zz-766-new.mjs'), [
+      "export { deeper } from './zz-766-deeper.mjs';",
+      "export const lazy = () => import('./zz-766-lazy.mjs');",
+      "export const data = new URL('./zz-766-data.json', import.meta.url);",
+      '',
+    ].join('\n'));
+    for (const name of ['zz-766-deeper.mjs', 'zz-766-lazy.mjs']) writeFileSync(join(root, 'scripts', name), 'export const deeper = 1;\n');
+    writeFileSync(join(root, 'scripts/zz-766-data.json'), '{}\n');
+    const derived = hookFiles(root).files;
+    assert.deepEqual(derived.filter((file) => !files.includes(file)),
+      ['scripts/zz-766-data.json', 'scripts/zz-766-deeper.mjs', 'scripts/zz-766-lazy.mjs', 'scripts/zz-766-new.mjs']);
+    // Импорт без файла — громкий отказ, а не тихо короче список.
+    rmSync(join(root, 'scripts/zz-766-lazy.mjs'));
+    assert.throws(() => hookFiles(root), /zz-766-lazy\.mjs: модуль хука не найден/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 // Заглушка набора: код выхода и журнал вызовов задаёт тест.
 const GATE_STUB = `import { appendFileSync } from 'node:fs';
 const leaked = Object.keys(process.env).filter((key) => /^GIT_/i.test(key)).sort().join(',');
