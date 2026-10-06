@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Battery icons now keep their colour readable over light and mixed plan
+  backgrounds with a soft size-aware shadow. Each device also has a **Hide
+  battery status on plan** switch, so one indicator can be suppressed without
+  disabling the default-on global battery display for every device
+  ([#806](https://github.com/Matysh/houseplan-card/issues/806)).
+
 ## v1.80.0-beta.5 — 2026-10-06
 
 - Battery-powered devices now show a compact charge indicator: green at 60–100%,

@@ -289,6 +289,9 @@ def _project_marker(ids: _Pseudonyms, marker: dict[str, Any]) -> dict[str, Any]:
         "ripple_size", "size", "angle", "glow_radius_cm", "glow_color", "is_light",
         "use_climate_temp",
     )))
+    hide_battery = marker.get("hide_battery")
+    if isinstance(hide_battery, bool):
+        out["hide_battery"] = hide_battery
     icon = marker.get("icon")
     if isinstance(icon, str) and _SAFE_ICON.fullmatch(icon):
         out["icon"] = icon

@@ -832,6 +832,7 @@
   "room.unnamed": "Unnamed room",
   "marker.use_climate_temp": "Include the device temperature in the room",
   "marker.use_climate_temp_tip": "Adds an air conditioner or thermostat current_temperature to the room average. Configure the external value badge separately below.",
+  "marker.hide_battery": "Hide battery status on plan",
   "marker.value_badge_title": "Value badge",
   "marker.value_badge.help": "Shows one selected value next to the icon. It does not affect room metrics, light, Glow or the tap action.",
   "marker.value_badge.help.aria": "Help: device value badge",

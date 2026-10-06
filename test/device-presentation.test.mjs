@@ -80,6 +80,11 @@ test('#792 battery is independent of static face and live-state policies', () =>
   const hidden = device({ userHidden: true, marker: { id: 'd1', binding: 'device:d1', hidden: true } });
   assert.equal(resolveDevicePresentation(ha, hidden, options).battery, null);
   assert.equal(resolveDevicePresentation(ha, hidden, { ...options, designPreview: true }).battery?.state, 'warning');
+  const batteryHidden = device({ marker: { id: 'd1', binding: 'device:d1', hide_battery: true } });
+  assert.equal(resolveDevicePresentation(ha, batteryHidden, options).battery, null);
+  assert.equal(resolveDevicePresentation(ha, batteryHidden, { ...options, designPreview: true }).battery, null);
+  const malformedOptOut = device({ marker: { id: 'd1', binding: 'device:d1', hide_battery: 'true' } });
+  assert.equal(resolveDevicePresentation(ha, malformedOptOut, options).battery?.state, 'warning');
   for (const kind of ['ha_disabled', 'orphaned']) {
     assert.equal(resolveDevicePresentation(ha, device({ bindingStatus: { kind } }), options).battery, null);
   }

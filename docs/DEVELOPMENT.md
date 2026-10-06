@@ -11,6 +11,10 @@ No separate runtime SVG files, icon dependency or asset-serving route is added.
 Scope size rules to `.device-battery-icon`; the main device glyph's `ha-icon`
 size must not leak into this independent frame. Demo fixtures use the same MDI
 paths so pixel tests do not substitute an emoji or an arbitrary test symbol.
+The #806 shadow is interpolated from the approved 19px control
+`(.7px 1.8px 1.3px)` to the 56px control `(1.6px 3.6px 3.2px)`, with a 75%
+black alpha in between. Keep it on the existing icon and reserve the blurred
+extent in preview fit bounds; do not add a wrapper, hit target or observer.
 
 The owner also approved a size-budget recalibration. Fresh source builds move
 initial View gzip from 301037 to 302532 bytes (+1495); the existing rolling
@@ -310,6 +314,10 @@ npm run audit:config -- path/to/houseplan-config.json
 
 # Reproducible synthetic large-house report (seven measured samples + warm-up).
 npm run benchmark:large-house -- --samples=7 --warmups=1 --output=artifacts/performance/local.json
+
+# #806: one-room browser stress with 200 painted battery shadows. It applies
+# the existing 3400 ms static, 500 ms pan+zoom and 150 ms camera Long Task limits.
+node demo/smoke_device_battery_performance.mjs
 
 # Hidden isometric profile; diagnostic only outside exact-SHA Linux CI.
 npm run benchmark:large-house-isometric -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-local.json

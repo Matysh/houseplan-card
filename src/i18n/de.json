@@ -832,6 +832,7 @@
   "room.unnamed": "Unbenannter Raum",
   "marker.use_climate_temp": "Geräte-Temperatur im Raum berücksichtigen",
   "marker.use_climate_temp_tip": "Fügt die aktuelle Temperatur einer Klimaanlage oder eines Thermostats zum Raumdurchschnitt hinzu. Das externe Wert-Label unten separat konfigurieren.",
+  "marker.hide_battery": "Batteriestatus auf dem Grundriss ausblenden",
   "marker.value_badge_title": "Wert-Label",
   "marker.value_badge.help": "Zeigt einen ausgewählten Wert neben dem Symbol an. Dies beeinflusst nicht die Raumkennzahlen, Licht, Glanz oder die Tippaktion.",
   "marker.value_badge.help.aria": "Hilfe: Gerätewert-Badge",

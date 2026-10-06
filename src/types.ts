@@ -251,6 +251,9 @@ export interface Marker {
    * nothing changes without an explicit tick (owner's spec, 2026-08-03).
    */
   use_climate_temp?: boolean | null;
+  /** Per-device override for the default-on battery diagnostic. Only exact
+   * true hides it; absent/false preserve the global setting. */
+  hide_battery?: boolean;
 }
 
 /** One saved answer to "this exact map of this exact source lives here" (#162). */

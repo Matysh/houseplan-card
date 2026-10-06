@@ -9,6 +9,20 @@ const { page, browser } = await launch({ width: 1200, height: 900 }, 1, [], { ha
 const out = {};
 try {
   await installBatteryFixture(page);
+  out.approvedShadowIsAppliedAtRenderedScale = await page.evaluate(() => {
+    const icon = window.__card.shadowRoot.querySelector('[data-id="d_temp"] ha-icon.device-battery-icon');
+    if (!icon) return false;
+    const frame = icon.getBoundingClientRect().width;
+    const filter = getComputedStyle(icon).filter;
+    const values = [...filter.matchAll(/(-?\d+(?:\.\d+)?)px/g)].map((match) => Number(match[1]));
+    const expected = [
+      frame * 0.024324324324 + 0.237837837844,
+      frame * 0.048648648649 + 0.875675675669,
+      frame * 0.051351351351 + 0.324324324331,
+    ];
+    return filter.includes('drop-shadow') && /0\.75|75%/.test(filter)
+      && values.length >= 3 && expected.every((value, index) => Math.abs(value - values[index]) <= 0.03);
+  });
   out.nonBatteryGetsNoQuestionMark = await page.evaluate(() => {
     const node = window.__card.shadowRoot.querySelector('[data-id="d_leak"]');
     return !!node && node.getBoundingClientRect().width > 0 && !node.querySelector('.device-battery');
@@ -47,6 +61,16 @@ try {
   out.disabledMarkerGetsNoLiveBattery = true;
   await page.evaluate(() => window.__setRegistryDisabled('device', 'd_temp', null));
   await page.waitForFunction(() => window.__card.shadowRoot.querySelector('[data-id="d_temp"] .device-battery')?.dataset.state === 'normal');
+
+  await patchBatteryMarker(page, { hide_battery: true });
+  await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('[data-id="d_temp"] .device-battery'));
+  out.localOptOutHidesOnlySelectedDevice = await page.evaluate(() =>
+    !window.__card.shadowRoot.querySelector('[data-id="d_temp"] .device-battery')
+      && !!window.__card.shadowRoot.querySelector('[data-id="d_light1"] .device-battery'));
+  await patchBatteryMarker(page, { hide_battery: 'true' });
+  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('[data-id="d_temp"] .device-battery'));
+  out.localOptOutRequiresExactBooleanTrue = true;
+  await patchBatteryMarker(page, { hide_battery: false });
 
   for (const position of ['none', 'right', 'left', 'top', 'bottom']) {
     await patchBatteryMarker(page, { value_badge: position === 'none' ? { enabled: false } : {
@@ -109,7 +133,48 @@ try {
     return battery?.dataset.state === 'warning' && !!r && !!stage
       && r.left >= stage.left && r.top >= stage.top && r.right <= stage.right && r.bottom <= stage.bottom;
   });
+  out.previewHasLocalOptOutToggle = await page.evaluate(() => {
+    const input = window.__card.shadowRoot.querySelector('hp-dialog[data-kind="marker"] #marker-hide-battery');
+    return !!input && input.checked === false;
+  });
+  await page.evaluate(() => window.__card.shadowRoot
+    .querySelector('hp-dialog[data-kind="marker"] #marker-hide-battery').click());
+  await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('hp-device-preview')?.shadowRoot
+    ?.querySelector('.device-battery'));
+  out.previewOptOutHidesOnlyDraftBattery = await page.evaluate(() =>
+    !window.__card.shadowRoot.querySelector('hp-device-preview')?.shadowRoot?.querySelector('.device-battery')
+      && !!window.__card.shadowRoot.querySelector('[data-id="d_light1"] .device-battery'));
+  await page.evaluate(() => window.__card.shadowRoot
+    .querySelector('hp-dialog[data-kind="marker"] #marker-hide-battery').click());
+  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-device-preview')?.shadowRoot
+    ?.querySelector('.device-battery'));
   await page.evaluate(async () => { await window.__hpTest.close(undefined, { via: 'cancel' }); await window.__hpTest.setMode('view'); });
+
+  // Save/reopen is the public persistence witness; the second save restores
+  // the default so the remaining #792 surface checks still see the battery.
+  await page.evaluate(async () => {
+    await window.__hpTest.setMode('devices');
+    await window.__hpTest.openMarkerDialog('d_temp');
+  });
+  await page.evaluate(() => window.__card.shadowRoot
+    .querySelector('hp-dialog[data-kind="marker"] #marker-hide-battery').click());
+  await page.evaluate(() => window.__card.shadowRoot
+    .querySelector('hp-dialog[data-kind="marker"] .dialog-action-commit [data-hp="dialog-confirm"]').click());
+  await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('hp-dialog[data-kind="marker"]')
+    && !window.__card.shadowRoot.querySelector('[data-id="d_temp"] .device-battery'));
+  await page.evaluate(() => window.__hpTest.openMarkerDialog('d_temp'));
+  await page.waitForFunction(() => window.__card.shadowRoot
+    .querySelector('hp-dialog[data-kind="marker"] #marker-hide-battery')?.checked === true);
+  out.savedOptOutSurvivesReopen = await page.evaluate(() =>
+    !window.__card.shadowRoot.querySelector('hp-device-preview')?.shadowRoot?.querySelector('.device-battery'));
+  await page.evaluate(() => window.__card.shadowRoot
+    .querySelector('hp-dialog[data-kind="marker"] #marker-hide-battery').click());
+  await page.evaluate(() => window.__card.shadowRoot
+    .querySelector('hp-dialog[data-kind="marker"] .dialog-action-commit [data-hp="dialog-confirm"]').click());
+  await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('hp-dialog[data-kind="marker"]')
+    && !!window.__card.shadowRoot.querySelector('[data-id="d_temp"] .device-battery'));
+  await page.evaluate(() => window.__hpTest.setMode('view'));
+  out.defaultRestoredAfterSecondSave = true;
 
   await page.evaluate(async () => {
     await customElements.whenDefined('houseplan-space-card');

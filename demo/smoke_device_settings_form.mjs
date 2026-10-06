@@ -122,6 +122,8 @@ const out = await page.evaluate(async () => {
   q('.hpf-iconclear').click(); await upd();
   o.clearResetsIcon = c._markerDialog.icon === '';
   o.displaySelectWithHint = !!q('#marker-display.hpf-select') && !!q('#marker-display')?.closest('.hpf-field')?.querySelector('.hpf-hint');
+  o.hideBatteryIsAnAppearanceToggle = !!q('#marker-hide-battery')
+    && !!q('#marker-hide-battery')?.closest('.hpf-toggle.hpf-compact');
   o.badgeBlock = !!q('.markerbadgegroup.hpf-block .hpf-sub h4') && !!q('#marker-value-badge')?.closest('.hpf-toggle.hpf-compact');
   if (!q('#marker-value-badge').checked && !q('#marker-value-badge').disabled) { q('#marker-value-badge').click(); await upd(); }
   o.badgePositionIsASegment = qa('input[name="marker-value-badge-position"]').length === 4;
@@ -178,6 +180,10 @@ const out = await page.evaluate(async () => {
   c._closeMarkerDialog(); await upd();
   c._openMarkerDialog(lamp); await upd();
   o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
+  q('#marker-hide-battery').click(); await upd();
+  o.hideBatteryWritesOwnKeyAndMakesDirty = c._markerDialog.hideBattery === true && saveBtn().disabled === false;
+  q('#marker-hide-battery').click(); await upd();
+  o.hideBatteryRevertsToClean = c._markerDialog.hideBattery === false && saveBtn().disabled === true;
   const editName0 = c._markerDialog.name;
   input(q('#marker-name'), `${editName0} x`); await upd();
   o.saveEnabledWhenDirtyWithoutDuplicateStatus = saveBtn().disabled === false && statusText() === '';

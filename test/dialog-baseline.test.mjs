@@ -185,7 +185,8 @@ test('#631 general settings: busy and raw inputs are transient, stored values ar
 const markerDraft = (patch = {}) => ({
   binding: 'light.kitchen', bindingMode: 'ha', name: 'Lamp', icon: 'mdi:lamp',
   tapAction: 'toggle', tapTarget: '', valueBadgeTouched: false, valueBadgeEnabled: false,
-  valueBadgeSource: null, glowRadius: null, originalBinding: 'light.kitchen', ...patch,
+  valueBadgeSource: null, glowRadius: null, hideBattery: false,
+  originalBinding: 'light.kitchen', ...patch,
 });
 
 test('#631 marker dialog: exactly the declared transient keys are ignored, Touched/original are not', () => {
@@ -204,6 +205,7 @@ test('#631 marker dialog: exactly the declared transient keys are ignored, Touch
     assert.equal(markerDirty(host, markerDraft({ [k]: v })), false, k);
   }
   assert.equal(markerDirty(host, markerDraft({ valueBadgeTouched: true })), true);
+  assert.equal(markerDirty(host, markerDraft({ hideBattery: true })), true);
   assert.equal(markerDirty(host, markerDraft({ originalBinding: 'light.hall' })), true);
   assert.equal(markerDirty(host, markerDraft({ name: 'Lamp 2' })), true);
   assert.equal(markerDraftKey(markerDraft(transient)), markerDraftKey(base));

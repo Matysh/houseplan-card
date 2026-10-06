@@ -253,6 +253,9 @@ export const devicesStyles = css`
     .device-battery > ha-icon.device-battery-icon {
       /* Override the main device glyph's .55 sizing, not its geometry. */
       --mdc-icon-size: var(--battery-frame);
+      --battery-shadow-x: calc(var(--battery-frame) * .024324324324 + .237837837844px);
+      --battery-shadow-y: calc(var(--battery-frame) * .048648648649 + .875675675669px);
+      --battery-shadow-blur: calc(var(--battery-frame) * .051351351351 + .324324324331px);
       position: absolute;
       inset: 0;
       width: 100%;
@@ -263,6 +266,8 @@ export const devicesStyles = css`
       line-height: 0;
       overflow: visible;
       pointer-events: none;
+      filter: drop-shadow(var(--battery-shadow-x) var(--battery-shadow-y)
+        var(--battery-shadow-blur) rgb(0 0 0 / 75%));
     }
     .device-shell:not(.with-values):not(.text-shell) .device-shell-frame {
       border-radius: 50%;

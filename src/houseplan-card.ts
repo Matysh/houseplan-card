@@ -2174,6 +2174,7 @@ export class HouseplanCard extends LitElement {
     originalHasValueSource: boolean;
     originalValueSource: ValueBadgeSource | null | undefined;
     useClimateTemp: boolean; // badge + room-average vote from climate current_temperature
+    hideBattery: boolean; // per-marker override; global setting remains authoritative
     model: string;
     link: string;
     description: string;

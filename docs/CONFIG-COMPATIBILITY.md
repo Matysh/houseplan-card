@@ -134,6 +134,13 @@ older backends preserve it through the unknown-settings policy. There is no
 model/store migration and no persisted charge or per-marker source selection:
 the own-device source and its current state are resolved from HA at runtime.
 
+`marker.hide_battery` is an optional strict boolean added by #806. Only exact
+`true` suppresses the passive battery for that marker; absence and `false`
+inherit the global default-on policy. The device dialog stores the default as
+absence. Full backup/import and the privacy-safe support projection retain the
+boolean. Older clients ignore it, so no model/store version migration is
+required. It does not select a battery entity or persist charge state.
+
 ## 2.5D View setting (#649)
 
 `settings.volumetric_view` is an optional global boolean for the whole

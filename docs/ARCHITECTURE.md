@@ -232,9 +232,13 @@ values come only from active state rows. Entity-bound markers explicitly capture
 their physical sensor siblings in the render snapshot, so battery-only ticks
 invalidate the correct frame without changing the functional roster or actions.
 The default-on shared `settings.show_device_battery` switch does not depend on
-face static/live policy; active LED representations omit the indicator. The
+face static/live policy; exact `marker.hide_battery:true` adds a per-marker
+O(1) gate before the battery resolver, while absence/false inherits the global
+choice. Active LED representations omit the indicator. The
 passive out-of-flow frame uses one built-in HA MDI icon at the three designer
-control sizes, without separate artwork delivery. Zigbee routes and captions have separate stacking levels: endpoint cores
+control sizes, without separate artwork delivery. A continuously sized CSS
+drop-shadow is composited on that existing icon; it adds no DOM, observer or
+registry scan. Zigbee routes and captions have separate stacking levels: endpoint cores
 remain above routes, captions remain above their batteries.
 
 Attachments are staged in `up_*`, promoted into `<config>/houseplan/files/<id>/`

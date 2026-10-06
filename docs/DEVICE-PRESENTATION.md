@@ -46,6 +46,10 @@ unknown. Двоичный `on` означает low, `off` normal. Неизве�
 ждёт изменения основного датчика или пересборки roster.
 
 `settings.show_device_battery` отсутствует — включено, exact false — выключено.
+`marker.hide_battery:true` сильнее глобального default-on и скрывает батарею
+только этого маркера; отсутствие/false сохраняет общее поведение. Тот же
+предикат используется в View, 2.5D, preview и static space card, поэтому draft
+диалога не расходится с сохранённым представлением.
 Батарея намеренно независима от static/live policy (`static_icon`,
 `value_static_icon`, `live_states:false`); прочие diagnostic gates не меняются.
 Lifecycle hidden/disabled/orphaned и виртуальные маркеры не оживляют индикатор;
@@ -56,6 +60,9 @@ user-hidden design preview сохраняет реальный дизайн. LED
 `ha-icon`: `mdi:battery`, `mdi:battery-30`, `mdi:battery-outline`,
 `mdi:battery-unknown`; отличие заполнения жёлтой и внутренний `?` разрешены.
 Цвета, размеры фрейма и отступы берутся из макета, отдельные SVG не поставляются.
+На сам `ha-icon` наложена одобренная мягкая `drop-shadow`: контрольные точки
+0.7/1.8/1.3 px при фрейме 19 px и 1.6/3.6/3.2 px при 56 px, между ними —
+непрерывное масштабирование. Тень пассивна и не расширяет hit area.
 
 Свидетели: `test/device-battery.test.mjs`, `test/device-presentation.test.mjs`,
 `test/render-device-snapshot.test.mjs`; browser/golden — матрица батарей #792.

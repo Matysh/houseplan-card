@@ -636,6 +636,12 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           </select>`,
           hint: t(DISPLAY_HINT_KEYS[d.display]),
         })}
+        ${toggleRow({
+          id: 'marker-hide-battery', compact: true, icon: 'mdi:battery-off-outline',
+          title: t('marker.hide_battery'),
+          checked: d.hideBattery,
+          onChange: (hidden) => (this.host._markerDialog = { ...d, hideBattery: hidden }),
+        })}
         ${d.display === 'icon_ripple'
           ? html`${field({
               label: t('marker.activity_color'),

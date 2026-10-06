@@ -1431,7 +1431,11 @@ information appears above it.
 
 **General settings → Display → Show device battery status** is on by default
 and applies installation-wide, including static space cards and the editor
-preview. Full configuration export/import preserves the setting.
+preview. In an individual device's **Appearance** settings, **Hide battery
+status on plan** suppresses only that device; it is off by default and has no
+effect on the ordinary value badge. Battery icons use a soft size-aware shadow
+to stay legible over light and mixed plan backgrounds. Full configuration
+export/import preserves both settings.
 
 ### Icon changes by state
 

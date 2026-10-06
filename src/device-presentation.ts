@@ -27,6 +27,7 @@ import {
   createDeviceBatteryContext, resolveDeviceBattery,
   type DeviceBatteryContext, type ResolvedDeviceBattery,
 } from './device-battery';
+import { showMarkerBatteryOf } from './device-battery-settings';
 import {
   resolveDeviceValueBadge, resolveValueSource, valueBadgeSourceKey,
   type ResolvedValueBadge,
@@ -756,7 +757,7 @@ export function resolveDevicePresentation(
     vacuumLiveRequested: d.marker?.vacuum?.live === true,
   });
   const { effectiveHidden, visual } = policy;
-  const battery = options.showBattery !== false && !effectiveHidden
+  const battery = options.showBattery !== false && showMarkerBatteryOf(d.marker) && !effectiveHidden
     ? resolveDeviceBattery(d, options.batteryContext
       || createDeviceBatteryContext(hass, options.registryHass || hass)) : null;
 

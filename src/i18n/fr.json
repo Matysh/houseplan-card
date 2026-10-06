@@ -832,6 +832,7 @@
   "room.unnamed": "Pièce sans nom",
   "marker.use_climate_temp": "Inclure la température de l’appareil dans la pièce",
   "marker.use_climate_temp_tip": "Ajoute la valeur current_temperature d’un climatiseur ou thermostat à la moyenne de la pièce. Configurez séparément le badge de valeur externe ci-dessous.",
+  "marker.hide_battery": "Masquer l’état de la batterie sur le plan",
   "marker.value_badge_title": "Badge de valeur",
   "marker.value_badge.help": "Affiche une valeur sélectionnée à côté de l’icône. Cela n’affecte pas les mesures de la pièce, la lumière, le halo ni l’action au toucher.",
   "marker.value_badge.help.aria": "Aide : badge de valeur de l’appareil",

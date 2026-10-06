@@ -112,7 +112,9 @@ import {
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
 import { generalProblems, moonDraftOf, rememberGeneralBaseline, writeMoonSetting } from './editors/general-form-state';
-import { showDeviceBatteryOf, writeDeviceBatterySetting } from './device-battery-settings';
+import {
+  markerBatteryFields, showDeviceBatteryOf, writeDeviceBatterySetting,
+} from './device-battery-settings';
 import { openMoonStatus } from './editors/moon-status';
 import { rememberRoomBaseline } from './editors/room-form-state';
 import { forgetMarkerBaseline, rememberMarkerBaseline } from './editors/marker-form-state';
@@ -615,7 +617,7 @@ export interface HouseplanEditorHostPort {
   _layout: DeviceLayout;
   readonly _layoutRev: number;
   _logicalViewCenter: () => { x: number; y: number; } | null;
-  _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
+  _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
   _markers: Marker[];
@@ -7292,6 +7294,7 @@ public _openMarkerDialog(d?: DevItem): void {
         originalHasValueSource: hasValueSource,
         originalValueSource: marker?.value_source,
         useClimateTemp: d.marker?.use_climate_temp === true,
+        hideBattery: d.marker?.hide_battery === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this.host._imperial
               ? Math.round((Number(d.marker!.glow_radius_cm) / 30.48) * 10) / 10
@@ -7334,7 +7337,7 @@ public _openMarkerDialog(d?: DevItem): void {
         valueBadgeTouched: false, originalHasValueBadge: false, originalValueBadge: undefined,
         valueSource: null, valueSourceTouched: false,
         originalHasValueSource: false, originalValueSource: undefined,
-        useClimateTemp: false, glowRadius: '', model: '',
+        useClimateTemp: false, hideBattery: false, glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', roomTouched: false,
         radar: null, radarEligible: false, radarTouched: false, radarRemove: false,
         hideFromPlan: false, busy: false,
@@ -7626,6 +7629,7 @@ public async _saveMarker(): Promise<void> {
         ...this._markerValueBadgeFields(dlg),
         ...this._markerValueSourceFields(dlg),
         use_climate_temp: dlg.useClimateTemp ? true : null,
+        ...markerBatteryFields(dlg.hideBattery),
         glow_radius_cm: (() => {
           const v = strictNumber(dlg.glowRadius);
           if (v == null || v <= 0) return null;
@@ -11638,6 +11642,7 @@ public _markerDraft(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>): M
       ...this._markerValueBadgeFields(d),
       ...this._markerValueSourceFields(d),
       use_climate_temp: d.useClimateTemp ? true : null,
+      ...markerBatteryFields(d.hideBattery),
       glow_radius_cm: (() => {
         const value = strictNumber(d.glowRadius);
         if (value == null || value <= 0) return null;
