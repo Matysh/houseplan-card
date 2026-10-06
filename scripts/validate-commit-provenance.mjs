@@ -29,6 +29,19 @@ const GOLDEN_PROVENANCE_ERRORS = new Set([
 const LOCAL_BASELINE = /^sha256:([0-9a-f]{64})$/;
 const BASELINE_INDEX = 'demo/golden/baselines/baselines-index.json';
 
+/**
+ * #729/#766: трейлер чернового коммита `track:ask` (PROCESS.md §11.8) —
+ * `issueBodyDigest` тела issue. Значения читаются так же, как их читает
+ * правило 10 `process-gate.mjs` (оно берёт эту функцию): строка `Spec-Draft:`
+ * в любом месте сообщения, ключ без учёта регистра. Хук commit-msg отвергает
+ * повтор и неверный формат сразу, а не на push; эпоху `S4`, трек и зелёный
+ * SPEC-REVIEW он не судит — это сеть и история, они остаются правилу 10.
+ */
+export const SPEC_DRAFT_VALUE = /^sha256:[0-9a-f]{64}$/;
+export function specDraftValues(message) {
+  return [...String(message).replace(/\r/g, '').matchAll(/^Spec-Draft:[ \t]*(.*)$/gmi)].map((m) => m[1].trim());
+}
+
 /** Git invokes commit-msg before it removes the editor template. Ignore the
  * standard comment/scissors suffix exactly as Git will when it records the
  * commit, while leaving ordinary prose after trailers invalid. */
@@ -83,6 +96,13 @@ export function validateCommitMessage(message, changedFiles = [], { baselineInde
         errors.push(`user-visible commit must update ${changelog}`);
       }
     }
+  }
+  // #766: черновой трейлер, если он есть, — ровно один и `sha256:<64 hex>`;
+  // обычный коммит его не несёт и не обязан.
+  const drafts = specDraftValues(cleanedCommitMessage(message));
+  if (drafts.length > 1) errors.push(`expected at most one 'Spec-Draft' trailer, found ${drafts.length}`);
+  if (drafts.some((value) => !SPEC_DRAFT_VALUE.test(value))) {
+    errors.push("Spec-Draft must be 'sha256:<64 lowercase hex>'");
   }
   // #657: бандл меняет только релизный кандидат. В хуке даты нет — судится
   // всегда; в истории коммиты раньше BUNDLE_RELEASE_ONLY_SINCE не судятся.

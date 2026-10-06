@@ -37,7 +37,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { resolveValidationRange } from './validate-commit-provenance.mjs';
+import { SPEC_DRAFT_VALUE, resolveValidationRange, specDraftValues } from './validate-commit-provenance.mjs';
 
 // Классы изменений (PROCESS.md §1) живут в change-classes.mjs (#701): их
 // читает и хук commit-msg, который судит, нужен ли коммиту трейлер.
@@ -117,8 +117,9 @@ export function makeCommit({
     release: one('Release'),
     baselineReviewed: one('Baseline-Reviewed'),
     baselineReviewedLocal: one('Baseline-Reviewed-Local'),
-    // #729: все значения, а не первое — «ровно один» судит правило 10.
-    specDrafts: all('Spec-Draft'),
+    // #729: все значения, а не первое — «ровно один» судит правило 10. Разбор
+    // общий с хуком commit-msg (#766): тот же формат он отвергает раньше.
+    specDrafts: specDraftValues(text),
     // null = вызывающий не доказал содержимое diff. Для stable release это
     // намеренно fail-closed: одного имени разрешённого version source мало.
     releaseSourceViolations,
@@ -538,9 +539,10 @@ const iso = (ms) => new Date(ms).toISOString();
 
 // #729: черновик кода во время ревью ТЗ (PROCESS.md §11.8). Статус, в котором
 // он пишется, трейлер и его значение — `issueBodyDigest` тела issue, тот же
-// хеш, что конвейер пишет в «Тело issue:» документа ревью.
+// хеш, что конвейер пишет в «Тело issue:» документа ревью. Формат значения
+// (SPEC_DRAFT_VALUE) — общий с хуком commit-msg (#766).
 export const DRAFT_STATUS = 'S4-spec-review';
-export const SPEC_DRAFT_VALUE = /^sha256:[0-9a-f]{64}$/;
+export { SPEC_DRAFT_VALUE };
 
 // Трек на момент `w`: последнее событие трековой метки (`track:*`, прежние
 // `small`/`trivial`) с `at ≤ w`, трек — по одной этой метке. Событий нет —

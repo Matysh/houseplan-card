@@ -1,13 +1,21 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
+  SPEC_DRAFT_VALUE,
   assertHookMode,
   cleanedCommitMessage,
   resolveValidationRange,
+  specDraftValues,
   terminalTrailers,
   validateHistoricalCommit,
   validateCommitMessage,
 } from '../scripts/validate-commit-provenance.mjs';
+import * as processGate from '../scripts/process-gate.mjs';
 
 test('provenance accepts positive issues and one visibility trailer at the end', () => {
   const message = `Fix relay\n\nIssue: #94\nIssue: #98\nUser-Visible: yes\n`;
@@ -120,4 +128,96 @@ test('#701: документационный коммит (только клас
   // Трейлер, если он есть, судится всегда: кривой номер — ошибка и в docs-коммите.
   assert.equal(validateCommitMessage('docs: typo\n\nIssue: #x', ['docs/a.md']).length, 2);
   assert.deepEqual(validateCommitMessage('docs: typo\n\nIssue: #9\nUser-Visible: no', ['docs/a.md']), []);
+});
+
+// #766: формат трейлера черновика `track:ask` (PROCESS.md §11.8) судит уже
+// commit-msg — тем же разбором, что правило 10 process-gate. Эпоху S4, трек и
+// SPEC-REVIEW хук не судит: это сеть, она остаётся правилу 10.
+const DRAFT_BASE = 'feat: draft (#729)\n\nIssue: #729\nUser-Visible: no';
+const DRAFT_HEX = 'a'.repeat(64);
+const FORMAT = "Spec-Draft must be 'sha256:<64 lowercase hex>'";
+
+test('#766: Spec-Draft — ровно один и sha256:<64 строчных hex>; обычный коммит без него проходит', () => {
+  const code = ['src/a.ts'];
+  assert.deepEqual(validateCommitMessage(DRAFT_BASE, code), [], 'обычный коммит трейлера не требует');
+  assert.deepEqual(validateCommitMessage(`${DRAFT_BASE}\nSpec-Draft: sha256:${DRAFT_HEX}`, code), [], 'корректный черновик');
+  for (const [label, trailer] of [
+    ['не hex (проба аналитики)', 'Spec-Draft: sha256:wrong'],
+    ['63 знака', `Spec-Draft: sha256:${DRAFT_HEX.slice(1)}`],
+    ['заглавные', `Spec-Draft: sha256:${'A'.repeat(64)}`],
+    ['без префикса', `Spec-Draft: ${DRAFT_HEX}`],
+    ['пустое значение', 'Spec-Draft:'],
+    ['ключ в другом регистре — тот же трейлер', 'spec-draft: sha256:x'],
+  ]) assert.deepEqual(validateCommitMessage(`${DRAFT_BASE}\n${trailer}`, code), [FORMAT], label);
+  assert.deepEqual(validateCommitMessage(`${DRAFT_BASE}\nSpec-Draft: sha256:${DRAFT_HEX}\nSpec-Draft: sha256:${DRAFT_HEX}`, code),
+    ["expected at most one 'Spec-Draft' trailer, found 2"], 'повтор, даже одинаковый');
+  assert.deepEqual(validateCommitMessage(`${DRAFT_BASE}\n# Spec-Draft: sha256:wrong\n`, code), [], 'комментарий редактора — не трейлер');
+  // Трейлер, если он есть, судится и в документационном коммите (#701).
+  assert.deepEqual(validateCommitMessage('docs: x\n\nSpec-Draft: sha256:wrong', ['docs/a.md']), [FORMAT]);
+});
+
+test('#766: commit-msg и правило 10 читают Spec-Draft одним разбором и одним форматом', () => {
+  assert.equal(processGate.SPEC_DRAFT_VALUE, SPEC_DRAFT_VALUE, 'формат — один объект');
+  for (const body of [
+    'Issue: #729\nUser-Visible: no',
+    `Issue: #729\nUser-Visible: no\nSpec-Draft: sha256:${DRAFT_HEX}`,
+    'Issue: #729\nSpec-Draft: sha256:wrong\nUser-Visible: no',
+    `Spec-Draft: sha256:${DRAFT_HEX}\n\nIssue: #729\nUser-Visible: no\nspec-draft: sha256:${DRAFT_HEX}`,
+    'Issue: #729\nUser-Visible: no\nSpec-Draft:',
+  ]) {
+    const drafts = processGate.makeCommit({ subject: 'feat: x', body }).specDrafts;
+    assert.deepEqual(drafts, specDraftValues(body), body);
+    // Правило 10 отказывает черновику при `drafts.length !== 1` или неверном значении;
+    // хук — при тех же условиях, если трейлер вообще есть.
+    const rule10 = drafts.length !== 1 || !SPEC_DRAFT_VALUE.test(drafts[0]);
+    const hook = validateCommitMessage(`feat: x\n\n${body}`, ['src/a.ts']).some((error) => /Spec-Draft/.test(error));
+    assert.equal(hook, drafts.length > 0 && rule10, body);
+  }
+});
+
+test('#766: настоящий .githooks/commit-msg — неверный Spec-Draft отвергнут, верный и обычный коммиты проходят', (t) => {
+  if (process.platform === 'win32' || spawnSync('git', ['--version']).status !== 0) { t.skip('git/sh недоступны'); return; }
+  const repo = fileURLToPath(new URL('..', import.meta.url));
+  const root = mkdtempSync(join(tmpdir(), 'hp-766-msg-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  // Окружение git без GIT_* родителя и без глобального конфига (#633, #496).
+  const env = {
+    ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^GIT_/i.test(key))),
+    GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t',
+    GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null',
+  };
+  const git = (...args) => spawnSync('git', ['-C', root, ...args], { encoding: 'utf8', env });
+  const ok = (r) => { assert.equal(r.status, 0, r.stderr); return r; };
+  ok(git('init', '-q', '-b', 'dev'));
+  // Хук и все скрипты верхнего уровня — без ручного списка импортов валидатора.
+  mkdirSync(join(root, '.githooks'));
+  copyFileSync(join(repo, '.githooks', 'commit-msg'), join(root, '.githooks', 'commit-msg'));
+  chmodSync(join(root, '.githooks', 'commit-msg'), 0o755);
+  mkdirSync(join(root, 'scripts'));
+  for (const name of readdirSync(join(repo, 'scripts')).filter((file) => file.endsWith('.mjs'))) {
+    copyFileSync(join(repo, 'scripts', name), join(root, 'scripts', name));
+  }
+  ok(git('add', '-A'));
+  ok(git('update-index', '--chmod=+x', '.githooks/commit-msg'));
+  ok(git('-c', 'core.hooksPath=/dev/null', 'commit', '-q', '-m', 'base\n\nIssue: #766\nUser-Visible: no'));
+  let n = 0;
+  const commit = (message) => {
+    n += 1;
+    mkdirSync(join(root, 'src'), { recursive: true });
+    writeFileSync(join(root, 'src', 'a.ts'), `export const a = ${n};\n`);
+    ok(git('add', 'src/a.ts'));
+    writeFileSync(join(root, 'msg'), message);
+    return git('-c', 'core.hooksPath=.githooks', 'commit', '-q', '-F', join(root, 'msg'));
+  };
+  const head = () => git('rev-parse', 'HEAD').stdout.trim();
+  for (const trailer of ['Spec-Draft: sha256:wrong', `Spec-Draft: sha256:${DRAFT_HEX}\nSpec-Draft: sha256:${DRAFT_HEX}`]) {
+    const before = head();
+    const refused = commit(`${DRAFT_BASE}\n${trailer}\n`);
+    assert.notEqual(refused.status, 0, `хук пропустил:\n${trailer}`);
+    assert.match(refused.stderr, /Spec-Draft/);
+    assert.equal(head(), before, 'коммит не создан');
+    ok(git('reset', '-q'));
+  }
+  ok(commit(`${DRAFT_BASE}\nSpec-Draft: sha256:${DRAFT_HEX}\n`));
+  ok(commit(`${DRAFT_BASE}\n`));
 });
