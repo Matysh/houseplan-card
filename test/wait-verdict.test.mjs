@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { decide, reviewRequestFromEvents, stateOf, waitForVerdict } from '../scripts/wait-verdict.mjs';
 import { reviewRoute, routeComment } from '../scripts/process-track.mjs';
+import { OUTCOME_SIGNS, PUSH_REFUSAL, commentFor, describePushRefusal } from '../scripts/merge-candidate.mjs';
 
 // #496: ожидание детерминировано — одинаковое состояние молчит, смена метки и
 // события конвейера доставляются один раз, ничего не пишется.
@@ -168,4 +169,107 @@ test('#726 AC7: вопрос владельцу с blocked доставлен, �
   // Исчерпание вместе с вопросом владельцу — одним комментарием; решает владелец, вид exhausted.
   const both = { id: 'b', createdAt: '4', body: routeBody({ spent: 1, route: 'reclassify', criterion: 'surfaces', confirmed: true }, '2') };
   assert.equal(stateOf(snap(['S6-in-progress', 'review-4', 'blocked'], [both])).lastEvent.kind, 'exhausted');
+});
+
+// #768: исходы слияния кандидата — тела, которые пишет сам merge-candidate.mjs
+// (commentFor / describePushRefusal), а не копии строк. Терминальный отказ —
+// код 3 уже при неизменной S7; rereview — строка без завершения; слито —
+// не событие, его сообщает метка S8.
+const MERGE_CTX = {
+  material: 'a'.repeat(40), actual: 'b'.repeat(40), candidate: 'c'.repeat(40), devNow: 'd'.repeat(40),
+  branch: 'issue/7-x', ref: 'dev', runUrl: 'https://github.com/o/r/actions/runs/1', attempt: 3, error: 'git push dev: boom',
+  refusal: { kind: PUSH_REFUSAL.workflow, reason: 'r', files: ['.github/workflows/x.yml'], stderr: 'e' }, pipelineUrl: 'https://run/1',
+};
+const REQUEST = { id: 'request-2', at: '2026-10-01T10:00:00Z', label: 'S7-code-review' };
+const rejectedPush = (reason) => `To https://github.com/o/r\n ! [remote rejected] 0123abcd -> issue/7-x (${reason})\nerror: failed to push some refs to 'https://github.com/o/r'`;
+const rebaseRefusal = (reason) => describePushRefusal(rejectedPush(reason), { ref: 'issue/7-x', branch: 'issue/7-x', candidate: 'c'.repeat(40), stage: 'rebase', pipelineUrl: 'https://run/1' }).comment;
+// [название, тело, ожидаемый kind (null — не событие), код при неизменной S7 (null — ждать дальше), фрагмент строки]
+const OUTCOME_TABLE = [
+  ['reject-stale', commentFor('reject-stale', MERGE_CTX), 'stale', 3, 'слияние отменено'],
+  ['conflict', commentFor('conflict', MERGE_CTX), 'merge-conflict', 3, 'слияние конфликтует'],
+  ['validation-red', commentFor('validation-red', MERGE_CTX), 'validation-red', 3, 'кандидат после ребейза на dev красный'],
+  ['validation-missing', commentFor('validation-missing', MERGE_CTX), 'validation-missing', 3, 'Validate на кандидате не дождались'],
+  ['give-up', commentFor('give-up', MERGE_CTX), 'give-up', 3, 'dev движется быстрее слияния'],
+  ['push-refused-workflow/merge', commentFor('push-refused-workflow', { ...MERGE_CTX, stage: 'merge' }), 'push-refused-workflow', 3, 'GitHub не принял push кандидата'],
+  ['push-refused-workflow/rebase', rebaseRefusal('refusing to allow an OAuth App to create or update workflow `.github/workflows/validate.yml` without `workflow` scope'), 'push-refused-workflow', 3, 'ревью не запускалось — GitHub не принял push ребейза'],
+  ['push-refused/merge', commentFor('push-refused', { ...MERGE_CTX, stage: 'merge', refusal: { kind: PUSH_REFUSAL.remote, reason: 'protected branch hook declined', stderr: 'e' } }), 'push-refused', 3, 'GitHub отклонил push в dev'],
+  ['push-refused/rebase', rebaseRefusal('protected branch hook declined'), 'push-refused', 3, 'GitHub отклонил push ребейза'],
+  ['error', commentFor('error', { error: 'boom' }), 'merge-error', 3, 'шаг слияния упал'],
+  ['rereview', commentFor('rereview', MERGE_CTX), 'rereview', null, 'новый заход ревью запускается сам'],
+  ['push', commentFor('push', MERGE_CTX), null, null, null],
+  ['fast-forward', commentFor('fast-forward', MERGE_CTX), null, null, null],
+];
+
+test('#768 исходы слияния: таблица тел commentFor → событие и код при неизменной S7', () => {
+  for (const [name, body, kind, code, fragment] of OUTCOME_TABLE) {
+    assert.ok(body, `${name}: тело не пусто`);
+    const comment = { id: name, createdAt: '2026-10-01T10:05:00Z', body };
+    const state = stateOf({ ...snap(['S7-code-review'], [comment]), reviewRequest: REQUEST });
+    assert.equal(state.lastEvent?.kind ?? null, kind, `${name}: вид события`);
+    const d = decide(stateOf({ ...snap(['S7-code-review']), reviewRequest: REQUEST }), state);
+    assert.equal(d.code, code, `${name}: код`);
+    assert.equal(d.done, code !== null, `${name}: завершение`);
+    if (fragment) assert.ok(d.lines.some((line) => line.includes(fragment)), `${name}: строка «${fragment}» — ${d.lines.join(' | ')}`);
+    else assert.deepEqual(d.lines, [], `${name}: слито — не событие, ждём метку S8`);
+  }
+  // Каталог merge-candidate.mjs целиком покрыт: новый исход без своей строки здесь краснеет.
+  const covered = new Set(OUTCOME_TABLE.filter(([, , kind]) => kind).map(([name]) => name));
+  for (const sign of OUTCOME_SIGNS) {
+    assert.ok(covered.has(`${sign.action}/${sign.stage}`) || covered.has(sign.action), `${sign.action}/${sign.stage} — нет строки в таблице`);
+  }
+});
+
+test('#768 исход текущего раунда, опубликованный до запуска waiter, — код 3 на первом опросе', async () => {
+  const red = { id: 'red', createdAt: '2026-10-01T10:05:00Z', body: commentFor('validation-red', MERGE_CTX) };
+  const lines = []; let slept = 0;
+  const code = await waitForVerdict({
+    readSnapshot: async () => ({ ...snap(['S7-code-review'], [red]), reviewRequest: REQUEST }),
+    intervalMs: 1, maxTicks: 3, sleep: async () => { slept++; }, log: (line) => lines.push(line),
+  });
+  assert.equal(code, 3);
+  assert.equal(slept, 0, 'ожидания нет: исход уже есть');
+  assert.ok(lines.some((line) => line.includes('кандидат после ребейза на dev красный')));
+  // Waiter, запущенный уже после возврата в S6, причину тоже называет, а не «ждать нечего».
+  const late = decide(null, stateOf({ ...snap(['S6-in-progress'], [red]), reviewRequest: REQUEST }));
+  assert.equal(late.code, 3);
+  assert.ok(late.lines.some((line) => line.includes('кандидат после ребейза на dev красный')));
+  assert.ok(!late.lines.some((line) => line.includes('ждать нечего')));
+});
+
+test('#768 исход прежнего раунда — baseline; тот же исход текущего раунда доставляется', async () => {
+  const old = { id: 'old', createdAt: '2026-09-30T10:00:00Z', body: commentFor('give-up', MERGE_CTX) };
+  const fresh = { id: 'fresh', createdAt: '2026-10-01T10:30:00Z', body: commentFor('give-up', MERGE_CTX) };
+  const states = [
+    { ...snap(['S7-code-review'], [old]), reviewRequest: REQUEST },
+    { ...snap(['S7-code-review'], [old]), reviewRequest: REQUEST },
+    { ...snap(['S7-code-review'], [old, fresh]), reviewRequest: REQUEST },
+  ];
+  let i = 0; const lines = []; let slept = 0;
+  const code = await waitForVerdict({
+    readSnapshot: async () => states[Math.min(i++, states.length - 1)],
+    intervalMs: 1, maxTicks: 5, sleep: async () => { slept++; }, log: (line) => lines.push(line),
+  });
+  assert.equal(code, 3);
+  assert.equal(slept, 2, 'старый исход не будит: ждём, пока не придёт исход текущего раунда');
+  assert.equal(lines.filter((line) => line.includes('dev движется быстрее слияния')).length, 1);
+  // rereview снова ставит S7: его комментарий оказывается до нового якоря и не повторяется.
+  const rereview = { id: 'rr', createdAt: '2026-10-01T10:05:00Z', body: commentFor('rereview', MERGE_CTX) };
+  const relabeled = stateOf({ ...snap(['S7-code-review'], [rereview]), reviewRequest: { ...REQUEST, id: 'request-3', at: '2026-10-01T10:06:00Z' } });
+  assert.equal(relabeled.lastEvent, null);
+});
+
+test('#768 сменившаяся метка: S6 — код 0 и причина в строках; S8 со «слито» — код 0 без отказа', () => {
+  const before = stateOf({ ...snap(['S7-code-review']), reviewRequest: REQUEST });
+  for (const [name, body, kind, code, fragment] of OUTCOME_TABLE) {
+    if (code === null) continue;
+    const comment = { id: name, createdAt: '2026-10-01T10:05:00Z', body };
+    const d = decide(before, stateOf({ ...snap(['S6-in-progress'], [comment]), reviewRequest: REQUEST }));
+    assert.equal(d.code, 0, `${name}: смена метки сохраняет код 0`);
+    assert.ok(d.lines.some((line) => line.includes('S7-code-review → S6-in-progress')), name);
+    assert.ok(d.lines.some((line) => line.includes(fragment)), `${name}: причина не потеряна (${kind})`);
+  }
+  const merged = { id: 'm', createdAt: '2026-10-01T10:05:00Z', body: commentFor('push', MERGE_CTX) };
+  const done = decide(before, stateOf({ ...snap(['S8-merged'], [merged]), reviewRequest: REQUEST }));
+  assert.equal(done.code, 0);
+  assert.deepEqual(done.lines.map((line) => line.replace(/^\[[^\]]*\] /, '')), ['метка: S7-code-review → S8-merged']);
 });

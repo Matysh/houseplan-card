@@ -6,31 +6,43 @@
 // и рассуждением «ничего не изменилось» — десятки пустых ходов на одно ревью.
 // Этот скрипт делает опрос сам и ГОВОРИТ только при смене состояния: одинаковое
 // состояние не будит никого. Что доставляется: смена статусной метки (вердикт),
-// отказ конвейера (комментарий «Ревью не запускалось» / «Слияние отменено» /
-// «Автоматическое ревью не отработало»), маршрут вердикта show (#726: трек
-// повышен до ask / вопрос владельцу), `blocked`, `review-4`, а при `--sha` —
-// исход Validate на этом SHA. Исторические комментарии до последнего запроса
-// S4/S7 образуют baseline: иначе новый раунд немедленно завершался по старому
-// failure. Событие текущего раунда, даже опубликованное до запуска waiter,
-// доставляется сразу (#546).
+// отказ конвейера (комментарий «Ревью не запускалось» / «Автоматическое ревью не
+// отработало»), исход слияния кандидата (#768: по каталогу `OUTCOME_SIGNS`
+// `merge-candidate.mjs` — отменено, конфликт, красный или не дождавшийся
+// Validate кандидат, ушедший dev, отказ push, сбой шага), маршрут вердикта show
+// (#726: трек повышен до ask / вопрос владельцу), `blocked`, `review-4`, а при
+// `--sha` — исход Validate на этом SHA. Исторические комментарии до последнего
+// запроса S4/S7 образуют baseline: иначе новый раунд немедленно завершался по
+// старому failure. Событие текущего раунда, даже опубликованное до запуска
+// waiter, доставляется сразу (#546).
 //
 // Скрипт НИЧЕГО не пишет: ни меток, ни комментариев, ни запусков. Новое ревью
 // или релиз начинаются только по текущей авторизации человека.
 //
 //   node scripts/wait-verdict.mjs --issue 437 [--sha <tip>] [--interval 90] [--max 110]
 //
-// Коды выхода: 0 — статус сменился (вердикт есть, читать метку и комментарий);
+// Коды выхода: 0 — статус сменился (вердикт есть, читать метку и комментарий;
+// причина исхода слияния печатается и тогда, когда метка уже ушла в S6);
 // 3 — доставлено событие, требующее действия (отказ конвейера, конфликт,
-// blocked, review-4, красный Validate); 4 — лимит ожидания, состояние прежнее;
-// 2 — ошибка вызова.
+// неудавшееся слияние, blocked, review-4, красный Validate) — даже если метка
+// ещё S7; 4 — лимит ожидания, состояние прежнее; 2 — ошибка вызова. Исход
+// `rereview` (дифф изменился при ребейзе) печатается, но ожидание идёт дальше:
+// новый заход ревью конвейер запускает сам. Успешное слияние признака в
+// каталоге не имеет — о нём говорит метка S8 (код 0).
 
 import { spawnSync } from 'node:child_process';
 import { isMainModule } from './spawn-portable.mjs';
+import { outcomeOf } from './merge-candidate.mjs';
 
 export const REVIEW_LABELS = ['S4-spec-review', 'S7-code-review'];
 const STATUS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
-/** Комментарии конвейера, которые требуют действия автора или владельца. */
+/**
+ * Комментарии конвейера, которые требуют действия автора или владельца.
+ * Исходы `merge-candidate.mjs` узнаются раньше, по его каталогу
+ * (`OUTCOME_EVENTS` ниже); `stale` и `merge-conflict` здесь — префиксы для тел
+ * до #752 и признаки, которые по `kind` импортирует `process-metrics.mjs`.
+ */
 export const PIPELINE_EVENTS = [
   { re: /^\*\*Ревью не запускалось:\*\*/m, kind: 'conflict', text: 'конвейер: ветка не ребейзится на dev — конфликт разрешает автор' },
   { re: /^\*\*Слияние отменено/m, kind: 'stale', text: 'конвейер: слияние отменено — вершина ветки ушла от проверенного SHA (#312)' },
@@ -43,6 +55,50 @@ export const PIPELINE_EVENTS = [
   { re: /^\*\*Ревью show: решать есть что — вопрос владельцу\.\*\*/m, kind: 'owner-question', text: 'конвейер: вопрос владельцу о треке show — ждёт владельца' },
   { re: /^Конвейер ревью не запущен:/m, kind: 'refused', text: 'конвейер отказал (blocked/review-4) — читать комментарий' },
 ];
+
+/**
+ * #768: исходы слияния кандидата — по общему каталогу `OUTCOME_SIGNS`
+ * (`outcomeOf`), а не копиями регулярок: прежний список знал два заголовка из
+ * одиннадцати, и отказ в окне «комментарий уже есть, метка ещё S7» ждал до
+ * лимита, а после смены метки печаталась одна смена статуса без причины.
+ *
+ * Ключ — `action` признака, внутри — `stage` (`merge` после зелёного вердикта,
+ * `rebase` — страж ребейза до ревью). `code`: 3 — нужно действие автора или
+ * владельца; `null` — исход не терминальный (`rereview`: задача уже снова в
+ * S7, новый заход ревью конвейер запускает сам) — строка печатается, ожидание
+ * идёт дальше. Новый исход каталога краснит тест #768, пока у него нет строки
+ * в таблице теста; без строки здесь он доставляется общим текстом с кодом 3.
+ */
+export const OUTCOME_EVENTS = Object.freeze({
+  'reject-stale': { kind: 'stale', code: 3, text: 'конвейер: слияние отменено — вершина ветки ушла от проверенного SHA (#312)' },
+  conflict: { kind: 'merge-conflict', code: 3, text: 'конвейер: вердикт зелёный, слияние конфликтует — ребейз (rebase-on-dev.mjs) и снова S7' },
+  'validation-red': { kind: 'validation-red', code: 3, text: 'конвейер: вердикт зелёный, но кандидат после ребейза на dev красный — разобрать прогон Validate и снова S7' },
+  'validation-missing': { kind: 'validation-missing', code: 3, text: 'конвейер: вердикт зелёный, Validate на кандидате не дождались — слияния нет; после зелёного Validate на кандидате снова S7, править код не нужно' },
+  'give-up': { kind: 'give-up', code: 3, text: 'конвейер: вердикт зелёный, dev движется быстрее слияния — снова S7, когда dev успокоится' },
+  'push-refused-workflow': {
+    merge: { kind: 'push-refused-workflow', code: 3, text: 'конвейер: вердикт зелёный, но GitHub не принял push кандидата — он меняет workflow-файл, у токена нет права: ребейз и push делает автор либо право выдаёт владелец (#705)' },
+    rebase: { kind: 'push-refused-workflow', code: 3, text: 'конвейер: ревью не запускалось — GitHub не принял push ребейза, ветка меняет workflow-файл: ребейз и push делает автор либо право выдаёт владелец (#705)' },
+  },
+  'push-refused': {
+    merge: { kind: 'push-refused', code: 3, text: 'конвейер: вердикт зелёный, но GitHub отклонил push в dev — причина в комментарии, устранить и снова S7 (#705)' },
+    rebase: { kind: 'push-refused', code: 3, text: 'конвейер: ревью не запускалось — GitHub отклонил push ребейза, причина в комментарии (#705)' },
+  },
+  error: { kind: 'merge-error', code: 3, text: 'конвейер: вердикт зелёный, шаг слияния упал — сбой в комментарии, после разбора снова S7' },
+  rereview: { kind: 'rereview', code: null, text: 'конвейер: дифф изменился при ребейзе на dev — вердикт к нему не применим, новый заход ревью запускается сам; ждём его вердикт' },
+});
+
+/** Событие по телу комментария: исход слияния по каталогу, иначе свой комментарий конвейера. */
+export function pipelineEventOf(body) {
+  const text = String(body || '');
+  const sign = outcomeOf(text);
+  if (sign) {
+    const entry = OUTCOME_EVENTS[sign.action];
+    const event = entry && (entry.kind ? entry : entry[sign.stage]);
+    // Исход, которого таблица ещё не знает: молчать нельзя — это и был дефект #768.
+    return event || { kind: sign.action, code: 3, text: `конвейер: исход слияния \`${sign.action}\` — читать комментарий` };
+  }
+  return PIPELINE_EVENTS.find((e) => e.re.test(text)) || null;
+}
 
 /** Последнее применение S4/S7 — устойчивый якорь текущего раунда ревью. */
 export function reviewRequestFromEvents(events = []) {
@@ -70,7 +126,7 @@ export function stateOf(snapshot) {
   const labels = snapshot.labels || [];
   const status = STATUS.find((l) => labels.includes(l)) || null;
   const events = (snapshot.comments || [])
-    .map((c) => ({ id: c.id, at: c.createdAt, event: PIPELINE_EVENTS.find((e) => e.re.test(String(c.body || ''))) }))
+    .map((c) => ({ id: c.id, at: c.createdAt, event: pipelineEventOf(c.body) }))
     .filter((c) => c.event && eventBelongsToReview(c, snapshot.reviewRequest));
   const last = events.at(-1) || null;
   return {
@@ -97,7 +153,9 @@ export function decide(prev, next) {
   }
   if (next.lastEventId && (!prev || prev.lastEventId !== next.lastEventId)) {
     lines.push(next.lastEvent.text);
-    if (code === null) code = 3;
+    // `code: null` — исход не терминальный (rereview): сказать и ждать дальше.
+    const eventCode = next.lastEvent.code === undefined ? 3 : next.lastEvent.code;
+    if (code === null && eventCode !== null) code = eventCode;
   }
   if (next.exhausted && (!prev || !prev.exhausted)) { lines.push('review-4: лимит циклов — решение владельца'); code = 3; }
   if (next.blocked && (!prev || !prev.blocked)) { lines.push('blocked: задача ждёт владельца, ждать вердикт бессмысленно'); code = 3; }

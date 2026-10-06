@@ -12383,6 +12383,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'wait-verdict-merge-outcomes-unknown',
+    guard: 'node --test --test-name-pattern="#768" test/wait-verdict.test.mjs',
+    because: '#768: merge-candidate outcomes are recognised through its OUTCOME_SIGNS catalog; without it '
+      + 'a red or stuck candidate keeps the author waiting in S7 until the timeout, and after the move to S6 '
+      + 'only the label change is printed, the reason is lost',
+    patches: [{
+      file: 'scripts/wait-verdict.mjs',
+      find: '  const sign = outcomeOf(text);',
+      replace: '  const sign = null; // mutant: merge-candidate outcomes are not recognised',
+    }],
+  },
+  {
     id: 'release-gate-counts-cancelled-runs',
     guard: 'node --test test/release-gate.test.mjs',
     because: 'a cancelled twin on the tag SHA proves nothing and must not block the assets; the '

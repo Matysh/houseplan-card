@@ -179,8 +179,11 @@ instead of ending the session.** The label starts the pipeline by itself. Poll
 with `node scripts/wait-verdict.mjs --issue NN [--sha <tip>]` (#496): it watches
 the label and the pipeline's comments every 90 s, at most 110 times, prints only
 on a change and exits 0 on a new label, 3 on an event that needs a hand, 4 on
-timeout. Watch the **label**, not the comment. Do not wait while `blocked` is
-set.
+timeout. A failed merge after a green verdict (outcomes of
+`merge-candidate.mjs`, #768) exits 3 while the label still reads `S7`, and its
+reason is printed when the label has already moved; «diff changed on rebase» is
+printed and the wait goes on — the new review round starts by itself. Watch the
+**label**, not the comment. Do not wait while `blocked` is set.
 
 | Now reads | What happened | What you do |
 |---|---|---|
