@@ -99,6 +99,10 @@
       "required": false,
       "type": "bool"
     },
+    "config.markers[].hide_battery": {
+      "required": false,
+      "type": "bool"
+    },
     "config.markers[].icon": {
       "maxLength": 500,
       "nullable": true,
