@@ -212,6 +212,45 @@ already fails the sample through the #735 structural guard, not through time. No
 profiles joined Validate only on a `src/**` diff, so the first beta candidate
 after #747 is their check.
 
+The aggregate Long Task ceilings of the same two families —
+`longTasks.maxCountP95` and `maxTotalP95Ms`, summed over every window of a
+sample, `switchCycle` included — are 18 tasks and 4350 ms for the flat family
+and 28 tasks and 6850 ms for the 2.5D family, the backdrop twin of #743
+included (#770). The former 30 / 12000 dated from the cold cycle and sat
+1.25–3.2 times above the post-#735 family maxima. The series is every Full Performance
+run from 2026-10-01 to 10-05 whose runner contains #735 (`5e318168`, landed
+2026-10-01 06:41 UTC), 14 runs: 36883292495, 36904753178, 36904816677,
+36905707715, 36905760140, 37055609391, 37062790080, 37065283633, 37134606046,
+37136641943, 37149329461, 37176616088, 37203867985 and 37302579095; both sides,
+7 samples, one runner type (linux x64, Chromium 151.0.7922.34, Node 22.23.3) —
+27 reports and 189 samples per profile. The point is what the ceiling judges:
+the nearest-rank p95 of a report, that is its largest sample. The window is
+warm in every one of them: the largest single Long Task inside `switchCycle` is
+190 ms against 427–1008 ms for the smallest cold floor switch of a profile, and
+the #735 guard fired in none. Maxima: flat count 13 / 15 / 13 and total 3301 /
+3759 / 3289 ms (`large-house-v1` / plan-snap / interaction); 2.5D count
+22 / 24 / 22 and total 5104 / 5935 / 5331 ms (isometric / Stage 3 dense /
+backdrop). The hosted runners are bimodal — on the faster ones fewer warm
+switches cross 50 ms and a sum falls to about half (isometric 2569 ms in
+37203867985 against 5104 ms in 36904816677) — which is the noise the series is
+meant to contain. Each ceiling follows the #747 rule for its metric: the first
+step (one task, 50 ms) at or above 1.15 × the family maximum and no higher than
+1.2 ×: flat 1.15 × 15 = 17.25 → 18 (+20 %) and 1.15 × 3759 = 4322.9 → 4350
+(+15.7 %); 2.5D 1.15 × 24 = 27.6 → 28 (+16.7 %) and 1.15 × 5935 = 6825.3 → 6850
+(+15.4 %). One report stays out of the maximum: the base of the v1.79.0 stable
+comparison 37149329461 is v1.78.0 (`7d4d75bd`, 2026-09-28, before #735 and the
+warm-switch work of #694, #725 and #739). Measured by the same runner as its
+candidate it reads 1.2–2 times higher — code, not runner noise — so it is the
+known slower variant the ceilings are checked against: its Stage 3 dense sum of
+8754 ms fails the 2.5D ceiling, its other points (isometric 24 / 6783 ms,
+backdrop 22 / 5159 ms, flat at most 17 / 3959 ms) pass and remain the relative
+comparison's job; three of its `switchCycleMs` medians already exceed the #747
+ceilings. Doubling the level fails both metrics. The only 3-sample smoke of the
+period, interaction in 36910217188, read 12 / 3047 ms; the isometric smoke has
+none, and a 3-sample p95 is the largest of fewer samples, so the 7-sample series
+bounds it. The relative half is unchanged: 0.35 and 0.3 with 3 tasks and 150 ms
+for the flat family, 0.2 with 5 tasks and 150 ms for the 2.5D family.
+
 The 2.5D View toggle (`viewToggleMs`) is reported by the isometric profiles but
 budgeted by none of them (#720, owner decision in #694 on 2026-09-30). Switching
 Flat ↔ 2.5D is a one-off General settings change, not something View or kiosk
@@ -359,8 +398,38 @@ rationale in the change. Do not loosen a threshold merely to make a single red
 run pass. A new fixture profile gets a new profile id instead of silently
 changing the meaning of `large-house-v1`.
 
-`large-house-isometric-v1` and its Stage 3 dense twin carry
-`countNoiseAllowance: 5` (the other profiles keep 3). Owner decision 2026-09-09, #507: since v1.73.0-beta.1 the
+An absolute ceiling is recalibrated from CI artifacts only — a local machine is
+noisy and of another class — by the method of #747 (`switchCycleMs`) and #770
+(Long Task count and total):
+
+1. **Series.** Every exact-SHA Full Performance run since the last change of
+   what the window measures (#735 for `switchCycle`), both sides — the base is
+   measured by the candidate runner — with 7 samples each and one runner type:
+   equal `runtime.platform`, `chromium` and `node` in the reports. Separate the
+   reports by `sourceSha` and date: a source that predates the change, or a known
+   slower build such as the previous stable tag measured as the base of a stable
+   comparison, is code rather than runner noise. It stays out of the maximum,
+   and how the new ceiling treats it is checked and written down.
+2. **Point.** The statistic the budget judges: the median for a timing, the
+   nearest-rank p95 of a report for Long Task count and total — with 7 samples
+   that is the largest one.
+3. **Ceiling.** One number per budget family — the smoke repeats its full
+   profile (#473 AC4), twins share their parent's ceilings (#160, #743) — at the
+   first step (50 ms, one task) at or above 1.15 × the family maximum and no
+   higher than 1.2 ×. Doubling the level must fail. The ratio and noise
+   allowance of the relative half are not the lever.
+4. **Record.** The run ids, the range and the rule go to "CI contracts" above,
+   the series to `test/performance-budget.test.mjs`, which replays every point
+   through the `--absolute-only` evaluation of the smoke budget and recomputes
+   the rule.
+
+A profile with fewer comparable runs than #747 had (four runs, eight reports)
+keeps its ceiling: dispatch Full Performance (`performance.yml`,
+`workflow_dispatch` on `dev`) until the series is long enough, then recalibrate.
+A ceiling never rises to let a red run pass.
+
+`large-house-isometric-v1` and its two twins (Stage 3 dense, #160; backdrop,
+#743) carry `countNoiseAllowance: 5` (the other profiles keep 3). Owner decision 2026-09-09, #507: since v1.73.0-beta.1 the
 isometric renderer lives in the lazy `iso-scene-render` chunk (#160 Stage 3),
 so the single v1.72.0 boot task is split into two around that import. The
 load-phase work is unchanged — timings, `longTask.totalP95Ms` and
@@ -370,20 +439,20 @@ runner jitter, sat at 16 → 20 against a 19.2 limit on the v1.73.0 stable
 comparison. The allowance widens the count check alone to 16 → 21 for that
 baseline; it is not a licence for more work per task.
 
-The same two isometric profiles carry a widened **gesture** allowance:
-`resizePreviewMs` 450 ms, `panZoomMs` 150 ms and `stateUpdateMs` 120 ms, held
-identical on both profiles because the #160 contract requires the Stage 3 dense
-twin to share every common ceiling with `large-house-isometric-v1`. Owner decision 2026-09-16, #585: the Full Performance run
-of the v1.76.0 stable candidate against v1.75.0 (run 35097102695) measured
-resizePreview 603 → 981 ms and panZoom 91 → 205 ms in the hidden 2.5D view.
-The step is real and understood — #583 gives that view more geometry, and the
-overlay-collision search still costs about twice what it did before #583, even
-after the coarse-lattice speed-up. Absolute ceilings did not move (panZoom 205
-against 600, resize 981 against 2200) and every user-visible profile stayed
-green. The lever is milliseconds, not the ratio: it absorbs one level shift and
-still gates growth from the new level. #585 rewrites the search to enumerate
-obstacle boundaries instead of scanning the 48 px disc; when it lands, these
-allowances go back to 150/60/75.
+The gesture noise allowances are `resizePreviewMs` 150 ms, `panZoomMs` 60 ms and
+`stateUpdateMs` 75 ms on every large-house profile, flat and 2.5D alike;
+`test/performance-budget.test.mjs` pins them (#585). In v1.76.0 and
+v1.77.0-beta.1 the two isometric profiles carried a widened 450 / 150 / 120 ms,
+held identical on both because the #160 contract requires the Stage 3 dense twin
+to share every common ceiling with `large-house-isometric-v1`. Owner decision 2026-09-16, #585: the
+Full Performance run of the v1.76.0 stable candidate against v1.75.0 (run
+35097102695) measured resizePreview 603 → 981 ms and panZoom 91 → 205 ms in the
+hidden 2.5D view, because #583 gave that view more geometry and the
+overlay-collision search still cost about twice what it did before #583. The
+absolute ceilings did not move (panZoom 205 against 600, resize 981 against
+2200); the lever was milliseconds, not the ratio. #585 then replaced the 48 px
+disc scan with a search over obstacle boundaries (`6f226a5b`, v1.77.0-beta.2),
+and the allowances returned to 150 / 60 / 75.
 
 The `cleanFloor` entry ceiling is 100: the reviewed fixture warms exactly 100
 deterministic room/physical-body entries. An extra 20 means that one complete

@@ -66,8 +66,8 @@
   },
   "longTasks": {
     "maxSingleMs": 3000,
-    "maxCountP95": 30,
-    "maxTotalP95Ms": 12000
+    "maxCountP95": 18,
+    "maxTotalP95Ms": 4350
   },
   "longTaskWindows": {
     "hoverSeries": {

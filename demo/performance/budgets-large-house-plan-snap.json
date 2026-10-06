@@ -62,10 +62,10 @@
     "maxSingleMs": 3000,
     "maxSingleRegressionRatio": 0.3,
     "maxSingleNoiseAllowanceMs": 250,
-    "maxCountP95": 30,
+    "maxCountP95": 18,
     "maxCountRegressionRatio": 0.35,
     "countNoiseAllowance": 3,
-    "maxTotalP95Ms": 12000,
+    "maxTotalP95Ms": 4350,
     "maxTotalRegressionRatio": 0.3,
     "noiseAllowanceMs": 150
   },

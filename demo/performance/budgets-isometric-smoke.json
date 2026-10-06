@@ -38,8 +38,8 @@
   },
   "longTasks": {
     "maxSingleMs": 3000,
-    "maxCountP95": 30,
-    "maxTotalP95Ms": 12000
+    "maxCountP95": 28,
+    "maxTotalP95Ms": 6850
   },
   "heap": {
     "required": true,
