@@ -36,11 +36,14 @@ const res = await page.evaluate(async () => {
   out.startsFlat = !iso();
   out.dialogOpens = await openSettings();
   const display = q('.hpf-card[data-card="display"]');
-  const ids = [...display.querySelectorAll('.hpf-toggle > input[type="checkbox"]')].map((i) => i.id);
+  const controls = [...display.querySelectorAll('input')];
+  const ids = controls.filter((i) => i.type === 'checkbox').map((i) => i.id);
   out.thirdInDisplay = JSON.stringify(ids.slice(0, 3)) === JSON.stringify(['gs-room-tooltip', 'gs-radar-live', 'gs-volumetric-view']);
-  // #792 appends its control without moving the established Display settings.
-  out.batteryFollowsExisting = JSON.stringify(ids) === JSON.stringify([
-    'gs-room-tooltip', 'gs-radar-live', 'gs-volumetric-view', 'gs-device-battery',
+  // #792/#807 appends the segmented battery control without moving the
+  // established Display settings.
+  out.batteryFollowsExisting = JSON.stringify(controls.map((i) => i.type === 'checkbox' ? i.id : `${i.name}:${i.value}`)) === JSON.stringify([
+    'gs-room-tooltip', 'gs-radar-live', 'gs-volumetric-view',
+    'gs-device-battery:all', 'gs-device-battery:low', 'gs-device-battery:off',
   ]);
   const row = q('#gs-volumetric-view').closest('.hpf-toggle')?.parentElement ?? null;
   out.rowTitleAndIcon = !!row && row.textContent.includes(c._t('gs.volumetric_view'))
