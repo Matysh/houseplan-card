@@ -45,9 +45,13 @@ test('#806 battery shadow matrix has an explicit neutral medium background witne
   assert.equal(scene.theme, 'light');
   assert.equal(scene.bgMode, 'static');
   assert.equal(scene.bgColor, '#808080');
+  assert.equal(scene.fillMode, 'custom');
+  assert.deepEqual(scene.customFill, { c: '#808080', a: 1 });
   const fixture = prepareGoldenFixture(scene);
   assert.equal(fixture.config.spaces[0].settings.bg_mode, 'static');
   assert.equal(fixture.config.spaces[0].settings.bg_color, '#808080');
+  assert.equal(fixture.config.spaces[0].settings.fill_mode, 'custom');
+  assert.deepEqual(fixture.config.spaces[0].settings.custom_fill, { c: '#808080', a: 1 });
 });
 
 test('#792 golden MDI oracle pins the four owner-approved icons independently of product code', () => {

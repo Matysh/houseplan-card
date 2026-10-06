@@ -899,6 +899,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   // so this proves the shadow against a third background, not a third UI skin.
   { id: 'device-battery-board-medium', fixture: 'visual', space: 'golden-battery', mode: 'view',
     batteryBoard: 'desktop', bgMode: 'static', bgColor: '#808080',
+    fillMode: 'custom', customFill: { c: '#808080', a: 1 },
     theme: 'light', viewport: { width: 1120, height: 1120 }, ...stage },
   { id: 'device-battery-mobile-dark', fixture: 'visual', space: 'golden-battery', mode: 'view',
     batteryBoard: 'mobile', theme: 'dark', viewport: { width: 390, height: 844 }, ...stage },
