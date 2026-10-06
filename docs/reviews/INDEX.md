@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 328, issue: 165. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 330, issue: 166. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -43,6 +43,8 @@
 | #780 | [SPEC-REVIEW-780-r2.md](SPEC-REVIEW-780-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #780 | [CODE-REVIEW-780-r1.md](CODE-REVIEW-780-r1.md) | code · r1 | 🔴 красный | 1 | 6 | обычное сохранение старым клиентом без led_strips безвозвратно удаляет все формы лент; активная лента удаляет не только обычный значок, но и подпись/бейдж устройства; явный room_id не имеет приоритета при выборе room-specific Glow; смена пространства завершает незаконченный контур в новом пространстве; скрытая/выключенная HA-сущность всё равно загружает View runtime лент; performance-профиль не доказывает обязательные camera/lifecycle условия AC17 | `custom_components/houseplan/websocket_api.py` `custom_components/houseplan/validation.py` `tests_backend/test_led_strips.py` `src/houseplan-card.ts` `src/led-strip-runtime.ts` `src/led-strip-editor.ts` `src/led-strip-gate.ts` `demo/benchmark_led_strips.mjs` |
 | #780 | [CODE-REVIEW-780-r2.md](CODE-REVIEW-780-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | обязательный профиль 50×50 стабильно превышает два бюджета AC17 | — |
+| #779 | [CODE-REVIEW-779-r1.md](CODE-REVIEW-779-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | summaryParagraph() выбирает «последний абзац на High:», доверяя порядку секций, которог… | `scripts/reviews-index.mjs` `SPEC-REVIEW-728-r2.md` `SPEC-REVIEW-774-r2.md` `SPEC-REVIEW-806-r2.md` `SPEC-REVIEW-662-r3.md` `774-r2.md` `780-r2.md` `806-r2.md` |
+| #779 | [CODE-REVIEW-779-r2.md](CODE-REVIEW-779-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #777 | [CODE-REVIEW-777-r1.md](CODE-REVIEW-777-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #776 | [CODE-REVIEW-776-r1.md](CODE-REVIEW-776-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #775 | [CODE-REVIEW-775-r1.md](CODE-REVIEW-775-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
@@ -209,7 +211,7 @@
 | #663 | [CODE-REVIEW-663-r3.md](CODE-REVIEW-663-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #662 | [SPEC-REVIEW-662-r1.md](SPEC-REVIEW-662-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «Входящие» не существует в UI, и текущая классификация каталога кладёт неразмещённую ле…; «Не скоуп» отсутствует внутри формального ## ТЗ | `src/device-inbox.ts` `USER-GUIDE.ru.md` `docs/USER-GUIDE.ru.md` `demo/smoke_led_strip_bind.mjs` `device-inbox.ts` `SPEC-REVIEW-661-r1.md` |
 | #662 | [SPEC-REVIEW-662-r2.md](SPEC-REVIEW-662-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
-| #662 | [SPEC-REVIEW-662-r3.md](SPEC-REVIEW-662-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 2 | — | — |
+| #662 | [SPEC-REVIEW-662-r3.md](SPEC-REVIEW-662-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #662 | [SPEC-REVIEW-662-r4.md](SPEC-REVIEW-662-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — | — |
 | #661 | [SPEC-REVIEW-661-r1.md](SPEC-REVIEW-661-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #661 | [CODE-REVIEW-661-r1.md](CODE-REVIEW-661-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
