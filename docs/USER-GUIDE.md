@@ -1429,7 +1429,7 @@ have no indicator. The normal vacuum dock marker follows the ordinary rules.
 The indicator does not enlarge the device's click target; Zigbee hover
 information appears above it.
 
-**General settings → Display → Show device battery charge** is on by default
+**General settings → Display → Show device battery status** is on by default
 and applies installation-wide, including static space cards and the editor
 preview. Full configuration export/import preserves the setting.
 

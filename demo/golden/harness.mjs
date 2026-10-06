@@ -1,7 +1,8 @@
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
-import { makeBatteryBoardFixture, prepareBatteryBoard } from './device-battery.mjs';
+import { makeBatteryBoardFixture, prepareBatteryBoard, makeBatteryZigbeeFixture,
+  prepareBatteryZigbeeOverlap, batteryZigbeeProbe, batteryZigbeeClip } from './device-battery.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -43,6 +44,7 @@ const cardVersion = '0.0.0-golden';
 const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
 const fixtureFor = (scenario) => scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
+  : scenario.batteryZigbeeOverlap ? makeBatteryZigbeeFixture()
   : scenario.fixture === 'large'
   ? makeLargeHouseFixture({ includeStairs: false })
   : makeVisualMatrixFixture({
@@ -1013,6 +1015,7 @@ export async function prepareGoldenScenario(page, scenario) {
         three: { floor_id: 'three', name: 'Three', level: 2 },
       },
       callWS: async (message) => {
+        if (message.type === 'zha/devices' && fixture.zhaDevices) return structuredClone(fixture.zhaDevices);
         if (message.type === 'houseplan/config/get') return {
           config: structuredClone(fixture.config), rev: 1,
           can_write: scenario.canWrite !== false,
@@ -2494,11 +2497,13 @@ export async function prepareGoldenScenario(page, scenario) {
     await page.mouse.move(point.x, point.y);
   }
   if (scenario.batteryBoard) result.batteryBoard = await prepareBatteryBoard(page, scenario);
+  if (scenario.batteryZigbeeOverlap) result.batteryZigbeeOverlap = await prepareBatteryZigbeeOverlap(page);
   return result;
 }
 
 export async function goldenClip(page, capture) {
   if (capture === 'page') return null;
+  if (capture === 'battery-zigbee-overlap') return batteryZigbeeClip(await batteryZigbeeProbe(page), page.viewportSize());
   return page.evaluate((captureKind) => {
     const card = window.__goldenCard;
     const target = card?.renderRoot?.querySelector('.stage');

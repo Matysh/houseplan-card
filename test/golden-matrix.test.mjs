@@ -15,7 +15,7 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
   for (const scenario of GOLDEN_SCENARIOS) {
     assert.match(scenario.id, /^[a-z0-9-]+$/);
     assert.equal(['visual', 'large'].includes(scenario.fixture), true, scenario.id);
-    assert.equal(['page', 'stage', 'sun-window'].includes(scenario.capture), true, scenario.id);
+    assert.equal(['page', 'stage', 'sun-window', 'battery-zigbee-overlap'].includes(scenario.capture), true, scenario.id);
     assert.equal(scenario.viewport.width > 0 && scenario.viewport.height > 0, true, scenario.id);
     assert.equal(scenario.threshold.maxChannelDelta >= 0 && scenario.threshold.maxChannelDelta <= 32, true, scenario.id);
     assert.equal(scenario.threshold.maxDiffRatio >= 0 && scenario.threshold.maxDiffRatio <= 0.01, true, scenario.id);
@@ -446,7 +446,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 72);
+  assert.equal(GOLDEN_MATRIX_VERSION, 73);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -940,7 +940,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 72);
+  assert.equal(GOLDEN_MATRIX_VERSION, 73);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',
