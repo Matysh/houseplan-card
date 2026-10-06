@@ -7,33 +7,12 @@ import { fileURLToPath } from 'node:url';
 // срабатывал ни разу: счётчик читался синхронно, а Playwright доставляет
 // pageerror асинхронно. Поведение доказывается запуском проб —
 // demo/guard/verify-guard.mjs в job со браузером. Здесь закреплено то, что
-// запуском не проверить: порядок операций в исходнике, место проб и наличие
-// вызова там, где он должен быть.
+// запуском этих проб не проверить: место проб и наличие вызова в CI.
+// Порядок доставки/закрытия/вердикта проверяется исполнением публичного API в
+// smoke-harness-lifecycle.test.mjs (#776), а не текстом реализации.
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const read = (rel) => readFileSync(new URL(rel, `file://${ROOT}`), 'utf8');
-
-test('счётчик читается ПОСЛЕ доставки событий, а не до (#404)', () => {
-  const serve = read('demo/serve.mjs');
-  const flush = serve.indexOf('await roundTripLivePages();\n  if (_pageErrors)');
-  assert.ok(flush > 0,
-    'round-trip обязан стоять непосредственно перед чтением счётчика: обратный'
-    + ' порядок и был дефектом #404');
-  // Вторая половина правки: опрашивать нечего, если страницы не регистрируются.
-  assert.match(serve, /const _livePages = new Set\(\)/);
-  assert.match(serve, /export function watchPage\(page\)/);
-  assert.match(serve, /_livePages\.add\(page\)/);
-  assert.match(serve, /page\.on\('close', \(\) => _livePages\.delete\(page\)\)/,
-    'закрытая страница обязана уходить из реестра');
-  // Round-trip к закрытой странице бросает — и не имеет права ронять вердикт.
-  assert.match(serve, /try \{ await page\.evaluate\(\(\) => 0\); \} catch/);
-});
-
-test('оба читателя счётчика ждут доставки (#404, #407)', () => {
-  const serve = read('demo/serve.mjs');
-  assert.match(serve, /export async function reportPageErrors\(\)\s*\{\s*await roundTripLivePages\(\);/,
-    'вердикт для смоков со своей развязкой обязан ждать так же, как finish()');
-});
 
 test('пробы гарда лежат вне маски смоков и вне корпуса отпечатка (#404)', () => {
   const guard = readdirSync(new URL('demo/guard/', `file://${ROOT}`));
@@ -70,12 +49,10 @@ test('пробы вызываются в job с браузером и служа
   assert.match(smoke, /if: matrix\.shard == 1/, 'один раз, а не в каждом шарде');
 
   const mutants = read('scripts/mutation-registry.mjs');
-  // Правка #404 состоит из двух половин, и мутант на одну оставил бы другую
-  // недоказанной. Список ведётся руками, и это осознанно: счётчик обязан
-  // совпадать с ним, поэтому новый мутант на этих пробах нельзя добавить, не
-  // назвав его здесь (в #430 так добавился четвёртый — гард page-benchmark).
+  // Только browser guards: premature snapshot с #776 доказывается без гонки
+  // в smoke-harness-lifecycle.test.mjs. Настоящий канал Playwright остаётся
+  // предметом verify-guard и остальных browser guards.
   const guarded = [
-    'smoke-guard-blind-to-tail',
     'smoke-guard-forgets-to-register-pages',
     'report-page-errors-skips-round-trip',
     'benchmark-page-verdict-unwatched',

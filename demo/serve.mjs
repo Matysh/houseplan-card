@@ -37,13 +37,12 @@ const _livePages = new Set();
  * уносит недоставленное событие. В логе это видно дословно: `EXC` печатается
  * ПОСЛЕ результата и ДО `OK`.
  *
- * Круговой запрос к странице вытесняет ранее поставленные макрозадачи, поэтому
- * всё, что страница успела произвести до этого момента, к нам уже дошло.
- *
- * Честная граница: исключение, возникшее ПОСЛЕ этого round-trip'а — например, в
- * обработчике `beforeunload` при закрытии браузера, — не учитывается. Ловить его
- * значит ждать неизвестно чего неизвестно сколько; контракт формулируется как
- * «всё, что произошло до вызова вердикта».
+ * Круговой запрос даёт странице возможность доставить накопленные события,
+ * но не является барьером для всех browser task queues: например, хвостовое
+ * отклонение промиса может прийти уже во время browser.close() (#776).
+ * finish() поэтому читает счётчик только после завершения закрытия. Граница —
+ * все pageerror, доставленные до вердикта; произвольных будущих таймеров не ждём.
+ * reportPageErrors() браузер не закрывает и судит события после своего запроса.
  */
 async function roundTripLivePages() {
   for (const page of _livePages) {
@@ -111,11 +110,11 @@ export async function reportPageErrors() {
 /** Print the result, report failures, close the browser, set the exit code. */
 export async function finish(browser, out) {
   if (out !== undefined) console.log(JSON.stringify(out, null, 1));
-  // Порядок обязателен: сначала дать странице доставить события, потом читать
-  // счётчик (#404). Обратный порядок и был дефектом.
+  // #404/#776: дать доставить события и дождаться закрытия, затем снять итог.
+  // Между round-trip и close тоже приходят pageerror: ранний снимок давал EXC + OK.
   await roundTripLivePages();
-  if (_pageErrors) _failures.push(`${_pageErrors} uncaught exception(s) inside the card`);
   await browser?.close?.();
+  if (_pageErrors) _failures.push(`${_pageErrors} uncaught exception(s) inside the card`);
   // #629: доказательство «перевод без потери утверждений» — отсортированный
   // список имён проверок; без переменной вывод прежний.
   if (process.env.HP_SMOKE_CHECKS === '1') {

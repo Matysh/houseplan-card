@@ -1814,14 +1814,15 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'smoke-guard-blind-to-tail',
-    guard: 'node demo/guard/verify-guard.mjs',
-    because: 'the uncaught-exception guard must read its counter AFTER the page delivered '
-      + 'its events; reading it first is the defect of #404 and looks identical to a '
-      + 'working guard in everything but the outcome',
+    guard: 'node --test test/smoke-harness-lifecycle.test.mjs',
+    because: 'the public harness must include page errors delivered during awaited teardown '
+      + '(#404/#776); controlled event delivery proves the premature snapshot without a browser race',
     patches: [{
       file: 'demo/serve.mjs',
-      find: '  await roundTripLivePages();\n  if (_pageErrors) _failures.push(',
-      replace: '  if (_pageErrors) _failures.push(',
+      find: '  await roundTripLivePages();\n  await browser?.close?.();\n'
+        + '  if (_pageErrors) _failures.push(`${_pageErrors} uncaught exception(s) inside the card`);',
+      replace: '  if (_pageErrors) _failures.push(`${_pageErrors} uncaught exception(s) inside the card`);\n'
+        + '  await roundTripLivePages();\n  await browser?.close?.();',
     }],
   },
   {
