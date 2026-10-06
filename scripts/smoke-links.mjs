@@ -455,6 +455,14 @@ export const SMOKE_LINKS = [
       + 'localized reload panel instead of dying silently (#353)',
   },
   {
+    symbols: ['_kioskDialog', '_renderKioskDialog', '_saveKioskScale', 'saveScale'],
+    smokes: ['smoke_kiosk_scale_no_editor.mjs'],
+    because: '#763: a cold kiosk opens the per-screen size dialog with a real 3 s touch hold and '
+      + 'drives its sliders, Reset, Close and reopen through the DOM, while the network log proves '
+      + 'the editor chunk is never requested, also when the network refuses it; the smoke names '
+      + 'none of these members',
+  },
+  {
     symbols: [
       'ROOM_GEAR_DRAG_THRESHOLD_PX', 'roomGearPointAllowed', 'roomGearAutoCenter',
       'resolveRoomGearCenter', 'roomGearDragMoved', 'clampRoomGearPointAlongPath',

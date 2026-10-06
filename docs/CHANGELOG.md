@@ -8,6 +8,9 @@
   arrows now pass over battery indicators instead of disappearing under them;
   device faces and captions still stay on top
   ([#808](https://github.com/Matysh/houseplan-card/issues/808)).
+- In kiosk mode, holding the plan to open **This screen's sizes** no longer
+  downloads the editor, and a poor connection no longer shows a "Could not load
+  the editor" notice there ([#763](https://github.com/Matysh/houseplan-card/issues/763)).
 
 ## v1.80.0-beta.6 — 2026-10-06
 

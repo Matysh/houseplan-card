@@ -155,10 +155,11 @@ out.fingerprintMismatchKeepsView = await mismatch.page.evaluate(() =>
   && window.__card._toast.includes(window.__card._t('editor.refresh_advice')));
 
 // #757: a render is not an intent. Surfaces the core opens without the
-// runtime — the kiosk scale dialog after a 3 s hold, the floor import wizard
-// on an empty plan, a dialog a warm remount revives — keep asking for it on
-// every repaint. One non-terminal failure is one cycle and one notice; the
-// loader then waits for the next explicit intent, which still heals.
+// runtime — the floor import wizard on an empty plan, a dialog a warm remount
+// revives — keep asking for it on every repaint. One non-terminal failure is
+// one cycle and one notice; the loader then waits for the next explicit
+// intent, which still heals. The kiosk scale dialog left that list in #763:
+// it needs no editor at all, so with the chunk refused it asks zero times.
 const QUIET_MS = 8000;
 const chunkRequests = async (session, name, plain = 'abort') => {
   const seen = [];
@@ -194,7 +195,8 @@ const notices = (page) => page.evaluate(() => window.__hpNotices);
 /** `true`, or what actually happened — the count is the evidence. */
 const exactly = (expected, actual, what) => actual === expected || `${actual} ${what} instead of ${expected}`;
 
-// (a) Kiosk: a 3 s hold on the empty scene opens the per-screen size dialog.
+// (a) Kiosk: a 3 s hold on the empty scene opens the per-screen size dialog
+// without the editor (#763; full scenario in smoke_kiosk_scale_no_editor).
 const kiosk = await launchColdView();
 const kioskChunk = await chunkRequests(kiosk, runtimeName);
 await kiosk.page.evaluate(async () => {
@@ -222,9 +224,9 @@ await kiosk.page.evaluate(() => {
 });
 await kiosk.page.waitForFunction(() => document.querySelector('#hp-kiosk')._kioskDialog === true, null, { timeout: 6000 });
 await kiosk.page.waitForTimeout(QUIET_MS);
-out.kioskDialogFailureIsOneCycle = exactly(2, kioskChunk.seen.length, 'chunk requests');
-out.kioskDialogFailureIsOneNotice = exactly(1, await notices(kiosk.page), 'notices');
-out.kioskDialogLoaderWaitsForIntent = await kiosk.page.evaluate(() => {
+out.kioskDialogAsksNoChunk = exactly(0, kioskChunk.seen.length, 'chunk requests');
+out.kioskDialogShowsNoNotice = exactly(0, await notices(kiosk.page), 'notices');
+out.kioskDialogLoaderStaysIdle = await kiosk.page.evaluate(() => {
   const card = document.querySelector('#hp-kiosk');
   return card._editorRuntimeLoader.state === 'idle' && card._kioskDialog === true
     && !!(card.shadowRoot || card.renderRoot).querySelector('hp-dialog input[type="range"]');

@@ -10687,7 +10687,8 @@ export class HouseplanCard extends LitElement {
         || this._deviceInbox
         || this._markerDialog || this._rulesDialog || this._settingsDialog || this._supportDialog
         || this._alignDialog || this._backupExportDialog || this._backupImportDialog
-        || this._kioskDialog || this._vacFit || this._vacCalConfirm);
+        // #763: no `_kioskDialog` — the core draws the kiosk scale dialog and the summary runtime saves it
+        || this._vacFit || this._vacCalConfirm);
     if (onboardingRuntimeRequested && !this._onboardingRuntime) { // a render reconciles; it is not an intent (#757)
       void this._onboardingRuntimeLoader.ensure('reconcile');
     }

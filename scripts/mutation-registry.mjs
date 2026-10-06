@@ -13885,13 +13885,25 @@ const MUTANT_DEFINITIONS = [
     id: 'render-reconcile-restarts-editor-runtime-cycle',
     guard: 'node demo/smoke_lazy_editor_chunk.mjs',
     because: '#757 AC1: _renderBody asks for the editor runtime on every repaint while a '
-      + 'surface the core opened (kiosk size dialog, warm-revived dialog) waits for it; '
+      + 'surface the core opened (a warm-revived dialog; the kiosk size dialog left in #763) waits for it; '
       + 'calling it as an intent turns one network failure into a new cycle and a new '
       + 'notice every few seconds — only the production card render shows this',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: "    if (editorRuntimeRequested && !this._editorRuntime) void this._editorRuntimeLoader.ensure('reconcile');",
       replace: '    if (editorRuntimeRequested && !this._editorRuntime) void this._editorRuntimeLoader.ensure(); // mutant: a render is an intent',
+    }],
+  },
+  {
+    id: 'kiosk-scale-dialog-loads-editor-runtime',
+    guard: 'node demo/smoke_kiosk_scale_no_editor.mjs',
+    because: '#763: the kiosk scale dialog is drawn by the core and saved by the summary runtime; '
+      + 'counting it as an editor-runtime request makes every 3 s hold on a wall tablet fetch '
+      + 'the editor chunk — only the cold production bundle and its network log show this',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        || this._vacFit || this._vacCalConfirm);',
+      replace: '        || this._kioskDialog || this._vacFit || this._vacCalConfirm); // mutant: the kiosk dialog asks for the editor',
     }],
   },
   {
