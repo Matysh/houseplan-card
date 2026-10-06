@@ -1,4 +1,6 @@
 /** #792 AC7: real caption pixels cover battery ink; route pixels stay below core.
+ * #808 AC2: a local link's route pixels paint over the battery ink of the
+ * hovered endpoint and of the neighbour endpoint, in Flat and 2.5D.
  * Controls hide only the rendered test layer for a differential raster probe.
  * Registry, settings, provider fetch and hover enter through public surfaces.
  */
@@ -14,6 +16,11 @@ const out = {};
 try {
   await installBatteryFixture(page);
   await page.evaluate(async () => {
+    await window.__hpTest.setLayout(layout => ({ ...layout,
+      d_light1: { s: 'f1', x: 0.6, y: 0.72 }, d_leak: { s: 'f1', x: 0.88, y: 0.72 } }));
+    await window.__hpTest.settled();
+  });
+  await page.evaluate(async () => {
     const card = window.__card;
     const originalCallWS = card.hass.callWS;
     card.hass = { ...card.hass, callWS: async message => {
@@ -24,6 +31,11 @@ try {
           name: 'Upstairs parent relay', neighbors: [
             { ieee: '00124b0000000001', relationship: 'Child', lqi: 50 },
           ] },
+        // #808: a local link whose line crosses a whole battery frame.
+        { ieee: '00124b0000000003', nwk: 3, device_reg_id: 'd_light1', device_type: 'EndDevice',
+          neighbors: [{ ieee: '00124b0000000004', relationship: 'Parent', lqi: 50 }] },
+        { ieee: '00124b0000000004', nwk: 4, device_reg_id: 'd_leak', device_type: 'Router',
+          neighbors: [{ ieee: '00124b0000000003', relationship: 'Child', lqi: 50 }] },
       ];
       return originalCallWS(message);
     } };
@@ -82,11 +94,13 @@ try {
     await page.evaluate(() => {
       const overlay = window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay').shadowRoot;
       overlay.querySelector('[data-hp="zigbee-topology-parent-bubble"]').style.removeProperty('visibility');
-      overlay.querySelector('[data-hp="zigbee-topology-lines"]').style.visibility = 'hidden';
+      for (const layer of overlay.querySelectorAll('[data-hp^="zigbee-topology-lines"]')) layer.style.visibility = 'hidden';
     });
     const routesHidden = await screenshot('routes-hidden-control');
-    await page.evaluate(() => window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay').shadowRoot
-      .querySelector('[data-hp="zigbee-topology-lines"]').style.removeProperty('visibility'));
+    await page.evaluate(() => {
+      for (const layer of window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay').shadowRoot
+        .querySelectorAll('[data-hp^="zigbee-topology-lines"]')) layer.style.removeProperty('visibility');
+    });
     const evidence = await page.evaluate(async ({ active, captionHidden, routesHidden, probe }) => {
       const decode = async data => {
         const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob());
@@ -131,6 +145,83 @@ try {
     out[`${mode}_coreStillPaintsOverRoutes`] = evidence.coreCoversRoute;
     console.log(`Battery Zigbee ${mode} pixel evidence:`, evidence, probe);
     await page.mouse.move(10, 10);
+  }
+  // #808 AC2: the line of a local link crosses a whole battery frame — the
+  // hovered device's own (d_light1 -> d_leak) and a neighbour endpoint's
+  // (hovering d_leak, the line ends in d_light1). Both markers are endpoints.
+  for (const iso of [false, true]) {
+    const mode = iso ? 'iso' : 'flat';
+    await page.evaluate(iso => window.__hpTest.setVolumetricView(iso), iso);
+    for (const [hovered, neighbor, role] of [['d_light1', 'd_leak', 'own'], ['d_leak', 'd_light1', 'neighbour']]) {
+      const owner = 'd_light1';
+      const start = await batteryGeometry(page, hovered);
+      await page.mouse.move(start.core.x + start.core.width / 2, start.core.y + start.core.height / 2);
+      await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay')?.shadowRoot
+        ?.querySelector('[data-hp="zigbee-topology-line"]'));
+      await page.evaluate(() => window.__hpTest.settled());
+      const battery = (await batteryGeometry(page, owner)).battery;
+      // The drawn route, not the lifted 2.5D cores: its endpoints in viewport px.
+      // The ordinary device tooltip may sit over the hovered battery; it is
+      // hidden in both frames, so only the route layers differ.
+      const route = await page.evaluate(() => {
+        const root = window.__card.shadowRoot;
+        root.querySelector('[data-hp-live-tip]')?.style.setProperty('visibility', 'hidden');
+        const overlay = root.querySelector('hp-zigbee-topology-overlay');
+        const line = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-line"]');
+        const layer = overlay.getBoundingClientRect();
+        const sx = layer.width / overlay.clientWidth, sy = layer.height / overlay.clientHeight;
+        const point = (x, y) => ({ x: layer.left + Number(line.getAttribute(x)) * sx,
+          y: layer.top + Number(line.getAttribute(y)) * sy });
+        return { from: point('x1', 'y1'), to: point('x2', 'y2') };
+      });
+      const shot = name => page.screenshot({ animations: 'disabled',
+        path: fileURLToPath(new URL(`${mode}-local-${role}-${name}.png`, artifacts)) });
+      const active = await shot('active');
+      const toggleRoutes = hidden => page.evaluate(hidden => {
+        for (const layer of window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay').shadowRoot
+          .querySelectorAll('[data-hp^="zigbee-topology-lines"]')) {
+          if (hidden) layer.style.visibility = 'hidden'; else layer.style.removeProperty('visibility');
+        }
+      }, hidden);
+      await toggleRoutes(true);
+      const routesHidden = await shot('routes-hidden-control');
+      await toggleRoutes(false);
+      await page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp-live-tip]')
+        ?.style.removeProperty('visibility'));
+      const evidence = await page.evaluate(async ({ active, routesHidden, route, battery }) => {
+        const decode = async data => {
+          const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob());
+          const canvas = new OffscreenCanvas(bitmap.width, bitmap.height), ctx = canvas.getContext('2d');
+          ctx.drawImage(bitmap, 0, 0);
+          return ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+        };
+        const [a, hidden] = await Promise.all([decode(active), decode(routesHidden)]);
+        const at = (image, x, y) => {
+          const index = (Math.floor(y * devicePixelRatio) * image.width + Math.floor(x * devicePixelRatio)) * 4;
+          return [image.data[index], image.data[index + 1], image.data[index + 2]];
+        };
+        const green = pixel => Math.abs(pixel[0] - 29) < 8 && Math.abs(pixel[1] - 194) < 8 && Math.abs(pixel[2] - 29) < 8;
+        const changed = (first, second) => first.some((value, index) => Math.abs(value - second[index]) > 12);
+        const p = route.from, q = route.to;
+        const length = Math.hypot(q.x - p.x, q.y - p.y), seen = new Set();
+        let ink = 0, over = 0;
+        for (let step = 0; step <= length * 2; step++) {
+          const x = p.x + (q.x - p.x) * step / (length * 2), y = p.y + (q.y - p.y) * step / (length * 2);
+          if (x < battery.x + 1 || x > battery.right - 1 || y < battery.y + 1 || y > battery.bottom - 1) continue;
+          const key = `${Math.floor(x)},${Math.floor(y)}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          const baseline = at(hidden, x, y), painted = at(a, x, y);
+          if (!green(baseline)) continue;
+          ink++;
+          if (changed(baseline, painted) && !green(painted)) over++;
+        }
+        return { ink, over, covers: ink >= 6 && over / ink >= 0.8 };
+      }, { active: active.toString('base64'), routesHidden: routesHidden.toString('base64'), route, battery });
+      console.log(`Battery Zigbee ${mode} local ${role} route evidence:`, evidence);
+      out[`${mode}_localRoutePaintsOver${role === 'own' ? 'Own' : 'Neighbour'}Battery`] = evidence.covers;
+      await page.mouse.move(10, 10);
+    }
   }
   checkAll(out);
 } catch (error) {

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Zigbee links: a map snapshot is now marked “Stale data” after an hour instead
+  of five minutes, so a fresh scan no longer looks outdated almost immediately.
+  A failed refresh still marks the last snapshot stale at once. Link lines and
+  arrows now pass over battery indicators instead of disappearing under them;
+  device faces and captions still stay on top
+  ([#808](https://github.com/Matysh/houseplan-card/issues/808)).
+
 ## v1.80.0-beta.6 — 2026-10-06
 
 - Battery icons now keep their colour readable over light and mixed plan

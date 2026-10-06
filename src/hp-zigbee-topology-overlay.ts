@@ -59,9 +59,12 @@ export class HpZigbeeTopologyOverlay extends LitElement {
 
   static styles = css`
     /* No host stacking context: endpoint cores stay above routes (8 > 7),
-       while information captions also stay above passive batteries (9 > 8). */
+       while information captions also stay above passive batteries (9 > 8).
+       #808: a copy of the routes clipped to endpoint battery frames paints
+       over those batteries (9 > 8) and under captions (same 9, earlier DOM). */
     :host { position: absolute; inset: 0; z-index: auto; display: block; pointer-events: none; }
     svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 7; }
+    svg.over-battery { z-index: 9; }
     line { vector-effect: non-scaling-stroke; stroke-linecap: round; }
     .route-arrow { vector-effect: non-scaling-stroke; }
     svg, line, polygon, .halo, .remote, .parent-bubble, .route-status { pointer-events: none; }
@@ -179,6 +182,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     this._layoutFrame = requestAnimationFrame(() => {
       this._layoutFrame = 0;
       if (!this.isConnected || !this._hovered) return;
+      this._clipRoutesToBatteries();
       this._fitParentCaptions();
       this.onLayout?.();
     });
@@ -239,11 +243,36 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       )) { part.setAttribute('x2', String(point.x)); part.setAttribute('y2', String(point.y)); }
       const arrow = zigbeeArrowGeometry(origin, point,
         marker ? Math.max(marker.width, marker.height) * .61 + 3 : 0, 0, 'toward-neighbor');
-      const polygon = this.renderRoot.querySelector<SVGPolygonElement>(
+      for (const polygon of this.renderRoot.querySelectorAll<SVGPolygonElement>(
         `polygon[data-parent-index="${caption.dataset.parentIndex}"]`,
-      );
-      if (polygon) polygon.setAttribute('points', arrow ? this._points(arrow.points) : '');
+      )) polygon.setAttribute('points', arrow ? this._points(arrow.points) : '');
     }
+  }
+
+  /** #808: routes paint over the passive battery of their own endpoints too.
+   *  An endpoint marker rises above the route layer as a whole (#464), its
+   *  battery included, so the route copy one level higher is clipped to those
+   *  battery frames only; cores, value sections and captions keep their order
+   *  (#792 AC7). DOM-only, inside the existing layout frame. */
+  private _clipRoutesToBatteries(): void {
+    const clip = this.renderRoot.querySelector<SVGClipPathElement>('#hp-zigbee-battery-clip');
+    if (!clip) return;
+    const layer = this.getBoundingClientRect();
+    const scaleX = this.clientWidth ? layer.width / this.clientWidth : 1;
+    const scaleY = this.clientHeight ? layer.height / this.clientHeight : 1;
+    const boxes = scaleX > 0 && scaleY > 0 ? [...this._endpointElements]
+      .map((marker) => marker.querySelector('.device-battery')?.getBoundingClientRect())
+      .filter((rect): rect is DOMRect => !!rect && rect.width > 0 && rect.height > 0)
+      .map((rect) => [(rect.left - layer.left) / scaleX - 2, (rect.top - layer.top) / scaleY - 2,
+        rect.width / scaleX + 4, rect.height / scaleY + 4].map((value) => value.toFixed(2))) : [];
+    const key = boxes.join(';');
+    if (clip.dataset.boxes === key) return;
+    clip.dataset.boxes = key;
+    clip.replaceChildren(...boxes.map(([x, y, width, height]) => {
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      for (const [name, value] of Object.entries({ x, y, width, height })) rect.setAttribute(name, value);
+      return rect;
+    }));
   }
 
   private _acceptRuntime(next: ZigbeeTopologyRuntimeSnapshot): void {
@@ -433,18 +462,18 @@ export class HpZigbeeTopologyOverlay extends LitElement {
 
   private _route(origin: ZigbeePixelPoint, point: ZigbeePixelPoint, lqi: number | undefined,
     direction: 'toward-neighbor' | 'toward-origin',
-    arrow: ReturnType<typeof zigbeeArrowGeometry>, parent = false, parentIndex?: number) {
+    arrow: ReturnType<typeof zigbeeArrowGeometry>, parent = false, parentIndex?: number, copy = false) {
     const color = zigbeeLinkColor(lqi);
     const outline = Number.isFinite(this.zoom) && this.zoom > 0 ? this.zoom : 1;
-    return svg`${lqi === undefined ? svg`<line class="link-casing" data-hp="zigbee-topology-line-casing"
+    return svg`${lqi === undefined ? svg`<line class="link-casing" data-hp=${copy ? nothing : 'zigbee-topology-line-casing'}
       data-parent-index=${parentIndex ?? nothing} x1=${origin.x} y1=${origin.y} x2=${point.x} y2=${point.y}
       stroke="#000000" stroke-width=${2 + 2 * outline} data-direction=${direction}></line>` : nothing}
       <line class=${parent ? 'parent-route' : 'link-core'}
-        data-hp=${parent ? 'zigbee-topology-parent-line' : 'zigbee-topology-line'}
+        data-hp=${copy ? nothing : parent ? 'zigbee-topology-parent-line' : 'zigbee-topology-line'}
         data-parent-index=${parentIndex ?? nothing} x1=${origin.x} y1=${origin.y} x2=${point.x} y2=${point.y}
         stroke=${color} stroke-width=${lqi === undefined ? 2 : 2.2} data-direction=${direction}></line>
       ${arrow ? svg`<polygon class="route-arrow"
-        data-hp=${parent ? 'zigbee-topology-parent-arrow' : 'zigbee-topology-arrow'}
+        data-hp=${copy ? nothing : parent ? 'zigbee-topology-parent-arrow' : 'zigbee-topology-arrow'}
         data-parent-index=${parentIndex ?? nothing} data-direction=${direction} points=${this._points(arrow.points)} fill=${color}
         stroke=${lqi === undefined ? '#000000' : nothing} stroke-width=${lqi === undefined ? 2 * outline : nothing}
         stroke-linejoin="round" paint-order="stroke fill"></polygon>` : nothing}`;
@@ -520,11 +549,19 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         this._hovered,
         ...lines.map((line) => line.neighborMarkerId),
       ] : []);
+    const routes = (copy: boolean) => [
+      ...lines.map((line) => this._route(origin, line.point!, line.lqi, line.routeDirection, line.arrow,
+        false, undefined, copy)),
+      ...bubbles.map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor',
+        bubble.arrow, true, index, copy)),
+    ];
     return html`
       ${lines.length || bubbles.length ? svg`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
-        aria-hidden="true" data-hp="zigbee-topology-lines">
-        ${lines.map((line) => this._route(origin, line.point!, line.lqi, line.routeDirection, line.arrow))}
-        ${bubbles.map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor', bubble.arrow, true, index))}
+        aria-hidden="true" data-hp="zigbee-topology-lines">${routes(false)}</svg>
+      <svg class="over-battery" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
+        aria-hidden="true" data-hp="zigbee-topology-lines-over-battery">
+        <clipPath id="hp-zigbee-battery-clip"></clipPath>
+        <g clip-path="url(#hp-zigbee-battery-clip)">${routes(true)}</g>
       </svg>` : nothing}
       ${lines.map((line) => html`<div class="halo" data-hp="zigbee-topology-neighbor"
         data-id=${line.neighborMarkerId} style="left:${line.point!.x}px;top:${line.point!.y}px;width:${line.point!.width * 1.22}px;height:${line.point!.height * 1.22}px"></div>`)}

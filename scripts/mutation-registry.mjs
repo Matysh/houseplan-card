@@ -106,6 +106,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-route-copy-under-battery',
+    guard: 'node demo/smoke_device_battery_zigbee.mjs',
+    because: '#808 AC2: only rasterised overlap proves that a local route paints over the battery '
+      + 'ink of both endpoints, which rise above the base route layer as a whole marker.',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '    svg.over-battery { z-index: 9; }',
+      replace: '    svg.over-battery { z-index: 7; }',
+    }],
+  },
+  {
     id: 'battery-setting-backend-accepts-string',
     guard: 'node scripts/backend-test-guard.mjs battery tests_backend/test_settings_device_battery.py',
     because: '#792 AC9, #807: the display preference stays a strict boolean or the exact '
@@ -9725,8 +9736,8 @@ const MUTANT_DEFINITIONS = [
       + 'as local routes instead of becoming permanently grey (#798)',
     patches: [{
       file: 'src/hp-zigbee-topology-overlay.ts',
-      find: "        ${bubbles.map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor', bubble.arrow, true, index))}",
-      replace: "        ${bubbles.map((bubble, index) => this._route(origin, bubble.point, undefined, 'toward-neighbor', bubble.arrow, true, index))}",
+      find: "      ...bubbles.map((bubble, index) => this._route(origin, bubble.point, bubble.target.lqi, 'toward-neighbor',",
+      replace: "      ...bubbles.map((bubble, index) => this._route(origin, bubble.point, undefined, 'toward-neighbor',",
     }],
   },
   {

@@ -104,7 +104,7 @@ const result = await page.evaluate(async () => {
   const settingsSnapshot = settings._snapshot;
   const renderedProviderStatus = () => [...settings.shadowRoot.querySelectorAll('.status,.hpf-actions .hpf-hint')]
     .map((node) => node.textContent).find((value) => /Received /.test(value)) || '';
-  const ageFixtureTime = Date.now() - 5 * 60 * 1000 + 300;
+  const ageFixtureTime = Date.now() - 60 * 60 * 1000 + 300;
   settings._acceptSnapshot({ ...settingsSnapshot, states: { ...settingsSnapshot.states,
     zha: { phase: 'ready', obtainedAt: ageFixtureTime },
   } });
@@ -555,7 +555,7 @@ for (const theme of ['light', 'dark']) {
     hover(knownSource);
     const stale = snapshot(null);
     stale.topologies = stale.topologies.map((topology) => ({ ...topology,
-      obtainedAt: Date.now() - 6 * 60 * 1000,
+      obtainedAt: Date.now() - 61 * 60 * 1000,
       warnings: [...topology.warnings, { code: 'provider_scan_failure' }],
     }));
     overlay._acceptRuntime(stale);
@@ -577,7 +577,7 @@ for (const theme of ['light', 'dark']) {
     ) && !!overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]');
     const expiring = snapshot(null);
     expiring.topologies = expiring.topologies.map((topology) => ({
-      ...topology, obtainedAt: Date.now() - 5 * 60 * 1000 + 300,
+      ...topology, obtainedAt: Date.now() - 60 * 60 * 1000 + 300,
     }));
     const fetchCount = window.__zigbeeSmokeFetchCount();
     overlay._acceptRuntime(expiring);

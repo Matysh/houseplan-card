@@ -358,11 +358,16 @@ export async function prepareBatteryZigbeeOverlap(page) {
   const screenshot = () => page.screenshot({ clip, scale: 'css', animations: 'disabled', caret: 'hide' });
   const controls = async (hidden) => page.evaluate((hidden) => {
     const overlay = window.__goldenCard.renderRoot.querySelector('hp-zigbee-topology-overlay').shadowRoot;
-    for (const [name, selector] of [['caption', 'zigbee-topology-parent-bubble'], ['routes', 'zigbee-topology-lines']]) {
-      const node = overlay.querySelector(`[data-hp="${selector}"]`);
-      if (!node) throw new Error(`battery Zigbee golden missing ${name}`);
-      if (hidden === name) node.style.visibility = 'hidden';
-      else node.style.removeProperty('visibility');
+    // #808: routes are two layers — the base and its copy over endpoint
+    // batteries; the routes control hides both.
+    for (const [name, selector] of [['caption', '[data-hp="zigbee-topology-parent-bubble"]'],
+      ['routes', '[data-hp="zigbee-topology-lines"], [data-hp="zigbee-topology-lines-over-battery"]']]) {
+      const nodes = [...overlay.querySelectorAll(selector)];
+      if (!nodes.length) throw new Error(`battery Zigbee golden missing ${name}`);
+      for (const node of nodes) {
+        if (hidden === name) node.style.visibility = 'hidden';
+        else node.style.removeProperty('visibility');
+      }
     }
   }, hidden);
   let active, captionHidden, routesHidden;

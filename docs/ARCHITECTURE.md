@@ -239,7 +239,10 @@ passive out-of-flow frame uses one built-in HA MDI icon at the three designer
 control sizes, without separate artwork delivery. A continuously sized CSS
 drop-shadow is composited on that existing icon; it adds no DOM, observer or
 registry scan. Zigbee routes and captions have separate stacking levels: endpoint cores
-remain above routes, captions remain above their batteries.
+remain above routes, captions remain above their batteries. Endpoint markers rise
+above the route layer as a whole, battery included, so a route copy one level
+higher is clipped to their battery frames: routes paint over batteries without
+covering cores (#808). A topology snapshot is labelled stale after an hour.
 
 Attachments are staged in `up_*`, promoted into `<config>/houseplan/files/<id>/`
 on Save and served by signed `/api/houseplan/content/files/…` URLs (Integration

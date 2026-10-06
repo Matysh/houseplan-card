@@ -30,7 +30,11 @@ export interface ZigbeeTopology {
   nodes: ZigbeeTopologyNode[]; links: ZigbeeTopologyLink[];
   uplinkEvidence: ZigbeeUplinkEvidence[]; warnings: ZigbeeTopologyWarning[];
 }
-export const TOPOLOGY_STALE_MS = 5 * 60 * 1000;
+/** #808: a snapshot is labelled stale after an hour. Nothing refreshes it on
+ *  its own and a Zigbee2MQTT scan alone can take over ten minutes, so a
+ *  shorter age marked almost every map. A failed refresh still marks the
+ *  retained snapshot at once (`state.stale`). */
+export const TOPOLOGY_STALE_MS = 60 * 60 * 1000;
 export const TOPOLOGY_MAX_PAYLOAD_BYTES = 2 * 1024 * 1024;
 export const TOPOLOGY_MAX_NODES = 1000;
 export const TOPOLOGY_MAX_LINKS = 6000;
