@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 322, issue: 160. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 323, issue: 161. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -42,6 +42,7 @@
 | #780 | [SPEC-REVIEW-780-r2.md](SPEC-REVIEW-780-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #780 | [CODE-REVIEW-780-r1.md](CODE-REVIEW-780-r1.md) | code · r1 | 🔴 красный | 1 | 6 | обычное сохранение старым клиентом без led_strips безвозвратно удаляет все формы лент; активная лента удаляет не только обычный значок, но и подпись/бейдж устройства; явный room_id не имеет приоритета при выборе room-specific Glow; смена пространства завершает незаконченный контур в новом пространстве; скрытая/выключенная HA-сущность всё равно загружает View runtime лент; performance-профиль не доказывает обязательные camera/lifecycle условия AC17 | `custom_components/houseplan/websocket_api.py` `custom_components/houseplan/validation.py` `tests_backend/test_led_strips.py` `src/houseplan-card.ts` `src/led-strip-runtime.ts` `src/led-strip-editor.ts` `src/led-strip-gate.ts` `demo/benchmark_led_strips.mjs` |
 | #780 | [CODE-REVIEW-780-r2.md](CODE-REVIEW-780-r2.md) | code · r2 | 🟡 жёлтый | 0 | 1 | обязательный профиль 50×50 стабильно превышает два бюджета AC17 | — |
+| #777 | [CODE-REVIEW-777-r1.md](CODE-REVIEW-777-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #776 | [CODE-REVIEW-776-r1.md](CODE-REVIEW-776-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #775 | [CODE-REVIEW-775-r1.md](CODE-REVIEW-775-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #774 | [SPEC-REVIEW-774-r1.md](SPEC-REVIEW-774-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | контракт привязывает камеру мастера к space.vb, который не является канонической рамкой…; влияние на производительность не названо | `docs/CANVAS.md` `src/houseplan-card.ts` `src/space-geometry.ts` `docs/reviews/SPEC-REVIEW-804-r1.md` |
