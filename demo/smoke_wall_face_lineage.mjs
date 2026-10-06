@@ -1,5 +1,6 @@
 /** #804: partial partition promotion through the real room dialog and config/set. */
 import { launch, check, finish } from './serve.mjs';
+import { isDeepStrictEqual } from 'node:util';
 
 const point = (x, y) => [x / 240, y / 240];
 const partition = (id, x1, y1, x2, y2, cm) => ({
@@ -48,7 +49,7 @@ function garderoba({ opening = null, duplicate = false } = {}) {
     const y = opening === 'same-residual' ? 101 : opening === 'absorbed' ? 122 : 160;
     space.openings = [{
       id: 'retained-opening', type: 'window', x: 74 / 240, y: y / 240,
-      angle: 90, length: 6 / 240, cm: 48,
+      angle: -90, length: 6 / 240, cm: 48,
       host: { kind: 'partition', id: 'long-source', t: (y - 90) / 110 },
       contact: 'binary_sensor.synthetic_window', future_field: { keep: true },
     }];
@@ -187,7 +188,7 @@ async function snapshot(page) {
   }));
 }
 
-const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const equal = isDeepStrictEqual;
 const geometry = (config) => config.spaces.map((space) => ({
   id: space.id, rooms: space.rooms || [], wall_segments: space.wall_segments || [],
   walls: space.walls || [], partitions: space.partitions || [], openings: space.openings || [],
@@ -227,12 +228,13 @@ await scenario('Garderoba without workaround', garderoba(), async (page) => {
     noMigrationError: !String(after.toast).includes('wall identifiers'),
   };
   if (!created) return out;
-  await page.keyboard.press('Escape');
-  await page.keyboard.press('Control+z');
+  const historyButton = (icon) => page.locator('[data-hp="toolbar"][data-kind="plan"] button')
+    .filter({ has: page.locator(`ha-icon[icon="mdi:${icon}-variant"]`) });
+  await historyButton('undo').click();
   await settleWrites(page);
   const undone = await snapshot(page);
   out.undoRestoresSource = equal(geometry(undone.config), geometry(before.config));
-  await page.keyboard.press('Control+Shift+z');
+  await historyButton('redo').click();
   await settleWrites(page);
   const redone = await snapshot(page);
   out.redoRestoresExactIds = equal(geometry(redone.config), geometry(after.config));
