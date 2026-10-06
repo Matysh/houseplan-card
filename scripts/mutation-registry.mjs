@@ -10859,8 +10859,8 @@ const MUTANT_DEFINITIONS = [
     because: '#670: release reviews use the mandated `Итог: High N · Medium N` summary without colons',
     patches: [{
       file: 'scripts/reviews-index.mjs',
-      find: '  if (release) return release;\n  for (const scope of [verdictLine(text, true), verdictSection(text), verdictLine(text)]) {',
-      replace: '  void release; // mutant: ignore the release summary\n  for (const scope of [verdictLine(text, true), verdictSection(text), verdictLine(text)]) {',
+      find: '  if (release) return release;\n  for (const scope of [verdictLine(text, true), verdictSection(text), summaryParagraph(text), verdictLine(text)]) {',
+      replace: '  void release; // mutant: ignore the release summary\n  for (const scope of [verdictLine(text, true), verdictSection(text), summaryParagraph(text), verdictLine(text)]) {',
     }],
   },
   {
@@ -10890,8 +10890,8 @@ const MUTANT_DEFINITIONS = [
       + 'Cyrillic guard is an explicit negative lookahead (#635)',
     patches: [{
       file: 'scripts/reviews-index.mjs',
-      find: "const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)[^\\n]{0,60}?\\**\\s*(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)(?![а-яёa-z])/i;",
-      replace: "const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)[^\\n]{0,60}?\\**\\s*(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)/i; // mutant: substring verdict",
+      find: "const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)(?!\\s+r\\d)[^\\n]{0,60}?\\**\\s*(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)(?![а-яёa-z])/i;",
+      replace: "const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)(?!\\s+r\\d)[^\\n]{0,60}?\\**\\s*(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)/i; // mutant: substring verdict",
     }],
   },
   {
@@ -10901,8 +10901,20 @@ const MUTANT_DEFINITIONS = [
       + 'round; counts must come from the document\'s own verdict line or section',
     patches: [{
       file: 'scripts/reviews-index.mjs',
-      find: "  for (const scope of [verdictLine(text, true), verdictSection(text), verdictLine(text)]) {",
+      find: "  for (const scope of [verdictLine(text, true), verdictSection(text), summaryParagraph(text), verdictLine(text)]) {",
       replace: "  for (const scope of [text]) { // mutant: first match anywhere in the document",
+    }],
+  },
+  {
+    id: 'reviews-index-own-verdict-any-tail',
+    guard: 'node --test --test-name-pattern="#779 пересказ" test/reviews-index.test.mjs',
+    because: '#779: the document\'s own verdict is «Вердикт: цвет» with the colon right after the word; '
+      + 'any line merely starting with «Вердикт» also matches the «Закрытие раунда r<N−1>» retelling '
+      + '«Вердикт r2 — зелёный», and the index shows the previous round\'s colour',
+    patches: [{
+      file: 'scripts/reviews-index.mjs',
+      find: '  const own = VERDICT_OWN_LINE_RE.exec(text) || VERDICT_LEAD_LINE_RE.exec(text);',
+      replace: '  const own = /^[ \\t]*(?:[-*]\\s*)?\\**(?:Вердикт|Verdict)[^\\n]{0,60}?\\**\\s*([Зз]елёный|[Зз]еленый|[Жж]ёлтый|[Жж]елтый|[Кк]расный|[Gg]reen|[Yy]ellow|[Rr]ed)(?![а-яёa-z])/m.exec(text); // mutant: any line starting with the word is own',
     }],
   },
   {

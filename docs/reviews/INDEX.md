@@ -209,7 +209,7 @@
 | #663 | [CODE-REVIEW-663-r3.md](CODE-REVIEW-663-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #662 | [SPEC-REVIEW-662-r1.md](SPEC-REVIEW-662-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | «Входящие» не существует в UI, и текущая классификация каталога кладёт неразмещённую ле…; «Не скоуп» отсутствует внутри формального ## ТЗ | `src/device-inbox.ts` `USER-GUIDE.ru.md` `docs/USER-GUIDE.ru.md` `demo/smoke_led_strip_bind.mjs` `device-inbox.ts` `SPEC-REVIEW-661-r1.md` |
 | #662 | [SPEC-REVIEW-662-r2.md](SPEC-REVIEW-662-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
-| #662 | [SPEC-REVIEW-662-r3.md](SPEC-REVIEW-662-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #662 | [SPEC-REVIEW-662-r3.md](SPEC-REVIEW-662-r3.md) | spec · r3 | 🟡 жёлтый | 0 | 2 | — | — |
 | #662 | [SPEC-REVIEW-662-r4.md](SPEC-REVIEW-662-r4.md) | spec · r4 | 🟢 зелёный | 0 | 0 | — | — |
 | #661 | [SPEC-REVIEW-661-r1.md](SPEC-REVIEW-661-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #661 | [CODE-REVIEW-661-r1.md](CODE-REVIEW-661-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
