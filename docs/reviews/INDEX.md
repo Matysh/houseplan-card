@@ -48,6 +48,7 @@
 | #774 | [SPEC-REVIEW-774-r1.md](SPEC-REVIEW-774-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 1 | контракт привязывает камеру мастера к space.vb, который не является канонической рамкой…; влияние на производительность не названо | `docs/CANVAS.md` `src/houseplan-card.ts` `src/space-geometry.ts` `docs/reviews/SPEC-REVIEW-804-r1.md` |
 | #774 | [SPEC-REVIEW-774-r2.md](SPEC-REVIEW-774-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #772 | [CODE-REVIEW-772-r1.md](CODE-REVIEW-772-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #768 | [CODE-REVIEW-768-r1.md](CODE-REVIEW-768-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #765 | [CODE-REVIEW-765-r1.md](CODE-REVIEW-765-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | завершающий авторский разделитель теряется при повторной записи якорей | `scripts/review-doc-guard.mjs` |
 | #762 | [SPEC-REVIEW-762-r1.md](SPEC-REVIEW-762-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #762 | [CODE-REVIEW-762-r1.md](CODE-REVIEW-762-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
