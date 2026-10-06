@@ -26,7 +26,8 @@ const out = await page.evaluate(async () => {
   o.everyGeneralCardHasContent = cards().every((card) => card.querySelector('.hpf-head + *'));
 
   // Сегмент фона: настоящая радиогруппа с доступным именем и целью ≥ 44 px.
-  const bgSeg = sr().querySelector('hp-dialog .hpf-seg[role="radiogroup"]');
+  // Ищем по имени радиокнопок: выше в «Отображении» стоит сегмент заряда (#807).
+  const bgSeg = sr().querySelector('hp-dialog input[type="radio"][name="gs-bg-mode"]')?.closest('.hpf-seg[role="radiogroup"]') ?? null;
   const bgRadios = bgSeg ? [...bgSeg.querySelectorAll('input[type="radio"]')] : [];
   o.bgSegmentIsRadioGroup = !!bgSeg && !!bgSeg.getAttribute('aria-label') && bgRadios.length === 2;
   // Цель нажатия ≥ 44 px. Проверка нашла настоящий дефект: лист набора
