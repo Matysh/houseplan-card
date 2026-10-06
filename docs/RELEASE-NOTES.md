@@ -1,16 +1,18 @@
-<!-- release: v1.80.0-beta.4 -->
+<!-- release: v1.80.0-beta.5 -->
 
 ## Основное
 
-- Подпись Zigbee-связи в другое пространство теперь содержит имя устройства. Обычная подсказка больше не закрывает сетевые бейджи: смещается в свободное место, а в тесной карточке временно скрывается ([#802](https://github.com/Matysh/houseplan-card/issues/802)).
+- У батарейных устройств появился компактный цветной индикатор заряда без цифр. Его можно отключить в общих настройках; LED-ленты индикатор не получают ([#792](https://github.com/Matysh/houseplan-card/issues/792)).
+- Исправлено создание комнаты из части длинной стены: оставшиеся участки сохраняют геометрию и толщину, а конфликт идентификаторов больше не требует перерисовки или оптимизации плана ([#804](https://github.com/Matysh/houseplan-card/issues/804)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Zigbee links to another space now include the destination device name. Device tooltips no longer cover network badges: they move to free space, or temporarily hide in a crowded card ([#802](https://github.com/Matysh/houseplan-card/issues/802)).
+- Battery-powered devices now have a compact colour-coded charge indicator without a percentage label. It can be hidden in General settings; LED strips do not show it ([#792](https://github.com/Matysh/houseplan-card/issues/792)).
+- Fixed creating a room from part of a longer wall: the remaining sections keep their geometry and thickness, and identifier conflicts no longer require redrawing or optimizing the plan ([#804](https://github.com/Matysh/houseplan-card/issues/804)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.4/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.4/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.5/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.5/docs/CHANGELOG.md)

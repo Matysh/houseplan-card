@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.80.0-beta.5 — 2026-10-06
+
 - Battery-powered devices now show a compact charge indicator: green at 60–100%,
   amber at 20–59%, red below 20%, or grey with a question mark when unavailable.
   It sits beside the whole device face without a percentage label. General
