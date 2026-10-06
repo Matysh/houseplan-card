@@ -315,6 +315,90 @@ parent. An unusable requested revision falls back with a warning to the direct
 parent, then to the newest reachable semver release. If no safe comparison
 exists, the job fails closed instead of comparing against an arbitrary commit.
 
+## Resize Long Task of the interaction profile (#778)
+
+`longTask.editorSeries.maxSingleMs` (150 ms in both the full and the smoke
+interaction budgets) is the longest task of three editor parts; in every
+recorded CI sample it is the resize part, and that part has exactly one Long
+Task. The Validate smoke of #762 (`adc2d7c5`, run 36910217188) read 135 / 129 /
+**163** ms on its first attempt and 127 / 132 / 132 ms on the re-run of the
+same job, without any change.
+
+**What the window holds.** The part dispatches 40 moves, ten per frame. The
+pointer-move queue keeps only the last move of a task and the Safe Resize clamp
+allows a single grid step in this fixture, so exactly one move per sample
+projects a candidate (`resizeLivePreflightChecks` is 1 in every sample). Its
+task is the Long Task: the timer continuation that dispatches the batch, then
+`ResizeController.move` with the live physical preflight inside `project`, the
+`publish` of the preview and the live `labels` (`measure`). A Chrome trace and
+Long Animation Frame entries of local runs show no Lit update, no forced style or
+layout and no paint in that task; the live editor paint and the frame's style,
+layout and paint follow in the next rendering step (6–15 ms locally) and are not
+part of it. Garbage collection inside the traced task was four minor scavenges,
+about 4 % of it, and no major collection. This is the work of a real first
+resize step: a browser delivers each pointer move as its own task, and its
+handler queues the same move microtask; pointerdown stays in an earlier task
+(the runner's yield before the window). The window therefore measures a real,
+stable task, and no measurement defect was found.
+
+**The CI series.** Fourteen Full Performance runs with the interaction profile
+(2026-10-01 to 10-05, Chromium 151.0.7922.34, 28 reports of 7 samples) plus both
+attempts of the Validate smoke above give 202 samples, one of them above 150 ms.
+
+| | Full Performance (196) | Validate attempt 1 (3) | Validate attempt 2 (3) |
+|---|---|---|---|
+| resize Long Task, ms | 64–146; report medians 114–142 on the usual runners, 97–100 and 65–68 on two faster ones | 135 / 129 / 163 | 127 / 132 / 132 |
+| physical preflight, ms | 44.0–106.9 | 94.6 / 89.5 / 97.8 | 86.9 / 93.0 / 94.3 |
+| task minus preflight, ms | 20.0–46.9, within-report σ ≤ 2.2 | 40.4 / 39.5 / **65.2** | 40.1 / 39.0 / 37.7 |
+
+The preflight is 60–75 % of the task (median 69 %) and the ratio of task to
+preflight is 1.34–1.54 everywhere except the failed sample (1.67): the
+composition is constant and scales with the runner. Runner classes differ by up
+to 2× (the same `24e48935c` read 124, 65, 129 and 114 ms in four runs), while
+one report varies by σ 1–5 ms. Base and candidate on one runner differ by −5 % to
++9 % (`24671d435` of #780 against its base; the step did not persist). The
+failed sample spent a normal 97.8 ms in the preflight and 65.2 ms elsewhere:
+25 ms above its siblings, 11–20 times the within-report σ of that remainder and
+18 ms above the remainder of any other sample. The same sample also had an
+extra Long Task in its load (3 against 2) and space-switch (2 against 1)
+windows, `editorSeriesMs` +46 ms and `irrelevantHaTicksMs` +17 ms. The verdict
+is one slow sample of the whole page, not a longer resize: runner noise on top
+of a systematic level of 112–146 ms per sample on the usual runners (report
+medians 114–142 ms), 3–25 % under the ceiling. One exceedance in 202 samples
+bounds the per-sample rate below 2.7 % (95 %, Clopper–Pearson); a three-sample
+smoke judges its maximum, so its failure rate is about three times the
+per-sample rate. The other five #762 samples (127–135 ms) lie inside that
+series, so nothing points to a regression of #762; a same-runner base and
+candidate pair for it was not recorded. The ceiling is unchanged here; the
+headroom is the budget question of #770.
+
+**Attribution in every report.** Since #778 each interaction row carries
+`interactionDiagnostics.resizeLongTask`, computed by
+`resize-attribution.mjs` from the entries of the very window the gate judges
+and from timed wrappers that the runner installs before the yield: the longest
+task (`longTaskMs`, equal to the resize part of `editorLongTaskParts`),
+`geometryMoves` inside it, and its milliseconds split into `preflightMs`,
+`projectOtherMs` (projection without the preflight: wall rekey, junction
+limits), `publishMs`, `labelsMs`, `moveOtherMs` (snap, clamp, solver),
+`updateMs` (a Lit update in the task) and `otherMs` (the rest: synthetic event
+dispatch, scheduling, collection outside the timed calls; a collection that
+interrupts a timed call stays in that call's phase). Long Task durations are
+whole milliseconds, so the parts add up within about 1 ms and `otherMs` may be
+slightly negative. `frameRenderMs` and `forcedStyleLayoutMs` come from Long
+Animation Frames and are `null` without them. The runner also prints one
+`#778 resize long task` line per sample. A base without
+`ResizeController.move` and its `project`/`publish`/`measure` callbacks (v1.68.1)
+reports `supported: false` with a reason instead of zero shares.
+
+Reading the next failure: extra time in `preflightMs` or `labelsMs` is product
+work (or a collection while it ran) and grows with the data; extra time in
+`otherMs` lies outside every timed call; `geometryMoves: 0` means the judged
+task was not the resize step at all. Local runs (Chromium 141, diagnostic only)
+split the task as about 70 % preflight, 24 % labels, 3 % projection, 1 %
+publish, 1 % move and under 1 % other; a synthetic 30 ms stall placed before the move
+moved `otherMs` by 30.8 ms and the same stall inside `measure` moved `labelsMs`
+by about 28 ms, the other phases staying put.
+
 ## Private card contract
 
 The candidate benchmark runner is also executed against the base bundle, so
@@ -332,6 +416,9 @@ optional member exists, its declared `fieldTypes` contract still applies. Add a
 new safely degradable field to `optionalFields` until every supported base has
 it, then promote it to `fields`. A member without a truthful fallback must be
 introduced through a compatibility revision before the benchmark consumes it.
+`optionalMethodsOf` declares methods of a declared member that the runner wraps
+(since #778, `_resize.move` for the resize attribution): optional, but a
+present one must be a function.
 
 Rename a consumed private member in two revisions:
 

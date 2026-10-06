@@ -76,6 +76,12 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
   // them (`typeof card._setProjection === 'function'`); the current card no
   // longer has them, so they are declared but never required.
   legacyOnlyFields: Object.freeze(['_setProjection']),
+  // #778: the resize Long Task attribution wraps the session controller's
+  // `move` (with its `project`/`publish`/`measure` callbacks) for the time of
+  // one editor part. Optional: a base without it (v1.68.1 keeps `_rszDrag`)
+  // or with another callback shape reports `resizeLongTask.supported: false`
+  // and a reason, never zero shares. A present member must be a function.
+  optionalMethodsOf: Object.freeze({ _resize: Object.freeze(['move']) }),
   // #380: v1.68.1 owns the same resize session directly on the card; newer
   // bundles moved it into ResizeController. A comparison target must expose
   // one of the two explicit shapes; the current member retains its object
@@ -205,6 +211,13 @@ export function assertCardContract(card, contract) {
     .filter((name) => name in card && contract.fieldTypes?.[name]
       && !matches(card[name], contract.fieldTypes[name]))
     .map((name) => `${name}:${contract.fieldTypes[name]}`);
+  for (const [owner, names] of Object.entries(contract.optionalMethodsOf || {})) {
+    const target = card[owner];
+    if (!target || typeof target !== 'object') continue;
+    for (const name of names) {
+      if (name in target && typeof target[name] !== 'function') invalidFields.push(`${owner}.${name}:function`);
+    }
+  }
   const missing = [...missingMethods, ...missingFields, ...missingAlternatives];
   if (missing.length || invalidFields.length) {
     const details = [

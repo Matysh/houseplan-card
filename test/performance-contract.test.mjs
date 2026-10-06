@@ -163,6 +163,31 @@ test('large-house contract accepts only an explicit current or stable resize own
     () => assertCardContract({ ...methods, ...fields }, LARGE_HOUSE_CARD_CONTRACT),
     /missing private API: _resize\|_rszDrag/,
   );
+  // #778: the attribution's nested member is optional (`_resize: {}` above
+  // passes) but, when present, typed like every other optional member.
+  assert.doesNotThrow(() => assertCardContract(
+    { ...methods, ...fields, _resize: { move: () => undefined } }, LARGE_HOUSE_CARD_CONTRACT,
+  ));
+  assert.throws(
+    () => assertCardContract(
+      { ...methods, ...fields, _resize: { move: true } }, LARGE_HOUSE_CARD_CONTRACT,
+    ),
+    /invalid private API types: _resize\.move:function/,
+  );
+});
+
+test('resize Long Task attribution wraps the real ResizeController move shape (#778)', () => {
+  assert.deepEqual(LARGE_HOUSE_CARD_CONTRACT.optionalMethodsOf, { _resize: ['move'] });
+  const controller = readFileSync(new URL('../src/resize-controller.ts', import.meta.url), 'utf8');
+  const start = controller.indexOf('  move(input: {');
+  const end = controller.indexOf('}): ResizeMoveOutcome', start);
+  assert.ok(start >= 0 && end > start, 'ResizeController.move(input) is present');
+  const signature = controller.slice(start, end);
+  for (const callback of ['project', 'publish', 'measure'])
+    assert.match(signature, new RegExp(`\\n\\s+${callback}: \\(`), `move input declares ${callback}`);
+  const runner = readFileSync(new URL('../demo/benchmark_large_house.mjs', import.meta.url), 'utf8');
+  assert.match(runner, /\['project', 'publish', 'measure'\]\.every\(/,
+    'an unknown move shape must be reported, not timed as zero');
 });
 
 test('#770: 2.5D contract errors name the measured profile, not the historical one', () => {

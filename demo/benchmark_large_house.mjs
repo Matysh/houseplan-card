@@ -13,6 +13,7 @@ import {
   assertIsometricCandidate,
   LARGE_HOUSE_CARD_CONTRACT,
 } from './performance/card-contract.mjs';
+import { attributeResizeLongTask } from './performance/resize-attribution.mjs';
 import {
   ISOMETRIC_STAGE3_DENSE_PROFILE,
   makeIsometricStage3DenseFixture,
@@ -106,6 +107,9 @@ await page.addScriptTag({
 await page.addScriptTag({
   content: `window.__hpEnsureHarnessEditorRuntime = ${ensureHarnessEditorRuntime.toString()};`,
 });
+await page.addScriptTag({
+  content: `window.__hpAttributeResizeLongTask = ${attributeResizeLongTask.toString()};`,
+});
 const chromium = await browser.version();
 let buildFingerprint;
 try {
@@ -135,11 +139,17 @@ try {
       const startLongTaskWindow = () => {
         const entries = [];
         if (!PerformanceObserver.supportedEntryTypes?.includes('longtask')) {
-          return { stop: async () => ({ supported: false, count: 0, maxMs: 0, totalMs: 0 }) };
+          return {
+            entries: null,
+            stop: async () => ({ supported: false, count: 0, maxMs: 0, totalMs: 0 }),
+          };
         }
         const observer = new PerformanceObserver((list) => entries.push(...list.getEntries()));
         observer.observe({ type: 'longtask', buffered: false });
         return {
+          // #778: the raw entries stay out of the report; the resize
+          // attribution reads exactly the task this window judged.
+          entries,
           stop: async () => {
             await new Promise((done) => setTimeout(done, 0));
             entries.push(...observer.takeRecords());
@@ -172,6 +182,12 @@ try {
         if (!(await card._ensureIsoSceneRuntime()))
           throw new Error(`${profile} isometric runtime did not load`);
         await card.updateComplete;
+      };
+      // #778: phase spans of the resize part's Long Task. Null outside that
+      // part, so every other window runs the wrappers below as before.
+      let attributionSpans = null;
+      const recordSpan = (name, startMs) => {
+        attributionSpans?.push({ name, startMs, endMs: performance.now() });
       };
       const forceGc = async () => {
         if (typeof globalThis.gc !== 'function') return false;
@@ -349,6 +365,7 @@ try {
         const result = diagPerform();
         card.__diag.updates += 1;
         card.__diag.updateMs += performance.now() - started;
+        recordSpan('update', started);
         return result;
       };
       const diagBuild = card._buildModel.bind(card);
@@ -470,7 +487,10 @@ try {
           physicalPreflightCount++;
           const started = performance.now();
           try { return checkSpacePhysicalGeometry(...args); }
-          finally { physicalPreflightMs += performance.now() - started; }
+          finally {
+            physicalPreflightMs += performance.now() - started;
+            recordSpan('preflight', started);
+          }
         };
         const willUpdate = card.willUpdate.bind(card);
         card.willUpdate = (changed) => {
@@ -867,6 +887,68 @@ try {
         editorStage = card.renderRoot.querySelector('.stage');
         editorRect = editorStage.getBoundingClientRect();
         editorView = card._viewOr(card._baseVb());
+        // #778: split this part's Long Task into timed phases (see
+        // performance/resize-attribution.mjs). The wrappers only time the live
+        // move and its callbacks, and they and the frame observer are installed
+        // before the yield below, so neither is inside the measured task.
+        const startResizeAttribution = () => {
+          const controller = card._resize;
+          const move = controller?.move;
+          if (typeof move !== 'function')
+            return { stop: () => ({ supported: false, reason: 'no ResizeController move' }) };
+          const spans = [];
+          const frames = [];
+          let shapeError = null;
+          const frameObserver = PerformanceObserver.supportedEntryTypes?.includes('long-animation-frame')
+            ? new PerformanceObserver((list) => frames.push(...list.getEntries())) : null;
+          frameObserver?.observe({ type: 'long-animation-frame', buffered: false });
+          const timed = (name, run) => function (...args) {
+            const started = performance.now();
+            try { return run.apply(this, args); } finally { recordSpan(name, started); }
+          };
+          const ownMove = Object.prototype.hasOwnProperty.call(controller, 'move');
+          controller.move = function (input) {
+            if (!['project', 'publish', 'measure'].every((key) => typeof input?.[key] === 'function')) {
+              // An unknown move shape is reported, never turned into zero shares.
+              shapeError = 'ResizeController.move input has no project/publish/measure callbacks';
+              return move.call(this, input);
+            }
+            return timed('move', move).call(this, {
+              ...input,
+              project: timed('project', input.project),
+              publish: timed('publish', input.publish),
+              measure: timed('labels', input.measure),
+            });
+          };
+          attributionSpans = spans;
+          return {
+            stop: (longTasks) => {
+              frames.push(...(frameObserver?.takeRecords() ?? []));
+              frameObserver?.disconnect();
+              if (ownMove) controller.move = move;
+              else delete controller.move;
+              attributionSpans = null;
+              if (shapeError) return { supported: false, reason: shapeError };
+              return window.__hpAttributeResizeLongTask({
+                longTasks: longTasks?.map((entry) => ({
+                  startTime: entry.startTime, duration: entry.duration,
+                })) ?? null,
+                spans,
+                frames: frameObserver ? frames.map((entry) => ({
+                  startTime: entry.startTime,
+                  duration: entry.duration,
+                  renderStart: entry.renderStart,
+                  scripts: [...(entry.scripts || [])].map((script) => ({
+                    startTime: script.startTime,
+                    duration: script.duration,
+                    forcedStyleAndLayoutDuration: script.forcedStyleAndLayoutDuration,
+                  })),
+                })) : null,
+              });
+            },
+          };
+        };
+        const resizeAttribution = startResizeAttribution();
         // A browser delivers pointerdown and pointermove as separate tasks.
         // Keep the synthetic harness from attributing both handlers to one
         // impossible long task while still timing every move-side preflight.
@@ -896,6 +978,7 @@ try {
         editorTerminalRenders.push(fullRenderCount - editorTerminalBefore);
         editorElapsed += performance.now() - partStarted;
         editorLongTaskWindows.push(await editorPartLongTasks.stop());
+        deltas.resizeLongTask = resizeAttribution.stop(editorPartLongTasks.entries);
 
         card._setMode('decor', false);
         card._decorTool = 'select';
@@ -1311,6 +1394,22 @@ try {
         + ` adopts=${bootDiag.adopts} cfgEpoch=${bootDiag.cfgEpoch}`
         + ` epochs=[${(bootDiag.epochs || []).join(' ; ')}]`
         + ` modelReady=${measured.modelReadyMs} firstStable=${measured.firstStableRenderMs}`);
+    }
+    // #778: the resize Long Task split, printed for the job log; the same
+    // numbers stay in the record as interactionDiagnostics.resizeLongTask.
+    const resizeLongTask = measured.interactionDiagnostics?.resizeLongTask;
+    if (resizeLongTask?.supported && resizeLongTask.longTaskMs > 0) {
+      const part = (name, value) => `${name} ${value ?? '—'}`;
+      console.log(`#778 resize long task sample ${row.sample}: ${resizeLongTask.longTaskMs} ms = ${[
+        part('preflight', resizeLongTask.preflightMs), part('project', resizeLongTask.projectOtherMs),
+        part('publish', resizeLongTask.publishMs), part('labels', resizeLongTask.labelsMs),
+        part('move', resizeLongTask.moveOtherMs), part('update', resizeLongTask.updateMs),
+        part('other', resizeLongTask.otherMs),
+      ].join(' + ')} (geometry moves ${resizeLongTask.geometryMoves}; after the task:`
+        + ` render ${resizeLongTask.frameRenderMs ?? '—'} ms; forced style/layout in it`
+        + ` ${resizeLongTask.forcedStyleLayoutMs ?? '—'} ms)`);
+    } else if (resizeLongTask && !resizeLongTask.supported) {
+      console.log(`#778 resize long task sample ${row.sample}: not attributed (${resizeLongTask.reason})`);
     }
     if (measuredSample >= 0) rows.push(measured);
   }
