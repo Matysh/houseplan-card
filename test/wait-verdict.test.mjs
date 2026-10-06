@@ -1,13 +1,83 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decide, reviewRequestFromEvents, stateOf, waitForVerdict } from '../scripts/wait-verdict.mjs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { PIPELINE_EVENTS, decide, reviewRequestFromEvents, stateOf, waitForVerdict } from '../scripts/wait-verdict.mjs';
+import { NOT_RUN_CONFLICT_RE, NOT_RUN_VALIDATE_RE, returnSignal } from '../scripts/process-metrics.mjs';
 import { reviewRoute, routeComment } from '../scripts/process-track.mjs';
 import { OUTCOME_SIGNS, PUSH_REFUSAL, commentFor, describePushRefusal } from '../scripts/merge-candidate.mjs';
+import { findStep, runStep, workflowSteps } from './helpers/workflow-step.mjs';
 
 // #496: ожидание детерминировано — одинаковое состояние молчит, смена метки и
 // события конвейера доставляются один раз, ничего не пишется.
 
 const snap = (labels, comments = [], validate) => ({ labels, comments, validate });
+
+const WORKFLOW = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
+/** #810: шаги `_process.yml`, которые пишут «**Ревью не запускалось:**». */
+const NOT_RUN_STEPS = Object.freeze({
+  conflict: 'Конфликт с dev — вернуть автору без ревью',
+  validate: 'Validate красный — вернуть автору без ревью',
+});
+
+/**
+ * #810: комментарий шага `name` — тело шага исполняется как у раннера
+ * (`runStep`), а не копируется строкой. `gh` подменён и сохраняет
+ * `--body-file` комментария; `git rev-parse --short` отвечает началом SHA.
+ * Выражения `${{ … }}` раннер подставляет до запуска — здесь тоже; файлы
+ * `/tmp/*.md` шага уходят во временный каталог теста.
+ */
+function notRunComment(name, env) {
+  const root = mkdtempSync(join(tmpdir(), 'hp-wait-verdict-'));
+  try {
+    const bin = join(root, 'bin');
+    mkdirSync(bin);
+    writeFileSync(join(bin, 'gh'), [
+      '#!/usr/bin/env bash',
+      'if [ "$1 $2" = "issue comment" ]; then',
+      '  while [ $# -gt 0 ]; do if [ "$1" = --body-file ]; then cp "$2" "$CAPTURE"; fi; shift; done',
+      'fi',
+      '',
+    ].join('\n'), { mode: 0o755 });
+    writeFileSync(join(bin, 'git'), [
+      '#!/usr/bin/env bash',
+      'if [ "$1 $2" = "rev-parse --short" ]; then echo "${3:0:7}"; exit 0; fi',
+      'echo "git $*: шаг не должен звать" >&2; exit 1',
+      '',
+    ].join('\n'), { mode: 0o755 });
+    const step = findStep(WORKFLOW, { name }, '_process.yml');
+    const script = step.run
+      .replace(/\$\{\{\s*github\.server_url\s*\}\}/g, 'https://github.com')
+      .replace(/\$\{\{\s*github\.repository\s*\}\}/g, 'o/r')
+      .replace(/\$\{\{\s*github\.run_id\s*\}\}/g, '1')
+      .replaceAll('/tmp/', `${root}/`);
+    assert.ok(!script.includes('${{'), `${name}: выражение раннера осталось без подстановки`);
+    const capture = join(root, 'comment.md');
+    const r = runStep(step, script, { env: { PATH: `${bin}:${process.env.PATH}`, CAPTURE: capture, NUM: '7', ...env } });
+    assert.equal(r.status, 0, `${name}: ${r.stderr}`);
+    return readFileSync(capture, 'utf8');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+let notRunCache = null;
+/** Конфликт ребейза и оба вида Validate-шага: с мутантами (красный) и лёгкий (не найден). */
+function notRunBodies() {
+  notRunCache ??= {
+    conflict: notRunComment(NOT_RUN_STEPS.conflict, { BRANCH: 'issue/7-x', CONFLICTS: 'scripts/a.mjs' }),
+    validate: [
+      notRunComment(NOT_RUN_STEPS.validate, {
+        BRANCH: 'issue/7-x', SHA: 'a'.repeat(40), MUTANTS: 'true', RESULT: 'failed', NOTE: 'прогон завершился с failure', URL: 'https://github.com/o/r/actions/runs/2',
+      }),
+      notRunComment(NOT_RUN_STEPS.validate, {
+        BRANCH: 'issue/7-x', SHA: 'b'.repeat(40), MUTANTS: 'false', RESULT: 'missing', NOTE: 'прогона на материале нет', URL: '',
+      }),
+    ],
+  };
+  return notRunCache;
+}
 
 test('одинаковое состояние не порождает ни строки; смена метки — завершение с 0 (#496)', async () => {
   const states = [snap(['S7-code-review', 'P2']), snap(['S7-code-review', 'P2']), snap(['S7-code-review', 'P2']), snap(['S8-merged', 'P2'])];
@@ -24,7 +94,7 @@ test('одинаковое состояние не порождает ни ст�
 });
 
 test('событие конвейера доставляется один раз и требует действия (код 3) (#496)', async () => {
-  const conflict = { id: 'c1', createdAt: '1', body: '**Ревью не запускалось:** ветка `issue/1-x` не ребейзится…' };
+  const conflict = { id: 'c1', createdAt: '1', body: notRunBodies().conflict };
   const states = [snap(['S7-code-review']), snap(['S6-in-progress'], [conflict])];
   let i = 0; const lines = [];
   const code = await waitForVerdict({ readSnapshot: async () => states[Math.min(i++, 1)], intervalMs: 1, maxTicks: 5, sleep: async () => {}, log: (l) => lines.push(l) });
@@ -272,4 +342,57 @@ test('#768 сменившаяся метка: S6 — код 0 и причина 
   const done = decide(before, stateOf({ ...snap(['S8-merged'], [merged]), reviewRequest: REQUEST }));
   assert.equal(done.code, 0);
   assert.deepEqual(done.lines.map((line) => line.replace(/^\[[^\]]*\] /, '')), ['метка: S7-code-review → S8-merged']);
+});
+
+// #810: «Ревью не запускалось:» пишут два шага _process.yml — конфликт ребейза
+// и красный/не найденный Validate на материале. Это разные события: второе —
+// не git-конфликт, автор разбирает прогон, а не ребейзит.
+const NOT_RUN_VALIDATE_LINE = 'конвейер: Validate на материале красный/не найден — разобрать прогон, править код не обязательно';
+
+test('#810 «Ревью не запускалось»: Validate на материале — своё событие, конфликт ребейза — своё (тела из шагов _process.yml)', () => {
+  // Писателей «Ревью не запускалось:» ровно два: третий шаг без своего события краснеет здесь.
+  const writers = workflowSteps(WORKFLOW, '_process.yml').filter((step) => step.run?.includes('**Ревью не запускалось:**')).map((step) => step.name);
+  assert.deepEqual(writers.sort(), Object.values(NOT_RUN_STEPS).sort());
+  const { conflict, validate } = notRunBodies();
+  assert.ok(validate[0].includes('Validate с мутантами на материале') && validate[0].includes('**failed**'), 'шаг с мутантами, прогон красный');
+  assert.ok(!validate[1].includes('с мутантами') && validate[1].includes('**missing**'), 'лёгкий шаг, прогон не найден');
+  const before = stateOf({ ...snap(['S7-code-review']), reviewRequest: REQUEST });
+  const after = (labels, body) => stateOf({ ...snap(labels, [{ id: 'n', createdAt: '2026-10-01T10:05:00Z', body }]), reviewRequest: REQUEST });
+  for (const [index, body] of validate.entries()) {
+    const state = after(['S7-code-review'], body);
+    assert.equal(state.lastEvent?.kind, 'validate-red', `Validate #${index}: вид события`);
+    const held = decide(before, state);
+    assert.equal(held.code, 3, `Validate #${index}: действие автора — код 3`);
+    assert.deepEqual(held.lines, [NOT_RUN_VALIDATE_LINE], `Validate #${index}: не «конфликт разрешает автор»`);
+    // Шаг сразу переводит метку в S6: код 0 смены метки, причина в строках та же.
+    const moved = decide(before, after(['S6-in-progress'], body));
+    assert.equal(moved.code, 0);
+    assert.deepEqual(moved.lines, ['метка: S7-code-review → S6-in-progress', NOT_RUN_VALIDATE_LINE]);
+  }
+  const state = after(['S7-code-review'], conflict);
+  assert.equal(state.lastEvent?.kind, 'conflict');
+  const held = decide(before, state);
+  assert.equal(held.code, 3);
+  assert.deepEqual(held.lines, ['конвейер: ветка не ребейзится на dev — конфликт разрешает автор']);
+});
+
+test('#810 один источник с process-metrics: те же признаки PIPELINE_EVENTS, та же причина', () => {
+  const byKind = (kind) => PIPELINE_EVENTS.find((event) => event.kind === kind)?.re;
+  assert.equal(NOT_RUN_VALIDATE_RE, byKind('validate-red'), 'NOT_RUN_VALIDATE_RE — признак PIPELINE_EVENTS, не копия');
+  assert.equal(NOT_RUN_CONFLICT_RE, byKind('conflict'), 'NOT_RUN_CONFLICT_RE — признак PIPELINE_EVENTS, не копия');
+  const { conflict, validate } = notRunBodies();
+  for (const body of [conflict, ...validate]) {
+    const kind = stateOf(snap(['S7-code-review'], [{ id: 'n', createdAt: '1', body }])).lastEvent?.kind;
+    assert.equal(kind, returnSignal(body, { stage: 'code', number: 7 }), `ожидание и метрики называют одну причину: ${body.split('\n')[0]}`);
+  }
+});
+
+test('#810 «Ревью не запускалось» с неизвестным продолжением — не конфликт: читать комментарий, код 3', () => {
+  const body = '**Ревью не запускалось:** причина, которой в шаблонах ещё нет.';
+  const state = stateOf(snap(['S7-code-review'], [{ id: 'x', createdAt: '1', body }]));
+  assert.equal(state.lastEvent?.kind, 'not-run');
+  const d = decide(stateOf(snap(['S7-code-review'])), state);
+  assert.equal(d.code, 3);
+  assert.deepEqual(d.lines, ['конвейер: ревью не запускалось, причина не распознана — читать комментарий']);
+  assert.equal(returnSignal(body, { stage: 'code', number: 7 }), 'unknown', 'метрики: семейство узнано, причина — unknown');
 });

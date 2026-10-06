@@ -295,7 +295,7 @@ test('#728 контракт: шаблоны «Ревью не запускало
   assert.deepEqual(reasons.map((r) => r.join(',')).sort(), ['conflict', 'validate-red'],
     'один шаблон — conflict, другой — validate-red при обоих $kind');
   for (const variants of templates) {
-    for (const text of variants) assert.ok(PIPELINE_EVENTS.find((e) => e.kind === 'conflict').re.test(text), 'общий префикс — под константой PIPELINE_EVENTS');
+    for (const text of variants) assert.ok(PIPELINE_EVENTS.find((e) => e.kind === 'not-run').re.test(text), 'общий префикс — под константой PIPELINE_EVENTS');
   }
 });
 

@@ -12476,6 +12476,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'wait-verdict-not-run-validate-unrecognised',
+    guard: 'node --test --test-name-pattern="#810" test/wait-verdict.test.mjs',
+    because: '#810: «Ревью не запускалось» from the red or missing Validate step of _process.yml is its own '
+      + 'event, not a rebase conflict; the sign must match the body the step writes for both kinds '
+      + '(«Validate» and «Validate с мутантами»), otherwise the author is sent to the wrong action',
+    patches: [{
+      file: 'scripts/wait-verdict.mjs',
+      find: "Validate(?: с мутантами)? на материале /m, kind: 'validate-red'",
+      replace: "Validate на материале /m, kind: 'validate-red'",
+    }],
+  },
+  {
     id: 'release-gate-counts-cancelled-runs',
     guard: 'node --test test/release-gate.test.mjs',
     because: 'a cancelled twin on the tag SHA proves nothing and must not block the assets; the '

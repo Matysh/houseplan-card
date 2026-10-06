@@ -213,15 +213,16 @@ export const VALIDATE_WORKFLOW = 'Проверка (CI)';
 export const TOKENS_NO_DATA = 'Токены: нет данных (ни один документ ревью не несёт расход модели)';
 
 /**
- * Причины `validate-red` и `conflict` (К3). У конвейера нет для них отдельной
- * константы: оба комментария `_process.yml` («Validate красный — вернуть
- * автору без ревью» и «Конфликт с dev — вернуть автору без ревью») идут под
- * одним префиксом `PIPELINE_EVENTS` с `kind: 'conflict'`. Причину даёт
- * продолжение первой строки. Это копия текста шаблонов, а не импорт: от
- * расхождения её держит контрактный тест на самих шаблонах (AC3 #728).
+ * Причины `validate-red` и `conflict` (К3). Оба комментария `_process.yml`
+ * («Validate красный — вернуть автору без ревью» и «Конфликт с dev — вернуть
+ * автору без ревью») начинаются с «**Ревью не запускалось:**», причину даёт
+ * продолжение первой строки. Признаки — из `PIPELINE_EVENTS` по `kind`: один
+ * источник с ожиданием вердикта, которое по ним же называет автору причину
+ * (#810). От расхождения с шаблонами держит контрактный тест на самих шаблонах
+ * (AC3 #728).
  */
-export const NOT_RUN_VALIDATE_RE = /^\*\*Ревью не запускалось:\*\* Validate(?: с мутантами)? на материале /m;
-export const NOT_RUN_CONFLICT_RE = /^\*\*Ревью не запускалось:\*\* ветка \S+ не ребейзится на /m;
+export const NOT_RUN_VALIDATE_RE = pipelineEvent('validate-red');
+export const NOT_RUN_CONFLICT_RE = pipelineEvent('conflict');
 /** Маршрут вердикта show (#726): машинная строка комментария конвейера. */
 export const ROUTE_RE = /<!--\s*hp:route\s+(reclassify|owner-question)\b[^>]*-->/;
 
@@ -232,7 +233,7 @@ function pipelineEvent(kind) {
   return event.re;
 }
 /** Общий префикс «Ревью не запускалось»: семейство, не причина. */
-const NOT_RUN_RE = pipelineEvent('conflict');
+const NOT_RUN_RE = pipelineEvent('not-run');
 /** Неудачное слияние после ревью: «Слияние отменено», «Код-ревью зелёное — вердикт выше в силе». */
 const MERGE_RES = [pipelineEvent('stale'), pipelineEvent('merge-conflict')];
 
