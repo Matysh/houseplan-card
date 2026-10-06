@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 311, issue: 155. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 313, issue: 155. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -23,6 +23,8 @@
 | #794 | [CODE-REVIEW-794-r1.md](CODE-REVIEW-794-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #793 | [CODE-REVIEW-793-r1.md](CODE-REVIEW-793-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #792 | [SPEC-REVIEW-792-r1.md](SPEC-REVIEW-792-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #792 | [CODE-REVIEW-792-r1.md](CODE-REVIEW-792-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | отсутствует одна из явно перечисленных golden-сцен; текст EN USER-GUIDE не совпадает с фактической строкой тумблера | `demo/golden/matrix.mjs` `demo/golden/device-battery.mjs` `test/golden-battery.test.mjs` `smoke_device_battery_zigbee.mjs` `demo/smoke_device_battery_zigbee.mjs` `docs/USER-GUIDE.md` `src/i18n/settings/en.json` `test/device-battery-settings.test.mjs` |
+| #792 | [CODE-REVIEW-792-r2.md](CODE-REVIEW-792-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #791 | [CODE-REVIEW-791-r1.md](CODE-REVIEW-791-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #790 | [CODE-REVIEW-790-r1.md](CODE-REVIEW-790-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #789 | [SPEC-REVIEW-789-r1.md](SPEC-REVIEW-789-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
