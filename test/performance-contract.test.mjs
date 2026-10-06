@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   assertCardContract,
+  assertIsometricCandidate,
   GLOW_CARD_CONTRACT,
   LARGE_HOUSE_CARD_CONTRACT,
   SPACE_GLOW_CARD_CONTRACT,
@@ -162,6 +163,37 @@ test('large-house contract accepts only an explicit current or stable resize own
     () => assertCardContract({ ...methods, ...fields }, LARGE_HOUSE_CARD_CONTRACT),
     /missing private API: _resize\|_rszDrag/,
   );
+});
+
+test('#770: 2.5D contract errors name the measured profile, not the historical one', () => {
+  const runner = readFileSync(new URL('../demo/benchmark_large_house.mjs', import.meta.url), 'utf8');
+  // Every 2.5D profile the runner accepts walks this contract.
+  const profiles = ['large-house-isometric-v1', 'isometric-stage3-dense-v1', 'large-house-isometric-backdrop-v1'];
+  // The runner injects the function with `toString()`: the serialized copy must
+  // behave exactly like the module export, so it is judged too.
+  const injected = new Function(`return ${assertIsometricCandidate.toString()}`)();
+  const complete = {
+    _onLabsSnapshot: () => undefined, _effectiveProjection: () => 'iso', _isoGeometryCache: new Map(),
+  };
+  for (const check of [assertIsometricCandidate, injected]) {
+    for (const profile of profiles) {
+      assert.throws(() => check({}, profile, 'labs-hook'),
+        (error) => error.message === `${profile} candidate has no Labs fixture hook`);
+      assert.throws(() => check({ ...complete, _isoGeometryCache: {} }, profile, 'renderer'),
+        (error) => error.message === `${profile} candidate has no renderer contract`);
+      assert.throws(() => check({ ...complete, _effectiveProjection: undefined }, profile, 'renderer'),
+        (error) => error.message === `${profile} candidate has no renderer contract`);
+      assert.doesNotThrow(() => check(complete, profile, 'labs-hook'));
+      assert.doesNotThrow(() => check(complete, profile, 'renderer'));
+    }
+    assert.throws(() => check(complete, 'isometric-stage3-dense-v1', 'renderr'), /unknown 2\.5D contract stage: renderr/);
+  }
+  // The runner injects it, calls both stages with the profile it measures and
+  // keeps no message of its own that names one profile for all three.
+  assert.match(runner, /window\.__hpAssertIsometricCandidate = \$\{assertIsometricCandidate\.toString\(\)\};/);
+  assert.match(runner, /window\.__hpAssertIsometricCandidate\(card, profile, 'labs-hook'\);/);
+  assert.match(runner, /if \(requiresIsometric\) window\.__hpAssertIsometricCandidate\(card, profile, 'renderer'\);/);
+  assert.doesNotMatch(runner, /large-house-isometric-v1 candidate has no/);
 });
 
 test('contract accepts recent optional fields only when their runtime type is valid', () => {

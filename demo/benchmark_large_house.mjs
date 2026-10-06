@@ -8,7 +8,11 @@ import { LARGE_HOUSE_COUNTS, makeLargeHouseFixture } from './fixtures/large-hous
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { ensureHarnessEditorRuntime } from './editor-runtime-compat.mjs';
 import { summarizeLongTasks, summarizeTimings } from './performance/evaluate.mjs';
-import { assertCardContract, LARGE_HOUSE_CARD_CONTRACT } from './performance/card-contract.mjs';
+import {
+  assertCardContract,
+  assertIsometricCandidate,
+  LARGE_HOUSE_CARD_CONTRACT,
+} from './performance/card-contract.mjs';
 import {
   ISOMETRIC_STAGE3_DENSE_PROFILE,
   makeIsometricStage3DenseFixture,
@@ -95,6 +99,9 @@ await page.addStyleTag({
 });
 await page.addScriptTag({
   content: `window.__hpAssertCardContract = ${assertCardContract.toString()};`,
+});
+await page.addScriptTag({
+  content: `window.__hpAssertIsometricCandidate = ${assertIsometricCandidate.toString()};`,
 });
 await page.addScriptTag({
   content: `window.__hpEnsureHarnessEditorRuntime = ${ensureHarnessEditorRuntime.toString()};`,
@@ -395,8 +402,7 @@ try {
       const loadStarted = performance.now();
       host.replaceChildren(card);
       if (requiresIsometric && window.__hpAlpha !== true) {
-        if (typeof card._onLabsSnapshot !== 'function')
-          throw new Error('large-house-isometric-v1 candidate has no Labs fixture hook');
+        window.__hpAssertIsometricCandidate(card, profile, 'labs-hook');
         // Comparison bundles before #448 do not understand hp_alpha. Preserve
         // the cross-version benchmark only for that base; current candidates
         // must activate through the real URL/storage contract above.
@@ -410,10 +416,7 @@ try {
         throw new Error('large-house editor runtime did not preload');
       if (isometric) await ensureIsoRuntime(card);
       window.__hpAssertCardContract(card, cardContract);
-      if (requiresIsometric && (typeof card._effectiveProjection !== 'function'
-          || !(card._isoGeometryCache instanceof Map))) {
-        throw new Error('large-house-isometric-v1 candidate has no renderer contract');
-      }
+      if (requiresIsometric) window.__hpAssertIsometricCandidate(card, profile, 'renderer');
       await until(() => card._loadOk && card._model?.length === fixture.counts.floors);
       await card.updateComplete;
       await frame();

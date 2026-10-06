@@ -160,6 +160,26 @@ export const SPACE_GLOW_CARD_CONTRACT = Object.freeze({
   }),
 });
 
+/**
+ * The 2.5D candidate contract of the large-house runner, shared by every 2.5D
+ * profile: `large-house-isometric-v1`, its Stage 3 dense twin and the backdrop
+ * twin (#743). The error names the profile being measured (#770); it used to
+ * name the historical profile whichever one failed. `labs-hook` is the
+ * pre-#448 activation path, checked before the first `hass`; `renderer` runs
+ * after the lazy renderer has loaded. Self-contained like
+ * `assertCardContract`: the runner serializes it with `toString()`.
+ */
+export function assertIsometricCandidate(card, profile, stage) {
+  if (stage === 'labs-hook') {
+    if (typeof card._onLabsSnapshot !== 'function')
+      throw new Error(`${profile} candidate has no Labs fixture hook`);
+    return;
+  }
+  if (stage !== 'renderer') throw new Error(`unknown 2.5D contract stage: ${stage}`);
+  if (typeof card._effectiveProjection !== 'function' || !(card._isoGeometryCache instanceof Map))
+    throw new Error(`${profile} candidate has no renderer contract`);
+}
+
 /** Single fail-fast implementation injected into both browser runners. Keep
  * this function self-contained: runners serialize it with `toString()`. */
 export function assertCardContract(card, contract) {
