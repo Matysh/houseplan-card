@@ -14,6 +14,7 @@ import {
 } from '../scripts/ship-review.mjs';
 import { parseDocName, renderIndex } from '../scripts/reviews-index.mjs';
 import { archivePlan } from '../scripts/reviews-archive.mjs';
+import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 const sha = (c) => c.repeat(40);
 const MARKER = `<!-- hp:ship-merge material=${sha('a')} -->`;
@@ -459,6 +460,12 @@ function stepRun(name) {
   return body.join('\n').replace(/\$\{\{ github\.repository \}\}/g, 'o/r');
 }
 
+/** Шаг для исполнения (#766): разобранный шаг — его shell по правилам раннера — и тело. */
+const runnable = (name) => ({
+  step: findStep(readFileSync(SHIP_WORKFLOW, 'utf8'), `      - name: ${name}\n`, '_ship-review.yml'),
+  script: stepRun(name),
+});
+
 /** Замыкание относительных импортов скрипта. */
 function importClosure(entry, seen = new Set()) {
   if (seen.has(entry)) return seen;
@@ -538,9 +545,9 @@ function shipSandbox(t) {
         number, title: `Задача ${number}`, body: '## ТЗ\n\nстрока', labels, comments,
       }));
     },
-    run(script, env) {
+    run({ step, script }, env) {
       for (const file of ['output', 'summary.md']) rmSync(join(temp, file), { force: true });
-      const r = spawnSync('bash', ['--noprofile', '--norc', '-e', '-c', script], {
+      const r = runStep(step, script, {
         cwd: work, encoding: 'utf8',
         env: {
           ...GIT_ENV, ...env, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, GH_TOKEN: 'x', TOKEN: 'x',
@@ -557,7 +564,7 @@ function shipSandbox(t) {
       return { status: r.status, stdout: r.stdout, stderr: r.stderr, output, summary: read(join(temp, 'summary.md')) };
     },
     prepare(env) {
-      return box.run(stepRun('Кандидат, база и ship-задачи'), {
+      return box.run(runnable('Кандидат, база и ship-задачи'), {
         FORCE: 'false', CANDIDATE: '', RUN_URL: 'https://github.com/o/r/actions/runs/1', ...env,
       });
     },
@@ -574,7 +581,7 @@ function shipSandbox(t) {
         TAG: extra.TAG, DOC: o.doc, CANDIDATE: o.candidate, BASE: o.base, ISSUES: o.issues, MODE: o.mode, PATCHES: o.patches,
         RUN_URL: 'https://github.com/o/r/actions/runs/2',
       };
-      const published = box.run(stepRun('Опубликовать документ'), env);
+      const published = box.run(runnable('Опубликовать документ'), env);
       git(work, 'fetch', '-q', 'origin');
       return published;
     },
@@ -714,7 +721,7 @@ test('#727 AC8 _ship-review.yml на настоящем bash: строка о Hi
   if (!hasTools()) { t.skip('bash/jq/sha256sum недоступны'); return; }
   const box = shipSandbox(t);
   const doc = 'docs/reviews/SHIP-REVIEW-v1.0.0-dev-0123456789ab.md';
-  const step = stepRun('High ночью — строка в задачи документа');
+  const step = runnable('High ночью — строка в задачи документа');
   const run = (mode, high) => {
     const dir = join(box.temp, 'ship-review-result');
     mkdirSync(dir, { recursive: true });

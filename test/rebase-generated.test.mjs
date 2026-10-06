@@ -7,6 +7,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { REVIEWS_INDEX_PATH, UPSTREAM_WINS, planStop, rebaseRegenerating } from '../scripts/rebase-generated.mjs';
+import { findStep, runStep } from './helpers/workflow-step.mjs';
 import { PATCH_ID_EXCLUDES } from '../scripts/merge-candidate.mjs';
 import { buildIndex } from '../scripts/reviews-index.mjs';
 
@@ -202,8 +203,9 @@ test('#643 CLI: отказ — код 3 и по строке на конфлик
 // ---------- проводка в process.yml: свидетели и настоящий bash ----------
 
 const WORKFLOW = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
+const REBASE_STEP = '      - name: Привести ветку к dev\n';
 const rebaseStep = () => WORKFLOW.slice(
-  WORKFLOW.indexOf('      - name: Привести ветку к dev\n'),
+  WORKFLOW.indexOf(REBASE_STEP),
   WORKFLOW.indexOf('      - name: Зафиксировать SHA материала ревью'),
 );
 
@@ -234,7 +236,7 @@ test('#643: замыкание импортов помощника не выхо
   }
 });
 
-/** Исполнить ребейзную часть шага как есть (bash -eo pipefail, как у Actions). */
+/** Исполнить ребейзную часть шага как есть — shell шага, как у раннера (#766). */
 function runStepRebase(work) {
   const step = rebaseStep();
   const body = step.slice(step.indexOf('        run: |\n') + '        run: |\n'.length)
@@ -249,9 +251,10 @@ function runStepRebase(work) {
     // #765: снимок dev подготовки (его шаг исполняет process-prepare-tools.test.mjs).
     const tools = join(temp, 'dev-tools');
     mkdirSync(tools);
-    execFileSync('bash', ['-eo', 'pipefail', '-c', `git archive origin/dev scripts | tar -x -C "${tools}"`], { cwd: work, env: ENV });
+    const archive = execFileSync('git', ['archive', 'origin/dev', 'scripts'], { cwd: work, env: ENV, maxBuffer: 256 * 1024 * 1024 });
+    execFileSync('tar', ['-x', '-C', tools], { input: archive });
     const script = `${body.slice(from, to)}\necho REBASED\n`;
-    const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
+    const r = runStep(findStep(WORKFLOW, REBASE_STEP, '_process.yml'), script, {
       cwd: work, encoding: 'utf8', env: { ...ENV, RUNNER_TEMP: temp, GITHUB_OUTPUT: output, BRANCH: 'issue/9-fix', TOOLS: tools },
     });
     return { status: r.status, stdout: r.stdout, stderr: r.stderr, output: readFileSync(output, 'utf8') };
@@ -411,7 +414,7 @@ function runStepPush(pushStderr) {
     const summary = join(temp, 'summary.md');
     writeFileSync(summary, '');
     const script = `TOOLS=${JSON.stringify(resolve(SCRIPTS, '..'))}\nbefore=${'b'.repeat(40)}\n${block}\necho PUSHED\n`;
-    const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
+    const r = runStep(findStep(WORKFLOW, REBASE_STEP, '_process.yml'), script, {
       encoding: 'utf8',
       env: {
         ...ENV, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary,

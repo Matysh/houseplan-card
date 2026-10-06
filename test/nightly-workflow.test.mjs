@@ -5,6 +5,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { findStep, runStep as runnerStep } from './helpers/workflow-step.mjs';
+
 // #492 §7: ночной workflow обязан ждать дочерний Validate и наследовать его
 // исход — успешный dispatch не равен успешной проверке.
 
@@ -57,6 +59,9 @@ function stepRun(text, name) {
   return body.join('\n').replace(/\$\{\{ github\.server_url \}\}/g, 'https://github.com');
 }
 
+/** Шаг для исполнения (#766): разобранный шаг — его shell по правилам раннера — и тело. */
+const runnable = (text, name) => ({ step: findStep(text, `      - name: "${name}"\n`), script: stepRun(text, name) });
+
 const hasBash = () => process.platform !== 'win32' && spawnSync('bash', ['--version']).status === 0;
 
 /**
@@ -64,7 +69,7 @@ const hasBash = () => process.platform !== 'win32' && spawnSync('bash', ['--vers
  * при FAKE_DISPATCH=fail), `run list --jq …` — FAKE_RUN_ID (то, что вернул бы
  * фильтр), `run view --jq .headSha` — FAKE_HEAD, `run watch` — код FAKE_WATCH.
  */
-function runStep(t, script, env = {}) {
+function runStep(t, { step, script }, env = {}) {
   const root = mkdtempSync(join(tmpdir(), 'hp-727-night-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const bin = join(root, 'bin');
@@ -83,7 +88,7 @@ function runStep(t, script, env = {}) {
   ].join('\n'), { mode: 0o755 });
   writeFileSync(join(bin, 'sleep'), '#!/bin/sh\necho "sleep $*" >> "$FAKE_LOG"\n', { mode: 0o755 });
   const files = { log: join(root, 'log'), output: join(root, 'output'), summary: join(root, 'summary.md') };
-  const r = spawnSync('bash', ['--noprofile', '--norc', '-e', '-c', script], {
+  const r = runnerStep(step, script, {
     encoding: 'utf8',
     env: {
       ...process.env, PATH: `${bin}:${process.env.PATH}`, REPO: 'o/r', GH_TOKEN: 'x',
@@ -125,23 +130,23 @@ test('#727 AC6 К6: ночь после Validate при любом его исх
 test('#727 AC6 на настоящем bash: SHA прогона Validate — в выходах до ожидания; красный Validate — красная job ожидания', (t) => {
   if (!hasBash()) { t.skip('bash недоступен'); return; }
   const nightly = read('_nightly.yml');
-  const found = runStep(t, stepRun(nightly, 'Запустить Validate и найти его прогон'), { FAKE_RUN_ID: '42', FAKE_HEAD: HEAD });
+  const found = runStep(t, runnable(nightly, 'Запустить Validate и найти его прогон'), { FAKE_RUN_ID: '42', FAKE_HEAD: HEAD });
   assert.equal(found.status, 0, found.stderr);
   assert.match(found.output, /^run_id=42$/m);
   assert.match(found.output, new RegExp(`^head_sha=${HEAD}$`, 'm'));
   assert.ok(found.log.includes('gh workflow run validate.yml --repo o/r --ref dev -f full=true'));
   assert.ok(!found.log.some((call) => call.startsWith('gh run watch')), 'шаг вывода не ждёт');
-  const red = runStep(t, stepRun(nightly, 'Дождаться Validate'), { RUN_ID: '42', FAKE_WATCH: '1' });
+  const red = runStep(t, runnable(nightly, 'Дождаться Validate'), { RUN_ID: '42', FAKE_WATCH: '1' });
   assert.equal(red.status, 1, 'красный Validate — красная ночь');
   assert.ok(red.log.includes('gh run watch 42 --repo o/r --exit-status --interval 30'));
-  const lost = runStep(t, stepRun(nightly, 'Запустить Validate и найти его прогон'), { FAKE_RUN_ID: '' });
+  const lost = runStep(t, runnable(nightly, 'Запустить Validate и найти его прогон'), { FAKE_RUN_ID: '' });
   assert.equal(lost.status, 1);
   assert.match(lost.stdout, /::error::прогон Validate не появился за 3 минуты/);
 });
 
 test('#727 AC6 на настоящем bash: ship-ревью ночью — dispatch с tag=nightly, ждёт только появления; сбой — предупреждение', (t) => {
   if (!hasBash()) { t.skip('bash недоступен'); return; }
-  const step = stepRun(read('_nightly.yml'), 'Запустить ship-ревью и дождаться появления прогона');
+  const step = runnable(read('_nightly.yml'), 'Запустить ship-ревью и дождаться появления прогона');
   const ok = runStep(t, step, { CANDIDATE: HEAD, FAKE_RUN_ID: '77' });
   assert.equal(ok.status, 0, ok.stderr);
   assert.equal(ok.log[0], `gh workflow run ship-review.yml --ref dev -f tag=nightly -f candidate=${HEAD} --repo o/r`);

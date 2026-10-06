@@ -19,6 +19,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseJobSettings } from '../scripts/workflow-jobs.mjs';
+import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 const WORKFLOWS = new URL('../.github/workflows/', import.meta.url);
 const files = readdirSync(WORKFLOWS).filter((name) => name.endsWith('.yml')).sort();
@@ -98,11 +99,13 @@ const lagStep = () => {
 
 test('#658: шаг сдвига старта ночи предупреждает при сдвиге больше часа', { skip: process.platform === 'win32' && 'нужен GNU bash и date' }, () => {
   const script = lagStep();
+  // #766: shell шага — по правилам раннера (без `shell:` — `bash -e {0}`, а не голый bash).
+  const step = findStep(textOf('_nightly.yml'), { name: 'Сдвиг старта ночи против расписания' }, '_nightly.yml');
   const dir = mkdtempSync(join(tmpdir(), 'hp-658-lag-'));
   try {
     const run = (schedule, nowIso) => {
       const summary = join(dir, `summary-${nowIso.replace(/\W/g, '')}.md`);
-      const result = spawnSync('bash', ['-c', script], {
+      const result = runStep(step, script, {
         encoding: 'utf8',
         env: { ...process.env, SCHEDULE: schedule, NOW_EPOCH: String(Date.parse(nowIso) / 1000), GITHUB_STEP_SUMMARY: summary },
       });

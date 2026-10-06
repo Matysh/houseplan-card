@@ -17,6 +17,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { findStep, runStep } from './helpers/workflow-step.mjs';
+
 const WORKFLOWS = fileURLToPath(new URL('../.github/workflows/', import.meta.url));
 
 const indentOf = (line) => line.length - line.trimStart().length;
@@ -112,14 +114,15 @@ test('#751 AC1: у каждого | tee во всех workflow — pipefail; п�
 
 const hasBash = () => process.platform !== 'win32' && spawnSync('bash', ['--version']).status === 0;
 
-/** Тело `run` шага `name` файла `file` — как его исполнит раннер. */
+/** Шаг `name` файла `file`: разобранный шаг (shell раннера, #766) и тело `run`. */
 function stepRun(file, name) {
   const text = readFileSync(join(WORKFLOWS, file), 'utf8');
-  const at = text.split('\n').findIndex((line) => line === `      - name: ${name}` || line === `      - id: ${name}`);
+  const lines = text.split('\n');
+  const at = lines.findIndex((line) => line === `      - name: ${name}` || line === `      - id: ${name}`);
   assert.ok(at >= 0, `шаг «${name}» в ${file}`);
   const block = runBlocks(text).find((b) => b.line > at + 1);
   assert.ok(block, `у шага «${name}» есть run`);
-  return block.body.join('\n');
+  return { step: findStep(text, `${lines[at]}\n`, file), script: block.body.join('\n') };
 }
 
 test('#751 AC1 на настоящем bash: упавший скрипт слева от | tee роняет шаг под bash -e, как у раннера', (t) => {
@@ -133,13 +136,24 @@ test('#751 AC1 на настоящем bash: упавший скрипт сле�
   for (const [file, name] of [['_process-resume.yml', 'Решить по маркеру ожидания и переставить S7'], ['validate.yml', 'heavy']]) {
     const out = join(root, `${file}.out`);
     writeFileSync(out, '');
-    // Шаг без `shell:` GitHub исполняет как `bash -e {0}`.
-    const r = spawnSync('bash', ['--noprofile', '--norc', '-e', '-c', stepRun(file, name)], {
-      cwd: root, encoding: 'utf8',
-      env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GITHUB_STEP_SUMMARY: out, GITHUB_OUTPUT: out },
-    });
+    // Шаг без `shell:` GitHub исполняет как `bash -e {0}` — обвязка тоже (#766).
+    const { step, script } = stepRun(file, name);
+    assert.equal(step.shell, null, `${file} «${name}»: shell не задан — pipefail только из тела`);
+    const run = (body) => {
+      writeFileSync(out, '');
+      return runStep(step, body, {
+        cwd: root, encoding: 'utf8',
+        env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GITHUB_STEP_SUMMARY: out, GITHUB_OUTPUT: out },
+      });
+    };
+    const r = run(script);
     assert.notEqual(r.status, 0, `${file} «${name}»: падение скрипта прошло зелёным шагом`);
     assert.match(r.stderr, /boom: scripts\//, `${file}: упал именно скрипт шага`);
     assert.equal(readFileSync(out, 'utf8'), 'action=partial\n', `${file}: tee по-прежнему пишет вывод`);
+    // #766: без строки pipefail тот же шаг зелёный — обвязка своей защиты не
+    // добавляет, и убранный из шага pipefail этот тест видит.
+    const bare = script.split('\n').filter((line) => !PIPEFAIL.test(line)).join('\n');
+    assert.notEqual(bare, script, `${file}: строка pipefail найдена`);
+    assert.equal(run(bare).status, 0, `${file} «${name}»: без pipefail обвязка обязана показать зелёный шаг`);
   }
 });

@@ -11,6 +11,7 @@ import {
   usageFromExecutionFile, usageFromMessages,
 } from '../scripts/model-usage.mjs';
 import { REQUIRED_FILES } from '../scripts/review-result-gate.mjs';
+import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 // #737: расход сессии модели — одной машинной строкой в документе ревью.
 // Шаг `Review` (claude-code-action) отдаёт `execution_file` — все сообщения
@@ -296,6 +297,8 @@ test('#737 AC5: шаг снятия расхода на настоящем bash 
   for (const { file, snapshot } of PIPELINES) {
     const text = readFileSync(join(WORKFLOWS, file), 'utf8');
     const body = runOf(named(stepsOf(jobBlock(text, 'model_review')), 'Снять расход модели'));
+    // #766: shell шага — по правилам раннера (без `shell:` — `bash -e {0}`).
+    const step = findStep(text, { name: 'Снять расход модели' }, file);
     const dir = tempDir(t);
     const exec = join(dir, 'claude-execution-output.json');
     writeFileSync(exec, JSON.stringify(session(RESULT), null, 2));
@@ -304,7 +307,7 @@ test('#737 AC5: шаг снятия расхода на настоящем bash 
       const summary = join(dir, 'summary.md');
       rmSync(output, { force: true });
       rmSync(summary, { force: true });
-      const r = spawnSync('bash', ['--noprofile', '--norc', '-e', '-c', body], {
+      const r = runStep(step, body, {
         cwd: ROOT, encoding: 'utf8',
         env: { ...process.env, EXEC, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary, ...(snapshot ? { TOOLS_SHA: head, RUNNER_TEMP: dir } : {}) },
       });

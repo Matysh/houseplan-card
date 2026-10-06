@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { buildCiProof } from '../scripts/ci-proof.mjs';
 import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
+import { findStep, stepCommand } from './helpers/workflow-step.mjs';
 import {
   LIST_LIMIT, NIGHT_RED_MARKER_RE, actionsClient, commentBody, commentVerdict, countsForNightRed, findLastGreen, gitClient,
   nightRed, parseNightRedMarkers, rangeSuspects,
@@ -393,9 +394,12 @@ async function runNightStep(t, { cwd, items, issues = {}, fail = false, scripts 
   rmSync(join(cwd, 'scripts'), { recursive: true, force: true });
   symlinkSync(scripts, join(cwd, 'scripts'));
   const files = { log: join(root, 'gh.log'), summary: join(root, 'summary.md') };
-  const step = stepRun(readFileSync(new URL('../.github/workflows/_nightly.yml', import.meta.url), 'utf8'),
-    'Комментарий в задачи диапазона от последней зелёной ночи до красной');
-  const child = spawn('bash', ['--noprofile', '--norc', '-e', '-c', step], {
+  const name = 'Комментарий в задачи диапазона от последней зелёной ночи до красной';
+  const nightly = readFileSync(new URL('../.github/workflows/_nightly.yml', import.meta.url), 'utf8');
+  // #766: shell шага — по правилам раннера (без `shell:` — `bash -e {0}`); тело — файлом.
+  const { command, args, dir } = stepCommand(findStep(nightly, `      - name: "${name}"\n`, '_nightly.yml'), stepRun(nightly, name));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const child = spawn(command, args, {
     cwd,
     env: {
       ...ENV, PATH: `${gh.bin}:${process.env.PATH}`, REPO, RED_RUN: '105',

@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 
 import { issueBodyDigest } from '../scripts/review-doc-guard.mjs';
 import { formatUsage } from '../scripts/model-usage.mjs';
+import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const WORKFLOW = join(ROOT, '.github', 'workflows', '_process.yml');
@@ -203,11 +204,11 @@ function fixture(t) {
   writeFileSync(join(bin, 'gh'), `#!/usr/bin/env bash\ncat '${join(root, 'body.md')}'\n`);
   chmodSync(join(bin, 'gh'), 0o755);
   const env = { ...GIT_ENV, RUNNER_TEMP: temp, PATH: `${bin}:${process.env.PATH}` };
-  const run = (body, extra) => {
+  // Шаг (из stepsOf) — тело как есть, shell — по правилам раннера (#766).
+  const run = (step, extra) => {
     const output = join(temp, `output-${Math.random().toString(36).slice(2)}`);
     const summary = join(temp, 'summary.md');
-    // Шаг без `shell:` GitHub исполняет как `bash -e {0}`.
-    const r = spawnSync('bash', ['--noprofile', '--norc', '-e', '-c', body], {
+    const r = runStep(findStep(workflow(), `      - name: ${step.name}\n`, '_process.yml'), step.run, {
       cwd: work, encoding: 'utf8', env: { ...env, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary, ...extra },
     });
     let out = '';
@@ -223,7 +224,7 @@ test('#765 AC2: шаги prepare на ветке, отставшей от dev и
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const fx = fixture(t);
   const steps = prepareSteps();
-  const tools = fx.run(named(steps, TOOLS_STEP).run);
+  const tools = fx.run(named(steps, TOOLS_STEP));
   assert.equal(tools.status, 0, tools.stderr);
   const dir = outputOf(tools.out, 'dir');
   const sha = outputOf(tools.out, 'sha');
@@ -233,17 +234,17 @@ test('#765 AC2: шаги prepare на ветке, отставшей от dev и
   fx.git(fx.work, 'checkout', '-q', 'origin/issue/7-x');
   const env = { TOOLS: dir, NUM: '7', REPO: 'o/r', GH_TOKEN: 'x' };
 
-  const material = fx.run(named(steps, 'Зафиксировать SHA материала ревью').run, env);
+  const material = fx.run(named(steps, 'Зафиксировать SHA материала ревью'), env);
   assert.equal(material.status, 0, material.stderr);
   assert.equal(outputOf(material.out, 'sha'), fx.git(fx.work, 'rev-parse', 'HEAD'), 'якорь — материал, а не снимок');
   assert.equal(outputOf(material.out, 'issue_body'), issueBodyDigest(BODY), 'хеш тела — функцией dev, не ветки');
 
-  const reuse = fx.run(named(steps, 'Зелёный вердикт прошлого захода применим без ревью (#499)').run,
+  const reuse = fx.run(named(steps, 'Зелёный вердикт прошлого захода применим без ревью (#499)'),
     { ...env, ISSUE_BODY: issueBodyDigest(BODY) });
   assert.equal(reuse.status, 0, reuse.stderr);
   assert.equal(outputOf(reuse.out, 'reuse'), 'false', 'подменённый скрипт выдал бы себе reuse=true — ревью без модели');
 
-  const spec = fx.run(named(steps, 'ТЗ менялось после зелёного ревью ТЗ (#517)').run,
+  const spec = fx.run(named(steps, 'ТЗ менялось после зелёного ревью ТЗ (#517)'),
     { ...env, DIGEST: issueBodyDigest(BODY) });
   assert.equal(spec.status, 0, spec.stderr);
   assert.equal(outputOf(spec.out, 'changed'), 'false', 'подменённый скрипт объявил бы ТЗ изменившимся');
@@ -252,7 +253,7 @@ test('#765 AC2: шаги prepare на ветке, отставшей от dev и
 test('#765 AC3: расход снимается скриптом закреплённого SHA — на ветке без model-usage.mjs и после сдвига dev', (t) => {
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const fx = fixture(t);
-  const tools = fx.run(named(prepareSteps(), TOOLS_STEP).run);
+  const tools = fx.run(named(prepareSteps(), TOOLS_STEP));
   assert.equal(tools.status, 0, tools.stderr);
   const sha = outputOf(tools.out, 'sha');
   // dev двинулся после подготовки: новая версия скрипта расхода печатает чужое.
@@ -265,12 +266,12 @@ test('#765 AC3: расход снимается скриптом закрепл�
   fx.git(fx.work, 'checkout', '-q', 'origin/issue/7-x');
   const exec = join(fx.temp, 'execution.json');
   writeFileSync(exec, JSON.stringify([{ type: 'system' }, { type: 'result', usage: USAGE, num_turns: USAGE.num_turns }]));
-  const body = named(modelSteps(), USAGE_STEP).run;
-  const usage = fx.run(body, { EXEC: exec, TOOLS_SHA: sha });
+  const step = named(modelSteps(), USAGE_STEP);
+  const usage = fx.run(step, { EXEC: exec, TOOLS_SHA: sha });
   assert.equal(usage.status, 0, usage.stderr);
   assert.equal(outputOf(usage.out, 'line'), formatUsage(USAGE), 'строка данных, а не missing и не версия позже');
   // Нет SHA из prepare — громкий сбой отчётного шага, а не молчаливая строка.
-  const lost = fx.run(body, { EXEC: exec, TOOLS_SHA: '' });
+  const lost = fx.run(step, { EXEC: exec, TOOLS_SHA: '' });
   assert.notEqual(lost.status, 0);
   assert.match(lost.stdout + lost.stderr, /нет SHA снимка/);
 });

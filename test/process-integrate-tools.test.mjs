@@ -17,6 +17,8 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { findStep, runStep } from './helpers/workflow-step.mjs';
+
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const WORKFLOW = join(ROOT, '.github', 'workflows', '_process.yml');
 const TOOLS_STEP = 'Скрипты конвейера — из dev (#749)';
@@ -162,8 +164,9 @@ test('#749 AC2: снимок самодостаточен — шаг как ес
   const snapshot = integrateSteps().find((step) => step.name === TOOLS_STEP);
   assert.ok(snapshot, `шаг «${TOOLS_STEP}»`);
   const output = join(temp, 'output');
-  // Шаг без `shell:` GitHub исполняет как `bash -e {0}`.
-  const r = spawnSync('bash', ['--noprofile', '--norc', '-e', '-c', snapshot.run], {
+  // #766: shell шага — по правилам раннера (без `shell:` — `bash -e {0}`).
+  const step = findStep(readFileSync(WORKFLOW, 'utf8'), `      - name: ${TOOLS_STEP}\n`, '_process.yml');
+  const r = runStep(step, snapshot.run, {
     cwd: work, encoding: 'utf8', env: { ...GIT_ENV, RUNNER_TEMP: temp, GITHUB_OUTPUT: output },
   });
   assert.equal(r.status, 0, r.stderr);

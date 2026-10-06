@@ -13,6 +13,7 @@ import {
   anchorTreeFrom, anchorVerdictFrom, reusableGreenVerdict,
   anchorIssueBodyFrom, issueBodyChanged, issueBodyDigest, normalizeIssueBody,
 } from '../scripts/review-doc-guard.mjs';
+import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 // #365. 28.08 шаг публикации ревью-дока запушил в dev коммит bb2919f с тридцатью
 // файлами вместо одного markdown: откатил отревьюженную реализацию #359, вернул
@@ -1062,6 +1063,7 @@ function runGuard(t, { labels, compare = null, branch = true }) {
     '',
   ].join('\n'), { mode: 0o755 });
   const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
+  const step = findStep(workflow, '      - id: decide\n', '_process.yml');
   const lines = workflow.slice(workflow.indexOf('      - id: decide\n')).split('\n');
   const from = lines.indexOf('        run: |');
   const body = [];
@@ -1073,7 +1075,8 @@ function runGuard(t, { labels, compare = null, branch = true }) {
   const script = body.join('\n').replace(/\$\{\{ github\.(\w+) \}\}/g, (_, key) => context[key]);
   const output = join(root, 'output');
   writeFileSync(output, '');
-  const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
+  // #766: shell шага по правилам раннера, без своего pipefail.
+  const r = runStep(step, script, {
     cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8',
     env: {
       ...process.env, PATH: `${bin}:${process.env.PATH}`, FAKE_DIR: root, GITHUB_OUTPUT: output,

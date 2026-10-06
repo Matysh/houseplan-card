@@ -9,6 +9,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { findStep, runStep } from './helpers/workflow-step.mjs';
+
 const WORKFLOWS = fileURLToPath(new URL('../.github/workflows/', import.meta.url));
 const read = (name) => readFileSync(new URL(name, `file://${WORKFLOWS}`), 'utf8');
 const workflow = read('release.yml');
@@ -185,7 +187,10 @@ function runReviewStep({ snapshots = [[]], dispatch = 0, appear = 45, poll = 15 
     writeFileSync(join(bin, 'sleep'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
     const summary = join(dir, 'summary.md');
     writeFileSync(summary, '');
-    const r = spawnSync('bash', ['--noprofile', '--norc', '-e', '-c', reviewStepScript()], {
+    // #766: shell шага — по правилам раннера (без `shell:` — `bash -e {0}`).
+    const step = findStep(workflow, { name: 'Поставить в очередь ревью линии' }, 'release.yml');
+    assert.equal(step.job, 'independent-review');
+    const r = runStep(step, reviewStepScript(), {
       encoding: 'utf8',
       env: {
         ...process.env, PATH: `${bin}:${process.env.PATH}`, GH_TOKEN: 'x', TAG: 'v1.79.0', SHA: 'c'.repeat(40),

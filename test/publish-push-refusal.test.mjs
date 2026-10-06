@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { PUSH_REFUSAL, classifyPushRefusal, refusalSummary } from '../scripts/merge-candidate.mjs';
 import { buildIndex } from '../scripts/reviews-index.mjs';
+import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 // #723: два шага публикуют коммит и прежде любой отказ push считали сдвигом
 // ветки — документ ревью релиза в `dev` (release-review.yml, три попытки) и
@@ -17,7 +18,8 @@ import { buildIndex } from '../scripts/reviews-index.mjs';
 // устаревший lease — прежний повтор/ребейз, отказ GitHub — остановка без
 // повторов, причина и ответ git без токена — в журнале и в сводке шага.
 //
-// Шаги исполняются как есть, настоящим bash и настоящим git во временных
+// Шаги исполняются как есть, shell шага по правилам раннера (#766: без
+// своего pipefail), настоящим bash и настоящим git во временных
 // репозиториях. Подменён только транспорт: `git push` на github.com уходит в
 // локальный origin, а заданный отказ GitHub отвечает записанным stderr. Сдвиг
 // ветки — настоящий: сосед пушит в origin до push шага, и git сам отвечает
@@ -97,11 +99,17 @@ function stepRun(file, name) {
   return body.join('\n').replace(/\$\{\{ github\.repository \}\}/g, 'o/r');
 }
 
-const RELEASE_STEP = () => stepRun('release-review.yml', 'Опубликовать документ');
-const REVIEW_DOC_STEP = () => stepRun('_process.yml', 'Опубликовать документ ревью');
+/** Шаг для исполнения (#766): разобранный шаг — его shell по правилам раннера — и тело. */
+const runnable = (file, name) => ({
+  step: findStep(readFileSync(join(WORKFLOWS, file), 'utf8'), `      - name: ${name}\n`, file),
+  script: stepRun(file, name),
+});
+
+const RELEASE_STEP = () => runnable('release-review.yml', 'Опубликовать документ');
+const REVIEW_DOC_STEP = () => runnable('_process.yml', 'Опубликовать документ ревью');
 // #749: скрипты job integrate — одним снимком dev; шаги получают каталог выходом `dir`.
-const TOOLS_STEP = () => stepRun('_process.yml', 'Скрипты конвейера — из dev (#749)');
-const REPRO_STEP = () => stepRun('_process.yml', '"Материал раунда воспроизводим (#413)"');
+const TOOLS_STEP = () => runnable('_process.yml', 'Скрипты конвейера — из dev (#749)');
+const REPRO_STEP = () => runnable('_process.yml', '"Материал раунда воспроизводим (#413)"');
 
 /**
  * Песочница: bare origin, рабочая копия, соседний клон и bin с подменами.
@@ -165,9 +173,9 @@ function sandbox(root) {
       writeFileSync(join(fake, `before-push-${n}`), `HEAD:${ref}`);
     },
     refuse(n, stderr) { writeFileSync(join(fake, `push-${n}.stderr`), stderr); },
-    run(script, env) {
+    run({ step, script }, env) {
       const summary = join(temp, 'summary.md');
-      const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
+      const r = runStep(step, script, {
         cwd: work, encoding: 'utf8',
         env: {
           ...ENV, ...env, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, GITHUB_STEP_SUMMARY: summary,
@@ -493,7 +501,7 @@ test('#749 AC1 _process.yml на настоящем bash: якорь и пров
 
 // ---------- #730 _ship-review.yml: SHIP-REVIEW в dev ----------
 
-const SHIP_STEP = () => stepRun('_ship-review.yml', 'Опубликовать документ');
+const SHIP_STEP = () => runnable('_ship-review.yml', 'Опубликовать документ');
 const BETA = 'v1.79.0-beta.1';
 const SHIP_DOC = `docs/reviews/SHIP-REVIEW-${BETA}.md`;
 
@@ -608,7 +616,7 @@ test('#730 _ship-review.yml на настоящем bash: сдвиг, затем
 
 // ---------- #730 _beta-derived.yml: бот-коммит производных артефактов в dev ----------
 
-const DERIVED_STEP = () => stepRun('_beta-derived.yml', 'Коммит в dev');
+const DERIVED_STEP = () => runnable('_beta-derived.yml', 'Коммит в dev');
 
 /** Кадры и эталоны на dev, как после checkout. */
 function derivedSandbox(t) {
@@ -688,23 +696,23 @@ for (const [label, stderr, kind, reason] of [
 // ---------- AC3 и разбор: тексты — из кода, не из run ----------
 
 test('#723 AC3: в run обоих шагов нет многострочного текста и heredoc; отказ разбирает код слияния', () => {
-  for (const [label, body, tools] of [['release-review.yml', RELEASE_STEP(), 'scripts'], ['_process.yml', REVIEW_DOC_STEP(), '"$TOOLS/scripts']]) {
+  for (const [label, body, tools] of [['release-review.yml', RELEASE_STEP().script, 'scripts'], ['_process.yml', REVIEW_DOC_STEP().script, '"$TOOLS/scripts']]) {
     assert.doesNotMatch(body, /<<-?\s*['"]?[A-Za-z_]/, `${label}: heredoc в run`);
     assert.ok(body.includes(`kind=$(node ${tools}/merge-candidate.mjs`), `${label}: разбор — merge-candidate.mjs --push-refusal`);
     assert.match(body, /--push-refusal="\$push_err"[^\n]*\\\n[^\n]*--summary="\$GITHUB_STEP_SUMMARY"\) \|\| kind=unknown/, `${label}: сводку пишет код`);
     assert.match(body, /2> "\$push_err"; then/, `${label}: stderr push идёт в разбор`);
   }
   // Шаг _process.yml берёт разбор из снимка dev (#749): ветка задачи, отставшая от dev, его может не нести.
-  assert.doesNotMatch(REVIEW_DOC_STEP(), /git archive/, 'своего извлечения у шага нет — снимок job');
-  assert.match(TOOLS_STEP(), /git archive origin\/dev scripts \.github\/workflows\/validate\.yml \| tar -x -C "\$tools"/);
+  assert.doesNotMatch(REVIEW_DOC_STEP().script, /git archive/, 'своего извлечения у шага нет — снимок job');
+  assert.match(TOOLS_STEP().script, /git archive origin\/dev scripts \.github\/workflows\/validate\.yml \| tar -x -C "\$tools"/);
   // Блок run не обрезан: последняя строка каждого шага на месте.
-  assert.match(RELEASE_STEP(), /echo "::error::документ ревью не опубликован в dev за три попытки"\nexit 1\n*$/);
-  assert.match(REVIEW_DOC_STEP(), /echo "документ опубликован в \$target: \$doc"\n*$/);
+  assert.match(RELEASE_STEP().script, /echo "::error::документ ревью не опубликован в dev за три попытки"\nexit 1\n*$/);
+  assert.match(REVIEW_DOC_STEP().script, /echo "документ опубликован в \$target: \$doc"\n*$/);
 });
 
 test('#730 AC3: тела _ship-review.yml и _beta-derived.yml — без heredoc, разбор кодом слияния из dev, сводку пишет код', () => {
   const read = (name) => readFileSync(join(WORKFLOWS, name), 'utf8');
-  for (const [label, body] of [['_ship-review.yml', SHIP_STEP()], ['_beta-derived.yml', DERIVED_STEP()]]) {
+  for (const [label, body] of [['_ship-review.yml', SHIP_STEP().script], ['_beta-derived.yml', DERIVED_STEP().script]]) {
     assert.doesNotMatch(body, /<<-?\s*['"]?[A-Za-z_]/, `${label}: heredoc в run`);
     assert.ok(body.includes('kind=$(node scripts/merge-candidate.mjs'), `${label}: разбор — merge-candidate.mjs --push-refusal`);
     assert.match(body, /--push-refusal="\$push_err"[^\n]*\\\n[^\n]*--summary="\$GITHUB_STEP_SUMMARY"\) \|\| kind=unknown/, `${label}: сводку пишет код`);
@@ -715,13 +723,13 @@ test('#730 AC3: тела _ship-review.yml и _beta-derived.yml — без heredo
   const job = (text, name) => text.slice(text.indexOf(`\n  ${name}:`));
   assert.match(job(read('_ship-review.yml'), 'publish'), /actions\/checkout@[^\n]+\n\s+with:\n\s+fetch-depth: 0\n\s+ref: dev\n/);
   assert.match(job(read('_beta-derived.yml'), 'accept'), /actions\/checkout@[^\n]+\n\s+with:\n\s+ref: dev\n/);
-  const ship = SHIP_STEP();
+  const ship = SHIP_STEP().script;
   const loop = ship.slice(ship.indexOf('for attempt in 1 2 3; do'));
   assert.ok(loop.indexOf('git reset -q --hard origin/dev') >= 0
     && loop.indexOf('git reset -q --hard origin/dev') < loop.indexOf('kind=$(node scripts/merge-candidate.mjs'));
   // Блок run не обрезан: последняя строка каждого шага на месте.
   assert.match(ship, /echo "::error::документ ревью не опубликован в dev за три попытки"\nexit 1\n*$/);
-  assert.match(DERIVED_STEP(), /в dev — проверить перед кандидатом беты\." >> "\$GITHUB_STEP_SUMMARY"\n*$/);
+  assert.match(DERIVED_STEP().script, /в dev — проверить перед кандидатом беты\." >> "\$GITHUB_STEP_SUMMARY"\n*$/);
 });
 
 test('#730: подписи сводки для публикации ship, производных артефактов и стража ребейза', () => {

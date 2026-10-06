@@ -16,6 +16,7 @@ import { classify as classifyPath } from '../scripts/change-classes.mjs';
 // Пути монолитов — данные для классификатора, а не чтение их текста (#624).
 import { CARD_FILE, RUNTIME_FILE } from '../scripts/monolith-metrics.mjs';
 import { trackFromLabels as packetTrack } from '../scripts/task-packet.mjs';
+import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 // #696: конвейер ревью решает цену захода по треку; трек и рамки ship —
 // механические, потому что по ним задача сливается без ревью модели.
@@ -650,6 +651,8 @@ function stepRun(workflow, marker) {
   assert.doesNotMatch(text, /\$\{\{/, 'все выражения подставлены');
   return text;
 }
+/** Шаг для исполнения (#766): разобранный шаг — его shell по правилам раннера — и тело. */
+const runnable = (workflow, marker) => ({ step: findStep(workflow, marker, '_process.yml'), script: stepRun(workflow, marker) });
 const TRACK_STEP = '      - name: "Трек задачи и рамки ship (#696)"\n';
 const GUARD_STEP = '      - id: decide\n';
 const DECIDE_STEP = '      - name: Решение по вердикту\n';
@@ -791,10 +794,10 @@ function trackSandbox(t, { change, base = () => {} }) {
   let tools = '';
   const box = {
     work, fake,
-    run(script, env) {
+    run({ step, script }, env) {
       for (const name of ['gh-calls', 'comment.md']) rmSync(join(fake, name), { force: true });
       writeFileSync(join(temp, 'output'), '');
-      const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script], {
+      const r = runStep(step, script, {
         cwd: work, encoding: 'utf8',
         env: {
           ...GIT_ENV, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, FAKE_DIR: fake, GH_TOKEN: 'x', NUM: '7',
@@ -817,7 +820,7 @@ function trackSandbox(t, { change, base = () => {} }) {
     },
     /** #749/#765: шаг снимка job как есть; его каталог дальше идёт шагам как TOOLS. */
     snapshot(step = TOOLS_STEP) {
-      const r = this.run(stepRun(readFileSync(WORKFLOW, 'utf8'), step), {});
+      const r = this.run(runnable(readFileSync(WORKFLOW, 'utf8'), step), {});
       assert.equal(r.status, 0, `снимок скриптов dev: ${r.stderr}`);
       assert.ok(r.output.dir && existsSync(join(r.output.dir, 'scripts', 'process-track.mjs')), 'снимок несёт скрипт трека');
       tools = r.output.dir;
@@ -837,7 +840,7 @@ test('#707 AC4: шаг трека на настоящем bash — ship с ри�
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const { readFileSync: read } = await import('node:fs');
   const box = trackSandbox(t, { change: touchChange });
-  const run = stepRun(read(WORKFLOW, 'utf8'), TRACK_STEP);
+  const run = runnable(read(WORKFLOW, 'utf8'), TRACK_STEP);
   box.comments([{ author: { login: 'claude[bot]' }, body: 'Трек: ship — решение владельца', createdAt: '2026-09-30T08:00:00Z' }]);
   const r = box.run(run, trackEnv('track:ship,S7-code-review'));
   assert.equal(r.status, 0, r.stderr);
@@ -866,7 +869,7 @@ test('#707 AC4: шаг трека на настоящем bash — ship, под�
   const workflow = read(WORKFLOW, 'utf8');
   const box = trackSandbox(t, { change: touchChange });
   box.comments([{ author: { login: 'Matysh' }, body: 'Трек: ship — решение владельца', createdAt: '2026-09-30T08:00:00Z' }]);
-  const r = box.run(stepRun(workflow, TRACK_STEP), trackEnv('track:ship,S7-code-review'));
+  const r = box.run(runnable(workflow, TRACK_STEP), trackEnv('track:ship,S7-code-review'));
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /^raise=false$/m);
   assert.deepEqual(r.calls, ['issue view 7 --repo o/r --json comments'], 'ни комментария, ни смены меток');
@@ -879,7 +882,8 @@ test('#707 AC4: шаг трека на настоящем bash — ship, под�
   // Комментарий слияния ship: шаг «Решение по вердикту» как есть, с этой строкой риска.
   const { SHIP_MERGE_MARKER_RE, shipRiskFrom } = await import('../scripts/ship-review.mjs');
   const material = 'a'.repeat(40);
-  const decide = stepRun(workflow, DECIDE_STEP).replaceAll('/tmp/ship-merge.md', join(box.fake, 'ship-merge.md'));
+  const step = runnable(workflow, DECIDE_STEP);
+  const decide = { ...step, script: step.script.replaceAll('/tmp/ship-merge.md', join(box.fake, 'ship-merge.md')) };
   const merged = box.run(decide, { OUT: '', STAGE: 'code', REUSE: 'false', SHIP: 'true', SHIP_RISK: r.output.ship_risk, MATERIAL: material, VALIDATE_URL: 'https://v' });
   assert.equal(merged.status, 0, merged.stderr);
   assert.equal(merged.output.green, 'true');
@@ -909,7 +913,7 @@ const dropStageSize = (work) => {
 test('#755 AC3: шаг трека на настоящем bash — ship с удалённым членом интерфейса не повышается', async (t) => {
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const { readFileSync: read } = await import('node:fs');
-  const run = stepRun(read(WORKFLOW, 'utf8'), TRACK_STEP);
+  const run = runnable(read(WORKFLOW, 'utf8'), TRACK_STEP);
   const bot = [{ author: { login: 'claude[bot]' }, body: 'Трек: ship — решение владельца', createdAt: '2026-10-01T05:00:00Z' }];
 
   const box = trackSandbox(t, { base: ISO_BASE('export interface IsoOverlayFitEnvelopeInput {'), change: dropStageSize });
@@ -934,7 +938,7 @@ test('#755 AC3: шаг трека на настоящем bash — ship с уд�
 test('#707 AC4: шаг трека на настоящем bash — комментарии недоступны, этап spec, show', async (t) => {
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const { readFileSync: read } = await import('node:fs');
-  const run = stepRun(read(WORKFLOW, 'utf8'), TRACK_STEP);
+  const run = runnable(read(WORKFLOW, 'utf8'), TRACK_STEP);
   const box = trackSandbox(t, { change: touchChange });
   box.comments(null);
   const unknown = box.run(run, trackEnv('track:ship,S7-code-review'));
@@ -1213,7 +1217,7 @@ test('#726 AC5: шаг решения на настоящем bash — reclassif
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const box = trackSandbox(t, { change: docsChange([[1, 'жёлтый'], [2, 'жёлтый']]) });
   box.snapshot();
-  const run = stepRun(readFileSync(WORKFLOW, 'utf8'), DECIDE_STEP);
+  const run = runnable(readFileSync(WORKFLOW, 'utf8'), DECIDE_STEP);
   box.labels(['track:show', 'S7-code-review', 'P2']);
   const r = box.run(run, decideEnv({ OUT: verdictOut({ route: 'reclassify', criterion: 'undocumented' }) }));
   assert.equal(r.status, 0, r.stderr + r.stdout);
@@ -1244,7 +1248,7 @@ test('#726 AC5: шаг решения на настоящем bash — исче�
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const box = trackSandbox(t, { change: docsChange([[1, 'жёлтый'], [2, 'жёлтый']]) });
   box.snapshot();
-  const run = stepRun(readFileSync(WORKFLOW, 'utf8'), DECIDE_STEP);
+  const run = runnable(readFileSync(WORKFLOW, 'utf8'), DECIDE_STEP);
   box.labels(['track:show', 'S7-code-review']);
   const commentPath = join(dirname(box.work), 'runner', 'route', 'comment.md');
   // show, spent 1, fix — review-4 этим же вердиктом, возврат в S6.
@@ -1287,7 +1291,7 @@ test('#726 AC5: шаг решения на настоящем bash — исче�
 test('#726 AC5: шаг трека на настоящем bash — confirmed и заметка маршрута для промпта', async (t) => {
   if (!hasTools()) { t.skip('bash/tar/git недоступны'); return; }
   const box = trackSandbox(t, { change: touchChange });
-  const run = stepRun(readFileSync(WORKFLOW, 'utf8'), TRACK_STEP);
+  const run = runnable(readFileSync(WORKFLOW, 'utf8'), TRACK_STEP);
   box.comments([]);
   const show = box.run(run, trackEnv('track:show,S7-code-review'));
   assert.equal(show.status, 0, show.stderr);

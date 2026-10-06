@@ -44,6 +44,11 @@ golden, а то, чего автоматика не видит, собрано �
    `c._roomDialog = …`, зелёный и при сломанной кнопке, — это тот же «ничего не
    проверено», что в правилах 1–5. Новые записи держит гейт
    `no-new-private-writes`, остальное — ревью (раздел ниже).
+7. **Шаг workflow исполняется так, как его исполнит раннер** (#766):
+   `runStep(findStep(…))` из `test/helpers/workflow-step.mjs` — shell шага, job
+   или workflow, без `shell:` — `bash -e {0}`. Свой `-eo pipefail` обвязки
+   даёт защиту, которой в шаге нет, и убранный из шага pipefail тест не видит.
+   Держит `test/workflow-step.test.mjs`.
 
 Проверка: `node scripts/mutation-gate.mjs --check` — якоря патчей живы;
 полный прогон — workflow `mutation-gate.yml` (десять чересполосных шардов
