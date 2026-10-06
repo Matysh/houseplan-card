@@ -12,7 +12,7 @@ import {
 } from '../scripts/bundle-manifest.mjs';
 import {
   INITIAL_PANEL_ONLY_GZIP_BUDGET, INITIAL_VIEW_CEILING_BAND,
-  INITIAL_VIEW_GZIP_BUDGET, INITIAL_VIEW_GZIP_CEILING,
+  INITIAL_VIEW_GZIP_BUDGET, INITIAL_VIEW_GZIP_CEILING, INITIAL_VIEW_RECALIBRATION_GZIP_BYTES,
   LAZY_EDITOR_GZIP_CEILING, LAZY_FURNITURE_ART_GZIP_CEILING, LAZY_GRAPH_CEILING_BAND,
   LAZY_ONBOARDING_GZIP_CEILING, lazyGraphCeilingViolation,
   assertNamespaceLocaleOwnership, namespaceLocaleMarkers,
@@ -861,9 +861,10 @@ test('bundle tree verification rejects orphan chunks (#353 AC4)', async (t) => {
 // последним. Настоящий рычаг — ленивые графы, и о нём напоминает сам текст
 // предупреждения.
 
-test('потолок держится внутри правила ~10% над измеренным фактом (#352, #367)', () => {
-  // Факт на момент рекалибровки — 273 697 Б gzip (dev @ 360).
-  const fact = 273_697;
+test('потолок держится внутри правила ~10% над измеренным фактом (#352, #367, #792)', () => {
+  // #792: owner-approved reference is the measured pre-feature source build,
+  // not the abandoned SVG implementation or an automatically growing ceiling.
+  const fact = INITIAL_VIEW_RECALIBRATION_GZIP_BYTES;
   assert.ok(INITIAL_VIEW_GZIP_BUDGET > fact, 'потолок ниже факта сделал бы гейт вечно красным');
   const allowance = (INITIAL_VIEW_GZIP_BUDGET - fact) / fact;
   assert.ok(allowance <= 0.10 + 1e-9, `надбавка ${(allowance * 100).toFixed(1)}% больше правила 10%`);
@@ -888,9 +889,9 @@ test('превышенный бюджет описывается как прев
   assert.equal(lowHeadroomWarning(Number.NaN), null);
 });
 
-test('запас на момент рекалибровки выше порога тревоги (#367)', () => {
+test('запас на момент рекалибровки выше порога тревоги (#367, #792)', () => {
   // Иначе рекалибровка была бы бессмысленной: гейт сразу же начал бы кричать.
-  assert.ok(INITIAL_VIEW_GZIP_BUDGET - 273_697 > LOW_HEADROOM_WARNING_BYTES);
+  assert.ok(INITIAL_VIEW_GZIP_BUDGET - INITIAL_VIEW_RECALIBRATION_GZIP_BYTES > LOW_HEADROOM_WARNING_BYTES);
 });
 
 test('#429 проверка владения не судит размер графа', () => {
@@ -924,11 +925,16 @@ test('#429 проверка владения не судит размер гра
     const shipped = JSON.parse(
       readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
     ).initialViewGzipBytes;
-    assert.match(
-      lowHeadroomWarning(INITIAL_VIEW_GZIP_BUDGET - shipped) || '',
-      new RegExp(`запас бюджета ${INITIAL_VIEW_GZIP_BUDGET - shipped} Б`),
-      'предупреждение о запасе остаётся честным сигналом о размере',
-    );
+    const headroom = INITIAL_VIEW_GZIP_BUDGET - shipped;
+    const warning = lowHeadroomWarning(headroom);
+    if (headroom < 0) {
+      assert.match(warning, new RegExp(`бюджет превышен на ${-headroom} Б`));
+    } else if (headroom < LOW_HEADROOM_WARNING_BYTES) {
+      assert.match(warning, new RegExp(`запас бюджета ${headroom} Б`),
+        'предупреждение о запасе остаётся честным сигналом о размере');
+    } else {
+      assert.equal(warning, null, 'достаточный запас после рекалибровки не вызывает тревогу');
+    }
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
@@ -1118,12 +1124,37 @@ test('#438 CLI действительно применяет потолок, а 
   const shrank = runBudgetCli(INITIAL_VIEW_GZIP_CEILING - INITIAL_VIEW_CEILING_BAND - 1);
   assert.equal(shrank.status, 0, shrank.output);
 
-  // И общий бюджет остаётся внешней стеной: он выше потолка, значит красным
-  // становится потолок, а не бюджет — но и бюджет обязан уметь падать.
+  // Production checks the rolling ceiling before the absolute wall. Report
+  // whichever gate binds first; a larger recalibrated wall must not reorder it.
   const overBudget = runBudgetCli(INITIAL_VIEW_GZIP_BUDGET + 1);
   assert.equal(overBudget.status, 1, overBudget.output);
-  assert.match(overBudget.output,
-    new RegExp(`exceeds ${INITIAL_VIEW_GZIP_BUDGET} B budget`));
+  assert.match(overBudget.output, INITIAL_VIEW_GZIP_BUDGET + 1
+      > INITIAL_VIEW_GZIP_CEILING + INITIAL_VIEW_CEILING_BAND
+    ? /выше потолка беты .* больше полосы/
+    : new RegExp(`exceeds ${INITIAL_VIEW_GZIP_BUDGET} B budget`));
+});
+
+test('#792 absolute initial View wall accepts equality and rejects the next byte independently of the ratchet', () => {
+  const base = shippedManifest();
+  const withBytes = (bytes) => {
+    const delta = bytes - base.initialViewGzipBytes;
+    return {
+      ...base,
+      initialViewGzipBytes: bytes,
+      initialPanelGzipBytes: base.initialPanelGzipBytes
+        + (base.initialPanelFiles.includes(base.entry) ? delta : 0),
+      files: base.files.map(file => file.path === base.entry
+        ? { ...file, gzipBytes: file.gzipBytes + delta } : file),
+    };
+  };
+  // Other graph limits use their own fixture facts: this witness judges only
+  // the absolute View boundary, even when the committed bundle is older.
+  const judge = bytes => assertBundleBudget(withBytes(bytes), INITIAL_VIEW_GZIP_BUDGET,
+    base.initialPanelOnlyGzipBytes, base.lazyFurnitureArtGzipBytes,
+    base.lazyEditorGzipBytes, base.lazyOnboardingGzipBytes);
+  assert.doesNotThrow(() => judge(INITIAL_VIEW_GZIP_BUDGET));
+  assert.throws(() => judge(INITIAL_VIEW_GZIP_BUDGET + 1),
+    new RegExp(`initial View graph ${INITIAL_VIEW_GZIP_BUDGET + 1} B gzip exceeds ${INITIAL_VIEW_GZIP_BUDGET} B budget`));
 });
 
 // #593: до этой задачи размеры ленивых графов только печатались в отчёт. Тогда

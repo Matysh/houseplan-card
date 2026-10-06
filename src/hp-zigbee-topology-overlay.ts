@@ -58,18 +58,22 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     registry: HaRegistrySnapshot; mapped: ZigbeeMappedTopology[] };
 
   static styles = css`
-    :host { position: absolute; inset: 0; z-index: 7; display: block; pointer-events: none; }
-    svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    /* No host stacking context: endpoint cores stay above routes (8 > 7),
+       while information captions also stay above passive batteries (9 > 8). */
+    :host { position: absolute; inset: 0; z-index: auto; display: block; pointer-events: none; }
+    svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 7; }
     line { vector-effect: non-scaling-stroke; stroke-linecap: round; }
     .route-arrow { vector-effect: non-scaling-stroke; }
     svg, line, polygon, .halo, .remote, .parent-bubble, .route-status { pointer-events: none; }
     .halo {
+      z-index: 7;
       position: absolute; width: calc(var(--device-base-size, 4cqw) * 1.22);
       height: calc(var(--device-base-size, 4cqw) * 1.22); transform: translate(-50%, -50%);
       box-sizing: border-box; border: 2px solid rgba(120, 190, 220, .82); border-radius: 50%;
       box-shadow: 0 0 0 4px rgba(120, 190, 220, .16);
     }
     .remote, .parent-bubble, .route-status {
+      z-index: 9;
       position: absolute; transform: translate(12px, calc(-100% - 12px));
       border: 1px solid rgba(255,255,255,.7); border-radius: 999px;
       padding: 3px 7px; color: #fff; background: rgba(28,31,36,.88);

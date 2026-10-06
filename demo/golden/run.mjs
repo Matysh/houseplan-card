@@ -7,6 +7,7 @@ import { launch } from '../serve.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 import { goldenClip, prepareGoldenScenario } from './harness.mjs';
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from './matrix.mjs';
+import { inspectBatteryBoardPixels } from './device-battery.mjs';
 import { CAPTURE_PROVENANCE_SCHEMA, captureProvenance } from '../../scripts/capture-environment.mjs';
 import {
   assertGoldenInvocation,
@@ -1020,6 +1021,9 @@ try {
       writeFileSync(actualPath, actual);
       result.actualSha256 = sha256(actual);
       result.actual = actualPath;
+      if (scenario.batteryBoard) {
+        result.batteryPixels = await inspectBatteryBoardPixels(page, actual, clip, result.runtime.batteryBoard);
+      }
       if (scenario.sunRayPixels) {
         const control = await captureWithoutSunRays(page, screenshotOptions);
         const sample = await countChangedPixels(page, actual, control.png, scenario.sunRayPixels);

@@ -6,6 +6,87 @@ import {
   createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
 } from '../test-build/render-device-snapshot.js';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
+import { createDeviceBatteryContext } from '../test-build/device-battery.js';
+import { resolveDevicePresentation } from '../test-build/device-presentation.js';
+import { classifyHassRenderChange } from '../test-build/render-invalidation.js';
+
+test('#792 opt-out skips battery indexing and extra tick dependencies, not ordinary sources', () => {
+  // The diagnostic sibling deliberately precedes the bound entity and has no
+  // plan Area: ordinary projection alone does not need this separate source.
+  const ha = {
+    entities: {
+      'sensor.charge': { device_id: 'physical', device_class: 'battery' },
+      'binary_sensor.motion': { device_id: 'physical' },
+    },
+    devices: { physical: {} },
+    states: {
+      'sensor.charge': { state: '70', attributes: { device_class: 'battery' } },
+      'binary_sensor.motion': { state: 'off', attributes: {} },
+    },
+  };
+  const device = {
+    id: 'marker', bindingKind: 'entity', bindingRef: 'binary_sensor.motion',
+    bindingStatus: { kind: 'active' }, entities: ['binary_sensor.motion'],
+  };
+  const next = { ...ha, states: { ...ha.states,
+    'sensor.charge': { state: '10', attributes: { device_class: 'battery' } },
+  } };
+  const options = { sourceSequence: 1, hass: ha, devices: [device], presentations: new Map() };
+  const disabled = createRenderDeviceSnapshot({ ...options, showBattery: false,
+    get batteryContext() { throw new Error('opt-out must not access the battery index'); },
+  });
+  assert.equal(disabled.entityIds.includes('sensor.charge'), false);
+  assert.equal(classifyHassRenderChange(ha, next, disabled), 'none');
+  const enabled = createRenderDeviceSnapshot(options);
+  assert.equal(enabled.entityIds.includes('sensor.charge'), true);
+  assert.equal(classifyHassRenderChange(ha, next, enabled), 'state');
+  const ordinarySource = createRenderDeviceSnapshot({ ...options, showBattery: false,
+    entityIds: ['sensor.charge'],
+  });
+  assert.equal(classifyHassRenderChange(ha, next, ordinarySource), 'state',
+    'the same entity remains live when an ordinary badge/room source requires it');
+});
+
+test('#792 entity marker snapshot captures earlier unplaced battery siblings atomically', () => {
+  const device = {
+    id: 'marker', name: 'Motion', icon: 'mdi:motion-sensor', space: 'floor',
+    entities: ['binary_sensor.motion'], primary: 'binary_sensor.motion',
+    bindingKind: 'entity', bindingRef: 'binary_sensor.motion',
+    marker: { id: 'marker', binding: 'entity:binary_sensor.motion' },
+    bindingStatus: { kind: 'active' },
+  };
+  const ha = {
+    entities: {
+      'sensor.charge': { device_id: 'physical', device_class: 'battery' },
+      'binary_sensor.motion': { device_id: 'physical' },
+      'sensor.other': { device_id: 'other', device_class: 'battery' },
+    },
+    states: {
+      'sensor.charge': { state: '70', attributes: { device_class: 'battery' } },
+      'binary_sensor.motion': { state: 'off', attributes: {} },
+      'sensor.other': { state: '5', attributes: { device_class: 'battery' } },
+    },
+    devices: { physical: {} },
+  };
+  const context = createDeviceBatteryContext(ha);
+  const presentation = resolveDevicePresentation(ha, device, {
+    liveStates: true, showTemperature: false, showSignal: false, batteryContext: context,
+  });
+  const snapshot = createRenderDeviceSnapshot({
+    sourceSequence: 1, hass: ha, devices: [device], batteryContext: context,
+    presentations: new Map([['marker:0', presentation]]),
+  });
+  assert.ok(snapshot.entityIds.includes('sensor.charge'));
+  assert.ok(!snapshot.entityIds.includes('sensor.other'));
+  assert.deepEqual(snapshot.devices[0].entities, ['binary_sensor.motion']);
+  ha.states['sensor.charge'].state = '10';
+  assert.equal(snapshot.hass.states['sensor.charge'].state, '70');
+  assert.equal(snapshot.presentations.get('marker:0').battery.state, 'normal');
+  const next = resolveDevicePresentation(ha, device, {
+    liveStates: true, showTemperature: false, showSignal: false,
+  });
+  assert.equal(next.battery.state, 'low');
+});
 
 test('snapshot positions skip resolution until a renderable plan exists', () => {
   const devices = [{ id: 'one' }, { id: 'two' }];

@@ -317,6 +317,8 @@ export interface ServerConfig {
     icon_rules?: { pattern: string; icon: string }[];
     /** Only an explicit false hides the room hover information window. */
     show_room_tooltip?: boolean;
+    /** #792: only an explicit false hides the separate device battery indicators. */
+    show_device_battery?: boolean;
     /** #649: the whole installation views plans in 2.5D; absent or false keeps Flat. */
     volumetric_view?: boolean;
     /** #661: the moon on the "Follow the Sun" background; only `true` switches it on. */

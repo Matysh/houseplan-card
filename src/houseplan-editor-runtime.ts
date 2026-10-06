@@ -112,6 +112,7 @@ import {
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
 import { generalProblems, moonDraftOf, rememberGeneralBaseline, writeMoonSetting } from './editors/general-form-state';
+import { showDeviceBatteryOf, writeDeviceBatterySetting } from './device-battery-settings';
 import { openMoonStatus } from './editors/moon-status';
 import { rememberRoomBaseline } from './editors/room-form-state';
 import { forgetMarkerBaseline, rememberMarkerBaseline } from './editors/marker-form-state';
@@ -725,9 +726,9 @@ export interface HouseplanEditorHostPort {
   _sentPos: Map<string, DeviceLayout[string] | null>;
   _serverCfg: ServerConfig | null;
   _serverStorage: boolean;
-  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; moon?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
+  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; show_device_battery?: boolean; moon?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
   _terminalFrame: 0 | 1 | 2;
-  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean; } | null;
+  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; showDeviceBattery: boolean; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
@@ -8483,6 +8484,7 @@ public _openSettingsDialog = (): void => {
       sunRayOrigin: sunRayOriginOf(this.host._settings),
       radarShowLive: this.host._settings.radar?.show_live !== false, volumetricView: volumetricViewOf(this.host._settings), moon: moonDraftOf(this.host._settings),
       showRoomTooltip: showRoomTooltipOf(this.host._settings), zigbeeTopology: zigbeeTopologySettingsOf(this.host._settings), busy: false,
+      showDeviceBattery: showDeviceBatteryOf(this.host._settings),
     };
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
     rememberGeneralBaseline(this.host, this.host._settingsDialog);
@@ -9542,6 +9544,7 @@ public _updateDecorStyle(next: DecorStyle): void {
       settings.sun_ray_origin = d.sunRayOrigin;
       if (d.showRoomTooltip) delete settings.show_room_tooltip;
       else settings.show_room_tooltip = false;
+      writeDeviceBatterySetting(settings, d.showDeviceBattery);
       if (d.volumetricView) settings.volumetric_view = true;
       else delete settings.volumetric_view;
       writeMoonSetting(settings, d.moon);

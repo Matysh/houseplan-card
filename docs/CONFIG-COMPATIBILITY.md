@@ -119,6 +119,21 @@ new frontend restores the disabled behavior after upgrade. Full backup/import
 preserves the setting and the privacy-safe support projection includes only a
 validated boolean.
 
+## Device battery indicators (#792)
+
+`settings.show_device_battery` is an optional global boolean, enabled by
+default on existing and new installations. Only exact `false` hides the new
+passive battery indicators; saving enabled removes the key. This does not
+change a manually configured battery value badge, LQI or device actions.
+The backend accepts only a boolean, and the privacy-safe support projection
+includes only a validated boolean.
+
+Full backup/import preserves the setting; importing a single space leaves the
+installation's global preference untouched. Older frontends ignore it and
+older backends preserve it through the unknown-settings policy. There is no
+model/store migration and no persisted charge or per-marker source selection:
+the own-device source and its current state are resolved from HA at runtime.
+
 ## 2.5D View setting (#649)
 
 `settings.volumetric_view` is an optional global boolean for the whole

@@ -8,6 +8,21 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'settings.show_device_battery',
+    enforcedBy: 'device-battery-settings.ts + validation.py + config-schema parity; #792',
+    selector: { path: ['settings', 'show_device_battery'] },
+    storage: 'House Plan server config',
+    type: 'boolean',
+    default: 'unset (= true: device battery indicators shown)',
+    level: 'global',
+    ui: 'General settings → Display → Show device battery status',
+    runtime: 'read-only battery indicators; ordinary configured value badges are unchanged',
+    introduced: '#792',
+    status: 'current',
+    migration: 'none — saving true removes the key; false is preserved by full backup/import',
+    compatibility: 'only exact false disables; older clients ignore the optional setting',
+  },
+  {
     id: 'settings.sun_ray_origin',
     enforcedBy: 'sun.ts + validation.py + config-schema parity; #577',
     selector: { path: ['settings', 'sun_ray_origin'] },

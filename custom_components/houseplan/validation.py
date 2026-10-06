@@ -2321,6 +2321,7 @@ CONFIG_SCHEMA = vol.All(
                     vol.Optional("sun_rays"): bool,
                     vol.Optional("sun_ray_origin"): _SUN_RAY_ORIGIN,
                     vol.Optional("show_room_tooltip"): bool,
+                    vol.Optional("show_device_battery"): bool,
                     # #649: installation-wide 2.5D View; absent/false keeps Flat.
                     vol.Optional("volumetric_view"): bool,
                     # #661: the moon on the "Follow the Sun" background; absent/false = off.

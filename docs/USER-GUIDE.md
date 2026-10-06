@@ -1403,6 +1403,36 @@ The preview uses the unsaved form and live HA state, and may run a local short
 or persistent pulse sample without touching HA, the saved config or the marker
 on the plan.
 
+The separate battery indicator remains visible in both static display modes
+and with live states disabled. This does not restore LQI, pulses or other
+suppressed diagnostics.
+
+### Battery charge
+
+Battery-powered devices show a vertical battery to the right of the complete
+icon/value and badge block, without a percentage label:
+
+- **Green:** 60–100%.
+- **Amber, approximately one-third full:** from 20% up to, but not including, 60%.
+- **Red empty outline:** from 0% up to, but not including, 20%.
+- **Grey with a question mark:** a battery source exists but has no current value.
+
+An integration reporting only normal/low uses green/red. With several sources,
+the first numeric battery sensor in entity-ID order is selected, otherwise the
+first binary battery sensor. A missing value does not switch to another source.
+A marker bound directly to a battery entity uses that exact source; other
+entity markers inherit their own physical device's battery, never the battery
+of a controlled device, group member or parent router.
+
+Non-battery and virtual devices, active LED strips and the moving vacuum puck
+have no indicator. The normal vacuum dock marker follows the ordinary rules.
+The indicator does not enlarge the device's click target; Zigbee hover
+information appears above it.
+
+**General settings → Display → Show device battery charge** is on by default
+and applies installation-wide, including static space cards and the editor
+preview. Full configuration export/import preserves the setting.
+
 ### Icon changes by state
 
 With live states enabled, known pairs change automatically:

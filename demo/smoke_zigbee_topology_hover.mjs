@@ -213,7 +213,7 @@ const result = await page.evaluate(async () => {
   const devlayer = root().querySelector('.devlayer');
   const endpoints = [...devlayer.querySelectorAll('[data-hp-zigbee-topology-endpoint]')]
     .map((marker) => marker.dataset.id).sort();
-  const overlayLayer = Number.parseInt(getComputedStyle(overlay).zIndex, 10);
+  const overlayLayer = Number.parseInt(getComputedStyle(overlay.shadowRoot.querySelector('svg')).zIndex, 10);
   const unrelatedFloorLayer = Number.parseInt(getComputedStyle(unrelated, '::before').zIndex, 10);
   const unrelatedShellLayer = Number.parseInt(
     getComputedStyle(unrelated.querySelector('.device-shell')).zIndex, 10,
@@ -1059,7 +1059,7 @@ result.realPointerEndpointWins = await page.evaluate(async () => {
   return source.matches(':hover')
     && source.hasAttribute('data-hp-zigbee-topology-endpoint')
     && Number.parseInt(getComputedStyle(source).zIndex, 10)
-      > Number.parseInt(getComputedStyle(overlay).zIndex, 10);
+      > Number.parseInt(getComputedStyle(overlay.shadowRoot.querySelector('svg')).zIndex, 10);
 });
 
 await page.emulateMedia({ forcedColors: 'active' });

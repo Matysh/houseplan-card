@@ -1,6 +1,7 @@
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
+import { makeBatteryBoardFixture, prepareBatteryBoard } from './device-battery.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -41,7 +42,8 @@ const wallUnionIsolationFixture = JSON.parse(readFileSync(
 const cardVersion = '0.0.0-golden';
 const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
-const fixtureFor = (scenario) => scenario.fixture === 'large'
+const fixtureFor = (scenario) => scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
+  : scenario.fixture === 'large'
   ? makeLargeHouseFixture({ includeStairs: false })
   : makeVisualMatrixFixture({
     applianceLifecycle: !!scenario.applianceLifecycle, ledStrips: !!scenario.ledStrips,
@@ -2491,6 +2493,7 @@ export async function prepareGoldenScenario(page, scenario) {
     if (!point) throw new Error(`golden hover stair missing: ${scenario.hoverStair}`);
     await page.mouse.move(point.x, point.y);
   }
+  if (scenario.batteryBoard) result.batteryBoard = await prepareBatteryBoard(page, scenario);
   return result;
 }
 

@@ -21,6 +21,11 @@ const out = await page.evaluate(async () => {
 
   c._openSettingsDialog(); await upd();
   const d0 = JSON.parse(JSON.stringify(c._settingsDialog));
+  const batteryRow = q('#gs-device-battery')?.closest('.hpf-toggle');
+  o.batteryDefaultOnInDisplay = d0.showDeviceBattery === true
+    && q('#gs-device-battery')?.checked === true
+    && batteryRow?.closest('.hpf-card')?.dataset.card === 'display'
+    && batteryRow?.querySelector('.hpf-toggle-title')?.textContent.trim() === 'Show device battery status';
 
   // --- AC1: семь карточек по §5.1, старой разметки нет ----------------------
   o.sevenCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
@@ -112,6 +117,58 @@ const out = await page.evaluate(async () => {
   o.resetMakesDirtyWhenDefaultsDiffer = JSON.stringify(c._settingsDialog.colors) !== JSON.stringify(d0.colors)
     ? saveBtn().disabled === false : true;
   c._settingsDialog = null; await upd();
+
+  // #792 AC9: the battery opt-out uses this form's draft, cancel and shared save.
+  const beforeBattery = JSON.stringify(c._serverCfg);
+  const openBatterySettings = async () => {
+    sr().querySelector('[data-hp="settings"]').click(); await upd();
+  };
+  const saveBatterySettings = async () => {
+    saveBtn().click();
+    for (let attempt = 0; attempt < 100; attempt++) {
+      await upd();
+      if (!c._settingsDialog?.busy) return;
+    }
+    throw new Error('battery settings save did not finish');
+  };
+  await openBatterySettings();
+  q('#gs-device-battery').click(); await upd();
+  o.batteryDraftDoesNotMutateSaved = c._settingsDialog.showDeviceBattery === false
+    && saveBtn().disabled === false && JSON.stringify(c._serverCfg) === beforeBattery;
+  q('[data-hp="dialog-cancel"]').click(); await upd();
+  o.batteryCancelAsks = !!confirm() && !!dlg();
+  confirm()?.querySelector('[data-hp="dialog-confirm"]')?.click(); await upd();
+  o.batteryCancelKeepsSaved = !dlg() && JSON.stringify(c._serverCfg) === beforeBattery;
+
+  await openBatterySettings();
+  o.batteryReopenAfterCancelIsOn = q('#gs-device-battery')?.checked === true;
+  q('#gs-device-battery').click(); await upd();
+  const originalCallWS = c.hass.callWS;
+  let written;
+  c.hass = { ...c.hass, callWS: async (message) => {
+    if (message.type === 'houseplan/config/set') written = structuredClone(message);
+    return originalCallWS(message);
+  } };
+  await saveBatterySettings();
+  o.batteryFalseSavedWithRevision = !dlg() && c._serverCfg.settings.show_device_battery === false
+    && written?.config.settings.show_device_battery === false && Number.isInteger(written?.expected_rev);
+  await openBatterySettings();
+  o.batteryReopensOffAndClean = q('#gs-device-battery')?.checked === false && saveBtn().disabled === true;
+  const disabledConfig = structuredClone(c._serverCfg);
+  q('#gs-device-battery').click(); await upd();
+  c.hass = { ...c.hass, callWS: async (message) => {
+    if (message.type === 'houseplan/config/set') throw new Error('battery-save-offline');
+    return originalCallWS(message);
+  } };
+  await saveBatterySettings();
+  o.batteryFailedSaveRollsBackAndKeepsDraft = JSON.stringify(c._serverCfg) === JSON.stringify(disabledConfig)
+    && c._settingsDialog?.showDeviceBattery === true && c._settingsDialog?.busy === false;
+  c.hass = { ...c.hass, callWS: originalCallWS };
+  await saveBatterySettings();
+  o.batteryEnabledRemovesKey = !dlg() && !Object.hasOwn(c._serverCfg.settings, 'show_device_battery');
+  const expectedSettings = { ...disabledConfig.settings };
+  delete expectedSettings.show_device_battery;
+  o.batterySavePreservesSiblingSettings = JSON.stringify(c._serverCfg.settings) === JSON.stringify(expectedSettings);
   return o;
 });
 

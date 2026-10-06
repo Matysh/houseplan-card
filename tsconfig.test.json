@@ -19,7 +19,7 @@
     "src/sun.ts", "src/moon.ts", "src/moon-gate.ts", "src/moon-runtime.ts", "src/moon-art.generated.ts",
     "src/light-visibility.ts", "src/led-strip-geometry.ts", "src/led-strip-gate.ts", "src/led-strip-runtime.ts", "src/led-strip-field.ts", "src/led-strip-editor.ts", "src/led-strip-card.ts", "src/glow-scene.ts", "src/space-render.ts", "src/space-card.ts",
     "src/resize.ts", "src/resize-labels.ts", "src/resize-controller.ts", "src/wall-record-preservation.ts",
-    "src/rules.ts",
+    "src/rules.ts", "src/device-battery.ts", "src/device-battery-settings.ts", "src/device-battery-geometry.ts",
     "src/devices.ts", "src/device-inbox.ts",
     "src/virtual-light-state.ts", "src/config-store.ts", "src/config-reload-authority.ts", "src/config-write-conflict.ts", "src/summary-panel.ts", "src/summary-panel-metrics.ts", "src/summary-panel-i18n.ts", "src/summary-panel-identity.ts", "src/summary-panel-picker.ts", "src/summary-panel-runtime-loaded.ts", "src/header-menu.ts", "src/iso-materials.ts", "src/iso-first-frame.ts", "src/iso-tiles.ts", "src/iso-sun.ts",
     "src/backdrop-probe.ts", "src/zoom-scale-activity.ts",

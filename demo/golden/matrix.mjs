@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 71;
+export const GOLDEN_MATRIX_VERSION = 72;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -888,6 +888,15 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       'golden-climate': { s: 'golden-lighting', x: 0.80, y: 0.28 },
     },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  // #792: six exact designer variants (Light/Dark × D32/56/96), all four
+  // states, every badge side, expanded Text and legacy multi-metric shells.
+  // Each rendered battery must render its MDI path and paint matching ink.
+  ...['light', 'dark'].map((theme) => ({
+    id: `device-battery-board-${theme}`, fixture: 'visual', space: 'golden-battery', mode: 'view',
+    batteryBoard: 'desktop', theme, viewport: { width: 1120, height: 1120 }, ...stage,
+  })),
+  { id: 'device-battery-mobile-dark', fixture: 'visual', space: 'golden-battery', mode: 'view',
+    batteryBoard: 'mobile', theme: 'dark', viewport: { width: 390, height: 844 }, ...stage },
   { id: 'device-value-face-cover-source-dark', fixture: 'visual',
     space: 'golden-lighting', mode: 'view', glowEnabled: false, sunRays: false,
     showNames: false,

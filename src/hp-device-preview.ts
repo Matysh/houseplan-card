@@ -1,7 +1,12 @@
 /** Live, read-only device display preview used by the marker editor. */
 import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { cardStyles } from './styles';
-import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
+import {
+  deviceFaceStyle, deviceTextScale, deviceThemeClass, legacySupplementalMetrics,
+  renderDeviceFace,
+} from './device-face';
+import { withDeviceBatteryBounds } from './device-battery-geometry';
+import { DEVICE_PREVIEW_BASE_PX } from './device-marker-geometry';
 import {
   type PresentationReason,
   type ResolvedDevicePresentation,
@@ -220,6 +225,54 @@ class HpDevicePreview extends LitElement {
     if (shown.lqiText != null) {
       const lqiBottom = shown.scale * (shown.valueBadge?.position === 'bottom' ? 1.55 : 0.95);
       bottom = Math.max(bottom, lqiBottom);
+    }
+    if (shown.battery) {
+      // Reserve a conservative full capsule, including uncapped long Text and
+      // the old second metric. CSS does the exact placement; this is only the
+      // preview camera's safe extent, never marker layout or a DOM measurement.
+      const core = DEVICE_PREVIEW_BASE_PX * shown.scale;
+      const textWidth = (text: string, fullText: string = text): number =>
+        [...text].length * deviceTextScale(fullText) * core;
+      const coreWidth = shown.valueText != null
+        ? Math.max(core, textWidth(shown.valueText, shown.valueFullText || shown.valueText) + core * .32)
+        : core;
+      const metricWidths = [
+        ...(shown.valueBadge
+          ? [Math.max(core * .7875, textWidth(shown.valueBadge.text,
+              shown.valueBadge.fullText || shown.valueBadge.text) + core * .28)] : []),
+        ...legacySupplementalMetrics(shown).map((metric) =>
+          Math.max(core * .7875, textWidth(metric.text + metric.suffix) + core * .28)),
+      ];
+      const vertical = shown.valueBadge?.position === 'top' || shown.valueBadge?.position === 'bottom';
+      const sectionsWidth = metricWidths.length
+        ? vertical ? metricWidths.reduce((sum, width) => sum + width, 0)
+            + (metricWidths.length - 1) * core * .08
+          : Math.max(...metricWidths)
+        : 0;
+      const sectionsHeight = metricWidths.length
+        ? vertical ? core * .7875
+          : metricWidths.length * core * .7875 + (metricWidths.length - 1) * core * .08
+        : 0;
+      const shellWidth = vertical ? Math.max(coreWidth, sectionsWidth)
+        : coreWidth + (metricWidths.length ? core * .1 + sectionsWidth : 0);
+      const shellHeight = vertical ? core + (metricWidths.length ? core * .1 + sectionsHeight : 0)
+        : Math.max(core, sectionsHeight);
+      const shellLeft = vertical ? (core - shellWidth) / 2
+        : shown.valueBadge?.position === 'left' ? core - shellWidth : 0;
+      const shellTop = shown.valueBadge?.position === 'top' ? core - shellHeight
+        : shown.valueBadge?.position === 'bottom' ? 0 : (core - shellHeight) / 2;
+      const inset = core * .134375;
+      const bounds = withDeviceBatteryBounds({
+        left: shellLeft - core / 2 - inset,
+        right: shellLeft + shellWidth - core / 2 + inset,
+        top: shellTop - core / 2 - inset,
+        bottom: shellTop + shellHeight - core / 2 + inset,
+      }, core * 1.26875);
+      // Existing camera coordinates use 54px compatibility units.
+      left = Math.min(left, bounds.left / 54);
+      right = Math.max(right, bounds.right / 54);
+      top = Math.min(top, bounds.top / 54);
+      bottom = Math.max(bottom, bounds.bottom / 54);
     }
     const fit = Math.min(1, 2.35 / Math.max(1, right - left), 2.35 / Math.max(1, bottom - top));
     const fitPct = Math.round(fit * 100);

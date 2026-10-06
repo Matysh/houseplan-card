@@ -603,6 +603,20 @@ def test_issue_577_full_export_preserves_sun_ray_origin(tmp_path: Path) -> None:
     assert parsed["payload"]["config"]["settings"]["sun_ray_origin"] == "outer"
 
 
+@pytest.mark.parametrize("value", [True, False])
+def test_issue_792_full_export_and_import_preserve_device_battery(tmp_path: Path, value: bool) -> None:
+    """The optional installation-wide preference survives a full backup."""
+    config = _config()
+    config["settings"]["show_device_battery"] = value
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": config}, {"layout": {}},
+        kind="full", space_id=None, card_version="review", config_root=tmp_path,
+    )
+    assert document["payload"]["config"]["settings"]["show_device_battery"] is value
+    parsed = parse_document(json.dumps(document).encode())
+    assert parsed["payload"]["config"]["settings"]["show_device_battery"] is value
+
+
 def test_issue_661_full_export_and_import_preserve_the_moon(tmp_path: Path) -> None:
     """#661 AC9: `settings.moon` travels with a full backup both ways."""
     runtime = SimpleNamespace(instance_id="instance-a")
@@ -629,6 +643,7 @@ def test_493_import_authority_preserves_or_replaces_global_namespaces(
     source = _config()
     source["settings"].update({
         "source_known": True,
+        "show_device_battery": True,
         "source_future": {"sentinel": "source"},
     })
     source["settings"].pop("summary_panel", None)
@@ -644,6 +659,7 @@ def test_493_import_authority_preserves_or_replaces_global_namespaces(
             "version": 1, "title": "Target", "show_on_mobile": True, "blocks": [],
         },
         "target_known": False,
+        "show_device_battery": False,
         "target_future": {"sentinel": "target"},
     })
     runtime = SimpleNamespace(instance_id="target-instance", import_previews={})
@@ -659,6 +675,7 @@ def test_493_import_authority_preserves_or_replaces_global_namespaces(
     if kind == "full":
         assert "summary_panel" not in imported["settings"]
         assert imported["settings"]["source_known"] is True
+        assert imported["settings"]["show_device_battery"] is True
         assert imported["settings"]["source_future"] == {"sentinel": "source"}
         assert "target_future" not in imported["settings"]
     else:

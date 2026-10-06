@@ -1,5 +1,25 @@
 # Development and deployment
 
+## Device battery icons (#792)
+
+Battery indicators reuse Home Assistant's `ha-icon` and four standard MDI
+symbols: `battery`, `battery-30`, `battery-outline`, `battery-unknown`.
+The owner approved the differences from the designer's export on 2026-10-06:
+30% rather than an exact third, and an internal question mark. The designer's
+colours, 19/33/56px frames and 2/4/7px gaps remain the visual contract.
+No separate runtime SVG files, icon dependency or asset-serving route is added.
+Scope size rules to `.device-battery-icon`; the main device glyph's `ha-icon`
+size must not leak into this independent frame. Demo fixtures use the same MDI
+paths so pixel tests do not substitute an emoji or an arbitrary test symbol.
+
+The owner also approved a size-budget recalibration. Fresh source builds move
+initial View gzip from 301037 to 302534 bytes (+1497); the existing rolling
+ceiling 301040 plus its unchanged 2000-byte band already admits this result.
+The absolute wall moves to 320000 bytes, restoring 6.3% reserve over the measured
+pre-feature reference. Raw dist moves from 2705833 to 2712880 bytes; only that
+size baseline is recalibrated, not coupling or runtime-performance limits.
+Optional eager-code/style extraction is tracked separately in #805, not done here.
+
 ## Room-face lineage regression (#804)
 
 `node demo/smoke_wall_face_lineage.mjs` exercises creation from a partial

@@ -180,6 +180,7 @@
     }
   ],
   "settings": {
+    "show_device_battery": false,
     "decor_default_style": {
       "color": "#8b0000",
       "width_cm": 5

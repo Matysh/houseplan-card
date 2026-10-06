@@ -156,6 +156,9 @@ def _global_settings(value: object) -> dict[str, Any]:
     show_room_tooltip = value.get("show_room_tooltip")
     if isinstance(show_room_tooltip, bool):
         out["show_room_tooltip"] = show_room_tooltip
+    show_device_battery = value.get("show_device_battery")
+    if isinstance(show_device_battery, bool):
+        out["show_device_battery"] = show_device_battery
     volumetric_view = value.get("volumetric_view")
     if isinstance(volumetric_view, bool):
         out["volumetric_view"] = volumetric_view

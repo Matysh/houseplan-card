@@ -60,6 +60,8 @@ import {
 } from './space-geometry';
 import { resolveZeroWalls } from './zero-walls';
 import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
+import { createDeviceBatteryContext } from './device-battery';
+import { showDeviceBatteryOf } from './device-battery-settings';
 import { geometryOpenings } from './plan-geometry-preflight';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { projectDecorImage } from './decor-assets';
@@ -613,11 +615,19 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   }
   const planLightSources = resolvedLightSources(planHass, devs, null, o.virtualLights);
   const showLqi = disp.showLqi ?? (o.showSignal !== false);
-  const presentationOf = (d: DevItem) => o.presentations?.get(presentationSnapshotKey(d.id, showLqi))
-      || resolveDevicePresentation(planHass, d, {
+  const showBattery = showDeviceBatteryOf(o.cfg.settings);
+  let batteryContext: ReturnType<typeof createDeviceBatteryContext> | undefined;
+  const presentationOf = (d: DevItem) => {
+    const captured = o.presentations?.get(presentationSnapshotKey(d.id, showLqi));
+    if (captured) return captured;
+    const showDeviceBattery = showBattery && !leds.has(d.id);
+    return resolveDevicePresentation(planHass, d, {
       liveStates: o.liveStates !== false,
       showTemperature: o.showTemperature !== false,
       showSignal: showLqi,
+      showBattery: showDeviceBattery,
+      batteryContext: showDeviceBattery
+        ? batteryContext ??= createDeviceBatteryContext(planHass, registryHass) : undefined,
       activityRuntime: o.activityRuntime?.get(d.id),
       sourceDetails: false,
       lightDevices: devs,
@@ -625,6 +635,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       registryHass,
       reducedMotion: o.reducedMotion,
     });
+  };
   // #780 r1 M1: a strip keeps its value badge at the half-length anchor, passive.
   const ledBadges = leds.size ? devs.filter((d) => leds.has(d.id)).map((d) => {
     const face = renderDeviceShadowFace(presentationOf(d));

@@ -227,6 +227,43 @@ export const devicesStyles = css`
       left: 0;
       top: 0;
     }
+    /* #792: HA supplies the MDI glyph; the designer frame stays out of flow
+       and never becomes a hit target or changes the core/badge geometry.
+       These continuous segments pass through D32/56/96 -> 19/33/56, gap2/4/7. */
+    .device-battery {
+      --battery-frame: min(calc(var(--device-shell-size) * .59375),
+        calc(var(--device-shell-size) * .583333333333 + .333333333333px),
+        calc(var(--device-shell-size) * .575 + .8px));
+      --battery-gap: max(calc(var(--device-shell-size) * .0625),
+        min(calc(var(--device-shell-size) * .083333333333 - .666666666667px),
+          calc(var(--device-shell-size) * .075 - .2px)));
+      position: absolute;
+      left: calc(100% + var(--device-shell-inset) + var(--battery-gap));
+      top: 50%;
+      transform: translateY(-50%);
+      width: var(--battery-frame);
+      height: var(--battery-frame);
+      overflow: visible;
+      pointer-events: none;
+    }
+    .device-battery[data-state="normal"] { color: #1DC21D; }
+    .device-battery[data-state="warning"] { color: #F0A00C; }
+    .device-battery[data-state="low"] { color: #F0410C; }
+    .device-battery[data-state="unknown"] { color: #707781; }
+    .device-battery > ha-icon.device-battery-icon {
+      /* Override the main device glyph's .55 sizing, not its geometry. */
+      --mdc-icon-size: var(--battery-frame);
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      overflow: visible;
+      pointer-events: none;
+    }
     .device-shell:not(.with-values):not(.text-shell) .device-shell-frame {
       border-radius: 50%;
     }

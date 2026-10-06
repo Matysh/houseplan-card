@@ -1,5 +1,8 @@
 import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DevItem } from './types';
+import {
+  createDeviceBatteryContext, deviceBatteryEntityIds, type DeviceBatteryContext,
+} from './device-battery';
 
 /** Immutable render-only projection of one HA tick. */
 export interface RenderDeviceSnapshot {
@@ -92,6 +95,9 @@ export function createRenderDeviceSnapshot(options: {
   entityIds?: Iterable<string>;
   deviceIds?: Iterable<string>;
   areaIds?: Iterable<string>;
+  /** False skips battery-only work; ordinary badge/room dependencies remain. */
+  showBattery?: boolean;
+  batteryContext?: DeviceBatteryContext;
   capturedAt?: number;
 }): RenderDeviceSnapshot {
   // Copy only the registry/state rows that can contribute to this plan. This
@@ -99,7 +105,14 @@ export function createRenderDeviceSnapshot(options: {
   const entityIds = new Set(options.entityIds || []);
   const deviceIds = new Set(options.deviceIds || []);
   const areaIds = new Set(options.areaIds || []);
+  const batteryContext = options.showBattery !== false
+    ? options.batteryContext || createDeviceBatteryContext(options.hass) : undefined;
   for (const device of options.devices) {
+    // Entity-bound markers need their physical siblings even if the registry
+    // lists those siblings before the bound entity or outside a plan area.
+    if (batteryContext) {
+      for (const entityId of deviceBatteryEntityIds(device, batteryContext)) entityIds.add(entityId);
+    }
     for (const entityId of device.entities || []) entityIds.add(entityId);
     if (device.primary) entityIds.add(device.primary);
     for (const entityId of device.controls || []) entityIds.add(entityId);

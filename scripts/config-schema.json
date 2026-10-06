@@ -432,6 +432,10 @@
       "allowExtra": true,
       "required": false
     },
+    "config.settings.show_device_battery": {
+      "required": false,
+      "type": "bool"
+    },
     "config.settings.show_room_tooltip": {
       "required": false,
       "type": "bool"

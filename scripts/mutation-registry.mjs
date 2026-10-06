@@ -73,6 +73,49 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'battery-icon-collapses-glyph',
+    guard: 'node demo/smoke_device_battery.mjs',
+    because: '#792 AC5: the HA custom element can retain its correct outer frame while its '
+      + 'shadow SVG collapses; actual painted pixels must witness the battery glyph.',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '      --mdc-icon-size: var(--battery-frame);',
+      replace: '      --mdc-icon-size: 0px;',
+    }],
+  },
+  {
+    id: 'battery-passive-frame-intercepts-pointer',
+    guard: 'node demo/smoke_device_battery.mjs',
+    because: '#792 AC7: browser hit testing and trusted pointer/touch sequences prove that the '
+      + 'new out-of-flow frame does not enlarge a marker activation area or block plan panning.',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '      height: var(--battery-frame);\n      overflow: visible;\n      pointer-events: none;',
+      replace: '      height: var(--battery-frame);\n      overflow: visible;\n      pointer-events: auto;',
+    }],
+  },
+  {
+    id: 'battery-zigbee-captions-under-endpoint',
+    guard: 'node demo/smoke_device_battery_zigbee.mjs',
+    because: '#792 AC7: only rasterised overlap proves that a Zigbee caption covers the battery '
+      + 'inside a raised endpoint stacking context without putting routes above its core.',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '    .remote, .parent-bubble, .route-status {\n      z-index: 9;',
+      replace: '    .remote, .parent-bubble, .route-status {\n      z-index: 7;',
+    }],
+  },
+  {
+    id: 'battery-setting-backend-accepts-string',
+    guard: 'node scripts/backend-test-guard.mjs battery tests_backend/test_settings_device_battery.py',
+    because: '#792 AC9: a display preference must remain a strict boolean across saves and imports.',
+    patches: [{
+      file: 'custom_components/houseplan/validation.py',
+      find: '                    vol.Optional("show_device_battery"): bool,',
+      replace: '                    vol.Optional("show_device_battery"): object,',
+    }],
+  },
+  {
     id: 'wall-face-lineage-skips-post-reconcile-settlement',
     guard: 'node demo/smoke_wall_face_lineage.mjs',
     because: '#804 AC1/AC3/AC5: only the production room-dialog save proves that residual '
@@ -9546,8 +9589,8 @@ const MUTANT_DEFINITIONS = [
       + 'remaining inside the existing plan camera context (#464 AC1)',
     patches: [{
       file: 'src/hp-zigbee-topology-overlay.ts',
-      find: ':host { position: absolute; inset: 0; z-index: 7; display: block; pointer-events: none; }',
-      replace: ':host { position: absolute; inset: 0; z-index: 1; display: block; pointer-events: none; }',
+      find: 'svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 7; }',
+      replace: 'svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; }',
     }],
   },
   {

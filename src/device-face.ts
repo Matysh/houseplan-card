@@ -5,6 +5,13 @@ import type { ResolvedValueBadge } from './device-value-badge';
 import { safeRenderColor } from './color';
 import { valueBadgeTitle } from './device-value-badge';
 
+const DEVICE_BATTERY_ICONS = {
+  normal: 'mdi:battery',
+  warning: 'mdi:battery-30',
+  low: 'mdi:battery-outline',
+  unknown: 'mdi:battery-unknown',
+} as const;
+
 export interface DeviceFaceOptions {
   surface: 'interactive-plan' | 'preview' | 'static-card';
   newDevice?: boolean;
@@ -136,6 +143,11 @@ export function renderDeviceFace(
           title=${metric.text + metric.suffix}
           style=${`--value-font-scale:${deviceTextScale(metric.text + metric.suffix)}`}
         >${metric.text}${metric.suffix}</span>`)}
+      </span>` : nothing}
+      ${presentation.battery ? html`<span class="device-battery"
+        data-state=${presentation.battery.state} aria-hidden="true">
+        <ha-icon class="device-battery-icon"
+          icon=${DEVICE_BATTERY_ICONS[presentation.battery.state]}></ha-icon>
       </span>` : nothing}
     </span>
     ${presentation.lqiText != null

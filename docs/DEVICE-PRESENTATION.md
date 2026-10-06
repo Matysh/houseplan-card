@@ -17,6 +17,8 @@ cover → light sources → device role, шторы и медиаплееры) �
 - `device-presentation-policy.ts` — единственный владелец приоритета lifecycle,
   availability, static/live/value и диагностических gates.
 - `device-pulse.ts` — единственный владелец эффекта activity.
+- `device-battery.ts` — независимая диагностика собственного физического
+  устройства; не меняет функциональный roster и граф управляемых целей.
 - `device-face.ts` только рисует готовую проекцию.
 - View, static card и preview получают один `ResolvedDevicePresentation`.
 - Черновик диалога маркера проецируется `deviceFromMarkerDraft()` через
@@ -26,6 +28,37 @@ cover → light sources → device role, шторы и медиаплееры) �
 
 `decisionIds` — внутренний bounded trace. Он не показывается человеку, не
 содержит entity IDs и не сохраняется в конфигурацию.
+
+## Батарея (#792)
+
+`ResolvedDevicePresentation.battery` передаётся всем поверхностям вместе с
+остальными фактами того же HA-кадра. Источник — собственный `sensor` класса
+`battery`, затем `binary_sensor`, в стабильном порядке entity ID; явно привязанная
+батарейная сущность остаётся точным источником. Нет заимствования из `controls`,
+групп, `via_device` или совпадений имён. Отключённая/недоступная выбранная
+сущность даёт `unknown`, а не подменяется следующей.
+
+Пороги: `[60,100]` normal, `[20,60)` warning, `[0,20)` low; некорректное значение
+unknown. Двоичный `on` означает low, `off` normal. Неизвестно, батарейное ли
+устройство, — `null`, не вопрос. Индекс владельцев кешируется по identity полного
+реестра, значения читаются из активных HA rows. Snapshot отдельно включает
+собственных sensor/binary siblings и у маркера сущности: обновление заряда не
+ждёт изменения основного датчика или пересборки roster.
+
+`settings.show_device_battery` отсутствует — включено, exact false — выключено.
+Батарея намеренно независима от static/live policy (`static_icon`,
+`value_static_icon`, `live_states:false`); прочие diagnostic gates не меняются.
+Lifecycle hidden/disabled/orphaned и виртуальные маркеры не оживляют индикатор;
+user-hidden design preview сохраняет реальный дизайн. LED-представление не
+рисует батарею, сохранённая неактивная LED-форма не влияет на обычный маркер.
+Значок располагается вне capsule, не расширяет hit area, а текст Zigbee-сети
+остаётся выше него. По решению владельца от 2026-10-06 используются штатные
+`ha-icon`: `mdi:battery`, `mdi:battery-30`, `mdi:battery-outline`,
+`mdi:battery-unknown`; отличие заполнения жёлтой и внутренний `?` разрешены.
+Цвета, размеры фрейма и отступы берутся из макета, отдельные SVG не поставляются.
+
+Свидетели: `test/device-battery.test.mjs`, `test/device-presentation.test.mjs`,
+`test/render-device-snapshot.test.mjs`; browser/golden — матрица батарей #792.
 
 ## Lifecycle и видимость
 

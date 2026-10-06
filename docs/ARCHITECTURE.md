@@ -226,6 +226,17 @@ overlapping 44 px targets get one screen-space owner (`device-hit-owner.ts`),
 latched for the whole pointer sequence. Rules: [`DEVICE-PRESENTATION.md`](DEVICE-PRESENTATION.md);
 stored fields: [`CONFIG-COMPATIBILITY.md`](CONFIG-COMPATIBILITY.md).
 
+`device-battery.ts` adds an independent own-device diagnostic to the same frozen
+presentation. An ownership index is cached against the full HA entity registry;
+values come only from active state rows. Entity-bound markers explicitly capture
+their physical sensor siblings in the render snapshot, so battery-only ticks
+invalidate the correct frame without changing the functional roster or actions.
+The default-on shared `settings.show_device_battery` switch does not depend on
+face static/live policy; active LED representations omit the indicator. The
+passive out-of-flow frame uses one built-in HA MDI icon at the three designer
+control sizes, without separate artwork delivery. Zigbee routes and captions have separate stacking levels: endpoint cores
+remain above routes, captions remain above their batteries.
+
 Attachments are staged in `up_*`, promoted into `<config>/houseplan/files/<id>/`
 on Save and served by signed `/api/houseplan/content/files/…` URLs (Integration
 WS API). Custom Background images use the content-addressed

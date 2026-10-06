@@ -24,6 +24,10 @@ import { resolveToggleIntent, toggleCoverEntity } from './device-toggle';
 import type { DevItem } from './types';
 import { safeStoredColor } from './color';
 import {
+  createDeviceBatteryContext, resolveDeviceBattery,
+  type DeviceBatteryContext, type ResolvedDeviceBattery,
+} from './device-battery';
+import {
   resolveDeviceValueBadge, resolveValueSource, valueBadgeSourceKey,
   type ResolvedValueBadge,
 } from './device-value-badge';
@@ -134,6 +138,9 @@ export interface ResolvePresentationOptions {
   liveStates: boolean;
   showTemperature: boolean;
   showSignal: boolean;
+  /** Independent diagnostic: static face modes do not suppress battery. */
+  showBattery?: boolean;
+  batteryContext?: DeviceBatteryContext;
   /** User-hidden markers show their real design inside the editor preview. */
   designPreview?: boolean;
   activityRuntime?: PresentationActivityRuntime | null;
@@ -175,6 +182,7 @@ export interface ResolvedDevicePresentation {
   tempText: string | null;
   humText: string | null;
   valueBadge: ResolvedValueBadge | null;
+  battery: ResolvedDeviceBattery | null;
   lqiText: string | null;
   lqiColor: string | null;
   lqiBand: DeviceLqiBand | null;
@@ -748,6 +756,9 @@ export function resolveDevicePresentation(
     vacuumLiveRequested: d.marker?.vacuum?.live === true,
   });
   const { effectiveHidden, visual } = policy;
+  const battery = options.showBattery !== false && !effectiveHidden
+    ? resolveDeviceBattery(d, options.batteryContext
+      || createDeviceBatteryContext(hass, options.registryHass || hass)) : null;
 
   const activity = display === 'icon_ripple' && !effectiveHidden
     && options.liveStates && visual.status !== 'alarm' ? visual.activity : 'none';
@@ -843,6 +854,7 @@ export function resolveDevicePresentation(
       ...sources.decisionIds,
       ...policy.decisionIds,
       ...(valueBadge ? ['diagnostics.value_badge'] : []),
+      ...(battery ? [`diagnostics.battery_${battery.state}`] : []),
       ...(lqi == null ? [] : [`diagnostics.lqi_${markerLqiBand(lqi)}`]),
       `pulse.${pulse.kind}_${pulse.reason}`,
     ],
@@ -860,6 +872,7 @@ export function resolveDevicePresentation(
     tempText: temp == null ? null : String(temp),
     humText: hum == null ? null : String(hum),
     valueBadge,
+    battery,
     lqiText: lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi'
       ? null : String(lqi),
     lqiColor: lqi == null ? null : markerLqiColor(lqi),

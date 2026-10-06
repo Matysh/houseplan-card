@@ -16,9 +16,11 @@ import { LANGUAGE_RUNTIME } from './i18n/registry';
 import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 import { ContentSigner } from './signing';
 import { normalizeDeviceDisplay, openingEntityReferences, referencedContentUrls } from './logic';
-import { acquireHaRegistries, activeRegistryHass, haRegistrySnapshot } from './ha-binding-status';
+import { acquireHaRegistries, activeRegistryHass, fullRegistryHass, haRegistrySnapshot } from './ha-binding-status';
+import { createDeviceBatteryContext } from './device-battery';
+import { showDeviceBatteryOf } from './device-battery-settings';
 import { resolvedLightSources } from './devices';
-import { ledRelease } from './led-strip-gate';
+import { ledRelease, ledStripsByMarker } from './led-strip-gate';
 import {
   activitySourceSignature, resolveDevicePresentation, resolvePresentationSources,
 } from './device-presentation';
@@ -496,6 +498,9 @@ class HouseplanSpaceCard extends LitElement {
         && this._capturedSnapshotActivity === activity
         && this._capturedSnapshotVirtual === virtualFingerprint) return;
     const planHass = activeRegistryHass(this.hass, haRegistrySnapshot(this.hass));
+    const registryHass = fullRegistryHass(this.hass, haRegistrySnapshot(this.hass));
+    const showBattery = showDeviceBatteryOf(this._snap?.config?.settings);
+    const batteryContext = showBattery ? createDeviceBatteryContext(planHass, registryHass) : undefined;
     const presentations = new Map<string, ReturnType<typeof resolveDevicePresentation>>();
     const entityIds = new Set<string>(['sun.sun']);
     const deviceIds = new Set<string>();
@@ -510,6 +515,7 @@ class HouseplanSpaceCard extends LitElement {
     };
     const selectedSpace = spaceModels(this._snap?.config || null)
       .find((space) => space.id === this._config?.space);
+    const leds = showBattery ? ledStripsByMarker(selectedSpace) : new Map();
     for (const room of selectedSpace?.rooms || []) {
       if (room.area) areaIds.add(room.area);
       addSource(room.settings?.temp_source);
@@ -529,11 +535,13 @@ class HouseplanSpaceCard extends LitElement {
             liveStates: this._config?.live_states !== false,
             showTemperature: this._config?.show_temperature !== false,
             showSignal: showLqi,
+            showBattery: showBattery && !leds.has(device.id),
+            batteryContext,
             activityRuntime: this._activityRuntime.get(device.id),
             sourceDetails: false,
             lightDevices: this._devices,
             lightSources: planLightSources,
-            registryHass: this.hass,
+            registryHass,
             reducedMotion: this._reducedMotion,
           },
         ));
@@ -541,7 +549,7 @@ class HouseplanSpaceCard extends LitElement {
     }
     const snapshot = createRenderDeviceSnapshot({
       sourceSequence: this._hassSequence, hass: planHass,
-      devices: this._devices, presentations, entityIds, deviceIds, areaIds,
+      devices: this._devices, presentations, entityIds, deviceIds, areaIds, showBattery, batteryContext,
     });
     this._capturedSnapshotSequence = this._hassSequence;
     this._capturedSnapshotDevices = this._devices;

@@ -152,15 +152,15 @@ const goldenFixture = () => {
   mkdirSync(resolve(directory, 'demo/golden'), { recursive: true });
   writeFileSync(resolve(directory, 'src/example.ts'), 'export const value = 1;\n', 'utf8');
   writeFileSync(resolve(directory, 'demo/fixtures/plan.mjs'), 'export const fixture = 1;\n', 'utf8');
-  for (const name of ['matrix', 'harness', 'run', 'accept', 'policy']) {
+  for (const name of ['matrix', 'harness', 'run', 'device-battery', 'accept', 'policy']) {
     writeFileSync(resolve(directory, `demo/golden/${name}.mjs`),
-      `export const ${name} = 1;\n`, 'utf8');
+      `export const ${name.replaceAll('-', '_')} = 1;\n`, 'utf8');
   }
   return directory;
 };
 
 const editGolden = (directory, name, value) => writeFileSync(
-  resolve(directory, `demo/golden/${name}.mjs`), `export const ${name} = ${value};\n`, 'utf8',
+  resolve(directory, `demo/golden/${name}.mjs`), `export const ${name.replaceAll('-', '_')} = ${value};\n`, 'utf8',
 );
 
 test('правка инструмента приёмки не требует ни пересборки, ни пересъёмки (#344)', () => {
@@ -183,7 +183,7 @@ test('файлы, определяющие кадр, из корпуса не в
   try {
     // Обратная сторона важнее прямой: исключение, расползшееся на matrix,
     // harness, run или фикстуры, сделает несвежий бандл неотличимым от свежего.
-    for (const name of ['matrix', 'harness', 'run']) {
+    for (const name of ['matrix', 'harness', 'run', 'device-battery']) {
       const before = { bundle: sourceFingerprint(directory), visual: visualFingerprint(directory) };
       editGolden(directory, name, 2);
       assert.notEqual(sourceFingerprint(directory), before.bundle, `${name}.mjs влияет на кадр`);
@@ -201,10 +201,13 @@ test('состав исключения объявлен списком, а не
   assert.deepEqual(postCaptureInputs(), ['demo/golden/accept.mjs', 'demo/golden/policy.mjs']);
 });
 
-test('в корпусе настоящего репозитория из demo/golden ровно три файла (#344)', () => {
+test('в корпусе настоящего репозитория из demo/golden ровно четыре файла (#344, #792)', () => {
   const corpus = fingerprintCorpus(fileURLToPath(new URL('..', import.meta.url)));
   const golden = corpus.filter((file) => file.startsWith('demo/golden/')).sort();
-  assert.deepEqual(golden, ['demo/golden/harness.mjs', 'demo/golden/matrix.mjs', 'demo/golden/run.mjs']);
+  assert.deepEqual(golden, [
+    'demo/golden/device-battery.mjs', 'demo/golden/harness.mjs',
+    'demo/golden/matrix.mjs', 'demo/golden/run.mjs',
+  ]);
   assert.ok(corpus.includes('scripts/source-fingerprint.mjs'), 'сам отпечаток остаётся входом сборки');
   assert.ok(corpus.some((file) => file.startsWith('src/')), 'корпус без src был бы пуст по смыслу');
 });

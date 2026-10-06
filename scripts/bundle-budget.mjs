@@ -41,7 +41,14 @@ import { NAMESPACE_LOCALE_CHUNKS } from './bundle-manifest.mjs';
 // gzip (+2 587 Б); presentation/safety при этом вынесены из ядра карточки в
 // отдельный adapter. Новый бюджет — целая часть прежней верхней границы 10%
 // над фактом #367 и оставляет 976 Б запаса; следующий рост обязан решать #367.
-export const INITIAL_VIEW_GZIP_BUDGET = 301_066;
+// 2026-10-06, #792: owner-approved recalibration against the measured pre-#792
+// source build: 301037 B gzip. A 320000 B absolute wall restores 18963 B (6.3%)
+// of reserve, inside the existing 5–10% rule. The accepted implementation uses
+// HA's four MDI icons; no designer SVG delivery remains in the runtime graph.
+// This does not claim a loading-speed improvement or replace the separately
+// measured rolling ceiling. All ratchets and the low-headroom warning stay on.
+export const INITIAL_VIEW_RECALIBRATION_GZIP_BYTES = 301_037;
+export const INITIAL_VIEW_GZIP_BUDGET = 320_000;
 export const INITIAL_PANEL_ONLY_GZIP_BUDGET = 8 * 1024;
 
 /**

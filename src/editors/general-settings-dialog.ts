@@ -96,6 +96,11 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             checked: d.showRoomTooltip, onChange: (v) => set({ showRoomTooltip: v }),
           })}
           ${toggleRow({
+            id: 'gs-device-battery', icon: 'mdi:battery-outline',
+            title: st('gs.show_device_battery'), caption: st('gs.show_device_battery_hint'),
+            checked: d.showDeviceBattery, onChange: (v) => set({ showDeviceBattery: v }),
+          })}
+          ${toggleRow({
             id: 'gs-radar-live', icon: 'mdi:radar',
             title: st('gs.radar_show_live'), caption: st('gs.radar_show_live_hint'),
             checked: d.radarShowLive, onChange: (v) => set({ radarShowLive: v }),
@@ -277,7 +282,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: host._imperial ? 9.8 : 3,
           glowRadiusInput: String(host._imperial ? 9.8 : 3),
           bgColor: null, northDeg: null, northDegInput: '', bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner',
-          showRoomTooltip: true, radarShowLive: true, volumetricView: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
+          showRoomTooltip: true, showDeviceBattery: true, radarShowLive: true, volumetricView: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
         })}>${t('gs.reset')}</button>
       </div>
       ${footerStatus(problems.length

@@ -56,6 +56,35 @@ const options = {
   showSignal: true,
 };
 
+test('#792 battery is independent of static face and live-state policies', () => {
+  const ha = hass({
+    'switch.relay': state('switch.relay', 'on'),
+    'sensor.charge': state('sensor.charge', '59', { device_class: 'battery' }),
+  }, {
+    'switch.relay': { device_id: 'd1' },
+    'sensor.charge': { device_id: 'd1', device_class: 'battery' },
+  });
+  for (const display of ['icon', 'static_icon', 'value_static_icon']) {
+    for (const liveStates of [false, true]) {
+      const d = device({ marker: { id: 'd1', binding: 'device:d1', display } });
+      const p = resolveDevicePresentation(ha, d, { ...options, liveStates, sourceDetails: false });
+      assert.deepEqual(p.battery, { state: 'warning', sourceEntityId: 'sensor.charge' });
+      if (display.includes('static')) {
+        assert.equal(p.lqiText, null);
+        assert.equal(p.pulse.kind, 'none');
+        assert.equal(p.lightColor, null);
+      }
+      assert.equal(resolveDevicePresentation(ha, d, { ...options, showBattery: false }).battery, null);
+    }
+  }
+  const hidden = device({ userHidden: true, marker: { id: 'd1', binding: 'device:d1', hidden: true } });
+  assert.equal(resolveDevicePresentation(ha, hidden, options).battery, null);
+  assert.equal(resolveDevicePresentation(ha, hidden, { ...options, designPreview: true }).battery?.state, 'warning');
+  for (const kind of ['ha_disabled', 'orphaned']) {
+    assert.equal(resolveDevicePresentation(ha, device({ bindingStatus: { kind } }), options).battery, null);
+  }
+});
+
 test('#565 accessible device label removes only whole repeated segments', () => {
   assert.equal(deviceAccessibleLabel([
     'Sink leak sensor', ' Alarm ', 'alarm', '', null, false,

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   deviceFaceStyle, deviceTextScale, deviceThemeClass,
   legacySupplementalMetrics, lqiClassName, renderDeviceFace,
-  valueBadgeClassName,
+  valueBadgeClassName, renderDeviceShadowFace,
 } from '../test-build/device-face.js';
 
 const face = (rippleColor) => ({
@@ -106,4 +106,34 @@ test('Text and Double use one shared shell and deterministic full-text fitting',
   assert.match(markup, /device-core/);
   assert.match(markup, /device-sections/);
   assert.match(markup, /band-/);
+});
+
+test('#792 shared face renders one passive HA battery icon for every state, never a floor shadow', () => {
+  const flatten = (value) => value?.strings
+    ? value.strings.map((part, index) => part + flatten(value.values[index])).join('')
+    : Array.isArray(value) ? value.map(flatten).join('')
+      : typeof value === 'symbol' ? '' : String(value ?? '');
+  const presentation = {
+    ...face('#ff9800'), icon: 'mdi:thermometer', valueBadge: null,
+    valueText: null, lqiText: null, tempText: null, humText: null,
+    battery: { state: 'warning', sourceEntityId: 'sensor.own_battery' },
+  };
+  for (const [state, icon] of Object.entries({
+    normal: 'mdi:battery', warning: 'mdi:battery-30',
+    low: 'mdi:battery-outline', unknown: 'mdi:battery-unknown',
+  })) {
+    for (const surface of ['interactive-plan', 'preview', 'static-card']) {
+      const markup = flatten(renderDeviceFace({ ...presentation,
+        battery: { ...presentation.battery, state },
+      }, { surface }));
+      assert.equal((markup.match(/class="device-battery"/g) || []).length, 1);
+      assert.equal((markup.match(/<ha-icon class="device-battery-icon"/g) || []).length, 1);
+      assert.match(markup, new RegExp(`class="device-battery-icon"\\s+icon=${icon}>`),
+        `${state} binds exactly ${icon} to the battery icon`);
+      assert.match(markup, new RegExp(`data-state=${state} aria-hidden="true"`));
+      assert.doesNotMatch(markup, /sensor\.own_battery|tabindex|@click|@pointer|<path|<image|<svg|\.svg|%/);
+    }
+  }
+  assert.doesNotMatch(flatten(renderDeviceFace({ ...presentation, battery: null }, { surface: 'preview' })), /device-battery/);
+  assert.doesNotMatch(flatten(renderDeviceShadowFace(presentation)), /device-battery/);
 });
