@@ -84,12 +84,15 @@ export function parseDocName(name) {
  * пересказа «Вердикт rN — цвет») → свободная форма хвоста → «—». r1 #635:
  * документ r2 пересказывал вердикт r1 («вердикт красный, High: 1») в шапке,
  * и первое совпадение по тексту выдавало чужой цвет; #779 — то же через
- * «Вердикт r2 — зелёный» в разделе «Закрытие раунда».
+ * «Вердикт r2 — зелёный» в разделе «Закрытие раунда». Своя строка и секция
+ * ищутся только в собственном тексте документа (`ownText`, r1 #779 M1).
+ * `round` — номер раунда из имени документа (`indexEntry`).
  */
-export function parseVerdict(text) {
-  const own = VERDICT_OWN_LINE_RE.exec(text) || VERDICT_LEAD_LINE_RE.exec(text);
+export function parseVerdict(text, { round } = {}) {
+  const ownBody = ownText(text, { round });
+  const own = VERDICT_OWN_LINE_RE.exec(ownBody) || VERDICT_LEAD_LINE_RE.exec(ownBody);
   if (own) return COLOUR[own[1].toLowerCase()];
-  const section = verdictSection(text);
+  const section = verdictSection(ownBody);
   if (section != null) {
     const colour = COLOUR_RE.exec(section);
     if (colour) return COLOUR[colour[1].toLowerCase()];
@@ -129,23 +132,87 @@ function verdictLine(text, own = false) {
 }
 
 /**
- * Итоговая сводка документа — абзац, который НАЧИНАЕТСЯ со счётчика:
- * `High: 0 · Medium: 2 (обе в скоупе) · Low: 0.` рядом с `**Вердикт: жёлтый.**`
- * (#779, SPEC-REVIEW-662-r3). Берётся последний такой абзац: пересказы прошлых
- * раундов стоят в начале документа, вывод — в конце. Строка-продолжение чужого
- * абзаца (`  High: 0, Medium: 1` под буллетом шапки) началом абзаца не считается.
+ * Пересказ чужого раунда по заголовку секции (r1 #779 M1): «Закрытие раунда
+ * r1», «Унаследовано из r1», «Inherited», «Предыдущий раунд» — и любой
+ * заголовок, называющий раунд, который не свой («Вердикт по находкам r1» в
+ * r2, «Дельта r1 → r2»). Заголовок документа (`# …`) пересказом не бывает.
  */
-function summaryParagraph(text) {
-  const lines = text.split('\n');
-  let found = null;
+const RETELL_HEADING_RE = /Унаследован|Закрыти[ея]\s+(?:раунда|r\d)|Inherited|Previous round|(?:Предыдущ|прошл)\S*\s+раунд/i;
+const ROUND_MENTION_RE = /(?<![A-Za-z])r(\d+)\b/g;
+
+/** Свой раунд: из имени документа, иначе последний `rN` заголовка `# …-r3`; неизвестен — null. */
+function ownRound(text, round) {
+  if (round != null && Number.isFinite(Number(round))) return Number(round);
+  const title = /^#[ \t]+([^\n]*)/m.exec(text);
+  const mention = title ? [...title[1].matchAll(ROUND_MENTION_RE)].at(-1) : null;
+  return mention ? Number(mention[1]) : null;
+}
+
+/**
+ * Собственный текст документа (r1 #779 M1): строки секций-пересказов (вместе
+ * с их подсекциями) и цитат `>` заменены пустыми, нумерация строк сохранена. Источник вердикта и счётчиков выбирается по структуре, а не по
+ * позиции: порядок секций не задан — «## Вердикт» бывает и до «## Унаследовано
+ * из r1» (SPEC-REVIEW-728-r2), и после (774-r2, 806-r2), и пересказ старого
+ * счётчика отдельным абзацем `High: …` не должен выдать чужие числа.
+ */
+export function ownText(text, { round } = {}) {
+  const own = ownRound(String(text), round);
+  const stack = [];
+  let fence = null;
+  let quote = false;
+  return String(text).split('\n').map((line) => {
+    // Блок кода — не цитата: шаблон своего комментария §7.2 ревьюеры кладут в
+    // него (SPEC-REVIEW-288-r1); но `# …` внутри блока — не заголовок секции.
+    const mark = /^[ \t]*(`{3,}|~{3,})/.exec(line);
+    if (fence && mark && mark[1][0] === fence[0] && mark[1].length >= fence.length) fence = null;
+    else if (!fence && mark) fence = mark[1];
+    const heading = fence || mark ? null : /^(#{1,6})[ \t]+(.*)$/.exec(line);
+    if (heading) {
+      const level = heading[1].length;
+      while (stack.length && stack.at(-1).level >= level) stack.pop();
+      const rounds = [...heading[2].matchAll(ROUND_MENTION_RE)].map((m) => Number(m[1]));
+      const retold = level > 1 && (RETELL_HEADING_RE.test(heading[2]) || rounds.some((n) => n !== own));
+      stack.push({ level, retold });
+    }
+    // Цитата — с «ленивым» продолжением: строка сразу под `>` без пустой — та же цитата.
+    quote = !fence && (/^[ \t]*>/.test(line) || (quote && line.trim() !== ''));
+    if (stack.some((section) => section.retold) || quote) return '';
+    return line;
+  }).join('\n');
+}
+
+/**
+ * Итоговая сводка документа — абзац собственного текста, который НАЧИНАЕТСЯ со
+ * счётчика: `High: 0 · Medium: 2 (обе в скоупе) · Low: 0.` рядом с
+ * `**Вердикт: жёлтый.**` (#779, SPEC-REVIEW-662-r3). Сначала — в секции своей
+ * строки вердикта; её нет или там пусто — последний такой абзац собственного
+ * текста (`ownText` уже без пересказов и цитат). Строка-продолжение
+ * чужого абзаца (`  High: 0, Medium: 1` под буллетом шапки) началом абзаца не
+ * считается.
+ */
+function summaryParagraph(own) {
+  const lines = own.split('\n');
+  const verdictAt = lines.findIndex((l) => VERDICT_OWN_MARKER_RE.test(l) || VERDICT_LEAD_LINE_RE.test(l));
+  const isHeading = (l) => /^#{1,6}[ \t]/.test(l);
+  let from = -1;
+  let to = -1;
+  if (verdictAt >= 0) {
+    from = verdictAt;
+    while (from > 0 && !isHeading(lines[from])) from -= 1;
+    to = verdictAt + 1;
+    while (to < lines.length && !isHeading(lines[to])) to += 1;
+  }
+  let inSection = null;
+  let last = null;
   for (let i = 0; i < lines.length; i += 1) {
     const starts = i === 0 || !lines[i - 1].trim() || /^[ \t]*[-*]\s/.test(lines[i]);
     if (!starts || !/^[ \t]*(?:[-*]\s*)?[*_]*High[*_]*:\s*\d/.test(lines[i])) continue;
     const body = [lines[i]];
     for (let j = i + 1; j < lines.length && lines[j].trim() && !/^[ \t]*(?:[-*]\s|#)/.test(lines[j]); j += 1) body.push(lines[j]);
-    found = body.join('\n');
+    last = body.join('\n');
+    if (i >= from && i < to) inSection = last;
   }
-  return found;
+  return inSection ?? last;
 }
 
 /** Секция «## Вердикт» (тело до следующего заголовка) либо null. */
@@ -241,11 +308,15 @@ function numberedItems(body) {
  * файлу больше не берётся: r1 #635 показал, что оно бывает цитатой чужого
  * документа («ТЗ прошло зелёным на r3 (High: 0, Medium: 0)»), #779 — что
  * им бывает и пересказ прошлого раунда «Вердикт r2 — зелёный (High: 0, Medium: 0)».
+ * Своя строка, секция «Вердикт» и сводка ищутся только в собственном тексте
+ * (`ownText`): секции «Закрытие раунда»/«Унаследовано» и цитаты — не источник,
+ * где бы они ни стояли (r1 #779 M1).
  */
-export function parseCounts(text) {
+export function parseCounts(text, { round } = {}) {
   const release = releaseCounts(text);
   if (release) return release;
-  for (const scope of [verdictLine(text, true), verdictSection(text), summaryParagraph(text), verdictLine(text)]) {
+  const own = ownText(text, { round });
+  for (const scope of [verdictLine(own, true), verdictSection(own), summaryParagraph(own), verdictLine(text)]) {
     const counts = scope ? countsIn(scope) : null;
     if (counts) return counts;
   }
@@ -333,8 +404,8 @@ export function indexEntry(name, text) {
   if (!meta) return null;
   return {
     name, ...meta,
-    verdict: parseVerdict(text),
-    ...parseCounts(text),
+    verdict: parseVerdict(text, { round: meta.round }),
+    ...parseCounts(text, { round: meta.round }),
     findings: parseFindings(text),
     files: parseFiles(text),
   };

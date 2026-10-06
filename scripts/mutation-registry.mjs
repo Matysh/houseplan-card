@@ -10859,8 +10859,8 @@ const MUTANT_DEFINITIONS = [
     because: '#670: release reviews use the mandated `Итог: High N · Medium N` summary without colons',
     patches: [{
       file: 'scripts/reviews-index.mjs',
-      find: '  if (release) return release;\n  for (const scope of [verdictLine(text, true), verdictSection(text), summaryParagraph(text), verdictLine(text)]) {',
-      replace: '  void release; // mutant: ignore the release summary\n  for (const scope of [verdictLine(text, true), verdictSection(text), summaryParagraph(text), verdictLine(text)]) {',
+      find: '  if (release) return release;\n  const own = ownText(text, { round });',
+      replace: '  void release; // mutant: ignore the release summary\n  const own = ownText(text, { round });',
     }],
   },
   {
@@ -10901,7 +10901,7 @@ const MUTANT_DEFINITIONS = [
       + 'round; counts must come from the document\'s own verdict line or section',
     patches: [{
       file: 'scripts/reviews-index.mjs',
-      find: "  for (const scope of [verdictLine(text, true), verdictSection(text), summaryParagraph(text), verdictLine(text)]) {",
+      find: "  for (const scope of [verdictLine(own, true), verdictSection(own), summaryParagraph(own), verdictLine(text)]) {",
       replace: "  for (const scope of [text]) { // mutant: first match anywhere in the document",
     }],
   },
@@ -10913,8 +10913,20 @@ const MUTANT_DEFINITIONS = [
       + '«Вердикт r2 — зелёный», and the index shows the previous round\'s colour',
     patches: [{
       file: 'scripts/reviews-index.mjs',
-      find: '  const own = VERDICT_OWN_LINE_RE.exec(text) || VERDICT_LEAD_LINE_RE.exec(text);',
-      replace: '  const own = /^[ \\t]*(?:[-*]\\s*)?\\**(?:Вердикт|Verdict)[^\\n]{0,60}?\\**\\s*([Зз]елёный|[Зз]еленый|[Жж]ёлтый|[Жж]елтый|[Кк]расный|[Gg]reen|[Yy]ellow|[Rr]ed)(?![а-яёa-z])/m.exec(text); // mutant: any line starting with the word is own',
+      find: '  const own = VERDICT_OWN_LINE_RE.exec(ownBody) || VERDICT_LEAD_LINE_RE.exec(ownBody);',
+      replace: '  const own = /^[ \\t]*(?:[-*]\\s*)?\\**(?:Вердикт|Verdict)[^\\n]{0,60}?\\**\\s*([Зз]елёный|[Зз]еленый|[Жж]ёлтый|[Жж]елтый|[Кк]расный|[Gg]reen|[Yy]ellow|[Rr]ed)(?![а-яёa-z])/m.exec(text); // mutant: any line starting with the word is own, anywhere in the document',
+    }],
+  },
+  {
+    id: 'reviews-index-retold-sections-own',
+    guard: 'node --test --test-name-pattern="#779 r2" test/reviews-index.test.mjs',
+    because: 'r1 #779 M1: the source of the verdict and counts is chosen by document structure; the order '
+      + 'of «## Вердикт» and «## Унаследовано из r1» is not fixed, so a «Закрытие раунда»/«Унаследовано» '
+      + 'section quoting the old «High: N» as its own paragraph must not count as the document\'s own text',
+    patches: [{
+      file: 'scripts/reviews-index.mjs',
+      find: '      const retold = level > 1 && (RETELL_HEADING_RE.test(heading[2]) || rounds.some((n) => n !== own));',
+      replace: '      const retold = false && rounds; // mutant: retelling sections count as the document\'s own text',
     }],
   },
   {

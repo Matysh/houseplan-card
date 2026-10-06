@@ -248,6 +248,39 @@ test('#779 своя строка без «Вердикт:»: строка кон
   assert.deepEqual(parseCounts(summary), { high: 0, medium: 0 });
 });
 
+// r1 #779 M1: источник счётчиков выбирается по структуре документа, а не по
+// позиции. Порядок секций не задан: «## Вердикт» бывает и до «## Унаследовано
+// из r1» (SPEC-REVIEW-728-r2), и после (774-r2, 806-r2). Секция-пересказ
+// («Закрытие раунда», «Унаследовано», заголовок с чужим rN), цитата и блок кода —
+// не собственный текст, даже если абзац в них начинается с `High:`.
+test('#779 r2: счётчики и вердикт — из собственного текста, не из секции-пересказа, при любом порядке секций', () => {
+  const inherited = ['## Унаследовано из r1', '', 'Принято без проверки:', '', '- High: 2, Medium: 1 (закрыто в r1)', ''];
+  // Вердикт после «Унаследовано» (774-r2, 806-r2); своя сводка — раньше пересказа.
+  const after = ['# CODE-REVIEW-900-r2', '', '## Вывод', '', 'High: 0 · Medium: 0.', '', ...inherited, '## Вердикт', '', 'Зелёный.'].join('\n');
+  assert.equal(parseVerdict(after), 'зелёный');
+  assert.deepEqual(parseCounts(after), { high: 0, medium: 0 });
+  // Вердикт до «Унаследовано» (728-r2): сводка рядом со своей строкой вердикта, пересказ — после.
+  const before = [
+    '# CODE-REVIEW-900-r2', '', '## Вывод', '', 'High: 0 · Medium: 2 (обе в скоупе).', '', '**Вердикт: жёлтый.**', '',
+    '## Закрытие раунда r1', '', 'Вердикт: зелёный · заход r1 · High: 0 · Medium: 0', '', 'High: 3 · Medium: 1 — находки r1, закрыты.', '',
+  ].join('\n');
+  assert.equal(parseVerdict(before), 'жёлтый');
+  assert.deepEqual(parseCounts(before), { high: 0, medium: 2 });
+  // Пересказ в форме шаблона §7.2 внутри секции-пересказа — не своя строка, даже без своей строки ниже.
+  const templated = '# CODE-REVIEW-900-r2\n\n## Закрытие раунда r1\n\nВердикт: красный · заход r1 · High: 1 · Medium: 0\n\n## Итог\n\nЗелёный. High: 0. Medium: 0.\n';
+  assert.equal(parseVerdict(templated), 'зелёный');
+  assert.deepEqual(parseCounts(templated), { high: 0, medium: 0 });
+  // Заголовок с номером СВОЕГО раунда — свой текст; номер раунда — из имени документа или из заголовка `# …-rN`.
+  const ownRound = '# CODE-REVIEW-900-r2\n\n## Находки (r2)\n\nHigh: 0 · Medium: 1.\n\n## Дельта r1 → r2\n\nHigh: 4 · Medium: 4 (r1).\n';
+  assert.deepEqual(parseCounts(ownRound), { high: 0, medium: 1 });
+  assert.deepEqual(parseCounts(ownRound.replace('# CODE-REVIEW-900-r2\n', ''), { round: 2 }), { high: 0, medium: 1 });
+  // Цитата — не сводка документа; `#` в блоке кода — не заголовок, блок не прячет свою сводку.
+  const quoted = '# CODE-REVIEW-900-r2\n\n## Вывод\n\nHigh: 0 · Medium: 1.\n\n```\n# Закрытие раунда r1\n```\n\nHigh: 0 · Medium: 1 → в задаче\n\n> Комментарий r1 владельцу:\nHigh: 5 · Medium: 5\n';
+  assert.deepEqual(parseCounts(quoted), { high: 0, medium: 1 });
+  // Свой шаблон §7.2 в блоке кода — свой вердикт (SPEC-REVIEW-288-r1).
+  assert.equal(parseVerdict('## Вердикт\n\nОдна Medium-находка.\n\n```\nВердикт: жёлтый · заход r1 · High: 0 · Medium: 1\n```\n'), 'жёлтый');
+});
+
 test('#635 r2: находки читаются из живых форматов заголовков (CODE-REVIEW-639-r1, 637-r1, 162-r1, 141-r1)', () => {
   const doc = [
     '### Medium (в скоупе — чинится в этой же ветке)',
