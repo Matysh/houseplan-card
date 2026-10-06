@@ -137,7 +137,15 @@ This is a catastrophic-regression guard, not a performance trend detector.
 Two more profiles join the smoke only when the diff touches their code path
 (#473, classified by `scripts/classify-changes.mjs`): `large-house-isometric-v1`
 for `src/iso-*` and `large-house-interaction-v1` for `src/live-*`,
-`src/render-*`, `houseplan-render-lifecycle.ts` and `houseplan-card.ts`. Both
+`src/render-*`, `houseplan-render-lifecycle.ts` and `houseplan-card.ts`. Since
+#770 a profile also joins when the diff touches what measures or judges it
+without `src/**`: its own budgets (the smoke file and the full profile's, which
+the smoke repeats) and the shared large-house harness —
+`benchmark_large_house.mjs`, `demo/fixtures/large-house.mjs`,
+`card-contract.mjs` and `evaluate.mjs`, which bring in both. Before, a
+budget-only change ran the smoke with Glow alone, and the new ceiling was first
+judged by the beta candidate. The Glow runner and `compare.mjs` are exercised by
+the Glow smoke, which always runs. Both
 run `--samples=3 --warmups=1` against `budgets-isometric-smoke.json` and
 `budgets-interaction-smoke.json`, whose ceilings are the `hardMaxMs` values of
 the full profiles. The set of profiles is part of the `performance_smoke`
@@ -200,9 +208,9 @@ ceiling" and the dense twin equal to the historical profile. Smaller growth
 stays the job of the full workflow's base-relative comparison (unchanged: 0.35
 flat, 0.2 2.5D, 250 ms noise allowance), and a floor built inside the window
 already fails the sample through the #735 structural guard, not through time. No
-3-sample `performance_smoke` median is in the series yet: those profiles join
-Validate only on a `src/**` diff, so the first beta candidate after #747 is
-their check.
+3-sample `performance_smoke` median is in the series yet: at the time those
+profiles joined Validate only on a `src/**` diff, so the first beta candidate
+after #747 is their check.
 
 The 2.5D View toggle (`viewToggleMs`) is reported by the isometric profiles but
 budgeted by none of them (#720, owner decision in #694 on 2026-09-30). Switching

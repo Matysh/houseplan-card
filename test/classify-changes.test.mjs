@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import {
   CHECK_OF_OUTPUT, CLASSIFIERS, OUTPUTS, PERF_PROFILES, classifyAll, classifyChanges, formatOutputs, mutantsRequested,
   screenshotsGateMode,
@@ -45,10 +45,88 @@ test('дифф по документации не включает ни одно
   assert.equal(out.backend, 'false');
 });
 
-test('тесты и демо перф-профили не включают: кадр они не замедляют', () => {
-  const out = classify(['test/iso-scene-render.test.mjs', 'demo/benchmark_large_house.mjs']);
+test('тесты и чужие демо-файлы перф-профили не включают: кадр и замер они не меняют', () => {
+  // Glow-раннер и compare.mjs исполняет glow-смок, который идёт всегда;
+  // фикстура плотного двойника принадлежит профилю без смока.
+  const out = classify(['test/iso-scene-render.test.mjs', 'demo/benchmark_glow.mjs',
+    'demo/performance/compare.mjs', 'demo/performance/isometric-stage3-dense-fixture.mjs']);
   assert.equal(out.perf_iso, 'false');
   assert.equal(out.perf_interaction, 'false');
+});
+
+// #770: смоковый профиль судят его бюджеты, а замеряет общий раннер
+// large-house. Прежде профиль включал только `src/**`, и правка одного потолка
+// шла в Validate с одним glow: новый потолок впервые судил кандидат беты.
+// Профиль шага берётся из самого validate.yml (его `--budgets`), бюджеты
+// профиля — из demo/performance по полю `profile`: новый файл бюджета этого
+// профиля обязан включать его без правки теста.
+const VALIDATE = readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8');
+const PERF_DIR = new URL('../demo/performance/', import.meta.url);
+const BUDGETS = readdirSync(PERF_DIR).filter((name) => /^budgets[\w-]*\.json$/.test(name))
+  .map((name) => ({ path: `demo/performance/${name}`, profile: JSON.parse(readFileSync(new URL(name, PERF_DIR), 'utf8')).profile }));
+const PERF_STEPS = { perf_iso: 'Изометрический профиль по диффу', perf_interaction: 'Профиль взаимодействия по диффу' };
+const smokeProfileOf = (output) => {
+  const job = VALIDATE.slice(VALIDATE.indexOf('\n  performance_smoke:\n'), VALIDATE.indexOf('\n  geometry_parity:\n'));
+  const start = job.indexOf(PERF_STEPS[output]);
+  const step = job.slice(start, job.indexOf('- name:', start));
+  assert.ok(start > 0, `${output}: нет шага «${PERF_STEPS[output]}»`);
+  assert.match(step, new RegExp(`if: needs\\.changes\\.outputs\\.${output} == 'true'`));
+  const smokeBudget = step.match(/--absolute-only --budgets=(demo\/performance\/[\w-]+\.json)/)[1];
+  const { profile } = BUDGETS.find((budget) => budget.path === smokeBudget);
+  assert.ok(step.includes(`--profile=${profile} `), `${output}: шаг меряет тот профиль, который судит его бюджет`);
+  return { profile, smokeBudget };
+};
+// Набор профилей ключа реюза — тем же текстом, что исполняет шаг `keys` job
+// `reuse`: `set=glow` и по строке `[ "$PERF_X" = "true" ] && set="$set-…"`.
+const REUSE = VALIDATE.slice(VALIDATE.indexOf('\n  reuse:\n'), VALIDATE.indexOf('\n  hacs:\n'));
+const perfSetOf = (outputs) => {
+  const envOutput = Object.fromEntries([...REUSE.matchAll(/(PERF_\w+): \$\{\{ needs\.changes\.outputs\.(\w+) \}\}/g)]
+    .map(([, env, output]) => [env, output]));
+  let set = REUSE.match(/^\s*set=(\w+)$/m)[1];
+  for (const [, env, suffix] of REUSE.matchAll(/\[ "\$(PERF_\w+)" = "true" \] && set="\$set-(\w+)"/g)) {
+    if (outputs[envOutput[env]] === 'true') set = `${set}-${suffix}`;
+  }
+  return set;
+};
+
+test('#770: правка только бюджета включает профиль, который он судит, и меняет ключ реюза', () => {
+  const quiet = perfSetOf(classify([p('docs', 'SUN.md')]));
+  assert.equal(quiet, 'glow', 'без перф-диффа набор — один glow');
+  for (const output of Object.keys(PERF_STEPS)) {
+    const { profile, smokeBudget } = smokeProfileOf(output);
+    const judged = BUDGETS.filter((budget) => budget.profile === profile).map((budget) => budget.path);
+    // Смоковый и полный: смок повторяет потолки полного (#473 AC4), и правка
+    // полного — правка того же профиля.
+    assert.ok(judged.includes(smokeBudget) && judged.length >= 2, `${profile}: ${judged.join(', ')}`);
+    for (const path of judged) {
+      const out = classify([path]);
+      assert.equal(out[output], 'true', `${path} судит ${profile} — профиль обязан войти в смок`);
+      for (const other of Object.keys(PERF_STEPS).filter((name) => name !== output))
+        assert.equal(out[other], 'false', `${path} не судит профиль ${other}`);
+      assert.deepEqual(out.unknown, [], path);
+      // Обе половины ключа `reuse-performance_smoke-<входы>-<набор>` меняются:
+      // файл — вход job (хеш), а набор получает профиль.
+      assert.ok(MANIFEST.performance_smoke.has(path), `${path}: вход хеша performance_smoke`);
+      assert.notEqual(perfSetOf(out), quiet, `${path}: ключ реюза совпал бы с glow-only прогоном`);
+    }
+  }
+  // Бюджеты профилей без смока (полные и glow) смоковых профилей не включают.
+  const smokeProfiles = new Set(Object.keys(PERF_STEPS).map((output) => smokeProfileOf(output).profile));
+  for (const budget of BUDGETS.filter(({ profile }) => !smokeProfiles.has(profile))) {
+    const out = classify([budget.path]);
+    for (const output of Object.keys(PERF_STEPS)) assert.equal(out[output], 'false', `${budget.path} → ${output}`);
+  }
+});
+
+test('#770: раннер large-house, его фикстура, контракт карточки и оценщик включают оба смоковых профиля', () => {
+  for (const file of ['demo/benchmark_large_house.mjs', 'demo/fixtures/large-house.mjs',
+    'demo/performance/card-contract.mjs', 'demo/performance/evaluate.mjs']) {
+    const out = classify([file]);
+    assert.equal(out.perf_iso, 'true', file);
+    assert.equal(out.perf_interaction, 'true', file);
+    assert.equal(perfSetOf(out), 'glow-iso-interaction', file);
+    assert.deepEqual(out.unknown, [], file);
+  }
 });
 
 test('правка реестра мутантов даёт mutants=true; юниты реестра — тоже вход frontend (#475 r1, #492)', () => {

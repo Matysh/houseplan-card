@@ -36,12 +36,34 @@ export const CHECK_OF_OUTPUT = {
 /**
  * Профили перф-смока (#473 §5): изометрический — при правке изометрии,
  * профиль взаимодействия — при правке живого пути и оркестраторов кадра.
- * Только `src/**`: тесты и демо кадр не замедляют. Это НЕ выбор job, а выбор
+ * Тесты кадр не замедляют и профиль не включают. Это НЕ выбор job, а выбор
  * набора внутри неё, поэтому остаётся фильтром по путям.
+ *
+ * #770: профиль включает и то, что меняет его замер или вердикт без `src/**`:
+ * его бюджеты — смоковый и полный (смок повторяет потолки полного, #473 AC4) —
+ * и общий харнесс large-house: раннер, его фикстуру, контракт приватной
+ * поверхности карточки и оценщик. Прежде правка одного потолка шла в Validate
+ * с одним glow, и новый потолок впервые судил кандидат беты. Glow-раннер и
+ * `compare.mjs` исполняет glow-смок, который идёт всегда.
  */
+const LARGE_HOUSE_HARNESS = [
+  /^demo\/benchmark_large_house\.mjs$/,
+  /^demo\/fixtures\/large-house\.mjs$/,
+  /^demo\/performance\/(card-contract|evaluate)\.mjs$/,
+];
+const anyOf = (...patterns) => new RegExp(patterns.map((pattern) => `(?:${pattern.source})`).join('|'));
+
 export const PERF_PROFILES = {
-  perf_iso: /^src\/iso-[^/]+\.ts$/,
-  perf_interaction: /^src\/(live-[^/]+|render-[^/]+|houseplan-render-lifecycle|houseplan-card)\.ts$/,
+  perf_iso: anyOf(
+    /^src\/iso-[^/]+\.ts$/,
+    /^demo\/performance\/budgets-(isometric-smoke|large-house-isometric)\.json$/,
+    ...LARGE_HOUSE_HARNESS,
+  ),
+  perf_interaction: anyOf(
+    /^src\/(live-[^/]+|render-[^/]+|houseplan-render-lifecycle|houseplan-card)\.ts$/,
+    /^demo\/performance\/budgets-(interaction-smoke|large-house-interaction)\.json$/,
+    ...LARGE_HOUSE_HARNESS,
+  ),
 };
 
 /** Совместимость с прежним экспортом: имя выхода → предикат по файлу. */

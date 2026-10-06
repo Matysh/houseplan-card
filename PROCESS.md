@@ -976,6 +976,9 @@ npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs \
 при правке `src/live-*`, `src/render-*`, `houseplan-render-lifecycle.ts`,
 `houseplan-card.ts` — `large-house-interaction-v1`, оба по три образца против
 абсолютных потолков `hardMaxMs` полных профилей (`budgets-*-smoke.json`).
+Профиль добавляет и правка того, что его меряет и судит без `src/**`: его
+бюджетов и общего харнесса large-house — раннера, фикстуры, контракта карточки,
+оценщика (#770).
 Это гейт на «в разы», а не «на проценты»: регрессия #160 (первый кадр 9 870 мс
 против потолка 3 500) ловится ещё в ревью, а не предрелизным гейтом под тегом.
 Классификацию делает `scripts/classify-changes.mjs`, набор профилей входит в
