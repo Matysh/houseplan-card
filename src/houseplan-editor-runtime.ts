@@ -509,6 +509,8 @@ export interface HouseplanEditorHostPort {
   _confirmDanger: (request: HpConfirmRequest) => Promise<boolean>;
   _cancelDangerConfirm: () => void;
   _config: CardConfig | undefined;
+  /** #774: the content-frame items the card frames a space with (docs/CANVAS.md §4). */
+  _contentItems: (space: SpaceModel) => import('./space-geometry').ContentItem[];
   _contourClosed: boolean;
   _curSpaceCfg: any;
   _currentModeVisual: (mode?: HouseplanMode) => ModeVisualState | null;
@@ -11986,6 +11988,7 @@ public _renderRadarSection(d: NonNullable<HouseplanEditorHostPort['_markerDialog
       hass: this.host.hass,
       spaceModelById: (id) => this.host._spaceModelById(id),
       currentSpace: () => this.host._spaceModel(),
+      contentItems: (space) => this.host._contentItems(space),
       position: (item) => this.host._pos(item),
       updateDialog: (patch) => {
         if (this.host._markerDialog) this.host._markerDialog = { ...this.host._markerDialog, ...patch };

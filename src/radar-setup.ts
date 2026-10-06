@@ -7,6 +7,9 @@ import {
   projectRadarLocal, radarMedianSample, solveRadarTwoPoint,
 } from './radar-geometry';
 import type { RadarEditorDraft } from './radar-editor';
+import {
+  NORM_W, contentFrame, itemOf, spaceFrame, type ContentItem, type Rect,
+} from './space-geometry';
 
 type RadarDiscardKey = 'radar.discard_setup_title' | 'radar.discard_setup' | 'btn.close' | 'btn.cancel';
 
@@ -15,7 +18,7 @@ export const radarDiscardRequest = (t: (key: RadarDiscardKey) => string) => ({
   title: t('radar.discard_setup_title'), message: t('radar.discard_setup'),
   confirmLabel: t('btn.close'), cancelLabel: t('btn.cancel'),
 });
-import type { MarkerRadar, RoomCfg } from './types';
+import type { MarkerRadar, RoomCfg, SpaceModel } from './types';
 
 const COUNTDOWN_MS = 10_000;
 const CAPTURE_MS = 5_000;
@@ -47,6 +50,7 @@ interface ActiveSetup {
   markerId: string;
   draft: RadarEditorDraft;
   room: RoomCfg;
+  projection: RadarSetupProjection;
   cellCm: number;
   configRev: number;
   phase: SetupPhase;
@@ -74,13 +78,55 @@ export interface RadarSetupHost {
   confirmDiscard(): Promise<boolean>;
 }
 
-function pointFromEvent(event: PointerEvent): Point | null {
-  const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
-  if (!(rect.width > 0 && rect.height > 0)) return null;
-  return [
-    Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
-    Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)),
-  ];
+/**
+ * The wizard's camera (#774, docs/CANVAS.md §4): the content frame the main
+ * card opens on, from the same items (`items` is the card's own content list,
+ * a superset of the space model's). `core` normally; `all` when the core would
+ * cut the contour of the room being configured, so an outlier vote can never
+ * hide it. The stored view_box is read only through `spaceFrame` — i.e. only
+ * when nothing at all is drawn. Absolute render units, fixed for the session.
+ */
+export function radarSetupFrame(
+  space: SpaceModel, room: RoomCfg, items: ReadonlyArray<ContentItem>,
+): Rect {
+  const { core, all } = contentFrame(items);
+  const own = room.poly && room.poly.length >= 3 ? itemOf(room.poly) : null;
+  const frame = !core || !all ? spaceFrame(space)
+    : own && !(core.x <= own.minX && core.y <= own.minY
+      && core.x + core.w >= own.maxX && core.y + core.h >= own.maxY) ? all : core;
+  return [frame.x, frame.y, frame.w, frame.h].every(Number.isFinite) && frame.w > 0 && frame.h > 0
+    ? frame : { x: 0, y: 0, w: NORM_W, h: NORM_W };
+}
+
+export type RadarSetupProjection = ReturnType<typeof radarSetupProjection>;
+
+/**
+ * The ONE projection of every wizard layer (#774). Plan units (what is stored)
+ * times NORM_W are absolute render units, and those ARE the SVG user units,
+ * because the viewBox is the frame itself. Room contours are render units
+ * already and are drawn untouched. The screen side mirrors
+ * preserveAspectRatio="xMidYMid meet"; a press in the letterbox is no point.
+ * Never clamped: the canvas has no edges (docs/CANVAS.md).
+ */
+export function radarSetupProjection(frame: Rect) {
+  return {
+    frame,
+    viewBox: `${frame.x} ${frame.y} ${frame.w} ${frame.h}`,
+    /** Glyph scale that keeps marker sizes what they were on the 1000-unit board. */
+    glyph: Math.max(frame.w, frame.h) / NORM_W,
+    scene: (point: Point): Point => [point[0] * NORM_W, point[1] * NORM_W],
+    plan(
+      clientX: number, clientY: number,
+      rect: { left: number; top: number; width: number; height: number },
+    ): Point | null {
+      const k = Math.min(rect.width / frame.w, rect.height / frame.h);
+      if (!(k > 0 && Number.isFinite(k))) return null;
+      const x = frame.x + (clientX - rect.left - (rect.width - frame.w * k) / 2) / k;
+      const y = frame.y + (clientY - rect.top - (rect.height - frame.h * k) / 2) / k;
+      return x >= frame.x && x <= frame.x + frame.w && y >= frame.y && y <= frame.y + frame.h
+        ? [x / NORM_W, y / NORM_W] : null;
+    },
+  };
 }
 
 function headingBetween(mount: Point, target: Point): number {
@@ -105,13 +151,16 @@ export class RadarSetupController {
 
   public constructor(private readonly host: RadarSetupHost) {}
 
+  /** `frame` is `radarSetupFrame(...)`, computed once by the caller at open. */
   public begin(
     markerId: string, draft: RadarEditorDraft, room: RoomCfg, cellCm: number, configRev: number,
+    frame: Rect,
   ): boolean {
     if (!this.host.configFromDraft(draft, cellCm)) return false;
     this.reset();
     this.active = {
-      markerId, draft, room, cellCm, configRev, phase: 'mount', mount: null,
+      markerId, draft, room, projection: radarSetupProjection(frame),
+      cellCm, configRev, phase: 'mount', mount: null,
       headingPoint: null, pendingPlan: null, refs: [], samples: [], ambiguous: false, trail: [],
     };
     this.host.requestUpdate();
@@ -155,7 +204,8 @@ export class RadarSetupController {
 
   private choosePoint(event: PointerEvent): void {
     const state = this.active;
-    const point = pointFromEvent(event);
+    const point = state?.projection.plan(event.clientX, event.clientY,
+      (event.currentTarget as Element).getBoundingClientRect());
     if (!state || !point || event.isPrimary === false
         || state.phase === 'capture' || state.phase === 'checking') return;
     state.error = undefined;
@@ -390,7 +440,9 @@ export class RadarSetupController {
   public render(): TemplateResult | typeof nothing {
     const state = this.active;
     if (!state) return nothing;
-    const polygon = (state.room.poly || []).map((point) => `${point[0] * 1000},${point[1] * 1000}`).join(' ');
+    const view = state.projection;
+    // SpaceModel contours are render units already (space-geometry.ts): drawn as is.
+    const polygon = (state.room.poly || []).map((point) => `${point[0]},${point[1]}`).join(' ');
     const markers = [
       ...(state.mount ? [{ point: state.mount, cls: 'mount', label: 'R' }] : []),
       ...state.refs.map((ref, index) => ({ point: ref.plan, cls: 'reference', label: String(index + 1) })),
@@ -406,17 +458,17 @@ export class RadarSetupController {
         <button class="iconbtn" type="button" title=${this.host.t('btn.cancel')}
           @click=${() => { void this.cancel(); }}><ha-icon icon="mdi:close"></ha-icon></button>
       </div>
-      <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"
+      <svg viewBox=${view.viewBox} preserveAspectRatio="xMidYMid meet"
         @pointerdown=${(event: PointerEvent) => this.choosePoint(event)}
         @pointercancel=${() => this.interrupt()}>
         <polygon class="room" points=${polygon}></polygon>
         ${trailGroups.map((trail) => trail.length > 1 ? svg`<polyline class="trail"
-          points=${trail.map((entry) => `${entry.point[0] * 1000},${entry.point[1] * 1000}`).join(' ')}></polyline>` : nothing)}
+          points=${trail.map((entry) => view.scene(entry.point).join(',')).join(' ')}></polyline>` : nothing)}
         ${state.mount && state.headingPoint ? svg`<line class="heading"
-          x1=${state.mount[0] * 1000} y1=${state.mount[1] * 1000}
-          x2=${state.headingPoint[0] * 1000} y2=${state.headingPoint[1] * 1000}></line>` : nothing}
+          x1=${view.scene(state.mount)[0]} y1=${view.scene(state.mount)[1]}
+          x2=${view.scene(state.headingPoint)[0]} y2=${view.scene(state.headingPoint)[1]}></line>` : nothing}
         ${markers.map((marker) => svg`<g class=${marker.cls}
-          transform="translate(${marker.point[0] * 1000} ${marker.point[1] * 1000})">
+          transform="translate(${view.scene(marker.point).join(' ')}) scale(${view.glyph})">
           <circle r="18"></circle><text y="1">${marker.label}</text></g>`)}
       </svg>
       <p class="muted">${this.host.t('radar.desktop_hint')}</p>

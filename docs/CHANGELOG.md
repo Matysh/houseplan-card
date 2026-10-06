@@ -11,6 +11,13 @@
 - In kiosk mode, holding the plan to open **This screen's sizes** no longer
   downloads the editor, and a poor connection no longer shows a "Could not load
   the editor" notice there ([#763](https://github.com/Matysh/houseplan-card/issues/763)).
+- Presence radar: **Configure on plan** now shows the outline of the selected
+  room. It used to be drawn far outside the setup area, so the mount point,
+  direction and reference positions were placed on an empty field. The area
+  now frames the plan the same way the card does, including rooms drawn outside
+  the original square, and every mark lands exactly where it is clicked
+  relative to the outline. Saved radar settings are unchanged
+  ([#774](https://github.com/Matysh/houseplan-card/issues/774)).
 
 ## v1.80.0-beta.6 — 2026-10-06
 

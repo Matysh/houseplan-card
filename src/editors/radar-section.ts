@@ -7,7 +7,8 @@ import {
   recognizeRadar,
   type RadarEditorDraft, type RadarHassLike,
 } from '../radar-editor';
-import type { RadarSetupController } from '../radar-setup';
+import { radarSetupFrame, type RadarSetupController } from '../radar-setup';
+import type { ContentItem } from '../space-geometry';
 import type { DevItem, SpaceModel } from '../types';
 import { toggleRow } from './form-kit';
 
@@ -35,6 +36,9 @@ export interface RadarSectionOptions {
   hass: RadarHass;
   spaceModelById(id: string | null | undefined): SpaceModel | null | undefined;
   currentSpace(): SpaceModel | null | undefined;
+  /** The main card's content-frame items of a space (docs/CANVAS.md §4): the
+   * on-plan setup frames the same plan, without drawing those layers (#774). */
+  contentItems(space: SpaceModel): ReadonlyArray<ContentItem>;
   position(device: DevItem): { x: number; y: number };
   updateDialog(patch: Partial<{
     radar: RadarEditorDraft | null;
@@ -197,6 +201,7 @@ export function renderRadarSection(
     }
     if (!options.setup.begin(
       device.marker?.id || device.id, draft, room, space.cellCm || 5, options.configRev,
+      radarSetupFrame(space, room, options.contentItems(space)),
     )) options.toast(options.t('radar.invalid'));
   };
   const changeInstallation = () => configureOnPlan({

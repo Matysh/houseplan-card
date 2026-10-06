@@ -206,6 +206,12 @@ not only in the viewBox: §6's `iconUnit` runs the same vote over the rooms.
 One notion of "the plan", or a stray the frame had just thrown out came back
 as icons ninety times too big (audit DEV-2C947-03).
 
+The radar **Configure on plan** setup (#774) frames the plan with the same
+items and opens on `core`, with one exception: when `core` would cut the
+contour of the room being configured it opens on `all`, so the vote can never
+hide the room the user is placing the sensor in. The frame is fixed for the
+setup session; the stored `view_box` still counts only when nothing is drawn.
+
 ### §4.3 The frame in an editor
 
 Inside an editor the frame only ever **grows** (`unionRect` with the previous

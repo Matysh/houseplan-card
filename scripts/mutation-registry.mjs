@@ -720,6 +720,63 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'radar-setup-contour-scaled-twice',
+    guard: 'node --test --test-name-pattern="#774" test/radar-setup.test.mjs',
+    because: '#774 AC1: SpaceModel room contours are render units already; multiplying them by '
+      + '1000 again draws the outline at 40000… far outside the setup viewBox, so the field '
+      + 'looks empty while mount and heading still appear',
+    patches: [{
+      file: 'src/radar-setup.ts',
+      find: "map((point) => `${point[0]},${point[1]}`)",
+      replace: "map((point) => `${point[0] * 1000},${point[1] * 1000}`)",
+    }],
+  },
+  {
+    id: 'radar-setup-pointer-clamped-to-unit-square',
+    guard: 'node --test --test-name-pattern="#774" test/radar-setup.test.mjs',
+    because: '#774 AC2: the canvas has no edges; clamping a press to [0,1] silently moves a mount '
+      + 'or reference placed in a room outside the historical square and changes the physical '
+      + 'meaning of the stored calibration',
+    patches: [{
+      file: 'src/radar-setup.ts',
+      find: '        ? [x / NORM_W, y / NORM_W] : null;',
+      replace: '        ? [Math.max(0, Math.min(1, x / NORM_W)), Math.max(0, Math.min(1, y / NORM_W))] : null;',
+    }],
+  },
+  {
+    id: 'radar-setup-frame-from-stored-view-box',
+    guard: 'node --test --test-name-pattern="#774" test/radar-setup.test.mjs',
+    because: '#774 AC1/AC2 (SPEC-REVIEW-774-r1 H1): view_box is only the empty-content hint; '
+      + 'framing the setup with it hides a room drawn outside [0,1] although its contour is right',
+    patches: [{
+      file: 'src/radar-setup.ts',
+      find: '  const frame = !core || !all ? spaceFrame(space)',
+      replace: '  const frame = !core || !all || space.vb ? spaceFrame({ ...space, rooms: [], stairs: [], bg: null })',
+    }],
+  },
+  {
+    id: 'radar-setup-room-left-to-outlier-vote',
+    guard: 'node --test --test-name-pattern="#774" test/radar-setup.test.mjs',
+    because: '#774 AC1: the outlier vote may drop the very room being configured from core; '
+      + 'without the switch to all its contour is cut off the setup frame',
+    patches: [{
+      file: 'src/radar-setup.ts',
+      find: '      && core.x + core.w >= own.maxX && core.y + core.h >= own.maxY) ? all : core;',
+      replace: '      && core.x + core.w >= own.maxX && core.y + core.h >= own.maxY) ? core : core;',
+    }],
+  },
+  {
+    id: 'radar-setup-trail-in-plan-units',
+    guard: 'node --test --test-name-pattern="#774" test/radar-setup.test.mjs',
+    because: '#774 AC3: a layer outside the shared projection (the live trail in raw plan units) '
+      + 'sits 1000× off the contour and marks it is meant to be compared with',
+    patches: [{
+      file: 'src/radar-setup.ts',
+      find: "trail.map((entry) => view.scene(entry.point).join(','))",
+      replace: "trail.map((entry) => entry.point.join(','))",
+    }],
+  },
+  {
     id: 'household-marker-drops-keyboard-reach',
     guard: 'node demo/smoke_household_journeys.mjs',
     because: '#560 J4: маркер с действием обязан доставаться клавиатурой — без tabindex он '
