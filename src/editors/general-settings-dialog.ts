@@ -96,11 +96,6 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             checked: d.showRoomTooltip, onChange: (v) => set({ showRoomTooltip: v }),
           })}
           ${toggleRow({
-            id: 'gs-device-battery', icon: 'mdi:battery-outline',
-            title: st('gs.show_device_battery'), caption: st('gs.show_device_battery_hint'),
-            checked: d.showDeviceBattery, onChange: (v) => set({ showDeviceBattery: v }),
-          })}
-          ${toggleRow({
             id: 'gs-radar-live', icon: 'mdi:radar',
             title: st('gs.radar_show_live'), caption: st('gs.radar_show_live_hint'),
             checked: d.radarShowLive, onChange: (v) => set({ radarShowLive: v }),
@@ -109,6 +104,11 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             id: 'gs-volumetric-view', icon: 'mdi:cube-outline',
             title: t('gs.volumetric_view'), caption: st('gs.volumetric_view_hint'),
             checked: d.volumetricView, onChange: (v) => set({ volumetricView: v }),
+          })}
+          ${toggleRow({
+            id: 'gs-device-battery', icon: 'mdi:battery-outline',
+            title: st('gs.show_device_battery'), caption: st('gs.show_device_battery_hint'),
+            checked: d.showDeviceBattery, onChange: (v) => set({ showDeviceBattery: v }),
           })}`,
       })}
       ${formCard({

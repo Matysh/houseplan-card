@@ -37,7 +37,11 @@ const res = await page.evaluate(async () => {
   out.dialogOpens = await openSettings();
   const display = q('.hpf-card[data-card="display"]');
   const ids = [...display.querySelectorAll('.hpf-toggle > input[type="checkbox"]')].map((i) => i.id);
-  out.thirdInDisplay = JSON.stringify(ids) === JSON.stringify(['gs-room-tooltip', 'gs-radar-live', 'gs-volumetric-view']);
+  out.thirdInDisplay = JSON.stringify(ids.slice(0, 3)) === JSON.stringify(['gs-room-tooltip', 'gs-radar-live', 'gs-volumetric-view']);
+  // #792 appends its control without moving the established Display settings.
+  out.batteryFollowsExisting = JSON.stringify(ids) === JSON.stringify([
+    'gs-room-tooltip', 'gs-radar-live', 'gs-volumetric-view', 'gs-device-battery',
+  ]);
   const row = q('#gs-volumetric-view').closest('.hpf-toggle')?.parentElement ?? null;
   out.rowTitleAndIcon = !!row && row.textContent.includes(c._t('gs.volumetric_view'))
     && !!row.querySelector('ha-icon[icon="mdi:cube-outline"]');

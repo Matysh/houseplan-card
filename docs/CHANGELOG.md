@@ -5,7 +5,8 @@
 - Battery-powered devices now show a compact charge indicator: green at 60–100%,
   amber at 20–59%, red below 20%, or grey with a question mark when unavailable.
   It sits beside the whole device face without a percentage label. General
-  settings can hide it installation-wide; LED strips have no indicator
+  settings can hide it installation-wide; the new option follows the existing
+  Display controls without moving them. LED strips have no indicator
   ([#792](https://github.com/Matysh/houseplan-card/issues/792)).
 
 - Fixed creating a room from part of a longer independent wall failing with

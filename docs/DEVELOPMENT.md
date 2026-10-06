@@ -13,7 +13,7 @@ size must not leak into this independent frame. Demo fixtures use the same MDI
 paths so pixel tests do not substitute an emoji or an arbitrary test symbol.
 
 The owner also approved a size-budget recalibration. Fresh source builds move
-initial View gzip from 301037 to 302537 bytes (+1500); the existing rolling
+initial View gzip from 301037 to 302532 bytes (+1495); the existing rolling
 ceiling 301040 plus its unchanged 2000-byte band already admits this result.
 The absolute wall moves to 320000 bytes, restoring 6.3% reserve over the measured
 pre-feature reference. Raw dist moves from 2705833 to 2712880 bytes; only that
