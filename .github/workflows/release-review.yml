@@ -309,6 +309,9 @@ jobs:
           # Сообщение коммита — построчно в файл, без heredoc в `run:` (#723).
           msg="$RUNNER_TEMP/release-review-commit.txt"
           push_err="$RUNNER_TEMP/release-review-push.stderr"
+          # #766: хост push — сервер раннера (GITHUB_SERVER_URL), не зашитый github.com.
+          server="${GITHUB_SERVER_URL:-https://github.com}"
+          push_url="${server%%://*}://x-access-token:$TOKEN@${server#*://}/${{ github.repository }}"
           for attempt in 1 2 3; do
             git fetch -q origin dev
             git reset -q --hard origin/dev
@@ -337,7 +340,7 @@ jobs:
                 -c user.email="209825114+claude[bot]@users.noreply.github.com" \
                 commit -q -F "$msg"
             git diff --name-only "origin/dev...HEAD" | node scripts/review-doc-guard.mjs
-            if git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" HEAD:dev 2> "$push_err"; then
+            if git push -q "$push_url" HEAD:dev 2> "$push_err"; then
               echo "### Независимое ревью $TAG" >> "$GITHUB_STEP_SUMMARY"
               echo "Итог: $counts — \`$DOC\` в dev. Выпуск не блокируется." >> "$GITHUB_STEP_SUMMARY"
               echo "::notice::$DOC опубликован: $counts"

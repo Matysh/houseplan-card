@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { PUSH_REFUSAL, classifyPushRefusal, refusalSummary } from '../scripts/merge-candidate.mjs';
 import { buildIndex } from '../scripts/reviews-index.mjs';
-import { findStep, runStep } from './helpers/workflow-step.mjs';
+import { findStep, runStep, workflowSteps } from './helpers/workflow-step.mjs';
 
 // #723: два шага публикуют коммит и прежде любой отказ push считали сдвигом
 // ветки — документ ревью релиза в `dev` (release-review.yml, три попытки) и
@@ -207,7 +207,7 @@ const noSecrets = (r) => {
 const TAG = 'v1.78.0';
 const RELEASE_DOC = `docs/reviews/RELEASE-REVIEW-${TAG}.md`;
 
-function runRelease(box) {
+function runRelease(box, extra = {}) {
   const dir = join(box.temp, 'release-review-result');
   mkdirSync(dir);
   const files = {
@@ -219,7 +219,7 @@ function runRelease(box) {
     .map(([name, text]) => `${createHash('sha256').update(text).digest('hex')}  ${name}\n`).join(''));
   return box.run(RELEASE_STEP(), {
     TAG, DOC: RELEASE_DOC, CANDIDATE: 'c'.repeat(40), BASE: 'v1.77.0', ISSUES: '701,702',
-    RUN_URL: 'https://github.com/o/r/actions/runs/42',
+    RUN_URL: 'https://github.com/o/r/actions/runs/42', ...extra,
   });
 }
 
@@ -631,11 +631,11 @@ function derivedSandbox(t) {
 }
 
 /** Шаг съёмки изменил отпечаток; коммит и push — шагом как есть. */
-function runDerived(box) {
+function runDerived(box, extra = {}) {
   writeFileSync(join(box.work, 'docs', 'images', 'screenshots.json'), '{"fingerprint":"new"}\n');
   return box.run(DERIVED_STEP(), {
     TAG: BETA, DOCS_CHANGED: 'true', DOCS_EXPECT: '', GOLDEN_CHANGED: '', GOLDEN_URL: '',
-    GOLDEN_EXPECT_CHANGE: '', GOLDEN_EXPECT_NEW: '', RUN_URL: 'https://github.com/o/r/actions/runs/44', HP_PREPUSH_GATE: '0',
+    GOLDEN_EXPECT_CHANGE: '', GOLDEN_EXPECT_NEW: '', RUN_URL: 'https://github.com/o/r/actions/runs/44', HP_PREPUSH_GATE: '0', ...extra,
   });
 }
 
@@ -730,6 +730,52 @@ test('#730 AC3: тела _ship-review.yml и _beta-derived.yml — без heredo
   // Блок run не обрезан: последняя строка каждого шага на месте.
   assert.match(ship, /echo "::error::документ ревью не опубликован в dev за три попытки"\nexit 1\n*$/);
   assert.match(DERIVED_STEP().script, /в dev — проверить перед кандидатом беты\." >> "\$GITHUB_STEP_SUMMARY"\n*$/);
+});
+
+// ---------- #766: хост push — сервер раннера, не зашитый github.com ----------
+
+const SERVER_LINE = 'server="${GITHUB_SERVER_URL:-https://github.com}"';
+const PUSH_URL_LINE = 'push_url="${server%%://*}://x-access-token:$TOKEN@${server#*://}/${{ github.repository }}"';
+
+test('#766: каждый push с токеном в workflow — на хост GITHUB_SERVER_URL с запасным github.com', () => {
+  const sites = [];
+  for (const name of readdirSync(WORKFLOWS).filter((file) => /\.ya?ml$/.test(file)).sort()) {
+    for (const step of workflowSteps(readFileSync(join(WORKFLOWS, name), 'utf8'), name)) {
+      if (!step.run || !step.run.includes('x-access-token')) continue;
+      const where = `${name}:${step.line}`;
+      sites.push(where);
+      assert.doesNotMatch(step.run, /@github\.com\b/, `${where}: хост push зашит`);
+      const lines = step.run.split('\n').map((line) => line.trim());
+      assert.ok(lines.includes(SERVER_LINE) && lines.includes(PUSH_URL_LINE), `${where}: адрес push — из GITHUB_SERVER_URL`);
+      assert.ok(lines.indexOf(SERVER_LINE) < lines.indexOf(PUSH_URL_LINE));
+      for (const push of step.run.match(/git push\b(?:[^\n]*\\\n)*[^\n]*/g) ?? []) {
+        assert.match(push, /"\$push_url"/, `${where}: ${push}`);
+      }
+    }
+  }
+  assert.deepEqual(sites.map((site) => site.split(':')[0]),
+    ['_beta-derived.yml', '_process.yml', '_process.yml', '_ship-review.yml', 'release-review.yml'], sites.join(', '));
+});
+
+test('#766 на настоящем bash: шаги публикации пушат на хост GITHUB_SERVER_URL', (t) => {
+  if (!hasTools()) { t.skip('bash/tar/jq/sha256sum недоступны'); return; }
+  const server = { GITHUB_SERVER_URL: 'https://ghe.example.test' };
+  // Транспорт подменён: адрес, с которым шаг позвал git push, — в журнале вызовов.
+  const hosts = (r) => r.calls.filter((call) => call.startsWith('push '))
+    .map((call) => /https:\/\/x-access-token:[^@\s]+@(\S+)/.exec(call)?.[1] ?? call);
+  const release = runRelease(sandbox(tempRoot(t, 'hp-766-release-')), server);
+  const docBox = sandbox(tempRoot(t, 'hp-766-doc-'));
+  taskBranch(docBox);
+  const doc = runReviewDoc(docBox, undefined, server);
+  const ship = runShip(sandbox(tempRoot(t, 'hp-766-ship-')), server);
+  const derived = runDerived(derivedSandbox(t), server);
+  for (const [label, r] of [['release-review.yml', release], ['_process.yml', doc], ['_ship-review.yml', ship], ['_beta-derived.yml', derived]]) {
+    assert.equal(r.status, 0, `${label}: ${r.stderr}${r.stdout}`);
+    assert.deepEqual(hosts(r), ['ghe.example.test/o/r'], label);
+  }
+  // Без GITHUB_SERVER_URL — прежний github.com.
+  const plain = runShip(sandbox(tempRoot(t, 'hp-766-plain-')), { GITHUB_SERVER_URL: '' });
+  assert.deepEqual(hosts(plain), ['github.com/o/r']);
 });
 
 test('#730: подписи сводки для публикации ship, производных артефактов и стража ребейза', () => {

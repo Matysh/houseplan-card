@@ -36,7 +36,7 @@ import { isMainModule } from './spawn-portable.mjs';
 import { classify } from './change-classes.mjs';
 import { issueTrailers } from './release-membership.mjs';
 import { hasReleaseTrailer } from './ship-review.mjs';
-import { CI_PROOF_POLICIES, evaluateCiProof, githubApiBase, loadGithubProofContext } from './ci-proof.mjs';
+import { CI_PROOF_POLICIES, evaluateCiProof, githubApiBase, githubServerUrl, loadGithubProofContext } from './ci-proof.mjs';
 
 /** Сколько последних dispatch-прогонов Validate на `dev` смотрит поиск `G`. */
 export const RUN_WINDOW = 50;
@@ -46,7 +46,8 @@ export const NIGHT_RED_MARKER_RE = /<!-- hp:night-red green=([0-9a-f]{40,64}) re
 
 const short = (sha, n) => String(sha || '').slice(0, n);
 const stamp = (run) => Date.parse(run?.created_at || '') || 0;
-const runUrl = (repo, run) => run?.html_url || `https://github.com/${repo}/actions/runs/${run?.id}`;
+// Ссылка API (`html_url`) главнее; без неё — сервер раннера (#766), не зашитый github.com.
+const runUrl = (repo, run, server) => run?.html_url || `${server}/${repo}/actions/runs/${run?.id}`;
 const subjectOf = (message) => String(message || '').split(/\r?\n/)[0].trim();
 
 /**
@@ -130,13 +131,16 @@ const limited = (items, render) => {
   return shown.join('; ');
 };
 
-/** К4: тело комментария. `commits` — все коммиты задачи в диапазоне; метка несёт все. */
-export function commentBody({ repo, red, green, commits = [], failedJobs = [] }) {
+/**
+ * К4: тело комментария. `commits` — все коммиты задачи в диапазоне; метка несёт все.
+ * `server` — для ссылок прогонов без `html_url` (#766).
+ */
+export function commentBody({ repo, red, green, commits = [], failedJobs = [], server = githubServerUrl() }) {
   const R = red.head_sha;
   const G = green.head_sha;
   return [
-    `**Красная ночь:** полный Validate на \`dev\` красный — ${runUrl(repo, red)} (\`${short(R, 12)}\`).`
-      + ` Последняя зелёная ночь — ${runUrl(repo, green)} (\`${short(G, 12)}\`).`,
+    `**Красная ночь:** полный Validate на \`dev\` красный — ${runUrl(repo, red, server)} (\`${short(R, 12)}\`).`
+      + ` Последняя зелёная ночь — ${runUrl(repo, green, server)} (\`${short(G, 12)}\`).`,
     `Коммиты этой задачи с файлами классов A/B вошли в \`dev\` между ними: ${limited(commits, (c) => `\`${short(c.sha, 8)}\` ${c.subject}`)}.`,
     `Упали job: ${failedJobs.length ? limited(failedJobs, (name) => name) : '—'}.`,
     'Задача — подозреваемая по диапазону, а не виновная. Ночь — сигнал, не гейт: бета по-прежнему требует зелёный Validate на SHA кандидата.',
@@ -156,10 +160,10 @@ const VERDICT_LINE = {
  * `rangeCommits`. Возвращает строки сводки, написанные комментарии и
  * предупреждения; сбой до первой задачи — исключение.
  */
-export async function nightRed({ repo, redRunId, api, issues, git, workflowJobs = undefined }) {
+export async function nightRed({ repo, redRunId, api, issues, git, workflowJobs = undefined, server = githubServerUrl() }) {
   const head = '### Красная ночь (#736)';
   const red = await api.run(redRunId);
-  const redLine = `${runUrl(repo, red)} (\`${short(red.head_sha, 12)}\`)`;
+  const redLine = `${runUrl(repo, red, server)} (\`${short(red.head_sha, 12)}\`)`;
   if (red.status !== 'completed' || red.conclusion !== 'failure') {
     return {
       posted: [], warnings: [],
@@ -171,14 +175,14 @@ export async function nightRed({ repo, redRunId, api, issues, git, workflowJobs 
   });
   const summary = [head, `- Красный прогон: ${redLine}.`];
   for (const item of found.skipped) {
-    summary.push(`- Отсеян зелёный ${runUrl(repo, item.run)} (\`${short(item.run.head_sha, 12)}\`): ${item.status} — ${item.note}.`);
+    summary.push(`- Отсеян зелёный ${runUrl(repo, item.run, server)} (\`${short(item.run.head_sha, 12)}\`): ${item.status} — ${item.note}.`);
   }
   if (!found.run) {
     summary.push(`- Последняя зелёная ночь не найдена (просмотрено прогонов: ${found.looked}) — подозреваемых не назначаю.`);
     return { posted: [], warnings: [], summary };
   }
   const green = found.run;
-  summary.push(`- Последняя зелёная ночь: ${runUrl(repo, green)} (\`${short(green.head_sha, 12)}\`).`);
+  summary.push(`- Последняя зелёная ночь: ${runUrl(repo, green, server)} (\`${short(green.head_sha, 12)}\`).`);
   const commits = green.head_sha === red.head_sha ? [] : git.rangeCommits(green.head_sha, red.head_sha);
   if (!commits.length) {
     summary.push('- Тот же код был зелёным — вероятен флак. Комментариев нет.');
@@ -195,7 +199,7 @@ export async function nightRed({ repo, redRunId, api, issues, git, workflowJobs 
       const issue = issues.view(suspect.number);
       const verdict = commentVerdict({ issue, green: green.head_sha, commits: suspect.commits });
       if (verdict === 'comment') {
-        const body = commentBody({ repo, red, green, commits: suspect.commits, failedJobs });
+        const body = commentBody({ repo, red, green, commits: suspect.commits, failedJobs, server });
         issues.comment(suspect.number, body);
         posted.push({ number: suspect.number, body });
       }
@@ -289,6 +293,7 @@ if (isMainModule(import.meta.url)) {
       api: actionsClient({ repo, token: process.env.ACTIONS_TOKEN || '', apiBase: githubApiBase() }),
       issues: ghIssues({ repo }),
       git: gitClient(),
+      server: githubServerUrl(),
     });
     const text = result.summary.join('\n');
     console.log(text);

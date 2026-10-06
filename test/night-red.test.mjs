@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { buildCiProof } from '../scripts/ci-proof.mjs';
+import { buildCiProof, githubServerUrl } from '../scripts/ci-proof.mjs';
 import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
 import { findStep, stepCommand } from './helpers/workflow-step.mjs';
 import {
@@ -386,7 +386,7 @@ function fakeGh(root, issues) {
 }
 
 /** Шаг ночи в рабочей копии `cwd` с `scripts/` из этого дерева; асинхронно — сервер живёт в этом процессе. */
-async function runNightStep(t, { cwd, items, issues = {}, fail = false, scripts = SCRIPTS }) {
+async function runNightStep(t, { cwd, items, issues = {}, fail = false, scripts = SCRIPTS, env = {} }) {
   const root = mkdtempSync(join(tmpdir(), 'hp-736-step-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const api = await actionsServer(t, items, { fail });
@@ -404,7 +404,7 @@ async function runNightStep(t, { cwd, items, issues = {}, fail = false, scripts 
     env: {
       ...ENV, PATH: `${gh.bin}:${process.env.PATH}`, REPO, RED_RUN: '105',
       ACTIONS_TOKEN: 'actions-token', GH_TOKEN: 'process-token', GITHUB_API_URL: api.base,
-      GITHUB_STEP_SUMMARY: files.summary, FAKE_LOG: files.log, FAKE_ISSUES: gh.data,
+      GITHUB_STEP_SUMMARY: files.summary, FAKE_LOG: files.log, FAKE_ISSUES: gh.data, ...env,
     },
   });
   let stdout = '';
@@ -491,4 +491,43 @@ test('#736 К6 на настоящем bash: сбой API или упавший 
   assert.equal(crashed.status, 0, crashed.stderr);
   assert.match(crashed.stdout, /^::warning::красная ночь \(#736\): скрипт упал — комментарии не написаны/m);
   assert.match(crashed.summary, /- Красная ночь \(#736\): скрипт упал/);
+});
+
+// #766: ссылка на прогон без `html_url` строится от сервера раннера
+// (`GITHUB_SERVER_URL`), а не от зашитого https://github.com.
+test('#766: сервер ссылок — GITHUB_SERVER_URL без хвостового /, по умолчанию github.com; html_url главнее', () => {
+  assert.equal(githubServerUrl({}), 'https://github.com');
+  assert.equal(githubServerUrl({ GITHUB_SERVER_URL: 'https://ghe.example.test/' }), 'https://ghe.example.test');
+  const R = 'd'.repeat(40);
+  const G = 'a'.repeat(40);
+  const body = commentBody({
+    repo: REPO, red: { id: 5, head_sha: R }, green: { id: 4, head_sha: G, html_url: 'https://api.example/runs/4' },
+    commits: [{ sha: '1'.repeat(40), subject: 'one' }], server: 'https://ghe.example.test',
+  });
+  assert.ok(body.includes(`красный — https://ghe.example.test/${REPO}/actions/runs/5 `), body);
+  assert.ok(body.includes('Последняя зелёная ночь — https://api.example/runs/4 '), 'ссылка API не переписывается');
+  assert.doesNotMatch(body, /github\.com/);
+});
+
+test('#766 на настоящем bash: шаг ночи на нестандартном сервере — ссылки прогонов без html_url от GITHUB_SERVER_URL', async (t) => {
+  if (!hasBash()) { t.skip('bash недоступен'); return; }
+  const { cwd, sha } = history(t);
+  const bare = ({ run: { html_url: _dropped, ...run }, context }) => ({ run, context });
+  const items = [
+    validateRun({ id: 105, sha: sha.R, at: day(24), conclusion: 'failure' }),
+    validateRun({ id: 104, sha: sha.c2, at: day(22), full: false }),
+    validateRun({ id: 102, sha: sha.G, at: day(20) }),
+  ].map(bare);
+  const run = await runNightStep(t, {
+    cwd, items, env: { GITHUB_SERVER_URL: 'https://ghe.example.test/' },
+    issues: { 1: { state: 'OPEN', comments: [] }, 2: { state: 'OPEN', comments: [] }, 5: { state: 'OPEN', comments: [] }, 8: { state: 'OPEN', comments: [] } },
+  });
+  assert.equal(run.status, 0, run.stderr);
+  assert.doesNotMatch(run.stdout, /::warning::/, run.stdout);
+  const server = `https://ghe.example.test/${REPO}/actions/runs`;
+  assert.ok(run.comment(1).includes(`красный — ${server}/105 `), run.comment(1));
+  assert.ok(run.comment(1).includes(`Последняя зелёная ночь — ${server}/102 `), run.comment(1));
+  assert.ok(run.summary.includes(`- Красный прогон: ${server}/105 `), run.summary);
+  assert.ok(run.summary.includes(`- Отсеян зелёный ${server}/104 `), run.summary);
+  assert.doesNotMatch(run.comment(1) + run.summary, /github\.com/);
 });

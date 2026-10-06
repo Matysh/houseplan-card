@@ -28,7 +28,10 @@ test('#697 бот: только по кнопке, прав на запись у
     assert.doesNotMatch(text, /contents: write/);
   }
   const commit = step('Коммит в dev');
-  assert.match(commit, /git push -q "https:\/\/x-access-token:\$TOKEN@github\.com\/\$\{\{ github\.repository \}\}" HEAD:dev/);
+  // #766: хост — сервер раннера (GITHUB_SERVER_URL), не зашитый github.com.
+  assert.match(commit, /push_url="\$\{server%%:\/\/\*\}:\/\/x-access-token:\$TOKEN@\$\{server#\*:\/\/\}\/\$\{\{ github\.repository \}\}"/);
+  assert.match(commit, /git push -q "\$push_url" HEAD:dev/);
+  assert.equal((commit.match(/git push/g) || []).length, 1, 'один push');
   assert.doesNotMatch(commit, /--force/, 'ушедший dev — перезапуск, а не перезапись');
 });
 

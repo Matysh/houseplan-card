@@ -501,6 +501,8 @@ const apiHeaders = (token) => ({
  * `archive_download_url` приходит из API абсолютным и базу не берёт.
  */
 export const githubApiBase = (env = process.env) => String(env.GITHUB_API_URL || 'https://api.github.com').replace(/\/+$/, '');
+/** Сервер GitHub для ссылок (#766): `GITHUB_SERVER_URL`, как у раннера, без хвостового `/`. */
+export const githubServerUrl = (env = process.env) => String(env.GITHUB_SERVER_URL || 'https://github.com').replace(/\/+$/, '');
 
 async function githubJson(url, token, fetchImpl) {
   const response = await fetchImpl(url, { headers: apiHeaders(token) });

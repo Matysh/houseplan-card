@@ -584,8 +584,11 @@ jobs:
           # прогона со своей причиной. #730: причина и ответ git без токена —
           # ещё и в сводке шага (--summary; устаревший lease её не пишет).
           push_err="$RUNNER_TEMP/rebase-push.stderr"
+          # #766: хост push — сервер раннера (GITHUB_SERVER_URL), не зашитый github.com.
+          server="${GITHUB_SERVER_URL:-https://github.com}"
+          push_url="${server%%://*}://x-access-token:$TOKEN@${server#*://}/${{ github.repository }}"
           if ! git push -q --force-with-lease="refs/heads/$BRANCH:$before" \
-               "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
+               "$push_url" \
                "HEAD:refs/heads/$BRANCH" 2> "$push_err"; then
             refusal="$RUNNER_TEMP/push-refusal.md"
             kind=$(node "$TOOLS/scripts/merge-candidate.mjs" --push-refusal="$push_err" \
@@ -1693,7 +1696,10 @@ jobs:
           # сразу, причина и ответ git без токена — в журнале и в сводке шага;
           # метка не меняется.
           push_err="$RUNNER_TEMP/review-doc-push.stderr"
-          if ! git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
+          # #766: хост push — сервер раннера (GITHUB_SERVER_URL), не зашитый github.com.
+          server="${GITHUB_SERVER_URL:-https://github.com}"
+          push_url="${server%%://*}://x-access-token:$TOKEN@${server#*://}/${{ github.repository }}"
+          if ! git push -q "$push_url" \
                "HEAD:$target" 2> "$push_err"; then
             kind=$(node "$TOOLS/scripts/merge-candidate.mjs" --push-refusal="$push_err" --ref="$target" \
               --stage=review-doc --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
@@ -1713,7 +1719,7 @@ jobs:
             # После ребейза набор путей другой — проверяется заново. Форс здесь
             # запрещён и не появляется: ветка двигается только вперёд.
             git diff --name-only "origin/$target...HEAD" | node "$TOOLS/scripts/review-doc-guard.mjs"
-            if ! git push -q "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
+            if ! git push -q "$push_url" \
                  "HEAD:$target" 2> "$push_err"; then
               kind=$(node "$TOOLS/scripts/merge-candidate.mjs" --push-refusal="$push_err" --ref="$target" \
                 --stage=review-doc --summary="$GITHUB_STEP_SUMMARY") || kind=unknown
