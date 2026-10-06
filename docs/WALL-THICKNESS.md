@@ -47,6 +47,14 @@ room deletion, opening edits, Undo/Redo/recovery, Optimize and import/export
 apply the same lineage and validation rules before one atomic persistence write.
 Initial legacy IDs are deterministic, so frontend, backend and repeated
 migrations converge; only genuinely new segments get UUIDs.
+Room-face acceptance settles its provisional partition lineage after coincident
+carriers have been reconciled (#804). A surviving partition or residual reserves
+its ID: only new room-edge hints that still claim that ID are cleared, preserving
+their slots. The common model barrier allocates new room-wall IDs; fully consumed
+carriers retain their usual promotion lineage. Existing room IDs and the global
+duplicate-ID guard are not relaxed. Ordinary config writes still reject changes
+to the kind or ID of a surviving partition-opening host; the narrowly proved
+Optimize rehost capability is not granted to room creation.
 `src/wall-segment-model.ts` and `custom_components/houseplan/wall_segment_model.py`
 share `test/fixtures/282-wall-identity-parity.json`. Writer-bypass mutants in
 `scripts/mutation-registry.mjs` guard every structural writer entrance. A `cm:0`

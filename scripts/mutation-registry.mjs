@@ -73,6 +73,18 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'wall-face-lineage-skips-post-reconcile-settlement',
+    guard: 'node demo/smoke_wall_face_lineage.mjs',
+    because: '#804 AC1/AC3/AC5: only the production room-dialog save proves that residual '
+      + 'partition IDs are settled before the strict wall-model barrier; pure helper tests '
+      + 'cannot detect an omitted runtime call, and the duplicate-ID guard must remain intact.',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '        if (room.wall_ids) room.wall_ids = settleWallFaceLineage(room.wall_ids, remainingPartitionIds);\n',
+      replace: '        // mutant: stale partition lineage reaches the wall-model barrier\n',
+    }],
+  },
+  {
     id: 'stairs-continuous-transform-snaps-to-lattice',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/coordinate-canonicalization.test.mjs',

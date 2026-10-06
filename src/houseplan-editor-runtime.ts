@@ -269,6 +269,7 @@ import { safeStoredColor } from './color';
 import { gridCellFieldValue, gridVisualUnits, newSpaceCellCm } from './grid-scale';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { reconcileCoincidentPartitions } from './coincident-partitions';
+import { selectWallFaceLineage, settleWallFaceLineage } from './wall-face-lineage';
 import { finalizeWallChainSpace } from './writer-fixed-point';
 import {
   captureMarkerRoomReferences, restoreMarkerRoomReferences,
@@ -6599,29 +6600,9 @@ public _applyWallFaceBatch(): void {
     }
     const activePartitionIds = new Set(batch.activePartitionIds);
     const epsilon = this.host._gridPitch * 0.0002;
-    const roomLineage = accepted.map((decision) => decision.candidate.ring.map((a, index, ring) => {
-      const b = ring[(index + 1) % ring.length];
-      const carriers = model.partitions.filter((partition) => {
-        const length = Math.hypot(partition.b[0] - partition.a[0], partition.b[1] - partition.a[1]);
-        if (!(length > epsilon)) return false;
-        const ux = (partition.b[0] - partition.a[0]) / length;
-        const uy = (partition.b[1] - partition.a[1]) / length;
-        const along = (point: number[]) => (
-          (point[0] - partition.a[0]) * ux + (point[1] - partition.a[1]) * uy
-        );
-        return distToSegment(a, [partition.a[0], partition.a[1], partition.b[0], partition.b[1]]) <= epsilon
-          && distToSegment(b, [partition.a[0], partition.a[1], partition.b[0], partition.b[1]]) <= epsilon
-          && along(a) >= -epsilon && along(a) <= length + epsilon
-          && along(b) >= -epsilon && along(b) <= length + epsilon;
-      });
-      carriers.sort((left, right) => (
-        Number(activePartitionIds.has(right.id)) - Number(activePartitionIds.has(left.id))
-        || Math.hypot(left.b[0] - left.a[0], left.b[1] - left.a[1])
-          - Math.hypot(right.b[0] - right.a[0], right.b[1] - right.a[1])
-        || left.id.localeCompare(right.id)
-      ));
-      return carriers[0]?.id || '';
-    }));
+    const roomLineage = accepted.map((decision) => selectWallFaceLineage(
+      decision.candidate.ring, model.partitions, activePartitionIds, epsilon,
+    ));
     const before = this._geometrySnapshot();
     if (!before) {
       abort('toast.geometry_unsafe');
@@ -6743,6 +6724,10 @@ public _applyWallFaceBatch(): void {
       else delete sp.partitions;
       if (reconciled.openings.length) sp.openings = reconciled.openings;
       else delete sp.openings;
+      const remainingPartitionIds = new Set(reconciled.partitions.map((partition) => partition.id));
+      for (const { room } of newRooms) {
+        if (room.wall_ids) room.wall_ids = settleWallFaceLineage(room.wall_ids, remainingPartitionIds);
+      }
     }
 
     if (!this._commitPhysicalGeometry(this.host._t('history.wall_face_batch'), before)) return;

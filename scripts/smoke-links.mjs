@@ -30,6 +30,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['selectWallFaceLineage', 'settleWallFaceLineage'],
+    smokes: ['smoke_wall_face_lineage.mjs'],
+    because: '#804: a partial partition carrier is promoted through the production room dialog, '
+      + 'actual config/set, history and reload; the smoke observes persisted IDs and atomic '
+      + 'rollback rather than importing or naming the lineage helper.',
+  },
+  {
     files: ['src/zigbee-topology-runtime.ts', 'src/hp-zigbee-topology-settings.ts'],
     smokes: ['smoke_zigbee_topology_job.mjs'],
     because: '#800: background-job restore across a real page reload, elapsed/cancel boundary, '

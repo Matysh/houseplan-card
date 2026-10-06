@@ -1,5 +1,15 @@
 # Development and deployment
 
+## Room-face lineage regression (#804)
+
+`node demo/smoke_wall_face_lineage.mjs` exercises creation from a partial
+independent wall using synthetic geometry, without a second exact-span carrier
+over the room edge. Adding that duplicate carrier would hide the original bug.
+Run against a fresh demo bundle; private runtime writes are not a test API.
+Pure lineage cases and shared frontend/backend candidates cover retained IDs,
+partial/full promotion and the unchanged partition-opening host restrictions.
+Never add a user's complete exported home configuration to the test fixtures.
+
 ## Input support contract
 
 Read `docs/TOUCH-SUPPORT.md` before changing interaction code.

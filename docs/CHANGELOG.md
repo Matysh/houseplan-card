@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fixed creating a room from part of a longer independent wall failing with
+  conflicting wall identifiers. The outside wall pieces retain their geometry
+  and thickness; no redraw or Optimize workaround is needed
+  ([#804](https://github.com/Matysh/houseplan-card/issues/804)).
+
 ## v1.80.0-beta.4 — 2026-10-05
 
 - Zigbee links to another space now name the destination device too. Device

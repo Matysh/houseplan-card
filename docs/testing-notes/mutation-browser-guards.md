@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 40 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 49 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 39 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 103 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **239 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 104 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **240 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -240,6 +240,11 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 
 ### Custom-element and HA browser lifecycle
 
+`wall-face-lineage-skips-post-reconcile-settlement` (#804) needs the production room
+dialog, post-reconciliation runtime wiring, history, asynchronous `config/set` and
+reload. Pure lineage-helper tests cannot prove that the editor actually settles
+residual-owned IDs before the strict wall-model barrier or rolls rejected writes back.
+
 The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition.
 
 - `accepted-marker-rolled-back-by-layout-failure`
@@ -329,6 +334,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `view-current-space-aria-removed`
 - `volumetric-kiosk-ignores-setting`
 - `wall-face-apply-skips-overlap-guard`
+- `wall-face-lineage-skips-post-reconcile-settlement`
 - `wallthick-hit-narrowed`
 - `warm-late-resume-beats-user-mode`
 - `warm-late-resume-crosses-space`

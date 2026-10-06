@@ -272,6 +272,12 @@ revision. Model and lineage: [`WALL-THICKNESS.md`](WALL-THICKNESS.md) §1;
 migrations and stale-client guard: [`CONFIG-COMPATIBILITY.md`](CONFIG-COMPATIBILITY.md)
 (model v8–v10); rationale: [`adr/282-wall-geometry-representation.md`](adr/282-wall-geometry-representation.md).
 
+Room-face acceptance uses `wall-face-lineage.ts` to choose provisional carriers
+and settle only new-room hints against the partitions left after reconciliation
+(#804). A residual keeps its identity without colliding with the promoted room
+edge. The common model barrier, host validation and atomic history remain the
+authorities; this helper neither allocates IDs nor writes configuration.
+
 Rooms may not partially overlap (lying on a shared wall is legal, a fully nested
 island is supported). Merge/Split use **polyclip-ts** (not `polygon-clipping`,
 see [`DEVELOPMENT.md`](DEVELOPMENT.md)): Merge accepts a pair only when the union
