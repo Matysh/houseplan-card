@@ -531,8 +531,11 @@ export const planStyles = css`
        the same DOM on a new "space" in setConfig of the same element (the
        outer key) and on a config event that inserts, removes or re-zones a
        room (the inner key).
+
+       #764: and its device markers and opening symbols, in the same
+       keyed(space.id, repeat(...)) shape.
        Witnesses: demo/smoke_space_switch_transitions.mjs,
-       demo/smoke_space_card.mjs. */
+       demo/smoke_space_card.mjs, demo/smoke_space_card_identity.mjs. */
     .op-leaf {
       transition: transform 0.6s ease;
     }

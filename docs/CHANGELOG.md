@@ -18,6 +18,10 @@
   the original square, and every mark lands exactly where it is clicked
   relative to the outline. Saved radar settings are unchanged
   ([#774](https://github.com/Matysh/houseplan-card/issues/774)).
+- The space card no longer swings doors or recolours device markers that did
+  not change when the plan is edited elsewhere or its space is changed: each
+  door and marker keeps its own drawing instead of starting from its
+  neighbour's ([#764](https://github.com/Matysh/houseplan-card/issues/764)).
 
 ## v1.80.0-beta.6 — 2026-10-06
 

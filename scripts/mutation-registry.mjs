@@ -10308,6 +10308,44 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'space-card-markers-rendered-without-keys',
+    guard: 'node demo/smoke_space_card_identity.mjs',
+    because: 'a config event that hides or adds a marker shifts the space card\'s marker list: '
+      + 'a positional map() hands each marker node to its neighbour, and `.device-core` draws '
+      + 'the neighbour\'s state colour out over 0.15s; the same reuse paints the previous '
+      + 'space\'s marker into the first frames of a new `space` from setConfig (#764 AC1)',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: '  const markers = keyed(space.id, repeat(iconDevs, (d) => d.id, (d) => {',
+      replace: '  const markers = keyed(space.id, iconDevs.map((d) => {',
+    }],
+  },
+  {
+    id: 'space-card-openings-rendered-without-keys',
+    guard: 'node demo/smoke_space_card_identity.mjs',
+    because: 'a door inserted first by a config event shifts the space card\'s opening symbols: '
+      + 'a positional map() hands each symbol node to its neighbour, and `.op-leaf`/`.op-arc` '
+      + 'swing for 0.6s from the neighbour\'s angle — a door that never moved (#764 AC1)',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: 'keyed(space.id, repeat<ResolvedPartitionOpening>(\n'
+        + '    resolvedHosted, (resolved, index) => resolved.opening.id || index, (resolved) => {',
+      replace: 'keyed(space.id, resolvedHosted.map((resolved: ResolvedPartitionOpening) => {',
+    }],
+  },
+  {
+    id: 'space-card-openings-rendered-without-space-key',
+    guard: 'node demo/smoke_space_card_identity.mjs',
+    because: 'opening ids are unique only inside a space: without the outer space key repeat '
+      + 'matches the door of the previous space to the door with the same id in the new one, '
+      + 'keeps the node, and its leaf swings from the other floor\'s state (#764 AC2, same-id case)',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: 'keyed(space.id, repeat<ResolvedPartitionOpening>(\n',
+      replace: '(repeat<ResolvedPartitionOpening>(\n',
+    }],
+  },
+  {
     id: 'live-editor-devices-drops-align-guides',
     guard: 'node demo/smoke_align_guides.mjs',
     because: 'the device editor paints nothing else from a template, so dropping the guides '

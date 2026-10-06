@@ -34,6 +34,7 @@ import { floorMinusBodies, physicalBodyParts, polyclipPathD } from './physical-g
 import {
   materializePartitionOpening, partitionOpeningCut,
   partitionOpeningFace, partitionOpeningHasCompositeRoomWall, resolvePartitionOpeningCompat,
+  type ResolvedPartitionOpening,
 } from './partition-openings';
 import {
   openingVisibleBounds, renderOpeningVisibleGeometry, type OpeningVisibleSpec,
@@ -645,7 +646,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     return face === nothing ? nothing : html`<div class="dev led-badge ${deviceThemeClass(planHass)}" data-led-badge=${d.id} aria-hidden="true"
       style="left:${((a.x - vb[0]) / vb[2]) * 100}%;top:${((a.y - vb[1]) / vb[3]) * 100}%">${face}</div>`;
   }) : nothing;
-  const markers = iconDevs.map((d) => {
+  // #764: markers and opening symbols are keyed like the rooms above (#745): `.device-core`
+  // and `.op-leaf`/`.op-arc` transition, and a positional node animated a stranger's state.
+  const markers = keyed(space.id, repeat(iconDevs, (d) => d.id, (d) => {
     const p = markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds);
     const left = ((p.x - vb[0]) / vb[2]) * 100;
     const top = ((p.y - vb[1]) / vb[3]) * 100;
@@ -679,7 +682,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         newDeviceTitle: t(o.lang, 'device.new'),
       })}
     </div>`;
-  });
+  }));
 
   const labels = disp.showNames
     ? space.rooms
@@ -931,7 +934,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       });
     }
   }
-  const hostedOpeningSymbols = disp.hideOpenings ? [] : resolvedHosted.map((resolved) => {
+  const hostedOpeningSymbols = disp.hideOpenings ? [] : keyed(space.id, repeat<ResolvedPartitionOpening>(
+    resolvedHosted, (resolved, index) => resolved.opening.id || index, (resolved) => {
     const opening = resolved.opening;
     const entity = opening.type === 'passage' || !opening.contact
       ? null : planHass.states?.[opening.contact];
@@ -958,7 +962,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       transform="translate(${resolved.center[0]} ${resolved.center[1]}) rotate(${resolved.angle})">
       ${renderOpeningVisibleGeometry(spec)}
     </g>`;
-  });
+  }));
   const stairShapes = space.stairs.map((stair) => {
     const geometry = cachedStairRenderGeometry(stair, cellCm);
     return svg`<g class="hp-stair" data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}

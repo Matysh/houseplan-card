@@ -196,6 +196,15 @@ export const SMOKE_LINKS = [
       + 'key without a single identifier of the smoke changing',
   },
   {
+    symbols: ['renderSpaceStatic'],
+    files: ['src/space-render.ts'],
+    smokes: ['smoke_space_card_identity.mjs'],
+    because: '#764: the same list-identity contract on the read-only space card. The smoke '
+      + 'drives a real houseplan-space-card through setConfig and a server config push and reads '
+      + 'transitions and per-frame computed styles off marker and opening nodes; it names no '
+      + 'symbol of the static renderer, whose marker and opening lists are local variables',
+  },
+  {
     symbols: ['LoadedSummaryPanelRuntime', 'SummaryPanelPresentation', 'renderSummaryPanelEditor',
       'summaryPanelCss', 'summaryPanelEditorCss', 'summaryPanelDialogCss', 'summaryIcon'],
     smokes: ['smoke_summary_panel_polish.mjs'],

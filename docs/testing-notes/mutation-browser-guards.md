@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 43 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 50 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 39 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 105 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **244 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 108 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **247 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -334,6 +334,9 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `rooms-rendered-without-keys`
 - `rooms-rendered-without-space-key`
 - `same-space-room-change-recenters`
+- `space-card-markers-rendered-without-keys`
+- `space-card-openings-rendered-without-keys`
+- `space-card-openings-rendered-without-space-key`
 - `space-card-rooms-rendered-without-keys`
 - `space-create-hidden-display-override`
 - `stairs-view-pan-opens-target-floor`
