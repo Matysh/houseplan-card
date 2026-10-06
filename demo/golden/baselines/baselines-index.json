@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 73,
-  "acceptedAt": "2026-10-06T17:21:15.454Z",
-  "sourceFingerprint": "542656cfacffc36a77b28cf329140d08b6f9bff447c092d54689c300d606f75d",
+  "acceptedAt": "2026-10-06T20:39:26.851Z",
+  "sourceFingerprint": "b7958f48935cd236f28c56a54e50a182713dbd63a012ad16b1c70d00b2b7fc4d",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,41 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "542656cfacffc36a77b28cf329140d08b6f9bff447c092d54689c300d606f75d",
-    "ci": null
-  },
-  "localAttestation": {
-    "schema": "houseplan-golden-wsl/v1",
-    "sha256": "d5e785e772731545943419b719df10f952592b82bbfb65db61a6727892d8b61c",
-    "artifactSha256": "ebce2dff59e2fca809ea4d8a0efbcb3663aeed57bf38f4f821387228f6eba09a",
-    "createdAt": "2026-10-06T17:20:50.497Z",
-    "source": {
+    "buildFingerprint": "b7958f48935cd236f28c56a54e50a182713dbd63a012ad16b1c70d00b2b7fc4d",
+    "ci": {
       "repository": "Matysh/houseplan-card",
-      "branch": "issue/806-battery-shadow-optout",
-      "commit": "3bfd3f416192892e768534c83b4117f8615a7042",
-      "tree": "a3959db430b8e57704fed4da397d6fe99fec4674",
-      "remoteSha": "3bfd3f416192892e768534c83b4117f8615a7042",
-      "clean": true,
-      "status": ""
-    },
-    "environment": {
-      "platform": "linux",
-      "arch": "x64",
-      "kernel": "6.18.33.2-microsoft-standard-WSL2",
-      "wsl": true,
-      "distro": "Ubuntu",
-      "filesystem": "ext2/ext3"
-    },
-    "toolchain": {
-      "node": "22.23.2",
-      "npm": "10.9.8",
-      "playwright": "1.62.0",
-      "chromiumExecutableSha256": "0b20b130e7edd9dd51873be867761295fe0cfad490c2b9a64f95bd3cfc08fa71"
+      "run": 37526387243,
+      "attempt": 1,
+      "sha": "7efe457939d6928693e16a33171a596de6c81fbb"
     }
   },
+  "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 110,
+    "count": 112,
     "floor": 10
   },
   "scenarios": {
@@ -167,7 +144,7 @@
     "device-battery-board-dark": "d0f4d338a34eef50965c89716df285344bcfb6a60a078372d3a8b1bb9855d733",
     "device-battery-board-medium": "25d924e54d0d0c09569678560c00869ac3a39dfc38c59910adc86ad221e8b2e7",
     "device-battery-mobile-dark": "f968127a092cd5081a18864ce883f791e398136b5cbc0fcd319eab6a855c7cc8",
-    "device-battery-zigbee-overlap-dark": "69e6a6da65f3aa144d9e4ec56f9d97820a6926e0fff58faa598d9ca0bff8420a",
+    "device-battery-zigbee-overlap-dark": "392c2d07b97e3c83a4da657931df1bd38d419b18c05c6843ed3da8934e975c9e",
     "device-value-face-cover-source-dark": "18aa90881fe7794c98c52142b73fb1db33bf57d390c24b6286b7b7db6312bcfa",
     "device-icon-state-table-light": "0e426d536bd89354d51bd90ef62c08bdf8d36f27132d5f1f22b64c79850266df",
     "device-icon-state-table-dark": "c993ee850b38af1325f1290d45e516a19c4bc6c3e4db864cdc1cc61276ce6d18",
