@@ -45,7 +45,10 @@ unknown. Двоичный `on` означает low, `off` normal. Неизве�
 собственных sensor/binary siblings и у маркера сущности: обновление заряда не
 ждёт изменения основного датчика или пересборки roster.
 
-`settings.show_device_battery` отсутствует — включено, exact false — выключено.
+`settings.show_device_battery` отсутствует — включено, exact false — выключено,
+exact `"low"` (#807) — только состояние `low`: резолвер `deviceBatteryModeOf`
+даёт опцию `batteryLowOnly`, и `resolveDevicePresentation` отбрасывает батарею
+в остальных состояниях; поверхности получают режим из одного резолвера.
 `marker.hide_battery:true` сильнее глобального default-on и скрывает батарею
 только этого маркера; отсутствие/false сохраняет общее поведение. Тот же
 предикат используется в View, 2.5D, preview и static space card, поэтому draft

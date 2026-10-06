@@ -157,7 +157,7 @@ def _global_settings(value: object) -> dict[str, Any]:
     if isinstance(show_room_tooltip, bool):
         out["show_room_tooltip"] = show_room_tooltip
     show_device_battery = value.get("show_device_battery")
-    if isinstance(show_device_battery, bool):
+    if isinstance(show_device_battery, bool) or show_device_battery == "low":
         out["show_device_battery"] = show_device_battery
     volumetric_view = value.get("volumetric_view")
     if isinstance(volumetric_view, bool):

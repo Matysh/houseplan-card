@@ -1402,6 +1402,9 @@ def _north_deg(value):
 
 _BG_MODE = vol.In(["static", "daynight"])
 _SUN_RAY_ORIGIN = vol.In(["inner", "outer"])
+# #792/#807: absent = every battery device, exact False = none, "low" = only
+# the red low state. Strings other than "low" and truthy numbers are refused.
+_DEVICE_BATTERY = vol.Any(bool, "low")
 
 SPACE_DISPLAY_SCHEMA = vol.Schema(
     {
@@ -2323,7 +2326,7 @@ CONFIG_SCHEMA = vol.All(
                     vol.Optional("sun_rays"): bool,
                     vol.Optional("sun_ray_origin"): _SUN_RAY_ORIGIN,
                     vol.Optional("show_room_tooltip"): bool,
-                    vol.Optional("show_device_battery"): bool,
+                    vol.Optional("show_device_battery"): _DEVICE_BATTERY,
                     # #649: installation-wide 2.5D View; absent/false keeps Flat.
                     vol.Optional("volumetric_view"): bool,
                     # #661: the moon on the "Follow the Sun" background; absent/false = off.

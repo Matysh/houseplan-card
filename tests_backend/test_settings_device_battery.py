@@ -1,4 +1,4 @@
-"""#792 AC9: optional global battery opt-out, strict writes and safe support data."""
+"""#792 AC9 / #807 AC3: optional global battery mode, strict writes and safe support data."""
 import copy
 import json
 from pathlib import Path
@@ -14,19 +14,20 @@ support = load_pure(
 )
 
 
-@pytest.mark.parametrize("value", [True, False])
-def test_device_battery_preserves_explicit_booleans(value):
+@pytest.mark.parametrize("value", [True, False, "low"])
+def test_device_battery_preserves_explicit_values(value):
     config = {"spaces": [], "settings": {
         "show_device_battery": value, "show_room_tooltip": False,
         "future_namespace": {"sentinel": "kept"},
     }}
     out = validation.CONFIG_SCHEMA(copy.deepcopy(config))
     assert out["settings"] == config["settings"]
-    assert out["settings"]["show_device_battery"] is value
+    assert out["settings"]["show_device_battery"] == value
+    assert type(out["settings"]["show_device_battery"]) is type(value)
 
 
-@pytest.mark.parametrize("bad", ["false", "true", "yes", 0, 1, None, [], {}])
-def test_device_battery_rejects_non_booleans(bad):
+@pytest.mark.parametrize("bad", ["false", "true", "yes", "LOW", "low ", "all", 0, 1, None, [], {}])
+def test_device_battery_rejects_other_values(bad):
     with pytest.raises(vol.Invalid):
         validation.CONFIG_SCHEMA({"spaces": [], "settings": {"show_device_battery": bad}})
 
@@ -36,10 +37,10 @@ def test_device_battery_omission_stays_absent_without_a_migration():
     assert "show_device_battery" not in out["settings"]
 
 
-def test_support_package_copies_only_valid_battery_booleans():
-    for value in (True, False):
+def test_support_package_copies_only_valid_battery_values():
+    for value in (True, False, "low"):
         assert support._global_settings({"show_device_battery": value}) == {"show_device_battery": value}
-    for bad in ("false", "true", 0, 1, None, [], {}):
+    for bad in ("false", "true", "LOW", 0, 1, None, [], {}):
         assert "show_device_battery" not in support._global_settings({"show_device_battery": bad})
 
 

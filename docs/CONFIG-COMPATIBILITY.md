@@ -119,14 +119,20 @@ new frontend restores the disabled behavior after upgrade. Full backup/import
 preserves the setting and the privacy-safe support projection includes only a
 validated boolean.
 
-## Device battery indicators (#792)
+## Device battery indicators (#792, #807)
 
-`settings.show_device_battery` is an optional global boolean, enabled by
-default on existing and new installations. Only exact `false` hides the new
-passive battery indicators; saving enabled removes the key. This does not
-change a manually configured battery value badge, LQI or device actions.
-The backend accepts only a boolean, and the privacy-safe support projection
-includes only a validated boolean.
+`settings.show_device_battery` is an optional global setting, enabled by
+default on existing and new installations. Only exact `false` hides the
+passive battery indicators; the exact string `"low"` (#807) keeps only the red
+low state (`low`: below 20 % or a binary `on`); saving «All» removes the key.
+This does not change a manually configured battery value badge, LQI or device
+actions. The backend accepts only a boolean or `"low"`, and the privacy-safe
+support projection includes only a validated value.
+
+Frontends before #807 test `!== false`, so they read `"low"` as «All»: the
+indicators come back on every battery device until the frontend is updated.
+Backends before #807 reject `"low"` (the field was a strict boolean), so the
+low-only mode needs the matching backend; frontend and backend ship together.
 
 Full backup/import preserves the setting; importing a single space leaves the
 installation's global preference untouched. Older frontends ignore it and

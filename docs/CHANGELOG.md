@@ -7,6 +7,11 @@
   battery status on plan** switch, so one indicator can be suppressed without
   disabling the default-on global battery display for every device
   ([#806](https://github.com/Matysh/houseplan-card/issues/806)).
+- The device battery setting in General settings is now a three-way choice:
+  All, Low only or None. Low only keeps just the red indicators of devices
+  below 20%, so a healthy house shows no battery icons at all. Update and
+  restart the integration too: older integration versions refuse to save the
+  new choice ([#807](https://github.com/Matysh/houseplan-card/issues/807)).
 
 ## v1.80.0-beta.5 — 2026-10-06
 

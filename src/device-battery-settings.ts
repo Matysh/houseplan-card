@@ -1,12 +1,21 @@
-/** #792: the installation-wide battery indicator is enabled unless explicitly disabled. */
-export function showDeviceBatteryOf(settings: { show_device_battery?: unknown } | null | undefined): boolean {
-  return settings?.show_device_battery !== false;
+/** #792/#807: the installation-wide battery indicator — every device (default), only low charge, or none. */
+export type DeviceBatteryMode = 'all' | 'low' | 'off';
+
+/** Absent/other — all; exact false — off; exact "low" — only the red low state. */
+export function deviceBatteryModeOf(settings: { show_device_battery?: unknown } | null | undefined): DeviceBatteryMode {
+  const value = settings?.show_device_battery;
+  return value === false ? 'off' : value === 'low' ? 'low' : 'all';
 }
 
-/** Store only the opt-out; enabling restores the default without touching sibling settings. */
-export function writeDeviceBatterySetting(settings: { show_device_battery?: unknown }, on: boolean): void {
-  if (on) delete settings.show_device_battery;
-  else settings.show_device_battery = false;
+/** #792: the indicator is enabled unless explicitly disabled (also true for the low-only mode). */
+export function showDeviceBatteryOf(settings: { show_device_battery?: unknown } | null | undefined): boolean {
+  return deviceBatteryModeOf(settings) !== 'off';
+}
+
+/** Store only what differs from the default; sibling settings stay untouched. */
+export function writeDeviceBatterySetting(settings: { show_device_battery?: unknown }, mode: DeviceBatteryMode): void {
+  if (mode === 'all') delete settings.show_device_battery;
+  else settings.show_device_battery = mode === 'low' ? 'low' : false;
 }
 
 export function showMarkerBatteryOf(marker: { hide_battery?: unknown } | null | undefined): boolean {

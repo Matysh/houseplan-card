@@ -1429,13 +1429,16 @@ have no indicator. The normal vacuum dock marker follows the ordinary rules.
 The indicator does not enlarge the device's click target; Zigbee hover
 information appears above it.
 
-**General settings → Display → Show device battery status** is on by default
-and applies installation-wide, including static space cards and the editor
-preview. In an individual device's **Appearance** settings, **Hide battery
-status on plan** suppresses only that device; it is off by default and has no
-effect on the ordinary value badge. Battery icons use a soft size-aware shadow
-to stay legible over light and mixed plan backgrounds. Full configuration
-export/import preserves both settings.
+**General settings → Display → Show device battery status** has three choices:
+**All** (the default) shows every battery device, **Low only** shows just the
+red indicators (below 20 % or a low binary sensor) and hides the green, yellow
+and grey ones, **None** hides them all. The choice applies installation-wide,
+including static space cards and the editor preview. In an individual device's
+**Appearance** settings, **Hide battery status on plan** suppresses only that
+device in every mode; it is off by default and has no effect on the ordinary
+value badge. Battery icons use a soft size-aware shadow to stay legible over
+light and mixed plan backgrounds. Full configuration export/import preserves
+both settings.
 
 ### Icon changes by state
 

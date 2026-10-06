@@ -141,6 +141,8 @@ export interface ResolvePresentationOptions {
   showSignal: boolean;
   /** Independent diagnostic: static face modes do not suppress battery. */
   showBattery?: boolean;
+  /** #807: the low-only mode keeps the indicator only in the red `low` state. */
+  batteryLowOnly?: boolean;
   batteryContext?: DeviceBatteryContext;
   /** User-hidden markers show their real design inside the editor preview. */
   designPreview?: boolean;
@@ -757,9 +759,10 @@ export function resolveDevicePresentation(
     vacuumLiveRequested: d.marker?.vacuum?.live === true,
   });
   const { effectiveHidden, visual } = policy;
-  const battery = options.showBattery !== false && showMarkerBatteryOf(d.marker) && !effectiveHidden
+  const resolvedBattery = options.showBattery !== false && showMarkerBatteryOf(d.marker) && !effectiveHidden
     ? resolveDeviceBattery(d, options.batteryContext
       || createDeviceBatteryContext(hass, options.registryHass || hass)) : null;
+  const battery = options.batteryLowOnly && resolvedBattery?.state !== 'low' ? null : resolvedBattery;
 
   const activity = display === 'icon_ripple' && !effectiveHidden
     && options.liveStates && visual.status !== 'alarm' ? visual.activity : 'none';

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  markerBatteryFields, showDeviceBatteryOf, showMarkerBatteryOf, writeDeviceBatterySetting,
+  deviceBatteryModeOf, markerBatteryFields, showDeviceBatteryOf, showMarkerBatteryOf, writeDeviceBatterySetting,
 } from '../test-build/device-battery-settings.js';
 import { forgetGeneralBaseline, generalDirty, rememberGeneralBaseline } from '../test-build/editors/general-form-state.js';
 
@@ -15,13 +15,35 @@ test('#792 AC9: only exact false disables the installation-wide battery indicato
   assert.equal(showDeviceBatteryOf({ show_device_battery: false }), false);
 });
 
+test('#807 AC1: the mode resolver — absent/other all, exact false off, exact "low" low-only', () => {
+  for (const settings of [undefined, null, {}, { show_device_battery: true },
+    { show_device_battery: null }, { show_device_battery: 'false' }, { show_device_battery: 'LOW' },
+    { show_device_battery: 'low ' }, { show_device_battery: 0 }]) {
+    assert.equal(deviceBatteryModeOf(settings), 'all', JSON.stringify(settings));
+  }
+  assert.equal(deviceBatteryModeOf({ show_device_battery: false }), 'off');
+  assert.equal(deviceBatteryModeOf({ show_device_battery: 'low' }), 'low');
+  // Low-only is still "battery shown": snapshots keep collecting battery sources.
+  assert.equal(showDeviceBatteryOf({ show_device_battery: 'low' }), true);
+});
+
+test('#807 AC1: saving each mode stores only what differs from the default', () => {
+  const settings = { show_room_tooltip: false, future: { sentinel: 1 } };
+  writeDeviceBatterySetting(settings, 'low');
+  assert.deepEqual(JSON.parse(JSON.stringify(settings)), { show_room_tooltip: false, future: { sentinel: 1 }, show_device_battery: 'low' });
+  writeDeviceBatterySetting(settings, 'off');
+  assert.equal(settings.show_device_battery, false);
+  writeDeviceBatterySetting(settings, 'all');
+  assert.deepEqual(settings, { show_room_tooltip: false, future: { sentinel: 1 } });
+});
+
 test('#792 AC9: save persists false, enabling removes the key and siblings survive', () => {
   const settings = { show_device_battery: true, show_room_tooltip: false, future: { sentinel: 1 } };
-  writeDeviceBatterySetting(settings, false);
+  writeDeviceBatterySetting(settings, 'off');
   const reloaded = JSON.parse(JSON.stringify(settings));
   assert.deepEqual(reloaded, { show_device_battery: false, show_room_tooltip: false, future: { sentinel: 1 } });
   assert.equal(showDeviceBatteryOf(reloaded), false);
-  writeDeviceBatterySetting(reloaded, true);
+  writeDeviceBatterySetting(reloaded, 'all');
   assert.deepEqual(reloaded, { show_room_tooltip: false, future: { sentinel: 1 } });
   assert.equal(showDeviceBatteryOf(reloaded), true);
 });
@@ -29,17 +51,18 @@ test('#792 AC9: save persists false, enabling removes the key and siblings survi
 test('#792 AC9: the battery switch participates in ordinary draft dirty/cancel without mutating saved settings', () => {
   const host = {};
   const settings = Object.freeze({ show_device_battery: false });
-  const original = { showDeviceBattery: showDeviceBatteryOf(settings), busy: false };
+  const original = { deviceBattery: deviceBatteryModeOf(settings), busy: false };
   rememberGeneralBaseline(host, original);
   assert.equal(generalDirty(host, original), false);
-  const changed = { ...original, showDeviceBattery: true };
+  const changed = { ...original, deviceBattery: 'low' };
   assert.equal(generalDirty(host, changed), true);
   assert.equal(generalDirty(host, { ...changed, busy: true }), true);
-  assert.equal(generalDirty(host, { ...changed, showDeviceBattery: false }), false);
+  assert.equal(generalDirty(host, { ...changed, deviceBattery: 'all' }), true);
+  assert.equal(generalDirty(host, { ...changed, deviceBattery: 'off' }), false);
   forgetGeneralBaseline(host);
-  const reopened = { showDeviceBattery: showDeviceBatteryOf(settings), busy: false };
+  const reopened = { deviceBattery: deviceBatteryModeOf(settings), busy: false };
   rememberGeneralBaseline(host, reopened);
-  assert.equal(reopened.showDeviceBattery, false);
+  assert.equal(reopened.deviceBattery, 'off');
   assert.equal(generalDirty(host, reopened), false);
   assert.equal(settings.show_device_battery, false);
 });
@@ -48,12 +71,15 @@ test('#792 AC9: the general battery setting has complete RU/EN/DE/FR wording', (
   const read = (lang) => JSON.parse(readFileSync(new URL(`../src/i18n/settings/${lang}.json`, import.meta.url), 'utf8'));
   for (const lang of ['ru', 'en', 'de', 'fr']) {
     const dictionary = read(lang);
-    for (const key of ['gs.show_device_battery', 'gs.show_device_battery_hint']) {
+    for (const key of ['gs.show_device_battery', 'gs.show_device_battery_hint',
+      'gs.device_battery_all', 'gs.device_battery_low', 'gs.device_battery_off']) {
       assert.ok(typeof dictionary[key] === 'string' && dictionary[key].trim(), `${lang}: ${key}`);
     }
   }
   assert.equal(read('ru')['gs.show_device_battery'], 'Показывать заряд устройств');
   assert.equal(read('en')['gs.show_device_battery'], 'Show device battery status');
+  assert.deepEqual(['all', 'low', 'off'].map((m) => read('ru')[`gs.device_battery_${m}`]), ['Все', 'Только низкий', 'Нет']);
+  assert.deepEqual(['all', 'low', 'off'].map((m) => read('en')[`gs.device_battery_${m}`]), ['All', 'Low only', 'None']);
 });
 
 test('#806 AC2: only exact marker true hides one battery and false is stored as absence', () => {

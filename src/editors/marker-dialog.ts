@@ -21,7 +21,7 @@ import { forgetMarkerBaseline, markerDirty, markerProblems } from './marker-form
 import { settingsCopy } from './settings-copy';
 
 import { resolveDevicePresentation } from '../device-presentation';
-import { showDeviceBatteryOf } from '../device-battery-settings';
+import { deviceBatteryModeOf, showDeviceBatteryOf } from '../device-battery-settings';
 import { ledStripsByMarker } from '../led-strip-gate';
 import { toggleEntityCandidates } from '../device-toggle';
 import { recommendedValueBadgeSource, valueBadgeCandidates, valueBadgeSourceFromKey, valueBadgeSourceKey } from '../device-value-badge';
@@ -89,6 +89,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           showSignal: previewSpaceDisplay?.showLqi ?? (this.host._config?.show_signal !== false),
           showBattery: showDeviceBatteryOf(this.host._settings)
             && !this.host._model.some((space) => ledStripsByMarker(space).has(previewDevice.id)),
+          batteryLowOnly: deviceBatteryModeOf(this.host._settings) === 'low',
           designPreview: true,
           activityRuntime: this.host._activityRt.get(previewDevice.id),
           lightDevices: previewLightDevices,

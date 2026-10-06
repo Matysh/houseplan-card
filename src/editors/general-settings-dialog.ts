@@ -26,6 +26,7 @@ import { sunStateOf } from '../sun';
 import { renderSunRayOriginSegment } from '../sun-settings-view';
 import { zigbeeTopologySettingsOf } from '../zigbee-topology-settings';
 import type { ZigbeeTopologySettings } from '../zigbee-topology-settings';
+import type { DeviceBatteryMode } from '../device-battery-settings';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 
 export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): TemplateResult {
@@ -105,10 +106,20 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             title: t('gs.volumetric_view'), caption: st('gs.volumetric_view_hint'),
             checked: d.volumetricView, onChange: (v) => set({ volumetricView: v }),
           })}
-          ${toggleRow({
-            id: 'gs-device-battery', icon: 'mdi:battery-outline',
-            title: st('gs.show_device_battery'), caption: st('gs.show_device_battery_hint'),
-            checked: d.showDeviceBattery, onChange: (v) => set({ showDeviceBattery: v }),
+          ${field({
+            label: st('gs.show_device_battery'),
+            control: segmented<DeviceBatteryMode>({
+              name: 'gs-device-battery',
+              value: d.deviceBattery,
+              ariaLabel: st('gs.show_device_battery'),
+              options: [
+                { value: 'all', label: st('gs.device_battery_all') },
+                { value: 'low', label: st('gs.device_battery_low') },
+                { value: 'off', label: st('gs.device_battery_off') },
+              ],
+              onChange: (deviceBattery) => set({ deviceBattery }),
+            }),
+            hint: st('gs.show_device_battery_hint'),
           })}`,
       })}
       ${formCard({
@@ -282,7 +293,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: host._imperial ? 9.8 : 3,
           glowRadiusInput: String(host._imperial ? 9.8 : 3),
           bgColor: null, northDeg: null, northDegInput: '', bgMode: 'daynight', sunRays: false, sunRayOrigin: 'inner',
-          showRoomTooltip: true, showDeviceBattery: true, radarShowLive: true, volumetricView: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
+          showRoomTooltip: true, deviceBattery: 'all', radarShowLive: true, volumetricView: false, moon: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] },
         })}>${t('gs.reset')}</button>
       </div>
       ${footerStatus(problems.length

@@ -108,11 +108,23 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'battery-setting-backend-accepts-string',
     guard: 'node scripts/backend-test-guard.mjs battery tests_backend/test_settings_device_battery.py',
-    because: '#792 AC9: a display preference must remain a strict boolean across saves and imports.',
+    because: '#792 AC9, #807: the display preference stays a strict boolean or the exact '
+      + 'string "low" across saves and imports; any other string must be refused.',
     patches: [{
       file: 'custom_components/houseplan/validation.py',
-      find: '                    vol.Optional("show_device_battery"): bool,',
-      replace: '                    vol.Optional("show_device_battery"): object,',
+      find: '_DEVICE_BATTERY = vol.Any(bool, "low")',
+      replace: '_DEVICE_BATTERY = object',
+    }],
+  },
+  {
+    id: 'battery-low-only-shows-every-state',
+    guard: 'node --test --test-name-pattern="#807" test/device-presentation.test.mjs',
+    because: '#807 AC1: the low-only mode must hide normal, warning and unknown indicators and '
+      + 'keep only the red low state on every surface that shares the presentation resolver.',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: "options.batteryLowOnly && resolvedBattery?.state !== 'low' ? null : resolvedBattery;",
+      replace: 'resolvedBattery;',
     }],
   },
   {

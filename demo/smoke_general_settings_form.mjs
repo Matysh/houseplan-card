@@ -21,11 +21,15 @@ const out = await page.evaluate(async () => {
 
   c._openSettingsDialog(); await upd();
   const d0 = JSON.parse(JSON.stringify(c._settingsDialog));
-  const batteryRow = q('#gs-device-battery')?.closest('.hpf-toggle');
-  o.batteryDefaultOnInDisplay = d0.showDeviceBattery === true
-    && q('#gs-device-battery')?.checked === true
-    && batteryRow?.closest('.hpf-card')?.dataset.card === 'display'
-    && batteryRow?.querySelector('.hpf-toggle-title')?.textContent.trim() === 'Show device battery status';
+  // #807: three segments, the same control as «Is this device a light source?».
+  const batteryRadio = (mode) => q(`input[type="radio"][name="gs-device-battery"][value="${mode}"]`);
+  const batteryField = batteryRadio('all')?.closest('.hpf-field');
+  o.batteryDefaultAllInDisplay = d0.deviceBattery === 'all' && batteryRadio('all')?.checked === true
+    && batteryField?.closest('.hpf-card')?.dataset.card === 'display'
+    && batteryField?.querySelector('.hpf-label')?.textContent.trim() === 'Show device battery status'
+    && JSON.stringify([...(batteryField?.querySelectorAll('.hpf-seg label') || [])].map((l) => l.textContent.trim()))
+      === JSON.stringify(['All', 'Low only', 'None'])
+    && batteryField?.querySelector('.hpf-seg')?.getAttribute('role') === 'radiogroup';
 
   // --- AC1: семь карточек по §5.1, старой разметки нет ----------------------
   o.sevenCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
@@ -50,7 +54,7 @@ const out = await page.evaluate(async () => {
   // --- AC9 ----------------------------------------------------------------
   const toggles = qa('.hpf-toggle > input[type="checkbox"]');
   o.toggleTargetsAre44 = toggles.length >= 3 && toggles.every((i) => { const b = i.getBoundingClientRect(); return b.width >= 44 && b.height >= 44; });
-  o.segmentsAreRadiogroups = qa('.hpf-seg').length === 2 && qa('.hpf-seg').every((s) => s.getAttribute('role') === 'radiogroup');
+  o.segmentsAreRadiogroups = qa('.hpf-seg').length === 3 && qa('.hpf-seg').every((s) => s.getAttribute('role') === 'radiogroup');
 
   // --- К10 ------------------------------------------------------------------
   o.saveDisabledWhenClean = saveBtn().disabled === true && statusText() === '';
@@ -118,7 +122,7 @@ const out = await page.evaluate(async () => {
     ? saveBtn().disabled === false : true;
   c._settingsDialog = null; await upd();
 
-  // #792 AC9: the battery opt-out uses this form's draft, cancel and shared save.
+  // #792 AC9 / #807 AC2: the battery mode uses this form's draft, cancel and shared save.
   const beforeBattery = JSON.stringify(c._serverCfg);
   const openBatterySettings = async () => {
     sr().querySelector('[data-hp="settings"]').click(); await upd();
@@ -132,8 +136,8 @@ const out = await page.evaluate(async () => {
     throw new Error('battery settings save did not finish');
   };
   await openBatterySettings();
-  q('#gs-device-battery').click(); await upd();
-  o.batteryDraftDoesNotMutateSaved = c._settingsDialog.showDeviceBattery === false
+  batteryRadio('off').click(); await upd();
+  o.batteryDraftDoesNotMutateSaved = c._settingsDialog.deviceBattery === 'off'
     && saveBtn().disabled === false && JSON.stringify(c._serverCfg) === beforeBattery;
   q('[data-hp="dialog-cancel"]').click(); await upd();
   o.batteryCancelAsks = !!confirm() && !!dlg();
@@ -141,8 +145,8 @@ const out = await page.evaluate(async () => {
   o.batteryCancelKeepsSaved = !dlg() && JSON.stringify(c._serverCfg) === beforeBattery;
 
   await openBatterySettings();
-  o.batteryReopenAfterCancelIsOn = q('#gs-device-battery')?.checked === true;
-  q('#gs-device-battery').click(); await upd();
+  o.batteryReopenAfterCancelIsAll = batteryRadio('all')?.checked === true;
+  batteryRadio('off').click(); await upd();
   const originalCallWS = c.hass.callWS;
   let written;
   c.hass = { ...c.hass, callWS: async (message) => {
@@ -153,22 +157,39 @@ const out = await page.evaluate(async () => {
   o.batteryFalseSavedWithRevision = !dlg() && c._serverCfg.settings.show_device_battery === false
     && written?.config.settings.show_device_battery === false && Number.isInteger(written?.expected_rev);
   await openBatterySettings();
-  o.batteryReopensOffAndClean = q('#gs-device-battery')?.checked === false && saveBtn().disabled === true;
+  o.batteryReopensOffAndClean = batteryRadio('off')?.checked === true && saveBtn().disabled === true;
   const disabledConfig = structuredClone(c._serverCfg);
-  q('#gs-device-battery').click(); await upd();
+  batteryRadio('all').click(); await upd();
   c.hass = { ...c.hass, callWS: async (message) => {
     if (message.type === 'houseplan/config/set') throw new Error('battery-save-offline');
     return originalCallWS(message);
   } };
   await saveBatterySettings();
   o.batteryFailedSaveRollsBackAndKeepsDraft = JSON.stringify(c._serverCfg) === JSON.stringify(disabledConfig)
-    && c._settingsDialog?.showDeviceBattery === true && c._settingsDialog?.busy === false;
+    && c._settingsDialog?.deviceBattery === 'all' && c._settingsDialog?.busy === false;
   c.hass = { ...c.hass, callWS: originalCallWS };
   await saveBatterySettings();
   o.batteryEnabledRemovesKey = !dlg() && !Object.hasOwn(c._serverCfg.settings, 'show_device_battery');
   const expectedSettings = { ...disabledConfig.settings };
   delete expectedSettings.show_device_battery;
   o.batterySavePreservesSiblingSettings = JSON.stringify(c._serverCfg.settings) === JSON.stringify(expectedSettings);
+  // #807 AC2: «Low only» is written as the exact string and reopens selected.
+  await openBatterySettings();
+  batteryRadio('low').click(); await upd();
+  written = undefined;
+  c.hass = { ...c.hass, callWS: async (message) => {
+    if (message.type === 'houseplan/config/set') written = structuredClone(message);
+    return originalCallWS(message);
+  } };
+  await saveBatterySettings();
+  o.batteryLowSavedAsString = !dlg() && c._serverCfg.settings.show_device_battery === 'low'
+    && written?.config.settings.show_device_battery === 'low';
+  await openBatterySettings();
+  o.batteryReopensLowAndClean = batteryRadio('low')?.checked === true && saveBtn().disabled === true;
+  batteryRadio('all').click(); await upd();
+  c.hass = { ...c.hass, callWS: originalCallWS };
+  await saveBatterySettings();
+  o.batteryAllAfterLowRemovesKey = !dlg() && !Object.hasOwn(c._serverCfg.settings, 'show_device_battery');
   return o;
 });
 

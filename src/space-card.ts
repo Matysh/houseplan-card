@@ -18,7 +18,7 @@ import { ContentSigner } from './signing';
 import { normalizeDeviceDisplay, openingEntityReferences, referencedContentUrls } from './logic';
 import { acquireHaRegistries, activeRegistryHass, fullRegistryHass, haRegistrySnapshot } from './ha-binding-status';
 import { createDeviceBatteryContext } from './device-battery';
-import { showDeviceBatteryOf } from './device-battery-settings';
+import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
 import { resolvedLightSources } from './devices';
 import { ledRelease, ledStripsByMarker } from './led-strip-gate';
 import {
@@ -500,6 +500,7 @@ class HouseplanSpaceCard extends LitElement {
     const planHass = activeRegistryHass(this.hass, haRegistrySnapshot(this.hass));
     const registryHass = fullRegistryHass(this.hass, haRegistrySnapshot(this.hass));
     const showBattery = showDeviceBatteryOf(this._snap?.config?.settings);
+    const batteryLowOnly = deviceBatteryModeOf(this._snap?.config?.settings) === 'low';
     const batteryContext = showBattery ? createDeviceBatteryContext(planHass, registryHass) : undefined;
     const presentations = new Map<string, ReturnType<typeof resolveDevicePresentation>>();
     const entityIds = new Set<string>(['sun.sun']);
@@ -536,6 +537,7 @@ class HouseplanSpaceCard extends LitElement {
             showTemperature: this._config?.show_temperature !== false,
             showSignal: showLqi,
             showBattery: showBattery && !leds.has(device.id),
+            batteryLowOnly,
             batteryContext,
             activityRuntime: this._activityRuntime.get(device.id),
             sourceDetails: false,

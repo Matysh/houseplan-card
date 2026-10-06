@@ -438,7 +438,14 @@
     },
     "config.settings.show_device_battery": {
       "required": false,
-      "type": "bool"
+      "variants": [
+        {
+          "type": "bool"
+        },
+        {
+          "const": "low"
+        }
+      ]
     },
     "config.settings.show_room_tooltip": {
       "required": false,

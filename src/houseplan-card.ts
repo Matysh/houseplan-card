@@ -8,7 +8,7 @@
  */
 import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from './led-strip-gate';
 import { createDeviceBatteryContext } from './device-battery';
-import { showDeviceBatteryOf } from './device-battery-settings';
+import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
 import { ZoomScaleActivity } from './zoom-scale-activity';
 import { ledButton, ledEditorFor, ledHistory, ledImportNote, ledSection, ledWallsNote } from './led-strip-card';
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
@@ -2074,7 +2074,7 @@ export class HouseplanCard extends LitElement {
     colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
     northDeg: number | null; northDegInput: string; bgMode: 'static' | 'daynight'; sunRays: boolean; sunRayOrigin: SunRayOrigin;
-    showRoomTooltip: boolean; showDeviceBattery: boolean; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean;
+    showRoomTooltip: boolean; deviceBattery: import('./device-battery-settings').DeviceBatteryMode; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean;
   } | null = null;
   private _pdfDialog = false;
   private _supportDialog: SupportDialogState | null = null;
@@ -4498,6 +4498,7 @@ export class HouseplanCard extends LitElement {
     const planHass = this._planHass;
     const presentations = new Map<string, ResolvedDevicePresentation>();
     const showBattery = showDeviceBatteryOf(this._settings);
+    const batteryLowOnly = deviceBatteryModeOf(this._settings) === 'low';
     const batteryContext = showBattery ? createDeviceBatteryContext(planHass, this._fullRegistryHass) : undefined;
     const ledMarkerIds = showBattery
       ? new Set(this._model.flatMap((space) => [...ledStripsByMarker(space).keys()])) : new Set<string>();
@@ -4559,6 +4560,7 @@ export class HouseplanCard extends LitElement {
             // full card, preview and static card cannot disagree.
             showSignal: showLqi,
             showBattery: showBattery && !ledMarkerIds.has(device.id),
+            batteryLowOnly,
             batteryContext,
             activityRuntime: this._activityRt.get(device.id),
             sourceDetails: false,
@@ -5464,6 +5466,7 @@ export class HouseplanCard extends LitElement {
       showSignal: showLqi,
       showBattery: showDeviceBatteryOf(this._settings)
         && !this._model.some((space) => ledStripsByMarker(space).has(d.id)),
+      batteryLowOnly: deviceBatteryModeOf(this._settings) === 'low',
       designPreview,
       activityRuntime: this._activityRt.get(d.id),
       sourceDetails: false,

@@ -1,4 +1,4 @@
-/** #792 AC4–10: live dependencies, static exceptions, geometry and passive input.
+/** #792 AC4–10: live dependencies, static exceptions, geometry and passive input; #807 AC2 low-only mode.
  * D32/56/96 × light/dark and the approved MDI art are also pinned by battery golden boards;
  * route layering has its own raster witness in smoke_device_battery_zigbee.
  */
@@ -43,6 +43,12 @@ try {
       settings: { ...cfg.settings, show_device_battery: false },
     })));
     out[`globalOffHides_${state}`] = (await batteryGeometry(page)).battery === null;
+    // #807 AC2: the low-only mode keeps just the red indicator.
+    await page.evaluate(() => window.__hpTest.setServerConfig(cfg => ({ ...cfg,
+      settings: { ...cfg.settings, show_device_battery: 'low' },
+    })));
+    const lowOnly = await batteryGeometry(page);
+    out[`lowOnlyKeepsOnlyRed_${state}`] = state === 'low' ? lowOnly.state === 'low' : lowOnly.battery === null;
     await page.evaluate(() => window.__hpTest.setServerConfig(cfg => ({ ...cfg,
       settings: { ...cfg.settings, show_device_battery: true },
     })));

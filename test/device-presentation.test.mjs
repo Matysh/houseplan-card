@@ -90,6 +90,38 @@ test('#792 battery is independent of static face and live-state policies', () =>
   }
 });
 
+test('#807 AC1: low-only mode keeps the indicator only in the red low state', () => {
+  const at = (charge, attrs = { device_class: 'battery' }) => hass({
+    'switch.relay': state('switch.relay', 'on'),
+    'sensor.charge': state('sensor.charge', charge, attrs),
+  }, {
+    'switch.relay': { device_id: 'd1' },
+    'sensor.charge': { device_id: 'd1', device_class: 'battery' },
+  });
+  const lowOnly = { ...options, batteryLowOnly: true };
+  for (const [charge, expected] of [['100', null], ['60', null], ['59', null], ['20', null],
+    ['19', 'low'], ['0', 'low'], ['oops', null]]) {
+    assert.equal(resolveDevicePresentation(at(charge), device(), lowOnly).battery?.state ?? null, expected, charge);
+    assert.ok(resolveDevicePresentation(at(charge), device(), options).battery, `all mode keeps ${charge}`);
+  }
+  const binary = (value) => hass({
+    'switch.relay': state('switch.relay', 'on'),
+    'binary_sensor.low': state('binary_sensor.low', value, { device_class: 'battery' }),
+  }, {
+    'switch.relay': { device_id: 'd1' },
+    'binary_sensor.low': { device_id: 'd1', device_class: 'battery' },
+  });
+  assert.equal(resolveDevicePresentation(binary('on'), device(), lowOnly).battery?.state, 'low');
+  assert.equal(resolveDevicePresentation(binary('off'), device(), lowOnly).battery, null);
+  // The off mode still wins, and so do the lifecycle gates of #792.
+  assert.equal(resolveDevicePresentation(at('5'), device(), { ...lowOnly, showBattery: false }).battery, null);
+  const hidden = device({ userHidden: true, marker: { id: 'd1', binding: 'device:d1', hidden: true } });
+  assert.equal(resolveDevicePresentation(at('5'), hidden, lowOnly).battery, null);
+  // #806: the per-device opt-out hides even a red indicator in the low-only mode.
+  const optedOut = device({ marker: { id: 'd1', binding: 'device:d1', hide_battery: true } });
+  assert.equal(resolveDevicePresentation(at('5'), optedOut, lowOnly).battery, null);
+});
+
 test('#565 accessible device label removes only whole repeated segments', () => {
   assert.equal(deviceAccessibleLabel([
     'Sink leak sensor', ' Alarm ', 'alarm', '', null, false,
