@@ -8,8 +8,10 @@ import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 
 test('#792 compact golden matrix contains all six size/theme variants and four states', () => {
   const boards = GOLDEN_SCENARIOS.filter((scenario) => scenario.batteryBoard);
-  assert.equal(boards.length, 3);
-  assert.deepEqual(boards.filter((scenario) => scenario.batteryBoard === 'desktop').map((scenario) => scenario.theme).sort(), ['dark', 'light']);
+  assert.equal(boards.length, 4);
+  assert.deepEqual(boards.filter((scenario) => scenario.batteryBoard === 'desktop')
+    .map((scenario) => scenario.id).sort(),
+    ['device-battery-board-dark', 'device-battery-board-light', 'device-battery-board-medium']);
   for (const scenario of boards) {
     const samples = batteryBoardSamples(scenario.batteryBoard);
     assert.equal(new Set(samples.map((sample) => sample.id)).size, samples.length);
@@ -35,6 +37,17 @@ test('#792 compact golden matrix contains all six size/theme variants and four s
       assert.deepEqual(fixture.layout[sample.id], { s: scenario.space, x: sample.x, y: sample.y });
     }
   }
+});
+
+test('#806 battery shadow matrix has an explicit neutral medium background witness', () => {
+  const scene = GOLDEN_SCENARIOS.find((scenario) => scenario.id === 'device-battery-board-medium');
+  assert.ok(scene);
+  assert.equal(scene.theme, 'light');
+  assert.equal(scene.bgMode, 'static');
+  assert.equal(scene.bgColor, '#808080');
+  const fixture = prepareGoldenFixture(scene);
+  assert.equal(fixture.config.spaces[0].settings.bg_mode, 'static');
+  assert.equal(fixture.config.spaces[0].settings.bg_color, '#808080');
 });
 
 test('#792 golden MDI oracle pins the four owner-approved icons independently of product code', () => {

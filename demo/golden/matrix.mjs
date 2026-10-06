@@ -895,6 +895,11 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     id: `device-battery-board-${theme}`, fixture: 'visual', space: 'golden-battery', mode: 'view',
     batteryBoard: 'desktop', theme, viewport: { width: 1120, height: 1120 }, ...stage,
   })),
+  // #806 AC1: an explicit neutral mid-tone plan surface. Theme is kept light
+  // so this proves the shadow against a third background, not a third UI skin.
+  { id: 'device-battery-board-medium', fixture: 'visual', space: 'golden-battery', mode: 'view',
+    batteryBoard: 'desktop', bgMode: 'static', bgColor: '#808080',
+    theme: 'light', viewport: { width: 1120, height: 1120 }, ...stage },
   { id: 'device-battery-mobile-dark', fixture: 'visual', space: 'golden-battery', mode: 'view',
     batteryBoard: 'mobile', theme: 'dark', viewport: { width: 390, height: 844 }, ...stage },
   // Real ZHA refresh + hover; differential raster controls prove natural
