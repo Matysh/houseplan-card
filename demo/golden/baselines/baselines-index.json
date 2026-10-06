@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 73,
-  "acceptedAt": "2026-10-06T16:16:06.200Z",
-  "sourceFingerprint": "ad98b86e2654a61c90afe9091abd0babd988f49adf67de6d63bca7d7716ce597",
+  "acceptedAt": "2026-10-06T17:21:15.454Z",
+  "sourceFingerprint": "542656cfacffc36a77b28cf329140d08b6f9bff447c092d54689c300d606f75d",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,20 +10,20 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "ad98b86e2654a61c90afe9091abd0babd988f49adf67de6d63bca7d7716ce597",
+    "buildFingerprint": "542656cfacffc36a77b28cf329140d08b6f9bff447c092d54689c300d606f75d",
     "ci": null
   },
   "localAttestation": {
     "schema": "houseplan-golden-wsl/v1",
-    "sha256": "453d95ec28670c0e2b0d962acaf1fb2aa715178944b3796402cc7a4e50808d8a",
-    "artifactSha256": "dd12769c18fc59ad97ef315948f6d15c44d5b1a3108f946c368639d8aab1b66f",
-    "createdAt": "2026-10-06T16:15:52.429Z",
+    "sha256": "d5e785e772731545943419b719df10f952592b82bbfb65db61a6727892d8b61c",
+    "artifactSha256": "ebce2dff59e2fca809ea4d8a0efbcb3663aeed57bf38f4f821387228f6eba09a",
+    "createdAt": "2026-10-06T17:20:50.497Z",
     "source": {
       "repository": "Matysh/houseplan-card",
       "branch": "issue/806-battery-shadow-optout",
-      "commit": "ab9dc1fb46cbec5468bc8727f989843462907f06",
-      "tree": "bbe862b6a117133a519f5c82eac5d48542a72ebf",
-      "remoteSha": "ab9dc1fb46cbec5468bc8727f989843462907f06",
+      "commit": "3bfd3f416192892e768534c83b4117f8615a7042",
+      "tree": "a3959db430b8e57704fed4da397d6fe99fec4674",
+      "remoteSha": "3bfd3f416192892e768534c83b4117f8615a7042",
       "clean": true,
       "status": ""
     },
@@ -44,7 +44,7 @@
   },
   "foreignCapture": null,
   "witnesses": {
-    "count": 105,
+    "count": 110,
     "floor": 10
   },
   "scenarios": {
@@ -165,6 +165,7 @@
     "device-value-badge-positions-dark": "f4ae3548d65e8fd0377b7c2b446065d922473c40f85537a8ce99d3219978223c",
     "device-battery-board-light": "ca8d98e6fa4f634c920f4d184277cfee2133b1b906b3cfb78e160a89ab4d5c12",
     "device-battery-board-dark": "d0f4d338a34eef50965c89716df285344bcfb6a60a078372d3a8b1bb9855d733",
+    "device-battery-board-medium": "25d924e54d0d0c09569678560c00869ac3a39dfc38c59910adc86ad221e8b2e7",
     "device-battery-mobile-dark": "f968127a092cd5081a18864ce883f791e398136b5cbc0fcd319eab6a855c7cc8",
     "device-battery-zigbee-overlap-dark": "69e6a6da65f3aa144d9e4ec56f9d97820a6926e0fff58faa598d9ca0bff8420a",
     "device-value-face-cover-source-dark": "18aa90881fe7794c98c52142b73fb1db33bf57d390c24b6286b7b7db6312bcfa",
