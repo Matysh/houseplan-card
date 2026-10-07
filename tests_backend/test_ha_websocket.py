@@ -29,7 +29,7 @@ from custom_components.houseplan.const import (
     VERSION,
 )
 from custom_components.houseplan.websocket_api import (
-    _space_delete_candidate, _space_marker_dependencies, _support_repairs,
+    _space_delete_candidate, _space_delete_target, _space_marker_dependencies, _support_repairs,
 )
 
 
@@ -299,6 +299,231 @@ async def test_issue_244_last_occupied_space_delete_preserves_marker_records(
         "icon": "mdi:lightbulb",
     }]
     assert final_layout == {}
+
+
+# ---- #819: space delete together with its markers ---------------------------
+
+_SPACE_DELETE_WITH_MARKERS = (
+    Path(__file__).parents[1] / "test" / "fixtures" / "space-delete-with-markers.json"
+)
+
+
+def _space_delete_with_markers_cases() -> list[dict]:
+    return json.loads(_SPACE_DELETE_WITH_MARKERS.read_text(encoding="utf-8"))["cases"]
+
+
+@pytest.mark.parametrize(
+    "case", _space_delete_with_markers_cases(), ids=lambda case: case["name"],
+)
+def test_issue_819_space_delete_target_matches_the_card_fixture(case: dict) -> None:
+    """The shared fixture: the card's mirror counts and deletes the same set."""
+    config = copy.deepcopy(case["config"])
+    layout = copy.deepcopy(case["layout"])
+    assert _space_marker_dependencies(config, layout, case["spaceId"]) == case["dependencies"]
+
+    target_config, target_layout, dependencies, removed_layout, removed_markers = (
+        _space_delete_target(config, layout, case["spaceId"], remove_markers=True)
+    )
+
+    assert removed_markers == case["removedMarkers"]
+    assert target_config == case["configAfter"]
+    assert target_layout == case["layoutAfter"]
+    assert removed_layout == len(case["layout"]) - len(case["layoutAfter"])
+    if case["removedMarkers"]:
+        assert dependencies == []
+    assert config == case["config"], "input config is immutable"
+    assert layout == case["layout"], "input layout is immutable"
+
+
+def test_issue_819_space_delete_target_without_the_flag_is_the_244_candidate() -> None:
+    case = _space_delete_with_markers_cases()[0]
+    assert _space_delete_target(case["config"], case["layout"], case["spaceId"]) == (
+        *_space_delete_candidate(case["config"], case["layout"], case["spaceId"]), [],
+    )
+
+
+async def _seed_space_delete_with_markers(
+    hass: HomeAssistant, client,
+) -> tuple[dict, int, int, dict]:
+    """Store the fixture pair, its attachments, trails and a switched-off light."""
+    from custom_components.houseplan.const import FILES_DIR
+
+    case = _space_delete_with_markers_cases()[0]
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": copy.deepcopy(case["config"]),
+        "expected_rev": 0,
+    })
+    config_set = await client.receive_json()
+    assert config_set["success"], config_set
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/set", "layout": copy.deepcopy(case["layout"]),
+    })
+    layout_set = await client.receive_json()
+    assert layout_set["success"], layout_set
+    await client.send_json_auto_id({
+        "type": "houseplan/virtual_light/toggle", "marker_id": "by_layout",
+    })
+    toggled = await client.receive_json()
+    assert toggled["success"] and toggled["result"]["on"] is False
+
+    files = Path(hass.config.path(FILES_DIR))
+
+    def _write() -> None:
+        for name in ("by_space/manual.pdf", "by_layout/leftover.pdf", "keeper/wiring.pdf"):
+            (files / name).parent.mkdir(parents=True, exist_ok=True)
+            (files / name).write_bytes(b"%PDF-1.4")
+
+    await hass.async_add_executor_job(_write)
+    recorder = hass.data[DOMAIN]["trail_recorder"]
+    recorder.book.data = {
+        marker_id: {"current": {"points": [[1, 2]]}}
+        for marker_id in ("hidden_room", "keeper")
+    }
+    await recorder.store.async_save(copy.deepcopy(recorder.book.data))
+    # The layout writer forgets the tombstone's position on its own.
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    stored_layout = (await client.receive_json())["result"]["layout"]
+    return case, config_set["result"]["rev"], layout_set["result"]["rev"], stored_layout
+
+
+async def test_issue_819_space_delete_with_markers_is_one_authoritative_write(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """AC2: one pair write deletes the space and its markers like the dialog's Delete."""
+    from homeassistant.const import EVENT_CALL_SERVICE
+
+    from custom_components.houseplan.const import FILES_DIR
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    case, config_rev, layout_rev, stored_layout = await _seed_space_delete_with_markers(hass, client)
+
+    # Without the flag the answer is the old one and nothing is written.
+    await client.send_json_auto_id({
+        "type": "houseplan/space/delete", "space_id": "f1",
+        "expected_config_rev": config_rev, "expected_layout_rev": layout_rev,
+    })
+    blocked = await client.receive_json()
+    assert not blocked["success"] and blocked["error"]["code"] == "space_in_use"
+    assert "4 active marker" in blocked["error"]["message"]
+
+    events: list[str] = []
+    service_calls: list[object] = []
+    unsubscribe = [
+        hass.bus.async_listen(name, lambda event: events.append(event.event_type))
+        for name in ("houseplan_config_updated", "houseplan_layout_updated")
+    ]
+    unsubscribe.append(hass.bus.async_listen(EVENT_CALL_SERVICE, service_calls.append))
+    try:
+        await client.send_json_auto_id({
+            "type": "houseplan/space/delete", "space_id": "f1",
+            "expected_config_rev": config_rev, "expected_layout_rev": layout_rev,
+            "remove_markers": True,
+        })
+        deleted = await client.receive_json()
+        await hass.async_block_till_done()
+    finally:
+        for stop in unsubscribe:
+            stop()
+    assert deleted["success"], deleted
+    assert deleted["result"]["config_rev"] == config_rev + 1
+    assert deleted["result"]["layout_rev"] == layout_rev + 1
+    assert deleted["result"]["removed_markers"] == case["removedMarkers"]
+    assert deleted["result"]["removed_layout"] == len(stored_layout) - len(case["layoutAfter"])
+    assert sorted(events) == ["houseplan_config_updated", "houseplan_layout_updated"]
+    assert service_calls == [], "Home Assistant entities and devices are not touched"
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    final = (await client.receive_json())["result"]
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    final_layout = (await client.receive_json())["result"]
+    assert final["rev"] == config_rev + 1 and final_layout["rev"] == layout_rev + 1
+    assert [space["id"] for space in final["config"]["spaces"]] == ["f2"]
+    by_id = {marker["id"]: marker for marker in final["config"]["markers"]}
+    for tombstone in ("by_space", "hidden_room"):
+        assert by_id[tombstone] == {
+            "id": tombstone, "binding": by_id[tombstone]["binding"],
+            "removed": True, "hidden": True,
+        }
+    assert "lamp_twin" not in by_id and "by_layout" not in by_id
+    assert by_id["keeper"]["controls"] == ["light.kitchen", "marker:keeper_light"]
+    assert by_id["keeper_light"].get("controls") is None
+    strips = {strip["id"]: strip for strip in final["config"]["spaces"][0]["led_strips"]}
+    assert strips["strip"]["marker"] is None and strips["strip"]["active"] is True
+    assert strips["kept_strip"]["marker"] == "keeper"
+    assert final["config"]["settings"]["marker_area_snapshot"] == {
+        "keeper": {"binding": "entity:switch.keeper", "area": "bedroom"},
+    }
+    assert set(final_layout["layout"]) == set(case["layoutAfter"])
+    assert final["virtual_lights"]["off"] == [], "the manual light state goes with its marker"
+
+    files = Path(hass.config.path(FILES_DIR))
+    exists = await hass.async_add_executor_job(lambda: {
+        name: (files / name).exists()
+        for name in ("by_space", "by_layout", "keeper/wiring.pdf")
+    })
+    assert exists == {"by_space": False, "by_layout": False, "keeper/wiring.pdf": True}
+    recorder = hass.data[DOMAIN]["trail_recorder"]
+    assert set(recorder.book.data) == {"keeper"}
+
+
+async def test_issue_819_space_delete_with_markers_conflict_deletes_nothing(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """AC4: a plan changed after the confirmation keeps the space and every marker."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    _case, config_rev, layout_rev, stored_layout = await _seed_space_delete_with_markers(
+        hass, client,
+    )
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    before = (await client.receive_json())["result"]["config"]
+
+    await client.send_json_auto_id({
+        "type": "houseplan/space/delete", "space_id": "f1",
+        "expected_config_rev": config_rev - 1, "expected_layout_rev": layout_rev,
+        "remove_markers": True,
+    })
+    stale = await client.receive_json()
+    assert not stale["success"] and stale["error"]["code"] == "conflict"
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    after = (await client.receive_json())["result"]
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    after_layout = (await client.receive_json())["result"]
+    assert after["rev"] == config_rev and after_layout["rev"] == layout_rev
+    assert after["config"] == before
+    assert after_layout["layout"] == stored_layout
+    assert set(hass.data[DOMAIN]["trail_recorder"].book.data) == {"hidden_room", "keeper"}
+
+
+async def test_issue_819_last_space_ignores_the_flag(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """AC5: the last space detaches its markers, with or without the flag."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    case = _space_delete_with_markers_cases()[1]
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": copy.deepcopy(case["config"]),
+        "expected_rev": 0,
+    })
+    config_set = await client.receive_json()
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/set", "layout": copy.deepcopy(case["layout"]),
+    })
+    layout_set = await client.receive_json()
+    await client.send_json_auto_id({
+        "type": "houseplan/space/delete", "space_id": case["spaceId"],
+        "expected_config_rev": config_set["result"]["rev"],
+        "expected_layout_rev": layout_set["result"]["rev"],
+        "remove_markers": True,
+    })
+    deleted = await client.receive_json()
+    assert deleted["success"] and deleted["result"]["removed_markers"] == []
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    final = (await client.receive_json())["result"]["config"]
+    assert final["spaces"] == [] and final["markers"] == case["configAfter"]["markers"]
 
 
 async def test_layout_roundtrip(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:

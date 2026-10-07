@@ -13284,6 +13284,97 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'space-delete-ignores-remove-markers',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_819_space_delete_with_markers_is_one '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'the confirmed «Delete space with devices» must reach the candidate; dropping the '
+      + 'flag answers space_in_use and the space never goes (#819 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '                remove_markers=msg["remove_markers"],\n',
+      replace: '                remove_markers=False,\n',
+    }],
+  },
+  {
+    id: 'space-delete-markers-leave-no-tombstone',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_819_space_delete_target_matches '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'a device deleted with its space goes as with the dialog\'s Delete: without the '
+      + 'binding tombstone discovery puts it straight back instead of «Available again» (#819 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '        if not virtual:\n'
+        + '            kept.append({"id": marker_id, "binding": binding, "removed": True, "hidden": True})\n',
+      replace: '        if False:\n'
+        + '            kept.append({"id": marker_id, "binding": binding, "removed": True, "hidden": True})\n',
+    }],
+  },
+  {
+    id: 'space-delete-markers-keep-control-links',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_819_space_delete_target_matches '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'the server mirror must clean other markers\' controls like the card\'s single delete; '
+      + 'the shared fixture is the parity witness between the two (#819 TS/Python parity)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '        if len(links) != len(controls):\n            marker["controls"] = links or None\n',
+      replace: '        if False:\n            marker["controls"] = links or None\n',
+    }],
+  },
+  {
+    id: 'space-delete-markers-keep-files-and-trails',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_819_space_delete_with_markers_is_one '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'attachments and robot trails of the deleted devices go after the durable write, as '
+      + 'files/cleanup and trail/delete take them for one marker (#819 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            if removed_markers:\n                # Under the lock',
+      replace: '            if False:\n                # Under the lock',
+    }],
+  },
+  {
+    id: 'space-delete-markers-on-the-last-space',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_819_last_space_ignores_the_flag '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'the last space keeps its own rule — its markers are detached, never deleted — even '
+      + 'when a client sends the new flag (#819 AC5)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '    if remove_markers and not (len(spaces) == 1 and spaces[0].get("id") == space_id):\n',
+      replace: '    if remove_markers:\n',
+    }],
+  },
+  {
+    id: 'space-delete-mirror-keeps-control-links',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#819 паритет" test/space-deletion.test.mjs',
+    because: 'the card mirror of the server candidate is the same single-marker Delete; losing the '
+      + 'controls clean-up splits it from the server on the shared fixture (#819 parity)',
+    patches: [{
+      file: 'src/space-deletion.ts',
+      find: '  config.markers = removeMarkerControlReferences(config.markers || [], dropped);\n',
+      replace: '  void removeMarkerControlReferences;\n',
+    }],
+  },
+  {
+    id: 'space-delete-confirm-forgets-hidden-devices',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#819 паритет" test/space-deletion.test.mjs',
+    because: 'the confirmation names the hidden devices apart (K); a wrong count hides that '
+      + 'invisible devices are deleted too (#819 contract 3)',
+    patches: [{
+      file: 'src/space-deletion.ts',
+      find: '  .filter((marker) => marker?.removed !== true && marker?.hidden === true && markerIds.includes(marker.id))\n',
+      replace: '  .filter((marker) => marker?.removed !== true && marker?.hidden === false && markerIds.includes(marker.id))\n',
+    }],
+  },
+  {
     id: 'plan-optimize-skips-active-marker-id-invariant',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'plan_optimize_rejects_duplicate_active_marker_ids '

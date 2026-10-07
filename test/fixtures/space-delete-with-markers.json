@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "about": "#819: deleting a space together with the markers that block it. Shared by test/space-deletion.test.mjs (createSpaceDeletionCandidate, deletePlanMarkers) and tests_backend/test_ha_websocket.py (_space_delete_target, the pair houseplan/space/delete commits) so the card and the server count and delete the same markers. Stairs and robot map routes are left out on purpose: the two candidates treat them differently today.",
+  "cases": [
+    {
+      "name": "hidden, space, room and position dependencies go like the device dialog's Delete",
+      "spaceId": "f1",
+      "config": {
+        "spaces": [
+          {
+            "id": "f1", "title": "Ground", "view_box": [0, 0, 1, 1], "plan_url": null,
+            "rooms": [{ "id": "r1", "name": "Living", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]] }]
+          },
+          {
+            "id": "f2", "title": "Upstairs", "view_box": [0, 0, 1, 1], "plan_url": null,
+            "rooms": [{ "id": "r2", "name": "Bedroom", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]] }],
+            "led_strips": [
+              { "id": "strip", "points": [[0.1, 0.1], [0.5, 0.1]], "marker": "hidden_room", "active": false },
+              { "id": "kept_strip", "points": [[0.1, 0.5], [0.5, 0.5]], "marker": "keeper", "active": true }
+            ]
+          }
+        ],
+        "markers": [
+          {
+            "id": "by_space", "binding": "device:lamp", "space": "f1", "name": "Lamp", "is_light": true,
+            "pdfs": [{ "name": "Manual", "url": "/houseplan_files/files/by_space/manual.pdf" }]
+          },
+          { "id": "lamp_twin", "binding": "device:lamp", "space": "f1", "name": "Legacy twin" },
+          { "id": "hidden_room", "binding": "entity:sensor.hidden", "space": "f2", "room_id": "r1", "hidden": true },
+          { "id": "by_layout", "binding": "virtual", "name": "Manual light", "is_light": true, "tap_action": "toggle" },
+          { "id": "old", "binding": "entity:light.old", "removed": true, "hidden": true, "space": "f1" },
+          {
+            "id": "keeper", "binding": "entity:switch.keeper", "space": "f2", "room_id": "r2",
+            "controls": ["marker:by_layout", "light.kitchen", "marker:keeper_light"],
+            "pdfs": [{ "name": "Wiring", "url": "/houseplan_files/files/keeper/wiring.pdf" }]
+          },
+          { "id": "keeper_light", "binding": "entity:light.keeper", "space": "f2", "is_light": true, "controls": ["marker:by_space"] }
+        ],
+        "settings": {
+          "marker_area_snapshot": {
+            "by_space": { "binding": "device:lamp", "area": "living" },
+            "keeper": { "binding": "entity:switch.keeper", "area": "bedroom" }
+          }
+        }
+      },
+      "layout": {
+        "by_space": { "s": "f1", "x": 0.1, "y": 0.1 },
+        "lamp_twin": { "s": "f1", "x": 0.15, "y": 0.1 },
+        "hidden_room": { "s": "f2", "x": 0.2, "y": 0.2 },
+        "by_layout": { "s": "f1", "x": 0.3, "y": 0.3 },
+        "old": { "s": "f1", "x": 0.4, "y": 0.4 },
+        "rl_r1": { "s": "f1", "x": 0.5, "y": 0.5 },
+        "keeper": { "s": "f2", "x": 0.6, "y": 0.6 },
+        "keeper_light": { "s": "f2", "x": 0.7, "y": 0.7 }
+      },
+      "dependencies": ["by_layout", "by_space", "hidden_room", "lamp_twin"],
+      "hiddenCount": 1,
+      "removedMarkers": ["by_layout", "by_space", "hidden_room", "lamp_twin"],
+      "configAfter": {
+        "spaces": [
+          {
+            "id": "f2", "title": "Upstairs", "view_box": [0, 0, 1, 1], "plan_url": null,
+            "rooms": [{ "id": "r2", "name": "Bedroom", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]] }],
+            "led_strips": [
+              { "id": "strip", "points": [[0.1, 0.1], [0.5, 0.1]], "marker": null, "active": true },
+              { "id": "kept_strip", "points": [[0.1, 0.5], [0.5, 0.5]], "marker": "keeper", "active": true }
+            ]
+          }
+        ],
+        "markers": [
+          { "id": "old", "binding": "entity:light.old", "removed": true, "hidden": true },
+          {
+            "id": "keeper", "binding": "entity:switch.keeper", "space": "f2", "room_id": "r2",
+            "controls": ["light.kitchen", "marker:keeper_light"],
+            "pdfs": [{ "name": "Wiring", "url": "/houseplan_files/files/keeper/wiring.pdf" }]
+          },
+          { "id": "keeper_light", "binding": "entity:light.keeper", "space": "f2", "is_light": true, "controls": null },
+          { "id": "by_space", "binding": "device:lamp", "removed": true, "hidden": true },
+          { "id": "hidden_room", "binding": "entity:sensor.hidden", "removed": true, "hidden": true }
+        ],
+        "settings": {
+          "marker_area_snapshot": {
+            "keeper": { "binding": "entity:switch.keeper", "area": "bedroom" }
+          }
+        }
+      },
+      "layoutAfter": {
+        "keeper": { "s": "f2", "x": 0.6, "y": 0.6 },
+        "keeper_light": { "s": "f2", "x": 0.7, "y": 0.7 }
+      }
+    },
+    {
+      "name": "the last space still detaches its markers instead of deleting them",
+      "spaceId": "only",
+      "config": {
+        "spaces": [
+          {
+            "id": "only", "title": "Only", "view_box": [0, 0, 1, 1], "plan_url": null,
+            "rooms": [{ "id": "room", "name": "Room", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]] }]
+          }
+        ],
+        "markers": [
+          { "id": "direct", "binding": "entity:sensor.direct", "space": "only", "room_id": "room", "name": "Kept" },
+          { "id": "hidden", "binding": "virtual", "hidden": true, "name": "Hidden" }
+        ],
+        "settings": {}
+      },
+      "layout": {
+        "direct": { "s": "only", "x": 0.1, "y": 0.2 },
+        "hidden": { "s": "only", "x": 0.3, "y": 0.4 }
+      },
+      "dependencies": ["direct", "hidden"],
+      "hiddenCount": 1,
+      "removedMarkers": [],
+      "configAfter": {
+        "spaces": [],
+        "markers": [
+          { "id": "direct", "binding": "entity:sensor.direct", "name": "Kept" },
+          { "id": "hidden", "binding": "virtual", "hidden": true, "name": "Hidden" }
+        ],
+        "settings": {}
+      },
+      "layoutAfter": {}
+    }
+  ]
+}

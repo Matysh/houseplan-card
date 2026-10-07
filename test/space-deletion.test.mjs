@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
-  collectSpaceMarkerDependencies, createSpaceDeletionCandidate, spaceDeletionMessage,
+  collectSpaceMarkerDependencies, createSpaceDeletionCandidate, hiddenDependencyCount,
+  spaceDeletionMessage,
 } from '../test-build/space-deletion.js';
 
 test('issue 244 space dependency count deduplicates all three reference paths', () => {
@@ -162,4 +164,39 @@ test('#162 текст подтверждения называет число к�
   assert.equal(spaceDeletionMessage(base, template, 0), base);
   assert.equal(spaceDeletionMessage(base, template, 2),
     'Пространство будет удалено. Также будет снято сопоставление карт роботов: 2.');
+});
+
+// --- #819: удаление пространства вместе с устройствами -----------------------
+// Общая фикстура с бэкендом (tests_backend/test_ha_websocket.py): карточка и
+// сервер считают и удаляют один и тот же набор маркеров.
+
+const withMarkers = JSON.parse(readFileSync(
+  new URL('./fixtures/space-delete-with-markers.json', import.meta.url), 'utf8',
+));
+
+test('#819 паритет с сервером на общей фикстуре', () => {
+  assert.equal(withMarkers.cases.length, 2);
+  for (const fixture of withMarkers.cases) {
+    const config = structuredClone(fixture.config);
+    const layout = structuredClone(fixture.layout);
+    const report = collectSpaceMarkerDependencies(config, layout, fixture.spaceId);
+    assert.deepEqual(report.markerIds, fixture.dependencies, `${fixture.name}: скрытые и tombstone — как на сервере`);
+    assert.equal(hiddenDependencyCount(config, report.markerIds), fixture.hiddenCount, fixture.name);
+
+    const result = createSpaceDeletionCandidate(config, layout, fixture.spaceId, true);
+    assert.deepEqual(result.removedMarkers, fixture.removedMarkers, fixture.name);
+    assert.deepEqual(result.config, fixture.configAfter, fixture.name);
+    assert.deepEqual(result.layout, fixture.layoutAfter, fixture.name);
+    assert.deepEqual(config, fixture.config, `${fixture.name}: input config is immutable`);
+    assert.deepEqual(layout, fixture.layout, `${fixture.name}: input layout is immutable`);
+  }
+});
+
+test('#819 без флага занятое пространство по-прежнему не трогается', () => {
+  const [fixture] = withMarkers.cases;
+  const result = createSpaceDeletionCandidate(fixture.config, fixture.layout, fixture.spaceId);
+  assert.equal(result.dependencies.count, fixture.dependencies.length);
+  assert.deepEqual(result.removedMarkers, []);
+  assert.deepEqual(result.config, fixture.config);
+  assert.deepEqual(result.layout, fixture.layout);
 });

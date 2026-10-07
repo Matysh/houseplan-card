@@ -1333,49 +1333,59 @@ async def ws_files_cleanup(hass: HomeAssistant, connection, msg: dict[str, Any])
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
-    from .const import FILES_DIR
     from .plans import attachment_refs
-    from .validation import sanitize_marker_id
 
-    mid = sanitize_marker_id(msg["marker_id"])
-    base = Path(hass.config.path(FILES_DIR)).resolve()
-    target = (base / mid).resolve() if mid else base
-    if not mid or not str(target).startswith(str(base)) or target == base:
-        connection.send_result(msg["id"], {"ok": True, "removed": 0, "kept": 0})
-        return
-
+    files_dir = Path(hass.config.path(FILES_DIR))
     async with rt.write_lock:
         stored = await rt.config_store.async_load() or {}
         refs = attachment_refs(stored.get("config") or {})
+        removed, kept = await hass.async_add_executor_job(
+            _drop_unreferenced_marker_files, files_dir, msg["marker_id"], refs,
+        )
+    connection.send_result(msg["id"], {"ok": True, "removed": removed, "kept": kept})
 
-        def _rm() -> tuple[int, int]:
-            if not target.is_dir():
-                return 0, 0
-            removed = kept = 0
-            for item in sorted(target.iterdir()):
-                if not item.is_file():
-                    continue
-                if f"{mid}/{item.name}" in refs:
-                    kept += 1
-                    continue
-                try:
-                    item.unlink()
-                    removed += 1
-                except OSError as err:
-                    _LOGGER.warning("House Plan: could not remove %s: %s", item, err)
-            if not kept:
-                try:
-                    target.rmdir()
-                except OSError:
-                    pass
-            return removed, kept
 
-        removed, kept = await hass.async_add_executor_job(_rm)
-    if kept:
+def _drop_unreferenced_marker_files(
+    files_dir: Path, marker_id: str, refs: set[str],
+) -> tuple[int, int]:
+    """Remove the files of ``<files>/<marker>`` the stored config does not name.
+
+    The one rule behind ``houseplan/files/cleanup`` and behind the markers a
+    space delete takes with it (#819). Runs in the executor; returns
+    ``(removed, kept)``. An id that does not name a folder inside the files
+    directory touches nothing.
+    """
+    from .validation import sanitize_marker_id
+
+    mid = sanitize_marker_id(marker_id)
+    base = files_dir.resolve()
+    target = (base / mid).resolve() if mid else base
+    if not mid or not str(target).startswith(str(base)) or target == base:
+        return 0, 0
+    if not target.is_dir():
+        return 0, 0
+    removed = kept = 0
+    for item in sorted(target.iterdir()):
+        if not item.is_file():
+            continue
+        if f"{mid}/{item.name}" in refs:
+            kept += 1
+            continue
+        try:
+            item.unlink()
+            removed += 1
+        except OSError as err:
+            _LOGGER.warning("House Plan: could not remove %s: %s", item, err)
+    if not kept:
+        try:
+            target.rmdir()
+        except OSError:
+            pass
+    else:
         _LOGGER.info(
             "House Plan: kept %s file(s) in %s — the configuration still references them", kept, mid
         )
-    connection.send_result(msg["id"], {"ok": True, "removed": removed, "kept": kept})
+    return removed, kept
 
 
 @websocket_api.websocket_command(
@@ -1902,12 +1912,133 @@ def _space_delete_candidate(
     return candidate_config, candidate_layout, dependencies, removed_layout
 
 
+def _delete_plan_markers(
+    config: dict[str, Any], layout: dict[str, Any], marker_ids: list[str],
+) -> list[str]:
+    """Delete markers the way the device dialog's «Delete» does (#819).
+
+    Mirror of the card's ``deletePlanMarkerRecords`` and the cleanup around
+    it (``src/space-deletion.ts`` ``deletePlanMarkers``; the shared fixture
+    ``test/fixtures/space-delete-with-markers.json`` pins both): a real binding
+    drops every marker of that binding and leaves a hidden tombstone of the
+    exact binding, a virtual marker simply goes; links to the dropped ids in
+    other markers' ``controls``, LED strips and area snapshots go with them,
+    and so do their layout positions. Mutates the given (already copied)
+    pair; returns the dropped ids, sorted.
+    """
+    dropped: set[str] = set()
+    for marker_id in sorted(marker_ids):
+        markers = config.get("markers") or []
+        target = next(
+            (marker for marker in markers
+             if marker.get("id") == marker_id and marker.get("removed") is not True),
+            None,
+        )
+        if target is None:
+            continue
+        binding = target.get("binding")
+        virtual = binding == "virtual"
+        kept = []
+        for marker in markers:
+            if marker.get("id") == marker_id or (not virtual and marker.get("binding") == binding):
+                dropped.add(str(marker.get("id")))
+            else:
+                kept.append(marker)
+        if not virtual:
+            kept.append({"id": marker_id, "binding": binding, "removed": True, "hidden": True})
+        config["markers"] = kept
+    if not dropped:
+        return []
+    for marker in config.get("markers") or []:
+        controls = marker.get("controls")
+        if not isinstance(controls, list):
+            continue
+        links = [
+            ref for ref in controls
+            if not (isinstance(ref, str) and ref.startswith("marker:")
+                    and ref[len("marker:"):] in dropped)
+        ]
+        if len(links) != len(controls):
+            marker["controls"] = links or None
+    for space in config.get("spaces") or []:
+        for strip in space.get("led_strips") or []:
+            if isinstance(strip, dict) and strip.get("marker") in dropped:
+                strip["marker"] = None
+                strip["active"] = True
+    snapshot = (config.get("settings") or {}).get("marker_area_snapshot")
+    if isinstance(snapshot, dict):
+        for marker_id in dropped:
+            snapshot.pop(marker_id, None)
+    for marker_id in dropped:
+        layout.pop(marker_id, None)
+    return sorted(dropped)
+
+
+def _space_delete_target(
+    config: dict[str, Any], layout: dict[str, Any], space_id: str,
+    *, remove_markers: bool = False,
+) -> tuple[dict[str, Any], dict[str, Any], list[str], int, list[str]]:
+    """The exact pair ``space/delete`` commits, and the markers it deleted.
+
+    Without ``remove_markers`` this is the #244 candidate unchanged. With it
+    (#819) every active marker that blocks the delete first goes the way
+    ``_delete_plan_markers`` sends it, so the space is no longer in use. The
+    last space keeps its own rule: its markers are detached, never deleted.
+    """
+    source_config, source_layout = config, layout
+    removed_markers: list[str] = []
+    spaces = config.get("spaces") or []
+    if remove_markers and not (len(spaces) == 1 and spaces[0].get("id") == space_id):
+        source_config = json.loads(json.dumps(config))
+        source_layout = json.loads(json.dumps(layout))
+        removed_markers = _delete_plan_markers(
+            source_config, source_layout,
+            _space_marker_dependencies(source_config, source_layout, space_id),
+        )
+    target_config, target_layout, dependencies, removed_layout = _space_delete_candidate(
+        source_config, source_layout, space_id,
+    )
+    removed_layout += len(layout) - len(source_layout)
+    return target_config, target_layout, dependencies, removed_layout, removed_markers
+
+
+async def _forget_deleted_markers(
+    hass: HomeAssistant, config: dict[str, Any], marker_ids: list[str],
+) -> None:
+    """Attachments and robot trails of markers a space delete took (#819).
+
+    The same clean-up the card runs after the device dialog's «Delete»
+    (``files/cleanup`` and ``trail/delete`` per marker). It follows an already
+    durable commit, so it is best-effort: a failure is logged and never turns
+    the accepted delete into an error the client would retry.
+    """
+    from .plans import attachment_refs
+
+    refs = attachment_refs(config)
+    files_dir = Path(hass.config.path(FILES_DIR))
+
+    def _drop_files() -> None:
+        for marker_id in marker_ids:
+            _drop_unreferenced_marker_files(files_dir, marker_id, refs)
+
+    try:
+        await hass.async_add_executor_job(_drop_files)
+    except Exception:  # noqa: BLE001 - the delete is already durable
+        _LOGGER.exception("House Plan: removing attachments of deleted markers failed")
+    try:
+        await _purge_trail_recorder(hass, config)
+    except Exception:  # noqa: BLE001 - the delete is already durable
+        _LOGGER.exception("House Plan: removing trails of deleted markers failed")
+
+
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/space/delete",
         vol.Required("space_id"): str,
         vol.Required("expected_config_rev"): int,
         vol.Required("expected_layout_rev"): int,
+        # #819: optional, so an older card keeps the `space_in_use` answer.
+        vol.Optional("remove_markers", default=False): bool,
     }
 )
 @websocket_api.async_response
@@ -1944,8 +2075,11 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
             ):
                 connection.send_error(msg["id"], "space_not_found", "Space no longer exists")
                 return
-            target_config, target_layout, dependencies, removed_layout = (
-                _space_delete_candidate(current_config, current_layout, space_id)
+            (
+                target_config, target_layout, dependencies, removed_layout, removed_markers,
+            ) = _space_delete_target(
+                current_config, current_layout, space_id,
+                remove_markers=msg["remove_markers"],
             )
             spaces = current_config.get("spaces") or []
             deleting_last_space = (
@@ -1984,6 +2118,10 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                 "final_metadata": original_metadata,
             }
             await _commit_pair(rt, pending, rollback)
+            if removed_markers:
+                # Under the lock, like config/set: a later write must not
+                # resurrect a marker between this commit and its clean-up.
+                await _forget_deleted_markers(hass, pending["config"], removed_markers)
     except PairCommitFailure as err:
         message = (
             "Space delete failed; the previous plan is pending recovery"
@@ -2014,6 +2152,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
         "config_rev": new_config_rev,
         "layout_rev": new_layout_rev,
         "removed_layout": removed_layout,
+        "removed_markers": removed_markers,
     })
 
 

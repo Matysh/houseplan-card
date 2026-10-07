@@ -409,7 +409,7 @@ config/layout (no per-entity projection), trails without `source` entity ids
 | `layout/set` **W** | `layout`, `expected_rev` | `{ok, rev}` · `conflict` (external clients; the card writes points) |
 | `layout/update` **W** | `device_id`, `pos` | `{ok, rev, ignored?: removed\|missing_virtual}` — a tombstoned owner's late drag is acknowledged, not stored |
 | `layout/delete` **W** | `device_id` | `{ok, rev}` (`rev: null` when nothing was stored) |
-| `space/delete` **W** | `space_id`, `expected_config_rev`, `expected_layout_rev` | `{ok, config_rev, layout_rev, removed_layout}` · `space_in_use`, `space_not_found`, `invalid_space_id` |
+| `space/delete` **W** | `space_id`, `expected_config_rev`, `expected_layout_rev`, `remove_markers?` (#819: the blocking markers go as with the device dialog's Delete, in the same pair write; ignored for the last space) | `{ok, config_rev, layout_rev, removed_layout, removed_markers}` · `space_in_use` (without `remove_markers`), `space_not_found`, `invalid_space_id` |
 | `plan/optimize` **W** | `config`, `layout`, both expected revs | `{ok, config_rev, layout_rev, can_undo}` — also the server-side wall-model migration barrier |
 | `plan/optimize_undo` **W** | both expected revs | restores the one-deep Optimize/full-import backup · `no_backup` after any later edit |
 | `geometry/repair` **W** | `space_id`, `aspect`, `dry_run?`, `undo?`, `expected_rev?` | manual re-transform of one space's positions (HP-1500-01) with one-deep `repair_backup` · `nothing_to_repair`, `no_backup` |

@@ -1,4 +1,7 @@
 /** Pure frontend preflight/candidate for an authoritative backend space delete. */
+import { removeMarkerAreaSnapshots } from './device-area-relocation';
+import { deletePlanMarkerRecords, removeMarkerControlReferences } from './devices';
+import type { LedStripModel, Marker } from './types';
 
 export interface SpaceDeletionDependencyReport {
   markerIds: string[];
@@ -68,17 +71,73 @@ export function spaceDeletionMessage(
   return routeCount ? `${base} ${routesTemplate.replace('{count}', String(routeCount))}` : base;
 }
 
+/** #819: how many of the blocking markers are hidden — the confirmation names them apart. */
+export const hiddenDependencyCount = (
+  config: { markers?: readonly Pick<Marker, 'id' | 'removed' | 'hidden'>[] | null } | null | undefined,
+  markerIds: readonly string[],
+): number => new Set((config?.markers || [])
+  .filter((marker) => marker?.removed !== true && marker?.hidden === true && markerIds.includes(marker.id))
+  .map((marker) => marker.id)).size;
+
+/** The part of a configuration the #819 mirror touches; the rest passes through. */
+interface MarkerDeletionConfig {
+  spaces?: ({ led_strips?: (Pick<LedStripModel, 'marker' | 'active'> | null)[] | null } | null)[];
+  markers?: Marker[];
+  settings?: { marker_area_snapshot?: unknown } | null;
+}
+
+/**
+ * #819: the device dialog's «Delete» for every id, on one candidate — mirror
+ * of `_delete_plan_markers` (websocket_api.py), pinned on both sides by
+ * test/fixtures/space-delete-with-markers.json. The server does this inside
+ * `houseplan/space/delete`; here it only proves the two agree.
+ */
+export function deletePlanMarkers(
+  config: MarkerDeletionConfig, layout: Record<string, unknown>, markerIds: readonly string[],
+): string[] {
+  const dropped = new Set<string>();
+  for (const id of [...markerIds].sort()) {
+    const markers = config.markers || [];
+    const target = markers.find((marker) => marker?.id === id && marker.removed !== true);
+    if (!target) continue;
+    const deletion = deletePlanMarkerRecords(markers, id, target.binding, target.binding === 'virtual');
+    config.markers = deletion.markers;
+    for (const removed of deletion.cleanupIds) dropped.add(removed);
+  }
+  if (!dropped.size) return [];
+  config.markers = removeMarkerControlReferences(config.markers || [], dropped);
+  for (const space of config.spaces || []) {
+    for (const strip of space?.led_strips || []) {
+      if (strip?.marker && dropped.has(strip.marker)) Object.assign(strip, { marker: null, active: true });
+    }
+  }
+  if (config.settings?.marker_area_snapshot) {
+    config.settings.marker_area_snapshot = removeMarkerAreaSnapshots(config.settings.marker_area_snapshot, dropped);
+  }
+  for (const id of dropped) delete layout[id];
+  return [...dropped].sort();
+}
+
 export function createSpaceDeletionCandidate(
   configIn: any,
   layoutIn: Record<string, any>,
   spaceId: string,
-): { config: any; layout: Record<string, any>; dependencies: SpaceDeletionDependencyReport } {
-  const dependencies = collectSpaceMarkerDependencies(configIn, layoutIn, spaceId);
+  removeMarkers = false,
+): {
+  config: any; layout: Record<string, any>; // any-ok: #244 raw stored JSON in and out, as configIn; #819 adds only removedMarkers
+  dependencies: SpaceDeletionDependencyReport; removedMarkers: string[];
+} {
   const config = clone(configIn);
   const layout = clone(layoutIn || {});
   const spaces = config.spaces || [];
   const deletingLastSpace = spaces.length === 1 && spaces[0]?.id === spaceId;
-  if (dependencies.count && !deletingLastSpace) return { config, layout, dependencies };
+  // #819: the markers go first (never the last space's — it detaches them),
+  // and the #244 rule below then finds nothing in use.
+  const removedMarkers = removeMarkers && !deletingLastSpace
+    ? deletePlanMarkers(config, layout, collectSpaceMarkerDependencies(config, layout, spaceId).markerIds)
+    : [];
+  const dependencies = collectSpaceMarkerDependencies(config, layout, spaceId);
+  if (dependencies.count && !deletingLastSpace) return { config, layout, dependencies, removedMarkers };
 
   const space = (config.spaces || []).find((item: any) => item?.id === spaceId);
   const roomIds = new Set(
@@ -111,5 +170,5 @@ export function createSpaceDeletionCandidate(
     const kept = routes.filter((route) => route?.space !== spaceId);
     if (kept.length !== routes.length) marker.vacuum.map_routes = kept;
   }
-  return { config, layout, dependencies };
+  return { config, layout, dependencies, removedMarkers };
 }
