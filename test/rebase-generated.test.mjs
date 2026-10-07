@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -198,6 +198,153 @@ test('#643 CLI: отказ — код 3 и по строке на конфлик
     assert.equal(failure.stdout, `${REVIEWS_INDEX_PATH}\nshared.txt\n`);
     assert.match(failure.stderr, /конфликт вне генерируемых путей — shared\.txt/);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+const INVENTORY_811 = 'docs/testing-notes/mutation-browser-guards.md';
+function inventoryText811({ paint = [], paintBefore = [], lifecycle = [], reason = 'Pixels' } = {}) {
+  const groups = new Map([
+    ['Paint', [...paintBefore, 'paint-base', ...Array.from({ length: 5 }, (_, i) => `paint-context-${i}`), ...paint]], ['Harness', ['harness-base']],
+    ['Pointer', ['pointer-base']], ['Layout', ['layout-base']],
+    ['Lifecycle', ['lifecycle-base', ...lifecycle]],
+  ]);
+  return ['# Inventory fixture', 'The guideline is `200`.', '',
+    '| Category | Count | Why a browser is still required |', '| --- | ---: | --- |',
+    ...[...groups].map(([name, ids]) => `| ${name} | ${ids.length} | ${name === 'Paint' ? reason : name} |`),
+    `| **Total** | **${[...groups.values()].flat().length} / 200** | Guideline |`, '',
+    '## Reviewed per-mutant inventory', '',
+    ...[...groups].flatMap(([name, ids]) => [`### ${name}`, '', `${name} reason retained.`, '',
+      ...ids.map((id) => `- \`${id}\``), '']),
+  ].join('\n');
+}
+
+function inventoryScenario811(t, { conflict = true, semantic = false, duplicate = false } = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'hp-rebase-inventory-811-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  git(root, 'init', '-q', '-b', 'dev');
+  mkdirSync(join(root, 'docs/testing-notes'), { recursive: true });
+  const file = join(root, INVENTORY_811);
+  writeFileSync(file, inventoryText811());
+  commitAll(root, 'base');
+  git(root, 'checkout', '-q', '-b', 'issue/811-test');
+  writeFileSync(file, inventoryText811({
+    ...(conflict ? { lifecycle: ['branch-id'] } : { paint: ['branch-id'] }),
+    reason: semantic ? 'Branch reason' : 'Pixels',
+  }));
+  commitAll(root, 'task inventory');
+  const before = git(root, 'rev-parse', 'HEAD');
+  const beforeText = readFileSync(file, 'utf8');
+  git(root, 'checkout', '-q', 'dev');
+  writeFileSync(file, inventoryText811({
+    ...(conflict ? { paint: ['dev-id', 'second-dev-id'] } : { paintBefore: [duplicate ? 'branch-id' : 'dev-id'] }),
+    reason: semantic ? 'Dev reason' : 'Pixels',
+  }));
+  commitAll(root, 'parallel inventory');
+  git(root, 'checkout', '-q', 'issue/811-test');
+  return { root, file, before, beforeText };
+}
+
+test('#811 AC6: numeric inventory conflicts preserve both ID lists and handwritten reasons', (t) => {
+  const { root, file } = inventoryScenario811(t);
+  const result = rebaseRegenerating({ onto: 'dev', cwd: root, env: ENV });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.ok(result.stops > 0, 'actual conflicting rebase, not just a pure parser fixture');
+  assert.equal(readFileSync(file, 'utf8'), inventoryText811({ paint: ['dev-id', 'second-dev-id'], lifecycle: ['branch-id'] }));
+  assert.equal(git(root, 'status', '--porcelain'), '');
+  const tip = git(root, 'rev-parse', 'HEAD');
+  const repeated = rebaseRegenerating({ onto: 'dev', cwd: root, env: ENV });
+  assert.equal(repeated.ok, true);
+  assert.equal(git(root, 'rev-parse', 'HEAD'), tip, 'repeated run is a no-op');
+});
+
+test('#811 AC6: silently merged equal totals are recomputed in a separate numeric-only commit', (t) => {
+  const { root, file } = inventoryScenario811(t, { conflict: false });
+  const result = rebaseRegenerating({ onto: 'dev', cwd: root, env: ENV });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.stops, 0, 'same Total on both branches merges without a Git conflict');
+  assert.equal(readFileSync(file, 'utf8'), inventoryText811({ paintBefore: ['dev-id'], paint: ['branch-id'] }));
+  assert.equal(git(root, 'rev-list', '--count', 'dev..HEAD'), '2', 'task commit plus a separate derived-count commit');
+  assert.deepEqual(git(root, 'diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n'), [INVENTORY_811]);
+  const diff = git(root, 'diff', 'HEAD^', 'HEAD', '--', INVENTORY_811);
+  assert.match(diff, /-\| \*\*Total\*\* \| \*\*11 \/ 200\*\*/);
+  assert.match(diff, /\+\| \*\*Total\*\* \| \*\*12 \/ 200\*\*/);
+  assert.doesNotMatch(diff, /^[+-]- `/m, 'ID lines were never rewritten');
+});
+
+for (const [name, options] of [
+  ['semantic reason conflict', { semantic: true }],
+  ['duplicate ID after a clean textual merge', { conflict: false, duplicate: true }],
+]) test(`#811 AC6: ${name} refuses and restores the original HEAD and tree`, (t) => {
+  const { root, file, before, beforeText } = inventoryScenario811(t, options);
+  const result = rebaseRegenerating({ onto: 'dev', cwd: root, env: ENV });
+  assert.equal(result.ok, false, JSON.stringify(result));
+  assert.ok(result.conflicts.includes(INVENTORY_811));
+  assert.ok(result.manual.includes(INVENTORY_811));
+  assert.equal(git(root, 'rev-parse', 'HEAD'), before);
+  assert.equal(readFileSync(file, 'utf8'), beforeText);
+  assert.equal(git(root, 'status', '--porcelain'), '');
+  assert.equal(existsSync(join(root, '.git/rebase-merge')), false);
+});
+
+test('#811 AC6: a refused numeric-only commit restores the clean start and preserves untracked files', (t) => {
+  const { root, file, before, beforeText } = inventoryScenario811(t, { conflict: false });
+  const untracked = join(root, 'keep-untracked.txt');
+  writeFileSync(untracked, 'owner data\n');
+  const hook = join(root, '.git/hooks/pre-commit');
+  writeFileSync(hook, '#!/bin/sh\necho "fixture refuses derived commit" >&2\nexit 1\n', { mode: 0o755 });
+  assert.throws(() => rebaseRegenerating({ onto: 'dev', cwd: root, env: ENV }), /fixture refuses derived commit/);
+  assert.equal(git(root, 'rev-parse', 'HEAD'), before);
+  assert.equal(readFileSync(file, 'utf8'), beforeText);
+  assert.equal(readFileSync(untracked, 'utf8'), 'owner data\n');
+  assert.equal(git(root, 'status', '--porcelain'), '?? keep-untracked.txt');
+});
+
+test('#811 AC6: a dirty tracked tree is refused without overwriting its staged or unstaged content', (t) => {
+  const { root, file, before } = inventoryScenario811(t);
+  writeFileSync(file, readFileSync(file, 'utf8') + '\nUncommitted owner prose.\n');
+  git(root, 'add', '--', INVENTORY_811);
+  writeFileSync(file, readFileSync(file, 'utf8') + '\nMore unstaged prose.\n');
+  const text = readFileSync(file, 'utf8');
+  const staged = git(root, 'show', `:${INVENTORY_811}`);
+  const result = rebaseRegenerating({ onto: 'dev', cwd: root, env: ENV });
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'dirty-worktree');
+  assert.equal(git(root, 'rev-parse', 'HEAD'), before);
+  assert.equal(readFileSync(file, 'utf8'), text);
+  assert.equal(git(root, 'show', `:${INVENTORY_811}`), staged);
+});
+
+for (const introducedByDev of [false, true]) test(`#811 AC6: ${introducedByDev ? 'rebased' : 'initial'} inventory symlink refuses without touching its target`, (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'hp-rebase-inventory-link-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const work = join(root, 'repo');
+  mkdirSync(join(work, 'docs/testing-notes'), { recursive: true });
+  git(work, 'init', '-q', '-b', 'dev');
+  const file = join(work, INVENTORY_811);
+  const sentinel = join(root, 'outside-inventory.md');
+  const stale = inventoryText811().replace('| Paint | 6 |', '| Paint | 5 |');
+  writeFileSync(sentinel, stale);
+  if (introducedByDev) writeFileSync(file, inventoryText811());
+  else symlinkSync(sentinel, file);
+  commitAll(work, 'base');
+  git(work, 'checkout', '-q', '-b', 'issue/811-link');
+  writeFileSync(join(work, 'task.txt'), 'task content\n');
+  commitAll(work, 'task');
+  const before = git(work, 'rev-parse', 'HEAD');
+  const beforeEntry = git(work, 'ls-files', '--stage', '--', INVENTORY_811);
+  if (introducedByDev) {
+    git(work, 'checkout', '-q', 'dev');
+    rmSync(file);
+    symlinkSync(sentinel, file);
+    commitAll(work, 'dev replaces inventory with a link');
+    git(work, 'checkout', '-q', 'issue/811-link');
+  }
+  const result = rebaseRegenerating({ onto: 'dev', cwd: work, env: ENV });
+  assert.equal(result.ok, false);
+  assert.match(result.output, /regular file/);
+  assert.equal(git(work, 'rev-parse', 'HEAD'), before);
+  assert.equal(git(work, 'ls-files', '--stage', '--', INVENTORY_811), beforeEntry);
+  assert.equal(git(work, 'status', '--porcelain'), '');
+  assert.equal(readFileSync(sentinel, 'utf8'), stale, 'no write may follow the inventory symlink');
 });
 
 // ---------- проводка в process.yml: свидетели и настоящий bash ----------

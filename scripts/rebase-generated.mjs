@@ -10,10 +10,14 @@
 // и не «их», а пересборка по дереву, в котором остановился ребейз.
 //
 // Правило одно: остановку разрешает только набор конфликтов, в котором ВСЕ
-// пути — индекс, данные, где права сторона dev (`UPSTREAM_WINS`, #698), или
-// пути, которые вызывающий объявил своими (бандл в `rebase-on-dev.mjs`). Хоть один другой путь — `git rebase --abort` и
+// пути — индекс, числовые ячейки browser inventory (#811), данные, где права
+// сторона dev (`UPSTREAM_WINS`, #698), или пути, которые вызывающий объявил
+// своими (бандл в `rebase-on-dev.mjs`). Хоть один другой путь — `git rebase --abort` и
 // перечень ВСЕХ конфликтующих файлов, индекс в нём тоже: автор видит полную
-// картину, дерево и HEAD как были.
+// картину, дерево и HEAD как были. Browser inventory сначала сливается без
+// счётчиков; конфликт рукописного текста/ID также возвращается автору. После
+// чистого ребейза счётчики проверяются снова: одинаковый Total двух веток
+// может слиться без конфликта и стать неверным для объединённого списка.
 //
 //   node scripts/rebase-generated.mjs --onto=origin/dev
 //
@@ -30,6 +34,10 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isMainModule } from './spawn-portable.mjs';
+import { BROWSER_GUARD_INVENTORY } from './mutation-browser-policy.mjs';
+import {
+  refreshBrowserInventory, resolveBrowserInventoryConflict, validateBrowserInventory,
+} from './mutation-browser-rebase.mjs';
 
 export const REVIEWS_INDEX_PATH = 'docs/reviews/INDEX.md';
 /**
@@ -61,27 +69,28 @@ const uniquePaths = (paths) => [...new Set(paths.map((p) => String(p).trim()).fi
 export function planStop(paths, { extra = () => false } = {}) {
   const conflicts = uniquePaths(paths);
   if (!conflicts.length) return { action: 'abort', reason: 'no-conflicts', manual: [], conflicts };
-  const manual = conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && !UPSTREAM_WINS.includes(path) && !extra(path));
+  const manual = conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && path !== BROWSER_GUARD_INVENTORY
+    && !UPSTREAM_WINS.includes(path) && !extra(path));
   if (manual.length) return { action: 'abort', reason: 'manual', manual, conflicts };
   return {
     action: 'resolve',
     index: conflicts.includes(REVIEWS_INDEX_PATH),
     upstream: conflicts.filter((path) => UPSTREAM_WINS.includes(path)),
-    extra: conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && !UPSTREAM_WINS.includes(path)),
+    extra: conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && path !== BROWSER_GUARD_INVENTORY && !UPSTREAM_WINS.includes(path)),
     conflicts,
   };
 }
 
 /** git-исполнитель: `(args, { allowFailure }) => { ok, status, stdout, stderr }`. */
 export function makeGit({ cwd = process.cwd(), env = process.env, gitPrefix = [] } = {}) {
-  const run = (args, { allowFailure = false } = {}) => {
+  const run = (args, { allowFailure = false, trim = true } = {}) => {
     const r = spawnSync('git', [...gitPrefix, ...args], {
       cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
       // Редактор сообщения на `rebase --continue` не открывается никогда.
       env: { ...env, GIT_EDITOR: 'true' },
     });
     if (r.error) throw r.error;
-    const out = { ok: r.status === 0, status: r.status, stdout: (r.stdout || '').trim(), stderr: (r.stderr || '').trim() };
+    const out = { ok: r.status === 0, status: r.status, stdout: trim ? (r.stdout || '').trim() : (r.stdout || ''), stderr: (r.stderr || '').trim() };
     if (!out.ok && !allowFailure) throw new Error(`git ${args.join(' ')} → ${out.stderr || out.stdout}`);
     return out;
   };
@@ -123,18 +132,44 @@ export function rebaseRegenerating({
   if (!onto) throw new Error('rebaseRegenerating: не задано, на что ребейзить (onto)');
   const resolved = [];
   let stops = 0;
+  // Restoration is safe only from a clean tracked tree. Untracked files are
+  // neither removed nor reset. Do not abort a rebase that belongs to the caller.
+  if (rebaseInProgress(git, cwd) || git(['status', '--porcelain', '--untracked-files=no']).stdout) {
+    return { ok: false, reason: 'dirty-worktree', resolved, stops, conflicts: [], manual: [],
+      output: 'ребейз требует чистого tracked-дерева и отсутствия начатого ребейза' };
+  }
+  const originalHead = git(['rev-parse', 'HEAD']).stdout;
+  const restore = () => {
+    if (rebaseInProgress(git, cwd)) git(['rebase', '--abort']);
+    else if (git(['rev-parse', 'HEAD']).stdout !== originalHead
+        || git(['status', '--porcelain', '--untracked-files=no']).stdout) {
+      // Rebase already finished before an invalid silent inventory merge was
+      // detected. --merge restores the known clean start, preserving untracked.
+      git(['reset', '--merge', originalHead]);
+    }
+  };
   const abort = (result) => {
-    git(['rebase', '--abort'], { allowFailure: true });
+    restore();
     return { ok: false, resolved, stops, ...result };
   };
+  const inventoryFailure = (error, conflicts = [BROWSER_GUARD_INVENTORY]) => abort({
+    reason: 'manual', conflicts, manual: [BROWSER_GUARD_INVENTORY], output: error,
+  });
   try {
-    let step = git(['rebase', onto], { allowFailure: true });
+    const initialInventory = validateBrowserInventory({ git, cwd });
+    if (!initialInventory.ok) return inventoryFailure(initialInventory.error);
+    let step = git(['rebase', '--no-autostash', onto], { allowFailure: true });
     while (!step.ok) {
       stops += 1;
       if (stops > maxStops) return abort({ reason: 'too-many-stops', conflicts: [], manual: [], output: step.stderr || step.stdout });
       const plan = planStop(conflictedPaths(git), { extra: extra?.match });
       if (plan.action === 'abort') {
         return abort({ reason: plan.reason, conflicts: plan.conflicts, manual: plan.manual, output: step.stderr || step.stdout });
+      }
+      if (plan.conflicts.includes(BROWSER_GUARD_INVENTORY)) {
+        const inventory = resolveBrowserInventoryConflict({ git, cwd, env });
+        if (!inventory.ok) return inventoryFailure(inventory.error, plan.conflicts);
+        resolved.push(`${BROWSER_GUARD_INVENTORY} ← пересчёт чисел`);
       }
       for (const path of plan.extra) resolved.push(`${path} ← ${extra.resolve(path)}`);
       // На ребейзе `--ours` — сторона, НА которую ребейзят, то есть dev.
@@ -157,9 +192,12 @@ export function rebaseRegenerating({
       const empty = git(['diff', '--cached', '--quiet', 'HEAD'], { allowFailure: true }).ok;
       step = git(['rebase', empty ? '--skip' : '--continue'], { allowFailure: true });
     }
+    const inventory = refreshBrowserInventory({ git, cwd });
+    if (!inventory.ok) return inventoryFailure(inventory.error);
+    if (inventory.changed) resolved.push(`${BROWSER_GUARD_INVENTORY} ← пересчёт чисел`);
     return { ok: true, stops, resolved };
   } catch (error) {
-    if (rebaseInProgress(git, cwd)) git(['rebase', '--abort'], { allowFailure: true });
+    restore();
     throw error;
   }
 }

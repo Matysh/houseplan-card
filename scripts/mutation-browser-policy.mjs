@@ -3,6 +3,7 @@
 // inventory, --check and unit tests ask the same question (#659).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { parseBrowserGuardInventory } from './mutation-browser-inventory.mjs';
 
 /**
  * Ориентир, а не стена (#699, решение владельца 2026-09-28). Прежний жёсткий
@@ -17,7 +18,7 @@ export const BROWSER_GUARD_INVENTORY = 'docs/testing-notes/mutation-browser-guar
 export const isBrowserGuard = (guard) => guard.includes('demo/') || guard.includes('bundle:sync');
 
 export function documentedBrowserGuards(markdown) {
-  return new Set([...markdown.matchAll(/^- `([^`]+)`$/gm)].map((match) => match[1]));
+  return parseBrowserGuardInventory(markdown, { validateCounts: false }).documented;
 }
 
 export function readDocumentedBrowserGuards(root = process.cwd()) {

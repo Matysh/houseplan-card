@@ -13,6 +13,64 @@ import {
 import { buildCiProof } from '../scripts/ci-proof.mjs';
 import { buildIndex } from '../scripts/reviews-index.mjs';
 
+function seedReviewedIndexGenerator(work) {
+  mkdirSync(join(work, 'scripts'), { recursive: true });
+  for (const name of ['reviews-index.mjs', 'spawn-portable.mjs']) {
+    writeFileSync(join(work, 'scripts', name), readFileSync(new URL(`../scripts/${name}`, import.meta.url)));
+  }
+}
+
+// The final index must use the reviewed generator, not the copy beside the
+// merge controller. These two tiny versions deliberately disagree.
+function indexGenerator(version) {
+  return `import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+const output = 'docs/reviews/INDEX.md';
+const text = ${JSON.stringify(version + '\n')} + readdirSync('docs/reviews').filter(n => n !== 'INDEX.md').sort().join('\\n') + '\\n';
+if (process.argv.includes('--check')) { if (readFileSync(output, 'utf8') !== text) process.exit(1); }
+else writeFileSync(output, text);
+`;
+}
+
+for (const rebased of [false, true]) test(`#811 AC5: ${rebased ? 'rebased' : 'fast-forward'} candidate uses its own index generator`, (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'hp-index-version-'));
+  t.after(() => rmSync(work, { recursive: true, force: true }));
+  const cfg = ['-c', 'user.name=t', '-c', 'user.email=t@x'];
+  const git = (...args) => execFileSync('git', ['-C', work, ...cfg, ...args], { encoding: 'utf8' }).trim();
+  const commit = (message) => { git('add', '.'); git('commit', '-qm', message); };
+  git('init', '-q');
+  mkdirSync(join(work, 'scripts'), { recursive: true });
+  mkdirSync(join(work, 'docs/reviews'), { recursive: true });
+  writeFileSync(join(work, 'scripts/reviews-index.mjs'), indexGenerator('base-generator'));
+  writeFileSync(join(work, 'docs/reviews/CODE-REVIEW-1-r1.md'), 'Verdict: green\n');
+  writeFileSync(join(work, 'docs/reviews/INDEX.md'), 'stale\n');
+  commit('base');
+  git('branch', '-M', 'dev');
+  git('checkout', '-qb', 'issue/811-fix');
+  writeFileSync(join(work, 'scripts/reviews-index.mjs'), indexGenerator('candidate-generator'));
+  commit('reviewed generator change');
+  const material = git('rev-parse', 'HEAD');
+  if (rebased) {
+    git('checkout', '-q', 'dev');
+    writeFileSync(join(work, 'docs/reviews/CODE-REVIEW-2-r1.md'), 'Verdict: green\n');
+    commit('another review');
+    git('checkout', '-q', 'issue/811-fix');
+  }
+  const ops = realOps({ repo: 'x/y', token: 'not-a-credential', issue: 811 });
+  const previous = process.cwd();
+  let result;
+  try {
+    process.chdir(work);
+    result = ops.freshIndex(rebased ? ops.rebaseOnto(material, 'dev') : material);
+  } finally { process.chdir(previous); }
+  assert.ok(result);
+  const expected = `candidate-generator\nCODE-REVIEW-1-r1.md\n${rebased ? 'CODE-REVIEW-2-r1.md\n' : ''}`;
+  assert.equal(readFileSync(join(work, 'docs/reviews/INDEX.md'), 'utf8'), expected);
+  const check = spawnSync(process.execPath, ['scripts/reviews-index.mjs', '--check'], { cwd: work, encoding: 'utf8' });
+  assert.equal(check.status, 0, `${check.stdout}${check.stderr}`);
+  assert.equal(git('status', '--porcelain'), '');
+  assert.deepEqual(git('diff', '--name-only', 'HEAD^', 'HEAD').split('\n'), ['docs/reviews/INDEX.md']);
+});
+
 // #643: сценарии на настоящем git ведут временные репозитории — GIT_* родителя
 // (GIT_DIR из pre-push хука, урок #633) направили бы их в чужой репозиторий.
 for (const key of Object.keys(process.env)) if (/^GIT_/i.test(key)) delete process.env[key];
@@ -183,8 +241,96 @@ test('patch-id изменился при ребейзе — S7-code-review, бе
   const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
   assert.equal(r.action, 'rereview');
   assert.equal(r.to, 'S7-code-review');
+  assert.ok(!ops.calls.some((c) => c[0] === 'index'), 'unreviewed rebased code must not run its generator');
   assert.ok(!ops.calls.some((c) => c[0] === 'validate'));
   assert.ok(!ops.calls.some((c) => c[0] === 'push' && c[2] === 'dev'));
+});
+
+test('#811 AC5: a matching rebased patch generates the index before publishing and validating that exact SHA', async () => {
+  const ops = fakeOps({ devTips: ['dev1'], branchTip: 'mat', material: 'mat', indexStale: true });
+  const result = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
+  assert.equal(result.action, 'push');
+  assert.equal(result.candidate, 'idx-cand-mat-on-dev1');
+  const relevant = ops.calls.filter((c) => ['index', 'push', 'dispatch', 'validate'].includes(c[0]));
+  assert.deepEqual(relevant, [
+    ['index', 'cand-mat-on-dev1'],
+    ['push', 'idx-cand-mat-on-dev1', 'issue/1-x', 'mat'],
+    ['dispatch', 'issue/1-x'],
+    ['validate', 'idx-cand-mat-on-dev1', 'workflow_dispatch'],
+    ['push', 'idx-cand-mat-on-dev1', 'dev', 'dev1'],
+  ]);
+});
+
+test('#811 AC6: patch-id ignores only inventory count digits across a real parallel-ID rebase', (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'hp-merge-inventory-patch-'));
+  t.after(() => rmSync(work, { recursive: true, force: true }));
+  const cfg = ['-c', 'user.name=t', '-c', 'user.email=t@x', '-c', 'core.hooksPath=/dev/null'];
+  const git = (...args) => execFileSync('git', ['-C', work, ...cfg, ...args], { encoding: 'utf8' }).trim();
+  const path = 'docs/testing-notes/mutation-browser-guards.md';
+  const file = join(work, path);
+  const inventory = (a, b, guideline = 200) => [
+    '# Inventory', `The guideline is \`${guideline}\`.`, '',
+    '| Category | Count | Why |', '| --- | ---: | --- |',
+    `| A | ${a.length} | Reason A |`, `| B | ${b.length} | Reason B |`,
+    `| **Total** | **${a.length + b.length} / ${guideline}** | Total reason |`, '',
+    '## Reviewed per-mutant inventory', '', '### A', '',
+    ...a.map((id) => `- \`${id}\``), '', '### B', '',
+    ...b.map((id) => `- \`${id}\``), '',
+  ].join('\n');
+  const commit = (message, text) => {
+    writeFileSync(file, text);
+    git('add', '.'); git('commit', '-qm', message);
+    return git('rev-parse', 'HEAD');
+  };
+  const ops = realOps({ repo: 'x/y', token: 'none', issue: 811, log: () => {} });
+  const inWork = (fn) => (...args) => {
+    const cwd = process.cwd(); process.chdir(work);
+    try { return fn(...args); } finally { process.chdir(cwd); }
+  };
+  const patchId = inWork(ops.patchId);
+  const rawPatchId = (from, to) => spawnSync('git', ['patch-id', '--stable'], {
+    input: git('diff', '--full-index', from, to), encoding: 'utf8',
+  }).stdout.trim().split(' ')[0];
+  git('init', '-q', '-b', 'dev');
+  git('commit', '--allow-empty', '-qm', 'before inventory existed');
+  const absent = git('rev-parse', 'HEAD');
+  mkdirSync(join(work, 'docs/testing-notes'), { recursive: true });
+  const base = commit('base', inventory(['base-id'], []));
+  assert.notEqual(patchId(absent, base), 'empty', 'adding the inventory still contributes its semantic content');
+  assert.notEqual(patchId(base, absent), 'empty', 'deleting the inventory is not hidden');
+  assert.notEqual(patchId(absent, base), patchId(base, absent), 'addition and deletion keep their direction');
+  git('checkout', '-qb', 'issue/811-inventory');
+  const material = commit('own guard', inventory(['base-id', 'own-id'], []));
+  git('checkout', '-q', 'dev');
+  const advanced = commit('neighbour guard', inventory(['base-id'], ['neighbour-id']));
+  const rebased = inWork(ops.rebaseOnto)(material, 'dev');
+  assert.ok(rebased, 'the real rebase preserves both independent ID additions');
+  assert.match(readFileSync(file, 'utf8'), /\*\*3 \/ 200\*\*/, 'the merged count is regenerated from both lists');
+  assert.notEqual(rawPatchId(base, material), rawPatchId(advanced, rebased),
+    'baseline witness: the old whole-Markdown patch-id sees the derived count delta');
+  const expected = patchId(base, material);
+  assert.equal(patchId(advanced, rebased), expected, 'the same semantic patch survives changed count cells');
+
+  const acceptedText = readFileSync(file, 'utf8');
+  git('checkout', '-qB', 'count-only', rebased);
+  const staleCounts = commit('derived counts only', acceptedText
+    .replace('| A | 2 |', '| A | 123 |').replace('**3 / 200**', '**124 / 200**'));
+  assert.equal(patchId(rebased, staleCounts), 'empty', 'only the numerical count cells are normalized');
+  assert.equal(patchId(advanced, staleCounts), expected, 'count normalization is independent of their arithmetic');
+  for (const [name, changed] of [
+    ['reason', acceptedText.replace('Reason A', 'A different reason')],
+    ['ID', acceptedText.replace('own-id', 'different-own-id')],
+    ['category', acceptedText.replace('| A |', '| C |').replace('### A', '### C')],
+    ['prose', acceptedText.replace('# Inventory', '# Changed inventory')],
+    ['guideline', acceptedText.replaceAll('200', '250')],
+  ]) {
+    git('checkout', '-qB', `probe-${name.toLowerCase()}`, rebased);
+    const tip = commit(name, changed);
+    assert.notEqual(patchId(advanced, tip), expected, `${name} is not a generated count and still changes patch-id`);
+  }
+  git('checkout', '-qB', 'malformed', rebased);
+  const malformed = commit('missing Total', acceptedText.replace(/^\| \*\*Total\*\*.*\n/m, ''));
+  assert.throws(() => patchId(advanced, malformed), /total is missing/i, 'malformed existing inventory fails closed');
 });
 
 test('dev ушёл снова после Validate: lease отклонён → новая попытка; трижды → S6', async () => {
@@ -249,6 +395,7 @@ test('на настоящем git: чистый ребейз с равным pat
 
     const calls = [];
     const ops = realOps({ repo: 'x/y', token: 'none' });
+    ops.deleteBranch = () => true; // This fixture must never reach GitHub.
     ops.pushWithLease = (sha, ref, expected) => {
       calls.push(['push', ref, expected]);
       const r = spawnSync('git', ['-C', work, 'push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, 'origin', `${sha}:refs/heads/${ref}`], { encoding: 'utf8' });
@@ -365,6 +512,7 @@ test('#516 AC1: dev moved only by review documents and the branch carries its ow
     const git = (cwd, ...args) => execFileSync('git', ['-C', cwd, ...cfg, ...args], { encoding: 'utf8' }).trim();
     const commit = (msg) => execFileSync('git', ['-C', work, ...cfg, 'commit', '-q', '-am', msg]);
     mkdirSync(join(work, 'docs', 'reviews'), { recursive: true });
+    seedReviewedIndexGenerator(work);
     writeFileSync(join(work, 'a.mjs'), 'export const a = 20;\n');
     writeFileSync(join(work, 'docs', 'reviews', '.keep'), '');
     git(work, 'add', '.');
@@ -389,6 +537,7 @@ test('#516 AC1: dev moved only by review documents and the branch carries its ow
 
     const calls = [];
     const ops = realOps({ repo: 'x/y', token: 'none', issue: 9 });
+    ops.deleteBranch = () => true; // This fixture must never reach GitHub.
     ops.pushWithLease = (sha, ref, expected) => {
       calls.push(['push', ref, expected]);
       const r = spawnSync('git', ['-C', work, 'push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, 'origin', `${sha}:refs/heads/${ref}`], { encoding: 'utf8' });
@@ -440,6 +589,7 @@ test('#643 AC1: dev сдвинулся документами ревью дру�
       git(work, 'commit', '-q', '-m', msg);
     };
     mkdirSync(reviews, { recursive: true });
+    seedReviewedIndexGenerator(work);
     writeFileSync(join(work, 'a.mjs'), 'export const a = 20;\n');
     git(work, 'add', '.');
     publish('CODE-REVIEW-1-r1.md', 'base');
@@ -463,6 +613,7 @@ test('#643 AC1: dev сдвинулся документами ревью дру�
 
     const calls = [];
     const ops = realOps({ repo: 'x/y', token: 'none', issue: 9 });
+    ops.deleteBranch = () => true; // This fixture must never reach GitHub.
     ops.pushWithLease = (sha, ref, expected) => {
       calls.push(['push', ref, expected]);
       const r = spawnSync('git', ['-C', work, 'push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, 'origin', `${sha}:refs/heads/${ref}`], { encoding: 'utf8' });
@@ -531,6 +682,7 @@ test('#657 r1 H1 на настоящем git: fast-forward несёт свежи
     const git = (cwd, ...args) => execFileSync('git', ['-C', cwd, ...cfg, ...args], { encoding: 'utf8' }).trim();
     const commit = (msg) => execFileSync('git', ['-C', work, ...cfg, 'commit', '-q', '-am', msg]);
     mkdirSync(join(work, 'docs', 'reviews'), { recursive: true });
+    seedReviewedIndexGenerator(work);
     writeFileSync(join(work, 'a.mjs'), 'export const a = 20;\n');
     writeFileSync(join(work, 'docs', 'reviews', 'CODE-REVIEW-8-r1.md'), '# CODE-REVIEW-8-r1\n');
     writeFileSync(join(work, 'docs', 'reviews', 'INDEX.md'), buildIndex(join(work, 'docs', 'reviews')));
@@ -550,6 +702,7 @@ test('#657 r1 H1 на настоящем git: fast-forward несёт свежи
 
     const calls = [];
     const ops = realOps({ repo: 'x/y', token: 'none', issue: 9 });
+    ops.deleteBranch = () => true; // This fixture must never reach GitHub.
     ops.pushWithLease = (sha, ref, expected) => {
       calls.push(['push', ref, expected]);
       const r = spawnSync('git', ['-C', work, 'push', '-q', `--force-with-lease=refs/heads/${ref}:${expected}`, 'origin', `${sha}:refs/heads/${ref}`], { encoding: 'utf8' });

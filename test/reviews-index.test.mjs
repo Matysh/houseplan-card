@@ -34,6 +34,92 @@ test('#635 вердикт: явная строка, раздел «Вердик�
   assert.equal(parseVerdict('Вердикт: зелёныйзаголовок без цвета'), '—', 'JS \\b не знает кириллицы — граница слова явная');
 });
 
+test('#811 AC2: colour tokens are standalone in every verdict fallback', async (t) => {
+  for (const token of ['validate-red', 'infrared', 'green-light', 'red2', 'red_flag', 'некрасный', 'красныйтекст']) {
+    await t.test(token, () => {
+      for (const text of [
+        `Verdict: ${token} was returned.`,
+        `Verdict: \`${token}\` was returned.`,
+        `The verdict mentions ${token}.`,
+        `## Вердикт\n\n${token}.`,
+        `Получен ${token} вердикт.`,
+      ]) assert.equal(parseVerdict(text), '—', text);
+    });
+  }
+  for (const text of ['Вердикт: красный', 'Verdict: red', 'Вердикт: 🟥 **красный**',
+    'Verdict: _red_', 'Verdict: __red__', '- Вердикт конвейера: `red` · High 1',
+    '## Вердикт\n\n**Red**.', 'Получен **red** вердикт.']) {
+    assert.equal(parseVerdict(text), 'красный', text);
+  }
+});
+
+test('#811 AC2/AC3: quoted and retold text cannot supply any fallback verdict or count', async (t) => {
+  const foreignBodies = [
+    'По результатам: вердикт красный, High: 1 · Medium: 3.', // mention fallback
+    'Получен **красный вердикт**.', // tail fallback
+    'Всего High: 1, Medium: 3.', // unique-count fallback
+    '### High-1 — чужая находка\n\nВ `src/foreign.ts`.', // heading fallback
+    'Итог: High 1 · Medium 3 · Low 0', // release summary fallback
+  ];
+  for (const [i, body] of foreignBodies.entries()) {
+    await t.test(`fallback ${i + 1}`, () => {
+      const own = '## Проверено (r2)\n\nЗамечаний к материалу здесь не сформулировано.\n';
+      const retold = `## Закрытие раунда r1\n\n${body}\n`;
+      const quoted = `## Цитата\n\n${body.split('\n').map((line) => `> ${line}`).join('\n')}\n`;
+      for (const other of [retold, quoted]) {
+        for (const sections of [[other, own], [own, other]]) {
+          // The filename supplies the round: a generic title must not hide our r2 section.
+          const entry = indexEntry('CODE-REVIEW-900-r2.md', ['# Ревью', ...sections].join('\n'));
+          assert.equal(entry.verdict, '—');
+          assert.deepEqual([entry.high, entry.medium, entry.findings, entry.files], [0, 0, [], []]);
+        }
+      }
+    });
+  }
+});
+
+test('#811 AC3: indexEntry keeps only this round’s findings/files when retellings move', () => {
+  const own = '## Находки (r2)\n\n### Medium-1 — собственная находка\n\nВ `src/own.ts:12`.\n';
+  const retold = '## Унаследовано из r1\n\n### High-2 — старая находка\n\nВ `src/old.ts`.\n';
+  const quoted = '## Цитата\n\n> ### High-3 — цитата\n> В `src/quoted.ts`.\n';
+  for (const sections of [[own], [retold, own, quoted], [quoted, own, retold]]) {
+    const entry = indexEntry('CODE-REVIEW-900-r2.md', ['# Ревью', ...sections].join('\n'));
+    assert.deepEqual([entry.high, entry.medium, entry.findings, entry.files],
+      [0, 1, ['собственная находка'], ['src/own.ts']]);
+  }
+});
+
+test('#811 AC3: «Находка Medium-1» supplies severity, titles and paths (SPEC-REVIEW-662-r3)', () => {
+  // Excerpts from the real r3; no summary counts, so headings must supply them too.
+  // This is quoted review data, not a runtime read of the demo documentation.
+  const standReadme = ['demo', 'stand', 'README.md'].join('/');
+  const doc = [
+    '# SPEC-REVIEW-662-r3',
+    '### Находка Medium-1 — радиус по умолчанию: ТЗ дизайнера противоречит решению 12',
+    'В `TZ-issue-662-LED-strips.md` и `docs/design/662-led-strips/README.md`.',
+    '### Находка Medium-2 — AC14 и раздел «Скоуп» называют документы, удалённые #679',
+    `В \`docs/TESTING-DEMO.md\` и \`${standReadme}\`.`,
+  ].join('\n');
+  const entry = indexEntry('SPEC-REVIEW-662-r3.md', doc);
+  assert.deepEqual([entry.high, entry.medium], [0, 2]);
+  assert.deepEqual(entry.findings, [
+    'радиус по умолчанию: ТЗ дизайнера противоречит решению 12',
+    'AC14 и раздел «Скоуп» называют документы, удалённые #679',
+  ]);
+  assert.deepEqual(entry.files, ['TZ-issue-662-LED-strips.md', 'docs/design/662-led-strips/README.md',
+    'docs/TESTING-DEMO.md', standReadme]);
+});
+
+test('#811 AC3/AC4: archive 403-r2 cannot inherit High 1; ambiguous 239-r2/43-r2 stay unknown', () => {
+  const read = (path) => readFileSync(new URL(`../legacy/reviews/${path}`, import.meta.url), 'utf8');
+  const fixed = indexEntry('SPEC-REVIEW-403-r2.md', read('v1.70.0/SPEC-REVIEW-403-r2.md'));
+  assert.equal(fixed.verdict, 'зелёный');
+  assert.deepEqual([fixed.high, fixed.medium], [0, 0]);
+  for (const [tag, name] of [['v1.68.0', 'SPEC-REVIEW-239-r2.md'], ['v1.70.0', 'SPEC-REVIEW-43-r2.md']]) {
+    assert.equal(indexEntry(name, read(`${tag}/${name}`)).verdict, '—', name);
+  }
+});
+
 test('#635 счётчики и находки', () => {
   assert.deepEqual(parseCounts('Вердикт: жёлтый · High: 1 · Medium: 3'), { high: 1, medium: 3 });
   assert.deepEqual(parseCounts('Итог: High 2 · Medium 4 · Low 1'), { high: 2, medium: 4 });
@@ -67,6 +153,8 @@ test('#635 индекс покрывает каталог целиком, дет
     writeFileSync(join(dir, 'RELEASE-REVIEW-v1.78.0.md'), '# Ревью линии\nИтог: High 1 · Medium 2 · Low 0\n### High — риск линии\n');
     writeFileSync(join(dir, 'INDEX.md'), 'старый индекс');
     writeFileSync(join(dir, 'notes.md'), 'постороннее');
+    mkdirSync(join(dir, 'legacy'));
+    writeFileSync(join(dir, 'legacy', 'CODE-REVIEW-1-r1.md'), 'Вердикт: красный\n');
     const { entries, skipped } = collectEntries(dir);
     assert.equal(entries.length, 5);
     assert.deepEqual(skipped, ['notes.md']);
@@ -152,7 +240,10 @@ test('#635/#657 (1б): индекс пересобирается только к
   assert.doesNotMatch(rebase, /reviews-index\.mjs/, 'в ветке задачи индекс не пересобирается (#657)');
   // Слияние кандидата в dev — единственная точка, где индекс задачи догоняет каталог.
   const merge = readFileSync(new URL('../scripts/merge-candidate.mjs', import.meta.url), 'utf8');
-  assert.match(merge, /REVIEWS_INDEX_SCRIPT, '--dir=docs\/reviews', '--commit-if-stale'/);
+  // #811: the trusted helper runs the accepted tree's generator in isolation;
+  // the tools snapshot must not generate an index with its older parser.
+  assert.match(merge, /import \{ commitCandidateReviewsIndex \} from '\.\/candidate-reviews-index\.mjs'/);
+  assert.match(merge, /commitCandidateReviewsIndex\(/);
 });
 
 // r1 #635 H1: индекс молчал о находках в живом формате заголовков и брал

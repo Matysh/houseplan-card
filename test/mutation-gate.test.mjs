@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +16,9 @@ import { guardPhases } from '../scripts/mutation-guard-outcome.mjs';
 import {
   BROWSER_GUARD_LIMIT, browserGuardPolicy, documentedBrowserGuards,
 } from '../scripts/mutation-browser-policy.mjs';
+import {
+  normalizeBrowserGuardCounts, parseBrowserGuardInventory, regenerateBrowserGuardCounts,
+} from '../scripts/mutation-browser-inventory.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -210,64 +213,11 @@ test('#332: каждый гвард реестра классифицирует�
 // reviewed categories. Parse both representations before comparing their counts
 // so a Set cannot hide duplicate IDs or an overwritten category row (#767).
 function assertBrowserGuardInventory(markdown, mutants, guideline) {
-  const lines = markdown.split(/\r?\n/);
-  const tableStart = lines.findIndex((line) => /^\| Category \| Count \|/.test(line));
-  assert.ok(tableStart >= 0, 'browser inventory category table is missing');
-  const counts = new Map();
-  let total;
-  let documentedGuideline;
-  for (const line of lines.slice(tableStart + 2)) {
-    if (!line.startsWith('|')) break;
-    const [, categoryCell, countCell] = line.split('|');
-    const category = categoryCell.replaceAll('**', '').trim();
-    const count = countCell.replaceAll('**', '').trim();
-    if (category === 'Total') {
-      assert.equal(total, undefined, 'duplicate browser inventory total');
-      assert.match(count, /^\d+\s*\/\s*\d+$/, 'browser inventory total / guideline must be numeric');
-      [total, documentedGuideline] = count.split('/').map(Number);
-    } else {
-      assert.ok(!counts.has(category), `duplicate category table row: ${category}`);
-      assert.match(count, /^\d+$/, `category count must be numeric: ${category}`);
-      counts.set(category, Number(count));
-    }
-  }
-
-  const inventoryStart = lines.indexOf('## Reviewed per-mutant inventory');
-  assert.ok(inventoryStart >= 0, 'reviewed per-mutant inventory is missing');
-  const categories = new Map();
-  const documented = new Set();
-  let currentCategory;
-  for (const line of lines.slice(inventoryStart + 1)) {
-    if (line.startsWith('## ')) break;
-    const heading = /^### (.+)$/.exec(line);
-    if (heading) {
-      currentCategory = heading[1].trim();
-      assert.ok(!categories.has(currentCategory), `duplicate inventory category: ${currentCategory}`);
-      categories.set(currentCategory, []);
-    }
-    const item = /^- `([^`]+)`\s*$/.exec(line);
-    if (!item) continue;
-    assert.ok(currentCategory, `browser guard has no category: ${item[1]}`);
-    assert.ok(!documented.has(item[1]), `duplicate browser guard ID: ${item[1]}`);
-    documented.add(item[1]);
-    categories.get(currentCategory).push(item[1]);
-  }
-  assert.ok(categories.size > 0, 'browser inventory has no categories');
-  assert.deepEqual([...counts.keys()].sort(), [...categories.keys()].sort(),
-    'category table and reviewed inventory must name the same categories');
+  const { documented } = parseBrowserGuardInventory(markdown, { guideline, validateCounts: false });
   const policy = browserGuardPolicy(mutants, documented);
   assert.deepEqual(policy.missingReasons, [], 'browser registry IDs missing from inventory');
   assert.deepEqual(policy.staleReasons, [], 'inventory IDs absent from browser registry');
-  for (const [category, ids] of categories) {
-    assert.equal(counts.get(category), ids.length, `category count differs from listed IDs: ${category}`);
-  }
-  assert.equal(total, policy.count, 'browser inventory total differs from registry');
-  assert.equal(total, [...counts.values()].reduce((sum, count) => sum + count, 0),
-    'browser inventory total differs from category sum');
-  assert.equal(documentedGuideline, guideline, 'browser inventory guideline differs from policy');
-  const proseGuideline = /The guideline is `(\d+)`/.exec(markdown);
-  assert.ok(proseGuideline, 'browser inventory prose guideline is missing');
-  assert.equal(Number(proseGuideline[1]), guideline, 'browser inventory prose guideline differs from policy');
+  parseBrowserGuardInventory(markdown, { guideline });
 }
 
 test('#659/#699/#767: browser guard inventory IDs, category counts and total match the registry', () => {
@@ -303,10 +253,10 @@ test('#767: browser inventory count contract rejects numeric and membership drif
   assert.doesNotThrow(() => assertBrowserGuardInventory(markdown.replaceAll('\n', '\r\n'), mutants, 2));
   const cases = [
     ['wrong category count', markdown.replace('| Paint | 2 |', '| Paint | 1 |'), /category count differs/],
-    ['wrong total', markdown.replace('**3 / 2**', '**4 / 2**'), /total differs from registry/],
+    ['wrong total', markdown.replace('**3 / 2**', '**4 / 2**'), /total differs from listed IDs/],
     ['wrong table guideline', markdown.replace('**3 / 2**', '**3 / 4**'), /guideline differs from policy/],
     ['wrong prose guideline', markdown.replace('guideline is `2`', 'guideline is `4`'), /prose guideline differs/],
-    ['missing total', markdown.replace(/^\| \*\*Total\*\*.*\n/m, ''), /total differs from registry/],
+    ['missing total', markdown.replace(/^\| \*\*Total\*\*.*\n/m, ''), /total is missing/],
     ['duplicate total', markdown.replace('| **Total** |', '| **Total** | **3 / 2** | Duplicate |\n| **Total** |'), /duplicate browser inventory total/],
     ['missing table category', markdown.replace(/^\| Paint.*\n/m, ''), /must name the same categories/],
     ['missing inventory category', markdown.replace('### Lifecycle\n', ''), /must name the same categories/],
@@ -319,6 +269,95 @@ test('#767: browser inventory count contract rejects numeric and membership drif
   for (const [name, changed, message] of cases) {
     assert.throws(() => assertBrowserGuardInventory(changed, mutants, 2), message, name);
   }
+});
+
+const inventory811 = (paint = ['alpha', 'beta'], lifecycle = ['gamma']) => [
+  'The guideline is `200`.',
+  '| Category | Count | Why a browser is still required |',
+  '| --- | ---: | --- |',
+  `| Paint | ${paint.length} | Pixels |`,
+  `| Lifecycle | ${lifecycle.length} | Events |`,
+  `| **Total** | **${paint.length + lifecycle.length} / 200** | Guideline only |`,
+  '', '## Reviewed per-mutant inventory', '### Paint',
+  ...paint.map((id) => `- \`${id}\``), '### Lifecycle',
+  ...lifecycle.map((id) => `- \`${id}\``), '',
+].join('\n');
+
+test('#811 AC7: numeric repair preserves every other byte, including CRLF and handwritten numbers', () => {
+  const valid = inventory811().replace('| Pixels |', '| Pixels 25 / 30 |').replaceAll('\n', '\r\n');
+  const stale = valid.replace('| Paint | 2 |', '| Paint | 99 |').replace('**3 / 200**', '**1000 / 200**');
+  assert.equal(regenerateBrowserGuardCounts(stale), valid);
+  assert.equal(regenerateBrowserGuardCounts(valid), valid);
+  const normalized = normalizeBrowserGuardCounts(stale);
+  assert.equal(normalized, normalizeBrowserGuardCounts(valid));
+  assert.match(normalized, /Pixels 25 \/ 30/);
+  assert.match(normalized, /\*\*0 \/ 200\*\*/);
+  assert.ok(normalized.includes('\r\n'));
+  assert.throws(() => regenerateBrowserGuardCounts(stale + '- `alpha`\r\n'), /duplicate browser guard ID/);
+});
+
+test('#811 AC7: malformed ID bullets cannot silently disappear during count regeneration', () => {
+  for (const bullet of ['- `alpha` extra reason', '- alpha', '  - `alpha`', '* `alpha`', '- ``']) {
+    const malformed = inventory811().replace('- `alpha`', bullet);
+    assert.throws(() => regenerateBrowserGuardCounts(malformed), /malformed browser guard ID/, bullet);
+    assert.throws(() => normalizeBrowserGuardCounts(malformed), /malformed browser guard ID/, bullet);
+  }
+});
+
+/** The real CLI and its modules, with a tiny registry; --check never executes guards. */
+function inventoryCli811(t, extra = []) {
+  const root = mkdtempSync(join(tmpdir(), 'hp-inventory-811-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, 'scripts'));
+  mkdirSync(join(root, 'src'));
+  for (const name of readdirSync(join(repoRoot, 'scripts')).filter((name) => name.endsWith('.mjs'))) {
+    copyFileSync(join(repoRoot, 'scripts', name), join(root, 'scripts', name));
+  }
+  const mutants = ['alpha', 'beta', 'gamma', ...extra].map((id) => ({
+    id, guard: 'node demo/smoke_x.mjs', patches: [], because: 'browser fixture',
+  }));
+  writeFileSync(join(root, 'scripts/mutation-registry.mjs'), `export const MUTANTS = ${JSON.stringify(mutants)};\n`);
+  mkdirSync(join(root, 'docs/testing-notes'), { recursive: true });
+  return (markdown) => {
+    writeFileSync(join(root, 'docs/testing-notes/mutation-browser-guards.md'), markdown);
+    return spawnSync(process.execPath, [join(root, 'scripts/mutation-gate.mjs'), '--check', '--id=alpha'], {
+      cwd: root, encoding: 'utf8',
+    });
+  };
+}
+
+test('#811 AC7: the real --check rejects numeric and structural inventory corruption', (t) => {
+  const run = inventoryCli811(t);
+  const markdown = inventory811();
+  const baseline = run(markdown);
+  assert.equal(baseline.status, 0, `${baseline.stdout}\n${baseline.stderr}`);
+  const cases = [
+    ['category count', markdown.replace('| Paint | 2 |', '| Paint | 1 |'), /category count differs/],
+    ['total', markdown.replace('**3 / 200**', '**4 / 200**'), /total differs/],
+    ['duplicate ID', markdown + '- `alpha`\n', /duplicate browser guard ID/],
+    ['missing total', markdown.replace(/^\| \*\*Total\*\*.*\n/m, ''), /total.*missing/],
+    ['table category', markdown.replace('| Paint |', '| Other |'), /same categories/],
+    ['duplicate heading', markdown + '### Paint\n', /duplicate inventory category/],
+    ['non-numeric count', markdown.replace('| Paint | 2 |', '| Paint | many |'), /count must be numeric/],
+    ['malformed ID', markdown.replace('- `alpha`', '- `alpha` extra reason'), /malformed browser guard ID/],
+  ];
+  for (const [name, text, error] of cases) {
+    const result = run(text);
+    assert.equal(result.status, 2, `${name}\n${result.stdout}\n${result.stderr}`);
+    assert.match(result.stdout, error, name);
+    assert.match(result.stdout, /FAIL browser guard policy/);
+  }
+});
+
+test('#811 AC7: membership drift and more than 200 guards remain CLI warnings', (t) => {
+  const run = inventoryCli811(t, Array.from({ length: 199 }, (_, i) => `extra-${i}`));
+  // Counts describe the document, not the registry: beta is missing and stale is extra.
+  const result = run(inventory811(['alpha', 'stale'], ['gamma']));
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /WARN browser guards: 202/);
+  assert.match(result.stdout, /WARN beta: browser guard не размечен/);
+  assert.match(result.stdout, /WARN stale: browser-разметка устарела/);
+  assert.doesNotMatch(result.stdout, /FAIL/);
 });
 
 test('#659: browser-only mutations reuse one clean bundle unless their patch is bundled', () => {

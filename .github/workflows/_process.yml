@@ -1931,9 +1931,9 @@ jobs:
           MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
           # #696: show/ship сливаются по лёгкому Validate на кандидате.
           MUTANTS: ${{ needs.prepare.outputs.mutants }}
-          # #749: из снимка dev — и суждение о Validate кандидата (ci-proof.mjs
-          # с validate.yml снимка), и reviews-index.mjs, который скрипт зовёт
-          # по пути от себя.
+          # #749/#811: policy, Git writes and CI proof stay in the dev snapshot.
+          # Only the accepted candidate's index generator runs from an exported
+          # credential-free tree; the trusted controller commits its output.
           TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           if [ -z "$BRANCH" ]; then

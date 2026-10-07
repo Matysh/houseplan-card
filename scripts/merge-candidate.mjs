@@ -20,18 +20,19 @@
 // случаев §8.4 была юнит-тестом, а не верой в shell.
 
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
-import { fileURLToPath } from 'node:url';
 import {
   CI_PROOF_POLICIES, evaluateCiProof, githubCandidateTree, loadGithubProofContext,
 } from './ci-proof.mjs';
 import { rebaseRegenerating } from './rebase-generated.mjs';
 // Личность конвейера — одна на ребейз и на коммит индекса (#643).
 import { CONVEYOR_IDENTITY } from './reviews-index.mjs';
-
-/** Скрипт индекса — по абсолютному пути: слияние работает из чужого cwd (worktree кандидата). */
-const REVIEWS_INDEX_SCRIPT = fileURLToPath(new URL('./reviews-index.mjs', import.meta.url));
+import { commitCandidateReviewsIndex } from './candidate-reviews-index.mjs';
+import { normalizeBrowserGuardCounts } from './mutation-browser-inventory.mjs';
+import { BROWSER_GUARD_INVENTORY } from './mutation-browser-policy.mjs';
 
 export const MAX_ATTEMPTS = 3;
 /** Пути вне patch-id кандидата (#698): документы ревью и то, что ребейз сливает сам. */
@@ -284,6 +285,50 @@ export const sh = (cmd, args, opts = {}) => {
   return { status: failure ? 1 : (r.status ?? 1), stdout: (r.stdout || '').trim(), stderr };
 };
 
+// #811: сравниваем нормализованные blob-стороны, а не вырезаем Markdown из
+// patch-id целиком. Только цифры счётчиков производны; причины, ID, текст и
+// знаменатель Total по-прежнему входят в патч. Нулевой контекст не добавляет
+// в сравнение соседний ID, внесённый другой задачей рядом с нашим.
+function browserGuardPatchDiff(from, to) {
+  const run = (args, opts = {}, statuses = [0]) => {
+    const r = spawnSync('git', args, { encoding: 'utf8', maxBuffer: MAX_COMMAND_OUTPUT_BYTES, ...opts });
+    if (r.error || !statuses.includes(r.status)) {
+      throw new Error(`inventory diff: ${r.error?.message || r.stderr || `git exited ${r.status}`}`);
+    }
+    return r.stdout;
+  };
+  const blob = (rev) => {
+    const entry = run(['ls-tree', '-z', rev, '--', BROWSER_GUARD_INVENTORY]);
+    if (!entry) return null; // Файл ещё не существовал в старом дереве.
+    const match = /^(100644|100755) blob ([a-f0-9]+)\t([^\0]+)\0$/.exec(entry);
+    if (!match || match[3] !== BROWSER_GUARD_INVENTORY) throw new Error('inventory diff: expected a regular inventory blob');
+    const text = run(['cat-file', 'blob', match[2]]); // Не trim(): сохраняем байты Markdown.
+    return { mode: match[1] === '100755' ? 0o755 : 0o644, text: normalizeBrowserGuardCounts(text) };
+  };
+  const before = blob(from);
+  const after = blob(to);
+  if (!before && !after) return '';
+  const work = mkdtempSync(join(tmpdir(), 'hp-inventory-patch-'));
+  try {
+    for (const [side, value] of [['left', before], ['right', after]]) {
+      const path = join(work, side, BROWSER_GUARD_INVENTORY);
+      mkdirSync(dirname(path), { recursive: true });
+      if (value) {
+        writeFileSync(path, value.text);
+        chmodSync(path, value.mode);
+      }
+    }
+    const diff = run(['diff', '--no-index', '--no-color', '--no-ext-diff', '--no-textconv',
+      '--full-index', '--unified=0', '--src-prefix=a/', '--dst-prefix=b/', '--', 'left', 'right'],
+    { cwd: work }, [0, 1]);
+    // Убираем только временные имена сторон из заголовков, не из текста.
+    return diff.split('\n').map((line) => /^(?:diff --git |--- |\+\+\+ )/.test(line)
+      ? line.replace(/\b([ab])\/(?:left|right)\//g, '$1/') : line).join('\n');
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+}
+
 export function realOps({
   repo, token, issue = '', workflow = 'validate.yml', sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
   now = Date.now, exec = sh,
@@ -313,8 +358,13 @@ export function realOps({
     // базу метрик монолита ребейз берёт из dev: строки соседей рядом с записью
     // задачи меняют контекст диффа, но не то, что читал ревьюер.
     patchId: (from, to) => {
-      const diff = must(git('diff', '--full-index', from, to, '--', '.', ...PATCH_ID_EXCLUDES), 'diff');
-      const r = spawnSync('git', ['patch-id', '--stable'], { input: diff, encoding: 'utf8' });
+      const ordinaryDiff = must(git('diff', '--full-index', from, to, '--', '.', ...PATCH_ID_EXCLUDES,
+        `:!${BROWSER_GUARD_INVENTORY}`), 'diff');
+      const diff = `${ordinaryDiff}\n${browserGuardPatchDiff(from, to)}`;
+      const r = spawnSync('git', ['patch-id', '--stable'], {
+        input: diff, encoding: 'utf8', maxBuffer: MAX_COMMAND_OUTPUT_BYTES,
+      });
+      if (r.error || r.status !== 0) throw new Error(`patch-id: ${r.error?.message || r.stderr || `git exited ${r.status}`}`);
       return (r.stdout || '').trim().split(' ')[0] || 'empty';
     },
     rebaseOnto: (branchTip, onto) => {
@@ -328,22 +378,17 @@ export function realOps({
         console.log(`ребейз на ${onto} отменён: ${r.conflicts.join(', ') || r.reason}`);
         return null;
       }
-      // #635 r2: dev мог принести новые документы ревью — снимок INDEX.md
-      // в кандидате их не знает. Коммит индекса — doc-коммит конвейера:
-      // patch-id его не видит (`:!docs/reviews`), а тест «индекс свеж» в
-      // Validate кандидата без него был бы красным.
-      must(exec(process.execPath, [REVIEWS_INDEX_SCRIPT, '--dir=docs/reviews', '--commit-if-stale', `--issue=${issue}`]), 'reviews-index --commit-if-stale');
       return must(git('rev-parse', 'HEAD'), 'rev-parse HEAD');
     },
     // #657 (1б) r1 H1: документ ревью ветки задачи больше не несёт индекс —
-    // его пересобирают только коммиты, идущие в dev. Ребейз делает это сам
-    // (выше); fast-forward, когда dev не двигался, ребейза не знает, и без
+    // его пересобирают только коммиты, идущие в dev. Оба пути слияния
+    // вызывают это после доказательства применимости зелёного вердикта. Без
     // этого шага в dev уехал бы устаревший INDEX.md — красный `reviews_index`
     // на голове dev. Коммит индекса — doc-коммит конвейера поверх материала,
     // слияние остаётся fast-forward.
     freshIndex: (tip) => {
       must(git('checkout', '-q', '-B', 'merge-into-dev', tip), 'checkout');
-      must(exec(process.execPath, [REVIEWS_INDEX_SCRIPT, '--dir=docs/reviews', '--commit-if-stale', `--issue=${issue}`]), 'reviews-index --commit-if-stale');
+      commitCandidateReviewsIndex({ issue });
       return must(git('rev-parse', 'HEAD'), 'rev-parse HEAD');
     },
     // #702: ветка задачи удаляется после слияния — только если её вершина всё
@@ -479,10 +524,14 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
       return finish(decision, { candidate: target, devNow, branchTip: tip });
     }
 
-    const candidate = ops.rebaseOnto(tip, 'origin/dev');
+    let candidate = ops.rebaseOnto(tip, 'origin/dev');
     if (!candidate) return finish(decideMerge({ fresh: true, devMoved: true, conflict: true }), { devNow });
 
     const patchIdEqual = ops.patchId(materialBase, material) === ops.patchId(devNow, candidate);
+    // #811: the candidate's generator is code, not merely data. Run it only
+    // while the green verdict still applies; a changed diff first needs a
+    // new review. The index commit is included in the exact Validate SHA.
+    if (patchIdEqual) candidate = ops.freshIndex(candidate);
     // кандидат публикуется в ветку в любом случае: он и есть то, что должно
     // ехать в dev, и Validate стартует именно от этого push
     if (!ops.pushWithLease(candidate, branch, tip)) {

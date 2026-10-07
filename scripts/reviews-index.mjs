@@ -37,9 +37,13 @@ const COLOUR = {
   'жёлтый': 'жёлтый', 'желтый': 'жёлтый', yellow: 'жёлтый',
   'красный': 'красный', red: 'красный',
 };
-const COLOUR_RE = /(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)(?![а-яёa-z])/i;
+// #811: a colour is a standalone token, not `validate-red`, `infrared` or
+// `red_flag`. Markdown emphasis/code delimiters may surround the whole token.
+// Share both boundaries across all verdict paths, including the legacy tail.
+const COLOUR_TOKEN = String.raw`(?<![\p{L}\p{N}_-])[*_\x60]*([Зз]елёный|[Зз]еленый|[Жж]ёлтый|[Жж]елтый|[Кк]расный|[Gg]reen|[Yy]ellow|[Rr]ed)[*_\x60]*(?![\p{L}\p{N}_-])`;
+const COLOUR_RE = new RegExp(COLOUR_TOKEN, 'iu');
 // `(?!\s+r\d)`: «Вердикт r2 — зелёный» — пересказ чужого раунда (#779), не вердикт документа ни в каком виде.
-const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)(?!\s+r\d)[^\n]{0,60}?\**\s*(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)(?![а-яёa-z])/i;
+const VERDICT_LINE_RE = new RegExp(String.raw`(?:Вердикт|Verdict)(?!\s+r\d)[^\n]{0,60}?${COLOUR_TOKEN}`, 'iu');
 /**
  * Своя строка вердикта — «Вердикт: цвет» по шаблону §7.2: с начала строки
  * (после `- `/`**`), двоеточие СРАЗУ после слова, вокруг — пробелы и разметка
@@ -57,10 +61,11 @@ const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)(?!\s+r\d)[^\n]{0,60}?
  */
 // Без флага `i`: строчное «вердикт красный» в шапке — пересказ, а не свой вердикт.
 const VERDICT_OWN_MARKER_RE = /^[ \t]*(?:[-*]\s*)?[*_]*(?:Вердикт|Verdict)(?: конвейера)?[*_]*[ \t]*:/;
-const VERDICT_OWN_LINE_RE = /^[ \t]*(?:[-*]\s*)?[*_]*(?:Вердикт|Verdict)(?: конвейера)?[*_]*[ \t]*:[ \t*_`]*(?:🟢|🟡|🔴)?[ \t*_`]*([Зз]елёный|[Зз]еленый|[Жж]ёлтый|[Жж]елтый|[Кк]расный|[Gg]reen|[Yy]ellow|[Rr]ed)(?![а-яёa-z])/m;
+const VERDICT_OWN_LINE_RE = new RegExp(String.raw`^[ \t]*(?:[-*]\s*)?[*_]*(?:Вердикт|Verdict)(?: конвейера)?[*_]*[ \t]*:[ \t*_\x60]*(?:🟢|🟡|🔴)?[ \t]*${COLOUR_TOKEN}`, 'mu');
 /** Строка, начинающаяся со слова без двоеточия (`Вердикт зелёный; …` старых документов), — после «Вердикт:». */
 const VERDICT_LEAD_MARKER_RE = /^[ \t]*(?:[-*]\s*)?\**(?:Вердикт|Verdict)(?!\s+r\d)/;
-const VERDICT_LEAD_LINE_RE = /^[ \t]*(?:[-*]\s*)?\**(?:Вердикт|Verdict)(?!\s+r\d)[^\n]{0,60}?\**\s*([Зз]елёный|[Зз]еленый|[Жж]ёлтый|[Жж]елтый|[Кк]расный|[Gg]reen|[Yy]ellow|[Rr]ed)(?![а-яёa-z])/m;
+const VERDICT_LEAD_LINE_RE = new RegExp(String.raw`^[ \t]*(?:[-*]\s*)?\**(?:Вердикт|Verdict)(?!\s+r\d)[^\n]{0,60}?${COLOUR_TOKEN}`, 'mu');
+const VERDICT_TAIL_RE = new RegExp(String.raw`${COLOUR_TOKEN}\s+вердикт`, 'iu');
 
 /** Разобрать имя документа: этап, issue, раунд. */
 export function parseDocName(name) {
@@ -84,8 +89,8 @@ export function parseDocName(name) {
  * пересказа «Вердикт rN — цвет») → свободная форма хвоста → «—». r1 #635:
  * документ r2 пересказывал вердикт r1 («вердикт красный, High: 1») в шапке,
  * и первое совпадение по тексту выдавало чужой цвет; #779 — то же через
- * «Вердикт r2 — зелёный» в разделе «Закрытие раунда». Своя строка и секция
- * ищутся только в собственном тексте документа (`ownText`, r1 #779 M1).
+ * «Вердикт r2 — зелёный» в разделе «Закрытие раунда». Все уровни ищутся
+ * только в собственном тексте документа (`ownText`, #779/#811).
  * `round` — номер раунда из имени документа (`indexEntry`).
  */
 export function parseVerdict(text, { round } = {}) {
@@ -96,21 +101,21 @@ export function parseVerdict(text, { round } = {}) {
   if (section != null) {
     const colour = COLOUR_RE.exec(section);
     if (colour) return COLOUR[colour[1].toLowerCase()];
-    if (/блокиру|не принят|отклон|red/i.test(section)) return 'красный';
+    if (/блокиру|не принят|отклон/i.test(section)) return 'красный';
     if (/принят|принимается|готов|без замечаний|можно сливать|регрессий нет|proceed|approved/i.test(section)) return 'зелёный';
   }
-  const explicit = VERDICT_LINE_RE.exec(text);
+  const explicit = VERDICT_LINE_RE.exec(ownBody);
   if (explicit) return COLOUR[explicit[1].toLowerCase()];
   // Старые документы пишут «зелёный вердикт» в свободной форме — ищем в хвосте.
-  const tail = /(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)\**\s+вердикт/i.exec(text.slice(-2500));
+  const tail = VERDICT_TAIL_RE.exec(ownBody.slice(-2500));
   if (tail) return COLOUR[tail[1].toLowerCase()];
   return '—';
 }
 
 const VERDICT_SECTION_RE = /^#{1,4}\s*(?:\d+\.\s*)?(?:Вердикт|Verdict|Итог)(?![а-яё])[^\n]*\n([\s\S]*?)(?=\n#{1,4}\s|(?![\s\S]))/m;
 const SEVERITY = { high: 'high', h: 'high', medium: 'medium', m: 'medium', low: 'low', l: 'low' };
-/** Заголовок находки: `### H1 — …`, `### Medium-2 (…) — …`, `### Medium (в скоупе) — …`, `### Low`. */
-const SEVERITY_HEADING_RE = /^(#{2,4})\s*\**\[?(High|Medium|Low|[HML])(?:[-\s]?(?:[HML])?(\d+)[a-z-]*)?\]?\**(?:\s*\([^)\n]*\))?\s*(?:[—–:.-]\s*)?(.*)$/gmi;
+/** Заголовок находки: `### H1 — …`, `### Находка Medium-2 — …`, `### Medium (в скоупе) — …`, `### Low`. */
+const SEVERITY_HEADING_RE = /^(#{2,4})\s*(?:Находка\s+)?\**\[?(High|Medium|Low|[HML])(?:[-\s]?(?:[HML])?(\d+)[a-z-]*)?\]?\**(?:\s*\([^)\n]*\))?\s*(?:[—–:.-]\s*)?(.*)$/gmi;
 /** `## Находка 1 (High, в скоупе) — title` — форма ранних документов; группы те же, что у SEVERITY_HEADING_RE. */
 const FINDING_HEADING_RE = /^(#{2,4})\s*Находка\s*(\d+)?\s*\((High|Medium|Low)[^)\n]*\)\s*(?:[—–:.-]\s*)?(.*)$/i;
 const NOTHING_RE = /^\s*[—–-]?\s*(?:нет|не найдено|не обнаружено|отсутствуют|не блокиру\S*|снима\S*(?:\s+с\s+записью)?|none|no|—)\s*[.,;]?\s*$/i;
@@ -308,26 +313,26 @@ function numberedItems(body) {
  * файлу больше не берётся: r1 #635 показал, что оно бывает цитатой чужого
  * документа («ТЗ прошло зелёным на r3 (High: 0, Medium: 0)»), #779 — что
  * им бывает и пересказ прошлого раунда «Вердикт r2 — зелёный (High: 0, Medium: 0)».
- * Своя строка, секция «Вердикт» и сводка ищутся только в собственном тексте
+ * Все уровни, включая запасной подсчёт по заголовкам, ищутся в собственном тексте
  * (`ownText`): секции «Закрытие раунда»/«Унаследовано» и цитаты — не источник,
  * где бы они ни стояли (r1 #779 M1).
  */
 export function parseCounts(text, { round } = {}) {
-  const release = releaseCounts(text);
-  if (release) return release;
   const own = ownText(text, { round });
-  for (const scope of [verdictLine(own, true), verdictSection(own), summaryParagraph(own), verdictLine(text)]) {
+  const release = releaseCounts(own);
+  if (release) return release;
+  for (const scope of [verdictLine(own, true), verdictSection(own), summaryParagraph(own), verdictLine(own)]) {
     const counts = scope ? countsIn(scope) : null;
     if (counts) return counts;
   }
-  const highs = new Set([...text.matchAll(/High:\s*(\d+)/g)].map((m) => m[1]));
-  const mediums = new Set([...text.matchAll(/Medium:\s*(\d+)/g)].map((m) => m[1]));
+  const highs = new Set([...own.matchAll(/High:\s*(\d+)/g)].map((m) => m[1]));
+  const mediums = new Set([...own.matchAll(/Medium:\s*(\d+)/g)].map((m) => m[1]));
   if ((highs.size || mediums.size) && highs.size <= 1 && mediums.size <= 1) {
     return { high: Number([...highs][0] || 0), medium: Number([...mediums][0] || 0) };
   }
   const ids = { high: new Set(), medium: new Set() };
   let anonymous = { high: 0, medium: 0 };
-  for (const block of severityBlocks(text)) {
+  for (const block of severityBlocks(own)) {
     if (block.severity === 'low') continue;
     if (block.id != null) { ids[block.severity].add(block.id); continue; }
     const items = numberedItems(block.body).filter((item) => item.severity === block.severity);
@@ -345,7 +350,8 @@ export function parseCounts(text, { round } = {}) {
  * с первым абзацем как заголовком, строки таблиц с severity в первых
  * ячейках. Обрезаются до 90 символов; не больше `limit`.
  */
-export function parseFindings(text, limit = 6) {
+export function parseFindings(text, limit = 6, { round } = {}) {
+  const own = ownText(text, { round });
   const out = [];
   const seen = new Set();
   const push = (raw) => {
@@ -359,14 +365,14 @@ export function parseFindings(text, limit = 6) {
   // Источники сливаются в порядке документа: заголовок r1 не должен уступать
   // место таблице из конца файла только потому, что он другой формы.
   const found = [];
-  const lines = text.split('\n');
+  const lines = own.split('\n');
   lines.forEach((line, index) => {
     const numbered = /^#{3,4}\s*\d+\.\s*([^\n]+)/.exec(line);
     if (numbered) found.push({ line: index, title: numbered[1] });
     const row = /^\|\s*(?:\*\*)?(?:H\d+|M\d+|High|Medium)(?:\*\*)?\s*\|(?:[^|\n]*\|)?\s*([^|\n]+)\|/.exec(line);
     if (row) found.push({ line: index, title: row[1] });
   });
-  for (const block of severityBlocks(text)) {
+  for (const block of severityBlocks(own)) {
     if (block.title) { found.push({ line: block.line, title: block.title }); continue; }
     const items = numberedItems(block.body);
     if (items.length) { items.forEach((item, k) => found.push({ line: block.line + k / 100, title: item.title })); continue; }
@@ -383,10 +389,10 @@ export function parseFindings(text, limit = 6) {
  * High/Medium/Low (с номером строки или без). Это и есть ответ на «что
  * находили по файлу X» — `grep 'form-kit' INDEX.md` (r1 #635 AC2).
  */
-export function parseFiles(text, limit = 8) {
+export function parseFiles(text, limit = 8, { round } = {}) {
   const out = [];
   const seen = new Set();
-  const blocks = severityBlocks(text);
+  const blocks = severityBlocks(ownText(text, { round }));
   const scope = blocks.length ? blocks.map((b) => [b.title, ...b.body].join('\n')).join('\n') : '';
   for (const m of scope.matchAll(/`((?:[\w@.-]+\/)*[\w@.-]+\.(?:ts|mjs|js|py|md|yml|yaml|json|css|html|sh|ps1|mermaid))(?::\d+(?:[-–]\d+)?)?`/g)) {
     const file = m[1].replace(/^\.\//, '');
@@ -406,8 +412,8 @@ export function indexEntry(name, text) {
     name, ...meta,
     verdict: parseVerdict(text, { round: meta.round }),
     ...parseCounts(text, { round: meta.round }),
-    findings: parseFindings(text),
-    files: parseFiles(text),
+    findings: parseFindings(text, 6, { round: meta.round }),
+    files: parseFiles(text, 8, { round: meta.round }),
   };
 }
 

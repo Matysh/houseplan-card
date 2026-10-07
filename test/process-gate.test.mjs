@@ -34,6 +34,7 @@ import {
   RS,
 } from '../scripts/process-gate.mjs';
 import { issueBodyDigest, materialAnchorBlock } from '../scripts/review-doc-guard.mjs';
+import { resolveValidationRange } from '../scripts/validate-commit-provenance.mjs';
 
 const commit = (subject, body, files) => makeCommit({ sha: 'deadbeefcafe', subject, body, files });
 const rules = (findings) => findings.filter((f) => f.level === 'fail').map((f) => f.rule);
@@ -582,20 +583,20 @@ test('the CLI exits 0 on a clean range and 1 on a broken one', (t) => {
 
 test('an issue-branch range is clamped to its own commits only when the base is stale', () => {
   // #190: после обязательного ребейза remote_old..local_new втягивает историю
-  // dev. Сужение включается только для issue-веток и только когда база
-  // перестала быть предком вершины — fast-forward остаётся точным.
-  const deps = (ancestor, mb = 'MB') => ({
+  // dev. #811: общий предок before/head тоже может быть слишком ранней базой.
+  // Fast-forward после развилки dev остаётся точным.
+  const deps = (ancestor, mb = 'MB', beforeDev = false) => ({
     targetRef: 'refs/heads/issue/117-registryless-opening',
-    isAncestor: () => ancestor,
+    isAncestor: (_base, head) => head === 'NEW' ? ancestor : beforeDev,
     mergeBaseWithDev: () => mb,
   });
   assert.equal(clampIssueBranchRange('OLD..NEW', deps(false)), 'MB..NEW');
   assert.equal(clampIssueBranchRange('OLD..NEW', deps(true)), 'OLD..NEW');
+  assert.equal(clampIssueBranchRange('OLD..NEW', deps(true, 'MB', true)), 'MB..NEW');
   // Не issue-ветка — не трогаем: dev и main живут по своим правилам.
-  assert.equal(
-    clampIssueBranchRange('OLD..NEW', { ...deps(false), targetRef: 'refs/heads/dev' }),
-    'OLD..NEW',
-  );
+  for (const targetRef of ['refs/heads/dev', 'refs/heads/main', 'refs/pull/117/merge']) {
+    assert.equal(clampIssueBranchRange('OLD..NEW', { ...deps(false), targetRef }), 'OLD..NEW');
+  }
   // Без origin/dev сужать не во что — fail closed остаётся за широким диапазоном.
   assert.equal(clampIssueBranchRange('OLD..NEW', deps(false, null)), 'OLD..NEW');
   // Тройная точка и не-диапазон проходят насквозь.
@@ -676,6 +677,127 @@ test('the CLI judges a rebased issue branch by its own commits (#190)', (t) => {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('#811 AC1: the GitHub range composition excludes rebased dev work but judges every own commit', (t) => {
+  if (process.platform === 'win32') {
+    t.skip('нужен исполняемый stub gh — прогон в Linux CI');
+    return;
+  }
+  if (spawnSync('git', ['--version'], { encoding: 'utf8' }).status !== 0) {
+    t.skip('git недоступен');
+    return;
+  }
+  const root = mkdtempSync(join(tmpdir(), 'hp-gate-811-range-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const dir = join(root, 'repo');
+  mkdirSync(dir);
+  const gate = fileURLToPath(new URL('../scripts/process-gate.mjs', import.meta.url));
+  const ghStub = join(root, 'gh.mjs');
+  writeFileSync(ghStub, '#!/usr/bin/env node\n'
+    + 'const args = process.argv.slice(2);\n'
+    + 'if (args[0] !== "issue" || args[1] !== "view") process.exit(2);\n'
+    + 'const number = Number(args[2]);\n'
+    + 'if (number !== 807 && number !== 811) process.exit(2);\n'
+    + 'const state = number === 807 ? "CLOSED" : process.env.HP_OWN_STATE || "OPEN";\n'
+    + 'process.stdout.write(JSON.stringify({number, state, labels: [{name: "S6-in-progress"}], body: ""}));\n',
+  { mode: 0o755 });
+  const git = (...args) => {
+    const result = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 0, `git ${args.join(' ')}: ${result.stderr}`);
+    return result.stdout.trim();
+  };
+  const commitFile = (path, message) => {
+    mkdirSync(join(dir, path, '..'), { recursive: true });
+    writeFileSync(join(dir, path), `${message.split('\n')[0]}\n`);
+    git('add', '-A');
+    git('-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'core.hooksPath=/dev/null',
+      'commit', '-q', '-m', message);
+    return git('rev-parse', 'HEAD');
+  };
+  const ownMessage = 'Own work\n\nIssue: #811\nUser-Visible: no';
+  const target = 'refs/heads/issue/811-composition';
+  const runGate = ({ before, head = git('rev-parse', 'HEAD'), targetRef = target,
+    eventName = 'push', base = '', ownState = 'OPEN' }) => {
+    const result = spawnSync(process.execPath,
+      [gate, '--repo', dir, '--github-range', '--issues', '--json'], {
+        encoding: 'utf8', env: {
+          ...process.env, GH_BIN: ghStub, HP_OWN_STATE: ownState,
+          EVENT_NAME: eventName, BEFORE_SHA: before, HEAD_SHA: head,
+          BASE_SHA: base, DEVELOPMENT_BRANCH: 'dev', TARGET_REF: targetRef,
+        },
+      });
+    assert.ok(result.stdout.trim().startsWith('{'), result.stdout + result.stderr);
+    return { result, report: JSON.parse(result.stdout) };
+  };
+  const accepted = (options, range, count) => {
+    const { result, report } = runGate(options);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(report.ok, true, result.stdout);
+    assert.equal(report.range, range);
+    assert.equal(report.commits, count);
+  };
+
+  git('init', '-q', '-b', 'dev');
+  const originalBase = commitFile('README.md', 'Base');
+  git('checkout', '-q', '-b', 'issue/811-composition');
+  const publishedTip = commitFile('scripts/own.mjs', ownMessage);
+  git('checkout', '-q', 'dev');
+  const devTip = commitFile('scripts/landed.mjs', 'Landed work\n\nIssue: #807\nUser-Visible: no');
+  git('update-ref', 'refs/remotes/origin/dev', devTip);
+  git('checkout', '-q', 'issue/811-composition');
+  git('-c', 'user.name=t', '-c', 'user.email=t@t', 'rebase', '-q', 'refs/remotes/origin/dev');
+  const rebasedTip = git('rev-parse', 'HEAD');
+
+  // The resolver has already replaced the divergent old tip with an ancestor.
+  // Testing only OLD..NEW at clamp's entry (#190) cannot witness this failure.
+  assert.equal(resolveValidationRange({ eventName: 'push', beforeSha: publishedTip, headSha: rebasedTip },
+    (args) => git(...args)), `${originalBase}..${rebasedTip}`);
+  accepted({ before: publishedTip }, `${devTip}..${rebasedTip}`, 1);
+  // A pre-resolved ancestor may also arrive through an explicit range caller.
+  const explicit = spawnSync(process.execPath, [gate, '--repo', dir,
+    '--range', `${originalBase}..${rebasedTip}`, '--target-ref', target, '--issues', '--json'], {
+    encoding: 'utf8', env: { ...process.env, GH_BIN: ghStub, HP_OWN_STATE: 'OPEN' },
+  });
+  assert.equal(explicit.status, 0, explicit.stdout + explicit.stderr);
+  assert.equal(JSON.parse(explicit.stdout).commits, 1);
+
+  // Narrowing cannot bless the branch's own closed issue.
+  const closed = runGate({ before: publishedTip, ownState: 'CLOSED' });
+  assert.equal(closed.result.status, 1, closed.result.stdout + closed.result.stderr);
+  assert.equal(closed.report.commits, 1);
+  assert.ok(closed.report.findings.some((f) => f.level === 'fail' && f.rule === 8 && /#811/.test(f.msg)),
+    closed.result.stdout);
+  assert.ok(closed.report.findings.every((f) => !/#807/.test(f.msg)), closed.result.stdout);
+
+  accepted({ before: '0'.repeat(40) }, `${devTip}..${rebasedTip}`, 1);
+  accepted({ before: 'f'.repeat(40) }, `${devTip}..${rebasedTip}`, 1);
+  accepted({ before: publishedTip, eventName: 'pull_request', targetRef: 'refs/pull/811/merge', base: devTip },
+    `${devTip}..${rebasedTip}`, 1);
+  for (const targetRef of ['refs/heads/dev', 'refs/heads/main', 'refs/pull/811/merge']) {
+    const options = { before: publishedTip, targetRef,
+      ...(targetRef.includes('/pull/') ? { eventName: 'pull_request', base: originalBase } : {}) };
+    const { result, report } = runGate(options);
+    assert.equal(report.range, `${originalBase}..${rebasedTip}`, result.stdout);
+    assert.equal(report.commits, 2, result.stdout);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.ok(report.findings.some((f) => f.level === 'fail' && f.rule === 8 && /#807/.test(f.msg)), result.stdout);
+  }
+
+  // Fast-forward pushes still judge their exact suffix, not the whole branch.
+  const nextTip = commitFile('scripts/next.mjs', ownMessage);
+  accepted({ before: rebasedTip }, `${rebasedTip}..${nextTip}`, 1);
+  // But a rebase/first-push range must not lose either own commit.
+  accepted({ before: publishedTip }, `${devTip}..${nextTip}`, 2);
+
+  // No proven dev boundary: retain the wider range and its real refusal.
+  git('update-ref', '-d', 'refs/remotes/origin/dev');
+  const unknown = runGate({ before: publishedTip });
+  assert.equal(unknown.report.range, `${originalBase}..${nextTip}`, unknown.result.stdout);
+  assert.equal(unknown.report.commits, 3);
+  assert.equal(unknown.result.status, 1);
+  assert.ok(unknown.report.findings.some((f) => f.level === 'fail' && f.rule === 8 && /#807/.test(f.msg)),
+    unknown.result.stdout);
 });
 
 test('the CLI falls back to origin/dev when BEFORE_SHA is orphaned by a force-push (#315)', (t) => {

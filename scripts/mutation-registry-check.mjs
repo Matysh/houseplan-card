@@ -4,8 +4,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  BROWSER_GUARD_LIMIT, browserGuardPolicy, readDocumentedBrowserGuards,
+  BROWSER_GUARD_INVENTORY, BROWSER_GUARD_LIMIT, browserGuardPolicy,
 } from './mutation-browser-policy.mjs';
+import { parseBrowserGuardInventory } from './mutation-browser-inventory.mjs';
 import { staticTestSelectionProblems } from './mutation-guard-outcome.mjs';
 
 export function checkMutationRegistry(selected, { allMutants, root, log = console.log }) {
@@ -39,7 +40,10 @@ export function checkMutationRegistry(selected, { allMutants, root, log = consol
     }
   }
   try {
-    const policy = browserGuardPolicy(allMutants, readDocumentedBrowserGuards(root));
+    const inventory = parseBrowserGuardInventory(readFileSync(join(root, BROWSER_GUARD_INVENTORY), 'utf8'), {
+      guideline: BROWSER_GUARD_LIMIT,
+    });
+    const policy = browserGuardPolicy(allMutants, inventory.documented);
     log(`browser guards: ${policy.count}/${BROWSER_GUARD_LIMIT}`);
     if (policy.overLimit) {
       // #699: ориентир, а не лимит — цена браузерных свидетелей растёт, но

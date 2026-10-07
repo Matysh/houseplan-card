@@ -10908,8 +10908,8 @@ const MUTANT_DEFINITIONS = [
     because: '#670: release reviews use the mandated `Итог: High N · Medium N` summary without colons',
     patches: [{
       file: 'scripts/reviews-index.mjs',
-      find: '  if (release) return release;\n  const own = ownText(text, { round });',
-      replace: '  void release; // mutant: ignore the release summary\n  const own = ownText(text, { round });',
+      find: '  const release = releaseCounts(own);\n  if (release) return release;',
+      replace: '  const release = releaseCounts(own);\n  void release; // mutant: ignore the release summary',
     }],
   },
   {
@@ -10934,13 +10934,13 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'reviews-index-verdict-substring',
-    guard: 'node --test --test-name-pattern="#635 вердикт" test/reviews-index.test.mjs',
-    because: 'a colour word inside another word is not a verdict; JS \\b is ASCII-only, so the '
-      + 'Cyrillic guard is an explicit negative lookahead (#635)',
+    guard: 'node --test --test-name-pattern="#635 вердикт|#811 AC2:" test/reviews-index.test.mjs',
+    because: '#811: every verdict path shares the left token boundary; removing it reads '
+      + 'validate-red and infrared as the document\'s red verdict',
     patches: [{
       file: 'scripts/reviews-index.mjs',
-      find: "const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)(?!\\s+r\\d)[^\\n]{0,60}?\\**\\s*(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)(?![а-яёa-z])/i;",
-      replace: "const VERDICT_LINE_RE = /(?:[Вв]ердикт|[Vv]erdict)(?!\\s+r\\d)[^\\n]{0,60}?\\**\\s*(зелёный|зеленый|жёлтый|желтый|красный|green|yellow|red)/i; // mutant: substring verdict",
+      find: '(?<![\\p{L}\\p{N}_-])',
+      replace: '',
     }],
   },
   {
@@ -10950,7 +10950,7 @@ const MUTANT_DEFINITIONS = [
       + 'round; counts must come from the document\'s own verdict line or section',
     patches: [{
       file: 'scripts/reviews-index.mjs',
-      find: "  for (const scope of [verdictLine(own, true), verdictSection(own), summaryParagraph(own), verdictLine(text)]) {",
+      find: "  for (const scope of [verdictLine(own, true), verdictSection(own), summaryParagraph(own), verdictLine(own)]) {",
       replace: "  for (const scope of [text]) { // mutant: first match anywhere in the document",
     }],
   },
@@ -11021,8 +11021,8 @@ const MUTANT_DEFINITIONS = [
       + 'the caller\'s tree is left mid-rebase and the next step works on a detached half-result',
     patches: [{
       file: 'scripts/rebase-generated.mjs',
-      find: "    if (rebaseInProgress(git, cwd)) git(['rebase', '--abort'], { allowFailure: true });\n",
-      replace: '    // mutant: no abort on failure\n',
+      find: '  } catch (error) {\n    restore();\n    throw error;\n',
+      replace: '  } catch (error) {\n    // mutant: no restore on failure\n    throw error;\n',
     }],
   },
   {
@@ -12960,8 +12960,8 @@ const MUTANT_DEFINITIONS = [
       + 'that counts docs/reviews sends every green candidate back to review whenever dev moved (#516)',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: "      const diff = must(git('diff', '--full-index', from, to, '--', '.', ...PATCH_ID_EXCLUDES), 'diff');",
-      replace: "      const diff = must(git('diff', '--full-index', from, to), 'diff'); // mutant: review docs count",
+      find: "      const ordinaryDiff = must(git('diff', '--full-index', from, to, '--', '.', ...PATCH_ID_EXCLUDES,",
+      replace: "      const ordinaryDiff = must(git('diff', '--full-index', from, to, '--', '.', ...PATCH_ID_EXCLUDES.filter((path) => path !== ':!docs/reviews'), // mutant: review docs count",
     }],
   },
   // #698: ребейз сам сливает то, в чём две задачи не противоречат друг другу.

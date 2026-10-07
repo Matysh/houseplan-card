@@ -858,14 +858,18 @@ function ghRunner(nwo, bin) {
 //
 // Fail-closed сохраняется: собственные коммиты ветки относительно origin/dev
 // проверяются все до одного, сужается только чужая история.
+// #811: resolveValidationRange уже заменяет расходящиеся before/head их общим
+// предком. Поэтому одной проверки «base — предок head» недостаточно: такой base
+// может стоять ДО новой базы dev. Поднимаем его только до доказанного общего
+// предка head и origin/dev; более поздний fast-forward before остаётся точным.
 export function clampIssueBranchRange(range, { targetRef = '', isAncestor, mergeBaseWithDev } = {}) {
   if (!/^(?:refs\/heads\/)?issue\/\d+-/.test(targetRef ?? '')) return range;
   const m = /^([^.\s]+)\.\.([^.\s]+)$/.exec(range ?? '');
   if (!m) return range;
   const [, base, head] = m;
-  if (isAncestor(base, head)) return range;
   const mergeBase = mergeBaseWithDev(head);
   if (!mergeBase) return range;
+  if (isAncestor(base, head) && !isAncestor(base, mergeBase)) return range;
   return `${mergeBase}..${head}`;
 }
 
