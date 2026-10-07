@@ -27,6 +27,7 @@ import { stableSummaryPlacementSlot } from './summary-panel-identity';
 import {
   refreshSummaryEntityIndex, type SummaryEntityIndex,
 } from './summary-panel-picker';
+import { floorRecordKeyMemo } from './floor-geometry-key';
 
 const isSummarySystemKey = (value: string): value is SummaryPanelSystemKey =>
   value === 'device_count' || value === 'total_area' || value === 'datetime';
@@ -89,6 +90,14 @@ export class LoadedSummaryPanelRuntime {
     cfgEpoch: number; layoutRev: number; registryRev: number; value: number | null;
   } | null = null;
   private areaMemo: { cfgEpoch: number; value: number | null } | null = null;
+  /**
+   * #769: the area of each floor (m², `null` — failed) by the content key of
+   * its records, so a new epoch recomputes only the floors that changed. It
+   * holds the keys of the current floors only; the total is summed anew.
+   */
+  private readonly areaFloors = new Map<string, number | null>();
+  /** #769: the floor record key, one fingerprint per floor and epoch (test seam). */
+  private areaKeys = floorRecordKeyMemo();
   private storageUnavailable = false;
   private clockContext = '';
   private editorRenderer: SummaryPanelEditorRenderer | null = null;
@@ -395,6 +404,8 @@ export class LoadedSummaryPanelRuntime {
     this.entityIndex = null;
     this.deviceMemo = null;
     this.areaMemo = null;
+    this.areaFloors.clear();
+    this.areaSteps = null;
     this.clockContext = '';
     this.storageKey = null;
     this.storageUnavailable = false;
@@ -772,8 +783,20 @@ export class LoadedSummaryPanelRuntime {
     }
     if (this.areaMemo && this.areaMemo.cfgEpoch === this.host._cfgEpoch) return true;
     if (!this.areaSteps || this.areaStepsEpoch !== this.host._cfgEpoch) {
-      this.areaSteps = module.cleanFloorAreaSteps(this.host._serverCfg, this.host._model);
-      this.areaStepsEpoch = this.host._cfgEpoch;
+      // #769: per floor. A floor whose records kept their content keeps its
+      // area; a floor that changed is computed again in the same portions, and
+      // a floor whose key moves mid-computation starts over alone.
+      const epoch = this.host._cfgEpoch;
+      const records = this.host._renderCfg?.spaces ?? [];
+      this.areaSteps = module.cleanFloorAreaSteps(
+        this.host._serverCfg, this.host._model, module.spaceWallGeometry, {
+          key: (index, raw, space) => this.areaKeys(
+            epoch, String(index), space.id, records[index] ?? null, raw,
+          ),
+          values: this.areaFloors,
+        },
+      );
+      this.areaStepsEpoch = epoch;
     }
     const started = Date.now();
     let step = this.areaSteps.next();

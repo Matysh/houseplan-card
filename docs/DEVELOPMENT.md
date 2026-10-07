@@ -578,7 +578,12 @@ edits — not a commit, not a merge (that is decided in `integrate` from the sea
   epoch lags behind edits made in place (boundary/opening tools mutate the
   space object), and a stale barrier set is invisible: the plan keeps lighting
   through a wall that already exists. `_lightBarriers` hashes its own inputs
-  instead, and the same fingerprint keys the per-source region cache.
+  instead, and the same fingerprint keys the per-source region cache. A cache
+  whose inputs are one floor's record keys by that record's content,
+  remembered per epoch (`floorRecordKeyMemo` in `src/floor-geometry-key.ts`):
+  the card's four floor-geometry caches (#744) and the summary panel's area
+  (#769). The furniture and stairs magnet (`furniture-wall-surface.ts`) keeps
+  the epoch by measurement: its own edits change the floor record anyway (#769).
 - **Segments that cross must be split before a visibility sweep.** The sweep
   casts a ray at every barrier ENDPOINT; two faces crossing in their middles —
   normal where wall bodies meet at a junction — leave that corner unsampled and

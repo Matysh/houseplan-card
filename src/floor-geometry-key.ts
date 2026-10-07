@@ -38,22 +38,49 @@ export interface FloorKeySource {
 
 type Slot = { model: unknown; current: unknown; key: string };
 
-/** A reader `spaceId → key`, remembered per epoch and per source record. */
-export function floorGeometryKeyReader(source: FloorKeySource): (spaceId: string) => string {
-  let epoch = Number.NaN;
+/** The content key of one floor's input records; see `floorRecordKeyMemo`. */
+export type FloorRecordKey = (
+  epoch: number, slot: string, id: string, model: unknown, current: unknown,
+) => string;
+
+/**
+ * #769: the content key of one floor's input records, the helper shared by the
+ * card's reader below and the summary panel's area (`summary-panel-runtime-loaded.ts`).
+ * `model` is the record the floor's model was built from, `current` the record
+ * its geometry reads walls, openings and `cell_cm` from. When they are one
+ * object (View) the key fingerprints it once; when they differ (a resize
+ * preview, a duplicate id) it fingerprints both. The key reads nothing else,
+ * so it does not depend on which floor is shown.
+ *
+ * Remembered per epoch and per caller `slot` by the record objects: at most
+ * one fingerprint per slot and epoch while the records stay the same objects.
+ * `fingerprint` is a test seam.
+ */
+export function floorRecordKeyMemo(
+  fingerprint: (value: unknown) => string = contentFingerprint,
+): FloorRecordKey {
+  let remembered = Number.NaN;
   const slots = new Map<string, Slot>();
-  return (spaceId) => {
-    if (source._cfgEpoch !== epoch) {
-      epoch = source._cfgEpoch;
+  return (epoch, slot, id, model, current) => {
+    if (epoch !== remembered) {
+      remembered = epoch;
       slots.clear();
     }
-    const model = source._renderCfg?.spaces
-      .find((space) => (space as { id?: unknown } | null)?.id === spaceId) ?? null;
-    const current = source._curSpaceCfg ?? null;
-    const slot = slots.get(spaceId);
-    if (slot && slot.model === model && slot.current === current) return slot.key;
-    const key = `${spaceId}|${contentFingerprint(model === current ? model : [model, current])}`;
-    slots.set(spaceId, { model, current, key });
+    const known = slots.get(slot);
+    if (known && known.model === model && known.current === current) return known.key;
+    const key = `${id}|${fingerprint(model === current ? model : [model, current])}`;
+    slots.set(slot, { model, current, key });
     return key;
   };
+}
+
+/** A reader `spaceId → key`, remembered per epoch and per source record. */
+export function floorGeometryKeyReader(source: FloorKeySource): (spaceId: string) => string {
+  const keyOf = floorRecordKeyMemo();
+  return (spaceId) => keyOf(
+    source._cfgEpoch, spaceId, spaceId,
+    source._renderCfg?.spaces
+      .find((space) => (space as { id?: unknown } | null)?.id === spaceId) ?? null,
+    source._curSpaceCfg ?? null,
+  );
 }

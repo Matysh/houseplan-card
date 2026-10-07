@@ -6,6 +6,11 @@
   link now stays above the link line, as it does in Flat and as the hovered
   device itself does, instead of the line crossing its face
   ([#809](https://github.com/Matysh/houseplan-card/issues/809)).
+- Summary panel: after a plan edit, **Total room area** is recalculated only
+  for the floors that actually changed, and edits of devices or settings no
+  longer recalculate it at all, so on a large house the new value arrives
+  sooner. The number and the panel look the same
+  ([#769](https://github.com/Matysh/houseplan-card/issues/769)).
 - Zigbee links: a map snapshot is now marked “Stale data” after an hour instead
   of five minutes, so a fresh scan no longer looks outdated almost immediately.
   A failed refresh still marks the last snapshot stale at once. Link lines and

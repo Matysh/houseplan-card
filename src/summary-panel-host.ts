@@ -45,6 +45,8 @@ export interface SummaryPanelHost extends Node {
   _model: SpaceModel[];
   _markers: Marker[];
   readonly _serverCfg: ServerConfig | null;
+  /** The config as rendered (#769: the records `_model` was built from). */
+  readonly _renderCfg: ServerConfig | null;
   readonly _cfgRev: number;
   _cfgEpoch: number;
   readonly _layoutRev: number;

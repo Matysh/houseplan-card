@@ -157,7 +157,17 @@ const sourceCache = new WeakMap<object, {
   key: string; value: readonly FurnitureWallSurface[];
 }>();
 
-/** One immutable candidate list per host geometry/config epoch. */
+/**
+ * One immutable candidate list per host geometry/config epoch.
+ *
+ * #769: the key stays the epoch, by measurement. Its readers are the furniture
+ * and stairs tools after commits that bump the epoch, and their main path
+ * (placing furniture or a stair) changes `decor` or `stairs`, which are part of
+ * the floor record: the #744 content key (`floor-geometry-key.ts`) would change
+ * too, so the rebuild on the next pointer move stays. That key would save only
+ * the rebuild after label, settings or other-floor edits — on a large-house
+ * floor 20 room profiles and 33 physical bodies, 690 faces.
+ */
 export function furnitureWallSurfacesFor(
   source: FurnitureWallSurfaceSource,
 ): readonly FurnitureWallSurface[] {

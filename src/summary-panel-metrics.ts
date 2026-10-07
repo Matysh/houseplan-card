@@ -83,6 +83,60 @@ export function spaceWallGeometry(
 }
 
 /**
+ * #769: the per-floor memo of the clean-floor area. A floor's area reads only
+ * its stored record (walls, openings, `cell_cm` — `prepareSpacePhysicalGeometryInputs`),
+ * the model built from its own record and the constants `GRID_*`/`NORM_W`, so
+ * the owner keys it by the content of those records
+ * (`floorRecordKeyMemo`, `src/floor-geometry-key.ts`): an unchanged floor is not
+ * computed again, and the total is summed anew from the memo on every pass.
+ * Should the computation ever read anything else, it must enter the key.
+ */
+export interface CleanFloorAreaMemo {
+  /** The content key of `models[index]`; `raw` is its stored record. */
+  key(index: number, raw: unknown, space: SpaceModel): string;
+  /** Area in m², or `null` when the floor's computation failed. A pass keeps
+   * only the keys of the floors it summed. */
+  readonly values: Map<string, number | null>;
+}
+
+/** One floor's clean area in m², in the portions of `cleanFloorAreaSteps`. */
+function* floorCleanAreaSteps(
+  raw: unknown,
+  space: SpaceModel,
+  geometryOf: typeof spaceWallGeometry,
+): Generator<void, number, void> {
+  const prepared = prepareSpacePhysicalGeometryInputs(raw, space);
+  // Один проход на пространство, не на комнату (#509).
+  const shared = geometryOf(space, prepared);
+  let spaceFloor: Geom | null = null;
+  for (const room of space.rooms) {
+    if (!room.id) continue;
+    const poly = roomPoly(room);
+    if (!poly) continue;
+    const inner = innerContourForRoom(
+      space.rooms, room.id, prepared.walls, prepared.openCuts,
+      GRID_STEP_N, prepared.cellCm, GRID_PITCH, NORM_W,
+      shared.roomGeom, shared.multiWallNodes,
+    ) || poly;
+    const clean = floorMinusBodies(inner, prepared.physicalBodies) as Geom;
+    spaceFloor = unionGeometry(spaceFloor, clean);
+    yield;
+  }
+  // Difference distributes over union. Subtract the shared stair set once,
+  // but in bounded batches: 250 footprints in one polyclip sweep becomes a
+  // visible long task on slower clients (#663).
+  const stairSteps = geometryMinusStairsSteps(spaceFloor || [], space.stairs);
+  let stairStep = stairSteps.next();
+  while (!stairStep.done) {
+    yield;
+    stairStep = stairSteps.next();
+  }
+  spaceFloor = stairStep.value;
+  const cmPerUnit = prepared.cellCm / GRID_PITCH;
+  return geometryArea(spaceFloor) * cmPerUnit * cmPerUnit / 1e4;
+}
+
+/**
  * Тот же расчёт, но шагами по комнате (#509).
  *
  * Даже с общей кладкой пространства полный обход большого дома — это ~1,5 с
@@ -91,48 +145,47 @@ export function spaceWallGeometry(
  * ровно тот симптом, ради которого заведена задача. Поэтому расчёт отдаёт
  * управление после каждой комнаты: вызывающий сам решает, сколько работы
  * уместить в кадр.
+ *
+ * С `memo` (#769) этаж, чей ключ уже в мемо, не считается: его значение
+ * берётся из мемо, а итог — сумма значений этажей в порядке `models`, как и
+ * без мемо. Упавший этаж мемоизируется как `null` и даёт итог `null`; прочие
+ * этажи при этом досчитываются, чтобы следующая правка пересчитала только
+ * изменённый.
  */
 export function* cleanFloorAreaSteps(
   config: ServerConfig,
   models: readonly SpaceModel[],
   geometryOf: typeof spaceWallGeometry = spaceWallGeometry,
+  memo?: CleanFloorAreaMemo,
 ): Generator<void, number | null, void> {
   try {
     let total = 0;
-    for (const space of models) {
+    let failed = false;
+    const used = new Set<string>();
+    for (let index = 0; index < models.length; index++) {
+      const space = models[index];
       const raw = config.spaces.find((item) => String(item?.id) === space.id);
       if (!raw) continue;
-      const prepared = prepareSpacePhysicalGeometryInputs(raw, space);
-      // Один проход на пространство, не на комнату (#509).
-      const shared = geometryOf(space, prepared);
-      let spaceFloor: Geom | null = null;
-      for (const room of space.rooms) {
-        if (!room.id) continue;
-        const poly = roomPoly(room);
-        if (!poly) continue;
-        const inner = innerContourForRoom(
-          space.rooms, room.id, prepared.walls, prepared.openCuts,
-          GRID_STEP_N, prepared.cellCm, GRID_PITCH, NORM_W,
-          shared.roomGeom, shared.multiWallNodes,
-        ) || poly;
-        const clean = floorMinusBodies(inner, prepared.physicalBodies) as Geom;
-        spaceFloor = unionGeometry(spaceFloor, clean);
-        yield;
+      const key = memo?.key(index, raw, space);
+      let area: number | null;
+      if (memo && key !== undefined && memo.values.has(key)) area = memo.values.get(key) ?? null;
+      else {
+        try {
+          area = yield* floorCleanAreaSteps(raw, space, geometryOf);
+        } catch {
+          if (!memo) return null;
+          area = null;
+        }
+        if (memo && key !== undefined) memo.values.set(key, area);
       }
-      // Difference distributes over union. Subtract the shared stair set once,
-      // but in bounded batches: 250 footprints in one polyclip sweep becomes a
-      // visible long task on slower clients (#663).
-      const stairSteps = geometryMinusStairsSteps(spaceFloor || [], space.stairs);
-      let stairStep = stairSteps.next();
-      while (!stairStep.done) {
-        yield;
-        stairStep = stairSteps.next();
-      }
-      spaceFloor = stairStep.value;
-      const cmPerUnit = prepared.cellCm / GRID_PITCH;
-      total += geometryArea(spaceFloor) * cmPerUnit * cmPerUnit / 1e4;
+      if (key !== undefined) used.add(key);
+      if (area === null) failed = true;
+      else total += area;
     }
-    return total;
+    if (memo) {
+      for (const key of [...memo.values.keys()]) if (!used.has(key)) memo.values.delete(key);
+    }
+    return failed ? null : total;
   } catch {
     return null;
   }

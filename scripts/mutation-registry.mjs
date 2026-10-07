@@ -12676,8 +12676,8 @@ const MUTANT_DEFINITIONS = [
       + 'комнаты: 176 мс на комнату и 11 с на большом плане (#509 AC3)',
     patches: [{
       file: 'src/summary-panel-metrics.ts',
-      find: "          shared.roomGeom, shared.multiWallNodes,",
-      replace: "          // mutant: no shared masonry",
+      find: "      shared.roomGeom, shared.multiWallNodes,",
+      replace: "      // mutant: no shared masonry",
     }],
   },
   {
@@ -14590,8 +14590,8 @@ const MUTANT_DEFINITIONS = [
       + 'turns every other floor cold, and its first visit rebuilds the union, contours and clean floors',
     patches: [{
       file: 'src/floor-geometry-key.ts',
-      find: '    const key = `${spaceId}|${contentFingerprint(model === current ? model : [model, current])}`;\n',
-      replace: '    const key = `${spaceId}|${source._cfgEpoch}`; // mutant: the global epoch\n',
+      find: '    const key = `${id}|${fingerprint(model === current ? model : [model, current])}`;\n',
+      replace: '    const key = `${id}|${epoch}`; // mutant: the global epoch\n',
     }],
   },
   {
@@ -14601,8 +14601,34 @@ const MUTANT_DEFINITIONS = [
       + 'without the content fingerprint draws the walls and areas of the previous record',
     patches: [{
       file: 'src/floor-geometry-key.ts',
-      find: '    const key = `${spaceId}|${contentFingerprint(model === current ? model : [model, current])}`;\n',
-      replace: '    const key = `${spaceId}|`; // mutant: no content fingerprint\n',
+      find: '    const key = `${id}|${fingerprint(model === current ? model : [model, current])}`;\n',
+      replace: '    const key = `${id}|`; // mutant: no content fingerprint\n',
+    }],
+  },
+  // #769: сводная площадь — пофлорное мемо по ключу записи этажа, а не по эпохе.
+  {
+    id: 'summary-area-key-global-epoch',
+    guard: 'node --test --test-name-pattern="#769 AC1" test/summary-panel-area-memo.test.mjs',
+    because: '#769 AC1: the per-floor area memo keyed by the global epoch recomputes every floor on any '
+      + 'edit — a rename of one floor, a marker or a setting — instead of only the floors that changed',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: '          key: (index, raw, space) => this.areaKeys(\n'
+        + '            epoch, String(index), space.id, records[index] ?? null, raw,\n'
+        + '          ),\n',
+      replace: '          key: (_index, _raw, space) => `${space.id}|${epoch}`, // mutant: the global epoch\n',
+    }],
+  },
+  {
+    id: 'summary-area-key-rooms-only',
+    guard: 'node --test --test-name-pattern="#769 AC2" test/summary-panel-area-memo.test.mjs',
+    because: '#769 AC2: a floor area key that fingerprints only the rooms misses walls, stairs and '
+      + '`cell_cm`; the panel keeps the stale area after a wall thickness or stair edit',
+    patches: [{
+      file: 'src/summary-panel-runtime-loaded.ts',
+      find: '            epoch, String(index), space.id, records[index] ?? null, raw,\n',
+      replace: '            epoch, String(index), space.id, (records[index] as { rooms?: unknown } | undefined)?.rooms ?? null,\n'
+        + '            (raw as { rooms?: unknown }).rooms, // mutant: rooms only\n',
     }],
   },
   {
