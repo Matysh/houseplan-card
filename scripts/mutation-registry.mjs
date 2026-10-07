@@ -13404,9 +13404,9 @@ const MUTANT_DEFINITIONS = [
       + 'must end in one space/delete with remove_markers, a toast and bindings in «Available '
       + 'again» — a complete card state transition (#819 AC2)',
     patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: '        ...(removeMarkers ? { remove_markers: true } : {}),\n',
-      replace: '        ...({}),\n',
+      file: 'src/editors/space-delete.ts',
+      find: '      ...(removeMarkers ? { remove_markers: true } : {}),\n',
+      replace: '      ...({}),\n',
     }],
   },
   {
@@ -13415,9 +13415,9 @@ const MUTANT_DEFINITIONS = [
     because: 'devices added while the confirmation is open were never confirmed: nothing may be '
       + 'written and the warning shows the current count, not busy (#819 AC4, card side)',
     patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: '    if (removeMarkers ? `${currentDependencies.markerIds}` !== `${dependencies.markerIds}`\n',
-      replace: '    if (removeMarkers ? false\n',
+      file: 'src/editors/space-delete.ts',
+      find: '  if (removeMarkers ? `${currentDependencies.markerIds}` !== `${dependencies.markerIds}`\n',
+      replace: '  if (removeMarkers ? false\n',
     }],
   },
   {

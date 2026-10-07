@@ -24,6 +24,25 @@ pre-feature reference. Raw dist moves from 2705833 to 2712880 bytes; only that
 size baseline is recalibrated, not coupling or runtime-performance limits.
 Optional eager-code/style extraction is tracked separately in #805, not done here.
 
+## Space deletion completion (#819)
+
+`src/editors/space-delete.ts` owns the post-confirmation path for editor and
+onboarding. Keep confirmation text in the callers and preserve the onboarding
+lazy boundary (the host port is a type-only import). Re-resolve the current
+dialog/target before writing, retain the confirmed-marker-set guard, flush and
+await pending writes before reading revisions, and adopt the authoritative
+re-read bodies. Asset-wait is still owned by the scheduled reload.
+
+After the test build, run `node --test test/space-delete-dialog.test.mjs
+test/space-deletion.test.mjs` for the shared path and TS/Python mirror. Run
+`node demo/smoke_space_delete_with_devices.mjs` against the fresh demo bundle
+for warning visibility/focus, confirmation, cancellation, bulk deletion and
+conflict recovery on both viewport sizes. Backend pair-write/file/trail proofs
+remain in `tests_backend/test_ha_websocket.py`. A cumulative bundle ratchet
+failure after rebase can be resolved by removing duplicate lazy code; do not
+raise the baseline to conceal it. The #819 completion extraction leaves the
+baseline, bands, translations and visible contract unchanged.
+
 ## Room-face lineage regression (#804)
 
 `node demo/smoke_wall_face_lineage.mjs` exercises creation from a partial

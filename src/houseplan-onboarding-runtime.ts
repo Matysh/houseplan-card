@@ -21,6 +21,7 @@ import {
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
 import { collectSpaceMarkerDependencies } from './space-deletion';
+import { completeSpaceDeletion } from './editors/space-delete';
 import {
   gridCellFieldValue,
   newSpaceCellCm,
@@ -438,81 +439,7 @@ export class HouseplanOnboardingRuntime {
       confirmLabel: this.host._t('btn.delete'),
       cancelLabel: this.host._t('btn.cancel'),
     });
-    const currentDialog = this.host._spaceDialog;
-    const currentConfig = this.host._serverCfg;
-    if (!accepted || !currentDialog || currentDialog.mode !== 'edit'
-      || currentDialog.busy || currentDialog.spaceId !== spaceId || !currentConfig) return;
-    const currentSpace = currentConfig.spaces.find((candidate) => candidate.id === spaceId);
-    if (!currentSpace) return;
-    const currentDependencies = collectSpaceMarkerDependencies(
-      currentConfig, this.host._layout || {}, spaceId,
-    );
-    const currentlyDeletingLastSpace = currentConfig.spaces.length === 1
-      && currentConfig.spaces[0]?.id === spaceId;
-    if (currentDependencies.count && !currentlyDeletingLastSpace) {
-      this.host._spaceDialog = {
-        ...currentDialog, deleteBlockers: currentDependencies.count,
-      };
-      void revealSpaceDeleteBlocker(this.host);
-      return;
-    }
-    this.host._spaceDialog = { ...currentDialog, deleteBlockers: 0, busy: true };
-    try {
-      if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.flush();
-      if (this.host._persistLayout.pending()) this.host._persistLayout.flush();
-      await this.host._writeChain;
-      await this.host.hass.callWS({
-        type: 'houseplan/space/delete',
-        space_id: spaceId,
-        expected_config_rev: this.host._cfgRev,
-        expected_layout_rev: this.host._layoutRev,
-      });
-      const [configResponse, layoutResponse] = await Promise.all([
-        this.host._getAuthoritativeConfig(),
-        this.host.hass.callWS({ type: 'houseplan/layout/get' }),
-      ]);
-      // #500: revisions come with the re-read bodies, never from the delete reply.
-      const adopted = await this.host._adoptAuthoritative({
-        cfgResp: configResponse, layResp: layoutResponse, reason: 'space-delete', profile: 'post-write',
-      });
-      // Asset wait: nothing adopted, the scheduled reload owns the tail (same as every reload path).
-      if (adopted.status !== 'adopted') {
-        this.host._spaceDialog = { ...currentDialog, busy: false };
-        this.host.requestUpdate();
-        return;
-      }
-      this.host._spaceDialog = null;
-      if (this.host._space === spaceId) {
-        this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || '');
-      }
-      this.host._regSignature = '';
-      this.host._maybeRebuildDevices();
-      this.host._showToast(this.host._t('toast.space_deleted'));
-    } catch (error: unknown) {
-      const failure = error as { code?: string };
-      if (failure?.code === 'conflict' || failure?.code === 'space_in_use') {
-        await Promise.all([
-          this.host._reloadConfigOnly(true), this.host._reloadLayoutOnly(),
-        ]);
-      }
-      const refreshedConfig = this.host._serverCfg;
-      if (this.host._spaceDialog && refreshedConfig) {
-        const refreshed = collectSpaceMarkerDependencies(
-          refreshedConfig, this.host._layout || {}, spaceId,
-        );
-        const stillLastSpace = refreshedConfig.spaces.length === 1
-          && refreshedConfig.spaces[0]?.id === spaceId;
-        this.host._spaceDialog = {
-          ...this.host._spaceDialog,
-          busy: false,
-          deleteBlockers: stillLastSpace ? 0 : refreshed.count,
-        };
-        if (!stillLastSpace && refreshed.count) void revealSpaceDeleteBlocker(this.host);
-      }
-      this.host._showToast(this.host._t('toast.delete_failed', {
-        err: this.host._errText(error),
-      }));
-    }
+    if (accepted) await completeSpaceDeletion(this.host, spaceId, dependencies);
   }
 
   public _startImport(): void {

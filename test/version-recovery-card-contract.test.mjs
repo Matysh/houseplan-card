@@ -8,6 +8,7 @@ const configReload = read('src/config-reload-authority.ts');
 const adapter = read('src/version-recovery-card.ts');
 const editor = read('src/houseplan-editor-runtime.ts');
 const onboarding = read('src/houseplan-onboarding-runtime.ts');
+const spaceDelete = read('src/editors/space-delete.ts');
 const controller = read('src/version-recovery.ts');
 const styles = read('src/styles/base.styles.ts');
 
@@ -20,6 +21,7 @@ test('one host seam owns every full-card config/get request', () => {
   assert.equal(matches(card, direct), 0, 'card flows must use the authoritative seam');
   assert.equal(matches(editor, direct), 0, 'lazy editor flows must use the host seam');
   assert.equal(matches(onboarding, direct), 0, 'onboarding flows must use the host seam');
+  assert.equal(matches(spaceDelete, direct), 0, 'shared space deletion must use the host seam');
 
   assert.match(card,
     /private _getAuthoritativeConfig\(\): Promise<AuthoritativeConfigResponse>/);
@@ -28,9 +30,11 @@ test('one host seam owns every full-card config/get request', () => {
       + occurrences(configReload, 'host._getAuthoritativeConfig()'),
     2,
     'initial load and config-only reload both use the seam');
-  assert.equal(occurrences(editor, 'this.host._getAuthoritativeConfig()'), 3,
+  assert.equal(occurrences(editor, 'this.host._getAuthoritativeConfig()')
+    + occurrences(spaceDelete, 'host._getAuthoritativeConfig()'), 3,
     'delete, optimization undo and backup import use the seam');
-  assert.equal(occurrences(onboarding, 'this.host._getAuthoritativeConfig()'), 1,
+  assert.equal(occurrences(onboarding, 'this.host._getAuthoritativeConfig()')
+    + occurrences(spaceDelete, 'host._getAuthoritativeConfig()'), 1,
     'empty-install space deletion uses the seam');
 });
 

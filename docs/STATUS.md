@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Space deletion (#819): editor and onboarding share one lazy post-confirmation
+completion path, preserving target/marker-set fences, authoritative adoption
+and error recovery. Confirmation copy remains in each caller; bundle ratchets
+are unchanged. Direct shared-handler tests complement the two-viewport smoke
+and backend pair-write/parity tests.
+
 Reinstallation (#820): the HA wizard offers Restore first or Start fresh when
 active previous data exists. Fresh archives all four Stores and the three file
 directories only on final confirmation; cancellation is read-only. Archives

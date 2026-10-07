@@ -80,9 +80,9 @@ test('AC2: the former host seam is gone and every module adopts through the one 
   const adopters = sources.filter(({ text }) => /_adoptAuthoritative\(\{/.test(text)).map(({ file }) => file).sort();
   assert.deepEqual(adopters, [
     'src/config-reload-authority.ts',
+    'src/editors/space-delete.ts',
     'src/houseplan-card.ts',
     'src/houseplan-editor-runtime.ts',
-    'src/houseplan-onboarding-runtime.ts',
     'src/summary-panel-runtime-loaded.ts',
   ]);
   const owner = readFileSync(join(repoRoot, OWNER), 'utf8');

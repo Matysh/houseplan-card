@@ -205,6 +205,7 @@ import type { SpaceReferenceRepairContext } from './space-reference-repair';
 import { collectSpaceMarkerDependencies, hiddenDependencyCount, spaceDeletionMessage } from './space-deletion';
 import { settingsCopy } from './editors/settings-copy';
 import { revealSpaceDeleteBlocker } from './editors/space-form';
+import { completeSpaceDeletion } from './editors/space-delete';
 import {
   checkSpacePhysicalGeometry, checkOptimizeGeometry, geometryOpenCuts, geometryOpenings,
   geometryPartitionOpeningCuts, spacePhysicalGeometryFingerprint,
@@ -8305,72 +8306,7 @@ public async _deleteSpace(withDevices = false): Promise<void> {
       confirmLabel: this.host._t('btn.delete'),
       cancelLabel: this.host._t('btn.cancel'),
     });
-    const currentDialog = this.host._spaceDialog;
-    const currentConfig = this.host._serverCfg;
-    if (!accepted || !currentDialog || currentDialog.mode !== 'edit'
-      || currentDialog.busy || currentDialog.spaceId !== spaceId || !currentConfig) return;
-    const currentSpace = currentConfig.spaces.find((candidate) => candidate.id === spaceId);
-    if (!currentSpace) return;
-    const currentDependencies = collectSpaceMarkerDependencies(
-      currentConfig, this.host._layout || {}, spaceId,
-    );
-    const currentlyDeletingLastSpace = currentConfig.spaces.length === 1
-      && currentConfig.spaces[0]?.id === spaceId;
-    // #819 AC4: the plan moved under the confirmation — nothing is deleted.
-    if (removeMarkers ? `${currentDependencies.markerIds}` !== `${dependencies.markerIds}`
-      : currentDependencies.count && !currentlyDeletingLastSpace) {
-      this.host._spaceDialog = {
-        ...currentDialog, deleteBlockers: currentDependencies.count,
-      };
-      void revealSpaceDeleteBlocker(this.host);
-      return;
-    }
-    this.host._spaceDialog = { ...currentDialog, deleteBlockers: 0, busy: true };
-    try {
-      if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.flush();
-      if (this.host._persistLayout.pending()) this.host._persistLayout.flush();
-      await this.host._writeChain;
-      await this.host.hass.callWS({
-        type: 'houseplan/space/delete',
-        space_id: spaceId,
-        expected_config_rev: this.host._cfgRev,
-        expected_layout_rev: this.host._layoutRev,
-        // Only when asked: an older integration refuses an unknown key.
-        ...(removeMarkers ? { remove_markers: true } : {}),
-      });
-      const [configResponse, layoutResponse] = await Promise.all([
-        this.host._getAuthoritativeConfig(),
-        this.host.hass.callWS({ type: 'houseplan/layout/get' }),
-      ]);
-      // #500: revisions come with the re-read bodies, never from the delete reply.
-      const adopted = await this.host._adoptAuthoritative({ cfgResp: configResponse, layResp: layoutResponse, reason: 'space-delete', profile: 'post-write' });
-      // Asset wait: nothing adopted, the scheduled reload owns the tail (same as every reload path).
-      if (adopted.status !== 'adopted') { this.host._spaceDialog = { ...currentDialog, busy: false }; this.host.requestUpdate(); return; }
-      this.host._spaceDialog = null;
-      if (this.host._space === spaceId) this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || '');
-      this.host._regSignature = '';
-      this.host._maybeRebuildDevices();
-      this.host._showToast(this.host._t('toast.space_deleted'));
-    } catch (e: any) {
-      if (e?.code === 'conflict' || e?.code === 'space_in_use') {
-        await Promise.all([this.host._reloadConfigOnly(true), this.host._reloadLayoutOnly()]);
-      }
-      const refreshedConfig = this.host._serverCfg;
-      if (this.host._spaceDialog && refreshedConfig) {
-        const refreshed = collectSpaceMarkerDependencies(
-          refreshedConfig, this.host._layout || {}, spaceId,
-        );
-        const stillLastSpace = refreshedConfig.spaces.length === 1
-          && refreshedConfig.spaces[0]?.id === spaceId;
-        this.host._spaceDialog = {
-          ...this.host._spaceDialog,
-          busy: false,
-          deleteBlockers: stillLastSpace ? 0 : refreshed.count,
-        };
-        if (!stillLastSpace && refreshed.count) void revealSpaceDeleteBlocker(this.host);
-      }
-      this.host._showToast(this.host._t('toast.delete_failed', { err: this.host._errText(e) }));
-    }
+    if (accepted) await completeSpaceDeletion(this.host, spaceId, dependencies, removeMarkers);
   }
 
 public async _saveConfigNow(attempt: OptimisticAttempt<ServerConfig> | null = null): Promise<void> {
