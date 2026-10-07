@@ -137,6 +137,7 @@ from .virtual_lights import (
     async_toggle_virtual_light,
     async_virtual_light_snapshot,
 )
+from .wall_node_move import NodeMoveError, node_move_candidate
 from .wall_segment_model import (
     WALL_SEGMENT_MODEL_VERSION,
     WallSegmentMigrationError,
@@ -270,6 +271,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_get)
     websocket_api.async_register_command(hass, ws_virtual_light_toggle)
     websocket_api.async_register_command(hass, ws_config_set)
+    websocket_api.async_register_command(hass, ws_wall_node_move)
     websocket_api.async_register_command(hass, ws_plan_optimize)
     websocket_api.async_register_command(hass, ws_plan_optimize_undo)
     websocket_api.async_register_command(hass, ws_space_delete)
@@ -1490,6 +1492,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "integration_version": VERSION,
             # #423: protocol capability is independent from release skew.
             "support_api": SUPPORT_API_VERSION,
+            "wall_node_move_api": 1,
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
             **({"radar_stage1_api": 1} if rt.radar_coordinator is not None else {}),
@@ -1816,6 +1819,89 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     if any(led_report.values()):
         result["led_strips"] = led_report
     connection.send_result(msg["id"], result)
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/wall/node_move",
+        vol.Required("space_id"): str,
+        vol.Required("expected_rev"): int,
+        vol.Required("intent"): dict,
+        vol.Optional("direction", default="apply"): vol.In(["apply", "undo"]),
+        vol.Optional("before_space"): dict,
+    }
+)
+@websocket_api.async_response
+async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Narrow local node edit and its proved inverse; ordinary set stays strict."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Not allowed to edit the plan")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    if len(json.dumps(msg, separators=(",", ":"))) > MAX_CONFIG_BYTES:
+        connection.send_error(msg["id"], "too_large", "Node operation exceeds the configuration limit")
+        return
+    async with rt.write_lock:
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        data = resolved.config_data
+        rev = int(data.get("rev", 0))
+        if msg["expected_rev"] != rev:
+            connection.send_error(msg["id"], "conflict", "Plan revision changed; reload before moving a node")
+            return
+        previous = data.get("config", {})
+
+        def _validate_node_cpu():
+            candidate = node_move_candidate(previous, msg["space_id"], msg["intent"],
+                                            msg["direction"], msg.get("before_space"))
+            validate_wall_model_transition(candidate, previous)
+            candidate = CONFIG_SCHEMA(candidate)
+            validate_opening_passages(candidate, previous)
+            # The operation above has already proved the ONLY authorized host
+            # delta, including an inverse X split. Recheck the resulting hosts
+            # independently with strict jamb margins; config/set gets no bypass.
+            proved_baseline = copy.deepcopy(previous)
+            after_spaces = {s["id"]: s for s in candidate.get("spaces", [])}
+            for old_space in proved_baseline.get("spaces", []):
+                after_openings = {o["id"]: o for o in after_spaces.get(old_space["id"], {}).get("openings", [])}
+                for old_opening in old_space.get("openings", []):
+                    after_host = after_openings.get(old_opening["id"], {}).get("host")
+                    old_host = old_opening.get("host")
+                    if old_host and after_host and old_host["kind"] == after_host["kind"] == "partition":
+                        old_host["id"] = after_host["id"]
+            validate_partition_opening_hosts(candidate, proved_baseline)
+            counts = validate_junction_limits(candidate, previous)
+            return candidate, counts
+
+        try:
+            candidate, counts = await hass.async_add_executor_job(_validate_node_cpu)
+        except (NodeMoveError, JunctionLimitError, WallModelClientOutdatedError,
+                OpeningPassageError, PartitionOpeningHostError,
+                PartitionOpeningJambMarginError) as err:
+            connection.send_error(msg["id"], err.code, str(err))
+            return
+        except (vol.Invalid, WallSegmentMigrationError, ValueError, KeyError,
+                TypeError, ZeroDivisionError) as err:
+            connection.send_error(msg["id"], NodeMoveError().code, str(err))
+            return
+        if candidate == previous:
+            connection.send_result(msg["id"], {"ok": True, "rev": rev, "config": candidate})
+            return
+        if len(json.dumps(candidate, separators=(",", ":"))) > MAX_CONFIG_BYTES:
+            connection.send_error(msg["id"], "too_large", "Result exceeds the configuration limit")
+            return
+        new_rev = rev + 1
+        await async_save_config_state(rt, candidate, new_rev, previous_rev=rev)
+        rt.junction_baseline = (new_rev, counts)
+        try:
+            await _discard_optimizer_snapshot(rt)
+        except Exception:  # noqa: BLE001 - durable write already accepted
+            _LOGGER.exception("House Plan: discarding stale optimization backup failed")
+    hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
+    connection.send_result(msg["id"], {"ok": True, "rev": new_rev, "config": candidate})
 
 
 # ---------------- whole-plan maintenance ----------------

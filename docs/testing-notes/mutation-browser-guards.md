@@ -95,6 +95,8 @@ real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
 
+- `node-preview-retains-original-body` — #803: Chromium raster after real pointer capture must remove the old affected masonry while keeping the new one translucent; a template or pure graph cannot prove compositing.
+
 - `battery-icon-collapses-glyph`
 - `battery-zigbee-captions-under-endpoint`
 - `zigbee-route-copy-under-battery`

@@ -1,0 +1,23 @@
+[
+  {"name":"free-a","walls":[{"id":"w","a":[0,0],"b":[1,0],"cm":25}],"point":[0,0],"target":[-0.25,0.25],"axis":null,"ok":true},
+  {"name":"free-b","walls":[{"id":"w","a":[1,0],"b":[0,0],"cm":25}],"point":[0,0],"target":[-0.25,0.25],"axis":null,"ok":true},
+  {"name":"T-whole","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"b","a":[0,0],"b":[0,1],"cm":15}],"point":[0,0],"target":[0.25,0],"axis":"partition:h","ok":true},
+  {"name":"T-atoms","walls":[{"id":"h-a","a":[-1,0],"b":[0,0],"cm":25},{"id":"h-b","a":[0,0],"b":[1,0],"cm":15},{"id":"b","a":[0,0],"b":[0,1],"cm":15}],"point":[0,0],"target":[0.25,0],"axis":"partition:h-a","ok":true},
+  {"name":"X-whole","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"v","a":[0,-1],"b":[0,1],"cm":15}],"point":[0,0],"target":[0.25,0],"axis":"partition:h","ok":true},
+  {"name":"X-atoms","walls":[{"id":"h-a","a":[-1,0],"b":[0,0],"cm":25},{"id":"h-b","a":[0,0],"b":[1,0],"cm":25},{"id":"v-a","a":[0,-1],"b":[0,0],"cm":15},{"id":"v-b","a":[0,0],"b":[0,1],"cm":15}],"point":[0,0],"target":[0.25,0],"axis":"partition:h-a","ok":true},
+  {"name":"case-sensitive-axis","walls":[{"id":"a","a":[-1,0],"b":[0,0],"cm":0},{"id":"Z","a":[0,0],"b":[1,0],"cm":0},{"id":"b","a":[0,0],"b":[0,1],"cm":0}],"point":[0,0],"target":[0.25,0],"axis":"partition:Z","ok":true},
+  {"name":"T-end-refused","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"b","a":[0,0],"b":[0,1],"cm":15}],"point":[0,0],"target":[1,0],"axis":"partition:h","ok":false},
+  {"name":"new-foreign-T","walls":[{"id":"w","a":[0,0],"b":[1,0],"cm":25},{"id":"foreign","a":[0.25,0.25],"b":[0.25,1],"cm":15}],"point":[0,0],"target":[0.25,0.5],"axis":null,"ok":false},
+  {"name":"collapsed","walls":[{"id":"w","a":[0,0],"b":[1,0],"cm":25}],"point":[0,0],"target":[1,0],"axis":null,"ok":false},
+  {"name":"unsupported-T-plus","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"b","a":[0,0],"b":[0,1],"cm":15},{"id":"c","a":[0,0],"b":[1,1],"cm":15}],"point":[0,0],"target":[0.25,0],"axis":"partition:h","ok":false},
+  {"name":"bounds","walls":[{"id":"w","a":[0,0],"b":[1,0],"cm":25}],"point":[0,0],"target":[5001,0],"axis":null,"ok":false},
+  {"name":"unsupported-T-four-branches","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"b","a":[0,0],"b":[0,1],"cm":15},{"id":"c","a":[0,0],"b":[1,1],"cm":15},{"id":"d","a":[0,0],"b":[-1,1],"cm":0},{"id":"e","a":[0,0],"b":[0.3,-1],"cm":100}],"point":[0,0],"target":[0.25,0],"axis":"partition:h","ok":false},
+  {"name":"unsupported-X-one-branch","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"v","a":[0,-1],"b":[0,1],"cm":15},{"id":"b","a":[0,0],"b":[1,1],"cm":0}],"point":[0,0],"target":[0.25,0],"axis":"partition:h","ok":false},
+  {"name":"unsupported-X-two-branches","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"v","a":[0,-1],"b":[0,1],"cm":15},{"id":"b","a":[0,0],"b":[1,1],"cm":0},{"id":"c","a":[0,0],"b":[-0.2,1],"cm":100}],"point":[0,0],"target":[0.25,0],"axis":"partition:h","ok":false},
+  {"name":"unsupported-three-passing","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"v","a":[0,-1],"b":[0,1],"cm":15},{"id":"d","a":[-1,-1],"b":[1,1],"cm":0}],"point":[0,0],"target":[0.25,0],"axis":"partition:h","ok":false},
+  {"name":"opening-fixed-a","walls":[{"id":"w","a":[0,0],"b":[1,0],"cm":25}],"point":[0,0],"target":[-0.5,0],"axis":null,"ok":true,"openings":[{"id":"door","type":"door","x":0.75,"y":0,"angle":0,"length":0.1,"host":{"kind":"partition","id":"w","t":0.75},"flip_h":true}]},
+  {"name":"opening-fixed-b","walls":[{"id":"w","a":[1,0],"b":[0,0],"cm":25}],"point":[0,0],"target":[-0.5,0],"axis":null,"ok":true,"openings":[{"id":"door","type":"door","x":0.75,"y":0,"angle":0,"length":0.1,"host":{"kind":"partition","id":"w","t":0.25},"flip_h":true}]},
+  {"name":"carrier-opening-jump","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"b","a":[0,0],"b":[0,1],"cm":15}],"point":[0,0],"target":[0.75,0],"axis":"partition:h","ok":false,"openings":[{"id":"door","type":"door","x":0.5,"y":0,"angle":0,"length":0.1,"host":{"kind":"partition","id":"h","t":0.75}}]},
+  {"name":"X-opening-child","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"v","a":[0,-1],"b":[0,1],"cm":15}],"point":[0,0],"target":[0.25,0],"axis":"partition:h","ok":true,"openings":[{"id":"door","type":"door","x":0,"y":0.65,"angle":-90,"length":0.1,"host":{"kind":"partition","id":"v","t":0.825},"flip_h":true}]},
+  {"name":"X-opening-crosses-P0","walls":[{"id":"h","a":[-1,0],"b":[1,0],"cm":25},{"id":"v","a":[0,-1],"b":[0,1],"cm":15}],"point":[0,0],"target":[0.25,0],"axis":"partition:h","ok":false,"openings":[{"id":"door","type":"door","x":0,"y":0,"angle":-90,"length":0.1,"host":{"kind":"partition","id":"v","t":0.5}}]}
+]

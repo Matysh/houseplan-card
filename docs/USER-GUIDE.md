@@ -765,6 +765,25 @@ selected room measurement source still has priority over the automatic average.
 
 ### Plan tools
 
+#### Moving wall nodes
+
+In **Select**, hover a wall endpoint, room corner or supported junction: the
+cursor becomes a grab hand. Drag the node: affected old walls disappear and
+the proposed node, walls and openings are translucent. Magnets follow original
+wall axes and exact horizontal/vertical positions. Release to save. **Esc
+before release** cancels the entire gesture; **Ctrl+Z during dragging** also
+only cancels the gesture, not the previous edit. After saving, normal Undo and
+Redo work.
+
+A T slides along its carrier. At a simple X, first move along one of the two
+walls: it stays straight and the transverse wall bends at the new node while
+retaining its far ends. Complex passing junctions are not movable yet. Openings
+retain width and distance from the fixed end; an opening that no longer fits
+or unsafe geometry refuses the entire move on release. Zoom in to separate
+ambiguous nearby nodes. Node movement is mouse-first in the Plan editor, absent
+in View and kiosk. An older backend shows an integration-update hint instead
+of saving an unsupported edit.
+
 #### Plan tools at a glance
 
 | Tool | Result | Room area | Light and shadow | Main limit |

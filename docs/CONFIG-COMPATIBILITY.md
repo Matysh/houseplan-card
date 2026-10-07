@@ -25,6 +25,17 @@ an unknown schema.
 
 ## Schema manifest and parity (#33)
 
+The #803 `houseplan/wall/node_move` protocol is capability-gated by
+`config/get.wall_node_move_api === 1`. It requires writer ACL and `expected_rev`
+under the shared config write lock. The client sends the frozen point, target,
+carrier key and stable split IDs, not an arbitrary edited config. The server
+derives and validates the incident delta. Undo also sends `before_space`; the
+server accepts it only when the same forward operation reproduces the complete
+current canonical document, including every foreign/unknown field. Ordinary
+`config/set` still cannot rehost a partition opening. No receipt, node graph or
+new model version is persisted. Hover/preview/cancel of legacy plans are read-only;
+only an accepted operation crosses the existing materialization barrier.
+
 The Voluptuous schema in `custom_components/houseplan/validation.py` is the only
 owner of the persisted config/layout shape. `scripts/dump-config-schema.py`
 walks it into the deterministic `scripts/config-schema.json`;

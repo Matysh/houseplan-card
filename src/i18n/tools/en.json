@@ -1,4 +1,12 @@
 {
+  "node_move_hint": "Drag the wall node. Original wall axes and horizontal/vertical walls snap. Esc cancels; Undo restores the whole move.",
+  "node_move_ambiguous": "These nodes are too close. Zoom in to choose one.",
+  "node_move_choose_axis": "Move along one of the original walls to choose the sliding axis.",
+  "node_move_invalid": "Cannot move this node: {reason}",
+  "node_move_opening_blocked": "A door or window would not fit or would cross the node. The move was cancelled.",
+  "node_move_update_required": "Update the House Plan integration to move wall nodes.",
+  "node_move_history": "Move wall node",
+  "node_move_unsupported_junction": "This complex through-junction cannot be moved. T and X junctions without extra branches are supported.",
   "furn.title": "Furniture library",
   "furn.symbol": "Symbol",
   "furn.group_furniture": "Furniture",

@@ -15,6 +15,31 @@ Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 
 ## 1. Model
 
+### Select node movement (#803)
+
+The node graph is derived once per gesture from structural segments, including
+zero-thickness walls, never opening-cut render spans. Coincident owners do not
+multiply physical rays. End nodes (1–6 rays), straight breakpoints, ordinary T
+and pure X are supported; complex passing junctions are refused without capture.
+T slides on its finite carrier. X locks the first unambiguous carrier axis and
+bends the transverse whole wall, retaining far ends. A split retains the parent
+ID on the child containing the original midpoint (tie: old a); the other child's
+UUID is allocated once, including on non-secure LAN HTTP origins.
+
+Original infinite axes and exact H/V positions are screen-space magnets (12 CSS
+pixels). Diagonal quantization is longitudinal, from the fixed end, never a
+second x/y rounding. Foreign connections, carrier-order swaps, collapsed edges
+and openings crossing the old or new bend are refused. Openings preserve width,
+settings and physical distance from their fixed far end, not their old host t.
+
+The live local component includes complete changed owners and far-end physical
+neighbours. It uses production boolean geometry and junction guards; unchanged
+remote components never enter the pointer pass. Old affected masonry,
+architectural axes and symbols are removed before the translucent candidate is
+painted. Invalid latest positions never commit a previous valid frame. Paper,
+room fills and opening cuts use that same candidate. Pointerup flushes the queue
+and allows the final frame to paint before writing the whole atomic delta.
+
 ### Stable stored identity and zero walls (model v10, #282/#306/#478)
 
 The decision record behind the stored representation — what the code calls

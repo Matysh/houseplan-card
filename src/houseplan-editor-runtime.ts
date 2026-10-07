@@ -33,6 +33,7 @@ import type { ColorPickerLabels } from './hp-color-opacity';
 import './hp-help';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
 import type { ConfigAdoption, GatedAdoptionInput, GatedAdoptionResult } from './config-adoption';
+import type { WallNodeEditor, NodeMoveHistory } from './wall-node-editor';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
 import { adoptEditorStyles } from './editor-style-adoption'; // #805: after the CSS-bearing elements — shared gzip context
 import {
@@ -366,6 +367,7 @@ const MAX_ROOMS = 400;
 const MAX_WALL_COLUMNS = 500;
 /** Everything whose topology or wall association changes in the plan editor. */
 interface SpaceGeometryState {
+  nodeMove?: NodeMoveHistory;
   spaceId: string;
   rooms: any[];
   openings?: OpeningCfg[];
@@ -483,6 +485,7 @@ export interface HouseplanEditorHostPort {
   _cacheSnapshot: () => void;
   _canCommitSpace: (id: string, authority?: boolean) => boolean;
   _canEdit: boolean;
+  _haWallNodeMoveApi: number | null;
   _canOptimizeUndo: boolean;
   _cancelDevicePressFeedback: () => void;
   _cancelDeviceDrag: () => boolean;
@@ -824,6 +827,9 @@ export class HouseplanEditorRuntime {
   private _supportPreviewGeneration = 0;
   private _decorAssetGuardReplace: boolean | null = null;
   public readonly roomGear: RoomGearDragController;
+  public nodeMove: WallNodeEditor | null = null;
+  private _nodeMoveLoad: Promise<void> | null = null;
+  private _nodeMoveEpoch = 0;
   private readonly _decorImages: DecorImageEditor<SpaceGeometryState | null>;
   // #592: маркерный диалог уехал в src/editors/marker-dialog.ts и обращается
   // к контроллеру оттуда. Остальной класс использует `public _x` — поле
@@ -899,6 +905,25 @@ export class HouseplanEditorRuntime {
       ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
     >();
   }
+  private _renderWallNodes(): TemplateResult | typeof nothing {
+    if (this.host._mode !== 'plan' || this.host._tool !== 'select' || !this.host._canEdit || this.host._kiosk) {
+      this.nodeMove?.cancel(); return nothing;
+    }
+    if (!this.nodeMove && !this._nodeMoveLoad) {
+      const epoch = this._nodeMoveEpoch;
+      this._nodeMoveLoad = import('./wall-node-card-adapter').then(({ createWallNodeEditor }) => {
+        if (epoch !== this._nodeMoveEpoch || !this.host.isConnected) return;
+        this.nodeMove = createWallNodeEditor<SpaceGeometryState>(this.host, {
+          point: ev => this._svgPoint(ev),
+          snapshot: space => this._geometrySnapshotFromConfig({ spaces: [space] }, space.id),
+          introduced: (config, baseline, id) => this._junctionLimitsIntroduced(config, baseline, id),
+        });
+        this.host.requestUpdate();
+      }).catch(() => { this.host._showToast(this.host._t('toast.geometry_unsafe')); })
+        .finally(() => { this._nodeMoveLoad = null; });
+    }
+    return this.nodeMove?.render() || nothing;
+  }
 public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
     const gearSpace = this.host._mode === 'plan' ? this.host._spaceModel() : null;
     if (gearSpace) this.roomGear.adoptPlan(gearSpace);
@@ -906,8 +931,8 @@ public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
     if (!live && this.host._resize.preview) this._resizeBaseFrameStable = false;
     return live;
   }
-public _commitLiveEditor(): void { commitHouseplanEditor(this.host); }
-public _disposeLiveEditor(): void { this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
+public _commitLiveEditor(): void { commitHouseplanEditor(this.host); this.nodeMove?.paint(); }
+public _disposeLiveEditor(): void { this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
   // An already queued pointer calculation runs before this continuation.
@@ -1987,6 +2012,7 @@ public _commitPhysicalGeometry(
   }
 
 public _clearGeometryGesture(): void {
+    this.nodeMove?.cancel();
     this._clearFurniturePreview();
     this.host._path = [];
     this._clearPlanSnapHover();
@@ -2060,6 +2086,7 @@ public _stagePointerCancel(ev: PointerEvent): void {
 public _applyGeometryState(
     state: SpaceGeometryState, allowHistoryBoundaryRepair = false,
   ): boolean {
+    if (state.nodeMove) return this.nodeMove?.applyHistory(state.nodeMove) || false;
     const target = this._canonicalWallChainHistoryState(state);
     if (!target || !this.host._canCommitSpace(target.spaceId)) return false;
     const before = this._geometrySnapshot(target.spaceId);
@@ -2133,6 +2160,7 @@ public _applyGeometryState(
   }
 
 public _undoGeometry = (): void => {
+    if (this.nodeMove?.busy || this.nodeMove?.cancel()) return;
     if (this.host._physicalDrag || this.host._physicalRotate) {
       this._cancelPhysicalGesture();
       return;
@@ -2153,6 +2181,7 @@ public _undoGeometry = (): void => {
   };
 
 public _redoGeometry = (): void => {
+    if (this.nodeMove?.busy || this.nodeMove?.cancel()) return;
     // Redo and Undo share the same transaction boundary. The first invocation
     // cancels an in-progress transform; only the next one navigates history.
     if (this.host._physicalDrag || this.host._physicalRotate) {
@@ -10901,6 +10930,7 @@ public _renderMarkupLayer(vb: number[]): TemplateResult {
         : nothing}
       ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
       ${this._renderPhysicalEditorLayer()}
+      ${this._renderWallNodes()}
       ${this.host._tool === 'column' && this.host._cursorPt && this.host._drawWallCm
         ? svg`<path class="physical-drag" d=${(() => {
             const c: WallColumnCfg = { id: 'preview', shape: 'square', center: this.host._cursorPt!, cm: this.host._drawWallCm! };

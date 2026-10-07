@@ -1,4 +1,12 @@
 {
+  "node_move_hint": "Faites glisser le nœud du mur. Les axes initiaux et les murs horizontaux/verticaux s'aimantent. Échap annule ; Annuler restaure tout le déplacement.",
+  "node_move_ambiguous": "Ces nœuds sont trop proches. Zoomez pour en choisir un.",
+  "node_move_choose_axis": "Déplacez-vous le long d'un mur initial pour choisir l'axe de glissement.",
+  "node_move_invalid": "Impossible de déplacer ce nœud : {reason}",
+  "node_move_opening_blocked": "Une porte ou fenêtre ne tiendrait plus ou traverserait le nœud. Déplacement annulé.",
+  "node_move_update_required": "Mettez à jour l'intégration House Plan pour déplacer les nœuds des murs.",
+  "node_move_history": "Déplacer un nœud de mur",
+  "node_move_unsupported_junction": "Cette jonction traversante complexe ne peut pas être déplacée. Les jonctions T et X sans branche supplémentaire sont prises en charge.",
   "furn.title": "Bibliothèque de mobilier",
   "furn.symbol": "Symbole",
   "furn.group_furniture": "Mobilier",

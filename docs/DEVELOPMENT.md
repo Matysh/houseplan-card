@@ -1,5 +1,37 @@
 # Development and deployment
 
+## Wall-node editing (#803)
+
+Use `node demo/smoke_wall_node_move.mjs` after `npm run bundle:sync` for trusted
+mouse capture, visible ghost pixels, cancellation and server-protocol Undo/Redo.
+The wire fixture supplies configs through fake HA, not private gesture writes.
+Pure geometry/input/write-queue witnesses are `test/wall-node-*.test.mjs`;
+the independent proof and real HA registration/CAS/ACL path are exercised by
+`tests_backend/test_wall_node_move.py` and the #803 test in `test_ha_websocket.py`.
+
+`node demo/benchmark_wall_node_drag.mjs` measures the frozen-graph candidate
+pass on 200 synthetic rooms. `node demo/benchmark_wall_node_browser.mjs`
+measures real pointer-to-validated-DOM/paint latency and drag-window Long Tasks
+(3 warm-ups, 20 series, 120 distinct raw positions per series, viewport/DPR and
+fixture fingerprint in the report). This is not a 25 ms full-frame or 60 fps
+claim. Keep the accepted 16 ms candidate-p95 and 150 ms / 3 / 300 ms Long Task
+limits; existing performance/bundle ceilings and golden baselines are unchanged.
+The X-axis hint is rendered locally: a generic card toast after capture would
+schedule an unnecessary full-floor render inside the drag window.
+
+`smoke_wall_node_topology.mjs` compares shared/T/X/zero before/during/after/cancel
+pixels, exact Undo/Redo/reload, capability/refusal and 100 accepted/cancelled
+cycles. Its committed synthetic exports live in ignored `artifacts/803-node/`
+for `model-invariants --config`; no user home is copied into fixtures.
+`python tests_backend/wall_node_parity.py` executes the common TS/Python
+fixture matrix, including atomized unsupported junctions, opening intervals,
+and independently proven inverse operations (not an optional skipped test).
+The Select-only module is a second-level lazy import, with an additional
+14 KiB gzip guard (`node scripts/node-editor-bundle-budget.mjs`); it does not
+change any existing graph ceiling or load in cold View/other tools. The
+intentional raw-bundle/coupling increments are recorded in issue #803 and
+`monolith-baseline.json`, not hidden by widening ratchet bands.
+
 ## Device battery icons (#792)
 
 Battery indicators reuse Home Assistant's `ha-icon` and four standard MDI

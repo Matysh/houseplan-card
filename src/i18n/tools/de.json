@@ -1,4 +1,12 @@
 {
+  "node_move_hint": "Wandknoten ziehen. Ursprüngliche Wandachsen und horizontale/vertikale Wände rasten ein. Esc bricht ab; Rückgängig stellt die gesamte Bewegung wieder her.",
+  "node_move_ambiguous": "Die Knoten liegen zu nahe beieinander. Zum Auswählen vergrößern.",
+  "node_move_choose_axis": "Entlang einer ursprünglichen Wand ziehen, um die Gleitachse zu wählen.",
+  "node_move_invalid": "Knoten kann nicht bewegt werden: {reason}",
+  "node_move_opening_blocked": "Eine Tür oder ein Fenster würde nicht passen oder den Knoten kreuzen. Bewegung abgebrochen.",
+  "node_move_update_required": "House-Plan-Integration aktualisieren, um Wandknoten zu bewegen.",
+  "node_move_history": "Wandknoten bewegen",
+  "node_move_unsupported_junction": "Dieser komplexe Durchgangsknoten kann nicht bewegt werden. T- und X-Knoten ohne zusätzliche Äste werden unterstützt.",
   "furn.title": "Möbelbibliothek",
   "furn.symbol": "Symbol",
   "furn.group_furniture": "Möbel",

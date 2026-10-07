@@ -131,6 +131,7 @@ ERROR_CODES: frozenset[str] = frozenset({
 # served by the generic per-code fallback on the frontend.
 ERROR_CODE_FAMILIES: tuple[str, ...] = (
     "junction_limit_",
+    "node_move_",
     "value_badge_",
     "value_source_",
 )

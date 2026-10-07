@@ -54,6 +54,12 @@
   the plan and is absent when there is no current value; if the device's value
   badge already shows the same battery sensor, the charge is not repeated
   ([#817](https://github.com/Matysh/houseplan-card/issues/817)).
+- Plan editor: in **Select**, drag a wall node with a translucent preview,
+  original-axis and horizontal/vertical snapping, Esc cancellation and Undo/Redo.
+  T junctions slide along their carrier; X junctions bend the transverse wall
+  while retaining its far ends. Doors and windows retain their distance from
+  the fixed end; unsafe moves are refused atomically
+  ([#803](https://github.com/Matysh/houseplan-card/issues/803)).
 
 ## v1.80.0-beta.7 — 2026-10-07
 

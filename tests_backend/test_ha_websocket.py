@@ -56,6 +56,67 @@ async def _access_token_for_group(hass: HomeAssistant, group_id: str) -> str:
     return hass.auth.async_create_access_token(refresh_token)
 
 
+async def test_issue_803_node_protocol_apply_undo_redo_conflict_and_acl(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """Real registration/store/ACL and revision lock; no private WS invocation."""
+    from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    source = {"spaces": [{"id": "f", "title": "Floor", "view_box": [0, 0, 1, 1], "rooms": [],
+        "partitions": [{"id": "h", "a": [-1, 0], "b": [1, 0], "cm": 0},
+                       {"id": "v", "a": [0, -1], "b": [0, 1], "cm": 25}],
+        "openings": [{"id": "door", "type": "door", "x": 0, "y": 0.65, "length": 0.1, "angle": -90,
+                      "host": {"kind": "partition", "id": "v", "t": 0.825}}]}],
+        "markers": [], "settings": {}}
+    source, _ = commit_wall_segment_model(source)
+    await client.send_json_auto_id({"type": "houseplan/config/set", "config": source, "expected_rev": 0})
+    saved = await client.receive_json()
+    assert saved["success"], saved
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    snapshot = (await client.receive_json())["result"]
+    assert snapshot["wall_node_move_api"] == 1
+    before = snapshot["config"]["spaces"][0]
+    operation = {"point": [0, 0], "target": [0.25, 0], "axis": "partition:h",
+                 "split_ids": {"partition:v": "partition-00000000-0000-4000-8000-000000000001"}}
+    message = {"type": "houseplan/wall/node_move", "space_id": "f", "intent": operation,
+               "expected_rev": snapshot["rev"]}
+    await client.send_json_auto_id(message)
+    applied = await client.receive_json()
+    assert applied["success"], applied
+    after = applied["result"]["config"]
+    assert len(after["spaces"][0]["partitions"]) == 3
+    assert after["spaces"][0]["openings"][0]["host"]["id"] == operation["split_ids"]["partition:v"]
+    await client.send_json_auto_id(message)
+    stale = await client.receive_json()
+    assert not stale["success"] and stale["error"]["code"] == "conflict"
+    readonly = await hass_ws_client(hass, access_token=await _access_token_for_group(hass, GROUP_ID_READ_ONLY))
+    await readonly.send_json_auto_id({**message, "expected_rev": applied["result"]["rev"]})
+    denied = await readonly.receive_json()
+    assert not denied["success"] and denied["error"]["code"] == "unauthorized"
+    forged = copy.deepcopy(before)
+    forged["partitions"][1]["b"] = [0, 1.2]
+    await client.send_json_auto_id({**message, "expected_rev": applied["result"]["rev"],
+                                   "direction": "undo", "before_space": forged})
+    refused = await client.receive_json()
+    assert not refused["success"] and refused["error"]["code"] == "node_move_invalid"
+    await client.send_json_auto_id({**message, "expected_rev": applied["result"]["rev"],
+                                   "direction": "undo", "before_space": before})
+    undo = await client.receive_json()
+    assert undo["success"], undo
+    assert undo["result"]["config"]["spaces"][0] == before
+    # Ordinary set still rejects this independently rehosted opening.
+    await client.send_json_auto_id({"type": "houseplan/config/set", "config": after,
+                                   "expected_rev": undo["result"]["rev"]})
+    ordinary = await client.receive_json()
+    assert not ordinary["success"] and ordinary["error"]["code"] == "invalid_partition_opening_host"
+    await client.send_json_auto_id({**message, "expected_rev": undo["result"]["rev"]})
+    redo = await client.receive_json()
+    assert redo["success"], redo
+    assert redo["result"]["config"] == after
+
+
 async def test_config_get_advertises_radar_only_while_coordinator_is_ready(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
 ) -> None:

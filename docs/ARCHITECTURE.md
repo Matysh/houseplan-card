@@ -5,6 +5,20 @@ One HACS repository (category **Integration**) ships the backend
 (`src/` → `dist/`). This document is the map: each subsystem gets a short
 description and a link to its canonical document, which owns the details.
 
+## Wall-node editing (#803)
+
+Node movement (#803) is a lazy Select-only subsystem: `wall-node-move.ts`
+freezes the structural graph, `wall-node-editor.ts` owns capture/cancel and
+the isolated live roots, `wall-node-preview.ts` renders the local complete-body
+closure through production masonry/inner-contour/opening functions, and
+`wall-node-write.ts` serializes the dedicated server operation with existing
+writers. Remote paper, fills and masonry stay in the settled DOM; old local
+geometry is masked out, not dimmed behind the ghost. Preview never replaces
+the authoritative config, model cache or recovery snapshot. The backend mirror
+`wall_node_move.py` derives the delta and independently proves an inverse before
+Undo; `config/set` keeps its existing host protection. Details: WALL-THICKNESS.md
+and CONFIG-COMPATIBILITY.md.
+
 ## Styles (#266)
 
 `src/styles.ts` composes `cardStyles = [base, plan, devices, chrome, dialogs,

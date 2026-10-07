@@ -70,6 +70,9 @@ def _emitted_codes() -> tuple[set[str], set[str]]:
         families |= {"value_badge_", "value_source_"}
     if re.search(r'f"junction_limit_\{', junction):
         families.add("junction_limit_")
+    node_move = (BACKEND / "wall_node_move.py").read_text(encoding="utf-8")
+    if re.search(r'f"node_move_\{', node_move):
+        families.add("node_move_")
 
     # fail-closed: a MarkerControlError call whose first argument is neither a
     # literal, a known variable, nor a known f-string pattern is a hole.

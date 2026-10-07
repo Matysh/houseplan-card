@@ -434,6 +434,7 @@ type WallFaceBatch = {
 };
 /** Everything whose topology or wall association changes in the plan editor. */
 interface SpaceGeometryState {
+  nodeMove?: import('./wall-node-editor').NodeMoveHistory;
   spaceId: string;
   rooms: any[];
   openings?: OpeningCfg[];
@@ -2087,6 +2088,7 @@ export class HouseplanCard extends LitElement {
   private _haDecorAssetsApi: number | null = null;
   private _haSummaryPanelApi: number | null = null;
   private _haRadarStage1Api: number | null = null;
+  private _haWallNodeMoveApi: number | null = null;
   private readonly _radarLive = new RadarLiveController(this);
   private _decorAssetSyncToken = 0;
   private _alignDialog: OptimizePlansDialogState | null = null;
@@ -3006,6 +3008,7 @@ export class HouseplanCard extends LitElement {
       return;
     }
     if (e.key !== 'Escape') return;
+    if (this._editorRuntime?.nodeMove?.cancel()) { e.preventDefault(); return; }
     if (this._editorRuntime?.stairs.escape()) { e.preventDefault(); return; }
     if (this._physicalDrag || this._physicalRotate) {
       e.preventDefault();
@@ -7246,6 +7249,7 @@ export class HouseplanCard extends LitElement {
    */
   private _guardTouchGesture(ev: Event): void {
     if (this._editorSecondary?.handleOutsideDismiss(ev)) return;
+    if (this._editorRuntime?.nodeMove?.guardEvent(ev)) return;
     if (this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
     const pointer = ev as PointerEvent;
     this._notePointer(pointer);
