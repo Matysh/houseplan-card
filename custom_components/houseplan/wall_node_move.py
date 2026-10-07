@@ -349,7 +349,7 @@ def node_move_host_baseline(current: dict[str, Any], candidate: dict[str, Any], 
         host = opening.get("host")
         return (host["kind"], host["id"]) if host else None
 
-    for old_space, adjusted in zip(current.get("spaces", []), baseline.get("spaces", [])):
+    for old_space, adjusted in zip(current.get("spaces", []), baseline.get("spaces", []), strict=True):
         sid = old_space["id"]
         original = source if sid == space_id else old_space
         old = {o["id"]: o for o in old_space.get("openings", [])}

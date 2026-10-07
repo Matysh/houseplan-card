@@ -52,6 +52,8 @@ must refuse with unchanged config, revision and events. The raw-legacy room
 fixture exercises the ledger's read-compatible identity canonicalisation and
 exact source immutability. Register these guards and use `mutation-gate --check`;
 do not execute mutants during development.
+Before pushing Python edits, also run the CI ruff subset: paired collections
+use explicit `zip(..., strict=True)` so an incomplete proof cannot be truncated.
 The Select-only module is a second-level lazy import, with an additional
 14 KiB gzip guard (`node scripts/node-editor-bundle-budget.mjs`); it does not
 change any existing graph ceiling or load in cold View/other tools. The
