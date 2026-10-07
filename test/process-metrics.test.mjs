@@ -17,6 +17,7 @@ import { anchorBlock } from '../scripts/ship-review.mjs';
 import { withMaterialAnchors } from '../scripts/review-doc-guard.mjs';
 import { formatUsage } from '../scripts/model-usage.mjs';
 import { PIPELINE_EVENTS } from '../scripts/wait-verdict.mjs';
+import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 const T = (h) => new Date(Date.UTC(2026, 8, 15, 0, Math.round(h * 60))).toISOString();
 const labeled = (name, h) => ({ event: 'labeled', label: { name }, created_at: T(h) });
@@ -256,16 +257,70 @@ const NUM = 701;
 const VERDICT_YELLOW = `Вердикт: жёлтый · заход r1 · High: 0 · Medium: 2 · Документ: docs/reviews/CODE-REVIEW-${NUM}-r1.md`;
 const VERDICT_RED = `**Вердикт: красный** · заход r2 · High: 1 · Документ: docs/reviews/CODE-REVIEW-${NUM}-r2.md`;
 
-/** Шаблоны «Ревью не запускалось» из `_process.yml`: снять экранирование и подставить `$kind`. */
-function notRunTemplates() {
-  const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
-  const templates = workflow.split('\n').map((line) => line.trim()).filter((line) => line.startsWith('**Ревью не запускалось:**'));
-  const step = workflow.slice(workflow.indexOf('- name: Validate красный — вернуть автору без ревью'));
-  const kinds = ['Validate', 'Validate с мутантами'];
-  for (const kind of kinds) assert.ok(step.slice(0, 1500).includes(`kind="${kind}"`), `шаг Validate красный задаёт kind="${kind}"`);
-  return templates.map((line) => kinds.map((kind) => line.replaceAll('\\`', '`').replaceAll('$kind', kind)
-    .replaceAll('$BRANCH', 'issue/701-white-tile').replaceAll('$short', '1a2b3c4').replaceAll('$RESULT', 'failed')));
+const hasBash = () => process.platform !== 'win32' && spawnSync('bash', ['--version']).status === 0;
+const PROCESS_WORKFLOW = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
+const CONFLICT_STEP = 'Конфликт с dev — вернуть автору без ревью';
+const VALIDATE_STEP = 'Validate красный — вернуть автору без ревью';
+
+/** #812: execute the real step, intercept only external Git/gh and temporary paths. */
+function notRunComment(t, name, { mutants = 'false', workflow = PROCESS_WORKFLOW } = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'hp-metrics-step-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const bin = join(root, 'bin');
+  mkdirSync(bin);
+  writeFileSync(join(bin, 'gh'), `#!/usr/bin/env node
+const fs = require('node:fs');
+const args = process.argv.slice(2);
+fs.appendFileSync(process.env.FAKE_CALLS, JSON.stringify(args) + '\\n');
+if (args[0] !== 'issue' || args[2] !== '${NUM}' || args[3] !== '--repo' || args[4] !== 'o/r') throw new Error('unexpected gh target');
+if (args[1] === 'comment' && args.length === 7 && args[5] === '--body-file') {
+  fs.writeFileSync(process.env.FAKE_COMMENT, fs.readFileSync(args[6], 'utf8'));
+} else if (JSON.stringify(args.slice(1)) !== JSON.stringify(['edit', '${NUM}', '--repo', 'o/r', '--add-label', 'S6-in-progress', '--remove-label', 'S7-code-review'])) {
+  throw new Error('unexpected gh command: ' + JSON.stringify(args));
 }
+`, { mode: 0o755 });
+  writeFileSync(join(bin, 'git'), '#!/bin/sh\n[ "$1" = rev-parse ] && [ "$2" = --short ] && [ "$3" = "$SHA" ] && [ "$#" = 3 ] || exit 91\nprintf "%s\\n" 1a2b3c4\n', { mode: 0o755 });
+  const step = findStep(workflow, { name }, '_process.yml');
+  const context = { repository: 'o/r', server_url: 'https://example.invalid', run_id: '812' };
+  const script = step.run
+    .replaceAll('/tmp/stale.md', join(root, 'stale.md')).replaceAll('/tmp/gate.md', join(root, 'gate.md'))
+    .replace(/\$\{\{ github\.(\w+) \}\}/g, (_, key) => {
+      assert.ok(Object.hasOwn(context, key), `unexpected Actions expression github.${key}`);
+      return context[key];
+    });
+  assert.doesNotMatch(script, /\$\{\{/, 'all remaining expressions must be supplied explicitly');
+  const result = runStep(step, script, {
+    cwd: root, env: {
+      ...process.env, PATH: `${bin}:${process.env.PATH}`, GH_TOKEN: 'fixture-only',
+      FAKE_CALLS: join(root, 'calls'), FAKE_COMMENT: join(root, 'comment'),
+      NUM: String(NUM), BRANCH: 'issue/701-white-tile', CONFLICTS: 'src/conflicted.ts\nscripts/conflicted.mjs',
+      SHA: '1a2b3c4'.padEnd(40, '0'), RESULT: 'failed', NOTE: 'fixture failed check',
+      URL: 'https://example.invalid/validate/812', MUTANTS: mutants,
+    },
+  });
+  assert.equal(result.status, 0, `${name}\n${result.stdout}\n${result.stderr}`);
+  const calls = readFileSync(join(root, 'calls'), 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+  assert.deepEqual(calls.map((args) => args.slice(0, 3)), [['issue', 'comment', String(NUM)], ['issue', 'edit', String(NUM)]]);
+  assert.match(result.stdout, /S7-code-review -> S6-in-progress/);
+  return readFileSync(join(root, 'comment'), 'utf8');
+}
+
+function notRunComments(t) {
+  return {
+    conflict: notRunComment(t, CONFLICT_STEP),
+    validate: ['false', 'true'].map((mutants) => notRunComment(t, VALIDATE_STEP, { mutants })),
+  };
+}
+
+test('#812 AC4: workflow comments include the actual runtime context, not a copied first line', (t) => {
+  if (!hasBash()) { t.skip('bash недоступен'); return; }
+  const { conflict, validate: variants } = notRunComments(t);
+  const [validate] = variants;
+  assert.match(conflict, /src\/conflicted\.ts/);
+  assert.match(validate, /fixture failed check/);
+  assert.match(validate, /https:\/\/example\.invalid\/validate\/812/);
+  for (const body of [conflict, ...variants]) assert.doesNotMatch(body, /\$\{\{|\$(?:CONFLICTS|NOTE|URL|kind|BRANCH|short|RESULT)\b/);
+});
 
 test('#728 returnSignal: причины возврата на текстах конвейера (AC3)', () => {
   const sig = (body) => returnSignal(body, { stage: 'code', number: NUM });
@@ -288,25 +343,33 @@ test('#728 returnSignal: причины возврата на текстах к�
   assert.equal(NOT_RUN_VALIDATE_RE.flags.includes('m') && NOT_RUN_CONFLICT_RE.flags.includes('m'), true);
 });
 
-test('#728 контракт: шаблоны «Ревью не запускалось» _process.yml дают conflict и validate-red (AC3)', () => {
-  const templates = notRunTemplates();
-  assert.equal(templates.length, 2, 'шаблонов «Ревью не запускалось:» в _process.yml ровно два');
-  const reasons = templates.map((variants) => [...new Set(variants.map((text) => returnSignal(text, { stage: 'code', number: NUM })))]);
-  assert.deepEqual(reasons.map((r) => r.join(',')).sort(), ['conflict', 'validate-red'],
-    'один шаблон — conflict, другой — validate-red при обоих $kind');
-  for (const variants of templates) {
-    for (const text of variants) assert.ok(PIPELINE_EVENTS.find((e) => e.kind === 'not-run').re.test(text), 'общий префикс — под константой PIPELINE_EVENTS');
+test('#728/#812: executed workflow comments give conflict and validate-red; wrong reasons stay unknown', (t) => {
+  if (!hasBash()) { t.skip('bash недоступен'); return; }
+  const { conflict, validate } = notRunComments(t);
+  const signal = (body) => returnSignal(body, { stage: 'code', number: NUM });
+  assert.deepEqual([conflict, ...validate].map(signal), ['conflict', 'validate-red', 'validate-red']);
+  assert.match(validate[0], /Ревью не запускалось:\*\* Validate на материале/);
+  assert.match(validate[1], /Ревью не запускалось:\*\* Validate с мутантами на материале/);
+  for (const text of [conflict, ...validate]) {
+    assert.ok(PIPELINE_EVENTS.find((e) => e.kind === 'not-run').re.test(text), 'общий префикс — под константой PIPELINE_EVENTS');
+  }
+  // Negative fixture only: execute the same publication path with an unknown
+  // reason. Later words about Validate/rebase cannot justify a classification.
+  const unknownWorkflow = PROCESS_WORKFLOW.replace(/^          \*\*Ревью не запускалось:\*\*.*$/gm,
+    '          **Ревью не запускалось:** неизвестная причина.');
+  assert.notEqual(unknownWorkflow, PROCESS_WORKFLOW);
+  for (const name of [CONFLICT_STEP, VALIDATE_STEP]) {
+    assert.equal(signal(notRunComment(t, name, { workflow: unknownWorkflow })), 'unknown');
   }
 });
 
-test('#728 returnReason: последний комментарий с признаком, возврат без комментария — unknown, трек своего момента (AC3)', () => {
+test('#728 returnReason: последний комментарий с признаком, возврат без комментария — unknown, трек своего момента (AC3)', (t) => {
+  if (!hasBash()) { t.skip('bash недоступен'); return; }
   const issue = { number: NUM };
   const cycle = (h, comment) => [
     labeled('S7-code-review', h), ...(comment ? [commented(comment, h + 0.5)] : []), labeled('S6-in-progress', h + 0.5),
   ];
-  const templates = notRunTemplates();
-  const conflict = templates.find((variants) => variants[0].includes(' ветка '));
-  const validate = templates.find((variants) => variants !== conflict);
+  const { conflict, validate } = notRunComments(t);
   const events = [
     labeled('S1-new', 0), labeled('track:ship', 0), labeled('S6-in-progress', 1),
     ...cycle(2, VERDICT_YELLOW),
@@ -314,7 +377,7 @@ test('#728 returnReason: последний комментарий с призн
     ...cycle(4, validate[0]),
     ...cycle(5, validate[1]),
     unlabeled('track:ship', 5.8), labeled('track:show', 5.8),
-    ...cycle(6, conflict[0]),
+    ...cycle(6, conflict),
     ...cycle(7, commentFor('reject-stale', {})),
     // Комментарий без признака после вердикта не перекрывает причину.
     labeled('S7-code-review', 8), commented(VERDICT_YELLOW, 8.2), commented('Пока шло ревью, `dev` продвинулся на 1 коммит(ов).', 8.3), labeled('S6-in-progress', 8.5),

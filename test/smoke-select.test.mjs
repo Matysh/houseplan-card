@@ -235,6 +235,25 @@ test('#772: CSS комнаты выбирает room-fill smoke без симв�
   assert.match(cli.stdout, /smoke_room_fill_transitions\.mjs[\s\S]*src\/styles\/plan\.styles\.ts \(файл\)/);
 });
 
+test('#812 AC5: space-render selects baseline and identity without clearing uncertainty', () => {
+  const diff = [
+    'diff --git a/src/space-render.ts b/src/space-render.ts',
+    '--- a/src/space-render.ts', '+++ b/src/space-render.ts',
+    '@@ -1 +1 @@', '-  opacity: 0.5,', '+  opacity: 0.8,',
+  ].join('\n');
+  const selection = selectSmokes(diff, { root: repoRoot });
+  assert.deepEqual(selection.symbols, []);
+  for (const smoke of ['smoke_space_card.mjs', 'smoke_space_card_identity.mjs']) {
+    const link = selection.registered.find((entry) => entry.smoke === smoke);
+    assert.deepEqual(link?.files, ['src/space-render.ts'], smoke);
+    assert.ok(smokesToRun(selection).includes(smoke), smoke);
+  }
+  assert.equal(selection.unproven, true, 'a broad file link is not a proven symbol link');
+  assert.deepEqual(selection.visualMinimum, [...VISUAL_MINIMUM]);
+  const foreign = selectSmokes(diff.replaceAll('space-render.ts', 'unrelated.ts'), { root: repoRoot });
+  assert.ok(!foreign.registered.some((entry) => entry.smoke === 'smoke_space_card.mjs'));
+});
+
 test('таблица символов не берёт одиночные английские слова (#241)', () => {
   const table = symbolTable(repoRoot);
   for (const noise of ['floor', 'value', 'index', 'return', 'length', 'edit']) {

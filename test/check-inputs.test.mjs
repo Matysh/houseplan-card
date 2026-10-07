@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   BASELINE_OVERLAY, CHECKS, CHECK_NAMES, NOT_AN_INPUT, REUSE_JOBS, checksAffectedBy, closure, coverage,
@@ -59,6 +60,59 @@ test('ссылки: test-build/*.js — это src/*.ts, компилируем�
   assert.deepEqual(refs.code, ['src/space-geometry.ts']);
 });
 
+test('#812 AC1: комментарии не съедают реальные импорты process-gate', () => {
+  const refs = referencesOf('scripts/process-gate.mjs', readFileSync('scripts/process-gate.mjs', 'utf8'));
+  for (const name of ['validate-commit-provenance', 'change-classes', 'review-doc-guard', 'process-track']) {
+    assert.ok(refs.code.includes(`scripts/${name}.mjs`), name);
+  }
+});
+
+test('#812 AC1: маркеры комментариев в строках и regex не повреждают следующие импорты', () => {
+  const text = [
+    'const a = "/*"; const b = "https://host/path";',
+    "const c = 'escaped\\\' // still string';",
+    'const re = /[/*]/; const quotient = 8 / 2;',
+    '// glob scripts/** — не начало block-comment',
+    "import /* annotation */ value from './real.mjs';",
+    "export { value } from './exported.mjs';",
+    "/* import './block-comment.mjs'; */",
+    "// import './line-comment.mjs';",
+  ].join('\n');
+  const clean = stripComments('test/probe.mjs', text);
+  assert.ok(clean.includes('"/*"'));
+  assert.ok(clean.includes('"https://host/path"'));
+  assert.ok(!clean.includes('block-comment.mjs'));
+  assert.deepEqual(referencesOf('test/probe.mjs', text).code.sort(), ['test/exported.mjs', 'test/real.mjs']);
+});
+
+test('#812 AC1: текст программы в строке — не импорт; interpolation остаётся исполняемым кодом', () => {
+  const text = [
+    'const fixture = "import x from \'./fake.mjs\';";',
+    'const raw = `import "./template-fake.mjs"; // /* raw`;',
+    'const executable = `value: ${await import("./interpolated.mjs")}`;',
+    'const fixturePath = "scripts/fixture-only.mjs";',
+    "import './real.mjs';",
+  ].join('\n');
+  const refs = referencesOf('test/probe.mjs', text);
+  assert.deepEqual(refs.code.sort(), ['test/interpolated.mjs', 'test/real.mjs']);
+  assert.ok(refs.data.includes('scripts/fixture-only.mjs'), 'строковый путь остаётся data-листом');
+});
+
+test('#812 AC1: пути собственного manifest — метаданные, но его импорты обходятся', () => {
+  const source = "import './helper.mjs'; const excluded = 'scripts/manual-only.mjs';";
+  const files = {
+    'scripts/check-inputs.mjs': source,
+    'scripts/helper.mjs': "import './nested.mjs';",
+    'scripts/nested.mjs': '',
+    'scripts/manual-only.mjs': '',
+  };
+  assert.deepEqual(closure('/virtual', ['scripts/check-inputs.mjs'], {
+    tracked: Object.keys(files), read: (file) => files[file],
+  }), ['scripts/check-inputs.mjs', 'scripts/helper.mjs', 'scripts/nested.mjs']);
+  assert.ok(referencesOf('scripts/ordinary-reader.mjs', source).data.includes('scripts/manual-only.mjs'),
+    'исключение касается только деклараций самого manifest');
+});
+
 test('ссылки: Python — пакеты репозитория, относительные модули relay, Path-цепочки', () => {
   const text = `
     from custom_components.houseplan.validation import CONFIG_SCHEMA
@@ -104,6 +158,56 @@ test('замыкание: код транзитивно, данные — лис
   assert.ok(!reached.includes('demo/fixtures/README.md'));
   assert.ok(!reached.includes('scripts/never.mjs'));
   assert.equal(parents.get('scripts/helper.mjs'), 'demo/compat.mjs');
+});
+
+test('#812 AC2: data → code повышает уровень обхода независимо от порядка корней и рёбер, цикл конечен', () => {
+  for (const entries of [['scripts/data.mjs', 'scripts/code.mjs'], ['scripts/code.mjs', 'scripts/data.mjs']]) {
+    for (const imports of ["import './b.mjs'; import './data.mjs';", "import './data.mjs'; import './b.mjs';"]) {
+      const files = {
+        'scripts/data.mjs': "const b = 'scripts/b.mjs'; const leaf = 'scripts/leaf.mjs';",
+        'scripts/code.mjs': imports,
+        'scripts/b.mjs': "import './c.mjs';",
+        'scripts/c.mjs': "import './b.mjs';",
+        'scripts/leaf.mjs': "import './never.mjs';",
+        'scripts/never.mjs': '',
+      };
+      const reads = new Map();
+      const reached = closure('/virtual', entries, {
+        tracked: Object.keys(files),
+        read: (file) => { reads.set(file, (reads.get(file) || 0) + 1); return files[file]; },
+      });
+      assert.deepEqual(reached, ['scripts/b.mjs', 'scripts/c.mjs', 'scripts/code.mjs', 'scripts/data.mjs', 'scripts/leaf.mjs']);
+      assert.ok([...reads.values()].every((n) => n === 1), 'код читается один раз даже при цикле');
+      assert.ok(!reads.has('scripts/leaf.mjs'), 'data-only лист не читается');
+    }
+  }
+});
+
+test('#812 AC2: повышение после каталога сохраняет stopAt, LEAF_FILES и overlay', () => {
+  const files = {
+    'scripts/a.mjs': "const dir = 'demo/fixtures'; const registry = 'scripts/mutation-registry.mjs';",
+    'scripts/z.mjs': "import '../demo/fixtures/b.mjs'; import './mutation-registry.mjs'; import './stop.mjs';",
+    'demo/fixtures/b.mjs': "import '../child.mjs';",
+    'demo/child.mjs': "const overlay = 'demo/golden';",
+    'demo/fixtures/leaf.mjs': "import '../never.mjs';",
+    'demo/fixtures/README.md': '',
+    'demo/fixtures/pic.png': '',
+    'demo/golden/baselines/x.json': '{}',
+    'scripts/mutation-registry.mjs': "import './never.mjs';",
+    'scripts/stop.mjs': "import './never.mjs';",
+    'scripts/never.mjs': '',
+    'demo/never.mjs': '',
+  };
+  const reads = [];
+  const reached = closure('/virtual', ['scripts/a.mjs', 'scripts/z.mjs'], {
+    tracked: Object.keys(files), stopAt: (file) => file === 'scripts/stop.mjs',
+    read: (file) => { reads.push(file); return files[file]; },
+  });
+  assert.deepEqual(reached, ['demo/child.mjs', 'demo/fixtures/b.mjs', 'demo/fixtures/leaf.mjs',
+    'scripts/a.mjs', 'scripts/mutation-registry.mjs', 'scripts/stop.mjs', 'scripts/z.mjs']);
+  assert.ok(!reads.includes('scripts/stop.mjs'));
+  assert.ok(!reads.includes('scripts/mutation-registry.mjs'));
+  assert.ok(!reads.includes('demo/fixtures/leaf.mjs'));
 });
 
 // #573: overlay принятых эталонов принадлежит только golden. Строка-каталог

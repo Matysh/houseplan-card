@@ -191,7 +191,7 @@ export function assertIsometricCandidate(card, profile, stage) {
 
 /** Single fail-fast implementation injected into both browser runners. Keep
  * this function self-contained: runners serialize it with `toString()`. */
-export function assertCardContract(card, contract) {
+export function assertCardContract(card, contract, profile = contract.label) {
   const matches = (value, expected) => {
     if (expected === 'array') return Array.isArray(value);
     if (expected === 'map') return value instanceof Map;
@@ -228,8 +228,47 @@ export function assertCardContract(card, contract) {
       invalidFields.length ? `invalid private API types: ${invalidFields.join(', ')}` : '',
     ].filter(Boolean).join('; ');
     throw new Error(
-      `${contract.label} harness is incompatible with this houseplan-card bundle; ${details}. `
+      `${profile} harness is incompatible with this houseplan-card bundle; ${details}. `
       + 'Update the explicit candidate/base compatibility contract before profiling.',
     );
   }
+}
+
+/** The runner's CLI plan, including discarded samples (negative sample IDs). */
+export function planLargeHouseIterations({ samples: sampleArg, warmups: warmupArg } = {}) {
+  const samples = Math.max(1, Math.min(20, Number(sampleArg) || 7));
+  // Change only the explicit CLI zero; retain defaults, clamping and fractions.
+  const warmups = Math.max(0, Math.min(5, Number(warmupArg) || (warmupArg === '0' ? 0 : 1)));
+  const iterations = [];
+  for (let iteration = 0; iteration < warmups + samples; iteration++) {
+    iterations.push(iteration - warmups);
+  }
+  return { samples, warmups, iterations };
+}
+
+/** Self-contained for serialization into the measured browser page. */
+export function installEpochDiagnostics(card, captureStack) {
+  const diag = card.__diag;
+  diag.epochChanges = 0;
+  diag.epochStackCaptures = 0;
+  diag.epochTracesDropped = 0;
+  diag.epochTracesLimit = 8;
+  let epoch = 0;
+  Object.defineProperty(card, '_cfgEpoch', {
+    configurable: true,
+    get: () => epoch,
+    set: (next) => {
+      if (next !== epoch) {
+        diag.epochChanges += 1;
+        if (diag.epochs.length < diag.epochTracesLimit) {
+          diag.epochStackCaptures += 1;
+          const stack = captureStack ? captureStack() : (new Error().stack || '');
+          const frames = stack.split('\n').slice(1, 4)
+            .map((line) => line.trim().replace(/^at\s+/, '').replace(/\s*\(.*$/, ''));
+          diag.epochs.push(`${epoch}->${next}@${frames.join('<')}`);
+        } else diag.epochTracesDropped += 1;
+      }
+      epoch = next;
+    },
+  });
 }

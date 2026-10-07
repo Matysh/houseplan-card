@@ -26,6 +26,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, posix, relative, resolve } from 'node:path';
 import { isMainModule } from './spawn-portable.mjs';
+import { relativeDependencies, scanJavaScript } from './relative-dependencies.mjs';
 
 /** Корни, внутри которых файл считается исполняемым входом (§5.2). */
 export const EXECUTABLE_ROOTS = ['scripts', 'demo', 'test', 'tests_backend', '.github', 'custom_components', 'src'];
@@ -136,9 +137,6 @@ const TOP = '(?:scripts|demo|docs|src|custom_components|tests_backend|test|\\.gi
 const PATH_LITERAL = new RegExp(`['"\`](${TOP}/[\\w./@-]+)['"\`]`, 'g');
 const TOP_RE = new RegExp(`^${TOP}/`);
 const ROOT_FILE_LITERAL = /['"`](package\.json|package-lock\.json|hacs\.json|PROCESS\.md|README\.md|README\.ru\.md|pyproject\.toml|pytest\.ini|rollup\.config\.mjs|tsconfig[\w.]*\.json)['"`]/g;
-const JS_IMPORT = /(?:^|[^\w$])(?:import|export)\s*(?:[^'"`;]*?\s+from\s*)?['"](\.\.?\/[^'"]+)['"]/g;
-const JS_DYNAMIC = /import\(\s*['"](\.\.?\/[^'"]+)['"]\s*\)/g;
-const JS_REQUIRE = /require\(\s*['"](\.\.?\/[^'"]+)['"]\s*\)/g;
 const PY_FROM = /^\s*from\s+([\w.]+)\s+import/gm;
 const PY_IMPORT = /^\s*import\s+([\w.]+)/gm;
 const PY_PATH_JOIN = /((?:"[\w.-]+"\s*\/\s*)+"[\w.-]+")/g;
@@ -185,7 +183,7 @@ const EXEC_LITERAL = new RegExp(`(?:node|python3?|tsx)\\s+((?:scripts|demo|tests
 /** Комментарии и docstring'и — не ссылки: путь в пояснении не делает файл входом. */
 export function stripComments(file, text) {
   if (/\.(mjs|cjs|js|ts)$/.test(file)) {
-    return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/[^\n]*/g, '$1');
+    return scanJavaScript(text).withoutComments;
   }
   if (file.endsWith('.py')) {
     return text.replace(/\"\"\"[\s\S]*?\"\"\"/g, '').replace(/'''[\s\S]*?'''/g, '').replace(/(^|\s)#[^\n]*/g, '$1');
@@ -194,14 +192,13 @@ export function stripComments(file, text) {
 }
 
 export function referencesOf(file, rawText) {
-  const text = stripComments(file, rawText);
+  const js = /\.(mjs|cjs|js|ts)$/.test(file) ? scanJavaScript(rawText) : null;
+  const text = js ? js.withoutComments : stripComments(file, rawText);
   const code = new Set();
   const data = new Set();
   const norm = (p) => toPosix(posix.normalize(p));
   if (/\.(mjs|cjs|js|ts)$/.test(file)) {
-    for (const re of [JS_IMPORT, JS_DYNAMIC, JS_REQUIRE]) {
-      for (const m of text.matchAll(re)) resolveJsSpecifier(file, m[1]).forEach((p) => code.add(norm(p)));
-    }
+    for (const spec of relativeDependencies(rawText, js)) resolveJsSpecifier(file, spec).forEach((p) => code.add(norm(p)));
     // Документ внутри названного каталога не является runtime-входом сам по
     // себе. Но точный относительный путь к Markdown в исполняемом коде — это
     // явная зависимость (например, release-gate действительно читает README).
@@ -231,12 +228,21 @@ export function referencesOf(file, rawText) {
   // Относительный путь к исполняемому файлу рядом (`'guard_x.mjs'`,
   // `'../benchmark_x.mjs'` у verify-guard) — код, если такой файл есть в дереве.
   if (/\.(mjs|cjs|js|ts)$/.test(file)) {
-    for (const m of text.matchAll(REL_EXEC_LITERAL)) {
+    // Only real string literals, not quoted fixture source containing another
+    // quoted path. Root-relative fixture paths retain their data-only policy.
+    for (const literal of js.tokens.filter((token) => token.kind === 'string')) {
+      const m = REL_EXEC_LITERAL.exec(JSON.stringify(literal.value));
+      REL_EXEC_LITERAL.lastIndex = 0;
+      if (!m || m[0].length !== JSON.stringify(literal.value).length) continue;
       if (TOP_RE.test(m[1])) continue; // путь от корня уже разобран выше
       const rel = norm(posix.join(posix.dirname(file), m[1]));
       if (!rel.startsWith('..')) code.add(rel);
     }
   }
+  // This module declares paths for all jobs and NOT_AN_INPUT; those strings
+  // are graph metadata, not files read by its own callers. Preserve its real
+  // imports above, without making manual scripts inputs of every reuse job.
+  if (file === 'scripts/check-inputs.mjs') return { code: [...code], data: [] };
   for (const c of code) data.delete(c);
   return { code: [...code], data: [...data] };
 }
@@ -271,20 +277,22 @@ export function closure(root, entries, { tracked = trackedFiles(root), stopAt = 
   });
   const isDir = (rel) => tracked.some((f) => f.startsWith(`${rel}/`));
   const seen = new Set();
+  const traversed = new Set(); // included as data ≠ dependencies already read
   const note = (child, parent) => { if (parents && !parents.has(child)) parents.set(child, parent); };
   const queue = [...entries].filter((e) => trackedSet.has(e));
   for (const e of queue) note(e, null);
   while (queue.length) {
     const file = queue.shift();
-    if (seen.has(file)) continue;
+    if (traversed.has(file)) continue;
     seen.add(file);
+    traversed.add(file);
     if (stopAt(file) || LEAF_FILES.has(file)) continue;
     if (!/\.(mjs|cjs|js|ts|py)$/.test(file)) continue;
     let text;
     try { text = readText(file); } catch { continue; }
     const { code, data } = referencesOf(file, text);
     for (const ref of code) {
-      if (trackedSet.has(ref)) { note(ref, file); if (!seen.has(ref)) queue.push(ref); }
+      if (trackedSet.has(ref)) { note(ref, file); if (!traversed.has(ref)) queue.push(ref); }
     }
     for (const ref of data) {
       if (trackedSet.has(ref)) { note(ref, file); seen.add(ref); continue; }

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { REVIEWS_INDEX_PATH, UPSTREAM_WINS, planStop, rebaseRegenerating } from '../scripts/rebase-generated.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
+import { importClosure } from './helpers/import-closure.mjs';
 import { PATCH_ID_EXCLUDES } from '../scripts/merge-candidate.mjs';
 import { buildIndex } from '../scripts/reviews-index.mjs';
 
@@ -46,22 +47,6 @@ const commitAll = (work, msg) => { git(work, 'add', '-A'); git(work, 'commit', '
  */
 const SCRIPTS = fileURLToPath(new URL('../scripts/', import.meta.url));
 
-/**
- * Замыкание модуля: относительные импорты и скрипты, которые он запускает по
- * `new URL('./x.mjs', import.meta.url)` (генератор индекса), — рекурсивно.
- */
-function importClosure(entry, seen = new Set()) {
-  if (seen.has(entry)) return seen;
-  seen.add(entry);
-  const text = readFileSync(entry, 'utf8');
-  const specs = [
-    ...text.matchAll(/^import[^'"]*['"](\.{1,2}\/[^'"]+)['"]/gm),
-    ...text.matchAll(/new URL\('(\.{1,2}\/[^']+\.mjs)', import\.meta\.url\)/g),
-  ].map((m) => m[1]);
-  for (const spec of specs) importClosure(resolve(dirname(entry), spec), seen);
-  return seen;
-}
-
 function scenario({ shared = false, tools = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'hp-rebase-gen-'));
   const origin = join(root, 'origin.git'); const work = join(root, 'work');
@@ -80,7 +65,9 @@ function scenario({ shared = false, tools = false } = {}) {
     for (const file of importClosure(join(SCRIPTS, 'rebase-generated.mjs'))) {
       // 'broken' — dev без зависимости помощника: Node упадёт на импорте с кодом 1.
       if (tools === 'broken' && file.endsWith('spawn-portable.mjs')) continue;
-      copyFileSync(file, join(work, 'scripts', file.slice(SCRIPTS.length)));
+      const destination = join(work, 'scripts', file.slice(SCRIPTS.length));
+      mkdirSync(dirname(destination), { recursive: true });
+      copyFileSync(file, destination);
     }
   }
   commitAll(work, 'base');

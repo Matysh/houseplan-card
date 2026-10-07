@@ -1064,15 +1064,8 @@ function runGuard(t, { labels, compare = null, branch = true }) {
   ].join('\n'), { mode: 0o755 });
   const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const step = findStep(workflow, '      - id: decide\n', '_process.yml');
-  const lines = workflow.slice(workflow.indexOf('      - id: decide\n')).split('\n');
-  const from = lines.indexOf('        run: |');
-  const body = [];
-  for (const line of lines.slice(from + 1)) {
-    if (line.trim() && !/^ {10}/.test(line)) break;
-    body.push(line.replace(/^ {10}/, ''));
-  }
   const context = { repository: 'o/r', server_url: 'https://github.com', run_id: '42' };
-  const script = body.join('\n').replace(/\$\{\{ github\.(\w+) \}\}/g, (_, key) => context[key]);
+  const script = step.run.replace(/\$\{\{ github\.(\w+) \}\}/g, (_, key) => context[key]);
   const output = join(root, 'output');
   writeFileSync(output, '');
   // #766: shell шага по правилам раннера, без своего pipefail.
@@ -1117,11 +1110,10 @@ test('r1 #695: guard даёт инфраструктуре без треково
   }
 });
 
-test('#793: guard не принимает ранний выход поиска за снятие метки', (t) => {
+test('#793/#812: guard сохраняет большой снимок меток и находит точную review-метку', (t) => {
   if (process.platform === 'win32' || spawnSync('bash', ['--version']).status !== 0) { t.skip('bash недоступен'); return; }
-  // Больше ёмкости обычного pipe: совпадение в начале вынуждает grep -q
-  // закрыть чтение, пока printf ещё пишет. Без этого свидетель зависит от
-  // планировщика и может месяцами оставаться зелёным на прежнем коде.
+  // Свидетель объёма и передачи полного снимка, а не SIGPIPE: фактический
+  // guard не задаёт shell/pipefail. Обвязка не усиливает production shell.
   const labels = ['S7-code-review', 'track:ask', ...Array.from({ length: 12_000 }, (_, i) => `n${i}`)];
   const r = runGuard(t, { labels, compare: ['scripts/x.mjs'] });
   const diagnostic = `${r.stdout}\n${r.stderr}`;

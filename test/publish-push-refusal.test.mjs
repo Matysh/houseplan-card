@@ -4,12 +4,13 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { PUSH_REFUSAL, classifyPushRefusal, refusalSummary } from '../scripts/merge-candidate.mjs';
 import { buildIndex } from '../scripts/reviews-index.mjs';
 import { findStep, runStep, workflowSteps } from './helpers/workflow-step.mjs';
+import { importClosure } from './helpers/import-closure.mjs';
 
 // #723: два шага публикуют коммит и прежде любой отказ push считали сдвигом
 // ветки — документ ревью релиза в `dev` (release-review.yml, три попытки) и
@@ -49,18 +50,6 @@ const git = (cwd, ...args) => execFileSync('git', args, {
 }).trim();
 const commitAll = (cwd, msg) => { git(cwd, 'add', '-A'); git(cwd, 'commit', '-q', '-m', msg); };
 
-/** Замыкание относительных импортов модуля (и скриптов, которые он зовёт по `new URL`). */
-function importClosure(entry, seen = new Set()) {
-  if (seen.has(entry)) return seen;
-  seen.add(entry);
-  const text = readFileSync(entry, 'utf8');
-  const specs = [
-    ...text.matchAll(/^import[^'"]*['"](\.{1,2}\/[^'"]+)['"]/gm),
-    ...text.matchAll(/new URL\('(\.{1,2}\/[^']+\.mjs)', import\.meta\.url\)/g),
-  ].map((m) => m[1]);
-  for (const spec of specs) importClosure(resolve(dirname(entry), spec), seen);
-  return seen;
-}
 /** Скрипты, которые зовут шаги, — с замыканием импортов. */
 const STEP_SCRIPTS = ['release-review.mjs', 'ship-review.mjs', 'reviews-index.mjs', 'review-doc-guard.mjs', 'merge-candidate.mjs']
   .reduce((seen, name) => importClosure(join(SCRIPTS, name), seen), new Set());
@@ -136,7 +125,11 @@ function sandbox(root) {
   git(work, 'checkout', '-q', '-b', 'dev');
   // Скрипты шага — из репозитория как есть: их несёт dev временного origin.
   mkdirSync(join(work, 'scripts'));
-  for (const file of STEP_SCRIPTS) copyFileSync(file, join(work, 'scripts', relative(SCRIPTS, file)));
+  for (const file of STEP_SCRIPTS) {
+    const destination = join(work, 'scripts', relative(SCRIPTS, file));
+    mkdirSync(dirname(destination), { recursive: true });
+    copyFileSync(file, destination);
+  }
   // #749: снимок скриптов integrate берёт из dev и validate.yml (его читает workflow-jobs.mjs).
   mkdirSync(join(work, '.github', 'workflows'), { recursive: true });
   copyFileSync(join(WORKFLOWS, 'validate.yml'), join(work, '.github', 'workflows', 'validate.yml'));

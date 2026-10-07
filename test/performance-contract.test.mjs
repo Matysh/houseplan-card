@@ -45,7 +45,7 @@ test('every measured large-house card preloads its own lazy editor runtime (#380
   );
   const create = source.indexOf("document.createElement('houseplan-card')");
   const preload = source.indexOf('await window.__hpEnsureHarnessEditorRuntime(card)', create);
-  const contract = source.indexOf('window.__hpAssertCardContract(card, cardContract)', create);
+  const contract = source.indexOf('window.__hpAssertCardContract(card, cardContract, profile)', create);
   assert.ok(create >= 0 && preload > create && contract > preload);
 });
 
@@ -55,7 +55,7 @@ test('isometric large-house samples await the optional lazy renderer before asse
   );
   const create = source.indexOf("document.createElement('houseplan-card')");
   const preload = source.indexOf('if (isometric) await ensureIsoRuntime(card)', create);
-  const contract = source.indexOf('window.__hpAssertCardContract(card, cardContract)', create);
+  const contract = source.indexOf('window.__hpAssertCardContract(card, cardContract, profile)', create);
   const firstProjectionAssertion = source.indexOf('const initialProjection =', create);
   assert.ok(create >= 0 && preload > create && contract > preload
     && firstProjectionAssertion > contract);

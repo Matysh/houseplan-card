@@ -5,6 +5,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { importClosure } from './helpers/import-closure.mjs';
 import {
   COMPARE_FILES_CAP, RISK_CLASSES, RISK_NOTE_LINE_LIMIT, SHIP_SRC_LINE_LIMIT, SHOW_CRITERIA, classifyRisk, cycleLimit, decideTrack,
   explicitTracks, guardLimit, hasTrackLabel, parseNameStatus, parseNumstat, rebaseBeforeReview, resolveTrack, reviewRoute, riskClassLine,
@@ -702,15 +703,6 @@ test('#707 AC4: шаг трека в _process.yml — один вызов, ко�
   assert.equal(decideTrack({ stage: 'code', branch: 'b', labels: ['track:show'], diff: RISKY }).full, false, 'риск полного набора не заказывает');
 });
 
-/** Замыкание относительных импортов модуля — то, что шаг получит архивом scripts/ из dev. */
-function importClosure(entry, seen = new Set()) {
-  if (seen.has(entry)) return seen;
-  seen.add(entry);
-  const text = readFileSync(entry, 'utf8');
-  for (const m of text.matchAll(/^(?:import|export)[^'"]*from ['"](\.{1,2}\/[^'"]+)['"]/gm)) importClosure(join(dirname(entry), m[1]), seen);
-  return seen;
-}
-
 // Окружение git без GIT_* родителя и без глобального конфига.
 const GIT_ENV = {
   ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^GIT_/i.test(key))),
@@ -759,7 +751,9 @@ function trackSandbox(t, { change, base = () => {} }) {
   mkdirSync(join(work, 'scripts'));
   for (const file of importClosure(SCRIPT)) {
     assert.ok(file.startsWith(SCRIPTS_DIR), `${file} вне scripts/`);
-    writeFileSync(join(work, 'scripts', file.slice(SCRIPTS_DIR.length + 1)), readFileSync(file));
+    const destination = join(work, 'scripts', file.slice(SCRIPTS_DIR.length + 1));
+    mkdirSync(dirname(destination), { recursive: true });
+    writeFileSync(destination, readFileSync(file));
   }
   // #749: снимок скриптов integrate берёт из dev и validate.yml.
   mkdirSync(join(work, '.github', 'workflows'), { recursive: true });

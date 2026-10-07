@@ -378,7 +378,8 @@ const SWITCH_CYCLE_FAMILIES = {
   isometric: {
     ceiling: 1550,
     smoke: 'budgets-isometric-smoke.json',
-    files: ['budgets-large-house-isometric.json', 'budgets-isometric-stage3-dense.json', 'budgets-isometric-smoke.json'],
+    files: ['budgets-large-house-isometric.json', 'budgets-isometric-stage3-dense.json',
+      'budgets-large-house-isometric-backdrop.json', 'budgets-isometric-smoke.json'],
     full: { maxRegressionRatio: 0.2, noiseAllowanceMs: 250 },
     medians: {
       'large-house-isometric-v1': [1069.5, 1051, 866.5, 766.5, 1134.9, 1100.4, 1135.7, 1089],
@@ -386,6 +387,10 @@ const SWITCH_CYCLE_FAMILIES = {
     },
   },
 };
+
+test('#812 AC8: the backdrop twin participates in the shared 2.5D switch-cycle contract', () => {
+  assert.ok(SWITCH_CYCLE_FAMILIES.isometric.files.includes('budgets-large-house-isometric-backdrop.json'));
+});
 
 for (const [family, spec] of Object.entries(SWITCH_CYCLE_FAMILIES)) {
   test(`#747 switchCycleMs (${family}): потолок над тёплым уровнем после #735 с запасом на шум раннера`, () => {

@@ -39,22 +39,76 @@ const out = await page.evaluate(async () => {
   const setup = root().querySelector('.radarsetup');
   const setupOpened = !!setup;
   const planSvg = setup?.querySelector('svg');
-  const press = (x, y) => planSvg?.dispatchEvent(new PointerEvent('pointerdown', {
-    bubbles: true, clientX: x, clientY: y, pointerId: 1,
+  const state = () => card._editorRuntime?._radarSetup?.active;
+  // #812: independently map scene coordinates through the measured xMidYMid
+  // meet viewport. An active wizard alone says nothing about accepted clicks.
+  const rect = planSvg?.getBoundingClientRect();
+  const [vx, vy, vw, vh] = (planSvg?.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+  const scale = Math.min(rect?.width / vw, rect?.height / vh);
+  const mount = [vx + vw * 0.25, vy + vh * 0.4];
+  const ahead = [mount[0], vy + vh * 0.1]; // straight north: heading = 0
+  const client = ([x, y]) => [
+    rect.left + (rect.width - vw * scale) / 2 + (x - vx) * scale,
+    rect.top + (rect.height - vh * scale) / 2 + (y - vy) * scale,
+  ];
+  const near = (actual, expected) => actual?.length === expected.length
+    && actual.every((value, i) => Math.abs(value - expected[i]) < 1e-6);
+  const press = ([x, y], isPrimary) => planSvg?.dispatchEvent(new PointerEvent('pointerdown', {
+    bubbles: true, clientX: x, clientY: y, pointerId: 1, isPrimary,
   }));
-  if (planSvg) {
-    planSvg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 1000, height: 1000,
-      right: 1000, bottom: 1000, x: 0, y: 0, toJSON() {} });
-    press(250, 400);
-    press(250, 100);
+  const persistedRadar = () => JSON.stringify(card._serverCfg.markers.find((marker) => marker.id === ordinary.id)?.radar);
+  const persistedBeforeSave = persistedRadar();
+  const hass = card.hass;
+  const realCallWS = hass.callWS;
+  const radarWrites = [];
+  hass.callWS = async (message) => {
+    if (message?.type === 'houseplan/config/set') {
+      radarWrites.push(JSON.stringify(message.config?.markers?.find((marker) => marker.id === ordinary.id)?.radar));
+    }
+    return realCallWS.call(hass, message);
+  };
+  let nonPrimaryIgnored = false;
+  let oneGestureIncomplete = false;
+  let installationDrafted = false;
+  let cancelReleased = false;
+  try {
+    if (planSvg) {
+      press(client(mount), false);
+      press(client(ahead), false);
+      await update();
+      nonPrimaryIgnored = state()?.phase === 'mount' && state()?.mount === null
+        && state()?.headingPoint === null;
+      press(client(mount), true);
+      await update();
+      oneGestureIncomplete = state()?.phase === 'heading'
+        && near(state()?.mount, mount.map((value) => value / 1000))
+        && state()?.headingPoint === null && !root().querySelector('.radarsetup line.heading');
+      press(client(ahead), true);
+    }
+    await update();
+    const line = root().querySelector('.radarsetup line.heading');
+    installationDrafted = state()?.phase === 'solved'
+      && near(state()?.mount, mount.map((value) => value / 1000))
+      && near(state()?.headingPoint, ahead.map((value) => value / 1000))
+      && state()?.draft.mountX === String(Number(mount[0].toFixed(3)))
+      && state()?.draft.mountY === String(Number(mount[1].toFixed(3)))
+      && state()?.draft.heading === '0' && !!line
+      && near([+line.getAttribute('x1'), +line.getAttribute('y1')], mount)
+      && near([+line.getAttribute('x2'), +line.getAttribute('y2')], ahead);
+    root().querySelector('.radarsetup .iconbtn')?.click();
+    await update();
+    // Two accepted gestures dirty the setup, so Cancel must go through its
+    // ordinary discard confirmation, not a private reset of the draft.
+    const confirm = root().querySelector('[data-hp="dialog"][data-kind="confirm"]');
+    const buttons = [...(confirm?.querySelectorAll('.danger-confirm-footer button')
+      || confirm?.shadowRoot?.querySelectorAll('.danger-confirm-footer button') || [])];
+    buttons.at(-1)?.click();
+    await update();
+    cancelReleased = !root().querySelector('.radarsetup') && persistedRadar() === persistedBeforeSave
+      && radarWrites.every((radar) => radar === persistedBeforeSave);
+  } finally {
+    hass.callWS = realCallWS;
   }
-  await update();
-  const installationDrafted = card._editorRuntime?._radarSetup?.isActive() === true;
-  const persistedBeforeSave = card._serverCfg.markers.find((marker) => marker.id === ordinary.id)?.radar;
-  root().querySelector('.radarsetup .iconbtn')?.click();
-  await update();
-  const cancelReleased = !root().querySelector('.radarsetup')
-    && card._serverCfg.markers.find((marker) => marker.id === ordinary.id)?.radar === persistedBeforeSave;
 
   card._closeMarkerDialog();
   // #602: a radar saved in an earlier session reopens as an enabled toggle in
@@ -91,7 +145,7 @@ const out = await page.evaluate(async () => {
   card._setMode('view');
   return {
     noAutomaticSection, manualToggleVisible: !!manualToggle, declared, setupOpened,
-    installationDrafted, cancelReleased, savedReopensInline, savedOffKeepsOriginal,
+    nonPrimaryIgnored, oneGestureIncomplete, installationDrafted, cancelReleased, savedReopensInline, savedOffKeepsOriginal,
     savedOnRestoresOriginal, virtualHasNoEntry,
   };
 });

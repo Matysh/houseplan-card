@@ -15,6 +15,7 @@ import {
 import { parseDocName, renderIndex } from '../scripts/reviews-index.mjs';
 import { archivePlan } from '../scripts/reviews-archive.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
+import { importClosure } from './helpers/import-closure.mjs';
 
 const sha = (c) => c.repeat(40);
 const MARKER = `<!-- hp:ship-merge material=${sha('a')} -->`;
@@ -466,16 +467,6 @@ const runnable = (name) => ({
   script: stepRun(name),
 });
 
-/** Замыкание относительных импортов скрипта. */
-function importClosure(entry, seen = new Set()) {
-  if (seen.has(entry)) return seen;
-  seen.add(entry);
-  for (const m of readFileSync(entry, 'utf8').matchAll(/^import[^'"]*['"](\.{1,2}\/[^'"]+)['"]/gm)) {
-    importClosure(join(dirname(entry), m[1]), seen);
-  }
-  return seen;
-}
-
 function shipSandbox(t) {
   const root = mkdtempSync(join(tmpdir(), 'hp-727-wf-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -496,7 +487,11 @@ function shipSandbox(t) {
   mkdirSync(join(work, 'scripts'));
   const scripts = ['ship-review.mjs', 'reviews-index.mjs', 'review-doc-guard.mjs']
     .reduce((seen, name) => importClosure(join(SCRIPTS, name), seen), new Set());
-  for (const file of scripts) writeFileSync(join(work, 'scripts', file.slice(SCRIPTS.length + 1)), readFileSync(file));
+  for (const file of scripts) {
+    const destination = join(work, 'scripts', file.slice(SCRIPTS.length + 1));
+    mkdirSync(dirname(destination), { recursive: true });
+    writeFileSync(destination, readFileSync(file));
+  }
   mkdirSync(join(work, 'docs', 'reviews'), { recursive: true });
   writeFileSync(join(work, 'docs', 'reviews', 'INDEX.md'), '# Индекс ревью\n');
   for (const name of ['a', 'b', 'c']) writeFileSync(join(work, `${name}.mjs`), `export const ${name} = 0;\n`);

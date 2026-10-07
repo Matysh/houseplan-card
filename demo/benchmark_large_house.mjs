@@ -11,7 +11,9 @@ import { summarizeLongTasks, summarizeTimings } from './performance/evaluate.mjs
 import {
   assertCardContract,
   assertIsometricCandidate,
+  installEpochDiagnostics,
   LARGE_HOUSE_CARD_CONTRACT,
+  planLargeHouseIterations,
 } from './performance/card-contract.mjs';
 import { attributeResizeLongTask } from './performance/resize-attribution.mjs';
 import { floorCacheBuilds, floorCacheSnapshot, judgeSwitchCycle } from './performance/switch-cycle-guard.mjs';
@@ -21,8 +23,9 @@ import {
 } from './performance/isometric-stage3-dense-fixture.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
-const samples = Math.max(1, Math.min(20, Number(valueArg('samples')) || 7));
-const warmups = Math.max(0, Math.min(5, Number(valueArg('warmups')) || 1));
+const { samples, warmups, iterations } = planLargeHouseIterations({
+  samples: valueArg('samples'), warmups: valueArg('warmups'),
+});
 const output = valueArg('output') ? resolve(valueArg('output')) : null;
 const targetRoot = resolve(valueArg('target-root') ?? '.');
 const profile = valueArg('profile') ?? 'large-house-v1';
@@ -106,6 +109,9 @@ await page.addScriptTag({
   content: `window.__hpAssertCardContract = ${assertCardContract.toString()};`,
 });
 await page.addScriptTag({
+  content: `window.__hpInstallEpochDiagnostics = ${installEpochDiagnostics.toString()};`,
+});
+await page.addScriptTag({
   content: `window.__hpAssertIsometricCandidate = ${assertIsometricCandidate.toString()};`,
 });
 await page.addScriptTag({
@@ -129,8 +135,7 @@ try {
 
 const rows = [];
 try {
-  for (let iteration = 0; iteration < warmups + samples; iteration++) {
-    const measuredSample = iteration - warmups;
+  for (const measuredSample of iterations) {
     const row = await page.evaluate(async ({
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
       requiresWallFace, interaction, requiresInteraction, stage3Dense, requireStage3,
@@ -346,21 +351,9 @@ try {
       // #520 diagnostics: where the extra half second of model readiness goes.
       // Counts Lit update cycles and model builds; printed, never budgeted.
       card.__diag = { updates: 0, updateMs: 0, models: 0, adopts: 0, epochs: [] };
-      // Every `_cfgEpoch` bump with the frame that made it: the extra epoch is
-      // what rebuilds the model a second time (#520).
-      let diagEpoch = 0;
-      Object.defineProperty(card, '_cfgEpoch', {
-        configurable: true,
-        get: () => diagEpoch,
-        set: (next) => {
-          if (next !== diagEpoch) {
-            const frames = (new Error().stack || '').split('\n').slice(1, 4)
-              .map((line) => line.trim().replace(/^at\s+/, '').replace(/\s*\(.*$/, ''));
-            card.__diag.epochs.push(`${diagEpoch}->${next}@${frames.join('<')}`);
-          }
-          diagEpoch = next;
-        },
-      });
+      // First eight `_cfgEpoch` bumps with their frames (#520/#812); later
+      // bumps still advance the epoch/counters, without collecting more stacks.
+      window.__hpInstallEpochDiagnostics(card);
       const diagPerform = card.performUpdate.bind(card);
       card.performUpdate = function () {
         const started = performance.now();
@@ -434,7 +427,7 @@ try {
       if (!await window.__hpEnsureHarnessEditorRuntime(card))
         throw new Error('large-house editor runtime did not preload');
       if (isometric) await ensureIsoRuntime(card);
-      window.__hpAssertCardContract(card, cardContract);
+      window.__hpAssertCardContract(card, cardContract, profile);
       if (requiresIsometric) window.__hpAssertIsometricCandidate(card, profile, 'renderer');
       await until(() => card._loadOk && card._model?.length === fixture.counts.floors);
       await card.updateComplete;
@@ -458,7 +451,11 @@ try {
         models: card.__diag.models,
         adopts: card.__diag.adopts,
         cfgEpoch: card._cfgEpoch,
-        epochs: card.__diag.epochs.slice(0, 8),
+        epochs: card.__diag.epochs.slice(),
+        epochChanges: card.__diag.epochChanges,
+        epochStackCaptures: card.__diag.epochStackCaptures,
+        epochTracesDropped: card.__diag.epochTracesDropped,
+        epochTracesLimit: card.__diag.epochTracesLimit,
       };
       const initialProjection = typeof card._effectiveProjection === 'function'
         ? card._effectiveProjection() : null;
@@ -1405,6 +1402,8 @@ try {
         + ` updateMs=${bootDiag.updateMs} models=${bootDiag.models}`
         + ` adopts=${bootDiag.adopts} cfgEpoch=${bootDiag.cfgEpoch}`
         + ` epochs=[${(bootDiag.epochs || []).join(' ; ')}]`
+        + ` epochChanges=${bootDiag.epochChanges} stackCaptures=${bootDiag.epochStackCaptures}`
+        + ` tracesDropped=${bootDiag.epochTracesDropped} traceLimit=${bootDiag.epochTracesLimit}`
         + ` modelReady=${measured.modelReadyMs} firstStable=${measured.firstStableRenderMs}`);
     }
     // #778: the resize Long Task split, printed for the job log; the same

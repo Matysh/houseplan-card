@@ -58,7 +58,9 @@ Structural assertions are evaluated independently of timing budgets: a fast
 run still fails when an interaction performs an unexpected full render or
 changes the heavy scene DOM.
 
-The runner records seven measured samples after one discarded warm-up. With
+By default the runner records seven measured samples after one discarded warm-up;
+explicit `--warmups=0` omits that discarded iteration (#812). Other CLI defaults
+and clamps are unchanged. With
 this intentionally small CI sample, the nearest-rank `p95` is the observed
 maximum; reports keep the conventional field name but should be read as a
 high-tail guard rather than a population estimate:
@@ -157,13 +159,15 @@ bundle is a hard failure.
 
 ## CI contracts
 
-Ordinary pushes, pull requests and prereleases use the blocking
-`performance_smoke` job in `validate.yml`. It builds only the candidate and
-measures the heaviest 60-source `large-house-glow-overlay-v1` state after one
-warm-up, with three recorded samples. `compare.mjs --absolute-only` enforces the
-reviewed hard timing, Long Task, heap, cache and rendered-device ceilings from
-`budgets-glow-smoke.json`; it deliberately makes no noisy base-relative claim.
-This is a catastrophic-regression guard, not a performance trend detector.
+The blocking `performance_smoke` job in `validate.yml` runs when heavy checks
+are requested and no valid reuse proof covers it: on release candidates in
+`dev`, pull requests and `full=true` dispatches, not on every ordinary push.
+It measures only the candidate: the heaviest 60-source
+`large-house-glow-overlay-v1` and `large-space-card-glow-v1` states after one
+warm-up, with three recorded samples each. `compare.mjs --absolute-only`
+enforces `budgets-glow-smoke.json` and `budgets-space-glow-smoke.json`; it makes
+no base-relative claim. This is a catastrophic-regression guard, not a trend
+detector. The same job also runs the junction-limits and wall-draw-click gates.
 
 Two more profiles join the smoke only when the diff touches their code path
 (#473, classified by `scripts/classify-changes.mjs`): `large-house-isometric-v1`
@@ -219,7 +223,7 @@ base-relative comparison.
 
 The `switchCycleMs` ceilings are 950 ms for the flat family (`budgets.json`,
 plan-snap, interaction and the interaction smoke) and 1550 ms for the 2.5D
-family (both isometric profiles and the isometric smoke), one number per family
+family (historical isometric, Stage 3 dense, backdrop and the isometric smoke), one number per family
 (#747). Since #735 the metric is the warmed twelve-switch cycle, and the former
 7000 and 8000 ms sat 7.6–10.2 times above the #735 medians. The series is every
 Full Performance run after #735, both sides with 7 samples — the base is
@@ -464,6 +468,14 @@ waiting for readiness or recording timings. Required caches must be real
 `Map` instances and must never be converted from missing/invalid values to
 plausible zeroes.
 
+The shared large-house contract names the profile actually being measured in
+its error (#812), including the backdrop and interaction variants. Its boot
+diagnostics keep the first eight epoch-change traces per card and stop capturing
+stacks at that limit; `_cfgEpoch` and all counters continue to update. The boot
+log reports `epochChanges`, `stackCaptures`, `tracesDropped` and `traceLimit`,
+so this bounded prefix is not mistaken for a complete journal. These diagnostics
+remain outside the stored timing rows; no performance ceiling changes.
+
 `fields` are required in every supported comparison base. `optionalFields` are
 newer members whose absence has an explicit safe fallback in the runner; if an
 optional member exists, its declared `fieldTypes` contract still applies. Add a
@@ -522,6 +534,27 @@ npm run benchmark:large-house-interaction -- --samples=7 --warmups=1 --output=ar
 ```
 
 A local report is diagnostic only; it cannot replace the CI comparison.
+
+### Historical browser mismatch is evidence, not a golden waiver (#812 / F28)
+
+The [author's #809 handoff](https://github.com/Matysh/houseplan-card/issues/809#issuecomment-6029190669)
+reported `device-battery-mobile-dark` as `different` on both base `53d3c790`
+and candidate `7fb609e4`, with the same screenshot SHA on the two sides.
+It named local Chromium **141** versus **151** for the baseline environment;
+exact browser builds, the PNG hash, OS, fonts and DPR were not recorded in that
+comment. The two other named scenes (`device-battery-zigbee-overlap-dark` and
+`device-battery-board-medium`) passed. These are historical claims from that
+handoff, not a new browser measurement or proof that every difference is noise.
+
+Before attributing a new difference to the environment, repeat the scene on the
+exact base and candidate SHAs with one harness/matrix revision, fresh bundles
+and the same Chromium pinned by `package-lock.json`, preferably in the canonical
+Linux CI environment. Record full browser/Node/Playwright versions, OS, scene
+viewport/DPR/fonts and image hashes with the result. If the pinned repeat is
+still different, investigate the difference; do not infer a product regression
+or an environment cause from a browser major alone. No skip, allowlist, threshold
+change or baseline acceptance follows from #809; the reviewed-source acceptance
+rules in [the golden guide](../golden/README.md#safety-contract) remain mandatory.
 
 To reproduce the comparison against another checkout using one harness and one
 browser installation:
