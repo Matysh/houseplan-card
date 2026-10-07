@@ -389,6 +389,12 @@ export const devicesStyles = css`
     :host([data-pointer-hover]) .dev.theme-dark:not(.unavail)[data-hp-device-hover] { --device-face-fg: #252525; }
     :host([data-pointer-hover]) .dev[data-hp-device-hover],
     .dev:focus-visible { z-index: 5; }
+    /* #813: the 2.5D View lays every marker on z-index 2 with a (0,4,0)
+       selector (plan.styles.ts), which beat the (0,2,0) focus layer above and
+       left a keyboard-focused marker under its neighbours. Focus repeats its
+       layer at (0,5,0) for that View; the endpoint rules below have the same
+       weight and come later, so a focused Zigbee endpoint stays on 8. */
+    .stage.projection-iso.mode-view .dev:focus-visible { z-index: 5; }
     /* #464: only markers that terminate a currently rendered local Zigbee
        link rise above the topology overlay. The namespaced attribute is
        transient and owned by hp-zigbee-topology-overlay. */

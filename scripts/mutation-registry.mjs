@@ -15223,6 +15223,30 @@ const MUTANT_DEFINITIONS = [
       replace: '      // mutant: the projection forgets its plan\n',
     }],
   },
+  {
+    id: 'iso-focus-under-neighbour',
+    guard: 'node demo/smoke_iso_tiles.mjs',
+    because: '#813 AC5: the (0,4,0) 2.5D marker layer beats a (0,2,0) focus layer; only the computed '
+      + 'z-index and the rasterised overlap of two real tiles after a real Shift+Tab show the focused '
+      + 'marker staying under its neighbour',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '    .stage.projection-iso.mode-view .dev:focus-visible { z-index: 5; }\n',
+      replace: '    /* mutant: the 2.5D focus layer is gone */\n',
+    }],
+  },
+  {
+    id: 'iso-focus-outranks-zigbee-endpoint',
+    guard: 'node demo/smoke_device_battery_zigbee.mjs',
+    because: '#813 AC5: focus must not outrank the #809 endpoint layer 8; only the topology overlay '
+      + 'marking the endpoints of a real hover, plus real keyboard focus, shows the focused neighbour '
+      + 'endpoint dropping to 5',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '    .stage.projection-iso.mode-view .dev:focus-visible { z-index: 5; }',
+      replace: '    .stage.projection-iso.mode-view .dev:focus-visible:not(#hp-mutant) { z-index: 5; }',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

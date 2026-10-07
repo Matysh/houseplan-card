@@ -4,6 +4,13 @@
 // table of the ТЗ), a frame that hugs tile and edge with the icon-package
 // colours and priority, forced colours without edge and shadow. Flat keeps its
 // circles; editors stay Flat.
+//
+// #813 AC5: keyboard focus lifts an ordinary marker over the ordinary marker
+// it overlaps in the 2.5D View, as it does in Flat. The 2.5D marker layer
+// (z-index 2, a (0,4,0) selector) used to beat the (0,2,0) focus layer, so the
+// focused tile stayed under its neighbour. Real Shift+Tab focus; the computed
+// layer and a differential raster probe must agree, in both themes, with
+// hover and Flat as controls; focusing acts on nothing.
 import { launch, check, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
@@ -270,6 +277,156 @@ await page.evaluate(async () => { await window.__hpTest.setVolumetricView(false)
 const back = await read([WHITE, TINTED]);
 res.offRestoresFlat = !back.iso && !back.layer && near(back.white.w, flat.white.w, 0.05)
   && back.white.radius >= back.white.w / 2 - 0.5;
+
+// ---- #813 AC5: keyboard focus over an overlapping ordinary neighbour ---------
+await page.evaluate(() => {
+  const c = window.__card;
+  const hass = c.hass;
+  window.__hpServiceCalls = 0;
+  c.hass = { ...hass, callService: (...args) => {
+    window.__hpServiceCalls += 1;
+    return hass.callService(...args);
+  } };
+});
+await page.evaluate(async () => { await window.__hpTest.setVolumetricView(true); });
+// Two ordinary markers next to each other in tab order; the later one paints
+// over the earlier one when both share a layer.
+const pair = await page.evaluate(() => [...window.__card.renderRoot
+  .querySelectorAll('.devlayer .dev:not(.iso-tile-shadow)[tabindex="0"]')].slice(0, 2).map((dev) => dev.dataset.id));
+const [under, over] = pair;
+const coreBox = (id) => page.evaluate((markerId) => {
+  const r = window.__card.renderRoot
+    .querySelector(`.devlayer .dev:not(.iso-tile-shadow)[data-id="${markerId}"] .device-core`).getBoundingClientRect();
+  return { left: r.left, top: r.top, width: r.width, height: r.height };
+}, id);
+const placePair = (dx) => page.evaluate(([a, b, offset]) => window.__hpTest.setLayout((layout) => {
+  layout[a] = { s: 'f1', x: 0.5, y: 0.62 };
+  layout[b] = { s: 'f1', x: 0.5 + offset, y: 0.62 };
+  return layout;
+}), [under, over, dx]);
+await placePair(0.02);
+{
+  const [a, b] = [await coreBox(under), await coreBox(over)];
+  // the neighbour's core starts in the middle of the focused one
+  await placePair(0.02 * (a.width / 2) / Math.max(1, b.left - a.left));
+}
+const focusable = () => page.evaluate(([a, b]) => {
+  const root = window.__card.renderRoot;
+  const dev = (id) => root.querySelector(`.devlayer .dev:not(.iso-tile-shadow)[data-id="${id}"]`);
+  return {
+    focused: root.activeElement?.dataset?.id ?? null,
+    focusVisible: dev(a).matches(':focus-visible'),
+    z: [getComputedStyle(dev(a)).zIndex, getComputedStyle(dev(b)).zIndex],
+    classes: [dev(a).className, dev(b).className],
+  };
+}, pair);
+/** Real keyboard focus on `under`: from `over`, one Shift+Tab back. */
+const keyboardFocusUnder = async () => {
+  await page.evaluate((id) => window.__card.renderRoot
+    .querySelector(`.devlayer .dev:not(.iso-tile-shadow)[data-id="${id}"]`).focus(), over);
+  await page.keyboard.press('Shift+Tab');
+  await page.waitForTimeout(120);
+};
+const blurAll = () => page.evaluate(() => window.__card.renderRoot.activeElement?.blur());
+/**
+ * Pixels of the overlap that belong to both cores, with the neighbour shown
+ * and hidden. If the focused (earlier) marker is on top, hiding the neighbour
+ * changes nothing there; if it is underneath, the neighbour's body covered it.
+ */
+const overlapChange = async () => {
+  const [a, b] = [await coreBox(under), await coreBox(over)];
+  const radius = await page.evaluate((id) => Number.parseFloat(getComputedStyle(window.__card.renderRoot
+    .querySelector(`.devlayer .dev:not(.iso-tile-shadow)[data-id="${id}"] .device-core`)).borderTopLeftRadius), under);
+  const clip = { x: Math.floor(b.left), y: Math.floor(a.top), width: Math.ceil(a.left + a.width - b.left), height: Math.ceil(a.height) };
+  const toggle = (hidden) => page.evaluate(([id, hide]) => {
+    const root = window.__card.renderRoot;
+    root.querySelector(`.devlayer .dev:not(.iso-tile-shadow)[data-id="${id}"]`).style.visibility = hide ? 'hidden' : '';
+    const tip = root.querySelector('[data-hp-live-tip]');
+    if (tip) tip.style.visibility = hide === null ? '' : 'hidden';
+  }, [over, hidden]);
+  await toggle(false);
+  const shown = await page.screenshot({ clip, animations: 'disabled' });
+  await toggle(true);
+  const hidden = await page.screenshot({ clip, animations: 'disabled' });
+  await toggle(null);
+  return page.evaluate(async ({ shown, hidden, clip, a, b, radius }) => {
+    const decode = async (data) => {
+      const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob());
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0);
+      return ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+    };
+    const [one, two] = await Promise.all([decode(shown), decode(hidden)]);
+    const inside = (box, x, y, inset) => {
+      const r = Math.min(radius, box.width / 2, box.height / 2);
+      const left = box.left + inset, right = box.left + box.width - inset;
+      const top = box.top + inset, bottom = box.top + box.height - inset;
+      if (x < left || x > right || y < top || y > bottom) return false;
+      const cx = Math.min(Math.max(x, left + r), right - r);
+      const cy = Math.min(Math.max(y, top + r), bottom - r);
+      return (x - cx) ** 2 + (y - cy) ** 2 <= r ** 2;
+    };
+    let total = 0, changed = 0;
+    for (let y = 0; y < one.height; y++) {
+      for (let x = 0; x < one.width; x++) {
+        const px = clip.x + x + 0.5, py = clip.y + y + 0.5;
+        if (!inside(a, px, py, 2) || !inside(b, px, py, 2)) continue;
+        const i = (y * one.width + x) * 4;
+        total++;
+        if ([0, 1, 2].some((k) => Math.abs(one.data[i + k] - two.data[i + k]) > 12)) changed++;
+      }
+    }
+    return { total, changed, ratio: total ? changed / total : NaN };
+  }, { shown: shown.toString('base64'), hidden: hidden.toString('base64'), clip, a, b, radius });
+};
+const onTop = (probe) => probe.total >= 20 && probe.ratio <= 0.05;
+const underneath = (probe) => probe.total >= 20 && probe.ratio >= 0.5;
+const focusLayers = {};
+for (const theme of ['light', 'dark']) {
+  await setTheme(theme === 'dark');
+  await blurAll();
+  const idle = await overlapChange();
+  focusLayers[`${theme}-idle`] = { ...(await focusable()), ...idle };
+  // Control: the fixture really overlaps and the earlier marker is underneath.
+  res[`isoFocusFixtureOverlaps_${theme}`] = underneath(idle) || JSON.stringify(focusLayers[`${theme}-idle`]);
+  await keyboardFocusUnder();
+  const state = await focusable();
+  const focused = await overlapChange();
+  focusLayers[`${theme}-focus`] = { ...state, ...focused };
+  res[`isoKeyboardFocusReachesTheMarker_${theme}`] = state.focused === under && state.focusVisible
+    || JSON.stringify(state);
+  res[`isoFocusedMarkerLayerAboveNeighbour_${theme}`] = state.z[0] === '5' && state.z[1] === '2'
+    || JSON.stringify(state.z);
+  res[`isoFocusedMarkerPaintsOverNeighbour_${theme}`] = onTop(focused) || JSON.stringify(focused);
+  await blurAll();
+}
+await setTheme(false);
+// Control: hover lifts the same marker by its own rule (unchanged).
+{
+  const a = await coreBox(under);
+  await page.mouse.move(a.left + a.width * 0.2, a.top + a.height / 2);
+  await page.waitForTimeout(120);
+  const hoveredProbe = await overlapChange();
+  focusLayers.hover = { ...(await focusable()), ...hoveredProbe };
+  res.isoHoveredMarkerPaintsOverNeighbour = onTop(hoveredProbe) || JSON.stringify(focusLayers.hover);
+  await page.mouse.move(5, 5);
+}
+res.focusActsOnNothing = await page.evaluate(() => window.__hpServiceCalls === 0
+  && !window.__card.renderRoot.querySelector('hp-dialog')
+  && window.__card.renderRoot.querySelector('ha-card')?.dataset.hpMode === 'view')
+  || await page.evaluate(() => JSON.stringify({ calls: window.__hpServiceCalls,
+    dialog: !!window.__card.renderRoot.querySelector('hp-dialog'),
+    mode: window.__card.renderRoot.querySelector('ha-card')?.dataset.hpMode }));
+// Control: Flat keeps its focus layer.
+await page.evaluate(async () => { await window.__hpTest.setVolumetricView(false); });
+await keyboardFocusUnder();
+const flatFocus = await overlapChange();
+focusLayers.flat = { ...(await focusable()), ...flatFocus };
+res.flatFocusedMarkerPaintsOverNeighbour = onTop(flatFocus) && focusLayers.flat.z[0] === '5'
+  || JSON.stringify(focusLayers.flat);
+await blurAll();
+console.log('Focus layer probes:', JSON.stringify(focusLayers));
 
 checkAll(res);
 await finish(browser, { ...res, D, gap: iso.badgeGap, badgeEdge: iso.badgeEdge });

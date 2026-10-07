@@ -3,6 +3,9 @@
  * hovered endpoint and of the neighbour endpoint, in Flat and 2.5D.
  * #809: the core of the unhovered neighbour endpoint paints over the routes in
  * Flat and 2.5D; non-endpoints keep their 2.5D layers (2, hovered 5).
+ * #813 AC5: keyboard focus in 2.5D lifts an ordinary marker to the hover layer
+ * (5) and never pulls a Zigbee endpoint, the #809 neighbour included, off 8;
+ * focusing starts no scan, no service and no dialog.
  * Controls hide only the rendered test layer for a differential raster probe.
  * Registry, settings, provider fetch and hover enter through public surfaces.
  */
@@ -299,6 +302,66 @@ try {
     && plain.d_temp.z === '2' && plain.d_light1.z === '2' && plain.d_leak.z === '2';
   out.iso_hoveredNonEndpointKeepsHoverLayer = plain.d_kettle.hovered && !plain.d_kettle.endpoint
     && plain.d_kettle.z === '5';
+  // #813 AC5: real keyboard focus while d_leak is hovered (its local link ends
+  // in d_light1). The focused neighbour endpoint stays on 8; a focused ordinary
+  // marker rises to 5, above the ordinary 2 and under both endpoints.
+  await page.evaluate(() => {
+    const card = window.__card;
+    const hass = card.hass;
+    window.__hpFocusCalls = { zha: 0, service: 0 };
+    card.hass = { ...hass,
+      callWS: (message) => {
+        if (message?.type === 'zha/devices') window.__hpFocusCalls.zha += 1;
+        return hass.callWS(message);
+      },
+      callService: (...args) => {
+        window.__hpFocusCalls.service += 1;
+        return hass.callService(...args);
+      } };
+  });
+  await page.evaluate(() => window.__hpTest.settled());
+  /** Keyboard focus: from the neighbouring marker in tab order, one Tab step. */
+  const keyboardFocus = async (id) => {
+    const step = await page.evaluate((markerId) => {
+      const all = [...window.__card.shadowRoot.querySelectorAll('.devlayer [data-hp="device"][tabindex="0"]')];
+      const at = all.findIndex((node) => node.dataset.id === markerId);
+      const from = all[at + 1] || all[at - 1];
+      from.focus();
+      return from === all[at + 1] ? 'Shift+Tab' : 'Tab';
+    }, id);
+    await page.keyboard.press(step);
+    await page.evaluate(() => window.__hpTest.settled());
+  };
+  const focusLayers = () => page.evaluate(() => {
+    const root = window.__card.shadowRoot;
+    return { focused: root.activeElement?.dataset?.id ?? null,
+      focusVisible: !!root.activeElement?.matches?.(':focus-visible'),
+      ...Object.fromEntries(['d_temp', 'd_light1', 'd_leak', 'd_kettle'].map(id => {
+        const node = root.querySelector(`[data-hp="device"][data-id="${id}"]`);
+        return [id, { z: node ? getComputedStyle(node).zIndex : null,
+          endpoint: !!node?.hasAttribute('data-hp-zigbee-topology-endpoint') }];
+      })) };
+  });
+  await hoverCore('d_leak');
+  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay')?.shadowRoot
+    ?.querySelector('[data-hp="zigbee-topology-line"]'));
+  await keyboardFocus('d_light1');
+  const focusedEndpoint = await focusLayers();
+  await keyboardFocus('d_temp');
+  const focusedOrdinary = await focusLayers();
+  console.log('Battery Zigbee iso focus layers:', { focusedEndpoint, focusedOrdinary });
+  out.iso_focusedNeighbourEndpointStaysOnEndpointLayer = focusedEndpoint.focused === 'd_light1'
+    && focusedEndpoint.focusVisible && focusedEndpoint.d_light1.endpoint && focusedEndpoint.d_light1.z === '8'
+    && focusedEndpoint.d_leak.z === '8';
+  out.iso_focusedOrdinaryMarkerRisesBetweenLayers = focusedOrdinary.focused === 'd_temp'
+    && focusedOrdinary.focusVisible && !focusedOrdinary.d_temp.endpoint && focusedOrdinary.d_temp.z === '5'
+    && focusedOrdinary.d_kettle.z === '2' && focusedOrdinary.d_light1.z === '8' && focusedOrdinary.d_leak.z === '8';
+  out.iso_focusStartsNoScanServiceOrDialog = await page.evaluate(() => {
+    const calls = window.__hpFocusCalls;
+    return calls.zha === 0 && calls.service === 0 && !window.__card.shadowRoot.querySelector('hp-dialog')
+      || JSON.stringify(calls);
+  });
+  await page.evaluate(() => window.__card.shadowRoot.activeElement?.blur());
   await page.mouse.move(10, 10);
   checkAll(out);
 } catch (error) {

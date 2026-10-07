@@ -344,6 +344,9 @@ byte-for-byte unchanged. Side-by-side acceptance frames:
   (bbox + 0.075 D per side, + edge height) and float with the tile: `#0C82F0`,
   `#0C82F0`, `#F0A00C`, `#F0410C`, priority Alert > Focus > Selected > Hover.
   The body is not repainted on hover.
+- Keyboard focus lifts a marker to the hover layer (`z-index: 5`), as in Flat,
+  above the ordinary 2.5D markers (layer 2); the ends of a highlighted Zigbee
+  link stay on their layer 8 (#809, #813).
 - `forced-colors: active` or no `filter` support: no edge and no shadow; size,
   tiles and frames stay.
 
