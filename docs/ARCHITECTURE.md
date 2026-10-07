@@ -660,7 +660,11 @@ a black casing under a 2 px grey core and an outer arrow outline. The outline
 is 1 px at zoom=1 and scales with the plan, including temporary camera CSS
 projection, per the owner's #798 clarification. Local and remote/unplaced routes share one renderer.
 Unknown/partial/stale captions never trigger network work; one expiry timer
-updates age without requiring another HA event. Persistence and privacy:
+updates age without requiring another HA event. The resolver's transient
+`showIncomplete` distinguishes an unknown per-device uplink from global snapshot
+`partial`: known uplinks and every matched coordinator suppress only that caption,
+even if cross-provider reconciliation makes a coordinator's route unknown (#816).
+Persistence and privacy:
 [CONFIG-COMPATIBILITY](CONFIG-COMPATIBILITY.md).
 
 Zigbee caption layout (#802) notifies the lazy live-hover runtime after the

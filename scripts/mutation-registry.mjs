@@ -9675,6 +9675,35 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-hover-incomplete-uses-global-partial',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: '#816: the mounted lazy custom element must consume the per-hover warning '
+      + 'while preserving live provider statuses and arrows; a pure resolver cannot prove the UI wiring',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: "hover.showIncomplete ? topologyT(lang, 'route_partial') : ''",
+      replace: "hover.outgoing !== 'not-zigbee' && hover.partial ? topologyT(lang, 'route_partial') : ''",
+    }],
+  },
+  {
+    id: 'zigbee-hover-coordinator-incomplete',
+    guard: 'node --test --test-name-pattern="#816 coordinator never" test/zigbee-provider-routes.test.mjs',
+    patches: [{
+      file: 'src/zigbee-topology.ts',
+      find: "showIncomplete: partial && outgoing === 'unknown' && !isCoordinator,",
+      replace: "showIncomplete: partial && outgoing === 'unknown',",
+    }],
+  },
+  {
+    id: 'zigbee-hover-known-route-incomplete',
+    guard: 'node --test --test-name-pattern="#816 known uplink" test/zigbee-provider-routes.test.mjs',
+    patches: [{
+      file: 'src/zigbee-topology.ts',
+      find: "showIncomplete: partial && outgoing === 'unknown' && !isCoordinator,",
+      replace: 'showIncomplete: partial && !isCoordinator,',
+    }],
+  },
+  {
     id: 'zigbee-topology-overlay-layer-lowered',
     guard: 'node demo/smoke_zigbee_topology_hover.mjs',
     because: 'the active topology must paint above unrelated markers and room labels while '

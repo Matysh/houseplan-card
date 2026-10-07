@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Zigbee hover: **Incomplete data** no longer appears on a device with a known
+  outgoing route (including remote/unplaced parents), or on a coordinator.
+  Incoming-only devices can still show it; stale/error statuses and the overall
+  snapshot status are unchanged ([#816](https://github.com/Matysh/houseplan-card/issues/816)).
+
 - Kiosk: holding an empty spot of the plan with a mouse now opens **This
   screen's sizes** every time. After the first hold the next one used to zoom
   the plan instead of opening the dialog, and the plan stopped showing device

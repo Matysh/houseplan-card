@@ -234,6 +234,59 @@ test('coordinator is incoming-only; unrelated and unknown hover states stay dist
   assert.equal(hover([topology], 'm3').partial, true);
 });
 
+test('#816 known uplink omits incomplete regardless of placement or LQI; global partial survives', () => {
+  for (const lqi of [undefined, 0, 255]) for (const placement of ['local', 'remote', 'unplaced']) {
+    const topology = zha([row(1, 'Coordinator'), row(2, 'EndDevice', {
+      neighbors: [neighbor(1, { relationship: 'Parent', lqi })],
+    })]);
+    topology.warnings.push({ code: 'invalid_payload' });
+    const devices = placement === 'unplaced' ? markers.filter(m => m.id !== 'm1')
+      : markers.map(m => m.id === 'm1' && placement === 'remote' ? { ...m, space: 'other' } : m);
+    const before = JSON.stringify(topology), result = hover([topology], 'm2', devices);
+    assert.equal(result.outgoing, 'known'); assert.equal(result.partial, true);
+    assert.equal(result.showIncomplete, false);
+    assert.equal(result.lines.length + result.parentTargets.length, 1);
+    assert.equal(JSON.stringify(topology), before, 'presentation does not rewrite provider evidence');
+  }
+});
+
+test('#816 coordinator never incomplete even after cross-provider root conflict', () => {
+  const a = zha([row(1, 'Coordinator'), row(2, 'Router', { routes: [route(0)] })]);
+  a.warnings.push({ code: 'invalid_payload' });
+  const b = z2m([zlink(2, 1, { routes: [{ status: 'ACTIVE', destinationAddress: 0, nextHopAddress: 2 }] })], [
+    { ieeeAddr: ieee(1), networkAddress: 1, type: 'Router' },
+    { ieeeAddr: ieee(2), networkAddress: 0, type: 'Coordinator' },
+  ]);
+  const empty = zha([row(1, 'Coordinator')]); empty.warnings.push({ code: 'invalid_payload' });
+  for (const snapshots of [[a], [empty], [a, b], [b, a]]) {
+    const result = hover(snapshots, 'm1');
+    assert.equal(result.partial, true); assert.equal(result.showIncomplete, false);
+    if (snapshots.length === 2) assert.equal(result.outgoing, 'unknown', 'root conflict is not misreported known');
+  }
+});
+
+test('#816 incoming-only/unknown stay incomplete; fresh/non-Zigbee do not', () => {
+  const topology = zha([row(2, 'Router'), row(3, 'EndDevice', {
+    neighbors: [neighbor(2, { relationship: 'Parent' })],
+  })]);
+  topology.warnings.push({ code: 'invalid_payload' });
+  const incoming = hover([topology]);
+  assert.equal(incoming.outgoing, 'unknown'); assert.equal(incoming.showIncomplete, true);
+  assert.deepEqual(incoming.lines.map(line => line.routeDirection), ['toward-origin']);
+  assert.equal(hover([topology], 'm4').showIncomplete, false);
+  const mapped = mapTopologies([topology], markers, registry);
+  for (const map of mapped) map.partial = false;
+  const fresh = resolveMappedTopologyHover(mapped, 'main', 'm2');
+  assert.equal(fresh.outgoing, 'unknown'); assert.equal(fresh.showIncomplete, false);
+  const a = zha([row(1, 'Coordinator'), row(2, 'Router', { routes: [route(0)] }), row(4)]);
+  const b = z2m([zlink(4, 2, { routes: [{ status: 'ACTIVE', destinationAddress: 0, nextHopAddress: 4 }] })], [
+    { ieeeAddr: ieee(1), networkAddress: 0, type: 'Coordinator' },
+    { ieeeAddr: ieee(2), networkAddress: 2, type: 'Router' },
+    { ieeeAddr: ieee(4), networkAddress: 4, type: 'Router' },
+  ]);
+  assert.equal(hover([a, b]).outgoing, 'unknown'); assert.equal(hover([a, b]).showIncomplete, true);
+});
+
 test('remote/unplaced parent carries exact target name and observed LQI, never source name', () => {
   const topology = zha([row(2, 'Router', { name: '<b>Provider parent</b>', neighbors: [neighbor(3, { relationship: 'Child', lqi: 128 })] }), row(3, 'EndDevice')]);
   const onlyChild = markers.filter((device) => device.id === 'm3');

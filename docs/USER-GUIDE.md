@@ -379,7 +379,11 @@ when space becomes available. No extra setting is needed. If the
 needed router or coordinator is not placed on the plan, the bubble says so;
 an unplaced device's available name is included in parentheses. “No route data”
 means the outgoing route is unknown or conflicting, not that the device is
-offline. No substitute line is drawn. Stale and incomplete data are marked:
+offline. No substitute line is drawn. **Incomplete data** appears only when
+the snapshot is partial and this device's outgoing route is unknown; incoming
+links alone do not suppress it. A coordinator never shows it, nor does a device
+with a known outgoing route, including remote or unplaced parents. The overall
+partial snapshot status in settings is unchanged. Staleness is marked separately:
 a snapshot older than one hour is stale, and a failed refresh marks the last
 snapshot stale at once. Lines and arrows pass over battery indicators but stay
 under device faces and captions. A recent read of ZHA's

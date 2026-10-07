@@ -64,6 +64,11 @@ topology benchmark must use confirmed route evidence, not an empty graph.
 Neighbour-only raw fixtures remain negative controls; do not add guessed
 routes to make them draw. Ordinary LQI badges keep their separate palette.
 
+The #816 tests in `zigbee-provider-routes.test.mjs` cover per-hover incomplete
+data suppression (local/remote/unplaced uplinks and conflicting coordinator roles),
+incoming-only negatives and unchanged global `partial`. The same hover smoke
+checks the mounted caption, retained stale/error messages and real mouse hover.
+
 For tooltip layout (#802), also run `node demo/smoke_zigbee_tooltip_layout.mjs`:
 it uses real mouse movement and screen-space overlap oracles, including a
 negative control at the previous cursor-relative position. DOM presence alone

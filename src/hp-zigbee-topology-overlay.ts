@@ -542,7 +542,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       providerStates.some((state) => state?.phase === 'error') ? topologyT(lang, 'error_provider') : '',
       providerStates.some((state) => state?.phase === 'loading') ? topologyT(lang, 'status_loading') : '',
       hover.outgoing !== 'not-zigbee' && stale ? topologyT(lang, 'route_stale') : '',
-      hover.outgoing !== 'not-zigbee' && hover.partial ? topologyT(lang, 'route_partial') : '',
+      hover.showIncomplete ? topologyT(lang, 'route_partial') : '',
     ].filter(Boolean).join(' · ');
     this._setDesiredEndpointIds(lines.length || bubbles.length || hover.remoteCount
       ? [

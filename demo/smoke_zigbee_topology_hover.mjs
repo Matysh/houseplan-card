@@ -239,6 +239,9 @@ const result = await page.evaluate(async () => {
   const arrowBox = routeArrow?.getBoundingClientRect();
   out.localRouteArrow = !!routeLine && routeArrow?.getAttribute('data-direction') === 'toward-neighbor'
     && !!lineBox && !!arrowBox && arrowBox.width > 3 && arrowBox.height > 3;
+  out.knownLocalRouteOmitsIncomplete = !/incomplete data/i.test(
+    overlay.shadowRoot.querySelector('.route-status')?.textContent || '',
+  );
   out.onlyConfirmedArrows = overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-arrow"]').length === 2
     && !overlay.shadowRoot.querySelector('line[data-direction="none"]')
     && !root().querySelector('.dev[data-id="d_kettle"]').hasAttribute('data-hp-zigbee-topology-endpoint');
@@ -324,6 +327,9 @@ const result = await page.evaluate(async () => {
   out.unknownRouteHasNoInventedLine = !overlay.shadowRoot.querySelector('line,polygon')
     && /no route data/i.test(overlay.shadowRoot.querySelector('.route-status').textContent)
     && !noRoute.hasAttribute('data-hp-zigbee-topology-endpoint');
+  out.unknownRouteRetainsIncomplete = /incomplete data/i.test(
+    overlay.shadowRoot.querySelector('.route-status')?.textContent || '',
+  );
   unknownNeighbor.dispatchEvent(mouse('pointerover'));
   await wait(() => overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]'), 'coordinator incoming route');
   out.coordinatorHasOnlyIncoming = !/no route data/i.test(
@@ -331,6 +337,9 @@ const result = await page.evaluate(async () => {
   )
     && !overlay.shadowRoot.querySelector('[data-direction="toward-neighbor"]')
     && !!overlay.shadowRoot.querySelector('[data-direction="toward-origin"]');
+  out.coordinatorNeverShowsIncomplete = !/incomplete data/i.test(
+    overlay.shadowRoot.querySelector('.route-status')?.textContent || '',
+  );
 
   card._commitSpace('garden', true);
   card.requestUpdate();
@@ -350,6 +359,9 @@ const result = await page.evaluate(async () => {
       ?.getAttribute('data-kind') === 'remote-space'
     && !!activeOverlay.shadowRoot.querySelector('[data-hp="zigbee-topology-parent-arrow"]')
     && !activeOverlay.shadowRoot.querySelector('[data-hp="zigbee-topology-remote"]');
+  out.knownRemoteRouteOmitsIncomplete = !/incomplete data/i.test(
+    activeOverlay.shadowRoot.querySelector('.route-status')?.textContent || '',
+  );
 
   card._commitSpace('f1', true);
   card.requestUpdate();
@@ -363,6 +375,9 @@ const result = await page.evaluate(async () => {
   const missingParentBubble = activeOverlay.shadowRoot.querySelector('[data-kind="unplaced-device"]');
   out.unplacedDeviceBubble = missingParentBubble?.textContent.trim()
     === 'Device is not on the plan (Hallway <router> & "target")';
+  out.knownUnplacedRouteOmitsIncomplete = !/incomplete data/i.test(
+    activeOverlay.shadowRoot.querySelector('.route-status')?.textContent || '',
+  );
   out.unplacedNameIsSafeText = !missingParentBubble?.querySelector('router,img,script')
     && !missingParentBubble?.textContent.includes('Temperature sensor');
 
@@ -562,7 +577,8 @@ for (const theme of ['light', 'dark']) {
     await overlay.updateComplete;
     const staleStatus = overlay.shadowRoot.querySelector('.route-status');
     out.stalePartialRetainsKnownRoute = staleStatus?.getAttribute('data-outgoing') === 'known'
-      && /stale data/i.test(staleStatus.textContent) && /incomplete data/i.test(staleStatus.textContent)
+      // #816: a globally partial snapshot must not label this confirmed uplink incomplete.
+      && /stale data/i.test(staleStatus.textContent) && !/incomplete data/i.test(staleStatus.textContent)
       && !!overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]')
       && [...overlay.shadowRoot.querySelectorAll('line,polygon')]
         .every((node) => getComputedStyle(node).strokeDasharray === 'none');
@@ -1060,6 +1076,13 @@ result.realPointerEndpointWins = await page.evaluate(async () => {
     && source.hasAttribute('data-hp-zigbee-topology-endpoint')
     && Number.parseInt(getComputedStyle(source).zIndex, 10)
       > Number.parseInt(getComputedStyle(overlay.shadowRoot.querySelector('svg')).zIndex, 10);
+});
+
+result.realMouseKnownRouteOmitsIncomplete = await page.evaluate(async () => {
+  const overlay = window.__card.renderRoot.querySelector('hp-zigbee-topology-overlay');
+  await overlay.updateComplete;
+  return !!overlay.shadowRoot.querySelector('[data-direction="toward-neighbor"]')
+    && !/incomplete data/i.test(overlay.shadowRoot.querySelector('.route-status')?.textContent || '');
 });
 
 await page.emulateMedia({ forcedColors: 'active' });

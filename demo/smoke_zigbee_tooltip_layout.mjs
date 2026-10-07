@@ -266,8 +266,14 @@ for (const provider of ['z2m', 'zha']) {
         await page.evaluate(() => window.__hpTest.switchSpace('f1'));
         for (const [id, name] of [['d_temp', 'unplaced'], ['d_light1', 'remote-count'], ['d_kettle', 'status-only']]) {
           await hover(id, 0.25);
-          await root.locator('.route-status').waitFor({ state: 'visible' });
+          // #816 removes only Incomplete data for these confirmed routes; the
+          // parent bubble/incoming remote count remains the exact layout witness.
+          const caption = name === 'status-only' ? '.route-status'
+            : name === 'unplaced' ? '.parent-bubble' : '.remote';
+          await root.locator(caption).waitFor({ state: 'visible' });
           const value = await witness(`${iso ? 'iso' : 'flat'}_${theme}_${name}`, id);
+          if (name !== 'status-only') out[`knownRouteNoIncomplete_${iso}_${theme}_${name}`]
+            = value.badges.every(badge => !/Incomplete data/i.test(badge.text));
           out[`actualProjection_${iso}_${theme}_${name}`] = value.projectionIso === iso
             && (!iso || (value.isoWalls && value.sourceRaised));
           if (name === 'remote-count') out[`remoteCount_${iso}_${theme}`] = value.badges.some((badge) => /1/.test(badge.text) && badge.kind === 'remote');

@@ -23,6 +23,7 @@ export interface ZigbeeHoverResolution {
   parentTargets: ZigbeeParentTarget[];
   outgoing: 'known' | 'unknown' | 'root' | 'not-zigbee';
   partial: boolean;
+  showIncomplete: boolean;
   obtainedAt?: number;
 }
 export type ZigbeeNodePlacement = { markerId: string; space: string };
@@ -150,7 +151,7 @@ export function resolveMappedTopologyHover(
   const lines = new Map<string, ZigbeeHoverLine>(); const remote = new Set<string>();
   const targets = new Map<string, ZigbeeParentTarget>(); const omitted = new Set<string>();
   let outgoing: ZigbeeHoverResolution['outgoing'] = 'not-zigbee';
-  let partial = false; let obtainedAt: number | undefined;
+  let partial = false; let isCoordinator = false; let obtainedAt: number | undefined;
   for (const map of mappedTopologies) {
     const hovered = new Set([...map.placements].filter(([, placement]) => (
       placement.markerId === hoveredMarkerId && placement.space === currentSpace
@@ -159,6 +160,7 @@ export function resolveMappedTopologyHover(
     partial ||= map.partial;
     obtainedAt = obtainedAt === undefined ? map.topology.obtainedAt : Math.min(obtainedAt, map.topology.obtainedAt);
     for (const key of hovered) {
+      isCoordinator ||= map.nodes.get(key)?.role === 'coordinator';
       const route = map.routes.get(key);
       if (route?.kind === 'known') outgoing = 'known';
       else if (route?.kind === 'root' && outgoing !== 'known') outgoing = 'root';
@@ -191,6 +193,7 @@ export function resolveMappedTopologyHover(
   }
   return { lines: [...lines.values()], remoteCount: remote.size, omittedCount: omitted.size,
     parentTargets: [...targets.values()], outgoing, partial,
+    showIncomplete: partial && outgoing === 'unknown' && !isCoordinator,
     ...(obtainedAt === undefined ? {} : { obtainedAt }) };
 }
 export function resolveTopologyHover(

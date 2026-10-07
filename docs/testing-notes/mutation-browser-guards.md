@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 47 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 53 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 39 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 116 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **262 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 117 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **263 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -261,6 +261,12 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `warm-memo-publishes-torn-header-stage-pair`
 
 ### Custom-element and HA browser lifecycle
+
+`zigbee-hover-incomplete-uses-global-partial` (#816) checks the mounted lazy
+overlay consuming the per-device warning under live provider state. Pure
+resolver negatives cover role/route classification, not its rendered wiring.
+
+- `zigbee-hover-incomplete-uses-global-partial`
 
 `wall-face-lineage-skips-post-reconcile-settlement` (#804) needs the production room
 dialog, post-reconciliation runtime wiring, history, asynchronous `config/set` and
