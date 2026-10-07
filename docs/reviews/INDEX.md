@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 355, issue: 180. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 357, issue: 181. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -12,6 +12,8 @@
 | #820 | [SPEC-REVIEW-820-r2.md](SPEC-REVIEW-820-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | Нет. Пять пунктов M1 из r1 закрыты содержательно, не формальной отпиской — см. «Закрыти… | — |
 | #819 | [SPEC-REVIEW-819-r1.md](SPEC-REVIEW-819-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | отсутствуют обязательные разделы «риски» и «откат» (§7.1) | `docs/reviews/SPEC-REVIEW-814-r1.md` |
 | #819 | [SPEC-REVIEW-819-r2.md](SPEC-REVIEW-819-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #817 | [CODE-REVIEW-817-r1.md](CODE-REVIEW-817-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | одно число, два источника форматирования в одной подсказке | `src/live-hover.ts` `src/device-presentation.ts` `src/device-value-badge.ts` `test/device-battery-tip.test.mjs` `demo/helpers/device-battery-fixture.mjs` `docs/USER-GUIDE.ru.md` |
+| #817 | [CODE-REVIEW-817-r2.md](CODE-REVIEW-817-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #816 | [CODE-REVIEW-816-r1.md](CODE-REVIEW-816-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #815 | [CODE-REVIEW-815-r1.md](CODE-REVIEW-815-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #814 | [SPEC-REVIEW-814-r1.md](SPEC-REVIEW-814-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
