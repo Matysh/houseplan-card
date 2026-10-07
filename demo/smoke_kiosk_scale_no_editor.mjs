@@ -11,6 +11,16 @@
 // Negative probe: the editor chunk is refused by the network. The dialog must
 // still work and the user must see no "editor failed to load" notice.
 // Control: the ordinary editor entry outside the kiosk still fetches it.
+//
+// #813: the same hold with a real mouse, three times in a row. A mouse has no
+// implicit capture, so the release of the press that opened the dialog goes to
+// the modal and never to the stage; the stage gesture must end when the modal
+// takes over, or the next hold reads as a second finger (no dialog, the plan
+// zooms) and the plan stops following Home Assistant. Then the presses that
+// must NOT open the dialog: a tap, a cancelled touch, a touch that loses its
+// capture, a press interrupted by the window losing focus, a press across a
+// detach/reattach of the card, and a pinch — none of them calls a service or
+// asks for the editor.
 import { readFileSync } from 'node:fs';
 import { launchColdView, checkAll, finish } from './serve.mjs';
 
@@ -139,6 +149,83 @@ const hold = async (session) => {
   return { opened, heldMs };
 };
 
+/** The plan's own frame: a zoom or a pan of the plan changes it. */
+const planViewBox = (page) => page.evaluate((selector) => {
+  const card = document.querySelector(selector);
+  return (card.shadowRoot || card.renderRoot).querySelector('.zoomwrap > svg')?.getAttribute('viewBox') || '';
+}, KIOSK);
+
+/** Every real pointerup of a press, and whether the dialog or the stage received it. */
+const watchReleases = (page) => page.evaluate((selector) => {
+  window.__hpReleases = [];
+  if (window.__hpReleaseWatch) return;
+  window.__hpReleaseWatch = true;
+  window.addEventListener('pointerup', (event) => {
+    const path = event.composedPath();
+    window.__hpReleases.push({
+      type: event.pointerType,
+      dialog: path.some((node) => node.localName === 'hp-dialog' && node.dataset?.kind === 'kiosk'),
+      stage: path.some((node) => node.classList?.contains?.('stage')
+        && node.getRootNode?.()?.host === document.querySelector(selector)),
+    });
+  }, true);
+}, KIOSK);
+
+/**
+ * A real mouse press held on the bare stage until the dialog appears (or the
+ * hold has clearly failed), then released where the pointer is: over the modal.
+ */
+const mouseHold = async (session) => {
+  const point = await emptyStagePoint(session.page);
+  if (!point) throw new Error('no bare stage point for the kiosk mouse hold');
+  await session.page.mouse.move(point.x, point.y);
+  await watchReleases(session.page);
+  const started = Date.now();
+  await session.page.mouse.down();
+  let opened = true;
+  try {
+    await session.page.locator(DIALOG).waitFor({ state: 'attached', timeout: HOLD_MS + 1600 });
+  } catch {
+    opened = false;
+  }
+  const heldMs = Date.now() - started;
+  await session.page.mouse.up();
+  await session.page.waitForTimeout(400);
+  const state = await kioskState(session.page);
+  const releases = await session.page.evaluate(() => window.__hpReleases);
+  return { opened, heldMs, openAfterRelease: state.open, releases, state };
+};
+
+/** Close the dialog the way a user does, when it is open. */
+const closeDialog = async (page) => {
+  if (!(await kioskState(page)).open) return false;
+  await footerButton(page, 'on').click();
+  await page.locator(DIALOG).waitFor({ state: 'detached', timeout: 3000 });
+  return true;
+};
+
+/** Long enough for a hold that should not exist to have opened the dialog. */
+const noDialogAfterHold = async (page) => {
+  await page.waitForTimeout(HOLD_MS + 500);
+  return !(await kioskState(page)).open;
+};
+
+/** Flip a light in Home Assistant; does the kiosk plan paint the new state? */
+const planFollowsHa = (page) => page.evaluate(async (selector) => {
+  const card = document.querySelector(selector);
+  const root = card.shadowRoot || card.renderRoot;
+  const marker = () => root.querySelector('[data-hp="device"][data-id="d_light1"]');
+  const before = marker()?.classList.contains('on');
+  const state = card.hass.states['light.ceiling'];
+  card.hass = { ...card.hass, states: { ...card.hass.states,
+    'light.ceiling': { ...state, state: state.state === 'on' ? 'off' : 'on' } } };
+  for (let i = 0; i < 20 && marker()?.classList.contains('on') === before; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  return typeof before === 'boolean' && marker()?.classList.contains('on') === !before
+    || `light marker stayed ${before ? 'on' : 'off'}`;
+}, KIOSK);
+
 const slider = (page, index) => page.locator(`${DIALOG} input[type="range"]`).nth(index);
 const nudge = async (page, index, steps) => {
   await slider(page, index).focus();
@@ -202,6 +289,149 @@ const after = await kioskState(kiosk.page);
 out.kioskSessionNeverRequestedEditor = same(
   { requests: 0, loader: 'idle', runtime: false, notices: 0 },
   { requests: kiosk.chunk.requests, loader: after.loader, runtime: after.runtime, notices: after.notices },
+);
+
+// (1b) #813 AC1: three real mouse holds in a row on the same cold kiosk.
+await kiosk.page.evaluate((selector) => {
+  const card = document.querySelector(selector);
+  const hass = card.hass;
+  window.__hpServiceCalls = 0;
+  card.hass = { ...hass, callService: (...args) => {
+    window.__hpServiceCalls += 1;
+    return hass.callService(...args);
+  } };
+}, KIOSK);
+const mouseBefore = { viewBox: await planViewBox(kiosk.page), state: await kioskState(kiosk.page) };
+const rounds = [];
+for (let round = 0; round < 3; round += 1) {
+  const result = await mouseHold(kiosk);
+  result.viewBox = await planViewBox(kiosk.page);
+  result.closed = await closeDialog(kiosk.page);
+  await kiosk.page.waitForTimeout(300);
+  result.viewBoxAfterClose = await planViewBox(kiosk.page);
+  rounds.push(result);
+}
+const roundsSeen = rounds.map((round) => ({
+  opened: round.opened, heldMs: round.heldMs, openAfterRelease: round.openAfterRelease,
+  releases: round.releases, closed: round.closed,
+}));
+out.mouseHoldOpensTheDialogEveryTime = rounds.every((round) => round.opened && round.heldMs >= 3000)
+  || JSON.stringify(roundsSeen);
+out.mouseReleaseIsDeliveredToTheOpenDialog = rounds.every((round) => round.releases.length === 1
+  && round.releases[0].type === 'mouse' && round.releases[0].dialog && !round.releases[0].stage)
+  || JSON.stringify(roundsSeen);
+out.dialogStaysOpenUntilClosed = rounds.every((round) => round.openAfterRelease && round.closed)
+  || JSON.stringify(roundsSeen);
+out.mouseHoldsNeverZoomThePlan = rounds.every((round) => round.viewBox === mouseBefore.viewBox
+  && round.viewBoxAfterClose === mouseBefore.viewBox)
+  || JSON.stringify({ before: mouseBefore.viewBox, after: rounds.map((round) => round.viewBoxAfterClose) });
+const mouseAfter = await kioskState(kiosk.page);
+out.mouseHoldsKeepTheSavedScale = same(
+  { iconSize: mouseBefore.state.iconSize, labelFont: mouseBefore.state.labelFont, stored: mouseBefore.state.stored },
+  { iconSize: mouseAfter.iconSize, labelFont: mouseAfter.labelFont, stored: mouseAfter.stored },
+);
+out.noPointerLeftOnTheStage = await kiosk.page.evaluate((selector) => document.querySelector(selector)._pointers.size === 0, KIOSK);
+out.planFollowsHaAfterTheHolds = await planFollowsHa(kiosk.page);
+
+// (1c) #813 AC2: presses that must not open the dialog.
+const bare = await emptyStagePoint(kiosk.page);
+const touch = (type, points) => kiosk.cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points });
+// An ordinary tap.
+await kiosk.cdp.send('Input.synthesizeTapGesture', {
+  x: bare.x, y: bare.y, duration: 80, tapCount: 1, gestureSourceType: 'touch',
+});
+out.touchTapOpensNothing = await noDialogAfterHold(kiosk.page);
+await closeDialog(kiosk.page);
+// A touch the browser cancels while it is held.
+await touch('touchStart', [{ x: bare.x, y: bare.y, id: 1 }]);
+await kiosk.page.waitForTimeout(400);
+await touch('touchCancel', []);
+out.cancelledTouchOpensNothing = await noDialogAfterHold(kiosk.page);
+await closeDialog(kiosk.page);
+// A held touch that loses its capture: the finger stays down, the stage no
+// longer owns the pointer. Capture changes are delivered with the next event.
+await kiosk.page.evaluate(() => {
+  window.__hpPress = null;
+  window.__hpLostCapture = 0;
+  window.addEventListener('pointerdown', (event) => {
+    window.__hpPress = { id: event.pointerId, target: event.composedPath()[0] };
+  }, { capture: true, once: true });
+  window.addEventListener('lostpointercapture', () => { window.__hpLostCapture += 1; }, true);
+});
+await touch('touchStart', [{ x: bare.x, y: bare.y, id: 2 }]);
+await kiosk.page.waitForTimeout(100);
+await touch('touchMove', [{ x: bare.x + 1, y: bare.y, id: 2 }]);
+const captured = await kiosk.page.evaluate(() => {
+  const press = window.__hpPress;
+  const had = !!press?.target.hasPointerCapture(press.id);
+  press?.target.releasePointerCapture(press.id);
+  return had;
+});
+await touch('touchMove', [{ x: bare.x + 2, y: bare.y, id: 2 }]);
+out.lostCaptureWasReal = captured && await kiosk.page.evaluate(() => window.__hpLostCapture === 1);
+out.touchThatLostCaptureOpensNothing = await noDialogAfterHold(kiosk.page);
+await closeDialog(kiosk.page);
+await touch('touchEnd', []);
+await kiosk.page.waitForTimeout(300);
+await closeDialog(kiosk.page);
+// A mouse press interrupted by the window losing focus to another document.
+await kiosk.page.mouse.move(bare.x, bare.y);
+await kiosk.page.mouse.down();
+await kiosk.page.waitForTimeout(300);
+out.windowBlurWasReal = await kiosk.page.evaluate(async () => {
+  let blurred = false;
+  window.addEventListener('blur', () => { blurred = true; }, { once: true });
+  const frame = document.createElement('iframe');
+  frame.id = 'hp-blur-frame';
+  frame.srcdoc = '<input>';
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:40px;height:40px;z-index:200';
+  const loaded = new Promise((resolve) => { frame.onload = resolve; });
+  document.body.appendChild(frame);
+  await loaded;
+  frame.contentWindow.focus();
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  return blurred;
+});
+out.pressInterruptedByBlurOpensNothing = await noDialogAfterHold(kiosk.page);
+await kiosk.page.mouse.up();
+await kiosk.page.evaluate(() => { document.getElementById('hp-blur-frame')?.remove(); window.focus(); });
+await closeDialog(kiosk.page);
+// A press across a detach/reattach of the same card: released while detached.
+await kiosk.page.mouse.move(bare.x, bare.y);
+await kiosk.page.mouse.down();
+await kiosk.page.waitForTimeout(300);
+await kiosk.page.evaluate((selector) => {
+  const card = document.querySelector(selector);
+  window.__hpDetached = card;
+  card.remove();
+}, KIOSK);
+await kiosk.page.mouse.up();
+await kiosk.page.evaluate(() => document.body.appendChild(window.__hpDetached));
+await kiosk.page.waitForFunction((selector) => !!document.querySelector(selector)
+  ?.renderRoot.querySelector('.stage .devlayer'), KIOSK, { timeout: 9000 });
+out.remountedPressOpensNothing = await noDialogAfterHold(kiosk.page);
+await closeDialog(kiosk.page);
+const afterRemount = await mouseHold(kiosk);
+out.holdAfterRemountOpensTheDialog = afterRemount.opened && afterRemount.openAfterRelease
+  || JSON.stringify({ opened: afterRemount.opened, heldMs: afterRemount.heldMs });
+await closeDialog(kiosk.page);
+// A pinch zooms the plan and is never a hold.
+await kiosk.cdp.send('Input.synthesizePinchGesture', {
+  x: bare.x, y: bare.y, scaleFactor: 1.4, relativeSpeed: 400, gestureSourceType: 'touch',
+});
+out.pinchOpensNothing = await noDialogAfterHold(kiosk.page);
+await closeDialog(kiosk.page);
+// The touch hold still works after all of it.
+const lastTouch = await hold(kiosk);
+out.touchHoldStillOpensTheDialog = lastTouch.opened || `not opened after ${lastTouch.heldMs} ms`;
+await closeDialog(kiosk.page);
+const lifecycle = await kioskState(kiosk.page);
+out.kioskGesturesCallNoServiceAndNoEditor = same(
+  { calls: 0, requests: 0, loader: 'idle', runtime: false, notices: 0 },
+  {
+    calls: await kiosk.page.evaluate(() => window.__hpServiceCalls), requests: kiosk.chunk.requests,
+    loader: lifecycle.loader, runtime: lifecycle.runtime, notices: lifecycle.notices,
+  },
 );
 
 // (2) Control: the ordinary editor entry outside the kiosk still fetches the

@@ -34,10 +34,10 @@ that transition events alone prove disposal.
 | Performance threshold | 4 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 45 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 50 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 53 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 39 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 112 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **253 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 114 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **258 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -174,6 +174,9 @@ The invariant depends on hit testing, pointer capture, touch/keyboard dispatch o
 - `furniture-shift-listeners-not-attached`
 - `furniture-wall-runtime-drops-drag-side`
 - `furniture-wall-runtime-drops-raw-intent`
+- `kiosk-hold-leaves-stage-gesture-under-modal`
+- `kiosk-hold-survives-cancelled-touch`
+- `kiosk-hold-survives-lost-capture`
 - `led-pan-adds-point`
 - `led-pinch-calls-action`
 - `led-zoom-quality-never-coarse`
@@ -328,6 +331,8 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `junction-limit-baseline-cache-stale`
 - `junction-limit-candidate-fail-open`
 - `junction-limit-write-gate-removed`
+- `kiosk-hold-survives-window-blur`
+- `kiosk-pointer-survives-reattach`
 - `kiosk-scale-dialog-loads-editor-runtime`
 - `led-auto-slot-reserved`
 - `led-hidden-marker-loads-chunk`

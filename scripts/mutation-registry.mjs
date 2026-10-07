@@ -15109,6 +15109,83 @@ const MUTANT_DEFINITIONS = [
       replace: 'export const editorDialogsStyles = css`\n    .btn {\n      display: inline-flex;\n      align-items: center;\n    }\n',
     }],
   },
+  {
+    id: 'kiosk-hold-leaves-stage-gesture-under-modal',
+    guard: 'node demo/smoke_kiosk_scale_no_editor.mjs',
+    because: '#813 AC1: a mouse has no implicit capture, so the release of the 3 s kiosk hold goes to '
+      + 'the modal scale dialog and never to the stage; only real browser mouse input shows the press '
+      + 'left in the pointer map turning the next hold into a pinch (no dialog, the plan zooms) and '
+      + 'deferring every live HA state change',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    this._interruptViewGesture(pointerId, this._stageEl);\n    this._kioskDialog = true;',
+      replace: '    void pointerId; // mutant: the modal takes over a live stage gesture\n    this._kioskDialog = true;',
+    }],
+  },
+  {
+    id: 'kiosk-hold-survives-cancelled-touch',
+    guard: 'node demo/smoke_kiosk_scale_no_editor.mjs',
+    because: '#813 AC2: Chromium follows a cancelled touch with the loss of its implicit capture; '
+      + 'either event must end the 3 s hold, and only the real touch stream produces the pair '
+      + '(the pointercancel path alone also serves pointers without implicit capture)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    this._kioskHold.cancel(); // #813: the cold kiosk has no editor runtime to clear it\n',
+      replace: '    // mutant: a cancelled press keeps its kiosk hold\n',
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: '      if (this._kioskHold.pointerId === pointer.pointerId) this._kioskHold.cancel();\n',
+      replace: '      // mutant: a press that lost its capture keeps its kiosk hold\n',
+    }],
+  },
+  {
+    id: 'kiosk-hold-survives-lost-capture',
+    guard: 'node demo/smoke_kiosk_scale_no_editor.mjs',
+    because: '#813 AC2: a held touch whose capture is released keeps the finger down but is no longer '
+      + "the stage's press; only the lostpointercapture Chromium delivers with the next real touch "
+      + 'event shows the hold opening the dialog anyway',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      if (this._kioskHold.pointerId === pointer.pointerId) this._kioskHold.cancel();\n',
+      replace: '      // mutant: a press that lost its capture keeps its kiosk hold\n',
+    }],
+  },
+  {
+    id: 'kiosk-hold-survives-window-blur',
+    guard: 'node demo/smoke_kiosk_scale_no_editor.mjs',
+    because: '#813 AC2: a press interrupted by the window losing focus to another document may never '
+      + 'deliver its release; only a real window blur in the browser shows the dialog opening anyway',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    window.addEventListener('blur', this._onWindowBlur);\n",
+      replace: '    // mutant: a window that loses focus keeps the press alive\n',
+    }],
+  },
+  {
+    id: 'kiosk-pointer-survives-reattach',
+    guard: 'node demo/smoke_kiosk_scale_no_editor.mjs',
+    because: '#813 AC2: a press released while the card is detached never reaches the stage; only a '
+      + 'real disconnect and reconnect of the custom element shows the next hold reading as a second finger',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    // pointer kept here would turn the next press after a reattach into a pinch.\n'
+        + '    this._interruptViewGesture();\n',
+      replace: '    // pointer kept here would turn the next press after a reattach into a pinch.\n'
+        + '    this._kioskHold.cancel(); // mutant: the stage pointer outlives the detach\n',
+    }],
+  },
+  {
+    id: 'kiosk-hold-cancel-keeps-timer',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/kiosk-hold.test.mjs',
+    because: '#813 AC2: every ending of a press is one cancel(); a cancel that leaves the timer running '
+      + 'keeps a dead hold alive and stacks a second timer on the next press',
+    patches: [{
+      file: 'src/kiosk-hold.ts',
+      find: '    if (this.timer) this.clock.clearTimeout(this.timer);\n',
+      replace: '    // mutant: an ended press keeps its timer\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

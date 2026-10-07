@@ -604,7 +604,7 @@ export interface HouseplanEditorHostPort {
   _isVacDev: (d: DevItem) => boolean;
   _kiosk: boolean;
   _kioskDialog: boolean;
-  _kioskHoldTimer: number | undefined;
+  readonly _kioskHold: { cancel(): void };
   _kioskScale: { icon: number; font: number; };
   _isoEnabled: boolean;
   _lastValidStageSize: [number, number] | null;
@@ -2014,7 +2014,7 @@ public _clearGeometryGesture(): void {
   }
 
 public _stagePointerCancel(ev: PointerEvent): void {
-    clearTimeout(this.host._kioskHoldTimer);
+    this.host._kioskHold.cancel();
     if (this.host._swipeStart?.id === ev.pointerId) this.host._swipeStart = null;
     if (this.host._furnTouchPending?.pid === ev.pointerId) {
       this._clearFurniturePreview();

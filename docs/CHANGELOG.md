@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Kiosk: holding an empty spot of the plan with a mouse now opens **This
+  screen's sizes** every time. After the first hold the next one used to zoom
+  the plan instead of opening the dialog, and the plan stopped showing device
+  state changes until it was clicked again. A short tap, a cancelled touch, a
+  press interrupted by switching to another window and a pinch never open the
+  dialog ([#813](https://github.com/Matysh/houseplan-card/issues/813)).
+
 ## v1.80.0-beta.7 — 2026-10-07
 
 - Zigbee links in 2.5D View: the device at the other end of a hovered device's

@@ -76,6 +76,7 @@ import {
   type FixedFloorSelection, type InitialSpaceSelection,
 } from './initial-load';
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
+import { KioskHoldGesture } from './kiosk-hold';
 import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import { roomTempRangeFromDraft, type SpaceDialogState } from './space-dialog';
@@ -2330,7 +2331,15 @@ export class HouseplanCard extends LitElement {
   private _vacCalConfirm: CalibrationProposal | null = null;
   private _kioskDots = false;
   private _kioskDotsTimer?: number;
-  private _kioskHoldTimer?: number;
+  /** #813 F11: the empty-stage hold; firing ends the stage gesture, then opens the dialog. */
+  private readonly _kioskHold = new KioskHoldGesture((pointerId) => {
+    this._interruptViewGesture(pointerId, this._stageEl);
+    this._kioskDialog = true;
+  });
+  /** #813: a window that loses focus mid-press may never deliver its release. */
+  private readonly _onWindowBlur = (): void => {
+    if (this._pointers.size || this._kioskHold.pointerId !== null) this._interruptViewGesture();
+  };
   private _cycleTimer?: number;
   private _cyclePausedUntil = 0;
   private _swipeStart: SpaceSwipePointerStart | null = null;
@@ -2601,6 +2610,7 @@ export class HouseplanCard extends LitElement {
     });
     if (this.hass) this._ensureHaRegistryAuthority();
     window.addEventListener('keydown', this._keyHandler);
+    window.addEventListener('blur', this._onWindowBlur);
     // signatures expire (24 h); refresh well before that on long-lived screens
     this._signer.start(() => this.hass, () => this._referencedContentUrls());
     this._syncCycleTimer();
@@ -2681,6 +2691,7 @@ export class HouseplanCard extends LitElement {
     this._bootSettling = false;
     for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
     window.removeEventListener('keydown', this._keyHandler);
+    window.removeEventListener('blur', this._onWindowBlur);
     // A tab drag holds window listeners for the length of the gesture. Losing
     // the card mid-drag — Lovelace rebuilding its tree, the user leaving the
     // view with the button still down — would leave them alive: the closure
@@ -2693,7 +2704,9 @@ export class HouseplanCard extends LitElement {
     this._tabSuppressClick = false;
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer); this._headerMenu.disconnect();
-    clearTimeout(this._kioskHoldTimer);
+    // #813: a release that lands while detached never reaches the stage; a
+    // pointer kept here would turn the next press after a reattach into a pinch.
+    this._interruptViewGesture();
     clearTimeout(this._reloadRetry);
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined; // a cleared id must not block a reschedule
@@ -5582,7 +5595,7 @@ export class HouseplanCard extends LitElement {
    */
   private _interruptViewGesture(pointerId?: number, source?: Element | null): void {
     clearTimeout(this._holdTimer);
-    clearTimeout(this._kioskHoldTimer);
+    this._kioskHold.cancel();
     if (pointerId !== undefined) {
       for (const element of [source, this._stageEl]) {
         try {
@@ -6747,17 +6760,11 @@ export class HouseplanCard extends LitElement {
         ) : null;
         // long-press on EMPTY stage opens the per-screen size popover
         if (!(ev.target as HTMLElement).closest?.('.dev, .roomlabel, .oplock')) {
-          clearTimeout(this._kioskHoldTimer);
-          this._kioskHoldTimer = window.setTimeout(() => {
-            this._roomPointer = null;
-            this._clearPlanTapSequence();
-            this._kioskDialog = true;
-            this._swipeStart = null;
-          }, 3000);
+          this._kioskHold.arm(ev.pointerId);
         }
       } else {
         this._swipeStart = null; // second finger = pinch, not a swipe
-        clearTimeout(this._kioskHoldTimer);
+        this._kioskHold.cancel();
       }
     }
     // do not interfere with icon and label dragging
@@ -6948,7 +6955,7 @@ export class HouseplanCard extends LitElement {
     );
     if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null;
     if (this._kiosk) {
-      clearTimeout(this._kioskHoldTimer);
+      this._kioskHold.cancel();
       const ss = this._swipeStart;
       this._swipeStart = null;
       if (!acceptedRoom && ss && ss.id === ev.pointerId) {
@@ -7231,6 +7238,8 @@ export class HouseplanCard extends LitElement {
     this._notePointer(pointer);
     if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') {
       this._clearPlanTapSequence();
+      // #813: a hold whose pointer lost its capture is no longer a hold.
+      if (this._kioskHold.pointerId === pointer.pointerId) this._kioskHold.cancel();
     } else if (ev.type === 'pointerdown') this._planTaps.clearNonPlan(pointer);
     if (ev.type === 'pointerdown') this._touchClickGuard.pointerDown(
       pointer.pointerId, pointer.pointerType,
@@ -7247,7 +7256,7 @@ export class HouseplanCard extends LitElement {
         this._clearRoomFocus(true);
         this._clearTransientHover();
         clearTimeout(this._holdTimer);
-        clearTimeout(this._kioskHoldTimer);
+        this._kioskHold.cancel();
         this._swipeStart = null;
         // Viewing is the guaranteed touch surface. Seed its existing stage
         // pinch pipeline even when a child swallowed the first pointerdown.
@@ -7775,6 +7784,7 @@ export class HouseplanCard extends LitElement {
 
   /** Browser/OS cancellation is an aborted transaction, never a commit. */
   private _stagePointerCancel(ev: PointerEvent): void {
+    this._kioskHold.cancel(); // #813: the cold kiosk has no editor runtime to clear it
     this._deviceHits.cancel(ev.pointerId);
     this._flushHa();
     this._editorRuntime?._cancelPointerMove('markup-hover');
