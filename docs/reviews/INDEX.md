@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 362, issue: 182. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 364, issue: 182. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -43,6 +43,8 @@
 | #804 | [CODE-REVIEW-804-r1.md](CODE-REVIEW-804-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #803 | [SPEC-REVIEW-803-r1.md](SPEC-REVIEW-803-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Для узла, где одновременно присутствует «проходящая» ось(и) и больше одного независимог… | `src/junction-limits.ts` |
 | #803 | [SPEC-REVIEW-803-r2.md](SPEC-REVIEW-803-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | Нет новых находок в скоупе дельты. M1 r1 закрыта полностью — см. «Закрытие раунда r1» и… | — |
+| #803 | [CODE-REVIEW-803-r1.md](CODE-REVIEW-803-r1.md) | code · r1 | 🔴 красный | 1 | 4 | Несогласованный EPS между группировкой осей и проверкой «проходящая» в classify ложно о…; Тай-брейк при равных по расстоянию кандидатах H/V-привязки — НЕ «стабильный ID стены», …; Принятое ТЗ §13 прямо требует обновить в том же change docs/CANVAS.md и docs/UX-MODES.m…; «Независимая» повторная проверка hosts проёмов в ws_wall_node_move (websocket_api.py:18…; Для AC9 нет отдельной фикстуры на (а) легитимный короткий слайд мимо постороннего узла,…; docs/USER-GUIDE.ru.md, новый раздел «Перемещение узлов стен» называет инструмент «Selec… | `custom_components/houseplan/wall_node_move.py` `test/fixtures/803-wall-node-parity.json` `src/wall-node-move.ts` `test/wall-node-move.test.mjs` `docs/CANVAS.md` `docs/UX-MODES.md` `websocket_api.py` `docs/USER-GUIDE.ru.md` |
+| #803 | [CODE-REVIEW-803-r2.md](CODE-REVIEW-803-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #802 | [SPEC-REVIEW-802-r1.md](SPEC-REVIEW-802-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #802 | [CODE-REVIEW-802-r1.md](CODE-REVIEW-802-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #802 | [CODE-REVIEW-802-r2.md](CODE-REVIEW-802-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
