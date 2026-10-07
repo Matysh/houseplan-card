@@ -7,10 +7,10 @@ export interface ResolvedDeviceBattery {
   readonly sourceEntityId: string;
 }
 
-/** #817: the selected source's own value, for text; no reading means no text. */
+/** #817: the selected source and its own value, for text; no reading means no text. */
 export type DeviceBatteryReading =
-  | { readonly kind: 'percent'; readonly value: number }
-  | { readonly kind: 'binary'; readonly low: boolean };
+  | { readonly kind: 'percent'; readonly value: number; readonly sourceEntityId: string }
+  | { readonly kind: 'binary'; readonly low: boolean; readonly sourceEntityId: string };
 
 interface BatteryEntityRegistryEntry {
   readonly device_id?: unknown;
@@ -193,7 +193,8 @@ export function deviceBatteryReading(
   const value = currentState(sourceEntityId, context);
   if (batteryDomain(sourceEntityId) === 'sensor') {
     const percent = batteryPercent(value);
-    return percent === null ? null : Object.freeze({ kind: 'percent', value: percent });
+    return percent === null ? null : Object.freeze({ kind: 'percent', value: percent, sourceEntityId });
   }
-  return value === 'on' || value === 'off' ? Object.freeze({ kind: 'binary', low: value === 'on' }) : null;
+  return value === 'on' || value === 'off'
+    ? Object.freeze({ kind: 'binary', low: value === 'on', sourceEntityId }) : null;
 }

@@ -24,7 +24,8 @@
   keyboard focus, in Flat and 2.5D, now shows its charge — “Battery N%”, or
   “Battery normal” / “Low battery” when Home Assistant reports only a
   low-battery flag. The line does not depend on the battery-icon settings of
-  the plan and is absent when there is no current value
+  the plan and is absent when there is no current value; if the device's value
+  badge already shows the same battery sensor, the charge is not repeated
   ([#817](https://github.com/Matysh/houseplan-card/issues/817)).
 
 ## v1.80.0-beta.7 — 2026-10-07

@@ -74,7 +74,11 @@ user-hidden design preview сохраняет реальный дизайн. LED
 `show_device_battery`, `"low"`, `hide_battery` и LED: эти настройки касаются
 только значка на плане. Чтение — активные rows кадра (`_renderPlanHass`) и
 полный реестр; некорректное, недоступное или отключённое значение даёт `null` —
-строки нет.
+строки нет. Как `lqiText` уступает LQI-бейджу, строка уступает бейджу значения,
+который уже показывает `entity_state` выбранного источника
+(`valueBadge.source.entity_id === sourceEntityId`): число не повторяется в meta
+в другом формате. Бейдж другой сущности, атрибута или выключенный бейдж строку
+не убирают.
 
 Свидетели: `test/device-battery.test.mjs`, `test/device-presentation.test.mjs`,
 `test/render-device-snapshot.test.mjs`, `test/device-battery-tip.test.mjs`;

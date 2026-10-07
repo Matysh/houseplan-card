@@ -1448,10 +1448,11 @@ both settings.
 
 The main tooltip of a battery device, on hover and on keyboard focus, has its
 own charge line from the same source: “Battery N%” (rounded to a whole number),
-or “Battery normal” / “Low battery” for a binary sensor. It is always shown,
-whatever **Show device battery status** and **Hide battery status on plan** say;
-with no current value, or with the sensor or device disabled in Home Assistant,
-there is no line.
+or “Battery normal” / “Low battery” for a binary sensor. It does not depend on
+**Show device battery status** or **Hide battery status on plan**; with no
+current value, or with the sensor or device disabled in Home Assistant, there is
+no line. If the device's value badge already shows that same battery sensor,
+the charge is not repeated in the tooltip.
 
 ### Icon changes by state
 

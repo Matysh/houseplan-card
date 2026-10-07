@@ -67,7 +67,8 @@ test('#817 AC1 binary off/on is normal/low in every shipped language, never a pe
   assert.equal(line(on, marker(), translator('de')), 'Niedriger Batteriestand');
   assert.equal(line(off, marker(), translator('fr')), 'Batterie en bon état');
   assert.equal(line(on, marker(), translator('fr')), 'Batterie faible');
-  assert.deepEqual(deviceBatteryReading(marker(), createDeviceBatteryContext(on)), { kind: 'binary', low: true });
+  assert.deepEqual(deviceBatteryReading(marker(), createDeviceBatteryContext(on)),
+    { kind: 'binary', low: true, sourceEntityId: 'binary_sensor.battery' });
 });
 
 test('#817 AC1 the #792 source decides: first numeric by ID, else binary; a battery-entity marker reads itself', () => {
@@ -127,6 +128,26 @@ test('#817 AC2 non-battery and virtual devices get no line', () => {
     marker({ bindingKind: undefined, bindingRef: undefined, marker: { id: 'd1', binding: 'virtual' } }),
     marker({ marker: { id: 'd1', binding: 'device:d1', removed: true } }),
   ]) assert.equal(line(hass, device), '');
+});
+
+test('#817 r1 a value badge already showing the selected battery sensor suppresses only the duplicate', () => {
+  const numeric = ha([['sensor.battery', '37.6']]);
+  const state = (entity_id) => ({ kind: 'entity_state', entity_id });
+  const withBadge = (hass, badge, device = marker()) => deviceBatteryTipText(device,
+    createDeviceBatteryContext(hass), en, badge);
+  assert.equal(withBadge(numeric, state('sensor.battery')), '');
+  for (const badge of [
+    undefined, null, state('sensor.temp'), state('sensor.other_battery'),
+    { kind: 'entity_attribute', entity_id: 'sensor.battery', attribute: 'voltage' },
+    { kind: 'derived_lqi' }, { kind: 'derived_marker_state', ref: 'marker:d1' },
+  ]) assert.equal(withBadge(numeric, badge), 'Battery 38%', JSON.stringify(badge));
+  const binary = ha([['binary_sensor.battery', 'on']]);
+  assert.equal(withBadge(binary, state('binary_sensor.battery')), '');
+  assert.equal(withBadge(binary, state('sensor.temp')), 'Low battery');
+  // The comparison is with the source the reader selected, not with any battery sensor.
+  const several = ha([['sensor.aaa_battery', '80'], ['sensor.zzz_battery', '5']]);
+  assert.equal(withBadge(several, state('sensor.zzz_battery')), 'Battery 80%');
+  assert.equal(withBadge(several, state('sensor.aaa_battery')), '');
 });
 
 // The tooltip entry points with the production presentation resolver. The
@@ -191,6 +212,30 @@ test('#817 AC3 title and model row are unchanged; a non-battery or invalid devic
     for (const tip of [withBattery[source], without[source], invalid[source]]) {
       assert.equal(tip.title, 'Hallway sensor');
       assert.equal(tip.meta, 'TS0201');
+    }
+  }
+});
+
+test('#817 r1 tooltip: a badge on the same battery sensor is shown once, other badges keep the line', () => {
+  const hass = ha([['sensor.battery', '37.6']]);
+  hass.states['sensor.battery'].attributes.unit_of_measurement = '%';
+  const badge = (source, enabled = true) => marker({
+    marker: { id: 'd1', binding: 'device:d1', value_badge: { enabled, source, position: 'right' } },
+  });
+  const same = badge({ kind: 'entity_state', entity_id: 'sensor.battery' });
+  const host = tipHost(hass);
+  const presented = host._devicePresentation(same, true).valueBadge;
+  assert.match(presented.fullText, /37\.6/, 'the badge itself shows the battery sensor');
+  for (const tip of Object.values(tips(host, same))) {
+    assert.equal(tip.battery, '', tip.source);
+    assert.equal(tip.meta, `TS0201 · ${presented.fullText}`, tip.source);
+  }
+  for (const [label, device] of [
+    ['badge on another entity', badge({ kind: 'entity_state', entity_id: 'sensor.temp' })],
+    ['badge disabled', badge({ kind: 'entity_state', entity_id: 'sensor.battery' }, false)],
+  ]) {
+    for (const tip of Object.values(tips(tipHost(hass), device))) {
+      assert.equal(tip.battery, 'Battery 38%', `${label}: ${tip.source}`);
     }
   }
 });

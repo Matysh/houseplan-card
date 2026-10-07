@@ -1,7 +1,7 @@
 import { lqiColor } from './logic';
 import type { I18nKey } from './i18n';
 import type { ResolvedDevicePresentation } from './device-presentation';
-import type { DevItem } from './types';
+import type { DevItem, ValueBadgeSource } from './types';
 import { placeDeviceTooltip } from './live-tip-placement';
 import { floatingViewport } from './floating-surface';
 import {
@@ -58,15 +58,19 @@ type BatteryTipKey = 'tip.battery_percent' | 'tip.battery_normal' | 'tip.battery
 /**
  * #817: the tooltip's own charge line. Owner's decision: it ignores the plan
  * indicator settings (All / Low only / None, per-device hiding); only the
- * #792 source and its current value decide. No reading — no line.
+ * #792 source and its current value decide. No reading — no line. A value
+ * badge already showing that very sensor in the meta row is not repeated in a
+ * second format, as `lqiText` yields to an LQI badge.
  */
 export function deviceBatteryTipText(
   device: DeviceBatteryDevice,
   context: DeviceBatteryContext,
   t: (key: BatteryTipKey, vars?: Record<string, number>) => string,
+  badge?: ValueBadgeSource | null,
 ): string {
   const reading = deviceBatteryReading(device, context);
   if (!reading) return '';
+  if (badge?.kind === 'entity_state' && badge.entity_id === reading.sourceEntityId) return '';
   if (reading.kind === 'percent') return t('tip.battery_percent', { value: Math.round(reading.value) });
   return t(reading.low ? 'tip.battery_low' : 'tip.battery_normal');
 }
@@ -88,7 +92,8 @@ const deviceTipContent = (
     presentation.lqiText != null ? `LQI ${presentation.lqiText}` : '',
   ].filter(Boolean).join(' · ');
   const battery = deviceBatteryTipText(device,
-    createDeviceBatteryContext(host._renderPlanHass, host._fullRegistryHass), (key, vars) => host._t(key, vars));
+    createDeviceBatteryContext(host._renderPlanHass, host._fullRegistryHass), (key, vars) => host._t(key, vars),
+    presentation.valueBadge?.source);
   return { title: device.name, meta: presentation.haDisabled ? ghostLabel : metrics, battery };
 };
 

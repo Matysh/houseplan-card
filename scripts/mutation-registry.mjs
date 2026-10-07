@@ -162,6 +162,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'battery-tooltip-line-duplicates-same-badge',
+    guard: 'node --test test/device-battery-tip.test.mjs',
+    because: '#817 r1: a value badge already showing the selected battery sensor in the meta row '
+      + 'must not be repeated as a second, differently formatted charge row (as lqiText yields to '
+      + 'an LQI badge); badges on other sources and disabled badges keep the row.',
+    patches: [{
+      file: 'src/live-hover.ts',
+      find: "  if (badge?.kind === 'entity_state' && badge.entity_id === reading.sourceEntityId) return '';\n",
+      replace: '',
+    }],
+  },
+  {
     id: 'wall-face-lineage-skips-post-reconcile-settlement',
     guard: 'node demo/smoke_wall_face_lineage.mjs',
     because: '#804 AC1/AC3/AC5: only the production room-dialog save proves that residual '

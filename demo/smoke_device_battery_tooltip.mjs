@@ -104,6 +104,33 @@ try {
   });
   await page.waitForFunction(() => window.__card.shadowRoot
     .querySelector('[data-hp="device"][data-id="battery_low"] .device-battery[data-state="normal"]'));
+  // #817 r1: a device whose value badge shows its own battery sensor — the
+  // editor's recommendation for a battery-only device. Kept out of the shared
+  // #792 fixture so its smokes and golden boards stay unchanged.
+  await page.evaluate(async () => {
+    const card = window.__card;
+    const id = 'sensor.hp_kettle_battery';
+    window.__addRegistryEntity(id, null, '37.6');
+    Object.assign(card.hass.entities[id], { device_id: 'd_kettle', device_class: 'battery' });
+    card.hass = { ...card.hass, states: { ...card.hass.states,
+      [id]: { entity_id: id, state: '37.6', attributes: { device_class: 'battery', unit_of_measurement: '%' } },
+    } };
+    window.__setRegistryArea('entity', id, null);
+    await window.__hpTest.setServerConfig((cfg) => ({ ...cfg, markers: cfg.markers.map((item) => item.id === 'd_kettle'
+      ? { id: 'd_kettle', binding: 'device:d_kettle', space: 'f1', display: 'badge',
+        value_badge: { enabled: true, source: { kind: 'entity_state', entity_id: id }, position: 'right' } }
+      : item) }));
+    await window.__hpTest.setLayout((layout) => ({ ...layout, d_kettle: { s: 'f1', x: 0.25, y: 0.7 } }));
+    await window.__hpTest.settled();
+  });
+  await page.waitForFunction(() => window.__card.shadowRoot
+    .querySelector('[data-hp="device"][data-id="d_kettle"] .device-battery[data-state="warning"]'));
+  const setKettleBadge = (patch) => page.evaluate((patch) => window.__hpTest.setServerConfig((cfg) => ({ ...cfg,
+    markers: cfg.markers.map((item) => item.id === 'd_kettle'
+      ? { ...item, value_badge: { ...item.value_badge, ...patch } } : item),
+  })), patch);
+  const badgeText = () => page.evaluate(() => window.__card.shadowRoot
+    .querySelector('[data-hp="device"][data-id="d_kettle"] .value-badge')?.textContent.trim() || '');
 
   for (const iso of [false, true]) {
     const view = iso ? 'iso' : 'flat';
@@ -165,6 +192,29 @@ try {
     evidence[`${view}_nonBattery`] = plain;
     out[`${view}_nonBatteryHasNoLine`] = ['pointer', 'focus'].every((source) => plain[source].visible
       && plain[source].rows.length > 0 && !plain[source].rows.some((row) => /battery/i.test(row)));
+
+    // #817 r1: the badge already shows this sensor in the meta row — no second,
+    // differently formatted charge row. Another badge source or no badge keeps it.
+    const sameBadge = await both('d_kettle');
+    evidence[`${view}_sameBadge`] = sameBadge;
+    out[`${view}_sameSensorBadgeShownOnce`] = /37[.,]6/.test(await badgeText())
+      && ['pointer', 'focus'].every((source) => sameBadge[source].visible
+        && /37[.,]6/.test(sameBadge[source].rows[1] || '')
+        && !sameBadge[source].rows.some((row) => /^Battery/.test(row)));
+    await setKettleBadge({ source: { kind: 'entity_state', entity_id: 'switch.kettle' } });
+    await settle();
+    const otherBadge = await both('d_kettle');
+    out[`${view}_otherBadgeKeepsLine`] = !/37[.,]6/.test(await badgeText())
+      && ['pointer', 'focus'].every((source) => otherBadge[source].visible
+        && otherBadge[source].rows.at(-1) === 'Battery 38%');
+    await setKettleBadge({ enabled: false });
+    await settle();
+    const noBadge = await both('d_kettle');
+    out[`${view}_disabledBadgeKeepsLine`] = !(await badgeText())
+      && ['pointer', 'focus'].every((source) => noBadge[source].visible
+        && noBadge[source].rows.at(-1) === 'Battery 38%');
+    await setKettleBadge({ enabled: true, source: { kind: 'entity_state', entity_id: 'sensor.hp_kettle_battery' } });
+    await settle();
   }
   await setVolumetricView(false);
 
