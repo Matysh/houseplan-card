@@ -9688,6 +9688,8 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'zigbee-hover-coordinator-incomplete',
     guard: 'node --test --test-name-pattern="#816 coordinator never" test/zigbee-provider-routes.test.mjs',
+    because: 'coordinator identity must suppress the per-device incomplete caption even when '
+      + 'conflicting provider roots resolve its outgoing route as unknown (#816 AC2)',
     patches: [{
       file: 'src/zigbee-topology.ts',
       find: "showIncomplete: partial && outgoing === 'unknown' && !isCoordinator,",
@@ -9697,6 +9699,8 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'zigbee-hover-known-route-incomplete',
     guard: 'node --test --test-name-pattern="#816 known uplink" test/zigbee-provider-routes.test.mjs',
+    because: 'a confirmed local, remote or unplaced uplink must not inherit the global partial '
+      + 'warning, including when its link quality is unavailable (#816 AC1)',
     patches: [{
       file: 'src/zigbee-topology.ts',
       find: "showIncomplete: partial && outgoing === 'unknown' && !isCoordinator,",
