@@ -403,9 +403,50 @@ export function physicalBodiesPath(bodies: number[][][]): string {
 
 /** Subtract only the physical bodies which overlap a room's clean floor. */
 export function floorMinusBodies(floor: number[][], bodies: number[][][]): any {
+  return floorMinusObstacles(floor, bodyObstacles(bodies));
+}
+
+/**
+ * #814: a body set and its union, built once for every floor it clips. An
+ * empty set (`bodies` empty) leaves a floor whole; a failed union (`union`
+ * null for a non-empty set) is not "no obstacles": each floor then takes the
+ * lossless sequential path.
+ */
+export interface BodyObstacles { bodies: number[][][]; union: ReturnType<typeof unionBodies> }
+
+export const bodyObstacles = (bodies: number[][][], unite = unionBodies): BodyObstacles =>
+  ({ bodies, union: bodies.length ? unite(bodies) : null });
+
+/**
+ * #814: the union of the physical bodies, kept while the bodies are the same.
+ * Resize measures every resized room on every accepted step against one body
+ * set (it never moves a partition, a column or the host of their openings), so
+ * the union is built once per gesture (`_rszEdgeLabels`). The key is the bodies
+ * themselves — partition opening cuts are already cut into them — at the grid
+ * scale, never the gesture alone. `builds` counts the unions; `unite` is a test
+ * seam.
+ */
+export class BodyObstaclesMemo {
+  builds = 0;
+  private last: { key: string; value: BodyObstacles } | null = null;
+  constructor(private readonly unite = unionBodies) {}
+  read(bodies: number[][][], scale: string): BodyObstacles {
+    const key = `${scale}|${bodies.join('|')}`;
+    if (this.last?.key !== key) {
+      if (bodies.length) this.builds++;
+      this.last = { key, value: bodyObstacles(bodies, this.unite) };
+    }
+    return this.last.value;
+  }
+  clear(): void { this.last = null; }
+}
+
+/** `floor` minus `obstacles`: through their union, else body by body. */
+export function floorMinusObstacles(
+  floor: number[][], { bodies, union: obstacles }: BodyObstacles,
+): ReturnType<typeof floorMinusBodies> {
   if (!bodies.length) return [closedRing(floor)];
   try {
-    const obstacles = unionBodies(bodies);
     if (obstacles) return difference(closedRing(floor) as any, obstacles);
   } catch {
     // Fall through to the lossless sequential path below.

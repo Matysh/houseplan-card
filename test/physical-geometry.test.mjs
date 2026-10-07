@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BOOLEAN_COORD_QUANTUM, canonicalColumnAngle, columnBody, floorMinusBodies, geometryArea,
-  directionalOccluders, intersectionPaths, partitionBody, pointInPhysicalBody,
+  BOOLEAN_COORD_QUANTUM, BodyObstaclesMemo, bodyObstacles, canonicalColumnAngle, columnBody, floorMinusBodies,
+  floorMinusObstacles, geometryArea, directionalOccluders, intersectionPaths, partitionBody, pointInPhysicalBody,
   physicalBodyParts, physicalBodySet, pointInOpaquePlanBody, pointInPhysicalGeometry,
   normalizeBooleanBody, sameColumnPlacement, scalePartitionOpeningCut, unionBodies,
 } from '../test-build/physical-geometry.js';
@@ -341,4 +341,81 @@ test('exact column overlays are rejected but rotated square bodies remain distin
   assert.equal(sameColumnPlacement(square, { ...square, id: 'b', angle: 45 }, 1e-9), false);
   assert.equal(sameColumnPlacement(square,
     { id: 'c', shape: 'circle', center: [1, 1], cm: 30 }, 1e-9), true);
+});
+
+// #814 AC3: Resize measures every resized room on every accepted step against
+// one union of the unchanged independent bodies.
+const resizeBodies = () => physicalBodyParts({
+  partitions: [
+    { id: 'p1', a: [100, 500], b: [600, 500], cm: 10 },
+    { id: 'p2', a: [300, 200], b: [300, 800], cm: 12 },
+  ],
+  wall_columns: [
+    { id: 'c1', shape: 'circle', center: [700, 300], cm: 30 },
+    // overlaps the partition p1
+    { id: 'c2', shape: 'square', center: [450, 500], cm: 20, angle: 0 },
+  ],
+}, 5, 50, 0.01, [
+  // a door hosted by p1 cuts its body in two
+  { hostId: 'p1', a: [180, 500], b: [240, 500], depth: 200 },
+]).all;
+const resizeFloors = [
+  [[0, 0], [1000, 0], [1000, 1000], [0, 1000]],
+  [[50, 50], [500, 50], [500, 600], [50, 600]],
+  [[400, 100], [900, 100], [900, 700], [400, 700]],
+];
+
+test('#814 AC3: a floor minus the shared union is the floor minus its bodies, byte for byte', () => {
+  const bodies = resizeBodies();
+  assert.ok(bodies.length > 4, 'the hosted door splits a partition body');
+  const obstacles = bodyObstacles(bodies);
+  const before = JSON.stringify(obstacles.union);
+  for (const floor of resizeFloors) {
+    assert.deepEqual(floorMinusObstacles(floor, obstacles), floorMinusBodies(floor, bodies));
+  }
+  assert.equal(JSON.stringify(obstacles.union), before, 'the shared union is never mutated');
+  const none = bodyObstacles([]);
+  assert.deepEqual(none, { bodies: [], union: null });
+  assert.deepEqual(floorMinusObstacles(resizeFloors[1], none), floorMinusBodies(resizeFloors[1], []),
+    'an empty set leaves the floor whole');
+});
+
+test('#814 AC3: a failed or broken union takes the lossless sequential path, never the whole floor', () => {
+  const bodies = resizeBodies();
+  const floor = resizeFloors[1];
+  const expected = geometryArea(floorMinusBodies(floor, bodies));
+  const whole = geometryArea(floorMinusObstacles(floor, bodyObstacles([])));
+  assert.ok(expected < whole - 1, 'the bodies take floor area');
+  const failed = bodyObstacles(bodies, () => null);
+  assert.equal(failed.union, null);
+  closeTo(geometryArea(floorMinusObstacles(floor, failed)), expected, 1e-6);
+  // A union the boolean difference rejects (it throws) also falls back.
+  const broken = bodyObstacles(bodies, () => 'not a geometry');
+  closeTo(geometryArea(floorMinusObstacles(floor, broken)), expected, 1e-6);
+});
+
+test('#814 AC3: one union per body set and scale — rooms and steps reuse it, a change rebuilds it', () => {
+  let unions = 0;
+  const memo = new BodyObstaclesMemo((bodies) => { unions++; return unionBodies(bodies); });
+  const bodies = resizeBodies();
+  const areas = () => resizeFloors.slice(1).map((floor) => geometryArea(floorMinusObstacles(floor, memo.read(bodies, '5|50'))));
+  const first = areas();
+  for (let step = 0; step < 4; step++) assert.deepEqual(areas(), first);
+  assert.equal(unions, 1, 'two rooms, five steps: one union');
+  assert.equal(memo.builds, 1);
+  assert.deepEqual(first, resizeFloors.slice(1).map((floor) => geometryArea(floorMinusBodies(floor, bodies))),
+    'the areas of the independent per-call path');
+  memo.read(structuredClone(bodies), '5|50');
+  assert.equal(unions, 1, 'equal bodies in new arrays: the same set');
+  memo.read(bodies, '10|50');
+  assert.equal(unions, 2, 'a new scale rebuilds');
+  bodies[0][0][0] += 5;
+  memo.read(bodies, '10|50');
+  assert.equal(unions, 3, 'a body moved in place rebuilds');
+  memo.clear();
+  memo.read(bodies, '10|50');
+  assert.equal(unions, 4, 'a new gesture starts without a union');
+  memo.read([], '10|50');
+  assert.equal(unions, 4, 'an empty set needs no union');
+  assert.equal(memo.builds, 4);
 });

@@ -160,7 +160,7 @@ import { renderRadarSection } from './editors/radar-section';
 import { radarDiscardRequest, RadarSetupController } from './radar-setup';
 import { OptimizePlansDialog, type OptimizePlansDialogState } from './optimize-plans-dialog';
 import {
-  COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody, floorMinusBodies, geometryArea,
+  BodyObstaclesMemo, COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody, floorMinusObstacles, geometryArea,
   partitionBody, pointInPhysicalBody, sameColumnPlacement, type PartitionOpeningCut,
 } from './physical-geometry';
 import {
@@ -818,6 +818,8 @@ export class HouseplanEditorRuntime {
   private _resizePreviewNodes: MultiWallNodeMap | null = null;
   private _resizeBaselineLimits: JunctionLimitViolation[] = [];
   private _resizeBaseFrameStable = true;
+  /** #814: the bodies' union of one Resize gesture, cleared at its begin and end. */
+  readonly rszBodiesUnion = new BodyObstaclesMemo();
   private _supportExpiryTimer?: number;
   private _supportPreviewGeneration = 0;
   private _decorAssetGuardReplace: boolean | null = null;
@@ -3031,6 +3033,7 @@ public _rszSnapshot(): string {
 public _rszResetController(): void {
     const hadPreview = this.host._resize.preview !== null;
     this.host._resize.reset();
+    this.rszBodiesUnion.clear();
     if (hadPreview) this.host._cfgEpoch++;
   }
 
@@ -3268,6 +3271,7 @@ public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
     const shown = this.host._wallUnionCache;
     const wallUnionBefore = unionKey !== null && shown?.key === unionKey ? shown.value : null;
     const snapshotIdentity = this._rszSnapshot();
+    this.rszBodiesUnion.clear();
     this.host._resize.begin({
       pointerId: ev.pointerId, start: [start[0], start[1]], roomId, plan,
       options: this._rszOptsFor(plan.a, plan.b), rooms,
@@ -3344,6 +3348,7 @@ public _rszUp(ev: PointerEvent): void {
       currentSnapshotIdentity: this._rszSnapshot(),
       validatePreview: (preview) => this._rszCandidateRenderable(preview),
     });
+    this.rszBodiesUnion.clear();
     if (result.kind === 'no-op') {
       // HP-1550-01: nothing to restore — the preview never touched the config
       this.host._cfgEpoch++;
@@ -3379,6 +3384,7 @@ public _rszUp(ev: PointerEvent): void {
 public _rszCancelDrag(pointerId?: number): void {
     cancelHouseplanPointerMove(this.host, 'resize');
     const result = this.host._resize.cancel(this._rszSnapshot(), pointerId);
+    this.rszBodiesUnion.clear();
     if (result.kind === 'no-op') return;
     // An identical cancel reuses the pre-drag structural caches and writes nothing.
     if (result.restoreEpoch !== null) this.host._cfgEpoch = result.restoreEpoch;
@@ -3441,6 +3447,8 @@ public _rszEdgeLabels(
     const ids = plan.roomIds;
     const walls = this.host._spaceWalls;
     const physical = this.host._physicalBodiesR();
+    // #814: one union of the unchanged bodies for every room and step of the gesture.
+    const obstacles = this.rszBodiesUnion.read(physical, `${this.host._cellCm}|${this.host._gridPitch}`);
     const base = this.host._baseVb();
     const currentView = this.host._view && this.host._view.w > 0 && this.host._view.h > 0
       ? this.host._view
@@ -3481,7 +3489,7 @@ public _rszEdgeLabels(
         ) || poly)
         : poly;
       const m2 = physical.length
-        ? geometryArea(floorMinusBodies(floor, physical))
+        ? geometryArea(floorMinusObstacles(floor, obstacles))
             * Math.pow(this.host._cellCm / this.host._gridPitch, 2) / 1e4
         : areaM2(floor, this.host._gridPitch, this.host._cellCm);
       const text = formatArea(m2, imperial);
