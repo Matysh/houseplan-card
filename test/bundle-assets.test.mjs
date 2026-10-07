@@ -431,28 +431,40 @@ test('#486 sync payload orders dependencies before both stable entries', () => {
   ]);
 });
 
-test('#486 both stable entries install a visible stale-load fallback', async () => {
+for (const extraEdges of [false, true]) test(
+  '#486 both stable entries install a visible stale-load fallback (#803 extra eager chunks)', async () => {
   const bundle = minimalTwoEntryBundle();
+  const before = extraEdges ? 'import"./houseplan-assets/extra-a.js";' : '';
+  const after = extraEdges ? 'import"./houseplan-assets/extra-b.js";' : '';
   bundle['houseplan-card.js'].code =
-    'export{x}from"./houseplan-assets/card-HASH.js";';
+    `${before}export{x}from"./houseplan-assets/card-HASH.js";${after}`;
   bundle['houseplan-panel.js'].code =
-    'import"./houseplan-assets/card-HASH.js";customElements.define("real-panel",class{});';
+    `${before}import"./houseplan-assets/card-HASH.js";${after}customElements.define("real-panel",class{});`;
   entryFallbackPlugin().generateBundle({}, bundle);
 
   const card = bundle['houseplan-card.js'].code;
   const panel = bundle['houseplan-panel.js'].code;
-  assert.match(card, /try\{await import\("\.\/houseplan-assets\/card-HASH\.js"\)\}catch/);
+  const guardedMain = /try\{(?:await import\("\.\/houseplan-assets\/[^"']+\.js"\);)*await import\("\.\/houseplan-assets\/card-HASH\.js"\)\}catch/;
+  assert.match(card, guardedMain);
   assert.match(card, /customElements\.define\("houseplan-card"/);
   assert.doesNotMatch(card, /export\{/);
   // #535 переворачивает это утверждение: панель импортирует РЕАЛИЗАЦИЮ по
   // content-hashed адресу, а не стабильный фасад. Фасад — единственный адрес
   // дистрибутива без версии, и на нём панель молча работала на прошлой карточке.
-  assert.match(panel, /try\{await import\("\.\/houseplan-assets\/card-HASH\.js"\)\}catch/);
+  assert.match(panel, guardedMain);
   assert.doesNotMatch(panel, /houseplan-card\.js/,
     'у панели не остаётся ни одной ссылки на карточку по адресу без версии');
   assert.match(panel, /customElements\.define\("houseplan-panel"/);
-  assert.doesNotMatch(panel, /(?:^|;)import["']/);
-  assert.deepEqual(bundle['houseplan-panel.js'].imports, ['houseplan-assets/card-HASH.js']);
+  assert.doesNotMatch(card, /(?:^|[;{}])import["']/);
+  assert.doesNotMatch(panel, /(?:^|[;{}])import["']/);
+  assert.deepEqual(bundle['houseplan-panel.js'].imports, ['houseplan-assets/card-HASH.js',
+    ...(extraEdges ? ['houseplan-assets/extra-a.js', 'houseplan-assets/extra-b.js'] : [])]);
+  if (extraEdges) for (const code of [card, panel]) {
+    assert.ok(code.indexOf('await import("./houseplan-assets/extra-a.js")')
+      < code.indexOf('await import("./houseplan-assets/extra-b.js")'));
+    assert.ok(code.indexOf('await import("./houseplan-assets/extra-b.js")')
+      < code.indexOf('await import("./houseplan-assets/card-HASH.js")'), 'eager side effects precede the implementation');
+  }
 
   const priorCustomElements = Object.getOwnPropertyDescriptor(globalThis, 'customElements');
   const priorHTMLElement = Object.getOwnPropertyDescriptor(globalThis, 'HTMLElement');
@@ -774,14 +786,14 @@ test('entry facade fails loudly when the main chunk is unavailable (#353 AC3a)',
   );
   assert.match(
     entry,
-    /try\{await import\("\.\/houseplan-assets\/[^"]+\.js"\)\}catch\(/,
+    /try\{(?:await import\("\.\/houseplan-assets\/[^"']+\.js"\);)*await import\("\.\/houseplan-assets\/[^"]+\.js"\)\}catch\(/,
     'the entry must await the main chunk so importers keep the happy-path guarantee',
   );
   assert.match(entry, /customElements\.define\("houseplan-card",/);
   assert.match(entry, /reload the page/);
   assert.doesNotMatch(
     entry,
-    /(?:^|;)(?:export|import)[\s{"']/m,
+    /(?:^|[;{}])(?:export|import)[\s{"']/m,
     'no static import/export may remain — a static edge aborts the module before any code runs',
   );
 });
@@ -796,12 +808,12 @@ test('#535 panel entry reaches the card implementation by its hashed name', () =
   // дистрибутива без версии. Входные файлы отдаются без Cache-Control, поэтому
   // браузер вправе держать копию часами, и устаревшая панель молча работала на
   // прошлой карточке против текущего бэкенда. Хешированное имя это исключает.
-  assert.match(panel, /try\{await import\("\.\/houseplan-assets\/houseplan-card-[^"']+\.js"\)\}catch\(/);
+  assert.match(panel, /try\{(?:await import\("\.\/houseplan-assets\/[^"']+\.js"\);)*await import\("\.\/houseplan-assets\/houseplan-card-[^"']+\.js"\)\}catch\(/);
   assert.match(panel, /customElements\.define\("houseplan-panel",/);
   assert.match(panel, /reload the page/);
   assert.doesNotMatch(
     panel,
-    /(?:^|;)import[\s{"']/m,
+    /(?:^|[;{}])import[\s{"']/m,
     'the panel must not keep a static edge that can abort before its fallback runs',
   );
 
@@ -835,7 +847,7 @@ test('#535 no built entry reaches the card by an address without a version', () 
       `${name}: ссылка на карточку по адресу без версии`);
   }
   const card = readFileSync(new URL('houseplan-card.js', dist), 'utf8');
-  assert.match(card, /try\{await import\("\.\/houseplan-assets\/houseplan-card-[^"']+\.js"\)\}catch\(/,
+  assert.match(card, /try\{(?:await import\("\.\/houseplan-assets\/[^"']+\.js"\);)*await import\("\.\/houseplan-assets\/houseplan-card-[^"']+\.js"\)\}catch\(/,
     'сам фасад остаётся стабильным входом Lovelace-ресурса и тянет хешированный чанк');
 });
 

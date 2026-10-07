@@ -444,6 +444,19 @@ export function editorRuntimeRetryUrlPlugin() {
  * Must run BEFORE bundleManifestPlugin so the manifest hashes the final code.
  */
 export function entryFallbackPlugin() {
+  // #803: manual chunking can add eager side-effect edges to either facade.
+  // They must settle before the implementation, as static imports did, but
+  // inside the same catch boundary so a missing extra chunk cannot bypass it.
+  const hoistSideEffectAssets = (entry, implementation) => {
+    const pattern = /\bimport(["'])(\.\/houseplan-assets\/[^"']+\.js)\1;?/g;
+    const assets = [...new Set([...entry.code.matchAll(pattern)]
+      .map((match) => match[2]).filter((asset) => asset !== implementation))];
+    entry.code = entry.code.replace(pattern, (match, _quote, asset) => (
+      asset === implementation ? match : ''
+    ));
+    return assets;
+  };
+  const awaitAssets = (assets) => assets.map((asset) => `await import("${asset}");`).join('');
   const fallbackDefinition = (contract) => `if(!customElements.get("${contract.element}")){`
     + 'const l=String(navigator.language||"en").toLowerCase();'
     + 'const m=l.startsWith("ru")'
@@ -476,9 +489,10 @@ export function entryFallbackPlugin() {
         );
       }
       const cardAsset = cardMatches[0][2];
+      const cardSideEffects = hoistSideEffectAssets(cardEntry, cardAsset);
       cardEntry.code = cardEntry.code.replace(
         cardPattern,
-        `try{await import("${cardAsset}")}`
+        `try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`
           + `catch(e){${fallbackDefinition(cardContract)}`
           + 'console.error("[houseplan] stale houseplan-card.js: the implementation chunk is unavailable",e)}',
       );
@@ -508,14 +522,15 @@ export function entryFallbackPlugin() {
           `${panelContract.fileName} card import count is ${panelMatches.length}, expected 1`,
         );
       }
+      const panelSideEffects = hoistSideEffectAssets(panelEntry, cardAsset);
       panelEntry.code = panelEntry.code.replace(
         panelPattern,
-        `try{await import("${cardAsset}")}`
+        `try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`
           + `catch(e){${fallbackDefinition(panelContract)}`
           + 'console.error("[houseplan] stale houseplan-panel.js: the card implementation '
           + 'chunk is unavailable",e)}',
       );
-      panelEntry.imports = [cardAsset.replace(/^\.\//, '')];
+      panelEntry.imports = [cardAsset, ...panelSideEffects].map((asset) => asset.replace(/^\.\//, ''));
     },
   };
 }

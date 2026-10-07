@@ -26,6 +26,12 @@ boolean operations, including touching, holes, nesting and bridging components.
 The X-axis hint is rendered locally: a generic card toast after capture would
 schedule an unnecessary full-floor render inside the drag window.
 
+After changing manual chunks, also run `node demo/smoke_entry_stale.mjs`:
+the stable card and panel entries must settle with the localized reload message
+when all old hashed chunks are missing. `test/bundle-assets.test.mjs` executes
+the entry rewrite with and without extra eager edges; those edges must remain
+inside the catch boundary and precede the implementation.
+
 `smoke_wall_node_topology.mjs` compares shared/T/X/zero before/during/after/cancel
 pixels, exact Undo/Redo/reload, capability/refusal and 100 accepted/cancelled
 cycles, plus terminal/context events, unsupported X+branch and legacy cancellation.

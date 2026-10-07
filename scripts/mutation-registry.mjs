@@ -119,6 +119,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'node-extra-entry-edge-bypasses-fallback',
+    guard: 'node --test --test-name-pattern="#803 extra eager chunks" test/bundle-assets.test.mjs',
+    because: '#803 must preserve stale-load recovery after manual chunking: even an extra eager edge '
+      + 'must fail inside the catch boundary for both stable entries; pure module execution proves this without a browser',
+    patches: [{ file: 'scripts/bundle-manifest.mjs',
+      find: "      asset === implementation ? match : ''",
+      replace: '      match // mutant: retain a static edge outside the fallback boundary',
+    }],
+  },
+  {
     id: 'node-preview-retains-original-body',
     guard: 'node demo/smoke_wall_node_move.mjs',
     because: '#803 AC5: the real pointer raster must remove the old affected wall, not merely add a translucent new copy',
@@ -4660,7 +4670,7 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/bundle-manifest.mjs',
       find: '      cardEntry.code = cardEntry.code.replace(\n'
         + '        cardPattern,\n'
-        + '        `try{await import("${cardAsset}")}`\n'
+        + '        `try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(cardContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-card.js: the implementation chunk is unavailable\",e)}',\n"
         + '      );',
@@ -4677,7 +4687,7 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/bundle-manifest.mjs',
       find: '      panelEntry.code = panelEntry.code.replace(\n'
         + '        panelPattern,\n'
-        + '        `try{await import("${cardAsset}")}`\n'
+        + '        `try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '\n"
         + "          + 'chunk is unavailable\",e)}',\n"
@@ -4714,10 +4724,10 @@ const MUTANT_DEFINITIONS = [
       + '(#535 AC1/AC2)',
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
-      find: '        `try{await import("${cardAsset}")}`\n'
+      find: '        `try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '",
-      replace: '        `try{await import("./${CARD_ENTRY_FILE}")}`\n'
+      replace: '        `try{${awaitAssets(panelSideEffects)}await import("./${CARD_ENTRY_FILE}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '",
     }],
@@ -4732,7 +4742,7 @@ const MUTANT_DEFINITIONS = [
       + 'exact card graph" check would then pass on a fiction (#486 AC5, #535 AC4)',
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
-      find: "      panelEntry.imports = [cardAsset.replace(/^\\.\\//, '')];",
+      find: "      panelEntry.imports = [cardAsset, ...panelSideEffects].map((asset) => asset.replace(/^\\.\\//, ''));",
       replace: '      panelEntry.imports = [CARD_ENTRY_FILE]; // mutant: edge names the facade',
     }],
   },

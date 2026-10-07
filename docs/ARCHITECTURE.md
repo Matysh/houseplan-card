@@ -22,6 +22,10 @@ Every live paint rechecks its frozen context before constructing SVG groups;
 mode/floor/revision adoption retires capture and masks before the settled render.
 `editor-shared` isolates shared lazy helpers so the editor entry retains its
 named API on both its normal import and its opaque immutable-URL retry.
+Both stable entry facades hoist any extra eager chunk imports into the same
+awaited fallback boundary, before the implementation. A deleted extra chunk
+therefore cannot abort the entry before its stale-update message is installed;
+the manifest retains every eager dependency.
 The write terminal refreshes history controls even when its own revision
 adoption already retired the live preview before the command was recorded.
 The frozen local baseline retains its geometry and guard carrier for one

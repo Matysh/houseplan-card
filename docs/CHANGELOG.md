@@ -62,7 +62,8 @@
   or editing permissions also cancels a pending move safely; the toolbar's Undo
   becomes available as soon as the accepted command is recorded. Large plans
   avoid repeatedly clipping distant, disconnected rooms during local edits
-  ([#803](https://github.com/Matysh/houseplan-card/issues/803)).
+  ([#803](https://github.com/Matysh/houseplan-card/issues/803)). The card and panel
+  keep their reload message if an update removes an extra shared chunk.
 
 ## v1.80.0-beta.7 — 2026-10-07
 
