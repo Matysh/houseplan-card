@@ -34,10 +34,10 @@ that transition events alone prove disposal.
 | Performance threshold | 4 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 3 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 47 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 53 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 54 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 41 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 119 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **267 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 124 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **273 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -192,6 +192,7 @@ The invariant depends on hit testing, pointer capture, touch/keyboard dispatch o
 - `resize-history-boundary-repair-removed`
 - `resize-label-uses-old-room-gear-centre`
 - `resize-labels-hide-narrow-area`
+- `resize-live-preflight-skipped`
 - `resize-pointer-capture-removed`
 - `resize-preview-reject-silent`
 - `room-fit-html-overlay-jumps-ahead`
@@ -289,6 +290,16 @@ and a warm remount on one page: per-root accounting of the editor sheets shows o
 the second root's adoptedStyleSheets and computed styles. The fake-root unit test pins
 the same accounting; the smoke proves it on Lit's own roots.
 
+`opening-wall-index-key-global-epoch` and `sun-key-global-epoch` (#814 AC1) need the
+real card adopting a pushed config through its server event (a new epoch with the shown
+floor's record unchanged) and rendering the shown floor in View with a lit sun: only the
+card's build counters across that adoption show the index and the wedges rebuilt.
+`physical-bodies-pool-bypassed` and `opening-tunnel-evicting-miss-uncounted` (#814 AC2)
+need the real tab cycle over three warm floors and a full pool: only the rendered floor
+switch reaches the miss branches, judged by the #735 guard with `pooled`.
+`resize-union-kept-after-reset` (#814 AC3) needs a held real Resize drag ended by a config
+event, the only path that resets the session outside pointer up and cancel.
+
 The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition.
 
 - `accepted-marker-rolled-back-by-layout-failure`
@@ -354,7 +365,10 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `namespace-loader-returns-english`
 - `near-axis-authoring-snap-bypassed`
 - `onboarding-loader-skips-namespace-ensure`
+- `opening-tunnel-evicting-miss-uncounted`
+- `opening-wall-index-key-global-epoch`
 - `openings-rendered-without-keys`
+- `physical-bodies-pool-bypassed`
 - `plan-only-preview-label-hidden`
 - `plan-room-area-icon-hidden`
 - `plan-room-area-icon-navigates`
@@ -367,6 +381,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `render-reconcile-restarts-editor-runtime-cycle`
 - `reopened-room-from-registry-space`
 - `resize-bodies-rekey-format-diverges`
+- `resize-union-kept-after-reset`
 - `room-accept-leaves-coincident-partitions`
 - `room-gear-second-touch-keeps-drag`
 - `room-settings-click-does-not-open`
@@ -382,6 +397,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `space-create-hidden-display-override`
 - `stairs-view-pan-opens-target-floor`
 - `stairs-view-tread-lines`
+- `sun-key-global-epoch`
 - `support-invalid-response-leaks-issued-token`
 - `support-stale-preview-response-revives-consent`
 - `support-timeout-claims-success`

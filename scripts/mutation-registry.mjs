@@ -7235,8 +7235,9 @@ const MUTANT_DEFINITIONS = [
       + 'пользователь до следующей записи видит закэшированную старую геометрию (#577)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '`${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${origin}|${this._cfgEpoch}`',
-      replace: '`${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${this._cfgEpoch}`',
+      // #814: the key lists its inputs in sunGeometryKey (floor-geometry-key.ts).
+      find: '      [sun.azimuth, sun.elevation, north, origin], zeroWalls);\n',
+      replace: '      [sun.azimuth, sun.elevation, north], zeroWalls); // mutant: the origin is not an input\n',
     }],
   },
   {
@@ -15514,6 +15515,156 @@ const MUTANT_DEFINITIONS = [
       file: 'src/styles/devices.styles.ts',
       find: '    .stage.projection-iso.mode-view .dev:focus-visible { z-index: 5; }',
       replace: '    .stage.projection-iso.mode-view .dev:focus-visible:not(#hp-mutant) { z-index: 5; }',
+    }],
+  },
+  // #814: ключи индекса проёмов и солнца — их входы, не глобальная эпоха.
+  {
+    id: 'opening-wall-index-key-global-epoch',
+    guard: 'node demo/smoke_floor_cache_reuse.mjs',
+    because: '#814 AC1: the global epoch back in the opening wall index key rebuilds the shown floor\'s '
+      + 'index on another floor\'s edit; only the real card pushed a config by its server event and '
+      + 'rendering the shown floor counts that build',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const key = openingWallIndexKey(space.id, space.rooms, this._spaceWalls, openCuts,\n',
+      replace: '    const key = openingWallIndexKey(`${space.id}|${this._cfgEpoch}`, space.rooms, this._spaceWalls, openCuts, // mutant: the epoch is back\n',
+    }],
+  },
+  {
+    id: 'sun-key-global-epoch',
+    guard: 'node demo/smoke_floor_cache_reuse.mjs',
+    because: '#814 AC1: the global epoch back in the sun key recomputes the wedges of the shown floor on '
+      + 'another floor\'s edit or a shared setting; only the rendered View with a lit sun counts it',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      [sun.azimuth, sun.elevation, north, origin], zeroWalls);\n',
+      replace: '      [sun.azimuth, sun.elevation, north, origin, this._cfgEpoch], zeroWalls); // mutant: the epoch is back\n',
+    }],
+  },
+  {
+    id: 'opening-wall-index-key-drops-wall-geometry',
+    guard: 'node --test --test-name-pattern="#814 AC1" test/floor-geometry-key.test.mjs',
+    because: '#814 AC1: a key without the wall thickness and endpoints serves an index built for the old '
+      + 'walls after a thickness edit; the cached index must equal an uncached build',
+    patches: [{
+      file: 'src/floor-geometry-key.ts',
+      find: "  walls.map((wall) => `${wall.key}:${wall.a}:${wall.b}:${wall.cm}`).join(';'),\n",
+      replace: "  walls.map((wall) => `${wall.key}`).join(';'), // mutant: thickness and endpoints are not inputs\n",
+    }],
+  },
+  {
+    id: 'sun-key-drops-window-geometry',
+    guard: 'node --test --test-name-pattern="#814 AC1" test/floor-geometry-key.test.mjs',
+    because: '#814 AC1: a sun key that knows the windows only by id keeps the wedges of a window moved '
+      + 'in place; the cached wedges must equal an uncached computation',
+    patches: [{
+      file: 'src/floor-geometry-key.ts',
+      find: "  index, bodies, windows.map((w) => `${w.id}:${w.x},${w.y},${w.angle},${w.length}`).join(';'),\n",
+      replace: "  index, bodies, windows.map((w) => w.id).join(';'), // mutant: a moved window keeps the key\n",
+    }],
+  },
+  // #814: пулы тел и туннелей по этажам.
+  {
+    id: 'floor-pool-single-slot',
+    guard: 'node --test --test-name-pattern="#814 AC2" test/floor-geometry-key.test.mjs',
+    because: '#814 AC2: a pool bounded to one entry is the old single-slot storage: twelve warm switches '
+      + 'between three floors build again on every switch',
+    patches: [{
+      file: 'src/floor-geometry-key.ts',
+      find: '  lruWrite(pool, key, entry, WALL_UNION_POOL_LIMIT);\n  return { ...entry };\n',
+      replace: '  lruWrite(pool, key, entry, 1); // mutant: the old single-slot storage\n  return { ...entry };\n',
+    }],
+  },
+  {
+    id: 'physical-bodies-pool-bypassed',
+    guard: 'node demo/smoke_floor_cache_reuse.mjs',
+    because: '#814 AC2: a card that keeps only the active bodies rebuilds them on every warm floor '
+      + 'switch; only the real tab cycle judged by the #735 guard with `pooled` counts it',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    return (this._physicalBodiesCache = floorPoolEntry(this._physicalBodiesPool, this._physicalBodiesCache, key, () => {\n',
+      replace: '    return (this._physicalBodiesCache = floorPoolEntry(new Map(), this._physicalBodiesCache, key, () => { // mutant: single slot\n',
+    }],
+  },
+  {
+    id: 'opening-tunnel-evicting-miss-uncounted',
+    guard: 'node demo/smoke_floor_cache_reuse.mjs',
+    because: '#814 AC2: a tunnel built on a miss that evicts from the full pool must count; a counter '
+      + 'that skips that branch hides a cold floor while every size stays the same',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        this._floorCacheBuilds.openingTunnel++;\n',
+      replace: '        if (this._openingTunnelPool.size < 8) this._floorCacheBuilds.openingTunnel++; // mutant: not on an evicting miss\n',
+    }],
+  },
+  {
+    id: 'switch-cycle-guard-ignores-pools',
+    guard: 'node --test --test-name-pattern="#814 AC2" test/switch-cycle-guard.test.mjs',
+    because: '#814 AC2/AC5: a guard that keeps the pooled families reported lets a candidate fall back '
+      + 'to single-slot storage with twelve builds in the warm cycle',
+    patches: [{
+      file: 'demo/performance/switch-cycle-guard.mjs',
+      find: '  if (pooled) Object.assign(judged, perFloor);\n',
+      replace: '  // mutant: a pooled card is judged like a single-slot one\n',
+    }],
+  },
+  // #814: один union неизменных тел на жест Resize.
+  {
+    id: 'resize-union-memo-disabled',
+    guard: 'node --test --test-name-pattern="#814 AC3" test/physical-geometry.test.mjs',
+    because: '#814 AC3: without the memo every resized room on every accepted step unites all bodies of '
+      + 'the floor again; the union count of one gesture shows it',
+    patches: [{
+      file: 'src/physical-geometry.ts',
+      find: '    if (this.last?.key !== key) {\n',
+      replace: '    if (true) { // mutant: a union per room and step\n',
+    }],
+  },
+  {
+    id: 'resize-union-key-ignores-bodies',
+    guard: 'node --test --test-name-pattern="#814 AC3" test/physical-geometry.test.mjs',
+    because: '#814 AC3: a union keyed by the scale alone survives a changed body set and subtracts the '
+      + 'old bodies from the live areas',
+    patches: [{
+      file: 'src/physical-geometry.ts',
+      find: "    const key = `${scale}|${bodies.join('|')}`;\n",
+      replace: '    const key = scale; // mutant: the scale alone\n',
+    }],
+  },
+  {
+    id: 'resize-failed-union-is-no-obstacle',
+    guard: 'node --test --test-name-pattern="#814 AC3" test/physical-geometry.test.mjs',
+    because: '#814 AC3: a failed union read as an empty set restores the floor under every body; it '
+      + 'must take the lossless sequential path',
+    patches: [{
+      file: 'src/physical-geometry.ts',
+      find: '  if (!bodies.length) return [closedRing(floor)];\n  try {\n    if (obstacles)',
+      replace: '  if (!obstacles) return [closedRing(floor)]; // mutant: a failed union is no obstacle\n  try {\n    if (obstacles)',
+    }],
+  },
+  {
+    id: 'resize-union-kept-after-reset',
+    guard: 'node demo/smoke_floor_cache_reuse.mjs',
+    because: '#814 AC3: a gesture ended by a reset (a server push mid-drag) must drop its union; only a '
+      + 'held real drag interrupted by the config event reaches that path',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '    this.host._resize.reset();\n    this.rszBodiesUnion.clear();\n',
+      replace: '    this.host._resize.reset(); // mutant: the union outlives the reset\n',
+    }],
+  },
+  // #814 AC4: живой preflight Resize не ослаблен.
+  {
+    id: 'resize-live-preflight-skipped',
+    guard: 'node demo/smoke_room_resize.mjs',
+    because: '#814 AC4: a live step must run the full physical preflight; skipped, a candidate the '
+      + 'preflight rejects is previewed and the drag no longer stops with its reason',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "    if (!liveSpace || !this._rszSpaceCandidateGeometry(this.host._space, liveSpace).ok)\n"
+        + "      return { ok: false, reason: 'physical-geometry' };\n",
+      replace: "    if (!liveSpace) // mutant: the live physical preflight is skipped\n"
+        + "      return { ok: false, reason: 'physical-geometry' };\n",
     }],
   },
 ];
