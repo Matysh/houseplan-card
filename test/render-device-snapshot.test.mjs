@@ -4,7 +4,9 @@ import { readFileSync } from 'node:fs';
 
 import {
   createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
+  selectRenderDeviceSnapshot,
 } from '../test-build/render-device-snapshot.js';
+import { openingAmount } from '../test-build/logic.js';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
 import { createDeviceBatteryContext } from '../test-build/device-battery.js';
 import { resolveDevicePresentation } from '../test-build/device-presentation.js';
@@ -261,4 +263,62 @@ test('marker delete/re-add and opening save remain separate config transactions'
   assert.doesNotMatch(saveOpening, /cfg\.markers|this\._markers/);
   assert.match(saveMarker, /candidate\.markers/);
   assert.doesNotMatch(saveMarker, /\.openings/);
+});
+
+/** #813 F14: two projections of one HA tick, captured for two plan geometries. */
+function doorProjections() {
+  const ha = {
+    entities: { 'binary_sensor.old_door': {}, 'binary_sensor.new_door': {} },
+    devices: {},
+    states: {
+      'binary_sensor.old_door': { state: 'off', attributes: {} },
+      'binary_sensor.new_door': { state: 'off', attributes: {} },
+    },
+  };
+  const capture = (geometry, entityIds) => createRenderDeviceSnapshot({
+    sourceSequence: 1, hass: ha, devices: [], presentations: new Map(), showBattery: false,
+    entityIds, geometry,
+  });
+  return {
+    old: capture('plan-1', ['binary_sensor.old_door']),
+    next: capture('plan-2', ['binary_sensor.old_door', 'binary_sensor.new_door']),
+  };
+}
+
+test('#813 AC4 a projection captured for the old plan has no row for a new contact', () => {
+  const { old, next } = doorProjections();
+  assert.equal(old.geometry, 'plan-1');
+  assert.equal(next.geometry, 'plan-2');
+  assert.equal(createRenderDeviceSnapshot({ sourceSequence: 1, hass: {}, devices: [], presentations: new Map() })
+    .geometry, null);
+  // The defect: the new door painted from the old projection is open.
+  assert.equal(openingAmount('door', old.hass.states['binary_sensor.new_door']?.state), 1);
+  assert.equal(openingAmount('door', next.hass.states['binary_sensor.new_door']?.state), 0);
+  // Missing, unknown and unavailable keep their meaning (door open, window closed).
+  for (const state of [undefined, 'unknown', 'unavailable']) {
+    assert.equal(openingAmount('door', state), 1);
+    assert.equal(openingAmount('window', state), 0);
+  }
+});
+
+test('#813 AC4 a frame paints the projection captured for its own geometry', () => {
+  const { old, next } = doorProjections();
+  // Steady: one projection, the plan it was captured for.
+  assert.equal(selectRenderDeviceSnapshot(old, null, false, 'plan-1'), old);
+  // Holding on the old plan: HA ticks prepare a candidate, the old frame stays whole.
+  const tick = { ...next, geometry: 'plan-1' };
+  assert.equal(selectRenderDeviceSnapshot(old, tick, false, 'plan-1'), old);
+  // The new plan is adopted before the candidate is staged (or a newer event
+  // restarted staging after it was): its own projection, not the old one.
+  assert.equal(selectRenderDeviceSnapshot(old, next, false, 'plan-2'), next);
+  // Staged as before; a staged candidate captured for another plan never replaces the matching one.
+  assert.equal(selectRenderDeviceSnapshot(old, next, true, 'plan-2'), next);
+  assert.equal(selectRenderDeviceSnapshot(old, next, true, 'plan-1'), old);
+  // Nothing captured for this plan yet: the historical preference is unchanged.
+  assert.equal(selectRenderDeviceSnapshot(old, next, false, 'plan-3'), old);
+  assert.equal(selectRenderDeviceSnapshot(old, next, true, 'plan-3'), next);
+  assert.equal(selectRenderDeviceSnapshot(null, next, false, 'plan-1'), next);
+  assert.equal(selectRenderDeviceSnapshot(null, null, true, 'plan-1'), null);
+  const painted = selectRenderDeviceSnapshot(old, next, false, 'plan-2');
+  assert.equal(openingAmount('door', painted.hass.states['binary_sensor.new_door']?.state), 0);
 });

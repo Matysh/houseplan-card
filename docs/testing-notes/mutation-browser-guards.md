@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 45 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 53 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 39 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 114 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **258 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 116 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **260 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -337,6 +337,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `led-auto-slot-reserved`
 - `led-hidden-marker-loads-chunk`
 - `locale-failure-toast-dropped`
+- `main-card-snapshot-without-geometry`
 - `marker-reject-keeps-optimistic-candidate`
 - `marker-rollback-keeps-enqueue-time-revision`
 - `moon-static-clock-tick-off`
@@ -367,6 +368,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `space-card-openings-rendered-without-keys`
 - `space-card-openings-rendered-without-space-key`
 - `space-card-rooms-rendered-without-keys`
+- `space-card-snapshot-without-geometry`
 - `space-create-hidden-display-override`
 - `stairs-view-pan-opens-target-floor`
 - `stairs-view-tread-lines`

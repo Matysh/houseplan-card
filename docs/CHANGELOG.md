@@ -8,6 +8,10 @@
   state changes until it was clicked again. A short tap, a cancelled touch, a
   press interrupted by switching to another window and a pinch never open the
   dialog ([#813](https://github.com/Matysh/houseplan-card/issues/813)).
+- A door or window added to the plan on another device now appears on the
+  full card and on the space card in its sensor's current state right away: a
+  closed door no longer shows up open and then swings shut. Real openings and
+  closings still animate ([#813](https://github.com/Matysh/houseplan-card/issues/813)).
 
 ## v1.80.0-beta.7 — 2026-10-07
 

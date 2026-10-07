@@ -27,6 +27,35 @@ export interface RenderDeviceSnapshot {
   readonly facts: ReadonlyMap<string, unknown>;
   /** Exact state rows whose identity may invalidate the painted frame. */
   readonly entityIds: readonly string[];
+  /**
+   * Identity of the plan geometry this projection was captured for (#813):
+   * the rows above were chosen from that plan's openings, rooms and decor.
+   */
+  readonly geometry: string | number | null;
+}
+
+/**
+ * The device projection a frame paints with its geometry (#813 F14).
+ *
+ * Between two complete frames a card keeps the visible projection and stages
+ * the candidate one after a paint barrier. Its geometry, however, is replaced
+ * as soon as the new config is adopted: one frame then paints a new opening
+ * with a projection captured for the OLD plan, which does not hold the new
+ * contact at all, and a missing door state draws an open door that a 0.6 s
+ * transition then "closes". A frame may hold the old projection only together
+ * with the old geometry: when the preferred projection was captured for other
+ * geometry and the other one matches, the matching one is painted.
+ */
+export function selectRenderDeviceSnapshot(
+  visible: RenderDeviceSnapshot | null,
+  candidate: RenderDeviceSnapshot | null,
+  staged: boolean,
+  geometry: string | number | null,
+): RenderDeviceSnapshot | null {
+  const preferred = staged ? candidate || visible : visible || candidate;
+  if (!preferred || preferred.geometry === geometry) return preferred;
+  const other = preferred === visible ? candidate : visible;
+  return other && other.geometry === geometry ? other : preferred;
 }
 
 /**
@@ -99,6 +128,8 @@ export function createRenderDeviceSnapshot(options: {
   showBattery?: boolean;
   batteryContext?: DeviceBatteryContext;
   capturedAt?: number;
+  /** The plan geometry the referenced rows were collected from (#813). */
+  geometry?: string | number | null;
 }): RenderDeviceSnapshot {
   // Copy only the registry/state rows that can contribute to this plan. This
   // is a render-data projection, not a frozen clone of Home Assistant runtime.
@@ -164,6 +195,7 @@ export function createRenderDeviceSnapshot(options: {
     facts: readonlyMap([...(options.facts || [])].map(([key, fact]) =>
       [key, cloneFact(fact)] as const)),
     entityIds: Object.freeze([...entityIds]),
+    geometry: options.geometry ?? null,
   });
 }
 

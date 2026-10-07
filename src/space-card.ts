@@ -29,7 +29,8 @@ import {
   stampFiniteActivity, type FiniteActivityRuntime,
 } from './activity-runtime';
 import {
-  createRenderDeviceSnapshot, presentationSnapshotKey, type RenderDeviceSnapshot,
+  createRenderDeviceSnapshot, presentationSnapshotKey, selectRenderDeviceSnapshot,
+  type RenderDeviceSnapshot,
 } from './render-device-snapshot';
 import type { DevItem } from './types';
 import {
@@ -552,6 +553,7 @@ class HouseplanSpaceCard extends LitElement {
     const snapshot = createRenderDeviceSnapshot({
       sourceSequence: this._hassSequence, hass: planHass,
       devices: this._devices, presentations, entityIds, deviceIds, areaIds, showBattery, batteryContext,
+      geometry: this._snapshotGeometry(),
     });
     this._capturedSnapshotSequence = this._hassSequence;
     this._capturedSnapshotDevices = this._devices;
@@ -565,10 +567,16 @@ class HouseplanSpaceCard extends LitElement {
     }
   }
 
+  /** The drawn plan whose openings and rooms chose the projected rows (#813). */
+  private _snapshotGeometry(): string {
+    return `${this._snap?.configFingerprint ?? ''}|${this._config?.space ?? ''}`;
+  }
+
   private get _renderDeviceSnapshot(): RenderDeviceSnapshot | null {
-    return this._stagedDeviceSnapshotToken === this._continuity.token
-      ? this._candidateDeviceSnapshot || this._visibleDeviceSnapshot
-      : this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+    return selectRenderDeviceSnapshot(
+      this._visibleDeviceSnapshot, this._candidateDeviceSnapshot,
+      this._stagedDeviceSnapshotToken === this._continuity.token, this._snapshotGeometry(),
+    );
   }
 
   private _beginContinuityCandidate(

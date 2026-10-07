@@ -213,7 +213,7 @@ import {
 import { valueBadgeTitle } from './device-value-badge';
 import {
   createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
-  type RenderDeviceSnapshot,
+  selectRenderDeviceSnapshot, type RenderDeviceSnapshot,
 } from './render-device-snapshot';
 import { RenderLifecycle, intakeHass } from './houseplan-render-lifecycle';
 import { RadarLiveController } from './radar-live';
@@ -4636,6 +4636,7 @@ export class HouseplanCard extends LitElement {
       entityIds,
       deviceIds,
       areaIds,
+      geometry: this._cfgEpoch,
     });
     this._capturedSnapshotSequence = this._hassSequence;
     this._capturedSnapshotDevices = this._devices;
@@ -4652,9 +4653,11 @@ export class HouseplanCard extends LitElement {
   }
 
   private get _renderDeviceSnapshot(): RenderDeviceSnapshot | null {
-    return this._stagedDeviceSnapshotToken === this._continuity.token
-      ? this._candidateDeviceSnapshot || this._visibleDeviceSnapshot
-      : this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+    // #813: the held projection is painted only with the geometry it was captured for.
+    return selectRenderDeviceSnapshot(
+      this._visibleDeviceSnapshot, this._candidateDeviceSnapshot,
+      this._stagedDeviceSnapshotToken === this._continuity.token, this._cfgEpoch,
+    );
   }
 
   private get _renderPlanHass(): any {

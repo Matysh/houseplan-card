@@ -15186,6 +15186,43 @@ const MUTANT_DEFINITIONS = [
       replace: '    // mutant: an ended press keeps its timer\n',
     }],
   },
+  {
+    id: 'render-snapshot-ignores-geometry',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#813 AC4" test/render-device-snapshot.test.mjs',
+    because: '#813 AC4: a frame paints the device projection captured for its own plan; preferring '
+      + 'the held projection whatever the plan paints a new door from rows that never held its contact',
+    patches: [{
+      file: 'src/render-device-snapshot.ts',
+      find: '  if (!preferred || preferred.geometry === geometry) return preferred;',
+      replace: '  if (!preferred || preferred.geometry !== geometry || geometry !== null) return preferred; '
+        + '// mutant: geometry ignored',
+    }],
+  },
+  {
+    id: 'space-card-snapshot-without-geometry',
+    guard: 'node demo/smoke_visual_continuity.mjs',
+    because: '#813 AC3: only the production static card crossing a real config event, its continuity '
+      + 'paint barrier and the presented frames (computed leaf transform, transitionrun) show a new '
+      + 'closed door painted open first and then swinging shut',
+    patches: [{
+      file: 'src/space-card.ts',
+      find: '      geometry: this._snapshotGeometry(),\n',
+      replace: '      // mutant: the projection forgets its plan\n',
+    }],
+  },
+  {
+    id: 'main-card-snapshot-without-geometry',
+    guard: 'node demo/smoke_visual_continuity.mjs',
+    because: '#813 AC4: the full card adopts a new config before its paint barrier stages the new '
+      + 'device projection; only its presented frames and transition events show the new closed door '
+      + 'drawn from the old projection',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      geometry: this._cfgEpoch,\n',
+      replace: '      // mutant: the projection forgets its plan\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
