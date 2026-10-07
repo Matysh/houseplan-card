@@ -19,6 +19,7 @@ import {
   LOW_HEADROOM_ACKNOWLEDGED_CEILING, LOW_HEADROOM_WARNING_BYTES,
   SUPPORT_LAZY_MARKERS,
   assertBundleBudget, assertSupportBundleOwnership, initialViewCeilingViolation,
+  assertEditorStyleOwnership, EDITOR_STYLE_MARKERS,
   lowHeadroomWarning,
 } from '../scripts/bundle-budget.mjs';
 import {
@@ -538,6 +539,45 @@ test('#423 support form copy belongs only to the lazy editor graph', () => {
   }
 });
 
+test('#805 editor-only CSS belongs to the lazy editor graph, View CSS stays in the first frame', () => {
+  const temp = mkdtempSync(join(tmpdir(), 'houseplan-editor-styles-'));
+  try {
+    const lazy = EDITOR_STYLE_MARKERS.lazy.join('');
+    const eager = EDITOR_STYLE_MARKERS.eager.join('');
+    writeFileSync(join(temp, 'initial.js'), eager);
+    writeFileSync(join(temp, 'editor.js'), lazy);
+    writeFileSync(join(temp, 'onboarding.js'), '.hpf-card{}');
+    writeFileSync(join(temp, 'sheet.js'), lazy);
+    const manifest = {
+      initialViewFiles: ['initial.js'], lazyEditorFiles: ['editor.js'], lazyOnboardingFiles: ['onboarding.js'],
+    };
+    assert.doesNotThrow(() => assertEditorStyleOwnership(manifest, temp));
+    // AC1: the tray sheet back in the card's static styles, or a moved rule back
+    // in the eager dialogs sheet, puts its selector into the first frame.
+    for (const text of EDITOR_STYLE_MARKERS.lazy) {
+      writeFileSync(join(temp, 'initial.js'), eager + text);
+      assert.throws(() => assertEditorStyleOwnership(manifest, temp), /leaked into initial View graph/, text);
+    }
+    writeFileSync(join(temp, 'initial.js'), eager);
+    // AC1: the sheet loaded by its own import() — a chunk outside the editor's static graph.
+    assert.throws(
+      () => assertEditorStyleOwnership({ ...manifest, lazyEditorFiles: [] }, temp),
+      /missing from lazy editor graph/,
+    );
+    assert.throws(
+      () => assertEditorStyleOwnership({ ...manifest, lazyOnboardingFiles: ['onboarding.js', 'sheet.js'] }, temp),
+      /leaked into lazy onboarding graph/,
+    );
+    // AC1/AC6: .btn, .editorloading, .recoveryoverlay, .vaccalbar, .floorrow stay eager.
+    for (const text of EDITOR_STYLE_MARKERS.eager) {
+      writeFileSync(join(temp, 'initial.js'), eager.replace(text, ''));
+      assert.throws(() => assertEditorStyleOwnership(manifest, temp), /missing from initial View graph/, text);
+    }
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
+
 test('build fingerprint is embedded for Windows and POSIX source ids', () => {
   const plugin = buildFingerprintPlugin('exact-build');
   for (const id of ['C:\\repo\\src\\houseplan-card.ts', '/repo/src/houseplan-editor-runtime.ts']) {
@@ -1034,7 +1074,8 @@ const runBudgetCli = (initialViewGzipBytes) => {
   const dir = mkdtempSync(join(tmpdir(), 'houseplan-budget-cli-'));
   try {
     mkdirSync(join(dir, 'dist'));
-    writeFileSync(join(dir, 'dist/houseplan-card.js'), 'view graph without support copy');
+    // #805: View CSS in the first frame, editor-only CSS in the editor graph.
+    writeFileSync(join(dir, 'dist/houseplan-card.js'), `view graph without support copy ${EDITOR_STYLE_MARKERS.eager.join('')}`);
     writeFileSync(join(dir, 'dist/houseplan-panel.js'), 'panel shell');
     // #627: the CLI judges ownership by content — each marker in its own graph.
     const namespaceMarkers = namespaceLocaleMarkers();
@@ -1043,6 +1084,7 @@ const runBudgetCli = (initialViewGzipBytes) => {
     writeFileSync(join(dir, 'dist/editor.js'), [
       ...SUPPORT_LAZY_MARKERS.filter((marker) => marker.graph === 'lazyEditorFiles').map((marker) => marker.text),
       english('settings'), english('support'), english('topology'), english('tools'),
+      ...EDITOR_STYLE_MARKERS.lazy,
     ].join('\n'));
     writeFileSync(join(dir, 'dist/onboarding.js'), english('settings'));
     writeFileSync(join(dir, 'dist/led-editor.js'), english('led'));

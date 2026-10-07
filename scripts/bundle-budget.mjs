@@ -472,6 +472,41 @@ export function assertSupportBundleOwnership(
   }
 }
 
+/**
+ * #805: CSS только редактора — маркеры владения по собранным файлам.
+ *
+ * Минифицированные строки селекторов. `lazy` — перенесённые из `dialogs`
+ * правила и лист `editor-secondary` (вместе с его `--hp-editor-tray-*` на
+ * `:host`): их нет в initial View и в графе онбординга, они есть в графе editor
+ * runtime. `eager` — правила View и киоска, общие с онбордингом: они обязаны
+ * остаться в первом кадре. Отдельный `import()` листа вне статического графа
+ * редактора маркер из `lazyEditorFiles` уносит — и проверка краснеет.
+ */
+export const EDITOR_STYLE_MARKERS = Object.freeze({
+  lazy: Object.freeze([
+    '.radarcoordinates{', '.supportform>label:not(.srcrow){', '.device-inbox-row{', '.vacpicker{',
+    '.editor-secondary-host{', '--hp-editor-tray-bg-fallback:',
+  ]),
+  eager: Object.freeze(['.btn{', '.editorloading{', '.recoveryoverlay{', '.vaccalbar{', '.floorrow{']),
+});
+
+export function assertEditorStyleOwnership(manifest, root = 'dist', markers = EDITOR_STYLE_MARKERS) {
+  const graphText = (paths) => paths
+    .map((path) => readFileSync(resolve(root, path), 'utf8'))
+    .join('\n');
+  const initial = graphText(manifest.initialViewFiles || []);
+  const editor = graphText(manifest.lazyEditorFiles || []);
+  const onboarding = graphText(manifest.lazyOnboardingFiles || []);
+  for (const text of markers.lazy) {
+    if (initial.includes(text)) throw new Error(`editor-only CSS leaked into initial View graph: ${text}`);
+    if (onboarding.includes(text)) throw new Error(`editor-only CSS leaked into lazy onboarding graph: ${text}`);
+    if (!editor.includes(text)) throw new Error(`editor-only CSS missing from lazy editor graph: ${text}`);
+  }
+  for (const text of markers.eager) {
+    if (!initial.includes(text)) throw new Error(`View CSS missing from initial View graph: ${text}`);
+  }
+}
+
 /** #627: кто статически несёт английский слой каждого пространства. */
 export const NAMESPACE_ENGLISH_CONSUMERS = {
   settings: ['lazyEditorFiles', 'lazyOnboardingFiles'],
@@ -889,6 +924,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     const result = assertBundleBudget(manifest);
     assertSupportBundleOwnership(manifest);
     assertNamespaceLocaleOwnership(manifest);
+    assertEditorStyleOwnership(manifest);
     const headroom = INITIAL_VIEW_GZIP_BUDGET - result.initialViewGzipBytes;
     const lines = [
       `initial View: ${result.initialViewGzipBytes} B gzip`
