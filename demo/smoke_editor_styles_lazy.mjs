@@ -4,8 +4,9 @@
 // none of the moved dialog rules nor the contextual tray sheet in its shadow
 // root, no `--hp-editor-tray-*` on the host and requests no editor chunk.
 // AC3 — opening each editor surface family on a cold tab: the control element
-// already has its styles in the very first frame it appears in (observed from
-// a MutationObserver, i.e. before any later microtask could adopt a sheet);
+// already has its styles in the very first frame it can be painted in (found by
+// a MutationObserver, judged once in the flat tree at the update boundary —
+// before any task could adopt a sheet — or else in the next animation frame);
 // the sheets sit in the canonical cascade slots exactly once, and back in View
 // the editor sheets change the computed style of no element.
 // AC5 — two cards, warm remount with a revived dialog, disconnect during the
@@ -45,6 +46,11 @@ const close = async (session) => {
   sessions.splice(sessions.indexOf(session), 1);
   await session.browser.close();
 };
+/** The verdict `__hp805.watch` parks once the control element has been judged. */
+const frameOf = async (page) => {
+  await page.waitForFunction(() => window.__hp805Frame !== null, null, { timeout: 20000 });
+  return page.evaluate(() => window.__hp805Frame);
+};
 
 /** Page-side helpers: rule inventory of a root, first-frame observer, View snapshot. */
 function installHelpers() {
@@ -78,24 +84,91 @@ function installHelpers() {
         .flatMap((sheet) => selectors(sheet.cssRules)).filter((selector) => selector !== ':host');
     },
     trayVar(host) { return getComputedStyle(host).getPropertyValue('--hp-editor-tray-bg').trim(); },
-    /** Resolve with the control's computed property the first time it exists in the root. */
+    /**
+     * The element takes part in rendering: connected, and slotted by every shadow
+     * host on its way up. A light-DOM child of a host that has not rendered its
+     * <slot> yet (a fresh hp-dialog before its first update) is outside the flat
+     * tree and has no computed style at all (Chromium 151 returns empty values).
+     */
+    inFlatTree(element) {
+      if (!element?.isConnected) return false;
+      for (let node = element; node;) {
+        const parent = node.parentNode;
+        if (parent instanceof ShadowRoot) { node = parent.host; continue; }
+        if (parent instanceof Element && parent.shadowRoot) {
+          if (!node.assignedSlot) return false;
+          node = node.assignedSlot;
+          continue;
+        }
+        node = parent instanceof Element ? parent : null;
+      }
+      return true;
+    },
+    /**
+     * Judge the control element in the first frame it can be painted in.
+     *
+     * Found by a MutationObserver as soon as the card renders it, the element is
+     * judged once it is in the flat tree and computes a value: first at the
+     * microtask boundary — after `updateComplete` of the card and of every Lit
+     * host on its way up (hp-dialog slots its content in its first update), all
+     * before any task (a `setTimeout` adoption) can run — and only if that is not
+     * enough, in the next animation frames (rAF runs before the frame's style
+     * and paint). An empty value is a reason to wait, never a verdict.
+     */
     firstFrame(card, selector, property) {
       return new Promise((resolve) => {
         const root = card.renderRoot;
+        let settled = false;
+        const finish = (result) => { if (!settled) { settled = true; resolve(result); } };
+        const editorKinds = () => [...root.adoptedStyleSheets].map(kindOf).filter((kind) => kind !== 'other');
+        const rendered = () => {
+          const element = root.querySelector(selector);
+          if (!element || !window.__hp805.inFlatTree(element)) return null;
+          const value = getComputedStyle(element).getPropertyValue(property).trim();
+          return value ? { element, value } : null;
+        };
+        const hostsOf = (element) => {
+          const hosts = new Set([card]);
+          for (let node = element; node && node !== root; node = node.parentNode) {
+            if (typeof node.updateComplete?.then === 'function') hosts.add(node);
+          }
+          return [...hosts];
+        };
+        const judge = async (found) => {
+          let element = found;
+          for (let round = 0; round < 8; round++) {
+            const now = rendered();
+            if (now) return finish({ value: now.value, kinds: editorKinds(), phase: 'update', rendered: true });
+            element = root.querySelector(selector) || element;
+            await Promise.all(hostsOf(element).map((host) => host.updateComplete));
+          }
+          for (let frame = 0; frame < 30; frame++) {
+            await new Promise((done) => requestAnimationFrame(done));
+            const now = rendered();
+            if (now) return finish({ value: now.value, kinds: editorKinds(), phase: `frame ${frame + 1}`, rendered: true });
+          }
+          return finish({ value: 'never rendered', kinds: editorKinds(), phase: 'none', rendered: false });
+        };
         const probe = () => {
           const element = root.querySelector(selector);
           if (!element) return false;
-          resolve({
-            value: getComputedStyle(element).getPropertyValue(property).trim(),
-            kinds: [...root.adoptedStyleSheets].map(kindOf).filter((kind) => kind !== 'other'),
-          });
+          void judge(element);
           return true;
         };
         if (probe()) return;
         const observer = new MutationObserver(() => { if (probe()) observer.disconnect(); });
         observer.observe(root, { childList: true, subtree: true });
-        setTimeout(() => { observer.disconnect(); resolve({ value: 'never shown', kinds: [] }); }, 10000);
+        setTimeout(() => { observer.disconnect(); finish({ value: 'never shown', kinds: [], phase: 'none', rendered: false }); }, 10000);
       });
+    },
+    /**
+     * Start judging and park the verdict in a slot. A promise left pending across
+     * evaluate calls, or awaited for seconds inside one, can be reported by CDP
+     * as collected; the Node side polls the slot with waitForFunction instead.
+     */
+    watch(card, selector, property) {
+      window.__hp805Frame = null;
+      this.firstFrame(card, selector, property).then((frame) => { window.__hp805Frame = frame; });
     },
     /** Index of the last sheet of the card's own `static styles` (Lit adopts them first). */
     litSheets(card) { return card.constructor.elementStyles.length; },
@@ -168,14 +241,16 @@ try {
 
   // AC3 settings family on the cold tab: the first frame of the dialog has its styles.
   const beforeOpen = desktop.requests.length;
-  const settings = await page.evaluate(async () => {
+  await page.evaluate(() => {
     const card = window.__card;
-    const first = window.__hp805.firstFrame(card, 'hp-dialog .backupupload input', 'display');
+    window.__hp805.watch(card, 'hp-dialog .backupupload input', 'display');
     card.renderRoot.querySelector('[data-hp="settings"]').click();
-    return first;
   });
-  out.settingsFirstFrameStyled = settings.value === 'none'
-    && JSON.stringify(settings.kinds) === JSON.stringify(['editor-dialogs', 'editor-tray']);
+  const settings = await frameOf(page);
+  console.log(`first frame, settings: @${settings.phase}`);
+  out.settingsFirstFrameStyled = settings.rendered && settings.value === 'none'
+    && JSON.stringify(settings.kinds) === JSON.stringify(['editor-dialogs', 'editor-tray'])
+    || `display=${settings.value} (${settings.phase}), editor sheets ${settings.kinds.join('+') || 'none'}`;
   const afterLoad = await page.evaluate(async () => {
     const card = window.__card;
     const kiosk = document.querySelector('#hp-805-kiosk');
@@ -238,33 +313,41 @@ try {
     && backInView.differing.length === 0 || `${backInView.differing.length} of ${backInView.elements}: ${backInView.differing.slice(0, 5)}`;
 
   // AC5 (i): a second full card adopts into its own root; the sheet objects are shared.
-  out.secondCardOwnRootSharedSheets = await page.evaluate(async () => {
-    const first = window.__card;
+  await page.evaluate(() => {
     const second = document.createElement('houseplan-card');
     second.id = 'hp-805-second';
     second.setConfig({ type: 'custom:houseplan-card', title: 'Second' });
-    second.hass = first.hass;
+    second.hass = window.__card.hass;
     document.body.appendChild(second);
-    const planTab = () => second.renderRoot?.querySelector('[data-hp="mode-tab"][data-mode="plan"]');
-    for (let i = 0; i < 160 && !(planTab() && second._booting === false); i++) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-    const firstFrame = window.__hp805.firstFrame(second, '.editor-secondary-host', 'position');
-    planTab().click();
-    const frame = await firstFrame;
+  });
+  await page.waitForFunction(() => {
+    const second = document.querySelector('#hp-805-second');
+    return second?._booting === false && !!second.renderRoot?.querySelector('[data-hp="mode-tab"][data-mode="plan"]');
+  }, null, { timeout: 15000 });
+  await page.evaluate(() => {
+    const second = document.querySelector('#hp-805-second');
+    window.__hp805.watch(second, '.editor-secondary-host', 'position');
+    second.renderRoot.querySelector('[data-hp="mode-tab"][data-mode="plan"]').click();
+  });
+  const secondFrame = await frameOf(page);
+  out.secondCardOwnRootSharedSheets = await page.evaluate((frame) => {
     const sheetsOf = (card) => [...card.renderRoot.adoptedStyleSheets]
       .filter((sheet) => window.__hp805.kindOf(sheet) !== 'other');
-    const a = sheetsOf(first);
-    const b = sheetsOf(second);
-    return frame.value === 'absolute' && a.length === 2 && b.length === 2 && a[0] === b[0] && a[1] === b[1];
-  });
+    const a = sheetsOf(window.__card);
+    const b = sheetsOf(document.querySelector('#hp-805-second'));
+    return frame.value === 'absolute' && a.length === 2 && b.length === 2 && a[0] === b[0] && a[1] === b[1]
+      || `position=${frame.value} (${frame.phase}), sheets ${a.length}/${b.length}`;
+  }, secondFrame);
 
   // AC5 (ii): warm remount — General settings revive on the new instance, styled in their first frame.
-  out.warmRemountRevivedDialogStyled = await page.evaluate(async () => {
-    const old = window.__card;
+  await page.evaluate(async () => {
     await window.__hpTest.setMode('view');
-    old.renderRoot.querySelector('[data-hp="settings"]').click();
-    for (let i = 0; i < 80 && !old.renderRoot.querySelector('hp-dialog .backupupload'); i++) await window.__hp805.settle(old);
+    window.__card.renderRoot.querySelector('[data-hp="settings"]').click();
+  });
+  await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('hp-dialog .backupupload'),
+    null, { timeout: 15000 });
+  await page.evaluate(() => {
+    const old = window.__card;
     const host = old.parentNode;
     const card = document.createElement('houseplan-card');
     card.setConfig({ type: 'custom:houseplan-card', title: 'House Plan', icon_size: 3.4 });
@@ -272,9 +355,13 @@ try {
     old.remove();
     host.appendChild(card);
     window.__card = card;
-    const frame = await window.__hp805.firstFrame(card, 'hp-dialog .backupupload input', 'display');
-    return frame.value === 'none' && frame.kinds.length === 2 && !!card._editorRuntime;
+    // Connected: the render root exists, the first render is still a microtask away.
+    window.__hp805.watch(card, 'hp-dialog .backupupload input', 'display');
   });
+  const revived = await frameOf(page);
+  out.warmRemountRevivedDialogStyled = revived.value === 'none' && revived.kinds.length === 2
+    && await page.evaluate(() => !!window.__card._editorRuntime)
+    || `display=${revived.value} (${revived.phase}), editor sheets ${revived.kinds.join('+') || 'none'}`;
   await close(desktop);
 
   // ---- AC3 families on cold tabs: each surface opened through its product path. The first
@@ -385,7 +472,12 @@ try {
         open: async () => {
           await window.__hpTest.setTool('furniture');
           window.__card._haDecorAssetsApi = 1; // private-ok: #805 the demo backend reports no decor-assets capability (as in smoke_decor_images)
-          await window.__hpTest.settled();
+          // The capability is a plain field: ask for the render that shows the image tool, then use it.
+          const tool = () => window.__card.renderRoot.querySelector('[data-hp="tool"][data-tool="image"]');
+          for (let i = 0; i < 100 && !tool(); i++) {
+            window.__card.requestUpdate();
+            await window.__hpTest.settled();
+          }
           void window.__hpTest.setTool('image');
         },
       }],
@@ -398,19 +490,19 @@ try {
       // The observer writes into a slot: a promise left pending across two evaluate
       // calls can be collected by CDP before it settles.
       await session.page.evaluate(({ selector, property }) => {
-        window.__hp805Frame = null;
-        window.__hp805.firstFrame(window.__card, selector, property).then((frame) => { window.__hp805Frame = frame; });
+        window.__hp805.watch(window.__card, selector, property);
       }, { selector: check.selector, property: check.property });
       await session.page.evaluate(check.open);
-      await session.page.waitForFunction(() => window.__hp805Frame !== null, null, { timeout: 15000 });
-      results.push(await session.page.evaluate(() => window.__hp805Frame));
+      results.push(await frameOf(session.page));
     }
     const kinds = await session.page.evaluate(() => [...window.__card.renderRoot.adoptedStyleSheets].map(window.__hp805.kindOf));
+    console.log(`first frame, ${family.name}:`, family.checks.map((check, i) => `${check.selector} @${results[i].phase}`).join('; '));
     family.checks.forEach((check, i) => {
       const result = results[i];
-      out[`${family.name}: ${check.selector} styled in its first frame`] = result.value !== 'never shown'
+      out[`${family.name}: ${check.selector} styled in its first frame`] = result.rendered
         && (check.expected === undefined || result.value === check.expected)
-        && result.kinds.length === 2 || `${check.property}=${result.value}, editor sheets ${result.kinds.join('+') || 'none'}`;
+        && result.kinds.length === 2
+        || `${check.property}=${result.value} (${result.phase}), editor sheets ${result.kinds.join('+') || 'none'}`;
     });
     const lit = await session.page.evaluate(() => window.__hp805.litSheets(window.__card));
     out[`${family.name}: editor sheets adopted once, canonical slots`] = canonical(kinds, lit) || kinds.join(',');
@@ -461,17 +553,20 @@ try {
   });
   release();
   await detached.page.waitForFunction(() => window.__card._editorRuntimeLoader.state === 'ready');
-  out.disconnectDuringImportAdoptsOnce = await detached.page.evaluate(async () => {
+  const detachedKinds = await detached.page.evaluate(() => {
     const card = window.__card;
-    const detachedKinds = [...card.renderRoot.adoptedStyleSheets].map(window.__hp805.kindOf);
-    window.__hp805Host.appendChild(card);
-    const frame = window.__hp805.firstFrame(card, '.editor-secondary-host', 'position');
-    card.renderRoot.querySelector('[data-hp="mode-tab"][data-mode="plan"]').click();
-    const result = await frame;
     const kinds = [...card.renderRoot.adoptedStyleSheets].map(window.__hp805.kindOf);
-    return detachedKinds.filter((kind) => kind !== 'other').length === 2 && result.value === 'absolute'
-      && kinds.filter((kind) => kind !== 'other').length === 2;
+    window.__hp805Host.appendChild(card);
+    window.__hp805.watch(card, '.editor-secondary-host', 'position');
+    card.renderRoot.querySelector('[data-hp="mode-tab"][data-mode="plan"]').click();
+    return kinds;
   });
+  const reattached = await frameOf(detached.page);
+  const reattachedKinds = await detached.page.evaluate(() => [...window.__card.renderRoot.adoptedStyleSheets]
+    .map(window.__hp805.kindOf));
+  out.disconnectDuringImportAdoptsOnce = detachedKinds.filter((kind) => kind !== 'other').length === 2
+    && reattached.value === 'absolute' && reattachedKinds.filter((kind) => kind !== 'other').length === 2
+    || `detached ${detachedKinds}, position=${reattached.value} (${reattached.phase}), after ${reattachedKinds}`;
   await close(detached);
 
   // ---- AC5 (iv): the first attempt fails, the content-hashed retry succeeds — adopted once
@@ -481,13 +576,15 @@ try {
     attempts += 1;
     return new URL(route.request().url()).search ? route.fallback() : route.abort('failed');
   });
-  const retried = await retry.page.evaluate(async () => {
-    const card = window.__card;
-    const frame = window.__hp805.firstFrame(card, '.editor-secondary-host', 'position');
-    card.renderRoot.querySelector('[data-hp="mode-tab"][data-mode="plan"]').click();
-    const result = await frame;
-    return { result, kinds: [...card.renderRoot.adoptedStyleSheets].map(window.__hp805.kindOf).filter((kind) => kind !== 'other') };
+  await retry.page.evaluate(() => {
+    window.__hp805.watch(window.__card, '.editor-secondary-host', 'position');
+    window.__card.renderRoot.querySelector('[data-hp="mode-tab"][data-mode="plan"]').click();
   });
+  const retried = {
+    result: await frameOf(retry.page),
+    kinds: await retry.page.evaluate(() => [...window.__card.renderRoot.adoptedStyleSheets]
+      .map(window.__hp805.kindOf).filter((kind) => kind !== 'other')),
+  };
   out.retryAfterFailedAttemptAdoptsOnce = attempts === 2 && retried.result.value === 'absolute'
     && JSON.stringify(retried.kinds) === JSON.stringify(['editor-dialogs', 'editor-tray']) || `${attempts} attempts, ${retried.kinds}`;
   await close(retry);
