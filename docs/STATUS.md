@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Reinstallation (#820): the HA wizard offers Restore first or Start fresh when
+active previous data exists. Fresh archives all four Stores and the three file
+directories only on final confirmation; cancellation is read-only. Archives
+are permanent, excluded from active discovery/quotas/cleanup, with manual
+recovery documented in both user guides. No runtime schema or View changes.
+
 | Item | State |
 |---|---|
 | Current local cycle | **v1.80.0-beta.5 candidate** — #792 battery indicators, #804 room creation from a long wall segment and #776 late smoke-error accounting passed review and are merged into `dev`. The release candidate rebuilds the committed bundle and tightens its ratchets; local targeted checks and full exact-SHA Validate precede publication. `main` remains on stable v1.79.0. |

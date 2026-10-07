@@ -232,6 +232,35 @@ This post-GC value is the #628 monthly-growth baseline. To evaluate AC2 on or
 after 2026-10-25, run the same GC and `count-objects` sequence and compare the
 new `size-pack` with 467.63 MiB; the accepted upper bound is 487.63 MiB.
 
+## Previous-installation lifecycle (#820)
+
+The config flow uses `previous_data.py` for read-only discovery and reversible
+rename archival; do not replace discovery with `Store.async_load` (it may save
+migrations). No model/Store versions or runtime WS contracts change. Transfers
+run in the executor, only after final confirmation, with single-entry and
+concurrent-flow guards. No old archive is overwritten or automatically cleaned.
+
+Targeted Linux/WSL proof (importable HA is required):
+
+```sh
+.venv-backend/bin/python -m pytest tests_backend/test_previous_data.py tests_backend/test_ha_config_flow.py -q
+.venv-backend/bin/python -m pytest tests_backend/ -q
+```
+
+HA flow tests restore real disk I/O only for House Plan Store keys, keeping HA
+registry mocks intact. They use isolated config directories and actual flow,
+setup, WebSocket and authenticated content endpoints. Pure tests cover complete
+byte sets, collisions, links, EXDEV and mid-transfer/rollback failures. Mutation
+anchors live in `scripts/mutation-registry.mjs`; check them with
+`node scripts/mutation-gate.mjs --check`, never execute mutants during development.
+
+Manual recovery is documented in [USER-GUIDE](USER-GUIDE.md#removal-and-reinstallation):
+stop HA, back up/preserve the new set, restore one archive's `storage/houseplan.*`
+to `.storage/` and its `plans/files/assets` to `houseplan/`, without mixing sets
+or overwriting the only copy, then restart. Multi-rename is not crash-atomic;
+failed rollback leaves all bytes in original locations or the logged partial
+archive. The wizard cannot recover an archive automatically.
+
 ## Tests
 
 - Frontend: `npm test` — compiles src/logic.ts+rules.ts (tsconfig.test.json) and runs node:test

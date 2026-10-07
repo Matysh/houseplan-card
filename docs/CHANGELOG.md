@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Reinstalling House Plan now offers **Restore previous plans** first or
+  **Start fresh** when old data remains. Fresh preserves the complete old set
+  in a permanent archive; closing the wizard before final confirmation changes
+  nothing. The wizard shows space/file counts and the last-modified date,
+  with a warning for unreadable configurations. Manual archive recovery is
+  documented ([#820](https://github.com/Matysh/houseplan-card/issues/820)).
+
 - Zigbee hover: **Incomplete data** no longer appears on a device with a known
   outgoing route (including remote/unplaced parents), or on a coordinator.
   Incoming-only devices can still show it; stale/error statuses and the overall

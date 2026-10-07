@@ -1,6 +1,14 @@
 {
   "config": {
     "step": {
+      "previous_data": {
+        "title": "Frühere Installation gefunden",
+        "description": "Frühere Daten gefunden: Bereiche — {spaces}, Dateien — {files}, zuletzt geändert — {modified}. {warning}\n\nEin Neuanfang verschiebt alle früheren Daten in ein dauerhaftes Archiv. Vor der Bestätigung des nächsten Formulars werden keine Daten geändert.",
+        "menu_options": {
+          "restore": "Frühere Pläne wiederherstellen",
+          "start_fresh": "Neu beginnen"
+        }
+      },
       "user": {
         "title": "House Plan",
         "data": {
@@ -11,8 +19,14 @@
     "create_entry": {
       "panel_ready": "Öffnen Sie House Plan über die Seitenleiste, wenn der Eintrag verfügbar ist. Für die Bearbeitung wird ein Desktop-Browser empfohlen. Fehlt der Eintrag, verwenden Sie die House-Plan-Dashboard-Karte und prüfen Sie die Systeminformationen."
     },
+    "error": {
+      "previous_data_unreadable": "Die frühere Konfiguration konnte nicht gelesen werden."
+    },
     "abort": {
-      "single_instance_allowed": "Bereits konfiguriert – es ist nur eine Instanz zulässig."
+      "single_instance_allowed": "Bereits konfiguriert – es ist nur eine Instanz zulässig.",
+      "already_in_progress": "Eine andere House-Plan-Einrichtung läuft bereits.",
+      "previous_data_error": "Frühere Daten konnten nicht geprüft werden. Prüfen Sie Dateiberechtigungen und das Home-Assistant-Protokoll; es wurden keine Daten geändert.",
+      "archive_failed": "Frühere Daten konnten nicht archiviert werden. Es wurde kein Eintrag erstellt. Archivpfad und Hinweise zur Wiederherstellung stehen im Home-Assistant-Protokoll."
     }
   },
   "options": {

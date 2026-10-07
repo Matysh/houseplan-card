@@ -73,6 +73,52 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'reinstall-archives-before-final-confirmation',
+    guard: 'node scripts/backend-test-guard.mjs abort_preserves_data tests_backend/test_ha_config_flow.py',
+    because: '#820 AC4: cancelling the user form after choosing fresh must not change any bytes, '
+      + 'paths, timestamps or create an archive; menu choice is not final confirmation.',
+    patches: [{
+      file: 'custom_components/houseplan/config_flow.py',
+      find: '    async def async_step_start_fresh(self, user_input=None):\n        self._start_fresh = True',
+      replace: '    async def async_step_start_fresh(self, user_input=None):\n'
+        + '        await self.hass.async_add_executor_job(archive_previous_data, self.hass.config.config_dir)\n'
+        + '        self._start_fresh = True',
+    }],
+  },
+  {
+    id: 'reinstall-moves-working-entry-data',
+    guard: 'node scripts/backend-test-guard.mjs active_entry_prevents_archive tests_backend/test_ha_config_flow.py',
+    because: '#820: an entry created while the confirmation form is open must abort fresh '
+      + 'before any active Store or attachment is moved.',
+    patches: [{
+      file: 'custom_components/houseplan/config_flow.py',
+      find: '        if self._async_current_entries():',
+      replace: '        if False:  # omit final active-entry fence',
+    }],
+  },
+  {
+    id: 'reinstall-loses-rollback-record',
+    guard: 'node scripts/backend-test-guard.mjs second_rename_failure_rolls_back tests_backend/test_previous_data.py',
+    because: '#820: an error after the first successful rename must restore every original file '
+      + 'and remove only the newly-created empty archive directories.',
+    patches: [{
+      file: 'custom_components/houseplan/previous_data.py',
+      find: '            moved.append((source, destination))',
+      replace: '            pass  # forget the rollback record',
+    }],
+  },
+  {
+    id: 'reinstall-archives-unsafe-links',
+    guard: 'node scripts/backend-test-guard.mjs symlinks_never_followed_or_moved tests_backend/test_previous_data.py',
+    because: '#820: fresh must refuse linked parents, Store files and nested attachments '
+      + 'without enumerating an external tree or moving any data.',
+    patches: [{
+      file: 'custom_components/houseplan/previous_data.py',
+      find: '        if inventory.unsafe or (parent_info is not None and not stat.S_ISDIR(parent_info.st_mode)):',
+      replace: '        if parent_info is not None and not stat.S_ISDIR(parent_info.st_mode):',
+    }],
+  },
+  {
     id: 'battery-icon-collapses-glyph',
     guard: 'node demo/smoke_device_battery.mjs',
     because: '#792 AC5: the HA custom element can retain its correct outer frame while its '

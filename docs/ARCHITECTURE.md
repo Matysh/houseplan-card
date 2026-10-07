@@ -97,6 +97,18 @@ chunks. Commands and gates: `DEVELOPMENT.md` › Build, › Tests, › Release.
    live rows augment an older snapshot at once and a debounced full reload
    reconciles `disabled_by` even without registry events (`FILTERING.md` ›
    Behaviour).
+   Reinstallation (#820) is an admin-only HA config-flow choice, not a runtime
+   cleanup action. `previous_data.py` inventories these four fixed Store files
+   and `houseplan/{plans,files,assets}` read-only in the executor; only the config
+   JSON is read, without calling Store or triggering migrations. Restore uses
+   the unchanged setup path. Fresh, on final `user` confirmation only, renames
+   the complete set to `houseplan/archive/<unique UTC timestamp>/storage/` and
+   its three sibling data directories. Archives are outside active discovery,
+   quotas and housekeeping and have no automatic retention cleanup. Unsafe
+   links/cross-filesystem moves abort before transfer; handled errors reverse
+   completed renames, without overwriting files. A failed rollback preserves
+   the partial archive and logs its path; this is not a crash-atomic transaction.
+   Single-entry/in-progress fences prevent moving an active installation's data.
 3. **Reactivity.** Every `hass` update re-renders. Registry rebuilds also run the
    pure `device-area-relocation` resolver: pending ids override stale layout in
    full and static cards at once; the writer deletes those points before

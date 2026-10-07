@@ -151,6 +151,42 @@ code from another build does the advice ask for a page refresh instead. A fully
 stale proxy-cached `houseplan-card.js` no longer leaves an empty card after an
 update: it shows a panel asking to reload the page.
 
+### Removal and reinstallation
+
+Removing the House Plan entry in **Settings → Devices & services** and then
+the HACS package does not erase plans. Data remains in the HA config directory:
+`.storage/houseplan.config`, `.storage/houseplan.layout`,
+`.storage/houseplan.virtual_lights`, `.storage/houseplan.trails` and
+`houseplan/plans/`, `houseplan/files/`, `houseplan/assets/`.
+
+When adding the integration again, the wizard shows the space count, file
+count and last-modified date, then offers:
+
+1. **Restore previous plans** — reuse existing data with normal migrations.
+   This is the first option. An unreadable or newer configuration gets a warning;
+   restoration does not repair it.
+2. **Start fresh** — move the complete old set to
+   `houseplan/archive/<UTC-timestamp>-<unique-id>/` and open an empty plan.
+
+Both choices lead to the existing administrators-only checkbox. Archival starts
+only when that final form is confirmed. Closing the wizard before confirmation
+changes nothing. With no data, or only an archive, there is no extra question.
+Archives are excluded from file quotas and never cleaned automatically; each
+fresh start creates a separate archive. Only the administrator can remove it
+manually.
+
+For manual recovery, first back up HA and **stop HA**. Preserve the current new
+set separately, then restore **one selected set**: move
+`archive/<...>/storage/houseplan.*` to `.storage/` and that archive's `plans/`,
+`files/`, `assets/` directories to `houseplan/`. Do not mix old and new sets or
+overwrite the only copy. Start HA; if its integration entry was removed, add it
+and choose restoration. There is no in-app archive recovery button.
+
+An archival error creates no entry and rolls back completed moves. A power loss
+or failing media during rollback can leave some files in the archive: preserve
+both sets and consult the archive path in the HA log for manual recovery.
+Nothing is automatically deleted.
+
 ### Permissions
 
 Every signed-in user can view the plan. Home Assistant permissions still govern

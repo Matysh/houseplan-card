@@ -1,6 +1,14 @@
 {
   "config": {
     "step": {
+      "previous_data": {
+        "title": "Previous installation found",
+        "description": "Found previous data: spaces — {spaces}, files — {files}, last modified — {modified}. {warning}\n\nStarting fresh moves all previous data to a permanent archive. No data is changed until you confirm the next form.",
+        "menu_options": {
+          "restore": "Restore previous plans",
+          "start_fresh": "Start fresh"
+        }
+      },
       "user": {
         "title": "House Plan",
         "data": {
@@ -11,8 +19,14 @@
     "create_entry": {
       "panel_ready": "Open House Plan from the sidebar when the item is available. A desktop browser is recommended for editing. If the item is missing, use the House Plan dashboard card and check System Health."
     },
+    "error": {
+      "previous_data_unreadable": "The previous configuration could not be read."
+    },
     "abort": {
-      "single_instance_allowed": "Already configured — only one entry is allowed."
+      "single_instance_allowed": "Already configured — only one entry is allowed.",
+      "already_in_progress": "Another House Plan setup is already in progress.",
+      "previous_data_error": "Previous data could not be inspected. Check file permissions and the Home Assistant log; no data was changed.",
+      "archive_failed": "Previous data could not be archived. No entry was created. Check the Home Assistant log for the archive path and recovery details."
     }
   },
   "options": {

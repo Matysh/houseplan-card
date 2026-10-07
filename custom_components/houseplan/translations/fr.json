@@ -1,6 +1,14 @@
 {
   "config": {
     "step": {
+      "previous_data": {
+        "title": "Installation précédente trouvée",
+        "description": "Données précédentes trouvées : espaces — {spaces}, fichiers — {files}, dernière modification — {modified}. {warning}\n\nRepartir de zéro déplace les anciennes données dans une archive permanente. Aucune donnée ne change avant la confirmation du formulaire suivant.",
+        "menu_options": {
+          "restore": "Restaurer les plans précédents",
+          "start_fresh": "Repartir de zéro"
+        }
+      },
       "user": {
         "title": "House Plan",
         "data": {
@@ -11,8 +19,14 @@
     "create_entry": {
       "panel_ready": "Ouvrez House Plan depuis la barre latérale lorsque l’entrée est disponible. Un navigateur sur ordinateur est recommandé pour la modification. Si l’entrée est absente, utilisez la carte House Plan du tableau de bord et consultez les informations système."
     },
+    "error": {
+      "previous_data_unreadable": "La configuration précédente n’a pas pu être lue."
+    },
     "abort": {
-      "single_instance_allowed": "Déjà configuré — une seule entrée est autorisée."
+      "single_instance_allowed": "Déjà configuré — une seule entrée est autorisée.",
+      "already_in_progress": "Une autre configuration House Plan est déjà en cours.",
+      "previous_data_error": "Impossible de vérifier les anciennes données. Vérifiez les permissions des fichiers et le journal Home Assistant ; aucune donnée n’a été modifiée.",
+      "archive_failed": "Impossible d’archiver les anciennes données. Aucune entrée n’a été créée. Consultez le journal Home Assistant pour le chemin de l’archive et les instructions de récupération."
     }
   },
   "options": {
