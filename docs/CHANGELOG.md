@@ -6,6 +6,11 @@
   into it, as the confirmation already promised. The dock and other maps stay
   unchanged; a rejected deletion removes no assignments
   ([#822](https://github.com/Matysh/houseplan-card/issues/822)).
+- Large plans: switching floors and resizing a room no longer rebuild geometry
+  that is already prepared — physical bodies and opening passages of each
+  floor are kept for the next visit, and one union of the unchanged bodies
+  serves every live area of a resize gesture. The plan, areas and placement
+  checks are unchanged ([#814](https://github.com/Matysh/houseplan-card/issues/814)).
 
 - Reinstalling House Plan now offers **Restore previous plans** first or
   **Start fresh** when old data remains. Fresh preserves the complete old set
