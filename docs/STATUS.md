@@ -61,6 +61,7 @@ recovery documented in both user guides. No runtime schema or View changes.
 | HACS and community | In the HACS default catalog since 2026-08-25 (hacs/default#9004): install is a plain HACS search, `houseplan.zip` is attached to stable tags. Support channel — Telegram chat https://t.me/ha_houseplan; GitHub Issues stay for bugs and features. |
 | Furniture | Top-view category/variant palette (#159, #593) from the MIT pack `assets/furniture/houseplan-0.4.1` (#606); plan art is lazy (#474), saved geometry and default dimensions never change with the pack. |
 | Vacuums | Live puck, server-side trails and fit calibration are shipped; Roomba is not covered. Canonical: `docs/VACUUM.md`. |
+| Space-delete vacuum routes | #822 fulfils the #162 confirmation on the real server writer: only routes into the deleted space go with its atomic pair; explicit empty lists keep legacy calibration dormant. Dock/other routes and refused writes stay unchanged. |
 | Demo stand | **https://demo.houseplan.tech** — public, login `demo`/`demo`, resets to a synthetic home every hour. **https://dev.houseplan.tech** — closed, auto-deploys the head of `dev`. The demo home and what the stand cannot show: `demo/stand/README.md`. |
 | Privacy | Real-house plan sources and screenshots are gone from the tree; public images are generated from synthetic fixtures (`docs/images/screenshots.json`). Old images persist in git history and release archives — history is deliberately not rewritten, because that would break release tags and HACS installs. |
 

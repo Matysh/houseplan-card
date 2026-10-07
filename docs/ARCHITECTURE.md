@@ -398,6 +398,12 @@ the shared path re-resolves the dialog/space and confirmed marker set, flushes
 pending writes, then adopts re-read config/layout rather than the delete reply.
 This lazy module imports the editor host only as a type, never the editor runtime.
 
+`space/delete` filters explicit vacuum map routes to the deleted space inside
+`_space_delete_candidate` (#822), before the existing paired commit. It keeps
+other routes, root vacuum settings and the dock intact; an emptied list stays
+`[]` to retain its precedence over legacy calibration. Refusals do not mutate
+either Store, and there is no extra config write or schema/WS-key change.
+
 `auth.may_write()` is the single writer policy for WS and HTTP: administrators
 always write; `admin_only` (default `true` when unset) restricts writing to
 them; with `admin_only: false` other users write unless they belong to

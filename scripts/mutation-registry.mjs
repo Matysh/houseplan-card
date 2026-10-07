@@ -13421,6 +13421,35 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'space-delete-server-keeps-vacuum-routes',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_822_space_delete_commits_only_its_routes '
+      + 'tests_backend/test_ha_space_delete_routes.py',
+    because: 'the real writer must remove routes into the deleted space while preserving '
+      + 'the dock and other routes; the frontend candidate cannot prove the stored pair (#822 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '                vacuum["map_routes"] = kept_routes\n',
+      replace: '                pass  # mutant: keep routes into the deleted space\n',
+    }],
+  },
+  {
+    id: 'space-delete-server-revives-legacy-routes',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_822_last_space_keeps_explicit_empty_routes '
+      + 'tests_backend/test_ha_space_delete_routes.py',
+    because: 'an explicit empty route list must not become absent and revive retained legacy '
+      + 'calibration after deleting the last space (#822 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '                vacuum["map_routes"] = kept_routes\n',
+      replace: '                if kept_routes:\n'
+        + '                    vacuum["map_routes"] = kept_routes\n'
+        + '                else:\n'
+        + '                    vacuum.pop("map_routes", None)\n',
+    }],
+  },
+  {
     id: 'plan-optimize-skips-active-marker-id-invariant',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'plan_optimize_rejects_duplicate_active_marker_ids '

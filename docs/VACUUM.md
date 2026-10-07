@@ -101,6 +101,13 @@ Rules that follow from the identity being exact:
 - `default` stays a valid single-map id, but it is not proof of a stable
   multi-floor identity; the editor says so next to such a route.
 
+The authoritative `houseplan/space/delete` candidate performs route cleanup
+inside its existing revision-guarded config/layout pair (#822), including
+hidden and removed carriers and deletion of the last space. An emptied
+`map_routes` remains `[]`: retained legacy calibration must not become active.
+Blocked, stale or missing-space requests change nothing. This is not a sweep
+of older orphan routes into other missing spaces, nor a change to trail history.
+
 ## Calibration
 
 Calibration belongs to the route: the matrix is solved against the rooms of

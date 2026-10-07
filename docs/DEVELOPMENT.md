@@ -53,6 +53,17 @@ Pure lineage cases and shared frontend/backend candidates cover retained IDs,
 partial/full promotion and the unchanged partition-opening host restrictions.
 Never add a user's complete exported home configuration to the test fixtures.
 
+## Space deletion map-route regression (#822)
+
+Run `pytest tests_backend/test_ha_space_delete_routes.py` in the pinned HA
+environment. Its real WS client verifies the committed pair and revision
+increments, unchanged dock/other routes, refusal snapshots and explicit `[]`
+beside retained legacy calibration. The pure compatibility cases preserve
+absent/null routes and older unrelated orphans. A TS preview alone cannot
+witness this server bug. Register the two backend mutants, but execute only
+`node scripts/mutation-gate.mjs --check` during development; mutation execution
+belongs to the nightly gate. No rendering, input or model migration is involved.
+
 ## Input support contract
 
 Read `docs/TOUCH-SUPPORT.md` before changing interaction code.

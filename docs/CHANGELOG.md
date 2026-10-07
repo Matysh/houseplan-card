@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Deleting a space now actually removes the robot-map assignments pointing
+  into it, as the confirmation already promised. The dock and other maps stay
+  unchanged; a rejected deletion removes no assignments
+  ([#822](https://github.com/Matysh/houseplan-card/issues/822)).
+
 - Reinstalling House Plan now offers **Restore previous plans** first or
   **Start fresh** when old data remains. Fresh preserves the complete old set
   in a permanent archive; closing the wizard before final confirmation changes

@@ -1879,6 +1879,16 @@ def _space_delete_candidate(
             if isinstance(stair, dict) and stair.get("target_space_id") == space_id:
                 stair["target_space_id"] = None
     for marker in candidate_config.get("markers") or []:
+        # #162/#822: fulfil the confirmation in the same authoritative pair.
+        vacuum = marker.get("vacuum")
+        routes = vacuum.get("map_routes") if isinstance(vacuum, dict) else None
+        if isinstance(routes, list):
+            kept_routes = [
+                route for route in routes
+                if not isinstance(route, dict) or route.get("space") != space_id
+            ]
+            if len(kept_routes) != len(routes):
+                vacuum["map_routes"] = kept_routes
         marker_id = str(marker.get("id")) if marker.get("id") is not None else None
         marker_position = candidate_layout.get(marker_id) if marker_id is not None else None
         references_deleted_space = (
