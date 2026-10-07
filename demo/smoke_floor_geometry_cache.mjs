@@ -19,6 +19,15 @@
 //      scene that replaces it whenever the host renders mid-drag (an entity
 //      state change from Home Assistant, a toast expiring) and draws the
 //      preview record through the floor-geometry caches.
+// #769 AC8 one source of the union and bodies keys (src/floor-geometry-key.ts),
+//      judged on the AC2c drag. (a) A host render mid-drag draws the union a
+//      fresh card builds on the preview record — paths and `sourceFingerprint`
+//      — building it once (no seed since #451, see `_rszAcceptPreview`); a
+//      second host render at the same preview builds nothing. (b) Cancel and
+//      the way back to View build no union, bodies, contours or floors, and the
+//      union is the fresh card's on the stored record. (c) The bodies re-keyed
+//      for the preview are the fresh card's, a door cut into a partition next
+//      to the moving wall included.
 // #769 AC7 a planted cold build the size guard cannot see: the union pool is
 //      full (8), `garden`'s union is gone while its contours and clean floors
 //      stay warm. A four-switch cycle builds exactly that union — the build
@@ -71,7 +80,15 @@ const fixture = {
   f1: {
     rooms: f1Rooms,
     walls: wallsOf(f1Rooms, 15),
-    partitions: [{ id: 'f1-wall', a: [0.6, 0.62], b: [0.8, 0.62], cm: 10 }],
+    partitions: [
+      { id: 'f1-wall', a: [0.6, 0.62], b: [0.8, 0.62], cm: 10 },
+      // #769 AC8 c: a door cut into a partition beside the wall the drag moves.
+      { id: 'f1-door-wall', a: [0.52, 0.32], b: [0.77, 0.32], cm: 10 },
+    ],
+    openings: [{
+      id: 'f1-door', type: 'door', x: 0.5575, y: 0.32, angle: 0, length: 0.04,
+      host: { kind: 'partition', id: 'f1-door-wall', t: 0.15 },
+    }],
     wall_columns: [{ id: 'f1-column', shape: 'circle', center: [0.7, 0.3], cm: 20 }],
   },
   garden: {
@@ -113,6 +130,21 @@ const res = await page.evaluate(async (fixture) => {
   });
   const sameShown = (a, b) => a.space === b.space && a.walls === b.walls
     && JSON.stringify(a.areas) === JSON.stringify(b.areas);
+  // #769 AC8: the union and the physical bodies the floor's caches hold.
+  const unionOf = (host = card) => {
+    const value = host._wallUnionCache?.value;
+    return value ? JSON.stringify({
+      status: value.status, d: value.d, paths: value.paths, paperD: value.paperD,
+      depthUnits: value.depthUnits, openingPadUnits: value.openingPadUnits ?? null,
+      fillRule: value.fillRule, sourceFingerprint: value.sourceFingerprint ?? null,
+    }) : null;
+  };
+  const bodiesOf = (host = card) => {
+    const frame = host._physicalBodiesCache;
+    return frame ? JSON.stringify({
+      partitions: frame.partitions, columns: frame.columns, patches: frame.patches, all: frame.all,
+    }) : null;
+  };
   const sizes = () => ({
     wallUnionPool: card._wallUnionPool.size,
     innerContour: card._innerContourCache.size,
@@ -150,11 +182,13 @@ const res = await page.evaluate(async (fixture) => {
     await fresh.updateComplete;
     await frames();
     await fresh.updateComplete;
-    const value = { ...shown(fresh), ready: fresh._cfgRev === rev };
+    const value = {
+      ...shown(fresh), union: unionOf(fresh), bodies: bodiesOf(fresh), ready: fresh._cfgRev === rev,
+    };
     host.remove();
     return value;
   };
-  window.__hp744 = { diag, shown, sameShown, oracle, settled, writesIdle };
+  window.__hp744 = { diag, shown, sameShown, oracle, settled, writesIdle, unionOf, bodiesOf };
 
   // ---- fixture: walls on every room edge, a partition and a column per floor -
   // The demo record still carries the legacy `segments: []`, and the first
@@ -294,6 +328,7 @@ const res = await page.evaluate(async (fixture) => {
   out.ac2cGesture = box ? {
     x: box.left + box.width / 2, y: box.top + box.height / 2, toX: leftBy.x,
   } : null;
+  diag.ac8BuildsBeforeDrag = window.__hpSwitchCycleGuard.builds(card);
   return out;
 }, fixture);
 
@@ -320,13 +355,32 @@ if (gesture) {
   Object.assign(checks, await page.evaluate(async () => {
     const card = window.__card;
     const { diag, shown, settled } = window.__hp744;
+    const { unionOf, bodiesOf } = window.__hp744;
+    const builds = () => window.__hpSwitchCycleGuard.builds(card);
+    const growth = (before, after) => Object.fromEntries(Object.keys(after)
+      .map((family) => [family, after[family] - before[family]]));
     const record = JSON.stringify(card._resize.preview?.sp ?? null);
+    const beforeHostRender = builds();
     await card.hass.callService('light', 'toggle', { entity_id: 'light.ceiling' });
     await settled();
     diag.ac2cSettled = shown();
+    // #769 AC8 a/c: the union of this preview already exists — built once by
+    // its first reader, nothing seeds it (see `_rszAcceptPreview`) — so host
+    // renders mid-drag build no union, and the bodies re-keyed on every
+    // accepted frame are never rebuilt through the whole drag. Clean floors
+    // are uncached during a preview by design (#744) and are not judged here.
+    diag.ac8aUnion = unionOf();
+    diag.ac8cBodies = bodiesOf();
+    await card.hass.callService('light', 'toggle', { entity_id: 'light.ceiling' });
+    await settled();
+    diag.ac8bBuildsBeforeCancel = builds();
+    diag.ac8aUnionBuildsOnTheWayToTheFirstHostRender = beforeHostRender.wallUnion - diag.ac8BuildsBeforeDrag.wallUnion;
     return {
       ac2cStateChangeKeepsThePreview: card._resize.dragging
         && JSON.stringify(card._resize.preview?.sp ?? null) === record,
+      ac8aHostRendersMidDragBuildNoUnion: growth(beforeHostRender, diag.ac8bBuildsBeforeCancel).wallUnion,
+      ac8aTheUnionIsStillTheDrawnOne: unionOf() === diag.ac8aUnion,
+      ac8cTheDragNeverRebuildsTheBodies: growth(diag.ac8BuildsBeforeDrag, diag.ac8bBuildsBeforeCancel).physicalBodies,
     };
   }));
   await page.keyboard.press('Escape');
@@ -380,6 +434,25 @@ if (gesture) {
         && diag.ac2cLiveAreas.every(([roomId, text]) => fresh.areas[roomId] === text);
     }
     diag.ac2cCancelled = cancelled;
+    // #769 AC8 b: back in View after the cancel, nothing of the floor is built
+    // and the union is the fresh card's on the stored record.
+    const { unionOf, bodiesOf } = window.__hp744;
+    await window.__hpTest.setMode('view');
+    const after = window.__hpSwitchCycleGuard.builds(card);
+    out.ac8bCancelAndViewBuildNoUnionBodiesContoursOrFloors = ['wallUnion', 'physicalBodies', 'innerContour', 'cleanFloor']
+      .map((family) => after[family] - diag.ac8bBuildsBeforeCancel[family]);
+    const stored = await oracle(structuredClone(card._serverCfg), 'f1');
+    out.ac8bStoredOracleReady = stored.ready;
+    out.ac8bTheUnionEqualsAFreshCardOnTheStoredRecord = !!stored.union && unionOf() === stored.union;
+    out.ac8bTheBodiesEqualAFreshCardOnTheStoredRecord = !!stored.bodies && bodiesOf() === stored.bodies;
+    if (diag.ac2cOracle) {
+      const fresh = diag.ac2cOracle;
+      out.ac8aTheDrawnUnionEqualsAFreshCardOnThePreview = !!fresh.union && diag.ac8aUnion === fresh.union;
+      out.ac8cTheReKeyedBodiesEqualAFreshCardOnThePreview = !!fresh.bodies && diag.ac8cBodies === fresh.bodies;
+      const bodies = JSON.parse(fresh.bodies || 'null');
+      out.ac8cTheFixtureCutsAPartitionWithADoor = !!bodies
+        && bodies.all.length > bodies.partitions.length + bodies.columns.length + bodies.patches.length;
+    }
     return out;
   }));
   if (!checks.ac2cPreviewWallStandsWhereAFreshCardDrawsIt || !checks.ac2cSettledFrameEqualsAFreshCard) {
@@ -434,6 +507,9 @@ Object.assign(checks, await page.evaluate(async () => {
 
 checkAll(checks, {
   ac1GardenVisitBuildsNothingByCounter: { wallUnion: 0, innerContour: 0, cleanFloor: 0 },
+  ac8aHostRendersMidDragBuildNoUnion: 0,
+  ac8cTheDragNeverRebuildsTheBodies: 0,
+  ac8bCancelAndViewBuildNoUnionBodiesContoursOrFloors: [0, 0, 0, 0],
   ac7TheCycleBuildsTheUnionOnce: 1,
   ac7ItsContoursAndFloorsStayWarm: [0, 0],
   ac7TheSizeGuardSeesNothing: [],

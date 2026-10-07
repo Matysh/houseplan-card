@@ -270,8 +270,11 @@ test('room inner faces are structurally cached and shared by both fill layers', 
   assert.match(helper, /lruWrite\(this\._innerContourCache, key, value, 600\)/);
   assert.match(helper, /multiWallNodes/);
   assert.match(source, /lruRead\(this\._wallUnionPool, unionKey\)/);
-  assert.match(source, /lruWrite\(this\._wallUnionPool, unionKey, entry, 8\)/);
-  assert.match(source, /wallBodiesGeometryPath\(wallGeometry\)/);
+  // #769: the pool entry and its bound come from src/floor-geometry-key.ts.
+  assert.match(source, /writeWallUnionPool\(this\._wallUnionPool, wallUnionPoolEntry\(/);
+  // #769: the resize seed from the preflight artifact was dead since #451
+  // (`artifact: null`) and is gone; the miss branch builds the preview union.
+  assert.doesNotMatch(source, /wallBodiesGeometryPath\(/);
 
   const glowStart = source.indexOf('private _renderGlowBaseRooms(');
   const glowEnd = source.indexOf('\n  private _renderWallBodies(', glowStart);
@@ -298,7 +301,7 @@ test('wall and light geometry reuse bounded caches before structural work', () =
       < union.indexOf('const openCuts = this._openCuts();'),
     'a cached wall union must avoid resolving openings',
   );
-  assert.match(union, /lruWrite\(this\._wallUnionPool, unionKey, entry, 8\)/);
+  assert.match(union, /writeWallUnionPool\(this\._wallUnionPool, wallUnionPoolEntry\(/);
 
   const lightStart = source.indexOf('private _lightBarriers(');
   const lightEnd = source.indexOf('\n  /** Light pools', lightStart);
@@ -315,4 +318,31 @@ test('wall and light geometry reuse bounded caches before structural work', () =
   assert.match(shared,
     /recutWallBodiesGeometry\(input\.sharedWallGeometry, roomPassages, opaqueBodies\)/);
   assert.match(light, /lruWrite\(this\._lightBarrierPool, cacheKey, entry, 8\)/);
+});
+
+test('#769 AC8: the union and bodies keys, the pool bound and its entry have one source', () => {
+  const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
+  const files = {
+    card: read('../src/houseplan-card.ts'),
+    runtime: read('../src/houseplan-editor-runtime.ts'),
+    led: read('../src/led-strip-editor.ts'),
+  };
+  for (const [name, text] of Object.entries(files)) {
+    assert.doesNotMatch(text, /_floorKey\([^)]*\)\}\|\$\{[^}]*rooms\.length\}/,
+      `${name}: a wall-union key outside floor-geometry-key.ts`);
+    assert.doesNotMatch(text, /_floorKey\([^)]*\)\}\|\$\{[^}]*_cellCm\}\|\$\{[^}]*_gridPitch\}/,
+      `${name}: a physical-bodies key outside floor-geometry-key.ts`);
+    assert.doesNotMatch(text, /lruWrite\((?:this\.host|this)\._wallUnionPool\b/,
+      `${name}: a union pool write outside floor-geometry-key.ts`);
+    assert.doesNotMatch(text, /'sourceFingerprint'/, `${name}: the union fingerprint attached by hand`);
+  }
+  const count = (text, pattern) => text.split(pattern).length - 1;
+  assert.equal(count(files.card, 'wallUnionKey('), 1, 'the card miss branch');
+  assert.equal(count(files.runtime, 'wallUnionKey('), 2, '_rszEdgeDown and the _rszCancelDrag alias');
+  assert.equal(count(files.card, 'physicalBodiesKey('), 1, 'the card miss branch');
+  assert.equal(count(files.runtime, 'physicalBodiesKey('), 2, 'the preview and cancel re-keys');
+  assert.equal(count(files.led, 'physicalBodiesKey('), 1, 'the LED editor bodies');
+  const module = read('../src/floor-geometry-key.ts');
+  assert.match(module, /export const WALL_UNION_POOL_LIMIT = 8;/);
+  assert.match(module, /lruWrite\(pool, entry\.key, entry, WALL_UNION_POOL_LIMIT\)/);
 });

@@ -22,6 +22,7 @@ import {
   geometryAllRings, physicalBodyParts, pointInPhysicalGeometry,
 } from './physical-geometry';
 import { wallBodiesGeometry } from './wall-thickness';
+import { physicalBodiesKey } from './floor-geometry-key';
 import {
   LED_MAX_POINTS, LED_MAX_STRIPS, clampToBodies, clampVertexMove, compactPoints,
   isClosedStrip, pathD, validStripPoints, type PlacementBodies, type Pt,
@@ -209,7 +210,7 @@ export class LedStripEditor {
     const host = this.host;
     const space = host._spaceModel();
     if (!space) return { bodies: { rings: [], inside: () => false }, guides: [] };
-    const key = `${host._floorKey(space.id)}|${host._cellCm}|${host._gridPitch}`;
+    const key = physicalBodiesKey(host._floorKey(space.id), host._cellCm, host._gridPitch);
     if (this.bodyCache?.key === key) return this.bodyCache;
     const passes = (o: OpeningCfg) => o.type !== 'window';
     let geoms: unknown[] = [];

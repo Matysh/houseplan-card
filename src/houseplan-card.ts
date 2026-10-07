@@ -183,7 +183,7 @@ import {
   buildGlowClipGeometry, buildLightBarrierScene, createGlowRuntimeState,
   disposeGlowRuntime, forgetGlowSource, forgetGlowSpace, glowSourceInOpaqueBody,
   pruneGlowSources, readGlowClip, renderGlowPools, resolveGlowCandidates, resolveGlowFeather,
-  LightBarrierPass, lightGeometryFingerprint, resolveLightBarrierRevision, transitionGlowSource,
+  LightBarrierPass, resolveLightBarrierRevision, transitionGlowSource,
   warnGlowGeometryFallback, writeGlowClip,
   type GlowRuntimeHost, type GlowRuntimeState, type GlowSpot,
 } from './glow-scene';
@@ -274,7 +274,10 @@ import {
 import type { DecorShape, DecorStyle } from './editors/decor/types';
 import { StairViewRuntime, type StairViewHostPort } from './stairs-view';
 import { cleanFloorForRoom, type CleanFloorResult } from './clean-floor';
-import { floorGeometryKeyReader, type FloorKeySource } from './floor-geometry-key';
+import {
+  floorGeometryKeyReader, physicalBodiesKey, wallUnionKey, wallUnionPoolEntry, writeWallUnionPool,
+  type FloorKeySource,
+} from './floor-geometry-key';
 import {
   DECOR_ASSETS_API_VERSION, decorAssetIds, projectDecorImage,
   resolveDecorAssets, type DecorAsset,
@@ -1786,7 +1789,7 @@ export class HouseplanCard extends LitElement {
    * structural LRU miss, never for HA/theme/hover/opening-state paint. */
   private _isoStructuralBuildCount = 0;
   /** #769: real builds of each floor-geometry cache, counted in the miss branch
-   * only — never on a hit, a recency refresh, a resize seed or alias, or a
+   * only — never on a hit, a recency refresh, a resize re-key or alias, or a
    * clear. The #735 switch-cycle guard (demo/performance/switch-cycle-guard.mjs)
    * and the floor-cache smoke judge them; nothing in the product reads them. */
   private _floorCacheBuilds = {
@@ -8809,7 +8812,7 @@ export class HouseplanCard extends LitElement {
     const walls = this._spaceWalls;
     const extras = this._physicalBodiesR();
     if (!walls.length && !extras.length) return null;
-    const unionKey = `${this._floorKey(space.id)}|${space.rooms.length}`;
+    const unionKey = wallUnionKey(this._floorKey(space.id), space.rooms.length);
     if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
       const cached = lruRead(this._wallUnionPool, unionKey);
       if (cached.hit) this._wallUnionCache = cached.value;
@@ -8824,13 +8827,9 @@ export class HouseplanCard extends LitElement {
           space.rooms, walls, openCuts, openings,
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
         );
-        if (value) Object.defineProperty(value, 'sourceFingerprint', {
-          value: lightGeometryFingerprint(this._curSpaceCfg, this._cellCm, this._gridPitch),
-          enumerable: false,
-        });
-        const entry = { key: unionKey, value };
-        lruWrite(this._wallUnionPool, unionKey, entry, 8);
-        this._wallUnionCache = entry;
+        this._wallUnionCache = writeWallUnionPool(this._wallUnionPool, wallUnionPoolEntry(
+          unionKey, value, this._curSpaceCfg, this._cellCm, this._gridPitch,
+        ));
       }
     }
     return this._wallUnionCache.value;
@@ -9516,7 +9515,7 @@ export class HouseplanCard extends LitElement {
    * does not depend on show_borders. */
   private _physicalBodiesR(space: SpaceModel | undefined = this._spaceModel()): number[][][] {
     if (!space) return [];
-    const key = `${this._floorKey(space.id)}|${this._cellCm}|${this._gridPitch}`;
+    const key = physicalBodiesKey(this._floorKey(space.id), this._cellCm, this._gridPitch);
     if (this._physicalBodiesCache?.key === key) return this._physicalBodiesCache.all;
     this._floorCacheBuilds.physicalBodies++;
     const frame = physicalBodyParts(

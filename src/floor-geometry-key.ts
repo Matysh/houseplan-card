@@ -25,6 +25,8 @@
  * in-place edit without a new epoch shows on the next epoch, as it always did
  * for these caches.
  */
+import { lruWrite } from './card-runtime';
+import { lightGeometryFingerprint } from './glow-scene';
 import { contentFingerprint } from './visual-continuity';
 
 /** The card members the key reads; the card passes itself. */
@@ -83,4 +85,50 @@ export function floorGeometryKeyReader(source: FloorKeySource): (spaceId: string
       .find((space) => (space as { id?: unknown } | null)?.id === spaceId) ?? null,
     source._curSpaceCfg ?? null,
   );
+}
+
+/*
+ * #769: the one source of the wall-union and physical-bodies keys, the bound of
+ * the union pool and its entry. The card's miss branch and the resize runtime
+ * (`_rszEdgeDown` finds the pre-drag union, `_rszCancelDrag` aliases it back,
+ * the preview and cancel re-key the physical bodies) build them only here: a
+ * copy in another format would silently stop hitting. The LED editor keys its
+ * own placement bodies with `physicalBodiesKey` too.
+ */
+
+/** Recently shown floors whose wall union stays warm. */
+export const WALL_UNION_POOL_LIMIT = 8;
+
+/** The wall-union key of a floor: its content key and its room count. */
+export const wallUnionKey = (floorKey: string, roomCount: number): string => `${floorKey}|${roomCount}`;
+
+/** The physical-bodies key of a floor at a grid scale. */
+export const physicalBodiesKey = (floorKey: string, cellCm: number, gridPitch: number): string =>
+  `${floorKey}|${cellCm}|${gridPitch}`;
+
+/** One entry of the wall-union pool. */
+export interface WallUnionPoolEntry<T> { key: string; value: T }
+
+/**
+ * The pool entry of a union built from `record`, the floor record as rendered.
+ * The union carries that record's light-geometry fingerprint as the
+ * non-enumerable `sourceFingerprint`: Glow and the light barriers reuse the
+ * masonry only for the record it was built from.
+ */
+export function wallUnionPoolEntry<T extends object | null>(
+  key: string, value: T, record: unknown, cellCm: number, gridPitch: number,
+): WallUnionPoolEntry<T> {
+  if (value) Object.defineProperty(value, 'sourceFingerprint', {
+    value: lightGeometryFingerprint(record, cellCm, gridPitch),
+    enumerable: false,
+  });
+  return { key, value };
+}
+
+/** Write `entry` into the union pool under its own key, most recent; returns it. */
+export function writeWallUnionPool<T>(
+  pool: Map<string, WallUnionPoolEntry<T>>, entry: WallUnionPoolEntry<T>,
+): WallUnionPoolEntry<T> {
+  lruWrite(pool, entry.key, entry, WALL_UNION_POOL_LIMIT);
+  return entry;
 }

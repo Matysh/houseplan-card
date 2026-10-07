@@ -36,8 +36,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 44 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 50 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 39 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 109 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **249 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 111 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **251 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -259,7 +259,11 @@ residual-owned IDs before the strict wall-model barrier or rolls rejected writes
 `floor-cache-counter-skips-evicting-miss` (#769) needs the real card cycling floors
 through its tabs with a full union pool: only the rendered floor switch reaches the
 miss branch that evicts, and the witness compares the build counter with the whole
-size snapshot of the same card.
+size snapshot of the same card. `resize-bodies-rekey-format-diverges` and
+`wall-union-fingerprint-from-stored-record` (#769 AC8) need a held real Resize drag with
+host renders mid-drag (a Home Assistant state change): the bodies re-keyed on every
+accepted frame and the union drawn for the preview record are compared with a fresh card
+built from that record.
 
 The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition.
 
@@ -334,6 +338,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `render-invalidation-renders-irrelevant-ha`
 - `render-reconcile-restarts-editor-runtime-cycle`
 - `reopened-room-from-registry-space`
+- `resize-bodies-rekey-format-diverges`
 - `room-accept-leaves-coincident-partitions`
 - `room-gear-second-touch-keeps-drag`
 - `room-settings-click-does-not-open`
@@ -356,6 +361,7 @@ The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy
 - `volumetric-kiosk-ignores-setting`
 - `wall-face-apply-skips-overlap-guard`
 - `wall-face-lineage-skips-post-reconcile-settlement`
+- `wall-union-fingerprint-from-stored-record`
 - `wallthick-hit-narrowed`
 - `warm-late-resume-beats-user-mode`
 - `warm-late-resume-crosses-space`

@@ -88,7 +88,7 @@ import { furnitureWallSurfacesFor, type FurnitureWallSurface } from './furniture
 import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations, setWallThickness,
   setWallThicknessForRoom, cmToField, wallCmToUnits, multiWallNodesForGeometry, wallBodiesGeometry,
-  wallBodiesGeometryPath, wallBodiesUnionPath, innerContourForRoom,
+  wallBodiesUnionPath, innerContourForRoom,
   openingInnerFaceOffsetFromIndex, resolveOpeningWallAssociation, applyWallThicknessToNewRoom,
   drawWallPreviewD, linearWallJoinPatches, DRAW_WALL_DEFAULT_CM, wallIntervals,
   materializeWallIntervals, intervalCmAt, wallHatchStepUnits, HATCH_BASE_STEP_UNITS,
@@ -231,7 +231,7 @@ import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlan
 import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePositionState } from './device-position-history';
 import { contentFingerprint } from './visual-continuity';
-import { lightGeometryFingerprint } from './glow-scene';
+import { physicalBodiesKey, wallUnionKey, writeWallUnionPool } from './floor-geometry-key';
 import { PointerModalityController } from './pointer-modality';
 import { type ResolvedDevicePresentation } from './device-presentation';
 import { type FiniteActivityRuntime } from './activity-runtime';
@@ -305,15 +305,6 @@ type ResizeWallUnion = ReturnType<typeof wallBodiesUnionPath>;
 type ResizeWallArtifact = ReturnType<typeof wallBodiesGeometry>;
 /** Keeps every previously valid scale at the maximum 20 cm grid scale lossless. */
 const DECOR_TEXT_CM_MAX = 2000;
-const lruWrite = <K, V>(cache: Map<K, V>, key: K, value: V, limit: number): void => {
-  cache.delete(key);
-  cache.set(key, value);
-  while (cache.size > limit) {
-    const oldest = cache.keys().next().value as K | undefined;
-    if (oldest === undefined) break;
-    cache.delete(oldest);
-  }
-};
 /** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
  *  PAGE, not with any card instance. Lovelace re-creates card elements when
  *  the websocket reconnects after a long-backgrounded tab; the fresh instance
@@ -3192,23 +3183,21 @@ public _rszProjectPreview(
       },
     };
   }
+/**
+ * #769: a resize moves rooms, walls and room openings, never partitions,
+ * columns or the host of a partition opening, so the physical bodies of the
+ * preview record are those of the stored one: the cache is re-keyed, not
+ * rebuilt (smoke #769 AC8 c compares them with a fresh card). No union is
+ * seeded: since #451 the live preflight checks a local component and publishes
+ * no artifact, and a host render mid-drag builds the preview union through the
+ * card's miss branch, keyed by the same module (AC8 a).
+ */
 public _rszAcceptPreview(
-    preview: ResizePreview | null, wallGeometry: ResizeWallArtifact | null,
+    _preview: ResizePreview | null, _wallGeometry: ResizeWallArtifact | null,
   ): void {
     this.host._cfgEpoch++;
-    if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key =
-      `${this.host._floorKey(this.host._space)}|${this.host._cellCm}|${this.host._gridPitch}`;
-    if (!preview || !wallGeometry) return;
-    const projected = wallBodiesGeometryPath(wallGeometry);
-    if (!projected) return;
-    const key = `${this.host._floorKey(this.host._space)}|${preview.sp.rooms.length}`;
-    Object.defineProperty(projected, 'sourceFingerprint', {
-      value: lightGeometryFingerprint(preview.sp, this.host._cellCm, this.host._gridPitch),
-      enumerable: false,
-    });
-    const entry = { key, value: projected };
-    lruWrite(this.host._wallUnionPool, key, entry, 8);
-    this.host._wallUnionCache = entry;
+    if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key = physicalBodiesKey(
+      this.host._floorKey(this.host._space), this.host._cellCm, this.host._gridPitch);
   }
 
 public _rszSpaceCandidateGeometry(spaceId: string, sp: any): {
@@ -3269,9 +3258,11 @@ public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
         this.host._serverCfg, this.host._space, null, new Set(plan.roomIds));
     } catch { this._resizeBaselineLimits = []; }
     const start = this._svgPoint(ev);
-    const wallUnionKey = `${this.host._floorKey(this.host._space)}|${rooms.length}`;
-    const wallUnionBefore = this.host._wallUnionCache?.key === wallUnionKey
-      ? this.host._wallUnionCache.value : null;
+    // #769: the card's own union key of the shown floor (its model's room count).
+    const space = this.host._spaceModel();
+    const unionKey = space ? wallUnionKey(this.host._floorKey(space.id), space.rooms.length) : null;
+    const shown = this.host._wallUnionCache;
+    const wallUnionBefore = unionKey !== null && shown?.key === unionKey ? shown.value : null;
     const snapshotIdentity = this._rszSnapshot();
     this.host._resize.begin({
       pointerId: ev.pointerId, start: [start[0], start[1]], roomId, plan,
@@ -3388,17 +3379,15 @@ public _rszCancelDrag(pointerId?: number): void {
     // An identical cancel reuses the pre-drag structural caches and writes nothing.
     if (result.restoreEpoch !== null) this.host._cfgEpoch = result.restoreEpoch;
     else this.host._cfgEpoch++;
-    if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key =
-      `${this.host._floorKey(this.host._space)}|${this.host._cellCm}|${this.host._gridPitch}`;
+    if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key = physicalBodiesKey(
+      this.host._floorKey(this.host._space), this.host._cellCm, this.host._gridPitch);
     if (result.restoreWallUnion) {
       // Alias the already-proved pre-drag union under the restored floor key (#744).
       const space = this.host._spaceModel();
-      if (space) {
-        const key = `${this.host._floorKey(space.id)}|${space.rooms.length}`;
-        const entry = { key, value: result.restoreWallUnion };
-        lruWrite(this.host._wallUnionPool, key, entry, 8);
-        this.host._wallUnionCache = entry;
-      }
+      if (space) this.host._wallUnionCache = writeWallUnionPool(this.host._wallUnionPool, {
+        key: wallUnionKey(this.host._floorKey(space.id), space.rooms.length),
+        value: result.restoreWallUnion,
+      });
     }
     // Retain the canonical frame only when the drag was actually painted in
     // the isolated plan-editor layer. Programmatic/non-editor callers still

@@ -4,7 +4,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { floorGeometryKeyReader, floorRecordKeyMemo } from '../test-build/floor-geometry-key.js';
+import {
+  floorGeometryKeyReader, floorRecordKeyMemo, physicalBodiesKey, WALL_UNION_POOL_LIMIT,
+  wallUnionKey, wallUnionPoolEntry, writeWallUnionPool,
+} from '../test-build/floor-geometry-key.js';
+import { lightGeometryFingerprint } from '../test-build/glow-scene.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
 
 const record = (id, cm = 15) => ({
@@ -65,4 +69,30 @@ test('#769 record key does not depend on the shown floor; the #744 reader keys a
   assert.equal(reader('B'), own, 'shown, B gets the record key');
   source._curSpaceCfg = a;
   assert.equal(keyOf(1, '1', 'B', b, b), own, 'the record key of B is the same whichever floor is shown');
+});
+
+test('#769 AC8: one format of the union and bodies keys, the pool bound and its entry', () => {
+  assert.equal(wallUnionKey('A|f', 3), 'A|f|3', 'the union key: the floor key and its room count');
+  assert.equal(physicalBodiesKey('A|f', 5, 1000), 'A|f|5|1000', 'the bodies key: the floor key at a grid scale');
+  assert.notEqual(physicalBodiesKey('A|f', 5, 1000), physicalBodiesKey('A|f', 10, 1000));
+
+  const stored = record('A');
+  const value = { d: 'M0 0Z' };
+  const entry = wallUnionPoolEntry('A|f|1', value, stored, 5, 1000);
+  assert.equal(entry.key, 'A|f|1');
+  assert.equal(entry.value, value, 'the union itself is the value');
+  assert.equal(value.sourceFingerprint, lightGeometryFingerprint(stored, 5, 1000),
+    'the union carries the light fingerprint of the record it was built from');
+  assert.deepEqual(Object.keys(value), ['d'], 'the fingerprint is not enumerable');
+  assert.equal(wallUnionPoolEntry('A|f|0', null, stored, 5, 1000).value, null, 'no union: nothing to tag');
+
+  const pool = new Map();
+  for (let index = 0; index < WALL_UNION_POOL_LIMIT + 2; index++)
+    assert.equal(writeWallUnionPool(pool, { key: `k${index}`, value: index }).key, `k${index}`);
+  assert.equal(WALL_UNION_POOL_LIMIT, 8);
+  assert.deepEqual([...pool.keys()], ['k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9'],
+    'the oldest floors leave the full pool first');
+  writeWallUnionPool(pool, { key: 'k2', value: 'again' });
+  assert.deepEqual([...pool.keys()].at(-1), 'k2', 'a rewrite is the most recent');
+  assert.equal(pool.size, WALL_UNION_POOL_LIMIT);
 });

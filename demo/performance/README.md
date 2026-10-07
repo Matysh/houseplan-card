@@ -95,7 +95,7 @@ build in a full LRU evicts one entry and leaves every size as it was, so the
 size guard was blind once a pool filled up; and its opening wall index read
 `card._openingWallIndexCache ? 1 : 0` of a `Map`, which is always 1. The card
 now counts the real builds of each floor-geometry cache in its miss branch
-(`_floorCacheBuilds`; never on a hit, a recency refresh, a resize seed or
+(`_floorCacheBuilds`; never on a hit, a recency refresh, a resize re-key or
 alias, or a clear), and one pure decision judges the window
 (`demo/performance/switch-cycle-guard.mjs`, shared with
 `demo/smoke_floor_geometry_cache.mjs` and `test/switch-cycle-guard.test.mjs`):

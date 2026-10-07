@@ -14617,6 +14617,36 @@ const MUTANT_DEFINITIONS = [
       replace: '        if (this._wallUnionPool.size < 8) this._floorCacheBuilds.wallUnion++; // mutant: not on an evicting miss\n',
     }],
   },
+  // #769: ключи объединения и тел, лимит и запись пула — из одного модуля.
+  {
+    id: 'resize-bodies-rekey-format-diverges',
+    guard: 'node demo/smoke_floor_geometry_cache.mjs',
+    because: '#769 AC8 c: the resize runtime re-keys the physical bodies for every accepted preview; a '
+      + 'key built in another format than the card\'s misses, and the drag rebuilds the bodies',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '  ): void {\n'
+        + '    this.host._cfgEpoch++;\n'
+        + '    if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key = physicalBodiesKey(\n'
+        + '      this.host._floorKey(this.host._space), this.host._cellCm, this.host._gridPitch);\n',
+      replace: '  ): void {\n'
+        + '    this.host._cfgEpoch++;\n'
+        + '    if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key = // mutant: own format\n'
+        + '      `${this.host._floorKey(this.host._space)}|${this.host._cellCm}`;\n',
+    }],
+  },
+  {
+    id: 'wall-union-fingerprint-from-stored-record',
+    guard: 'node demo/smoke_floor_geometry_cache.mjs',
+    because: '#769 AC8 a: the union drawn mid-drag must carry the preview record\'s light fingerprint; '
+      + 'tagged with the stored record, Glow and the light barriers would treat stale masonry as current',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '          unionKey, value, this._curSpaceCfg, this._cellCm, this._gridPitch,\n',
+      replace: '          unionKey, value, this._serverCfg?.spaces.find((s: any) => s.id === space.id), // mutant\n'
+        + '          this._cellCm, this._gridPitch,\n',
+    }],
+  },
   // #769: сводная площадь — пофлорное мемо по ключу записи этажа, а не по эпохе.
   {
     id: 'summary-area-key-global-epoch',
