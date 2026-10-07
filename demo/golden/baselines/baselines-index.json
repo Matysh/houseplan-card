@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 73,
-  "acceptedAt": "2026-10-06T20:39:26.851Z",
-  "sourceFingerprint": "b7958f48935cd236f28c56a54e50a182713dbd63a012ad16b1c70d00b2b7fc4d",
+  "acceptedAt": "2026-10-07T20:16:32.701Z",
+  "sourceFingerprint": "e270340092f7e34e87f84df9b2d6b4a34d4ffadf0039174d8c3c89cfa4573b69",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "b7958f48935cd236f28c56a54e50a182713dbd63a012ad16b1c70d00b2b7fc4d",
+    "buildFingerprint": "e270340092f7e34e87f84df9b2d6b4a34d4ffadf0039174d8c3c89cfa4573b69",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 37526387243,
+      "run": 37675448130,
       "attempt": 1,
-      "sha": "7efe457939d6928693e16a33171a596de6c81fbb"
+      "sha": "334e0c23788d9da952a217f5e86b080e89eb8934"
     }
   },
   "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 112,
+    "count": 111,
     "floor": 10
   },
   "scenarios": {
@@ -144,7 +144,7 @@
     "device-battery-board-dark": "d0f4d338a34eef50965c89716df285344bcfb6a60a078372d3a8b1bb9855d733",
     "device-battery-board-medium": "25d924e54d0d0c09569678560c00869ac3a39dfc38c59910adc86ad221e8b2e7",
     "device-battery-mobile-dark": "f968127a092cd5081a18864ce883f791e398136b5cbc0fcd319eab6a855c7cc8",
-    "device-battery-zigbee-overlap-dark": "392c2d07b97e3c83a4da657931df1bd38d419b18c05c6843ed3da8934e975c9e",
+    "device-battery-zigbee-overlap-dark": "ef5211df5694a04a62eb2d1e4cfc5fe0468a34a92d1a0365e1fc7d6737db5aa2",
     "device-value-face-cover-source-dark": "18aa90881fe7794c98c52142b73fb1db33bf57d390c24b6286b7b7db6312bcfa",
     "device-icon-state-table-light": "0e426d536bd89354d51bd90ef62c08bdf8d36f27132d5f1f22b64c79850266df",
     "device-icon-state-table-dark": "c993ee850b38af1325f1290d45e516a19c4bc6c3e4db864cdc1cc61276ce6d18",
