@@ -274,21 +274,8 @@ export const dialogsStyles = css`
       gap: var(--sp-4);
   }
     .colorrow input[type='range'] { flex: 1; }
-    /* beat the generic hp-dialog .body .namein { width:100% } rule */
-    hp-dialog .body .temprange .tempin { width: 56px; flex: none; padding: var(--sp-2) var(--sp-3); }
     .colorrow ha-slider { flex: 1; min-width: 0; }
     .colorrow .opv { font-size: var(--fs-s); min-width: 34px; text-align: right; }
-    .help-inline-label {
-      display: inline-flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: var(--sp-1);
-    }
-    hp-dialog .body .help-inline-label > label {
-      min-width: 0;
-      margin-top: 0;
-      overflow-wrap: anywhere;
-    }
     .planrow {
       display: flex;
       align-items: center;
@@ -398,18 +385,6 @@ export const dialogsStyles = css`
       overflow-wrap: anywhere;
       font-size: var(--fs-l);
       line-height: 1.3;
-    }
-    .curbind {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-      font-size: var(--fs-m);
-      color: var(--hp-txt);
-      flex-wrap: wrap;
-    }
-    .curbind .ref {
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
     }
     .vaccalbar {
       position: fixed;
@@ -544,19 +519,6 @@ export const dialogsStyles = css`
       border-radius: var(--rad-s);
       padding: 0 var(--sp-3);
     }
-    .btn.alignall { width: 100%; justify-content: center; }
-    .backupactions {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--sp-3);
-    }
-    .backupactions .btn { justify-content: center; min-width: 0; }
-    .backupcounts {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--sp-2) var(--sp-4);
-      font-size: var(--fs-s);
-    }
     .backupwarn, .backuperror {
       border-radius: var(--rad-s);
       padding: var(--sp-3);
@@ -566,9 +528,6 @@ export const dialogsStyles = css`
     }
     .backupwarn { background: color-mix(in srgb, var(--hp-accent) 12%, transparent); }
     .backuperror { background: rgba(179, 64, 42, .16); color: #ff7a5c; }
-    @media (max-width: 520px) {
-      .backupactions, .backupcounts { grid-template-columns: 1fr; }
-    }
     hp-dialog .body {
       padding: var(--sp-5) var(--sp-6);
       display: flex;

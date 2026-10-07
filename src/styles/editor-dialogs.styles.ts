@@ -518,6 +518,17 @@ export const editorDialogsStyles = css`
     .backupupload > .btn { width: 100%; justify-content: center; }
     .backupupload input { display: none; }
     .backupbody { min-width: 0; }
+    /* #813: the eager sheet kept these only because a dead .backupactions
+       shared the 520 px rule; with it gone they are editor-only (#805). */
+    .backupcounts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--sp-2) var(--sp-4);
+      font-size: var(--fs-s);
+    }
+    @media (max-width: 520px) {
+      .backupcounts { grid-template-columns: 1fr; }
+    }
     .backupplanonly { margin-inline-start: var(--sp-4) !important; align-items: flex-start !important; }
     .backupplanonly > span:first-of-type { display: grid; gap: 2px; white-space: normal; }
     .backupplanonly small { color: var(--secondary-text-color); line-height: 1.35; }

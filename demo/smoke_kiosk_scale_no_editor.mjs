@@ -36,6 +36,8 @@ const HOLD_MS = 3400; // the kiosk opens its dialog after a 3 s hold
 const KIOSK = '#hp-kiosk';
 const DIALOG = `${KIOSK} hp-dialog[data-kind="kiosk"]`;
 const SUMMARY_PREFIX = 'houseplan.summary-panel.v1:';
+// #813 (F12): the pre-summary key is read once for migration and never written.
+const LEGACY_SCALE_KEY = 'houseplan_card_kiosk_v1';
 /** `true`, or what actually happened — the value is the evidence. */
 const same = (expected, actual) => JSON.stringify(actual) === JSON.stringify(expected)
   || `${JSON.stringify(actual)} instead of ${JSON.stringify(expected)}`;
@@ -290,6 +292,8 @@ out.kioskSessionNeverRequestedEditor = same(
   { requests: 0, loader: 'idle', runtime: false, notices: 0 },
   { requests: kiosk.chunk.requests, loader: after.loader, runtime: after.runtime, notices: after.notices },
 );
+out.scaleNeverWritesTheLegacyKey = same(null,
+  await kiosk.page.evaluate((key) => localStorage.getItem(key), LEGACY_SCALE_KEY));
 
 // (1b) #813 AC1: three real mouse holds in a row on the same cold kiosk.
 await kiosk.page.evaluate((selector) => {

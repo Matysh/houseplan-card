@@ -324,7 +324,6 @@ const DECOR_TEXT_CM_MAX = 2000;
 /** Rotation step of a decor text block — the same 5° a device icon turns in
  *  (marker dialog). Shift affects angle precision only, never position. */
 const DT_ANGLE_STEP = 5;
-const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
 /** Short semantic-event / direct-terminal-transition window. Event uses
     three sequential 1.1 s waves; motion cool-down itself never animates. */
@@ -603,7 +602,6 @@ export interface HouseplanEditorHostPort {
     sharedGeometry?: JunctionSharedGeometry | null, roomIds?: ReadonlySet<string>) => JunctionLimitViolation[];
   _isVacDev: (d: DevItem) => boolean;
   _kiosk: boolean;
-  _kioskDialog: boolean;
   readonly _kioskHold: { cancel(): void };
   _kioskScale: { icon: number; font: number; };
   _isoEnabled: boolean;
@@ -9697,38 +9695,6 @@ public _renderRulesDialog(): TemplateResult {
           <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveRules()} ?disabled=${d.busy}>
             <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this.host._t('btn.save')}
           </button>
-        </div>
-    </hp-dialog>`;
-  }
-
-public _saveKioskScale(patch: Partial<{ icon: number; font: number }>): void {
-    this.host._kioskScale = { ...this.host._kioskScale, ...patch };
-    try {
-      localStorage.setItem(LS_KIOSK, JSON.stringify(this.host._kioskScale));
-    } catch {
-      /* ignore */
-    }
-    this.host.requestUpdate();
-  }
-
-public _renderKioskDialog(): TemplateResult {
-    const k = this.host._kioskScale;
-    const row = (key: 'icon' | 'font', label: string) => html`<label>${label}</label>
-      <div class="colorrow">
-        ${this._rangeInput(50, 300, 5, Math.round(k[key] * 100), (n) => this._saveKioskScale({ [key]: n / 100 }))}
-        <span class="opv">${Math.round(k[key] * 100)}%</span>
-      </div>`;
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="kiosk" .title=${this.host._t('kiosk.title')} icon="mdi:tablet"
-      dismiss-on-scrim @hp-close=${() => (this.host._kioskDialog = false)}>
-        <div class="body">
-          <div class="rhint">${this.host._t('kiosk.hint')}</div>
-          ${row('icon', this.host._t('kiosk.icon_scale'))}
-          ${row('font', this.host._t('kiosk.font_scale'))}
-        </div>
-        <div class="row" slot="footer">
-          <button class="btn ghost" @click=${() => this._saveKioskScale({ icon: 1, font: 1 })}>${this.host._t('gs.reset')}</button>
-          <span class="spacer"></span>
-          <button class="btn on" data-hp="dialog-cancel" @click=${() => (this.host._kioskDialog = false)}>${this.host._t('btn.close')}</button>
         </div>
     </hp-dialog>`;
   }
