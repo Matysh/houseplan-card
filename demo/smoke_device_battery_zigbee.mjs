@@ -1,6 +1,8 @@
 /** #792 AC7: real caption pixels cover battery ink; route pixels stay below core.
  * #808 AC2: a local link's route pixels paint over the battery ink of the
  * hovered endpoint and of the neighbour endpoint, in Flat and 2.5D.
+ * #809: the core of the unhovered neighbour endpoint paints over the routes in
+ * Flat and 2.5D; non-endpoints keep their 2.5D layers (2, hovered 5).
  * Controls hide only the rendered test layer for a differential raster probe.
  * Registry, settings, provider fetch and hover enter through public surfaces.
  */
@@ -160,6 +162,10 @@ try {
         ?.querySelector('[data-hp="zigbee-topology-line"]'));
       await page.evaluate(() => window.__hpTest.settled());
       const battery = (await batteryGeometry(page, owner)).battery;
+      // #809 AC1: the unhovered neighbour endpoint (d_light1 while d_leak is
+      // hovered) and the hovered core, both measured after the hover settled.
+      const ends = role === 'neighbour' ? { core: (await batteryGeometry(page, neighbor)).core,
+        hoveredCore: (await batteryGeometry(page, hovered)).core } : null;
       // The drawn route, not the lifted 2.5D cores: its endpoints in viewport px.
       // The ordinary device tooltip may sit over the hovered battery; it is
       // hidden in both frames, so only the route layers differ.
@@ -188,7 +194,7 @@ try {
       await toggleRoutes(false);
       await page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp-live-tip]')
         ?.style.removeProperty('visibility'));
-      const evidence = await page.evaluate(async ({ active, routesHidden, route, battery }) => {
+      const evidence = await page.evaluate(async ({ active, routesHidden, route, battery, ends }) => {
         const decode = async data => {
           const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob());
           const canvas = new OffscreenCanvas(bitmap.width, bitmap.height), ctx = canvas.getContext('2d');
@@ -216,13 +222,84 @@ try {
           ink++;
           if (changed(baseline, painted) && !green(painted)) over++;
         }
-        return { ink, over, covers: ink >= 6 && over / ink >= 0.8 };
-      }, { active: active.toString('base64'), routesHidden: routesHidden.toString('base64'), route, battery });
+        // #809 AC1: along the same line, inside the neighbour's core the route
+        // layers change nothing; outside both cores they do. The battery frame
+        // may reach into the core and the #808 copy paints over it there, so
+        // the frame (plus the clip padding) is skipped. The core sample is the
+        // inscribed ellipse: a round Flat core paints no bounding-box corners.
+        let core = null;
+        if (ends) {
+          const near = (r, x, y, margin) => x >= r.x - margin && x <= r.right + margin
+            && y >= r.y - margin && y <= r.bottom + margin;
+          const inCore = (r, x, y) => {
+            const rx = r.width / 2 - 2, ry = r.height / 2 - 2;
+            return rx > 0 && ry > 0 && ((x - r.x - r.width / 2) / rx) ** 2 + ((y - r.y - r.height / 2) / ry) ** 2 <= 1;
+          };
+          const visited = new Set();
+          let inside = 0, insideChanged = 0, outside = 0, exposed = 0;
+          for (let step = 0; step <= length * 2; step++) {
+            const x = p.x + (q.x - p.x) * step / (length * 2), y = p.y + (q.y - p.y) * step / (length * 2);
+            const key = `${Math.floor(x)},${Math.floor(y)}`;
+            if (visited.has(key) || near(battery, x, y, 4)) continue;
+            visited.add(key);
+            const routeShows = changed(at(a, x, y), at(hidden, x, y));
+            if (inCore(ends.core, x, y)) {
+              inside++;
+              if (routeShows) insideChanged++;
+            } else if (!near(ends.core, x, y, 3) && !near(ends.hoveredCore, x, y, 3)) {
+              outside++;
+              if (routeShows) exposed++;
+            }
+          }
+          core = { inside, insideChanged, outside, exposed,
+            paintsOver: inside >= 6 && insideChanged <= 2 && exposed >= 3 };
+        }
+        return { ink, over, covers: ink >= 6 && over / ink >= 0.8, core };
+      }, { active: active.toString('base64'), routesHidden: routesHidden.toString('base64'), route, battery, ends });
       console.log(`Battery Zigbee ${mode} local ${role} route evidence:`, evidence);
       out[`${mode}_localRoutePaintsOver${role === 'own' ? 'Own' : 'Neighbour'}Battery`] = evidence.covers;
+      if (ends) out[`${mode}_neighbourCorePaintsOverRoutes`] = evidence.core.paintsOver;
       await page.mouse.move(10, 10);
     }
   }
+  // #809 AC2: the endpoint lift must not reach other markers in 2.5D. A plug
+  // outside the Zigbee topology is the hovered non-endpoint (z-index 5); the
+  // unlinked d_temp stays on the base 2.5D layer (2) in both hovers.
+  await page.evaluate(async () => {
+    await window.__hpTest.setVolumetricView(true);
+    await window.__hpTest.setServerConfig(cfg => ({ ...cfg,
+      markers: cfg.markers.map(marker => marker.id === 'd_kettle' ? { id: 'd_kettle', binding: 'device:d_kettle',
+        space: 'f1', display: 'badge', value_badge: { enabled: false } } : marker) }));
+    await window.__hpTest.setLayout(layout => ({ ...layout, d_kettle: { s: 'f1', x: 0.15, y: 0.2 } }));
+    await window.__hpTest.settled();
+  });
+  const layers = () => page.evaluate(() => Object.fromEntries(['d_temp', 'd_light1', 'd_leak', 'd_kettle'].map(id => {
+    const node = window.__card.shadowRoot.querySelector(`[data-hp="device"][data-id="${id}"]`);
+    return [id, { z: node ? getComputedStyle(node).zIndex : null,
+      endpoint: !!node?.hasAttribute('data-hp-zigbee-topology-endpoint'),
+      hovered: !!node?.hasAttribute('data-hp-device-hover') }];
+  })));
+  const hoverCore = async id => {
+    const { core } = await batteryGeometry(page, id);
+    await page.mouse.move(core.x + core.width / 2, core.y + core.height / 2);
+    await page.waitForFunction(id => window.__card.shadowRoot
+      .querySelector(`[data-hp="device"][data-id="${id}"][data-hp-device-hover]`), id);
+    await page.evaluate(() => window.__hpTest.settled());
+  };
+  await hoverCore('d_leak');
+  await page.waitForFunction(() => window.__card.shadowRoot.querySelector('hp-zigbee-topology-overlay')?.shadowRoot
+    ?.querySelector('[data-hp="zigbee-topology-line"]'));
+  const linked = await layers();
+  await hoverCore('d_kettle');
+  await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('[data-hp-zigbee-topology-endpoint]'));
+  const plain = await layers();
+  console.log('Battery Zigbee iso marker layers:', { linked, plain });
+  out.iso_nonEndpointKeepsBaseLayer = linked.d_light1.endpoint && linked.d_leak.endpoint
+    && !linked.d_temp.endpoint && linked.d_temp.z === '2' && !linked.d_kettle.endpoint && linked.d_kettle.z === '2'
+    && plain.d_temp.z === '2' && plain.d_light1.z === '2' && plain.d_leak.z === '2';
+  out.iso_hoveredNonEndpointKeepsHoverLayer = plain.d_kettle.hovered && !plain.d_kettle.endpoint
+    && plain.d_kettle.z === '5';
+  await page.mouse.move(10, 10);
   checkAll(out);
 } catch (error) {
   check('batteryZigbeeSmokeCompleted', false);

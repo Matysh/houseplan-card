@@ -397,6 +397,15 @@ export const devicesStyles = css`
        Repeat the endpoint contract at a still-higher specificity so the
        hovered source cannot fall back below the topology overlay. */
     :host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint][data-hp-device-hover] { z-index: 8; }
+    /* #809: the 2.5D View puts every marker on z-index 2 with a (0,4,0)
+       selector (plan.styles.ts), which beats the base endpoint rule and left
+       the unhovered neighbour endpoint under the routes. Repeat the endpoint
+       contract at (0,5,0) for that View. Narrowing the 2.5D rule with
+       :not([data-hp-zigbee-topology-endpoint]) instead would raise it to
+       (0,5,0) and beat the hovered non-endpoint's z-index 5. */
+    .stage.projection-iso.mode-view .dev[data-hp-zigbee-topology-endpoint] {
+      z-index: 8;
+    }
     .dev.unavail {
       opacity: 0.35;
       --device-face-bg: #B5BAC1;

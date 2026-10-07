@@ -117,6 +117,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-iso-neighbour-endpoint-under-routes',
+    guard: 'node demo/smoke_device_battery_zigbee.mjs',
+    because: '#809 AC1: only rasterised route pixels inside the unhovered neighbour core prove that '
+      + 'the 2.5D endpoint rule beats the (0,4,0) 2.5D marker layer and keeps the core above routes.',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '    .stage.projection-iso.mode-view .dev[data-hp-zigbee-topology-endpoint] {\n      z-index: 8;\n    }\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'battery-setting-backend-accepts-string',
     guard: 'node scripts/backend-test-guard.mjs battery tests_backend/test_settings_device_battery.py',
     because: '#792 AC9, #807: the display preference stays a strict boolean or the exact '
