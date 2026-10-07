@@ -339,7 +339,7 @@ test('#769 AC8: the union and bodies keys, the pool bound and its entry have one
   const count = (text, pattern) => text.split(pattern).length - 1;
   assert.equal(count(files.card, 'wallUnionKey('), 1, 'the card miss branch');
   assert.equal(count(files.runtime, 'wallUnionKey('), 2, '_rszEdgeDown and the _rszCancelDrag alias');
-  assert.equal(count(files.card, 'physicalBodiesKey('), 1, 'the card miss branch');
+  assert.equal(count(files.card, 'physicalBodiesKey('), 2, 'the card bodies lookup and the #814 sun key');
   assert.equal(count(files.runtime, 'physicalBodiesKey('), 2, 'the preview and cancel re-keys');
   assert.equal(count(files.led, 'physicalBodiesKey('), 1, 'the LED editor bodies');
   const module = read('../src/floor-geometry-key.ts');

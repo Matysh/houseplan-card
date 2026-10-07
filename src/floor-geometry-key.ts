@@ -27,6 +27,7 @@
  */
 import { lruWrite } from './card-runtime';
 import { lightGeometryFingerprint } from './glow-scene';
+import { roomPoly } from './logic';
 import { contentFingerprint } from './visual-continuity';
 
 /** The card members the key reads; the card passes itself. */
@@ -132,3 +133,40 @@ export function writeWallUnionPool<T>(
   lruWrite(pool, entry.key, entry, WALL_UNION_POOL_LIMIT);
   return entry;
 }
+
+/**
+ * #814: the key of the opening wall index (`openingWallIndex` in
+ * wall-thickness.ts), read afresh on every call — an in-place edit counts.
+ * Every input: the floor, its rooms in order (id and the polygon `roomPoly`
+ * reads, the rect fallback included), its wall records, the open cuts and the
+ * scale. Not the global config epoch: another floor's edit, a shared setting
+ * or a Home Assistant update leaves every one of them as it was.
+ */
+export const openingWallIndexKey = (
+  spaceId: string, rooms: readonly unknown[], walls: readonly { key: string; cm: number; a?: number[]; b?: number[] }[],
+  cuts: readonly number[][], scale: readonly number[],
+): string => [
+  spaceId, ...scale,
+  rooms.map((room) => `${(room as { id?: string } | null)?.id || ''}:${roomPoly(room)?.join('/')}`).join(';'),
+  walls.map((wall) => `${wall.key}:${wall.a}:${wall.b}:${wall.cm}`).join(';'),
+  cuts.join(';'),
+].join('|');
+
+/** #814: an exterior window of the sun layer, in render units (docs/SUN.md). */
+export interface SunWindow { id: string; x: number; y: number; angle: number; length: number }
+
+/**
+ * #814: the key of the sun wedges (`_renderSunRays`; the 2.5D wash adds its
+ * cell size and lit floors). `index` is the opening wall index key (rooms,
+ * walls, cuts, scale), `bodies` the physical bodies key — the floor record the
+ * occluders, the wall union and the inner contours are cached by — then the
+ * windows, `sun` (azimuth, elevation, north, ray origin) and the zero walls.
+ * Not the global config epoch (see `openingWallIndexKey`).
+ */
+export const sunGeometryKey = (
+  index: string, bodies: string, windows: readonly SunWindow[], sun: readonly unknown[],
+  zero: { style: unknown; barriers: readonly number[][] },
+): string => [
+  index, bodies, windows.map((w) => `${w.id}:${w.x},${w.y},${w.angle},${w.length}`).join(';'),
+  ...sun, zero.style, zero.barriers.join(';'),
+].join('|');

@@ -275,8 +275,8 @@ import type { DecorShape, DecorStyle } from './editors/decor/types';
 import { StairViewRuntime, type StairViewHostPort } from './stairs-view';
 import { cleanFloorForRoom, type CleanFloorResult } from './clean-floor';
 import {
-  floorGeometryKeyReader, physicalBodiesKey, wallUnionKey, wallUnionPoolEntry, writeWallUnionPool,
-  type FloorKeySource,
+  floorGeometryKeyReader, openingWallIndexKey, physicalBodiesKey, sunGeometryKey, wallUnionKey,
+  wallUnionPoolEntry, writeWallUnionPool, type FloorKeySource, type SunWindow,
 } from './floor-geometry-key';
 import {
   DECOR_ASSETS_API_VERSION, decorAssetIds, projectDecorImage,
@@ -1791,10 +1791,11 @@ export class HouseplanCard extends LitElement {
   /** #769: real builds of each floor-geometry cache, counted in the miss branch
    * only — never on a hit, a recency refresh, a resize re-key or alias, or a
    * clear. The #735 switch-cycle guard (demo/performance/switch-cycle-guard.mjs)
-   * and the floor-cache smoke judge them; nothing in the product reads them. */
+   * and the floor-cache smoke judge them; nothing in the product reads them.
+   * #814: the sun wedges (Flat, 2.5D) count theirs for the floor-cache-reuse smoke. */
   private _floorCacheBuilds = {
     wallUnion: 0, innerContour: 0, cleanFloor: 0, openingWallIndex: 0, lightBarrier: 0,
-    glowClip: 0, physicalBodies: 0, openingTunnel: 0, lightPhysicalBodies: 0,
+    glowClip: 0, physicalBodies: 0, openingTunnel: 0, lightPhysicalBodies: 0, sunRays: 0, isoSun: 0,
   };
   private _isoFallback = new Set<string>();
   private _openingTunnelCache: {
@@ -8991,17 +8992,8 @@ export class HouseplanCard extends LitElement {
   private _openingWallIndexFor(space: SpaceModel, openCuts: number[][]): {
     key: string; value: OpeningWallIndex;
   } {
-    const roomFingerprint = space.rooms.map((room) => (
-      `${room.id}:${room.poly?.map((point) => point.join(',')).join('/') || `${room.x},${room.y},${room.w},${room.h}`}`
-    )).join(';');
-    const wallFingerprint = this._spaceWalls.map((wall) => (
-      `${wall.key}:${wall.a?.join(',') || ''}:${wall.b?.join(',') || ''}:${wall.cm}`
-    )).join(';');
-    const cutFingerprint = openCuts.map((cut) => cut.join(',')).join(';');
-    const key = [
-      space.id, this._cfgEpoch, this._wallKeyPitch, this._cellCm, this._gridPitch,
-      roomFingerprint, wallFingerprint, cutFingerprint,
-    ].join('|');
+    const key = openingWallIndexKey(space.id, space.rooms, this._spaceWalls, openCuts,
+      [this._wallKeyPitch, this._cellCm, this._gridPitch]);
     let value = this._openingWallIndexCache.get(key);
     if (value) {
       // Refresh recency on hit; the pool is intentionally tiny because each
@@ -9919,18 +9911,12 @@ export class HouseplanCard extends LitElement {
    * everything else in `hass` must not trigger the polygon clipping.
    */
   /** Window-light inputs shared by the Flat wedges and the 2.5D soft light (#649). */
-  private _sunInputs(space: SpaceModel, zeroWalls: ReturnType<HouseplanCard['_zeroWalls']>) {
+  private _sunInputs(space: SpaceModel, zeroWalls: ReturnType<HouseplanCard['_zeroWalls']>, windows: SunWindow[]) {
     const rooms = space.rooms
       .map((r) => ({ id: r.id || '', poly: roomPoly(r) }))
       .filter((r): r is { id: string; poly: number[][] } => !!r.id && !!r.poly);
-    const windows = this._openingsR
-      // A contour-wall host is stable identity metadata, not a different
-      // physical carrier. Only an independent partition window is excluded
-      // from exterior sunlight (#132, ADR 282 Stage 1).
-      .filter((o) => o.type === 'window' && o.host?.kind !== 'partition')
-      .map((o) => ({ id: o.id, x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }));
     const walls = this._spaceWalls;
-    const openCuts = this._openCuts();
+    const openCuts = zeroWalls.contour;
     const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
     const innerByRoom: Record<string, number[][]> = {};
     const wallDepthByOpening: Record<string, number> = {};
@@ -9999,28 +9985,34 @@ export class HouseplanCard extends LitElement {
         }, RAY_FADE_MS);
       }
     }
-    // DEV-B701-01: the geometry signal must be _cfgEpoch, not _cfgRev.
-    // Every local mutation ends in _saveConfig(), which bumps the epoch
-    // SYNCHRONOUSLY; _cfgRev only moves after the debounced WS write is
-    // acked, so a rev-keyed memo served wedges for the OLD window position
-    // during the whole write window (and forever if the write failed).
+    // DEV-B701-01: the key is the geometry itself, never _cfgRev (it moves only
+    // after the debounced WS ack). #814: nor the global _cfgEpoch — every input
+    // is read on each frame (floor-geometry-key.ts), so an own edit, in place
+    // too, moves it synchronously, and another floor's edit does not.
     const zeroWalls = this._zeroWalls();
-    const zeroKey = zeroWalls.barriers.map((line) => line.join(',')).join(';');
     const origin = this._effSunRayOrigin();
-    const key = `${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${origin}|${this._cfgEpoch}`
-      + `|${zeroWalls.style}|${zeroKey}`;
+    // A contour-wall host is stable identity metadata, not a different physical
+    // carrier. Only an independent partition window is excluded from exterior
+    // sunlight (#132, ADR 282 Stage 1).
+    const windows = this._openingsR.filter((o) => o.type === 'window' && o.host?.kind !== 'partition')
+      .map((o) => ({ id: o.id, x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }));
+    const key = sunGeometryKey(this._openingWallIndexFor(space, zeroWalls.contour).key,
+      physicalBodiesKey(this._floorKey(space.id), this._cellCm, this._gridPitch), windows,
+      [sun.azimuth, sun.elevation, north, origin], zeroWalls);
     const isoSun = this._renderProjection === 'iso' ? this._isoSceneRuntime : null;
     if (isoSun) { // #649 п.2: the 2.5D View paints soft light along the sun instead of the Flat wedges
       const isoKey = `${key}|${this._cellCm}|${[...(this._isoLightFloors ?? [])].join(',')}`;
       if (this._isoSunCache?.key !== isoKey) {
-        const inputs = this._sunInputs(space, zeroWalls);
+        this._floorCacheBuilds.isoSun++;
+        const inputs = this._sunInputs(space, zeroWalls, windows);
         const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, this._cellCm);
         this._isoSunCache = { key: isoKey, wallHeight, beams: isoSun.computeIsoSunBeams({ ...inputs, azimuth: sun.azimuth, elevation: sun.elevation, northDeg: north!, wallHeight, lightFloorRooms: this._isoLightFloors ?? undefined }) };
       }
       return isoSun.renderIsoSunWash(this._isoSunCache.beams, this._isoSunCache.wallHeight, this._sunOut, this._modeTransitionVisual?.viewWeight ?? 1) as TemplateResult;
     }
     if (!this._sunRaysCache || this._sunRaysCache.key !== key) {
-      const { rooms, windows, innerByRoom, wallDepthByOpening, occluders: sunOccluders } = this._sunInputs(space, zeroWalls);
+      this._floorCacheBuilds.sunRays++;
+      const { rooms, innerByRoom, wallDepthByOpening, occluders: sunOccluders } = this._sunInputs(space, zeroWalls, windows);
       let rays = computeSunRays(
         rooms, windows, sun.azimuth, sun.elevation, north!, innerByRoom, wallDepthByOpening, origin,
       );

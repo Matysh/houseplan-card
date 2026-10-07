@@ -5,11 +5,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  floorGeometryKeyReader, floorRecordKeyMemo, physicalBodiesKey, WALL_UNION_POOL_LIMIT,
-  wallUnionKey, wallUnionPoolEntry, writeWallUnionPool,
+  floorGeometryKeyReader, floorRecordKeyMemo, openingWallIndexKey, physicalBodiesKey,
+  sunGeometryKey, WALL_UNION_POOL_LIMIT, wallUnionKey, wallUnionPoolEntry, writeWallUnionPool,
 } from '../test-build/floor-geometry-key.js';
 import { lightGeometryFingerprint } from '../test-build/glow-scene.js';
+import { computeSunRays } from '../test-build/sun.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
+import { openingWallIndex } from '../test-build/wall-thickness.js';
 
 const record = (id, cm = 15) => ({
   id, cell_cm: 5, rooms: [{ id: `${id}1`, poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5]] }],
@@ -95,4 +97,113 @@ test('#769 AC8: one format of the union and bodies keys, the pool bound and its 
   writeWallUnionPool(pool, { key: 'k2', value: 'again' });
   assert.deepEqual([...pool.keys()].at(-1), 'k2', 'a rewrite is the most recent');
   assert.equal(pool.size, WALL_UNION_POOL_LIMIT);
+});
+
+/** A one-slot memo by `key`, counting its builds: what the card does with a key. */
+const memoOf = (key, build) => {
+  let last = null;
+  const memo = (...input) => {
+    const k = key(...input);
+    if (last?.k !== k) { memo.builds++; last = { k, value: build(...input) }; }
+    return last.value;
+  };
+  memo.builds = 0;
+  return memo;
+};
+
+test('#814 AC1: the opening wall index key — every input moves it, the cached index is the uncached one', () => {
+  const scale = (input) => [1 / 240, input.cellCm, input.gridPitch];
+  const keyOf = (input) => openingWallIndexKey(input.spaceId, input.rooms, input.walls, input.cuts, scale(input));
+  const fresh = (input) => openingWallIndex(input.rooms, input.walls, input.cuts, 1 / 240, input.cellCm,
+    input.gridPitch, 1000);
+  const index = memoOf(keyOf, fresh);
+  const input = {
+    spaceId: 'f1', cellCm: 5, gridPitch: 1000 / 240,
+    rooms: [
+      { id: 'r1', name: 'Living', poly: [[100, 100], [500, 100], [500, 500], [100, 500]] },
+      { id: 'r2', x: 500, y: 100, w: 300, h: 400 },
+    ],
+    walls: [{ key: 'w', cm: 15, a: [0.5, 0.1], b: [0.5, 0.5] }],
+    cuts: [],
+  };
+  const steps = [
+    ['a room point moved in place', () => { input.rooms[0].poly[1][0] = 520; }],
+    ['a rect room moved in place', () => { input.rooms[1].w = 320; }],
+    ['the room order', () => { input.rooms.reverse(); }],
+    ['a room id', () => { input.rooms[0].id = 'r9'; }],
+    ['a wall thickness in place', () => { input.walls[0].cm = 30; }],
+    ['a wall endpoint in place', () => { input.walls[0].b[1] = 0.45; }],
+    ['a wall key', () => { input.walls[0].key = 'w2'; }],
+    ['an open cut', () => { input.cuts.push([500, 200, 500, 300]); }],
+    ['the cell size', () => { input.cellCm = 10; }],
+    ['the grid pitch', () => { input.gridPitch = 1000 / 120; }],
+    ['the floor', () => { input.spaceId = 'f2'; }],
+  ];
+  let previous = keyOf(input);
+  assert.deepEqual(index(input), fresh(input));
+  for (const [name, change] of steps) {
+    const builds = index.builds;
+    change();
+    assert.notEqual(keyOf(input), previous, `${name} moves the key`);
+    previous = keyOf(input);
+    assert.deepEqual(index(input), fresh(input), `${name}: the cached index is the uncached one`);
+    assert.equal(index.builds, builds + 1, `${name}: one build`);
+  }
+  // What the index never reads leaves the key: a rename, a setting, another
+  // floor, a new epoch with equal records (a server push), a Home Assistant tick.
+  const builds = index.builds;
+  input.rooms[0].name = 'Renamed';
+  input.rooms[0].settings = { fill_mode: 'light' };
+  assert.deepEqual(index(structuredClone(input)), fresh(input));
+  assert.equal(index.builds, builds, 'no build');
+});
+
+test('#814 AC1: the sun key — every input moves it, the cached wedges are the uncached ones', () => {
+  const rooms = [
+    { id: 'r1', poly: [[100, 100], [500, 100], [500, 500], [100, 500]] },
+    { id: 'r2', poly: [[500, 100], [800, 100], [800, 500], [500, 500]] },
+  ];
+  const input = {
+    rooms, walls: [], cuts: [], bodies: 'f1|record|5|1000',
+    windows: [{ id: 'wE', x: 800, y: 300, angle: 90, length: 60 }, { id: 'wS', x: 300, y: 500, angle: 0, length: 60 }],
+    azimuth: 90, elevation: 20, north: 0, origin: 'inner', zero: { style: 'solid', barriers: [] },
+  };
+  const keyOf = (i) => sunGeometryKey(openingWallIndexKey('f1', i.rooms, i.walls, i.cuts, [1, 5, 1000]),
+    i.bodies, i.windows, [i.azimuth, i.elevation, i.north, i.origin], i.zero);
+  const fresh = (i) => computeSunRays(structuredClone(i.rooms), structuredClone(i.windows), i.azimuth, i.elevation,
+    i.north, undefined, undefined, i.origin);
+  const rays = memoOf(keyOf, fresh);
+  assert.ok(rays(input).length > 0, 'the fixture is lit');
+  const steps = [
+    ['a window moved in place', () => { input.windows[0].y = 340; }],
+    ['a window resized in place', () => { input.windows[0].length = 80; }],
+    ['a window added', () => { input.windows.push({ id: 'wN', x: 300, y: 100, angle: 0, length: 60 }); }],
+    ['a room point moved in place', () => { input.rooms[1].poly[1][0] = 760; input.rooms[1].poly[2][0] = 760; }],
+    ['the azimuth', () => { input.azimuth = 200; }],
+    ['the elevation', () => { input.elevation = 40; }],
+    ['the compass', () => { input.north = 90; }],
+    ['the ray origin', () => { input.origin = 'outer'; }],
+  ];
+  let previous = keyOf(input);
+  for (const [name, change] of steps) {
+    change();
+    assert.notEqual(keyOf(input), previous, `${name} moves the key`);
+    previous = keyOf(input);
+    assert.deepEqual(rays(input), fresh(input), `${name}: the cached wedges are the uncached ones`);
+  }
+  for (const [name, change] of [
+    ['a wall record', () => { input.walls.push({ key: 'w', cm: 15 }); }],
+    ['an open cut', () => { input.cuts.push([500, 200, 500, 300]); }],
+    ['the floor record of the bodies', () => { input.bodies = 'f1|moved partition|5|1000'; }],
+    ['a solid zero wall', () => { input.zero = { style: 'solid', barriers: [[100, 300, 300, 300]] }; }],
+    ['the zero-wall style', () => { input.zero = { ...input.zero, style: 'dashed' }; }],
+  ]) {
+    change();
+    assert.notEqual(keyOf(input), previous, `${name} moves the key`);
+    previous = keyOf(input);
+  }
+  rays(input);
+  const builds = rays.builds;
+  rays(structuredClone(input));
+  assert.equal(rays.builds, builds, 'equal inputs in new objects (a server push, an epoch) build nothing');
 });
