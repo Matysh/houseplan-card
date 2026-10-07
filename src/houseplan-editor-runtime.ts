@@ -920,7 +920,12 @@ export class HouseplanEditorRuntime {
         });
         this.host.requestUpdate();
       }).catch(() => { this.host._showToast(this.host._t('toast.geometry_unsafe')); })
-        .finally(() => { this._nodeMoveLoad = null; });
+        .finally(() => {
+          this._nodeMoveLoad = null;
+          // A Select return before the old import settles needs a new render;
+          // the retired epoch must neither install nor strand its controller.
+          if (epoch !== this._nodeMoveEpoch && this.host.isConnected) this.host.requestUpdate();
+        });
     }
     return this.nodeMove?.render() || nothing;
   }

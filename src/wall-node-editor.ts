@@ -311,7 +311,7 @@ export class WallNodeEditor {
         if (scene.openingIds.includes(element.dataset.id || '')) element.style.opacity = '0';
       } else if (scene) element.style.mask = element.matches('.hp-paperg')
         ? 'url(#hp-node-old-paper-mask)' : 'url(#hp-node-old-walls-mask)';
-      else if (s.moved && element.matches('.wallbodies, .seg, .zerowall, .plan-snap-overlay, .hidden-wall-diagnostic, .physical-chrome, .physical-hit')) element.style.mask = 'url(#hp-node-ghost-mask)';
+      else if (s.moved && element.matches('.wallbodies, .room-outline, .seg, .zerowall, .plan-snap-overlay, .hidden-wall-diagnostic, .physical-chrome, .physical-hit')) element.style.mask = 'url(#hp-node-ghost-mask)';
       else if (s.moved && element.matches('[data-hp="opening"]') && s.plan.source.openings?.some(o => o.id === element.dataset.id
         && o.host && s.plan.node.walls.some(w => w.id === o.host?.id))) element.style.opacity = '0';
     }
