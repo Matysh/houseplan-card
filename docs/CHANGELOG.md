@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.80.0-beta.7 — 2026-10-07
+
 - Zigbee links in 2.5D View: the device at the other end of a hovered device's
   link now stays above the link line, as it does in Flat and as the hovered
   device itself does, instead of the line crossing its face

@@ -1,18 +1,20 @@
-<!-- release: v1.80.0-beta.6 -->
+<!-- release: v1.80.0-beta.7 -->
 
 ## Основное
 
-- Иконки заряда получили мягкую масштабируемую тень, а в настройках каждого устройства появился отдельный переключатель, скрывающий его заряд без отключения остальных ([#806](https://github.com/Matysh/houseplan-card/issues/806)).
-- Глобальная настройка заряда теперь предлагает режимы «Все», «Только низкий» и «Нет»: режим «Только низкий» оставляет на плане лишь красные индикаторы ниже 20% ([#807](https://github.com/Matysh/houseplan-card/issues/807)).
+- Zigbee-связи: снимок карты считается устаревшим только через час, а линии и стрелки связей проходят поверх индикаторов заряда; в 2.5D устройство на другом конце связи больше не перечёркивается линией ([#808](https://github.com/Matysh/houseplan-card/issues/808), [#809](https://github.com/Matysh/houseplan-card/issues/809)).
+- Радар присутствия: в «Настроить на плане» снова виден контур выбранной комнаты, и отметки ложатся точно туда, куда нажали ([#774](https://github.com/Matysh/houseplan-card/issues/774)).
+- Киоск и карточка пространства: «Размеры на этом экране» открываются без загрузки редактора, а при правке плана с другого устройства двери и маркеры больше не меняют вид без причины ([#763](https://github.com/Matysh/houseplan-card/issues/763), [#764](https://github.com/Matysh/houseplan-card/issues/764)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Battery indicators now have a soft size-aware shadow, plus a per-device switch that hides one indicator without disabling the rest ([#806](https://github.com/Matysh/houseplan-card/issues/806)).
-- The global battery setting now offers All, Low only and None; Low only keeps just red indicators below 20% on the plan ([#807](https://github.com/Matysh/houseplan-card/issues/807)).
+- Zigbee links: a map snapshot turns stale only after an hour, and link lines and arrows pass over battery indicators; in 2.5D the device at the other end of a link is no longer crossed by the line ([#808](https://github.com/Matysh/houseplan-card/issues/808), [#809](https://github.com/Matysh/houseplan-card/issues/809)).
+- Presence radar: **Configure on plan** shows the selected room's outline again, and every mark lands exactly where it is clicked ([#774](https://github.com/Matysh/houseplan-card/issues/774)).
+- Kiosk and space card: **This screen's sizes** opens without loading the editor, and editing the plan from another device no longer changes doors or markers that did not change ([#763](https://github.com/Matysh/houseplan-card/issues/763), [#764](https://github.com/Matysh/houseplan-card/issues/764)).
 - Small fixes and improvements.
 
 Сообщество / Community: [Telegram](https://t.me/ha_houseplan)
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.6/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.6/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.7/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.80.0-beta.7/docs/CHANGELOG.md)

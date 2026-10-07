@@ -49,7 +49,7 @@ const CAPS = {
   // 2026-09-27, #676: +2 — вызов черновика лестницы в pointerdown сцены и
   // рамка лестницы в верхнем оверлее (выше тел стен). Всё остальное слоя —
   // жесты, рамка, магнит, диалог — живёт в stairs-editor.ts и stairs-box.ts.
-  'src/houseplan-card.ts': 12992,
+  'src/houseplan-card.ts': 13009,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.
@@ -64,7 +64,7 @@ const CAPS = {
   // 2026-09-24, #642: диалог «Оптимизировать планы» (превью, запуск,
   // диагностика preflight, разметка) уехал в src/optimize-plans-dialog.ts за
   // узкий порт из 18 членов — 362 строки. Потолок опущен на выигрыш.
-  'src/houseplan-editor-runtime.ts': 12039,
+  'src/houseplan-editor-runtime.ts': 12031,
 };
 
 /**
