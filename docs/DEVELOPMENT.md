@@ -629,7 +629,8 @@ edits — not a commit, not a merge (that is decided in `integrate` from the sea
 
 - **polygon-clipping is a trap**: its `.d.ts` declares named exports but the ESM build has only
   a default export — tsc or the runtime breaks, whichever you appease. Use **polyclip-ts**
-  (proper ESM + native types; same results, +~50 KB bundle via bignumber.js).
+  (proper ESM + native types; same results). It brings `bignumber.js` and `splaytree-ts`;
+  their measured weight in the built graph is below (#814).
 - **Redeploying the same version keeps the resource URL** (`/houseplan_files/houseplan-card.js?v=X`),
   so browsers may serve the previous bundle from cache. Bump the version for anything users must
   pick up, or hard-refresh (Ctrl+Shift+R) when testing a hotfix redeploy.
@@ -649,6 +650,11 @@ edits — not a commit, not a merge (that is decided in `integrate` from the sea
   the card's four floor-geometry caches (#744) and the summary panel's area
   (#769). The furniture and stairs magnet (`furniture-wall-surface.ts`) keeps
   the epoch by measurement: its own edits change the floor record anyway (#769).
+  The opening wall index and the sun wedges list every input they read in the
+  same module (`openingWallIndexKey`, `sunGeometryKey`, #814) and read the
+  in-place mutable ones afresh on every call; the record key is never a
+  substitute for them. Physical bodies and opening tunnels keep a pool of the
+  eight most recently shown floors next to the active entry (`floorPoolEntry`).
 - **Segments that cross must be split before a visibility sweep.** The sweep
   casts a ray at every barrier ENDPOINT; two faces crossing in their middles —
   normal where wall bodies meet at a junction — leave that corner unsampled and
@@ -658,6 +664,46 @@ edits — not a commit, not a merge (that is decided in `integrate` from the sea
   (`gate:small`, #654, #725): `getComputedStyle`, `getBoundingClientRect` and reads such as
   `clientWidth`/`offsetTop`. The guarded methods (and the one summary-panel measurement method
   that may read) are listed in the script; measure in `updated()` or an observer instead.
+
+### Geometry dependency weight and the bundle ratchet (#814: F19, F27)
+
+Measured on the build of `7c6931c1` (the last product commit of #814 on base
+`a5e7d79c`; its test and documentation commits do not change `dist`) with
+Node 22.22.2, Rollup 4.62.2, terser 5.48.0 (`@rollup/plugin-terser` 0.4.4) and
+TypeScript 5.9.3.
+Method: after `npm run build`, the project's Rollup config generates the bundle
+in memory; for every module of `bignumber.js`, `polyclip-ts` and `splaytree-ts`
+and for the two style modules, Rollup's `chunk.modules[id].code` (the rendered
+code after tree-shaking, before terser) is minified alone with the build's
+terser options and gzipped at level 9, as the bundle manifest does. The
+standalone gzip is an upper bound of a module's share of its chunk, which
+compresses with shared context. Graph membership is read from
+`dist/houseplan-assets.json`.
+
+| Module | Source, B | Rendered, B | Minified, B | Gzip (alone), B | Graph |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `bignumber.js` 9.3.1 (`bignumber.mjs`) | 84 714 | 84 648 | 18 460 | 8 328 | initial View (card entry chunk) |
+| `polyclip-ts` 0.16.8 | 39 981 | 39 442 | 17 780 | 5 082 | initial View (card entry chunk) |
+| `splaytree-ts` 1.0.2 | 17 966 | 11 538 | 3 296 | 1 106 | initial View (card entry chunk) |
+| `src/styles/plan.styles.ts` | 61 356 | 31 652 | 31 528 | 6 472 | initial View (card entry chunk) |
+| `src/styles/chrome.styles.ts` | 16 093 | 10 460 | 10 233 | 2 480 | initial View (card entry chunk) |
+
+The three geometry dependencies are at most 14 516 B gzip of the 298 916 B
+initial View graph (about 4.9 %), not the 85 KB of `bignumber.js` source. They
+stay: View itself needs exact booleans (wall union, clean floors, Glow and sun
+occlusion), so the code cannot leave the first-frame graph by laziness, and a
+replacement is a separate decision. The plan/chrome CSS that remains in the
+entry after #805 is a separate tail of at most 8 952 B gzip; its ownership is
+unchanged here.
+
+F27, the `bundleBytes` ratchet on the same build: the committed release `dist`
+at `a5e7d79c` is 2 718 201 B, equal to `scripts/monolith-baseline.json`; a
+sandbox build of `a5e7d79c` is 2 717 957 B; `7c6931c1` builds 2 718 948 B
+(+991 B over the base build, +747 B over the baseline, inside the +2 000 B
+band). The initial View graph moves 298 665 → 298 916 B gzip (ceiling 303 046
++ 2 000), the lazy editor graph 250 248 → 250 293 B (ceiling 251 460 + 2 000).
+No band, ceiling or the `UPSTREAM_WINS` policy changed. A CI build of the exact
+SHA is the authority; these are sandbox numbers.
 
 ## Release
 

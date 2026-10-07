@@ -123,6 +123,28 @@ family lists come from one counted sample of every `large-house*` profile and
 light physical bodies 0, no structural 2.5D build, every size unchanged. No
 family had to move to the reported list.
 
+Issue #814 pools physical bodies and opening tunnels per floor (at most eight,
+LRU, `floorPoolEntry` in `src/floor-geometry-key.ts`). A target whose source
+declares both pools (`private _physicalBodiesPool`, `private _openingTunnelPool`)
+is judged with `pooled`: the two families join the judged list, so one build in
+the warm cycle fails the sample; a base before #814 keeps them reported. Light
+physical bodies stay reported. Each row's `switchCycleBuilds` adds `pooled`,
+the pool sizes in the size snapshot (`physicalBodiesPool`, `openingTunnelPool`;
+0 for a base) and `keyCost`: the mean milliseconds of one warm lookup of the
+opening wall index and of the physical bodies on the shown floor (key plus
+hit), 50 calls after one warming call, untimed and outside every Long Task
+window. The budgeted `cacheEntries`/`cacheGrowth` keys are unchanged.
+
+For #814's AC5 the Full Performance comparison runs with `comparison_ref` set
+to the full base SHA and publishes, per profile, the raw rows of
+`large-house-interaction-v1` (with `interactionDiagnostics.resizeLongTask`:
+`labelsMs` is the live areas whose body union is now built once per gesture)
+and the Flat and 2.5D switch cycles (`large-house-v1`,
+`large-house-isometric-v1`: `switchCycleMs`, `switchCycleBuilds.families`,
+`.caches` with the pool sizes, `.keyCost`). The deterministic result is the
+build counters; milliseconds are reported as measured, without a promised
+percentage, and every budget stays as it is.
+
 Issue #743 adds `large-house-isometric-backdrop-v1`, the 2.5D twin of
 `large-house-isometric-v1` with a loaded plan picture on every floor. Before it
 no Full Performance profile walked the backdrop (`imagePlan`) path, so the

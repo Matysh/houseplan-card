@@ -28,9 +28,15 @@ soft wedges from exterior windows. Neither creates entities nor calls services.
   projection must preserve its live state while still excluding rows
   that are explicitly disabled.
 - Sun attributes update rarely (~30–120 s). Sun geometry is recomputed
-  ONLY when (azimuth, elevation) or the config change — never on every
-  `hass` tick. The wedge layer memoises on
-  `(azimuth, elevation, config rev, space id)`.
+  ONLY when (azimuth, elevation) or one of its geometric inputs change —
+  never on every `hass` tick. The wedge layer memoises on every input
+  (`sunGeometryKey`, `src/floor-geometry-key.ts`, #814): the opening wall
+  index key (floor, rooms, walls, open cuts, scale), the physical bodies key
+  of the floor record, the exterior windows, azimuth, elevation, north, the
+  ray origin and the zero walls; the 2.5D wash adds the cell size and the lit
+  floors. Not the config revision (it moves only after the WS ack,
+  DEV-B701-01) and not the global config epoch: an own edit moves the key
+  synchronously, an edit of another floor or of a shared setting does not.
 - Angle on the plan: `plan_angle = north_deg + azimuth` (normalised to
   0–360). Both bearings increase clockwise: `north_deg` is the literal
   direction of true north on the canvas, and `azimuth` is the clockwise

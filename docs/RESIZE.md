@@ -161,6 +161,16 @@ button and shifts a conflicting area label along the wall. The production
 pointer path performs no DOM measurement; browser smoke compares the actual
 post-render rectangles at default and non-default zoom.
 
+Each area is the room's inner contour minus the floor's independent bodies. A
+resize never moves a partition, a column or the host of their openings, so the
+union of those bodies is built once per gesture (#814, `BodyObstaclesMemo` in
+`src/physical-geometry.ts`), on the first measured step, and every room of
+every later step subtracts it. It is keyed by the bodies themselves at the grid
+scale, not by the gesture, and dropped when the gesture begins, ends, is
+cancelled or reset (a server push mid-drag). A failed union is not an empty set:
+the room then takes the same lossless body-by-body path as before. The full
+physical preflight of each step is unchanged.
+
 ## Thickness, virtual spans and openings
 
 `rekeyWallsAfterMoveChecked()` and `rekeyOpenSpansAfterMove()` map the immutable

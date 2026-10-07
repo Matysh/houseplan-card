@@ -330,6 +330,16 @@ preflight rejects `degraded-extra`, `failed-core` fails dark. It is computed sta
 only — cached per structural geometry, never written back, never rebuilt by HA
 state ticks. Contract: [`WALL-THICKNESS.md`](WALL-THICKNESS.md) §2–§4, §9–§11.
 
+Floor-geometry caches are keyed by their inputs, never by the global config
+epoch, and their keys and pools come from one module, `src/floor-geometry-key.ts`.
+The wall union, physical bodies, inner contours and clean floors key by the
+content of one floor record (#744, #769); the union, the bodies and the opening
+tunnels keep a bounded pool of recently shown floors (eight, LRU) next to the
+active entry, so a warm floor switch builds none of them (#814). The opening
+wall index and the sun wedges key by every input they read (#814); an edit of
+another floor or a shared setting leaves them warm. Every pool is an
+instance-local memo: nothing is persisted, and a remounted card starts empty.
+
 ## Markup editor
 
 Card state: `_mode`, `_tool` (`select|draw|column|merge|split|resize|opening|

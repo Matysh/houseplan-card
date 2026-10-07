@@ -331,9 +331,13 @@ the shared symbol-placement helper turns that result into the user-visible
 translation. Candidates must be effectively collinear with
 the opening axis (not merely parallel within one grid cell); ties use complete
 opening coverage, signed distance to the inner face, smaller room area and
-stable room id. The index and batch tunnel geometry are cached by space,
-configuration epoch and complete geometry, so HA state ticks change only the
-resolved fill colours. Overlapping openings reserve each physical interval
+stable room id. The index is cached by its complete inputs — the floor, its
+rooms (id and polygon), wall records, open cuts and scale, read afresh on every
+call — not by the configuration epoch, so another floor's edit, a shared setting
+and HA state ticks reuse it (#814). Batch tunnel geometry adds the openings'
+positions and is pooled per floor (at most eight recently shown floors, LRU), so
+a warm floor switch reuses it and HA state ticks change only the resolved fill
+colours. Overlapping openings reserve each physical interval
 once and cannot stack room-fill alpha.
 "Effectively collinear" is deliberately strict: the perpendicular distance to
 the candidate axis may not exceed `max(4% × grid pitch, 1e-9)`. A detached
@@ -549,7 +553,9 @@ blocks the commit and reports the valid range; no editor path silently clamps
 it. These bodies are unioned with room-wall bodies only after door/window/gate cuts,
 so an opening cannot punch a coincident independent wall. They are subtracted
 from the cached clean floor, and the same body set is used by Glow and sun-ray
-occlusion even when borders are hidden. A source inside/on a physical body is
+occlusion even when borders are hidden. The body set is cached per floor record
+and grid scale and pooled like the union (at most eight recently shown floors,
+#814); the editor's current entry stays `_physicalBodiesCache`. A source inside/on a physical body is
 fully occluded instead of leaking around its own masonry. The same fail-dark
 placement rule applies to window tunnels and exterior door/gate openings;
 interior passages remain valid source positions (#92).
