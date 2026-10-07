@@ -67,8 +67,18 @@ user-hidden design preview сохраняет реальный дизайн. LED
 0.7/1.8/1.3 px при фрейме 19 px и 1.6/3.6/3.2 px при 56 px, между ними —
 непрерывное масштабирование. Тень пассивна и не расширяет hit area.
 
+Строка заряда основной подсказки (#817) берёт тот же источник через
+`deviceBatteryReading` (`device-battery.ts`) — значение, а не полосу; текст
+собирает `deviceBatteryTipText` в `live-hover.ts`. По решению владельца она не
+проходит через `ResolvedDevicePresentation.battery` и не зависит от
+`show_device_battery`, `"low"`, `hide_battery` и LED: эти настройки касаются
+только значка на плане. Чтение — активные rows кадра (`_renderPlanHass`) и
+полный реестр; некорректное, недоступное или отключённое значение даёт `null` —
+строки нет.
+
 Свидетели: `test/device-battery.test.mjs`, `test/device-presentation.test.mjs`,
-`test/render-device-snapshot.test.mjs`; browser/golden — матрица батарей #792.
+`test/render-device-snapshot.test.mjs`, `test/device-battery-tip.test.mjs`;
+browser/golden — матрица батарей #792, `demo/smoke_device_battery_tooltip.mjs`.
 
 ## Lifecycle и видимость
 

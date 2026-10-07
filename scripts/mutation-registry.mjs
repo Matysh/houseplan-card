@@ -150,6 +150,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'battery-tooltip-line-follows-plan-indicator',
+    guard: 'node --test test/device-battery-tip.test.mjs',
+    because: '#817 AC2 (owner decision): the tooltip charge line ignores None, Low only and the '
+      + 'per-device hiding of the plan indicator; driving the real tooltip entry points with the '
+      + 'production presentation resolver must still show the line while the indicator is hidden.',
+    patches: [{
+      file: 'src/live-hover.ts',
+      find: '  const battery = deviceBatteryTipText(device,',
+      replace: "  const battery = !presentation.battery ? '' : deviceBatteryTipText(device,",
+    }],
+  },
+  {
     id: 'wall-face-lineage-skips-post-reconcile-settlement',
     guard: 'node demo/smoke_wall_face_lineage.mjs',
     because: '#804 AC1/AC3/AC5: only the production room-dialog save proves that residual '

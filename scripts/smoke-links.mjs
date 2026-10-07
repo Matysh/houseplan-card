@@ -336,6 +336,13 @@ export const SMOKE_LINKS = [
       + 'a successful retry; those UI and transport effects are outside the pure draft helpers',
   },
   {
+    symbols: ['deviceBatteryTipText', 'deviceBatteryReading', 'deviceTipContent'],
+    smokes: ['smoke_device_battery_tooltip.mjs'],
+    because: '#817: the charge row is read from the visible device tooltip after a real mouse '
+      + 'hover and keyboard focus, in Flat and 2.5D, with the plan indicator off, low-only and '
+      + 'hidden per device; the smoke observes tooltip text and never names these helpers',
+  },
+  {
     symbols: ['showRoomTooltipOf'],
     smokes: ['smoke_room_tooltip_toggle.mjs'],
     because: 'the production-bundle scenario proves the global-settings draft and persistence, '

@@ -1446,6 +1446,13 @@ value badge. Battery icons use a soft size-aware shadow to stay legible over
 light and mixed plan backgrounds. Full configuration export/import preserves
 both settings.
 
+The main tooltip of a battery device, on hover and on keyboard focus, has its
+own charge line from the same source: “Battery N%” (rounded to a whole number),
+or “Battery normal” / “Low battery” for a binary sensor. It is always shown,
+whatever **Show device battery status** and **Hide battery status on plan** say;
+with no current value, or with the sensor or device disabled in Home Assistant,
+there is no line.
+
 ### Icon changes by state
 
 With live states enabled, known pairs change automatically:

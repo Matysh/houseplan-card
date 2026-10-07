@@ -20,6 +20,12 @@
 - 2.5D View: a device reached with the keyboard (Tab) is now drawn above the
   devices it overlaps, as in Flat; the ends of a highlighted Zigbee link stay
   on top ([#813](https://github.com/Matysh/houseplan-card/issues/813)).
+- Device tooltip: a battery-powered device's tooltip, on mouse hover and on
+  keyboard focus, in Flat and 2.5D, now shows its charge — “Battery N%”, or
+  “Battery normal” / “Low battery” when Home Assistant reports only a
+  low-battery flag. The line does not depend on the battery-icon settings of
+  the plan and is absent when there is no current value
+  ([#817](https://github.com/Matysh/houseplan-card/issues/817)).
 
 ## v1.80.0-beta.7 — 2026-10-07
 

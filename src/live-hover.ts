@@ -4,12 +4,17 @@ import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DevItem } from './types';
 import { placeDeviceTooltip } from './live-tip-placement';
 import { floatingViewport } from './floating-surface';
+import {
+  createDeviceBatteryContext, deviceBatteryReading,
+  type DeviceBatteryContext, type DeviceBatteryDevice, type DeviceBatteryHass,
+} from './device-battery';
 
 export interface LiveTip {
   x: number;
   y: number;
   title: string;
   meta: string;
+  battery?: string;
   lqi?: number | null;
   temp?: number | null;
   hum?: number | null;
@@ -42,13 +47,36 @@ interface DeviceTipHost extends LiveHoverHost {
   _spaceDisplayForRender: () => { showLqi?: boolean };
   _devicePresentation: (device: DevItem, showLqi: boolean) => ResolvedDevicePresentation;
   _notePointer: (event: PointerEvent) => void;
-  _t: LiveHoverHost['_t'] & ((key: I18nKey) => string);
+  _t: LiveHoverHost['_t'] & ((key: I18nKey, vars?: Record<string, string | number>) => string);
+  /** Same active states and registry as the plan battery; never unfiltered `hass`. */
+  _renderPlanHass: DeviceBatteryHass | null | undefined;
+  _fullRegistryHass: DeviceBatteryHass | null | undefined;
+}
+
+type BatteryTipKey = 'tip.battery_percent' | 'tip.battery_normal' | 'tip.battery_low';
+
+/**
+ * #817: the tooltip's own charge line. Owner's decision: it ignores the plan
+ * indicator settings (All / Low only / None, per-device hiding); only the
+ * #792 source and its current value decide. No reading — no line.
+ */
+export function deviceBatteryTipText(
+  device: DeviceBatteryDevice,
+  context: DeviceBatteryContext,
+  t: (key: BatteryTipKey, vars?: Record<string, number>) => string,
+): string {
+  const reading = deviceBatteryReading(device, context);
+  if (!reading) return '';
+  if (reading.kind === 'percent') return t('tip.battery_percent', { value: Math.round(reading.value) });
+  return t(reading.low ? 'tip.battery_low' : 'tip.battery_normal');
 }
 
 const states = new WeakMap<object, HoverState>();
 const focusTips = new WeakMap<object, LiveTip>();
 
-const deviceTipContent = (host: DeviceTipHost, device: DevItem): { title: string; meta: string } => {
+const deviceTipContent = (
+  host: DeviceTipHost, device: DevItem,
+): { title: string; meta: string; battery: string } => {
   const showLqi = host._spaceDisplayForRender().showLqi ?? host._config?.show_signal ?? true;
   const presentation = host._devicePresentation(device, showLqi);
   const ghostLabel = presentation.haDisabled
@@ -59,7 +87,9 @@ const deviceTipContent = (host: DeviceTipHost, device: DevItem): { title: string
     presentation.valueBadge?.fullText || '',
     presentation.lqiText != null ? `LQI ${presentation.lqiText}` : '',
   ].filter(Boolean).join(' · ');
-  return { title: device.name, meta: presentation.haDisabled ? ghostLabel : metrics };
+  const battery = deviceBatteryTipText(device,
+    createDeviceBatteryContext(host._renderPlanHass, host._fullRegistryHass), (key, vars) => host._t(key, vars));
+  return { title: device.name, meta: presentation.haDisabled ? ghostLabel : metrics, battery };
 };
 
 export function showDevicePointerTip(value: object, event: PointerEvent, device: DevItem): void {
@@ -152,6 +182,7 @@ const syncTip = (host: LiveHoverHost, root: ParentNode): void => {
   title.textContent = tip.title;
   element.append(title);
   appendMeta(element, '', tip.meta);
+  appendMeta(element, '', tip.battery);
   appendMeta(element, host._t('tip.temp_avg'), tip.temp == null ? '' : `${tip.temp}°`);
   appendMeta(element, host._t('tip.hum_avg'), tip.hum == null ? '' : `${tip.hum}%`);
   appendMeta(element, host._t('tip.lqi'), tip.lqi == null ? '' : String(tip.lqi),

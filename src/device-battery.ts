@@ -7,6 +7,11 @@ export interface ResolvedDeviceBattery {
   readonly sourceEntityId: string;
 }
 
+/** #817: the selected source's own value, for text; no reading means no text. */
+export type DeviceBatteryReading =
+  | { readonly kind: 'percent'; readonly value: number }
+  | { readonly kind: 'binary'; readonly low: boolean };
+
 interface BatteryEntityRegistryEntry {
   readonly device_id?: unknown;
   readonly device_class?: unknown;
@@ -135,32 +140,60 @@ function currentState(entityId: string, context: DeviceBatteryContext): unknown 
   return context.states[entityId]?.state;
 }
 
-function numericBatteryState(value: unknown): DeviceBatteryState {
+function batteryPercent(value: unknown): number | null {
   if (typeof value === 'string') {
     const text = value.trim();
     // Do not coerce empty, units, hexadecimal, booleans or arbitrary HA text to
     // a percentage. Decimal fractions retain their precision at the thresholds.
-    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) return 'unknown';
+    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) return null;
     value = Number(text);
   }
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) return 'unknown';
-  return value >= 60 ? 'normal' : value >= 20 ? 'warning' : 'low';
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) return null;
+  return value;
+}
+
+function numericBatteryState(value: unknown): DeviceBatteryState {
+  const percent = batteryPercent(value);
+  if (percent === null) return 'unknown';
+  return percent >= 60 ? 'normal' : percent >= 20 ? 'warning' : 'low';
+}
+
+/** One selection rule for the indicator and the tooltip text. */
+function batterySource(device: DeviceBatteryDevice, context: DeviceBatteryContext): string | null {
+  const binding = batteryBinding(device);
+  if (!binding) return null;
+  if (binding.kind === 'entity' && isBatteryEntity(binding.ref, context)) return binding.ref;
+  const candidates = deviceBatteryEntityIds(device, context).filter((entityId) => isBatteryEntity(entityId, context));
+  return candidates.find((entityId) => batteryDomain(entityId) === 'sensor') || candidates[0] || null;
 }
 
 export function resolveDeviceBattery(
   device: DeviceBatteryDevice,
   context: DeviceBatteryContext,
 ): ResolvedDeviceBattery | null {
-  const binding = batteryBinding(device);
-  if (!binding) return null;
-  let sourceEntityId = binding.kind === 'entity' && isBatteryEntity(binding.ref, context) ? binding.ref : null;
-  if (!sourceEntityId) {
-    const candidates = deviceBatteryEntityIds(device, context).filter((entityId) => isBatteryEntity(entityId, context));
-    sourceEntityId = candidates.find((entityId) => batteryDomain(entityId) === 'sensor') || candidates[0] || null;
-  }
+  const sourceEntityId = batterySource(device, context);
   if (!sourceEntityId) return null;
   const value = currentState(sourceEntityId, context);
   const state = batteryDomain(sourceEntityId) === 'sensor' ? numericBatteryState(value)
     : value === 'on' ? 'low' : value === 'off' ? 'normal' : 'unknown';
   return Object.freeze({ state, sourceEntityId });
+}
+
+/**
+ * #817: the value behind the indicator, independent of whether the indicator
+ * is shown. Unknown, unavailable, empty, non-numeric, out-of-range and
+ * disabled sources give null, never a guessed normal charge.
+ */
+export function deviceBatteryReading(
+  device: DeviceBatteryDevice,
+  context: DeviceBatteryContext,
+): DeviceBatteryReading | null {
+  const sourceEntityId = batterySource(device, context);
+  if (!sourceEntityId) return null;
+  const value = currentState(sourceEntityId, context);
+  if (batteryDomain(sourceEntityId) === 'sensor') {
+    const percent = batteryPercent(value);
+    return percent === null ? null : Object.freeze({ kind: 'percent', value: percent });
+  }
+  return value === 'on' || value === 'off' ? Object.freeze({ kind: 'binary', low: value === 'on' }) : null;
 }
